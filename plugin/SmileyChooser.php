@@ -11,7 +11,7 @@
 function macro_SmileyChooser($formatter,$value) {
   global $DBInfo;
 
-  if (!$DBInfo->use_smiley) return '';
+  if (!$DBInfo->use_smileys) return '';
 
   $chooser=<<<EOS
 <script language="javascript" type="text/javascript">
