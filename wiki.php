@@ -986,8 +986,8 @@ class Formatter {
     $this->gen_pagelinks=0;
 
     #
-#    $punct="<\"\'}\]\|\;\,\.\!";
-    $punct="\'}\]\|;,\.\)\?\!";
+    #$punct="<\"\'}\]\|\;\,\.\!";
+    $punct="<\'}\]\|;,\.\)\!";
     $url="http|ftp|telnet|mailto|wiki";
     $urlrule="((?:$url):[^\s$punct]+(\.?[^\s$punct]+)+)";
     # solw slow slow
@@ -1001,6 +1001,15 @@ class Formatter {
              "($urlrule)|".
              "(\?[a-z0-9]+)";
 
+  }
+
+  function get_redirect() {
+    $body=$this->page->get_raw_body();
+    if ($body[0]=='#' and substr($body,0,10)=='#redirect ') {
+      list($line,$dumm)=explode("\n",$body,2);
+      list($tag,$val)=explode(" ",$line,2);
+      if ($val) $this->pi['#redirect']=$val;
+    }
   }
 
   function _instructions($body="") {
@@ -1022,15 +1031,20 @@ class Formatter {
       $this->pi['#format']=$tag;
       $this->pi['args']=$args;
     }
+
     while ($body and $body[0] == '#') {
       # extract first line
       list($line, $body)= split("\n", $body,2);
       if ($line=='#') break;
       else if ($line[1]=='#') continue;
+
       list($key,$val,$args)= explode(" ",$line,3);
       $key=strtolower($key);
       if (in_array($key,$pi)) $this->pi[$key]=$val;
+      else $notused[]=$line;
     }
+    if ($notused) $body=join("\n",$notused)."\n".$body;
+
     if ($this->pi['#format']) {
       $pi_format=$this->pi['#format'];
       if (function_exists("processor_".$pi_format)) {
@@ -1107,10 +1121,10 @@ class Formatter {
 
     if ($url[0]=="w")
       $url=substr($url,5);
-    $dum=explode(":",$url);
+    $dum=explode(":",$url,2);
     $wiki=$dum[0]; $page=$dum[1];
     if (!$page) { # wiki:Wiki/FrontPage
-      $dum1=explode("/",$url);
+      $dum1=explode("/",$url,2);
       $wiki=$dum1[0]; $page=$dum1[1];
     }
     if (!$page) { # wiki:FrontPage or [wiki:FrontPage Home Page]
@@ -1362,7 +1376,6 @@ class Formatter {
 
   function send_page($body="",$options="") {
     global $DBInfo;
-    # get body
 
     if ($options[pagelinks]) $this->gen_pagelinks=1;
 
@@ -1396,9 +1409,10 @@ class Formatter {
       }
     }
 
+    # have no contents
     if (!$lines) return;
 
-    # get smily_rule
+    # set smily_rule,_repl
     if ($DBInfo->smileys) {
       $smiley_rule='/(?:\s|^)('.$DBInfo->smiley_rule.')(?:\s|$)/e';
       $smiley_repl="\$this->smiley_repl('\\1')";
@@ -1415,16 +1429,16 @@ class Formatter {
 
     $wordrule="({{{([^}]+)}}})|".
               "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|"; # macro
-    if ($DBInfo->enable_latex)
+    if ($DBInfo->enable_latex) # single line latex syntax
       $wordrule.="\\$([^\\$]+)\\$(?:\s|$)|".
-                 "\\$\\$([^\\$]+)\\$\\$(?:\s|$)|"; # tex
+                 "\\$\\$([^\\$]+)\\$\\$(?:\s|$)|";
     $wordrule.=$this->wordrule;
 
     foreach ($lines as $line) {
       # strip trailing '\n'
       $line=preg_replace("/\n$/", "", $line);
 
-#     if ($line=="" && $indlen) {continue;}
+      # empty line
       if ($line=="") {
         if ($in_pre) { $this->pre_line.="\n";continue;}
         if ($in_li) { $text.="<br />\n"; continue;}
@@ -1434,7 +1448,7 @@ class Formatter {
           if ($in_p) { $text.="<br />\n"; $in_p=2; continue;}
         }
       } else if ($in_p == 1) $in_p= 2;
-      if (substr($line,0,2)=="##") continue; # comment
+      if ($line[0]=='#' and $line[2]=='#') continue; # comments
 
       if ($in_pre == 0 && preg_match("/{{{[^}]*$/",$line)) {
          $p=strpos($line,"{{{");
@@ -1445,17 +1459,18 @@ class Formatter {
 
          # check processor
          if ($line[$p+3] == "#" && $line[$p+4] == "!") {
-            $dummy=explode(" ",substr($line,$p+5),2);
+            list($tag,$dummy)=explode(" ",substr($line,$p+5),2);
 
-            if (function_exists("processor_".$dummy[0])) {
-              $this->processor=$dummy[0];
+            if (function_exists("processor_".$tag)) {
+              $this->processor=$tag;
             } else {
-              if ($pf=getProcessor($dummy[0])) {
+              if ($pf=getProcessor($tag)) {
                 include("plugin/processor/$pf.php");
                 $this->processor=$pf;
               }
             }
          } else if ($line[$p+3] == ":") {
+            # new formatting rule for a quote block (pre block + wikilinks)
             $line[$p+3]=" ";
             $in_quote=1;
          }
@@ -1538,7 +1553,6 @@ class Formatter {
             $indent_type[$in_li]=$indtype; # add list type
             $open.=$this->_list(1,$indtype,$numtype);
          } else if ($indent_list[$in_li] > $indlen) {
-#            if ($indent_type[$in_li]!='dd' && $li_open) $close="xxx</li>\n".$close;
             while($in_li >= 0 && $indent_list[$in_li] > $indlen) {
                if ($indent_type[$in_li]!='dd' && $li_open == $in_li) $close.="</li>\n";
                $close.=$this->_list(0,$indent_type[$in_li],"",$in_li);
@@ -1556,7 +1570,6 @@ class Formatter {
          $in_table=1;
       } else if ($in_table && !preg_match("/^\|\|.*\|\|$/",$line)) {
          $close=$this->_table(0).$close;
-         #$close.=$this->_table(0);
          $in_table=0;
       }
       if ($in_table) {
@@ -1595,7 +1608,7 @@ class Formatter {
             $in_quote=0;
          } else {
             # htmlfy '<'
-            $pre=str_replace("/</","&lt;",$this->pre_line);
+            $pre=str_replace("<","&lt;",$this->pre_line);
             $line="<pre class='wiki'>\n".$pre."</pre>\n".$line;
          }
          $this->nobr=1;
@@ -2528,10 +2541,14 @@ if ($pagename) {
       $formatter->send_footer($args,$options);
       return;
     }
+    # display this page
+
+    # increase counter
     $DBInfo->counter->incCounter($pagename);
 
     $options[pi]=1;
 
+    $formatter->get_redirect();
     $formatter->send_header("",$options);
     $formatter->send_title("","",$options);
     $formatter->write("<div id='wikiContent'>\n");
