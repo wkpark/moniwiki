@@ -1548,8 +1548,8 @@ class Formatter {
     }
 
     $img="<a href='$url' target='wiki'><img border='0' src='$this->imgs_dir/".
-         strtolower($wiki)."-16.png' align='middle' height='16' width='16' ".
-         "alt='$wiki:' title='$wiki:' /></a>";
+         "interwiki/".strtolower($wiki)."-16.png' align='middle' height='16' ".
+         "width='16' alt='$wiki:' title='$wiki:' /></a>";
     #if (!$text) $text=str_replace("%20"," ",$page);
     if (!$text) $text=urldecode($page);
     else if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
