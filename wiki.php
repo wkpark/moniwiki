@@ -457,7 +457,7 @@ class WikiDB {
     $this->home='Home';
     $this->diff_type='fancy';
     $this->hr_type='simple';
-    $this->noexists='simple';
+    $this->nonexists='simple';
     $this->use_sistersites=1;
     $this->use_twinpages=1;
     $this->use_hostname=1;
