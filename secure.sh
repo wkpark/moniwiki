@@ -16,11 +16,11 @@ if [ -f config.php ]; then
 fi
 
 echo ""
-echo "Your MoniWiki is now secure and cannot be configured.  If"
-echo "you wish to reconfigure it, execute the following command:"
+echo "Your MoniWiki is now secure and cannot be configured."
+echo "If you wish to reconfigure it, execute the following command:"
 echo ""
 echo "    % sh config.sh"
 echo ""
-echo "and open 'monisetup.php' on a web browser"
+echo "and open 'monisetup.php' on a web browser."
 echo ""
 echo ""
