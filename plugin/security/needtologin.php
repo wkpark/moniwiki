@@ -28,6 +28,16 @@ class Security_needtologin extends Security {
     return 1;
   }
 
+  function may_blog($action,$options) {
+    if (!$options['page']) return 0; # XXX
+    if ($options['id']=='Anonymous') {
+      $options['err']=sprintf(_("You are not allowed to %s this page"),$action);
+      $options['err'].="\n"._("Please Login or make your ID on this Wiki ;)");
+      return 0;
+    }
+    return 1;
+  }
+
   function may_uploadfile($action,$options) {
     if (!$options['page']) return 0;
     if ($options['id']=='Anonymous') {
