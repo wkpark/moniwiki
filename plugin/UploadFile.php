@@ -92,7 +92,11 @@ function do_uploadfile($formatter,$options) {
   $title=sprintf(_("File \"%s\" is uploaded successfully"),$upfilename);
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
-  print "<ins>Uploads:$upfilename</ins>";
+  if ($key == 'UploadFile')
+    print "<ins>Uploads:$upfilename</ins>";
+  else
+    print "<ins>attachment:$upfilename</ins> or<br />";
+    print "<ins>attachment:".$formatter->page->name.":$upfilename</ins>";
   $formatter->send_footer();
 }
 
