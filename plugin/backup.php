@@ -1,0 +1,64 @@
+<?php
+// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// All rights reserved. Distributable under GPL see COPYING
+// a backup action plugin for the MoniWiki
+//
+// Usage: [[Test]]
+//
+// $Id$
+// vim:et:ts=2:
+
+function do_post_backup($formatter,$options) {
+  global $DBInfo;
+  $date=date("Ymd");
+  umask(02);
+
+  if ($options['ticket']) {
+    $tar=$DBInfo->upload_dir."/backup_$date.tgz";
+    $dummy=0;
+    while (file_exists($tar)) {
+      $dummy=$dummy+1;
+      $new="backup_$date"."_".$dummy.".tgz"; // rename file
+      $tar=$DBInfo->upload_dir."/".$new;
+      $file_path= $dir."/".$upfilename;
+    }
+
+    if ($options['verbose'])
+      $cmd="tar cvpzf $tar $DBInfo->text_dir";
+    else
+      $cmd="tar cpzf $tar $DBInfo->text_dir";
+
+    $formatter->send_header("",$options);
+    $formatter->send_title("","",$options);
+
+    print "<pre>";
+    print $cmd;
+    exec($cmd,$log);
+    print(join("\n",$log));
+    print "</pre>";
+    $formatter->send_footer("",$options);
+  } else {
+    $title = _("Did you want to Backup your wiki ?");
+    $formatter->send_header("",$options);
+    $formatter->send_title($title,"",$options);
+
+    $out="<form method='post' >\n";
+    $out.="<input type='hidden' name='action' value='backup' />\n";
+    if ($DBInfo->security->is_protected("backup",$options))
+      $out.="Password: <input type='password' name='passwd' size='10' />\n";
+    $out.="<input type='hidden' name='ticket' value='hello' /> \n";
+    $out.="<input type='checkbox' name='verbose' checked='checked' />verbosely\n";
+    $out.="<input type='submit' value='Backup now' /></form>\n";
+
+    print $out;
+
+    $formatter->send_footer("",$options);
+  }
+  return;
+}
+
+function macro_backup($formatter,$value) {
+  
+}
+
+?>
