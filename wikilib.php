@@ -403,4 +403,130 @@ function processor_html($formatter="",$value="") {
    $html=substr($formatter->pre_line,6,strlen($formatter->pre_line));
    return $html;
 }
+
+function processor_latex($formatter="",$value="") {
+  global $DBInfo;
+  # site spesific variables
+  $latex="/usr/bin/latex ";
+  $dvips="dvips ";
+  $convert="convert ";
+  $vartmp_dir="/var/tmp";
+  $cache_dir="pds";
+  $option='-interaction=batchmode ';
+
+  $lines=explode("\n",$formatter->pre_line);
+  # get parameters
+  unset($lines[0]);
+
+  $tex=join($lines,"\n");
+
+  $uniq=md5($tex);
+
+  $src="\documentclass[10pt,notitlepage]{article}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+%%\usepackage[all]{xy}
+\\begin{document}
+\pagestyle{empty}
+$tex
+\end{document}
+";
+
+  if ($formatter->refresh || !file_exists("$cache_dir/$uniq.png")) {
+     $fp= fopen("$vartmp_dir/$uniq.tex", "w");
+     fwrite($fp, $src);
+     fclose($fp);
+
+     $outpath="$cache_dir/$uniq.png";
+
+     $cmd= "cd $vartmp_dir; $latex $option $uniq.tex >/dev/null";
+     system($cmd);
+
+     $cmd= "cd $vartmp_dir; $dvips -D 600 $uniq.dvi -o $uniq.ps";
+     system($cmd);
+
+     $cmd= "$convert -crop 0x0 -density 120x120 $vartmp_dir/$uniq.ps $outpath";
+     system($cmd);
+
+     system("rm $vartmp_dir/$uniq.*");
+  }
+  return "<img src='$DBInfo->url_prefix/$cache_dir/$uniq.png' alt='tex'".
+         "title=\"$tex\" />";
+}
+
+function processor_php($formatter="",$value="") {
+  $php=substr($formatter->pre_line,5,strlen($formatter->pre_line));
+  ob_start();
+  highlight_string($php);
+  $highlighted= ob_get_contents();
+  ob_end_clean();
+#  $highlighted=preg_replace("/<code>/","<code style='background-color:#c0c0c0;'>",$highlighted);
+#  $highlighted=preg_replace("/<\/?code>/","",$highlighted);
+#  $highlighted="<pre style='color:white;background-color:black;'>".
+#               $highlighted."\n</pre>";
+  return $highlighted;
+}
+
+function processor_gnuplot($formatter="",$value="") {
+  #$gnuplot="/usr/local/bin/gnuplot_pm3d ";
+  #$gnuplot="gnuplot ";
+  $gnuplot="/usr/local/bin/gnuplot_pm3d ";
+  $vartmp_dir="/var/tmp";
+  $cache_dir="pds";
+
+  #
+  $plt=$formatter->pre_line;
+  #$lines=explode("\n",$formatter->pre_line);
+  # get parameters
+  #unset($lines[0]);
+  #$plt=join($lines,"\n");
+
+# a sample for debugging
+#  $plt='
+#set term gif
+#!  ls
+#plot sin(x)
+#';
+
+  # normalize plt
+  $plt="\n".$plt."\n";
+  $plt=preg_replace("/\n\s*![^\n]+\n/","\n",$plt); # strip shell commends
+  $plt=preg_replace("/[ ]+/"," ",$plt);
+  $plt=preg_replace("/\nset?\s+(t|o|si).*\n/", "\n",$plt);
+  
+  #print "<pre>$plt</pre>";
+  
+  $uniq=md5($plt);
+
+  $outpath="$cache_dir/$uniq.png";
+
+  $src="
+  set size 0.5,0.6
+set term png
+set out '$outpath'
+$plt
+";
+
+  #if (1 || $formatter->refresh || !file_exists("$cache_dir/$uniq.png")) {
+  if ($formatter->refresh || !file_exists("$cache_dir/$uniq.png")) {
+
+     $flog=tempnam($vartmp_dir,"GNUPLOT");
+
+     $cmd= "$gnuplot 2>$flog";
+     $fp=popen($cmd,"w");
+     fwrite($fp,$src);
+  
+#   while($s = fgets($fp, 1024)) {
+#     $log.= $s;
+#   }
+     pclose($fp);
+     $log=join(file($flog),"");
+     unlink($flog);
+  
+     if ($log)
+        $log ="<pre style='background-color:black;color:gold'>$log</pre>\n";
+  }
+  return $log."<img src='/wiki/$cache_dir/$uniq.png' alt='gnuplot'/>";
+}
+
 ?>
