@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: MoniWiki 1.0\n"
-"POT-Creation-Date: 2003-08-20 05:01+0900\n"
+"POT-Creation-Date: 2003-08-23 16:16+0900\n"
 "PO-Revision-Date: 2003-04-29 19:00+0900\n"
 "Last-Translator: Won-kyu Park <wkpark@kldp.org>\n"
 "Language-Team: ko <ko@li.org>\n"
@@ -55,7 +55,7 @@ msgstr ""
 msgid "<b>horizontal rule</b> ---- does not applied on the blog mode."
 msgstr "<b>가로선</b> ----는 블로그일 경우 적용되지 않습니다."
 
-#: ../plugin/BlogChanges.php:218
+#: ../plugin/BlogChanges.php:226
 msgid "Previous"
 msgstr "이전"
 
@@ -140,7 +140,7 @@ msgstr ""
 msgid "TwinPages of %s"
 msgstr "%s의 쌍둥이 페이지"
 
-#: ../plugin/TwinPages.php:18 ../wiki.php:1822 ../wiki.php:2923
+#: ../plugin/TwinPages.php:18 ../wiki.php:1828 ../wiki.php:2943
 msgid "See TwinPages: "
 msgstr ""
 
@@ -399,99 +399,108 @@ msgstr ""
 msgid "No TrackBack entry found for %s"
 msgstr ""
 
-#: ../wiki.php:847
+#: ../wiki.php:850
 #, c-format
 msgid "Rename %s to %s"
 msgstr ""
 
-#: ../wiki.php:1040
+#: ../wiki.php:1044
 msgid ""
 "You have no permission to see this page.\n"
 "\n"
 msgstr ""
 
-#: ../wiki.php:1041
+#: ../wiki.php:1045
 msgid "See MoniWiki/AccessControl\n"
 msgstr ""
 
-#: ../wiki.php:1818
+#: ../wiki.php:1824
 #, c-format
 msgid "See %s"
 msgstr ""
 
-#: ../wiki.php:1818
+#: ../wiki.php:1824
 msgid "TwinPages"
 msgstr "TwinPages"
 
-#: ../wiki.php:2104
+#: ../wiki.php:2110
 msgid "Revision History"
 msgstr "버전 히스토리"
 
-#: ../wiki.php:2205 ../wiki.php:2351
+#: ../wiki.php:2211 ../wiki.php:2360
 msgid "No older revisions available"
 msgstr "옛 버전이 없습니다"
 
-#: ../wiki.php:2332 ../wiki.php:2364 ../wikilib.php:770
+#: ../wiki.php:2338 ../wiki.php:2373 ../wikilib.php:770
 msgid "No difference found"
 msgstr "변화가 없습니다"
 
-#: ../wiki.php:2335
+#: ../wiki.php:2341
 msgid "Difference between yours and the current"
 msgstr ""
 
-#: ../wiki.php:2367
+#: ../wiki.php:2376
 msgid "Difference between versions"
 msgstr ""
 
-#: ../wiki.php:2369
+#: ../wiki.php:2378
 #, c-format
 msgid "Difference between r%s and r%s"
 msgstr "r%s과 r%s의 차이점"
 
-#: ../wiki.php:2373
+#: ../wiki.php:2382
 #, c-format
 msgid "Difference between r%s and the current"
 msgstr "r%s과 현재 버전의 차이점"
 
-#: ../locale/dummy.php:6 ../wiki.php:2540
+#: ../locale/dummy.php:6 ../wiki.php:2553
 msgid "EditText"
 msgstr "고치기"
 
-#: ../wiki.php:2542
+#: ../wiki.php:2555
 msgid "NotEditable"
 msgstr "고칠수 없음"
 
-#: ../locale/dummy.php:6 ../wiki.php:2544
+#: ../locale/dummy.php:6 ../wiki.php:2557
 msgid "ShowPage"
 msgstr "보기"
 
-#: ../locale/dummy.php:3 ../locale/dummy.php:5 ../wiki.php:2545
+#: ../locale/dummy.php:3 ../locale/dummy.php:5 ../wiki.php:2558
 msgid "FindPage"
 msgstr "찾기"
 
-#: ../wiki.php:2925 ../wiki.php:2928 ../wiki.php:2934
+#: ../wiki.php:2945 ../wiki.php:2948
 msgid "Create this page"
 msgstr "페이지 만들기"
 
-#: ../wiki.php:2935
+#: ../wiki.php:2950
+#, c-format
+msgid " or click %s to fullsearch this page.\n"
+msgstr ""
+
+#: ../wiki.php:2950
+msgid "title"
+msgstr ""
+
+#: ../wiki.php:2956
 msgid " or alternativly, use one of these templates:\n"
 msgstr ""
 
-#: ../wiki.php:2938
+#: ../wiki.php:2959
 msgid "To create your own templates, add a page with a 'Template' suffix\n"
 msgstr ""
 
-#: ../wiki.php:2988
+#: ../wiki.php:3009
 #, c-format
 msgid "You are not allowed to '%s'"
 msgstr ""
 
-#: ../wiki.php:3000
+#: ../wiki.php:3021
 #, c-format
 msgid "Fail to \"%s\" !"
 msgstr ""
 
-#: ../wiki.php:3003
+#: ../wiki.php:3024
 msgid "Please enter the valid password"
 msgstr "정확한 비밀번호를 넣어주세요"
 
@@ -720,9 +729,8 @@ msgid "password again"
 msgstr ""
 
 #: ../wikilib.php:1082
-#, fuzzy
 msgid "New password"
-msgstr "맞지 않는 비밀번호!"
+msgstr "새 비밀번호"
 
 #: ../wikilib.php:1088
 msgid "logout"
