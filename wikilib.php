@@ -2050,7 +2050,7 @@ function macro_TableOfContents($formatter="",$value="") {
 
    $dep=strlen($match[1]);
    if ($dep != strlen($match[4])) continue;
-   $head=$match[3];
+   $head=str_replace("<","&lt;",$match[3]);
    $head=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$head);
 
    if (!$depth_top) { $depth_top=$dep; $depth=1; }
