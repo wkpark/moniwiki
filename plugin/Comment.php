@@ -38,8 +38,8 @@ function macro_Comment($formatter,$value,$options=array()) {
 
   $form = "<form method='post' action='$url'>\n";
   $form.= <<<FORM
-<textarea class="wiki" id="content" wrap="virtual" name="savetext"
- rows="$rows" cols="$cols" class="wiki">$savetext</textarea><br />
+<textarea class="wiki" id="content" name="savetext"
+ rows="$rows" cols="$cols">$savetext</textarea><br />
 FORM;
   if ($options['id'] == 'Anonymous')
     $sig=_("Name").": <input name='name' value='$options[name]' />";
