@@ -1,5 +1,17 @@
 <?php
-# $Id$
+// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org> all rights reserved.
+// distributable under GPL see COPYING
+//
+// many codes are imported from the MoinMoin
+// some codes are reused from the Phiki
+//
+// * MoinMoin is a python based wiki clone based on the PikiPiki
+//    by Ju"rgen Hermann <jhs at web.de>
+// * PikiPiki is a python based wiki clone by MartinPool
+// * Phiki is a php based wiki clone based on the MoinMoin
+//    by Fred C. Yankowski <fcy at acm.org>
+//
+// $Id$
 
 include "wikilib.php";
 
@@ -77,15 +89,18 @@ FORM;
 
 function kbd_handler() {
   global $DBInfo;
+
+  if (!$DBInfo->kbd_script) return '';
   $prefix=get_scriptname();
+  $sep= $DBInfo->query_prefix;
   print <<<EOS
 <script language="JavaScript" type="text/javascript">
 <!--
 url_prefix="$prefix";
-FrontPage="/FrontPage";
+FrontPage="${sep}$DBInfo->frontpage";
 //-->
 </script>
-<script type="text/javascript" src="$DBInfo->url_prefix/css/kbd.js">
+<script type="text/javascript" src="$DBInfo->kbd_script">
 </script>
 EOS;
 }
@@ -170,14 +185,17 @@ function getConfig($configfile) {
 class WikiDB {
   function WikiDB($config=array()) {
   # Default Configuations
+    $this->frontpage='FrontPage';
     $this->sitename='MoniWiki';
     $this->data_dir= './data';
     $this->upload_dir= './pds';
     $this->query_prefix='/';
     $this->umask= 02;
     $this->embeded=0;
+    $this->charset='utf-8';
 
     $this->text_dir= $this->data_dir.'/text';
+    $this->cache_dir= $this->data_dir.'/cache';
     $this->intermap= $this->data_dir.'/intermap.txt';
     $this->editlog_name= $this->data_dir.'/editlog';
     $this->shared_intermap=$this->data_dir."/text/InterMap";
@@ -187,8 +205,9 @@ class WikiDB {
     $this->logo_img= $this->imgs_dir.'/moniwiki.gif';
 
     $this->css_url= $this->url_prefix.'/css/default.css';
+    $this->kbd_script= $this->url_prefix.'/css/kbd.css';
     $this->logo_string= '<img src="'.$this->logo_img.
-                        '" alt="" border="0" align="middle" />';
+                        '" alt="[RecentChanges]" border="0" align="middle" />';
     $this->use_smileys=1;
     $this->hr="<hr class='wikiHr' />";
     $this->date_fmt= 'D d M Y';
@@ -196,6 +215,7 @@ class WikiDB {
     #$this->changed_time_fmt = ' . . . . [h:i a]';
     $this->changed_time_fmt= ' [h:i a]';
     $this->admin_passwd= '10sQ0sKjIJES.';
+    $this->purge_passwd= '';
     $this->actions= array('DeletePage','LikePages');
     $this->show_hosts= TRUE;
 
@@ -462,7 +482,8 @@ class WikiDB {
 
 class Cache_text {
   function Cache_text($arena) {
-    $this->cache_dir="data/cache/$arena";
+    global $DBInfo;
+    $this->cache_dir=$DBInfo->cache_dir."/$arena";
     if (!file_exists($this->cache_dir))
        mkdir($this->cache_dir, 0777);
   }
@@ -888,17 +909,16 @@ class Formatter {
 
  function link_url($pageurl,$query_string="") {
    global $DBInfo;
-   if ($DBInfo->query_prefix) $SEP=$DBInfo->query_prefix;
-   else $SEP='/';
+   $sep=$DBInfo->query_prefix;
 
-   if ($SEP == '?') {
+   if ($sep == '?') {
      if ($pageurl && $query_string[0]=='?')
        # add 'dummy=1' to work around the buggy php
        $query_string= '&amp;'.substr($query_string,1).'&amp;dummy=1';
      $query_string= $pageurl.$query_string;
    } else
      $query_string= $pageurl.$query_string;
-   return sprintf("%s%s%s", $this->prefix, $SEP, $query_string);
+   return sprintf("%s%s%s", $this->prefix, $sep, $query_string);
  }
 
  function link_tag($pageurl,$query_string="", $text="",$attr="") {
@@ -1261,8 +1281,8 @@ class Formatter {
            break;
       }
    }
-   $out.="<tr><td colspan='6' align='right'>(!) Not implemented <input type='password'>";
-   $out.="<input type='submit' name='button_admin' value='admin'></td></tr>";
+   $out.="<tr><td colspan='6' align='right'><input type='checkbox' name='show' checked='checked' />show only <input type='password' name='passwd'>";
+   $out.="<input type='submit' name='button_admin' value='purge'></td></tr>";
    $out.="<input type='hidden' name='action' value='diff'/></form></table>\n";
    return $out; 
  }
@@ -1440,14 +1460,14 @@ class Formatter {
 <!-- <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"> -->
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
-  <meta http-equiv="Content-Type" content="text/html;charset=euc-kr" /> 
+  <meta http-equiv="Content-Type" content="text/html;charset=$DBInfo->charset" /> 
   <meta name="ROBOTS" content="NOINDEX,NOFOLLOW" />
   <title>$title</title>\n
 EOS;
       if ($DBInfo->css_url)
          print '<link rel="stylesheet" type="text/css" href="'.
                $DBInfo->css_url.'"/>';
-      
+# default CSS
       else print <<<EOS
 <style type="text/css">
 <!--
@@ -1636,7 +1656,7 @@ $opts[msg]
 MSG;
    }
 
-   $menu =$this->link_tag("FrontPage")." | ";
+   $menu =$this->link_tag($DBInfo->frontpage)." | ";
    $menu.=$this->link_tag("FindPage")." | ";
    $menu.=$this->link_tag("TitleIndex")." | ";
    $menu.=$this->link_tag("UserPreferences");
@@ -1761,17 +1781,10 @@ EOS;
 
 }
 
-# extra utilities
+# extra
+# blah
 
-#function quoteW(filename) {
-#    safe = string.letters + string.digits + '_-'
-#    res = list(filename)
-#    for i in range(len(res)):
-#        c = res[i]
-#        if c not in safe:
-#            res[i] = '_%02x' % ord(c)
-#    return string.joinfields(res, '')
-
+# Start Main
 $Config=getConfig("config.php");
 
 $DBInfo = new WikiDB($Config);
@@ -1780,7 +1793,7 @@ if (!empty($PATH_INFO)) {
    if ($PATH_INFO[0] == '/')
       $pagename=substr($PATH_INFO,1);
    if (!$pagename) {
-      $pagename = "FrontPage";
+      $pagename = $DBInfo->frontpage;
    }
 } else if (!empty($QUERY_STRING)) {
    if (isset($goto)) $pagename=$goto;
@@ -1792,10 +1805,9 @@ if (!empty($PATH_INFO)) {
         $QUERY_STRING=substr($QUERY_STRING,strlen($pagename));
      }
    }
-   if (!$pagename) $pagename= "FrontPage";
+   if (!$pagename) $pagename= $DBInfo->frontpage;
 } else {
-   $PATH_INFO.="/FrontPage";
-   $pagename = "FrontPage";
+   $pagename = $DBInfo->frontpage;
 }
 
 #print_r(array_keys($HTTP_GET_VARS));
@@ -1955,7 +1967,8 @@ if ($pagename) {
    }
 
    if ($action=="diff") {
-      if ($button_admin && $range) {
+      if ($button_admin) {
+         if (!$range) $range=array();
          $rr='';
          $dum=array();
          foreach (array_keys($range) as $r) {
@@ -1967,6 +1980,8 @@ if ($pagename) {
             $dum[]=$rr;$rr='';
          }
          #print_r($dum);
+         $options[passwd]=$passwd;
+         $options[show]=$show;
          $options[range]=$dum;
          $options[page]=$page->name;
          $options[timer]=$timing;
