@@ -23,7 +23,7 @@ $timing=new Timer();
 include("wikilib.php");
 
 function _preg_escape($val) {
-  return preg_replace('/([\^\.\[\]\{\}\|\(\)\+\*\/\\\\!\?]{1})/','\\\\\1',$val);
+  return preg_replace('/([\$\^\.\[\]\{\}\|\(\)\+\*\/\\\\!\?]{1})/','\\\\\1',$val);
 }
 
 function _preg_search_escape($val) {
@@ -39,7 +39,6 @@ function get_scriptname() {
 }
 
 function _rawurlencode($url) {
-  #
   $name=rawurlencode($url);
 #  $urlname=preg_replace('/%2F/i','/',$name);
   $urlname=preg_replace(array('/%2F/i','/%7E/i'),array('/','~'),$name);
@@ -78,28 +77,18 @@ function getProcessor($pro_name) {
   return $processors[strtolower($pro_name)];
 }
 
-if (0 && !function_exists ('bindtextdomain')) {
+if (!function_exists ('bindtextdomain')) {
+  $locale = array();
+
   function gettext ($text) {
+    global $locale;
+    if (!empty ($locale[$text]))
+      return $locale[$text];
     return $text;
   }
 
   function _ ($text) {
-    return $text;
-  }
-} else {
-  if (!function_exists ('bindtextdomain')) {
-    $locale = array();
-
-    function gettext ($text) {
-      global $locale;
-      if (!empty ($locale[$text]))
-        return $locale[$text];
-      return $text;
-    }
-
-    function _ ($text) {
-      return gettext($text);
-    }
+    return gettext($text);
   }
 }
 
@@ -229,9 +218,6 @@ class MetaDB_dba extends MetaDB {
        $ret="wiki:".
          str_replace(" ",":$pagename wiki:",dba_fetch($pagename,$this->metadb)).
          ":$pagename";
-       #$dum=explode(" ",dba_fetch($pagename,$this->metadb));
-       #$ret= "wiki:".join(":$pagename wiki:",$dum).":$pagename";
-       #return "wiki:".join(":$pagename wiki:",$dum).":$pagename";
        $pagename=_preg_search_escape($pagename);
        return preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
     }
@@ -243,9 +229,6 @@ class MetaDB_dba extends MetaDB {
        $ret=" wiki:".
          str_replace(" ",":$pagename wiki:",dba_fetch($pagename,$this->metadb)).
          ":$pagename";
-       #$dum=explode(" ",dba_fetch($pagename,$this->metadb));
-       #$ret= "See TwinPages wiki:".$dum.":$pagename";
-       #return "See TwinPages wiki:".join(":$pagename wiki:",$dum).":$pagename";
        $pagename=_preg_search_escape($pagename);
        return preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
     }
@@ -372,7 +355,7 @@ class Security {
   function is_protected($action="read",$options) {
     # password protected POST actions
     $protected_actions=array(
-      "deletepage","deletefile","rename","rcspurge","chmod");
+      "deletepage","deletefile","rename","rcspurge","chmod","backup","restore");
     $action=strtolower($action);
 
     if (in_array($action,$protected_actions)) {
@@ -399,7 +382,6 @@ function getConfig($configfile, $options=array()) {
   } 
 
   #while (list($key,$val)=each($options)) eval("\$$key=\"$val\";");
-  #foreach ($options as $key=>$val) eval("\$$key=\"$val\";");
   foreach ($options as $key=>$val) $$key=$val;
   unset($key,$val,$options);
   include($configfile);
@@ -453,6 +435,7 @@ class WikiDB {
     $this->changed_time_fmt= ' [h:i a]'; # used by RecentChanges macro
     $this->admin_passwd= '10sQ0sKjIJES.';
     $this->purge_passwd= '';
+    $this->rcs_user='nobody';
     $this->actions= array('DeletePage','LikePages');
     $this->show_hosts= TRUE;
     $this->iconset='moni';
@@ -714,8 +697,6 @@ class WikiDB {
       $dumm=fgets($fp,1024); # emit dummy
       while (!feof($fp)) {
         $line=fgets($fp,2048);
-#       $line=preg_replace("/[\r\n]+$/","",$line);
-#       print $line."<br />";
         $lines[]=$line;
       }
       fclose($fp);
@@ -761,6 +742,7 @@ class WikiDB {
   }
 
   function savePage($page,$comment="",$options=array()) {
+    global $DBInfo;
     $user=new User();
     $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
     $comment=escapeshellcmd($comment);
@@ -776,8 +758,10 @@ class WikiDB {
     $page->write($body);
     fwrite($fp, $body);
     fclose($fp);
-    system("ci -x,v/ -q -t-\"".$pagename."\" -l -m\"".$REMOTE_ADDR.";;".
+    putenv('LOGNAME='.$DBInfo->rcs_user);
+    $ret=system("ci -l -x,v/ -q -t-\"".$pagename."\" -m\"".$REMOTE_ADDR.";;".
             $user->id.";;".$comment."\" ".$key);
+    print $ret;
     #print $key;
     #$this->addLogEntry($page->name, $REMOTE_ADDR,$comment,"SAVE");
     $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
@@ -1315,18 +1299,18 @@ class Formatter {
       $url=substr($url,5);
     $dum=explode(":",$url,2);
     $wiki=$dum[0]; $page=$dum[1];
-    if (!$page) { # wiki:Wiki/FrontPage
-      $dum1=explode("/",$url,2);
-      $wiki=$dum1[0]; $page=$dum1[1];
-    }
+#    if (!$page) { # wiki:Wiki/FrontPage
+#      $dum1=explode("/",$url,2);
+#      $wiki=$dum1[0]; $page=$dum1[1];
+#    }
 
     if (!$page) {
       # wiki:FrontPage(not supported in the MoinMoin
       # or [wiki:FrontPage Home Page]
       $page=$dum[0];
       if (!$text)
-        return $this->word_repl($page);
-      return $this->word_repl($page,$text);
+        return $this->word_repl($page,"",1);
+      return $this->word_repl($page,$text,1);
     }
 
     $url=$DBInfo->interwiki[$wiki];
@@ -1379,7 +1363,7 @@ class Formatter {
     return "";
   }
 
-  function word_repl($word,$text="") {
+  function word_repl($word,$text="",$nogroup=0) {
     global $DBInfo;
     if ($word[0]=='"') { # ["extended wiki name"]
       $page=substr($word,1,-1);
@@ -1397,7 +1381,7 @@ class Formatter {
     if ($page[0]=='~' and ($p=strpos($page,'/'))) {
       # change ~User/Page to User~Page
       $page=substr($page,1,$p-1)."~".substr($page,$p+1);
-    } else if ($this->group and !strpos($page,'~')) {
+    } else if (!$nogroup and $this->group and !strpos($page,'~')) {
       if ($page[0]=='/') $page=substr($page,1);
       else $page=$this->group.$page;
     } else if ($page[0]=='/') # SubPage
@@ -2342,14 +2326,14 @@ EOS;
     if ($this->pi['#action'] && !in_array($this->pi['#action'],$this->actions)){
       list($act,$txt)=explode(" ",$this->pi['#action'],2);
       if (!$txt) $txt=$act;
-      $menu= $this->link_to("?action=$act",_($txt));
+      $menu= $this->link_to("?action=$act",_($txt),"accesskey='x'");
     } else if ($args['editable']) {
       if ($DBInfo->security->writable($options))
         $menu= $this->link_to("?action=edit",_("EditText"),"accesskey='x'");
       else
         $menu= _("NotEditable");
     } else
-      $menu.= $this->link_to("",_("ShowPage"));
+      $menu.= $this->link_to("?action=show",_("ShowPage"));
     $menu.=$this->menu_sep.$this->link_tag("FindPage","",_("FindPage"));
 
     if (!$args['noaction']) {
@@ -2594,7 +2578,8 @@ EOS;
     $trail=join("\t",$trails);
 
     setcookie("MONI_TRAIL",$trail,time()+60*60*24*30,get_scriptname());
-    $this->trail= "[\"".join("\"] > [\"",$trails)."\"]";
+    #$this->trail= "[\"".join("\"] > [\"",$trails)."\"]";
+    $this->trail= "wiki:".join(" > wiki:",$trails);
   }
 } # end-of-Formatter
 
@@ -2811,6 +2796,9 @@ if ($pagename) {
     } else if (function_exists("do_post_".$action)) {
       if ($_SERVER['REQUEST_METHOD']=="POST")
         $options=array_merge($_POST,$options);
+      else { # do_post_* set some primary variables as $options
+        $options['value']=$_GET['value'];
+      }
       #eval("do_post_".$action."(\$formatter,\$options);");
       call_user_func("do_post_$action",$formatter,$options);
       return;
