@@ -74,7 +74,7 @@ function do_OeKaki($formatter,$options) {
     if ($formatter->page->exists())
       $body=$formatter->page->get_raw_body();
     else $body='';
-    if (!preg_match("/\n\[\[OeKaki($name)\]\]\n/i",$body)) {
+    if (!preg_match("/\n?\[\[OeKaki\($name\)\]\]\n?/i",$body)) {
       if (preg_match("/\n##Draw\n/i",$body))
        $body=preg_replace("/\n##Draw\n/","\n##Draw\n[[OeKaki($name)]]\n",$body);
       else
@@ -118,8 +118,8 @@ function do_OeKaki($formatter,$options) {
   $formatter->send_title(_("Create new picture"),"",$options);
   $prefix=$formatter->prefix;
   $now=time();
-  $url_exit= $formatter->link_url($options[page],"?ts=$now");
-  $url_save= $formatter->link_url($options[page],"?action=OeKaki&value=$name&ts=$now");
+  $url_exit= $formatter->link_url($options['page'],"?ts=$now");
+  $url_save= $formatter->link_url($options['page'],"----OeKaki----$name");
 
   $pubpath=$DBInfo->url_prefix."/applets/OekakiPlugin";
   print "<h2>"._("Edit Image")."</h2>\n";

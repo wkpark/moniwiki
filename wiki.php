@@ -3217,7 +3217,6 @@ $pagename=get_pagename();
 //function render($pagename,$options) {
 if ($pagename) {
   global $DBInfo;
-  global $value,$action;
   # get primary variables
   if ($_SERVER['REQUEST_METHOD']=="POST") {
     # hack for TWiki plugin
@@ -3225,6 +3224,8 @@ if ($pagename) {
     if ($GLOBALS['HTTP_RAW_POST_DATA']) {
       # RAW posted data. the $value and $action could be accessed under
       # "register_globals = On" in the php.ini
+      # hack for Oekaki: PageName----action----filename
+      list($pagename,$action,$value)=explode('----',$pagename,3);
       $options['value']=$value;
     } else {
       $value=$_POST['value'];
