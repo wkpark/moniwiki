@@ -45,7 +45,7 @@ function do_download($formatter,$options) {
   }
   if (preg_match("/\.(.{1,4})$/",$file,$match))
     $mimetype=$mime[$match[1]];
-  if (!$mimetype) $mimetype="text/plain";
+  if (!$mimetype) $mimetype="application/x-unknown";
 
   header("Content-Type: $mimetype\r\n");
   header("Content-Disposition: attachment; filename=$file" );
