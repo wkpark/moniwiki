@@ -1,6 +1,6 @@
 <?php
-# a sample security plugin for the MoniWiki
-#
+# a needtologin security plugin for the MoniWiki
+# $Id$
 
 class Security_needtologin extends Security {
   var $DB;

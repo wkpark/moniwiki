@@ -1,4 +1,6 @@
 <?php
+# a sample security plugin for the MoniWiki
+# $Id$
 
 class Security_sample extends Security {
   var $DB;
