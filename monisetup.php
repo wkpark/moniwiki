@@ -117,12 +117,6 @@ class MoniConfig {
 
 function checkConfig($config) {
   umask(011);
-
-  # check sgid
-  $datadir_perm=sprintf("%o",07777 & fileperms("."));
-
-  if (02000 & fileperms(".")) $PERM=0775;
-  else $PERM=0777;
   $dir=getcwd();
 
   if (!file_exists("config.php") && !is_writable(".")) {
@@ -139,17 +133,24 @@ function checkConfig($config) {
   }
 
   if (file_exists("config.php")) {
-    if (!$fatal && !is_writable($config['data_dir'])) {
-       print "<h3><font color=red>FATAL: $config[data_dir] directory is not writable</font></h3>\n";
-       print "<h4>Please execute the following command</h4>";
-       print "<pre class='console'>\n".
-             "<font color='green'>$</font> chmod $datadir_perm $config[data_dir]\n</pre>\n";
-       exit;
+    if (!is_writable($config['data_dir'])) {
+      if (02000 & fileperms(".")) # check sgid
+        $datadir_perm = 0775;
+      else
+        $datadir_perm = 0777;
+      $datadir_perm = decoct($datadir_perm);
+      print "<h3><font color=red>FATAL: $config[data_dir] directory is not writable</font></h3>\n";
+      print "<h4>Please execute the following command</h4>";
+      print "<pre class='console'>\n".
+            "<font color='green'>$</font> chmod $datadir_perm $config[data_dir]\n</pre>\n";
+      exit;
     }
 
     $data_sub_dir=array("cache","user","text");
-    if (02000 & fileperms($config['data_dir'])) $DPERM=0775;
-    else $DPERM=0777;
+    if (02000 & fileperms($config['data_dir']))
+      $DPERM=0775;
+    else
+      $DPERM=0777;
 
     foreach($data_sub_dir as $dir) {
        if (!file_exists("$config[data_dir]/$dir")) {
