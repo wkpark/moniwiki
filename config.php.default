@@ -60,6 +60,11 @@ $use_trackback=0;
 #<link rel="Start" href="FrontPage" />
 #<link rel="Index" href="TitleIndex" />
 #<link rel="Help" href="HelpOnFormatting" />
+#<link rel="Copyright" href="FrontPage" />
+#<link rel="Search" href="FindPage" />
+#<link rel="Glossary" href="WordIndex" />
+#<link rel="Alternate History" title="Page History" href="?action=info" />
+#<link rel="Alternate" title="xml" type="application/rss+xml" href="?action=rss_rc" />
 #';
 
 #$diffonly=1;
@@ -72,4 +77,7 @@ $use_trackback=0;
 
 #$password_length=6;
 #$use_convert_thumbs=0;
+
+#$url_schemas='mms';
+#$vim_options='+"set encoding=utf-8"';
 ?>
