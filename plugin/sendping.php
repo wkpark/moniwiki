@@ -1,8 +1,7 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2994 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a TrackBack send action plugin for the MoniWiki
-// vim:et:ts=2:
 //
 // $Id$
 
@@ -100,15 +99,22 @@ FORM2;
 
 	$excerpt= stripslashes($options['excerpt']);
 
-  if ($options['mbencode'] and function_exists('mb_encode_numericentity')) {
+  if ($options['mbencode']) {
     if ($checked and function_exists('iconv')
         and strtolower($DBInfo->charset) != 'utf-8')
       $excerpt=iconv($DBInfo->charset,'utf-8',$excerpt);
-
-    $new=mb_encode_numericentity($excerpt,$DBInfo->convmap,'utf-8');
-    if ($new) $excerpt=$new;
-    $new=mb_encode_numericentity($title,$DBInfo->convmap,'utf-8');
-    if ($new) $title=$new;
+    if (function_exists('mb_encode_numericentity')) {
+      $new=mb_encode_numericentity($excerpt,$DBInfo->convmap,'utf-8');
+      if ($new) $excerpt=$new;
+      $new=mb_encode_numericentity($title,$DBInfo->convmap,'utf-8');
+      if ($new) $title=$new;
+    } else {
+      include('lib/compat.php');
+      $new=utf8_mb_encode($excerpt);
+      if ($new) $excerpt=$new;
+      $new=utf8_mb_encode($title);
+      if ($new) $title=$new;
+    }
   }
 
 	$excerpt= urlencode($excerpt);
@@ -164,4 +170,5 @@ FORM2;
   return;
 }
 
+// vim:et:ts=2:sw=2
 ?>
