@@ -92,8 +92,8 @@ class MoniConfig {
       $val=stripslashes($val);
       if (!isset($val)) $val="''";
       if (!$mode) {
-        eval("\$dum=$val;");
-        eval("\$$key=$val;");
+        @eval("\$dum=$val;");
+        @eval("\$$key=$val;");
         $conf[$key]=$dum;
       } else {
         $conf[$key]=$val;
@@ -108,7 +108,11 @@ class MoniConfig {
     while (list($key,$val) = each($config)) {
       if ($key=='admin_passwd' or $key=='purge_passwd')
          $val="'".crypt($val,md5(time()))."'";
-      $lines[]="\$$key=$val;\n";
+      $t=@eval("\$$key=$val;");
+      if ($t === NULL)
+        $lines[]="\$$key=$val;\n";
+      else
+        print "<font color='red'>ERROR:</font> <tt>\$$key=$val;</tt><br/>";
     }
     $lines[]="?>\n";
     return $lines;
