@@ -48,9 +48,10 @@ function getPlugin($pluginname) {
 }
 
 function getModule($module,$name) {
-  if (!class_exists($module.'_'.$name)) {
+  $mod=$module.'_'.$name;
+  if (!class_exists($mod))
     include_once('lib/'.strtolower($module).'.'.$name.'.php');
-  }
+  return $mod;
 }
 
 function getProcessor($pro_name) {
@@ -838,8 +839,7 @@ class WikiDB {
 
     $log=$REMOTE_ADDR.';;'.$user->id.';;'.$comment;
     if ($this->version_class) {
-      getModule('Version',$this->version_class);
-      $class='Version_'.$this->version_class;
+      $class=getModule('Version',$this->version_class);
       $version=new $class ($this);
       $ret=$version->ci($page->name,$log);
     }
@@ -866,8 +866,7 @@ class WikiDB {
 
     $delete=@unlink($this->text_dir."/$keyname");
     if ($options['history'] && $this->version_class) {
-      getModule('Version',$this->version_class);
-      $class='Version_'.$this->version_class;
+      $class=getModule('Version',$this->version_class);
       $version=new $class ($this);
       $version->delete($page->name);
     }
@@ -901,8 +900,7 @@ class WikiDB {
 
     rename($okey,$nkey);
     if ($options['history'] && $this->version_class) {
-      getModule('Version',$this->version_class);
-      $class='Version_'.$this->version_class;
+      $class=getModule('Version',$this->version_class);
       $version=new $class ($this);
       $version->rename($pagename,$new);
     }
@@ -1193,8 +1191,7 @@ class WikiPage {
       else $rev=$this->rev;
 
       if ($DBInfo->version_class) {
-        getModule('Version',$DBInfo->version_class);
-        $class='Version_'.$DBInfo->version_class;
+        $class=getModule('Version',$DBInfo->version_class);
         $version=new $class ($DBInfo);
         $out = $version->co($this->name,$rev);
         return $out;
@@ -1253,8 +1250,7 @@ class WikiPage {
     global $DBInfo;
 
     if ($DBInfo->version_class) {
-      getModule('Version',$DBInfo->version_class);
-      $class='Version_'.$DBInfo->version_class;
+      $class=getModule('Version',$DBInfo->version_class);
       $version=new $class ($DBInfo);
       $rev= $version->get_rev($this->name,$mtime,$last);
 
@@ -1273,8 +1269,7 @@ class WikiPage {
     if (!$rev) return $info;
 
     if ($DBInfo->version_class) {
-      getModule('Version',$DBInfo->version_class);
-      $class='Version_'.$DBInfo->version_class;
+      $class=getModule('Version',$DBInfo->version_class);
       $version=new $class ($DBInfo);
       $out= $version->rlog($this->name,$rev,$opt);
     } else {
