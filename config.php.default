@@ -24,6 +24,7 @@ $logo_string= '<img src="'.$logo_img.'" alt="" border="0" align="middle" />';
 $use_smileys= 1;
 #$smiley='wikismiley';
 $use_counter= 0;
+$use_hostname= 1;
 $iconset= 'moni';
 $enable_latex=0;
 $lang='auto';
@@ -45,6 +46,9 @@ $vim_options='+"set expandtab" +"retab"';
 #$use_titlecache=0;
 #$security_class="needtologin";
 #$security_class="desktop";
+#$security_class="wikimaster";
+#$wikimasters=array('CsKim','SjPark');
+#$owners=array('moniwiki','Hong');
 
 #$menu=array('MoniWiki'=>1,'FindPage'=>4,'TitleIndex'=>3,'BlogChanges'=>'','RecentChanges'=>2,'http://kldp.org KLDP'=>9);
 #$menu_sep='|';
@@ -72,7 +76,6 @@ $vim_options='+"set expandtab" +"retab"';
 #$goto_type=1;
 
 #$purple_icon='<img src="/wiki/imgs/egg.png" border="0" />';
-#$use_titlecache=1;
 #$pagetype=array("KldpDsl"=>"plain","ManPage"=>"/man","DocbookSgml"=>"/jade","LinuxDoc"=>"/linuxdoc");
 #$default_dsssl='to_dir/kldp.dsl';
 
@@ -84,4 +87,5 @@ $vim_options='+"set expandtab" +"retab"';
 
 #$url_schemas='mms';
 #$vim_options='+"set encoding=utf-8"';
+#$blacklist='127.0.0.0/24:192.168.1.0/24:192.168.1.67';
 ?>
