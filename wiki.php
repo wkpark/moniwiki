@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0rc6';
+$_release = '1.0rc8';
 
 include "wikilib.php";
 
@@ -1500,7 +1500,7 @@ class Formatter {
           if ($in_p) { $text.="<br />\n"; $in_p=2; continue;}
         }
       } else if ($in_p == 1) $in_p= 2;
-      if ($line[0]=='#' and $line[2]=='#') continue; # comments
+      if ($line[0]=='#' and $line[1]=='#') continue; # comments
 
       if ($in_pre) {
          if (strpos($line,"}}}")===false) {
@@ -2346,7 +2346,7 @@ Summary of Change: <input name="comment" size="70" maxlength="70" style="width:2
 <input type="hidden" name="action" value="savepage" />
 <input type="hidden" name="datestamp" value="$datestamp">
 <input type="submit" value="Save" />&nbsp;
-<input type="reset" value="Reset" />&nbsp;
+<!-- <input type="reset" value="Reset" />&nbsp; -->
 <input type="submit" name="button_preview" value="Preview" />
 $extra
 </form>
