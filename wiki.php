@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0.6';
+$_release = '1.0.7';
 
 #ob_start("ob_gzhandler");
 
@@ -1160,7 +1160,7 @@ class Formatter {
     $this->set_theme($options['theme']);
 
     #$this->baserule=array("/<([^\s][^>]*)>/","/`([^`]*)`/",
-    $this->baserule=array("/<([^\s<>])/","/`([^`']+)'/","/(?<!`)`([^`]*)`/",
+    $this->baserule=array("/<([^\s<>])/","/`([^`' ]+)'/","/(?<!`)`([^`]*)`/",
                      "/'''([^']*)'''/","/(?<!')'''(.*)'''(?!')/",
                      "/''([^']*)''/","/(?<!')''(.*)''(?!')/",
                      "/\^([^ \^]+)\^(?:\s)/","/,,([^ ,]+),,(?:\s)/",
@@ -1206,7 +1206,7 @@ class Formatter {
     # protect WikiName rule !WikiName
     "(?<![a-z])\!?(?:\/?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b|".
     # single bracketed name [Hello World]
-    "(?<!\[)\!?\[([^\[:,<\s][^\[:,>]+)\](?!\])|".
+    "(?<!\[)\!?\[([^\[:,<\s][^\[:,>]{1,255})\](?!\])|".
     # bracketed with double quotes ["Hello World"]
     "(?<!\[)\!?\[\\\"([^\\\"]+)\\\"\](?!\])|".
   # "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
@@ -1979,6 +1979,8 @@ class Formatter {
       # rules
       #$line=preg_replace("/^-{4,}/","<hr />\n",$line);
 
+      if ($DBInfo->auto_linebreak and preg_match('/^-{4,}/',$line))
+        $this->nobr=1; // XXX
       $line=preg_replace($this->baserule,$this->baserepl,$line);
       #if ($in_p and ($in_pre==1 or $in_li)) $line=$this->_check_p().$line;
 
@@ -3047,7 +3049,7 @@ if ($pagename) {
         print "<hr />\n$button";
         print _(" or alternativly, use one of these templates:\n");
         $options['linkto']="?action=edit&amp;template=";
-        print macro_TitleSearch($formatter,".*Template",$options);
+        print macro_TitleSearch($formatter,$DBInfo->template_regex,$options);
         print _("To create your own templates, add a page with a 'Template' suffix.\n");
       }
 
@@ -3102,6 +3104,7 @@ if ($pagename) {
   }
 
   if ($action) {
+    $DBInfo->metatags='<meta name="ROBOTS" content="NOINDEX,NOFOLLOW" />';
 
     if (!$DBInfo->security->is_allowed($action,&$options)) {
       $msg=sprintf(_("You are not allowed to '%s'"),$action);
@@ -3153,5 +3156,5 @@ if ($pagename) {
 
 //$pagename=get_pagename();
 //render($pagename,$options);
-// vim:et:ts=2:
+// vim:et:sts=2:
 ?>
