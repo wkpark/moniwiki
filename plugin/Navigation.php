@@ -22,14 +22,15 @@ function macro_Navigation($formatter,$value) {
   $pg=$DBInfo->getPage($value);
   $lines=explode("\n",$pg->get_raw_body());
 
-  $group='';
+  $group='';#$formatter->group;
   $current=$formatter->page->name;
   if ($formatter->group)
     $current=preg_replace('/~/','.',$formatter->page->name,1);
   if (strpos($value,'~')) {
     $group=strtok($value,'~').'~';
     $page=strtok('');
-  }
+  } else
+    $page=$value;
 
 #  print $current;
 
