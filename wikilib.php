@@ -270,7 +270,7 @@ class User {
 
   function validPasswd($passwd,$passwd2) {
 
-    if (strlen($passwd)<6)
+    if (strlen($passwd)<4)
        return 0;
     if ($passwd2!="" and $passwd!=$passwd2)
        return -1;
@@ -1027,7 +1027,7 @@ function macro_DateTime($formatter,$value) {
   return date("Y/m/d\TH:i:s");
 }
 
-function macro_UserPreferences($formatter="") {
+function macro_UserPreferences($formatter,$value,$options='') {
   global $DBInfo;
 
   $user=new User(); # get from COOKIE VARS
@@ -1037,47 +1037,68 @@ function macro_UserPreferences($formatter="") {
   }
   $url=$formatter->link_url("UserPreferences");
 
-  if ($user->id == "Anonymous")
-     return <<<EOF
+  # setup form
+  if ($user->id == 'Anonymous') {
+    if ($options['login_id'])
+      $idform="$options[login_id]<input type='hidden' name='login_id' value=\"$options[login_id]\" />";
+    else
+      $idform="<input type='text' size='20' name='login_id' value='' />";
+  } else {
+    $idform=$user->id;
+  }
+  $button=_("Login");
+  if ($user->id == 'Anonymous' and !isset($options['login_id']) and $value!="simple")
+    $login=<<<FORM
 <form method="post" action="$url">
 <input type="hidden" name="action" value="userform" />
 <table border="0">
-  <tr><td><b>ID</b>&nbsp;</td><td><input type="text" size="20" name="login_id" /></td></tr>
-  <tr><td><b>Password</b>&nbsp;</td><td><input type="password" size="20" maxlength="12" name="login_passwd" /></td></tr>
-
-  <tr><td></td><td><input type="submit" name="login" value="Login" /></td></tr>
-        
-  <tr><td><b>ID</b>&nbsp;</td><td><input type="text" size="20" name="username" value="" /></td></tr>
+  <tr><td><b>ID</b>&nbsp;</td><td>$idform</td></tr>
   <tr>
-     <td><b>Password</b>&nbsp;</td><td><input type="password" size="10" maxlength="12" name="password" value="" />
-     <b>Password again</b>&nbsp;<input type="password" size="10" maxlength="12" name="passwordagain" value="" /></td></tr>
-  <tr><td><b>Mail</b>&nbsp;</td><td><input type="text" size="40" name="email" value="" /></td></tr>
+     <td><b>Password</b>&nbsp;</td><td><input type="password" size="15" maxlength="8" name="password" value="" />
   <tr><td></td><td>
-    <input type="submit" name="save" value="make profile" /> &nbsp;
+    <input type="submit" name="login" value="$button" /> &nbsp;
   </td></tr>
 </table>
 </form>
-EOF;
+FORM;
 
-   #$udb=new UserDB($DBInfo);
-   #$user=$udb->getUser($user->id);
-   $css=$user->info['css_url'];
-   $name=$user->info['name'];
-   $email=$user->info['email'];
-   return <<<EOF
+  if ($user->id == 'Anonymous') {
+    if (isset($options['login_id']) or $_GET['join'] or $value!="simple") {
+      $passwd=$options['password'];
+      $button=_("Make profile");
+      $again="<b>"._("password again")."</b>&nbsp;<input type='password' size='15' maxlength='8' name='passwordagain' value='' /></td></tr>";
+      $extra=<<<EXTRA
+  <tr><td><b>Mail</b>&nbsp;</td><td><input type="text" size="40" name="email" value="$email" /></td></tr>
+EXTRA;
+    } else {
+      $button=_("Login or Join");
+    }
+  } else {
+    $button=_("Save");
+    $css=$user->info['css_url'];
+    $email=$user->info['email'];
+    $again="<b>"._("New password")."</b>&nbsp;<input type='password' size='15' maxlength='8' name='passwordagain' value='' /></td></tr>";
+
+    $extra=<<<EXTRA
+  <tr><td><b>Mail</b>&nbsp;</td><td><input type="text" size="40" name="email" value="$email" /></td></tr>
+  <tr><td><b>CSS URL </b>&nbsp;</td><td><input type="text" size="40" name="user_css" value="$css" /><br />("None" for disable CSS)</td></tr>
+EXTRA;
+    $logout="<input type='submit' name='logout' value='"._("logout")."' /> &nbsp;";
+  }
+
+  return <<<EOF
+$login
 <form method="post" action="$url">
 <input type="hidden" name="action" value="userform" />
 <table border="0">
-  <tr><td><b>ID</b>&nbsp;</td><td>$user->id</td></tr>
-  <tr><td><b>Name</b>&nbsp;</td><td><input type="text" size="40" name="username" value="$name" /></td></tr>
+  <tr><td><b>ID</b>&nbsp;</td><td>$idform</td></tr>
   <tr>
-     <td><b>Password</b>&nbsp;</td><td><input type="password" size="15" maxlength="8" name="password" value="" />
-     <b>New password</b>&nbsp;<input type="password" size="15" maxlength="8" name="passwordagain" value="" /></td></tr>
-  <tr><td><b>Mail</b>&nbsp;</td><td><input type="text" size="40" name="email" value="$email" /></td></tr>
-  <tr><td><b>CSS URL </b>&nbsp;</td><td><input type="text" size="40" name="user_css" value="$css" /><br />("None" for disable CSS)</td></tr>
+     <td><b>Password</b>&nbsp;</td><td><input type="password" size="15" maxlength="8" name="password" value="$passwd" />
+    $again
+    $extra
   <tr><td></td><td>
-    <input type="submit" name="save" value="save profile" /> &nbsp;
-    <input type="submit" name="logout" value="logout" /> &nbsp;
+    <input type="submit" name="login" value="$button" /> &nbsp;
+    $logout
   </td></tr>
 </table>
 </form>
