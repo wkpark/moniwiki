@@ -1,3 +1,4 @@
+# $Id$
 # see http://usemod.com/intermap.txt 
 ISBN http://www.amazon.com/exec/obidos/ISBN=
 Wiki http://c2.com/cgi/wiki?
@@ -25,8 +26,8 @@ SourceForge http://www.sourceforge.net/
 
 # Korean Wikis
 NoSmoke http://no-smok.net/nsmk/
-GnomeKorea http://www.gnome.or.kr/moin.cgi/
-KLE http://kle.kldp.org/moin.php/
+GnomeKorea http://www.gnome.or.kr/wiki/
+KLE http://kle.kldp.org/main.php/
 GentooKorea http://gentoo.or.kr/wiki/moin.cgi/
 DebianKorea http://debianusers.org/DebianWiki/
 Freefeel http://freefeel.org/wiki/
@@ -37,7 +38,5 @@ PyKug http://www.python.or.kr/pykug/
 WIM http://linux.mizi.com/wim/
 KTUG http://faq.ktug.or.kr/mywiki/
 MoniWiki http://moniwiki.sf.net/wiki.php/
-#MoniDev http://chemie.skku.ac.kr/wiki/wiki.php/
-#MoniWikiDev http://chemie.skku.ac.kr/wiki/wiki.php/
-
+KLDPWiki http://wiki.kldp.org/wiki/
 Teoal http://teoal.net/wiki/
