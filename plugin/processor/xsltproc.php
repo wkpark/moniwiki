@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a vim colorizer plugin for the MoniWiki
 //
-// Usage: {{{#!xml XslPage
+// Usage: {{{#!xml
 // xml codes
 // }}}
 // $Id$
@@ -11,21 +11,33 @@
 function processor_xsltproc($formatter,$value) {
   global $DBInfo;
   $xsltproc = "xsltproc ";
-  if ($value[0]=='#' and $value[1]=='!')
+  if ($value[0]=='#' and $value[1]=='!') {
     list($line,$value)=explode("\n",$value,2);
+    # get parameters
+    list($tag,$args)=explode(" ",$line,2);
+  }
 
-  # get parameters
-  list($tag,$args)=explode(" ",$line,2);
-  $src=$value;
-
-  $xsl = "include/terms.xsl";
+  list($line,$body)=explode("\n",$value,2);
+  $value="";
+  while($line[0]=='<' and $line[1]=='?') {
+    preg_match("/^<\?xml-stylesheet\s+href=\"([^\"]+)\"/",$line,$match);
+    if ($match) {
+      if ($DBInfo->hasPage($match[1]))
+        $line='<?xml-stylesheet href="'.getcwd().'/'.$DBInfo->text_dir.'/'.$match[1].'" type="text/xml"?>';
+      $flag=1;
+    }
+    $value.=$line."\n";
+    list($line,$body)=explode("\n",$body,2);
+    if ($flag) break;
+  }
+  $src=$value.$line."\n".$body;
 
   $tmpf=tempnam("/tmp","FOO");
   $fp= fopen($tmpf, "w");
   fwrite($fp, $src);
   fclose($fp);
 
-  $cmd="$xsltproc $xsl $tmpf";
+  $cmd="$xsltproc --xinclude $tmpf";
 
   $fp=popen($cmd,"r");
   #fwrite($fp,$src);
@@ -33,7 +45,7 @@ function processor_xsltproc($formatter,$value) {
   while($s = fgets($fp, 1024)) $html.= $s;
 
   pclose($fp);
-  unlink($tmpf);
+  #unlink($tmpf);
 
   if (!$html) {
     $src=str_replace("<","&lt;",$src);
