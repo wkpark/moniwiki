@@ -38,10 +38,12 @@ function get_title($page) {
   if ($DBInfo->use_titlecache) {
     $cache=new Cache_text('title');
     if ($cache->exists($page)) $title=$cache->fetch($page);
+    else $title=$page;
   } else
     $title=$page;
 
-  return preg_replace("/((?<=[a-z0-9]|[B-Z]{2}|A)([A-Z][a-z]|A))/"," \\1",$title);
+  #return preg_replace("/((?<=[a-z0-9]|[B-Z]{2}|A)([A-Z][a-z]|A))/"," \\1",$title);
+  return preg_replace("/((?<=[a-z0-9]|[B-Z]{2})([A-Z][a-z]))/"," \\1",$title);
 }
 
 function getTicket($seed) {
@@ -321,6 +323,7 @@ function do_highlight($formatter,$options) {
   $formatter->send_title("","",$options);
 
   $expr= stripslashes($options['value']);
+#  $expr= implode('|',preg_split('/\s+/',$expr));
 
   $formatter->highlight=$expr;
   $formatter->send_page();
@@ -1375,6 +1378,7 @@ function macro_BR($formatter) {
 
 function macro_FootNote($formatter,$value="") {
   if (!$value) {# emit all footnotes
+    if (!$formatter->foots) return '';
     $foots=join("\n",$formatter->foots);
     $foots=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$foots);
     unset($formatter->foots);
