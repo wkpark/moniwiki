@@ -53,13 +53,17 @@ function do_uploadfile($formatter,$options) {
   $comment.="File ";
 
   $log_entry='';
+
+  $protected_exts=$DBInfo->pds_protected ? $DBInfo->pds_protected :"pl|cgi|php";
+  $protected=explode('|',$protected_exts);
+
   for ($j=0;$j<$count;$j++) {
 
   # replace space and ':' strtr()
   $upfilename=str_replace(" ","_",$files['upfile']['name'][$j]);
   $upfilename=str_replace(":","_",$upfilename);
 
-  preg_match("/(.*)\.([a-z0-9]{1,4})$/i",$upfilename,$fname);
+  preg_match("/^(.*)\.([a-z0-9]{1,4})$/i",$upfilename,$fname);
 
   if (!$upfilename) continue;
   else if ($upfilename) $uploaded++;
@@ -72,6 +76,20 @@ function do_uploadfile($formatter,$options) {
   if (!preg_match("/(".$pds_exts.")$/i",$fname[2])) {
      $msg.=sprintf(_("%s is not allowed to upload"),$upfilename)."<br/>\n";
      continue;
+  } else {
+    # check extra extentions for the mod_mime
+    $exts=explode('.',$fname[1]);
+    $ok=0;
+    for ($i=1;$i<sizeof($exts);$i++) {
+      if (in_array($exts[$i],$protected)) {
+        $exts[$i].='s';
+        $ok=1;
+      }
+    }
+    if ($ok) {
+      $fname[1]=implode('.',$exts);
+      $upfilename=$fname[1].'.'.$fname[2];
+    }
   }
 
   $file_path= $newfile_path = $dir."/".$upfilename;
@@ -81,7 +99,20 @@ function do_uploadfile($formatter,$options) {
     $temp=explode("/",stripslashes($options['rename'][$j]));
     $upfilename= $temp[count($temp)-1];
 
-    preg_match("/(.*)\.([a-z0-9]{1,4})$/i",$upfilename,$tname);
+    preg_match("/^(.*)\.([a-z0-9]{1,4})$/i",$upfilename,$tname);
+    $exts=explode('.',$tname[1]);
+    $ok=0;
+    for ($i=1;$i<sizeof($exts);$i++) {
+      if (in_array($exts[$i],$protected)) {
+        $exts[$i].='s';
+        $ok=1;
+      }
+    }
+    if ($ok) {
+      $tname[1]=implode('.',$exts);
+      $upfilename=$tname[1].'.'.$fname[2];
+    }
+    
     # do not change the extention of the file.
     $fname[1]=$tname[1];
     $newfile_path = $dir."/".$tname[1].".$fname[2]";
@@ -117,7 +148,7 @@ function do_uploadfile($formatter,$options) {
 
   $comment.="'$upfilename' ";
 
-  $title.=sprintf(_("File \"%s\" is uploaded successfully"),$upfilename).'<br />';
+  $title.=sprintf(_("File \"%s\" is uploaded successfully"),$upfilename);
   if ($key == 'UploadFile') {
     $msg.= "<ins>Uploads:$upfilename</ins> or<br />";
     $msg.= "<ins>attachment:/$upfilename</ins><br />";
@@ -147,7 +178,7 @@ function do_uploadfile($formatter,$options) {
     $formatter->send_title($title,"",$options);
     print $msg;
   } else {
-    $msg=$title.$msg;
+    $msg=$title.'<br />'.$msg;
     $title=sprintf(_("Files are uploaded successfully"),$upfilename);
     $formatter->send_title($title,"",$options);
     print $msg;
