@@ -85,7 +85,7 @@ function do_userform($formatter,$options) {
               $options['msg']=_("Your password is too simple to use as a password !");
            $udb=new UserDB($DBInfo);
            if ($options['email']) {
-             if (preg_match('/^[a-z][a-z0-9_\-]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
+             if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
                #$user->info['email']=$options['email'];
              } else
                $options['msg'].='<br/>'._("Your email address is not valid");
@@ -99,7 +99,7 @@ function do_userform($formatter,$options) {
              $ret=$udb->addUser($user);
 
              # XXX
-             if ($options['email'] and preg_match('/^[a-z][a-z0-9_\-]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
+             if ($options['email'] and preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
                $options['subject']="[$DBInfo->sitename] "._("E-mail confirmation");
                $body=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
                $body=_("Please confirm your email address")."\n".$body;
@@ -148,7 +148,7 @@ function do_userform($formatter,$options) {
     if (isset($options['user_css']))
       $userinfo->info['css_url']=$options['user_css'];
     if ($options['email'] and ($options['email'] != $userinfo->info['email'])) {
-      if (preg_match('/^[a-z][a-z0-9_\-]+@[a-a][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
+      if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
         $ticket=md5(time().$userinfo->info['id'].$options['email']);
         $userinfo->info['eticket']=$ticket.".".$options['email'];
         $options['subject']="[$DBInfo->sitename] "._("E-mail confirmation");
