@@ -286,10 +286,16 @@ span.externalLink {
   display: none;
 }
 
-/*a.externalLink[href^='http:'] { */
+/*a.externalLink[href^='http:'] {
 a.externalLink {
   padding-right: 9px;
   background-image: url("../../../imgs/popup.png");
   background-position: right;
   background-repeat: no-repeat;
+}
+
+*/
+
+span.lineNumber {
+  color:#ffff00;
 }
