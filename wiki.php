@@ -12,7 +12,7 @@
 //    by Fred C. Yankowski <fcy at acm.org>
 //
 // $Id$
-// vim:et:ts=2:
+//
 $_revision = substr('$Revision$',1,-1);
 $_release = '1.0rc4';
 
@@ -423,7 +423,7 @@ class WikiDB {
     $this->icon[find]="<img src='$this->imgs_dir/$iconset-search.gif' alt='S' align='middle' border='0' />";
     $this->icon[help]="<img src='$this->imgs_dir/$iconset-help.gif' alt='H' align='middle' border='0' />";
     $this->icon[www]="<img src='$this->imgs_dir/$iconset-www.gif' alt='www' align='middle' border='0' />";
-    $this->icon[mailto]="<img src='$this->imgs_dir/$iconset-email.gif' alt='www' align='middle' border='0' />";
+    $this->icon[mailto]="<img src='$this->imgs_dir/$iconset-email.gif' alt='M' align='middle' border='0' />";
     $this->icon[create]="<img src='$this->imgs_dir/$iconset-create.gif' alt='N' align='middle' border='0' />";
     $this->icon['new']="<img src='$this->imgs_dir/$iconset-new.gif' alt='U' align='middle' border='0' />";
     $this->icon[updated]="<img src='$this->imgs_dir/$iconset-updated.gif' alt='U' align='middle' border='0' />";
@@ -992,7 +992,7 @@ class Formatter {
     #$punct="<\"\'}\]\|\;\,\.\!";
     $punct="<\'}\]\|;,\.\)\!";
     $url="http|ftp|telnet|mailto|wiki";
-    $urlrule="((?:$url):[^\s$punct]+(\.?[^\s$punct]+)+)";
+    $urlrule="((?:$url):([^\s$punct]|(\.?[^\s$punct]+))+)";
     #$urlrule="((?:$url):[^\s$punct]+(\.?[^\s$punct]+)+\s?)";
     # solw slow slow
     #(?P<word>(?:/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})
@@ -1022,6 +1022,8 @@ class Formatter {
     if (!$body) {
       if (!$this->page->exists()) return '';
       $body=$this->page->get_raw_body();
+    } else {
+      unset($this->pi);
     }
 
     if ($body[0] == '<') {
@@ -1950,8 +1952,9 @@ class Formatter {
       else
         header($header);
     }
-    if ($DBInfo->trail)
+    if ($DBInfo->trail) {
       $this->set_trailer($options[trail],$this->page->name);
+    }
 
     if (!$plain) {
       if (!$options[title]) $options[title]=$this->page->name;
@@ -2319,18 +2322,20 @@ EOS;
 EOS;
   }
 
-  function set_trailer($trail="",$pagename,$size=5) {
-    $trail=str_replace($pagename,"",$trail);
-    if (!$trail) $trail="FrontPage";
+  function set_trailer($trailer="",$pagename,$size=5) {
+    global $DBInfo;
+    if (!$trailer) $trail=$DBInfo->frontpage;
+    else $trail=str_replace("\t".$pagename."\t","\t",$trailer);
     $trail=str_replace("\t\t","\t",$trail);
     $trails=explode("\t",trim($trail));
-    $trails[]=$pagename;
+    if (!in_array($pagename,$trails))
+      $trails[]=$pagename;
     $idx=count($trails) - $size;
     $idx= $idx > 0 ? $idx:0;
     $trails=array_slice($trails,$idx);
     $trail=join("\t",$trails);
     setcookie("MONI_TRAIL",$trail,time()+60*60*24*30,get_scriptname());
-    $this->trail= "[".str_replace("\t","] > [",$trail)."]\n";
+    $this->trail= "[\"".str_replace("\t","\"] > [\"",$trail)."\"]\n";
   }
 } # end-of-Formatter
 
@@ -2739,4 +2744,5 @@ if ($pagename) {
     }
   }
 }
+// vim:et:ts=2:
 ?>
