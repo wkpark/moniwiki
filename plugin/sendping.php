@@ -94,10 +94,10 @@ FORM2;
   # send Trackback ping
 
   $trackback_url=$options['trackback_url'];
-	$title= urlencode(stripslashes($options['title']));
-	$blog_name= urlencode($DBInfo->sitename.":$options[id]");
+  $title= urlencode(stripslashes($options['title']));
+  $blog_name= urlencode($DBInfo->sitename.":$options[id]");
 
-	$excerpt= stripslashes($options['excerpt']);
+  $excerpt= stripslashes($options['excerpt']);
 
   if ($options['mbencode']) {
     if ($checked and function_exists('iconv')
@@ -117,50 +117,50 @@ FORM2;
     }
   }
 
-	$excerpt= urlencode($excerpt);
+  $excerpt= urlencode($excerpt);
 
   $url= $formatter->link_url($options['page'],"#$options[value]");
   $url= urlencode(qualifiedUrl($url));
 
-	$query_string= "title=$title&url=$url&blog_name=$blog_name&excerpt=$excerpt";
+  $query_string= "title=$title&url=$url&blog_name=$blog_name&excerpt=$excerpt";
 
-	if (strstr($trackback_url, '?')) {
-		$trackback_url.= "&".$query_string;;
-		$fp= @fopen($trackback_url, 'r');
-		$result= @fread($fp, 4096);
-		@fclose($fp);
+  if (strstr($trackback_url, '?')) {
+    $trackback_url.= "&".$query_string;;
+    $fp= @fopen($trackback_url, 'r');
+    $result= @fread($fp, 4096);
+    @fclose($fp);
 /* debug code
-		$debug_file = 'trackback.log';
-		$fp = fopen($debug_file, 'a');
-		fwrite($fp, "\n*****\nTrackback URL query:\n\n$trackback_url\n\nResponse:\n\n");
-		fwrite($fp, $result);
-		fwrite($fp, "\n\n");
-		fclose($fp);
+    $debug_file = 'trackback.log';
+    $fp = fopen($debug_file, 'a');
+    fwrite($fp, "\n*****\nTrackback URL query:\n\n$trackback_url\n\nResponse:\n\n");
+    fwrite($fp, $result);
+    fwrite($fp, "\n\n");
+    fclose($fp);
 */
-	} else {
-		$trackback_url = parse_url($trackback_url);
+  } else {
+    $trackback_url = parse_url($trackback_url);
 
-		$http_request  = 'POST '.$trackback_url['path']." HTTP/1.0\r\n";
-		$http_request .= 'Host: '.$trackback_url['host']."\r\n";
-		$http_request .= 'Content-Type: application/x-www-form-urlencoded'."\r\n";
-		$http_request .= 'Content-Length: '.strlen($query_string)."\r\n";
-		$http_request .= "\r\n";
-		$http_request .= $query_string;
+    $http_request  = 'POST '.$trackback_url['path']." HTTP/1.0\r\n";
+    $http_request .= 'Host: '.$trackback_url['host']."\r\n";
+    $http_request .= 'Content-Type: application/x-www-form-urlencoded'."\r\n";
+    $http_request .= 'Content-Length: '.strlen($query_string)."\r\n";
+    $http_request .= "\r\n";
+    $http_request .= $query_string;
 
-		$fs = @fsockopen($trackback_url['host'], 80);
-		@fputs($fs, $http_request);
+    $fs = @fsockopen($trackback_url['host'], 80);
+    @fputs($fs, $http_request);
 /* debug code
-		$debug_file = 'trackback.log';
-		$fp = fopen($debug_file, 'a');
-		fwrite($fp, "\n*****\nRequest:\n\n$http_request\n\nResponse:\n\n");
-		while(!@feof($fs)) {
-			fwrite($fp, @fgets($fs, 4096));
-		}
-		fwrite($fp, "\n\n");
-		fclose($fp);
+    $debug_file = 'trackback.log';
+    $fp = fopen($debug_file, 'a');
+    fwrite($fp, "\n*****\nRequest:\n\n$http_request\n\nResponse:\n\n");
+    while(!@feof($fs)) {
+      fwrite($fp, @fgets($fs, 4096));
+    }
+    fwrite($fp, "\n\n");
+    fclose($fp);
 */
-		@fclose($fs);
-	}
+    @fclose($fs);
+  }
 
   $formatter->send_header("",$options);
   $formatter->send_title(_("Trackback sent"),"",$options);
@@ -170,5 +170,5 @@ FORM2;
   return;
 }
 
-// vim:et:ts=2:sw=2
+// vim:et:sts=2:sw=2
 ?>
