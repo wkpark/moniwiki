@@ -28,24 +28,25 @@ function get_scriptname() {
   return $SCRIPT_NAME;
 }
 
-function goto_form($option="") {
-#  print "<form method='get' action=''>\n";
+function goto_form($pagename,$option="") {
+  global $DBInfo;
+  $script_name=get_scriptname();
 
   if ($option==1) {
     print "
-<form method='get' action=''>
+<form name='go' id='go' method='get' action='$script_name/$pagename'>
 <span title='TitleSearch'>
-<input type='radio' name='action' value='titlesearch'/>
+<input type='radio' name='action' value='titlesearch' />
 Title</span>
 <span title='FullSearch'>
-<input type='radio' name='action' value='fullsearch'/>
+<input type='radio' name='action' value='fullsearch' />
 Contents</span>&nbsp;
-<input type='text' name='value' size='20' />
-<input type='submit' value='Go' />
+<input type='text' name='value' class='goto' size='20' />
+<input type='submit' value='Go' class='goto' style='width:23px' />
 ";
   } else if ($option==2) {
     print "
-<form method='get' action=''>
+<form name='go' id='go' method='get' action='$script_name/$pagename'>
 <select name='action' style='width:60px'>
 <option value='goto'/>&nbsp;&nbsp;&nbsp;
 <option value='titlesearch'/>TitleSearch
@@ -56,10 +57,11 @@ Contents</span>&nbsp;
 ";
   } else if ($option==3) {
     print "
-<form method='get' action=''>
-<table class='goto' align='right'>
-<tr><td style='width:220'>
-<input type='text' name='value' size='28' style='width:100%' />
+<form name='go' id='go' method='get' action='$script_name/$pagename'>
+<table class='goto'>
+<tr><td nowrap='nowrap' style='width:220'>
+<input type='text' name='value' size='28' style='width:110px' />
+<input type='submit' value='Go' class='goto' style='width:23px' />
 </td></tr>
 <tr><td>
 <span title='TitleSearch' class='goto'>
@@ -68,20 +70,34 @@ Title(?)</span>
 <span title='FullSearch' class='goto'>
 <input type='radio' name='action' value='fullsearch' class='goto'/>
 Contents(/)</span>&nbsp;
-<input type='submit' value='Go' class='goto' style='width:23px' />
 </td></tr>
 </table>
 </form>
 ";
   } else {
-    print "
-<form method='get' action=''>
+    print <<<FORM
+<form name='go' id='go' method='get' action='$script_name/$pagename' onsubmit="return moin_submit();">
 <input type='text' name='value' size='20' style='width:100' />
+<input type='hidden' name='action' value='goto' />
 <input type='submit' value='Go' class='goto' style='width:23px;' />
 </form>
-";
+FORM;
   }
-#  print "</form>\n";
+}
+
+function kbd_handler() {
+  global $DBInfo;
+  $prefix=get_scriptname();
+  print <<<EOS
+<script language="JavaScript" type="text/javascript">
+<!--
+url_prefix="$prefix";
+FrontPage="/FrontPage";
+//-->
+</script>
+<script type="text/javascript" src="$DBInfo->url_prefix/css/kbd.js">
+</script>
+EOS;
 }
 
 class Timer {
@@ -122,6 +138,17 @@ class MetaDB_dba extends MetaDB {
     }
     return "";
   }
+
+  function getAllPages() {
+    if ($this->keys) return $this->keys;
+    for ($key= dba_firstkey($this->metadb);
+         $key !== false;
+         $key= dba_nextkey($this->metadb)) {
+      $keys[] = $key;
+    }
+    $this->keys=$keys;
+    return $keys;
+  }
 }
 
 class MetaDB {
@@ -133,6 +160,9 @@ class MetaDB {
   }
   function getTwinPages($pagename) {
     return "";
+  }
+  function getAllPages() {
+    return array();
   }
 }
 
@@ -158,7 +188,7 @@ class WikiDB {
     $this->changed_time_fmt= ' [h:i a]';
     $this->admin_passwd= '10sQ0sKjIJES.';
 
-    $this->actions= array('DeletePage');
+    $this->actions= array('DeletePage','LikePages');
 
     $this->icon[upper]="<img src='$this->imgs_dir/upper.gif' alt='U' align='middle' border='0' />";
     $this->icon[edit]="<img src='$this->imgs_dir/moin-edit.gif' alt='E' align='middle' border='0' />";
@@ -198,6 +228,12 @@ class WikiDB {
       $this->metadb=new MetaDB_dba($this->shared_metadb);
     if (!$this->metadb->metadb)
       $this->metadb=new MetaDB();
+
+    $this->_initCounter();
+  }
+
+  function Close() {
+    dba_close($this->counter);
   }
 
   function set_intermap() {
@@ -213,6 +249,25 @@ class WikiDB {
     }
     $this->interwikis.="Self";
     $this->interwiki[Self]=get_scriptname()."/";
+  }
+
+  function incCounter($pagename) {
+    $key=$this->getPageKey($pagename);
+    $count=dba_fetch($key,$this->counter);
+    $count++;
+    dba_replace($key,$count,$this->counter);
+  }
+
+  function pageCounter($pagename) {
+    $key=$this->getPageKey($pagename);
+    $count=dba_fetch($key,$this->counter);
+    return $count;
+  }
+
+  function _initCounter() {
+    $this->counter=@dba_open($this->data_dir."/counter.db","w","db3");
+    if (!$this->counter)
+       $this->counter=dba_open($this->data_dir."/counter.db","n","db3");
   }
 
   function getPageKey($pagename) {
@@ -350,6 +405,7 @@ class WikiDB {
 class WikiPage {
   var $fp;
   var $filename;
+  var $rev;
   function WikiPage($name,$options="") {
     if ($options[rev])
       $this->rev=$options[rev];
@@ -384,14 +440,16 @@ class WikiPage {
     return @filemtime($this->filename);
   }
 
-  function get_raw_body() {
-    if ($this->body)
+  function get_raw_body($options='') {
+    if (!$options[rev] && $this->body)
        return $this->body;
 
     if (!$this->exists()) return '';
 
-    if ($exists && $this->rev) {
-       $fp=@popen("co -q -p'".$this->rev."' ".$this->filename,"r");
+    if ($this->exists() && ($this->rev || $options[rev])) {
+       if ($options[rev]) $rev=$options[rev];
+       else $rev=$this->rev;
+       $fp=@popen("co -q -p'".$rev."' ".$this->filename,"r");
        if (!$fp)
           return "";
        while (!feof($fp)) {
@@ -464,12 +522,12 @@ class Formatter {
    $url=str_replace("\\\"",'"',$url);
    #$url=str_replace("\\\\\"",'"',$url);
    if ($url[0]=="[")
-      $url=substr($url,1,strlen($url)-2);
+      $url=substr($url,1,-1);
    if ($url[0]=="{") {
-      $url=substr($url,3,strlen($url)-6);
+      $url=substr($url,3,-3);
       return "<tt class='wiki'>$url</tt>"; # No link
    } else if ($url[0]=="[") {
-      $url=substr($url,1,strlen($url)-2);
+      $url=substr($url,1,-1);
       return $this->macro_repl($url); # No link
    }
 
@@ -480,7 +538,7 @@ class Formatter {
    if (preg_match("/:/",$url)) {
      if (preg_match("/^mailto:/",$url)) {
        $url=str_replace("@","_at_",$url);
-       $name=substr($url,7,strlen($url)-7);
+       $name=substr($url,7);
        return $DBInfo->icon[mailto]."<a href='$url'>$name</a>";
      } else
      if (preg_match("/^wiki:/",$url)) {
@@ -500,7 +558,7 @@ class Formatter {
        return "<a href='$url'>$url</a>";
      }
    } else {
-     if ($url[0]=="?") $url=substr($url,1,strlen($url)-1);
+     if ($url[0]=="?") $url=substr($url,1);
      return $this->word_repl($url);
    }
  }
@@ -533,7 +591,7 @@ class Formatter {
  function word_repl($word) {
    global $DBInfo;
    if ($word[0]=='"') {
-      $page=substr($word,1,strlen($word)-2);
+      $page=substr($word,1,-1);
       $word=$page;
    } else
       $page=preg_replace("/\s+/","",$word);
@@ -553,7 +611,7 @@ class Formatter {
          }
          $idx=$this->sister[$word];
          return "<a href='$this->prefix/$page'>$word</a>".
-                "<sup><a href='#sister$idx'>$idx</a></sup>";
+                "<sup><a href='#sister$idx'>#$idx</a></sup>";
       }
       return "<a href='$this->prefix/$page'>?</a>$word";
    }
@@ -643,8 +701,12 @@ class Formatter {
    } else if (!$on && $close !=1)
       $list_type=$list_type."></li";
    if ($on) {
-      if ($numtype)
-         return "<$list_type type='$numtype'>";
+      if ($numtype) {
+         $start=substr($numtype,1);
+         if ($start)
+            return "<$list_type type='$numtype[0]' start='$start'>";
+         return "<$list_type type='$numtype[0]'>";
+      }
       return "<$list_type>\n";
    } else {
       return "</$list_type>\n";
@@ -671,16 +733,20 @@ class Formatter {
    global $DBInfo;
    # get body
 
-   $twins=$DBInfo->metadb->getTwinPages($this->page->name);
-   if (!$body)
-      $lines=explode("\n",$this->page->get_raw_body());
-   else if ($body)
+   if (!$body) {
+      $twins=$DBInfo->metadb->getTwinPages($this->page->name);
+      $body=$this->page->get_raw_body();
+      if ($body)
+        $lines=explode("\n",$body);
+      else
+        $lines=array();
+      if ($twins) {
+         if ($lines)
+            $lines[]="----";
+         $lines[]=$twins;
+      }
+   } else if ($body)
       $lines=explode("\n",$body);
-   if ($twins) {
-#      if ($lines)
-         $lines[]="----";
-      $lines[]=$twins;
-   }
 
    if (!$lines) return;
 
@@ -747,7 +813,7 @@ class Formatter {
 
          # check processor
          if ($line[$p+3] == "#" && $line[$p+4] == "!") {
-            $dummy=explode(" ",substr($line,$p+5,$len),2);
+            $dummy=explode(" ",substr($line,$p+5),2);
 
             if (function_exists("processor_".$dummy[0])) {
               $this->processor=$dummy[0];
@@ -758,7 +824,7 @@ class Formatter {
          }
 
          if ($in_pre) {
-            $this->pre_line=substr($line,$p+3,$len);
+            $this->pre_line=substr($line,$p+3);
             if (trim($this->pre_line))
                $this->pre_line.="\n";
             $line=substr($line,0,$p);
@@ -768,7 +834,7 @@ class Formatter {
          $len=strlen($line);
          if ($in_pre) {
             $this->pre_line.=substr($line,0,$p-2);
-            $line=substr($line,$p+1,$len);
+            $line=substr($line,$p+1);
             $in_pre=-1;
 #         } else {
 #            $line=substr_replace($line,"</pre>xx",$p-3,$p);
@@ -808,16 +874,19 @@ class Formatter {
          $indlen=strlen($match[0]);
          #print "<!-- indlen=$indlen -->\n";
          if ($indlen > 0) {
-            $line=substr($line,$indlen,strlen($line));
+            $line=substr($line,$indlen);
             if (preg_match("/^(\*\s)/",$line,$limatch)) {
                $line=preg_replace("/^(\*\s)/","<li>",$line);
                if ($indent_list[$in_li] == $indlen) $line="</li>\n".$line;
                $numtype="";
                $indtype="ul";
-            } else if (preg_match("/^((\d+|[aAiI])\.)/",$line,$limatch)) {
-               $line=preg_replace("/^((\d+|[aAiI])\.)/","<li>",$line);
+            #} else if (preg_match("/^((\d+|[aAiI])\.)/",$line,$limatch)) {
+            } else if (preg_match("/^((\d+|[aAiI])\.)(#\d+)?/",$line,$limatch)) {
+               $line=preg_replace("/^((\d+|[aAiI])\.(#\d+)?)/","<li>",$line);
                if ($indent_list[$in_li] == $indlen) $line="</li>\n".$line;
-               $numtype=$match[2];
+               $numtype=$limatch[2];
+               if ($limatch[3])
+                  $numtype.=substr($limatch[3],1);
                $indtype="ol";
             }
          }
@@ -1010,11 +1079,12 @@ class Formatter {
    unset($lines[0]); unset($lines[1]);
    foreach ($lines as $line) {
       $marker=$line[0];
-      $line=substr($line,1,strlen($line));
-      if ($marker=="@") $line='<div class="diff-sep">@'."$line</div>\n";
-      else if ($marker=="-") $line='<div class="diff-removed">'."$line</div>\n";
-      else if ($marker=="+") $line='<div class="diff-added">'."$line</div>\n";
+      $line=substr($line,1);
+      if ($marker=="@") $line='<div class="diff-sep">@'."$line</div>";
+      else if ($marker=="-") $line='<div class="diff-removed">'."$line</div>";
+      else if ($marker=="+") $line='<div class="diff-added">'."$line</div>";
       else if ($marker=="\\" && $line==" No newline at end of file") continue;
+      else $line.="<br />";
       $out.=$line."\n";
    }
    return $out;
@@ -1038,8 +1108,75 @@ class Formatter {
    return "";
  }
 
- function get_diff($rev1="",$rev2="") {
+ function get_merge($text,$rev="") {
+   global $DBInfo;
+
+   if (!$text) return '';
+   # save new
+   $tmpf3=tempnam($DBInfo->vartmp_dir,"MERGE_NEW");
+   $fp= fopen($tmpf3, "w");
+   fwrite($fp, $text);
+   fclose($fp);
+
+   # recall old rev
+   $opts[rev]=$this->get_rev();
+   
+   $orig=$this->page->get_raw_body($opts);
+   $tmpf2=tempnam($DBInfo->vartmp_dir,"MERGE_ORG");
+   $fp= fopen($tmpf2, "w");
+   fwrite($fp, $orig);
+   fclose($fp);
+
+   $fp=popen("merge -p ".$this->page->filename." $tmpf2 $tmpf3","r");
+
+   if (!$fp) {
+      unlink($tmpf2);
+      unlink($tmpf3);
+      return '';
+   }
+   while (!feof($fp)) {
+      $line=fgets($fp,1024);
+      $out .= $line;
+   }
+   pclose($fp);
+   unlink($tmpf2);
+   unlink($tmpf3);
+
+   $out=preg_replace("/(<{7}|>{7}).*\n/","\\1\n",$out);
+
+   return $out;
+ }
+
+ function get_diff($rev1="",$rev2="",$text="") {
+   global $DBInfo;
    $option="";
+
+   if ($text) {
+      $tmpf=tempnam($DBInfo->vartmp_dir,"DIFF");
+      $fp= fopen($tmpf, "w");
+      fwrite($fp, $text);
+      fclose($fp);
+
+      $fp=popen("diff -u $tmpf ".$this->page->filename,"r");
+      if (!$fp) {
+         unlink($tmpf);
+         return;
+      }
+      while (!feof($fp)) {
+         $line=fgets($fp,1024);
+         $out .= $line;
+      }
+      pclose($fp);
+      unlink($tmpf);
+
+      if (!$out)
+         print "<h2>No difference found</h2>";
+      else {
+         print "<h2>Difference between yours and the current</h2>";
+         print $this->_parse_diff($out);
+      }
+      return;
+   }
 
    if (!$rev1 and !$rev2) {
       $rev1=$this->get_rev();
@@ -1084,7 +1221,7 @@ class Formatter {
 
    if (!$plain) {
       if (!$title) $title=$this->page->name;
-      print <<<EOF
+      print <<<EOS
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <!-- <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"> -->
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -1092,12 +1229,12 @@ class Formatter {
   <meta http-equiv="Content-Type" content="text/html;charset=euc-kr" /> 
   <meta name="ROBOTS" content="NOINDEX,NOFOLLOW" />
   <title>$title</title>\n
-EOF;
+EOS;
       if ($DBInfo->css_url)
          print '<link rel="stylesheet" type="text/css" href="'.
                $DBInfo->css_url.'"/>';
       
-      else print <<<EOF
+      else print <<<EOS
 <style type="text/css">
 <!--
 body {font-family:Georgia,Verdana,Lucida,sans-serif;font-size:14px; background-color:#FFF9F9;}
@@ -1204,7 +1341,7 @@ td.message {
 //-->
 
 </style>
-EOF;
+EOS;
 
     print "\n</head>\n<body>\n";
    }
@@ -1230,12 +1367,12 @@ EOF;
 
    print <<<FOOT
  <a href="http://validator.w3.org/check/referer"><img
-  src="http://www.w3.org/Icons/valid-xhtml10.png" border="0"
+  src="$DBInfo->imgs_dir/valid-xhtml10.png" border="0"
   align="middle" width="88" height="31"
   alt="Valid XHTML 1.0!" /></a>
 
  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
-  src="http://jigsaw.w3.org/css-validator/images/vcss" 
+  src="$DBInfo->imgs_dir/vcss" 
   style="border:0;width:88px;height:31px"
   align="middle"
   alt="Valid CSS!" />
@@ -1263,16 +1400,26 @@ FOOT;
 
    $text="<font size='+3' class='title'><b>$text</b></font>";
 
+   print "<table width='100%' border='0' cellpadding='3' cellspacing='0'><tr>";
    if ($DBInfo->logo_string) {
+     print "<td rowspan='2' width='10%' valign='top'>";
      print $this->link_tag('RecentChanges', $DBInfo->logo_string);
-     print '&nbsp;&nbsp;&nbsp;';
+     print "</td>";
    }
    if ($link)
-     print "<a href=\"$link\">$text</a>";
+     print "<td><a href=\"$link\">$text</a></td>";
    else {
+     print "<td>";
      print $this->link_to("?action=fullsearch&amp;value=$name",$text,"class='title'");
+     print "</td>";
    }
-   print "<br />";
+   print "</tr><tr><td>\n";
+
+   # menu
+   goto_form($name);
+   print "</td></tr></table>\n";
+   kbd_handler();
+
    if ($msg) {
      print <<<MSG
 <table class="message" width="100%"><tr><td class="message">
@@ -1282,8 +1429,6 @@ MSG;
    }
 
    if (!$DBInfo->menu_html) {
-     # menu
-     goto_form();
      print $this->link_tag("FindPage")." | ";
      print $this->link_tag("FrontPage")." | ";
      print $this->link_tag("TitleIndex")." | ";
@@ -1314,6 +1459,16 @@ MSG;
 
     $preview=$options[preview];
 
+    if (!$this->page->exists()) {
+       $options[linkto]="?action=edit&amp;template=";
+       print "Use one of the following templates as an initial release :\n";
+       print macro_TitleSearch($this,".*Template",$options);
+       print "To create your own templates, add a page with a 'Template' suffix.\n";
+    }
+
+    if ($options[conflict])
+       $extra='<input type="submit" name="button_merge" value="Merge" />';
+
     print "<a id='editor' name='editor' />\n";
     printf('<form method="post" action="%s/%s">', get_scriptname(),$this->page->name);
     #printf('<form method="POST" action="%s/%s#preview">', get_scriptname(),$this->page->name);
@@ -1328,20 +1483,31 @@ MSG;
       $raw_body = str_replace('\r\n', '\n', $text);
     } else if ($this->page->exists()) {
       $raw_body = str_replace('\r\n', '\n', $this->page->get_raw_body());
+    } else if ($options[template]) {
+      $p= new WikiPage($options[template]);
+      $raw_body = str_replace('\r\n', '\n', $p->get_raw_body());
     } else
       $raw_body = sprintf("Describe %s here", $this->page->name);
 
-    print <<<EOF
+    # for conflict check
+    if ($options[datestamp])
+       $datestamp= $options[datestamp];
+    else
+       $datestamp= $this->page->mtime();
+
+    print <<<EOS
 <textarea class="wiki" id="content" wrap="virtual" name="savetext"
  rows="$rows" cols="$cols" style="width:100%">$raw_body</textarea><br />
 Summary of Change: <input name="comment" size="70" maxlength="70" style="width:200" /><br />
 <input type="hidden" name="action" value="savepage" />
+<input type="hidden" name="datestamp" value="$datestamp">
 <input type="submit" value="Save" />&nbsp;
 <input type="reset" value="Reset" />&nbsp;
 <input type="submit" name="button_preview" value="Preview" />
+$extra
 </form>
-EOF;
-    print <<<EOF
+EOS;
+    print <<<EOS
 <div class="hint">
 <b>Emphasis:</b> ''<i>italics</i>''; '''<b>bold</b>'''; '''''<b><i>bold italics</i></b>''''';
     ''<i>mixed '''<b>bold</b>''' and italics</i>''; ---- horizontal rule.<br />
@@ -1356,8 +1522,7 @@ EOF;
     no trailing white space allowed after tables or titles.<br />
 </div>
 <a id='preview' name='preview' />
-EOF;
-
+EOS;
  }
 
 }
@@ -1377,7 +1542,7 @@ $DBInfo = new WikiDB;
 
 if (!empty($PATH_INFO)) {
    if ($PATH_INFO[0] == '/')
-      $pagename=substr($PATH_INFO,1,strlen($PATH_INFO));
+      $pagename=substr($PATH_INFO,1);
    if (!$pagename) {
       $pagename = "FrontPage";
    }
@@ -1398,21 +1563,46 @@ if ($REQUEST_METHOD=="POST") {
    $page = $DBInfo->getPage($pagename);
    $formatter = new Formatter($page);
    $formatter->send_header();
+
+   $savetext=str_replace("\r", "", $savetext);
+   $savetext=stripslashes($savetext);
+   if ($savetext and $savetext[strlen($savetext)-1] != "\n")
+     $savetext.="\n";
+   $new=md5($savetext);
+
    if ($page->exists()) {
       # check difference
       $body=$page->get_raw_body();
-      $body=str_replace("\r\n", "\n", $body);
+      $body=str_replace("\r", "", $body);
       $orig=md5($body);
+      # check datestamp
+      if ($page->mtime() > $datestamp) {
+         $msg="Someone else saved the page while you edited ".$formatter->link_tag($page->name,"");
+         $formatter->send_title("Conflict error!","",$msg);
+         $options[preview]=1; 
+         $options[conflict]=1; 
+         $options[datestamp]=$datestamp; 
+         if ($button_merge) {
+            $merge=$formatter->get_merge($savetext);
+            if ($merge) $savetext=$merge;
+         }
+         $formatter->send_editor($savetext,$options);
+         print $formatter->link_tag('GoodStyle')." | ";
+         print $formatter->link_tag('InterWiki')." | ";
+         print $formatter->link_tag('HelpOnEditing')." | ";
+         print $formatter->link_to("#editor","Goto Editor");
+         print "<table border='1' align='center' width='100%'><tr><td>\n";
+         $formatter->get_diff("","",$savetext);
+         print "</td></tr></table>\n";
+         $formatter->send_footer();
+         return;
+      }
    }
-   $savetext=str_replace("\r\n", "\n", $savetext);
-   $savetext=stripslashes($savetext);
-   $new=md5($savetext);
 
    if (!$button_preview && $orig == $new) {
       $msg="Go back or return to ".$formatter->link_tag($page->name,"");
       $formatter->send_title("No difference found","",$msg);
       $formatter->send_footer();
-
       return;
    }
    $formatter->page->set_raw_body($savetext);
@@ -1422,13 +1612,14 @@ if ($REQUEST_METHOD=="POST") {
       $formatter->send_title($title,"");
      
       $options[preview]=1; 
+      $options[datestamp]=$datestamp; 
       $formatter->send_editor($savetext,$options);
       print "<hr />\n";
       print $formatter->link_tag('GoodStyle')." | ";
       print $formatter->link_tag('InterWiki')." | ";
       print $formatter->link_tag('HelpOnEditing')." | ";
       print $formatter->link_to("#editor","Goto Editor");
-      print "<table border='1' width='90%'><tr><td>\n";
+      print "<table border='1' align='center' width='95%'><tr><td>\n";
       $formatter->send_page();
       print "</td></tr></table><hr />\n";
       print $formatter->link_tag('GoodStyle')." | ";
@@ -1463,20 +1654,45 @@ if ($pagename) {
    $formatter = new Formatter($page);
 
    if (!$action) {
-      if ($value) {
+      if ($value) { # ?value=Hello
         $options[value]=$value;
-        do_goto($options);
+        do_goto($formatter,$options);
+        return;
+      } else if ($goto) { # ?goto=Hello
+        $options[value]=$goto;
+        do_goto($formatter,$options);
         return;
       }
       if (!$page->exists()) {
         $formatter->send_header(array("Status: 404 Not found"));
-        $formatter->send_title($page->name." Not Found");
+
+        $twins=$DBInfo->metadb->getTwinPages($page->name);
+        if ($twins) {
+           $formatter->send_title($page->name);
+           #$formatter->send_page($twins."\n----\n");
+           $formatter->send_page($twins);
+           print "<br /><br />or ".
+             $formatter->link_to("?action=edit","Create this page.");
+        } else {
+           $formatter->send_title($page->name." Not Found");
+           print $formatter->link_to("?action=edit","Create this page");
+           print macro_LikePages($formatter,$page->name);
+
+           print "<hr />\n";
+           print $formatter->link_to("?action=edit","Create this page");
+           print " or alternativly, use one of these templates:\n";
+           $options[linkto]="?action=edit&amp;template=";
+           print macro_TitleSearch($formatter,".*Template",$options);
+           print "To create your own templates, add a page with a 'Template' suffix\n";
+        }
+
         #$args[showpage]=1;
         $args[editable]=1;
-        $formatter->send_page("");
         $formatter->send_footer($args);
         return;
       }
+      $DBInfo->incCounter($pagename);
+
       $formatter->send_header();
       $formatter->send_title();
       $formatter->send_page();
@@ -1526,7 +1742,8 @@ if ($pagename) {
      $formatter->send_header();
      $formatter->send_title("Edit ".$page->name);
      $options[rows]=$rows; 
-     $options[cols]=$cols; 
+     $options[cols]=$cols;
+     $options[template]=$template;
      $formatter->send_editor("",$options);
      $args[showpage]=1;
      #$args[editable]=1;
@@ -1542,8 +1759,10 @@ if ($pagename) {
      $options[page]=$page->name;
      $options[comment]=$comment;
      $options[passwd]=$passwd;
-     do_DeletePage($options);
+     do_DeletePage($formatter,$options);
    } else if ($action) {
+     # XXX protect some post actions
+     #
      #$keys=array_keys($HTTP_GET_VARS);
      #foreach ($keys as $key) {
      #   $options[$key]=$HTTP_GET_VARS[$key];
@@ -1558,7 +1777,15 @@ if ($pagename) {
      $options[timer]=$timing;
 
      if (function_exists("do_".$action))
-        eval("do_".$action."(\$options);");
+        eval("do_".$action."(\$formatter,\$options);");
+     else {
+        $formatter->send_header(array("Status: 406 Not Acceptable"));
+        $formatter->send_title("406 Not Acceptable");
+        $args[editable]=1;
+     #   $formatter->send_page("");
+        $formatter->send_footer($args);
+        return;
+     }
    }
 }
 
