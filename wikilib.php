@@ -231,15 +231,15 @@ class User {
      $ticket=getTicket();
      $this->ticket=$ticket;
      if ($this->id == "Anonymous") return false;
-     setcookie("MONI_ID",$ticket.'.'.$this->id,time()+60*60*24*30,get_scriptname());
      # set the fake cookie
      $_COOKIE['MONI_ID']=$ticket.'.'.$this->id;
+     return "Set-Cookie: MONI_ID=".$ticket.'.'.$this->id.'; expires='.date('l, d-M-Y',time()+60*60*24*30).'; Path='.get_scriptname();
   }
 
   function unsetCookie() {
-     header("Set-Cookie: MONI_ID=".$this->id."; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname());
      # set the fake cookie
-     $_COOKIE[MONI_ID]="Anonymous";
+     $_COOKIE['MONI_ID']="Anonymous";
+     return "Set-Cookie: MONI_ID=".$this->id."; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname();
   }
 
   function setPasswd($passwd,$passwd2="") {
@@ -422,7 +422,7 @@ function macro_Edit($formatter,$value,$options='') {
 
   if (!$formatter->page->exists()) {
     $options['linkto']="?action=edit&amp;template=";
-    $form = _("Use one of the following templates as an initial release :\n");
+    $form = '<br />'._("Use one of the following templates as an initial release :\n");
     $form.= macro_TitleSearch($formatter,".*Template",$options);
     $form.= _("To create your own templates, add a page with a 'Template' suffix.\n"."<br />\n");
   }
@@ -458,8 +458,14 @@ function macro_Edit($formatter,$value,$options='') {
   } else if ($options['template']) {
     $p= new WikiPage($options['template']);
     $raw_body = str_replace('\r\n', '\n', $p->get_raw_body());
-  } else
-    $raw_body = sprintf(_("Describe %s here"), $options['page']);
+  } else {
+    if (strpos($options['page'],' ') > 0) {
+      $raw_body="#title $options[page]\n";
+      $options['page']='['.$options['page'].']';
+    } else $raw_body='';
+    $raw_body.= sprintf(_("Describe %s here"), $options['page']);
+  }
+
 
   # for conflict check
   if ($options['datestamp'])
@@ -658,8 +664,8 @@ function do_goto($formatter,$options) {
     if ($to and $to != $from) {
       $url=urldecode($url);
 
-      if ($to and function_exists("iconv")) {
-        $new=iconv($DBInfo->charset,$to,$url);
+      if (function_exists("iconv")) {
+        $new=iconv($from,$to,$url);
         if ($new) $url=_urlencode($new);
       } else {
         $buf=exec(escapeshellcmd("echo ".$options[page])." | ".escapeshellcmd("iconv -f $DBInfo->charset -t $to"));
