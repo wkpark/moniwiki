@@ -602,10 +602,7 @@ function get_authorinfo($body) {
   while ($body and $body[0] == '#') {
     # extract first line
     list($line, $body)= split("\n", $body,2);
-    if ($line[1]=='#' and preg_match('/^##\$Log$
-    if ($line[1]=='#' and preg_match('/^##\Revision 1.3  2003/08/07 01:05:04  wkpark
-    if ($line[1]=='#' and preg_match('/^##\author info and revhistory supported now
-    if ($line[1]=='#' and preg_match('/^##\line)) {
+    if ($line[1]=='#' and preg_match('/^##\$'.'Log: /',$line)) {
       $log=1; $state=0;
       continue;
     } else if ($line[1]=='#' and preg_match('/^##\$?Author: ([^;]+);(.*)$/',$line,$match)) {
