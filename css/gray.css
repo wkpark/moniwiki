@@ -158,7 +158,7 @@ table.closure, td.closure{
 */
 }
 
-#wikiTrailer {
+#wikiTrailer,#wikiOrigin {
   padding-left: 20px;
   padding-bottom: 5px;
 }

@@ -175,7 +175,7 @@ table.recentchanges {
 
 /* MoniWiki */
 
-#wikiTrailer {
+#wikiTrailer,#wikiOrigin {
   padding-left: 20px;
   padding-bottom: 5px;
 }

@@ -155,7 +155,7 @@ table.closure, td.closure{
 /* background: #000 url(hr1.gif) no-repeat scroll center; */
 }
 
-#wikiTrailer {
+#wikiTrailer,#wikiOrigin {
   padding-left: 20px;
   padding-bottom: 5px;
 }

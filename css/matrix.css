@@ -157,7 +157,7 @@ div.indent {
   padding-left:2em;
 }
 
-#wikiTrailer {
+#wikiTrailer,#wikiOrigin {
   padding-left: 20px;
   padding-bottom: 5px;
 }
