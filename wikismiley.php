@@ -56,7 +56,6 @@ $smileys=array(
     "@)"=>array(16, 16, 0, "smile/@-).gif"),
     "|)"=>array(16, 16, 0, "smile/l-l.gif"),
 #    ":-|"=>array(16, 16, 0, "smile/8-l.gif"),
-    ";))"=>array(16, 16, 0, "smile/8-)).gif"),
     "%-^"=>array(16, 16, 0, "smile/%25-^.gif"),
 #    "(:)-)"=>array(16, 16, 0, "smile/(8)-).gif"),
 #    ",-)"=>array(16, 16, 0, "smile/,-).gif"),
