@@ -9,34 +9,38 @@ function macro_ISBN($formatter="",$value="") {
   $ISBN_MAP="IsbnMap";
   $DEFAULT=<<<EOS
 Amazon http://www.amazon.com/exec/obidos/ISBN= http://images.amazon.com/images/P/\$ISBN.01.MZZZZZZZ.gif
-Aladdin http://www.aladdin.co.kr/catalog/book.asp?ISBN= http://www.aladdin.co.kr/Cover/\$ISBN_1.gif\n
+Aladdin http://www.aladdin.co.kr/catalog/book.asp?ISBN= http://image.aladdin.co.kr/cover/cover/\$ISBN_1.\$EXT?jpg\n
 EOS;
 
   $DEFAULT_ISBN="Amazon";
-  $re_isbn="/([0-9\-]{9,}[xX]?)(?:\s*,\s*)?([A-Z][A-Za-z]*)?(?:\s*,\s*)?(.*)?/";
+  $re_isbn="/([0-9\-]{9,}[xX]?)(?:,)?(([A-Z][A-Za-z]*)?(?:,)?(.*))?/x";
 
   $test=preg_match($re_isbn,$value,$match);
   if ($test === false)
      return "<p><strong class=\"error\">Invalid ISBN \"%value\"</strong></p>";
 
   $isbn2=$match[1];
-  $isbn=str_replace("-","",$isbn2);
+  $isbn=str_replace('-','',$isbn2);
 
-  if ($match[2]) {
-    if (strtolower($match[2][0])=="k") $lang="Aladdin";
-    else $lang=$match[2];
+  #print_r($match);
+  if ($match[3]) {
+    if (strtolower($match[2][0])=='k') $lang='Aladdin';
+    else $lang=$match[3];
   } else $lang=$DEFAULT_ISBN;
 
   $attr='';
-  if ($match[3]) {
-    $args=explode(",",$match[3]);
+  $ext='';
+  if ($match[2]) {
+    $args=explode(',',$match[2]);
     foreach ($args as $arg) {
-      if ($arg == "noimg") $noimg=1;
+      if ($arg == 'noimg') $noimg=1;
+      else if (strtolower($arg)=='k') $lang='Aladdin';
       else {
         $name=strtok($arg,'=');
         $val=strtok(' ');
         $attr.=$name.'="'.$val.'" ';
         if ($name == 'align') $attr.='class="img'.ucfirst($val).'" ';
+        if ($name == 'img') $ext=$val;
       }
     }
   }
@@ -81,13 +85,17 @@ EOS;
         $imglink=str_replace('$ISBN', $isbn, $imglink);
      else
         $imglink=str_replace('$ISBN2', $isbn2, $imglink);
+     if ($ext)
+        $imglink=str_replace('$EXT', $ext, $imglink);
+     else
+        $imglink=str_replace('$EXT?', '', $imglink);
   }
 
   if ($noimg)
      return $formatter->icon['www']."[<a href='$booklink'>ISBN-$isbn2</a>]";
   else
      return "<a href='$booklink'><img src='$imglink' border='1' title='$lang".
-       ":ISBN-$isbn' alt='[ISBN-$isbn2]' $attr /></a>";
+       ":ISBN-$isbn' alt='[ISBN-$isbn2]' class='isbn' $attr /></a>";
 }
 
 ?>
