@@ -28,6 +28,13 @@ function get_scriptname() {
   return $SCRIPT_NAME;
 }
 
+function qualifiedUrl($url) {
+  global $HTTP_HOST;
+  if (substr($url[0],0,7)=="http://")
+    return $url;
+  return "http://$HTTP_HOST$url";
+}
+
 function goto_form($pagename,$option="") {
   global $DBInfo;
   $script_name=get_scriptname();
@@ -170,7 +177,9 @@ class MetaDB {
 class WikiDB {
 # TODO Seperate Configuation parts
   function WikiDB($config="") {
+    $this->sitename='MoniWiki';
     $this->url_prefix= '/wiki';
+    $this->upload_dir= 'pds';
     $this->data_dir= '/home/httpd/wiki/data';
     $this->text_dir= $this->data_dir . '/text';
     $this->imgs_dir= $this->url_prefix . '/imgs';
@@ -178,8 +187,11 @@ class WikiDB {
     $this->editlog_name= $this->data_dir . '/editlog';
     $this->umask= 02;
     $this->intermap= $this->data_dir . '/intermap.txt';
+    $this->logo_img= $this->imgs_dir.'/moniwiki.gif';
 
-    $this->logo_string= '<img src="'.$this->imgs_dir.'/moniwiki.gif" alt="" border="0" align="middle" />';
+    $this->hr="<hr class='wiki' />";
+
+    $this->logo_string= '<img src="'.$this->logo_img.'" alt="" border="0" align="middle" />';
     $this->show_hosts= TRUE;
 
     $this->date_fmt= 'D d M Y';
@@ -195,6 +207,7 @@ class WikiDB {
     $this->icon[diff]="<img src='$this->imgs_dir/moin-diff.gif' alt='D' align='middle' border='0' />";
     $this->icon[del]="<img src='$this->imgs_dir/moin-deleted.gif' alt='X' align='middle' border='0' />";
     $this->icon[info]="<img src='$this->imgs_dir/moin-info.gif' alt='I' align='middle' border='0' />";
+    $this->icon[rss]="<img src='$this->imgs_dir/rss.png' alt='RSS' align='middle' border='0' />";
     $this->icon[show]="<img src='$this->imgs_dir/moin-show.gif' alt='R' align='middle' border='0' />";
     $this->icon[find]="<img src='$this->imgs_dir/moin-search.gif' alt='S' align='middle' border='0' />";
     $this->icon[help]="<img src='$this->imgs_dir/moin-help.gif' alt='H' align='middle' border='0' />";
@@ -354,26 +367,45 @@ class WikiDB {
     fclose($fp_editlog);
   }
 
-  function editlog_raw_lines() {
-    $LOG_BYTES=5000;
-    $fp = fopen($this->editlog_name, 'r');
+  function reverse($arrayX) {
+    $out= array();
+    $size= count($arrayX);
+    for ($i= $size - 1; $i >= 0; $i--)
+      $out[]= $arrayX[$i];
+    return $out;
+  }
+
+  function editlog_raw_lines($size=5000,$quick="") {
+    $fp= fopen($this->editlog_name, 'r');
     fseek($fp, 0, SEEK_END);
-    $filesize = ftell($fp);
+    $filesize= ftell($fp);
 
-    $foffset=$filesize - $LOG_BYTES;
-
-    $foffset= $foffset >=0 ? $LOG_BYTES:$filesize;
+    $foffset=$filesize - $size;
+    $foffset=$foffset >=0 ? $size:$filesize;
 
     fseek($fp, -$foffset, SEEK_END);
 
     $dumm=fgets($fp,1024); # emit dummy
     while (!feof($fp)) {
-       $line=fgets($fp,2048);
-#       $line=preg_replace("/[\r\n]+$/","",$line);
-#       print $line."<br />";
-       $lines[]=$line;
+      $line=fgets($fp,2048);
+#     $line=preg_replace("/[\r\n]+$/","",$line);
+#     print $line."<br />";
+      $lines[]=$line;
     }
     fclose($fp);
+
+    $lines=$this->reverse($lines);
+    unset($lines[0]); # delete last dummy
+
+    if ($quick) {
+      foreach($lines as $line) {
+        $dum=explode("\t",$line,2);
+        if ($keys[$dum[0]]) continue;
+        $keys[$dum[0]]=1;
+        $out[]=$line;
+      }
+      $lines=$out;
+    }
 
     #return file($this->editlog_name);
     return $lines;
@@ -399,6 +431,86 @@ class WikiDB {
     $delete=@unlink($key);
 #    system("ci -q -t-".$page->name." -l -m'".$REMOTE_ADDR.";;".$comment."' ".$key);
     $this->addLogEntry($page->name, $REMOTE_ADDR,$comment,"DEL");
+  }
+}
+
+class Cache_text {
+  function Cache_text($arena) {
+    $this->cache_dir="data/cache/$arena";
+    if (!file_exists($this->cache_dir))
+       mkdir($this->cache_dir, 0777);
+  }
+
+  function getKey($pagename) {
+    $name=preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord('\\1')))",$pagename);
+    return $this->cache_dir . '/' . $name;
+  }
+
+  function update($pagename,$val,$mtime="") {
+    $key=$this->getKey($pagename);
+    if ($mtime <= $this->mtime($key)) return;
+
+    if (is_array($val)) {
+       $val=join("\n",array_keys($val))."\n";
+    } else {
+       $val=str_replace("\r","",$val);
+    }
+    $this->_save($key,$val);
+  }
+
+  function _save($key,$val) {
+    $fp=fopen($key,"w+");
+    fwrite($fp,$val);
+    fclose($fp);
+  }
+
+  function fetch($pagename,$mtime="") {
+    $key=$this->getKey($pagename);
+    if ($this->_exists($key)) {
+       if (!$mtime) {
+          return $this->_fetch($key);
+       }
+       else if ($this->_mtime($key) > $mtime)
+          return $this->_fetch($key);
+    }
+    return -1;
+  }
+
+  function exists($pagename) {
+    $key=$this->getKey($pagename);
+    return $this->_exists($key);
+  }
+
+  function _exists($key) {
+    return file_exists($key);
+  }
+
+  function _fetch($key) {
+    $fp=fopen($key,"r");
+    $content=fread($fp,filesize($key));
+    fclose($fp);
+    return $content;
+  }
+
+  function _mtime($key) {
+    return filemtime($key);
+  }
+
+  function mtime($pagename) {
+    $key=$this->getKey($pagename);
+    if ($this->_exists($key))
+       return $this->_mtime($key);
+    return 0;
+  }
+
+#  function needsUpdate($pagename) {
+#    $key=$this->getKey($pagename);
+#  }
+
+  function remove($pagename) {
+    $key=$this->getKey($pagename);
+    if ($this->_exists($key))
+       unlink($key);
   }
 }
 
@@ -441,12 +553,12 @@ class WikiPage {
   }
 
   function get_raw_body($options='') {
-    if (!$options[rev] && $this->body)
+    if ($this->body && !$options[rev])
        return $this->body;
 
     if (!$this->exists()) return '';
 
-    if ($this->exists() && ($this->rev || $options[rev])) {
+    if ($this->rev || $options[rev]) {
        if ($options[rev]) $rev=$options[rev];
        else $rev=$this->rev;
        $fp=@popen("co -q -p'".$rev."' ".$this->filename,"r");
@@ -479,6 +591,15 @@ class WikiPage {
     return $this->$body;
   }
 
+  function _get_raw_body() {
+    $fp=@fopen($this->filename,"r");
+    $size=filesize($this->filename);
+    $body=fread($fp,$size);
+    fclose($fp);
+
+    return $body;
+  }
+
   function set_raw_body($body) {
     $this->body=$body;
   }
@@ -505,9 +626,26 @@ class Formatter {
    $this->toc=0;
    $this->highlight="";
    $this->prefix=get_scriptname();
+
    $this->sister_on=1;
    $this->sisters=array();
    $this->foots=array();
+   $this->gen_pagelinks=1;
+
+   #
+   $punct="<\"\'}\]\|\;\,\.\!";
+   $url="http|ftp|telnet|mailto|wiki";
+   $urlrule="((?:$url):[^\s$punct]+(\.?[^\s$punct]+)+)";
+   # solw slow slow
+   #(?P<word>(?:/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})
+#             "(?<!\!|\[\[|[a-z])(([A-Z]+[a-z0-9]+){2,})(?!([a-z0-9]))|".
+   $this->wordrule="(\[($url):[^\s\]]+(\s[^\]]*)+\])|".
+             "(\!([A-Z]+[a-z0-9]+){2,})(?!(:|[a-z0-9]))|".
+             "(?<!\!|\[\[|[a-z])((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})(?!([a-z0-9]))|".
+             "(?<!\[)\[([^\[:,\s\d][^\[:,]+)\](?!\])|".
+             "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
+             "($urlrule)|".
+             "(\?[a-z0-9]+)";
  }
 
  function highlight_repl($val) {
@@ -583,18 +721,58 @@ class Formatter {
    if (!$DBInfo->interwiki[$wiki]) return "$wiki:$page";
 
    $page=trim($page);
+
+   if ($this->gen_pagelinks) $this->add_pagelinks($page);
+
    $img=strtolower($wiki);
    return "<img src='$DBInfo->imgs_dir/$img-16.png' width='16' height='16' align='middle' alt='$wiki:'/>".
   "<a href='".$DBInfo->interwiki[$wiki]."$page' title='$wiki:$page'>$text</a>";
  }
 
+ function add_pagelinks($word) {
+   if (!$this->pagelinks[$word] && $word != "TwinPages")
+      $this->pagelinks[$word]=1;
+ }
+
+ function store_pagelinks() {
+   $cache= new Cache_text("pagelinks");
+   $cache->update($this->page->name,$this->pagelinks,$this->page->mtime());
+ }
+
+ function get_pagelinks() {
+   $cache= new Cache_text("pagelinks");
+   if ($cache->exists($this->page->name)) {
+      $links=$cache->fetch($this->page->name);
+      if ($links != -1) return $links;
+   }
+   if ($this->page->exists()) {
+     $body=$this->page->get_raw_body();
+     $save=$this->gen_pagelinks;
+     $this->gen_pagelinks=1;
+     preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$body);
+     $this->gen_pagelinks=$save;
+     $this->store_pagelinks();
+     if ($this->pagelinks) {
+        $links=join("\n",array_keys($this->pagelinks))."\n";
+        unset($this->pagelinks);
+        return $links;
+     }
+   }
+   return "";
+ }
+
  function word_repl($word) {
    global $DBInfo;
-   if ($word[0]=='"') {
+   if ($word[0]=='"') { # ["extended wiki name"]
       $page=substr($word,1,-1);
       $word=$page;
    } else
       $page=preg_replace("/\s+/","",$word);
+
+   if ($word[0]=='/')
+      $page=$this->page->name.$page;
+
+   if ($this->gen_pagelinks) $this->add_pagelinks($word);
 
    if ($DBInfo->hasPage($page)) {
       return "<a href='$this->prefix/$page'>$word</a>";
@@ -605,13 +783,13 @@ class Formatter {
          if (!$this->sister[$word]) {
             $this->sisters[]="<tt class='foot'><sup>&#160;&#160;&#160;".
                   "<a name='sister$this->sister_idx'/>".
-                  "<b>$this->sister_idx</b>&#160;</sup></tt> ".
+                  "<b>$this->sister_idx)</b>&#160;</sup></tt> ".
                   "$sisters<br/>";
             $this->sister[$word]=$this->sister_idx++;
          }
          $idx=$this->sister[$word];
          return "<a href='$this->prefix/$page'>$word</a>".
-                "<sup><a href='#sister$idx'>#$idx</a></sup>";
+                "<sup><a href='#sister$idx'>$idx)</a></sup>";
       }
       return "<a href='$this->prefix/$page'>?</a>$word";
    }
@@ -677,11 +855,12 @@ class Formatter {
  }
 
  function link_tag($query_string, $text='',$attr="") {
+   //
    // Return a link with given query_string.
-   if (! $text)
-     $text = $query_string;
+   if (!$text)
+     $text= $query_string;
    return sprintf("<a href='%s/%s' $attr>%s</a>",
-          get_scriptname(), $query_string, $text);
+          $this->prefix, $query_string, $text);
  }
 
  function link_to($query_string="",$text="",$attr="") {
@@ -766,19 +945,6 @@ class Formatter {
    $indent_list[0]=0;
    $indent_type[0]="";
 
-   $punct="<\"\'}\]\|\;\,\.\!";
-   $url="http|ftp|telnet|mailto|wiki";
-   $urlrule="((?:$url):[^\s$punct]+(\.?[^\s$punct]+)+)";
-
-   # solw slow slow
-   $this->wordrule="(\[($url):[^\s\]]+(\s[^\]]*)+\])|".
-             "(\!([A-Z]+[a-z0-9]+){2,})(?!(:|[a-z0-9]))|".
-             "(?<!\!|\[\[|[a-z])(([A-Z]+[a-z0-9]+){2,})(?!([a-z0-9]))|".
-             "(?<!\[)\[([^\[:,\s\d][^\[:,]+)\](?!\])|".
-             "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
-             "($urlrule)|".
-             "(\?[a-z0-9]+)";
-
    $wordrule="({{{([^}]+)}}})|".
              "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|". # macro
              $this->wordrule;
@@ -860,7 +1026,7 @@ class Formatter {
       $line=preg_replace("/\^([^ \^]+)\^/","<sup>\\1</sup>",$line);
       $line=preg_replace("/(?: |^)_([^ _]+)_/","<sub>\\1</sub>",$line);
 
-      $line=preg_replace("/^-{4,}/","<hr />\n",$line);
+      $line=preg_replace("/^-{4,}/","<hr class='wiki' />\n",$line);
 
       # Smiley
       if ($smiley_rule)
@@ -980,13 +1146,15 @@ class Formatter {
    }
 
    $text.=$close;
-   
+  
    print $text;
    if ($this->sisters) {
       $sisters=join("\n",$this->sisters);
       $sisters=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$sisters);
-      print "<br/><tt class='foot'>----</tt><br/>\nSister Sites Index<br />\n$sisters";
+      print "<div id='wikiSister'>\n<br/><tt class='foot'>----</tt><br/>\nSister Sites Index<br />\n$sisters</div>\n";
    }
+
+   $this->store_pagelinks();
  }
 
  function _parse_rlog($log) {
@@ -1350,10 +1518,11 @@ EOS;
  function send_footer($options=array(),$timer="") {
    global $DBInfo;
 
+   print "</div>\n<div id='wikiFooter'>";
    if ($options[html])
       print "$options[html]";
    else {
-      print "<hr />";
+      print $DBInfo->hr;
       if ($options[editable])
          print $this->link_to("?action=edit",'EditText')." | ";
       if ($options[showpage])
@@ -1375,14 +1544,13 @@ EOS;
   src="$DBInfo->imgs_dir/vcss" 
   style="border:0;width:88px;height:31px"
   align="middle"
-  alt="Valid CSS!" />
- </a>
+  alt="Valid CSS!" /></a>
 FOOT;
 
    if ($timer)
       printf("<br />%7.4f",$timer->Check());
    
-   print "\n</body>\n</html>\n";
+   print "\n</div>\n</body>\n</html>\n";
  }
 
  function send_title($text="", $link="", $msg="") {
@@ -1399,6 +1567,7 @@ FOOT;
      $text=$name;
 
    $text="<font size='+3' class='title'><b>$text</b></font>";
+   print "<div id='wikiHeader'>\n";
 
    print "<table width='100%' border='0' cellpadding='3' cellspacing='0'><tr>";
    if ($DBInfo->logo_string) {
@@ -1418,6 +1587,7 @@ FOOT;
    # menu
    goto_form($name);
    print "</td></tr></table>\n";
+   print "</div>\n";
    kbd_handler();
 
    if ($msg) {
@@ -1429,6 +1599,7 @@ MSG;
    }
 
    if (!$DBInfo->menu_html) {
+     print "<div id='wikiMenu'>";
      print $this->link_tag("FindPage")." | ";
      print $this->link_tag("FrontPage")." | ";
      print $this->link_tag("TitleIndex")." | ";
@@ -1442,7 +1613,9 @@ MSG;
      print $this->link_tag("FindPage",$DBInfo->icon[find])." ";
      print $this->link_to("?action=info",$DBInfo->icon[info])." ";
      print $this->link_tag("HelpContents",$DBInfo->icon[help])." ";
-     print "<hr />\n";
+     print $this->link_tag("?action=rss_rc",$DBInfo->icon[rss])." ";
+     print $DBInfo->hr;
+     print "</div>\n<div id='wikiBody'>\n";
      # form
      #flush();
    }
@@ -1458,6 +1631,7 @@ MSG;
     $cols=$options[cols] > 60 ? $options[cols]: $cols;
 
     $preview=$options[preview];
+    print "<div id='wikiEditor'>\n";
 
     if (!$this->page->exists()) {
        $options[linkto]="?action=edit&amp;template=";
@@ -1523,6 +1697,7 @@ EOS;
 </div>
 <a id='preview' name='preview' />
 EOS;
+    print "</div>\n";
  }
 
 }
@@ -1614,6 +1789,7 @@ if ($REQUEST_METHOD=="POST") {
       $options[preview]=1; 
       $options[datestamp]=$datestamp; 
       $formatter->send_editor($savetext,$options);
+      print "<div class='wikiPreview'>\n";
       print "<hr />\n";
       print $formatter->link_tag('GoodStyle')." | ";
       print $formatter->link_tag('InterWiki')." | ";
@@ -1626,6 +1802,7 @@ if ($REQUEST_METHOD=="POST") {
       print $formatter->link_tag('InterWiki')." | ";
       print $formatter->link_tag('HelpOnEditing')." | ";
       print $formatter->link_to("#editor","Goto Editor");
+      print "</div>\n";
    } else {
       $page->write($savetext);
       $DBInfo->savePage($page);
