@@ -46,7 +46,7 @@ function _rawurlencode($url) {
 
 function _urlencode($url) {
   $name=urlencode(strtr($url,"+"," "));
-  $urlname=preg_replace(array('/%2F/i','/%7E/i'),array('/','~'),$name);
+  $urlname=preg_replace(array('/%2F/i','/%7E/i','/%23/'),array('/','~','#'),$name);
   return $urlname;
 }
 
@@ -218,26 +218,37 @@ class MetaDB_dba extends MetaDB {
     dba_close($this->metadb);
   }
 
-  function getSisterSites($pagename) {
-    if (dba_exists($pagename,$this->metadb)) {
+  function getSisterSites($pagename,$mode=1) {
+    if ($pagename and dba_exists($pagename,$this->metadb)) {
+       if (!$mode) return true;
+       $sisters=dba_fetch($pagename,$this->metadb);
+
+       if (strlen($sisters) > 40) return "[$pagename]";
+
        $ret="wiki:".
-         str_replace(" ",":$pagename wiki:",dba_fetch($pagename,$this->metadb)).
-         ":$pagename";
+         str_replace(" ",":$pagename wiki:",$sisters).":$pagename";
        $pagename=_preg_search_escape($pagename);
        return preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
     }
     return "";
   }
 
-  function getTwinPages($pagename) {
+  function getTwinPages($pagename,$mode=1) {
     if ($pagename && dba_exists($pagename,$this->metadb)) {
-       $ret=" wiki:".
-         str_replace(" ",":$pagename wiki:",dba_fetch($pagename,$this->metadb)).
+       if (!$mode) return true;
+
+       $twins=dba_fetch($pagename,$this->metadb);
+       $bullet=" ";
+       if (strlen($twins) > 40) $bullet="\n * ";
+       $ret=$bullet."wiki:".
+         str_replace(" ",":$pagename$bullet"."wiki:",$twins).
          ":$pagename";
+
        $pagename=_preg_search_escape($pagename);
-       return preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
+       $ret= preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
+       return explode("\n",$ret);
     }
-    return "";
+    return false;
   }
 
   function getAllPages() {
@@ -444,6 +455,7 @@ class WikiDB {
     $this->notify=0;
     $this->trail=0;
     $this->diff_type='fancy_diff';
+    $this->use_sistersites=0;
 #    $this->security_class="needtologin";
 
     # set user-specified configuration
@@ -547,6 +559,8 @@ class WikiDB {
   function set_intermap() {
     # intitialize interwiki map
     $map=file($this->intermap);
+    if ($this->sistermap and file_exists($this->sistermap))
+      $map=array_merge($map,file($this->sistermap));
 
     # read shared intermap
     $shared_map=array();
@@ -833,14 +847,14 @@ class Cache_text {
 
   function update($pagename,$val,$mtime="") {
     $key=$this->getKey($pagename);
-    if ($mtime and ($mtime <= $this->mtime($key))) return;
+    if ($mtime and ($mtime <= $this->mtime($key))) return false;
 
-    if (is_array($val)) {
-       $val=join("\n",array_keys($val))."\n";
-    } else {
-       $val=str_replace("\r","",$val);
-    }
+    if (is_array($val))
+      $val=join("\n",array_keys($val))."\n";
+    else
+      $val=str_replace("\r","",$val);
     $this->_save($key,$val);
+    return true;
   }
 
   function _save($key,$val) {
@@ -1229,9 +1243,9 @@ class Formatter {
                         "style='background-color:#f99;'",
                         "style='background-color:#f9c;'",
                         "style='background-color:#c9f;'");
+    $val=str_replace("\\\"",'"',$val);
     if ($val[0]=="<") return $val;
 
-    $val=str_replace('\"','"',$val);
     $key=strtolower($val);
 
     if (isset($colref[$key]))
@@ -1285,8 +1299,7 @@ class Formatter {
         else if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text))
           return "<a href='$url' title='$url'><img border='0' alt='$url' src='$text' /></a>";
         list($icon,$dummy)=explode(":",$url,2);
-        #return $this->icon[www]. "<a href='$url'>$text</a>";
-        return "<img align='absmiddle' alt='[$icon]' src='".$DBInfo->imgs_dir."/$icon.png'>". "<a href='$url'>$text</a>";
+        return "<img align='middle' alt='[$icon]' src='".$DBInfo->imgs_dir."/$icon.png' />". "<a href='$url'>$text</a>";
       } else # have no space
       if (preg_match("/^(http|https|ftp)/",$url)) {
         if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$url))
@@ -1400,16 +1413,29 @@ class Formatter {
     $url=$this->link_url(_rawurlencode($page)); # XXX
     if (isset($this->pagelinks[$page])) {
       $idx=$this->pagelinks[$page];
-      if ($idx === -1) return "<a href='$url'>$word</a>";
-      if ($idx === 0) return "<a class='nonexistent' href='$url'>?</a>$word";
-      return "<a href='$url'>$word</a>".
-        "<tt class='sister'><a href='#sister$idx'>&#x203a;$idx</a></tt>";
+      switch($idx) {
+        case 0:
+          return "<a class='nonexistent' href='$url'>?</a>$word";
+        case -1:
+          return "<a href='$url'>$word</a>";
+        case -2:
+          return "<a href='$url'>$word</a>".
+            "</a><tt class='sister'><a href='$url'>&#x203a;</a></tt>";
+        default:
+          return "<a href='$url'>$word</a>".
+            "<tt class='sister'><a href='#sister$idx'>&#x203a;$idx</a></tt>";
+      }
     } else if ($DBInfo->hasPage($page)) {
       $this->pagelinks[$page]=-1;
       return "<a href='$url'>$word</a>";
     } else {
       if ($this->sister_on) {
-        $sisters=$DBInfo->metadb->getSisterSites($page);
+        $sisters=$DBInfo->metadb->getSisterSites($page, $DBInfo->use_sistersites);
+        if ($sisters === true) {
+          $this->pagelinks[$page]=-2;
+          return "<a href='$url'>$word</a>".
+            "</a><tt class='sister'><a href='$url'>&#x203a;</a></tt>";
+        }
         if ($sisters) {
           $this->sisters[]="<tt class='foot'>&#160;&#160;&#160;".
             "<a name='sister$this->sister_idx' id='sister$this->sister_idx'></a>".
@@ -1571,7 +1597,7 @@ class Formatter {
       else
          $list_type="dd></dl";
       $numtype='';
-    }  else if (!$on && $close !=1)
+    } if (!$on and $close and $close !='dd')
       $list_type=$list_type."></li";
     if ($on) {
       if ($numtype) {
@@ -1618,15 +1644,21 @@ class Formatter {
         return;
       }
 
-      $twins=$DBInfo->metadb->getTwinPages($this->page->name);
+      $twins=$DBInfo->metadb->getTwinPages($this->page->name,$DBInfo->use_twinpages);
       if ($body) {
         $body=rtrim($body); # delete last empty line
         $lines=explode("\n",$body);
       } else
         $lines=array();
-      if ($twins) {
+      if ($twins === true) {
+        if ($DBInfo->interwiki['TwinPages']) {
+          if ($lines) $lines[]="----";
+          $lines[]=sprintf(_("See %s"),"[wiki:TwinPages:".$this->page->name." "._("TwinPages")."]");
+        }
+      } else if ($twins) {
         if ($lines) $lines[]="----";
-        $lines[]=_("See TwinPages: ").$twins;
+        $twins[0]=_("See TwinPages: ").$twins[0];
+        $lines=array_merge($lines,$twins);
       }
     }
 
@@ -1779,7 +1811,7 @@ class Formatter {
             while($in_li >= 0 && $indent_list[$in_li] > $indlen) {
                if ($indent_type[$in_li]!='dd' && $li_open == $in_li)
                  $close.="</li>\n";
-               $close.=$this->_list(0,$indent_type[$in_li],"",$in_li);
+               $close.=$this->_list(0,$indent_type[$in_li],"",$indent_type[$in_li-1]);
                unset($indent_list[$in_li]);
                unset($indent_type[$in_li]);
                $in_li--;
@@ -1938,7 +1970,9 @@ class Formatter {
                $ip=$this->link_tag($user);
                $users[$user]=$ip;
              }
-           }
+           } else if ($DBInfo->interwiki['Whois'])
+             $ip="<a href='".$DBInfo->interwiki['Whois']."$ip'>$ip</a>";
+
            $comment=$dummy[2];
            $state=4;
            break;
@@ -2325,7 +2359,6 @@ EOS;
 
     print "</div>\n";
     print $DBInfo->hr;
-    print "<div id='wikiFooter'>";
     $menu="";
     if ($this->pi['#action'] && !in_array($this->pi['#action'],$this->actions)){
       list($act,$txt)=explode(" ",$this->pi['#action'],2);
@@ -2347,6 +2380,7 @@ EOS;
       foreach ($this->actions as $action)
         $menu.= $this->menu_sep.$this->link_to("?action=$action",_($action));
     }
+    $menu = $this->menu_bra.$menu.$this->menu_cat;
 
     if ($mtime=$this->page->mtime()) {
       $lastedit=date("Y-m-d",$mtime);
@@ -2382,9 +2416,10 @@ FOOT;
       $themeurl=$this->themeurl;
       include($this->themedir."/footer.php");
     } else {
+      print "<div id='wikiFooter'>";
       print $menu.$banner;
+      print "\n</div>\n";
     }
-    print "\n</div>\n";
     print "</body>\n</html>\n";
     #include "prof_results.php";
   }
@@ -2402,7 +2437,7 @@ FOOT;
     else if ($this->group) $upper=substr($this->group,0,-1);
 
     if (!$title) {
-      if ($this->group) { # for HierarchicalWiki
+      if ($this->group) { # for UserNameSpace
         $group=$this->group;
         $title=substr($this->page->name,strlen($group));
         $name=$title;
@@ -2462,7 +2497,6 @@ MSG;
 
     # print the title
     kbd_handler();
-    print "<div id='wikiHeader'>\n";
 
     if (file_exists($this->themedir."/header.php")) {
       $themeurl=$this->themeurl;
@@ -2481,16 +2515,16 @@ MSG;
       $header.="</td></tr></table>\n";
 
       # menu
+      print "<div id='wikiHeader'>\n";
       print $header;
       print $menu.$user_link." ".$upper_icon.$icons.$home.$rss_icon;
       print $msg;
+      print "</div>\n";
     }
-    print "</div>\n";
     print $DBInfo->hr;
     if ($options['trail']) {
       $opt['nosisters']=1;
       print "<div id='wikiTrailer'>\n";
-      #$this->send_page($this->trail,$opt);
       print $this->trail;
       print "</div>\n";
     }
@@ -2512,9 +2546,9 @@ MSG;
 
     if (!$this->page->exists()) {
        $options['linkto']="?action=edit&amp;template=";
-       print "Use one of the following templates as an initial release :\n";
+       print _("Use one of the following templates as an initial release :\n");
        print macro_TitleSearch($this,".*Template",$options);
-       print "To create your own templates, add a page with a 'Template' suffix.\n";
+       print _("To create your own templates, add a page with a 'Template' suffix.\n");
     }
 
     if ($options['conflict'])
@@ -2546,7 +2580,7 @@ MSG;
     else
        $datestamp= $this->page->mtime();
 
-    $raw_body = str_replace("<","&lt;",$raw_body);
+    $raw_body = str_replace(array("&","<"),array("&amp;","&lt;"),$raw_body);
 
     # get categories
     $categories=array();
@@ -2634,7 +2668,12 @@ function get_pagename() {
     if (isset($goto)) $pagename=$goto;
     else {
       $pagename = $_SERVER['QUERY_STRING'];
-      $result = preg_match('/^([^&=]+)/',$pagename,$matches);
+      $temp = strtok($pagename,"&");
+
+      if ($temp and strpos($temp,"="))
+        $pagename = $DBInfo->frontpage;
+      else
+        $result = preg_match('/^([^&=]+)/',$pagename,$matches);
       if ($result) {
         $pagename = urldecode($matches[1]);
         $_SERVER['QUERY_STRING']=substr($_SERVER['QUERY_STRING'],strlen($pagename));
@@ -2678,7 +2717,7 @@ if ($user->id != "Anonymous") {
   if (!$theme) $options['theme']=$user->theme;
 }
 
-if ($DBInfo->theme)
+if ($DBInfo->theme and $DBInfo->theme_css)
   $options['css_url']=$DBInfo->url_prefix."/theme/$theme/css/default.css";
 
 $options['timer']=&$timing;
@@ -2745,21 +2784,23 @@ if ($pagename) {
     if (!$page->exists()) {
       $formatter->send_header("Status: 404 Not found",$options);
 
-      $twins=$DBInfo->metadb->getTwinPages($page->name);
+      $twins=$DBInfo->metadb->getTwinPages($page->name,1);
       if ($twins) {
         $formatter->send_title($page->name,"",$options);
-        #$formatter->send_page($twins."\n----\n");
+        $twins=join("\n",$twins);
         $formatter->send_page(_("See TwinPages: ").$twins);
         echo "<br />or ".
           $formatter->link_to("?action=edit",_("Create this page"));
       } else {
         $formatter->send_title(sprintf("%s Not Found",$page->name),"",$options);
         print $formatter->link_to("?action=edit",_("Create this page"));
-        print macro_LikePages($formatter,$page->name);
+        print macro_LikePages($formatter,$page->name,&$err);
+        if ($err['extra'])
+          print $err['extra'];
 
         print "<hr />\n";
         print $formatter->link_to("?action=edit",_("Create this page"));
-        print " or alternativly, use one of these templates:\n";
+        print _(" or alternativly, use one of these templates:\n");
         $options['linkto']="?action=edit&amp;template=";
         print macro_TitleSearch($formatter,".*Template",$options);
         print _("To create your own templates, add a page with a 'Template' suffix\n");
@@ -2787,6 +2828,9 @@ if ($pagename) {
 #    } else {
 #      ob_start();
       $formatter->send_page();
+      if ($DBInfo->use_referer)
+        log_referer($_SERVER['HTTP_REFERER'],$pagename);
+      flush();
 #      $out=ob_get_contents();
 #      ob_end_clean();
 #      print $out;
