@@ -192,7 +192,11 @@ function macro_Calendar($formatter,$value="",$option="") {
 			}
 			if ($mode == 'archive') {
 				if ($archives[$day]) {
-					$action='?action=blogchanges&amp;date='.$date;
+                                        if ($day < 10)
+                                          $anchor = '#'.$date.'0'.$day;
+                                        else
+                                          $anchor = '#'.$date.$day;
+					$action='?action=blogchanges&amp;date='.$date.$anchor;
 					$classes='day';
 					$link=$pagename;
 				} else {
