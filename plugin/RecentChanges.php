@@ -179,6 +179,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
     #$title= preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$page_name);
     $title= get_title($title).$group;
+    $title=htmlspecialchars($title);
     $title= $formatter->link_tag($pageurl,"",$title,$target);
 
     if (! empty($DBInfo->changed_time_fmt))
