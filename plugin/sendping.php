@@ -63,7 +63,7 @@ function do_sendping($formatter,$options) {
     $formatter->send_header("",$options);
     $formatter->send_title(_("Send TrackBack ping"),"",$options);
     print "<form method='post' action='$url'>\n";
-    print "<b>TrackBack Ping URL</b>: <input name='trackback_url' size='60' maxlength='100' style='width:200' /><br />\n";
+    print "<b>TrackBack Ping URL</b>: <input name='trackback_url' size='60' maxlength='256' style='width:200' /><br />\n";
     if ($options['value'])
       print "<input type='hidden' name='value' value='$options[value]' />\n";
     print "<b>Title</b>: <input name='title' value='$title' size='70' maxlength='70' style='width:200' /><br />\n";
