@@ -476,6 +476,10 @@ function do_edit($formatter,$options) {
   $formatter->send_footer($args,$options);
 }
 
+function _get_section($formatter,$text) {
+
+}
+
 function macro_Edit($formatter,$value,$options='') {
   global $DBInfo;
 
@@ -531,12 +535,12 @@ function macro_Edit($formatter,$value,$options='') {
   $form.=$menu;
   $form.= sprintf('<form name="editform" method="post" action="%s">', $previewurl);
   if ($text) {
-    $raw_body = str_replace('\r\n', '\n', $text);
+    $raw_body = str_replace("\r\n", "\n", $text);
   } else if ($formatter->page->exists()) {
-    $raw_body = str_replace('\r\n', '\n', $formatter->page->_get_raw_body());
+    $raw_body = str_replace("\r\n", "\n", $formatter->page->_get_raw_body());
   } else if ($options['template']) {
     $p= new WikiPage($options['template']);
-    $raw_body = str_replace('\r\n', '\n', $p->get_raw_body());
+    $raw_body = str_replace("\r\n", "\n", $p->get_raw_body());
   } else {
     if (strpos($options['page'],' ') > 0) {
       $raw_body="#title $options[page]\n";
@@ -1595,7 +1599,7 @@ function macro_TableOfContents(&$formatter,$value="") {
  } else {
    $body=$formatter->page->get_raw_body();
  }
-# $body=preg_replace("/(\{\{\{$)(.*)(\}\}\})/ms",'',$body);
+ $body=preg_replace("/\{\{\{.+?\}\}\}/s",'',$body);
  $lines=explode("\n",$body);
  foreach ($lines as $line) {
    $line=preg_replace("/\n$/", "", $line); # strip \n
