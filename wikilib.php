@@ -125,16 +125,15 @@ class UserDB {
 
 class User {
   function User($id="") {
-     global $HTTP_COOKIE_VARS;
      if ($id) {
         $this->setID($id);
         return;
      }
-     $this->setID($HTTP_COOKIE_VARS['MONI_ID']);
-     $this->css=$HTTP_COOKIE_VARS['MONI_CSS'];
-     $this->theme=$HTTP_COOKIE_VARS['MONI_THEME'];
-     $this->bookmark=$HTTP_COOKIE_VARS['MONI_BOOKMARK'];
-     $this->trail=stripslashes($HTTP_COOKIE_VARS['MONI_TRAIL']);
+     $this->setID($_COOKIE['MONI_ID']);
+     $this->css=$_COOKIE['MONI_CSS'];
+     $this->theme=$_COOKIE['MONI_THEME'];
+     $this->bookmark=$_COOKIE['MONI_BOOKMARK'];
+     $this->trail=stripslashes($_COOKIE['MONI_TRAIL']);
   }
 
   function setID($id) {
@@ -156,18 +155,16 @@ class User {
   }
 
   function setCookie() {
-     global $HTTP_COOKIE_VARS;
      if ($this->id == "Anonymous") return false;
      setcookie("MONI_ID",$this->id,time()+60*60*24*30,get_scriptname());
      # set the fake cookie
-     $HTTP_COOKIE_VARS[MONI_ID]=$this->id;
+     $_COOKIE[MONI_ID]=$this->id;
   }
 
   function unsetCookie() {
-     global $HTTP_COOKIE_VARS;
      header("Set-Cookie: MONI_ID=".$this->id."; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname());
      # set the fake cookie
-     $HTTP_COOKIE_VARS[MONI_ID]="Anonymous";
+     $_COOKIE[MONI_ID]="Anonymous";
   }
 
   function setPasswd($passwd,$passwd2="") {
@@ -825,10 +822,9 @@ function wiki_notify($formatter,$options) {
 
 function do_uploadfile($formatter,$options) {
   global $DBInfo;
-  global $HTTP_POST_FILES;
 
   # replace space and ':'
-  $upfilename=str_replace(" ","_",$HTTP_POST_FILES['upfile']['name']);
+  $upfilename=str_replace(" ","_",$_FILES['upfile']['name']);
   $upfilename=str_replace(":","_",$upfilename);
 
   preg_match("/(.*)\.([a-z0-9]{1,4})$/i",$upfilename,$fname);
@@ -875,8 +871,9 @@ function do_uploadfile($formatter,$options) {
      $newfile_path= $dir."/".$upfilename;
   }
  
-  $temp=explode("/",$HTTP_POST_FILES['upfile']['tmp_name']);
-  $upfile="/tmp/".$temp[count($temp)-1];
+  $upfile=$_FILES['upfile']['tmp_name'];
+  //$temp=explode("/",$_FILES['upfile']['tmp_name']);
+  //$upfile="/tmp/".$temp[count($temp)-1];
   // Tip at http://phpschool.com
 
   if ($options['replace']) {
@@ -925,7 +922,7 @@ FORM;
 
 function do_bookmark($formatter,$options) {
   global $DBInfo;
-  global $HTTP_COOKIE_VARS;
+  global $_COOKIE;
 
   $user=new User(); # get cookie
   if (!$options['time']) {
@@ -937,7 +934,7 @@ function do_bookmark($formatter,$options) {
     if ($user->id == "Anonymous") {
       setcookie("MONI_BOOKMARK",$bookmark,time()+60*60*24*30,get_scriptname());
       # set the fake cookie
-      $HTTP_COOKIE_VARS['MONI_BOOKMARK']=$bookmark;
+      $_COOKIE['MONI_BOOKMARK']=$bookmark;
       $options['msg'] = 'Bookmark Changed';
     } else {
       $udb=new UserDB($DBInfo);
@@ -1097,15 +1094,15 @@ function macro_RandomPage($formatter,$value="") {
   if ($count <= 0) $count=1;
   $counter= $count;
 
-  $max=sizeof($pages);
+  $max=sizeof($pages)-1;
 
   while ($counter > 0) {
-    $selected[]=rand(1,$max);
+    $selected[]=rand(0,$max);
     $counter--;
   }
 
   foreach ($selected as $item) {
-    $selects[]=$formatter->link_tag($pages[$item]);
+    $selects[]=$formatter->link_tag(_rawurlencode($pages[$item]),"",$pages[$item]);
   }
 
   if ($count > 1) {
@@ -1301,7 +1298,6 @@ function macro_DateTime($formatter,$value) {
 
 function macro_UserPreferences($formatter="") {
   global $DBInfo;
-  global $HTTP_COOKIE_VARS;
 
   $user=new User(); # get from COOKIE VARS
   $url=$formatter->link_url("UserPreferences");
@@ -1571,7 +1567,7 @@ function macro_PageCount($formatter="") {
   return $DBInfo->getCounter();
 }
 
-function macro_PageHits($formatter="") {
+function macro_PageHits($formatter="",$value) {
   global $DBInfo;
 
   if (!$DBInfo->use_counter) return "[[PageHits is not activated. set \$use_counter=1; in the config.php]]";
@@ -1582,7 +1578,9 @@ function macro_PageHits($formatter="") {
   foreach ($pages as $page) {
     $hits[$page]=$DBInfo->counter->pageCounter($page);
   }
-  arsort($hits);
+
+  if ($value=='reverse' or $value[0]=='r') asort($hits);
+  else arsort($hits);
   while(list($name,$hit)=each($hits)) {
     if (!$hit) $hit=0;
     $name=$formatter->link_tag(_rawurlencode($name),"",$name);
