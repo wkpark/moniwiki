@@ -631,14 +631,14 @@ function form_permission($mode) {
 
 function do_raw($formatter,$options) {
   $formatter->send_header("Content-Type: text/plain",$options);
-  print $formatter->page->get_raw_body();
+  print $formatter->page->get_raw_body($options);
 }
 
 function do_recall($formatter,$options) {
   $formatter->send_header("",$options);
   $formatter->send_title("Rev. ".$options['rev']." ".
                                  $options['page'],"",$options);
-  $formatter->send_page();
+  $formatter->send_page("",$options);
   $formatter->send_footer($args,$options);
 }
 

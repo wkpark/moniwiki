@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0.7';
+$_release = '1.0.8';
 
 #ob_start("ob_gzhandler");
 
@@ -146,7 +146,7 @@ Contents(/)</span>&nbsp;
   } else {
     return <<<FORM
 <form name='go' id='go' method='get' action='$action' onsubmit="return moin_submit();">
-<input type='text' name='value' size='20' accesskey='s' class='goto' style='width:100' />
+<input type='text' name='value' size='20' accesskey='s' class='goto' style='width:100px' />
 <input type='hidden' name='action' value='goto' />
 <input type='submit' name='status' value='Go' class='goto' style='width:23px;' />
 </form>
@@ -393,7 +393,8 @@ function getConfig($configfile, $options=array()) {
     return array();
   } 
 
-  foreach ($options as $key=>$val) $$key=$val;
+  #foreach ($options as $key=>$val) $$key=$val;
+  extract($options);
   unset($key,$val,$options);
   include($configfile);
   unset($configfile);
@@ -401,10 +402,10 @@ function getConfig($configfile, $options=array()) {
   $config=get_defined_vars();
 #  print_r($config);
 
-  if ($menu) $config['menu']=$menu;
-  if ($icons) $config['icons']=$icons;
-  if ($icon) $config['icon']=$icon;
-  if ($actions) $config['actions']=$actions;
+#  if ($menu) $config['menu']=$menu;
+#  if ($icons) $config['icons']=$icons;
+#  if ($icon) $config['icon']=$icon;
+#  if ($actions) $config['actions']=$actions;
 
   return $config;
 }
@@ -1013,36 +1014,27 @@ class WikiPage {
   }
 
   function get_raw_body($options='') {
-    if ($this->body && !$options['rev']) {
+    if ($this->body && !$options['rev'])
        return $this->body;
-    }
-#    if (!$this->exists()) return '';
 
     if ($this->rev || $options['rev']) {
-       if ($options['rev']) $rev=$options['rev'];
-       else $rev=$this->rev;
-       $fp=@popen("co -x,v/ -q -p\"".$rev."\" ".$this->filename,"r");
-       if (!$fp)
-          return "";
-       while (!feof($fp)) {
-          $line=fgets($fp,2048);
-          $out.= $line;
-       }
-       pclose($fp);
-       return $out;
+      if ($options['rev']) $rev=$options['rev'];
+      else $rev=$this->rev;
+      $fp=@popen("co -x,v/ -q -p\"".$rev."\" ".$this->filename,"r");
+      if (!$fp) return "";
+      $out='';
+      while (!feof($fp)) $out.=fgets($fp,2048);
+      pclose($fp);
+      return $out;
     }
 
     $fp=@fopen($this->filename,"r");
     if (!$fp) {
-       $out="You have no permission to see this page.\n\n";
-       $out.="See MoniWiki/AccessControl\n";
-       return $out;
+      $out="You have no permission to see this page.\n\n";
+      $out.="See MoniWiki/AccessControl\n";
+      return $out;
     }
     $this->fsize=filesize($this->filename);
-#    $body="";
-#    if ($fp) { while($line=fgets($fp, 2048)) $body.=$line; }
-#    $this->$body=implode("", file($this->filename));
-#    $this->body=$body;
     $body=fread($fp,$this->fsize);
     fclose($fp);
     $this->body=$body;
@@ -1846,7 +1838,7 @@ class Formatter {
     $this->imgs_dir= qualifiedUrl($this->imgs_dir);
   }
 
-  function send_page($body="",$options="") {
+  function send_page($body="",$options=array()) {
     global $DBInfo;
     if ($options['fixpath']) $this->_fixpath();
 
@@ -1861,7 +1853,7 @@ class Formatter {
     } else {
       #$pi=$this->get_instructions(&$body);
       $pi=$this->get_instructions();
-      $body=$this->page->get_raw_body();
+      $body=$this->page->get_raw_body($options);
       $this->pi=$pi;
       if ($pi['#format']) {
         if ($pi['args']) $pi_line="#!".$pi['#format']." $pi[args]\n";
@@ -3031,11 +3023,11 @@ if ($pagename) {
   #print $_SERVER['REQUEST_URI'];
   $options['page']=$pagename;
 
-  if ($action=="recall" || $action=="raw" && $rev) {
-    $options['rev']=$rev;
-    $page = $DBInfo->getPage($pagename,$options);
-  } else
-    $page = $DBInfo->getPage($pagename);
+#  if ($action=="recall" || $action=="raw" && $rev) {
+#    $options['rev']=$rev;
+#    $page = $DBInfo->getPage($pagename,$options);
+#  } else
+  $page = $DBInfo->getPage($pagename);
 
   $formatter = new Formatter($page,$options);
 
