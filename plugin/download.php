@@ -31,17 +31,20 @@ function do_download($formatter,$options) {
   if (!file_exists("$dir/$file")) 
     return;
 
-  $lines = file('data/mime.types');
-  foreach($lines as $line) {
-    rtrim($line);
-    if (preg_match('/^\#/', $line))
-      continue;
-    $elms = preg_split('/\s+/', $line);
-    $type = array_shift($elms);
-    foreach ($elms as $elm) {
-     $mime[$elm] = $type;
+  $lines = @file('data/mime.types');
+  if ($lines) {
+    foreach($lines as $line) {
+      rtrim($line);
+      if (preg_match('/^\#/', $line))
+        continue;
+      $elms = preg_split('/\s+/', $line);
+      $type = array_shift($elms);
+      foreach ($elms as $elm) {
+       $mime[$elm] = $type;
+      }
     }
-  }
+  } else
+    $mime=array();
   if (preg_match("/\.(.{1,4})$/",$file,$match))
     $mimetype=strtolower($mime[$match[1]]);
   if (!$mimetype) $mimetype="application/x-unknown";
