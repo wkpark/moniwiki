@@ -1567,10 +1567,6 @@ class Formatter {
       $line=preg_replace(array("/{{\|/","/\|}}/"),
             array('<table class="closure"><tr class="closure"><td class="closure">'."\n","</td></tr></table>\n"),$line);
 
-      # Smiley
-      if ($smiley_rule)
-         $line=preg_replace($smiley_rule,$smiley_repl,$line);
-
       # bullet and indentation
       #if (!$in_pre && preg_match("/^(\s*)/",$line,$match)) {
       #if (preg_match("/^(\s*)/",$line,$match)) {
@@ -1653,6 +1649,10 @@ class Formatter {
       # Headings
       $line=preg_replace('/(?<!=)(={1,5})\s+(.*)\s+(={1,5})$/e',
                          "\$this->head_repl('\\1','\\2','\\3')",$line);
+
+      # Smiley
+      if ($smiley_rule)
+         $line=preg_replace($smiley_rule,$smiley_repl,$line);
 
       if ($in_pre==-1) {
          $in_pre=0;
@@ -2406,7 +2406,7 @@ $options=array();
 $options[id]=$user->id;
 
 # MoniWiki theme
-$theme=$HTTP_POST_VARS[theme];
+$theme=$HTTP_GET_VARS[theme];
 if ($theme) $options[theme]=$theme;
 
 if ($DBInfo->trail)
@@ -2753,7 +2753,7 @@ if ($pagename) {
     $formatter->send_footer($args,$options);
   } else if ($action=="info") {
     $formatter->send_header("",$options);
-    $formatter->send_title(sprintf(_("Info. for %s"),$page->name));
+    $formatter->send_title(sprintf(_("Info. for %s"),$page->name),"",$options);
     $formatter->show_info();
     $args[showpage]=1;
     $options[timer]=$timing;
