@@ -599,12 +599,12 @@ CHANNEL;
       break;
 
     if (!$DBInfo->hasPage($page_name))
-       $status='deleted';
+      $status='deleted';
     else
-       $status='updated';
+      $status='updated';
     $zone = date("O");
     $zone = $zone[0].$zone[1].$zone[2].":".$zone[3].$zone[4];
-    $date = date("Y-m-d\TH:i:s",$ed_time).$zone;
+    $date = gmdate("Y-m-d\TH:i:s",$ed_time).$zone;
 
     $channel.="    <rdf:li rdf:resource=\"$URL/$page_name\"/>\n";
 
@@ -1008,6 +1008,34 @@ function macro_Css($formatter="") {
 </form>
 ";
   return $out;
+}
+
+function macro_Date($formatter,$value) {
+  global $DBInfo;
+
+  if (!$value) {
+    return date('Y/m/d');
+  }
+  if ($value[10]== 'T') {
+    $value[10]=' ';
+    $time=strtotime($value." GMT");
+    return date("Y/m/d",$time);
+  }
+  return date("Y/m/d");
+}
+
+function macro_DateTime($formatter,$value) {
+  global $DBInfo;
+
+  if (!$value) {
+    return date('Y/m/d');
+  }
+  if ($value[10]== 'T') {
+    $value[10]=' ';
+    $time=strtotime($value." GMT");
+    return date("Y/m/d H:i:s",$time);
+  }
+  return date("Y/m/d\TH:i:s");
 }
 
 function macro_UserPreferences($formatter="") {
@@ -1493,24 +1521,26 @@ function macro_RecentChanges($formatter="",$value="") {
       $ratchet_day = $day;
     }
 
+    $pageurl=_rawurlencode($page_name);
+
     if (!$DBInfo->hasPage($page_name))
-       $out.= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=diff&amp;date=$bookmark",$DBInfo->icon[del]);
+       $out.= "&nbsp;&nbsp; ".$formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$DBInfo->icon[del]);
     else if ($ed_time > $bookmark) {
        if ($new) {
          $p= new WikiPage($page_name);
          $v= $p->get_rev($bookmark);
        } else $v=1;
        if ($v) # has 
-         $out.= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=diff&amp;date=$bookmark",$DBInfo->icon[updated]);
+         $out.= "&nbsp;&nbsp; ".$formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$DBInfo->icon[updated]);
        else
-         $out.= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=info",$DBInfo->icon['new']);
+         $out.= "&nbsp;&nbsp; ".$formatter->link_tag($pageurl,"?action=info",$DBInfo->icon['new']);
     } else
-       $out.= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=diff&amp;date=$bookmark",$DBInfo->icon[diff]);
+       $out.= "&nbsp;&nbsp; ".$formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$DBInfo->icon[diff]);
 
     $title=preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$page_name);
 #   $title=$page_name;
 
-    $out.= "&nbsp;&nbsp;".$formatter->link_tag($page_name,"",$title);
+    $out.= "&nbsp;&nbsp;".$formatter->link_tag($pageurl,"",$title);
     if (! empty($DBInfo->changed_time_fmt))
        $out.= date($DBInfo->changed_time_fmt, $ed_time);
 
