@@ -196,15 +196,13 @@ function macro_BlogChanges($formatter,$value,$options='') {
 
   foreach ($logs as $log) {
     list($page, $user,$date,$title,$summary)= $log;
-    $url=qualifiedUrl($formatter->link_url(_urlencode($page)));
+    $tag=md5($user." ".$date." ".$title);
 
+    $url=qualifiedUrl($formatter->link_url(_urlencode($page)));
     if (!$opts['nouser'] and $user and $DBInfo->hasPage($user))
       $user=$formatter->link_tag(_rawurlencode($user),"",$user);
 
     if (!$title) continue;
-
-    #$tag=_rawurlencode(normalize($title));
-    $tag=md5($user." ".$date." ".$title);
 
     $date[10]=' ';
     $time=strtotime($date." GMT");
