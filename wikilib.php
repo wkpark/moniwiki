@@ -238,10 +238,42 @@ function do_highlight($formatter,$options) {
   $formatter->send_header("",$options);
   $formatter->send_title("","",$options);
 
-  $formatter->highlight=$options[value];
+  $formatter->highlight=stripslashes($options['value']);
   $formatter->send_page();
   $args['editable']=1;
   $formatter->send_footer($args,$options);
+}
+
+function do_diff($formatter,$options="") {
+  $range=$options['range'];
+  $date=$options['date'];
+  $rev=$options['rev'];
+  $rev2=$options['rev2'];
+  if ($options['button_admin']) {
+    if (!$range) $range=array();
+    $rr='';
+    $dum=array();
+    foreach (array_keys($range) as $r) {
+      if (!$rr) $rr=$range[$r];
+      if ($range[$r+1]) continue;
+      else
+        $rr.=":".$range[$r];
+      $dum[]=$rr;$rr='';
+    }
+    $options['range']=$dum;
+    do_RcsPurge($formatter,$options);
+    return;
+  }
+  $formatter->send_header("",$options);
+  $formatter->send_title("Diff for $rev ".$options['page'],"",$options);
+  if ($date)
+    print $formatter->get_diff($date);
+  else
+    print $formatter->get_diff($rev,$rev2);
+  print "<br /><hr />\n";
+  $formatter->send_page();
+  $formatter->send_footer($args,$options);
+  return;
 }
 
 function do_edit($formatter,$options) {
@@ -586,7 +618,7 @@ function do_post_savepage($formatter,$options) {
     $orig=md5($body);
     # check datestamp
     if ($formatter->page->mtime() > $datestamp) {
-      $options['msg']=sprintf(_("Someone else saved the page while you edited %s"),$formatter->link_tag($options['page']));
+      $options['msg']=sprintf(_("Someone else saved the page while you edited %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
       $formatter->send_title(_("Conflict error!"),"",$options);
       $options['preview']=1; 
       $options['conflict']=1; 
@@ -610,7 +642,7 @@ function do_post_savepage($formatter,$options) {
     }
 
     if (!$button_preview && $orig == $new) {
-      $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($options[page]));
+      $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
       $formatter->send_title(_("No difference found"),"",$options);
       $formatter->send_footer();
       return;
@@ -618,7 +650,7 @@ function do_post_savepage($formatter,$options) {
     $formatter->page->set_raw_body($savetext);
 
     if ($button_preview) {
-      $title=sprintf(_("Preview of %s"),$formatter->link_tag($formatter->page->urlname));
+      $title=sprintf(_("Preview of %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
       $formatter->send_title($title,"",$options);
      
       $options['preview']=1; 
@@ -652,9 +684,9 @@ function do_post_savepage($formatter,$options) {
     }
       
     if ($ret == -1)
-      $options['msg'].=sprintf(_("%s is not editable"),$formatter->link_tag($formatter->page->urlname));
+      $options['msg'].=sprintf(_("%s is not editable"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
     else
-      $options['msg'].=sprintf(_("%s is saved"),$formatter->link_tag($formatter->page->urlname));
+      $options['msg'].=sprintf(_("%s is saved"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
     $formatter->send_title("","",$options);
     $opt['pagelinks']=1;
     # re-generates pagelinks
@@ -669,15 +701,15 @@ function do_subscribe($formatter,$options) {
 
   if ($options[id] != 'Anonymous') {
     $udb=new UserDB($DBInfo);
-    $userinfo=$udb->getUser($options[id]);
-    $email=$userinfo->info[email];
+    $userinfo=$udb->getUser($options['id']);
+    $email=$userinfo->info['email'];
     #$subs=$udb->getPageSubscribers($options[page]);
     if (!$email) $title = _("Please enter your email address first.");
   } else {
     $title = _("Please login or make your ID.");
   }
 
-  if ($options[id] == 'Anonymous' or !$email) {
+  if ($options['id'] == 'Anonymous' or !$email) {
     $formatter->send_header("",$options);
     $formatter->send_title($title,"",$options);
     $formatter->send_page("Goto UserPreferences\n");
@@ -686,8 +718,8 @@ function do_subscribe($formatter,$options) {
     return;
   }
 
-  if ($options[subscribed_pages]) {
-    $pages=preg_replace("/\n\s*/","\n",$options[subscribed_pages]);
+  if ($options['subscribed_pages']) {
+    $pages=preg_replace("/\n\s*/","\n",$options['subscribed_pages']);
     $pages=preg_replace("/\s*\n/","\n",$pages);
     $pages=explode("\n",$pages);
     $pages=array_unique ($pages);
@@ -704,11 +736,11 @@ function do_subscribe($formatter,$options) {
 
   }
 
-  $pages=explode("\t",$userinfo->info[subscribed_pages]);
-  if (!in_array($options[page],$pages)) $pages[]=$options[page];
+  $pages=explode("\t",$userinfo->info['subscribed_pages']);
+  if (!in_array($options['page'],$pages)) $pages[]=$options['page'];
   $page_lists=join("\n",$pages);
 
-  $title = sprintf(_("Do you want to subscribe \"%s\" ?"), $options[page]);
+  $title = sprintf(_("Do you want to subscribe \"%s\" ?"), $options['page']);
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
   print "<form method='post'>
@@ -727,14 +759,14 @@ function do_subscribe($formatter,$options) {
 function wiki_notify($formatter,$options) {
   global $DBInfo;
 
-  $from= $options[id];
+  $from= $options['id'];
 #  if ($options[id] != 'Anonymous')
 #
 
   $udb=new UserDB($DBInfo);
-  $subs=$udb->getPageSubscribers($options[page]);
+  $subs=$udb->getPageSubscribers($options['page']);
   if (!$subs) {
-    if ($options[noaction]) return 0;
+    if ($options['noaction']) return 0;
 
     $title=_("Nobody subscribed to this page, no mail sented.");
     $formatter->send_header("",$options);
@@ -772,14 +804,14 @@ function wiki_notify($formatter,$options) {
   $body.="-------- $options[page] ---------\n";
   
   $body.=$formatter->page->get_raw_body();
-  if (!$options[nodiff]) {
+  if (!$options['nodiff']) {
     $body.="================================\n";
     $body.=$diff;
   }
 
   mail($mailto,$subject,$body,$mailheaders);
 
-  if ($options[noaction]) return 1;
+  if ($options['noaction']) return 1;
 
   $title=_("Send mail notification to all subscribers");
   $formatter->send_header("",$options);
@@ -836,7 +868,7 @@ function do_uploadfile($formatter,$options) {
 
   # is file already exists ?
   $dummy=0;
-  while (!$options[replace] && file_exists($file_path)) {
+  while (!$options['replace'] && file_exists($file_path)) {
      $dummy=$dummy+1;
      $ufname=$fname[1]."_".$dummy; // rename file
      $upfilename=$ufname.".$fname[2]";
@@ -856,7 +888,7 @@ function do_uploadfile($formatter,$options) {
   }
   chmod($file_path,0644);
 
-  $REMOTE_ADDR=$_SERVER[REMOTE_ADDR];
+  $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
   $comment="File '$upfilename' uploaded";
   $DBInfo->addLogEntry($key, $REMOTE_ADDR,$comment,"UPLOAD");
   
@@ -891,26 +923,26 @@ function do_bookmark($formatter,$options) {
   global $HTTP_COOKIE_VARS;
 
   $user=new User(); # get cookie
-  if (!$options[time]) {
+  if (!$options['time']) {
      $bookmark=time();
   } else {
-     $bookmark=$options[time];
+     $bookmark=$options['time'];
   }
   if (0 === strcmp($bookmark , (int)$bookmark)) {
     if ($user->id == "Anonymous") {
       setcookie("MONI_BOOKMARK",$bookmark,time()+60*60*24*30,get_scriptname());
       # set the fake cookie
-      $HTTP_COOKIE_VARS[MONI_BOOKMARK]=$bookmark;
-      $options[msg] = 'Bookmark Changed';
+      $HTTP_COOKIE_VARS['MONI_BOOKMARK']=$bookmark;
+      $options['msg'] = 'Bookmark Changed';
     } else {
       $udb=new UserDB($DBInfo);
       $userinfo=$udb->getUser($user->id);
-      $userinfo->info[bookmark]=$bookmark;
+      $userinfo->info['bookmark']=$bookmark;
       $udb->saveUser($userinfo);
-      $options[msg] = 'Bookmark Changed';
+      $options['msg'] = 'Bookmark Changed';
     }
   } else
-    $options[msg]="Invalid bookmark!";
+    $options['msg']="Invalid bookmark!";
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
   $formatter->send_page();
@@ -926,14 +958,14 @@ function do_userform($formatter,$options) {
   global $DBInfo;
 
   $user=new User(); # get cookie
-  $id=$options[login_id];
+  $id=$options['login_id'];
 
-  if ($user->id == "Anonymous" and $id and $options[login_passwd]) {
+  if ($user->id == "Anonymous" and $id and $options['login_passwd']) {
     # login
     $userdb=new UserDB($DBInfo);
     if ($userdb->_exists($id)) {
        $user=$userdb->getUser($id);
-       if ($user->checkPasswd($options[login_passwd])=== true) {
+       if ($user->checkPasswd($options['login_passwd'])=== true) {
           $title = sprintf(_("Successfully login as '%s'"),$id);
           $user->setCookie();
        } else {
@@ -941,25 +973,25 @@ function do_userform($formatter,$options) {
        }
     } else
        $title= _("Please enter a valid user ID !");
-  } else if ($options[logout]) {
+  } else if ($options['logout']) {
     # logout
     $user->unsetCookie();
     $title= _("Cookie deleted !");
-  } else if ($user->id=="Anonymous" and $options[username] and $options[password] and $options[passwordagain]) {
+  } else if ($user->id=="Anonymous" and $options['username'] and $options['password'] and $options['passwordagain']) {
     # create profile
 
-    $id=$user->getID($options[username]);
+    $id=$user->getID($options['username']);
     $user->setID($id);
 
     if ($user->id != "Anonymous") {
-       $ret=$user->setPasswd($options[password],$options[passwordagain]);
+       $ret=$user->setPasswd($options['password'],$options['passwordagain']);
        if ($ret <= 0) {
            if ($ret==0) $title= _("too short password!");
            else if ($ret==-1) $title= _("mismatch password!");
            else if ($ret==-2) $title= _("not acceptable character found in the password!");
        } else {
            if ($ret < 8)
-              $options[msg]=_("Password is too simple to use as a password !");
+              $options['msg']=_("Password is too simple to use as a password !");
            $udb=new UserDB($DBInfo);
            $ret=$udb->addUser($user);
            if ($ret) {
@@ -967,7 +999,7 @@ function do_userform($formatter,$options) {
               $user->setCookie();
            } else {# already exist user
               $user=$udb->getUser($user->id);
-              if ($user->checkPasswd($options[password])=== true) {
+              if ($user->checkPasswd($options['password'])=== true) {
                   $title = sprintf(_("Successfully login as '%s'"),$id);
                   $user->setCookie();
               } else {
@@ -982,9 +1014,9 @@ function do_userform($formatter,$options) {
     $udb=new UserDB($DBInfo);
     $userinfo=$udb->getUser($user->id);
 
-    if ($options[password] and $options[passwordagain]) {
-      if ($userinfo->checkPasswd($options[password])=== true) {
-        $ret=$userinfo->setPasswd($options[passwordagain]);
+    if ($options['password'] and $options['passwordagain']) {
+      if ($userinfo->checkPasswd($options['password'])=== true) {
+        $ret=$userinfo->setPasswd($options['passwordagain']);
 
         if ($ret <= 0) {
           if ($ret==0) $title= _("too short password!");
@@ -992,27 +1024,27 @@ function do_userform($formatter,$options) {
             $title= _("mismatch password !");
           else if ($ret==-2)
             $title= _("not acceptable character found in the password!");
-          $options[msg]= _("Password is not changed !");
+          $options['msg']= _("Password is not changed !");
         } else {
           $title= _("Password is changed !");
           if ($ret < 8)
-            $options[msg]=_("Password is too simple to use as a password !");
+            $options['msg']=_("Password is too simple to use as a password !");
         }
       } else {
         $title= _("Invalid password !");
-        $options[msg]=_("Password is not changed !");
+        $options['msg']=_("Password is not changed !");
       }
     }
-    if (isset($options[user_css]))
-      $userinfo->info[css_url]=$options[user_css];
-    if (isset($options[email]))
-      $userinfo->info[email]=$options[email];
-    if ($options[username])
-      $userinfo->info[name]=$options[username];
+    if (isset($options['user_css']))
+      $userinfo->info['css_url']=$options['user_css'];
+    if (isset($options['email']))
+      $userinfo->info['email']=$options['email'];
+    if ($options['username'])
+      $userinfo->info['name']=$options['username'];
     $udb->saveUser($userinfo);
-    $options[css_url]=$options[user_css];
-    if (!isset($options[msg]))
-      $options[msg]=_("Profiles are saved successfully !");
+    $options['css_url']=$options['user_css'];
+    if (!isset($options['msg']))
+      $options['msg']=_("Profiles are saved successfully !");
   }
 
   $formatter->send_header("",$options);
@@ -1037,7 +1069,7 @@ function macro_Include($formatter,$value="") {
   if ($value and !in_array($value, $included) and $DBInfo->hasPage($value)) {
     $ipage=$DBInfo->getPage($value);
     $ibody=$ipage->_get_raw_body();
-    $opt[nosisters]=1;
+    $opt['nosisters']=1;
     ob_start();
     $formatter->send_page($title.$ibody,$opt);
     $out= ob_get_contents();
@@ -1105,7 +1137,7 @@ function macro_RandomQuote($formatter,$value="") {
   $quote=$quotes[rand(1,sizeof($quotes))];
 
   ob_start();
-  $options[nosisters]=1;
+  $options['nosisters']=1;
   $formatter->send_page($quote,$options);
   $out= ob_get_contents();
   ob_end_clean();
@@ -1131,13 +1163,13 @@ EOF;
 }
 
 function do_uploadedfiles($formatter,$options) {
-  $list=macro_UploadedFiles($formatter,$options[page],$options);
+  $list=macro_UploadedFiles($formatter,$options['page'],$options);
 
   $formatter->send_header("",$options);
   $formatter->send_title("","",$options);
 
   print $list;
-  $args[editable]=0;
+  $args['editable']=0;
   $formatter->send_footer($args,$options);
   return;
 }
@@ -1157,7 +1189,7 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
         $prefix=$formatter->link_url($formatter->page->urlname,"?action=download&amp;value=");
       $dir=$DBInfo->upload_dir."/$key";
    }
-   if ($options[value]!='top' and file_exists($dir))
+   if ($options['value']!='top' and file_exists($dir))
       $handle= opendir($dir);
    else {
       $key='';
@@ -1170,7 +1202,7 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
 
    while ($file= readdir($handle)) {
       if (is_dir($dir."/".$file)) {
-        if ($file=='.' or $file=='..' or $options[value]!='top') continue;
+        if ($file=='.' or $file=='..' or $options['value']!='top') continue;
         $dirs[]= $DBInfo->keyToPagename($file);
         continue;
       }
@@ -1256,7 +1288,6 @@ function macro_UserPreferences($formatter="") {
 <form method="post" action="$url">
 <input type="hidden" name="action" value="userform" />
 <table border="0">
-  <tr><td>&nbsp;</td></tr>
   <tr><td><b>ID</b>&nbsp;</td><td><input type="text" size="40" name="login_id" /></td></tr>
   <tr><td><b>Password</b>&nbsp;</td><td><input type="password" size="20" maxlength="12" name="login_passwd" /></td></tr>
 
@@ -1276,9 +1307,9 @@ EOF;
 
    $udb=new UserDB($DBInfo);
    $user=$udb->getUser($user->id);
-   $css=$user->info[css_url];
-   $name=$user->info[name];
-   $email=$user->info[email];
+   $css=$user->info['css_url'];
+   $name=$user->info['name'];
+   $email=$user->info['email'];
    return <<<EOF
 <form method="post" action="$url">
 <input type="hidden" name="action" value="userform" />
@@ -1385,7 +1416,7 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
   $metawiki=$opts[metawiki];
 
   if (strlen($pname) < 3) {
-    $opts[msg] = 'Use more specific text';
+    $opts['msg'] = 'Use more specific text';
     return '';
   }
 
@@ -1494,19 +1525,19 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
       $idx++;
     }
     $out.="</ol>\n</td></tr></table>\n";
-    $opts[extra]="If you can't find this page, ";
+    $opts['extra']="If you can't find this page, ";
     $hits+=count($starts) + count($ends);
   }
 
   if (!$hits) {
     $out.="<h3>"._("No similar pages found")."</h3>";
-    $opts[extra]=_("You are strongly recommened to find it in MetaWikis. ");
+    $opts['extra']=_("You are strongly recommened to find it in MetaWikis. ");
   }
 
-  $opts[msg] = sprintf(_("Like \"%s\""),$args);
+  $opts['msg'] = sprintf(_("Like \"%s\""),$args);
 
   $tag=$formatter->link_to("?action=LikePages&amp;metawiki=1",_("Search all MetaWikis"));
-  $opts[extra].="$tag (Slow Slow)<br />";
+  $opts['extra'].="$tag (Slow Slow)<br />";
 
   return $out;
 }
@@ -1530,7 +1561,7 @@ function macro_PageHits($formatter="") {
   arsort($hits);
   while(list($name,$hit)=each($hits)) {
     if (!$hit) $hit=0;
-    $name=$formatter->link_tag($name);
+    $name=$formatter->link_tag(_rawurlencode($name),"",$name);
     $out.="<li>$name . . . . [$hit]</li>\n";
   }
   return "<ol>\n".$out."</ol>\n";
@@ -1613,7 +1644,7 @@ function macro_PageList($formatter,$arg="") {
     } else $hits=$all_pages;
     arsort($hits);
     while (list($pagename,$mtime) = @each ($hits)) {
-      $out.= '<li>'.$formatter->link_tag($pagename).". . . . [".date("Y-m-d",$mtime)."]</li>\n";
+      $out.= '<li>'.$formatter->link_tag(_rawurlencode($pagename),"",$pagename).". . . . [".date("Y-m-d",$mtime)."]</li>\n";
     }
     $out="<ol>\n".$out."</ol>\n";
   } else {
@@ -1623,7 +1654,7 @@ function macro_PageList($formatter,$arg="") {
     }
     sort($hits);
     foreach ($hits as $pagename) {
-      $out.= '<li>' . $formatter->link_tag($pagename)."</li>\n";
+      $out.= '<li>' . $formatter->link_tag(_rawurlencode($pagename),"",$pagename)."</li>\n";
     }
     $out="<ul>\n".$out."</ul>\n";
   }
@@ -1704,7 +1735,7 @@ function macro_RecentChanges($formatter="",$value="") {
   else {
     $udb=new UserDB($DBInfo);
     $userinfo= $udb->getUser($user->id);
-    $bookmark= $userinfo->info[bookmark];
+    $bookmark= $userinfo->info['bookmark'];
   }
   if (!$bookmark) $bookmark=time();
 
@@ -1743,6 +1774,7 @@ function macro_RecentChanges($formatter="",$value="") {
 
   $out="";
   $ratchet_day= FALSE;
+  $br="";
   foreach ($lines as $line) {
     $parts= explode("\t", $line);
     $page_key=$parts[0];
@@ -1761,11 +1793,13 @@ function macro_RecentChanges($formatter="",$value="") {
 
     $day = date('Y-m-d', $ed_time);
     if ($use_day and $day != $ratchet_day) {
-      $out.=sprintf("<br /><font size='+1'>%s </font> <font size='-1'>[", date($DBInfo->date_fmt, $ed_time));
+      $out.=sprintf("%s<font size='+1'>%s </font> <font size='-1'>[",
+            $br, date($DBInfo->date_fmt, $ed_time));
       $out.=$formatter->link_tag($formatter->page->urlname,
                                  "?action=bookmark&amp;time=$ed_time",
                                  _("set bookmark"))."]</font><br />\n";
       $ratchet_day = $day;
+      $br="<br />";
     } else
       $day=$formatter->link_to("?action=bookmark&amp;time=$ed_time",$day);
 
@@ -1796,7 +1830,7 @@ function macro_RecentChanges($formatter="",$value="") {
         $user= $addr;
       else {
         if ($DBInfo->hasPage($user)) {
-          $user= $formatter->link_tag($user);
+          $user= $formatter->link_tag(_rawurlencode($user),"",$user);
         } else
           $user= $user;
       }
@@ -1960,7 +1994,7 @@ function macro_FullSearch($formatter="",$value="", $opts=array()) {
 EOF;
 
   if (!$needle) { # or blah blah
-     $opts[msg] = 'No search text';
+     $opts['msg'] = 'No search text';
      return $form;
   }
   $needle=_preg_search_escape($needle);
@@ -1976,7 +2010,7 @@ EOF;
   if ($opts['case']) $pattern.="i";
 
   if ($opts['backlinks']) {
-     $opts[context]=0; # turn off context-matching
+     $opts['context']=0; # turn off context-matching
      $cache=new Cache_text("pagelinks");
      foreach ($pages as $page_name) {
        $links==-1;
@@ -2011,8 +2045,8 @@ EOF;
   reset($hits);
   $idx=1;
   while (list($page_name, $count) = each($hits)) {
-    $out.= '<li>'.$formatter->link_tag($page_name,
-          "?action=highlight&amp;value=$needle",
+    $out.= '<li>'.$formatter->link_tag(_rawurlencode($page_name),
+          "?action=highlight&amp;value=$value",
           $page_name,"tabindex='$idx'");
     $out.= ' . . . . ' . $count . (($count == 1) ? ' match' : ' matches');
     $out.= $contexts[$page_name];
@@ -2021,8 +2055,8 @@ EOF;
   }
   $out.= "</ul>\n";
 
-  $opts[hits]= count($hits);
-  $opts[all]= count($pages);
+  $opts['hits']= count($hits);
+  $opts['all']= count($pages);
   return $out;
 }
 
@@ -2135,16 +2169,16 @@ function macro_TitleSearch($formatter="",$needle="",$opts=array()) {
   $out="<ul>\n";
   $idx=1;
   foreach ($hits as $pagename) {
-    if ($opts[linkto])
-      $out.= '<li>' . $formatter->link_tag($options[page],"$opts[linkto]$pagename",$pagename,"tabindex='$idx'")."</li>\n";
+    if ($opts['linkto'])
+      $out.= '<li>' . $formatter->link_to("$opts[linkto]$pagename",$pagename,"tabindex='$idx'")."</li>\n";
     else
-      $out.= '<li>' . $formatter->link_tag($pagename,"","tabindex='$idx'")."</li>\n";
+      $out.= '<li>' . $formatter->link_tag(_rawurlencode($pagename),"",$pagename,"tabindex='$idx'")."</li>\n";
     $idx++;
   }
 
   $out.="</ul>\n";
-  $opts[hits]= count($hits);
-  $opts[all]= count($pages);
+  $opts['hits']= count($hits);
+  $opts['all']= count($pages);
   return $out;
 }
 
