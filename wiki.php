@@ -2044,11 +2044,12 @@ class Formatter {
         continue; # comments
       }
 
+      $p_close='';
       if (preg_match('/^-{4,}/',$line)) {
         if ($DBInfo->auto_linebreak) $this->nobr=1; // XXX
-        if ($in_p) { $text.=$this->_div(0,&$in_div); $in_p='';}
+        if ($in_p) { $p_close=$this->_div(0,&$in_div); $in_p='';}
       } else if ($in_p == '') {
-        $text.=$this->_div(1,&$in_div);
+        $p_close=$this->_div(1,&$in_div);
         $in_p= $line;
       }
 
@@ -2212,7 +2213,7 @@ class Formatter {
 
       $line=preg_replace($this->extrarule,$this->extrarepl,$line);
 
-      $line=$close.$open.$line;
+      $line=$close.$p_close.$open.$line;
       $open="";$close="";
 
       if ($in_pre==-1) {
