@@ -10,6 +10,7 @@
 
 function processor_vim($formatter,$value,$options) {
   global $DBInfo;
+  static $jsloaded=0;
   $cache_dir=$DBInfo->upload_dir."/VimProcessor";
 
   $syntax=array("php","c","python","jsp","sh","cpp",
@@ -31,26 +32,45 @@ function processor_vim($formatter,$value,$options) {
 
   if ($extra == "number") 
     $option='+"set number" ';
+
   if ($DBInfo->vim_options)
     $option.=$DBInfo->vim_options.' ';
 
   $uniq=md5($option.$src);
+  $script='';
+  if ($DBInfo->use_linenumber) {
+    if (!$jsloaded) 
+      $script='<script type="text/javascript" src="/wiki/css/linenumber.js"></script>';
+    $script.="<script type=\"text/javascript\">
+document.write('<a href=\"#\" onClick=\"return togglenumber(\'PRE-$uniq\', 1, 1);\" \
+                class=\"codenumbers\">Toggle line numbers<\/a>');
+</script>";
+  }
+
+  $stag="<pre class='wikiSyntax' id='PRE-$uniq' style='font-family:FixedSys,monospace;color:#c0c0c0;background-color:black'>\n";
+  $etag="</pre>\n";
+
   if (!file_exists($cache_dir)) {
     umask(000);
     mkdir($cache_dir,0777);
     umask(022);
   }
 
-  if (file_exists($cache_dir."/$uniq".".html") && !$formatter->refresh) {
+  if (file_exists($cache_dir."/$uniq".".html") && !$formatter->refresh && !$formatter->preview) {
     $out = "";
     $fp=fopen($cache_dir."/$uniq".".html","r");
     while (!feof($fp)) $out .= fread($fp, 1024);
-    return $out;
+    return $script.$stag.$out.$etag;
     #return join('',file($cache_dir."/$uniq".".html"));
   }
 
-  if (!empty($DBInfo->vim_nocheck) and !in_array($type,$syntax)) 
-    return "<pre class='code'>\n$line\n$src\n</pre>\n";
+  if (!empty($DBInfo->vim_nocheck) and !in_array($type,$syntax)) {
+    $lines=explode("\n",$line."\n".$src);
+    if ($lines[sizeof($lines)-1]=="") array_pop($lines);
+    $src="<span class=\"line\">".
+      implode("</span>\n<span class=\"line\">",$lines)."</span>";
+    return $script."<pre class='wiki' id='PRE-$uniq'>\n$src</pre>\n";
+  }
 
   if(getenv("OS")=="Windows_NT") {
     $tohtml='\%VIMRUNTIME\%\\syntax\\2html.vim';
@@ -91,14 +111,15 @@ function processor_vim($formatter,$value,$options) {
   }
   unlink($tmpf);
 
-  $out=preg_replace("/<title>.*title>|<\/?head>|<\/?html>|<meta.*>|<\/?body.*>/","", $out);
-  $out=preg_replace("/<pre>/","<pre class='wikiSyntax' style='font-family:FixedSys,monospace;color:#c0c0c0;background-color:black'>", $out);
-#  $out=preg_replace("/<\/pre>/","</span></pre>", $out);
+  #$out=preg_replace("/<title.*title>|<\/?head>|<\/?html>|<meta.*>|<\/?body.*>/","", $out);
+  $out=preg_replace("/(^(\s|\S)*<pre>\n|\n<\/pre>(\s|\S)*$)/","",$out);
+  $lines=explode("\n",$out);
+  $out="<span class=\"line\">".
+    implode("</span>\n<span class=\"line\">",$lines)."</span>\n";
   $fp=fopen($cache_dir."/$uniq".".html","w");
   fwrite($fp,$out);
   fclose($fp);
-
-  return $out;
+  return $script.$stag.$out.$etag;
 }
 
 // vim:et:sts=2:
