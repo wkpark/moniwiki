@@ -3012,19 +3012,21 @@ MSG;
       if ($this->group) {
         $group=strtok($pagename,'~');
         $text=strtok('');
-        $pagename=$group.'.'.$text;
+        #$pagename=$group.'.'.$text;
+        #$pagename='[wiki:'.$pagename.' '.$text.']';
         $main=strtok($text,'/');
       }
       if ($group)
         # represent: Main     > MoniWiki    > WikiName
         # real link: MoniWiki > Ko~MoniWiki > Ko~MoniWiki/WikiName
-        $origin=$this->word_repl('"'.$main.'"',_("Main"),'',1);
+        $origin=$this->word_repl('"'.$main.'"',_("Main"),'',1,0);
       else
         # represent: Home       > WikiName > SubPage
         # real link: $frontpage > WikiName > WikiName/SubPage
-        $origin=$this->word_repl('"'.$DBInfo->frontpage.'"',$parent,'',1);
+        $origin=$this->word_repl('"'.$DBInfo->frontpage.'"',$parent,'',1,0);
       $parent='';
 
+      $text=strtok($text,'/');
       $key=strtok($pagename,'/');
       while($key !== false) {
         if ($parent) $parent.='/'.$key;
@@ -3035,9 +3037,9 @@ MSG;
         $okey=$key;
         $key=strtok('/');
         if ($key)
-          $origin.=$DBInfo->arrow.$this->word_repl('"'.$parent.'"','','',1,0);
+          $origin.=$DBInfo->arrow.$this->word_repl('"'.$parent.'"',$okey,'',1);
         else
-          $origin.=$DBInfo->arrow.$this->word_repl('"'.$parent.'"',$okey,'',1,0);
+          $origin.=$DBInfo->arrow.$this->word_repl('"'.$parent.'"',$okey,'',1);
       }
       # reset pagelinks
       $this->pagelinks=array();
