@@ -581,21 +581,21 @@ function do_post_DeleteFile($formatter,$options) {
   return;
 }
 
-function do_DeletePage($formatter,$options) {
+function do_post_DeletePage($formatter,$options) {
   global $DBInfo;
   
   $page = $DBInfo->getPage($options['page']);
 
-  #print $options['value'];
+  #print $options['name'];
   #print $options['page'];
-  if (stripslashes($options['value']) == $options['page']) {
+  if (stripslashes($options['name']) == $options['page']) {
     $DBInfo->deletePage($page,$options);
     $title = sprintf(_("\"%s\" is deleted !"), $page->name);
     $formatter->send_header("",$options);
     $formatter->send_title($title,"",$options);
     $formatter->send_footer();
     return;
-  } else if ($options['value']) {
+  } else if ($options['name']) {
     $options['msg'] = _("Please delete this file manually.");
   }
   $title = sprintf(_("Delete \"%s\" ?"), $page->name);
@@ -609,7 +609,7 @@ Comment: <input name='comment' size='80' value='' /><br />\n";
 Only WikiMaster can delete this page<br />\n";
   print "
     <input type='hidden' name='action' value='DeletePage' />
-    <input type='hidden' name='value' value='$options[page]' />
+    <input type='hidden' name='name' value='$options[page]' />
     <input type='submit' value='Delete page' />
     </form>";
 #  $formatter->send_page();
