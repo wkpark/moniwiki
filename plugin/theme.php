@@ -32,7 +32,7 @@ function do_theme($formatter,$options) {
         setcookie("MONI_CSS",$options[css_url],time()+60*60*24*30,
                                get_scriptname());
         $title="Theme is changed";
-        $msg="OK";
+        $msg="Goto ".$formatter->link_repl("UserPreferences");
       } else if ($options[save] and $options[id]!='Anonymous') {
         # save profile
         $udb=new UserDB($DBInfo);
