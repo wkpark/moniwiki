@@ -22,20 +22,28 @@ function do_ImportUrl($formatter,$options) {
 #  fix_url('http://hello.com/',$dummy);
 #  fix_url('http://hello.com',$dummy);
 
-  $out= strip_tags($html_data, '<a><b><i><u><h1><h2><h3><h4><h5><li><img>');
-  $out= preg_replace("/<img\s*[^>]*src=['\"]((http|ftp)[^'\"]+)['\"][^>]*>/",
+  $out= strip_tags($html_data,'<pre><a><b><i><u><h1><h2><h3><h4><h5><li><img>');
+  $out= preg_replace("/<img\s*[^>]*src=['\"]((http|ftp)[^'\"]+)['\"][^>]*>/i",
     "\\1",$out);
-  $out = preg_replace("/<img\s*[^>]*src=['\"]([^'\"]+)['\"][^>]*>/e",
+  $out = preg_replace("/<img\s*[^>]*src=['\"]([^'\"]+)['\"][^>]*>/ie",
     "fix_url('$value','\\1')",$out);
   $out= preg_replace("/<b>([^<]+)<\/b>/i","'''\\1'''",$out);
   $out= preg_replace("/<i>([^<]+)<\/i>/i","''\\1''",$out);
   $out= preg_replace("/<u>([^<]+)<\/u>/i","__\\1__",$out);
   $out= preg_replace("/<li>/i"," * \\1",$out);
   $out= preg_replace("/<\/li>/i","",$out);
-  $out= preg_replace("/<h(\d)>([^<]+)<\/h\d>/ie",
-    "str_repeat('=', \\1).' \\2 '.str_repeat('=', \\1)",$out);
+  $out= preg_replace("/&quot;/",'"',$out);
+  $out= preg_replace("/<pre\s*[^>]*>/i","{{{\n",$out);
+  $out= preg_replace("/<\/pre>/i","}}}\n",$out);
+
+  $out= preg_replace("/<a\s*id=[^>]+>[^<]*<\/a>/i","",$out);
+  $out= preg_replace("/<a\s*[^>]*href=['\"]#[^>]+>[^<]*<\/a>/i","",$out);
+  $out= preg_replace("/<a\s*[^>]*href=['\"][^>]+>\?<\/a>/i","",$out);
+
   $out= preg_replace("/<a\s*[^>]*href=['\"]([^'\"]+)['\"][^>]*>([^<]+)<\/a>/ie",
-    "'['.fix_url('$value','\\1').' \\2]'",$out);
+    "'['.fix_url('$value','\\1').'\\2]'",$out);
+  $out= preg_replace("/<h(\d)[^>]*>(?:\d+\.?\d*)*([^<]+)<\/h\d>/ie",
+    "str_repeat('=', \\1).' \\2 '.str_repeat('=', \\1)",$out);
   $out= preg_replace("/\r/","",$out);
   $out= preg_replace("/\n\s+/","\n",$out);
   $formatter->send_header("content-type: text/plain",$options);
@@ -75,26 +83,36 @@ function fix_url($base_url,$url) {
   if (!$base_url) $path=array(); // reset
   else if (!count($path)) $path=prep_url($base_url);
 
+  if (substr($url,0,7)=='mailto:') return $url;
+
+  $p=strpos($url,'://');
+  if ($p !== false) {
+    $type=substr($url,0,$p);
+    if ($type == 'http' or $type == 'ftp') return $url.' ';
+  }
+
   if ($url[0] == '/') {
-    return $path[0].$url;
+    if (substr($url,1,5)=='imgs/') return '';
+    else if (substr($url,1,8)=='wiki.php') return '';
+    return $path[0].$url.' ';
   } else if (preg_match('@^(\./)+@',$url)) {
     // base_url: http://foo.bar.com/hello/world/
     // img url: ./imgs/hello.gif
     $url = preg_replace('@^(\./)+@','',$url);
-    return end($path).'/'.$url;
+    return end($path).'/'.$url.' ';
   } else if (preg_match('@^(\.\./)+@',$url,$match)) {
     // base_url: http://foo.bar.com/hello/world/
     // img url: ../../imgs/hello.gif
     $url = preg_replace('@^(\.\./)+@','',$url);
     $sz=sizeof(explode('/',$match[1]));
-    if ($sz > sizeof($path)) return $path[0].'/'.$url;
+    if ($sz > sizeof($path)) return $path[0].'/'.$url.' ';
     else {
       end($path);
       for ($j=1; $j<$sz;$j++) prev($path);
-      return current($path).'/'.$url;
+      return current($path).'/'.$url.' ';
     }
   }
-  return end($path).'/'.$url;
+  return end($path).'/'.$url.' ';
 }
 
 // vim:et:sts=2:
