@@ -94,15 +94,13 @@ function getProcessor($pro_name) {
     while ($file= readdir($handle)) {
       if (is_dir($dir."/plugin/processor/$file")) continue;
       $name= substr($file,0,-4);
-      if (($tname=$DBInfo->processors[$name])) {
-        if (!file_exists("plugin/processor/$tname.php")) $name='plain';
-        else $name=$DBInfo->processors[$name];
-      }
       $processors[strtolower($name)]= $name;
     }
   }
 
-  #print_r($processors);
+  if (is_array($DBInfo->processors))
+    $processors=array_merge($processors,$DBInfo->processors);
+
   return $processors[strtolower($pro_name)];
 }
 
@@ -1192,10 +1190,10 @@ class Formatter {
     $this->themedir= dirname(__FILE__);
     $this->set_theme($options['theme']);
 
-    $this->ex_target='';
-    $this->ex_bra="<span class='externalLink'>(";
-    $this->ex_ket=")</span>";
-    if ($DBInfo->external_target) $this->ex_target='target="_blank" ';
+    $this->external_on=1;
+    $this->external_target='';
+    if ($DBInfo->external_target)
+      $this->external_target='target="'.$DBInfo->external_target.'" ';
 
     #$this->baserule=array("/<([^\s][^>]*)>/","/`([^`]*)`/",
     $this->baserule=array("/<([^\s<>])/","/`([^`' ]+)'/","/(?<!`)`([^`]*)`/",
@@ -1456,7 +1454,7 @@ class Formatter {
       if ($url[0] == '^') {
         $attr.=' target="_blank" ';
         $url=substr($url,1);
-        $externalicon=$this->icon['popup'];
+        $external_icon=$this->icon['popup'];
       }
       if ($force or strpos($url," ")) { # have a space ?
         list($url,$text)=explode(" ",$url,2);
@@ -1465,17 +1463,27 @@ class Formatter {
         else {
           if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
             $text=str_replace('&','&amp;',$text);
-            return "<a href='$link' $attr $this->ex_target title='$url'><img border='0' alt='$url' src='$text' /></a>";
+            return "<a href='$link' $attr $this->external_target title='$url'><img border='0' alt='$url' src='$text' /></a>";
           }
-          $external=$this->ex_bra.$url.$this->ex_ket;
+          if ($this->external_on)
+            $external_link='<span class="externalLink">('.$url.')</span>';
         }
         list($icon,$dummy)=explode(":",$url,2);
-        return "<img align='middle' alt='[$icon]' src='".$this->imgs_dir."/$icon.png' />". "<a class='externalLink' $attr $this->ex_target href='$link'>$text</a>".$externalicon;
+        return "<img align='middle' alt='[$icon]' src='".$this->imgs_dir."/$icon.png' />". "<a class='externalLink' $attr $this->ex_target href='$link'>$text</a>".$external_icon.$external_link;
       } # have no space
       $link=str_replace('&','&amp;',$url);
       if (preg_match("/^(http|https|ftp)/",$url)) {
-        if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$url))
-          return "<img alt='$link' src='$url' />";
+        if (preg_match("/(^.*\.(png|gif|jpeg|jpg))(([\?&]([a-z]+=[0-9a-z]+))*)$/i",$url,$match)) {
+          $url=$match[1];
+          $attrs=explode('&',substr($match[3],1));
+          foreach ($attrs as $arg) {
+            $name=strtok($arg,'=');
+            $val=strtok(' ');
+            if ($name and $val) $attr.=$name.'="'.$val.'" ';
+            if ($name == 'align') $attr.='class="img'.ucfirst($val).'" ';
+          }
+          return "<img alt='$link' $attr src='$url' />";
+        }
       }
       return "<a class='externalLink' $attr href='$link' $this->ex_target>$url</a>";
     } else {
