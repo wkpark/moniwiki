@@ -85,7 +85,7 @@ EOF;
     if ($count) {
       $hits[$page_name] = $count;
       # search matching contexts
-      $contexts[$page_name] = find_needle($body,$needle,$opts['context']);
+      $contexts[$page_name] = find_needle($body,$needle,'',$opts['context']);
     }
   }
 
@@ -96,7 +96,7 @@ EOF;
   $idx=1;
   while (list($page_name, $count) = each($hits)) {
     $out.= '<li>'.$formatter->link_tag(_rawurlencode($page_name),
-          "?action=highlight&amp;value="._urlencode($value),
+          "?action=highlight&amp;value="._urlencode($needle),
           $page_name,"tabindex='$idx'");
     $out.= ' . . . . ' . $count . (($count == 1) ? ' match' : ' matches');
     $out.= $contexts[$page_name];
