@@ -8,19 +8,18 @@
 function do_uploadfile($formatter,$options) {
   global $DBInfo;
 
-  # replace space and ':' strtr()
-  $files=array();
   if (is_array($_FILES)) {
-    if (is_array($_FILES['upfile']['name'])) {
-      $options['multiform']=sizeof($_FILES['upfile']['name']);
+    if (($options['multiform'] > 1) or is_array($_FILES['upfile']['name'])) {
+      $options['multiform']=$options['multiform'] ?
+         $options['multiform']:sizeof($_FILES['upfile']['name']);
       $count=$options['multiform'];
       $files=&$_FILES;
     } else {
       $count=1;
       $files['upfile']['name'][]=&$_FILES['upfile']['name'];
       $files['upfile']['tmp_name'][]=&$_FILES['upfile']['tmp_name'];
-      $options['rename'][]=$options['rename'];
-      $options['replace'][]=$options['replace'];
+      $options['rename'][0]=$options['rename'];
+      $options['replace'][0]=$options['replace'];
     }
   } else
     $files=array();
@@ -52,8 +51,12 @@ function do_uploadfile($formatter,$options) {
     umask(02);
   }
   $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
+  $comment.="File ";
 
   for ($j=0;$j<$count;$j++) {
+
+  # replace space and ':' strtr()
+  $files=array();
   $upfilename=str_replace(" ","_",$files['upfile']['name'][$j]);
   $upfilename=str_replace(":","_",$upfilename);
 
@@ -74,7 +77,7 @@ function do_uploadfile($formatter,$options) {
   $filename=$upfilename;
   if ($options['rename'][$j]) {
     # XXX
-    $temp=explode("/",stripslashes($options['rename']));
+    $temp=explode("/",stripslashes($options['rename'][$j]));
     $upfilename= $temp[count($temp)-1];
 
     preg_match("/(.*)\.([a-z0-9]{1,4})$/i",$upfilename,$tname);
@@ -108,7 +111,7 @@ function do_uploadfile($formatter,$options) {
 
   chmod($newfile_path,0644);
 
-  $comment.="File '$upfilename' uploaded";
+  $comment.="'$upfilename' ";
 
   $title.=sprintf(_("File \"%s\" is uploaded successfully"),$upfilename).'<br />';
   if ($key == 'UploadFile')
@@ -120,6 +123,7 @@ function do_uploadfile($formatter,$options) {
 
   } // multiple upload
 
+  $comment.="uploaded";
   $DBInfo->addLogEntry($key, $REMOTE_ADDR,$comment,"UPLOAD");
   
   $formatter->send_header("",$options);
@@ -136,15 +140,21 @@ function do_uploadfile($formatter,$options) {
 }
 
 function macro_UploadFile($formatter,$value='',$options='') {
+  $use_multi=1;
+  $multiform='';
   if ($options['rename'] and !is_array($options['rename'])) {
-    $rename=stripslashes($options['rename']);
-    $extra="<input name='rename' value='$rename' />"._(": Rename")."<br />";
+    // rename option used by "attachment:" and it does not use multiple form.
+    $rename=$options['rename'];
+    $options['rename']=array();
+    $options['rename'][0]=$rename;
+    $use_multi=0;
   }
-
-  $multiform="<select name='multiform' />\n";
-  for ($i=2;$i<=10;$i++)
-    $multiform.="<option value='$i'>$i</option>\n";
-  $multiform.="</select><input type='submit' value='Multiple upload form' />\n";
+  if ($use_multi) {
+    $multiform="<select name='multiform' />\n";
+    for ($i=2;$i<=10;$i++)
+      $multiform.="<option value='$i'>$i</option>\n";
+    $multiform.="</select><input type='submit' value='Multi upload form' />\n";
+  }
 
   $url=$formatter->link_url($formatter->page->urlname);
 
@@ -154,6 +164,10 @@ function macro_UploadFile($formatter,$value='',$options='') {
   $form.="<input type='hidden' name='action' value='UploadFile' />\n";
   for ($j=0;$j<$count;$j++) {
     if ($count > 1) $suffix="[$j]";
+    if ($options['rename'][$j]) {
+      $rename=stripslashes($options['rename'][$j]);
+      $extra="<input name='rename$suffix' value='$rename' />"._(": Rename")."<br />";
+    } else $extra='';
     $form.= <<<EOF
    <input type='file' name='upfile$suffix' size='30' />
 EOF;
@@ -168,12 +182,14 @@ EOF;
   if ($count > 1) $form.="<input type='submit' value='Upload files' />";
   $form.="</form>\n";
 
-  $multiform= <<<EOF
+  if ($use_multi) {
+    $multiform= <<<EOF
 <form enctype="multipart/form-data" method='post' action='$url'>
    <input type='hidden' name='action' value='UploadFile' />
    $multiform
 </form>
 EOF;
+  }
 
   if (!in_array('UploadedFiles',$formatter->actions))
     $formatter->actions[]='UploadedFiles';

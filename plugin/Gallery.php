@@ -62,6 +62,8 @@ function macro_Gallery($formatter,$value,$options='') {
     $formatter->actions[]='UploadedFiles';
   }
 
+  $default_width=$DBInfo->gallery_img_width ? $DBInfo->gallery_img_width:600;
+
   if ($value) {
     $key=$DBInfo->pageToKeyname($value);
     if ($key != $value)
@@ -108,7 +110,7 @@ function macro_Gallery($formatter,$value,$options='') {
     if ($options['id']=='Anonymous') $name=$_SERVER['REMOTE_ADDR'];
     else $name=$options['id'];
     if ($options['name']) $name=$options['name'];
-    $date=date("@ Y-m-d");
+    $date=date("(Y-m-d H:i:s) ");
 
     $comment=stripslashes($options['comment']);
     $comment=str_replace("\r","",$comment);
@@ -126,6 +128,7 @@ function macro_Gallery($formatter,$value,$options='') {
     $comments=array();
     $upfiles[$file]=$mtime;
     $comments[$file]=$comment;
+    $selected=1;
   }
 
   $mtime=file_exists($dir."/list.txt") ? filemtime($dir."/list.txt"):0;
@@ -160,7 +163,7 @@ function macro_Gallery($formatter,$value,$options='') {
   if (!$prefix) $prefix=$DBInfo->url_prefix."/".$dir."/";
 
   $col=3;
-  $width=150;
+  $width=$selected ? $default_width:150;
   $perpage=$col*4;
 
   $pages= intval(sizeof($upfiles) / $perpage);
@@ -177,26 +180,25 @@ function macro_Gallery($formatter,$value,$options='') {
 
   if (!file_exists($dir."/thumbnails")) mkdir($dir."/thumbnails",0777);
 
-
   while (list($file,$mtime) = each ($upfiles)) {
     $size=filesize($dir."/".$file);
     $id=rawurlencode($file);
-    $link=$prefix.$id;
+    $linksrc=$prefix.$id;
+    $link=$selected ? $prefix.$id:$formatter->link_url($formatter->page->urlname,"?action=gallery&amp;value=$id");
     $date=date("Y-m-d",$mtime);
     if (preg_match("/\.(jpg|jpeg|gif|png)$/i",$file)) {
       if ($DBInfo->use_covert_thumbs and !file_exists($dir."/thumbnails/".$file)) {
         system("convert -scale ".$width." ".$dir."/".$file." ".$dir."/thumbnails/".$file);
       }
-      if (file_exists($dir."/thumbnails/".$file)) {
+      if (!$selected and file_exists($dir."/thumbnails/".$file)) {
         $thumb=$prefix."thumbnails/".rawurlencode($file);
         $object="<img src='$thumb' alt='$file' />";
       } else {
-        $object="<img src='$link' width='$width' alt='$file' />";
+        $object="<img src='$linksrc' width='$width' alt='$file' />";
       }
     }
     else
       $object=$file;
-
 
     $unit=array('Bytes','KB','MB','GB','TB');
     $i=0;
@@ -210,7 +212,7 @@ function macro_Gallery($formatter,$value,$options='') {
 #    $size=round($size,2).' '.$unit[$i];
 
     $comment='';
-    $comment_btn=_("comment");
+    $comment_btn=_("add comment");
     if ($comments[$file] != '' and $options['value']) {
       $comment=$comments[$file];
       $comment=str_replace("\\n","\n",$comment);
@@ -252,7 +254,6 @@ function do_gallery($formatter,$options='') {
 
   if ($options['admin'] and $options['comments'] and !$DBInfo->security->is_valid_password($options['passwd'],$options)) {
     $title= sprintf('Invalid password !');
-    $formatter->send_header("",$options);
     $formatter->send_title($title);
     $formatter->send_footer();
     return;
@@ -260,9 +261,20 @@ function do_gallery($formatter,$options='') {
 
   $ret=macro_Gallery($formatter,'',&$options);
 
+  if ($options['passwd'] and $options['comments']) {
+    $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
+    $options['title']=_("Comments are edited");
+  } else if ($options['comment']) {
+    $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
+    $options['title']=_("Comments is added");
+  }
+
   if (!$options['value']) {
     $formatter->send_title("","",$options);
     print $ret;
+  } else
+  if ($options['comment'] or ($options['comments'] and $options['passwd'])) {
+    $formatter->send_title("","",$options);
   } else
   if ($options['comments'] and $options['admin'] and !$options['passwd']) {
     // admin form
@@ -286,10 +298,6 @@ password: <input type='password' name='passwd' />
 </form>
 FORM2;
     print $form;
-
-  } else if ($options['passwd'] and $options['comments']) {
-    $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
-    $formatter->send_title(_("Comments are edited "),"",$options);
   } else if (!$options['comment']) {
     // add comment form
     $formatter->send_title("","",$options);
@@ -311,10 +319,10 @@ FORM;
 </form>
 FORM2;
     print $form;
-
   }
 
   $formatter->send_footer("",$options);
+  return;
 }
 
 ?>
