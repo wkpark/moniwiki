@@ -60,7 +60,8 @@ function processor_blog($formatter,$value="",$options) {
       } else
         $anchor= date("Ymd",$time);
       if ($date_anchor != $anchor) {
-        $datetag= "<div class='blog-date'>".date("M d, Y",$time)." <a name='$anchor'></a><a class='purple' href='#$anchor'>$formatter->purple_icon</a></div>";
+        $anchor_date_fmt=$DBInfo->date_fmt_blog;
+        $datetag= "<div class='blog-date'>".date($anchor_date_fmt,$time)." <a name='$anchor'></a><a class='perma' href='#$anchor'>$formatter->perma_icon</a></div>";
         $date_anchor= $anchor;
       }
     }
@@ -116,10 +117,10 @@ function processor_blog($formatter,$value="",$options) {
     #$tag=normalize($title);
     $tag=$md5sum;
     if ($tag[0]=='%') $tag="n".$tag;
-    $purple="<a class='purple' href='#$tag'>$formatter->purple_icon</a>";
+    $perma="<a class='perma' href='#$tag'>$formatter->perma_icon</a>";
     $title=preg_replace("/(".$formatter->wordrule.")/e",
                         "\$formatter->link_repl('\\1')",$title);
-    $out.="<div class='blog-title'><a name='$tag'></a>$title $purple</div>\n";
+    $out.="<div class='blog-title'><a name='$tag'></a>$title $perma</div>\n";
   }
   $out.="<div class='blog-user'>Submitted by $user $date</div>\n".
     "<div class='blog-content'>$msg</div>$comments$action\n".

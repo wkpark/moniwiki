@@ -2,7 +2,6 @@
 // Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a RecentChanges plugin for the MoniWiki
-// vim:et:ts=2:
 //
 // $Id$
 
@@ -30,7 +29,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
   if ($options['target']) $target="target='$options[target]'";
 
-  $date_fmt='D d M Y';
+  #$date_fmt='D d M Y';
+  $date_fmt=$DBInfo->date_fmt_rc;
 
   preg_match("/(\d+)?(?:\s*,\s*)?(.*)?$/",$value,$match);
   if ($match) {
@@ -45,7 +45,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     if (in_array ("showhost", $args)) $showhost=1;
     if (in_array ("comment", $args)) $comment=1;
     if (in_array ("nobookmark", $args)) $nobookmark=1;
-    if (!in_array ("nopurple", $args)) $purple_icon=$formatter->purple_icon;
+    if (!in_array ("noperma", $args)) $perma_icon=$formatter->perma_icon;
     if (in_array ("simple", $args)) {
       $use_day=0;
       $template=
@@ -145,9 +145,10 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
     $day = date('Y-m-d', $ed_time);
     if ($use_day and $day != $ratchet_day) {
-      $purple="<a name='$day'></a><a class='purple' href='#$day'>$purple_icon</a>";
+      $tag=str_replace('-','',$day);
+      $perma="<a name='$tag'></a><a class='perma' href='#$tag'>$perma_icon</a>";
       $out.=$cat0;
-      $out.=sprintf("%s<font class='rc-date' size='+1'>%s </font>$purple<font class='rc-bookmark' size='-1'>",
+      $out.=sprintf("%s<font class='rc-date' size='+1'>%s </font>$perma<font class='rc-bookmark' size='-1'>",
             $br, date($date_fmt, $ed_time));
       if (!$nobookmark)
         $out.='['.$formatter->link_tag($formatter->page->urlname,
@@ -205,4 +206,5 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   }
   return $out.$cat0;
 }
+// vim:et:sts=2:
 ?>

@@ -346,7 +346,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
   if (in_array('summary',$opts))
     $template='$out="$bullet<div class=\"blog-summary\"><div class=\"blog-title\"><a name=\"$tag\"></a>'.
       '<a href=\"$url#$tag\">$title</a> <a class=\"puple\" href=\"#$tag\">'.
-      addslashes($formatter->purple_icon).
+      addslashes($formatter->perma_icon).
       '</a></div><span class=\"blog-user\">';
   if (!in_array('nouser',$opts))
     $template.='by $user ';
@@ -390,9 +390,10 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
     if ($summary) {
       $anchor= date('Ymd',$time);
       if ($date_anchor != $anchor) {
-        $datetag= '<div class="blog-date">'.date('M d, Y',$time).
-          ' <a name="'.$anchor.'"></a><a class="purple" href="#'.$anchor.'">'.
-          $formatter->purple_icon.'</a></div>';
+        $date_anchor_fmt=$DBInfo->date_fmt_blog;
+        $datetag= '<div class="blog-date">'.date($date_anchor_fmt,$time).
+          ' <a name="'.$anchor.'"></a><a class="perma" href="#'.$anchor.'">'.
+          $formatter->perma_icon.'</a></div>';
         $date_anchor= $anchor;
       }
       $p=new WikiPage($page);
