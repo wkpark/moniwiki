@@ -381,7 +381,6 @@ function getConfig($configfile, $options=array()) {
     return array();
   } 
 
-  #while (list($key,$val)=each($options)) eval("\$$key=\"$val\";");
   foreach ($options as $key=>$val) $$key=$val;
   unset($key,$val,$options);
   include($configfile);
@@ -1491,7 +1490,6 @@ class Formatter {
       else
         return "[[".$name."]]";
     }
-    #eval("\$ret=macro_$name(&\$this,\$option);");
     $ret=call_user_func("macro_$name",&$this,$option);
     return $ret;
   }
@@ -1594,14 +1592,9 @@ class Formatter {
   function send_page($body="",$options="") {
     global $DBInfo;
 
-    #if(!$this->cache->exists($this->page->name)or isset($options['pagelinks']))
-    #  $this->gen_pagelinks=1;
-
     if ($body) {
       $pi=$this->get_instructions(&$body);
       if ($pi['#format']) {
-        #eval("\$out=processor_".$pi['#format']."(&\$this,\$body,\$options);");
-        #print $out;
         print call_user_func("processor_".$pi['#format'],&$this,$body,$options);
         return;
       }
@@ -1612,8 +1605,6 @@ class Formatter {
       $this->pi=$pi;
       if ($pi['#format']) {
         print call_user_func("processor_".$pi['#format'],&$this,$body,$options);
-        #eval("\$out=processor_".$pi['#format']."(&\$this,\$body,\$options);");
-        #print $out;
         return;
       }
 
@@ -1825,7 +1816,6 @@ class Formatter {
          $in_pre=0;
          if ($processor) {
            $value=$this->pre_line;
-           #eval("\$out=processor_$processor(&\$this,\$value,\$options);");
            $out= call_user_func("processor_$processor",&$this,$value,$options);
            $line=$out.$line;
          } else if ($in_quote) {
@@ -2230,9 +2220,7 @@ pre.wiki {
   color:#FFD700; /* gold */
 }
 
-textarea.wiki {
-  font-family:Georgia,monotype,lucida,fixed;font-size:14px;
-}
+textarea.wiki { width:100%; }
 
 pre.quote {
   padding-left:6px;
@@ -2547,7 +2535,7 @@ MSG;
     $summary_msg=_("Summary of Change");
     print <<<EOS
 <textarea class="wiki" id="content" wrap="virtual" name="savetext"
- rows="$rows" cols="$cols" style="width:100%">$raw_body</textarea>
+ rows="$rows" cols="$cols" class="wiki">$raw_body</textarea><br />
 $summary_msg: <input name="comment" size="70" maxlength="70" style="width:200" /><br />
 <input type="hidden" name="action" value="savepage" />
 <input type="hidden" name="datestamp" value="$datestamp">
@@ -2790,7 +2778,6 @@ if ($pagename) {
         $options=array_merge($_POST,$options);
       else
         $options=array_merge($_GET,$options);
-      #eval("do_".$action."(\$formatter,\$options);");
       call_user_func("do_$action",$formatter,$options);
       return;
     } else if (function_exists("do_post_".$action)) {
@@ -2799,7 +2786,6 @@ if ($pagename) {
       else { # do_post_* set some primary variables as $options
         $options['value']=$_GET['value'];
       }
-      #eval("do_post_".$action."(\$formatter,\$options);");
       call_user_func("do_post_$action",$formatter,$options);
       return;
     }
