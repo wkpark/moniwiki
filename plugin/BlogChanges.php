@@ -140,25 +140,6 @@ class Blog_cache {
     $entries=array();
     $logs=array();
 
-/*
-    if ($DBInfo->use_trackback) {
-      #read trackbacks and set entry counter
-      $cache= new Cache_text('trackback');
-      if ($cache->exists($formatter->page->name)) {
-        $trackback_raw=$cache->fetch($formatter->page->name);
-
-        $trackbacks=explode("\n",$trackback_raw);
-        foreach ($trackbacks as $trackback) {
-          list($dummy,$entry,$extra)=explode("\t",$trackback);
-          if ($entry) {
-            if($formatter->trackback_list[$entry]) $formatter->trackback_list[$entry]++;
-            else $formatter->trackback_list[$entry]=1;
-          }
-        }
-      }
-    }
-*/
-
     foreach ($blogs as $blog) {
       $pagename=$DBInfo->keyToPagename($blog);
       $pageurl=_urlencode($pagename);
@@ -308,6 +289,29 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
     $logs=Blog_cache::get_simple($blogs,$options);
   usort($logs,'BlogCompare');
 
+  // get the number of trackbacks
+  $trackback_list=array();
+  if ($DBInfo->use_trackback) {
+    #read trackbacks and set entry counter
+    $cache= new Cache_text('trackback');
+    foreach ($blogs as $blog) {
+      if ($cache->exists($blog)) {
+        $trackback_raw=$cache->fetch($blog);
+
+        $trackbacks=explode("\n",$trackback_raw);
+        foreach ($trackbacks as $trackback) {
+          list($dummy,$entry,$extra)=explode("\t",$trackback);
+          if ($entry) {
+            if($trackback_list[$blog][$entry])
+              $trackback_list[$blog][$entry]++;
+            else
+            $trackback_list[$blog]=array($entry=>1);
+          }
+        }
+      }
+    }
+  }
+
   if (!$options['date'] or !preg_match('/^\d{4}-?\d{2}$/',$options['date']))
     $date=date('Ym');
 
@@ -406,9 +410,17 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
           $add_button=_("Add comment");
         $add_button=sprintf($add_button,$commentcount);
         $btn= $formatter->link_tag(_urlencode($page),"?action=blog&amp;value=$tag",$add_button);
-        if (getPlugin('SendPing'))
+
+        if ($DBInfo->use_trackback) {
+          if (isset($trackback_list[$page][$tag]))
+            $counter=' ('.$trackback_list[$page][$tag].')';
+          else
+            $counter='';
+
           $btn.= ' | '.$formatter->link_tag(_urlencode($page),"?action=trackback&amp;value=$tag",_("track back").$counter);
+        }
         $btn="<div class='blog-action'>&raquo; ".$btn."</div>\n";
+
       } else
         $btn='';
     }
