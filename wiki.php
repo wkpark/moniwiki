@@ -66,6 +66,7 @@ function getPlugin($pluginname) {
     $name= substr($file,0,-4);
     $plugins[strtolower($name)]= $name;
   }
+
   return $plugins[strtolower($pluginname)];
 }
 
@@ -693,6 +694,7 @@ class WikiDB {
 
   function addLogEntry($page_name, $remote_name,$comment,$action="SAVE") {
     $user=new User();
+    $comment=strtr($comment,"\t"," ");
     $fp_editlog = fopen($this->editlog_name, 'a+');
     $time= time();
     $host= gethostbyaddr($remote_name);
@@ -791,32 +793,50 @@ class WikiDB {
     return 0;
   }
 
-  function deletePage($page,$comment="") {
+  function deletePage($page,$options='') {
     $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
+
+    $comment=$options['comment'];
 
     $keyname=$this->_getPageKey($page->name);
 
     $delete=@unlink($this->text_dir."/$keyname");
+    if ($options['history']) @unlink($this->text_dir."/RCS/$keyname,v");
     $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
 
     $handle= opendir($this->cache_dir);
     while ($file= readdir($handle)) {
-      if (is_dir("$this->cache_dir/$file")) {
+      if ($file[0] != '.' and is_dir("$this->cache_dir/$file")) {
         $cache= new Cache_text($file);
         $cache->remove($page->name);
+
+        # blog cache
+        if ($file == 'blog') {
+          $handle2= opendir("$this->cache_dir/$file");
+          while ($fcache= readdir($handle2)) {
+            #print $keyname.';'.$fcache."\n";
+            if (preg_match("/\d+_2e$keyname$/",$fcache))
+              unlink("$this->cache_dir/$file/$fcache");
+          }
+        } # for blog cache
       }
     }
   }
 
-  function renamePage($pagename,$new) {
+  function renamePage($pagename,$new,$options='') {
     $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
 
     $okey=$this->getPageKey($pagename);
     $nkey=$this->getPageKey($new);
+    $keyname=$this->_getPageKey($new);
 
     rename($okey,$nkey);
+    if ($options['history']) {
+      $oname=$this->_getPageKey($pagename);
+      rename($this->text_dir."/RCS/$oname,v",$this->text_dir."/RCS/$keyname,v");
+    }
     $comment=sprintf(_("Rename %s to %s"),$pagename,$new);
-    $this->addLogEntry($new, $REMOTE_ADDR,$comment,"SAVE");
+    $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
   }
 
   function _isWritable($pagename) {
@@ -918,7 +938,7 @@ class Cache_text {
   function remove($pagename) {
     $key=$this->getKey($pagename);
     if ($this->_exists($key))
-       unlink($key);
+      unlink($key);
   }
 }
 
@@ -1581,9 +1601,13 @@ class Formatter {
     return "$close$open<h$dep><a id='s$prefix-$num' name='s$prefix-$num'></a> $head$purple</h$dep>";
   }
 
-  function macro_repl($macro) {
-    preg_match("/^([A-Za-z]+)(\((.*)\))?$/",$macro,$match);
-    $name=$match[1]; $option=($match[2] and !$match[3]) ? true:$match[3];
+  function macro_repl($macro,$value='',$options='') {
+    if (!$value and (strpos($macro,'(') !== false)) {
+      preg_match("/^([A-Za-z]+)(\((.*)\))?$/",$macro,$match);
+      $name=$match[1]; $args=($match[2] and !$match[3]) ? true:$match[3];
+    } else {
+      $name=$macro; $args=$value;
+    }
 
     if (!function_exists ("macro_".$name)) {
 
@@ -1592,7 +1616,7 @@ class Formatter {
       else
         return "[[".$name."]]";
     }
-    $ret=call_user_func("macro_$name",&$this,$option);
+    $ret=call_user_func("macro_$name",&$this,$args,$options);
     return $ret;
   }
 
@@ -2087,7 +2111,7 @@ class Formatter {
            } else if ($DBInfo->interwiki['Whois'])
              $ip="<a href='".$DBInfo->interwiki['Whois']."$ip'>$ip</a>";
 
-           $comment=$dummy[2];
+           $comment=stripslashes($dummy[2]);
            $state=4;
            break;
         case 4:
@@ -2851,7 +2875,7 @@ if ($pagename) {
       } else {
         $formatter->send_title(sprintf("%s Not Found",$page->name),"",$options);
         print $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
-        print macro_LikePages($formatter,$page->name,&$err);
+        print $formatter->macro_repl('LikePages',$page->name,&$err);
         if ($err['extra'])
           print $err['extra'];
 
