@@ -2,18 +2,9 @@
 # $Id$
 
 include "wikilib.php";
-include "wikismiley.php";
 
 function preg_escape($val) {
-  return preg_replace('/([\|\(\)\/\\\\!]{1})/','\\\\\1',$val);
-}
-
-if ($Globals[smiley]) {
-  # set smileys rule
-  $tmp=array_keys($Globals[smiley]);
-  $tmp=array_map("preg_escape",$tmp);
-  $rule=join($tmp,"|");
-  $Globals[smiley_rule]=$rule;
+  return preg_replace('/([\^\.\{\}\|\(\)\/\\\\!]{1})/','\\\\\1',$val);
 }
 
 function get_scriptname() {
@@ -165,34 +156,48 @@ class MetaDB {
   }
 }
 
+function getConfig($configfile) {
+  if (!file_exists($configfile))
+    return array();
+
+  $org=get_defined_vars();
+  include($configfile);
+  $new=get_defined_vars();
+
+  return array_diff($new,$org);
+}
 
 class WikiDB {
-# TODO Seperate Configuation parts
-  function WikiDB($config="") {
+  function WikiDB($config=array()) {
+  # Default Configuations
     $this->sitename='MoniWiki';
-    $this->url_prefix= '/wiki';
-    $this->upload_dir= 'pds';
+    $this->data_dir= './data';
+    $this->upload_dir= './pds';
+    $this->query_prefix='/';
+    $this->umask= 02;
+    $this->embeded=0;
+
     $this->text_dir= $this->data_dir.'/text';
     $this->intermap= $this->data_dir.'/intermap.txt';
     $this->editlog_name= $this->data_dir.'/editlog';
-    $this->umask= 02;
-    $this->query_prefix='?';
-    $this->embeded=0;
-
-    $this->css_url= $this->url_prefix.'/css/default.css';
+    $this->shared_intermap=$this->data_dir."/text/InterMap";
+#    $this->shared_metadb=$this->data_dir."/metadb";
+    $this->url_prefix= '/wiki';
     $this->imgs_dir= $this->url_prefix.'/imgs';
     $this->logo_img= $this->imgs_dir.'/moniwiki.gif';
+
+    $this->css_url= $this->url_prefix.'/css/default.css';
     $this->logo_string= '<img src="'.$this->logo_img.
                         '" alt="" border="0" align="middle" />';
+    $this->use_smileys=1;
     $this->hr="<hr class='wikiHr' />";
-    $this->show_hosts= TRUE;
-
     $this->date_fmt= 'D d M Y';
     $this->datetime_fmt= 'D d M Y h:i a';
     #$this->changed_time_fmt = ' . . . . [h:i a]';
     $this->changed_time_fmt= ' [h:i a]';
     $this->admin_passwd= '10sQ0sKjIJES.';
     $this->actions= array('DeletePage','LikePages');
+    $this->show_hosts= TRUE;
 
     $this->icon[upper]="<img src='$this->imgs_dir/upper.gif' alt='U' align='middle' border='0' />";
     $this->icon[edit]="<img src='$this->imgs_dir/moin-edit.gif' alt='E' align='middle' border='0' />";
@@ -221,14 +226,31 @@ class WikiDB {
                 "<img src='$this->imgs_dir/moin-help.gif' alt='H' /> ".
                 "<img src='$this->imgs_dir/moin-home.gif' alt='Z' /> ";
 
-    // Number of lines output per each flush() call.
+    # set user-specified configuration
+    if ($config) {
+       # read configurations
+       while (list($key,$val) = each($config))
+          $this->$key=$val;
+    }
+
+    # load smileys
+    if ($this->use_smileys){
+      include("wikismiley.php");
+      # set smileys rule
+      $tmp=array_keys($smileys);
+      $tmp=array_map("preg_escape",$tmp);
+      $rule=join($tmp,"|");
+      $this->smiley_rule=$rule;
+      $this->smileys=$smileys;
+    }
+
+    # ??? Number of lines output per each flush() call.
     // $this->lines_per_flush = 10;
 
-    // Is mod_rewrite being used to translate 'WikiWord' to
-    // 'phiki.php3?WikiWord'?  Default:  false.
+    # ??? Is mod_rewrite being used to translate 'WikiWord' to
     // $this->rewrite = true;
+
     $this->set_intermap();
-#    $this->shared_metadb=$this->data_dir."/metadb";
     if ($this->shared_metadb)
       $this->metadb=new MetaDB_dba($this->shared_metadb);
     if (!$this->metadb->metadb)
@@ -245,10 +267,12 @@ class WikiDB {
     # intitialize interwiki map
     $map=file($this->intermap);
 
+    # read shared intermap
     $shared_map=array();
     if (file_exists($this->shared_intermap)) {
       $shared_map=file($this->shared_intermap);
     }
+    # merge
     $map=array_merge($map,$shared_map);
 
     for ($i=0;$i<sizeof($map);$i++) {
@@ -298,12 +322,6 @@ class WikiDB {
     return $this->text_dir . '/' . $name;
   }
 
-#  function keyToPagename($key) {
-#    $pagename=preg_replace("/_([a-f0-9]{2})/","%\\1",$key);
-#    
-#    return urldecode($pagename);
-#  }
-
   function hasPage($pagename) {
     if (!$pagename) return false;
     $name=$this->getPageKey($pagename);
@@ -313,6 +331,11 @@ class WikiDB {
   function getPage($pagename,$options="") {
     return new WikiPage($pagename,$options);
   }
+
+#  function keyToPagename($key) {
+#    $pagename=preg_replace("/_([a-f0-9]{2})/","%\\1",$key);
+#    return urldecode($pagename);
+#  }
 
   function keyToPagename($key) {
   #  return preg_replace("/_([a-f0-9]{2})/e","chr(hexdec('\\1'))",$key);
@@ -854,10 +877,9 @@ class Formatter {
  }
 
  function smiley_repl($smiley) {
-   global $Globals;
    global $DBInfo;
 
-   $img=$Globals[smiley][$smiley][3];
+   $img=$DBInfo->smileys[$smiley][3];
 
    $alt=str_replace("<","&lt;",$smiley);
 
@@ -930,7 +952,6 @@ class Formatter {
  }
 
  function send_page($body="") {
-   global $Globals;
    global $DBInfo;
    # get body
 
@@ -951,9 +972,8 @@ class Formatter {
    if (!$lines) return;
 
    # get smily_rule
-   $smiley_rule=$Globals[smiley_rule];
-   if ($smiley_rule) {
-     $smiley_rule='/(?:\s|^)('.$smiley_rule.')(?:\s|$)/e';
+   if ($DBInfo->smileys) {
+     $smiley_rule='/(?:\s|^)('.$DBInfo->smiley_rule.')(?:\s|$)/e';
      $smiley_repl="\$this->smiley_repl('\\1')";
    }
 
@@ -1752,7 +1772,9 @@ EOS;
 #            res[i] = '_%02x' % ord(c)
 #    return string.joinfields(res, '')
 
-$DBInfo = new WikiDB;
+$Config=getConfig("config.php");
+
+$DBInfo = new WikiDB($Config);
 
 if (!empty($PATH_INFO)) {
    if ($PATH_INFO[0] == '/')
