@@ -1177,7 +1177,7 @@ class Formatter {
 
     #$punct="<\"\'}\]\|;,\.\!";
     $punct="<\'}\]\|;\.\)\!"; # , is omitted for the WikiPedia
-    $url="wiki|http|https|ftp|nntp|news|irc|telnet|mailto|file";
+    $url="wiki|http|https|ftp|nntp|news|irc|telnet|mailto|file|attachment";
     $urlrule="((?:$url):([^\s$punct]|(\.?[^\s$punct]))+)";
     #$urlrule="((?:$url):(\.?[^\s$punct])+)";
     #$urlrule="((?:$url):[^\s$punct]+(\.?[^\s$punct]+)+\s?)";
@@ -1377,6 +1377,8 @@ class Formatter {
       return $url;
     } else
     if (strpos($url,":")) {
+      if ($url[0]=='a') # attachment:
+        return $this->macro_repl('Attachment',substr($url,11));
       if (preg_match("/^mailto:/",$url)) {
         $url=str_replace("@","_at_",$url);
         $name=substr($url,7);
@@ -1789,14 +1791,15 @@ class Formatter {
     return $tag[$on];
   }
 
+  function _fixpath() {
+    $this->url_prefix= qualifiedUrl($DBInfo->url_prefix);
+    $this->prefix= qualifiedUrl($this->prefix);
+    $this->imgs_dir= qualifiedUrl($this->imgs_dir);
+  }
+
   function send_page($body="",$options="") {
     global $DBInfo;
-
-    #if ($options['fixpath']) {
-    #  $this->url_prefix= qualifiedUrl($DBInfo->url_prefix);
-    #  $this->prefix= qualifiedUrl($this->prefix);
-    #  $this->imgs_dir= qualifiedUrl($this->imgs_dir);
-    #}
+    if ($options['fixpath']) $this->_fixpath();
 
     if ($body) {
       $pi=$this->get_instructions(&$body);
