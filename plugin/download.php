@@ -27,8 +27,14 @@ function do_download($formatter,$options) {
     $dir=$DBInfo->upload_dir;
     $handle= opendir($dir);
   }
-  $file=explode("/",$options['value']);
-  $file=$file[count($file)-1];
+  $acceptable_dirs=array('thumbnails');
+  $file=explode('/',$options['value']);
+  $subdir='';
+  if (count($file) > 1)
+    $subdir=in_array($file[count($file)-2],$acceptable_dirs) ?
+      $file[count($file)-2].'/':'';
+
+  $file=$subdir.$file[count($file)-1];
 
   if (!file_exists("$dir/$file")) 
     return;
