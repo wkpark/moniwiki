@@ -26,7 +26,8 @@ function updateBlogList($formatter) {
       $datestamp[10]=' ';
       $time= strtotime($datestamp." GMT");
       $datestamp= date("Ymd",$time);
-      if ($datestamp > $date) {
+      if (!$date) $date=$datestamp;
+      if ($datestamp < $date) {
         if ($date) {
           $log=join("\n",$entries)."\n";
           $logs.=$log;
@@ -40,9 +41,9 @@ function updateBlogList($formatter) {
     }
   }
   $log=join("\n",$entries)."\n";
-  $logs.=$log;
-  $changecache->update($date.".".$formatter->page->name,$log);
+  $changecache->update($datestamp.".".$formatter->page->name,$log);
 
+  $logs.=$log;
   $cache->update($formatter->page->name,$logs);
   return;
 }
