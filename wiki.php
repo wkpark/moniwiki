@@ -1719,6 +1719,8 @@ class Formatter {
     global $DBInfo;
     $sep=$DBInfo->query_prefix;
 
+    if (!$query_string and $this->query_string) $query_string=$this->query_string;
+
     if ($sep == '?') {
       if ($pageurl && $query_string[0]=='?')
         # add 'dummy=1' to work around the buggy php
