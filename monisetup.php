@@ -105,39 +105,156 @@ class MoniConfig {
 }
 
 function checkConfig($config) {
+  umask(011);
   if (!file_exists("config.php") && !is_writable(".")) {
-     print "<h3><font color=red>Change current directory permission to write a generated config.php</font></h3>\n";
-     print "
-<pre class='console'>
-<font color='green'>$</font> chmod a+w .
-</pre>
-";
-     $fatal=1;
+     print "<h3><font color=red>Please change current directory writable to generate a config.php</font></h3>\n";
+     print "<pre class='console'>\n<font color='green'>$</font> chmod a+w .\n</pre>\n";
+     return;
+  } else {
+     print "<h3><font color='green'>WARN: Please execute the following command after you have finished your first configuration step.</font></h3>\n";
+     print "<pre class='console'>\n<font color='green'>$</font> sh config.sh\n</pre>\n";
+     print "<h3><font color='green'>WARN: and please execute the following command after you have completed your configuration.</font></h3>\n";
+     print "<pre class='console'>\n<font color='green'>$</font> sh secure.sh\n</pre>\n";
   }
 
   if (file_exists("config.php")) {
     if (!$fatal && !is_writable($config[data_dir])) {
-       print "<h3><font color=red>$config[data_dir] directory is not writable</font></h3>\n";
-       $error=1;
+       print "<h3><font color=red>FATAL: $config[data_dir] directory is not writable</font></h3>\n";
+       print "<h4>Please execute the following command</h4>";
+       print "<pre class='console'>\n".
+             "<font color='green'>$</font> chmod a+w $config[data_dir]\n</pre>\n";
+       exit;
     }
-    if (!$fatal && !is_writable($config[text_dir])) {
-       print "<h3><font color=red>$config[text_dir] directory is not writable</font> :( </h3>\n";
-      $error=1;
-    } else
-       print "<h3><font color=blue>$config[text_dir] directory is writable</font> :)</h3>\n";
 
-    if (!$fatal && !is_writable($config[upload_dir])) {
-       print "<h3><font color=red>$config[upload_dir] directory is not writable</font> :(</h3>\n";
-      $error=1;
-    } else
-       print "<h3><font color=blue>$config[upload_dir] directory is writable</font> :)</h3>\n";
+    $data_sub_dir=array("cache","user");
+
+    foreach($data_sub_dir as $dir) {
+       if (!file_exists("$config[data_dir]/$dir")) {
+           umask(000);
+           mkdir("$config[data_dir]/$dir",0777);
+           print "<h4><font color='green'>$dir directory is created now ;)</font></h4>\n";
+           umask(011);
+       } else
+           print "<h4><font color=blue>$dir directory is ok</font></h4>\n";
+    }
+
+    $writables=array("text_dir","upload_dir","editlog_name");
+
+    foreach($writables as $file) {
+      if (!is_writable($config[$file])) {
+        if (file_exists($config[$file])) {
+          print "<h3><font color=red>$config[$file] is not writable</font> :( </h3>\n";
+          print "<pre class='console'>\n".
+              "<font color='green'>$</font> chmod a+w $config[$file]\n</pre>\n";
+        } else {
+          print "<h3><font color=red>$config[$file] is not exists</font> :( </h3>\n";
+          if (preg_match("/_dir/",$file))
+            print "<pre class='console'>\n".
+              "<font color='green'>$</font> mkdir $config[$file]\n".
+              "<font color='green'>$</font> chmod a+w $config[$file]\n</pre>\n";
+          else {
+            $fp=@fopen($config[$file],"w+");
+            if ($fp) {
+              chmod($config[$file],0666);
+              fclose($fp);
+              print "<h4><font color='green'>$config[$file] is created now</font> ;) </h4>\n";
+            } else {
+              print "<pre class='console'>\n".
+              "<font color='green'>$</font> touch $config[$file]\n".
+              "<font color='green'>$</font> chmod a+w $config[$file]\n</pre>\n";
+            }
+          }
+        }
+        $error=1;
+      } else
+        print "<h3><font color=blue>$config[$file] is writable</font> :)</h3>\n";
+    }
   }
-
-  if ($fatal)
-     exit;
-
 }
 
+function keyToPagename($key) {
+#  return preg_replace("/_([a-f0-9]{2})/e","chr(hexdec('\\1'))",$key);
+  $pagename=preg_replace("/_([a-f0-9]{2})/","%\\1",$key);
+#  $pagename=str_replace("_","%",$key);
+#  $pagename=strtr($key,"_","%");
+  return rawurldecode($pagename);
+}
+
+function pagenameToKey($pagename) {
+  return preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord('\\1')))",$pagename);
+}
+
+function show_wikiseed($config,$seeddir='wikiseed') {
+  $pages= array();
+  $handle= opendir($seeddir);
+  while ($file = readdir($handle)) {
+    if (is_dir($seeddir."/".$file)) continue;
+    $pagename = keyToPagename($file);
+    $pages[$pagename] = $pagename;
+  }
+  closedir($handle);
+#  sort($pages);
+  $idx=1;
+
+  $num=sizeof($pages);
+
+  #
+  $SystemPages="FrontPage|RecentChanges|TitleIndex|FindPage|".
+  "FortuneCookies|Pages$|".
+  "SystemPages|TwinPages|WikiName|SystemInfo|UserPreferences|".
+  "InterMap|IsbnMap|WikiSandBox|SandBox|UploadFile|UploadedFiles|".
+  "InterWiki|SandBox|UploadFile|UploadedFiles|".
+  "모니위키|위키딱지|설치설명서|쌍둥이쪽|자매위키|원격위키";
+  $WikiTag='DeleteThisPage';
+  #
+  $seed_filters= array(
+    "HelpPages"=>array('/^Help.*/',1),
+    "Category pages"=>array('/^Category.*/',1),
+    "Macro pages"=>array('/Macro$/',1),
+    "MoniWiki pages"=>array('/MoniWiki.*|Moni/',1),
+    "MoinMoin pages"=>array('/MoinMoin.*/',1),
+    "Templates"=>array('/Template$/',1),
+    "SystemPages"=>array("/($SystemPages)/",1),
+    "WikiTags"=>array("/($WikiTag)/",1),
+    "Wiki etc."=>array('/Wiki/',1),
+    "Misc."=>array('//',0),
+  );
+
+  $wrap=1;
+
+  print "<h3>Total $num pages found</h3>\n";
+  print "<form method='post' action=''>\n";
+  while (list($filter_name,$filter) = each($seed_filters)) {
+    print "<h4>$filter_name</h4>\n";
+    foreach ($pages as $pagename) {
+      if (preg_match($filter[0],$pagename)) {
+        print "<input type='checkbox' name='seeds[$idx]' value='$pagename'";
+        if ($filter[1])
+          print "checked='checked' />$pagename ";
+        else
+          print " />$pagename ";
+        $idx++;
+        if ($wrap++ % 4 == 0) print "<br />\n";
+        unset($pages[$pagename]);
+      }
+    }
+    $wrap=1;
+  }
+  print "<input type='hidden' name='action' value='sow_seed' />\n";
+  print "<br /><input type='submit' value='sow WikiSeeds'></form>\n";
+}
+
+function sow_wikiseed($config,$seeddir='wikiseed',$seeds) {
+  umask(000);
+  print "<pre class='console'>\n";
+  foreach($seeds as $seed) {
+    $key=pagenameToKey($seed);
+    $cmd="cp $seeddir/$key $config[text_dir]";
+    system(escapeshellcmd($cmd));
+    print $cmd."\n";
+  }
+  print "</pre>\n";
+}
 
 print <<<EOF
 <html><head><title>Moni Setup</title>
@@ -222,12 +339,14 @@ if ($_SERVER[REQUEST_METHOD]=="POST" && $config) {
     print "</pre>\n";
 
     if (!$invalid && (is_writable("config.php") || !file_exists("config.php"))) {
+      umask(000);
       $fp=fopen("config.php","w");
       fwrite($fp,$rawconf);
       fclose($fp);
-      chmod("config.php",0666);
+      @chmod("config.php",0666);
       print "<h3><font color='blue'>Configurations are saved successfully</font></h3>\n";
-      print "Please change 'config.php' permission as 644.<br />\n";
+      print "<h3><font color='green'>WARN: Please check <a href='monisetup.php'> your saved configurations</a></font></h3>\n";
+      print "If all is good, change 'config.php' permission as 644.<br />\n";
     } else {
       if (!$invalid) {
         print "<h3><font color='red'>Can't write settings to 'config.php'</font></h3>\n";
@@ -245,7 +364,7 @@ AS;
       }
     }
   } else
-  print "<h3>Read current settings for this $config[sitename]</h3>\n";
+    print "<h3>Read current settings for this $config[sitename]</h3>\n";
 #  $rawconfig=rawConfig($lines);
 } else {
   # read settings
@@ -267,14 +386,36 @@ AS;
   }
 }
 
-print "<table class='wiki' align=center border=1 cellpadding=2 cellspacing=2>\n";
+print "<table class='wiki' align=center border=1 cellpadding=2 cellspacing=2>";
+print "\n";
 while (list($key,$val) = each($config)) {
   if ($key != "admin_passwd" && $key != "purge_passwd")
   print "<tr><td>$$key</td><td>$val</td></tr>\n";
 }
 print "</table>\n";
 
+if ($REQUEST_METHOD=="POST") {
+  if ($action=='sow_seed' && $seeds) {
+    sow_wikiseed($config,'wikiseed',$seeds);
+    print "<h2>WikiSeeds are sowed successfully</h2>";
+    print "<h2>goto <a href='wiki.php'>$config[sitename]</a></h2>";
+    exit;
+  } else {
+    print "<h2><font color='red'>No WikiSeeds are selected</font></h2>";
+    exit;
+  }
+}
+
 if ($REQUEST_METHOD!="POST") {
+  if ($action=='seed') {
+    show_wikiseed($config,'wikiseed');
+    exit;
+  }
+  if ( !file_exists($config[data_dir]."/text/RecentChanges")) {
+    print "<h3><font color='red'>WARN: You have no WikiSeed on your $config[sitename]</font></h3>\n";
+    print "<h2>If you want to put wikiseeds on your wiki <a href='?action=seed'>Click here</a> now</h2>";
+  }
+
   print "<h3>Change your settings</h3>\n";
   print "<form method='post' action=''>\n";
   print "<table align=center border=1 cellpadding=2 cellspacing=2>\n";
