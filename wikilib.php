@@ -94,8 +94,10 @@ class UserDB {
   function getUser($id) {
     if ($this->_exists($id))
        $data=file("$this->user_dir/wu-$id");
-    else
-       return "";
+    else {
+       $user=new User('Anonymous');
+       return $user;
+    }
     $info=array();
     foreach ($data as $line) {
        #print "$line<br/>";
@@ -123,9 +125,10 @@ class User {
         $this->setID($id);
         return;
      }
-     $this->setID($HTTP_COOKIE_VARS[MONI_ID]);
-     $this->css=$HTTP_COOKIE_VARS[MONI_CSS];
-     $this->bookmark=$HTTP_COOKIE_VARS[MONI_BOOKMARK];
+     $this->setID($HTTP_COOKIE_VARS['MONI_ID']);
+     $this->css=$HTTP_COOKIE_VARS['MONI_CSS'];
+     $this->bookmark=$HTTP_COOKIE_VARS['MONI_BOOKMARK'];
+     $this->trail=$HTTP_COOKIE_VARS['MONI_TRAIL'];
   }
 
   function setID($id) {
@@ -161,12 +164,13 @@ class User {
      $HTTP_COOKIE_VARS[MONI_ID]="Anonymous";
   }
 
-  function setPasswd($passwd,$passwd2) {
+  function setPasswd($passwd,$passwd2="") {
+     if (!$passwd2) $passwd2=$passwd;
      $ret=$this->validPasswd($passwd,$passwd2);
      if ($ret > 0)
         $this->info[password]=crypt($passwd);
-     else
-        $this->info[password]="";
+#     else
+#        $this->info[password]="";
      return $ret;
   }
 
@@ -562,10 +566,10 @@ function do_goto($formatter,$options) {
      $url=stripslashes($options[value]);
      $url=_rawurlencode($url);
      $url=$formatter->link_url($url);
-     $formatter->send_header(array("Status: 302","Location: ".$url));
+     $formatter->send_header(array("Status: 302","Location: ".$url),$options);
   } else if ($options[url]) {
      $url=str_replace("&amp;","&",$options[url]);
-     $formatter->send_header(array("Status: 302","Location: ".$url));
+     $formatter->send_header(array("Status: 302","Location: ".$url),$options);
   } else {
      $title = _("Use more specific text");
      $formatter->send_header("",$options);
@@ -739,10 +743,12 @@ function do_subscribe($formatter,$options) {
     $userinfo=$udb->getUser($options[id]);
     $email=$userinfo->info[email];
     #$subs=$udb->getPageSubscribers($options[page]);
+    if (!$email) $title = _("Please enter your email address first.");
+  } else {
+    $title = _("Please login or make your ID.");
   }
 
   if ($options[id] == 'Anonymous' or !$email) {
-    $title = _("Please enter your email address first.");
     $formatter->send_header("",$options);
     $formatter->send_title($title);
     $formatter->send_page("Goto UserPreferences\n");
@@ -984,6 +990,11 @@ function do_bookmark($formatter,$options) {
   $formatter->send_footer();
 }
 
+function do_print($formatter,$options) {
+  $formatter->send_header();
+  $formatter->send_page();
+}
+
 function do_userform($formatter,$options) {
   global $DBInfo;
 
@@ -991,6 +1002,7 @@ function do_userform($formatter,$options) {
   $id=$options[login_id];
 
   if ($user->id == "Anonymous" and $id and $options[login_passwd]) {
+    # login
     $userdb=new UserDB($DBInfo);
     if ($userdb->_exists($id)) {
        $user=$userdb->getUser($id);
@@ -1003,9 +1015,11 @@ function do_userform($formatter,$options) {
     } else
        $title= _("Please enter a valid user ID !");
   } else if ($options[logout]) {
+    # logout
     $user->unsetCookie();
     $title= _("Cookie deleted !");
   } else if ($user->id=="Anonymous" and $options[username] and $options[password] and $options[passwordagain]) {
+    # create profile
 
     $id=$user->getID($options[username]);
     $user->setID($id);
@@ -1013,9 +1027,9 @@ function do_userform($formatter,$options) {
     if ($user->id != "Anonymous") {
        $ret=$user->setPasswd($options[password],$options[passwordagain]);
        if ($ret <= 0) {
-           if ($ret==0) $title= "too short password!";
-           else if ($ret==-1) $title= "mismatch password!";
-           else if ($ret==-2) $title= "not acceptable character found in the password!";
+           if ($ret==0) $title= _("too short password!");
+           else if ($ret==-1) $title= _("mismatch password!");
+           else if ($ret==-2) $title= _("not acceptable character found in the password!");
        } else {
            if ($ret < 8)
               $opts[msg]=_("Password is too simple to use as a password !");
@@ -1030,23 +1044,48 @@ function do_userform($formatter,$options) {
                   $title = sprintf(_("Successfully login as '%s'"),$id);
                   $user->setCookie();
               } else {
-                  $title = sprintf(_("Invalid password !"));
+                  $title = _("Invalid password !");
               }
            }
        }
     } else
        $title= _("Invalid username !");
   } else if ($user->id != "Anonymous") {
+    # save profile
     $udb=new UserDB($DBInfo);
     $userinfo=$udb->getUser($user->id);
+
+    if ($options[password] and $options[passwordagain]) {
+      if ($userinfo->checkPasswd($options[password])=== true) {
+        $ret=$userinfo->setPasswd($options[passwordagain]);
+
+        if ($ret <= 0) {
+          if ($ret==0) $title= _("too short password!");
+          else if ($ret==-1)
+            $title= _("mismatch password !");
+          else if ($ret==-2)
+            $title= _("not acceptable character found in the password!");
+          $opts[msg]= _("Password is not changed !");
+        } else {
+          $title= _("Password is changed !");
+          if ($ret < 8)
+            $opts[msg]=_("Password is too simple to use as a password !");
+        }
+      } else {
+        $title= _("Invalid password !");
+        $opts[msg]=_("Password is not changed !");
+      }
+    }
     if (isset($options[user_css]))
-       $userinfo->info[css_url]=$options[user_css];
+      $userinfo->info[css_url]=$options[user_css];
     if (isset($options[email]))
-       $userinfo->info[email]=$options[email];
+      $userinfo->info[email]=$options[email];
     if ($options[username])
-       $userinfo->info[name]=$options[username];
+      $userinfo->info[name]=$options[username];
     $udb->saveUser($userinfo);
     $options[css_url]=$options[user_css];
+    if (!isset($opts[msg]))
+      $opts[msg]=_("Profiles are saved successfully !");
   }
 
   $formatter->send_header("",$options);
@@ -1269,7 +1308,7 @@ function macro_UserPreferences($formatter="") {
   global $HTTP_COOKIE_VARS;
 
   $user=new User(); # get from COOKIE VARS
-  $url=$formatter->link_url("UserPreference");
+  $url=$formatter->link_url("UserPreferences");
 
   if ($user->id == "Anonymous")
      return <<<EOF
@@ -1643,9 +1682,10 @@ function macro_TitleIndex($formatter="") {
        $out.= "<UL>";
     }
     
-    $p = new WikiPage($page);
-    $h = new Formatter($p);
-    $out.= '<LI>' . $h->link_to();
+#    $p = new WikiPage($page);
+#    $h = new Formatter($p);
+#    $out.= '<LI>' . $h->link_to();
+    $out.= '<LI>' . $formatter->link_tag($page);
   }
   $out.= "</UL>";
 
