@@ -53,7 +53,7 @@ function do_Blog($formatter,$options) {
     if ($formatter->page->exists())
       $raw_body=$formatter->page->_get_raw_body();
     else
-      $raw_body="#action Blog "._("Add Blog")."\n\n##Blog\n";
+      $raw_body="#action Blog "._("Add Blog")."\n##Blog\n";
     $lines=explode("\n",$raw_body);
     $count=count($lines);
 
@@ -89,10 +89,10 @@ function do_Blog($formatter,$options) {
         return;
       }
     } else { # Blog entry
-      $entry="\n{{{#!blog $id @date@";
+      $entry="{{{#!blog $id @date@";
       if ($options['title'])
         $entry.=" ".$options['title'];
-      $entry.="\n$savetext\n}}}\n";
+      $entry.="\n$savetext\n}}}\n\n";
 
       if (preg_match("/\n##Blog\n/i",$raw_body))
         $raw_body=preg_replace("/\n##Blog\n/i","\n##Blog\n$entry",$raw_body,1);
@@ -105,7 +105,7 @@ function do_Blog($formatter,$options) {
       $log="Add Comment to \"$title\"";
     } else {
       $formatter->send_title(sprintf(_("Blog entry added to \"%s\""),$options['page']),"",$options);
-      $log="Add Blog entry \"$options[title]\"";
+      $log="Add Blog entry \"$options[title]\" added";
     }
     
     $formatter->page->write($raw_body);
@@ -127,6 +127,13 @@ function do_Blog($formatter,$options) {
           }
         }
       }
+
+      if ($found) {
+        for (;$i<$count;$i++) {
+          if (preg_match("/^}}}$/",$lines[$i])) break;
+          $quote.=$lines[$i]."\n";
+        }
+      }
       if (!$title) $title=$options['page'];
       if (!$found) {
         $formatter->send_title("Error: No entry found!","",$options);
@@ -136,6 +143,10 @@ function do_Blog($formatter,$options) {
     } else {
       $formatter->send_title(sprintf(_("Add Blog entry to \"%s\""),$options['page']),"",$options);
     }
+    $options['noaction']=1;
+    if ($quote)
+      print $formatter->processor_repl('blog',substr($quote,3),$options);
+
     print "<form method='post' action='$url'>\n";
     if ($options['value'])
       print "<input type='hidden' name='value' value='$options[value]' />\n";
@@ -143,7 +154,7 @@ function do_Blog($formatter,$options) {
       print "<b>Title</b>: <input name='title' value='$options[title]' size='70' maxlength='70' style='width:200' /><br />\n";
     print <<<FORM
 <textarea class="wiki" id="content" wrap="virtual" name="savetext"
- rows="$rows" cols="$cols" style="width:100%">$savetext</textarea><br />
+ rows="$rows" cols="$cols" class="wiki">$savetext</textarea><br />
 FORM;
     if ($options['value'])
       print "<input name='nosig' type='checkbox' />"._("Don't add a signature")."<br />";
@@ -156,8 +167,11 @@ $extra
 </form>
 FORM2;
   }
-  $formatter->show_hints();
-  print "<div class='hint'>"._("<b>horizontal rule</b> ---- does not applied on the blog mode.")."</div>";
+  if (!$savetext) {
+    #print $formatter->macro_repl('SmileyChooser');
+    print macro_EditHints($formatter);
+    print "<div class='hint'>"._("<b>horizontal rule</b> ---- does not applied on the blog mode.")."</div>\n";
+  }
   if ($options['button_preview'] && $options['savetext']) {
     if ($options['title'])
       $formatter->send_page("== $options[title] ==\n");
@@ -165,6 +179,34 @@ FORM2;
   }
   $formatter->send_footer("",$options);
   return;
+}
+
+function macro_Blog($formatter,$value) {
+  global $HTTP_USER_AGENT;
+  $COLS_MSIE = 80;
+  $COLS_OTHER = 85;
+  $cols = preg_match('/MSIE/', $HTTP_USER_AGENT) ? $COLS_MSIE : $COLS_OTHER;
+
+  $rows=$options['rows'] > 5 ? $options['rows']: 8;
+  $cols=$options['cols'] > 60 ? $options['cols']: $cols;
+
+  $url=$formatter->link_url($formatter->page->urlname);
+
+  $form = "<form method='post' action='$url'>\n";
+  $form.= "<b>Title</b>: <input name='title' size='70' maxlength='70' style='width:200' /><br />\n";
+  $form.= <<<FORM
+<textarea class="wiki" id="content" wrap="virtual" name="savetext"
+ rows="$rows" cols="$cols" class="wiki"></textarea><br />
+FORM;
+  $form.= <<<FORM2
+<input type="hidden" name="action" value="Blog" />
+<input type="submit" value="Save" />&nbsp;
+<input type="reset" value="Reset" />&nbsp;
+<input type="submit" name="button_preview" value="Preview" />
+</form>
+FORM2;
+
+  return $form;
 }
 
 ?>
