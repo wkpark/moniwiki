@@ -3114,13 +3114,15 @@ if ($pagename) {
   global $value,$action;
   # get primary variables
   if ($_SERVER['REQUEST_METHOD']=="POST") {
+    # hack for TWiki plugin
+    if ($_FILES['filepath']['name']) $action='draw';
     if ($GLOBALS['HTTP_RAW_POST_DATA']) {
       # RAW posted data. the $value and $action could be accessed under
       # "register_globals = On" in the php.ini
       $options['value']=$value;
     } else {
       $value=$_POST['value'];
-      $action=$_POST['action'];
+      $action=$_POST['action'] ? $_POST['action']:$action;
     }
     $goto=$_POST['goto'];
   } else if ($_SERVER['REQUEST_METHOD']=="GET") {
@@ -3130,6 +3132,7 @@ if ($pagename) {
     $rev=$_GET['rev'];
     $refresh=$_GET['refresh'];
   }
+
 
   #print $_SERVER['REQUEST_URI'];
   $options['page']=$pagename;
