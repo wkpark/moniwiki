@@ -1,0 +1,21 @@
+#!/bin/sh
+echo
+echo "+------------------------------------+"
+echo "|    MoniWiki installation script    |"
+echo "+------------------------------------+"
+echo
+
+INSTDIR=@@INSTDIR@@
+[ ! -d data ] && cp -a $INSTDIR/data .
+[ ! -d imgs ] && cp -a $INSTDIR/imgs .
+[ ! -d theme ] && cp -a $INSTDIR/theme .
+[ ! -d css ] && cp -a $INSTDIR/css .
+[ ! -d applets ] && cp -a $INSTDIR/applets .
+[ ! -f index.html ] && cp -a $INSTDIR/index.html .
+cp $INSTDIR/{monisetup.*,secure.sh,config.php.default} .
+
+cat <<PHP >index.php
+<?php
+include("$INSTDIR/wiki.php");
+?>
+PHP
