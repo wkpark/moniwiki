@@ -672,11 +672,15 @@ function do_post_savepage($formatter,$options) {
       $ret=$DBInfo->savePage($formatter->page,$comment,$options);
       if ($DBInfo->notify) {
         $options['noaction']=1;
-        $ret2=wiki_notify($formatter,$options);
-        if ($ret2)
-          $options['msg']=sprintf(_("Mail notifications are sented."))."<br />";
-        else
-          $options['msg']=sprintf(_("No subscribers found."))."<br />";
+        if (!function_exists('mail')) {
+            $options['msg']=sprintf(_("mail does not supported by default."))."<br />";
+        } else {
+          $ret2=wiki_notify($formatter,$options);
+          if ($ret2)
+            $options['msg']=sprintf(_("Mail notifications are sented."))."<br />";
+          else
+            $options['msg']=sprintf(_("No subscribers found."))."<br />";
+        }
     }
       
     if ($ret == -1)
@@ -860,22 +864,27 @@ function do_uploadfile($formatter,$options) {
     umask(02);
   }
 
-  $file_path= $dir."/".$upfilename;
+  $file_path= $newfile_path = $dir."/".$upfilename;
 
   # is file already exists ?
   $dummy=0;
-  while (!$options['replace'] && file_exists($file_path)) {
+  while (file_exists($newfile_path)) {
      $dummy=$dummy+1;
      $ufname=$fname[1]."_".$dummy; // rename file
      $upfilename=$ufname.".$fname[2]";
-     $file_path= $dir."/".$upfilename;
+     $newfile_path= $dir."/".$upfilename;
   }
  
   $temp=explode("/",$HTTP_POST_FILES['upfile']['tmp_name']);
   $upfile="/tmp/".$temp[count($temp)-1];
   // Tip at http://phpschool.com
 
-  $test=@copy($upfile, $file_path);
+  if ($options['replace']) {
+    if ($newfile_path) $test=@copy($file_path, $newfile_path);
+    $test=@copy($upfile, $file_path);
+  } else {
+    $test=@copy($upfile, $newfile_path);
+  }
   if (!$test) {
      $title=sprintf(_("Fail to copy \"%s\" to \"%s\""),$upfilename,$file_path);
      $formatter->send_header("",$options);
@@ -945,11 +954,6 @@ function do_bookmark($formatter,$options) {
   $formatter->send_footer("",$options);
 }
 
-function do_print($formatter,$options) {
-  $formatter->send_header();
-  $formatter->send_page();
-}
-
 function do_userform($formatter,$options) {
   global $DBInfo;
 
@@ -962,7 +966,7 @@ function do_userform($formatter,$options) {
     if ($userdb->_exists($id)) {
        $user=$userdb->getUser($id);
        if ($user->checkPasswd($options['login_passwd'])=== true) {
-          $title = sprintf(_("Successfully login as '%s'"),$id);
+          $options['msg'] = sprintf(_("Successfully login as '%s'"),$id);
           $user->setCookie();
        } else {
           $title = sprintf(_("Invalid password !"));
@@ -996,7 +1000,7 @@ function do_userform($formatter,$options) {
            } else {# already exist user
               $user=$udb->getUser($user->id);
               if ($user->checkPasswd($options['password'])=== true) {
-                  $title = sprintf(_("Successfully login as '%s'"),$id);
+                  $options['msg']= sprintf(_("Successfully login as '%s'"),$id);
                   $user->setCookie();
               } else {
                   $title = _("Invalid password !");
@@ -1045,7 +1049,10 @@ function do_userform($formatter,$options) {
 
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
-  $formatter->send_page("Back to UserPreferences");
+  if (!$title)
+    $formatter->send_page();
+  else
+    $formatter->send_page("Goto UserPreferences");
   $formatter->send_footer("",$options);
 }
 
@@ -1897,7 +1904,9 @@ function macro_FootNote($formatter,$value="") {
     $foots=join("\n",$formatter->foots);
     $foots=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$foots);
     unset($formatter->foots);
-    return "<br/><tt class='wiki'>----</tt><br/>\n$foots";
+    if ($foots)
+      return "<br/><tt class='wiki'>----</tt><br/>\n$foots";
+    return '';
   }
 
   $formatter->foot_idx++;
