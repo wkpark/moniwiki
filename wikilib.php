@@ -277,7 +277,38 @@ function do_highlight($formatter,$options) {
   $formatter->send_footer($args,$options);
 }
 
-function do_DeletePage($formatter,$options) {
+function do_post_DeleteFile($formatter,$options) {
+  global $DBInfo;
+  
+  if ($options[files] && $options[passwd]) {
+    $check=$DBInfo->admin_passwd==crypt($options[passwd],$DBInfo->admin_passwd);
+    if ($check) {
+      foreach ($options[files] as $file) {
+         $log.=sprintf("File '%s' is deleted<br />",$file);
+         unlink($DBInfo->upload_dir."/".$file);
+      }
+      $title = sprintf('Selected files are deleted !');
+      $formatter->send_header("",$options);
+      $formatter->send_title($title,"",$options);
+      print $log;
+      $formatter->send_footer();
+      return;
+    }
+    $title = sprintf('Invalid password !');
+  } else {
+    if (!$options[files])
+      $title = sprintf('No files are selected !');
+    else
+      $title = sprintf('Invalid password !');
+  }
+  $formatter->send_header("",$options);
+  $formatter->send_title($title);
+  print $log;
+  $formatter->send_footer();
+  return;
+}
+
+function do_post_DeletePage($formatter,$options) {
   global $DBInfo;
   
   $page = $DBInfo->getPage($options[page]);
@@ -308,6 +339,46 @@ Password: <input type=password name=passwd size=20 value='' />
 Only WikiMaster can delete this page<br />
     <input type=hidden name=action value='DeletePage' />
     <input type=submit value='Delete' />
+    </form>";
+#  $formatter->send_page();
+  $formatter->send_footer();
+}
+
+function do_rename($formatter,$options) {
+  global $DBInfo;
+  
+  $page = $DBInfo->getPage($options[page]);
+
+  if (isset($options[passwd])) {
+    $check=$DBInfo->admin_passwd==crypt($options[passwd],$DBInfo->admin_passwd);
+    if ($check && !$DBInfo->hasPage($options[value])) {
+      $DBInfo->renamePage($page,$options[value]);
+      $title = sprintf('"%s" is renamed !', $page->name);
+      $formatter->send_header("",$options);
+      $formatter->send_title($title,"",$options);
+      $formatter->send_footer();
+      return;
+    } else {
+      $title = sprintf('Fail to rename "%s" !', $page->name);
+      $formatter->send_header("",$options);
+      $formatter->send_title($title);
+      $formatter->send_footer();
+      return;
+    }
+  }
+  $title = sprintf('Rename "%s" ?', $page->name);
+  $formatter->send_header("",$options);
+  $formatter->send_title($title);
+#<tr><td align='right'><input type='checkbox' name='show' checked='checked' />show only </td><td><input type='password' name='passwd'>
+  print "<form method='post'>
+<table border='0'>
+<tr><td align='right'>Old name: </td><td><b>$page->name</b></td></tr>
+<tr><td align='right'>New name: </td><td><input name='value' /></td></tr>
+<tr><td align='right'>Password: </td><td><input type='password' name='passwd'>
+<input type='submit' name='button_rename' value='rename'>
+Only WikiMaster can rename this page</td></tr>
+</table>
+    <input type=hidden name='action' value='rename' />
     </form>";
 #  $formatter->send_page();
   $formatter->send_footer();
@@ -724,6 +795,58 @@ function do_userform($formatter,$options) {
   $formatter->send_footer();
 }
 
+function macro_RandomPage($formatter,$value="") {
+  global $DBInfo;
+  $pages = $DBInfo->getPageLists();
+
+  $count= (int) $value;
+  if ($count <= 0) $count=1;
+  $counter= $count;
+
+  $max=sizeof($pages);
+
+  while ($counter > 0) {
+    $selected[]=rand(1,$max);
+    $counter--;
+  }
+
+  foreach ($selected as $item) {
+    $selects[]=$formatter->link_tag($pages[$item]);
+  }
+
+  if ($count > 1)
+    return "<ul>\n<li>".join("</li>\n<li>",$selects)."</li>\n</ul>";
+  return join("",$selects);
+}
+
+function macro_RandomQuote($formatter,$value="") {
+  global $DBInfo;
+  define(QUOTE_PAGE,'FortuneCookies');
+
+  if ($value and $DBInfo->hasPage($value))
+    $fortune=$value;
+  else
+    $fortune=QUOTE_PAGE;
+
+  $page=$DBInfo->getPage($fortune);
+  $raw=$page->get_raw_body();
+ 
+  $lines=explode("\n",$raw);
+
+  foreach($lines as $line) {
+    if (preg_match("/^\s\* (.*)$/",$line,$match))
+      $quotes[]=$match[1];
+  } 
+
+  $quote=$quotes[rand(1,sizeof($quotes))];
+
+  ob_start();
+  $formatter->send_page($quote);
+  $out= ob_get_contents();
+  ob_end_clean();
+  return $out;
+}
+
 function macro_UploadFile($formatter,$value="") {
    global $DBInfo;
    $url=$formatter->link_url($formatter->page->urlname);
@@ -752,16 +875,23 @@ function macro_UploadedFiles($formatter,$value="") {
    }
    closedir($handle);
 
-   $out="<form method='post' ><table border='0' cellpadding='2'>";
+   $out="<form method='post' >";
+   $out.="<input type='hidden' name='action' value='DeleteFile' />\n";
+   $out.="<table border='0' cellpadding='2'>\n";
+   $out.="<tr><th colspan='2'>File name</th><th>Size(byte)</th><th>Date</th></tr>\n";
    $idx=1;
    $prefix=$DBInfo->url_prefix."/".$DBInfo->upload_dir;
    foreach ($upfiles as $file) {
       $link=$prefix."/".rawurlencode($file);
-      $out.="<tr><td class='wiki'><input type='checkbox' value='$file'></td><td class='wiki'><a href='$link'>$file</a></td><td class='wiki'>xx</td><td class='wiki'>xx</td></tr>\n";
+      $size=filesize($DBInfo->upload_dir."/".$file);
+      $date=date("Y-m-d",filemtime($DBInfo->upload_dir."/".$file));
+      $out.="<tr><td class='wiki'><input type='checkbox' name='files[$idx]' value='$file'></td><td class='wiki'><a href='$link'>$file</a></td><td align='right' class='wiki'>$size</td><td class='wiki'>$date</td></tr>\n";
       $idx++;
    }
    $out.="<tr><th colspan='2'>Total files</th><td></td><td></td></tr>\n";
-   $out.="</table><input type='submit' value='Delete selected files'></form>\n";
+   $out.="</table>
+Password: <input type='password' name='passwd' size='10' />
+<input type='submit' value='Delete selected files'></form>\n";
    return $out;
 }
 
@@ -921,7 +1051,7 @@ function get_key($name) {
 function macro_LikePages($formatter="",$args="",$opts=array()) {
   global $DBInfo;
 
-  $pname=preg_escape($args);
+  $pname=_preg_escape($args);
 
   $metawiki=$opts[metawiki];
 
@@ -961,6 +1091,7 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
     $end=$match[1];
     $e_len=strlen($end);
     if ($e_len < 2) $end="";
+    else $end=_preg_escape($end);
   }
 
   $starts=array();
@@ -986,6 +1117,7 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
   if ($start || $end) {
     if (!$end) $similar_re=$start;
     else $similar_re="$start|$end";
+
     foreach ($pages as $page) {
       preg_match("/($similar_re)/i",$page,$matches);
       if ($matches && !$starts[$page] && !$ends[$page])
@@ -1079,32 +1211,50 @@ function macro_PageLinks($formatter="",$options="") {
 }
 
 
-function macro_PageList($formatter="",$arg="") {
+function macro_PageList($formatter,$arg="") {
   global $DBInfo;
 
-  $test=@preg_match("/$arg/","",$match);
+  preg_match("/((\s*,\s*)?date)$/",$arg,$match);
+  if ($match) {
+    $options[date]=1;
+    $arg=substr($arg,0,-strlen($match[1]));
+  }
+  $needle=$arg;
+
+  $test=@preg_match("/$needle/","",$match);
   if ($test === false) {
-     return "[[PageList(<font color='red'>Invalid \"$arg\"</font>)]]";
+    # show error message
+    return "[[PageList(<font color='red'>Invalid \"$needle\"</font>)]]";
   }
 
-  $all_pages = $DBInfo->getPageLists();
+  $all_pages = $DBInfo->getPageLists($options);
   $hits=array();
-  foreach ($all_pages as $page) {
-     preg_match("/$arg/",$page,$matches);
-     if ($matches)
-        $hits[]=$page;
+
+  if ($options[date]) {
+    if ($needle) {
+      while (list($pagename,$mtime) = @each ($all_pages)) {
+        preg_match("/$needle/",$pagename,$matches);
+        if ($matches) $hits[$pagename]=$mtime;
+      }
+    } else $hits=$all_pages;
+    arsort($hits);
+    while (list($pagename,$mtime) = @each ($hits)) {
+      $out.= '<li>'.$formatter->link_tag($pagename).". . . . [".date("Y-m-d",$mtime)."]</li>\n";
+    }
+    $out="<ol>\n".$out."</ol>\n";
+  } else {
+    foreach ($all_pages as $page) {
+      preg_match("/$needle/",$page,$matches);
+      if ($matches) $hits[]=$page;
+    }
+    sort($hits);
+    foreach ($hits as $pagename) {
+      $out.= '<li>' . $formatter->link_tag($pagename)."</li>\n";
+    }
+    $out="<ul>\n".$out."</ul>\n";
   }
 
-  sort($hits);
-
-  $out="<ul>\n";
-  foreach ($hits as $pagename) {
-    $p = new WikiPage($pagename);
-    $h = new Formatter($p);
-    $out.= '<li>' . $h->link_to()."</li>\n";
-  }
-
-  return $out."</ul>\n";
+  return $out;
 }
 
 function macro_TitleIndex($formatter="") {
@@ -1152,6 +1302,21 @@ function macro_Icon($formatter="",$value="",$extra="") {
 
 function macro_RecentChanges($formatter="",$value="") {
   global $DBInfo;
+  define(MAXSIZE,5000);
+  $new=1;
+
+  preg_match("/(\d+)?(?:\s*,\s*)?(.*)?$/",$value,$match);
+  if ($match) {
+    $size=(int) $match[1];
+    $args=explode(",",$match[2]);
+    #print "size: $size";
+    #print_r($args);
+
+    if (in_array ("quick", $args)) $quick=1;
+    if (in_array ("nonew", $args)) $new=0;
+    if (in_array ("showhost", $args)) $showhost=1;
+  }
+  if ($size > MAXSIZE) $size=MAXSIZE;
 
   $user=new User(); # retrive user info
   if ($user->id == 'Anonymous')
@@ -1161,11 +1326,12 @@ function macro_RecentChanges($formatter="",$value="") {
     $userinfo= $udb->getUser($user->id);
     $bookmark= $userinfo->info[bookmark];
   }
+  if (!$bookmark) $bookmark=time();
 
-  if ($value== 'quick')
-    $lines= $DBInfo->editlog_raw_lines(4000,1);
+  if ($quick)
+    $lines= $DBInfo->editlog_raw_lines($size,1);
   else
-    $lines= $DBInfo->editlog_raw_lines();
+    $lines= $DBInfo->editlog_raw_lines($size);
     
   $time_current= time();
   $secs_per_day= 60*60*24;
@@ -1201,6 +1367,7 @@ function macro_RecentChanges($formatter="",$value="") {
   $ratchet_day= FALSE;
   foreach ($lines as $line) {
     $parts= explode("\t", $line);
+    $page_key=$parts[0];
     $page_name= $DBInfo->keyToPagename($parts[0]);
     $addr= $parts[1];
     $ed_time= $parts[2];
@@ -1221,27 +1388,34 @@ function macro_RecentChanges($formatter="",$value="") {
     }
 
     if (!$DBInfo->hasPage($page_name))
-       $out.= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=diff",$DBInfo->icon[del]);
-    else if ($ed_time > $bookmark)
-       $out.= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=diff",$DBInfo->icon[updated]);
-    else
-       $out.= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=diff",$DBInfo->icon[diff]);
+       $out.= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=diff&amp;date=$bookmark",$DBInfo->icon[del]);
+    else if ($ed_time > $bookmark) {
+       if ($new) {
+         $p= new WikiPage($page_name);
+         $v= $p->get_rev($bookmark);
+       } else $v=1;
+       if ($v) # has 
+         $out.= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=diff&amp;date=$bookmark",$DBInfo->icon[updated]);
+       else
+         $out.= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=info",$DBInfo->icon['new']);
+    } else
+       $out.= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=diff&amp;date=$bookmark",$DBInfo->icon[diff]);
 
-    $out.= "&nbsp;&nbsp;".$formatter->link_tag($page_name);
+    $out.= "&nbsp;&nbsp;".$formatter->link_tag($page_key,"",$page_name);
     if (! empty($DBInfo->changed_time_fmt))
        $out.= date($DBInfo->changed_time_fmt, $ed_time);
 
     if ($DBInfo->show_hosts) {
       $out.= ' . . . . '; # traditional style
-      #$logs[$page_name].= '&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ';
-      if ($user)
-        $out.= $user;
-      else
+      #$out.= '&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ';
+      if ($showhost && $user == 'Anonymous')
         $out.= $addr;
+      else
+        $out.= $user;
     }
     if ($editcount[$page_name] > 1)
       $out.=" [".$editcount[$page_name]." changes]";
-    $out.= '<br />';
+    $out.= "<br />\n";
     $logs[$page_name]= 1;
   }
   return $out;
@@ -1468,7 +1642,7 @@ EOS;
   $list= $DEFAULT;
   $map= new WikiPage($ISBN_MAP);
   if ($map->exists)
-     $list.=$map.get_raw_body();
+     $list.=$map->get_raw_body();
 
   $lists=explode("\n",$list);
   $ISBN_list=array();
