@@ -70,6 +70,7 @@ $tex
 
      if (!file_exists($uniq.".dvi")) {
        print "<font color='red'>ERROR:</font> LaTeX does not works properly.";
+       chdir($cwd);
        return;
      }
      $cmd= "$dvips -D 600 $uniq.dvi -o $uniq.ps";
