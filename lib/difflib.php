@@ -949,46 +949,6 @@ class WordLevelDiff extends MappedDiff
     }
 }
 
-class MoniWikiDiffFormatter extends DiffFormatter
-{
-    function MoniWikiDiffFormatter($context_lines = 3) {
-        $this->leading_context_lines = $context_lines;
-        $this->trailing_context_lines = $context_lines;
-    }
-    
-    function _block_header($xbeg, $xlen, $ybeg, $ylen) {
-          return "<div class='diff-sep'>@@ -$xbeg +$ybeg @@</div>";
-    }
-
-    function _start_block($header) {
-        echo $header."\n";
-    }
-
-    function _end_block() {
-    }
-
-    function _lines($lines, $prefix = ' ' , $class = "") {
-        foreach ($lines as $line) {
-            if ($class) 
-            echo "<div class=\"$class\">$line</div>\n";
-            else
-            echo "$line<br />\n";
-        }
-    }
-    
-    function _added($lines) {
-        $this->_lines($lines, "+", "diff-added");
-    }
-    function _deleted($lines) {
-        $this->_lines($lines, "-", "diff-removed");
-    }
-    function _changed($orig, $_final) {
-        $diff = new WordLevelDiff($orig, $_final);
-        $this->_deleted($diff->orig());
-        $this->_added($diff->_final());
-    }
-}
-
 /**
  * "Unified" diff formatter.
  *
