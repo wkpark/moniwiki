@@ -56,4 +56,8 @@ function do_download($formatter,$options) {
   $fp=readfile("$dir/$file");
   return;
 }
+
+function macro_download($formatter,$value) {
+  return $formatter->link_to("?action=download&amp;value=$value",$value);
+}
 ?>
