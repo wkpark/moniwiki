@@ -5,7 +5,6 @@
 # this module is ported from the RcsLite.pm of the TWiki by wkpark.
 # $Id$
 
-#
 # Original notice:
 #
 # Module of TWiki Collaboration Platform, http://TWiki.org/
@@ -42,9 +41,6 @@
 #    this needs fixing
 #  - cleaner dealing with errors/warnings
 
-define(DIFF_DEBUG,0);
-define(DIFFEND_DEBUG,0);
-
 Class RcsLite {
     var $rcs_dir='RCS';
     var $rcs_user='root';
@@ -60,110 +56,68 @@ Class RcsLite {
         $this->_next = array();
     }
   
-    # ======================
     function _trace($text)
     {
     #   TWiki::writeDebug( $text );
     }
 
-# Process an RCS file
+    function _readString($fp)
+    {
+        $string='';
+        while(($ch=fgetc($fp)) !== false) {
+            if ($ch == '@') {
+                $ch=fgetc($fp);
+                if ($ch != '@') break;
+            }
+            $string.=$ch;
+        }
+        return array($string,$ch);
+    }
 
-# File format information:
-#
-#rcstext    ::=  admin {delta}* desc {deltatext}*
-#admin      ::=  head {num};
-#                { branch   {num}; }
-#                access {id}*;
-#                symbols {sym : num}*;
-#                locks {id : num}*;  {strict  ;}
-#                { comment  {string}; }
-#                { expand   {string}; }
-#                { newphrase }*
-#delta      ::=  num
-#                date num;
-#                author id;
-#                state {id};
-#                branches {num}*;
-#                next {num};
-#                { newphrase }*
-#desc       ::=  desc string
-#deltatext  ::=  num
-#                log string
-#                { newphrase }*
-#                text string
-#num        ::=  {digit | .}+
-#digit      ::=  0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9
-#id         ::=  {num} idchar {idchar | num }*
-#sym        ::=  {digit}* idchar {idchar | digit }*
-#idchar     ::=  any visible graphic character except special
-#special    ::=  $ | , | . | : | ; | @
-#string     ::=  @{any character, with @ doubled}*@
-#newphrase  ::=  id word* ;
-#word       ::=  id | num | string | :
-#
-# Identifiers are case sensitive. Keywords are in lower case only. The sets of
-# keywords and identifiers can overlap.
-# In most environments RCS uses the ISO 8859/1 encoding: 
-# visible graphic characters are codes 041-176 and 240-377, and white space
-# characters are codes 010-015 and 040. 
-#
-# Dates, which appear after the date keyword, are of the form Y.mm.dd.hh.mm.ss, 
-# where Y is the year, mm the month (01-12), dd the day (01-31), hh 
-# the hour(00-23), mm the minute (00-59), and ss the second (00-60).
-# Y contains just the last two digits of the year for years from 1900 through
-# 1999, and all the digits of years thereafter. 
-# Dates use the Gregorian calendar; times use UTC. 
-#
-# The newphrase productions in the grammar are reserved for future extensions
-# to the format of RCS files.
-# No newphrase will begin with any keyword already in use. 
-
-#
     function _readTo($fp, $char)
     {
         $ch = null;
         $buf = '';
         $string = '';
         $state = '';
-        $space = 0;
-        while( false !== ($ch = fgetc($fp)) ) {
+
+        while( false !== ($ch = fgetc($fp)) )
+            if ( !ctype_space($ch) ) break;
+
+        do {
+/*
+            if ($state) {
+                if ($ch == '@') {
+                    $ch=fgetc($fp);
+                    if ($ch == '@') {
+                        $string.=$ch;
+                        continue;
+                    } else {
+                        $state='';
+                        if ($char == '@') break;
+                    }
+                } else {
+                    $string.=$ch;
+                    continue;
+                }
+            } else if( $ch == '@' ) {
+                $state = 1;
+                continue;
+            }
+//*/
+//*
             if( $ch == '@' ) {
-                if( $state == '@' ) {
-                    $state = 'e';
-                    continue;
-                } else if( $state == 'e' ) {
-                    $state = '@';
-                    $string .= '@';
-                    continue;
-                } else {
-                    $state = '@';
-                    continue;
-                }
-            } else if ( $state ) {
-                if ( $state == '@' ) {
-                    $string .= $ch;
-                    continue;
-                } else if( $state == 'e' ) {
-                    $state = '';
-                    if( $char == '@' ) break;
-                    # End of string
-                }
+                list($str,$ch)=$this->_readString($fp);
+                $string.=$str;
+                if ($char == '@') break;
             }
-           
-            if ( preg_match('/\s/',$ch) ) {
-                if( $space or $buf == '' ) {
-                    continue;
-                } else {
-                    $space = 1;
-                    $ch = ' ';
-                }
-            } else {
-                $space = 0;
-            }
+//*/
             $buf .= $ch;
             if( $ch == $char ) break;
-        }
-        if ($ch == null) $buf=null;
+        } while ( false !== ($ch = fgetc($fp)) );
+
+        $buf = preg_replace('/\s+/',' ',$buf);
+        if ($buf == '') $buf=null;
         return array( $buf, $string );
     }
     
@@ -181,7 +135,7 @@ Class RcsLite {
     }
     
     # Read in the whole RCS file
-    function _process($file='', $force=0)
+    function _process($file='', $quick=0,$force=0)
     {
         if( $this->_where && !$force) return;
 
@@ -270,12 +224,15 @@ Class RcsLite {
                     $date[$num] = $this->rcsDateToTime($match[2]);
                 }
             } else if( $where == 'delta.next' ) {
-                if( preg_match('/^next ([^;]*);$/',$line,$match) ){
+                if( preg_match('/^next\s+([^;]*);$/',$line,$match) ){
                     $where = 'delta.date';
                     $next[$num] = $match[1];
                     if ($next[$num] == "") {
                         $where = 'desc';
                         $term = '@';
+                        if ($quick) {
+                            break;
+                        }
                     }
                 }
             } else if( $where == 'delta.author' ) {
@@ -412,7 +369,6 @@ Class RcsLite {
         return $rlog;
     }
     
-    # ======================
     function _binaryChange()
     {
         # Nothing to be done but note for re-writing
@@ -421,28 +377,24 @@ Class RcsLite {
         # FIXME: unless we have to not do diffs for binary files
     }
     
-    # ======================
     function numRevisions()
     {
         $this->_ensureProcessed();
         return $this->_head;
     }
     
-    # ======================
     function access()
     {
         $this->_ensureProcessed();
         return $this->_access;
     }
     
-    # ======================
     function comment()
     {
         $this->_ensureProcessed();
         return $this->_comment;
     }
     
-    # ======================
     function date($version)
     {
         $this->_ensureProcessed();
@@ -467,28 +419,24 @@ Class RcsLite {
         return strtotime("$dum[0]/$dum[1]/$dum[2] $dum[3]:$dum[4]:$dum[5]");
     }
     
-    # ======================
     function description()
     {
         $this->_ensureProcessed();
         return $this->_description;
     }
     
-    # ======================
     function author($version)
     {
         $this->_ensureProcessed();
         return $this->_author[$version];
     }
     
-    # ======================
     function log($version)
     {
         $this->_ensureProcessed();
         return $this->_log[$version];
     }
     
-    # ======================
     function delta($version)
     {
         $this->_ensureProcessed();
@@ -500,7 +448,6 @@ Class RcsLite {
         return $dum[0].'.'.sprintf("%s",$dum[1]+1);
     }
     
-    # ======================
     function addRevisionText($text,$log, $date=0)
     {
         $this->_ensureProcessed();
@@ -510,7 +457,6 @@ Class RcsLite {
         #   $text = $this->_readFile( $this->{file} )
         $head = $this->numRevisions();
         if( $head ) {
-            //$delta = $this->_diffText( $text, $this->delta($head));
             $delta = $this->_diffText( $this->delta($head),$text);
             $this->_delta[$head] = $delta;
             $nhead=$this->incRev($head);
@@ -532,7 +478,6 @@ Class RcsLite {
         return $this->_writeMe();
     }
 
-    # ======================
     function addRevisionPage($log, $date=0)
     {
         $this->_ensureProcessed();
@@ -547,7 +492,6 @@ Class RcsLite {
         $this->addRevisionText($text, $log, $date);
     }
 
-    # ======================
     function _writeMe()
     {
         $dataError = '';
@@ -558,7 +502,6 @@ Class RcsLite {
         if( ! $fp ) {
            $dataError = 'Problem opening ' . $this->rcsFile . ' for writing';
         } else {
-           #binmode( $out );
            fwrite( $fp, $this->_make_rcs() );
            fclose( $fp );
         }
@@ -566,7 +509,6 @@ Class RcsLite {
         return $dataError;
     }
     
-    # ======================
     # Replace the top revision
     # Return non empty string with error message if there is a problem
     function replaceRevision($text, $comment, $date)
@@ -576,7 +518,6 @@ Class RcsLite {
         $this->addRevisionText( $text, $comment, $date );
     }
     
-    # ======================
     # Delete the last revision - do nothing if there is only one revision
     function deleteRevision()
     {
@@ -587,7 +528,6 @@ Class RcsLite {
         return $this->_writeMe();
     }
     
-    # ======================
     function _delLastRevision() // XXX
     {
         $numRevisions = $this->numRevisions();
@@ -602,7 +542,6 @@ Class RcsLite {
         $this->_head = $numRevisions;
     }
     
-    # ======================
     function revisionDiff($rev1, $rev2, $type='diff')
     {
         $this->_ensureProcessed();
@@ -610,27 +549,26 @@ Class RcsLite {
         if (!$rev2) $rev2=$this->_head;
         $text1 = $this->getRevision( $rev1 );
         $text2 = $this->getRevision( $rev2 );
+
         $diff = $this->_diffText( $text2, $text1, $type );
         return $diff;
     }
     
-    # ======================
     function getRevision($version)
     {
         $this->_ensureProcessed();
         $head = $this->numRevisions();
         if ( $version != $head && !in_array($version,$this->_next))
-            return;
-        if( $version == $head ) {
+            return; // XXX
+        if( strcmp($version,$head) == 0 ) {
             return $this->delta( $version );
         } else {
             $headText = $this->delta( $head );
-            $text = $this->_mySplit( $headText,1 );
+            $text = $this->_mySplit( $headText );
             return $this->_patchN( $text, $this->_next[$head], $version );
         }
     }
     
-    # ======================
     # If revision file is missing, information based on actual file is returned.
     # Date is in epoch based seconds
     function getRevisionInfo($version)
@@ -647,10 +585,8 @@ Class RcsLite {
         }
     }
     
-    
-    # ======================
     # Apply delta (patch) to text. Note that RCS stores reverse deltas,
-    # the text for revision x is patched to produce text for revision x-1.
+    # the text for revision 1.x is patched to produce text for revision 1.x-1.
     # It is fiddly dealing with differences in number of line breaks after the
     # end of the text.
     function _patch(&$text,$delta)
@@ -695,62 +631,33 @@ Class RcsLite {
         }
     }
     
-    
-    # ======================
     function _patchN(&$text,$version,$target)
     {
         $deltaText= $this->delta( $version );
         $delta = $this->_mySplit( $deltaText );
         $this->_patch( $text, $delta );
-        if( $version == $target ) {
+        if( strcmp($version,$target) == 0 ) {
             return implode('', $text );
         } else {
             return $this->_patchN( $text, $this->_next[$version], $target );
         }
     }
     
-    # ======================
     # Split and make sure we have trailing carriage returns
-    function _mySplit($text,$addEntries=0,$add_cr=1)
+    function _mySplit($text)
     {
-        $ending = '';
-        if( preg_match_all("/(\n)$/", $text,$match) )
-            $ending = $match[1][0]; // XXX
-   
-        $list = preg_split( "/\n/", $text );
+        $list = split( "\n", $text );
         $sz=sizeof($list);
-        #print $sz.':';
-        for( $i = 0; $i<$sz; $i++ )
-            $list[$i] .= "\n";
-    
-        if( $ending ) {
-            if (strlen($ending) == 1) array_pop($list);
-/*
-            if( $addEntries ) {
-                $len = strlen($ending);
-                if( $list ) {
-                   $len--;
-                # ??? $list[sizeof($list)] .= "\n";
-                }
-                for($i=0; $i<$len; $i++ ) {
-                    array_push($list,"\n");
-                }
-            } else {
-                if( $list ) {
-                # ??? $list[sizeof($list)] .= $ending;
-                } else {
-                    $list = array( $ending );
-                }
-            }
-*/
+        if ($list[$sz-1]=="\n") {
+            array_pop($list);
+            $sz--;
         }
+
+        for( $i = 0; $i<$sz; $i++ ) $list[$i] .= "\n";
         # TODO: deal with Mac style line ending??
-    
         return $list; # FIXME would it be more efficient to return a reference?
     }
     
-    
-    # ======================
     # Way of dealing with trailing \ns feels clumsy
     function _diffText($new,$old,$type="")
     {
@@ -759,7 +666,6 @@ Class RcsLite {
         return $this->_diffN( $lNew, $lOld, $type );
     }
 
-    # ====================== 
     # no type means diff for putting in rcs file, diff means normal diff output
     function _diffN($new,$old,$type="")
     {
@@ -776,36 +682,11 @@ Class RcsLite {
         return $diffs;
     }
 
-    # ======================
     function validTo()
     {
         $this->_ensureProcessed();
         return $this->_status;
     }
-}
-
-function test() {
-    $rcs_dir='RCS';$rcs_user='hello';
-    $rcs = new RcsLite($rcs_dir,$rcs_user);
-
-    $rcs->_process("m.txt");
-    #process( "c:/tmp/rcs/RCS/a.txt" );
-    print "head: $rcs->_head\n";
-    print_r($rcs->_next);
-
-    #for ($i=0;$i<10;$i++) {
-    #   $dd=$rcs->getRevision('1.'.$i);
-    #   print($dd);
-    #}
-    ## co -p1.7
-    #$dd=$rcs->getRevision('1.7');
-    #print($dd);
-    ## rcsdiff -r1.3 -r1.8
-    $dd=$rcs->revisionDiff('1.3','1.8','udiff');
-    print($dd);
-    ## ci -l
-    $rcs->addRevisionText("Bang\n\t\tHello World !\n",'hello');
-    #print $rcs->rlog("1.11");
 }
 
 // vim:et:sts=4
