@@ -70,7 +70,7 @@ class Blog_cache {
     global $DBInfo;
 
     if (!$blogs) return array();
-
+/*
     $check=strlen($date);
     if (($check < 4) or !preg_match('/^\d+/',$date)) $date=date('Y\-m');
     else {
@@ -78,6 +78,8 @@ class Blog_cache {
       else if ($check==8) $date=substr($date,0,4).'\-'.substr($date,4,2).'\-'.substr($date,6);
       else if ($check!=4) $date=date('Y\-m');
     }
+*/
+    $date='';
 
     $entries=array();
     $logs=array();
