@@ -1042,7 +1042,7 @@ function do_userform($formatter,$options) {
     if ($options['username'])
       $userinfo->info['name']=$options['username'];
     $udb->saveUser($userinfo);
-    $options['css_url']=$options['user_css'];
+    #$options['css_url']=$options['user_css'];
     if (!isset($options['msg']))
       $options['msg']=_("Profiles are saved successfully !");
   }
