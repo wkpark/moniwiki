@@ -266,11 +266,14 @@ class Security {
 
   function writable($options="") {
     if (!$options[page]) return 0; # XXX
-#    if ($options[id]=='Anonymous') return 0;
     return $this->DB->_isWritable($options[page]);
   }
 
   function validuser($options="") {
+    return 1;
+  }
+
+  function is_allowed($action="read",$options) {
     return 1;
   }
 }
@@ -289,13 +292,25 @@ class Security_needtologin {
   }
 
   function writable($options="") {
-    if (!$options[page]) return 0; # XXX
-    if ($options[page]=='WikiSandBox') return 1;
-    if ($options[id]=='Anonymous') return 0;
     return $this->DB->_isWritable($options[page]);
   }
 
   function validuser($options="") {
+    return 1;
+  }
+
+  function may_edit($options) {
+    if (!$options[page]) return 0; # XXX
+    if ($options[page]=='WikiSandBox') return 1;
+    if ($options[id]=='Anonymous') return 0;
+    return 1;
+  }
+
+  function is_allowed($action="read",$options) {
+    $method='may_'.$action;
+    if (method_exists($this, $method)) {
+      return $this->$method ($options);
+    }
     return 1;
   }
 }
@@ -311,16 +326,10 @@ function getConfig($configfile) {
   return array_diff($new,$org);
 }
 
-function _dummy() {
-$msg=array(
-  _("FrontPage"),
-  _("RecentChanges"),
-  _("FindPage"),
-  _("UserPreferences"),
-  _("TitleIndex"),
-  _("HelpContents")
-  );
-}
+$dummy=array(
+  _("FrontPage"), _("RecentChanges"), _("FindPage"), _("UserPreferences"),
+  _("TitleIndex"), _("HelpContents")
+);
 
 class WikiDB {
   function WikiDB($config=array()) {
@@ -364,7 +373,7 @@ class WikiDB {
     $this->iconset='moni';
     $this->template_regex='[a-z]Template$';
     $this->category_regex='^Category[A-Z]';
-    #$this->security="needtologin";
+    $this->security_class="needtologin";
 
     # set user-specified configuration
     if ($config) {
@@ -457,8 +466,8 @@ class WikiDB {
     if (!$this->counter->counter)
       $this->counter=new Counter();
 
-    if ($this->security) {
-      $class="Security_".$this->security;
+    if ($this->security_class) {
+      $class="Security_".$this->security_class;
       $this->security=new $class ($this);
     } else
       $this->security=new Security($this);
@@ -2317,7 +2326,7 @@ if ($pagename) {
       return;
     }
     if (!$page->exists()) {
-      $formatter->send_header(array("Status: 404 Not found"),$options);
+      $formatter->send_header("Status: 404 Not found",$options);
 
       $twins=$DBInfo->metadb->getTwinPages($page->name);
       if ($twins) {
@@ -2339,7 +2348,6 @@ if ($pagename) {
         print _("To create your own templates, add a page with a 'Template' suffix\n");
       }
 
-      #$args[showpage]=1;
       $args[editable]=1;
       $formatter->send_footer($args);
       return;
@@ -2351,9 +2359,17 @@ if ($pagename) {
     $formatter->write("<div id='wikiContent'>\n");
     $formatter->send_page();
     $formatter->write("</div>\n");
-    #$args[showpage]=1;
     $args[editable]=1;
     $options[timer]=$timing;
+    $formatter->send_footer($args,$options);
+    return;
+  }
+  if ($action && !$DBInfo->security->is_allowed($action,&$options)) {
+    $msg=sprintf(_("Please login before \"%s\" this page"),$action);
+    $formatter->send_header("Status: 406 Not Acceptable",$options);
+    $formatter->send_title($msg,"", $options);
+    $formatter->send_page("== "._("Goto UserPreferences")." ==\n");
+    $args[showpage]=1;
     $formatter->send_footer($args,$options);
     return;
   }
@@ -2371,7 +2387,6 @@ if ($pagename) {
           $rr.=":".$range[$r];
         $dum[]=$rr;$rr='';
       }
-      #print_r($dum);
       $options[passwd]=$passwd;
       $options[show]=$show;
       $options[range]=$dum;
@@ -2442,7 +2457,6 @@ if ($pagename) {
     $options[passwd]=$passwd;
     do_DeletePage($formatter,$options);
   } else if ($action) {
-    #print($login_id);
 
     if (function_exists("do_post_".$action)) {
       $options=array_merge($options,$HTTP_POST_VARS);
@@ -2478,8 +2492,9 @@ if ($pagename) {
       }
       $formatter->send_header("Status: 406 Not Acceptable",$options);
       $formatter->send_title(_("406 Not Acceptable"),"",$options);
-      $args[editable]=0;
-      # $formatter->send_page("");
+      $formatter->send_page("== "._("Is it valid action ?")." ==\n");
+      #print "<h2> "._("Is it valid action ?")." </h2>";
+      $args[showpage]=1;
       $options[timer]=$timing;
       $formatter->send_footer($args,$options);
       return;
