@@ -25,6 +25,7 @@ function processor_blog($formatter,$value="") {
       $date= "@ ".date("Y-m-d [h:i a]",$time);
     }
     $md5sum=md5($line);
+    $purple="<a class='purple' href='#$md5sum'>#</a>";
     $comment_action="<div class='blog_user'>&raquo; ".$formatter->link_tag($formatter->page->urlname,"?action=blog&amp;value=$md5sum",_("Add comment"))."</div>\n";
   }
 
@@ -55,10 +56,10 @@ function processor_blog($formatter,$value="") {
   if ($title) {
     $title=preg_replace("/(".$formatter->wordrule.")/e",
                         "\$formatter->link_repl('\\1')",$title);
-    $out.="<div class='blog_title'>$title</div>\n";
+    $out.="<div class='blog_title'><a name='$md5sum' id='$md5sum'>$title$purple</div>\n";
   }
   $out.="<div class='blog_user'>Submitted by $user $date</div>\n".
-    "<div class='blog_comment'>$msg$comments$comment_action</div>\n".
+    "<div class='blog_comment'></a>$msg$comments$comment_action</div>\n".
     "</div>\n";
   return $out;
 }
