@@ -110,17 +110,19 @@ Title</span>
 Contents</span>&nbsp;
 <input type='text' name='value' class='goto' accesskey='s' size='20' />
 <input type='submit' name='status' value='Go' class='goto' style='width:23px' />
+</form>
 ";
   } else if ($type==2) {
     return "
 <form name='go' id='go' method='get' action='$action'>
 <select name='action' style='width:60px'>
-<option value='goto'/>&nbsp;&nbsp;&nbsp;
+<option value='goto'/>goto
 <option value='titlesearch'/>TitleSearch
 <option value='fullsearch'/>FullSearch
 </select>
 <input type='text' name='value' class='goto' accesskey='s' size='20' />
 <input type='submit' name='status' value='Go' />
+</form>
 ";
   } else if ($type==3) {
     return "
