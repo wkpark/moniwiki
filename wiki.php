@@ -14,7 +14,7 @@
 // $Id$
 // vim:et:ts=2:
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0rc3';
+$_release = '1.0rc4';
 
 include "wikilib.php";
 
@@ -58,17 +58,17 @@ function getPlugin($pluginname) {
   return $plugins[strtolower($pluginname)];
 }
 
-function hasProcessor($pro_name) {
+function getProcessor($pro_name) {
   static $processors=array();
-  if ($processors) return isset($processors[$pro_name]);
+  if ($processors) return $processors[strtolower($pro_name)];
 
   $handle= opendir('plugin/processor');
   while ($file= readdir($handle)) {
     if (is_dir("plugin/processor/$file")) continue;
     $name= substr($file,0,-4);
-    $processors[$name]= $name;
+    $processors[strtolower($name)]= $name;
   }
-  return isset($processors[$pro_name]);
+  return $processors[strtolower($pro_name)];
 }
 
 if (0 && !function_exists ('bindtextdomain')) {
@@ -992,22 +992,31 @@ class Formatter {
     $urlrule="((?:$url):[^\s$punct]+(\.?[^\s$punct]+)+)";
     # solw slow slow
     #(?P<word>(?:/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})
-#             "(?<!\!|\[\[|[a-z])(([A-Z]+[a-z0-9]+){2,})(?!([a-z0-9]))|".
     $this->wordrule="(\[($url):[^\s\]]+(\s[^\]]*)+\])|".
              "(\!([A-Z]+[a-z0-9]+){2,})(?!(:|[a-z0-9]))|".
+    #        "(?<!\!|\[\[|[a-z])(([A-Z]+[a-z0-9]+){2,})(?!([a-z0-9]))|".
              "(?<!\!|\[\[|[a-z])((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})(?!([a-z0-9]))|".
              "(?<!\[)\[([^\[:,\s\d][^\[:,]+)\](?!\])|".
              "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
              "($urlrule)|".
              "(\?[a-z0-9]+)";
 
-    if ($page) $this->get_instructions();
   }
 
-  function get_instructions() {
+  function _instructions($body="") {
+    $this->processor="";
     $pi=array('#redirect','#format','#action');
-    if (!$this->page->exists()) return '';
-    $body=$this->page->get_raw_body();
+    if (!$body) {
+      if (!$this->page->exists()) return '';
+      $body=$this->page->get_raw_body();
+    }
+
+    if ($body[0] == '<') {
+      list($line, $dummy)= split("\n", $body,2);
+      if (substr($line,0,6) == '<?xml ')
+        #$this->pi['#format']='xslt';
+        $this->pi['#format']='xsltproc';
+    }
     while ($body and $body[0] == '#') {
       # extract first line
       list($line, $body)= split("\n", $body,2);
@@ -1017,7 +1026,17 @@ class Formatter {
       $key=strtolower($key);
       if (in_array($key,$pi)) $this->pi[$key]=$val;
     }
-    $this->page->body=$body;
+    if ($this->pi['#format']) {
+      $pi_format=$this->pi['#format'];
+      if (function_exists("processor_".$pi_format)) {
+        $this->processor=$pi_format;
+      } else {
+        if ($processor=getProcessor($pi_format)) {
+          include("plugin/processor/$processor.php");
+          $this->processor=$processor;
+        }
+      }
+    }
   }
 
   function highlight_repl($val) {
@@ -1172,9 +1191,9 @@ class Formatter {
       if ($sisters) {
          if (!$this->sister[$word]) {
             $this->sisters[]="<tt class='foot'><sup>&#160;&#160;&#160;".
-                  "<a name='sister$this->sister_idx'/>".
+                  "<a name='sister$this->sister_idx'></a>".
                   "<b>$this->sister_idx)</b>&#160;</sup></tt> ".
-                  "$sisters<br/>";
+                  "$sisters <br/>";
             $this->sister[$word]=$this->sister_idx++;
          }
          $idx=$this->sister[$word];
@@ -1342,19 +1361,36 @@ class Formatter {
 
     if ($options[pagelinks]) $this->gen_pagelinks=1;
 
-    if (!$body) {
-      $twins=$DBInfo->metadb->getTwinPages($this->page->name);
+    if ($body) {
+      $this->_instructions(&$body);
+      if ($this->processor) {
+#        if ($body[0]=='#') list($dummy,$body)= explode("\n",$body,2);
+        print "$body";
+        eval("\$out=processor_$this->processor(&\$this,\$body,\$options);");
+        print $out;
+        return;
+      }
+      $lines=explode("\n",$body);
+    } else {
       $body=$this->page->get_raw_body();
+      $this->_instructions(&$body);
+      if ($this->processor) {
+#        if ($body[0]=='#') list($dummy,$body)= explode("\n",$body,2);
+        eval("\$out=processor_$this->processor(&\$this,\$body,\$options);");
+        print $out;
+        return;
+      }
+
+      $twins=$DBInfo->metadb->getTwinPages($this->page->name);
       if ($body)
         $lines=explode("\n",$body);
       else
         $lines=array();
       if ($twins) {
-         if ($lines) $lines[]="----";
-         $lines[]=$twins;
+        if ($lines) $lines[]="----";
+        $lines[]=$twins;
       }
-    } else
-      $lines=explode("\n",$body);
+    }
 
     if (!$lines) return;
 
@@ -1410,9 +1446,9 @@ class Formatter {
             if (function_exists("processor_".$dummy[0])) {
               $this->processor=$dummy[0];
             } else {
-              if (hasProcessor($dummy[0])) {
-                include("plugin/processor/$dummy[0].php");
-                $this->processor=$dummy[0];
+              if ($pf=getProcessor($dummy[0])) {
+                include("plugin/processor/$pf.php");
+                $this->processor=$pf;
               }
             }
          } else if ($line[$p+3] == ":") {
@@ -1544,18 +1580,18 @@ class Formatter {
       if ($in_pre==-1) {
          $in_pre=0;
          if ($this->processor) {
-            $value=$this->pre_line;
-            eval("\$out=processor_$this->processor(&\$this,\$value);");
-            $line=$out.$line;
+           $value=$this->pre_line;
+           eval("\$out=processor_$this->processor(&\$this,\$value,\$options);");
+           $line=$out.$line;
          } else if ($in_quote) {
             # htmlfy '<'
-            $pre=preg_replace("/</","&lt;",$this->pre_line);
+            $pre=str_replace("<","&lt;",$this->pre_line);
             $pre=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$pre);
             $line="<pre class='quote'>\n".$pre."</pre>\n".$line;
             $in_quote=0;
          } else {
             # htmlfy '<'
-            $pre=preg_replace("/</","&lt;",$this->pre_line);
+            $pre=str_replace("/</","&lt;",$this->pre_line);
             $line="<pre class='wiki'>\n".$pre."</pre>\n".$line;
          }
          $this->nobr=1;
@@ -2410,7 +2446,7 @@ if ($_SERVER[REQUEST_METHOD]=="POST" && $HTTP_POST_VARS) {
       print $formatter->link_to("#editor",_("Goto Editor"));
       print "<div class='wikiPreview'>\n";
       print "<table border='1' align='center' width='95%'><tr><td>\n";
-      $formatter->send_page();
+      $formatter->send_page($savetext);
       print "</td></tr></table>\n";
       print $DBInfo->hr;
       #print "<hr id='wikiHr' />\n";

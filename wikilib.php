@@ -2070,8 +2070,16 @@ EOF;
 }
 
 function processor_html($formatter="",$value="") {
-   $html=substr($value,6);
-   return $html;
+  if ($value[0]=='#' and $value[1]=='!')
+    list($line,$value)=explode("\n",$value,2);
+  return $value;
+}
+
+function processor_plain($formatter,$value) {
+  if ($value[0]=='#' and $value[1]=='!')
+    list($line,$value)=explode("\n",$value,2);
+  $value=str_replace('<','&lt;',$value);
+  return "<pre class='code'>$value</pre>";
 }
 
 function processor_latex($formatter="",$value="") {
@@ -2084,12 +2092,12 @@ function processor_latex($formatter="",$value="") {
   $cache_dir="pds";
   $option='-interaction=batchmode ';
 
-  if (!$value) return;
-  $lines=explode("\n",$value);
-  # get parameters
-  unset($lines[0]);
+  if ($value[0]=='#' and $value[1]=='!')
+    list($line,$value)=explode("\n",$value,2);
 
-  $tex=join($lines,"\n");
+  if (!$value) return;
+
+  $tex=$value;
 
   $uniq=md5($tex);
 
@@ -2126,7 +2134,9 @@ $tex
 }
 
 function processor_php($formatter="",$value="") {
-  $php=substr($value,5);
+  if ($value[0]=='#' and $value[1]=='!')
+    list($line,$value)=explode("\n",$value,2);
+  $php=$value;
   ob_start();
   highlight_string($php);
   $highlighted= ob_get_contents();
@@ -2146,11 +2156,10 @@ function processor_gnuplot($formatter="",$value="") {
   $cache_dir="pds";
 
   #
+  if ($value[0]=='#' and $value[1]=='!')
+    list($line,$value)=explode("\n",$value,2);
+
   $plt=$value;
-  #$lines=explode("\n",$value);
-  # get parameters
-  #unset($lines[0]);
-  #$plt=join($lines,"\n");
 
 # a sample for testing
 #  $plt='
