@@ -82,7 +82,7 @@ class UserDB {
     $subs=array();
     foreach ($users as $id) {
       $usr=$this->getUser($id);
-      if ($usr->isSubscribedPage($pagename)) $subs[]=$usr->info[email];
+      if ($usr->isSubscribedPage($pagename)) $subs[]=$usr->info['email'];
     }
     return $subs;
   }
@@ -94,10 +94,16 @@ class UserDB {
     return true;
   }
 
+  function isNotUser($user) {
+    if ($this->_exists($user->id))
+      return false;
+    return true;
+  }
+
   function saveUser($user) {
     $config=array("css_url","datatime_fmt","email","bookmark","language",
                   "name","password","wikiname_add_spaces","subscribed_pages",
-                  "quicklinks","theme");
+                  "quicklinks","theme","ticket");
 
     $date=date('Y/m/d', time());
     $data="# Data saved $date\n";
@@ -818,7 +824,7 @@ function wiki_notify($formatter,$options) {
 
   $mailto=join(", ",$subs);
   $subject="[".$DBInfo->sitename."] ".sprintf(_("%s page is modified"),$options[page]);
-  
+ 
   $mailheaders = "Return-Path: $from\r\n";
   $mailheaders.= "From: $from\r\n";
   $mailheaders.= "X-Mailer: MoniWiki form-mail interface\r\n";
@@ -981,11 +987,59 @@ function do_bookmark($formatter,$options) {
   $formatter->send_footer("",$options);
 }
 
+function wiki_sendmail($body,$options) {
+  global $DBInfo;
+
+  if ($options['id'])
+    $from=$options['id'];
+  else
+    $from=$DBInfo->sitename;
+
+  $email=$options['email'];
+  $subject=$options['subject'];
+
+  $mailheaders = "Return-Path: $from\r\n";
+  $mailheaders.= "From: $from\r\n";
+  $mailheaders.= "X-Mailer: MoniWiki form-mail interface\r\n";
+
+  $mailheaders.= "MIME-Version: 1.0\r\n";
+  $mailheaders.= "Content-Type: text/plain; charset=$DBInfo->charset\r\n";
+  $mailheaders.= "Content-Transfer-Encoding: 8bit\r\n\r\n";
+
+  mail($email,$subject,$body,$mailheaders);
+}
+
 function do_userform($formatter,$options) {
   global $DBInfo;
 
   $user=new User(); # get cookie
   $id=$options['login_id'];
+
+  if ($options['ticket'] and $id and $id!='Anonymous') {
+    $userdb=new UserDB($DBInfo);
+    if ($userdb->_exists($id)) {
+       $user=$userdb->getUser($id);
+       if ($user->info['ticket']==$options['ticket']) {
+         list($dummy,$email)=explode('.',$options['ticket'],2);
+         $user->info['email']=$email;
+         $user->info['ticket']='';
+         $userdb->saveUser($user);
+         $title=_("Successfully confirmed");
+         $options['msg']=_("Your e-mail address is confirmed successfully");
+       } else {
+         $title=_("Confirmation missmatched !");
+         $options['msg']=_("Please try again to register your e-mail address");
+       }
+    } else {
+      $title=_("ID does not exists !");
+      $options['msg']=_("Please try again to register your e-mail address");
+    }
+    $formatter->send_header("",$options);
+    $formatter->send_title($title,"",$options);
+
+    $formatter->send_footer("",$options);
+    return '';
+  }
 
   if ($user->id == "Anonymous" and $id and $options['login_passwd']) {
     # login
@@ -1020,14 +1074,28 @@ function do_userform($formatter,$options) {
            if ($ret < 8)
               $options['msg']=_("Your password is too simple to use as a password !");
            $udb=new UserDB($DBInfo);
-           $ret=$udb->addUser($user);
-           if ($ret) {
+           if (isset($options['email'])) {
+             if (preg_match('/^[a-z][a-z0-9_]+@[a-z0-9_]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
+               #$user->info['email']=$options['email'];
+             } else
+               $options['msg'].='<br/>'._("Your email address is not valid");
+           }
+
+           if ($udb->isNotUser($user)) {
               $title= _("Successfully added!");
+              $ticket=md5(time().$user->id.$options['email']);
+              $user->info['ticket']=$ticket.".".$options['email'];
+              $ret=$udb->addUser($user);
               $user->setCookie();
+
+              $options['subject']="[$DBInfo->sitename] "._("E-mail confirmation");
+              $body=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
+              $body=_("Please confirm your email address")."\n".$body;
+              wiki_sendmail($body,$options);
            } else {# already exist user
               $user=$udb->getUser($user->id);
               if ($user->checkPasswd($options['password'])=== true) {
-                  $options['msg']= sprintf(_("Successfully login as '%s'"),$id);
+                  $options['msg'].= sprintf(_("Successfully login as '%s'"),$id);
                   $user->setCookie();
               } else {
                   $title = _("Invalid password !");
@@ -1064,8 +1132,17 @@ function do_userform($formatter,$options) {
     }
     if (isset($options['user_css']))
       $userinfo->info['css_url']=$options['user_css'];
-    if (isset($options['email']))
-      $userinfo->info['email']=$options['email'];
+    if (isset($options['email'])) {
+      if (preg_match('/^[a-z][a-z0-9_]+@[a-z0-9_]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
+        $ticket=md5(time().$userinfo->info['id'].$options['email']);
+        $userinfo->info['ticket']=$ticket.".".$options['email'];
+        $options['subject']="[$DBInfo->sitename] "._("E-mail confirmation");
+        $body=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
+        $body=_("Please confirm your email address")."\n".$body;
+        wiki_sendmail($body,$options);
+      } else
+        $options['msg'].=_("Your email address is not valid");
+    }
     if ($options['username'])
       $userinfo->info['name']=$options['username'];
     $udb->saveUser($userinfo);
