@@ -14,12 +14,12 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0rc8';
+$_release = '1.0rc9';
 
 include "wikilib.php";
 
 function _preg_escape($val) {
-  return preg_replace('/([\^\.\[\]\{\}\|\(\)\+\*\/\\\\!]{1})/','\\\\\1',$val);
+  return preg_replace('/([\^\.\[\]\{\}\|\(\)\+\*\/\\\\!\?]{1})/','\\\\\1',$val);
 }
 
 function _preg_search_escape($val) {
@@ -370,7 +370,7 @@ class Security_needtologin {
   }
 }
 
-function getConfig($configfile) {
+function getConfig($configfile,$options="") {
   if (!file_exists($configfile))
     return array();
 
@@ -418,7 +418,7 @@ class WikiDB {
     $this->changed_time_fmt= ' [h:i a]';
     $this->admin_passwd= '10sQ0sKjIJES.';
     $this->purge_passwd= '';
-    $this->actions= array('DeletePage','LikePages');
+    $this->actions= array('FindPage','DeletePage','LikePages');
     $this->show_hosts= TRUE;
     $this->iconset='moni';
     $this->template_regex='[a-z]Template$';
@@ -437,26 +437,6 @@ class WikiDB {
     if (!$this->purge_passwd)
        $this->purge_passwd=$this->admin_passwd;
 
-    if (!$this->icon) {
-    $iconset=$this->iconset;
-    $this->icon[upper]="<img src='$this->imgs_dir/$iconset-upper.gif' alt='U' align='middle' border='0' />";
-    $this->icon[edit]="<img src='$this->imgs_dir/$iconset-edit.gif' alt='E' align='middle' border='0' />";
-    $this->icon[diff]="<img src='$this->imgs_dir/$iconset-diff.gif' alt='D' align='middle' border='0' />";
-    $this->icon[del]="<img src='$this->imgs_dir/$iconset-deleted.gif' alt='(del)' align='middle' border='0' />";
-    $this->icon[info]="<img src='$this->imgs_dir/$iconset-info.gif' alt='I' align='middle' border='0' />";
-    $this->icon[rss]="<img src='$this->imgs_dir/$iconset-rss.gif' alt='RSS' align='middle' border='0' />";
-    $this->icon[show]="<img src='$this->imgs_dir/$iconset-show.gif' alt='R' align='middle' border='0' />";
-    $this->icon[find]="<img src='$this->imgs_dir/$iconset-search.gif' alt='S' align='middle' border='0' />";
-    $this->icon[help]="<img src='$this->imgs_dir/$iconset-help.gif' alt='H' align='middle' border='0' />";
-    $this->icon[www]="<img src='$this->imgs_dir/$iconset-www.gif' alt='www' align='middle' border='0' />";
-    $this->icon[mailto]="<img src='$this->imgs_dir/$iconset-email.gif' alt='M' align='middle' border='0' />";
-    $this->icon[create]="<img src='$this->imgs_dir/$iconset-create.gif' alt='N' align='middle' border='0' />";
-    $this->icon['new']="<img src='$this->imgs_dir/$iconset-new.gif' alt='U' align='middle' border='0' />";
-    $this->icon[updated]="<img src='$this->imgs_dir/$iconset-updated.gif' alt='U' align='middle' border='0' />";
-    $this->icon[user]="UserPreferences";
-    $this->icon[home]="<img src='$this->imgs_dir/$iconset-home.gif' alt='M' align='middle' border='0' />";
-    }
-
 #
     if (!$this->menu) {
       $this->menu= array($this->frontpage,'FindPage','TitleIndex','RecentChanges');
@@ -464,32 +444,6 @@ class WikiDB {
       $this->menu_cat="|";
       $this->menu_sep="|";
     }
-
-    if (!$this->icons) {
-      $this->icons=array(
-              array("","?action=edit",$this->icon[edit]),
-              array("","?action=diff",$this->icon[diff]),
-              array("","",$this->icon[show]),
-              array("FindPage","",$this->icon[find]),
-              array("","?action=info",$this->icon[info]),
-              array("","?action=subscribe",$this->icon[mailto]),
-              array("HelpContents","",$this->icon[help]),
-           );
-
-      $this->icon_bra='';
-      $this->icon_cat=' ';
-      $this->icon_sep=' ';
-    }
-
-##    if (!$this->menu) {
-##    $this->menu="<img src='$this->imgs_dir/diff-7.gif'> ".
-##                "<img src='$this->imgs_dir/edit-7.gif'> ".
-##                "<img src='$this->imgs_dir/info-7.gif'> ".
-##                "<img src='$this->imgs_dir/show-7.gif'> ".
-##                "<img src='$this->imgs_dir/find-7.gif'> ".
-##                "<img src='$this->imgs_dir/help-7.gif'> ".
-##                "<img src='$this->imgs_dir/home-7.gif'> ";
-##    }
 
     # load smileys
     if ($this->use_smileys){
@@ -604,14 +558,20 @@ class WikiDB {
     $pages = array();
     $handle = opendir($this->text_dir);
 
-    if ($options[limit]) { # XXX
+    if (!$options) {
+      while ($file = readdir($handle)) {
+        if (is_dir($this->text_dir."/".$file)) continue;
+        $pages[] = $this->keyToPagename($file);
+      }
+      closedir($handle);
+      return $pages;
+    } else if ($options[limit]) { # XXX
        while ($file = readdir($handle)) {
           if (is_dir($this->text_dir."/".$file)) continue;
           if (filemtime($this->text_dir."/".$file) > $options[limit])
              $pages[] = $this->keyToPagename($file);
        }
        closedir($handle);
-       return $pages;
     } else if ($options[count]) {
        $count=$options[count];
        while (($file = readdir($handle)) && $count > 0) {
@@ -620,7 +580,6 @@ class WikiDB {
           $count--;
        }
        closedir($handle);
-       return $pages;
     } else if ($options[date]) {
        while ($file = readdir($handle)) {
           if (is_dir($this->text_dir."/".$file)) continue;
@@ -629,11 +588,17 @@ class WikiDB {
           $pages[$pagename]= $mtime;
        }
        closedir($handle);
-       return $pages;
     }
+    return $pages;
+  }
+
+  function getLikePages($needle) {
+    $pages = array();
+    $handle = opendir($this->text_dir);
     while ($file = readdir($handle)) {
-       if (is_dir($this->text_dir."/".$file)) continue;
-       $pages[] = $this->keyToPagename($file);
+      if (is_dir($this->text_dir."/".$file)) continue;
+      if (preg_match("/($needle)/",$file))
+        $pages[] = $this->keyToPagename($file);
     }
     closedir($handle);
     return $pages;
@@ -1002,6 +967,7 @@ class Formatter {
   var $sister_idx=1;
 
   function Formatter($page="",$options="") {
+    global $DBInfo;
     $this->page=$page;
     $this->head_num=1;
     $this->head_dep=0;
@@ -1013,10 +979,15 @@ class Formatter {
     $this->sisters=array();
     $this->foots=array();
     $this->gen_pagelinks=0;
-    $this->actions=array();
+    $this->actions=$DBInfo->actions;
+    $this->icons="";
 
-    #$punct="<\"\'}\]\|\;\,\.\!";
-    $punct="<\'}\]\|;,\.\)\!";
+    $this->themedir= dirname(__FILE__);
+    $this->themeurl= $DBInfo->url_prefix;
+    $this->set_theme($options[theme]);
+
+    #$punct="<\"\'}\]\|;,\.\!";
+    $punct="<\'}\]\|;\.\)\!";
     $url="http|ftp|telnet|mailto|wiki";
     $urlrule="((?:$url):([^\s$punct]|(\.?[^\s$punct]+))+)";
     #$urlrule="((?:$url):[^\s$punct]+(\.?[^\s$punct]+)+\s?)";
@@ -1033,6 +1004,68 @@ class Formatter {
              "(\?[a-z0-9]+)";
 
     $this->cache= new Cache_text("pagelinks");
+  }
+
+  function set_theme($theme="") {
+    if ($theme) {
+      $this->themedir.="/theme/$theme";
+      $this->themeurl.="/theme/$theme";
+    }
+    $themedir=$this->themedir;
+    $themeurl=$this->themeurl;
+    if (file_exists($themedir."/theme.php")) {
+      include($themedir."/theme.php");  
+      $this->icon=$icon;
+      $this->icons=$icons;
+    }
+    if (!$this->icon) {
+    global $DBInfo;
+    $iconset=$DBInfo->iconset;
+    $imgdir=$DBInfo->imgs_dir;
+    $this->icon[upper]="<img src='$imgdir/$iconset-upper.gif' alt='U' align='middle' border='0' />";
+    $this->icon[edit]="<img src='$imgdir/$iconset-edit.gif' alt='E' align='middle' border='0' />";
+    $this->icon[diff]="<img src='$imgdir/$iconset-diff.gif' alt='D' align='middle' border='0' />";
+    $this->icon[del]="<img src='$imgdir/$iconset-deleted.gif' alt='(del)' align='middle' border='0' />";
+    $this->icon[info]="<img src='$imgdir/$iconset-info.gif' alt='I' align='middle' border='0' />";
+    $this->icon[rss]="<img src='$imgdir/$iconset-rss.gif' alt='RSS' align='middle' border='0' />";
+    $this->icon[show]="<img src='$imgdir/$iconset-show.gif' alt='R' align='middle' border='0' />";
+    $this->icon[find]="<img src='$imgdir/$iconset-search.gif' alt='S' align='middle' border='0' />";
+    $this->icon[help]="<img src='$imgdir/$iconset-help.gif' alt='H' align='middle' border='0' />";
+    $this->icon[www]="<img src='$imgdir/$iconset-www.gif' alt='www' align='middle' border='0' />";
+    $this->icon[mailto]="<img src='$imgdir/$iconset-email.gif' alt='M' align='middle' border='0' />";
+    $this->icon[create]="<img src='$imgdir/$iconset-create.gif' alt='N' align='middle' border='0' />";
+    $this->icon['new']="<img src='$imgdir/$iconset-new.gif' alt='U' align='middle' border='0' />";
+    $this->icon[updated]="<img src='$imgdir/$iconset-updated.gif' alt='U' align='middle' border='0' />";
+    $this->icon[user]="UserPreferences";
+    $this->icon[home]="<img src='$imgdir/$iconset-home.gif' alt='M' align='middle' border='0' />";
+    }
+
+    if (!$this->icons) {
+      $this->icons=array(
+              array("","?action=edit",$this->icon[edit]),
+              array("","?action=diff",$this->icon[diff]),
+              array("","",$this->icon[show]),
+              array("FindPage","",$this->icon[find]),
+              array("","?action=info",$this->icon[info]),
+              array("","?action=subscribe",$this->icon[mailto]),
+              array("HelpContents","",$this->icon[help]),
+           );
+
+      $this->icon_bra='';
+      $this->icon_cat=' ';
+      $this->icon_sep=' ';
+    }
+
+##    if (!$this->menu) {
+##    $this->menu="<img src='$this->imgs_dir/diff-7.gif'> ".
+##                "<img src='$this->imgs_dir/edit-7.gif'> ".
+##                "<img src='$this->imgs_dir/info-7.gif'> ".
+##                "<img src='$this->imgs_dir/show-7.gif'> ".
+##                "<img src='$this->imgs_dir/find-7.gif'> ".
+##                "<img src='$this->imgs_dir/help-7.gif'> ".
+##                "<img src='$this->imgs_dir/home-7.gif'> ";
+##    }
+
   }
 
   function get_redirect() {
@@ -1127,7 +1160,7 @@ class Formatter {
       if (preg_match("/^mailto:/",$url)) {
         $url=str_replace("@","_at_",$url);
         $name=substr($url,7);
-        return $DBInfo->icon[mailto]."<a href='$url'>$name</a>";
+        return $this->icon[mailto]."<a href='$url'>$name</a>";
       } else
       if (preg_match("/^wiki:/",$url)) {
         if (preg_match("/\s/",$url)) { # have a space ?
@@ -1140,12 +1173,12 @@ class Formatter {
         list($url,$text)=explode(" ",$url,2);
         if (!$text) $text=$url;
         else if (preg_match("/(png|gif|jpeg|jpg)$/i",$text))
-          return "<a href='$url' title='$url'><img border='0' src='$text' /></a>";
-        return $DBInfo->icon[www]. "<a href='$url'>$text</a>";
+          return "<a href='$url' title='$url'><img border='0' alt='$url' src='$text' /></a>";
+        return $this->icon[www]. "<a href='$url'>$text</a>";
       } else
       if (preg_match("/^(http|ftp)/",$url)) {
         if (preg_match("/(png|gif|jpeg|jpg)$/i",$url))
-          return "<img src='$url' />";
+          return "<img alt='$url' src='$url' />";
         return "<a href='$url'>$url</a>";
       }
     } else {
@@ -1165,11 +1198,14 @@ class Formatter {
       $dum1=explode("/",$url,2);
       $wiki=$dum1[0]; $page=$dum1[1];
     }
-    $img="<img src='$DBInfo->imgs_dir/".strtolower($wiki).
-         "-16.png' align='middle' height='16' width='16' alt='$wiki:'/>";
+
+    $url=$DBInfo->interwiki[$wiki];
+    $img="<a href='$url' target='wiki'><img border='0' src='$DBInfo->imgs_dir/".
+         strtolower($wiki)."-16.png' align='middle' height='16' width='16' ".
+         "alt='$wiki:' title='$wiki:' /></a>";
     if (!$text) $text=$page;
     else if (preg_match("/(png|gif|jpeg|jpg)$/i",$text)) {
-      $text= "<img border='0' src='$text' />";
+      $text= "<img border='0' alt='$text' src='$text' />";
       $img="";
     }
 
@@ -1182,7 +1218,6 @@ class Formatter {
         return $this->link_tag($page,"","?").$page;
     }
 
-    $url=$DBInfo->interwiki[$wiki];
     if (!$url) return "$wiki:$page";
     $page=trim($page);
 
@@ -1343,7 +1378,7 @@ class Formatter {
 
     $alt=str_replace("<","&lt;",$smiley);
 
-    return "<img src='$DBInfo->imgs_dir/$img' align='middle' alt='$alt' border='0' />";
+    return "<img src='$DBInfo->imgs_dir/$img' align='middle' alt='$alt' title='$alt' />";
   }
 
   function link_url($pageurl,$query_string="") {
@@ -1401,17 +1436,15 @@ class Formatter {
 
   function _table_span($str) {
     $len=strlen($str)/2;
-    if ($len > 1) {
+    if ($len > 1)
       return " align='center' colspan='$len'";
-    }
     return "";
   }
 
   function _table($on,$attr="") {
     if ($on)
       return "<table class='wiki' cellpadding='3' cellspacing='2' $attr>\n";
-    else
-      return "</table>\n";
+    return "</table>\n";
   }
 
   function send_page($body="",$options="") {
@@ -1564,10 +1597,6 @@ class Formatter {
 
       $line=preg_replace($base_rule,$base_repl,$line);
 
-      # NoSmoke's MultiLineCell
-      $line=preg_replace(array("/{{\|/","/\|}}/"),
-            array('<table class="closure"><tr class="closure"><td class="closure">'."\n","</td></tr></table>\n"),$line);
-
       # bullet and indentation
       #if (!$in_pre && preg_match("/^(\s*)/",$line,$match)) {
       #if (preg_match("/^(\s*)/",$line,$match)) {
@@ -1652,8 +1681,11 @@ class Formatter {
                          "\$this->head_repl('\\1','\\2','\\3')",$line);
 
       # Smiley
-      if ($smiley_rule)
-         $line=preg_replace($smiley_rule,$smiley_repl,$line);
+      if ($smiley_rule) $line=preg_replace($smiley_rule,$smiley_repl,$line);
+
+      # NoSmoke's MultiLineCell
+      $line=preg_replace(array("/{{\|/","/\|}}/"),
+            array('<table class="closure"><tr class="closure"><td class="closure">'."\n","</td></tr></table>\n"),$line);
 
       if ($in_pre==-1) {
          $in_pre=0;
@@ -2135,26 +2167,21 @@ EOS;
     print $DBInfo->hr;
     print "<div id='wikiFooter'>";
     $menu="";
-    if ($this->pi['#action']) {
+    if ($this->pi['#action'] && !in_array($this->pi['#action'],$this->actions)){
       list($act,$txt)=explode(" ",$this->pi['#action'],2);
       if (!$txt) $txt=$act;
-      $menu= $this->link_to("?action=$act",_($txt)).$DBInfo->menu_sep;
+      $menu= $this->link_to("?action=$act",_($txt));
     } else if ($args[editable]) {
       if ($DBInfo->security->writable($options))
-        $menu= $this->link_to("?action=edit",'EditText').$DBInfo->menu_sep;
+        $menu= $this->link_to("?action=edit",_("EditText"));
       else
-        $menu= _("NotEditable")." ".$DBInfo->menu_sep;
-    }
-    if ($args[showpage])
-      $menu.= $this->link_to("",'ShowPage').$DBInfo->menu_sep;
-    $menu.= $this->link_tag("FindPage");
+        $menu= _("NotEditable");
+    } else
+      $menu.= $this->link_to("",_("ShowPage"));
 
     if (!$args[noaction]) {
-      foreach ($DBInfo->actions as $action)
-        $menu.= $DBInfo->menu_sep.$this->link_to("?action=$action",$action);
-      if ($this->actions) 
-        foreach ($this->actions as $action)
-          $menu.= $DBInfo->menu_sep.$this->link_to("?action=$action",$action);
+      foreach ($this->actions as $action)
+        $menu.= $DBInfo->menu_sep.$this->link_to("?action=$action",_($action));
     }
 
     if ($mtime=$this->page->mtime()) {
@@ -2169,22 +2196,26 @@ EOS;
   alt="Valid XHTML 1.0!" /></a>
 
  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
-  src="$DBInfo->imgs_dir/vcss" 
+  src="$DBInfo->imgs_dir/vcss.png" 
   style="border:0;width:88px;height:31px"
   align="middle"
   alt="Valid CSS!" /></a>
+
+ <a href="http://moniwiki.sourceforge.net/"><img
+  src="$DBInfo->imgs_dir/moniwiki-powerd.png" 
+  style="border:0;width:88px;height:31px"
+  align="middle"
+  alt="powerd by MoniWiki" /></a>
 FOOT;
 
     if ($options[timer])
       #$timer=sprintf("<br />%10.6f sec",$options[timer]->Check());
       $timer=sprintf("<br />%8.5f sec",$options[timer]->Check());
 
-    $themedir= dirname(__FILE__);
-    if ($options[theme]) $themedir.="/theme/$options[theme]";
-
-    if (file_exists($themedir."/footer.php"))
-      include_once($themedir."/footer.php");
-    else {
+    if (file_exists($this->themedir."/footer.php")) {
+      $themeurl=$this->themeurl;
+      include_once($this->themedir."/footer.php");
+    } else {
       print $menu.$banner;
     }
     print "\n</div>\n";
@@ -2233,42 +2264,39 @@ MSG;
     $menu=$DBInfo->menu_bra.join($DBInfo->menu_sep,$menu).$DBInfo->menu_cat;
     # icons
     if ($upper)
-      $upper_icon=$this->link_tag($upper,'',$DBInfo->icon[upper])." ";
+      $upper_icon=$this->link_tag($upper,'',$this->icon[upper])." ";
 
     $icons="";
-    if (!$DBInfo->icons) {
-      $icons.=$this->link_to("?action=edit",$DBInfo->icon[edit])." ";
-      $icons.=$this->link_to("?action=diff",$DBInfo->icon[diff])." ";
-      $icons.=$this->link_to("",$DBInfo->icon[show])." ";
-      $icons.=$this->link_tag("FindPage",'',$DBInfo->icon[find])." ";
-      $icons.=$this->link_to("?action=info",$DBInfo->icon[info])." ";
-      $icons.=$this->link_tag("HelpContents",'',$DBInfo->icon[help])." ";
+    if (!$this->icons) {
+      $icons.=$this->link_to("?action=edit",$this->icon[edit])." ";
+      $icons.=$this->link_to("?action=diff",$this->icon[diff])." ";
+      $icons.=$this->link_to("",$this->icon[show])." ";
+      $icons.=$this->link_tag("FindPage",'',$this->icon[find])." ";
+      $icons.=$this->link_to("?action=info",$this->icon[info])." ";
+      $icons.=$this->link_tag("HelpContents",'',$this->icon[help])." ";
     } else {
       $icon=array();
-      foreach ($DBInfo->icons as $item)
+      foreach ($this->icons as $item)
         $icon[]=$this->link_tag($item[0],$item[1],$item[2]);
-      $icons=$DBInfo->icon_bra.join($DBInfo->icon_sep,$icon).$DBInfo->icon_cat;
+      $icons=$this->icon_bra.join($this->icon_sep,$icon).$this->icon_cat;
     }
-    $rss_icon.=$this->link_tag("RecentChanges","?action=rss_rc",$DBInfo->icon[rss])." ";
+    $rss_icon.=$this->link_tag("RecentChanges","?action=rss_rc",$this->icon[rss])." ";
 
     # UserPreferences
     if ($options[id] != "Anonymous") {
       $user_link=$this->link_tag("UserPreferences","",$options[id]);
       if ($DBInfo->hasPage($options[id]))
-      $home=$this->link_tag($options[id],"",$DBInfo->icon[home])." ";
+      $home=$this->link_tag($options[id],"",$this->icon[home])." ";
     } else
-      $user_link=$this->link_tag("UserPreferences","",_($DBInfo->icon[user]));
+      $user_link=$this->link_tag("UserPreferences","",_($this->icon[user]));
 
     # print the title
     kbd_handler();
     print "<div id='wikiHeader'>\n";
 
-    $themedir= dirname(__FILE__);
-    if ($options[theme]) $themedir.="/theme/$options[theme]";
-
-    if (file_exists($themedir."/header.php")) {
-      $themeurl=$DBInfo->url_prefix."/theme/$options[theme]";
-      include_once ($themedir."/header.php");
+    if (file_exists($this->themedir."/header.php")) {
+      $themeurl=$this->themeurl;
+      include_once ($this->themedir."/header.php");
     } else { #default header
       $header="<table width='100%' border='0' cellpadding='3' cellspacing='0'>";
       $header.="<tr>";
@@ -2506,7 +2534,7 @@ if ($_SERVER[REQUEST_METHOD]=="POST" && $HTTP_POST_VARS) {
    $button_merge=$request[button_merge];
 
    $page = $DBInfo->getPage($pagename);
-   $formatter = new Formatter($page);
+   $formatter = new Formatter($page,$options);
    $formatter->send_header("",$options);
 
    $savetext=str_replace("\r", "", $savetext);
@@ -2522,7 +2550,7 @@ if ($_SERVER[REQUEST_METHOD]=="POST" && $HTTP_POST_VARS) {
       $orig=md5($body);
       # check datestamp
       if ($page->mtime() > $datestamp) {
-         $opts[msg]=sprintf(_("Someone else saved the page while you edited %s"),$formatter->link_tag($page->name));
+         $options[msg]=sprintf(_("Someone else saved the page while you edited %s"),$formatter->link_tag($page->name));
          $formatter->send_title(_("Conflict error!"),"",$options);
          $options[preview]=1; 
          $options[conflict]=1; 
@@ -2546,7 +2574,7 @@ if ($_SERVER[REQUEST_METHOD]=="POST" && $HTTP_POST_VARS) {
    }
 
    if (!$button_preview && $orig == $new) {
-      $opts[msg]=sprintf(_("Go back or return to %s"),$formatter->link_tag($page->name));
+      $options[msg]=sprintf(_("Go back or return to %s"),$formatter->link_tag($page->name));
       $formatter->send_title(_("No difference found"),"",$options);
       $formatter->send_footer();
       return;
@@ -2599,7 +2627,6 @@ if ($_SERVER[REQUEST_METHOD]=="POST" && $HTTP_POST_VARS) {
       # re-generates pagelinks
       $formatter->send_page("",$opt);
    }
-   $args[showpage]=1;
    $args[editable]=0;
    $options[timer]=$timing;
    $formatter->send_footer($args,$options);
@@ -2618,7 +2645,7 @@ if ($pagename) {
   } else
     $page = $DBInfo->getPage($pagename);
 
-  $formatter = new Formatter($page);
+  $formatter = new Formatter($page,$options);
 
   if (!$action or $action=='show') {
     if ($value) { # ?value=Hello
@@ -2681,7 +2708,6 @@ if ($pagename) {
     $formatter->send_header("Status: 406 Not Acceptable",$options);
     $formatter->send_title($msg,"", $options);
     $formatter->send_page("== "._("Goto UserPreferences")." ==\n");
-    $args[showpage]=1;
     $formatter->send_footer($args,$options);
     return;
   }
@@ -2715,8 +2741,6 @@ if ($pagename) {
       print $formatter->get_diff($rev,$rev2);
     print "<br /><hr />\n";
     $formatter->send_page();
-    $args[showpage]=1;
-    #$args[editable]=1;
     $options[timer]=$timing;
     $formatter->send_footer($args,$options);
 
@@ -2741,7 +2765,6 @@ if ($pagename) {
       print $page->get_raw_body();
     } else {
       $formatter->send_page();
-      $args[showpage]=1;
       $options[timer]=$timing;
       $formatter->send_footer($args,$options);
     }
@@ -2753,14 +2776,12 @@ if ($pagename) {
     $options[cols]=$cols;
     $options[template]=$template;
     $formatter->send_editor("",$options);
-    $args[showpage]=1;
     $options[timer]=$timing;
     $formatter->send_footer($args,$options);
   } else if ($action=="info") {
     $formatter->send_header("",$options);
     $formatter->send_title(sprintf(_("Info. for %s"),$page->name),"",$options);
     $formatter->show_info();
-    $args[showpage]=1;
     $options[timer]=$timing;
     $formatter->send_footer($args,$options);
   } else if ($action=="DeletePage") {
@@ -2805,7 +2826,6 @@ if ($pagename) {
       $formatter->send_title(_("406 Not Acceptable"),"",$options);
       $formatter->send_page("== "._("Is it valid action ?")." ==\n");
       #print "<h2> "._("Is it valid action ?")." </h2>";
-      $args[showpage]=1;
       $options[timer]=$timing;
       $formatter->send_footer($args,$options);
       return;
