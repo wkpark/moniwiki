@@ -237,7 +237,7 @@ class User {
      $this->ticket=$ticket;
      # set the fake cookie
      $_COOKIE['MONI_ID']=$ticket.'.'.$this->id;
-     return "Set-Cookie: MONI_ID=".$ticket.'.'.$this->id.'; expires='.date('l, d-M-Y',time()+60*60*24*30).'; Path='.get_scriptname();
+     return "Set-Cookie: MONI_ID=".$ticket.'.'.$this->id.'; expires='.gmdate('l, d-M-Y',time()+60*60*24*30).'; Path='.get_scriptname();
   }
 
   function unsetCookie() {
@@ -429,7 +429,7 @@ function macro_Edit($formatter,$value,$options='') {
   if (!$formatter->page->exists()) {
     $options['linkto']="?action=edit&amp;template=";
     $form = '<br />'._("Use one of the following templates as an initial release :\n");
-    $form.= macro_TitleSearch($formatter,".*Template",$options);
+    $form.= macro_TitleSearch($formatter,$DBInfo->template_regex,$options);
     $form.= _("To create your own templates, add a page with a 'Template' suffix.\n"."<br />\n");
   }
 
@@ -1000,7 +1000,7 @@ function macro_RandomQuote($formatter,$value="") {
 
   if (!($count=sizeof($quotes))) return '';
 
-  $quote=$quotes[rand(1,$count)];
+  $quote=$quotes[rand(0,$count-1)];
 
   $quote=str_replace("<","&lt;",$quote);
   $quote=preg_replace($formatter->baserule,$formatter->baserepl,$quote);
@@ -1152,13 +1152,14 @@ function get_key($name) {
      return strtoupper($name[0]);
   }
   $utf="";
-  if (function_exists ("iconv")) {
+  $use_utf=strtolower($DBInfo->charset)=='utf-8';
+  if (!$use_utf and function_exists ("iconv")) {
     # XXX php 4.1.x did not support unicode sting.
     $utf=iconv($DBInfo->charset,'UTF-8',$name);
     $name=$utf;
   }
 
-  if ($utf or $DBInfo->charset=='UTF-8') {
+  if ($utf or $use_utf) {
     if ((ord($name[0]) & 0xF0) == 0xE0) { # Now only 3-byte UTF-8 supported
        #$uni1=((ord($name[0]) & 0x0f) <<4) | ((ord($name[1]) & 0x7f) >>2);
        $uni1=((ord($name[0]) & 0x0f) <<4) | (($name[1] & 0x7f) >>2);
@@ -1169,7 +1170,7 @@ function get_key($name) {
        if ($uni>=0xac00 && $uni<=0xd7a3) {
          $ukey=0xac00 + (int)(($uni - 0xac00) / 588) * 588;
          $ukey=toutf8($ukey);
-         if ($utf)
+         if ($utf and !$use_utf)
            return iconv('UTF-8',$DBInfo->charset,$ukey);
          return $ukey;
        }
@@ -1179,11 +1180,10 @@ function get_key($name) {
     if (preg_match('/[a-z0-9]/i',$name[0])) {
       return strtoupper($name[0]);
     }
-    # php does not have iconv() EUC-KR assumed
-    # (from NoSmoke moinmoin)
+    # if php does not support iconv(), EUC-KR assumed
     if (strtolower($DBInfo->charset) == 'euc-kr') {
-      $korean=array('가','나','다','라','마','바','사','아',
-                    '자','차','카','타','파','하',"\xca");
+      $korean=array('가','까','나','다','따','라','마','바','빠','사','싸','아',
+                    '자','짜','차','카','타','파','하',"\xca");
       $lastPosition='~';
 
       $letter=substr($name,0,2);
