@@ -104,9 +104,11 @@ function macro_Gallery($formatter,$value,$options='') {
       $cr="\n";
     }
     closedir($handle);
-    $fp=fopen($dir."/list.txt",'w');
-    fwrite($fp,$cache);
-    fclose($fp);
+    $fp=@fopen($dir."/list.txt",'w');
+    if ($fp) {
+      fwrite($fp,$cache);
+      fclose($fp);
+    }
   }
 
   if (!$upfiles) return "<h3>No files uploaded</h3>";
