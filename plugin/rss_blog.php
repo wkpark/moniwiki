@@ -156,6 +156,19 @@ function generate_item($formatter, $log)
       ob_end_clean();
   }
 
+  /* convert special characters into HTML entities */
+  $search = array ("'&'",
+                   "'\"'",
+                   "'<'",
+                   "'>'");
+
+  $replace = array ("&amp;",
+                    "&quot;",  
+                    "&lt;",
+                    "&gt;");         
+
+  $title = preg_replace($search, $replace, $title);
+
   return <<<ITEM
 <item>
   <title>$title</title>
