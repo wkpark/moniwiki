@@ -379,6 +379,10 @@ function macro_EditText($formatter,$value,$options='') {
 }
 
 function do_edit($formatter,$options) {
+  global $DBInfo;
+  if (!$DBInfo->security->writable($options)) {
+    do_invalid($formatter,$options);
+  }
   $formatter->send_header("",$options);
   $formatter->send_title("Edit ".$options['page'],"",$options);
   print macro_EditText($formatter,$value,$options);
@@ -594,7 +598,7 @@ function form_permission($mode) {
 function do_chmod($formatter,$options) {
   global $DBInfo;
   
-  if (isset($options['read']) and isset($options['write'])) {
+  if (isset($options['read']) or isset($options['write'])) {
     if ($DBInfo->hasPage($options['page'])) {
       $perms= $DBInfo->getPerms($options['page']);
       $perms&= 0077; # clear user perms
@@ -627,10 +631,13 @@ function do_chmod($formatter,$options) {
   print "<form method='post'>
 <table border='0'>
 $form
-</table>
+</table>\n";
+  if ($DBInfo->security->is_protected("deletefile",$options))
+    print "
 Password:<input type='password' name='passwd' />
 <input type='submit' name='button_chmod' value='change' /><br />
-Only WikiMaster can change the permission of this page
+Only WikiMaster can change the permission of this page\n";
+  print "
 <input type=hidden name='action' value='chmod' />
 </form>";
 #  $formatter->send_page();
@@ -1326,6 +1333,16 @@ function macro_Include($formatter,$value="") {
   }
 }
 
+function do_RandomPage($formatter,$options='') {
+  global $DBInfo;
+  $pages= $DBInfo->getPageLists();
+  $max=sizeof($pages)-1;
+  $rand=rand(0,$max);
+  $options['value']=$pages[$rand];
+  do_goto($formatter,$options);
+  return;
+}
+
 function macro_RandomPage($formatter,$value="") {
   global $DBInfo;
   $pages = $DBInfo->getPageLists();
@@ -1982,8 +1999,8 @@ function macro_TitleIndex($formatter="") {
   $out="";
   $keys=array();
 
-  if ($DBInfo->use_titlecache)
-    $cache=new Cache_text('title');
+#  if ($DBInfo->use_titlecache)
+#    $cache=new Cache_text('title');
 
   foreach ($all_pages as $page) {
     $pkey=get_key($page);
@@ -1998,9 +2015,9 @@ function macro_TitleIndex($formatter="") {
     }
 
     #
-    if ($DBInfo->use_titlecache and $cache->exists($page))
-      $title=$cache->fetch($page);
-    else
+#    if ($DBInfo->use_titlecache and $cache->exists($page))
+#      $title=$cache->fetch($page);
+#    else
       $title=$page;
 
     $out.= '<li>' . $formatter->word_repl($page,$title)."</li>\n";
