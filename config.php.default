@@ -31,6 +31,8 @@ $charset='euc-kr';
 #$charset='utf-8';
 $auto_linebreak= 0;
 $trail= 0;
+#$origin=1;
+#$arrow=' <img src="/wiki/imgs/moni-arrow.gif"/> ';
 $notify= 0;
 $use_referer= 0;
 $use_sistersites=1;
