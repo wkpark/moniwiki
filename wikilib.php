@@ -293,7 +293,24 @@ function do_highlight($formatter,$options) {
 
   $formatter->highlight=$options[value];
   $formatter->send_page();
-  $args[editable]=1;
+  $args['editable']=1;
+  $formatter->send_footer($args,$options);
+}
+
+function do_edit($formatter,$options) {
+#  global $DBInfo; XXX
+#  $DBInfo->security->writable($options);
+  $formatter->send_header("",$options);
+  $formatter->send_title("Edit ".$options['page'],"",$options);
+  $formatter->send_editor("",$options);
+  $formatter->send_footer($args,$options);
+}
+
+
+function do_info($formatter,$options) {
+  $formatter->send_header("",$options);
+  $formatter->send_title(sprintf(_("Info. for %s"),$options['page']),"",$options);
+  $formatter->show_info();
   $formatter->send_footer($args,$options);
 }
 
@@ -428,6 +445,19 @@ Only WikiMaster can change the permission of this page
 </form>";
 #  $formatter->send_page();
   $formatter->send_footer();
+}
+
+function do_raw($formatter,$options) {
+  $formatter->send_header("Content-Type: text/plain",$options);
+  print $formatter->page->get_raw_body();
+}
+
+function do_recall($formatter,$options) {
+  $formatter->send_header("",$options);
+  $formatter->send_title("Rev. ".$options['rev']." ".
+                                 $options['page'],"",$options);
+  $formatter->send_page();
+  $formatter->send_footer($args,$options);
 }
 
 function do_rename($formatter,$options) {
