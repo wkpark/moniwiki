@@ -9,6 +9,7 @@
 
 // FIXME: possibly remove assert()'s for production version?
 // $Id$
+// original Id: difflib.php,v 1.5 2002/01/21 06:55:47 dairiki Exp
 
 // PHP3 does not have assert()
 define('USE_ASSERTS', function_exists('assert'));
@@ -841,7 +842,8 @@ class DiffFormatter
  * 
  */
 
-define('NBSP', "\xA0");         // iso-8859-x non-breaking space.
+#define('NBSP', "\xA0");         // iso-8859-x non-breaking space.
+define('NBSP', "&nbsp;");         // iso-8859-x non-breaking space.
 
 class _HWLDF_WordAccumulator {
     function _HWLDF_WordAccumulator () {
@@ -897,18 +899,23 @@ class _HWLDF_WordAccumulator {
 
 class WordLevelDiff extends MappedDiff
 {
-    function WordLevelDiff ($orig_lines, $final_lines) {
+    function WordLevelDiff ($orig_lines, $final_lines,$charset="euc-kr") {
+        if (strtolower($charset) == 'euc-kr') # two bytes sequence rule
+          $this->charset_rule='[\xb0-\xfd][\xa1-\xfe]|';
+#        else if (strtolower($charset) == 'utf-8') # three bytes sequence
+#          $this->charset_rule='[\xb0-\xfd][\xa1-\xfe]|';
+        
         list ($orig_words, $orig_stripped) = $this->_split($orig_lines);
         list ($final_words, $final_stripped) = $this->_split($final_lines);
 
-        
         $this->MappedDiff($orig_words, $final_words,
                           $orig_stripped, $final_stripped);
     }
 
     function _split($lines) {
         // FIXME: fix POSIX char class.
-        if (!preg_match_all('/ ( [^\S\n]+ | [[:alnum:]]+ | . ) (?: (?!< \n) [^\S\n])? /xs',
+        //if (!preg_match_all('/ ( [^\S\n]+ | [[:alnum:]]+ | . ) (?: (?!< \n) [^\S\n])? /xs',
+        if (!preg_match_all('/ ( [^\S\n]+ | [[:alnum:]]+ |'.$this->charset_rule .'. ) (?: (?!< \n) [^\S\n])? /xs',
                             implode("\n", $lines),
                             $m)) {
             return array(array(''), array(''));
