@@ -107,6 +107,8 @@ FORM2;
     $convmap=array(0xac00, 0xd7a3, 0x0000, 0xffff); /* for euc-kr */
     $new=mb_encode_numericentity($excerpt,$convmap,'utf-8');
     if ($new) $excerpt=$new;
+    $new=mb_encode_numericentity($title,$convmap,'utf-8');
+    if ($new) $title=$new;
   }
 
 	$excerpt= urlencode($excerpt);
