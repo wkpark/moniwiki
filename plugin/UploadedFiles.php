@@ -21,10 +21,12 @@ function do_uploadedfiles($formatter,$options) {
 function macro_UploadedFiles($formatter,$value="",$options="") {
    global $DBInfo;
 
-   $download='download';
+   if ($DBInfo->download_action) $mydownload=$DBInfo->download_action;
+   else $mydownload='download';
    $checkbox='checkbox';
    $needle="//";
-   if ($options['download']) $download=$options['download'];
+   if ($options['download'] || $DBInfo->force_download)
+     $force_download=1;
    if ($options['needle']) $needle=$options['needle'];
    if ($options['checkbox']) $checkbox=$options['checkbox'];
 
@@ -33,14 +35,14 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
 
    if ($value and $value!='UploadFile') {
       $key=$DBInfo->pageToKeyname($value);
-      if ($options['download'] or $key != $value)
-        $prefix=$formatter->link_url(_rawurlencode($value),"?action=$download&amp;value=");
+      if ($force_download or $key != $value)
+        $prefix=$formatter->link_url(_rawurlencode($value),"?action=$mydownload&amp;value=");
       $dir=$DBInfo->upload_dir."/$key";
    } else {
       $value=$formatter->page->urlname;
       $key=$DBInfo->pageToKeyname($formatter->page->name);
-      if ($options['download'] or $key != $formatter->page->name)
-        $prefix=$formatter->link_url($formatter->page->urlname,"?action=$download&amp;value=");
+      if ($force_download or $key != $formatter->page->name)
+        $prefix=$formatter->link_url($formatter->page->urlname,"?action=$mydownload&amp;value=");
       $dir=$DBInfo->upload_dir."/$key";
    }
    if ($value!='UploadFile' and file_exists($dir))
@@ -48,6 +50,7 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    else {
       $key='';
       $value='UploadFile';
+      $prefix.= ($prefix ? '/':'');
       $dir=$DBInfo->upload_dir;
       $handle= opendir($dir);
    }

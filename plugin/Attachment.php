@@ -11,7 +11,10 @@ function macro_Attachment($formatter,$value) {
   global $DBInfo;
 
   $attr='';
-  $myaction='download';
+  if ($DBInfo->force_download) $force_download=1;
+  if ($DBInfo->download_action) $mydownload=$DBInfo->download_action;
+  else $mydownload='download';
+
   $text='';
   if (($p=strpos($value,' ')) !== false) { // XXX for [attachment:my.ext hello]
     $text=substr($value,$p);
@@ -24,7 +27,7 @@ function macro_Attachment($formatter,$value) {
     $value=substr($value,0,$dummy);
     foreach ($attrs as $name=>$val) {
       if ($name=='action')
-        $myaction=$val;
+        $mydownload=$val;
       else
         $attr.="$name=\"$val\" ";
     }
@@ -63,17 +66,16 @@ function macro_Attachment($formatter,$value) {
   if (!$text) $text=$file;
 
   if (file_exists($upload_file)) {
-    if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$upload_file)
-       and $myaction == 'download') {
-      if ($key != $pagename)
-        $url=$formatter->link_url(_urlencode($pagename),"?action=download&amp;value=$value");
+    if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$upload_file)) {
+      if ($key != $pagename || $force_download)
+        $url=$formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=$value");
       else
         $url=$DBInfo->url_prefix."/"._urlencode($upload_file);
       return "<span class=\"imgAttach\"><img src='$url' alt='$file' $attr/></span>";
     } else {
 
       return "<span class=\"attach\"><img align='middle' src='$DBInfo->imgs_dir_interwiki".'uploads-16.png\' />'.
-        $formatter->link_tag(_urlencode($pagename),"?action=$myaction&amp;value=$value",$text).'</span>';
+        $formatter->link_tag(_urlencode($pagename),"?action=$mydownload&amp;value=$value",$text).'</span>';
     }
   }
   if ($pagename == $formatter->page->name)
