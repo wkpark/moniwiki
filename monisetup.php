@@ -122,12 +122,15 @@ function checkConfig($config) {
 
   if (02000 & fileperms(".")) $PERM=0775;
   else $PERM=0777;
+  $dir=getcwd();
 
   if (!file_exists("config.php") && !is_writable(".")) {
-     print "<h3><font color='red'>Please change current directory writable to generate a config.php</font></h3>\n";
-     print "<pre class='console'>\n<font color='green'>$</font> chmod 777 . data/\n</pre>\n";
-     print "<h3><font color='red'>You can chmod it with 2777(sgid)</font></h3>\n";
-     print "<pre class='console'>\n<font color='green'>$</font> chmod 2777 . data/\n</pre>\n";
+     print "<h3><font color='red'>Please change the permission of some directories writable on your server to initialize your Wiki.</font></h3>\n";
+     print "<pre class='console'>\n<font color='green'>$</font> chmod <b>777</b> $dir/data/ $dir\n</pre>\n";
+     print "If you want a more safe wiki, try to change the permission of directories with <font color='red'>2777(setgid).</font>\n";
+     print "<pre class='console'>\n<font color='green'>$</font> chmod <b>2777</b> $dir/data/ $dir\n</pre>\n";
+     print "After execute one of above two commands, just <a href='monisetup.php'>reload this monisetup.php</a> would make a new initial config.php with detected parameters for your wiki.\n<br/>";
+     print "<h2><a href='monisetup.php'>Reload</a></h2>";
      exit;
   } else if (file_exists("config.php")) {
      print "<h3><font color='green'>WARN: Please execute the following command after you have completed your configuration.</font></h3>\n";
@@ -298,6 +301,7 @@ table.wiki {
 
 pre.console {
   background-color:#000;
+  padding: 1em 0.5em 0.5em 1em;
   color:white;
   width:80%;
 }
@@ -388,7 +392,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $config) {
     print "<h2>Welcome ! This is your first installation</h2>\n";
 
     $rawconfig=$Config->rawconfig;
-    print "<h3 color='blue'>Default settings are loaded</h3>\n";
+    print "<h3 color='blue'>Default settings are loaded...</h3>\n";
 
     $lines=$Config->_genRawConfig($rawconfig);
     $rawconf=join("",$lines);
@@ -397,7 +401,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $config) {
     fwrite($fp,$rawconf);
     fclose($fp);
     @chmod("config.php",0666);
-    print "<h3><font color='blue'>Initial configurations are saved successfully</font></h3>\n";
+    print "<h3><font color='blue'>Initial configurations are saved successfully.</font></h3>\n";
     print "<h3><font color='red'>Goto <a href='monisetup.php'>MoniSetup</a> again to configure details</font></h3>\n";
     exit;
   } else {
