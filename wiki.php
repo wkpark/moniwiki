@@ -1242,7 +1242,7 @@ class Formatter {
     #"\b(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+[^\(\)<>\s\',\.:\?\!]+)|".
-    "\b([A-Z][a-zA-Z]+):([^\(\)<>\s\']+[^\(\)<>\s\',\.:\?\!]+)|".
+    "(\b|\^?)([A-Z][a-zA-Z]+):([^\(\)<>\s\']+[^\(\)<>\s\',\.:\?\!]+)|".
     # "(?<!\!|\[\[)\b(([A-Z]+[a-z0-9]+){2,})\b|".
     # "(?<!\!|\[\[)((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})\b|".
     # WikiName rule: WikiName ILoveYou (imported from the rule of NoSmoke)
@@ -1437,24 +1437,27 @@ class Formatter {
     if (strpos($url,":")) {
       if ($url[0]=='a') # attachment:
         return $this->macro_repl('Attachment',substr($url,11));
+
+      if ($url[0] == '^') {
+        $attr.=' target="_blank" ';
+        $url=substr($url,1);
+        $external_icon=$this->icon['external'];
+      }
+
       if (preg_match("/^mailto:/",$url)) {
         $url=str_replace("@","_at_",$url);
         $link=str_replace('&','&amp;',$url);
         $name=substr($url,7);
-        return $this->icon['mailto']."<a href='$link' $attr>$name</a>";
+        return $this->icon['mailto']."<a href='$link' $attr>$name</a>$external_icon";
       }
 
       if (preg_match("/^(w|[A-Z])/",$url)) { # InterWiki or wiki:
         if (strpos($url," ")) { # have a space ?
           $dum=explode(" ",$url,2);
-          return $this->interwiki_repl($dum[0],$dum[1]);
+          return $this->interwiki_repl($dum[0],$dum[1],$attr,$external_icon);
         }
-        return $this->interwiki_repl($url);
-      }
-      if ($url[0] == '^') {
-        $attr.=' target="_blank" ';
-        $url=substr($url,1);
-        $external_icon=$this->icon['external'];
+        
+        return $this->interwiki_repl($url,'',$attr,$external_icon);
       }
       if ($force or strpos($url," ")) { # have a space ?
         list($url,$text)=explode(" ",$url,2);
@@ -1492,7 +1495,7 @@ class Formatter {
     }
   }
 
-  function interwiki_repl($url,$text="") {
+  function interwiki_repl($url,$text='',$attr='',$extra='') {
     global $DBInfo;
 
     if ($url[0]=="w")
@@ -1509,8 +1512,8 @@ class Formatter {
       # or [wiki:FrontPage Home Page]
       $page=$dum[0];
       if (!$text)
-        return $this->word_repl($page,'','',1);
-      return $this->word_repl($page,$text,'',1);
+        return $this->word_repl($page,$page.$extra,$attr,1);
+      return $this->word_repl($page,$text.$extra,$attr,1);
     }
 
     $url=$DBInfo->interwiki[$wiki];
@@ -1543,9 +1546,9 @@ class Formatter {
     }
 
     if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$url))
-      return "<a href='".$url."' title='$wiki:$page'><img border='0' align='middle' alt='$text' src='$url' /></a>";
+      return "<a href='".$url."' $attr title='$wiki:$page'><img border='0' align='middle' alt='$text' src='$url' /></a>$extra";
 
-    return $img. "<a href='".$url."' title='$wiki:$page'>$text</a>";
+    return $img. "<a href='".$url."' $attr title='$wiki:$page'>$text</a>$extra";
   }
 
   function store_pagelinks() {
