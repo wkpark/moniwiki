@@ -215,7 +215,9 @@ function getConfig($configfile) {
 class WikiDB {
   function WikiDB($config=array()) {
   # Default Configuations
-    $this->frontpage='FrontPage'; # _("FrontPage")
+  # _("FrontPage"),_("RecentChanges"),_("FindPage"),_("UserPreferences")
+  # _("TitleIndex"),_("HelpContents")
+    $this->frontpage='FrontPage';
     $this->sitename='MoniWiki';
     $this->data_dir= './data';
     $this->upload_dir= './pds';
@@ -240,8 +242,8 @@ class WikiDB {
 
     $this->css_url= $this->url_prefix.'/css/default.css';
     $this->kbd_script= $this->url_prefix.'/css/kbd.js';
-    $this->logo_string= '<img src="'.$this->logo_img.
-                        '" alt="[RecentChanges]" border="0" align="middle" />';
+    $this->logo_string= '<img src="'.$this->logo_img.'" alt="[RecentChanges]" border="0" align="middle" />';
+    $this->logo_page= 'FrontPage';
     $this->use_smileys=1;
     $this->hr="<hr class='wikiHr' />";
     $this->date_fmt= 'D d M Y';
@@ -260,6 +262,9 @@ class WikiDB {
           $this->$key=$val;
     }
 
+    if (!$this->purge_passwd)
+       $this->purge_passwd=$this->admin_passwd;
+
     if (!$this->icon) {
     $this->icon[upper]="<img src='$this->imgs_dir/upper.gif' alt='U' align='middle' border='0' />";
     $this->icon[edit]="<img src='$this->imgs_dir/moin-edit.gif' alt='E' align='middle' border='0' />";
@@ -272,24 +277,41 @@ class WikiDB {
     $this->icon[help]="<img src='$this->imgs_dir/moin-help.gif' alt='H' align='middle' border='0' />";
     $this->icon[www]="<img src='$this->imgs_dir/moin-www.gif' alt='www' align='middle' border='0' />";
     $this->icon[mailto]="<img src='$this->imgs_dir/moin-www.gif' alt='www' align='middle' border='0' />";
+    $this->icon[user]="UserPreferences";
     }
 
+#
     if (!$this->menu) {
-#    $this->menu="<img src='$this->imgs_dir/diff-7.gif'> ".
-#                "<img src='$this->imgs_dir/edit-7.gif'> ".
-#                "<img src='$this->imgs_dir/info-7.gif'> ".
-#                "<img src='$this->imgs_dir/show-7.gif'> ".
-#                "<img src='$this->imgs_dir/find-7.gif'> ".
-#                "<img src='$this->imgs_dir/help-7.gif'> ".
-#                "<img src='$this->imgs_dir/home-7.gif'> ";
-    $this->menu="<img src='$this->imgs_dir/moin-diff.gif' alt='D' /> ".
-                "<img src='$this->imgs_dir/moin-edit.gif' alt='E' /> ".
-                "<img src='$this->imgs_dir/moin-info.gif' alt='I' /> ".
-                "<img src='$this->imgs_dir/moin-show.gif' alt='R' /> ".
-                "<img src='$this->imgs_dir/moin-search.gif' alt='S' /> ".
-                "<img src='$this->imgs_dir/moin-help.gif' alt='H' /> ".
-                "<img src='$this->imgs_dir/moin-home.gif' alt='Z' /> ";
+      $this->menu= array('FrontPage','FindPage','TitleIndex','RecentChanges');
+      $this->menu_bra="";
+      $this->menu_cat="|";
+      $this->menu_sep="|";
     }
+
+    if (!$this->icons) {
+      $this->icons=array(
+              array("","?action=edit",$this->icon[edit]),
+              array("","?action=diff",$this->icon[diff]),
+              array("","",$this->icon[show]),
+              array("FindPage","",$this->icon[find]),
+              array("","?action=info",$this->icon[info]),
+              array("HelpContents","",$this->icon[help]),
+           );
+
+      $this->icon_bra='';
+      $this->icon_cat=' ';
+      $this->icon_sep=' ';
+    }
+
+##    if (!$this->menu) {
+##    $this->menu="<img src='$this->imgs_dir/diff-7.gif'> ".
+##                "<img src='$this->imgs_dir/edit-7.gif'> ".
+##                "<img src='$this->imgs_dir/info-7.gif'> ".
+##                "<img src='$this->imgs_dir/show-7.gif'> ".
+##                "<img src='$this->imgs_dir/find-7.gif'> ".
+##                "<img src='$this->imgs_dir/help-7.gif'> ".
+##                "<img src='$this->imgs_dir/home-7.gif'> ";
+##    }
 
     # load smileys
     if ($this->use_smileys){
@@ -729,6 +751,10 @@ class Formatter {
    return "<strong class='highlight'>$val</strong>";
  }
 
+ function write($raw) {
+   print $raw;
+ }
+
  function link_repl($url) {
    global $DBInfo;
 
@@ -949,6 +975,8 @@ class Formatter {
    # Return a link with given query_string.
    if (!$text)
      $text= $pageurl; # XXX
+   if (!$pageurl)
+     $pageurl=$this->page->urlname;
    $url=$this->link_url($pageurl,$query_string);
    return sprintf("<a href='%s' %s>%s</a>", $url, $attr, $text);
  }
@@ -1030,6 +1058,7 @@ class Formatter {
    $indent_list[0]=0;
    $indent_type[0]="";
 
+# $wordrule="({{{(([^}}}).+)}}})|".
    $wordrule="({{{([^}]+)}}})|".
              "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|". # macro
              $this->wordrule;
@@ -1039,7 +1068,7 @@ class Formatter {
       $line=preg_replace("/\n$/", "", $line);
 
 #      if ($line=="" && $indlen) {continue;}
-      if ($line=="" && $in_pre) {$text.="\n";continue;}
+      if ($line=="" && $in_pre) {$this->pre_line.="\n";continue;}
 #      if ($line=="" && $in_p && !$in_table) {$in_p=0; $text.="<p>\n";continue;}
       if ($line=="" && !$in_li && !$in_table) {
          if (!$in_p) { $text.="<div>"; $in_p=1; continue;}
@@ -1088,7 +1117,7 @@ class Formatter {
          $this->pre_line.=$line."\n";
          continue;
       }
-      if (!$in_pre) {
+      #if (!$in_pre) {
       #$line=preg_replace("/\\$/","&#36;",$line);
       $line=preg_replace("/<([^\s][^>]*)>/","&lt;\\1>",$line);
       $line=preg_replace("/`([^`]*)`/","<tt class='wiki'>\\1</tt>",$line);
@@ -1105,6 +1134,10 @@ class Formatter {
       $line=preg_replace("/(?: |^)_([^ _]+)_/","<sub>\\1</sub>",$line);
 
       $line=preg_replace("/^-{4,}/","<hr />\n",$line);
+
+      # NoSmoke's MultiLineCell
+      $line=preg_replace(array("/{{\|/","/\|}}/"),
+            array('<table class="closure"><tr class="closure"><td class="closure">'."\n","</td></tr></table>\n"),$line);
 
       # Smiley
       if ($smiley_rule)
@@ -1181,7 +1214,7 @@ class Formatter {
       # Headings
       $line=preg_replace('/(?<!=)(={1,5})\s+(.*)\s+(={1,5})$/e',
                          "\$this->head_repl('\\1','\\2','\\3')",$line);
-      }
+      #} # XXX
       if ($in_pre==-1) {
          $in_pre=0;
          if ($this->processor) {
@@ -1608,31 +1641,33 @@ EOS;
    }
  }
 
- function send_footer($options=array(),$timer="") {
+ function send_footer($args=array(),$options="") {
    global $DBInfo;
 
    print "</div>\n";
    print $DBInfo->hr;
    print "<div id='wikiFooter'>";
-   if ($options[html])
-      print "$options[html]";
-   else {
-      if ($options[editable]) {
-         if ($this->page->writable())
-            print $this->link_to("?action=edit",'EditText')." | ";
-         else
-            print "NotEditable | ";
-      }
-      if ($options[showpage])
-         print $this->link_to("",'ShowPage')." | ";
-      print $this->link_tag("FindPage");
+   $menu="";
+   if ($args[editable]) {
+      if ($this->page->writable())
+         $menu= $this->link_to("?action=edit",'EditText').$DBInfo->menu_sep;
+      else
+         $menu= "NotEditable ".$DBInfo->menu_sep;
+   }
+   if ($args[showpage])
+      $menu.= $this->link_to("",'ShowPage').$DBInfo->menu_sep;
+   $menu.= $this->link_tag("FindPage");
+
+   if (!$args[noaction])
+      foreach ($DBInfo->actions as $action)
+         $menu.= $DBInfo->menu_sep.$this->link_to("?action=$action",$action);
+
+   if ($mtime=$this->page->mtime()) {
+     $lastedit=date("Y-m-d",$mtime);
+     $lasttime=date("h:m:s",$mtime);
    }
 
-   if (!$options[noaction])
-      foreach ($DBInfo->actions as $action)
-         print "|".$this->link_to("?action=$action",$action);
-
-   print <<<FOOT
+   $banner= <<<FOOT
  <a href="http://validator.w3.org/check/referer"><img
   src="$DBInfo->imgs_dir/valid-xhtml10.png" border="0"
   align="middle" width="88" height="31"
@@ -1645,15 +1680,20 @@ EOS;
   alt="Valid CSS!" /></a>
 FOOT;
 
-   if ($timer)
-      printf("<br />%7.4f",$timer->Check());
+   if ($options[timer])
+      $timer=sprintf("<br />%7.4f",$options[timer]->Check());
    
-   print "\n</div>\n";
+   if (file_exists("footer.php"))
+      include_once("footer.php");
+   else {
+      print $menu.$banner;
+      print "\n</div>\n";
+   }
 
    if (!$DBInfo->embeded) print "</body>\n</html>\n";
  }
 
- function send_title($title="", $link="", $opts="") {
+ function send_title($title="", $link="", $options="") {
    // Generate and output the top part of the HTML page.
    global $DBInfo;
 
@@ -1670,41 +1710,59 @@ FOOT;
    $title="<font class='title'><b>$title</b></font>";
    if ($link)
       $title="<a href=\"$link\" class='title'>$title</a>";
-   else if (!$opts[nolink])
+   else if (!$options[nolink])
       $title=$this->link_to("?action=fullsearch&amp;value=$name",$title,"class='title'");
-   $logo=$this->link_tag('RecentChanges','',$DBInfo->logo_string);
+   $logo=$this->link_tag($DBInfo->logo_page,'',$DBInfo->logo_string);
    $goto_form=goto_form($action);
 
-   if ($opts[msg]) {
+   if ($options[msg]) {
      $msg=<<<MSG
 <table class="message" width="100%"><tr><td class="message">
-$opts[msg]
+$options[msg]
 </td></tr></table>
 MSG;
    }
 
-   $menu =$this->link_tag($DBInfo->frontpage,"",_($DBInfo->frontpage))." | ";
-   $menu.=$this->link_tag("FindPage","",_("FindPage"))." | ";
-   $menu.=$this->link_tag("TitleIndex","",_("TitleIndex"))." | ";
-   $menu.=$this->link_tag("UserPreferences","",_("UserPreferences"));
+   # navi bar
+   $menu=array();
+   foreach ($DBInfo->menu as $item) {
+     #$menu=preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$DBInfo->menu);
+     $menu[]=$this->link_tag($item,"",_($item));
+   }
+   $menu=$DBInfo->menu_bra.join($DBInfo->menu_sep,$menu).$DBInfo->menu_cat;
    # icons
-   $icons="";
    if ($upper)
-      $icons.=$this->link_tag($upper,'',$DBInfo->icon[upper])." ";
-   $icons.=$this->link_to("?action=edit",$DBInfo->icon[edit])." ";
-   $icons.=$this->link_to("?action=diff",$DBInfo->icon[diff])." ";
-   $icons.=$this->link_to("",$DBInfo->icon[show])." ";
-   $icons.=$this->link_tag("FindPage",'',$DBInfo->icon[find])." ";
-   $icons.=$this->link_to("?action=info",$DBInfo->icon[info])." ";
-   $icons.=$this->link_tag("HelpContents",'',$DBInfo->icon[help])." ";
+      $upper_icon=$this->link_tag($upper,'',$DBInfo->icon[upper])." ";
+
+   $icons="";
+   if (!$DBInfo->icons) {
+     $icons.=$this->link_to("?action=edit",$DBInfo->icon[edit])." ";
+     $icons.=$this->link_to("?action=diff",$DBInfo->icon[diff])." ";
+     $icons.=$this->link_to("",$DBInfo->icon[show])." ";
+     $icons.=$this->link_tag("FindPage",'',$DBInfo->icon[find])." ";
+     $icons.=$this->link_to("?action=info",$DBInfo->icon[info])." ";
+     $icons.=$this->link_tag("HelpContents",'',$DBInfo->icon[help])." ";
+   } else {
+     $icon=array();
+     foreach ($DBInfo->icons as $item)
+       $icon[]=$this->link_tag($item[0],$item[1],$item[2]);
+     $icons=$DBInfo->icon_bra.join($DBInfo->icon_sep,$icon).$DBInfo->icon_cat;
+   }
    $rss_icon.=$this->link_tag("RecentChanges","?action=rss_rc",$DBInfo->icon[rss])." ";
+
+   # UserPreferences
+   if ($options[id] != "Anonymous") {
+      $user_link=$this->link_tag("UserPreferences","",$options[id]);
+   } else
+      $user_link=$this->link_tag("UserPreferences","",$DBInfo->icon[user]);
 
    # print the title
    kbd_handler();
    print "<div id='wikiHeader'>\n";
 
    if (file_exists("header.php")) {
-      include "header.php";
+      # $menu.$upper_icon.icons.$rss_icon;
+      include_once "header.php";
    } else { #default header
       $header="<table width='100%' border='0' cellpadding='3' cellspacing='0'>";
       $header.="<tr>";
@@ -1720,7 +1778,7 @@ MSG;
 
       # menu
       print $header;
-      print $menu." |".$icons.$rss_icon;
+      print $menu.$user_link." ".$upper_icon.$icons.$rss_icon;
       print $msg;
    }
    print "</div>\n";
@@ -1909,7 +1967,7 @@ if ($_SERVER[REQUEST_METHOD]=="POST") {
       # check datestamp
       if ($page->mtime() > $datestamp) {
          $opts[msg]=sprintf("Someone else saved the page while you edited %s",$formatter->link_tag($page->name));
-         $formatter->send_title(_("Conflict error!"),"",$opts);
+         $formatter->send_title(_("Conflict error!"),"",$options);
          $options[preview]=1; 
          $options[conflict]=1; 
          $options[datestamp]=$datestamp; 
@@ -1933,7 +1991,7 @@ if ($_SERVER[REQUEST_METHOD]=="POST") {
 
    if (!$button_preview && $orig == $new) {
       $opts[msg]="Go back or return to ".$formatter->link_tag($page->name);
-      $formatter->send_title(_("No difference found"),"",$opts);
+      $formatter->send_title(_("No difference found"),"",$options);
       $formatter->send_footer();
       return;
    }
@@ -1941,7 +1999,7 @@ if ($_SERVER[REQUEST_METHOD]=="POST") {
 
    if ($button_preview) {
       $title=sprintf("Preview of %s",$formatter->link_tag($page->name));
-      $formatter->send_title($title,"");
+      $formatter->send_title($title,"",$options);
      
       $options[preview]=1; 
       $options[datestamp]=$datestamp; 
@@ -1967,10 +2025,10 @@ if ($_SERVER[REQUEST_METHOD]=="POST") {
       $page->write($savetext);
       $ret=$DBInfo->savePage($page);
       if ($ret == -1)
-        $opts[msg]=$formatter->link_tag($page->name)." is not editable";
+        $options[msg]=$formatter->link_tag($page->name)." is not editable";
       else
-        $opts[msg]=$formatter->link_tag($page->name)." is saved";
-      $formatter->send_title("","",$opts);
+        $options[msg]=$formatter->link_tag($page->name)." is saved";
+      $formatter->send_title("","",$options);
       $formatter->send_page();
    }
    $args[showpage]=1;
@@ -2009,13 +2067,13 @@ if ($pagename) {
 
         $twins=$DBInfo->metadb->getTwinPages($page->name);
         if ($twins) {
-           $formatter->send_title($page->name);
+           $formatter->send_title($page->name,"",$options);
            #$formatter->send_page($twins."\n----\n");
            $formatter->send_page($twins);
            print "<br /><br />or ".
              $formatter->link_to("?action=edit",_("Create this page"));
         } else {
-           $formatter->send_title($page->name." Not Found");
+           $formatter->send_title($page->name." Not Found","",$options);
            print $formatter->link_to("?action=edit",_("Create this page"));
            print macro_LikePages($formatter,$page->name);
 
@@ -2035,11 +2093,14 @@ if ($pagename) {
       $DBInfo->counter->incCounter($pagename);
 
       $formatter->send_header("",$options);
-      $formatter->send_title();
+      $formatter->send_title("","",$options);
+      $formatter->write("<div id='wikiContent'>\n");
       $formatter->send_page();
+      $formatter->write("</div>\n");
       #$args[showpage]=1;
       $args[editable]=1;
-      $formatter->send_footer($args,$timing);
+      $options[timer]=$timing;
+      $formatter->send_footer($args,$options);
       return;
    }
 
@@ -2066,13 +2127,14 @@ if ($pagename) {
          return;
       }
       $formatter->send_header("",$options);
-      $formatter->send_title("Diff for $rev ".$page->name);
+      $formatter->send_title("Diff for $rev ".$page->name,"",$options);
       print $formatter->get_diff($rev,$rev2);
       print "<br /><hr />\n";
       $formatter->send_page();
       $args[showpage]=1;
       #$args[editable]=1;
-      $formatter->send_footer($args,$timing);
+      $options[timer]=$timing;
+      $formatter->send_footer($args,$options);
 
       return;
    }
@@ -2082,7 +2144,7 @@ if ($pagename) {
         $formatter->send_header($header,$options);
      } else {
         $formatter->send_header("",$options);
-        $formatter->send_title("Rev. $rev ".$page->name);
+        $formatter->send_title("Rev. $rev ".$page->name,"",$options);
      }
      if (!$page->exists() || !$page->get_raw_body()) {
         if ($action=="raw") {
@@ -2096,27 +2158,27 @@ if ($pagename) {
      } else {
         $formatter->send_page();
         $args[showpage]=1;
-        #$args[editable]=1;
-        $formatter->send_footer($args,$timing);
+        $options[timer]=$timing;
+        $formatter->send_footer($args,$options);
      }
      return;
    } else if ($action=="edit" && $page->writable()) {
      $formatter->send_header("",$options);
-     $formatter->send_title("Edit ".$page->name);
+     $formatter->send_title("Edit ".$page->name,"",$options);
      $options[rows]=$rows; 
      $options[cols]=$cols;
      $options[template]=$template;
      $formatter->send_editor("",$options);
      $args[showpage]=1;
-     #$args[editable]=1;
-     $formatter->send_footer($args);
+     $options[timer]=$timing;
+     $formatter->send_footer($args,$options);
    } else if ($action=="info") {
      $formatter->send_header("",$options);
      $formatter->send_title("Info. for ".$page->name);
      $formatter->show_info();
      $args[showpage]=1;
-     #$args[editable]=1;
-     $formatter->send_footer($args,$timing);
+     $options[timer]=$timing;
+     $formatter->send_footer($args,$options);
    } else if ($action=="DeletePage") {
      $options[page]=$page->name;
      $options[comment]=$comment;
@@ -2142,10 +2204,11 @@ if ($pagename) {
         eval("do_".$action."(\$formatter,\$options);");
      } else {
         $formatter->send_header("Status: 406 Not Acceptable",$options);
-        $formatter->send_title("406 Not Acceptable");
+        $formatter->send_title("406 Not Acceptable","",$options);
         $args[editable]=1;
         # $formatter->send_page("");
-        $formatter->send_footer($args);
+        $options[timer]=$timing;
+        $formatter->send_footer($args,$options);
         return;
      }
    }
