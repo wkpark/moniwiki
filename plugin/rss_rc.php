@@ -47,7 +47,7 @@ CHANNEL;
     $url=qualifiedUrl($formatter->link_url(_rawurlencode($page_name)));
     $diff_url=qualifiedUrl($formatter->link_url(_rawurlencode($page_name),'?action=diff'));
 
-    $diff="&lt;a href='$diff_url'>show changes&lt;/a>\n";
+    $diff="<a href='$diff_url'>"._("show changes")."</a>\n";
     if (!$DBInfo->hasPage($page_name)) {
       $status='deleted';
       $html="<a href='$url'>$page_name</a> is deleted\n";
@@ -59,16 +59,17 @@ CHANNEL;
         $options['raw']=1;
         $options['nomsg']=1;
 #        $html='<![CDATA['.strtr($f->get_diff('','','',$options),array('&'=>'&amp;','<'=>'&lt;'));
-        $html='<![CDATA['.$f->get_diff('','','',$options).']]>';
+        $html=$f->get_diff('','','',$options);
         if (!$html) {
           ob_start();
           $f->send_page('',array('fixpath'=>1));
           #$f->send_page('');
-          $html='<![CDATA['.ob_get_contents().']]>';
+          $html=ob_get_contents();
           #$html=strtr(ob_get_contents(),array('&'=>'&amp;','<'=>'&lt;'));
           ob_end_clean();
+          $diff='';
         }
-        $html.="&lt;br />$diff";
+        $html="<![CDATA[".$html."<br />$diff]]>";
       } else {
         if ($log) $html=$log;
       }
