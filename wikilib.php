@@ -1593,7 +1593,7 @@ function macro_TableOfContents(&$formatter,$value="") {
  } else {
    $body=$formatter->page->get_raw_body();
  }
- $body=preg_replace("/(\{\{\{$)(.*)(\}\}\})/ms",'',$body);
+# $body=preg_replace("/(\{\{\{$)(.*)(\}\}\})/ms",'',$body);
  $lines=explode("\n",$body);
  foreach ($lines as $line) {
    $line=preg_replace("/\n$/", "", $line); # strip \n
