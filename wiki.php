@@ -1204,11 +1204,11 @@ class Formatter {
                      "/(?<!-)--([^-]+)--(?!-)/",
                      );
     $this->baserepl=array("&lt;\\1","&#96;\\1'","<tt class='wiki'>\\1</tt>",
-                     "<b>\\1</b>","<b>\\1</b>",
+                     "<strong>\\1</strong>","<strong>\\1</strong>",
                      "<i>\\1</i>","<i>\\1</i>",
                      "<sup>\\1</sup>","<sub>\\1</sub>",
                      "<u>\\1</u>",
-                     "<hr class='wiki' />\n",
+                     "<div class='seperator'><hr class='wiki' /></div>\n",
                      "<del>\\1</del>",
                      );
 
