@@ -1,7 +1,7 @@
 <?php
 // Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
-// RandomBanner plugin for the MoniWiki
+// a RandomBanner macro plugin for the MoniWiki
 //
 // Usage: [[RandomBanner(PageName,number]]
 //

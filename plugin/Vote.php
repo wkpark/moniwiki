@@ -17,6 +17,10 @@ function macro_Vote($formatter,$value) {
   $temps=explode(",",$value);
   $total=0;
   foreach ($temps as $item) {
+    if (trim($item)=='off') {
+      $vote_off=1;
+      continue;
+    }
     $test=preg_match("/(^.+)\s+(\d+)$/",$item,$match);
     if (!$test) return "[[Vote(<font color='red'>error !</font>$value)]]";
     $votes[$match[1]]=$match[2];
@@ -26,10 +30,12 @@ function macro_Vote($formatter,$value) {
   $bra_bar="<img src='$imgdir/leftbar.gif'>";
   $cat_bar="<img src='$imgdir/rightbar.gif'>";
 
-  $out="<form method='post'>
+  $out='';
+  if (!$vote_off)
+    $out.="<form method='post'>
 <input type='hidden' name='ticket' value='$md5' />
-<input type='hidden' name='action' value='vote' />
-<table class='vote'>\n";
+<input type='hidden' name='action' value='vote' />";
+  $out.="<table class='vote'>\n";
   while (list($item,$count)= each($votes)) {
     if ($total > 0) $ratio=$count/$total;
     $bar_width=(int) ($ratio * 100);
@@ -39,10 +45,16 @@ function macro_Vote($formatter,$value) {
          $cat_bar;
     $md5=md5($item);
     $out.="<tr><td>$item </td><td nowrap='nowrap'>$bar</td><td>".
-         sprintf("%3d (%3.2f %%)",$count,$ratio).
-         "<input type='radio' name='vote' value='$md5' /></td></tr>\n";
+         sprintf("%3d (%3.2f %%)",$count,$ratio);
+    if (!$vote_off)
+      $out.="<input type='radio' name='vote' value='$md5' />";
+    $out.="</td></tr>\n";
   }
-  $out.="<tr><td colspan='2' align='right'><b>Total votes</b></td><td align='center'>$total <input type='submit' value='Vote' /></td></tr>\n</table></form>\n";
+  $out.="<tr><td colspan='2' align='right'><b>Total votes</b></td><td align='center'>$total";
+  if (!$vote_off)
+    $out.="<input type='submit' value='Vote' /></td></tr>\n</table></form>\n";
+  else
+    $out.="</td></tr>\n</table>\n";
 
   return $out;
 }

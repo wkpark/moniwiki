@@ -1,7 +1,7 @@
 <?php
 // Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
-// sample plugin for the MoniWiki
+// a sample plugin for the MoniWiki
 //
 // Usage: [[Test]]
 //

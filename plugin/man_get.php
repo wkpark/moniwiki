@@ -1,9 +1,7 @@
 <?php
 // Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
-// sample plugin for the MoniWiki
-//
-// Usage: [[Test]]
+// a man_get action plugin for the MoniWiki
 //
 // $Id$
 // vim:et:ts=2:

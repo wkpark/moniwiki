@@ -1,7 +1,7 @@
 <?php
 // Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
-// rename action plugin for the MoniWiki
+// a rename action plugin for the MoniWiki
 //
 // $Id$
 
@@ -10,7 +10,7 @@ function do_rename($formatter,$options) {
   
   if (isset($options['value'])) {
     if ($DBInfo->hasPage($options['page']) && !$DBInfo->hasPage($options['value'])) {
-      $DBInfo->renamePage($options['page'],$options['value']);
+      $DBInfo->renamePage($options['page'],$options['value'],$options);
       $title = sprintf(_("\"%s\" is renamed !"), $options['page']);
       $formatter->send_header("",$options);
       $formatter->send_title($title,"",$options);
@@ -32,12 +32,13 @@ function do_rename($formatter,$options) {
 <table border='0'>
 <tr><td align='right'>Old name: </td><td><b>$options[page]</b></td></tr>
 <tr><td align='right'>New name: </td><td><input name='value' /></td></tr>\n";
-  print "<tr><td valign='top'>"._("with version info").":</td><td><input type='checkbox' name='with_history' /></td></tr>\n";
   if ($DBInfo->security->is_protected("rename",$options))
-  print "<tr><td align='right'>
- Password: </td><td><input type='password' name='passwd' />
-<input type='submit' name='button_rename' value='rename' />".
-_("Only WikiMaster can rename this page")."</td></tr>\n";
+    print "<tr><td align='right'>"._("Password").": </td><td><input type='password' name='passwd' /> ".
+    _("Only WikiMaster can rename this page");
+  print "<tr>";
+  print "<td>"._("with revision history")."<input type='checkbox' name='history' /></td>";
+  print "<td><input type='submit' name='button_rename' value='rename' /></td>";
+  print "</td></tr>\n";
 
   print "
 </table>

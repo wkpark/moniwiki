@@ -1,7 +1,7 @@
 <?php
 // Copyright 2003 by iolo
 // All rights reserved. Distributable under GPL see COPYING
-// a SmileyChooser  plugin for the MoniWiki
+// a SmileyChooser macro plugin for the MoniWiki
 // vim:et:ts=2:
 //
 // Usage: [[SmileyChooser]]
@@ -10,6 +10,8 @@
 
 function macro_SmileyChooser($formatter,$value) {
   global $DBInfo;
+
+  if (!$DBInfo->use_smiley) return '';
 
   $chooser=<<<EOS
 <script language="javascript" type="text/javascript">
