@@ -113,17 +113,29 @@ function do_uploadfile($formatter,$options) {
   $comment.="'$upfilename' ";
 
   $title.=sprintf(_("File \"%s\" is uploaded successfully"),$upfilename).'<br />';
-  if ($key == 'UploadFile')
-    $msg.= "<ins>Uploads:$upfilename</ins><br />";
-  else {
+  if ($key == 'UploadFile') {
+    $msg.= "<ins>Uploads:$upfilename</ins> or<br />";
+    $msg.= "<ins>attachment:/$upfilename</ins><br />";
+    $log_entry=" * attachment:/$upfilename?action=deletefile . . . @USERNAME@ @DATE@\n";
+  } else {
     $msg.= "<ins>attachment:$upfilename</ins> or<br />";
-    $msg.= "<ins>attachment:".$formatter->page->name.":$upfilename</ins><br />";
+    $msg.= "<ins>attachment:".$formatter->page->name."/$upfilename</ins><br />";
+    $log_entry=" * attachment:".$formatter->page->name."/$upfilename?action=deletefile . . . @USERNAME@ @DATE@\n";
   }
 
   } // multiple upload
 
   $comment.="uploaded";
-  $DBInfo->addLogEntry($key, $REMOTE_ADDR,$comment,"UPLOAD");
+  if (!empty($DBInfo->upload_changes)) {
+    $p=$DBInfo->getPage($DBInfo->upload_changes);
+    $raw_body=$p->_get_raw_body();
+    if ($raw_body and $raw_body[strlen($raw_body)-1] != "\n")
+      $raw_body.="\n";
+    $raw_body.=$log_entry;
+    $p->write($raw_body);
+    $DBInfo->savePage(&$p,$comment,$options);
+  } else
+    $DBInfo->addLogEntry($key, $REMOTE_ADDR,$comment,"UPLOAD");
   
   $formatter->send_header("",$options);
   if ($uploaded < 2) {

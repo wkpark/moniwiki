@@ -650,23 +650,34 @@ function do_invalid($formatter,$options) {
 function do_post_DeleteFile($formatter,$options) {
   global $DBInfo;
 
-  if ($options['value']) {
-    $key=$DBInfo->pageToKeyname(urldecode($options['value']));
-    $dir=$DBInfo->upload_dir."/$key";
+  if ($_SERVER['REQUEST_METHOD']=="POST") {
+    if ($options['value']) {
+      $key=$DBInfo->pageToKeyname(urldecode($options['value']));
+      $dir=$DBInfo->upload_dir."/$key";
+    } else {
+      $dir=$DBInfo->upload_dir;
+    }
   } else {
-    $dir=$DBInfo->upload_dir;
+    // GET with 'value=filename' query string
+    $file=$options['value'];
   }
 
-  if (isset($options['files'])) {
+  if (isset($options['files']) or isset($options['file'])) {
+    if (isset($options['file'])) {
+      $options['files']=array();
+      $options['files'][]=$options['file'];
+    }
+      
     if ($options['files']) {
       foreach ($options['files'] as $file) {
         $key=$DBInfo->pageToKeyname($file);
 
         if (!is_dir($dir."/".$file) && !is_dir($dir."/".$key)) {
+          $fdir=$options['value'] ? $options['value'].':':'';
           if (@unlink($dir."/".$file))
-            $log.=sprintf(_("File '%s' is deleted")."<br />",$file);
+            $log.=sprintf(_("File '%s' is deleted")."<br />",$fdir.$file);
           else
-            $log.=sprintf(_("Fail to delete '%s'")."<br />",$file);
+            $log.=sprintf(_("Fail to delete '%s'")."<br />",$fdir.$file);
         } else {
           if ($key != $file)
             $realfile = $key;
@@ -680,17 +691,35 @@ function do_post_DeleteFile($formatter,$options) {
       $formatter->send_header("",$options);
       $formatter->send_title($title,"",$options);
       print $log;
-      $formatter->send_footer();
+      $formatter->send_footer('',$options);
       return;
     } else
       $title = sprintf(_("No files are selected !"));
+  } else if ($file) {
+    list($page,$file)=explode(':',$file);
+    if (!$file) {
+      $file=$page;
+      $page=$formatter->page->name;
+    }
+    $link=$formatter->link_url($formatter->page->urlname);
+    $out="<form method='post' action='$link'>";
+    $out.="<input type='hidden' name='action' value='DeleteFile' />\n";
+    if ($page)
+      $out.="<input type='hidden' name='value' value='$page' />\n";
+    $out.="<input type='hidden' name='file' value='$file' />\n<h2>";
+    $out.=sprintf(_("Did you really want to delete '%s' ?"),$file).'</h2>';
+    if ($DBInfo->security->is_protected("deletefile",$options))
+      $out.=_("Password").": <input type='password' name='passwd' size='10' />\n";
+    $out.="<input type='submit' value='"._("Delete")."' /></form>\n";
+    $title = sprintf(_("Delete selected file"));
+    $log=$out;
   } else {
     $title = sprintf(_("No files are selected !"));
   }
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
   print $log;
-  $formatter->send_footer();
+  $formatter->send_footer('',$options);
   return;
 }
 
@@ -707,7 +736,7 @@ function do_post_DeletePage($formatter,$options) {
     $title = sprintf(_("\"%s\" is deleted !"), $page->name);
     $formatter->send_header("",$options);
     $formatter->send_title($title,"",$options);
-    $formatter->send_footer();
+    $formatter->send_footer('',$options);
     return;
   } else if ($options['name']) {
     $options['msg'] = _("Please delete this file manually.");
@@ -727,7 +756,7 @@ Only WikiMaster can delete this page<br />\n";
     <input type='submit' value='Delete page' />
     </form>";
 #  $formatter->send_page();
-  $formatter->send_footer();
+  $formatter->send_footer('',$options);
 }
 
 function form_permission($mode) {
@@ -1501,11 +1530,43 @@ function macro_FootNote($formatter,$value="") {
 
   $text="[$idx&#093";
   $fnidx="fn".$idx;
-  if ($value[0] == "*") {
-#    $dum=explode(" ",$value,2); XXX
-    $p=strrpos($value,'*')+1;
-    $text=substr($value,0,$p);
-    $value=substr($value,$p);
+  if ($value[0] == '*') {
+    if ($value[1] == '*') {
+      # [** http://foobar.com] -> [*]
+      # [*** http://foobar.com] -> [**]
+      $p=strrpos($value,'*');
+      $len=strlen(substr($value,1,$p));
+      $text=str_repeat('*',$len);
+      $value=substr($value,$p+1);
+    } else if ($value[1] == '+') {
+      $dagger=array('','&#x2020;',
+                    '&#x2020;&#x2020;',
+                    '&#x2020;&#x2020;&#x2020;',
+                    '&#x2021;',
+                    '&#x2021;&#x2021;',
+                    '&#x2021;&#x2021;&#x2021;');
+      $p=strrpos($value,'+');
+      $len=strlen(substr($value,0,$p));
+      $text=$dagger[$len];
+      $value=substr($value,$p+1);
+    } else if ($value[1] == ' ') {
+      # [* http://c2.com] -> [1]
+      $value=substr($value,2);
+    } else {
+      # [*ward http://c2.com] -> [ward]
+      $text=strtok($value,' ');
+      $value=strtok('');
+      $fnidx=substr($text,1);
+      $text[0]='[';
+      $text=$text.'&#093;'; # make a text as [Alex77]
+      if ($value) {
+        $formatter->foot_idx--; # undo ++.
+        if (0 === strcmp($fnidx , (int)$fnidx)) $fnidx="fn$fnidx";
+      } else {
+        if (0 === strcmp($fnidx , (int)$fnidx)) $fnidx="fn$fnidx";
+        return "<tt class='foot'><a href='#$fnidx'>$text</a></tt>";
+      }
+    }
   } else if ($value[0] == "[") {
     $dum=explode("]",$value,2);
     if (trim($dum[1])) {
@@ -1549,12 +1610,11 @@ function macro_TableOfContents($formatter="",$value="") {
  $lines=explode("\n",$body);
  foreach ($lines as $line) {
    $line=preg_replace("/\n$/", "", $line); # strip \n
-   preg_match("/(?<!=)(={1,5})\s(#?)(.*)\s+(={1,5})\s?$/",$line,$match);
+   preg_match("/(?<!=)(={1,5})\s(#?)(.*)\s+\\1\s?$/",$line,$match);
 
    if (!$match) continue;
 
    $dep=strlen($match[1]);
-   if ($dep != strlen($match[4])) continue;
    $head=str_replace("<","&lt;",$match[3]);
    # strip some basic wikitags
    # $formatter->baserepl,$head);
@@ -1567,10 +1627,6 @@ function macro_TableOfContents($formatter="",$value="") {
      $depth=$dep - $depth_top + 1;
      if ($depth <= 0) $depth=1;
    }
-
-#   $depth=$dep;
-#   if ($dep==1) $depth++; # depth 1 is regarded same as depth 2
-#   $depth--;
 
    $num="".$head_num;
    $odepth=$head_dep;
