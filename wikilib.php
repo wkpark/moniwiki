@@ -574,6 +574,13 @@ function macro_Edit($formatter,$value,$options='') {
     $select_category.="</select>\n";
   }
 
+  if ($DBInfo->use_minoredit) {
+    $user=new User(); # get from COOKIE VARS
+    if ($DBInfo->owners and in_array($user->id,$DBInfo->owners)) {
+      $extra_check=' '._('Minor edit')."<input type='checkbox' name='minor' />";
+    }
+  }
+
   $preview_msg=_("Preview");
   $save_msg=_("Save");
   $summary_msg=_("Summary of Change");
@@ -599,7 +606,7 @@ EOS;
   $form.=<<<EOS
 <textarea class="wiki" id="content" wrap="virtual" name="savetext"
  rows="$rows" cols="$cols" class="wiki">$raw_body</textarea><br />
-$summary_msg: <input name="comment" size="70" maxlength="70" style="width:200" /><br />
+$summary_msg: <input name="comment" size="70" maxlength="70" style="width:200" />$extra_check<br />
 <input type="hidden" name="action" value="savepage" />
 <input type="hidden" name="datestamp" value="$datestamp" />
 $select_category
@@ -965,10 +972,20 @@ function do_post_savepage($formatter,$options) {
     if ($options['category'])
       $savetext.="----\n$options[category]\n";
 
+    $options['minor'] = $DBInfo->use_minoredit ? $options['minor']:0;
+    if ($options['minor']) {
+      $user=new User(); # get from COOKIE VARS
+      if ($DBInfo->owners and in_array($user->id,$DBInfo->owners)) {
+        $options['minor']=1;
+      } else {
+        $options['minor']=0;
+      }
+    }
+
     $comment=_stripslashes($options['comment']);
     $formatter->page->write($savetext);
     $ret=$DBInfo->savePage($formatter->page,$comment,$options);
-    if (($ret != -1) and $DBInfo->notify) {
+    if (($ret != -1) and $DBInfo->notify and ($options['minor'] != 1)) {
       $options['noaction']=1;
       if (!function_exists('mail')) {
         $options['msg']=sprintf(_("mail does not supported by default."))."<br />";

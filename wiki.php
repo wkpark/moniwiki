@@ -852,7 +852,7 @@ class WikiDB {
         if (abs($check) < 3) $minor=1;
       }
     }
-    if (!$minor or !$options['minor'])
+    if (!$options['minor'] and !$minor)
       $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
     return 0;
   }
@@ -1569,7 +1569,7 @@ class Formatter {
     case '{':
       $url=substr($url,3,-3);
       if ($url[0]=='#' and ($p=strpos($url,' '))) {
-        $col=strtok($url,' '); $url=strtok(' ');
+        $col=strtok($url,' '); $url=strtok('');
         if (!preg_match('/^#[0-9a-f]{6}$/',$col)) $col=substr($col,1);
         return "<font color='$col'>$url</font>";
       }
