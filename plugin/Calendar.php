@@ -8,25 +8,26 @@
 #------(last two arguments are optional)----------------------------------------
 #-------------------------------------------------------------------------------
 # $Id$
-function macro_Calendar($formatter,$value="",$option="") {
-	function day_func($year,$month,$day,$pagename) {
-		global $DBInfo;
-		static $today;
-		if (!$today) $today=date("d");
-		if ($day==$today) {
-			$exists='today" bgcolor="white';
-			$nonexists='today" bgcolor="white';
-		} else {
-			$exists='wiki';
-			$nonexists='day" bgcolor="lightyellow';
-		}
-
-		$link="$pagename/".sprintf("%04d-%02d-%02d", $year, $month, $day);
-		if ($DBInfo->hasPage($link))
-		  return array($link, $exists, $day);
-		else
-		  return array($link, $nonexists, $day);
+function day_func($year,$month,$day,$pagename) {
+	global $DBInfo;
+	static $today;
+	if (!$today) $today=date("d");
+	if ($day==$today) {
+		$exists='today" bgcolor="white';
+		$nonexists='today" bgcolor="white';
+	} else {
+		$exists='wiki';
+		$nonexists='day" bgcolor="lightyellow';
 	}
+
+	$link="$pagename/".sprintf("%04d-%02d-%02d", $year, $month, $day);
+	if ($DBInfo->hasPage($link))
+	  return array($link, $exists, $day);
+	else
+	  return array($link, $nonexists, $day);
+}
+
+function macro_Calendar($formatter,$value="",$option="") {
 
 	$test=preg_match("/^(\d{4})-(\d{2})$/",$value,$match);
         if ($test) {
