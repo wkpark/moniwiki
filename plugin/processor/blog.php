@@ -77,8 +77,9 @@ function processor_blog($formatter,$value="",$options) {
     if ($comments) {
       $count=sizeof(explode("----\n",$comments));
 
-      if ($options['noaction'] or $DBInfo->blog_comments);
-      else {
+      if ($options['noaction'] or $DBInfo->blog_comments) {
+        $comments=preg_replace("/----\n/","[[HTML(</div></div><div class='seperator'><hr /></div><div class='blog-comment'><div>)]]",$comments);
+      } else {
         $comments='';
         $add_button=($count == 1) ? _("%d comment"):_("%d comments");
         $add_button=sprintf($add_button,$count);
@@ -95,7 +96,7 @@ function processor_blog($formatter,$value="",$options) {
     }
 
     if ($action)
-      $action="<div class='blog-action'>&raquo; ".$action."</div>\n";
+      $action="<div class='blog-action'><span class='bullet'>&raquo;</span> ".$action."</div>\n";
 
     ob_start();
     $formatter->send_page($src,$options);
@@ -104,7 +105,7 @@ function processor_blog($formatter,$value="",$options) {
     if ($comments) {
       ob_start();
       $formatter->send_page($comments,$options);
-      $comments= "<div class='blog-comments'>".ob_get_contents()."</div>";
+      $comments= "<div class='blog-comments'><div class='blog-comment'>".ob_get_contents()."</div></div>";
       ob_end_clean();
     } else
       $comments="";
@@ -121,7 +122,7 @@ function processor_blog($formatter,$value="",$options) {
     $out.="<div class='blog-title'><a name='$tag'></a>$title $purple</div>\n";
   }
   $out.="<div class='blog-user'>Submitted by $user $date</div>\n".
-    "<div class='blog-comment'>$msg$comments$action</div>\n".
+    "<div class='blog-content'>$msg</div>$comments$action\n".
     "</div>\n";
   return $out;
 }
