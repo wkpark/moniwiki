@@ -50,6 +50,7 @@ function do_VisualTour($formatter,$options) {
   }
 
   $selfurl=$formatter->link_to();
+  $formatter->send_header();
   print "<h2 style='font-family:Tahoma,Sans-serif;'>VisualTour on $selfurl</h2>";
 
   print $formatter->link_to("?action=visualtour",_("Normal"));
