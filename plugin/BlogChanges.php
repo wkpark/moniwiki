@@ -6,29 +6,41 @@
 // $Id$
 
 class Blog_cache {
-  function get_blogs() {
+  function get_blogs($date) {
     global $DBInfo;
 
+    $blogs=array();
     $handle = @opendir($DBInfo->cache_dir."/blog");
     if (!$handle) return array();
 
     while ($file = readdir($handle)) {
       if (is_dir($DBInfo->cache_dir."/blog/".$file)) continue;
-      $blogs[] = $file;
+      if (preg_match("/^$date/",$file))
+        $blogs[] = $file;
     }
     closedir($handle);
     return $blogs;
   }
 
-  function get_all() {
+  function get_all($date) {
     global $DBInfo;
-    $all=Blog_cache::get_blogs();
+    $all=Blog_cache::get_blogs($date);
     $lines=array();
-    foreach ($all as $blog) {
-      $name=$DBInfo->cache_dir."/blog/".$blog;
+    foreach ($all as $stamped_blog) {
+      $fname=$DBInfo->cache_dir."/blog/".$stamped_blog;
+
+      #strip datestamp
+      list($datestamp,$blog)=explode('_2e',$stamped_blog,2);
       $pagename=$DBInfo->keyToPagename($blog);
-      $items=file($name);
-      foreach ($items as $line) $lines[]=$pagename." ".rtrim($line);
+      $items=file($fname);
+      foreach ($items as $line) {
+        list($author,$datestamp,$dummy)=explode(' ',$line);
+        $datestamp[10]=' ';
+        $timestamp= strtotime($datestamp." GMT");
+        $datestamp= date("Ymd",$timestamp);
+        if (preg_match("/^$date/",$datestamp))
+          $lines[]=$pagename." ".rtrim($line);
+      }
     }
     return $lines;
   }
@@ -41,15 +53,39 @@ function BlogCompare($a,$b) {
   return 0;
 }
 
-function macro_BlogChanges($formatter,$value) {
+function do_BlogChanges($formatter,$options='') {
+  if (!$options['date']) $options['date']=date('Ym');
+  $changes=macro_BlogChanges($formatter,$options['mode'],$options);
+  $formatter->send_header('',$options);
+  $formatter->send_title('','',$options);
+  print '<div id="wikiContent">';
+  print $changes;
+  print '</div>';
+  $formatter->send_footer('',$options);
+  return;
+}
+
+function macro_BlogChanges($formatter,$value,$options='') {
   global $DBInfo;
 
   $opts=explode(",",$value);
+
+  if ($options['date']) {
+    $date=$options['date'];
+    # check error and set default value
+    if (!preg_match('/^\d+$/',$date)) $date=date('Ym');
+  } else $date=date('Ym'); # default: show BlogChages monthly
+
+  if (strlen($date)==6) {
+    $pre_month=intval(substr($date,4))-1;
+    $pre_date=substr($date,0,4).sprintf('%02d',$pre_month);
+  }
   
   if (in_array('all',$opts)) {
-    $lines=Blog_cache::get_all();
+    $lines=Blog_cache::get_all($date);
     $logs=array();
     foreach ($lines as $line) $logs[]=explode(" ",$line,4);
+    #uniq($logs);
     usort($logs,'BlogCompare');
   } else {
     if ($value and $DBInfo->hasPage($value)) {
@@ -112,6 +148,9 @@ function macro_BlogChanges($formatter,$value) {
     $items.=$out;
   }
   $url=qualifiedUrl($formatter->link_url($DBInfo->frontpage));
-  return $bra.$items.$cat;
+
+  # make pnut
+  $pnut=$formatter->link_to("?action=blogchanges&amp;mode=$value&amp;date=$pre_date",'&laquo; '._("Previous"));
+  return $bra.$items.$cat.$pnut;
 }
 ?>

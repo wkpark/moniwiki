@@ -14,12 +14,27 @@ function updateBlogList($formatter) {
   $cache=new Cache_text("blog");
   $lines=explode("\n",$body);
 
+  $date=0;
   $out=array();
   foreach ($lines as $line) {
-    if (preg_match("/^{{{#!blog (.*)$/",$line,$match))
+    if (preg_match("/^{{{#!blog (.*)$/",$line,$match)) {
+      list($dummy,$datestamp,$dummy)=explode(' ',$match[1],3);
+
+      $datestamp[10]=' ';
+      $time= strtotime($datestamp." GMT");
+      $datestamp= date("Ymd",$time);
+      if ($datestamp > $date) {
+        if ($date) {
+          $cache->update($date.".".$formatter->page->name,join("\n",$out));
+          $out=array();
+        }
+        $date=$datestamp;
+      }
+
       $out[]=$match[1];
+    }
   }
-  $cache->update($formatter->page->name,join("\n",$out));
+  $cache->update($date.".".$formatter->page->name,join("\n",$out));
   return;
 }
 

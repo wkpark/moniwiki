@@ -28,18 +28,31 @@ function send_error($error=0,$error_message='') {
 function do_trackback($formatter,$options) {
   global $DBInfo, $_release;
 
-  if (!$DBInfo->use_trackback)
-    send_error(1,"TrackBack is not enabled"); 
+  $entry='';
   if (!$formatter->page->exists()) {
-    $options['msg']=_("Error: Page Not found !");
-    send_error(1,$options['msg']);
+    $pos=strrpos($formatter->page->name,'/');
+    if ($pos > 0) {
+      $entry=substr($formatter->page->name,$pos+1);
+      $pagename=substr($formatter->page->name,0,$pos);
+      $page=new WikiPage($pagename);
+      $formatter=new Formatter($page);
+      $options['page']=$pagename;
+    } else {
+      $options['msg']=_("Error: Page Not found !");
+      send_error(1,$options['msg']);
+    }
   }
 
   if (!$options['url']) {
+    if ($options['value']) $anchor='/'.$options['value'];
+
     $formatter->send_header("",$options);
 
-    $ping_url= qualifiedUrl($formatter->link_url($formatter->page->urlname,"?action=trackback"));
-    $sendping_action= $formatter->link_tag($formatter->page->urlname,"?action=sendping",_("send ping"));
+    if ($DBInfo->use_trackback)
+      $ping_url= qualifiedUrl($formatter->link_url($formatter->page->urlname.$anchor,"?action=trackback"));
+    else
+      $ping_url=_("TrackBack is not activated !");
+    $sendping_action= $formatter->link_tag($formatter->page->urlname,"?action=sendping&amp;value=$options[value]",_("send ping"));
     $tb_cache=new Cache_text('trackback');
     if ($tb_cache->exists($options['page'])) {
       $formatter->send_title(sprintf(_("TrackBack list of %s"),$options['page']),"",$options);
@@ -49,7 +62,8 @@ function do_trackback($formatter,$options) {
       print "<div class='trackback-hint'><b>"._("TrackBack URL for this page:")."</b><br />\n$ping_url<br /><br />\n";
       print "<b>"._("Send TrackBack Ping to another Blog:")."</b> $sendping_action</div>\n<br />";
       foreach ($trackbacks as $trackback) {
-        list($dummy,$url,$date,$sitename,$title,$excerpt)= explode("\t",$trackback);
+        list($dummy,$entry,$url,$date,$sitename,$title,$excerpt)= explode("\t",$trackback);
+        if ($anchor and '/'.$entry!=$anchor) continue;
         $date[10]=" ";
         # 2003-07-11T12:08:33+09:00
         # $time=strtotime($date);
@@ -68,6 +82,8 @@ function do_trackback($formatter,$options) {
     $formatter->send_footer("",$options);
     return;
   } 
+  if (!$DBInfo->use_trackback)
+    send_error(1,"TrackBack is not enabled"); 
 
   if (!$options['title'] or !$options['excerpt'] or !$options['blog_name'] or !$options['url']) send_error(1,"Invalid TrackBack Ping");
   # receivie Trackback ping
@@ -81,7 +97,7 @@ function do_trackback($formatter,$options) {
   $timestamp=time();
   $date= gmdate("Y-m-d\TH:i:s",$timestamp);
 
-  $receive= $timestamp."\t".$url."\t".$date."\t".$blog_name."\t".$title."\t".$excerpt."\n";
+  $receive= $timestamp."\t".$entry."\t".$url."\t".$date."\t".$blog_name."\t".$title."\t".$excerpt."\n";
 
   $tb_cache= new Cache_text('trackback');
 
