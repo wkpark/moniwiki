@@ -136,9 +136,9 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
     $day = date('Y-m-d', $ed_time);
     if ($use_day and $day != $ratchet_day) {
-      $purple="<a id='$day' name='$day'></a><a href='#$day'>$purple_icon</a>";
+      $purple="<a id='$day' name='$day'></a><a class='purple' href='#$day'>$purple_icon</a>";
       $out.=$cat0;
-      $out.=sprintf("%s<font size='+1'>%s </font>$purple<font size='-1'>",
+      $out.=sprintf("%s<font class='rc-date' size='+1'>%s </font>$purple<font class='rc-bookmark' size='-1'>",
             $br, date($date_fmt, $ed_time));
       if (!$nobookmark)
         $out.='['.$formatter->link_tag($formatter->page->urlname,
