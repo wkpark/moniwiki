@@ -1310,33 +1310,32 @@ class Formatter {
       $page=$this->page->name.$page;
 
     #$url=$this->link_url($page);
-    if ($this->pagelinks[$page]) {
-      $url=$this->pagelinks[$page];
-      return "<a href='$url'>$word</a>";
+    $url=$this->link_url(_rawurlencode($page)); # XXX
+    if (isset($this->pagelinks[$page])) {
+      $idx=$this->pagelinks[$page];
+      if ($idx == -1) return "<a href='$url'>$word</a>";
+      if ($idx == 0) return "<a href='$url'>?</a>$word";
+      return "<a href='$url'>$word</a>".
+             "<sup><a href='#sister$idx'>$idx)</a></sup>";
     } else if ($DBInfo->hasPage($page)) {
-      $url=$this->link_url(_rawurlencode($page)); # XXX
-      $this->pagelinks[$page]=$url;
+      $this->pagelinks[$page]=-1;
       return "<a href='$url'>$word</a>";
     } else {
       if ($this->sister_on) {
-        $idx=$this->pagelinks[$page];
-        if ($idx !== -1) {
-          $sisters=$DBInfo->metadb->getSisterSites($page);
-          if ($sisters) {
-            $this->sisters[]="<tt class='foot'><sup>&#160;&#160;&#160;".
-                  "<a name='sister$this->sister_idx'></a>".
-                  "<b>$this->sister_idx)</b>&#160;</sup></tt> ".
-                  "$sisters <br/>";
-            $this->pagelinks[$page]=$this->sister_idx++;
-            $idx=$this->pagelinks[$page];
-          }
+        $sisters=$DBInfo->metadb->getSisterSites($page);
+        if ($sisters) {
+          $this->sisters[]="<tt class='foot'><sup>&#160;&#160;&#160;".
+                "<a name='sister$this->sister_idx'></a>".
+                "<b>$this->sister_idx)</b>&#160;</sup></tt> ".
+                "$sisters <br/>";
+          $this->pagelinks[$page]=$this->sister_idx++;
+          $idx=$this->pagelinks[$page];
         }
         if ($idx > 0) {
           return "<a href='$url'>$word</a>".
                 "<sup><a href='#sister$idx'>$idx)</a></sup>";
         }
       }
-      $url=$this->link_url(_rawurlencode($page)); # XXX
       $this->pagelinks[$page]=0;
       return "<a href='$url'>?</a>$word";
     }
