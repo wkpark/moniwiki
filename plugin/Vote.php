@@ -77,14 +77,17 @@ function do_vote($formatter,$options) {
   for ($i=0;$i<$count;$i++) {
     if($test=preg_match_all("/\[\[Vote\(([^\]]+)\)\]\]/",$lines[$i],$tickets)) {
       foreach ($tickets[1] as $ticket) {
-        if (md5($ticket) == $options[ticket]) {
+        $tic=preg_replace($formatter->baserule,$formatter->baserepl,$ticket);
+        if (md5($tic) == $options['ticket']) {
           $save=$ticket;
-          $temps=explode(",",$ticket);
-          foreach ($temps as $item) {
-            preg_match("/(^.+)\s+(\d+)$/",$item,$match);
-            $votes[$match[1]]=(int) $match[2];
-            if (md5($match[1]) == $options[vote]) {
-              $votes[$match[1]]++;
+          $items=explode(",",$tic);
+          $rawitems=explode(",",$ticket);
+          for ($k=0;$k< sizeof($items); $k++) {
+            preg_match("/(^.+)\s+(\d+)$/",$items[$k],$match);
+            preg_match("/(^.+)\s+(\d+)$/",$rawitems[$k],$rawmatch);
+            $votes[$rawmatch[1]]=(int) $match[2];
+            if (md5($match[1]) == $options['vote']) {
+              $votes[$rawmatch[1]]++;
               $voted=1;
             }
           }
