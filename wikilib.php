@@ -1056,7 +1056,7 @@ function macro_UserPreferences($formatter,$value,$options='') {
 <table border="0">
   <tr><td><b>ID</b>&nbsp;</td><td>$idform</td></tr>
   <tr>
-     <td><b>Password</b>&nbsp;</td><td><input type="password" size="15" maxlength="8" name="password" value="" />
+     <td><b>Password</b>&nbsp;</td><td><input type="password" size="15" maxlength="12" name="password" value="" />
   <tr><td></td><td>
     <input type="submit" name="login" value="$button" /> &nbsp;
   </td></tr>
@@ -1068,7 +1068,7 @@ FORM;
     if (isset($options['login_id']) or $_GET['join'] or $value!="simple") {
       $passwd=$options['password'];
       $button=_("Make profile");
-      $again="<b>"._("password again")."</b>&nbsp;<input type='password' size='15' maxlength='8' name='passwordagain' value='' /></td></tr>";
+      $again="<b>"._("password again")."</b>&nbsp;<input type='password' size='15' maxlength='12' name='passwordagain' value='' /></td></tr>";
       $extra=<<<EXTRA
   <tr><td><b>Mail</b>&nbsp;</td><td><input type="text" size="40" name="email" value="$email" /></td></tr>
 EXTRA;
@@ -1079,7 +1079,7 @@ EXTRA;
     $button=_("Save");
     $css=$user->info['css_url'];
     $email=$user->info['email'];
-    $again="<b>"._("New password")."</b>&nbsp;<input type='password' size='15' maxlength='8' name='passwordagain' value='' /></td></tr>";
+    $again="<b>"._("New password")."</b>&nbsp;<input type='password' size='15' maxlength='12' name='passwordagain' value='' /></td></tr>";
 
     $extra=<<<EXTRA
   <tr><td><b>Mail</b>&nbsp;</td><td><input type="text" size="40" name="email" value="$email" /></td></tr>
@@ -1095,7 +1095,7 @@ $login
 <table border="0">
   <tr><td><b>ID</b>&nbsp;</td><td>$idform</td></tr>
   <tr>
-     <td><b>Password</b>&nbsp;</td><td><input type="password" size="15" maxlength="8" name="password" value="$passwd" />
+     <td><b>Password</b>&nbsp;</td><td><input type="password" size="15" maxlength="12" name="password" value="$passwd" />
     $again
     $extra
   <tr><td></td><td>
