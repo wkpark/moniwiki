@@ -101,4 +101,5 @@ $vim_options='+"set expandtab" +"retab"';
 #$delete_history=1;
 #$use_twikilink=1;
 #$timezone='KST'; // for windows
+#$version_class='RcsLite';
 ?>
