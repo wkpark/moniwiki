@@ -8,7 +8,7 @@
 function do_rss_rc($formatter,$options) {
   global $DBInfo;
 
-  $lines= $DBInfo->editlog_raw_lines(2000,1);
+  $lines= $DBInfo->editlog_raw_lines(4000,1);
     
   $time_current= time();
   $secs_per_day= 60*60*24;
@@ -58,7 +58,7 @@ CHANNEL;
         $f=new Formatter($p);
         $options['raw']=1;
         $options['nomsg']=1;
-        $html=$f->get_diff('','','',$options);
+        $html=$f->macro_repl('Diff','',$options);
         if (!$html) {
           ob_start();
           $f->send_page('',array('fixpath'=>1));
@@ -75,16 +75,16 @@ CHANNEL;
     }
     $zone = "+00:00";
     $date = gmdate("Y-m-d\TH:i:s",$ed_time).$zone;
-    $datetag = gmdate("YmdHis",$ed_time);
+    #$datetag = gmdate("YmdHis",$ed_time);
 
     $channel.="<rdf:li rdf:resource=\"$url\"></rdf:li>\n";
 
     $valid_page_name=str_replace('&','&amp;',$page_name);
-    $items.="<item rdf:about=\"$url#$datetag\">\n";
+    $items.="<item rdf:about=\"$url\">\n";
     $items.="  <title>$valid_page_name</title>\n";
     $items.="  <link>$url</link>\n";
-    $items.="  <dc:date>$date</dc:date>\n";
     $items.="  <description>$html</description>\n";
+    $items.="  <dc:date>$date</dc:date>\n";
     $items.="<dc:creator>$user</dc:creator>\n";
     $items.="<dc:contributor>$user</dc:contributor>\n";
 #    $items.="     <dc:contributor>\n     <rdf:Description>\n"
@@ -131,11 +131,11 @@ FORM;
 	xmlns:wiki="http://purl.org/rss/1.0/modules/wiki/"
 	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 	xmlns:xlink="http://www.w3.org/1999/xlink"
-	xmlns:dc="http://purl.org/dc/elements/1.1/">\n
+	xmlns:dc="http://purl.org/dc/elements/1.1/">
 <!--
     Add "diffs=1" to add change diffs to the description of each items.
     Add "oe=utf-8" to convert the charset of this rss to UTF-8.
--->
+-->\n
 HEAD;
   header("Content-Type: text/xml");
   if ($new) print $head.$new;
