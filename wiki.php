@@ -411,6 +411,7 @@ class WikiDB {
 
     $this->text_dir= $this->data_dir.'/text';
     $this->cache_dir= $this->data_dir.'/cache';
+    $this->vartmp_dir= '/var/tmp';
     $this->intermap= $this->data_dir.'/intermap.txt';
     $this->editlog_name= $this->data_dir.'/editlog';
     $this->shared_intermap=$this->data_dir."/text/InterMap";
@@ -648,12 +649,16 @@ class WikiDB {
     return $pages;
   }
 
-  function getLikePages($needle) {
-    $pages = array();
-    $handle = opendir($this->text_dir);
+  function getLikePages($needle,$mode=0) {
+    $pages= array();
+    $handle= opendir($this->text_dir);
+    if ($mode==1)
+      $needle_key= $this->pageToKeyname($needle);
+    else $needle_key=$needle;
+
     while ($file = readdir($handle)) {
       if (is_dir($this->text_dir."/".$file)) continue;
-      if (preg_match("/($needle)/",$file))
+      if (preg_match("/($needle_key)/",$file))
         $pages[] = $this->keyToPagename($file);
     }
     closedir($handle);
@@ -934,7 +939,7 @@ class WikiPage {
 
   function size() {
     if ($this->fsize) return $this->fsize;
-    $this->fsize=filesize($this->filename);
+    $this->fsize=@filesize($this->filename);
     return $this->fsize;
   }
 
@@ -2013,6 +2018,7 @@ class Formatter {
   }
 
   function fancy_diff($diff) {
+    global $DBInfo;
     include_once("lib/difflib.php");
     $diff=str_replace("<","&lt;",$diff);
     $lines=explode("\n",$diff);
@@ -2034,7 +2040,7 @@ class Formatter {
       else if ($omarker) {
         $omarker=0;
         $buf="";
-        $result = new WordLevelDiff($orig, $new);
+        $result = new WordLevelDiff($orig, $new, $DBInfo->charset);
         foreach ($result->orig() as $ll)
           $buf.= "<div class=\"diff-removed\">$ll</div>\n";
         foreach ($result->final() as $ll)
@@ -2325,6 +2331,9 @@ EOS;
       list($act,$txt)=explode(" ",$this->pi['#action'],2);
       if (!$txt) $txt=$act;
       $menu= $this->link_to("?action=$act",_($txt),"accesskey='x'");
+      if (strtolower($act) == 'blog')
+        $this->actions[]='BlogRss';
+        
     } else if ($args['editable']) {
       if ($DBInfo->security->writable($options))
         $menu= $this->link_to("?action=edit",_("EditText"),"accesskey='x'");
@@ -2390,6 +2399,7 @@ FOOT;
     # find upper page
     $pos=strrpos($name,"/");
     if ($pos > 0) $upper=substr($name,0,$pos);
+    else if ($this->group) $upper=substr($this->group,0,-1);
 
     if (!$title) {
       if ($this->group) { # for HierarchicalWiki
@@ -2488,6 +2498,8 @@ MSG;
   }
 
   function send_editor($text="",$options="") {
+    global $DBInfo;
+
     $COLS_MSIE = 80;
     $COLS_OTHER = 85;
     $cols = preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
@@ -2536,6 +2548,16 @@ MSG;
 
     $raw_body = str_replace("<","&lt;",$raw_body);
 
+    # get categories
+    $categories=array();
+    $categories= $DBInfo->getLikePages($DBInfo->category_regex);
+    if ($categories) {
+      $select_category="<select name='category'>\n<option value=''>"._("--Select Category--")."</option>\n";
+      foreach ($categories as $category)
+        $select_category.="<option value='$category'>$category</option>\n";
+      $select_category.="</select>\n";
+    }
+
     $preview_msg=_("Preview");
     $save_msg=_("Save");
     $summary_msg=_("Summary of Change");
@@ -2545,6 +2567,7 @@ MSG;
 $summary_msg: <input name="comment" size="70" maxlength="70" style="width:200" /><br />
 <input type="hidden" name="action" value="savepage" />
 <input type="hidden" name="datestamp" value="$datestamp">
+$select_category
 <input type="submit" value="$save_msg" />&nbsp;
 <!-- <input type="reset" value="Reset" />&nbsp; -->
 <input type="submit" name="button_preview" value="$preview_msg" />
