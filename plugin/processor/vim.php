@@ -41,7 +41,7 @@ function processor_vim($formatter,$value,$options) {
   if ($DBInfo->use_numbering) {
     $button=_("Toggle line numbers");
     if (!$jsloaded) 
-      $script='<script type="text/javascript" src="/wiki/css/numbering.js"></script>';
+      $script='<script type="text/javascript" src="'.$DBInfo->url_prefix.'/css/numbering.js"></script>';
     $script.="<script type=\"text/javascript\">
 document.write('<a href=\"#\" onClick=\"return togglenumber(\'PRE-$uniq\', 1, 1);\" \
                 class=\"codenumbers\">$button<\/a>');
@@ -61,7 +61,7 @@ document.write('<a href=\"#\" onClick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
     $out = "";
     $fp=fopen($cache_dir."/$uniq".".html","r");
     while (!feof($fp)) $out .= fread($fp, 1024);
-    return $script.$stag.$out.$etag;
+    return '<div>'.$script.$out.'</div>';
     #return join('',file($cache_dir."/$uniq".".html"));
   }
 
@@ -70,7 +70,7 @@ document.write('<a href=\"#\" onClick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
     if ($lines[sizeof($lines)-1]=="") array_pop($lines);
     $src="<span class=\"line\">".
       implode("</span>\n<span class=\"line\">",$lines)."</span>";
-    return $script."<pre class='wiki' id='PRE-$uniq'>\n$src</pre>\n";
+    return '<div>'.$script."<pre class='wiki' id='PRE-$uniq'>\n$src</pre></div>\n";
   }
 
   if(getenv("OS")=="Windows_NT") {
@@ -118,9 +118,9 @@ document.write('<a href=\"#\" onClick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
   $out="<span class=\"line\">".
     implode("</span>\n<span class=\"line\">",$lines)."</span>\n";
   $fp=fopen($cache_dir."/$uniq".".html","w");
-  fwrite($fp,$out);
+  fwrite($fp,$stag.$out.$etag);
   fclose($fp);
-  return $script.$stag.$out.$etag;
+  return '<div>'.$script.$stag.$out.$etag.'</div>';
 }
 
 // vim:et:sts=2:
