@@ -8,7 +8,7 @@
 // $Id$
 // vim:et:ts=2:
 
-function get_pagelist($formatter,$pages,$action,$curpage=1,$listcount=10,$bra="[",$cat="]",$sep="|",$prev="¢·",$next="¢¹",$first="",$last="",$ellip="...") {
+function get_pagelist($formatter,$pages,$action,$curpage=1,$listcount=10,$bra="[",$cat="]",$sep="|",$prev="&#171;",$next="&#187;",$first="",$last="",$ellip="...") {
 
   if ($curpage >=0)
     if ($curpage > $pages)
@@ -81,26 +81,27 @@ function macro_Gallery($formatter,$value,$options='') {
   }
 
   $upfiles=array();
-  if (file_exists($dir."/list.txt") and filemtime($dir."/list.txt") > filemtime($dir)) {
+  $comments=array();
+  if (file_exists($dir."/list.txt")) {
     $cache=file($dir."/list.txt");
     foreach ($cache as $line) {
-      list($name,$mtime)=explode("\t",rtrim($line));
+      list($name,$mtime,$comment)=explode("\t",rtrim($line),3);
       $upfiles[$name]=$mtime;
+      $comments[$name]=$comment;
     }
-  } else {
+  }
+
+  if (filemtime($dir."/list.txt") > filemtime($dir)) {
     $handle= opendir($dir);
 
     $cache='';
     $cr='';
     while ($file= readdir($handle)) {
-      if (is_dir($dir."/".$file)) {
-        if ($file=='.' or $file=='..') continue;
-        $dirs[]= $DBInfo->keyToPagename($file);
-        continue;
-      }
+      if ($file[0]=='.' or $file=='list.txt' or is_dir($dir."/$file")) continue;
       $mtime=filemtime($dir."/".$file);
       $cache.=$cr.$file."\t".$mtime;
       $upfiles[$file]= $mtime;
+      if ($comments[$file] != '') $cache.="\t".$comments[$file];
       $cr="\n";
     }
     closedir($handle);
@@ -132,13 +133,19 @@ function macro_Gallery($formatter,$value,$options='') {
     $upfiles=array_slice($upfiles,$slice_index);
   }
 
-  $pnut=get_pagelist($formatter,$pages,"?action=gallery&p=",$options['p'],$perpage);
+  if ($pages > 1)
+    $pnut=get_pagelist($formatter,$pages,"?action=gallery&p=",$options['p'],$perpage);
+
+  if (!file_exists($dir."/thumbnails")) mkdir($dir."/thumbnails");
 
   while (list($file,$mtime) = each ($upfiles)) {
     $size=filesize($dir."/".$file);
     $link=$prefix.rawurlencode($file);
     $date=date("Y-m-d",$mtime);
     if (preg_match("/\.(jpg|jpeg|gif|png)$/i",$file)) {
+      if ($DBInfo->use_thumbnails and !file_exists($dir."/thumbnails/".$file)) {
+        system("convert -scale ".$width." ".$dir."/".$file." ".$dir."/thumbnails/".$file);
+      }
       if (file_exists($dir."/thumbnails/".$file)) {
         $thumb=$prefix."thumbnails/".rawurlencode($file);
         $object="<img src='$thumb' alt='$file' />";
@@ -148,8 +155,10 @@ function macro_Gallery($formatter,$value,$options='') {
     }
     else
       $object=$file;
+    $comment='';
+    if ($comments[$file] != '') $comment="<br/>".$comments[$file];
     $out.="<td align='center' valign='top' class='wiki'><a href='$link'>$object</a><br />".
-          "@ $date ($size bytes)</td>\n";
+          "@ $date ($size bytes)$comment</td>\n";
     if ($idx % $col == 0) $out.="</tr>\n<tr>\n";
     $idx++;
     if ($idx > $perpage) break;
