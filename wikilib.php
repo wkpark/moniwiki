@@ -306,6 +306,7 @@ function do_post_DeleteFile($formatter,$options) {
   } else {
     $dir=$DBInfo->upload_dir;
   }
+
   if ($options[files] && $options[passwd]) {
     $check=$DBInfo->admin_passwd==crypt($options[passwd],$DBInfo->admin_passwd);
     if ($check) {
@@ -360,7 +361,8 @@ function do_DeletePage($formatter,$options) {
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
   print "<form method='post'>
-Comment: <input name='comment' size='80' value='' /><br />
+Comment: <input name='comment' size='80' value='' /><br />\n";
+  print "
 Password: <input type='password' name='passwd' size='20' value='' />
 Only WikiMaster can delete this page<br />
     <input type='hidden' name='action' value='DeletePage' />
@@ -419,8 +421,8 @@ function do_chmod($formatter,$options) {
 <table border='0'>
 $form
 </table>
-Password:<input type='password' name='passwd'>
-<input type='submit' name='button_chmod' value='change'><br />
+Password:<input type='password' name='passwd' />
+<input type='submit' name='button_chmod' value='change' /><br />
 Only WikiMaster can change the permission of this page
 <input type=hidden name='action' value='chmod' />
 </form>";
@@ -456,8 +458,8 @@ function do_rename($formatter,$options) {
 <table border='0'>
 <tr><td align='right'>Old name: </td><td><b>$options[page]</b></td></tr>
 <tr><td align='right'>New name: </td><td><input name='value' /></td></tr>
-<tr><td align='right'>Password: </td><td><input type='password' name='passwd'>
-<input type='submit' name='button_rename' value='rename'>
+<tr><td align='right'>Password: </td><td><input type='password' name='passwd' />
+<input type='submit' name='button_rename' value='rename' />
 Only WikiMaster can rename this page</td></tr>
 </table>
     <input type=hidden name='action' value='rename' />
@@ -1258,6 +1260,7 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    if ($options[value]!='top' and file_exists($dir))
       $handle= opendir($dir);
    else {
+      $key='';
       $dir=$DBInfo->upload_dir;
       $handle= opendir($dir);
    }
@@ -1267,7 +1270,7 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
 
    while ($file= readdir($handle)) {
       if (is_dir($dir."/".$file)) {
-        if ($file=='.' or $file=='..') continue;
+        if ($file=='.' or $file=='..' or $options[value]!='top') continue;
         $dirs[]= $DBInfo->keyToPagename($file);
         continue;
       }
@@ -1303,14 +1306,14 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
       $link=$prefix.rawurlencode($file);
       $size=filesize($dir."/".$file);
       $date=date("Y-m-d",filemtime($dir."/".$file));
-      $out.="<tr><td class='wiki'><input type='checkbox' name='files[$idx]' value='$file'></td><td class='wiki'><a href='$link'>$file</a></td><td align='right' class='wiki'>$size</td><td class='wiki'>$date</td></tr>\n";
+      $out.="<tr><td class='wiki'><input type='checkbox' name='files[$idx]' value='$file' /></td><td class='wiki'><a href='$link'>$file</a></td><td align='right' class='wiki'>$size</td><td class='wiki'>$date</td></tr>\n";
       $idx++;
    }
    $idx--;
    $out.="<tr><th colspan='2'>Total $idx files</th><td></td><td></td></tr>\n";
    $out.="</table>
 Password: <input type='password' name='passwd' size='10' />
-<input type='submit' value='Delete selected files'></form>\n";
+<input type='submit' value='Delete selected files' /></form>\n";
 
    if (!$value and !in_array('UploadFile',$formatter->actions))
      $formatter->actions[]='UploadFile';
@@ -1992,7 +1995,7 @@ function macro_FootNote($formatter,$value="") {
 function macro_TableOfContents($formatter="",$value="") {
  $head_num=1;
  $head_dep=0;
- $TOC="\n<a name='toc' id='toc' /><dl><dd><dl>";
+ $TOC="\n<div class='toc'><a name='toc' id='toc' /><dl><dd><dl>\n";
 
  $formatter->toc=1;
  $lines=explode("\n",$formatter->page->get_raw_body());
@@ -2005,6 +2008,9 @@ function macro_TableOfContents($formatter="",$value="") {
    $dep=strlen($match[1]);
    if ($dep != strlen($match[4])) continue;
    $head=str_replace("<","&lt;",$match[3]);
+   # strip some basic wikitags
+   # $formatter->baserepl,$head);
+   $head=preg_replace($formatter->baserule,"\\1",$head);
    $head=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$head);
 
    if (!$depth_top) { $depth_top=$dep; $depth=1; }
@@ -2059,7 +2065,7 @@ function macro_TableOfContents($formatter="",$value="") {
      $close="";
      $depth=$head_dep;
      while ($depth>1) { $depth--;$close.="</dl></dd>\n"; };
-     return $TOC.$close."</dl></dd></dl>\n";
+     return $TOC.$close."</dl></dd></dl>\n</div>\n";
   }
   else return "";
 }
