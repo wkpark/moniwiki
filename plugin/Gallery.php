@@ -191,7 +191,7 @@ function macro_Gallery($formatter,$value,$options='') {
     $link=$selected ? $linksrc:$formatter->link_url($formatter->page->urlname,"?action=gallery&amp;value=$id");
     $date=date("Y-m-d",$mtime);
     if (preg_match("/\.(jpg|jpeg|gif|png)$/i",$file)) {
-      if ($DBInfo->use_covert_thumbs and !file_exists($dir."/thumbnails/".$file)) {
+      if ($DBInfo->use_convert_thumbs and !file_exists($dir."/thumbnails/".$file)) {
         system("convert -scale ".$width." ".$dir."/".$file." ".$dir."/thumbnails/".$file);
       }
       if (!$selected and file_exists($dir."/thumbnails/".$file)) {
