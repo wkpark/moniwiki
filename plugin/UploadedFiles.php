@@ -103,8 +103,8 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    $out.="<tr><th colspan='2'>Total $idx files</th><td></td><td></td></tr>\n";
    $out.="</table>\n";
    if ($DBInfo->security->is_protected("deletefile",$options))
-     $out.="Password: <input type='password' name='passwd' size='10' />\n";
-   $out.="<input type='submit' value='Delete selected files' /></form>\n";
+     $out.=_("Password").": <input type='password' name='passwd' size='10' />\n";
+   $out.="<input type='submit' value='"._("Delete selected files")."' /></form>\n";
 
    if (!$value and !in_array('UploadFile',$formatter->actions))
      $formatter->actions[]='UploadFile';

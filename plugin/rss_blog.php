@@ -38,14 +38,6 @@ function do_rss_blog($formatter,$options) {
   $URL=qualifiedURL($formatter->prefix);
   $img_url=qualifiedURL($DBInfo->logo_img);
 
-  $head=<<<HEAD
-<?xml version="1.0" encoding="$DBInfo->charset"?>
-<rdf:RDF xmlns:wiki="http://purl.org/rss/1.0/modules/wiki/"
-         xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-         xmlns:xlink="http://www.w3.org/1999/xlink"
-         xmlns:dc="http://purl.org/dc/elements/1.1/"
-         xmlns="http://purl.org/rss/1.0/">\n
-HEAD;
   $url=qualifiedUrl($formatter->link_url("RecentChanges"));
   $desc=sprintf(_("BlogChanges at %s"),$DBInfo->sitename);
   $channel=<<<CHANNEL
@@ -84,8 +76,10 @@ CHANNEL;
       $p=new WikiPage($page);
       $f=new Formatter($p);
       ob_start();
-      $f->send_page($summary);
-      $summary=htmlspecialchars(ob_get_contents());
+      #$f->send_page($summary);
+      $f->send_page($summary,array('fixpath'=>1));
+      #$summary=htmlspecialchars(ob_get_contents());
+      $summary='<![CDATA['.ob_get_contents().']]>';
       ob_end_clean();
       $items.="     <description>$summary</description>\n";
     }
@@ -116,11 +110,37 @@ FOOT;
 <name>goto</name>
 </textinput>
 FORM;
+
+  $new="";
+  if ($options['oe'] and (strtolower($options['oe']) != $DBInfo->charset)) {
+    $charset=$options['oe'];
+    if (function_exists('iconv')) {
+      $out=$head.$channel.$items.$form;
+      $new=iconv($DBInfo->charset,$charset,$out);
+      if (!$new) $charset=$DBInfo->charset;
+    }
+  } else $charset=$DBInfo->charset;
+
+  $head=<<<HEAD
+<?xml version="1.0" encoding="$charset"?>
+<rdf:RDF xmlns:wiki="http://purl.org/rss/1.0/modules/wiki/"
+         xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:dc="http://purl.org/dc/elements/1.1/"
+         xmlns="http://purl.org/rss/1.0/">\n
+<!--
+    Add "oe=utf-8" to convert the charset of this rss to UTF-8.
+-->
+HEAD;
+
   header("Content-Type: text/xml");
-  print $head;
-  print $channel;
-  print $items;
-  print $form;
+  if ($new) print $head.$new;
+  else print $head.$channel.$items.$form;
+
+  #print $head;
+  #print $channel;
+  #print $items;
+  #print $form;
   print "</rdf:RDF>";
 }
 ?>

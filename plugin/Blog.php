@@ -20,15 +20,15 @@ function updateBlogList($formatter) {
   $log='';
   $logs='';
   foreach ($lines as $line) {
-    if (preg_match("/^{{{#!blog (.*)$/",$line,$match)) {
-      list($dummy,$datestamp,$dummy)=explode(' ',$match[1],3);
+    if (preg_match("/^({{{)?#!blog (.*)$/",$line,$match)) {
+      list($dummy,$datestamp,$dummy)=explode(' ',$match[2],3);
 
       $datestamp[10]=' ';
       $time= strtotime($datestamp." GMT");
       $datestamp= date("Ymd",$time);
       if ($datestamp > $date) {
         if ($date) {
-          $log=join("\n",$entries);
+          $log=join("\n",$entries)."\n";
           $logs.=$log;
           $changecache->update($date.".".$formatter->page->name,$log);
           $entries=array();
@@ -36,10 +36,10 @@ function updateBlogList($formatter) {
         $date=$datestamp;
       }
 
-      $entries[]=$match[1];
+      $entries[]=$match[2];
     }
   }
-  $log=join("\n",$entries);
+  $log=join("\n",$entries)."\n";
   $logs.=$log;
   $changecache->update($date.".".$formatter->page->name,$log);
 
