@@ -43,8 +43,11 @@ function do_rss_blog($formatter,$options) {
   if ($options['oe'] and (strtolower($options['oe']) != $DBInfo->charset)) {
     $charset=$options['oe'];
     if (function_exists('iconv')) {
-      $rss=iconv($DBInfo->charset,$charset,$out);
-      if (!$rss) $charset=$DBInfo->charset;
+      $out=iconv($DBInfo->charset,$charset,$rss);
+      if (!$out) {
+        $out= &$rss;
+        $charset=$DBInfo->charset;
+      }
     }
   } else $charset=$DBInfo->charset;
 
@@ -69,7 +72,14 @@ function generate_rss($formatter, $rss_name, $logs)
   $textInput = generate_textInput($formatter);
 
   return <<<RSS
-<rss version="2.0">
+<rss version="2.0"
+     xmlns:admin="http://webns.net/mvcb/"
+     xmlns:content="http://purl.org/rss/1.0/modules/content/"
+
+xmlns:creativeCommons="http://backend.userland.com/creativeCommonsRssModule"
+     xmlns:dc="http://purl.org/dc/elements/1.1/"
+     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+     xmlns:html="http://www.w3.org/1999/html">
 $channel
 $textInput
 </rss>
