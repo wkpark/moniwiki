@@ -427,7 +427,7 @@ class WikiDB {
   }
 
 
-  function getPageKey($pagename) {
+  function _getPageKey($pagename) {
     # normalize a pagename to uniq key
 
     # moinmoin style internal encoding
@@ -439,7 +439,11 @@ class WikiDB {
     #$name=str_replace("\\","",$pagename);
     #$name=stripslashes($pagename);
     $name=preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord('\\1')))",$pagename);
+    return $name;
+  }
 
+  function getPageKey($pagename) {
+    $name=preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord('\\1')))",$pagename);
     return $this->text_dir . '/' . $name;
   }
 
@@ -571,27 +575,30 @@ class WikiDB {
     $comment=escapeshellcmd($comment);
     $pagename=escapeshellcmd($page->name);
 
-    $key=$this->getPageKey($page->name);
+    $keyname=$this->_getPageKey($page->name);
+    $key=$this->text_dir."/$keyname";
 
     $fp=fopen($key,"w");
     if (!$fp)
        return -1;
     fwrite($fp, $page->body);
     fclose($fp);
-    system("ci -q -t-".$pagename." -l -m'".$REMOTE_ADDR.";;".
-                       $user->id.";;".$comment."' ".$key);
-    $this->addLogEntry($page->name, $REMOTE_ADDR,$comment,"SAVE");
+    system("ci -q -t-'".$pagename."' -l -m'".$REMOTE_ADDR.";;".
+            $user->id.";;".$comment."' ".$key);
+    #print $key;
+    #$this->addLogEntry($page->name, $REMOTE_ADDR,$comment,"SAVE");
+    $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
     return 0;
   }
 
   function deletePage($page,$comment="") {
     $REMOTE_ADDR=$_SERVER[REMOTE_ADDR];
 
-    $key=$this->getPageKey($page->name);
+    $keyname=$this->_getPageKey($page->name);
 
-    $delete=@unlink($key);
+    $delete=@unlink($this->text_dir."/$keyname");
 #    system("ci -q -t-".$page->name." -l -m'".$REMOTE_ADDR.";;".$comment."' ".$key);
-    $this->addLogEntry($page->name, $REMOTE_ADDR,$comment,"SAVE");
+    $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
   }
 
   function renamePage($pagename,$new) {
@@ -1117,7 +1124,7 @@ class Formatter {
     if (!$pageurl)
       $pageurl=$this->page->urlname;
     $url=$this->link_url($pageurl,$query_string);
-    return sprintf("<a href='%s' %s>%s</a>", $url, $attr, $text);
+    return sprintf("<a href=\"%s\" %s>%s</a>", $url, $attr, $text);
   }
 
   function link_to($query_string="",$text="",$attr="") {
@@ -1810,7 +1817,7 @@ EOS;
 FOOT;
 
     if ($options[timer])
-      $timer=sprintf("<br />%7.4f",$options[timer]->Check());
+      $timer=sprintf("<br />%7.4f sec",$options[timer]->Check());
    
     if (file_exists("footer.php"))
       include_once("footer.php");
