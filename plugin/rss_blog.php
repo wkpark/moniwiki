@@ -67,7 +67,7 @@ CHANNEL;
 
     if (!$title) continue;
     #$tag=md5("#!blog ".$line);
-    $tag=md5($line);
+    $tag=md5($user." ".$date." ".$title);
     #$tag=_rawurlencode(normalize($title));
 
     $channel.="    <rdf:li rdf:resource=\"$url#$tag\"/>\n";
