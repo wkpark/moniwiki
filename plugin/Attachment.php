@@ -18,13 +18,25 @@ function macro_Attachment($formatter,$value) {
     $pagename=$formatter->page->name;
     $key=$DBInfo->pageToKeyname($formatter->page->name);
   }
+
+  if (($dummy=strpos($value,'?'))) {
+    parse_str(substr($value,$dummy+1),$attrs);
+    $value=substr($value,0,$dummy);
+    foreach ($attrs as $name=>$val)
+      $attr.="$name=\"$val\" ";
+
+    if ($attrs['align']) $attr.='class="img'.ucfirst($attrs['align']).'" ';
+  }
   $upload_file=$DBInfo->upload_dir."/$key/$value";
 
   if (file_exists($upload_file)) {
-    $url=$formatter->link_url(_urlencode($pagename),"?action=download&amp;value=$value");
-    if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$upload_file))
-      return "<span class=\"attach\"><img src='$url' alt='$value' /></span>";
-    else
+    if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$upload_file)) {
+      if ($key != $pagename)
+        $url=$formatter->link_url(_urlencode($pagename),"?action=download&amp;value=$value");
+      else
+        $url=$DBInfo->url_prefix."/".$upload_file;
+      return "<span class=\"imgAttach\"><img src='$url' alt='$value' $attr/></span>";
+    } else
       return "<span class=\"attach\"><img align='middle' src='$DBInfo->imgs_dir/uploads-16.png' />".
         $formatter->link_to("?action=download&amp;value=$value",$value).'</span>';
   }
