@@ -1166,6 +1166,11 @@ class Formatter {
     $this->themedir= dirname(__FILE__);
     $this->set_theme($options['theme']);
 
+    $this->ex_target='';
+    $this->ex_bra="<span class='externalLink'>(";
+    $this->ex_ket=")</span>";
+    if ($DBInfo->external_target) $this->ex_target='target="_blank" ';
+
     #$this->baserule=array("/<([^\s][^>]*)>/","/`([^`]*)`/",
     $this->baserule=array("/<([^\s<>])/","/`([^`' ]+)'/","/(?<!`)`([^`]*)`/",
                      "/'''([^']*)'''/","/(?<!')'''(.*)'''(?!')/",
@@ -1197,8 +1202,9 @@ class Formatter {
     }
 
     #$punct="<\"\'}\]\|;,\.\!";
-    $punct="<\'}\]\|\.\!"; # , is omitted for the WikiPedia
+    $punct="<\'}\]\|;\.\!"; # , is omitted for the WikiPedia
     $url="wiki|http|https|ftp|nntp|news|irc|telnet|mailto|file|attachment";
+    if ($DBInfo->url_schemas) $url.='|'.$DBInfo->url_schemas;
     $urlrule="((?:$url):([^\s$punct]|(\.?[^\s$punct]))+)";
     #$urlrule="((?:$url):(\.?[^\s$punct])+)";
     #$urlrule="((?:$url):[^\s$punct]+(\.?[^\s$punct]+)+\s?)";
@@ -1411,7 +1417,8 @@ class Formatter {
         $link=str_replace('&','&amp;',$url);
         $name=substr($url,7);
         return $this->icon['mailto']."<a href='$link' $attr>$name</a>";
-      } else
+      }
+
       if (preg_match("/^(w|[A-Z])/",$url)) { # InterWiki or wiki:
         if (strpos($url," ")) { # have a space ?
           $dum=explode(" ",$url,2);
@@ -1423,20 +1430,22 @@ class Formatter {
         list($url,$text)=explode(" ",$url,2);
         $link=str_replace('&','&amp;',$url);
         if (!$text) $text=$url;
-        else if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
-          $text=str_replace('&','&amp;',$text);
-          return "<a href='$link' $attr title='$url'><img border='0' alt='$url' src='$text' /></a>";
+        else {
+          if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
+            $text=str_replace('&','&amp;',$text);
+            return "<a href='$link' $attr $this->ex_target title='$url'><img border='0' alt='$url' src='$text' /></a>";
+          }
+          $external=$this->ex_bra.$url.$this->ex_ket;
         }
         list($icon,$dummy)=explode(":",$url,2);
-        return "<img align='middle' alt='[$icon]' src='".$this->imgs_dir."/$icon.png' />". "<a $attr href='$link'>$text</a>";
+        return "<img align='middle' alt='[$icon]' src='".$this->imgs_dir."/$icon.png' />". "<a class='externalLink' $attr $this->ex_target href='$link'>$text</a>".$external;
       } # have no space
       $link=str_replace('&','&amp;',$url);
       if (preg_match("/^(http|https|ftp)/",$url)) {
         if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$url))
           return "<img alt='$link' src='$url' />";
-        return "<a $attr href='$link'>$url</a>";
       }
-      return "<a $attr href='$link'>$url</a>";
+      return "<a class='externalLink' $attr href='$link' $this->ex_target>$url</a>";
     } else {
       if ($url[0]=="?") $url=substr($url,1);
       return $this->word_repl($url,'',$attr);
@@ -1569,6 +1578,7 @@ class Formatter {
 
     $url=$this->link_url(_rawurlencode($page)); # XXX
     $page=urldecode($page); # XXX
+    #$page=rawurldecode($page); # C++
     if (isset($this->pagelinks[$page])) {
       $idx=$this->pagelinks[$page];
       switch($idx) {
@@ -2515,6 +2525,11 @@ class Formatter {
       $this->set_origin($this->page->name);
 
     if (!$plain) {
+      # find upper page
+      $pos=strrpos($this->page->name,"/");
+      if ($pos > 0) $upper=substr($this->page->urlname,0,$pos);
+      else if ($this->group) $upper=_urlencode(substr($this->group,0,-1));
+
       if ($this->pi['#keywords'])
         $keywords='<meta name="keywords" content="'.$this->pi['#keywords'].'" />';
       else if ($DBInfo->use_keywords) {
@@ -2532,10 +2547,18 @@ class Formatter {
   $DBInfo->metatags
   $keywords
 EOS;
-  print "  <title>$DBInfo->sitename: ".$this->page->title."</title>\n";
+      print "  <title>$DBInfo->sitename: ".$this->page->title."</title>\n";
+      if ($upper)
+        print '  <link rel="Up" href="'.$this->link_url($upper)."\" />\n";
+      $raw_url=$this->link_url($this->page->urlname,"?action=raw");
+      $print_url=$this->link_url($this->page->urlname,"?action=print");
+      print '  <link rel="Alternate" title="Wiki Markup" href="'.
+        $raw_url."\" />\n";
+      print '  <link rel="Alternate" media="print" title="Print View" href="'.
+        $print_url."\" />\n";
       if ($options['css_url'])
-         print '<link rel="stylesheet" type="text/css" href="'.
-               $options['css_url'].'"/>';
+        print '  <link rel="stylesheet" type="text/css" media="screen" href="'.
+          $options['css_url'].'" />';
 # default CSS
       else print <<<EOS
 <style type="text/css">
