@@ -15,10 +15,10 @@ function calendar_get_dates($formatter,$date='',$page='') {
   if (!$handle) return array();
 
   if (!$page) $page='.*';
-  else $page=$DBInfo->pageToKeyname($page);
+  else $page=$DBInfo->pageToKeyname('.'.$page);
 
   if (!$date) $date=date('Ym');
-  $rule="/^$date(\d{2})_2e".$page."$/";
+  $rule="/^$date(\d{2})".$page."$/";
 
   $archives=array();
   while ($file = readdir($handle)) {
@@ -46,7 +46,7 @@ function macro_Calendar($formatter,$value="",$option="") {
 		'Thursday','Friday','Saturday');
 	$day_heading_length = 3;
 
-	preg_match("/^(?(?=')'([^']+)'|\"([^\"]+)\")?,?((\d{4})-?(\d{2}))?,?\s*([a-z, ]+)?$/i",$value,$match);
+	preg_match("/^(('|\")([^\\2]+)\\2)?,?((\d{4})-?(\d{2}))?,?\s*([a-z, ]+)?$/i",$value,$match);
 
 	#print_r($match);
 	/* GET argument has priority */
@@ -67,16 +67,16 @@ function macro_Calendar($formatter,$value="",$option="") {
 	$month=intval($month);
 	$year=intval($year);
 
-	if ($match[1] or $match[2])
-		$pagename=$match[1] ? $match[1]:$match[2];
+	if ($match[3])
+		$pagename=$match[3];
 	else
 		$pagename=$formatter->page->name;
 
 	$link_prefix=sprintf("%04d-%02d",$year,$month);
 
 	$archives=array();
-	if ($match[6]) {
-		$args=explode(",",$match[6]);
+	if ($match[7]) {
+		$args=explode(",",$match[7]);
 
 		if (in_array ("blog", $args)) $mode='blog';
 		if (in_array ("noweek", $args)) $day_heading_length=0;
@@ -194,14 +194,20 @@ function macro_Calendar($formatter,$value="",$option="") {
 				if ($archives[$day]) {
 					$action='?action=blogchanges&amp;date='.$date;
 					$classes='day';
-				} else
+					$link=$pagename;
+				} else {
+					if ($day==$today)
+						$link=$pagename;
+					else
+						$link='';
 					$action='?action=blog';
+				}
 			} else if ($action[0] != '?')
 				$action=sprintf("#%02d",$day);
 		}
 
 		$calendar.= '<td'.($classes ? " class=\"$classes\">" : '>').
-			($link ? $formatter->link_tag($link,$action,$daytext) : '').'</td>';
+			($link ? $formatter->link_tag($link,$action,$daytext) : $daytext).'</td>';
 
 		$day++;
 		$weekday++;
