@@ -11,8 +11,8 @@
 
 function processor_blog($formatter,$value="",$options) {
   static $date_anchor='';
-  static $tackback_list=array();
   global $DBInfo;
+  #static $tackback_list=array();
 
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
@@ -27,19 +27,23 @@ function processor_blog($formatter,$value="",$options) {
       foreach ($trackbacks as $trackback) {
         list($dummy,$entry,$extra)=explode("\t",$trackback);
         if ($entry) {
-          if($trackback_list[$entry]) $trackback_list[$entry]++;
-          else $trackback_list[$entry]=1;
+          if($formatter->trackback_list[$entry]) $formatter->trackback_list[$entry]++;
+          else $formatter->trackback_list[$entry]=1;
         }
       }
     }
   }
+  #print($date_anchor);print_r($trackback_list);
   if ($line) {
     # get parameters
     list($tag, $user, $date, $title)=explode(" ",$line, 4);
 
-    if (preg_match('/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/',$user))
-      $user="Anonymous[$user]";
-    else if ($DBInfo->hasPage($user)) {
+    if (preg_match('/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/',$user)) {
+      if ($DBInfo->interwiki['Whois'])
+        $user=_("Anonymous")."[<a href='".$DBInfo->interwiki['Whois']."$user'>$user</a>]";
+      else
+        $user=_("Anonymous");#"[$user]";
+    } else if ($DBInfo->hasPage($user)) {
       $user=$formatter->link_tag($user);
     }
 
@@ -67,7 +71,7 @@ function processor_blog($formatter,$value="",$options) {
     if ($comments) {
       $count=sizeof(explode("----\n",$comments));
 
-      if ($options['noaction'] or $DBInfo->show_comments)
+      if ($options['noaction'] or $DBInfo->blog_comments)
         $comments=preg_replace("/----\n/","[[BR]]-''''''---[[BR]]",$comments);
       else {
         $comments='';
@@ -76,7 +80,7 @@ function processor_blog($formatter,$value="",$options) {
       }
     }
 
-    if ($trackback_list[$md5sum]) $counter='['.$trackback_list[$md5sum].']';
+    if ($formatter->trackback_list[$md5sum]) $counter=' ('.$formatter->trackback_list[$md5sum].')';
     else $counter='';
 
     if (!$options['noaction'] and $md5sum) {

@@ -35,6 +35,14 @@ class Security_wikimaster extends Security {
     return 0;
   }
 
+  function may_rename($action,$options) {
+    if (!$options['page']) return 0;
+    if (in_array($options['id'],$this->allowed_users)) return 1;
+    $options['err']=sprintf(_("You are not allowed to %s this page."),$action);
+    $options['err'].=" "._("Please contact to WikiMaster");
+    return 0;
+  }
+
   function may_uploadfile($action,$options) {
     if (!$options['page']) return 0;
     return 1;

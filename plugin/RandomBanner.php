@@ -33,15 +33,12 @@ function macro_RandomBanner($formatter,$value="") {
     }
   }
 
-  $out="";
   $count=count($banner)-1;
   $number=min($number,$count);
-  while($number > 0) {
-    $idx=rand(0,$count);
-    if ($selected[$idx]) continue;
+  $selected=array_rand($banner,$number);
+  $out='';
+  foreach ($selected as $idx)
     $out.=$banner[$idx];
-    $selected[$idx]=1;$number--;
-  }
 
   return $out;
 }

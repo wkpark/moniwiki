@@ -8,8 +8,8 @@ class Security_userbased extends Security {
   function Security_userbased($DB='') {
     $this->DB=$DB;
     $this->allowed_users=array_merge($DB->wikimasters,$DB->owners);
-    $this->public_pages=array(
-      'WikiSandBox','WikiSandbox','GuestBook','SandBox');
+    $this->public_pages=array_merge($DB->public_pages,array(
+      'WikiSandBox','WikiSandbox','GuestBook','SandBox'));
   }
 
   function writable($options='') {
@@ -31,6 +31,14 @@ class Security_userbased extends Security {
   }
 
   function may_deletefile($action,$options) {
+    if (!$options['page']) return 0;
+    if (in_array($options['id'],$this->allowed_users)) return 1;
+    $options['err']=sprintf(_("You are not allowed to %s this page."),$action);
+    $options['err'].=" "._("Please contact to WikiMaster");
+    return 0;
+  }
+
+  function may_rename($action,$options) {
     if (!$options['page']) return 0;
     if (in_array($options['id'],$this->allowed_users)) return 1;
     $options['err']=sprintf(_("You are not allowed to %s this page."),$action);

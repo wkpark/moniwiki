@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2003-08-10 08:22+0900\n"
+"POT-Creation-Date: 2003-08-13 18:20+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: Serge Stinckwich <Serge.Stinckwich@info.unicaen.fr>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -79,11 +79,11 @@ msgstr "Faire un nouveau dessin"
 msgid "Fail to copy \"%s\" to \"%s\""
 msgstr "Impossible de copier \"%s\" vers \"%s\""
 
-#: ../plugin/Draw.php:58 ../plugin/OeKaki.php:58
+#: ../plugin/Draw.php:58
 msgid "Fatal error !"
 msgstr "Erreur fatale !"
 
-#: ../plugin/Draw.php:61 ../plugin/OeKaki.php:61
+#: ../plugin/Draw.php:61
 msgid "No filename given"
 msgstr "Aucun nom de fichier donné"
 
@@ -119,11 +119,11 @@ msgstr "Recherche en texte intégral pour \"%s\""
 msgid "Found %s matching %s out of %s total pages"
 msgstr "Trouvé %s s'appariant avec %s sur un total de %s pages"
 
-#: ../plugin/OeKaki.php:111
+#: ../plugin/OeKaki.php:118
 msgid "Create new picture"
 msgstr "Créer un nouveau dessin"
 
-#: ../plugin/OeKaki.php:118
+#: ../plugin/OeKaki.php:125
 msgid "Edit Image"
 msgstr "Éditer l'image"
 
@@ -137,7 +137,7 @@ msgstr "Envoyer \"%s\" à quelqu'un"
 msgid "TwinPages of %s"
 msgstr "TwinPages de %s"
 
-#: ../plugin/TwinPages.php:18 ../wiki.php:1729 ../wiki.php:2831
+#: ../plugin/TwinPages.php:18 ../wiki.php:1754 ../wiki.php:2843
 msgid "See TwinPages: "
 msgstr "Voir TwinPages: "
 
@@ -236,7 +236,7 @@ msgstr "envoyer un ping"
 msgid "Please login or make your ID."
 msgstr "Merci de vous connectez ou de construire un ID"
 
-#: ../plugin/quicklinks.php:22 ../plugin/subscribe.php:30 ../wiki.php:2899
+#: ../plugin/quicklinks.php:22 ../plugin/subscribe.php:30
 msgid "Goto UserPreferences"
 msgstr "Aller à UserPreferences"
 
@@ -315,15 +315,15 @@ msgstr "Merci de vous connecter ou de construire un ID sur ce Wiki ;)"
 msgid "Error: Page Not found !"
 msgstr "Erreur : page non trouvé !"
 
-#: ../plugin/sendping.php:49
+#: ../plugin/sendping.php:55
 msgid "Error: No entry found!"
 msgstr "Erreur : entrée non trouvé !"
 
-#: ../plugin/sendping.php:67
+#: ../plugin/sendping.php:73
 msgid "Send TrackBack ping"
 msgstr "Envoyé un ping de TrackBack"
 
-#: ../plugin/sendping.php:152
+#: ../plugin/sendping.php:158
 msgid "Trackback sented"
 msgstr "Trackback envoyé"
 
@@ -386,12 +386,12 @@ msgstr "Envoyer un ping de TrackBack à un autre blog :"
 msgid "No TrackBack entry found for %s"
 msgstr "Aucune entrée de TrackBack détecté pour %s"
 
-#: ../wiki.php:817
+#: ../wiki.php:818
 #, c-format
 msgid "Rename %s to %s"
 msgstr "Renommer %s en %s"
 
-#: ../wiki.php:1009
+#: ../wiki.php:1011
 msgid ""
 "You have no permission to see this page.\n"
 "\n"
@@ -399,90 +399,90 @@ msgstr ""
 "Vous n'avez pas la permission de voir cette page.\n"
 "\n"
 
-#: ../wiki.php:1010
+#: ../wiki.php:1012
 msgid "See MoniWiki/AccessControl\n"
 msgstr "Voir MoniWiki/AccessControl\n"
 
-#: ../wiki.php:1725
+#: ../wiki.php:1750
 #, c-format
 msgid "See %s"
 msgstr "Voir %s"
 
-#: ../wiki.php:1725
+#: ../wiki.php:1750
 msgid "TwinPages"
 msgstr ""
 
-#: ../wiki.php:2014
+#: ../wiki.php:2036
 msgid "Revision History"
 msgstr "Historique de révision"
 
-#: ../wiki.php:2113
+#: ../wiki.php:2137
 msgid "No older revisions available"
 msgstr "Aucune révision plus ancienne disponible"
 
-#: ../wiki.php:2240 ../wikilib.php:880
+#: ../wiki.php:2264 ../wikilib.php:880
 msgid "No difference found"
 msgstr "Aucune différence trouvé"
 
-#: ../wiki.php:2243
+#: ../wiki.php:2267
 msgid "Difference between yours and the current"
 msgstr "Différence entre la votre et la courrante"
 
-#: ../wiki.php:2276
+#: ../wiki.php:2299
 msgid "Difference between versions"
 msgstr "Différence entre les versions"
 
-#: ../wiki.php:2278
+#: ../wiki.php:2301
 #, c-format
 msgid "Difference between r%s and r%s"
 msgstr "Différence entre r%s et r%s"
 
-#: ../wiki.php:2282
+#: ../wiki.php:2305
 #, c-format
 msgid "Difference between r%s and the current"
 msgstr "Différence entre r%s et la courrante"
 
-#: ../locale/dummy.php:6 ../wiki.php:2459
+#: ../locale/dummy.php:6 ../wiki.php:2472
 msgid "EditText"
 msgstr "ÉditionTexte"
 
-#: ../wiki.php:2461
+#: ../wiki.php:2474
 msgid "NotEditable"
 msgstr "PasÉditable"
 
-#: ../locale/dummy.php:6 ../wiki.php:2463
+#: ../locale/dummy.php:6 ../wiki.php:2476
 msgid "ShowPage"
 msgstr "MontrePage"
 
-#: ../locale/dummy.php:3 ../locale/dummy.php:5 ../wiki.php:2464
+#: ../locale/dummy.php:3 ../locale/dummy.php:5 ../wiki.php:2477
 msgid "FindPage"
 msgstr "TrouvePage"
 
-#: ../wiki.php:2833 ../wiki.php:2836 ../wiki.php:2842
+#: ../wiki.php:2845 ../wiki.php:2848 ../wiki.php:2854
 msgid "Create this page"
 msgstr "Créer cette page"
 
-#: ../wiki.php:2843
+#: ../wiki.php:2855
 msgid " or alternativly, use one of these templates:\n"
 msgstr " ou alternativement, utiliser un de ces modèles de page :\n"
 
-#: ../wiki.php:2846
+#: ../wiki.php:2858
 msgid "To create your own templates, add a page with a 'Template' suffix\n"
 msgstr ""
 "Pour créer votre propre modèle de page, ajouter une page avec le suffix "
 "'Template'\n"
 
-#: ../wiki.php:2896
-#, c-format
-msgid "Please login before \"%s\" this page"
-msgstr "Merci de vous connecter avant de pouvoir \"%s\" cette page"
+#: ../wiki.php:2908
+#, fuzzy, c-format
+msgid "You are not allowed to '%s'"
+msgstr "Vous n'êtes pas autorisé à pouvoir %s cette page"
 
-#: ../wiki.php:2907
+#: ../wiki.php:2920
 #, c-format
 msgid "Fail to \"%s\" !"
 msgstr "Impossible de pouvoir \"%s\" !"
 
-#: ../wiki.php:2910
+#: ../wiki.php:2923
 msgid "Please enter the valid password"
 msgstr "Merci d'entrer un mot de passge valide"
 
@@ -937,3 +937,10 @@ msgstr ""
 #: ../locale/dummy.php:7
 msgid "TrackBack"
 msgstr ""
+
+#, fuzzy
+#~ msgid "Please contact to WikiMaster or Goto UserPreferences"
+#~ msgstr "Thème effacé. Allez à UserPreferences."
+
+#~ msgid "Please login before \"%s\" this page"
+#~ msgstr "Merci de vous connecter avant de pouvoir \"%s\" cette page"

@@ -223,7 +223,7 @@ def getMetaIndex(metamap,fetch=1):
     return wikis
 
 def normalize(name):
-    temp=re.sub(r'[!\'\"\?^\$\#~&*,<>]','',name)
+    temp=re.sub(r'[!\'\"\?^\$\#~&*,_<>]','',name)
     temp=re.sub(r'(\-|%20|_|\+)',' ',temp)
     temp=re.sub(r'([a-z])([A-Z])',r'\1 \2',temp)
     temp=re.sub(r'([/\.])([A-Z])',r'\1 \2',temp)

@@ -197,7 +197,7 @@ table.closure, td.closure{
 }
 
 #wikiBody a:hover {
-  border-bottom: 1px solid #F3B717;
+  text-decoration:none;
 }
 
 #wikiContent {
