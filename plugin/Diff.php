@@ -12,29 +12,39 @@ function macro_diff($formatter,$value,&$options)
   $option='';
 
   if ($options['text']) {
-    $tmpf=tempnam($DBInfo->vartmp_dir,'DIFF');
-    $fp= fopen($tmpf, 'w');
-    fwrite($fp, $options['text']);
-    fclose($fp);
+    if (0) {
+      $tmpf=tempnam($DBInfo->vartmp_dir,'DIFF');
+      $fp= fopen($tmpf, 'w');
+      fwrite($fp, $options['text']);
+      fclose($fp);
 
-    $fp=popen("diff -u $tmpf ".$formatter->page->filename,'r');
-    if (!$fp) {
-       unlink($tmpf);
-       return '';
+      $fp=popen("diff -u $tmpf ".$formatter->page->filename,'r');
+      if (!$fp) {
+        unlink($tmpf);
+        return '';
+      }
+      fgets($fp,1024); fgets($fp,1024);
+      while (!feof($fp)) {
+        $line=fgets($fp,1024);
+        $out .= $line;
+      }
+      pclose($fp);
+      unlink($tmpf);
+    } else {
+      $current=$formatter->page->get_raw_body();
+      include_once('lib/difflib.php');
+      $mydiff=new Diff(explode("\n",$options['text']),explode("\n",$current));
+
+      $fmtdiff = new UnifiedDiffFormatter;
+      $out = $fmtdiff->format($mydiff);
     }
-    while (!feof($fp)) {
-       $line=fgets($fp,1024);
-       $out .= $line;
-    }
-    pclose($fp);
-    unlink($tmpf);
 
     if (!$out) {
        $msg=_("No difference found");
     } else {
        $msg= _("Difference between yours and the current");
        if (!$options['raw'])
-         $ret= call_user_func(array(&$formatter,$DBInfo->diff_type),$out);
+         $ret=call_user_func(array(&$formatter,$DBInfo->diff_type.'_diff'),$out);
        else
          $ret="<pre>$out</pre>\n";
     }
