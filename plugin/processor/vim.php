@@ -52,7 +52,7 @@ function processor_vim($formatter,$value) {
   if(getenv("OS")=="Windows_NT") {
     $tohtml='\%VIMRUNTIME\%\\syntax\\2html.vim';
     $vim="gvim"; # Win32
-    $fout="CON";
+    $fout=tempnam("/tmp","OUT");
   } else {
     $tohtml='\$VIMRUNTIME/syntax/2html.vim';
     $vim="vim";
