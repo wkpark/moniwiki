@@ -108,7 +108,7 @@ Title</span>
 <input type='radio' name='action' value='fullsearch' />
 Contents</span>&nbsp;
 <input type='text' name='value' class='goto' accesskey='s' size='20' />
-<input type='submit' name='goto' value='Go' class='goto' style='width:23px' />
+<input type='submit' name='status' value='Go' class='goto' style='width:23px' />
 ";
   } else if ($type==2) {
     return "
@@ -119,7 +119,7 @@ Contents</span>&nbsp;
 <option value='fullsearch'/>FullSearch
 </select>
 <input type='text' name='value' accesskey='s' size='20' />
-<input type='submit' name='goto' value='Go' />
+<input type='submit' name='status' value='Go' />
 ";
   } else if ($type==3) {
     return "
@@ -127,7 +127,7 @@ Contents</span>&nbsp;
 <table class='goto'>
 <tr><td nowrap='nowrap' style='width:220'>
 <input type='text' name='value' size='28' accesskey='s' style='width:110px' />
-<input type='submit' name='goto' value='Go' class='goto' style='width:23px' />
+<input type='submit' name='status' value='Go' class='goto' style='width:23px' />
 </td></tr>
 <tr><td>
 <span title='TitleSearch' class='goto'>
@@ -145,7 +145,7 @@ Contents(/)</span>&nbsp;
 <form name='go' id='go' method='get' action='$action' onsubmit="return moin_submit();">
 <input type='text' name='value' size='20' accesskey='s' style='width:100' />
 <input type='hidden' name='action' value='goto' />
-<input type='submit' name='goto' value='Go' class='goto' style='width:23px;' />
+<input type='submit' name='status' value='Go' class='goto' style='width:23px;' />
 </form>
 FORM;
   }
