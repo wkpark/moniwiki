@@ -17,7 +17,7 @@ define('USE_ASSERTS', function_exists('assert'));
 class _DiffOp {
     var $type;
     var $orig;
-    var $final;
+    var $_final;
     
     function reverse() {
         trigger_error("pure virtual", E_USER_ERROR);
@@ -28,22 +28,22 @@ class _DiffOp {
     }
 
     function nfinal() {
-        return $this->final ? sizeof($this->final) : 0;
+        return $this->_final ? sizeof($this->_final) : 0;
     }
 }
 
 class _DiffOp_Copy extends _DiffOp {
     var $type = 'copy';
     
-    function _DiffOp_Copy ($orig, $final = false) {
-        if (!is_array($final))
-            $final = $orig;
+    function _DiffOp_Copy ($orig, $_final = false) {
+        if (!is_array($_final))
+            $_final = $orig;
         $this->orig = $orig;
-        $this->final = $final;
+        $this->_final = $_final;
     }
 
     function reverse() {
-        return new _DiffOp_Copy($this->final, $this->orig);
+        return new _DiffOp_Copy($this->_final, $this->orig);
     }
 }
 
@@ -52,7 +52,7 @@ class _DiffOp_Delete extends _DiffOp {
     
     function _DiffOp_Delete ($lines) {
         $this->orig = $lines;
-        $this->final = false;
+        $this->_final = false;
     }
 
     function reverse() {
@@ -64,25 +64,25 @@ class _DiffOp_Add extends _DiffOp {
     var $type = 'add';
     
     function _DiffOp_Add ($lines) {
-        $this->final = $lines;
+        $this->_final = $lines;
         $this->orig = false;
     }
 
     function reverse() {
-        return new _DiffOp_Delete($this->final);
+        return new _DiffOp_Delete($this->_final);
     }
 }
 
 class _DiffOp_Change extends _DiffOp {
     var $type = 'change';
     
-    function _DiffOp_Change ($orig, $final) {
+    function _DiffOp_Change ($orig, $_final) {
         $this->orig = $orig;
-        $this->final = $final;
+        $this->_final = $_final;
     }
 
     function reverse() {
-        return new _DiffOp_Change($this->final, $this->orig);
+        return new _DiffOp_Change($this->_final, $this->orig);
     }
 }
         
@@ -588,8 +588,8 @@ class Diff
         $lines = array();
         
         foreach ($this->edits as $edit) {
-            if ($edit->final)
-                array_splice($lines, sizeof($lines), 0, $edit->final);
+            if ($edit->_final)
+                array_splice($lines, sizeof($lines), 0, $edit->_final);
         }
         return $lines;
     }
@@ -602,13 +602,13 @@ class Diff
     function _check ($from_lines, $to_lines) {
         if (serialize($from_lines) != serialize($this->orig()))
             trigger_error("Reconstructed original doesn't match", E_USER_ERROR);
-        if (serialize($to_lines) != serialize($this->final()))
+        if (serialize($to_lines) != serialize($this->_final()))
             trigger_error("Reconstructed final doesn't match", E_USER_ERROR);
 
         $rev = $this->reverse();
         if (serialize($to_lines) != serialize($rev->orig()))
             trigger_error("Reversed original doesn't match", E_USER_ERROR);
-        if (serialize($from_lines) != serialize($rev->final()))
+        if (serialize($from_lines) != serialize($rev->_final()))
             trigger_error("Reversed final doesn't match", E_USER_ERROR);
 
 
@@ -672,10 +672,10 @@ extends Diff
                 $xi += sizeof($orig);
             }
             
-            $final = &$this->edits[$i]->final;
-            if (is_array($final)) {
-                $final = array_slice($to_lines, $yi, sizeof($final));
-                $yi += sizeof($final);
+            $_final = &$this->edits[$i]->_final;
+            if (is_array($_final)) {
+                $_final = array_slice($to_lines, $yi, sizeof($_final));
+                $yi += sizeof($_final);
             }
         }
     }
@@ -758,8 +758,8 @@ class DiffFormatter
 
             if ($edit->orig)
                 $xi += sizeof($edit->orig);
-            if ($edit->final)
-                $yi += sizeof($edit->final);
+            if ($edit->_final)
+                $yi += sizeof($edit->_final);
         }
 
         if (is_array($block))
@@ -776,11 +776,11 @@ class DiffFormatter
             if ($edit->type == 'copy')
                 $this->_context($edit->orig);
             elseif ($edit->type == 'add')
-                $this->_added($edit->final);
+                $this->_added($edit->_final);
             elseif ($edit->type == 'delete')
                 $this->_deleted($edit->orig);
             elseif ($edit->type == 'change')
-                $this->_changed($edit->orig, $edit->final);
+                $this->_changed($edit->orig, $edit->_final);
             else
                 trigger_error("Unknown edit type", E_USER_ERROR);
         }
@@ -829,10 +829,10 @@ class DiffFormatter
         $this->_lines($lines, "<");
     }
 
-    function _changed($orig, $final) {
+    function _changed($orig, $_final) {
         $this->_deleted($orig);
         echo "---\n";
-        $this->_added($final);
+        $this->_added($_final);
     }
 }
 
@@ -899,17 +899,17 @@ class _HWLDF_WordAccumulator {
 
 class WordLevelDiff extends MappedDiff
 {
-    function WordLevelDiff ($orig_lines, $final_lines,$charset="euc-kr") {
+    function WordLevelDiff ($orig_lines, $_final_lines,$charset="euc-kr") {
         if (strtolower($charset) == 'euc-kr') # two bytes sequence rule
           $this->charset_rule='[\xb0-\xfd][\xa1-\xfe]|';
         else if (strtolower($charset) == 'utf-8') # three bytes sequence
           $this->charset_rule='[\xE1-\xEF][\x80-\xBF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|';
         
         list ($orig_words, $orig_stripped) = $this->_split($orig_lines);
-        list ($final_words, $final_stripped) = $this->_split($final_lines);
+        list ($_final_words, $_final_stripped) = $this->_split($_final_lines);
 
-        $this->MappedDiff($orig_words, $final_words,
-                          $orig_stripped, $final_stripped);
+        $this->MappedDiff($orig_words, $_final_words,
+                          $orig_stripped, $_final_stripped);
     }
 
     function _split($lines) {
@@ -936,15 +936,15 @@ class WordLevelDiff extends MappedDiff
     }
 
     function final () {
-        $final = new _HWLDF_WordAccumulator;
+        $_final = new _HWLDF_WordAccumulator;
         
         foreach ($this->edits as $edit) {
             if ($edit->type == 'copy')
-                $final->addWords($edit->final);
-            elseif ($edit->final)
-                $final->addWords($edit->final, 'ins');
+                $_final->addWords($edit->_final);
+            elseif ($edit->_final)
+                $_final->addWords($edit->_final, 'ins');
         }
-        return $final->getLines();
+        return $_final->getLines();
     }
 }
 
@@ -981,10 +981,10 @@ class MoniWikiDiffFormatter extends DiffFormatter
     function _deleted($lines) {
         $this->_lines($lines, "-", "diff-removed");
     }
-    function _changed($orig, $final) {
-        $diff = new WordLevelDiff($orig, $final);
+    function _changed($orig, $_final) {
+        $diff = new WordLevelDiff($orig, $_final);
         $this->_deleted($diff->orig());
-        $this->_added($diff->final());
+        $this->_added($diff->_final());
     }
 }
 
