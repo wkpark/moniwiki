@@ -359,6 +359,8 @@ function do_DeletePage($formatter,$options) {
     $formatter->send_title($title,"",$options);
     $formatter->send_footer();
     return;
+  } else if ($options['value']) {
+    $options['msg'] = _("Please delete this file manually.");
   }
   $title = sprintf(_("Delete \"%s\" ?"), $page->name);
   $formatter->send_header("",$options);
@@ -665,6 +667,8 @@ function do_post_savepage($formatter,$options) {
       print $formatter->link_tag('HelpOnEditing',"",_("HelpOnEditing"))." | ";
       print $formatter->link_to("#editor",_("Goto Editor"));
     } else {
+      if ($options['category'])
+        $savetext.="----\n$options[category]\n";
       $formatter->page->write($savetext);
       $ret=$DBInfo->savePage($formatter->page,$comment,$options);
       if ($DBInfo->notify) {
@@ -1687,7 +1691,12 @@ function macro_PageList($formatter,$arg="") {
 function macro_TitleIndex($formatter="") {
   global $DBInfo;
 
-  $all_pages = $DBInfo->getPageLists();
+  if ($formatter->group) {
+    $group_pages = $DBInfo->getLikePages($formatter->group,1);
+    foreach ($group_pages as $page)
+      $all_pages[]=str_replace($formatter->group,"",$page);
+  } else
+    $all_pages = $DBInfo->getPageLists();
   sort($all_pages);
 
   $key=-1;
@@ -1705,7 +1714,7 @@ function macro_TitleIndex($formatter="") {
        $out.= "<UL>";
     }
     
-    $out.= '<LI>' . $formatter->link_tag(_rawurlencode($page),"",$page);
+    $out.= '<LI>' . $formatter->word_repl($page);
   }
   $out.= "</UL>";
 
