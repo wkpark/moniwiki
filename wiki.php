@@ -14,7 +14,7 @@
 // $Id$
 // vim:et:ts=2:
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0rc2';
+$_release = '1.0rc3';
 
 include "wikilib.php";
 
@@ -760,7 +760,7 @@ class Cache_text {
     umask(000);
     $this->cache_dir=$DBInfo->cache_dir."/$arena";
     if (!file_exists($this->cache_dir))
-       mkdir($this->cache_dir, 0777);
+      mkdir($this->cache_dir, 0777);
   }
 
   function getKey($pagename) {
@@ -770,7 +770,7 @@ class Cache_text {
 
   function update($pagename,$val,$mtime="") {
     $key=$this->getKey($pagename);
-    if ($mtime <= $this->mtime($key)) return;
+    if ($mtime and ($mtime <= $this->mtime($key))) return;
 
     if (is_array($val)) {
        $val=join("\n",array_keys($val))."\n";
@@ -983,7 +983,7 @@ class Formatter {
     $this->sister_on=1;
     $this->sisters=array();
     $this->foots=array();
-    $this->gen_pagelinks=1;
+    $this->gen_pagelinks=0;
 
     #
 #    $punct="<\"\'}\]\|\;\,\.\!";
@@ -1014,6 +1014,7 @@ class Formatter {
       if ($line=='#') break;
       else if ($line[1]=='#') continue;
       list($key,$val)= explode(" ",$line,2);
+      $key=strtolower($key);
       if (in_array($key,$pi)) $this->pi[$key]=$val;
     }
     $this->page->body=$body;
@@ -1339,6 +1340,8 @@ class Formatter {
     global $DBInfo;
     # get body
 
+    if ($options[pagelinks]) $this->gen_pagelinks=1;
+
     if (!$body) {
       $twins=$DBInfo->metadb->getTwinPages($this->page->name);
       $body=$this->page->get_raw_body();
@@ -1529,6 +1532,7 @@ class Formatter {
 #      $rule="/(?<!wiki:)(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^$punct]+\s{0,1})/";
       $repl="wiki:\\1:\\2";
       $line=preg_replace($rule, $repl, $line);
+
       # WikiName, {{{ }}}, !WikiName, ?single, ["extended wiki name"]
       # urls, [single bracket name], [urls text], [[macro]]
       $line=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$line);
@@ -1562,7 +1566,7 @@ class Formatter {
         $text.=$line."\n";
       $this->nobr=0;
     }
-    # strip slash only for double quotes
+    # strip slash against double quotes
     $text=str_replace('\"','"',$text);
 
     # highlight text
@@ -1692,11 +1696,12 @@ class Formatter {
       print $this->_parse_rlog($out);
   }
 
-  function _parse_diff($diff) {
+  function _parse_diff2($diff) {
     $diff=str_replace("<","&lt;",$diff);
     $lines=explode("\n",$diff);
     $out="";
     unset($lines[0]); unset($lines[1]);
+
     foreach ($lines as $line) {
       $marker=$line[0];
       $line=substr($line,1);
@@ -1705,6 +1710,44 @@ class Formatter {
       else if ($marker=="+") $line='<div class="diff-added">'."$line</div>";
       else if ($marker=="\\" && $line==" No newline at end of file") continue;
       else $line.="<br />";
+      $out.=$line."\n";
+    }
+    return $out;
+  }
+
+  function _parse_diff($diff) {
+    include ("lib/difflib.php");
+    $diff=str_replace("<","&lt;",$diff);
+    $lines=explode("\n",$diff);
+    $out="";
+    unset($lines[0]); unset($lines[1]);
+
+    $omarker=0;
+    $orig=array();$new=array();
+    foreach ($lines as $line) {
+      $marker=$line[0];
+      $line=substr($line,1);
+      if ($marker=="@") $line='<div class="diff-sep">@'."$line</div>";
+      else if ($marker=="-") {
+        $omarker=1; $orig[]=$line; continue;
+      }
+      else if ($marker=="+") {
+        $omarker=1; $new[]=$line; continue;
+      }
+      else if ($omarker) {
+        $omarker=0;
+        $buf="";
+        $result = new WordLevelDiff($orig, $new);
+        foreach ($result->orig() as $ll)
+          $buf.= "<div class=\"diff-removed\">$ll</div>\n";
+        foreach ($result->final() as $ll)
+          $buf.= "<div class=\"diff-added\">$ll</div>\n";
+        $orig=array();$new=array();
+        $line=$buf.$line."<br />";
+      }
+      else if ($marker==" " and !$omarker)
+        $line.="<br />";
+      else if ($marker=="\\" && $line==" No newline at end of file") continue;
       $out.=$line."\n";
     }
     return $out;
@@ -2385,7 +2428,8 @@ if ($_SERVER[REQUEST_METHOD]=="POST" && $HTTP_POST_VARS) {
       else
         $options[msg]=sprintf(_("%s is saved"),$formatter->link_tag($page->name));
       $formatter->send_title("","",$options);
-      $formatter->send_page();
+      $opt[pagelinks]=1;
+      $formatter->send_page("",$opt);
    }
    $args[showpage]=1;
    $args[editable]=0;
