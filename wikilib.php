@@ -320,10 +320,19 @@ function do_post_DeleteFile($formatter,$options) {
   if (isset($options['files'])) {
     if ($options['files']) {
       foreach ($options['files'] as $file) {
-         $log.=sprintf(_("File '%s' is deleted")."<br />",$file);
-         unlink($dir."/".$file);
+        if (!is_dir($dir."/".$file)) {
+          if (@unlink($dir."/".$file))
+            $log.=sprintf(_("File '%s' is deleted")."<br />",$file);
+          else
+            $log.=sprintf(_("Fail to delete '%s'")."<br />",$file);
+        } else {
+          if (@rmdir($dir."/".$file))
+            $log.=sprintf(_("Directory '%s' is deleted")."<br />",$file);
+          else
+            $log.=sprintf(_("Fail to rmdir '%s'")."<br />",$file);
+        }
       }
-      $title = sprintf(_("Selected files are deleted !"));
+      $title = sprintf(_("Delete selected files"));
       $formatter->send_header("",$options);
       $formatter->send_title($title,"",$options);
       print $log;
@@ -706,7 +715,7 @@ function do_subscribe($formatter,$options) {
     return;
   }
 
-  if ($options['subscribed_pages']) {
+  if (isset($options['subscribed_pages'])) {
     $pages=preg_replace("/\n\s*/","\n",$options['subscribed_pages']);
     $pages=preg_replace("/\s*\n/","\n",$pages);
     $pages=explode("\n",$pages);
@@ -1217,7 +1226,7 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    foreach ($dirs as $file) {
       $link=$formatter->link_url($file,"?action=uploadedfiles",$file);
       $date=date("Y-m-d",filemtime($dir."/".$DBInfo->pageToKeyname($file)));
-      $out.="<tr><td class='wiki'>&nbsp;</td><td class='wiki'><a href='$link'>$file</a></td><td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td></tr>\n";
+      $out.="<tr><td class='wiki'><input type='checkbox' name='files[$idx]' value='$file' /></td><td class='wiki'><a href='$link'>$file/</a></td><td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td></tr>\n";
       $idx++;
    }
 
@@ -1419,7 +1428,7 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
 
   $pname=_preg_escape($args);
 
-  $metawiki=$opts[metawiki];
+  $metawiki=$opts['metawiki'];
 
   if (strlen($pname) < 3) {
     $opts['msg'] = 'Use more specific text';
@@ -1498,7 +1507,7 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
   $hits=0;
   $out="";
   if ($likes) {
-    arsort($likes);
+    ksort($likes);
 
     $out.="<h3>These pages share a similar word...</h3>";
     $out.="<ol>\n";
@@ -1511,7 +1520,7 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
     $hits=count($likes);
   }
   if ($starts || $ends) {
-    arsort($starts);
+    ksort($starts);
 
     $out.="<h3>These pages share an initial or final title word...</h3>";
     $out.="<table border='0' width='100%'><tr><td width='50%' valign='top'>\n<ol>\n";
@@ -1522,7 +1531,7 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
     }
     $out.="</ol></td>\n";
 
-    arsort($ends);
+    ksort($ends);
 
     $out.="<td width='50%' valign='top'><ol>\n";
     while (list($pagename,$i) = each($ends)) {
