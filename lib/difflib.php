@@ -902,8 +902,8 @@ class WordLevelDiff extends MappedDiff
     function WordLevelDiff ($orig_lines, $final_lines,$charset="euc-kr") {
         if (strtolower($charset) == 'euc-kr') # two bytes sequence rule
           $this->charset_rule='[\xb0-\xfd][\xa1-\xfe]|';
-#        else if (strtolower($charset) == 'utf-8') # three bytes sequence
-#          $this->charset_rule='[\xb0-\xfd][\xa1-\xfe]|';
+        else if (strtolower($charset) == 'utf-8') # three bytes sequence
+          $this->charset_rule='[\xE1-\xEF][\x80-\xBF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|';
         
         list ($orig_words, $orig_stripped) = $this->_split($orig_lines);
         list ($final_words, $final_stripped) = $this->_split($final_lines);
