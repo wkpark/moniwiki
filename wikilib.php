@@ -1457,7 +1457,8 @@ function macro_TitleIndex($formatter="") {
   } else
     $all_pages = $DBInfo->getPageLists();
   #natcasesort($all_pages);
-  sort($all_pages,SORT_STRING);
+  #sort($all_pages,SORT_STRING);
+  usort($all_pages, "strcasecmp");
 
   $key=-1;
   $out="";
