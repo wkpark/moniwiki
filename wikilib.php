@@ -1,6 +1,7 @@
 <?php
-// Copyright 1999-2002 by Fred C. Yankowski <fcy@acm.org>, all rights
-// reserved.
+// Copyright 2003 by Won-Kyu Park <wkpark@kldp.org> all rights reserved.
+//
+// Copyright 1999-2002 by Fred C. Yankowski <fcy@acm.org>, all rights reserved.
 //
 // $Id$
 // wkpark@kldp.org 2003
@@ -12,8 +13,9 @@ function do_DeletePage($options) {
   $html = new Formatter($page);
 
   if ($options[passwd]) {
-    $check=$DBInfo[admin_passwd]==crypt($options[passwd],$DBInfo[admin_passwd]);
+    $check=$DBInfo->admin_passwd==crypt($options[passwd],$DBInfo->admin_passwd);
     if ($check) {
+      $DBInfo->deletePage($page);
       $title = sprintf('"%s" is deleted !', $page->name);
       $html->send_header("",$title);
       $html->send_title($title);
@@ -78,19 +80,51 @@ function do_fullsearch($needle) {
   $html->send_footer();
 }
 
-function do_titlesearch($title) {
-  // Get this working???
-  $msg = '<b>Sorry, Title Search is not working yet.</b>';
-  $page = new WikiPage('TitleSearch');
-  $page->send_page($msg);
+function do_goto($options) {
+  $html = new Formatter();
+  $html->send_header(array("Status: 302","Location: ".$options[value]));
+}
+
+function do_titlesearch($options) {
+  global $DBInfo;
+  $page = new WikiPage("FindPage");
+  $html = new Formatter($page);
+  $title = sprintf('Title Search for "%s"', $options[value]);
+  $html->send_header("",$title);
+  $html->send_title($title);
+
+  $all_pages = $DBInfo->getPageLists();
+  $hits=array();
+  foreach ($all_pages as $page) {
+     preg_match("/".$options[value]."/i",$page,$matches);
+     if ($matches)
+        $hits[]=$page;
+  }
+
+  sort($hits);
+
+  $out="<ul>\n";
+  foreach ($hits as $pagename) {
+    $p = new WikiPage($pagename);
+    $h = new Formatter($p);
+    $out.= '<li>' . $h->link_to()."</li>\n";
+  }
+
+  print $out."</ul>\n";
+  printf("Found %s matching %s out of %s total pages<br>",
+	 count($hits),
+	 (count($hits) == 1) ? 'page' : 'pages',
+	 count($all_pages));
+  $args[noaction]=1;
+  $html->send_footer($args);
 }
 
 function macro_InterWiki($formatter="") {
-  global $Globals;
+  global $DBInfo;
 
   $out="<table border=0 cellspacing=2 cellpadding=0>";
-  foreach (array_keys($Globals[interwiki]) as $wiki) {
-    $href=$Globals[interwiki][$wiki];
+  foreach (array_keys($DBInfo->interwiki) as $wiki) {
+    $href=$DBInfo->interwiki[$wiki];
     $out.="<tr><td><tt><a href='$href"."RecentChanges'>$wiki</a></tt><td><tt>";
     $out.="<a href='$href'>$href</a></tt></tr>\n";
   }
@@ -98,7 +132,7 @@ function macro_InterWiki($formatter="") {
   return $out;
 }
 
-if (function_exists ("iconv")) {
+if (!function_exists ("iconv")) {
   function get_key($name) {
      return '?';
   }
@@ -228,14 +262,17 @@ function macro_RecentChanges($formatter="") {
     $day = date('Y/m/d', $ed_time);
     if ($day != $ratchet_day) {
 #      flush();
-      $out.=sprintf('<h3>%s</h3>', date($DBInfo->date_fmt, $ed_time));
+      $out.=sprintf("<br /><font size='+1'>%s :</font><br />\n", date($DBInfo->date_fmt, $ed_time));
       $ratchet_day = $day;
     }
 
     $p = new WikiPage($page_name);
     $h = new Formatter($p);
-    $out.= $h->link_to("?action=diff",$DBInfo->icon[diff])." ";
-    $out.= $h->link_to();
+    $out.= "&nbsp;&nbsp; ".$h->link_to("?action=diff",$DBInfo->icon[diff]);
+    $out.= "&nbsp;&nbsp;".$h->link_to();
+
+    if (! empty($DBInfo->changed_time_fmt))
+      $out.= date($DBInfo->changed_time_fmt, $ed_time);
 
     if ($DBInfo->show_hosts) {
       $out.= ' . . . . ';
@@ -244,9 +281,7 @@ function macro_RecentChanges($formatter="") {
       }
       $out.= $ip_to_host[$addr];
     }
-    if (! empty($DBInfo->changed_time_fmt))
-      $out.= date($DBInfo->changed_time_fmt, $ed_time);
-    $out.= '<br>';
+    $out.= '<br />';
   }
   return $out;
 }
@@ -260,7 +295,7 @@ function reverse($arrayX) {
 }
 
 function macro_HTML($formatter="",$value="") {
-  return $value;
+  return str_replace("&lt;","<",$value);
 }
 
 function macro_BR($formatter="") {
@@ -270,7 +305,7 @@ function macro_BR($formatter="") {
 function macro_TableOfContents($formatter="") {
  $head_num=1;
  $head_dep=0;
- $TOC="\n<dl>";
+ $TOC="\n<a name='toc' id='toc' /><dl><dd><dl>";
 
  $formatter->toc=1;
  $lines=explode("\n",$formatter->page->get_raw_body());
@@ -319,7 +354,8 @@ function macro_TableOfContents($formatter="") {
   if ($TOC) {
      $close="";
      $depth=$head_dep;
-     while ($depth>0) { $depth--;$close.="</dl>\n"; };
+     # XXX ???
+     while ($depth>0) { $depth--;$close.="</dl></dd></dl>\n"; };
      return $TOC.$close;
   }
   else return "";
@@ -350,5 +386,21 @@ function macro_GoTo($formatter="",$value="") {
     <input name=value size=30 value='$value'>
     <input type=submit value='Go'>
     </form>";
+}
+
+function macro_SystemInfo($formatter="",$value="") {
+
+   $version=phpversion();
+   $uname=php_uname();
+  return <<<EOF
+<table border=0 cellpadding=5>
+<tr><th>PHP Version</th> <td>$version ($uname)</td></tr>
+</table>
+EOF;
+}
+
+function processor_html($formatter="",$value="") {
+   $html=substr($formatter->pre_line,6,strlen($formatter->pre_line));
+   return $html;
 }
 ?>

@@ -1,8 +1,8 @@
 <?
 # $Id$
 
-$Globals[interwiki]=array();
-$Globals[wikis]="";
+#$Globals[interwiki]=array();
+#$Globals[wikis]="";
 include "wikilib.php";
 include "wikismiley.php";
 
@@ -28,26 +28,6 @@ function get_scriptname() {
   return $SCRIPT_NAME;
 }
 
-function get_intermap() {
-   global $Globals;
-#   if ($Globals[interwiki]) return;
-      
-   # intitialize interwiki map
-   $map=file("intermap.txt");
-
-   for ($i=0;$i<sizeof($map);$i++) {
-      $dum=split("[[:space:]]",$map[$i]);
-      $Globals[interwiki][$dum[0]]=trim($dum[1]);
-      $Globals[wikis].="$dum[0]|";
-   }
-   $Globals[wikis].="Self";
-
-}
-
-get_intermap();
-
-function check_pagename() {
-}
 
 class WikiDB {
 # TODO Seperate Configuation parts
@@ -58,15 +38,20 @@ class WikiDB {
     $this->imgs_dir = $this->url_prefix . '/imgs';
     $this->editlog_name = $this->data_dir . '/editlog';
     $this->umask = 02;
+    $this->intermap = $this->data_dir . '/intermap.txt';
 
     $this->logo_string = '<img src="/wiki/moinmoin.gif" alt="" border="0" />';
     $this->show_hosts = TRUE;
 
     $this->date_fmt = 'D d M Y';
     $this->datetime_fmt = 'D d M Y h:i a';
-    $this->changed_time_fmt = ' . . . . [h:i a]';
-    $this->admin_passwd = '';
+    #$this->changed_time_fmt = ' . . . . [h:i a]';
+    $this->changed_time_fmt = ' [h:i a]';
+    $this->admin_passwd = '10sV5lDSjmW9M';
 
+    $this->actions = array('DeletePage');
+
+    $this->icon[upper]="<img src='$this->imgs_dir/upper.gif' alt='U' align='middle' border='0' />";
     $this->icon[edit]="<img src='$this->imgs_dir/moin-edit.gif' alt='E' align='middle' border='0' />";
     $this->icon[diff]="<img src='$this->imgs_dir/moin-diff.gif' alt='D' align='middle' border='0' />";
     $this->icon[info]="<img src='$this->imgs_dir/moin-info.gif' alt='I' align='middle' border='0' />";
@@ -93,11 +78,27 @@ class WikiDB {
 
 
     // Number of lines output per each flush() call.
-    $this->lines_per_flush = 10;
+    // $this->lines_per_flush = 10;
 
     // Is mod_rewrite being used to translate 'WikiWord' to
     // 'phiki.php3?WikiWord'?  Default:  false.
-    $this->rewrite = true;
+    // $this->rewrite = true;
+    $this->set_intermap();
+  }
+
+  function set_intermap() {
+    # intitialize interwiki map
+    $map=file($this->intermap);
+
+    for ($i=0;$i<sizeof($map);$i++) {
+      $line=trim($map[$i]);
+      if (!$line || $line[0]=="#") continue;
+      $dum=split("[[:space:]]",$line);
+      $this->interwiki[$dum[0]]=trim($dum[1]);
+      $this->interwikis.="$dum[0]|";
+    }
+    $this->interwikis.="Self";
+    $this->interwiki[Self]=get_scriptname()."/";
   }
 
   function getPageKey($pagename) {
@@ -156,19 +157,20 @@ class WikiDB {
   }
 
   function editlog_raw_lines() {
-    $LOG_BYTES=20000;
+    $LOG_BYTES=5000;
     $fp = fopen($this->editlog_name, 'r');
     fseek($fp, 0, SEEK_END);
     $filesize = ftell($fp);
-#    print $filesize."Bytes";
 
     $foffset=$filesize - $LOG_BYTES;
-    $foffset= $foffset >=0 ? $foffset:$filesize;
-    fseek($fp, -$foffset, SEEK_CUR);
+
+    $foffset= $foffset >=0 ? $LOG_BYTES:$filesize;
+
+    fseek($fp, -$foffset, SEEK_END);
 
     $dumm=fgets($fp,1024); # emit dummy
     while (!feof($fp)) {
-       $line=fgets($fp,1024);
+       $line=fgets($fp,2048);
 #       $line=preg_replace("/[\r\n]+$/","",$line);
 #       print $line."<br />";
        $lines[]=$line;
@@ -188,6 +190,16 @@ class WikiDB {
     fwrite($fp, $page->body);
     fclose($fp);
     system("ci -q -t-".$page->name." -l -m'".$REMOTE_ADDR.";;".$comment."' ".$key);
+    $this->addLogEntry($page->name, $REMOTE_ADDR);
+  }
+
+  function deletePage($page,$comment="") {
+    global $REMOTE_ADDR;
+
+    $key=$this->getPageKey($page->name);
+
+    $delete=@unlink($key);
+#    system("ci -q -t-".$page->name." -l -m'".$REMOTE_ADDR.";;".$comment."' ".$key);
     $this->addLogEntry($page->name, $REMOTE_ADDR);
   }
 }
@@ -279,7 +291,7 @@ class WikiPage {
 
 class Formatter {
 
- function Formatter($page) {
+ function Formatter($page="") {
    $this->page=$page;
    $this->head_num=1;
    $this->head_dep=0;
@@ -288,6 +300,8 @@ class Formatter {
 
  function link_repl($url) {
    global $DBInfo;
+
+#   print $url.";";
    $url=str_replace("\\\"",'"',$url);
    #$url=str_replace("\\\\\"",'"',$url);
    if ($url[0]=="[")
@@ -336,23 +350,25 @@ class Formatter {
 
  function interwiki_repl($url,$text="") {
    global $DBInfo;
-   global $Globals;
 
    $dum=explode(":",$url);
    $wiki=$dum[1]; $page=$dum[2];
    if (!$page) {
-      $dum=explode("/",$dum[1]);
-      $wiki=$dum[0]; $page=$dum[1];
+      $dum1=explode("/",$dum[1]);
+      $wiki=$dum1[0]; $page=$dum1[1];
+   }
+   if (!$page) {
+      $wiki="Self"; $page=$dum[1];
    }
 
    if (!$text) $text=$page;
 
-   if (!$Globals[interwiki]["$wiki"]) return "$wiki:$page";
+   if (!$DBInfo->interwiki[$wiki]) return "$wiki:$page";
 
    $page=trim($page);
    $img=strtolower($wiki);
    return "<img src='$DBInfo->imgs_dir/$img-16.png' width='16' height='16' align='middle' alt='$wiki'/>".
-  "<a href='".$Globals[interwiki][$wiki]."$page' title='$wiki:$page'>$text</a>";
+  "<a href='".$DBInfo->interwiki[$wiki]."$page' title='$wiki:$page'>$text</a>";
  }
 
  function word_repl($page) {
@@ -398,9 +414,9 @@ class Formatter {
    $this->head_num=$num;
 
    if ($this->toc)
-      $head="<a href='#toc$num'>$num</a> $head";
+      $head="<a href='#toc'>$num</a> $head";
 
-   return "<h$dep><a id='s$num' name='s$num' /> $head</h$dep>";
+   return "<h$dep><a id='s$num' name='s$name' /> $head</h$dep>";
  }
 
  function macro_repl($macro) {
@@ -434,7 +450,7 @@ class Formatter {
 
  function link_to($query_string="",$text="") {
    if (!$this->page->linkurl)
-      $this->page->_set_linkurl();
+      $this->page->_linkurl();
    if (!$text)
       $text=$this->page->name;
    return $this->link_tag($this->page->linkurl."$query_string",$text);
@@ -467,14 +483,18 @@ class Formatter {
 
  function _table($on,$attr="") {
    if ($on)
-      return "<table class='wiki' border='1' cellpadding='3' $attr>\n";
+      return "<table class='wiki' border='1' cellpadding='3' cellspacing='0' $attr>\n";
    else
       return "</table>\n";
  }
 
  function send_page() {
    global $Globals;
+   global $DBInfo;
+   # get body
    $lines=explode("\n",$this->page->get_raw_body());
+
+   # get smily_rule
    $smiley_rule=$Globals[smiley_rule];
    if ($smiley_rule) {
      $smiley_rule='/(?:\s|^)('.$smiley_rule.')(?:\s|$)/e';
@@ -494,7 +514,7 @@ class Formatter {
    $url="http|ftp|telnet|mailto|wiki";
    $urlrule="((?:$url):[^\s$punct]+(\.?[^\s$punct]+)+)";
 
-# solw slow slow
+   # solw slow slow
    $wordrule="/(({{{([^}]+)}}})|".
              "\[\[([A-Za-z0-9]+(\(.*\))?)\]\]|".
              "(\[($url):[^\s\]]+(\s[^\]]*)+\])|".
@@ -502,12 +522,12 @@ class Formatter {
              "(?<!\!|\[\[|[a-z])(([A-Z]+[a-z0-9]+){2,})(?!([a-z0-9]))|".
              "(?<!\[)\[([^\[:,]+)\](?!\])|".
              "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
-             "$urlrule|".
-             "(\?([a-z0-9]+)))/";
+             "($urlrule)|".
+             "(\?[a-z0-9]+))/";
 
    foreach ($lines as $line) {
-      #$line=preg_replace("/\r?\n$|\r[^\n]$/", "", $line);
       # strip trailing '\n'
+      # $line=preg_replace("/\r?\n$|\r[^\n]$/", "", $line);
       $line=preg_replace("/\n$/", "", $line);
 
 #      if ($line=="" && $indlen) {continue;}
@@ -518,28 +538,58 @@ class Formatter {
          if ($in_p) { $text.="</div><br/>\n"; $in_p=0; continue;}
       }
       if (substr($line,0,2)=="##") continue; # comment
-#      $line=preg_replace("/{{{([^}]+)}}}/","<tt class='wiki'>\\1</tt>",$line);
 
       if (!$in_pre && preg_match("/{{{[^}]*$/",$line)) {
-         $line=substr_replace($line,"<pre class='wiki'>",strpos($line,"{{{"),3);
+         $p=strpos($line,"{{{");
+         $slen=strlen($line);
+         $this->pre_line=substr($line,$p+3,$slen);
+         if ($this->pre_line)
+            $this->pre_line.="\n";
+
+         $this->processor="";
+
+         # check processor
+         if ($line[$p+3] == "#" && $line[$p+4] == "!") {
+            $dummy=explode(" ",substr($line,$p+5,$slen),2);
+
+            if (function_exists("processor_".$dummy[0])) {
+              $this->processor=$dummy[0];
+            }
+         }
+         $line=substr($line,0,$p);
+
          $in_pre=1;
       } else if ($in_pre && preg_match("/}}}/",$line)) {
-         $line=substr_replace($line,"</pre>",strrpos($line,"}}}")-2,3);
+         $p=strrpos($line,"}}}");
+         $slen=strlen($line);
+         $this->pre_line.=substr($line,0,$p-2);
+
+         $line=substr($line,$p+1,$slen);
+
          $in_pre=-1;
       } else if ($in_pre) {
-         $line=preg_replace("/</","&lt;",$line);
+         $this->pre_line.=$line."\n";
+         continue;
       }
       if (!$in_pre) {
-      #$line=preg_replace($headrule,$headrepl,$line);
       #$line=preg_replace("/\\$/","&#36;",$line);
       $line=preg_replace("/<([^\s][^>]*)>/","&lt;\\1>",$line);
       $line=preg_replace("/`([^`]*)`/","<tt class='wiki'>\\1</tt>",$line);
-      $line=preg_replace("/(?<!')'''''([^']*)'''''(?!')/","<b><i>\\1</i></b>",$line);
-#      $line=preg_replace("/''''''/","<b></b>",$line);
+
+      #$line=preg_replace("/(?<!')'''''([^']*)'''''(?!')/","<b><i>\\1</i></b>",$line);
       $line=preg_replace("/(?<!')'''([^']*)'''(?!')/","<b>\\1</b>",$line);
       $line=preg_replace("/(?<!')''([^']*)''(?!')/","<i>\\1</i>",$line);
+      # for nested markups
+      $line=preg_replace("/'''(.*)'''/","<b>\\1</b>",$line);
+      $line=preg_replace("/''(.*)''/","<i>\\1</i>",$line);
+
+      # Superscripts, subscripts
+      $line=preg_replace("/\^([^ \^]+)\^/","<sup>\\1</sup>",$line);
+      $line=preg_replace("/_([^ _]+)_/","<sub>\\1</sub>",$line);
+
       $line=preg_replace("/^-{4,}/","<hr />\n",$line);
 
+      # Smiley
       if ($smiley_rule)
          $line=preg_replace($smiley_rule,$smiley_repl,$line);
 
@@ -593,30 +643,38 @@ class Formatter {
          $in_table=0;
       }
       if ($in_table) {
-         $line=preg_replace("/^((?:\|\|)+)(.*)\|\|$/e","'<tr class=\"wiki\"><td class=\"wiki\"'.\$this->_table_span('\\1').'>\\2</td></tr>'",$line);
-         $line=preg_replace("/((\|\|)+)/e","'</td><td class=\"wiki\"'.\$this->_table_span('\\1').'>'",$line);
+         $line=preg_replace('/^((?:\|\|)+)(.*)\|\|$/e',"'<tr class=\"wiki\"><td class=\"wiki\"'.\$this->_table_span('\\1').'>\\2</td></tr>'",$line);
+         $line=preg_replace('/((\|\|)+)/e',"'</td><td class=\"wiki\"'.\$this->_table_span('\\1').'>'",$line);
+         $line=str_replace('\"','"',$line); # revert \\" to \"
       }
       $line=$close.$open.$line;
       $open="";$close="";
 
-# InterWiki
-      $rule="/(".$Globals[wikis]."):([^<>\s\']+[\s]{0,1})/";
+      # InterWiki
+      $rule="/(".$DBInfo->interwikis."):([^<>\s\'\/]{1,2}[^<>\s\']+[\s]{0,1})/";
       $repl="wiki:\\1:\\2";
       $line=preg_replace($rule, $repl, $line);
-#
+      # WikiName, {{{ }}}, !WikiName, ?single, ["extended wiki name"]
+      # urls, [single bracket name], [urls text], [[macro]]
       $line=preg_replace($wordrule."e","\$this->link_repl('\\1')",$line);
-#      $line=preg_replace($wordrule,"{ \\1 }",$line);
-#
-      $line=preg_replace("/(?<!=)(={1,5})\s+(.*)\s+(={1,5})$/e",
+
+      # Headings
+      $line=preg_replace('/(?<!=)(={1,5})\s+(.*)\s+(={1,5})$/e',
                          "\$this->head_repl('\\1','\\2','\\3')",$line);
       }
+      if ($in_pre==-1) {
+         $in_pre=0;
+         if ($this->processor) {
+             eval("\$out=processor_$this->processor(&\$this,\$option);");
+            $line=$out.$line;
+         } else {
+            # htmlfy '<'
+            $pre=preg_replace("/</","&lt;",$this->pre_line);
+            $line="<pre class='wiki'>\n".$pre."</pre>\n".$line;
+         }
+      }
       $text.=$line."\n";
-      if ($in_pre==-1) $in_pre=0;
    }
-   # macro repl
-#   $text=preg_replace("/\[\[([A-Za-z0-9]+(\(.*\))?)\]\]/e",
-#                      "\$this->macro_repl('\\1')", $text);
-
    # strip slash only for double quotes
    $text=str_replace('\"','"',$text);
 
@@ -644,10 +702,13 @@ class Formatter {
    $state=0;
    $flag=0;
 
-   $out="<h1>Revision History</h1>\n";
-   $out.="<table border='1' cellpadding='3'>\n";
-   $out.="<th>Rev.</th><th>Date and Changes</th><th>Editor</th>".
-         "<th>actions</th>";
+   $out="<h2>Revision History</h2>\n";
+   $out.="<table class='info' border='0' cellpadding='3' cellspacing='2'>\n";
+   $out.="<form method='GET' action=''>";
+   $out.="<th class='info'>Rev.</th><th class='info'>Date and Changes</th>".
+         "<th class='info'>Editor</th>".
+         "<th><input type='submit' value='diff'></th>".
+         "<th class='info'>actions</th>";
    $out.= "</tr>\n";
    
    foreach ($lines as $line) {
@@ -677,8 +738,17 @@ class Formatter {
            $rowspan=1;
            if ($comment) $rowspan=2;
            $out.="<tr>\n";
-           $out.="<th rowspan=$rowspan># $rev</th><td>$inf</td><td>$ip&nbsp;</td>".
-                 "<td>".$this->link_to("?action=recall&rev=$rev","view").
+           $out.="<th rowspan=$rowspan># $rev</th><td>$inf</td><td>$ip&nbsp;</td>";
+           $achecked="";
+           $bchecked="";
+           if ($flag==1)
+              $achecked="checked ";
+           else if (!$flag)
+              $bchecked="checked ";
+           $out.="<td><input type='radio' name='rev' value='$rev' $achecked/>";
+           $out.="<input type='radio' name='rev2' value='$rev' $bchecked/>";
+
+           $out.="<td>".$this->link_to("?action=recall&rev=$rev","view").
                  " ".$this->link_to("?action=raw&rev=$rev","raw");
            if ($flag)
               $out.= " ".$this->link_to("?action=diff&rev=$rev","diff");
@@ -687,11 +757,11 @@ class Formatter {
            if ($comment)
               $out.="<tr><td colspan=3>$comment&nbsp;</td></tr>\n";
            $state=1;
-           $flag=1;
+           $flag++;
            break;
       }
    }
-   $out.="</table>\n";
+   $out.="<input type='hidden' name='action' value='diff'/></form></table>\n";
    return $out; 
  }
 
@@ -711,13 +781,14 @@ class Formatter {
  }
 
  function _parse_diff($diff) {
+   $diff=str_replace("<","&lt;",$diff);
    $lines=explode("\n",$diff);
    $out="";
    unset($lines[0]); unset($lines[1]);
    foreach ($lines as $line) {
       $marker=$line[0];
       $line=substr($line,1,strlen($line));
-      if ($marker=="@") $line='<div class="diff-sep">'."$line</div>\n";
+      if ($marker=="@") $line='<div class="diff-sep">@'."$line</div>\n";
       else if ($marker=="-") $line='<div class="diff-removed">'."$line</div>\n";
       else if ($marker=="+") $line='<div class="diff-added">'."$line</div>\n";
       else if ($marker=="\\" && $line==" No newline at end of file") continue;
@@ -750,6 +821,7 @@ class Formatter {
    if (!$rev1 and !$rev2) {
       $rev1=$this->get_rev();
    }
+   if ($rev1==$rev2) $rev2="";
    if ($rev1) $option="-r$rev1 ";
    if ($rev2) $option.="-r$rev2 ";
 
@@ -766,7 +838,7 @@ class Formatter {
    }
    pclose($fp);
    if (!$out)
-      print "<h2>No older revisions available</h2>";
+      print "<h2>No differences found</h2>";
    else
       print $this->_parse_diff($out);
  }
@@ -794,13 +866,15 @@ class Formatter {
   <title>$title</title>
 <style type="text/css">
 <!--
-body {font-family:Verdana,Lucida;font-size:14px; background-color:#EFF0E8;}
-.title {font-family:Verdana,Lucida;font-size:26px;font-weight:bold;}
-tt.wiki {font-family:Lucida Typewriter,fixed,lucida;font-size:12px;}
+body {font-family:Georgia,Verdana,Lucida,sans-serif;font-size:14px; background-color:#FFF9F9;}
+a:link {color:#993333;}
+a:visited {color:#CE5C00;}
+.title {font-family:Tahoma,Lucida,sans-serif;font-size:26px;font-weight:bold;}
+tt.wiki {font-family:Lucida Typewriter,fixed,lucida,fixed;font-size:12px;}
 pre.wiki {
   padding-left:6px;
   padding-top:6px; 
-  font-family:Lucida TypeWriter,monotype,fixed,lucida;font-size:14px;
+  font-family:Lucida TypeWriter,monotype,lucida,fixed;font-size:14px;
   background-color:#000000;
   color:#FFD700; /* gold */
  }
@@ -809,9 +883,15 @@ table.wiki {
 /*  border-collapse: collapse; */
 /*  border: 1px solid silver; */
 /*  border: 1px; */
-/*  border-color:silver; */
 }
-h1,h2,h3,h4,h5 {font-family:Tahoma;background-color:#B8B88E;padding-left:6px;}
+
+th.info {
+  background-color:#E2ECE2;
+/*  border-collapse: collapse; */
+/*  border: 1px solid silver; */
+}
+
+h1,h2,h3,h4,h5 {font-family:Tahoma;background-color:#E07B2A;padding-left:6px;}
 
 div.diff-added {
    font-family:Lucida Sans TypeWriter,Lucida Console,fixed;
@@ -860,6 +940,8 @@ EOF;
  }
 
  function send_footer($options=array()) {
+   global $DBInfo;
+
    if ($options[html])
       print "$options[html]";
    else {
@@ -870,6 +952,11 @@ EOF;
          print $this->link_to("",'ShowPage')." | ";
       print $this->link_tag("FindPage");
    }
+
+   if (!$options[noaction])
+      foreach ($DBInfo->actions as $action)
+         print "|".$this->link_to("?action=$action",$action);
+
    print <<<FOOT
  <a href="http://validator.w3.org/check/referer"><img
   src="http://www.w3.org/Icons/valid-xhtml10.png" border="0"
@@ -920,12 +1007,12 @@ $msg
 MSG;
    }
 
-   if ($upper)
-      print $this->link_tag($upper,"Upper")." | ";
    print $this->link_tag("FrontPage")." | ";
    print $this->link_tag("FindPage")." | ";
    print $this->link_tag("TitleIndex")." | ";
    print $this->link_tag("HelpContents")." | ";
+   if ($upper)
+      print $this->link_tag($upper,$DBInfo->icon[upper])." ";
    print $this->link_to("?action=edit",$DBInfo->icon[edit])." ";
    print $this->link_to("?action=diff",$DBInfo->icon[diff])." ";
    print $this->link_to("",$DBInfo->icon[show])." ";
@@ -948,7 +1035,8 @@ MSG;
     $preview=$options[preview];
 
     print "<a id='editor' name='editor' />\n";
-    printf('<form method="POST" action="%s/%s#preview">', get_scriptname(),$this->page->name);
+    printf('<form method="POST" action="%s/%s">', get_scriptname(),$this->page->name);
+    #printf('<form method="POST" action="%s/%s#preview">', get_scriptname(),$this->page->name);
     printf("<br />\n");
     print $this->link_to("?action=edit&rows=".($rows-3),"ReduceEditor")." | ";
     print $this->link_tag('InterWiki')." | ";
@@ -1008,7 +1096,7 @@ $DBInfo = new WikiDB;
 if (!empty($PATH_INFO)) {
    if ($PATH_INFO[0] == '/')
       $pagename=substr($PATH_INFO,1,strlen($PATH_INFO));
-   else
+   if (!$pagename)
       $pagename = "FrontPage";
 
 #   $result = preg_match('/\b[A-Z][a-z]*(?:[A-Z][a-z]+){1,}[0-9]*\b/',$pagename,$matches);
@@ -1110,7 +1198,7 @@ if ($pagename) {
    if ($action=="diff") {
       $formatter->send_header();
       $formatter->send_title("Diff for $rev ".$page->name);
-      print $formatter->get_diff($rev);
+      print $formatter->get_diff($rev,$rev2);
       $args[showpage]=1;
       #$args[editable]=1;
       $formatter->send_footer($args);
@@ -1164,9 +1252,15 @@ if ($pagename) {
      $options[comment]=$comment;
      $options[passwd]=$passwd;
      do_DeletePage($options);
-   } else {
-     $formatter->send_header();
-     $formatter->send_title("Unknown action error !");
+   } else if ($action) {
+     $keys=array_keys($HTTP_GET_VARS);
+     #foreach ($keys as $key) {
+     #   $options[$key]=$HTTP_GET_VARS[$key];
+     #}
+     $options=$HTTP_GET_VARS;
+
+     if (function_exists("do_".$action))
+        eval("do_".$action."(\$options);");
    }
 }
 
