@@ -8,9 +8,11 @@
 function macro_BlogCategories($formatter,$value='') {
   global $DBInfo;
 
+  $depth='';
   if (!$DBInfo->hasPage($DBInfo->blog_category)) return '';
   $opts=explode(',',$value);
   if (in_array('norss',$opts)) $no_rss=1;
+  if (in_array('all',$opts)) $depth=',';
 
   $categories=array();
   $page=$DBInfo->getPage($DBInfo->blog_category);
@@ -21,17 +23,28 @@ function macro_BlogCategories($formatter,$value='') {
 
   $link=$formatter->link_url($formatter->page->name,'?action=blogchanges&amp;category=CATEGORY');
   foreach ($temp as $line) {
-    $line=str_replace('/','_2f',$line);
-    if (preg_match('/^ \* ([^ ]+)(?=\s|$)/',$line,$match)) {
-      $lnk=str_replace('CATEGORY',$match[1],$link);
+    #$line=str_replace('/','_2f',$line);
+    if (preg_match('/^(\s{1'.$depth.'})\* ([^ ]+)(?=\s|$)/',$line,$match)) {
+      $lnk=str_replace('CATEGORY',$match[2],$link);
       if (!$no_rss)
         $rss='&nbsp;<a href="'.str_replace('blogchanges','blogrss',$lnk).'">'.
           '<img src="'.$DBInfo->imgs_dir.'/tiny-xml.gif'.'" border="0" /></a>';
-      $out.="<a href='$lnk'>$match[1]/</a>$rss<br/>";
-    }    
+      $dep=str_replace(' ','&nbsp;&nbsp;',$match[1]);
+      $out.="$dep<a href='$lnk'>$match[2]/</a>$rss<br/>";
+    }
   }
 
   return $out;
+}
+
+function do_blogcategories($formatter,$options) {
+  global $DBInfo;
+  $formatter->send_header("",$options);
+  $formatter->send_title("Blog Categories","",$options);
+  $formatter->send_page('== ['.$DBInfo->blog_category.'] ==');
+  print macro_BlogCategories($formatter,'all',$options);
+  $args['noaction']=1;
+  $formatter->send_footer($args,$options);
 }
 // vim:et:sts=2:
 ?>
