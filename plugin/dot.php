@@ -7,6 +7,7 @@
 
 define(DEPTH,3);
 define(LEAFCOUNT,2);
+define(FONTSIZE,8);
 
   function getLeafs($pagename,$node,$color,$depth,$count=LEAFCOUNT) {
     $p= new WikiPage($pagename);
@@ -58,6 +59,9 @@ function do_dot($formatter,$options) {
   else $count=LEAFCOUNT;
   if ($options['d'] and $options['d'] < 6) $depth=$options['d'];
   else $depth=DEPTH;
+  if ($options['f'] and $options['f'] < 12 and $options['f'] > 7 )
+    $fontsize=$options['f'];
+  else $fontsize=FONTSIZE;
 
   $color=array();
   makeTree($options['page'],&$node,&$color,$depth,$count);
@@ -73,7 +77,8 @@ function do_dot($formatter,$options) {
   $visualtour=$formatter->link_url("VisualTour");
   $pageurl=qualifiedUrl($formatter->link_url("\\N","?action=visualtour"));
 
-  $colref=array('gray71','olivedrab1','olivedrab2','olivedrab3',
+  $colref=array('gray71',
+                'olivedrab1','olivedrab2','olivedrab3',
                 '"#A4DDF4"','"#83D0ED"','"#63C0E3"',
                 'gray53', 'gray40','gray30','yellow');
   $colidx=0;
@@ -81,7 +86,7 @@ function do_dot($formatter,$options) {
 digraph G {
   URL="$visualtour"
   node [URL="$pageurl", 
-fontcolor=black, fontname=WEBDOTFONT, fontsize=8]\n
+fontcolor=black, fontname=WEBDOTFONT, fontsize=$fontsize]\n
 HEAD;
 
   $allnode=array_keys($node);

@@ -28,7 +28,9 @@ function do_VisualTour($formatter,$options) {
   if ($options['d'] and $options['d'] < 6) $d=$options['d'];
   else $d=3;
 
-  $url=qualifiedUrl($formatter->link_url($formatter->page->urlname,"?action=dot&w=$w&d=$d"));
+  if ($options['f']) $extra="&f=".$options['f'];
+
+  $url=qualifiedUrl($formatter->link_url($formatter->page->urlname,"?action=dot&w=$w&d=$d$extra"));
 
   $fp=fopen($url,"r");
   $dot="";

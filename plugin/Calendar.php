@@ -49,7 +49,7 @@ function macro_Calendar($formatter,$value="",$option="") {
 	$year= $date_info['year'];
 	$today= date("d");
 
-	$calendar= "<table class=\"calendar\">\n";
+	$calendar= "<table class=\"Calendar\">\n";
 	#use the <caption> tag or just a normal table heading. Take your pick.
 	#http://diveintomark.org/archives/2002/07/03.html#day_18_giving_your_calendar_a_real_caption
 #	$calendar .= "<tr><th colspan=\"7\" class=\"month\">$date_info[month], $year</th></tr>\n";

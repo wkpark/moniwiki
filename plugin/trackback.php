@@ -131,7 +131,10 @@ function TrackBackCompare($a,$b) {
 
 function macro_trackback($formatter,$value) {
 
-  $lines=TrackBack_text::get_all();
+  if ($value=='all')
+    $lines=TrackBack_text::get_all();
+  else
+    $lines=TrackBack_text::get_all();
   $logs=array();
   foreach ($lines as $line) $logs[]=explode("\t",$line,7);
   usort($logs,'TrackBackCompare');

@@ -1,9 +1,9 @@
 <?
 // Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
-// a vim colorizer plugin for the MoniWiki
+// a xml processor plugin for the MoniWiki
 //
-// Usage: {{{#!xml XslPage
+// Usage: {{{#!xslt
 // xml codes
 // }}}
 // $Id$
@@ -21,7 +21,7 @@ function processor_xslt($formatter,$value) {
   $xsl=NULL;
 
   list($line,$body)=explode("\n",$value,2);
-  $value="";
+  $buff="";
   while($line[0]=='<' and $line[1]=='?') {
     preg_match("/^<\?xml-stylesheet\s+href=\"([^\"]+)\"/",$line,$match);
     if ($match) {
@@ -31,18 +31,18 @@ function processor_xslt($formatter,$value) {
       }
       $flag=1;
     }
-    $value.=$line."\n";
+    $buff.=$line."\n";
     list($line,$body)=explode("\n",$body,2);
     if ($flag) break;
   }
-  $src=$value.$line."\n".$body;
+  $src=$buff.$line."\n".$body;
 
   $arguments = array('/_xml' => $src);
   $html = xslt_process($xsltproc,'arg:/_xml',$xsl,NULL,$arguments);
 #  $html = xslt_process($xsltproc,'arg:/_xml',NULL,NULL,$arguments);
 
   if (!$html) {
-    return "<pre class='code'>\n$src\n</pre>\n";
+    return "<pre class='code'>\n$balue\n</pre>\n";
   }
   xslt_free($xsltproc);
 

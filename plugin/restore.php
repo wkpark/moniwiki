@@ -17,17 +17,28 @@ function do_post_restore($formatter,$options) {
     if ($options['show'])
       $cmd="tar tzf $tar";
     else
-      $cmd="tar tzf $tar";
+      $cmd="tar xzf $tar";
 
-    $title = sprintf(_("Restore %s"),$options['value']);
-    $formatter->send_header("",$options);
-    $formatter->send_title($title,"",$options);
+    if (file_exists($DBInfo->text_dir)) {
+      $title = _("Error: Don't try to overwrite it");
+      $formatter->send_header("",$options);
+      $formatter->send_title($title,"",$options);
+    } else if (file_exists($tar)) {
+      $title = _("Error: tarball does not exists");
+      $formatter->send_header("",$options);
+      $formatter->send_title($title,"",$options);
 
-    print "<pre class='wiki'>";
-    print "$ $cmd\n";
-    exec($cmd,$log);
-    print(join("\n",$log));
-    print "</pre>";
+    } else {
+      $title = sprintf(_("Restore %s"),$options['value']);
+      $formatter->send_header("",$options);
+      $formatter->send_title($title,"",$options);
+
+      print "<pre class='wiki'>";
+      print "$ $cmd\n";
+      exec($cmd,$log);
+      print(join("\n",$log));
+      print "</pre>";
+    }
 
     $formatter->send_footer("",$options);
   } else if ($options['value']) {

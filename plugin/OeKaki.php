@@ -10,6 +10,17 @@
 function macro_OeKaki($formatter,$value) {
   global $DBInfo;
   $oekaki_dir=$DBInfo->upload_dir.'/OeKaki';
+
+  $size="";
+  preg_match("/^(\d{3})x(\d{3}),?\s*(.+)$/",$value,$match);
+  if ($match) {
+    $sizex=$match[1]; $sizey=$match[2];
+    $value=$match[3];
+    if ($sizex < 100 or $sizex > 600) $sizex=300;
+    if ($sizey < 100 or $sizey > 600) $sizey=300;
+    $size="&amp;size=".$sizex."x".$sizey;
+  }
+
   $name=_rawurlencode($value);
 
   umask(000);
@@ -19,7 +30,7 @@ function macro_OeKaki($formatter,$value) {
   $pngname='OeKaki_'.$name.".png";
   $now=time();
 
-  $url=$formatter->link_url($formatter->page->name,"?action=OeKaki&amp;value=$name&amp;now=$now");
+  $url=$formatter->link_url($formatter->page->name,"?action=OeKaki&amp;value=$name$size&amp;now=$now");
 
   if (!file_exists($oekaki_dir."/$pngname"))
     return "<a href='$url'>"._("Draw new picture")."</a>";
@@ -31,9 +42,9 @@ function do_OeKaki($formatter,$options) {
   global $DBInfo;
 
   $oekaki_dir=$DBInfo->upload_dir.'/OeKaki';
-  $pagename=$options[page];
+  $pagename=$options['page'];
 
-  $name=$options[value];
+  $name=$options['value'];
 #  $fp=fopen('php://stderr','w');
 #  fputs($fp,"name=$name\n");
 #  fputs($fp,"page=$options[page]\n");
@@ -86,6 +97,14 @@ function do_OeKaki($formatter,$options) {
     return;
   }
 
+  if ($options['size'] and preg_match("/(\d{3})x(\d{3})/",$options['size'],$match)) {
+    $sizex=$match[1]; $sizey=$match[2];
+    if ($sizex < 100 or $sizex > 600) $sizex=300;
+    if ($sizey < 100 or $sizey > 600) $sizey=300;
+  } else {
+    $sizex=300;$sizey=300;
+  }
+
   $extra="<param name='image_canvas' value='$imgurl'>";
   
   $formatter->send_header("",$options);
@@ -103,8 +122,8 @@ function do_OeKaki($formatter,$options) {
  name="$pngname.png"
  width="400" height="400" align="center">
 
-<param name="image_width" value="300">
-<param name="image_height" value="300">
+<param name="image_width" value="$sizex">
+<param name="image_height" value="$sizey">
 <param name="image_bkcolor" value="#ffffff">
 $extra
 <param name="image_jpeg" value="true">
@@ -126,8 +145,6 @@ $extra
 
 <param name="bar_size" value="15">
 
-<c param name="url_save" value="$pubpath/get.php?action=OeKaki&name=$pngname">
-<c param name="url_save" value="/wiki/get.php?action=OeKaki&name=$pngname">
 <param name="url_save" value="$url_save">
 <param name="url_exit" value="$url_exit">
 

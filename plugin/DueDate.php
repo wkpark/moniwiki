@@ -11,14 +11,14 @@
 function macro_DueDate($formatter,$value) {
   $time= localtime(time(),true);
 
-  $day= $time[tm_mday];
-  $month= $time[tm_mon]+1;
-  $year= $time[tm_year]+1900;
+  $day= $time['tm_mday'];
+  $month= $time['tm_mon']+1;
+  $year= $time['tm_year']+1900;
 
   $date_val=$value;
 
   if (strlen($value) == 2) {
-    if ((int) $value < $time[tm_mday])
+    if ((int) $value < $time['tm_mday'])
       $month+=1;
     if ($month > 12) {
       $year+=1; $month=1;
@@ -33,16 +33,16 @@ function macro_DueDate($formatter,$value) {
   }
 
   $time_val= strtotime($date_val);
-  $time_diff= ($time_val - time())/86400;
+  $time_diff= (int) (($time_val - time())/86400);
   
-  $msg=strftime("%x",$time_val);
+  $date=strftime("%x",$time_val);
 
   if  ($time_diff > 0)
-     $msg.=sprintf("까지  %d일 남았습니다.", $time_diff);
+     $msg=sprintf(_("%d day(s) left until %s."), $time_diff, $date);
   else if ($time_diff == 0)
-     $msg="오늘입니다.";
+     $msg=_("It's today.");
   else
-     $msg.=sprintf("로부터 %d일 지났습니다.",$time_diff);
+     $msg=sprintf(_("%d day(s) passed from %s."), abs($time_diff), $date);
 
   return $msg;
 }

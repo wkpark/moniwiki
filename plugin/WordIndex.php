@@ -13,10 +13,18 @@ function macro_WordIndex($formatter,$value) {
 
   $all_pages= $DBInfo->getPageLists();
 
+  if ($DBInfo->use_titlecache) {
+    $cache=new Cache_text('title');
+  }
+
   foreach ($all_pages as $page) {
-    $tmp=preg_replace("/[\?!$%\.\^;&\*()_\+\|\[\] \-~\/]/"," ",$page);
+    if ($DBInfo->use_titlecache and $cache->exists($page))
+      $title=$cache->fetch($page);
+    else
+      $title=$page;
+    $tmp=preg_replace("/[\?!$%\.\^;&\*()_\+\|\[\] \-~\/]/"," ",$title);
     $tmp=preg_replace("/((?<=[A-Za-z0-9])[A-Z][a-z0-9])/"," \\1",ucwords($tmp));
-    $words=explode(" ",$tmp);
+    $words=preg_split("/\s+/",$tmp);
     foreach ($words as $word) {
       if ($dict[$word])
         $dict[$word][]=$page;

@@ -24,6 +24,7 @@ function processor_linuxdoc($formatter,$value) {
 
   $args= "--language=$lang ".
 #        "--charset=$DBInfo->charset ".
+#        "--toc=2 ".
          "--split=0 ";
 
   if ($value[0]=='#' and $value[1]=='!') {

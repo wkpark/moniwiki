@@ -20,6 +20,7 @@ class WikiRSSParser {
        } elseif ($tagName == "ITEM") {
            $this->insideitem = true;
        } elseif ($tagName == "IMAGE") {
+           if ($attrs['RDF:RESOURCE'])
            print "<img src=\"".$attrs['RDF:RESOURCE']."\"><br />";
        }
    }
@@ -27,17 +28,22 @@ class WikiRSSParser {
    function endElement($parser, $tagName) {
        if ($tagName == "ITEM") {
            if ($this->status) print "[$this->status] ";
-           printf("<a href='%s'>%s</a>",
+           printf("<a href='%s' target='_content'>%s</a>",
              trim($this->link),
              htmlspecialchars(trim($this->title)));
            #printf("<p>%s</p>",
            #  htmlspecialchars(trim($this->description)));
-           $date=$this->date;
-           $date[10]=" ";
-           $time=strtotime(substr($date,0,-6));
-           $date=date("[h:i a]",$time);
-           printf(" %s<br />\n",
-             htmlspecialchars(trim($date)));
+           if ($this->date) {
+             $date=trim($this->date);
+             $date[10]=" ";
+             # 2003-07-11T12:08:33+09:00
+             # http://www.w3.org/TR/NOTE-datetime
+             $zone=str_replace(":","",substr($date,19));
+             $time=strtotime(substr($date,0,19).$zone);
+             $date=date("@ m-d [h:i a]",$time);
+             printf(" %s<br />\n", htmlspecialchars(trim($date)));
+           } else
+             printf("<br />\n");
            $this->title = "";
            $this->description = "";
            $this->link = "";
@@ -71,6 +77,15 @@ class WikiRSSParser {
    }
 }
 
+function do_Rss($formatter,$options) {
+  if ($options['url']) {
+    print '<font size="-1">';
+    print macro_Rss($formatter,$options['url']);
+    print '</font>';
+  }
+  return;
+}
+
 function macro_Rss($formatter,$value) {
   global $DBInfo;
 
@@ -81,24 +96,41 @@ function macro_Rss($formatter,$value) {
   xml_set_element_handler($xml_parser, "startElement", "endElement");
   xml_set_character_data_handler($xml_parser, "characterData");
 
-  $fp = fopen("$value","r");
-  if (!$fp)
-    return ("[[RSS(ERR: not a valid URL! $value)]]");
+  $key=_rawurlencode($value);
+
+  $cache= new Cache_text("rss");
+  # reflash rss each 7200 second (60*60*2)
+  if (!$cache->exists($key) or (time() > $cache->mtime($key) + 7200 )) {
+    $fp = fopen("$value","r");
+    if (!$fp)
+      return ("[[RSS(ERR: not a valid URL! $value)]]");
+
+    while ($data = fread($fp, 4096)) $xml_data.=$data;
+    fclose($fp);
+    $cache->update($key,$xml_data);
+  } else
+    $xml_data=$cache->fetch($key);
+
+  list($line,$dummy)=explode("\n",$xml_data,2);
+  preg_match("/\sencoding=?(\"|')([^'\"]+)/",$line,$match);
+  if ($match) $charset=strtoupper($match[2]);
+  else $charset='UTF-8';
 
   ob_start();
-  while ($data = fread($fp, 4096))
-    $ret= xml_parse($xml_parser, $data, feof($fp));
+  $ret= xml_parse($xml_parser, $xml_data);
+
   if (!$ret)
     return (sprintf("[[RSS(XML error: %s at line %d)]]",  
       xml_error_string(xml_get_error_code($xml_parser)),  
       xml_get_current_line_number($xml_parser)));
-  fclose($fp);
   $out=ob_get_contents();
   ob_end_clean();
   xml_parser_free($xml_parser);
 
-#  if (strtoupper($DBInfo->charset) != 'UTF-8')
-#    $out=iconv('utf-8',$DBInfo->charset,$out);
+  #  if (strtolower(str_replace("-","",$options['oe'])) == 'euckr')
+  if (function_exists('iconv') and strtoupper($DBInfo->charset) != $charset)
+    $new=iconv($charset,$DBInfo->charset,$out);
+  if ($new) return $new;
 
   return $out;
 }

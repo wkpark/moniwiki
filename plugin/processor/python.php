@@ -8,8 +8,7 @@
 // }}}
 // $Id$
 
-if (!function_exists("processor_vim"))
-  include("vim.php");
+if (!function_exists("processor_vim")) include("vim.php");
 
 function processor_python($formatter,$value="") {
 

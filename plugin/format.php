@@ -13,7 +13,7 @@ function do_format($formatter,$options) {
 
   $pi=$formatter->get_instructions();
   if ($pi['#format']=='xsltproc') {
-    $options['title']= _("You can only export WikiMarkup to XML");
+    $options['title']= _("It is a XML format !");
     do_invalid($formatter,$options);
   }
   if (!$formatter->page->exists()) do_invalid($formatter,$options);
@@ -23,7 +23,7 @@ function do_format($formatter,$options) {
     header("Content-type: ".$mimetype);
     print $formatter->processor_repl($mimes[$mimetype],$formatter->page->get_raw_body());
   } else {
-    $processor=str_replace("/","_",$mimetype);
+    $processor=str_replace("/.","__",$mimetype);
     header("Content-type: text/plain");
 
     if (getProcessor($processor))

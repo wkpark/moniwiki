@@ -29,28 +29,34 @@ function do_sendping($formatter,$options) {
       $count=count($lines);
       # add comment
       for ($i=0;$i<$count;$i++) {
-        if (preg_match("/^{{{#!blog .*$/",$lines[$i])) {
-          if (md5(substr($lines[$i],10)) == $options['value']) {
+        if (preg_match("/^({{{)?#!blog (.*)$/",$lines[$i],$match)) {
+          if (md5($match[2]) == $options['value']) {
             list($tag, $user, $date, $title) = explode(" ",$lines[$i],4);
             $found=1;
+            if ($match[1]) $end_tag='}}}';
             break;
           }
         }
       }
 
-      if ($found) {
+      if ($found) { # a blog page with multiple entries
         $i++;
-        for (;$i<$count;$i++) {
-          if (preg_match("/^}}}$/",$lines[$i])) break;
-          else if (preg_match("/^----$/",$lines[$i])) break;
-          $excerpt.=$lines[$i]."\n";
+        if ($end_tag)
+          for (;$i<$count;$i++) {
+            if (preg_match("/^}}}$/",$lines[$i])) break;
+            else if (preg_match("/^----$/",$lines[$i])) break;
+            $excerpt.=$lines[$i]."\n";
+          }
+        else { # a blog page with a single entry
+            list($dummy,$entry)=explode("\n",$raw_body,2);
+            list($excerpt,$comments)=explode("\n----\n",$entry,2);
         }
       } else {
         $options['msg']=_("Error: No entry found!");
         do_invalid($formatter,$options);
         return;
       }
-    } else {
+    } else { # a plain wiki page
       $excerpt=substr($raw_body,0,400);
       $title=$options['page'];
     }

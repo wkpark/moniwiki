@@ -1,9 +1,9 @@
 <?
 // Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
-// a vim colorizer plugin for the MoniWiki
+// a xml processor plugin for the MoniWiki
 //
-// Usage: {{{#!xml
+// Usage: {{{#!xsltproc
 // xml codes
 // }}}
 // $Id$
@@ -17,22 +17,29 @@ function processor_xsltproc($formatter,$value) {
     list($tag,$args)=explode(" ",$line,2);
   }
 
+  $pagename=$formatter->page->name;
+
+  $cache= new Cache_text("docbook");
+
+  if (!$formatter->preview and $cache->exists($pagename) and $cache->mtime($pagename) > $formatter->page->mtime())
+    return $cache->fetch($pagename);
+
   list($line,$body)=explode("\n",$value,2);
-  $value="";
-  while($line[0]=='<' and $line[1]=='?') {
+  $buff="";
+  while(($line[0]=='<' and $line[1]=='?') or !$line) {
     preg_match("/^<\?xml-stylesheet\s+href=\"([^\"]+)\"/",$line,$match);
     if ($match) {
       if ($DBInfo->hasPage($match[1]))
         $line='<?xml-stylesheet href="'.getcwd().'/'.$DBInfo->text_dir.'/'.$match[1].'" type="text/xml"?>';
       $flag=1;
     }
-    $value.=$line."\n";
+    $buff.=$line."\n";
     list($line,$body)=explode("\n",$body,2);
     if ($flag) break;
   }
-  $src=$value.$line."\n".$body;
+  $src=$buff.$line."\n".$body;
 
-  $tmpf=tempnam("/tmp","FOO");
+  $tmpf=tempnam("/tmp","XSLT");
   $fp= fopen($tmpf, "w");
   fwrite($fp, $src);
   fclose($fp);
@@ -45,15 +52,22 @@ function processor_xsltproc($formatter,$value) {
   while($s = fgets($fp, 1024)) $html.= $s;
 
   pclose($fp);
-  #unlink($tmpf);
+  unlink($tmpf);
 
   if (!$html) {
-    $src=str_replace("<","&lt;",$src);
+    $src=str_replace("<","&lt;",$value);
+    $cache->remove($pagename);
     return "<pre class='code'>$src\n</pre>\n";
   }
 
-  if (function_exists ("iconv"))
-    $html=iconv('UTF-8',$DBInfo->charset,$html);
+  if (function_exists ("iconv")) {
+    $new=iconv('UTF-8',$DBInfo->charset,$html);
+    if ($new) $html=$new;
+  }
+
+  if (!$formatter->preview)
+    $cache->update($pagename,$html);
+
   return $html;
 }
 

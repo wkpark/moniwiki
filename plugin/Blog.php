@@ -63,26 +63,32 @@ function do_Blog($formatter,$options) {
     if ($options['value']) {
       # add comment
       for ($i=0;$i<$count;$i++) {
-        if (preg_match("/^{{{#!blog .*$/",$lines[$i])) {
-          if (md5(substr($lines[$i],10)) == $options['value']) {
+        if (preg_match("/^({{{)?#!blog (.*)$/",$lines[$i],$match)) {
+          if (md5($match[2]) == $options['value']) {
             list($tag, $user, $date, $title) = explode(" ",$lines[$i],4);
             $found=1;
+            if ($match[1]) $endtag='}}}';
             break;
           }
         }
       }
 
       if ($found) {
-        for (;$i<$count;$i++) {
-          if (preg_match("/^}}}$/",$lines[$i])) {
-            $found=1; 
-            break;
+        if ($endtag)
+          for (;$i<$count;$i++) {
+            if (preg_match("/^}}}$/",$lines[$i])) {
+              $found=1; 
+              break;
+            }
           }
+        else { # XXX
+          $lines=explode("\n",rtrim($raw_body));
+          $i=count($lines);
         }
         if ($options['nosig'])
-          $lines[$i]="----\n$savetext\n}}}";
+          $lines[$i]="----\n$savetext\n$endtag";
         else
-          $lines[$i]="----\n$savetext -- $id @DATE@\n}}}";
+          $lines[$i]="----\n$savetext -- $id @DATE@\n$endtag";
         $raw_body=join("\n",$lines);
       } else {
         $formatter->send_title("Error: No entry found!","",$options);
@@ -105,7 +111,7 @@ function do_Blog($formatter,$options) {
       $log="Add Comment to \"$title\"";
     } else {
       $formatter->send_title(sprintf(_("Blog entry added to \"%s\""),$options['page']),"",$options);
-      $log="Add Blog entry \"$options[title]\" added";
+      $log="Blog entry \"$options[title]\" added";
     }
     
     $formatter->page->write($raw_body);
@@ -119,10 +125,11 @@ function do_Blog($formatter,$options) {
       $lines=explode("\n",$raw_body);
       $count=count($lines);
       for ($i=0;$i<$count;$i++) {
-        if (preg_match("/^{{{#!blog .*$/",$lines[$i])) {
-          if (md5(substr($lines[$i],10)) == $options['value']) {
+        if (preg_match("/^({{{)?#!blog (.*)$/",$lines[$i],$match)) {
+          if (md5($match[2]) == $options['value']) {
             list($tag, $user, $date, $title) = explode(" ",$lines[$i],4);
             $found=1;
+            $lines[$i]='#!blog '.$match[2];
             break;
           }
         }
@@ -145,7 +152,7 @@ function do_Blog($formatter,$options) {
     }
     $options['noaction']=1;
     if ($quote)
-      print $formatter->processor_repl('blog',substr($quote,3),$options);
+      print $formatter->processor_repl('blog',$quote,$options);
 
     print "<form method='post' action='$url'>\n";
     if ($options['value'])

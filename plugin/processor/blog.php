@@ -15,6 +15,7 @@ function processor_blog($formatter,$value="",$options) {
 
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
+
   if ($line) {
     # get parameters
     list($tag, $user, $date, $title)=explode(" ",$line, 4);

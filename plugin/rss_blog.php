@@ -5,17 +5,46 @@
 //
 // $Id$
 
+class Blog_cache {
+  function get_blogs() {
+    global $DBInfo;
+
+    $handle = opendir($DBInfo->cache_dir."/blog");
+
+    while ($file = readdir($handle)) {
+      if (is_dir($DBInfo->cache_dir."/blog/".$file)) continue;
+      $blogs[] = $file;
+    }
+    closedir($handle);
+    return $blogs;
+  }
+
+  function get_all() {
+    global $DBInfo;
+    $all=Blog_cache::get_blogs();
+    $lines=array();
+    foreach ($all as $blog) {
+      #$lines=array_merge($lines,file($DBInfo->cache_dir."/blog/".$blog));
+      $lines=array_merge($lines,file($DBInfo->cache_dir."/blog/".$blog));
+    }
+    return $lines;
+  }
+}
+
 function do_rss_blog($formatter,$options) {
   global $DBInfo;
 
-  $raw_body=$formatter->page->get_raw_body();
+  if ($options['all']) {
+    $lines=Blog_cache::get_all();
+  } else {
+    $raw_body=$formatter->page->get_raw_body();
+    $temp= explode("\n",$raw_body);
 
-  $temp= explode("\n",$raw_body);
-
-  $lines=array();
-  foreach ($temp as $line) {
-    if (preg_match("/^{{{#!blog (.*)$/",$line,$match)) {
-      $lines[]=$match[1];
+    $lines=array();
+    foreach ($temp as $line) {
+      if (preg_match("/^{{{#!blog (.*)$/",$line,$match)) {
+        $lines[$match[1]]=$options['page'];
+      }
     }
   }
     
@@ -25,7 +54,7 @@ function do_rss_blog($formatter,$options) {
   $img_url=qualifiedURL($DBInfo->logo_img);
 
   $head=<<<HEAD
-<?xml version="1.0" encoding="euc-kr"?>
+<?xml version="1.0" encoding="$DBInfo->charset"?>
 <!--<?xml-stylesheet type="text/xsl" href="/wiki/css/rss.xsl"?>-->
 <rdf:RDF xmlns:wiki="http://purl.org/rss/1.0/modules/wiki/"
          xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -54,12 +83,14 @@ CHANNEL;
   $ratchet_day= FALSE;
   if (!$lines) $lines=array();
 
-  $url=qualifiedUrl($formatter->prefix."/".$formatter->page->urlname);
+  foreach ($lines as $line=>$page) {
+    $url=qualifiedUrl($formatter->prefix."/".$page);
 
-  foreach ($lines as $line) {
     list($user,$date,$title)= explode(" ", $line,3);
     if (!$title) continue;
-    $tag=md5("#!blog ".$line);
+    #$tag=md5("#!blog ".$line);
+    $tag=md5($line);
+    #$tag=_rawurlencode(normalize($title));
 
     $channel.="    <rdf:li rdf:resource=\"$url#$tag\"/>\n";
     $items.="     <item rdf:about=\"$url#$tag\">\n";

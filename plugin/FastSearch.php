@@ -5,9 +5,9 @@
 // Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 //
-// indexer.tar.gz is modified to attach with MoniWiki
+// indexer.tar.gz is modified to adopt under MoniWiki
 // the indexer engine is a perl program, slightly modified by wkpark
-// the lookup script also imported adn modified.
+// the lookup script also imported and modified.
 //
 // a FasetSearch plugin using a index.db for the MoniWiki
 //
@@ -19,8 +19,34 @@ function macro_FastSearch($formatter,$value="",$opts=array()) {
   global $DBInfo;
   $theDB=$DBInfo->data_dir."/index.db";
 
-  if (($dbindex=dba_open("$theDB", "r",$DBInfo->dba_type)) === false) {
+  if ($value === true) {
+    $needle = $value = $formatter->page->name;
+  } else {
+    # for MoinMoin compatibility with [[FullSearch("blah blah")]]
+    $needle = preg_replace("/^(\'|\")(.*)(\'|\")/","\\2",$value);
+  }
+
+  $needle=_preg_search_escape($value);
+  $pattern = '/'.$needle.'/i';
+
+  $form= <<<EOF
+<form method='get' action='$url'>
+   <input type='hidden' name='action' value='fastsearch' />
+   <input name='value' size='30' value='$fneedle' />
+   <input type='submit' value='Fast search' /><br />
+   <input type='checkbox' name='context' value='20' checked='checked' />Display context of search results<br />
+   </form>
+EOF;
+
+  if (!$needle) { # or blah blah
+     $opts['msg'] = 'No search text';
+     return $form;
+  }
+
+  if (($dbindex=@dba_open("$theDB", "r",$DBInfo->dba_type)) === false) {
     $opts['msg']="Couldn't open search database, sorry.";
+    $opts['hits']= 0;
+    $opts['all']= 0;
     return;
   }
 
@@ -44,8 +70,6 @@ function macro_FastSearch($formatter,$value="",$opts=array()) {
   dba_close($dbindex);
 #  print_r($pages);
 
-  $needle=_preg_search_escape($value);
-  $pattern = '/'.$needle.'/i';
 #  if ($opts['case']) $pattern.="i";
 
   $hits=array();
@@ -83,6 +107,27 @@ function macro_FastSearch($formatter,$value="",$opts=array()) {
   $opts['hits']= count($hits);
   $opts['all']= count($pages);
   return $out;
+}
+
+function do_fastsearch($formatter,$options) {
+
+  $ret=$options;
+
+  $title= sprintf(_("Full text search for \"%s\""), $options['value']);
+  $out= macro_FastSearch($formatter,$options['value'],&$ret);
+  $options['msg']=$ret['msg'];
+  $formatter->send_header("",$options);
+  $formatter->send_title($title,$formatter->link_url("FindPage"),$options);
+
+  print $out;
+
+  if ($options['value'])
+    printf(_("Found %s matching %s out of %s total pages")."<br />",
+         $ret['hits'],
+        ($ret['hits'] == 1) ? 'page' : 'pages',
+         $ret['all']);
+  $args['noaction']=1;
+  $formatter->send_footer($args,$options);
 }
 
 ?>

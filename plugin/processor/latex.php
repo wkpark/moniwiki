@@ -43,7 +43,7 @@ $tex
 ";
 
   if ($formatter->refresh || !file_exists("$cache_dir/$uniq.png")) {
-     $fp= fopen("$vartmp_dir/$uniq.tex", "w");
+     $fp= fopen($vartmp_dir."/$uniq.tex", "w");
      fwrite($fp, $src);
      fclose($fp);
 
