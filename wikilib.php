@@ -346,12 +346,14 @@ function do_diff($formatter,$options="") {
         $rr.=":".$range[$r];
       $dum[]=$rr;$rr='';
     }
-    $dum=join(';',$dum);
-    $query="?action=rcspurge&amp;range=$dum";
-    if ($options['show']) $query.="&amp;show=1";
-    $options['url']=qualifiedURL($formatter->link_url($options['page'],$query));
-    do_goto($formatter,$options);
-    #do_RcsPurge($formatter,$options);
+    $options['range']=join(';',$dum);
+    #$query="?action=rcspurge&amp;range=$dum";
+    #if ($options['show']) $query.="&amp;show=1";
+    #$options['url']=qualifiedURL($formatter->link_url($options['page'],$query));
+    #do_goto($formatter,$options);
+    include_once("plugin/rcspurge.php");
+
+    do_RcsPurge($formatter,$options);
     return;
   }
   $formatter->send_header("",$options);
