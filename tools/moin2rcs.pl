@@ -38,21 +38,28 @@ foreach $_ (@backups) {
 foreach $name (keys %pages) {
   @list=`ls backup/$name.*`;
   sort @list;
+  if ( -f "text/$name" ) {
+     $list[$#list + 1]="text/$name\n";
+  }
   foreach $backup (@list) {
     chop $backup;
     if ($backup =~ /\.(\d+)$/) {
-      if ($logs{$1}) {
-        #print $logs{$1}."\n";
-        $time=$1;
-        $pagename=$name;
-        $pagename=~ s/_([a-f0-9]{2})/chr(hex($1))/eg;
-        $pagename =~ s/\"/\\\"/g;
-        print "cp $backup backup/$name\n";
-        $date = strftime ("%Y%m%d%H%M", gmtime($time));
-        print "touch -t $date backup/$name\n";
-        print "ci -q -d -l -t-\"$pagename\" -m\"".$logs{$time}."\" backup/$name\n";
-        print "rm backup/$name\n";
-      }
+      $time=$1;
+    } else {
+      $time = (stat($backup))[9];
+    }
+     
+    if ($logs{$time}) {
+      #print $logs{$1}."\n";
+      $time=$1;
+      $pagename=$name;
+      $pagename=~ s/_([a-f0-9]{2})/chr(hex($1))/eg;
+      $pagename =~ s/\"/\\\"/g;
+      print "cp $backup backup/$name\n";
+      $date = strftime ("%Y%m%d%H%M", gmtime($time));
+      print "touch -t $date backup/$name\n";
+      print "ci -q -d -l -t-\"$pagename\" -m\"".$logs{$time}."\" backup/$name\n";
+      print "rm backup/$name\n";
     }
   }
 }
