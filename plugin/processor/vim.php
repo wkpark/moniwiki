@@ -96,5 +96,5 @@ function processor_vim($formatter,$value) {
   return $out;
 }
 
-// vim:et:ts=2:
+// vim:et:sts=2:
 ?>

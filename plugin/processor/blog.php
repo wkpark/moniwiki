@@ -121,5 +121,5 @@ function processor_blog($formatter,$value="",$options) {
   return $out;
 }
 
-// vim:et:ts=2:
+// vim:et:sts=2:
 ?>
