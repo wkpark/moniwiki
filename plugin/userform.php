@@ -104,7 +104,7 @@ function do_userform($formatter,$options) {
                $body=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
                $body=_("Please confirm your email address")."\n".$body;
                wiki_sendmail($body,$options);
-               $options['msg'].='<br/>'._("E-mail confirmation mail sented");
+               $options['msg'].='<br/>'._("E-mail confirmation mail sent");
              }
            } else {# already exist user
              $user=$udb->getUser($user->id);
@@ -155,7 +155,7 @@ function do_userform($formatter,$options) {
         $body=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
         $body=_("Please confirm your email address")."\n".$body;
         wiki_sendmail($body,$options);
-        $options['msg']=_("E-mail confirmation mail sented");
+        $options['msg']=_("E-mail confirmation mail sent");
       } else {
         $options['msg']=_("Your email address is not valid");
       }

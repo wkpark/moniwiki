@@ -8,7 +8,7 @@
 function do_download($formatter,$options) {
   global $DBInfo;
 
-  if (!$options[value]) {
+  if (!$options['value']) {
     do_uploadedfiles($formatter,$options);
     return; 
   }
@@ -25,7 +25,7 @@ function do_download($formatter,$options) {
     $dir=$DBInfo->upload_dir;
     $handle= opendir($dir);
   }
-  $file=explode("/",$options[value]);
+  $file=explode("/",$options['value']);
   $file=$file[count($file)-1];
 
   if (!file_exists("$dir/$file")) 
