@@ -250,7 +250,7 @@ class MetaDB_dba extends MetaDB {
       if (!$mode) return true;
       $sisters=dba_fetch($pagename,$this->metadb);
 
-      if (strlen($sisters) > 40) return "[$pagename]";
+      if (strlen($sisters) > 40) return "TwinPages:$pagename";
 
       $ret="wiki:".
         str_replace(" ",":$pagename wiki:",$sisters).":$pagename";
@@ -1672,8 +1672,8 @@ class Formatter {
           return "<a href='$url' $attr>$word</a>".
             "<tt class='sister'><a href='$url'>&#x203a;</a></tt>";
         case -3:
-          $url=$this->link_url(_rawurlencode($gpage));
-          return $this->link_tag($page,'',$this->icon['main']).
+          #$url=$this->link_url(_rawurlencode($gpage));
+          return $this->link_tag(_rawurlencode($gpage),'',$this->icon['main']).
             "<a href='$url' $attr>$word</a>";
         default:
           return "<a href='$url' $attr>$word</a>".
@@ -1685,8 +1685,8 @@ class Formatter {
     } else {
       if ($gpage and $DBInfo->hasPage($gpage)) {
         $this->pagelinks[$page]=-3;
-        $url=$this->link_url(_rawurlencode($gpage));
-        return $this->link_tag($page,'',$this->icon['main']).
+        #$url=$this->link_url(_rawurlencode($gpage));
+        return $this->link_tag(_rawurlencode($gpage),'',$this->icon['main']).
           "<a href='$url' $attr>$word</a>";
       }
       if ($this->sister_on) {
@@ -2271,6 +2271,7 @@ class Formatter {
       $highlight=_preg_search_escape($this->highlight);
 
       $colref=preg_split("/\|/",$highlight);
+      #$colref=preg_split("/\s+/",$highlight);
       $highlight=join("|",$colref);
       $colref=array_flip(array_map("strtolower",$colref));
 
@@ -2636,8 +2637,7 @@ class Formatter {
       # find upper page
       $pos=strrpos($this->page->name,"/");
       if ($pos > 0) $upper=substr($this->page->urlname,0,$pos);
-      else if ($this->group) $upper=_urlencode(substr($this->group,0,-1));
-
+      else if ($this->group) $upper=_urlencode(substr($this->page->name,strlen($this->group)));
       if ($this->pi['#keywords'])
         $keywords='<meta name="keywords" content="'.$this->pi['#keywords'].'" />';
       else if ($DBInfo->use_keywords) {
@@ -2858,7 +2858,7 @@ FOOT;
     # find upper page
     $pos=strrpos($name,"/");
     if ($pos > 0) $upper=substr($name,0,$pos);
-    else if ($this->group) $upper=_urlencode(substr($this->group,0,-1));
+    else if ($this->group) $upper=_urlencode(substr($this->page->name,strlen($this->group)));
 
     if (!$title) {
       $title=$options['title'];
