@@ -34,7 +34,6 @@ foreach $_ (@backups) {
 
 #print %pages;
 
-
 foreach $name (keys %pages) {
   @list=`ls backup/$name.*`;
   sort @list;
@@ -43,6 +42,7 @@ foreach $name (keys %pages) {
   }
   foreach $backup (@list) {
     chop $backup;
+    $time=0;
     if ($backup =~ /\.(\d+)$/) {
       $time=$1;
     } else {
@@ -51,7 +51,6 @@ foreach $name (keys %pages) {
      
     if ($logs{$time}) {
       #print $logs{$1}."\n";
-      $time=$1;
       $pagename=$name;
       $pagename=~ s/_([a-f0-9]{2})/chr(hex($1))/eg;
       $pagename =~ s/\"/\\\"/g;
