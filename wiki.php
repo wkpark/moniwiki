@@ -1011,6 +1011,17 @@ class Formatter {
     $this->themedir= dirname(__FILE__);
     $this->set_theme($options[theme]);
 
+    $this->baserule=array("/<([^\s][^>]*)>/","/`([^`]*)`/",
+                     "/'''([^']*)'''/","/(?<!')'''(.*)'''(?!')/",
+                     "/''([^']*)''/","/(?<!')''(.*)''(?!')/",
+                     "/\^([^ \^]+)\^/","/(?: |^)_([^ _]+)_/",
+                     "/^-{4,}/");
+    $this->baserepl=array("&lt;\\1>","<tt class='wiki'>\\1</tt>",
+                     "<b>\\1</b>","<b>\\1</b>",
+                     "<i>\\1</i>","<i>\\1</i>",
+                     "<sup>\\1</sup>","<sub>\\1</sub>",
+                     "<hr class='wiki' />\n");
+
     #$punct="<\"\'}\]\|;,\.\!";
     $punct="<\'}\]\|;\.\)\!";
     $url="wiki|http|https|ftp|nntp|news|irc|telnet|mailto";
@@ -1552,17 +1563,6 @@ class Formatter {
                  "\\$\\$([^\\$]+)\\$\\$(?:\s|$)|";
     $wordrule.=$this->wordrule;
 
-    $base_rule=array("/<([^\s][^>]*)>/","/`([^`]*)`/",
-                     "/'''([^']*)'''/","/(?<!')'''(.*)'''(?!')/",
-                     "/''([^']*)''/","/(?<!')''(.*)''(?!')/",
-                     "/\^([^ \^]+)\^/","/(?: |^)_([^ _]+)_/",
-                     "/^-{4,}/");
-    $base_repl=array("&lt;\\1>","<tt class='wiki'>\\1</tt>",
-                     "<b>\\1</b>","<b>\\1</b>",
-                     "<i>\\1</i>","<i>\\1</i>",
-                     "<sup>\\1</sup>","<sub>\\1</sub>",
-                     "<hr class='wiki' />\n");
-
     foreach ($lines as $line) {
       # strip trailing '\n'
       #$line=preg_replace("/\n$/", "", $line);
@@ -1640,7 +1640,7 @@ class Formatter {
       # rules
       #$line=preg_replace("/^-{4,}/","<hr />\n",$line);
 
-      $line=preg_replace($base_rule,$base_repl,$line);
+      $line=preg_replace($this->baserule,$this->baserepl,$line);
 
       # bullet and indentation
       #if (!$in_pre && preg_match("/^(\s*)/",$line,$match)) {
@@ -1727,6 +1727,7 @@ class Formatter {
          } else if ($in_quote) {
             # htmlfy '<'
             $pre=str_replace("<","&lt;",$this->pre_line);
+            $pre=preg_replace($this->baserule,$this->baserepl,$pre);
             $pre=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$pre);
             $line="<pre class='quote'>\n".$pre."</pre>\n".$line;
             $in_quote=0;
