@@ -38,11 +38,11 @@ function processor_blog($formatter,$value="",$options) {
     # get parameters
     list($tag, $user, $date, $title)=explode(" ",$line, 4);
 
-    if (preg_match('/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/',$user)) {
+    if (preg_match('/^[\d\.]+$/',$user)) {
       if ($DBInfo->interwiki['Whois'])
         $user=_("Anonymous")."[<a href='".$DBInfo->interwiki['Whois']."$user'>$user</a>]";
       else
-        $user=_("Anonymous");#"[$user]";
+        $user=_("Anonymous");
     } else if ($DBInfo->hasPage($user)) {
       $user=$formatter->link_tag($user);
     }
@@ -77,8 +77,7 @@ function processor_blog($formatter,$value="",$options) {
     if ($comments) {
       $count=sizeof(explode("----\n",$comments));
 
-      if ($options['noaction'] or $DBInfo->blog_comments)
-        $comments=preg_replace("/----\n/","[[BR]]-''''''---[[BR]]",$comments);
+      if ($options['noaction'] or $DBInfo->blog_comments);
       else {
         $comments='';
         $add_button=($count == 1) ? _("%d comment"):_("%d comments");
