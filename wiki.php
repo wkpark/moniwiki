@@ -232,7 +232,7 @@ class MetaDB_dba extends MetaDB {
 
   function getTwinPages($pagename) {
     if ($pagename && dba_exists($pagename,$this->metadb)) {
-       $ret="See TwinPages wiki:".
+       $ret=" wiki:".
          str_replace(" ",":$pagename wiki:",dba_fetch($pagename,$this->metadb)).
          ":$pagename";
        #$dum=explode(" ",dba_fetch($pagename,$this->metadb));
@@ -747,7 +747,7 @@ class WikiDB {
     $okey=$this->getPageKey($pagename);
     $nkey=$this->getPageKey($new);
 
-    system("mv $okey $nkey");
+    rename($okey,$nkey);
     $comment=sprintf(_("Rename %s to %s"),$pagename,$new);
     $this->addLogEntry($new, $REMOTE_ADDR,$comment,"SAVE");
   }
@@ -1314,9 +1314,9 @@ class Formatter {
     if (isset($this->pagelinks[$page])) {
       $idx=$this->pagelinks[$page];
       if ($idx == -1) return "<a href='$url'>$word</a>";
-      if ($idx == 0) return "<a href='$url'>?</a>$word";
+      if ($idx == 0) return "<a class='nonexistent' href='$url'>?</a>$word";
       return "<a href='$url'>$word</a>".
-             "<sup><a href='#sister$idx'>$idx)</a></sup>";
+        "<tt class='sister'><a href='#sister$idx'>&#x203a;$idx</a></tt>";
     } else if ($DBInfo->hasPage($page)) {
       $this->pagelinks[$page]=-1;
       return "<a href='$url'>$word</a>";
@@ -1324,20 +1324,20 @@ class Formatter {
       if ($this->sister_on) {
         $sisters=$DBInfo->metadb->getSisterSites($page);
         if ($sisters) {
-          $this->sisters[]="<tt class='foot'><sup>&#160;&#160;&#160;".
+          $this->sisters[]="<tt class='foot'>&#160;&#160;&#160;".
                 "<a name='sister$this->sister_idx'></a>".
-                "<b>$this->sister_idx)</b>&#160;</sup></tt> ".
+                "$this->sister_idx&#160;</tt> ".
                 "$sisters <br/>";
           $this->pagelinks[$page]=$this->sister_idx++;
           $idx=$this->pagelinks[$page];
         }
         if ($idx > 0) {
           return "<a href='$url'>$word</a>".
-                "<sup><a href='#sister$idx'>$idx)</a></sup>";
+           "<tt class='sister'><a href='#sister$idx'>&#x203a;$idx</a></tt>";
         }
       }
       $this->pagelinks[$page]=0;
-      return "<a href='$url'>?</a>$word";
+      return "<a class='nonexistent' href='$url'>?</a>$word";
     }
   }
 
@@ -1464,7 +1464,13 @@ class Formatter {
          #$list_type="dd></dl";
          $list_type="div";
       $numtype='';
-    } else if (!$on && $close !=1)
+    } else if ($list_type=="dl") {
+      if ($on)
+         $list_type="dl";
+      else
+         $list_type="dd></dl";
+      $numtype='';
+    }  else if (!$on && $close !=1)
       $list_type=$list_type."></li";
     if ($on) {
       if ($numtype) {
@@ -1523,7 +1529,7 @@ class Formatter {
         $lines=array();
       if ($twins) {
         if ($lines) $lines[]="----";
-        $lines[]=$twins;
+        $lines[]=_("See TwinPages: ").$twins;
       }
     }
 
@@ -1654,6 +1660,12 @@ class Formatter {
              if ($limatch[3])
                $numtype.=substr($limatch[3],1);
              $indtype="ol";
+           } elseif (1 and preg_match("/^([^:]+)::\s/",$line,$limatch)) {
+             $line=preg_replace("/^[^:]+::\s/",
+                     "<dt class='wiki'>".$limatch[1]."</dt><dd>",$line);
+             if ($indent_list[$in_li] == $indlen) $line="</dd>\n".$line;
+             $numtype="";
+             $indtype="dl";
            }
          }
          if ($indent_list[$in_li] < $indlen) {
@@ -2676,11 +2688,11 @@ if ($pagename) {
       if ($twins) {
         $formatter->send_title($page->name,"",$options);
         #$formatter->send_page($twins."\n----\n");
-        $formatter->send_page($twins);
-        echo "<br /><br />or ".
+        $formatter->send_page(_("See TwinPages: ").$twins);
+        echo "<br />or ".
           $formatter->link_to("?action=edit",_("Create this page"));
       } else {
-        $formatter->send_title($page->name." Not Found","",$options);
+        $formatter->send_title(sprintf("%s Not Found",$page->name),"",$options);
         print $formatter->link_to("?action=edit",_("Create this page"));
         print macro_LikePages($formatter,$page->name);
 
