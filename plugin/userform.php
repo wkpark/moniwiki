@@ -50,6 +50,7 @@ function do_userform($formatter,$options) {
       $user=$userdb->getUser($id);
       if ($user->checkPasswd($options['password'])=== true) {
         $options['msg'] = sprintf(_("Successfully login as '%s'"),$id);
+        $options['id']=$user->id;
         $formatter->header($user->setCookie());
 
         $userdb->saveUser($user); # XXX
@@ -93,6 +94,7 @@ function do_userform($formatter,$options) {
 
            if ($udb->isNotUser($user)) {
              $title= _("Successfully added!");
+             $options['id']=$user->id;
              $ticket=md5(time().$user->id.$options['email']);
              $user->info['eticket']=$ticket.".".$options['email'];
              $formatter->header($user->setCookie());
@@ -110,6 +112,7 @@ function do_userform($formatter,$options) {
              $user=$udb->getUser($user->id);
              if ($user->checkPasswd($options['password'])=== true) {
                $options['msg'].= sprintf(_("Successfully login as '%s'"),$id);
+               $options['id']=$user->id;
                $formatter->header($user->setCookie());
                $udb->saveUser($user); # XXX
              } else {
