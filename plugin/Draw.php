@@ -6,7 +6,6 @@
 // Usage: [[Draw(hello)]]
 //
 // $Id$
-// vim:et:ts=2:
 
 function macro_Draw($formatter,$value) {
   global $DBInfo;
@@ -28,7 +27,7 @@ function macro_Draw($formatter,$value) {
   return "<a href='$url'><img src='$DBInfo->url_prefix/$hotdraw_dir/$gifname' alt='hotdraw'></a>\n";
 }
 
-function do_Draw($formatter,$options) {
+function do_post_Draw($formatter,$options) {
   global $DBInfo;
 
   $hotdraw_dir=str_replace("./",'',$DBInfo->upload_dir.'/Draw');
@@ -37,27 +36,24 @@ function do_Draw($formatter,$options) {
   $name=$options['value'];
 
   if ($_FILES['filepath']) {
-  #if ($options['filepath']) {
     $upfile=$_FILES['filepath']['tmp_name'];
     $temp=explode("/",$_FILES['filepath']['name']);
     $file_path=$hotdraw_dir."/".$temp[count($temp)-1];
-    #$upfile=$options['filepath'];
-    #$file_path=$hotdraw_dir."/Draw_".$name;
 
     $test=@copy($upfile, $file_path);
     if (!$test) {
       $title=sprintf(_("Fail to copy \"%s\" to \"%s\""),$upfilename,$file_path);
-      $formatter->send_header("",$options);
+      $formatter->send_header("Status: 406 Not Acceptable",$options);
       $formatter->send_title($title,"",$options);
       return;
     }
     chmod($file_path,0644);
-    exit;
+    return;
   }
 
   if (!$name) {
     $title=_("Fatal error !");
-    $formatter->send_header("",$options);
+    $formatter->send_header("Status: 406 Not Acceptable",$options);
     $formatter->send_title($title,"",$options);
     print "<h2>"._("No filename given")."</h2>";
     $formatter->send_footer("",$options);
@@ -107,4 +103,5 @@ APPLET;
   return;
 }
 
+// vim:et:sts=2:
 ?>
