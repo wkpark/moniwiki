@@ -35,6 +35,7 @@ function macro_FullSearch($formatter="",$value="", $opts=array()) {
   $needle=$value;
   if ($value === true) {
     $needle = $value = $formatter->page->name;
+    $options['noexpr']=1;
   } else {
     # for MoinMoin compatibility with [[FullSearch("blah blah")]]
     #$needle = preg_replace("/^('|\")([^\\1]*)\\1/","\\2",$value);
@@ -139,10 +140,11 @@ EOF;
        if ($count) {
          # search matching contexts
          $context= find_needle($body,$needle,$excl_needle,$opts['context']);
-         if ($context) {
+         if ($opts['context'] and $context) {
            $contexts[$page_name] = $context;
            $hits[$page_name] = $count;
-         }
+         } else
+           $hits[$page_name] = $count;
        }
      }
   }
