@@ -1585,7 +1585,8 @@ class Formatter {
     case '$':
       #return processor_latex($this,"#!latex\n".$url);
       $url=preg_replace('/<\/?sup>/','^',$url);
-      return $this->processor_repl($this->inline_latex,$url);
+      $opt=array('type'=>'inline');
+      return $this->processor_repl($this->inline_latex,$url,$opt);
       break;
     case '#': # Anchor syntax in the MoinMoin 1.1
       $anchor=strtok($url,' ');
@@ -2597,6 +2598,7 @@ class Formatter {
           $plain=1;
       }
     }
+    #$this->header('Content-type: application/xhtml+xml');
 
     if (isset($this->pi['#noindex'])) {
       $metatags='<meta name="robots" content="noindex,nofollow" />';
@@ -2633,14 +2635,15 @@ class Formatter {
           htmlspecialchars($options['title']);
       }
       if (empty($options['css_url'])) $options['css_url']=$DBInfo->css_url;
-      print <<<EOS
+      if ($DBInfo->doctype) print $DBInfo->doctype;
+      else
+        print <<<EOS
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
   <meta http-equiv="Content-Type" content="text/html;charset=$DBInfo->charset" /> 
-  $metatags
-  $keywords
 EOS;
+      print $metatags."\n".$keywords;
       print "  <title>$DBInfo->sitename: ".$options['title']."</title>\n";
       if ($upper)
         print '  <link rel="Up" href="'.$this->link_url($upper)."\" />\n";
