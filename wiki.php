@@ -520,6 +520,8 @@ class WikiDB {
     $this->icon['user']="UserPreferences";
     $this->icon['home']="<img src='$imgdir/$iconset-home.gif' alt='M' align='middle' border='0' />";
     $this->icon['main']="<img src='$imgdir/$iconset-main.gif' alt='^' align='middle' border='0' />";
+    $this->icon['print']="<img src='$imgdir/$iconset-print.gif' alt='P' align='middle' border='0' />";
+    $this->icon['attach']="<img src='$imgdir/$iconset-attach.gif' alt='@' align='middle' border='0' />";
     $this->icon_sep=" ";
     $this->icon_bra=" ";
     $this->icon_cat=" ";
