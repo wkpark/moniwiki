@@ -28,7 +28,7 @@ $use_hostname= 1;
 $iconset= 'moni';
 $enable_latex=0;
 $lang='auto';
-$charset='euc-kr';
+$charset='utf-8';
 #$charset='utf-8';
 $auto_linebreak= 0;
 $trail= 0;
@@ -40,7 +40,8 @@ $use_sistersites=1;
 $use_twinpages=1;
 $use_trackback=0;
 $vim_options='+"set expandtab" +"retab"';
-#$nonexists='fancy_nonexists';
+#$vim_options='+"set encoding=UTF-8"';
+#$nonexists='fancy';
 #$nonexists='nolink';
 #$nonexists='forcelink';
 #$use_titlecache=0;
@@ -59,6 +60,10 @@ $vim_options='+"set expandtab" +"retab"';
 #$theme_css=1;
 #$blog_comments=1;
 
+#$date_fmt='Y-m-d';
+#$date_fmt_rc='Y-m-d';
+#$date_fmt_blog='Y-m-d';
+
 #$sistermap=$data_dir.'/sistermap.txt';
 #$metatags='
 #<meta name="ROBOTS" content="NOINDEX,NOFOLLOW" />
@@ -75,7 +80,9 @@ $vim_options='+"set expandtab" +"retab"';
 #$diffonly=1;
 #$goto_type=1;
 
-#$purple_icon='<img src="/wiki/imgs/egg.png" border="0" />';
+#$purple_icon=''; # obsolute
+#$use_purple='';
+#$perma_icon='<img src="/wiki/imgs/egg.png" border="0" />';
 #$pagetype=array("KldpDsl"=>"plain","ManPage"=>"/man","DocbookSgml"=>"/jade","LinuxDoc"=>"/linuxdoc");
 #$default_dsssl='to_dir/kldp.dsl';
 
@@ -84,8 +91,9 @@ $vim_options='+"set expandtab" +"retab"';
 
 #$processors=array('latex'=>'latex');
 #$inline_latex='mimetex';
+#$inline_latex='latex';
+#$inline_latex='1';
 
 #$url_schemas='mms';
-#$vim_options='+"set encoding=utf-8"';
 #$blacklist='127.0.0.0/24:192.168.1.0/24:192.168.1.67';
 ?>

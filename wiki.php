@@ -437,6 +437,8 @@ class WikiDB {
     $this->use_smileys=1;
     $this->hr="<hr class='wikiHr' />";
     $this->date_fmt= 'Y-m-d';
+    $this->date_fmt_rc= 'D d M Y';
+    $this->date_fmt_blog= 'M d, Y';
     $this->datetime_fmt= 'Y-m-d H:i:s';
     #$this->changed_time_fmt = ' . . . . [h:i a]';
     $this->changed_time_fmt= ' [h:i a]'; # used by RecentChanges macro
