@@ -2069,8 +2069,8 @@ class Formatter {
             # new formatting rule for a quote block (pre block + wikilinks)
             $line[$p+3]=" ";
             $np=1;
-            if ($line[$p+4]=='#') {
-              $pre_style=strtok(substr($line,$p+5),' ');
+            if ($line[$p+4]=='#' or $line[$p+4]=='.') {
+              $pre_style=strtok(substr($line,$p+4),' ');
               $np++;
               if ($pre_style) $np+=strlen($pre_style);
             } else
@@ -2210,11 +2210,22 @@ class Formatter {
             $pre=str_replace("<","&lt;",$this->pre_line);
             $pre=preg_replace($this->baserule,$this->baserepl,$pre);
             $pre=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$pre);
-            $class='quote';
-            if ($pre_style) $class=$pre_style;
+            $attr='class="quote"';
+            if ($pre_style) {
+              $tag=$pre_style[0];
+              $style=substr($pre_style,1);
+              switch($tag) {
+              case '#':
+                $attr="id='$style'";
+                break;
+              case '.':
+                $attr="class='$style'";
+                break;
+              }
+            }
             #if ($pre_style) $class.=' '.$pre_style;
             #if ($pre_style) $class=$pre_style.' '.$class;
-            $line="<pre class=\"$class\">\n".$pre."</pre>\n".$line;
+            $line="<pre $attr>\n".$pre."</pre>\n".$line;
             $in_quote=0;
          } else {
             # htmlfy '<'
