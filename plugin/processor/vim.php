@@ -25,9 +25,9 @@ function processor_vim($formatter,$value,$options) {
     list($line,$value)=explode("\n",$value,2);
   # get parameters
   if ($line)
-    list($tag,$type,$extra)=explode(" ",$line,3);
+    list($tag,$type,$extra)=preg_split('/\s+/',$line,3);
   $src=$value;
-  if (!$type) $type='nosyntax';
+  if (!preg_match('/^\w$/',$type)) $type='nosyntax';
 
   if ($extra == "number") 
     $option='+"set number" ';
@@ -49,8 +49,7 @@ function processor_vim($formatter,$value,$options) {
     #return join('',file($cache_dir."/$uniq".".html"));
   }
 
-  # comment out the following two lines to freely use any syntaxes.
-  if (!in_array($type,$syntax)) 
+  if (!empty($DBInfo->vim_nocheck) and !in_array($type,$syntax)) 
     return "<pre class='code'>\n$line\n$src\n</pre>\n";
 
   if(getenv("OS")=="Windows_NT") {
