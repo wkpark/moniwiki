@@ -130,7 +130,9 @@ function generate_item($formatter, $log)
   $url=qualifiedUrl($formatter->link_url(_urlencode($page)));
 
   /* RFC 822 date format for RSS 2.0 */
-  $pubDate=gmdate("D, j M Y H:i:s T",strtotime($date));
+  $date[10]=' ';
+  $zone='+0000';
+  $pubDate=gmdate("D, j M Y H:i:s T",strtotime(substr($date,0,19).$zone));
 
   /* purple link */
   $tag=md5($user." ".$date." ".$title);
