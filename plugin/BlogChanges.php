@@ -233,7 +233,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
     $options['category']=
       preg_replace('/(?<!\.|\)|\])\*/','.*',$options['category']);
     
-    $test=@preg_match("/$options[category]/",'');
+    $test=@preg_match("/".str_replace('/','\/',$options['category'])."/",'');
     if ($test === false) {
       return '[[BlogChanges('.
         sprintf(_("Invalid category expr \"%s\""),$options['category']).')]]';
