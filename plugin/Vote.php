@@ -37,8 +37,8 @@ function macro_Vote($formatter,$value) {
 <input type='hidden' name='action' value='vote' />";
   $out.="<table class='vote'>\n";
   while (list($item,$count)= each($votes)) {
-    if ($total > 0) $ratio=$count/$total;
-    $bar_width=(int) ($ratio * 100);
+    if ($total > 0) $ratio= 100 * $count/$total;
+    $bar_width=intval($ratio);
 
     $bar=$bra_bar.
          "<img width='$bar_width' height='14' src='$imgdir/mainbar.gif'>".
