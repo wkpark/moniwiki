@@ -51,11 +51,17 @@ function processor_blog($formatter,$value="",$options) {
       $date[10]=' ';
       $time=strtotime($date." GMT");
       $date= "@ ".date("m-d [h:i a]",$time);
-      $anchor= date("d",$time);
+      $pagename=$formatter->page->name;
+      $p=strrpos($pagename,'/');
+      if ($p and preg_match('/(\d{4})(-\d{1,2})?(-\d{1,2})?/',substr($pagename,$p),$match)) {
+        if ($match[3]) $anchor='';
+        else if ($match[2]) $anchor= date("d",$time);
+        else if ($match[1]) $anchor= date("md",$time);
+      } else
+        $anchor= date("Ymd",$time);
       if ($date_anchor != $anchor) {
         $datetag= "<div class='blog-date'>".date("M d, Y",$time)." <a name='$anchor' id='$anchor'></a><a class='purple' href='#$anchor'>$formatter->purple_icon</a></div>";
         $date_anchor= $anchor;
-
       }
     }
     $md5sum=md5(substr($line,7));
