@@ -2511,35 +2511,45 @@ class Formatter {
     global $DBInfo;
 
     if (!$text) return '';
-    # save new
-    $tmpf3=tempnam($DBInfo->vartmp_dir,'MERGE_NEW');
-    $fp= fopen($tmpf3, 'w');
-    fwrite($fp, $text);
-    fclose($fp);
-
     # recall old rev
     $opts['rev']=$this->page->get_rev();
-   
     $orig=$this->page->get_raw_body($opts);
-    $tmpf2=tempnam($DBInfo->vartmp_dir,'MERGE_ORG');
-    $fp= fopen($tmpf2, 'w');
-    fwrite($fp, $orig);
-    fclose($fp);
 
-    $fp=popen("merge -p ".$this->page->filename." $tmpf2 $tmpf3",'r');
+    if (0) {
+      # save new
+      $tmpf3=tempnam($DBInfo->vartmp_dir,'MERGE_NEW');
+      $fp= fopen($tmpf3, 'w');
+      fwrite($fp, $text);
+      fclose($fp);
 
-    if (!$fp) {
+      $tmpf2=tempnam($DBInfo->vartmp_dir,'MERGE_ORG');
+      $fp= fopen($tmpf2, 'w');
+      fwrite($fp, $orig);
+      fclose($fp);
+
+      $fp=popen("merge -p ".$this->page->filename." $tmpf2 $tmpf3",'r');
+
+      if (!$fp) {
+        unlink($tmpf2);
+        unlink($tmpf3);
+        return '';
+      }
+      while (!feof($fp)) {
+        $line=fgets($fp,1024);
+        $out .= $line;
+      }
+      pclose($fp);
       unlink($tmpf2);
       unlink($tmpf3);
-      return '';
+    } else {
+      include_once('lib/diff3.php');
+      # current
+      $current=$this->page->_get_raw_body();
+
+      $merge= new Diff3(explode("\n",$orig),
+        explode("\n",$text),explode("\n",$current));
+      $out=implode("\n",$merge->merged_output());
     }
-    while (!feof($fp)) {
-      $line=fgets($fp,1024);
-      $out .= $line;
-    }
-    pclose($fp);
-    unlink($tmpf2);
-    unlink($tmpf3);
 
     $out=preg_replace("/(<{7}|>{7}).*\n/","\\1\n",$out);
 
