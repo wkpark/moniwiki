@@ -899,6 +899,10 @@ class WikiDB {
     $keyname=$this->_getPageKey($new);
 
     rename($okey,$nkey);
+    $newdir=$this->upload_dir.'/'.$keyname;
+    if (!file_exists($newdir))
+      rename($this->upload_dir.'/'.$this->_getPageKey($pagename),$newdir);
+
     if ($options['history'] && $this->version_class) {
       $class=getModule('Version',$this->version_class);
       $version=new $class ($this);
