@@ -32,7 +32,7 @@ function macro_login($formatter,$value="",$options="") {
 <input type="hidden" name="action" value="userform" />
 <table border='0' cellpadding='0' cellspacing='0'>
 <tr><td align='right'><font size='-1'>$login</font></td><td><input name='login_id' size='10' /></td></tr>
-<tr><td align='right'><font size='-1'>$pass</font></td><td><input name='login_passwd' type='password' size='10' /></td></tr>
+<tr><td align='right'><font size='-1'>$pass</font></td><td><input name='password' type='password' size='10' /></td></tr>
 <tr><td align='right'><a href='$url'>$join</a></td><td><input type='submit' value='$button' /></td></tr>
 </table>
 </form>
