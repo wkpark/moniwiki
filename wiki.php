@@ -433,7 +433,7 @@ class WikiDB {
     $this->logo_img= $this->imgs_dir.'/moniwiki-logo.gif';
     $this->logo_page= $this->frontpage;
     $this->logo_string= '<img src="'.$this->logo_img.'" alt="[logo]" border="0" align="middle" />';
-    $this->metatags='<meta name="ROBOTS" content="NOINDEX,NOFOLLOW" />';
+    $this->metatags='<meta name="robots" content="noindex,nofollow" />';
     $this->use_smileys=1;
     $this->hr="<hr class='wikiHr' />";
     $this->date_fmt= 'Y-m-d';
@@ -1329,7 +1329,7 @@ class Formatter {
 
   function get_instructions($body="") {
     global $DBInfo;
-    $pikeys=array('#redirect','#action','#title','#keywords');
+    $pikeys=array('#redirect','#action','#title','#keywords','#noindex');
     $pi=array();
     if (!$body) {
       if (!$this->page->exists()) return '';
@@ -1372,7 +1372,7 @@ class Formatter {
         #list($key,$val,$args)= explode(" ",$line,2); # XXX
         list($key,$val)= explode(" ",$line,2); # XXX
         $key=strtolower($key);
-        if (in_array($key,$pikeys)) { $pi[$key]=$val; }
+        if (in_array($key,$pikeys)) { $pi[$key]=$val ? $val:1; }
         else $notused[]=$line;
       }
     }
@@ -2623,6 +2623,17 @@ class Formatter {
           $plain=1;
       }
     }
+
+    if (isset($this->pi['#noindex'])) {
+      $metatags='<meta name="robots" content="noindex,nofollow" />';
+    } else {
+      if ($options['metatags'])
+        $metatags=$options['metatags'];
+      else {
+        $metatags=$DBInfo->metatags;
+      }
+    }
+
     if (isset($options['trail']))
       $this->set_trailer($options['trail'],$this->page->name);
     else if ($DBInfo->origin)
@@ -2653,7 +2664,7 @@ class Formatter {
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
   <meta http-equiv="Content-Type" content="text/html;charset=$DBInfo->charset" /> 
-  $DBInfo->metatags
+  $metatags
   $keywords
 EOS;
       print "  <title>$DBInfo->sitename: ".$options['title']."</title>\n";
@@ -3347,7 +3358,7 @@ if ($pagename) {
   }
 
   if ($action) {
-    $DBInfo->metatags='<meta name="ROBOTS" content="NOINDEX,NOFOLLOW" />';
+    $options['metatags']='<meta name="robots" content="noindex,nofollow" />';
 
     if (!$DBInfo->security->is_allowed($action,&$options)) {
       $msg=sprintf(_("You are not allowed to '%s'"),$action);
