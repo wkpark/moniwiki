@@ -8,67 +8,54 @@
 #------(last two arguments are optional)----------------------------------------
 #-------------------------------------------------------------------------------
 # $Id$
-function day_func($year,$month,$day,$pagename) {
-	global $DBInfo;
-	static $today;
-	if (!$today) $today=date("d");
-	if ($day==$today) {
-		$exists='today" bgcolor="white';
-		$nonexists='today" bgcolor="white';
-	} else {
-		$exists='wiki';
-		$nonexists='day" bgcolor="lightyellow';
-	}
-
-	$link="$pagename/".sprintf("%04d-%02d-%02d", $year, $month, $day);
-	if ($DBInfo->hasPage($link))
-	  return array($link, $exists, $day);
-	else
-	  return array($link, $nonexists, $day);
-}
 
 function macro_Calendar($formatter,$value="",$option="") {
+	global $DBInfo;
+	static $day_headings= array('Sunday','Monday','Tuesday','Wednesday',
+		'Thursday','Friday','Saturday');
+	$day_heading_length = 3;
 
-	$test=preg_match("/^(\d{4})-(\d{2})$/",$value,$match);
-        if ($test) {
-		$year= $match[1];
-		$month= $match[2];
-        } else {
-#	$year, $month;
+	preg_match("/^((\d{4})-(\d{2}))?,?\s*([a-z, ]+)?$/i",$value,$match);
+	if ($match[1]) {
+		$year= $match[2];
+		$month= $match[3];
+	} else {
 		$year= date('Y');
 		$month= date('m');
 	}
+	if ($match[4]) {
+    $args=explode(",",$match[4]);
+
+    if (in_array ("blog", $args)) $mode='blog';
+    if (in_array ("noweek", $args)) $day_heading_length=0;
+	}
+
 	if ($option)
 		$pagename=$option;
 	else
 		$pagename=$formatter->page->name;
-#   $day_func = NULL;
-#   $day_func = '
-#	if($GLOBALS["days"][$day-1]){
-#		return array("/" . sprintf("%04d-%02d-%02d", $year, $month, $day), &$GLOBALS["classes"][$day-1], &$GLOBALS["content"][$day-1]);
-#	}else{
-#		return false;
-#	}';
-	$day_heading_length = 3;
+
 	$first_of_month = mktime (0,0,0, $month, 1, $year);
 	#remember that mktime will automatically correct if invalid dates are entered
 	# for instance, mktime(0,0,0,12,32,1997) will be the date for Jan 1, 1998
 	# this provides a built in "rounding" feature to generate_calendar()
 
-	static $day_headings = array('Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday');
-	$maxdays   = date('t', $first_of_month); #number of days in the month
-	$date_info = getdate($first_of_month);   #get info about the first day of the month
-	$month     = $date_info['mon'];
-	$year      = $date_info['year'];
+	# number of days in the month
+	$maxdays= date('t', $first_of_month);
+	# get info about the first day of the month
+	$date_info= getdate($first_of_month);
 
-	$calendar  = "<table class=\"calendar\">\n";
+	$month= $date_info['mon'];
+	$year= $date_info['year'];
+	$today= date("d");
 
+	$calendar= "<table class=\"calendar\">\n";
 	#use the <caption> tag or just a normal table heading. Take your pick.
 	#http://diveintomark.org/archives/2002/07/03.html#day_18_giving_your_calendar_a_real_caption
 #	$calendar .= "<tr><th colspan=\"7\" class=\"month\">$date_info[month], $year</th></tr>\n";
-	$calendar .= "<caption class=\"month\">$date_info[month], $year</caption>\n";
+	$calendar.= "<caption class=\"month\">$date_info[month], $year</caption>\n";
 
-	#print the day headings "Mon", "Tue", etc.
+	# print the day headings "Mon", "Tue", etc.
 	# if day_heading_length is 4, the full name of the day will be printed
 	# otherwise, just the first n characters
 	if($day_heading_length > 0 and $day_heading_length <= 4){
@@ -88,28 +75,44 @@ function macro_Calendar($formatter,$value="",$option="") {
 	if($weekday > 0){$calendar .= "<td colspan=\"$weekday\">&nbsp;</td>";}
 
 	#print the days of the month
+	$link_prefix=sprintf("%04d-%02d",$year,$month);
+	if ($mode) {
+		$link=$pagename."/$link_prefix";
+		if (!$DBInfo->hasPage($link))
+			$action="?action=blog";
+	}
 	while ($day <= $maxdays){
 		if($weekday == 7){ #start a new week
 			$calendar .= "</tr>\n<tr>";
 			$weekday = 0;
 		}
-		#if a linking function is provided
-		if(function_exists('day_func')){
-			list($link, $classes, $content) = day_func($year,$month,$day,$pagename);
-			$calendar .= '<td' . ($classes ? " class=\"$classes\">" : '>') .
-				($link ? $formatter->link_tag($link,"",$day) : '') .
-#"<a href=\"$formatter->prefix/$link\">" : '') . 
-#				(isset($content) ? $content : $day) .
-#				($link ? '</a>' : '') .
-				'</td>';
-		}else{
-			$calendar .= "<td>$day</td>";
+
+		if ($day==$today) {
+			$exists='today" bgcolor="white';
+			$nonexists='today" bgcolor="white';
+			$classes=$nonexists;
+		} else {
+			$exists='wiki';
+			$nonexists='day" bgcolor="lightyellow';
+			$classes=$nonexists;
 		}
+
+		if (!$mode) {
+			$link=$pagename."/".$link_prefix."-".sprintf("%02d",$day);
+			if ($DBInfo->hasPage($link))
+				$classes=$exists;
+		} else if ($action[0] != '?') {
+			$action=sprintf("#%02d",$day);
+		}
+
+		$calendar.= '<td'.($classes ? " class=\"$classes\">" : '>').
+			($link ? $formatter->link_tag($link,$action,$day) : '').'</td>';
+
 		$day++;
 		$weekday++;
 	}
 	if($weekday != 7){
-		$calendar .= '<td colspan="' . (7 - $weekday) . '">&nbsp;</td>';
+		$calendar .= '<td colspan="'. (7 - $weekday).'">&nbsp;</td>';
 	}
 	return $calendar . "</tr>\n</table>\n";
 }
