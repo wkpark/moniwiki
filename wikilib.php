@@ -407,7 +407,7 @@ function do_rename($formatter,$options) {
   
   if (isset($options[passwd])) {
     $check=$DBInfo->admin_passwd==crypt($options[passwd],$DBInfo->admin_passwd);
-    if ($check && !$DBInfo->hasPage($options[value])) {
+    if ($check && $DBInfo->hasPage($options[page]) && !$DBInfo->hasPage($options[value])) {
       $DBInfo->renamePage($options[page],$options[value]);
       $title = sprintf('"%s" is renamed !', $options[page]);
       $formatter->send_header("",$options);
@@ -1503,7 +1503,10 @@ function macro_RecentChanges($formatter="",$value="") {
     } else
        $out.= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=diff&amp;date=$bookmark",$DBInfo->icon[diff]);
 
-    $out.= "&nbsp;&nbsp;".$formatter->link_tag($page_key,"",$page_name);
+    $title=preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$page_name);
+#    $title=$page_name;
+
+    $out.= "&nbsp;&nbsp;".$formatter->link_tag($page_key,"",$title);
     if (! empty($DBInfo->changed_time_fmt))
        $out.= date($DBInfo->changed_time_fmt, $ed_time);
 
@@ -1633,15 +1636,13 @@ function macro_TableOfContents($formatter="") {
 
    $TOC.=$close.$open."<dt><a id='toc$prefix-$num' name='toc$prefix-$num' /><a href='#s$prefix-$num'>$num</a> $head</dt>\n";
 
-#   print $TOC;
   }
 
   if ($TOC) {
      $close="";
      $depth=$head_dep;
-     # XXX
-     while ($depth>0) { $depth--;$close.="</dl></dd></dl>\n"; };
-     return $TOC.$close;
+     while ($depth>2) { $depth--;$close.="</dl></dd>\n"; };
+     return $TOC.$close."</dl></dd></dl>\n";
   }
   else return "";
 }
