@@ -573,10 +573,11 @@ function do_rss_rc($formatter,$options) {
          xmlns:dc="http://purl.org/dc/elements/1.1/"
          xmlns="http://purl.org/rss/1.0/">\n
 HEAD;
+  $url=qualifiedUrl($formatter->link_url("RecentChanges"));
   $channel=<<<CHANNEL
 <channel rdf:about="$URL">
   <title>$DBInfo->sitename</title>
-  <link>$URL/RecentChanges</link>
+  <link>$url</link>
   <description>
     RecentChanges at $DBInfo->sitename
   </description>
@@ -611,11 +612,12 @@ CHANNEL;
     $zone = $zone[0].$zone[1].$zone[2].":".$zone[3].$zone[4];
     $date = gmdate("Y-m-d\TH:i:s",$ed_time).$zone;
 
-    $channel.="    <rdf:li rdf:resource=\"$URL/$page_name\"/>\n";
+    $url=qualifiedUrl($formatter->link_url($page_name));
+    $channel.="    <rdf:li rdf:resource=\"$url\"/>\n";
 
-    $items.="     <item rdf:about=\"$URL/$page_name\">\n";
+    $items.="     <item rdf:about=\"$url\">\n";
     $items.="     <title>$page_name</title>\n";
-    $items.="     <link>$URL/$page_name</link>\n";
+    $items.="     <link>$url</link>\n";
     $items.="     <dc:date>$date</dc:date>\n";
     $items.="     <dc:contributor>\n<rdf:Description>\n"
           ."<rdf:value>$user</rdf:value>\n"
@@ -636,21 +638,23 @@ CHANNEL;
 #        $out.= $addr;
 #    }
   }
+  $url=qualifiedUrl($formatter->link_url($DBInfo->frontpage));
   $channel.= <<<FOOT
     </rdf:Seq>
   </items>
 </channel>
 <image rdf:about="$img_url">
 <title>$DBInfo->sitename</title>
-<link>$URL/FrontPage</link>
+<link>$url</link>
 <url>$img_url</url>
 </image>
 FOOT;
 
+  $url=qualifiedUrl($formatter->link_url("FindPage"));
   $form=<<<FORM
 <textinput>
 <title>Search</title>
-<link>$URL/FindPage</link>
+<link>$url</link>
 <name>goto</name>
 </textinput>
 FORM;
