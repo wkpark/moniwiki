@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0rc13';
+$_release = '1.0rc14';
 
 #ob_start("ob_gzhandler");
 
@@ -413,19 +413,21 @@ function getConfig($configfile, $options=array()) {
     return array();
   } 
 
-  $org=array();
-  # next line does not works exactly under php 4.1.2 with apache 1.3.xx
-  # while (list($key,$val)=each($options)) eval("\$$key=\"$val\";");
+  #while (list($key,$val)=each($options)) eval("\$$key=\"$val\";");
   foreach ($options as $key=>$val) eval("\$$key=\"$val\";");
-
-  $org=get_defined_vars();
+  unset($key,$val,$options);
   include($configfile);
-  $new=get_defined_vars();
-  $config=array_diff($new,$org);
+  $config=get_defined_vars();
+  unset($config['configfile']);
+#  $org=get_defined_vars();
+#  $new=get_defined_vars();
+#  $config=array_diff($new,$org);
+#  print_r($new);
+#  print_r($config);
 
-  $config['menu']=$menu;
-  $config['icons']=$icons;
-  $config['icon']=$icon;
+  if ($menu) $config['menu']=$menu;
+  if ($icons) $config['icons']=$icons;
+  if ($icon) $config['icon']=$icon;
 
   return $config;
 }
@@ -479,8 +481,11 @@ class WikiDB {
     # set user-specified configuration
     if ($config) {
        # read configurations
-       while (list($key,$val) = each($config))
+#       while (list($key,$val) = each($config)) {
+       foreach ($config as $key=>$val) {
           $this->$key=$val;
+#          print $key."=".$val."<br/>";
+       }
     }
 
     if (!$this->purge_passwd)
@@ -513,6 +518,9 @@ class WikiDB {
     $this->icon['updated']="<img src='$imgdir/$iconset-updated.gif' alt='U' align='middle' border='0' />";
     $this->icon['user']="UserPreferences";
     $this->icon['home']="<img src='$imgdir/$iconset-home.gif' alt='M' align='middle' border='0' />";
+    $this->icon_sep=" ";
+    $this->icon_bra="";
+    $this->icon_cat="";
     }
 
     if (!$this->icons) {
@@ -1113,14 +1121,16 @@ class Formatter {
   }
 
   function set_theme($theme="") {
+    global $DBInfo;
     if ($theme) {
       $this->themedir.="/theme/$theme";
       $this->themeurl.="/theme/$theme";
     }
-    $options[themedir]=$this->themedir;
-    $options[themeurl]=$this->themeurl;
+    $options['themedir']=$this->themedir;
+    $options['themeurl']=$this->themeurl;
     if (file_exists($this->themedir."/theme.php")) {
       $data=getConfig($this->themedir."/theme.php",$options);
+      #print_r($data);
 
       if ($data) {
       # read configurations
@@ -1129,12 +1139,19 @@ class Formatter {
       }
     }
     if (!$this->icon) {
-      global $DBInfo;
       $this->icon=&$DBInfo->icon;
 
       $this->icon_bra=$DBInfo->icon_bra;
       $this->icon_cat=$DBInfo->icon_cat;
       $this->icon_sep=$DBInfo->icon_sep;
+    }
+
+    if (!$this->menu) {
+      $this->menu=&$DBInfo->menu;
+
+      $this->menu_bra=$DBInfo->menu_bra;
+      $this->menu_cat=$DBInfo->menu_cat;
+      $this->menu_sep=$DBInfo->menu_sep;
     }
 
     if (!$this->icons) {
@@ -1354,7 +1371,7 @@ class Formatter {
       if ($idx == -1) return "<a href='$url'>$word</a>";
       if ($idx == 0) return "<a class='nonexistent' href='$url'>?</a>$word";
       return "<a href='$url'>$word</a>".
-        "<tt class='sister'><a href='#sister$idx'>&#x203a;$idx</a></tt>";
+        "<tt class='sister'><a href='#sister$idx'>&raquo;$idx</a></tt>";
     } else if ($DBInfo->hasPage($page)) {
       $this->pagelinks[$page]=-1;
       return "<a href='$url'>$word</a>";
@@ -1371,7 +1388,7 @@ class Formatter {
         }
         if ($idx > 0) {
           return "<a href='$url'>$word</a>".
-           "<tt class='sister'><a href='#sister$idx'>&#x203a;$idx</a></tt>";
+           "<tt class='sister'><a href='#sister$idx'>&raquo;$idx</a></tt>";
         }
       }
       $this->pagelinks[$page]=0;
@@ -2262,11 +2279,11 @@ EOS;
         $menu= _("NotEditable");
     } else
       $menu.= $this->link_to("",_("ShowPage"));
-    $menu.=$DBInfo->menu_sep.$this->link_tag("FindPage","",_("FindPage"));
+    $menu.=$this->menu_sep.$this->link_tag("FindPage","",_("FindPage"));
 
     if (!$args[noaction]) {
       foreach ($this->actions as $action)
-        $menu.= $DBInfo->menu_sep.$this->link_to("?action=$action",_($action));
+        $menu.= $this->menu_sep.$this->link_to("?action=$action",_($action));
     }
 
     if ($mtime=$this->page->mtime()) {
@@ -2344,30 +2361,30 @@ MSG;
 
     # navi bar
     $menu=array();
-    foreach ($DBInfo->menu as $item) {
+    foreach ($this->menu as $item) {
       #$menu=preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$DBInfo->menu);
       $menu[]=$this->link_tag($item,"",_($item));
     }
-    $menu=$DBInfo->menu_bra.join($DBInfo->menu_sep,$menu).$DBInfo->menu_cat;
+    $menu=$this->menu_bra.join($this->menu_sep,$menu).$this->menu_cat;
     # icons
     if ($upper)
-      $upper_icon=$this->link_tag($upper,'',$this->icon[upper])." ";
+      $upper_icon=$this->link_tag($upper,'',$this->icon['upper'])." ";
 
     $icons="";
     if (!$this->icons) {
-      $icons.=$this->link_to("?action=edit",$this->icon[edit])." ";
-      $icons.=$this->link_to("?action=diff",$this->icon[diff])." ";
-      $icons.=$this->link_to("",$this->icon[show])." ";
-      $icons.=$this->link_tag("FindPage",'',$this->icon[find])." ";
-      $icons.=$this->link_to("?action=info",$this->icon[info])." ";
-      $icons.=$this->link_tag("HelpContents",'',$this->icon[help])." ";
+      $icons.=$this->link_to("?action=edit",$this->icon['edit'])." ";
+      $icons.=$this->link_to("?action=diff",$this->icon['diff'])." ";
+      $icons.=$this->link_to("",$this->icon['show'])." ";
+      $icons.=$this->link_tag("FindPage",'',$this->icon['find'])." ";
+      $icons.=$this->link_to("?action=info",$this->icon['info'])." ";
+      $icons.=$this->link_tag("HelpContents",'',$this->icon['help'])." ";
     } else {
       $icon=array();
       foreach ($this->icons as $item)
         $icon[]=$this->link_tag($item[0],$item[1],$item[2]);
       $icons=$this->icon_bra.join($this->icon_sep,$icon).$this->icon_cat;
     }
-    $rss_icon.=$this->link_tag("RecentChanges","?action=rss_rc",$this->icon[rss])." ";
+    $rss_icon.=$this->link_tag("RecentChanges","?action=rss_rc",$this->icon['rss'])." ";
 
     # UserPreferences
     if ($options['id'] != "Anonymous") {
@@ -2457,6 +2474,8 @@ MSG;
        $datestamp= $options['datestamp'];
     else
        $datestamp= $this->page->mtime();
+
+    $raw_body = str_replace("<","&lt;",$raw_body);
 
     $preview_msg=_("Preview");
     $save_msg=_("Save");
