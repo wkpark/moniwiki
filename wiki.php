@@ -1231,6 +1231,7 @@ class Formatter {
       } else if ($body[0] == '#' and $body[1] =='!') {
         list($line, $body)= explode("\n", $body,2);
         list($format,$args)= explode(" ", substr($line,2),2);
+        $pi['args']=$args;
       }
 
       while ($body and $body[0] == '#') {
@@ -1696,17 +1697,19 @@ class Formatter {
     if ($body) {
       $pi=$this->get_instructions(&$body);
       if ($pi['#format']) {
-        print call_user_func("processor_".$pi['#format'],&$this,$body,$options);
+        if ($pi['args']) $pi_line="#!".$pi['#format']." $pi[args]\n";
+        print call_user_func("processor_".$pi['#format'],&$this,$pi_line.$body,$options);
         return;
       }
       $lines=explode("\n",$body);
     } else {
-      $body=$this->page->get_raw_body();
       #$pi=$this->get_instructions(&$body);
       $pi=$this->get_instructions();
+      $body=$this->page->get_raw_body();
       $this->pi=$pi;
       if ($pi['#format']) {
-        print call_user_func("processor_".$pi['#format'],&$this,$body,$options);
+        if ($pi['args']) $pi_line="#!".$pi['#format']." $pi[args]\n";
+        print call_user_func("processor_".$pi['#format'],&$this,$pi_line.$body,$options);
         return;
       }
 
@@ -1961,7 +1964,7 @@ class Formatter {
     if ($this->highlight) {
       $highlight=_preg_search_escape($this->highlight);
 
-      $colref=preg_split("/\s+/",$highlight);
+      $colref=preg_split("/\|/",$highlight);
       $highlight=join("|",$colref);
       $colref=array_flip(array_map("strtolower",$colref));
 
