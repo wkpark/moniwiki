@@ -29,20 +29,35 @@ function find_needle($body,$needle,$count=-1) {
 
 
 class UserDB {
+  var $users=array();
   function UserDB($WikiDB) {
     $this->user_dir=$WikiDB->data_dir.'/user';
   }
 
   function getUserList() {
+    if ($this->users) return $this->users;
+
     $users = array();
     $handle = opendir($this->user_dir);
     while ($file = readdir($handle)) {
       if (is_dir($this->user_dir."/".$file)) continue;
       if (preg_match('/^wu-([^\.]+)$/', $file,$match))
-        $users[$match[1]] = 1;
+        #$users[$match[1]] = 1;
+        $users[] = $match[1];
     }
     closedir($handle);
+    $this->users=$users;
     return $users; 
+  }
+
+  function getPageSubscribers($pagename) {
+    $users=$this->getUserList();
+    $subs=array();
+    foreach ($users as $id) {
+      $usr=$this->getUser($id);
+      if ($usr->isSubscribedPage($pagename)) $subs[]=$usr->info[email];
+    }
+    return $subs;
   }
 
   function addUser($user) {
@@ -199,6 +214,16 @@ class User {
           $ok|=8;
     }
     return $ok;
+  }
+
+  function isSubscribedPage($pagename) {
+    if (!$this->info[email] or !$this->info[subscribed_pages]) return 0;
+    $page_list=explode("\t",$this->info[subscribed_pages]);
+    $page_rule=join("|",$page_list);
+    if (preg_match('/('.$page_rule.')/',$pagename)) {
+      return true;
+    }
+    return false;
   }
 }
 
@@ -713,6 +738,7 @@ function do_subscribe($formatter,$options) {
     $udb=new UserDB($DBInfo);
     $userinfo=$udb->getUser($options[id]);
     $email=$userinfo->info[email];
+    #$subs=$udb->getPageSubscribers($options[page]);
   }
 
   if ($options[id] == 'Anonymous' or !$email) {
@@ -764,6 +790,73 @@ function do_subscribe($formatter,$options) {
 
 }
 
+function wiki_notify($formatter,$options) {
+  global $DBInfo;
+
+  $from= $options[id];
+#  if ($options[id] != 'Anonymous')
+#
+
+  $udb=new UserDB($DBInfo);
+  $subs=$udb->getPageSubscribers($options[page]);
+  if (!$subs) {
+    if ($options[noaction]) return 0;
+
+    $title=_("Nobody subscribed to this page, no mail sented.");
+    $formatter->send_header("",$options);
+    $formatter->send_title($title);
+    print "Fail !";
+    $formatter->send_footer("",$options);
+    return;
+  }
+
+  $diff="";
+  $option="-r".$formatter->page->get_rev();
+  $fp=popen("rcsdiff -u $option ".$formatter->page->filename,"r");
+  if (!$fp)
+    $diff="";
+  else {
+    while (!feof($fp)) {
+      $line=fgets($fp,1024);
+      $diff.= $line;
+    }
+    pclose($fp);
+  }
+
+  $mailto=join(", ",$subs);
+  $subject="[".$DBInfo->sitename."] ".sprintf(_("%s page is modified"),$options[page]);
+  
+  $mailheaders = "Return-Path: $from\r\n";
+  $mailheaders.= "From: $from\r\n";
+  $mailheaders.= "X-Mailer: MoniWiki form-mail interface\r\n";
+
+  $mailheaders.= "MIME-Version: 1.0\r\n";
+  $mailheaders.= "Content-Type: text/plain; charset=$DBInfo->charset\r\n";
+  $mailheaders.= "Content-Transfer-Encoding: 8bit\r\n\r\n";
+
+  $body=sprintf(_("You have subscribed to this wiki page on \"%s\" for change notification.\n\n"),$DBInfo->sitename);
+  $body.="-------- $options[page] ---------\n";
+  
+  $body.=$formatter->page->get_raw_body();
+  if (!$options[nodiff]) {
+    $body.="================================\n";
+    $body.=$diff;
+  }
+
+  mail($mailto,$subject,$body,$mailheaders);
+
+  if ($options[noaction]) return 1;
+
+  $title=_("Send mail notification to all subscribers");
+  $formatter->send_header("",$options);
+  $formatter->send_title($title);
+  $msg= str_replace("@"," at ",$mailto);
+  print "<h2>".sprintf(_("Mail sented successfully"))."</h2>";
+  printf(sprintf(_("mail sented to '%s'"),$msg));
+  $formatter->send_footer("",$options);
+  return;
+}
+
 function do_uploadfile($formatter,$options) {
   global $DBInfo;
   global $HTTP_POST_FILES;
@@ -812,7 +905,7 @@ function do_uploadfile($formatter,$options) {
      $title=sprintf(_("Fail to copy \"%s\" to \"%s\""),$upfilename,$file_path);
      $formatter->send_header("",$options);
      $formatter->send_title($title);
-     exit;
+     return;
   }
   chmod($file_path,0644); 
   
