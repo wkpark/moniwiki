@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0.3';
+$_release = '1.0.4';
 
 #ob_start("ob_gzhandler");
 
@@ -1763,7 +1763,7 @@ class Formatter {
     if ($extra) {
       $para=substr($extra,3,-1);
       # rowspan
-      if (preg_match("/^\|(\d)$/",$para,$match))
+      if (preg_match("/^\|(\d+)$/",$para,$match))
         $attr="rowspan='$match[1]' ";
       else if ($para[0]=='#')
         $attr="bgcolor='$para' ";
