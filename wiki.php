@@ -1362,7 +1362,7 @@ class Formatter {
     
     # set smily_rule,_repl
     if ($DBInfo->smileys) {
-      $smiley_rule='/(?<=\s|^)('.$DBInfo->smiley_rule.')(?=\s|$)/e';
+      $smiley_rule='/(?<=\s|^|>)('.$DBInfo->smiley_rule.')(?=\s|$)/e';
       $smiley_repl="\$this->smiley_repl('\\1')";
 
       $this->extrarule[]=$smiley_rule;
@@ -2178,8 +2178,8 @@ class Formatter {
     $wordrule="({{{([^}]+)}}})|".
               "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|"; # macro
     if ($DBInfo->inline_latex) # single line latex syntax
-      $wordrule.="(?<=\s|^)\\$([^\\$]+)\\$(?:\s|$)|".
-                 "(?<=\s|^)\\$\\$([^\\$]+)\\$\\$(?:\s|$)|";
+      $wordrule.="(?<=\s|^|>)\\$([^\\$]+)\\$(?:\s|$)|".
+                 "(?<=\s|^|>)\\$\\$([^\\$]+)\\$\\$(?:\s|$)|";
     #if ($DBInfo->builtin_footnote) # builtin footnote support
     $wordrule.=$this->footrule.'|';
     $wordrule.=$this->wordrule;
@@ -2405,8 +2405,10 @@ class Formatter {
             $line="<pre $attr>\n".$pre."</pre>\n".$line;
             $in_quote=0;
          } else {
-            # htmlfy '<'
-            $pre=str_replace("<","&lt;",$this->pre_line);
+            # htmlfy '<', '&'
+            $pre=str_replace(array('<','&'),
+                             array('&lt;','&amp;'),
+                            $this->pre_line);
             $line="<pre class='wiki'>\n".$pre."</pre>\n".$line;
          }
          $this->nobr=1;
@@ -3272,7 +3274,7 @@ if ($pagename) {
     }
   }
 
-  if (!$action or $action=='show') {
+  while (!$action or $action=='show') {
     if ($value) { # ?value=Hello
       $options['value']=$value;
       do_goto($formatter,$options);
@@ -3283,17 +3285,9 @@ if ($pagename) {
       return;
     }
     if (!$page->exists()) {
-      if ($DBInfo->auto_search) {
-        $npage=str_replace(' ','',$page->name);
-        if ($DBInfo->hasPage($npage)) {
-          $options['value']=$npage;
-          do_goto($formatter,$options);
-          return;
-        }
-        $options['value']=$page->name;
-        $options['check']=1;
-        if (do_titlesearch($formatter,$options))
-          return;
+      if ($DBInfo->auto_search && $action!='show' && $p=getPlugin($DBInfo->auto_search)) {
+        $action=$DBInfo->auto_search;
+        break;
       }
 
       $formatter->send_header("Status: 404 Not found",$options);
