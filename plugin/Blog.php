@@ -8,6 +8,21 @@
 // $Id$
 // vim:et:ts=2:
 
+function updateBlogList($formatter) {
+  global $DBInfo;
+  $body=$formatter->page->get_raw_body();
+  $cache=new Cache_text("blog");
+  $lines=explode("\n",$body);
+
+  $out=array();
+  foreach ($lines as $line) {
+    if (preg_match("/^{{{#!blog (.*)$/",$line,$match))
+      $out[]=$match[1];
+  }
+  $cache->update($formatter->page->name,join("\n",$out));
+  return;
+}
+
 function do_Blog($formatter,$options) {
   global $DBInfo;
   global $HTTP_USER_AGENT;
@@ -24,17 +39,21 @@ function do_Blog($formatter,$options) {
   $savetext="";
   if ($options['savetext']) {
     $savetext=stripslashes($options['savetext']);
-    $savetext=str_replace("}}}","\}}}",$savetext);
     $savetext=str_replace("\r","",$savetext);
     $savetext=str_replace("----\n","-''''''---\n",$savetext);
     $savetext=str_replace("<","&lt;",$savetext);
   }
   if (!$options['button_preview'] && $savetext) {
+    $savetext=preg_replace("/(?<!\\\\)}}}/","\}}}",$savetext);
+
     $options['title']=stripslashes($options['title']);
     $url=$formatter->link_tag($formatter->page->urlname,"",$options['page']);
     $options['msg']=sprintf(_("\"%s\" is updated"),$url);
 
-    $raw_body=$formatter->page->_get_raw_body();
+    if ($formatter->page->exists())
+      $raw_body=$formatter->page->_get_raw_body();
+    else
+      $raw_body="#action Blog "._("Add Blog")."\n\n##Blog\n";
     $lines=explode("\n",$raw_body);
     $count=count($lines);
 
@@ -45,7 +64,7 @@ function do_Blog($formatter,$options) {
       # add comment
       for ($i=0;$i<$count;$i++) {
         if (preg_match("/^{{{#!blog .*$/",$lines[$i])) {
-          if (md5(substr($lines[$i],3)) == $options['value']) {
+          if (md5(substr($lines[$i],10)) == $options['value']) {
             list($tag, $user, $date, $title) = explode(" ",$lines[$i],4);
             $found=1;
             break;
@@ -60,7 +79,10 @@ function do_Blog($formatter,$options) {
             break;
           }
         }
-        $lines[$i]="----\n$savetext -- $id @DATE@\n}}}";
+        if ($options['nosig'])
+          $lines[$i]="----\n$savetext\n}}}";
+        else
+          $lines[$i]="----\n$savetext -- $id @DATE@\n}}}";
         $raw_body=join("\n",$lines);
       } else {
         $formatter->send_title("Error: No entry found!","",$options);
@@ -87,7 +109,8 @@ function do_Blog($formatter,$options) {
     }
     
     $formatter->page->write($raw_body);
-    $DBInfo->savePage($formatter->page,$log,$options);
+    $DBInfo->savePage(&$formatter->page,$log,$options);
+    updateBlogList($formatter);
 
     $formatter->send_page();
   } else {
@@ -97,7 +120,7 @@ function do_Blog($formatter,$options) {
       $count=count($lines);
       for ($i=0;$i<$count;$i++) {
         if (preg_match("/^{{{#!blog .*$/",$lines[$i])) {
-          if (md5(substr($lines[$i],3)) == $options['value']) {
+          if (md5(substr($lines[$i],10)) == $options['value']) {
             list($tag, $user, $date, $title) = explode(" ",$lines[$i],4);
             $found=1;
             break;
@@ -121,13 +144,17 @@ function do_Blog($formatter,$options) {
     print <<<FORM
 <textarea class="wiki" id="content" wrap="virtual" name="savetext"
  rows="$rows" cols="$cols" style="width:100%">$savetext</textarea><br />
+FORM;
+    if ($options['value'])
+      print "<input name='nosig' type='checkbox' />"._("Don't add a signature")."<br />";
+    print <<<FORM2
 <input type="hidden" name="action" value="Blog" />
 <input type="submit" value="Save" />&nbsp;
 <input type="reset" value="Reset" />&nbsp;
 <input type="submit" name="button_preview" value="Preview" />
 $extra
 </form>
-FORM;
+FORM2;
   }
   $formatter->show_hints();
   print "<div class='hint'>"._("<b>horizontal rule</b> ---- does not applied on the blog mode.")."</div>";
