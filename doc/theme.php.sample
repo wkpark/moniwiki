@@ -19,6 +19,7 @@ $icon['user']="UserPreferences";
 $icon['home']="<img src='$imgdir/$iconset-home.gif' alt='M' align='middle' border='0' />";
 $icon['xml']="<img src='$imgdir/$iconset-xml.gif' alt='X' align='middle' border='0' />";
 $icon['print']="<img src='$imgdir/$iconset-print.gif' alt='P' align='middle' border='0' />";
+$icon['attach']="<img src='$imgdir/$iconset-attach.gif' alt='@' align='middle' border='0' />";
 
 $icon_sep=' ';
 $icon_cat=' ';
