@@ -71,6 +71,7 @@ function getPlugin($pluginname) {
 }
 
 function getProcessor($pro_name) {
+  global $DBInfo;
   static $processors=array();
   if ($processors) return $processors[strtolower($pro_name)];
 
@@ -78,8 +79,14 @@ function getProcessor($pro_name) {
   while ($file= readdir($handle)) {
     if (is_dir("plugin/processor/$file")) continue;
     $name= substr($file,0,-4);
+    if (($tname=$DBInfo->processors[$name])) {
+      if (!file_exists("plugin/processor/$tname.php")) $name='plain';
+      else $name=$DBInfo->processors[$name];
+    }
     $processors[strtolower($name)]= $name;
   }
+
+  #print_r($processors);
   return $processors[strtolower($pro_name)];
 }
 
@@ -469,6 +476,9 @@ class WikiDB {
     $this->pagetype=array();
     $this->smiley='wikismiley';
 
+    $this->inline_latex=0;
+    $this->processors=array();
+
     $this->purple_icon='#';
 #    $this->security_class="needtologin";
 
@@ -580,24 +590,23 @@ class WikiDB {
       $map=array_merge($map,file($this->sistermap));
 
     # read shared intermap
-    $shared_map=array();
-    if (file_exists($this->shared_intermap)) {
-      $shared_map=file($this->shared_intermap);
-    }
-    # merge
-    $map=array_merge($map,$shared_map);
+    if (file_exists($this->shared_intermap))
+      $map=array_merge($map,file($this->shared_intermap));
 
     for ($i=0;$i<sizeof($map);$i++) {
       $line=rtrim($map[$i]);
       if (!$line || $line[0]=="#" || $line[0]==" ") continue;
       if (preg_match("/^[A-Z]+/",$line)) {
-        $dum=split("[[:space:]]",$line);
-        $this->interwiki[$dum[0]]=trim($dum[1]);
-        $this->interwikirule.="$dum[0]|";
+        $wiki=strtok($line,' ');$url=strtok(' ');
+        $this->interwiki[$wiki]=trim($url);
+        $this->interwikirule.="$wiki|";
+        #$dum=split("[[:space:]]",$line);
+        #$this->interwiki[$dum[0]]=trim($dum[1]);
+        #$this->interwikirule.="$dum[0]|";
       }
     }
     $this->interwikirule.="Self";
-    $this->interwiki[Self]=get_scriptname().$this->query_prefix;
+    $this->interwiki['Self']=get_scriptname().$this->query_prefix;
   }
 
   function _getPageKey($pagename) {
@@ -1138,6 +1147,7 @@ class Formatter {
     $this->url_prefix= $DBInfo->url_prefix;
     $this->imgs_dir= $DBInfo->imgs_dir;
     $this->actions= $DBInfo->actions;
+    $this->inline_latex= $DBInfo->inline_latex;
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -1156,12 +1166,14 @@ class Formatter {
     $this->baserule=array("/<([^\s<>])/","/`([^`' ]+)'/","/(?<!`)`([^`]*)`/",
                      "/'''([^']*)'''/","/(?<!')'''(.*)'''(?!')/",
                      "/''([^']*)''/","/(?<!')''(.*)''(?!')/",
-                     "/\^([^ \^]+)\^(?:\s)/","/,,([^ ,]+),,(?:\s)/",
-                     "/__([^ _]+)__(?:\s)/","/^-{4,}/");
+                     "/\^([^ \^]+)\^(?=\s|$)/","/,,([^ ,]+),,(?=\s|$)/",
+                     "/--([^-]+)--(?=\s|$)/",
+                     "/__([^ _]+)__(?=\s|$)/","/^-{4,}/");
     $this->baserepl=array("&lt;\\1","&#96;\\1'","<tt class='wiki'>\\1</tt>",
                      "<b>\\1</b>","<b>\\1</b>",
                      "<i>\\1</i>","<i>\\1</i>",
                      "<sup>\\1</sup>","<sub>\\1</sub>",
+                     "<del>\\1</del>",
                      "<u>\\1</u>","<hr class='wiki' />\n");
 
     # NoSmoke's MultiLineCell hack
@@ -1178,7 +1190,7 @@ class Formatter {
     }
 
     #$punct="<\"\'}\]\|;,\.\!";
-    $punct="<\'}\]\|;\.\)\!"; # , is omitted for the WikiPedia
+    $punct="<\'}\]\|;\.\!"; # , is omitted for the WikiPedia
     $url="wiki|http|https|ftp|nntp|news|irc|telnet|mailto|file|attachment";
     $urlrule="((?:$url):([^\s$punct]|(\.?[^\s$punct]))+)";
     #$urlrule="((?:$url):(\.?[^\s$punct])+)";
@@ -1192,9 +1204,10 @@ class Formatter {
     # strict but slow
     #"\b(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
-    "\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+[^\(\)<>\s\',\.:\?\!]+)|".
-  # "(?<!\!|\[\[)\b(([A-Z]+[a-z0-9]+){2,})\b|".
-  # "(?<!\!|\[\[)((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})\b|".
+    #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+[^\(\)<>\s\',\.:\?\!]+)|".
+    "\b([A-Z][a-zA-Z]+):([^\(\)<>\s\']+[^\(\)<>\s\',\.:\?\!]+)|".
+    # "(?<!\!|\[\[)\b(([A-Z]+[a-z0-9]+){2,})\b|".
+    # "(?<!\!|\[\[)((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})\b|".
     # WikiName rule: WikiName ILoveYou (imported from the rule of NoSmoke)
     # protect WikiName rule !WikiName
     "(?<![a-z])\!?(?:\/?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b|".
@@ -1202,7 +1215,7 @@ class Formatter {
     "(?<!\[)\!?\[([^\[:,<\s][^\[:,>]{1,255})\](?!\])|".
     # bracketed with double quotes ["Hello World"]
     "(?<!\[)\!?\[\\\"([^\\\"]+)\\\"\](?!\])|".
-  # "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
+    # "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
     "($urlrule)|".
     # single linkage rule ?hello ?abacus
     #"(\?[A-Z]*[a-z0-9]+)";
@@ -1365,13 +1378,18 @@ class Formatter {
     }
     if ($url[0]=="{") {
       $url=substr($url,3,-3);
+      if ($url[0]=='#' and ($p=strpos($url,' '))) {
+        $col=strtok($url,' '); $url=strtok(' ');
+        if (!preg_match('/^#[0-9a-f]{6}$/',$col)) $col=substr($col,1);
+        return "<font color='$col'>$url</font>";
+      }
       return "<tt class='wiki'>$url</tt>"; # No link
     } else if ($url[0]=="[") {
       $url=substr($url,1,-1);
       return $this->macro_repl($url); # No link
     } else if ($url[0]=='$') {
       #return processor_latex($this,"#!latex\n".$url);
-      return $this->processor_repl('latex',$url);
+      return $this->processor_repl($this->inline_latex,$url);
     }
 
     if ($url[0]=="!") {
@@ -1383,8 +1401,9 @@ class Formatter {
         return $this->macro_repl('Attachment',substr($url,11));
       if (preg_match("/^mailto:/",$url)) {
         $url=str_replace("@","_at_",$url);
+        $link=str_replace('&','&amp;',$url);
         $name=substr($url,7);
-        return $this->icon['mailto']."<a href='$url' $attr>$name</a>";
+        return $this->icon['mailto']."<a href='$link' $attr>$name</a>";
       } else
       if (preg_match("/^(w|[A-Z])/",$url)) { # InterWiki or wiki:
         if (strpos($url," ")) { # have a space ?
@@ -1395,18 +1414,22 @@ class Formatter {
       } else
       if ($force or strpos($url," ")) { # have a space ?
         list($url,$text)=explode(" ",$url,2);
+        $link=str_replace('&','&amp;',$url);
         if (!$text) $text=$url;
-        else if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text))
-          return "<a href='$url' $attr title='$url'><img border='0' alt='$url' src='$text' /></a>";
+        else if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
+          $text=str_replace('&','&amp;',$text);
+          return "<a href='$link' $attr title='$url'><img border='0' alt='$url' src='$text' /></a>";
+        }
         list($icon,$dummy)=explode(":",$url,2);
-        return "<img align='middle' alt='[$icon]' src='".$this->imgs_dir."/$icon.png' />". "<a $attr href='$url'>$text</a>";
-      } else # have no space
+        return "<img align='middle' alt='[$icon]' src='".$this->imgs_dir."/$icon.png' />". "<a $attr href='$link'>$text</a>";
+      } # have no space
+      $link=str_replace('&','&amp;',$url);
       if (preg_match("/^(http|https|ftp)/",$url)) {
         if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$url))
-          return "<img alt='$url' src='$url' />";
-        return "<a $attr href='$url'>$url</a>";
+          return "<img alt='$link' src='$url' />";
+        return "<a $attr href='$link'>$url</a>";
       }
-      return "<a $attr href='$url'>$url</a>";
+      return "<a $attr href='$link'>$url</a>";
     } else {
       if ($url[0]=="?") $url=substr($url,1);
       return $this->word_repl($url,'',$attr);
@@ -1706,6 +1729,8 @@ class Formatter {
   function processor_repl($processor,$value,$options="") {
     if (!function_exists("processor_".$processor)) {
       $pf=getProcessor($processor);
+      if (!$pf)
+      return call_user_func('processor_plain',&$this,$value,$options);
       include_once("plugin/processor/$pf.php");
       $processor=$pf;
     }
@@ -1894,9 +1919,9 @@ class Formatter {
 
     $wordrule="({{{([^}]+)}}})|".
               "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|"; # macro
-    if ($DBInfo->enable_latex) # single line latex syntax
-      $wordrule.="\\$\s([^\\$]+)\\$(?:\s|$)|".
-                 "\\$\\$\s([^\\$]+)\\$\\$(?:\s|$)|";
+    if ($DBInfo->inline_latex) # single line latex syntax
+      $wordrule.="(?<=\s|^)\\$([^\\$]+)\\$(?:\s|$)|".
+                 "(?<=\s|^)\\$\\$([^\\$]+)\\$\\$(?:\s|$)|";
     $wordrule.=$this->wordrule;
 
     foreach ($lines as $line) {
@@ -2016,7 +2041,7 @@ class Formatter {
            } elseif (preg_match("/^((\d+|[aAiI])\.)(#\d+)?\s/",$line,$limatch)){
              $line=preg_replace("/^((\d+|[aAiI])\.(#\d+)?)/","<li>",$line);
              if ($indent_list[$in_li] == $indlen) $line="</li>\n".$line;
-             $numtype=$limatch[2];
+             $numtype=$limatch[2][0];
              if ($limatch[3])
                $numtype.=substr($limatch[3],1);
              $indtype="ol";
@@ -2146,6 +2171,8 @@ class Formatter {
     #if ($in_p) $close.="</div>\n"; # </para>
     if ($in_p) $close.=$this->_div(0,&$in_div); # </para>
 
+    # activate <del></del> tag
+    #$text=preg_replace("/(&lt;)(\/?del>)/i","<\\2",$text);
     $text.=$close;
   
     print $text;
