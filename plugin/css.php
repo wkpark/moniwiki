@@ -12,12 +12,12 @@ function do_css($formatter,$options) {
   if ($options['clear']) {
     if ($options['id']=='Anonymous') {
       header("Set-Cookie: MONI_CSS=dummy; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname());
-      $options[css_url]="";
+      $options['css_url']="";
     } else {
       # save profile
       $udb=new UserDB($DBInfo);
-      $userinfo=$udb->getUser($options[id]);
-      $userinfo->info[css_url]="";
+      $userinfo=$udb->getUser($options['id']);
+      $userinfo->info['css_url']="";
       $udb->saveUser($userinfo);
     }
   } else if ($options['save'] && $options['id']=="Anonymous" && isset($options['user_css'])) {
