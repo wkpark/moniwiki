@@ -33,6 +33,16 @@ function normalize($title) {
   return $title;
 }
 
+function getTicket() {
+  global $DBInfo;
+  $config=getConfig("config.php");
+  foreach ($config as $seed) {
+    if (!is_array($seed))
+      $md5.=md5($seed);
+  }
+  return md5($md5.time().$_SERVER['HTTP_HOST']);
+}
+
 function log_referer($referer,$page) {
   global $DBInfo;
   if (!$referer) return;
@@ -103,10 +113,13 @@ class UserDB {
   function saveUser($user) {
     $config=array("css_url","datatime_fmt","email","bookmark","language",
                   "name","password","wikiname_add_spaces","subscribed_pages",
-                  "quicklinks","theme","ticket");
+                  "quicklinks","theme","ticket","eticket");
 
     $date=date('Y/m/d', time());
     $data="# Data saved $date\n";
+
+    if ($user->ticket)
+      $user->info['ticket']=$user->ticket;
 
     foreach ($config as $key) {
       $data.="$key=".$user->info[$key]."\n";
@@ -123,6 +136,16 @@ class UserDB {
     if (file_exists("$this->user_dir/wu-$id"))
       return true;
     return false;
+  }
+
+  function checkUser($user) {
+    $tmp=$this->getUser($user->id);
+    if ($tmp->info['ticket'] != $user->ticket) {
+      $user->id='Anonymous';
+      return 1;
+    }
+    $user=$tmp;
+    return 0;
   }
 
   function getUser($id) {
@@ -158,7 +181,9 @@ class User {
         $this->setID($id);
         return;
      }
-     $this->setID($_COOKIE['MONI_ID']);
+     list($this->ticket,$id)=explode(".",$_COOKIE['MONI_ID'],2);
+
+     $this->setID($id);
      $this->css=$_COOKIE['MONI_CSS'];
      $this->theme=$_COOKIE['MONI_THEME'];
      $this->bookmark=$_COOKIE['MONI_BOOKMARK'];
@@ -171,6 +196,7 @@ class User {
         return true;
      }
      $this->id='Anonymous';
+     $this->ticket='';
      return false;
   }
 
@@ -184,10 +210,12 @@ class User {
   }
 
   function setCookie() {
+     $ticket=getTicket();
+     $this->ticket=$ticket;
      if ($this->id == "Anonymous") return false;
-     setcookie("MONI_ID",$this->id,time()+60*60*24*30,get_scriptname());
+     setcookie("MONI_ID",$ticket.'.'.$this->id,time()+60*60*24*30,get_scriptname());
      # set the fake cookie
-     $_COOKIE[MONI_ID]=$this->id;
+     $_COOKIE['MONI_ID']=$ticket.'.'.$this->id;
   }
 
   function unsetCookie() {
@@ -276,6 +304,8 @@ function do_highlight($formatter,$options) {
 }
 
 function do_diff($formatter,$options="") {
+  global $DBInfo;
+
   $range=$options['range'];
   $date=$options['date'];
   $rev=$options['rev'];
@@ -301,8 +331,10 @@ function do_diff($formatter,$options="") {
     print $formatter->get_diff($date);
   else
     print $formatter->get_diff($rev,$rev2);
-  print "<br /><hr />\n";
-  $formatter->send_page();
+  if (!$DBInfo->diffonly) {
+    print "<br /><hr />\n";
+    $formatter->send_page();
+  }
   $formatter->send_footer($args,$options);
   return;
 }
@@ -828,6 +860,8 @@ function do_post_savepage($formatter,$options) {
   } else {
     if ($options['category'])
       $savetext.="----\n$options[category]\n";
+
+    $comment=stripslashes($options['comment']);
     $formatter->page->write($savetext);
     $ret=$DBInfo->savePage($formatter->page,$comment,$options);
     if ($DBInfo->notify) {
@@ -1038,6 +1072,11 @@ function do_bookmark($formatter,$options) {
   global $_COOKIE;
 
   $user=new User(); # get cookie
+  if ($user->id != 'Anonymous') {
+    $udb=new UserDB($DBInfo);
+    $udb->checkUser(&$user);
+  }
+
   if (!$options['time']) {
      $bookmark=time();
   } else {
@@ -1050,10 +1089,8 @@ function do_bookmark($formatter,$options) {
       $_COOKIE['MONI_BOOKMARK']=$bookmark;
       $options['msg'] = 'Bookmark Changed';
     } else {
-      $udb=new UserDB($DBInfo);
-      $userinfo=$udb->getUser($user->id);
-      $userinfo->info['bookmark']=$bookmark;
-      $udb->saveUser($userinfo);
+      $user->info['bookmark']=$bookmark;
+      $udb->saveUser($user);
       $options['msg'] = 'Bookmark Changed';
     }
   } else
@@ -1090,16 +1127,21 @@ function do_userform($formatter,$options) {
   global $DBInfo;
 
   $user=new User(); # get cookie
+  if ($user->id != 'Anonymous') { # XXX
+    $udb=new UserDB($DBInfo);
+    $udb->checkUser(&$user);
+  }
   $id=$options['login_id'];
 
+  # e-mail conformation
   if ($options['ticket'] and $id and $id!='Anonymous') {
     $userdb=new UserDB($DBInfo);
     if ($userdb->_exists($id)) {
        $user=$userdb->getUser($id);
-       if ($user->info['ticket']==$options['ticket']) {
+       if ($user->info['eticket']==$options['ticket']) {
          list($dummy,$email)=explode('.',$options['ticket'],2);
          $user->info['email']=$email;
-         $user->info['ticket']='';
+         $user->info['eticket']='';
          $userdb->saveUser($user);
          $title=_("Successfully confirmed");
          $options['msg']=_("Your e-mail address is confirmed successfully");
@@ -1126,6 +1168,7 @@ function do_userform($formatter,$options) {
        if ($user->checkPasswd($options['login_passwd'])=== true) {
           $options['msg'] = sprintf(_("Successfully login as '%s'"),$id);
           $user->setCookie();
+          $userdb->saveUser($user); # XXX
        } else {
           $title = sprintf(_("Invalid password !"));
        }
@@ -1151,7 +1194,7 @@ function do_userform($formatter,$options) {
            if ($ret < 8)
               $options['msg']=_("Your password is too simple to use as a password !");
            $udb=new UserDB($DBInfo);
-           if (isset($options['email'])) {
+           if ($options['email']) {
              if (preg_match('/^[a-z][a-z0-9_]+@[a-z0-9_]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
                #$user->info['email']=$options['email'];
              } else
@@ -1161,20 +1204,24 @@ function do_userform($formatter,$options) {
            if ($udb->isNotUser($user)) {
               $title= _("Successfully added!");
               $ticket=md5(time().$user->id.$options['email']);
-              $user->info['ticket']=$ticket.".".$options['email'];
-              $ret=$udb->addUser($user);
+              $user->info['eticket']=$ticket.".".$options['email'];
               $user->setCookie();
+              $ret=$udb->addUser($user);
 
-              $options['subject']="[$DBInfo->sitename] "._("E-mail confirmation");
-              $body=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
-              $body=_("Please confirm your email address")."\n".$body;
-              wiki_sendmail($body,$options);
-              $options['msg'].='<br/>'._("E-mail confirmation mail sented");
+              # XXX
+              if ($options['email'] and preg_match('/^[a-z][a-z0-9_]+@[a-z0-9_]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
+                $options['subject']="[$DBInfo->sitename] "._("E-mail confirmation");
+                $body=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
+                $body=_("Please confirm your email address")."\n".$body;
+                wiki_sendmail($body,$options);
+                $options['msg'].='<br/>'._("E-mail confirmation mail sented");
+              }
            } else {# already exist user
               $user=$udb->getUser($user->id);
               if ($user->checkPasswd($options['password'])=== true) {
                   $options['msg'].= sprintf(_("Successfully login as '%s'"),$id);
                   $user->setCookie();
+                  $udb->saveUser($user); # XXX
               } else {
                   $title = _("Invalid password !");
               }
@@ -1213,14 +1260,15 @@ function do_userform($formatter,$options) {
     if ($options['email'] and ($options['email'] != $userinfo->info['email'])) {
       if (preg_match('/^[a-z][a-z0-9_]+@[a-z0-9_]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
         $ticket=md5(time().$userinfo->info['id'].$options['email']);
-        $userinfo->info['ticket']=$ticket.".".$options['email'];
+        $userinfo->info['eticket']=$ticket.".".$options['email'];
         $options['subject']="[$DBInfo->sitename] "._("E-mail confirmation");
         $body=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
         $body=_("Please confirm your email address")."\n".$body;
         wiki_sendmail($body,$options);
         $options['msg']=_("E-mail confirmation mail sented");
-      } else
+      } else {
         $options['msg']=_("Your email address is not valid");
+      }
     }
     if ($options['username'])
       $userinfo->info['name']=$options['username'];
@@ -1503,6 +1551,10 @@ function macro_UserPreferences($formatter="") {
   global $DBInfo;
 
   $user=new User(); # get from COOKIE VARS
+  if ($user->id != 'Anonymous') {
+    $udb=new UserDB($DBInfo);
+    $udb->checkUser(&$user);
+  }
   $url=$formatter->link_url("UserPreferences");
 
   if ($user->id == "Anonymous")
@@ -1527,8 +1579,8 @@ function macro_UserPreferences($formatter="") {
 </form>
 EOF;
 
-   $udb=new UserDB($DBInfo);
-   $user=$udb->getUser($user->id);
+   #$udb=new UserDB($DBInfo);
+   #$user=$udb->getUser($user->id);
    $css=$user->info['css_url'];
    $name=$user->info['name'];
    $email=$user->info['email'];
@@ -1991,12 +2043,15 @@ function macro_RecentChanges($formatter="",$value="") {
   if ($size > MAXSIZE) $size=DEFSIZE;
 
   $user=new User(); # retrive user info
+  if ($user->id != 'Anonymous') {
+    $udb=new UserDB($DBInfo);
+    $udb->checkUser(&$user);
+  }
+
   if ($user->id == 'Anonymous')
     $bookmark= $user->bookmark;
   else {
-    $udb=new UserDB($DBInfo);
-    $userinfo= $udb->getUser($user->id);
-    $bookmark= $userinfo->info['bookmark'];
+    $bookmark= $user->info['bookmark'];
   }
   if (!$bookmark) $bookmark=time();
 
@@ -2167,12 +2222,20 @@ function macro_FootNote($formatter,$value="") {
 }
 
 function macro_TableOfContents($formatter="",$value="") {
+ global $DBInfo;
  $head_num=1;
  $head_dep=0;
  $TOC="\n<div class='toc'><a name='toc' id='toc' /><dl><dd><dl>\n";
 
  $formatter->toc=1;
- $lines=explode("\n",$formatter->page->get_raw_body());
+ $baseurl='';
+ if ($value and $DBInfo->hasPage($value)) {
+   $p=$DBInfo->getPage($value);
+   $lines=explode("\n",$p->get_raw_body());
+   $baseurl=$formatter->link_url(_urlencode($value));
+   $formatter->page=&$p;
+ } else
+   $lines=explode("\n",$formatter->page->get_raw_body());
  foreach ($lines as $line) {
    $line=preg_replace("/\n$/", "", $line); # strip \n
    preg_match("/(?<!=)(={1,5})\s(#?)(.*)\s+(={1,5})$/",$line,$match);
@@ -2231,7 +2294,10 @@ function macro_TableOfContents($formatter="",$value="") {
    $head_dep=$depth; # save old
    $head_num=$num;
 
-   $TOC.=$close.$open."<dt><a id='toc$prefix-$num' name='toc$prefix-$num' /><a href='#s$prefix-$num'>$num</a> $head</dt>\n";
+   if ($baseurl)
+     $TOC.=$close.$open."<dt><a href='$baseurl#s$prefix-$num'>$num</a> $head</dt>\n";
+   else
+     $TOC.=$close.$open."<dt><a id='toc$prefix-$num' name='toc$prefix-$num' /><a href='#s$prefix-$num'>$num</a> $head</dt>\n";
 
   }
 
