@@ -19,10 +19,10 @@ function find_needle($body,$needle,$count=-1) {
   $out="";
   $matches=preg_grep("/($needle)/i",$lines);
   foreach ($matches as $line) {
-     $line=preg_replace("/($needle)/i","<strong>\\1</strong>",$line);
-     $out.="<br />\n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".$line;
-     $count--;
-     if ($count==0) break;
+    $line=preg_replace("/($needle)/i","<strong>\\1</strong>",$line);
+    $out.="<br />\n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".$line;
+    $count--;
+    if ($count==0) break;
   }
   return $out;
 }
@@ -30,16 +30,16 @@ function find_needle($body,$needle,$count=-1) {
 
 class UserDB {
   function UserDB($WikiDB) {
-     $this->user_dir=$WikiDB->data_dir.'/user';
+    $this->user_dir=$WikiDB->data_dir.'/user';
   }
 
   function getUserList() {
     $users = array();
     $handle = opendir($this->user_dir);
     while ($file = readdir($handle)) {
-       if (is_dir($this->user_dir."/".$file)) continue;
-       if (preg_match('/^wu-([^\.]+)$/', $file,$match))
-          $users[$match[1]] = 1;
+      if (is_dir($this->user_dir."/".$file)) continue;
+      if (preg_match('/^wu-([^\.]+)$/', $file,$match))
+        $users[$match[1]] = 1;
     }
     closedir($handle);
     return $users; 
@@ -47,7 +47,7 @@ class UserDB {
 
   function addUser($user) {
     if ($this->_exists($user->id))
-       return false;
+      return false;
     $this->saveUser($user);
     return true;
   }
@@ -60,7 +60,7 @@ class UserDB {
     $data="# Data saved $date\n";
 
     foreach ($config as $key) {
-       $data.="$key=".$user->info[$key]."\n";
+      $data.="$key=".$user->info[$key]."\n";
     }
 
     #print $data;
@@ -72,7 +72,7 @@ class UserDB {
 
   function _exists($id) {
     if (file_exists("$this->user_dir/wu-$id"))
-       return true;
+      return true;
     return false;
   }
 
@@ -284,22 +284,22 @@ function do_post_DeleteFile($formatter,$options) {
     $check=$DBInfo->admin_passwd==crypt($options[passwd],$DBInfo->admin_passwd);
     if ($check) {
       foreach ($options[files] as $file) {
-         $log.=sprintf("File '%s' is deleted<br />",$file);
+         $log.=sprintf(_("File '%s' is deleted")."<br />",$file);
          unlink($DBInfo->upload_dir."/".$file);
       }
-      $title = sprintf('Selected files are deleted !');
+      $title = sprintf(_("Selected files are deleted !"));
       $formatter->send_header("",$options);
       $formatter->send_title($title,"",$options);
       print $log;
       $formatter->send_footer();
       return;
     }
-    $title = sprintf('Invalid password !');
+    $title = sprintf(_("Invalid password !"));
   } else {
     if (!$options[files])
-      $title = sprintf('No files are selected !');
+      $title = sprintf(_("No files are selected !"));
     else
-      $title = sprintf('Invalid password !');
+      $title = sprintf(_("Invalid password !"));
   }
   $formatter->send_header("",$options);
   $formatter->send_title($title);
@@ -317,20 +317,20 @@ function do_DeletePage($formatter,$options) {
     $check=$DBInfo->admin_passwd==crypt($options[passwd],$DBInfo->admin_passwd);
     if ($check) {
       $DBInfo->deletePage($page);
-      $title = sprintf('"%s" is deleted !', $page->name);
+      $title = sprintf(_("\"%s\" is deleted !"), $page->name);
       $formatter->send_header("",$options);
       $formatter->send_title($title,"",$options);
       $formatter->send_footer();
       return;
     } else {
-      $title = sprintf('Fail to delete "%s" !', $page->name);
+      $title = sprintf(_("Fail to delete \"%s\" !"), $page->name);
       $formatter->send_header("",$options);
       $formatter->send_title($title);
       $formatter->send_footer();
       return;
     }
   }
-  $title = sprintf('Delete "%s" ?', $page->name);
+  $title = sprintf(_("Delete \"%s\" ?"), $page->name);
   $formatter->send_header("",$options);
   $formatter->send_title($title);
   print "<form method='post'>
@@ -368,13 +368,13 @@ function do_chmod($formatter,$options) {
       if ($options[write])
          $perms|=0200;
       $DBInfo->setPerms($options[page],$perms);
-      $title = sprintf('Permission of "%s" changed !', $options[page]);
+      $title = sprintf(_("Permission of \"%s\" changed !"), $options[page]);
       $formatter->send_header("",$options);
       $formatter->send_title($title,"",$options);
       $formatter->send_footer();
       return;
     } else {
-      $title = sprintf('Fail to chmod "%s" !', $options[page]);
+      $title = sprintf(_("Fail to chmod \"%s\" !"), $options[page]);
       $formatter->send_header("",$options);
       $formatter->send_title($title);
       $formatter->send_footer();
@@ -385,7 +385,7 @@ function do_chmod($formatter,$options) {
 
   $form=form_permission($perms);
 
-  $title = sprintf('Change permission of "%s"', $options[page]);
+  $title = sprintf(_("Change permission of \"%s\""), $options[page]);
   $formatter->send_header("",$options);
   $formatter->send_title($title);
 #<tr><td align='right'><input type='checkbox' name='show' checked='checked' />show only </td><td><input type='password' name='passwd'>
@@ -409,20 +409,20 @@ function do_rename($formatter,$options) {
     $check=$DBInfo->admin_passwd==crypt($options[passwd],$DBInfo->admin_passwd);
     if ($check && $DBInfo->hasPage($options[page]) && !$DBInfo->hasPage($options[value])) {
       $DBInfo->renamePage($options[page],$options[value]);
-      $title = sprintf('"%s" is renamed !', $options[page]);
+      $title = sprintf(_("\"%s\" is renamed !"), $options[page]);
       $formatter->send_header("",$options);
       $formatter->send_title($title,"",$options);
       $formatter->send_footer();
       return;
     } else {
-      $title = sprintf('Fail to rename "%s" !', $options[page]);
+      $title = sprintf(_("Fail to rename \"%s\" !"), $options[page]);
       $formatter->send_header("",$options);
       $formatter->send_title($title);
       $formatter->send_footer();
       return;
     }
   }
-  $title = sprintf('Rename "%s" ?', $options[page]);
+  $title = sprintf(_("Rename \"%s\" ?"), $options[page]);
   $formatter->send_header("",$options);
   $formatter->send_title($title);
 #<tr><td align='right'><input type='checkbox' name='show' checked='checked' />show only </td><td><input type='password' name='passwd'>
@@ -446,14 +446,14 @@ function do_RcsPurge($formatter,$options) {
   if ($DBInfo->purge_passwd && $options[passwd]) {
     $check=$DBInfo->purge_passwd==crypt($options[passwd],$DBInfo->purge_passwd);
     if (!$check) {
-      $title= sprintf('Invalid password to purge "%s" !', $options[page]);
+      $title= sprintf(_("Invalid password to purge \"%s\" !"), $options[page]);
       $formatter->send_header("",$options);
       $formatter->send_title($title);
       $formatter->send_footer();
       return;
     }
   } else if ($DBInfo->purge_passwd) {
-    $title= sprintf('You need to password to purge "%s"',$options[page]);
+    $title= sprintf(_("You need to password to purge \"%s\""),$options[page]);
     $formatter->send_header("",$options);
     $formatter->send_title($title);
     $args[noaction]=1;
@@ -465,7 +465,7 @@ function do_RcsPurge($formatter,$options) {
 #    do_goto($formatter,$options);
 #    return;
 #  }
-  $title= sprintf('RCS purge "%s"',$options[page]);
+  $title= sprintf(_("RCS purge \"%s\""),$options[page]);
   $formatter->send_header("",$options);
   $formatter->send_title($title);
   if ($options[range]) {
@@ -491,9 +491,9 @@ function do_fullsearch($formatter,$options) {
   $ret=$options;
 
   if ($options[backlinks])
-  $title= sprintf('BackLinks search for "%s"', $options[value]);
+    $title= sprintf(_("BackLinks search for \"%s\""), $options[value]);
   else
-  $title= sprintf('Full text search for "%s"', $options[value]);
+    $title= sprintf(_("Full text search for \"%s\""), $options[value]);
   $formatter->send_header("",$options);
   $formatter->send_title($title,$formatter->link_url("FindPage"));
 
@@ -501,7 +501,7 @@ function do_fullsearch($formatter,$options) {
   print $out;
 
   if ($options[value])
-    printf("Found %s matching %s out of %s total pages"."<br />",
+    printf(_("Found %s matching %s out of %s total pages")."<br />",
 	 $ret[hits],
 	($ret[hits] == 1) ? 'page' : 'pages',
 	 $ret[all]);
@@ -517,17 +517,13 @@ function do_goto($formatter,$options) {
   if ($options[value]) {
      $url=stripslashes($options[value]);
      $url=_rawurlencode($url);
-     #$url=$formatter->link_url($options[value]);
      $url=$formatter->link_url($url);
-     #print $url;
-     #return;
-     #$url=("&amp;","&",$options[value]);
      $formatter->send_header(array("Status: 302","Location: ".$url));
   } else if ($options[url]) {
      $url=str_replace("&amp;","&",$options[url]);
      $formatter->send_header(array("Status: 302","Location: ".$url));
   } else {
-     $title = 'Use more specific text';
+     $title = _("Use more specific text");
      $formatter->send_header("",$options);
      $formatter->send_title($title);
      $args[noaction]=1;
@@ -732,14 +728,14 @@ function do_uploadfile($formatter,$options) {
 
   $test=@copy($upfile, $file_path);
   if (!$test) {
-     $title="Fail to copy \"$upfilename\" to \"$file_path\"";
+     $title=sprintf(_("Fail to copy \"%s\" to \"%s\""),$upfilename,$file_path);
      $formatter->send_header("",$options);
      $formatter->send_title($title);
      exit;
   }
   chmod($file_path,0644); 
   
-  $title=sprintf('File "%s" is uploaded successfully',$upfilename);
+  $title=sprintf(_("File \"%s\" is uploaded successfully"),$upfilename);
   $formatter->send_header("",$options);
   $formatter->send_title($title);
   print "<ins>Uploads:$upfilename</ins>";
@@ -825,16 +821,16 @@ function do_userform($formatter,$options) {
     if ($userdb->_exists($id)) {
        $user=$userdb->getUser($id);
        if ($user->checkPasswd($options[login_passwd])=== true) {
-          $title = sprintf("Successfully login as '%s'",$id);
+          $title = sprintf(_("Successfully login as '%s'"),$id);
           $user->setCookie();
        } else {
-          $title = sprintf("Invalid password !");
+          $title = sprintf(_("Invalid password !"));
        }
     } else
-       $title= "Please enter a valid user ID!";
+       $title= _("Please enter a valid user ID !");
   } else if ($options[logout]) {
     $user->unsetCookie();
-    $title= "Cookie deleted!";
+    $title= _("Cookie deleted !");
   } else if ($user->id=="Anonymous" and $options[username] and $options[password] and $options[passwordagain]) {
 
     $id=$user->getID($options[username]);
@@ -848,24 +844,24 @@ function do_userform($formatter,$options) {
            else if ($ret==-2) $title= "not acceptable character found in the password!";
        } else {
            if ($ret < 8)
-              $opts[msg]="Password is too simple to use as a password!";
+              $opts[msg]=_("Password is too simple to use as a password !");
            $udb=new UserDB($DBInfo);
            $ret=$udb->addUser($user);
            if ($ret) {
-              $title= "Successfully added!";
+              $title= _("Successfully added!");
               $user->setCookie();
            } else {# already exist user
               $user=$udb->getUser($user->id);
               if ($user->checkPasswd($options[password])=== true) {
-                  $title = sprintf("Successfully login as '%s'",$id);
+                  $title = sprintf(_("Successfully login as '%s'"),$id);
                   $user->setCookie();
               } else {
-                  $title = sprintf("Invalid password !");
+                  $title = sprintf(_("Invalid password !"));
               }
            }
        }
     } else
-       $title= "Invalid username!";
+       $title= _("Invalid username !");
   } else if ($user->id != "Anonymous") {
     $udb=new UserDB($DBInfo);
     $userinfo=$udb->getUser($user->id);
@@ -1182,9 +1178,9 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
   $e_re="[A-Z][a-z0-9]+$";
 
   if ($metawiki)
-     $pages = $DBInfo->metadb->getAllPages();
+    $pages = $DBInfo->metadb->getAllPages();
   else
-     $pages = $DBInfo->getPageLists();
+    $pages = $DBInfo->getPageLists();
 
   $count=preg_match("/(".$s_re.")/",$pname,$match);
   if ($count) {
@@ -1291,14 +1287,14 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
   }
 
   if (!$hits) {
-    $out.="<h3>No similar pages found</h3>";
-    $opts[extra]="You are strongly recommened to find it in MetaWikis. ";
+    $out.="<h3>"._("No similar pages found")."</h3>";
+    $opts[extra]=_("You are strongly recommened to find it in MetaWikis. ");
   }
 
-  $opts[msg] = "Like \"$args\"";
+  $opts[msg] = sprintf(_("Like \"%s\""),$args);
 
   $prefix=get_scriptname();
-  $tag=$formatter->link_to("?action=LikePages&amp;metawiki=1","Search all MetaWikis");
+  $tag=$formatter->link_to("?action=LikePages&amp;metawiki=1",_("Search all MetaWikis"));
   $opts[extra].="$tag (Slow Slow)<br />";
 
   return $out;
@@ -1710,7 +1706,7 @@ EOF;
   }
   $test=@preg_match("/$needle/","",$match);
   if ($test === false) {
-     $opts[msg] = sprintf('Invalid search expression "%s"', $needle);
+     $opts[msg] = sprintf(_("Invalid search expression \"%s\""), $needle);
      return $form;
   }
 
@@ -1768,7 +1764,7 @@ EOF;
   }
   $out.= "</ul>\n";
 
-  $opts[msg]= sprintf('Full text search for "%s"', $needle);
+  $opts[msg]= sprintf(_("Full text search for \"%s\""), $needle);
   $opts[hits]= count($hits);
   $opts[all]= count($pages);
   return $out;
@@ -1852,16 +1848,18 @@ function macro_TitleSearch($formatter="",$needle="",$opts=array()) {
   $url=$formatter->link_url($formatter->page->name);
 
   if (!$needle) {
-    $opts[msg] = 'Use more specific text';
+    $opts[msg] = _("Use more specific text");
     return "<form method='get' action='$url'>
       <input type='hidden' name='action' value='titlesearch' />
       <input name='value' size='30' value='$needle' />
       <input type='submit' value='Go' />
       </form>";
   }
+  $opts[msg] = sprintf(_("Title search for \"%s\""), $needle);
+  $needle=_preg_escape($needle);
   $test=@preg_match("/$needle/","",$match);
   if ($test === false) {
-    $opts[msg] = sprintf('Invalid search expression "%s"', $needle);
+    $opts[msg] = sprintf(_("Invalid search expression \"%s\""), $needle);
     return "<form method='get' action=''>
       <input type='hidden' name='action' value='titlesearch' />
       <input name='value' size='30' value='$needle' />
@@ -1891,7 +1889,6 @@ function macro_TitleSearch($formatter="",$needle="",$opts=array()) {
   }
 
   $out.="</ul>\n";
-  $opts[msg] = sprintf('Title search for "%s"', $needle);
   $opts[hits]= count($hits);
   $opts[all]= count($pages);
   return $out;
