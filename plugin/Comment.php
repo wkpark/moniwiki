@@ -54,7 +54,7 @@ $sig
 </form>
 FORM2;
 
-  return $form;
+  return '<div id="commentForm">'.$form.'</div>';
 }
 
 function do_comment($formatter,$options=array()) {
