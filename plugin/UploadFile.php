@@ -52,6 +52,7 @@ function do_uploadfile($formatter,$options) {
   $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
   $comment.="File ";
 
+  $log_entry='';
   for ($j=0;$j<$count;$j++) {
 
   # replace space and ':' strtr()
@@ -119,11 +120,11 @@ function do_uploadfile($formatter,$options) {
   if ($key == 'UploadFile') {
     $msg.= "<ins>Uploads:$upfilename</ins> or<br />";
     $msg.= "<ins>attachment:/$upfilename</ins><br />";
-    $log_entry=" * attachment:/$upfilename?action=deletefile . . . @USERNAME@ @DATE@\n";
+    $log_entry.=" * attachment:/$upfilename?action=deletefile . . . @USERNAME@ @DATE@\n";
   } else {
     $msg.= "<ins>attachment:$upfilename</ins> or<br />";
     $msg.= "<ins>attachment:".$formatter->page->name."/$upfilename</ins><br />";
-    $log_entry=" * attachment:".$formatter->page->name."/$upfilename?action=deletefile . . . @USERNAME@ @DATE@\n";
+    $log_entry.=" * attachment:".$formatter->page->name."/$upfilename?action=deletefile . . . @USERNAME@ @DATE@\n";
   }
 
   } // multiple upload
