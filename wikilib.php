@@ -1608,7 +1608,38 @@ function macro_PageLinks($formatter="",$options="") {
     $f= new Formatter($p);
     $out.="<li>".$f->link_to().": ";
     $links=$f->get_pagelinks();
+    $links=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$links);
     $out.=$links."</li>\n";
+  }
+  $out.="</ul>\n";
+  return $out;
+}
+
+function macro_WantedPages($formatter="",$options="") {
+  global $DBInfo;
+  $pages = $DBInfo->getPageLists();
+
+  $cache=new Cache_text("pagelinks");
+  foreach ($pages as $page) {
+    $p= new WikiPage($page);
+    $f= new Formatter($p);
+    $links=$f->get_pagelinks();
+    if ($links) {
+      $lns=explode("\n",$links);
+      foreach($lns as $link) {
+        if (!$link or $DBInfo->hasPage($link)) continue;
+        if ($link and !$wants[$link])
+          $wants[$link]="[\"$page\"]";
+        else $wants[$link].=" [\"$page\"]";
+      }
+    }
+  }
+
+  asort($wants);
+  $out="<ul>\n";
+  while (list($name,$owns) = each($wants)) {
+    $owns=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$owns);
+    $out.="<li>".$formatter->link_repl($name). ": $owns</li>";
   }
   $out.="</ul>\n";
   return $out;
@@ -1682,17 +1713,14 @@ function macro_TitleIndex($formatter="") {
        $out.= "<UL>";
     }
     
-#    $p = new WikiPage($page);
-#    $h = new Formatter($p);
-#    $out.= '<LI>' . $h->link_to();
     $out.= '<LI>' . $formatter->link_tag($page);
   }
   $out.= "</UL>";
 
   $index="";
   foreach ($keys as $key)
-    $index.= "|<a href='#$key'>$key</a>";
-  $index[0]="";
+    $index.= "| <a href='#$key'>$key</a> ";
+  $index[0]=" ";
   
   return "<center><a name='top' />$index</center>\n$out";
 }
