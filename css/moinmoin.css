@@ -7,6 +7,7 @@
 
 /* user interface styles */
 @import url("moinui");
+@import url("user.css");
 
 /* content styles */
 body {
@@ -153,7 +154,7 @@ div.blog-action { font-size:10px;}
 li.blog-list { list-style-type: none;}
 
 /* HierarchicalWiki */
-span.group {
+div.wikiGroup {
   font-family:Tahoma,Lucida,sans-serif;
   font-size:10px;
 }

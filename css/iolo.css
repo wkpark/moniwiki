@@ -2,6 +2,9 @@
  CSS designed by iolo http://hellocity.net/~iolo/moniwiki/css/iolo.css
  distributable under GPL
 */
+
+@import url("user.css");
+
 body {
 	font-family:"Trebuchet MS","Myungjo Newsletter","UnBatang",sans-serif;
 	font-size:medium;
@@ -97,6 +100,9 @@ table.wiki {
 }
 
 td.wiki {
+}
+
+tr.wiki {
 	background-color: #ddeedd;
 }
 
@@ -151,10 +157,7 @@ del.diff-removed {
   background-color: #FF0000;
 }
 
-table.message {
-}
-
-td.message {
+div.message {
 	padding:6px;
 	color:#000000;
 	background-color:#ffffff;
@@ -366,7 +369,7 @@ td.today {
 }
 
 /* HierarchicalWiki */
-span.group {
+div.wikiGroup {
 	font-size:smaller;
 }
 

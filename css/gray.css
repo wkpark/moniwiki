@@ -1,3 +1,5 @@
+@import url("user.css");
+
 body {
   font-family:Georgia,Verdana,Lucida,sans-serif;
   background-color:#888; 
@@ -56,23 +58,21 @@ pre.quote {
 }
 
 table.wiki {
-/* background-color:#E2ECE5;*/
-/* border-collapse: collapse; */
   border: 0px outset #ddddb0;
 }
 
 td.wiki {
-  background-color:#ddddb0;
-/* border-collapse: collapse; */
   border: 0px inset #E2ECE5;
+}
+
+tr.wiki {
+  background-color:#ddddb0;
 }
 
 textarea.wiki { width:100%; }
 
 th.info {
   background-color:#E2ECE2;
-/*  border-collapse: collapse; */
-/*  border: 1px solid silver; */
 }
 
 td.info {
@@ -119,7 +119,7 @@ span.diff-removed, del.diff-removed {
   background-color: #FF0000;
 }
 
-td.message {
+div.message {
   margin-top: 6pt;
   background-color: #E8E8E8;
   border-style:solid;
@@ -233,7 +233,7 @@ div.blog-title { font-size:16px; font-weight:bold; }
 div.blog-comments { padding-left:2em; }
 
 /* HierarchicalWiki */
-span.group {
+div.wikiGroup {
   font-family:Tahoma,Lucida,sans-serif;
   font-size:10px;
 }

@@ -1,3 +1,5 @@
+@import url("user.css");
+
 body {
   font-family:Georgia,Verdana,Lucida,sans-serif;
   background-color:#000000; color: #B2E0FA;
@@ -49,22 +51,19 @@ pre.quote {
 textarea.wiki { width:100%; }
 
 table.wiki {
-/* background-color:#E2ECE5;*/
-/* border-collapse: collapse; */
   border: 0px outset #E2ECE5;
 }
 
 td.wiki {
-  background-color:#16384C; 
-/*  background-color:#E2ECE2; */
-/* border-collapse: collapse; */
   border: 0px inset #E2ECE5;
+}
+
+tr.wiki {
+  background-color: #3E3E3E;
 }
 
 th.info {
   background-color:#E2ECE2;
-/*  border-collapse: collapse; */
-/*  border: 1px solid silver; */
 }
 
 h1,h2,h3,h4,h5 {
@@ -117,7 +116,7 @@ span.diff-removed, del.diff-removed {
   background-color: #FF0000;
 }
 
-td.message {
+div.message {
     margin-top: 6pt;
     background-color: #E8E8E8;
     border-style:solid;
@@ -176,7 +175,7 @@ div.blog-action { font-size:10px;}
 li.blog-list { list-style-type: none;}
 
 /* HierarchicalWiki */
-span.group {
+div.wikiGroup {
   font-family:Tahoma,Lucida,sans-serif;
   font-size:10px;
 }

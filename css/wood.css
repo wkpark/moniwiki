@@ -1,4 +1,6 @@
 /* MoniWiki CSS 2003/11/01 by wkpark */
+@import url("user.css");
+
 body {
   font-family:Georgia,Verdana,Lucida,sans-serif;font-size:12px;
   background-color:#FFFFFF;
@@ -55,28 +57,25 @@ pre.quote {
 }
 
 table.wiki {
-/* background-color:#E2ECE5;*/
-/* border-collapse: collapse; */
   border: 0px outset #ddddb0;
 }
 
 td.wiki {
-  background-color: #E9ECEF;
-/* border-collapse: collapse; */
   border: 0px inset #E2ECE5;
+}
+
+tr.wiki {
+  background-color: #E9ECEF;
 }
 
 textarea.wiki { width:100%; }
 
 th.info {
   background-color:#E2ECE2;
-/*  border-collapse: collapse; */
-/*  border: 1px solid silver; */
 }
 
 td.info {
   background-color:#E2ECE2;
-
 }
 
 h1,h2,h3,h4,h5 {
@@ -118,7 +117,7 @@ span.diff-removed, del.diff-removed {
   background-color: #FF0000;
 }
 
-td.message {
+div.message {
   margin-top: 6pt;
   background-color: #E8E8E8;
   border-style:solid;
@@ -223,12 +222,11 @@ table.closure, td.closure{
 }
 
 #wikiIcon {
- position: absolute;
- top: 80px; right: 10px;
-
- margin-left: 10px;
- text-align: right;
- vertical-align: middle;
+  float:right;
+  padding: 3px 10px;
+  text-align: right;
+  vertical-align: middle;
+  margin-left: 10px;
 }
 
 div.indent { padding-left:2em; }
@@ -252,7 +250,7 @@ td.day { background:#e5d9c7; text-align: center;}
 td.today { background:#ffffff; text-align: center;}
 
 /* HierarchicalWiki */
-span.group {
+div.wikiGroup {
   font-family:Tahoma,Lucida,sans-serif;
   font-size:10px;
 }

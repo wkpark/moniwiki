@@ -1,4 +1,5 @@
 /*  NoSmoke Default Styles */
+@import url("user.css");
 
 body {
     background-color: lightyellow;
@@ -210,7 +211,7 @@ div.blog-action { font-size:10px;}
 li.blog-list { list-style-type: none;}
 
 /* HierarchicalWiki */
-span.group {
+div.wikiGroup {
   font-family:Tahoma,Lucida,sans-serif;
   font-size:10px;
 }
