@@ -516,9 +516,22 @@ function do_fullsearch($formatter,$options) {
 }
 
 function do_goto($formatter,$options) {
+  global $DBInfo;
   if (preg_match("/^(http:\/\/|ftp:\/\/)/",$options[value])) {
      $options[url]=$options[value];
      unset($options[value]);
+  } else if (preg_match("/^(".$DBInfo->interwikirule."):(.*)/",$options[value],$match)) {
+    $url=$DBInfo->interwiki[$match[1]];
+    if ($url) {
+      $page=trim($match[2]);
+
+      if (strpos($url,'$PAGE') === false)
+        $url.=$page;
+      else
+        $url=str_replace('$PAGE',$page,$url);
+      $options[url]=$url;
+      unset($options[value]);
+    }
   }
   if ($options[value]) {
      $url=stripslashes($options[value]);
