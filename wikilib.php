@@ -27,7 +27,7 @@ function find_needle($body,$needle,$count=0) {
 }
 
 function normalize($title) {
-  return preg_replace("/[\?!$%\.\^;&\*()_\+\/\|\[\]\/ ]/","",ucwords($title));
+  return preg_replace("/[\?!$%\.\^;&\*()_\+\|\[\] ]/","",ucwords($title));
 }
 
 class UserDB {
@@ -225,8 +225,8 @@ class User {
   }
 
   function isSubscribedPage($pagename) {
-    if (!$this->info[email] or !$this->info[subscribed_pages]) return 0;
-    $page_list=explode("\t",$this->info[subscribed_pages]);
+    if (!$this->info['email'] or !$this->info['subscribed_pages']) return 0;
+    $page_list=explode("\t",$this->info['subscribed_pages']);
     $page_rule=join("|",$page_list);
     if (preg_match('/('.$page_rule.')/',$pagename)) {
       return true;
@@ -483,7 +483,7 @@ function do_fullsearch($formatter,$options) {
     $title= sprintf(_("BackLinks search for \"%s\""), $options['value']);
   else
     $title= sprintf(_("Full text search for \"%s\""), $options['value']);
-  $out= macro_FullSearch($formatter,$options[value],&$ret);
+  $out= macro_FullSearch($formatter,$options['value'],&$ret);
   $options['msg']=$ret['msg'];
   $formatter->send_header("",$options);
   $formatter->send_title($title,$formatter->link_url("FindPage"),$options);
@@ -617,9 +617,9 @@ function do_post_savepage($formatter,$options) {
         print $formatter->link_tag('InterWiki')." | ";
         print $formatter->link_tag('HelpOnEditing')." | ";
         print $formatter->link_to("#editor",_("Goto Editor"));
-        print "<table border='1' align='center' width='100%'><tr><td>\n";
+        print "<div id='wikiPreview'>\n";
         $formatter->get_diff("","",$savetext);
-        print "</td></tr></table>\n";
+        print "</div>\n";
         $formatter->send_footer();
         return;
       }
@@ -642,18 +642,16 @@ function do_post_savepage($formatter,$options) {
       $formatter->send_editor($savetext,$options);
       print $DBInfo->hr;
       print $formatter->link_tag('GoodStyle')." | ";
-      print $formatter->link_tag('InterWiki')." | ";
-      print $formatter->link_tag('HelpOnEditing')." | ";
+      print $formatter->link_tag('InterWiki',"",_("InterWiki"))." | ";
+      print $formatter->link_tag('HelpOnEditing',"",_("HelpOnEditing"))." | ";
       print $formatter->link_to("#editor",_("Goto Editor"));
-      print "<div class='wikiPreview'>\n";
-      print "<table border='1' align='center' width='95%'><tr><td>\n";
+      print "<div id='wikiPreview'>\n";
       $formatter->send_page($savetext);
-      print "</td></tr></table>\n";
       print $DBInfo->hr;
       print "</div>\n";
       print $formatter->link_tag('GoodStyle')." | ";
-      print $formatter->link_tag('InterWiki')." | ";
-      print $formatter->link_tag('HelpOnEditing')." | ";
+      print $formatter->link_tag('InterWiki',"",_("InterWiki"))." | ";
+      print $formatter->link_tag('HelpOnEditing',"",_("HelpOnEditing"))." | ";
       print $formatter->link_to("#editor",_("Goto Editor"));
     } else {
       $formatter->page->write($savetext);
@@ -683,7 +681,7 @@ function do_post_savepage($formatter,$options) {
 function do_subscribe($formatter,$options) {
   global $DBInfo;
 
-  if ($options[id] != 'Anonymous') {
+  if ($options['id'] != 'Anonymous') {
     $udb=new UserDB($DBInfo);
     $userinfo=$udb->getUser($options['id']);
     $email=$userinfo->info['email'];
@@ -696,7 +694,8 @@ function do_subscribe($formatter,$options) {
   if ($options['id'] == 'Anonymous' or !$email) {
     $formatter->send_header("",$options);
     $formatter->send_title($title,"",$options);
-    $formatter->send_page("Goto UserPreferences\n");
+    $formatter->send_page("== "._("Goto UserPreferences")." ==\n".
+    _("If you want to subscribe this page, just make your ID and register your email address in the UserPreferences."));
     $formatter->send_footer();
 
     return;
@@ -708,7 +707,7 @@ function do_subscribe($formatter,$options) {
     $pages=explode("\n",$pages);
     $pages=array_unique ($pages);
     $page_list=join("\t",$pages);
-    $userinfo->info[subscribed_pages]=$page_list;
+    $userinfo->info['subscribed_pages']=$page_list;
     $udb->saveUser($userinfo);
 
     $title = _("Subscribe lists updated.");
@@ -717,7 +716,6 @@ function do_subscribe($formatter,$options) {
     $formatter->send_page("Goto [$options[page]]\n");
     $formatter->send_footer();
     return;
-
   }
 
   $pages=explode("\t",$userinfo->info['subscribed_pages']);
@@ -762,7 +760,7 @@ function wiki_notify($formatter,$options) {
 
   $diff="";
   $option="-r".$formatter->page->get_rev();
-  $fp=popen("rcsdiff -u $option ".$formatter->page->filename,"r");
+  $fp=popen("rcsdiff -x,v/ -u $option ".$formatter->page->filename,"r");
   if (!$fp)
     $diff="";
   else {
@@ -1550,6 +1548,8 @@ function macro_PageCount($formatter="") {
 function macro_PageHits($formatter="") {
   global $DBInfo;
 
+  if (!$DBInfo->use_counter) return "[[PageHits is not activated. set \$use_counter=1; in the config.php]]";
+
   $pages = $DBInfo->getPageLists();
   sort($pages);
   $hits= array();
@@ -1981,9 +1981,12 @@ function macro_TableOfContents($formatter="",$value="") {
 function macro_FullSearch($formatter="",$value="", $opts=array()) {
   global $DBInfo;
   $needle=$value;
+  if ($value === true) {
+    $needle = $value = $formatter->page->name;
+  }
 
   $url=$formatter->link_url($formatter->page->urlname);
-  $needle=str_replace('"',"&#34;",$needle);
+  $needle=str_replace('"',"&#34;",$needle); # XXX
 
   $form= <<<EOF
 <form method='get' action='$url'>
@@ -1991,7 +1994,7 @@ function macro_FullSearch($formatter="",$value="", $opts=array()) {
    <input name='value' size='30' value="$needle" />
    <input type='submit' value='Go' /><br />
    <input type='checkbox' name='context' value='20' checked='checked' />Display context of search results<br />
-   <input type='checkbox' name='backlinks' value='1' checked='checked' />Search BackLinks only<br />
+   <input type='checkbox' name='backlinks' value='1' />Search BackLinks only<br />
    <input type='checkbox' name='case' value='1' />Case-sensitive searching<br />
    </form>
 EOF;
@@ -2003,7 +2006,7 @@ EOF;
   $needle=_preg_search_escape($needle);
   $test=@preg_match("/$needle/","",$match);
   if ($test === false) {
-     $opts[msg] = sprintf(_("Invalid search expression \"%s\""), $needle);
+     $opts['msg'] = sprintf(_("Invalid search expression \"%s\""), $needle);
      return $form;
   }
 
@@ -2229,7 +2232,7 @@ function processor_plain($formatter,$value) {
 function processor_latex($formatter="",$value="") {
   global $DBInfo;
   # site spesific variables
-  $latex="/usr/bin/latex";
+  $latex="latex";
   $dvips="dvips";
   $convert="convert";
   $vartmp_dir="/var/tmp";
@@ -2267,6 +2270,7 @@ $tex
 
      $outpath="$cache_dir/$uniq.png";
 
+     # Unix specific FIXME
      $cmd= "cd $vartmp_dir; $latex $option $uniq.tex >/dev/null";
      system($cmd);
 

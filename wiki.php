@@ -299,15 +299,19 @@ class MetaDB {
 
 class Counter_dba {
   var $counter;
+  var $DB;
   function Counter_dba($DB) {
     if (!function_exists('dba_open')) return;
     if (!file_exists($DB->data_dir."/counter.db"))
        $this->counter=dba_open($DB->data_dir."/counter.db","n",$DB->dba_type);
     else
        $this->counter=@dba_open($DB->data_dir."/counter.db","w",$DB->dba_type);
+    $this->DB=&$DB;
   }
 
-  function incCounter($pagename) {
+  function incCounter($pagename,$options="") {
+    if ($this->DB->owners and in_array($options['id'],$this->DB->owners))
+      return;
     $count=dba_fetch($pagename,$this->counter);
     if (!$count) $count=0;
     $count++;
@@ -328,7 +332,7 @@ class Counter {
   function Counter($DB="") {
   }
 
-  function incCounter($page) {
+  function incCounter($page,$options="") {
   }
 
   function pageCounter($page) {
@@ -394,7 +398,8 @@ function getConfig($configfile, $options=array()) {
   } 
 
   #while (list($key,$val)=each($options)) eval("\$$key=\"$val\";");
-  foreach ($options as $key=>$val) eval("\$$key=\"$val\";");
+  #foreach ($options as $key=>$val) eval("\$$key=\"$val\";");
+  foreach ($options as $key=>$val) $$key=$val;
   unset($key,$val,$options);
   include($configfile);
   unset($configfile);
@@ -767,6 +772,7 @@ class WikiDB {
     if (!$fp)
        return -1;
     $body=$this->_replace_variables($page->body,$options);
+    $page->write($body);
     fwrite($fp, $body);
     fclose($fp);
     system("ci -x,v/ -q -t-\"".$pagename."\" -l -m\"".$REMOTE_ADDR.";;".
@@ -1098,6 +1104,10 @@ class Formatter {
     $this->cache= new Cache_text("pagelinks");
   }
 
+  function header($args) {
+    header($args);
+  }
+
   function set_theme($theme="") {
     global $DBInfo;
     if ($theme) {
@@ -1111,9 +1121,8 @@ class Formatter {
       #print_r($data);
 
       if ($data) {
-      # read configurations
-      while (list($key,$val) = each($data))
-        $this->$key=$val;
+        # read configurations
+        while (list($key,$val) = each($data)) $this->$key=$val;
       }
     }
     if (!$this->icon) {
@@ -1241,7 +1250,7 @@ class Formatter {
       if ($force or preg_match("/\s/",$url)) { # have a space ?
         list($url,$text)=explode(" ",$url,2);
         if (!$text) $text=$url;
-        else if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$text))
+        else if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text))
           return "<a href='$url' title='$url'><img border='0' alt='$url' src='$text' /></a>";
         list($icon,$dummy)=explode(":",$url,2);
         #return $this->icon[www]. "<a href='$url'>$text</a>";
@@ -1289,7 +1298,7 @@ class Formatter {
          strtolower($wiki)."-16.png' align='middle' height='16' width='16' ".
          "alt='$wiki:' title='$wiki:' /></a>";
     if (!$text) $text=$page;
-    else if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$text)) {
+    else if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
       $text= "<img border='0' alt='$text' src='$text' />";
       $img="";
     }
@@ -1335,8 +1344,13 @@ class Formatter {
     if ($word[0]=='"') { # ["extended wiki name"]
       $page=substr($word,1,-1);
       $word=$page;
+    } else if ($word[0]=='#') { # Anchor syntax in the MoinMoin 1.1
+      $anchor=strtok($word," ");
+      return ($word=strtok("")) ? $this->link_to($anchor,$word):
+                 "<a name='".($temp=substr($anchor,1))."' id='$temp'></a>";
     } else
-      $page=preg_replace("/\s+/","",$word); # concat words
+      #$page=preg_replace("/\s+/","",$word); # concat words
+      $page=normalize($word); # concat words
     if ($text) $word=$text;
 
     if ($page[0]=='/') # SubPage
@@ -1434,7 +1448,7 @@ class Formatter {
 
   function macro_repl($macro) {
     preg_match("/^([A-Za-z]+)(\((.*)\))?$/",$macro,$match);
-    $name=$match[1]; $option=$match[3];
+    $name=$match[1]; $option=($match[2] and !$match[3]) ? true:$match[3];
 
     if (!function_exists ("macro_".$name)) {
 
@@ -1601,7 +1615,9 @@ class Formatter {
       if (!strlen($line)) {
         if ($in_pre) { $this->pre_line.="\n";continue;}
         if ($in_li) { $text.="<br />\n"; continue;}
-        if (!$in_table) {
+        if ($in_table) {
+          $text.=$this->_table(0)."<br />\n";$in_table=0; continue;
+        } else {
           if (!$in_p) { $text.="<div>"; $in_p=1;}
           #else if ($in_p==2) { $text.="</div><br />\n<div>"; $in_p=1;}
           else if ($in_p==2) { $text.="</div><br />\n"; $in_p=1;}
@@ -1621,6 +1637,10 @@ class Formatter {
            continue;
          } else {
            $p=strrpos($line,"}}}");
+           if ($p>2 and $line[$p-3]=='\\') {
+             $this->pre_line.=substr($line,0,$p-3).substr($line,$p-2)."\n";
+             continue;
+           }
            $len=strlen($line);
            $this->pre_line.=substr($line,0,$p-2);
            $line=substr($line,$p+1);
@@ -1788,7 +1808,7 @@ class Formatter {
 
     # highlight text
     if ($this->highlight) {
-      $highlight=_preg_escape($this->highlight);
+      $highlight=_preg_search_escape($this->highlight);
       $text=preg_replace('/((<[^>]*>)|('.$highlight.'))/ie',
                          "\$this->highlight_repl('\\1')",$text);
     }
@@ -2107,12 +2127,12 @@ class Formatter {
     if ($header) {
       if (is_array($header))
         foreach ($header as $head) {
-          header($head);
+          $this->header($head);
           if (preg_match("/^content\-type: text\/plain/i",$head))
             $plain=1;
         }
       else {
-        header($header);
+        $this->header($header);
         if (preg_match("/^content\-type: text\/plain/i",$header))
           $plain=1;
       }
@@ -2303,7 +2323,7 @@ FOOT;
 
     if (file_exists($this->themedir."/footer.php")) {
       $themeurl=$this->themeurl;
-      include_once($this->themedir."/footer.php");
+      include($this->themedir."/footer.php");
     } else {
       print $menu.$banner;
     }
@@ -2379,7 +2399,7 @@ MSG;
 
     if (file_exists($this->themedir."/header.php")) {
       $themeurl=$this->themeurl;
-      include_once ($this->themedir."/header.php");
+      include($this->themedir."/header.php");
     } else { #default header
       $header="<table width='100%' border='0' cellpadding='3' cellspacing='0'>";
       $header.="<tr>";
@@ -2514,6 +2534,36 @@ function get_langs() {
   return $langs;
 }
 
+# get the pagename
+function get_pagename() {
+  global $DBInfo;
+  // $_SERVER["PATH_INFO"] has bad value under CGI mode
+  // set 'cgi.fix_pathinfo=1' in the php.ini under
+  // apache 2.0.x + php4.2.x Win32
+  if (!empty($_SERVER['PATH_INFO'])) {
+    if ($_SERVER['PATH_INFO'][0] == '/')
+      $pagename=substr($_SERVER['PATH_INFO'],1);
+    if (!$pagename) {
+      $pagename = $DBInfo->frontpage;
+    }
+    $pagename=stripslashes($pagename);
+  } else if (!empty($_SERVER['QUERY_STRING'])) {
+    if (isset($goto)) $pagename=$goto;
+    else {
+      $pagename = $_SERVER['QUERY_STRING'];
+      $result = preg_match('/^([^&=]+)/',$pagename,$matches);
+      if ($result) {
+        $pagename = urldecode($matches[1]);
+        $_SERVER['QUERY_STRING']=substr($_SERVER['QUERY_STRING'],strlen($pagename));
+      }
+    }
+    if (!$pagename) $pagename= $DBInfo->frontpage;
+  } else {
+    $pagename = $DBInfo->frontpage;
+  }
+  return $pagename;
+}
+
 # Start Main
 $Config=getConfig("config.php",array('init'=>1));
 
@@ -2558,41 +2608,11 @@ if (isset($locale)) {
   textdomain("moniwiki");
 }
 
-# get the pagename
-function get_pagename() {
-  global $DBInfo;
-  // $_SERVER["PATH_INFO"] has bad value under CGI mode
-  // set 'cgi.fix_pathinfo=1' in the php.ini under
-  // apache 2.0.x + php4.2.x Win32
-  if (!empty($_SERVER['PATH_INFO'])) {
-    if ($_SERVER['PATH_INFO'][0] == '/')
-      $pagename=substr($_SERVER['PATH_INFO'],1);
-    if (!$pagename) {
-      $pagename = $DBInfo->frontpage;
-    }
-    $pagename=stripslashes($pagename);
-  } else if (!empty($_SERVER['QUERY_STRING'])) {
-    if (isset($goto)) $pagename=$goto;
-    else {
-      $pagename = $_SERVER['QUERY_STRING'];
-      $result = preg_match('/^([^&=]+)/',$pagename,$matches);
-      if ($result) {
-        $pagename = urldecode($matches[1]);
-        $_SERVER['QUERY_STRING']=substr($_SERVER['QUERY_STRING'],strlen($pagename));
-      }
-    }
-    if (!$pagename) $pagename= $DBInfo->frontpage;
-  } else {
-    $pagename = $DBInfo->frontpage;
-  }
-  return $pagename;
-}
-
 $pagename=get_pagename();
-#function render($pagename,$options) {
+//function render($pagename,$options) {
 if ($pagename) {
-#  global $DBInfo;
-#  global $GLOBALS;
+  global $DBInfo;
+  global $value,$action;
   # get primary variables
   if ($_SERVER['REQUEST_METHOD']=="POST") {
     if (!$GLOBALS['HTTP_RAW_POST_DATA']) {
@@ -2600,7 +2620,7 @@ if ($pagename) {
       $value=$_POST['value'];
       $goto=$_POST['goto'];
     } else {
-      # RAW posted data. the $value can be accessed under
+      # RAW posted data. the $value and $action could be accessed under
       # "register_globals = On" in the php.ini
       $options['value']=$value;
     }
@@ -2611,6 +2631,7 @@ if ($pagename) {
     $rev=$_GET['rev'];
   }
 
+  #print $_SERVER['REQUEST_URI'];
   $options['page']=$pagename;
 
   if ($action=="recall" || $action=="raw" && $rev) {
@@ -2661,7 +2682,7 @@ if ($pagename) {
     # display this page
 
     # increase counter
-    $DBInfo->counter->incCounter($pagename);
+    $DBInfo->counter->incCounter($pagename,$options);
 
     if (!$action) $options['pi']=1; # protect a recursivly called #redirect
 
@@ -2723,7 +2744,7 @@ if ($pagename) {
   }
 }
 
-#$pagename=get_pagename();
-#render($pagename,$options);
+//$pagename=get_pagename();
+//render($pagename,$options);
 // vim:et:ts=2:
 ?>
