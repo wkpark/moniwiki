@@ -93,7 +93,7 @@ function processor_vim($formatter,$value,$options) {
   unlink($tmpf);
 
   $out=preg_replace("/<title>.*title>|<\/?head>|<\/?html>|<meta.*>|<\/?body.*>/","", $out);
-  $out=preg_replace("/<pre>/","<pre class='wikiSyntax' style='font-family:fixed;color:#c0c0c0;background-color:black'>", $out);
+  $out=preg_replace("/<pre>/","<pre class='wikiSyntax' style='font-family:FixedSys,monospace;color:#c0c0c0;background-color:black'>", $out);
 #  $out=preg_replace("/<\/pre>/","</span></pre>", $out);
   $fp=fopen($cache_dir."/$uniq".".html","w");
   fwrite($fp,$out);
