@@ -1597,6 +1597,10 @@ class Formatter {
     return "$word";
   }
 
+  function word_forcelink($word,$url) {
+    return "<a href='$url'>$word</a>";
+  }
+
   function word_fancy_nonexists($word,$url) {
     global $DBInfo;
     #if (preg_match("/^[a-zA-Z0-9\/~]/",$word))
