@@ -2636,13 +2636,16 @@ class Formatter {
       if ($this->pi['#keywords'])
         $keywords='<meta name="keywords" content="'.$this->pi['#keywords'].'" />';
       else if ($DBInfo->use_keywords) {
-        $keywords=str_replace(" ",", ",$this->page->title);
+        $keywords=strip_tags($this->page->title);
+        $keywords=str_replace(" ",", ",$keywords);
         $keywords="<meta name=\"keywords\" content=\"$keywords\" />";
       }
 
       if (empty($options['title'])) {
         $options['title']=$this->pi['#title'] ? $this->pi['#title']:
           $this->page->title;
+        $options['title']=
+          htmlspecialchars($options['title']);
       }
       if (empty($options['css_url'])) $options['css_url']=$DBInfo->css_url;
       print <<<EOS
@@ -2861,8 +2864,10 @@ FOOT;
     }
 
     if (!$title) {
-      $title=$options['title'];
-      if (!$title) $title=$this->pi['#title'];
+      $title=htmlspecialchars($this->pi['#title']);
+      if (!$title) $title=$options['title'];
+    } else {
+      $title=htmlspecialchars($title);
     }
     if (!$title) {
       if ($this->group) { # for UserNameSpace
@@ -2872,6 +2877,7 @@ FOOT;
         $group="<div class='wikiGroup'>".(substr($group,0,-1))." &raquo;</div>";
       } else     
         $title=$this->page->title;
+      $title=htmlspecialchars($title);
     }
     # setup title variables
     #$heading=$this->link_to("?action=fullsearch&amp;value="._urlencode($name),$title);

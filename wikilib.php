@@ -525,6 +525,7 @@ function macro_Edit($formatter,$value,$options='') {
   $cols= preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
 
   $rows= $options['rows'] > 5 ? $options['rows']: 16;
+  $rows= $rows < 60 ? $rows: 16;
   $cols= $options['cols'] > 60 ? $options['cols']: $cols;
 
   $text= $options['savetext'];
@@ -556,8 +557,10 @@ function macro_Edit($formatter,$value,$options='') {
   $menu= '';
   if ($preview)
     $menu= $formatter->link_to('#preview',_("Skip to preview"));
-  else
+  else {
     $menu= $formatter->link_to("?action=edit&amp;rows=".($rows-3),_("ReduceEditor"));
+    $menu.= ' | '.$formatter->link_to("?action=edit&amp;rows=".($rows+3),_("EnlargeEditor"));
+  }
 
   if (!$options['nomenu']) {
     $menu.= " | ".$formatter->link_tag('InterWiki',"",_("InterWiki"));
@@ -603,6 +606,23 @@ function macro_Edit($formatter,$value,$options='') {
   $preview_msg=_("Preview");
   $save_msg=_("Save");
   $summary_msg=_("Summary of Change");
+  $form.=<<<EOS
+<script language='javascript'>
+//<![CDATA[
+<!--
+function resize(obj,val) {
+  rows= obj.savetext.rows;
+  rows+=val;
+  if (rows > 60) rows=16;
+  else if (rows < 5) rows=16;
+  obj.savetext.rows=rows;
+}
+//-->
+//]]>
+</script>
+<input type='button' value='+' onClick='resize(this.form,3)'>
+<input type='button' value='-' onClick='resize(this.form,-3)'>
+EOS;
   $form.=<<<EOS
 <textarea class="wiki" id="content" wrap="virtual" name="savetext"
  rows="$rows" cols="$cols" class="wiki">$raw_body</textarea><br />
@@ -919,8 +939,8 @@ function do_post_savepage($formatter,$options) {
       $options['conflict']=1; 
       $options['datestamp']=$datestamp; 
       if ($button_merge) {
-        $title=sprintf(_("Preview of %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page'],"class='title'"));
-        $formatter->send_title($title,"",$options);
+        $option['title']=sprintf(_("Preview of %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page'],"class='wikiTitle'"));
+        $formatter->send_title("","",$options);
         $options['conflict']=0; 
         $merge=$formatter->get_merge($savetext);
         if ($merge) $savetext=$merge;
@@ -948,8 +968,8 @@ function do_post_savepage($formatter,$options) {
   $formatter->page->set_raw_body($savetext);
 
   if ($button_preview) {
-    $title=sprintf(_("Preview of %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page'],"class='title'"));
-    $formatter->send_title($title,"",$options);
+    $options['title']=sprintf(_("Preview of %s"),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page']),"class='wikiTitle'"));
+    $formatter->send_title("","",$options);
      
     $options['preview']=1; 
     $options['datestamp']=$datestamp; 
