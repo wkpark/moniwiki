@@ -99,9 +99,12 @@ class Blog_cache {
     if (!$date)
       $date=Blog_cache::get_daterule();
 
-    $pages=array_map('_preg_search_escape',$pages);
-    if ($pages) $pagerule=implode('|',$pages);
-    else $pagerule='.*';
+    if (!$pages) {
+      $pagerule='.*';
+    } else {
+      $pages=array_map('_preg_search_escape',$pages);
+      $pagerule=implode('|',$pages);
+    }
     $rule="/^($date\d*)\.($pagerule)$/";
 
     while ($file = readdir($handle)) {
@@ -244,7 +247,9 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
     $opts['all']=1;
 
   foreach ($opts as $opt)
-    if ($limit= intval($opt)) break;
+    if (($temp= intval($opt)) > 1) break;
+  $limit = ($temp > 1) ? $temp:0;
+ 
   if (!$limit) {
     if ($date) $limit=30;
     else $limit=10;
@@ -261,6 +266,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
 #    // no blog entries found
 #    return _("No entries found");
 #  }
+#  print_r($blogs);
 
   if (in_array('summary',$opts))
     $logs=Blog_cache::get_summary($blogs,$options);
