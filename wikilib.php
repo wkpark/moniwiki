@@ -1298,7 +1298,7 @@ function macro_TitleIndex($formatter="") {
 #    $cache=new Cache_text('title');
 
   foreach ($all_pages as $page) {
-    $pkey=get_key($page);
+    $pkey=get_key(ltrim($page));
 #   $key=strtoupper($page[0]);
     if ($key != $pkey) {
        if ($key !=-1)
