@@ -206,7 +206,7 @@ function keypresshandler(e){
 		self.location = url_prefix + _qp + TitleIndex
 	} else if(ch=="e" || ch=="w" || ch=="r") { // Edit or refresh
 		var my=''+self.location;
-		var idx=my.indexOf(_qp);
+		var idx=my.indexOf(_ap);
 		if (idx != -1 && my.substr(idx+1,5) == "goto=") {
 			my=my.substr(idx+6,my.length-6);
 			if ((idx=my.indexOf("&")) != -1)
@@ -216,10 +216,11 @@ function keypresshandler(e){
 			if (ch == "r") {
 				if ((idx=my.indexOf("#")) != -1)
 					my=my.substring(0,idx);
-				self.location=url_prefix + _qp + my + _ap + 'action=show';			}
+				self.location=url_prefix + _qp + my + _ap + 'action=show';
+			}
 		} else {
 			if (ch == "e" || ch == "w")
-				self.location += _ap + 'action=edit';
+				self.location = _ap + 'action=edit';
 			if (ch == "r") {
 				if ((idx=my.indexOf("#")) != -1) {
 					my=my.substring(0,idx);
