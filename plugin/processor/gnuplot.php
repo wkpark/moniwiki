@@ -70,6 +70,8 @@ function processor_gnuplot($formatter="",$value="") {
   $plt=preg_replace("/\n\s*![^\n]+\n/","\n",$plt); # strip shell commands
   $plt=preg_replace("/[ ]+/"," ",$plt);
   $plt=preg_replace("/\nset?\s+(t|o|si).*\n/", "\n",$plt);
+  #
+  $plt=preg_replace("/\n\s*(s?plot)\s+('|\")<(\s*)/", "\n\\1 \\2\\3",$plt);
   
   #print "<pre>$plt</pre>";
   
