@@ -891,11 +891,20 @@ function do_titlesearch($formatter,$options) {
   if ($ret['hits']==1) {
     $options['value']=$ret['value'];
     do_goto($formatter,$options);
-    return;
+    return true;
   }
+  if (!$ret['hits'] and $options['check']) return false;
 
   $formatter->send_header("",$options);
   $formatter->send_title($ret['msg'],$formatter->link_url("FindPage"),$options);
+
+  if ($options['check']) {
+    $button= $formatter->link_to("?action=edit",$formatter->icon['create']._
+("Create this page"));
+    print $button;
+    print sprintf(_(" or click %s to fullsearch this page.\n"),$formatter->link_to("?action=fullsearch&amp;value=$options[page]",_("title")));
+  }
+
   print $out;
 
   if ($options['value'])
@@ -905,6 +914,7 @@ function do_titlesearch($formatter,$options) {
 	 $ret['all']);
   $args['noaction']=1;
   $formatter->send_footer($args,$options);
+  return true;
 }
 
 function do_post_savepage($formatter,$options) {

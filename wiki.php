@@ -3264,6 +3264,17 @@ if ($pagename) {
       return;
     }
     if (!$page->exists()) {
+      $npage=str_replace(' ','',$page->name);
+      if ($DBInfo->hasPage($npage)) {
+        $options['value']=$npage;
+        do_goto($formatter,$options);
+        return;
+      }
+      $options['value']=$page->name;
+      $options['check']=1;
+      if (do_titlesearch($formatter,$options))
+          return;
+
       $formatter->send_header("Status: 404 Not found",$options);
 
       $twins=$DBInfo->metadb->getTwinPages($page->name,1);
