@@ -19,6 +19,26 @@ class MoniConfig {
     $this->config=$this->_getConfig("config.php.default");
     $lines=file("config.php.default");
     $this->rawconfig=$this->_rawConfigLines($lines);
+    $this->config=array_merge($this->config,$this->_getHostConfig());
+
+  }
+  function _getHostConfig() {
+    $tempnam="/tmp/".time();
+    if ($db=@dba_open($tempnam,"n","db2"))
+      $config[dba_type]="db2";
+    else if ($db=@dba_open($tempnam,"n","db3"))
+      $config[dba_type]="db3";
+    else if ($db=@dba_open($tempnam,"n","gdbm"))
+      $config[dba_type]="gdbm";
+
+    dba_close($db);
+    preg_match("/Apache\/2\.0\./",$_SERVER[SERVER_SOFTWARE],$match);
+
+    if ($match) {
+      $config[query_prefix]='"?"';
+      $config[kbd_script]='$url_prefix."/css/kbd2.js";';
+    }
+    return $config;
   }
 
   function setConfig($config) {
@@ -84,6 +104,41 @@ class MoniConfig {
   }
 }
 
+function checkConfig($config) {
+  if (!file_exists("config.php") && !is_writable(".")) {
+     print "<h3><font color=red>Change current directory permission to write a generated config.php</font></h3>\n";
+     print "
+<pre class='console'>
+<font color='green'>$</font> chmod a+w .
+</pre>
+";
+     $fatal=1;
+  }
+
+  if (file_exists("config.php")) {
+    if (!$fatal && !is_writable($config[data_dir])) {
+       print "<h3><font color=red>$config[data_dir] directory is not writable</font></h3>\n";
+       $error=1;
+    }
+    if (!$fatal && !is_writable($config[text_dir])) {
+       print "<h3><font color=red>$config[text_dir] directory is not writable</font> :( </h3>\n";
+      $error=1;
+    } else
+       print "<h3><font color=blue>$config[text_dir] directory is writable</font> :)</h3>\n";
+
+    if (!$fatal && !is_writable($config[upload_dir])) {
+       print "<h3><font color=red>$config[upload_dir] directory is not writable</font> :(</h3>\n";
+      $error=1;
+    } else
+       print "<h3><font color=blue>$config[upload_dir] directory is writable</font> :)</h3>\n";
+  }
+
+  if ($fatal)
+     exit;
+
+}
+
+
 print <<<EOF
 <html><head><title>Moni Setup</title>
 <style type="text/css">
@@ -103,8 +158,8 @@ table.wiki {
 
 pre.console {
   background-color:#000;
-  color:gray;
-
+  color:white;
+  width:80%;
 }
 
 td.wiki {
@@ -119,9 +174,9 @@ td.wiki {
 <body>
 EOF;
 
-print "<h2>Moni Wiki setup</h2\n";
+print "<h2>Moni Wiki setup</h2>\n";
 
-if (!is_writable("config.php")) {
+if (file_exists("config.php") && !is_writable("config.php")) {
   print "<h2><font color='red'>'config.php' is not writable !!</font></h2>\n";
   print "Please change 'config.php' permission as 666 first to write settings<br />\n";
 
@@ -130,7 +185,10 @@ if (!is_writable("config.php")) {
 
 $Config=new MoniConfig();
 
-if ($REQUEST_METHOD=="POST" && $config) {
+$config=$HTTP_POST_VARS[config];
+$update=$HTTP_POST_VARS[update];
+
+if ($_SERVER[REQUEST_METHOD]=="POST" && $config) {
   $conf=$Config->_getFormConfig($config);
   $rawconfig=$Config->_getFormConfig($config,1);
   $config=$conf;
@@ -145,7 +203,8 @@ if ($REQUEST_METHOD=="POST" && $config) {
         $rawconfig[admin_passwd]=$newpasswd;
     }
   } else {
-    $rawconfig[admin_passwd]=$newpasswd;
+    if ($newpasswd)
+       $rawconfig[admin_passwd]=$newpasswd;
   }
 
   if ($update) {
@@ -162,16 +221,25 @@ if ($REQUEST_METHOD=="POST" && $config) {
     print $highlighted;
     print "</pre>\n";
 
-    if (!$invalid && is_writable("config.php")) {
+    if (!$invalid && (is_writable("config.php") || !file_exists("config.php"))) {
       $fp=fopen("config.php","w");
       fwrite($fp,$rawconf);
       fclose($fp);
+      chmod("config.php",0666);
       print "<h3><font color='blue'>Configurations are saved successfully</font></h3>\n";
       print "Please change 'config.php' permission as 644.<br />\n";
     } else {
       if (!$invalid) {
         print "<h3><font color='red'>Can't write settings to 'config.php'</font></h3>\n";
         print "Please change 'config.php' permission as 666 first to write settings<br />\n";
+        print "&nbsp;&nbsp; or change directory permission as 777 to write settings<br />\n";
+	print <<<AS
+<pre class='console'>
+<font color='green'>$</font> chmod a+w config.php
+or
+<font color='green'>$</font> chmod a+w .
+</pre>
+AS;
       } else {
         print "<h3><font color='red'>You Can't write this settings to 'config.php'</font></h3>\n";
       }
@@ -185,10 +253,15 @@ if ($REQUEST_METHOD=="POST" && $config) {
   if (!$Config->config) {
     $Config->getDefaultConfig();
     $config=$Config->config;
+
+    checkConfig($config);
+
     $rawconfig=$Config->rawconfig;
     print "<h2>Read default settings</h2>\n";
+    print "<h3>Welcome ! This is your first installation</h3>\n";
   } else {
     $config=$Config->config;
+    checkConfig($config);
     $rawconfig=$Config->rawconfig;
     print "<h3>Read current settings for this $config[sitename]</h3>\n";
   }
