@@ -403,6 +403,7 @@ function do_edit($formatter,$options) {
   global $DBInfo;
   if (!$DBInfo->security->writable($options)) {
     do_invalid($formatter,$options);
+    return;
   }
   $formatter->send_header("",$options);
   $formatter->send_title("Edit ".$options['page'],"",$options);
@@ -748,6 +749,7 @@ function do_post_savepage($formatter,$options) {
   global $DBInfo;
   if (!$DBInfo->security->writable($options)) {
     do_invalid($formatter,$options);
+    return;
   }
 
   $savetext=$options['savetext'];
@@ -1424,11 +1426,14 @@ function macro_TableOfContents($formatter="",$value="") {
  $baseurl='';
  if ($value and $DBInfo->hasPage($value)) {
    $p=$DBInfo->getPage($value);
-   $lines=explode("\n",$p->get_raw_body());
+   $body=$p->get_raw_body();
    $baseurl=$formatter->link_url(_urlencode($value));
    $formatter->page=&$p;
- } else
-   $lines=explode("\n",$formatter->page->get_raw_body());
+ } else {
+   $body=$formatter->page->get_raw_body();
+ }
+ $body=preg_replace("/(\{\{\{$)(.*)(\}\}\})/ms",'',$body);
+ $lines=explode("\n",$body);
  foreach ($lines as $line) {
    $line=preg_replace("/\n$/", "", $line); # strip \n
    preg_match("/(?<!=)(={1,5})\s(#?)(.*)\s+(={1,5})\s?$/",$line,$match);
