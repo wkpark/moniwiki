@@ -68,7 +68,8 @@ class UserDB {
 
   function saveUser($user) {
     $config=array("css_url","datatime_fmt","email","bookmark","language",
-                  "name","password","wikiname_add_spaces","subscribed_pages");
+                  "name","password","wikiname_add_spaces","subscribed_pages",
+                  "theme");
 
     $date=date('Y/m/d', time());
     $data="# Data saved $date\n";
@@ -126,8 +127,9 @@ class User {
      }
      $this->setID($HTTP_COOKIE_VARS['MONI_ID']);
      $this->css=$HTTP_COOKIE_VARS['MONI_CSS'];
+     $this->theme=$HTTP_COOKIE_VARS['MONI_THEME'];
      $this->bookmark=$HTTP_COOKIE_VARS['MONI_BOOKMARK'];
-     $this->trail=$HTTP_COOKIE_VARS['MONI_TRAIL'];
+     $this->trail=stripslashes($HTTP_COOKIE_VARS['MONI_TRAIL']);
   }
 
   function setID($id) {
@@ -931,6 +933,13 @@ function do_post_css($formatter,$options) {
      $HTTP_COOKIE_VARS[MONI_CSS]=$options[user_css];
      $title="CSS Changed";
      $options[css_url]=$options[user_css];
+  } else if ($options[id] != "Anonymous" && isset($options[user_css])) {
+    # save profile
+    $udb=new UserDB($DBInfo);
+    $userinfo=$udb->getUser($options[id]);
+    $userinfo->info[css_url]=$options[user_css];
+    $udb->saveUser($userinfo);
+    $options[css_url]=$options[user_css];
   }
   $formatter->send_header("",$options);
   $formatter->send_title($title);
@@ -1252,7 +1261,7 @@ function macro_Css($formatter="") {
   $out="
 <form method='post'>
 <input type='hidden' name='action' value='css' />
-  <b>CSS for Anonymous users</b>&nbsp;
+  <b>Select a CSS</b>&nbsp;
 <select name='user_css'>
 ";
   $handle = opendir($DBInfo->css_dir);
