@@ -3,7 +3,9 @@ prefix=/usr
 install: moni-install
 	mkdir -p $(DESTDIR)$(prefix)/share/moniwiki
 	mkdir -p $(DESTDIR)$(prefix)/share/moniwiki/bin
-	cp -ar data wikiseed imgs css $(DESTDIR)$(prefix)/share/moniwiki
+	mkdir -p $(DESTDIR)$(prefix)/share/moniwiki/data
+	cp data/*.* $(DESTDIR)$(prefix)/share/moniwiki/data
+	cp -ar wikiseed imgs css $(DESTDIR)$(prefix)/share/moniwiki
 	cp -ar lib plugin $(DESTDIR)$(prefix)/share/moniwiki
 	cp -ar locale tools $(DESTDIR)$(prefix)/share/moniwiki
 	cp wiki.php wikilib.php $(DESTDIR)$(prefix)/share/moniwiki
