@@ -224,7 +224,7 @@ function show_wikiseed($config,$seeddir='wikiseed') {
   $num=sizeof($pages);
 
   #
-  $SystemPages="FrontPage|RecentChanges|TitleIndex|FindPage|".
+  $SystemPages="FrontPage|RecentChanges|TitleIndex|FindPage|WordIndex".
   "FortuneCookies|Pages$|".
   "SystemPages|TwinPages|WikiName|SystemInfo|UserPreferences|".
   "InterMap|IsbnMap|WikiSandBox|SandBox|UploadFile|UploadedFiles|".
@@ -332,24 +332,27 @@ $Config=new MoniConfig();
 
 $config=$_POST['config'];
 $update=$_POST['update'];
+$action=$_GET['action'] or $_POST['action'];
+$newpasswd=$_POST['newpasswd'];
+$oldpasswd=$_POST['oldpasswd'];
 
 if ($_SERVER['REQUEST_METHOD']=="POST" && $config) {
   $conf=$Config->_getFormConfig($config);
   $rawconfig=$Config->_getFormConfig($config,1);
   $config=$conf;
 
-  if ($Config->config[admin_passwd]) {
-    if (crypt($oldpasswd,$Config->config[admin_passwd]) != 
-      $Config->config[admin_passwd]) {
+  if ($Config->config['admin_passwd']) {
+    if (crypt($oldpasswd,$Config->config['admin_passwd']) != 
+      $Config->config['admin_passwd']) {
         print "<h3><font color='red'>Invalid password error !!!</font></h3>\n";
         print "If you can't remember your admin password, delete password entry in the 'config.php' and restart 'monisetup'<br />\n";
         $invalid=1;
     } else {
-        $rawconfig[admin_passwd]=$newpasswd;
+        $rawconfig['admin_passwd']=$newpasswd;
     }
   } else {
     if ($newpasswd)
-       $rawconfig[admin_passwd]=$newpasswd;
+       $rawconfig['admin_passwd']=$newpasswd;
   }
 
   if ($update) {
@@ -413,6 +416,8 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $config) {
 }
 
 if ($_SERVER['REQUEST_METHOD']=="POST") {
+  $seeds=$_POST['seeds'];
+  $action=$_POST['action'];
   if ($action=='sow_seed' && $seeds) {
     sow_wikiseed($config,'wikiseed',$seeds);
     print "<h2>WikiSeeds are sowed successfully</h2>";
@@ -440,7 +445,7 @@ if ($_SERVER['REQUEST_METHOD']!="POST") {
   print "</table>\n";
 
   print "<h3>Change your settings</h3>\n";
-  if (!$config[admin_passwd])
+  if (!$config['admin_passwd'])
   print "<h3><font color='red'>WARN: You have to enter your Admin Password</h3>\n";
   else if (file_exists('config.php') && !file_exists($config[data_dir]."/text/RecentChanges")) {
     print "<h3><font color='red'>WARN: You have no WikiSeed on your $config[sitename]</font></h3>\n";
@@ -456,7 +461,7 @@ if ($_SERVER['REQUEST_METHOD']!="POST") {
     }
   }
 
-  if (!$config[admin_passwd]) {
+  if (!$config['admin_passwd']) {
     print "<tr><td><b>\$admin_passwd</b></td>";
     print "<td><input type='password' name='newpasswd' size='30'></td></tr>\n";
   } else  {
@@ -467,7 +472,7 @@ if ($_SERVER['REQUEST_METHOD']!="POST") {
   }
   print "<tr><td colspan=2>";
   print "<input type='submit' value='preview'> ";
-  if (!$config[admin_passwd])
+  if (!$config['admin_passwd'])
   print "<input type='submit' name='update' value='update'></td></tr>\n";
   else
   print "<input type='submit' name='update' value='update'></td></tr>\n";
