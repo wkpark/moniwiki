@@ -13,6 +13,7 @@ function macro_Comment($formatter,$value,$options=array()) {
   global $DBInfo;
   if (!$options['page']) $options['page']=$formatter->page->name;
 
+  #if (!$DBInfo->_isWritable($options['page'])) return '';
   if (!$DBInfo->security->writable($options)) return '';
 
   $COLS_MSIE = 80;
@@ -62,6 +63,7 @@ function do_comment($formatter,$options=array()) {
 
   if (!$DBInfo->security->writable($options)) {
     do_invalid($formatter,$options);
+    return;
   }
 
   $COLS_MSIE = 80;

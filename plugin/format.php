@@ -15,10 +15,12 @@ function do_format($formatter,$options) {
   if ($pi['#format']=='xsltproc') {
     $options['title']= _("It is a XML format !");
     do_invalid($formatter,$options);
+    return;
   }
-  if (!$formatter->page->exists()) do_invalid($formatter,$options);
-
-  // Detect File type
+  if (!$formatter->page->exists()) {
+    do_invalid($formatter,$options);
+    return;
+  } // Detect File type
   else if (array_key_exists($mimetype,$mimes)) {
     header("Content-type: ".$mimetype);
     print $formatter->processor_repl($mimes[$mimetype],$formatter->page->get_raw_body());
@@ -28,8 +30,10 @@ function do_format($formatter,$options) {
 
     if (getProcessor($processor))
       print $formatter->processor_repl($processor,$formatter->page->get_raw_body());
-    else
+    else {
       do_invalid($formatter,$options);
+      return;
+    }
   }
 
   return;
