@@ -7,8 +7,7 @@ class MoniConfig {
   function MoniConfig($configfile="config.php") {
     if (file_exists($configfile)) {
       $this->config=$this->_getConfig($configfile);
-      $lines=file($configfile);
-      $this->rawconfig=$this->_rawConfigLines($lines);
+      $this->rawconfig=$this->_rawConfig($configfile);
     } else {
       $this->config=array();
       $this->rawconfig=array();
@@ -17,20 +16,24 @@ class MoniConfig {
 
   function getDefaultConfig() {
     $this->config=$this->_getConfig("config.php.default");
-    $lines=file("config.php.default");
-    $this->rawconfig=$this->_rawConfigLines($lines);
-    $this->config=array_merge($this->config,$this->_getHostConfig());
+
+    $hostconfig=$this->_getHostConfig();
+    $this->rawconfig=array_merge($this->_rawConfig("config.php.default"),$hostconfig);
+    while (list($key,$val)=each($this->rawconfig)) {
+      eval("\$$key=$val;");
+      eval("\$this->config[\$key]=$val;");
+    }
 
   }
   function _getHostConfig() {
     if (function_exists("dba_open")) {
       $tempnam="/tmp/".time();
-      if ($db=@dba_open($tempnam,"n","db2"))
-        $config['dba_type']="db2";
-      else if ($db=@dba_open($tempnam,"n","db3"))
-        $config['dba_type']="db3";
+      if ($db=@dba_open($tempnam,"n","db3"))
+        $config['dba_type']="'db3'";
+      else if ($db=@dba_open($tempnam,"n","db2"))
+        $config['dba_type']="'db2'";
       else if ($db=@dba_open($tempnam,"n","gdbm"))
-        $config['dba_type']="gdbm";
+        $config['dba_type']="'gdbm'";
 
       if ($db) dba_close($db);
     }
@@ -38,8 +41,12 @@ class MoniConfig {
 
     if ($match) {
       $config['query_prefix']='"?"';
-      $config['kbd_script']='$url_prefix."/css/kbd2.js";';
+      $config['kbd_script']='$url_prefix."/css/kbd2.js"';
     }
+
+    $url_prefix= preg_replace("/\/([^\/]+)\.php$/","",
+      $_SERVER['SCRIPT_NAME']);
+    $config['url_prefix']="'".$url_prefix."'";
     return $config;
   }
 
@@ -63,7 +70,8 @@ class MoniConfig {
     return array_diff($new,$org);
   }
 
-  function _rawConfigLines($lines) {
+  function _rawConfig($configfile) {
+    $lines=file($configfile);
     foreach ($lines as $line) {
       if ($line[0] != '$') continue;
 
@@ -81,7 +89,7 @@ class MoniConfig {
     $conf=array();
     while (list($key,$val) = each($config)) {
       $val=stripslashes($val);
-      if (!$val) $val="''";
+      if (!isset($val)) $val="''";
       if (!$mode) {
         eval("\$dum=$val;");
         eval("\$$key=$val;");
@@ -108,14 +116,21 @@ class MoniConfig {
 
 function checkConfig($config) {
   umask(011);
+
+  # check sgid
+  $datadir_perm=sprintf("%o",07777 & fileperms("."));
+
+  if (02000 & fileperms(".")) $PERM=0775;
+  else $PERM=0777;
+
   if (!file_exists("config.php") && !is_writable(".")) {
-     print "<h3><font color=red>Please change current directory writable to generate a config.php</font></h3>\n";
-     print "<pre class='console'>\n<font color='green'>$</font> chmod a+w .\n</pre>\n";
-     return;
+     print "<h3><font color='red'>Please change current directory writable to generate a config.php</font></h3>\n";
+     print "<pre class='console'>\n<font color='green'>$</font> chmod 777 . data/\n</pre>\n";
+     print "<h3><font color='red'>You can chmod it with 2777(sgid)</font></h3>\n";
+     print "<pre class='console'>\n<font color='green'>$</font> chmod 2777 . data/\n</pre>\n";
+     exit;
   } else if (file_exists("config.php")) {
-     print "<h3><font color='green'>WARN: Please execute the following command after you have finished your first configuration step.</font></h3>\n";
-     print "<pre class='console'>\n<font color='green'>$</font> sh config.sh\n</pre>\n";
-     print "<h3><font color='green'>WARN: and please execute the following command after you have completed your configuration.</font></h3>\n";
+     print "<h3><font color='green'>WARN: Please execute the following command after you have completed your configuration.</font></h3>\n";
      print "<pre class='console'>\n<font color='green'>$</font> sh secure.sh\n</pre>\n";
   }
 
@@ -124,23 +139,28 @@ function checkConfig($config) {
        print "<h3><font color=red>FATAL: $config[data_dir] directory is not writable</font></h3>\n";
        print "<h4>Please execute the following command</h4>";
        print "<pre class='console'>\n".
-             "<font color='green'>$</font> chmod a+w $config[data_dir]\n</pre>\n";
+             "<font color='green'>$</font> chmod $datadir_perm $config[data_dir]\n</pre>\n";
        exit;
     }
 
-    $data_sub_dir=array("cache","user");
+    $data_sub_dir=array("cache","user","text");
+    if (02000 & fileperms($config['data_dir'])) $DPERM=0775;
+    else $DPERM=0777;
 
     foreach($data_sub_dir as $dir) {
        if (!file_exists("$config[data_dir]/$dir")) {
            umask(000);
-           mkdir("$config[data_dir]/$dir",0777);
-           print "<h4><font color='green'>$dir directory is created now ;)</font></h4>\n";
-           umask(011);
-       } else
-           print "<h4><font color=blue>$dir directory is ok</font></h4>\n";
+           mkdir("$config[data_dir]/$dir",$DPERM);
+           if ($dir == 'text')
+             mkdir($config['data_dir']."/$dir/RCS",$DPERM);
+       } else if (!is_writable("$config[data_dir]/$dir")) {
+           print "<h4><font color=red>$dir directory is not writable</font></h4>\n";
+           print "<pre class='console'>\n".
+             "<font color='green'>$</font> chmod a+w $config[$file]\n</pre>\n";
+       }
     }
 
-    $writables=array("text_dir","upload_dir","editlog_name");
+    $writables=array("upload_dir","editlog_name");
 
     foreach($writables as $file) {
       if (!is_writable($config[$file])) {
@@ -149,12 +169,11 @@ function checkConfig($config) {
           print "<pre class='console'>\n".
               "<font color='green'>$</font> chmod a+w $config[$file]\n</pre>\n";
         } else {
-          print "<h3><font color=red>$config[$file] is not exists</font> :( </h3>\n";
-          if (preg_match("/_dir/",$file))
-            print "<pre class='console'>\n".
-              "<font color='green'>$</font> mkdir $config[$file]\n".
-              "<font color='green'>$</font> chmod a+w $config[$file]\n</pre>\n";
-          else {
+          if (preg_match("/_dir/",$file)) {
+            umask(000);
+            mkdir($config[$file],$DPERM);
+            print "<h3>&nbsp;&nbsp;<font color=blue>$config[$file] is created now</font> :)</h3>\n";
+          } else {
             $fp=@fopen($config[$file],"w+");
             if ($fp) {
               chmod($config[$file],0666);
@@ -205,8 +224,9 @@ function show_wikiseed($config,$seeddir='wikiseed') {
   "FortuneCookies|Pages$|".
   "SystemPages|TwinPages|WikiName|SystemInfo|UserPreferences|".
   "InterMap|IsbnMap|WikiSandBox|SandBox|UploadFile|UploadedFiles|".
-  "InterWiki|SandBox|UploadFile|UploadedFiles|".
-  "모니위키|위키딱지|설치설명서|쌍둥이쪽|자매위키|원격위키";
+  "InterWiki|SandBox|".
+  "BlogChanges|HotDraw|OeKaki";
+
   $WikiTag='DeleteThisPage';
   #
   $seed_filters= array(
@@ -351,24 +371,12 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $config) {
       print "<h3><font color='green'>WARN: Please check <a href='monisetup.php'> your saved configurations</a></font></h3>\n";
       print "If all is good, change 'config.php' permission as 644.<br />\n";
     } else {
-      if (!$invalid) {
-        print "<h3><font color='red'>Can't write settings to 'config.php'</font></h3>\n";
-        print "Please change 'config.php' permission as 666 first to write settings<br />\n";
-        print "&nbsp;&nbsp; or change directory permission as 777 to write settings<br />\n";
-	print <<<AS
-<pre class='console'>
-<font color='green'>$</font> chmod a+w config.php
-or
-<font color='green'>$</font> chmod a+w .
-</pre>
-AS;
-      } else {
+      if ($invalid) {
         print "<h3><font color='red'>You Can't write this settings to 'config.php'</font></h3>\n";
       }
     }
   } else
     print "<h3>Read current settings for this $config[sitename]</h3>\n";
-#  $rawconfig=rawConfig($lines);
 } else {
   # read settings
 
@@ -377,25 +385,27 @@ AS;
     $config=$Config->config;
 
     checkConfig($config);
+    print "<h2>Welcome ! This is your first installation</h2>\n";
 
     $rawconfig=$Config->rawconfig;
-    print "<h2>Read default settings</h2>\n";
-    print "<h3>Welcome ! This is your first installation</h3>\n";
+    print "<h3 color='blue'>Default settings are loaded</h3>\n";
+
+    $lines=$Config->_genRawConfig($rawconfig);
+    $rawconf=join("",$lines);
+    umask(000);
+    $fp=fopen("config.php","w");
+    fwrite($fp,$rawconf);
+    fclose($fp);
+    @chmod("config.php",0666);
+    print "<h3><font color='blue'>Initial configurations are saved successfully</font></h3>\n";
+    print "<h3><font color='red'>Goto <a href='monisetup.php'>MoniSetup</a> again to configure details</font></h3>\n";
+    exit;
   } else {
     $config=$Config->config;
     checkConfig($config);
     $rawconfig=$Config->rawconfig;
-    print "<h3>Read current settings for this $config[sitename]</h3>\n";
   }
 }
-
-print "<table class='wiki' align=center border=1 cellpadding=2 cellspacing=2>";
-print "\n";
-while (list($key,$val) = each($config)) {
-  if ($key != "admin_passwd" && $key != "purge_passwd")
-  print "<tr><td>$$key</td><td>$val</td></tr>\n";
-}
-print "</table>\n";
 
 if ($_SERVER['REQUEST_METHOD']=="POST") {
   if ($action=='sow_seed' && $seeds) {
@@ -414,12 +424,23 @@ if ($_SERVER['REQUEST_METHOD']!="POST") {
     show_wikiseed($config,'wikiseed');
     exit;
   }
-  if (file_exists('config.php') && !file_exists($config[data_dir]."/text/RecentChanges")) {
+
+  print "<h3>Read current settings for this $config[sitename]</h3>\n";
+  print"<table class='wiki' align=center border=1 cellpadding=2 cellspacing=2>";
+  print "\n";
+  while (list($key,$val) = each($config)) {
+    if ($key != "admin_passwd" && $key != "purge_passwd")
+    print "<tr><td>\$$key</td><td>$val</td></tr>\n";
+  }
+  print "</table>\n";
+
+  print "<h3>Change your settings</h3>\n";
+  if (!$config[admin_passwd])
+  print "<h3><font color='red'>WARN: You have to enter your Admin Password</h3>\n";
+  else if (file_exists('config.php') && !file_exists($config[data_dir]."/text/RecentChanges")) {
     print "<h3><font color='red'>WARN: You have no WikiSeed on your $config[sitename]</font></h3>\n";
     print "<h2>If you want to put wikiseeds on your wiki <a href='?action=seed'>Click here</a> now</h2>";
   }
-
-  print "<h3>Change your settings</h3>\n";
   print "<form method='post' action=''>\n";
   print "<table align=center border=1 cellpadding=2 cellspacing=2>\n";
   while (list($key,$val) = each($rawconfig)) {
@@ -441,8 +462,17 @@ if ($_SERVER['REQUEST_METHOD']!="POST") {
   }
   print "<tr><td colspan=2>";
   print "<input type='submit' value='preview'> ";
+  if (!$config[admin_passwd])
+  print "<input type='submit' name='update' value='update'></td></tr>\n";
+  else
   print "<input type='submit' name='update' value='update'></td></tr>\n";
   print "</table></form>\n";
+
+  if (file_exists('config.php') && !file_exists($config[data_dir]."/text/RecentChanges")) {
+    print "<h3><font color='red'>WARN: You have no WikiSeed on your $config[sitename]</font></h3>\n";
+    print "<h2>If you want to put wikiseeds on your wiki <a href='?action=seed'>Click here</a> now</h2>";
+  }
+
 }
 
 ?>
