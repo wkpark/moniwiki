@@ -23,18 +23,12 @@ function do_rss_rc($formatter,$options) {
 <channel rdf:about="$URL">
   <title>$DBInfo->sitename</title>
   <link>$url</link>
-  <description>
-    RecentChanges at $DBInfo->sitename
-  </description>
-  <image rdf:resource="$img_url"/>
+  <description>RecentChanges at $DBInfo->sitename</description>
+  <image rdf:resource="$img_url"></image>
   <items>
-  <rdf:Seq>
+  <rdf:Seq>\n
 CHANNEL;
   $items="";
-
-#          print('<description>'."[$data] :".$chg["action"]." ".$chg["pageName"].$comment.'</description>'."\n");
-#          print('</rdf:li>'."\n");
-#        }
 
   $ratchet_day= FALSE;
   if (!$lines) $lines=array();
@@ -49,42 +43,42 @@ CHANNEL;
     if ($ed_time < $time_cutoff)
       break;
 
-    if (!$DBInfo->hasPage($page_name))
+    if (!$DBInfo->hasPage($page_name)) {
       $status='deleted';
-    else
+    } else {
       $status='updated';
-    #$zone = date("O");
-    #$zone = $zone[0].$zone[1].$zone[2].":".$zone[3].$zone[4];
-    #$date = date("Y-m-d\TH:i:s",$ed_time).$zone;
-
+      $p=new WikiPage($page_name);
+      $f=new Formatter($p);
+      $options['raw']=1;
+      $html=strtr($f->get_diff('','','',$options),array('&'=>'&amp;','<'=>'&lt;'));
+      if (!$html) {
+         ob_start();
+         $f->send_page();
+         $html=ob_get_contents();
+         ob_end_clean();
+      }
+    }
     $zone = "+00:00";
     $date = gmdate("Y-m-d\TH:i:s",$ed_time).$zone;
+    $datetag = gmdate("YmdHis",$ed_time);
 
     $url=qualifiedUrl($formatter->link_url(_rawurlencode($page_name)));
-    $channel.="    <rdf:li rdf:resource=\"$url\"/>\n";
+    $diff_url=qualifiedUrl($formatter->link_url(_rawurlencode($page_name),'?action=diff'));
+    $channel.="<rdf:li rdf:resource=\"$url\"></rdf:li>\n";
 
-    $items.="     <item rdf:about=\"$url\">\n";
-    $items.="     <title>$page_name</title>\n";
-    $items.="     <link>$url</link>\n";
-    $items.="     <dc:date>$date</dc:date>\n";
-    $items.="     <dc:contributor>\n<rdf:Description>\n"
-          ."<rdf:value>$user</rdf:value>\n"
-          ."</rdf:Description>\n</dc:contributor>\n";
+    $items.="<item rdf:about=\"$url#$datetag\">\n";
+    $items.="  <title>$page_name</title>\n";
+    $items.="  <link>$url</link>\n";
+    $items.="  <dc:date>$date</dc:date>\n";
+    $items.="  <description>$html</description>\n";
+    $items.="<dc:creator>$user</dc:creator>\n";
+    $items.="<dc:contributor>$user</dc:contributor>\n";
+#    $items.="     <dc:contributor>\n     <rdf:Description>\n"
+#          ."     <rdf:value>$user</rdf:value>\n"
+#          ."     </rdf:Description>\n     </dc:contributor>\n";
     $items.="     <wiki:status>$status</wiki:status>\n";
-    $items.="     </item>\n";
-
-#    $out.= "&nbsp;&nbsp;".$formatter->link_tag("$page_name");
-#    if (! empty($DBInfo->changed_time_fmt))
-#       $out.= date($DBInfo->changed_time_fmt, $ed_time);
-#
-#    if ($DBInfo->show_hosts) {
-#      $out.= ' . . . . '; # traditional style
-#      #$logs[$page_name].= '&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ';
-#      if ($user)
-#        $out.= $user;
-#      else
-#        $out.= $addr;
-#    }
+    $items.="     <wiki:diff>$diff_url</wiki:diff>\n";
+    $items.="</item>\n";
   }
   $url=qualifiedUrl($formatter->link_url($DBInfo->frontpage));
   $channel.= <<<FOOT
@@ -95,7 +89,7 @@ CHANNEL;
 <title>$DBInfo->sitename</title>
 <link>$url</link>
 <url>$img_url</url>
-</image>
+</image>\n
 FOOT;
 
   $url=qualifiedUrl($formatter->link_url("FindPage"));
@@ -104,7 +98,7 @@ FOOT;
 <title>Search</title>
 <link>$url</link>
 <name>goto</name>
-</textinput>
+</textinput>\n
 FORM;
 
   $new="";
@@ -119,16 +113,15 @@ FORM;
 
   $head=<<<HEAD
 <?xml version="1.0" encoding="$charset"?>
-<!--<?xml-stylesheet type="text/xsl" href="/wiki/css/rss.xsl"?>-->
-<rdf:RDF xmlns:wiki="http://purl.org/rss/1.0/modules/wiki/"
-         xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-         xmlns:xlink="http://www.w3.org/1999/xlink"
-         xmlns:dc="http://purl.org/dc/elements/1.1/"
-         xmlns="http://purl.org/rss/1.0/">\n
+<rdf:RDF xmlns="http://purl.org/rss/1.0/"
+	xmlns:wiki="http://purl.org/rss/1.0/modules/wiki/"
+	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+	xmlns:xlink="http://www.w3.org/1999/xlink"
+	xmlns:dc="http://purl.org/dc/elements/1.1/">\n
 HEAD;
   header("Content-Type: text/xml");
   if ($new) print $head.$new;
   else print $head.$channel.$items.$form;
-  print "</rdf:RDF>";
+  print "</rdf:RDF>\n";
 }
 ?>
