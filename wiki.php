@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0.8';
+$_release = '1.0.9';
 
 #ob_start("ob_gzhandler");
 
@@ -502,7 +502,6 @@ class WikiDB {
     $this->processors=array();
 
     $this->purple_icon='#';
-#    $this->security_class="needtologin";
 
     # set user-specified configuration
     if ($config) {
@@ -522,14 +521,26 @@ class WikiDB {
       $this->menu_sep="|";
     }
 
+    // for lower version compatibility
+    $this->imgs_dir_url=$this->imgs_dir.'/';
+    $this->imgs_dir_interwiki=$this->imgs_dir.'/';
+
+    $imgs_realdir=basename($this->imgs_dir);
+    if (file_exists($imgs_realdir.'/interwiki/'.'moniwiki-16.png'))
+      $this->imgs_dir_interwiki=$this->imgs_dir.'/interwiki/';
+
     if (empty($this->icon)) {
     $iconset=$this->iconset;
     $imgdir=$this->imgs_dir;
+
+    // for lower version compatibility
     $ext='png';
-    $realdir=basename($imgdir);
-    if (is_dir($realdir.'/'.$iconset)) $iconset.='/';
+    if (is_dir($imgs_realdir.'/'.$iconset)) $iconset.='/';
     else $iconset.='-';
-    if (!file_exists($realdir.'/'.$iconset.'home.png')) $ext='gif';
+    if (!file_exists($imgs_realdir.'/'.$iconset.'home.png')) $ext='gif';
+
+    if (file_exists($imgs_realdir.'/'.$iconset.'http.png'))
+      $this->imgs_dir_url=$this->imgs_dir.'/'.$iconset;
 
     $this->icon['upper']="<img src='$imgdir/${iconset}upper.$ext' alt='U' align='middle' border='0' />";
     $this->icon['edit']="<img src='$imgdir/${iconset}edit.$ext' alt='E' align='middle' border='0' />";
@@ -1186,6 +1197,8 @@ class Formatter {
     $this->prefix= get_scriptname();
     $this->url_prefix= $DBInfo->url_prefix;
     $this->imgs_dir= $DBInfo->imgs_dir;
+    $this->imgs_dir_interwiki=$DBInfo->imgs_dir_interwiki;
+    $this->imgs_dir_url=$DBInfo->imgs_dir_url;
     $this->actions= $DBInfo->actions;
     $this->inline_latex= $DBInfo->inline_latex;
 
@@ -1483,8 +1496,8 @@ class Formatter {
           if ($this->external_on)
             $external_link='<span class="externalLink">('.$url.')</span>';
         }
-        list($icon,$dummy)=explode(":",$url,2);
-        return "<img align='middle' alt='[$icon]' src='".$this->imgs_dir."/$icon.png' />". "<a class='externalLink' $attr $this->ex_target href='$link'>$text</a>".$external_icon.$external_link;
+        $icon=strtok($url,':');
+        return "<img align='middle' alt='[$icon]' src='".$this->imgs_dir_url."$icon.png' />". "<a class='externalLink' $attr $this->ex_target href='$link'>$text</a>".$external_icon.$external_link;
       } # have no space
       $link=str_replace('&','&amp;',$url);
       if (preg_match("/^(http|https|ftp)/",$url)) {
@@ -1547,8 +1560,9 @@ class Formatter {
       $url=str_replace('$PAGE',$page_only,$url).$query;
     }
 
-    $img="<a href='$url' target='wiki'><img border='0' src='$this->imgs_dir/".
-         "interwiki/".strtolower($wiki)."-16.png' align='middle' height='16' ".
+    $img="<a href='$url' target='wiki'>".
+         "<img border='0' src='$this->imgs_dir_interwiki".
+         strtolower($wiki)."-16.png' align='middle' height='16' ".
          "width='16' alt='$wiki:' title='$wiki:' /></a>";
     #if (!$text) $text=str_replace("%20"," ",$page);
     if (!$text) $text=urldecode($page);
