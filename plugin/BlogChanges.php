@@ -144,14 +144,14 @@ function macro_BlogChanges($formatter,$value,$options='') {
   if (!$options['date'] or !preg_match('/^\d+$/',$options['date'])) $date=date('Ym');
   else $date=$options['date'];
 
-  if (strlen($date)==6) {
-    $pre_month=intval(substr($date,4))-1;
-    $pre_year=substr($date,0,4);
-    if ($pre_month == 0) {
-      $pre_month=12;
-      $pre_year=intval(substr($date,0,4))-1;
-    }
-    $pre_date=$pre_year.sprintf('%02d',$pre_month);
+  $year=substr($date,0,4);
+  $month=substr($date,4,2);
+  $day=substr($date,6,2);
+
+  if (strlen($date)==8) {
+    $pre_date= date('Ymd',mktime(0,0,0,$month,intval($day) - 1,$year));
+  } else if (strlen($date)==6) {
+    $pre_date= date('Ym',mktime(0,0,0,intval($month) - 1,1,$year));
   }
 
   if (in_array('all',$opts)) {
