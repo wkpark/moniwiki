@@ -15,8 +15,8 @@
 
 include "wikilib.php";
 
-function preg_escape($val) {
-  return preg_replace('/([\^\.\[\]\{\}\|\(\)\/\\\\!]{1})/','\\\\\1',$val);
+function _preg_escape($val) {
+  return preg_replace('/([\^\.\[\]\{\}\|\(\)\+\*\/\\\\!]{1})/','\\\\\1',$val);
 }
 
 function get_scriptname() {
@@ -25,7 +25,7 @@ function get_scriptname() {
 }
 
 function _rawurlencode($url) {
-  # MoinMoin style, have to be merged with WikiDB XXX
+  #
   $name=rawurlencode($url);
   $urlname=preg_replace('/%2F/i','/',$name);
   return $urlname;
@@ -230,7 +230,6 @@ class WikiDB {
     $this->upload_dir= './pds';
     $this->query_prefix='/';
     $this->umask= 02;
-    $this->embeded=0;
     $this->charset='euc-kr';
     $this->lang='ko';
     $this->dba_type="db3";
@@ -285,6 +284,7 @@ class WikiDB {
     $this->icon[www]="<img src='$this->imgs_dir/moin-www.gif' alt='www' align='middle' border='0' />";
     $this->icon[mailto]="<img src='$this->imgs_dir/moin-www.gif' alt='www' align='middle' border='0' />";
     $this->icon[updated]="<img src='$this->imgs_dir/moin-updated.gif' alt='U' align='middle' border='0' />";
+    $this->icon['new']="<img src='$this->imgs_dir/moin-new.gif' alt='U' align='middle' border='0' />";
     $this->icon[user]="UserPreferences";
     }
 
@@ -326,7 +326,7 @@ class WikiDB {
       include("wikismiley.php");
       # set smileys rule
       $tmp=array_keys($smileys);
-      $tmp=array_map("preg_escape",$tmp);
+      $tmp=array_map("_preg_escape",$tmp);
       $rule=join($tmp,"|");
       $this->smiley_rule=$rule;
       $this->smileys=$smileys;
@@ -386,6 +386,7 @@ class WikiDB {
 
     # moinmoin style internal encoding
     #$name=rawurlencode($pagename);
+    #$name=strtr($name,"%","_");
     #$name=preg_replace("/%([a-f0-9]{2})/ie","'_'.strtolower('\\1')",$name);
     #$name=preg_replace(".","_2e",$name);
 
@@ -394,6 +395,10 @@ class WikiDB {
     $name=preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord('\\1')))",$pagename);
 
     return $this->text_dir . '/' . $name;
+  }
+
+  function pageToKeyname($pagename) {
+    return preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord('\\1')))",$pagename);
   }
 
   function hasPage($pagename) {
@@ -406,17 +411,12 @@ class WikiDB {
     return new WikiPage($pagename,$options);
   }
 
-#  function keyToPagename($key) {
-#    $pagename=preg_replace("/_([a-f0-9]{2})/","%\\1",$key);
-#    return urldecode($pagename);
-#  }
-
   function keyToPagename($key) {
   #  return preg_replace("/_([a-f0-9]{2})/e","chr(hexdec('\\1'))",$key);
   #  $pagename=preg_replace("/_([a-f0-9]{2})/","%\\1",$key);
   #  $pagename=str_replace("_","%",$key);
     $pagename=strtr($key,"_","%");
-    return urldecode($pagename);
+    return rawurldecode($pagename);
   }
 
 
@@ -427,7 +427,7 @@ class WikiDB {
     if ($options[limit]) { # XXX
        while ($file = readdir($handle)) {
           if (is_dir($this->text_dir."/".$file)) continue;
-          if (filemtime($file) > $options[limit])
+          if (filemtime($this->text_dir."/".$file) > $options[limit])
              $pages[] = $this->keyToPagename($file);
        }
        closedir($handle);
@@ -438,6 +438,15 @@ class WikiDB {
           if (is_dir($this->text_dir."/".$file)) continue;
           $pages[] = $this->keyToPagename($file);
           $count--;
+       }
+       closedir($handle);
+       return $pages;
+    } else if ($options[date]) {
+       while ($file = readdir($handle)) {
+          if (is_dir($this->text_dir."/".$file)) continue;
+          $mtime=filemtime($this->text_dir."/".$file);
+          $pagename= $this->keyToPagename($file);
+          $pages[$pagename]= $mtime;
        }
        closedir($handle);
        return $pages;
@@ -473,6 +482,8 @@ class WikiDB {
   }
 
   function editlog_raw_lines($size=5000,$quick="") {
+    define(MAXSIZE,5000);
+    if ($size==0) $size=MAXSIZE;
     $filesize= filesize($this->editlog_name);
     if ($filesize > $size) {
       $fp= fopen($this->editlog_name, 'r');
@@ -535,6 +546,17 @@ class WikiDB {
     $delete=@unlink($key);
 #    system("ci -q -t-".$page->name." -l -m'".$REMOTE_ADDR.";;".$comment."' ".$key);
     $this->addLogEntry($page->name, $REMOTE_ADDR,$comment,"SAVE");
+  }
+
+  function renamePage($page,$new) {
+    $REMOTE_ADDR=$_SERVER[REMOTE_ADDR];
+
+    $okey=$this->getPageKey($page->name);
+    $nkey=$this->getPageKey($new);
+
+    system("mv $okey $nkey");
+    $comment="Rename '$old' to '$new'";
+    $this->addLogEntry($new, $REMOTE_ADDR,$comment,"SAVE");
   }
 }
 
@@ -717,6 +739,30 @@ class WikiPage {
   function write($body) {
     if ($body)
        $this->body=$body;
+  }
+
+  function get_rev($mtime="") {
+    if ($mtime) {
+      $date=gmdate('Y/m/d H:i:s',$mtime);
+      if ($date) 
+         $opt="-d\<'$date'";
+    }
+    $fp=popen("rlog $opt ".$this->filename,"r");
+#   if (!$fp)
+#      print "No older revisions available";
+# XXX
+    while (!feof($fp)) {
+      $line=fgets($fp,1024);
+      preg_match("/^revision\s+([\d\.]+$)/",$line,$match);
+      if ($match[1]) {
+         $rev=$match[1];
+         break;
+      }
+    }
+    pclose($fp);
+    if ($rev > 1.0)
+      return $rev;
+    return '';
   }
 }
 
@@ -1388,30 +1434,6 @@ class Formatter {
    return $out;
  }
 
- function get_rev($mtime="") {
-   if ($mtime) {
-      $date=date('Y/m/d h:m:s',$mtime);
-      if ($date) 
-         $opt="-d\<$date";
-   }
-   $fp=popen("rlog $opt ".$this->page->filename,"r");
-#   if (!$fp)
-#      print "No older revisions available";
-# XXX
-   while (!feof($fp)) {
-      $line=fgets($fp,1024);
-      preg_match("/^revision\s+([\d\.]+$)/",$line,$match);
-      if ($match[1]) {
-         $rev=$match[1];
-         break;
-      }
-   }
-   pclose($fp);
-   if ($rev > 1.0)
-      return $rev;
-   return '';
- }
-
  function get_merge($text,$rev="") {
    global $DBInfo;
 
@@ -1423,7 +1445,7 @@ class Formatter {
    fclose($fp);
 
    # recall old rev
-   $opts[rev]=$this->get_rev();
+   $opts[rev]=$this->page->get_rev();
    
    $orig=$this->page->get_raw_body($opts);
    $tmpf2=tempnam($DBInfo->vartmp_dir,"MERGE_ORG");
@@ -1483,9 +1505,9 @@ class Formatter {
    }
 
    if (!$rev1 and !$rev2) {
-      $rev1=$this->get_rev();
+      $rev1=$this->page->get_rev();
    } else if (0 === strcmp($rev1 , (int)$rev1)) {
-      $rev1=$this->get_rev($rev1);
+      $rev1=$this->page->get_rev($rev1);
    } else if ($rev1==$rev2) $rev2="";
    if ($rev1) $option="-r$rev1 ";
    if ($rev2) $option.="-r$rev2 ";
@@ -1499,7 +1521,7 @@ class Formatter {
       return;
    while (!feof($fp)) {
       $line=fgets($fp,1024);
-      $out .= $line;
+      $out.= $line;
    }
    pclose($fp);
    if (!$out)
@@ -1527,7 +1549,6 @@ class Formatter {
         header($header);
     }
 
-#  if ($DBInfo->embeded) return;
    if (!$plain) {
       if (!$options[title]) $options[title]=$this->page->name;
       if (!$options[css_url]) $options[css_url]=$DBInfo->css_url;
@@ -1538,7 +1559,7 @@ class Formatter {
   <head>
   <meta http-equiv="Content-Type" content="text/html;charset=$DBInfo->charset" /> 
   <meta name="ROBOTS" content="NOINDEX,NOFOLLOW" />
-  <title>$options[title]</title>\n
+  <title>$DBInfo->sitename:$options[title]</title>\n
 EOS;
       if ($options[css_url])
          print '<link rel="stylesheet" type="text/css" href="'.
@@ -1680,7 +1701,7 @@ EOS;
 
    if ($mtime=$this->page->mtime()) {
      $lastedit=date("Y-m-d",$mtime);
-     $lasttime=date("h:m:s",$mtime);
+     $lasttime=date("H:i:s",$mtime);
    }
 
    $banner= <<<FOOT
@@ -1703,10 +1724,9 @@ FOOT;
       include_once("footer.php");
    else {
       print $menu.$banner;
-      print "\n</div>\n";
    }
-
-   if (!$DBInfo->embeded) print "</body>\n</html>\n";
+   print "\n</div>\n";
+   print "</body>\n</html>\n";
  }
 
  function send_title($title="", $link="", $options="") {
