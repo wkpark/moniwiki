@@ -2627,7 +2627,10 @@ class Formatter {
         $keywords="<meta name=\"keywords\" content=\"$keywords\" />";
       }
 
-      if (empty($options['title'])) $options['title']=$this->page->title;
+      if (empty($options['title'])) {
+        $options['title']=$this->pi['#title'] ? $this->pi['#title']:
+          $this->page->title;
+      }
       if (empty($options['css_url'])) $options['css_url']=$DBInfo->css_url;
       print <<<EOS
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -2637,7 +2640,7 @@ class Formatter {
   $DBInfo->metatags
   $keywords
 EOS;
-      print "  <title>$DBInfo->sitename: ".$this->page->title."</title>\n";
+      print "  <title>$DBInfo->sitename: ".$options['title']."</title>\n";
       if ($upper)
         print '  <link rel="Up" href="'.$this->link_url($upper)."\" />\n";
       $raw_url=$this->link_url($this->page->urlname,"?action=raw");
