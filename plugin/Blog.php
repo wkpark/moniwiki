@@ -75,6 +75,13 @@ function do_Blog($formatter,$options) {
     $savetext=str_replace("----\n","-''''''---\n",$savetext);
     #$savetext=str_replace("<","&lt;",$savetext);
   }
+
+  # for conflict check
+  if ($options['datestamp'])
+     $datestamp= $options['datestamp'];
+  else
+     $datestamp= $formatter->page->mtime();
+
   if ($options['title'])
     $options['title']=stripslashes($options['title']);
   if (!$options['button_preview'] && $savetext) {
@@ -124,10 +131,19 @@ function do_Blog($formatter,$options) {
           $lines[$i]="----\n$savetext -- $id @DATE@\n$endtag";
         $raw_body=join("\n",$lines);
       } else {
-        $formatter->send_title("Error: No entry found!","",$options);
+        $formatter->send_title(_("Error: No blog entry found!"),"",$options);
+        $formatter->send_footer("",$options);
         return;
       }
     } else { # Blog entry
+      // check timestamp
+      if ($formatter->page->mtime() > $datestamp) {
+        $options['msg']='';
+        $formatter->send_title(_("Error: Don't make a clone!"),"",$options);
+        $formatter->send_footer("",$options);
+        return;
+      }
+
       $entry="{{{#!blog $id @date@";
       if ($options['title'])
         $entry.=" ".$options['title'];
@@ -177,6 +193,7 @@ function do_Blog($formatter,$options) {
       if (!$title) $title=$options['page'];
       if (!$found) {
         $formatter->send_title("Error: No entry found!","",$options);
+        $formatter->send_footer("",$options);
         return;
       }
       $formatter->send_title(sprintf(_("Add Comment to \"%s\""),$title),"",$options);
@@ -203,6 +220,7 @@ FORM;
       print "<input name='nosig' type='checkbox' />"._("Don't add a signature")."<br />";
     print <<<FORM2
 <input type="hidden" name="action" value="Blog" />
+<input type="hidden" name="datestamp" value="$datestamp" />
 <input type="submit" value="Save" />&nbsp;
 <input type="reset" value="Reset" />&nbsp;
 <input type="submit" name="button_preview" value="Preview" />
