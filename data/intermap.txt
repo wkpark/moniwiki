@@ -37,5 +37,7 @@ PyKug http://www.python.or.kr/pykug/
 WIM http://linux.mizi.com/wim/
 KTUG http://faq.ktug.or.kr/mywiki/
 MoniWiki http://moniwiki.sf.net/wiki.php/
-KLDPDoc http://doc.kldp.org/wiki.php/
+#MoniDev http://chemie.skku.ac.kr/wiki/wiki.php/
 #MoniWikiDev http://chemie.skku.ac.kr/wiki/wiki.php/
+
+Teoal http://teoal.net/wiki/
