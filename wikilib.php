@@ -28,8 +28,31 @@ function find_needle($body,$needle,$count=0) {
 
 function normalize($title) {
   if (strpos($title," "))
-    return preg_replace("/[\?!$%\.\^;&\*()_\+\|\[\] ]/","",ucwords($title));
+    #return preg_replace("/[\?!$%\.\^;&\*()_\+\|\[\] ]/","",ucwords($title));
+    return str_replace(" ","",ucwords($title));
   return $title;
+}
+
+function log_referer($referer,$page) {
+  global $DBInfo;
+  if (!$referer) return;
+
+  $ignore=array("http://".$_SERVER['HTTP_HOST']);
+
+  foreach ($ignore as $str)
+    if (($p=strpos($referer,$str)) !== false) return;
+
+  if (!file_exists($DBInfo->cache_dir."/referer")) {
+    umask(000);
+    mkdir($DBInfo->cache_dir."/referer",0777);
+    umask(011);
+    touch($DBInfo->cache_dir."/referer/referer.log");
+  }
+
+  $fp=fopen($DBInfo->cache_dir."/referer/referer.log",'a');
+  $date=gmdate("Y-m-d\TH:i:s",time());
+  fwrite($fp,"$date\t$page\t$referer\n");
+  fclose($fp);
 }
 
 class UserDB {
@@ -992,7 +1015,7 @@ function do_userform($formatter,$options) {
            else if ($ret==-2) $title= _("not acceptable character found in the password!");
        } else {
            if ($ret < 8)
-              $options['msg']=_("Password is too simple to use as a password !");
+              $options['msg']=_("Your password is too simple to use as a password !");
            $udb=new UserDB($DBInfo);
            $ret=$udb->addUser($user);
            if ($ret) {
@@ -1130,6 +1153,7 @@ function macro_RandomQuote($formatter,$value="") {
     $fortune=QUOTE_PAGE;
 
   $page=$DBInfo->getPage($fortune);
+  if (!$page->exists()) return '';
   $raw=$page->get_raw_body();
  
   $lines=explode("\n",$raw);
@@ -1137,16 +1161,23 @@ function macro_RandomQuote($formatter,$value="") {
   foreach($lines as $line) {
     if (preg_match("/^\s\* (.*)$/",$line,$match))
       $quotes[]=$match[1];
-  } 
+  }
 
-  $quote=$quotes[rand(1,sizeof($quotes))];
+  if (!($count=sizeof($quotes))) return '';
 
-  ob_start();
-  $options['nosisters']=1;
-  $formatter->send_page($quote,$options);
-  $out= ob_get_contents();
-  ob_end_clean();
-  return $out;
+  $quote=$quotes[rand(1,$count)];
+
+  $quote=str_replace("<","&lt;",$quote);
+  $quote=preg_replace($formatter->baserule,$formatter->baserepl,$quote);
+  $quote=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",
+         $quote);
+#  ob_start();
+#  $options['nosisters']=1;
+#  $formatter->send_page($quote,$options);
+#  $out= ob_get_contents();
+#  ob_end_clean();
+#  return $out;
+  return $quote;
 }
 
 function macro_UploadFile($formatter,$value="") {
@@ -1356,7 +1387,7 @@ EOF;
 function macro_InterWiki($formatter="") {
   global $DBInfo;
 
-  $out="<table border=0 cellspacing=2 cellpadding=0>";
+  $out="<table border='0' cellspacing='2' cellpadding='0'>";
   foreach (array_keys($DBInfo->interwiki) as $wiki) {
     $href=$DBInfo->interwiki[$wiki];
     if (strpos($href,'$PAGE') === false)
@@ -1366,8 +1397,8 @@ function macro_InterWiki($formatter="") {
       #$href=$url;
     }
     $icon=strtolower($wiki)."-16.png";
-    $out.="<tr><td><tt><img src='$DBInfo->imgs_dir/$icon' align='middle' alt='$wiki:'><a href='$url'>$wiki</a></tt><td><tt>";
-    $out.="<a href='$href'>$href</a></tt></tr>\n";
+    $out.="<tr><td><tt><img src='$DBInfo->imgs_dir/$icon' align='middle' alt='$wiki:'><a href='$url'>$wiki</a></tt></td><td><tt>";
+    $out.="<a href='$href'>$href</a></tt></td></tr>\n";
   }
   $out.="</table>\n";
   return $out;
@@ -1438,7 +1469,7 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
   $metawiki=$opts['metawiki'];
 
   if (strlen($pname) < 3) {
-    $opts['msg'] = 'Use more specific text';
+    $opts['msg'] = _('Use more specific text');
     return '';
   }
 
@@ -1516,7 +1547,7 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
   if ($likes) {
     ksort($likes);
 
-    $out.="<h3>These pages share a similar word...</h3>";
+    $out.="<h3>"._("These pages share a similar word...")."</h3>";
     $out.="<ol>\n";
     while (list($pagename,$i) = each($likes)) {
       $pageurl=_rawurlencode($pagename);
@@ -1529,7 +1560,7 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
   if ($starts || $ends) {
     ksort($starts);
 
-    $out.="<h3>These pages share an initial or final title word...</h3>";
+    $out.="<h3>"._("These pages share an initial or final title word...")."</h3>";
     $out.="<table border='0' width='100%'><tr><td width='50%' valign='top'>\n<ol>\n";
     while (list($pagename,$i) = each($starts)) {
       $pageurl=_rawurlencode($pagename);
@@ -1547,7 +1578,7 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
       $idx++;
     }
     $out.="</ol>\n</td></tr></table>\n";
-    $opts['extra']="If you can't find this page, ";
+    $opts['extra']=_("If you can't find this page, ");
     $hits+=count($starts) + count($ends);
   }
 
@@ -1645,10 +1676,17 @@ function macro_WantedPages($formatter="",$options="") {
 function macro_PageList($formatter,$arg="") {
   global $DBInfo;
 
-  preg_match("/((\s*,\s*)?date)$/",$arg,$match);
-  if ($match) {
-    $options[date]=1;
-    $arg=substr($arg,0,-strlen($match[1]));
+  preg_match("/([^,]*)(\s*,\s*)?(.*)?$/",$arg,$match);
+  if ($match[1]=='date') {
+    $options['date']=1;
+    $arg='';
+  } else if ($match) {
+    $arg=$match[1];
+    $options=array();
+    if ($match[3]) $options=explode(",",$match[3]);
+    if (in_array('date',$options)) $options['date']=1;
+    else if ($arg and (in_array('metawiki',$options) or in_array('m',$options)))
+      $options['metawiki']=1;
   }
   $needle=_preg_search_escape($arg);
 
@@ -1658,7 +1696,17 @@ function macro_PageList($formatter,$arg="") {
     return "[[PageList(<font color='red'>Invalid \"$arg\"</font>)]]";
   }
 
-  $all_pages = $DBInfo->getPageLists($options);
+  if ($options['date']) {
+    $all_pages = $DBInfo->getPageLists($options);
+  } else {
+    if ($options['metawiki'])
+      $all_pages = $DBInfo->metadb->getLikePages($needle);
+    else
+      $all_pages = $DBInfo->getLikePages($needle);
+#     $all_pages= array_unique(array_merge($meta_pages,$all_pages));
+  }
+#  $all_pages = $DBInfo->getPageLists($options);
+
   $hits=array();
 
   if ($options[date]) {
@@ -1697,26 +1745,26 @@ function macro_TitleIndex($formatter="") {
       $all_pages[]=str_replace($formatter->group,"",$page);
   } else
     $all_pages = $DBInfo->getPageLists();
-  sort($all_pages);
+  natcasesort($all_pages);
 
   $key=-1;
   $out="";
   $keys=array();
   foreach ($all_pages as $page) {
     $pkey=get_key($page);
-#       $key=strtoupper($page[0]);
+#   $key=strtoupper($page[0]);
     if ($key != $pkey) {
        if ($key !=-1)
-          $out.="</UL>";
+          $out.="</ul>";
        $key=$pkey;
        $keys[]=$key;
        $out.= "<a name='$key' /><h3><a href='#top'>$key</a></h3>\n";
-       $out.= "<UL>";
+       $out.= "<ul>";
     }
     
-    $out.= '<LI>' . $formatter->word_repl($page);
+    $out.= '<li>' . $formatter->word_repl($page)."</li>\n";
   }
-  $out.= "</UL>";
+  $out.= "</ul>\n";
 
   $index="";
   foreach ($keys as $key)
@@ -1766,7 +1814,7 @@ function macro_RecentChanges($formatter="",$value="") {
     } if (in_array ("table", $args)) {
       $bra="<table border='0' cellpadding='0' cellspading='0' width='100%'>";
       $template=
-  '$out.= "<tr><td>&nbsp;</td><td width=\'2%\'>$icon</td><td width=\'40%\'>$title</td><td width=\'15%\'>$date</td><td>$user $count $extra</td></tr>\n";';
+  '$out.= "<tr><td nowrap=\'nowrap\' width=\'2%\'>$icon</td><td width=\'40%\'>$title</td><td width=\'15%\'>$date</td><td>$user $count $extra</td></tr>\n";';
       $cat="</table>";
       $cat0="";
     }
@@ -1856,7 +1904,7 @@ function macro_RecentChanges($formatter="",$value="") {
     $pageurl=_rawurlencode($page_name);
 
     if (!$DBInfo->hasPage($page_name))
-      $icon= $formatter->link_tag($pageurl,"?action=diff",$formatter->icon[del]);
+      $icon= "&nbsp;&nbsp;".$formatter->link_tag($pageurl,"?action=diff",$formatter->icon[del]);
     else if ($ed_time > $bookmark) {
       $icon= $formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon[updated]);
       if ($checknew) {
@@ -1867,7 +1915,7 @@ function macro_RecentChanges($formatter="",$value="") {
             $formatter->link_tag($pageurl,"?action=info",$formatter->icon['new']);
       }
     } else
-      $icon= $formatter->link_tag($pageurl,"?action=diff",$formatter->icon[diff]);
+      $icon= "&nbsp;&nbsp;".$formatter->link_tag($pageurl,"?action=diff",$formatter->icon[diff]);
 
     $title= preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$page_name);
     $title= $formatter->link_tag($pageurl,"",$title);
@@ -2038,12 +2086,12 @@ function macro_FullSearch($formatter="",$value="", $opts=array()) {
   }
 
   $url=$formatter->link_url($formatter->page->urlname);
-  $needle=str_replace('"',"&#34;",$needle); # XXX
+  $fneedle=str_replace('"',"&#34;",$needle); # XXX
 
   $form= <<<EOF
 <form method='get' action='$url'>
    <input type='hidden' name='action' value='fullsearch' />
-   <input name='value' size='30' value='$needle' />
+   <input name='value' size='30' value='$fneedle' />
    <input type='submit' value='Go' /><br />
    <input type='checkbox' name='context' value='20' checked='checked' />Display context of search results<br />
    <input type='checkbox' name='backlinks' value='1' />Search BackLinks only<br />
@@ -2093,7 +2141,7 @@ EOF;
        if ($count) {
          $hits[$page_name] = $count;
          # search matching contexts
-         $contexts[$page_name] = find_needle($body,$needle,$opts[context]);
+         $contexts[$page_name] = find_needle($body,$needle,$opts['context']);
        }
      }
   }
