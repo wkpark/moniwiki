@@ -11,8 +11,9 @@ if (!function_exists('macro_BlogChanges'))
 function do_rss_blog($formatter,$options) {
   global $DBInfo;
 
-  if (!$options['date'] or !preg_match('/^\d+$/',$date)) $date=date('Ym');
-  else $date=$options['date'];
+#  if (!$options['date'] or !preg_match('/^\d+$/',$date)) $date=date('Ym');
+#  else $date=$options['date'];
+  $date=$options['date'];
 
   if ($options['all']) {
     # check error and set default value

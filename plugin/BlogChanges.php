@@ -25,10 +25,14 @@ class Blog_cache {
     global $DBInfo;
     $rule="/^($date\d*)".'_2e('.join('|',$blogs).')$/';
     $logs=array();
+    if (!$date) $limit=10;
+    else $limit=30;
+
+    #print $limit;
     $handle = @opendir($DBInfo->cache_dir."/blogchanges");
     if (!$handle) return array();
 
-    while ($file = readdir($handle)) {
+    while (($file = readdir($handle)) && $limit > 0) {
       $fname=$DBInfo->cache_dir."/blogchanges/".$file;
       if (is_dir($fname)) continue;
       if (preg_match($rule,$file,$match)) {
@@ -39,10 +43,11 @@ class Blog_cache {
         $items=file($fname);
         foreach ($items as $line) {
           list($author,$datestamp,$dummy)=explode(' ',$line);
-          $datestamp[10]=' ';
-          $timestamp= strtotime($datestamp." GMT");
-          $datestamp= date("Ymd",$timestamp);
+          #$datestamp[10]=' ';
+          #$timestamp= strtotime($datestamp." GMT");
+          #$datestamp= date("Ym",$timestamp);
           $logs[]=explode(' ',$pagename." ".rtrim($line),4);
+          $limit--;
         }
       }
     }
@@ -52,17 +57,21 @@ class Blog_cache {
   function get_rc_blogs($date) {
     global $DBInfo;
     $all=Blog_cache::get_blogs();
-    $rule="/^($date\d*)".'_2e('.join('|',$all).')$/';
+
     $blogs=array();
     $handle = @opendir($DBInfo->cache_dir."/blogchanges");
     if (!$handle) return array();
+    if (!$date) return array_unique($all);
 
+    $rule="/^($date\d*)".'_2e('.join('|',$all).')$/';
     while ($file = readdir($handle)) {
       $fname=$DBInfo->cache_dir."/blogchanges/".$file;
       if (is_dir($fname)) continue;
+      $blogs[]=$file;
       if (preg_match($rule,$file,$match))
         $blogs[]=$match[2];
     }
+
     return array_unique($blogs);
   }
 
@@ -70,16 +79,20 @@ class Blog_cache {
     global $DBInfo;
 
     if (!$blogs) return array();
-/*
-    $check=strlen($date);
-    if (($check < 4) or !preg_match('/^\d+/',$date)) $date=date('Y\-m');
-    else {
-      if ($check==6) $date=substr($date,0,4).'\-'.substr($date,4);
-      else if ($check==8) $date=substr($date,0,4).'\-'.substr($date,4,2).'\-'.substr($date,6);
-      else if ($check!=4) $date=date('Y\-m');
+
+    if ($date) {
+      $check=strlen($date);
+      if (($check < 4) or !preg_match('/^\d+/',$date)) $date=date('Y\-m');
+      else {
+        if ($check==6) $date=substr($date,0,4).'\-'.substr($date,4);
+        else if ($check==8) $date=substr($date,0,4).'\-'.substr($date,4,2).'\-'.substr($date,6);
+        else if ($check!=4) $date=date('Y\-m');
+      }
+      #print $date;
     }
-*/
-    $date='';
+
+    if ($date) $limit=30;
+    else $limit=10;
 
     $entries=array();
     $logs=array();
@@ -105,11 +118,13 @@ class Blog_cache {
           $temp=explode("----\n",$summary,2);
           $entry[]=$temp[0];
           $entries[]=$entry;
+          $limit--;
           $summary='';
           continue;
         }
         $summary.=$line."\n";
       }
+      if ($limit < 0) break;
     }
     return $entries;
   }
@@ -143,18 +158,7 @@ function macro_BlogChanges($formatter,$value,$options='') {
 
   # check error and set default value
   # default: show BlogChages monthly
-  if (!$options['date'] or !preg_match('/^\d+$/',$options['date'])) $date=date('Ym');
-  else $date=$options['date'];
-
-  $year=substr($date,0,4);
-  $month=substr($date,4,2);
-  $day=substr($date,6,2);
-
-  if (strlen($date)==8) {
-    $pre_date= date('Ymd',mktime(0,0,0,$month,intval($day) - 1,$year));
-  } else if (strlen($date)==6) {
-    $pre_date= date('Ym',mktime(0,0,0,intval($month) - 1,1,$year));
-  }
+  $date=$options['date'];
 
   if (in_array('all',$opts)) {
     if (in_array('summary',$opts))
@@ -169,6 +173,19 @@ function macro_BlogChanges($formatter,$value,$options='') {
   else
     $logs=Blog_cache::get_simple($blogs,$date);
   usort($logs,'BlogCompare');
+
+  if (!$options['date'] or !preg_match('/^\d+$/',$options['date']))
+    $date=date('Ym');
+
+  $year=substr($date,0,4);
+  $month=substr($date,4,2);
+  $day=substr($date,6,2);
+
+  if (strlen($date)==8) {
+    $pre_date= date('Ymd',mktime(0,0,0,$month,intval($day) - 1,$year));
+  } else if (strlen($date)==6) {
+    $pre_date= date('Ym',mktime(0,0,0,intval($month) - 1,1,$year));
+  }
 
   if (in_array('simple',$opts)) {
     $bra="";
