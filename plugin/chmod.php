@@ -49,7 +49,7 @@ Only WikiMaster can change the permission of this page\n";
 <input type=hidden name='action' value='chmod' />
 </form>";
 #  $formatter->send_page();
-  $formatter->send_footer();
+  $formatter->send_footer('',$options);
 }
 
 ?>
