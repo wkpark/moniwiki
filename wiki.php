@@ -1522,8 +1522,23 @@ class Formatter {
     } else if (!$nogroup and $this->group and !strpos($page,'~')) {
       if ($page[0]=='/') $page=substr($page,1);
       else $page=$this->group.$page;
-    } else if ($page[0]=='/') # SubPage
+    } else if ($page[0]=='/') { # SubPage
       $page=$this->page->name.$page;
+    } else if (preg_match('/^(\.{1,2})\//',$page,$match)) {
+      if ($match[1] == '..') {
+        $pos=strrpos($this->page->name,"/");
+        if ($pos > 0) $upper=substr($this->page->name,0,$pos);
+        if ($upper) {
+          $page=substr($page,2);
+          if ($page == '/') $page=$upper;
+          else $page=$upper.$page;
+        }
+      } else {
+        $page=substr($page,1);
+        if ($page == '/') $page='';
+        $page=$this->page->name.$page;
+      }
+    }
 
     $page=urldecode($page); # XXX
     $url=$this->link_url(_rawurlencode($page)); # XXX
@@ -1576,6 +1591,10 @@ class Formatter {
 
   function word_nonexists($word,$url) {
     return "<a class='nonexistent' href='$url'>?</a>$word";
+  }
+
+  function word_nolink($word,$url) {
+    return "$word";
   }
 
   function word_fancy_nonexists($word,$url) {
@@ -2850,6 +2869,21 @@ function get_locales($mode=1) {
   return array($languages[0][0]);
 }
 
+function set_locale($lang,$charset='') {
+  if ($lang == 'auto') {
+    # get broswer's settings
+    $langs=get_locales();
+    $lang= $langs[0];
+
+    $charset= strtoupper($charset);
+    if (function_exists('nl_langinfo'))
+      $server_charset= nl_langinfo(CODESET);
+    if ($charset == 'UTF-8' or $charset != $server_charset)
+      $lang.=".".$charset;
+  }
+  return $lang;
+}
+
 # get the pagename
 function get_pagename() {
   global $DBInfo;
@@ -2932,18 +2966,7 @@ if ($DBInfo->theme and $DBInfo->theme_css)
 $options['timer']=&$timing;
 $options['timer']->Check("load");
 
-if ($DBInfo->lang == 'auto') {
-  # get broswer's settings
-  $langs=get_locales();
-  $lang= $langs[0];
-
-  $charset= strtoupper($DBInfo->charset);
-  if (function_exists('nl_langinfo'))
-    $server_charset= nl_langinfo(CODESET);
-  if ($charset == 'UTF-8' or $charset != $server_charset)
-    $lang.=".".$charset;
-} else
-  $lang= $DBInfo->lang;
+$lang= set_locale($DBInfo->lang,$DBInfo->charset);
 
 if (isset($locale)) {
   $lf="locale/".$lang."/LC_MESSAGES/moniwiki.php";

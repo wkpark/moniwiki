@@ -440,7 +440,7 @@ function macro_Edit($formatter,$value,$options='') {
   $form.= "<a id='editor' name='editor' />\n";
 
   if ($options['page'])
-    $previewurl=$formatter->link_url(_urlencode($options['page']),'#preview');
+    $previewurl=$formatter->link_url(_rawurlencode($options['page']),'#preview');
   else
     $previewurl=$formatter->link_url($formatter->page->urlname,'#preview');
 
@@ -586,6 +586,8 @@ function do_DeletePage($formatter,$options) {
   
   $page = $DBInfo->getPage($options['page']);
 
+  print $options['value'];
+  print $options['page'];
   if (stripslashes($options['value']) == $options['page']) {
     $DBInfo->deletePage($page,$options);
     $title = sprintf(_("\"%s\" is deleted !"), $page->name);
