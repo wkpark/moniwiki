@@ -706,9 +706,9 @@ class WikiDB {
     return $out;
   }
 
-  function editlog_raw_lines($size=5000,$quick="") {
-    define(MAXSIZE,5000);
-    if ($size==0) $size=MAXSIZE;
+  function editlog_raw_lines($size=6000,$quick="") {
+    define(DEFSIZE,6000);
+    if ($size==0) $size=DEFSIZE;
     $filesize= filesize($this->editlog_name);
     if ($filesize > $size) {
       $fp= fopen($this->editlog_name, 'r');
@@ -923,6 +923,7 @@ class WikiPage {
   var $fp;
   var $filename;
   var $rev;
+  var $body;
 
   function WikiPage($name,$options="") {
     if ($options['rev'])
@@ -964,8 +965,9 @@ class WikiPage {
 
   function get_raw_body($options='') {
 #    if (isset($this->body) && !$options[rev])
-    if ($this->body && !$options['rev'])
+    if ($this->body && !$options['rev']) {
        return $this->body;
+    }
 
     if (!$this->exists()) return '';
 
@@ -1004,8 +1006,8 @@ class WikiPage {
   function _get_raw_body() {
     $fp=@fopen($this->filename,"r");
     if (!$fp) {
-      $out="You have no permission to see this page.\n\n";
-      $out.="See MoniWiki/AccessControl\n";
+      $out=_("You have no permission to see this page.\n\n");
+      $out.=_("See MoniWiki/AccessControl\n");
       return $out;
     }
     $size=filesize($this->filename);
@@ -1025,8 +1027,8 @@ class WikiPage {
   }
 
   function write($body) {
-    if ($body)
-       $this->body=$body;
+    #if ($body)
+    $this->body=$body;
   }
 
   function get_rev($mtime="") {
@@ -1250,7 +1252,8 @@ class Formatter {
     }
 
     if ($notused) $body=join("\n",$notused)."\n".$body;
-    if ($update_body) $this->page->write($body);
+    if ($update_body) $this->page->write($body." "); # workaround XXX
+    #if ($update_body) $this->page->write($body);
     return $pi;
   }
 
@@ -2511,7 +2514,7 @@ FOOT;
     }
     # setup title variables
     $heading=$this->link_to("?action=fullsearch&amp;value=$name",$title);
-    $title="$group<span class='wikiTitle'><b>$title</b></span>";
+    $title="$group<font class='wikiTitle'><b>$title</b></font>";
     if ($link)
       $title="<a href=\"$link\" class='wikiTitle'>$title</a>";
     else if (empty($options['nolink']))
