@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0rc4';
+$_release = '1.0rc5';
 
 include "wikilib.php";
 
@@ -988,7 +988,6 @@ class Formatter {
     $this->foots=array();
     $this->gen_pagelinks=0;
 
-    #
     #$punct="<\"\'}\]\|\;\,\.\!";
     $punct="<\'}\]\|;,\.\)\!";
     $url="http|ftp|telnet|mailto|wiki";
@@ -1005,6 +1004,7 @@ class Formatter {
              "($urlrule)|".
              "(\?[a-z0-9]+)";
 
+    $this->cache= new Cache_text("pagelinks");
   }
 
   function get_redirect() {
@@ -1175,14 +1175,12 @@ class Formatter {
   }
 
   function store_pagelinks() {
-    $cache= new Cache_text("pagelinks");
-    $cache->update($this->page->name,$this->pagelinks,$this->page->mtime());
+    $this->cache->update($this->page->name,$this->pagelinks,$this->page->mtime());
   }
 
   function get_pagelinks() {
-    $cache= new Cache_text("pagelinks");
-    if ($cache->exists($this->page->name)) {
-      $links=$cache->fetch($this->page->name);
+    if ($this->cache->exists($this->page->name)) {
+      $links=$this->cache->fetch($this->page->name);
       if ($links != -1) return $links;
     }
     if ($this->page->exists()) {
@@ -1392,7 +1390,9 @@ class Formatter {
   function send_page($body="",$options="") {
     global $DBInfo;
 
-    if ($options[pagelinks]) $this->gen_pagelinks=1;
+    if ($body) $this->gen_pagelinks=0;
+    else if (!$this->cache->exists($this->page->name) or $options[pagelinks])
+      $this->gen_pagelinks=1;
 
     if ($body) {
       $this->_instructions(&$body);
@@ -1665,7 +1665,7 @@ class Formatter {
       print "<div id='wikiSister'>\n<br/><tt class='foot'>----</tt><br/>\nSister Sites Index<br />\n$sisters</div>\n";
     }
 
-    $this->store_pagelinks();
+    if ($this->gen_pagelinks) $this->store_pagelinks();
   }
 
   function _parse_rlog($log) {
@@ -2531,6 +2531,7 @@ if ($_SERVER[REQUEST_METHOD]=="POST" && $HTTP_POST_VARS) {
         $options[msg].=sprintf(_("%s is saved"),$formatter->link_tag($page->name));
       $formatter->send_title("","",$options);
       $opt[pagelinks]=1;
+      # re-generates pagelinks
       $formatter->send_page("",$opt);
    }
    $args[showpage]=1;
