@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0.4';
+$_release = '1.0.5';
 
 #ob_start("ob_gzhandler");
 
@@ -2686,19 +2686,21 @@ MSG;
     # navi bar
     $menu=array();
     if ($options['quicklinks']) {
+      # get from the user setting
       $quicklinks=array_flip(explode("\t",$options['quicklinks']));
     } else {
+      # get from the config.php
       $quicklinks=$this->menu;
     }
     $sister_save=$this->sister_on;
     $this->sister_on=0;
-    $key=1;
     foreach ($quicklinks as $item=>$attr) {
       if (strpos($item,' ') === false) {
-        $attr++;
-        $attr="accesskey='$attr'";
+        if (strpos($attr,'=') === false) $attr="accesskey='$attr'";
+        # like 'MoniWiki'=>'accesskey="1"'
         $menu[]=$this->link_tag($item,"",_($item),$attr);
       } else {
+        # like a 'MoniWiki http://moniwiki.sf.net'
         $menu[]=$this->link_repl($item,$attr);
       }
     }
@@ -3071,6 +3073,7 @@ if ($pagename) {
   }
 
   if ($action) {
+
     if (!$DBInfo->security->is_allowed($action,&$options)) {
       $msg=sprintf(_("You are not allowed to '%s'"),$action);
       $formatter->send_header("Status: 406 Not Acceptable",$options);
@@ -3080,8 +3083,8 @@ if ($pagename) {
       $formatter->send_footer($args,$options);
       return;
     } else if ($_SERVER['REQUEST_METHOD']=="POST" and
-       $DBInfo->security->is_protected($action,&$options) and
-       !$DBInfo->security->is_valid_password($_POST['passwd'],$options)) {
+      $DBInfo->security->is_protected($action,&$options) and
+      !$DBInfo->security->is_valid_password($_POST['passwd'],$options)) {
       # protect some POST actions and check a password
 
       $title = sprintf(_("Fail to \"%s\" !"), $action);
