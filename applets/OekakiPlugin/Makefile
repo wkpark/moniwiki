@@ -1,5 +1,7 @@
+VER=222_5
 install:
-	wget -c http://hp.vector.co.jp/authors/VA016309/paintbbs/file/pbbs222_4.zip
-	unzip pbbs222_4.zip
+	if [ ! -f pbbs${VER}.zip ]; then \
+	wget -c http://hp.vector.co.jp/authors/VA016309/paintbbs/file/pbbs${VER}.zip; fi
+	unzip pbbs${VER}.zip
 uninstall:
 	rm *.jar *.html
