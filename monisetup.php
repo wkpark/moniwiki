@@ -27,6 +27,7 @@ class MoniConfig {
   }
   function _getHostConfig() {
     if (function_exists("dba_open")) {
+      print '<h3>Check a dba configuration</h3>';
       $tempnam="/tmp/".time();
       if ($db=@dba_open($tempnam,"n","db3"))
         $config['dba_type']="'db3'";
@@ -36,11 +37,35 @@ class MoniConfig {
         $config['dba_type']="'gdbm'";
 
       if ($db) dba_close($db);
+      print '<ul><li><b>'.$config['dba_type'].'</b> is selected.</li></ul>';
     }
     preg_match("/Apache\/2\.0\./",$_SERVER['SERVER_SOFTWARE'],$match);
 
-    if ($match)
+    if ($match) {
       $config['query_prefix']='"?"';
+      while (ini_get('allow_url_fopen')) {
+        print '<h3>Check a AcceptPathInfo setting for Apache 2.0.xx</h3>';
+        print '<ul>';
+        $fp=@fopen('http://'.$_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_NAME'].'/pathinfo?action=pathinfo','r');
+        $out='';
+        if ($fp) {
+          while (!feof($fp)) $out.=fgets($fp,2048);
+        } else {
+          print "<li><b><a href='http://moniwiki.sf.net/wiki.php/AcceptPathInfo'>AcceptPathInfo</a> <font color='red'>Off</font></b><li>\n";
+          print '</ul>';
+          break;
+        }
+        fclose($fp);
+        if ($out[0] == '*') {
+          print "<li><b><a href='http://moniwiki.sf.net/wiki.php/AcceptPathInfo'>AcceptPathInfo</a> <font color='red'>Off</font></b></li>\n";
+        } else {
+          print "<li><b>AcceptPathInfo <font color='blue'>On</font></b></li>\n";
+          $config['query_prefix']='"/"';
+        }
+        print '</ul>';
+        break;
+      }
+    }
 
     $url_prefix= preg_replace("/\/([^\/]+)\.php$/","",$_SERVER['SCRIPT_NAME']);
     $config['url_prefix']="'".$url_prefix."'";
@@ -49,8 +74,9 @@ class MoniConfig {
     $user = $user ? $user : get_current_user();
     $config['rcs_user']="'".$user."'";
 
-    if (!file_exists('wikilib.php'))
+    if (!file_exists('wikilib.php')) {
       $config['include_path']="'.:/usr/local/share/moniwiki:/usr/share/moniwiki'";
+    }
     return $config;
   }
 
@@ -372,6 +398,11 @@ $update=$_POST['update'];
 $action=$_GET['action'] or $_POST['action'];
 $newpasswd=$_POST['newpasswd'];
 $oldpasswd=$_POST['oldpasswd'];
+
+if ($_GET['action']=='pathinfo') {
+  print $_SERVER['PATH_INFO'].'****';
+  return;
+}
 
 if ($_SERVER['REQUEST_METHOD']=="POST" && $config) {
   $conf=$Config->_getFormConfig($config);
