@@ -151,7 +151,7 @@ Contents</span>&nbsp;
     return "
 <form name='go' id='go' method='get' action='$action'>
 <table class='goto'>
-<tr><td nowrap='nowrap' style='width:220'>
+<tr><td nowrap='nowrap' style='width:220px'>
 <input type='text' name='value' size='28' accesskey='s' style='width:110px' />
 <input type='submit' name='status' value='Go' class='goto' style='width:23px' />
 </td></tr>
@@ -1675,7 +1675,7 @@ class Formatter {
   }
 
   function word_forcelink($word,$url) {
-    return "<a href='$url'>$word</a>";
+    return "<a class='nonexistent' href='$url'>$word</a>";
   }
 
   function word_fancy_nonexists($word,$url) {
