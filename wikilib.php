@@ -53,7 +53,7 @@ class UserDB {
   }
 
   function saveUser($user) {
-    $config=array("css_url","datatime_fmt","email","language",
+    $config=array("css_url","datatime_fmt","email","bookmark","language",
                   "name","password","wikiname_add_spaces");
 
     $date=date('Y/m/d', time());
@@ -110,6 +110,7 @@ class User {
      }
      $this->setID($HTTP_COOKIE_VARS[MONI_ID]);
      $this->css=$HTTP_COOKIE_VARS[MONI_CSS];
+     $this->bookmark=$HTTP_COOKIE_VARS[MONI_BOOKMARK];
   }
 
   function setID($id) {
@@ -383,7 +384,13 @@ function do_fullsearch($formatter,$options) {
 
 function do_goto($formatter,$options) {
   if ($options[value]) {
-     $url=$formatter->link_url($options[value]);
+     $url=stripslashes($options[value]);
+     $url=_rawurlencode($url);
+     #$url=$formatter->link_url($options[value]);
+     $url=$formatter->link_url($url);
+     #print $url;
+     #return;
+     #$url=("&amp;","&",$options[value]);
      $formatter->send_header(array("Status: 302","Location: ".$url));
   } else
   if ($options[url]) {
@@ -618,6 +625,36 @@ function do_post_css($formatter,$options) {
   $formatter->send_footer();
 }
 
+function do_bookmark($formatter,$options) {
+  global $DBInfo;
+
+  $user=new User(); # get cookie
+  if (!$options[time]) {
+     $bookmark=time();
+  } else {
+     $bookmark=$options[time];
+  }
+  if (0 === strcmp($bookmark , (int)$bookmark)) {
+    if ($user->id == "Anonymous") {
+      setcookie("MONI_BOOKMARK",$bookmark,time()+60*60*24*30,get_scriptname());
+      # set the fake cookie
+      $HTTP_COOKIE_VARS[MONI_BOOKMARK]=$bookmark;
+      $opts[msg] = 'Bookmark Changed';
+    } else {
+      $udb=new UserDB($DBInfo);
+      $userinfo=$udb->getUser($user->id);
+      $userinfo->info[bookmark]=$bookmark;
+      $udb->saveUser($userinfo);
+      $opts[msg] = 'Bookmark Changed';
+    }
+  } else
+    $opts[msg]="Invalid bookmark!";
+  $formatter->send_header("",$options);
+  $formatter->send_title($title,"",$opts);
+  $formatter->send_page();
+  $formatter->send_footer();
+}
+
 function do_userform($formatter,$options) {
   global $DBInfo;
 
@@ -689,7 +726,7 @@ function do_userform($formatter,$options) {
 
 function macro_UploadFile($formatter,$value="") {
    global $DBInfo;
-   $url=$formatter->link_url($formatter->page->name);
+   $url=$formatter->link_url($formatter->page->urlname);
    $form= <<<EOF
 <form enctype="multipart/form-data" method='post' action='$url'>
    <input type='hidden' name='action' value='UploadFile' />
@@ -732,7 +769,7 @@ function macro_Css($formatter="") {
   global $DBInfo;
 
   $out="
-<form method='post' action='$url'>
+<form method='post'>
 <input type='hidden' name='action' value='css' />
   <b>CSS for Anonymous users</b>&nbsp;
 <select name='user_css'>
@@ -1113,15 +1150,52 @@ function macro_Icon($formatter="",$value="",$extra="") {
   return $out;
 }
 
-function macro_QuickChanges($formatter="") {
+function macro_RecentChanges($formatter="",$value="") {
   global $DBInfo;
 
-  $lines= $DBInfo->editlog_raw_lines(4000,1);
+  $user=new User(); # retrive user info
+  if ($user->id == 'Anonymous')
+    $bookmark= $user->bookmark;
+  else {
+    $udb=new UserDB($DBInfo);
+    $userinfo= $udb->getUser($user->id);
+    $bookmark= $userinfo->info[bookmark];
+  }
+
+  if ($value== 'quick')
+    $lines= $DBInfo->editlog_raw_lines(4000,1);
+  else
+    $lines= $DBInfo->editlog_raw_lines();
     
   $time_current= time();
   $secs_per_day= 60*60*24;
   $days_to_show= 30;
   $time_cutoff= $time_current - ($days_to_show * $secs_per_day);
+
+  foreach ($lines as $line) {
+    $parts= explode("\t", $line);
+    $page_name= $DBInfo->keyToPagename($parts[0]);
+    $ed_time= $parts[2];
+
+    $day = date('Y/m/d', $ed_time);
+    if ($day != $ratchet_day) {
+      $ratchet_day = $day;
+      unset($logs);
+    }
+
+    if ($editcount[$page_name]) {
+      if ($logs[$page_name]) {
+        $editcount[$page_name]++;
+        continue;
+        print "$page_name;$editcount[$page_name];";
+      } else {
+        continue;
+      }
+    }
+    $editcount[$page_name]= 1;
+    $logs[$page_name]= 1;
+  }
+  unset($logs);
 
   $out="";
   $ratchet_day= FALSE;
@@ -1133,18 +1207,23 @@ function macro_QuickChanges($formatter="") {
     $user= $parts[4];
     $act= rtrim($parts[6]);
 
+    if ($logs[$page_name]) continue;
+
     if ($ed_time < $time_cutoff)
       break;
 
     $day = date('Y/m/d', $ed_time);
     if ($day != $ratchet_day) {
-      $out.=sprintf("<br /><font size='+1'>%s :</font><br />\n", date($DBInfo->date_fmt, $ed_time));
+      $out.=sprintf("<br /><font size='+1'>%s </font> <font size='-1'>[", date($DBInfo->date_fmt, $ed_time));
+      $out.=$formatter->link_to("?action=bookmark&amp;time=$ed_time",
+                               _("set bookmark"))."]</font><br />\n";
       $ratchet_day = $day;
-      unset($edit);
     }
 
-    if ($act == "DEL")
+    if (!$DBInfo->hasPage($page_name))
        $out.= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=diff",$DBInfo->icon[del]);
+    else if ($ed_time > $bookmark)
+       $out.= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=diff",$DBInfo->icon[updated]);
     else
        $out.= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=diff",$DBInfo->icon[diff]);
 
@@ -1160,80 +1239,10 @@ function macro_QuickChanges($formatter="") {
       else
         $out.= $addr;
     }
+    if ($editcount[$page_name] > 1)
+      $out.=" [".$editcount[$page_name]." changes]";
     $out.= '<br />';
-  }
-  return $out;
-}
-
-function macro_RecentChanges($formatter="") {
-  global $DBInfo;
-
-  $lines= $DBInfo->editlog_raw_lines();
-
-  $time_current= time();
-  $secs_per_day= 60*60*24;
-  $days_to_show= 30;
-  $time_cutoff= $time_current - ($days_to_show * $secs_per_day);
-
-  $out="";
-  $ratchet_day= FALSE;
-#  while (list($_, $line) = each($lines)) {
-  foreach ($lines as $line) {
-    if (!$line) continue;
-    $parts= explode("\t", $line);
-    $page_name= $DBInfo->keyToPagename($parts[0]);
-    $addr= $parts[1];
-    $ed_time= $parts[2];
-    $user= $parts[4];
-    $act= rtrim($parts[6]);
-
-    if ($ed_time < $time_cutoff)
-      break;
-
-    if (!empty($logs[$page_name])) {
-      $edit[$page_name]++; continue;
-    }
-    $edit[$page_name] = 1;
-
-    $day = date('Y/m/d', $ed_time);
-    if ($day != $ratchet_day) {
-      if ($logs) {
-         while (list($name, $log) = each($logs)) {
-            if ($edit[$name]>1)
-               $count=" [".$edit[$name]." changes]";
-            else
-               $count="";
-            $out.=str_replace("[@]",$count,$log);
-         }
-      }
-      $out.=sprintf("<br /><font size='+1'>%s :</font><br />\n", date($DBInfo->date_fmt, $ed_time));
-      $ratchet_day = $day;
-      unset($logs);
-      #unset($edit);
-    }
-
-    if ($act == "DEL")
-       $logs[$page_name]= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=diff",$DBInfo->icon[del]);
-    else
-       $logs[$page_name]= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=diff",$DBInfo->icon[diff]);
-
-    $logs[$page_name].= "&nbsp;&nbsp;".$formatter->link_tag($page_name);
-    if (! empty($DBInfo->changed_time_fmt))
-      $logs[$page_name].= date($DBInfo->changed_time_fmt, $ed_time);
-
-#    $count=$DBInfo->pageCounter($page_name);
-#    if ($count)
-#       $logs[$page_name].= " ($count)";
-
-    if ($DBInfo->show_hosts) {
-      $logs[$page_name].= ' . . . . '; # traditional style
-      #$logs[$page_name].= '&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ';
-      if ($user)
-        $logs[$page_name].= $user;
-      else
-        $logs[$page_name].= $addr;
-    }
-    $logs[$page_name].= ' [@]<br />';
+    $logs[$page_name]= 1;
   }
   return $out;
 }
@@ -1350,12 +1359,13 @@ function macro_FullSearch($formatter="",$value="", $opts=array()) {
   global $DBInfo;
   $needle=$value;
 
-  $url=$formatter->link_url($formatter->page->name);
+  $url=$formatter->link_url($formatter->page->urlname);
+  $needle=str_replace('"',"&#34;",$needle);
 
   $form= <<<EOF
 <form method='get' action='$url'>
    <input type='hidden' name='action' value='fullsearch' />
-   <input name='value' size='30' value='$needle' />
+   <input name='value' size='30' value="$needle" />
    <input type='submit' value='Go' /><br />
    <input type='checkbox' name='context' value='20' checked='checked' />Display context of search results<br />
    <input type='checkbox' name='backlinks' value='1' checked='checked' />Search BackLinks only<br />
