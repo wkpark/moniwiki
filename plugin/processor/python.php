@@ -13,7 +13,10 @@ if (!function_exists("processor_vim"))
 
 function processor_python($formatter,$value="") {
 
-  $value="#!vim ".substr($value,2);
+  if ($value[0]=='#' and $value[1]=='!')
+    $value="#!vim ".substr($value,2);
+  else
+    $value="#!vim python\n".$value;
   # get parameters
   return processor_vim($formatter,$value);
 }
