@@ -456,6 +456,7 @@ class WikiDB {
     $this->notify=0;
     $this->trail=0;
     $this->diff_type='fancy_diff';
+    $this->nonexists='nonexists';
     $this->use_sistersites=1;
     $this->use_twinpages=1;
     $this->pagetype=array();
@@ -1211,6 +1212,7 @@ class Formatter {
       if ($this->pi) return $this->pi;
       $body=$this->page->get_raw_body();
       $update_body=1;
+    }{
 
       $pos=strpos($this->page->name,'/') ? 1:0;
       $key=strtok($this->page->name,'/');
@@ -1228,12 +1230,14 @@ class Formatter {
     } else {
       if ($body[0]=='#' and substr($body,0,8)=='#format ') {
         list($line,$body)=explode("\n",$body,2);
-        list($tag,$format)=explode(" ",$line,2);
+        list($tag,$format,$args)=explode(" ",$line,3);
+        $pi['args']=$args;
       } else if ($body[0] == '#' and $body[1] =='!') {
         list($line, $body)= explode("\n", $body,2);
         list($format,$args)= explode(" ", substr($line,2),2);
         $pi['args']=$args;
       }
+      if ($format=='wiki') $format=='';
 
       while ($body and $body[0] == '#') {
         # extract first line
@@ -1250,7 +1254,9 @@ class Formatter {
     }
 
     if ($format) {
-      if (function_exists("processor_".$format)) {
+      if ($format == 'wiki') {
+        #just ignore
+      } else if (function_exists("processor_".$format)) {
         $pi['#format']=$format;
       } else if ($processor=getProcessor($format)) {
         include_once("plugin/processor/$processor.php");
@@ -1423,6 +1429,7 @@ class Formatter {
 
   function word_repl($word,$text='',$attr='',$nogroup=0) {
     global $DBInfo;
+    $nonexists='word_'.$DBInfo->nonexists;
     if ($word[0]=='"') { # ["extended wiki name"]
       $page=substr($word,1,-1);
       $word=$page;
@@ -1451,7 +1458,8 @@ class Formatter {
       $idx=$this->pagelinks[$page];
       switch($idx) {
         case 0:
-          return "<a class='nonexistent' href='$url'>?</a>$word";
+          #return "<a class='nonexistent' href='$url'>?</a>$word";
+          return call_user_func(array(&$this,"word_$DBInfo->nonexists"),$word,$url);
         case -1:
           return "<a href='$url'>$word</a>";
         case -2:
@@ -1488,6 +1496,27 @@ class Formatter {
         }
       }
       $this->pagelinks[$page]=0;
+      #return "<a class='nonexistent' href='$url'>?</a>$word";
+      return call_user_func(array(&$this,"word_$DBInfo->nonexists"),$word,$url);
+    }
+  }
+
+  function word_nonexists($word,$url) {
+    return "<a class='nonexistent' href='$url'>?</a>$word";
+  }
+
+  function word_fancy_nonexists($word,$url) {
+    global $DBInfo;
+    #if (preg_match("/^[a-zA-Z0-9\/~]/",$word))
+    if (ord($word[0]) < 125)
+      return "<a class='nonexistent' href='$url'>$word[0]</a>".substr($word,1);
+    if (function_exists('mb_encode_numericentity') && function_exists('iconv')){
+      $utfword=iconv($DBInfo->charset,'utf-8',$word);
+      $convmap=array(0xac00, 0xd7a3, 0x0000, 0xffff); /* for euc-kr */
+      $mbword=mb_encode_numericentity($utfword,$convmap,'utf-8');
+      $tag=strtok($mbword,';').';'; $last=strtok('');
+      return "<a class='nonexistent' href='$url'>$tag</a>".$last;
+    } else {
       return "<a class='nonexistent' href='$url'>?</a>$word";
     }
   }
@@ -2037,6 +2066,8 @@ class Formatter {
         case 2:
            $inf=preg_replace("/date:\s(.*);\s+author:.*;\s+state:.*;/","\\1",$line);
            list($inf,$change)=explode('lines:',$inf,2);
+           $date=strtok($inf,' '); $inf=$date.' '.strtok('-+');
+
            $change=preg_replace("/\+(\d+)\s\-(\d+)/",
              "<span class='diff-added'>+\\1</span><span class='diff-removed'>-\\2</span>",$change);
            $state=3;
@@ -2098,7 +2129,7 @@ class Formatter {
   }
 
   function show_info() {
-    $fp=popen("rlog -x,v/ ".$this->page->filename,"r");
+    $fp=popen("rlog -zLT -x,v/ ".$this->page->filename,"r");
 #   if (!$fp)
 #      print "No older revisions available";
 # XXX
@@ -2240,8 +2271,7 @@ class Formatter {
       } else {
          $msg= _("Difference between yours and the current");
          print "<h2>$msg</h2>";
-         $diff_type=$DBInfo->diff_type;
-         print $this->$diff_type($out);
+         print call_user_func(array(&$this,$DBInfo->diff_type),$out);
       }
       return;
     }
@@ -2280,8 +2310,7 @@ class Formatter {
         $msg=sprintf(_("Difference between r%s and the current"),$rev1.$rev2);
         print "<h2>$msg</h2>";
       }
-      $diff_type=$DBInfo->diff_type;
-      print $this->$diff_type($out);
+      print call_user_func(array(&$this,$DBInfo->diff_type),$out);
     }
   }
 
@@ -2312,14 +2341,14 @@ class Formatter {
     if (isset($options['trail']))
       $this->set_trailer($options['trail'],$this->page->name);
 
-    if ($this->pi['#keywords'])
-      $keywords='<meta name="keywords" content="'.$this->pi['#keywords'].'" />';
-    else if ($DBInfo->use_keywords) {
-      $keywords=preg_replace("/((?<=[A-Za-z0-9])[A-Z][a-z0-9])/",", \\1",$this->page->name);
-      $keywords="<meta name=\"keywords\" content=\"$keywords\" />";
-    }
-
     if (!$plain) {
+      if ($this->pi['#keywords'])
+        $keywords='<meta name="keywords" content="'.$this->pi['#keywords'].'" />';
+      else if ($DBInfo->use_keywords) {
+        $keywords=str_replace(" ",", ",$this->page->title);
+        $keywords="<meta name=\"keywords\" content=\"$keywords\" />";
+      }
+
       if (empty($options['title'])) $options['title']=$this->page->title;
       if (empty($options['css_url'])) $options['css_url']=$DBInfo->css_url;
       print <<<EOS
@@ -2881,10 +2910,11 @@ if ($pagename) {
 
   if ($action) {
     if (!$DBInfo->security->is_allowed($action,&$options)) {
-      $msg=sprintf(_("You are not allowed to \"%s\""),$action);
+      $msg=sprintf(_("You are not allowed to '%s'"),$action);
       $formatter->send_header("Status: 406 Not Acceptable",$options);
       $formatter->send_title($msg,"", $options);
-      $formatter->send_page("== "._("Please contact to WikiMaster or Goto UserPreferences")." ==\n".$options['err']);
+      if ($options['err'])
+        $formatter->send_page($options['err']);
       $formatter->send_footer($args,$options);
       return;
     } else if ($_SERVER['REQUEST_METHOD']=="POST" and
