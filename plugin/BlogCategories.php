@@ -31,7 +31,7 @@ function macro_BlogCategories($formatter,$value='') {
       $lnk=str_replace('CATEGORY',$category,$link);
       if (!$no_rss)
         $rss='&nbsp;<a href="'.str_replace('blogchanges','blogrss',$lnk).'">'.
-          '<img src="'.$DBInfo->imgs_dir.'/tiny-xml.gif'.'" border="0" /></a>';
+          '<img src="'.$DBInfo->imgs_dir.'/tiny-xml.gif'.'" border="0" alt="xml" /></a>';
       $dep=str_replace(' ','&nbsp;&nbsp;',$match[1]);
       $out.="$dep<a href='$lnk'>$text/</a>$rss<br/>";
     }

@@ -35,17 +35,17 @@ EOF;
   #$TR="http://babelfish.altavista.com/babelfish/tr?doit=done&urltext=http://chemie.skku.ac.kr/wiki/wiki.php/BabelFishMacro&lp=en_ja
   if (in_array($lp,$supported)) {
     $URL=urlencode($URL);
-    $TR.="&lp=$lp";
+    $TR.="&amp;lp=$lp";
   } else {
     // XXX not supported by http://babelfish.altavista.com/
     $lp=$from.'_en';
-    $URL=urlencode($TR."&lp=$lp&url=$URL");
+    $URL=urlencode($TR."&amp;lp=$lp&amp;url=$URL");
     $lp='en_'.$to;
-    $TR.="&lp=$lp";
+    $TR.="&amp;lp=$lp";
   }
-  $goto=$TR.'&url='.$URL;
+  $goto=$TR.'&amp;url='.$URL;
   return <<<EOF
-<img src='$formatter->imgs_dir/$from-16.png' /> <a href="$goto"><img border='0' src='$formatter->imgs_dir/fishloop.gif' title='$msg' alt='BabelFish@altavista' /></a><img src='$formatter->imgs_dir/$to-16.png' />
+<img src='$formatter->imgs_dir/$from-16.png' alt='$from' /> <a href="$goto"><img border='0' src='$formatter->imgs_dir/fishloop.gif' title='$msg' alt='BabelFish@altavista' /></a><img src='$formatter->imgs_dir/$to-16.png' alt='$to' />
 EOF;
 
 }
