@@ -41,17 +41,17 @@ function qualifiedUrl($url) {
   return "http://$HTTP_HOST$url";
 }
 
-function hasPlugin($pluginname) {
+function getPlugin($pluginname) {
   static $plugins=array();
-  if ($plugins) return isset($plugins[$pluginname]);
+  if ($plugins) return $plugins[strtolower($pluginname)];
 
   $handle= opendir('plugin');
   while ($file= readdir($handle)) {
     if (is_dir("plugin/$file")) continue;
     $name= substr($file,0,-4);
-    $plugins[$name]= $name;
+    $plugins[strtolower($name)]= $name;
   }
-  return isset($plugins[$pluginname]);
+  return $plugins[strtolower($pluginname)];
 }
 
 function hasProcessor($pro_name) {
@@ -1233,8 +1233,8 @@ class Formatter {
 
     if (!function_exists ("macro_".$name)) {
 
-      if (hasPlugin($name) === true)
-        include("plugin/$name.php");
+      if ($plugin=getPlugin($name))
+        include("plugin/$plugin.php");
       else
         return "[[".$name."]]";
     }
@@ -2196,51 +2196,77 @@ if ($user->id != "Anonymous") {
 }
 
 # setup like phpwiki style locale
-# XXX
+# get broswer's settings
+
+function get_langs() {
+  $lang= $_SERVER[HTTP_ACCEPT_LANGUAGE];
+  $langs=explode(",",preg_replace(array("/;[^;,]+/","/\-[a-z]+/"),"",$lang));
+  return $langs;
+}
+
+$langs=get_langs();
+#print_r($langs);
+
+if ($DBInfo->lang == 'auto')
+  $lang= $langs[0];
+else
+  $lang= $DBInfo->lang;
+
 if (isset($locale)) {
-  $lf="locale/".$DBInfo->lang."/LC_MESSAGES/moniwiki.php";
-  if (file_exists($lf))
-    include($lf);
+  $lf="locale/".$lang."/LC_MESSAGES/moniwiki.php";
+  if (file_exists($lf)) include($lf);
 } else {
-  setlocale(LC_ALL, $DBInfo->lang);
+  setlocale(LC_ALL, $lang);
   bindtextdomain("moniwiki", "locale");
   textdomain("moniwiki");
 }
 
 if (!empty($_SERVER[PATH_INFO])) {
-   if ($_SERVER[PATH_INFO][0] == '/')
-      $pagename=substr($_SERVER[PATH_INFO],1);
-   if (!$pagename) {
-      $pagename = $DBInfo->frontpage;
-   }
-   $pagename=stripslashes($pagename);
+  if ($_SERVER[PATH_INFO][0] == '/')
+    $pagename=substr($_SERVER[PATH_INFO],1);
+  if (!$pagename) {
+    $pagename = $DBInfo->frontpage;
+  }
+  $pagename=stripslashes($pagename);
 } else if (!empty($_SERVER[QUERY_STRING])) {
-   if (isset($goto)) $pagename=$goto;
-   else {
-     $pagename = $_SERVER[QUERY_STRING];
-     $result = preg_match('/^([^&=]+)/',$pagename,$matches);
-     if ($result) {
-        $pagename = urldecode($matches[1]);
-        $QUERY_STRING=substr($QUERY_STRING,strlen($pagename));
-     }
-   }
-   if (!$pagename) $pagename= $DBInfo->frontpage;
+  if (isset($goto)) $pagename=$goto;
+  else {
+    $pagename = $_SERVER[QUERY_STRING];
+    $result = preg_match('/^([^&=]+)/',$pagename,$matches);
+    if ($result) {
+      $pagename = urldecode($matches[1]);
+      $QUERY_STRING=substr($QUERY_STRING,strlen($pagename));
+    }
+  }
+  if (!$pagename) $pagename= $DBInfo->frontpage;
 } else {
-   $pagename = $DBInfo->frontpage;
+  $pagename = $DBInfo->frontpage;
 }
 
 #print_r(array_keys($HTTP_GET_VARS));
 #print_r($HTTP_GET_VARS);
 
-$action=$HTTP_GET_VARS[action];
-$value=$HTTP_GET_VARS[value];
-$goto=$HTTP_GET_VARS[goto];
+if ($_SERVER[REQUEST_METHOD]=="POST") {
+  # if you want to use '$HTTP_RAW_POST_DATA'
+  # set "register_globals = On" in the php.ini
+  if (!$GLOBALS[HTTP_RAW_POST_DATA]) {
+    $action=$HTTP_POST_VARS[action];
+    $value=$HTTP_POST_VARS[value];
+    $goto=$HTTP_POST_VARS[goto];
+  } else {
+    $options[value]=$value;
+  }
+} else if ($_SERVER[REQUEST_METHOD]=="GET") {
+  $action=$HTTP_GET_VARS[action];
+  $value=$HTTP_GET_VARS[value];
+  $goto=$HTTP_GET_VARS[goto];
+}
 
 $options[page]=$pagename;
 
-if ($_SERVER[REQUEST_METHOD]=="POST") {
+if ($_SERVER[REQUEST_METHOD]=="POST" && $HTTP_POST_VARS) {
  $request=$HTTP_POST_VARS;
- $action=$request[action];
+# $action=$request[action];
  if ($action=="savepage" && $DBInfo->security->writable($options)) {
    $savetext=$request[savetext];
    $datestamp=$request[datestamp];
@@ -2335,7 +2361,7 @@ if ($_SERVER[REQUEST_METHOD]=="POST") {
    $formatter->send_footer($args);
 
    exit;
-   }
+ }
 }
 
 #if (!empty($QUERY_STRING))
@@ -2494,7 +2520,6 @@ if ($pagename) {
     $options[passwd]=$passwd;
     do_DeletePage($formatter,$options);
   } else if ($action) {
-
     if (function_exists("do_post_".$action)) {
       $options=array_merge($options,$HTTP_POST_VARS);
       $options[page]=$page->name;
@@ -2509,8 +2534,8 @@ if ($pagename) {
       $options[timer]=$timing;
       eval("do_".$action."(\$formatter,\$options);");
     } else {
-      if (file_exists("plugin/$action.php")) {
-        include("plugin/$action.php");
+      if ($plugin=getPlugin($action)) {
+        include("plugin/$plugin.php");
         if (function_exists("do_post_".$action)) {
           $options=array_merge($options,$HTTP_POST_VARS);
           $options[page]=$page->name;
