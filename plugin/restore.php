@@ -66,7 +66,7 @@ function do_post_restore($formatter,$options) {
     $options['needle']="/^backup_\d{8}(_\d+)?\.tgz$/";
     $options['download']="restore";
     $options['nodir']=1;
-    print macro_UploadedFiles($formatter,'UploadFile',$options);
+    print $formatter->macro_repl('UploadedFiles','UploadFile',$options);
 
     print $out;
 
