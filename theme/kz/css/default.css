@@ -2,7 +2,7 @@ body {
 	margin: 1em;
 	background-color: lightgrey;
 	color: black;
-	font-family: sans;
+	font-family: sans-serif;
 }
 head + body {
 	background-image: url(/images/haenim_transparent.png);
@@ -157,7 +157,7 @@ div.indent {
 }
 
 td.headline {
-    font-family: Helvetica;
+    font-family: Helvetica,sans-serif;
     font-size: 20pt;
 }
 
@@ -186,10 +186,10 @@ a.external {
 tt {
     padding-left:6px;
     padding-top:6px;
-    font-family:monotype,fixed;font-size:14px;
+    font-family:monotype,monospace;font-size:14px;
 }
 tt.foot {
-  font-family:Tahoma,fixed;
+  font-family:Tahoma,monospace;
   font-size:11px;
   vertical-align: super;
 }
@@ -271,7 +271,7 @@ del.diff-removed {
 
 .preformat {
     white-space: pre-wrap;
-    font-family: vt100;
+    font-family: vt100,monospace;
     word-wrap: break-word;
 }
 
@@ -315,4 +315,24 @@ form>#content {
 .rcTable .icon, .rcTable .timestamp {
 	white-space: pre;
 	text-align: right;
+}
+
+/* enscript syntax */
+div.wikiPre i,div.wikiPre b{
+  font-weight: normal;
+  font-style: normal;
+}
+
+img.imgLeft {
+  margin-right : 15px;
+  margin-bottom : 5px;
+}
+
+img.imgRight {
+  margin-left : 10px;
+  margin-bottom : 5px;
+}
+
+span.externalLink {
+  display: none;
 }

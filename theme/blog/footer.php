@@ -1,4 +1,5 @@
 </td><td width='200'>
+<div id='wikiSideMenu'>
 <?
 print '<div style="font-size:10px">';
 if ($options['id']=='Anonymous')
@@ -16,6 +17,7 @@ print macro_RandomPage($this,"4,simple");
 print '</font>';
 
 ?>
+</div>
 </td>
 </tr></table>
 <div id='wikiFooter'>
