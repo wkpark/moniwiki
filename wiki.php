@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org> all rights reserved.
+// Copyright 2003-2004 Won-Kyu Park <wkpark at kldp.org> all rights reserved.
 // distributable under GPL see COPYING
 //
 // many codes are imported from the MoinMoin
@@ -3284,7 +3284,8 @@ if ($pagename) {
 
     #$formatter->get_redirect();
     $formatter->pi=$formatter->get_instructions();
-    $options['attr']='ondblclick="location.href=\'?action=edit\'"';
+    if ($DBInfo->body_attr)
+      $options['attr']=$DBInfo->body_attr;
     $formatter->send_header("",$options);
     $formatter->send_title("","",$options);
 
