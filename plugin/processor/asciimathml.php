@@ -40,6 +40,11 @@ function processor_asciimathml($formatter,$value="") {
   if ( $flag ) {
     $out .= "<script type=\"text/javascript\" src=\"" .
     $DBInfo->url_prefix ."/local/ASCIIMathML.js\"></script>";
+    if (preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']))
+      $out.='<object id="mathplayer"'.
+        ' classid="clsid:32F66A20-7614-11D4-BD11-00104BD3F987">'.
+        '</object>'.
+        '<?import namespace="mml" implementation="#mathplayer"?>';
   }
 
   $out .= "<div id=\"asciimathml" . $id . "\">$value</div>" .
