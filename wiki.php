@@ -490,6 +490,7 @@ class WikiDB {
     $this->nonexists='nonexists';
     $this->use_sistersites=1;
     $this->use_twinpages=1;
+    $this->use_hostname=1;
     $this->pagetype=array();
     $this->smiley='wikismiley';
 
@@ -737,7 +738,8 @@ class WikiDB {
     $comment=strtr($comment,"\t"," ");
     $fp_editlog = fopen($this->editlog_name, 'a+');
     $time= time();
-    $host= gethostbyaddr($remote_name);
+    if ($this->use_hostname) $host= gethostbyaddr($remote_name);
+    else $host= $remote_name;
     $msg="$page_name\t$remote_name\t$time\t$host\t$user->id\t$comment\t$action\n";
     fwrite($fp_editlog, $msg);
     fclose($fp_editlog);
@@ -1194,7 +1196,7 @@ class Formatter {
     $this->baserule=array("/<([^\s<>])/","/`([^`' ]+)'/","/(?<!`)`([^`]*)`/",
                      "/'''([^']*)'''/","/(?<!')'''(.*)'''(?!')/",
                      "/''([^']*)''/","/(?<!')''(.*)''(?!')/",
-                     "/(?<!\^)\^([^ \^]+)\^(?!\^)/","/(?<!,),,([^ ,]+),,(?!,)/",
+                     "/\^([^ \^]+)\^(?=\s|$)/","/(?<!,),,([^ ,]+),,(?!,)/",
                      "/(?<!_)__([^_]+)__(?!_)/","/^-{4,}/",
                      "/(?<!-)--([^-]+)--(?!-)/",
                      );
@@ -1421,6 +1423,7 @@ class Formatter {
       return $this->macro_repl($url); # No link
     } else if ($url[0]=='$') {
       #return processor_latex($this,"#!latex\n".$url);
+      $url=preg_replace('/<\/?sup>/','^',$url);
       return $this->processor_repl($this->inline_latex,$url);
     }
 
