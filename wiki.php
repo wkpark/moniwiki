@@ -231,6 +231,7 @@ class MetaDB_dba extends MetaDB {
        #$dum=explode(" ",dba_fetch($pagename,$this->metadb));
        #$ret= "wiki:".join(":$pagename wiki:",$dum).":$pagename";
        #return "wiki:".join(":$pagename wiki:",$dum).":$pagename";
+       $pagename=_preg_search_escape($pagename);
        return preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
     }
     return "";
@@ -244,6 +245,7 @@ class MetaDB_dba extends MetaDB {
        #$dum=explode(" ",dba_fetch($pagename,$this->metadb));
        #$ret= "See TwinPages wiki:".$dum.":$pagename";
        #return "See TwinPages wiki:".join(":$pagename wiki:",$dum).":$pagename";
+       $pagename=_preg_search_escape($pagename);
        return preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
     }
     return "";
@@ -400,20 +402,32 @@ class Security_needtologin {
   }
 }
 
-function getConfig($configfile) {
+function getConfig($configfile, $options=array()) {
   if (!file_exists($configfile)) {
-    header("Location: monisetup.php");
-    exit;
+    if ($options['init']) {
+      $script= preg_replace("/\/([^\/]+)\.php$/","/monisetup.php",
+               $_SERVER['SCRIPT_NAME']);
+      header("Location: $script");
+      exit;
+    }
     return array();
-  }
+  } 
 
   $org=array();
+  # next line does not works exactly under php 4.1.2 with apache 1.3.xx
+  # while (list($key,$val)=each($options)) eval("\$$key=\"$val\";");
+  foreach ($options as $key=>$val) eval("\$$key=\"$val\";");
+
   $org=get_defined_vars();
   include($configfile);
   $new=get_defined_vars();
-  # print_r(array_diff($new,$org));
+  $config=array_diff($new,$org);
 
-  return array_diff($new,$org);
+  $config['menu']=$menu;
+  $config['icons']=$icons;
+  $config['icon']=$icon;
+
+  return $config;
 }
 
 class WikiDB {
@@ -447,8 +461,8 @@ class WikiDB {
     $this->logo_string= '<img src="'.$this->logo_img.'" alt="[logo]" border="0" align="middle" />';
     $this->use_smileys=1;
     $this->hr="<hr class='wikiHr' />";
-    $this->date_fmt= 'D d M Y';
-    $this->datetime_fmt= 'D d M Y h:i a';
+    $this->date_fmt= 'Y-m-d';
+    $this->datetime_fmt= 'Y-m-d h:i:s';
     #$this->changed_time_fmt = ' . . . . [h:i a]';
     $this->changed_time_fmt= ' [h:i a]';
     $this->admin_passwd= '10sQ0sKjIJES.';
@@ -478,6 +492,39 @@ class WikiDB {
       $this->menu_bra="";
       $this->menu_cat="|";
       $this->menu_sep="|";
+    }
+
+    if (!$this->icon) {
+    $iconset=$this->iconset;
+    $imgdir=$this->imgs_dir;
+    $this->icon['upper']="<img src='$imgdir/$iconset-upper.gif' alt='U' align='middle' border='0' />";
+    $this->icon['edit']="<img src='$imgdir/$iconset-edit.gif' alt='E' align='middle' border='0' />";
+    $this->icon['diff']="<img src='$imgdir/$iconset-diff.gif' alt='D' align='middle' border='0' />";
+    $this->icon['del']="<img src='$imgdir/$iconset-deleted.gif' alt='(del)' align='middle' border='0' />";
+    $this->icon['info']="<img src='$imgdir/$iconset-info.gif' alt='I' align='middle' border='0' />";
+    $this->icon['rss']="<img src='$imgdir/$iconset-rss.gif' alt='RSS' align='middle' border='0' />";
+    $this->icon['show']="<img src='$imgdir/$iconset-show.gif' alt='R' align='middle' border='0' />";
+    $this->icon['find']="<img src='$imgdir/$iconset-search.gif' alt='S' align='middle' border='0' />";
+    $this->icon['help']="<img src='$imgdir/$iconset-help.gif' alt='H' align='middle' border='0' />";
+    $this->icon['www']="<img src='$imgdir/$iconset-www.gif' alt='www' align='middle' border='0' />";
+    $this->icon['mailto']="<img src='$imgdir/$iconset-email.gif' alt='M' align='middle' border='0' />";
+    $this->icon['create']="<img src='$imgdir/$iconset-create.gif' alt='N' align='middle' border='0' />";
+    $this->icon['new']="<img src='$imgdir/$iconset-new.gif' alt='U' align='middle' border='0' />";
+    $this->icon['updated']="<img src='$imgdir/$iconset-updated.gif' alt='U' align='middle' border='0' />";
+    $this->icon['user']="UserPreferences";
+    $this->icon['home']="<img src='$imgdir/$iconset-home.gif' alt='M' align='middle' border='0' />";
+    }
+
+    if (!$this->icons) {
+      $this->icons=array(
+              array("","?action=edit",$this->icon['edit']),
+              array("","?action=diff",$this->icon['diff']),
+              array("","",$this->icon['show']),
+              array("FindPage","",$this->icon['find']),
+              array("","?action=info",$this->icon['info']),
+              array("","?action=subscribe",$this->icon['mailto']),
+              array("HelpContents","",$this->icon['help']),
+           );
     }
 
     # load smileys
@@ -1030,10 +1077,10 @@ class Formatter {
                      "<b>\\1</b>","<b>\\1</b>",
                      "<i>\\1</i>","<i>\\1</i>",
                      "<sup>\\1</sup>","<sub>\\1</sub>",
-                     "<hr class='wiki' />\n");
+                     "<hr class='wikiHr' />\n");
 
     #$punct="<\"\'}\]\|;,\.\!";
-    $punct="<\'}\]\|;\.\)\!";
+    $punct="<\'}\]\|;\.\)\!"; # , is omitted for the WikiPedia
     $url="wiki|http|https|ftp|nntp|news|irc|telnet|mailto|file";
     $urlrule="((?:$url):([^\s$punct]|(\.?[^\s$punct]))+)";
     #$urlrule="((?:$url):(\.?[^\s$punct])+)";
@@ -1070,49 +1117,28 @@ class Formatter {
       $this->themedir.="/theme/$theme";
       $this->themeurl.="/theme/$theme";
     }
-    $themedir=$this->themedir;
-    $themeurl=$this->themeurl;
-    if (file_exists($themedir."/theme.php")) {
-      include($themedir."/theme.php");  
-      $this->icon=$icon;
-      $this->icons=$icons;
+    $options[themedir]=$this->themedir;
+    $options[themeurl]=$this->themeurl;
+    if (file_exists($this->themedir."/theme.php")) {
+      $data=getConfig($this->themedir."/theme.php",$options);
+
+      if ($data) {
+      # read configurations
+      while (list($key,$val) = each($data))
+        $this->$key=$val;
+      }
     }
     if (!$this->icon) {
-    global $DBInfo;
-    $iconset=$DBInfo->iconset;
-    $imgdir=$DBInfo->imgs_dir;
-    $this->icon['upper']="<img src='$imgdir/$iconset-upper.gif' alt='U' align='middle' border='0' />";
-    $this->icon['edit']="<img src='$imgdir/$iconset-edit.gif' alt='E' align='middle' border='0' />";
-    $this->icon['diff']="<img src='$imgdir/$iconset-diff.gif' alt='D' align='middle' border='0' />";
-    $this->icon['del']="<img src='$imgdir/$iconset-deleted.gif' alt='(del)' align='middle' border='0' />";
-    $this->icon['info']="<img src='$imgdir/$iconset-info.gif' alt='I' align='middle' border='0' />";
-    $this->icon['rss']="<img src='$imgdir/$iconset-rss.gif' alt='RSS' align='middle' border='0' />";
-    $this->icon['show']="<img src='$imgdir/$iconset-show.gif' alt='R' align='middle' border='0' />";
-    $this->icon['find']="<img src='$imgdir/$iconset-search.gif' alt='S' align='middle' border='0' />";
-    $this->icon['help']="<img src='$imgdir/$iconset-help.gif' alt='H' align='middle' border='0' />";
-    $this->icon['www']="<img src='$imgdir/$iconset-www.gif' alt='www' align='middle' border='0' />";
-    $this->icon['mailto']="<img src='$imgdir/$iconset-email.gif' alt='M' align='middle' border='0' />";
-    $this->icon['create']="<img src='$imgdir/$iconset-create.gif' alt='N' align='middle' border='0' />";
-    $this->icon['new']="<img src='$imgdir/$iconset-new.gif' alt='U' align='middle' border='0' />";
-    $this->icon['updated']="<img src='$imgdir/$iconset-updated.gif' alt='U' align='middle' border='0' />";
-    $this->icon['user']="UserPreferences";
-    $this->icon['home']="<img src='$imgdir/$iconset-home.gif' alt='M' align='middle' border='0' />";
+      global $DBInfo;
+      $this->icon=&$DBInfo->icon;
+
+      $this->icon_bra=$DBInfo->icon_bra;
+      $this->icon_cat=$DBInfo->icon_cat;
+      $this->icon_sep=$DBInfo->icon_sep;
     }
 
     if (!$this->icons) {
-      $this->icons=array(
-              array("","?action=edit",$this->icon['edit']),
-              array("","?action=diff",$this->icon['diff']),
-              array("","",$this->icon['show']),
-              array("FindPage","",$this->icon['find']),
-              array("","?action=info",$this->icon['info']),
-              array("","?action=subscribe",$this->icon['mailto']),
-              array("HelpContents","",$this->icon['help']),
-           );
-
-      $this->icon_bra='';
-      $this->icon_cat=' ';
-      $this->icon_sep=' ';
+      $this->icons=&$DBInfo->icons;
     }
   }
 
@@ -1442,10 +1468,12 @@ class Formatter {
       if ($pageurl && $query_string[0]=='?')
         # add 'dummy=1' to work around the buggy php
         $query_string= '&amp;'.substr($query_string,1).'&amp;dummy=1';
+        # Did you have a problem with &amp;dummy=1 ?
+        # then, please replace above line with next line.
+        #$query_string= '&amp;'.substr($query_string,1);
       $query_string= $pageurl.$query_string;
     } else
       $query_string= $pageurl.$query_string;
-    #$query_string= stripslashes($query_string);
     return sprintf("%s%s%s", $this->prefix, $sep, $query_string);
   }
 
@@ -1469,7 +1497,7 @@ class Formatter {
     if ($list_type=="dd") {
       if ($on)
          #$list_type="dl><dd";
-         $list_type="div style='padding-left:2em'";
+         $list_type="div class='indent'";
       else
          #$list_type="dd></dl";
          $list_type="div";
@@ -1723,9 +1751,9 @@ class Formatter {
       # Smiley
       if ($smiley_rule) $line=preg_replace($smiley_rule,$smiley_repl,$line);
 
-      # NoSmoke's MultiLineCell
+      # NoSmoke's MultiLineCell hack
       $line=preg_replace(array("/{{\|/","/\|}}/"),
-            array('<table class="closure"><tr class="closure"><td class="closure">'."\n","</td></tr></table>\n"),$line);
+            array("</div><table class='closure'><tr class='closure'><td class='closure'><div>","</div></td></tr></table><div>"),$line);
 
       if ($in_pre==-1) {
          $in_pre=0;
@@ -1757,9 +1785,11 @@ class Formatter {
     #$text=str_replace('\"','"',$text); # XXX 
 
     # highlight text
-    if ($this->highlight)
-      $text=preg_replace('/((<[^>]*>)|('.$this->highlight.'))/ie',
+    if ($this->highlight) {
+      $highlight=_preg_escape($this->highlight);
+      $text=preg_replace('/((<[^>]*>)|('.$highlight.'))/ie',
                          "\$this->highlight_repl('\\1')",$text);
+    }
 
     # close all tags
     $close="";
@@ -2195,7 +2225,7 @@ td.message {
   width:100%;
 }
 
-.hint {
+#wikiHint {
   font-family:Georgia,Verdana,Lucida,sans-serif;
   font-size:10px;
   background-color:#E2DAE2;
@@ -2446,7 +2476,7 @@ EOS;
   }
 
   function show_hints() {
-    print "<div id=\"wikiHint\">\n";
+    print "<div class=\"hint\">\n";
     print _("<b>Emphasis:</b> ''<i>italics</i>''; '''<b>bold</b>'''; '''''<b><i>bold italics</i></b>''''';\n''<i>mixed '''<b>bold</b>''' and italics</i>''; ---- horizontal rule.<br />\n<b>Headings:</b> = Title 1 =; == Title 2 ==; === Title 3 ===;\n==== Title 4 ====; ===== Title 5 =====.<br />\n<b>Lists:</b> space and one of * bullets; 1., a., A., i., I. numbered items;\n1.#n start numbering at n; space alone indents.<br />\n<b>Links:</b> JoinCapitalizedWords; [\"brackets and double quotes\"];\n[bracketed words];\nurl; [url]; [url label].<br />\n<b>Tables</b>: || cell text |||| cell text spanning two columns ||;\nno trailing white space allowed after tables or titles.<br />\n");
     print "</div>\n";
   }
@@ -2479,7 +2509,7 @@ function get_langs() {
 }
 
 # Start Main
-$Config=getConfig("config.php");
+$Config=getConfig("config.php",array('init'=>1));
 
 $DBInfo= new WikiDB($Config);
 register_shutdown_function(array(&$DBInfo,'Close'));
