@@ -38,32 +38,41 @@ CHANNEL;
     $addr= $parts[1];
     $ed_time= $parts[2];
     $user= $parts[4];
+    $log= stripslashes($parts[5]);
     $act= rtrim($parts[6]);
 
     if ($ed_time < $time_cutoff)
       break;
 
+    $url=qualifiedUrl($formatter->link_url(_rawurlencode($page_name)));
+    $diff_url=qualifiedUrl($formatter->link_url(_rawurlencode($page_name),'?action=diff'));
+
+    $diff="&lt;a href='$diff_url'>show changes&lt;/a>\n";
     if (!$DBInfo->hasPage($page_name)) {
       $status='deleted';
+      $html="<a href='$url'>$page_name</a> is deleted\n";
     } else {
       $status='updated';
-      $p=new WikiPage($page_name);
-      $f=new Formatter($p);
-      $options['raw']=1;
-      $html=strtr($f->get_diff('','','',$options),array('&'=>'&amp;','<'=>'&lt;'));
-      if (!$html) {
-         ob_start();
-         $f->send_page();
-         $html=ob_get_contents();
-         ob_end_clean();
+      if ($options['diffs']) {
+        $p=new WikiPage($page_name);
+        $f=new Formatter($p);
+        $options['raw']=1;
+        $html=strtr($f->get_diff('','','',$options),array('&'=>'&amp;','<'=>'&lt;'));
+        if (!$html) {
+          ob_start();
+          $f->send_page();
+          $html=strtr(ob_get_contents(),array('&'=>'&amp;','<'=>'&lt;'));
+          ob_end_clean();
+        }
+        $html.="&lt;br />$diff";
+      } else {
+        if ($log) $html=$log;
       }
     }
     $zone = "+00:00";
     $date = gmdate("Y-m-d\TH:i:s",$ed_time).$zone;
     $datetag = gmdate("YmdHis",$ed_time);
 
-    $url=qualifiedUrl($formatter->link_url(_rawurlencode($page_name)));
-    $diff_url=qualifiedUrl($formatter->link_url(_rawurlencode($page_name),'?action=diff'));
     $channel.="<rdf:li rdf:resource=\"$url\"></rdf:li>\n";
 
     $items.="<item rdf:about=\"$url#$datetag\">\n";
