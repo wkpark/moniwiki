@@ -981,7 +981,11 @@ function do_uploadfile($formatter,$options) {
      $formatter->send_title($title,"",$options);
      return;
   }
-  chmod($file_path,0644); 
+  chmod($file_path,0644);
+
+  $REMOTE_ADDR=$_SERVER[REMOTE_ADDR];
+  $comment="File '$upfilename' uploaded";
+  $DBInfo->addLogEntry($key, $REMOTE_ADDR,$comment,"UPLOAD");
   
   $title=sprintf(_("File \"%s\" is uploaded successfully"),$upfilename);
   $formatter->send_header("",$options);
@@ -1253,7 +1257,8 @@ function macro_RandomQuote($formatter,$value="") {
   $quote=$quotes[rand(1,sizeof($quotes))];
 
   ob_start();
-  $formatter->send_page($quote);
+  $options[nosisters]=1;
+  $formatter->send_page($quote,$options);
   $out= ob_get_contents();
   ob_end_clean();
   return $out;
@@ -1284,8 +1289,8 @@ function do_uploadedfiles($formatter,$options) {
   $formatter->send_header("",$options);
   $formatter->send_title("","",$options);
 
-  $args[editable]=1;
   print $list;
+  $args[editable]=0;
   $formatter->send_footer($args,$options);
   return;
 }
@@ -1293,9 +1298,7 @@ function do_uploadedfiles($formatter,$options) {
 function macro_UploadedFiles($formatter,$value="",$options="") {
    global $DBInfo;
 
-   $pages= array();
-
-   if ($value) {
+   if ($value and $value!='top') {
       $key=$DBInfo->pageToKeyname($value);
       if ($key != $value)
         $prefix=$formatter->link_url($value,"?action=download&amp;value=");
@@ -1326,7 +1329,7 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
       $upfiles[]= $file;
    }
    closedir($handle);
-   if (!$upfiles or !dirs) return "<h3>No files uploaded</h3>";
+   if (!$upfiles and !$dirs) return "<h3>No files uploaded</h3>";
    sort($upfiles); sort($dirs);
 
    $out="<form method='post' >";
@@ -1644,11 +1647,8 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
 
     $out.="<h3>These pages share a similar word...</h3>";
     $out.="<ol>\n";
-#    foreach ($likes as $pagename) {
     while (list($pagename,$i) = each($likes)) {
-      $p = new WikiPage($pagename);
-      $h = new Formatter($p);
-      $out.= '<li>' . $h->link_to("","","tabindex='$idx'")."</li>\n";
+      $out.= '<li>' . $formatter->link_tag($pagename,"","","tabindex='$idx'")."</li>\n";
       $idx++;
     }
     $out.="</ol>\n";
@@ -1659,11 +1659,8 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
 
     $out.="<h3>These pages share an initial or final title word...</h3>";
     $out.="<table border='0' width='100%'><tr><td width='50%' valign='top'>\n<ol>\n";
-#    foreach ($starts as $pagename) {
     while (list($pagename,$i) = each($starts)) {
-      $p = new WikiPage($pagename);
-      $h = new Formatter($p);
-      $out.= '<li>' . $h->link_to("","","tabindex='$idx'")."</li>\n";
+      $out.= '<li>' . $formatter->link_tag($pagename,"","","tabindex='$idx'")."</li>\n";
       $idx++;
     }
     $out.="</ol></td>\n";
@@ -1671,11 +1668,8 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
     arsort($ends);
 
     $out.="<td width='50%' valign='top'><ol>\n";
-#    foreach ($ends as $pagename) {
     while (list($pagename,$i) = each($ends)) {
-      $p = new WikiPage($pagename);
-      $h = new Formatter($p);
-      $out.= '<li>' . $h->link_to("","","tabindex='$idx'")."</li>\n";
+      $out.= '<li>' . $formatter->link_tag($pagename,"","","tabindex='$idx'")."</li>\n";
       $idx++;
     }
     $out.="</ol>\n</td></tr></table>\n";
@@ -1878,7 +1872,7 @@ function macro_RecentChanges($formatter="",$value="") {
     if (in_array ("simple", $args)) {
       $use_day=0;
       $template=
-  '$out.= "$icon&nbsp;&nbsp;$title @ $day $date by $user $count<br />\n";';
+  '$out.= "$icon&nbsp;&nbsp;$title @ $day $date by $user $count $extra<br />\n";';
     }
   }
   if ($size > MAXSIZE) $size=MAXSIZE;
@@ -1957,18 +1951,18 @@ function macro_RecentChanges($formatter="",$value="") {
     $pageurl=_rawurlencode($page_name);
 
     if (!$DBInfo->hasPage($page_name))
-      $icon= $formatter->link_tag($pageurl,"?action=diff",$DBInfo->icon[del]);
+      $icon= $formatter->link_tag($pageurl,"?action=diff",$formatter->icon[del]);
     else if ($ed_time > $bookmark) {
-      $icon= $formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$DBInfo->icon[updated]);
+      $icon= $formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon[updated]);
       if ($checknew) {
         $p= new WikiPage($page_name);
         $v= $p->get_rev($bookmark);
         if (!$v)
           $icon=
-            $formatter->link_tag($pageurl,"?action=info",$DBInfo->icon['new']);
+            $formatter->link_tag($pageurl,"?action=info",$formatter->icon['new']);
       }
     } else
-      $icon= $formatter->link_tag($pageurl,"?action=diff",$DBInfo->icon[diff]);
+      $icon= $formatter->link_tag($pageurl,"?action=diff",$formatter->icon[diff]);
 
     $title= preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$page_name);
     $title= $formatter->link_tag($pageurl,"",$title);
@@ -2274,7 +2268,7 @@ EOS;
   }
 
   if ($match[3] && $match[3] == 'noimg')
-     return $DBInfo->icon[www]."[<a href='$booklink'>ISBN-$isbn2</a>]";
+     return $formatter->icon[www]."[<a href='$booklink'>ISBN-$isbn2</a>]";
   else
      return "<a href='$booklink'><img src='$imglink' border='1' title='$lang".
        ": ISBN-$isbn' alt='[ISBN-$isbn2]'></a>";
@@ -2317,12 +2311,10 @@ function macro_TitleSearch($formatter="",$needle="",$opts=array()) {
   $out="<ul>\n";
   $idx=1;
   foreach ($hits as $pagename) {
-    $p = new WikiPage($pagename);
-    $h = new Formatter($p);
     if ($opts[linkto])
-      $out.= '<li>' . $formatter->link_to("$opts[linkto]$pagename",$pagename,"tabindex='$idx'")."</li>\n";
+      $out.= '<li>' . $formatter->link_tag($options[page],"$opts[linkto]$pagename",$pagename,"tabindex='$idx'")."</li>\n";
     else
-      $out.= '<li>' . $h->link_to("","","tabindex='$idx'")."</li>\n";
+      $out.= '<li>' . $formatter->link_tag($pagename,"","tabindex='$idx'")."</li>\n";
     $idx++;
   }
 
