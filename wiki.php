@@ -1195,11 +1195,13 @@ class Formatter {
 
   function get_instructions($body="") {
     global $DBInfo;
-    $pikeys=array('#redirect','#action');
+    $pikeys=array('#redirect','#action','#title');
     $pi=array();
     if (!$body) {
       if (!$this->page->exists()) return '';
+      if ($this->pi) return $this->pi;
       $body=$this->page->get_raw_body();
+      $update_body=1;
     }
 
     $pos=strpos($this->page->name,'/') ? 1:0;
@@ -1229,7 +1231,8 @@ class Formatter {
         if ($line=='#') break;
         else if ($line[1]=='#') continue;
 
-        list($key,$val,$args)= explode(" ",$line,2); # XXX
+        #list($key,$val,$args)= explode(" ",$line,2); # XXX
+        list($key,$val)= explode(" ",$line,2); # XXX
         $key=strtolower($key);
         if (in_array($key,$pikeys)) { $pi[$key]=$val; }
         else $notused[]=$line;
@@ -1247,6 +1250,7 @@ class Formatter {
     }
 
     if ($notused) $body=join("\n",$notused)."\n".$body;
+    if ($update_body) $this->page->write($body);
     return $pi;
   }
 
@@ -1291,7 +1295,7 @@ class Formatter {
     }
 
     if ($url[0]=="!") {
-      $url[0]=" ";
+      $url=substr($url,1);
       return $url;
     } else
     if (strpos($url,":")) {
@@ -1377,7 +1381,7 @@ class Formatter {
     }
 
     if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$url))
-      return "<img border='0' alt='$text' src='$url' />";
+      return "<a href='".$url."' title='$wiki:$page'><img border='0' align='middle' alt='$text' src='$url' /></a>";
 
     return $img. "<a href='".$url."' title='$wiki:$page'>$text</a>";
   }
@@ -1512,25 +1516,18 @@ class Formatter {
     $open="";
     $close="";
 
-    if (!$odepth) {
-      $open.="<div class='section'>\n"; # <section>
-    } else if ($odepth && ($depth > $odepth)) {
-    #if ($odepth && ($depth > $odepth)) {
-      $open.="<div class='section'>\n"; # <section>
+    if ($odepth && ($depth > $odepth)) {
       $num.=".1";
     } else if ($odepth) {
       $dum=explode(".",$num);
       $i=sizeof($dum)-1;
-      if ($depth == $odepth) $close.="</div>\n<div class='section'>\n"; # </section><section>
       while ($depth < $odepth && $i > 0) {
          unset($dum[$i]);
          $i--;
          $odepth--;
-         $close.="</div>\n"; # </section>
       }
       $dum[$i]++;
       $num=join($dum,".");
-      $open.="</div>\n<div class='section'>";
     }
 
     $this->head_dep=$depth; # save old
@@ -1540,8 +1537,6 @@ class Formatter {
     if ($this->toc)
       $head="<a href='#toc'>$num</a> $head";
     $purple=" <a class='purple' href='#s$prefix-$num'>#</a>";
-
-#    $close=$this->_check_p().$close; 
 
     return "$close$open<h$dep><a id='s$prefix-$num' name='s$prefix-$num'></a> $head$purple</h$dep>";
   }
@@ -1689,7 +1684,8 @@ class Formatter {
       $lines=explode("\n",$body);
     } else {
       $body=$this->page->get_raw_body();
-      $pi=$this->get_instructions(&$body);
+      #$pi=$this->get_instructions(&$body);
+      $pi=$this->get_instructions();
       $this->pi=$pi;
       if ($pi['#format']) {
         print call_user_func("processor_".$pi['#format'],&$this,$body,$options);
@@ -1906,6 +1902,11 @@ class Formatter {
 
       $line=preg_replace($this->extrarule,$this->extrarepl,$line);
 
+#      if ($in_p == '') {
+#        $text.=$this->_div(1,&$in_div);
+#        $in_p= $line;
+#      }
+
       $line=$close.$open.$line;
       $open="";$close="";
 
@@ -1966,20 +1967,6 @@ class Formatter {
     # close div
     #if ($in_p) $close.="##</div>\n"; # </para>
     if ($in_p) $close.=$this->_div(0,&$in_div); # </para>
-
-    if ($this->head_dep) {
-      $odepth=$this->head_dep;
-      $dum=explode(".",$this->head_num);
-      $i=sizeof($dum)-1;
-      while (0 <= $odepth && $i > 0) {
-         $close.="</div>\n"; # </section>
-         #$close.=$this->_div(0,&$in_div); # </section>
-         #$close.=$this->_div(0,$odepth); # </section>
-         $i--;
-         $odepth--;
-      }
-      #$close.="</div>\n"; # </section>
-    }
 
     $text.=$close;
   
@@ -2508,7 +2495,10 @@ FOOT;
     if ($pos > 0) $upper=substr($name,0,$pos);
     else if ($this->group) $upper=substr($this->group,0,-1);
 
-    if (!$title) $title=$options['title'];
+    if (!$title) {
+      $title=$options['title'];
+      if (!$title) $title=$this->pi['#title'];
+    }
     if (!$title) {
       if ($this->group) { # for UserNameSpace
         $group=$this->group;
@@ -2614,94 +2604,6 @@ MSG;
       print "</div>\n";
     }
     print "<div id='wikiBody'>\n";
-  }
-
-  function send_editor($text="",$options="") {
-    global $DBInfo;
-
-    $COLS_MSIE = 80;
-    $COLS_OTHER = 85;
-    $cols = preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
-
-    $rows=$options['rows'] > 5 ? $options['rows']: 16;
-    $cols=$options['cols'] > 60 ? $options['cols']: $cols;
-
-    $preview=$options['preview'];
-
-    $url=$this->link_url(_urlencode($option['page']));
-
-    if (!$this->page->exists()) {
-       $options['linkto']="?action=edit&amp;template=";
-       print _("Use one of the following templates as an initial release :\n");
-       print macro_TitleSearch($this,".*Template",$options);
-       print _("To create your own templates, add a page with a 'Template' suffix.\n");
-    }
-
-    if ($options['conflict'])
-       $extra='<input type="submit" name="button_merge" value="Merge" />';
-
-    print "<a id='editor' name='editor' />\n";
-    $previewurl=$this->link_url(_urlencode($options['page']),"#preview");
-    #printf('<form method="post" action="%s">', $url);
-    printf('<form method="post" action="%s">', $previewurl);
-    print $this->link_to("?action=edit&amp;rows=".($rows-3),_("ReduceEditor"))." | ";
-    print $this->link_tag('InterWiki',"",_("InterWiki"))." | ";
-    print $this->link_tag('HelpOnEditing',"",_("HelpOnEditing"));
-    if ($preview)
-       print "|".$this->link_to('#preview',_("Skip to preview"));
-    printf("<br />\n");
-    if ($text) {
-      $raw_body = str_replace('\r\n', '\n', $text);
-    } else if ($this->page->exists()) {
-      $raw_body = str_replace('\r\n', '\n', $this->page->_get_raw_body());
-    } else if ($options['template']) {
-      $p= new WikiPage($options['template']);
-      $raw_body = str_replace('\r\n', '\n', $p->get_raw_body());
-    } else
-      $raw_body = sprintf(_("Describe %s here"), $options['page']);
-
-    # for conflict check
-    if ($options['datestamp'])
-       $datestamp= $options['datestamp'];
-    else
-       $datestamp= $this->page->mtime();
-
-    $raw_body = str_replace(array("&","<"),array("&amp;","&lt;"),$raw_body);
-
-    # get categories
-    $categories=array();
-    $categories= $DBInfo->getLikePages($DBInfo->category_regex);
-    if ($categories) {
-      $select_category="<select name='category'>\n<option value=''>"._("--Select Category--")."</option>\n";
-      foreach ($categories as $category)
-        $select_category.="<option value='$category'>$category</option>\n";
-      $select_category.="</select>\n";
-    }
-
-    $preview_msg=_("Preview");
-    $save_msg=_("Save");
-    $summary_msg=_("Summary of Change");
-    print <<<EOS
-<textarea class="wiki" id="content" wrap="virtual" name="savetext"
- rows="$rows" cols="$cols" class="wiki">$raw_body</textarea><br />
-$summary_msg: <input name="comment" size="70" maxlength="70" style="width:200" /><br />
-<input type="hidden" name="action" value="savepage" />
-<input type="hidden" name="datestamp" value="$datestamp">
-$select_category
-<input type="submit" value="$save_msg" />&nbsp;
-<!-- <input type="reset" value="Reset" />&nbsp; -->
-<input type="submit" name="button_preview" value="$preview_msg" />
-$extra
-</form>
-EOS;
-    $this->show_hints();
-    print "<a id='preview' name='preview' />";
-  }
-
-  function show_hints() {
-    print "<div class=\"hint\">\n";
-    print _("<b>Emphasis:</b> ''<i>italics</i>''; '''<b>bold</b>'''; '''''<b><i>bold italics</i></b>''''';\n''<i>mixed '''<b>bold</b>''' and italics</i>''; ---- horizontal rule.<br />\n<b>Headings:</b> = Title 1 =; == Title 2 ==; === Title 3 ===;\n==== Title 4 ====; ===== Title 5 =====.<br />\n<b>Lists:</b> space and one of * bullets; 1., a., A., i., I. numbered items;\n1.#n start numbering at n; space alone indents.<br />\n<b>Links:</b> JoinCapitalizedWords; [\"brackets and double quotes\"];\n[bracketed words];\nurl; [url]; [url label].<br />\n<b>Tables</b>: || cell text |||| cell text spanning two columns ||;\nno trailing white space allowed after tables or titles.<br />\n");
-    print "</div>\n";
   }
 
   function set_trailer($trailer="",$pagename,$size=5) {
@@ -2907,7 +2809,8 @@ if ($pagename) {
 
     if (!$action) $options['pi']=1; # protect a recursivly called #redirect
 
-    $formatter->get_redirect();
+    #$formatter->get_redirect();
+    $formatter->pi=$formatter->get_instructions();
     $formatter->send_header("",$options);
     $formatter->send_title("","",$options);
     $formatter->write("<div id='wikiContent'>\n");
