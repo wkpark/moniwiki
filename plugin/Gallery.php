@@ -6,7 +6,6 @@
 // Usage: [[Gallery]]
 //
 // $Id$
-// vim:et:ts=2:
 
 function get_pagelist($formatter,$pages,$action,$curpage=1,$listcount=10,$bra="[",$cat="]",$sep="|",$prev="&#171;",$next="&#187;",$first="",$last="",$ellip="...") {
 
@@ -62,9 +61,16 @@ function macro_Gallery($formatter,$value,$options='') {
     $formatter->actions[]='UploadedFiles';
   }
 
+  // parse args
+  preg_match("/^(('|\")([^\\2]+)\\2)?,?(\s*,?\s*.*)?$/",
+    $value,$match);
+  $opts=explode(',',$match[4]);
+  if (in_array('showall',$opts))
+    $show_all=1;
+
   $default_width=$DBInfo->gallery_img_width ? $DBInfo->gallery_img_width:600;
 
-  if ($value) {
+  if ($match[3]) {
     $key=$DBInfo->pageToKeyname($value);
     if ($key != $value)
       $prefix=$formatter->link_url($value,"?action=download&amp;value=");
@@ -221,22 +227,24 @@ function macro_Gallery($formatter,$value,$options='') {
     if ($comments[$file] != '' and $options['value']) {
       $comment=$comments[$file];
       $comment=str_replace("\\n","\n",$comment);
-      $comment=str_replace("\t","\n----\n",$comment);
-      $options['comments']=$comment;
+      $options['comments']=str_replace("\t","\n----\n",$comment);
+      $comment=str_replace("\t","<div class='separator'><hr /></div>",$comment);
       $comment=str_replace("\n","<br/>\n",$comment);
-      $comment="<br/>".$comment;
-    } else if ($comments[$file] != '') {
-      $comment_btn=_("show comments");
-      list($comment,$dum)=explode("\t",$comments[$file],2);
+    } else if (!empty($comments[$file])) {
+      if (empty($show_all)) {
+        $comment_btn=_("show comments");
+        list($comment,$dum)=explode("\t",$comments[$file],2);
+      } else {
+        $comment_btn=_("add comment");
+        $comment=str_replace("\t","<div class='separator'><hr /></div>\n",$comments[$file]);
+      }
       $comment=str_replace("\\n","<br/>\n",$comment);
-      $comment=str_replace("\t","<br/>\n----<br/>\n",$comment);
-      $comment="<br/>".$comment;
     }
     $out.="<td align='center' valign='top' class='wiki'><a href='$link'>$object</a><br />".
           "$date ($size) ";
     if (!$options['value'])
       $out.='['.$formatter->link_tag($formatter->page->urlname,"?action=gallery&amp;value=$id",$comment_btn)."]<br />\n";
-    if ($comment) $out.="<div align='left' class='gallery_comments'>$comment</div>";
+    if ($comment) $out.="<div align='left' class='gallery-comments'>$comment</div>";
     $out.="</td>\n";
     if ($idx % $col == 0) $out.="</tr>\n<tr>\n";
     $idx++;
@@ -257,7 +265,7 @@ function do_gallery($formatter,$options='') {
 
   $formatter->send_header("",$options);
 
-  if ($options['admin'] and $options['comments'] and !$DBInfo->security->is_valid_password($options['passwd'],$options)) {
+  if ($options['comments'] and !$DBInfo->security->is_valid_password($options['passwd'],$options)) {
     $title= sprintf('Invalid password !');
     $formatter->send_title($title);
     $formatter->send_footer();
@@ -266,7 +274,7 @@ function do_gallery($formatter,$options='') {
 
   $ret=macro_Gallery($formatter,'',&$options);
 
-  if ($options['passwd'] and $options['comments']) {
+  if (isset($options['passwd']) and $options['comments']) {
     $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
     $options['title']=_("Comments are edited");
   } else if ($options['comment']) {
@@ -330,4 +338,5 @@ FORM2;
   return;
 }
 
+// vim:et:sts=2:
 ?>
