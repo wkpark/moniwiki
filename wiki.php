@@ -744,7 +744,7 @@ class WikiDB {
     $time= time();
     if ($this->use_hostname) $host= gethostbyaddr($remote_name);
     else $host= $remote_name;
-    $msg="$page_name\t$remote_name\t$time\t$host\t$user->id\t\ $comment\ \t$action\n";
+    $msg="$page_name\t$remote_name\t$time\t$host\t$user->id\t$comment\t$action\n";
     fwrite($fp_editlog, $msg);
     fclose($fp_editlog);
   }

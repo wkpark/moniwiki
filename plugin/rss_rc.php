@@ -70,7 +70,7 @@ CHANNEL;
         $html="<![CDATA[".$html.$extra."]]>";
         #$html=strtr($html.$extra,array('&'=>'&amp;','<'=>'&lt;'));
       } else {
-        if ($log) $html=$log;
+        $html=$log;
       }
     }
     $zone = "+00:00";
