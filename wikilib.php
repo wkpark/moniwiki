@@ -769,7 +769,8 @@ function do_post_DeletePage($formatter,$options) {
   $formatter->send_title($title,"",$options);
   print "<form method='post'>
 Comment: <input name='comment' size='80' value='' /><br />\n";
-  print _("with revision history")." <input type='checkbox' name='history' />\n";
+  if ($DBInfo->delete_history)
+    print _("with revision history")." <input type='checkbox' name='history' />\n";
   if ($DBInfo->security->is_protected("DeletePage",$options))
     print "Password: <input type='password' name='passwd' size='20' value='' />
 Only WikiMaster can delete this page<br />\n";
