@@ -31,8 +31,13 @@ else
   echo "*** chmod 777 config.php"
   chmod 777 config.php 2>/dev/null
   RETVAL=$?
-  [ ! $RETVAL -eq 0 ] && cp config.php config.php.$$ && mv config.php.$$ config.php
-  chmod 777 config.php
+  [ ! $RETVAL -eq 0 ] && cp config.php config.php.$$ && mv config.php.$$ config.php && chmod 777 config.php
+
+  DATA_DIR=`cat config.php |grep '$data_dir='|cut -d\' -f2`
+
+  echo "*** chmod $PERM . $DATA_DIR"
+  chmod $PERM . $DATA_DIR
+
   ID=`id -u`
   if [ $ID -eq 0 ]; then
     echo "*** You are the root user ***"
@@ -51,11 +56,6 @@ else
     fi
   fi  
 fi
-
-DATA_DIR=`cat config.php |grep '$data_dir='|cut -d\' -f2`
-
-echo "*** chmod $PERM $DATA_DIR"
-chmod $PERM $DATA_DIR
 
 
 if [ ! -d $DATA_DIR/text ]; then
