@@ -22,7 +22,8 @@ function do_ImportUrl($formatter,$options) {
 #  fix_url('http://hello.com/',$dummy);
 #  fix_url('http://hello.com',$dummy);
 
-  $out= strip_tags($html_data,'<pre><a><b><i><u><h1><h2><h3><h4><h5><li><img>');
+  $out= strip_tags($html_data,'<pre><hr><td><tr><a><b><i><u><h1><h2><h3><h4><h5><li><img>');
+  # remove leading spaces
   $out= preg_replace("/\n[ ]+/","\n",$out);
   $out= preg_replace("/\r/","",$out);
   $out= preg_replace("/<img\s*[^>]*src=['\"]((http|ftp)[^'\"]+)['\"][^>]*>/i",
@@ -34,6 +35,11 @@ function do_ImportUrl($formatter,$options) {
   $out= preg_replace("/<u>([^<]+)<\/u>/i","__\\1__",$out);
   $out= preg_replace("/<li>/i"," * ",$out);
   $out= preg_replace("/<\/li>\n*/i","",$out);
+  $out= preg_replace("/<td\s*[^>]*>/i","||",$out);
+  $out= preg_replace("/<\/td>\n*/i","",$out);
+  $out= preg_replace("/<tr\s*[^>]*>/i","",$out);
+  $out= preg_replace("/<\/tr>\n*/i","||\n",$out);
+  $out= preg_replace("/<hr\s*[^>]*>/i","----\n",$out);
   #
   $out= str_replace(array("&quot;",'&lt;','&gt;','&amp;'),
                      array('"','<','>','&'),$out);
