@@ -21,18 +21,34 @@ class Blog_cache {
     return $blogs;
   }
 
+  function get_daterule() {
+    $date=date('Y-m');
+    list($year,$month)=explode('-',$date);
+    $mon=intval($month);
+    $y=$year;
+    $daterule.='(?='.$y.$month;
+    for ($i=1;$i<3;$i++) {
+      if (--$mon <= 0) {
+        $mon=12;
+        $y--;
+      }
+      $daterule.='|'.$y.sprintf("%02d",$mon);
+    }
+    $daterule.=')';
+    #print $daterule;
+    # (200402|200401|200312)
+    return $daterule;
+  }
+
   function get_simple($blogs,$options) {
     global $DBInfo;
 
-    $date=$options['date'];
-    $limit=$options['limit'];
-    $rule="/^($date\d*)".'_2e('.join('|',$blogs).')$/';
-    $logs=array();
+    $daterule=$options['date'];
+    if (!$daterule)
+      $daterule=Blog_cache::get_daterule();
 
-    if (!$limit) {
-      if ($date) $limit=30;
-      else $limit=10;
-    }
+    $rule="/^($daterule\d*)".'_2e('.join('|',$blogs).')$/';
+    $logs=array();
 
     $handle = @opendir($DBInfo->cache_dir."/blogchanges");
     if (!$handle) return array();
@@ -46,7 +62,7 @@ class Blog_cache {
 
     rsort($filelist);
 
-    while ((list($key, $file) = each ($filelist)) && $limit > 0) {
+    while ((list($key, $file) = each ($filelist))) {
       #echo "<b>$file</b><br>";
       if (preg_match($rule,$file,$match)) {
         $fname=$DBInfo->cache_dir."/blogchanges/".$file;
@@ -56,13 +72,11 @@ class Blog_cache {
 
         $items=file($fname);
         foreach ($items as $line) {
-          if ($limit < 0) break;
           list($author,$datestamp,$dummy)=explode(' ',$line);
           #$datestamp[10]=' ';
           #$timestamp= strtotime($datestamp." GMT");
           #$datestamp= date("Ym",$timestamp);
           $logs[]=explode(' ',$pagename." ".rtrim($line),4);
-          $limit--;
         }
       }
     }
@@ -71,31 +85,13 @@ class Blog_cache {
 
   function get_rc_blogs($date) {
     global $DBInfo;
-    $all=Blog_cache::get_blogs();
-
     $blogs=array();
     $handle = @opendir($DBInfo->cache_dir."/blogchanges");
     if (!$handle) return array();
-    if (!$date) {
-      while ($file = readdir($handle)) {
-        $fname=$DBInfo->cache_dir."/blogchanges/".$file;
-        if (is_dir($fname)) continue;
-        $blogs[]=$file;
-      }
-      arsort($blogs);
 
-      $selected=array();
-      foreach ($blogs as $file) {
-        $name=substr($file,11); # get pagename only
-        if (!in_array($name,$selected))
-          $selected[]=$name;
-      }
-
-      #print_r($selected);
-      return array_unique($selected);
-    }
-
-    $rule="/^($date\d*)".'_2e('.join('|',$all).')$/';
+    if (!$date)
+      $date=Blog_cache::get_daterule();
+    $rule="/^($date\d*)".'_2e(.*)$/';
     while ($file = readdir($handle)) {
       $fname=$DBInfo->cache_dir."/blogchanges/".$file;
       if (is_dir($fname)) continue;
@@ -111,13 +107,9 @@ class Blog_cache {
 
     if (!$blogs) return array();
     $date=$options['date'];
-    $limit=$options['limit'];
-    if (!$limit) {
-      if ($date) $limit=30;
-      else $limit=10;
-    }
 
     if ($date) {
+      // make a date pattern to grep blog entries
       $check=strlen($date);
       if (($check < 4) or !preg_match('/^\d+/',$date)) $date=date('Y\-m');
       else {
@@ -139,7 +131,6 @@ class Blog_cache {
       $temp= explode("\n",$raw);
 
       foreach ($temp as $line) {
-        if ($limit <= 0) break;
         if (!$state) {
           if (preg_match("/^({{{)?#!blog\s([^ ]+\s($date"."[^ ]+)\s.*)$/",$line,$match)) {
             $entry=explode(" ",$pagename." ".$match[2],4);
@@ -153,7 +144,6 @@ class Blog_cache {
           $temp=explode("----\n",$summary,2);
           $entry[]=$temp[0];
           $entries[]=$entry;
-          $limit--;
           $summary='';
           continue;
         }
@@ -166,16 +156,19 @@ class Blog_cache {
 
 function BlogCompare($a,$b) {
   # third field is a date
-  if ($a[2] > $b[2]) return -1;
-  if ($a[2] < $b[2]) return 1;
-  return 0;
+  if ($a[2] == $b[2]) return 0;
+#    return strcmp($a[3],$b[3]);
+  return ($a[2] > $b[2]) ? -1:1;
 }
 
 function do_BlogChanges($formatter,$options='') {
   if (!$options['date']) $options['date']=date('Ym');
-  $changes=macro_BlogChanges($formatter,$options['mode'],$options);
+  $options['action']=1;
+  $options['summary']=1;
+  $options['simple']=1;
+  $changes=macro_BlogChanges($formatter,'all,'.$options['mode'],$options);
   $formatter->send_header('',$options);
-  $formatter->send_title('','',$options);
+  $formatter->send_title(_("BlogChanges"),'',$options);
   print '<div id="wikiContent">';
   print $changes;
   print '</div>';
@@ -183,18 +176,25 @@ function do_BlogChanges($formatter,$options='') {
   return;
 }
 
-function macro_BlogChanges($formatter,$value,$options='') {
+function macro_BlogChanges($formatter,$value,$options=array()) {
   global $DBInfo;
+
+  if (empty($options)) $options=array();
+  if ($_GET['date'])
+    $options['date']=$date=$_GET['date'];
 
   preg_match('/(\d+)?(\s*,?\s*.*)?$/',$value,$match);
   $opts=explode(",",$match[2]);
-  if ($match[1]) $options['limit']=$match[1];
-
-  $options['date']=$_GET['date'];
+  $opts=array_merge($opts,array_keys($options));
+  if ($match[1]) {
+    $options['limit']=$limit=$match[1];
+  } else {
+    if ($date) $limit=30;
+    else $limit=10;
+  }
 
   # check error and set default value
   # default: show BlogChages monthly
-  $date=$options['date'];
 
   if (in_array('all',$opts)) {
     if (in_array('summary',$opts))
@@ -210,7 +210,7 @@ function macro_BlogChanges($formatter,$value,$options='') {
     $logs=Blog_cache::get_simple($blogs,$options);
   usort($logs,'BlogCompare');
 
-  if (!$options['date'] or !preg_match('/^\d+$/',$options['date']))
+  if (!$options['date'] or !preg_match('/^\d{4}-?\d{2}$/',$options['date']))
     $date=date('Ym');
 
   $year=substr($date,0,4);
@@ -235,10 +235,12 @@ function macro_BlogChanges($formatter,$value,$options='') {
     $cat="</ul>";
   }
   $template='$out="$bullet<a href=\"$url#$tag\">$title</a> <span class=\"blog-user\">';
+  if (in_array('summary',$opts))
+  $template='$out="$bullet<div class=\"blog-title\"><a name=\"$tag\"></a><a href=\"$url#$tag\">$title</a> <a class=\"puple\" href=\"#$tag\">'.addslashes($formatter->purple_icon).'</a></div><span class=\"blog-user\">';
+  if (!in_array('nouser',$opts))
+    $template.='by $user ';
   if (!in_array('nodate',$opts))
     $template.='@ $date ';
-  if (!in_array('nouser',$opts))
-    $template.='by $user';
 
   if (in_array('summary',$opts)) {
     $template.='</span><div class=\"blog-summary\">$summary</div>$sep\n";';
@@ -252,6 +254,7 @@ function macro_BlogChanges($formatter,$value,$options='') {
   foreach ($logs as $log) {
     list($page, $user,$date,$title,$summary)= $log;
     $tag=md5($user." ".$date." ".$title);
+    $datetag='';
 
     $url=qualifiedUrl($formatter->link_url(_urlencode($page)));
     if (!$opts['nouser'] and $user and $DBInfo->hasPage($user))
@@ -261,8 +264,14 @@ function macro_BlogChanges($formatter,$value,$options='') {
 
     $date[10]=' ';
     $time=strtotime($date." GMT");
+
     $date= date("m-d [h:i a]",$time);
     if ($summary) {
+      $anchor= date('Ymd',$time);
+      if ($date_anchor != $anchor) {
+        $datetag= "<div class='blog-date'>".date('M d, Y',$time)." <a name='$anchor'></a><a class='purple' href='#$anchor'>$formatter->purple_icon</a></div>";
+        $date_anchor= $anchor;
+      }
       $p=new WikiPage($page);
       $f=new Formatter($p);
       $summary=str_replace('\}}}','}}}',$summary);
@@ -273,13 +282,18 @@ function macro_BlogChanges($formatter,$value,$options='') {
     }
 
     eval($template);
-    $items.=$out;
+    $items.=$datetag.$out;
+    if ($limit-- < 0) break;
   }
   $url=qualifiedUrl($formatter->link_url($DBInfo->frontpage));
 
   # make pnut
-  $pnut="<div class='blog-action'>".$formatter->link_to("?date=$pre_date",'&laquo; '._("Previous"))."</div>";
-  #$pnut=$formatter->link_to("?action=blogchanges&amp;mode=$value&amp;date=$pre_date",'&laquo; '._("Previous"));
+  $action="date=$pre_date";
+  if ($options['action'])
+    $action='action=blogchanges&amp;'.$action;
+  if ($options['mode'])
+    $action='&amp;mode='.$options['mode'];
+  $pnut="<div class='blog-action'>".$formatter->link_to('?'.$action,'&laquo; '._("Previous"))."</div>";
   return $bra.$items.$cat.$pnut;
 }
 ?>
