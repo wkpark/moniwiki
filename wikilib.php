@@ -210,7 +210,7 @@ class UserDB {
     $handle = opendir($this->user_dir);
     while ($file = readdir($handle)) {
       if (is_dir($this->user_dir."/".$file)) continue;
-      if (preg_match('/^wu-([^\.]+)$/', $file,$match))
+      if (preg_match('/^wu\-([^\.]+)$/', $file,$match))
         #$users[$match[1]] = 1;
         $users[] = $match[1];
     }
@@ -281,9 +281,9 @@ class UserDB {
   }
 
   function getUser($id) {
-    if ($this->_exists($id))
+    if ($this->_exists($id)) {
        $data=file("$this->user_dir/wu-$id");
-    else {
+    } else {
        $user=new User('Anonymous');
        return $user;
     }
@@ -303,7 +303,9 @@ class UserDB {
   }
 
   function delUser($id) {
-
+    if ($this->_exists($id)) {
+       unlink("$this->user_dir/wu-$id");
+    }
   }
 }
 
@@ -1676,6 +1678,7 @@ function macro_TableOfContents(&$formatter,$value="") {
 
 function macro_TitleSearch($formatter="",$needle="",&$opts) {
   global $DBInfo;
+  $type='o';
 
   $url=$formatter->link_url($formatter->page->urlname);
 
@@ -1708,7 +1711,7 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
 
   sort($hits);
 
-  $out="<ul>\n";
+  $out="<${type}l>\n";
   $idx=1;
   foreach ($hits as $pagename) {
     if ($opts['linkto'])
@@ -1718,7 +1721,7 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
     $idx++;
   }
 
-  $out.="</ul>\n";
+  $out.="</${type}l>\n";
   $opts['hits']= count($hits);
   if ($opts['hits']==1)
     $opts['value']=array_pop($hits);
