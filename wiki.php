@@ -2473,9 +2473,8 @@ class Formatter {
     if (!$fp)
       return '';
     if (!feof($fp)) {
-      # trashing two first line
-      $line=fgets($fp,1024);
-      $line=fgets($fp,1024);
+      #$line=fgets($fp,1024);
+      #$line=fgets($fp,1024);
     }
     while (!feof($fp)) {
       $line=fgets($fp,1024);
