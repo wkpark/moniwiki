@@ -6,7 +6,7 @@
 // Usage: [[moztab]]
 //
 // $Id$
-// vim:et:ts=2:
+// vim:et:sts=2:
 
 function macro_MozTab($formatter,$value) {
   global $DBInfo;
@@ -27,7 +27,7 @@ function macro_MozTab($formatter,$value) {
     }
 //-->
 </script>
-<a href="javascript:selfside();"><img src="$DBInfo->imgs_dir/moztab.png" border=0 title="add mozilla tab"></a>
+<a href="javascript:selfside();"><img src="$DBInfo->imgs_dir/plugin/moztab.png" border=0 title="add mozilla tab"></a>
 TAB;
   return $tab;
 }
