@@ -375,9 +375,10 @@ function macro_EditText($formatter,$value,$options='') {
   if ($DBInfo->hasPage('EditTextForm')) {
     $p=$DBInfo->getPage('EditTextForm');
     $form=$p->get_raw_body();
+    $f=new Formatter($p);
 
     ob_start();
-    $formatter->send_page(rtrim($form),$options);
+    $f->send_page(rtrim($form),$options);
     $form= ob_get_contents();
     ob_end_clean();
 
