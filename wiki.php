@@ -1914,7 +1914,7 @@ class Formatter {
     }
     if ($align) $attr[]="align='center'";
     if ($len > 1)
-      $attr[]="align='center' colspan='$len'";
+      $attr[]="colspan='$len'"; #$attr[]="align='center' colspan='$len'";
     return implode(' ',$attr);
   }
 

@@ -45,7 +45,7 @@ EOF;
   }
   $goto=$TR.'&amp;url='.$URL;
   return <<<EOF
-<img src='$formatter->imgs_dir_interwiki$from-16.png' /> <a href="$goto"><img border='0' src='$formatter->imgs_dir/plugin/babelfish.gif' title='$msg' alt='BabelFish@altavista' /></a><img src='$formatter->imgs_dir_interwiki$to-16.png' />
+<img src='$formatter->imgs_dir_interwiki$from-16.png' alt="$from"/> <a href="$goto"><img border='0' src='$formatter->imgs_dir/plugin/babelfish.gif' title='$msg' alt='BabelFish@altavista' /></a><img src='$formatter->imgs_dir_interwiki$to-16.png' alt="$to"/>
 EOF;
 
 }
