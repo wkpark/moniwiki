@@ -4,7 +4,6 @@
 // a print action plugin for the MoniWiki
 //
 // $Id$
-// vim:et:ts=2:
 
 function do_print($formatter,$options) {
   global $DBInfo;
@@ -29,4 +28,5 @@ function do_print($formatter,$options) {
   return;
 }
 
+// vim:et:sts=2:
 ?>

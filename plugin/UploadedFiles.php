@@ -22,9 +22,11 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    global $DBInfo;
 
    $download='download';
+   $checkbox='checkbox';
    $needle="//";
    if ($options['download']) $download=$options['download'];
    if ($options['needle']) $needle=$options['needle'];
+   if ($options['checkbox']) $checkbox=$options['checkbox'];
 
    if (!in_array('UploadFile',$formatter->actions))
      $formatter->actions[]='UploadFile';
@@ -76,7 +78,7 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    foreach ($dirs as $file) {
       $link=$formatter->link_url($file,"?action=uploadedfiles",$file);
       $date=date("Y-m-d",filemtime($dir."/".$DBInfo->pageToKeyname($file)));
-      $out.="<tr><td class='wiki'><input type='checkbox' name='files[$idx]' value='$file' /></td><td class='wiki'><a href='$link'>$file/</a></td><td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td></tr>\n";
+      $out.="<tr><td class='wiki'><input type='$checkbox' name='files[$idx]' value='$file' /></td><td class='wiki'><a href='$link'>$file/</a></td><td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td></tr>\n";
       $idx++;
    }
 
@@ -109,7 +111,7 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
       $size=round($size,2).' '.$unit[$i];
 
       $date=date('Y-m-d',filemtime($dir.'/'.$file));
-      $out.="<tr><td class='wiki'><input type='checkbox' name='files[$idx]' value='$file' /></td><td class='wiki'><a href='$link'>$file</a></td><td align='right' class='wiki'>$size</td><td class='wiki'>$date</td></tr>\n";
+      $out.="<tr><td class='wiki'><input type='$checkbox' name='files[$idx]' value='$file' /></td><td class='wiki'><a href='$link'>$file</a></td><td align='right' class='wiki'>$size</td><td class='wiki'>$date</td></tr>\n";
       $idx++;
    }
    $idx--;

@@ -14,10 +14,10 @@ function macro_MailTo($formatter,$value) {
     array(".","@","-",""),
     $value);
 
-  $new=preg_replace(array("/\s/","/\s[A-Z]+\s/"),"",$new);
+  $new=preg_replace(array("/\s/","/(?<=\s)[A-Z]+\s/"),"",$new);
 
   return $formatter->link_repl('mailto:'.$new);
 }
 
-// vim:et:ts=2:
+// vim:et:sts=2:
 ?>

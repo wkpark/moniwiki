@@ -138,7 +138,7 @@ function generate_item($formatter, $log)
 
   $url=qualifiedUrl($formatter->link_url(_urlencode($page)));
 
-  /* purple link */
+  /* perma link */
   $tag=md5($user.' '.$date.' '.$title);
 
   /* RFC 822 date format for RSS 2.0 */

@@ -31,7 +31,7 @@ function macro_BlogArchives($formatter,$value,$options=array()) {
 
   $year=date('Y');
   // show only recent two years
-  $rule="/^(($year|".($year-1).")\d{2})\d{2}_2e/";
+  $rule="/^(($year|".($year-1).")\d{2})\d{2}/";
   $archives=array();
   while ($file = readdir($handle)) {
     $fname=$DBInfo->cache_dir.'/blogchanges/'.$file;

@@ -35,9 +35,9 @@ function macro_WordIndex($formatter,$value) {
     }
   }
   #ksort($dict);
-  ksort($dict,SORT_STRING);
+  #ksort($dict,SORT_STRING);
   #uksort($dict, "strnatcasecmp");
-  #uksort($dict, "strcasecmp");
+  uksort($dict, "strcasecmp");
 
   $key=-1;
   $out="";
