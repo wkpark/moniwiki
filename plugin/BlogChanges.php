@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2004 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a BlogChanges action plugin for the MoniWiki
 //
@@ -38,6 +38,29 @@ class Blog_cache {
     #print $daterule;
     # (200402|200401|200312)
     return $daterule;
+  }
+
+  function get_categories() {
+    global $DBInfo;
+
+    if (!$DBInfo->hasPage($DBInfo->blog_category)) return array();
+    $categories=array();
+
+    $page=$DBInfo->getPage($DBInfo->blog_category);
+
+    $raw=$page->get_raw_body();
+    $temp= explode("\n",$raw);
+
+    foreach ($temp as $line) {
+      $line=str_replace('/','_2f',$line);
+      if (preg_match('/^ \* ([^ :]+)(?=\s|$)/',$line,$match)) {
+        $category=$match[1];
+        if (!$categories[$category]) $categories[$category]=array();
+      } else if ($category and preg_match('/^\s\s+\* ([^ :]+)(?=\s|$)/',$line,$match)) {
+        $categories[$category][]=$match[1];
+      }
+    }
+    return $categories;
   }
 
   function get_simple($blogs,$options) {
@@ -83,7 +106,7 @@ class Blog_cache {
     return $logs;
   }
 
-  function get_rc_blogs($date) {
+  function get_rc_blogs($date,$pages=array()) {
     global $DBInfo;
     $blogs=array();
     $handle = @opendir($DBInfo->cache_dir."/blogchanges");
@@ -91,7 +114,10 @@ class Blog_cache {
 
     if (!$date)
       $date=Blog_cache::get_daterule();
-    $rule="/^($date\d*)".'_2e(.*)$/';
+
+    if ($pages) $pagerule=implode('|',$pages);
+    else $pagerule='.*';
+    $rule="/^($date\d*)_2e($pagerule)$/";
     while ($file = readdir($handle)) {
       $fname=$DBInfo->cache_dir."/blogchanges/".$file;
       if (is_dir($fname)) continue;
@@ -101,6 +127,7 @@ class Blog_cache {
 
     return array_unique($blogs);
   }
+
 
   function get_summary($blogs,$options) {
     global $DBInfo;
@@ -166,9 +193,13 @@ function do_BlogChanges($formatter,$options='') {
   $options['action']=1;
   $options['summary']=1;
   $options['simple']=1;
+
   $changes=macro_BlogChanges($formatter,'all,'.$options['mode'],$options);
   $formatter->send_header('',$options);
-  $formatter->send_title(_("BlogChanges"),'',$options);
+  if ($options['category'])
+    $formatter->send_title($options['category'],'',$options);
+  else
+    $formatter->send_title(_("BlogChanges"),'',$options);
   print '<div id="wikiContent">';
   print $changes;
   print '</div>';
@@ -182,12 +213,25 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
   if (empty($options)) $options=array();
   if ($_GET['date'])
     $options['date']=$date=$_GET['date'];
+  else
+    $date=$options['date'];
 
-  preg_match('/(\d+)?(\s*,?\s*.*)?$/',$value,$match);
-  $opts=explode(",",$match[2]);
+  preg_match('/^(?(?=\')\'([^\']+)\'|\"([^\"]+)\")?,?(\d+)?(\s*,?\s*.*)?$/',
+    $value,$match);
+
+  $category_pages=array();
+  if ($match[2] or $options['category']) {
+    $options['category']=$options['category'] ? $options['category']:$match[2];
+    if ($DBInfo->blog_category) {
+      $categories=Blog_cache::get_categories();
+      if ($categories[$options['category']])
+        $category_pages=$categories[$options['category']];
+    }
+  }
+  $opts=explode(',',$match[4]);
   $opts=array_merge($opts,array_keys($options));
-  if ($match[1]) {
-    $options['limit']=$limit=$match[1];
+  if ($match[3]) {
+    $options['limit']=$limit=$match[3];
   } else {
     if ($date) $limit=30;
     else $limit=10;
@@ -196,9 +240,10 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
   # check error and set default value
   # default: show BlogChages monthly
 
-  if (in_array('all',$opts)) {
+  #print_r($category_pages);
+  if (in_array('all',$opts) or $category_pages) {
     if (in_array('summary',$opts))
-      $blogs=Blog_cache::get_rc_blogs($date);
+      $blogs=Blog_cache::get_rc_blogs($date,$category_pages);
     else
       $blogs=Blog_cache::get_blogs();
   } else
@@ -291,9 +336,12 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
   $action="date=$pre_date";
   if ($options['action'])
     $action='action=blogchanges&amp;'.$action;
+  if ($options['category'])
+    $action.='&amp;category='.$options['category'];
   if ($options['mode'])
-    $action='&amp;mode='.$options['mode'];
+    $action.='&amp;mode='.$options['mode'];
   $pnut="<div class='blog-action'>".$formatter->link_to('?'.$action,'&laquo; '._("Previous"))."</div>";
   return $bra.$items.$cat.$pnut;
 }
+// vim:et:sts=2:
 ?>
