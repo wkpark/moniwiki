@@ -13,7 +13,8 @@ function processor_vim($formatter,$value) {
           "java","ruby","forth","fortran","perl",
           "haskell","lisp","st","objc","tcl","lua",
           "asm","masm","tasm","make",
-          "awk","docbk","diff","html","tex","vim",);
+          "awk","docbk","diff","html","tex","vim",
+          "xml","dtd","sql");
   $options=array("number");
 
   if ($value[0]=='#' and $value[1]=='!')
