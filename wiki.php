@@ -21,8 +21,6 @@ function preg_escape($val) {
 
 function get_scriptname() {
   // Return full URL of current page.
-  global $SCRIPT_NAME;
-  if ($SCRIPT_NAME) return $SCRIPT_NAME;
   return $_SERVER["SCRIPT_NAME"];
 }
 
@@ -124,8 +122,8 @@ $timing=new Timer();
 class MetaDB_dba extends MetaDB {
   var $metadb;
 
-  function MetaDB_dba($file) {
-    $this->metadb=dba_open($file.".cache","r","db3");
+  function MetaDB_dba($file,$type="db3") {
+    $this->metadb=@dba_open($file.".cache","r",$type);
   }
 
   function getSisterSites($pagename) {
@@ -171,6 +169,38 @@ class MetaDB {
   }
 }
 
+class Counter_dba {
+  var $counter;
+  function Counter_dba($DB) {
+    $this->counter=@dba_open($DB->data_dir."/counter.db","w",$DB->dba_type);
+    if (!$this->counter)
+       $this->counter=dba_open($DB->data_dir."/counter.db","n",$DB->dba_type);
+  }
+
+  function incCounter($pagename) {
+    $count=dba_fetch($pagename,$this->counter);
+    $count++;
+    dba_replace($key,$count,$this->counter);
+  }
+
+  function pageCounter($pagename) {
+    $count=dba_fetch($pagename,$this->counter);
+    return $count;
+  }
+}
+
+class Counter {
+  function Counter($DB="") {
+  }
+
+  function incCounter($page) {
+  }
+
+  function pageCounter($page) {
+    return 1;
+  }
+}
+
 function getConfig($configfile) {
   if (!file_exists($configfile))
     return array();
@@ -185,27 +215,31 @@ function getConfig($configfile) {
 class WikiDB {
   function WikiDB($config=array()) {
   # Default Configuations
-    $this->frontpage='FrontPage';
+    $this->frontpage='FrontPage'; # _("FrontPage")
     $this->sitename='MoniWiki';
     $this->data_dir= './data';
     $this->upload_dir= './pds';
     $this->query_prefix='/';
     $this->umask= 02;
     $this->embeded=0;
-    $this->charset='utf-8';
+    $this->charset='euc-kr';
+    $this->lang='ko';
+    $this->dba_type="db3";
+    $this->use_counter=1;
 
     $this->text_dir= $this->data_dir.'/text';
     $this->cache_dir= $this->data_dir.'/cache';
     $this->intermap= $this->data_dir.'/intermap.txt';
     $this->editlog_name= $this->data_dir.'/editlog';
     $this->shared_intermap=$this->data_dir."/text/InterMap";
-#    $this->shared_metadb=$this->data_dir."/metadb";
-    $this->url_prefix= '/wiki';
+    $this->shared_metadb=$this->data_dir."/metadb";
+    $this->url_prefix= '/moniwiki';
     $this->imgs_dir= $this->url_prefix.'/imgs';
+    $this->css_dir= 'css';
     $this->logo_img= $this->imgs_dir.'/moniwiki.gif';
 
     $this->css_url= $this->url_prefix.'/css/default.css';
-    $this->kbd_script= $this->url_prefix.'/css/kbd.css';
+    $this->kbd_script= $this->url_prefix.'/css/kbd.js';
     $this->logo_string= '<img src="'.$this->logo_img.
                         '" alt="[RecentChanges]" border="0" align="middle" />';
     $this->use_smileys=1;
@@ -219,6 +253,14 @@ class WikiDB {
     $this->actions= array('DeletePage','LikePages');
     $this->show_hosts= TRUE;
 
+    # set user-specified configuration
+    if ($config) {
+       # read configurations
+       while (list($key,$val) = each($config))
+          $this->$key=$val;
+    }
+
+    if (!$this->icon) {
     $this->icon[upper]="<img src='$this->imgs_dir/upper.gif' alt='U' align='middle' border='0' />";
     $this->icon[edit]="<img src='$this->imgs_dir/moin-edit.gif' alt='E' align='middle' border='0' />";
     $this->icon[diff]="<img src='$this->imgs_dir/moin-diff.gif' alt='D' align='middle' border='0' />";
@@ -230,7 +272,9 @@ class WikiDB {
     $this->icon[help]="<img src='$this->imgs_dir/moin-help.gif' alt='H' align='middle' border='0' />";
     $this->icon[www]="<img src='$this->imgs_dir/moin-www.gif' alt='www' align='middle' border='0' />";
     $this->icon[mailto]="<img src='$this->imgs_dir/moin-www.gif' alt='www' align='middle' border='0' />";
+    }
 
+    if (!$this->menu) {
 #    $this->menu="<img src='$this->imgs_dir/diff-7.gif'> ".
 #                "<img src='$this->imgs_dir/edit-7.gif'> ".
 #                "<img src='$this->imgs_dir/info-7.gif'> ".
@@ -245,12 +289,6 @@ class WikiDB {
                 "<img src='$this->imgs_dir/moin-search.gif' alt='S' /> ".
                 "<img src='$this->imgs_dir/moin-help.gif' alt='H' /> ".
                 "<img src='$this->imgs_dir/moin-home.gif' alt='Z' /> ";
-
-    # set user-specified configuration
-    if ($config) {
-       # read configurations
-       while (list($key,$val) = each($config))
-          $this->$key=$val;
     }
 
     # load smileys
@@ -272,11 +310,15 @@ class WikiDB {
 
     $this->set_intermap();
     if ($this->shared_metadb)
-      $this->metadb=new MetaDB_dba($this->shared_metadb);
+      $this->metadb=new MetaDB_dba($this->shared_metadb,$this->dba_type);
     if (!$this->metadb->metadb)
       $this->metadb=new MetaDB();
 
-    $this->_initCounter();
+    if ($this->use_counter)
+      $this->counter=new Counter_dba($this);
+    if (!$this->counter->counter)
+      $this->counter=new Counter();
+
   }
 
   function Close() {
@@ -308,24 +350,6 @@ class WikiDB {
     $this->interwiki[Self]=get_scriptname().$this->query_prefix;
   }
 
-  function incCounter($pagename) {
-    $key=$this->getPageKey($pagename);
-    $count=dba_fetch($key,$this->counter);
-    $count++;
-    dba_replace($key,$count,$this->counter);
-  }
-
-  function pageCounter($pagename) {
-    $key=$this->getPageKey($pagename);
-    $count=dba_fetch($key,$this->counter);
-    return $count;
-  }
-
-  function _initCounter() {
-    $this->counter=@dba_open($this->data_dir."/counter.db","w","db3");
-    if (!$this->counter)
-       $this->counter=dba_open($this->data_dir."/counter.db","n","db3");
-  }
 
   function getPageKey($pagename) {
     # normalize a pagename to uniq key
@@ -419,23 +443,22 @@ class WikiDB {
   }
 
   function editlog_raw_lines($size=5000,$quick="") {
-    $fp= fopen($this->editlog_name, 'r');
-    fseek($fp, 0, SEEK_END);
-    $filesize= ftell($fp);
+    $filesize= filesize($this->editlog_name);
+    if ($filesize > $size) {
+      $fp= fopen($this->editlog_name, 'r');
 
-    $foffset=$filesize - $size;
-    $foffset=$foffset >=0 ? $size:$filesize;
+      fseek($fp, -$size, SEEK_END);
 
-    fseek($fp, -$foffset, SEEK_END);
-
-    $dumm=fgets($fp,1024); # emit dummy
-    while (!feof($fp)) {
-      $line=fgets($fp,2048);
-#     $line=preg_replace("/[\r\n]+$/","",$line);
-#     print $line."<br />";
-      $lines[]=$line;
-    }
-    fclose($fp);
+      $dumm=fgets($fp,1024); # emit dummy
+      while (!feof($fp)) {
+        $line=fgets($fp,2048);
+#       $line=preg_replace("/[\r\n]+$/","",$line);
+#       print $line."<br />";
+        $lines[]=$line;
+      }
+      fclose($fp);
+    } else
+      $lines=file($this->editlog_name);
 
     $lines=$this->reverse($lines);
     unset($lines[0]); # delete last dummy
@@ -455,7 +478,7 @@ class WikiDB {
   }
 
   function savePage($page,$comment="") {
-    global $REMOTE_ADDR;
+    $REMOTE_ADDR=$_SERVER[REMOTE_ADDR];
 
     $key=$this->getPageKey($page->name);
 
@@ -470,7 +493,7 @@ class WikiDB {
   }
 
   function deletePage($page,$comment="") {
-    global $REMOTE_ADDR;
+    $REMOTE_ADDR=$_SERVER[REMOTE_ADDR];
 
     $key=$this->getPageKey($page->name);
 
@@ -506,6 +529,7 @@ class Cache_text {
   }
 
   function _save($key,$val) {
+    umask(011);
     $fp=fopen($key,"w+");
     fwrite($fp,$val);
     fclose($fp);
@@ -824,7 +848,7 @@ class Formatter {
    if ($word[0]=='/')
       $page=$this->page->name.$page;
 
-   if ($this->gen_pagelinks) $this->add_pagelinks($word);
+   if ($this->gen_pagelinks) $this->add_pagelinks($page);
 
    $url=$this->link_url($page);
 
@@ -1095,8 +1119,8 @@ class Formatter {
          #print "<!-- indlen=$indlen -->\n";
          if ($indlen > 0) {
             $line=substr($line,$indlen);
-            if (preg_match("/^(\*\s)/",$line,$limatch)) {
-               $line=preg_replace("/^(\*\s)/","<li>",$line);
+            if (preg_match("/^(\*\s*)/",$line,$limatch)) {
+               $line=preg_replace("/^(\*\s*)/","<li>",$line);
                if ($indent_list[$in_li] == $indlen) $line="</li>\n".$line;
                $numtype="";
                $indtype="ul";
@@ -1439,22 +1463,25 @@ class Formatter {
    }
  }
 
- function send_header($header="",$title="") {
-   global $DBInfo;
-   $plain=0;
-   if ($header) {
-      foreach ($header as $head) {
+  function send_header($header="",$options=array()) {
+    global $DBInfo;
+    $plain=0;
+    if ($header) {
+      if (is_array($header))
+        foreach ($header as $head) {
           header($head);
           if (preg_match("/^content\-type: text\/plain/i",$head)) {
              $plain=1;
           }
-      }
-   }
+        }
+      else
+        header($header);
+    }
 
-#   if ($DBInfo->embeded) return;
-
+#  if ($DBInfo->embeded) return;
    if (!$plain) {
-      if (!$title) $title=$this->page->name;
+      if (!$options[title]) $options[title]=$this->page->name;
+      if (!$options[css_url]) $options[css_url]=$DBInfo->css_url;
       print <<<EOS
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <!-- <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"> -->
@@ -1462,11 +1489,11 @@ class Formatter {
   <head>
   <meta http-equiv="Content-Type" content="text/html;charset=$DBInfo->charset" /> 
   <meta name="ROBOTS" content="NOINDEX,NOFOLLOW" />
-  <title>$title</title>\n
+  <title>$options[title]</title>\n
 EOS;
-      if ($DBInfo->css_url)
+      if ($options[css_url])
          print '<link rel="stylesheet" type="text/css" href="'.
-               $DBInfo->css_url.'"/>';
+               $options[css_url].'"/>';
 # default CSS
       else print <<<EOS
 <style type="text/css">
@@ -1656,10 +1683,10 @@ $opts[msg]
 MSG;
    }
 
-   $menu =$this->link_tag($DBInfo->frontpage)." | ";
-   $menu.=$this->link_tag("FindPage")." | ";
-   $menu.=$this->link_tag("TitleIndex")." | ";
-   $menu.=$this->link_tag("UserPreferences");
+   $menu =$this->link_tag($DBInfo->frontpage,"",_($DBInfo->frontpage))." | ";
+   $menu.=$this->link_tag("FindPage","",_("FindPage"))." | ";
+   $menu.=$this->link_tag("TitleIndex","",_("TitleIndex"))." | ";
+   $menu.=$this->link_tag("UserPreferences","",_("UserPreferences"));
    # icons
    $icons="";
    if ($upper)
@@ -1781,24 +1808,62 @@ EOS;
 
 }
 
-# extra
-# blah
-
 # Start Main
 $Config=getConfig("config.php");
 
-$DBInfo = new WikiDB($Config);
+$DBInfo= new WikiDB($Config);
+$user=new User();
+$options=array();
+$options[id]=$user->id;
+if ($user->id != "Anonymous") {
+  $udb=new UserDB($DBInfo);
+  $user=$udb->getUser($user->id);
+  $options[css_url]=$user->info[css_url];
+#  $name=$user->info[name];
+} else {
+  if ($user->css)
+    $options[css_url]=$user->css;
+}
 
-if (!empty($PATH_INFO)) {
-   if ($PATH_INFO[0] == '/')
-      $pagename=substr($PATH_INFO,1);
+#setlocale(LC_ALL, 'ko');
+if (!function_exists ('bindtextdomain')) {
+     function gettext ($text) {
+       return $text;
+     }
+
+     function _ ($text) {
+       return $text;
+     }
+}
+#    $locale = array();
+#
+#    function gettext ($text) {
+#        global $locale;
+#        if (!empty ($locale[$text]))
+#            return $locale[$text];
+#        return $text;
+#    }
+#
+#    function _ ($text) {
+#        return gettext($text);
+#    }
+#}
+else {
+   setlocale(LC_ALL, $DBInfo->lang);
+   bindtextdomain("moniwiki", "locale");
+   textdomain("moniwiki");
+}
+
+if (!empty($_SERVER[PATH_INFO])) {
+   if ($_SERVER[PATH_INFO][0] == '/')
+      $pagename=substr($_SERVER[PATH_INFO],1);
    if (!$pagename) {
       $pagename = $DBInfo->frontpage;
    }
-} else if (!empty($QUERY_STRING)) {
+} else if (!empty($_SERVER[QUERY_STRING])) {
    if (isset($goto)) $pagename=$goto;
    else {
-     $pagename = $QUERY_STRING;
+     $pagename = $_SERVER[QUERY_STRING];
      $result = preg_match('/^([^&=]+)/',$pagename,$matches);
      if ($result) {
         $pagename = urldecode($matches[1]);
@@ -1813,11 +1878,22 @@ if (!empty($PATH_INFO)) {
 #print_r(array_keys($HTTP_GET_VARS));
 #print_r($HTTP_GET_VARS);
 
-if ($REQUEST_METHOD=="POST") {
-   if ($action=="savepage") {
+$action=$HTTP_GET_VARS[action];
+$value=$HTTP_GET_VARS[value];
+$goto=$HTTP_GET_VARS[goto];
+
+if ($_SERVER[REQUEST_METHOD]=="POST") {
+ $request=$HTTP_POST_VARS;
+ $action=$request[action];
+ if ($action=="savepage") {
+   $savetext=$request[savetext];
+   $datestamp=$request[datestamp];
+   $button_preview=$request[button_preview];
+   $button_merge=$request[button_merge];
+
    $page = $DBInfo->getPage($pagename);
    $formatter = new Formatter($page);
-   $formatter->send_header();
+   $formatter->send_header("",$options);
 
    $savetext=str_replace("\r", "", $savetext);
    $savetext=stripslashes($savetext);
@@ -1832,20 +1908,21 @@ if ($REQUEST_METHOD=="POST") {
       $orig=md5($body);
       # check datestamp
       if ($page->mtime() > $datestamp) {
-         $opts[msg]="Someone else saved the page while you edited ".$formatter->link_tag($page->name);
-         $formatter->send_title("Conflict error!","",$opts);
+         $opts[msg]=sprintf("Someone else saved the page while you edited %s",$formatter->link_tag($page->name));
+         $formatter->send_title(_("Conflict error!"),"",$opts);
          $options[preview]=1; 
          $options[conflict]=1; 
          $options[datestamp]=$datestamp; 
          if ($button_merge) {
             $merge=$formatter->get_merge($savetext);
             if ($merge) $savetext=$merge;
+            unset($options[datestamp]); 
          }
          $formatter->send_editor($savetext,$options);
          print $formatter->link_tag('GoodStyle')." | ";
          print $formatter->link_tag('InterWiki')." | ";
          print $formatter->link_tag('HelpOnEditing')." | ";
-         print $formatter->link_to("#editor","Goto Editor");
+         print $formatter->link_to("#editor",_("Goto Editor"));
          print "<table border='1' align='center' width='100%'><tr><td>\n";
          $formatter->get_diff("","",$savetext);
          print "</td></tr></table>\n";
@@ -1856,14 +1933,14 @@ if ($REQUEST_METHOD=="POST") {
 
    if (!$button_preview && $orig == $new) {
       $opts[msg]="Go back or return to ".$formatter->link_tag($page->name);
-      $formatter->send_title("No difference found","",$opts);
+      $formatter->send_title(_("No difference found"),"",$opts);
       $formatter->send_footer();
       return;
    }
    $formatter->page->set_raw_body($savetext);
 
    if ($button_preview) {
-      $title="Preview of ".$formatter->link_tag($page->name);
+      $title=sprintf("Preview of %s",$formatter->link_tag($page->name));
       $formatter->send_title($title,"");
      
       $options[preview]=1; 
@@ -1874,7 +1951,7 @@ if ($REQUEST_METHOD=="POST") {
       print $formatter->link_tag('GoodStyle')." | ";
       print $formatter->link_tag('InterWiki')." | ";
       print $formatter->link_tag('HelpOnEditing')." | ";
-      print $formatter->link_to("#editor","Goto Editor");
+      print $formatter->link_to("#editor",_("Goto Editor"));
       print "<div class='wikiPreview'>\n";
       print "<table border='1' align='center' width='95%'><tr><td>\n";
       $formatter->send_page();
@@ -1885,14 +1962,14 @@ if ($REQUEST_METHOD=="POST") {
       print $formatter->link_tag('GoodStyle')." | ";
       print $formatter->link_tag('InterWiki')." | ";
       print $formatter->link_tag('HelpOnEditing')." | ";
-      print $formatter->link_to("#editor","Goto Editor");
+      print $formatter->link_to("#editor",_("Goto Editor"));
    } else {
       $page->write($savetext);
       $ret=$DBInfo->savePage($page);
       if ($ret == -1)
-      $opts[msg]=$formatter->link_tag($page->name)." is not editable";
+        $opts[msg]=$formatter->link_tag($page->name)." is not editable";
       else
-      $opts[msg]=$formatter->link_tag($page->name)." is saved";
+        $opts[msg]=$formatter->link_tag($page->name)." is saved";
       $formatter->send_title("","",$opts);
       $formatter->send_page();
    }
@@ -1904,8 +1981,8 @@ if ($REQUEST_METHOD=="POST") {
    }
 }
 
-if (!empty($QUERY_STRING))
-   $query= $QUERY_STRING;
+#if (!empty($QUERY_STRING))
+#   $query= $QUERY_STRING;
 
 if ($pagename) {
 
@@ -1928,7 +2005,7 @@ if ($pagename) {
         return;
       }
       if (!$page->exists()) {
-        $formatter->send_header(array("Status: 404 Not found"));
+        $formatter->send_header(array("Status: 404 Not found"),$options);
 
         $twins=$DBInfo->metadb->getTwinPages($page->name);
         if ($twins) {
@@ -1936,14 +2013,14 @@ if ($pagename) {
            #$formatter->send_page($twins."\n----\n");
            $formatter->send_page($twins);
            print "<br /><br />or ".
-             $formatter->link_to("?action=edit","Create this page.");
+             $formatter->link_to("?action=edit",_("Create this page"));
         } else {
            $formatter->send_title($page->name." Not Found");
-           print $formatter->link_to("?action=edit","Create this page");
+           print $formatter->link_to("?action=edit",_("Create this page"));
            print macro_LikePages($formatter,$page->name);
 
            print "<hr />\n";
-           print $formatter->link_to("?action=edit","Create this page");
+           print $formatter->link_to("?action=edit",_("Create this page"));
            print " or alternativly, use one of these templates:\n";
            $options[linkto]="?action=edit&amp;template=";
            print macro_TitleSearch($formatter,".*Template",$options);
@@ -1955,9 +2032,9 @@ if ($pagename) {
         $formatter->send_footer($args);
         return;
       }
-      $DBInfo->incCounter($pagename);
+      $DBInfo->counter->incCounter($pagename);
 
-      $formatter->send_header();
+      $formatter->send_header("",$options);
       $formatter->send_title();
       $formatter->send_page();
       #$args[showpage]=1;
@@ -1988,7 +2065,7 @@ if ($pagename) {
          do_RcsPurge($formatter,$options);
          return;
       }
-      $formatter->send_header();
+      $formatter->send_header("",$options);
       $formatter->send_title("Diff for $rev ".$page->name);
       print $formatter->get_diff($rev,$rev2);
       print "<br /><hr />\n";
@@ -2002,9 +2079,9 @@ if ($pagename) {
    if ($action=="recall" || $action=="raw") {
      if ($action=="raw") {
         $header[]="Content-Type: text/plain";
-        $formatter->send_header($header);
+        $formatter->send_header($header,$options);
      } else {
-        $formatter->send_header();
+        $formatter->send_header("",$options);
         $formatter->send_title("Rev. $rev ".$page->name);
      }
      if (!$page->exists() || !$page->get_raw_body()) {
@@ -2024,7 +2101,7 @@ if ($pagename) {
      }
      return;
    } else if ($action=="edit" && $page->writable()) {
-     $formatter->send_header();
+     $formatter->send_header("",$options);
      $formatter->send_title("Edit ".$page->name);
      $options[rows]=$rows; 
      $options[cols]=$cols;
@@ -2034,7 +2111,7 @@ if ($pagename) {
      #$args[editable]=1;
      $formatter->send_footer($args);
    } else if ($action=="info") {
-     $formatter->send_header();
+     $formatter->send_header("",$options);
      $formatter->send_title("Info. for ".$page->name);
      $formatter->show_info();
      $args[showpage]=1;
@@ -2051,18 +2128,20 @@ if ($pagename) {
      #print($login_id);
 
      if (function_exists("do_post_".$action)) {
-        $options=$HTTP_POST_VARS;
+        $options=array_merge($options,$HTTP_POST_VARS);
         $options[page]=$page->name;
         $options[timer]=$timing;
         eval("do_post_".$action."(\$formatter,\$options);");
      } else if (function_exists("do_".$action)) {
-        $options=$HTTP_GET_VARS;
-        if (!$options) $options=$HTTP_POST_VARS;
+        if ($_SERVER[REQUEST_METHOD]=="POST")
+           $options=array_merge($options,$HTTP_POST_VARS);
+        else
+           $options=array_merge($options,$HTTP_GET_VARS);
         $options[page]=$page->name;
         $options[timer]=$timing;
         eval("do_".$action."(\$formatter,\$options);");
      } else {
-        $formatter->send_header(array("Status: 406 Not Acceptable"));
+        $formatter->send_header("Status: 406 Not Acceptable",$options);
         $formatter->send_title("406 Not Acceptable");
         $args[editable]=1;
         # $formatter->send_page("");
