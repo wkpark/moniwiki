@@ -1246,14 +1246,14 @@ class Formatter {
       if ($force or preg_match("/\s/",$url)) { # have a space ?
         list($url,$text)=explode(" ",$url,2);
         if (!$text) $text=$url;
-        else if (preg_match("/(png|gif|jpeg|jpg)$/i",$text))
+        else if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$text))
           return "<a href='$url' title='$url'><img border='0' alt='$url' src='$text' /></a>";
         list($icon,$dummy)=explode(":",$url,2);
         #return $this->icon[www]. "<a href='$url'>$text</a>";
         return "<img align='absmiddle' alt='[$icon]' src='".$DBInfo->imgs_dir."/$icon.png'>". "<a href='$url'>$text</a>";
       } else # have no space
       if (preg_match("/^(http|https|ftp)/",$url)) {
-        if (preg_match("/(png|gif|jpeg|jpg)$/i",$url))
+        if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$url))
           return "<img alt='$url' src='$url' />";
         return "<a href='$url'>$url</a>";
       }
@@ -1294,17 +1294,19 @@ class Formatter {
          strtolower($wiki)."-16.png' align='middle' height='16' width='16' ".
          "alt='$wiki:' title='$wiki:' /></a>";
     if (!$text) $text=$page;
-    else if (preg_match("/(png|gif|jpeg|jpg)$/i",$text)) {
+    else if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$text)) {
       $text= "<img border='0' alt='$text' src='$text' />";
       $img="";
     }
 
     $page=trim($page);
-
     if (strpos($url,'$PAGE') === false)
       $url.=$page;
     else
       $url=str_replace('$PAGE',$page,$url);
+
+    if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$url))
+      return "<img border='0' alt='$text' src='$url' />";
 
     return $img. "<a href='".$url."' title='$wiki:$page'>$text</a>";
   }
