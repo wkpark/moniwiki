@@ -458,6 +458,9 @@ class WikiDB {
     $this->category_regex='^Category[A-Z]';
     $this->notify=0;
     $this->trail=0;
+    $this->origin=0;
+    $this->arrow=" &#x203a; ";
+    $this->home=Home;
     $this->diff_type='fancy_diff';
     $this->nonexists='nonexists';
     $this->use_sistersites=1;
@@ -1159,7 +1162,7 @@ class Formatter {
     $this->set_theme($options['theme']);
 
     #$this->baserule=array("/<([^\s][^>]*)>/","/`([^`]*)`/",
-    $this->baserule=array("/<([^\s<>])/","/`([^`']+)'/","/`([^`]*)`/",
+    $this->baserule=array("/<([^\s<>])/","/`([^`']+)'/","/(?<!`)`([^`]*)`/",
                      "/'''([^']*)'''/","/(?<!')'''(.*)'''(?!')/",
                      "/''([^']*)''/","/(?<!')''(.*)''(?!')/",
                      "/\^([^ \^]+)\^(?:\s)/","/,,([^ ,]+),,(?:\s)/",
@@ -1524,7 +1527,7 @@ class Formatter {
     } else if ($page[0]=='/') # SubPage
       $page=$this->page->name.$page;
 
-    #$url=$this->link_url($page);
+    $page=urldecode($page); # XXX
     $url=$this->link_url(_rawurlencode($page)); # XXX
     if (isset($this->pagelinks[$page])) {
       $idx=$this->pagelinks[$page];
@@ -2434,6 +2437,8 @@ class Formatter {
     }
     if (isset($options['trail']))
       $this->set_trailer($options['trail'],$this->page->name);
+    else if ($DBInfo->origin)
+      $this->set_origin($this->page->name);
 
     if (!$plain) {
       if ($this->pi['#keywords'])
@@ -2751,13 +2756,51 @@ MSG;
       print "</div>\n";
     }
     print $DBInfo->hr;
-    if ($options['trail']) {
-      $opt['nosisters']=1;
+    if ($options['trail'] or $this->origin) {
+      //$opt['nosisters']=1;
+      print "<div id='wikiOrigin'>\n";
+      print $this->origin;
+      print "</div>\n";
       print "<div id='wikiTrailer'>\n";
       print $this->trail;
       print "</div>\n";
     }
     print "<div id='wikiBody'>\n";
+  }
+
+  function set_origin($pagename) {
+    global $DBInfo;
+
+    $orig='';
+    if ($pagename != $DBInfo->frontpage) {
+      # save setting
+      $sister_save=$this->sister_on;
+      $this->sister_on=0;
+
+      $parent=_($DBInfo->home);
+      $origin=$this->word_repl('"'.$DBInfo->frontpage.'"',$parent,'',1);
+      $parent='';
+
+      $key=strtok($pagename,'/');
+      while($key !== false) {
+        if ($parent)
+          $parent.='/'.$key;
+        else
+          $parent.=$key;
+        $okey=$key;
+        $key=strtok('/');
+        if ($key)
+          $origin.=$DBInfo->arrow.$this->word_repl('"'.$parent.'"',$okey,'',1);
+        else
+          $origin.=$DBInfo->arrow.$okey;
+      }
+      # reset pagelinks
+      $this->pagelinks=array();
+      $this->sister_on=$sister_save;
+    } else {
+      $origin=$DBInfo->home;
+    }
+    $this->origin=$origin;
   }
 
   function set_trailer($trailer="",$pagename,$size=5) {
@@ -2770,7 +2813,7 @@ MSG;
     $this->sister_on=0;
     $this->trail="";
     foreach ($trails as $page) {
-      $this->trail.=$this->word_repl('"'.$page.'"','','',1)." &#x203a; ";
+      $this->trail.=$this->word_repl('"'.$page.'"','','',1).$DBInfo->arrow;
     }
     $this->trail.= " $pagename";
     $this->pagelinks=array(); # reset pagelinks
@@ -2918,9 +2961,10 @@ if ($pagename) {
       # RAW posted data. the $value and $action could be accessed under
       # "register_globals = On" in the php.ini
       $options['value']=$value;
+    } else {
+      $value=$_POST['value'];
+      $action=$_POST['action'];
     }
-    $action=$_POST['action'];
-    $value=$_POST['value'];
     $goto=$_POST['goto'];
   } else if ($_SERVER['REQUEST_METHOD']=="GET") {
     $action=$_GET['action'];
