@@ -459,6 +459,8 @@ class WikiDB {
     $this->use_sistersites=1;
     $this->use_twinpages=1;
     $this->pagetype=array();
+
+    $this->purple_icon='#';
 #    $this->security_class="needtologin";
 
     # set user-specified configuration
@@ -1138,7 +1140,8 @@ class Formatter {
   # "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
     "($urlrule)|".
     # single linkage rule ?hello ?abacus
-    "(\?[A-Z]*[a-z0-9]+)";
+    #"(\?[A-Z]*[a-z0-9]+)";
+    "(\?[A-Za-z0-9]+)";
 
     $this->cache= new Cache_text("pagelinks");
   }
@@ -1184,6 +1187,9 @@ class Formatter {
     if (!$this->icons) {
       $this->icons=&$DBInfo->icons;
     }
+    if (!$this->purple_icon) {
+      $this->purple_icon=$DBInfo->purple_icon;
+    }
   }
 
   function get_redirect() {
@@ -1204,16 +1210,16 @@ class Formatter {
       if ($this->pi) return $this->pi;
       $body=$this->page->get_raw_body();
       $update_body=1;
-    }
 
-    $pos=strpos($this->page->name,'/') ? 1:0;
-    $key=strtok($this->page->name,'/');
-    $format=$DBInfo->pagetype[$key];
-    if ($format) {
-      $temp=explode("/",$format);
-      $format=$temp[$pos];
-    } else
-    if ($body[0] == '<') {
+      $pos=strpos($this->page->name,'/') ? 1:0;
+      $key=strtok($this->page->name,'/');
+      $format=$DBInfo->pagetype[$key];
+      if ($format) {
+        $temp=explode("/",$format);
+        $format=$temp[$pos];
+      }
+    }
+    if (!$format and $body[0] == '<') {
       list($line, $dummy)= explode("\n", $body,2);
       if (substr($line,0,6) == '<?xml ')
         #$format='xslt';
@@ -1539,7 +1545,7 @@ class Formatter {
     $prefix=$this->toc_prefix;
     if ($this->toc)
       $head="<a href='#toc'>$num</a> $head";
-    $purple=" <a class='purple' href='#s$prefix-$num'>#</a>";
+    $purple=" <a class='purple' href='#s$prefix-$num'>$this->purple_icon</a>";
 
     return "$close$open<h$dep><a id='s$prefix-$num' name='s$prefix-$num'></a> $head$purple</h$dep>";
   }
