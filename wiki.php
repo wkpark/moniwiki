@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0rc10';
+$_release = '1.0rc11';
 
 #ob_start("ob_gzhandler");
 
@@ -1025,7 +1025,8 @@ class Formatter {
     #$punct="<\"\'}\]\|;,\.\!";
     $punct="<\'}\]\|;\.\)\!";
     $url="wiki|http|https|ftp|nntp|news|irc|telnet|mailto";
-    $urlrule="((?:$url):([^\s$punct]|(\.?[^\s$punct]+))+)";
+    $urlrule="((?:$url):([^\s$punct]|(\.?[^\s$punct]))+)";
+    #$urlrule="((?:$url):(\.?[^\s$punct])+)";
     #$urlrule="((?:$url):[^\s$punct]+(\.?[^\s$punct]+)+\s?)";
     # solw slow slow
     #(?P<word>(?:/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})
@@ -1037,13 +1038,11 @@ class Formatter {
     #"\b(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     "\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+)|".
-    # protect WikiName rule !WikiName
-    #"(\!([A-Z]+[a-z0-9]+){2,})(?!(:|[a-z0-9]))|".
-    "(\!([A-Z]+|[a-z0-9]+){2,})\b|".
   # "(?<!\!|\[\[)\b(([A-Z]+[a-z0-9]+){2,})\b|".
   # "(?<!\!|\[\[)((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})\b|".
     # WikiName rule: WikiName ILoveYou (imported from the rule of NoSmoke)
-    "(?<![a-z])(?:\/?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b|".
+    # protect WikiName rule !WikiName
+    "(?<![a-z])\!?(?:\/?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b|".
     # macro rule [[Hello(World)]]
     "(?<!\[)\[([^\[:,\s\d][^\[:,]+)\](?!\])|".
     # bracketted with double quotes ["Hello World"]
@@ -1105,17 +1104,6 @@ class Formatter {
       $this->icon_cat=' ';
       $this->icon_sep=' ';
     }
-
-##    if (!$this->menu) {
-##    $this->menu="<img src='$this->imgs_dir/diff-7.gif'> ".
-##                "<img src='$this->imgs_dir/edit-7.gif'> ".
-##                "<img src='$this->imgs_dir/info-7.gif'> ".
-##                "<img src='$this->imgs_dir/show-7.gif'> ".
-##                "<img src='$this->imgs_dir/find-7.gif'> ".
-##                "<img src='$this->imgs_dir/help-7.gif'> ".
-##                "<img src='$this->imgs_dir/home-7.gif'> ";
-##    }
-
   }
 
   function get_redirect() {
@@ -1155,9 +1143,9 @@ class Formatter {
         if ($line=='#') break;
         else if ($line[1]=='#') continue;
 
-        list($key,$val,$args)= explode(" ",$line,3);
+        list($key,$val,$args)= explode(" ",$line,2); # XXX
         $key=strtolower($key);
-        if (in_array($key,$pikeys)) $pi[$key]=$val;
+        if (in_array($key,$pikeys)) { $pi[$key]=$val; }
         else $notused[]=$line;
       }
     }
@@ -1471,9 +1459,11 @@ class Formatter {
   function _list($on,$list_type,$numtype="",$close="") {
     if ($list_type=="dd") {
       if ($on)
-         $list_type="dl><dd";
+         #$list_type="dl><dd";
+         $list_type="div style='padding-left:2em'";
       else
-         $list_type="dd></dl";
+         #$list_type="dd></dl";
+         $list_type="div";
       $numtype='';
     } else if (!$on && $close !=1)
       $list_type=$list_type."></li";
@@ -1754,10 +1744,9 @@ class Formatter {
 
     # close all tags
     $close="";
-    # close pre,table,p
+    # close pre,table
     if ($in_pre) $close.="</pre>\n";
     if ($in_table) $close.="</table>\n";
-    if ($in_p) $close.="</div>\n";
     # close indent
     while($in_li >= 0 && $indent_list[$in_li] > 0) {
       $close.=$this->_list(0,$indent_type[$in_li]);
@@ -1765,6 +1754,8 @@ class Formatter {
       unset($indent_type[$in_li]);
       $in_li--;
     }
+    # close div
+    if ($in_p) $close.="</div>\n";
 
     $text.=$close;
   
@@ -2494,6 +2485,7 @@ function get_langs() {
   return $langs;
 }
 
+$timing->Check("load");
 # get broswer's settings
 $langs=get_langs();
 
@@ -2717,7 +2709,7 @@ if ($pagename) {
     $formatter->send_header("",$options);
     $formatter->send_title("","",$options);
     $formatter->write("<div id='wikiContent'>\n");
-    $timing->Check("load");
+    $timing->Check("init");
     $formatter->send_page();
     $timing->Check("send_page");
     $formatter->write("</div>\n");
