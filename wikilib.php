@@ -307,14 +307,140 @@ function do_diff($formatter,$options="") {
   return;
 }
 
+  function macro_EditHints($formatter) {
+    $hints = "<div class=\"hint\">\n";
+    $hints.= _("<b>Emphasis:</b> ''<i>italics</i>''; '''<b>bold</b>'''; '''''<b><i>bold italics</i></b>''''';\n''<i>mixed '''<b>bold</b>''' and italics</i>''; ---- horizontal rule.<br />\n<b>Headings:</b> = Title 1 =; == Title 2 ==; === Title 3 ===;\n==== Title 4 ====; ===== Title 5 =====.<br />\n<b>Lists:</b> space and one of * bullets; 1., a., A., i., I. numbered items;\n1.#n start numbering at n; space alone indents.<br />\n<b>Links:</b> JoinCapitalizedWords; [\"brackets and double quotes\"];\n[bracketed words];\nurl; [url]; [url label].<br />\n<b>Tables</b>: || cell text |||| cell text spanning two columns ||;\nno trailing white space allowed after tables or titles.<br />\n");
+    $hints.= "</div>\n";
+    return $hints;
+  }
+
+function macro_EditText($formatter,$value,$options='') {
+  global $DBInfo;
+  if ($DBInfo->hasPage('EditTextForm')) {
+    $p=$DBInfo->getPage('EditTextForm');
+    $form=$p->get_raw_body();
+
+    ob_start();
+    $formatter->send_page(rtrim($form),$options);
+    $form= ob_get_contents();
+    ob_end_clean();
+
+    $editform= macro_Edit($formatter,'nohints,nomenu',$options);
+    $new=str_replace("\n#editform\n",$editform,$form);
+    if ($form == $new) $form.=$editform;
+    else $form=$new;
+  } else {
+    $form = macro_Edit($formatter,$value,$options);
+  }
+  return $form;
+}
+
 function do_edit($formatter,$options) {
-#  global $DBInfo; XXX
-#  $DBInfo->security->writable($options);
   $formatter->send_header("",$options);
   $formatter->send_title("Edit ".$options['page'],"",$options);
-  $formatter->send_editor("",$options);
+  print macro_EditText($formatter,$value,$options);
   $formatter->send_footer($args,$options);
 }
+
+function macro_Edit($formatter,$value,$options='') {
+  global $DBInfo;
+
+  $COLS_MSIE= 80;
+  $COLS_OTHER= 85;
+  $cols= preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
+
+  $rows= $options['rows'] > 5 ? $options['rows']: 16;
+  $cols= $options['cols'] > 60 ? $options['cols']: $cols;
+
+  $text= $options['savetext'];
+
+  $args= explode(',',$value);
+  if (in_array('nohints',$args)) $options['nohints']=1;
+  if (in_array('nomenu',$args)) $options['nomenu']=1;
+
+  $preview= $options['preview'];
+
+  if (!$formatter->page->exists()) {
+    $options['linkto']="?action=edit&amp;template=";
+    $form = _("Use one of the following templates as an initial release :\n");
+    $form.= macro_TitleSearch($formatter,".*Template",$options);
+    $form.= _("To create your own templates, add a page with a 'Template' suffix.\n"."<br />\n");
+  }
+
+  if ($options['conflict'])
+    $extra='<input type="submit" name="button_merge" value="Merge" />';
+
+  # make a edit form
+  $form.= "<a id='editor' name='editor' />\n";
+
+  if ($options['page'])
+    $previewurl=$formatter->link_url(_urlencode($options['page']),'#preview');
+  else
+    $previewurl=$formatter->link_url($formatter->page->urlname,'#preview');
+
+  $menu= '';
+  if ($preview)
+    $menu= $formatter->link_to('#preview',_("Skip to preview"));
+  else
+    $menu= $formatter->link_to("?action=edit&amp;rows=".($rows-3),_("ReduceEditor"));
+
+  if (!$options['nomenu']) {
+    $menu.= " | ".$formatter->link_tag('InterWiki',"",_("InterWiki"));
+    $menu.= " | ".$formatter->link_tag('HelpOnEditing',"",_("HelpOnEditing"));
+  }
+
+  $form.=$menu;
+  $form.= sprintf('<form name="editform" method="post" action="%s">', $previewurl);
+  if ($text) {
+    $raw_body = str_replace('\r\n', '\n', $text);
+  } else if ($formatter->page->exists()) {
+    $raw_body = str_replace('\r\n', '\n', $formatter->page->_get_raw_body());
+  } else if ($options['template']) {
+    $p= new WikiPage($options['template']);
+    $raw_body = str_replace('\r\n', '\n', $p->get_raw_body());
+  } else
+    $raw_body = sprintf(_("Describe %s here"), $options['page']);
+
+  # for conflict check
+  if ($options['datestamp'])
+     $datestamp= $options['datestamp'];
+  else
+     $datestamp= $formatter->page->mtime();
+
+  $raw_body = str_replace(array("&","<"),array("&amp;","&lt;"),$raw_body);
+
+  # get categories
+  $categories=array();
+  $categories= $DBInfo->getLikePages($DBInfo->category_regex);
+  if ($categories) {
+    $select_category="<select name='category'>\n<option value=''>"._("--Select Category--")."</option>\n";
+    foreach ($categories as $category)
+      $select_category.="<option value='$category'>$category</option>\n";
+    $select_category.="</select>\n";
+  }
+
+  $preview_msg=_("Preview");
+  $save_msg=_("Save");
+  $summary_msg=_("Summary of Change");
+  $form.=<<<EOS
+<textarea class="wiki" id="content" wrap="virtual" name="savetext"
+ rows="$rows" cols="$cols" class="wiki">$raw_body</textarea><br />
+$summary_msg: <input name="comment" size="70" maxlength="70" style="width:200" /><br />
+<input type="hidden" name="action" value="savepage" />
+<input type="hidden" name="datestamp" value="$datestamp" />
+$select_category
+<input type="submit" value="$save_msg" />&nbsp;
+<!-- <input type="reset" value="Reset" />&nbsp; -->
+<input type="submit" name="button_preview" value="$preview_msg" />
+$extra
+</form>
+EOS;
+  if (!$options['nohints'])
+    $form.= macro_EditHints($formatter);
+  $form.= "<a id='preview' name='preview' />";
+  return $form;
+}
+
 
 function do_info($formatter,$options) {
   $formatter->send_header("",$options);
@@ -640,6 +766,8 @@ function do_post_savepage($formatter,$options) {
 
   $new=md5($savetext);
 
+  $menu = $formatter->link_to("#editor",_("Goto Editor"));
+
   if ($formatter->page->exists()) {
     # check difference
     $body=$formatter->page->get_raw_body();
@@ -657,11 +785,10 @@ function do_post_savepage($formatter,$options) {
         if ($merge) $savetext=$merge;
           unset($options[datestamp]); 
         }
-        $formatter->send_editor($savetext,$options);
-        print $formatter->link_tag('GoodStyle')." | ";
-        print $formatter->link_tag('InterWiki')." | ";
-        print $formatter->link_tag('HelpOnEditing')." | ";
-        print $formatter->link_to("#editor",_("Goto Editor"));
+        $options['savetext']=$savetext;
+        print macro_EditText($formatter,$value,$options); # XXX
+
+        print $menu;
         print "<div id='wikiPreview'>\n";
         $formatter->get_diff("","",$savetext);
         print "</div>\n";
@@ -684,20 +811,17 @@ function do_post_savepage($formatter,$options) {
      
       $options['preview']=1; 
       $options['datestamp']=$datestamp; 
-      $formatter->send_editor($savetext,$options);
+      $options['savetext']=$savetext;
+      print macro_EditText($formatter,$value,$options); # XXX
       print $DBInfo->hr;
-      print $formatter->link_tag('GoodStyle')." | ";
-      print $formatter->link_tag('InterWiki',"",_("InterWiki"))." | ";
-      print $formatter->link_tag('HelpOnEditing',"",_("HelpOnEditing"))." | ";
-      print $formatter->link_to("#editor",_("Goto Editor"));
+      print $menu;
       print "<div id='wikiPreview'>\n";
+      $formatter->preview=1;
       $formatter->send_page($savetext);
+      $formatter->preview=0;
       print $DBInfo->hr;
       print "</div>\n";
-      print $formatter->link_tag('GoodStyle')." | ";
-      print $formatter->link_tag('InterWiki',"",_("InterWiki"))." | ";
-      print $formatter->link_tag('HelpOnEditing',"",_("HelpOnEditing"))." | ";
-      print $formatter->link_to("#editor",_("Goto Editor"));
+      print $menu;
     } else {
       if ($options['category'])
         $savetext.="----\n$options[category]\n";
@@ -727,66 +851,6 @@ function do_post_savepage($formatter,$options) {
   }
   $args['editable']=0;
   $formatter->send_footer($args,$options);
-}
-
-function do_subscribe($formatter,$options) {
-  global $DBInfo;
-
-  if ($options['id'] != 'Anonymous') {
-    $udb=new UserDB($DBInfo);
-    $userinfo=$udb->getUser($options['id']);
-    $email=$userinfo->info['email'];
-    #$subs=$udb->getPageSubscribers($options[page]);
-    if (!$email) $title = _("Please enter your email address first.");
-  } else {
-    $title = _("Please login or make your ID.");
-  }
-
-  if ($options['id'] == 'Anonymous' or !$email) {
-    $formatter->send_header("",$options);
-    $formatter->send_title($title,"",$options);
-    $formatter->send_page("== "._("Goto UserPreferences")." ==\n".
-    _("If you want to subscribe this page, just make your ID and register your email address in the UserPreferences."));
-    $formatter->send_footer();
-
-    return;
-  }
-
-  if (isset($options['subscribed_pages'])) {
-    $pages=preg_replace("/\n\s*/","\n",$options['subscribed_pages']);
-    $pages=preg_replace("/\s*\n/","\n",$pages);
-    $pages=explode("\n",$pages);
-    $pages=array_unique ($pages);
-    $page_list=join("\t",$pages);
-    $userinfo->info['subscribed_pages']=$page_list;
-    $udb->saveUser($userinfo);
-
-    $title = _("Subscribe lists updated.");
-    $formatter->send_header("",$options);
-    $formatter->send_title($title,"",$options);
-    $formatter->send_page("Goto [$options[page]]\n");
-    $formatter->send_footer();
-    return;
-  }
-
-  $pages=explode("\t",$userinfo->info['subscribed_pages']);
-  if (!in_array($options['page'],$pages)) $pages[]=$options['page'];
-  $page_lists=join("\n",$pages);
-
-  $title = sprintf(_("Do you want to subscribe \"%s\" ?"), $options['page']);
-  $formatter->send_header("",$options);
-  $formatter->send_title($title,"",$options);
-  print "<form method='post'>
-<table border='0'><tr>
-<th>Subscribe pages:</th><td><textarea name='subscribed_pages' cols='30' rows='5' value='' />$page_lists</textarea></td></tr>
-<tr><td></td><td>
-    <input type='hidden' name='action' value='subscribe' />
-    <input type='submit' value='Subscribe' />
-</td></tr>
-</table>
-    </form>";
-#  $formatter->send_page();
-  $formatter->send_footer("",$options);
 }
 
 function wiki_notify($formatter,$options) {
@@ -859,7 +923,7 @@ function wiki_notify($formatter,$options) {
 function do_uploadfile($formatter,$options) {
   global $DBInfo;
 
-  # replace space and ':'
+  # replace space and ':' strtr()
   $upfilename=str_replace(" ","_",$_FILES['upfile']['name']);
   $upfilename=str_replace(":","_",$upfilename);
 
@@ -869,7 +933,7 @@ function do_uploadfile($formatter,$options) {
      #$title="No file selected";
      $formatter->send_header("",$options);
      $formatter->send_title($title,"",$options);
-     print macro_UploadFile($formatter);
+     print macro_UploadFile($formatter,'',$options);
      $formatter->send_footer("",$options);
      return;
   }
@@ -897,6 +961,16 @@ function do_uploadfile($formatter,$options) {
   }
 
   $file_path= $newfile_path = $dir."/".$upfilename;
+  if ($options['rename']) {
+    # XXX
+    $temp=explode("/",stripslashes($options['rename']));
+    $upfilename= $temp[count($temp)-1];
+
+    preg_match("/(.*)\.([a-z0-9]{1,4})$/i",$upfilename,$tname);
+    # do not change the extention of the file.
+    $fname[1]=$tname[1];
+    $newfile_path = $dir."/".$tname[1].".$fname[2]";
+  }
 
   # is file already exists ?
   $dummy=0;
@@ -924,7 +998,7 @@ function do_uploadfile($formatter,$options) {
      $formatter->send_title($title,"",$options);
      return;
   }
-  chmod($file_path,0644);
+  chmod($newfile_path,0644);
 
   $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
   $comment="File '$upfilename' uploaded";
@@ -1092,6 +1166,7 @@ function do_userform($formatter,$options) {
               $body=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
               $body=_("Please confirm your email address")."\n".$body;
               wiki_sendmail($body,$options);
+              $options['msg'].='<br/>'._("E-mail confirmation mail sented");
            } else {# already exist user
               $user=$udb->getUser($user->id);
               if ($user->checkPasswd($options['password'])=== true) {
@@ -1132,7 +1207,7 @@ function do_userform($formatter,$options) {
     }
     if (isset($options['user_css']))
       $userinfo->info['css_url']=$options['user_css'];
-    if (isset($options['email'])) {
+    if ($options['email'] and ($options['email'] != $userinfo->info['email'])) {
       if (preg_match('/^[a-z][a-z0-9_]+@[a-z0-9_]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
         $ticket=md5(time().$userinfo->info['id'].$options['email']);
         $userinfo->info['ticket']=$ticket.".".$options['email'];
@@ -1140,8 +1215,9 @@ function do_userform($formatter,$options) {
         $body=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
         $body=_("Please confirm your email address")."\n".$body;
         wiki_sendmail($body,$options);
+        $options['msg']=_("E-mail confirmation mail sented");
       } else
-        $options['msg'].=_("Your email address is not valid");
+        $options['msg']=_("Your email address is not valid");
     }
     if ($options['username'])
       $userinfo->info['name']=$options['username'];
@@ -1263,13 +1339,19 @@ function macro_RandomQuote($formatter,$value="") {
   return $quote;
 }
 
-function macro_UploadFile($formatter,$value="") {
-   $url=$formatter->link_url($formatter->page->urlname);
-   $form= <<<EOF
+function macro_UploadFile($formatter,$value='',$options='') {
+  if ($options['rename']) {
+    $rename=stripslashes($options['rename']);
+    $extra="<input name='rename' value='$rename' />"._(": Rename")."<br />";
+  }
+
+  $url=$formatter->link_url($formatter->page->urlname);
+  $form= <<<EOF
 <form enctype="multipart/form-data" method='post' action='$url'>
    <input type='hidden' name='action' value='UploadFile' />
    <input type='file' name='upfile' size='30' />
    <input type='submit' value='Upload' /><br />
+   $extra
    <input type='radio' name='replace' value='1' />Replace original file<br />
    <input type='radio' name='replace' value='0' checked='checked' />Rename if it already exist<br />
 </form>
