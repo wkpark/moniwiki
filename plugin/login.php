@@ -8,9 +8,19 @@
 // $Id$
 
 function macro_login($formatter,$value="",$options="") {
-  $url=$formatter->link_url("UserPreferences");
+  global $DBInfo;
 
-  $user=new User(); # get cookie
+  $url=$formatter->link_url('UserPreferences');
+  $urlpage=$formatter->link_url($formatter->page->urlname);
+
+  $user=new User(); # get from COOKIE VARS
+  if ($user->id != 'Anonymous') {
+    $udb=new UserDB($DBInfo);
+    $udb->checkUser(&$user);
+  }
+
+  if ($user->id == 'Anonymous')
+
   $login=_("Login:");
   $pass=_("Password:");
   $button=_("Login");
@@ -18,7 +28,7 @@ function macro_login($formatter,$value="",$options="") {
 
   if ($user->id == 'Anonymous')
   return <<<LOGIN
-<form method='post' action='$url'>
+<form method='post' action='$urlpage'>
 <input type="hidden" name="action" value="userform" />
 <table border='0'>
 <tr><td align='right'><font size='-1'>$login</font></td><td><input name='login_id' size='10' /></td></tr>
@@ -36,7 +46,6 @@ LOGIN;
 <a href='$url'>$option</a> or <input type='submit' name="logout" value="$button"/>
 </form>
 LOGOUT;
-
 }
 
 // vim:et:ts=2:
