@@ -17,6 +17,8 @@
 function processor_itex($formatter="",$value="",$options='') {
     global $DBInfo;
 
+    $fix_itex=array('Sum'=>'sum','rightarrow'=>'rarr');
+
     $use_javascript=1;
     if ($use_javascript) {
         $flag = 0;
@@ -25,6 +27,11 @@ function processor_itex($formatter="",$value="",$options='') {
         if ( $flag ) {
             $script= "<script type=\"text/javascript\" src=\"" .
             $DBInfo->url_prefix ."/local/fixmathml.js\"></script>";
+            if (preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']))
+                $script.='<object id="mathplayer"'.
+                    ' classid="clsid:32F66A20-7614-11D4-BD11-00104BD3F987">'.
+                    '</object>'.
+                    '<?import namespace="mml" implementation="#mathplayer"?>';
         }
     }
 
@@ -82,7 +89,7 @@ function processor_itex($formatter="",$value="",$options='') {
     if (!$fp) return $src;
     while (!feof($fp)) $out .= fread($fp, 1024);
     @fclose($fp);
-    $out = preg_replace("/Sum/","sum",$out); # itex bug ?
+    $out = strtr($out,$fix_itex); # itex bug ?
     $out = "<div class='itex' id=\"mathml" . $id. "\">$out" .'</div>';
     if ($use_javascript)
         $out.= "<script type=\"text/javascript\">fixMmlById('mathml" .$id.
