@@ -210,9 +210,11 @@ function macro_BlogChanges($formatter,$value,$options='') {
     $time=strtotime($date." GMT");
     $date= date("m-d [h:i a]",$time);
     if ($summary) {
+      $p=new WikiPage($page);
+      $f=new Formatter($p);
       $summary=str_replace('\}}}','}}}',$summary);
       ob_start();
-      $formatter->send_page($summary);
+      $f->send_page($summary);
       $summary=ob_get_contents();
       ob_end_clean();
     }
