@@ -82,7 +82,7 @@ chmod $PERM config.php
 if [ $ID -eq 0 ]; then
   RETVAL=1
   while [ ! $RETVAL -eq 0 ]; do
-    echo -n " Please enter the nobody user id (nobody): "
+    echo -n " Please enter the Apache user ID (e.g. nobody): "
     read owner
     if [ x$owner = x ]; then
       owner=nobody
@@ -95,7 +95,7 @@ if [ $ID -eq 0 ]; then
   RETVAL=1
 
   while [ ! $RETVAL -eq 0 ]; do
-    echo -n " Please enter the nobody group id (nobody): "
+    echo -n " Please enter the Apache group ID (e.g. nobody): "
     read group
     if [ x$group = x ]; then
       group=nobody
@@ -108,7 +108,8 @@ fi
 
 echo
 echo 'Your wiki is cofiguared now.'
-echo 'Please open monisetup.php to change some basic options for your wiki'
+echo 'Please open monisetup.php in a browser'
+echo ' to change some basic options for your wiki'
 echo
 echo
 
