@@ -5,9 +5,8 @@
 //
 // $Id$
 
-function do_dot($formatter,$options) {
-  define(DEPTH,3);
-  define(LEAFCOUNT,3);
+define(DEPTH,3);
+define(LEAFCOUNT,2);
 
   function getLeafs($pagename,$node,$count=LEAFCOUNT) {
     $p= new WikiPage($pagename);
@@ -15,57 +14,93 @@ function do_dot($formatter,$options) {
     $links=$f->get_pagelinks();
     $links=explode("\n",$links);
     foreach ($links as $page) {
-      if (!$node[$page] && $page) {
-        $p= new WikiPage($page);
-        $f= new Formatter($p);
-        $leafs=$f->get_pagelinks();
-        if ($leafs) {
-          $leafs=explode("\n",$leafs);
-          #$tree[$page]=$leafs;
-          $nodelink[$page]=sizeof($leafs);
-        }
+      if ($page) {
+        if (!$node[$page]) {
+          $p= new WikiPage($page);
+          $f= new Formatter($p);
+          $leafs=$f->get_pagelinks();
+          if ($leafs) {
+            $leafs=explode("\n",$leafs);
+            # XXX 
+            $nodelink[$page]=$p->size();
+          }
+        } else $nodelink[$page]=1;
       }
     }
-    if (sizeof($nodelink) > $count) {
-      arsort($nodelink);
-      $nodelink=array_slice($nodelink,0,$count);
-    }
-    if ($nodelink)
-      $node[$pagename]=array_keys($nodelink);
+    if (sizeof($nodelink) > $count) arsort($nodelink);
+    if ($nodelink) $node[$pagename]=array_keys($nodelink);
   }
 
   function makeTree($pagename,$node,$depth=DEPTH,$count=LEAFCOUNT) {
     if ($depth > 0) {
       $depth--;
       getLeafs($pagename,&$node,$count);
-      if ($node[$pagename])
-        foreach($node[$pagename] as $leaf)
+      if ($node[$pagename]) {
+        $size=(int) (sizeof($node[$pagename]) * 0.2);
+        $slice = ($size > $count) ? $size: $count;
+        $selected=array_slice($node[$pagename],0,$slice);
+        foreach($selected as $leaf)
           makeTree($leaf,&$node,$depth,$count);
+      }
     }
+    return;
   }
 
+function do_dot($formatter,$options) {
+  global $DBInfo;
+
   #getLeafs($options[page],&$node);
-  if ($options[w]) $count=$options[w];
+  if ($options['w'] and $options['w'] < 5) $count=$options['w'];
   else $count=LEAFCOUNT;
-  if ($options[d]) $depth=$options[d];
+  if ($options['d'] and $options['d'] < 6) $depth=$options['d'];
   else $depth=DEPTH;
-  makeTree($options[page],&$node,$depth,$count);
+
+  makeTree($options['page'],&$node,$depth,$count);
+  if (!$node) $node=array($options['page']=>array());
 
   header("Content-Type: text/plain");
   $visualtour=$formatter->link_url("VisualTour");
-  $pageurl=$formatter->link_url("\\N");
-  print <<<HEAD
+  $pageurl=qualifiedUrl($formatter->link_url("\\N"));
+
+  $colref=array('yellow','olivedrab1','olivedrab2','olivedrab3','olivedrab4','gray71','gray62','gray53','gray40');
+  $colidx=0;
+  $out=<<<HEAD
 digraph G {
   URL="$visualtour"
   node [URL="$pageurl", 
-fontcolor=black, fontsize=10]\n
+fontcolor=black, fontname=WEBDOTFONT, fontsize=8]\n
 HEAD;
+
+  $allnode=array_keys($node);
   while (list($leafname,$leaf) = @each ($node)) {
-      foreach ($node[$leafname] as $leaf) {
-        print "\"$leafname\" ->\"$leaf\";\n";
-      }
+    if (!$leafs[($urlname=_rawurlencode($leafname))]) {
+      $leafs[$leafname]=$urlname;
+      $out.= '"'.$urlname."\" [label=\"$leafname\",".
+             "style=filled,fillcolor=".$colref[$colidx]."];\n";
+      $colidx++;
     }
-  print "};\n";
+    #print $leafname."\n";
+    #print_r($node[$leafname]);
+    $selected=array_intersect($node[$leafname],$allnode);
+    foreach ($selected as $leaf) {
+      if (!$leafs[($urlname=_rawurlencode($leaf))]) {
+        $leafs[$leaf]=$urlname;
+        $out.= '"'.$urlname."\" [label=\"$leaf\",".
+               "style=filled,fillcolor=".$colref[$colidx]."];\n";
+      }
+      $out.= "\"".$leafs[$leafname]."\" ->\"".$leafs[$leaf]."\";\n";
+    }
+    $colidx++;
+  }
+  $out.= "};\n";
+
+  if (strtoupper($DBInfo->charset) != 'UTF-8') {
+    $new=iconv($DBInfo->charset,'UTF-8',$out);
+    if ($new) print $new;
+    return;
+  }
+  print $out;
+  return;
 }
 
 ?>
