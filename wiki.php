@@ -1765,6 +1765,7 @@ class Formatter {
     } else 
       $word=$text=$page_text ? $page_text:$word;
     #print $text;
+    $word=htmlspecialchars($word);
 
     $url=_urlencode($page);
     $url_only=strtok($url,'#?'); # for [WikiName#tag] [wiki:WikiName#tag Tag]
@@ -1847,8 +1848,14 @@ class Formatter {
   function nonexists_fancy($word,$url) {
     global $DBInfo;
     #if (preg_match("/^[a-zA-Z0-9\/~]/",$word))
-    if (ord($word[0]) < 125)
-      return "<a class='nonexistent' href='$url'>$word[0]</a>".substr($word,1);
+    if (ord($word[0]) < 125) {
+      $link=$word[0];
+      if ($word[0]=='&') {
+        $link=strtok($word,';').';';$last=strtok('');
+      } else
+        $last=substr($word,1);
+      return "<a class='nonexistent' href='$url'>$link</a>".$last;
+    }
     if (function_exists('mb_encode_numericentity')) {
       if (function_exists('iconv') and strtolower($DBInfo->charset) != 'utf-8')
         $utfword=iconv($DBInfo->charset,'utf-8',$word);
@@ -3031,7 +3038,7 @@ MSG;
     foreach ($trails as $page) {
       $this->trail.=$this->word_repl('"'.$page.'"','','',1,0).$DBInfo->arrow;
     }
-    $this->trail.= " $pagename";
+    $this->trail.= ' '.htmlspecialchars($pagename);
     $this->pagelinks=array(); # reset pagelinks
     $this->sister_on=$sister_save;
 
