@@ -7,11 +7,12 @@
 #-----usage: generate_calendar(2001, 11, $day_func, 2);-------------------------
 #------(last two arguments are optional)----------------------------------------
 #-------------------------------------------------------------------------------
-function macro_Calendar($formatter,$value) {
+# $Id$
+function macro_Calendar($formatter,$value="",$option="") {
 	function day_func($year,$month,$day,$pagename) {
 		global $DBInfo;
 		static $today;
-      if (!$today) $today=date("d");
+		if (!$today) $today=date("d");
 		if ($day==$today) {
 			$exists='today" bgcolor="white';
 			$nonexists='today" bgcolor="white';
@@ -26,9 +27,20 @@ function macro_Calendar($formatter,$value) {
 		else
 		  return array($link, $nonexists, $day);
 	}
+
+	$test=preg_match("/^(\d{4})-(\d{2})$/",$value,$match);
+        if ($test) {
+		$year= $match[1];
+		$month= $match[2];
+        } else {
 #	$year, $month;
-   $year= date('Y');
-   $month= date('m');
+		$year= date('Y');
+		$month= date('m');
+	}
+	if ($option)
+		$pagename=$option;
+	else
+		$pagename=$formatter->page->name;
 #   $day_func = NULL;
 #   $day_func = '
 #	if($GLOBALS["days"][$day-1]){
@@ -36,7 +48,7 @@ function macro_Calendar($formatter,$value) {
 #	}else{
 #		return false;
 #	}';
-   $day_heading_length = 3;
+	$day_heading_length = 3;
 	$first_of_month = mktime (0,0,0, $month, 1, $year);
 	#remember that mktime will automatically correct if invalid dates are entered
 	# for instance, mktime(0,0,0,12,32,1997) will be the date for Jan 1, 1998
@@ -82,7 +94,7 @@ function macro_Calendar($formatter,$value) {
 		}
 		#if a linking function is provided
 		if(function_exists('day_func')){
-			list($link, $classes, $content) = day_func($year,$month,$day,$formatter->page->name);
+			list($link, $classes, $content) = day_func($year,$month,$day,$pagename);
 			$calendar .= '<td' . ($classes ? " class=\"$classes\">" : '>') .
 				($link ? $formatter->link_tag($link,"",$day) : '') .
 #"<a href=\"$formatter->prefix/$link\">" : '') . 
