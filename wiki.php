@@ -822,7 +822,6 @@ class WikiDB {
     }
     $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
     $comment=escapeshellcmd($comment);
-    $pagename=escapeshellcmd($page->name);
 
     $keyname=$this->_getPageKey($page->name);
     $key=$this->text_dir."/$keyname";
@@ -842,7 +841,7 @@ class WikiDB {
       getModule('Version',$this->version_class);
       $class='Version_'.$this->version_class;
       $version=new $class ($this);
-      $ret=$version->ci($pagename,$log);
+      $ret=$version->ci($page->name,$log);
     }
     # check minor edits XXX
     $minor=0;
@@ -898,6 +897,7 @@ class WikiDB {
 
     $okey=$this->getPageKey($pagename);
     $nkey=$this->getPageKey($new);
+    $keyname=$this->_getPageKey($new);
 
     rename($okey,$nkey);
     if ($options['history'] && $this->version_class) {
@@ -961,6 +961,7 @@ class Version_RCS {
 
   function ci($pagename,$log) {
     $key=$this->_filename($pagename);
+    $pagename=escapeshellcmd($pagename);
     $ret=system("ci -l -x,v/ -q -t-\"".$pagename."\" -m\"".$log."\" ".$key);
   }
 
@@ -1106,7 +1107,9 @@ class Cache_text {
 
   function _fetch($key) {
     $fp=fopen($key,"r");
-    $content=fread($fp,filesize($key));
+    $content='';
+    if (($size=filesize($key)) >0)
+      $content=fread($fp,$size);
     fclose($fp);
     return $content;
   }
@@ -1211,7 +1214,8 @@ class WikiPage {
       return $out;
     }
     $this->fsize=filesize($this->filename);
-    $body=fread($fp,$this->fsize);
+    if ($this->fsize > 0)
+      $body=fread($fp,$this->fsize);
     fclose($fp);
     $this->body=$body;
 
@@ -1222,7 +1226,8 @@ class WikiPage {
     $fp=@fopen($this->filename,"r");
     if ($fp) {
       $size=filesize($this->filename);
-      $this->body=fread($fp,$size);
+      if ($size >0)
+        $this->body=fread($fp,$size);
       fclose($fp);
     } else
       return '';
@@ -2495,7 +2500,7 @@ class Formatter {
         $result = new WordLevelDiff($orig, $new, $DBInfo->charset);
         foreach ($result->orig() as $ll)
           $buf.= "<div class=\"diff-removed\">$ll</div>\n";
-        foreach ($result->final() as $ll)
+        foreach ($result->_final() as $ll)
           $buf.= "<div class=\"diff-added\">$ll</div>\n";
         $orig=array();$new=array();
         $line=$buf.$line."<br />";
@@ -2571,6 +2576,7 @@ class Formatter {
       do_goto($this,$options);
       return;
     }
+    #$this->header("Expires: Tue, 01 Jan 2002 00:00:00 GMT");
     if ($header) {
       if (is_array($header))
         foreach ($header as $head) {

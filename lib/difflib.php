@@ -584,7 +584,7 @@ class Diff
      *
      * @return array The sequence of strings.
      */
-    function final() {
+    function _final() {
         $lines = array();
         
         foreach ($this->edits as $edit) {
@@ -936,7 +936,7 @@ class WordLevelDiff extends MappedDiff
         return $orig->getLines();
     }
 
-    function final () {
+    function _final () {
         $_final = new _HWLDF_WordAccumulator;
         
         foreach ($this->edits as $edit) {
@@ -975,9 +975,9 @@ class UnifiedDiffFormatter extends DiffFormatter
     function _deleted($lines) {
         $this->_lines($lines, "-");
     }
-    function _changed($orig, $final) {
+    function _changed($orig, $_final) {
         $this->_deleted($orig);
-        $this->_added($final);
+        $this->_added($_final);
     }
 }
 
@@ -1001,9 +1001,9 @@ class DeltaDiffFormatter extends DiffFormatter
     function _deleted($lines) {
         #$this->_lines($lines, "");
     }
-    function _changed($orig, $final) {
+    function _changed($orig, $_final) {
         #$this->_deleted($orig);
-        $this->_added($final);
+        $this->_added($_final);
     }
 }
 
