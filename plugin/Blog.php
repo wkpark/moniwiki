@@ -46,7 +46,7 @@ function updateBlogList($formatter) {
       $time= strtotime($datestamp." GMT");
       $datestamp= date("Ymd",$time);
       if (!$date) $date=$datestamp;
-      if ($datestamp < $date) {
+      if ($datestamp != $date) {
         if ($date) {
           $log=join("\n",$entries)."\n";
           $logs.=$log;
@@ -80,8 +80,10 @@ function do_Blog($formatter,$options) {
   $url=$formatter->link_url($formatter->page->urlname);
   $formatter->send_header("",$options);
 
-  if ($options['mode']=='update')
+  if ($formatter->refresh) {
     updateBlogList($formatter);
+    $options['msg']=sprintf(_("Blog cache of \"%s\" is refreshed"),$formatter->page->name);
+  }
 
   $savetext="";
   if ($options['savetext']) {
