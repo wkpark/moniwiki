@@ -180,6 +180,19 @@ class User {
   }
 }
 
+function do_highlight($options) {
+  global $DBInfo;
+  $page = $DBInfo->getPage($options[page]);
+  $html = new Formatter($page);
+  $html->send_header("",$title);
+  $html->send_title($title);
+
+  $html->highlight=$options[value];
+  $html->send_page($title);
+  $args[editable]=1;
+  $html->send_footer($args,$options[timer]);
+}
+
 function do_DeletePage($options) {
   global $DBInfo;
   
@@ -193,11 +206,13 @@ function do_DeletePage($options) {
       $title = sprintf('"%s" is deleted !', $page->name);
       $html->send_header("",$title);
       $html->send_title($title);
+      $html->send_footer();
       return;
     } else {
       $title = sprintf('Fail to delete "%s" !', $page->name);
       $html->send_header("",$title);
       $html->send_title($title);
+      $html->send_footer();
       return;
     }
   }
@@ -215,22 +230,34 @@ Only WikiMaster can delete this page<br />
   $html->send_footer();
 }
 
-function do_fullsearch($needle) {
+function do_fullsearch($options) {
   global $DBInfo;
+  $needle=$options[value];
   $page = new WikiPage("FullSearch");
   $html = new Formatter($page);
+  if (!$needle) { # or blah blah
+     $title = 'No search text';
+     $html->send_header("",$title);
+     $html->send_title($title);
+     $html->send_footer();
+     return;
+  }
   $title = sprintf('Full text search for "%s"', $needle);
   $html->send_header("",$title);
   $html->send_title($title);
 
   $hits = array();
-  $all_pages = $DBInfo->getPageLists();
-  $pattern = '/'.$needle.'/i';
+  $all_pages = $DBInfo->getPageLists($options);
+  $pattern = '/'.$needle.'/';
+  if ($options['case']) $pattern.="i";
 
   while (list($_, $page_name) = each($all_pages)) {
     $p = new WikiPage($page_name);
     $body = $p->get_raw_body();
+    #$count = count($matches=preg_split($pattern, $body))-1;
     $count = preg_match_all($pattern, $body, $matches);
+    #$count = count(explode($needle, $body)) - 1;
+    #$count = preg_match($pattern, $body);
     if ($count)
       $hits[$page_name] = $count;
   }
@@ -241,7 +268,7 @@ function do_fullsearch($needle) {
   while (list($page_name, $count) = each($hits)) {
     $p = new WikiPage($page_name);
     $h = new Formatter($p);
-    print '<li>' . $h->link_to();
+    print '<li>' . $h->link_to("?action=highlight&amp;value=$needle",$page_name);
     print ' . . . . ' . $count . (($count == 1) ? ' match' : ' matches');
     print "</li>\n";
   }
@@ -251,18 +278,35 @@ function do_fullsearch($needle) {
 	 count($hits),
 	 (count($hits) == 1) ? 'page' : 'pages',
 	 count($all_pages));
-  $html->send_footer();
+  $args[noaction]=1;
+  $html->send_footer($args,$options[timer]);
 }
 
 function do_goto($options) {
-  $html = new Formatter();
-  $html->send_header(array("Status: 302","Location: ".$options[value]));
+  $page = new WikiPage("FindPage");
+  $html = new Formatter($page);
+  if ($options[value])
+     $html->send_header(array("Status: 302","Location: ".$options[value]));
+  else {
+     $title = 'Use more specific text';
+     $html->send_header("",$title);
+     $html->send_title($title);
+     $args[noaction]=1;
+     $html->send_footer($args);
+  }
 }
 
 function do_titlesearch($options) {
   global $DBInfo;
   $page = new WikiPage("FindPage");
   $html = new Formatter($page);
+  if (!$options[value]) {
+     $title = 'Use more specific text';
+     $html->send_header("",$title);
+     $html->send_title($title);
+     $html->send_footer();
+     return;
+  }
   $title = sprintf('Title Search for "%s"', $options[value]);
   $html->send_header("",$title);
   $html->send_title($title);
@@ -290,7 +334,7 @@ function do_titlesearch($options) {
 	 (count($hits) == 1) ? 'page' : 'pages',
 	 count($all_pages));
   $args[noaction]=1;
-  $html->send_footer($args);
+  $html->send_footer($args,$options[timer]);
 }
 
 function do_userform($options) {
@@ -542,13 +586,17 @@ function macro_RecentChanges($formatter="") {
     $addr= $parts[1];
     $ed_time= $parts[2];
     $user= $parts[4];
+    $act= rtrim($parts[6]);
 
     if ($ed_time < $time_cutoff)
       break;
 
-    if (! empty($done_words[$page_name]))
+    if (! empty($done_words[$page_name])) {
+      $edit_words[$page_name]++;
       continue;			// reported this page already
+    }
     $done_words[$page_name] = TRUE;
+    $edit_words[$page_name] = 1;
 
     $day = date('Y/m/d', $ed_time);
     if ($day != $ratchet_day) {
@@ -558,7 +606,10 @@ function macro_RecentChanges($formatter="") {
 
     $p = new WikiPage($page_name);
     $h = new Formatter($p);
-    $out.= "&nbsp;&nbsp; ".$h->link_to("?action=diff",$DBInfo->icon[diff]);
+    if ($act == "DEL")
+       $out.= "&nbsp;&nbsp; ".$h->link_to("?action=diff",$DBInfo->icon[del]);
+    else
+       $out.= "&nbsp;&nbsp; ".$h->link_to("?action=diff",$DBInfo->icon[diff]);
     $out.= "&nbsp;&nbsp;".$h->link_to();
 
     if (! empty($DBInfo->changed_time_fmt))
@@ -567,10 +618,10 @@ function macro_RecentChanges($formatter="") {
     if ($DBInfo->show_hosts) {
       #$out.= ' . . . . '; # traditional style
       $out.= '&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ';
-       if ($user)
-          $out.= $user;
-       else
-          $out.= $addr;
+      if ($user)
+        $out.= $user;
+      else
+        $out.= $addr;
     }
     $out.= '<br />';
   }
@@ -585,12 +636,52 @@ function reverse($arrayX) {
   return $out;
 }
 
-function macro_HTML($formatter="",$value="") {
+function macro_HTML($formatter,$value) {
   return str_replace("&lt;","<",$value);
 }
 
-function macro_BR($formatter="") {
+function macro_BR($formatter) {
   return "<br />\n";
+}
+
+function macro_FootNote($formatter,$value="") {
+  if (!$value) {# emit all footnotes
+    $foots=join("\n",$formatter->foots);
+    $foots=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$foots);
+    unset($formatter->foots);
+    return "<br/><tt class='wiki'>----</tt><br/>\n$foots";
+  }
+
+  $formatter->foot_idx++;
+  $idx=$formatter->foot_idx;
+
+  $text="[$idx]";
+  $idx="fn".$idx;
+  if ($value[0] == "*") {
+#    $dum=explode(" ",$value,2); XXX
+    $p=strrpos($value,'*')+1;
+    $text=substr($value,0,$p);
+    $value=substr($value,$p);
+  } else if ($value[0] == "[") {
+    $dum=explode("]",$value,2);
+    if (trim($dum[1])) {
+       $text=$dum[0]."&#093;"; # make a text as [Alex77]
+       $idx=substr($dum[0],1);
+       $value=$dum[1]; 
+       $formatter->foot_idx--; # undo ++.
+    } else if ($dum[0]) {
+       $text=$dum[0]."]";
+       $idx=substr($dum[0],1);
+       $formatter->foot_idx--; # undo ++.
+       if (0 === strcmp($idx , (int)$idx)) $idx="fn$idx";
+       return "<tt class='foot'><sup><a href='#$idx'>$text</a></sup></tt>";
+    }
+  }
+  $formatter->foots[]="<tt class='foot'><sup>&#160;&#160;&#160;".
+                      "<a name='$idx'/>".
+                      "<a href='#r$idx'>$text</a>&#160;</sup></tt> ".
+                      "$value<br/>";
+  return "<tt class='foot'><a name='r$idx'/><sup><a href='#$idx'>$text</a></sup></tt>";
 }
 
 function macro_TableOfContents($formatter="") {
@@ -653,29 +744,29 @@ function macro_TableOfContents($formatter="") {
 }
 
 function macro_FullSearch($formatter="",$value="") {
-  return "<form method='get'>
-    <input type=hidden name=action value='fullsearch'>
-    <input name=value size=30 value='$value'>
-    <input type=submit value='Go'><br />
-    <input type='checkbox' name='context' value='20' checked>Display context of search results<br />
-    <input type='checkbox' name='case' value='1'>Case-sensitive searching<br />
+  return "<form method='get' action=''>
+    <input type='hidden' name='action' value='fullsearch' />
+    <input name='value' size='30' value='$value' />
+    <input type='submit' value='Go' /><br />
+    <input type='checkbox' name='context' value='20' checked='checked' />Display context of search results<br />
+    <input type='checkbox' name='case' value='1' />Case-sensitive searching<br />
 
     </form>";
 }
 
 function macro_TitleSearch($formatter="",$value="") {
-  return "<form method='get'>
-    <input type=hidden name=action value='titlesearch'>
-    <input name=value size=30 value='$value'>
-    <input type=submit value='Go'>
+  return "<form method='get' action=''>
+    <input type='hidden' name='action' value='titlesearch' />
+    <input name='value' size='30' value='$value' />
+    <input type='submit' value='Go' />
     </form>";
 }
 
 function macro_GoTo($formatter="",$value="") {
-  return "<form method='get'>
-    <input type=hidden name=action value='goto'>
-    <input name=value size=30 value='$value'>
-    <input type=submit value='Go'>
+  return "<form method='get' action=''>
+    <input type='hidden' name='action' value='goto' />
+    <input name='value' size='30' value='$value' />
+    <input type='submit' value='Go' />
     </form>";
 }
 
@@ -817,7 +908,7 @@ $plt
      if ($log)
         $log ="<pre style='background-color:black;color:gold'>$log</pre>\n";
   }
-  return $log."<img src='/wiki/$cache_dir/$uniq.png' alt='gnuplot'/>";
+  return $log."<img src='/wiki/$cache_dir/$uniq.png' alt='gnuplot' />";
 }
 
 ?>
