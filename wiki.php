@@ -678,8 +678,8 @@ class WikiDB {
     $time=gmdate("Y-m-d\TH:i:s");
 
     $id=$options[id];
-    if ($options[id] != 'Anonymous')
-      if (!preg_match('/[A-Z][a-z0-9]/',$options[id])) $id='['.$id.']';
+    if ($id != 'Anonymous')
+      if (!preg_match('/([A-Z][a-z0-9]+){2,}/',$id)) $id='['.$id.']';
  
     $body=preg_replace("/@DATE@/","[[Date($time)]]",$body);
     $body=preg_replace("/@TIME@/","[[DateTime($time)]]",$body);
@@ -1084,12 +1084,17 @@ class Formatter {
       $url=substr($url,5);
     $dum=explode(":",$url);
     $wiki=$dum[0]; $page=$dum[1];
-    if (!$page) {
+    if (!$page) { # wiki:Wiki/FrontPage
       $dum1=explode("/",$url);
       $wiki=$dum1[0]; $page=$dum1[1];
     }
-    if (!$page) {
-      $wiki="Self"; $page=$dum[0];
+    if (!$page) { # wiki:FrontPage or [wiki:FrontPage Home Page]
+      $page=$dum[0];
+      if (!$text) $text=$page;
+      if ($DBInfo->hasPage($page))
+        return $this->link_tag($page,"",$text);
+      else
+        return $this->link_tag($page,"","?").$page;
     }
 
     if (!$text) $text=$page;
