@@ -3,7 +3,7 @@
 $smileys=array(
     "X-("=> array(16, 16, 0, "smile/x-(.gif"),
     ":D"=>  array(16, 16, 0, "smile/8-D.gif"),
-    "&lt;:("=> array(15, 15, 0, "frown.gif"),
+    "&lt;:("=> array(16, 16, 0, "smile/(8(.gif"),
     ":o"=>  array(16, 16, 0, "smile/8-O.gif"),
     ":("=>  array(16, 16, 0, "smile/8-(.gif"),
     ":)"=>  array(16, 16, 0, "smile/8).gif"),
@@ -16,10 +16,10 @@ $smileys=array(
     ":|"=>  array(16, 16, 0, "smile/8-l.gif"),
     "|-|"=> array(16, 16, 0, "smile/l-l.gif"),
     "|-I"=> array(16, 16, 0, "smile/l-I.gif"),
-    "/!\\"=>array(16, 16, 0, "alert.gif"),
+    "/!\\"=>array(15, 15, 0, "alert.gif"),
     "\\?/"=>array(16, 16, 0, "icon-question.png"),
     "&lt;!>"=> array(15, 15, 0, "attention.gif"),
-    "(!)"=> array(15, 15, 0, "idea.gif"),
+    "(!)"=> array(16, 16, 0, "idea.png"),
 
 #    ":&"=>  array(16, 16, 0, "smile/8-%26.gif"),
     ":-X"=> array(16, 16, 0, "smile/8-x.gif"),
@@ -78,14 +78,26 @@ $smileys=array(
 #    "][%"=>array(12, 16, 0, "smile/beer_l.gif"),
 
     # version 1.0
-    "(./)"=>array(14, 16, 0, "checkmark.gif"),
+    "(./)"=>array(16, 16, 0, "checkbox.png"),
     "{OK}"=>array(12, 16, 0, "smile/thumb-up.gif"),
     "{NO}"=>array(12, 16, 0, "smile/thumb-down.gif"),
-    "{X}"=>array(16, 16, 0, "icon-error.gif"),
-    "{i}"=>array(16, 16, 0, "icon-info.gif"),
+    "{X}"=>array(16, 16, 0, "icon-error.png"),
+    "{i}"=>array(16, 16, 0, "icon-info.png"),
     "{1}"=>array(15, 13, 0, "prio1.gif"),
     "{2}"=>array(15, 13, 0, "prio2.gif"),
     "{3}"=>array(15, 13, 0, "prio3.gif"),
+    "{da}"=>array(16, 16, 0, "da-16.png"),
+    "{de}"=>array(16, 16, 0, "de-16.png"),
+    "{en}"=>array(16, 16, 0, "en-16.png"),
+    "{es}"=>array(16, 16, 0, "pt-16.png"),
+    "{it}"=>array(16, 16, 0, "it-16.png"),
+    "{ja}"=>array(16, 16, 0, "ja-16.png"),
+    "{ko}"=>array(16, 16, 0, "ko-16.png"),
+    "{nl}"=>array(16, 16, 0, "nl-16.png"),
+    "{pt}"=>array(16, 16, 0, "pt-16.png"),
+    "{sv}"=>array(16, 16, 0, "sv-16.png"),
+    "{us}"=>array(16, 16, 0, "us-16.png"),
+    "{zh}"=>array(16, 16, 0, "zh-16.png"),
 );
 
 ?>
