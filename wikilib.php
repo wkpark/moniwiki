@@ -172,7 +172,7 @@ class User {
      if (!$passwd2) $passwd2=$passwd;
      $ret=$this->validPasswd($passwd,$passwd2);
      if ($ret > 0)
-        $this->info[password]=crypt($passwd);
+        $this->info['password']=crypt($passwd);
 #     else
 #        $this->info[password]="";
      return $ret;
@@ -189,7 +189,7 @@ class User {
   function checkPasswd($passwd) {
      if (strlen($passwd) < 3)
         return false;
-     if (crypt($passwd,$this->info[password]) == $this->info[password])
+     if (crypt($passwd,$this->info['password']) == $this->info['password'])
         return true;
      return false;
   }
@@ -252,7 +252,7 @@ function do_diff($formatter,$options="") {
   $date=$options['date'];
   $rev=$options['rev'];
   $rev2=$options['rev2'];
-  if ($options['button_admin']) {
+  if ($options['rcspurge']) {
     if (!$range) $range=array();
     $rr='';
     $dum=array();
@@ -298,8 +298,11 @@ function do_info($formatter,$options) {
 function do_invalid($formatter,$options) {
   $formatter->send_header("Status: 406 Not Acceptable",$options);
   $formatter->send_title(_("406 Not Acceptable"),"",$options);
-  $formatter->send_page("== "._("Is it valid action ?")." ==\n");
-  $formatter->send_footer($args,$options);
+  if ($options['action'])
+    $formatter->send_page("== ".sprintf(_("%s is not valid action"),$options['action'])." ==\n");
+  else
+    $formatter->send_page("== "._("Is it valid action ?")." ==\n");
+  $formatter->send_footer("",$options);
 }
 
 function do_post_DeleteFile($formatter,$options) {
@@ -312,9 +315,8 @@ function do_post_DeleteFile($formatter,$options) {
     $dir=$DBInfo->upload_dir;
   }
 
-  if ($options['files'] && $options['passwd']) {
-    $check=$DBInfo->admin_passwd==crypt($options[passwd],$DBInfo->admin_passwd);
-    if ($check) {
+  if (isset($options['files'])) {
+    if ($options['files']) {
       foreach ($options['files'] as $file) {
          $log.=sprintf(_("File '%s' is deleted")."<br />",$file);
          unlink($dir."/".$file);
@@ -325,13 +327,10 @@ function do_post_DeleteFile($formatter,$options) {
       print $log;
       $formatter->send_footer();
       return;
-    }
-    $title = sprintf(_("Invalid password !"));
-  } else {
-    if (!$options['files'])
+    } else
       $title = sprintf(_("No files are selected !"));
-    else
-      $title = sprintf(_("Invalid password !"));
+  } else {
+    $title = sprintf(_("No files are selected !"));
   }
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
@@ -343,35 +342,28 @@ function do_post_DeleteFile($formatter,$options) {
 function do_DeletePage($formatter,$options) {
   global $DBInfo;
   
-  $page = $DBInfo->getPage($options[page]);
+  $page = $DBInfo->getPage($options['page']);
 
-  if ($options[passwd]) {
-    $check=$DBInfo->admin_passwd==crypt($options[passwd],$DBInfo->admin_passwd);
-    if ($check) {
-      $DBInfo->deletePage($page);
-      $title = sprintf(_("\"%s\" is deleted !"), $page->name);
-      $formatter->send_header("",$options);
-      $formatter->send_title($title,"",$options);
-      $formatter->send_footer();
-      return;
-    } else {
-      $title = sprintf(_("Fail to delete \"%s\" !"), $page->name);
-      $formatter->send_header("",$options);
-      $formatter->send_title($title,"",$options);
-      $formatter->send_footer();
-      return;
-    }
+  if (stripslashes($options['value']) == $options['page']) {
+    $DBInfo->deletePage($page);
+    $title = sprintf(_("\"%s\" is deleted !"), $page->name);
+    $formatter->send_header("",$options);
+    $formatter->send_title($title,"",$options);
+    $formatter->send_footer();
+    return;
   }
   $title = sprintf(_("Delete \"%s\" ?"), $page->name);
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
   print "<form method='post'>
 Comment: <input name='comment' size='80' value='' /><br />\n";
+  if ($DBInfo->security->is_protected("DeletePage",$options))
+    print "Password: <input type='password' name='passwd' size='20' value='' />
+Only WikiMaster can delete this page<br />\n";
   print "
-Password: <input type='password' name='passwd' size='20' value='' />
-Only WikiMaster can delete this page<br />
     <input type='hidden' name='action' value='DeletePage' />
-    <input type='submit' value='Delete' />
+    <input type='hidden' name='value' value='$options[page]' />
+    <input type='submit' value='Delete page' />
     </form>";
 #  $formatter->send_page();
   $formatter->send_footer();
@@ -391,34 +383,33 @@ function form_permission($mode) {
 function do_chmod($formatter,$options) {
   global $DBInfo;
   
-  if (isset($options[passwd])) {
-    $check=$DBInfo->admin_passwd==crypt($options[passwd],$DBInfo->admin_passwd);
-    if ($check && $DBInfo->hasPage($options[page])) {
-      $perms= $DBInfo->getPerms($options[page]);
+  if (isset($options['read']) and isset($options['write'])) {
+    if ($DBInfo->hasPage($options['page'])) {
+      $perms= $DBInfo->getPerms($options['page']);
       $perms&= 0077; # clear user perms
       if ($options[read])
          $perms|=0400;
       if ($options[write])
          $perms|=0200;
-      $DBInfo->setPerms($options[page],$perms);
-      $title = sprintf(_("Permission of \"%s\" changed !"), $options[page]);
+      $DBInfo->setPerms($options['page'],$perms);
+      $title = sprintf(_("Permission of \"%s\" changed !"), $options['page']);
       $formatter->send_header("",$options);
       $formatter->send_title($title,"",$options);
       $formatter->send_footer("",$options);
       return;
     } else {
-      $title = sprintf(_("Fail to chmod \"%s\" !"), $options[page]);
+      $title = sprintf(_("Fail to chmod \"%s\" !"), $options['page']);
       $formatter->send_header("",$options);
       $formatter->send_title($title,"",$options);
       $formatter->send_footer("",$options);
       return;
     }
   }
-  $perms= $DBInfo->getPerms($options[page]);
+  $perms= $DBInfo->getPerms($options['page']);
 
   $form=form_permission($perms);
 
-  $title = sprintf(_("Change permission of \"%s\""), $options[page]);
+  $title = sprintf(_("Change permission of \"%s\""), $options['page']);
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
 #<tr><td align='right'><input type='checkbox' name='show' checked='checked' />show only </td><td><input type='password' name='passwd'>
@@ -450,47 +441,37 @@ function do_recall($formatter,$options) {
 
 function do_RcsPurge($formatter,$options) {
   global $DBInfo;
-  
-  if ($DBInfo->purge_passwd && $options[passwd]) {
-    $check=$DBInfo->purge_passwd==crypt($options[passwd],$DBInfo->purge_passwd);
-    if (!$check) {
-      $title= sprintf(_("Invalid password to purge \"%s\" !"), $options[page]);
-      $formatter->send_header("",$options);
-      $formatter->send_title($title,"",$options);
-      $formatter->send_footer("",$options);
-      return;
-    }
-  } else if ($DBInfo->purge_passwd) {
-    $title= sprintf(_("You need to password to purge \"%s\""),$options[page]);
+
+  # XXX 
+  if (!$options['show'] and 
+     $DBInfo->security->is_protected("rcspurge",$options) and
+     !$DBInfo->security->is_valid_password($options['passwd'],$options)) {
+
+    $title= sprintf('Invalid password to purge "%s" !', $options['page']);
     $formatter->send_header("",$options);
-    $formatter->send_title($title,"",$options);
-    $args[noaction]=1;
-    $formatter->send_footer($args,$options);
+    $formatter->send_title($title);
+    $formatter->send_footer();
     return;
   }
-#    unset($options);
-#    $options[url]=$formatter->link_url($formatter->page->name,"?action=info");
-#    do_goto($formatter,$options);
-#    return;
-#  }
-  $title= sprintf(_("RCS purge \"%s\""),$options[page]);
+     
+  $title= sprintf(_("RCS purge \"%s\""),$options['page']);
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
-  if ($options[range]) {
-    foreach ($options[range] as $range) {
+  if ($options['range']) {
+    foreach ($options['range'] as $range) {
        printf("<h3>range '%s' purged</h3>",$range);
-       if ($options[show])
-         print "<tt>rcs -o$range ".$options[page]."</tt><br />";
+       if ($options['show'])
+         print "<tt>rcs -o$range ".$options['page']."</tt><br />";
        else {
          #print "<b>Not enabled now</b> <tt>rcs -o$range  data_dir/".$options[page]."</tt><br />";
-         print "<tt>rcs -o$range ".$options[page]."</tt><br />";
+         print "<tt>rcs -o$range ".$options['page']."</tt><br />";
          system("rcs -o$range ".$formatter->page->filename);
        }
     }
   } else {
-    printf("<h3>No version selected to purge '%s'</h3>",$options[page]);
+    printf("<h3>No version selected to purge '%s'</h3>",$options['page']);
   }
-  $args[noaction]=1;
+  $args['noaction']=1;
   $formatter->send_footer($args,$options);
 }
 
@@ -498,31 +479,31 @@ function do_fullsearch($formatter,$options) {
 
   $ret=$options;
 
-  if ($options[backlinks])
-    $title= sprintf(_("BackLinks search for \"%s\""), $options[value]);
+  if ($options['backlinks'])
+    $title= sprintf(_("BackLinks search for \"%s\""), $options['value']);
   else
-    $title= sprintf(_("Full text search for \"%s\""), $options[value]);
+    $title= sprintf(_("Full text search for \"%s\""), $options['value']);
   $out= macro_FullSearch($formatter,$options[value],&$ret);
-  $options[msg]=$ret[msg];
+  $options['msg']=$ret['msg'];
   $formatter->send_header("",$options);
   $formatter->send_title($title,$formatter->link_url("FindPage"),$options);
 
   print $out;
 
-  if ($options[value])
+  if ($options['value'])
     printf(_("Found %s matching %s out of %s total pages")."<br />",
-	 $ret[hits],
-	($ret[hits] == 1) ? 'page' : 'pages',
-	 $ret[all]);
-  $args[noaction]=1;
+	 $ret['hits'],
+	($ret['hits'] == 1) ? 'page' : 'pages',
+	 $ret['all']);
+  $args['noaction']=1;
   $formatter->send_footer($args,$options);
 }
 
 function do_goto($formatter,$options) {
   global $DBInfo;
-  if (preg_match("/^(http:\/\/|ftp:\/\/)/",$options[value])) {
-     $options[url]=$options[value];
-     unset($options[value]);
+  if (preg_match("/^(http:\/\/|ftp:\/\/)/",$options['value'])) {
+     $options['url']=$options['value'];
+     unset($options['value']);
   } else if (preg_match("/^(".$DBInfo->interwikirule."):(.*)/",$options[value],$match)) {
     $url=$DBInfo->interwiki[$match[1]];
     if ($url) {
@@ -532,38 +513,38 @@ function do_goto($formatter,$options) {
         $url.=$page;
       else
         $url=str_replace('$PAGE',$page,$url);
-      $options[url]=$url;
-      unset($options[value]);
+      $options['url']=$url;
+      unset($options['value']);
     }
   }
-  if ($options[value]) {
-     $url=stripslashes($options[value]);
+  if ($options['value']) {
+     $url=stripslashes($options['value']);
      $url=_rawurlencode($url);
      $url=$formatter->link_url($url,"?action=show");
      $formatter->send_header(array("Status: 302","Location: ".$url),$options);
-  } else if ($options[url]) {
-     $url=str_replace("&amp;","&",$options[url]);
+  } else if ($options['url']) {
+     $url=str_replace("&amp;","&",$options['url']);
      $formatter->send_header(array("Status: 302","Location: ".$url),$options);
   } else {
      $title = _("Use more specific text");
      $formatter->send_header("",$options);
      $formatter->send_title($title,"",$options);
-     $args[noaction]=1;
+     $args['noaction']=1;
      $formatter->send_footer($args,$options);
   }
 }
 
 function do_LikePages($formatter,$options) {
 
-  $opts[metawiki]=$options[metawiki];
-  $out= macro_LikePages($formatter,$options[page],&$opts);
+  $opts['metawiki']=$options['metawiki'];
+  $out= macro_LikePages($formatter,$options['page'],&$opts);
   
-  $title = $opts[msg];
+  $title = $opts['msg'];
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
-  print $opts[extra];
+  print $opts['extra'];
   print $out;
-  print $opts[extra];
+  print $opts['extra'];
   $formatter->send_footer("",$options);
 }
 
@@ -579,18 +560,18 @@ function do_titleindex($formatter,$options) {
 
 function do_titlesearch($formatter,$options) {
 
-  $out= macro_TitleSearch($formatter,$options[value],&$ret);
+  $out= macro_TitleSearch($formatter,$options['value'],&$ret);
 
   $formatter->send_header("",$options);
-  $formatter->send_title($ret[msg],$formatter->link_url("FindPage"),$options);
+  $formatter->send_title($ret['msg'],$formatter->link_url("FindPage"),$options);
   print $out;
 
-  if ($options[value])
+  if ($options['value'])
     printf("Found %s matching %s out of %s total pages"."<br />",
-	 $ret[hits],
-	($ret[hits] == 1) ? 'page' : 'pages',
-	 $ret[all]);
-  $args[noaction]=1;
+	 $ret['hits'],
+	($ret['hits'] == 1) ? 'page' : 'pages',
+	 $ret['all']);
+  $args['noaction']=1;
   $formatter->send_footer($args,$options);
 }
 
@@ -1252,9 +1233,10 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    }
    $idx--;
    $out.="<tr><th colspan='2'>Total $idx files</th><td></td><td></td></tr>\n";
-   $out.="</table>
-Password: <input type='password' name='passwd' size='10' />
-<input type='submit' value='Delete selected files' /></form>\n";
+   $out.="</table>\n";
+   if ($DBInfo->security->is_protected("deletefile",$options))
+     $out.="Password: <input type='password' name='passwd' size='10' />\n";
+   $out.="<input type='submit' value='Delete selected files' /></form>\n";
 
    if (!$value and !in_array('UploadFile',$formatter->actions))
      $formatter->actions[]='UploadFile';

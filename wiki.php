@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0rc14';
+$_release = '1.0rc15';
 
 #ob_start("ob_gzhandler");
 
@@ -363,6 +363,23 @@ class Security {
   function is_allowed($action="read",$options) {
     return 1;
   }
+
+  function is_protected($action="read",$options) {
+    # password protected POST actions
+    $protected_actions=array(
+      "deletepage","deletefile","rename","rcspurge","chmod");
+    $action=strtolower($action);
+
+    if (in_array($action,$protected_actions)) {
+      return 1;
+    }
+    return 0;
+  }
+
+  function is_valid_password($passwd,$options) {
+    return
+     $this->DB->admin_passwd==crypt($passwd,$this->DB->admin_passwd);
+  }
 }
 
 function getConfig($configfile, $options=array()) {
@@ -528,8 +545,9 @@ class WikiDB {
       include_once("plugin/security/$this->security_class.php");
       $class="Security_".$this->security_class;
       $this->security=new $class ($this);
-    } else
+    } else {
       $this->security=new Security($this);
+    }
 
   }
 
@@ -1882,8 +1900,11 @@ class Formatter {
            break;
       }
     }
-    $out.="<tr><td colspan='6' align='right'><input type='checkbox' name='show' checked='checked' />show only <input type='password' name='passwd'>";
-    $out.="<input type='submit' name='button_admin' value='purge'></td></tr>";
+    $out.="<tr><td colspan='6' align='right'><input type='checkbox' name='show' checked='checked' />show only ";
+    if ($DBInfo->security->is_protected("rcspurge",array())) {
+      $out.="<input type='password' name='passwd'>";
+    }
+    $out.="<input type='submit' name='rcspurge' value='purge'></td></tr>";
     $out.="<input type='hidden' name='action' value='diff'/></form></table>\n";
     return $out; 
   }
@@ -2657,18 +2678,28 @@ if ($pagename) {
     return;
   }
 
-  if ($action && !$DBInfo->security->is_allowed($action,&$options)) {
-    $msg=sprintf(_("Please login before \"%s\" this page"),$action);
-    $formatter->send_header("Status: 406 Not Acceptable",$options);
-    $formatter->send_title($msg,"", $options);
-    $formatter->send_page("== "._("Goto UserPreferences")." ==\n".
-    _("You are not allowed to \"$action\" this page"));
-    $formatter->send_footer($args,$options);
-    return;
-  }
-
   if ($action) {
-    if(!function_exists("do_post_".$action) and
+    if (!$DBInfo->security->is_allowed($action,&$options)) {
+      $msg=sprintf(_("Please login before \"%s\" this page"),$action);
+      $formatter->send_header("Status: 406 Not Acceptable",$options);
+      $formatter->send_title($msg,"", $options);
+      $formatter->send_page("== "._("Goto UserPreferences")." ==\n".$options['err']);
+      $formatter->send_footer($args,$options);
+      return;
+    } else if ($_SERVER['REQUEST_METHOD']=="POST" and
+       $DBInfo->security->is_protected($action,&$options) and
+       !$DBInfo->security->is_valid_password($_POST['passwd'],$options)) {
+      # protect some POST actions and check a password
+
+      $title = sprintf(_("Fail to \"%s\" !"), $action);
+      $formatter->send_header("",$options);
+      $formatter->send_title($title,"",$options);
+      $formatter->send_page("== "._("Please enter the valid password")." ==");
+      $formatter->send_footer("",$options);
+      return;
+    }
+
+    if (!function_exists("do_post_".$action) and
       !function_exists("do_".$action)){
       if ($plugin=getPlugin($action))
         include_once("plugin/$plugin.php");
