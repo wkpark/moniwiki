@@ -13,11 +13,15 @@
 //
 // $Id$
 
-function find_needle($body,$needle,$count=0) {
+function find_needle($body,$needle,$exclude='',$count=0) {
   if (!$body) return '';
   $lines=explode("\n",$body);
   $out="";
   $matches=preg_grep("/($needle)/i",$lines);
+  if ($exclude) {
+    $matches=preg_grep("/($exclude)/i",$matches,PREG_GREP_INVERT);
+    if ($matches) return '';
+  }
   if (count($matches) > $count) $matches=array_slice($matches,0,$count);
   foreach ($matches as $line) {
     $line=preg_replace("/($needle)/i","<strong>\\1</strong>",str_replace("<","&lt;",$line));
