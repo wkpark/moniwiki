@@ -38,8 +38,8 @@ function macro_Vote($formatter,$value) {
          "<img width='$bar_width' height='14' src='$imgdir/mainbar.gif'>".
          $cat_bar;
     $md5=md5($item);
-    $out.="<tr><td>$item </td><td>$bar</td><td>".
-         sprintf("(%3d %3.2f %%)",$count,$ratio).
+    $out.="<tr><td>$item </td><td nowrap='nowrap'>$bar</td><td>".
+         sprintf("%3d (%3.2f %%)",$count,$ratio).
          "<input type='radio' name='vote' value='$md5' /></td></tr>\n";
   }
   $out.="<tr><td colspan='2' align='right'><b>Total votes</b></td><td align='center'>$total <input type='submit' value='Vote' /></td></tr>\n</table></form>\n";
