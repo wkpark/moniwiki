@@ -1065,6 +1065,7 @@ class Formatter {
     $this->prefix= get_scriptname();
     $this->url_prefix= $DBInfo->url_prefix;
     $this->actions= $DBInfo->actions;
+    $this->in_p='';
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -1498,13 +1499,16 @@ class Formatter {
     $open="";
     $close="";
 
-    if ($odepth && ($depth > $odepth)) {
-      $open.="<div>\n"; # <section>
+    if (!$odepth) {
+      $open.="<div class='section'>\n"; # <section>
+    } else if ($odepth && ($depth > $odepth)) {
+    #if ($odepth && ($depth > $odepth)) {
+      $open.="<div class='section'>\n"; # <section>
       $num.=".1";
     } else if ($odepth) {
       $dum=explode(".",$num);
       $i=sizeof($dum)-1;
-      if ($depth == $odepth) $close.="</div>\n<div>\n"; # </section><section>
+      if ($depth == $odepth) $close.="</div>\n<div class='section'>\n"; # </section><section>
       while ($depth < $odepth && $i > 0) {
          unset($dum[$i]);
          $i--;
@@ -1522,6 +1526,8 @@ class Formatter {
     if ($this->toc)
       $head="<a href='#toc'>$num</a> $head";
     $purple=" <a class='purple' href='#s$prefix-$num'>#</a>";
+
+    $close=$this->_check_p().$close; 
 
     return "$close$open<h$dep><a id='s$prefix-$num' name='s$prefix-$num'></a> $head$purple</h$dep>";
   }
@@ -1593,7 +1599,7 @@ class Formatter {
     return $this->link_tag($this->page->urlname,$query_string,$text,$attr);
   }
 
-  function _list($on,$list_type,$numtype="",$close="") {
+  function _list($on,$list_type,$numtype="",$closetype="") {
     if ($list_type=="dd") {
       if ($on)
          #$list_type="dl><dd";
@@ -1608,8 +1614,14 @@ class Formatter {
       else
          $list_type="dd></dl";
       $numtype='';
-    } if (!$on and $close and $close !='dd')
+    } if (!$on and $closetype and $closetype !='dd')
       $list_type=$list_type."></li";
+
+    if ($this->in_li==0 and $on) {
+      $close=$this->_check_p();
+      $open="<div class='list'>";
+      $this->in_p='li';
+    }
     if ($on) {
       if ($numtype) {
         $start=substr($numtype,1);
@@ -1617,10 +1629,18 @@ class Formatter {
           return "<$list_type type='$numtype[0]' start='$start'>";
         return "<$list_type type='$numtype[0]'>";
       }
-      return "<$list_type>\n";
+      return "$close$open<$list_type>\n";
     } else {
-      return "</$list_type>\n";
+      return "</$list_type>\n$close$open";
     }
+  }
+
+  function _check_p() {
+    if ($this->in_p) {
+      $this->in_p='';
+      return "</div>\n"; #close
+    }
+    return '';
   }
 
   function _table_span($str) {
@@ -1676,13 +1696,12 @@ class Formatter {
     # have no contents
     if (!$lines) return;
 
-    #$text="<div>";
     $text="";
-    $in_pre=0;
-    $in_p=1;
+    #$in_p=1;
     $in_li=0;
-    $li_open=0;
+    $in_pre=0;
     $in_table=0;
+    $li_open=0;
     $indent_list[0]=0;
     $indent_type[0]="";
 
@@ -1703,17 +1722,12 @@ class Formatter {
         if ($in_table) {
           $text.=$this->_table(0)."<br />\n";$in_table=0; continue;
         } else {
-          if (!$in_p) { $text.="<div>\n"; $in_p=1;}
-          #else if ($in_p==2) { $text.="</div><br />\n<div>"; $in_p=1;}
-          else if ($in_p==2) { $text.="</div><br />\n"; $in_p=1;}
-          else if ($in_p==1) { $text.="<br />\n"; $in_p=1;}
-          else { $text.="<br />\n"; $in_p=2; }
+          if ($this->in_p) { $text.="</div><br />\n"; $this->in_p='';}
+          else if ($this->in_p=='') { $text.="<br />\n";}
           continue;
         }
-      } else if ($in_p == 1) {
-        $text.="<div>\n";
-        $in_p= 2;
       }
+
       if ($line[0]=='#' and $line[1]=='#') continue; # comments
 
       if ($in_pre) {
@@ -1781,6 +1795,7 @@ class Formatter {
       #$line=preg_replace("/^-{4,}/","<hr />\n",$line);
 
       $line=preg_replace($this->baserule,$this->baserepl,$line);
+      #if ($in_p and ($in_pre==1 or $in_li)) $line=$this->_check_p().$line;
 
       # bullet and indentation
       if ($in_pre != -1 && preg_match("/^(\s*)/",$line,$match)) {
@@ -1814,6 +1829,7 @@ class Formatter {
            }
          }
          if ($indent_list[$in_li] < $indlen) {
+            $this->in_li=$in_li;
             $in_li++;
             $indent_list[$in_li]=$indlen; # add list depth
             $indent_type[$in_li]=$indtype; # add list type
@@ -1826,6 +1842,7 @@ class Formatter {
                unset($indent_list[$in_li]);
                unset($indent_type[$in_li]);
                $in_li--;
+               $this->in_li=$in_li;
             }
          }
          if ($indent_list[$in_li] <= $indlen || $limatch) $li_open=$in_li;
@@ -1846,8 +1863,7 @@ class Formatter {
          $line=preg_replace('/((\|\|)+)/e',"'</td><td class=\"wiki\"'.\$this->_table_span('\\1').'>'",$line);
          $line=str_replace('\"','"',$line); # revert \\" to \"
       }
-      $line=$close.$open.$line;
-      $open="";$close="";
+
 
       # InterWiki, WikiName, {{{ }}}, !WikiName, ?single, ["extended wiki name"]
       # urls, [single bracket name], [urls text], [[macro]]
@@ -1864,6 +1880,17 @@ class Formatter {
       #      array("</div><table class='closure'><tr class='closure'><td class='closure'><div>","</div></td></tr></table><div>"),$line);
 
       $line=preg_replace($this->extrarule,$this->extrarepl,$line);
+
+      if ($this->in_p == '' ) { #and !$this->nobr) {
+        $text.="<div class='p'>\n";
+        $this->in_p=$line;
+      } else if ($li_open==0 and 0) {
+        $close.=$this->_check_p()."<div class='p'>\n";
+        $this->in_p=$line;
+      }
+
+      $line=$close.$open.$line;
+      $open="";$close="";
 
       if ($in_pre==-1) {
          $in_pre=0;
@@ -1911,19 +1938,22 @@ class Formatter {
     if ($in_table) $close.="</table>\n";
     # close indent
     while($in_li >= 0 && $indent_list[$in_li] > 0) {
-      $close.=$this->_list(0,$indent_type[$in_li]);
+      if ($indent_type[$in_li]!='dd' && $li_open == $in_li)
+        $close.="</li>\n";
+#      $close.=$this->_list(0,$indent_type[$in_li]);
+      $close.=$this->_list(0,$indent_type[$in_li],"",$indent_type[$in_li-1]);
       unset($indent_list[$in_li]);
       unset($indent_type[$in_li]);
       $in_li--;
     }
     # close div
-    if ($in_p === 2) $close.="</div>\n"; # </para>
+    if ($this->in_p) $close.="</div>\n"; # </para>
 
     if ($this->head_dep) {
       $odepth=$this->head_dep;
       $dum=explode(".",$this->head_num);
       $i=sizeof($dum)-1;
-      while (0 < $odepth && $i > 0) {
+      while (0 <= $odepth && $i >= 0) {
          $i--;
          $odepth--;
          $close.="</div>\n"; # </section>
@@ -2412,19 +2442,19 @@ EOS;
     $banner= <<<FOOT
  <a href="http://validator.w3.org/check/referer"><img
   src="$DBInfo->imgs_dir/valid-xhtml10.png"
-  style="border:0;width:88px;height:31px"
+  border="0" width="88" height="31"
   align="middle"
   alt="Valid XHTML 1.0!" /></a>
 
  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
   src="$DBInfo->imgs_dir/vcss.png" 
-  style="border:0;width:88px;height:31px"
+  border="0" width="88" height="31"
   align="middle"
   alt="Valid CSS!" /></a>
 
  <a href="http://moniwiki.sourceforge.net/"><img
   src="$DBInfo->imgs_dir/moniwiki-powerd.png" 
-  style="border:0;width:88px;height:31px"
+  border="0" width="88" height="31"
   align="middle"
   alt="powerd by MoniWiki" /></a>
 FOOT;
