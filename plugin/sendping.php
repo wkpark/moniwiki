@@ -96,7 +96,7 @@ FORM2;
 
   $trackback_url=$options['trackback_url'];
 	$title= urlencode(stripslashes($options['title']));
-	$blog_name= urlencode($DBInfo->sitename);
+	$blog_name= urlencode($DBInfo->sitename.":$options[id]");
 
 	$excerpt= stripslashes($options['excerpt']);
 
