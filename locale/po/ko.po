@@ -417,12 +417,12 @@ msgstr "페이지 이름을 넣으세요"
 #: ../plugin/processor/blog.php:84
 #, c-format
 msgid "%d comment"
-msgstr ""
+msgstr "댓글 %d개"
 
 #: ../plugin/processor/blog.php:84
 #, c-format
 msgid "%d comments"
-msgstr ""
+msgstr "댓글 %d개"
 
 #: ../plugin/processor/blog.php:95
 msgid "track back"
