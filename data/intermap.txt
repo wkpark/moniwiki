@@ -19,8 +19,8 @@ KnowHow http://www2.iro.umontreal.ca/~paquetse/cgi-bin/wiki.cgi?
 Bzla http://bugzilla.gnome.org/show_bug.cgi?id=
 BugZilla http://bugzilla.gnome.org/show_bug.cgi?id=
 Foldoc http://www.foldoc.org/foldoc/foldoc.cgi?
-JargonFile http://sunir.org/apps/meta.pl?wiki=JargonFile&redirect=
-Acronym http://www.acronymfinder.com/af-query.asp?String=exact&Acronym=
+JargonFile http://sunir.org/apps/meta.pl?wiki=JargonFile&amp;redirect=
+Acronym http://www.acronymfinder.com/af-query.asp?String=exact&amp;Acronym=
 Advogato http://www.advogato.org/
 SourceForge http://www.sourceforge.net/
 
@@ -31,12 +31,12 @@ KLE http://kle.kldp.org/main/
 GentooKorea http://gentoo.or.kr/wiki/moin.cgi/
 DebianKorea http://debianusers.org/DebianWiki/
 BSDKorea http://wiki.bsdforum.or.kr/wiki.php/
+KDEKorea http://wiki.kde.or.kr/wiki/
 Freefeel http://freefeel.org/wiki/
 SFReaders http://www.sfreaders.org/moin.cgi/
-Jangnan http://www.jangnan.org/wiki/moin.cgi/
+Jangnan http://jangnan.st/wiki/
 Xper http://xper.org/wiki/xp/
 PyKug http://www.python.or.kr/pykug/
 KTUG http://faq.ktug.or.kr/mywiki/
 MoniWiki http://moniwiki.sf.net/wiki.php/
 KLDPWiki http://wiki.kldp.org/wiki/
-Teoal http://teoal.net/wiki/
