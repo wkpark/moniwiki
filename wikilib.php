@@ -1,10 +1,184 @@
 <?php
 // Copyright 2003 by Won-Kyu Park <wkpark@kldp.org> all rights reserved.
+// distributable under GPL see COPYING
 //
 // Copyright 1999-2002 by Fred C. Yankowski <fcy@acm.org>, all rights reserved.
 //
 // $Id$
 // wkpark@kldp.org 2003
+
+
+class UserDB {
+  function UserDB() {
+     $this->user_dir='data/user';
+  }
+
+  function getUserList() {
+    $users = array();
+    $handle = opendir($this->user_dir);
+    while ($file = readdir($handle)) {
+       if (is_dir($this->user_dir."/".$file)) continue;
+       if (preg_match('/^wu-([^\.]+)$/', $file,$match))
+          $users[$match[1]] = 1;
+    }
+    closedir($handle);
+    return $users; 
+  }
+
+  function addUser($user) {
+    if ($this->_exists($user->id))
+       return false;
+    $this->_saveUser($user);
+    return true;
+  }
+
+  function _saveUser($user) {
+    $config=array("css_url","datatime_fmt","email","language",
+                  "name","password","wikiname_add_spaces");
+
+    $data="# Data saved \n";
+
+    foreach ($config as $key) {
+       $data.="$key=".$user->info[$key]."\n";
+#       print "$key";
+    }
+
+    $fp=fopen($this->user_dir."/wu-".$user->id,"w+");
+    fwrite($fp,$data);
+    fclose($fp);
+  }
+
+  function _exists($id) {
+    if (file_exists("$this->user_dir/wu-$id"))
+       return true;
+    return false;
+  }
+
+  function getUser($id) {
+    $type=array(""=>"");
+    if ($this->_exists($id))
+       $data=file("$this->user_dir/wu-$id");
+    else
+       return "";
+    $info=array();
+    foreach ($data as $line) {
+       if ($line[0]=="#" and $line[0]==" ") continue;
+       $p=strpos($line,"=");
+       if ($p === false) continue;
+       $key=substr($line,0,$p);
+       $val=substr($line,$p+1,strlen($line)-$p-2);
+       $info[$key]=$val;
+    }
+    $user=new User($id);
+    $user->info=$info;
+    return $user;
+  }
+
+
+  function delUser($id) {
+
+  }
+}
+
+class User {
+
+  function User($id="") {
+     global $HTTP_COOKIE_VARS;
+     if ($id) {
+        $this->setID($id);
+        return;
+     }
+     $this->setID($HTTP_COOKIE_VARS[MOIN_ID]);
+  }
+
+  function setID($id) {
+     if ($this->checkID($id)) {
+        $this->id=$id;
+        return true;
+     }
+     $this->id='Anonymous';
+  }
+
+  function getID($name) {
+     if (strpos($name," ")) {
+        $dum=explode(" ",$name);
+        $new=array_map("ucfirst",$dum);
+        return join($new,"");
+     }
+     return $name;
+  }
+
+  function setCookie() {
+     global $HTTP_COOKIE_VARS;
+     if ($this->id == "Anonymous") return false;
+     setcookie("MOIN_ID",$this->id,time()+60*60*24*30,get_scriptname());
+     # set the fake cookie
+     $HTTP_COOKIE_VARS[MOIN_ID]=$this->id;
+  }
+
+  function unsetCookie() {
+     global $HTTP_COOKIE_VARS;
+     header("Set-Cookie: MOIN_ID=".$this->id."; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname());
+     # set the fake cookie
+     $HTTP_COOKIE_VARS[MOIN_ID]="Anonymous";
+  }
+
+  function setPasswd($passwd,$passwd2) {
+     $ret=$this->validPasswd($passwd,$passwd2);
+     if ($ret > 0)
+        $this->info[password]=crypt($passwd);
+     else
+        $this->info[password]="";
+     return $ret;
+  }
+
+  function checkID($id) {
+     $SPECIAL='\\,\.;:\-_#\+\*\?!"\'\?%&\/\(\)\[\]\{\}\=';
+     preg_match("/[$SPECIAL]/",$id,$match);
+     if (!$id || $match)
+        return false;
+     return true;
+  }
+
+  function checkPasswd($passwd) {
+     if (strlen($passwd) < 3)
+        return false;
+     if (crypt($passwd,$this->info[password]) == $this->info[password])
+        return true;
+     return false;
+  }
+
+  function validPasswd($passwd,$passwd2) {
+
+    if (strlen($passwd)<6)
+       return 0;
+    if ($passwd2!="" and $passwd!=$passwd2)
+       return -1;
+    $LOWER='abcdefghijklmnopqrstuvwxyz';
+    $UPPER='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+    $DIGIT='0123456789';
+    $SPECIAL=',.;:-_#+*?!"\'?%&/()[]{}\=~^|$@`';
+
+    $VALID=$LOWER.$UPPER.$DIGIT.$SPECIAL;
+
+    $ok=0;
+
+    for ($i=0;$i<strlen($passwd);$i++) {
+       if (strpos($VALID,$passwd[$i]) === false)
+          return -2;
+       if (strpos($LOWER,$passwd[$i]))
+          $ok|=1;
+       if (strpos($UPPER,$passwd[$i]))
+          $ok|=2;
+       if (strpos($DIGIT,$passwd[$i]))
+          $ok|=4;
+       if (strpos($SPECIAL,$passwd[$i]))
+          $ok|=8;
+
+    }
+    return $ok;
+  }
+}
 
 function do_DeletePage($options) {
   global $DBInfo;
@@ -30,12 +204,12 @@ function do_DeletePage($options) {
   $title = sprintf('Delete "%s" ?', $page->name);
   $html->send_header("",$title);
   $html->send_title($title);
-  print "<form method=POST>
-Comment: <input name=comment size=80 value=''><br>
-Password: <input type=password name=passwd size=20 value=''>
-Only WikiMaster can delete this page<br>
-    <input type=hidden name=action value='DeletePage'>
-    <input type=submit value='Delete'>
+  print "<form method='post'>
+Comment: <input name=comment size=80 value='' /><br />
+Password: <input type=password name=passwd size=20 value='' />
+Only WikiMaster can delete this page<br />
+    <input type=hidden name=action value='DeletePage' />
+    <input type=submit value='Delete' />
     </form><hr>";
   $html->send_page($title);
   $html->send_footer();
@@ -73,7 +247,7 @@ function do_fullsearch($needle) {
   }
   print "</ul>\n";
 
-  printf("Found %s matching %s out of %s total pages<br>",
+  printf("Found %s matching %s out of %s total pages<br />",
 	 count($hits),
 	 (count($hits) == 1) ? 'page' : 'pages',
 	 count($all_pages));
@@ -111,12 +285,128 @@ function do_titlesearch($options) {
   }
 
   print $out."</ul>\n";
-  printf("Found %s matching %s out of %s total pages<br>",
+  printf("Found %s matching %s out of %s total pages<br />",
 	 count($hits),
 	 (count($hits) == 1) ? 'page' : 'pages',
 	 count($all_pages));
   $args[noaction]=1;
   $html->send_footer($args);
+}
+
+function do_userform($options) {
+  $page = new WikiPage("UserPreferences");
+  $html = new Formatter($page);
+
+  $id=$options[login_id];
+  if ($id || $options[login_passwd]) {
+    $userdb=new UserDB();
+    if ($userdb->_exists($id)) {
+       $user=$userdb->getUser($id);
+       if ($user->checkPasswd($options[login_passwd])=== true) {
+          $title = sprintf("Successfully login as '$id'");
+          $user->setCookie();
+       } else {
+          $title = sprintf("??Invalid password !");
+       }
+    } else
+       $title= "Please enter a valid user ID!";
+  } else if ($options[logout]) {
+    $user=new User(); # get cookie
+    $user->unsetCookie();
+    $title= "Cookie deleted!";
+  } else if ($options[username] and $options[password] and $options[passwordagain]) {
+    $user=new User(); # get cookie
+    if ($user->id == "Anonymous") {
+       $id=$user->getID($options[username]);
+       $user->setID($id);
+    }
+
+    if ($user->id != "Anonymous") {
+       $ret=$user->setPasswd($options[password],$options[passwordagain]);
+       if ($ret <= 0) {
+           if ($ret==0) $title= "too short password!";
+           else if ($ret==-1) $title= "mismatch password!";
+           else if ($ret==-2) $title= "not acceptable character found in the password!";
+       } else {
+           if ($ret < 8) $msg="Password is too simple to use as a password!";
+           $udb=new UserDB();
+           $ret=$udb->addUser($user);
+           if ($ret) {
+              $title= "Successfully added!";
+              $user->setCookie();
+           } else {# already exist user
+              $user=$udb->getUser($user->id);
+              if ($user->checkPasswd($options[password])=== true) {
+                  $title = sprintf("Successfully login as '$id'");
+                  $user->setCookie();
+              } else {
+                  $title = sprintf("Invalid password !");
+              }
+           }
+       }
+    } else
+       $title= "Invalid username!";
+  }
+  $html->send_header("",$title);
+  $html->send_title($title,"",$msg);
+  $html->send_page($title);
+  $html->send_footer();
+}
+
+function macro_UserPreferences($formatter="") {
+  global $HTTP_COOKIE_VARS;
+  $prefix=get_scriptname();
+
+#  print $HTTP_COOKIE_VARS[MOIN_ID];
+#  print $user->id;
+
+  $user=new User(); # get from COOKIE VARS
+
+  if ($user->id == "Anonymous")
+     return <<<EOF
+<form method="post" action="$prefix/UserPreferences">
+<input type="hidden" name="action" value="userform" />
+<table border="0">
+  <tr><td>&nbsp;</td></tr>
+  <tr><td><b>ID</b>&nbsp;</td><td><input type="text" size="40" name="login_id" /></td></tr>
+  <tr><td><b>Password</b>&nbsp;</td><td><input type="password" size="20" maxlength="8" name="login_passwd" /></td></tr>
+
+  <tr><td></td><td><input type="submit" name="login" value="Login" /></td></tr>
+        
+  <tr><td><b>ID</b>&nbsp;</td><td><input type="text" size="40" name="username" value="" /></td></tr>
+  <tr>
+     <td><b>Password</b>&nbsp;</td><td><input type="password" size="20" maxlength="8" name="password" value="" />
+     <b>Password again</b>&nbsp;<input type="password" size="20" maxlength="8" name="passwordagain" value="" /></td></tr>
+  <tr><td><b>Mail</b>&nbsp;</td><td><input type="text" size="60" name="email" value="" /></td></tr>
+  <tr><td></td><td>
+    <input type="submit" name="save" value="make profile" /> &nbsp;
+  </td></tr>
+</table>
+</form>
+EOF;
+
+   $udb=new UserDB();
+   $user=$udb->getUser($user->id);
+   $css=$user->info[css_url];
+   return <<<EOF
+<form method="post" action="$prefix/UserPreferences">
+<input type="hidden" name="action" value="userform" />
+<table border="0">
+  <tr><td>&nbsp;</td></tr>
+  <tr><td><b>ID</b>&nbsp;</td><td>$user->id</td></tr>
+  <tr><td><b>Name</b>&nbsp;</td><td><input type="text" size="40" name="username" value="" /></td></tr>
+  <tr>
+     <td><b>Password</b>&nbsp;</td><td><input type="password" size="20" maxlength="8" name="password" value="" />
+     <b>Password again</b>&nbsp;<input type="password" size="20" maxlength="8" name="passwordagain" value="" /></td></tr>
+  <tr><td><b>Mail</b>&nbsp;</td><td><input type="text" size="60" name="email" value="" /></td></tr>
+  <tr><td><b>CSS URL </b>&nbsp;</td><td><input type="text" size="60" name="css_url" value="$css" /><br />("None" for disable CSS)</td></tr>
+  <tr><td></td><td>
+    <input type="submit" name="save" value="save profile" /> &nbsp;
+    <input type="submit" name="logout" value="logout" /> &nbsp;
+  </td></tr>
+</table>
+</form>
+EOF;
 }
 
 function macro_InterWiki($formatter="") {
@@ -233,24 +523,25 @@ function macro_Icon($formatter="",$value="") {
 function macro_RecentChanges($formatter="") {
   global $DBInfo;
 
-  $lines = $DBInfo->editlog_raw_lines();
-  $lines = reverse($lines);
+  $lines= $DBInfo->editlog_raw_lines();
+  $lines= reverse($lines);
     
-  $time_current = time();
-  $secs_per_day = 60*60*24;
-  $days_to_show = 30;
-  $time_cutoff = $time_current - ($days_to_show * $secs_per_day);
+  $time_current= time();
+  $secs_per_day= 60*60*24;
+  $days_to_show= 30;
+  $time_cutoff= $time_current - ($days_to_show * $secs_per_day);
 
   $out="";
-  $ratchet_day = FALSE;
-  $done_words = array();
+  $ratchet_day= FALSE;
+  $done_words= array();
 #  while (list($_, $line) = each($lines)) {
   foreach ($lines as $line) {
     if (!$line) continue;
-    $parts = explode("\t", $line);
-    $page_name = $DBInfo->keyToPagename($parts[0]);
-    $addr = $parts[1];
-    $ed_time = $parts[2];
+    $parts= explode("\t", $line);
+    $page_name= $DBInfo->keyToPagename($parts[0]);
+    $addr= $parts[1];
+    $ed_time= $parts[2];
+    $user= $parts[4];
 
     if ($ed_time < $time_cutoff)
       break;
@@ -261,7 +552,6 @@ function macro_RecentChanges($formatter="") {
 
     $day = date('Y/m/d', $ed_time);
     if ($day != $ratchet_day) {
-#      flush();
       $out.=sprintf("<br /><font size='+1'>%s :</font><br />\n", date($DBInfo->date_fmt, $ed_time));
       $ratchet_day = $day;
     }
@@ -275,11 +565,12 @@ function macro_RecentChanges($formatter="") {
       $out.= date($DBInfo->changed_time_fmt, $ed_time);
 
     if ($DBInfo->show_hosts) {
-      $out.= ' . . . . ';
-      if (! isset($ip_to_host[$addr])) {
-	$ip_to_host[$addr] = gethostbyaddr($addr);
-      }
-      $out.= $ip_to_host[$addr];
+      #$out.= ' . . . . '; # traditional style
+      $out.= '&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ';
+       if ($user)
+          $out.= $user;
+       else
+          $out.= $addr;
     }
     $out.= '<br />';
   }
@@ -362,7 +653,7 @@ function macro_TableOfContents($formatter="") {
 }
 
 function macro_FullSearch($formatter="",$value="") {
-  return "<form method=GET>
+  return "<form method='get'>
     <input type=hidden name=action value='fullsearch'>
     <input name=value size=30 value='$value'>
     <input type=submit value='Go'><br />
@@ -373,7 +664,7 @@ function macro_FullSearch($formatter="",$value="") {
 }
 
 function macro_TitleSearch($formatter="",$value="") {
-  return "<form method=GET>
+  return "<form method='get'>
     <input type=hidden name=action value='titlesearch'>
     <input name=value size=30 value='$value'>
     <input type=submit value='Go'>
@@ -381,7 +672,7 @@ function macro_TitleSearch($formatter="",$value="") {
 }
 
 function macro_GoTo($formatter="",$value="") {
-  return "<form method=GET>
+  return "<form method='get'>
     <input type=hidden name=action value='goto'>
     <input name=value size=30 value='$value'>
     <input type=submit value='Go'>
