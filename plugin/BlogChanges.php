@@ -345,7 +345,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
     '<span class=\"blog-user\">';
   if (in_array('summary',$opts))
     $template='$out="$bullet<div class=\"blog-summary\"><div class=\"blog-title\"><a name=\"$tag\"></a>'.
-      '<a href=\"$url#$tag\">$title</a> <a class=\"puple\" href=\"#$tag\">'.
+      '<a href=\"$url#$tag\">$title</a> <a class=\"purple\" href=\"#$tag\">'.
       addslashes($formatter->perma_icon).
       '</a></div><span class=\"blog-user\">';
   if (!in_array('nouser',$opts))
