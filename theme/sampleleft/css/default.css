@@ -1,18 +1,18 @@
 body {
-  font-family:Georgia,Verdana,Lucida,sans-serif;font-size:14px;
+  font-family:Georgia,Verdana,Lucida,sans-serif;font-size:12px;
   color:#000;
   margin: 0;
   padding: 0;
 }
 
-a:link { color: #369;}
-a:visited { color: #369;}
+a:link { color: #948540;}
+a:visited { color: #948540;}
 /* a:hover {background-color:#999966;color:white} /* */
 .wikiTitle {
   font-family:Tahoma,Lucida,sans-serif;
   font-size:28px;
   font-weight:bold;
-  color:#ffffff; /* */
+  color:black; /* */
 /*  color: #7B7D5A; /* */
   text-decoration: none;
 }
@@ -61,7 +61,7 @@ table.wiki {
 }
 
 td.wiki {
-  background-color:#ddddb0;
+  background-color: #EBEDE1;
 /* border-collapse: collapse; */
   border: 0px inset #E2ECE5;
 }
@@ -158,7 +158,7 @@ table.closure, td.closure{
 #wikiTrailer {
   padding-left: 20px;
   padding-bottom: 5px;
-  background-color:#AAABC6;
+  background-color:#C0c0c0;
 }
 
 #wikiTrailer a {color:white; }
@@ -167,18 +167,18 @@ table.closure, td.closure{
 /*  border-left: 0.8em solid #7B9AC5; /* */
   color: #fff;
   padding: 0.2em 0em 0.2em 0.2em;
-  background-color:#4B4C73; 
+  background-color:#ffffff; 
 }
 #wikiHeader a:link {color:#fff;}
 #wikiHeader a:visited {color:#f2f2f2;}
 
 #wikiMenu {
   padding: 0.2em 0em 0.2em 0.2em;
-  background-color:#696A9B; 
+  background-color:#d8d8d8; 
 }
 
-#wikiMenu a {color:white; }
-#wikiMenu a {color:white; }
+#wikiMenu a {color:black; }
+#wikiMenu a {color:black; }
 
 #wikiBody {
   color: black;
@@ -199,9 +199,9 @@ table.closure, td.closure{
    border-collapse:collapse; */
 }
 
-#wikiBody a:link { color: #6064B4; }
+#wikiBody a:link { color: #B29F48; }
 
-#wikiBody a:visited { color: #8587B1; }
+#wikiBody a:visited { color: #948540; }
 
 #wikiBody a:hover { text-decoration:none; }
 
@@ -244,7 +244,7 @@ div.blog-date { font-size:18px; font-weight:bold; padding-bottom:5px;}
 span.blog-user { font-size:10px; }
 
 /* Calendar */
-td.day { background:#BDBED9; text-align: center;}
+td.day { background:#c0c0c0; text-align: center;}
 td.today { background:#A1A2AF; text-align: center;}
 
 /* HierarchicalWiki */
