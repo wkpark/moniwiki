@@ -279,7 +279,7 @@ function show_wikiseed($config,$seeddir='wikiseed') {
   $num=sizeof($pages);
 
   #
-  $SystemPages="FrontPage|RecentChanges|TitleIndex|FindPage|WordIndex".
+  $SystemPages="FrontPage|RecentChanges|TitleIndex|FindPage|WordIndex|".
   "FortuneCookies|Pages$|".
   "SystemPages|TwinPages|WikiName|SystemInfo|UserPreferences|".
   "InterMap|IsbnMap|WikiSandBox|SandBox|UploadFile|UploadedFiles|".
