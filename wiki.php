@@ -1051,14 +1051,12 @@ class WikiPage {
 
   function _get_raw_body() {
     $fp=@fopen($this->filename,"r");
-    if (!$fp) {
-      $out=_("You have no permission to see this page.\n\n");
-      $out.=_("See MoniWiki/AccessControl\n");
-      return $out;
-    }
-    $size=filesize($this->filename);
-    $this->body=fread($fp,$size);
-    fclose($fp);
+    if ($fp) {
+      $size=filesize($this->filename);
+      $this->body=fread($fp,$size);
+      fclose($fp);
+    } else
+      return '';
 
     return $this->body;
   }
@@ -1915,8 +1913,8 @@ class Formatter {
          }
       #} else if ($in_pre == 0 && preg_match("/{{{[^}]*$/",$line)) {
       } else if (!(strpos($line,"{{{")===false) and 
-                 preg_match("/{{{[^}]*$/",$line)) {
-         $p=strpos($line,"{{{");
+                 preg_match("/{{{[^{}]*$/",$line)) {
+         $p=strrpos($line,"{{{")-2;
          $len=strlen($line);
 
          $processor="";
