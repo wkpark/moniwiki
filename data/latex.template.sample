@@ -1,0 +1,11 @@
+\documentclass[10pt,notitlepage]{article}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsfonts}
+%%\usepackage[all]{xy}
+%%\usepackage{hangul}
+%%\usepackage{hfont}
+\pagestyle{empty}
+\begin{document}
+@TEX@
+\end{document}
