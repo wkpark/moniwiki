@@ -100,7 +100,8 @@ function do_uploadfile($formatter,$options) {
 
   if ($options['replace'][$j]) {
     // backup
-    if ($newfile_path) $test=@copy($file_path, $newfile_path);
+    if ($newfile_path != $file_path)
+      $test=@copy($file_path, $newfile_path);
     // replace
     $test=@copy($upfile, $file_path);
     $upfilename=$filename;
