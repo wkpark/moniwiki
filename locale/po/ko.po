@@ -948,7 +948,7 @@ msgstr "편집창 줄이기"
 
 #: ../wikilib.php:563
 msgid "EnlargeEditor"
-msgstr ""
+msgstr "편집창 늘이기"
 
 #: ../wikilib.php:567 ../locale/dummy.php:6
 msgid "InterWiki"
