@@ -58,9 +58,6 @@ function do_ImportUrl($formatter,$options) {
       "\\1",$out);
     $out = preg_replace("/<img\s*[^>]*src=['\"]([^'\"]+)['\"][^>]*>/ie",
       "fix_url('$value','\\1')",$out);
-    $out= preg_replace("/<b>([^<]+)<\/b>/i","'''\\1'''",$out);
-    $out= preg_replace("/<i>([^<]+)<\/i>/i","''\\1''",$out);
-    $out= preg_replace("/<u>([^<]+)<\/u>/i","__\\1__",$out);
     $out= preg_replace("/<li>/i"," * ",$out);
     $out= preg_replace("/<\/li>\n*/i","",$out);
     $out= preg_replace("/<td\s*[^>]*>/i","||",$out);
@@ -88,6 +85,9 @@ function do_ImportUrl($formatter,$options) {
       "str_repeat('=', \\1).' \\2 '.str_repeat('=', \\1)",$out);
     # paragraph
     $out= preg_replace("/\n{3,}/","\n\n",$out);
+    $out= preg_replace("/<b>([^<]+)<\/b>/i","'''\\1'''",$out);
+    $out= preg_replace("/<i>([^<]+)<\/i>/i","''\\1''",$out);
+    $out= preg_replace("/<u>([^<]+)<\/u>/i","__\\1__",$out);
 
     $wiki.=$out;
   }
