@@ -38,6 +38,7 @@ $use_referer= 0;
 $use_sistersites=1;
 $use_twinpages=1;
 $use_trackback=0;
+$vim_options='+"set expandtab" +"retab"';
 #$nonexists='fancy_nonexists';
 #$nonexists='nolink';
 #$nonexists='forcelink';
