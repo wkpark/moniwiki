@@ -1317,7 +1317,7 @@ class Formatter {
     if ($this->toc)
       $head="<a href='#toc'>$num</a> $head";
 
-    return "<h$dep><a id='s$prefix-$num' name='s$prefix-$num' /> $head</h$dep>";
+    return "<h$dep><a id='s$prefix-$num' name='s$prefix-$num' ></a> $head</h$dep>";
   }
 
   function macro_repl($macro) {
@@ -2262,8 +2262,8 @@ MSG;
     if ($options[theme]) $themedir.="/theme/$options[theme]";
 
     if (file_exists($themedir."/header.php")) {
-      # $menu.$upper_icon.icons.$rss_icon;
-      include_once $themedir."/header.php";
+      $themeurl=$DBInfo->url_prefix."/theme/$options[theme]";
+      include_once ($themedir."/header.php");
     } else { #default header
       $header="<table width='100%' border='0' cellpadding='3' cellspacing='0'>";
       $header.="<tr>";
@@ -2412,9 +2412,15 @@ if ($user->id != "Anonymous") {
   $options[css_url]=$user->info[css_url];
 #  $name=$user->info[name];
 } else {
-  if ($user->css)
-    $options[css_url]=$user->css;
+  $options[css_url]=$user->css;
 }
+
+# MoniWiki theme
+$theme=$HTTP_POST_VARS[theme];
+if ($theme)
+  $options[theme]=$theme;
+else
+  $options[theme]=$user->theme;
 
 # setup like phpwiki style locale
 # get broswer's settings
