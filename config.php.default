@@ -66,4 +66,5 @@ $use_trackback=0;
 #$pagetype=array("KldpDsl"=>"plain","ManPage"=>"/man","DocbookSgml"=>"/jade","LinuxDoc"=>"/linuxdoc");
 
 #$password_length=6;
+#$use_convert_thumbs=0;
 ?>
