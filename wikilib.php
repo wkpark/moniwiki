@@ -924,23 +924,25 @@ function do_RandomPage($formatter,$options='') {
   return;
 }
 
-function macro_RandomPage($formatter,$value="") {
+function macro_RandomPage($formatter,$value='') {
   global $DBInfo;
   $pages = $DBInfo->getPageLists();
 
-  $test=preg_match("/^(\d+)\s*,?\s*(simple|nobr)?$/",$value,$match);
+  $test=preg_match("/^(\d+)\s*,?\s?(simple|nobr)?$/",$value,$match);
   if ($test) {
-    $count= (int) $match[1];
+    $count= intval($match[1]);
     $mode=$match[2];
   }
-  #$count= (int) $value;
   if ($count <= 0) $count=1;
   $counter= $count;
 
-  $max=sizeof($pages)-1;
-
+  $max=sizeof($pages);
   $number=min($max,$counter);
+
   $selected=array_rand($pages,$number);
+
+  if ($number==1)
+    $selected=array($selected);
 
   foreach ($selected as $idx) {
     $item=$pages[$idx];
@@ -1081,7 +1083,7 @@ EXTRA;
 
     $extra=<<<EXTRA
   <tr><td><b>Mail</b>&nbsp;</td><td><input type="text" size="40" name="email" value="$email" /></td></tr>
-  <tr><td><b>CSS URL </b>&nbsp;</td><td><input type="text" size="40" name="user_css" value="$css" /><br />("None" for disable CSS)</td></tr>
+  <tr><td><b>CSS URL </b>&nbsp;</td><td><input type="text" size="40" name="user_css" value="$css" /><br />("None" for disabling CSS)</td></tr>
 EXTRA;
     $logout="<input type='submit' name='logout' value='"._("logout")."' /> &nbsp;";
   }
