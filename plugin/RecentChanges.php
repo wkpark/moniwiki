@@ -167,7 +167,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     } else
       $icon= $formatter->link_tag($pageurl,"?action=diff",$formatter->icon[diff]);
 
-    $title= preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$page_name);
+    #$title= preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$page_name);
+    $title= get_title($page_name);
     $title= $formatter->link_tag($pageurl,"",$title,$target);
 
     if (! empty($DBInfo->changed_time_fmt))
