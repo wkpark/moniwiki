@@ -816,7 +816,7 @@ function do_post_savepage($formatter,$options) {
       } else {
         $ret2=wiki_notify($formatter,$options);
         if ($ret2)
-          $options['msg']=sprintf(_("Mail notifications are sented."))."<br />";
+          $options['msg']=sprintf(_("Sent notification mail."))."<br />";
         else
           $options['msg']=sprintf(_("No subscribers found."))."<br />";
       }
@@ -847,7 +847,7 @@ function wiki_notify($formatter,$options) {
   if (!$subs) {
     if ($options['noaction']) return 0;
 
-    $title=_("Nobody subscribed to this page, no mail sented.");
+    $title=_("Nobody subscribed to this page.");
     $formatter->send_header("",$options);
     $formatter->send_title($title,"",$options);
     print "Fail !";
@@ -892,12 +892,12 @@ function wiki_notify($formatter,$options) {
 
   if ($options['noaction']) return 1;
 
-  $title=_("Send mail notification to all subscribers");
+  $title=_("Send notification mails to all subscribers");
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
   $msg= str_replace("@"," at ",$mailto);
-  print "<h2>".sprintf(_("Mail sented successfully"))."</h2>";
-  printf(sprintf(_("mail sented to '%s'"),$msg));
+  print "<h2>".sprintf(_("Mails are sent successfully"))."</h2>";
+  printf(sprintf(_("mails are sent to '%s'"),$msg));
   $formatter->send_footer("",$options);
   return;
 }
