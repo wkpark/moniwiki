@@ -1045,9 +1045,9 @@ class Formatter {
     # WikiName rule: WikiName ILoveYou (imported from the rule of NoSmoke)
     # protect WikiName rule !WikiName
     "(?<![a-z])\!?(?:\/?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b|".
-    # macro rule [[Hello(World)]]
-    "(?<!\[)\[([^\[:,\s\d][^\[:,]+)\](?!\])|".
-    # bracketted with double quotes ["Hello World"]
+    # single bracketed name [Hello World]
+    "(?<!\[)\[([^\[:,\s][^\[:,]+)\](?!\])|".
+    # bracketed with double quotes ["Hello World"]
     "(?<!\[)\[\\\"([^\\\"]+)\\\"\](?!\])|".
   # "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
     "($urlrule)|".
@@ -1649,7 +1649,7 @@ class Formatter {
            #if (preg_match("/^(\*\s*)/",$line,$limatch)) {
            if ($line[0]=='*') {
              $limatch[1]='*';
-             $line=preg_replace("/^(\*\s*)/","<li>",$line);
+             $line=preg_replace("/^(\*\s?)/","<li>",$line);
              if ($indent_list[$in_li] == $indlen) $line="</li>\n".$line;
              $numtype="";
              $indtype="ul";
