@@ -115,7 +115,9 @@ function do_Blog($formatter,$options) {
     $lines=explode("\n",$raw_body);
     $count=count($lines);
 
-    if ($options['id']=='Anonymous') $id=$_SERVER['REMOTE_ADDR'];
+    if ($options['id']=='Anonymous')
+      $id=$options['name'] ?
+        stripslashes($options['name']):$_SERVER['REMOTE_ADDR'];
     else $id=$options['id'];
 
     if ($options['value']) {
@@ -229,10 +231,12 @@ function do_Blog($formatter,$options) {
         <input type="submit" name="button_refresh" value="Refresh" /></div>';
 
     print "<form method='post' action='$url'>\n";
+    if ($options['id'] == 'Anonymous')
+      print '<b>'._("Name")."</b>: <input name='name' size='15' maxlength='15' value='$options[name]' />\n";
     if ($options['value'])
       print "<input type='hidden' name='value' value='$options[value]' />\n";
     else
-      print "<b>Title</b>: <input name='title' value='$options[title]' size='70' maxlength='70' style='width:200' /><br />\n";
+      print '<b>'._("Title")."</b>: <input name='title' value='$options[title]' size='70' maxlength='70' style='width:300px' /><br />\n";
     print <<<FORM
 <textarea class="wiki" id="content" wrap="virtual" name="savetext"
  rows="$rows" cols="$cols" class="wiki">$savetext</textarea><br />
