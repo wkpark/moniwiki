@@ -6,7 +6,7 @@
 // $Id$
 
 class Blog_cache {
-  function get_blogs() {
+  function get_all_blogs() {
     global $DBInfo;
 
     $blogs=array();
@@ -53,17 +53,18 @@ class Blog_cache {
     $temp= explode("\n",$raw);
 
     foreach ($temp as $line) {
-      if (preg_match('/^ \* ([^ ]+)(?=\s|$)/',$line,$match)) {
-        $category=$match[1];
+      if (preg_match('/^ \* ([^:]+)(?=\s|:|$)/',$line,$match)) {
+        $category=rtrim($match[1]);
         if (!$categories[$category])
           // include category page itself.
           $categories[$category]=array($category);
       } else if ($category
-        and preg_match('/^\s{2,}\* ([^ ]+)(?=\s|$)/',$line,$match)) {
+        and preg_match('/^\s{2,}\* ([^:]+)(?=\s|:|$)/',$line,$match)) {
         // sub category (or blog pages list)
-        $categories[$category][]=$match[1];
+        $subcategory=rtrim($match[1]);
+        $categories[$category][]=$subcategory;
         // all items are regarded as a category
-        $categories[$match[1]]=array($match[1]);
+        $categories[$subcategory]=array($subcategory);
       }
     }
     return $categories;
@@ -72,41 +73,18 @@ class Blog_cache {
   function get_simple($blogs,$options) {
     global $DBInfo;
 
-    $daterule=$options['date'];
-    if (!$daterule)
-      $daterule=Blog_cache::get_daterule();
-
-    $rule="/^($daterule\d*)".'_2e('.implode('|',$blogs).')$/';
-
     $logs=array();
 
-    $handle = @opendir($DBInfo->cache_dir."/blogchanges");
-    if (!$handle) return array();
+    foreach ($blogs as $blog) {
+      $pagename=$DBInfo->keyToPagename($blog);
+      $pageurl=_urlencode($pagename);
+      $file=$DBInfo->pageToKeyname($blog); // XXX
+      $fname=$DBInfo->cache_dir.'/blog/'.$file;
 
-    while (($file = readdir($handle)) !== false) {
-      $fname=$DBInfo->cache_dir."/blogchanges/".$file;
-      if (is_dir($fname)) continue;
-      $filelist[] = $file;
-    }
-    closedir($handle);
-
-    rsort($filelist);
-
-    while ((list($key, $file) = each ($filelist))) {
-      if (preg_match($rule,$file,$match)) {
-        $fname=$DBInfo->cache_dir."/blogchanges/".$file;
-        $datestamp=$match[1];
-        $blog=$match[2];
-        $pagename=$DBInfo->keyToPagename($blog);
-
-        $items=file($fname);
-        foreach ($items as $line) {
-          list($author,$datestamp,$dummy)=explode(' ',$line);
-          #$datestamp[10]=' ';
-          #$timestamp= strtotime($datestamp." GMT");
-          #$datestamp= date("Ym",$timestamp);
-          $logs[]=explode(' ',$pagename." ".rtrim($line),4);
-        }
+      $items=file($fname);
+      foreach ($items as $line) {
+        list($author,$datestamp,$dummy)=explode(' ',$line);
+        $logs[]=explode(' ',$pageurl.' '.rtrim($line),4);
       }
     }
     return $logs;
@@ -124,14 +102,14 @@ class Blog_cache {
     $pages=array_map('_preg_search_escape',$pages);
     if ($pages) $pagerule=implode('|',$pages);
     else $pagerule='.*';
-    $rule="/^($date\d*)_2e($pagerule)$/";
+    $rule="/^($date\d*)\.($pagerule)$/";
 
     while ($file = readdir($handle)) {
       $fname=$DBInfo->cache_dir."/blogchanges/".$file;
       if (is_dir($fname)) continue;
 
-      $file=str_replace('_2f','/',$file); // XXX
-      if (preg_match($rule,$file,$match))
+      $pagename=$DBInfo->keyToPagename($file);
+      if (preg_match($rule,$pagename,$match))
         $blogs[]=$match[2];
     }
     #print_r($blogs);
@@ -161,6 +139,7 @@ class Blog_cache {
 
     foreach ($blogs as $blog) {
       $pagename=$DBInfo->keyToPagename($blog);
+      $pageurl=_urlencode($pagename);
       $page=$DBInfo->getPage($pagename);
 
       $raw=$page->get_raw_body();
@@ -169,7 +148,7 @@ class Blog_cache {
       foreach ($temp as $line) {
         if (!$state) {
           if (preg_match("/^({{{)?#!blog\s([^ ]+\s($date"."[^ ]+)\s.*)$/",$line,$match)) {
-            $entry=explode(" ",$pagename." ".$match[2],4);
+            $entry=explode(' ',$pageurl.' '.$match[2],4);
             if ($match[1]) $endtag='}}}';
             $state=1;
           }
@@ -261,7 +240,8 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
         $category_pages=array($options['category']);
       }
     }
-  }
+  } else
+    $opts['all']=1;
 
   foreach ($opts as $opt)
     if ($limit= intval($opt)) break;
@@ -272,14 +252,10 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
 
   #print_r($category_pages);
   if (in_array('all',$opts) or $category_pages) {
-    if (in_array('summary',$opts))
-      $blogs=Blog_cache::get_rc_blogs($date,$category_pages);
-    else
-      $blogs=Blog_cache::get_blogs();
+    $blogs=Blog_cache::get_rc_blogs($date,$category_pages);
   } else if ($blog_page)
-    $blogs=array($DBInfo->pageToKeyname($blog_page));
-  else
-    $blogs=array($DBInfo->pageToKeyname($formatter->page->name));
+    //$blogs=array($DBInfo->pageToKeyname($blog_page));
+    $blogs=array($blog_page);
 
 #  if (empty($blogs)) {
 #    // no blog entries found
@@ -347,8 +323,17 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
     $datetag='';
 
     $url=qualifiedUrl($formatter->link_url(_urlencode($page)));
-    if (!$opts['nouser'] and $user and $DBInfo->hasPage($user))
-      $user=$formatter->link_tag(_rawurlencode($user),'',$user);
+    if (!$opts['nouser']) {
+      if (preg_match('/^[\d\.]+$/',$user)) {
+        if ($DBInfo->interwiki['Whois'])
+          $user='<a href="'.$DBInfo->interwiki['Whois'].$user.'">'.
+            _("Anonymous").'</a>';
+        else
+          $user=_("Anonymous");#"[$user]";
+      } else if ($DBInfo->hasPage($user)) {
+        $user=$formatter->link_tag(_rawurlencode($user),'',$user);
+      }
+    }
 
     if (!$title) continue;
 
