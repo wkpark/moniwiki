@@ -22,7 +22,35 @@ function processor_gnuplot($formatter="",$value="") {
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
 
-  $plt=$value;
+  $default_size="set size 0.5,0.6";
+
+  $body=$plt=$value;
+  while ($body and $body[0] == '#') {
+    # extract first line
+    list($line, $body) = explode("\n",$body, 2);
+
+    # skip comments (lines with two hash marks)
+    if ($line[1] == '#') continue;
+
+    # parse the PI
+    list($verb, $arg) = explode(' ',$line,2);
+    $verb = strtolower($verb);
+    $arg = rtrim($arg);
+
+    if (in_array($verb,array('#size'))) {
+      $args= explode('x',$arg,2);
+      $xsize=intval($args[0]);$ysize=intval($args[1]);
+    }
+  }
+  if ($xsize != '') {
+    if ($xsize > 640 or $xsize < 100) $xscale=0.5;
+    if ($xscale and ($ysize > 480 or $ysize < 100)) $yscale=0.6;
+    $xscale=$xsize/640.0;
+    
+    if (empty($yscale)) $yscale=$xscale/0.5*0.6;
+
+    $size='set size '.$xscale.','.$yscale;
+  } else $size=$default_size;
 
 # a sample for testing
 #  $plt='
@@ -39,12 +67,12 @@ function processor_gnuplot($formatter="",$value="") {
   
   #print "<pre>$plt</pre>";
   
+  $plt="\n".$size."\n".$plt;
   $uniq=md5($plt);
 
   $outpath="$cache_dir/$uniq.png";
 
   $src="
-set size 0.5,0.6
 set term png
 set out '$outpath'
 $plt
