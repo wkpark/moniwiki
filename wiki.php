@@ -1545,7 +1545,13 @@ class Formatter {
     } else
       #$page=preg_replace("/\s+/","",$word); # concat words
       $page=normalize($word); # concat words
-    if ($text) $word=$text;
+    if ($text) {
+      if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
+        $text=str_replace('&','&amp;',$text);
+        $word="<img border='0' alt='$word' src='$text' /></a>";
+      } else
+        $word=$text;
+    }
 
     # User namespace extension
     if ($page[0]=='~' and ($p=strpos($page,'/'))) {
