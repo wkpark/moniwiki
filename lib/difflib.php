@@ -708,6 +708,7 @@ class DiffFormatter
      */
     var $trailing_context_lines = 0;
 
+    var $trailing_cr = "\n";
     /**
      * Format a diff.
      *
@@ -807,7 +808,7 @@ class DiffFormatter
     }
     
     function _start_block($header) {
-        echo $header;
+        echo $header."\n";
     }
     
     function _end_block() {
@@ -815,7 +816,7 @@ class DiffFormatter
 
     function _lines($lines, $prefix = ' ') {
         foreach ($lines as $line)
-            echo "$prefix $line\n";
+            echo "$prefix$line".$this->trailing_cr;
     }
     
     function _context($lines) {
@@ -823,10 +824,10 @@ class DiffFormatter
     }
 
     function _added($lines) {
-        $this->_lines($lines, ">");
+        $this->_lines($lines, "> ");
     }
     function _deleted($lines) {
-        $this->_lines($lines, "<");
+        $this->_lines($lines, "< ");
     }
 
     function _changed($orig, $_final) {
@@ -960,7 +961,7 @@ class MoniWikiDiffFormatter extends DiffFormatter
     }
 
     function _start_block($header) {
-        echo $header;
+        echo $header."\n";
     }
 
     function _end_block() {
@@ -985,6 +986,64 @@ class MoniWikiDiffFormatter extends DiffFormatter
         $diff = new WordLevelDiff($orig, $_final);
         $this->_deleted($diff->orig());
         $this->_added($diff->_final());
+    }
+}
+
+/**
+ * "Unified" diff formatter.
+ *
+ * This class formats the diff in classic "unified diff" format.
+ */
+class UnifiedDiffFormatter extends DiffFormatter
+{
+    function UnifiedDiffFormatter($context_lines = 3) {
+        $this->leading_context_lines = $context_lines;
+        $this->trailing_context_lines = $context_lines;
+    }
+    
+    function _block_header($xbeg, $xlen, $ybeg, $ylen) {
+        if ($xlen != 1)
+            $xbeg .= "," . $xlen;
+        if ($ylen != 1)
+            $ybeg .= "," . $ylen;
+        return "@@ -$xbeg +$ybeg @@";
+    }
+
+    function _added($lines) {
+        $this->_lines($lines, "+");
+    }
+    function _deleted($lines) {
+        $this->_lines($lines, "-");
+    }
+    function _changed($orig, $final) {
+        $this->_deleted($orig);
+        $this->_added($final);
+    }
+}
+
+/**
+ * "Delta" diff formatter for the RcsLite
+ *
+ * This class formats the diff in classic "Delta diff" format.
+ */
+class DeltaDiffFormatter extends DiffFormatter
+{
+    function _block_header($xbeg, $xlen, $ybeg, $ylen) {
+        $del = 'd'. $xbeg.' '.$xlen;
+        $add = 'a'. ($xbeg + $xlen - 1).' '.$ylen;
+
+        return ($xlen ? ($ylen ? $del. "\n" .$add : $del) : $add);
+    }
+
+    function _added($lines) {
+        $this->_lines($lines, "");
+    }
+    function _deleted($lines) {
+        #$this->_lines($lines, "");
+    }
+    function _changed($orig, $final) {
+        #$this->_deleted($orig);
+        $this->_added($final);
     }
 }
 
