@@ -16,12 +16,19 @@
 include "wikilib.php";
 
 function preg_escape($val) {
-  return preg_replace('/([\^\.\{\}\|\(\)\/\\\\!]{1})/','\\\\\1',$val);
+  return preg_replace('/([\^\.\[\]\{\}\|\(\)\/\\\\!]{1})/','\\\\\1',$val);
 }
 
 function get_scriptname() {
   // Return full URL of current page.
   return $_SERVER["SCRIPT_NAME"];
+}
+
+function _rawurlencode($url) {
+  # MoinMoin style, have to be merged with WikiDB XXX
+  $name=rawurlencode($url);
+  $urlname=preg_replace('/%2F/i','/',$name);
+  return $urlname;
 }
 
 function qualifiedUrl($url) {
@@ -277,6 +284,7 @@ class WikiDB {
     $this->icon[help]="<img src='$this->imgs_dir/moin-help.gif' alt='H' align='middle' border='0' />";
     $this->icon[www]="<img src='$this->imgs_dir/moin-www.gif' alt='www' align='middle' border='0' />";
     $this->icon[mailto]="<img src='$this->imgs_dir/moin-www.gif' alt='www' align='middle' border='0' />";
+    $this->icon[updated]="<img src='$this->imgs_dir/moin-updated.gif' alt='U' align='middle' border='0' />";
     $this->icon[user]="UserPreferences";
     }
 
@@ -483,7 +491,8 @@ class WikiDB {
       $lines=file($this->editlog_name);
 
     $lines=$this->reverse($lines);
-    unset($lines[0]); # delete last dummy
+    if (!$lines[0]); # delete last dummy
+      unset($lines[0]);
 
     if ($quick) {
       foreach($lines as $line) {
@@ -495,12 +504,15 @@ class WikiDB {
       $lines=$out;
     }
 
-    #return file($this->editlog_name);
+#    print_r($lines);
     return $lines;
   }
 
   function savePage($page,$comment="") {
+    $user=new User();
     $REMOTE_ADDR=$_SERVER[REMOTE_ADDR];
+    $comment=escapeshellcmd($comment);
+    $pagename=escapeshellcmd($page->name);
 
     $key=$this->getPageKey($page->name);
 
@@ -509,7 +521,8 @@ class WikiDB {
        return -1;
     fwrite($fp, $page->body);
     fclose($fp);
-    system("ci -q -t-".$page->name." -l -m'".$REMOTE_ADDR.";;".$comment."' ".$key);
+    system("ci -q -t-".$pagename." -l -m'".$REMOTE_ADDR.";;".
+                       $user->id.";;".$comment."' ".$key);
     $this->addLogEntry($page->name, $REMOTE_ADDR,$comment,"SAVE");
     return 0;
   }
@@ -521,7 +534,7 @@ class WikiDB {
 
     $delete=@unlink($key);
 #    system("ci -q -t-".$page->name." -l -m'".$REMOTE_ADDR.";;".$comment."' ".$key);
-    $this->addLogEntry($page->name, $REMOTE_ADDR,$comment,"DEL");
+    $this->addLogEntry($page->name, $REMOTE_ADDR,$comment,"SAVE");
   }
 }
 
@@ -616,18 +629,12 @@ class WikiPage {
       $this->rev=$options[rev];
     else
       $this->rev=0; # current rev.
-    $this->name = $name;
-    $this->filename = $this->_filename($name);
-    $this->urlname = $this->_urlname($name);
-    $this->body = "";
+    $this->name= $name;
+    $this->filename= $this->_filename($name);
+    $this->urlname= _rawurlencode($name);
+    $this->body= "";
   }
 
-  function _urlname($pagename) {
-    # MoinMoin style, have to be merged with WikiDB XXX
-    $name=rawurlencode($pagename);
-    $urlname=preg_replace('/%2F/i','/',$name);
-    return $urlname;
-  }
 
   function _filename($pagename) {
     # have to be factored out XXX
@@ -968,6 +975,7 @@ class Formatter {
      $query_string= $pageurl.$query_string;
    } else
      $query_string= $pageurl.$query_string;
+   #$query_string= stripslashes($query_string);
    return sprintf("%s%s%s", $this->prefix, $sep, $query_string);
  }
 
@@ -1273,7 +1281,7 @@ class Formatter {
    $state=0;
    $flag=0;
 
-   $url=$this->link_url($this->page->name);
+   $url=$this->link_url($this->page->urlname);
 
    $out="<h2>Revision History</h2>\n";
    $out.="<table class='info' border='0' cellpadding='3' cellspacing='2'>\n";
@@ -1306,6 +1314,8 @@ class Formatter {
            $dummy=explode(";;",$line);
            $ip=$dummy[0];
            $user=$dummy[1];
+           if ($user && $user!='Anonymous')
+             $ip=$user;
            $comment=$dummy[2];
            $state=4;
            break;
@@ -1332,7 +1342,7 @@ class Formatter {
               $out.="<input type='checkbox' name='range[$flag]' value='$rev' />";
            $out.="</th></tr>\n";
            if ($comment)
-              $out.="<tr><td colspan=3>$comment&nbsp;</td></tr>\n";
+              $out.="<tr><td class='info' colspan='5'>$comment&nbsp;</td></tr>\n";
            $state=1;
            $flag++;
            break;
@@ -1378,16 +1388,21 @@ class Formatter {
    return $out;
  }
 
- function get_rev() {
-   $fp=popen("rlog ".$this->page->filename,"r");
+ function get_rev($mtime="") {
+   if ($mtime) {
+      $date=date('Y/m/d h:m:s',$mtime);
+      if ($date) 
+         $opt="-d\<$date";
+   }
+   $fp=popen("rlog $opt ".$this->page->filename,"r");
 #   if (!$fp)
 #      print "No older revisions available";
 # XXX
    while (!feof($fp)) {
       $line=fgets($fp,1024);
-      preg_match("/^head:\s+(\d+)\.(\d+)$/",$line,$match);
-      if ($match[2]) {
-         $rev=$match[1].".".($match[2]-1);
+      preg_match("/^revision\s+([\d\.]+$)/",$line,$match);
+      if ($match[1]) {
+         $rev=$match[1];
          break;
       }
    }
@@ -1469,8 +1484,9 @@ class Formatter {
 
    if (!$rev1 and !$rev2) {
       $rev1=$this->get_rev();
-   }
-   else if ($rev1==$rev2) $rev2="";
+   } else if (0 === strcmp($rev1 , (int)$rev1)) {
+      $rev1=$this->get_rev($rev1);
+   } else if ($rev1==$rev2) $rev2="";
    if ($rev1) $option="-r$rev1 ";
    if ($rev2) $option.="-r$rev2 ";
 
@@ -1697,15 +1713,14 @@ FOOT;
    // Generate and output the top part of the HTML page.
    global $DBInfo;
 
-   $name=$this->page->name;
-
+   $name=$this->page->urlname;
    $action=$this->link_url($name);
 
    # find upper page
    $pos=strrpos($name,"/");
    if ($pos > 0) $upper=substr($name,0,$pos);
 
-   if (!$title) $title=$name;
+   if (!$title) $title=$this->page->name;
    # setup title variables
    $title="<font class='title'><b>$title</b></font>";
    if ($link)
@@ -1796,7 +1811,7 @@ MSG;
     $cols=$options[cols] > 60 ? $options[cols]: $cols;
 
     $preview=$options[preview];
-    $url=$this->link_url($this->page->name);
+    $url=$this->link_url($this->page->urlname);
 
     if (!$this->page->exists()) {
        $options[linkto]="?action=edit&amp;template=";
@@ -1918,6 +1933,7 @@ if (!empty($_SERVER[PATH_INFO])) {
    if (!$pagename) {
       $pagename = $DBInfo->frontpage;
    }
+   $pagename=stripslashes($pagename);
 } else if (!empty($_SERVER[QUERY_STRING])) {
    if (isset($goto)) $pagename=$goto;
    else {
@@ -2023,7 +2039,7 @@ if ($_SERVER[REQUEST_METHOD]=="POST") {
       print $formatter->link_to("#editor",_("Goto Editor"));
    } else {
       $page->write($savetext);
-      $ret=$DBInfo->savePage($page);
+      $ret=$DBInfo->savePage($page,$comment);
       if ($ret == -1)
         $options[msg]=$formatter->link_tag($page->name)." is not editable";
       else
@@ -2070,7 +2086,7 @@ if ($pagename) {
            $formatter->send_title($page->name,"",$options);
            #$formatter->send_page($twins."\n----\n");
            $formatter->send_page($twins);
-           print "<br /><br />or ".
+           echo "<br /><br />or ".
              $formatter->link_to("?action=edit",_("Create this page"));
         } else {
            $formatter->send_title($page->name." Not Found","",$options);
@@ -2128,7 +2144,10 @@ if ($pagename) {
       }
       $formatter->send_header("",$options);
       $formatter->send_title("Diff for $rev ".$page->name,"",$options);
-      print $formatter->get_diff($rev,$rev2);
+      if ($date)
+         print $formatter->get_diff($date);
+      else
+         print $formatter->get_diff($rev,$rev2);
       print "<br /><hr />\n";
       $formatter->send_page();
       $args[showpage]=1;
