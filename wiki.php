@@ -697,6 +697,10 @@ class WikiDB {
 
   function addLogEntry($page_name, $remote_name,$comment,$action="SAVE") {
     $user=new User();
+    if ($user->id != 'Anonymous') {
+      $udb=new UserDB($this);
+      $udb->checkUser(&$user);
+    }
     $comment=strtr($comment,"\t"," ");
     $fp_editlog = fopen($this->editlog_name, 'a+');
     $time= time();
@@ -773,6 +777,10 @@ class WikiDB {
 
   function savePage($page,$comment="",$options=array()) {
     $user=new User();
+    if ($user->id != 'Anonymous') {
+      $udb=new UserDB($this);
+      $udb->checkUser(&$user);
+    }
     $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
     $comment=escapeshellcmd($comment);
     $pagename=escapeshellcmd($page->name);
@@ -791,7 +799,7 @@ class WikiDB {
     fclose($fp);
     $ret=system("ci -l -x,v/ -q -t-\"".$pagename."\" -m\"".$REMOTE_ADDR.';;'.
             $user->id.';;'.$comment."\" ".$key);
-    # check minor edits
+    # check minor edits XXX
     $minor=0;
     if ($this->use_minorcheck or $options['minorcheck']) {
       $info=$page->get_info();
@@ -2444,8 +2452,8 @@ class Formatter {
   <meta http-equiv="Content-Type" content="text/html;charset=$DBInfo->charset" /> 
   $DBInfo->metatags
   $keywords
-  <title>$DBInfo->sitename: $options[title]</title>\n
 EOS;
+  print "  <title>$DBInfo->sitename: ".$this->page->title."</title>\n";
       if ($options['css_url'])
          print '<link rel="stylesheet" type="text/css" href="'.
                $options['css_url'].'"/>';
@@ -2906,15 +2914,14 @@ if ($pagename) {
   global $value,$action;
   # get primary variables
   if ($_SERVER['REQUEST_METHOD']=="POST") {
-    if (!$GLOBALS['HTTP_RAW_POST_DATA']) {
-      $action=$_POST['action'];
-      $value=$_POST['value'];
-      $goto=$_POST['goto'];
-    } else {
+    if ($GLOBALS['HTTP_RAW_POST_DATA']) {
       # RAW posted data. the $value and $action could be accessed under
       # "register_globals = On" in the php.ini
       $options['value']=$value;
     }
+    $action=$_POST['action'];
+    $value=$_POST['value'];
+    $goto=$_POST['goto'];
   } else if ($_SERVER['REQUEST_METHOD']=="GET") {
     $action=$_GET['action'];
     $value=$_GET['value'];
