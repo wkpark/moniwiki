@@ -29,14 +29,14 @@ function do_rcs($formatter,$options) {
   $formatter->send_title($title,"",$options);
   print "<form method='post'>
 <table border='0'>\n";
-  if ($DBInfo->security->is_protected("rcs",$options))
-    print "<tr><td align='right'>"._("Password").": </td><td><input type='password' name='passwd' /> ".
-    _("Only WikiMaster can execute rcs");
   print "<tr>";
-  print "<td><b>rcs</b> <select name='param' />\n";
+  print "<td valign='top'><b>rcs</b></td><td><select name='param' />\n";
   print "<option value='-kk'>-kk</option>\n";
-  print "<option value='-kkv'>-kkv</option>\n</select>\n</td>\n";
-  print "<td><input type='submit' name='button_rcs' value='apply' /></td>";
+  print "<option value='-kkv'>-kkv</option>\n</select>\n";
+  if ($DBInfo->security->is_protected("rcs",$options))
+    print " <input type='password' name='passwd' /> ".
+    _("Only WikiMaster can execute rcs");
+  print "</tr><tr><td colspan='2'><input type='submit' name='button_rcs' value='apply' /></td>";
   print "</td></tr>\n";
 
   print "
