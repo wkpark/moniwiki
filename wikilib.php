@@ -2046,7 +2046,7 @@ function macro_TitleIndex($formatter="") {
 #    else
       $title=$page;
 
-    $out.= '<li>' . $formatter->word_repl($page,$title)."</li>\n";
+    $out.= '<li>' . $formatter->word_repl('"'.$page.'"',$title)."</li>\n";
   }
   $out.= "</ul>\n";
 
@@ -2068,6 +2068,7 @@ function macro_Icon($formatter,$value='',$extra='') {
 
 function do_RecentChanges($formatter,$options='') {
   $options['trail']='';
+  $options['css_url']=$formatter->url_prefix.'/css/sidebar.css';
   $formatter->send_header("",$options);
   print "<div id='wikiBody'>";
   print macro_RecentChanges($formatter,'nobookmark,moztab',array('target'=>'_content'));
