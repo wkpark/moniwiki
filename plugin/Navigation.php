@@ -53,7 +53,7 @@ function macro_Navigation($formatter,$value) {
   #print_r($indices);
   if ($count > 1) {
     $prev='';
-    $index_text=$index;
+    $index_text=$value;
     if ($group) {
       $index=$value;
       $index_text=substr($index,strlen($group));
