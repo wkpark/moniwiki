@@ -46,9 +46,9 @@ function do_OeKaki($formatter,$options) {
   if (!$name) {
     $title=_("Fatal error !");
     $formatter->send_header("",$options);
-    $formatter->send_title($title);
+    $formatter->send_title($title,"",$options);
     print "<h2>"._("No filename given")."</h2>";
-    $formatter->send_footer();
+    $formatter->send_footer("",$options);
     
     return;
   }
@@ -59,14 +59,17 @@ function do_OeKaki($formatter,$options) {
   $imgpath="$oekaki_dir/$pngname.png";
 
   $dummy=0;
-  while (file_exists($imgpath)) {
+
+  $backup_imgpath=$imgpath;
+  while (file_exists($backup_imgpath)) {
      $dummy=$dummy+1;
      $ufname=$pngname."_".$dummy; // rename file
      $upfilename=$ufname.".png";
-     $imgpath= "$oekaki_dir/$upfilename";
+     $backup_imgpath= "$oekaki_dir/$upfilename";
   }
 
   if ($GLOBALS['HTTP_RAW_POST_DATA']) {
+    if ($backup_imgpath != $imgpath) copy($imgpath,$backup_imgpath);
     $raw=$GLOBALS['HTTP_RAW_POST_DATA'];
     $p=strpos($raw,"\r");
     if ($p < 0) {
@@ -86,7 +89,7 @@ function do_OeKaki($formatter,$options) {
   $extra="<param name='image_canvas' value='$imgurl'>";
   
   $formatter->send_header("",$options);
-  $formatter->send_title(_("Create new picture"));
+  $formatter->send_title(_("Create new picture"),"",$options);
   $prefix=$formatter->prefix;
   $now=time();
   $url_exit= $formatter->link_url($options[page],"?ts=$now");
