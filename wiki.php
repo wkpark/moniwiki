@@ -40,7 +40,7 @@ function _rawurlencode($url) {
 
 function qualifiedUrl($url) {
   global $HTTP_HOST;
-  if (substr($url[0],0,7)=="http://")
+  if (substr($url,0,7)=="http://")
     return $url;
   return "http://$HTTP_HOST$url";
 }
@@ -1013,6 +1013,7 @@ class Formatter {
     $this->sisters=array();
     $this->foots=array();
     $this->gen_pagelinks=0;
+    $this->actions=array();
 
     #$punct="<\"\'}\]\|\;\,\.\!";
     $punct="<\'}\]\|;,\.\)\!";
@@ -2148,9 +2149,13 @@ EOS;
       $menu.= $this->link_to("",'ShowPage').$DBInfo->menu_sep;
     $menu.= $this->link_tag("FindPage");
 
-    if (!$args[noaction])
+    if (!$args[noaction]) {
       foreach ($DBInfo->actions as $action)
-         $menu.= $DBInfo->menu_sep.$this->link_to("?action=$action",$action);
+        $menu.= $DBInfo->menu_sep.$this->link_to("?action=$action",$action);
+      if ($this->actions) 
+        foreach ($this->actions as $action)
+          $menu.= $DBInfo->menu_sep.$this->link_to("?action=$action",$action);
+    }
 
     if ($mtime=$this->page->mtime()) {
       $lastedit=date("Y-m-d",$mtime);
