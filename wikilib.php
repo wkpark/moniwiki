@@ -917,7 +917,7 @@ function do_post_savepage($formatter,$options) {
 
       print $menu;
       print "<div id='wikiPreview'>\n";
-      print $formatter->get_diff("","",$savetext);
+      print $formatter->macro_repl('Diff','',array('text'=>$savetext));
       print "</div>\n";
       $formatter->send_footer();
       return;
