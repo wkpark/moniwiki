@@ -48,7 +48,8 @@ function do_download($formatter,$options) {
   if (!$mimetype) $mimetype="application/x-unknown";
 
   header("Content-Type: $mimetype\r\n");
-  header("Content-Disposition: attachment; filename=$file" );
+  header("Content-Disposition: inline; filename=$file" );
+  #header("Content-Disposition: attachment; filename=$file" );
   header("Content-Description: MoniWiki PHP Downloader" );
   Header("Pragma: no-cache");
   Header("Expires: 0");
