@@ -3081,6 +3081,7 @@ if ($pagename) {
     $value=$_GET['value'];
     $goto=$_GET['goto'];
     $rev=$_GET['rev'];
+    $refresh=$_GET['refresh'];
   }
 
   #print $_SERVER['REQUEST_URI'];
@@ -3093,6 +3094,7 @@ if ($pagename) {
   $page = $DBInfo->getPage($pagename);
 
   $formatter = new Formatter($page,$options);
+  $formatter->refresh=$refresh;
 
   if (!$action or $action=='show') {
     if ($value) { # ?value=Hello
