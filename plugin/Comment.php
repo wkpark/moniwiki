@@ -88,6 +88,7 @@ function do_comment($formatter,$options=array()) {
     $formatter->send_header("",$options);
     $formatter->send_title(_("Preview comment"),"",$options);
     $formatter->send_page($savetext."\n----");
+    $options['savetext']=$savetext;
     print macro_Comment($formatter,'',$options);
     print $formatter->macro_repl('EditHints');
     $formatter->send_footer("",$options);
