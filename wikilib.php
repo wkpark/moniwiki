@@ -26,6 +26,9 @@ function find_needle($body,$needle,$count=0) {
   return $out;
 }
 
+function normalize($title) {
+  return preg_replace("/[\?!$%\.\^;&\*()_\+\/\|\[\]\/ ]/","",ucwords($title));
+}
 
 class UserDB {
   var $users=array();
@@ -1057,7 +1060,7 @@ function macro_Include($formatter,$value="") {
   global $DBInfo;
   static $included=array();
 
-  if ($formatter->gen_pagelinks) return '';
+  $savelinks=$formatter->pagelinks; # don't update pagelinks with Included files
 
   preg_match("/([^'\",]+)(?:\s*,\s*)?(\"[^\"]*\"|'[^']*')?$/",$value,$match);
   if ($match) {
@@ -1074,6 +1077,7 @@ function macro_Include($formatter,$value="") {
     $formatter->send_page($title.$ibody,$opt);
     $out= ob_get_contents();
     ob_end_clean();
+    $formatter->pagelinks=$savelinks;
     return $out;
   } else {
     return "[[Include($value)]]";
@@ -1907,7 +1911,7 @@ function macro_FootNote($formatter,$value="") {
        return "<tt class='foot'><a href='#$idx'>$text</a></tt>";
     }
   }
-  $formatter->foots[]="<tt class='foot'>&#160;&#160&#160;".
+  $formatter->foots[]="<tt class='foot'>&#160;&#160;&#160;".
                       "<a name='$idx'/>".
                       "<a href='#r$idx'>$text</a>&#160;</tt> ".
                       "$value<br/>";
@@ -2287,12 +2291,12 @@ $tex
      $cmd= "cd $vartmp_dir; $dvips -D 600 $uniq.dvi -o $uniq.ps";
      system($cmd);
 
-     $cmd= "$convert -crop 0x0 -density 120x120 $vartmp_dir/$uniq.ps $outpath";
+     $cmd= "$convert -transparent white -crop 0x0 -density 120x120 $vartmp_dir/$uniq.ps $outpath";
      system($cmd);
 
      system("rm $vartmp_dir/$uniq.*");
   }
-  return "<img src='$DBInfo->url_prefix/$cache_dir/$uniq.png' alt='tex'".
+  return "<img class='tex' src='$DBInfo->url_prefix/$cache_dir/$uniq.png' alt='tex'".
          "title=\"$tex\" />";
 }
 
