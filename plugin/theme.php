@@ -9,15 +9,16 @@
 
 function do_theme($formatter,$options) {
   global $DBInfo;
-  if ($options[clear]) {
+
+  if ($options['clear']) {
     if ($options[id]=='Anonymous') {
     header("Set-Cookie: MONI_THEME=dummy; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname());
     } else {
       # save profile
       $udb=new UserDB($DBInfo);
       $userinfo=$udb->getUser($options[id]);
-      $userinfo->info[theme]="";
-      $userinfo->info[css_url]="";
+      $userinfo->info['theme']="";
+      $userinfo->info['css_url']="";
       $udb->saveUser($userinfo);
     }
     $msg="== "._("Theme cleared. Goto UserPreferences.")." ==";
@@ -40,6 +41,7 @@ function do_theme($formatter,$options) {
         $userinfo->info[theme]=$options[theme];
         $userinfo->info[css_url]=$options[css_url];
         $udb->saveUser($userinfo);
+        $msg="Goto ".$formatter->link_repl("UserPreferences");
       } else {
         $title="";
         $msg=<<<FORM
@@ -69,6 +71,7 @@ FORM;
 
 function macro_theme($formatter,$value) {
   global $DBInfo;
+  if ($DBInfo->theme) return "Theme disabled !";
   $out="
 <form method='get'>
 <input type='hidden' name='action' value='theme' />
@@ -89,7 +92,7 @@ function macro_theme($formatter,$value) {
   $out.="
     </select>&nbsp; &nbsp; &nbsp;
     <input type='submit' name='show' value='Show this theme' /> &nbsp;
-    <input type='submit' name='clear' value='Clear theme cookie' /> &nbsp;
+    <input type='submit' name='clear' value='Clear cookie' /> &nbsp;
 </form>
 ";
   return $out;
