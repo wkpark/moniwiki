@@ -57,8 +57,10 @@ class MetaWiki:
         ('letters/$C',
          NO_CUT_REGEX,'\.\./(.*?).html'),
       "Wiki":
-        ("http://sunir.org/apps/meta.pl?list=WikiWiki",
-         NO_CUT_REGEX, DEFAULT_MATCH_REGEX),
+        #("http://sunir.org/apps/meta.pl?list=WikiWiki",
+        # NO_CUT_REGEX, DEFAULT_MATCH_REGEX),
+        ("search=$",
+         USEMOD_CUT_REGEX,USEMOD_MATCH_REGEX),
       "wikiX":
         ("AllPages", NO_CUT_REGEX, '\?display=(.*?)"'),
       "PhpWiki":
@@ -68,7 +70,7 @@ class MetaWiki:
       "PediaIndex":
         ("Special:Allpages",
          '^<table>(.*)</table>',
-         '(/w/wiki.phtml\?title=Special:Allpages&amp;from.*?)"')
+         '(http://.*/w/wiki.phtml\?title=Special:Allpages&amp;from.*?)"')
     };
 
     def __init__(self):
@@ -77,8 +79,6 @@ class MetaWiki:
 	return
 
     def _fetch(self,wikiname,type,urls):
-        urllib.URLopener.version =
-            "Mozilla/4.0 (compatible; MSIE 6.0; Windows NT 5.1)"
         catcmd = 'cat %s'
         num=0
         for url in urls:
@@ -151,8 +151,6 @@ class MetaWiki:
         fp.close()
         urls=[]
         for url in all:
-          if not re.match(r'^http://',url):
-            url='http://en.wikipedia.org' + url
           urls.append(string.replace(url,'&amp;','&'))
         self._fetch(wikiname,type,urls)
 
