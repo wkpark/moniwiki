@@ -1,0 +1,188 @@
+body {
+  font-family:Georgia,Verdana,Lucida,sans-serif;
+  background-color:#000000; color: #B2E0FA;
+}
+a:link {color:#993333;}
+a:visited {color:#CE5C00;}
+a:hover {background-color:#E2ECE5;color:#000;}
+.wikiTitle {
+  font-family:palatino, Georgia,Tahoma,Lucida,sans-serif;
+  font-size:28px;
+  font-weight:bold;
+  color:#639ACE;
+  text-decoration: none;
+}
+
+tt.wiki {font-family:Lucida Typewriter,fixed,lucida,fixed;font-size:12px;}
+tt.foot {
+  font-family:Tahoma,lucida,fixed;
+  font-size:11px;
+  vertical-align: super;
+}
+
+tt.sister {
+  font-family:Tahoma,lucida,fixed;
+  font-size:11px;
+  vertical-align: super;
+  text-decoration: none;
+}
+
+pre.wiki {
+  padding-left:6px;
+  padding-top:6px; 
+  font-family:Lucida TypeWriter,monotype,lucida,fixed;font-size:14px;
+  background-color:#000000;
+  color:#FFD700; /* gold */
+}
+
+pre.quote {
+  padding-left:6px;
+  padding-top:6px;
+  white-space: -pre-wrap; /* */
+  white-space: -moz-pre-wrap; 
+  white-space: -o-pre-wrap; 
+  font-family:Georgia,monotype,lucida,fixed;font-size:14px;
+  /* background-color:#F7F8E6; */
+  background-color: #22516C;
+}
+
+textarea.wiki { width:100%; }
+
+table.wiki {
+/* background-color:#E2ECE5;*/
+/* border-collapse: collapse; */
+  border: 0px outset #E2ECE5;
+}
+
+td.wiki {
+  background-color:#16384C; 
+/*  background-color:#E2ECE2; */
+/* border-collapse: collapse; */
+  border: 0px inset #E2ECE5;
+}
+
+th.info {
+  background-color:#E2ECE2;
+/*  border-collapse: collapse; */
+/*  border: 1px solid silver; */
+}
+
+h1,h2,h3,h4,h5 {
+  font-family:Tahoma;
+/* background-color:#E07B2A; */
+  padding-left:6px;
+  border-bottom:1px solid #999;
+}
+
+#wikiBody {
+  padding-left:6px;
+  padding-right:6px;
+}
+
+#wikiPreview {
+  border: 2px solid #a0a0a0;
+  margin: 5px 5px 5px 5px;
+  padding: 5px 1em 5px 1em;
+}
+
+div.diff-added {
+   font-family:Verdana,Lucida Sans TypeWriter,Lucida Console,fixed;
+   font-size:12px;
+   background-color:#B0FFB0;
+   color:black;
+}
+
+div.diff-removed {
+   font-family:Verdana,Lucida Sans TypeWriter,Lucida Console,fixed;
+   font-size:12px;
+   background-color:#E9EAB8;
+   color:black;
+}
+
+div.diff-sep {
+   font-family:georgia,Verdana,Lucida Sans TypeWriter,Lucida Console,fixed;
+   font-size:12px;
+   background-color:#000000;
+   color:#FFD700; /* gold */
+}
+
+span.diff-added, ins.diff-added {
+  color:black;
+  background-color: #60FF60;
+  text-decoration: none;
+}
+
+span.diff-removed, del.diff-removed {
+  color:black;
+  background-color: #FF0000;
+}
+
+td.message {
+    margin-top: 6pt;
+    background-color: #E8E8E8;
+    border-style:solid;
+    border-width:1pt;
+    border-color:#990000;
+    color:#440000;
+    padding:5px;
+    width:100%;
+}
+
+.hint {
+   font-family:Georgia,Verdana,Lucida,sans-serif;
+   font-size:10px;
+   /* background-color:#E2DAE2; */
+   background-color: #5B4343;
+}
+
+.highlight {
+   background-color:#FFFF40;
+}
+
+table.goto {
+}
+
+span.goto, input.goto {
+   font-family:Tahoma,Lucida,sans-serif;
+   font-size:10px;
+}
+
+table.closure, td.closure{
+  background-color:#5B4343;
+}
+
+div.indent {
+  padding-left:2em;
+}
+
+#wikiTrailer {
+  padding-left: 20px;
+  padding-bottom: 5px;
+}
+
+#smileyChooser {
+  border:0px;
+}
+
+/* Blog CSS */
+a.purple { font-size: 10px; text-decoration:none;}
+div.blog { width:90%; padding: 0em 1em 0em 1em; }
+div.blog-user { font-size:10px; }
+div.blog-title { font-size:16px; font-weight:bold; }
+div.blog-comments { padding-left:2em; }
+div.blog-date { font-size:18px; font-weight:bold; padding-bottom:5px;}
+span.blog-user { font-size:10px; }
+div.blog-action { font-size:10px;}
+li.blog-list { list-style-type: none;}
+
+/* HierarchicalWiki */
+span.group {
+  font-family:Tahoma,Lucida,sans-serif;
+  font-size:10px;
+}
+
+/* enscript syntax */
+div.wikiPre i,div.wikiPre b{
+  font-weight: normal;
+  font-style: normal;
+}

@@ -1,0 +1,3 @@
+<Files mywiki>
+SetHandler application/x-httpd-php
+</Files>

@@ -20,7 +20,7 @@
  <form name="go" id="go" method="get" action='$url' onsubmit="return moin_submit();">
  <input type="text" name="value" size="20" style="width:100" />
  <input type="hidden" name="action" value="goto" />
- <input type="submit" name="goto" value="Go" class="goto" style="width:23px;" />
+ <input type="submit" name="status" value="Go" class="goto" style="width:23px;" />
  </form>
 */
 
@@ -113,23 +113,23 @@ function keypresshandler(e){
 		if ((ch == '?' || ch== '/') && EventStatus == 'INPUT') {
 			var my=""+document.go.elements['value'].value;
 			if (ch == '?') {
-			 if (document.go.elements['goto'].value == '?') {
+			 if (document.go.elements['status'].value == '?') {
                 	  document.go.elements['action'].value="goto";
-                	  document.go.elements['goto'].value="Go";
+                	  document.go.elements['status'].value="Go";
 			  window.status="GoTo";
 			 } else {
                 	  document.go.elements['action'].value="titlesearch";
-                	  document.go.elements['goto'].value="?";
+                	  document.go.elements['status'].value="?";
 			  window.status="TitleSearch";
 			 }
 			} else {
-			 if (document.go.elements['goto'].value == '/') {
+			 if (document.go.elements['status'].value == '/') {
                 	  document.go.elements['action'].value="goto";
-                	  document.go.elements['goto'].value="Go";
+                	  document.go.elements['status'].value="Go";
 			  window.status="GoTo";
 			 } else {
                 	  document.go.elements['action'].value="fullsearch";
-                	  document.go.elements['goto'].value="/";
+                	  document.go.elements['status'].value="/";
 			  window.status="FullSearch";
 			 }
 			}
@@ -139,7 +139,7 @@ function keypresshandler(e){
 			document.go.elements['value'].blur();
 			document.go.elements['value'].value='';
                		document.go.elements['action'].value="goto";
-               		document.go.elements['goto'].value="Go";
+               		document.go.elements['status'].value="Go";
 			window.status="GoTo"+window.defaultStatus;
 		}
 		return;
@@ -161,12 +161,12 @@ function keypresshandler(e){
                 // Title search as vi way
                 document.go.elements['value'].focus();
                 document.go.elements['action'].value="titlesearch";
-                document.go.elements['goto'].value="?";
+                document.go.elements['status'].value="?";
                 } else if ( ch == "/") {
                 // Contents search
                 document.go.elements['value'].focus();
                 document.go.elements['action'].value="fullsearch";
-                document.go.elements['goto'].value="/";
+                document.go.elements['status'].value="/";
                 }
         } else if(ch == "c") {
                 self.location = url_prefix + RecentChanges;

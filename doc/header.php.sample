@@ -1,0 +1,11 @@
+<?
+# $title, $logo
+# $menu, $icon, $upper_icon, $rss_icon, $user_link
+# $msg
+?>
+<table border='0'><tr>
+<td colspan='2'><?=$title?></td><td align='right'><?=$logo?></td></tr>
+<tr><td><?=$goto_form?></td></tr>
+<tr><td><?=$menu?></td><td><?=$icons?><?=$rss_icon?></td><td><?=$user_link?></td></tr>
+</table>
+<?=$msg?>

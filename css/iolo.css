@@ -1,0 +1,393 @@
+/*
+ CSS designed by iolo http://hellocity.net/~iolo/moniwiki/css/iolo.css
+ distributable under GPL
+*/
+body {
+	font-family:"Trebuchet MS","Myungjo Newsletter","UnBatang",sans-serif;
+	font-size:medium;
+	margin:0px;
+	scrollbar-face-color:#336633;
+	scrollbar-highlight-color:#cccccc;
+	scrollbar-3dlight-color:#336633;
+	scrollbar-shadow-color:#cccccc;
+	scrollbar-darkshadow-color:#336633;
+	scrollbar-track-color:#ddeedd;
+	scrollbar-arrow-color:#ffffff;
+	background-color:#ccddcc;
+}
+
+p, tr, td, ul, ol, li, dl, dt, dd, blockquote, form, input, textarea, select {
+	font-family:"Trebuchet MS","Myungjo Newsletter","UnBatang",sans-serif;
+	font-size:medium;
+}
+
+pre, samp, tt, code, kbd {
+	font-family:monospace;
+	font-size:medium;
+}
+
+h1,h2,h3,h4,h5 {
+	font-family:"Trebuchet MS","Gothic Newsletter","UnYetgul",sans-serif;
+	font-weight: bold;
+}
+
+h1 { font-size:xx-large; }
+h2 { font-size:xx-large; }
+h3 { font-size:x-large; }
+h4 { font-size:x-large; }
+h5 { font-size:medium; }
+h6 { font-size:medium; }
+
+a:link { color:#336633; text-decoration:none; }
+a:visited { color:#336633; text-decoration:none; }
+a:active { color:#ccddcc; text-decoration:none; background-color:#336633;}
+a:hover { color:#ccddcc; text-decoration:none; background-color:#336633;}
+
+/* ---- */
+
+.title {
+	font-family:"Trebuchet MS","Gothic Newsletter","UnYetgul",sans-serif;
+	font-size:xx-large;
+	font-weight:bolder;
+	text-decoration: none;
+}
+
+tt.wiki {
+	font-size:medium;
+}
+
+tt.foot {
+	font-size:small;
+	vertical-align: super;
+}
+
+tt.sister {
+	font-size:small;
+	vertical-align: super;
+	text-decoration: none;
+}
+
+pre.wiki {
+	background-color: #ddeedd;
+	border:1px dotted #336633;
+	padding:5px;
+	margin-top:10px;
+	margin-bottom:10px;
+	width:100%;
+	white-space:pre;
+}
+
+pre.console {
+	background-color: #000000;
+	color: #E0E0E0;
+	padding: .25em ;
+	border: 3px inset #808080;
+}
+
+pre.quote {
+	padding-left:6px;
+	padding-top:6px;
+	white-space:pre-wrap;
+	white-space: -moz-pre-wrap; 
+	font-size:medium;
+	background-color:#F7F8E6;
+}
+
+table.wiki {
+}
+
+td.wiki {
+	background-color: #ddeedd;
+}
+
+textarea.wiki {
+	width:100%;
+	border:1px solid #669966;
+}
+
+hr.wiki {
+	height:1px;
+	border:none;
+	color:#336633;
+	background-color:#336633;
+}
+
+th.info {
+  background-color:#E2ECE2;
+/*  border-collapse: collapse; */
+/*  border: 1px solid silver; */
+}
+
+td.info {
+  background-color:#E2ECE2;
+}
+
+div.diff-added {
+  font-size:12px;
+  background-color:#B0FFB0;
+  color:black;
+}
+
+div.diff-removed {
+  font-size:12px;
+  background-color:#E9EAB8;
+  color:black;
+}
+
+div.diff-sep {
+  font-size:12px;
+  background-color:#000000;
+  color:#FFD700; /* gold */
+}
+
+ins.diff-added {
+  color:black;
+  background-color: #60FF60;
+  text-decoration: none;
+}
+
+del.diff-removed {
+  color:black;
+  background-color: #FF0000;
+}
+
+table.message {
+}
+
+td.message {
+	padding:6px;
+	color:#000000;
+	background-color:#ffffff;
+	border:3px solid #cc0000;
+	font-size:smaller;
+}
+
+.highlight {
+  background-color:#FFFF40;
+}
+
+table.closure {
+	width:100%;
+}
+
+tr.closure {
+}
+
+td.closure {
+	left:20px;
+	right:20px;
+	border:2px dotted #336633;
+	padding:10px;
+	background-color:#ddeedd;;
+}
+
+/*  */
+.wikiHr {
+	display:none;
+}
+
+#wikiHeader {
+	font-size:smaller;
+	background-color:#aabbaa;
+	padding:6px;
+	border-bottom:1px solid #336633;
+}
+
+#wikiBody {
+	padding:6px;
+}
+
+#wikiTrailer {
+	padding:6px;
+	font-size:smaller;
+	background-color:#ffffff;
+	border-bottom:1px solid #336633;
+}
+
+#wikiContent {
+	padding:6px;
+}
+
+#wikiFooter {
+	font-size:smaller;
+	background-color:#aabbaa;
+	padding:6px;
+	border-top:1px solid #336633;
+}
+
+#wikiContent h1,h2,h3,h4,h5,h6 {
+	border-bottom:1px dotted #336633;
+	border-left:10px solid #336633;
+	padding-left:10px;
+	margin-top:10px;
+	margin-bottom:10px;
+}
+
+.hint {
+	margin:6px;
+	padding:6px;
+	border:1px dotted #336633;
+	background-color:#ddeedd;
+}
+
+#wikiSister {
+/*  background-color:lightgreen; /* */
+}
+
+#wikiPreview {
+	margin:6px;
+	padding: 6px;
+	border: 3px solid #336633;
+}
+
+/*
+#wikiMenu {
+  background-color:yellow;
+}
+*/
+
+div.indent {
+  padding-left:12px;
+}
+
+/* Blog CSS */
+a.purple { font-size: smaller; text-decoration:none;}
+div.blog {
+	left:20px;
+	padding: 20px;
+}
+div.blog-date {
+	font-size:medium;
+	font-weight:bold;
+	border-left:10px solid #336633;
+	border-bottom:1px dotted #336633;
+	padding-left:10px;
+}
+div.blog-title {
+	font-size:larger;
+	font-weight:bold;
+	border-left:10px solid #336633;
+	border-bottom:1px dotted #336633;
+	padding-left:10px;
+}
+div.blog-user {
+	font-size:x-small;
+	text-align:right;
+}
+div.blog-comments {
+	left:20px;
+	right:20px;
+	padding:10px;
+	background-color: #ddeedd;
+	border:1px dotted #336633;
+}
+div.trackback-hint {
+	font-size:x-small; padding: 3px;
+	background-color: #eee;
+}
+
+/* Smiley Chooser */
+#smileyChooser {
+	margin:6px;
+	padding:6px;
+	border:1px dotted #336633;
+	background-color:#ddeedd;
+}
+#smileyChooser img {
+	border:none;
+}
+
+/* Calendar */
+#wikiBody table.calendar {
+}
+#wikiBody caption.month {
+	font-size:x-large;
+	font-weight:bold;
+	color:#336633;
+	text-align:left;
+	border-bottom:1px dotted #336633;
+	border-left:10px solid #336633;
+	padding-left:10px;
+}
+#wikiBody th.dayofweek {
+	font-size:medium;
+	font-weight:bold;
+	color:#000000;
+	background-color:#aabbaa;
+	width:50px;
+}
+#wikiBody td.day {
+	font-size:medium;
+	color:#336633;
+	background-color:#ddeedd;
+	text-align:center;
+	height:50px;
+}
+#wikiBody td.today {
+	font-size:medium;
+	font-weight:bold;
+	color:#336633;
+	background-color:#ffffff;
+	text-align:center;
+	height:50px;
+}
+table.calendar {
+}
+caption.month {
+	font-size:medium;
+	font-weight:bold;
+	color:#336633;
+	text-align:left;
+	border-bottom:1px dotted #336633;
+	border-left:3px solid #336633;
+	padding-left:3px;
+}
+th.dayofweek {
+	font-size:10px;
+	font-weight:bold;
+	color:#000000;
+	background-color:#aabbaa;
+	width:20px;
+}
+td.day {
+	font-size:10px;
+	color:#336633;
+	background-color:#ddeedd;
+	text-align:center;
+	height:20px;
+}
+td.today {
+	font-size:10px;
+	font-weight:bold;
+	color:#336633;
+	background-color:#ffffff;
+	text-align:center;
+	height:20px;
+}
+
+/* HierarchicalWiki */
+span.group {
+	font-size:smaller;
+}
+
+/* enscript syntax */
+div.wikiPre i, div.wikiPre b {
+	font-weight: normal;
+	font-style: normal;
+}
+
+#wikiHeader input {
+	border:1px solid #336633;
+	font-size:smaller;
+}
+
+#wikiBody input {
+	border:1px solid #336633;
+	font-size:smaller;
+}
+
+#wikiFooter input {
+	border:1px solid #336633;
+	font-size:smaller;
+}
+

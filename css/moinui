@@ -1,0 +1,95 @@
+/*  MoinMoin User Interface Styles
+
+    Copyright (c) 2001, 2002, 2003 by Jürgen Hermann
+
+    $Id$
+*/
+
+/* special stuff */
+body.editor {
+    background-color: #F8F8E8;
+}
+
+
+/* eye catchers */
+div.message {
+    margin-top: 6pt;
+    background-color: #E8FFE8;
+    border-style:solid;
+    border-width:1pt;
+    border-color:#999999;
+    color:#440000;
+    padding:5px;
+    width:99%;
+}
+strong.highlight {
+    background-color: #FFBBBB;
+/* as usual, NetScape fucks up with innocent CSS
+    border-color: #FFAAAA;
+    border-style: solid;
+    border-width: 1pt;
+*/
+}
+
+
+/* page frame */
+td.headline {
+    font-family: sans-serif;
+    font-size: 150%;
+    font-weight: bold;
+}
+table.navibar {
+    background-color: #C8C8C8;
+    border-spacing: 3px;
+}
+td.navibar {
+    background-color: #E8E8E8;
+    vertical-align: middle;
+    padding: 0px;
+}
+a.navibar {
+    text-decoration: none;
+}
+font.navibar {
+    font-family: sans-serif;
+    font-size: 80%;
+}
+
+table.footer {
+    font-family: sans-serif;
+    background-color: #E8E8E8;
+    border: 1px #C8C8C8 solid;
+    border-spacing: 3px;
+}
+
+
+/* diffs */
+.diff {
+    width:99%;
+}
+.diff-title {
+    background-color: #C0C0C0;
+    border-style: none;
+    border-width: thin;
+}
+.diff-added {
+    background-color: #E0FFE0;
+    border-style: none;
+    border-width: thin;
+    vertical-align: top;
+}
+.diff-removed {
+    background-color: #FFFFE0;
+    border-style: none;
+    border-width: thin;
+    vertical-align: top;
+}
+ins.diff-added {
+    background-color: #80FF80;
+    text-decoration: none;
+}
+del.diff-removed {
+    background-color: #FFFF80;
+    text-decoration: none;
+}
+
