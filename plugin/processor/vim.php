@@ -78,7 +78,7 @@ function processor_vim($formatter,$value,$options) {
   fclose($fp);
 
   $cmd= "$vim -T xterm -e -s $tmpf ".
-        ' +"syntax on " +"%s/\t/    /g" +"set syntax='.$type.'" '.$option.
+        ' +"syntax on " +"set syntax='.$type.'" '.$option.
         ' +"so '.$tohtml.'" +"wq! '.$fout.'" +q';
 
   if(getenv("OS")=="Windows_NT") {
