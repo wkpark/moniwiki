@@ -436,6 +436,7 @@ class WikiDB {
     $this->logo_img= $this->imgs_dir.'/moniwiki-logo.gif';
     $this->logo_page= $this->frontpage;
     $this->logo_string= '<img src="'.$this->logo_img.'" alt="[logo]" border="0" align="middle" />';
+    $this->metatags='<meta name="ROBOTS" content="NOINDEX,NOFOLLOW" />';
     $this->use_smileys=1;
     $this->hr="<hr class='wikiHr' />";
     $this->date_fmt= 'Y-m-d';
@@ -1881,10 +1882,10 @@ class Formatter {
 
       $line=preg_replace($this->extrarule,$this->extrarepl,$line);
 
-      if ($this->in_p == '' ) { #and !$this->nobr) {
+      if ($this->in_p == '') { #and !$this->nobr) { #and !$this->nobr) {
         $text.="<div class='p'>\n";
         $this->in_p=$line;
-      } else if ($li_open==0 and 0) {
+      } else if ($this->in_p and !$indlen and $li_open and 0) {
         $close.=$this->_check_p()."<div class='p'>\n";
         $this->in_p=$line;
       }
@@ -2286,11 +2287,10 @@ class Formatter {
       if (empty($options['css_url'])) $options['css_url']=$DBInfo->css_url;
       print <<<EOS
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<!-- <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.1//EN" "http://www.w3.org/TR/xhtml11/DTD/xhtml11.dtd"> -->
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
   <meta http-equiv="Content-Type" content="text/html;charset=$DBInfo->charset" /> 
-  <meta name="ROBOTS" content="NOINDEX,NOFOLLOW" />
+  $DBInfo->metatags
   <title>$DBInfo->sitename:$options[title]</title>\n
 EOS;
       if ($options['css_url'])
