@@ -334,11 +334,11 @@ function do_DeletePage($formatter,$options) {
   $formatter->send_header("",$options);
   $formatter->send_title($title);
   print "<form method='post'>
-Comment: <input name=comment size=80 value='' /><br />
-Password: <input type=password name=passwd size=20 value='' />
+Comment: <input name='comment' size='80' value='' /><br />
+Password: <input type='password' name='passwd' size='20' value='' />
 Only WikiMaster can delete this page<br />
-    <input type=hidden name=action value='DeletePage' />
-    <input type=submit value='Delete' />
+    <input type='hidden' name='action' value='DeletePage' />
+    <input type='submit' value='Delete' />
     </form>";
 #  $formatter->send_page();
   $formatter->send_footer();
@@ -959,6 +959,8 @@ function macro_UploadedFiles($formatter,$value="") {
       $upfiles[]= $file;
    }
    closedir($handle);
+   if (!$upfiles) return "<h3>No files uploaded</h3>";
+   sort($upfiles);
 
    $out="<form method='post' >";
    $out.="<input type='hidden' name='action' value='DeleteFile' />\n";
@@ -973,7 +975,8 @@ function macro_UploadedFiles($formatter,$value="") {
       $out.="<tr><td class='wiki'><input type='checkbox' name='files[$idx]' value='$file'></td><td class='wiki'><a href='$link'>$file</a></td><td align='right' class='wiki'>$size</td><td class='wiki'>$date</td></tr>\n";
       $idx++;
    }
-   $out.="<tr><th colspan='2'>Total files</th><td></td><td></td></tr>\n";
+   $idx--;
+   $out.="<tr><th colspan='2'>Total $idx files</th><td></td><td></td></tr>\n";
    $out.="</table>
 Password: <input type='password' name='passwd' size='10' />
 <input type='submit' value='Delete selected files'></form>\n";
@@ -1417,6 +1420,7 @@ function macro_RecentChanges($formatter="",$value="") {
     if (in_array ("quick", $args)) $quick=1;
     if (in_array ("nonew", $args)) $new=0;
     if (in_array ("showhost", $args)) $showhost=1;
+    if (in_array ("comment", $args)) $comment=1;
   }
   if ($size > MAXSIZE) $size=MAXSIZE;
 
@@ -1473,6 +1477,7 @@ function macro_RecentChanges($formatter="",$value="") {
     $addr= $parts[1];
     $ed_time= $parts[2];
     $user= $parts[4];
+    $log= $parts[5];
     $act= rtrim($parts[6]);
 
     if ($logs[$page_name]) continue;
@@ -1523,6 +1528,8 @@ function macro_RecentChanges($formatter="",$value="") {
     }
     if ($editcount[$page_name] > 1)
       $out.=" [".$editcount[$page_name]." changes]";
+    if ($comment && $log)
+      $out.="&nbsp; &nbsp; &nbsp; <font size='-1'>$log</font>";
     $out.= "<br />\n";
     $logs[$page_name]= 1;
   }
