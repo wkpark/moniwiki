@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a abc2midi processor plugin for the MoniWiki
 //
-// Usage: {{{#!abc2midi
+// Usage: {{{#!abc
 // blah blah
 // }}}
 // $Id$
