@@ -3175,7 +3175,7 @@ $options['timer']->Check("load");
 $lang= set_locale($DBInfo->lang,$DBInfo->charset);
 
 if (isset($locale)) {
-  @include_once('locale/'.$lang.'/LC_MESSAGES/moniwiki.php') or
+  if (!@include_once('locale/'.$lang.'/LC_MESSAGES/moniwiki.php'))
     @include_once('locale/'.substr($lang,0,2).'/LC_MESSAGES/moniwiki.php');
 } else if (substr($lang,0,2) != 'en') {
   if ($DBInfo->include_path) $dirs=explode(':',$DBInfo->include_path);
