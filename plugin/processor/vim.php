@@ -38,12 +38,13 @@ function processor_vim($formatter,$value,$options) {
 
   $uniq=md5($option.$src);
   $script='';
-  if ($DBInfo->use_linenumber) {
+  if ($DBInfo->use_numbering) {
+    $button=_("Toggle line numbers");
     if (!$jsloaded) 
-      $script='<script type="text/javascript" src="/wiki/css/linenumber.js"></script>';
+      $script='<script type="text/javascript" src="/wiki/css/numbering.js"></script>';
     $script.="<script type=\"text/javascript\">
 document.write('<a href=\"#\" onClick=\"return togglenumber(\'PRE-$uniq\', 1, 1);\" \
-                class=\"codenumbers\">Toggle line numbers<\/a>');
+                class=\"codenumbers\">$button<\/a>');
 </script>";
   }
 
