@@ -27,6 +27,7 @@ function do_Blog($formatter,$options) {
     $savetext=str_replace("}}}","\}}}",$savetext);
     $savetext=str_replace("\r","",$savetext);
     $savetext=str_replace("----\n","-''''''---\n",$savetext);
+    $savetext=str_replace("<","&lt;",$savetext);
   }
   if (!$options['button_preview'] && $savetext) {
     $options['title']=stripslashes($options['title']);
@@ -66,10 +67,15 @@ function do_Blog($formatter,$options) {
         return;
       }
     } else { # Blog entry
-      $raw_body.="\n{{{#!blog $id @date@";
+      $entry="\n{{{#!blog $id @date@";
       if ($options['title'])
-        $raw_body.=" ".$options['title'];
-      $raw_body.="\n$savetext\n}}}\n";
+        $entry.=" ".$options['title'];
+      $entry.="\n$savetext\n}}}\n";
+
+      if (preg_match("/\n##Blog\n/i",$raw_body))
+        $raw_body=preg_replace("/\n##Blog\n/i","\n##Blog\n$entry",$raw_body,1);
+      else
+        $raw_body.=$entry;
     }
 
     if ($options['value']) {
