@@ -6,13 +6,28 @@
 // Usage: ?action=Blog
 //
 // $Id$
-// vim:et:ts=2:
 
 function updateBlogList($formatter) {
   global $DBInfo;
-  $body=$formatter->page->get_raw_body();
   $cache=new Cache_text("blog");
   $changecache=new Cache_text("blogchanges");
+
+  $rule="/^(\d*)".'_2e'.$DBInfo->pageToKeyname($formatter->page->name).'$/';
+
+  $handle = @opendir($DBInfo->cache_dir."/blogchanges");
+  if ($handle) {
+    while (($file = readdir($handle)) !== false) {
+      if (preg_match($rule,$file,$match)) {
+        $fname=$DBInfo->cache_dir."/blogchanges/".$file;
+        if (is_dir($fname)) continue;
+        print $fname;
+        unlink($fname);
+      }
+    }
+    closedir($handle);
+  }
+
+  $body=$formatter->page->get_raw_body();
   $lines=explode("\n",$body);
 
   $date=0;
@@ -35,7 +50,7 @@ function updateBlogList($formatter) {
         if ($date) {
           $log=join("\n",$entries)."\n";
           $logs.=$log;
-          $changecache->update($date.".".$formatter->page->name,$log);
+          $changecache->update($date.'.'.$formatter->page->name,$log);
           $entries=array();
         }
         $date=$datestamp;
@@ -45,7 +60,7 @@ function updateBlogList($formatter) {
     }
   }
   $log=join("\n",$entries)."\n";
-  $changecache->update($datestamp.".".$formatter->page->name,$log);
+  $changecache->update($datestamp.'.'.$formatter->page->name,$log);
 
   $logs.=$log;
   $cache->update($formatter->page->name,$logs);
@@ -270,4 +285,5 @@ FORM2;
   return $form;
 }
 
+// vim:et:sts=2:
 ?>
