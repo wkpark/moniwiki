@@ -1281,7 +1281,7 @@ function macro_InterWiki($formatter="") {
       #$href=$url;
     }
     $icon=strtolower($wiki)."-16.png";
-    $out.="<tr><td><tt><img src='$DBInfo->imgs_dir/$icon' align='middle' alt='$wiki:'><a href='$url'>$wiki</a></tt></td><td><tt>";
+    $out.="<tr><td><tt><img src='$DBInfo->imgs_dir_interwiki/$icon' align='middle' alt='$wiki:'><a href='$url'>$wiki</a></tt></td><td><tt>";
     $out.="<a href='$href'>$href</a></tt></td></tr>\n";
   }
   $out.="</table>\n";
@@ -1500,7 +1500,7 @@ function macro_BR($formatter) {
   return "<br />\n";
 }
 
-function macro_FootNote($formatter,$value="") {
+function macro_FootNote(&$formatter,$value="") {
   if (!$value) {# emit all footnotes
     if (!$formatter->foots) return '';
     $foots=join("\n",$formatter->foots);
@@ -1577,7 +1577,7 @@ function macro_FootNote($formatter,$value="") {
     "<a href='#$fnidx' title='$value'>$text</a></tt>";
 }
 
-function macro_TableOfContents($formatter="",$value="") {
+function macro_TableOfContents(&$formatter,$value="") {
  global $DBInfo;
  $head_num=1;
  $head_dep=0;
