@@ -45,6 +45,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     if (in_array ("showhost", $args)) $showhost=1;
     if (in_array ("comment", $args)) $comment=1;
     if (in_array ("nobookmark", $args)) $nobookmark=1;
+    if (!in_array ("nopurple", $args)) $purple_icon=$formatter->purple_icon;
     if (in_array ("simple", $args)) {
       $use_day=0;
       $template=
@@ -135,8 +136,9 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
     $day = date('Y-m-d', $ed_time);
     if ($use_day and $day != $ratchet_day) {
+      $purple="<a id='$day' name='$day'></a><a href='#$day'>$purple_icon</a>";
       $out.=$cat0;
-      $out.=sprintf("%s<font size='+1'>%s </font> <font size='-1'>",
+      $out.=sprintf("%s<font size='+1'>%s </font>$purple<font size='-1'>",
             $br, date($date_fmt, $ed_time));
       if (!$nobookmark)
         $out.='['.$formatter->link_tag($formatter->page->urlname,
