@@ -1235,14 +1235,16 @@ function macro_PageList($formatter,$arg="") {
     if ($options['metawiki'])
       $all_pages = $DBInfo->metadb->getLikePages($needle);
     else
-      $all_pages = $DBInfo->getLikePages($needle);
+      $all_pages = $DBInfo->getPageLists();
 #     $all_pages= array_unique(array_merge($meta_pages,$all_pages));
   }
 #  $all_pages = $DBInfo->getPageLists($options);
 
+#  print_r($all_pages);
+
   $hits=array();
 
-  if ($options[date]) {
+  if ($options['date']) {
     if ($needle) {
       while (list($pagename,$mtime) = @each ($all_pages)) {
         preg_match("/$needle/",$pagename,$matches);
