@@ -12,6 +12,7 @@ function macro_Vote($formatter,$value) {
   global $DBInfo;
 
   $imgdir=$DBInfo->imgs_dir;
+  $iconset='red';
 
   $md5=md5($value);
   $temps=explode(",",$value);
@@ -27,8 +28,8 @@ function macro_Vote($formatter,$value) {
     $total+=$match[2];
   }
 
-  $bra_bar="<img src='$imgdir/leftbar.gif'>";
-  $cat_bar="<img src='$imgdir/rightbar.gif'>";
+  $bra_bar="<img src='$imgdir/vote/$iconset/leftbar.gif'>";
+  $cat_bar="<img src='$imgdir/vote/$iconset/rightbar.gif'>";
 
   $out='';
   if (!$vote_off)
@@ -41,7 +42,7 @@ function macro_Vote($formatter,$value) {
     $bar_width=intval($ratio);
 
     $bar=$bra_bar.
-         "<img width='$bar_width' height='14' src='$imgdir/mainbar.gif'>".
+         "<img width='$bar_width' height='14' src='$imgdir/vote/$iconset/mainbar.gif'>".
          $cat_bar;
     $md5=md5($item);
     $out.="<tr><td>$item </td><td nowrap='nowrap'>$bar</td><td>".
