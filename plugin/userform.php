@@ -43,32 +43,38 @@ function do_userform($formatter,$options) {
     return '';
   }
 
-  if ($user->id == "Anonymous" and $id and $options['login_passwd']) {
+  if ($user->id == "Anonymous" and isset($options['id']) and isset($options['password']) and !isset($options['passwordagain'])) {
     # login
     $userdb=new UserDB($DBInfo);
     if ($userdb->_exists($id)) {
-       $user=$userdb->getUser($id);
-       if ($user->checkPasswd($options['login_passwd'])=== true) {
-          $options['msg'] = sprintf(_("Successfully login as '%s'"),$id);
-          $user->setCookie();
-          $userdb->saveUser($user); # XXX
-       } else {
-          $title = sprintf(_("Invalid password !"));
-       }
-    } else
-       $title= _("Please enter a valid user ID !");
+      $user=$userdb->getUser($id);
+      if ($user->checkPasswd($options['password'])=== true) {
+        $options['msg'] = sprintf(_("Successfully login as '%s'"),$id);
+        $user->setCookie();
+        $userdb->saveUser($user); # XXX
+      } else {
+        $title = sprintf(_("Invalid password !"));
+      }
+    } else {
+      if ($options['login_id'])
+        $title= sprintf(_("\"%s\" is not exists on this wiki !"),$options['login_id']);
+      else
+        $title= _("Make new ID on this wiki");
+     $form=macro_UserPreferences($formatter,'',$options);
+    }
   } else if ($options['logout']) {
     # logout
     $user->unsetCookie();
     $title= _("Cookie deleted !");
-  } else if ($user->id=="Anonymous" and $options['username'] and $options['password'] and $options['passwordagain']) {
+  } else if ($user->id=="Anonymous" and $options['login_id'] and $options['password'] and $options['passwordagain']) {
     # create profile
 
-    $id=$user->getID($options['username']);
+    $id=$user->getID($options['login_id']);
     $user->setID($id);
 
     if ($user->id != "Anonymous") {
        $ret=$user->setPasswd($options['password'],$options['passwordagain']);
+       if ($DBInfo->password_length and (strlen($options['password']) < $DBInfo->password_length)) $ret=0;
        if ($ret <= 0) {
            if ($ret==0) $title= _("too short password!");
            else if ($ret==-1) $title= _("mismatch password!");
@@ -100,14 +106,14 @@ function do_userform($formatter,$options) {
                 $options['msg'].='<br/>'._("E-mail confirmation mail sented");
               }
            } else {# already exist user
-              $user=$udb->getUser($user->id);
-              if ($user->checkPasswd($options['password'])=== true) {
-                  $options['msg'].= sprintf(_("Successfully login as '%s'"),$id);
-                  $user->setCookie();
-                  $udb->saveUser($user); # XXX
-              } else {
-                  $title = _("Invalid password !");
-              }
+             $user=$udb->getUser($user->id);
+             if ($user->checkPasswd($options['password'])=== true) {
+               $options['msg'].= sprintf(_("Successfully login as '%s'"),$id);
+               $user->setCookie();
+               $udb->saveUser($user); # XXX
+             } else {
+               $title = _("Invalid password !");
+             }
            }
        }
     } else
@@ -153,8 +159,6 @@ function do_userform($formatter,$options) {
         $options['msg']=_("Your email address is not valid");
       }
     }
-    if ($options['username'])
-      $userinfo->info['name']=$options['username'];
     $udb->saveUser($userinfo);
     #$options['css_url']=$options['user_css'];
     if (!isset($options['msg']))
@@ -165,8 +169,10 @@ function do_userform($formatter,$options) {
   $formatter->send_title($title,"",$options);
   if (!$title)
     $formatter->send_page();
-  else
-    $formatter->send_page("Goto UserPreferences");
+  else {
+    if ($form) print $form;
+#    else $formatter->send_page("Goto UserPreferences");
+  }
   $formatter->send_footer("",$options);
 }
 
