@@ -443,7 +443,7 @@ class WikiDB {
     $this->use_smileys=1;
     $this->hr="<hr class='wikiHr' />";
     $this->date_fmt= 'Y-m-d';
-    $this->datetime_fmt= 'Y-m-d h:i:s';
+    $this->datetime_fmt= 'Y-m-d H:i:s';
     #$this->changed_time_fmt = ' . . . . [h:i a]';
     $this->changed_time_fmt= ' [h:i a]'; # used by RecentChanges macro
     $this->admin_passwd= '10sQ0sKjIJES.';
@@ -463,6 +463,7 @@ class WikiDB {
     $this->use_sistersites=1;
     $this->use_twinpages=1;
     $this->pagetype=array();
+    $this->smiley='wikismiley';
 
     $this->purple_icon='#';
 #    $this->security_class="needtologin";
@@ -523,7 +524,7 @@ class WikiDB {
 
     # load smileys
     if ($this->use_smileys){
-      include_once("wikismiley.php");
+      include_once($this->smiley.".php");
       # set smileys rule
       $tmp=array_keys($smileys);
       $tmp=array_map("_preg_escape",$tmp);
@@ -2740,7 +2741,7 @@ MSG;
     $this->sister_on=0;
     $this->trail="";
     foreach ($trails as $page) {
-      $this->trail.=$this->word_repl($page,'','',1)." &#x203a; ";
+      $this->trail.=$this->word_repl('"'.$page.'"','','',1)." &#x203a; ";
     }
     $this->trail.= " $pagename";
     $this->pagelinks=array(); # reset pagelinks
