@@ -843,7 +843,7 @@ class WikiDB {
         if (abs($check) < 3) $minor=1;
       }
     }
-    if (!$minor)
+    if (!$minor or !$options['minor'])
       $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
     return 0;
   }
@@ -908,7 +908,7 @@ class WikiDB {
   }
 
   function setPerms($pagename,$perms) {
-    umask(000);
+    umask(0700);
     $key=$this->getPageKey($pagename);
     if (file_exists($key)) chmod($key,$perms);
   }
@@ -1064,8 +1064,12 @@ class WikiPage {
 
     $fp=@fopen($this->filename,"r");
     if (!$fp) {
-      $out="You have no permission to see this page.\n\n";
-      $out.="See MoniWiki/AccessControl\n";
+      if (file_exists($this->filename)) {
+        $out="You have no permission to see this page.\n\n";
+        $out.="See MoniWiki/AccessControl\n";
+        return $out;
+      }
+      $out=_("File does not exists");
       return $out;
     }
     $this->fsize=filesize($this->filename);
@@ -1985,7 +1989,7 @@ class Formatter {
           continue;
         }
       }
-      if ($line[0]=='#' and $line[1]=='#') {
+      if (!$in_pre and $line[0]=='#' and $line[1]=='#') {
         if ($line[2]=='[') {
           $macro=substr($line,4,-2);
           $text.= $this->macro_repl($macro);
@@ -3199,6 +3203,8 @@ if ($pagename) {
 #      print $out;
 #      $cache->update($pagename,$out);
 #    }
+    if ($DBInfo->comment_macro)
+      print $formatter->macro_repl($DBInfo->comment_macro);
     
     $options['timer']->Check("send_page");
     $formatter->write("</div>\n");
