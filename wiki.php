@@ -230,6 +230,20 @@ class MetaDB_dba extends MetaDB {
     $this->keys=$keys;
     return $keys;
   }
+
+  function getLikePages($needle,$count=500) {
+    $keys=array();
+    if (!$needle) return $keys;
+    for ($key= dba_firstkey($this->metadb);
+         $key !== false;
+         $key= dba_nextkey($this->metadb)) {
+      if (preg_match("/($needle)/i",$key)) {
+        $keys[] = $key; $count--;
+      }
+      if ($count < 0) break;
+    }
+    return $keys;
+  }
 }
 
 class MetaDB {
@@ -243,6 +257,9 @@ class MetaDB {
     return "";
   }
   function getAllPages() {
+    return array();
+  }
+  function getLikePages() {
     return array();
   }
   function close() {

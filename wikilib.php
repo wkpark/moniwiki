@@ -1449,11 +1449,6 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
   $s_re="^[A-Z][a-z0-9]+";
   $e_re="[A-Z][a-z0-9]+$";
 
-  if ($metawiki)
-    $pages = $DBInfo->metadb->getAllPages();
-  else
-    $pages = $DBInfo->getPageLists();
-
   $count=preg_match("/(".$s_re.")/",$pname,$match);
   if ($count) {
     $start=$match[1];
@@ -1483,6 +1478,14 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
   $starts=array();
   $ends=array();
   $likes=array();
+
+  if (!$metawiki) {
+    $pages = $DBInfo->getPageLists();
+  } else {
+    if (!$end) $needle=$start;
+    else $needle="$start|$end";
+    $pages = $DBInfo->metadb->getLikePages($needle);
+  }
   
   if ($start) {
     foreach ($pages as $page) {
