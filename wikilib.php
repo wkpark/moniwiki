@@ -20,7 +20,7 @@ function find_needle($body,$needle,$count=0) {
   $matches=preg_grep("/($needle)/i",$lines);
   if (count($matches) > $count) $matches=array_slice($matches,0,$count);
   foreach ($matches as $line) {
-    $line=preg_replace("/($needle)/i","<strong>\\1</strong>",$line);
+    $line=preg_replace("/($needle)/i","<strong>\\1</strong>",str_replace("<","&lt;",$line));
     $out.="<br />\n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".$line;
   }
   return $out;
@@ -520,10 +520,11 @@ function do_fullsearch($formatter,$options) {
     $title= sprintf(_("BackLinks search for \"%s\""), $options[value]);
   else
     $title= sprintf(_("Full text search for \"%s\""), $options[value]);
+  $out= macro_FullSearch($formatter,$options[value],&$ret);
+  $options[msg]=$ret[msg];
   $formatter->send_header("",$options);
   $formatter->send_title($title,$formatter->link_url("FindPage"),$options);
 
-  $out= macro_FullSearch($formatter,$options[value],&$ret);
   print $out;
 
   if ($options[value])
@@ -1591,7 +1592,8 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
     $out.="<h3>These pages share a similar word...</h3>";
     $out.="<ol>\n";
     while (list($pagename,$i) = each($likes)) {
-      $out.= '<li>' . $formatter->link_tag($pagename,"","","tabindex='$idx'")."</li>\n";
+      $pageurl=_rawurlencode($pagename);
+      $out.= '<li>' . $formatter->link_tag($pageurl,"",$pagename,"tabindex='$idx'")."</li>\n";
       $idx++;
     }
     $out.="</ol>\n";
@@ -1603,7 +1605,8 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
     $out.="<h3>These pages share an initial or final title word...</h3>";
     $out.="<table border='0' width='100%'><tr><td width='50%' valign='top'>\n<ol>\n";
     while (list($pagename,$i) = each($starts)) {
-      $out.= '<li>' . $formatter->link_tag($pagename,"","","tabindex='$idx'")."</li>\n";
+      $pageurl=_rawurlencode($pagename);
+      $out.= '<li>' . $formatter->link_tag($pageurl,"",$pagename,"tabindex='$idx'")."</li>\n";
       $idx++;
     }
     $out.="</ol></td>\n";
@@ -1612,7 +1615,8 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
 
     $out.="<td width='50%' valign='top'><ol>\n";
     while (list($pagename,$i) = each($ends)) {
-      $out.= '<li>' . $formatter->link_tag($pagename,"","","tabindex='$idx'")."</li>\n";
+      $pageurl=_rawurlencode($pagename);
+      $out.= '<li>' . $formatter->link_tag($pageurl,"",$pagename,"tabindex='$idx'")."</li>\n";
       $idx++;
     }
     $out.="</ol>\n</td></tr></table>\n";
@@ -1715,12 +1719,12 @@ function macro_PageList($formatter,$arg="") {
     $options[date]=1;
     $arg=substr($arg,0,-strlen($match[1]));
   }
-  $needle=$arg;
+  $needle=_preg_search_escape($arg);
 
   $test=@preg_match("/$needle/","",$match);
   if ($test === false) {
     # show error message
-    return "[[PageList(<font color='red'>Invalid \"$needle\"</font>)]]";
+    return "[[PageList(<font color='red'>Invalid \"$arg\"</font>)]]";
   }
 
   $all_pages = $DBInfo->getPageLists($options);
@@ -1774,7 +1778,7 @@ function macro_TitleIndex($formatter="") {
        $out.= "<UL>";
     }
     
-    $out.= '<LI>' . $formatter->link_tag($page);
+    $out.= '<LI>' . $formatter->link_tag(_rawurlencode($page),"",$page);
   }
   $out.= "</UL>";
 
@@ -2082,6 +2086,7 @@ EOF;
      $opts[msg] = 'No search text';
      return $form;
   }
+  $needle=_preg_search_escape($needle);
   $test=@preg_match("/$needle/","",$match);
   if ($test === false) {
      $opts[msg] = sprintf(_("Invalid search expression \"%s\""), $needle);
@@ -2139,7 +2144,6 @@ EOF;
   }
   $out.= "</ul>\n";
 
-  $opts[msg]= sprintf(_("Full text search for \"%s\""), $needle);
   $opts[hits]= count($hits);
   $opts[all]= count($pages);
   return $out;
