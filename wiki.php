@@ -18,7 +18,7 @@ $_release = '1.0.8';
 
 #ob_start("ob_gzhandler");
 
-error_reporting(E_ALL & ~E_NOTICE);
+error_reporting(E_ALL ^ E_NOTICE);
 #error_reporting(E_ALL);
 $Config=getConfig("config.php",array('init'=>1));
 include("wikilib.php");
@@ -187,7 +187,8 @@ function kbd_handler() {
 <script language="JavaScript" type="text/javascript">
 <!--
 url_prefix="$prefix";
-FrontPage="${sep}$DBInfo->frontpage";
+_qp="$sep";
+FrontPage= "$DBInfo->frontpage";
 //-->
 </script>
 <script type="text/javascript" src="$DBInfo->kbd_script">
@@ -524,26 +525,32 @@ class WikiDB {
     if (empty($this->icon)) {
     $iconset=$this->iconset;
     $imgdir=$this->imgs_dir;
-    $this->icon['upper']="<img src='$imgdir/$iconset-upper.gif' alt='U' align='middle' border='0' />";
-    $this->icon['edit']="<img src='$imgdir/$iconset-edit.gif' alt='E' align='middle' border='0' />";
-    $this->icon['diff']="<img src='$imgdir/$iconset-diff.gif' alt='D' align='middle' border='0' />";
-    $this->icon['del']="<img src='$imgdir/$iconset-deleted.gif' alt='(del)' align='middle' border='0' />";
-    $this->icon['info']="<img src='$imgdir/$iconset-info.gif' alt='I' align='middle' border='0' />";
-    $this->icon['rss']="<img src='$imgdir/$iconset-rss.gif' alt='RSS' align='middle' border='0' />";
-    $this->icon['show']="<img src='$imgdir/$iconset-show.gif' alt='R' align='middle' border='0' />";
-    $this->icon['find']="<img src='$imgdir/$iconset-search.gif' alt='S' align='middle' border='0' />";
-    $this->icon['help']="<img src='$imgdir/$iconset-help.gif' alt='H' align='middle' border='0' />";
-    $this->icon['www']="<img src='$imgdir/$iconset-www.gif' alt='www' align='middle' border='0' />";
-    $this->icon['mailto']="<img src='$imgdir/$iconset-email.gif' alt='M' align='middle' border='0' />";
-    $this->icon['create']="<img src='$imgdir/$iconset-create.gif' alt='N' align='middle' border='0' />";
-    $this->icon['new']="<img src='$imgdir/$iconset-new.gif' alt='U' align='middle' border='0' />";
-    $this->icon['updated']="<img src='$imgdir/$iconset-updated.gif' alt='U' align='middle' border='0' />";
+    $ext='png';
+    $realdir=basename($imgdir);
+    if (is_dir($realdir.'/'.$iconset)) $iconset.='/';
+    else $iconset.='-';
+    if (!file_exists($realdir.'/'.$iconset.'home.png')) $ext='gif';
+
+    $this->icon['upper']="<img src='$imgdir/${iconset}upper.$ext' alt='U' align='middle' border='0' />";
+    $this->icon['edit']="<img src='$imgdir/${iconset}edit.$ext' alt='E' align='middle' border='0' />";
+    $this->icon['diff']="<img src='$imgdir/${iconset}diff.$ext' alt='D' align='middle' border='0' />";
+    $this->icon['del']="<img src='$imgdir/${iconset}deleted.$ext' alt='(del)' align='middle' border='0' />";
+    $this->icon['info']="<img src='$imgdir/${iconset}info.$ext' alt='I' align='middle' border='0' />";
+    $this->icon['rss']="<img src='$imgdir/${iconset}rss.$ext' alt='RSS' align='middle' border='0' />";
+    $this->icon['show']="<img src='$imgdir/${iconset}show.$ext' alt='R' align='middle' border='0' />";
+    $this->icon['find']="<img src='$imgdir/${iconset}search.$ext' alt='S' align='middle' border='0' />";
+    $this->icon['help']="<img src='$imgdir/${iconset}help.$ext' alt='H' align='middle' border='0' />";
+    $this->icon['www']="<img src='$imgdir/${iconset}www.$ext' alt='www' align='middle' border='0' />";
+    $this->icon['mailto']="<img src='$imgdir/${iconset}email.$ext' alt='M' align='middle' border='0' />";
+    $this->icon['create']="<img src='$imgdir/${iconset}create.$ext' alt='N' align='middle' border='0' />";
+    $this->icon['new']="<img src='$imgdir/${iconset}new.$ext' alt='U' align='middle' border='0' />";
+    $this->icon['updated']="<img src='$imgdir/${iconset}updated.$ext' alt='U' align='middle' border='0' />";
     $this->icon['user']="UserPreferences";
-    $this->icon['home']="<img src='$imgdir/$iconset-home.gif' alt='M' align='middle' border='0' />";
-    $this->icon['main']="<img src='$imgdir/$iconset-main.gif' alt='^' align='middle' border='0' />";
-    $this->icon['print']="<img src='$imgdir/$iconset-print.gif' alt='P' align='middle' border='0' />";
-    $this->icon['attach']="<img src='$imgdir/$iconset-attach.gif' alt='@' align='middle' border='0' />";
-    $this->icon['external']="<img src='$imgdir/$iconset-external.gif' alt='[]' align='middle' border='0' />";
+    $this->icon['home']="<img src='$imgdir/${iconset}home.$ext' alt='M' align='middle' border='0' />";
+    $this->icon['main']="<img src='$imgdir/${iconset}main.$ext' alt='^' align='middle' border='0' />";
+    $this->icon['print']="<img src='$imgdir/${iconset}print.$ext' alt='P' align='middle' border='0' />";
+    $this->icon['attach']="<img src='$imgdir/${iconset}attach.$ext' alt='@' align='middle' border='0' />";
+    $this->icon['external']="<img src='$imgdir/${iconset}external.$ext' alt='[]' align='middle' border='0' />";
     $this->icon_sep=" ";
     $this->icon_bra=" ";
     $this->icon_cat=" ";
