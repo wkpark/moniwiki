@@ -13,10 +13,10 @@ function do_post_rename($formatter,$options) {
       $title = sprintf(_("\"%s\" is renamed !"), $options['page']);
       $formatter->send_header("",$options);
       $formatter->send_title($title,"",$options);
+      $new_encodedname=_rawurlencode($options['name']);
       if ($options['pagenames'] and is_array($options['pagenames'])) {
         $regex=preg_quote($options['page']);
         $options['minor']=1;
-        $new_encodedname=_rawurlencode($options['name']);
         foreach ($options['pagenames'] as $page) {
           $p = new WikiPage($page);
           if (!$p->exists()) continue;
