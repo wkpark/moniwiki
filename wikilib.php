@@ -776,68 +776,71 @@ function do_post_savepage($formatter,$options) {
     # check datestamp
     if ($formatter->page->mtime() > $datestamp) {
       $options['msg']=sprintf(_("Someone else saved the page while you edited %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
-      $formatter->send_title(_("Conflict error!"),"",$options);
       $options['preview']=1; 
       $options['conflict']=1; 
       $options['datestamp']=$datestamp; 
       if ($button_merge) {
+        $title=sprintf(_("Preview of %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page'],"class='title'"));
+        $formatter->send_title($title,"",$options);
+        $options['conflict']=0; 
         $merge=$formatter->get_merge($savetext);
         if ($merge) $savetext=$merge;
-          unset($options[datestamp]); 
-        }
-        $options['savetext']=$savetext;
-        print macro_EditText($formatter,$value,$options); # XXX
+        unset($options['datestamp']); 
+      } else
+        $formatter->send_title(_("Conflict error!"),"",$options);
+      $options['savetext']=$savetext;
+      print macro_EditText($formatter,$value,$options); # XXX
 
-        print $menu;
-        print "<div id='wikiPreview'>\n";
-        $formatter->get_diff("","",$savetext);
-        print "</div>\n";
-        $formatter->send_footer();
-        return;
-      }
-    }
-
-    if (!$button_preview && $orig == $new) {
-      $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
-      $formatter->send_title(_("No difference found"),"",$options);
+      print $menu;
+      print "<div id='wikiPreview'>\n";
+      $formatter->get_diff("","",$savetext);
+      print "</div>\n";
       $formatter->send_footer();
       return;
     }
-    $formatter->page->set_raw_body($savetext);
+  }
 
-    if ($button_preview) {
-      $title=sprintf(_("Preview of %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page'],"class='title'"));
-      $formatter->send_title($title,"",$options);
+  if (!$button_preview && $orig == $new) {
+    $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
+    $formatter->send_title(_("No difference found"),"",$options);
+    $formatter->send_footer();
+    return;
+  }
+  $formatter->page->set_raw_body($savetext);
+
+  if ($button_preview) {
+    $title=sprintf(_("Preview of %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page'],"class='title'"));
+    $formatter->send_title($title,"",$options);
      
-      $options['preview']=1; 
-      $options['datestamp']=$datestamp; 
-      $options['savetext']=$savetext;
-      print macro_EditText($formatter,$value,$options); # XXX
-      print $DBInfo->hr;
-      print $menu;
-      print "<div id='wikiPreview'>\n";
-      $formatter->preview=1;
-      $formatter->send_page($savetext);
-      $formatter->preview=0;
-      print $DBInfo->hr;
-      print "</div>\n";
-      print $menu;
-    } else {
-      if ($options['category'])
-        $savetext.="----\n$options[category]\n";
-      $formatter->page->write($savetext);
-      $ret=$DBInfo->savePage($formatter->page,$comment,$options);
-      if ($DBInfo->notify) {
-        $options['noaction']=1;
-        if (!function_exists('mail')) {
-            $options['msg']=sprintf(_("mail does not supported by default."))."<br />";
-        } else {
-          $ret2=wiki_notify($formatter,$options);
-          if ($ret2)
-            $options['msg']=sprintf(_("Mail notifications are sented."))."<br />";
-          else
-            $options['msg']=sprintf(_("No subscribers found."))."<br />";
-        }
+    $options['preview']=1; 
+    $options['datestamp']=$datestamp; 
+    $options['savetext']=$savetext;
+    print macro_EditText($formatter,$value,$options); # XXX
+    print $DBInfo->hr;
+    print $menu;
+    print "<div id='wikiPreview'>\n";
+    $formatter->preview=1;
+    $formatter->send_page($savetext);
+    $formatter->preview=0;
+    print $DBInfo->hr;
+    print "</div>\n";
+    print $menu;
+  } else {
+    if ($options['category'])
+      $savetext.="----\n$options[category]\n";
+    $formatter->page->write($savetext);
+    $ret=$DBInfo->savePage($formatter->page,$comment,$options);
+    if ($DBInfo->notify) {
+      $options['noaction']=1;
+      if (!function_exists('mail')) {
+        $options['msg']=sprintf(_("mail does not supported by default."))."<br />";
+      } else {
+        $ret2=wiki_notify($formatter,$options);
+        if ($ret2)
+          $options['msg']=sprintf(_("Mail notifications are sented."))."<br />";
+        else
+          $options['msg']=sprintf(_("No subscribers found."))."<br />";
+      }
     }
       
     if ($ret == -1)
