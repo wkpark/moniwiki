@@ -398,6 +398,7 @@ class WikiDB {
     $this->template_regex='[a-z]Template$';
     $this->category_regex='^Category[A-Z]';
     $this->notify=0;
+    $this->trail=0;
 #    $this->security_class="needtologin";
 
     # set user-specified configuration
@@ -422,7 +423,7 @@ class WikiDB {
     $this->icon[find]="<img src='$this->imgs_dir/$iconset-search.gif' alt='S' align='middle' border='0' />";
     $this->icon[help]="<img src='$this->imgs_dir/$iconset-help.gif' alt='H' align='middle' border='0' />";
     $this->icon[www]="<img src='$this->imgs_dir/$iconset-www.gif' alt='www' align='middle' border='0' />";
-    $this->icon[mailto]="<img src='$this->imgs_dir/$iconset-www.gif' alt='www' align='middle' border='0' />";
+    $this->icon[mailto]="<img src='$this->imgs_dir/$iconset-email.gif' alt='www' align='middle' border='0' />";
     $this->icon[create]="<img src='$this->imgs_dir/$iconset-create.gif' alt='N' align='middle' border='0' />";
     $this->icon['new']="<img src='$this->imgs_dir/$iconset-new.gif' alt='U' align='middle' border='0' />";
     $this->icon[updated]="<img src='$this->imgs_dir/$iconset-updated.gif' alt='U' align='middle' border='0' />";
@@ -445,6 +446,7 @@ class WikiDB {
               array("","",$this->icon[show]),
               array("FindPage","",$this->icon[find]),
               array("","?action=info",$this->icon[info]),
+              array("","?action=subscribe",$this->icon[mailto]),
               array("HelpContents","",$this->icon[help]),
            );
 
@@ -991,9 +993,10 @@ class Formatter {
     $punct="<\'}\]\|;,\.\)\!";
     $url="http|ftp|telnet|mailto|wiki";
     $urlrule="((?:$url):[^\s$punct]+(\.?[^\s$punct]+)+)";
+    #$urlrule="((?:$url):[^\s$punct]+(\.?[^\s$punct]+)+\s?)";
     # solw slow slow
     #(?P<word>(?:/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})
-    $this->wordrule="(\[($url):[^\s\]]+(\s[^\]]*)+\])|".
+    $this->wordrule="(\[($url):[^\s\]]+(\s?[^\]]*)+\])|".
              "(\!([A-Z]+[a-z0-9]+){2,})(?!(:|[a-z0-9]))|".
     #        "(?<!\!|\[\[|[a-z])(([A-Z]+[a-z0-9]+){2,})(?!([a-z0-9]))|".
              "(?<!\!|\[\[|[a-z])((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})(?!([a-z0-9]))|".
@@ -1073,8 +1076,10 @@ class Formatter {
 
     $url=str_replace("\\\"",'"',$url);
     #$url=str_replace("\\\\\"",'"',$url);
-    if ($url[0]=="[")
+    if ($url[0]=="[") {
       $url=substr($url,1,-1);
+      $force=1;
+    }
     if ($url[0]=="{") {
       $url=substr($url,3,-3);
       return "<tt class='wiki'>$url</tt>"; # No link
@@ -1102,9 +1107,12 @@ class Formatter {
         }
         return $this->interwiki_repl($url);
       } else
-      if (preg_match("/\s/",$url)) { # have a space ?
-        $dum=explode(" ",$url,2);
-        return $DBInfo->icon[www]. "<a href='$dum[0]'>$dum[1]</a>";
+      if ($force or preg_match("/\s/",$url)) { # have a space ?
+        list($url,$text)=explode(" ",$url,2);
+        if (!$text) $text=$url;
+        else if (preg_match("/(png|gif|jpeg|jpg)$/i",$text))
+          return "<a href='$url' title='$url'><img border='0' src='$text' /></a>";
+        return $DBInfo->icon[www]. "<a href='$url'>$text</a>";
       } else
       if (preg_match("/^(http|ftp)/",$url)) {
         if (preg_match("/(png|gif|jpeg|jpg)$/i",$url))
@@ -1128,6 +1136,14 @@ class Formatter {
       $dum1=explode("/",$url,2);
       $wiki=$dum1[0]; $page=$dum1[1];
     }
+    $img="<img src='$DBInfo->imgs_dir/".strtolower($wiki).
+         "-16.png' align='middle' height='16' width='16' alt='$wiki:'/>";
+    if (!$text) $text=$page;
+    else if (preg_match("/(png|gif|jpeg|jpg)$/i",$text)) {
+      $text= "<img border='0' src='$text' />";
+      $img="";
+    }
+
     if (!$page) { # wiki:FrontPage or [wiki:FrontPage Home Page]
       $page=$dum[0];
       if (!$text) $text=$page;
@@ -1136,8 +1152,6 @@ class Formatter {
       else
         return $this->link_tag($page,"","?").$page;
     }
-
-    if (!$text) $text=$page;
 
     $url=$DBInfo->interwiki[$wiki];
     if (!$url) return "$wiki:$page";
@@ -1150,9 +1164,7 @@ class Formatter {
 
     if ($this->gen_pagelinks) $this->add_pagelinks($page);
 
-    $img=strtolower($wiki);
-    return "<img src='$DBInfo->imgs_dir/$img-16.png' width='16' height='16' align='middle' alt='$wiki:'/>".
-  "<a href='".$url."' title='$wiki:$page'>$text</a>";
+    return $img. "<a href='".$url."' title='$wiki:$page'>$text</a>";
   }
 
   function add_pagelinks($word) {
@@ -1938,8 +1950,10 @@ class Formatter {
       else
         header($header);
     }
+    if ($DBInfo->trail)
+      $this->set_trailer($options[trail],$this->page->name);
 
-   if (!$plain) {
+    if (!$plain) {
       if (!$options[title]) $options[title]=$this->page->name;
       if (!$options[css_url]) $options[css_url]=$DBInfo->css_url;
       print <<<EOS
@@ -2217,6 +2231,10 @@ MSG;
     print "</div>\n";
     print $DBInfo->hr;
     print "<div id='wikiBody'>\n";
+    if ($DBInfo->trail) {
+      $opt[nosisters]=1;
+      $this->send_page($this->trail,$opt);
+    }
   }
 
   function send_editor($text="",$options="") {
@@ -2300,7 +2318,22 @@ EOS;
 </div>
 EOS;
   }
+
+  function set_trailer($trail="",$pagename,$size=5) {
+    $trail=str_replace($pagename,"",$trail);
+    if (!$trail) $trail="FrontPage";
+    $trail=str_replace("\t\t","\t",$trail);
+    $trails=explode("\t",trim($trail));
+    $trails[]=$pagename;
+    $idx=count($trails) - $size;
+    $idx= $idx > 0 ? $idx:0;
+    $trails=array_slice($trails,$idx);
+    $trail=join("\t",$trails);
+    setcookie("MONI_TRAIL",$trail,time()+60*60*24*30,get_scriptname());
+    $this->trail= "[".str_replace("\t","] > [",$trail)."]\n";
+  }
 } # end-of-Formatter
+
 
 # Start Main
 $timing=new Timer();
@@ -2313,6 +2346,7 @@ register_shutdown_function(array(&$DBInfo,'Close'));
 $user=new User();
 $options=array();
 $options[id]=$user->id;
+$options[trail]=$user->trail;
 if ($user->id != "Anonymous") {
   $udb=new UserDB($DBInfo);
   $user=$udb->getUser($user->id);
@@ -2514,7 +2548,7 @@ if ($pagename) {
 
   $formatter = new Formatter($page);
 
-  if (!$action) {
+  if (!$action or $action=='show') {
     if ($value) { # ?value=Hello
       $options[value]=$value;
       do_goto($formatter,$options);
