@@ -68,8 +68,8 @@ function do_post_rename($formatter,$options) {
   if ($DBInfo->security->is_protected("rename",$options))
     print "<tr><td align='right'>"._("Password").": </td><td><input type='password' name='passwd' /> ".
     _("Only WikiMaster can rename this page")."</td></tr>\n";
-  print "<tr>\n<td colspan='2'>"._("with revision history")."<input type='checkbox' name='history' />";
-  print " "._("show only")."<input type='checkbox' name='show_only' checked='checked' /></td></tr>\n";
+  print "<tr><td colspan='2'><input type='checkbox' name='history' />"._("with revision history")."</td></tr>\n";
+  print "<tr><td colspan='2'><input type='checkbox' name='show_only' checked='checked' />"._("show only")."</td></tr>\n";
   print "<tr><td></td><td><input type='submit' name='button_rename' value='$rename_button' />";
   print " <a href='?action=rename&value=check_backlinks'>"._("Check backlinks").
 "</a>";
