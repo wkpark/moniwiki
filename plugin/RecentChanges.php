@@ -131,8 +131,17 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     if ($ed_time < $time_cutoff)
       break;
 
-    if ($formatter->group and !preg_match("/^$formatter->group/",$page_name))
-      continue;
+    if ($formatter->group) {
+      if (!preg_match("/^($formatter->group)(.*)$/",$page_name,$match)) continue;
+      $title=$match[2];
+    } else {
+      $group='';
+      if ($p=strpos($page_name,'~')) {
+        $title=substr($page_name,$p+1);
+        $group=' ('.substr($page_name,0,$p).')';
+      } else
+        $title=$page_name;
+    }
 
     $day = date('Y-m-d', $ed_time);
     if ($use_day and $day != $ratchet_day) {
@@ -168,7 +177,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       $icon= $formatter->link_tag($pageurl,"?action=diff",$formatter->icon[diff]);
 
     #$title= preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$page_name);
-    $title= get_title($page_name);
+    $title= get_title($title).$group;
     $title= $formatter->link_tag($pageurl,"",$title,$target);
 
     if (! empty($DBInfo->changed_time_fmt))
