@@ -2,9 +2,9 @@
 #
 # $Id$
 #
-$sitename='MoniWiki';
+$sitename='UnnamedWiki';
 $data_dir= './data';
-$upload_dir= './pds';
+$upload_dir= 'pds';
 
 $text_dir= $data_dir.'/text';
 $cache_dir= $data_dir.'/cache';
@@ -15,13 +15,51 @@ $shared_intermap= $data_dir."/text/InterMap";
 
 $url_prefix= '/moniwiki';
 $imgs_dir= $url_prefix.'/imgs';
-$logo_img= $imgs_dir.'/moniwiki.gif';
+$logo_img= $imgs_dir.'/moniwiki-logo.gif';
 $query_prefix= '/';
 
 $css_url= $url_prefix.'/css/default.css';
 $kbd_script= $url_prefix.'/css/kbd.js';
 $logo_string= '<img src="'.$logo_img.'" alt="" border="0" align="middle" />';
 $use_smileys= 1;
-$use_counter= 1;
+$use_counter= 0;
 $iconset= 'moni';
+$enable_latex=0;
+$lang='auto';
+$charset='euc-kr';
+#$charset='utf-8';
+$auto_linebreak= 0;
+$trail= 0;
+$notify= 0;
+$use_referer= 0;
+$use_sistersites=1;
+$use_twinpages=1;
+$use_trackback=0;
+#$use_titlecache=0;
+#$security_class="needtologin";
+#$security_class="desktop";
+
+#$menu=array('MoniWiki'=>1,'FindPage'=>4,'TitleIndex'=>3,'BlogChanges'=>'','RecentChanges'=>2,'http://kldp.org KLDP'=>9);
+#$menu_sep='|';
+#$menu_bra='';
+#$menu_cat='';
+#$path='/usr/local/bin:/usr/bin:/bin:/usr/X11R6/bin';
+#$theme='blog';
+#$theme_css=1;
+#$show_comments=1;
+
+#$sistermap=$data_dir.'/sistermap.txt';
+#$metatags='
+#<meta name="ROBOTS" content="NOINDEX,NOFOLLOW" />
+#<link rel="Start" href="FrontPage" />
+#<link rel="Index" href="TitleIndex" />
+#<link rel="Help" href="HelpOnFormatting" />
+#';
+
+#$diffonly=1;
+#$goto_type=1;
+
+#$purple_icon='<img src="/wiki/imgs/egg.png" border="0" />';
+#$use_titlecache=1;
+#$pagetype=array("KldpDsl"=>"plain","ManPage"=>"/man","DocbookSgml"=>"/jade","LinuxDoc"=>"/linuxdoc");
 ?>
