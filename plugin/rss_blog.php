@@ -129,6 +129,7 @@ function generate_item($formatter, $log)
   if ($summary) {
       $p=new WikiPage($page);
       $f=new Formatter($p);
+      $summary=str_replace('\}}}','}}}',$summary);
       ob_start();
       $f->send_page($summary,array('fixpath'=>1));
       $description='<description><![CDATA['.ob_get_contents().']]></description>';
