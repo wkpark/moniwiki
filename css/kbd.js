@@ -162,9 +162,9 @@ function keypresshandler(e){
 	if(_dom != 3 && cc == 229 && ch == '') { // Mozilla
 		window.status="?/ or change IME status";
 	} else if(_dom !=3 && cc == 112) { // 'F1' Help! (Mozilla only)
-		self.location = url_prefix + HelpContents;
+		self.location = url_prefix + _qp + HelpContents;
 	} else if(_dom !=3 && cc == 114) { // 'F3' Find (Mozilla only)
-		self.location = url_prefix + FindPage;
+		self.location = url_prefix + _qp + FindPage;
 	} else if(cc == 9 || cc == 27) { // 'TAB','ESC' key
 		if (cc == 27) {
 			document.getElementById(_go).elements['value'].focus();
@@ -219,7 +219,7 @@ function keypresshandler(e){
 			if ((idx=my.indexOf("&")) != -1)
 				my=my.substring(0,idx);
 			if (ch == "e" || ch == "w")
-				self.location= url_prefix + _qp + my + _ap +
+				self.location=url_prefix + _qp + my + _ap +
 					'action=edit';
 			if (ch == "r") {
 				if ((idx=my.indexOf("#")) != -1)
@@ -228,17 +228,15 @@ function keypresshandler(e){
 					'action=show';
 			}
 		} else {
-			if (ch == "e" || ch == "w")
-				self.location = _ap + 'action=edit';
-			if (ch == "r") {
-				if ((idx=my.indexOf("#")) != -1) {
-					my=my.substring(0,idx);
-					self.location = my + _ap +
-						'action=show';
-				} else
-					//self.location += '?action=show';
-					self.location = self.location;
+			if (idx != -1) {
+				my=my.substr(0,idx);
+			} else if ((idx=my.indexOf("#")) != -1) {
+				my=my.substring(0,idx);
 			}
+			if (ch == "e" || ch == "w")
+				self.location = my + _ap + 'action=edit';
+			if (ch == "r")
+				self.location = my + _ap + 'action=show';
 		}
 	}
 	return;

@@ -264,3 +264,7 @@ span.externalLink {
     text-decoration: none;
     color: #C8A8FF;  /* light purple */
 }
+
+span.lineNumber {
+  color:#ffff00;
+}

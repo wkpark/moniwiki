@@ -249,3 +249,7 @@ img.imgRight {
 span.externalLink {
   display: none;
 }
+
+span.lineNumber {
+  color:#ffff00;
+}
