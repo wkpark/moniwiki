@@ -9,6 +9,9 @@
 // $Id$
 
 function processor_vim($formatter,$value) {
+  global $DBInfo;
+  $cache_dir=$DBInfo->upload_dir."/VimProcessor";
+
   $syntax=array("php","c","python","jsp","sh","cpp",
           "java","ruby","forth","fortran","perl",
           "haskell","lisp","st","objc","tcl","lua",
@@ -23,6 +26,21 @@ function processor_vim($formatter,$value) {
   if ($line)
     list($tag,$type,$extra)=explode(" ",$line,3);
   $src=$value;
+
+  $uniq=md5($src);
+  if (!file_exists($cache_dir)) {
+    umask(000);
+    mkdir($cache_dir,0777);
+    umask(022);
+  }
+
+  if (file_exists($cache_dir."/$uniq".".html") && !$formatter->refresh) {
+    $out = "";
+    $fp=fopen($cache_dir."/$uniq".".html","r");
+    while (!feof($fp)) $out .= fread($fp, 1024);
+    return $out;
+    #return join('',file($cache_dir."/$uniq".".html"));
+  }
 
   # comment out the following two lines to freely use any syntaxes.
   if (!in_array($type,$syntax)) 
@@ -63,7 +81,7 @@ function processor_vim($formatter,$value) {
 
   while($s = fgets($fp, 1024)) {
     $out.= $s;
-  };
+  }
 
   pclose($fp);
   unlink($tmpf);
@@ -71,6 +89,9 @@ function processor_vim($formatter,$value) {
   $out=preg_replace("/<title>.*title>|<\/?head>|<\/?html>|<meta.*>|<\/?body.*>/","", $out);
   $out=preg_replace("/<pre>/","<pre class='wikiSyntax' style='font-family:fixed;color:#c0c0c0;background-color:black'>", $out);
 #  $out=preg_replace("/<\/pre>/","</span></pre>", $out);
+  $fp=fopen($cache_dir."/$uniq".".html","w");
+  fwrite($fp,$out);
+  fclose($fp);
 
   return $out;
 }
