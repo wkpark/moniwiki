@@ -47,7 +47,7 @@ function _rawurlencode($url) {
 function _urlencode($url) {
   #$name=urlencode(strtr($url,"+"," "));
   #return preg_replace(array('/%2F/i','/%7E/i','/%23/'),array('/','~','#'),$name);
-  return preg_replace("/([^a-z0-9\/\?\.\+~#&:;=%]{1})/ie","'%'.strtoupper(dechex(ord('\\1')))",$url);
+  return preg_replace("/([^a-z0-9\/\?\.\+~#&:;=%]{1})\-/ie","'%'.strtoupper(dechex(ord('\\1')))",$url);
 }
 
 function qualifiedUrl($url) {
@@ -2359,7 +2359,7 @@ class Formatter {
     if (!$option) {
       $msg= _("No older revisions available");
       $ret= "<h2>$msg</h2>";
-      return;
+      return $ret;
     }
     $fp=popen("rcsdiff -x,v/ -u $option ".$this->page->filename,'r');
     if (!$fp)
@@ -2373,7 +2373,7 @@ class Formatter {
       $msg= _("No difference found");
       $ret.= "<h2>$msg</h2>";
     } else {
-      if ($rev1==$rev2) print "<h2>"._("Difference between versions")."</h2>";
+      if ($rev1==$rev2) $ret.= "<h2>"._("Difference between versions")."</h2>";
       else if ($rev1 and $rev2) {
         $msg= sprintf(_("Difference between r%s and r%s"),$rev1,$rev2);
         $ret.= "<h2>$msg</h2>";
