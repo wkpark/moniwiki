@@ -11,6 +11,7 @@ if [ -f config.php ]; then
     cp config.php.$$ config.php
     rm config.php.$$
     chmod 644 config.php
+    chmod 711 . data
     echo "*** chmod 644 config.php"
 fi
 
@@ -20,6 +21,6 @@ echo "you wish to reconfigure it, execute the following command:"
 echo ""
 echo "    % sh config.sh"
 echo ""
-echo "and open 'monisetup.php' on a webbrowser"
+echo "and open 'monisetup.php' on a web browser"
 echo ""
 echo ""

@@ -1,0 +1,41 @@
+# see http://usemod.com/intermap.txt 
+ISBN http://www.amazon.com/exec/obidos/ISBN=
+Wiki http://c2.com/cgi/wiki?
+MeatBall http://www.usemod.com/cgi-bin/mb.pl?
+MoinMoin http://purl.net/wiki/moin/
+UseMod http://www.usemod.com/cgi-bin/wiki.pl?
+TWiki http://twiki.org/cgi-bin/view/
+WikiPedia http://www.wikipedia.org/wiki/
+ZWiki http://www.zwiki.org/
+FoxWiki http://fox.wikis.com/wc.dll?Wiki~
+AndStuff http://andstuff.org/wiki.php?
+Unreal http://wiki.beyondunreal.com/wiki/
+
+# MetaWikis
+Google http://www.google.com/search?q=
+GoogleGroups http://groups.google.com/groups?q=
+KnowHow http://www2.iro.umontreal.ca/~paquetse/cgi-bin/wiki.cgi?
+Bzla http://bugzilla.gnome.org/show_bug.cgi?id=
+BugZilla http://bugzilla.gnome.org/show_bug.cgi?id=
+Foldoc http://www.foldoc.org/foldoc/foldoc.cgi?
+JargonFile http://sunir.org/apps/meta.pl?wiki=JargonFile&redirect=
+Acronym http://www.acronymfinder.com/af-query.asp?String=exact&Acronym=
+Advogato http://www.advogato.org/
+SourceForge http://www.sourceforge.net/
+
+# Korean Wikis
+NoSmoke http://no-smok.net/nsmk/
+GnomeKorea http://www.gnome.or.kr/moin.cgi/
+KLE http://kle.kldp.org/moin.php/
+GentooKorea http://gentoo.or.kr/wiki/moin.cgi/
+DebianKorea http://debianusers.org/DebianWiki/
+Freefeel http://freefeel.org/wiki/
+SFReaders http://www.sfreaders.org/moin.cgi/
+Jangnan http://www.jangnan.org/wiki/moin.cgi/
+Xper http://xper.org/wiki/xp/
+PyKug http://www.python.or.kr/pykug/
+WIM http://linux.mizi.com/wim/
+KTUG http://faq.ktug.or.kr/mywiki/
+MoniWiki http://moniwiki.sf.net/wiki.php/
+KLDPDoc http://doc.kldp.org/wiki.php/
+#MoniWikiDev http://chemie.skku.ac.kr/wiki/wiki.php/
