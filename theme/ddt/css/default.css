@@ -129,7 +129,7 @@ span.diff-removed, del.diff-removed {
   background-color: #FF0000;
 }
 
-td.message {
+div.message {
   margin-top: 6pt;
   background-color: #E8E8E8;
   border-style:solid;
@@ -248,7 +248,7 @@ div.blog-action { font-size:10px; background-color: padding-top:5px;}
 li.blog-list { list-style-type: none;}
 
 /* HierarchicalWiki */
-span.group {
+div.wikiGroup {
   font-family:Tahoma,Lucida,sans-serif;
   font-size:10px;
 }
