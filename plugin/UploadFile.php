@@ -19,8 +19,8 @@ function do_uploadfile($formatter,$options) {
       $count=1;
       $files['upfile']['name'][]=&$_FILES['upfile']['name'];
       $files['upfile']['tmp_name'][]=&$_FILES['upfile']['tmp_name'];
-      $options['rename'][0]=$options['rename'];
-      $options['replace'][0]=$options['replace'];
+      $options['rename']=array($options['rename']);
+      $options['replace']=array($options['replace']);
     }
   }
 
