@@ -13,16 +13,15 @@
 //
 // $Id$
 
-function find_needle($body,$needle,$count=-1) {
+function find_needle($body,$needle,$count=0) {
   if (!$body) return '';
   $lines=explode("\n",$body);
   $out="";
   $matches=preg_grep("/($needle)/i",$lines);
+  if (count($matches) > $count) $matches=array_slice($matches,0,$count);
   foreach ($matches as $line) {
     $line=preg_replace("/($needle)/i","<strong>\\1</strong>",$line);
     $out.="<br />\n&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;".$line;
-    $count--;
-    if ($count==0) break;
   }
   return $out;
 }
@@ -1438,7 +1437,7 @@ function get_key($name) {
 function macro_LikePages($formatter="",$args="",$opts=array()) {
   global $DBInfo;
 
-  $pname=_preg_escape($args);
+  $pname=preg_quote($args);
 
   $metawiki=$opts[metawiki];
 
@@ -1478,7 +1477,7 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
     $end=$match[1];
     $e_len=strlen($end);
     if ($e_len < 2) $end="";
-    else $end=_preg_escape($end);
+    else $end=preg_quote($end);
   }
 
   $starts=array();
@@ -2044,12 +2043,12 @@ EOF;
        $p = new WikiPage($page_name);
        if (!$p->exists()) continue;
        $body= $p->_get_raw_body();
-       $count = count($matches=preg_split($pattern, $body))-1;
-       #$count = preg_match_all($pattern, $body, $matches);
-       #$count = count(explode($needle, $body)) - 1;
-       #$count = preg_match($pattern, $body);
+       #$count = count(preg_split($pattern, $body))-1;
+       $count = preg_match_all($pattern, $body,$matches);
        if ($count) {
          $hits[$page_name] = $count;
+         # search matching contexts
+         $contexts[$page_name] = find_needle($body,$needle,$opts[context]);
        }
      }
   }
@@ -2059,14 +2058,11 @@ EOF;
   reset($hits);
   $idx=1;
   while (list($page_name, $count) = each($hits)) {
-    $p = new WikiPage($page_name);
-    $h = new Formatter($p);
-    $out.= '<li>'.$h->link_to("?action=highlight&amp;value=$needle",
-                             $page_name,"tabindex='$idx'");
+    $out.= '<li>'.$formatter->link_tag($page_name,
+          "?action=highlight&amp;value=$needle",
+          $page_name,"tabindex='$idx'");
     $out.= ' . . . . ' . $count . (($count == 1) ? ' match' : ' matches');
-    if ($opts[context])
-       # search matching contexts
-       $out.= find_needle($p->_get_raw_body(),$needle,$opts[context]);
+    $out.= $contexts[$page_name];
     $out.= "</li>\n";
     $idx++;
   }
