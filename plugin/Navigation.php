@@ -25,7 +25,7 @@ function macro_Navigation($formatter,$value) {
   $group='';#$formatter->group;
   $current=$formatter->page->name;
   if ($formatter->group)
-    $current=preg_replace('/~/','.',$formatter->page->name,1);
+    $current=$formatter->page->name;
   if (strpos($value,'~')) {
     $group=strtok($value,'~').'~';
     $page=strtok('');
@@ -43,7 +43,8 @@ function macro_Navigation($formatter,$value) {
       if ($word[0]=='"') $word=substr($word,1,-1);
 
       list($index,$text,$dummy)= normalize_word($word,$group,$page);
-      if ($group) $indices[]=preg_replace('/~/','.',$index,1);
+      if ($group)
+	$indices[]=$index;
       else $indices[]=$index;
       $count++;
     }
@@ -52,7 +53,11 @@ function macro_Navigation($formatter,$value) {
   #print_r($indices);
   if ($count > 1) {
     $prev='';
-    if ($group) $index=preg_replace('/~/','.',$value,1);
+    $index_text=$index;
+    if ($group) {
+      $index=$value;
+      $index_text=substr($index,strlen($group));
+    }
     else $index=$value;
     $next=$indices[0];
   }
@@ -77,11 +82,21 @@ function macro_Navigation($formatter,$value) {
       $formatter->query_string=$query;
     }
     $pnut='&laquo; ';
-    if ($prev) $pnut.=$formatter->link_repl($prev," accesskey=\",\" ");
+    if ($prev) {
+      $prev_text=$prev;
+      if (($p=strpos($prev,'~'))!==false)
+        $prev_text=substr($prev,$p+1);
+      $pnut.=$formatter->link_repl("[wiki:$prev $prev_text]"," accesskey=\",\" ");
+    }
     if ($use_action) $formatter->query_string=$save;
-    $pnut.=" | ".$formatter->link_repl($index)." | ";
+    $pnut.=" | ".$formatter->link_repl("[wiki:$index $index_text]")." | ";
     if ($use_action) $formatter->query_string=$query;
-    if ($next) $pnut.=$formatter->link_repl($next," accesskey=\".\" ");
+    if ($next) {
+      $next_text=$next;
+      if (($p=strpos($next,'~'))!==false)
+        $next_text=substr($next,$p+1);
+      $pnut.=$formatter->link_repl("[wiki:$next $next_text]"," accesskey=\".\" ");
+    }
     $pnut.=' &raquo;';
     if ($use_action) $formatter->query_string=$save;
   }
