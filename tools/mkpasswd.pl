@@ -4,7 +4,13 @@
 # $Id$
 if ($ARGV[0]) {
    $seed=localtime;
-   $seed= `echo $seed$ARGV[0] |md5sum | cut -d' ' -f1`;
+   if ( -x "/usr/bin/md5sum" ) {
+     $seed= `echo $seed$ARGV[0] |md5sum | cut -d' ' -f1`;
+   } elsif ( -x "/usr/bin/md5" ) {
+     $seed= `echo $seed$ARGV[0] |md5 | cut -d' ' -f1`;
+   } else {
+     $seed.=$ARGV[0];
+   }
    chop $seed;
    if (not $seed) {
       $seed=time ^ $$;
