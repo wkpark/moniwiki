@@ -1,5 +1,6 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003 by Jang,Dong-Su <jdongsu at pyunji.net>
+//                   Won-kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a rss_blog action plugin for the MoniWiki
 //
@@ -35,114 +36,148 @@ function do_rss_blog($formatter,$options) {
   }
   usort($logs,'BlogCompare');
     
-  $time_current= time();
+  /* generate <rss> ... </rss> */
+  $rss = generate_rss($formatter, $rss_name, $logs);
 
-  $URL=qualifiedURL($formatter->prefix);
-  $img_url=qualifiedURL($DBInfo->logo_img);
-
-  $url=qualifiedUrl($formatter->link_url("BlogChanges"));
-  $desc=sprintf(_("BlogChanges at %s"),$DBInfo->sitename);
-  $channel=<<<CHANNEL
-<channel rdf:about="$URL">
-  <title>$rss_name</title>
-  <link>$url</link>
-  <description>$desc</description>
-  <image rdf:resource="$img_url"/>
-  <items>
-  <rdf:Seq>
-CHANNEL;
-  $items="";
-
-#          print('<description>'."[$data] :".$chg["action"]." ".$chg["pageName"].$comment.'</description>'."\n");
-#          print('</rdf:li>'."\n");
-#        }
-
-  $ratchet_day= FALSE;
-  if (!$logs) $logs=array();
-
-  foreach ($logs as $log) {
-    #print_r($log);
-    list($page, $user,$date,$title,$summary)= $log;
-    $url=qualifiedUrl($formatter->link_url(_urlencode($page)));
-
-    if (!$title) continue;
-    #$tag=md5("#!blog ".$line);
-    $tag=md5($user." ".$date." ".$title);
-    #$tag=_rawurlencode(normalize($title));
-
-    $channel.="    <rdf:li rdf:resource=\"$url#$tag\"/>\n";
-    $items.="     <item rdf:about=\"$url#$tag\">\n";
-    $items.="     <title>$title</title>\n";
-    $items.="     <link>$url#$tag</link>\n";
-    if ($summary) {
-      $p=new WikiPage($page);
-      $f=new Formatter($p);
-      ob_start();
-      #$f->send_page($summary);
-      $f->send_page($summary,array('fixpath'=>1));
-      #$summary=htmlspecialchars(ob_get_contents());
-      $summary='<![CDATA['.ob_get_contents().']]>';
-      ob_end_clean();
-      $items.="     <description>$summary</description>\n";
-    }
-    $items.="     <dc:date>$date+00:00</dc:date>\n";
-    $items.="     <dc:contributor>\n<rdf:Description>\n"
-          ."<rdf:value>$user</rdf:value>\n"
-          ."</rdf:Description>\n</dc:contributor>\n";
-    $items.="     </item>\n";
-
-  }
-  $url=qualifiedUrl($formatter->link_url($DBInfo->frontpage));
-  $channel.= <<<FOOT
-    </rdf:Seq>
-  </items>
-</channel>
-<image rdf:about="$img_url">
-<title>$DBInfo->sitename</title>
-<link>$url</link>
-<url>$img_url</url>
-</image>
-FOOT;
-
-  $url=qualifiedUrl($formatter->link_url("FindPage"));
-  $form=<<<FORM
-<textinput>
-<title>Search</title>
-<link>$url</link>
-<name>goto</name>
-</textinput>
-FORM;
-
-  $new="";
+  /* output encoding */
   if ($options['oe'] and (strtolower($options['oe']) != $DBInfo->charset)) {
     $charset=$options['oe'];
     if (function_exists('iconv')) {
-      $out=$head.$channel.$items.$form;
-      $new=iconv($DBInfo->charset,$charset,$out);
-      if (!$new) $charset=$DBInfo->charset;
+      $rss=iconv($DBInfo->charset,$charset,$out);
+      if (!$rss) $charset=$DBInfo->charset;
     }
   } else $charset=$DBInfo->charset;
 
-  $head=<<<HEAD
+
+  /* emit output rss as text/xml */
+  header("Content-Type: text/xml");
+
+  print <<<XML
 <?xml version="1.0" encoding="$charset"?>
-<rdf:RDF xmlns:wiki="http://purl.org/rss/1.0/modules/wiki/"
-         xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-         xmlns:xlink="http://www.w3.org/1999/xlink"
-         xmlns:dc="http://purl.org/dc/elements/1.1/"
-         xmlns="http://purl.org/rss/1.0/">\n
 <!--
     Add "oe=utf-8" to convert the charset of this rss to UTF-8.
 -->
-HEAD;
+$rss
+XML;
+}
 
-  header("Content-Type: text/xml");
-  if ($new) print $head.$new;
-  else print $head.$channel.$items.$form;
+function generate_rss($formatter, $rss_name, $logs)
+{
+  global $DBInfo;
 
-  #print $head;
-  #print $channel;
-  #print $items;
-  #print $form;
-  print "</rdf:RDF>";
+  $channel = generate_channel($formatter, $rss_name, $logs);
+  $textInput = generate_textInput($formatter);
+
+  return <<<RSS
+<rss version="2.0">
+$channel
+$textInput
+</rss>
+
+RSS;
+}
+
+function generate_channel($formatter, $rss_name, $logs)
+{
+  global $DBInfo;
+
+  $url=qualifiedUrl($formatter->link_url("BlogChanges"));
+  $desc=sprintf(_("BlogChanges at %s"),$DBInfo->sitename);
+  $image = generate_image($formatter);
+  $items = generate_items($formatter, $logs);
+
+  return <<<CHANNEL
+<channel>
+<title>$rss_name</title>
+<link>$url</link>
+<description>$desc</description>
+$image
+$items
+</channel>
+
+CHANNEL;
+}
+
+function generate_items($formatter, $logs)
+{
+  if (!$logs) return "";
+
+  $items = "";
+  foreach ($logs as $log) {
+    $items .= generate_item($formatter, $log);
+  }
+  return $items;
+}
+
+function generate_item($formatter, $log)
+{
+  global $DBInfo;
+
+  list($page,$user,$date,$title,$summary)= $log;
+
+  if (!$title) return "";
+
+  $url=qualifiedUrl($formatter->link_url(_urlencode($page)));
+
+  /* RFC 822 date format for RSS 2.0 */
+  $pubDate=gmdate("D, j M Y H:i:s T",strtotime($date));
+
+  /* purple link */
+  $tag=md5($user." ".$date." ".$title);
+
+  /* description */
+  if ($summary) {
+      $p=new WikiPage($page);
+      $f=new Formatter($p);
+      ob_start();
+      $f->send_page($summary,array('fixpath'=>1));
+      $description='<description><![CDATA['.ob_get_contents().']]></description>';
+      ob_end_clean();
+  }
+
+  return <<<ITEM
+<item>
+  <title>$title</title>
+  <link>$url#$tag</link>
+  <guid isPermaLink="true">$url#$tag</guid>
+  $description
+  <pubDate>$pubDate</pubDate>
+  <author>$user</author>
+  <category domain="$url">$page</category>
+  <comments><![CDATA[$url?action=blog&value=$tag']]></comments>
+</item>
+
+ITEM;
+}
+
+function generate_image($formatter)
+{
+  global $DBInfo;
+
+  $url=qualifiedUrl($formatter->link_url($DBInfo->frontpage));
+  $img_url=qualifiedURL($DBInfo->logo_img);
+
+  return <<<IMAGE
+<image>
+  <title>$DBInfo->sitename</title>
+  <link>$url</link>
+  <url>$img_url</url>
+</image>
+
+IMAGE;
+}
+
+function generate_textInput($formatter)
+{
+  $url=qualifiedUrl($formatter->link_url("FindPage"));
+
+  return <<<FORM
+<textInput>
+  <title>Search</title>
+  <link>$url</link>
+  <name>goto</name>
+</textInput>
+
+FORM;
 }
 ?>
