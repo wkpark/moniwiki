@@ -1,9 +1,9 @@
 <?php
 // Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
-// sample plugin for the MoniWiki
+// Blog action plugin for the MoniWiki
 //
-// Usage: [[Test]]
+// Usage: ?action=Blog
 //
 // $Id$
 // vim:et:ts=2:
@@ -21,6 +21,8 @@ function do_Blog($formatter,$options) {
   $url=$formatter->link_url($formatter->page->urlname);
   $formatter->send_header("",$options);
   if (!$options[button_preview] && $options[savetext]) {
+    $savetext=stripslashes($options[savetext]);
+    $savetext=str_replace("}}}","\}}}",$savetext);
     $options[msg]=sprintf(_("Comment is added to \"%s\""),$options[page]);
     $formatter->send_title(sprintf(_("Add comment to \"%s\""),$options[page]),"",$options);
     $raw_body=$formatter->page->_get_raw_body();
@@ -29,7 +31,7 @@ function do_Blog($formatter,$options) {
     $raw_body.="{{{#!chat $id @date@";
     if ($options[title])
       $raw_body.=" $options[title]";
-    $raw_body.="\n$options[savetext]\n}}}\n\n";
+    $raw_body.="\n$savetext\n}}}\n\n";
     $formatter->page->write($raw_body);
     $DBInfo->savePage($formatter->page,"Add Blog entry",$options);
 
@@ -49,6 +51,7 @@ $extra
 </form>
 EOS;
   }
+  $formatter->show_hints();
   if ($options[button_preview] && $options[savetext]) {
     if ($options[title])
       $formatter->send_page("== $options[title] ==\n");
