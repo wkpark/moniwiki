@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2004 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // download action plugin for the MoniWiki
 //
@@ -58,8 +58,8 @@ function do_download($formatter,$options) {
   if (!$mimetype) $mimetype="application/x-unknown";
 
   header("Content-Type: $mimetype\r\n");
-  header("Content-Disposition: inline; filename=$file" );
-  #header("Content-Disposition: attachment; filename=$file" );
+  header("Content-Disposition: inline; filename=\"$file\"" );
+  #header("Content-Disposition: attachment; filename=\"$file\"" );
   header("Content-Description: MoniWiki PHP Downloader" );
   Header("Pragma: no-cache");
   Header("Expires: 0");
