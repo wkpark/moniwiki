@@ -48,6 +48,8 @@ function processor_vim($formatter,$value) {
 
   if ($extra == "number") 
     $option='+"set number" ';
+  if ($DBInfo->vim_options)
+    $option.=$DBInfo->vim_options;
 
   if(getenv("OS")=="Windows_NT") {
     $tohtml='\%VIMRUNTIME\%\\syntax\\2html.vim';
