@@ -308,7 +308,7 @@ function do_post_DeleteFile($formatter,$options) {
   return;
 }
 
-function do_post_DeletePage($formatter,$options) {
+function do_DeletePage($formatter,$options) {
   global $DBInfo;
   
   $page = $DBInfo->getPage($options[page]);
@@ -344,35 +344,91 @@ Only WikiMaster can delete this page<br />
   $formatter->send_footer();
 }
 
-function do_rename($formatter,$options) {
+function form_permission($mode) {
+  if ($mode & 0400)
+     $read="checked='checked'";
+  if ($mode & 0200)
+     $write="checked='checked'";
+  $form= "<tr><th>read</th><th>write</th></tr>\n";
+  $form.= "<tr><td><input type='checkbox' name='read' $read /></td>\n";
+  $form.= "<td><input type='checkbox' name='write' $write /></td></tr>\n";
+  return $form;
+}
+
+function do_chmod($formatter,$options) {
   global $DBInfo;
   
-  $page = $DBInfo->getPage($options[page]);
-
   if (isset($options[passwd])) {
     $check=$DBInfo->admin_passwd==crypt($options[passwd],$DBInfo->admin_passwd);
-    if ($check && !$DBInfo->hasPage($options[value])) {
-      $DBInfo->renamePage($page,$options[value]);
-      $title = sprintf('"%s" is renamed !', $page->name);
+    if ($check && $DBInfo->hasPage($options[page])) {
+      $perms= $DBInfo->getPerms($options[page]);
+      $perms&= 0077; # clear user perms
+      if ($options[read])
+         $perms|=0400;
+      if ($options[write])
+         $perms|=0200;
+      $DBInfo->setPerms($options[page],$perms);
+      $title = sprintf('Permission of "%s" changed !', $options[page]);
       $formatter->send_header("",$options);
       $formatter->send_title($title,"",$options);
       $formatter->send_footer();
       return;
     } else {
-      $title = sprintf('Fail to rename "%s" !', $page->name);
+      $title = sprintf('Fail to chmod "%s" !', $options[page]);
       $formatter->send_header("",$options);
       $formatter->send_title($title);
       $formatter->send_footer();
       return;
     }
   }
-  $title = sprintf('Rename "%s" ?', $page->name);
+  $perms= $DBInfo->getPerms($options[page]);
+
+  $form=form_permission($perms);
+
+  $title = sprintf('Change permission of "%s"', $options[page]);
   $formatter->send_header("",$options);
   $formatter->send_title($title);
 #<tr><td align='right'><input type='checkbox' name='show' checked='checked' />show only </td><td><input type='password' name='passwd'>
   print "<form method='post'>
 <table border='0'>
-<tr><td align='right'>Old name: </td><td><b>$page->name</b></td></tr>
+$form
+</table>
+Password:<input type='password' name='passwd'>
+<input type='submit' name='button_chmod' value='change'><br />
+Only WikiMaster can change the permission of this page
+<input type=hidden name='action' value='chmod' />
+</form>";
+#  $formatter->send_page();
+  $formatter->send_footer();
+}
+
+function do_rename($formatter,$options) {
+  global $DBInfo;
+  
+  if (isset($options[passwd])) {
+    $check=$DBInfo->admin_passwd==crypt($options[passwd],$DBInfo->admin_passwd);
+    if ($check && !$DBInfo->hasPage($options[value])) {
+      $DBInfo->renamePage($options[page],$options[value]);
+      $title = sprintf('"%s" is renamed !', $options[page]);
+      $formatter->send_header("",$options);
+      $formatter->send_title($title,"",$options);
+      $formatter->send_footer();
+      return;
+    } else {
+      $title = sprintf('Fail to rename "%s" !', $options[page]);
+      $formatter->send_header("",$options);
+      $formatter->send_title($title);
+      $formatter->send_footer();
+      return;
+    }
+  }
+  $title = sprintf('Rename "%s" ?', $options[page]);
+  $formatter->send_header("",$options);
+  $formatter->send_title($title);
+#<tr><td align='right'><input type='checkbox' name='show' checked='checked' />show only </td><td><input type='password' name='passwd'>
+  print "<form method='post'>
+<table border='0'>
+<tr><td align='right'>Old name: </td><td><b>$options[page]</b></td></tr>
 <tr><td align='right'>New name: </td><td><input name='value' /></td></tr>
 <tr><td align='right'>Password: </td><td><input type='password' name='passwd'>
 <input type='submit' name='button_rename' value='rename'>
@@ -689,6 +745,7 @@ function do_post_css($formatter,$options) {
      # set the fake cookie
      $HTTP_COOKIE_VARS[MONI_CSS]=$options[user_css];
      $title="CSS Changed";
+     $options[css_url]=$options[user_css];
   }
   $formatter->send_header("",$options);
   $formatter->send_title($title);
@@ -696,8 +753,29 @@ function do_post_css($formatter,$options) {
   $formatter->send_footer();
 }
 
+function do_new($formatter,$options) {
+  global $DBInfo;
+  
+  $title=_("Create a new page");
+  $formatter->send_header("",$options);
+  $formatter->send_title($title);
+  $url=$formatter->link_url($formatter->page->name);
+
+  $msg=_("Enter a page name");
+  print <<<FORM
+<form method='get' action='$url'>
+    $msg: <input type='hidden' name='action' value='goto' />
+    <input name='value' size='30' />
+    <input type='submit' value='Create' />
+    </form>
+FORM;
+
+  $formatter->send_footer();
+}
+
 function do_bookmark($formatter,$options) {
   global $DBInfo;
+  global $HTTP_COOKIE_VARS;
 
   $user=new User(); # get cookie
   if (!$options[time]) {
@@ -897,7 +975,6 @@ Password: <input type='password' name='passwd' size='10' />
 
 function macro_Css($formatter="") {
   global $DBInfo;
-
   $out="
 <form method='post'>
 <input type='hidden' name='action' value='css' />
