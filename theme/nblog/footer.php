@@ -3,11 +3,10 @@
 <?
 print '<div style="font-size:10px">';
 if ($options['id']=='Anonymous')
-  print macro_calendar($this,"blog,noweek",'Blog');
+  print macro_calendar($this,"'Blog',blog,noweek,archive",'Blog');
 else
-  print macro_calendar($this,"blog,noweek",$options['id']);
+  print macro_calendar($this,"'$options[id]',blog,noweek,archive",$options['id']);
 print '</div>';
-print "<br />\n";
 print '<font style="font-size:12px;"><b>';
 print macro_RandomQuote($this);
 print '</b></font>';

@@ -14,7 +14,7 @@ $login=macro_login($this);
 <tr><td><?=$goto_form?></td></tr>
 </table>
 </div>
-<div id='wikiIcon'><?=$icons?><?=$upper_icon?><?=$rss_icon?><?=$home?></div>
+<div id='wikiIcon'><?=$upper_icon?><?=$icons?><?=$rss_icon?><?=$home?></div>
 <div id='wikiMenu'><?=$menu?></div>
 <?=$msg?>
 <table border='0' width='100%' cellpadding='0' cellspacing='0'><tr valign='top'>
