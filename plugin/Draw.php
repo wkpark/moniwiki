@@ -9,28 +9,48 @@
 
 function macro_Draw($formatter,$value) {
   global $DBInfo;
-  $hotdraw_dir=str_replace("./",'',$DBInfo->upload_dir.'/Draw');
+  $keyname=$DBInfo->_getPageKey($formatter->page->name);
+  $_dir=str_replace("./",'',$DBInfo->upload_dir.'/'.$keyname);
   $name=_rawurlencode($value);
 
+  $enable_edit=1;
+
   umask(000);
-  if (!file_exists($hotdraw_dir))
-    mkdir($hotdraw_dir, 0777);
+  if (!file_exists($_dir))
+    mkdir($_dir, 0777);
 
   $gifname='Draw_'.$name.".gif";
+  $mapname='Draw_'.$name.".map";
   $now=time();
 
   $url=$formatter->link_url($formatter->page->name,"?action=draw&amp;value=$name&amp;now=$now");
 
-  if (!file_exists($hotdraw_dir."/$gifname"))
+  if (!file_exists($_dir."/$gifname"))
     return "<a href='$url'>"._("Draw new picture")."</a>";
+  $editable='';
+  if ($enable_edit)
+    $editable="<a href='$url'>Edit</a>";
 
-  return "<a href='$url'><img src='$DBInfo->url_prefix/$hotdraw_dir/$gifname' alt='hotdraw'></a>\n";
+  $maptag='';
+  $map='';
+  if (file_exists($_dir."/$mapname")) {
+    $maptag=" usemap='#$name'";
+    $map=file($_dir."/$mapname");
+    $map=implode("",$map);
+    $map=preg_replace('/HREF="%TWIKIDRAW%"/','nohref',$map);
+    $map=preg_replace("/%MAPNAME%/",$name,$map);
+  }
+
+  return "$map<img src='$DBInfo->url_prefix/$_dir/$gifname' border='0' alt='hotdraw' $maptag /></a>\n".$editable;
 }
 
 function do_post_Draw($formatter,$options) {
   global $DBInfo;
 
-  $hotdraw_dir=str_replace("./",'',$DBInfo->upload_dir.'/Draw');
+  $enable_replace=1;
+
+  $keyname=$DBInfo->_getPageKey($options['page']);
+  $_dir=str_replace("./",'',$DBInfo->upload_dir.'/'.$keyname);
   $pagename=$options['page'];
 
   $name=$options['value'];
@@ -38,16 +58,49 @@ function do_post_Draw($formatter,$options) {
   if ($_FILES['filepath']) {
     $upfile=$_FILES['filepath']['tmp_name'];
     $temp=explode("/",$_FILES['filepath']['name']);
-    $file_path=$hotdraw_dir."/".$temp[count($temp)-1];
+    $upfilename= $temp[count($temp)-1];
+    preg_match("/(.*)\.([a-z0-9]{1,4})$/i",$upfilename,$fname);
+    # do not change the extention of the file.
+    $file_path= $newfile_path = $_dir."/".$upfilename;
 
-    $test=@copy($upfile, $file_path);
+    # is file already exists ?
+    $dummy=0;
+    while (file_exists($newfile_path)) {
+      $dummy=$dummy+1;
+      $ufname=$fname[1]."_".$dummy; // rename file
+      $upfilename=$ufname.".$fname[2]";
+      $newfile_path= $_dir."/".$upfilename;
+    }
+    if ($enable_replace) {
+      if ($file_path != $newfile_path)
+        $test=@copy($file_path, $newfile_path);
+      $test=@copy($upfile, $file_path);
+    } else
+      $test=@copy($upfile, $newfile_path);
     if (!$test) {
       $title=sprintf(_("Fail to copy \"%s\" to \"%s\""),$upfilename,$file_path);
       $formatter->send_header("Status: 406 Not Acceptable",$options);
       $formatter->send_title($title,"",$options);
       return;
     }
-    chmod($file_path,0644);
+    if ($fname[2] == 'map') {
+      # fix map file.
+      $map=file($newfile_path);
+      $map=implode('',$map);
+      # remove useless areas
+      $map=preg_replace('/HREF="%TWIKIDRAW%"/','nohref',$map);
+      $fp=fopen($newfile_path,'w');
+      if ($fp) {
+        fwrite($fp,$map);
+        fclose($fp);
+      }
+    }
+    chmod($newfile_path,0644);
+    if ($fname[2] == 'draw') {
+      $comment=sprintf("Drawing '%s' uploaded",$upfilename);
+      $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
+      $DBInfo->addLogEntry($keyname, $REMOTE_ADDR,$comment,"ATTDRW");
+    }
     return;
   }
 
@@ -63,13 +116,13 @@ function do_post_Draw($formatter,$options) {
 
   $gifname='Draw_'._rawurlencode($name);
 
-  $imgpath="$hotdraw_dir/$gifname";
+  $imgpath="$_dir/$gifname";
 
   $dummy=0;
   while (file_exists($imgpath)) {
      $dummy=$dummy+1;
      $ufname=$gifname."_".$dummy; // rename file
-     $imgpath= "$hotdraw_dir/$ufname";
+     $imgpath= "$_dir/$ufname";
   }
 
   $draw_url="$DBInfo->url_prefix/$imgpath.draw";
