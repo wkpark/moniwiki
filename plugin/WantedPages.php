@@ -8,6 +8,8 @@ function macro_WantedPages($formatter="",$options="") {
   global $DBInfo;
   $pages = $DBInfo->getPageLists();
 
+  $pagelinks=$formatter->pagelinks; // save
+
   $cache=new Cache_text("pagelinks");
   foreach ($pages as $page) {
     $p= new WikiPage($page);
@@ -23,7 +25,6 @@ function macro_WantedPages($formatter="",$options="") {
       }
     }
   }
-
   asort($wants);
   $out="<ul>\n";
   while (list($name,$owns) = each($wants)) {
@@ -31,6 +32,8 @@ function macro_WantedPages($formatter="",$options="") {
     $out.="<li>".$formatter->link_repl($name). ": $owns</li>";
   }
   $out.="</ul>\n";
+  $formatter->pagelinks = $pagelinks; // restore
+
   return $out;
 }
 
