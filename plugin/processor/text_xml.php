@@ -377,12 +377,12 @@ class Formatter_xml {
            $xml->pre_line.=$line."\n";
            continue;
          } else {
-           $p=strrpos($line,"}}}");
+           #$p=strrpos($line,"}}}");
+           $p= strlen($line) - strpos(strrev($line),'}}}') - 1;
            if ($p>2 and $line[$p-3]=='\\') {
              $xml->pre_line.=substr($line,0,$p-3).substr($line,$p-2)."\n";
              continue;
            }
-           $len=strlen($line);
            $xml->pre_line.=substr($line,0,$p-2);
            $line=substr($line,$p+1);
            $in_pre=-1;
@@ -391,7 +391,6 @@ class Formatter_xml {
       } else if (!(strpos($line,"{{{")===false) and 
                  preg_match("/{{{[^}]*$/",$line)) {
          $p=strpos($line,"{{{");
-         $len=strlen($line);
 
          $processor="";
          $in_pre=1;
