@@ -1611,7 +1611,9 @@ function macro_TableOfContents(&$formatter,$value="") {
    $head=str_replace("<","&lt;",$match[3]);
    # strip some basic wikitags
    # $formatter->baserepl,$head);
-   $head=preg_replace($formatter->baserule,"\\1",$head);
+   #$head=preg_replace($formatter->baserule,"\\1",$head);
+   # do not strip basic wikitags
+   $head=preg_replace($formatter->baserule,$formatter->baserepl,$head);
    $head=preg_replace("/\[\[.*\]\]/","",$head);
    $head=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$head);
 
