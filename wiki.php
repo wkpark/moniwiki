@@ -446,7 +446,7 @@ class WikiDB {
     $this->datetime_fmt= 'Y-m-d H:i:s';
     #$this->changed_time_fmt = ' . . . . [h:i a]';
     $this->changed_time_fmt= ' [h:i a]'; # used by RecentChanges macro
-    $this->admin_passwd= '10sQ0sKjIJES.';
+    $this->admin_passwd= 'daEPulu0FLGhk'; # default value moniwiki
     $this->purge_passwd= '';
     $this->rcs_user='root';
     $this->actions= array('DeletePage','LikePages');
