@@ -110,7 +110,7 @@ function checkConfig($config) {
      print "<h3><font color=red>Please change current directory writable to generate a config.php</font></h3>\n";
      print "<pre class='console'>\n<font color='green'>$</font> chmod a+w .\n</pre>\n";
      return;
-  } else {
+  } else if (file_exists("config.php")) {
      print "<h3><font color='green'>WARN: Please execute the following command after you have finished your first configuration step.</font></h3>\n";
      print "<pre class='console'>\n<font color='green'>$</font> sh config.sh\n</pre>\n";
      print "<h3><font color='green'>WARN: and please execute the following command after you have completed your configuration.</font></h3>\n";
@@ -411,7 +411,7 @@ if ($REQUEST_METHOD!="POST") {
     show_wikiseed($config,'wikiseed');
     exit;
   }
-  if ( !file_exists($config[data_dir]."/text/RecentChanges")) {
+  if (file_exists('config.php') && !file_exists($config[data_dir]."/text/RecentChanges")) {
     print "<h3><font color='red'>WARN: You have no WikiSeed on your $config[sitename]</font></h3>\n";
     print "<h2>If you want to put wikiseeds on your wiki <a href='?action=seed'>Click here</a> now</h2>";
   }
