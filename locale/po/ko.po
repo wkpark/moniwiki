@@ -133,7 +133,7 @@ msgstr "이전"
 
 #: ../plugin/BlogChanges.php:444
 msgid "Next"
-msgstr ""
+msgstr "다음"
 
 #: ../plugin/Comment.php:48
 msgid "Comment"
