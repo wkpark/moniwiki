@@ -1468,7 +1468,8 @@ class Formatter {
 
   function get_instructions(&$body) {
     global $DBInfo;
-    $pikeys=array('#redirect','#action','#title','#keywords','#noindex');
+    $pikeys=array('#redirect','#action','#title','#keywords','#noindex',
+      '#twinpages','#notwins');
     $pi=array();
     if (!$body) {
       if (!$this->page->exists()) return '';
@@ -1514,6 +1515,8 @@ class Formatter {
         if (in_array($key,$pikeys)) { $pi[$key]=$val ? $val:1; }
         else $notused[]=$line;
       }
+      #
+      if ($pi['#notwins']) $pi['#twinpages']=0;
     }
 
     if ($format) {
@@ -2137,7 +2140,9 @@ class Formatter {
         return;
       }
 
-      $twins=$DBInfo->metadb->getTwinPages($this->page->name,$DBInfo->use_twinpages);
+      $twin_mode=$DBInfo->use_twinpages;
+      if (isset($pi['#twinpages'])) $twin_mode=$pi['#twinpages'];
+      $twins=$DBInfo->metadb->getTwinPages($this->page->name,$twin_mode);
       if ($body) {
         $body=rtrim($body); # delete last empty line
         $lines=explode("\n",$body);
