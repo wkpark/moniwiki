@@ -42,12 +42,12 @@ function do_chmod($formatter,$options) {
 <table border='0'>
 $form
 </table>\n";
-  if ($DBInfo->security->is_protected("deletefile",$options))
+  if ($DBInfo->security->is_protected("chmod",$options))
     print "
 Password:<input type='password' name='passwd' />
-<input type='submit' name='button_chmod' value='change' /><br />
 Only WikiMaster can change the permission of this page\n";
   print "
+<input type='submit' name='button_chmod' value='change' /><br />
 <input type=hidden name='action' value='chmod' />
 </form>";
 #  $formatter->send_page();
