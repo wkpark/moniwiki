@@ -38,13 +38,33 @@ function macro_Trail($formatter,$value) {
   }
 
   if ($count > 1) {
+    $save=$formatter->query_string;
+    $query='?action=trail&amp;value='.$value;
+    $formatter->query_string=$query;
     $pnut='&#x2039; ';
     if ($prev) $pnut.=$formatter->link_repl($prev)." | ";
+    $formatter->query_string=$save;
     $pnut.=$formatter->link_repl($index);
+    $formatter->query_string=$query;
     if ($next) $pnut.=" | ".$formatter->link_repl($next);
     $pnut.=' &#x203a;';
+    $formatter->query_string=$save;
   }
   return $pnut;
+}
+
+function do_trail($formatter,$options) {
+  $pnut=macro_Trail($formatter,$options['value']);
+  $formatter->send_header('',$options);
+  $formatter->send_title($title,$formatter->link_url("FindPage"),$options);
+  print "<div class='wikiTrailer'>\n";
+  print $pnut;
+  print "</div>\n";
+  $formatter->send_page();
+  print "<div class='wikiTrailer'>\n";
+  print $pnut;
+  print "</div>\n";
+  $formatter->send_footer('',$options);
 }
 
 // vim:noet:sts=2:
