@@ -18,6 +18,8 @@ $_release = '1.0.8';
 
 #ob_start("ob_gzhandler");
 
+error_reporting(E_ALL & ~E_NOTICE);
+#error_reporting(E_ALL);
 $Config=getConfig("config.php",array('init'=>1));
 include("wikilib.php");
 
@@ -427,7 +429,8 @@ function getConfig($configfile, $options=array()) {
 #  if ($icons) $config['icons']=$icons;
 #  if ($icon) $config['icon']=$icon;
 #  if ($actions) $config['actions']=$actions;
-  if ($config['include_path']) ini_set('include_path',$config['include_path']);
+  if (isset($config['include_path']))
+    ini_set('include_path',$config['include_path']);
 
   return $config;
 }
@@ -450,6 +453,7 @@ class WikiDB {
     $this->cache_dir= $this->data_dir.'/cache';
     $this->vartmp_dir= '/var/tmp';
     $this->intermap= $this->data_dir.'/intermap.txt';
+    $this->interwikirule='';
     $this->editlog_name= $this->data_dir.'/editlog';
     $this->shared_intermap=$this->data_dir."/text/InterMap";
     $this->shared_metadb=$this->data_dir."/metadb";
@@ -483,7 +487,7 @@ class WikiDB {
     $this->trail=0;
     $this->origin=0;
     $this->arrow=" &#x203a; ";
-    $this->home=Home;
+    $this->home='Home';
     $this->diff_type='fancy_diff';
     $this->nonexists='nonexists';
     $this->use_sistersites=1;
@@ -491,6 +495,7 @@ class WikiDB {
     $this->use_hostname=1;
     $this->pagetype=array();
     $this->smiley='wikismiley';
+    $this->theme='';
 
     $this->inline_latex=0;
     $this->processors=array();
@@ -516,7 +521,7 @@ class WikiDB {
       $this->menu_sep="|";
     }
 
-    if (!$this->icon) {
+    if (empty($this->icon)) {
     $iconset=$this->iconset;
     $imgdir=$this->imgs_dir;
     $this->icon['upper']="<img src='$imgdir/$iconset-upper.gif' alt='U' align='middle' border='0' />";
@@ -544,7 +549,7 @@ class WikiDB {
     $this->icon_cat=" ";
     }
 
-    if (!$this->icons) {
+    if (empty($this->icons)) {
       $this->icons=array(
               array("","?action=edit",$this->icon['edit'],"accesskey='e'"),
               array("","?action=diff",$this->icon['diff'],"accesskey='c'"),
@@ -589,7 +594,7 @@ class WikiDB {
     if (!$this->counter->counter)
       $this->counter=new Counter();
 
-    if ($this->security_class) {
+    if (isset($this->security_class)) {
       include_once("plugin/security/$this->security_class.php");
       $class="Security_".$this->security_class;
       $this->security=new $class ($this);
@@ -2048,6 +2053,7 @@ class Formatter {
 
          $processor="";
          $in_pre=1;
+         $np=0;
 
          # check processor
          if ($line[$p+3] == "#" and $line[$p+4] == "!") {
@@ -2062,10 +2068,17 @@ class Formatter {
          } else if ($line[$p+3] == ":") {
             # new formatting rule for a quote block (pre block + wikilinks)
             $line[$p+3]=" ";
+            $np=1;
+            if ($line[$p+4]=='#') {
+              $pre_style=strtok(substr($line,$p+5),' ');
+              $np++;
+              if ($pre_style) $np+=strlen($pre_style);
+            } else
+              $pre_style='';
             $in_quote=1;
          }
 
-         $this->pre_line=substr($line,$p+3);
+         $this->pre_line=substr($line,$p+$np+3);
          if (trim($this->pre_line))
            $this->pre_line.="\n";
          $line=substr($line,0,$p);
@@ -2197,7 +2210,11 @@ class Formatter {
             $pre=str_replace("<","&lt;",$this->pre_line);
             $pre=preg_replace($this->baserule,$this->baserepl,$pre);
             $pre=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$pre);
-            $line="<pre class='quote'>\n".$pre."</pre>\n".$line;
+            $class='quote';
+            if ($pre_style) $class=$pre_style;
+            #if ($pre_style) $class.=' '.$pre_style;
+            #if ($pre_style) $class=$pre_style.' '.$class;
+            $line="<pre class=\"$class\">\n".$pre."</pre>\n".$line;
             $in_quote=0;
          } else {
             # htmlfy '<'
@@ -3062,7 +3079,7 @@ $options=array();
 $options['id']=$user->id;
 
 # MoniWiki theme
-if (!$DBInfo->theme) $theme=$_GET['theme'];
+if (empty($DBInfo->theme) and isset($_GET['theme'])) $theme=$_GET['theme'];
 else $theme=$DBInfo->theme;
 if ($theme) $options['theme']=$theme;
 
