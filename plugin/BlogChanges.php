@@ -216,17 +216,16 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
     $date=$options['date'];
 
   // parse args
-  preg_match("/^(?(?=')'([^']+)'|\"([^\"]+)\")?,?(\s*,?\s*.*)?$/",
+  preg_match("/^(('|\")([^\\2]+)\\2)?,?(\s*,?\s*.*)?$/",
     $value,$match);
 
-  $opts=explode(',',$match[3]);
+  $opts=explode(',',$match[4]);
   $opts=array_merge($opts,array_keys($options));
   #print_r($match);print_r($opts);
 
   $category_pages=array();
 
-  $match[1]=$match[1] ? $match[1]:$match[2];
-  $options['category']=$options['category'] ? $options['category']:$match[1];
+  $options['category']=$options['category'] ? $options['category']:$match[3];
 
 
   if ($options['category']) {
