@@ -620,7 +620,7 @@ function do_goto($formatter,$options) {
   if ($options[value]) {
      $url=stripslashes($options[value]);
      $url=_rawurlencode($url);
-     $url=$formatter->link_url($url);
+     $url=$formatter->link_url($url,"?action=show");
      $formatter->send_header(array("Status: 302","Location: ".$url),$options);
   } else if ($options[url]) {
      $url=str_replace("&amp;","&",$options[url]);
@@ -1019,8 +1019,6 @@ function do_post_css($formatter,$options) {
 }
 
 function do_new($formatter,$options) {
-  global $DBInfo;
-  
   $title=_("Create a new page");
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
@@ -1265,7 +1263,6 @@ function macro_RandomQuote($formatter,$value="") {
 }
 
 function macro_UploadFile($formatter,$value="") {
-   global $DBInfo;
    $url=$formatter->link_url($formatter->page->urlname);
    $form= <<<EOF
 <form enctype="multipart/form-data" method='post' action='$url'>
@@ -1400,8 +1397,6 @@ function macro_Css($formatter="") {
 }
 
 function macro_Date($formatter,$value) {
-  global $DBInfo;
-
   if (!$value) {
     return date('Y/m/d');
   }
@@ -1414,8 +1409,6 @@ function macro_Date($formatter,$value) {
 }
 
 function macro_DateTime($formatter,$value) {
-  global $DBInfo;
-
   if (!$value) {
     return date('Y/m/d');
   }
