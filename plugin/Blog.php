@@ -20,6 +20,10 @@ function updateBlogList($formatter) {
   $log='';
   $logs='';
   foreach ($lines as $line) {
+    if (preg_match("/^##norss/i",$line)) {
+      #XXX $changecache->_del($key);
+      return;
+    }
     if (preg_match("/^({{{)?#!blog (.*)$/",$line,$match)) {
       list($dummy,$datestamp,$dummy)=explode(' ',$match[2],3);
 
