@@ -13,17 +13,17 @@ function processor_vim($formatter,$value) {
                 "tex","java","fortran","vim","perl",
                 "haskell","lisp","html","st","objc");
   $options=array("number");
-  $lines=explode("\n",$value);
-  # get parameters
-  $args=explode(" ",substr($lines[0],6),2);
-  unset($lines[0]);
-  $src=join($lines,"\n");
 
-  if (in_array($args[0],$syntax)) 
-    $type=$args[0];
-  else
+  if ($value[0]=='#' and $value[1]=='!')
+    list($line,$value)=explode("\n",$value,2);
+  # get parameters
+  if ($line)
+    list($tag,$type,$extra)=explode(" ",$line,3);
+  $src=$value;
+
+  if (!in_array($type,$syntax)) 
     return "<pre class='code'>\n#!vim\n$src\n</pre>\n";
-  if ($args[1] == "number") 
+  if ($extra == "number") 
     $option='+"set number" ';
   
   $tohtml='\$VIMRUNTIME/syntax/2html.vim';
@@ -48,7 +48,7 @@ function processor_vim($formatter,$value) {
         ' +"so '.$tohtml.'" +"wq! /dev/stdout" +q';
 
   $fp=popen($cmd,"r");
-  fwrite($fp,$src);
+  #fwrite($fp,$src);
 
   while($s = fgets($fp, 1024)) {
     $out.= $s;

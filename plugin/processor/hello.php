@@ -7,22 +7,20 @@
 // Hello World
 // }}}
 // $Id$
-// vim:et:ts=2:
 
 function processor_hello($formatter,$value="") {
+  if ($value[0]=='#' and $value[1]=='!')
+    list($line,$value)=explode("\n",$value,2);
+
+  if ($line)
+    list($tag,$args)=explode(' ',$line,2);
 
   $lines=explode("\n",$value);
-  $tag=substr($lines[0],0,7);
-  if ($tag=='#!hello') {
-    # get parameters
-    $args=substr($lines[0],8);
-    unset($lines[0]);
-  }
-
   foreach ($lines as $line)
     $out.="[<b>$args</b>]:$line<br />\n";
 
   return $out;
 }
 
+// vim:et:ts=2:
 ?>
