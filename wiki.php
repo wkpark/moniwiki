@@ -25,40 +25,6 @@ include("wikilib.php");
 
 $timing=new Timer();
 
-function _preg_escape($val) {
-  return preg_replace('/([\$\^\.\[\]\{\}\|\(\)\+\*\/\\\\!\?]{1})/','\\\\\1',$val);
-}
-
-function _preg_search_escape($val) {
-  return preg_replace('/([\/]{1})/','\\\\\1',$val);
-}
-
-function get_scriptname() {
-  // Return full URL of current page.
-  // $_SERVER["SCRIPT_NAME"] has bad value under CGI mode
-  // set 'cgi.fix_pathinfo=1' in the php.ini under
-  // apache 2.0.x + php4.2.x Win32
-  return $_SERVER["SCRIPT_NAME"];
-}
-
-function _rawurlencode($url) {
-  $name=rawurlencode($url);
-  $urlname=preg_replace(array('/%2F/i','/%7E/i'),array('/','~'),$name);
-  return $urlname;
-}
-
-function _urlencode($url) {
-  #$name=urlencode(strtr($url,"+"," "));
-  #return preg_replace(array('/%2F/i','/%7E/i','/%23/'),array('/','~','#'),$name);
-  return preg_replace("/([^a-z0-9\/\?\.\+~#&:;=%\-]{1})/ie","'%'.strtoupper(dechex(ord('\\1')))",$url);
-}
-
-function qualifiedUrl($url) {
-  if (substr($url,0,7)=="http://")
-    return $url;
-  return "http://$_SERVER[HTTP_HOST]$url";
-}
-
 function getPlugin($pluginname) {
   static $plugins=array();
   if ($plugins) return $plugins[strtolower($pluginname)];
@@ -496,6 +462,7 @@ class WikiDB {
     $this->use_hostname=1;
     $this->pagetype=array();
     $this->smiley='wikismiley';
+    $this->convmap=array(0xac00, 0xd7a3, 0x0000, 0xffff); /* for euc-kr */
     $this->theme='';
 
     $this->inline_latex=0;
@@ -1614,48 +1581,23 @@ class Formatter {
       $page=substr($word,1,-1);
       $word=$page;
     } else if ($word[0]=='#') { # Anchor syntax in the MoinMoin 1.1
-      $anchor=strtok($word," ");
-      return ($word=strtok("")) ? $this->link_to($anchor,$word):
+      $anchor=strtok($word,' ');
+      return ($word=strtok('')) ? $this->link_to($anchor,$word):
                  "<a name='".($temp=substr($anchor,1))."' id='$temp'></a>";
     } else
       #$page=preg_replace("/\s+/","",$word); # concat words
       $page=normalize($word); # concat words
+
+    list($page,$page_text,$gpage)=
+      normalize_word($word,$this->group,$this->page->name,$nogroup);
     if ($text) {
       if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
         $text=str_replace('&','&amp;',$text);
         $word="<img border='0' alt='$word' src='$text' /></a>";
-      } else
-        $word=$text;
-    }
-
-    # User namespace extension
-    if ($page[0]=='~' and ($p=strpos($page,'/'))) {
-      # change ~User/Page to User~Page
-      $gpage=$page;
-      $page=substr($page,1,$p-1)."~".substr($page,$p+1);
-    } else if (!$nogroup and $this->group and !strpos($page,'~')) {
-      if ($page[0]=='/') $page=substr($page,1);
-      else {
-        $gpage=$page;
-        $page=$this->group.$page;
-      }
-    } else if ($page[0]=='/') { # SubPage
-      $page=$this->page->name.$page;
-    } else if ($page[0]=='.' and preg_match('/^(\.{1,2})\//',$page,$match)) {
-      if ($match[1] == '..') {
-        $pos=strrpos($this->page->name,"/");
-        if ($pos > 0) $upper=substr($this->page->name,0,$pos);
-        if ($upper) {
-          $page=substr($page,2);
-          if ($page == '/') $page=$upper;
-          else $page=$upper.$page;
-        }
-      } else {
-        $page=substr($page,1);
-        if ($page == '/') $page='';
-        $page=$this->page->name.$page;
-      }
-    }
+      } else $word=$text;
+    } else 
+      $word=$text=$page_text ? $page_text:$word;
+    #print $text;
 
     $url=$this->link_url(_rawurlencode($page)); # XXX
     $page=urldecode($page); # XXX
@@ -1734,10 +1676,12 @@ class Formatter {
     #if (preg_match("/^[a-zA-Z0-9\/~]/",$word))
     if (ord($word[0]) < 125)
       return "<a class='nonexistent' href='$url'>$word[0]</a>".substr($word,1);
-    if (function_exists('mb_encode_numericentity') && function_exists('iconv')){
-      $utfword=iconv($DBInfo->charset,'utf-8',$word);
-      $convmap=array(0xac00, 0xd7a3, 0x0000, 0xffff); /* for euc-kr */
-      $mbword=mb_encode_numericentity($utfword,$convmap,'utf-8');
+    if (function_exists('mb_encode_numericentity')) {
+      if (function_exists('iconv') and strtolower($DBInfo->charset) != 'utf-8')
+        $utfword=iconv($DBInfo->charset,'utf-8',$word);
+      else
+        $utfword=$word;
+      $mbword=mb_encode_numericentity($utfword,$DBInfo->convmap,'utf-8');
       $tag=strtok($mbword,';').';'; $last=strtok('');
       return "<a class='nonexistent' href='$url'>$tag</a>".$last;
     } else {
@@ -2857,8 +2801,13 @@ FOOT;
 
     # find upper page
     $pos=strrpos($name,"/");
-    if ($pos > 0) $upper=substr($name,0,$pos);
-    else if ($this->group) $upper=_urlencode(substr($this->page->name,strlen($this->group)));
+    if ($pos > 0) {
+      $upper=substr($name,0,$pos);
+      $upper_icon=$this->link_tag($upper,'',$this->icon['upper'])." ";
+    } else if ($this->group) {
+      $upper=_urlencode(substr($this->page->name,strlen($this->group)));
+      $upper_icon=$this->link_tag($upper,'',$this->icon['main'])." ";
+    }
 
     if (!$title) {
       $title=$options['title'];
@@ -2918,8 +2867,8 @@ MSG;
     $menu=$this->menu_bra.join($this->menu_sep,$menu).$this->menu_cat;
 
     # icons
-    if ($upper)
-      $upper_icon=$this->link_tag($upper,'',$this->icon['upper'])." ";
+    #if ($upper)
+    #  $upper_icon=$this->link_tag($upper,'',$this->icon['upper'])." ";
 
     if ($this->icons) {
       $icon=array();
@@ -2991,21 +2940,36 @@ MSG;
       $this->sister_on=0;
 
       $parent=_($DBInfo->home);
-      $origin=$this->word_repl('"'.$DBInfo->frontpage.'"',$parent,'',1);
+      $text='';
+      if ($this->group) {
+        $group=strtok($pagename,'~');
+        $text=strtok('');
+        $pagename=$group.'.'.$text;
+        $main=strtok($text,'/');
+      }
+      if ($group)
+        # represent: Main     > MoniWiki    > WikiName
+        # real link: MoniWiki > Ko~MoniWiki > Ko~MoniWiki/WikiName
+        $origin=$this->word_repl('"'.$main.'"',_("Main"),'',1);
+      else
+        # represent: Home       > WikiName > SubPage
+        # real link: $frontpage > WikiName > WikiName/SubPage
+        $origin=$this->word_repl('"'.$DBInfo->frontpage.'"',$parent,'',1);
       $parent='';
 
       $key=strtok($pagename,'/');
       while($key !== false) {
-        if ($parent)
-          $parent.='/'.$key;
-        else
+        if ($parent) $parent.='/'.$key;
+        else {
           $parent.=$key;
+          $key=$text;
+        }
         $okey=$key;
         $key=strtok('/');
         if ($key)
-          $origin.=$DBInfo->arrow.$this->word_repl('"'.$parent.'"',$okey,'',1);
+          $origin.=$DBInfo->arrow.$this->word_repl('"'.$parent.'"','','',1);
         else
-          $origin.=$DBInfo->arrow.$okey;
+          $origin.=$DBInfo->arrow.$this->word_repl('"'.$parent.'"',$okey,'',1);
       }
       # reset pagelinks
       $this->pagelinks=array();
@@ -3295,6 +3259,8 @@ if ($pagename) {
       if ($DBInfo->use_referer)
         log_referer($_SERVER['HTTP_REFERER'],$pagename);
       flush();
+#      ob_end_flush();
+#      ob_end_clean();
 #      $out=ob_get_contents();
 #      ob_end_clean();
 #      print $out;

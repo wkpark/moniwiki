@@ -13,6 +13,40 @@
 //
 // $Id$
 
+function _preg_escape($val) {
+  return preg_replace('/([\$\^\.\[\]\{\}\|\(\)\+\*\/\\\\!\?]{1})/','\\\\\1',$val);
+}
+
+function _preg_search_escape($val) {
+  return preg_replace('/([\/]{1})/','\\\\\1',$val);
+}
+
+function get_scriptname() {
+  // Return full URL of current page.
+  // $_SERVER["SCRIPT_NAME"] has bad value under CGI mode
+  // set 'cgi.fix_pathinfo=1' in the php.ini under
+  // apache 2.0.x + php4.2.x Win32
+  return $_SERVER["SCRIPT_NAME"];
+}
+
+function _rawurlencode($url) {
+  $name=rawurlencode($url);
+  $urlname=preg_replace(array('/%2F/i','/%7E/i'),array('/','~'),$name);
+  return $urlname;
+}
+
+function _urlencode($url) {
+  #$name=urlencode(strtr($url,"+"," "));
+  #return preg_replace(array('/%2F/i','/%7E/i','/%23/'),array('/','~','#'),$name);
+  return preg_replace("/([^a-z0-9\/\?\.\+~#&:;=%\-]{1})/ie","'%'.strtoupper(dechex(ord('\\1')))",$url);
+}
+
+function qualifiedUrl($url) {
+  if (substr($url,0,7)=="http://")
+    return $url;
+  return "http://$_SERVER[HTTP_HOST]$url";
+}
+
 function find_needle($body,$needle,$exclude='',$count=0) {
   if (!$body) return '';
   $lines=explode("\n",$body);
@@ -34,6 +68,72 @@ function normalize($title) {
     #return preg_replace("/[\?!$%\.\^;&\*()_\+\|\[\] ]/","",ucwords($title));
     return str_replace(" ","",ucwords($title));
   return $title;
+}
+
+function normalize_word($word,$group='',$pagename='',$nogroup=0) {
+  if ($word[0]=='[') $word=substr($word,1,-1);
+  if ($word[0]=='"') $word=substr($word,1,-1);
+  $page=$word;
+
+  # User namespace extension
+  if ($page[0]=='~' and ($p=strpos($page,'/'))) {
+    # change ~User/Page to User~Page
+    $main_page=$page;
+    $page=$text=substr($page,1,$p-1).'~'.substr($page,$p+1);
+    return array($page,$text,$main_page);
+  }
+    
+  if ($page[0]=='.' and preg_match('/^(\.{1,2})\//',$page,$match)) {
+    if ($match[1] == '..') {
+      if (($pos = strrpos($pagename,'/')) > 0) {
+        $upper=substr($pagename,0,$pos);
+        $page=substr($page,2);
+        if ($page == '/') $page=$upper;
+        else $page=$upper.$page;
+      } else {
+        $page=substr($page,3);
+        if ($page == '') $page=substr($pagename,strlen($group));
+        else if ($group) $page=$group.$page;
+      }
+    } else {
+      $page=substr($page,1);
+      if ($page == '/') $page='';
+      $page=$pagename.$page;
+    }
+    return array($page,$text,$main_page);
+  }
+
+  if ($page[0]=='/') { # SubPage
+    $page=$pagename.$page;
+  } else if ($tok=strtok($page,'.')) {
+    if ($tok=='Main') {
+      # Main.MoniWiki => MoniWiki
+      $page=$text=strtok('');
+      return array($page,$text,$main_page);
+    } else if (strpos($tok,'~') === false) {
+      # Ko~Hello.World =x=> Ko~Hello~World
+      # Ko.Hello => Ko~Hello
+
+      #$page=preg_replace('/\./','~',$page,1);
+      $npage=preg_replace('/(?<!\\\\)\./','~',$page,1);
+      if ($npage == $page) $page=preg_replace('/(\\\.)/','.',$page,1);
+      else $page=$npage;
+
+      $text=$main_page=strtok('');
+    }
+  }
+  if (!$nogroup and $group and !strpos($page,'~')) {
+    # UserNameSpace pages: e.g.) Ko~MoniWiki etc.
+    if ($page[0]=='/') {
+      # /MoniWiki => MoniWiki
+      $page=$text=substr($page,1);
+    } else {
+      $main_page=$text=$page;
+      $page=$group.$page;
+    }
+  }
+
+  return array($page,$text,$main_page);
 }
 
 function get_title($page) {
