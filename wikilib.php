@@ -687,7 +687,19 @@ function do_goto($formatter,$options) {
       }
     }
     $url=str_replace("&amp;","&",$url);
-    $formatter->send_header(array("Status: 302","Location: ".$url),$options);
+    if (!preg_match("/^(http:\/\/|ftp:\/\/)/",$options['url'])) {
+       print <<<HEADER
+<html>
+  <head>
+    <meta http-equiv="refresh" content="0;URL=$options[url]">
+  </head>
+  <body bgcolor="#FFFFFF" text="#000000">
+  </body>
+</html>
+HEADER;
+     } else {
+       $formatter->send_header(array("Status: 302","Location: ".$url),$options);
+     }
   } else {
      $title = _("Use more specific text");
      $formatter->send_header("",$options);
