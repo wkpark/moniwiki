@@ -13,7 +13,8 @@
 //
 // $Id$
 // vim:et:ts=2:
-$_version="$Revision";
+$_revision = '$Revision$'[11:-2]
+$_release = '1.0beta';
 
 include "wikilib.php";
 
