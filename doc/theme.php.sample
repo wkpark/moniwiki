@@ -1,23 +1,24 @@
 <?php
 $iconset='moni';
 $imgdir=$themeurl."/imgs";
-$icon[upper]="<img src='$imgdir/$iconset-upper.gif' alt='U' align='middle' border='0' />";
-$icon[edit]="<img src='$imgdir/$iconset-edit.gif' alt='E' align='middle' border='0' />";
-$icon[diff]="<img src='$imgdir/$iconset-diff.gif' alt='D' align='middle' border='0' />";
-$icon[del]="<img src='$imgdir/$iconset-deleted.gif' alt='(del)' align='middle' border='0' />";
-$icon[info]="<img src='$imgdir/$iconset-info.gif' alt='I' align='middle' border='0' />";
-$icon[rss]="<img src='$imgdir/$iconset-rss.gif' alt='RSS' align='middle' border='0' />";
-$icon[show]="<img src='$imgdir/$iconset-show.gif' alt='R' align='middle' border='0' />";
-$icon[find]="<img src='$imgdir/$iconset-search.gif' alt='S' align='middle' border='0' />";
-$icon[help]="<img src='$imgdir/$iconset-help.gif' alt='H' align='middle' border='0' />";
-$icon[www]="<img src='$imgdir/$iconset-www.gif' alt='www' align='middle' border='0' />";
-$icon[mailto]="<img src='$imgdir/$iconset-email.gif' alt='M' align='middle' border='0' />";
-$icon[create]="<img src='$imgdir/$iconset-create.gif' alt='N' align='middle' border='0' />";
+$icon['upper']="<img src='$imgdir/$iconset-upper.gif' alt='U' align='middle' border='0' />";
+$icon['edit']="<img src='$imgdir/$iconset-edit.gif' alt='E' align='middle' border='0' />";
+$icon['diff']="<img src='$imgdir/$iconset-diff.gif' alt='D' align='middle' border='0' />";
+$icon['del']="<img src='$imgdir/$iconset-deleted.gif' alt='(del)' align='middle' border='0' />";
+$icon['info']="<img src='$imgdir/$iconset-info.gif' alt='I' align='middle' border='0' />";
+$icon['rss']="<img src='$imgdir/$iconset-rss.gif' alt='RSS' align='middle' border='0' />";
+$icon['show']="<img src='$imgdir/$iconset-show.gif' alt='R' align='middle' border='0' />";
+$icon['find']="<img src='$imgdir/$iconset-search.gif' alt='S' align='middle' border='0' />";
+$icon['help']="<img src='$imgdir/$iconset-help.gif' alt='H' align='middle' border='0' />";
+$icon['www']="<img src='$imgdir/$iconset-www.gif' alt='www' align='middle' border='0' />";
+$icon['mailto']="<img src='$imgdir/$iconset-email.gif' alt='M' align='middle' border='0' />";
+$icon['create']="<img src='$imgdir/$iconset-create.gif' alt='N' align='middle' border='0' />";
 $icon['new']="<img src='$imgdir/$iconset-new.gif' alt='U' align='middle' border='0' />";
-$icon[updated]="<img src='$imgdir/$iconset-updated.gif' alt='U' align='middle' border='0' />";
-$icon[user]="UserPreferences";
-$icon[home]="<img src='$imgdir/$iconset-home.gif' alt='M' align='middle' border='0' />";
-$icon[xml]="<img src='$imgdir/$iconset-xml.gif' alt='M' align='middle' border='0' />";
+$icon['updated']="<img src='$imgdir/$iconset-updated.gif' alt='U' align='middle' border='0' />";
+$icon['user']="UserPreferences";
+$icon['home']="<img src='$imgdir/$iconset-home.gif' alt='M' align='middle' border='0' />";
+$icon['xml']="<img src='$imgdir/$iconset-xml.gif' alt='X' align='middle' border='0' />";
+$icon['print']="<img src='$imgdir/$iconset-print.gif' alt='P' align='middle' border='0' />";
 
 $icon_sep=' ';
 $icon_cat=' ';
@@ -31,6 +32,7 @@ $icons=array(
    array("","?action=subscribe",$icon['mailto']),
    array("HelpContents","",$icon['help']),
    array("","?action=format&amp;mimetype=text/xml",$icon['xml']),
+   array("","?action=print",$icon['print']),
 );
 
 #$icons=array(
