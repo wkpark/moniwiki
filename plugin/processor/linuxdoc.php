@@ -10,6 +10,7 @@
 
 function processor_linuxdoc($formatter,$value) {
   global $DBInfo;
+  $langs=array('en','de','nl','fr','es','da','no','se','pt','ca','it','ro');
 
   $pagename=$formatter->page->name;
   $cache= new Cache_text("linuxdoc");
@@ -18,8 +19,11 @@ function processor_linuxdoc($formatter,$value) {
     return $cache->fetch($pagename);
 
   $sgml2html= "sgml2html";
-  $args= "--language=$DBInfo->lang ".
-#         "--charset=$DBInfo->charset ".
+  $lang=strtok($DBInfo->lang,"_");
+  $lang= in_array($lang,$langs) ? $lang:'en';
+
+  $args= "--language=$lang ".
+#        "--charset=$DBInfo->charset ".
          "--split=0 ";
 
   if ($value[0]=='#' and $value[1]=='!') {
