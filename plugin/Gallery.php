@@ -194,7 +194,12 @@ function macro_Gallery($formatter,$value,$options='') {
         $thumb=$prefix."thumbnails/".rawurlencode($file);
         $object="<img src='$thumb' alt='$file' />";
       } else {
-        $object="<img src='$linksrc' width='$width' alt='$file' />";
+        $nwidth=$width;
+        if (function_exists('getimagesize')) {
+          list($nwidth, $height, $type, $attr) = getimagesize($dir.'/'.$file);
+          $nwidth=($nwidth > $width) ? $width:$nwidth;
+        }
+        $object="<img src='$linksrc' width='$nwidth' alt='$file' />";
       }
     }
     else
