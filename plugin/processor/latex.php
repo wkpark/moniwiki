@@ -42,6 +42,13 @@ $tex
 \end{document}
 ";
 
+  $RM='rm';
+  $NULL='/dev/null';
+  if(getenv("OS")=="Windows_NT") {
+    $RM='del';
+    $NULL='NUL';
+  }
+  
   if ($formatter->refresh || !file_exists("$cache_dir/$uniq.png")) {
      $fp= fopen($vartmp_dir."/$uniq.tex", "w");
      fwrite($fp, $src);
@@ -50,16 +57,23 @@ $tex
      $outpath="$cache_dir/$uniq.png";
 
      # Unix specific FIXME
-     $cmd= "cd $vartmp_dir; $latex $option $uniq.tex >/dev/null";
+     $cwd= getcwd();
+     chdir($vartmp_dir);
+     $cmd= "$latex $option $uniq.tex >$NULL";
      system($cmd);
 
-     $cmd= "cd $vartmp_dir; $dvips -D 600 $uniq.dvi -o $uniq.ps";
+     if (!file_exists($uniq.".dvi")) {
+       print "<font color='red'>ERROR:</font> LaTeX does not works properly.";
+       return;
+     }
+     $cmd= "$dvips -D 600 $uniq.dvi -o $uniq.ps";
      system($cmd);
+     chdir($cwd);
 
      $cmd= "$convert -transparent white -crop 0x0 -density 120x120 $vartmp_dir/$uniq.ps $outpath";
      system($cmd);
 
-     system("rm $vartmp_dir/$uniq.*");
+     system("$RM $vartmp_dir/$uniq.*");
   }
   return "<img class='tex' src='$DBInfo->url_prefix/$cache_dir/$uniq.png' alt='tex'".
          "title=\"$tex\" />";

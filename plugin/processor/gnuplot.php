@@ -71,8 +71,12 @@ $plt
        $cmd= "$gnuplot $finp > $flog";
        $fp=system($cmd);
        $log=join(file($flog),"");
-       unlink($flog);
-       unlink($finp);
+       if (file_exists($outpath)) {
+         unlink($flog);
+         unlink($finp);
+       } else {
+         print "<font color='red'>ERROR:</font> Gnuplot does not works correctly";
+       }
      } else {
        #
        # Unix
@@ -82,8 +86,11 @@ $plt
        fwrite($fp,$src);
        pclose($fp);
        $log=join(file($flog),"");
-       if ($log) unlink($outpath);
-       unlink($flog);
+       if (file_exists($outpath)) {
+         unlink($flog);
+       } else {
+         print "<font color='red'>ERROR:</font> Gnuplot does not works correctly";
+       }
      }
 
      if ($log)
