@@ -50,20 +50,143 @@ class Formatter_xml {
 
   }
 
-  function _table() {
-
+  function _table_span($str) {
+    $len=strlen($str)/2;
+    if ($len > 1)
+      return " align='middle' morerows='$len'";
+    return "";
   }
 
-  function _table_span() {
-
+  function _table($on,$attr="") {
+    if ($on)
+      return "<table $attr>\n";
+    return "</table>\n";
   }
 
-  function link_repl($url) {
-    if (preg_match("/^(http|ftp):\/\//",$url))
-      return "<ulink url=\"$url\">$url</ulink>\n";
+  function _img($url) {
+    return "<inlinemediaobject>\n  <imageobject>\n   <imagedata fileref='$url' />\n  </imageobject>\n</inlinemediaobject>\n";
+  }
+
+  function _a($url,$text='',$attr='') {
+    if (!$text) $text=$url;
+    return "<ulink url='$url'>$text</ulink>\n";
+  }
+
+  function link_repl($url,$attr='') {
+    global $DBInfo;
+
+    $url=str_replace('\"','"',$url);
+    if ($url[0]=="[") {
+      $url=substr($url,1,-1);
+      $force=1;
+    }
+    if ($url[0]=="{") {
+      $url=substr($url,3,-3);
+      return "<constant>$url</constant>"; # No link
+    } else if ($url[0]=="[") {
+      $url=substr($url,1,-1);
+      #return $this->macro_repl($url); # No link
+      return $url;
+    }
+
+    if ($url[0]=="!") {
+      $url[0]=" ";
+      return $url;
+    } else
+    if (strpos($url,":")) {
+      if (preg_match("/^mailto:/",$url)) {
+        $url=str_replace("@","_at_",$url);
+        $name=substr($url,7);
+        return $this->_a($url,$name);
+      } else
+      if (preg_match("/^(w|[A-Z])/",$url)) { # InterWiki or wiki:
+        if (strpos($url," ")) { # have a space ?
+          $dum=explode(" ",$url,2);
+          return $this->interwiki_repl($dum[0],$dum[1]);
+        }
+        return $this->interwiki_repl($url);
+      } else
+      if ($force or strpos($url," ")) { # have a space ?
+        list($url,$text)=explode(" ",$url,2);
+        if (!$text) $text=$url;
+        else if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text))
+          return $this->_a($url,$this->_img($text));
+        list($icon,$dummy)=explode(":",$url,2);
+        return $this->_img($DBInfo->imgs_dir."/$icon.png"). $this->_a($url,$text);
+      } else # have no space
+      if (preg_match("/^(http|https|ftp)/",$url)) {
+        if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$url))
+          return $this->_img($url);
+        return $this->_a($url);
+      }
+      return $this->_a($url);
+    } else {
+      if ($url[0]=="?") $url=substr($url,1);
+      return $this->word_repl($url);
+    }
+  }
+
+  function interwiki_repl($url,$text="") {
+    global $DBInfo;
+
+    if ($url[0]=="w")
+      $url=substr($url,5);
+    $dum=explode(":",$url,2);
+    $wiki=$dum[0]; $page=$dum[1];
+#    if (!$page) { # wiki:Wiki/FrontPage
+#      $dum1=explode("/",$url,2);
+#      $wiki=$dum1[0]; $page=$dum1[1];
+#    }
+
+    if (!$page) {
+      # wiki:FrontPage(not supported in the MoinMoin
+      # or [wiki:FrontPage Home Page]
+      $page=$dum[0];
+      if (!$text)
+        return $this->word_repl($page,'','',1);
+      return $this->word_repl($page,$text,'',1);
+    }
+
+    $url=$DBInfo->interwiki[$wiki];
+    # invalid InterWiki name
+    if (!$url)
+      return $dum[0].":".$this->word_repl($dum[1],$text);
+
+    $urlpage=_urlencode(trim($page));
+    #$urlpage=trim($page);
+    if (strpos($url,'$PAGE') === false)
+      $url.=$urlpage;
+    else {
+      # GtkRef http://developer.gnome.org/doc/API/2.0/gtk/$PAGE.html
+      # GtkRef:GtkTreeView#GtkTreeView
+      # is rendered as http://...GtkTreeView.html#GtkTreeView
+      $page_only=strtok($urlpage,'#?');
+      $query= substr($urlpage,strlen($page_only));
+      #if ($query and !$text) $text=strtok($page,'#?');
+      $url=str_replace('$PAGE',$page_only,$url).$query;
+    }
+
+    $img=$this->_img($DBInfo->imgs_dir."/".strtolower($wiki)."-16.png");
+#"<a href='$url' target='wiki'><img border='0' src='$DBInfo->imgs_dir/".
+#         strtolower($wiki)."-16.png' align='middle' height='16' width='16' ".
+#         "alt='$wiki:' title='$wiki:' /></a>";
+    if (!$text) $text=str_replace("%20"," ",$page);
+    else if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
+      $text= $this->_a($text);
+      $img='';
+    }
+
+    if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$url))
+      #return "<img border='0' alt='$text' src='$url' />";
+      return $this->_a($url);
+
+    return $img. $this->_a($url,$text);
+  }
+
+  function word_repl($url) {
     return $url;
-
   }
+
 
   function _list($on,$list_type,$numtype="",$closetype="") {
     if ($list_type=="dd") {
@@ -240,6 +363,22 @@ class Formatter_xml {
          $processor="";
          $in_pre=1;
 
+         # check processor
+         if ($line[$p+3] == "#" and $line[$p+4] == "!") {
+            list($tag,$dummy)=explode(" ",substr($line,$p+5),2);
+
+            if (function_exists("processor_".$tag)) {
+              $processor=$tag;
+            } else if ($pf=getProcessor($tag)) {
+              include_once("plugin/processor/$pf.php");
+              $processor=$pf;
+            }
+         } else if ($line[$p+3] == ":") {
+            # new formatting rule for a quote block (pre block + wikilinks)
+            $line[$p+3]=" ";
+            $in_quote=1;
+         }
+
          $xml->pre_line=substr($line,$p+3);
          if (trim($xml->pre_line))
            $xml->pre_line.="\n";
@@ -329,11 +468,23 @@ class Formatter_xml {
 
       if ($in_pre==-1) {
          $in_pre=0;
-         {
+         if ($processor) {
+           $value=$xml->pre_line;
+           $out= call_user_func("processor_$processor",&$formatter,$value,$options);
+           $line="<screen><![CDATA[\n".$out."\n]]></screen>\n".$line;
+         } else if ($in_quote) {
             # htmlfy '<'
             $pre=str_replace("&","&amp;",$xml->pre_line);
             $pre=str_replace("<","&lt;",$pre);
-            $line="<screen>\n".$pre."</screen>\n".$line;
+            $pre=preg_replace($xml->baserule,$xml->baserepl,$pre);
+            $pre=preg_replace("/(".$wordrule.")/e","\$xml->link_repl('\\1')",$pre);
+            $line="<quote>\n".$pre."</quote>\n".$line;
+            $in_quote=0;
+         } else {
+            # htmlfy '<'
+            $pre=str_replace("&","&amp;",$xml->pre_line);
+            $pre=str_replace("<","&lt;",$pre);
+            $line="<screen><![CDATA[\n".$pre."]]></screen>\n".$line;
          }
       }
       $text.=$xml->padding.$line."\n";
@@ -370,7 +521,7 @@ class Formatter_xml {
     $text.=$close;
 
     $pagename=$formatter->page->name;
-    print <<<HEAD
+    $header=<<<HEAD
 <?xml version="1.0" encoding="$DBInfo->charset"?>
 <!-- <?xml-stylesheet href="DocbookKoXsl" type="text/xml"?> -->
 <!-- <!DOCTYPE article PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
@@ -383,7 +534,8 @@ class Formatter_xml {
 </articleinfo>
 
 HEAD;
-    print $text;
-    print "</article>\n";
+    $footer="</article>\n";
+
+    print $header.$text.$footer;
   }
 ?>
