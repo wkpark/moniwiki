@@ -47,7 +47,8 @@ function do_VisualTour($formatter,$options) {
     exec($cmd,$log);
   }
 
-  print "<h2 style='font-family:Tahoma,Sans-serif;'>VisualTour</h2>";
+  $selfurl=$formatter->link_to();
+  print "<h2 style='font-family:Tahoma,Sans-serif;'>VisualTour on $selfurl</h2>";
 
   print $formatter->link_to("?action=visualtour",_("Normal"));
   print "|";
