@@ -32,15 +32,21 @@ function processor_latex($formatter="",$value="") {
 
   $uniq=md5($tex);
 
-  $src="\documentclass[10pt,notitlepage]{article}
-\usepackage{amsmath}
-\usepackage{amsfonts}
+  if ($DBInfo->latex_template and file_exists($DBInfo->data_dir.'/'.$DBInfo->latex_template)) {
+    $src=implode('',file($DBInfo->data_dir.'/'.$DBInfo->latex_template));
+    $src=str_replace('@TEX@',$tex,$src);
+  } else {
+    $src="\\documentclass[10pt,notitlepage]{article}
+\\usepackage{amsmath}
+\\usepackage{amssymb}
+\\usepackage{amsfonts}$DBInfo->latex_header
 %%\usepackage[all]{xy}
+\\pagestyle{empty}
 \\begin{document}
-\pagestyle{empty}
 $tex
-\end{document}
+\\end{document}
 ";
+  }
 
   $RM='rm';
   $NULL='/dev/null';
