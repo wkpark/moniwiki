@@ -55,7 +55,9 @@ class Blog_cache {
       $line=str_replace('/','_2f',$line);
       if (preg_match('/^ \* ([^ :]+)(?=\s|$)/',$line,$match)) {
         $category=$match[1];
-        if (!$categories[$category]) $categories[$category]=array();
+        if (!$categories[$category])
+          // include category page itself.
+          $categories[$category]=array($categories[$category]);
       } else if ($category and preg_match('/^\s\s+\* ([^ :]+)(?=\s|$)/',$line,$match)) {
         $categories[$category][]=$match[1];
       }
@@ -216,12 +218,13 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
   else
     $date=$options['date'];
 
-  preg_match('/^(?(?=\')\'([^\']+)\'|\"([^\"]+)\")?,?(\d+)?(\s*,?\s*.*)?$/',
+  preg_match('/^(?(?=')'([^']+)'|\"([^\"]+)\")?,?(\d+)?(\s*,?\s*.*)?$/',
     $value,$match);
 
   $category_pages=array();
-  if ($match[2] or $options['category']) {
-    $options['category']=$options['category'] ? $options['category']:$match[2];
+  if ($match[2] or $match[1] or $options['category']) {
+    $match[1]=$match[1] ? $match[1]:$match[2];
+    $options['category']=$options['category'] ? $options['category']:$match[1];
     if ($DBInfo->blog_category) {
       $categories=Blog_cache::get_categories();
       if ($categories[$options['category']])
@@ -263,9 +266,12 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
   $day=substr($date,6,2);
 
   if (strlen($date)==8) {
-    $pre_date= date('Ymd',mktime(0,0,0,$month,intval($day) - 1,$year));
+    $prev_date= date('Ymd',mktime(0,0,0,$month,intval($day) - 1,$year));
   } else if (strlen($date)==6) {
-    $pre_date= date('Ym',mktime(0,0,0,intval($month) - 1,1,$year));
+    $cdate=date('Ym');
+    $prev_date= date('Ym',mktime(0,0,0,intval($month) - 1,1,$year));
+    if ($cdate > $date)
+      $next_date= date('Ym',mktime(0,0,0,intval($month) + 1,1,$year));
   }
 
   if (in_array('simple',$opts)) {
@@ -333,15 +339,15 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
   $url=qualifiedUrl($formatter->link_url($DBInfo->frontpage));
 
   # make pnut
-  $action="date=$pre_date";
-  if ($options['action'])
-    $action='action=blogchanges&amp;'.$action;
-  if ($options['category'])
-    $action.='&amp;category='.$options['category'];
-  if ($options['mode'])
-    $action.='&amp;mode='.$options['mode'];
-  $pnut="<div class='blog-action'>".$formatter->link_to('?'.$action,'&laquo; '._("Previous"))."</div>";
-  return $bra.$items.$cat.$pnut;
+  $action="date=$prev_date";
+  if ($options['action']) $action='action=blogchanges';
+  if ($options['category']) $action.='&amp;category='.$options['category'];
+  if ($options['mode']) $action.='&amp;mode='.$options['mode'];
+
+  $prev=$formatter->link_to('?'.$action.'&amp;date='.$prev_date,'&laquo; '._("Previous"));
+  if ($next_date)
+  $next=" | ".$formatter->link_to('?'.$action.'&amp;date='.$next_date,_("Next"). ' &raquo;');
+  return $bra.$items.$cat."<div class='blog-action'>".$prev.$next."</div>";
 }
 // vim:et:sts=2:
 ?>
