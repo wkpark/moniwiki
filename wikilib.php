@@ -279,13 +279,19 @@ function do_highlight($formatter,$options) {
 
 function do_post_DeleteFile($formatter,$options) {
   global $DBInfo;
-  
+
+  if ($options[value]) {
+    $key=$DBInfo->pageToKeyname($options[value]);
+    $dir=$DBInfo->upload_dir."/$key";
+  } else {
+    $dir=$DBInfo->upload_dir;
+  }
   if ($options[files] && $options[passwd]) {
     $check=$DBInfo->admin_passwd==crypt($options[passwd],$DBInfo->admin_passwd);
     if ($check) {
       foreach ($options[files] as $file) {
          $log.=sprintf(_("File '%s' is deleted")."<br />",$file);
-         unlink($DBInfo->upload_dir."/".$file);
+         unlink($dir."/".$file);
       }
       $title = sprintf(_("Selected files are deleted !"));
       $formatter->send_header("",$options);
@@ -951,10 +957,17 @@ function macro_UploadedFiles($formatter,$value="") {
    global $DBInfo;
 
    $pages= array();
-   $handle= opendir($DBInfo->upload_dir);
+
+   if ($value) {
+      $key=$DBInfo->pageToKeyname($value);
+      $dir=$DBInfo->upload_dir."/$key";
+   } else {
+      $dir=$DBInfo->upload_dir;
+   }
+   $handle= opendir($dir);
 
    while ($file= readdir($handle)) {
-      if (is_dir($DBInfo->upload_dir."/".$file)) continue;
+      if (is_dir($dir."/".$file)) continue;
       $upfiles[]= $file;
    }
    closedir($handle);
@@ -963,14 +976,16 @@ function macro_UploadedFiles($formatter,$value="") {
 
    $out="<form method='post' >";
    $out.="<input type='hidden' name='action' value='DeleteFile' />\n";
+   if ($key)
+     $out.="<input type='hidden' name='value' value='$value' />\n";
    $out.="<table border='0' cellpadding='2'>\n";
    $out.="<tr><th colspan='2'>File name</th><th>Size(byte)</th><th>Date</th></tr>\n";
    $idx=1;
-   $prefix=$DBInfo->url_prefix."/".$DBInfo->upload_dir;
+   $prefix=$DBInfo->url_prefix."/".$dir;
    foreach ($upfiles as $file) {
       $link=$prefix."/".rawurlencode($file);
-      $size=filesize($DBInfo->upload_dir."/".$file);
-      $date=date("Y-m-d",filemtime($DBInfo->upload_dir."/".$file));
+      $size=filesize($dir."/".$file);
+      $date=date("Y-m-d",filemtime($dir."/".$file));
       $out.="<tr><td class='wiki'><input type='checkbox' name='files[$idx]' value='$file'></td><td class='wiki'><a href='$link'>$file</a></td><td align='right' class='wiki'>$size</td><td class='wiki'>$date</td></tr>\n";
       $idx++;
    }
