@@ -55,13 +55,14 @@ class Version_RcsLite extends Version_RCS {
 
   function delete($pagename) {
     $keyname=$DB->_getPageKey($pagename);
-    @unlink($DB->text_dir."/RCS/$keyname,v");
+    @unlink($DB->text_dir.'/'.$this->rcs_dir."/$keyname,v");
   }
 
   function rename($pagename,$new) {
     $keyname=$DB->_getPageKey($new);
     $oname=$DB->_getPageKey($pagename);
-    rename($DB->text_dir."/RCS/$oname,v",$DB->text_dir."/RCS/$keyname,v");
+    rename($DB->text_dir.'/'.$this->rcs_dir."/$oname,v",
+      $DB->text_dir.'/'.$this->rcs_dir."/$keyname,v");
   }
 
   function get_rev($pagename,$mtime='',$last=0) {
