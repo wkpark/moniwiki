@@ -13,7 +13,7 @@
 //
 // $Id$
 // vim:et:ts=2:
-$_revision = '$Revision$'[11:-2]
+$_revision = substr('$Revision$',1,-1);
 $_release = '1.0beta';
 
 include "wikilib.php";
@@ -1298,21 +1298,21 @@ class Formatter {
          $indlen=strlen($match[0]);
          #print "<!-- indlen=$indlen -->\n";
          if ($indlen > 0) {
-            $line=substr($line,$indlen);
-            if (preg_match("/^(\*\s*)/",$line,$limatch)) {
-               $line=preg_replace("/^(\*\s*)/","<li>",$line);
-               if ($indent_list[$in_li] == $indlen) $line="</li>\n".$line;
-               $numtype="";
-               $indtype="ul";
+           $line=substr($line,$indlen);
+           if (preg_match("/^(\*\s*)/",$line,$limatch)) {
+             $line=preg_replace("/^(\*\s*)/","<li>",$line);
+             if ($indent_list[$in_li] == $indlen) $line="</li>\n".$line;
+             $numtype="";
+             $indtype="ul";
             #} else if (preg_match("/^((\d+|[aAiI])\.)/",$line,$limatch)) {
-            } else if (preg_match("/^((\d+|[aAiI])\.)(#\d+)?/",$line,$limatch)) {
-               $line=preg_replace("/^((\d+|[aAiI])\.(#\d+)?)/","<li>",$line);
-               if ($indent_list[$in_li] == $indlen) $line="</li>\n".$line;
-               $numtype=$limatch[2];
-               if ($limatch[3])
-                  $numtype.=substr($limatch[3],1);
-               $indtype="ol";
-            }
+           } else if (preg_match("/^((\d+|[aAiI])\.)(#\d+)?/",$line,$limatch)) {
+             $line=preg_replace("/^((\d+|[aAiI])\.(#\d+)?)/","<li>",$line);
+             if ($indent_list[$in_li] == $indlen) $line="</li>\n".$line;
+             $numtype=$limatch[2];
+             if ($limatch[3])
+               $numtype.=substr($limatch[3],1);
+             $indtype="ol";
+           }
          }
          if ($indent_list[$in_li] < $indlen) {
 
@@ -1834,7 +1834,7 @@ FOOT;
 
     if (!$title) {
       $title=$this->page->name;
-      $title=preg_replace("/([a-z0-9])([A-Z][a-z0-9])/","\\1 \\2",$title);
+      $title=preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$title);
     }
     # setup title variables
     $title="<font class='title'><b>$title</b></font>";
@@ -1979,7 +1979,7 @@ $extra
 </form>
 EOS;
     print <<<EOS
-<div id="WikiHint">
+<div id="wikiHint">
 <b>Emphasis:</b> ''<i>italics</i>''; '''<b>bold</b>'''; '''''<b><i>bold italics</i></b>''''';
     ''<i>mixed '''<b>bold</b>''' and italics</i>''; ---- horizontal rule.<br />
 <b>Headings:</b> = Title 1 =; == Title 2 ==; === Title 3 ===;
