@@ -302,17 +302,17 @@ function do_invalid($formatter,$options) {
 function do_post_DeleteFile($formatter,$options) {
   global $DBInfo;
 
-  if ($options[value]) {
-    $key=$DBInfo->pageToKeyname($options[value]);
+  if ($options['value']) {
+    $key=$DBInfo->pageToKeyname($options['value']);
     $dir=$DBInfo->upload_dir."/$key";
   } else {
     $dir=$DBInfo->upload_dir;
   }
 
-  if ($options[files] && $options[passwd]) {
+  if ($options['files'] && $options['passwd']) {
     $check=$DBInfo->admin_passwd==crypt($options[passwd],$DBInfo->admin_passwd);
     if ($check) {
-      foreach ($options[files] as $file) {
+      foreach ($options['files'] as $file) {
          $log.=sprintf(_("File '%s' is deleted")."<br />",$file);
          unlink($dir."/".$file);
       }
@@ -325,7 +325,7 @@ function do_post_DeleteFile($formatter,$options) {
     }
     $title = sprintf(_("Invalid password !"));
   } else {
-    if (!$options[files])
+    if (!$options['files'])
       $title = sprintf(_("No files are selected !"));
     else
       $title = sprintf(_("Invalid password !"));
@@ -1177,7 +1177,7 @@ function do_uploadedfiles($formatter,$options) {
 function macro_UploadedFiles($formatter,$value="",$options="") {
    global $DBInfo;
 
-   if ($value and $value!='top') {
+   if ($value and $value!='UploadFile') {
       $key=$DBInfo->pageToKeyname($value);
       if ($key != $value)
         $prefix=$formatter->link_url($value,"?action=download&amp;value=");
@@ -1189,10 +1189,11 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
         $prefix=$formatter->link_url($formatter->page->urlname,"?action=download&amp;value=");
       $dir=$DBInfo->upload_dir."/$key";
    }
-   if ($options['value']!='top' and file_exists($dir))
+   if ($value!='UploadFile' and file_exists($dir))
       $handle= opendir($dir);
    else {
       $key='';
+      $value='UploadFile';
       $dir=$DBInfo->upload_dir;
       $handle= opendir($dir);
    }
@@ -1202,7 +1203,7 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
 
    while ($file= readdir($handle)) {
       if (is_dir($dir."/".$file)) {
-        if ($file=='.' or $file=='..' or $options['value']!='top') continue;
+        if ($file=='.' or $file=='..' or $value!='UploadFile') continue;
         $dirs[]= $DBInfo->keyToPagename($file);
         continue;
       }
@@ -1227,15 +1228,19 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    }
 
    if (!$dirs) {
-      $link=$formatter->link_tag($value,"?action=uploadedfiles&amp;value=top","..");
+      $link=$formatter->link_tag('UploadFile',"?action=uploadedfiles&amp;value=top","..");
       $date=date("Y-m-d",filemtime($dir."/.."));
       $out.="<tr><td class='wiki'>&nbsp;</td><td class='wiki'>$link</td><td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td></tr>\n";
    }
 
    if (!$prefix) $prefix=$DBInfo->url_prefix."/".$dir."/";
 
+   $down_mode=substr($prefix,strlen($prefix)-1) === '=';
    foreach ($upfiles as $file) {
-      $link=str_replace("value=","value=".rawurlencode($file),$prefix);
+      if ($down_mode)
+        $link=str_replace("value=","value=".rawurlencode($file),$prefix);
+      else
+        $link=$prefix.rawurlencode($file);
       $size=filesize($dir."/".$file);
       $date=date("Y-m-d",filemtime($dir."/".$file));
       $out.="<tr><td class='wiki'><input type='checkbox' name='files[$idx]' value='$file' /></td><td class='wiki'><a href='$link'>$file</a></td><td align='right' class='wiki'>$size</td><td class='wiki'>$date</td></tr>\n";
@@ -1295,16 +1300,16 @@ function macro_UserPreferences($formatter="") {
 <form method="post" action="$url">
 <input type="hidden" name="action" value="userform" />
 <table border="0">
-  <tr><td><b>ID</b>&nbsp;</td><td><input type="text" size="40" name="login_id" /></td></tr>
+  <tr><td><b>ID</b>&nbsp;</td><td><input type="text" size="20" name="login_id" /></td></tr>
   <tr><td><b>Password</b>&nbsp;</td><td><input type="password" size="20" maxlength="12" name="login_passwd" /></td></tr>
 
   <tr><td></td><td><input type="submit" name="login" value="Login" /></td></tr>
         
-  <tr><td><b>ID</b>&nbsp;</td><td><input type="text" size="40" name="username" value="" /></td></tr>
+  <tr><td><b>ID</b>&nbsp;</td><td><input type="text" size="20" name="username" value="" /></td></tr>
   <tr>
-     <td><b>Password</b>&nbsp;</td><td><input type="password" size="20" maxlength="12" name="password" value="" />
-     <b>Password again</b>&nbsp;<input type="password" size="20" maxlength="12" name="passwordagain" value="" /></td></tr>
-  <tr><td><b>Mail</b>&nbsp;</td><td><input type="text" size="60" name="email" value="" /></td></tr>
+     <td><b>Password</b>&nbsp;</td><td><input type="password" size="10" maxlength="12" name="password" value="" />
+     <b>Password again</b>&nbsp;<input type="password" size="10" maxlength="12" name="passwordagain" value="" /></td></tr>
+  <tr><td><b>Mail</b>&nbsp;</td><td><input type="text" size="40" name="email" value="" /></td></tr>
   <tr><td></td><td>
     <input type="submit" name="save" value="make profile" /> &nbsp;
   </td></tr>
@@ -1325,10 +1330,10 @@ EOF;
   <tr><td><b>ID</b>&nbsp;</td><td>$user->id</td></tr>
   <tr><td><b>Name</b>&nbsp;</td><td><input type="text" size="40" name="username" value="$name" /></td></tr>
   <tr>
-     <td><b>Password</b>&nbsp;</td><td><input type="password" size="20" maxlength="8" name="password" value="" />
-     <b>New password</b>&nbsp;<input type="password" size="20" maxlength="8" name="passwordagain" value="" /></td></tr>
-  <tr><td><b>Mail</b>&nbsp;</td><td><input type="text" size="60" name="email" value="$email" /></td></tr>
-  <tr><td><b>CSS URL </b>&nbsp;</td><td><input type="text" size="60" name="user_css" value="$css" /><br />("None" for disable CSS)</td></tr>
+     <td><b>Password</b>&nbsp;</td><td><input type="password" size="15" maxlength="8" name="password" value="" />
+     <b>New password</b>&nbsp;<input type="password" size="15" maxlength="8" name="passwordagain" value="" /></td></tr>
+  <tr><td><b>Mail</b>&nbsp;</td><td><input type="text" size="40" name="email" value="$email" /></td></tr>
+  <tr><td><b>CSS URL </b>&nbsp;</td><td><input type="text" size="40" name="user_css" value="$css" /><br />("None" for disable CSS)</td></tr>
   <tr><td></td><td>
     <input type="submit" name="save" value="save profile" /> &nbsp;
     <input type="submit" name="logout" value="logout" /> &nbsp;
