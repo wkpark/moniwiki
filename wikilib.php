@@ -536,10 +536,14 @@ function do_invalid($formatter,$options) {
     $formatter->send_title('',"",$options);
   else
     $formatter->send_title(_("406 Not Acceptable"),"",$options);
-  if ($options['action'])
-    $formatter->send_page("== ".sprintf(_("%s is not valid action"),$options['action'])." ==\n");
-  else
-    $formatter->send_page("== "._("Is it valid action ?")." ==\n");
+  if ($options['err']) {
+    $formatter->send_page($options['err']);
+  } else {
+    if ($options['action'])
+      $formatter->send_page("== ".sprintf(_("%s is not valid action"),$options['action'])." ==\n");
+    else
+      $formatter->send_page("== "._("Is it valid action ?")." ==\n");
+  }
   $formatter->send_footer("",$options);
 }
 
@@ -858,7 +862,9 @@ function do_post_savepage($formatter,$options) {
     $formatter->send_title("","",$options);
     $opt['pagelinks']=1;
     # re-generates pagelinks
+    print "<div id='wikiContent'>\n";
     $formatter->send_page("",$opt);
+    print "</div>\n";
   }
   $args['editable']=0;
   $formatter->send_footer($args,$options);
