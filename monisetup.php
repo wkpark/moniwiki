@@ -209,6 +209,13 @@ function checkConfig($config) {
       } else
         print "<h3><font color=blue>$config[$file] is writable</font> :)</h3>\n";
     }
+    if (is_dir($config['upload_dir'])
+      and !file_exists($config['upload_dir'].'/.htaccess')) {
+      $fp=fopen('pds_htaccess','w');
+      fwrite($fp,'#Options NoExecCGI'."\n");
+      fwrite($fp,'AddType text/plain .sh .cgi .pl .py .php .php3 .php4 .phtml .html'."\n");
+      fclose($fp);
+    }
   }
 }
 

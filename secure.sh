@@ -15,7 +15,7 @@ if [ -f config.php ]; then
     echo "*** chmod 644 config.php"
 fi
 
-IMG_DIR=`cat config.php |grep '$upload_dir='|cut -d\' -f2`
+IMG_DIR=`cat config.php |grep '$imgs_dir='|cut -d\' -f2`
 [ -n "$IMG_DIR" ] && [ -f imgs_htaccess ] && [ ! -f .$IMG_DIR/.htaccess ] &&
     cp imgs_htaccess .$IMG_DIR/.htaccess && rm imgs_htaccess
 
