@@ -116,7 +116,7 @@ function do_whois($formatter,$options) {
   foreach ($whois_servers as $key=>$server) {
     $fp= fsockopen($server,43);
     if(!$fp) {
-      $error="$key WHOIS서버에 접속할 수 없습니다.";
+      $error=sprintf(_("Could not connect to %s server"),$key);
       return $error;
     } else {
       fputs($fp,$arg);
@@ -134,7 +134,7 @@ function do_whois($formatter,$options) {
     }
     if (!$notfound) break;
   }
-  $out ="=== ".sprintf("$query"."에 대한 WHOIS 검색결과 입니다")." ===\n";
+  $out ="=== ".sprintf(_("Whois search result for %s"),$query)." ===\n";
   $out.="{{{\n$result\n}}}";
   $out.= "hostname : [http://ws.arin.net/cgi-bin/whois.pl?queryinput=$query ".gethostbyaddr($query)."]";
   $formatter->send_page($out);
