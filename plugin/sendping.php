@@ -155,7 +155,7 @@ FORM2;
 	}
 
   $formatter->send_header("",$options);
-  $formatter->send_title(_("Trackback sented"),"",$options);
+  $formatter->send_title(_("Trackback sent"),"",$options);
   #$formatter->send_page("Return: $result");
   print "Return: $result";
   $formatter->send_footer("",$options);
