@@ -64,6 +64,7 @@ $use_trackback=0;
 #$purple_icon='<img src="/wiki/imgs/egg.png" border="0" />';
 #$use_titlecache=1;
 #$pagetype=array("KldpDsl"=>"plain","ManPage"=>"/man","DocbookSgml"=>"/jade","LinuxDoc"=>"/linuxdoc");
+#$default_dsssl='to_dir/kldp.dsl';
 
 #$password_length=6;
 #$use_convert_thumbs=0;
