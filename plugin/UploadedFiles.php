@@ -71,7 +71,7 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    if ($key)
      $out.="<input type='hidden' name='value' value='$value' />\n";
    $out.="<table border='0' cellpadding='2'>\n";
-   $out.="<tr><th colspan='2'>File name</th><th>Size(byte)</th><th>Date</th></tr>\n";
+   $out.="<tr><th colspan='2'>File name</th><th>Size</th><th>Date</th></tr>\n";
    $idx=1;
    foreach ($dirs as $file) {
       $link=$formatter->link_url($file,"?action=uploadedfiles",$file);
@@ -88,14 +88,27 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
 
    if (!$prefix) $prefix=$DBInfo->url_prefix."/".$dir."/";
 
+   $unit=array('Bytes','KB','MB','GB','TB');
+
    $down_mode=substr($prefix,strlen($prefix)-1) === '=';
    foreach ($upfiles as $file) {
       if ($down_mode)
         $link=str_replace("value=","value=".rawurlencode($file),$prefix);
       else
         $link=$prefix.rawurlencode($file);
-      $size=filesize($dir."/".$file);
-      $date=date("Y-m-d",filemtime($dir."/".$file));
+      $size=filesize($dir.'/'.$file);
+
+      $i=0;
+      for (;$i<4;$i++) {
+         if ($size <= 1024) {
+            $size= round($size,2).' '.$unit[$i];
+            break;
+         }
+         $size=$size/1024;
+      }
+      $size=round($size,2).' '.$unit[$i];
+
+      $date=date('Y-m-d',filemtime($dir.'/'.$file));
       $out.="<tr><td class='wiki'><input type='checkbox' name='files[$idx]' value='$file' /></td><td class='wiki'><a href='$link'>$file</a></td><td align='right' class='wiki'>$size</td><td class='wiki'>$date</td></tr>\n";
       $idx++;
    }
