@@ -123,9 +123,9 @@ Contents</span>&nbsp;
     return "
 <form name='go' id='go' method='get' action='$action'>
 <select name='action' style='width:60px'>
-<option value='goto'/>goto
-<option value='titlesearch'/>TitleSearch
-<option value='fullsearch'/>FullSearch
+<option value='goto'>goto</option>
+<option value='titlesearch'>TitleSearch</option>
+<option value='fullsearch'>FullSearch</option>
 </select>
 <input type='text' name='value' class='goto' accesskey='s' size='20' />
 <input type='submit' name='status' value='Go' />
