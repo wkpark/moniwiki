@@ -218,7 +218,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
   else
     $date=$options['date'];
 
-  preg_match('/^(?(?=')'([^']+)'|\"([^\"]+)\")?,?(\d+)?(\s*,?\s*.*)?$/',
+  preg_match("/^(?(?=')'([^']+)'|\"([^\"]+)\")?,?(\d+)?(\s*,?\s*.*)?$/",
     $value,$match);
 
   $category_pages=array();
