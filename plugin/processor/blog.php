@@ -9,7 +9,7 @@
 // this processor is used internally by the Blog action
 // $Id$
 
-function processor_blog($formatter,$value="") {
+function processor_blog($formatter,$value="",$options) {
   static $date_anchor="";
   global $DBInfo;
 
@@ -36,10 +36,11 @@ function processor_blog($formatter,$value="") {
       }
     }
     $md5sum=md5(substr($line,7));
+    if (!$options['noaction'])
     $comment_action="<div class='blog-user'>&raquo; ".$formatter->link_tag($formatter->page->urlname,"?action=blog&amp;value=$md5sum",_("Add comment"))."</div>\n";
   }
 
-  $src= $value;
+  $src= rtrim($value);
 
   if ($src) {
     $options['nosisters']=1;
