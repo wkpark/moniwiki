@@ -22,6 +22,10 @@ function _preg_escape($val) {
   return preg_replace('/([\^\.\[\]\{\}\|\(\)\+\*\/\\\\!]{1})/','\\\\\1',$val);
 }
 
+function _preg_search_escape($val) {
+  return preg_replace('/([\/]{1})/','\\\\\1',$val);
+}
+
 function get_scriptname() {
   // Return full URL of current page.
   return $_SERVER["SCRIPT_NAME"];
@@ -681,6 +685,7 @@ class WikiDB {
     $body=preg_replace("/@TIME@/","[[DateTime($time)]]",$body);
     $body=preg_replace("/@SIG@/","-- $id [[DateTime($time)]]",$body);
     $body=preg_replace("/@PAGE@/",$options[page],$body);
+    $body=preg_replace("/@date@/","$time",$body);
 
     return $body;
   }
@@ -999,7 +1004,7 @@ class Formatter {
   }
 
   function get_instructions() {
-    $pi=array('#redirect','#format');
+    $pi=array('#redirect','#format','#action');
     if (!$this->page->exists()) return '';
     $body=$this->page->get_raw_body();
     while ($body and $body[0] == '#') {
@@ -1187,7 +1192,7 @@ class Formatter {
     $num="".$this->head_num;
     $odepth=$this->head_dep;
 
-    if ($head[0] == '#') {
+    if ($head[0] == '#' && $head[1] == ' ') {
       # reset TOC numberings
       if ($this->toc_prefix) $this->toc_prefix++;
       else $this->toc_prefix=1;
@@ -1207,7 +1212,7 @@ class Formatter {
     } else if ($odepth) {
       $dum=explode(".",$num);
       $i=sizeof($dum)-1;
-      while ($depth < $odepth) {
+      while ($depth < $odepth && $i > 0) {
          unset($dum[$i]);
          $i--;
          $odepth--;
@@ -1367,12 +1372,14 @@ class Formatter {
       $line=preg_replace("/\n$/", "", $line);
 
 #     if ($line=="" && $indlen) {continue;}
-      if ($line=="" && $in_pre) {$this->pre_line.="\n";continue;}
-#     if ($line=="" && $in_p && !$in_table) {$in_p=0; $text.="<p>\n";continue;}
-      if ($line=="" && !$in_li && !$in_table) {
-         if (!$in_p) { $text.="<div>"; $in_p=1; continue;}
-         if ($in_p==2) { $text.="</div><br />\n<div>"; $in_p=1; continue;}
-         if ($in_p) { $text.="<br />\n"; $in_p=2; continue;}
+      if ($line=="") {
+        if ($in_pre) { $this->pre_line.="\n";continue;}
+        if ($in_li) { $text.="<br />\n"; continue;}
+        if (!$in_li && !$in_table) {
+          if (!$in_p) { $text.="<div>"; $in_p=1; continue;}
+          if ($in_p==2) { $text.="</div><br />\n<div>"; $in_p=1; continue;}
+          if ($in_p) { $text.="<br />\n"; $in_p=2; continue;}
+        }
       } else if ($in_p == 1) $in_p= 2;
       if (substr($line,0,2)=="##") continue; # comment
 
@@ -1953,7 +1960,11 @@ EOS;
     print $DBInfo->hr;
     print "<div id='wikiFooter'>";
     $menu="";
-    if ($args[editable]) {
+    if ($this->pi['#action']) {
+      list($act,$txt)=explode(" ",$this->pi['#action'],2);
+      if (!$txt) $txt=$act;
+      $menu= $this->link_to("?action=$act",_($txt)).$DBInfo->menu_sep;
+    } else if ($args[editable]) {
       if ($DBInfo->security->writable($options))
         $menu= $this->link_to("?action=edit",'EditText').$DBInfo->menu_sep;
       else
@@ -2155,6 +2166,10 @@ Summary of Change: <input name="comment" size="70" maxlength="70" style="width:2
 $extra
 </form>
 EOS;
+    $this->show_hints();
+  }
+
+  function show_hints() {
     print <<<EOS
 <div id="wikiHint">
 <b>Emphasis:</b> ''<i>italics</i>''; '''<b>bold</b>'''; '''''<b><i>bold italics</i></b>''''';
