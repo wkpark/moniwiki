@@ -11,15 +11,15 @@ a:hover {background-color:#E2ECE5;color:#000;}
   color: #3D9763;
   text-decoration: none;
 }
-tt.wiki {font-family:Lucida Typewriter,fixed,lucida,fixed;font-size:12px;}
+tt.wiki {font-family:Lucida Typewriter,lucida,monospace;font-size:12px;}
 tt.foot {
-  font-family:Tahoma,lucida,fixed;
+  font-family:Tahoma,lucida,monospace;
   font-size:11px;
   vertical-align: super;
 }
 
 tt.sister {
-  font-family:Tahoma,lucida,fixed;
+  font-family:Tahoma,lucida,monospace;
   font-size:11px;
   vertical-align: super;
   text-decoration: none;
@@ -28,7 +28,7 @@ tt.sister {
 pre.wiki {
   padding-left:6px;
   padding-top:6px; 
-  font-family:Lucida TypeWriter,monotype,lucida,fixed;font-size:14px;
+  font-family:Lucida TypeWriter,monotype,lucida,monospace;font-size:14px;
   background-color: #394143;
   color: #26C745; /* gold */
 }
@@ -39,13 +39,13 @@ pre.quote {
   white-space: -pre-wrap; /* */
   white-space: -moz-pre-wrap; 
   white-space: -o-pre-wrap; 
-  font-family:Georgia,monotype,lucida,fixed;font-size:14px;
+  font-family:Georgia,monotype,lucida,monospace;font-size:14px;
   /* background-color:#F7F8E6; */
   background-color: #22516C;
 }
 
 textarea.wiki {
-  font-family:Georgia,monotype,lucida,fixed;font-size:14px;
+  font-family:Georgia,monotype,lucida,monospace;font-size:14px;
 }
 
 table.wiki {
@@ -77,21 +77,21 @@ h1,h2,h3,h4,h5 {
 }
 
 div.diff-added {
-   font-family:Verdana,Lucida Sans TypeWriter,Lucida Console,fixed;
+   font-family:Verdana,Lucida Sans TypeWriter,Lucida Console,monospace;
    font-size:12px;
    background-color:#B0FFB0;
    color:black;
 }
 
 div.diff-removed {
-   font-family:Verdana,Lucida Sans TypeWriter,Lucida Console,fixed;
+   font-family:Verdana,Lucida Sans TypeWriter,Lucida Console,monospace;
    font-size:12px;
    background-color:#E9EAB8;
    color:black;
 }
 
 div.diff-sep {
-   font-family:georgia,Verdana,Lucida Sans TypeWriter,Lucida Console,fixed;
+   font-family:georgia,Verdana,Lucida Sans TypeWriter,Lucida Console,monospace;
    font-size:12px;
    background-color:#000000;
    color:#FFD700; /* gold */
@@ -183,4 +183,18 @@ span.group {
 div.wikiPre i,div.wikiPre b{
   font-weight: normal;
   font-style: normal;
+}
+
+img.imgLeft {
+  margin-right : 15px;
+  margin-bottom : 5px;
+}
+
+img.imgRight {
+  margin-left : 10px;
+  margin-bottom : 5px;
+}
+
+span.externalLink {
+  display: none;
 }

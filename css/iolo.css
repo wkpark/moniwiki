@@ -391,3 +391,16 @@ div.wikiPre i, div.wikiPre b {
 	font-size:smaller;
 }
 
+img.imgLeft {
+  margin-right : 15px;
+  margin-bottom : 5px;
+}
+
+img.imgRight {
+  margin-left : 10px;
+  margin-bottom : 5px;
+}
+
+span.externalLink {
+  display: none;
+}
