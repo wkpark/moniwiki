@@ -3243,11 +3243,22 @@ if ($pagename) {
   $formatter->refresh=$refresh;
 
   // check black list
-  if ($DBInfo->blacklist) {
+  if (!empty($DBInfo->blacklist)) {
     include_once 'lib/checkip.php';
     if (check_ip($DBInfo->blacklist, $_SERVER['REMOTE_ADDR'])) {
       $options['title']=_("You are in the black list");
-      $options['msg']=_("Please contact wikimasters");
+      $options['msg']=_("Please contact WikiMasters");
+      do_invalid($formatter,$options);
+      return;
+    }
+  }
+  if (!empty($DBInfo->kiwirian)) {
+    if (!is_array($DBInfo->kiwirian)) {
+      $DBInfo->kiwirian=explode(':',$DBInfo->kiwirian);
+    }
+    if (in_array($options['id'],$DBInfo->kiwirian)) {
+      $options['title']=_("You are blocked in this wiki");
+      $options['msg']=_("Please contact WikiMasters");
       do_invalid($formatter,$options);
       return;
     }
