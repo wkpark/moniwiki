@@ -15,6 +15,9 @@ if [ -f config.php ]; then
     echo "*** chmod 644 config.php"
 fi
 
+[ -f imgs_htaccess ] && [ ! -f imgs/.htaccess ] &&
+    cp imgs_htaccess imgs/.htaccess && rm imgs_htaccess
+
 echo ""
 echo "Your MoniWiki is now secure and cannot be configured."
 echo "If you wish to reconfigure it, execute the following command:"
