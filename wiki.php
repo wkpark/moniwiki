@@ -966,12 +966,10 @@ class WikiPage {
   }
 
   function get_raw_body($options='') {
-#    if (isset($this->body) && !$options[rev])
     if ($this->body && !$options['rev']) {
        return $this->body;
     }
-
-    if (!$this->exists()) return '';
+#    if (!$this->exists()) return '';
 
     if ($this->rev || $options['rev']) {
        if ($options['rev']) $rev=$options['rev'];
@@ -1237,7 +1235,7 @@ class Formatter {
         # extract first line
         list($line, $body)= split("\n", $body,2);
         if ($line=='#') break;
-        else if ($line[1]=='#') continue;
+        else if ($line[1]=='#') { $notused[]=$line; continue;}
 
         #list($key,$val,$args)= explode(" ",$line,2); # XXX
         list($key,$val)= explode(" ",$line,2); # XXX
@@ -2033,11 +2031,13 @@ class Formatter {
            $dummy=explode(";;",$line);
            $ip=$dummy[0];
            $user=$dummy[1];
-           if ($user!='Anonymous') {
+           if ($user and $user!='Anonymous') {
              if (in_array($user,$users)) $ip=$users[$user];
              else if ($DBInfo->hasPage($user)) {
                $ip=$this->link_tag($user);
                $users[$user]=$ip;
+             } else if ($DBInfo->interwiki['Whois']) {
+               $ip="<a href='".$DBInfo->interwiki['Whois']."$ip'>$user</a>";
              }
            } else if ($DBInfo->interwiki['Whois'])
              $ip="<a href='".$DBInfo->interwiki['Whois']."$ip'>$ip</a>";
@@ -2703,13 +2703,21 @@ if ($theme) $options['theme']=$theme;
 
 if ($DBInfo->trail)
   $options['trail']=$user->trail;
-if ($user->id != "Anonymous") {
+if ($options['id'] != 'Anonymous') {
   $udb=new UserDB($DBInfo);
-  $user=$udb->getUser($user->id);
-  $options['css_url']=$user->info['css_url'];
-  $options['quicklinks']=$user->info['quicklinks'];
-  #$options['name']=$user->info[name];
-  if (!$theme) $options['theme']=$user->info['theme'];
+  $userinfo=$udb->getUser($user->id);
+  # Does it have valid ticket ?
+
+  if ($user->ticket == $userinfo->info['ticket']) {
+    $user=$userinfo;
+    $options['css_url']=$user->info['css_url'];
+    $options['quicklinks']=$user->info['quicklinks'];
+    if (!$theme) $options['theme']=$user->info['theme'];
+  } else {
+    $options['id']='Anonymous';
+    $options['css_url']=$user->css;
+    if (!$theme) $options['theme']=$user->theme;
+  }
 } else {
   $options['css_url']=$user->css;
   if (!$theme) $options['theme']=$user->theme;
@@ -2822,6 +2830,12 @@ if ($pagename) {
     $formatter->pi=$formatter->get_instructions();
     $formatter->send_header("",$options);
     $formatter->send_title("","",$options);
+
+    if ($formatter->pi['#title'] and $DBInfo->use_titlecache) {
+      $tcache=new Cache_text('title');
+      if (!$tcache->exists($pagename) or $_GET['update_title'])
+        $tcache->update($pagename,$formatter->pi['#title']);
+    }
     $formatter->write("<div id='wikiContent'>\n");
     $options['timer']->Check("init");
 #    $cache=new Cache_text('pages');
