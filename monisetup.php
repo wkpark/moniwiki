@@ -1,4 +1,4 @@
-<?
+<?php
 // Copyright 2003 by Won-Kyu Park <wkpark at kldp.org> all rights reserved.
 // distributable under GPL see COPYING 
 // $Id$
@@ -73,6 +73,9 @@ class MoniConfig {
     $user = getenv('LOGNAME');
     $user = $user ? $user : get_current_user();
     $config['rcs_user']="'".$user."'";
+
+    if(getenv("OS")=="Windows_NT")
+      $config['timezone']="'LT'";
 
     if (!file_exists('wikilib.php')) {
       $config['include_path']="'.:/usr/local/share/moniwiki:/usr/share/moniwiki'";

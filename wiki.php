@@ -572,6 +572,8 @@ class WikiDB {
       putenv("PATH=".$this->path);
     if ($this->rcs_user)
       putenv('LOGNAME='.$this->rcs_user);
+    if ($this->timezone)
+      putenv('TZ='.$this->timezone);
 
     $this->set_intermap();
     if ($this->shared_metadb)
