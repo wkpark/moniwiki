@@ -27,7 +27,7 @@ function processor_vim($formatter,$value,$options) {
   if ($line)
     list($tag,$type,$extra)=preg_split('/\s+/',$line,3);
   $src=$value;
-  if (!preg_match('/^\w$/',$type)) $type='nosyntax';
+  if (!preg_match('/^\w+$/',$type)) $type='nosyntax';
 
   if ($extra == "number") 
     $option='+"set number" ';
