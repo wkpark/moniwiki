@@ -21,6 +21,12 @@ function processor_gnuplot($formatter="",$value="") {
 
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
+  list($dum,$szarg)=explode(' ',$line);
+  if ($szarg) {
+    $args= explode('x',$szarg,2);
+    $xsize=intval($args[0]);$ysize=intval($args[1]);
+    $value='#'.$line."\n".$value;
+  }
 
   $default_size="set size 0.5,0.6";
 
