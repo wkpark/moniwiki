@@ -42,15 +42,17 @@ function macro_Comment($formatter,$value,$options=array()) {
  rows="$rows" cols="$cols" class="wiki">$savetext</textarea><br />
 FORM;
   if ($options['id'] == 'Anonymous')
-    $sig=_("Name").": <input name='name' /><br />";
+    $sig=_("Name").": <input name='name' value='$options[name]' />";
   else 
-    $sig="<input name='nosig' type='checkbox' />"._("Don't add a signature")."<br />";
+    $sig="<input name='nosig' type='checkbox' />"._("Don't add a signature");
+  $comment=_("Comment");
+  $preview=_("Preview");
   $form.= <<<FORM2
 $sig
 <input type="hidden" name="action" value="comment" />
 <input type="hidden" name="datestamp" value="$datestamp" />
-<input type="submit" value="Comment" />&nbsp;
-<input type="submit" name="button_preview" value="Preview" />
+<input type="submit" value="$comment" />&nbsp;
+<input type="submit" name="button_preview" value="$preview" />
 </form>
 FORM2;
 
