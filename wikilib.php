@@ -240,9 +240,25 @@ Password: <input type=password name=passwd size=20 value='' />
 Only WikiMaster can delete this page<br />
     <input type=hidden name=action value='DeletePage' />
     <input type=submit value='Delete' />
-    </form><hr class='wiki' />";
-  $formatter->send_page($title);
+    </form>";
+#  $formatter->send_page();
   $formatter->send_footer();
+}
+
+function do_RcsPurge($formatter,$options) {
+  global $DBInfo;
+  
+  $title = sprintf('RCS purge "%s"', $formatter->page->name);
+  $formatter->send_header("",$title);
+  $formatter->send_title($title);
+  if ($options[range]) {
+    foreach ($options[range] as $range) {
+       print "<h3>range '$range' purged</h3>";
+       print "rcs -o$range ".$formatter->page->filename."<br>";
+    }
+  }
+  $args[noaction]=1;
+  $formatter->send_footer($args,$options[timer]);
 }
 
 function do_fullsearch($formatter,$options) {
@@ -251,7 +267,7 @@ function do_fullsearch($formatter,$options) {
 
   $title= sprintf('Full text search for "%s"', $options[value]);
   $formatter->send_header("",$title);
-  $formatter->send_title($title);
+  $formatter->send_title($title,$formatter->link_url("FindPage"));
 
   $out= macro_FullSearch($formatter,$options[value],&$ret);
   print $out;
@@ -267,8 +283,10 @@ function do_fullsearch($formatter,$options) {
 
 function do_goto($formatter,$options) {
 
-  if ($options[value])
-     $formatter->send_header(array("Status: 302","Location: ".$options[value]));
+  if ($options[value]) {
+     $url=$formatter->link_url($options[value]);
+     $formatter->send_header(array("Status: 302","Location: ".$url));
+  }
   else {
      $title = 'Use more specific text';
      $formatter->send_header("",$title);
@@ -410,7 +428,7 @@ function do_titlesearch($formatter,$options) {
   $out= macro_TitleSearch($formatter,$options[value],&$ret);
 
   $formatter->send_header("",$ret[msg]);
-  $formatter->send_title($ret[msg]);
+  $formatter->send_title($ret[msg],$formatter->link_url("FindPage"));
   print $out;
 
   if ($options[value])
@@ -432,6 +450,12 @@ function do_uploadfile($formatter,$options) {
 
   preg_match("/(.*)\.([a-z0-9]{1,4})$/i",$upfilename,$fname);
 
+  if (!$upfilename) {
+     $title="No file selected";
+     $formatter->send_header("",$title);
+     $formatter->send_title($title);
+     return;
+  }
   # upload file protection
   if ($DBInfo->pds_allowed)
      $pds_exts=$DBInfo->pds_allowed;
@@ -441,7 +465,7 @@ function do_uploadfile($formatter,$options) {
      $title="$fname[2] extension does not allowed to upload";
      $formatter->send_header("",$title);
      $formatter->send_title($title);
-     exit;
+     return;
   }
 
   $file_path= $DBInfo->upload_dir."/".$upfilename;
@@ -543,14 +567,15 @@ function do_userform($formatter,$options) {
 
 function macro_UploadFile($formatter,$value="") {
    global $DBInfo;
+   $url=$formatter->link_url($formatter->page->name);
    $form= <<<EOF
-<form enctype="multipart/form-data" method='post' action=''>
+<form enctype="multipart/form-data" method='post' action='$url'>
    <input type='hidden' name='action' value='UploadFile' />
    <input type='file' name='upfile' size='30' />
    <input type='submit' value='Upload' /><br />
    <input type='radio' name='replace' value='1' />Replace original file<br />
    <input type='radio' name='replace' value='0' checked='checked' />Rename if already exist file<br />
-   </form>
+</form>
 EOF;
 
    return $form;
@@ -583,16 +608,16 @@ function macro_UploadedFiles($formatter,$value="") {
 
 function macro_UserPreferences($formatter="") {
   global $HTTP_COOKIE_VARS;
-  $prefix=get_scriptname();
 
 #  print $HTTP_COOKIE_VARS[MOIN_ID];
 #  print $user->id;
 
   $user=new User(); # get from COOKIE VARS
+  $url=$formatter->link_url("UserPreference");
 
   if ($user->id == "Anonymous")
      return <<<EOF
-<form method="post" action="$prefix/UserPreferences">
+<form method="post" action="$url">
 <input type="hidden" name="action" value="userform" />
 <table border="0">
   <tr><td>&nbsp;</td></tr>
@@ -618,7 +643,7 @@ EOF;
    $css=$user->info[css_url];
    $name=$user->info[name];
    return <<<EOF
-<form method="post" action="$prefix/UserPreferences">
+<form method="post" action="$url">
 <input type="hidden" name="action" value="userform" />
 <table border="0">
   <tr><td>&nbsp;</td></tr>
@@ -802,10 +827,11 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
     $opts[extra]="You are strongly recommened to find it in MetaWikis. ";
   }
 
-  $opts[msg] = "Like \"$pname\"";
+  $opts[msg] = "Like \"$args\"";
 
   $prefix=get_scriptname();
-  $opts[extra].="<a href='$prefix/".$pname."?action=LikePages&amp;metawiki=1'>Search all MetaWikis</a> (Slow Slow)<br />";
+  $tag=$formatter->link_to("?action=LikePages&amp;metawiki=1","Search all MetaWikis");
+  $opts[extra].="$tag (Slow Slow)<br />";
 
   return $out;
 }
@@ -937,11 +963,11 @@ function macro_QuickChanges($formatter="") {
     }
 
     if ($act == "DEL")
-       $out.= "&nbsp;&nbsp; ".$formatter->link_tag("$page_name?action=diff",$DBInfo->icon[del]);
+       $out.= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=diff",$DBInfo->icon[del]);
     else
-       $out.= "&nbsp;&nbsp; ".$formatter->link_tag("$page_name?action=diff",$DBInfo->icon[diff]);
+       $out.= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=diff",$DBInfo->icon[diff]);
 
-    $out.= "&nbsp;&nbsp;".$formatter->link_tag("$page_name");
+    $out.= "&nbsp;&nbsp;".$formatter->link_tag($page_name);
     if (! empty($DBInfo->changed_time_fmt))
        $out.= date($DBInfo->changed_time_fmt, $ed_time);
 
@@ -1006,11 +1032,11 @@ function macro_RecentChanges($formatter="") {
     }
 
     if ($act == "DEL")
-       $logs[$page_name]= "&nbsp;&nbsp; ".$formatter->link_tag("$page_name?action=diff",$DBInfo->icon[del]);
+       $logs[$page_name]= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=diff",$DBInfo->icon[del]);
     else
-       $logs[$page_name]= "&nbsp;&nbsp; ".$formatter->link_tag("$page_name?action=diff",$DBInfo->icon[diff]);
+       $logs[$page_name]= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=diff",$DBInfo->icon[diff]);
 
-    $logs[$page_name].= "&nbsp;&nbsp;".$formatter->link_tag("$page_name");
+    $logs[$page_name].= "&nbsp;&nbsp;".$formatter->link_tag($page_name);
     if (! empty($DBInfo->changed_time_fmt))
       $logs[$page_name].= date($DBInfo->changed_time_fmt, $ed_time);
 
@@ -1143,8 +1169,10 @@ function macro_FullSearch($formatter="",$value="", $opts=array()) {
   global $DBInfo;
   $needle=$value;
 
-   $form= <<<EOF
-<form method='get' action=''>
+  $url=$formatter->link_url($formatter->page->name);
+
+  $form= <<<EOF
+<form method='get' action='$url'>
    <input type='hidden' name='action' value='fullsearch' />
    <input name='value' size='30' value='$needle' />
    <input type='submit' value='Go' /><br />
@@ -1297,9 +1325,11 @@ EOS;
 function macro_TitleSearch($formatter="",$needle="",$opts=array()) {
   global $DBInfo;
 
+  $url=$formatter->link_url($formatter->page->name);
+
   if (!$needle) {
     $opts[msg] = 'Use more specific text';
-    return "<form method='get' action=''>
+    return "<form method='get' action='$url'>
       <input type='hidden' name='action' value='titlesearch' />
       <input name='value' size='30' value='$needle' />
       <input type='submit' value='Go' />
@@ -1337,13 +1367,15 @@ function macro_TitleSearch($formatter="",$needle="",$opts=array()) {
   }
 
   $out.="</ul>\n";
+  $opts[msg] = sprintf('Title search for "%s"', $needle);
   $opts[hits]= count($hits);
   $opts[all]= count($pages);
   return $out;
 }
 
 function macro_GoTo($formatter="",$value="") {
-  return "<form method='get' action=''>
+  $url=$formatter->link_url($formatter->page->name);
+  return "<form method='get' action='$url'>
     <input type='hidden' name='action' value='goto' />
     <input name='value' size='30' value='$value' />
     <input type='submit' value='Go' />
