@@ -75,6 +75,7 @@ class Blog_cache {
       $daterule=Blog_cache::get_daterule();
 
     $rule="/^($daterule\d*)".'_2e('.join('|',$blogs).')$/';
+
     $logs=array();
 
     $handle = @opendir($DBInfo->cache_dir."/blogchanges");
@@ -197,6 +198,7 @@ function do_BlogChanges($formatter,$options='') {
   $options['action']=1;
   $options['summary']=1;
   $options['simple']=1;
+  $options['all']=1;
 
   $changes=macro_BlogChanges($formatter,'all,'.$options['mode'],$options);
   $formatter->send_header('',$options);
@@ -223,18 +225,28 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
   preg_match("/^(?(?=')'([^']+)'|\"([^\"]+)\")?,?(\d+)?(\s*,?\s*.*)?$/",
     $value,$match);
 
+  $opts=explode(',',$match[4]);
+  $opts=array_merge($opts,array_keys($options));
+
   $category_pages=array();
-  if ($match[2] or $match[1] or $options['category']) {
+  if (in_array('all',$opts) and ($match[2] or $match[1] and $options['category'])) {
+    // set selected category with 'all' option
     $match[1]=$match[1] ? $match[1]:$match[2];
     $options['category']=$options['category'] ? $options['category']:$match[1];
     if ($DBInfo->blog_category) {
       $categories=Blog_cache::get_categories();
       if ($categories[$options['category']])
         $category_pages=$categories[$options['category']];
+      else
+        // category does not found
+        // regard it as a single blog page
+        $options['blogpage']=$options['category'];
     }
+  } else if ($match[2] or $match[1]) {
+    // set selected single blog page
+    $options['blogpage']=$match[1] ? $match[1]:$match[2];
   }
-  $opts=explode(',',$match[4]);
-  $opts=array_merge($opts,array_keys($options));
+
   if ($match[3]) {
     $options['limit']=$limit=$match[3];
   } else {
@@ -251,7 +263,9 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
       $blogs=Blog_cache::get_rc_blogs($date,$category_pages);
     else
       $blogs=Blog_cache::get_blogs();
-  } else
+  } else if ($options['blogpage'])
+    $blogs=array($DBInfo->pageToKeyname($options['blogpage']));
+  else
     $blogs=array($DBInfo->pageToKeyname($formatter->page->name));
 
   if (in_array('summary',$opts))
@@ -341,14 +355,13 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
   $url=qualifiedUrl($formatter->link_url($DBInfo->frontpage));
 
   # make pnut
-  $action="date=$prev_date";
-  if ($options['action']) $action='action=blogchanges';
-  if ($options['category']) $action.='&amp;category='.$options['category'];
-  if ($options['mode']) $action.='&amp;mode='.$options['mode'];
+  if ($options['action']) $action='action=blogchanges&amp;';
+  if ($options['category']) $action.='category='.$options['category'].'&amp;';
+  if ($options['mode']) $action.='mode='.$options['mode'].'&amp;';
 
-  $prev=$formatter->link_to('?'.$action.'&amp;date='.$prev_date,'&laquo; '._("Previous"));
+  $prev=$formatter->link_to('?'.$action.'date='.$prev_date,'&laquo; '._("Previous"));
   if ($next_date)
-  $next=" | ".$formatter->link_to('?'.$action.'&amp;date='.$next_date,_("Next"). ' &raquo;');
+  $next=" | ".$formatter->link_to('?'.$action.'date='.$next_date,_("Next"). ' &raquo;');
   return $bra.$items.$cat."<div class='blog-action'>".$prev.$next."</div>";
 }
 // vim:et:sts=2:
