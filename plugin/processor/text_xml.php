@@ -2,7 +2,9 @@
 
 class Formatter_xml {
 
-  function Formatter_xml() {  
+  function Formatter_xml() {
+    global $DBInfo;
+
     $this->in_p='';
     $this->level=0;
     $this->padding='';
@@ -13,10 +15,21 @@ class Formatter_xml {
                      "/\^([^ \^]+)\^(?:\s)/","/,,([^ ,]+),,(?:\s)/",
                      "/__([^ _]+)__(?:\s)/","/^-{4,}/");
     $this->baserepl=array("&lt;\\1","<constant>\\1</constant>",
+                     "<keycap>\\1</keycap>","<keycap>\\1</keycap>",
                      "<emphasis>\\1</emphasis>","<emphasis>\\1</emphasis>",
-                     "<i>\\1</i>","<i>\\1</i>",
                      "<superscript>\\1</superscript>","<subscript>\\1</subscript>",
-                     "<u>\\1</u>","<hr />\n");
+                     "<constant class='underline'>\\1</constant>","----\n");
+
+    $this->extrarule=array();
+    $this->extrarepl=array();
+    # set smily_rule,_repl
+    if ($DBInfo->smileys) {
+      $smiley_rule='/(?<=\s|^)('.$DBInfo->smiley_rule.')(?=\s|$)/e';
+      $smiley_repl="\$xml->smiley_repl('\\1')";
+
+      $this->extrarule[]=$smiley_rule;
+      $this->extrarepl[]=$smiley_repl;
+    }
 
     #$punct="<\"\'}\]\|;,\.\!";
     $punct="<\'}\]\|;\.\)\!"; # , is omitted for the WikiPedia
@@ -53,14 +66,18 @@ class Formatter_xml {
   function _table_span($str) {
     $len=strlen($str)/2;
     if ($len > 1)
-      return " align='middle' morerows='$len'";
-    return "";
+      return " align='middle'"; # colspan=$len
+    return '';
   }
 
-  function _table($on,$attr="") {
-    if ($on)
-      return "<table $attr>\n";
-    return "</table>\n";
+  function _table($on,$col='') {
+    if ($on) {
+      $out= "<informaltable><tgroup cols='$col'><tbody>\n";
+      for ($i=1;$i<=$col;$i++)
+        $out.="<colspec colname='c$i'/>\n";
+      return $out;
+    }
+    return "</tbody></tgroup></informaltable>\n";
   }
 
   function _img($url) {
@@ -70,6 +87,16 @@ class Formatter_xml {
   function _a($url,$text='',$attr='') {
     if (!$text) $text=$url;
     return "<ulink url='$url'>$text</ulink>\n";
+  }
+
+  function smiley_repl($smiley) {
+    global $DBInfo;
+
+    $img=$DBInfo->smileys[$smiley][3];
+
+    $alt=str_replace("<","&lt;",$smiley);
+
+    return $this->_img(qualifiedUrl("$DBInfo->imgs_dir/$img"));
   }
 
   function link_repl($url,$attr='') {
@@ -199,9 +226,9 @@ class Formatter_xml {
       $numtype='';
     } else if ($list_type=="dl") {
       if ($on)
-         $list_type="dl";
+         $list_type="listitem><para";
       else
-         $list_type="dd></dl";
+         $list_type="listitem></varlistentry";
       $numtype='';
     } if (!$on and $closetype and $closetype !='dd')
       $list_type=$list_type."></listitem";
@@ -260,22 +287,28 @@ class Formatter_xml {
     $this->level=$depth;
 
     if (!$odepth) {
-      $open.="<sect$depth>\n"; # <section>
-    } else if ($odepth && ($depth > $odepth)) {
-      $open.="$this->padding<sect$depth>\n"; # <section>
+      #$open.="<sect$depth>\n"; # <section>
+      $open.="<section>\n"; # <section>
+    } if ($odepth && ($depth > $odepth)) {
+      #$open.="$this->padding<sect$depth>\n"; # <section>
+      $open.="$this->padding<section>\n"; # <section>
       $num.=".1";
     } else if ($odepth) {
       $dum=explode(".",$num);
       $i=sizeof($dum)-1;
-      if ($depth == $odepth) $close.="$this->padding</sect$depth>\n$this->padding<sect$depth>\n"; # </section><section>
+      #if ($depth == $odepth) $close.="$this->padding</sect$depth>\n$this->padding<sect$depth>\n"; # </section><section>
+      if ($depth == $odepth) $close.="$this->padding</section>\n$this->padding<section>\n"; # </section><section>
       while ($depth < $odepth && $i > 0) {
          unset($dum[$i]);
          $i--;
-         $close.="$this->padding</sect$odepth>\n"; # </section>
+         #$close.="$this->padding</sect$odepth>\n"; # </section>
+         $close.="$this->padding</section>\n"; # </section>
          $odepth--;
       }
       $dum[$i]++;
       $num=join($dum,".");
+      #$open.="</sect$depth>\n<sect$depth>"; # <section>
+      $open.="</section>\n<section>"; # <section>
     }
 
     $this->head_dep=$depth; # save old
@@ -373,10 +406,14 @@ class Formatter_xml {
               include_once("plugin/processor/$pf.php");
               $processor=$pf;
             }
+            if ($tag == 'docbook') $processor=$tag;
          } else if ($line[$p+3] == ":") {
             # new formatting rule for a quote block (pre block + wikilinks)
             $line[$p+3]=" ";
             $in_quote=1;
+         } else if ($line[$p+3] == "!") {
+            $line[$p+3]=" ";
+            $in_quote=2;
          }
 
          $xml->pre_line=substr($line,$p+3);
@@ -412,8 +449,8 @@ class Formatter_xml {
              $indtype="orderedlist";
            } elseif (preg_match("/^([^:]+)::\s/",$line,$limatch)) {
              $line=preg_replace("/^[^:]+::\s/",
-                     "<dt class='wiki'>".$limatch[1]."</dt><dd>",$line);
-             if ($indent_list[$in_li] == $indlen) $line="</dd>\n".$line;
+                     "<varlistentry><term>".$limatch[1]."</term>",$line);
+             if ($indent_list[$in_li] == $indlen) $line="</para>\n".$line;
              $numtype="";
              $indtype="dl";
            }
@@ -439,7 +476,8 @@ class Formatter_xml {
 
       #if (!$in_pre && !$in_table && preg_match("/^\|\|.*\|\|$/",$line)) {
       if (!$in_pre && $line[0]=='|' && !$in_table && preg_match("/^\|\|.*\|\|$/",$line)) {
-         $open.=$xml->_table(1);
+         $count=preg_match_all("/\|\|/",$line,$match);
+         $open.=$xml->_table(1, $count);
          $in_table=1;
       #} elseif ($in_table && !preg_match("/^\|\|.*\|\|$/",$line)){
       } elseif ($in_table && $line[0]!='|' && !preg_match("/^\|\|.*\|\|$/",$line)){
@@ -447,20 +485,23 @@ class Formatter_xml {
          $in_table=0;
       }
       if ($in_table) {
-         $line=preg_replace('/^((?:\|\|)+)(.*)\|\|$/e',"'<row><entry '.\$xml->_table_span('\\1').'>\\2</entry></row>'",$line);
+         $line=preg_replace('/^((?:\|\|)+)(.*)\|\|$/e',"'<row><entry '.\$xml->_table_span('\\1').'>\\2</entry></row>\n'",$line);
          $line=preg_replace('/((\|\|)+)/e',"'</entry><entry '.\$xml->_table_span('\\1').'>'",$line);
          $line=str_replace('\"','"',$line); # revert \\" to \"
       }
       $line=$close.$open.$line;
       $open="";$close="";
 
+      # Headings
+      $line=preg_replace("/(?<!=)(={1,5})\s+(.*)\s+(={1,5})\s?$/e",
+                         "\$xml->head_repl('\\1','\\2','\\3')",$line);
+
       # InterWiki, WikiName, {{{ }}}, !WikiName, ?single, ["extended wiki name"]
       # urls, [single bracket name], [urls text], [[macro]]
       $line=preg_replace("/(".$wordrule.")/e","\$xml->link_repl('\\1')",$line);
 
-      # Headings
-      $line=preg_replace("/(?<!=)(={1,5})\s+(.*)\s+(={1,5})\s?$/e",
-                         "\$xml->head_repl('\\1','\\2','\\3')",$line);
+
+      $line=preg_replace($xml->extrarule,$xml->extrarepl,$line);
 
       $line=preg_replace("/&(?:\s)/","&amp;",$line);
 
@@ -469,22 +510,33 @@ class Formatter_xml {
       if ($in_pre==-1) {
          $in_pre=0;
          if ($processor) {
-           $value=$xml->pre_line;
-           $out= call_user_func("processor_$processor",&$formatter,$value,$options);
-           $line="<screen><![CDATA[\n".$out."\n]]></screen>\n".$line;
+           #$value=$xml->pre_line;
+           #$out= call_user_func("processor_$processor",&$formatter,$value,$options);
+           if ($processor != 'docbook') {
+             $pre=str_replace("&","&amp;",$xml->pre_line);
+             $pre=str_replace("<","&lt;",$pre);
+             $line="<programlisting><![CDATA[\n".$pre."\n]]></programlisting>\n".$line;
+           } else {
+             list($tag,$pre)=explode("\n",$xml->pre_line,2);
+             $line=$pre;
+           }
          } else if ($in_quote) {
             # htmlfy '<'
-            $pre=str_replace("&","&amp;",$xml->pre_line);
-            $pre=str_replace("<","&lt;",$pre);
-            $pre=preg_replace($xml->baserule,$xml->baserepl,$pre);
-            $pre=preg_replace("/(".$wordrule.")/e","\$xml->link_repl('\\1')",$pre);
-            $line="<quote>\n".$pre."</quote>\n".$line;
+            if ($in_quote==2)
+              $line=$xml->pre_line;
+            else {
+              $pre=str_replace("&","&amp;",$xml->pre_line);
+              $pre=str_replace("<","&lt;",$pre);
+              $pre=preg_replace($xml->baserule,$xml->baserepl,$pre);
+              $pre=preg_replace("/(".$wordrule.")/e","\$xml->link_repl('\\1')",$pre);
+              $line="<blockquote>\n".$pre."</blockquote>\n".$line;
+            }
             $in_quote=0;
          } else {
             # htmlfy '<'
             $pre=str_replace("&","&amp;",$xml->pre_line);
             $pre=str_replace("<","&lt;",$pre);
-            $line="<screen><![CDATA[\n".$pre."]]></screen>\n".$line;
+            $line="<screen><![CDATA[\n".$pre."\n]]></screen>\n".$line;
          }
       }
       $text.=$xml->padding.$line."\n";
@@ -497,8 +549,9 @@ class Formatter_xml {
     if ($in_table) $close.="</table>\n";
     # close indent
     while($in_li >= 0 && $indent_list[$in_li] > 0) {
-      if ($indent_type[$in_li]!='dd' && $li_open == $in_li)
+      if ($indent_type[$in_li]!='dd' && $li_open >= $in_li)
         $close.="</listitem>\n";
+      #$close.=$in_li.":$li_open".$indent_type[$in_li];
       $close.=$xml->_list(0,$indent_type[$in_li]);
       unset($indent_list[$in_li]);
       unset($indent_type[$in_li]);
@@ -513,7 +566,8 @@ class Formatter_xml {
       $i=sizeof($dum)-1;
       while (0 <= $odepth && $i >= 0) {
          $i--;
-         $close.="</sect$odepth>\n"; # </section>
+         #$close.="</sect$odepth>\n"; # </section>
+         $close.="</section>\n"; # </section>
          $odepth--;
       }
     }
@@ -521,6 +575,7 @@ class Formatter_xml {
     $text.=$close;
 
     $pagename=$formatter->page->name;
+
     $header=<<<HEAD
 <?xml version="1.0" encoding="$DBInfo->charset"?>
 <!-- <?xml-stylesheet href="DocbookKoXsl" type="text/xml"?> -->
@@ -531,11 +586,67 @@ class Formatter_xml {
 
 <articleinfo>
 <title>$pagename</title>
-</articleinfo>
-
 HEAD;
+
+    $author=get_authorinfo($value);
+
+    $author.="</articleinfo>\n";
     $footer="</article>\n";
 
-    print $header.$text.$footer;
+    print $header.$author.$text.$footer;
   }
+
+function get_authorinfo($body) {
+  $log=0;
+
+  while ($body and $body[0] == '#') {
+    # extract first line
+    list($line, $body)= split("\n", $body,2);
+    if ($line[1]=='#' and preg_match('/^##\$Log$
+    if ($line[1]=='#' and preg_match('/^##\Revision 1.3  2003/08/07 01:05:04  wkpark
+    if ($line[1]=='#' and preg_match('/^##\author info and revhistory supported now
+    if ($line[1]=='#' and preg_match('/^##\line)) {
+      $log=1; $state=0;
+      continue;
+    } else if ($line[1]=='#' and preg_match('/^##\$?Author: ([^;]+);(.*)$/',$line,$match)) {
+      list($firstname,$surname)=explode(" ",$match[1],2);
+      $affiliation="<affiliation>\n
+<address><email>$match[2]</email></address>\n</affiliation>\n";
+      if ($firstname and $surname)
+        $authors.="<author>
+  <surname>$surname</surname>
+  <firstname>$firstname</firstname>
+  $affiliation\n</author>\n";
+    }
+
+    if ($log) {
+      switch($state) {
+        case 0:
+          preg_match("/^##Revision ([\d\.]+)\s+(.{19})\s/",$line,$match);
+          $rev=$match[1];$date=$match[2];
+          $state=1;
+          break;
+        case 1:
+          preg_match("/^##([\d\.]+);;([^;]+);;(.*)$/",$line,$match);
+          $ip=$match[1];$user=$match[2];$summary=$match[3];
+          $state=2;
+          break;
+        case 2:
+          $info.="<revision>
+<revnumber>$rev</revnumber>
+<date>$date</date>
+<authorinitials>$user</authorinitials>\n";
+          if ($summary)
+            $info.="<revremark>$summary</revremark>\n";
+          $info.="</revision>\n";
+          $state=0;
+          break;
+      }
+    }
+  }
+  $authorinfo="<authorgroup>$authors</authorgroup>\n";
+  $history="<revhistory>$info</revhistory>\n";
+
+  return $authorinfo.$history;
+}
 ?>
