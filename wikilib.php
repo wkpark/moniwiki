@@ -2,10 +2,16 @@
 // Copyright 2003 by Won-Kyu Park <wkpark@kldp.org> all rights reserved.
 // distributable under GPL see COPYING
 //
-// Copyright 1999-2002 by Fred C. Yankowski <fcy@acm.org>, all rights reserved.
+// many codes are imported from the MoinMoin
+// some codes are reused from the Phiki
+//
+// * MoinMoin is a python based wiki clone based on the PikiPiki
+//    by Jurgen Herman
+// * PikiPiki is a python based wiki clone by MartinPool
+// * Phiki is a php based wiki clone based on the MoinMoin
+//    by Fred C. Yankowski <fcy@acm.org>
 //
 // $Id$
-// wkpark@kldp.org 2003
 
 
 class UserDB {
@@ -28,11 +34,11 @@ class UserDB {
   function addUser($user) {
     if ($this->_exists($user->id))
        return false;
-    $this->_saveUser($user);
+    $this->saveUser($user);
     return true;
   }
 
-  function _saveUser($user) {
+  function saveUser($user) {
     $config=array("css_url","datatime_fmt","email","language",
                   "name","password","wikiname_add_spaces");
 
@@ -40,8 +46,9 @@ class UserDB {
 
     foreach ($config as $key) {
        $data.="$key=".$user->info[$key]."\n";
-#       print "$key";
     }
+
+    #print $data;
 
     $fp=fopen($this->user_dir."/wu-".$user->id,"w+");
     fwrite($fp,$data);
@@ -55,18 +62,18 @@ class UserDB {
   }
 
   function getUser($id) {
-    $type=array(""=>"");
     if ($this->_exists($id))
        $data=file("$this->user_dir/wu-$id");
     else
        return "";
     $info=array();
     foreach ($data as $line) {
+       #print "$line<br/>";
        if ($line[0]=="#" and $line[0]==" ") continue;
        $p=strpos($line,"=");
        if ($p === false) continue;
        $key=substr($line,0,$p);
-       $val=substr($line,$p+1,strlen($line)-$p-2);
+       $val=substr($line,$p+1,-1);
        $info[$key]=$val;
     }
     $user=new User($id);
@@ -74,14 +81,12 @@ class UserDB {
     return $user;
   }
 
-
   function delUser($id) {
 
   }
 }
 
 class User {
-
   function User($id="") {
      global $HTTP_COOKIE_VARS;
      if ($id) {
@@ -174,7 +179,6 @@ class User {
           $ok|=4;
        if (strpos($SPECIAL,$passwd[$i]))
           $ok|=8;
-
     }
     return $ok;
   }
@@ -232,55 +236,20 @@ Only WikiMaster can delete this page<br />
 
 function do_fullsearch($options) {
   global $DBInfo;
-  $needle=$options[value];
-  $page = new WikiPage("FullSearch");
-  $html = new Formatter($page);
-  if (!$needle) { # or blah blah
-     $title = 'No search text';
-     $html->send_header("",$title);
-     $html->send_title($title);
-     $html->send_footer();
-     return;
-  }
-  $title = sprintf('Full text search for "%s"', $needle);
-  $html->send_header("",$title);
-  $html->send_title($title);
+  $page= new WikiPage($options[page]);
+  $html= new Formatter($page);
 
-  $hits = array();
-  $all_pages = $DBInfo->getPageLists($options);
-  $pattern = '/'.$needle.'/';
-  if ($options['case']) $pattern.="i";
+  $out= macro_FullSearch($html,$options[value],&$ret);
 
-  while (list($_, $page_name) = each($all_pages)) {
-    $p = new WikiPage($page_name);
-    $body = $p->get_raw_body();
-    #$count = count($matches=preg_split($pattern, $body))-1;
-    $count = preg_match_all($pattern, $body, $matches);
-    #$count = count(explode($needle, $body)) - 1;
-    #$count = preg_match($pattern, $body);
-    if ($count)
-      $hits[$page_name] = $count;
-  }
-  arsort($hits);
+  $html->send_header("",$ret[msg]);
+  $html->send_title($ret[msg]);
+  print $out;
 
-  print "<ul>";
-  reset($hits);
-  $idx=1;
-  while (list($page_name, $count) = each($hits)) {
-    $p = new WikiPage($page_name);
-    $h = new Formatter($p);
-    print '<li>'.$h->link_to("?action=highlight&amp;value=$needle",
-                             $page_name,"tabindex='$idx'");
-    print ' . . . . ' . $count . (($count == 1) ? ' match' : ' matches');
-    print "</li>\n";
-    $idx++;
-  }
-  print "</ul>\n";
-
-  printf("Found %s matching %s out of %s total pages<br />",
-	 count($hits),
-	 (count($hits) == 1) ? 'page' : 'pages',
-	 count($all_pages));
+  if ($options[value])
+    printf("Found %s matching %s out of %s total pages<br />",
+	 $ret[hits],
+	($ret[hits] == 1) ? 'page' : 'pages',
+	 $ret[all]);
   $args[noaction]=1;
   $html->send_footer($args,$options[timer]);
 }
@@ -301,132 +270,19 @@ function do_goto($options) {
 
 function do_LikePages($options) {
   global $DBInfo;
+
   $page = new WikiPage($options[page]);
   $html = new Formatter($page);
-  if (strlen($options[page]) < 3) {
-     $title = 'Use more specific text';
-     $html->send_header("",$title);
-     $html->send_title($title);
-     $html->send_footer();
-     return;
-  }
 
-  $s_re="^[A-Z][a-z0-9]+";
-  $e_re="[A-Z][a-z0-9]+$";
-
-  if ($options[metawiki])
-     $pages = $DBInfo->metadb->getAllPages();
-  else
-     $pages = $DBInfo->getPageLists();
-
-  $count=preg_match("/(".$s_re.")/",$options[page],$match);
-  if ($count) {
-    $start=$match[1];
-    $s_len=strlen($start);
-  }
-  $count=preg_match("/(".$e_re.")/",$options[page],$match);
-  if ($count) {
-    $end=$match[1];
-    $e_len=strlen($end);
-  }
-
-  if (!$start && !$end) {
-    preg_match("/^(.{2,4})/",$options[page],$match);
-    $start=$match[1];
-    $s_len=strlen($start);
-  }
-  if (!$end) {
-    $end=substr($options[page],$s_len);
-    preg_match("/(.{2,6})$/",$end,$match);
-    $end=$match[1];
-    $e_len=strlen($end);
-    if ($e_len < 2) $end="";
-  }
-
-  $starts=array();
-  $ends=array();
-  $likes=array();
+  $opts[metawiki]=$options[metawiki];
+  $out= macro_LikePages($html,$options[page],&$opts);
   
-  if ($start) {
-    foreach ($pages as $page) {
-      preg_match("/^$start/",$page,$matches);
-      if ($matches)
-        $starts[]=$page;
-    }
-  }
-
-  if ($end) {
-    foreach ($pages as $page) {
-      preg_match("/$end$/",$page,$matches);
-      if ($matches)
-        $ends[]=$page;
-    }
-  }
-
-  if ($start && $end) {
-    foreach ($pages as $page) {
-      preg_match("/($start|$end)/i",$page,$matches);
-      if ($matches)
-        $likes[]=$page;
-    }
-
-  }
-
-  $idx=1;
-  $out="";
-  if ($likes) {
-    sort($likes);
-
-    $out.="<h3>These pages share a similar word...</h3>";
-    $out.="<ol>\n";
-    foreach ($likes as $pagename) {
-      $p = new WikiPage($pagename);
-      $h = new Formatter($p);
-      $out.= '<li>' . $h->link_to("","","tabindex='$idx'")."</li>\n";
-      $idx++;
-    }
-    $out.="</ol>\n";
-  }
-  if ($starts || $ends) {
-    sort($starts);
-
-    $out.="<h3>These pages share an initial or final title word...</h3>";
-    $out.="<table border='0' width='100%'><tr><td width='50%' valign='top'>\n<ol>\n";
-    foreach ($starts as $pagename) {
-      $p = new WikiPage($pagename);
-      $h = new Formatter($p);
-      $out.= '<li>' . $h->link_to("","","tabindex='$idx'")."</li>\n";
-      $idx++;
-    }
-    $out.="</ol></td>\n";
-
-    sort($ends);
-
-    $out.="<td width='50%' valign='top'><ol>\n";
-    foreach ($ends as $pagename) {
-      $p = new WikiPage($pagename);
-      $h = new Formatter($p);
-      $out.= '<li>' . $h->link_to("","","tabindex='$idx'")."</li>\n";
-      $idx++;
-    }
-    $out.="</ol>\n</td></tr></table>\n";
-    $msg="If you can't find a page, ";
-  } else {
-    $out.="<h3>No similar pages found</h3>";
-    $msg="You are strongly recommened to find a page in MetaWikis. ";
-  }
-
-  $title = "Like \"$options[page]\"";
+  $title = $opts[msg];
   $html->send_header("",$title);
   $html->send_title($title);
-
-  $prefix=get_scriptname();
-  $msg.="<a href='$prefix/".$options[page]."?action=LikePages&amp;metawiki=1'>Search all MetaWikis</a> (Slow Slow)<br />";
-
-  print $msg;
+  print $opts[extra];
   print $out;
-  print $msg;
-
+  print $opts[extra];
   $html->send_footer("",$options[timer]);
 }
 
@@ -448,43 +304,20 @@ function do_titleindex($options) {
 
 function do_titlesearch($options) {
   global $DBInfo;
-  $page = new WikiPage("FindPage");
-  $html = new Formatter($page);
-  if (!$options[value]) {
-     $title = 'Use more specific text';
-     $html->send_header("",$title);
-     $html->send_title($title);
-     $html->send_footer();
-     return;
-  }
-  $title = sprintf('Title Search for "%s"', $options[value]);
-  $html->send_header("",$title);
-  $html->send_title($title);
+  $page= new WikiPage($options[page]);
+  $html= new Formatter($page);
 
-  $all_pages = $DBInfo->getPageLists();
-  $hits=array();
-  foreach ($all_pages as $page) {
-     preg_match("/".$options[value]."/i",$page,$matches);
-     if ($matches)
-        $hits[]=$page;
-  }
+  $out= macro_TitleSearch($html,$options[value],&$ret);
 
-  sort($hits);
+  $html->send_header("",$ret[msg]);
+  $html->send_title($ret[msg]);
+  print $out;
 
-  $out="<ul>\n";
-  $idx=1;
-  foreach ($hits as $pagename) {
-    $p = new WikiPage($pagename);
-    $h = new Formatter($p);
-    $out.= '<li>' . $h->link_to("","","tabindex='$idx'")."</li>\n";
-    $idx++;
-  }
-
-  print $out."</ul>\n";
-  printf("Found %s matching %s out of %s total pages<br />",
-	 count($hits),
-	 (count($hits) == 1) ? 'page' : 'pages',
-	 count($all_pages));
+  if ($options[value])
+    printf("Found %s matching %s out of %s total pages<br />",
+	 $ret[hits],
+	($ret[hits] == 1) ? 'page' : 'pages',
+	 $ret[all]);
   $args[noaction]=1;
   $html->send_footer($args,$options[timer]);
 }
@@ -493,8 +326,10 @@ function do_userform($options) {
   $page = new WikiPage("UserPreferences");
   $html = new Formatter($page);
 
+  $user=new User(); # get cookie
   $id=$options[login_id];
-  if ($id || $options[login_passwd]) {
+
+  if ($user->id == "Anonymous" and $id and $options[login_passwd]) {
     $userdb=new UserDB();
     if ($userdb->_exists($id)) {
        $user=$userdb->getUser($id);
@@ -507,15 +342,12 @@ function do_userform($options) {
     } else
        $title= "Please enter a valid user ID!";
   } else if ($options[logout]) {
-    $user=new User(); # get cookie
     $user->unsetCookie();
     $title= "Cookie deleted!";
-  } else if ($options[username] and $options[password] and $options[passwordagain]) {
-    $user=new User(); # get cookie
-    if ($user->id == "Anonymous") {
-       $id=$user->getID($options[username]);
-       $user->setID($id);
-    }
+  } else if ($user->id=="Anonymous" and $options[username] and $options[password] and $options[passwordagain]) {
+
+    $id=$user->getID($options[username]);
+    $user->setID($id);
 
     if ($user->id != "Anonymous") {
        $ret=$user->setPasswd($options[password],$options[passwordagain]);
@@ -542,7 +374,16 @@ function do_userform($options) {
        }
     } else
        $title= "Invalid username!";
+  } else if ($user->id != "Anonymous") {
+    $udb=new UserDB();
+    $userinfo=$udb->getUser($user->id);
+    if ($options[css_url])
+       $userinfo->info[css_url]=$options[css_url];
+    if ($options[username])
+       $userinfo->info[name]=$options[username];
+    $udb->saveUser($userinfo);
   }
+  
   $html->send_header("",$title);
   $html->send_title($title,"",$msg);
   $html->send_page($title);
@@ -565,14 +406,14 @@ function macro_UserPreferences($formatter="") {
 <table border="0">
   <tr><td>&nbsp;</td></tr>
   <tr><td><b>ID</b>&nbsp;</td><td><input type="text" size="40" name="login_id" /></td></tr>
-  <tr><td><b>Password</b>&nbsp;</td><td><input type="password" size="20" maxlength="8" name="login_passwd" /></td></tr>
+  <tr><td><b>Password</b>&nbsp;</td><td><input type="password" size="20" maxlength="12" name="login_passwd" /></td></tr>
 
   <tr><td></td><td><input type="submit" name="login" value="Login" /></td></tr>
         
   <tr><td><b>ID</b>&nbsp;</td><td><input type="text" size="40" name="username" value="" /></td></tr>
   <tr>
-     <td><b>Password</b>&nbsp;</td><td><input type="password" size="20" maxlength="8" name="password" value="" />
-     <b>Password again</b>&nbsp;<input type="password" size="20" maxlength="8" name="passwordagain" value="" /></td></tr>
+     <td><b>Password</b>&nbsp;</td><td><input type="password" size="20" maxlength="12" name="password" value="" />
+     <b>Password again</b>&nbsp;<input type="password" size="20" maxlength="12" name="passwordagain" value="" /></td></tr>
   <tr><td><b>Mail</b>&nbsp;</td><td><input type="text" size="60" name="email" value="" /></td></tr>
   <tr><td></td><td>
     <input type="submit" name="save" value="make profile" /> &nbsp;
@@ -584,16 +425,17 @@ EOF;
    $udb=new UserDB();
    $user=$udb->getUser($user->id);
    $css=$user->info[css_url];
+   $name=$user->info[name];
    return <<<EOF
 <form method="post" action="$prefix/UserPreferences">
 <input type="hidden" name="action" value="userform" />
 <table border="0">
   <tr><td>&nbsp;</td></tr>
   <tr><td><b>ID</b>&nbsp;</td><td>$user->id</td></tr>
-  <tr><td><b>Name</b>&nbsp;</td><td><input type="text" size="40" name="username" value="" /></td></tr>
+  <tr><td><b>Name</b>&nbsp;</td><td><input type="text" size="40" name="username" value="$name" /></td></tr>
   <tr>
      <td><b>Password</b>&nbsp;</td><td><input type="password" size="20" maxlength="8" name="password" value="" />
-     <b>Password again</b>&nbsp;<input type="password" size="20" maxlength="8" name="passwordagain" value="" /></td></tr>
+     <b>New password</b>&nbsp;<input type="password" size="20" maxlength="8" name="passwordagain" value="" /></td></tr>
   <tr><td><b>Mail</b>&nbsp;</td><td><input type="text" size="60" name="email" value="" /></td></tr>
   <tr><td><b>CSS URL </b>&nbsp;</td><td><input type="text" size="60" name="css_url" value="$css" /><br />("None" for disable CSS)</td></tr>
   <tr><td></td><td>
@@ -642,6 +484,142 @@ if (!function_exists ("iconv")) {
   }
 }
 
+function macro_LikePages($formatter="",$args="",$opts=array()) {
+  global $DBInfo;
+
+  $pname=preg_escape($args);
+
+  $metawiki=$opts[metawiki];
+
+  if (strlen($pname) < 3) {
+     $opts[msg] = 'Use more specific text';
+     return '';
+  }
+
+  $s_re="^[A-Z][a-z0-9]+";
+  $e_re="[A-Z][a-z0-9]+$";
+
+  if ($metawiki)
+     $pages = $DBInfo->metadb->getAllPages();
+  else
+     $pages = $DBInfo->getPageLists();
+
+  $count=preg_match("/(".$s_re.")/",$pname,$match);
+  if ($count) {
+    $start=$match[1];
+    $s_len=strlen($start);
+  }
+  $count=preg_match("/(".$e_re.")/",$pname,$match);
+  if ($count) {
+    $end=$match[1];
+    $e_len=strlen($end);
+  }
+
+  if (!$start && !$end) {
+    preg_match("/^(.{2,4})/",$pname,$match);
+    $start=$match[1];
+    $s_len=strlen($start);
+  }
+
+  if (!$end) {
+    $end=substr($pname,$s_len);
+    preg_match("/(.{2,6})$/",$end,$match);
+    $end=$match[1];
+    $e_len=strlen($end);
+    if ($e_len < 2) $end="";
+  }
+
+  $starts=array();
+  $ends=array();
+  $likes=array();
+  
+  if ($start) {
+    foreach ($pages as $page) {
+      preg_match("/^$start/",$page,$matches);
+      if ($matches)
+        $starts[$page]=1;
+    }
+  }
+
+  if ($end) {
+    foreach ($pages as $page) {
+      preg_match("/$end$/",$page,$matches);
+      if ($matches)
+        $ends[$page]=1;
+    }
+  }
+
+  if ($start || $end) {
+    if (!$end) $similar_re=$start;
+    else $similar_re="$start|$end";
+    foreach ($pages as $page) {
+      preg_match("/($similar_re)/i",$page,$matches);
+      if ($matches && !$starts[$page] && !$ends[$page])
+        $likes[$page]=1;
+    }
+  }
+
+  $idx=1;
+  $hits=0;
+  $out="";
+  if ($likes) {
+    arsort($likes);
+
+    $out.="<h3>These pages share a similar word...</h3>";
+    $out.="<ol>\n";
+#    foreach ($likes as $pagename) {
+    while (list($pagename,$i) = each($likes)) {
+      $p = new WikiPage($pagename);
+      $h = new Formatter($p);
+      $out.= '<li>' . $h->link_to("","","tabindex='$idx'")."</li>\n";
+      $idx++;
+    }
+    $out.="</ol>\n";
+    $hits=count($likes);
+  }
+  if ($starts || $ends) {
+    arsort($starts);
+
+    $out.="<h3>These pages share an initial or final title word...</h3>";
+    $out.="<table border='0' width='100%'><tr><td width='50%' valign='top'>\n<ol>\n";
+#    foreach ($starts as $pagename) {
+    while (list($pagename,$i) = each($starts)) {
+      $p = new WikiPage($pagename);
+      $h = new Formatter($p);
+      $out.= '<li>' . $h->link_to("","","tabindex='$idx'")."</li>\n";
+      $idx++;
+    }
+    $out.="</ol></td>\n";
+
+    arsort($ends);
+
+    $out.="<td width='50%' valign='top'><ol>\n";
+#    foreach ($ends as $pagename) {
+    while (list($pagename,$i) = each($ends)) {
+      $p = new WikiPage($pagename);
+      $h = new Formatter($p);
+      $out.= '<li>' . $h->link_to("","","tabindex='$idx'")."</li>\n";
+      $idx++;
+    }
+    $out.="</ol>\n</td></tr></table>\n";
+    $opts[extra]="If you can't find this page, ";
+    $hits+=count($starts) + count($ends);
+  }
+
+  if (!$hits) {
+    $out.="<h3>No similar pages found</h3>";
+    $opts[extra]="You are strongly recommened to find it in MetaWikis. ";
+  }
+
+  $opts[msg] = "Like \"$pname\"";
+
+  $prefix=get_scriptname();
+  $opts[extra].="<a href='$prefix/".$pname."?action=LikePages&amp;metawiki=1'>Search all MetaWikis</a> (Slow Slow)<br />";
+
+  return $out;
+}
+
+
 function macro_PageCount($formatter="") {
   global $DBInfo;
 
@@ -652,6 +630,10 @@ function macro_PageCount($formatter="") {
 function macro_PageList($formatter="",$arg="") {
   global $DBInfo;
 
+  $test=@preg_match("/$arg/","",$match);
+  if ($test === false) {
+     return "[[PageList(<font color='red'>Invalid \"$arg\"</font>)]]";
+  }
 
   $all_pages = $DBInfo->getPageLists();
   $hits=array();
@@ -716,6 +698,72 @@ function macro_Icon($formatter="",$value="") {
   return $out;
 }
 
+function macro_QuickChanges($formatter="") {
+  global $DBInfo;
+
+  $lines= $DBInfo->editlog_raw_lines();
+  $lines= reverse($lines);
+    
+  $time_current= time();
+  $secs_per_day= 60*60*24;
+  $days_to_show= 30;
+  $time_cutoff= $time_current - ($days_to_show * $secs_per_day);
+
+  $out="";
+  $ratchet_day= FALSE;
+  $done_words= array();
+  foreach ($lines as $line) {
+    if (!$line) continue;
+    $parts= explode("\t", $line);
+    $page_name= $DBInfo->keyToPagename($parts[0]);
+    $addr= $parts[1];
+    $ed_time= $parts[2];
+    $user= $parts[4];
+    $act= rtrim($parts[6]);
+
+    if ($ed_time < $time_cutoff)
+      break;
+
+    $day = date('Y/m/d', $ed_time);
+    if ($day != $ratchet_day) {
+      $out.=sprintf("<br /><font size='+1'>%s :</font><br />\n", date($DBInfo->date_fmt, $ed_time));
+      $ratchet_day = $day;
+      unset($edit);
+    }
+
+    if (!empty($edit[$page_name])) {
+      $edit[$page_name]++; continue;
+    }
+    $edit[$page_name] = 1;
+
+    $p = new WikiPage($page_name);
+    $h = new Formatter($p);
+    if ($act == "DEL")
+       $out.= "&nbsp;&nbsp; ".$h->link_to("?action=diff",$DBInfo->icon[del]);
+    else
+       $out.= "&nbsp;&nbsp; ".$h->link_to("?action=diff",$DBInfo->icon[diff]);
+
+    $out.= "&nbsp;&nbsp;".$h->link_to();
+    if (! empty($DBInfo->changed_time_fmt))
+       $out.= date($DBInfo->changed_time_fmt, $ed_time);
+
+#    $count=$DBInfo->pageCounter($page_name);
+#    if ($count)
+#       $logs[$page_name].= " ($count)";
+
+    if ($DBInfo->show_hosts) {
+      $out.= ' . . . . '; # traditional style
+      #$logs[$page_name].= '&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ';
+      if ($user)
+        $out.= $user;
+      else
+        $out.= $addr;
+    }
+    $out.= '<br />';
+  }
+  return $out;
+}
+
 function macro_RecentChanges($formatter="") {
   global $DBInfo;
 
@@ -756,7 +804,7 @@ function macro_RecentChanges($formatter="") {
                $count=" [".$edit[$name]." changes]";
             else
                $count="";
-            $out.=str_replace("@@@",$count,$log);
+            $out.=str_replace("[@]",$count,$log);
          }
       }
       $out.=sprintf("<br /><font size='+1'>%s :</font><br />\n", date($DBInfo->date_fmt, $ed_time));
@@ -771,20 +819,24 @@ function macro_RecentChanges($formatter="") {
        $logs[$page_name]= "&nbsp;&nbsp; ".$h->link_to("?action=diff",$DBInfo->icon[del]);
     else
        $logs[$page_name]= "&nbsp;&nbsp; ".$h->link_to("?action=diff",$DBInfo->icon[diff]);
-    $logs[$page_name].= "&nbsp;&nbsp;".$h->link_to()."@@@";
 
+    $logs[$page_name].= "&nbsp;&nbsp;".$h->link_to();
     if (! empty($DBInfo->changed_time_fmt))
       $logs[$page_name].= date($DBInfo->changed_time_fmt, $ed_time);
 
+#    $count=$DBInfo->pageCounter($page_name);
+#    if ($count)
+#       $logs[$page_name].= " ($count)";
+
     if ($DBInfo->show_hosts) {
-      #$out.= ' . . . . '; # traditional style
-      $logs[$page_name].= '&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ';
+      $logs[$page_name].= ' . . . . '; # traditional style
+      #$logs[$page_name].= '&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ';
       if ($user)
         $logs[$page_name].= $user;
       else
         $logs[$page_name].= $addr;
     }
-    $logs[$page_name].= '<br />';
+    $logs[$page_name].= ' [@]<br />';
   }
   return $out;
 }
@@ -839,7 +891,7 @@ function macro_FootNote($formatter,$value="") {
        return "<tt class='foot'><sup><a href='#$idx'>$text</a></sup></tt>";
     }
   }
-  $formatter->foots[]="<tt class='foot'><sup>&#160;&#160;&#160;".
+  $formatter->foots[]="<tt class='foot'><sup>&#160;&#160&#160;".
                       "<a name='$idx'/>".
                       "<a href='#r$idx'>$text</a>&#160;</sup></tt> ".
                       "$value<br/>";
@@ -905,23 +957,187 @@ function macro_TableOfContents($formatter="") {
   else return "";
 }
 
-function macro_FullSearch($formatter="",$value="") {
-  return "<form method='get' action=''>
-    <input type='hidden' name='action' value='fullsearch' />
-    <input name='value' size='30' value='$value' />
-    <input type='submit' value='Go' /><br />
-    <input type='checkbox' name='context' value='20' checked='checked' />Display context of search results<br />
-    <input type='checkbox' name='case' value='1' />Case-sensitive searching<br />
+function macro_FullSearch($formatter="",$value="", $ret=array()) {
+  global $DBInfo;
+  $needle=$value;
 
-    </form>";
+#  $page = new WikiPage($options[page]);
+#  $html = new Formatter($page);
+   $form= <<<EOF
+<form method='get' action=''>
+   <input type='hidden' name='action' value='fullsearch' />
+   <input name='value' size='30' value='$needle' />
+   <input type='submit' value='Go' /><br />
+   <input type='checkbox' name='context' value='20' checked='checked' />Display context of search results<br />
+   <input type='checkbox' name='case' value='1' />Case-sensitive searching<br />
+   </form>
+EOF;
+
+  if (!$needle) { # or blah blah
+     $ret[msg] = 'No search text';
+     return $form;
+  }
+  $test=@preg_match("/$needle/","",$match);
+  if ($test === false) {
+     $ret[msg] = sprintf('Invalid search expression "%s"', $needle);
+     return $form;
+  }
+
+  $hits = array();
+  $pages = $DBInfo->getPageLists($options);
+  $pattern = '/'.$needle.'/';
+  if ($options['case']) $pattern.="i";
+
+  while (list($_, $page_name) = each($pages)) {
+    $p = new WikiPage($page_name);
+    $body = $p->get_raw_body();
+    #$count = count($matches=preg_split($pattern, $body))-1;
+    $count = preg_match_all($pattern, $body, $matches);
+    #$count = count(explode($needle, $body)) - 1;
+    #$count = preg_match($pattern, $body);
+    if ($count)
+      $hits[$page_name] = $count;
+  }
+  arsort($hits);
+
+  $out.= "<ul>";
+  reset($hits);
+  $idx=1;
+  while (list($page_name, $count) = each($hits)) {
+    $p = new WikiPage($page_name);
+    $h = new Formatter($p);
+    $out.= '<li>'.$h->link_to("?action=highlight&amp;value=$needle",
+                             $page_name,"tabindex='$idx'");
+    $out.= ' . . . . ' . $count . (($count == 1) ? ' match' : ' matches');
+    $out.= "</li>\n";
+    $idx++;
+  }
+  $out.= "</ul>\n";
+
+  $ret[msg]= sprintf('Full text search for "%s"', $needle);
+  $ret[hits]= count($hits);
+  $ret[all]= count($pages);
+  return $out;
 }
 
-function macro_TitleSearch($formatter="",$value="") {
-  return "<form method='get' action=''>
-    <input type='hidden' name='action' value='titlesearch' />
-    <input name='value' size='30' value='$value' />
-    <input type='submit' value='Go' />
-    </form>";
+function macro_ISBN($formatter="",$value="") {
+  $ISBN_MAP="ISBNMap";
+  $DEFAULT=<<<EOS
+Amazon http://www.amazon.com/exec/obidos/ISBN= http://images.amazon.com/images/P/\$ISBN.01.MZZZZZZZ.gif
+Aladdin http://www.aladdin.co.kr/catalog/book.asp?ISBN= http://www.aladdin.co.kr/Cover/\$ISBN_1.gif
+EOS;
+
+  $DEFAULT_ISBN="Amazon";
+  $re_isbn="/([0-9\-]{9,}[xX]?)(?:\s*,\s*)?([A-Z][a-z]*)?(?:\s*,\s*)?(noimg)?/";
+
+  $test=preg_match($re_isbn,$value,$match);
+  if ($test === false)
+     return "<p><strong class=\"error\">Invalid ISBN \"%value\"</strong></p>";
+
+  $isbn2=$match[1];
+  $isbn=str_replace("-","",$isbn2);
+
+  if ($match[2] && strtolower($match[2][0])=="k")
+     $lang="Aladdin";
+  else
+     $lang=$DEFAULT_ISBN;
+
+  $list= $DEFAULT;
+  $map= new WikiPage($ISBN_MAP);
+  if ($map->exists)
+     $list.=$map.get_raw_body();
+
+  $lists=explode("\n",$list);
+  $ISBN_list=array();
+  foreach ($lists as $line) {
+     if (!$line or !preg_match("/[a-z]/i",$line[0])) continue;
+     $dum=explode(" ",$line);
+     if (sizeof($dum) == 2)
+        $dum[]=$ISBN_list[$DEFAULT_ISBN][0];
+     else if (sizeof($dum) !=3) continue;
+
+     $ISBN_list[$dum[0]]=array($dum[1],$dum[2]);
+  }
+
+  if ($ISBN_list[$lang]) {
+     $booklink=$ISBN_list[$lang][0];
+     $imglink=$ISBN_list[$lang][1];
+  } else {
+     $booklink=$ISBN_list[$DEFAULT_ISBN][0];
+     $imglink=$ISBN_list[$DEFAULT_ISBN][1];
+  }
+
+  if (strpos($booklink,'$ISBN') === false)
+     $booklink.=$isbn;
+  else {
+     if (strpos($booklink,'$ISBN2') === false)
+        $booklink=str_replace('$ISBN',$isbn,$booklink);
+     else
+        $booklink=str_replace('$ISBN2',$isbn2,$booklink);
+  }
+
+  if (strpos($imglink, '$ISBN') === false)
+        $imglink.=$isbn;
+  else {
+     if (strpos($imglink, '$ISBN2') === false)
+        $imglink=str_replace('$ISBN', $isbn, $imglink);
+     else
+        $imglink=str_replace('$ISBN2', $isbn2, $imglink);
+  }
+
+  if ($match[3] && $match[3] == 'noimg')
+     return $DBInfo->icon[www]."[<a href='$booklink'>ISBN-$isbn2</a>]";
+  else
+     return "<a href='$booklink'><img src='$imglink' border='1' title='$lang".
+       ": ISBN-$isbn' alt='[ISBN-$isbn2]'></a>";
+}
+
+function macro_TitleSearch($formatter="",$needle="",$opts=array()) {
+  global $DBInfo;
+
+  if (!$needle) {
+    $opts[msg] = 'Use more specific text';
+    return "<form method='get' action=''>
+      <input type='hidden' name='action' value='titlesearch' />
+      <input name='value' size='30' value='$needle' />
+      <input type='submit' value='Go' />
+      </form>";
+  }
+  $test=@preg_match("/$needle/","",$match);
+  if ($test === false) {
+    $opts[msg] = sprintf('Invalid search expression "%s"', $needle);
+    return "<form method='get' action=''>
+      <input type='hidden' name='action' value='titlesearch' />
+      <input name='value' size='30' value='$needle' />
+      <input type='submit' value='Go' />
+      </form>";
+  }
+  $pages= $DBInfo->getPageLists();
+  $hits=array();
+  foreach ($pages as $page) {
+     preg_match("/".$needle."/i",$page,$matches);
+     if ($matches)
+        $hits[]=$page;
+  }
+
+  sort($hits);
+
+  $out="<ul>\n";
+  $idx=1;
+  foreach ($hits as $pagename) {
+    $p = new WikiPage($pagename);
+    $h = new Formatter($p);
+    if ($opts[linkto])
+      $out.= '<li>' . $formatter->link_to("$opts[linkto]$pagename",$pagename,"tabindex='$idx'")."</li>\n";
+    else
+      $out.= '<li>' . $h->link_to("","","tabindex='$idx'")."</li>\n";
+    $idx++;
+  }
+
+  $out.="</ul>\n";
+  $opts[hits]= count($hits);
+  $opts[all]= count($pages);
+  return $out;
 }
 
 function macro_GoTo($formatter="",$value="") {
@@ -944,7 +1160,7 @@ EOF;
 }
 
 function processor_html($formatter="",$value="") {
-   $html=substr($formatter->pre_line,6,strlen($formatter->pre_line));
+   $html=substr($formatter->pre_line,6);
    return $html;
 }
 
@@ -999,7 +1215,7 @@ $tex
 }
 
 function processor_php($formatter="",$value="") {
-  $php=substr($formatter->pre_line,5,strlen($formatter->pre_line));
+  $php=substr($formatter->pre_line,5);
   ob_start();
   highlight_string($php);
   $highlighted= ob_get_contents();
