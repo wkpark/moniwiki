@@ -1011,16 +1011,11 @@ function wiki_notify($formatter,$options) {
   }
 
   $diff="";
-  $option="-r".$formatter->page->get_rev();
-  $fp=popen("rcsdiff -x,v/ -u $option ".$formatter->page->filename,"r");
-  if (!$fp)
-    $diff="";
-  else {
-    while (!feof($fp)) {
-      $line=fgets($fp,1024);
-      $diff.= $line;
-    }
-    pclose($fp);
+  if ($DBInfo->version_class) {
+    $class=getModule('Version',$DBInfo->version_class);
+    $version=new $class ($DBInfo);
+    $rev=$formatter->page->get_rev();
+    $diff=$version->diff($formatter->page->name,$rev);
   }
 
   $mailto=join(", ",$subs);
