@@ -1,15 +1,15 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark@kldp.org> all rights reserved.
+// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org> all rights reserved.
 // distributable under GPL see COPYING
 //
 // many codes are imported from the MoinMoin
 // some codes are reused from the Phiki
 //
 // * MoinMoin is a python based wiki clone based on the PikiPiki
-//    by Jurgen Herman
+//    by Ju"rgen Hermann <jhs at web.de>
 // * PikiPiki is a python based wiki clone by MartinPool
 // * Phiki is a php based wiki clone based on the MoinMoin
-//    by Fred C. Yankowski <fcy@acm.org>
+//    by Fred C. Yankowski <fcy at acm.org>
 //
 // $Id$
 
@@ -29,8 +29,8 @@ function find_needle($body,$needle,$count=-1) {
 
 
 class UserDB {
-  function UserDB() {
-     $this->user_dir='data/user';
+  function UserDB($WikiDB) {
+     $this->user_dir=$WikiDB->data_dir.'/user';
   }
 
   function getUserList() {
@@ -56,7 +56,8 @@ class UserDB {
     $config=array("css_url","datatime_fmt","email","language",
                   "name","password","wikiname_add_spaces");
 
-    $data="# Data saved \n";
+    $date=date('Y/m/d', time());
+    $data="# Data saved $date\n";
 
     foreach ($config as $key) {
        $data.="$key=".$user->info[$key]."\n";
@@ -107,7 +108,8 @@ class User {
         $this->setID($id);
         return;
      }
-     $this->setID($HTTP_COOKIE_VARS[MOIN_ID]);
+     $this->setID($HTTP_COOKIE_VARS[MONI_ID]);
+     $this->css=$HTTP_COOKIE_VARS[MONI_CSS];
   }
 
   function setID($id) {
@@ -116,6 +118,7 @@ class User {
         return true;
      }
      $this->id='Anonymous';
+     return false;
   }
 
   function getID($name) {
@@ -130,16 +133,16 @@ class User {
   function setCookie() {
      global $HTTP_COOKIE_VARS;
      if ($this->id == "Anonymous") return false;
-     setcookie("MOIN_ID",$this->id,time()+60*60*24*30,get_scriptname());
+     setcookie("MONI_ID",$this->id,time()+60*60*24*30,get_scriptname());
      # set the fake cookie
-     $HTTP_COOKIE_VARS[MOIN_ID]=$this->id;
+     $HTTP_COOKIE_VARS[MONI_ID]=$this->id;
   }
 
   function unsetCookie() {
      global $HTTP_COOKIE_VARS;
-     header("Set-Cookie: MOIN_ID=".$this->id."; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname());
+     header("Set-Cookie: MONI_ID=".$this->id."; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname());
      # set the fake cookie
-     $HTTP_COOKIE_VARS[MOIN_ID]="Anonymous";
+     $HTTP_COOKIE_VARS[MONI_ID]="Anonymous";
   }
 
   function setPasswd($passwd,$passwd2) {
@@ -198,13 +201,59 @@ class User {
   }
 }
 
+
+function do_dot($formatter,$options) {
+  define(DEPTH,2);
+  define(LEAF,3);
+
+  function getLeafs($pagename,$tree,$node,$depth=0) {
+    $p= new WikiPage($pagename);
+    $f= new Formatter($p);
+    $links=$f->get_pagelinks();
+    $links=explode("\n",$links);
+    foreach ($links as $page) {
+      if (!$tree[$page] && $page) {
+        $p= new WikiPage($page);
+        $f= new Formatter($p);
+        $leafs=$f->get_pagelinks();
+        if ($leafs) {
+          $leafs=explode("\n",$leafs);
+          $tree[$page]=$leafs;
+        }
+      }
+    }
+  }
+
+
+  getLeafs($options[page],&$tree,&$node);
+
+  header("Content-Type: text/plain");
+  $visualtour=$formatter->link_url("VisualTour");
+  $pageurl=$formatter->link_url("\\N");
+  print <<<HEAD
+digraph G {
+  URL="$visualtour"
+  node [URL="$pageurl", 
+fontcolor=black, fontname=sandolkwangsu , fontsize=10]\n
+HEAD;
+  if (is_array($tree)) {
+  while (list($pagename,$leaf) = each ($tree)) {
+     foreach ($leaf as $node) {
+       if ($node)
+         print "\"$pagename\" ->\"$node\";\n";
+     }
+  }
+  }
+  print "};\n";
+}
+
 function do_highlight($formatter,$options) {
 
-  $formatter->send_header("",$title);
-  $formatter->send_title($title);
+  $formatter->send_header("",$options);
+  $formatter->send_title();
 
   $formatter->highlight=$options[value];
-  $formatter->send_page($title);
+  $formatter->send_page();
   $args[editable]=1;
   $formatter->send_footer($args,$options[timer]);
 }
@@ -219,20 +268,20 @@ function do_DeletePage($formatter,$options) {
     if ($check) {
       $DBInfo->deletePage($page);
       $title = sprintf('"%s" is deleted !', $page->name);
-      $formatter->send_header("",$title);
+      $formatter->send_header("",$options);
       $formatter->send_title($title);
       $formatter->send_footer();
       return;
     } else {
       $title = sprintf('Fail to delete "%s" !', $page->name);
-      $formatter->send_header("",$title);
+      $formatter->send_header("",$options);
       $formatter->send_title($title);
       $formatter->send_footer();
       return;
     }
   }
   $title = sprintf('Delete "%s" ?', $page->name);
-  $formatter->send_header("",$title);
+  $formatter->send_header("",$options);
   $formatter->send_title($title);
   print "<form method='post'>
 Comment: <input name=comment size=80 value='' /><br />
@@ -248,14 +297,44 @@ Only WikiMaster can delete this page<br />
 function do_RcsPurge($formatter,$options) {
   global $DBInfo;
   
-  $title = sprintf('RCS purge "%s"', $formatter->page->name);
-  $formatter->send_header("",$title);
+  if ($DBInfo->purge_passwd && $options[passwd]) {
+    $check=$DBInfo->purge_passwd==crypt($options[passwd],$DBInfo->purge_passwd);
+    if (!$check) {
+      $title= sprintf('Invalid password to purge "%s" !', $options[page]);
+      $formatter->send_header("",$options);
+      $formatter->send_title($title);
+      $formatter->send_footer();
+      return;
+    }
+  } else if ($DBInfo->purge_passwd) {
+    $title= sprintf('You need to password to purge "%s"',$options[page]);
+    $formatter->send_header("",$options);
+    $formatter->send_title($title);
+    $args[noaction]=1;
+    $formatter->send_footer($args,$options[timer]);
+    return;
+  }
+#    unset($options);
+#    $options[url]=$formatter->link_url($formatter->page->name,"?action=info");
+#    do_goto($formatter,$options);
+#    return;
+#  }
+  $title= sprintf('RCS purge "%s"',$options[page]);
+  $formatter->send_header("",$options);
   $formatter->send_title($title);
   if ($options[range]) {
     foreach ($options[range] as $range) {
-       print "<h3>range '$range' purged</h3>";
-       print "rcs -o$range ".$formatter->page->filename."<br>";
+       printf("<h3>range '%s' purged</h3>",$range);
+       if ($options[show])
+         print "<tt>rcs -o$range ".$options[page]."</tt><br />";
+       else {
+         print "<b>Not enabled now</b> <tt>rcs -o$range  data_dir/".$options[page]."</tt><br />";
+         print "<tt>rcs -o$range ".$options[page]."</tt><br />";
+         system("rcs -o$range ".$formatter->page->filename);
+       }
     }
+  } else {
+    printf("<h3>No version selected to purge '%s'</h3>",$options[page]);
   }
   $args[noaction]=1;
   $formatter->send_footer($args,$options[timer]);
@@ -265,15 +344,18 @@ function do_fullsearch($formatter,$options) {
 
   $ret=$options;
 
+  if ($options[backlinks])
+  $title= sprintf('BackLinks search for "%s"', $options[value]);
+  else
   $title= sprintf('Full text search for "%s"', $options[value]);
-  $formatter->send_header("",$title);
+  $formatter->send_header("",$options);
   $formatter->send_title($title,$formatter->link_url("FindPage"));
 
   $out= macro_FullSearch($formatter,$options[value],&$ret);
   print $out;
 
   if ($options[value])
-    printf("Found %s matching %s out of %s total pages<br />",
+    printf("Found %s matching %s out of %s total pages"."<br />",
 	 $ret[hits],
 	($ret[hits] == 1) ? 'page' : 'pages',
 	 $ret[all]);
@@ -282,14 +364,16 @@ function do_fullsearch($formatter,$options) {
 }
 
 function do_goto($formatter,$options) {
-
   if ($options[value]) {
      $url=$formatter->link_url($options[value]);
      $formatter->send_header(array("Status: 302","Location: ".$url));
-  }
-  else {
+  } else
+  if ($options[url]) {
+     $url=str_replace("&amp;","&",$options[url]);
+     $formatter->send_header(array("Status: 302","Location: ".$url));
+  } else {
      $title = 'Use more specific text';
-     $formatter->send_header("",$title);
+     $formatter->send_header("",$options);
      $formatter->send_title($title);
      $args[noaction]=1;
      $formatter->send_footer($args);
@@ -302,7 +386,7 @@ function do_LikePages($formatter,$options) {
   $out= macro_LikePages($formatter,$options[page],&$opts);
   
   $title = $opts[msg];
-  $formatter->send_header("",$title);
+  $formatter->send_header("",$options);
   $formatter->send_title($title);
   print $opts[extra];
   print $out;
@@ -350,6 +434,7 @@ CHANNEL;
 #        }
 
   $ratchet_day= FALSE;
+  if (!$lines) $lines=array();
   foreach ($lines as $line) {
     $parts= explode("\t", $line);
     $page_name= $DBInfo->keyToPagename($parts[0]);
@@ -427,12 +512,12 @@ function do_titlesearch($formatter,$options) {
 
   $out= macro_TitleSearch($formatter,$options[value],&$ret);
 
-  $formatter->send_header("",$ret[msg]);
+  $formatter->send_header("",$options);
   $formatter->send_title($ret[msg],$formatter->link_url("FindPage"));
   print $out;
 
   if ($options[value])
-    printf("Found %s matching %s out of %s total pages<br />",
+    printf("Found %s matching %s out of %s total pages"."<br />",
 	 $ret[hits],
 	($ret[hits] == 1) ? 'page' : 'pages',
 	 $ret[all]);
@@ -452,7 +537,7 @@ function do_uploadfile($formatter,$options) {
 
   if (!$upfilename) {
      $title="No file selected";
-     $formatter->send_header("",$title);
+     $formatter->send_header("",$options);
      $formatter->send_title($title);
      return;
   }
@@ -463,7 +548,7 @@ function do_uploadfile($formatter,$options) {
      $pds_exts="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|hwp";
   if (!preg_match("/(".$pds_exts.")$/i",$fname[2])) {
      $title="$fname[2] extension does not allowed to upload";
-     $formatter->send_header("",$title);
+     $formatter->send_header("",$options);
      $formatter->send_title($title);
      return;
   }
@@ -486,33 +571,50 @@ function do_uploadfile($formatter,$options) {
   $test=@copy($upfile, $file_path);
   if (!$test) {
      $title="Fail to copy \"$upfilename\" to \"$file_path\"";
-     $formatter->send_header("",$title);
+     $formatter->send_header("",$options);
      $formatter->send_title($title);
      exit;
   }
   chmod($file_path,0644); 
   
-  $title='File "'.$upfilename.'" is uploaded successfully';
-  $formatter->send_header("",$title);
+  $title=sprintf('File "%s" is uploaded successfully',$upfilename);
+  $formatter->send_header("",$options);
   $formatter->send_title($title);
   print "<ins>Uploads:$upfilename</ins>";
   $formatter->send_footer();
 }
 
+function do_post_css($formatter,$options) {
+  global $DBInfo;
+  global $HTTP_COOKIE_VARS;
+
+  if ($options[id]=="Anonymous" && isset($options[user_css])) {
+     setcookie("MONI_CSS",$options[user_css],time()+60*60*24*30,get_scriptname());
+     # set the fake cookie
+     $HTTP_COOKIE_VARS[MONI_CSS]=$options[user_css];
+     $title="CSS Changed";
+  }
+  $formatter->send_header("",$options);
+  $formatter->send_title($title);
+  $formatter->send_page("Back to UserPreferences");
+  $formatter->send_footer();
+}
+
 function do_userform($formatter,$options) {
+  global $DBInfo;
 
   $user=new User(); # get cookie
   $id=$options[login_id];
 
   if ($user->id == "Anonymous" and $id and $options[login_passwd]) {
-    $userdb=new UserDB();
+    $userdb=new UserDB($DBInfo);
     if ($userdb->_exists($id)) {
        $user=$userdb->getUser($id);
        if ($user->checkPasswd($options[login_passwd])=== true) {
-          $title = sprintf("Successfully login as '$id'");
+          $title = sprintf("Successfully login as '%s'",$id);
           $user->setCookie();
        } else {
-          $title = sprintf("??Invalid password !");
+          $title = sprintf("Invalid password !");
        }
     } else
        $title= "Please enter a valid user ID!";
@@ -531,8 +633,9 @@ function do_userform($formatter,$options) {
            else if ($ret==-1) $title= "mismatch password!";
            else if ($ret==-2) $title= "not acceptable character found in the password!";
        } else {
-           if ($ret < 8) $msg="Password is too simple to use as a password!";
-           $udb=new UserDB();
+           if ($ret < 8)
+              $opts[msg]="Password is too simple to use as a password!";
+           $udb=new UserDB($DBInfo);
            $ret=$udb->addUser($user);
            if ($ret) {
               $title= "Successfully added!";
@@ -540,7 +643,7 @@ function do_userform($formatter,$options) {
            } else {# already exist user
               $user=$udb->getUser($user->id);
               if ($user->checkPasswd($options[password])=== true) {
-                  $title = sprintf("Successfully login as '$id'");
+                  $title = sprintf("Successfully login as '%s'",$id);
                   $user->setCookie();
               } else {
                   $title = sprintf("Invalid password !");
@@ -550,18 +653,19 @@ function do_userform($formatter,$options) {
     } else
        $title= "Invalid username!";
   } else if ($user->id != "Anonymous") {
-    $udb=new UserDB();
+    $udb=new UserDB($DBInfo);
     $userinfo=$udb->getUser($user->id);
-    if ($options[css_url])
-       $userinfo->info[css_url]=$options[css_url];
+    if (isset($options[user_css]))
+       $userinfo->info[css_url]=$options[user_css];
     if ($options[username])
        $userinfo->info[name]=$options[username];
     $udb->saveUser($userinfo);
+    $options[css_url]=$options[user_css];
   }
-  
-  $formatter->send_header("",$title);
-  $formatter->send_title($title,"",$msg);
-  $formatter->send_page($title);
+
+  $formatter->send_header("",$options);
+  $formatter->send_title($title,"",$opts);
+  $formatter->send_page("Back to UserPreferences");
   $formatter->send_footer();
 }
 
@@ -606,11 +710,37 @@ function macro_UploadedFiles($formatter,$value="") {
    return $out;
 }
 
-function macro_UserPreferences($formatter="") {
-  global $HTTP_COOKIE_VARS;
+function macro_Css($formatter="") {
+  global $DBInfo;
 
-#  print $HTTP_COOKIE_VARS[MOIN_ID];
-#  print $user->id;
+  $out="
+<form method='post' action='$url'>
+<input type='hidden' name='action' value='css' />
+  <b>CSS for Anonymous users</b>&nbsp;
+<select name='user_css'>
+";
+  $handle = opendir($DBInfo->css_dir);
+  $css=array();
+  while ($file = readdir($handle)) {
+     if (preg_match("/\.css$/i", $file,$match))
+        $css[]= $file;
+  }
+
+  foreach ($css as $item)
+     $out.="<option value='$DBInfo->url_prefix/$DBInfo->css_dir/$item'>$item</option>\n";
+
+
+  $out.="
+    </select>&nbsp; &nbsp; &nbsp;
+    <input type='submit' name='save' value='Change CSS' /> &nbsp;
+</form>
+";
+  return $out;
+}
+
+function macro_UserPreferences($formatter="") {
+  global $DBInfo;
+  global $HTTP_COOKIE_VARS;
 
   $user=new User(); # get from COOKIE VARS
   $url=$formatter->link_url("UserPreference");
@@ -638,7 +768,7 @@ function macro_UserPreferences($formatter="") {
 </form>
 EOF;
 
-   $udb=new UserDB();
+   $udb=new UserDB($DBInfo);
    $user=$udb->getUser($user->id);
    $css=$user->info[css_url];
    $name=$user->info[name];
@@ -653,7 +783,7 @@ EOF;
      <td><b>Password</b>&nbsp;</td><td><input type="password" size="20" maxlength="8" name="password" value="" />
      <b>New password</b>&nbsp;<input type="password" size="20" maxlength="8" name="passwordagain" value="" /></td></tr>
   <tr><td><b>Mail</b>&nbsp;</td><td><input type="text" size="60" name="email" value="" /></td></tr>
-  <tr><td><b>CSS URL </b>&nbsp;</td><td><input type="text" size="60" name="css_url" value="$css" /><br />("None" for disable CSS)</td></tr>
+  <tr><td><b>CSS URL </b>&nbsp;</td><td><input type="text" size="60" name="user_css" value="$css" /><br />("None" for disable CSS)</td></tr>
   <tr><td></td><td>
     <input type="submit" name="save" value="save profile" /> &nbsp;
     <input type="submit" name="logout" value="logout" /> &nbsp;
@@ -676,16 +806,49 @@ function macro_InterWiki($formatter="") {
   return $out;
 }
 
-if (!function_exists ("iconv")) {
-  function get_key($name) {
-     return '?';
+
+function toutf8($uni) {
+  $utf[0]=0xe0 | ($uni >> 12);
+  $utf[1]=0x80 | (($uni >> 6) & 0x3f);
+  $utf[2]=0x80 | ($uni & 0x3f);
+  return chr($utf[0]).chr($utf[1]).chr($utf[2]);
+}
+
+function get_key($name) {
+  global $DBInfo;
+  if (preg_match('/[a-z0-9]/i',$name[0])) {
+     return strtoupper($name[0]);
   }
-} else {
-  function get_key($name) {
+  $utf="";
+  if (function_exists ("iconv")) {
+    # XXX php 4.1.x did not support unicode sting.
+    $utf=iconv($DBInfo->charset,'utf-8',$name);
+    $name=$utf;
+  }
+
+  if ($utf or $DBInfo->charset=='utf-8') {
+    if ((ord($name[0]) & 0xF0) == 0xE0) { # Now only 3-byte UTF-8 supported
+       #$uni1=((ord($name[0]) & 0x0f) <<4) | ((ord($name[1]) & 0x7f) >>2);
+       $uni1=((ord($name[0]) & 0x0f) <<4) | (($name[1] & 0x7f) >>2);
+       $uni2=((ord($name[1]) & 0x7f) <<6) | (ord($name[2]) & 0x7f);
+
+       $uni=($uni1<<8)+$uni2;
+       # Hangul Syllables
+       if ($uni>=0xac00 && $uni<=0xd7a3) {
+         $ukey=0xac00 + (int)(($uni - 0xac00) / 588) * 588;
+         $ukey=toutf8($ukey);
+         if ($utf)
+           return iconv('utf-8',$DBInfo->charset,$ukey);
+         return $ukey;
+       }
+    }
+    return '~';
+  } else {
     if (preg_match('/[a-z0-9]/i',$name[0])) {
        return strtoupper($name[0]);
     }
-    # else EUC-KR
+    # php does not have iconv() EUC-KR assumed
+    # (from NoSmoke monimoin)
     $korean=array('가','나','다','라','마','바','사','아',
                   '자','차','카','타','파','하',"\xca");
     $lastPosition='~';
@@ -1028,7 +1191,7 @@ function macro_RecentChanges($formatter="") {
       $out.=sprintf("<br /><font size='+1'>%s :</font><br />\n", date($DBInfo->date_fmt, $ed_time));
       $ratchet_day = $day;
       unset($logs);
-      unset($edit);
+      #unset($edit);
     }
 
     if ($act == "DEL")
@@ -1177,7 +1340,7 @@ function macro_FullSearch($formatter="",$value="", $opts=array()) {
    <input name='value' size='30' value='$needle' />
    <input type='submit' value='Go' /><br />
    <input type='checkbox' name='context' value='20' checked='checked' />Display context of search results<br />
-   <input type='checkbox' name='pagelinks' value='1' checked='checked' />Search PageLinks only<br />
+   <input type='checkbox' name='backlinks' value='1' checked='checked' />Search BackLinks only<br />
    <input type='checkbox' name='case' value='1' />Case-sensitive searching<br />
    </form>
 EOF;
@@ -1197,7 +1360,8 @@ EOF;
   $pattern = '/'.$needle.'/';
   if ($opts['case']) $pattern.="i";
 
-  if ($opts['pagelinks']) {
+  if ($opts['backlinks']) {
+     $opts[context]=0; # turn off context-matching
      $cache=new Cache_text("pagelinks");
      foreach ($pages as $page_name) {
        $links==-1;
@@ -1238,6 +1402,7 @@ EOF;
                              $page_name,"tabindex='$idx'");
     $out.= ' . . . . ' . $count . (($count == 1) ? ' match' : ' matches');
     if ($opts[context])
+       # search matching contexts
        $out.= find_needle($p->_get_raw_body(),$needle,$opts[context]);
     $out.= "</li>\n";
     $idx++;
@@ -1401,9 +1566,9 @@ function processor_html($formatter="",$value="") {
 function processor_latex($formatter="",$value="") {
   global $DBInfo;
   # site spesific variables
-  $latex="/usr/bin/latex ";
-  $dvips="dvips ";
-  $convert="convert ";
+  $latex="/usr/bin/latex";
+  $dvips="dvips";
+  $convert="convert";
   $vartmp_dir="/var/tmp";
   $cache_dir="pds";
   $option='-interaction=batchmode ';
@@ -1462,9 +1627,9 @@ function processor_php($formatter="",$value="") {
 }
 
 function processor_gnuplot($formatter="",$value="") {
-  #$gnuplot="/usr/local/bin/gnuplot_pm3d ";
-  #$gnuplot="gnuplot ";
-  $gnuplot="/usr/local/bin/gnuplot_pm3d ";
+  #$gnuplot="/usr/local/bin/gnuplot_pm3d";
+  #$gnuplot="gnuplot";
+  $gnuplot="/usr/local/bin/gnuplot_pm3d";
   $vartmp_dir="/var/tmp";
   $cache_dir="pds";
 
@@ -1475,7 +1640,7 @@ function processor_gnuplot($formatter="",$value="") {
   #unset($lines[0]);
   #$plt=join($lines,"\n");
 
-# a sample for debugging
+# a sample for testing
 #  $plt='
 #set term gif
 #!  ls
