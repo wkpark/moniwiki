@@ -60,15 +60,16 @@ function do_fullsearch($needle) {
   }
   arsort($hits);
 
-  print "<UL>";
+  print "<ul>";
   reset($hits);
   while (list($page_name, $count) = each($hits)) {
     $p = new WikiPage($page_name);
     $h = new Formatter($p);
-    print '<LI>' . $h->link_to();
+    print '<li>' . $h->link_to();
     print ' . . . . ' . $count . (($count == 1) ? ' match' : ' matches');
+    print "</li>\n";
   }
-  print "</UL>";
+  print "</ul>\n";
 
   printf("Found %s matching %s out of %s total pages<br>",
 	 count($hits),
@@ -142,14 +143,14 @@ function macro_PageList($formatter="",$arg="") {
 
   sort($hits);
 
-  $out="<UL>";
+  $out="<ul>\n";
   foreach ($hits as $pagename) {
     $p = new WikiPage($pagename);
     $h = new Formatter($p);
-    $out.= '<LI>' . $h->link_to()."\n";
+    $out.= '<li>' . $h->link_to()."</li>\n";
   }
 
-  return $out."</UL>\n";
+  return $out."</ul>\n";
 }
 
 function macro_TitleIndex($formatter="") {
@@ -158,17 +159,18 @@ function macro_TitleIndex($formatter="") {
   $all_pages = $DBInfo->getPageLists();
   sort($all_pages);
 
-  $key="";
+  $key=-1;
   $out="";
   $keys=array();
   foreach ($all_pages as $page) {
-    if ($key != $page[0]) {
-       if ($key)
-          $out.="</UL>";
-       $key=get_key($page);
+    $pkey=get_key($page);
 #       $key=strtoupper($page[0]);
+    if ($key != $pkey) {
+       if ($key !=-1)
+          $out.="</UL>";
+       $key=$pkey;
        $keys[]=$key;
-       $out.= "<a name='$key'><h3><a href='#top'>$key</a></h3>\n";
+       $out.= "<a name='$key' /><h3><a href='#top'>$key</a></h3>\n";
        $out.= "<UL>";
     }
     
@@ -183,14 +185,14 @@ function macro_TitleIndex($formatter="") {
     $index.= "|<a href='#$key'>$key</a>";
   $index[0]="";
   
-  return "<center><a name='top'>$index</center>\n$out";
+  return "<center><a name='top' />$index</center>\n$out";
 }
 
 function macro_Icon($formatter="",$value="") {
   global $DBInfo;
 
-  $out=$DBInfo->url_prefix."/imgs/$value";
-  $out="<img src='$out' border=0>";
+  $out=$DBInfo->imgs_dir."/$value";
+  $out="<img src='$out' border='0' align='absmiddle' />";
   return $out;
 }
 
@@ -208,9 +210,11 @@ function macro_RecentChanges($formatter="") {
   $out="";
   $ratchet_day = FALSE;
   $done_words = array();
-  while (list($_, $line) = each($lines)) {
+#  while (list($_, $line) = each($lines)) {
+  foreach ($lines as $line) {
+    if (!$line) continue;
     $parts = explode("\t", $line);
-    $page_name = $parts[0];
+    $page_name = $DBInfo->keyToPagename($parts[0]);
     $addr = $parts[1];
     $ed_time = $parts[2];
 
@@ -259,12 +263,64 @@ function macro_HTML($formatter="",$value="") {
   return $value;
 }
 
+function macro_BR($formatter="") {
+  return "<br />\n";
+}
+
 function macro_TableOfContents($formatter="") {
-  if ($formatter->TOC) {
+ $head_num=1;
+ $head_dep=0;
+ $TOC="\n<dl>";
+
+ $formatter->toc=1;
+ $lines=explode("\n",$formatter->page->get_raw_body());
+ foreach ($lines as $line) {
+   $line=preg_replace("/\n$/", "", $line); # strip \n
+   preg_match("/(?<!=)(={1,5})\s+(.*)\s+(={1,5})$/",$line,$match);
+
+   if (!$match) continue;
+
+   $dep=strlen($match[1]);
+   if ($dep != strlen($match[3])) continue;
+   $head=$match[2];
+
+   $depth=$dep;
+   if ($dep==1) $depth++; # depth 1 is regarded same as depth 2
+   $depth--;
+
+   $num="".$head_num;
+   $odepth=$head_dep;
+   $open="";
+   $close="";
+
+   if ($odepth && ($depth > $odepth)) {
+      $open.="<dd><dl>\n";
+      $num.=".1";
+   } else if ($odepth) {
+      $dum=explode(".",$num);
+      $i=sizeof($dum)-1;
+      while ($depth < $odepth) {
+         unset($dum[$i]);
+         $i--;
+         $odepth--;
+         $close.="</dl></dd>\n";
+      }
+      $dum[$i]++;
+      $num=join($dum,".");
+   }
+   $head_dep=$depth; # save old
+   $head_num=$num;
+
+   $TOC.=$close.$open."<dt><a id='toc$num' name='toc$num' /><a href='#s$num'>$num</a> $head</dt>\n";
+
+#   print $TOC;
+  }
+
+  if ($TOC) {
      $close="";
-     $depth=$formatter->head_dep;
-     while ($depth>0) { $depth--;$close.="</dl></dd>\n"; };
-     return $formatter->TOC.$close;
+     $depth=$head_dep;
+     while ($depth>0) { $depth--;$close.="</dl>\n"; };
+     return $TOC.$close;
   }
   else return "";
 }
