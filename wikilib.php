@@ -586,8 +586,8 @@ function do_DeletePage($formatter,$options) {
   
   $page = $DBInfo->getPage($options['page']);
 
-  print $options['value'];
-  print $options['page'];
+  #print $options['value'];
+  #print $options['page'];
   if (stripslashes($options['value']) == $options['page']) {
     $DBInfo->deletePage($page,$options);
     $title = sprintf(_("\"%s\" is deleted !"), $page->name);
