@@ -8,14 +8,13 @@
 // }}}
 // this processor is used internally by the Blog action
 // $Id$
-// vim:et:ts=2:
 
 function processor_chat($formatter,$value="") {
-  $lines=explode("\n",$value);
-  $tag=substr($lines[0],0,6);
-  if ($tag=='#!chat') {
+  if ($value[0]=='#' and $value[1]=='!')
+    list($line,$value)=explode("\n",$value,2);
+  if ($line) {
     # get parameters
-    list($user, $date, $title)=explode(" ",substr($lines[0],7), 3);
+    list($tag, $user, $date, $title)=explode(" ",$line, 4);
 
     if (preg_match('/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/',$user))
       $user="Anonymous[$user]";
@@ -25,10 +24,9 @@ function processor_chat($formatter,$value="") {
       $time=strtotime($date." GMT");
       $date= "@ ".date("Y-m-d [h:i a]",$time);
     }
-    unset($lines[0]);
   }
 
-  $src= join("\n",$lines);
+  $src= $value;
 
   $options[nosisters]=1;
   ob_start();
@@ -45,4 +43,5 @@ function processor_chat($formatter,$value="") {
   return $out;
 }
 
+// vim:et:ts=2:
 ?>
