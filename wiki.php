@@ -47,6 +47,12 @@ function getPlugin($pluginname) {
   return $plugins[strtolower($pluginname)];
 }
 
+function getModule($module,$name) {
+  if (!class_exists($module.'_'.$name)) {
+    include_once('lib/'.strtolower($module).'.'.$name.'.php');
+  }
+}
+
 function getProcessor($pro_name) {
   static $processors=array();
   if ($processors) return $processors[strtolower($pro_name)];
@@ -474,6 +480,7 @@ class WikiDB {
     $this->perma_icon='#';
     $this->purple_icon='#';
     $this->use_purple=0;
+    $this->version_class='RCS';
 
     # set user-specified configuration
     if ($config) {
@@ -829,8 +836,14 @@ class WikiDB {
     fwrite($fp, $body);
     flock($fp,LOCK_UN);
     fclose($fp);
-    $ret=system("ci -l -x,v/ -q -t-\"".$pagename."\" -m\"".$REMOTE_ADDR.';;'.
-            $user->id.';;'.$comment."\" ".$key);
+
+    $log=$REMOTE_ADDR.';;'.$user->id.';;'.$comment;
+    if ($this->version_class) {
+      getModule('Version',$this->version_class);
+      $class='Version_'.$this->version_class;
+      $version=new $class ($this);
+      $ret=$version->ci($pagename,$log);
+    }
     # check minor edits XXX
     $minor=0;
     if ($this->use_minorcheck or $options['minorcheck']) {
@@ -853,7 +866,12 @@ class WikiDB {
     $keyname=$this->_getPageKey($page->name);
 
     $delete=@unlink($this->text_dir."/$keyname");
-    if ($options['history']) @unlink($this->text_dir."/RCS/$keyname,v");
+    if ($options['history'] && $this->version_class) {
+      getModule('Version',$this->version_class);
+      $class='Version_'.$this->version_class;
+      $version=new $class ($this);
+      $version->delete($page->name);
+    }
     $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
 
     $handle= opendir($this->cache_dir);
@@ -876,17 +894,21 @@ class WikiDB {
   }
 
   function renamePage($pagename,$new,$options='') {
+    global $DBInfo;
+
     $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
 
     $okey=$this->getPageKey($pagename);
     $nkey=$this->getPageKey($new);
-    $keyname=$this->_getPageKey($new);
 
     rename($okey,$nkey);
-    if ($options['history']) {
-      $oname=$this->_getPageKey($pagename);
-      rename($this->text_dir."/RCS/$oname,v",$this->text_dir."/RCS/$keyname,v");
+    if ($options['history'] && $this->version_class) {
+      getModule('Version',$this->version_class);
+      $class='Version_'.$this->version_class;
+      $version=new $class ($this);
+      $version->rename($pagename,$new);
     }
+
     $comment=sprintf(_("Rename %s to %s"),$pagename,$new);
     $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
   }
@@ -908,6 +930,120 @@ class WikiDB {
     umask(0700);
     $key=$this->getPageKey($pagename);
     if (file_exists($key)) chmod($key,$perms);
+  }
+}
+
+class Version_RCS {
+  var $DB;
+
+  function Version_RCS($DB) {
+    $this->DB=$DB;
+  }
+
+  function _filename($pagename) {
+    # have to be factored out XXX
+    # Return filename where this word/page should be stored.
+    return $this->DB->getPageKey($pagename);
+  }
+
+  function co($pagename,$rev,$opt='') {
+    $filename= $this->_filename($pagename);
+
+    $fp=@popen("co -x,v/ -q -p\"".$rev."\" ".$filename,"r");
+    $out='';
+    if ($fp) {
+      while (!feof($fp)) {
+        $line=fgets($fp,2048);
+        $out.= $line;
+      }
+      pclose($fp);
+    }
+    return $out;
+  }
+
+  function ci($pagename,$log) {
+    $key=$this->_filename($pagename);
+    $ret=system("ci -l -x,v/ -q -t-\"".$pagename."\" -m\"".$log."\" ".$key);
+  }
+
+  function rlog($pagename,$rev='',$opt='',$oldopt='') {
+    if ($rev)
+      $rev = "-r$rev";
+    $filename=$this->_filename($pagename);
+
+    $fp= popen("rlog $opt $oldopt -x,v/ $rev ".$filename,"r");
+    $out='';
+    if ($fp) {
+      while (!feof($fp)) {
+        $line=fgets($fp,1024);
+        $out .= $line;
+      }
+      pclose($fp);
+    }
+    return $out;
+  }
+
+  function diff($pagename,$rev="",$rev2="") {
+    if ($rev) $option="-r$rev ";
+    if ($rev2) $option.="-r$rev2 ";
+
+    $filename=$this->_filename($pagename);
+    $fp=popen("rcsdiff -x,v/ -u $option ".$filename,'r');
+    if (!$fp) return '';
+    while (!feof($fp)) {
+      # trashing first two lines
+      $line=fgets($fp,1024);
+      if (preg_match('/^--- /',$line)) {
+        $line=fgets($fp,1024);
+        break;
+      }
+    }
+    while (!feof($fp)) {
+      $line=fgets($fp,1024);
+      $out.= $line;
+    }
+    pclose($fp);
+    return $out;
+  }
+
+  function purge($pagename,$rev) {
+  }
+
+  function delete($pagename) {
+    $keyname=$DB->_getPageKey($pagename);
+    @unlink($DB->text_dir."/RCS/$keyname,v");
+  }
+
+  function rename($pagename,$new) {
+    $keyname=$DB->_getPageKey($new);
+    $oname=$DB->_getPageKey($pagename);
+    rename($DB->text_dir."/RCS/$oname,v",$DB->text_dir."/RCS/$keyname,v");
+  }
+
+  function get_rev($pagename,$mtime='',$last=0) {
+    if ($last==1) {
+      $tag='head:';
+      $opt='-h';
+    } else $tag='revision';
+    if ($mtime) {
+      $date=gmdate('Y/m/d H:i:s',$mtime);
+      if ($date) {
+        $opt="-d\<'$date'";
+        $tag='revision';
+      }
+    }
+
+    $out= $this->rlog($pagename,'',$opt);
+    if ($out) {
+      for ($line=strtok($out,"\n"); $line !== false;$line=strtok("\n")) {
+        preg_match("/^$tag\s+([\d\.]+)$/",$line,$match);
+        if ($match[1]) {
+          $rev=$match[1];
+          break;
+        }
+      }
+    }
+    return $rev;
   }
 }
 
@@ -1045,18 +1181,24 @@ class WikiPage {
   }
 
   function get_raw_body($options='') {
+    global $DBInfo;
+
     if ($this->body && !$options['rev'])
        return $this->body;
 
     if ($this->rev || $options['rev']) {
       if ($options['rev']) $rev=$options['rev'];
       else $rev=$this->rev;
-      $fp=@popen("co -x,v/ -q -p\"".$rev."\" ".$this->filename,"r");
-      if (!$fp) return "";
-      $out='';
-      while (!feof($fp)) $out.=fgets($fp,2048);
-      pclose($fp);
-      return $out;
+
+      if ($DBInfo->version_class) {
+        getModule('Version',$DBInfo->version_class);
+        $class='Version_'.$DBInfo->version_class;
+        $version=new $class ($DBInfo);
+        $out = $version->co($this->name,$rev);
+        return $out;
+      } else {
+        return _("Version info does not supported by this wiki");
+      }
     }
 
     $fp=@fopen($this->filename,"r");
@@ -1104,55 +1246,51 @@ class WikiPage {
   }
 
   function get_rev($mtime="",$last=0) {
-    if ($last==1) {
-      $tag='head:';
-      $opt='-h';
-    } else $tag='revision';
-    if ($mtime) {
-      $date=gmdate('Y/m/d H:i:s',$mtime);
-      if ($date) {
-        $opt="-d\<'$date'";
-        $tag='revision';
-      }
+    global $DBInfo;
+
+    if ($DBInfo->version_class) {
+      getModule('Version',$DBInfo->version_class);
+      $class='Version_'.$DBInfo->version_class;
+      $version=new $class ($DBInfo);
+      $rev= $version->get_rev($this->name,$mtime,$last);
+
+      if ($rev > 1.0)
+        return $rev;
     }
-    $fp=popen("rlog -x,v/ $opt ".$this->filename,"r");
-#   if (!$fp)
-#      print "No older revisions available";
-# XXX
-    while (!feof($fp)) {
-      $line=fgets($fp,1024);
-      preg_match("/^$tag\s+([\d\.]+)$/",$line,$match);
-      if ($match[1]) {
-        $rev=$match[1];
-        break;
-      }
-    }
-    pclose($fp);
-    if ($rev > 1.0)
-      return $rev;
     return '';
   }
 
   function get_info($rev='') {
+    global $DBInfo;
+
     $info=array('','','','','');
     if (!$rev)
       $rev=$this->get_rev('',1);
     if (!$rev) return $info;
-    $fp=popen("rlog -x,v/ -r$rev ".$this->filename,"r");
+
+    if ($DBInfo->version_class) {
+      getModule('Version',$DBInfo->version_class);
+      $class='Version_'.$DBInfo->version_class;
+      $version=new $class ($DBInfo);
+      $out= $version->rlog($this->name,$rev,$opt);
+    } else {
+      return $info;
+    }
+
     $state=0;
-    while (!feof($fp)) {
-      $line=fgets($fp,1024);
-      if ($state == 0 and preg_match("/^date:\s.*$/",$line)) {
-        $tmp=preg_replace("/date:\s(.*);\s+author:.*;\s+state:.*;/","\\1",rtrim($line));
-        $tmp=explode('lines:',$tmp);
-        $info[0]=$tmp[0];$info[1]=$tmp[1];
-        $state=1;
-      } else if ($state) {
-        list($info[2],$info[3],$info[4])=explode(';;',$line,3);
-        break;
+    if ($out) {
+      for ($line=strtok($out,"\n"); $line !== false;$line=strtok("\n")) {
+        if ($state == 0 and preg_match("/^date:\s.*$/",$line)) {
+          $tmp=preg_replace("/date:\s(.*);\s+author:.*;\s+state:.*;/","\\1",rtrim($line));
+          $tmp=explode('lines:',$tmp);
+          $info[0]=$tmp[0];$info[1]=$tmp[1];
+          $state=1;
+        } else if ($state) {
+          list($info[2],$info[3],$info[4])=explode(';;',$line,3);
+          break;
+        }
       }
     }
-    pclose($fp);
     return $info;
   }
 }
@@ -2314,129 +2452,12 @@ class Formatter {
     if ($options['pagelinks']) $this->store_pagelinks();
   }
 
-  function _parse_rlog($log) {
-    global $DBInfo;
-    $lines=explode("\n",$log);
-    $state=0;
-    $flag=0;
-
-    $url=$this->link_url($this->page->urlname);
-
-    $out="<h2>"._("Revision History")."</h2>\n";
-    $out.="<table class='info' border='0' cellpadding='3' cellspacing='2'>\n";
-    $out.="<form method='post' action='$url'>";
-    $out.="<th class='info'>#</th><th class='info'>Date and Changes</th>".
-         "<th class='info'>Editor</th>".
-         "<th><input type='submit' value='diff'></th>".
-         "<th class='info'>actions</th>".
-         "<th class='info'>admin.</th>";
-         #"<th><input type='submit' value='admin'></th>";
-    $out.= "</tr>\n";
-
-    $users=array();
-   
-    foreach ($lines as $line) {
-      if (!$state) {
-        if (!preg_match("/^---/",$line)) { continue;}
-        else {$state=1; continue;}
-      }
-      
-      switch($state) {
-        case 1:
-           preg_match("/^revision ([0-9\.]*)/",$line,$match);
-           $rev=$match[1];
-           $state=2;
-           break;
-        case 2:
-           $inf=preg_replace("/date:\s(.*);\s+author:.*;\s+state:.*;/","\\1",$line);
-           list($inf,$change)=explode('lines:',$inf,2);
-           $date=strtok($inf,' '); $inf=$date.' '.strtok('-+');
-
-           $change=preg_replace("/\+(\d+)\s\-(\d+)/",
-             "<span class='diff-added'>+\\1</span><span class='diff-removed'>-\\2</span>",$change);
-           $state=3;
-           break;
-        case 3:
-           $dummy=explode(';;',$line,3);
-           $ip=$dummy[0];
-           $user=$dummy[1];
-           if ($user and $user!='Anonymous') {
-             if (in_array($user,$users)) $ip=$users[$user];
-             else if ($DBInfo->hasPage($user)) {
-               $ip=$this->link_tag($user);
-               $users[$user]=$ip;
-             } else if ($DBInfo->interwiki['Whois']) {
-               $ip="<a href='".$DBInfo->interwiki['Whois']."$ip'>$user</a>";
-             }
-           } else if ($DBInfo->interwiki['Whois'])
-             $ip="<a href='".$DBInfo->interwiki['Whois']."$ip'>$ip</a>";
-
-           $comment=stripslashes($dummy[2]);
-           $state=4;
-           break;
-        case 4:
-           $rowspan=1;
-           if ($comment) $rowspan=2;
-           $out.="<tr>\n";
-           $out.="<th valign='top' rowspan=$rowspan>r$rev</th><td nowrap='nowrap'>$inf $change</td><td>$ip&nbsp;</td>";
-           $achecked="";
-           $bchecked="";
-           if ($flag==1)
-              $achecked="checked ";
-           else if (!$flag)
-              $bchecked="checked ";
-           $out.="<td nowrap='nowrap'><input type='radio' name='rev' value='$rev' $achecked/>";
-           $out.="<input type='radio' name='rev2' value='$rev' $bchecked/>";
-
-           $out.="<td nowrap='nowrap'>".$this->link_to("?action=recall&rev=$rev","view").
-                 " ".$this->link_to("?action=raw&rev=$rev","raw");
-           if ($flag)
-              $out.= " ".$this->link_to("?action=diff&rev=$rev","diff");
-           $out.="</td><th>";
-           if ($flag)
-              $out.="<input type='checkbox' name='range[$flag]' value='$rev' />";
-           $out.="</th></tr>\n";
-           if ($comment)
-              $out.="<tr><td class='info' colspan='5'>$comment&nbsp;</td></tr>\n";
-           $state=1;
-           $flag++;
-           break;
-      }
-    }
-    $out.="<tr><td colspan='6' align='right'><input type='checkbox' name='show' checked='checked' />show only ";
-    if ($DBInfo->security->is_protected("rcspurge",array())) {
-      $out.="<input type='password' name='passwd'>";
-    }
-    $out.="<input type='submit' name='rcspurge' value='purge'></td></tr>";
-    $out.="<input type='hidden' name='action' value='diff'/></form></table>\n";
-    return $out; 
-  }
-
-  function show_info() {
-    $fp=popen("rlog -zLT -x,v/ ".$this->page->filename,"r");
-#   if (!$fp)
-#      print "No older revisions available";
-# XXX
-    while (!feof($fp)) {
-      $line=fgets($fp,1024);
-      $out .= $line;
-    }
-    pclose($fp);
-
-    $msg=_("No older revisions available");
-    if (!$out)
-      print "<h2>$msg</h2>";
-    else
-      print $this->_parse_rlog($out);
-  }
-
   function simple_diff($diff) {
     $diff=str_replace("<","&lt;",$diff);
-    $lines=explode("\n",$diff);
     $out="";
-    unset($lines[0]); unset($lines[1]);
+    //unset($lines[0]); unset($lines[1]); // XXX
 
-    foreach ($lines as $line) {
+    for ($line=strtok($diff,"\n"); $line !== false;$line=strtok("\n")) {
       $marker=$line[0];
       $line=substr($line,1);
       if ($marker=="@") $line='<div class="diff-sep">@'."$line</div>";
@@ -2455,7 +2476,7 @@ class Formatter {
     $diff=str_replace("<","&lt;",$diff);
     $lines=explode("\n",$diff);
     $out="";
-    unset($lines[0]); unset($lines[1]);
+    #unset($lines[0]); unset($lines[1]);
 
     $omarker=0;
     $orig=array();$new=array();
@@ -2525,85 +2546,6 @@ class Formatter {
     $out=preg_replace("/(<{7}|>{7}).*\n/","\\1\n",$out);
 
     return $out;
-  }
-
-  function get_diff($rev1='',$rev2='',$text='',$options='') {
-    global $DBInfo;
-    $option='';
-
-    if ($text) {
-      $tmpf=tempnam($DBInfo->vartmp_dir,'DIFF');
-      $fp= fopen($tmpf, 'w');
-      fwrite($fp, $text);
-      fclose($fp);
-
-      $fp=popen("diff -u $tmpf ".$this->page->filename,'r');
-      if (!$fp) {
-         unlink($tmpf);
-         return '';
-      }
-      while (!feof($fp)) {
-         $line=fgets($fp,1024);
-         $out .= $line;
-      }
-      pclose($fp);
-      unlink($tmpf);
-
-      if (!$out) {
-         $msg=_("No difference found");
-      } else {
-         $msg= _("Difference between yours and the current");
-         if (!$options['raw'])
-           $ret= call_user_func(array(&$this,$DBInfo->diff_type.'_diff'),$out);
-         else
-           $ret="<pre>$out</pre>\n";
-      }
-      if ($options['nomsg']) return $ret;
-      return "<h2>$msg</h2>\n$ret";
-    }
-
-    if (!$rev1 and !$rev2) {
-      $rev1=$this->page->get_rev();
-    } else if (0 === strcmp($rev1 , (int)$rev1)) {
-      $rev1=$this->page->get_rev($rev1);
-    } else if ($rev1==$rev2) $rev2='';
-    if ($rev1) $option="-r$rev1 ";
-    if ($rev2) $option.="-r$rev2 ";
-
-    if (!$option) {
-      $msg= _("No older revisions available");
-      if ($options['nomsg']) return '';
-      return "<h2>$msg</h2>";
-    }
-    $fp=popen("rcsdiff -x,v/ -u $option ".$this->page->filename,'r');
-    if (!$fp)
-      return '';
-    if (!feof($fp)) {
-      #$line=fgets($fp,1024);
-      #$line=fgets($fp,1024);
-    }
-    while (!feof($fp)) {
-      $line=fgets($fp,1024);
-      $out.= $line;
-    }
-    pclose($fp);
-    if (!$out) {
-      $msg= _("No difference found");
-    } else {
-      if ($rev1==$rev2) $ret.= "<h2>"._("Difference between versions")."</h2>";
-      else if ($rev1 and $rev2) {
-        $msg= sprintf(_("Difference between r%s and r%s"),$rev1,$rev2);
-      }
-      else if ($rev1 or $rev2) {
-        $msg=sprintf(_("Difference between r%s and the current"),$rev1.$rev2);
-      }
-      if (!$options['raw'])
-        $ret= call_user_func(array(&$this,$DBInfo->diff_type.'_diff'),$out);
-      else
-        $ret="<pre>$out</pre>\n";
-    }
-    if ($options['nomsg']) return $ret;
-    return "<h2>$msg</h2>\n$ret";
   }
 
   function send_header($header="",$options=array()) {
@@ -3334,7 +3276,7 @@ if ($pagename) {
 
     if (!$action) $options['pi']=1; # protect a recursivly called #redirect
 
-#    if (!$DBInfo->security->is_allowed('read',&$options)) {
+#    if (!$DBInfo->security->is_allowed('read',$options)) {
 #      do_invalid($formatter,$options);
 #      return;
 #    }

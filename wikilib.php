@@ -435,54 +435,12 @@ function do_highlight($formatter,$options) {
   $formatter->send_footer($args,$options);
 }
 
-function do_diff($formatter,$options="") {
-  global $DBInfo;
-
-  $range=$options['range'];
-  $date=$options['date'];
-  $rev=$options['rev'];
-  $rev2=$options['rev2'];
-  if ($options['rcspurge']) {
-    if (!$range) $range=array();
-    $rr='';
-    $dum=array();
-    foreach (array_keys($range) as $r) {
-      if (!$rr) $rr=$range[$r];
-      if ($range[$r+1]) continue;
-      else
-        $rr.=":".$range[$r];
-      $dum[]=$rr;$rr='';
-    }
-    $options['range']=join(';',$dum);
-    #$query="?action=rcspurge&amp;range=$dum";
-    #if ($options['show']) $query.="&amp;show=1";
-    #$options['url']=qualifiedURL($formatter->link_url($options['page'],$query));
-    #do_goto($formatter,$options);
-    include_once("plugin/rcspurge.php");
-
-    do_RcsPurge($formatter,$options);
-    return;
-  }
-  $formatter->send_header("",$options);
-  $formatter->send_title("Diff for $rev ".$options['page'],"",$options);
-  if ($date)
-    print $formatter->get_diff($date);
-  else
-    print $formatter->get_diff($rev,$rev2);
-  if (!$DBInfo->diffonly) {
-    print "<br /><hr />\n";
-    $formatter->send_page();
-  }
-  $formatter->send_footer($args,$options);
-  return;
+function macro_EditHints($formatter) {
+  $hints = "<div class=\"hint\">\n";
+  $hints.= _("<b>Emphasis:</b> ''<i>italics</i>''; '''<b>bold</b>'''; '''''<b><i>bold italics</i></b>''''';\n''<i>mixed '''<b>bold</b>''' and italics</i>''; ---- horizontal rule.<br />\n<b>Headings:</b> = Title 1 =; == Title 2 ==; === Title 3 ===;\n==== Title 4 ====; ===== Title 5 =====.<br />\n<b>Lists:</b> space and one of * bullets; 1., a., A., i., I. numbered items;\n1.#n start numbering at n; space alone indents.<br />\n<b>Links:</b> JoinCapitalizedWords; [\"brackets and double quotes\"];\n[bracketed words];\nurl; [url]; [url label].<br />\n<b>Tables</b>: || cell text |||| cell text spanning two columns ||;\nno trailing white space allowed after tables or titles.<br />\n");
+  $hints.= "</div>\n";
+  return $hints;
 }
-
-  function macro_EditHints($formatter) {
-    $hints = "<div class=\"hint\">\n";
-    $hints.= _("<b>Emphasis:</b> ''<i>italics</i>''; '''<b>bold</b>'''; '''''<b><i>bold italics</i></b>''''';\n''<i>mixed '''<b>bold</b>''' and italics</i>''; ---- horizontal rule.<br />\n<b>Headings:</b> = Title 1 =; == Title 2 ==; === Title 3 ===;\n==== Title 4 ====; ===== Title 5 =====.<br />\n<b>Lists:</b> space and one of * bullets; 1., a., A., i., I. numbered items;\n1.#n start numbering at n; space alone indents.<br />\n<b>Links:</b> JoinCapitalizedWords; [\"brackets and double quotes\"];\n[bracketed words];\nurl; [url]; [url label].<br />\n<b>Tables</b>: || cell text |||| cell text spanning two columns ||;\nno trailing white space allowed after tables or titles.<br />\n");
-    $hints.= "</div>\n";
-    return $hints;
-  }
 
 function macro_EditText($formatter,$value,$options='') {
   global $DBInfo;
@@ -645,13 +603,6 @@ EOS;
   return $form;
 }
 
-
-function do_info($formatter,$options) {
-  $formatter->send_header("",$options);
-  $formatter->send_title(sprintf(_("Info. for %s"),$options['page']),"",$options);
-  $formatter->show_info();
-  $formatter->send_footer($args,$options);
-}
 
 function do_invalid($formatter,$options) {
   $formatter->send_header("Status: 406 Not Acceptable",$options);
