@@ -317,6 +317,12 @@ form>#content {
 	text-align: right;
 }
 
+/* HierarchicalWiki */
+div.wikiGroup {
+  font-family:Tahoma,Lucida,sans-serif;
+  font-size:10px;
+}
+
 /* enscript syntax */
 div.wikiPre i,div.wikiPre b{
   font-weight: normal;

@@ -119,7 +119,7 @@ span.diff-removed, del.diff-removed {
   background-color: #FF0000;
 }
 
-td.message {
+div.message {
   margin-top: 6pt;
   background-color: #E8E8E8;
   border-style:solid;
@@ -234,6 +234,12 @@ div.blog-comments { padding-left:2em; }
 div.blog-date { font-size:18px; font-weight:bold; padding-bottom:5px;}
 span.blog-user { font-size:10px; }
 div.blog-action { font-size:10px; }
+
+/* HierarchicalWiki */
+div.wikiGroup {
+  font-family:Tahoma,Lucida,sans-serif;
+  font-size:10px;
+}
 
 /* enscript syntax */
 div.wikiPre i,div.wikiPre b{

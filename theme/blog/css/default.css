@@ -118,7 +118,7 @@ span.diff-removed, del.diff-removed {
   background-color: #FF0000;
 }
 
-td.message {
+div.message {
   margin-top: 6pt;
   background-color: #E8E8E8;
   border-style:solid;
@@ -255,9 +255,13 @@ div.trackback-hint { font-size: 10px; padding: 1em 1em 1em 1em;background-color:
 /* Calendar */
 td.day { background: #639DD3; text-align: center;}
 td.today { background:#fff; text-align: center;}
+span.blogged {
+  text-decoration:none;
+  font-weight:bold; color:#2C5982; text-align: center;
+}
 
 /* HierarchicalWiki */
-span.group {
+div.wikiGroup {
   font-family:Tahoma,Lucida,sans-serif;
   font-size:10px;
 }
