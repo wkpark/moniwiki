@@ -23,20 +23,22 @@ class MoniConfig {
 
   }
   function _getHostConfig() {
-    $tempnam="/tmp/".time();
-    if ($db=@dba_open($tempnam,"n","db2"))
-      $config[dba_type]="db2";
-    else if ($db=@dba_open($tempnam,"n","db3"))
-      $config[dba_type]="db3";
-    else if ($db=@dba_open($tempnam,"n","gdbm"))
-      $config[dba_type]="gdbm";
+    if (function_exists("dba_open")) {
+      $tempnam="/tmp/".time();
+      if ($db=@dba_open($tempnam,"n","db2"))
+        $config['dba_type']="db2";
+      else if ($db=@dba_open($tempnam,"n","db3"))
+        $config['dba_type']="db3";
+      else if ($db=@dba_open($tempnam,"n","gdbm"))
+        $config['dba_type']="gdbm";
 
-    dba_close($db);
-    preg_match("/Apache\/2\.0\./",$_SERVER[SERVER_SOFTWARE],$match);
+      if ($db) dba_close($db);
+    }
+    preg_match("/Apache\/2\.0\./",$_SERVER['SERVER_SOFTWARE'],$match);
 
     if ($match) {
-      $config[query_prefix]='"?"';
-      $config[kbd_script]='$url_prefix."/css/kbd2.js";';
+      $config['query_prefix']='"?"';
+      $config['kbd_script']='$url_prefix."/css/kbd2.js";';
     }
     return $config;
   }
@@ -118,7 +120,7 @@ function checkConfig($config) {
   }
 
   if (file_exists("config.php")) {
-    if (!$fatal && !is_writable($config[data_dir])) {
+    if (!$fatal && !is_writable($config['data_dir'])) {
        print "<h3><font color=red>FATAL: $config[data_dir] directory is not writable</font></h3>\n";
        print "<h4>Please execute the following command</h4>";
        print "<pre class='console'>\n".
@@ -250,7 +252,8 @@ function sow_wikiseed($config,$seeddir='wikiseed',$seeds) {
   foreach($seeds as $seed) {
     $key=pagenameToKey($seed);
     $cmd="cp $seeddir/$key $config[text_dir]";
-    system(escapeshellcmd($cmd));
+    #system(escapeshellcmd($cmd));
+    copy("$seeddir/$key", $config['text_dir']."/$key");
     print $cmd."\n";
   }
   print "</pre>\n";
@@ -302,10 +305,10 @@ if (file_exists("config.php") && !is_writable("config.php")) {
 
 $Config=new MoniConfig();
 
-$config=$HTTP_POST_VARS[config];
-$update=$HTTP_POST_VARS[update];
+$config=$_POST['config'];
+$update=$_POST['update'];
 
-if ($_SERVER[REQUEST_METHOD]=="POST" && $config) {
+if ($_SERVER['REQUEST_METHOD']=="POST" && $config) {
   $conf=$Config->_getFormConfig($config);
   $rawconfig=$Config->_getFormConfig($config,1);
   $config=$conf;
@@ -394,7 +397,7 @@ while (list($key,$val) = each($config)) {
 }
 print "</table>\n";
 
-if ($REQUEST_METHOD=="POST") {
+if ($_SERVER['REQUEST_METHOD']=="POST") {
   if ($action=='sow_seed' && $seeds) {
     sow_wikiseed($config,'wikiseed',$seeds);
     print "<h2>WikiSeeds are sowed successfully</h2>";
@@ -406,7 +409,7 @@ if ($REQUEST_METHOD=="POST") {
   }
 }
 
-if ($REQUEST_METHOD!="POST") {
+if ($_SERVER['REQUEST_METHOD']!="POST") {
   if ($action=='seed') {
     show_wikiseed($config,'wikiseed');
     exit;
