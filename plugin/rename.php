@@ -5,12 +5,12 @@
 //
 // $Id$
 
-function do_rename($formatter,$options) {
+function do_post_rename($formatter,$options) {
   global $DBInfo;
   
-  if (isset($options['value'])) {
-    if ($DBInfo->hasPage($options['page']) && !$DBInfo->hasPage($options['value'])) {
-      $DBInfo->renamePage($options['page'],$options['value'],$options);
+  if (isset($options['name'])) {
+    if ($DBInfo->hasPage($options['page']) && !$DBInfo->hasPage($options['name'])) {
+      $DBInfo->renamePage($options['page'],$options['name'],$options);
       $title = sprintf(_("\"%s\" is renamed !"), $options['page']);
       $formatter->send_header("",$options);
       $formatter->send_title($title,"",$options);
@@ -31,7 +31,7 @@ function do_rename($formatter,$options) {
   print "<form method='post'>
 <table border='0'>
 <tr><td align='right'>Old name: </td><td><b>$options[page]</b></td></tr>
-<tr><td align='right'>New name: </td><td><input name='value' /></td></tr>\n";
+<tr><td align='right'>New name: </td><td><input name='name' /></td></tr>\n";
   if ($DBInfo->security->is_protected("rename",$options))
     print "<tr><td align='right'>"._("Password").": </td><td><input type='password' name='passwd' /> ".
     _("Only WikiMaster can rename this page");
