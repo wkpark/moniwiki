@@ -2636,7 +2636,7 @@ FOOT;
     # find upper page
     $pos=strrpos($name,"/");
     if ($pos > 0) $upper=substr($name,0,$pos);
-    else if ($this->group) $upper=substr($this->group,0,-1);
+    else if ($this->group) $upper=_urlencode(substr($this->group,0,-1));
 
     if (!$title) {
       $title=$options['title'];
@@ -2652,12 +2652,12 @@ FOOT;
         $title=$this->page->title;
     }
     # setup title variables
-    $heading=$this->link_to("?action=fullsearch&amp;value=$name",$title);
+    #$heading=$this->link_to("?action=fullsearch&amp;value="._urlencode($name),$title);
     $title="$group<font class='wikiTitle'><b>$title</b></font>";
     if ($link)
       $title="<a href=\"$link\" class='wikiTitle'>$title</a>";
     else if (empty($options['nolink']))
-      $title=$this->link_to("?action=fullsearch&amp;value=$name",$title,"class='wikiTitle'");
+      $title=$this->link_to("?action=fullsearch&amp;value="._urlencode($name),$title,"class='wikiTitle'");
     $logo=$this->link_tag($DBInfo->logo_page,'',$DBInfo->logo_string);
     $goto_form=$DBInfo->goto_form ?
       $DBInfo->goto_form : goto_form($action,$DBInfo->goto_type);
