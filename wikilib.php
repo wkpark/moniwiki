@@ -1991,6 +1991,9 @@ function macro_FullSearch($formatter="",$value="", $opts=array()) {
   $needle=$value;
   if ($value === true) {
     $needle = $value = $formatter->page->name;
+  } else {
+    # for MoinMoin compatibility with [[FullSearch("blah blah")]]
+    $needle = preg_replace("/^(\'|\")(.*)(\'|\")/","\\2",$value);
   }
 
   $url=$formatter->link_url($formatter->page->urlname);
@@ -1999,7 +2002,7 @@ function macro_FullSearch($formatter="",$value="", $opts=array()) {
   $form= <<<EOF
 <form method='get' action='$url'>
    <input type='hidden' name='action' value='fullsearch' />
-   <input name='value' size='30' value="$needle" />
+   <input name='value' size='30' value='$needle' />
    <input type='submit' value='Go' /><br />
    <input type='checkbox' name='context' value='20' checked='checked' />Display context of search results<br />
    <input type='checkbox' name='backlinks' value='1' />Search BackLinks only<br />
