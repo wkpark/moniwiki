@@ -411,7 +411,7 @@ class WikiDB {
     # Default Configuations
     $this->frontpage='FrontPage';
     $this->sitename='UnnamedWiki';
-    $this->upload_dir= './pds';
+    $this->upload_dir= 'pds';
     $this->data_dir= './data';
     $this->query_prefix='/';
     $this->umask= 02;
@@ -458,6 +458,7 @@ class WikiDB {
     $this->diff_type='fancy_diff';
     $this->use_sistersites=1;
     $this->use_twinpages=1;
+    $this->pagetype=array();
 #    $this->security_class="needtologin";
 
     # set user-specified configuration
@@ -1192,6 +1193,7 @@ class Formatter {
   }
 
   function get_instructions($body="") {
+    global $DBInfo;
     $pikeys=array('#redirect','#action');
     $pi=array();
     if (!$body) {
@@ -1199,7 +1201,11 @@ class Formatter {
       $body=$this->page->get_raw_body();
     }
 
-    if ($body[0] == '<') {
+    $key=substr($this->page->name,0,strpos($this->page->name,'/'));
+
+    if (array_key_exists($key,$DBInfo->pagetype))
+      $format=$DBInfo->pagetype[$key];
+    else if ($body[0] == '<') {
       list($line, $dummy)= explode("\n", $body,2);
       if (substr($line,0,6) == '<?xml ')
         #$format='xslt';
@@ -1260,7 +1266,7 @@ class Formatter {
     print $raw;
   }
 
-  function link_repl($url) {
+  function link_repl($url,$attr='') {
     global $DBInfo;
 
     $url=str_replace('\"','"',$url);
@@ -1287,7 +1293,7 @@ class Formatter {
       if (preg_match("/^mailto:/",$url)) {
         $url=str_replace("@","_at_",$url);
         $name=substr($url,7);
-        return $this->icon['mailto']."<a href='$url'>$name</a>";
+        return $this->icon['mailto']."<a href='$url' $attr>$name</a>";
       } else
       if (preg_match("/^(w|[A-Z])/",$url)) { # InterWiki or wiki:
         if (strpos($url," ")) { # have a space ?
@@ -1300,16 +1306,16 @@ class Formatter {
         list($url,$text)=explode(" ",$url,2);
         if (!$text) $text=$url;
         else if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text))
-          return "<a href='$url' title='$url'><img border='0' alt='$url' src='$text' /></a>";
+          return "<a href='$url' $attr title='$url'><img border='0' alt='$url' src='$text' /></a>";
         list($icon,$dummy)=explode(":",$url,2);
-        return "<img align='middle' alt='[$icon]' src='".$DBInfo->imgs_dir."/$icon.png' />". "<a href='$url'>$text</a>";
+        return "<img align='middle' alt='[$icon]' src='".$DBInfo->imgs_dir."/$icon.png' />". "<a $attr href='$url'>$text</a>";
       } else # have no space
       if (preg_match("/^(http|https|ftp)/",$url)) {
         if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$url))
           return "<img alt='$url' src='$url' />";
-        return "<a href='$url'>$url</a>";
+        return "<a $attr href='$url'>$url</a>";
       }
-      return "<a href='$url'>$url</a>";
+      return "<a $attr href='$url'>$url</a>";
     } else {
       if ($url[0]=="?") $url=substr($url,1);
       return $this->word_repl($url);
@@ -1333,8 +1339,8 @@ class Formatter {
       # or [wiki:FrontPage Home Page]
       $page=$dum[0];
       if (!$text)
-        return $this->word_repl($page,"",1);
-      return $this->word_repl($page,$text,1);
+        return $this->word_repl($page,'','',1);
+      return $this->word_repl($page,$text,'',1);
     }
 
     $url=$DBInfo->interwiki[$wiki];
@@ -1392,10 +1398,10 @@ class Formatter {
         return $links;
       }
     }
-    return "";
+    return '';
   }
 
-  function word_repl($word,$text="",$nogroup=0) {
+  function word_repl($word,$text='',$attr='',$nogroup=0) {
     global $DBInfo;
     if ($word[0]=='"') { # ["extended wiki name"]
       $page=substr($word,1,-1);
@@ -1882,7 +1888,7 @@ class Formatter {
 
       $line=preg_replace($this->extrarule,$this->extrarepl,$line);
 
-      if ($this->in_p == '') { #and !$this->nobr) { #and !$this->nobr) {
+      if ($this->in_p == '' and $line) { #and !$this->nobr) { #and !$this->nobr) {
         $text.="<div class='p'>\n";
         $this->in_p=$line;
       } else if ($this->in_p and !$indlen and $li_open and 0) {
@@ -2489,6 +2495,7 @@ FOOT;
     if ($pos > 0) $upper=substr($name,0,$pos);
     else if ($this->group) $upper=substr($this->group,0,-1);
 
+    if (!$title) $title=$options['title'];
     if (!$title) {
       if ($this->group) { # for UserNameSpace
         $group=$this->group;
@@ -2520,8 +2527,20 @@ MSG;
 
     # navi bar
     $menu=array();
-    foreach ($this->menu as $item=>$attr)
-      $menu[]=$this->link_tag($item,"",_($item),$attr);
+    if ($options['quicklinks']) {
+      $quicklinks=array_flip(explode("\t",$options['quicklinks']));
+    } else {
+      $quicklinks=$this->menu;
+    }
+    $sister_save=$this->sister_on;
+    $this->sister_on=0;
+    foreach ($quicklinks as $item=>$attr) {
+      if (strpos($item,' ') === false)
+        $menu[]=$this->link_tag($item,"",_($item),$attr);
+      else
+        $menu[]=$this->link_repl($item,$attr);
+    }
+    $this->sister_on=$sister_save;
     $menu=$this->menu_bra.join($this->menu_sep,$menu).$this->menu_cat;
 
     # icons
@@ -2595,7 +2614,8 @@ MSG;
     $cols=$options['cols'] > 60 ? $options['cols']: $cols;
 
     $preview=$options['preview'];
-    $url=$this->link_url($this->page->urlname);
+
+    $url=$this->link_url(_urlencode($option['page']));
 
     if (!$this->page->exists()) {
        $options['linkto']="?action=edit&amp;template=";
@@ -2608,7 +2628,7 @@ MSG;
        $extra='<input type="submit" name="button_merge" value="Merge" />';
 
     print "<a id='editor' name='editor' />\n";
-    $previewurl=$this->link_url($this->page->urlname,"#preview");
+    $previewurl=$this->link_url(_urlencode($options['page']),"#preview");
     #printf('<form method="post" action="%s">', $url);
     printf('<form method="post" action="%s">', $previewurl);
     print $this->link_to("?action=edit&amp;rows=".($rows-3),_("ReduceEditor"))." | ";
@@ -2625,7 +2645,7 @@ MSG;
       $p= new WikiPage($options['template']);
       $raw_body = str_replace('\r\n', '\n', $p->get_raw_body());
     } else
-      $raw_body = sprintf(_("Describe %s here"), $this->page->name);
+      $raw_body = sprintf(_("Describe %s here"), $options['page']);
 
     # for conflict check
     if ($options['datestamp'])
@@ -2681,7 +2701,7 @@ EOS;
     $this->sister_on=0;
     $this->trail="";
     foreach ($trails as $page) {
-      $this->trail.=$this->word_repl($page,"",1)." &#x203a; ";
+      $this->trail.=$this->word_repl($page,'','',1)." &#x203a; ";
     }
     $this->trail.= " $pagename";
     $this->pagelinks=array(); # reset pagelinks
@@ -2763,6 +2783,7 @@ if ($user->id != "Anonymous") {
   $udb=new UserDB($DBInfo);
   $user=$udb->getUser($user->id);
   $options['css_url']=$user->info['css_url'];
+  $options['quicklinks']=$user->info['quicklinks'];
   #$options['name']=$user->info[name];
   if (!$theme) $options['theme']=$user->info['theme'];
 } else {
@@ -2843,16 +2864,16 @@ if ($pagename) {
         $twins=join("\n",$twins);
         $formatter->send_page(_("See TwinPages: ").$twins);
         echo "<br />or ".
-          $formatter->link_to("?action=edit",_("Create this page"));
+          $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
       } else {
         $formatter->send_title(sprintf("%s Not Found",$page->name),"",$options);
-        print $formatter->link_to("?action=edit",_("Create this page"));
+        print $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
         print macro_LikePages($formatter,$page->name,&$err);
         if ($err['extra'])
           print $err['extra'];
 
         print "<hr />\n";
-        print $formatter->link_to("?action=edit",_("Create this page"));
+        print $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
         print _(" or alternativly, use one of these templates:\n");
         $options['linkto']="?action=edit&amp;template=";
         print macro_TitleSearch($formatter,".*Template",$options);
