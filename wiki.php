@@ -1424,7 +1424,6 @@ class Formatter {
     if ($body) {
       $this->_instructions(&$body);
       if ($this->processor) {
-#        if ($body[0]=='#') list($dummy,$body)= explode("\n",$body,2);
         eval("\$out=processor_$this->processor(&\$this,\$body,\$options);");
         print $out;
         return;
@@ -1434,7 +1433,6 @@ class Formatter {
       $body=$this->page->get_raw_body();
       $this->_instructions(&$body);
       if ($this->processor) {
-#        if ($body[0]=='#') list($dummy,$body)= explode("\n",$body,2);
         eval("\$out=processor_$this->processor(&\$this,\$body,\$options);");
         print $out;
         return;
@@ -1476,12 +1474,24 @@ class Formatter {
                  "\\$\\$([^\\$]+)\\$\\$(?:\s|$)|";
     $wordrule.=$this->wordrule;
 
+    $base_rule=array("/<([^\s][^>]*)>/","/`([^`]*)`/",
+                     "/'''([^']*)'''/","/(?<!')'''(.*)'''(?!')/",
+                     "/''([^']*)''/","/(?<!')''(.*)''(?!')/",
+                     "/\^([^ \^]+)\^/","/(?: |^)_([^ _]+)_/",
+                     "/^-{4,}/");
+    $base_repl=array("&lt;\\1>","<tt class='wiki'>\\1</tt>",
+                     "<b>\\1</b>","<b>\\1</b>",
+                     "<i>\\1</i>","<i>\\1</i>",
+                     "<sup>\\1</sup>","<sub>\\1</sub>",
+                     "<hr />\n");
+
     foreach ($lines as $line) {
       # strip trailing '\n'
-      $line=preg_replace("/\n$/", "", $line);
+      #$line=preg_replace("/\n$/", "", $line);
 
       # empty line
-      if ($line=="") {
+      #if ($line=="") {
+      if (!trim($line)) {
         if ($in_pre) { $this->pre_line.="\n";continue;}
         if ($in_li) { $text.="<br />\n"; continue;}
         if (!$in_li && !$in_table) {
@@ -1523,35 +1533,37 @@ class Formatter {
                $this->pre_line.="\n";
             $line=substr($line,0,$p);
          }
-      } else if ($in_pre && preg_match("/}}}/",$line)) {
-         $p=strrpos($line,"}}}");
-         $len=strlen($line);
-         if ($in_pre) {
-            $this->pre_line.=substr($line,0,$p-2);
-            $line=substr($line,$p+1);
-            $in_pre=-1;
-         }
       } else if ($in_pre) {
-         $this->pre_line.=$line."\n";
-         continue;
+         if (false===strpos($line,"}}}")) {
+           $this->pre_line.=$line."\n";
+           continue;
+         } else {
+           $p=strrpos($line,"}}}");
+           $len=strlen($line);
+           $this->pre_line.=substr($line,0,$p-2);
+           $line=substr($line,$p+1);
+           $in_pre=-1;
+         }
       }
-      #if (!$in_pre) {
       #$line=preg_replace("/\\$/","&#36;",$line);
-      $line=preg_replace("/<([^\s][^>]*)>/","&lt;\\1>",$line);
-      $line=preg_replace("/`([^`]*)`/","<tt class='wiki'>\\1</tt>",$line);
+      #$line=preg_replace("/<([^\s][^>]*)>/","&lt;\\1>",$line);
+      #$line=preg_replace("/`([^`]*)`/","<tt class='wiki'>\\1</tt>",$line);
 
       # bold
-      $line=preg_replace("/'''([^']*)'''/","<b>\\1</b>",$line);
-      $line=preg_replace("/(?<!')'''(.*)'''(?!')/","<b>\\1</b>",$line);
+      #$line=preg_replace("/'''([^']*)'''/","<b>\\1</b>",$line);
+      #$line=preg_replace("/(?<!')'''(.*)'''(?!')/","<b>\\1</b>",$line);
+
       # italic 
-      $line=preg_replace("/''([^']*)''/","<i>\\1</i>",$line);
-      $line=preg_replace("/(?<!')''(.*)''(?!')/","<i>\\1</i>",$line);
+      #$line=preg_replace("/''([^']*)''/","<i>\\1</i>",$line);
+      #$line=preg_replace("/(?<!')''(.*)''(?!')/","<i>\\1</i>",$line);
 
       # Superscripts, subscripts
-      $line=preg_replace("/\^([^ \^]+)\^/","<sup>\\1</sup>",$line);
-      $line=preg_replace("/(?: |^)_([^ _]+)_/","<sub>\\1</sub>",$line);
+      #$line=preg_replace("/\^([^ \^]+)\^/","<sup>\\1</sup>",$line);
+      #$line=preg_replace("/(?: |^)_([^ _]+)_/","<sub>\\1</sub>",$line);
+      # rules
+      #$line=preg_replace("/^-{4,}/","<hr />\n",$line);
 
-      $line=preg_replace("/^-{4,}/","<hr />\n",$line);
+      $line=preg_replace($base_rule,$base_repl,$line);
 
       # NoSmoke's MultiLineCell
       $line=preg_replace(array("/{{\|/","/\|}}/"),
@@ -1563,7 +1575,10 @@ class Formatter {
 
       # bullet
       #if (!$in_pre && preg_match("/^(\s*)/",$line,$match)) {
-      if (preg_match("/^(\s*)/",$line,$match)) {
+      #if (preg_match("/^(\s*)/",$line,$match)) {
+      {
+         if ($line[0]==' ') preg_match("/^(\s*)/",$line,$match);
+         else $match[0]="";
          $open="";
          $close="";
          $indtype="dd";
@@ -1571,7 +1586,9 @@ class Formatter {
          #print "<!-- indlen=$indlen -->\n";
          if ($indlen > 0) {
            $line=substr($line,$indlen);
-           if (preg_match("/^(\*\s*)/",$line,$limatch)) {
+           #if (preg_match("/^(\*\s*)/",$line,$limatch)) {
+           if ($line[0]=='*') {
+             $limatch[1]='*';
              $line=preg_replace("/^(\*\s*)/","<li>",$line);
              if ($indent_list[$in_li] == $indlen) $line="</li>\n".$line;
              $numtype="";
@@ -1586,7 +1603,6 @@ class Formatter {
            }
          }
          if ($indent_list[$in_li] < $indlen) {
-
             $in_li++;
             $indent_list[$in_li]=$indlen; # add list depth
             $indent_type[$in_li]=$indtype; # add list type
@@ -1604,10 +1620,17 @@ class Formatter {
          else $li_open=0;
       }
 
-      if (!$in_pre && !$in_table && preg_match("/^\|\|.*\|\|$/",$line)) {
+      #$f=preg_match("/^\|\|.*\|\|$/",$line);
+      #$f=preg_match("/^\|\|/",$line) and preg_match("/.*\|\|$/",$line);
+      #$f=substr($line,0,2)=="||" and substr($line,strlen($line)-2)=="||";
+      $f=$line[0]=='|' and $line[1]=='|'
+                       and substr($line,strlen($line)-2)=="||";
+      #if (!$in_pre && !$in_table && preg_match("/^\|\|.*\|\|$/",$line)) {
+      if (!$in_pre && !$in_table && $f) {
          $open.=$this->_table(1);
          $in_table=1;
-      } else if ($in_table && !preg_match("/^\|\|.*\|\|$/",$line)) {
+      #} else if ($in_table && !preg_match("/^\|\|.*\|\|$/",$line)) {
+      } else if ($in_table && !$f) {
          $close=$this->_table(0).$close;
          $in_table=0;
       }
@@ -1632,7 +1655,7 @@ class Formatter {
       # Headings
       $line=preg_replace('/(?<!=)(={1,5})\s+(.*)\s+(={1,5})$/e',
                          "\$this->head_repl('\\1','\\2','\\3')",$line);
-      #} # XXX
+
       if ($in_pre==-1) {
          $in_pre=0;
          if ($this->processor) {
@@ -2150,7 +2173,8 @@ EOS;
 FOOT;
 
     if ($options[timer])
-      $timer=sprintf("<br />%7.4f sec",$options[timer]->Check());
+      #$timer=sprintf("<br />%10.6f sec",$options[timer]->Check());
+      $timer=sprintf("<br />%8.5f sec",$options[timer]->Check());
    
     if (file_exists("footer.php"))
       include_once("footer.php");
@@ -2560,7 +2584,8 @@ if ($_SERVER[REQUEST_METHOD]=="POST" && $HTTP_POST_VARS) {
    }
    $args[showpage]=1;
    $args[editable]=0;
-   $formatter->send_footer($args);
+   $options[timer]=$timing;
+   $formatter->send_footer($args,$options);
 
    exit;
  }
