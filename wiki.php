@@ -1334,7 +1334,7 @@ class Formatter {
     $this->external_on=0;
     $this->external_target='';
     if ($DBInfo->external_target)
-      $this->external_target='target="'.$DBInfo->external_target.'" ';
+      $this->external_target='target="'.$DBInfo->external_target.'"';
 
     #$this->baserule=array("/<([^\s][^>]*)>/","/`([^`]*)`/",
     $this->baserule=array("/<([^\s<>])/","/`([^`' ]+)'/","/(?<!`)`([^`]*)`/",
@@ -1638,7 +1638,7 @@ class Formatter {
             $external_link='<span class="externalLink">('.$url.')</span>';
         }
         $icon=strtok($url,':');
-        return "<img align='middle' alt='[$icon]' src='".$this->imgs_dir_url."$icon.png' />". "<a class='externalLink' $attr $this->ex_target href='$link'>$text</a>".$external_icon.$external_link;
+        return "<img align='middle' alt='[$icon]' src='".$this->imgs_dir_url."$icon.png' />". "<a class='externalLink' $attr $this->external_target href='$link'>$text</a>".$external_icon.$external_link;
       } # have no space
       $link=str_replace('&','&amp;',$url);
       if (preg_match("/^(http|https|ftp)/",$url)) {
@@ -1654,7 +1654,7 @@ class Formatter {
           return "<img alt='$link' $attr src='$url' />";
         }
       }
-      return "<a class='externalLink' $attr href='$link' $this->ex_target>$url</a>";
+      return "<a class='externalLink' $attr href='$link' $this->external_target>$url</a>";
     } else {
       if ($url[0]=="?") $url=substr($url,1);
       return $this->word_repl($url,'',$attr);
