@@ -18,15 +18,6 @@ function do_rss_rc($formatter,$options) {
   $URL=qualifiedURL($formatter->prefix);
   $img_url=qualifiedURL($DBInfo->logo_img);
 
-  $head=<<<HEAD
-<?xml version="1.0" encoding="euc-kr"?>
-<!--<?xml-stylesheet type="text/xsl" href="/wiki/css/rss.xsl"?>-->
-<rdf:RDF xmlns:wiki="http://purl.org/rss/1.0/modules/wiki/"
-         xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-         xmlns:xlink="http://www.w3.org/1999/xlink"
-         xmlns:dc="http://purl.org/dc/elements/1.1/"
-         xmlns="http://purl.org/rss/1.0/">\n
-HEAD;
   $url=qualifiedUrl($formatter->link_url("RecentChanges"));
   $channel=<<<CHANNEL
 <channel rdf:about="$URL">
@@ -62,11 +53,14 @@ CHANNEL;
       $status='deleted';
     else
       $status='updated';
-    $zone = date("O");
-    $zone = $zone[0].$zone[1].$zone[2].":".$zone[3].$zone[4];
+    #$zone = date("O");
+    #$zone = $zone[0].$zone[1].$zone[2].":".$zone[3].$zone[4];
+    #$date = date("Y-m-d\TH:i:s",$ed_time).$zone;
+
+    $zone = "+00:00";
     $date = gmdate("Y-m-d\TH:i:s",$ed_time).$zone;
 
-    $url=qualifiedUrl($formatter->link_url($page_name));
+    $url=qualifiedUrl($formatter->link_url(_rawurlencode($page_name)));
     $channel.="    <rdf:li rdf:resource=\"$url\"/>\n";
 
     $items.="     <item rdf:about=\"$url\">\n";
@@ -112,11 +106,29 @@ FOOT;
 <name>goto</name>
 </textinput>
 FORM;
+
+  $new="";
+  if ($options['oe'] and (strtolower($options['oe']) != $DBInfo->charset)) {
+    $charset=$options['oe'];
+    if (function_exists('iconv')) {
+      $out=$head.$channel.$items.$form;
+      $new=iconv($DBInfo->charset,$charset,$out);
+      if (!$new) $charset=$DBInfo->charset;
+    }
+  } else $charset=$DBInfo->charset;
+
+  $head=<<<HEAD
+<?xml version="1.0" encoding="$charset"?>
+<!--<?xml-stylesheet type="text/xsl" href="/wiki/css/rss.xsl"?>-->
+<rdf:RDF xmlns:wiki="http://purl.org/rss/1.0/modules/wiki/"
+         xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+         xmlns:xlink="http://www.w3.org/1999/xlink"
+         xmlns:dc="http://purl.org/dc/elements/1.1/"
+         xmlns="http://purl.org/rss/1.0/">\n
+HEAD;
   header("Content-Type: text/xml");
-  print $head;
-  print $channel;
-  print $items;
-  print $form;
+  if ($new) print $head.$new;
+  else print $head.$channel.$items.$form;
   print "</rdf:RDF>";
 }
 ?>
