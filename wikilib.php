@@ -673,7 +673,7 @@ function do_post_savepage($formatter,$options) {
     if ($ret == -1)
       $options['msg'].=sprintf(_("%s is not editable"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
     else
-      $options['msg'].=sprintf(_("%s is saved"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
+      $options['msg'].=sprintf(_("%s is saved"),$formatter->link_tag($formatter->page->urlname,"?action=show",$options['page']));
     $formatter->send_title("","",$options);
     $opt['pagelinks']=1;
     # re-generates pagelinks
@@ -1140,7 +1140,7 @@ function macro_UploadFile($formatter,$value="") {
    <input type='file' name='upfile' size='30' />
    <input type='submit' value='Upload' /><br />
    <input type='radio' name='replace' value='1' />Replace original file<br />
-   <input type='radio' name='replace' value='0' checked='checked' />Rename if already exist file<br />
+   <input type='radio' name='replace' value='0' checked='checked' />Rename if it already exist<br />
 </form>
 EOF;
 
@@ -1165,16 +1165,21 @@ function do_uploadedfiles($formatter,$options) {
 function macro_UploadedFiles($formatter,$value="",$options="") {
    global $DBInfo;
 
+   $download='download';
+   $needle="//";
+   if ($options['download']) $download=$options['download'];
+   if ($options['needle']) $needle=$options['needle'];
+
    if ($value and $value!='UploadFile') {
       $key=$DBInfo->pageToKeyname($value);
-      if ($key != $value)
-        $prefix=$formatter->link_url($value,"?action=download&amp;value=");
+      if ($options['download'] or $key != $value)
+        $prefix=$formatter->link_url($value,"?action=$download&amp;value=");
       $dir=$DBInfo->upload_dir."/$key";
    } else {
       $value=$formatter->page->urlname;
       $key=$DBInfo->pageToKeyname($formatter->page->name);
-      if ($key != $formatter->page->name)
-        $prefix=$formatter->link_url($formatter->page->urlname,"?action=download&amp;value=");
+      if ($options['download'] or $key != $formatter->page->name)
+        $prefix=$formatter->link_url($formatter->page->urlname,"?action=$download&amp;value=");
       $dir=$DBInfo->upload_dir."/$key";
    }
    if ($value!='UploadFile' and file_exists($dir))
@@ -1191,17 +1196,18 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
 
    while ($file= readdir($handle)) {
       if ($file[0]=='.') continue;
-      if (is_dir($dir."/".$file)) {
+      if (!$options['nodir'] and is_dir($dir."/".$file)) {
         if ($value =='UploadFile')
           $dirs[]= $DBInfo->keyToPagename($file);
-      } else
+      } else if (preg_match($needle,$file))
         $upfiles[]= $file;
    }
    closedir($handle);
    if (!$upfiles and !$dirs) return "<h3>No files uploaded</h3>";
    sort($upfiles); sort($dirs);
 
-   $out="<form method='post' >";
+   $link=$formatter->link_url($formatter->page->urlname);
+   $out="<form method='post' action='$link'>";
    $out.="<input type='hidden' name='action' value='DeleteFile' />\n";
    if ($key)
      $out.="<input type='hidden' name='value' value='$value' />\n";
@@ -1215,7 +1221,7 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
       $idx++;
    }
 
-   if (!$dirs) {
+   if (!$options['nodir'] and !$dirs) {
       $link=$formatter->link_tag('UploadFile',"?action=uploadedfiles&amp;value=top","..");
       $date=date("Y-m-d",filemtime($dir."/.."));
       $out.="<tr><td class='wiki'>&nbsp;</td><td class='wiki'>$link</td><td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td></tr>\n";
@@ -1315,7 +1321,6 @@ EOF;
 <form method="post" action="$url">
 <input type="hidden" name="action" value="userform" />
 <table border="0">
-  <tr><td>&nbsp;</td></tr>
   <tr><td><b>ID</b>&nbsp;</td><td>$user->id</td></tr>
   <tr><td><b>Name</b>&nbsp;</td><td><input type="text" size="40" name="username" value="$name" /></td></tr>
   <tr>
@@ -1708,11 +1713,13 @@ function macro_Icon($formatter="",$value="",$extra="") {
 
 function macro_RecentChanges($formatter="",$value="") {
   global $DBInfo;
-  define(MAXSIZE,5000);
+  define(MAXSIZE,6000);
   $new=1;
 
+  $template_bra="";
   $template=
   '$out.= "$icon&nbsp;&nbsp;$title $date . . . . $user $count $extra<br />\n";';
+  $template_cat="";
   $use_day=1;
 
   $date_fmt='D d M Y';
@@ -1733,6 +1740,12 @@ function macro_RecentChanges($formatter="",$value="") {
       $use_day=0;
       $template=
   '$out.= "$icon&nbsp;&nbsp;$title @ $day $date by $user $count $extra<br />\n";';
+    } if (in_array ("table", $args)) {
+      $bra="<table border='0' cellpadding='0' cellspading='0' width='100%'>";
+      $template=
+  '$out.= "<tr><td>&nbsp;</td><td width=\'2%\'>$icon</td><td width=\'40%\'>$title</td><td width=\'15%\'>$date</td><td>$user $count $extra</td></tr>\n";';
+      $cat="</table>";
+      $cat0="";
     }
   }
   if ($size > MAXSIZE) $size=MAXSIZE;
@@ -1793,7 +1806,7 @@ function macro_RecentChanges($formatter="",$value="") {
     $addr= $parts[1];
     $ed_time= $parts[2];
     $user= $parts[4];
-    $log= $parts[5];
+    $log= stripslashes($parts[5]);
     $act= rtrim($parts[6]);
 
     if ($ed_time < $time_cutoff)
@@ -1804,6 +1817,7 @@ function macro_RecentChanges($formatter="",$value="") {
 
     $day = date('Y-m-d', $ed_time);
     if ($use_day and $day != $ratchet_day) {
+      $out.=$cat0;
       $out.=sprintf("%s<font size='+1'>%s </font> <font size='-1'>[",
             $br, date($date_fmt, $ed_time));
       $out.=$formatter->link_tag($formatter->page->urlname,
@@ -1811,6 +1825,8 @@ function macro_RecentChanges($formatter="",$value="") {
                                  _("set bookmark"))."]</font><br />\n";
       $ratchet_day = $day;
       $br="<br />";
+      $out.=$bra;
+      $cat0=$cat;
     } else
       $day=$formatter->link_to("?action=bookmark&amp;time=$ed_time",$day);
 
@@ -1856,7 +1872,7 @@ function macro_RecentChanges($formatter="",$value="") {
 
     $logs[$page_key]= 1;
   }
-  return $out;
+  return $out.$cat0;
 }
 
 function macro_HTML($formatter,$value) {
