@@ -891,13 +891,13 @@ function wiki_notify($formatter,$options) {
   $mailto=join(", ",$subs);
   $subject="[".$DBInfo->sitename."] ".sprintf(_("%s page is modified"),$options[page]);
  
-  $mailheaders = "Return-Path: $from\r\n";
-  $mailheaders.= "From: $from\r\n";
-  $mailheaders.= "X-Mailer: MoniWiki form-mail interface\r\n";
+  $mailheaders = "Return-Path: $from\n";
+  $mailheaders.= "From: $from\n";
+  $mailheaders.= "X-Mailer: MoniWiki form-mail interface\n";
 
-  $mailheaders.= "MIME-Version: 1.0\r\n";
-  $mailheaders.= "Content-Type: text/plain; charset=$DBInfo->charset\r\n";
-  $mailheaders.= "Content-Transfer-Encoding: 8bit\r\n\r\n";
+  $mailheaders.= "MIME-Version: 1.0\n";
+  $mailheaders.= "Content-Type: text/plain; charset=$DBInfo->charset\n";
+  $mailheaders.= "Content-Transfer-Encoding: 8bit\n\n";
 
   $body=sprintf(_("You have subscribed to this wiki page on \"%s\" for change notification.\n\n"),$DBInfo->sitename);
   $body.="-------- $options[page] ---------\n";
@@ -934,13 +934,13 @@ function wiki_sendmail($body,$options) {
   $email=$options['email'];
   $subject=$options['subject'];
 
-  $mailheaders = "Return-Path: $from\r\n";
-  $mailheaders.= "From: $from\r\n";
-  $mailheaders.= "X-Mailer: MoniWiki form-mail interface\r\n";
+  $mailheaders = "Return-Path: $from\n";
+  $mailheaders.= "From: $from\n";
+  $mailheaders.= "X-Mailer: MoniWiki form-mail interface\n";
 
-  $mailheaders.= "MIME-Version: 1.0\r\n";
-  $mailheaders.= "Content-Type: text/plain; charset=$DBInfo->charset\r\n";
-  $mailheaders.= "Content-Transfer-Encoding: 8bit\r\n\r\n";
+  $mailheaders.= "MIME-Version: 1.0\n";
+  $mailheaders.= "Content-Type: text/plain; charset=$DBInfo->charset\n";
+  $mailheaders.= "Content-Transfer-Encoding: 8bit\n\n";
 
   mail($email,$subject,$body,$mailheaders);
 }
