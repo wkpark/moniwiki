@@ -26,9 +26,11 @@ function do_rss_blog($formatter,$options) {
 
     $blogs=Blog_cache::get_rc_blogs($date);
     $logs=Blog_cache::get_simple($blogs,$date);
+    $rss_name=$DBInfo->sitename;
   } else {
     $blogs=array($DBInfo->pageToKeyname($formatter->page->name));
     $logs=Blog_cache::get_summary($blogs,$date);
+    $rss_name=$formatter->page->name;
   }
     
   $time_current= time();
@@ -47,10 +49,10 @@ HEAD;
   $url=qualifiedUrl($formatter->link_url("RecentChanges"));
   $channel=<<<CHANNEL
 <channel rdf:about="$URL">
-  <title>$DBInfo->sitename</title>
+  <title>$rss_name</title>
   <link>$url</link>
   <description>
-    BlogChanges at $DBInfo->sitename
+    BlogChanges at $rss_name
   </description>
   <image rdf:resource="$img_url"/>
   <items>
