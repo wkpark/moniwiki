@@ -296,10 +296,64 @@ HEAD;
   print "};\n";
 }
 
+function do_download($formatter,$options) {
+  global $DBInfo;
+
+  if (!$options[value]) {
+    do_uploadedfiles($formatter,$options);
+    exit; 
+  }
+  $key=$DBInfo->pageToKeyname($formatter->page->name);
+  if (!$key) {
+
+    exit;
+  }
+  $dir=$DBInfo->upload_dir."/$key";
+
+  if (file_exists($dir))
+    $handle= opendir($dir);
+  else {
+    $dir=$DBInfo->upload_dir;
+    $handle= opendir($dir);
+  }
+  $file=explode("/",$options[value]);
+  $file=$file[count($file)-1];
+
+  if (!file_exists("$dir/$file")) {
+    exit;
+  }
+
+  $lines = file('/etc/mime.types');
+  foreach($lines as $line) {
+    rtrim($line);
+    if (preg_match('/^\#/', $line))
+      continue;
+    $elms = preg_split('/\s+/', $line);
+    $type = array_shift($elms);
+    foreach ($elms as $elm) {
+     $mime[$elm] = $type;
+    }
+  }
+  if (preg_match("/\.(.{1,4})$/",$file,$match))
+    $mimetype=$mime[$match[1]];
+  if (!$mimetype) $mimetype="text/plain";
+
+  header("Content-Type: $mimetype\r\n");
+  header("Content-Disposition: attachment; filename=$file" );
+  header("Content-Description: MoniWiki PHP Downloader" );
+  Header("Pragma: no-cache");
+  Header("Expires: 0");
+
+  $fp=readfile("$dir/$file");
+  return;
+  
+ 
+}
+
 function do_highlight($formatter,$options) {
 
   $formatter->send_header("",$options);
-  $formatter->send_title();
+  $formatter->send_title("","",$options);
 
   $formatter->highlight=$options[value];
   $formatter->send_page();
@@ -338,7 +392,7 @@ function do_post_DeleteFile($formatter,$options) {
       $title = sprintf(_("Invalid password !"));
   }
   $formatter->send_header("",$options);
-  $formatter->send_title($title);
+  $formatter->send_title($title,"",$options);
   print $log;
   $formatter->send_footer();
   return;
@@ -361,14 +415,14 @@ function do_DeletePage($formatter,$options) {
     } else {
       $title = sprintf(_("Fail to delete \"%s\" !"), $page->name);
       $formatter->send_header("",$options);
-      $formatter->send_title($title);
+      $formatter->send_title($title,"",$options);
       $formatter->send_footer();
       return;
     }
   }
   $title = sprintf(_("Delete \"%s\" ?"), $page->name);
   $formatter->send_header("",$options);
-  $formatter->send_title($title);
+  $formatter->send_title($title,"",$options);
   print "<form method='post'>
 Comment: <input name='comment' size='80' value='' /><br />
 Password: <input type='password' name='passwd' size='20' value='' />
@@ -407,13 +461,13 @@ function do_chmod($formatter,$options) {
       $title = sprintf(_("Permission of \"%s\" changed !"), $options[page]);
       $formatter->send_header("",$options);
       $formatter->send_title($title,"",$options);
-      $formatter->send_footer();
+      $formatter->send_footer("",$options);
       return;
     } else {
       $title = sprintf(_("Fail to chmod \"%s\" !"), $options[page]);
       $formatter->send_header("",$options);
-      $formatter->send_title($title);
-      $formatter->send_footer();
+      $formatter->send_title($title,"",$options);
+      $formatter->send_footer("",$options);
       return;
     }
   }
@@ -423,7 +477,7 @@ function do_chmod($formatter,$options) {
 
   $title = sprintf(_("Change permission of \"%s\""), $options[page]);
   $formatter->send_header("",$options);
-  $formatter->send_title($title);
+  $formatter->send_title($title,"",$options);
 #<tr><td align='right'><input type='checkbox' name='show' checked='checked' />show only </td><td><input type='password' name='passwd'>
   print "<form method='post'>
 <table border='0'>
@@ -448,19 +502,19 @@ function do_rename($formatter,$options) {
       $title = sprintf(_("\"%s\" is renamed !"), $options[page]);
       $formatter->send_header("",$options);
       $formatter->send_title($title,"",$options);
-      $formatter->send_footer();
+      $formatter->send_footer("",$options);
       return;
     } else {
       $title = sprintf(_("Fail to rename \"%s\" !"), $options[page]);
       $formatter->send_header("",$options);
-      $formatter->send_title($title);
-      $formatter->send_footer();
+      $formatter->send_title($title,"",$options);
+      $formatter->send_footer("",$options);
       return;
     }
   }
   $title = sprintf(_("Rename \"%s\" ?"), $options[page]);
   $formatter->send_header("",$options);
-  $formatter->send_title($title);
+  $formatter->send_title($title,"",$options);
 #<tr><td align='right'><input type='checkbox' name='show' checked='checked' />show only </td><td><input type='password' name='passwd'>
   print "<form method='post'>
 <table border='0'>
@@ -473,7 +527,7 @@ Only WikiMaster can rename this page</td></tr>
     <input type=hidden name='action' value='rename' />
     </form>";
 #  $formatter->send_page();
-  $formatter->send_footer();
+  $formatter->send_footer("",$options);
 }
 
 function do_RcsPurge($formatter,$options) {
@@ -484,14 +538,14 @@ function do_RcsPurge($formatter,$options) {
     if (!$check) {
       $title= sprintf(_("Invalid password to purge \"%s\" !"), $options[page]);
       $formatter->send_header("",$options);
-      $formatter->send_title($title);
-      $formatter->send_footer();
+      $formatter->send_title($title,"",$options);
+      $formatter->send_footer("",$options);
       return;
     }
   } else if ($DBInfo->purge_passwd) {
     $title= sprintf(_("You need to password to purge \"%s\""),$options[page]);
     $formatter->send_header("",$options);
-    $formatter->send_title($title);
+    $formatter->send_title($title,"",$options);
     $args[noaction]=1;
     $formatter->send_footer($args,$options);
     return;
@@ -503,7 +557,7 @@ function do_RcsPurge($formatter,$options) {
 #  }
   $title= sprintf(_("RCS purge \"%s\""),$options[page]);
   $formatter->send_header("",$options);
-  $formatter->send_title($title);
+  $formatter->send_title($title,"",$options);
   if ($options[range]) {
     foreach ($options[range] as $range) {
        printf("<h3>range '%s' purged</h3>",$range);
@@ -531,7 +585,7 @@ function do_fullsearch($formatter,$options) {
   else
     $title= sprintf(_("Full text search for \"%s\""), $options[value]);
   $formatter->send_header("",$options);
-  $formatter->send_title($title,$formatter->link_url("FindPage"));
+  $formatter->send_title($title,$formatter->link_url("FindPage"),$options);
 
   $out= macro_FullSearch($formatter,$options[value],&$ret);
   print $out;
@@ -574,9 +628,9 @@ function do_goto($formatter,$options) {
   } else {
      $title = _("Use more specific text");
      $formatter->send_header("",$options);
-     $formatter->send_title($title);
+     $formatter->send_title($title,"",$options);
      $args[noaction]=1;
-     $formatter->send_footer($args);
+     $formatter->send_footer($args,$options);
   }
 }
 
@@ -587,7 +641,7 @@ function do_LikePages($formatter,$options) {
   
   $title = $opts[msg];
   $formatter->send_header("",$options);
-  $formatter->send_title($title);
+  $formatter->send_title($title,"",$options);
   print $opts[extra];
   print $out;
   print $opts[extra];
@@ -724,7 +778,7 @@ function do_titlesearch($formatter,$options) {
   $out= macro_TitleSearch($formatter,$options[value],&$ret);
 
   $formatter->send_header("",$options);
-  $formatter->send_title($ret[msg],$formatter->link_url("FindPage"));
+  $formatter->send_title($ret[msg],$formatter->link_url("FindPage"),$options);
   print $out;
 
   if ($options[value])
@@ -751,7 +805,7 @@ function do_subscribe($formatter,$options) {
 
   if ($options[id] == 'Anonymous' or !$email) {
     $formatter->send_header("",$options);
-    $formatter->send_title($title);
+    $formatter->send_title($title,"",$options);
     $formatter->send_page("Goto UserPreferences\n");
     $formatter->send_footer();
 
@@ -769,7 +823,7 @@ function do_subscribe($formatter,$options) {
 
     $title = _("Subscribe lists updated.");
     $formatter->send_header("",$options);
-    $formatter->send_title($title);
+    $formatter->send_title($title,"",$options);
     $formatter->send_page("Goto [$options[page]]\n");
     $formatter->send_footer();
     return;
@@ -782,7 +836,7 @@ function do_subscribe($formatter,$options) {
 
   $title = sprintf(_("Do you want to subscribe \"%s\" ?"), $options[page]);
   $formatter->send_header("",$options);
-  $formatter->send_title($title);
+  $formatter->send_title($title,"",$options);
   print "<form method='post'>
 <table border='0'><tr>
 <th>Subscribe pages:</th><td><textarea name='subscribed_pages' cols='30' rows='5' value='' />$page_lists</textarea></td></tr>
@@ -793,7 +847,7 @@ function do_subscribe($formatter,$options) {
 </table>
     </form>";
 #  $formatter->send_page();
-  $formatter->send_footer();
+  $formatter->send_footer("",$options);
 
 }
 
@@ -811,7 +865,7 @@ function wiki_notify($formatter,$options) {
 
     $title=_("Nobody subscribed to this page, no mail sented.");
     $formatter->send_header("",$options);
-    $formatter->send_title($title);
+    $formatter->send_title($title,"",$options);
     print "Fail !";
     $formatter->send_footer("",$options);
     return;
@@ -856,7 +910,7 @@ function wiki_notify($formatter,$options) {
 
   $title=_("Send mail notification to all subscribers");
   $formatter->send_header("",$options);
-  $formatter->send_title($title);
+  $formatter->send_title($title,"",$options);
   $msg= str_replace("@"," at ",$mailto);
   print "<h2>".sprintf(_("Mail sented successfully"))."</h2>";
   printf(sprintf(_("mail sented to '%s'"),$msg));
@@ -877,22 +931,34 @@ function do_uploadfile($formatter,$options) {
   if (!$upfilename) {
      $title="No file selected";
      $formatter->send_header("",$options);
-     $formatter->send_title($title);
+     $formatter->send_title($title,"",$options);
+     $formatter->send_footer("",$options);
      return;
   }
   # upload file protection
   if ($DBInfo->pds_allowed)
      $pds_exts=$DBInfo->pds_allowed;
   else
-     $pds_exts="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|hwp";
+     $pds_exts="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|css|exe|hwp";
   if (!preg_match("/(".$pds_exts.")$/i",$fname[2])) {
      $title="$fname[2] extension does not allowed to upload";
      $formatter->send_header("",$options);
-     $formatter->send_title($title);
+     $formatter->send_title($title,"",$options);
+     $formatter->send_footer("",$options);
      return;
   }
+  $key=$DBInfo->pageToKeyname($formatter->page->name);
+  if ($key != 'UploadFile')
+    $dir= $DBInfo->upload_dir."/$key";
+  else
+    $dir= $DBInfo->upload_dir;
+  if (!file_exists($dir)) {
+    umask(000);
+    mkdir($dir,0777);
+    umask(02);
+  }
 
-  $file_path= $DBInfo->upload_dir."/".$upfilename;
+  $file_path= $dir."/".$upfilename;
 
   # is file already exists ?
   $dummy=0;
@@ -900,7 +966,7 @@ function do_uploadfile($formatter,$options) {
      $dummy=$dummy+1;
      $ufname=$fname[1]."_".$dummy; // rename file
      $upfilename=$ufname.".$fname[2]";
-     $file_path= $DBInfo->upload_dir."/".$upfilename;
+     $file_path= $dir."/".$upfilename;
   }
  
   $temp=explode("/",$HTTP_POST_FILES['upfile']['tmp_name']);
@@ -911,14 +977,14 @@ function do_uploadfile($formatter,$options) {
   if (!$test) {
      $title=sprintf(_("Fail to copy \"%s\" to \"%s\""),$upfilename,$file_path);
      $formatter->send_header("",$options);
-     $formatter->send_title($title);
+     $formatter->send_title($title,"",$options);
      return;
   }
   chmod($file_path,0644); 
   
   $title=sprintf(_("File \"%s\" is uploaded successfully"),$upfilename);
   $formatter->send_header("",$options);
-  $formatter->send_title($title);
+  $formatter->send_title($title,"",$options);
   print "<ins>Uploads:$upfilename</ins>";
   $formatter->send_footer();
 }
@@ -942,9 +1008,9 @@ function do_post_css($formatter,$options) {
     $options[css_url]=$options[user_css];
   }
   $formatter->send_header("",$options);
-  $formatter->send_title($title);
+  $formatter->send_title($title,"",$options);
   $formatter->send_page("Back to UserPreferences");
-  $formatter->send_footer();
+  $formatter->send_footer("",$options);
 }
 
 function do_new($formatter,$options) {
@@ -952,7 +1018,7 @@ function do_new($formatter,$options) {
   
   $title=_("Create a new page");
   $formatter->send_header("",$options);
-  $formatter->send_title($title);
+  $formatter->send_title($title,"",$options);
   $url=$formatter->link_url($formatter->page->name);
 
   $msg=_("Enter a page name");
@@ -982,20 +1048,20 @@ function do_bookmark($formatter,$options) {
       setcookie("MONI_BOOKMARK",$bookmark,time()+60*60*24*30,get_scriptname());
       # set the fake cookie
       $HTTP_COOKIE_VARS[MONI_BOOKMARK]=$bookmark;
-      $opts[msg] = 'Bookmark Changed';
+      $options[msg] = 'Bookmark Changed';
     } else {
       $udb=new UserDB($DBInfo);
       $userinfo=$udb->getUser($user->id);
       $userinfo->info[bookmark]=$bookmark;
       $udb->saveUser($userinfo);
-      $opts[msg] = 'Bookmark Changed';
+      $options[msg] = 'Bookmark Changed';
     }
   } else
-    $opts[msg]="Invalid bookmark!";
+    $options[msg]="Invalid bookmark!";
   $formatter->send_header("",$options);
-  $formatter->send_title($title,"",$opts);
+  $formatter->send_title($title,"",$options);
   $formatter->send_page();
-  $formatter->send_footer();
+  $formatter->send_footer("",$options);
 }
 
 function do_print($formatter,$options) {
@@ -1040,7 +1106,7 @@ function do_userform($formatter,$options) {
            else if ($ret==-2) $title= _("not acceptable character found in the password!");
        } else {
            if ($ret < 8)
-              $opts[msg]=_("Password is too simple to use as a password !");
+              $options[msg]=_("Password is too simple to use as a password !");
            $udb=new UserDB($DBInfo);
            $ret=$udb->addUser($user);
            if ($ret) {
@@ -1073,15 +1139,15 @@ function do_userform($formatter,$options) {
             $title= _("mismatch password !");
           else if ($ret==-2)
             $title= _("not acceptable character found in the password!");
-          $opts[msg]= _("Password is not changed !");
+          $options[msg]= _("Password is not changed !");
         } else {
           $title= _("Password is changed !");
           if ($ret < 8)
-            $opts[msg]=_("Password is too simple to use as a password !");
+            $options[msg]=_("Password is too simple to use as a password !");
         }
       } else {
         $title= _("Invalid password !");
-        $opts[msg]=_("Password is not changed !");
+        $options[msg]=_("Password is not changed !");
       }
     }
     if (isset($options[user_css]))
@@ -1092,14 +1158,14 @@ function do_userform($formatter,$options) {
       $userinfo->info[name]=$options[username];
     $udb->saveUser($userinfo);
     $options[css_url]=$options[user_css];
-    if (!isset($opts[msg]))
-      $opts[msg]=_("Profiles are saved successfully !");
+    if (!isset($options[msg]))
+      $options[msg]=_("Profiles are saved successfully !");
   }
 
   $formatter->send_header("",$options);
-  $formatter->send_title($title,"",$opts);
+  $formatter->send_title($title,"",$options);
   $formatter->send_page("Back to UserPreferences");
-  $formatter->send_footer();
+  $formatter->send_footer("",$options);
 }
 
 function macro_Include($formatter,$value="") {
@@ -1201,7 +1267,7 @@ function do_uploadedfiles($formatter,$options) {
   $list=macro_UploadedFiles($formatter,$options[page]);
 
   $formatter->send_header("",$options);
-  $formatter->send_title();
+  $formatter->send_title("",$options);
 
   $args[editable]=1;
   print $list;
@@ -1209,29 +1275,43 @@ function do_uploadedfiles($formatter,$options) {
   return;
 }
 
-function macro_UploadedFiles($formatter,$value="") {
+function macro_UploadedFiles($formatter,$value="",$options="") {
    global $DBInfo;
 
    $pages= array();
 
    if ($value) {
       $key=$DBInfo->pageToKeyname($value);
+      if ($key != $value)
+        $prefix=$formatter->link_url($value,"?action=download&amp;value=");
       $dir=$DBInfo->upload_dir."/$key";
    } else {
-      $dir=$DBInfo->upload_dir;
+      $key=$DBInfo->pageToKeyname($formatter->page->name);
+      if ($key != $formatter->page->name)
+        $prefix=$formatter->link_url($formatter->page->name,"?action=download&amp;value=");
+      $dir=$DBInfo->upload_dir."/$key";
    }
    if (file_exists($dir))
       $handle= opendir($dir);
-   else
-      return "<h2>"._("No such directory exists")."</h2>";
+   else {
+      $dir=$DBInfo->upload_dir;
+      $handle= opendir($dir);
+   }
+
+   $upfiles=array();
+   $dirs=array();
 
    while ($file= readdir($handle)) {
-      if (is_dir($dir."/".$file)) continue;
+      if (is_dir($dir."/".$file)) {
+        if ($file=='.' or $file=='..') continue;
+        $dirs[]= $DBInfo->keyToPagename($file);
+        continue;
+      }
       $upfiles[]= $file;
    }
    closedir($handle);
-   if (!$upfiles) return "<h3>No files uploaded</h3>";
-   sort($upfiles);
+   if (!$upfiles or !dirs) return "<h3>No files uploaded</h3>";
+   sort($upfiles); sort($dirs);
 
    $out="<form method='post' >";
    $out.="<input type='hidden' name='action' value='DeleteFile' />\n";
@@ -1240,9 +1320,17 @@ function macro_UploadedFiles($formatter,$value="") {
    $out.="<table border='0' cellpadding='2'>\n";
    $out.="<tr><th colspan='2'>File name</th><th>Size(byte)</th><th>Date</th></tr>\n";
    $idx=1;
-   $prefix=$DBInfo->url_prefix."/".$dir;
+   foreach ($dirs as $file) {
+      $link=$formatter->link_url($file,"?action=uploadedfiles",$file);
+      $date=date("Y-m-d",filemtime($dir."/".$DBInfo->pageToKeyname($file)));
+      $out.="<tr><td class='wiki'>&nbsp;</td><td class='wiki'><a href='$link'>$file</a></td><td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td></tr>\n";
+      $idx++;
+   }
+
+   if (!$prefix) $prefix=$DBInfo->url_prefix."/".$dir."/";
+
    foreach ($upfiles as $file) {
-      $link=$prefix."/".rawurlencode($file);
+      $link=$prefix.rawurlencode($file);
       $size=filesize($dir."/".$file);
       $date=date("Y-m-d",filemtime($dir."/".$file));
       $out.="<tr><td class='wiki'><input type='checkbox' name='files[$idx]' value='$file'></td><td class='wiki'><a href='$link'>$file</a></td><td align='right' class='wiki'>$size</td><td class='wiki'>$date</td></tr>\n";
@@ -1446,13 +1534,13 @@ function get_key($name) {
 function macro_LikePages($formatter="",$args="",$opts=array()) {
   global $DBInfo;
 
-  $pname=preg_quote($args);
+  $pname=_preg_escape($args);
 
   $metawiki=$opts[metawiki];
 
   if (strlen($pname) < 3) {
-     $opts[msg] = 'Use more specific text';
-     return '';
+    $opts[msg] = 'Use more specific text';
+    return '';
   }
 
   $s_re="^[A-Z][a-z0-9]+";
@@ -1476,12 +1564,12 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
   }
 
   if (!$end) {
-    $end=substr($pname,$s_len);
+    $end=substr($args,$s_len);
     preg_match("/(.{2,6})$/",$end,$match);
     $end=$match[1];
     $e_len=strlen($end);
     if ($e_len < 2) $end="";
-    else $end=preg_quote($end);
+    else $end=_preg_escape($end);
   }
 
   $starts=array();
@@ -2258,13 +2346,18 @@ function processor_latex($formatter="",$value="") {
   $dvips="dvips";
   $convert="convert";
   $vartmp_dir="/var/tmp";
-  $cache_dir="pds";
+  $cache_dir="pds/LaTeX";
   $option='-interaction=batchmode ';
 
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
 
   if (!$value) return;
+
+  if (!file_exists($cache_dir)) {
+    umask(000);
+    mkdir($cache_dir,0777);
+  }
 
   $tex=$value;
 
@@ -2322,7 +2415,7 @@ function processor_gnuplot($formatter="",$value="") {
   #$gnuplot="gnuplot";
   $gnuplot="/usr/local/bin/gnuplot_pm3d";
   $vartmp_dir="/var/tmp";
-  $cache_dir="pds";
+  $cache_dir="pds/GnuPlot";
 
   #
   if ($value[0]=='#' and $value[1]=='!')
@@ -2355,6 +2448,12 @@ set term png
 set out '$outpath'
 $plt
 ";
+
+  if (!file_exists($cache_dir)) {
+    umask(000);
+    mkdir($cache_dir,0777);
+    umask(022);
+  }
 
   #if (1 || $formatter->refresh || !file_exists("$cache_dir/$uniq.png")) {
   if ($formatter->refresh || !file_exists("$cache_dir/$uniq.png")) {
