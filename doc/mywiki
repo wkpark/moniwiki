@@ -1,0 +1,40 @@
+<?php
+/* from http://www.pmichaud.com/wiki/PmWiki/ChangePmWikiURL
+
+You may want to access your site without having 'wiki.php' appear in your
+address. There are two ways to accomplish your want.
+
+First, if you have root privilage to configure your web server(apache),
+simply add the following lines to your apache conf.
+
+  Alias /mywiki /path/to/wiki.php
+
+If you don't have a access permission to configure your web server,
+do the following workaround.
+
+Make a simple php script with no .php extension.
+------------- mywiki ----------
+<?php
+// chdir("/path/to/moniwiki");
+include("wiki.php"); 
+?>
+------------- 8X --------------
+
+Then, add the following lines to the .htaccess file in the same directory 
+as the 'mywiki' file (create the .htaccess file if doesn't exist):
+
+----------- .htaccess ---------
+<Files mywiki>
+SetHandler application/x-httpd-php
+</Files>
+----------- 8X ----------------
+
+This tells the apache webserver to treat the 'mywiki' file as a PHP script
+even though it doesn't have a .php extension.
+
+$Id$
+*/
+
+// chdir("/path/to/moniwiki");
+include("wiki.php");
+?>
