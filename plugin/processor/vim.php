@@ -8,7 +8,7 @@
 // }}}
 // $Id$
 
-function processor_vim($formatter,$value) {
+function processor_vim($formatter,$value,$options) {
   global $DBInfo;
   $cache_dir=$DBInfo->upload_dir."/VimProcessor";
 
@@ -17,8 +17,9 @@ function processor_vim($formatter,$value) {
           "haskell","lisp","st","objc","tcl","lua",
           "asm","masm","tasm","make",
           "awk","docbk","diff","html","tex","vim",
-          "xml","dtd","sql");
-  $options=array("number");
+          "xml","dtd","sql","conf","config","nosyntax","apache");
+
+  #$opts=array("number");
 
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
@@ -26,8 +27,14 @@ function processor_vim($formatter,$value) {
   if ($line)
     list($tag,$type,$extra)=explode(" ",$line,3);
   $src=$value;
+  if (!$type) $type='nosyntax';
 
-  $uniq=md5($src);
+  if ($extra == "number") 
+    $option='+"set number" ';
+  if ($DBInfo->vim_options)
+    $option.=$DBInfo->vim_options.' ';
+
+  $uniq=md5($option.$src);
   if (!file_exists($cache_dir)) {
     umask(000);
     mkdir($cache_dir,0777);
@@ -45,11 +52,6 @@ function processor_vim($formatter,$value) {
   # comment out the following two lines to freely use any syntaxes.
   if (!in_array($type,$syntax)) 
     return "<pre class='code'>\n$line\n$src\n</pre>\n";
-
-  if ($extra == "number") 
-    $option='+"set number" ';
-  if ($DBInfo->vim_options)
-    $option.=$DBInfo->vim_options;
 
   if(getenv("OS")=="Windows_NT") {
     $tohtml='\%VIMRUNTIME\%\\syntax\\2html.vim';
