@@ -1147,12 +1147,12 @@ class Formatter {
     $this->set_theme($options['theme']);
 
     #$this->baserule=array("/<([^\s][^>]*)>/","/`([^`]*)`/",
-    $this->baserule=array("/<([^\s<>])/","/`([^`]*)`/",
+    $this->baserule=array("/<([^\s<>])/","/`([^`']+)'/","/`([^`]*)`/",
                      "/'''([^']*)'''/","/(?<!')'''(.*)'''(?!')/",
                      "/''([^']*)''/","/(?<!')''(.*)''(?!')/",
                      "/\^([^ \^]+)\^(?:\s)/","/,,([^ ,]+),,(?:\s)/",
                      "/__([^ _]+)__(?:\s)/","/^-{4,}/");
-    $this->baserepl=array("&lt;\\1","<tt class='wiki'>\\1</tt>",
+    $this->baserepl=array("&lt;\\1","&#96;\\1'","<tt class='wiki'>\\1</tt>",
                      "<b>\\1</b>","<b>\\1</b>",
                      "<i>\\1</i>","<i>\\1</i>",
                      "<sup>\\1</sup>","<sub>\\1</sub>",
@@ -1193,9 +1193,9 @@ class Formatter {
     # protect WikiName rule !WikiName
     "(?<![a-z])\!?(?:\/?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b|".
     # single bracketed name [Hello World]
-    "(?<!\[)\[([^\[:,<\s][^\[:,>]+)\](?!\])|".
+    "(?<!\[)\!?\[([^\[:,<\s][^\[:,>]+)\](?!\])|".
     # bracketed with double quotes ["Hello World"]
-    "(?<!\[)\[\\\"([^\\\"]+)\\\"\](?!\])|".
+    "(?<!\[)\!\[\\\"([^\\\"]+)\\\"\](?!\])|".
   # "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
     "($urlrule)|".
     # single linkage rule ?hello ?abacus
