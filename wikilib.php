@@ -606,7 +606,8 @@ function macro_Edit($formatter,$value,$options='') {
   $preview_msg=_("Preview");
   $save_msg=_("Save");
   $summary_msg=_("Summary of Change");
-  $form.=<<<EOS
+  if ($DBInfo->use_resizer) {
+    $form.=<<<EOS
 <script language='javascript'>
 //<![CDATA[
 <!--
@@ -623,6 +624,7 @@ function resize(obj,val) {
 <input type='button' value='+' onClick='resize(this.form,3)'>
 <input type='button' value='-' onClick='resize(this.form,-3)'>
 EOS;
+  }
   $form.=<<<EOS
 <textarea class="wiki" id="content" wrap="virtual" name="savetext"
  rows="$rows" cols="$cols" class="wiki">$raw_body</textarea><br />
