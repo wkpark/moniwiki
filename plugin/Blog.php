@@ -20,7 +20,7 @@ function updateBlogList($formatter) {
       if (preg_match($rule,$file,$match)) {
         $fname=$DBInfo->cache_dir."/blogchanges/".$file;
         if (is_dir($fname)) continue;
-        print $fname;
+        #print $fname;
         unlink($fname);
       }
     }
