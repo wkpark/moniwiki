@@ -326,7 +326,7 @@ function macro_EditText($formatter,$value,$options='') {
     ob_end_clean();
 
     $editform= macro_Edit($formatter,'nohints,nomenu',$options);
-    $new=str_replace("\n#editform\n",$editform,$form);
+    $new=str_replace("\n#editform",$editform,$form);
     if ($form == $new) $form.=$editform;
     else $form=$new;
   } else {
@@ -1952,7 +1952,8 @@ function macro_Icon($formatter="",$value="",$extra="") {
 
 function macro_RecentChanges($formatter="",$value="") {
   global $DBInfo;
-  define(MAXSIZE,6000);
+  define(MAXSIZE,10000);
+  define(DEFSIZE,6000);
   $checknew=1;
 
   $template_bra="";
@@ -1987,7 +1988,7 @@ function macro_RecentChanges($formatter="",$value="") {
       $cat0="";
     }
   }
-  if ($size > MAXSIZE) $size=MAXSIZE;
+  if ($size > MAXSIZE) $size=DEFSIZE;
 
   $user=new User(); # retrive user info
   if ($user->id == 'Anonymous')
@@ -2072,7 +2073,7 @@ function macro_RecentChanges($formatter="",$value="") {
     $pageurl=_rawurlencode($page_name);
 
     if (!$DBInfo->hasPage($page_name))
-      $icon= "&nbsp;&nbsp;".$formatter->link_tag($pageurl,"?action=diff",$formatter->icon[del]);
+      $icon= $formatter->link_tag($pageurl,"?action=diff",$formatter->icon[del]);
     else if ($ed_time > $bookmark) {
       $icon= $formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon[updated]);
       if ($checknew) {
@@ -2083,7 +2084,7 @@ function macro_RecentChanges($formatter="",$value="") {
             $formatter->link_tag($pageurl,"?action=info",$formatter->icon['new']);
       }
     } else
-      $icon= "&nbsp;&nbsp;".$formatter->link_tag($pageurl,"?action=diff",$formatter->icon[diff]);
+      $icon= $formatter->link_tag($pageurl,"?action=diff",$formatter->icon[diff]);
 
     $title= preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$page_name);
     $title= $formatter->link_tag($pageurl,"",$title);
