@@ -3150,16 +3150,21 @@ $options['timer']->Check("load");
 $lang= set_locale($DBInfo->lang,$DBInfo->charset);
 
 if (isset($locale)) {
-  $lf="locale/".$lang."/LC_MESSAGES/moniwiki.php";
-  if (!file_exists($lf)) {
-    $lang=substr($lang,0,2);
-    $lf="locale/".$lang."/LC_MESSAGES/moniwiki.php";
-  }
-  if (file_exists($lf)) include_once($lf);
+  @include_once('locale/'.$lang.'/LC_MESSAGES/moniwiki.php') or
+    @include_once('locale/'.substr($lang,0,2).'/LC_MESSAGES/moniwiki.php');
 } else if (substr($lang,0,2) != 'en') {
+  if ($DBInfo->include_path) $dirs=explode(':',$DBInfo->include_path);
+  else $dirs=array('.');
+
   $test=setlocale(LC_ALL, $lang);
-  bindtextdomain("moniwiki", "locale");
-  textdomain("moniwiki");
+  foreach ($dirs as $dir) {
+    $ldir=$dir.'/locale';
+    if (is_dir($ldir)) {
+      bindtextdomain('moniwiki', $ldir);
+      textdomain("moniwiki");
+      break;
+    }
+  }
 }
 
 $pagename=get_pagename();
