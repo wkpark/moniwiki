@@ -1331,7 +1331,7 @@ class Formatter {
     $this->themedir= dirname(__FILE__);
     $this->set_theme($options['theme']);
 
-    $this->external_on=1;
+    $this->external_on=0;
     $this->external_target='';
     if ($DBInfo->external_target)
       $this->external_target='target="'.$DBInfo->external_target.'" ';
@@ -1370,7 +1370,7 @@ class Formatter {
     }
 
     #$punct="<\"\'}\]\|;,\.\!";
-    $punct="<\'}\]\|;\.\!"; # , is omitted for the WikiPedia
+    $punct="<\'}\]\)\|;\.\!"; # , is omitted for the WikiPedia
     $url="wiki|http|https|ftp|nntp|news|irc|telnet|mailto|file|attachment";
     if ($DBInfo->url_schemas) $url.='|'.$DBInfo->url_schemas;
     $urlrule="((?:$url):([^\s$punct]|(\.?[^\s$punct]))+)";
