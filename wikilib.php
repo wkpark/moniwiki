@@ -76,6 +76,13 @@ function log_referer($referer,$page) {
   fclose($fp);
 }
 
+function toutf8($uni) {
+  $utf[0]=0xe0 | ($uni >> 12);
+  $utf[1]=0x80 | (($uni >> 6) & 0x3f);
+  $utf[2]=0x80 | ($uni & 0x3f);
+  return chr($utf[0]).chr($utf[1]).chr($utf[2]);
+}
+
 class UserDB {
   var $users=array();
   function UserDB($WikiDB) {
@@ -334,8 +341,12 @@ function do_diff($formatter,$options="") {
         $rr.=":".$range[$r];
       $dum[]=$rr;$rr='';
     }
-    $options['range']=$dum;
-    do_RcsPurge($formatter,$options);
+    $dum=join(';',$dum);
+    $query="?action=rcspurge&amp;range=$dum";
+    if ($options['show']) $query.="&amp;show=1";
+    $options['url']=qualifiedURL($formatter->link_url($options['page'],$query));
+    do_goto($formatter,$options);
+    #do_RcsPurge($formatter,$options);
     return;
   }
   $formatter->send_header("",$options);
@@ -673,12 +684,19 @@ function do_RcsPurge($formatter,$options) {
     $formatter->send_footer();
     return;
   }
+  if (!preg_match("/^[\d:;\.]+$/",$options['range'])) {
+    $options['title']=_("Invalid rcsclean range");
+    do_invalid($formatter,$options);
+    return;
+  }
      
   $title= sprintf(_("RCS purge \"%s\""),$options['page']);
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
   if ($options['range']) {
-    foreach ($options['range'] as $range) {
+    $ranges=explode(';',$options['range']);
+    foreach ($ranges as $range) {
+       if (!trim($range)) continue;
        printf("<h3>range '%s' purged</h3>",$range);
        if ($options['show'])
          print "<tt>rcs -o$range ".$options['page']."</tt><br />";
@@ -1238,7 +1256,7 @@ function do_userform($formatter,$options) {
               $options['msg']=_("Your password is too simple to use as a password !");
            $udb=new UserDB($DBInfo);
            if ($options['email']) {
-             if (preg_match('/^[a-z][a-z0-9_]+@[a-z0-9_]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
+             if (preg_match('/^[a-z][a-z0-9_\-]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
                #$user->info['email']=$options['email'];
              } else
                $options['msg'].='<br/>'._("Your email address is not valid");
@@ -1252,7 +1270,7 @@ function do_userform($formatter,$options) {
               $ret=$udb->addUser($user);
 
               # XXX
-              if ($options['email'] and preg_match('/^[a-z][a-z0-9_]+@[a-z0-9_]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
+              if ($options['email'] and preg_match('/^[a-z][a-z0-9_\-]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
                 $options['subject']="[$DBInfo->sitename] "._("E-mail confirmation");
                 $body=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
                 $body=_("Please confirm your email address")."\n".$body;
@@ -1301,7 +1319,7 @@ function do_userform($formatter,$options) {
     if (isset($options['user_css']))
       $userinfo->info['css_url']=$options['user_css'];
     if ($options['email'] and ($options['email'] != $userinfo->info['email'])) {
-      if (preg_match('/^[a-z][a-z0-9_]+@[a-z0-9_]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
+      if (preg_match('/^[a-z][a-z0-9_\-]+@[a-a][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
         $ticket=md5(time().$userinfo->info['id'].$options['email']);
         $userinfo->info['eticket']=$ticket.".".$options['email'];
         $options['subject']="[$DBInfo->sitename] "._("E-mail confirmation");
@@ -1679,13 +1697,6 @@ function macro_InterWiki($formatter="") {
 }
 
 
-function toutf8($uni) {
-  $utf[0]=0xe0 | ($uni >> 12);
-  $utf[1]=0x80 | (($uni >> 6) & 0x3f);
-  $utf[2]=0x80 | ($uni & 0x3f);
-  return chr($utf[0]).chr($utf[1]).chr($utf[2]);
-}
-
 function get_key($name) {
   global $DBInfo;
   if (preg_match('/[a-z0-9]/i',$name[0])) {
@@ -1717,19 +1728,21 @@ function get_key($name) {
     return '~';
   } else {
     if (preg_match('/[a-z0-9]/i',$name[0])) {
-       return strtoupper($name[0]);
+      return strtoupper($name[0]);
     }
     # php does not have iconv() EUC-KR assumed
-    # (from NoSmoke monimoin)
-    $korean=array('가','나','다','라','마','바','사','아',
-                  '자','차','카','타','파','하',"\xca");
-    $lastPosition='~';
+    # (from NoSmoke moinmoin)
+    if (strtolower($DBInfo->charset) == 'euc-kr') {
+      $korean=array('가','나','다','라','마','바','사','아',
+                    '자','차','카','타','파','하',"\xca");
+      $lastPosition='~';
 
-    $letter=substr($name,0,2);
-    foreach ($korean as $position) {
-       if ($position > $letter)
-           return $lastPosition;
-       $lastPosition=$position;
+      $letter=substr($name,0,2);
+      foreach ($korean as $position) {
+        if ($position > $letter)
+          return $lastPosition;
+        $lastPosition=$position;
+      }
     }
     return '~';
   }
@@ -1911,36 +1924,6 @@ function macro_PageLinks($formatter="",$options="") {
     $links=$f->get_pagelinks();
     $links=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$links);
     $out.=$links."</li>\n";
-  }
-  $out.="</ul>\n";
-  return $out;
-}
-
-function macro_WantedPages($formatter="",$options="") {
-  global $DBInfo;
-  $pages = $DBInfo->getPageLists();
-
-  $cache=new Cache_text("pagelinks");
-  foreach ($pages as $page) {
-    $p= new WikiPage($page);
-    $f= new Formatter($p);
-    $links=$f->get_pagelinks();
-    if ($links) {
-      $lns=explode("\n",$links);
-      foreach($lns as $link) {
-        if (!$link or $DBInfo->hasPage($link)) continue;
-        if ($link and !$wants[$link])
-          $wants[$link]="[\"$page\"]";
-        else $wants[$link].=" [\"$page\"]";
-      }
-    }
-  }
-
-  asort($wants);
-  $out="<ul>\n";
-  while (list($name,$owns) = each($wants)) {
-    $owns=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$owns);
-    $out.="<li>".$formatter->link_repl($name). ": $owns</li>";
   }
   $out.="</ul>\n";
   return $out;
@@ -2552,25 +2535,6 @@ function macro_GoTo($formatter="",$value="") {
     <input name='value' size='30' value='$value' />
     <input type='submit' value='Go' />
     </form>";
-}
-
-function macro_SystemInfo($formatter="",$value="") {
-  global $_revision,$_release;
-
-  $version=phpversion();
-  $uname=php_uname();
-  list($aversion,$dummy)=explode(" ",$_SERVER['SERVER_SOFTWARE'],2);
-
-  $pages=macro_PageCount($formatter);
-   
-  return <<<EOF
-<table border='0' cellpadding='5'>
-<tr><th width='200'>PHP Version</th> <td>$version ($uname)</td></tr>
-<tr><th>MoniWiki Version</th> <td>Release $_release [$_revision]</td></tr>
-<tr><th>Apache Version</th> <td>$aversion</td></tr>
-<tr><th>Number of Pages</th> <td>$pages</td></tr>
-</table>
-EOF;
 }
 
 function processor_html($formatter="",$value="") {
