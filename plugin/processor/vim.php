@@ -9,9 +9,11 @@
 // $Id$
 
 function processor_vim($formatter,$value) {
-  $syntax=array("php","c","python","sh","cpp","diff",
-                "tex","java","ruby", "forth", "fortran","vim","perl",
-                "haskell","lisp","html","st","objc");
+  $syntax=array("php","c","python","jsp","sh","cpp",
+          "java","ruby","forth","fortran","perl",
+          "haskell","lisp","st","objc","tcl","lua",
+          "asm","masm","tasm","make",
+          "awk","docbk","diff","html","tex","vim",);
   $options=array("number");
 
   if ($value[0]=='#' and $value[1]=='!')
@@ -21,8 +23,10 @@ function processor_vim($formatter,$value) {
     list($tag,$type,$extra)=explode(" ",$line,3);
   $src=$value;
 
+  # comment out the following two lines to freely use any syntaxes.
   if (!in_array($type,$syntax)) 
     return "<pre class='code'>\n$line\n$src\n</pre>\n";
+
   if ($extra == "number") 
     $option='+"set number" ';
 
