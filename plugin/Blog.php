@@ -12,7 +12,7 @@ function updateBlogList($formatter) {
   $cache=new Cache_text("blog");
   $changecache=new Cache_text("blogchanges");
 
-  $rule="/^(\d*)".'_2e'.$DBInfo->pageToKeyname($formatter->page->name).'$/';
+  $rule="/^(\d*)".$DBInfo->pageToKeyname('.'.$formatter->page->name).'$/';
 
   $handle = @opendir($DBInfo->cache_dir."/blogchanges");
   if ($handle) {
@@ -60,7 +60,8 @@ function updateBlogList($formatter) {
     }
   }
   $log=join("\n",$entries)."\n";
-  $changecache->update($datestamp.'.'.$formatter->page->name,$log);
+  if ($datestamp)
+    $changecache->update($datestamp.'.'.$formatter->page->name,$log);
 
   $logs.=$log;
   $cache->update($formatter->page->name,$logs);
@@ -242,7 +243,6 @@ FORM;
 <input type="hidden" name="action" value="Blog" />
 <input type="hidden" name="datestamp" value="$datestamp" />
 <input type="submit" value="Save" />&nbsp;
-<input type="reset" value="Reset" />&nbsp;
 <input type="submit" name="button_preview" value="Preview" />
 $extra
 </form>
@@ -284,7 +284,6 @@ FORM;
 <input type="hidden" name="action" value="Blog" />
 <input type="hidden" name="datestamp" value="$datestamp" />
 <input type="submit" value="Save" />&nbsp;
-<input type="reset" value="Reset" />&nbsp;
 <input type="submit" name="button_preview" value="Preview" />
 </form>
 FORM2;
