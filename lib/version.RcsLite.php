@@ -40,11 +40,10 @@ class Version_RcsLite extends Version_RCS {
     return $this->rcs->rlog($rev,$opt,$oldopt);
   }
 
-  function diff($pagename,$rev,$rev2) {
+  function diff($pagename,$rev='',$rev2='') {
     $filename=$this->_filename($pagename);
     $this->rcs->_process($filename);
 
-    #print $rev.":".$rev2;
     $out=$this->rcs->revisionDiff($rev,$rev2,'udiff'); // XXX
 
     return $out;
@@ -54,15 +53,15 @@ class Version_RcsLite extends Version_RCS {
   }
 
   function delete($pagename) {
-    $keyname=$DB->_getPageKey($pagename);
-    @unlink($DB->text_dir.'/'.$this->rcs_dir."/$keyname,v");
+    $keyname=$this->DB->_getPageKey($pagename);
+    @unlink($this->DB->text_dir.'/'.$this->rcs_dir."/$keyname,v");
   }
 
   function rename($pagename,$new) {
-    $keyname=$DB->_getPageKey($new);
-    $oname=$DB->_getPageKey($pagename);
-    rename($DB->text_dir.'/'.$this->rcs_dir."/$oname,v",
-      $DB->text_dir.'/'.$this->rcs_dir."/$keyname,v");
+    $keyname=$this->DB->_getPageKey($new);
+    $oname=$this->DB->_getPageKey($pagename);
+    rename($this->DB->text_dir.'/'.$this->rcs_dir."/$oname,v",
+      $this->DB->text_dir.'/'.$this->rcs_dir."/$keyname,v");
   }
 
   function get_rev($pagename,$mtime='',$last=0) {
