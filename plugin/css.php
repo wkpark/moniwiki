@@ -9,8 +9,8 @@ function do_css($formatter,$options) {
   global $DBInfo;
   global $HTTP_COOKIE_VARS;
 
-  if ($options[clear]) {
-    if ($options[id]=='Anonymous') {
+  if ($options['clear']) {
+    if ($options['id']=='Anonymous') {
       header("Set-Cookie: MONI_CSS=dummy; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname());
       $options[css_url]="";
     } else {
@@ -60,7 +60,7 @@ FORM;
 
 function macro_Css($formatter="") {
   global $DBInfo;
-  if ($DBInfo->theme) return "CSS disabled !";
+  if ($DBInfo->theme_css) return "CSS disabled !";
   $out="
 <form method='post'>
 <input type='hidden' name='action' value='css' />

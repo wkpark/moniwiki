@@ -52,7 +52,7 @@ function macro_WordIndex($formatter,$value) {
     $out.= "<h4>$word</h4>\n";
     $out.= "<ul>\n";
     foreach ($pages as $page)
-      $out.= '<li>' . $formatter->word_repl($page)."</li>\n";
+      $out.= '<li>' . $formatter->word_repl('"'.$page.'"')."</li>\n";
     $out.= "</ul>\n";
   }
 
