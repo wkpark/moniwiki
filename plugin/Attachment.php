@@ -10,7 +10,10 @@
 
 function macro_Attachment($formatter,$value) {
   global $DBInfo;
-  if (($dummy=strtok($value,',:')) and $DBInfo->hasPage($dummy)) {
+
+  $attr='';
+
+  if (($dummy=strtok($value,':')) and $DBInfo->hasPage($dummy)) {
     $key=$DBInfo->pageToKeyname($dummy);
     $value=strtok('');
     $pagename=$dummy;
@@ -26,6 +29,11 @@ function macro_Attachment($formatter,$value) {
       $attr.="$name=\"$val\" ";
 
     if ($attrs['align']) $attr.='class="img'.ucfirst($attrs['align']).'" ';
+  } else if (($dummy=strpos($value,','))) {
+    $args=explode(',',substr($value,$dummy+1));
+    $value=substr($value,0,$dummy);
+    foreach ($args as $arg)
+      $attr.="$arg ";
   }
   $upload_file=$DBInfo->upload_dir."/$key/$value";
 
