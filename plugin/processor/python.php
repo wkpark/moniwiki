@@ -8,8 +8,6 @@
 // }}}
 // $Id$
 
-if (!function_exists("processor_vim")) include("vim.php");
-
 function processor_python($formatter,$value="") {
 
   if ($value[0]=='#' and $value[1]=='!')
@@ -17,7 +15,7 @@ function processor_python($formatter,$value="") {
   else
     $value="#!vim python\n".$value;
   # get parameters
-  return processor_vim($formatter,$value);
+  return $formatter->processor_repl('vim',$value);
 }
 
 ?>
