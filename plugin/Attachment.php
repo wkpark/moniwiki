@@ -17,7 +17,7 @@ function macro_Attachment($formatter,$value) {
 
   $text='';
   if (($p=strpos($value,' ')) !== false) { // XXX for [attachment:my.ext hello]
-    $text=substr($value,$p);
+    $text=substr($value,$p+1);
     $value=substr($value,0,$p);
   }
 
