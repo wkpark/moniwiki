@@ -308,7 +308,9 @@ function do_highlight($formatter,$options) {
   $formatter->send_header("",$options);
   $formatter->send_title("","",$options);
 
-  $formatter->highlight=stripslashes($options['value']);
+  $expr= stripslashes($options['value']);
+
+  $formatter->highlight=$expr;
   $formatter->send_page();
   $args['editable']=1;
   $formatter->send_footer($args,$options);
@@ -744,8 +746,25 @@ function do_goto($formatter,$options) {
        $url=$formatter->link_url($url,"");
      $formatter->send_header(array("Status: 302","Location: ".$url),$options);
   } else if ($options['url']) {
-     $url=str_replace("&amp;","&",$options['url']);
-     $formatter->send_header(array("Status: 302","Location: ".$url),$options);
+    $url=$options['url'];
+
+    if ($options['ie']) $from=strtoupper($options['ie']);
+    else $from=strtoupper($DBInfo->charset);
+    if ($options['oe']) $to=strtoupper($options['oe']);
+
+    if ($to and $to != $from) {
+      $url=urldecode($url);
+
+      if ($to and function_exists("iconv")) {
+        $new=iconv($DBInfo->charset,$to,$url);
+        if ($new) $url=_urlencode($new);
+      } else {
+        $buf=exec(escapeshellcmd("echo ".$options[page])." | ".escapeshellcmd("iconv -f $DBInfo->charset -t $to"));
+        $url=_urlencode($buf);
+      }
+    }
+    $url=str_replace("&amp;","&",$url);
+    $formatter->send_header(array("Status: 302","Location: ".$url),$options);
   } else {
      $title = _("Use more specific text");
      $formatter->send_header("",$options);
@@ -782,6 +801,12 @@ function do_titleindex($formatter,$options) {
 function do_titlesearch($formatter,$options) {
 
   $out= macro_TitleSearch($formatter,$options['value'],&$ret);
+
+  if ($ret['hits']==1) {
+    $options['value']=$ret['value'];
+    do_goto($formatter,$options);
+    return;
+  }
 
   $formatter->send_header("",$options);
   $formatter->send_title($ret['msg'],$formatter->link_url("FindPage"),$options);
@@ -2041,6 +2066,7 @@ function macro_Icon($formatter,$value='',$extra='') {
 }
 
 function do_RecentChanges($formatter,$options='') {
+  $options['trail']='';
   $formatter->send_header("",$options);
   print "<div id='wikiBody'>";
   print macro_RecentChanges($formatter,'nobookmark,moztab',array('target'=>'_content'));
@@ -2395,7 +2421,13 @@ EOF;
      $opts['msg'] = 'No search text';
      return $form;
   }
+  # XXX
+  if ($opts['noexpr']) {
+    $tmp=preg_split("/\s+/",$needle);
+    $needle=$value=join('|',$tmp);
+  }
   $needle=_preg_search_escape($needle);
+
   $test=@preg_match("/$needle/","",$match);
   if ($test === false) {
      $opts['msg'] = sprintf(_("Invalid search expression \"%s\""), $needle);
@@ -2505,6 +2537,8 @@ function macro_TitleSearch($formatter="",$needle="",$opts=array()) {
 
   $out.="</ul>\n";
   $opts['hits']= count($hits);
+  if ($opts['hits']==1)
+    $opts['value']=array_pop($hits);
   $opts['all']= count($pages);
   return $out;
 }
