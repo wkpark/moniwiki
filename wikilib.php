@@ -1668,9 +1668,15 @@ function macro_TableOfContents($formatter="",$value="") {
    $head=$match[3];
    $head=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$head);
 
-   $depth=$dep;
-   if ($dep==1) $depth++; # depth 1 is regarded same as depth 2
-   $depth--;
+   if (!$depth_top) { $depth_top=$dep; $depth=1; }
+   else {
+     $depth=$dep - $depth_top + 1;
+     if ($depth <= 0) $depth=1;
+   }
+
+#   $depth=$dep;
+#   if ($dep==1) $depth++; # depth 1 is regarded same as depth 2
+#   $depth--;
 
    $num="".$head_num;
    $odepth=$head_dep;
@@ -1713,7 +1719,7 @@ function macro_TableOfContents($formatter="",$value="") {
   if ($TOC) {
      $close="";
      $depth=$head_dep;
-     while ($depth>2) { $depth--;$close.="</dl></dd>\n"; };
+     while ($depth>1) { $depth--;$close.="</dl></dd>\n"; };
      return $TOC.$close."</dl></dd></dl>\n";
   }
   else return "";
