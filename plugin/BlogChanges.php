@@ -53,17 +53,19 @@ class Blog_cache {
     $temp= explode("\n",$raw);
 
     foreach ($temp as $line) {
-      $line=str_replace('/','_2f',$line);
       if (preg_match('/^ \* ([^ ]+)(?=\s|$)/',$line,$match)) {
         $category=$match[1];
         if (!$categories[$category])
           // include category page itself.
           $categories[$category]=array($category);
-      } else if ($category and preg_match('/^\s{2,}\* ([^ ]+)(?=\s|$)/',$line,$match)) {
+      } else if ($category
+        and preg_match('/^\s{2,}\* ([^ ]+)(?=\s|$)/',$line,$match)) {
+        // sub category (or blog pages list)
         $categories[$category][]=$match[1];
+        // all items are regarded as a category
+        $categories[$match[1]]=array($match[1]);
       }
     }
-    #print_r($categories);
     return $categories;
   }
 
@@ -74,7 +76,7 @@ class Blog_cache {
     if (!$daterule)
       $daterule=Blog_cache::get_daterule();
 
-    $rule="/^($daterule\d*)".'_2e('.join('|',$blogs).')$/';
+    $rule="/^($daterule\d*)".'_2e('.implode('|',$blogs).')$/';
 
     $logs=array();
 
@@ -91,7 +93,6 @@ class Blog_cache {
     rsort($filelist);
 
     while ((list($key, $file) = each ($filelist))) {
-      #echo "<b>$file</b><br>";
       if (preg_match($rule,$file,$match)) {
         $fname=$DBInfo->cache_dir."/blogchanges/".$file;
         $datestamp=$match[1];
@@ -120,19 +121,22 @@ class Blog_cache {
     if (!$date)
       $date=Blog_cache::get_daterule();
 
+    $pages=array_map('_preg_search_escape',$pages);
     if ($pages) $pagerule=implode('|',$pages);
     else $pagerule='.*';
     $rule="/^($date\d*)_2e($pagerule)$/";
+
     while ($file = readdir($handle)) {
       $fname=$DBInfo->cache_dir."/blogchanges/".$file;
       if (is_dir($fname)) continue;
+
+      $file=str_replace('_2f','/',$file); // XXX
       if (preg_match($rule,$file,$match))
         $blogs[]=$match[2];
     }
-
+    #print_r($blogs);
     return array_unique($blogs);
   }
-
 
   function get_summary($blogs,$options) {
     global $DBInfo;
@@ -187,29 +191,36 @@ class Blog_cache {
 }
 
 function BlogCompare($a,$b) {
-  # third field is a date
   if ($a[2] == $b[2]) return 0;
-#    return strcmp($a[3],$b[3]);
+  # date:2nd field
+  # title:3rd field
+  # return strcmp($a[3],$b[3]);
   return ($a[2] > $b[2]) ? -1:1;
 }
 
 function do_BlogChanges($formatter,$options='') {
-  if (!$options['date']) $options['date']=date('Ym');
+#  if (!$options['date']) $options['date']=date('Ym');
   $options['action']=1;
   $options['summary']=1;
   $options['simple']=1;
   $options['all']=1;
+# $options['mode'] // XXX
 
   $changes=macro_BlogChanges($formatter,'all,'.$options['mode'],$options);
   $formatter->send_header('',$options);
   if ($options['category'])
-    $formatter->send_title($options['category'],'',$options);
+    $formatter->send_title(_("Category: ").$options['category'],'',$options);
   else
     $formatter->send_title(_("BlogChanges"),'',$options);
   print '<div id="wikiContent">';
   print $changes;
   print '</div>';
-  $formatter->send_footer('',$options);
+  #$args['editable']=-1;
+  // XXX
+  $formatter->pi['#action']='BlogCategories';
+  $args['noaction']=1;
+
+  $formatter->send_footer($args,$options);
   return;
 }
 
@@ -222,40 +233,42 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
   else
     $date=$options['date'];
 
-  preg_match("/^(?(?=')'([^']+)'|\"([^\"]+)\")?,?(\d+)?(\s*,?\s*.*)?$/",
+  // parse args
+  preg_match("/^(?(?=')'([^']+)'|\"([^\"]+)\")?,?(\s*,?\s*.*)?$/",
     $value,$match);
 
-  $opts=explode(',',$match[4]);
+  $opts=explode(',',$match[3]);
   $opts=array_merge($opts,array_keys($options));
+  #print_r($match);print_r($opts);
 
   $category_pages=array();
-  if (in_array('all',$opts) and ($match[2] or $match[1] and $options['category'])) {
-    // set selected category with 'all' option
-    $match[1]=$match[1] ? $match[1]:$match[2];
-    $options['category']=$options['category'] ? $options['category']:$match[1];
+
+  $match[1]=$match[1] ? $match[1]:$match[2];
+  $options['category']=$options['category'] ? $options['category']:$match[1];
+  if ($options['category']) {
     if ($DBInfo->blog_category) {
       $categories=Blog_cache::get_categories();
       if ($categories[$options['category']])
         $category_pages=$categories[$options['category']];
-      else
+    }
+    if (!$category_pages) {
+      if ($DBInfo->hasPage($options['category'])) {
         // category does not found
         // regard it as a single blog page
-        $options['blogpage']=$options['category'];
+        $blog_page=$options['category'];
+      } else {
+        // or category pattern like as 'Blog/Misc/.*'
+        $category_pages=array($options['category']);
+      }
     }
-  } else if ($match[2] or $match[1]) {
-    // set selected single blog page
-    $options['blogpage']=$match[1] ? $match[1]:$match[2];
   }
 
-  if ($match[3]) {
-    $options['limit']=$limit=$match[3];
-  } else {
+  foreach ($opts as $opt)
+    if ($limit= intval($opt)) break;
+  if (!$limit) {
     if ($date) $limit=30;
     else $limit=10;
   }
-
-  # check error and set default value
-  # default: show BlogChages monthly
 
   #print_r($category_pages);
   if (in_array('all',$opts) or $category_pages) {
@@ -263,10 +276,15 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
       $blogs=Blog_cache::get_rc_blogs($date,$category_pages);
     else
       $blogs=Blog_cache::get_blogs();
-  } else if ($options['blogpage'])
-    $blogs=array($DBInfo->pageToKeyname($options['blogpage']));
+  } else if ($blog_page)
+    $blogs=array($DBInfo->pageToKeyname($blog_page));
   else
     $blogs=array($DBInfo->pageToKeyname($formatter->page->name));
+
+#  if (empty($blogs)) {
+#    // no blog entries found
+#    return _("No entries found");
+#  }
 
   if (in_array('summary',$opts))
     $logs=Blog_cache::get_summary($blogs,$options);
@@ -283,6 +301,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
 
   if (strlen($date)==8) {
     $prev_date= date('Ymd',mktime(0,0,0,$month,intval($day) - 1,$year));
+    $next_date= date('Ymd',mktime(0,0,0,$month,intval($day) + 1,$year));
   } else if (strlen($date)==6) {
     $cdate=date('Ym');
     $prev_date= date('Ym',mktime(0,0,0,intval($month) - 1,1,$year));
@@ -290,7 +309,8 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
       $next_date= date('Ym',mktime(0,0,0,intval($month) + 1,1,$year));
   }
 
-  if (in_array('simple',$opts)) {
+  // set output style
+  if (in_array('simple',$opts) or in_array('summary',$opts)) {
     $bra="";
     $sep="<br />";
     $bullet="";
@@ -301,47 +321,52 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
     $sep="</li>\n";
     $cat="</ul>";
   }
-  $template='$out="$bullet<a href=\"$url#$tag\">$title</a> <span class=\"blog-user\">';
+  $template='$out="$bullet<a href=\"$url#$tag\">$title</a> '.
+    '<span class=\"blog-user\">';
   if (in_array('summary',$opts))
-  $template='$out="$bullet<div class=\"blog-title\"><a name=\"$tag\"></a><a href=\"$url#$tag\">$title</a> <a class=\"puple\" href=\"#$tag\">'.addslashes($formatter->purple_icon).'</a></div><span class=\"blog-user\">';
+    $template='$out="$bullet<div class=\"blog-title\"><a name=\"$tag\"></a>'.
+      '<a href=\"$url#$tag\">$title</a> <a class=\"puple\" href=\"#$tag\">'.
+      addslashes($formatter->purple_icon).
+      '</a></div><span class=\"blog-user\">';
   if (!in_array('nouser',$opts))
     $template.='by $user ';
   if (!in_array('nodate',$opts))
     $template.='@ $date ';
 
-  if (in_array('summary',$opts)) {
+  if (in_array('summary',$opts))
     $template.='</span><div class=\"blog-summary\">$summary</div>$sep\n";';
-  }
   else
     $template.='</span>$sep\n";';
     
   $time_current= time();
-  $items="";
+  $items='';
 
   foreach ($logs as $log) {
     list($page, $user,$date,$title,$summary)= $log;
-    $tag=md5($user." ".$date." ".$title);
+    $tag=md5($user.' '.$date.' '.$title);
     $datetag='';
 
     $url=qualifiedUrl($formatter->link_url(_urlencode($page)));
     if (!$opts['nouser'] and $user and $DBInfo->hasPage($user))
-      $user=$formatter->link_tag(_rawurlencode($user),"",$user);
+      $user=$formatter->link_tag(_rawurlencode($user),'',$user);
 
     if (!$title) continue;
 
     $date[10]=' ';
-    $time=strtotime($date." GMT");
+    $time=strtotime($date.' GMT');
 
-    $date= date("m-d [h:i a]",$time);
+    $date= date('m-d [h:i a]',$time);
     if ($summary) {
       $anchor= date('Ymd',$time);
       if ($date_anchor != $anchor) {
-        $datetag= "<div class='blog-date'>".date('M d, Y',$time)." <a name='$anchor'></a><a class='purple' href='#$anchor'>$formatter->purple_icon</a></div>";
+        $datetag= '<div class="blog-date">'.date('M d, Y',$time).
+          ' <a name="'.$anchor.'"></a><a class="purple" href="#'.$anchor.'">'.
+          $formatter->purple_icon.'</a></div>';
         $date_anchor= $anchor;
       }
       $p=new WikiPage($page);
       $f=new Formatter($p);
-      $summary=str_replace('\}}}','}}}',$summary);
+      $summary=str_replace('\}}}','}}}',$summary); # XXX
       ob_start();
       $f->send_page($summary);
       $summary=ob_get_contents();
@@ -350,7 +375,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
 
     eval($template);
     $items.=$datetag.$out;
-    if ($limit-- < 0) break;
+    if (--$limit <= 0) break;
   }
   $url=qualifiedUrl($formatter->link_url($DBInfo->frontpage));
 
@@ -359,10 +384,12 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
   if ($options['category']) $action.='category='.$options['category'].'&amp;';
   if ($options['mode']) $action.='mode='.$options['mode'].'&amp;';
 
-  $prev=$formatter->link_to('?'.$action.'date='.$prev_date,'&laquo; '._("Previous"));
+  $prev=$formatter->link_to('?'.$action.'date='.$prev_date,'&laquo; '.
+    _("Previous"));
   if ($next_date)
-  $next=" | ".$formatter->link_to('?'.$action.'date='.$next_date,_("Next"). ' &raquo;');
-  return $bra.$items.$cat."<div class='blog-action'>".$prev.$next."</div>";
+    $next=" | ".$formatter->link_to('?'.$action.'date='.$next_date,
+      _("Next").' &raquo;');
+  return $bra.$items.$cat.'<div class="blog-action">'.$prev.$next.'</div>';
 }
 // vim:et:sts=2:
 ?>
