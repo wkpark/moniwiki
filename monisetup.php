@@ -39,10 +39,8 @@ class MoniConfig {
     }
     preg_match("/Apache\/2\.0\./",$_SERVER['SERVER_SOFTWARE'],$match);
 
-    if ($match) {
+    if ($match)
       $config['query_prefix']='"?"';
-      $config['kbd_script']='$url_prefix."/css/kbd2.js"';
-    }
 
     $url_prefix= preg_replace("/\/([^\/]+)\.php$/","",$_SERVER['SCRIPT_NAME']);
     $config['url_prefix']="'".$url_prefix."'";
