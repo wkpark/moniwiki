@@ -1235,7 +1235,7 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    if (!$prefix) $prefix=$DBInfo->url_prefix."/".$dir."/";
 
    foreach ($upfiles as $file) {
-      $link=$prefix.rawurlencode($file);
+      $link=str_replace("value=","value=".rawurlencode($file),$prefix);
       $size=filesize($dir."/".$file);
       $date=date("Y-m-d",filemtime($dir."/".$file));
       $out.="<tr><td class='wiki'><input type='checkbox' name='files[$idx]' value='$file' /></td><td class='wiki'><a href='$link'>$file</a></td><td align='right' class='wiki'>$size</td><td class='wiki'>$date</td></tr>\n";
@@ -1253,25 +1253,32 @@ Password: <input type='password' name='passwd' size='10' />
 }
 
 function macro_Date($formatter,$value) {
+  global $DBInfo;
+
+  $fmt=&$DBInfo->date_fmt;
   if (!$value) {
-    return date('Y/m/d');
+    return date($fmt);
   }
   if ($value[10]== 'T') {
     $value[10]=' ';
     $time=strtotime($value." GMT");
-    return date("Y/m/d",$time);
+    return date($fmt,$time);
   }
-  return date("Y/m/d");
+  return date($fmt);
 }
 
 function macro_DateTime($formatter,$value) {
+  global $DBInfo;
+
+  $fmt=&$DBInfo->datetime_fmt;
+
   if (!$value) {
-    return date('Y/m/d');
+    return date($fmt);
   }
   if ($value[10]== 'T') {
     $value[10]=' ';
     $time=strtotime($value." GMT");
-    return date("Y/m/d H:i:s",$time);
+    return date($fmt,$time);
   }
   return date("Y/m/d\TH:i:s");
 }
@@ -1712,10 +1719,15 @@ function macro_RecentChanges($formatter="",$value="") {
   '$out.= "$icon&nbsp;&nbsp;$title $date . . . . $user $count $extra<br />\n";';
   $use_day=1;
 
+  $date_fmt='D d M Y';
+
   preg_match("/(\d+)?(?:\s*,\s*)?(.*)?$/",$value,$match);
   if ($match) {
     $size=(int) $match[1];
     $args=explode(",",$match[2]);
+
+    if (preg_match("/^[\/\-:aABdDFgGhHiIjmMOrSTY]+$/",$args[0]))
+      $date_fmt=$args[0];
 
     if (in_array ("quick", $args)) $quick=1;
     if (in_array ("nonew", $args)) $checknew=0;
@@ -1794,7 +1806,7 @@ function macro_RecentChanges($formatter="",$value="") {
     $day = date('Y-m-d', $ed_time);
     if ($use_day and $day != $ratchet_day) {
       $out.=sprintf("%s<font size='+1'>%s </font> <font size='-1'>[",
-            $br, date($DBInfo->date_fmt, $ed_time));
+            $br, date($date_fmt, $ed_time));
       $out.=$formatter->link_tag($formatter->page->urlname,
                                  "?action=bookmark&amp;time=$ed_time",
                                  _("set bookmark"))."]</font><br />\n";
