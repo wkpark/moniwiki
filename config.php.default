@@ -25,8 +25,9 @@ $use_smileys= 1;
 #$smiley='wikismiley';
 $use_counter= 0;
 $use_hostname= 1;
+$edit_rows=16;
 $iconset= 'moni';
-$enable_latex=0;
+$inline_latex=0;
 $lang='auto';
 $charset='utf-8';
 #$charset='utf-8';
@@ -40,6 +41,7 @@ $use_sistersites=1;
 $use_twinpages=1;
 $use_trackback=0;
 $vim_options='+"set expandtab" +"retab"';
+#$vim_nocheck=1;
 #$vim_options='+"set encoding=UTF-8"';
 #$nonexists='fancy';
 #$nonexists='nolink';
@@ -102,4 +104,6 @@ $vim_options='+"set expandtab" +"retab"';
 #$use_twikilink=1;
 #$timezone='KST'; // for windows
 #$version_class='RcsLite';
+#$use_numbering=1;
+#$use_resizer=1;
 ?>
