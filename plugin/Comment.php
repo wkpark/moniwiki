@@ -110,7 +110,9 @@ function do_comment($formatter,$options=array()) {
 
   $body=$formatter->page->get_raw_body();
 
-  if ($options['id']=='Anonymous') $id=$_SERVER['REMOTE_ADDR'];
+  if ($options['id']=='Anonymous')
+    $id=$options['name'] ?
+      stripslashes($options['name']):$_SERVER['REMOTE_ADDR'];
   else $id=$options['id'];
 
   if ($options['nosig']) $savetext="----\n$savetext\n";
