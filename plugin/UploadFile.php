@@ -14,6 +14,7 @@ function do_uploadfile($formatter,$options) {
          $options['multiform']:sizeof($_FILES['upfile']['name']);
       $count=$options['multiform'];
       $files=&$_FILES;
+      if (!isset($options['rename'])) $options['rename']=array();
     } else {
       $count=1;
       $files['upfile']['name'][]=&$_FILES['upfile']['name'];
