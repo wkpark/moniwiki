@@ -12,7 +12,11 @@ function macro_Attachment($formatter,$value) {
 
   $attr='';
   $myaction='download';
-
+  $text='';
+  if (($p=strpos($value,' ')) !== false) { // XXX for [attachment:my.ext hello]
+    $text=substr($value,$p);
+    $value=substr($value,0,$p);
+  }
 
   if (($dummy=strpos($value,'?'))) {
     # for attachment: syntax
@@ -56,6 +60,7 @@ function macro_Attachment($formatter,$value) {
   if (!$file) return 'attachment:/';
 
   $upload_file=$dir.'/'.$file;
+  if (!$text) $text=$file;
 
   if (file_exists($upload_file)) {
     if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$upload_file)
@@ -68,7 +73,7 @@ function macro_Attachment($formatter,$value) {
     } else {
 
       return "<span class=\"attach\"><img align='middle' src='$DBInfo->imgs_dir_interwiki".'uploads-16.png\' />'.
-        $formatter->link_tag(_urlencode($pagename),"?action=$myaction&amp;value=$value",$file).'</span>';
+        $formatter->link_tag(_urlencode($pagename),"?action=$myaction&amp;value=$value",$text).'</span>';
     }
   }
   if ($pagename == $formatter->page->name)
