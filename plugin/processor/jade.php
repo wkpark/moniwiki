@@ -81,10 +81,9 @@ function processor_jade($formatter,$value,$options=array()) {
     return "<pre class='code'>$src\n</pre>\n";
   }
 
-  if (!$formatter->preview)
-    $cache->update($pagename,$html);
+  if (!$formatter->preview) $cache->update($pagename,$html);
   return $html;
 }
 
-// vim:et:ts=2:
+// vim:et:sts=2:
 ?>
