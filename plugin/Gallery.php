@@ -70,18 +70,17 @@ function macro_Gallery($formatter,$value,$options='') {
 
   $default_width=$DBInfo->gallery_img_width ? $DBInfo->gallery_img_width:600;
 
-  if ($match[3]) {
-    $key=$DBInfo->pageToKeyname($value);
-    if ($key != $value)
-      $prefix=$formatter->link_url($value,"?action=download&amp;value=");
-    $dir=$DBInfo->upload_dir."/$key";
-  } else {
+  if ($match[3])
+    # arg has a pagename
+    $value=$match[3];
+  else
     $value=$formatter->page->name;
-    $key=$DBInfo->pageToKeyname($formatter->page->name);
-    if ($key != $formatter->page->name)
-       $prefix=$formatter->link_url($formatter->page->name,"?action=download&amp;value=");
-    $dir=$DBInfo->upload_dir."/$key";
-  }
+
+  $key=$DBInfo->pageToKeyname($value);
+  if ($key != $value)
+    $prefix=$formatter->link_url($value,"?action=download&amp;value=");
+  $dir=$DBInfo->upload_dir."/$key";
+  if (!$prefix) $prefix=$DBInfo->url_prefix."/".$dir."/";
 
   if (!file_exists($dir)) {
     umask(000);
@@ -166,8 +165,6 @@ function macro_Gallery($formatter,$value,$options='') {
   $out.="<table border='0' cellpadding='2'>\n<tr>\n";
   $idx=1;
 
-  if (!$prefix) $prefix=$DBInfo->url_prefix."/".$dir."/";
-
   $col=3;
   $width=$selected ? $default_width:150;
   $perpage=$col*4;
@@ -189,15 +186,17 @@ function macro_Gallery($formatter,$value,$options='') {
   while (list($file,$mtime) = each ($upfiles)) {
     $size=filesize($dir."/".$file);
     $id=rawurlencode($file);
-    $linksrc=$prefix.$id;
-    $link=$selected ? $prefix.$id:$formatter->link_url($formatter->page->urlname,"?action=gallery&amp;value=$id");
+    $linksrc=($key == $value) ? $prefix.$id:
+      str_replace('value=','value='.$id,$prefix);
+    $link=$selected ? $linksrc:$formatter->link_url($formatter->page->urlname,"?action=gallery&amp;value=$id");
     $date=date("Y-m-d",$mtime);
     if (preg_match("/\.(jpg|jpeg|gif|png)$/i",$file)) {
       if ($DBInfo->use_covert_thumbs and !file_exists($dir."/thumbnails/".$file)) {
         system("convert -scale ".$width." ".$dir."/".$file." ".$dir."/thumbnails/".$file);
       }
       if (!$selected and file_exists($dir."/thumbnails/".$file)) {
-        $thumb=$prefix."thumbnails/".rawurlencode($file);
+        $thumb=($key == $value) ? $prefix.'thumbnails/'.$id:
+          str_replace('value=','value='.$id,$prefix);
         $object="<img src='$thumb' alt='$file' />";
       } else {
         $nwidth=$width;
