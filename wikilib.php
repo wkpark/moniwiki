@@ -265,12 +265,15 @@ function do_fullsearch($options) {
 
   print "<ul>";
   reset($hits);
+  $idx=1;
   while (list($page_name, $count) = each($hits)) {
     $p = new WikiPage($page_name);
     $h = new Formatter($p);
-    print '<li>' . $h->link_to("?action=highlight&amp;value=$needle",$page_name);
+    print '<li>'.$h->link_to("?action=highlight&amp;value=$needle",
+                             $page_name,"tabindex='$idx'");
     print ' . . . . ' . $count . (($count == 1) ? ' match' : ' matches');
     print "</li>\n";
+    $idx++;
   }
   print "</ul>\n";
 
@@ -294,6 +297,153 @@ function do_goto($options) {
      $args[noaction]=1;
      $html->send_footer($args);
   }
+}
+
+function do_LikePages($options) {
+  global $DBInfo;
+  $page = new WikiPage($options[page]);
+  $html = new Formatter($page);
+  if (strlen($options[page]) < 3) {
+     $title = 'Use more specific text';
+     $html->send_header("",$title);
+     $html->send_title($title);
+     $html->send_footer();
+     return;
+  }
+
+  $s_re="^[A-Z][a-z0-9]+";
+  $e_re="[A-Z][a-z0-9]+$";
+
+  if ($options[metawiki])
+     $pages = $DBInfo->metadb->getAllPages();
+  else
+     $pages = $DBInfo->getPageLists();
+
+  $count=preg_match("/(".$s_re.")/",$options[page],$match);
+  if ($count) {
+    $start=$match[1];
+    $s_len=strlen($start);
+  }
+  $count=preg_match("/(".$e_re.")/",$options[page],$match);
+  if ($count) {
+    $end=$match[1];
+    $e_len=strlen($end);
+  }
+
+  if (!$start && !$end) {
+    preg_match("/^(.{2,4})/",$options[page],$match);
+    $start=$match[1];
+    $s_len=strlen($start);
+  }
+  if (!$end) {
+    $end=substr($options[page],$s_len);
+    preg_match("/(.{2,6})$/",$end,$match);
+    $end=$match[1];
+    $e_len=strlen($end);
+    if ($e_len < 2) $end="";
+  }
+
+  $starts=array();
+  $ends=array();
+  $likes=array();
+  
+  if ($start) {
+    foreach ($pages as $page) {
+      preg_match("/^$start/",$page,$matches);
+      if ($matches)
+        $starts[]=$page;
+    }
+  }
+
+  if ($end) {
+    foreach ($pages as $page) {
+      preg_match("/$end$/",$page,$matches);
+      if ($matches)
+        $ends[]=$page;
+    }
+  }
+
+  if ($start && $end) {
+    foreach ($pages as $page) {
+      preg_match("/($start|$end)/i",$page,$matches);
+      if ($matches)
+        $likes[]=$page;
+    }
+
+  }
+
+  $idx=1;
+  $out="";
+  if ($likes) {
+    sort($likes);
+
+    $out.="<h3>These pages share a similar word...</h3>";
+    $out.="<ol>\n";
+    foreach ($likes as $pagename) {
+      $p = new WikiPage($pagename);
+      $h = new Formatter($p);
+      $out.= '<li>' . $h->link_to("","","tabindex='$idx'")."</li>\n";
+      $idx++;
+    }
+    $out.="</ol>\n";
+  }
+  if ($starts || $ends) {
+    sort($starts);
+
+    $out.="<h3>These pages share an initial or final title word...</h3>";
+    $out.="<table border='0' width='100%'><tr><td width='50%' valign='top'>\n<ol>\n";
+    foreach ($starts as $pagename) {
+      $p = new WikiPage($pagename);
+      $h = new Formatter($p);
+      $out.= '<li>' . $h->link_to("","","tabindex='$idx'")."</li>\n";
+      $idx++;
+    }
+    $out.="</ol></td>\n";
+
+    sort($ends);
+
+    $out.="<td width='50%' valign='top'><ol>\n";
+    foreach ($ends as $pagename) {
+      $p = new WikiPage($pagename);
+      $h = new Formatter($p);
+      $out.= '<li>' . $h->link_to("","","tabindex='$idx'")."</li>\n";
+      $idx++;
+    }
+    $out.="</ol>\n</td></tr></table>\n";
+    $msg="If you can't find a page, ";
+  } else {
+    $out.="<h3>No similar pages found</h3>";
+    $msg="You are strongly recommened to find a page in MetaWikis. ";
+  }
+
+  $title = "Like \"$options[page]\"";
+  $html->send_header("",$title);
+  $html->send_title($title);
+
+  $prefix=get_scriptname();
+  $msg.="<a href='$prefix/".$options[page]."?action=LikePages&amp;metawiki=1'>Search all MetaWikis</a> (Slow Slow)<br />";
+
+  print $msg;
+  print $out;
+  print $msg;
+
+  $html->send_footer("",$options[timer]);
+}
+
+function do_rss_rc($options) {
+  global $DBInfo;
+  
+
+}
+
+function do_titleindex($options) {
+  global $DBInfo;
+
+  $pages = $DBInfo->getPageLists();
+
+  sort($pages);
+  header("Content-Type: text/plain");
+  print join("\n",$pages);
 }
 
 function do_titlesearch($options) {
@@ -322,10 +472,12 @@ function do_titlesearch($options) {
   sort($hits);
 
   $out="<ul>\n";
+  $idx=1;
   foreach ($hits as $pagename) {
     $p = new WikiPage($pagename);
     $h = new Formatter($p);
-    $out.= '<li>' . $h->link_to()."</li>\n";
+    $out.= '<li>' . $h->link_to("","","tabindex='$idx'")."</li>\n";
+    $idx++;
   }
 
   print $out."</ul>\n";
@@ -591,39 +743,48 @@ function macro_RecentChanges($formatter="") {
     if ($ed_time < $time_cutoff)
       break;
 
-    if (! empty($done_words[$page_name])) {
-      $edit_words[$page_name]++;
-      continue;			// reported this page already
+    if (!empty($logs[$page_name])) {
+      $edit[$page_name]++; continue;
     }
-    $done_words[$page_name] = TRUE;
-    $edit_words[$page_name] = 1;
+    $edit[$page_name] = 1;
 
     $day = date('Y/m/d', $ed_time);
     if ($day != $ratchet_day) {
+      if ($logs) {
+         while (list($name, $log) = each($logs)) {
+            if ($edit[$name]>1)
+               $count=" [".$edit[$name]." changes]";
+            else
+               $count="";
+            $out.=str_replace("@@@",$count,$log);
+         }
+      }
       $out.=sprintf("<br /><font size='+1'>%s :</font><br />\n", date($DBInfo->date_fmt, $ed_time));
       $ratchet_day = $day;
+      unset($logs);
+      unset($edit);
     }
 
     $p = new WikiPage($page_name);
     $h = new Formatter($p);
     if ($act == "DEL")
-       $out.= "&nbsp;&nbsp; ".$h->link_to("?action=diff",$DBInfo->icon[del]);
+       $logs[$page_name]= "&nbsp;&nbsp; ".$h->link_to("?action=diff",$DBInfo->icon[del]);
     else
-       $out.= "&nbsp;&nbsp; ".$h->link_to("?action=diff",$DBInfo->icon[diff]);
-    $out.= "&nbsp;&nbsp;".$h->link_to();
+       $logs[$page_name]= "&nbsp;&nbsp; ".$h->link_to("?action=diff",$DBInfo->icon[diff]);
+    $logs[$page_name].= "&nbsp;&nbsp;".$h->link_to()."@@@";
 
     if (! empty($DBInfo->changed_time_fmt))
-      $out.= date($DBInfo->changed_time_fmt, $ed_time);
+      $logs[$page_name].= date($DBInfo->changed_time_fmt, $ed_time);
 
     if ($DBInfo->show_hosts) {
       #$out.= ' . . . . '; # traditional style
-      $out.= '&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ';
+      $logs[$page_name].= '&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ';
       if ($user)
-        $out.= $user;
+        $logs[$page_name].= $user;
       else
-        $out.= $addr;
+        $logs[$page_name].= $addr;
     }
-    $out.= '<br />';
+    $logs[$page_name].= '<br />';
   }
   return $out;
 }
@@ -667,8 +828,9 @@ function macro_FootNote($formatter,$value="") {
     if (trim($dum[1])) {
        $text=$dum[0]."&#093;"; # make a text as [Alex77]
        $idx=substr($dum[0],1);
-       $value=$dum[1]; 
        $formatter->foot_idx--; # undo ++.
+       if (0 === strcmp($idx , (int)$idx)) $idx="fn$idx";
+       $value=$dum[1]; 
     } else if ($dum[0]) {
        $text=$dum[0]."]";
        $idx=substr($dum[0],1);
