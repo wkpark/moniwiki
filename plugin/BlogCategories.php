@@ -9,8 +9,10 @@ function macro_BlogCategories($formatter,$value='') {
   global $DBInfo;
 
   if (!$DBInfo->hasPage($DBInfo->blog_category)) return '';
-  $categories=array();
+  $opts=explode(',',$value);
+  if (in_array('norss',$opts)) $no_rss=1;
 
+  $categories=array();
   $page=$DBInfo->getPage($DBInfo->blog_category);
 
   $raw=$page->get_raw_body();
@@ -20,8 +22,11 @@ function macro_BlogCategories($formatter,$value='') {
   foreach ($temp as $line) {
     $line=str_replace('/','_2f',$line);
     if (preg_match('/^ \* ([^ :]+)(?=\s|$)/',$line,$match)) {
-       $lnk=str_replace('CATEGORY',$match[1],$link);
-       $out.="<a href='$lnk'>$match[1]/</a><br/>";
+      $lnk=str_replace('CATEGORY',$match[1],$link);
+      if (!$no_rss)
+        $rss='&nbsp;<a href="'.str_replace('blogchanges','blogrss',$lnk).'">'.
+          '<img src="'.$DBInfo->imgs_dir.'/tiny-xml.gif'.'" border="0" /></a>';
+      $out.="<a href='$lnk'>$match[1]/</a>$rss<br/>";
     }    
   }
 
