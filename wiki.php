@@ -1412,19 +1412,23 @@ class Formatter {
   }
 
   function highlight_repl($val,$colref=array()) {
-    static $color=array("style='background-color:#ff6;'",
-                        "style='background-color:#aff;'",
-                        "style='background-color:#0f3;'",
-                        "style='background-color:#f99;'",
-                        "style='background-color:#f9c;'",
-                        "style='background-color:#c9f;'");
+    static $color=array("style='background-color:#ffff99;'",
+                        "style='background-color:#99ffff;'",
+                        "style='background-color:#99ff99;'",
+                        "style='background-color:#ff9999;'",
+                        "style='background-color:#ff99ff;'",
+                        "style='background-color:#9999ff;'",
+                        "style='background-color:#999999;'",
+                        "style='background-color:#886800;'",
+                        "style='background-color:#004699;'",
+                        "style='background-color:#990099;'");
     $val=str_replace("\\\"",'"',$val);
     if ($val[0]=="<") return $val;
 
     $key=strtolower($val);
 
     if (isset($colref[$key]))
-      return "<strong ".($color[$colref[$key] % 5]).">$val</strong>";
+      return "<strong ".($color[$colref[$key] % 10]).">$val</strong>";
     return "<strong class='highlight'>$val</strong>";
   }
 
@@ -3205,6 +3209,17 @@ if ($pagename) {
 
   $formatter = new Formatter($page,$options);
   $formatter->refresh=$refresh;
+
+  // check black list
+  if ($DBInfo->blacklist) {
+    include_once 'lib/checkip.php';
+    if (check_ip($DBInfo->blacklist, $_SERVER['REMOTE_ADDR'])) {
+      $options['title']=_("You are in the black list");
+      $options['msg']=_("Please contact wikimasters");
+      do_invalid($formatter,$options);
+      return;
+    }
+  }
 
   if (!$action or $action=='show') {
     if ($value) { # ?value=Hello
