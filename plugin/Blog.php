@@ -80,7 +80,7 @@ function do_Blog($formatter,$options) {
   $url=$formatter->link_url($formatter->page->urlname);
   $formatter->send_header("",$options);
 
-  if ($formatter->refresh) {
+  if ($formatter->refresh or $options['button_refresh']) {
     updateBlogList($formatter);
     $options['msg']=sprintf(_("Blog cache of \"%s\" is refreshed"),$formatter->page->name);
   }
@@ -223,6 +223,9 @@ function do_Blog($formatter,$options) {
       print $formatter->processor_repl('blog',$quote,$options);
       #print $formatter->send_page($quote,$options);
     }
+    if ($options['id'] != 'Anonymous')
+      $extra='<div style="text-align:right">'.'
+        <input type="submit" name="button_refresh" value="Refresh" /></div>';
 
     print "<form method='post' action='$url'>\n";
     if ($options['value'])
@@ -269,6 +272,7 @@ function macro_Blog($formatter,$value) {
   $cols=$options['cols'] > 60 ? $options['cols']: $cols;
 
   $url=$formatter->link_url($formatter->page->urlname);
+  $datestamp= $formatter->page->mtime();
 
   $form = "<form method='post' action='$url'>\n";
   $form.= "<b>Title</b>: <input name='title' size='70' maxlength='70' style='width:200' /><br />\n";
@@ -278,6 +282,7 @@ function macro_Blog($formatter,$value) {
 FORM;
   $form.= <<<FORM2
 <input type="hidden" name="action" value="Blog" />
+<input type="hidden" name="datestamp" value="$datestamp" />
 <input type="submit" value="Save" />&nbsp;
 <input type="reset" value="Reset" />&nbsp;
 <input type="submit" name="button_preview" value="Preview" />
