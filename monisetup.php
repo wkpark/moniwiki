@@ -44,9 +44,10 @@ class MoniConfig {
       $config['kbd_script']='$url_prefix."/css/kbd2.js"';
     }
 
-    $url_prefix= preg_replace("/\/([^\/]+)\.php$/","",
-      $_SERVER['SCRIPT_NAME']);
+    $url_prefix= preg_replace("/\/([^\/]+)\.php$/","",$_SERVER['SCRIPT_NAME']);
     $config['url_prefix']="'".$url_prefix."'";
+
+    $config['rcs_user']="'".getenv('LOGNAME')."'";
     return $config;
   }
 
