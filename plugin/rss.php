@@ -115,6 +115,8 @@ function macro_Rss($formatter,$value) {
   preg_match("/\sencoding=?(\"|')([^'\"]+)/",$line,$match);
   if ($match) $charset=strtoupper($match[2]);
   else $charset='UTF-8';
+  # override $charset for php5
+  if ((int)phpversion() >= 5) $charset='UTF-8';
 
   ob_start();
   $ret= xml_parse($xml_parser, $xml_data);
@@ -128,7 +130,7 @@ function macro_Rss($formatter,$value) {
   xml_parser_free($xml_parser);
 
   #  if (strtolower(str_replace("-","",$options['oe'])) == 'euckr')
-  if (function_exists('iconv') and strtoupper($DBInfo->charset) != $charset)
+  if (function_exists('iconv') and strtoupper($DBInfo->charset) != $charset) {
     $new=iconv($charset,$DBInfo->charset,$out);
   if ($new) return $new;
 
