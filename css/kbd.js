@@ -15,6 +15,7 @@
    * 2003/06/01 : added patch by Kkabi
    * 2003/07/14 : fixed element indices
    * 2004/08/24 : no PATH_INFO support merged
+   * 2004/10/03 : more intelligent behavior with search keys '?' '/'
 */
 
 /*
@@ -51,7 +52,10 @@
 RecentChanges= "RecentChanges"; 
 FindPage= "FindPage"; 
 TitleIndex= "TitleIndex"; 
-HelpContents= "HelpContents"; 
+HelpContents= "HelpContents";
+
+// go form ID
+_go= "go";
 
 if (_qp == '/') {
 	_ap='?';
@@ -83,7 +87,8 @@ function keydownhandler(e) {
 
 //	if (_dom!=3) return;
 	if(EventStatus == 'INPUT' || EventStatus == 'TEXTAREA' ) {
-		if (_dom==3 && cc==27 && EventStatus == 'TEXTAREA') return false;
+		if (_dom==3 && cc==27 && EventStatus == 'TEXTAREA')
+			return false;
 		// ESC blocking for all vim lovers
 		return;
 	}
@@ -119,35 +124,35 @@ function keypresshandler(e){
 	}
 	if(EventStatus == 'INPUT' || EventStatus == 'TEXTAREA' || _dom == 2) {
 		if ((ch == '?' || ch== '/') && EventStatus == 'INPUT') {
-			var my=""+document.go.elements['value'].value;
-			if (ch == '?') {
-				if (document.go.elements['status'].value == '?') {
-					document.go.elements['action'].value="goto";
-					document.go.elements['status'].value="Go";
+			var my=""+document.getElementById(_go).elements['value'].value;
+			if (ch == '?' && (my == "/" || my =="?" || my=="")) {
+				if (document.getElementById(_go).elements['status'].value == '?') {
+					document.getElementById(_go).elements['action'].value="goto";
+					document.getElementById(_go).elements['status'].value="Go";
 					window.status="GoTo";
 				} else {
-					document.go.elements['action'].value="titlesearch";
-					document.go.elements['status'].value="?";
+					document.getElementById(_go).elements['action'].value="titlesearch";
+					document.getElementById(_go).elements['status'].value="?";
 					window.status="TitleSearch";
 				}
-			} else {
-				if (document.go.elements['status'].value == '/') {
-			 		document.go.elements['action'].value="goto";
-			 		document.go.elements['status'].value="Go";
+			} else if (ch == '/' && (my == "/" || my =="?" || my=="")) {
+				if (document.getElementById(_go).elements['status'].value == '/') {
+			 		document.getElementById(_go).elements['action'].value="goto";
+			 		document.getElementById(_go).elements['status'].value="Go";
 			 		window.status="GoTo";
 				} else {
-					document.go.elements['action'].value="fullsearch";
-					document.go.elements['status'].value="/";
+					document.getElementById(_go).elements['action'].value="fullsearch";
+					document.getElementById(_go).elements['status'].value="/";
 					window.status="FullSearch";
 				}
 			}
 			if (my == '/' || my == '?')
-			document.go.elements['value'].value=my.substr(0,my.length-1);
+			document.getElementById(_go).elements['value'].value=my.substr(0,my.length-1);
 		} else if (cc== 27 && EventStatus == 'INPUT') {
-			document.go.elements['value'].blur();
-			document.go.elements['value'].value='';
-			document.go.elements['action'].value="goto";
-			document.go.elements['status'].value="Go";
+			document.getElementById(_go).elements['value'].blur();
+			document.getElementById(_go).elements['value'].value='';
+			document.getElementById(_go).elements['action'].value="goto";
+			document.getElementById(_go).elements['status'].value="Go";
 			window.status="GoTo"+window.defaultStatus;
 		}
 		return;
@@ -162,19 +167,21 @@ function keypresshandler(e){
 		self.location = url_prefix + FindPage;
 	} else if(cc == 9 || cc == 27) { // 'TAB','ESC' key
 		if (cc == 27) {
-			document.go.elements['value'].focus();
+			document.getElementById(_go).elements['value'].focus();
 		}
 	} else if(ch == "/" || ch == "?") {
-		if (ch == "?") {
+		var my=document.getElementById(_go).elements['value'].value + "";
+		if (ch == "?" && (my == "?" || my =="/" || my=="")) {
 			// Title search as vi way
-			document.go.elements['value'].focus();
-			document.go.elements['action'].value="titlesearch";
-			document.go.elements['status'].value="?";
-		} else if ( ch == "/") {
+			document.getElementById(_go).elements['value'].focus();
+			document.getElementById(_go).elements['action'].value="titlesearch";
+			document.getElementById(_go).elements['status'].value="?";
+		} else
+		if (ch == "/" && (my == "?" || my =="/" || my=="")) {
 			// Contents search
-			document.go.elements['value'].focus();
-			document.go.elements['action'].value="fullsearch";
-			document.go.elements['status'].value="/";
+			document.getElementById(_go).elements['value'].focus();
+			document.getElementById(_go).elements['action'].value="fullsearch";
+			document.getElementById(_go).elements['status'].value="/";
 		}
 	} else if(ch == "c") {
 		self.location = url_prefix + _qp + RecentChanges;
@@ -212,11 +219,13 @@ function keypresshandler(e){
 			if ((idx=my.indexOf("&")) != -1)
 				my=my.substring(0,idx);
 			if (ch == "e" || ch == "w")
-				self.location=url_prefix + _qp + my + _ap + 'action=edit';
+				self.location= url_prefix + _qp + my + _ap +
+					'action=edit';
 			if (ch == "r") {
 				if ((idx=my.indexOf("#")) != -1)
 					my=my.substring(0,idx);
-				self.location=url_prefix + _qp + my + _ap + 'action=show';
+				self.location=url_prefix + _qp + my + _ap +
+					'action=show';
 			}
 		} else {
 			if (ch == "e" || ch == "w")
@@ -224,7 +233,8 @@ function keypresshandler(e){
 			if (ch == "r") {
 				if ((idx=my.indexOf("#")) != -1) {
 					my=my.substring(0,idx);
-					self.location = my + _ap + 'action=show';
+					self.location = my + _ap +
+						'action=show';
 				} else
 					//self.location += '?action=show';
 					self.location = self.location;
@@ -241,9 +251,9 @@ function input(){
 }
 
 function moin_submit() {
-	if (document.go.elements['action'].value =="goto") {
-		document.go.elements['value'].name='goto';
-		document.go.elements['action'].name='';
+	if (document.getElementById(_go).elements['action'].value =="goto") {
+		document.getElementById(_go).elements['value'].name='goto';
+		document.getElementById(_go).elements['action'].name='';
 		return true;
 	}
 }
