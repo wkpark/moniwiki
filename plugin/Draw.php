@@ -20,7 +20,7 @@ function macro_Draw($formatter,$value) {
   $gifname='Draw_'.$name.".gif";
   $now=time();
 
-  $url=$formatter->link_url($formatter->page->name,"?action=Draw&amp;value=$name&amp;now=$now");
+  $url=$formatter->link_url($formatter->page->name,"?action=draw&amp;value=$name&amp;now=$now");
 
   if (!file_exists($hotdraw_dir."/$gifname"))
     return "<a href='$url'>"._("Draw new picture")."</a>";
@@ -37,11 +37,12 @@ function do_Draw($formatter,$options) {
   $name=$options['value'];
 
   if ($_FILES['filepath']) {
-    # $temp=explode("/",$_FILES['filepath']['tmp_name']);
-    # $upfile="/tmp/".$temp[count($temp)-1];
+  #if ($options['filepath']) {
     $upfile=$_FILES['filepath']['tmp_name'];
     $temp=explode("/",$_FILES['filepath']['name']);
     $file_path=$hotdraw_dir."/".$temp[count($temp)-1];
+    #$upfile=$options['filepath'];
+    #$file_path=$hotdraw_dir."/Draw_".$name;
 
     $test=@copy($upfile, $file_path);
     if (!$test) {
@@ -75,8 +76,8 @@ function do_Draw($formatter,$options) {
      $imgpath= "$hotdraw_dir/$ufname";
   }
 
-  $gif_url="$DBInfo->url_prefix/$imgpath.gif";
   $draw_url="$DBInfo->url_prefix/$imgpath.draw";
+  $gif_url="$DBInfo->url_prefix/$imgpath.gif";
 
   $formatter->send_header("",$options);
   $formatter->send_title(_("Edit drawing"),"",$options);
@@ -84,7 +85,7 @@ function do_Draw($formatter,$options) {
   $now=time();
 
   $url_exit= $formatter->link_url($options['page'],"?ts=$now");
-  $url_save= $formatter->link_url($options['page'],"?action=Draw");
+  $url_save= $formatter->link_url($options['page'],"?action=draw");
   $url_help= $formatter->link_url("HotDraw");
 
   $pubpath=$DBInfo->url_prefix."/applets/TWikiDrawPlugin";
