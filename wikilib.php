@@ -939,15 +939,11 @@ function macro_RandomPage($formatter,$value="") {
 
   $max=sizeof($pages)-1;
 
-  while ($counter > 0) {
-    $rand=rand(0,$max--);
-    $selected[]=$pages[$rand];
-    unset($pages[$rand]);
-    
-    $counter--;
-  }
+  $number=min($max,$counter);
+  $selected=array_rand($pages,$number);
 
-  foreach ($selected as $item) {
+  foreach ($selected as $idx) {
+    $item=$pages[$idx];
     $selects[]=$formatter->link_tag(_rawurlencode($item),"",$item);
   }
 
