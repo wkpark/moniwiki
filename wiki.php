@@ -1417,7 +1417,7 @@ class Formatter {
       return "<a $attr href='$url'>$url</a>";
     } else {
       if ($url[0]=="?") $url=substr($url,1);
-      return $this->word_repl($url);
+      return $this->word_repl($url,'',$attr);
     }
   }
 
@@ -1529,7 +1529,7 @@ class Formatter {
       }
     } else if ($page[0]=='/') { # SubPage
       $page=$this->page->name.$page;
-    } else if (preg_match('/^(\.{1,2})\//',$page,$match)) {
+    } else if ($page[0]=='.' and preg_match('/^(\.{1,2})\//',$page,$match)) {
       if ($match[1] == '..') {
         $pos=strrpos($this->page->name,"/");
         if ($pos > 0) $upper=substr($this->page->name,0,$pos);
@@ -1545,40 +1545,36 @@ class Formatter {
       }
     }
 
-    $page=urldecode($page); # XXX
     $url=$this->link_url(_rawurlencode($page)); # XXX
-    if ($gpage)
-      $gurl=$this->link_url(_rawurlencode($gpage));
-    if (isset($this->pagelinks[$page]) or isset($this->pagelinks[$gpage])) {
-      if (!isset($this->pagelinks[$page])) {
-        $url=$gurl;
-        $idx=$this->pagelinks[$gpage];
-      } else
-        $idx=$this->pagelinks[$page];
+    $page=urldecode($page); # XXX
+    if (isset($this->pagelinks[$page])) {
+      $idx=$this->pagelinks[$page];
       switch($idx) {
         case 0:
           #return "<a class='nonexistent' href='$url'>?</a>$word";
           return call_user_func(array(&$this,"word_$DBInfo->nonexists"),$word,$url);
         case -1:
-          return "<a href='$url'>$word</a>";
+          return "<a href='$url' $attr>$word</a>";
         case -2:
-          return "<a href='$url'>$word</a>".
+          return "<a href='$url' $attr>$word</a>".
             "<tt class='sister'><a href='$url'>&#x203a;</a></tt>";
         case -3:
+          $url=$this->link_url(_rawurlencode($gpage));
           return $this->link_tag($page,'',$this->icon['main']).
-            "<a href='$url'>$word</a>";
+            "<a href='$url' $attr>$word</a>";
         default:
-          return "<a href='$url'>$word</a>".
+          return "<a href='$url' $attr>$word</a>".
             "<tt class='sister'><a href='#sister$idx'>&#x203a;$idx</a></tt>";
       }
     } else if ($DBInfo->hasPage($page)) {
       $this->pagelinks[$page]=-1;
-      return "<a href='$url'>$word</a>";
+      return "<a href='$url' $attr>$word</a>";
     } else {
       if ($gpage and $DBInfo->hasPage($gpage)) {
-        $this->pagelinks[$gpage]=-3;
+        $this->pagelinks[$page]=-3;
+        $url=$this->link_url(_rawurlencode($gpage));
         return $this->link_tag($page,'',$this->icon['main']).
-          "<a href='$gurl'>$word</a>";
+          "<a href='$url' $attr>$word</a>";
       }
       if ($this->sister_on) {
         $sisters=$DBInfo->metadb->getSisterSites($page, $DBInfo->use_sistersites);
