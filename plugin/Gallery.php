@@ -91,7 +91,8 @@ function macro_Gallery($formatter,$value,$options='') {
     }
   }
 
-  if (filemtime($dir) > filemtime($dir."/list.txt")) {
+  $mtime=file_exists($dir."/list.txt") ? filemtime($dir."/list.txt"):0;
+  if (filemtime($dir) > $mtime) {
     unset($upfiles);
 
     $handle= opendir($dir);
@@ -137,7 +138,7 @@ function macro_Gallery($formatter,$value,$options='') {
   if ($pages > 1)
     $pnut=get_pagelist($formatter,$pages,"?action=gallery&p=",$options['p'],$perpage);
 
-  if (!file_exists($dir."/thumbnails")) mkdir($dir."/thumbnails");
+  if (!file_exists($dir."/thumbnails")) mkdir($dir."/thumbnails",0777);
 
   while (list($file,$mtime) = each ($upfiles)) {
     $size=filesize($dir."/".$file);
