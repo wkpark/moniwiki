@@ -28,6 +28,7 @@ function macro_Comment($formatter,$value,$options=array()) {
   else
     $datestamp= $formatter->page->mtime();
   $savetext=$options['savetext'];
+  $savetext= str_replace(array("&","<"),array("&amp;","&lt;"),$savetext);
 
   if (!$options['id']) {
     $user=new User(); # get from COOKIE VARS
@@ -119,7 +120,7 @@ function do_comment($formatter,$options=array()) {
   else $id=$options['id'];
 
   if ($options['nosig']) $savetext="----\n$savetext\n";
-  else $savetext="----\n$savetext -- $id @DATE@\n";
+  else $savetext="----\n$savetext @SIG@\n";
 
   if (preg_match("/\n##Comment\n/i",$body))
     $body= preg_replace("/\n##Comment\n/i","\n##Comment\n$savetext",$body,1);
