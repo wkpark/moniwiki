@@ -10,12 +10,29 @@
 // $Id$
 
 function processor_blog($formatter,$value="",$options) {
-  static $date_anchor="";
+  static $date_anchor='';
+  static $tackback_list=array();
   global $DBInfo;
 
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
 
+  if ($date_anchor=='' and $DBInfo->use_trackback) {
+    #read trackbacks and set entry counter
+    $cache= new Cache_text('trackback');
+    if ($cache->exists($formatter->page->name)) {
+      $trackback_raw=$cache->fetch($formatter->page->name);
+
+      $trackbacks=explode("\n",$trackback_raw);
+      foreach ($trackbacks as $trackback) {
+        list($dummy,$entry,$extra)=explode("\t",$trackback);
+        if ($entry) {
+          if($trackback_list[$entry]) $trackback_list[$entry]++;
+          else $trackback_list[$entry]=1;
+        }
+      }
+    }
+  }
   if ($line) {
     # get parameters
     list($tag, $user, $date, $title)=explode(" ",$line, 4);
@@ -34,6 +51,7 @@ function processor_blog($formatter,$value="",$options) {
       if ($date_anchor != $anchor) {
         $datetag= "<div class='blog-date'>".date("M d, Y",$time)." <a name='$anchor' id='$anchor'></a><a class='purple' href='#$anchor'>$formatter->purple_icon</a></div>";
         $date_anchor= $anchor;
+
       }
     }
     $md5sum=md5(substr($line,7));
@@ -58,10 +76,13 @@ function processor_blog($formatter,$value="",$options) {
       }
     }
 
+    if ($trackback_list[$md5sum]) $counter='['.$trackback_list[$md5sum].']';
+    else $counter='';
+
     if (!$options['noaction'] and $md5sum) {
       $action= $formatter->link_tag($formatter->page->urlname,"?action=blog&amp;value=$md5sum",$add_button);
       if (getPlugin('SendPing'))
-        $action.= ' | '.$formatter->link_tag($formatter->page->urlname,"?action=sendping&amp;value=$md5sum",_("send ping"));
+        $action.= ' | '.$formatter->link_tag($formatter->page->urlname,"?action=trackback&amp;value=$md5sum",_("track back").$counter);
     }
 
     if ($action)
