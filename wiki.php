@@ -1203,7 +1203,7 @@ class Formatter {
 
   function get_instructions($body="") {
     global $DBInfo;
-    $pikeys=array('#redirect','#action','#title');
+    $pikeys=array('#redirect','#action','#title','#keywords');
     $pi=array();
     if (!$body) {
       if (!$this->page->exists()) return '';
@@ -2311,6 +2311,13 @@ class Formatter {
     if (isset($options['trail']))
       $this->set_trailer($options['trail'],$this->page->name);
 
+    if ($this->pi['#keywords'])
+      $keywords='<meta name="keywords" content="'.$this->pi['#keywords'].'" />';
+    else if ($DBInfo->use_keywords) {
+      $keywords=preg_replace("/((?<=[A-Za-z0-9])[A-Z][a-z0-9])/",", \\1",$this->page->name);
+      $keywords="<meta name=\"keywords\" content=\"$keywords\" />";
+    }
+
     if (!$plain) {
       if (empty($options['title'])) $options['title']=$this->page->name;
       if (empty($options['css_url'])) $options['css_url']=$DBInfo->css_url;
@@ -2320,6 +2327,7 @@ class Formatter {
   <head>
   <meta http-equiv="Content-Type" content="text/html;charset=$DBInfo->charset" /> 
   $DBInfo->metatags
+  $keywords
   <title>$DBInfo->sitename:$options[title]</title>\n
 EOS;
       if ($options['css_url'])
@@ -2720,8 +2728,9 @@ if (!$DBInfo->theme) $theme=$_GET['theme'];
 else $theme=$DBInfo->theme;
 if ($theme) $options['theme']=$theme;
 
-if ($DBInfo->trail)
+if ($DBInfo->trail) {
   $options['trail']=$user->trail;
+}
 if ($options['id'] != 'Anonymous') {
   $udb=new UserDB($DBInfo);
   $userinfo=$udb->getUser($user->id);
