@@ -5,7 +5,7 @@
 //
 // $Id$
 
-function do_post_css($formatter,$options) {
+function do_css($formatter,$options) {
   global $DBInfo;
   global $HTTP_COOKIE_VARS;
 
@@ -20,19 +20,37 @@ function do_post_css($formatter,$options) {
       $userinfo->info[css_url]="";
       $udb->saveUser($userinfo);
     }
-  } else if ($options[id]=="Anonymous" && isset($options[user_css])) {
-     setcookie("MONI_CSS",$options[user_css],time()+60*60*24*30,get_scriptname());
-     # set the fake cookie
-     $HTTP_COOKIE_VARS[MONI_CSS]=$options[user_css];
-     $title="CSS Changed";
-     $options[css_url]=$options[user_css];
-  } else if ($options[id] != "Anonymous" && isset($options[user_css])) {
+  } else if ($options['save'] && $options['id']=="Anonymous" && isset($options['user_css'])) {
+    setcookie("MONI_CSS",$options['user_css'],time()+60*60*24*30,get_scriptname());
+    # set the fake cookie
+    #$HTTP_COOKIE_VARS['MONI_CSS']=$options['user_css'];
+    $title="CSS Changed";
+    #$options['css_url']=$options['user_css'];
+    $msg=_("Back to UserPreferences");
+  } else if ($options['save'] && $options[id] != "Anonymous" && isset($options['user_css'])) {
     # save profile
     $udb=new UserDB($DBInfo);
-    $userinfo=$udb->getUser($options[id]);
-    $userinfo->info[css_url]=$options[user_css];
+    $userinfo=$udb->getUser($options['id']);
+    $userinfo->info['css_url']=$options['user_css'];
     $udb->saveUser($userinfo);
-    $options[css_url]=$options[user_css];
+    $options['css_url']=$options['user_css'];
+    $msg=_("Back to UserPreferences");
+  } else {
+    $title="";
+    $options['css_url']=$options['user_css'];
+    $msg=<<<FORM
+<form method='post'>
+<input type='hidden' name='action' value='css' />
+<input type='hidden' name='user_css' value='$options[css_url]' />
+Did you want to apply this CSS ? <input type='submit' name='save' value='OK' /> &nbsp;
+</form>
+FORM;
+    $formatter->send_header("",$options);
+    $formatter->send_title($title,"",$options);
+    print $msg;
+
+    $formatter->send_footer("",$options);
+    return;
   }
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
@@ -42,6 +60,7 @@ function do_post_css($formatter,$options) {
 
 function macro_Css($formatter="") {
   global $DBInfo;
+  if ($DBInfo->theme) return "CSS disabled !";
   $out="
 <form method='post'>
 <input type='hidden' name='action' value='css' />
@@ -60,10 +79,10 @@ function macro_Css($formatter="") {
 
   $out.="
     </select>&nbsp; &nbsp; &nbsp;
-    <input type='submit' name='save' value='Change CSS' /> &nbsp;";
+    <input type='submit' name='show' value='Change CSS' /> &nbsp;";
 
   $out.="
-    <input type='submit' name='clear' value='Clear CSS cookie' /> &nbsp;";
+    <input type='submit' name='clear' value='Clear cookie' /> &nbsp;";
 
   $out.="</form>\n";
   return $out;
