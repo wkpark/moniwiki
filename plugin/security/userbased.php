@@ -25,7 +25,7 @@ class Security_userbased extends Security {
   function may_deletepage($action,$options) {
     if (!$options['page']) return 0;
     if (in_array($options['id'],$this->allowed_users)) return 1;
-    $options['err']=sprintf(_("You are not allowed to %s this page."),$action);
+    $options['err']=sprintf(_("You are not allowed to '%s' on this page."),$action);
     $options['err'].=" "._("Please contact to WikiMaster");
     return 0;
   }
@@ -33,7 +33,7 @@ class Security_userbased extends Security {
   function may_deletefile($action,$options) {
     if (!$options['page']) return 0;
     if (in_array($options['id'],$this->allowed_users)) return 1;
-    $options['err']=sprintf(_("You are not allowed to %s this page."),$action);
+    $options['err']=sprintf(_("You are not allowed to '%s' on this page."),$action);
     $options['err'].=" "._("Please contact to WikiMaster");
     return 0;
   }
@@ -41,7 +41,7 @@ class Security_userbased extends Security {
   function may_rename($action,$options) {
     if (!$options['page']) return 0;
     if (in_array($options['id'],$this->allowed_users)) return 1;
-    $options['err']=sprintf(_("You are not allowed to %s this page."),$action);
+    $options['err']=sprintf(_("You are not allowed to '%s' on this page."),$action);
     $options['err'].=" "._("Please contact to WikiMaster");
     return 0;
   }
@@ -56,7 +56,7 @@ class Security_userbased extends Security {
       'trackback','rss_rc','rss','blogrss','urlencode');
     if (in_array(strtolower($action),$allowed_actions)) return 1;
     if ($options['id']=='Anonymous') {
-      $options['err']=sprintf(_("You are not allowed to %s this page."),$action);
+      $options['err']=sprintf(_("You are not allowed to '%s' on this page."),$action);
       $options['err'].="\n"._("Please Login or make your ID on this Wiki ;)");
       return 0;
     }
