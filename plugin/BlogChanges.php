@@ -340,7 +340,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
   $template='$out="$bullet<a href=\"$url#$tag\">$title</a> '.
     '<span class=\"blog-user\">';
   if (in_array('summary',$opts))
-    $template='$out="$bullet<div class=\"blog-title\"><a name=\"$tag\"></a>'.
+    $template='$out="$bullet<div class=\"blog-summary\"><div class=\"blog-title\"><a name=\"$tag\"></a>'.
       '<a href=\"$url#$tag\">$title</a> <a class=\"puple\" href=\"#$tag\">'.
       addslashes($formatter->purple_icon).
       '</a></div><span class=\"blog-user\">';
@@ -350,7 +350,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
     $template.='@ $date ';
 
   if (in_array('summary',$opts))
-    $template.='</span><div class=\"blog-summary\">$summary$btn</div>$sep\n";';
+    $template.='</span><div class=\"blog-content\">$summary</div>$btn</div>\n";';
   else
     $template.='</span>$sep\n";';
     
