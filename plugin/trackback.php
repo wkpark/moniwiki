@@ -117,7 +117,7 @@ class TrackBack_text {
     if (!$handle) return array();
 
     while ($file = readdir($handle)) {
-      if (is_dir($DBInfo->cache_dir."/trackback/".$file)) continue;
+      if ($file[0]=='.' or is_dir($DBInfo->cache_dir."/trackback/".$file)) continue;
       $blogs[] = $file;
     }
     closedir($handle);
@@ -152,11 +152,11 @@ function macro_trackback($formatter,$value) {
   else
     $lines=TrackBack_text::get_all();
   $logs=array();
-  foreach ($lines as $line) $logs[]=explode("\t",$line,7);
+  foreach ($lines as $line) $logs[]=explode("\t",$line,8);
   usort($logs,'TrackBackCompare');
 
   foreach ($logs as $log) {
-    list($page, $dum, $url,$date,$site,$title,$dum2)= $log;
+    list($page, $dum, $entry,$url,$date,$site,$title,$dum2)= $log;
 
     if (!$title) continue;
 
