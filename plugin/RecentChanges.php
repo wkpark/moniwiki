@@ -37,7 +37,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $size=(int) $match[1];
     $args=explode(",",$match[2]);
 
-    if (preg_match("/^[\/\-:aABdDFgGhHiIjmMOrSTY]+$/",$args[0]))
+    if (preg_match("/^[\s\/\-:aABdDFgGhHiIjmMOrSTY]+$/",$args[0]))
       $date_fmt=$args[0];
 
     if (in_array ("quick", $args)) $quick=1;
