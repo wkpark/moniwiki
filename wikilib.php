@@ -1455,7 +1455,6 @@ function macro_RecentChanges($formatter="",$value="") {
       if ($logs[$page_name]) {
         $editcount[$page_name]++;
         continue;
-        print "$page_name;$editcount[$page_name];";
       } else {
         continue;
       }
@@ -1504,9 +1503,9 @@ function macro_RecentChanges($formatter="",$value="") {
        $out.= "&nbsp;&nbsp; ".$formatter->link_tag($page_name,"?action=diff&amp;date=$bookmark",$DBInfo->icon[diff]);
 
     $title=preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$page_name);
-#    $title=$page_name;
+#   $title=$page_name;
 
-    $out.= "&nbsp;&nbsp;".$formatter->link_tag($page_key,"",$title);
+    $out.= "&nbsp;&nbsp;".$formatter->link_tag($page_name,"",$title);
     if (! empty($DBInfo->changed_time_fmt))
        $out.= date($DBInfo->changed_time_fmt, $ed_time);
 
