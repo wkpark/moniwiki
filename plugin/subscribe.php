@@ -9,7 +9,7 @@ function do_subscribe($formatter,$options) {
   global $DBInfo;
 
   if (!$DBInfo->notify) {
-    $options['title']=_("EmailNotification does not activated");
+    $options['title']=_("EmailNotification is not activated");
     $options['msg']=_("If you wan't to subscribe this page please contact the WikiMaster to activate the e-mail notification");
     do_invalid($formatter,$options);
   }

@@ -68,7 +68,7 @@ function macro_diff($formatter,$value,&$options)
     return "<h2>$msg</h2>";
   }
   if (!$DBInfo->version_class) {
-    $msg= _("Version info does not available in this wiki");
+    $msg= _("Version info is not available in this wiki");
     return "<h2>$msg</h2>";
   }
   

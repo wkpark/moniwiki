@@ -70,7 +70,7 @@ function do_uploadfile($formatter,$options) {
   else
      $pds_exts="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|css|exe|hwp";
   if (!preg_match("/(".$pds_exts.")$/i",$fname[2])) {
-     $msg.=sprintf(_("%s does not allowed to upload"),$upfilename)."<br/>\n";
+     $msg.=sprintf(_("%s is not allowed to upload"),$upfilename)."<br/>\n";
      continue;
   }
 

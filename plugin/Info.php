@@ -128,7 +128,7 @@ function do_info($formatter,$options) {
       print _parse_rlog($formatter,$out);
     }
   } else {
-    $msg=_("Version info does not available in this wiki");
+    $msg=_("Version info is not available in this wiki");
     print "<h2>$msg</h2>";
   }
 

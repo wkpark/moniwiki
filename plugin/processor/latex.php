@@ -69,7 +69,7 @@ $tex
      system($cmd);
 
      if (!file_exists($uniq.".dvi")) {
-       print "<font color='red'>ERROR:</font> LaTeX does not works properly.";
+       print "<font color='red'>ERROR:</font> LaTeX does not work properly.";
        chdir($cwd);
        return;
      }

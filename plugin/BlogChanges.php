@@ -250,7 +250,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
     }
     if (!$category_pages) {
       if ($DBInfo->hasPage($options['category'])) {
-        // category does not found
+        // category is not found
         // regard it as a single blog page
         $blog_page=$options['category'];
       } else {

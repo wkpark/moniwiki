@@ -75,7 +75,7 @@ $plt
          unlink($flog);
          unlink($finp);
        } else {
-         print "<font color='red'>ERROR:</font> Gnuplot does not works correctly";
+         print "<font color='red'>ERROR:</font> Gnuplot does not work correctly";
        }
      } else {
        #
@@ -89,7 +89,7 @@ $plt
        if (file_exists($outpath)) {
          unlink($flog);
        } else {
-         print "<font color='red'>ERROR:</font> Gnuplot does not works correctly";
+         print "<font color='red'>ERROR:</font> Gnuplot does not work correctly";
        }
      }
 
