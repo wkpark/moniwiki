@@ -35,6 +35,7 @@ $use_referer= 0;
 $use_sistersites=1;
 $use_twinpages=1;
 $use_trackback=0;
+#$nonexists='fancy_nonexists';
 #$use_titlecache=0;
 #$security_class="needtologin";
 #$security_class="desktop";
@@ -46,7 +47,7 @@ $use_trackback=0;
 #$path='/usr/local/bin:/usr/bin:/bin:/usr/X11R6/bin';
 #$theme='blog';
 #$theme_css=1;
-#$show_comments=1;
+#$blog_comments=1;
 
 #$sistermap=$data_dir.'/sistermap.txt';
 #$metatags='
