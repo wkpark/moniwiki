@@ -101,13 +101,13 @@ FORM2;
 	$excerpt= stripslashes($options['excerpt']);
 
   if ($options['mbencode'] and function_exists('mb_encode_numericentity')) {
-    if ($checked and function_exists('iconv'))
+    if ($checked and function_exists('iconv')
+        and strtolower($DBInfo->charset) != 'utf-8')
       $excerpt=iconv($DBInfo->charset,'utf-8',$excerpt);
 
-    $convmap=array(0xac00, 0xd7a3, 0x0000, 0xffff); /* for euc-kr */
-    $new=mb_encode_numericentity($excerpt,$convmap,'utf-8');
+    $new=mb_encode_numericentity($excerpt,$DBInfo->convmap,'utf-8');
     if ($new) $excerpt=$new;
-    $new=mb_encode_numericentity($title,$convmap,'utf-8');
+    $new=mb_encode_numericentity($title,$DBInfo->convmap,'utf-8');
     if ($new) $title=$new;
   }
 
