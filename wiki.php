@@ -118,7 +118,7 @@ Contents</span>&nbsp;
 <option value='titlesearch'/>TitleSearch
 <option value='fullsearch'/>FullSearch
 </select>
-<input type='text' name='value' accesskey='s' size='20' />
+<input type='text' name='value' class='goto' accesskey='s' size='20' />
 <input type='submit' name='status' value='Go' />
 ";
   } else if ($type==3) {
@@ -143,7 +143,7 @@ Contents(/)</span>&nbsp;
   } else {
     return <<<FORM
 <form name='go' id='go' method='get' action='$action' onsubmit="return moin_submit();">
-<input type='text' name='value' size='20' accesskey='s' style='width:100' />
+<input type='text' name='value' size='20' accesskey='s' class='goto' style='width:100' />
 <input type='hidden' name='action' value='goto' />
 <input type='submit' name='status' value='Go' class='goto' style='width:23px;' />
 </form>
@@ -1176,7 +1176,9 @@ class Formatter {
 
     if (!$this->menu) {
       $this->menu=&$DBInfo->menu;
+    }
 
+    if (!isset($this->menu_bra)) {
       $this->menu_bra=$DBInfo->menu_bra;
       $this->menu_cat=$DBInfo->menu_cat;
       $this->menu_sep=$DBInfo->menu_sep;
@@ -2422,12 +2424,7 @@ EOS;
     }
   }
 
-  function send_footer($args=array(),$options="") {
-    global $DBInfo;
-
-    print "</div>\n";
-    print $DBInfo->hr;
-    $menu="";
+  function get_actions($args='',$options) {
     if ($this->pi['#action'] && !in_array($this->pi['#action'],$this->actions)){
       list($act,$txt)=explode(" ",$this->pi['#action'],2);
       if (!$txt) $txt=$act;
@@ -2436,7 +2433,7 @@ EOS;
         $this->actions[]='BlogRss';
         
     } else if ($args['editable']) {
-      if ($DBInfo->security->writable($options))
+      if ($args['editable']==1)
         $menu= $this->link_to("?action=edit",_("EditText"),"accesskey='x'");
       else
         $menu= _("NotEditable");
@@ -2448,7 +2445,18 @@ EOS;
       foreach ($this->actions as $action)
         $menu.= $this->menu_sep.$this->link_to("?action=$action",_($action));
     }
-    $menu = $this->menu_bra.$menu.$this->menu_cat;
+    return $this->menu_bra.$menu.$this->menu_cat;
+  }
+
+  function send_footer($args='',$options='') {
+    global $DBInfo;
+
+    print "</div>\n";
+    print $DBInfo->hr;
+    if ($args['editable'] and !$DBInfo->security->writable($options))
+      $args['editable']=-1;
+    
+    $menu=$this->get_actions($args,$options);
 
     if ($mtime=$this->page->mtime()) {
       $lastedit=date("Y-m-d",$mtime);
