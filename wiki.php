@@ -2806,10 +2806,10 @@ EOS;
   alt="Valid CSS!" /></a>
 
  <a href="http://moniwiki.sourceforge.net/"><img
-  src="$this->imgs_dir/moniwiki-powerd.png" 
+  src="$this->imgs_dir/moniwiki-powered.png" 
   border="0" width="88" height="31"
   align="middle"
-  alt="powerd by MoniWiki" /></a>
+  alt="powered by MoniWiki" /></a>
 FOOT;
 
     if ($options['timer']) {
