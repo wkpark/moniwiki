@@ -1,51 +1,34 @@
 <?php
 // Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
-// rss_blog action plugin for the MoniWiki
+// a rss_blog action plugin for the MoniWiki
 //
 // $Id$
 
-class Blog_cache {
-  function get_blogs() {
-    global $DBInfo;
-
-    $handle = opendir($DBInfo->cache_dir."/blog");
-
-    while ($file = readdir($handle)) {
-      if (is_dir($DBInfo->cache_dir."/blog/".$file)) continue;
-      $blogs[] = $file;
-    }
-    closedir($handle);
-    return $blogs;
-  }
-
-  function get_all() {
-    global $DBInfo;
-    $all=Blog_cache::get_blogs();
-    $lines=array();
-    foreach ($all as $blog) {
-      #$lines=array_merge($lines,file($DBInfo->cache_dir."/blog/".$blog));
-      $lines=array_merge($lines,file($DBInfo->cache_dir."/blog/".$blog));
-    }
-    return $lines;
-  }
-}
+if (!function_exists('macro_BlogChanges'))
+  if ($plugin=getPlugin('BlogChanges')) include_once("plugin/$plugin.php");
 
 function do_rss_blog($formatter,$options) {
   global $DBInfo;
 
-  if ($options['all']) {
-    $lines=Blog_cache::get_all();
-  } else {
-    $raw_body=$formatter->page->get_raw_body();
-    $temp= explode("\n",$raw_body);
+  if (!$options['date'] or !preg_match('/^\d+$/',$date)) $date=date('Ym');
+  else $date=$options['date'];
 
-    $lines=array();
-    foreach ($temp as $line) {
-      if (preg_match("/^{{{#!blog (.*)$/",$line,$match)) {
-        $lines[$match[1]]=$options['page'];
-      }
-    }
+  if ($options['all']) {
+    # check error and set default value
+    $blog_rss=new Cache_text('blogrss');
+
+#    $blog_mtime=filemtime($DBInfo->cache_dir."/blog");
+#    if ($blog_rss->exists($date'.xml') and ($blog_rss->mtime($date.'.xml') > $blog_mtime)) {
+#      print $blog_rss->fetch($date.'.xml');
+#      return;
+#    }
+
+    $blogs=Blog_cache::get_rc_blogs($date);
+    $logs=Blog_cache::get_simple($blogs,$date);
+  } else {
+    $blogs=array($DBInfo->pageToKeyname($formatter->page->name));
+    $logs=Blog_cache::get_summary($blogs,$date);
   }
     
   $time_current= time();
@@ -55,7 +38,6 @@ function do_rss_blog($formatter,$options) {
 
   $head=<<<HEAD
 <?xml version="1.0" encoding="$DBInfo->charset"?>
-<!--<?xml-stylesheet type="text/xsl" href="/wiki/css/rss.xsl"?>-->
 <rdf:RDF xmlns:wiki="http://purl.org/rss/1.0/modules/wiki/"
          xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
          xmlns:xlink="http://www.w3.org/1999/xlink"
@@ -68,7 +50,7 @@ HEAD;
   <title>$DBInfo->sitename</title>
   <link>$url</link>
   <description>
-    RecentChanges at $DBInfo->sitename
+    BlogChanges at $DBInfo->sitename
   </description>
   <image rdf:resource="$img_url"/>
   <items>
@@ -81,12 +63,13 @@ CHANNEL;
 #        }
 
   $ratchet_day= FALSE;
-  if (!$lines) $lines=array();
+  if (!$logs) $logs=array();
 
-  foreach ($lines as $line=>$page) {
-    $url=qualifiedUrl($formatter->prefix."/".$page);
+  foreach ($logs as $log) {
+    #print_r($log);
+    list($page, $user,$date,$title,$summary)= $log;
+    $url=qualifiedUrl($formatter->link_url(_urlencode($page)));
 
-    list($user,$date,$title)= explode(" ", $line,3);
     if (!$title) continue;
     #$tag=md5("#!blog ".$line);
     $tag=md5($line);
@@ -96,6 +79,8 @@ CHANNEL;
     $items.="     <item rdf:about=\"$url#$tag\">\n";
     $items.="     <title>$title</title>\n";
     $items.="     <link>$url#$tag</link>\n";
+    if ($summary)
+      $items.="     <description>$summary</description>\n";
     $items.="     <dc:date>$date</dc:date>\n";
     $items.="     <dc:contributor>\n<rdf:Description>\n"
           ."<rdf:value>$user</rdf:value>\n"
