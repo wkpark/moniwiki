@@ -1012,17 +1012,22 @@ class Formatter {
     }
 
     if ($body[0] == '<') {
-      list($line, $dummy)= split("\n", $body,2);
+      list($line, $dummy)= explode("\n", $body,2);
       if (substr($line,0,6) == '<?xml ')
         #$this->pi['#format']='xslt';
         $this->pi['#format']='xsltproc';
+    } else if ($body[0] == '#' and $body[1] =='!') {
+      list($line, $dummy)= explode("\n", $body,2);
+      list($tag,$args)= explode(" ", substr($line,2),2);
+      $this->pi['#format']=$tag;
+      $this->pi['args']=$args;
     }
     while ($body and $body[0] == '#') {
       # extract first line
       list($line, $body)= split("\n", $body,2);
       if ($line=='#') break;
       else if ($line[1]=='#') continue;
-      list($key,$val)= explode(" ",$line,2);
+      list($key,$val,$args)= explode(" ",$line,3);
       $key=strtolower($key);
       if (in_array($key,$pi)) $this->pi[$key]=$val;
     }
@@ -1365,7 +1370,6 @@ class Formatter {
       $this->_instructions(&$body);
       if ($this->processor) {
 #        if ($body[0]=='#') list($dummy,$body)= explode("\n",$body,2);
-        print "$body";
         eval("\$out=processor_$this->processor(&\$this,\$body,\$options);");
         print $out;
         return;
