@@ -69,12 +69,13 @@ function do_Blog($formatter,$options) {
     $savetext=stripslashes($options['savetext']);
     $savetext=str_replace("\r","",$savetext);
     $savetext=str_replace("----\n","-''''''---\n",$savetext);
-    $savetext=str_replace("<","&lt;",$savetext);
+    #$savetext=str_replace("<","&lt;",$savetext);
   }
+  if ($options['title'])
+    $options['title']=stripslashes($options['title']);
   if (!$options['button_preview'] && $savetext) {
     $savetext=preg_replace("/(?<!\\\\)}}}/","\}}}",$savetext);
 
-    $options['title']=stripslashes($options['title']);
     $url=$formatter->link_tag($formatter->page->urlname,"",$options['page']);
     $options['msg']=sprintf(_("\"%s\" is updated"),$url);
 
