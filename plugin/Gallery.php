@@ -196,7 +196,7 @@ function macro_Gallery($formatter,$value,$options='') {
       }
       if (!$selected and file_exists($dir."/thumbnails/".$file)) {
         $thumb=($key == $value) ? $prefix.'thumbnails/'.$id:
-          str_replace('value=','value='.$id,$prefix);
+          str_replace('value=','value=thumbnails/'.$id,$prefix);
         $object="<img src='$thumb' alt='$file' />";
       } else {
         $nwidth=$width;
