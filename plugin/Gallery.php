@@ -91,9 +91,10 @@ function macro_Gallery($formatter,$value,$options='') {
     }
   }
 
-  if (filemtime($dir."/list.txt") > filemtime($dir)) {
-    $handle= opendir($dir);
+  if (filemtime($dir) > filemtime($dir."/list.txt")) {
+    unset($upfiles);
 
+    $handle= opendir($dir);
     $cache='';
     $cr='';
     while ($file= readdir($handle)) {
@@ -143,7 +144,7 @@ function macro_Gallery($formatter,$value,$options='') {
     $link=$prefix.rawurlencode($file);
     $date=date("Y-m-d",$mtime);
     if (preg_match("/\.(jpg|jpeg|gif|png)$/i",$file)) {
-      if ($DBInfo->use_thumbnails and !file_exists($dir."/thumbnails/".$file)) {
+      if ($DBInfo->use_covert_thumbs and !file_exists($dir."/thumbnails/".$file)) {
         system("convert -scale ".$width." ".$dir."/".$file." ".$dir."/thumbnails/".$file);
       }
       if (file_exists($dir."/thumbnails/".$file)) {
