@@ -84,7 +84,7 @@ CHANNEL;
       ob_end_clean();
       $items.="     <description>$summary</description>\n";
     }
-    $items.="     <dc:date>$date</dc:date>\n";
+    $items.="     <dc:date>$date+00:00</dc:date>\n";
     $items.="     <dc:contributor>\n<rdf:Description>\n"
           ."<rdf:value>$user</rdf:value>\n"
           ."</rdf:Description>\n</dc:contributor>\n";
