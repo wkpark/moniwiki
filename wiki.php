@@ -2404,23 +2404,23 @@ register_shutdown_function(array(&$DBInfo,'Close'));
 $user=new User();
 $options=array();
 $options[id]=$user->id;
+
+# MoniWiki theme
+$theme=$HTTP_POST_VARS[theme];
+if ($theme) $options[theme]=$theme;
+
 if ($DBInfo->trail)
   $options[trail]=$user->trail;
 if ($user->id != "Anonymous") {
   $udb=new UserDB($DBInfo);
   $user=$udb->getUser($user->id);
   $options[css_url]=$user->info[css_url];
-#  $name=$user->info[name];
+  #$options[name]=$user->info[name];
+  if (!$theme) $options[theme]=$user->info[theme];
 } else {
   $options[css_url]=$user->css;
+  if (!$theme) $options[theme]=$user->theme;
 }
-
-# MoniWiki theme
-$theme=$HTTP_POST_VARS[theme];
-if ($theme)
-  $options[theme]=$theme;
-else
-  $options[theme]=$user->theme;
 
 # setup like phpwiki style locale
 # get broswer's settings
