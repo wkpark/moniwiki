@@ -400,7 +400,7 @@ if ($REQUEST_METHOD=="POST") {
     print "<h2>WikiSeeds are sowed successfully</h2>";
     print "<h2>goto <a href='wiki.php'>$config[sitename]</a></h2>";
     exit;
-  } else {
+  } else if ($action=='sow_seed' && !$seeds) {
     print "<h2><font color='red'>No WikiSeeds are selected</font></h2>";
     exit;
   }
