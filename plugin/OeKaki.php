@@ -35,7 +35,7 @@ function macro_OeKaki($formatter,$value) {
   if (!file_exists($oekaki_dir."/$pngname"))
     return "<a href='$url'>"._("Draw new picture")."</a>";
 
-  return "<a href='$url'><img src='$DBInfo->url_prefix/$oekaki_dir/$pngname' alt='oekaki'></a>\n";
+  return "<a href='$url'><img src='$DBInfo->url_prefix/$oekaki_dir/$pngname' alt='oekaki'></a>";
 }
 
 function do_OeKaki($formatter,$options) {
@@ -53,16 +53,7 @@ function do_OeKaki($formatter,$options) {
 #    fputs($fp,"len=$len\n");
 #    fputs($fp,"method=POST\n");
 #  }
-
-  if (!$name) {
-    $title=_("Fatal error !");
-    $formatter->send_header("",$options);
-    $formatter->send_title($title,"",$options);
-    print "<h2>"._("No filename given")."</h2>";
-    $formatter->send_footer("",$options);
-    
-    return;
-  }
+  if (!$name) $name=time(); # XXX
 
   $pngname='OeKaki_'._rawurlencode($name);
 
@@ -80,6 +71,22 @@ function do_OeKaki($formatter,$options) {
   }
 
   if ($GLOBALS['HTTP_RAW_POST_DATA']) {
+    if ($formatter->page->exists())
+      $body=$formatter->page->get_raw_body();
+    else $body='';
+    if (!preg_match("/\n\[\[OeKaki($name)\]\]\n/i",$body)) {
+      if (preg_match("/\n##Draw\n/i",$body))
+       $body=preg_replace("/\n##Draw\n/","\n##Draw\n[[OeKaki($name)]]\n",$body);
+      else
+       $body.="[[OeKaki($name)]]\n";
+
+      $log="Oekaki drawing added";
+
+      $formatter->page->write($body);
+      # XXX Oekaki post does not hav any information about user id.
+      $DBInfo->savePage(&$formatter->page,$log,$options);
+    }
+
     if ($backup_imgpath != $imgpath) copy($imgpath,$backup_imgpath);
     $raw=$GLOBALS['HTTP_RAW_POST_DATA'];
     $p=strpos($raw,"\r");

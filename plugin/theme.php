@@ -81,8 +81,8 @@ function macro_theme($formatter,$value) {
   $handle = opendir("theme");
   $themes=array();
   while ($file = readdir($handle)) {
-     if ($file != '.' and $file !='..' and is_dir("theme/".$file))
-        $themes[]= $file;
+    if (!in_array($file,array('.','..','RCS','CVS')) and is_dir("theme/".$file))
+      $themes[]= $file;
   }
 
   $out.="<option value=''>-- Select --</option>\n";
