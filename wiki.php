@@ -679,7 +679,7 @@ class WikiDB {
 
     $id=$options[id];
     if ($options[id] != 'Anonymous')
-      if (!preg_match('[A-Z][a-z0-9]',$options[id])) $id='['.$id.']';
+      if (!preg_match('/[A-Z][a-z0-9]/',$options[id])) $id='['.$id.']';
  
     $body=preg_replace("/@DATE@/","[[Date($time)]]",$body);
     $body=preg_replace("/@TIME@/","[[DateTime($time)]]",$body);
@@ -1182,6 +1182,7 @@ class Formatter {
   function head_repl($left,$head,$right) {
     $dep=strlen($left);
     if ($dep != strlen($right)) return "$left $head $right";
+    $this->nobr=1;
 
     if (!$this->depth_top) { $this->depth_top=$dep; $depth=1; }
     else {
@@ -1548,8 +1549,13 @@ class Formatter {
             $pre=preg_replace("/</","&lt;",$this->pre_line);
             $line="<pre class='wiki'>\n".$pre."</pre>\n".$line;
          }
+         $this->nobr=1;
       }
-      $text.=$line."\n";
+      if ($DBInfo->auto_linebreak && !$in_table && !$this->nobr)
+        $text.=$line."<br />\n"; 
+      else
+        $text.=$line."\n";
+      $this->nobr=0;
     }
     # strip slash only for double quotes
     $text=str_replace('\"','"',$text);
@@ -2541,15 +2547,15 @@ if ($pagename) {
     do_DeletePage($formatter,$options);
   } else if ($action) {
     if (function_exists("do_post_".$action)) {
-      $options=array_merge($options,$HTTP_POST_VARS);
+      $options=array_merge($HTTP_POST_VARS,$options);
       $options[page]=$page->name;
       $options[timer]=$timing;
       eval("do_post_".$action."(\$formatter,\$options);");
     } else if (function_exists("do_".$action)) {
       if ($_SERVER[REQUEST_METHOD]=="POST")
-        $options=array_merge($options,$HTTP_POST_VARS);
+        $options=array_merge($HTTP_POST_VARS,$options);
       else
-        $options=array_merge($options,$HTTP_GET_VARS);
+        $options=array_merge($HTTP_GET_VARS,$options);
       $options[page]=$page->name;
       $options[timer]=$timing;
       eval("do_".$action."(\$formatter,\$options);");
@@ -2557,15 +2563,15 @@ if ($pagename) {
       if ($plugin=getPlugin($action)) {
         include("plugin/$plugin.php");
         if (function_exists("do_post_".$action)) {
-          $options=array_merge($options,$HTTP_POST_VARS);
+          $options=array_merge($HTTP_POST_VARS,$options);
           $options[page]=$page->name;
           $options[timer]=$timing;
           eval("do_post_".$action."(\$formatter,\$options);");
         } else if (function_exists("do_".$action)) {
           if ($_SERVER[REQUEST_METHOD]=="POST")
-            $options=array_merge($options,$HTTP_POST_VARS);
+            $options=array_merge($HTTP_POST_VARS,$options);
           else
-            $options=array_merge($options,$HTTP_GET_VARS);
+            $options=array_merge($HTTP_GET_VARS,$options);
           $options[page]=$page->name;
           $options[timer]=$timing;
           eval("do_".$action."(\$formatter,\$options);");
