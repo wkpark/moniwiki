@@ -131,7 +131,9 @@ function checkConfig($config) {
      print "<pre class='console'>\n<font color='green'>$</font> chmod <b>777</b> $dir/data/ $dir\n</pre>\n";
      print "If you want a more safe wiki, try to change the permission of directories with <font color='red'>2777(setgid).</font>\n";
      print "<pre class='console'>\n<font color='green'>$</font> chmod <b>2777</b> $dir/data/ $dir\n</pre>\n";
-     print "After execute one of above two commands, just <a href='monisetup.php'>reload this monisetup.php</a> would make a new initial config.php with detected parameters for your wiki.\n<br/>";
+     print "or use <tt>monisetup.sh</tt> and select 777 or <font color='red'>2777</font>";
+     print "<pre class='console'>\n<font color='green'>$</font> sh monisetup.sh</pre>\n";
+     print "After execute one of above two commands, just <a href='monisetup.php'>reload this <tt>monisetup.php</tt></a> would make a new initial <tt>config.php</tt> with detected parameters for your wiki.\n<br/>";
      print "<h2><a href='monisetup.php'>Reload</a></h2>";
      exit;
   } else if (file_exists("config.php")) {
@@ -170,6 +172,11 @@ function checkConfig($config) {
            print "<pre class='console'>\n".
              "<font color='green'>$</font> chmod a+w $config[$file]\n</pre>\n";
        }
+    }
+    if (is_dir('imgs') and !file_exists('imgs/.htaccess')) {
+      $fp=fopen('imgs_htaccess','w');
+      fwrite($fp,'ErrorDocument 404 '.$config['url_prefix'].'/imgs/moni/inter.png'."\n");
+      fclose($fp);
     }
 
     $writables=array("upload_dir","editlog_name");
@@ -294,7 +301,7 @@ function sow_wikiseed($config,$seeddir='wikiseed',$seeds) {
       break;
     }
   }
-  umask(000);
+  umask(0133);
   print "<pre class='console'>\n";
   foreach($seeds as $seed) {
     $key=pagenameToKey($seed);
@@ -444,7 +451,10 @@ if ($_SERVER['REQUEST_METHOD']=="POST") {
   if ($action=='sow_seed' && $seeds) {
     sow_wikiseed($config,'wikiseed',$seeds);
     print "<h2>WikiSeeds are sowed successfully</h2>";
-    print "<h2>goto <a href='wiki.php'>$config[sitename]</a></h2>";
+    if (file_exists('wiki.php'))
+      print "<h2>goto <a href='wiki.php'>$config[sitename]</a></h2>";
+    else
+      print "<h2>goto <a href='".$config[url_prefix]."'>$config[sitename]</a></h2>";
     exit;
   } else if ($action=='sow_seed' && !$seeds) {
     print "<h2><font color='red'>No WikiSeeds are selected</font></h2>";
@@ -505,7 +515,10 @@ if ($_SERVER['REQUEST_METHOD']!="POST") {
     print "<h3><font color='red'>WARN: You have no WikiSeed on your $config[sitename]</font></h3>\n";
     print "<h2>If you want to put wikiseeds on your wiki <a href='?action=seed'>Click here</a> now</h2>";
   } else {
-    print "<h2>goto <a href='wiki.php'>$config[sitename]</a></h2>";
+    if (file_exists('wiki.php'))
+      print "<h2>goto <a href='wiki.php'>$config[sitename]</a></h2>";
+    else
+      print "<h2>goto <a href='".$config[url_prefix]."'>$config[sitename]</a></h2>";
   }
 }
 
