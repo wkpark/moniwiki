@@ -9,6 +9,8 @@ function do_download($formatter,$options) {
   global $DBInfo;
 
   if (!$options['value']) {
+    if (!function_exists('do_uploadedfiles'))
+      include_once dirname(__FILE__).'/UploadedFiles.php';
     do_uploadedfiles($formatter,$options);
     return; 
   }
