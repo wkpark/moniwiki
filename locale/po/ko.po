@@ -111,7 +111,7 @@ msgstr ""
 #: ../plugin/BlogChanges.php:409 ../plugin/processor/blog.php:85
 #, c-format
 msgid "%d comment"
-msgstr ""
+msgstr "´ñ±Û %d°³"
 
 #: ../plugin/BlogChanges.php:409 ../plugin/processor/blog.php:85
 #, c-format
