@@ -894,8 +894,6 @@ class WikiDB {
   }
 
   function renamePage($pagename,$new,$options='') {
-    global $DBInfo;
-
     $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
 
     $okey=$this->getPageKey($pagename);
