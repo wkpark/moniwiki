@@ -77,11 +77,11 @@ function macro_Navigation($formatter,$value) {
       $formatter->query_string=$query;
     }
     $pnut='&laquo; ';
-    if ($prev) $pnut.=$formatter->link_repl($prev);
+    if ($prev) $pnut.=$formatter->link_repl($prev," accesskey=\",\" ");
     if ($use_action) $formatter->query_string=$save;
     $pnut.=" | ".$formatter->link_repl($index)." | ";
     if ($use_action) $formatter->query_string=$query;
-    if ($next) $pnut.=$formatter->link_repl($next);
+    if ($next) $pnut.=$formatter->link_repl($next," accesskey=\".\" ");
     $pnut.=' &raquo;';
     if ($use_action) $formatter->query_string=$save;
   }
