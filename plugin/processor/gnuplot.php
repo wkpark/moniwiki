@@ -11,17 +11,14 @@
 function processor_gnuplot($formatter="",$value="") {
   global $DBInfo;
 
-  #if(getenv("OS")=="Windows_NT") {
-  #$gnuplot="wgnuplot"; # Win32
-  #} else {
-  #$gnuplot="gnuplot";
-  $gnuplot="/usr/local/bin/gnuplot_pm3d";
-  #}
+  if(getenv("OS")=="Windows_NT")
+    $gnuplot="wgnuplot"; # Win32
+  else
+    $gnuplot="gnuplot";
 
   $vartmp_dir=$DBInfo->vartmp_dir;
   $cache_dir=$DBInfo->upload_dir."/GnuPlot";
 
-  #
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
 
@@ -47,7 +44,7 @@ function processor_gnuplot($formatter="",$value="") {
   $outpath="$cache_dir/$uniq.png";
 
   $src="
-  set size 0.5,0.6
+set size 0.5,0.6
 set term png
 set out '$outpath'
 $plt
@@ -59,33 +56,36 @@ $plt
     umask(022);
   }
 
-  #if (1 || $formatter->refresh || !file_exists("$cache_dir/$uniq.png")) {
   if ($formatter->refresh || !file_exists("$cache_dir/$uniq.png")) {
 
      $flog=tempnam($vartmp_dir,"GNUPLOT");
-#
-# for Win32 wgnuplot.exe
-#
-#     $finp=tempnam($vartmp_dir,"GNUPLOT");
-#     $ifp=fopen($finp,"w");
-#     fwrite($ifp,$src);
-#     fclose($ifp);
-#
-#     $cmd= "$gnuplot $finp > $flog";
-#     $fp=system($cmd);
-#     $log=join(file($flog),"");
-#     unlink($flog);
-#     unlink($finp);
+     #
+     # for Win32 wgnuplot.exe
+     #
+     if(getenv("OS")=="Windows_NT") {
+       $finp=tempnam($vartmp_dir,"GNUPLOT");
+       $ifp=fopen($finp,"w");
+       fwrite($ifp,$src);
+       fclose($ifp);
 
-#
-# Unix
-#
-     $cmd= "$gnuplot 2> $flog";
-     $fp=system($cmd);
+       $cmd= "$gnuplot $finp > $flog";
+       $fp=system($cmd);
+       $log=join(file($flog),"");
+       unlink($flog);
+       unlink($finp);
+     } else {
+       #
+       # Unix
+       #
+       $cmd= "$gnuplot 2> $flog";
+       $fp=popen($cmd,"w");
+       fwrite($fp,$src);
+       pclose($fp);
+       $log=join(file($flog),"");
+       if ($log) unlink($outpath);
+       unlink($flog);
+     }
 
-     $log=join(file($flog),"");
-     unlink($flog);
-  
      if ($log)
         $log ="<pre style='background-color:black;color:gold'>$log</pre>\n";
   }
