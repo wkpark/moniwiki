@@ -45,7 +45,7 @@ function macro_Attachment($formatter,$value) {
         $url=$DBInfo->url_prefix."/".$upload_file;
       return "<span class=\"imgAttach\"><img src='$url' alt='$value' $attr/></span>";
     } else
-      return "<span class=\"attach\"><img align='middle' src='$DBInfo->imgs_dir/uploads-16.png' />".
+      return "<span class=\"attach\"><img align='middle' src='$DBInfo->imgs_dir_interwiki".'uploads-16.png\' />'.
         $formatter->link_tag(_urlencode($pagename),"?action=download&amp;value=$value",$value).'</span>';
   }
   if ($pagename == $formatter->page->name)
