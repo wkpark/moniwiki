@@ -23,10 +23,15 @@ function do_post_backup($formatter,$options) {
       $file_path= $dir."/".$upfilename;
     }
 
-    if ($options['verbose'])
-      $cmd="tar cvpzf $tar $DBInfo->text_dir";
-    else
-      $cmd="tar cpzf $tar $DBInfo->text_dir";
+    # XXX
+    $dest_files = " ".$DBInfo->text_dir;
+    echo $DBInfo->user_dir;
+    $dest_files.= " ".$DBInfo->user_dir;
+    $dest_files.= " ".$DBInfo->editlog_name;
+    if (file_exists($DBInfo->data_dir."/counter.db"))
+        $dest_files .= " ".$DBInfo->data_dir."/counter.db";
+    $verbose_option = $options['verbose'] ? 'v' : '';
+    $cmd="tar c{$verbose_option}pzf $tar $dest_files";
 
     $formatter->send_header("",$options);
     $formatter->send_title("","",$options);
