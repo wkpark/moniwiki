@@ -16,7 +16,16 @@ function do_rss_blog($formatter,$options) {
 #  else $date=$options['date'];
   $date=$options['date'];
 
-  if ($options['all']) {
+  $category_pages=array();
+  if ($options['category'] and $DBInfo->blog_category) {
+    $categories=Blog_cache::get_categories();
+    if ($categories[$options['category']])
+      $category_pages=$categories[$options['category']];
+    $title=$options['category'];
+  } else
+    $title=_("Blog Changes");
+
+  if ($options['all'] or $options['category']) {
     # check error and set default value
     $blog_rss=new Cache_text('blogrss');
 
@@ -26,9 +35,9 @@ function do_rss_blog($formatter,$options) {
 #      return;
 #    }
 
-    $blogs=Blog_cache::get_rc_blogs($date);
+    $blogs=Blog_cache::get_rc_blogs($date,$category_pages);
     $logs=Blog_cache::get_summary($blogs,$date);
-    $rss_name=$DBInfo->sitename.': '._("Blog Changes");
+    $rss_name=$DBInfo->sitename.': '.$title;
   } else {
     $blogs=array($DBInfo->pageToKeyname($formatter->page->name));
     $logs=Blog_cache::get_summary($blogs,$date);
