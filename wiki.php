@@ -18,9 +18,10 @@ $_release = '1.0.8';
 
 #ob_start("ob_gzhandler");
 
-$timing=new Timer();
-
+$Config=getConfig("config.php",array('init'=>1));
 include("wikilib.php");
+
+$timing=new Timer();
 
 function _preg_escape($val) {
   return preg_replace('/([\$\^\.\[\]\{\}\|\(\)\+\*\/\\\\!\?]{1})/','\\\\\1',$val);
@@ -59,31 +60,46 @@ function qualifiedUrl($url) {
 function getPlugin($pluginname) {
   static $plugins=array();
   if ($plugins) return $plugins[strtolower($pluginname)];
-
-  $handle= opendir('plugin');
-  while ($file= readdir($handle)) {
-    if (is_dir("plugin/$file")) continue;
-    $name= substr($file,0,-4);
-    $plugins[strtolower($name)]= $name;
+  global $DBInfo;
+  if ($DBInfo->include_path)
+    $dirs=explode(':',$DBInfo->include_path);
+  else
+    $dirs=array('.');
+ 
+  foreach ($dirs as $dir) {
+    $handle= @opendir($dir.'/plugin');
+    if (!$handle) continue;
+    while ($file= readdir($handle)) {
+      if (is_dir($dir."/plugin/$file")) continue;
+      $name= substr($file,0,-4);
+      $plugins[strtolower($name)]= $name;
+    }
   }
 
   return $plugins[strtolower($pluginname)];
 }
 
 function getProcessor($pro_name) {
-  global $DBInfo;
   static $processors=array();
   if ($processors) return $processors[strtolower($pro_name)];
+  global $DBInfo;
+  if ($DBInfo->include_path)
+    $dirs=explode(':',$DBInfo->include_path);
+  else
+    $dirs=array('.');
 
-  $handle= opendir('plugin/processor');
-  while ($file= readdir($handle)) {
-    if (is_dir("plugin/processor/$file")) continue;
-    $name= substr($file,0,-4);
-    if (($tname=$DBInfo->processors[$name])) {
-      if (!file_exists("plugin/processor/$tname.php")) $name='plain';
-      else $name=$DBInfo->processors[$name];
+  foreach ($dirs as $dir) {
+    $handle= @opendir($dir.'/plugin/processor');
+    if (!$handle) continue;
+    while ($file= readdir($handle)) {
+      if (is_dir($dir."/plugin/processor/$file")) continue;
+      $name= substr($file,0,-4);
+      if (($tname=$DBInfo->processors[$name])) {
+        if (!file_exists("plugin/processor/$tname.php")) $name='plain';
+        else $name=$DBInfo->processors[$name];
+      }
+      $processors[strtolower($name)]= $name;
     }
-    $processors[strtolower($name)]= $name;
   }
 
   #print_r($processors);
@@ -413,6 +429,7 @@ function getConfig($configfile, $options=array()) {
 #  if ($icons) $config['icons']=$icons;
 #  if ($icon) $config['icon']=$icon;
 #  if ($actions) $config['actions']=$actions;
+  if ($config['include_path']) ini_set('include_path',$config['include_path']);
 
   return $config;
 }
@@ -1177,9 +1194,9 @@ class Formatter {
     $this->baserule=array("/<([^\s<>])/","/`([^`' ]+)'/","/(?<!`)`([^`]*)`/",
                      "/'''([^']*)'''/","/(?<!')'''(.*)'''(?!')/",
                      "/''([^']*)''/","/(?<!')''(.*)''(?!')/",
-                     "/\^([^ \^]+)\^(?=\s|$)/","/,,([^ ,]+),,(?=\s|$)/",
-                     "/__([^ _]+)__(?=\s|$)/","/^-{4,}/",
-                     "/--([^- ]+)--(?=\s|$)/",
+                     "/(?<!\^)\^([^ \^]+)\^(?!\^)/","/(?<!,),,([^ ,]+),,(?!,)/",
+                     "/(?<!_)__([^_]+)__(?!_)/","/^-{4,}/",
+                     "/(?<!-)--([^-]+)--(?!-)/",
                      );
     $this->baserepl=array("&lt;\\1","&#96;\\1'","<tt class='wiki'>\\1</tt>",
                      "<b>\\1</b>","<b>\\1</b>",
@@ -1227,7 +1244,7 @@ class Formatter {
     # protect WikiName rule !WikiName
     "(?<![a-z])\!?(?:\/?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b|".
     # single bracketed name [Hello World]
-    "(?<!\[)\!?\[([^\[:,<\s][^\[:,>]{1,255})\](?!\])|".
+    "(?<!\[)\!?\[([^\[:,<\s'][^\[:,>]{1,255})\](?!\])|".
     # bracketed with double quotes ["Hello World"]
     "(?<!\[)\!?\[\\\"([^\\\"]+)\\\"\](?!\])|".
     # "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
@@ -1520,10 +1537,12 @@ class Formatter {
       $links=$this->cache->fetch($this->page->name);
       if ($links !== false) return $links;
     }
+    $pi=$this->get_instructions();
+    if ($pi['#format']) return '';
     if ($this->page->exists()) {
       $body=$this->page->get_raw_body();
       # quickly generate a pseudo pagelinks
-      preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$body);
+      preg_replace("/(?<!\[\[)(".$this->wordrule.")/e","\$this->link_repl('\\1')",$body);
       $this->store_pagelinks();
       if ($this->pagelinks) {
         $links=join("\n",array_keys($this->pagelinks))."\n";
@@ -2749,6 +2768,7 @@ FOOT;
 
     $name=$this->page->urlname;
     $action=$this->link_url($name);
+    $saved_pagelinks = $this->pagelinks;
 
     # find upper page
     $pos=strrpos($name,"/");
@@ -2873,6 +2893,7 @@ MSG;
       print "</div>\n";
     }
     print "<div id='wikiBody'>\n";
+    $this->pagelinks=$saved_pagelinks;
   }
 
   function set_origin($pagename) {
@@ -3003,7 +3024,6 @@ function get_pagename() {
 }
 
 # Start Main
-$Config=getConfig("config.php",array('init'=>1));
 
 $DBInfo= new WikiDB($Config);
 register_shutdown_function(array(&$DBInfo,'Close'));
@@ -3161,12 +3181,13 @@ if ($pagename) {
     }
     $formatter->write("<div id='wikiContent'>\n");
     $options['timer']->Check("init");
+    $options['pagelinks']=1;
 #    $cache=new Cache_text('pages');
 #    if ($cache->exists($pagename)) {
 #      print $cache->fetch($pagename);
 #    } else {
 #      ob_start();
-      $formatter->send_page();
+      $formatter->send_page('',$options);
       if ($DBInfo->use_referer)
         log_referer($_SERVER['HTTP_REFERER'],$pagename);
       flush();
