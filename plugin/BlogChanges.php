@@ -9,7 +9,8 @@ class Blog_cache {
   function get_blogs() {
     global $DBInfo;
 
-    $handle = opendir($DBInfo->cache_dir."/blog");
+    $handle = @opendir($DBInfo->cache_dir."/blog");
+    if (!$handle) return array();
 
     while ($file = readdir($handle)) {
       if (is_dir($DBInfo->cache_dir."/blog/".$file)) continue;
@@ -43,13 +44,19 @@ function BlogCompare($a,$b) {
 function macro_BlogChanges($formatter,$value) {
   global $DBInfo;
 
-  if ($value=='all') {
+  $opts=explode(",",$value);
+  
+  if (in_array('all',$opts)) {
     $lines=Blog_cache::get_all();
     $logs=array();
     foreach ($lines as $line) $logs[]=explode(" ",$line,4);
     usort($logs,'BlogCompare');
   } else {
-    $raw_body=$formatter->page->get_raw_body();
+    if ($value and $DBInfo->hasPage($value)) {
+      $p=$DBInfo->getPage($value);
+      $raw_body=$p->get_raw_body();
+    } else
+      $raw_body=$formatter->page->get_raw_body();
     $temp= explode("\n",$raw_body);
 
     $logs=array();
@@ -59,15 +66,37 @@ function macro_BlogChanges($formatter,$value) {
       }
     }
   }
+
+  if (in_array('simple',$opts)) {
+    $bra="";
+    $sep="<br />";
+    $bullet="";
+    $cat="";
+  } else {
+    $bra="<ul class='blog-list'>";
+    $bullet="<li class='blog-list'>";
+    $sep="</li>\n";
+    $cat="</ul>";
+  }
+  $template='$out="$bullet<a href=\"$url#$tag\">$title</a> <span class=\"blog-user\">';
+  if (!in_array('nodate',$opts))
+    $template.='@ $date ';
+  if (!in_array('nouser',$opts))
+    $template.='by $user';
+
+  $template.='</span>$sep\n";';
     
   $time_current= time();
   $items="";
 
-  if (!$lines) return "";
+  if (!$logs) return "";
 
   foreach ($logs as $log) {
     list($page, $user,$date,$title)= $log;
     $url=qualifiedUrl($formatter->prefix."/".$page);
+
+    if (!$opts['nouser'] and $user and $DBInfo->hasPage($user))
+      $user=$formatter->link_tag(_rawurlencode($user),"",$user);
 
     if (!$title) continue;
 
@@ -78,10 +107,11 @@ function macro_BlogChanges($formatter,$value) {
     $time=strtotime($date." GMT");
     $date= date("m-d [h:i a]",$time);
 
-    #$items.="<li><a href='$url#$tag'>$title</a> <span class='blog-user'>@ $date by $user</span></li>\n";
-    $items.="<li><a href='$url#$tag'>$title</a> <span class='blog-user'>@ $date </span></li>\n";
+    #$items.="$bullet<a href='$url#$tag'>$title</a> <span class='blog-user'>@ $date </span>$sep\n";
+    eval($template);
+    $items.=$out;
   }
   $url=qualifiedUrl($formatter->link_url($DBInfo->frontpage));
-  return "<ul>".$items."</ul>";
+  return $bra.$items.$cat;
 }
 ?>
