@@ -1,4 +1,4 @@
-<?
+<?php
 // Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // Blog plugin for the MoniWiki
