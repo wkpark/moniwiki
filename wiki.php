@@ -32,6 +32,7 @@ function _preg_search_escape($val) {
 
 function get_scriptname() {
   // Return full URL of current page.
+  // return $_SERVER["PATH_INFO"]; for apache 2.0.x + php4.2.x Win32
   return $_SERVER["SCRIPT_NAME"];
 }
 
@@ -1559,8 +1560,6 @@ class Formatter {
     $wordrule.=$this->wordrule;
 
     foreach ($lines as $line) {
-      # strip trailing '\n'
-      #$line=preg_replace("/\n$/", "", $line);
 
       # empty line
       #if ($line=="") {
@@ -1709,7 +1708,7 @@ class Formatter {
       $line=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$line);
 
       # Headings
-      $line=preg_replace('/(?<!=)(={1,5})\s+(.*)\s+(={1,5})$/e',
+      $line=preg_replace("/(?<!=)(={1,5})\s+(.*)\s+(={1,5})\s?$/e",
                          "\$this->head_repl('\\1','\\2','\\3')",$line);
 
       # Smiley
@@ -2513,14 +2512,16 @@ if (isset($locale)) {
 }
 
 # get the pagename
-if (!empty($_SERVER[PATH_INFO])) {
-  if ($_SERVER[PATH_INFO][0] == '/')
-    $pagename=substr($_SERVER[PATH_INFO],1);
+// $_SERVER["PATH_INFO"] has bad value under
+// apache 2.0.x + php4.2.x Win32
+if (!empty($_SERVER['PATH_INFO'])) {
+  if ($_SERVER['PATH_INFO'][0] == '/')
+    $pagename=substr($_SERVER['PATH_INFO'],1);
   if (!$pagename) {
     $pagename = $DBInfo->frontpage;
   }
   $pagename=stripslashes($pagename);
-} else if (!empty($_SERVER[QUERY_STRING])) {
+} else if (!empty($_SERVER['QUERY_STRING'])) {
   if (isset($goto)) $pagename=$goto;
   else {
     $pagename = $_SERVER[QUERY_STRING];
