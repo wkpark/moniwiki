@@ -14,7 +14,7 @@
 // $Id$
 // vim:et:ts=2:
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0beta';
+$_release = '1.0rc1';
 
 include "wikilib.php";
 
