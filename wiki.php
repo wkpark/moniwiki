@@ -1605,7 +1605,7 @@ class Formatter {
     return '';
   }
 
-  function word_repl($word,$text='',$attr='',$nogroup=0) {
+  function word_repl($word,$text='',$attr='',$nogroup=0,$islink=1) {
     global $DBInfo;
     $nonexists='nonexists_'.$DBInfo->nonexists;
     if ($word[0]=='"') { # ["extended wiki name"]
@@ -1616,7 +1616,7 @@ class Formatter {
       $page=normalize($word); # concat words
 
     list($page,$page_text,$gpage)=
-      normalize_word($word,$this->group,$this->page->name,$nogroup);
+      normalize_word($word,$this->group,$this->page->name,$nogroup,$islink);
     if ($text) {
       if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
         $text=str_replace('&','&amp;',$text);
@@ -3035,9 +3035,9 @@ MSG;
         $okey=$key;
         $key=strtok('/');
         if ($key)
-          $origin.=$DBInfo->arrow.$this->word_repl('"'.$parent.'"','','',1);
+          $origin.=$DBInfo->arrow.$this->word_repl('"'.$parent.'"','','',1,0);
         else
-          $origin.=$DBInfo->arrow.$this->word_repl('"'.$parent.'"',$okey,'',1);
+          $origin.=$DBInfo->arrow.$this->word_repl('"'.$parent.'"',$okey,'',1,0);
       }
       # reset pagelinks
       $this->pagelinks=array();
@@ -3058,7 +3058,7 @@ MSG;
     $this->sister_on=0;
     $this->trail="";
     foreach ($trails as $page) {
-      $this->trail.=$this->word_repl('"'.$page.'"','','',1).$DBInfo->arrow;
+      $this->trail.=$this->word_repl('"'.$page.'"','','',1,0).$DBInfo->arrow;
     }
     $this->trail.= " $pagename";
     $this->pagelinks=array(); # reset pagelinks

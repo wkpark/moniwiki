@@ -70,7 +70,7 @@ function normalize($title) {
   return $title;
 }
 
-function normalize_word($word,$group='',$pagename='',$nogroup=0) {
+function normalize_word($word,$group='',$pagename='',$nogroup=0,$islink=1) {
   if ($word[0]=='[') $word=substr($word,1,-1);
   if ($word[0]=='"') $word=substr($word,1,-1);
   $page=$word;
@@ -105,7 +105,7 @@ function normalize_word($word,$group='',$pagename='',$nogroup=0) {
 
   if ($page[0]=='/') { # SubPage
     $page=$pagename.$page;
-  } else if ($tok=strtok($page,'.')) {
+  } else if ($islink && $tok=strtok($page,'.')) {
 #    print $tok;
     if ($tok=='Main') {
       # Main.MoniWiki => MoniWiki
@@ -1520,7 +1520,7 @@ function macro_TitleIndex($formatter="") {
 #    else
       $title=get_title($page);
 
-    $out.= '<li>' . $formatter->word_repl('"'.$page.'"',$title);
+    $out.= '<li>' . $formatter->word_repl('"'.$page.'"',$title,'',0,0);
     $keyname=$DBInfo->pageToKeyname(urldecode($page));
     if (is_dir($DBInfo->upload_dir."/$keyname"))
        $out.=' '.$formatter->link_tag(_urlencode($page),"?action=uploadedfiles",
