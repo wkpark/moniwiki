@@ -2065,12 +2065,14 @@ class Formatter {
       if (is_array($header))
         foreach ($header as $head) {
           header($head);
-          if (preg_match("/^content\-type: text\/plain/i",$head)) {
+          if (preg_match("/^content\-type: text\/plain/i",$head))
             $plain=1;
-          }
         }
-      else
+      else {
         header($header);
+        if (preg_match("/^content\-type: text\/plain/i",$header))
+          $plain=1;
+      }
     }
     if (isset($options['trail']))
       $this->set_trailer($options['trail'],$this->page->name);
@@ -2556,6 +2558,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST") {
 }
 
 $options['page']=$pagename;
+$options['timer']=&$timing;
 
 if ($_SERVER['REQUEST_METHOD']=="POST" && $HTTP_POST_VARS) {
  $request=$HTTP_POST_VARS;
@@ -2658,7 +2661,6 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $HTTP_POST_VARS) {
       $formatter->send_page("",$opt);
    }
    $args['editable']=0;
-   $options['timer']=$timing;
    $formatter->send_footer($args,$options);
 
    exit;
@@ -2708,7 +2710,6 @@ if ($pagename) {
       }
 
       $args['editable']=1;
-      $options['timer']=$timing;
       $formatter->send_footer($args,$options);
       return;
     }
@@ -2728,16 +2729,15 @@ if ($pagename) {
     $timing->Check("send_page");
     $formatter->write("</div>\n");
     $args['editable']=1;
-    $options['timer']=$timing;
     $formatter->send_footer($args,$options);
     return;
   }
+
   if ($action && !$DBInfo->security->is_allowed($action,&$options)) {
     $msg=sprintf(_("Please login before \"%s\" this page"),$action);
     $formatter->send_header("Status: 406 Not Acceptable",$options);
     $formatter->send_title($msg,"", $options);
     $formatter->send_page("== "._("Goto UserPreferences")." ==\n");
-    $options['timer']=$timing;
     $formatter->send_footer($args,$options);
     return;
   }
@@ -2758,7 +2758,6 @@ if ($pagename) {
       $options['show']=$show;
       $options['range']=$dum;
       $options['page']=$page->name;
-      $options['timer']=$timing;
       do_RcsPurge($formatter,$options);
       return;
     }
@@ -2770,94 +2769,35 @@ if ($pagename) {
       print $formatter->get_diff($rev,$rev2);
     print "<br /><hr />\n";
     $formatter->send_page();
-    $options['timer']=$timing;
     $formatter->send_footer($args,$options);
+    return;
 
-    return;
-  }
-  if ($action=="recall" || $action=="raw") {
-    if ($action=="raw") {
-      $header[]="Content-Type: text/plain";
-      $formatter->send_header($header,$options);
-    } else { # recall
-      $formatter->send_header("",$options);
-      $formatter->send_title("Rev. $rev ".$page->name,"",$options);
-    }
-    if (!$page->exists() || !$page->get_raw_body()) {
-      $options['timer']=$timing;
-      if ($action!="raw") 
-        $formatter->send_footer("",$options);
-      return;
-    }
-    if ($action=="raw") {
-      print $page->get_raw_body();
-    } else {
-      $formatter->send_page();
-      $options['timer']=$timing;
-      $formatter->send_footer($args,$options);
-    }
-    return;
-  } else if ($action=="edit" && $DBInfo->security->writable($options)) {
-    $formatter->send_header("",$options);
-    $formatter->send_title("Edit ".$page->name,"",$options);
-    $options['rows']=$rows; 
-    $options['cols']=$cols;
-    $options['template']=$template;
-    $formatter->send_editor("",$options);
-    $options['timer']=$timing;
-    $formatter->send_footer($args,$options);
-  } else if ($action=="info") {
-    $formatter->send_header("",$options);
-    $formatter->send_title(sprintf(_("Info. for %s"),$page->name),"",$options);
-    $formatter->show_info();
-    $options['timer']=$timing;
-    $formatter->send_footer($args,$options);
-  } else if ($action=="DeletePage") {
-    $options['page']=$page->name;
-    $options['comment']=$comment;
-    $options['passwd']=$passwd;
-    do_DeletePage($formatter,$options);
   } else if ($action) {
-    if (function_exists("do_post_".$action)) {
-      $options=array_merge($HTTP_POST_VARS,$options);
-      $options['page']=$page->name;
-      $options['timer']=$timing;
-      eval("do_post_".$action."(\$formatter,\$options);");
-    } else if (function_exists("do_".$action)) {
+    if(!function_exists("do_post_".$action) and
+      !function_exists("do_".$action)){
+      if ($plugin=getPlugin($action))
+        include_once("plugin/$plugin.php");
+    }
+
+    if (function_exists("do_".$action)) {
       if ($_SERVER['REQUEST_METHOD']=="POST")
         $options=array_merge($HTTP_POST_VARS,$options);
       else
         $options=array_merge($HTTP_GET_VARS,$options);
-      $options['page']=$page->name;
-      $options['timer']=$timing;
       eval("do_".$action."(\$formatter,\$options);");
-    } else {
-      if ($plugin=getPlugin($action)) {
-        include_once("plugin/$plugin.php");
-        if (function_exists("do_post_".$action)) {
-          $options=array_merge($HTTP_POST_VARS,$options);
-          $options['page']=$page->name;
-          $options['timer']=$timing;
-          eval("do_post_".$action."(\$formatter,\$options);");
-        } else if (function_exists("do_".$action)) {
-          if ($_SERVER['REQUEST_METHOD']=="POST")
-            $options=array_merge($HTTP_POST_VARS,$options);
-          else
-            $options=array_merge($HTTP_GET_VARS,$options);
-          $options['page']=$page->name;
-          $options['timer']=$timing;
-          eval("do_".$action."(\$formatter,\$options);");
-        }
-        return;
-      }
-      $formatter->send_header("Status: 406 Not Acceptable",$options);
-      $formatter->send_title(_("406 Not Acceptable"),"",$options);
-      $formatter->send_page("== "._("Is it valid action ?")." ==\n");
-      #print "<h2> "._("Is it valid action ?")." </h2>";
-      $options['timer']=$timing;
-      $formatter->send_footer($args,$options);
+      return;
+    } else if (function_exists("do_post_".$action)) {
+      if ($_SERVER['REQUEST_METHOD']=="POST")
+        $options=array_merge($HTTP_POST_VARS,$options);
+      eval("do_".$action."(\$formatter,\$options);");
       return;
     }
+    $formatter->send_header("Status: 406 Not Acceptable",$options);
+    $formatter->send_title(_("406 Not Acceptable"),"",$options);
+    $formatter->send_page("== "._("Is it valid action ?")." ==\n");
+    #print "<h2> "._("Is it valid action ?")." </h2>";
+    $formatter->send_footer($args,$options);
+    return;
   }
 }
 // vim:et:ts=2:
