@@ -538,7 +538,7 @@ function do_post_DeleteFile($formatter,$options) {
   global $DBInfo;
 
   if ($options['value']) {
-    $key=$DBInfo->pageToKeyname($options['value']);
+    $key=$DBInfo->pageToKeyname(urldecode($options['value']));
     $dir=$DBInfo->upload_dir."/$key";
   } else {
     $dir=$DBInfo->upload_dir;
@@ -547,13 +547,17 @@ function do_post_DeleteFile($formatter,$options) {
   if (isset($options['files'])) {
     if ($options['files']) {
       foreach ($options['files'] as $file) {
-        if (!is_dir($dir."/".$file)) {
+        $key=$DBInfo->pageToKeyname($file);
+
+        if (!is_dir($dir."/".$file) && !is_dir($dir."/".$key)) {
           if (@unlink($dir."/".$file))
             $log.=sprintf(_("File '%s' is deleted")."<br />",$file);
           else
             $log.=sprintf(_("Fail to delete '%s'")."<br />",$file);
         } else {
-          if (@rmdir($dir."/".$file))
+          if ($key != $file)
+            $realfile = $key;
+          if (@rmdir($dir."/".$realfile))
             $log.=sprintf(_("Directory '%s' is deleted")."<br />",$file);
           else
             $log.=sprintf(_("Fail to rmdir '%s'")."<br />",$file);
