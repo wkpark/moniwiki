@@ -8,6 +8,7 @@
 function do_uploadfile($formatter,$options) {
   global $DBInfo;
 
+  $files=array();
   if (is_array($_FILES)) {
     if (($options['multiform'] > 1) or is_array($_FILES['upfile']['name'])) {
       $options['multiform']=$options['multiform'] ?
@@ -21,8 +22,7 @@ function do_uploadfile($formatter,$options) {
       $options['rename'][0]=$options['rename'];
       $options['replace'][0]=$options['replace'];
     }
-  } else
-    $files=array();
+  }
 
   $ok=0;
   if ($files) {
@@ -56,7 +56,6 @@ function do_uploadfile($formatter,$options) {
   for ($j=0;$j<$count;$j++) {
 
   # replace space and ':' strtr()
-  $files=array();
   $upfilename=str_replace(" ","_",$files['upfile']['name'][$j]);
   $upfilename=str_replace(":","_",$upfilename);
 
