@@ -1344,8 +1344,15 @@ class Formatter {
     #$urlpage=trim($page);
     if (strpos($url,'$PAGE') === false)
       $url.=$urlpage;
-    else
-      $url=str_replace('$PAGE',$urlpage,$url);
+    else {
+      # GtkRef http://developer.gnome.org/doc/API/2.0/gtk/$PAGE.html
+      # GtkRef:GtkTreeView#GtkTreeView
+      # is rendered as http://...GtkTreeView.html#GtkTreeView
+      $page_only=strtok($urlpage,'#?');
+      $query= substr($urlpage,strlen($page_only));
+      #if ($query and !$text) $text=strtok($page,'#?');
+      $url=str_replace('$PAGE',$page_only,$url).$query;
+    }
 
     $img="<a href='$url' target='wiki'><img border='0' src='$DBInfo->imgs_dir/".
          strtolower($wiki)."-16.png' align='middle' height='16' width='16' ".
