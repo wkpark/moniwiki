@@ -304,10 +304,10 @@ class User {
 
   function isSubscribedPage($pagename) {
     if (!$this->info['email'] or !$this->info['subscribed_pages']) return false;
-    $page_list=explode("\t",$this->info['subscribed_pages']);
+    $page_list=_preg_search_escape($this->info['subscribed_pages']);
     if (!trim($page_list)) return false;
-    $page_list=_preg_search_escape($page_list);
-    $page_rule=join("|",$page_list);
+    $page_lists=explode("\t",$page_list);
+    $page_rule='^'.join("$|^",$page_lists).'$';
     if (preg_match('/('.$page_rule.')/',$pagename))
       return true;
     return false;
@@ -829,7 +829,7 @@ function do_post_savepage($formatter,$options) {
     $comment=stripslashes($options['comment']);
     $formatter->page->write($savetext);
     $ret=$DBInfo->savePage($formatter->page,$comment,$options);
-    if ($DBInfo->notify) {
+    if (($ret != -1) and $DBInfo->notify) {
       $options['noaction']=1;
       if (!function_exists('mail')) {
         $options['msg']=sprintf(_("mail does not supported by default."))."<br />";
@@ -1189,7 +1189,7 @@ function get_key($name) {
          return $ukey;
        }
     }
-    return '~';
+    return 'Others';
   } else {
     if (preg_match('/[a-z0-9]/i',$name[0])) {
       return strtoupper($name[0]);
@@ -1312,7 +1312,8 @@ function macro_TitleIndex($formatter="") {
       $all_pages[]=str_replace($formatter->group,"",$page);
   } else
     $all_pages = $DBInfo->getPageLists();
-  natcasesort($all_pages);
+  #natcasesort($all_pages);
+  sort($all_pages,SORT_STRING);
 
   $key=-1;
   $out="";
@@ -1339,13 +1340,21 @@ function macro_TitleIndex($formatter="") {
 #    else
       $title=get_title($page);
 
-    $out.= '<li>' . $formatter->word_repl('"'.$page.'"',$title)."</li>\n";
+    $out.= '<li>' . $formatter->word_repl('"'.$page.'"',$title);
+    $keyname=$DBInfo->pageToKeyname(urldecode($page));
+    if (is_dir($DBInfo->upload_dir."/$keyname"))
+       $out.=' '.$formatter->link_tag(_urlencode($page),"?action=uploadedfiles",
+         $formatter->icon['attach']);
+    $out.="</li>\n";
   }
   $out.= "</ul>\n";
 
   $index="";
-  foreach ($keys as $key)
-    $index.= "| <a href='#$key'>$key</a> ";
+  foreach ($keys as $key) {
+    $name=$key;
+    if ($key == 'Others') $name=_("Others");
+    $index.= "| <a href='#$key'>$name</a> ";
+  }
   $index[0]=" ";
   
   return "<center><a name='top' />$index</center>\n$out";
