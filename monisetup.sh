@@ -14,17 +14,26 @@ while [ ! $RETVAL -eq 0 ]; do
   if [ x$PERM = x ]; then
     PERM=777
   fi
-  echo "*** chmod $PERM . data"
-  chmod $PERM . data
-  RETVAL=$?
+
+  if [ ! -f config.php ]; then
+    echo "*** chmod $PERM . data"
+    chmod $PERM . data
+    RETVAL=$?
+  else
+    RETVAL=0
+  fi
 done
 
 if [ ! -f config.php ]; then
   echo 'Please open monisetup.php on your browser'
   exit;
 else
+  echo "*** chmod 777 config.php"
+  chmod 777 config.php 2>/dev/null
+  RETVAL=$?
+  [ ! $RETVAL -eq 0 ] && cp config.php config.php.$$ && mv config.php.$$ config.php
+  chmod 777 config.php
   ID=`id -u`
-  PERM=777
   if [ $ID -eq 0 ]; then
     echo "*** You are the root user ***"
     PERM=755
