@@ -9,7 +9,7 @@
 
 #<script language="JavaScript1.2" src="http://www.altavista.com/r?entr"></script>
 function macro_BabelFish($formatter,$value) {
-  $langs=array('ko','ja','en','de','fr','esp','por');
+  $langs=array('ko','ja','en','de','fr','it','es','pt','zh');
   $supported=array('ko_en','en_ko','en_de','en_fr','ko_jp','jp_ko');
   $msg=_("BabelFish Translation");
 
@@ -22,23 +22,23 @@ EOF;
   if (!in_array($from,$langs))
     $from='en';
   if (!in_array($to,$langs))
-    $from='en';
+    $to='en';
   if ($from and $to and $from != $to)
     $msg=sprintf(_("Translate %s to %s"),$from,$to);
 
   $lp=$from."_".$to;
-  $URL=qualifiedUrl($formatter->link_url(_rawurlencode($formatter->page->name)));
+  $URL=qualifiedUrl($formatter->link_url(urlencode($formatter->page->urlname)));
   $TR="http://babelfish.altavista.com/babelfish/urlload?tt=url";
   if (in_array($lp,$supported)) {
     $TR.="&lp=$lp";
   } else {
     $lp=$from.'_en';
-    $URL=urlencode($TR."&lp=$lp&url=".$URL);
+    $URL=urlencode($TR."&lp=$lp&url=").$URL;
     $lp='en_'.$to;
     $TR.="&lp=$lp";
   }
   return <<<EOF
-<img src='$formatter->imgs_dir/flag-$from.png' /> <a href="$TR&url=$URL"><img border='0' src='$formatter->imgs_dir/fishloop.gif' title='$msg' alt='BabelFish@altavista' /></a><img src='$formatter->imgs_dir/flag-$to.png' />
+<img src='$formatter->imgs_dir/$from-16.png' /> <a href="$TR&url=$URL"><img border='0' src='$formatter->imgs_dir/fishloop.gif' title='$msg' alt='BabelFish@altavista' /></a><img src='$formatter->imgs_dir/$to-16.png' />
 EOF;
 
 }
