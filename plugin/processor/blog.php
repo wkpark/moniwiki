@@ -78,7 +78,7 @@ function processor_blog($formatter,$value="",$options) {
       $count=sizeof(explode("----\n",$comments));
 
       if ($options['noaction'] or $DBInfo->blog_comments) {
-        $comments=preg_replace("/----\n/","[[HTML(</div></div><div class='seperator'><hr /></div><div class='blog-comment'><div>)]]",$comments);
+        $comments=preg_replace("/----\n/","[[HTML(</div></div><div class='separator'><hr /></div><div class='blog-comment'><div>)]]",$comments);
       } else {
         $comments='';
         $add_button=($count == 1) ? _("%d comment"):_("%d comments");

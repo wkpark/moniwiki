@@ -1213,7 +1213,7 @@ class Formatter {
                      "<i>\\1</i>","<i>\\1</i>",
                      "<sup>\\1</sup>","<sub>\\1</sub>",
                      "<u>\\1</u>",
-                     "<div class='seperator'><hr class='wiki' /></div>\n",
+                     "<div class='separator'><hr class='wiki' /></div>\n",
                      "<del>\\1</del>",
                      );
 
