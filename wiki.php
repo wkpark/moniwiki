@@ -251,6 +251,55 @@ class Counter {
   }
 }
 
+class Security {
+  var $DB;
+
+  function Security($DB="") {
+    $this->DB=$DB;
+  }
+
+# $options[page]: pagename
+# $options[id]: user id
+  function readable($options="") {
+    return 1;
+  }
+
+  function writable($options="") {
+    if (!$options[page]) return 0; # XXX
+#    if ($options[id]=='Anonymous') return 0;
+    return $this->DB->_isWritable($options[page]);
+  }
+
+  function validuser($options="") {
+    return 1;
+  }
+}
+
+class Security_needtologin {
+  var $DB;
+
+  function Security_needtologin($DB="") {
+    $this->DB=$DB;
+  }
+
+# $options[page]: pagename
+# $options[id]: user id
+  function readable($options="") {
+    return 1;
+  }
+
+  function writable($options="") {
+    if (!$options[page]) return 0; # XXX
+    if ($options[page]=='WikiSandBox') return 1;
+    if ($options[id]=='Anonymous') return 0;
+    return $this->DB->_isWritable($options[page]);
+  }
+
+  function validuser($options="") {
+    return 1;
+  }
+}
+
 function getConfig($configfile) {
   if (!file_exists($configfile))
     return array();
@@ -275,7 +324,7 @@ $msg=array(
 
 class WikiDB {
   function WikiDB($config=array()) {
-  # Default Configuations
+    # Default Configuations
     $this->frontpage='FrontPage';
     $this->sitename='MoniWiki';
     $this->data_dir= './data';
@@ -315,6 +364,7 @@ class WikiDB {
     $this->iconset='moni';
     $this->template_regex='[a-z]Template$';
     $this->category_regex='^Category[A-Z]';
+    #$this->security="needtologin";
 
     # set user-specified configuration
     if ($config) {
@@ -407,6 +457,12 @@ class WikiDB {
     if (!$this->counter->counter)
       $this->counter=new Counter();
 
+    if ($this->security) {
+      $class="Security_".$this->security;
+      $this->security=new $class ($this);
+    } else
+      $this->security=new Security($this);
+
   }
 
   function Close() {
@@ -481,7 +537,6 @@ class WikiDB {
     $pagename=strtr($key,"_","%");
     return rawurldecode($pagename);
   }
-
 
   function getPageLists($options="") {
     $pages = array();
@@ -645,6 +700,12 @@ class WikiDB {
     $this->addLogEntry($new, $REMOTE_ADDR,$comment,"SAVE");
   }
 
+  function _isWritable($pagename) {
+    $key=$this->getPageKey($pagename);
+    # True if page can be changed
+    return is_writable($key) or !file_exists($key);
+  }
+
   function getPerms($pagename) {
     $key=$this->getPageKey($pagename);
     if (file_exists($key))
@@ -770,10 +831,10 @@ class WikiPage {
     return file_exists($this->filename);
   }
 
-  function writable() {
-    # True if page can be changed
-    return is_writable($this->filename) or !$this->exists();
-  }
+#  function writable() {
+#    # True if page can be changed
+#    return is_writable($this->filename) or !$this->exists();
+#  }
 
   function mtime () {
     return @filemtime($this->filename);
@@ -1239,7 +1300,6 @@ class Formatter {
     $indent_list[0]=0;
     $indent_type[0]="";
 
-# $wordrule="({{{(([^}}}).+)}}})|".
     $wordrule="({{{([^}]+)}}})|".
               "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|"; # macro
     if ($DBInfo->enable_latex)
@@ -1832,7 +1892,7 @@ EOS;
     print "<div id='wikiFooter'>";
     $menu="";
     if ($args[editable]) {
-      if ($this->page->writable())
+      if ($DBInfo->security->writable($options))
         $menu= $this->link_to("?action=edit",'EditText').$DBInfo->menu_sep;
       else
         $menu= _("NotEditable")." ".$DBInfo->menu_sep;
@@ -2135,7 +2195,7 @@ $goto=$HTTP_GET_VARS[goto];
 if ($_SERVER[REQUEST_METHOD]=="POST") {
  $request=$HTTP_POST_VARS;
  $action=$request[action];
- if ($action=="savepage") {
+ if ($action=="savepage" && $DBInfo->security->writable($options)) {
    $savetext=$request[savetext];
    $datestamp=$request[datestamp];
    $button_preview=$request[button_preview];
@@ -2236,6 +2296,7 @@ if ($_SERVER[REQUEST_METHOD]=="POST") {
 #   $query= $QUERY_STRING;
 
 if ($pagename) {
+  $options[page]=$pagename;
 
   if ($action=="recall" || $action=="raw" && $rev) {
     $options[rev]=$rev;
@@ -2358,7 +2419,7 @@ if ($pagename) {
       $formatter->send_footer($args,$options);
     }
     return;
-  } else if ($action=="edit" && $page->writable()) {
+  } else if ($action=="edit" && $DBInfo->security->writable($options)) {
     $formatter->send_header("",$options);
     $formatter->send_title("Edit ".$page->name,"",$options);
     $options[rows]=$rows; 
@@ -2417,7 +2478,7 @@ if ($pagename) {
       }
       $formatter->send_header("Status: 406 Not Acceptable",$options);
       $formatter->send_title(_("406 Not Acceptable"),"",$options);
-      $args[editable]=1;
+      $args[editable]=0;
       # $formatter->send_page("");
       $options[timer]=$timing;
       $formatter->send_footer($args,$options);
