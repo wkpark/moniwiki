@@ -365,43 +365,6 @@ class Security {
   }
 }
 
-class Security_needtologin {
-  var $DB;
-
-  function Security_needtologin($DB="") {
-    $this->DB=$DB;
-  }
-
-# $options[page]: pagename
-# $options[id]: user id
-  function readable($options="") {
-    return 1;
-  }
-
-  function writable($options="") {
-    return $this->DB->_isWritable($options['page']);
-  }
-
-  function validuser($options="") {
-    return 1;
-  }
-
-  function may_edit($options) {
-    if (!$options['page']) return 0; # XXX
-    if ($options['page']=='WikiSandBox') return 1;
-    if ($options['id']=='Anonymous') return 0;
-    return 1;
-  }
-
-  function is_allowed($action="read",$options) {
-    $method='may_'.$action;
-    if (method_exists($this, $method)) {
-      return $this->$method ($options);
-    }
-    return 1;
-  }
-}
-
 function getConfig($configfile, $options=array()) {
   if (!file_exists($configfile)) {
     if ($options['init']) {
@@ -417,17 +380,15 @@ function getConfig($configfile, $options=array()) {
   foreach ($options as $key=>$val) eval("\$$key=\"$val\";");
   unset($key,$val,$options);
   include($configfile);
+  unset($configfile);
+
   $config=get_defined_vars();
-  unset($config['configfile']);
-#  $org=get_defined_vars();
-#  $new=get_defined_vars();
-#  $config=array_diff($new,$org);
-#  print_r($new);
 #  print_r($config);
 
   if ($menu) $config['menu']=$menu;
   if ($icons) $config['icons']=$icons;
   if ($icon) $config['icon']=$icon;
+  if ($actions) $config['actions']=$actions;
 
   return $config;
 }
@@ -455,18 +416,18 @@ class WikiDB {
     $this->url_prefix= '/moniwiki';
     $this->imgs_dir= $this->url_prefix.'/imgs';
     $this->css_dir= 'css';
-    $this->logo_img= $this->imgs_dir.'/moniwiki-logo.gif';
-
     $this->css_url= $this->url_prefix.'/css/default.css';
+
     $this->kbd_script= $this->url_prefix.'/css/kbd.js';
-    $this->logo_page= 'FrontPage';
+    $this->logo_img= $this->imgs_dir.'/moniwiki-logo.gif';
+    $this->logo_page= $this->frontpage;
     $this->logo_string= '<img src="'.$this->logo_img.'" alt="[logo]" border="0" align="middle" />';
     $this->use_smileys=1;
     $this->hr="<hr class='wikiHr' />";
     $this->date_fmt= 'Y-m-d';
     $this->datetime_fmt= 'Y-m-d h:i:s';
     #$this->changed_time_fmt = ' . . . . [h:i a]';
-    $this->changed_time_fmt= ' [h:i a]';
+    $this->changed_time_fmt= ' [h:i a]'; # used by RecentChanges macro
     $this->admin_passwd= '10sQ0sKjIJES.';
     $this->purge_passwd= '';
     $this->actions= array('DeletePage','LikePages');
@@ -564,6 +525,7 @@ class WikiDB {
       $this->counter=new Counter();
 
     if ($this->security_class) {
+      include_once("plugin/security/$this->security_class.php");
       $class="Security_".$this->security_class;
       $this->security=new $class ($this);
     } else
@@ -986,14 +948,12 @@ class WikiPage {
     }
     $this->fsize=filesize($this->filename);
 #    $body="";
-#    if ($fp) {
-#       while($line=fgets($fp, 2048))
-#          $body.=$line;
-#    }
+#    if ($fp) { while($line=fgets($fp, 2048)) $body.=$line; }
 #    $this->$body=implode("", file($this->filename));
 #    $this->body=$body;
-    $this->body=fread($fp,$this->fsize);
+    $body=fread($fp,$this->fsize);
     fclose($fp);
+    $this->body=$body;
 
     return $this->body;
   }
@@ -1068,7 +1028,6 @@ class Formatter {
     $this->sister_on=1;
     $this->sisters=array();
     $this->foots=array();
-    $this->gen_pagelinks=0;
     $this->pagelinks=array();
     $this->icons="";
 
@@ -1076,16 +1035,17 @@ class Formatter {
     $this->themedir= dirname(__FILE__);
     $this->set_theme($options['theme']);
 
-    $this->baserule=array("/<([^\s][^>]*)>/","/`([^`]*)`/",
+    #$this->baserule=array("/<([^\s][^>]*)>/","/`([^`]*)`/",
+    $this->baserule=array("/<([^\s<>])/","/`([^`]*)`/",
                      "/'''([^']*)'''/","/(?<!')'''(.*)'''(?!')/",
                      "/''([^']*)''/","/(?<!')''(.*)''(?!')/",
                      "/\^([^ \^]+)\^/","/(?: |^)_([^ _]+)_/",
                      "/^-{4,}/");
-    $this->baserepl=array("&lt;\\1>","<tt class='wiki'>\\1</tt>",
+    $this->baserepl=array("&lt;\\1","<tt class='wiki'>\\1</tt>",
                      "<b>\\1</b>","<b>\\1</b>",
                      "<i>\\1</i>","<i>\\1</i>",
                      "<sup>\\1</sup>","<sub>\\1</sub>",
-                     "<hr class='wikiHr' />\n");
+                     "<hr class='wiki' />\n");
 
     #$punct="<\"\'}\]\|;,\.\!";
     $punct="<\'}\]\|;\.\)\!"; # , is omitted for the WikiPedia
@@ -1340,12 +1300,12 @@ class Formatter {
     }
     if ($this->page->exists()) {
       $body=$this->page->get_raw_body();
-      # pseudo pagelinks
+      # quickly generate a pseudo pagelinks
       preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$body);
       $this->store_pagelinks();
       if ($this->pagelinks) {
         $links=join("\n",array_keys($this->pagelinks))."\n";
-        unset($this->pagelinks);
+        $this->pagelinks=array();
         return $links;
       }
     }
@@ -1358,18 +1318,18 @@ class Formatter {
       $page=substr($word,1,-1);
       $word=$page;
     } else
-      $page=preg_replace("/\s+/","",$word);
+      $page=preg_replace("/\s+/","",$word); # concat words
     if ($text) $word=$text;
 
-    if ($page[0]=='/')
+    if ($page[0]=='/') # SubPage
       $page=$this->page->name.$page;
 
     #$url=$this->link_url($page);
     $url=$this->link_url(_rawurlencode($page)); # XXX
     if (isset($this->pagelinks[$page])) {
       $idx=$this->pagelinks[$page];
-      if ($idx == -1) return "<a href='$url'>$word</a>";
-      if ($idx == 0) return "<a class='nonexistent' href='$url'>?</a>$word";
+      if ($idx === -1) return "<a href='$url'>$word</a>";
+      if ($idx === 0) return "<a class='nonexistent' href='$url'>?</a>$word";
       return "<a href='$url'>$word</a>".
         "<tt class='sister'><a href='#sister$idx'>&raquo;$idx</a></tt>";
     } else if ($DBInfo->hasPage($page)) {
@@ -1558,8 +1518,8 @@ class Formatter {
   function send_page($body="",$options="") {
     global $DBInfo;
 
-    if (!$this->cache->exists($this->page->name) or isset($options['pagelinks']))
-      $this->gen_pagelinks=1;
+    #if(!$this->cache->exists($this->page->name)or isset($options['pagelinks']))
+    #  $this->gen_pagelinks=1;
 
     if ($body) {
       $pi=$this->get_instructions(&$body);
@@ -1599,7 +1559,8 @@ class Formatter {
       $smiley_repl="\$this->smiley_repl('\\1')";
     }
 
-    $text="<div>";
+    #$text="<div>";
+    $text="";
     $in_pre=0;
     $in_p=1;
     $in_li=0;
@@ -1624,11 +1585,16 @@ class Formatter {
         if ($in_li) { $text.="<br />\n"; continue;}
         if (!$in_table) {
           if (!$in_p) { $text.="<div>"; $in_p=1;}
-          else if ($in_p==2) { $text.="</div><br />\n<div>"; $in_p=1;}
+          #else if ($in_p==2) { $text.="</div><br />\n<div>"; $in_p=1;}
+          else if ($in_p==2) { $text.="</div><br />\n"; $in_p=1;}
+          else if ($in_p==1) { $text.="<br />\n"; $in_p=1;}
           else { $text.="<br />\n"; $in_p=2; }
           continue;
         }
-      } else if ($in_p == 1) $in_p= 2;
+      } else if ($in_p == 1) {
+        $text.="<div>";
+        $in_p= 2;
+      }
       if ($line[0]=='#' and $line[1]=='#') continue; # comments
 
       if ($in_pre) {
@@ -1672,6 +1638,7 @@ class Formatter {
            $this->pre_line.="\n";
          $line=substr($line,0,$p);
       }
+#     $line=str_replace("<","&lt;",$line);
       #$line=preg_replace("/\\$/","&#36;",$line);
       #$line=preg_replace("/<([^\s][^>]*)>/","&lt;\\1>",$line);
       #$line=preg_replace("/`([^`]*)`/","<tt class='wiki'>\\1</tt>",$line);
@@ -1715,7 +1682,7 @@ class Formatter {
              if ($limatch[3])
                $numtype.=substr($limatch[3],1);
              $indtype="ol";
-           } elseif (1 and preg_match("/^([^:]+)::\s/",$line,$limatch)) {
+           } elseif (preg_match("/^([^:]+)::\s/",$line,$limatch)) {
              $line=preg_replace("/^[^:]+::\s/",
                      "<dt class='wiki'>".$limatch[1]."</dt><dd>",$line);
              if ($indent_list[$in_li] == $indlen) $line="</dd>\n".$line;
@@ -1800,8 +1767,6 @@ class Formatter {
         $text.=$line."\n";
       $this->nobr=0;
     }
-    # strip slash against double quotes
-    #$text=str_replace('\"','"',$text); # XXX 
 
     # highlight text
     if ($this->highlight) {
@@ -1823,7 +1788,7 @@ class Formatter {
       $in_li--;
     }
     # close div
-    if ($in_p) $close.="</div>\n";
+    if ($in_p === 2) $close.="</div>\n";
 
     $text.=$close;
   
@@ -1831,10 +1796,10 @@ class Formatter {
     if ($this->sisters and !$options['nosisters']) {
       $sisters=join("\n",$this->sisters);
       $sisters=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$sisters);
-      print "<div id='wikiSister'>\n<br/><tt class='foot'>----</tt><br/>\nSister Sites Index<br />\n$sisters</div>\n";
+      print "<div id='wikiSister'>\n<tt class='foot'>----</tt><br/>\nSister Sites Index<br />\n$sisters</div>\n";
     }
 
-    if ($this->gen_pagelinks) $this->store_pagelinks();
+    if ($options['pagelinks']) $this->store_pagelinks();
   }
 
   function _parse_rlog($log) {
@@ -2272,7 +2237,7 @@ EOS;
       list($act,$txt)=explode(" ",$this->pi['#action'],2);
       if (!$txt) $txt=$act;
       $menu= $this->link_to("?action=$act",_($txt));
-    } else if ($args[editable]) {
+    } else if ($args['editable']) {
       if ($DBInfo->security->writable($options))
         $menu= $this->link_to("?action=edit",_("EditText"));
       else
@@ -2281,7 +2246,7 @@ EOS;
       $menu.= $this->link_to("",_("ShowPage"));
     $menu.=$this->menu_sep.$this->link_tag("FindPage","",_("FindPage"));
 
-    if (!$args[noaction]) {
+    if (!$args['noaction']) {
       foreach ($this->actions as $action)
         $menu.= $this->menu_sep.$this->link_to("?action=$action",_($action));
     }
@@ -2370,21 +2335,14 @@ MSG;
     if ($upper)
       $upper_icon=$this->link_tag($upper,'',$this->icon['upper'])." ";
 
-    $icons="";
-    if (!$this->icons) {
-      $icons.=$this->link_to("?action=edit",$this->icon['edit'])." ";
-      $icons.=$this->link_to("?action=diff",$this->icon['diff'])." ";
-      $icons.=$this->link_to("",$this->icon['show'])." ";
-      $icons.=$this->link_tag("FindPage",'',$this->icon['find'])." ";
-      $icons.=$this->link_to("?action=info",$this->icon['info'])." ";
-      $icons.=$this->link_tag("HelpContents",'',$this->icon['help'])." ";
-    } else {
+    if ($this->icons) {
       $icon=array();
       foreach ($this->icons as $item)
         $icon[]=$this->link_tag($item[0],$item[1],$item[2]);
       $icons=$this->icon_bra.join($this->icon_sep,$icon).$this->icon_cat;
     }
-    $rss_icon.=$this->link_tag("RecentChanges","?action=rss_rc",$this->icon['rss'])." ";
+
+    $rss_icon=$this->link_tag("RecentChanges","?action=rss_rc",$this->icon['rss'])." ";
 
     # UserPreferences
     if ($options['id'] != "Anonymous") {
@@ -2421,11 +2379,17 @@ MSG;
     }
     print "</div>\n";
     print $DBInfo->hr;
-    print "<div id='wikiBody'>\n";
     if ($options['trail']) {
       $opt['nosisters']=1;
+      $sister_save=$this->sister_on;
+      $this->sister_on=0;
+      print "<div id='wikiTrailer'>\n";
       $this->send_page($this->trail,$opt);
+      print "</div>\n";
+      $this->pagelinks=array(); # reset pagelinks
+      $this->sister_on=$sister_save;
     }
+    print "<div id='wikiBody'>\n";
   }
 
   function send_editor($text="",$options="") {
@@ -2518,7 +2482,7 @@ EOS;
 
     setcookie("MONI_TRAIL",$trail,time()+60*60*24*30,get_scriptname());
     #$this->trail= "[\"".str_replace("\t","\"] > [\"",$trail)."\"]\n";
-    $this->trail= "[\"".join("\"] > [\"",$trails)."\"]\n";
+    $this->trail= "[\"".join("\"] > [\"",$trails)."\"]";
   }
 } # end-of-Formatter
 
@@ -2606,8 +2570,8 @@ function get_pagename() {
 $pagename=get_pagename();
 #function render($pagename,$options) {
 if ($pagename) {
-  global $DBInfo;
-  global $GLOBALS;
+#  global $DBInfo;
+#  global $GLOBALS;
   # get primary variables
   if ($_SERVER['REQUEST_METHOD']=="POST") {
     if (!$GLOBALS['HTTP_RAW_POST_DATA']) {
@@ -2697,7 +2661,8 @@ if ($pagename) {
     $msg=sprintf(_("Please login before \"%s\" this page"),$action);
     $formatter->send_header("Status: 406 Not Acceptable",$options);
     $formatter->send_title($msg,"", $options);
-    $formatter->send_page("== "._("Goto UserPreferences")." ==\n");
+    $formatter->send_page("== "._("Goto UserPreferences")." ==\n".
+    _("You are not allowed to \"$action\" this page"));
     $formatter->send_footer($args,$options);
     return;
   }
