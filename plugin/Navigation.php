@@ -7,56 +7,59 @@
 //
 // $Id$
 
-function normalize_word($page,$word) {
-  if ($word[0]=='/') { # SubPage
-    $word=$page.$word;
-  } else if ($word[0]=='.' and preg_match('/^(\.{1,2})\//',$word,$match)) {
-    if ($match[1] == '..') {
-      $pos=strrpos($page,"/");
-      if ($pos > 0) $upper=substr($page,0,$pos);
-      if ($upper) {
-        $word=substr($word,2);
-        if ($word == '/') $word=$upper;
-        else $word=$upper.$word;
-      }
-    } else {
-      $word=substr($word,1);
-      if ($word == '/') $word='';
-      $word=$page.$word;
-    }
-  }
-  return $word;
-}
-
 function macro_Navigation($formatter,$value) {
   global $DBInfo;
 
   if (!$value or !$DBInfo->hasPage($value))
     return '[[Index('._("No Index page found").')]]';
 
-  $action=1;
+  preg_match('/([^,]+),?\s*,?(.*)/',$value,$match);
+  $opts=explode(',',$match[2]);
+  $value=$match[1];
+  $use_action=0;
+  if (in_array('action',$opts)) $use_action=1;
 
   $pg=$DBInfo->getPage($value);
   $lines=explode("\n",$pg->get_raw_body());
+
+  $group='';
+  $current=$formatter->page->name;
+  if ($formatter->group)
+    $current=preg_replace('/~/','.',$formatter->page->name,1);
+  if (strpos($value,'~')) {
+    $group=strtok($value,'~').'~';
+    $page=strtok('');
+  }
+
+#  print $current;
 
   $indices=array();
   $count=0;
   foreach ($lines as $line) {
     if (preg_match("/^\s+(\*|\d+\.)\s+(?<!\!)($formatter->wordrule)/",$line,$match)) {
-      $indices[]=normalize_word($value,$match[2]);
+      $word=$match[2];
+      if ($word[0]=='[') $word=substr($word,1,-1);
+      if ($word[0]=='"') $word=substr($word,1,-1);
+
+      list($index,$text,$dummy)= normalize_word($word,$group,$page);
+      if ($group) $indices[]=preg_replace('/~/','.',$index,1);
+      else $indices[]=$index;
       $count++;
     }
   }
+
+  #print_r($indices);
   if ($count > 1) {
     $prev='';
-    $index=$value;
+    if ($group) $index=preg_replace('/~/','.',$value,1);
+    else $index=$value;
     $next=$indices[0];
   }
 
   for ($i=0;$i<$count;$i++) {
     #print $indices[$i];
     #print ':'.$formatter->page->name;
-    if ($indices[$i]==$formatter->page->name) {
+    if ($indices[$i]==$current) {
       if ($i > 0) $prev=$indices[$i-1];
       if ($i < ($count - 1)) {
 	$next=$indices[$i+1];
@@ -67,19 +70,19 @@ function macro_Navigation($formatter,$value) {
   }
 
   if ($count > 1) {
-    if ($action) {
+    if ($use_action) {
       $save=$formatter->query_string;
       $query='?action=navigation&amp;value='.$value;
       $formatter->query_string=$query;
     }
     $pnut='&laquo; ';
     if ($prev) $pnut.=$formatter->link_repl($prev);
-    if ($action) $formatter->query_string=$save;
+    if ($use_action) $formatter->query_string=$save;
     $pnut.=" | ".$formatter->link_repl($index)." | ";
-    if ($action) $formatter->query_string=$query;
+    if ($use_action) $formatter->query_string=$query;
     if ($next) $pnut.=$formatter->link_repl($next);
     $pnut.=' &raquo;';
-    if ($action) $formatter->query_string=$save;
+    if ($use_action) $formatter->query_string=$save;
   }
   return $pnut;
 }
