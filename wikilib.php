@@ -41,7 +41,7 @@ function get_title($page) {
   } else
     $title=$page;
 
-  return preg_replace("/((?<=[a-z0-9]|[A-Z]{2})[A-Z][a-z])/"," \\1",$title);
+  return preg_replace("/((?<=[a-z0-9]|[B-Z]{2}|A)([A-Z][a-z]|A))/"," \\1",$title);
 }
 
 function getTicket($seed) {
