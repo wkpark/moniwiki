@@ -427,6 +427,25 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $config) {
   }
 
   if ($update) {
+    if ($rawconfig['charset'] && $rawconfig['sitename']) {
+      if (function_exists('iconv')) {
+        $ncharset=strtoupper($rawconfig['charset']);
+
+        # check and translate to the supported charset names
+        $charset_map=array('X-WINDOWS-949'=>'UHC');
+
+        $dummy=explode(';',$_SERVER['HTTP_ACCEPT_CHARSET'],2);
+        $charsets=array_map('strtoupper',explode(',',$dummy[0]));
+        #print_r($charsets);
+        $charset=$charsets[0];
+        if ($charset_map[$charset]) $charset=$charset_map[$charset];
+
+        # convert sitename to proper encoding
+        if (isset($ncharset) and $charset != $ncharset)
+          $out=iconv($charset,$ncharset,$rawconfig['sitename']);
+        if ($out) $rawconfig['sitename']=$out;
+      }
+    }
     print "<h3>Updated Configutations for this $config[sitename]</h3>\n";
     $lines=$Config->_genRawConfig($rawconfig);
     print "<pre class='console'>\n";
