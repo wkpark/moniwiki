@@ -1650,7 +1650,7 @@ function macro_FootNote($formatter,$value="") {
   return "<tt class='foot'><a name='r$idx'/><sup><a href='#$idx'>$text</a></sup></tt>";
 }
 
-function macro_TableOfContents($formatter="") {
+function macro_TableOfContents($formatter="",$value="") {
  $head_num=1;
  $head_dep=0;
  $TOC="\n<a name='toc' id='toc' /><dl><dd><dl>";
@@ -1666,6 +1666,7 @@ function macro_TableOfContents($formatter="") {
    $dep=strlen($match[1]);
    if ($dep != strlen($match[4])) continue;
    $head=$match[3];
+   $head=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$head);
 
    $depth=$dep;
    if ($dep==1) $depth++; # depth 1 is regarded same as depth 2
@@ -1693,7 +1694,7 @@ function macro_TableOfContents($formatter="") {
    } else if ($odepth) {
       $dum=explode(".",$num);
       $i=sizeof($dum)-1;
-      while ($depth < $odepth) {
+      while ($depth < $odepth && $i > 0) {
          unset($dum[$i]);
          $i--;
          $odepth--;
