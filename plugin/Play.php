@@ -9,6 +9,7 @@
 
 function macro_Play($formatter,$value) {
   global $DBInfo;
+  static $autoplay=1;
 
   preg_match("/(^[^,]+)(\s*,\s*)?$/",$value,$match);
   if (!$match) return '[[Play()]]';
@@ -25,19 +26,27 @@ function macro_Play($formatter,$value) {
 
   $url=qualifiedUrl($DBInfo->url_prefix."/"._urlencode($fname));
 
+  if ($autoplay==1) {
+    $play="true";
+  } else {
+    $play="false";
+  }
+
   if (preg_match("/(wmv|mpeg4|avi|asf)$/",$media)) {
     $classid="clsid:22D6F312-B0F6-11D0-94AB-0080C74C7E95";
     $type='type="application/x-mplayer2"';
-    $attr='width="320" height="280"';
+    $attr='width="320" height="280" autoplay="'.$play.'"';
     $params="<param name='FileName' value='$url'>\n".
       "<param name='AutoStart' value='False'>\n".
       "<param name='ShowControls' value='True'>";
   } else if (preg_match("/(wav|mp3|ogg)$/",$media)) {
     $classid="clsid:02BF25D5-8C17-4B23-BC80-D3488ABDDC6B";
     $attr='codebase="http://www.apple.com/qtactivex/qtplugin.cab" height="30"';
+    $attr.=' autoplay="'.$play.'"';
     $params="<param name='src' value='$url'>\n".
-      "<param name='AutoStart' value='True'>";
+      "<param name='AutoStart' value='$play'>";
   }
+  $autoplay=0;
 
   return <<<OBJECT
 <object classid="$classid" $type $attr>
