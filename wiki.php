@@ -157,7 +157,8 @@ class MetaDB_dba extends MetaDB {
   var $metadb;
 
   function MetaDB_dba($file,$type="db3") {
-    $this->metadb=@dba_open($file.".cache","r",$type);
+    if (function_exists('dba_open'))
+      $this->metadb=@dba_open($file.".cache","r",$type);
   }
 
   function close() {
@@ -212,6 +213,7 @@ class MetaDB {
 class Counter_dba {
   var $counter;
   function Counter_dba($DB) {
+    if (!function_exists('dba_open')) return;
     if (!file_exists($DB->data_dir."/counter.db"))
        $this->counter=dba_open($DB->data_dir."/counter.db","n",$DB->dba_type);
     else
@@ -260,11 +262,20 @@ function getConfig($configfile) {
   return array_diff($new,$org);
 }
 
+function _dummy() {
+$msg=array(
+  _("FrontPage"),
+  _("RecentChanges"),
+  _("FindPage"),
+  _("UserPreferences"),
+  _("TitleIndex"),
+  _("HelpContents")
+  );
+}
+
 class WikiDB {
   function WikiDB($config=array()) {
   # Default Configuations
-  # _("FrontPage"),_("RecentChanges"),_("FindPage"),_("UserPreferences")
-  # _("TitleIndex"),_("HelpContents")
     $this->frontpage='FrontPage';
     $this->sitename='MoniWiki';
     $this->data_dir= './data';
@@ -289,8 +300,8 @@ class WikiDB {
 
     $this->css_url= $this->url_prefix.'/css/default.css';
     $this->kbd_script= $this->url_prefix.'/css/kbd.js';
-    $this->logo_string= '<img src="'.$this->logo_img.'" alt="[RecentChanges]" border="0" align="middle" />';
     $this->logo_page= 'FrontPage';
+    $this->logo_string= '<img src="'.$this->logo_img.'" alt="[logo]" border="0" align="middle" />';
     $this->use_smileys=1;
     $this->hr="<hr class='wikiHr' />";
     $this->date_fmt= 'D d M Y';
@@ -331,7 +342,7 @@ class WikiDB {
     $this->icon[create]="<img src='$this->imgs_dir/$iconset-create.gif' alt='N' align='middle' border='0' />";
     $this->icon['new']="<img src='$this->imgs_dir/$iconset-new.gif' alt='U' align='middle' border='0' />";
     $this->icon[updated]="<img src='$this->imgs_dir/$iconset-updated.gif' alt='U' align='middle' border='0' />";
-    $this->icon[user]="UserPreferences";
+    $this->icon[user]=_("UserPreferences");
     $this->icon[home]="<img src='$this->imgs_dir/$iconset-home.gif' alt='M' align='middle' border='0' />";
     }
 
@@ -1454,7 +1465,7 @@ class Formatter {
 
     $url=$this->link_url($this->page->urlname);
 
-    $out="<h2>Revision History</h2>\n";
+    $out="<h2>"._("Revision History")."</h2>\n";
     $out.="<table class='info' border='0' cellpadding='3' cellspacing='2'>\n";
     $out.="<form method='post' action='$url'>";
     $out.="<th class='info'>#</th><th class='info'>Date and Changes</th>".
@@ -1535,8 +1546,10 @@ class Formatter {
       $out .= $line;
     }
     pclose($fp);
+
+    $msg=_("No older revisions available");
     if (!$out)
-      print "<h2>No older revisions available</h2>";
+      print "<h2>$msg</h2>";
     else
       print $this->_parse_rlog($out);
   }
@@ -1620,10 +1633,12 @@ class Formatter {
       pclose($fp);
       unlink($tmpf);
 
-      if (!$out)
-         print "<h2>No difference found</h2>";
-      else {
-         print "<h2>Difference between yours and the current</h2>";
+      if (!$out) {
+         $msg=_("No difference found");
+         print "<h2>$msg</h2>";
+      } else {
+         $msg= _("Difference between yours and the current");
+         print "<h2>$msg</h2>";
          print $this->_parse_diff($out);
       }
       return;
@@ -1638,7 +1653,8 @@ class Formatter {
     if ($rev2) $option.="-r$rev2 ";
 
     if (!$option) {
-      print "<h2>No older revisions available</h2>";
+      $msg= "No older revisions available";
+      print "<h2>$msg</h2>";
       return;
     }
     $fp=popen("rcsdiff -u $option ".$this->page->filename,"r");
@@ -1649,12 +1665,19 @@ class Formatter {
       $out.= $line;
     }
     pclose($fp);
-    if (!$out)
-      print "<h2>No difference found</h2>";
-    else {
-      if ($rev1==$rev2) print "<h2>Difference between versions</h2>";
-      else if ($rev1 and $rev2) print "<h2>Difference between r$rev1 and r$rev2</h2>";
-      else if ($rev1 or $rev2) print "<h2>Difference between r$rev1$rev2 and the current</h2>";
+    if (!$out) {
+      $msg= "No difference found";
+      print "<h2>$msg</h2>";
+    } else {
+      if ($rev1==$rev2) print "<h2>"._("Difference between versions")."</h2>";
+      else if ($rev1 and $rev2) {
+        $msg= sprintf(_("Difference between r%s and r%s"),$rev1,$rev2);
+        print "<h2>$msg</h2>";
+      }
+      else if ($rev1 or $rev2) {
+        $msg=sprintf(_("Difference between r%s and the current"),$rev1.$rev2);
+        print "<h2>$msg</h2>";
+      }
       print $this->_parse_diff($out);
     }
   }
@@ -1812,7 +1835,7 @@ EOS;
       if ($this->page->writable())
         $menu= $this->link_to("?action=edit",'EditText').$DBInfo->menu_sep;
       else
-        $menu= "NotEditable ".$DBInfo->menu_sep;
+        $menu= _("NotEditable")." ".$DBInfo->menu_sep;
     }
     if ($args[showpage])
       $menu.= $this->link_to("",'ShowPage').$DBInfo->menu_sep;
@@ -1990,7 +2013,7 @@ MSG;
       $p= new WikiPage($options[template]);
       $raw_body = str_replace('\r\n', '\n', $p->get_raw_body());
     } else
-      $raw_body = sprintf("Describe %s here", $this->page->name);
+      $raw_body = sprintf(_("Describe %s here"), $this->page->name);
 
     # for conflict check
     if ($options[datestamp])
@@ -2050,33 +2073,34 @@ if ($user->id != "Anonymous") {
     $options[css_url]=$user->css;
 }
 
-#setlocale(LC_ALL, 'ko');
-if (!function_exists ('bindtextdomain')) {
-     function gettext ($text) {
-       return $text;
-     }
+if (!$DBInfo->use_gettext && !function_exists ('bindtextdomain')) {
+  function gettext ($text) {
+    return $text;
+  }
 
-     function _ ($text) {
-       return $text;
-     }
-}
-#    $locale = array();
-#
-#    function gettext ($text) {
-#        global $locale;
-#        if (!empty ($locale[$text]))
-#            return $locale[$text];
-#        return $text;
-#    }
-#
-#    function _ ($text) {
-#        return gettext($text);
-#    }
-#}
-else {
-   setlocale(LC_ALL, $DBInfo->lang);
-   bindtextdomain("moniwiki", "locale");
-   textdomain("moniwiki");
+  function _ ($text) {
+    return $text;
+  }
+} else {
+  if (!function_exists ('bindtextdomain')) {
+    $locale = array();
+
+    function gettext ($text) {
+      global $locale;
+      if (!empty ($locale[$text]))
+        return $locale[$text];
+      return $text;
+    }
+
+    function _ ($text) {
+      return gettext($text);
+    }
+  }
+  else {
+    setlocale(LC_ALL, $DBInfo->lang);
+    bindtextdomain("moniwiki", "locale");
+    textdomain("moniwiki");
+  }
 }
 
 if (!empty($_SERVER[PATH_INFO])) {
@@ -2134,7 +2158,7 @@ if ($_SERVER[REQUEST_METHOD]=="POST") {
       $orig=md5($body);
       # check datestamp
       if ($page->mtime() > $datestamp) {
-         $opts[msg]=sprintf("Someone else saved the page while you edited %s",$formatter->link_tag($page->name));
+         $opts[msg]=sprintf(_("Someone else saved the page while you edited %s"),$formatter->link_tag($page->name));
          $formatter->send_title(_("Conflict error!"),"",$options);
          $options[preview]=1; 
          $options[conflict]=1; 
@@ -2158,7 +2182,7 @@ if ($_SERVER[REQUEST_METHOD]=="POST") {
    }
 
    if (!$button_preview && $orig == $new) {
-      $opts[msg]="Go back or return to ".$formatter->link_tag($page->name);
+      $opts[msg]=sprintf(_("Go back or return to %s"),$formatter->link_tag($page->name));
       $formatter->send_title(_("No difference found"),"",$options);
       $formatter->send_footer();
       return;
@@ -2166,7 +2190,7 @@ if ($_SERVER[REQUEST_METHOD]=="POST") {
    $formatter->page->set_raw_body($savetext);
 
    if ($button_preview) {
-      $title=sprintf("Preview of %s",$formatter->link_tag($page->name));
+      $title=sprintf(_("Preview of %s"),$formatter->link_tag($page->name));
       $formatter->send_title($title,"",$options);
      
       $options[preview]=1; 
@@ -2194,9 +2218,9 @@ if ($_SERVER[REQUEST_METHOD]=="POST") {
       $options[page]=$page->name;
       $ret=$DBInfo->savePage($page,$comment,$options);
       if ($ret == -1)
-        $options[msg]=$formatter->link_tag($page->name)." is not editable";
+        $options[msg]=sprintf(_("%s is not editable"),$formatter->link_tag($page->name));
       else
-        $options[msg]=$formatter->link_tag($page->name)." is saved";
+        $options[msg]=sprintf(_("%s is saved"),$formatter->link_tag($page->name));
       $formatter->send_title("","",$options);
       $formatter->send_page();
    }
@@ -2251,7 +2275,7 @@ if ($pagename) {
         print " or alternativly, use one of these templates:\n";
         $options[linkto]="?action=edit&amp;template=";
         print macro_TitleSearch($formatter,".*Template",$options);
-        print "To create your own templates, add a page with a 'Template' suffix\n";
+        print _("To create your own templates, add a page with a 'Template' suffix\n");
       }
 
       #$args[showpage]=1;
@@ -2346,7 +2370,7 @@ if ($pagename) {
     $formatter->send_footer($args,$options);
   } else if ($action=="info") {
     $formatter->send_header("",$options);
-    $formatter->send_title("Info. for ".$page->name);
+    $formatter->send_title(sprintf(_("Info. for %s"),$page->name));
     $formatter->show_info();
     $args[showpage]=1;
     $options[timer]=$timing;
@@ -2357,8 +2381,6 @@ if ($pagename) {
     $options[passwd]=$passwd;
     do_DeletePage($formatter,$options);
   } else if ($action) {
-    #print_r($HTTP_POST_VARS);
-    #print_r($HTTP_GET_VARS);
     #print($login_id);
 
     if (function_exists("do_post_".$action)) {
@@ -2394,7 +2416,7 @@ if ($pagename) {
         return;
       }
       $formatter->send_header("Status: 406 Not Acceptable",$options);
-      $formatter->send_title("406 Not Acceptable","",$options);
+      $formatter->send_title(_("406 Not Acceptable"),"",$options);
       $args[editable]=1;
       # $formatter->send_page("");
       $options[timer]=$timing;
