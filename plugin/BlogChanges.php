@@ -165,7 +165,7 @@ function macro_BlogChanges($formatter,$value,$options='') {
   if (in_array('summary',$opts))
     $logs=Blog_cache::get_summary($blogs,$date);
   else
-    $logs=Blog_cache::get_summary($blogs,$date);
+    $logs=Blog_cache::get_simple($blogs,$date);
   usort($logs,'BlogCompare');
 
   if (in_array('simple',$opts)) {
@@ -185,8 +185,9 @@ function macro_BlogChanges($formatter,$value,$options='') {
   if (!in_array('nouser',$opts))
     $template.='by $user';
 
-  if (in_array('summary',$opts))
+  if (in_array('summary',$opts)) {
     $template.='</span><div class=\"blog-summary\">$summary</div>$sep\n";';
+  }
   else
     $template.='</span>$sep\n";';
     
@@ -208,6 +209,13 @@ function macro_BlogChanges($formatter,$value,$options='') {
     $date[10]=' ';
     $time=strtotime($date." GMT");
     $date= date("m-d [h:i a]",$time);
+    if ($summary) {
+      $summary=str_replace('\}}}','}}}',$summary);
+      ob_start();
+      $formatter->send_page($summary);
+      $summary=ob_get_contents();
+      ob_end_clean();
+    }
 
     eval($template);
     $items.=$out;
@@ -215,7 +223,7 @@ function macro_BlogChanges($formatter,$value,$options='') {
   $url=qualifiedUrl($formatter->link_url($DBInfo->frontpage));
 
   # make pnut
-  $pnut=$formatter->link_to("?date=$pre_date",'&laquo; '._("Previous"));
+  $pnut="<div class='blog-action'>".$formatter->link_to("?date=$pre_date",'&laquo; '._("Previous"))."</div>";
   #$pnut=$formatter->link_to("?action=blogchanges&amp;mode=$value&amp;date=$pre_date",'&laquo; '._("Previous"));
   return $bra.$items.$cat.$pnut;
 }

@@ -25,7 +25,7 @@ function do_rss_blog($formatter,$options) {
 #    }
 
     $blogs=Blog_cache::get_rc_blogs($date);
-    $logs=Blog_cache::get_simple($blogs,$date);
+    $logs=Blog_cache::get_summary($blogs,$date);
     $rss_name=$DBInfo->sitename;
   } else {
     $blogs=array($DBInfo->pageToKeyname($formatter->page->name));
@@ -81,8 +81,13 @@ CHANNEL;
     $items.="     <item rdf:about=\"$url#$tag\">\n";
     $items.="     <title>$title</title>\n";
     $items.="     <link>$url#$tag</link>\n";
-    if ($summary)
+    if ($summary) {
+      ob_start();
+      $formatter->send_page($summary);
+      $summary=ob_get_contents();
+      ob_end_clean();
       $items.="     <description>$summary</description>\n";
+    }
     $items.="     <dc:date>$date</dc:date>\n";
     $items.="     <dc:contributor>\n<rdf:Description>\n"
           ."<rdf:value>$user</rdf:value>\n"
