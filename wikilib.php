@@ -1334,7 +1334,7 @@ function macro_Include($formatter,$value="") {
   global $DBInfo;
   static $included=array();
 
-  $savelinks=$formatter->pagelinks; # don't update pagelinks with Included files
+#  $savelinks=$formatter->pagelinks; # don't update pagelinks with Included files
 
   preg_match("/([^'\",]+)(?:\s*,\s*)?(\"[^\"]*\"|'[^']*')?$/",$value,$match);
   if ($match) {
@@ -1345,13 +1345,14 @@ function macro_Include($formatter,$value="") {
 
   if ($value and !in_array($value, $included) and $DBInfo->hasPage($value)) {
     $ipage=$DBInfo->getPage($value);
+    $if=new Formatter($ipage);
     $ibody=$ipage->_get_raw_body();
     $opt['nosisters']=1;
     ob_start();
-    $formatter->send_page($title.$ibody,$opt);
+    $if->send_page($title.$ibody,$opt);
     $out= ob_get_contents();
     ob_end_clean();
-    $formatter->pagelinks=$savelinks;
+#    $formatter->pagelinks=$savelinks;
     return $out;
   } else {
     return "[[Include($value)]]";
