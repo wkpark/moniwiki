@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0rc15';
+$_release = '1.0rc16';
 
 #ob_start("ob_gzhandler");
 
@@ -41,7 +41,8 @@ function get_scriptname() {
 function _rawurlencode($url) {
   #
   $name=rawurlencode($url);
-  $urlname=preg_replace('/%2F/i','/',$name);
+#  $urlname=preg_replace('/%2F/i','/',$name);
+  $urlname=preg_replace(array('/%2F/i','/%7E/i'),array('/','~'),$name);
   return $urlname;
 }
 
@@ -112,7 +113,7 @@ Title</span>
 <span title='FullSearch'>
 <input type='radio' name='action' value='fullsearch' />
 Contents</span>&nbsp;
-<input type='text' name='value' class='goto' size='20' />
+<input type='text' name='value' class='goto' accesskey='z' size='20' />
 <input type='submit' value='Go' class='goto' style='width:23px' />
 ";
   } else if ($option==2) {
@@ -123,7 +124,7 @@ Contents</span>&nbsp;
 <option value='titlesearch'/>TitleSearch
 <option value='fullsearch'/>FullSearch
 </select>
-<input type='text' name='value' size='20' />
+<input type='text' name='value' accesskey='z' size='20' />
 <input type='submit' value='Go' />
 ";
   } else if ($option==3) {
@@ -131,7 +132,7 @@ Contents</span>&nbsp;
 <form name='go' id='go' method='get' action='$action'>
 <table class='goto'>
 <tr><td nowrap='nowrap' style='width:220'>
-<input type='text' name='value' size='28' style='width:110px' />
+<input type='text' name='value' size='28' accesskey='z' style='width:110px' />
 <input type='submit' value='Go' class='goto' style='width:23px' />
 </td></tr>
 <tr><td>
@@ -139,7 +140,7 @@ Contents</span>&nbsp;
 <input type='radio' name='action' value='titlesearch' class='goto' />
 Title(?)</span>
 <span title='FullSearch' class='goto'>
-<input type='radio' name='action' value='fullsearch' class='goto'/>
+<input type='radio' name='action' value='fullsearch' accesskey='z' class='goto'/>
 Contents(/)</span>&nbsp;
 </td></tr>
 </table>
@@ -148,7 +149,7 @@ Contents(/)</span>&nbsp;
   } else {
     return <<<FORM
 <form name='go' id='go' method='get' action='$action' onsubmit="return moin_submit();">
-<input type='text' name='value' size='20' style='width:100' />
+<input type='text' name='value' size='20' accesskey='z' style='width:100' />
 <input type='hidden' name='action' value='goto' />
 <input type='submit' value='Go' class='goto' style='width:23px;' />
 </form>
@@ -476,7 +477,7 @@ class WikiDB {
 
 #
     if (!$this->menu) {
-      $this->menu= array($this->frontpage,'FindPage','TitleIndex','RecentChanges');
+      $this->menu= array($this->frontpage=>'1','FindPage'=>'4','TitleIndex'=>'3','RecentChanges'=>'2');
       $this->menu_bra="";
       $this->menu_cat="|";
       $this->menu_sep="|";
@@ -508,8 +509,8 @@ class WikiDB {
 
     if (!$this->icons) {
       $this->icons=array(
-              array("","?action=edit",$this->icon['edit']),
-              array("","?action=diff",$this->icon['diff']),
+              array("","?action=edit",$this->icon['edit'],"e"),
+              array("","?action=diff",$this->icon['diff'],"c"),
               array("","",$this->icon['show']),
               array("FindPage","",$this->icon['find']),
               array("","?action=info",$this->icon['info']),
@@ -790,6 +791,14 @@ class WikiDB {
 
     $delete=@unlink($this->text_dir."/$keyname");
     $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
+
+    $handle= opendir($this->cache_dir);
+    while ($file= readdir($handle)) {
+      if (is_dir("$this->cache_dir/$file")) {
+        $cache= new Cache_text($file);
+        $cache->remove($page->name);
+      }
+    }
   }
 
   function renamePage($pagename,$new) {
@@ -1037,9 +1046,11 @@ class WikiPage {
 
 class Formatter {
   var $sister_idx=1;
+  var $group="";
 
   function Formatter($page="",$options="") {
     global $DBInfo;
+
     $this->page=$page;
     $this->head_num=1;
     $this->head_dep=0;
@@ -1048,6 +1059,9 @@ class Formatter {
     $this->prefix= get_scriptname();
     $this->url_prefix= $DBInfo->url_prefix;
     $this->actions= $DBInfo->actions;
+
+    if (($p=strpos($page->name,"~")))
+      $this->group=substr($page->name,0,$p+1);
 
     $this->sister_on=1;
     $this->sisters=array();
@@ -1070,6 +1084,19 @@ class Formatter {
                      "<i>\\1</i>","<i>\\1</i>",
                      "<sup>\\1</sup>","<sub>\\1</sub>",
                      "<hr class='wiki' />\n");
+
+    # NoSmoke's MultiLineCell hack
+    $this->extrarule=array("/{{\|/","/\|}}/");
+    $this->extrarepl=array("</div><table class='closure'><tr class='closure'><td class='closure'><div>","</div></td></tr></table><div>");
+    
+    # set smily_rule,_repl
+    if ($DBInfo->smileys) {
+      $smiley_rule='/(?<=\s|^)('.$DBInfo->smiley_rule.')(?=\s|$)/e';
+      $smiley_repl="\$this->smiley_repl('\\1')";
+
+      $this->extrarule[]=$smiley_rule;
+      $this->extrarepl[]=$smiley_repl;
+    }
 
     #$punct="<\"\'}\]\|;,\.\!";
     $punct="<\'}\]\|;\.\)\!"; # , is omitted for the WikiPedia
@@ -1203,8 +1230,20 @@ class Formatter {
     return $pi;
   }
 
-  function highlight_repl($val) {
-    if ($val[0]=="<") return str_replace('\"','"',$val);
+  function highlight_repl($val,$colref=array()) {
+    static $color=array("style='background-color:#ff6;'",
+                        "style='background-color:#aff;'",
+                        "style='background-color:#0f3;'",
+                        "style='background-color:#f99;'",
+                        "style='background-color:#f9c;'",
+                        "style='background-color:#c9f;'");
+    if ($val[0]=="<") return $val;
+
+    $val=str_replace('\"','"',$val);
+    $key=strtolower($val);
+
+    if (isset($colref[$key]))
+      return "<strong ".($color[$colref[$key] % 5]).">$val</strong>";
     return "<strong class='highlight'>$val</strong>";
   }
 
@@ -1227,7 +1266,8 @@ class Formatter {
       $url=substr($url,1,-1);
       return $this->macro_repl($url); # No link
     } else if ($url[0]=='$') {
-      return processor_latex($this,"#!latex\n".$url);
+      #return processor_latex($this,"#!latex\n".$url);
+      return $this->processor_repl('latex',$url);
     }
 
     if ($url[0]=="!") {
@@ -1353,7 +1393,14 @@ class Formatter {
       $page=normalize($word); # concat words
     if ($text) $word=$text;
 
-    if ($page[0]=='/') # SubPage
+    # User namespace extension
+    if ($page[0]=='~' and ($p=strpos($page,'/'))) {
+      # change ~User/Page to User~Page
+      $page=substr($page,1,$p-1)."~".substr($page,$p+1);
+    } else if ($this->group and !strpos($page,'~')) {
+      if ($page[0]=='/') $page=substr($page,1);
+      else $page=$this->group.$page;
+    } else if ($page[0]=='/') # SubPage
       $page=$this->page->name.$page;
 
     #$url=$this->link_url($page);
@@ -1363,7 +1410,7 @@ class Formatter {
       if ($idx === -1) return "<a href='$url'>$word</a>";
       if ($idx === 0) return "<a class='nonexistent' href='$url'>?</a>$word";
       return "<a href='$url'>$word</a>".
-        "<tt class='sister'><a href='#sister$idx'>&raquo;$idx</a></tt>";
+        "<tt class='sister'><a href='#sister$idx'>&#x203a;$idx</a></tt>";
     } else if ($DBInfo->hasPage($page)) {
       $this->pagelinks[$page]=-1;
       return "<a href='$url'>$word</a>";
@@ -1372,15 +1419,16 @@ class Formatter {
         $sisters=$DBInfo->metadb->getSisterSites($page);
         if ($sisters) {
           $this->sisters[]="<tt class='foot'>&#160;&#160;&#160;".
-                "<a name='sister$this->sister_idx'></a>".
-                "$this->sister_idx&#160;</tt> ".
-                "$sisters <br/>";
+            "<a name='sister$this->sister_idx' id='sister$this->sister_idx'></a>".
+            "<a href='#rsister$this->sister_idx'>$this->sister_idx&#x203a;</a>&#160;</tt> ".
+            "$sisters <br/>";
           $this->pagelinks[$page]=$this->sister_idx++;
           $idx=$this->pagelinks[$page];
         }
         if ($idx > 0) {
           return "<a href='$url'>$word</a>".
-           "<tt class='sister'><a href='#sister$idx'>&raquo;$idx</a></tt>";
+           "<a name='rsister$idx' id='rsister$idx'>".
+           "</a><tt class='sister'><a href='#sister$idx'>&#x203a;$idx</a></tt>";
         }
       }
       $this->pagelinks[$page]=0;
@@ -1392,6 +1440,8 @@ class Formatter {
     $dep=strlen($left);
     if ($dep != strlen($right)) return "$left $head $right";
     $this->nobr=1;
+
+    $head=str_replace('\"','"',$head); # revert \\" to \"
 
     if (!$this->depth_top) { $this->depth_top=$dep; $depth=1; }
     else {
@@ -1457,8 +1507,18 @@ class Formatter {
       else
         return "[[".$name."]]";
     }
-    eval("\$ret=macro_$name(&\$this,\$option);");
+    #eval("\$ret=macro_$name(&\$this,\$option);");
+    $ret=call_user_func("macro_$name",&$this,$option);
     return $ret;
+  }
+
+  function processor_repl($processor,$value,$options="") {
+    if (!function_exists("processor_".$processor)) {
+      $pf=getProcessor($processor);
+      include_once("plugin/processor/$pf.php");
+      $processor=$pf;
+    }
+    return call_user_func("processor_$processor",&$this,$value,$options);
   }
 
   function smiley_repl($smiley) {
@@ -1556,8 +1616,9 @@ class Formatter {
     if ($body) {
       $pi=$this->get_instructions(&$body);
       if ($pi['#format']) {
-        eval("\$out=processor_".$pi['#format']."(&\$this,\$body,\$options);");
-        print $out;
+        #eval("\$out=processor_".$pi['#format']."(&\$this,\$body,\$options);");
+        #print $out;
+        print call_user_func("processor_".$pi['#format'],&$this,$body,$options);
         return;
       }
       $lines=explode("\n",$body);
@@ -1566,15 +1627,17 @@ class Formatter {
       $pi=$this->get_instructions(&$body);
       $this->pi=$pi;
       if ($pi['#format']) {
-        eval("\$out=processor_".$pi['#format']."(&\$this,\$body,\$options);");
-        print $out;
+        print call_user_func("processor_".$pi['#format'],&$this,$body,$options);
+        #eval("\$out=processor_".$pi['#format']."(&\$this,\$body,\$options);");
+        #print $out;
         return;
       }
 
       $twins=$DBInfo->metadb->getTwinPages($this->page->name);
-      if ($body)
+      if ($body) {
+        $body=rtrim($body); # delete last empty line
         $lines=explode("\n",$body);
-      else
+      } else
         $lines=array();
       if ($twins) {
         if ($lines) $lines[]="----";
@@ -1584,12 +1647,6 @@ class Formatter {
 
     # have no contents
     if (!$lines) return;
-
-    # set smily_rule,_repl
-    if ($DBInfo->smileys) {
-      $smiley_rule='/(?<=\s|^)('.$DBInfo->smiley_rule.')(?=\s|$)/e';
-      $smiley_repl="\$this->smiley_repl('\\1')";
-    }
 
     #$text="<div>";
     $text="";
@@ -1604,8 +1661,8 @@ class Formatter {
     $wordrule="({{{([^}]+)}}})|".
               "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|"; # macro
     if ($DBInfo->enable_latex) # single line latex syntax
-      $wordrule.="\\$([^\\$]+)\\$(?:\s|$)|".
-                 "\\$\\$([^\\$]+)\\$\\$(?:\s|$)|";
+      $wordrule.="\\$\s([^\\$]+)\\$(?:\s|$)|".
+                 "\\$\\$\s([^\\$]+)\\$\\$(?:\s|$)|";
     $wordrule.=$this->wordrule;
 
     foreach ($lines as $line) {
@@ -1773,17 +1830,19 @@ class Formatter {
                          "\$this->head_repl('\\1','\\2','\\3')",$line);
 
       # Smiley
-      if ($smiley_rule) $line=preg_replace($smiley_rule,$smiley_repl,$line);
-
+      #if ($smiley_rule) $line=preg_replace($smiley_rule,$smiley_repl,$line);
       # NoSmoke's MultiLineCell hack
-      $line=preg_replace(array("/{{\|/","/\|}}/"),
-            array("</div><table class='closure'><tr class='closure'><td class='closure'><div>","</div></td></tr></table><div>"),$line);
+      #$line=preg_replace(array("/{{\|/","/\|}}/"),
+      #      array("</div><table class='closure'><tr class='closure'><td class='closure'><div>","</div></td></tr></table><div>"),$line);
+
+      $line=preg_replace($this->extrarule,$this->extrarepl,$line);
 
       if ($in_pre==-1) {
          $in_pre=0;
          if ($processor) {
            $value=$this->pre_line;
-           eval("\$out=processor_$processor(&\$this,\$value,\$options);");
+           #eval("\$out=processor_$processor(&\$this,\$value,\$options);");
+           $out= call_user_func("processor_$processor",&$this,$value,$options);
            $line=$out.$line;
          } else if ($in_quote) {
             # htmlfy '<'
@@ -1809,8 +1868,13 @@ class Formatter {
     # highlight text
     if ($this->highlight) {
       $highlight=_preg_search_escape($this->highlight);
+
+      $colref=preg_split("/\s+/",$highlight);
+      $highlight=join("|",$colref);
+      $colref=array_flip(array_map("strtolower",$colref));
+
       $text=preg_replace('/((<[^>]*>)|('.$highlight.'))/ie',
-                         "\$this->highlight_repl('\\1')",$text);
+                         "\$this->highlight_repl('\\1',\$colref)",$text);
     }
 
     # close all tags
@@ -2120,6 +2184,7 @@ class Formatter {
 
     if ($this->pi["#redirect"] != '' && $options['pi']) {
       $options['value']=$this->pi['#redirect'];
+      $options['redirect']=1;
       $this->pi['#redirect']='';
       do_goto($this,$options);
       return;
@@ -2280,7 +2345,7 @@ EOS;
       $menu= $this->link_to("?action=$act",_($txt));
     } else if ($args['editable']) {
       if ($DBInfo->security->writable($options))
-        $menu= $this->link_to("?action=edit",_("EditText"));
+        $menu= $this->link_to("?action=edit",_("EditText"),"accesskey='x'");
       else
         $menu= _("NotEditable");
     } else
@@ -2299,8 +2364,9 @@ EOS;
 
     $banner= <<<FOOT
  <a href="http://validator.w3.org/check/referer"><img
-  src="$DBInfo->imgs_dir/valid-xhtml10.png" border="0"
-  align="middle" width="88" height="31"
+  src="$DBInfo->imgs_dir/valid-xhtml10.png"
+  style="border:0;width:88px;height:31px"
+  align="middle"
   alt="Valid XHTML 1.0!" /></a>
 
  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
@@ -2344,12 +2410,18 @@ FOOT;
     if ($pos > 0) $upper=substr($name,0,$pos);
 
     if (!$title) {
-      $title=$this->page->name;
+      if ($this->group) { # for HierarchicalWiki
+        $group=$this->group;
+        $title=substr($this->page->name,strlen($group));
+        $name=$title;
+        $group="<span class='group'>".(substr($group,0,-1))." &raquo;<br /></span>";
+      } else     
+        $title=$this->page->name;
       $title=preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$title);
     }
     # setup title variables
     $heading=$this->link_to("?action=fullsearch&amp;value=$name",$title);
-    $title="<font class='title'><b>$title</b></font>";
+    $title="$group<span class='title'><b>$title</b></span>";
     if ($link)
       $title="<a href=\"$link\" class='title'>$title</a>";
     else if (empty($options['nolink']))
@@ -2367,9 +2439,11 @@ MSG;
 
     # navi bar
     $menu=array();
-    foreach ($this->menu as $item) {
+    foreach ($this->menu as $item=>$accesskey) {
       #$menu=preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$DBInfo->menu);
-      $menu[]=$this->link_tag($item,"",_($item));
+      if ($accesskey) $accesskey="accesskey='$accesskey'";
+      else $accesskey="";
+      $menu[]=$this->link_tag($item,"",_($item),$accesskey);
     }
     $menu=$this->menu_bra.join($this->menu_sep,$menu).$this->menu_cat;
     # icons
@@ -2378,8 +2452,11 @@ MSG;
 
     if ($this->icons) {
       $icon=array();
-      foreach ($this->icons as $item)
-        $icon[]=$this->link_tag($item[0],$item[1],$item[2]);
+      foreach ($this->icons as $item) {
+        if ($item[3]) $accesskey="accesskey='$item[3]'";
+        else $accesskey='';
+        $icon[]=$this->link_tag($item[0],$item[1],$item[2],$accesskey);
+      }
       $icons=$this->icon_bra.join($this->icon_sep,$icon).$this->icon_cat;
     }
 
@@ -2426,6 +2503,7 @@ MSG;
       $this->sister_on=0;
       print "<div id='wikiTrailer'>\n";
       $this->send_page($this->trail,$opt);
+      #print preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$this->trail);
       print "</div>\n";
       $this->pagelinks=array(); # reset pagelinks
       $this->sister_on=$sister_save;
@@ -2455,9 +2533,9 @@ MSG;
        $extra='<input type="submit" name="button_merge" value="Merge" />';
 
     print "<a id='editor' name='editor' />\n";
-    printf('<form method="post" action="%s">', $url);
-    #printf('<form method="POST" action="%s/%s#preview">', get_scriptname(),$this->page->name);
-    printf("<br />\n");
+    $previewurl=$this->link_url($this->page->urlname,"#preview");
+    #printf('<form method="post" action="%s">', $url);
+    printf('<form method="post" action="%s">', $previewurl);
     print $this->link_to("?action=edit&amp;rows=".($rows-3),_("ReduceEditor"))." | ";
     print $this->link_tag('InterWiki',"",_("InterWiki"))." | ";
     print $this->link_tag('HelpOnEditing',"",_("HelpOnEditing"));
@@ -2487,7 +2565,7 @@ MSG;
     $summary_msg=_("Summary of Change");
     print <<<EOS
 <textarea class="wiki" id="content" wrap="virtual" name="savetext"
- rows="$rows" cols="$cols" style="width:100%">$raw_body</textarea><br />
+ rows="$rows" cols="$cols" style="width:100%">$raw_body</textarea>
 $summary_msg: <input name="comment" size="70" maxlength="70" style="width:200" /><br />
 <input type="hidden" name="action" value="savepage" />
 <input type="hidden" name="datestamp" value="$datestamp">
@@ -2511,18 +2589,13 @@ EOS;
     global $DBInfo;
     if (!$trailer) $trail=$DBInfo->frontpage;
     else $trail=str_replace("\t".$pagename."\t","\t",$trailer);
-    $trail=str_replace("\t\t","\t",$trail);
     $trails=explode("\t",trim($trail));
-    #if (!in_array($pagename,$trails))
-    if (!isset($trails[$pagename]))
-      $trails[]=$pagename;
+    if (!in_array($pagename,$trails)) $trails[]=$pagename;
     $idx=count($trails) - $size;
-    if ($idx > 0)
-      $trails=array_slice($trails,$idx);
+    if ($idx > 0) $trails=array_slice($trails,$idx);
     $trail=join("\t",$trails);
 
     setcookie("MONI_TRAIL",$trail,time()+60*60*24*30,get_scriptname());
-    #$this->trail= "[\"".str_replace("\t","\"] > [\"",$trail)."\"]\n";
     $this->trail= "[\"".join("\"] > [\"",$trails)."\"]";
   }
 } # end-of-Formatter
@@ -2561,6 +2634,9 @@ function get_pagename() {
   } else {
     $pagename = $DBInfo->frontpage;
   }
+
+  if ($pagename[0]=='~' and ($p=strpos($pagename,"/")))
+    $pagename=substr($pagename,1,$p-1)."~".substr($pagename,$p+1);
   return $pagename;
 }
 
@@ -2602,7 +2678,7 @@ else $lang= $DBInfo->lang;
 if (isset($locale)) {
   $lf="locale/".$lang."/LC_MESSAGES/moniwiki.php";
   if (file_exists($lf)) include_once($lf);
-} else {
+} else if ($lang != 'en') {
   setlocale(LC_ALL, $lang);
   bindtextdomain("moniwiki", "locale");
   textdomain("moniwiki");
@@ -2731,12 +2807,14 @@ if ($pagename) {
         $options=array_merge($_POST,$options);
       else
         $options=array_merge($_GET,$options);
-      eval("do_".$action."(\$formatter,\$options);");
+      #eval("do_".$action."(\$formatter,\$options);");
+      call_user_func("do_$action",$formatter,$options);
       return;
     } else if (function_exists("do_post_".$action)) {
       if ($_SERVER['REQUEST_METHOD']=="POST")
         $options=array_merge($_POST,$options);
-      eval("do_post_".$action."(\$formatter,\$options);");
+      #eval("do_post_".$action."(\$formatter,\$options);");
+      call_user_func("do_post_$action",$formatter,$options);
       return;
     }
     do_invalid($formatter,$options);
