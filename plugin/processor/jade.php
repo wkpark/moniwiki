@@ -10,6 +10,7 @@
 
 function processor_jade($formatter,$value,$options=array()) {
   global $DBInfo;
+  $methods=array('html');
 
 #  'jade ' +
 #  "-V %%root-filename%%='%s-x0' " % tmpfile +
