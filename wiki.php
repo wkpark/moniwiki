@@ -440,17 +440,18 @@ class Formatter {
    return $this->link_tag($this->page->linkurl."$query_string",$text);
  }
 
- function _list($on,$list_type,$numtype="") {
+ function _list($on,$list_type,$numtype="",$close="") {
    if ($list_type=="dd") {
       if ($on)
          $list_type="dl><dd";
       else
          $list_type="dd></dl";
-   }
+   } else if (!$on && $close !=1)
+      $list_type=$list_type."></li";
    if ($on) {
       if ($numtype)
          return "<$list_type type='$numtype'>";
-      return " <$list_type>\n";
+      return "<$list_type>\n";
    } else {
       return "</$list_type>\n";
    }
@@ -497,22 +498,25 @@ class Formatter {
    $wordrule="/(({{{([^}]+)}}})|".
              "\[\[([A-Za-z0-9]+(\(.*\))?)\]\]|".
              "(\[($url):[^\s\]]+(\s[^\]]*)+\])|".
-             "\!(([A-Z]+[a-z0-9]+){2,})(?!(:|[a-z0-9]))|".
+             "(\!([A-Z]+[a-z0-9]+){2,})(?!(:|[a-z0-9]))|".
              "(?<!\!|\[\[|[a-z])(([A-Z]+[a-z0-9]+){2,})(?!([a-z0-9]))|".
              "(?<!\[)\[([^\[:,]+)\](?!\])|".
              "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
              "$urlrule|".
-             "\?(([a-z0-9]+)+))/";
+             "(\?([a-z0-9]+)))/";
 
    foreach ($lines as $line) {
       #$line=preg_replace("/\r?\n$|\r[^\n]$/", "", $line);
       # strip trailing '\n'
       $line=preg_replace("/\n$/", "", $line);
 
-      if ($line=="" && $indlen) {continue;}
+#      if ($line=="" && $indlen) {continue;}
       if ($line=="" && $in_pre) {$text.="\n";continue;}
 #      if ($line=="" && $in_p && !$in_table) {$in_p=0; $text.="<p>\n";continue;}
-      if ($line=="") {$in_p=1;continue;}
+      if ($line=="" && !$in_li && !$in_table) {
+         if (!$in_p) { $text.="<div>\n"; $in_p=1; continue;}
+         if ($in_p) { $text.="</div><br/>\n"; $in_p=0; continue;}
+      }
       if (substr($line,0,2)=="##") continue; # comment
 #      $line=preg_replace("/{{{([^}]+)}}}/","<tt class='wiki'>\\1</tt>",$line);
 
@@ -553,29 +557,30 @@ class Formatter {
                if ($indent_list[$in_li] == $indlen) $line="</li>\n".$line;
                $numtype="";
                $indtype="ul";
-            } else if (preg_match("/^((\d+|[aAiI])\.\s)/",$line,$limatch)) {
-               $line=preg_replace("/^((\d+|[aAiI])\.\s)/","<li>",$line);
+            } else if (preg_match("/^((\d+|[aAiI])\.)/",$line,$limatch)) {
+               $line=preg_replace("/^((\d+|[aAiI])\.)/","<li>",$line);
                if ($indent_list[$in_li] == $indlen) $line="</li>\n".$line;
                $numtype=$match[2];
                $indtype="ol";
             }
          }
          if ($indent_list[$in_li] < $indlen) {
-            if ($indlen && $indent_list[$in_li] && $li_open) $open="</li>\n".$open;
+
             $in_li++;
             $indent_list[$in_li]=$indlen; # add list depth
             $indent_type[$in_li]=$indtype; # add list type
             $open.=$this->_list(1,$indtype,$numtype);
          } else if ($indent_list[$in_li] > $indlen) {
-            if ($indent_list[$in_li] && $li_open) $close="</li>\n".$close;
+#            if ($indent_type[$in_li]!='dd' && $li_open) $close="xxx</li>\n".$close;
             while($in_li >= 0 && $indent_list[$in_li] > $indlen) {
-               $close.=$this->_list(0,$indent_type[$in_li]);
+               if ($indent_type[$in_li]!='dd' && $li_open == $in_li) $close.="</li>\n";
+               $close.=$this->_list(0,$indent_type[$in_li],"",$in_li);
                unset($indent_list[$in_li]);
                unset($indent_type[$in_li]);
                $in_li--;
             }
          }
-         if ($limatch) $li_open=1;
+         if ($indent_list[$in_li] <= $indlen || $limatch) $li_open=$in_li;
          else $li_open=0;
       }
 
@@ -583,7 +588,8 @@ class Formatter {
          $open.=$this->_table(1);
          $in_table=1;
       } else if ($in_table && !preg_match("/^\|\|.*\|\|$/",$line)) {
-         $close.=$this->_table(0);
+         $close=$this->_table(0).$close;
+         #$close.=$this->_table(0);
          $in_table=0;
       }
       if ($in_table) {
@@ -616,12 +622,10 @@ class Formatter {
 
    # close all tags
    $close="";
-   if ($in_pre) {
-      $close.="</pre>\n";
-   }
-   if ($in_table) {
-      $close.="</table>\n";
-   }
+   # close pre,table,p
+   if ($in_pre) $close.="</pre>\n";
+   if ($in_table) $close.="</table>\n";
+   if ($in_p) $close.="</div>\n";
    # close indent
    while($in_li >= 0 && $indent_list[$in_li] > 0) {
       $close.=$this->_list(0,$indent_type[$in_li]);
@@ -629,6 +633,7 @@ class Formatter {
       unset($indent_type[$in_li]);
       $in_li--;
    }
+
    $text.=$close;
    
    print $text;
@@ -797,7 +802,7 @@ pre.wiki {
   padding-top:6px; 
   font-family:Lucida TypeWriter,monotype,fixed,lucida;font-size:14px;
   background-color:#000000;
-  color:gold;
+  color:#FFD700; /* gold */
  }
 table.wiki {
   background-color:#E2ECE2;
@@ -826,7 +831,7 @@ div.diff-sep {
    font-family:Lucida Sans TypeWriter,Lucida Console,fixed;
    font-size:12px;
    background-color:#000000;
-   color:gold;
+   color:#FFD700; /* gold */
 }
 
 .message {
@@ -870,6 +875,13 @@ EOF;
   src="http://www.w3.org/Icons/valid-xhtml10.png" border="0"
   align="middle" width="88" height="31"
   alt="Valid XHTML 1.0!" /></a>
+
+ <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+  src="http://jigsaw.w3.org/css-validator/images/vcss" 
+  style="border:0;width:88px;height:31px"
+  align="middle"
+  alt="Valid CSS!" />
+ </a>
 FOOT;
    
    print "\n</body>\n</html>\n";
