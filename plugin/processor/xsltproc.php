@@ -21,7 +21,7 @@ function processor_xsltproc($formatter,$value) {
 
   $cache= new Cache_text("docbook");
 
-  if (!$formatter->preview and $cache->exists($pagename) and $cache->mtime($pagename) > $formatter->page->mtime())
+  if (!$formatter->preview and !$formatter->refresh and $cache->exists($pagename) and $cache->mtime($pagename) > $formatter->page->mtime())
     return $cache->fetch($pagename);
 
   list($line,$body)=explode("\n",$value,2);
@@ -60,7 +60,7 @@ function processor_xsltproc($formatter,$value) {
     return "<pre class='code'>$src\n</pre>\n";
   }
 
-  if (function_exists ("iconv")) {
+  if (function_exists ("iconv") and strtoupper($DBInfo->charset) != 'UTF-8') {
     $new=iconv('UTF-8',$DBInfo->charset,$html);
     if ($new) $html=$new;
   }
@@ -71,5 +71,5 @@ function processor_xsltproc($formatter,$value) {
   return $html;
 }
 
-// vim:et:ts=2:
+// vim:et:sts=2:sw=2
 ?>
