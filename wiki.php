@@ -540,6 +540,7 @@ class WikiDB {
     $this->icon['main']="<img src='$imgdir/$iconset-main.gif' alt='^' align='middle' border='0' />";
     $this->icon['print']="<img src='$imgdir/$iconset-print.gif' alt='P' align='middle' border='0' />";
     $this->icon['attach']="<img src='$imgdir/$iconset-attach.gif' alt='@' align='middle' border='0' />";
+    $this->icon['popup']="<img src='$imgdir/$iconset-popup.gif' alt='[]' align='middle' border='0' />";
     $this->icon_sep=" ";
     $this->icon_bra=" ";
     $this->icon_cat=" ";
@@ -1237,7 +1238,7 @@ class Formatter {
     #(?P<word>(?:/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})
     $this->wordrule=
     # single bracketed rule [http://blah.blah.com Blah Blah]
-    "(\[($url):[^\s\]]+(\s[^\]]+)?\])|".
+    "(\[\^?($url):[^\s\]]+(\s[^\]]+)?\])|".
     # InterWiki
     # strict but slow
     #"\b(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
@@ -1451,7 +1452,12 @@ class Formatter {
           return $this->interwiki_repl($dum[0],$dum[1]);
         }
         return $this->interwiki_repl($url);
-      } else
+      }
+      if ($url[0] == '^') {
+        $attr.=' target="_blank" ';
+        $url=substr($url,1);
+        $externalicon=$this->icon['popup'];
+      }
       if ($force or strpos($url," ")) { # have a space ?
         list($url,$text)=explode(" ",$url,2);
         $link=str_replace('&','&amp;',$url);
@@ -1464,7 +1470,7 @@ class Formatter {
           $external=$this->ex_bra.$url.$this->ex_ket;
         }
         list($icon,$dummy)=explode(":",$url,2);
-        return "<img align='middle' alt='[$icon]' src='".$this->imgs_dir."/$icon.png' />". "<a class='externalLink' $attr $this->ex_target href='$link'>$text</a>".$external;
+        return "<img align='middle' alt='[$icon]' src='".$this->imgs_dir."/$icon.png' />". "<a class='externalLink' $attr $this->ex_target href='$link'>$text</a>".$externalicon;
       } # have no space
       $link=str_replace('&','&amp;',$url);
       if (preg_match("/^(http|https|ftp)/",$url)) {
@@ -1872,7 +1878,7 @@ class Formatter {
     return '';
   }
 
-  function _table_span($str) {
+  function _table_span($str,$align='') {
     $tok=strtok($str,'&');
     $len=strlen($tok)/2;
     $extra=strtok('');
@@ -1885,12 +1891,16 @@ class Formatter {
       else if ($para[0]=='#')
         $attr="bgcolor='$para' ";
     }
+    if ($align) $attr.="align='center' ";
     if ($len > 1)
       $attr.=" align='center' colspan='$len'";
     return $attr;
   }
 
   function _table($on,$attr="") {
+    if ($attr) {
+      $attr=substr($attr,4,-1);
+    }
     if ($on)
       return "<table class='wiki' cellpadding='3' cellspacing='2' $attr>\n";
     return "</table>\n";
@@ -2124,8 +2134,9 @@ class Formatter {
       }
 
       #if (!$in_pre && !$in_table && preg_match("/^\|\|.*\|\|$/",$line)) {
-      if (!$in_pre && $line[0]=='|' && !$in_table && preg_match("/^\|\|.*\|\|$/",$line)) {
-         $open.=$this->_table(1);
+      if (!$in_pre && $line[0]=='|' && !$in_table && preg_match("/^((\|\|)+)(&lt;[^>]+>)?.*\|\|$/",$line,$match)) {
+         $open.=$this->_table(1,$match[3]);
+         $line=preg_replace('/^((\|\|)+)(&lt;[^>]+>)?/','\\1',$line);
          $in_table=1;
       #} elseif ($in_table && !preg_match("/^\|\|.*\|\|$/",$line)){
       } elseif ($in_table && $line[0]!='|' && !preg_match("/^\|\|.*\|\|$/",$line)){
@@ -2133,8 +2144,8 @@ class Formatter {
          $in_table=0;
       }
       if ($in_table) {
-         $line=preg_replace('/^((?:\|\|)+(&lt;[^>]+>)?)(.*)\|\|$/e',"'<tr class=\"wiki\"><td class=\"wiki\"'.\$this->_table_span('\\1').'>\\3</td></tr>'",$line);
-         $line=preg_replace('/((\|\|)+(&lt;[^>]+>)?)/e',"'</td><td class=\"wiki\"'.\$this->_table_span('\\1').'>'",$line);
+         $line=preg_replace('/^((?:\|\|)+(&lt;[^>]+>)?)(\s?)(.*)\|\|$/e',"'<tr class=\"wiki\"><td class=\"wiki\"'.\$this->_table_span('\\1','\\3').'>\\4</td></tr>'",$line);
+         $line=preg_replace('/((\|\|)+(&lt;[^>]+>)?)(\s?)/e',"'</td><td class=\"wiki\"'.\$this->_table_span('\\1','\\4').'>'",$line);
          $line=str_replace('\"','"',$line); # revert \\" to \"
       }
 
@@ -3203,11 +3214,22 @@ if ($pagename) {
 #      print $out;
 #      $cache->update($pagename,$out);
 #    }
-    if ($DBInfo->comment_macro)
-      print $formatter->macro_repl($DBInfo->comment_macro);
-    
     $options['timer']->Check("send_page");
     $formatter->write("</div>\n");
+
+    if ($DBInfo->extra_macros) {
+      if (!is_array($DBInfo->extra_macros)) {
+        print '<div id="wikiExtra">'."\n";
+        print $formatter->macro_repl($DBInfo->extra_macros);
+        print '</div>'."\n";
+      } else {
+        print '<div id="wikiExtra">'."\n";
+        foreach ($DBInfo->extra_macros as $macro)
+          print $formatter->macro_repl($macro);
+        print '</div>'."\n";
+      }
+    }
+    
     $args['editable']=1;
     $formatter->send_footer($args,$options);
     return;
