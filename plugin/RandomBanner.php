@@ -36,6 +36,7 @@ function macro_RandomBanner($formatter,$value="") {
   $count=count($banner)-1;
   $number=min($number,$count);
   $selected=array_rand($banner,$number);
+  if ($number==1) $selected=array($selected);
   $out='';
   foreach ($selected as $idx)
     $out.=$banner[$idx];
