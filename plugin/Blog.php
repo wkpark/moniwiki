@@ -51,6 +51,9 @@ function do_Blog($formatter,$options) {
   $url=$formatter->link_url($formatter->page->urlname);
   $formatter->send_header("",$options);
 
+  if ($options['mode']=='update')
+    updateBlogList($formatter);
+
   $savetext="";
   if ($options['savetext']) {
     $savetext=stripslashes($options['savetext']);
