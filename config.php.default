@@ -18,7 +18,7 @@ $imgs_dir= $url_prefix.'/imgs';
 $logo_img= $imgs_dir.'/moniwiki-logo.gif';
 $query_prefix= '/';
 
-$css_url= $url_prefix.'/css/default.css';
+$css_url= $url_prefix.'/css/nlog.css';
 $kbd_script= $url_prefix.'/css/kbd.js';
 $logo_string= '<img src="'.$logo_img.'" alt="" border="0" align="middle" />';
 $use_smileys= 1;
@@ -96,4 +96,9 @@ $vim_options='+"set expandtab" +"retab"';
 
 #$url_schemas='mms';
 #$blacklist='127.0.0.0/24:192.168.1.0/24:192.168.1.67';
+#$kiwirian=array('Kiwirian','Hello');
+#$kiwirian='Kiwirian:Hello';
+#$delete_history=1;
+#$use_twikilink=1;
+#$timezone='KST'; // for windows
 ?>
