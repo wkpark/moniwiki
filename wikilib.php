@@ -2032,7 +2032,7 @@ function macro_TitleIndex($formatter="") {
   return "<center><a name='top' />$index</center>\n$out";
 }
 
-function macro_Icon($formatter="",$value="",$extra="") {
+function macro_Icon($formatter,$value='',$extra='') {
   global $DBInfo;
 
   $out=$DBInfo->imgs_dir."/$value";
@@ -2040,7 +2040,15 @@ function macro_Icon($formatter="",$value="",$extra="") {
   return $out;
 }
 
-function macro_RecentChanges($formatter="",$value="") {
+function do_RecentChanges($formatter,$options='') {
+  $formatter->send_header("",$options);
+  print "<div id='wikiBody'>";
+  print macro_RecentChanges($formatter,'nobookmark,moztab',array('target'=>'_content'));
+  print "</div></body></html>";
+  return;
+}
+
+function macro_RecentChanges($formatter,$value='',$options='') {
   global $DBInfo;
   define(MAXSIZE,10000);
   define(DEFSIZE,6000);
@@ -2051,6 +2059,8 @@ function macro_RecentChanges($formatter="",$value="") {
   '$out.= "$icon&nbsp;&nbsp;$title $date . . . . $user $count $extra<br />\n";';
   $template_cat="";
   $use_day=1;
+
+  if ($options['target']) $target="target='$options[target]'";
 
   $date_fmt='D d M Y';
 
@@ -2066,11 +2076,18 @@ function macro_RecentChanges($formatter="",$value="") {
     if (in_array ("nonew", $args)) $checknew=0;
     if (in_array ("showhost", $args)) $showhost=1;
     if (in_array ("comment", $args)) $comment=1;
+    if (in_array ("nobookmark", $args)) $nobookmark=1;
     if (in_array ("simple", $args)) {
       $use_day=0;
       $template=
   '$out.= "$icon&nbsp;&nbsp;$title @ $day $date by $user $count $extra<br />\n";';
-    } if (in_array ("table", $args)) {
+    }
+    if (in_array ("moztab", $args)) {
+      $use_day=1;
+      $template=
+  '$out.= "<li>$title $date</li>\n";';
+    }
+    if (in_array ("table", $args)) {
       $bra="<table border='0' cellpadding='0' cellspading='0' width='100%'>";
       $template=
   '$out.= "<tr><td nowrap=\'nowrap\' width=\'2%\'>$icon</td><td width=\'40%\'>$title</td><td width=\'15%\'>$date</td><td>$user $count $extra</td></tr>\n";';
@@ -2151,9 +2168,10 @@ function macro_RecentChanges($formatter="",$value="") {
     $day = date('Y-m-d', $ed_time);
     if ($use_day and $day != $ratchet_day) {
       $out.=$cat0;
-      $out.=sprintf("%s<font size='+1'>%s </font> <font size='-1'>[",
+      $out.=sprintf("%s<font size='+1'>%s </font> <font size='-1'>",
             $br, date($date_fmt, $ed_time));
-      $out.=$formatter->link_tag($formatter->page->urlname,
+      if (!$nobookmark)
+        $out.='['.$formatter->link_tag($formatter->page->urlname,
                                  "?action=bookmark&amp;time=$ed_time",
                                  _("set bookmark"))."]</font><br />\n";
       $ratchet_day = $day;
@@ -2180,7 +2198,7 @@ function macro_RecentChanges($formatter="",$value="") {
       $icon= $formatter->link_tag($pageurl,"?action=diff",$formatter->icon[diff]);
 
     $title= preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$page_name);
-    $title= $formatter->link_tag($pageurl,"",$title);
+    $title= $formatter->link_tag($pageurl,"",$title,$target);
 
     if (! empty($DBInfo->changed_time_fmt))
       $date= date($DBInfo->changed_time_fmt, $ed_time);
@@ -2229,8 +2247,8 @@ function macro_FootNote($formatter,$value="") {
   $formatter->foot_idx++;
   $idx=$formatter->foot_idx;
 
-  $text="[$idx]";
-  $idx="fn".$idx;
+  $text="[$idx&#093";
+  $fnidx="fn".$idx;
   if ($value[0] == "*") {
 #    $dum=explode(" ",$value,2); XXX
     $p=strrpos($value,'*')+1;
@@ -2240,23 +2258,23 @@ function macro_FootNote($formatter,$value="") {
     $dum=explode("]",$value,2);
     if (trim($dum[1])) {
        $text=$dum[0]."&#093;"; # make a text as [Alex77]
-       $idx=substr($dum[0],1);
+       $fnidx=substr($dum[0],1);
        $formatter->foot_idx--; # undo ++.
-       if (0 === strcmp($idx , (int)$idx)) $idx="fn$idx";
+       if (0 === strcmp($fnidx , (int)$fnidx)) $fnidx="fn$fnidx";
        $value=$dum[1]; 
     } else if ($dum[0]) {
        $text=$dum[0]."]";
-       $idx=substr($dum[0],1);
+       $fnidx=substr($dum[0],1);
        $formatter->foot_idx--; # undo ++.
-       if (0 === strcmp($idx , (int)$idx)) $idx="fn$idx";
-       return "<tt class='foot'><a href='#$idx'>$text</a></tt>";
+       if (0 === strcmp($fnidx , (int)$fnidx)) $fnidx="fn$fnidx";
+       return "<tt class='foot'><a href='#$fnidx'>$text</a></tt>";
     }
   }
   $formatter->foots[]="<tt class='foot'>&#160;&#160;&#160;".
-                      "<a name='$idx'/>".
-                      "<a href='#r$idx'>$text</a>&#160;</tt> ".
+                      "<a id='$fnidx' name='$fnidx'/>".
+                      "<a href='#r$fnidx'>$text</a>&#160;</tt> ".
                       "$value<br/>";
-  return "<tt class='foot'><a name='r$idx'/><a href='#$idx'>$text</a></tt>";
+  return "<tt class='foot'><a id='r$fnidx' name='r$fnidx'/><a href='#$fnidx'>$text</a></tt>";
 }
 
 function macro_TableOfContents($formatter="",$value="") {
@@ -2286,6 +2304,7 @@ function macro_TableOfContents($formatter="",$value="") {
    # strip some basic wikitags
    # $formatter->baserepl,$head);
    $head=preg_replace($formatter->baserule,"\\1",$head);
+   $head=preg_replace("/\[\[.*\]\]/","",$head);
    $head=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$head);
 
    if (!$depth_top) { $depth_top=$dep; $depth=1; }
