@@ -19,12 +19,15 @@ function macro_Play($formatter,$value) {
     $attr='';
     list($x,$y)=explode(',',$match[3]);
   }
-  $fname=$formatter->macro_repl('Attachment',$value,1);
-  if (!file_exists($fname)) {
-    return $formatter->macro_repl('Attachment',$value);
+  if (!preg_match("/^(http|ftp|mms|rtsp):\/\//",$media)) {
+    $fname=$formatter->macro_repl('Attachment',$media,1);
+    if (!file_exists($fname)) {
+      return $formatter->macro_repl('Attachment',$value);
+    }
+    $url=qualifiedUrl($DBInfo->url_prefix."/"._urlencode($fname));
+  } else {
+    $url=$media;
   }
-
-  $url=qualifiedUrl($DBInfo->url_prefix."/"._urlencode($fname));
 
   if ($autoplay==1) {
     $play="true";
