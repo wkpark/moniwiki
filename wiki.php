@@ -1173,7 +1173,8 @@ class Formatter {
     $this->imgs_dir_interwiki=$DBInfo->imgs_dir_interwiki;
     $this->imgs_dir_url=$DBInfo->imgs_dir_url;
     $this->actions= $DBInfo->actions;
-    $this->inline_latex= $DBInfo->inline_latex;
+    $this->inline_latex=
+      $DBInfo->inline_latex == 1 ? 'latex':$DBInfo->inline_latex;
     $this->use_purple=$DBInfo->use_purple;
 
     if (($p=strpos($page->name,"~")))
