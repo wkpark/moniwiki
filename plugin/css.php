@@ -1,0 +1,72 @@
+<?php
+// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// All rights reserved. Distributable under GPL see COPYING
+// css action plugin for the MoniWiki
+//
+// $Id$
+
+function do_post_css($formatter,$options) {
+  global $DBInfo;
+  global $HTTP_COOKIE_VARS;
+
+  if ($options[clear]) {
+    if ($options[id]=='Anonymous') {
+      header("Set-Cookie: MONI_CSS=dummy; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname());
+      $options[css_url]="";
+    } else {
+      # save profile
+      $udb=new UserDB($DBInfo);
+      $userinfo=$udb->getUser($options[id]);
+      $userinfo->info[css_url]="";
+      $udb->saveUser($userinfo);
+    }
+  } else if ($options[id]=="Anonymous" && isset($options[user_css])) {
+     setcookie("MONI_CSS",$options[user_css],time()+60*60*24*30,get_scriptname());
+     # set the fake cookie
+     $HTTP_COOKIE_VARS[MONI_CSS]=$options[user_css];
+     $title="CSS Changed";
+     $options[css_url]=$options[user_css];
+  } else if ($options[id] != "Anonymous" && isset($options[user_css])) {
+    # save profile
+    $udb=new UserDB($DBInfo);
+    $userinfo=$udb->getUser($options[id]);
+    $userinfo->info[css_url]=$options[user_css];
+    $udb->saveUser($userinfo);
+    $options[css_url]=$options[user_css];
+  }
+  $formatter->send_header("",$options);
+  $formatter->send_title($title,"",$options);
+  $formatter->send_page("Back to UserPreferences");
+  $formatter->send_footer("",$options);
+}
+
+function macro_Css($formatter="") {
+  global $DBInfo;
+  $out="
+<form method='post'>
+<input type='hidden' name='action' value='css' />
+  <b>Select a CSS</b>&nbsp;
+<select name='user_css'>
+";
+  $handle = opendir($DBInfo->css_dir);
+  $css=array();
+  while ($file = readdir($handle)) {
+     if (preg_match("/\.css$/i", $file,$match))
+        $css[]= $file;
+  }
+
+  foreach ($css as $item)
+     $out.="<option value='$DBInfo->url_prefix/$DBInfo->css_dir/$item'>$item</option>\n";
+
+  $out.="
+    </select>&nbsp; &nbsp; &nbsp;
+    <input type='submit' name='save' value='Change CSS' /> &nbsp;";
+
+  $out.="
+    <input type='submit' name='clear' value='Clear CSS cookie' /> &nbsp;";
+
+  $out.="</form>\n";
+  return $out;
+}
+
+?>
