@@ -1,0 +1,10 @@
+#make po/moniwiki.pot
+#make po/ko.po
+
+iconv -f EUC-KR -t UTF-8 po/ko.po |sed 's/EUC-KR/UTF-8/' >po/ko_KR.UTF-8.po
+mkdir -p ko_KR.UTF-8/LC_MESSAGES/
+make ko_KR.UTF-8/LC_MESSAGES/moniwiki.mo
+rm po/ko_KR.UTF-8.po
+#make ko_KR.UTF-8/LC_MESSAGES/moniwiki.php
+
+#make ko/LC_MESSAGES/moniwiki.mo

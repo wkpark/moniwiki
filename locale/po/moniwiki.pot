@@ -1,0 +1,906 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR Free Software Foundation, Inc.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2003-08-10 08:22+0900\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=CHARSET\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: ../plugin/Attachment.php:24
+#, c-format
+msgid "Upload new Attachment \"%s\""
+msgstr ""
+
+#: ../plugin/Blog.php:51
+#, c-format
+msgid "\"%s\" is updated"
+msgstr ""
+
+#: ../plugin/Blog.php:56
+msgid "Add Blog"
+msgstr ""
+
+#: ../plugin/Blog.php:110
+#, c-format
+msgid "Comment added to \"%s\""
+msgstr ""
+
+#: ../plugin/Blog.php:113
+#, c-format
+msgid "Blog entry added to \"%s\""
+msgstr ""
+
+#: ../plugin/Blog.php:149
+#, c-format
+msgid "Add Comment to \"%s\""
+msgstr ""
+
+#: ../plugin/Blog.php:151
+#, c-format
+msgid "Add Blog entry to \"%s\""
+msgstr ""
+
+#: ../plugin/Blog.php:167
+msgid "Don't add a signature"
+msgstr ""
+
+#: ../plugin/Blog.php:180
+msgid "<b>horizontal rule</b> ---- does not applied on the blog mode."
+msgstr ""
+
+#: ../plugin/Board.php:24
+msgid "No articles found"
+msgstr ""
+
+#: ../plugin/Board.php:67
+#, c-format
+msgid "Comment is added to \"%s\""
+msgstr ""
+
+#: ../plugin/Board.php:68 ../plugin/Board.php:78
+#, c-format
+msgid "Add article to \"%s\""
+msgstr ""
+
+#: ../plugin/Draw.php:26 ../plugin/OeKaki.php:36
+msgid "Draw new picture"
+msgstr ""
+
+#: ../plugin/Draw.php:48 ../wikilib.php:1076
+#, c-format
+msgid "Fail to copy \"%s\" to \"%s\""
+msgstr ""
+
+#: ../plugin/Draw.php:58 ../plugin/OeKaki.php:58
+msgid "Fatal error !"
+msgstr ""
+
+#: ../plugin/Draw.php:61 ../plugin/OeKaki.php:61
+msgid "No filename given"
+msgstr ""
+
+#: ../plugin/Draw.php:82
+msgid "Edit drawing"
+msgstr ""
+
+#: ../plugin/Draw.php:91
+msgid "Edit new drawing"
+msgstr ""
+
+#: ../plugin/DueDate.php:41
+#, c-format
+msgid "%d day(s) left until %s."
+msgstr ""
+
+#: ../plugin/DueDate.php:43
+msgid "It's today."
+msgstr ""
+
+#: ../plugin/DueDate.php:45
+#, c-format
+msgid "%d day(s) passed from %s."
+msgstr ""
+
+#: ../plugin/FastSearch.php:116 ../wikilib.php:705
+#, c-format
+msgid "Full text search for \"%s\""
+msgstr ""
+
+#: ../plugin/FastSearch.php:125 ../wikilib.php:714
+#, c-format
+msgid "Found %s matching %s out of %s total pages"
+msgstr ""
+
+#: ../plugin/OeKaki.php:111
+msgid "Create new picture"
+msgstr ""
+
+#: ../plugin/OeKaki.php:118
+msgid "Edit Image"
+msgstr ""
+
+#: ../plugin/PostPage.php:7
+#, c-format
+msgid "Post \"%s\" to someone"
+msgstr ""
+
+#: ../plugin/TwinPages.php:13
+#, c-format
+msgid "TwinPages of %s"
+msgstr ""
+
+#: ../plugin/TwinPages.php:18 ../wiki.php:1729 ../wiki.php:2831
+msgid "See TwinPages: "
+msgstr ""
+
+#: ../plugin/TwinPages.php:20
+msgid "No TwinPages found."
+msgstr ""
+
+#: ../plugin/VisualTour.php:55
+msgid "Normal"
+msgstr ""
+
+#: ../plugin/VisualTour.php:57
+msgid "Wider"
+msgstr ""
+
+#: ../plugin/VisualTour.php:59
+msgid "Deeper"
+msgstr ""
+
+#: ../plugin/Vote.php:92
+msgid "Voted successfully"
+msgstr ""
+
+#: ../plugin/backup.php:46
+msgid "Did you want to Backup your wiki ?"
+msgstr ""
+
+#: ../plugin/css.php:29 ../plugin/css.php:37
+msgid "Back to UserPreferences"
+msgstr ""
+
+#: ../plugin/format.php:16
+msgid "It is a XML format !"
+msgstr ""
+
+#: ../plugin/login.php:24
+msgid "Login:"
+msgstr ""
+
+#: ../plugin/login.php:25
+msgid "Password:"
+msgstr ""
+
+#: ../plugin/login.php:26
+msgid "Login"
+msgstr ""
+
+#: ../plugin/login.php:27
+msgid "Join"
+msgstr ""
+
+#: ../plugin/login.php:41 ../plugin/minilogin.php:29
+msgid "Logout"
+msgstr ""
+
+#: ../locale/dummy.php:3 ../plugin/login.php:42 ../plugin/minilogin.php:28
+msgid "UserPreferences"
+msgstr ""
+
+#: ../plugin/man_get.php:15
+msgid "No manpage selected"
+msgstr ""
+
+#: ../plugin/man_get.php:25
+msgid "No manpage found"
+msgstr ""
+
+#: ../plugin/minilogin.php:22
+msgid "Login or Join"
+msgstr ""
+
+#: ../plugin/minilogin.php:30
+#, c-format
+msgid "%s or %s"
+msgstr ""
+
+#: ../plugin/processor/blog.php:48
+msgid "Add comment"
+msgstr ""
+
+#: ../plugin/processor/blog.php:56
+#, c-format
+msgid "%d comment"
+msgstr ""
+
+#: ../plugin/processor/blog.php:56
+#, c-format
+msgid "%d comments"
+msgstr ""
+
+#: ../plugin/processor/blog.php:64 ../plugin/trackback.php:42
+msgid "send ping"
+msgstr ""
+
+#: ../plugin/quicklinks.php:16 ../plugin/subscribe.php:24
+msgid "Please login or make your ID."
+msgstr ""
+
+#: ../plugin/quicklinks.php:22 ../plugin/subscribe.php:30 ../wiki.php:2899
+msgid "Goto UserPreferences"
+msgstr ""
+
+#: ../plugin/quicklinks.php:23
+msgid ""
+"If you want to custumize your quicklinks, just make your ID and register "
+"your email address in the UserPreferences."
+msgstr ""
+
+#: ../plugin/quicklinks.php:38
+msgid "QucikLinks are updated."
+msgstr ""
+
+#: ../plugin/quicklinks.php:50
+msgid "Do you want to customize your quicklinks ?"
+msgstr ""
+
+#: ../plugin/rename.php:14
+#, c-format
+msgid "\"%s\" is renamed !"
+msgstr ""
+
+#: ../plugin/rename.php:20
+#, c-format
+msgid "Fail to rename \"%s\" !"
+msgstr ""
+
+#: ../plugin/rename.php:27
+#, c-format
+msgid "Rename \"%s\" ?"
+msgstr ""
+
+#: ../plugin/rename.php:35
+msgid "with version info"
+msgstr ""
+
+#: ../plugin/rename.php:40
+msgid "Only WikiMaster can rename this page"
+msgstr ""
+
+#: ../plugin/restore.php:23
+msgid "Error: Don't try to overwrite it"
+msgstr ""
+
+#: ../plugin/restore.php:27
+msgid "Error: tarball does not exists"
+msgstr ""
+
+#: ../plugin/restore.php:32
+#, c-format
+msgid "Restore %s"
+msgstr ""
+
+#: ../plugin/restore.php:45
+#, c-format
+msgid "Restore %s ?"
+msgstr ""
+
+#: ../plugin/restore.php:62
+msgid "Restore backuped data"
+msgstr ""
+
+#: ../plugin/security/needtologin.php:24 ../plugin/security/needtologin.php:34
+#, c-format
+msgid "You are not allowed to %s this page"
+msgstr ""
+
+#: ../plugin/security/needtologin.php:25 ../plugin/security/needtologin.php:35
+msgid "Please Login or make your ID on this Wiki ;)"
+msgstr ""
+
+#: ../plugin/sendping.php:14 ../plugin/trackback.php:34
+msgid "Error: Page Not found !"
+msgstr ""
+
+#: ../plugin/sendping.php:49
+msgid "Error: No entry found!"
+msgstr ""
+
+#: ../plugin/sendping.php:67
+msgid "Send TrackBack ping"
+msgstr ""
+
+#: ../plugin/sendping.php:152
+msgid "Trackback sented"
+msgstr ""
+
+#: ../plugin/subscribe.php:12
+msgid "EmailNotification does not activated"
+msgstr ""
+
+#: ../plugin/subscribe.php:13
+msgid ""
+"If you wan't to subscribe this page please contact the WikiMaster to "
+"activate the e-mail notification"
+msgstr ""
+
+#: ../plugin/subscribe.php:22
+msgid "Please enter your email address first."
+msgstr ""
+
+#: ../plugin/subscribe.php:31
+msgid ""
+"If you want to subscribe this page, just make your ID and register your "
+"email address in the UserPreferences."
+msgstr ""
+
+#: ../plugin/subscribe.php:46
+msgid "Subscribe lists updated."
+msgstr ""
+
+#: ../plugin/subscribe.php:58
+#, c-format
+msgid "Do you want to subscribe \"%s\" ?"
+msgstr ""
+
+#: ../plugin/theme.php:24
+msgid "Theme cleared. Goto UserPreferences."
+msgstr ""
+
+#: ../plugin/theme.php:64
+msgid "Please select a theme properly."
+msgstr ""
+
+#: ../plugin/trackback.php:45
+#, c-format
+msgid "TrackBack list of %s"
+msgstr ""
+
+#: ../plugin/trackback.php:49 ../plugin/trackback.php:65
+msgid "TrackBack URL for this page:"
+msgstr ""
+
+#: ../plugin/trackback.php:50 ../plugin/trackback.php:66
+msgid "Send TrackBack Ping to another Blog:"
+msgstr ""
+
+#: ../plugin/trackback.php:64
+#, c-format
+msgid "No TrackBack entry found for %s"
+msgstr ""
+
+#: ../wiki.php:817
+#, c-format
+msgid "Rename %s to %s"
+msgstr ""
+
+#: ../wiki.php:1009
+msgid ""
+"You have no permission to see this page.\n"
+"\n"
+msgstr ""
+
+#: ../wiki.php:1010
+msgid "See MoniWiki/AccessControl\n"
+msgstr ""
+
+#: ../wiki.php:1725
+#, c-format
+msgid "See %s"
+msgstr ""
+
+#: ../wiki.php:1725
+msgid "TwinPages"
+msgstr ""
+
+#: ../wiki.php:2014
+msgid "Revision History"
+msgstr ""
+
+#: ../wiki.php:2113
+msgid "No older revisions available"
+msgstr ""
+
+#: ../wiki.php:2240 ../wikilib.php:880
+msgid "No difference found"
+msgstr ""
+
+#: ../wiki.php:2243
+msgid "Difference between yours and the current"
+msgstr ""
+
+#: ../wiki.php:2276
+msgid "Difference between versions"
+msgstr ""
+
+#: ../wiki.php:2278
+#, c-format
+msgid "Difference between r%s and r%s"
+msgstr ""
+
+#: ../wiki.php:2282
+#, c-format
+msgid "Difference between r%s and the current"
+msgstr ""
+
+#: ../locale/dummy.php:6 ../wiki.php:2459
+msgid "EditText"
+msgstr ""
+
+#: ../wiki.php:2461
+msgid "NotEditable"
+msgstr ""
+
+#: ../locale/dummy.php:6 ../wiki.php:2463
+msgid "ShowPage"
+msgstr ""
+
+#: ../locale/dummy.php:3 ../locale/dummy.php:5 ../wiki.php:2464
+msgid "FindPage"
+msgstr ""
+
+#: ../wiki.php:2833 ../wiki.php:2836 ../wiki.php:2842
+msgid "Create this page"
+msgstr ""
+
+#: ../wiki.php:2843
+msgid " or alternativly, use one of these templates:\n"
+msgstr ""
+
+#: ../wiki.php:2846
+msgid "To create your own templates, add a page with a 'Template' suffix\n"
+msgstr ""
+
+#: ../wiki.php:2896
+#, c-format
+msgid "Please login before \"%s\" this page"
+msgstr ""
+
+#: ../wiki.php:2907
+#, c-format
+msgid "Fail to \"%s\" !"
+msgstr ""
+
+#: ../wiki.php:2910
+msgid "Please enter the valid password"
+msgstr ""
+
+#: ../wikilib.php:357
+msgid ""
+"<b>Emphasis:</b> ''<i>italics</i>''; '''<b>bold</b>'''; '''''<b><i>bold "
+"italics</i></b>''''';\n"
+"''<i>mixed '''<b>bold</b>''' and italics</i>''; ---- horizontal rule.<br />\n"
+"<b>Headings:</b> = Title 1 =; == Title 2 ==; === Title 3 ===;\n"
+"==== Title 4 ====; ===== Title 5 =====.<br />\n"
+"<b>Lists:</b> space and one of * bullets; 1., a., A., i., I. numbered "
+"items;\n"
+"1.#n start numbering at n; space alone indents.<br />\n"
+"<b>Links:</b> JoinCapitalizedWords; [\"brackets and double quotes\"];\n"
+"[bracketed words];\n"
+"url; [url]; [url label].<br />\n"
+"<b>Tables</b>: || cell text |||| cell text spanning two columns ||;\n"
+"no trailing white space allowed after tables or titles.<br />\n"
+msgstr ""
+
+#: ../wikilib.php:414
+msgid "Use one of the following templates as an initial release :\n"
+msgstr ""
+
+#: ../wikilib.php:416
+msgid "To create your own templates, add a page with a 'Template' suffix.\n"
+msgstr ""
+
+#: ../wikilib.php:416
+msgid "<br />\n"
+msgstr ""
+
+#: ../wikilib.php:432
+msgid "Skip to preview"
+msgstr ""
+
+#: ../wikilib.php:434
+msgid "ReduceEditor"
+msgstr ""
+
+#: ../locale/dummy.php:6 ../wikilib.php:437
+msgid "InterWiki"
+msgstr ""
+
+#: ../wikilib.php:438
+msgid "HelpOnEditing"
+msgstr ""
+
+#: ../wikilib.php:451
+#, c-format
+msgid "Describe %s here"
+msgstr ""
+
+#: ../wikilib.php:465
+msgid "--Select Category--"
+msgstr ""
+
+#: ../wikilib.php:471
+msgid "Preview"
+msgstr ""
+
+#: ../wikilib.php:472
+msgid "Save"
+msgstr ""
+
+#: ../wikilib.php:473
+msgid "Summary of Change"
+msgstr ""
+
+#: ../wikilib.php:496
+#, c-format
+msgid "Info. for %s"
+msgstr ""
+
+#: ../wikilib.php:506
+msgid "406 Not Acceptable"
+msgstr ""
+
+#: ../wikilib.php:508
+#, c-format
+msgid "%s is not valid action"
+msgstr ""
+
+#: ../wikilib.php:510
+msgid "Is it valid action ?"
+msgstr ""
+
+#: ../wikilib.php:529
+#, c-format
+msgid "File '%s' is deleted"
+msgstr ""
+
+#: ../wikilib.php:531
+#, c-format
+msgid "Fail to delete '%s'"
+msgstr ""
+
+#: ../wikilib.php:534
+#, c-format
+msgid "Directory '%s' is deleted"
+msgstr ""
+
+#: ../wikilib.php:536
+#, c-format
+msgid "Fail to rmdir '%s'"
+msgstr ""
+
+#: ../wikilib.php:539
+msgid "Delete selected files"
+msgstr ""
+
+#: ../wikilib.php:546 ../wikilib.php:548
+msgid "No files are selected !"
+msgstr ""
+
+#: ../wikilib.php:564
+#, c-format
+msgid "\"%s\" is deleted !"
+msgstr ""
+
+#: ../wikilib.php:570
+msgid "Please delete this file manually."
+msgstr ""
+
+#: ../wikilib.php:572
+#, c-format
+msgid "Delete \"%s\" ?"
+msgstr ""
+
+#: ../wikilib.php:612
+#, c-format
+msgid "Permission of \"%s\" changed !"
+msgstr ""
+
+#: ../wikilib.php:618
+#, c-format
+msgid "Fail to chmod \"%s\" !"
+msgstr ""
+
+#: ../wikilib.php:629
+#, c-format
+msgid "Change permission of \"%s\""
+msgstr ""
+
+#: ../wikilib.php:677
+#, c-format
+msgid "RCS purge \"%s\""
+msgstr ""
+
+#: ../wikilib.php:703
+#, c-format
+msgid "BackLinks search for \"%s\""
+msgstr ""
+
+#: ../wikilib.php:769 ../wikilib.php:2501
+msgid "Use more specific text"
+msgstr ""
+
+#: ../wikilib.php:844
+msgid "Goto Editor"
+msgstr ""
+
+#: ../wikilib.php:853
+#, c-format
+msgid "Someone else saved the page while you edited %s"
+msgstr ""
+
+#: ../wikilib.php:858 ../wikilib.php:887
+#, c-format
+msgid "Preview of %s"
+msgstr ""
+
+#: ../wikilib.php:865
+msgid "Conflict error!"
+msgstr ""
+
+#: ../wikilib.php:879
+#, c-format
+msgid "Go back or return to %s"
+msgstr ""
+
+#: ../wikilib.php:913
+msgid "mail does not supported by default."
+msgstr ""
+
+#: ../wikilib.php:917
+msgid "Mail notifications are sented."
+msgstr ""
+
+#: ../wikilib.php:919
+msgid "No subscribers found."
+msgstr ""
+
+#: ../wikilib.php:924
+#, c-format
+msgid "%s is not editable"
+msgstr ""
+
+#: ../wikilib.php:926
+#, c-format
+msgid "%s is saved"
+msgstr ""
+
+#: ../wikilib.php:948
+msgid "Nobody subscribed to this page, no mail sented."
+msgstr ""
+
+#: ../wikilib.php:970
+#, c-format
+msgid "%s page is modified"
+msgstr ""
+
+#: ../wikilib.php:980
+#, c-format
+msgid ""
+"You have subscribed to this wiki page on \"%s\" for change notification.\n"
+"\n"
+msgstr ""
+
+#: ../wikilib.php:993
+msgid "Send mail notification to all subscribers"
+msgstr ""
+
+#: ../wikilib.php:997
+msgid "Mail sented successfully"
+msgstr ""
+
+#: ../wikilib.php:998
+#, c-format
+msgid "mail sented to '%s'"
+msgstr ""
+
+#: ../wikilib.php:1087
+#, c-format
+msgid "File \"%s\" is uploaded successfully"
+msgstr ""
+
+#: ../wikilib.php:1096
+msgid "Create a new page"
+msgstr ""
+
+#: ../wikilib.php:1101
+msgid "Enter a page name"
+msgstr ""
+
+#: ../wikilib.php:1189
+msgid "Successfully confirmed"
+msgstr ""
+
+#: ../wikilib.php:1190
+msgid "Your e-mail address is confirmed successfully"
+msgstr ""
+
+#: ../wikilib.php:1192
+msgid "Confirmation missmatched !"
+msgstr ""
+
+#: ../wikilib.php:1193 ../wikilib.php:1197
+msgid "Please try again to register your e-mail address"
+msgstr ""
+
+#: ../wikilib.php:1196
+msgid "ID does not exists !"
+msgstr ""
+
+#: ../wikilib.php:1212 ../wikilib.php:1265
+#, c-format
+msgid "Successfully login as '%s'"
+msgstr ""
+
+#: ../wikilib.php:1216 ../wikilib.php:1269 ../wikilib.php:1297
+msgid "Invalid password !"
+msgstr ""
+
+#: ../wikilib.php:1219
+msgid "Please enter a valid user ID !"
+msgstr ""
+
+#: ../wikilib.php:1223
+msgid "Cookie deleted !"
+msgstr ""
+
+#: ../wikilib.php:1233 ../wikilib.php:1285
+msgid "too short password!"
+msgstr ""
+
+#: ../wikilib.php:1234
+msgid "mismatch password!"
+msgstr ""
+
+#: ../wikilib.php:1235 ../wikilib.php:1289
+msgid "not acceptable character found in the password!"
+msgstr ""
+
+#: ../wikilib.php:1238
+msgid "Your password is too simple to use as a password !"
+msgstr ""
+
+#: ../wikilib.php:1244 ../wikilib.php:1313
+msgid "Your email address is not valid"
+msgstr ""
+
+#: ../wikilib.php:1248
+msgid "Successfully added!"
+msgstr ""
+
+#: ../wikilib.php:1256 ../wikilib.php:1307
+msgid "E-mail confirmation"
+msgstr ""
+
+#: ../wikilib.php:1258 ../wikilib.php:1309
+msgid "Please confirm your email address"
+msgstr ""
+
+#: ../wikilib.php:1260 ../wikilib.php:1311
+msgid "E-mail confirmation mail sented"
+msgstr ""
+
+#: ../wikilib.php:1274
+msgid "Invalid username !"
+msgstr ""
+
+#: ../wikilib.php:1287
+msgid "mismatch password !"
+msgstr ""
+
+#: ../wikilib.php:1290 ../wikilib.php:1298
+msgid "Password is not changed !"
+msgstr ""
+
+#: ../wikilib.php:1292
+msgid "Password is changed !"
+msgstr ""
+
+#: ../wikilib.php:1294
+msgid "Password is too simple to use as a password !"
+msgstr ""
+
+#: ../wikilib.php:1321
+msgid "Profiles are saved successfully !"
+msgstr ""
+
+#: ../wikilib.php:1450
+msgid ": Rename"
+msgstr ""
+
+#: ../wikilib.php:1824
+msgid "These pages share a similar word..."
+msgstr ""
+
+#: ../wikilib.php:1837
+msgid "These pages share an initial or final title word..."
+msgstr ""
+
+#: ../wikilib.php:1855
+msgid "If you can't find this page, "
+msgstr ""
+
+#: ../wikilib.php:1860
+msgid "No similar pages found"
+msgstr ""
+
+#: ../wikilib.php:1861
+msgid "You are strongly recommened to find it in MetaWikis. "
+msgstr ""
+
+#: ../wikilib.php:1864
+#, c-format
+msgid "Like \"%s\""
+msgstr ""
+
+#: ../wikilib.php:1866
+msgid "Search all MetaWikis"
+msgstr ""
+
+#: ../wikilib.php:2203
+msgid "set bookmark"
+msgstr ""
+
+#: ../wikilib.php:2434 ../wikilib.php:2512
+#, c-format
+msgid "Invalid search expression \"%s\""
+msgstr ""
+
+#: ../wikilib.php:2508
+#, c-format
+msgid "Title search for \"%s\""
+msgstr ""
+
+#: ../locale/dummy.php:3
+msgid "FrontPage"
+msgstr ""
+
+#: ../locale/dummy.php:3
+msgid "RecentChanges"
+msgstr ""
+
+#: ../locale/dummy.php:4
+msgid "TitleIndex"
+msgstr ""
+
+#: ../locale/dummy.php:4
+msgid "HelpContents"
+msgstr ""
+
+#: ../locale/dummy.php:5
+msgid "DeletePage"
+msgstr ""
+
+#: ../locale/dummy.php:5
+msgid "LikePages"
+msgstr ""
+
+#: ../locale/dummy.php:5
+msgid "UploadFile"
+msgstr ""
+
+#: ../locale/dummy.php:6
+msgid "UploadedFiles"
+msgstr ""
+
+#: ../locale/dummy.php:7
+msgid "BlogChanges"
+msgstr ""
+
+#: ../locale/dummy.php:7
+msgid "VisualTour"
+msgstr ""
+
+#: ../locale/dummy.php:7
+msgid "TrackBack"
+msgstr ""
