@@ -25,7 +25,7 @@ function do_css($formatter,$options) {
     # set the fake cookie
     #$HTTP_COOKIE_VARS['MONI_CSS']=$options['user_css'];
     $title="CSS Changed";
-    #$options['css_url']=$options['user_css'];
+    $options['css_url']=$options['user_css'];
     $msg=_("Back to UserPreferences");
   } else if ($options['save'] && $options[id] != "Anonymous" && isset($options['user_css'])) {
     # save profile
@@ -88,4 +88,5 @@ function macro_Css($formatter="") {
   return $out;
 }
 
+// vim:et:sts=2:
 ?>

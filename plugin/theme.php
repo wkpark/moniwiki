@@ -2,7 +2,6 @@
 // Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // Theme plugin for the MoniWiki
-// vim:et:ts=2:
 //
 // $Id$
 //
@@ -12,34 +11,34 @@ function do_theme($formatter,$options) {
 
   if ($options['clear']) {
     if ($options[id]=='Anonymous') {
-    header("Set-Cookie: MONI_THEME=dummy; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname());
+      header("Set-Cookie: MONI_THEME=dummy; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname());
     } else {
       # save profile
       $udb=new UserDB($DBInfo);
-      $userinfo=$udb->getUser($options[id]);
+      $userinfo=$udb->getUser($options['id']);
       $userinfo->info['theme']="";
       $userinfo->info['css_url']="";
       $udb->saveUser($userinfo);
     }
     $msg="== "._("Theme cleared. Goto UserPreferences.")." ==";
   }
-  else if ($options[theme]) {
+  else if ($options['theme']) {
     $themedir="theme/$options[theme]";
     if (file_exists($themedir."/header.php")) { # check
-      $options[css_url]=$DBInfo->url_prefix."/$themedir/css/default.css";
-      if ($options[save] and $options[id]=='Anonymous') {
-        setcookie("MONI_THEME",$options[theme],time()+60*60*24*30,
+      $options['css_url']=$DBInfo->url_prefix."/$themedir/css/default.css";
+      if ($options['save'] and $options['id']=='Anonymous') {
+        setcookie("MONI_THEME",$options['theme'],time()+60*60*24*30,
                                get_scriptname());
-        setcookie("MONI_CSS",$options[css_url],time()+60*60*24*30,
+        setcookie("MONI_CSS",$options['css_url'],time()+60*60*24*30,
                                get_scriptname());
         $title="Theme is changed";
         $msg="Goto ".$formatter->link_repl("UserPreferences");
-      } else if ($options[save] and $options[id]!='Anonymous') {
+      } else if ($options['save'] and $options['id']!='Anonymous') {
         # save profile
         $udb=new UserDB($DBInfo);
-        $userinfo=$udb->getUser($options[id]);
-        $userinfo->info[theme]=$options[theme];
-        $userinfo->info[css_url]=$options[css_url];
+        $userinfo=$udb->getUser($options['id']);
+        $userinfo->info['theme']=$options['theme'];
+        $userinfo->info['css_url']=$options['css_url'];
         $udb->saveUser($userinfo);
         $msg="Goto ".$formatter->link_repl("UserPreferences");
       } else {
@@ -98,4 +97,5 @@ function macro_theme($formatter,$value) {
   return $out;
 }
 
+// vim:et:sts=2:
 ?>
