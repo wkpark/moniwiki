@@ -57,7 +57,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   '$out.= "<li>$title $date</li>\n";';
     }
     if (in_array ("table", $args)) {
-      $bra="<table border='0' cellpadding='0' cellspading='0' width='100%'>";
+      $bra="<table border='0' cellpadding='0' cellspacing='0' width='100%'>";
       $template=
   '$out.= "<tr><td nowrap=\'nowrap\' width=\'2%\'>$icon</td><td width=\'40%\'>$title</td><td width=\'15%\'>$date</td><td>$user $count $extra</td></tr>\n";';
       $cat="</table>";
