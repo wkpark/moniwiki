@@ -61,13 +61,29 @@ class Blog_cache {
     $blogs=array();
     $handle = @opendir($DBInfo->cache_dir."/blogchanges");
     if (!$handle) return array();
-    if (!$date) return array_unique($all);
+    if (!$date) {
+      while ($file = readdir($handle)) {
+        $fname=$DBInfo->cache_dir."/blogchanges/".$file;
+        if (is_dir($fname)) continue;
+        $blogs[]=$file;
+      }
+      arsort($blogs);
+
+      $selected=array();
+      foreach ($blogs as $file) {
+        $name=substr($file,11); # get pagename only
+        if (!in_array($name,$selected))
+          $selected[]=$name;
+      }
+
+      #print_r($selected);
+      return array_unique($selected);
+    }
 
     $rule="/^($date\d*)".'_2e('.join('|',$all).')$/';
     while ($file = readdir($handle)) {
       $fname=$DBInfo->cache_dir."/blogchanges/".$file;
       if (is_dir($fname)) continue;
-      $blogs[]=$file;
       if (preg_match($rule,$file,$match))
         $blogs[]=$match[2];
     }
