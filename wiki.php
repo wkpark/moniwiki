@@ -477,7 +477,7 @@ class WikiDB {
 
 #
     if (!$this->menu) {
-      $this->menu= array($this->frontpage=>'1','FindPage'=>'4','TitleIndex'=>'3','RecentChanges'=>'2');
+      $this->menu= array($this->frontpage=>"accesskey='1'",'FindPage'=>"accesskey='4'",'TitleIndex'=>"accesskey='3'",'RecentChanges'=>"accesskey='2'");
       $this->menu_bra="";
       $this->menu_cat="|";
       $this->menu_sep="|";
@@ -509,8 +509,8 @@ class WikiDB {
 
     if (!$this->icons) {
       $this->icons=array(
-              array("","?action=edit",$this->icon['edit'],"e"),
-              array("","?action=diff",$this->icon['diff'],"c"),
+              array("","?action=edit",$this->icon['edit'],"accesskey='e'"),
+              array("","?action=diff",$this->icon['diff'],"accesskey='c'"),
               array("","",$this->icon['show']),
               array("FindPage","",$this->icon['find']),
               array("","?action=info",$this->icon['info']),
@@ -1120,7 +1120,7 @@ class Formatter {
     # protect WikiName rule !WikiName
     "(?<![a-z])\!?(?:\/?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b|".
     # single bracketed name [Hello World]
-    "(?<!\[)\[([^\[:,\s][^\[:,]+)\](?!\])|".
+    "(?<!\[)\[([^\[:,<\s][^\[:,>]+)\](?!\])|".
     # bracketed with double quotes ["Hello World"]
     "(?<!\[)\[\\\"([^\\\"]+)\\\"\](?!\])|".
   # "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
@@ -2439,11 +2439,9 @@ MSG;
 
     # navi bar
     $menu=array();
-    foreach ($this->menu as $item=>$accesskey) {
+    foreach ($this->menu as $item=>$attr) {
       #$menu=preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$DBInfo->menu);
-      if ($accesskey) $accesskey="accesskey='$accesskey'";
-      else $accesskey="";
-      $menu[]=$this->link_tag($item,"",_($item),$accesskey);
+      $menu[]=$this->link_tag($item,"",_($item),$attr);
     }
     $menu=$this->menu_bra.join($this->menu_sep,$menu).$this->menu_cat;
     # icons
@@ -2453,9 +2451,9 @@ MSG;
     if ($this->icons) {
       $icon=array();
       foreach ($this->icons as $item) {
-        if ($item[3]) $accesskey="accesskey='$item[3]'";
-        else $accesskey='';
-        $icon[]=$this->link_tag($item[0],$item[1],$item[2],$accesskey);
+        if ($item[3]) $attr=$item[3];
+        else $attr='';
+        $icon[]=$this->link_tag($item[0],$item[1],$item[2],$attr);
       }
       $icons=$this->icon_bra.join($this->icon_sep,$icon).$this->icon_cat;
     }
