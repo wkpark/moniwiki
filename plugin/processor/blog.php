@@ -60,7 +60,7 @@ function processor_blog($formatter,$value="",$options) {
       } else
         $anchor= date("Ymd",$time);
       if ($date_anchor != $anchor) {
-        $datetag= "<div class='blog-date'>".date("M d, Y",$time)." <a name='$anchor' id='$anchor'></a><a class='purple' href='#$anchor'>$formatter->purple_icon</a></div>";
+        $datetag= "<div class='blog-date'>".date("M d, Y",$time)." <a name='$anchor'></a><a class='purple' href='#$anchor'>$formatter->purple_icon</a></div>";
         $date_anchor= $anchor;
       }
     }
@@ -119,7 +119,7 @@ function processor_blog($formatter,$value="",$options) {
     $purple="<a class='purple' href='#$tag'>$formatter->purple_icon</a>";
     $title=preg_replace("/(".$formatter->wordrule.")/e",
                         "\$formatter->link_repl('\\1')",$title);
-    $out.="<div class='blog-title'><a name='$tag' id='$tag'></a>$title $purple</div>\n";
+    $out.="<div class='blog-title'><a name='$tag'></a>$title $purple</div>\n";
   }
   $out.="<div class='blog-user'>Submitted by $user $date</div>\n".
     "<div class='blog-comment'>$msg$comments$action</div>\n".
