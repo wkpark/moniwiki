@@ -989,7 +989,7 @@ class Formatter {
 #             "(?<!\!|\[\[|[a-z])(([A-Z]+[a-z0-9]+){2,})(?!([a-z0-9]))|".
     $this->wordrule="(\[($url):[^\s\]]+(\s[^\]]*)+\])|".
              "(\!([A-Z]+[a-z0-9]+){2,})(?!(:|[a-z0-9]))|".
-             "(?<!\!|\[\[|[a-z])((?:\/?[A-Z]([a-z0-9]+|[A-Z]+(?=[A-Z][a-z0-9]|\b))){2,})(?!([a-z0-9]))|".
+             "(?<!\!|\[\[|[a-z])((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})(?!([a-z0-9]))|".
              "(?<!\[)\[([^\[:,\s\d][^\[:,]+)\](?!\])|".
              "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
              "($urlrule)|".
@@ -1091,15 +1091,20 @@ class Formatter {
 
     if (!$text) $text=$page;
 
-    if (!$DBInfo->interwiki[$wiki]) return "$wiki:$page";
-
+    $url=$DBInfo->interwiki[$wiki];
+    if (!$url) return "$wiki:$page";
     $page=trim($page);
+
+    if (strpos($url,'$PAGE') === false)
+      $url.=$page;
+    else
+      $url=str_replace('$PAGE',$page,$url);
 
     if ($this->gen_pagelinks) $this->add_pagelinks($page);
 
     $img=strtolower($wiki);
     return "<img src='$DBInfo->imgs_dir/$img-16.png' width='16' height='16' align='middle' alt='$wiki:'/>".
-  "<a href='".$DBInfo->interwiki[$wiki]."$page' title='$wiki:$page'>$text</a>";
+  "<a href='".$url."' title='$wiki:$page'>$text</a>";
   }
 
   function add_pagelinks($word) {

@@ -1098,7 +1098,13 @@ function macro_InterWiki($formatter="") {
   $out="<table border=0 cellspacing=2 cellpadding=0>";
   foreach (array_keys($DBInfo->interwiki) as $wiki) {
     $href=$DBInfo->interwiki[$wiki];
-    $out.="<tr><td><tt><a href='$href"."RecentChanges'>$wiki</a></tt><td><tt>";
+    if (strpos($href,'$PAGE') === false)
+      $url=$href.'RecentChanges';
+    else {
+      $url=str_replace('$PAGE','index',$href);
+      #$href=$url;
+    }
+    $out.="<tr><td><tt><a href='$url'>$wiki</a></tt><td><tt>";
     $out.="<a href='$href'>$href</a></tt></tr>\n";
   }
   $out.="</table>\n";
