@@ -13,7 +13,7 @@ Aladdin http://www.aladdin.co.kr/catalog/book.asp?ISBN= http://www.aladdin.co.kr
 EOS;
 
   $DEFAULT_ISBN="Amazon";
-  $re_isbn="/([0-9\-]{9,}[xX]?)(?:\s*,\s*)?([A-Za-z]*)?(?:\s*,\s*)?(noimg)?/";
+  $re_isbn="/([0-9\-]{9,}[xX]?)(?:\s*,\s*)?([A-Z][A-Za-z]*)?(?:\s*,\s*)?(.*)?/";
 
   $test=preg_match($re_isbn,$value,$match);
   if ($test === false)
@@ -26,6 +26,20 @@ EOS;
     if (strtolower($match[2][0])=="k") $lang="Aladdin";
     else $lang=$match[2];
   } else $lang=$DEFAULT_ISBN;
+
+  $attr='';
+  if ($match[3]) {
+    $args=explode(",",$match[3]);
+    foreach ($args as $arg) {
+      if ($arg == "noimg") $noimg=1;
+      else {
+        $name=strtok($arg,'=');
+        $val=strtok(' ');
+        $attr.=$name.'="'.$val.'" ';
+        if ($name == 'align') $attr.='class="img'.ucfirst($val).'" ';
+      }
+    }
+  }
 
   $list= $DEFAULT;
   $map= new WikiPage($ISBN_MAP);
@@ -69,11 +83,11 @@ EOS;
         $imglink=str_replace('$ISBN2', $isbn2, $imglink);
   }
 
-  if ($match[3] && $match[3] == 'noimg')
+  if ($noimg)
      return $formatter->icon['www']."[<a href='$booklink'>ISBN-$isbn2</a>]";
   else
      return "<a href='$booklink'><img src='$imglink' border='1' title='$lang".
-       ":ISBN-$isbn' alt='[ISBN-$isbn2]'></a>";
+       ":ISBN-$isbn' alt='[ISBN-$isbn2]' $attr /></a>";
 }
 
 ?>
