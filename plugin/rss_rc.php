@@ -79,8 +79,9 @@ CHANNEL;
 
     $channel.="<rdf:li rdf:resource=\"$url\"></rdf:li>\n";
 
+    $valid_page_name=str_replace('&','&amp;',$page_name);
     $items.="<item rdf:about=\"$url#$datetag\">\n";
-    $items.="  <title>$page_name</title>\n";
+    $items.="  <title>$valid_page_name</title>\n";
     $items.="  <link>$url</link>\n";
     $items.="  <dc:date>$date</dc:date>\n";
     $items.="  <description>$html</description>\n";
