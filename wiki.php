@@ -899,6 +899,7 @@ class WikiPage {
   var $fp;
   var $filename;
   var $rev;
+
   function WikiPage($name,$options="") {
     if ($options['rev'])
       $this->rev=$options['rev'];
@@ -909,7 +910,6 @@ class WikiPage {
     $this->urlname= _rawurlencode($name);
     $this->body= "";
   }
-
 
   function _filename($pagename) {
     # have to be factored out XXX
@@ -930,6 +930,12 @@ class WikiPage {
 
   function mtime () {
     return @filemtime($this->filename);
+  }
+
+  function size() {
+    if ($this->fsize) return $this->fsize;
+    $this->fsize=filesize($this->filename);
+    return $this->fsize;
   }
 
   function get_raw_body($options='') {
@@ -1123,6 +1129,7 @@ class Formatter {
     }
     $options['themedir']=$this->themedir;
     $options['themeurl']=$this->themeurl;
+    $options['frontpage']=$DBInfo->frontpage;
     if (file_exists($this->themedir."/theme.php")) {
       $data=getConfig($this->themedir."/theme.php",$options);
       #print_r($data);
