@@ -1,5 +1,4 @@
 <?php
-rcs_id('$Id$');
 // diff3.php
 //
 // A class for computing three way diffs
@@ -7,6 +6,8 @@ rcs_id('$Id$');
 // Copyright (C) 2001 Geoffrey T. Dairiki <dairiki@dairiki.org>
 // You may copy this code freely under the conditions of the GPL.
 //
+// $Id$
+// $original Id: diff3.php,v 1.5 2002/08/20 16:51:46 rurban Exp $
 
 require_once('lib/difflib.php');
 
@@ -135,14 +136,14 @@ class Diff3 {
 
                 if ($e1->norig() > $ncopy) {
                     array_splice($e1->orig, 0, $ncopy);
-                    array_splice($e1->final, 0, $ncopy);
+                    array_splice($e1->_final, 0, $ncopy);
                 }
                 else
                     $e1 = next($edits1);
 
                 if ($e2->norig() > $ncopy) {
                     array_splice($e2->orig, 0, $ncopy);
-                    array_splice($e2->final, 0, $ncopy);
+                    array_splice($e2->_final, 0, $ncopy);
                 }
                 else
                     $e2 = next($edits2);
@@ -157,17 +158,17 @@ class Diff3 {
                     }
                     
                     if ($e1->type == 'copy')
-                        $bb->out1(array_splice($e1->final, 0, $norig));
+                        $bb->out1(array_splice($e1->_final, 0, $norig));
                                                      
                     if ($e2->type == 'copy')
-                        $bb->out2(array_splice($e2->final, 0, $norig));
+                        $bb->out2(array_splice($e2->_final, 0, $norig));
                 }
                 if ($e1 && ! $e1->orig) {
-                    $bb->out1($e1->final);
+                    $bb->out1($e1->_final);
                     $e1 = next($edits1);
                 }
                 if ($e2 && ! $e2->orig) {
-                    $bb->out2($e2->final);
+                    $bb->out2($e2->_final);
                     $e2 = next($edits2);
                 }
             }
