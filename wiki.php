@@ -811,7 +811,7 @@ class WikiDB {
         $cache->remove($page->name);
 
         # blog cache
-        if ($file == 'blog') {
+        if ($file == 'blogchanges') {
           $handle2= opendir("$this->cache_dir/$file");
           while ($fcache= readdir($handle2)) {
             #print $keyname.';'.$fcache."\n";
@@ -1411,7 +1411,8 @@ class Formatter {
     $img="<a href='$url' target='wiki'><img border='0' src='$DBInfo->imgs_dir/".
          strtolower($wiki)."-16.png' align='middle' height='16' width='16' ".
          "alt='$wiki:' title='$wiki:' /></a>";
-    if (!$text) $text=str_replace("%20"," ",$page);
+    #if (!$text) $text=str_replace("%20"," ",$page);
+    if (!$text) $text=urldecode($page);
     else if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
       $text= "<img border='0' alt='$text' src='$text' />";
       $img="";
