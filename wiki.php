@@ -28,28 +28,43 @@ function get_scriptname() {
   return $SCRIPT_NAME;
 }
 
+class Timer {
+  function Timer() {
+    $mt= explode(" ",microtime());
+    $this->now=$mt[0]+$mt[1];
+    $this->timing=$this->now;
+  }
+
+  function Check() {
+    $mt= explode(" ",microtime());
+    $this->now=$mt[0]+$mt[1];
+    return $this->now-$this->timing;
+  }
+}
+
+$t=new Timer();
 
 class WikiDB {
 # TODO Seperate Configuation parts
   function WikiDB($config="") {
-    $this->url_prefix = '/wiki';
-    $this->data_dir = '/home/httpd/wiki/data';
-    $this->text_dir = $this->data_dir . '/text';
-    $this->imgs_dir = $this->url_prefix . '/imgs';
-    $this->editlog_name = $this->data_dir . '/editlog';
-    $this->umask = 02;
-    $this->intermap = $this->data_dir . '/intermap.txt';
+    $this->url_prefix= '/wiki';
+    $this->data_dir= '/home/httpd/wiki/data';
+    $this->text_dir= $this->data_dir . '/text';
+    $this->imgs_dir= $this->url_prefix . '/imgs';
+    $this->editlog_name= $this->data_dir . '/editlog';
+    $this->umask= 02;
+    $this->intermap= $this->data_dir . '/intermap.txt';
 
-    $this->logo_string = '<img src="/wiki/moinmoin.gif" alt="" border="0" />';
-    $this->show_hosts = TRUE;
+    $this->logo_string= '<img src="'.$this->imgs_dir.'/monimoni.gif" alt="" border="0" />';
+    $this->show_hosts= TRUE;
 
-    $this->date_fmt = 'D d M Y';
-    $this->datetime_fmt = 'D d M Y h:i a';
+    $this->date_fmt= 'D d M Y';
+    $this->datetime_fmt= 'D d M Y h:i a';
     #$this->changed_time_fmt = ' . . . . [h:i a]';
-    $this->changed_time_fmt = ' [h:i a]';
-    $this->admin_passwd = '10sV5lDSjmW9M';
+    $this->changed_time_fmt= ' [h:i a]';
+    $this->admin_passwd= '10sV5lDSjmW9M';
 
-    $this->actions = array('DeletePage');
+    $this->actions= array('DeletePage');
 
     $this->icon[upper]="<img src='$this->imgs_dir/upper.gif' alt='U' align='middle' border='0' />";
     $this->icon[edit]="<img src='$this->imgs_dir/moin-edit.gif' alt='E' align='middle' border='0' />";
@@ -148,10 +163,12 @@ class WikiDB {
     return sizeof($this->getPageLists());
   }
 
-  function addLogEntry($page_name, $remote_name) {
+  function addLogEntry($page_name, $remote_name,$comment,$action="SAVE") {
+    $user=new User();
     $fp_editlog = fopen($this->editlog_name, 'a+');
-    $time = time();
-    $msg = "$page_name\t$remote_name\t$time\n";
+    $time= time();
+    $host= gethostbyaddr($remote_name);
+    $msg="$page_name\t$remote_name\t$time\t$host\t$user->id\t$comment\t$action\n";
     fwrite($fp_editlog, $msg);
     fclose($fp_editlog);
   }
@@ -190,7 +207,7 @@ class WikiDB {
     fwrite($fp, $page->body);
     fclose($fp);
     system("ci -q -t-".$page->name." -l -m'".$REMOTE_ADDR.";;".$comment."' ".$key);
-    $this->addLogEntry($page->name, $REMOTE_ADDR);
+    $this->addLogEntry($page->name, $REMOTE_ADDR,$comment,"SAVE");
   }
 
   function deletePage($page,$comment="") {
@@ -200,7 +217,7 @@ class WikiDB {
 
     $delete=@unlink($key);
 #    system("ci -q -t-".$page->name." -l -m'".$REMOTE_ADDR.";;".$comment."' ".$key);
-    $this->addLogEntry($page->name, $REMOTE_ADDR);
+    $this->addLogEntry($page->name, $REMOTE_ADDR,$comment,"DEL");
   }
 }
 
@@ -296,6 +313,7 @@ class Formatter {
    $this->head_num=1;
    $this->head_dep=0;
    $this->toc=0;
+   $this->prefix=get_scriptname();
  }
 
  function link_repl($url) {
@@ -306,9 +324,7 @@ class Formatter {
    #$url=str_replace("\\\\\"",'"',$url);
    if ($url[0]=="[")
       $url=substr($url,1,strlen($url)-2);
-   if ($url[0]=='"')
-      $url=substr($url,1,strlen($url)-2);
-   else if ($url[0]=="{") {
+   if ($url[0]=="{") {
       $url=substr($url,3,strlen($url)-6);
       return "<tt class='wiki'>$url</tt>"; # No link
    } else if ($url[0]=="[") {
@@ -371,13 +387,18 @@ class Formatter {
   "<a href='".$DBInfo->interwiki[$wiki]."$page' title='$wiki:$page'>$text</a>";
  }
 
- function word_repl($page) {
+ function word_repl($word) {
    global $DBInfo;
+   if ($word[0]=='"') {
+      $page=substr($word,1,strlen($word)-2);
+      $word=$page;
+   } else
+      $page=preg_replace("/\s+/","",$word);
 
    if ($DBInfo->hasPage($page)) {
-      return "<a href='$page'>$page</a>";
+      return "<a href='$this->prefix/$page'>$word</a>";
    } else {
-      return "<a href='$page'>?</a>$page";
+      return "<a href='$this->prefix/$page'>?</a>$word";
    }
  }
 
@@ -440,20 +461,20 @@ class Formatter {
    return "<img src='$DBInfo->imgs_dir/$img' align='middle' alt='$alt' border='0' />";
  }
 
- function link_tag($query_string, $text='') {
+ function link_tag($query_string, $text='',$attr="") {
    // Return a link with given query_string.
    if (! $text)
      $text = $query_string;
-   return sprintf('<a href="%s/%s">%s</a>',
+   return sprintf("<a href='%s/%s' $attr>%s</a>",
           get_scriptname(), $query_string, $text);
  }
 
- function link_to($query_string="",$text="") {
+ function link_to($query_string="",$text="",$attr="") {
    if (!$this->page->linkurl)
       $this->page->_linkurl();
    if (!$text)
       $text=$this->page->name;
-   return $this->link_tag($this->page->linkurl."$query_string",$text);
+   return $this->link_tag($this->page->linkurl."$query_string",$text,$attr);
  }
 
  function _list($on,$list_type,$numtype="",$close="") {
@@ -483,7 +504,7 @@ class Formatter {
 
  function _table($on,$attr="") {
    if ($on)
-      return "<table class='wiki' border='1' cellpadding='3' cellspacing='0' $attr>\n";
+      return "<table class='wiki' cellpadding='3' cellspacing='2' $attr>\n";
    else
       return "</table>\n";
  }
@@ -585,7 +606,7 @@ class Formatter {
 
       # Superscripts, subscripts
       $line=preg_replace("/\^([^ \^]+)\^/","<sup>\\1</sup>",$line);
-      $line=preg_replace("/_([^ _]+)_/","<sub>\\1</sub>",$line);
+      $line=preg_replace("/(?: |^)_([^ _]+)_/","<sub>\\1</sub>",$line);
 
       $line=preg_replace("/^-{4,}/","<hr />\n",$line);
 
@@ -705,7 +726,7 @@ class Formatter {
    $out="<h2>Revision History</h2>\n";
    $out.="<table class='info' border='0' cellpadding='3' cellspacing='2'>\n";
    $out.="<form method='GET' action=''>";
-   $out.="<th class='info'>Rev.</th><th class='info'>Date and Changes</th>".
+   $out.="<th class='info'>#</th><th class='info'>Date and Changes</th>".
          "<th class='info'>Editor</th>".
          "<th><input type='submit' value='diff'></th>".
          "<th class='info'>actions</th>";
@@ -738,7 +759,7 @@ class Formatter {
            $rowspan=1;
            if ($comment) $rowspan=2;
            $out.="<tr>\n";
-           $out.="<th rowspan=$rowspan># $rev</th><td>$inf</td><td>$ip&nbsp;</td>";
+           $out.="<th rowspan=$rowspan>r$rev</th><td>$inf</td><td>$ip&nbsp;</td>";
            $achecked="";
            $bchecked="";
            if ($flag==1)
@@ -821,7 +842,7 @@ class Formatter {
    if (!$rev1 and !$rev2) {
       $rev1=$this->get_rev();
    }
-   if ($rev1==$rev2) $rev2="";
+   else if ($rev1==$rev2) $rev2="";
    if ($rev1) $option="-r$rev1 ";
    if ($rev2) $option.="-r$rev2 ";
 
@@ -838,9 +859,13 @@ class Formatter {
    }
    pclose($fp);
    if (!$out)
-      print "<h2>No differences found</h2>";
-   else
+      print "<h2>No difference found</h2>";
+   else {
+      if ($rev1==$rev2) print "<h2>Difference between versions</h2>";
+      else if ($rev1 and $rev2) print "<h2>Difference between r$rev1 and r$rev2</h2>";
+      else if ($rev1 or $rev2) print "<h2>Difference between r$rev1$rev2 and the current</h2>";
       print $this->_parse_diff($out);
+   }
  }
 
  function send_header($header="",$title="") {
@@ -869,20 +894,34 @@ class Formatter {
 body {font-family:Georgia,Verdana,Lucida,sans-serif;font-size:14px; background-color:#FFF9F9;}
 a:link {color:#993333;}
 a:visited {color:#CE5C00;}
-.title {font-family:Tahoma,Lucida,sans-serif;font-size:26px;font-weight:bold;}
+a:hover {background-color:#E2ECE5;color:#000;}
+.title {
+  font-family:palatino, Georgia,Tahoma,Lucida,sans-serif;
+  font-size:28px;
+  font-weight:bold;
+  color:#639ACE;
+  text-decoration: none;
+}
 tt.wiki {font-family:Lucida Typewriter,fixed,lucida,fixed;font-size:12px;}
+
 pre.wiki {
   padding-left:6px;
   padding-top:6px; 
   font-family:Lucida TypeWriter,monotype,lucida,fixed;font-size:14px;
   background-color:#000000;
   color:#FFD700; /* gold */
- }
+}
+
 table.wiki {
+/* background-color:#E2ECE5;*/
+/* border-collapse: collapse; */
+  border: 0px outset #E2ECE5;
+}
+
+td.wiki {
   background-color:#E2ECE2;
-/*  border-collapse: collapse; */
-/*  border: 1px solid silver; */
-/*  border: 1px; */
+/* border-collapse: collapse; */
+  border: 0px inset #E2ECE5;
 }
 
 th.info {
@@ -891,30 +930,35 @@ th.info {
 /*  border: 1px solid silver; */
 }
 
-h1,h2,h3,h4,h5 {font-family:Tahoma;background-color:#E07B2A;padding-left:6px;}
+h1,h2,h3,h4,h5 {
+  font-family:Tahoma;
+/* background-color:#E07B2A; */
+  padding-left:6px;
+  border-bottom:1px solid #999;
+}
 
 div.diff-added {
-   font-family:Lucida Sans TypeWriter,Lucida Console,fixed;
+   font-family:Verdana,Lucida Sans TypeWriter,Lucida Console,fixed;
    font-size:12px;
    background-color:#61FF61;
    color:black;
 }
 
 div.diff-removed {
-   font-family:Lucida Sans TypeWriter,Lucida Console,fixed;
+   font-family:Verdana,Lucida Sans TypeWriter,Lucida Console,fixed;
    font-size:12px;
    background-color:#E9EAB8;
    color:black;
 }
 
 div.diff-sep {
-   font-family:Lucida Sans TypeWriter,Lucida Console,fixed;
+   font-family:georgia,Verdana,Lucida Sans TypeWriter,Lucida Console,fixed;
    font-size:12px;
    background-color:#000000;
    color:#FFD700; /* gold */
 }
 
-.message {
+td.message {
     margin-top: 6pt;
     background-color: #E8E8E8;
     border-style:solid;
@@ -939,7 +983,7 @@ EOF;
    }
  }
 
- function send_footer($options=array()) {
+ function send_footer($options=array(),$timer="") {
    global $DBInfo;
 
    if ($options[html])
@@ -970,11 +1014,14 @@ EOF;
   alt="Valid CSS!" />
  </a>
 FOOT;
+
+   if ($timer)
+      printf("<br />%7.4f",$timer->Check());
    
    print "\n</body>\n</html>\n";
  }
 
- function send_title($text="", $link="", $msg=0) {
+ function send_title($text="", $link="", $msg="") {
    // Generate and output the top part of the HTML page.
    global $DBInfo;
 
@@ -996,12 +1043,12 @@ FOOT;
    if ($link)
      print "<a href=\"$link\">$text</a>";
    else {
-     print $this->link_to("?action=fullsearch&amp;value=$name",$text);
+     print $this->link_to("?action=fullsearch&amp;value=$name",$text,"class='title'");
    }
    print "<br />";
    if ($msg) {
      print <<<MSG
-<table border="1" class="message" width="100%"><tr><td>
+<table class="message" width="100%"><tr><td class="message">
 $msg
 </td></tr></table>
 MSG;
@@ -1011,6 +1058,7 @@ MSG;
    print $this->link_tag("FindPage")." | ";
    print $this->link_tag("TitleIndex")." | ";
    print $this->link_tag("HelpContents")." | ";
+   print $this->link_tag("UserPreferences")." | ";
    if ($upper)
       print $this->link_tag($upper,$DBInfo->icon[upper])." ";
    print $this->link_to("?action=edit",$DBInfo->icon[edit])." ";
@@ -1096,16 +1144,19 @@ $DBInfo = new WikiDB;
 if (!empty($PATH_INFO)) {
    if ($PATH_INFO[0] == '/')
       $pagename=substr($PATH_INFO,1,strlen($PATH_INFO));
-   if (!$pagename)
+   if (!$pagename) {
       $pagename = "FrontPage";
+   }
 
 #   $result = preg_match('/\b[A-Z][a-z]*(?:[A-Z][a-z]+){1,}[0-9]*\b/',$pagename,$matches);
 #   if ($result)
 #      $pagename = $matches[0];
 #   else
 #      $pagename = "FrontPage";
-} else
+} else {
+   $PATH_INFO.="/FrontPage";
    $pagename = "FrontPage";
+}
 
 
 if ($REQUEST_METHOD=="POST") {
@@ -1169,7 +1220,7 @@ if (!empty($QUERY_STRING))
 
 if ($pagename) {
 
-   if ($action=="recall" && $rev) {
+   if ($action=="recall" || $action=="raw" && $rev) {
        $options[rev]=$rev;
        $page = $DBInfo->getPage($pagename,$options);
    } else
@@ -1191,7 +1242,7 @@ if ($pagename) {
       $formatter->send_page();
       #$args[showpage]=1;
       $args[editable]=1;
-      $formatter->send_footer($args);
+      $formatter->send_footer($args,$t);
       return;
    }
 
@@ -1199,6 +1250,8 @@ if ($pagename) {
       $formatter->send_header();
       $formatter->send_title("Diff for $rev ".$page->name);
       print $formatter->get_diff($rev,$rev2);
+      print "<br /><hr />\n";
+      $formatter->send_page();
       $args[showpage]=1;
       #$args[editable]=1;
       $formatter->send_footer($args);
@@ -1253,11 +1306,14 @@ if ($pagename) {
      $options[passwd]=$passwd;
      do_DeletePage($options);
    } else if ($action) {
-     $keys=array_keys($HTTP_GET_VARS);
+     #$keys=array_keys($HTTP_GET_VARS);
      #foreach ($keys as $key) {
      #   $options[$key]=$HTTP_GET_VARS[$key];
      #}
-     $options=$HTTP_GET_VARS;
+     #$options=$HTTP_GET_VARS;
+     $options=$HTTP_POST_VARS;
+     #print_r($HTTP_POST_VARS);
+     #print($login_id);
 
      if (function_exists("do_".$action))
         eval("do_".$action."(\$options);");
