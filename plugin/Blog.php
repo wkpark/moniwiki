@@ -137,7 +137,7 @@ function do_Blog($formatter,$options) {
     updateBlogList($formatter);
 
     $formatter->send_page();
-  } else {
+  } else { # add entry or comment
     if ($options['value']) {
       $raw_body=$formatter->page->_get_raw_body();
       $lines=explode("\n",$raw_body);
@@ -169,8 +169,11 @@ function do_Blog($formatter,$options) {
       $formatter->send_title(sprintf(_("Add Blog entry to \"%s\""),$options['page']),"",$options);
     }
     $options['noaction']=1;
-    if ($quote)
+    if ($quote) {
+      $quote=str_replace('\}}}','}}}',$quote);
       print $formatter->processor_repl('blog',$quote,$options);
+      #print $formatter->send_page($quote,$options);
+    }
 
     print "<form method='post' action='$url'>\n";
     if ($options['value'])
