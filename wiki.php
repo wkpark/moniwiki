@@ -2715,7 +2715,7 @@ div.diff-sep {
   color:#FFD700; /* gold */
 }
 
-td.message {
+div.message {
   margin-top: 6pt;
   background-color: #E8E8E8;
   border-style:solid;
@@ -2841,13 +2841,13 @@ FOOT;
         $group=$this->group;
         $title=substr($this->page->name,strlen($group));
         $name=$title;
-        $group="<span class='group'>".(substr($group,0,-1))." &raquo;<br /></span>";
+        $group="<div class='wikiGroup'>".(substr($group,0,-1))." &raquo;</div>";
       } else     
         $title=$this->page->title;
     }
     # setup title variables
     #$heading=$this->link_to("?action=fullsearch&amp;value="._urlencode($name),$title);
-    $title="$group<font class='wikiTitle'><b>$title</b></font>";
+    $title="$group<span class='wikiTitle'><b>$title</b></span>";
     if ($link)
       $title="<a href=\"$link\" class='wikiTitle'>$title</a>";
     else if (empty($options['nolink']))
@@ -2858,9 +2858,9 @@ FOOT;
 
     if ($options['msg']) {
       $msg=<<<MSG
-<table class="message" width="100%"><tr><td class="message">
+<div class="message">
 $options[msg]
-</td></tr></table>
+</div>
 MSG;
     }
 
