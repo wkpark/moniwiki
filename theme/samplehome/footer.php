@@ -21,7 +21,12 @@ print '</font>';
 <?
   if ($lastedit)
     print "last modified $lastedit $lasttime<br />";
-  if ($options['id']!='Anonymous') print $menu;
+  if ($options['id']!='Anonymous') print '<font size="-1">'.$menu.'</font>';
 #  print $banner."<br />".$timer;
 ?>
+
+<!-- Theme imported from http://gnome.org -->
+<center>
+Copyright ¨Ï 2003, by Nobody.
+</center>
 </div>

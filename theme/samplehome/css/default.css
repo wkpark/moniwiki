@@ -5,15 +5,15 @@ body {
   padding: 0;
 }
 
-a:link { color: #369;}
-a:visited { color: #369;}
-/* a:hover {background-color:#999966;color:white} /* */
+a:link {}
+a:visited {}
+a:hover {text-decoration: none;} /* */
 .wikiTitle {
   font-family:Tahoma,Lucida,sans-serif;
-  font-size:28px;
+  font-size:30px;
   font-weight:bold;
-  color:#ffffff; /* */
-/*  color: #7B7D5A; /* */
+  color:black; /* */
+  padding-left: 5px;
   text-decoration: none;
 }
 tt.wiki {font-family:Monotype,Lucida Console,fixed,lucida;font-size:12px;}
@@ -51,7 +51,7 @@ pre.quote {
   white-space:pre-wrap;
   white-space: -moz-pre-wrap; 
   font-family:Georgia,monotype,lucida,fixed;font-size:14px;
-  background-color:#ddddc0;
+  background-color: #EFF3EB;
 }
 
 table.wiki {
@@ -61,7 +61,7 @@ table.wiki {
 }
 
 td.wiki {
-  background-color:#ddddb0;
+  background-color: #EFF3EB;
 /* border-collapse: collapse; */
   border: 0px inset #E2ECE5;
 }
@@ -142,7 +142,7 @@ span.goto, input.goto {
 }
 
 table.closure, td.closure{
-  background-color:#ddddb0;
+  background-color: #EFF3EB;
 }
 
 /*  */
@@ -159,19 +159,22 @@ table.closure, td.closure{
   padding-bottom: 5px;
 }
 
+#wikiTrailer a {color:#c0c0c0;}
+
 #wikiHeader {
 /*  border-left: 0.8em solid #7B9AC5; /* */
-  color: #fff;
+  color: black;
   padding: 0.2em 0em 0.2em 0.2em;
-  background-color:#69c; 
 }
-#wikiHeader a:link {color:#fff;}
-#wikiHeader a:visited {color:#f2f2f2;}
+
+#wikiHeader a:link {color:black;text-decoration:none;}
+#wikiHeader a:visited {color:black;text-decoration:none;}
+#wikiHeader a:hover {text-decoration: underline;color:black;}
 
 #wikiBody {
   color: black;
   background-color: #fff;
-  border: 1px dotted #69C;
+  border: 1px dotted #e0e0e0;
 /*  border-left: 0.8em solid #E2ECE2;
   border-right: 0.8em solid #E2ECE2; */
 /*  border-left: 0.8em dotted; /*solid #6A2525; */
@@ -187,17 +190,9 @@ table.closure, td.closure{
    border-collapse:collapse; */
 }
 
-#wikiBody a:link {
-  color: #39c;
-}
-
-#wikiBody a:visited {
-  color: #369;
-}
-
-#wikiBody a:hover {
-  border-bottom: 1px solid #369;
-}
+#wikiBody a:link { }
+#wikiBody a:visited { } 
+#wikiBody a:hover { text-decoration:none; }
 
 #wikiContent {
   margin-left: 20px; 
@@ -246,8 +241,8 @@ div.blog-date { font-size:18px; font-weight:bold; padding-bottom:5px;}
 span.blog-user { font-size:10px; }
 
 /* Calendar */
-td.day { background:#90B7DC; text-align: center;}
-td.today { background:#fff; text-align: center;}
+td.day { background:#f0f0f0; text-align: center;}
+td.today { background:#e0e0e0; text-align: center;}
 
 /* HierarchicalWiki */
 span.group {
