@@ -106,11 +106,12 @@ function normalize_word($word,$group='',$pagename='',$nogroup=0) {
   if ($page[0]=='/') { # SubPage
     $page=$pagename.$page;
   } else if ($tok=strtok($page,'.')) {
+#    print $tok;
     if ($tok=='Main') {
       # Main.MoniWiki => MoniWiki
       $page=$text=strtok('');
       return array($page,$text,$main_page);
-    } else if (strpos($tok,'~') === false) {
+    } else if (strpos($tok,'~') === false and strpos($tok,'/') === false) {
       # Ko~Hello.World =x=> Ko~Hello~World
       # Ko.Hello => Ko~Hello
 
@@ -540,7 +541,7 @@ function macro_Edit($formatter,$value,$options='') {
     $options['linkto']="?action=edit&amp;template=";
     $form = '<br />'._("Use one of the following templates as an initial release :\n");
     $form.= macro_TitleSearch($formatter,$DBInfo->template_regex,$options);
-    $form.= _("To create your own templates, add a page with a 'Template' suffix.\n"."<br />\n");
+    $form.= _("To create your own templates, add a page with a 'Template' suffix.")."\n<br />\n";
   }
 
   if ($options['conflict'])
