@@ -474,7 +474,7 @@ function do_RcsPurge($formatter,$options) {
        if ($options[show])
          print "<tt>rcs -o$range ".$options[page]."</tt><br />";
        else {
-         print "<b>Not enabled now</b> <tt>rcs -o$range  data_dir/".$options[page]."</tt><br />";
+         #print "<b>Not enabled now</b> <tt>rcs -o$range  data_dir/".$options[page]."</tt><br />";
          print "<tt>rcs -o$range ".$options[page]."</tt><br />";
          system("rcs -o$range ".$formatter->page->filename);
        }
@@ -598,18 +598,25 @@ CHANNEL;
     if ($ed_time < $time_cutoff)
       break;
 
-    $day = date('Y/m/d', $ed_time);
-#    if ($day != $ratchet_day) {
-#      $out.=sprintf("<br /><font size='+1'>%s :</font><br />\n", date($DBInfo->date_fmt, $ed_time));
-#      $ratchet_day = $day;
-#      unset($edit);
-#    }
-    $channel.='    <rdf:li rdf:resource="'.$URL.'/'.$page_name.'"/>'."\n";
+    if (!$DBInfo->hasPage($page_name))
+       $status='deleted';
+    else
+       $status='updated';
+    $zone = date("O");
+    $zone = $zone[0].$zone[1].$zone[2].":".$zone[3].$zone[4];
+    $date = date("Y-m-d\TH:i:s",$ed_time).$zone;
 
-    $items.='     <item rdf:about="'.$URL.'/'.$page_name.'">'."\n";
-    $items.='     <title>'.$page_name.'</title>'."\n";
-    $items.='     <link>'.$URL.'/'.$page_name.'</link>'."\n";
-    $items.='     </item>'."\n";
+    $channel.="    <rdf:li rdf:resource=\"$URL/$page_name\"/>\n";
+
+    $items.="     <item rdf:about=\"$URL/$page_name\">\n";
+    $items.="     <title>$page_name</title>\n";
+    $items.="     <link>$URL/$page_name</link>\n";
+    $items.="     <dc:date>$date</dc:date>\n";
+    $items.="     <dc:contributor>\n<rdf:Description>\n"
+          ."<rdf:value>$user</rdf:value>\n"
+          ."</rdf:Description>\n</dc:contributor>\n";
+    $items.="     <wiki:status>$status</wiki:status>\n";
+    $items.="     </item>\n";
 
 #    $out.= "&nbsp;&nbsp;".$formatter->link_tag("$page_name");
 #    if (! empty($DBInfo->changed_time_fmt))
@@ -1270,6 +1277,24 @@ function macro_PageCount($formatter="") {
   return $DBInfo->getCounter();
 }
 
+function macro_PageHits($formatter="") {
+  global $DBInfo;
+
+  $pages = $DBInfo->getPageLists();
+  sort($pages);
+  $hits= array();
+  foreach ($pages as $page) {
+    $hits[$page]=$DBInfo->counter->pageCounter($page);
+  }
+  arsort($hits);
+  while(list($name,$hit)=each($hits)) {
+    if (!$hit) $hit=0;
+    $name=$formatter->link_tag($name);
+    $out.="<li>$name . . . . [$hit]</li>\n";
+  }
+  return "<ol>\n".$out."</ol>\n";
+}
+
 function macro_PageLinks($formatter="",$options="") {
   global $DBInfo;
   $pages = $DBInfo->getPageLists();
@@ -1487,8 +1512,12 @@ function macro_RecentChanges($formatter="",$value="") {
       #$out.= '&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ';
       if ($showhost && $user == 'Anonymous')
         $out.= $addr;
-      else
-        $out.= $user;
+      else {
+        if ($DBInfo->hasPage($user)) {
+          $out.= $formatter->link_tag($user);
+        } else
+          $out.= $user;
+      }
     }
     if ($editcount[$page_name] > 1)
       $out.=" [".$editcount[$page_name]." changes]";
@@ -1556,13 +1585,13 @@ function macro_TableOfContents($formatter="") {
  $lines=explode("\n",$formatter->page->get_raw_body());
  foreach ($lines as $line) {
    $line=preg_replace("/\n$/", "", $line); # strip \n
-   preg_match("/(?<!=)(={1,5})\s+(.*)\s+(={1,5})$/",$line,$match);
+   preg_match("/(?<!=)(={1,5})\s(#?)(.*)\s+(={1,5})$/",$line,$match);
 
    if (!$match) continue;
 
    $dep=strlen($match[1]);
-   if ($dep != strlen($match[3])) continue;
-   $head=$match[2];
+   if ($dep != strlen($match[4])) continue;
+   $head=$match[3];
 
    $depth=$dep;
    if ($dep==1) $depth++; # depth 1 is regarded same as depth 2
@@ -1572,6 +1601,17 @@ function macro_TableOfContents($formatter="") {
    $odepth=$head_dep;
    $open="";
    $close="";
+
+   if ($match[2]) {
+      # reset TOC numberings
+      $dum=explode(".",$num);
+      $i=sizeof($dum);
+      for ($j=0;$j<$i;$j++) $dum[$j]=1;
+      $dum[$i-1]=0;
+      $num=join($dum,".");
+      if ($prefix) $prefix++;
+      else $prefix=1;
+   }
 
    if ($odepth && ($depth > $odepth)) {
       $open.="<dd><dl>\n";
@@ -1591,7 +1631,7 @@ function macro_TableOfContents($formatter="") {
    $head_dep=$depth; # save old
    $head_num=$num;
 
-   $TOC.=$close.$open."<dt><a id='toc$num' name='toc$num' /><a href='#s$num'>$num</a> $head</dt>\n";
+   $TOC.=$close.$open."<dt><a id='toc$prefix-$num' name='toc$prefix-$num' /><a href='#s$prefix-$num'>$num</a> $head</dt>\n";
 
 #   print $TOC;
   }
@@ -1599,7 +1639,7 @@ function macro_TableOfContents($formatter="") {
   if ($TOC) {
      $close="";
      $depth=$head_dep;
-     # XXX ???
+     # XXX
      while ($depth>0) { $depth--;$close.="</dl></dd></dl>\n"; };
      return $TOC.$close;
   }
@@ -1827,18 +1867,20 @@ function macro_GoTo($formatter="",$value="") {
 }
 
 function macro_SystemInfo($formatter="",$value="") {
+   global $_revision,$_release;
 
    $version=phpversion();
    $uname=php_uname();
   return <<<EOF
-<table border=0 cellpadding=5>
+<table border='0' cellpadding='5'>
 <tr><th>PHP Version</th> <td>$version ($uname)</td></tr>
+<tr><th>MoniWiki Version</th> <td>Release $_release [$_revision]</td></tr>
 </table>
 EOF;
 }
 
 function processor_html($formatter="",$value="") {
-   $html=substr($formatter->pre_line,6);
+   $html=substr($value,6);
    return $html;
 }
 
@@ -1852,7 +1894,8 @@ function processor_latex($formatter="",$value="") {
   $cache_dir="pds";
   $option='-interaction=batchmode ';
 
-  $lines=explode("\n",$formatter->pre_line);
+  if (!$value) return;
+  $lines=explode("\n",$value);
   # get parameters
   unset($lines[0]);
 
@@ -1893,7 +1936,7 @@ $tex
 }
 
 function processor_php($formatter="",$value="") {
-  $php=substr($formatter->pre_line,5);
+  $php=substr($value,5);
   ob_start();
   highlight_string($php);
   $highlighted= ob_get_contents();
@@ -1913,8 +1956,8 @@ function processor_gnuplot($formatter="",$value="") {
   $cache_dir="pds";
 
   #
-  $plt=$formatter->pre_line;
-  #$lines=explode("\n",$formatter->pre_line);
+  $plt=$value;
+  #$lines=explode("\n",$value);
   # get parameters
   #unset($lines[0]);
   #$plt=join($lines,"\n");
