@@ -10,6 +10,9 @@
 // $Id$
 
 function processor_blog($formatter,$value="") {
+  static $date_anchor="";
+  global $DBInfo;
+
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
   if ($line) {
@@ -18,15 +21,22 @@ function processor_blog($formatter,$value="") {
 
     if (preg_match('/\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}/',$user))
       $user="Anonymous[$user]";
+    else if ($DBInfo->hasPage($user)) {
+      $user=$formatter->link_tag($user);
+    }
 
     if ($date && $date[10] == 'T') {
       $date[10]=' ';
       $time=strtotime($date." GMT");
-      $date= "@ ".date("Y-m-d [h:i a]",$time);
+      $date= date("m-d [h:i a]",$time);
+      $anchor= date("d",$time);
+      if ($date_anchor != $anchor) {
+        $datetag= "<div class='blog-date'>".date("M d, Y",$time)." <a name='$anchor' id='$anchor'></a><a class='purple' href='#$anchor'>#</a></div>";
+        $date_anchor= $anchor;
+      }
     }
-    $md5sum=md5($line);
-    $purple="<a class='purple' href='#$md5sum'>#</a>";
-    $comment_action="<div class='blog_user'>&raquo; ".$formatter->link_tag($formatter->page->urlname,"?action=blog&amp;value=$md5sum",_("Add comment"))."</div>\n";
+    $md5sum=md5(substr($line,7));
+    $comment_action="<div class='blog-user'>&raquo; ".$formatter->link_tag($formatter->page->urlname,"?action=blog&amp;value=$md5sum",_("Add comment"))."</div>\n";
   }
 
   $src= $value;
@@ -46,20 +56,24 @@ function processor_blog($formatter,$value="") {
     if ($comments) {
       ob_start();
       $formatter->send_page($comments,$options);
-      $comments= "<div class='blog_comments'>".ob_get_contents()."</div>";
+      $comments= "<div class='blog-comments'>".ob_get_contents()."</div>";
       ob_end_clean();
     } else
       $comments="";
   }
 
-  $out="<div class='blog'>";
+  $out="$datetag<div class='blog'>";
   if ($title) {
+    #$tag=normalize($title);
+    $tag=$md5sum;
+    if ($tag[0]=='%') $tag="n".$tag;
+    $purple="<a class='purple' href='#$tag'>#</a>";
     $title=preg_replace("/(".$formatter->wordrule.")/e",
                         "\$formatter->link_repl('\\1')",$title);
-    $out.="<div class='blog_title'><a name='$md5sum' id='$md5sum'>$title$purple</div>\n";
+    $out.="<div class='blog-title'><a name='$tag' id='$tag'></a>$title $purple</div>\n";
   }
-  $out.="<div class='blog_user'>Submitted by $user $date</div>\n".
-    "<div class='blog_comment'></a>$msg$comments$comment_action</div>\n".
+  $out.="<div class='blog-user'>Submitted by $user @ $date</div>\n".
+    "<div class='blog-comment'>$msg$comments$comment_action</div>\n".
     "</div>\n";
   return $out;
 }
