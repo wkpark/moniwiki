@@ -1,4 +1,4 @@
-VER=222_5
+VER=222_7
 install:
 	if [ ! -f pbbs${VER}.zip ]; then \
 	wget -c http://hp.vector.co.jp/authors/VA016309/paintbbs/file/pbbs${VER}.zip; fi
