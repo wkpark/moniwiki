@@ -5,7 +5,7 @@
 //
 // $Id$
 
-function do_rcs($formatter,$options) {
+function do_post_rcs($formatter,$options) {
   global $DBInfo;
 
   $supported=array('-kkv','-kk');
