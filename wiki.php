@@ -12,6 +12,7 @@
 //    by Fred C. Yankowski <fcy at acm.org>
 //
 // $Id$
+// vim:et:ts=2:
 
 include "wikilib.php";
 
@@ -36,6 +37,19 @@ function qualifiedUrl($url) {
   if (substr($url[0],0,7)=="http://")
     return $url;
   return "http://$HTTP_HOST$url";
+}
+
+function hasPlugin($pluginname) {
+  static $plugins=array();
+  if ($plugins) return isset($plugins[$pluginname]);
+
+  $handle= opendir('plugin');
+  while ($file= readdir($handle)) {
+    if (is_dir("plugin/$file")) continue;
+    $name= substr($file,0,-4);
+    $plugins[$name]= $name;
+  }
+  return isset($plugins[$pluginname]);
 }
 
 function goto_form($action,$option="") {
@@ -123,8 +137,6 @@ class Timer {
     return $this->now-$this->timing;
   }
 }
-
-$timing=new Timer();
 
 class MetaDB_dba extends MetaDB {
   var $metadb;
@@ -260,6 +272,7 @@ class WikiDB {
     $this->purge_passwd= '';
     $this->actions= array('DeletePage','LikePages');
     $this->show_hosts= TRUE;
+    $this->iconset='moni';
 
     # set user-specified configuration
     if ($config) {
@@ -272,25 +285,28 @@ class WikiDB {
        $this->purge_passwd=$this->admin_passwd;
 
     if (!$this->icon) {
-    $this->icon[upper]="<img src='$this->imgs_dir/upper.gif' alt='U' align='middle' border='0' />";
-    $this->icon[edit]="<img src='$this->imgs_dir/moin-edit.gif' alt='E' align='middle' border='0' />";
-    $this->icon[diff]="<img src='$this->imgs_dir/moin-diff.gif' alt='D' align='middle' border='0' />";
-    $this->icon[del]="<img src='$this->imgs_dir/moin-deleted.gif' alt='X' align='middle' border='0' />";
-    $this->icon[info]="<img src='$this->imgs_dir/moin-info.gif' alt='I' align='middle' border='0' />";
-    $this->icon[rss]="<img src='$this->imgs_dir/rss.png' alt='RSS' align='middle' border='0' />";
-    $this->icon[show]="<img src='$this->imgs_dir/moin-show.gif' alt='R' align='middle' border='0' />";
-    $this->icon[find]="<img src='$this->imgs_dir/moin-search.gif' alt='S' align='middle' border='0' />";
-    $this->icon[help]="<img src='$this->imgs_dir/moin-help.gif' alt='H' align='middle' border='0' />";
-    $this->icon[www]="<img src='$this->imgs_dir/moin-www.gif' alt='www' align='middle' border='0' />";
-    $this->icon[mailto]="<img src='$this->imgs_dir/moin-www.gif' alt='www' align='middle' border='0' />";
-    $this->icon[updated]="<img src='$this->imgs_dir/moin-updated.gif' alt='U' align='middle' border='0' />";
-    $this->icon['new']="<img src='$this->imgs_dir/moin-new.gif' alt='U' align='middle' border='0' />";
+    $iconset=$this->iconset;
+    $this->icon[upper]="<img src='$this->imgs_dir/$iconset-upper.gif' alt='U' align='middle' border='0' />";
+    $this->icon[edit]="<img src='$this->imgs_dir/$iconset-edit.gif' alt='E' align='middle' border='0' />";
+    $this->icon[diff]="<img src='$this->imgs_dir/$iconset-diff.gif' alt='D' align='middle' border='0' />";
+    $this->icon[del]="<img src='$this->imgs_dir/$iconset-deleted.gif' alt='(del)' align='middle' border='0' />";
+    $this->icon[info]="<img src='$this->imgs_dir/$iconset-info.gif' alt='I' align='middle' border='0' />";
+    $this->icon[rss]="<img src='$this->imgs_dir/$iconset-rss.gif' alt='RSS' align='middle' border='0' />";
+    $this->icon[show]="<img src='$this->imgs_dir/$iconset-show.gif' alt='R' align='middle' border='0' />";
+    $this->icon[find]="<img src='$this->imgs_dir/$iconset-search.gif' alt='S' align='middle' border='0' />";
+    $this->icon[help]="<img src='$this->imgs_dir/$iconset-help.gif' alt='H' align='middle' border='0' />";
+    $this->icon[www]="<img src='$this->imgs_dir/$iconset-www.gif' alt='www' align='middle' border='0' />";
+    $this->icon[mailto]="<img src='$this->imgs_dir/$iconset-www.gif' alt='www' align='middle' border='0' />";
+    $this->icon[create]="<img src='$this->imgs_dir/$iconset-create.gif' alt='N' align='middle' border='0' />";
+    $this->icon['new']="<img src='$this->imgs_dir/$iconset-new.gif' alt='U' align='middle' border='0' />";
+    $this->icon[updated]="<img src='$this->imgs_dir/$iconset-updated.gif' alt='U' align='middle' border='0' />";
     $this->icon[user]="UserPreferences";
+    $this->icon[home]="<img src='$this->imgs_dir/$iconset-home.gif' alt='M' align='middle' border='0' />";
     }
 
 #
     if (!$this->menu) {
-      $this->menu= array('FrontPage','FindPage','TitleIndex','RecentChanges');
+      $this->menu= array($this->frontpage,'FindPage','TitleIndex','RecentChanges');
       $this->menu_bra="";
       $this->menu_cat="|";
       $this->menu_sep="|";
@@ -501,8 +517,9 @@ class WikiDB {
     } else
       $lines=file($this->editlog_name);
 
-    $lines=$this->reverse($lines);
-    if (!$lines[0]); # delete last dummy
+    #$lines=$this->reverse($lines);
+    $lines=array_reverse($lines);
+    if (!$lines[0]) # delete last dummy
       unset($lines[0]);
 
     if ($quick) {
@@ -515,7 +532,6 @@ class WikiDB {
       $lines=$out;
     }
 
-#    print_r($lines);
     return $lines;
   }
 
@@ -548,21 +564,36 @@ class WikiDB {
     $this->addLogEntry($page->name, $REMOTE_ADDR,$comment,"SAVE");
   }
 
-  function renamePage($page,$new) {
+  function renamePage($pagename,$new) {
     $REMOTE_ADDR=$_SERVER[REMOTE_ADDR];
 
-    $okey=$this->getPageKey($page->name);
+    $okey=$this->getPageKey($pagename);
     $nkey=$this->getPageKey($new);
 
     system("mv $okey $nkey");
-    $comment="Rename '$old' to '$new'";
+    $comment="Rename $old to $new";
     $this->addLogEntry($new, $REMOTE_ADDR,$comment,"SAVE");
   }
+
+  function getPerms($pagename) {
+    $key=$this->getPageKey($pagename);
+    if (file_exists($key))
+       return fileperms($key);
+    return 0666;
+  }
+
+  function setPerms($pagename,$perms) {
+    umask(000);
+    $key=$this->getPageKey($pagename);
+    if (file_exists($key)) chmod($key,$perms);
+  }
+
 }
 
 class Cache_text {
   function Cache_text($arena) {
     global $DBInfo;
+    umask(000);
     $this->cache_dir=$DBInfo->cache_dir."/$arena";
     if (!file_exists($this->cache_dir))
        mkdir($this->cache_dir, 0777);
@@ -701,8 +732,9 @@ class WikiPage {
 
     $fp=@fopen($this->filename,"r");
     if (!$fp) {
-       print $this->filename;
-       return "";
+       $out="You have no permission to see this page.\n\n";
+       $out.="See MoniWiki/AccessControl\n";
+       return $out;
     }
     $this->fsize=filesize($this->filename);
 #    $body="";
@@ -768,172 +800,171 @@ class WikiPage {
 
 
 class Formatter {
- var $sister_idx=1;
+  var $sister_idx=1;
 
- function Formatter($page="",$options="") {
-   $this->page=$page;
-   $this->head_num=1;
-   $this->head_dep=0;
-   $this->toc=0;
-   $this->highlight="";
-   $this->prefix=get_scriptname();
+  function Formatter($page="",$options="") {
+    $this->page=$page;
+    $this->head_num=1;
+    $this->head_dep=0;
+    $this->toc=0;
+    $this->highlight="";
+    $this->prefix=get_scriptname();
 
-   $this->sister_on=1;
-   $this->sisters=array();
-   $this->foots=array();
-   $this->gen_pagelinks=1;
+    $this->sister_on=1;
+    $this->sisters=array();
+    $this->foots=array();
+    $this->gen_pagelinks=1;
 
-   #
-   $punct="<\"\'}\]\|\;\,\.\!";
-   $url="http|ftp|telnet|mailto|wiki";
-   $urlrule="((?:$url):[^\s$punct]+(\.?[^\s$punct]+)+)";
-   # solw slow slow
-   #(?P<word>(?:/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})
+    #
+    $punct="<\"\'}\]\|\;\,\.\!";
+    $url="http|ftp|telnet|mailto|wiki";
+    $urlrule="((?:$url):[^\s$punct]+(\.?[^\s$punct]+)+)";
+    # solw slow slow
+    #(?P<word>(?:/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})
 #             "(?<!\!|\[\[|[a-z])(([A-Z]+[a-z0-9]+){2,})(?!([a-z0-9]))|".
-   $this->wordrule="(\[($url):[^\s\]]+(\s[^\]]*)+\])|".
+    $this->wordrule="(\[($url):[^\s\]]+(\s[^\]]*)+\])|".
              "(\!([A-Z]+[a-z0-9]+){2,})(?!(:|[a-z0-9]))|".
              "(?<!\!|\[\[|[a-z])((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})(?!([a-z0-9]))|".
              "(?<!\[)\[([^\[:,\s\d][^\[:,]+)\](?!\])|".
              "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
              "($urlrule)|".
              "(\?[a-z0-9]+)";
- }
+  }
 
- function highlight_repl($val) {
-   if ($val[0]=="<") return str_replace("\\\"",'"',$val);
-   return "<strong class='highlight'>$val</strong>";
- }
+  function highlight_repl($val) {
+    if ($val[0]=="<") return str_replace("\\\"",'"',$val);
+    return "<strong class='highlight'>$val</strong>";
+  }
 
- function write($raw) {
-   print $raw;
- }
+  function write($raw) {
+    print $raw;
+  }
 
- function link_repl($url) {
-   global $DBInfo;
+  function link_repl($url) {
+    global $DBInfo;
 
-#   print $url.";";
-   $url=str_replace("\\\"",'"',$url);
-   #$url=str_replace("\\\\\"",'"',$url);
-   if ($url[0]=="[")
+    $url=str_replace("\\\"",'"',$url);
+    #$url=str_replace("\\\\\"",'"',$url);
+    if ($url[0]=="[")
       $url=substr($url,1,-1);
-   if ($url[0]=="{") {
+    if ($url[0]=="{") {
       $url=substr($url,3,-3);
       return "<tt class='wiki'>$url</tt>"; # No link
-   } else if ($url[0]=="[") {
+    } else if ($url[0]=="[") {
       $url=substr($url,1,-1);
       return $this->macro_repl($url); # No link
-   }
+    }
 
-   if ($url[0]=="!") {
+    if ($url[0]=="!") {
       $url[0]=" ";
       return $url;
-   } else
-   if (preg_match("/:/",$url)) {
-     if (preg_match("/^mailto:/",$url)) {
-       $url=str_replace("@","_at_",$url);
-       $name=substr($url,7);
-       return $DBInfo->icon[mailto]."<a href='$url'>$name</a>";
-     } else
-     if (preg_match("/^wiki:/",$url)) {
-       if (preg_match("/\s/",$url)) { # have a space ?
-         $dum=explode(" ",$url,2);
-         return $this->interwiki_repl($dum[0],$dum[1]);
-       }
+    } else
+    if (preg_match("/:/",$url)) {
+      if (preg_match("/^mailto:/",$url)) {
+        $url=str_replace("@","_at_",$url);
+        $name=substr($url,7);
+        return $DBInfo->icon[mailto]."<a href='$url'>$name</a>";
+      } else
+      if (preg_match("/^wiki:/",$url)) {
+        if (preg_match("/\s/",$url)) { # have a space ?
+          $dum=explode(" ",$url,2);
+          return $this->interwiki_repl($dum[0],$dum[1]);
+        }
         return $this->interwiki_repl($url);
-     } else
-     if (preg_match("/\s/",$url)) { # have a space ?
-       $dum=explode(" ",$url,2);
-       return $DBInfo->icon[www]. "<a href='$dum[0]'>$dum[1]</a>";
-     } else
-     if (preg_match("/^(http|ftp)/",$url)) {
-       if (preg_match("/(png|gif|jpeg|jpg)$/i",$url))
-         return "<img src='$url' />";
-       return "<a href='$url'>$url</a>";
-     }
-   } else {
-     if ($url[0]=="?") $url=substr($url,1);
-     return $this->word_repl($url);
-   }
- }
+      } else
+      if (preg_match("/\s/",$url)) { # have a space ?
+        $dum=explode(" ",$url,2);
+        return $DBInfo->icon[www]. "<a href='$dum[0]'>$dum[1]</a>";
+      } else
+      if (preg_match("/^(http|ftp)/",$url)) {
+        if (preg_match("/(png|gif|jpeg|jpg)$/i",$url))
+          return "<img src='$url' />";
+        return "<a href='$url'>$url</a>";
+      }
+    } else {
+      if ($url[0]=="?") $url=substr($url,1);
+      return $this->word_repl($url);
+    }
+  }
 
- function interwiki_repl($url,$text="") {
-   global $DBInfo;
+  function interwiki_repl($url,$text="") {
+    global $DBInfo;
 
-   if ($url[0]=="w")
+    if ($url[0]=="w")
       $url=substr($url,5);
-   $dum=explode(":",$url);
-   $wiki=$dum[0]; $page=$dum[1];
-   if (!$page) {
+    $dum=explode(":",$url);
+    $wiki=$dum[0]; $page=$dum[1];
+    if (!$page) {
       $dum1=explode("/",$url);
       $wiki=$dum1[0]; $page=$dum1[1];
-   }
-   if (!$page) {
+    }
+    if (!$page) {
       $wiki="Self"; $page=$dum[0];
-   }
+    }
 
-   if (!$text) $text=$page;
+    if (!$text) $text=$page;
 
-   if (!$DBInfo->interwiki[$wiki]) return "$wiki:$page";
+    if (!$DBInfo->interwiki[$wiki]) return "$wiki:$page";
 
-   $page=trim($page);
+    $page=trim($page);
 
-   if ($this->gen_pagelinks) $this->add_pagelinks($page);
+    if ($this->gen_pagelinks) $this->add_pagelinks($page);
 
-   $img=strtolower($wiki);
-   return "<img src='$DBInfo->imgs_dir/$img-16.png' width='16' height='16' align='middle' alt='$wiki:'/>".
+    $img=strtolower($wiki);
+    return "<img src='$DBInfo->imgs_dir/$img-16.png' width='16' height='16' align='middle' alt='$wiki:'/>".
   "<a href='".$DBInfo->interwiki[$wiki]."$page' title='$wiki:$page'>$text</a>";
- }
+  }
 
- function add_pagelinks($word) {
-   if (!$this->pagelinks[$word] && $word != "TwinPages")
+  function add_pagelinks($word) {
+    if (!$this->pagelinks[$word] && $word != "TwinPages")
       $this->pagelinks[$word]=1;
- }
+  }
 
- function store_pagelinks() {
-   $cache= new Cache_text("pagelinks");
-   $cache->update($this->page->name,$this->pagelinks,$this->page->mtime());
- }
+  function store_pagelinks() {
+    $cache= new Cache_text("pagelinks");
+    $cache->update($this->page->name,$this->pagelinks,$this->page->mtime());
+  }
 
- function get_pagelinks() {
-   $cache= new Cache_text("pagelinks");
-   if ($cache->exists($this->page->name)) {
+  function get_pagelinks() {
+    $cache= new Cache_text("pagelinks");
+    if ($cache->exists($this->page->name)) {
       $links=$cache->fetch($this->page->name);
       if ($links != -1) return $links;
-   }
-   if ($this->page->exists()) {
-     $body=$this->page->get_raw_body();
-     $save=$this->gen_pagelinks;
-     $this->gen_pagelinks=1;
-     preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$body);
-     $this->gen_pagelinks=$save;
-     $this->store_pagelinks();
-     if ($this->pagelinks) {
+    }
+    if ($this->page->exists()) {
+      $body=$this->page->get_raw_body();
+      $save=$this->gen_pagelinks;
+      $this->gen_pagelinks=1;
+      preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$body);
+      $this->gen_pagelinks=$save;
+      $this->store_pagelinks();
+      if ($this->pagelinks) {
         $links=join("\n",array_keys($this->pagelinks))."\n";
         unset($this->pagelinks);
         return $links;
-     }
-   }
-   return "";
- }
+      }
+    }
+    return "";
+  }
 
- function word_repl($word) {
-   global $DBInfo;
-   if ($word[0]=='"') { # ["extended wiki name"]
+  function word_repl($word) {
+    global $DBInfo;
+    if ($word[0]=='"') { # ["extended wiki name"]
       $page=substr($word,1,-1);
       $word=$page;
-   } else
+    } else
       $page=preg_replace("/\s+/","",$word);
 
-   if ($word[0]=='/')
+    if ($word[0]=='/')
       $page=$this->page->name.$page;
 
-   if ($this->gen_pagelinks) $this->add_pagelinks($page);
+    if ($this->gen_pagelinks) $this->add_pagelinks($page);
 
-   $url=$this->link_url($page);
+    $url=$this->link_url($page);
 
-   if ($DBInfo->hasPage($page)) {
+    if ($DBInfo->hasPage($page)) {
       return "<a href='$url'>$word</a>";
-   } else {
+    } else {
       if ($this->sister_on)
          $sisters=$DBInfo->metadb->getSisterSites($word);
       if ($sisters) {
@@ -949,26 +980,26 @@ class Formatter {
                 "<sup><a href='#sister$idx'>$idx)</a></sup>";
       }
       return "<a href='$url'>?</a>$word";
-   }
- }
+    }
+  }
 
- function head_repl($left,$head,$right) {
-   $dep=strlen($left);
-   if ($dep != strlen($right)) return "$left $head $right";
+  function head_repl($left,$head,$right) {
+    $dep=strlen($left);
+    if ($dep != strlen($right)) return "$left $head $right";
 
-   $depth=$dep;
-   if ($dep==1) $depth++; # depth 1 is regarded same as depth 2
-   $depth--;
+    $depth=$dep;
+    if ($dep==1) $depth++; # depth 1 is regarded same as depth 2
+    $depth--;
 
-   $num="".$this->head_num;
-   $odepth=$this->head_dep;
+    $num="".$this->head_num;
+    $odepth=$this->head_dep;
 #   $open="";
 #   $close="";
 
-   if ($odepth && ($depth > $odepth)) {
+    if ($odepth && ($depth > $odepth)) {
 #      $open.="<dd><dl>\n"; 
       $num.=".1";
-   } else if ($odepth) {
+    } else if ($odepth) {
       $dum=explode(".",$num);
       $i=sizeof($dum)-1;
       while ($depth < $odepth) {
@@ -979,109 +1010,114 @@ class Formatter {
       }
       $dum[$i]++;
       $num=join($dum,".");
-   }
+    }
 
-   $this->head_dep=$depth; # save old
-   $this->head_num=$num;
+    $this->head_dep=$depth; # save old
+    $this->head_num=$num;
 
-   if ($this->toc)
+    if ($this->toc)
       $head="<a href='#toc'>$num</a> $head";
 
-   return "<h$dep><a id='s$num' name='s$name' /> $head</h$dep>";
- }
+    return "<h$dep><a id='s$num' name='s$name' /> $head</h$dep>";
+  }
 
- function macro_repl($macro) {
-   preg_match("/^([A-Za-z]+)(\((.*)\))?$/",$macro,$match);
-   $name=$match[1]; $option=$match[3];
+  function macro_repl($macro) {
+    preg_match("/^([A-Za-z]+)(\((.*)\))?$/",$macro,$match);
+    $name=$match[1]; $option=$match[3];
 
-   if (!function_exists ("macro_".$name))
-      return "[[".$name."]]";
-   eval("\$ret=macro_$name(&\$this,\$option);");
-   return $ret;
- }
+    if (!function_exists ("macro_".$name)) {
 
- function smiley_repl($smiley) {
-   global $DBInfo;
+      if (hasPlugin($name) === true)
+        include("plugin/$name.php");
+      else
+        return "[[".$name."]]";
+    }
+    eval("\$ret=macro_$name(&\$this,\$option);");
+    return $ret;
+  }
 
-   $img=$DBInfo->smileys[$smiley][3];
+  function smiley_repl($smiley) {
+    global $DBInfo;
 
-   $alt=str_replace("<","&lt;",$smiley);
+    $img=$DBInfo->smileys[$smiley][3];
 
-   return "<img src='$DBInfo->imgs_dir/$img' align='middle' alt='$alt' border='0' />";
- }
+    $alt=str_replace("<","&lt;",$smiley);
 
- function link_url($pageurl,$query_string="") {
-   global $DBInfo;
-   $sep=$DBInfo->query_prefix;
+    return "<img src='$DBInfo->imgs_dir/$img' align='middle' alt='$alt' border='0' />";
+  }
 
-   if ($sep == '?') {
-     if ($pageurl && $query_string[0]=='?')
-       # add 'dummy=1' to work around the buggy php
-       $query_string= '&amp;'.substr($query_string,1).'&amp;dummy=1';
-     $query_string= $pageurl.$query_string;
-   } else
-     $query_string= $pageurl.$query_string;
-   #$query_string= stripslashes($query_string);
-   return sprintf("%s%s%s", $this->prefix, $sep, $query_string);
- }
+  function link_url($pageurl,$query_string="") {
+    global $DBInfo;
+    $sep=$DBInfo->query_prefix;
 
- function link_tag($pageurl,$query_string="", $text="",$attr="") {
-   # Return a link with given query_string.
-   if (!$text)
-     $text= $pageurl; # XXX
-   if (!$pageurl)
-     $pageurl=$this->page->urlname;
-   $url=$this->link_url($pageurl,$query_string);
-   return sprintf("<a href='%s' %s>%s</a>", $url, $attr, $text);
- }
+    if ($sep == '?') {
+      if ($pageurl && $query_string[0]=='?')
+        # add 'dummy=1' to work around the buggy php
+        $query_string= '&amp;'.substr($query_string,1).'&amp;dummy=1';
+      $query_string= $pageurl.$query_string;
+    } else
+      $query_string= $pageurl.$query_string;
+    #$query_string= stripslashes($query_string);
+    return sprintf("%s%s%s", $this->prefix, $sep, $query_string);
+  }
 
- function link_to($query_string="",$text="",$attr="") {
-   if (!$text)
+  function link_tag($pageurl,$query_string="", $text="",$attr="") {
+    # Return a link with given query_string.
+    if (!$text)
+      $text= $pageurl; # XXX
+    if (!$pageurl)
+      $pageurl=$this->page->urlname;
+    $url=$this->link_url($pageurl,$query_string);
+    return sprintf("<a href='%s' %s>%s</a>", $url, $attr, $text);
+  }
+
+  function link_to($query_string="",$text="",$attr="") {
+    if (!$text)
       $text=$this->page->name;
-   return $this->link_tag($this->page->urlname,$query_string,$text,$attr);
- }
+    return $this->link_tag($this->page->urlname,$query_string,$text,$attr);
+  }
 
- function _list($on,$list_type,$numtype="",$close="") {
-   if ($list_type=="dd") {
+  function _list($on,$list_type,$numtype="",$close="") {
+    if ($list_type=="dd") {
       if ($on)
          $list_type="dl><dd";
       else
          $list_type="dd></dl";
-   } else if (!$on && $close !=1)
+    } else if (!$on && $close !=1)
       $list_type=$list_type."></li";
-   if ($on) {
+    if ($on) {
       if ($numtype) {
-         $start=substr($numtype,1);
-         if ($start)
-            return "<$list_type type='$numtype[0]' start='$start'>";
-         return "<$list_type type='$numtype[0]'>";
+        $start=substr($numtype,1);
+        if ($start)
+          return "<$list_type type='$numtype[0]' start='$start'>";
+        return "<$list_type type='$numtype[0]'>";
       }
       return "<$list_type>\n";
-   } else {
+    } else {
       return "</$list_type>\n";
-   }
- }
+    }
+  }
 
- function _table_span($str) {
-   $len=strlen($str)/2;
-   if ($len > 1) {
+  function _table_span($str) {
+    $len=strlen($str)/2;
+    if ($len > 1) {
       return " align='center' colspan='$len'";
-   }
-   return "";
- }
+    }
+    return "";
+  }
 
- function _table($on,$attr="") {
-   if ($on)
+  function _table($on,$attr="") {
+    if ($on)
       return "<table class='wiki' cellpadding='3' cellspacing='2' $attr>\n";
-   else
+    else
       return "</table>\n";
- }
+  }
 
- function send_page($body="") {
-   global $DBInfo;
-   # get body
+  function send_page($body="") {
+    global $DBInfo;
+    # get body
 
-   if (!$body) {
+    if (!$body) {
       $twins=$DBInfo->metadb->getTwinPages($this->page->name);
       $body=$this->page->get_raw_body();
       if ($body)
@@ -1092,32 +1128,32 @@ class Formatter {
          if ($lines) $lines[]="----";
          $lines[]=$twins;
       }
-   } else
+    } else
       $lines=explode("\n",$body);
 
-   if (!$lines) return;
+    if (!$lines) return;
 
-   # get smily_rule
-   if ($DBInfo->smileys) {
-     $smiley_rule='/(?:\s|^)('.$DBInfo->smiley_rule.')(?:\s|$)/e';
-     $smiley_repl="\$this->smiley_repl('\\1')";
-   }
+    # get smily_rule
+    if ($DBInfo->smileys) {
+      $smiley_rule='/(?:\s|^)('.$DBInfo->smiley_rule.')(?:\s|$)/e';
+      $smiley_repl="\$this->smiley_repl('\\1')";
+    }
 
-   $text="";
-   $in_pre=0;
-   $in_p=0;
-   $in_li=0;
-   $li_open=0;
-   $in_table=0;
-   $indent_list[0]=0;
-   $indent_type[0]="";
+    $text="";
+    $in_pre=0;
+    $in_p=0;
+    $in_li=0;
+    $li_open=0;
+    $in_table=0;
+    $indent_list[0]=0;
+    $indent_type[0]="";
 
 # $wordrule="({{{(([^}}}).+)}}})|".
-   $wordrule="({{{([^}]+)}}})|".
+    $wordrule="({{{([^}]+)}}})|".
              "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|". # macro
              $this->wordrule;
 
-   foreach ($lines as $line) {
+    foreach ($lines as $line) {
       # strip trailing '\n'
       $line=preg_replace("/\n$/", "", $line);
 
@@ -1287,60 +1323,60 @@ class Formatter {
          }
       }
       $text.=$line."\n";
-   }
-   # strip slash only for double quotes
-   $text=str_replace('\"','"',$text);
+    }
+    # strip slash only for double quotes
+    $text=str_replace('\"','"',$text);
 
-   # highlight text
-   if ($this->highlight)
+    # highlight text
+    if ($this->highlight)
       $text=preg_replace('/((<[^>]*>)|('.$this->highlight.'))/ie',
                          "\$this->highlight_repl('\\1')",$text);
 
-   # close all tags
-   $close="";
-   # close pre,table,p
-   if ($in_pre) $close.="</pre>\n";
-   if ($in_table) $close.="</table>\n";
-   if ($in_p) $close.="</div>\n";
-   # close indent
-   while($in_li >= 0 && $indent_list[$in_li] > 0) {
+    # close all tags
+    $close="";
+    # close pre,table,p
+    if ($in_pre) $close.="</pre>\n";
+    if ($in_table) $close.="</table>\n";
+    if ($in_p) $close.="</div>\n";
+    # close indent
+    while($in_li >= 0 && $indent_list[$in_li] > 0) {
       $close.=$this->_list(0,$indent_type[$in_li]);
       unset($indent_list[$in_li]);
       unset($indent_type[$in_li]);
       $in_li--;
-   }
+    }
 
-   $text.=$close;
+    $text.=$close;
   
-   print $text;
-   if ($this->sisters) {
+    print $text;
+    if ($this->sisters) {
       $sisters=join("\n",$this->sisters);
       $sisters=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$sisters);
       print "<div id='wikiSister'>\n<br/><tt class='foot'>----</tt><br/>\nSister Sites Index<br />\n$sisters</div>\n";
-   }
+    }
 
-   $this->store_pagelinks();
- }
+    $this->store_pagelinks();
+  }
 
- function _parse_rlog($log) {
-   $lines=explode("\n",$log);
-   $state=0;
-   $flag=0;
+  function _parse_rlog($log) {
+    $lines=explode("\n",$log);
+    $state=0;
+    $flag=0;
 
-   $url=$this->link_url($this->page->urlname);
+    $url=$this->link_url($this->page->urlname);
 
-   $out="<h2>Revision History</h2>\n";
-   $out.="<table class='info' border='0' cellpadding='3' cellspacing='2'>\n";
-   $out.="<form method='post' action='$url'>";
-   $out.="<th class='info'>#</th><th class='info'>Date and Changes</th>".
+    $out="<h2>Revision History</h2>\n";
+    $out.="<table class='info' border='0' cellpadding='3' cellspacing='2'>\n";
+    $out.="<form method='post' action='$url'>";
+    $out.="<th class='info'>#</th><th class='info'>Date and Changes</th>".
          "<th class='info'>Editor</th>".
          "<th><input type='submit' value='diff'></th>".
          "<th class='info'>actions</th>".
          "<th class='info'>admin.</th>";
          #"<th><input type='submit' value='admin'></th>";
-   $out.= "</tr>\n";
+    $out.= "</tr>\n";
    
-   foreach ($lines as $line) {
+    foreach ($lines as $line) {
       if (!$state) {
         if (!preg_match("/^---/",$line)) { continue;}
         else {$state=1; continue;}
@@ -1393,35 +1429,35 @@ class Formatter {
            $flag++;
            break;
       }
-   }
-   $out.="<tr><td colspan='6' align='right'><input type='checkbox' name='show' checked='checked' />show only <input type='password' name='passwd'>";
-   $out.="<input type='submit' name='button_admin' value='purge'></td></tr>";
-   $out.="<input type='hidden' name='action' value='diff'/></form></table>\n";
-   return $out; 
- }
+    }
+    $out.="<tr><td colspan='6' align='right'><input type='checkbox' name='show' checked='checked' />show only <input type='password' name='passwd'>";
+    $out.="<input type='submit' name='button_admin' value='purge'></td></tr>";
+    $out.="<input type='hidden' name='action' value='diff'/></form></table>\n";
+    return $out; 
+  }
 
- function show_info() {
-   $fp=popen("rlog ".$this->page->filename,"r");
+  function show_info() {
+    $fp=popen("rlog ".$this->page->filename,"r");
 #   if (!$fp)
 #      print "No older revisions available";
 # XXX
-   while (!feof($fp)) {
+    while (!feof($fp)) {
       $line=fgets($fp,1024);
       $out .= $line;
-   }
-   pclose($fp);
-   if (!$out)
+    }
+    pclose($fp);
+    if (!$out)
       print "<h2>No older revisions available</h2>";
-   else
+    else
       print $this->_parse_rlog($out);
- }
+  }
 
- function _parse_diff($diff) {
-   $diff=str_replace("<","&lt;",$diff);
-   $lines=explode("\n",$diff);
-   $out="";
-   unset($lines[0]); unset($lines[1]);
-   foreach ($lines as $line) {
+  function _parse_diff($diff) {
+    $diff=str_replace("<","&lt;",$diff);
+    $lines=explode("\n",$diff);
+    $out="";
+    unset($lines[0]); unset($lines[1]);
+    foreach ($lines as $line) {
       $marker=$line[0];
       $line=substr($line,1);
       if ($marker=="@") $line='<div class="diff-sep">@'."$line</div>";
@@ -1430,54 +1466,54 @@ class Formatter {
       else if ($marker=="\\" && $line==" No newline at end of file") continue;
       else $line.="<br />";
       $out.=$line."\n";
-   }
-   return $out;
- }
+    }
+    return $out;
+  }
 
- function get_merge($text,$rev="") {
-   global $DBInfo;
+  function get_merge($text,$rev="") {
+    global $DBInfo;
 
-   if (!$text) return '';
-   # save new
-   $tmpf3=tempnam($DBInfo->vartmp_dir,"MERGE_NEW");
-   $fp= fopen($tmpf3, "w");
-   fwrite($fp, $text);
-   fclose($fp);
+    if (!$text) return '';
+    # save new
+    $tmpf3=tempnam($DBInfo->vartmp_dir,"MERGE_NEW");
+    $fp= fopen($tmpf3, "w");
+    fwrite($fp, $text);
+    fclose($fp);
 
-   # recall old rev
-   $opts[rev]=$this->page->get_rev();
+    # recall old rev
+    $opts[rev]=$this->page->get_rev();
    
-   $orig=$this->page->get_raw_body($opts);
-   $tmpf2=tempnam($DBInfo->vartmp_dir,"MERGE_ORG");
-   $fp= fopen($tmpf2, "w");
-   fwrite($fp, $orig);
-   fclose($fp);
+    $orig=$this->page->get_raw_body($opts);
+    $tmpf2=tempnam($DBInfo->vartmp_dir,"MERGE_ORG");
+    $fp= fopen($tmpf2, "w");
+    fwrite($fp, $orig);
+    fclose($fp);
 
-   $fp=popen("merge -p ".$this->page->filename." $tmpf2 $tmpf3","r");
+    $fp=popen("merge -p ".$this->page->filename." $tmpf2 $tmpf3","r");
 
-   if (!$fp) {
+    if (!$fp) {
       unlink($tmpf2);
       unlink($tmpf3);
       return '';
-   }
-   while (!feof($fp)) {
+    }
+    while (!feof($fp)) {
       $line=fgets($fp,1024);
       $out .= $line;
-   }
-   pclose($fp);
-   unlink($tmpf2);
-   unlink($tmpf3);
+    }
+    pclose($fp);
+    unlink($tmpf2);
+    unlink($tmpf3);
 
-   $out=preg_replace("/(<{7}|>{7}).*\n/","\\1\n",$out);
+    $out=preg_replace("/(<{7}|>{7}).*\n/","\\1\n",$out);
 
-   return $out;
- }
+    return $out;
+  }
 
- function get_diff($rev1="",$rev2="",$text="") {
-   global $DBInfo;
-   $option="";
+  function get_diff($rev1="",$rev2="",$text="") {
+    global $DBInfo;
+    $option="";
 
-   if ($text) {
+    if ($text) {
       $tmpf=tempnam($DBInfo->vartmp_dir,"DIFF");
       $fp= fopen($tmpf, "w");
       fwrite($fp, $text);
@@ -1502,37 +1538,37 @@ class Formatter {
          print $this->_parse_diff($out);
       }
       return;
-   }
+    }
 
-   if (!$rev1 and !$rev2) {
+    if (!$rev1 and !$rev2) {
       $rev1=$this->page->get_rev();
-   } else if (0 === strcmp($rev1 , (int)$rev1)) {
+    } else if (0 === strcmp($rev1 , (int)$rev1)) {
       $rev1=$this->page->get_rev($rev1);
-   } else if ($rev1==$rev2) $rev2="";
-   if ($rev1) $option="-r$rev1 ";
-   if ($rev2) $option.="-r$rev2 ";
+    } else if ($rev1==$rev2) $rev2="";
+    if ($rev1) $option="-r$rev1 ";
+    if ($rev2) $option.="-r$rev2 ";
 
-   if (!$option) {
+    if (!$option) {
       print "<h2>No older revisions available</h2>";
       return;
-   }
-   $fp=popen("rcsdiff -u $option ".$this->page->filename,"r");
-   if (!$fp)
+    }
+    $fp=popen("rcsdiff -u $option ".$this->page->filename,"r");
+    if (!$fp)
       return;
-   while (!feof($fp)) {
+    while (!feof($fp)) {
       $line=fgets($fp,1024);
       $out.= $line;
-   }
-   pclose($fp);
-   if (!$out)
+    }
+    pclose($fp);
+    if (!$out)
       print "<h2>No difference found</h2>";
-   else {
+    else {
       if ($rev1==$rev2) print "<h2>Difference between versions</h2>";
       else if ($rev1 and $rev2) print "<h2>Difference between r$rev1 and r$rev2</h2>";
       else if ($rev1 or $rev2) print "<h2>Difference between r$rev1$rev2 and the current</h2>";
       print $this->_parse_diff($out);
-   }
- }
+    }
+  }
 
   function send_header($header="",$options=array()) {
     global $DBInfo;
@@ -1623,88 +1659,86 @@ th.info {
 
 h1,h2,h3,h4,h5 {
   font-family:Tahoma;
-/* background-color:#E07B2A; */
   padding-left:6px;
   border-bottom:1px solid #999;
 }
 
 div.diff-added {
-   font-family:Verdana,Lucida Sans TypeWriter,Lucida Console,fixed;
-   font-size:12px;
-   background-color:#61FF61;
-   color:black;
+  font-family:Verdana,Lucida Sans TypeWriter,Lucida Console,fixed;
+  font-size:12px;
+  background-color:#61FF61;
+  color:black;
 }
 
 div.diff-removed {
-   font-family:Verdana,Lucida Sans TypeWriter,Lucida Console,fixed;
-   font-size:12px;
-   background-color:#E9EAB8;
-   color:black;
+  font-family:Verdana,Lucida Sans TypeWriter,Lucida Console,fixed;
+  font-size:12px;
+  background-color:#E9EAB8;
+  color:black;
 }
 
 div.diff-sep {
-   font-family:georgia,Verdana,Lucida Sans TypeWriter,Lucida Console,fixed;
-   font-size:12px;
-   background-color:#000000;
-   color:#FFD700; /* gold */
+  font-family:georgia,Verdana,Lucida Sans TypeWriter,Lucida Console,fixed;
+  font-size:12px;
+  background-color:#000000;
+  color:#FFD700; /* gold */
 }
 
 td.message {
-    margin-top: 6pt;
-    background-color: #E8E8E8;
-    border-style:solid;
-    border-width:1pt;
-    border-color:#990000;
-    color:#440000;
-    padding:0px;
-    width:100%;
+  margin-top: 6pt;
+  background-color: #E8E8E8;
+  border-style:solid;
+  border-width:1pt;
+  border-color:#990000;
+  color:#440000;
+  padding:0px;
+  width:100%;
 }
 
 .hint {
-   font-family:Georgia,Verdana,Lucida,sans-serif;
-   font-size:10px;
-   background-color:#E2DAE2;
+  font-family:Georgia,Verdana,Lucida,sans-serif;
+  font-size:10px;
+  background-color:#E2DAE2;
 }
 
 .highlight {
    background-color:#FFFF40;
 }
 //-->
-
 </style>
 EOS;
 
-    print "\n</head>\n<body>\n";
-   }
- }
+      print "\n</head>\n<body>\n";
+    }
+  }
 
- function send_footer($args=array(),$options="") {
-   global $DBInfo;
+  function send_footer($args=array(),$options="") {
+    global $DBInfo;
 
-   print "</div>\n";
-   print $DBInfo->hr;
-   print "<div id='wikiFooter'>";
-   $menu="";
-   if ($args[editable]) {
+    print "</div>\n";
+    print $DBInfo->hr;
+    print "<div id='wikiFooter'>";
+    $menu="";
+    if ($args[editable]) {
       if ($this->page->writable())
-         $menu= $this->link_to("?action=edit",'EditText').$DBInfo->menu_sep;
+        $menu= $this->link_to("?action=edit",'EditText').$DBInfo->menu_sep;
       else
-         $menu= "NotEditable ".$DBInfo->menu_sep;
-   }
-   if ($args[showpage])
+        $menu= "NotEditable ".$DBInfo->menu_sep;
+    }
+    if ($args[showpage])
       $menu.= $this->link_to("",'ShowPage').$DBInfo->menu_sep;
-   $menu.= $this->link_tag("FindPage");
+    $menu.= $this->link_tag("FindPage");
 
-   if (!$args[noaction])
+    if (!$args[noaction])
       foreach ($DBInfo->actions as $action)
          $menu.= $DBInfo->menu_sep.$this->link_to("?action=$action",$action);
 
-   if ($mtime=$this->page->mtime()) {
-     $lastedit=date("Y-m-d",$mtime);
-     $lasttime=date("H:i:s",$mtime);
-   }
+    if ($mtime=$this->page->mtime()) {
+      $lastedit=date("Y-m-d",$mtime);
+      $lasttime=date("H:i:s",$mtime);
+    }
 
-   $banner= <<<FOOT
+    $banner= <<<FOOT
  <a href="http://validator.w3.org/check/referer"><img
   src="$DBInfo->imgs_dir/valid-xhtml10.png" border="0"
   align="middle" width="88" height="31"
@@ -1717,88 +1751,90 @@ EOS;
   alt="Valid CSS!" /></a>
 FOOT;
 
-   if ($options[timer])
+    if ($options[timer])
       $timer=sprintf("<br />%7.4f",$options[timer]->Check());
    
-   if (file_exists("footer.php"))
+    if (file_exists("footer.php"))
       include_once("footer.php");
-   else {
+    else {
       print $menu.$banner;
-   }
-   print "\n</div>\n";
-   print "</body>\n</html>\n";
- }
+    }
+    print "\n</div>\n";
+    print "</body>\n</html>\n";
+  }
 
- function send_title($title="", $link="", $options="") {
-   // Generate and output the top part of the HTML page.
-   global $DBInfo;
+  function send_title($title="", $link="", $options="") {
+    // Generate and output the top part of the HTML page.
+    global $DBInfo;
 
-   $name=$this->page->urlname;
-   $action=$this->link_url($name);
+    $name=$this->page->urlname;
+    $action=$this->link_url($name);
 
-   # find upper page
-   $pos=strrpos($name,"/");
-   if ($pos > 0) $upper=substr($name,0,$pos);
+    # find upper page
+    $pos=strrpos($name,"/");
+    if ($pos > 0) $upper=substr($name,0,$pos);
 
-   if (!$title) $title=$this->page->name;
-   # setup title variables
-   $title="<font class='title'><b>$title</b></font>";
-   if ($link)
+    if (!$title) $title=$this->page->name;
+    # setup title variables
+    $title="<font class='title'><b>$title</b></font>";
+    if ($link)
       $title="<a href=\"$link\" class='title'>$title</a>";
-   else if (!$options[nolink])
+    else if (!$options[nolink])
       $title=$this->link_to("?action=fullsearch&amp;value=$name",$title,"class='title'");
-   $logo=$this->link_tag($DBInfo->logo_page,'',$DBInfo->logo_string);
-   $goto_form=goto_form($action);
+    $logo=$this->link_tag($DBInfo->logo_page,'',$DBInfo->logo_string);
+    $goto_form=goto_form($action);
 
-   if ($options[msg]) {
-     $msg=<<<MSG
+    if ($options[msg]) {
+      $msg=<<<MSG
 <table class="message" width="100%"><tr><td class="message">
 $options[msg]
 </td></tr></table>
 MSG;
-   }
+    }
 
-   # navi bar
-   $menu=array();
-   foreach ($DBInfo->menu as $item) {
-     #$menu=preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$DBInfo->menu);
-     $menu[]=$this->link_tag($item,"",_($item));
-   }
-   $menu=$DBInfo->menu_bra.join($DBInfo->menu_sep,$menu).$DBInfo->menu_cat;
-   # icons
-   if ($upper)
+    # navi bar
+    $menu=array();
+    foreach ($DBInfo->menu as $item) {
+      #$menu=preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$DBInfo->menu);
+      $menu[]=$this->link_tag($item,"",_($item));
+    }
+    $menu=$DBInfo->menu_bra.join($DBInfo->menu_sep,$menu).$DBInfo->menu_cat;
+    # icons
+    if ($upper)
       $upper_icon=$this->link_tag($upper,'',$DBInfo->icon[upper])." ";
 
-   $icons="";
-   if (!$DBInfo->icons) {
-     $icons.=$this->link_to("?action=edit",$DBInfo->icon[edit])." ";
-     $icons.=$this->link_to("?action=diff",$DBInfo->icon[diff])." ";
-     $icons.=$this->link_to("",$DBInfo->icon[show])." ";
-     $icons.=$this->link_tag("FindPage",'',$DBInfo->icon[find])." ";
-     $icons.=$this->link_to("?action=info",$DBInfo->icon[info])." ";
-     $icons.=$this->link_tag("HelpContents",'',$DBInfo->icon[help])." ";
-   } else {
-     $icon=array();
-     foreach ($DBInfo->icons as $item)
-       $icon[]=$this->link_tag($item[0],$item[1],$item[2]);
-     $icons=$DBInfo->icon_bra.join($DBInfo->icon_sep,$icon).$DBInfo->icon_cat;
-   }
-   $rss_icon.=$this->link_tag("RecentChanges","?action=rss_rc",$DBInfo->icon[rss])." ";
+    $icons="";
+    if (!$DBInfo->icons) {
+      $icons.=$this->link_to("?action=edit",$DBInfo->icon[edit])." ";
+      $icons.=$this->link_to("?action=diff",$DBInfo->icon[diff])." ";
+      $icons.=$this->link_to("",$DBInfo->icon[show])." ";
+      $icons.=$this->link_tag("FindPage",'',$DBInfo->icon[find])." ";
+      $icons.=$this->link_to("?action=info",$DBInfo->icon[info])." ";
+      $icons.=$this->link_tag("HelpContents",'',$DBInfo->icon[help])." ";
+    } else {
+      $icon=array();
+      foreach ($DBInfo->icons as $item)
+        $icon[]=$this->link_tag($item[0],$item[1],$item[2]);
+      $icons=$DBInfo->icon_bra.join($DBInfo->icon_sep,$icon).$DBInfo->icon_cat;
+    }
+    $rss_icon.=$this->link_tag("RecentChanges","?action=rss_rc",$DBInfo->icon[rss])." ";
 
-   # UserPreferences
-   if ($options[id] != "Anonymous") {
+    # UserPreferences
+    if ($options[id] != "Anonymous") {
       $user_link=$this->link_tag("UserPreferences","",$options[id]);
-   } else
+      if ($DBInfo->hasPage($options[id]))
+      $home=$this->link_tag($options[id],"",$DBInfo->icon[home])." ";
+    } else
       $user_link=$this->link_tag("UserPreferences","",$DBInfo->icon[user]);
 
-   # print the title
-   kbd_handler();
-   print "<div id='wikiHeader'>\n";
+    # print the title
+    kbd_handler();
+    print "<div id='wikiHeader'>\n";
 
-   if (file_exists("header.php")) {
+    if (file_exists("header.php")) {
       # $menu.$upper_icon.icons.$rss_icon;
       include_once "header.php";
-   } else { #default header
+    } else { #default header
       $header="<table width='100%' border='0' cellpadding='3' cellspacing='0'>";
       $header.="<tr>";
       if ($DBInfo->logo_string) {
@@ -1813,15 +1849,15 @@ MSG;
 
       # menu
       print $header;
-      print $menu.$user_link." ".$upper_icon.$icons.$rss_icon;
+      print $menu.$user_link." ".$upper_icon.$icons.$home.$rss_icon;
       print $msg;
-   }
-   print "</div>\n";
-   print $DBInfo->hr;
-   print "<div id='wikiBody'>\n";
- }
+    }
+    print "</div>\n";
+    print $DBInfo->hr;
+    print "<div id='wikiBody'>\n";
+  }
 
- function send_editor($text="",$options="") {
+  function send_editor($text="",$options="") {
     global $HTTP_USER_AGENT;
     $COLS_MSIE = 80;
     $COLS_OTHER = 85;
@@ -1897,11 +1933,12 @@ EOS;
 </div>
 <a id='preview' name='preview' />
 EOS;
- }
-
-}
+  }
+} # end-of-Formatter
 
 # Start Main
+$timing=new Timer();
+
 $Config=getConfig("config.php");
 
 $DBInfo= new WikiDB($Config);
@@ -2080,177 +2117,194 @@ if ($_SERVER[REQUEST_METHOD]=="POST") {
 
 if ($pagename) {
 
-   if ($action=="recall" || $action=="raw" && $rev) {
-       $options[rev]=$rev;
-       $page = $DBInfo->getPage($pagename,$options);
-   } else
-       $page = $DBInfo->getPage($pagename);
+  if ($action=="recall" || $action=="raw" && $rev) {
+    $options[rev]=$rev;
+    $page = $DBInfo->getPage($pagename,$options);
+  } else
+    $page = $DBInfo->getPage($pagename);
 
-   $formatter = new Formatter($page);
+  $formatter = new Formatter($page);
 
-   if (!$action) {
-      if ($value) { # ?value=Hello
-        $options[value]=$value;
-        do_goto($formatter,$options);
-        return;
-      } else if ($goto) { # ?goto=Hello
-        $options[value]=$goto;
-        do_goto($formatter,$options);
-        return;
+  if (!$action) {
+    if ($value) { # ?value=Hello
+      $options[value]=$value;
+      do_goto($formatter,$options);
+      return;
+    } else if ($goto) { # ?goto=Hello
+      $options[value]=$goto;
+      do_goto($formatter,$options);
+      return;
+    }
+    if (!$page->exists()) {
+      $formatter->send_header(array("Status: 404 Not found"),$options);
+
+      $twins=$DBInfo->metadb->getTwinPages($page->name);
+      if ($twins) {
+        $formatter->send_title($page->name,"",$options);
+        #$formatter->send_page($twins."\n----\n");
+        $formatter->send_page($twins);
+        echo "<br /><br />or ".
+          $formatter->link_to("?action=edit",_("Create this page"));
+      } else {
+        $formatter->send_title($page->name." Not Found","",$options);
+        print $formatter->link_to("?action=edit",_("Create this page"));
+        print macro_LikePages($formatter,$page->name);
+
+        print "<hr />\n";
+        print $formatter->link_to("?action=edit",_("Create this page"));
+        print " or alternativly, use one of these templates:\n";
+        $options[linkto]="?action=edit&amp;template=";
+        print macro_TitleSearch($formatter,".*Template",$options);
+        print "To create your own templates, add a page with a 'Template' suffix\n";
       }
-      if (!$page->exists()) {
-        $formatter->send_header(array("Status: 404 Not found"),$options);
 
-        $twins=$DBInfo->metadb->getTwinPages($page->name);
-        if ($twins) {
-           $formatter->send_title($page->name,"",$options);
-           #$formatter->send_page($twins."\n----\n");
-           $formatter->send_page($twins);
-           echo "<br /><br />or ".
-             $formatter->link_to("?action=edit",_("Create this page"));
-        } else {
-           $formatter->send_title($page->name." Not Found","",$options);
-           print $formatter->link_to("?action=edit",_("Create this page"));
-           print macro_LikePages($formatter,$page->name);
-
-           print "<hr />\n";
-           print $formatter->link_to("?action=edit",_("Create this page"));
-           print " or alternativly, use one of these templates:\n";
-           $options[linkto]="?action=edit&amp;template=";
-           print macro_TitleSearch($formatter,".*Template",$options);
-           print "To create your own templates, add a page with a 'Template' suffix\n";
-        }
-
-        #$args[showpage]=1;
-        $args[editable]=1;
-        $formatter->send_footer($args);
-        return;
-      }
-      $DBInfo->counter->incCounter($pagename);
-
-      $formatter->send_header("",$options);
-      $formatter->send_title("","",$options);
-      $formatter->write("<div id='wikiContent'>\n");
-      $formatter->send_page();
-      $formatter->write("</div>\n");
       #$args[showpage]=1;
       $args[editable]=1;
-      $options[timer]=$timing;
-      $formatter->send_footer($args,$options);
+      $formatter->send_footer($args);
       return;
-   }
+    }
+    $DBInfo->counter->incCounter($pagename);
 
-   if ($action=="diff") {
-      if ($button_admin) {
-         if (!$range) $range=array();
-         $rr='';
-         $dum=array();
-         foreach (array_keys($range) as $r) {
-         #   print "[$r]-$range[$r]";
-            if (!$rr) $rr=$range[$r];
-            if ($range[$r+1]) continue;
-            else
-               $rr.=":".$range[$r];
-            $dum[]=$rr;$rr='';
-         }
-         #print_r($dum);
-         $options[passwd]=$passwd;
-         $options[show]=$show;
-         $options[range]=$dum;
-         $options[page]=$page->name;
-         $options[timer]=$timing;
-         do_RcsPurge($formatter,$options);
-         return;
+    $formatter->send_header("",$options);
+    $formatter->send_title("","",$options);
+    $formatter->write("<div id='wikiContent'>\n");
+    $formatter->send_page();
+    $formatter->write("</div>\n");
+    #$args[showpage]=1;
+    $args[editable]=1;
+    $options[timer]=$timing;
+    $formatter->send_footer($args,$options);
+    return;
+  }
+
+  if ($action=="diff") {
+    if ($button_admin) {
+      if (!$range) $range=array();
+      $rr='';
+      $dum=array();
+      foreach (array_keys($range) as $r) {
+      #   print "[$r]-$range[$r]";
+        if (!$rr) $rr=$range[$r];
+        if ($range[$r+1]) continue;
+        else
+          $rr.=":".$range[$r];
+        $dum[]=$rr;$rr='';
       }
+      #print_r($dum);
+      $options[passwd]=$passwd;
+      $options[show]=$show;
+      $options[range]=$dum;
+      $options[page]=$page->name;
+      $options[timer]=$timing;
+      do_RcsPurge($formatter,$options);
+      return;
+    }
+    $formatter->send_header("",$options);
+    $formatter->send_title("Diff for $rev ".$page->name,"",$options);
+    if ($date)
+      print $formatter->get_diff($date);
+    else
+      print $formatter->get_diff($rev,$rev2);
+    print "<br /><hr />\n";
+    $formatter->send_page();
+    $args[showpage]=1;
+    #$args[editable]=1;
+    $options[timer]=$timing;
+    $formatter->send_footer($args,$options);
+
+    return;
+  }
+  if ($action=="recall" || $action=="raw") {
+    if ($action=="raw") {
+      $header[]="Content-Type: text/plain";
+      $formatter->send_header($header,$options);
+    } else {
       $formatter->send_header("",$options);
-      $formatter->send_title("Diff for $rev ".$page->name,"",$options);
-      if ($date)
-         print $formatter->get_diff($date);
-      else
-         print $formatter->get_diff($rev,$rev2);
-      print "<br /><hr />\n";
+      $formatter->send_title("Rev. $rev ".$page->name,"",$options);
+    }
+    if (!$page->exists() || !$page->get_raw_body()) {
+      if ($action=="raw") {
+      } else {
+        $formatter->send_footer();
+      }
+      return;
+    }
+    if ($action=="raw") {
+      print $page->get_raw_body();
+    } else {
       $formatter->send_page();
       $args[showpage]=1;
-      #$args[editable]=1;
       $options[timer]=$timing;
       $formatter->send_footer($args,$options);
+    }
+    return;
+  } else if ($action=="edit" && $page->writable()) {
+    $formatter->send_header("",$options);
+    $formatter->send_title("Edit ".$page->name,"",$options);
+    $options[rows]=$rows; 
+    $options[cols]=$cols;
+    $options[template]=$template;
+    $formatter->send_editor("",$options);
+    $args[showpage]=1;
+    $options[timer]=$timing;
+    $formatter->send_footer($args,$options);
+  } else if ($action=="info") {
+    $formatter->send_header("",$options);
+    $formatter->send_title("Info. for ".$page->name);
+    $formatter->show_info();
+    $args[showpage]=1;
+    $options[timer]=$timing;
+    $formatter->send_footer($args,$options);
+  } else if ($action=="DeletePage") {
+    $options[page]=$page->name;
+    $options[comment]=$comment;
+    $options[passwd]=$passwd;
+    do_DeletePage($formatter,$options);
+  } else if ($action) {
+    #print_r($HTTP_POST_VARS);
+    #print_r($HTTP_GET_VARS);
+    #print($login_id);
 
-      return;
-   }
-   if ($action=="recall" || $action=="raw") {
-     if ($action=="raw") {
-        $header[]="Content-Type: text/plain";
-        $formatter->send_header($header,$options);
-     } else {
-        $formatter->send_header("",$options);
-        $formatter->send_title("Rev. $rev ".$page->name,"",$options);
-     }
-     if (!$page->exists() || !$page->get_raw_body()) {
-        if ($action=="raw") {
-        } else {
-           $formatter->send_footer();
+    if (function_exists("do_post_".$action)) {
+      $options=array_merge($options,$HTTP_POST_VARS);
+      $options[page]=$page->name;
+      $options[timer]=$timing;
+      eval("do_post_".$action."(\$formatter,\$options);");
+    } else if (function_exists("do_".$action)) {
+      if ($_SERVER[REQUEST_METHOD]=="POST")
+        $options=array_merge($options,$HTTP_POST_VARS);
+      else
+        $options=array_merge($options,$HTTP_GET_VARS);
+      $options[page]=$page->name;
+      $options[timer]=$timing;
+      eval("do_".$action."(\$formatter,\$options);");
+    } else {
+      if (file_exists("plugin/$action.php")) {
+        include("plugin/$action.php");
+        if (function_exists("do_post_".$action)) {
+          $options=array_merge($options,$HTTP_POST_VARS);
+          $options[page]=$page->name;
+          $options[timer]=$timing;
+          eval("do_post_".$action."(\$formatter,\$options);");
+        } else if (function_exists("do_".$action)) {
+          if ($_SERVER[REQUEST_METHOD]=="POST")
+            $options=array_merge($options,$HTTP_POST_VARS);
+          else
+            $options=array_merge($options,$HTTP_GET_VARS);
+          $options[page]=$page->name;
+          $options[timer]=$timing;
+          eval("do_".$action."(\$formatter,\$options);");
         }
         return;
-     }
-     if ($action=="raw") {
-        print $page->get_raw_body();
-     } else {
-        $formatter->send_page();
-        $args[showpage]=1;
-        $options[timer]=$timing;
-        $formatter->send_footer($args,$options);
-     }
-     return;
-   } else if ($action=="edit" && $page->writable()) {
-     $formatter->send_header("",$options);
-     $formatter->send_title("Edit ".$page->name,"",$options);
-     $options[rows]=$rows; 
-     $options[cols]=$cols;
-     $options[template]=$template;
-     $formatter->send_editor("",$options);
-     $args[showpage]=1;
-     $options[timer]=$timing;
-     $formatter->send_footer($args,$options);
-   } else if ($action=="info") {
-     $formatter->send_header("",$options);
-     $formatter->send_title("Info. for ".$page->name);
-     $formatter->show_info();
-     $args[showpage]=1;
-     $options[timer]=$timing;
-     $formatter->send_footer($args,$options);
-   } else if ($action=="DeletePage") {
-     $options[page]=$page->name;
-     $options[comment]=$comment;
-     $options[passwd]=$passwd;
-     do_DeletePage($formatter,$options);
-   } else if ($action) {
-     #print_r($HTTP_POST_VARS);
-     #print_r($HTTP_GET_VARS);
-     #print($login_id);
-
-     if (function_exists("do_post_".$action)) {
-        $options=array_merge($options,$HTTP_POST_VARS);
-        $options[page]=$page->name;
-        $options[timer]=$timing;
-        eval("do_post_".$action."(\$formatter,\$options);");
-     } else if (function_exists("do_".$action)) {
-        if ($_SERVER[REQUEST_METHOD]=="POST")
-           $options=array_merge($options,$HTTP_POST_VARS);
-        else
-           $options=array_merge($options,$HTTP_GET_VARS);
-        $options[page]=$page->name;
-        $options[timer]=$timing;
-        eval("do_".$action."(\$formatter,\$options);");
-     } else {
-        $formatter->send_header("Status: 406 Not Acceptable",$options);
-        $formatter->send_title("406 Not Acceptable","",$options);
-        $args[editable]=1;
-        # $formatter->send_page("");
-        $options[timer]=$timing;
-        $formatter->send_footer($args,$options);
-        return;
-     }
-   }
+      }
+      $formatter->send_header("Status: 406 Not Acceptable",$options);
+      $formatter->send_title("406 Not Acceptable","",$options);
+      $args[editable]=1;
+      # $formatter->send_page("");
+      $options[timer]=$timing;
+      $formatter->send_footer($args,$options);
+      return;
+    }
+  }
 }
-
 ?>
