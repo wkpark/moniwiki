@@ -1199,7 +1199,12 @@ function macro_RandomPage($formatter,$value="") {
   global $DBInfo;
   $pages = $DBInfo->getPageLists();
 
-  $count= (int) $value;
+  $test=preg_match("/^(\d+)\s*,?\s*(simple|nobr)?$/",$value,$match);
+  if ($test) {
+    $count= (int) $match[1];
+    $mode=$match[2];
+  }
+  #$count= (int) $value;
   if ($count <= 0) $count=1;
   $counter= $count;
 
@@ -1214,8 +1219,14 @@ function macro_RandomPage($formatter,$value="") {
     $selects[]=$formatter->link_tag($pages[$item]);
   }
 
-  if ($count > 1)
-    return "<ul>\n<li>".join("</li>\n<li>",$selects)."</li>\n</ul>";
+  if ($count > 1) {
+    if (!$mode)
+      return "<ul>\n<li>".join("</li>\n<li>",$selects)."</li>\n</ul>";
+    if ($mode=='simple')
+      return join("<br />\n",$selects)."<br />\n";
+    if ($mode=='nobr')
+      return join(" ",$selects);
+  }
   return join("",$selects);
 }
 
@@ -1923,7 +1934,7 @@ function macro_RecentChanges($formatter="",$value="") {
     $pageurl=_rawurlencode($page_name);
 
     if (!$DBInfo->hasPage($page_name))
-       $out.= "&nbsp;&nbsp; ".$formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$DBInfo->icon[del]);
+       $out.= "&nbsp;&nbsp; ".$formatter->link_tag($pageurl,"?action=diff",$DBInfo->icon[del]);
     else if ($ed_time > $bookmark) {
        if ($new) {
          $p= new WikiPage($page_name);
@@ -1934,7 +1945,7 @@ function macro_RecentChanges($formatter="",$value="") {
        else
          $out.= "&nbsp;&nbsp; ".$formatter->link_tag($pageurl,"?action=info",$DBInfo->icon['new']);
     } else
-       $out.= "&nbsp;&nbsp; ".$formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$DBInfo->icon[diff]);
+       $out.= "&nbsp;&nbsp; ".$formatter->link_tag($pageurl,"?action=diff",$DBInfo->icon[diff]);
 
     $title=preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$page_name);
 #   $title=$page_name;
