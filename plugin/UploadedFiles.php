@@ -26,6 +26,9 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    if ($options['download']) $download=$options['download'];
    if ($options['needle']) $needle=$options['needle'];
 
+   if (!in_array('UploadFile',$formatter->actions))
+     $formatter->actions[]='UploadFile';
+
    if ($value and $value!='UploadFile') {
       $key=$DBInfo->pageToKeyname($value);
       if ($options['download'] or $key != $value)
