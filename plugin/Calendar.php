@@ -19,6 +19,7 @@ function calendar_get_dates($formatter,$date='',$page='') {
 
   if (!$date) $date=date('Ym');
   $rule="/^$date(\d{2})_2e".$page."$/";
+
   $archives=array();
   while ($file = readdir($handle)) {
     $fname=$DBInfo->cache_dir.'/blogchanges/'.$file;
@@ -38,25 +39,24 @@ function macro_Calendar($formatter,$value="",$option="") {
 
 	$date=$_GET['date'];
 
-	$year_prev_tag='&laquo;';
-	$year_next_tag='&raquo;';
-	$prev_tag='&lsaquo;';
-	$next_tag='&rsaquo;';
+	$prev_tag='&laquo;';
+	$next_tag='&raquo;';
 
 	static $day_headings= array('Sunday','Monday','Tuesday','Wednesday',
 		'Thursday','Friday','Saturday');
 	$day_heading_length = 3;
 
-	preg_match("/^((\d{4})-?(\d{2}))?,?\s*([a-z, ]+)?$/i",$value,$match);
+	preg_match("/^(?(?=')'([^']+)'|\"([^\"]+)\")?,?((\d{4})-?(\d{2}))?,?\s*([a-z, ]+)?$/i",$value,$match);
 
+	#print_r($match);
 	/* GET argument has priority */
 	if ($date) {
 		preg_match("/^((\d{4})-?(\d{1,2}))$/i",$date,$match2);
 		$year= $match2[2];
 		$month= $match2[3];
-	} else if ($match[1]) {
-		$year= $match[2];
-		$month= $match[3];
+	} else if ($match[3]) {
+		$year= $match[4];
+		$month= $match[5];
 	}
 	/* Validate date. Use system date, if date is not validated */
 	if ($month <1 || $month > 12) {
@@ -67,25 +67,26 @@ function macro_Calendar($formatter,$value="",$option="") {
 	$month=intval($month);
 	$year=intval($year);
 
-	if ($option)
-		$pagename=$option;
+	if ($match[1] or $match[2])
+		$pagename=$match[1] ? $match[1]:$match[2];
 	else
 		$pagename=$formatter->page->name;
 
 	$link_prefix=sprintf("%04d-%02d",$year,$month);
 
 	$archives=array();
-	if ($match[4]) {
-		$args=explode(",",$match[4]);
+	if ($match[6]) {
+		$args=explode(",",$match[6]);
 
 		if (in_array ("blog", $args)) $mode='blog';
 		if (in_array ("noweek", $args)) $day_heading_length=0;
+		if (in_array ("shortweek", $args)) $day_heading_length=1;
 		if (in_array ("yearlink", $args)) $yearlink=1;
 		if (in_array ("archive", $args)) {
 			if ($mode) // blog mode
 				$archives=calendar_get_dates($formatter,$date,$pagename.'/'.$link_prefix);
 			else {
-				$archives=calendar_get_dates($formatter,$year.$month);
+				$archives=calendar_get_dates($formatter,$date);
 				$mode='archive';
 			}
 		}
@@ -96,6 +97,11 @@ function macro_Calendar($formatter,$value="",$option="") {
 	if ($yearlink) {
 		$prev_year=date('Ym',mktime(0,0,0,$month,1,$year - 1));
 		$next_year=date('Ym',mktime(0,0,0,$month,1,$year + 1));
+
+		$year_prev_tag='&laquo;';
+		$year_next_tag='&raquo;';
+		$prev_tag='&lsaquo;';
+		$next_tag='&rsaquo;';
 	}
 
 	$first_of_month = mktime (0,0,0, $month, 1, $year);
