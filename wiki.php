@@ -538,7 +538,7 @@ class WikiDB {
     $this->icon['main']="<img src='$imgdir/$iconset-main.gif' alt='^' align='middle' border='0' />";
     $this->icon['print']="<img src='$imgdir/$iconset-print.gif' alt='P' align='middle' border='0' />";
     $this->icon['attach']="<img src='$imgdir/$iconset-attach.gif' alt='@' align='middle' border='0' />";
-    $this->icon['popup']="<img src='$imgdir/$iconset-popup.gif' alt='[]' align='middle' border='0' />";
+    $this->icon['external']="<img src='$imgdir/$iconset-external.gif' alt='[]' align='middle' border='0' />";
     $this->icon_sep=" ";
     $this->icon_bra=" ";
     $this->icon_cat=" ";
@@ -1454,7 +1454,7 @@ class Formatter {
       if ($url[0] == '^') {
         $attr.=' target="_blank" ';
         $url=substr($url,1);
-        $external_icon=$this->icon['popup'];
+        $external_icon=$this->icon['external'];
       }
       if ($force or strpos($url," ")) { # have a space ?
         list($url,$text)=explode(" ",$url,2);
