@@ -26,8 +26,8 @@ class WikiRSSParser {
 
    function endElement($parser, $tagName) {
        if ($tagName == "ITEM") {
-           printf("[%s] <a href='%s'>%s</a>",
-             trim($this->status),
+           if ($this->status) print "[$this->status] ";
+           printf("<a href='%s'>%s</a>",
              trim($this->link),
              htmlspecialchars(trim($this->title)));
            #printf("<p>%s</p>",
@@ -88,17 +88,17 @@ function macro_Rss($formatter,$value) {
   ob_start();
   while ($data = fread($fp, 4096))
     $ret= xml_parse($xml_parser, $data, feof($fp));
-    if (!$ret)
-      return (sprintf("[[RSS(XML error: %s at line %d)]]",  
-        xml_error_string(xml_get_error_code($xml_parser)),  
-        xml_get_current_line_number($xml_parser)));
+  if (!$ret)
+    return (sprintf("[[RSS(XML error: %s at line %d)]]",  
+      xml_error_string(xml_get_error_code($xml_parser)),  
+      xml_get_current_line_number($xml_parser)));
   fclose($fp);
   $out=ob_get_contents();
   ob_end_clean();
   xml_parser_free($xml_parser);
 
-  if (strtoupper($DBInfo->charset) != 'UTF-8')
-    $out=iconv('utf-8',$DBInfo->charset,$out);
+#  if (strtoupper($DBInfo->charset) != 'UTF-8')
+#    $out=iconv('utf-8',$DBInfo->charset,$out);
 
   return $out;
 }
