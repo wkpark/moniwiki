@@ -16,9 +16,25 @@ function macro_Attachment($formatter,$value,$option='') {
   else $mydownload='download';
 
   $text='';
-  if (($p=strpos($value,' ')) !== false) { // XXX for [attachment:my.ext hello]
-    $text=substr($value,$p+1);
+  if (($p=strpos($value,' ')) !== false) {
+    // [attachment:my.ext hello]
+    // [attachment:my.ext attachment:my.png]
+    // [attachment:my.ext http://url/../my.png]
+    $text=$ntext=substr($value,$p+1);
     $value=substr($value,0,$p);
+    if (substr($text,0,11)=='attachment:') {
+      $fname=substr($text,11);
+      $ntext=macro_Attachment($formatter,$fname,1);
+    }
+    if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$ntext)) {
+      $img_link='<img src="'.$ntext.'" alt="'.$text.'" border="0" />';
+      if (!file_exists($ntext)) {
+        $mydownload='UploadFile&amp;rename='.$fname;
+        $text=sprintf(_("Upload new Attachment \"%s\""),$fname);
+        $text=str_replace('"','\'',$text);
+      }
+      $ntext=qualifiedUrl($DBInfo->url_prefix.'/'.$ntext);
+    }
   }
 
   if (($dummy=strpos($value,'?'))) {
@@ -69,16 +85,18 @@ function macro_Attachment($formatter,$value,$option='') {
   if (!$text) $text=$file;
 
   if (file_exists($upload_file)) {
-    if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$upload_file)) {
+    if (!$img_link && preg_match("/\.(png|gif|jpeg|jpg)$/i",$upload_file)) {
       if ($key != $pagename || $force_download)
         $url=$formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=$value");
       else
         $url=$DBInfo->url_prefix."/"._urlencode($upload_file);
       return "<span class=\"imgAttach\"><img src='$url' alt='$file' $attr/></span>";
     } else {
+      $link=$formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=$value",$text);
+      if ($img_link)
+        return "<span class=\"attach\"><a href='$link'>$img_link</a></span>";
 
-      return "<span class=\"attach\"><img align='middle' src='$DBInfo->imgs_dir_interwiki".'uploads-16.png\' />'.
-        $formatter->link_tag(_urlencode($pagename),"?action=$mydownload&amp;value=$value",$text).'</span>';
+      return "<span class=\"attach\"><img align='middle' src='$DBInfo->imgs_dir_interwiki".'uploads-16.png\' /><a href="'.$link.'">'.$text.'</a></span>';
     }
   }
   if ($pagename == $formatter->page->name)
