@@ -8,12 +8,37 @@
 function do_post_rename($formatter,$options) {
   global $DBInfo;
   
-  if (isset($options['name'])) {
+  if (isset($options['name']) and trim($options['name'])) {
     if ($DBInfo->hasPage($options['page']) && !$DBInfo->hasPage($options['name'])) {
-      $DBInfo->renamePage($options['page'],$options['name'],$options);
       $title = sprintf(_("\"%s\" is renamed !"), $options['page']);
       $formatter->send_header("",$options);
       $formatter->send_title($title,"",$options);
+      if ($options['pagenames'] and is_array($options['pagenames'])) {
+        $regex=preg_quote($options['page']);
+        $options['minor']=1;
+        $new_encodedname=_rawurlencode($options['name']);
+        foreach ($options['pagenames'] as $page) {
+          $p = new WikiPage($page);
+          if (!$p->exists()) continue;
+          $f= new Formatter($p);
+          $body= $p->_get_raw_body();
+          $body= preg_replace("/$regex/m",$options['name'],$body);
+          $f->page->write($body);
+          if (!$options['show_only'])
+            $DBInfo->savePage(&$f->page,'',$options);
+          $msg.=sprintf(_("'%s' is changed"),
+            $f->link_tag(_rawurlencode($page),
+              "?action=highlight&amp;value=".$new_encodedname))."<br />";
+        }
+      }
+      print $msg;
+      if (!$options['show_only'])
+        $DBInfo->renamePage($options['page'],$options['name'],$options);
+      print sprintf(_("'%s' is renamed as '%s' successfully"),
+        $options['page'],
+        $formatter->link_tag($new_encodedname,
+          "?action=highlight&amp;value=".$new_encodedname));
+
       $formatter->send_footer("",$options);
       return;
     } else {
@@ -28,23 +53,38 @@ function do_post_rename($formatter,$options) {
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
 #<tr><td align='right'><input type='checkbox' name='show' checked='checked' />show only </td><td><input type='password' name='passwd'>
+
   print "<form method='post'>
 <table border='0'>
 <tr><td align='right'>Old name: </td><td><b>$options[page]</b></td></tr>
 <tr><td align='right'>New name: </td><td><input name='name' /></td></tr>\n";
+  $rename_button=_("Rename");
+  if ($options['value']=='check_backlinks') {
+    print "<tr><td colspan='2'>\n";
+    print check_backlinks($formatter,$options);   
+    print "</td></tr>\n";
+    $rename_button=_("Rename and fix Backlinks");
+  }
   if ($DBInfo->security->is_protected("rename",$options))
     print "<tr><td align='right'>"._("Password").": </td><td><input type='password' name='passwd' /> ".
-    _("Only WikiMaster can rename this page");
-  print "<tr>";
-  print "<td>"._("with revision history")."<input type='checkbox' name='history' /></td>";
-  print "<td><input type='submit' name='button_rename' value='rename' /></td>";
+    _("Only WikiMaster can rename this page")."</td></tr>\n";
+  print "<tr>\n<td colspan='2'>"._("with revision history")."<input type='checkbox' name='history' />";
+  print " "._("show only")."<input type='checkbox' name='show_only' checked='checked' /></td></tr>\n";
+  print "<tr><td></td><td><input type='submit' name='button_rename' value='$rename_button' />";
+  print " <a href='?action=rename&value=check_backlinks'>"._("Check backlinks").
+"</a>";
   print "</td></tr>\n";
-
   print "
 </table>
     <input type=hidden name='action' value='rename' />
     </form>";
 #  $formatter->send_page();
   $formatter->send_footer("",$options);
+}
+
+function check_backlinks($formatter,$options) {
+  $options['checkbox']=1;
+
+  return $formatter->macro_repl('FullSearch',$options['page'],$options);
 }
 ?>

@@ -113,7 +113,8 @@ EOF;
   reset($hits);
   $idx=1;
   while (list($page_name, $count) = each($hits)) {
-    $out.= '<li>'.$formatter->link_tag(_rawurlencode($page_name),
+    if ($opts['checkbox']) $checkbox="<input type='checkbox' name='pagenames[]' value='$page_name' />";
+    $out.= '<li>'.$checkbox.$formatter->link_tag(_rawurlencode($page_name),
           "?action=highlight&amp;value="._urlencode($value),
           $page_name,"tabindex='$idx'");
     $out.= ' . . . . ' . $count . (($count == 1) ? ' match' : ' matches');
