@@ -227,7 +227,17 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
 
   $match[1]=$match[1] ? $match[1]:$match[2];
   $options['category']=$options['category'] ? $options['category']:$match[1];
+
+
   if ($options['category']) {
+    $options['category']=
+      preg_replace('/(?<!\.|\)|\])\*/','.*',$options['category']);
+    
+    $test=@preg_match("/$options[category]/",'');
+    if ($test === false) {
+      return '[[BlogChanges('.
+        sprintf(_("Invalid category expr \"%s\""),$options['category']).')]]';
+    }
     if ($DBInfo->blog_category) {
       $categories=Blog_cache::get_categories();
       if ($categories[$options['category']])
