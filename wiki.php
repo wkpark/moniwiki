@@ -1342,7 +1342,7 @@ class Formatter {
                      "/\^([^ \^]+)\^(?=\s|$)/","/\^\^([^\^]+)\^\^(?!^)/",
                      "/(?<!,),,([^ ,]+),,(?!,)/",
                      "/(?<!_)__([^_]+)__(?!_)/","/^(-{4,})/e",
-                     "/(?<!-)--[^\s]([^-]+)[^\s]--(?!-)/",
+                     "/(?<!-)--([^\s][^-]+[^\s])--(?!-)/",
                      );
     $this->baserepl=array("&lt;\\1","&#96;\\1'","<tt class='wiki'>\\1</tt>",
                      "<strong>\\1</strong>","<strong>\\1</strong>",
@@ -2921,7 +2921,11 @@ MSG;
     # print the title
     kbd_handler();
 
+    #
     if (file_exists($this->themedir."/header.php")) {
+      $trail=&$option['trail'];
+      $origin=&$this->origin;
+
       $themeurl=$this->themeurl;
       include($this->themedir."/header.php");
     } else { #default header
@@ -2944,15 +2948,18 @@ MSG;
       print $msg;
       print "</div>\n";
     }
-    print $DBInfo->hr;
-    if ($options['trail'] or $this->origin) {
-      //$opt['nosisters']=1;
-      print "<div id='wikiOrigin'>\n";
-      print $this->origin;
-      print "</div>\n";
-      print "<div id='wikiTrailer'>\n";
-      print $this->trail;
-      print "</div>\n";
+    if (empty($themeurl) or !$_NEWTHEME) {
+      print $DBInfo->hr;
+      if ($options['trail']) {
+        print "<div id='wikiTrailer'>\n";
+        print $this->trail;
+        print "</div>\n";
+      }
+      if ($this->origin) {
+        print "<div id='wikiOrigin'>\n";
+        print $this->origin;
+        print "</div>\n";
+      }
     }
     print "<div id='wikiBody'>\n";
     $this->pagelinks=$saved_pagelinks;
