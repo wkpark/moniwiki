@@ -7,7 +7,7 @@
 //
 // $Id$
 
-function macro_Attachment($formatter,$value) {
+function macro_Attachment($formatter,$value,$option='') {
   global $DBInfo;
 
   $attr='';
@@ -63,6 +63,9 @@ function macro_Attachment($formatter,$value) {
   if (!$file) return 'attachment:/';
 
   $upload_file=$dir.'/'.$file;
+  if ($option == 1) {
+    return $upload_file;
+  }
   if (!$text) $text=$file;
 
   if (file_exists($upload_file)) {
