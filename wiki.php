@@ -608,7 +608,7 @@ class WikiDB {
     $nkey=$this->getPageKey($new);
 
     system("mv $okey $nkey");
-    $comment="Rename $old to $new";
+    $comment=sprintf(_("Rename %s to %s"),$pagename,$new);
     $this->addLogEntry($new, $REMOTE_ADDR,$comment,"SAVE");
   }
 
@@ -1207,10 +1207,11 @@ class Formatter {
 
 # $wordrule="({{{(([^}}}).+)}}})|".
     $wordrule="({{{([^}]+)}}})|".
-              "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|". # macro
-              "\\$([^\\$]+)\\$|". # tex
-              "\\$\\$([^\\$]+)\\$\\$|". # tex
-              $this->wordrule;
+              "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|"; # macro
+    if ($DBInfo->enable_latex)
+      $wordrule.="\\$([^\\$]+)\\$(?:\s|$)|".
+                 "\\$\\$([^\\$]+)\\$\\$(?:\s|$)|"; # tex
+    $wordrule.=$this->wordrule;
 
     foreach ($lines as $line) {
       # strip trailing '\n'
