@@ -52,11 +52,11 @@ function processor_vim($formatter,$value) {
   if(getenv("OS")=="Windows_NT") {
     $tohtml='\%VIMRUNTIME\%\\syntax\\2html.vim';
     $vim="gvim"; # Win32
-    $stdout="CON";
+    $fout="CON";
   } else {
     $tohtml='\$VIMRUNTIME/syntax/2html.vim';
     $vim="vim";
-    $stdout="/dev/stdout";
+    $fout="/dev/stdout";
   }  
 
 # simple sample
@@ -75,15 +75,17 @@ function processor_vim($formatter,$value) {
 
   $cmd= "$vim -T xterm -e -s $tmpf ".
         ' +"syntax on " +"set syntax='.$type.'" '.$option.
-        ' +"so '.$tohtml.'" +"wq! '.$stdout.'" +q';
+        ' +"so '.$tohtml.'" +"wq! '.$fout.'" +q';
 
-  $fp=popen($cmd,"r");
-
-  while($s = fgets($fp, 1024)) {
-    $out.= $s;
+  if(getenv("OS")=="Windows_NT") {
+    system($cmd);
+    $out=join(file($fout),"");
+    unlink($fout);
+  } else {
+    $fp=popen($cmd,"r");
+    while($s = fgets($fp, 1024)) $out.= $s;
+    pclose($fp);
   }
-
-  pclose($fp);
   unlink($tmpf);
 
   $out=preg_replace("/<title>.*title>|<\/?head>|<\/?html>|<meta.*>|<\/?body.*>/","", $out);
