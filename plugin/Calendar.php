@@ -9,6 +9,30 @@
 #-------------------------------------------------------------------------------
 # $Id$
 
+function calendar_get_dates($formatter,$date='',$page='') {
+  global $DBInfo;
+  $handle = @opendir($DBInfo->cache_dir."/blogchanges");
+  if (!$handle) return array();
+
+  if (!$page) $page='.*';
+  else $page=$DBInfo->pageToKeyname($page);
+
+  if (!$date) $date=date('Ym');
+  $rule="/^$date(\d{2})_2e".$page."$/";
+  $archives=array();
+  while ($file = readdir($handle)) {
+    $fname=$DBInfo->cache_dir.'/blogchanges/'.$file;
+    if (is_dir($fname)) continue;
+    if (preg_match($rule,$file,$match)) {
+      $archives[intval($match[1])]=1;
+    }
+  }
+  closedir($handle);
+
+#  return array_unique($archives);
+  return $archives;
+}
+
 function macro_Calendar($formatter,$value="",$option="") {
 	global $DBInfo;
 
@@ -39,15 +63,32 @@ function macro_Calendar($formatter,$value="",$option="") {
 		$year= date('Y');
 		$month= date('m');
 	}
+	$date=$year.$month;
 	$month=intval($month);
 	$year=intval($year);
 
+	if ($option)
+		$pagename=$option;
+	else
+		$pagename=$formatter->page->name;
+
+	$link_prefix=sprintf("%04d-%02d",$year,$month);
+
+	$archives=array();
 	if ($match[4]) {
 		$args=explode(",",$match[4]);
 
 		if (in_array ("blog", $args)) $mode='blog';
 		if (in_array ("noweek", $args)) $day_heading_length=0;
 		if (in_array ("yearlink", $args)) $yearlink=1;
+		if (in_array ("archive", $args)) {
+			if ($mode) // blog mode
+				$archives=calendar_get_dates($formatter,$date,$pagename.'/'.$link_prefix);
+			else {
+				$archives=calendar_get_dates($formatter,$year.$month);
+				$mode='archive';
+			}
+		}
 	}
 
 	$prev_month=date('Ym',mktime(0,0,0,$month - 1,1,$year));
@@ -56,11 +97,6 @@ function macro_Calendar($formatter,$value="",$option="") {
 		$prev_year=date('Ym',mktime(0,0,0,$month,1,$year - 1));
 		$next_year=date('Ym',mktime(0,0,0,$month,1,$year + 1));
 	}
-
-	if ($option)
-		$pagename=$option;
-	else
-		$pagename=$formatter->page->name;
 
 	$first_of_month = mktime (0,0,0, $month, 1, $year);
 	#remember that mktime will automatically correct if invalid dates are entered
@@ -116,17 +152,19 @@ function macro_Calendar($formatter,$value="",$option="") {
 	if($weekday > 0){$calendar .= "<td colspan=\"$weekday\">&nbsp;</td>";}
 
 	#print the days of the month
-	$link_prefix=sprintf("%04d-%02d",$year,$month);
-	if ($mode) {
+	if ($mode=='blog') {
 		$link=$pagename."/$link_prefix";
 		if (!$DBInfo->hasPage($link))
 			$action="?action=blog";
+	} else if ($mode) {
+		$link=$pagename;
 	}
 	while ($day <= $maxdays){
 		if($weekday == 7){ #start a new week
 			$calendar .= "</tr>\n<tr>";
 			$weekday = 0;
 		}
+		$daytext=$day;
 
 		if ($day==$today and $month == date('m')) {
 			$exists='today" bgcolor="white';
@@ -142,12 +180,22 @@ function macro_Calendar($formatter,$value="",$option="") {
 			$link=$pagename."/".$link_prefix."-".sprintf("%02d",$day);
 			if ($DBInfo->hasPage($link))
 				$classes=$exists;
-		} else if ($action[0] != '?') {
-			$action=sprintf("#%02d",$day);
+		} else if ($mode) {
+			if ($archives[$day]) {
+				 $daytext='<span class="blogged"><b>'.$day.'</b></span>';
+			}
+			if ($mode == 'archive') {
+				if ($archives[$day]) {
+					$action='?action=blogchanges&amp;date='.$date;
+					$classes='day';
+				} else
+					$action='?action=blog';
+			} else if ($action[0] != '?')
+				$action=sprintf("#%02d",$day);
 		}
 
 		$calendar.= '<td'.($classes ? " class=\"$classes\">" : '>').
-			($link ? $formatter->link_tag($link,$action,$day) : '').'</td>';
+			($link ? $formatter->link_tag($link,$action,$daytext) : '').'</td>';
 
 		$day++;
 		$weekday++;
