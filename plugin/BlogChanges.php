@@ -25,17 +25,28 @@ class Blog_cache {
     global $DBInfo;
     $rule="/^($date\d*)".'_2e('.join('|',$blogs).')$/';
     $logs=array();
+
     if (!$date) $limit=10;
     else $limit=30;
-
     #print $limit;
+
     $handle = @opendir($DBInfo->cache_dir."/blogchanges");
     if (!$handle) return array();
 
-    while (($file = readdir($handle)) && $limit > 0) {
+    while (($file = readdir($handle)) !== false) {
       $fname=$DBInfo->cache_dir."/blogchanges/".$file;
       if (is_dir($fname)) continue;
+      $filelist[] = $file;
+    }
+    closedir($handle);
+
+    rsort($filelist);
+
+    while ((list($key, $file) = each ($filelist)) && $limit > 0)
+    {
+      #echo "<b>$file</b><br>";
       if (preg_match($rule,$file,$match)) {
+        $fname=$DBInfo->cache_dir."/blogchanges/".$file;
         $datestamp=$match[1];
         $blog=$match[2];
         $pagename=$DBInfo->keyToPagename($blog);
