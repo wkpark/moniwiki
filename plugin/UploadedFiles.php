@@ -32,7 +32,7 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    if ($value and $value!='UploadFile') {
       $key=$DBInfo->pageToKeyname($value);
       if ($options['download'] or $key != $value)
-        $prefix=$formatter->link_url($value,"?action=$download&amp;value=");
+        $prefix=$formatter->link_url(_rawurlencode($value),"?action=$download&amp;value=");
       $dir=$DBInfo->upload_dir."/$key";
    } else {
       $value=$formatter->page->urlname;
