@@ -27,15 +27,15 @@ SourceForge http://www.sourceforge.net/
 # Korean Wikis
 NoSmoke http://no-smok.net/nsmk/
 GnomeKorea http://www.gnome.or.kr/wiki/
-KLE http://kle.kldp.org/main.php/
+KLE http://kle.kldp.org/main/
 GentooKorea http://gentoo.or.kr/wiki/moin.cgi/
 DebianKorea http://debianusers.org/DebianWiki/
+BSDKorea http://wiki.bsdforum.or.kr/wiki.php/
 Freefeel http://freefeel.org/wiki/
 SFReaders http://www.sfreaders.org/moin.cgi/
 Jangnan http://www.jangnan.org/wiki/moin.cgi/
 Xper http://xper.org/wiki/xp/
 PyKug http://www.python.or.kr/pykug/
-WIM http://linux.mizi.com/wim/
 KTUG http://faq.ktug.or.kr/mywiki/
 MoniWiki http://moniwiki.sf.net/wiki.php/
 KLDPWiki http://wiki.kldp.org/wiki/
