@@ -41,7 +41,7 @@ function macro_Attachment($formatter,$value) {
   if (($p=strpos($value,':')) !== false or ($p=strpos($value,'/')) !== false) {
     $subpage=substr($value,0,$p);
     $file=substr($value,$p+1);
-    $value=$subpage.':'.$file; # normalize page arg
+    $value=$subpage.'/'.$file; # normalize page arg
     if ($subpage and $DBInfo->hasPage($subpage)) {
       $pagename=$subpage;
       $key=$DBInfo->pageToKeyname($subpage);
@@ -68,7 +68,7 @@ function macro_Attachment($formatter,$value) {
       if ($key != $pagename)
         $url=$formatter->link_url(_urlencode($pagename),"?action=download&amp;value=$value");
       else
-        $url=$DBInfo->url_prefix."/".$upload_file;
+        $url=$DBInfo->url_prefix."/"._urlencode($upload_file);
       return "<span class=\"imgAttach\"><img src='$url' alt='$file' $attr/></span>";
     } else {
 
