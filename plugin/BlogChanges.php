@@ -49,19 +49,21 @@ class Blog_cache {
     $page=$DBInfo->getPage($DBInfo->blog_category);
 
     $raw=$page->get_raw_body();
+    $raw=preg_replace("/(\{\{\{$)(.*)(\}\}\})/ms",'',$raw);
     $temp= explode("\n",$raw);
 
     foreach ($temp as $line) {
       $line=str_replace('/','_2f',$line);
-      if (preg_match('/^ \* ([^ :]+)(?=\s|$)/',$line,$match)) {
+      if (preg_match('/^ \* ([^ ]+)(?=\s|$)/',$line,$match)) {
         $category=$match[1];
         if (!$categories[$category])
           // include category page itself.
-          $categories[$category]=array($categories[$category]);
-      } else if ($category and preg_match('/^\s\s+\* ([^ :]+)(?=\s|$)/',$line,$match)) {
+          $categories[$category]=array($category);
+      } else if ($category and preg_match('/^\s{2,}\* ([^ ]+)(?=\s|$)/',$line,$match)) {
         $categories[$category][]=$match[1];
       }
     }
+    #print_r($categories);
     return $categories;
   }
 

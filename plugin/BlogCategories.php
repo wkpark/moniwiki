@@ -16,12 +16,13 @@ function macro_BlogCategories($formatter,$value='') {
   $page=$DBInfo->getPage($DBInfo->blog_category);
 
   $raw=$page->get_raw_body();
+  $raw=preg_replace("/(\{\{\{$)(.*)(\}\}\})/ms",'',$raw);
   $temp= explode("\n",$raw);
 
   $link=$formatter->link_url($formatter->page->name,'?action=blogchanges&amp;category=CATEGORY');
   foreach ($temp as $line) {
     $line=str_replace('/','_2f',$line);
-    if (preg_match('/^ \* ([^ :]+)(?=\s|$)/',$line,$match)) {
+    if (preg_match('/^ \* ([^ ]+)(?=\s|$)/',$line,$match)) {
       $lnk=str_replace('CATEGORY',$match[1],$link);
       if (!$no_rss)
         $rss='&nbsp;<a href="'.str_replace('blogchanges','blogrss',$lnk).'">'.
