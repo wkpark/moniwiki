@@ -588,8 +588,9 @@ function do_post_DeletePage($formatter,$options) {
   
   $page = $DBInfo->getPage($options['page']);
 
-  #print $options['name'];
   #print $options['page'];
+  if ($options['name']) $options['name']=urldecode($options['name']);
+  $pagename= $formatter->page->urlname;
   if (stripslashes($options['name']) == $options['page']) {
     $DBInfo->deletePage($page,$options);
     $title = sprintf(_("\"%s\" is deleted !"), $page->name);
@@ -611,7 +612,7 @@ Comment: <input name='comment' size='80' value='' /><br />\n";
 Only WikiMaster can delete this page<br />\n";
   print "
     <input type='hidden' name='action' value='DeletePage' />
-    <input type='hidden' name='name' value='$options[page]' />
+    <input type='hidden' name='name' value='$pagename' />
     <input type='submit' value='Delete page' />
     </form>";
 #  $formatter->send_page();
