@@ -2175,8 +2175,8 @@ class Formatter {
          $in_table=0;
       }
       if ($in_table) {
-         $line=preg_replace('/^((?:\|\|)+(&lt;[^>]+>)?)(\s?)(.*)\|\|$/e',"'<tr class=\"wiki\"><td class=\"wiki\"'.\$this->_table_span('\\1','\\3').'>\\4</td></tr>'",$line);
-         $line=preg_replace('/((\|\|)+(&lt;[^>]+>)?)(\s?)/e',"'</td><td class=\"wiki\"'.\$this->_table_span('\\1','\\4').'>'",$line);
+         $line=preg_replace('/^((?:\|\|)+(&lt;[^>]+>)?)((\s?)(.*))\|\|$/e',"'<tr class=\"wiki\"><td class=\"wiki\"'.\$this->_table_span('\\1','\\4').'>\\3</td></tr>'",$line);
+         $line=preg_replace('/((\|\|)+(&lt;[^>]+>)?)(\s?)/e',"'</td><td class=\"wiki\"'.\$this->_table_span('\\1','\\4').'>\\4'",$line);
          $line=str_replace('\"','"',$line); # revert \\" to \"
       }
 
