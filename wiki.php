@@ -1502,39 +1502,8 @@ class Formatter {
       } else if ($in_p == 1) $in_p= 2;
       if ($line[0]=='#' and $line[2]=='#') continue; # comments
 
-      if ($in_pre == 0 && preg_match("/{{{[^}]*$/",$line)) {
-         $p=strpos($line,"{{{");
-         $len=strlen($line);
-
-         $processor="";
-         $in_pre=1;
-
-         # check processor
-         if ($line[$p+3] == "#" && $line[$p+4] == "!") {
-            list($tag,$dummy)=explode(" ",substr($line,$p+5),2);
-
-            if (function_exists("processor_".$tag)) {
-              $processor=$tag;
-            } else {
-              if ($pf=getProcessor($tag)) {
-                include("plugin/processor/$pf.php");
-                $processor=$pf;
-              }
-            }
-         } else if ($line[$p+3] == ":") {
-            # new formatting rule for a quote block (pre block + wikilinks)
-            $line[$p+3]=" ";
-            $in_quote=1;
-         }
-
-         if ($in_pre) {
-            $this->pre_line=substr($line,$p+3);
-            if (trim($this->pre_line))
-               $this->pre_line.="\n";
-            $line=substr($line,0,$p);
-         }
-      } else if ($in_pre) {
-         if (false===strpos($line,"}}}")) {
+      if ($in_pre) {
+         if (strpos($line,"}}}")===false) {
            $this->pre_line.=$line."\n";
            continue;
          } else {
@@ -1544,6 +1513,35 @@ class Formatter {
            $line=substr($line,$p+1);
            $in_pre=-1;
          }
+      #} else if ($in_pre == 0 && preg_match("/{{{[^}]*$/",$line)) {
+      } else if (!(strpos($line,"{{{")===false) and 
+                 preg_match("/{{{[^}]*$/",$line)) {
+         $p=strpos($line,"{{{");
+         $len=strlen($line);
+
+         $processor="";
+         $in_pre=1;
+
+         # check processor
+         if ($line[$p+3] == "#" and $line[$p+4] == "!") {
+            list($tag,$dummy)=explode(" ",substr($line,$p+5),2);
+
+            if (function_exists("processor_".$tag)) {
+              $processor=$tag;
+            } else if ($pf=getProcessor($tag)) {
+              include("plugin/processor/$pf.php");
+              $processor=$pf;
+            }
+         } else if ($line[$p+3] == ":") {
+            # new formatting rule for a quote block (pre block + wikilinks)
+            $line[$p+3]=" ";
+            $in_quote=1;
+         }
+
+         $this->pre_line=substr($line,$p+3);
+         if (trim($this->pre_line))
+           $this->pre_line.="\n";
+         $line=substr($line,0,$p);
       }
       #$line=preg_replace("/\\$/","&#36;",$line);
       #$line=preg_replace("/<([^\s][^>]*)>/","&lt;\\1>",$line);
@@ -1573,17 +1571,21 @@ class Formatter {
       if ($smiley_rule)
          $line=preg_replace($smiley_rule,$smiley_repl,$line);
 
-      # bullet
+      # bullet and indentation
       #if (!$in_pre && preg_match("/^(\s*)/",$line,$match)) {
       #if (preg_match("/^(\s*)/",$line,$match)) {
       {
-         if ($line[0]==' ') preg_match("/^(\s*)/",$line,$match);
-         else $match[0]="";
+         if ($line[0]==' ') {
+           preg_match("/^(\s*)/",$line,$match);
+           $indlen=strlen($match[0]);
+         } else {
+           $match[0]="";
+           $indlen=0;
+         }
          $open="";
          $close="";
          $indtype="dd";
-         $indlen=strlen($match[0]);
-         #print "<!-- indlen=$indlen -->\n";
+         #$indlen=strlen($match[0]);
          if ($indlen > 0) {
            $line=substr($line,$indlen);
            #if (preg_match("/^(\*\s*)/",$line,$limatch)) {
@@ -1593,7 +1595,7 @@ class Formatter {
              if ($indent_list[$in_li] == $indlen) $line="</li>\n".$line;
              $numtype="";
              $indtype="ul";
-           } elseif (preg_match("/^((\d+|[aAiI])\.)(#\d+)?\s/",$line,$limatch)) {
+           } elseif (preg_match("/^((\d+|[aAiI])\.)(#\d+)?\s/",$line,$limatch)){
              $line=preg_replace("/^((\d+|[aAiI])\.(#\d+)?)/","<li>",$line);
              if ($indent_list[$in_li] == $indlen) $line="</li>\n".$line;
              $numtype=$limatch[2];
@@ -1609,7 +1611,8 @@ class Formatter {
             $open.=$this->_list(1,$indtype,$numtype);
          } else if ($indent_list[$in_li] > $indlen) {
             while($in_li >= 0 && $indent_list[$in_li] > $indlen) {
-               if ($indent_type[$in_li]!='dd' && $li_open == $in_li) $close.="</li>\n";
+               if ($indent_type[$in_li]!='dd' && $li_open == $in_li)
+                 $close.="</li>\n";
                $close.=$this->_list(0,$indent_type[$in_li],"",$in_li);
                unset($indent_list[$in_li]);
                unset($indent_type[$in_li]);
@@ -1620,17 +1623,12 @@ class Formatter {
          else $li_open=0;
       }
 
-      #$f=preg_match("/^\|\|.*\|\|$/",$line);
-      #$f=preg_match("/^\|\|/",$line) and preg_match("/.*\|\|$/",$line);
-      #$f=substr($line,0,2)=="||" and substr($line,strlen($line)-2)=="||";
-      $f=$line[0]=='|' and $line[1]=='|'
-                       and substr($line,strlen($line)-2)=="||";
       #if (!$in_pre && !$in_table && preg_match("/^\|\|.*\|\|$/",$line)) {
-      if (!$in_pre && !$in_table && $f) {
+      if (!$in_pre && $line[0]=='|' && !$in_table && preg_match("/^\|\|.*\|\|$/",$line)) {
          $open.=$this->_table(1);
          $in_table=1;
-      #} else if ($in_table && !preg_match("/^\|\|.*\|\|$/",$line)) {
-      } else if ($in_table && !$f) {
+      #} elseif ($in_table && !preg_match("/^\|\|.*\|\|$/",$line)){
+      } elseif ($in_table && $line[0]!='|' && !preg_match("/^\|\|.*\|\|$/",$line)){
          $close=$this->_table(0).$close;
          $in_table=0;
       }
@@ -2175,9 +2173,12 @@ FOOT;
     if ($options[timer])
       #$timer=sprintf("<br />%10.6f sec",$options[timer]->Check());
       $timer=sprintf("<br />%8.5f sec",$options[timer]->Check());
-   
-    if (file_exists("footer.php"))
-      include_once("footer.php");
+
+    $themedir= dirname(__FILE__);
+    if ($options[theme]) $themedir.="/theme/$options[theme]";
+
+    if (file_exists($themedir."/footer.php"))
+      include_once($themedir."/footer.php");
     else {
       print $menu.$banner;
     }
@@ -2257,9 +2258,12 @@ MSG;
     kbd_handler();
     print "<div id='wikiHeader'>\n";
 
-    if (file_exists("header.php")) {
+    $themedir= dirname(__FILE__);
+    if ($options[theme]) $themedir.="/theme/$options[theme]";
+
+    if (file_exists($themedir."/header.php")) {
       # $menu.$upper_icon.icons.$rss_icon;
-      include_once "header.php";
+      include_once $themedir."/header.php";
     } else { #default header
       $header="<table width='100%' border='0' cellpadding='3' cellspacing='0'>";
       $header.="<tr>";
@@ -2378,12 +2382,13 @@ EOS;
     if (!in_array($pagename,$trails))
       $trails[]=$pagename;
     $idx=count($trails) - $size;
-    $idx= $idx > 0 ? $idx:0;
-    $trails=array_slice($trails,$idx);
+    if ($idx > 0)
+      $trails=array_slice($trails,$idx);
     $trail=join("\t",$trails);
 
     setcookie("MONI_TRAIL",$trail,time()+60*60*24*30,get_scriptname());
-    $this->trail= "[\"".str_replace("\t","\"] > [\"",$trail)."\"]\n";
+    #$this->trail= "[\"".str_replace("\t","\"] > [\"",$trail)."\"]\n";
+    $this->trail= "[\"".join("\"] > [\"",$trails)."\"]\n";
   }
 } # end-of-Formatter
 
