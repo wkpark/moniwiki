@@ -299,12 +299,13 @@ class User {
   }
 
   function isSubscribedPage($pagename) {
-    if (!$this->info['email'] or !$this->info['subscribed_pages']) return 0;
+    if (!$this->info['email'] or !$this->info['subscribed_pages']) return false;
     $page_list=explode("\t",$this->info['subscribed_pages']);
+    if (!trim($page_list)) return false;
+    $page_list=_preg_search_escape($page_list);
     $page_rule=join("|",$page_list);
-    if (preg_match('/('.$page_rule.')/',$pagename)) {
+    if (preg_match('/('.$page_rule.')/',$pagename))
       return true;
-    }
     return false;
   }
 }
@@ -1395,7 +1396,7 @@ function macro_TableOfContents($formatter="",$value="") {
    $lines=explode("\n",$formatter->page->get_raw_body());
  foreach ($lines as $line) {
    $line=preg_replace("/\n$/", "", $line); # strip \n
-   preg_match("/(?<!=)(={1,5})\s(#?)(.*)\s+(={1,5})$/",$line,$match);
+   preg_match("/(?<!=)(={1,5})\s(#?)(.*)\s+(={1,5})\s?$/",$line,$match);
 
    if (!$match) continue;
 
