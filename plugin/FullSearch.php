@@ -37,7 +37,8 @@ function macro_FullSearch($formatter="",$value="", $opts=array()) {
     $needle = $value = $formatter->page->name;
   } else {
     # for MoinMoin compatibility with [[FullSearch("blah blah")]]
-    $needle = preg_replace("/^('|\")([^\\1]*)\\1/","\\2",$value);
+    #$needle = preg_replace("/^('|\")([^\\1]*)\\1/","\\2",$value);
+    $needle = $value;
   }
 
   $url=$formatter->link_url($formatter->page->urlname);
@@ -62,11 +63,42 @@ EOF;
   if ($opts['noexpr']) {
     $tmp=preg_split("/\s+/",$needle);
     $needle=$value=join('|',$tmp);
+    $raw_needle=implode(' ',$tmp);
+    $needle=_preg_search_escape($needle);
+  } else {
+    $needle=_preg_search_escape($needle);
+    $terms = preg_split('/((?<!\S)[-+]?"[^"]+?"(?!\S)|\S+)/s',$needle,-1,
+      PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_NO_EMPTY);
+
+    $common_words=array('the','that','where','what','who','how','too','are');
+    $excl = array();
+    $incl = array();
+    $common = array();
+    foreach($terms as $term) {
+      if (trim($term)=='') continue;
+      if (preg_match('/^([-+]?)("?)([^\\2]+?)\\2$/',$term,$match)) {
+        $word=str_replace(array('/','-','\\','.','*'),'',$match[3]);
+        $len=strlen($word);
+
+        if (!$match[1] and $match[2] != '"') {
+          if ($len <= 2 or in_array($word,$common_words)) {
+            $common[]=$word;
+            continue;
+          }
+        }
+
+        if ($match[1]=='-') $excl[] = $word;
+        else $incl[] = $word;
+      }
+    }
+    $needle=implode('|',$incl);
+    $raw_needle=implode(' ',$incl);
+    $excl_needle=implode('|',$excl);
   }
-  $needle=_preg_search_escape($needle);
 
   $test=@preg_match("/$needle/","",$match);
-  if ($test === false) {
+  $test2=@preg_match("/$excl_needle/","",$match);
+  if ($test === false or $test2 === false) {
      $opts['msg'] = sprintf(_("Invalid search expression \"%s\""), $needle);
      return $form;
   }
@@ -74,7 +106,12 @@ EOF;
   $hits = array();
   $pages = $DBInfo->getPageLists();
   $pattern = '/'.$needle.'/';
-  if ($opts['case']) $pattern.="i";
+  if ($excl_needle)
+    $excl_pattern = '/'.$excl_needle.'/';
+  if ($opts['case']) {
+    $pattern.="i";
+    $excl_pattern.="i";
+  }
 
   if ($opts['backlinks']) {
      $opts['context']=0; # turn off context-matching
@@ -100,9 +137,12 @@ EOF;
        #$count = count(preg_split($pattern, $body))-1;
        $count = preg_match_all($pattern, $body,$matches);
        if ($count) {
-         $hits[$page_name] = $count;
          # search matching contexts
-         $contexts[$page_name] = find_needle($body,$needle,$opts['context']);
+         $context= find_needle($body,$needle,$excl_needle,$opts['context']);
+         if ($context) {
+           $contexts[$page_name] = $context;
+           $hits[$page_name] = $count;
+         }
        }
      }
   }
@@ -114,7 +154,7 @@ EOF;
   while (list($page_name, $count) = each($hits)) {
     if ($opts['checkbox']) $checkbox="<input type='checkbox' name='pagenames[]' value='$page_name' />";
     $out.= '<li>'.$checkbox.$formatter->link_tag(_rawurlencode($page_name),
-          "?action=highlight&amp;value="._urlencode($value),
+          "?action=highlight&amp;value="._urlencode($needle),
           $page_name,"tabindex='$idx'");
     $out.= ' . . . . ' . $count . (($count == 1) ? ' match' : ' matches');
     $out.= $contexts[$page_name];
