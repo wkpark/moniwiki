@@ -52,7 +52,7 @@ pre.quote {
   white-space:pre-wrap;
   white-space: -moz-pre-wrap; 
   font-family:Georgia,monotype,lucida,fixed;font-size:14px;
-  background-color:#ddddc0;
+  background-color: #E9ECEF;
 }
 
 table.wiki {
@@ -62,7 +62,7 @@ table.wiki {
 }
 
 td.wiki {
-  background-color:#ddddb0;
+  background-color: #E9ECEF;
 /* border-collapse: collapse; */
   border: 0px inset #E2ECE5;
 }
@@ -143,7 +143,7 @@ span.goto, input.goto {
 }
 
 table.closure, td.closure{
-  background-color:#ddddb0;
+  background-color: #E9ECEF;
 }
 
 /*  */
@@ -225,11 +225,14 @@ table.closure, td.closure{
   padding: 5px 1em 5px 1em;
 }
 
-/*
-#wikiMenu {
-  background-color:yellow;
+#wikiIcon {
+ position: absolute;
+ top: 80px; right: 10px;
+
+ margin-left: 10px;
+ text-align: right;
+ vertical-align: middle;
 }
-*/
 
 div.indent { padding-left:2em; }
 
@@ -248,7 +251,7 @@ span.blog-user { font-size:10px; }
 
 div.trackback-hint { font-size: 10px; padding: 1em 1em 1em 1em;background-color: #eee;}
 /* Calendar */
-td.day { background:#90B7DC; text-align: center;}
+td.day { background: #639DD3; text-align: center;}
 td.today { background:#fff; text-align: center;}
 
 /* HierarchicalWiki */
