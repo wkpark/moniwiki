@@ -510,6 +510,10 @@ function do_fullsearch($formatter,$options) {
 }
 
 function do_goto($formatter,$options) {
+  if (preg_match("/^(http:\/\/|ftp:\/\/)/",$options[value])) {
+     $options[url]=$options[value];
+     unset($options[value]);
+  }
   if ($options[value]) {
      $url=stripslashes($options[value]);
      $url=_rawurlencode($url);
@@ -519,8 +523,7 @@ function do_goto($formatter,$options) {
      #return;
      #$url=("&amp;","&",$options[value]);
      $formatter->send_header(array("Status: 302","Location: ".$url));
-  } else
-  if ($options[url]) {
+  } else if ($options[url]) {
      $url=str_replace("&amp;","&",$options[url]);
      $formatter->send_header(array("Status: 302","Location: ".$url));
   } else {
