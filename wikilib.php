@@ -1043,7 +1043,7 @@ function wiki_notify($formatter,$options) {
     $body.=$diff;
   }
 
-  mail($mailto,$subject,$body,$mailheaders);
+  mail($mailto,$subject,$body,$mailheaders,'-f"'.$from.'"');
 
   if ($options['noaction']) return 1;
 
@@ -1077,7 +1077,7 @@ function wiki_sendmail($body,$options) {
   $mailheaders.= "Content-Type: text/plain; charset=$DBInfo->charset\n";
   $mailheaders.= "Content-Transfer-Encoding: 8bit\n\n";
 
-  mail($email,$subject,$body,$mailheaders);
+  mail($email,$subject,$body,$mailheaders,'-f"'.$from.'"');
 }
 
 
