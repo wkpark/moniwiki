@@ -1,4 +1,8 @@
 <?
+# $Id$
+
+$Globals[interwiki][]=array();
+$Globals[wikis]="";
 
 function get_scriptname() {
   // Return full URL of current page.
@@ -9,19 +13,37 @@ function get_scriptname() {
   return $SCRIPT_NAME;
 }
 
+function get_intermap() {
+   global $Globals;
+#   if ($Globals[interwiki]) return;
+      
+   # intitialize interwiki map
+   $map=file("intermap.txt");
+
+   for ($i=0;$i<sizeof($map);$i++) {
+      $dum=split("[[:space:]]",$map[$i]);
+      $Globals[interwiki][$dum[0]]=trim($dum[1]);
+      $Globals[wikis].="$dum[0]|";
+   }
+   $Globals[wikis].="Self";
+
+}
+
+get_intermap();
+
 function http_header() {
 
 }
 
-class WikiConfig {
-  function WikiConfig() {
+class WikiDB {
+  function WikiDB() {
     $this->url_prefix = '/wiki';
     $this->data_dir = '/home/httpd/wiki/data';
     $this->text_dir = $this->data_dir . '/text';
     $this->editlog_name = $this->data_dir . '/editlog';
     $this->umask = 02;
 
-    $this->logo_string = '<img src="phiki.gif" border=0>';
+    $this->logo_string = '<img src="/wiki/moinmoin.gif" border=0>';
     $this->show_hosts = TRUE;
 
     $this->date_fmt = 'D d M Y';
@@ -35,12 +57,31 @@ class WikiConfig {
     // 'phiki.php3?WikiWord'?  Default:  false.
     $this->rewrite = true;
   }
+
+  function getPageKey($pagename) {
+    # normalize a pagename to uniq key
+    return $this->text_dir . '/' . $pagename;
+  }
+
+  function hasPage($page) {
+    $name=$this->getPageKey($pagename);
+
+    return file_exists($name); 
+  }
+
+  function getPage($page,$options="") {
+    return new WikiPage($page,$options);
+  }
 }
 
 class WikiPage {
   var $fp;
   var $filename;
-  function WikiPage($name) {
+  function WikiPage($name,$options="") {
+    if ($options[rev])
+      $this->rev=$options[rev];
+    else
+      $this->rev=0; # current rev.
     $this->name = $name;
     $this->filename = $this->_filename($name);
     $this->body = "";
@@ -48,8 +89,8 @@ class WikiPage {
 
   function _filename($name) {
     // Return filename where this word/page should be stored.
-    global $Config;
-    $filename = $Config->text_dir . '/' . $name;
+    global $DBInfo;
+    $filename = $DBInfo->text_dir . '/' . $name;
     return $filename;
   }
 
@@ -61,13 +102,21 @@ class WikiPage {
     return @filemtime($this->filename);
   }
 
-  function get_body() {
-    return file($this->filename);
-  }
-
   function get_raw_body() {
     if ($this->body)
-        return $this->body;
+       return $this->body;
+
+    if ($this->rev) {
+       $fp=popen("co -q -p'".$this->rev."' ".$this->filename,"r");
+       if (!$fp)
+          return "";
+       while (!feof($fp)) {
+          $line=fgets($fp,1024);
+          $out .= $line;
+       }
+       pclose($fp);
+       return $out;
+    }
 
     $fp=fopen($this->filename,"r");
     $body="";
@@ -91,10 +140,16 @@ class WikiPage {
        $this->write($this->body);
   }
 
-  function write($body) {
+  function write($body,$comment="") {
+    global $REMOTE_ADDR;
+#
     $this->body=$body;
+# get gmtime
+
     $fp=fopen($this->filename,"w");
     fwrite($fp, $body);
+    fclose($fp);
+    system("ci -q -t-".$this->name." -l -m'".$REMOTE_ADDR.";;".$comment."' ".$this->filename);
   }
 }
 
@@ -104,25 +159,18 @@ class Formatter {
  function Formatter($page) {
    $this->page=$page;
 
-   # intitialize interwiki map
-   $map=file("intermap.txt");
-
-   $this->wikis="";
-   for ($i=0;$i<sizeof($map);$i++) {
-      $dum=split("[[:space:]]",$map[$i],2);
-      $this->interwiki[$dum[0]]=trim($dum[1]);
-      $this->wikis.="$dum[0]|";
-   }
-   $this->wikis.="Self";
  }
 
  function interlink($wiki,$page) {
-   global $Config;
+   global $DBInfo;
+   global $Globals;
+
+   if (!$Globals[interwiki]["$wiki"]) return "$wiki:$page";
 
    $page=trim($page);
    $img=strtolower($wiki);
-   return "<img src='$Config->url_prefix/imgs/$img-16.png' width=16 height=16 align=absmiddle>"
-          ."<a href='".$this->interwiki[$wiki]."$page' title='$wiki:$page'>$page</a>";
+   return "<img src='$DBInfo->url_prefix/imgs/$img-16.png' width=16 height=16 align=absmiddle>"
+          ."<a href='".$Globals[interwiki][$wiki]."$page' title='$wiki:$page'>$page</a>";
  }
 
  function link_tag($query_string, $text='') {
@@ -154,6 +202,7 @@ class Formatter {
    }
    return "";
  }
+
  function _table($on,$attr="") {
    if ($on)
       return "<table class='wiki' border=1 cellpadding=3 $attr>\n";
@@ -162,6 +211,7 @@ class Formatter {
  }
 
  function send_page() {
+   global $Globals;
    $lines=explode("\n",$this->page->get_raw_body());
 
    $text="";
@@ -277,7 +327,7 @@ class Formatter {
       $line=preg_replace("/(?<!\[)\[([^\[]*)\](?!\])/","<a href='\\1'>\\1</a>",$line);
 
 
-      $rule="/($this->wikis):([^<>\s\']+[\s]{0,1})/e";
+      $rule="/(".$Globals[wikis]."):([^<>\s\']+[\s]{0,1})/e";
       $repl="\$this->interlink('\\1','\\2')";
       $line=preg_replace($rule, $repl, $line);
 
@@ -311,6 +361,103 @@ class Formatter {
    print $text;
  }
 
+ function _parse_rlog($log) {
+   $lines=explode("\n",$log);
+   $state=0;
+   $flag=0;
+
+   $out="<h1>Revision History</h1>\n";
+   $out.="<table border=1 cellpadding=3>\n";
+   $out.="<th>Rev.</th><th>file information</th><th>IP</th>".
+         "<th>actions</th>";
+   $out.= "</tr>\n";
+   
+   foreach ($lines as $line) {
+      if (!$state) {
+        if (!preg_match("/^---/",$line)) { continue;}
+        else {$state=1; continue;}
+      }
+      
+      switch($state) {
+        case 1:
+            preg_match("/^revision ([0-9\.]*)/",$line,$match);
+            $rev=$match[1];
+            $state=2;
+            break;
+        case 2:
+            $inf=preg_replace("/author:.*;\s+state:.*;/","",$line);
+            $state=3;
+            break;
+        case 3:
+            $dummy=explode(";;",$line);
+            $ip=$dummy[0];
+            $user=$dummy[1];
+            $comment=$dummy[2];
+            $state=4;
+            break;
+        case 4:
+            $out.="<tr>\n";
+            $out.="<td rowspan=2># $rev</td><td>$inf</td><td>$ip&nbsp;</td>".
+                  "<td>".$this->link_to("?action=recall&rev=$rev","view").
+                  " ".$this->link_to("?action=raw&rev=$rev","raw");
+            if ($flag) {
+               $out.= " ".$this->link_to("?action=diff&rev=$rev","diff");
+            }
+            $out.="</td>";
+            $out.="</tr>\n";
+            $out.="<tr><td colspan=3>$comment&nbsp;</td></tr>\n";
+            $state=1;
+            $flag=1;
+            break;
+      }
+   }
+   $out.="</table>\n";
+   return $out; 
+ }
+
+ function show_info() {
+   $fp=popen("rlog ".$this->page->filename,"r");
+   if (!$fp)
+      return "";
+   while (!feof($fp)) {
+      $line=fgets($fp,1024);
+      $out .= $line;
+   }
+   pclose($fp);
+   print $this->_parse_rlog($out);
+ }
+
+ function _parse_diff($diff) {
+   $lines=explode("\n",$diff);
+   $out="";
+   foreach ($lines as $line) {
+      $marker=$line[0];
+      $line=substr($line,1,strlen($line));
+      if ($marker=="@") $line='<hr style="color:#FF3333">';
+      else if ($marker=="-") $line='<div class="diff-removed">'.$line.'</div>';
+      else if ($marker=="+") $line='<div class="diff-added">'.$line.'</div>';
+      else if ($marker=="\\" && $line==" No newline at end of file") continue;
+      $out.=$line."\n";
+   }
+   return $out;
+ }
+
+ function get_diff($rev1="",$rev2="") {
+   $option="";
+   if ($rev1) $option="-r$rev1 ";
+   if ($rev2) $option.="-r$rev2 ";
+
+   $fp=popen("rcsdiff -u $option ".$this->page->filename,"r");
+   if (!$fp)
+      return "";
+   while (!feof($fp)) {
+      $line=fgets($fp,1024);
+      $out .= $line;
+   }
+   pclose($fp);
+   print $this->_parse_diff($out);
+ }
+
  function send_header() {
    print <<<EOF
 <html><head>
@@ -334,7 +481,20 @@ table.wiki {
 /*  border-color:silver; */
 }
 h1,h2,h3,h4,h5 {font-family:Tahoma;background-color:#B8B88E;padding-left:6px;}
+
+div.diff-added {
+   font-family:Lucida Console,fixed;
+   background-color:#61FF61;
+   color:black;
+}
+
+div.diff-removed {
+   font-family:Lucida Console,fixed;
+   background-color:#E9EAB8;
+   color:black;
+}
 //-->
+
 </style>
 </head>
 <body>
@@ -356,16 +516,16 @@ EOF;
 
  function send_title($text="", $link=0, $msg=0) {
    // Generate and output the top part of the HTML page.
-   global $Config;
+   global $DBInfo;
 
    if (!$text)
      $text=$this->page->name;
 
    print "<head><title>$text</title></head>";
    print "<body>\n  <font class=title>";
-   if ($Config->logo_string) {
-     print $this->link_tag('RecentChanges', $Config->logo_string);
-     print '&nbsp;&nbsp;&nbsp;&nbsp;';
+   if ($DBInfo->logo_string) {
+     print $this->link_tag('RecentChanges', $DBInfo->logo_string);
+     print '&nbsp;&nbsp;&nbsp;';
    }
    if ($link)
      print "<a href=\"$link\">$text</a>";
@@ -438,7 +598,7 @@ EOF;
 #            res[i] = '_%02x' % ord(c)
 #    return string.joinfields(res, '')
 
-$Config = new WikiConfig;
+$DBInfo = new WikiDB;
 
 if (!empty($PATH_INFO)) {
    if ($PATH_INFO[0] == '/')
@@ -451,9 +611,10 @@ if (!empty($PATH_INFO)) {
       $pagename = "FrontPage";
 }
 
+
 if ($REQUEST_METHOD=="POST") {
    if ($action=="savepage") {
-   $page = new WikiPage($pagename);
+   $page = $DBInfo->getPage($pagename);
    $formatter = new Formatter($page);
    $formatter->send_header();
    if ($page->exists()) {
@@ -465,6 +626,13 @@ if ($REQUEST_METHOD=="POST") {
    $savetext=str_replace("\r\n", "\n", $savetext);
    $savetext=stripslashes($savetext);
    $new=md5($savetext);
+
+   if ($orig == $new) {
+      $formatter->send_title("No difference found","",$formatter->link_tag($page->name,""));
+      $formatter->send_footer(" ");
+
+      return;
+   }
    $formatter->page->set_raw_body($savetext);
 
    if ($button_preview) {
@@ -494,20 +662,68 @@ if (!empty($QUERY_STRING))
    $query= $QUERY_STRING;
 
 if ($pagename) {
-   $page = new WikiPage($pagename);
+
+   if ($action=="recall" && $rev) {
+       $options[rev]=$rev;
+       $page = $DBInfo->getPage($pagename,$options);
+   } else
+       $page = $DBInfo->getPage($pagename);
+
    $formatter = new Formatter($page);
-   $formatter->send_header();
-   if ($page->exists() && $action!="edit") {
-     $formatter->send_title();
-     $formatter->send_page();
-   } else {
+
+   if (!$action) {
+      if (!$page->exists()) {
+        $formatter->send_header();
+        $formatter->send_title($page->name." Not Found");
+        $formatter->send_footer();
+        return;
+      }
+      $formatter->send_header();
+      $formatter->send_title();
+      $formatter->send_page();
+      $formatter->send_footer();
+      return;
+   }
+
+   if ($action=="diff") {
+      $formatter->send_header();
+      $formatter->send_title("Diff for $rev ".$page->name);
+      print $formatter->get_diff($rev);
+      $formatter->send_footer();
+
+      return;
+   }
+   if ($action=="recall" || $action=="raw") {
+     if ($action=="raw") {
+     } else {
+        $formatter->send_header();
+        $formatter->send_title("Rev. $rev ".$page->name);
+     }
+     if (!$page->exists() || !$page->get_raw_body()) {
+        if ($action=="raw") {
+        } else {
+           $formatter->send_footer();
+        }
+        return;
+     }
+     if ($action=="raw") {
+        print $page->get_raw_body();
+     } else {
+        $formatter->send_page();
+        $formatter->send_footer();
+     }
+     return;
+   } else if ($action=="edit") {
+     $formatter->send_header();
      $formatter->send_title("Edit ".$page->name);
      $formatter->send_editor();
+     $formatter->send_footer();
+   } else if ($action=="info") {
+     $formatter->send_header();
+     $formatter->send_title("Info. for ".$page->name);
+     $formatter->show_info();
+     $formatter->send_footer();
    }
-   $formatter->send_footer();
 }
-
-#$text=process($lines);
-
 
 ?>
