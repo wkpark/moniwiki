@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0rc16';
+$_release = '1.0rc17';
 
 #ob_start("ob_gzhandler");
 
@@ -45,9 +45,9 @@ function _rawurlencode($url) {
 }
 
 function _urlencode($url) {
-  $name=urlencode(strtr($url,"+"," "));
-  $urlname=preg_replace(array('/%2F/i','/%7E/i','/%23/'),array('/','~','#'),$name);
-  return $urlname;
+  #$name=urlencode(strtr($url,"+"," "));
+  #return preg_replace(array('/%2F/i','/%7E/i','/%23/'),array('/','~','#'),$name);
+  return preg_replace("/([^a-z0-9\/\?\.\+~#&:;=%]{1})/ie","'%'.strtoupper(dechex(ord('\\1')))",$url);
 }
 
 function qualifiedUrl($url) {
@@ -455,7 +455,8 @@ class WikiDB {
     $this->notify=0;
     $this->trail=0;
     $this->diff_type='fancy_diff';
-    $this->use_sistersites=0;
+    $this->use_sistersites=1;
+    $this->use_twinpages=1;
 #    $this->security_class="needtologin";
 
     # set user-specified configuration
@@ -573,7 +574,7 @@ class WikiDB {
     for ($i=0;$i<sizeof($map);$i++) {
       $line=rtrim($map[$i]);
       if (!$line || $line[0]=="#" || $line[0]==" ") continue;
-      if (preg_match("/^[a-z]+/i",$line)) {
+      if (preg_match("/^[A-Z]+/",$line)) {
         $dum=split("[[:space:]]",$line);
         $this->interwiki[$dum[0]]=trim($dum[1]);
         $this->interwikirule.="$dum[0]|";
@@ -1349,7 +1350,7 @@ class Formatter {
     $img="<a href='$url' target='wiki'><img border='0' src='$DBInfo->imgs_dir/".
          strtolower($wiki)."-16.png' align='middle' height='16' width='16' ".
          "alt='$wiki:' title='$wiki:' /></a>";
-    if (!$text) $text=$page;
+    if (!$text) $text=str_replace("%20"," ",$page);
     else if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
       $text= "<img border='0' alt='$text' src='$text' />";
       $img="";
@@ -1420,7 +1421,7 @@ class Formatter {
           return "<a href='$url'>$word</a>";
         case -2:
           return "<a href='$url'>$word</a>".
-            "</a><tt class='sister'><a href='$url'>&#x203a;</a></tt>";
+            "<tt class='sister'><a href='$url'>&#x203a;</a></tt>";
         default:
           return "<a href='$url'>$word</a>".
             "<tt class='sister'><a href='#sister$idx'>&#x203a;$idx</a></tt>";
@@ -1434,7 +1435,7 @@ class Formatter {
         if ($sisters === true) {
           $this->pagelinks[$page]=-2;
           return "<a href='$url'>$word</a>".
-            "</a><tt class='sister'><a href='$url'>&#x203a;</a></tt>";
+            "<tt class='sister'><a href='$url'>&#x203a;</a></tt>";
         }
         if ($sisters) {
           $this->sisters[]="<tt class='foot'>&#160;&#160;&#160;".
@@ -1447,7 +1448,7 @@ class Formatter {
         if ($idx > 0) {
           return "<a href='$url'>$word</a>".
            "<a name='rsister$idx' id='rsister$idx'>".
-           "</a><tt class='sister'><a href='#sister$idx'>&#x203a;$idx</a></tt>";
+           "<tt class='sister'><a href='#sister$idx'>&#x203a;$idx</a></tt>";
         }
       }
       $this->pagelinks[$page]=0;
@@ -1462,8 +1463,9 @@ class Formatter {
 
     $head=str_replace('\"','"',$head); # revert \\" to \"
 
-    if (!$this->depth_top) { $this->depth_top=$dep; $depth=1; }
-    else {
+    if (!$this->depth_top) {
+      $this->depth_top=$dep; $depth=1;
+    } else {
       $depth=$dep - $this->depth_top + 1;
       if ($depth <= 0) $depth=1;
     }
@@ -1486,20 +1488,21 @@ class Formatter {
       $dum[$i-1]=0;
       $num=join($dum,".");
     }
-#   $open="";
-#   $close="";
+    $open="";
+    $close="";
 
     if ($odepth && ($depth > $odepth)) {
-#      $open.="<dd><dl>\n"; 
+      $open.="<div>\n"; # <section>
       $num.=".1";
     } else if ($odepth) {
       $dum=explode(".",$num);
       $i=sizeof($dum)-1;
+      if ($depth == $odepth) $close.="</div>\n<div>\n"; # </section><section>
       while ($depth < $odepth && $i > 0) {
          unset($dum[$i]);
          $i--;
          $odepth--;
-#         $close.="</dl></dd>\n"; 
+         $close.="</div>\n"; # </section>
       }
       $dum[$i]++;
       $num=join($dum,".");
@@ -1511,8 +1514,9 @@ class Formatter {
     $prefix=$this->toc_prefix;
     if ($this->toc)
       $head="<a href='#toc'>$num</a> $head";
+    $purple=" <a class='purple' href='#s$prefix-$num'>#</a>";
 
-    return "<h$dep><a id='s$prefix-$num' name='s$prefix-$num' ></a> $head</h$dep>";
+    return "$close$open<h$dep><a id='s$prefix-$num' name='s$prefix-$num'></a> $head$purple</h$dep>";
   }
 
   function macro_repl($macro) {
@@ -1692,7 +1696,7 @@ class Formatter {
         if ($in_table) {
           $text.=$this->_table(0)."<br />\n";$in_table=0; continue;
         } else {
-          if (!$in_p) { $text.="<div>"; $in_p=1;}
+          if (!$in_p) { $text.="<div>\n"; $in_p=1;}
           #else if ($in_p==2) { $text.="</div><br />\n<div>"; $in_p=1;}
           else if ($in_p==2) { $text.="</div><br />\n"; $in_p=1;}
           else if ($in_p==1) { $text.="<br />\n"; $in_p=1;}
@@ -1700,7 +1704,7 @@ class Formatter {
           continue;
         }
       } else if ($in_p == 1) {
-        $text.="<div>";
+        $text.="<div>\n";
         $in_p= 2;
       }
       if ($line[0]=='#' and $line[1]=='#') continue; # comments
@@ -1906,7 +1910,18 @@ class Formatter {
       $in_li--;
     }
     # close div
-    if ($in_p === 2) $close.="</div>\n";
+    if ($in_p === 2) $close.="</div>\n"; # </para>
+
+    if ($this->head_dep) {
+      $odepth=$this->head_dep;
+      $dum=explode(".",$this->head_num);
+      $i=sizeof($dum)-1;
+      while (0 < $odepth && $i > 0) {
+         $i--;
+         $odepth--;
+         $close.="</div>\n"; # </section>
+      }
+    }
 
     $text.=$close;
   
@@ -2448,11 +2463,11 @@ FOOT;
     }
     # setup title variables
     $heading=$this->link_to("?action=fullsearch&amp;value=$name",$title);
-    $title="$group<span class='title'><b>$title</b></span>";
+    $title="$group<span class='wikiTitle'><b>$title</b></span>";
     if ($link)
-      $title="<a href=\"$link\" class='title'>$title</a>";
+      $title="<a href=\"$link\" class='wikiTitle'>$title</a>";
     else if (empty($options['nolink']))
-      $title=$this->link_to("?action=fullsearch&amp;value=$name",$title,"class='title'");
+      $title=$this->link_to("?action=fullsearch&amp;value=$name",$title,"class='wikiTitle'");
     $logo=$this->link_tag($DBInfo->logo_page,'',$DBInfo->logo_string);
     $goto_form=$DBInfo->goto_form ?
       $DBInfo->goto_form : goto_form($action,$DBInfo->goto_type);
