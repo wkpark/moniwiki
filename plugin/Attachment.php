@@ -38,7 +38,7 @@ function macro_Attachment($formatter,$value) {
       return "<span class=\"imgAttach\"><img src='$url' alt='$value' $attr/></span>";
     } else
       return "<span class=\"attach\"><img align='middle' src='$DBInfo->imgs_dir/uploads-16.png' />".
-        $formatter->link_to("?action=download&amp;value=$value",$value).'</span>';
+        $formatter->link_tag(_urlencode($pagename),"?action=download&amp;value=$value",$value).'</span>';
   }
   if ($pagename == $formatter->page->name)
     return '<span class="attach">'.$formatter->link_to("?action=UploadFile&amp;rename=$value",sprintf(_("Upload new Attachment \"%s\""),$value)).'</span>';
