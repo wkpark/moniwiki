@@ -2966,7 +2966,7 @@ if ($pagename) {
         print _(" or alternativly, use one of these templates:\n");
         $options['linkto']="?action=edit&amp;template=";
         print macro_TitleSearch($formatter,".*Template",$options);
-        print _("To create your own templates, add a page with a 'Template' suffix\n");
+        print _("To create your own templates, add a page with a 'Template' suffix.\n");
       }
 
       $args['editable']=1;
