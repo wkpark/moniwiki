@@ -140,6 +140,25 @@ class Blog_cache {
     $entries=array();
     $logs=array();
 
+/*
+    if ($DBInfo->use_trackback) {
+      #read trackbacks and set entry counter
+      $cache= new Cache_text('trackback');
+      if ($cache->exists($formatter->page->name)) {
+        $trackback_raw=$cache->fetch($formatter->page->name);
+
+        $trackbacks=explode("\n",$trackback_raw);
+        foreach ($trackbacks as $trackback) {
+          list($dummy,$entry,$extra)=explode("\t",$trackback);
+          if ($entry) {
+            if($formatter->trackback_list[$entry]) $formatter->trackback_list[$entry]++;
+            else $formatter->trackback_list[$entry]=1;
+          }
+        }
+      }
+    }
+*/
+
     foreach ($blogs as $blog) {
       $pagename=$DBInfo->keyToPagename($blog);
       $pageurl=_urlencode($pagename);
@@ -154,13 +173,17 @@ class Blog_cache {
             $entry=explode(' ',$pageurl.' '.$match[2],4);
             if ($match[1]) $endtag='}}}';
             $state=1;
+            $commentcount=0;
           }
           continue;
         }
         if (preg_match("/^$endtag$/",$line)) {
           $state=0;
-          $temp=explode("----\n",$summary,2);
-          $entry[]=$temp[0];
+          list($content,$comments)=explode("----\n",$summary,2);
+          $entry[]=$content;
+          if ($comments and !$options['noaction'])
+            $commentcount=sizeof(explode("----\n",$comments));
+          $entry[]=$commentcount;
           $entries[]=$entry;
           $summary='';
           continue;
@@ -222,6 +245,8 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
   $opts=explode(',',$match[4]);
   $opts=array_merge($opts,array_keys($options));
   #print_r($match);print_r($opts);
+  if (in_array('noaction',$opts))
+    $options['noaction']=1;
 
   $category_pages=array();
 
@@ -325,15 +350,17 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
     $template.='@ $date ';
 
   if (in_array('summary',$opts))
-    $template.='</span><div class=\"blog-summary\">$summary</div>$sep\n";';
+    $template.='</span><div class=\"blog-summary\">$summary$btn</div>$sep\n";';
   else
     $template.='</span>$sep\n";';
     
   $time_current= time();
   $items='';
 
+  $sendopt['nosisters']=1;
+
   foreach ($logs as $log) {
-    list($page, $user,$date,$title,$summary)= $log;
+    list($page, $user,$date,$title,$summary,$commentcount)= $log;
     $tag=md5($user.' '.$date.' '.$title);
     $datetag='';
 
@@ -368,9 +395,22 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
       $f=new Formatter($p);
       $summary=str_replace('\}}}','}}}',$summary); # XXX
       ob_start();
-      $f->send_page($summary);
+      $f->send_page($summary,$sendopt);
       $summary=ob_get_contents();
       ob_end_clean();
+
+      if (!$options['noaction']) {
+        if ($commentcount) {
+          $add_button=($commentcount == 1) ? _("%d comment"):_("%d comments");
+        } else
+          $add_button=_("Add comment");
+        $add_button=sprintf($add_button,$commentcount);
+        $btn= $formatter->link_tag(_urlencode($page),"?action=blog&amp;value=$tag",$add_button);
+        if (getPlugin('SendPing'))
+          $btn.= ' | '.$formatter->link_tag(_urlencode($page),"?action=trackback&amp;value=$tag",_("track back").$counter);
+        $btn="<div class='blog-action'>&raquo; ".$btn."</div>\n";
+      } else
+        $btn='';
     }
 
     eval($template);
