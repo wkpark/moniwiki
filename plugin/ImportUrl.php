@@ -23,46 +23,77 @@ function do_ImportUrl($formatter,$options) {
 #  fix_url('http://hello.com',$dummy);
 
   $out= strip_tags($html_data,'<pre><hr><td><tr><a><b><i><u><h1><h2><h3><h4><h5><li><img>');
-  # remove leading spaces
-  $out= preg_replace("/\n[ ]+/","\n",$out);
-  $out= preg_replace("/\r/","",$out);
-  $out= preg_replace("/<img\s*[^>]*src=['\"]((http|ftp)[^'\"]+)['\"][^>]*>/i",
-    "\\1",$out);
-  $out = preg_replace("/<img\s*[^>]*src=['\"]([^'\"]+)['\"][^>]*>/ie",
-    "fix_url('$value','\\1')",$out);
-  $out= preg_replace("/<b>([^<]+)<\/b>/i","'''\\1'''",$out);
-  $out= preg_replace("/<i>([^<]+)<\/i>/i","''\\1''",$out);
-  $out= preg_replace("/<u>([^<]+)<\/u>/i","__\\1__",$out);
-  $out= preg_replace("/<li>/i"," * ",$out);
-  $out= preg_replace("/<\/li>\n*/i","",$out);
-  $out= preg_replace("/<td\s*[^>]*>/i","||",$out);
-  $out= preg_replace("/<\/td>\n*/i","",$out);
-  $out= preg_replace("/<tr\s*[^>]*>/i","",$out);
-  $out= preg_replace("/<\/tr>\n*/i","||\n",$out);
-  $out= preg_replace("/<hr\s*[^>]*>/i","----\n",$out);
-  #
-  $out= str_replace(array("&quot;",'&lt;','&gt;','&amp;'),
-                     array('"','<','>','&'),$out);
-  # for rendered wiki page
-  $out= preg_replace("/<pre\s*class=.wiki.>/i","{{{",$out);
-  $out= preg_replace("/<pre\s*[^>]*>/i","{{{#!vim config",$out);
-  $out= preg_replace("/<\/pre>/i","}}}\n",$out);
-  # remove id tag and perma links
-  $out= preg_replace("/<a\s*id=[^>]+>[^<]*<\/a>/i","",$out);
-  $out= preg_replace("/<a\s*[^>]*href=['\"]#[^>]+>[^<]*<\/a>/i","",$out);
-  # remove ?WikiName links
-  $out= preg_replace("/<a\s*[^>]*href=['\"][^>]+>\?<\/a>/i","",$out);
-  # url
-  $out= preg_replace("/<a\s*[^>]*href=['\"]([^'\"]+)['\"][^>]*>([^<]+)<\/a>/ie",
-    "'['.fix_url('$value','\\1').'\\2]'",$out);
-  # heading
-  $out= preg_replace("/<h(\d)[^>]*>(?:\d+\.?\d*)*([^<]+)<\/h\d>/ie",
-    "str_repeat('=', \\1).' \\2 '.str_repeat('=', \\1)",$out);
-  # paragraph
-  $out= preg_replace("/\n{3,}/","\n\n",$out);
+
+  $splits=preg_split('/(<pre\s*[^>]*>|<\/pre>)/', $out,
+    -1, PREG_SPLIT_DELIM_CAPTURE);
+
+  $wiki='';
+  foreach ($splits as $split) {
+    if (preg_match('/^<pre\s/i',$split)) {
+      $state='p';
+      if (preg_match("/<pre\s*class=.wikiSyntax.[^>]*>/i",$split))
+        $pre='{{{#!vim';
+      else if (preg_match("/<pre\s*class=.wiki.>/i",$split))
+        $pre='{{{';
+      else
+        $pre='{{{#!';
+      continue;
+    } else if (preg_match('/^<\/pre>/i',$split)) {
+      $state='';
+      $pre.="}}}\n";
+      $pre= str_replace(array("&quot;",'&lt;','&gt;','&amp;'),
+                        array('"','<','>','&'),$pre);
+      $wiki.=$pre;
+      $pre='';
+      continue;
+    }
+    if ($pre) {
+      $pre.=$split;
+      continue;
+    }
+    # remove leading spaces
+    $out= preg_replace("/\n[ ]+/","\n",$split);
+    $out= preg_replace("/\r/","",$out);
+    $out= preg_replace("/<img\s*[^>]*src=['\"]((http|ftp)[^'\"]+)['\"][^>]*>/i",
+      "\\1",$out);
+    $out = preg_replace("/<img\s*[^>]*src=['\"]([^'\"]+)['\"][^>]*>/ie",
+      "fix_url('$value','\\1')",$out);
+    $out= preg_replace("/<b>([^<]+)<\/b>/i","'''\\1'''",$out);
+    $out= preg_replace("/<i>([^<]+)<\/i>/i","''\\1''",$out);
+    $out= preg_replace("/<u>([^<]+)<\/u>/i","__\\1__",$out);
+    $out= preg_replace("/<li>/i"," * ",$out);
+    $out= preg_replace("/<\/li>\n*/i","",$out);
+    $out= preg_replace("/<td\s*[^>]*>/i","||",$out);
+    $out= preg_replace("/<\/td>\n*/i","",$out);
+    $out= preg_replace("/<tr\s*[^>]*>/i","",$out);
+    $out= preg_replace("/<\/tr>\n*/i","||\n",$out);
+    $out= preg_replace("/<hr\s*[^>]*>/i","----\n",$out);
+    #
+    $out= str_replace(array("&quot;",'&lt;','&gt;','&amp;'),
+                      array('"','<','>','&'),$out);
+    # for rendered wiki page
+    #$out= preg_replace("/<pre\s*class=.wiki.>/i","{{{",$out);
+    #$out= preg_replace("/<pre\s*[^>]*>/i","{{{#!vim config",$out);
+    #$out= preg_replace("/<\/pre>/i","}}}\n",$out);
+    # remove id tag and perma links
+    $out= preg_replace("/<a\s*id=[^>]+>[^<]*<\/a>/i","",$out);
+    $out= preg_replace("/<a\s*[^>]*href=['\"]#[^>]+>[^<]*<\/a>/i","",$out);
+    # remove ?WikiName links
+    $out= preg_replace("/<a\s*[^>]*href=['\"][^>]+>\?<\/a>/i","",$out);
+    # url
+    $out= preg_replace("/<a\s*[^>]*href=['\"]([^'\"]+)['\"][^>]*>([^<]+)<\/a>/ie",
+      "'['.fix_url('$value','\\1').'\\2]'",$out);
+    # heading
+    $out= preg_replace("/<h(\d)[^>]*>(?:\d+\.?\d*)*([^<]+)<\/h\d>/ie",
+      "str_repeat('=', \\1).' \\2 '.str_repeat('=', \\1)",$out);
+    # paragraph
+    $out= preg_replace("/\n{3,}/","\n\n",$out);
+
+    $wiki.=$out;
+  }
 
   $formatter->send_header("content-type: text/plain",$options);
-  print $out;
+  print $wiki;
   return;
 
   $options['savetext']=$out;
