@@ -13,6 +13,7 @@
 //
 // $Id$
 // vim:et:ts=2:
+$_version="$Revision";
 
 include "wikilib.php";
 
@@ -50,6 +51,19 @@ function hasPlugin($pluginname) {
     $plugins[$name]= $name;
   }
   return isset($plugins[$pluginname]);
+}
+
+function hasProcessor($pro_name) {
+  static $processors=array();
+  if ($processors) return isset($processors[$pro_name]);
+
+  $handle= opendir('plugin/processor');
+  while ($file= readdir($handle)) {
+    if (is_dir("plugin/processor/$file")) continue;
+    $name= substr($file,0,-4);
+    $processors[$name]= $name;
+  }
+  return isset($processors[$pro_name]);
 }
 
 function goto_form($action,$option="") {
@@ -145,6 +159,10 @@ class MetaDB_dba extends MetaDB {
     $this->metadb=@dba_open($file.".cache","r",$type);
   }
 
+  function close() {
+    dba_close($this->metadb);
+  }
+
   function getSisterSites($pagename) {
     if (dba_exists($pagename,$this->metadb)) {
        $dum=explode(" ",dba_fetch($pagename,$this->metadb));
@@ -186,25 +204,33 @@ class MetaDB {
   function getAllPages() {
     return array();
   }
+  function close() {
+  }
 }
 
 class Counter_dba {
   var $counter;
   function Counter_dba($DB) {
-    $this->counter=@dba_open($DB->data_dir."/counter.db","w",$DB->dba_type);
-    if (!$this->counter)
+    if (!file_exists($DB->data_dir."/counter.db"))
        $this->counter=dba_open($DB->data_dir."/counter.db","n",$DB->dba_type);
+    else
+       $this->counter=@dba_open($DB->data_dir."/counter.db","w",$DB->dba_type);
   }
 
   function incCounter($pagename) {
     $count=dba_fetch($pagename,$this->counter);
+    if (!$count) $count=0;
     $count++;
-    dba_replace($key,$count,$this->counter);
+    dba_replace($pagename,$count,$this->counter);
   }
 
   function pageCounter($pagename) {
     $count=dba_fetch($pagename,$this->counter);
     return $count;
+  }
+
+  function close() {
+    dba_close($this->counter);
   }
 }
 
@@ -217,6 +243,8 @@ class Counter {
 
   function pageCounter($page) {
     return 1;
+  }
+  function close() {
   }
 }
 
@@ -368,7 +396,8 @@ class WikiDB {
   }
 
   function Close() {
-    dba_close($this->counter);
+    $this->metadb->close();
+    $this->counter->close();
   }
 
   function set_intermap() {
@@ -587,7 +616,6 @@ class WikiDB {
     $key=$this->getPageKey($pagename);
     if (file_exists($key)) chmod($key,$perms);
   }
-
 }
 
 class Cache_text {
@@ -752,6 +780,11 @@ class WikiPage {
 
   function _get_raw_body() {
     $fp=@fopen($this->filename,"r");
+    if (!$fp) {
+      $out="You have no permission to see this page.\n\n";
+      $out.="See MoniWiki/AccessControl\n";
+      return $out;
+    }
     $size=filesize($this->filename);
     $body=fread($fp,$size);
     fclose($fp);
@@ -853,6 +886,8 @@ class Formatter {
     } else if ($url[0]=="[") {
       $url=substr($url,1,-1);
       return $this->macro_repl($url); # No link
+    } else if ($url[0]=='$') {
+      return processor_latex($this,"#!latex\n".$url);
     }
 
     if ($url[0]=="!") {
@@ -993,6 +1028,18 @@ class Formatter {
 
     $num="".$this->head_num;
     $odepth=$this->head_dep;
+
+    if ($head[0] == '#') {
+      # reset TOC numberings
+      if ($this->toc_prefix) $this->toc_prefix++;
+      else $this->toc_prefix=1;
+      $head[0]=' ';
+      $dum=explode(".",$num);
+      $i=sizeof($dum);
+      for ($j=0;$j<$i;$j++) $dum[$j]=1;
+      $dum[$i-1]=0;
+      $num=join($dum,".");
+    }
 #   $open="";
 #   $close="";
 
@@ -1015,10 +1062,11 @@ class Formatter {
     $this->head_dep=$depth; # save old
     $this->head_num=$num;
 
+    $prefix=$this->toc_prefix;
     if ($this->toc)
       $head="<a href='#toc'>$num</a> $head";
 
-    return "<h$dep><a id='s$num' name='s$name' /> $head</h$dep>";
+    return "<h$dep><a id='s$prefix-$num' name='s$prefix-$num' /> $head</h$dep>";
   }
 
   function macro_repl($macro) {
@@ -1083,6 +1131,7 @@ class Formatter {
          $list_type="dl><dd";
       else
          $list_type="dd></dl";
+      $numtype='';
     } else if (!$on && $close !=1)
       $list_type=$list_type."></li";
     if ($on) {
@@ -1139,9 +1188,9 @@ class Formatter {
       $smiley_repl="\$this->smiley_repl('\\1')";
     }
 
-    $text="";
+    $text="<div>";
     $in_pre=0;
-    $in_p=0;
+    $in_p=1;
     $in_li=0;
     $li_open=0;
     $in_table=0;
@@ -1150,16 +1199,18 @@ class Formatter {
 
 # $wordrule="({{{(([^}}}).+)}}})|".
     $wordrule="({{{([^}]+)}}})|".
-             "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|". # macro
-             $this->wordrule;
+              "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|". # macro
+              "\\$([^\\$]+)\\$|". # tex
+              "\\$\\$([^\\$]+)\\$\\$|". # tex
+              $this->wordrule;
 
     foreach ($lines as $line) {
       # strip trailing '\n'
       $line=preg_replace("/\n$/", "", $line);
 
-#      if ($line=="" && $indlen) {continue;}
+#     if ($line=="" && $indlen) {continue;}
       if ($line=="" && $in_pre) {$this->pre_line.="\n";continue;}
-#      if ($line=="" && $in_p && !$in_table) {$in_p=0; $text.="<p>\n";continue;}
+#     if ($line=="" && $in_p && !$in_table) {$in_p=0; $text.="<p>\n";continue;}
       if ($line=="" && !$in_li && !$in_table) {
          if (!$in_p) { $text.="<div>"; $in_p=1; continue;}
          if ($in_p==2) { $text.="</div><br />\n<div>"; $in_p=1; continue;}
@@ -1180,6 +1231,11 @@ class Formatter {
 
             if (function_exists("processor_".$dummy[0])) {
               $this->processor=$dummy[0];
+            } else {
+              if (hasProcessor($dummy[0])) {
+                include("plugin/processor/$dummy[0].php");
+                $this->processor=$dummy[0];
+              }
             }
          } else if ($line[$p+3] == ":") {
             $line[$p+3]=" ";
@@ -1308,7 +1364,8 @@ class Formatter {
       if ($in_pre==-1) {
          $in_pre=0;
          if ($this->processor) {
-             eval("\$out=processor_$this->processor(&\$this,\$option);");
+            $value=$this->pre_line;
+            eval("\$out=processor_$this->processor(&\$this,\$value);");
             $line=$out.$line;
          } else if ($in_quote) {
             # htmlfy '<'
@@ -1774,7 +1831,10 @@ FOOT;
     $pos=strrpos($name,"/");
     if ($pos > 0) $upper=substr($name,0,$pos);
 
-    if (!$title) $title=$this->page->name;
+    if (!$title) {
+      $title=$this->page->name;
+      $title=preg_replace("/([a-z0-9])([A-Z][a-z0-9])/","\\1 \\2",$title);
+    }
     # setup title variables
     $title="<font class='title'><b>$title</b></font>";
     if ($link)
@@ -1942,6 +2002,8 @@ $timing=new Timer();
 $Config=getConfig("config.php");
 
 $DBInfo= new WikiDB($Config);
+register_shutdown_function(array(&$DBInfo,'Close'));
+
 $user=new User();
 $options=array();
 $options[id]=$user->id;
