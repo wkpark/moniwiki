@@ -522,7 +522,10 @@ function do_goto($formatter,$options) {
   if ($options['value']) {
      $url=stripslashes($options['value']);
      $url=_rawurlencode($url);
-     $url=$formatter->link_url($url,"?action=show");
+     if ($options['redirect'])
+       $url=$formatter->link_url($url,"?action=show");
+     else
+       $url=$formatter->link_url($url,"");
      $formatter->send_header(array("Status: 302","Location: ".$url),$options);
   } else if ($options['url']) {
      $url=str_replace("&amp;","&",$options['url']);
@@ -1187,12 +1190,12 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    $dirs=array();
 
    while ($file= readdir($handle)) {
+      if ($file[0]=='.') continue;
       if (is_dir($dir."/".$file)) {
-        if ($file=='.' or $file=='..' or $value!='UploadFile') continue;
-        $dirs[]= $DBInfo->keyToPagename($file);
-        continue;
-      }
-      $upfiles[]= $file;
+        if ($value =='UploadFile')
+          $dirs[]= $DBInfo->keyToPagename($file);
+      } else
+        $upfiles[]= $file;
    }
    closedir($handle);
    if (!$upfiles and !$dirs) return "<h3>No files uploaded</h3>";
@@ -2071,77 +2074,6 @@ EOF;
   return $out;
 }
 
-function macro_ISBN($formatter="",$value="") {
-  $ISBN_MAP="ISBNMap";
-  $DEFAULT=<<<EOS
-Amazon http://www.amazon.com/exec/obidos/ISBN= http://images.amazon.com/images/P/\$ISBN.01.MZZZZZZZ.gif
-Aladdin http://www.aladdin.co.kr/catalog/book.asp?ISBN= http://www.aladdin.co.kr/Cover/\$ISBN_1.gif
-EOS;
-
-  $DEFAULT_ISBN="Amazon";
-  $re_isbn="/([0-9\-]{9,}[xX]?)(?:\s*,\s*)?([A-Z][a-z]*)?(?:\s*,\s*)?(noimg)?/";
-
-  $test=preg_match($re_isbn,$value,$match);
-  if ($test === false)
-     return "<p><strong class=\"error\">Invalid ISBN \"%value\"</strong></p>";
-
-  $isbn2=$match[1];
-  $isbn=str_replace("-","",$isbn2);
-
-  if ($match[2] && strtolower($match[2][0])=="k")
-     $lang="Aladdin";
-  else
-     $lang=$DEFAULT_ISBN;
-
-  $list= $DEFAULT;
-  $map= new WikiPage($ISBN_MAP);
-  if ($map->exists)
-     $list.=$map->get_raw_body();
-
-  $lists=explode("\n",$list);
-  $ISBN_list=array();
-  foreach ($lists as $line) {
-     if (!$line or !preg_match("/[a-z]/i",$line[0])) continue;
-     $dum=explode(" ",$line);
-     if (sizeof($dum) == 2)
-        $dum[]=$ISBN_list[$DEFAULT_ISBN][0];
-     else if (sizeof($dum) !=3) continue;
-
-     $ISBN_list[$dum[0]]=array($dum[1],$dum[2]);
-  }
-
-  if ($ISBN_list[$lang]) {
-     $booklink=$ISBN_list[$lang][0];
-     $imglink=$ISBN_list[$lang][1];
-  } else {
-     $booklink=$ISBN_list[$DEFAULT_ISBN][0];
-     $imglink=$ISBN_list[$DEFAULT_ISBN][1];
-  }
-
-  if (strpos($booklink,'$ISBN') === false)
-     $booklink.=$isbn;
-  else {
-     if (strpos($booklink,'$ISBN2') === false)
-        $booklink=str_replace('$ISBN',$isbn,$booklink);
-     else
-        $booklink=str_replace('$ISBN2',$isbn2,$booklink);
-  }
-
-  if (strpos($imglink, '$ISBN') === false)
-        $imglink.=$isbn;
-  else {
-     if (strpos($imglink, '$ISBN2') === false)
-        $imglink=str_replace('$ISBN', $isbn, $imglink);
-     else
-        $imglink=str_replace('$ISBN2', $isbn2, $imglink);
-  }
-
-  if ($match[3] && $match[3] == 'noimg')
-     return $formatter->icon[www]."[<a href='$booklink'>ISBN-$isbn2</a>]";
-  else
-     return "<a href='$booklink'><img src='$imglink' border='1' title='$lang".
-       ": ISBN-$isbn' alt='[ISBN-$isbn2]'></a>";
-}
 
 function macro_TitleSearch($formatter="",$needle="",$opts=array()) {
   global $DBInfo;
@@ -2234,62 +2166,6 @@ function processor_plain($formatter,$value) {
   return "<pre class='code'>$value</pre>";
 }
 
-function processor_latex($formatter="",$value="") {
-  global $DBInfo;
-  # site spesific variables
-  $latex="latex";
-  $dvips="dvips";
-  $convert="convert";
-  $vartmp_dir="/var/tmp";
-  $cache_dir="pds/LaTeX";
-  $option='-interaction=batchmode ';
-
-  if ($value[0]=='#' and $value[1]=='!')
-    list($line,$value)=explode("\n",$value,2);
-
-  if (!$value) return;
-
-  if (!file_exists($cache_dir)) {
-    umask(000);
-    mkdir($cache_dir,0777);
-  }
-
-  $tex=$value;
-
-  $uniq=md5($tex);
-
-  $src="\documentclass[10pt,notitlepage]{article}
-\usepackage{amsmath}
-\usepackage{amsfonts}
-%%\usepackage[all]{xy}
-\\begin{document}
-\pagestyle{empty}
-$tex
-\end{document}
-";
-
-  if ($formatter->refresh || !file_exists("$cache_dir/$uniq.png")) {
-     $fp= fopen("$vartmp_dir/$uniq.tex", "w");
-     fwrite($fp, $src);
-     fclose($fp);
-
-     $outpath="$cache_dir/$uniq.png";
-
-     # Unix specific FIXME
-     $cmd= "cd $vartmp_dir; $latex $option $uniq.tex >/dev/null";
-     system($cmd);
-
-     $cmd= "cd $vartmp_dir; $dvips -D 600 $uniq.dvi -o $uniq.ps";
-     system($cmd);
-
-     $cmd= "$convert -transparent white -crop 0x0 -density 120x120 $vartmp_dir/$uniq.ps $outpath";
-     system($cmd);
-
-     system("rm $vartmp_dir/$uniq.*");
-  }
-  return "<img class='tex' src='$DBInfo->url_prefix/$cache_dir/$uniq.png' alt='tex'".
-         "title=\"$tex\" />";
-}
 
 function processor_php($formatter="",$value="") {
   if ($value[0]=='#' and $value[1]=='!')
