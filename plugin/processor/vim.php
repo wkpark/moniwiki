@@ -41,10 +41,10 @@ function processor_vim($formatter,$value,$options) {
   if ($DBInfo->use_numbering) {
     $button=_("Toggle line numbers");
     if (!$jsloaded) 
-      $script='<script type="text/javascript" src="'.$DBInfo->url_prefix.'/css/numbering.js"></script>';
+      $script='<script type="text/javascript" src="'.$DBInfo->url_prefix.'/local/numbering.js"></script>';
     $script.="<script type=\"text/javascript\">
-document.write('<a href=\"#\" onClick=\"return togglenumber(\'PRE-$uniq\', 1, 1);\" \
-                class=\"codenumbers\">$button<\/a>');
+document.write('<a href=\"#\" onClick=\"return togglenumber(\'PRE-$uniq\', 1, 1);\" \\
+class=\"codenumbers\">$button</a>');
 </script>";
   }
 
@@ -61,6 +61,7 @@ document.write('<a href=\"#\" onClick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
     $out = "";
     $fp=fopen($cache_dir."/$uniq".".html","r");
     while (!feof($fp)) $out .= fread($fp, 1024);
+    @fclose($fp);
     return '<div>'.$script.$out.'</div>';
     #return join('',file($cache_dir."/$uniq".".html"));
   }
