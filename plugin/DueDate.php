@@ -1,12 +1,11 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2004 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // DueDate plugin for the MoniWiki
 //
 // Usage: DueDate([[YYYY]MM]DD)
 //
 // $Id$
-// vim:et:ts=2:
 
 function macro_DueDate($formatter,$value) {
   $time= localtime(time(),true);
@@ -14,6 +13,7 @@ function macro_DueDate($formatter,$value) {
   $day= $time['tm_mday'];
   $month= $time['tm_mon']+1;
   $year= $time['tm_year']+1900;
+  $now_val= strtotime($year.sprintf("%02d%02d",$month,$day));
 
   $date_val=$value;
 
@@ -33,7 +33,7 @@ function macro_DueDate($formatter,$value) {
   }
 
   $time_val= strtotime($date_val);
-  $time_diff= (int) (($time_val - time())/86400);
+  $time_diff= (int) (($time_val - $now_val)/86400);
   
   $date=strftime("%x",$time_val);
 
@@ -45,6 +45,7 @@ function macro_DueDate($formatter,$value) {
      $msg=sprintf(_("%d day(s) passed from %s."), abs($time_diff), $date);
 
   return $msg;
+// vim:et:sts=4:
 }
 
 ?>
