@@ -6,7 +6,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2004-10-02 12:33+0900\n"
+"POT-Creation-Date: 2004-10-18 01:48+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -14,12 +14,12 @@ msgstr ""
 "Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../plugin/Attachment.php:75
+#: ../plugin/Attachment.php:80
 #, c-format
 msgid "Upload new Attachment \"%s\""
 msgstr ""
 
-#: ../plugin/Attachment.php:78
+#: ../plugin/Attachment.php:83
 #, c-format
 msgid "Upload new Attachment \"%s\" on the \"%s\""
 msgstr ""
@@ -140,7 +140,7 @@ msgstr ""
 msgid "Comment"
 msgstr ""
 
-#: ../plugin/Comment.php:49 ../wikilib.php:606
+#: ../plugin/Comment.php:49 ../wikilib.php:607
 msgid "Preview"
 msgstr ""
 
@@ -211,7 +211,7 @@ msgstr ""
 msgid "BackLinks search for \"%s\""
 msgstr ""
 
-#: ../plugin/FullSearch.php:103 ../wikilib.php:1724
+#: ../plugin/FullSearch.php:103 ../wikilib.php:1736
 #, c-format
 msgid "Invalid search expression \"%s\""
 msgstr ""
@@ -224,7 +224,7 @@ msgstr ""
 msgid "show comments"
 msgstr ""
 
-#: ../plugin/Gallery.php:277 ../plugin/Gallery.php:280 ../wikilib.php:965
+#: ../plugin/Gallery.php:277 ../plugin/Gallery.php:280 ../wikilib.php:977
 #, c-format
 msgid "Go back or return to %s"
 msgstr ""
@@ -291,7 +291,7 @@ msgstr ""
 msgid "TwinPages of %s"
 msgstr ""
 
-#: ../plugin/TwinPages.php:18 ../wiki.php:1999 ../wiki.php:3262
+#: ../plugin/TwinPages.php:18 ../wiki.php:2002 ../wiki.php:3300
 msgid "See TwinPages: "
 msgstr ""
 
@@ -317,11 +317,11 @@ msgstr ""
 msgid ": Rename"
 msgstr ""
 
-#: ../plugin/UploadedFiles.php:121 ../plugin/rename.php:69 ../wikilib.php:734
+#: ../plugin/UploadedFiles.php:121 ../plugin/rename.php:69 ../wikilib.php:735
 msgid "Password"
 msgstr ""
 
-#: ../plugin/UploadedFiles.php:122 ../wikilib.php:712
+#: ../plugin/UploadedFiles.php:122 ../wikilib.php:713
 msgid "Delete selected files"
 msgstr ""
 
@@ -349,7 +349,7 @@ msgstr ""
 msgid "Voted successfully"
 msgstr ""
 
-#: ../plugin/WordIndex.php:65 ../wikilib.php:1523
+#: ../plugin/WordIndex.php:65 ../wikilib.php:1535
 msgid "Others"
 msgstr ""
 
@@ -408,7 +408,7 @@ msgstr ""
 msgid "No manpage found"
 msgstr ""
 
-#: ../plugin/minilogin.php:22 ../wikilib.php:1274
+#: ../plugin/minilogin.php:22 ../wikilib.php:1286
 msgid "Login or Join"
 msgstr ""
 
@@ -531,7 +531,7 @@ msgstr ""
 msgid "Only WikiMaster can rename this page"
 msgstr ""
 
-#: ../plugin/rename.php:71 ../wikilib.php:771
+#: ../plugin/rename.php:71 ../wikilib.php:773
 msgid "with revision history"
 msgstr ""
 
@@ -782,118 +782,122 @@ msgstr ""
 msgid "Whois search result for %s"
 msgstr ""
 
-#: ../wiki.php:888
+#: ../wiki.php:890
 #, c-format
 msgid "Rename %s to %s"
 msgstr ""
 
-#: ../wiki.php:1067
+#: ../wiki.php:1069
 msgid "File does not exists"
 msgstr ""
 
-#: ../wiki.php:1995
+#: ../wiki.php:1998
 #, c-format
 msgid "See %s"
 msgstr ""
 
-#: ../wiki.php:1995
+#: ../wiki.php:1998
 msgid "TwinPages"
 msgstr ""
 
-#: ../wiki.php:2315
+#: ../wiki.php:2318
 msgid "Revision History"
 msgstr ""
 
-#: ../wiki.php:2416 ../wiki.php:2564
+#: ../wiki.php:2419 ../wiki.php:2567
 msgid "No older revisions available"
 msgstr ""
 
-#: ../wiki.php:2543 ../wiki.php:2581 ../wikilib.php:966
+#: ../wiki.php:2546 ../wiki.php:2584 ../wikilib.php:978
 msgid "No difference found"
 msgstr ""
 
-#: ../wiki.php:2545
+#: ../wiki.php:2548
 msgid "Difference between yours and the current"
 msgstr ""
 
-#: ../wiki.php:2583
+#: ../wiki.php:2586
 msgid "Difference between versions"
-msgstr ""
-
-#: ../wiki.php:2585
-#, c-format
-msgid "Difference between r%s and r%s"
 msgstr ""
 
 #: ../wiki.php:2588
 #, c-format
+msgid "Difference between r%s and r%s"
+msgstr ""
+
+#: ../wiki.php:2591
+#, c-format
 msgid "Difference between r%s and the current"
 msgstr ""
 
-#: ../wiki.php:2782 ../locale/dummy.php:6
+#: ../wiki.php:2796 ../locale/dummy.php:6
 msgid "EditText"
 msgstr ""
 
-#: ../wiki.php:2784
+#: ../wiki.php:2798
 msgid "NotEditable"
 msgstr ""
 
-#: ../wiki.php:2786 ../locale/dummy.php:6
+#: ../wiki.php:2800 ../locale/dummy.php:6
 msgid "ShowPage"
 msgstr ""
 
-#: ../wiki.php:2787 ../locale/dummy.php:3 ../locale/dummy.php:5
+#: ../wiki.php:2801 ../locale/dummy.php:3 ../locale/dummy.php:5
 msgid "FindPage"
 msgstr ""
 
-#: ../wiki.php:3010
+#: ../wiki.php:3025
 msgid "Main"
 msgstr ""
 
-#: ../wiki.php:3238
+#: ../wiki.php:3254
 msgid "You are in the black list"
 msgstr ""
 
-#: ../wiki.php:3239
-msgid "Please contact wikimasters"
+#: ../wiki.php:3255 ../wiki.php:3266
+msgid "Please contact WikiMasters"
 msgstr ""
 
-#: ../wiki.php:3264 ../wiki.php:3267
+#: ../wiki.php:3265
+msgid "You are blocked in this wiki"
+msgstr ""
+
+#: ../wiki.php:3302 ../wiki.php:3305 ../wikilib.php:904
 msgid "Create this page"
 msgstr ""
 
-#: ../wiki.php:3269
+#: ../wiki.php:3307 ../wikilib.php:906
 #, c-format
 msgid " or click %s to fullsearch this page.\n"
 msgstr ""
 
-#: ../wiki.php:3269
+#: ../wiki.php:3307 ../wikilib.php:906
 msgid "title"
 msgstr ""
 
-#: ../wiki.php:3275
+#: ../wiki.php:3313
 msgid " or alternativly, use one of these templates:\n"
 msgstr ""
 
-#: ../wiki.php:3278
+#: ../wiki.php:3316
 msgid "To create your own templates, add a page with a 'Template' suffix.\n"
 msgstr ""
 
-#: ../wiki.php:3353
+#: ../wiki.php:3391
 #, c-format
 msgid "You are not allowed to '%s'"
 msgstr ""
 
-#: ../wiki.php:3365
+#: ../wiki.php:3403
 #, c-format
 msgid "Fail to \"%s\" !"
 msgstr ""
 
-#: ../wiki.php:3368
+#: ../wiki.php:3406
 msgid "Please enter the valid password"
 msgstr ""
 
-#: ../wikilib.php:481
+#: ../wikilib.php:482
 msgid ""
 "<b>Emphasis:</b> ''<i>italics</i>''; '''<b>bold</b>'''; '''''<b><i>bold "
 "italics</i></b>''''';\n"
@@ -910,214 +914,214 @@ msgid ""
 "no trailing white space allowed after tables or titles.<br />\n"
 msgstr ""
 
-#: ../wikilib.php:541
+#: ../wikilib.php:542
 msgid "Use one of the following templates as an initial release :\n"
 msgstr ""
 
-#: ../wikilib.php:543
+#: ../wikilib.php:544
 msgid "To create your own templates, add a page with a 'Template' suffix."
 msgstr ""
 
-#: ../wikilib.php:559
+#: ../wikilib.php:560
 msgid "Skip to preview"
 msgstr ""
 
-#: ../wikilib.php:561
+#: ../wikilib.php:562
 msgid "ReduceEditor"
 msgstr ""
 
-#: ../wikilib.php:562
+#: ../wikilib.php:563
 msgid "EnlargeEditor"
 msgstr ""
 
-#: ../wikilib.php:566 ../locale/dummy.php:6
+#: ../wikilib.php:567 ../locale/dummy.php:6
 msgid "InterWiki"
 msgstr ""
 
-#: ../wikilib.php:567
+#: ../wikilib.php:568
 msgid "HelpOnEditing"
 msgstr ""
 
-#: ../wikilib.php:584
+#: ../wikilib.php:585
 #, c-format
 msgid "Describe %s here"
 msgstr ""
 
-#: ../wikilib.php:600
+#: ../wikilib.php:601
 msgid "--Select Category--"
 msgstr ""
 
-#: ../wikilib.php:607 ../wikilib.php:1277
+#: ../wikilib.php:608 ../wikilib.php:1289
 msgid "Save"
 msgstr ""
 
-#: ../wikilib.php:608
+#: ../wikilib.php:609
 msgid "Summary of Change"
 msgstr ""
 
-#: ../wikilib.php:650
+#: ../wikilib.php:651
 #, c-format
 msgid "Info. for %s"
 msgstr ""
 
-#: ../wikilib.php:660
+#: ../wikilib.php:661
 msgid "406 Not Acceptable"
 msgstr ""
 
-#: ../wikilib.php:665
+#: ../wikilib.php:666
 #, c-format
 msgid "%s is not valid action"
 msgstr ""
 
-#: ../wikilib.php:667
+#: ../wikilib.php:668
 msgid "Is it valid action ?"
 msgstr ""
 
-#: ../wikilib.php:700
+#: ../wikilib.php:701
 #, c-format
 msgid "File '%s' is deleted"
 msgstr ""
 
-#: ../wikilib.php:702
+#: ../wikilib.php:703
 #, c-format
 msgid "Fail to delete '%s'"
 msgstr ""
 
-#: ../wikilib.php:707
+#: ../wikilib.php:708
 #, c-format
 msgid "Directory '%s' is deleted"
 msgstr ""
 
-#: ../wikilib.php:709
+#: ../wikilib.php:710
 #, c-format
 msgid "Fail to rmdir '%s'"
 msgstr ""
 
-#: ../wikilib.php:719 ../wikilib.php:739
+#: ../wikilib.php:720 ../wikilib.php:740
 msgid "No files are selected !"
 msgstr ""
 
-#: ../wikilib.php:732
+#: ../wikilib.php:733
 #, c-format
 msgid "Did you really want to delete '%s' ?"
 msgstr ""
 
-#: ../wikilib.php:735
+#: ../wikilib.php:736
 msgid "Delete"
 msgstr ""
 
-#: ../wikilib.php:736
+#: ../wikilib.php:737
 msgid "Delete selected file"
 msgstr ""
 
-#: ../wikilib.php:758
+#: ../wikilib.php:759
 #, c-format
 msgid "\"%s\" is deleted !"
 msgstr ""
 
-#: ../wikilib.php:764
+#: ../wikilib.php:765
 msgid "Please delete this file manually."
 msgstr ""
 
-#: ../wikilib.php:766
+#: ../wikilib.php:767
 #, c-format
 msgid "Delete \"%s\" ?"
 msgstr ""
 
-#: ../wikilib.php:867 ../wikilib.php:1713
+#: ../wikilib.php:869 ../wikilib.php:1725
 msgid "Use more specific text"
 msgstr ""
 
-#: ../wikilib.php:930
+#: ../wikilib.php:942
 msgid "Goto Editor"
 msgstr ""
 
-#: ../wikilib.php:939
+#: ../wikilib.php:951
 #, c-format
 msgid "Someone else saved the page while you edited %s"
 msgstr ""
 
-#: ../wikilib.php:944 ../wikilib.php:973
+#: ../wikilib.php:956 ../wikilib.php:985
 #, c-format
 msgid "Preview of %s"
 msgstr ""
 
-#: ../wikilib.php:951
+#: ../wikilib.php:963
 msgid "Conflict error!"
 msgstr ""
 
-#: ../wikilib.php:999
+#: ../wikilib.php:1011
 msgid "mail does not supported by default."
 msgstr ""
 
-#: ../wikilib.php:1003
+#: ../wikilib.php:1015
 msgid "Sent notification mail."
 msgstr ""
 
-#: ../wikilib.php:1005
+#: ../wikilib.php:1017
 msgid "No subscribers found."
 msgstr ""
 
-#: ../wikilib.php:1010
+#: ../wikilib.php:1022
 #, c-format
 msgid "%s is not editable"
 msgstr ""
 
-#: ../wikilib.php:1012
+#: ../wikilib.php:1024
 #, c-format
 msgid "%s is saved"
 msgstr ""
 
-#: ../wikilib.php:1036
+#: ../wikilib.php:1048
 msgid "Nobody subscribed to this page."
 msgstr ""
 
-#: ../wikilib.php:1058
+#: ../wikilib.php:1070
 #, c-format
 msgid "%s page is modified"
 msgstr ""
 
-#: ../wikilib.php:1068
+#: ../wikilib.php:1080
 #, c-format
 msgid ""
 "You have subscribed to this wiki page on \"%s\" for change notification.\n"
 "\n"
 msgstr ""
 
-#: ../wikilib.php:1081
+#: ../wikilib.php:1093
 msgid "Send notification mails to all subscribers"
 msgstr ""
 
-#: ../wikilib.php:1085
+#: ../wikilib.php:1097
 msgid "Mails are sent successfully"
 msgstr ""
 
-#: ../wikilib.php:1086
+#: ../wikilib.php:1098
 #, c-format
 msgid "mails are sent to '%s'"
 msgstr ""
 
-#: ../wikilib.php:1249
+#: ../wikilib.php:1261
 msgid "Login"
 msgstr ""
 
-#: ../wikilib.php:1268
+#: ../wikilib.php:1280
 msgid "Make profile"
 msgstr ""
 
-#: ../wikilib.php:1269
+#: ../wikilib.php:1281
 msgid "password again"
 msgstr ""
 
-#: ../wikilib.php:1280
+#: ../wikilib.php:1292
 msgid "New password"
 msgstr ""
 
-#: ../wikilib.php:1286
+#: ../wikilib.php:1298
 msgid "logout"
 msgstr ""
 
-#: ../wikilib.php:1720
+#: ../wikilib.php:1732
 #, c-format
 msgid "Title search for \"%s\""
 msgstr ""
