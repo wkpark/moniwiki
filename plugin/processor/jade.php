@@ -22,7 +22,7 @@ function processor_jade($formatter,$value,$options=array()) {
   $pagename=$formatter->page->name;
   $cache= new Cache_text("jade");
 
-  if (!$formatter->preview and $cache->exists($pagename) and $cache->mtime($pagename) > $formatter->page->mtime())
+  if (!$formatter->refresh and !$formatter->preview and $cache->exists($pagename) and $cache->mtime($pagename) > $formatter->page->mtime())
     return $cache->fetch($pagename);
 
   $method="#html";
