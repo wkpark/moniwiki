@@ -78,7 +78,7 @@ function macro_Gallery($formatter,$value,&$options) {
 
   $key=$DBInfo->pageToKeyname($value);
   if ($key != $value)
-    $prefix=$formatter->link_url($value,"?action=download&amp;value=");
+    $prefix=$formatter->link_url(_rawurlencode($value),"?action=download&amp;value=");
   $dir=$DBInfo->upload_dir."/$key";
   if (!$prefix) $prefix=$DBInfo->url_prefix."/".$dir."/";
 
