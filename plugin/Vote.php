@@ -50,8 +50,13 @@ function macro_Vote($formatter,$value) {
 function do_vote($formatter,$options) {
   global $DBInfo;
 
-  if (!$options[ticket] and !$options[vote])
-     return '<html><h1>Error</h1></html>';
+  if ($options['id'] == 'Anonymous') {
+    $options['msg'].="\n"._("Please Login or make your ID on this Wiki ;)");
+    do_invalid($formatter,$options);
+    return;
+  }
+  if (!$options['ticket'] and !$options['vote'])
+    return '<html><h1>Error</h1></html>';
   $body=$formatter->page->get_raw_body();
 
   $lines=explode("\n",$body);
