@@ -16,6 +16,8 @@
 $_revision = substr('$Revision$',1,-1);
 $_release = '1.0rc9';
 
+#ob_start("ob_gzhandler");
+
 include "wikilib.php";
 
 function _preg_escape($val) {
@@ -994,14 +996,15 @@ class Formatter {
     # solw slow slow
     #(?P<word>(?:/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})
     $this->wordrule="(\[($url):[^\s\]]+(\s?[^\]]*)+\])|".
-             "(\!([A-Z]+[a-z0-9]+){2,})(?!(:|[a-z0-9]))|".
-    #        "(?<!\!|\[\[|[a-z])(([A-Z]+[a-z0-9]+){2,})(?!([a-z0-9]))|".
-             "(?<!\!|\[\[|[a-z])((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})(?!([a-z0-9]))|".
-             "(?<!\[)\[([^\[:,\s\d][^\[:,]+)\](?!\])|".
-             "(?<!\[)\[\\\"([^\\\"]+)\\\"\](?!\])|".
-             #"(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
-             "($urlrule)|".
-             "(\?[a-z0-9]+)";
+    "(\!([A-Z]+[a-z0-9]+){2,})(?!(:|[a-z0-9]))|".
+  # "(?<!\!|\[\[)\b(([A-Z]+[a-z0-9]+){2,})\b|".
+  # "(?<!\!|\[\[)\b((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})\b|".
+    "(?<!\!|\[\[)\b(?:\/?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b|".
+    "(?<!\[)\[([^\[:,\s\d][^\[:,]+)\](?!\])|".
+    "(?<!\[)\[\\\"([^\\\"]+)\\\"\](?!\])|".
+   #"(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
+    "($urlrule)|".
+    "(\?[a-z0-9]+)";
 
     $this->cache= new Cache_text("pagelinks");
   }
@@ -2455,22 +2458,18 @@ if ($user->id != "Anonymous") {
   if (!$theme) $options[theme]=$user->theme;
 }
 
-# setup like phpwiki style locale
-# get broswer's settings
-
+# setup the locale like as the phpwiki style
 function get_langs() {
   $lang= $_SERVER[HTTP_ACCEPT_LANGUAGE];
   $langs=explode(",",preg_replace(array("/;[^;,]+/","/\-[a-z]+/"),"",$lang));
   return $langs;
 }
 
+# get broswer's settings
 $langs=get_langs();
-#print_r($langs);
 
-if ($DBInfo->lang == 'auto')
-  $lang= $langs[0];
-else
-  $lang= $DBInfo->lang;
+if ($DBInfo->lang == 'auto') $lang= $langs[0];
+else $lang= $DBInfo->lang;
 
 if (isset($locale)) {
   $lf="locale/".$lang."/LC_MESSAGES/moniwiki.php";
@@ -2481,6 +2480,7 @@ if (isset($locale)) {
   textdomain("moniwiki");
 }
 
+# get the pagename
 if (!empty($_SERVER[PATH_INFO])) {
   if ($_SERVER[PATH_INFO][0] == '/')
     $pagename=substr($_SERVER[PATH_INFO],1);
@@ -2503,17 +2503,15 @@ if (!empty($_SERVER[PATH_INFO])) {
   $pagename = $DBInfo->frontpage;
 }
 
-#print_r(array_keys($HTTP_GET_VARS));
-#print_r($HTTP_GET_VARS);
-
+# get primary variables
 if ($_SERVER[REQUEST_METHOD]=="POST") {
-  # if you want to use '$HTTP_RAW_POST_DATA'
-  # set "register_globals = On" in the php.ini
   if (!$GLOBALS[HTTP_RAW_POST_DATA]) {
     $action=$HTTP_POST_VARS[action];
     $value=$HTTP_POST_VARS[value];
     $goto=$HTTP_POST_VARS[goto];
   } else {
+    # RAW posted data. the $value can be accessed under
+    # "register_globals = On" in the php.ini
     $options[value]=$value;
   }
 } else if ($_SERVER[REQUEST_METHOD]=="GET") {
@@ -2526,7 +2524,6 @@ $options[page]=$pagename;
 
 if ($_SERVER[REQUEST_METHOD]=="POST" && $HTTP_POST_VARS) {
  $request=$HTTP_POST_VARS;
-# $action=$request[action];
  if ($action=="savepage" && $DBInfo->security->writable($options)) {
    $savetext=$request[savetext];
    $datestamp=$request[datestamp];
@@ -2589,7 +2586,6 @@ if ($_SERVER[REQUEST_METHOD]=="POST" && $HTTP_POST_VARS) {
       $options[datestamp]=$datestamp; 
       $formatter->send_editor($savetext,$options);
       print $DBInfo->hr;
-      #print "<hr d='wikiHr' />\n";
       print $formatter->link_tag('GoodStyle')." | ";
       print $formatter->link_tag('InterWiki')." | ";
       print $formatter->link_tag('HelpOnEditing')." | ";
@@ -2599,7 +2595,6 @@ if ($_SERVER[REQUEST_METHOD]=="POST" && $HTTP_POST_VARS) {
       $formatter->send_page($savetext);
       print "</td></tr></table>\n";
       print $DBInfo->hr;
-      #print "<hr id='wikiHr' />\n";
       print "</div>\n";
       print $formatter->link_tag('GoodStyle')." | ";
       print $formatter->link_tag('InterWiki')." | ";
@@ -2634,9 +2629,6 @@ if ($_SERVER[REQUEST_METHOD]=="POST" && $HTTP_POST_VARS) {
    exit;
  }
 }
-
-#if (!empty($QUERY_STRING))
-#   $query= $QUERY_STRING;
 
 if ($pagename) {
   if ($action=="recall" || $action=="raw" && $rev) {
@@ -2690,7 +2682,7 @@ if ($pagename) {
     # increase counter
     $DBInfo->counter->incCounter($pagename);
 
-    $options[pi]=1;
+    if (!$action) $options[pi]=1; # protect a recursivly called #redirect
 
     $formatter->get_redirect();
     $formatter->send_header("",$options);
@@ -2718,7 +2710,6 @@ if ($pagename) {
       $rr='';
       $dum=array();
       foreach (array_keys($range) as $r) {
-      #   print "[$r]-$range[$r]";
         if (!$rr) $rr=$range[$r];
         if ($range[$r+1]) continue;
         else
@@ -2750,15 +2741,13 @@ if ($pagename) {
     if ($action=="raw") {
       $header[]="Content-Type: text/plain";
       $formatter->send_header($header,$options);
-    } else {
+    } else { # recall
       $formatter->send_header("",$options);
       $formatter->send_title("Rev. $rev ".$page->name,"",$options);
     }
     if (!$page->exists() || !$page->get_raw_body()) {
-      if ($action=="raw") {
-      } else {
+      if ($action!="raw") 
         $formatter->send_footer();
-      }
       return;
     }
     if ($action=="raw") {
