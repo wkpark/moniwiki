@@ -149,7 +149,8 @@ function do_uploadfile($formatter,$options) {
 
   $comment.="'$upfilename' ";
 
-  $title.=sprintf(_("File \"%s\" is uploaded successfully"),$upfilename);
+  $title.=($title ? '<br />':'').
+    sprintf(_("File \"%s\" is uploaded successfully"),$upfilename);
   if ($key == 'UploadFile') {
     $msg.= "<ins>Uploads:$upfilename</ins> or<br />";
     $msg.= "<ins>attachment:/$upfilename</ins><br />";
