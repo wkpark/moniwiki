@@ -27,7 +27,9 @@ function find_needle($body,$needle,$count=0) {
 }
 
 function normalize($title) {
-  return preg_replace("/[\?!$%\.\^;&\*()_\+\|\[\] ]/","",ucwords($title));
+  if (strpos($title," "))
+    return preg_replace("/[\?!$%\.\^;&\*()_\+\|\[\] ]/","",ucwords($title));
+  return $title;
 }
 
 class UserDB {
@@ -634,7 +636,7 @@ function do_post_savepage($formatter,$options) {
     $formatter->page->set_raw_body($savetext);
 
     if ($button_preview) {
-      $title=sprintf(_("Preview of %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
+      $title=sprintf(_("Preview of %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page'],"class='title'"));
       $formatter->send_title($title,"",$options);
      
       $options['preview']=1; 
@@ -1793,6 +1795,9 @@ function macro_RecentChanges($formatter="",$value="") {
 
     if ($ed_time < $time_cutoff)
       break;
+
+    if ($formatter->group and !preg_match("/^$formatter->group/",$page_name))
+      continue;
 
     $day = date('Y-m-d', $ed_time);
     if ($use_day and $day != $ratchet_day) {
