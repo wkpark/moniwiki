@@ -609,12 +609,12 @@ function resize(obj,val) {
 //-->
 //]]>
 </script>
-<input type='button' value='+' onClick='resize(this.form,3)'>
-<input type='button' value='-' onClick='resize(this.form,-3)'>
+<input type='button' value='+' onClick='resize(this.form,3)' />
+<input type='button' value='-' onClick='resize(this.form,-3)' />
 EOS;
   }
   $form.=<<<EOS
-<textarea class="wiki" id="content" wrap="virtual" name="savetext"
+<textarea id="content" wrap="virtual" name="savetext"
  rows="$rows" cols="$cols" class="wiki">$raw_body</textarea><br />
 $summary_msg: <input name="comment" size="70" maxlength="70" style="width:200" />$extra_check<br />
 <input type="hidden" name="action" value="savepage" />
@@ -1315,7 +1315,7 @@ function macro_InterWiki($formatter="") {
       #$href=$url;
     }
     $icon=strtolower($wiki)."-16.png";
-    $out.="<tr><td><tt><img src='$DBInfo->imgs_dir_interwiki/$icon' align='middle' alt='$wiki:'><a href='$url'>$wiki</a></tt></td><td><tt>";
+    $out.="<tr><td><tt><img src='$DBInfo->imgs_dir_interwiki/$icon' align='middle' alt='$wiki:' /><a href='$url'>$wiki</a></tt></td><td><tt>";
     $out.="<a href='$href'>$href</a></tt></td></tr>\n";
   }
   $out.="</table>\n";
