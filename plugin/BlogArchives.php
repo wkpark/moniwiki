@@ -13,7 +13,7 @@ function macro_BlogArchives($formatter,$value,$options=array()) {
   global $DBInfo;
 
   $handle = @opendir($DBInfo->cache_dir."/blogchanges");
-  if (!$handle) return array();
+  if (!$handle) return '';//array();
 
   preg_match("/^(?(?=')'([^']+)'|\"([^\"]+)\")?(\s*,?.*)$/",$value,$match);
   if ($match[1] or $match[2]) {
