@@ -986,7 +986,8 @@ class Formatter {
     $this->gen_pagelinks=1;
 
     #
-    $punct="<\"\'}\]\|\;\,\.\!";
+#    $punct="<\"\'}\]\|\;\,\.\!";
+    $punct="\'}\]\|;,\.\)\?\!";
     $url="http|ftp|telnet|mailto|wiki";
     $urlrule="((?:$url):[^\s$punct]+(\.?[^\s$punct]+)+)";
     # solw slow slow
@@ -1013,10 +1014,7 @@ class Formatter {
       if ($line=='#') break;
       else if ($line[1]=='#') continue;
       list($key,$val)= explode(" ",$line,2);
-      if (in_array($key,$pi)) {
-        $this->pi[$key]=$val;
-#       print $key."   ".$val."<br />";
-      }
+      if (in_array($key,$pi)) $this->pi[$key]=$val;
     }
     $this->page->body=$body;
   }
@@ -1521,7 +1519,8 @@ class Formatter {
       $open="";$close="";
 
       # InterWiki
-      $rule="/(?<!wiki:)(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^<>\s\']+[\s]{0,1})/";
+      $rule="/(?<!wiki:)(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})/";
+#      $rule="/(?<!wiki:)(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^$punct]+\s{0,1})/";
       $repl="wiki:\\1:\\2";
       $line=preg_replace($rule, $repl, $line);
       # WikiName, {{{ }}}, !WikiName, ?single, ["extended wiki name"]
