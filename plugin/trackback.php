@@ -146,29 +146,48 @@ function TrackBackCompare($a,$b) {
 }
 
 function macro_trackback($formatter,$value) {
+  preg_match('/(\d+)?(\s*,?\s*.*)?$/',$value,$match);
+  $opts=explode(",",$match[2]);
+  if ($match[1]) $limit=$match[1];
+  else $limit=10;
+#  if (in_array('all',$opts))
+  $lines=TrackBack_text::get_all();
 
-  if ($value=='all')
-    $lines=TrackBack_text::get_all();
-  else
-    $lines=TrackBack_text::get_all();
+  $date_fmt="m-d [h:i a]";
+  $template_bra='';
+  $template= '$out.= "<a href=\"$link\">$title</a>&nbsp;&nbsp;<span class=\"blog-user\">by <a href=\"$url\">$site</a> @ $date</span><br />\n";';
+  $template_ket='';
+  if (in_array('simple',$opts)) {
+    $template_bra='<ul>';
+    $template= '$out.= "<li><span class=\"blog-user\"><a href=\"$link\">$title</a></span><br/><span class=\"blog-user\">by <a href=\"$url\">$site</a> @ $date</span></li>\n";';
+    $template_bra='</ul>';
+    $date_fmt="m-d";
+  }
+
   $logs=array();
   foreach ($lines as $line) $logs[]=explode("\t",$line,8);
   usort($logs,'TrackBackCompare');
 
   foreach ($logs as $log) {
+    if ($limit <= 0) break;
     list($page, $dum, $entry,$url,$date,$site,$title,$dum2)= $log;
 
     if (!$title) continue;
+    if ($entry) $entry='&amp;value='.$entry;
+    $link=$formatter->link_url(_urlencode($page),'?action=trackback'.$entry);
 
     $date[10]=' ';
     $time=strtotime($date." GMT");
-    $date= date("m-d [h:i a]",$time);
+    $date= date($date_fmt,$time);
+    list($wiki,$user)=explode(':',$site);
+    if ($user) $site=$user;
 
     #$out.=$page."<a href='$url'>$title</a> @ $date from $site<br />\n";
-    $out.="<a href='$url'>$title</a> @ $date from $site<br />\n";
-
+    #$out.="<a href='$url'>$title</a> @ $date from $site<br />\n";
+    eval($template);
+    $limit--;
   }
-  return $out;
+  return $template_bra.$out.$template_ket;
 }
 
 ?>
