@@ -26,7 +26,7 @@ function do_rss_blog($formatter,$options) {
 
     $blogs=Blog_cache::get_rc_blogs($date);
     $logs=Blog_cache::get_summary($blogs,$date);
-    $rss_name=$DBInfo->sitename;
+    $rss_name=$DBInfo->sitename.': '._("Blog Changes");
   } else {
     $blogs=array($DBInfo->pageToKeyname($formatter->page->name));
     $logs=Blog_cache::get_summary($blogs,$date);
@@ -47,13 +47,12 @@ function do_rss_blog($formatter,$options) {
          xmlns="http://purl.org/rss/1.0/">\n
 HEAD;
   $url=qualifiedUrl($formatter->link_url("RecentChanges"));
+  $desc=sprintf(_("BlogChanges at %s"),$DBInfo->sitename);
   $channel=<<<CHANNEL
 <channel rdf:about="$URL">
   <title>$rss_name</title>
   <link>$url</link>
-  <description>
-    BlogChanges at $rss_name
-  </description>
+  <description>$desc</description>
   <image rdf:resource="$img_url"/>
   <items>
   <rdf:Seq>
@@ -82,9 +81,11 @@ CHANNEL;
     $items.="     <title>$title</title>\n";
     $items.="     <link>$url#$tag</link>\n";
     if ($summary) {
+      $p=new WikiPage($page);
+      $f=new Formatter($p);
       ob_start();
-      $formatter->send_page($summary);
-      $summary=ob_get_contents();
+      $f->send_page($summary);
+      $summary=htmlspecialchars(ob_get_contents());
       ob_end_clean();
       $items.="     <description>$summary</description>\n";
     }
