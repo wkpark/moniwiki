@@ -33,6 +33,17 @@ function normalize($title) {
   return $title;
 }
 
+function get_title($page) {
+  global $DBInfo;
+  if ($DBInfo->use_titlecache) {
+    $cache=new Cache_text('title');
+    if ($cache->exists($page)) $title=$cache->fetch($page);
+  } else
+    $title=$page;
+
+  return preg_replace("/((?<=[A-Za-z0-9])[A-Z][a-z0-9])/"," \\1",$title);
+}
+
 function getTicket() {
   global $DBInfo;
   $config=getConfig("config.php");
@@ -1970,6 +1981,10 @@ function macro_TitleIndex($formatter="") {
   $key=-1;
   $out="";
   $keys=array();
+
+  if ($DBInfo->use_titlecache)
+    $cache=new Cache_text('title');
+
   foreach ($all_pages as $page) {
     $pkey=get_key($page);
 #   $key=strtoupper($page[0]);
@@ -1981,8 +1996,14 @@ function macro_TitleIndex($formatter="") {
        $out.= "<a name='$key' /><h3><a href='#top'>$key</a></h3>\n";
        $out.= "<ul>";
     }
-    
-    $out.= '<li>' . $formatter->word_repl($page)."</li>\n";
+
+    #
+    if ($DBInfo->use_titlecache and $cache->exists($page))
+      $title=$cache->fetch($page);
+    else
+      $title=$page;
+
+    $out.= '<li>' . $formatter->word_repl($page,$title)."</li>\n";
   }
   $out.= "</ul>\n";
 
@@ -2408,18 +2429,18 @@ function macro_TitleSearch($formatter="",$needle="",$opts=array()) {
   $url=$formatter->link_url($formatter->page->urlname);
 
   if (!$needle) {
-    $opts[msg] = _("Use more specific text");
+    $opts['msg'] = _("Use more specific text");
     return "<form method='get' action='$url'>
       <input type='hidden' name='action' value='titlesearch' />
       <input name='value' size='30' value='$needle' />
       <input type='submit' value='Go' />
       </form>";
   }
-  $opts[msg] = sprintf(_("Title search for \"%s\""), $needle);
+  $opts['msg'] = sprintf(_("Title search for \"%s\""), $needle);
   $needle=_preg_search_escape($needle);
   $test=@preg_match("/$needle/","",$match);
   if ($test === false) {
-    $opts[msg] = sprintf(_("Invalid search expression \"%s\""), $needle);
+    $opts['msg'] = sprintf(_("Invalid search expression \"%s\""), $needle);
     return "<form method='get' action=''>
       <input type='hidden' name='action' value='titlesearch' />
       <input name='value' size='30' value='$needle' />
