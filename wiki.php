@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0rc5';
+$_release = '1.0rc6';
 
 include "wikilib.php";
 
@@ -171,14 +171,13 @@ EOS;
 class Timer {
   function Timer() {
     $mt= explode(" ",microtime());
-    $this->now=$mt[0]+$mt[1];
-    $this->timing=$this->now;
+    $this->save=$mt[0]+$mt[1];
   }
 
   function Check() {
     $mt= explode(" ",microtime());
-    $this->now=$mt[0]+$mt[1];
-    return $this->now-$this->timing;
+    $now=$mt[0]+$mt[1];
+    return $now-$this->save;
   }
 }
 
@@ -1027,7 +1026,8 @@ class Formatter {
     #        "(?<!\!|\[\[|[a-z])(([A-Z]+[a-z0-9]+){2,})(?!([a-z0-9]))|".
              "(?<!\!|\[\[|[a-z])((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})(?!([a-z0-9]))|".
              "(?<!\[)\[([^\[:,\s\d][^\[:,]+)\](?!\])|".
-             "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
+             "(?<!\[)\[\\\"([^\\\"]+)\\\"\](?!\])|".
+             #"(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
              "($urlrule)|".
              "(\?[a-z0-9]+)";
 
@@ -1043,56 +1043,56 @@ class Formatter {
     }
   }
 
-  function _instructions($body="") {
-    $this->processor="";
-    $pi=array('#redirect','#format','#action');
+  function get_instructions($body="") {
+    $pikeys=array('#redirect','#action');
+    $pi=array();
     if (!$body) {
       if (!$this->page->exists()) return '';
       $body=$this->page->get_raw_body();
-    } else {
-      unset($this->pi);
     }
 
     if ($body[0] == '<') {
       list($line, $dummy)= explode("\n", $body,2);
       if (substr($line,0,6) == '<?xml ')
-        #$this->pi['#format']='xslt';
-        $this->pi['#format']='xsltproc';
-    } else if ($body[0] == '#' and $body[1] =='!') {
-      list($line, $dummy)= explode("\n", $body,2);
-      list($tag,$args)= explode(" ", substr($line,2),2);
-      $this->pi['#format']=$tag;
-      $this->pi['args']=$args;
-    }
+        #$format='xslt';
+        $format='xsltproc';
+    } else {
+      if ($body[0]=='#' and substr($body,0,8)=='#format ') {
+        list($line,$body)=explode("\n",$body,2);
+        list($tag,$format)=explode(" ",$line,2);
+      } else if ($body[0] == '#' and $body[1] =='!') {
+        list($line, $body)= explode("\n", $body,2);
+        list($format,$args)= explode(" ", substr($line,2),2);
+      }
 
-    while ($body and $body[0] == '#') {
-      # extract first line
-      list($line, $body)= split("\n", $body,2);
-      if ($line=='#') break;
-      else if ($line[1]=='#') continue;
+      while ($body and $body[0] == '#') {
+        # extract first line
+        list($line, $body)= split("\n", $body,2);
+        if ($line=='#') break;
+        else if ($line[1]=='#') continue;
 
-      list($key,$val,$args)= explode(" ",$line,3);
-      $key=strtolower($key);
-      if (in_array($key,$pi)) $this->pi[$key]=$val;
-      else $notused[]=$line;
-    }
-    if ($notused) $body=join("\n",$notused)."\n".$body;
-
-    if ($this->pi['#format']) {
-      $pi_format=$this->pi['#format'];
-      if (function_exists("processor_".$pi_format)) {
-        $this->processor=$pi_format;
-      } else {
-        if ($processor=getProcessor($pi_format)) {
-          include("plugin/processor/$processor.php");
-          $this->processor=$processor;
-        }
+        list($key,$val,$args)= explode(" ",$line,3);
+        $key=strtolower($key);
+        if (in_array($key,$pikeys)) $pi[$key]=$val;
+        else $notused[]=$line;
       }
     }
+
+    if ($format) {
+      if (function_exists("processor_".$format)) {
+        $pi['#format']=$format;
+      } else if ($processor=getProcessor($format)) {
+        include("plugin/processor/$processor.php");
+        $pi['#format']=$format;
+      }
+    }
+
+    if ($notused) $body=join("\n",$notused)."\n".$body;
+    return $pi;
   }
 
   function highlight_repl($val) {
-    if ($val[0]=="<") return str_replace("\\\"",'"',$val);
+    if ($val[0]=="<") return str_replace('\"','"',$val);
     return "<strong class='highlight'>$val</strong>";
   }
 
@@ -1103,8 +1103,7 @@ class Formatter {
   function link_repl($url) {
     global $DBInfo;
 
-    $url=str_replace("\\\"",'"',$url);
-    #$url=str_replace("\\\\\"",'"',$url);
+    $url=str_replace('\"','"',$url);
     if ($url[0]=="[") {
       $url=substr($url,1,-1);
       $force=1;
@@ -1422,18 +1421,19 @@ class Formatter {
       $this->gen_pagelinks=1;
 
     if ($body) {
-      $this->_instructions(&$body);
-      if ($this->processor) {
-        eval("\$out=processor_$this->processor(&\$this,\$body,\$options);");
+      $pi=$this->get_instructions(&$body);
+      if ($pi['#format']) {
+        eval("\$out=processor_".$pi['#format']."(&\$this,\$body,\$options);");
         print $out;
         return;
       }
       $lines=explode("\n",$body);
     } else {
       $body=$this->page->get_raw_body();
-      $this->_instructions(&$body);
-      if ($this->processor) {
-        eval("\$out=processor_$this->processor(&\$this,\$body,\$options);");
+      $pi=$this->get_instructions(&$body);
+      $this->pi=$pi;
+      if ($pi['#format']) {
+        eval("\$out=processor_".$pi['#format']."(&\$this,\$body,\$options);");
         print $out;
         return;
       }
@@ -1506,7 +1506,7 @@ class Formatter {
          $p=strpos($line,"{{{");
          $len=strlen($line);
 
-         $this->processor="";
+         $processor="";
          $in_pre=1;
 
          # check processor
@@ -1514,11 +1514,11 @@ class Formatter {
             list($tag,$dummy)=explode(" ",substr($line,$p+5),2);
 
             if (function_exists("processor_".$tag)) {
-              $this->processor=$tag;
+              $processor=$tag;
             } else {
               if ($pf=getProcessor($tag)) {
                 include("plugin/processor/$pf.php");
-                $this->processor=$pf;
+                $processor=$pf;
               }
             }
          } else if ($line[$p+3] == ":") {
@@ -1658,9 +1658,9 @@ class Formatter {
 
       if ($in_pre==-1) {
          $in_pre=0;
-         if ($this->processor) {
+         if ($processor) {
            $value=$this->pre_line;
-           eval("\$out=processor_$this->processor(&\$this,\$value,\$options);");
+           eval("\$out=processor_$processor(&\$this,\$value,\$options);");
            $line=$out.$line;
          } else if ($in_quote) {
             # htmlfy '<'
@@ -1682,7 +1682,7 @@ class Formatter {
       $this->nobr=0;
     }
     # strip slash against double quotes
-    $text=str_replace('\"','"',$text);
+    #$text=str_replace('\"','"',$text); # XXX 
 
     # highlight text
     if ($this->highlight)
@@ -2381,6 +2381,7 @@ EOS;
     $idx= $idx > 0 ? $idx:0;
     $trails=array_slice($trails,$idx);
     $trail=join("\t",$trails);
+
     setcookie("MONI_TRAIL",$trail,time()+60*60*24*30,get_scriptname());
     $this->trail= "[\"".str_replace("\t","\"] > [\"",$trail)."\"]\n";
   }
