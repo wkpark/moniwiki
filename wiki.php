@@ -1008,14 +1008,15 @@ class Version_RCS {
   }
 
   function delete($pagename) {
-    $keyname=$DB->_getPageKey($pagename);
-    @unlink($DB->text_dir."/RCS/$keyname,v");
+    $keyname=$this->DB->_getPageKey($pagename);
+    @unlink($this->DB->text_dir."/RCS/$keyname,v");
   }
 
   function rename($pagename,$new) {
-    $keyname=$DB->_getPageKey($new);
-    $oname=$DB->_getPageKey($pagename);
-    rename($DB->text_dir."/RCS/$oname,v",$DB->text_dir."/RCS/$keyname,v");
+    $keyname=$this->DB->_getPageKey($new);
+    $oname=$this->DB->_getPageKey($pagename);
+    rename($this->DB->text_dir."/RCS/$oname,v",
+      $this->DB->text_dir."/RCS/$keyname,v");
   }
 
   function get_rev($pagename,$mtime='',$last=0) {
