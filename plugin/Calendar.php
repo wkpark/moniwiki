@@ -11,23 +11,55 @@
 
 function macro_Calendar($formatter,$value="",$option="") {
 	global $DBInfo;
+
+	$date=$_GET['date'];
+
+	$year_prev_tag='&laquo;';
+	$year_next_tag='&raquo;';
+	$prev_tag='&lsaquo;';
+	$next_tag='&rsaquo;';
+
 	static $day_headings= array('Sunday','Monday','Tuesday','Wednesday',
 		'Thursday','Friday','Saturday');
 	$day_heading_length = 3;
 
 	preg_match("/^((\d{4})-(\d{2}))?,?\s*([a-z, ]+)?$/i",$value,$match);
-	if ($match[1]) {
+
+	/* GET argument has priority */
+	if ($date) {
+		$year = substr($date, 0, 4);
+		$month = substr($date, 5);
+	} else if ($match[1]) {
 		$year= $match[2];
 		$month= $match[3];
-	} else {
+	}
+	/* Validate date. Use system date, if date is not validated */
+	if ($month <1 || $month > 12) {
 		$year= date('Y');
 		$month= date('m');
 	}
-	if ($match[4]) {
-    $args=explode(",",$match[4]);
 
-    if (in_array ("blog", $args)) $mode='blog';
-    if (in_array ("noweek", $args)) $day_heading_length=0;
+	/* Calculate next/prev months and next/prev years */
+	$next_year = ($year+1).'-'.$month;
+	$prev_year = ($year-1).'-'.$month;
+
+	/* January */
+	if ($month==1)
+		$prev_month = ($year-1).'-12';
+	else
+		$prev_month = $year.'-'.($month-1);
+	/* December */
+	if ($month==12)
+		$next_month = ($year+1).'-1';
+	else
+		$next_month = $year.'-'.($month+1);
+
+	if ($match[4]) {
+		$args=explode(",",$match[4]);
+
+		if (in_array ("blog", $args)) $mode='blog';
+		if (in_array ("noweek", $args)) $day_heading_length=0;
+		if (in_array ("yearlink", $args)) $yearlink=1;
 	}
 
 	if ($option)
@@ -53,7 +85,21 @@ function macro_Calendar($formatter,$value="",$option="") {
 	#use the <caption> tag or just a normal table heading. Take your pick.
 	#http://diveintomark.org/archives/2002/07/03.html#day_18_giving_your_calendar_a_real_caption
 #	$calendar .= "<tr><th colspan=\"7\" class=\"month\">$date_info[month], $year</th></tr>\n";
-	$calendar.= "<caption class=\"month\">$date_info[month], $year</caption>\n";
+##	$calendar.= "<caption class=\"month\">$date_info[month], $year</caption>\n";
+	$calendar.= "<caption class=\"month\">";
+
+        /* Adding previous month and year */
+	if ($yearlink)
+	$calendar.= $formatter->link_tag($link,"?date=$prev_year",$year_prev_tag).'&nbsp;&nbsp;';
+	$calendar.= $formatter->link_tag($link,"?date=$prev_month",$prev_tag).'&nbsp;&nbsp;';
+
+	$calendar.="$date_info[month] $year";
+
+	/* Adding next month and year */
+	$calendar.= '&nbsp;&nbsp;'.$formatter->link_tag($link,"?date=$next_month",$next_tag);
+	if ($yearlink)
+	$calendar.= '&nbsp;&nbsp;'.$formatter->link_tag($link,"?date=$next_year",$year_next_tag);
+	$calendar.= "</caption>\n";
 
 	# print the day headings "Mon", "Tue", etc.
 	# if day_heading_length is 4, the full name of the day will be printed
@@ -87,7 +133,7 @@ function macro_Calendar($formatter,$value="",$option="") {
 			$weekday = 0;
 		}
 
-		if ($day==$today) {
+		if ($day==$today and $month == date('m')) {
 			$exists='today" bgcolor="white';
 			$nonexists='today" bgcolor="white';
 			$classes=$nonexists;
