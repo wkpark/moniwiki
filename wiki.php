@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0rc17';
+$_release = '1.0.1';
 
 #ob_start("ob_gzhandler");
 
@@ -220,33 +220,33 @@ class MetaDB_dba extends MetaDB {
 
   function getSisterSites($pagename,$mode=1) {
     if ($pagename and dba_exists($pagename,$this->metadb)) {
-       if (!$mode) return true;
-       $sisters=dba_fetch($pagename,$this->metadb);
+      if (!$mode) return true;
+      $sisters=dba_fetch($pagename,$this->metadb);
 
-       if (strlen($sisters) > 40) return "[$pagename]";
+      if (strlen($sisters) > 40) return "[$pagename]";
 
-       $ret="wiki:".
-         str_replace(" ",":$pagename wiki:",$sisters).":$pagename";
-       $pagename=_preg_search_escape($pagename);
-       return preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
+      $ret="wiki:".
+        str_replace(" ",":$pagename wiki:",$sisters).":$pagename";
+      $pagename=_preg_search_escape($pagename);
+      return preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
     }
     return "";
   }
 
   function getTwinPages($pagename,$mode=1) {
     if ($pagename && dba_exists($pagename,$this->metadb)) {
-       if (!$mode) return true;
+      if (!$mode) return true;
 
-       $twins=dba_fetch($pagename,$this->metadb);
-       $bullet=" ";
-       if (strlen($twins) > 40) $bullet="\n * ";
-       $ret=$bullet."wiki:".
-         str_replace(" ",":$pagename$bullet"."wiki:",$twins).
-         ":$pagename";
+      $twins=dba_fetch($pagename,$this->metadb);
+      $bullet=" ";
+      if (strlen($twins) > 40) $bullet="\n * ";
+      $ret=$bullet."wiki:".
+        str_replace(" ",":$pagename$bullet"."wiki:",$twins).
+        ":$pagename";
 
-       $pagename=_preg_search_escape($pagename);
-       $ret= preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
-       return explode("\n",$ret);
+      $pagename=_preg_search_escape($pagename);
+      $ret= preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
+      return explode("\n",$ret);
     }
     return false;
   }
@@ -254,8 +254,8 @@ class MetaDB_dba extends MetaDB {
   function getAllPages() {
     if ($this->keys) return $this->keys;
     for ($key= dba_firstkey($this->metadb);
-         $key !== false;
-         $key= dba_nextkey($this->metadb)) {
+      $key !== false;
+      $key= dba_nextkey($this->metadb)) {
       $keys[] = $key;
     }
     $this->keys=$keys;
@@ -266,8 +266,8 @@ class MetaDB_dba extends MetaDB {
     $keys=array();
     if (!$needle) return $keys;
     for ($key= dba_firstkey($this->metadb);
-         $key !== false;
-         $key= dba_nextkey($this->metadb)) {
+      $key !== false;
+      $key= dba_nextkey($this->metadb)) {
       if (preg_match("/($needle)/i",$key)) {
         $keys[] = $key; $count--;
       }
@@ -303,9 +303,9 @@ class Counter_dba {
   function Counter_dba($DB) {
     if (!function_exists('dba_open')) return;
     if (!file_exists($DB->data_dir."/counter.db"))
-       $this->counter=dba_open($DB->data_dir."/counter.db","n",$DB->dba_type);
+      $this->counter=dba_open($DB->data_dir."/counter.db","n",$DB->dba_type);
     else
-       $this->counter=@dba_open($DB->data_dir."/counter.db","w",$DB->dba_type);
+      $this->counter=@dba_open($DB->data_dir."/counter.db","w",$DB->dba_type);
     $this->DB=&$DB;
   }
 
@@ -936,6 +936,7 @@ class WikiPage {
     $this->filename= $this->_filename($name);
     $this->urlname= _rawurlencode($name);
     $this->body= "";
+    $this->title=preg_replace("/((?<=[A-Za-z0-9])[A-Z][a-z0-9])/"," \\1",$name);
   }
 
   function _filename($pagename) {
@@ -1752,9 +1753,7 @@ class Formatter {
     $wordrule.=$this->wordrule;
 
     foreach ($lines as $line) {
-
       # empty line
-      #if ($line=="") {
       if (!strlen($line)) {
         if ($in_pre) { $this->pre_line.="\n";continue;}
         if ($in_li) { $text.="<br />\n"; continue;}
@@ -1906,7 +1905,6 @@ class Formatter {
          $line=str_replace('\"','"',$line); # revert \\" to \"
       }
 
-
       # InterWiki, WikiName, {{{ }}}, !WikiName, ?single, ["extended wiki name"]
       # urls, [single bracket name], [urls text], [[macro]]
       $line=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$line);
@@ -1981,14 +1979,14 @@ class Formatter {
     while($in_li >= 0 && $indent_list[$in_li] > 0) {
       if ($indent_type[$in_li]!='dd' && $li_open == $in_li)
         $close.="</li>\n";
-#      $close.=$this->_list(0,$indent_type[$in_li]);
+#     $close.=$this->_list(0,$indent_type[$in_li]);
       $close.=$this->_list(0,$indent_type[$in_li],"",$indent_type[$in_li-1]);
       unset($indent_list[$in_li]);
       unset($indent_type[$in_li]);
       $in_li--;
     }
     # close div
-    #if ($in_p) $close.="##</div>\n"; # </para>
+    #if ($in_p) $close.="</div>\n"; # </para>
     if ($in_p) $close.=$this->_div(0,&$in_div); # </para>
 
     $text.=$close;
@@ -2322,7 +2320,7 @@ class Formatter {
     }
 
     if (!$plain) {
-      if (empty($options['title'])) $options['title']=$this->page->name;
+      if (empty($options['title'])) $options['title']=$this->page->title;
       if (empty($options['css_url'])) $options['css_url']=$DBInfo->css_url;
       print <<<EOS
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
@@ -2331,7 +2329,7 @@ class Formatter {
   <meta http-equiv="Content-Type" content="text/html;charset=$DBInfo->charset" /> 
   $DBInfo->metatags
   $keywords
-  <title>$DBInfo->sitename:$options[title]</title>\n
+  <title>$DBInfo->sitename: $options[title]</title>\n
 EOS;
       if ($options['css_url'])
          print '<link rel="stylesheet" type="text/css" href="'.
@@ -2340,11 +2338,11 @@ EOS;
       else print <<<EOS
 <style type="text/css">
 <!--
-body {font-family:Georgia,Verdana,Lucida,sans-serif;font-size:14px; background-color:#FFF9F9;}
+body {font-family:Georgia,Verdana,Lucida,sans-serif; background-color:#FFF9F9;}
 a:link {color:#993333;}
 a:visited {color:#CE5C00;}
 a:hover {background-color:#E2ECE5;color:#000;}
-.title {
+.wikiTitle {
   font-family:palatino, Georgia,Tahoma,Lucida,sans-serif;
   font-size:28px;
   font-weight:bold;
@@ -2373,23 +2371,14 @@ pre.quote {
   background-color:#F7F8E6;
 }
 
-table.wiki {
-/* background-color:#E2ECE5;*/
-/* border-collapse: collapse; */
-  border: 0px outset #E2ECE5;
-}
+table.wiki { border: 0px outset #E2ECE5; }
 
 td.wiki {
   background-color:#E2ECE2;
-/* border-collapse: collapse; */
   border: 0px inset #E2ECE5;
 }
 
-th.info {
-  background-color:#E2ECE2;
-/*  border-collapse: collapse; */
-/*  border: 1px solid silver; */
-}
+th.info { background-color:#E2ECE2; }
 
 h1,h2,h3,h4,h5 {
   font-family:Tahoma;
@@ -2545,8 +2534,7 @@ FOOT;
         $name=$title;
         $group="<span class='group'>".(substr($group,0,-1))." &raquo;<br /></span>";
       } else     
-        $title=$this->page->name;
-      $title=preg_replace("/((?<=[A-Za-z0-9])[A-Z][a-z0-9])/"," \\1",$title);
+        $title=$this->page->title;
     }
     # setup title variables
     $heading=$this->link_to("?action=fullsearch&amp;value=$name",$title);
@@ -2667,14 +2655,14 @@ MSG;
     if ($idx > 0) $trails=array_slice($trails,$idx);
     $trail=join("\t",$trails);
 
-    setcookie("MONI_TRAIL",$trail,time()+60*60*24*30,get_scriptname());
+    setcookie('MONI_TRAIL',$trail,time()+60*60*24*30,get_scriptname());
   }
 } # end-of-Formatter
 
 # setup the locale like as the phpwiki style
 function get_langs() {
   $lang= $_SERVER['HTTP_ACCEPT_LANGUAGE'];
-  $langs=explode(",",preg_replace(array("/;[^;,]+/","/\-[a-z]+/"),"",$lang));
+  $langs=explode(',',preg_replace(array("/;[^;,]+/","/\-[a-z]+/"),'',$lang));
   return $langs;
 }
 
@@ -2737,8 +2725,8 @@ if ($DBInfo->trail) {
 if ($options['id'] != 'Anonymous') {
   $udb=new UserDB($DBInfo);
   $userinfo=$udb->getUser($user->id);
-  # Does it have valid ticket ?
 
+  # Does it have valid ticket ?
   if ($user->ticket == $userinfo->info['ticket']) {
     $user=$userinfo;
     $options['css_url']=$user->info['css_url'];
@@ -2893,10 +2881,10 @@ if ($pagename) {
 
   if ($action) {
     if (!$DBInfo->security->is_allowed($action,&$options)) {
-      $msg=sprintf(_("Please login before \"%s\" this page"),$action);
+      $msg=sprintf(_("You are not allowed to \"%s\""),$action);
       $formatter->send_header("Status: 406 Not Acceptable",$options);
       $formatter->send_title($msg,"", $options);
-      $formatter->send_page("== "._("Goto UserPreferences")." ==\n".$options['err']);
+      $formatter->send_page("== "._("Please contact to WikiMaster or Goto UserPreferences")." ==\n".$options['err']);
       $formatter->send_footer($args,$options);
       return;
     } else if ($_SERVER['REQUEST_METHOD']=="POST" and
