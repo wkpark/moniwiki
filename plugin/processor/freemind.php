@@ -70,7 +70,6 @@ function processor_freemind($formatter,$value) {
     $md5sum=md5($value);
     $map=$md5sum.'.mm';
     if ($formatter->refresh || $formatter->preview || !file_exists($_dir.'/'.$map)) {
-        include_once('lib/compat.php');
         $depth=$odepth=0;
         $dep=$odep=0;
         $out='<map version="0.7.1">'."\n";
@@ -147,7 +146,12 @@ function processor_freemind($formatter,$value) {
             $utf8=iconv($DBInfo->charset,'UTF-8',$out);
             if ($utf8) $out=&$utf8;
         }
-        $out=utf8_mb_encode($out);
+        if (function_exists('mb_encode_numericentity')) {
+            $out=mb_encode_numericentity($out,$DBInfo->convmap,'utf-8');
+        } else {
+            include_once('lib/compat.php');
+            $out=utf8_mb_encode($out);
+        }
 
         $fp=fopen($_dir.'/'.$map,'w');
         fwrite($fp,$out);
