@@ -1143,11 +1143,11 @@ function get_key($name) {
   $utf="";
   if (function_exists ("iconv")) {
     # XXX php 4.1.x did not support unicode sting.
-    $utf=iconv($DBInfo->charset,'utf-8',$name);
+    $utf=iconv($DBInfo->charset,'UTF-8',$name);
     $name=$utf;
   }
 
-  if ($utf or $DBInfo->charset=='utf-8') {
+  if ($utf or $DBInfo->charset=='UTF-8') {
     if ((ord($name[0]) & 0xF0) == 0xE0) { # Now only 3-byte UTF-8 supported
        #$uni1=((ord($name[0]) & 0x0f) <<4) | ((ord($name[1]) & 0x7f) >>2);
        $uni1=((ord($name[0]) & 0x0f) <<4) | (($name[1] & 0x7f) >>2);
@@ -1159,7 +1159,7 @@ function get_key($name) {
          $ukey=0xac00 + (int)(($uni - 0xac00) / 588) * 588;
          $ukey=toutf8($ukey);
          if ($utf)
-           return iconv('utf-8',$DBInfo->charset,$ukey);
+           return iconv('UTF-8',$DBInfo->charset,$ukey);
          return $ukey;
        }
     }
