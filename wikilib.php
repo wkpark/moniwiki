@@ -953,6 +953,18 @@ EOF;
    return $form;
 }
 
+function do_uploadedfiles($formatter,$options) {
+  $list=macro_UploadedFiles($formatter,$options[page]);
+
+  $formatter->send_header("",$options);
+  $formatter->send_title();
+
+  $args[editable]=1;
+  print $list;
+  $formatter->send_footer($args,$options);
+  return;
+}
+
 function macro_UploadedFiles($formatter,$value="") {
    global $DBInfo;
 
@@ -964,7 +976,10 @@ function macro_UploadedFiles($formatter,$value="") {
    } else {
       $dir=$DBInfo->upload_dir;
    }
-   $handle= opendir($dir);
+   if (file_exists($dir))
+      $handle= opendir($dir);
+   else
+      return "<h2>"._("No such directory exists")."</h2>";
 
    while ($file= readdir($handle)) {
       if (is_dir($dir."/".$file)) continue;
@@ -1877,7 +1892,7 @@ function macro_TitleSearch($formatter="",$needle="",$opts=array()) {
       </form>";
   }
   $opts[msg] = sprintf(_("Title search for \"%s\""), $needle);
-  $needle=_preg_escape($needle);
+  $needle=_preg_search_escape($needle);
   $test=@preg_match("/$needle/","",$match);
   if ($test === false) {
     $opts[msg] = sprintf(_("Invalid search expression \"%s\""), $needle);
