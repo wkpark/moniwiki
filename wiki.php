@@ -1331,7 +1331,7 @@ class Formatter {
       return "</table>\n";
   }
 
-  function send_page($body="") {
+  function send_page($body="",$options="") {
     global $DBInfo;
     # get body
 
@@ -1577,7 +1577,7 @@ class Formatter {
     $text.=$close;
   
     print $text;
-    if ($this->sisters) {
+    if ($this->sisters and !$options[nosisters]) {
       $sisters=join("\n",$this->sisters);
       $sisters=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$sisters);
       print "<div id='wikiSister'>\n<br/><tt class='foot'>----</tt><br/>\nSister Sites Index<br />\n$sisters</div>\n";
