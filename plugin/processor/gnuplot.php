@@ -10,12 +10,16 @@
 
 function processor_gnuplot($formatter="",$value="") {
   global $DBInfo;
-  #$gnuplot="gnuplot"; # Unix
-  #$gnuplot="wgnuplot"; # Win32
-  $gnuplot="/usr/local/bin/gnuplot_pm3d";
 
-  $vartmp_dir="/var/tmp";
-  $cache_dir="pds/GnuPlot";
+  #if(getenv("OS")=="Windows_NT") {
+  #$gnuplot="wgnuplot"; # Win32
+  #} else {
+  #$gnuplot="gnuplot";
+  $gnuplot="/usr/local/bin/gnuplot_pm3d";
+  #}
+
+  $vartmp_dir=$DBInfo->vartmp_dir;
+  $cache_dir=$DBInfo->upload_dir."/GnuPlot";
 
   #
   if ($value[0]=='#' and $value[1]=='!')

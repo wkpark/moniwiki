@@ -22,7 +22,7 @@ function processor_vim($formatter,$value) {
   $src=$value;
 
   if (!in_array($type,$syntax)) 
-    return "<pre class='code'>\n#!vim\n$src\n</pre>\n";
+    return "<pre class='code'>\n$line\n$src\n</pre>\n";
   if ($extra == "number") 
     $option='+"set number" ';
   

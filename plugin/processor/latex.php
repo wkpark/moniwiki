@@ -14,8 +14,8 @@ function processor_latex($formatter="",$value="") {
   $latex="latex";
   $dvips="dvips";
   $convert="convert";
-  $vartmp_dir="/var/tmp";
-  $cache_dir="pds/LaTeX";
+  $vartmp_dir=$DBInfo->vartmp_dir;
+  $cache_dir=$DBInfo->upload_dir."/LaTeX";
   $option='-interaction=batchmode ';
 
   if ($value[0]=='#' and $value[1]=='!')

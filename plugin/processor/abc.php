@@ -10,11 +10,10 @@
 
 function processor_abc($formatter="",$value="") {
   global $DBInfo;
-  #$abc2midi="abc2midi"; # Unix
-  $abc2midi="/usr/local/bin/abc2midi";
+  $abc2midi="abc2midi"; # Unix
 
-  $vartmp_dir="/var/tmp";
-  $cache_dir="pds/Abc2Midi";
+  $vartmp_dir=$DBInfo->vartmp_dir;
+  $cache_dir=$DBInfo->upload_dir."/Abc2Midi";
 
   #
   if ($value[0]=='#' and $value[1]=='!')
