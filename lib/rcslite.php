@@ -40,7 +40,6 @@
 #    doing a line based diff
 #  - most serious is when having multiple line ends on one seq but not other -
 #    this needs fixing
-#  - tidyup us of 1. for revisions
 #  - cleaner dealing with errors/warnings
 
 define(DIFF_DEBUG,0);
@@ -58,6 +57,7 @@ Class RcsLite {
         $this->rcs_dir=$rcs_dir ? $rcs_dir:'RCS';
         $this->rcs_user=$rcs_user ? $rcs_user:'root';
         $this->_head = 0;
+        $this->_next = array();
     }
   
     # ======================
@@ -121,52 +121,47 @@ Class RcsLite {
 #
     function _readTo($fp, $char)
     {
+        $ch = null;
         $buf = '';
-        $ch=null;
-        $space = 0;
         $string = '';
         $state = '';
-        while( !feof($fp)) {
-           $ch = fread( $fp, 1 );
-           if( $ch == '@' ) {
-              if( $state == '@' ) {
-                 $state = 'e';
-                 continue;
-              } else if( $state == 'e' ) {
-                 $state = '@';
-                 $string .= '@';
-                 continue;
-              } else {
-                 $state = '@';
-                 continue;
-              }
-           } else {
-              if( $state == 'e' ) {
-                 $state = '';
-                 if( $char == '@' ) {
-                    break;
-                 }
-                 # End of string
-              } else if ( $state == '@' ) {
-                 $string .= $ch;
-                 continue;
-              }
-           }
+        $space = 0;
+        while( false !== ($ch = fgetc($fp)) ) {
+            if( $ch == '@' ) {
+                if( $state == '@' ) {
+                    $state = 'e';
+                    continue;
+                } else if( $state == 'e' ) {
+                    $state = '@';
+                    $string .= '@';
+                    continue;
+                } else {
+                    $state = '@';
+                    continue;
+                }
+            } else if ( $state ) {
+                if ( $state == '@' ) {
+                    $string .= $ch;
+                    continue;
+                } else if( $state == 'e' ) {
+                    $state = '';
+                    if( $char == '@' ) break;
+                    # End of string
+                }
+            }
            
-           if( preg_match("/\s/",$ch) ) {
-              if( strlen( $buf ) == 0 ) {
-                  continue;
-              } else if( $space ) {
-                  continue;
-              } else {
-                  $space = 1;
-                  $ch = ' ';
-              }
-           } else {
-              $space = 0;
-           }
-           $buf .= $ch;
-           if( $ch == $char ) break;
+            if ( preg_match('/\s/',$ch) ) {
+                if( $space or $buf == '' ) {
+                    continue;
+                } else {
+                    $space = 1;
+                    $ch = ' ';
+                }
+            } else {
+                $space = 0;
+            }
+            $buf .= $ch;
+            if( $ch == $char ) break;
         }
         if ($ch == null) $buf=null;
         return array( $buf, $string );
@@ -186,9 +181,12 @@ Class RcsLite {
     }
     
     # Read in the whole RCS file
-    function _process($file=null)
+    function _process($file='', $force=0)
     {
+        if( $this->_where && !$force) return;
+
         if ($file) {
+            $this->filename=$file;
             $dirname=dirname($file);
             $dirname=$dirname ? $dirname:'.';
             $rcsname=basename($file);
@@ -198,10 +196,11 @@ Class RcsLite {
                 $this->rcsFile=$dirname.'/'.$rcsname;
             else 
                 $this->rcsFile=$dirname.'/'.$this->rcs_dir.'/'.$rcsname;
+
         }
-        $fh = fopen( $this->rcsFile, 'r');
+        $fh = @fopen( $this->rcsFile, 'r');
         if( ! $fh ) {
-            $this->_warn( "Couldn't open file $this->rcsFile" );
+            //$this->_warn( "Couldn't open file $this->rcsFile" );
             $this->_where = 'nofile';
             return;
         }
@@ -216,97 +215,101 @@ Class RcsLite {
         $author = array();
         $log = array();
         $text = array();
+        $next = array();
         $dnum = '';
         while( $going ) {
-           list($line, $string) = $this->_readTo( $fh, $term );
-           if( is_null($line) ) break;
-           #print "\"$where -- $line\"\n";
+            list($line, $string) = $this->_readTo( $fh, $term );
+            if( is_null($line) ) break;
+            #print "\"$where -- $line\"\n";
           
-           $lastWhere = $where;
-           if( $where == 'admin.head' ) {
-              if( preg_match('/^head\s+([0-9]+)\.([0-9]+);$/',$line, $match) ) {
-                 if( $match[1] != '1' )
-                    die( 'Only support start of version being 1' );
-                 $headNum = $match[2];
-                 $where = 'admin.access'; # Don't support branch
-              } else {
-                 break;
-              }
-           } else if ( $where == 'admin.access' ) {
-              if( preg_match('/^access\s*(.*);$/',$line, $match) ) {
-                 $where = 'admin.symbols';
-                 $this->_access = $match[1];
-              } else {
-                 break;
-              }
-           } else if( $where == 'admin.symbols' ) {
-              if( preg_match('/^symbols(.*);$/',$line, $match) ) {
-                 $where = 'admin.locks';
-                 $this->_symbols = $match[1];
-              } else {
-                 break;
-              }
-           } else if( $where == 'admin.locks' ) {
-              if( preg_match('/^locks.*;$/', $line) ) {
-                 $where = 'admin.postLocks';
-              } else {
-                 break;
-              }
-           } else if( $where == 'admin.postLocks' ) {
-              if( preg_match('/^strict\s*;/', $line) ) {
-                 $where = 'admin.postStrict';
-              }
-           } else if( $where == 'admin.postStrict' &&
-                    preg_match('/^comment\s.*$/', $line) ) {
-                 $where = 'admin.postComment';
-                 $this->_comment = $string;
-           } else if( ( $where == 'admin.postStrict' || $where == 'admin.postComment' )  &&
-                    preg_match('/^expand\s/', $line) ) {
-                 $where = 'admin.postExpand';
-                 $this->_expand = $string;         
-           } else if( $where == 'admin.postStrict' || $where == 'admin.postComment' || 
-                    $where == 'admin.postExpand' || $where == 'delta.date') {
-              if( preg_match('/^([0-9]+)\.([0-9]+)\s+date\s+(\d\d(\d\d)?(\.\d\d){5}?);$/', $line,$match) ) {
-                 $where = 'delta.author';
-                 $num = $match[2];
-                 $date[$num] = $match[3];
-              }
-           } else if( $where == 'delta.author' ) {
-              if( preg_match('/^author\s+(.*);$/', $line, $match) ) {
-                 $author[$num] = $match[1];
-                 if( $num == 1 ) {
-                    $where = 'desc';
-                    $term = '@';
-                 } else {
-                    $where = 'delta.date';
-                 }
-              }
-           } else if( $where == 'desc' ) {
-              if( preg_match('/desc\s*$/', $line, $match) ) {
-                 $this->_description = $string;
-                 $where = 'deltatext.log';
-              }
-           } else if( $where == 'deltatext.log' ) {
-              if( preg_match('/\d+\.(\d+)\s+log\s+$/', $line, $match) ) {
-                 $dnum = $match[1];
-                 $log[$dnum] = $string;
-                 $where = 'deltatext.text';
-              }
-           } else if( $where == 'deltatext.text' ) {
-              if( preg_match('/text\s*$/', $line) ) {
-                 $where = 'deltatext.log';
-                 $text[$dnum] = $string;
-                 if( $dnum == 1 ) {
-                    $where = 'done';
+            $lastWhere = $where;
+            if( $where == 'admin.head' ) {
+                if( preg_match('/^head\s+([0-9]+\.[0-9]+);$/',$line, $match) ) {
+                    $headNum = $match[1];
+                    $where = 'admin.access'; # Don't support branch
+                } else {
                     break;
-                 }
-              }
-           }
+                }
+            } else if ( $where == 'admin.access' ) {
+                if( preg_match('/^access\s*(.*);$/',$line, $match) ) {
+                    $where = 'admin.symbols';
+                    $this->_access = $match[1];
+                } else {
+                    break;
+                }
+            } else if( $where == 'admin.symbols' ) {
+                if( preg_match('/^symbols(.*);$/',$line, $match) ) {
+                    $where = 'admin.locks';
+                    $this->_symbols = $match[1];
+                } else {
+                    break;
+                }
+            } else if( $where == 'admin.locks' ) {
+                if( preg_match('/^locks.*;$/', $line) ) {
+                    $where = 'admin.postLocks';
+                } else {
+                    break;
+                }
+            } else if( $where == 'admin.postLocks' ) {
+                if( preg_match('/^strict\s*;/', $line) ) {
+                    $where = 'admin.postStrict';
+                }
+            } else if( $where == 'admin.postStrict' &&
+                    preg_match('/^comment\s.*$/', $line) ) {
+                $where = 'admin.postComment';
+                $this->_comment = $string;
+            } else if( ( $where == 'admin.postStrict' || $where == 'admin.postComment' )  &&
+                    preg_match('/^expand\s/', $line) ) {
+                $where = 'admin.postExpand';
+                $this->_expand = $string;         
+            } else if( $where == 'admin.postStrict' || $where == 'admin.postComment' || 
+                $where == 'admin.postExpand' || $where == 'delta.date') {
+                if( preg_match('/^([0-9]+\.[0-9]+)\s+date\s+(\d\d(\d\d)?(\.\d\d){5}?);$/', $line,$match) ) {
+                    $where = 'delta.author';
+                    $num = $match[1];
+                    $date[$num] = $this->rcsDateToTime($match[2]);
+                }
+            } else if( $where == 'delta.next' ) {
+                if( preg_match('/^next ([^;]*);$/',$line,$match) ){
+                    $where = 'delta.date';
+                    $next[$num] = $match[1];
+                    if ($next[$num] == "") {
+                        $where = 'desc';
+                        $term = '@';
+                    }
+                }
+            } else if( $where == 'delta.author' ) {
+                if( preg_match('/^author\s+(.*);$/', $line, $match) ) {
+                    $author[$num] = $match[1];
+                    $where = 'delta.next';
+                }
+            } else if( $where == 'desc' ) {
+                if( preg_match('/desc\s*$/', $line, $match) ) {
+                    $this->_description = $string;
+                    $where = 'deltatext.log';
+                }
+            } else if( $where == 'deltatext.log' ) {
+                if( preg_match('/^(\d+\.\d+)\s+log\s+$/', $line, $match) ) {
+                    $dnum = $match[1];
+                    $log[$dnum] = $string;
+                    $where = 'deltatext.text';
+                }
+            } else if( $where == 'deltatext.text' ) {
+                if( preg_match('/text\s*$/', $line) ) {
+                    $where = 'deltatext.log';
+                    $text[$dnum] = $string;
+                    if( $dnum == 1 ) {
+                        $where = 'done';
+                        break;
+                    }
+                }
+            }
         }
         
         $this->_head = $headNum;
         $this->_author = $author;
         $this->_date = $date;
+        $this->_next = $next;
         $this->_log = $log;
         $this->_delta = $text;
         $this->_status = $dnum;
@@ -318,9 +321,9 @@ Class RcsLite {
     # for rlog() function
     function check_delta()
     {
-        foreach ($this->_delta as $rev=>$delta) {
-            if ($rev == $this->_head) continue;
-            $lines=explode("\n",$delta);
+        foreach ($this->_next as $rev=>$next) {
+            if ($next=="") break;
+            $lines=explode("\n",$this->_delta[$next]);
             $add=0;
             $del=0;
             $sz=sizeof($lines);
@@ -334,22 +337,23 @@ Class RcsLite {
                     }
                 }
             }
-            $this->_change[$rev]="$del $add";
-            print "+$del -$add\n";
+            # delta has reversed info:
+            $this->_change[$rev]="+$del -$add";
+            #print "+$del -$add\n";
         }
     }
     
     function _formatString($str)
     {
         $str = preg_replace('/@/', '@@', $str);
-        return '@$str@';
+        return '@'.$str.'@';
     }
     
     # Write content of the RCS file
     function _make_rcs()
     {
         # admin
-        $headnum='1.'.$this->numRevisions();
+        $headnum=$this->_head;
         $out = "head\t" . $headnum . ";\n";
         $out.= "access" . $this->access() . ";\n";
         $out.= "symbols" . $this->_symbols . ";\n";
@@ -362,26 +366,50 @@ Class RcsLite {
         $out.="\n";
         
         # delta
-        for($i=$this->numRevisions(); $i>0; $i--) {
+        for($n=$headnum; $n != "";) {
            $out.=
-               sprintf("\n1.%d\ndate\t%s;\tauthor %s;\tstate Exp;\nbranches;\n",
-                  $i, $this->_date[$i], $this->author($i) );
-           if( $i == 1 ) {
-               $out.= "next\t;\n";
-           } else {
-               $out.= sprintf( "next\t1.%d;\n", ($i - 1));
-           }
+              sprintf("\n%s\ndate\t%s;\tauthor %s;\tstate Exp;\nbranches;\n",
+                 $n, gmdate("Y.m.d.H.i.s",$this->_date[$n]), $this->author($n));
+           $n=$this->_next[$n];
+           $out.= sprintf( "next\t%s;\n", $n);
         }
         
         $out.=sprintf("\n\ndesc\n%s\n\n",
             $this->_formatString( $this->description()) );
         
-        for($i=$this->numRevisions(); $i>0; $i--) {
-           $out.=sprintf("\n1.$i\nlog\n%s\ntext\n%s\n\n",
-                $this->_formatString( $this->log($i)),
-                $this->_formatString( $this->delta($i)) );
+        for($n=$headnum; $n != ""; $n=$this->_next[$n]) {
+           $out.=sprintf("\n%s\nlog\n%s\ntext\n%s\n\n",
+                $n,
+                $this->_formatString( $this->log($n)),
+                $this->_formatString( $this->delta($n)) );
         }
         return $out;
+    }
+
+    function rlog($rev="",$option="",$oldopt="")
+    {
+        $this->_ensureProcessed();
+        $this->check_delta();
+
+        $revs=array();
+        if ($rev) {
+            if ($rev == $this->_head or in_array($rev,$this->_next))
+                $revs=array($rev=>'1');
+            else
+                return '';
+        } else
+            $revs=&$this->_next;
+
+        foreach ($revs as $rev=>$next) {
+            $log=$this->_log[$rev];
+            if (!preg_match("/\n$/",$log)) $log.="\n";
+            $rlog.= "----------------------------\n";
+            $rlog.= "revision $rev\n";
+            $rlog.= "date: ".date("Y/m/d H:i:s",$this->_date[$rev]).";  author: ". $this->_author[$rev].";  state: Exp;  lines: ".$this->_change[$rev]."\n";
+            $rlog.= $log;
+        }
+        $rlog.= str_repeat("=",71)."\n";
+        return $rlog;
     }
     
     # ======================
@@ -420,11 +448,23 @@ Class RcsLite {
         $this->_ensureProcessed();
         $date = $this->_date[$version];
         if( $date ) {
-    //        $date = TWiki::Store::RcsFile::_rcsDateTimeToEpoch( $date );
+            $date = date("Y/m/d H:i:s", $date );
         } else {
             $date = "";
         }
         return $date;
+    }
+
+    function rcsDateToEpoch($date)
+    {
+        $dum=explode('.',$date);
+        return date("Y/m/d H:i:s",strtotime("$dum[0]/$dum[1]/$dum[2] $dum[3]:$dum[4]:$dum[5]"));
+    }
+
+    function rcsDateToTime($date)
+    {
+        $dum=explode('.',$date);
+        return strtotime("$dum[0]/$dum[1]/$dum[2] $dum[3]:$dum[4]:$dum[5]");
     }
     
     # ======================
@@ -454,9 +494,14 @@ Class RcsLite {
         $this->_ensureProcessed();
         return $this->_delta[$version];
     }
+
+    function incRev($rev) {
+        $dum=explode('.',$rev);
+        return $dum[0].'.'.sprintf("%s",$dum[1]+1);
+    }
     
     # ======================
-    function addRevision($text,$log, $date=0)
+    function addRevisionText($text,$log, $date=0)
     {
         $this->_ensureProcessed();
         
@@ -468,17 +513,38 @@ Class RcsLite {
             //$delta = $this->_diffText( $text, $this->delta($head));
             $delta = $this->_diffText( $this->delta($head),$text);
             $this->_delta[$head] = $delta;
-        }   
-        $head++;
-        $this->_delta[$head] = $text;
-        $this->_head = $head;
-        $this->_log[$head] = $log;
-        $this->_author[$head] = $this->rcs_user;
+            $nhead=$this->incRev($head);
+        } else {
+            $nhead='1.1';
+            $head='';
+        }
+
+        $this->_next[$nhead] = $head;
+        $this->_delta[$nhead] = $text;
+        $this->_head = $nhead;
+        if (!preg_match("/\n$/",$log)) $log.="\n";
+        $this->_log[$nhead] = $log;
+        $this->_author[$nhead] = $this->rcs_user;
         if( ! $date )
            $date = time();
-        $this->_date[$head] = gmdate('Y.m.d.H.i.s',$date);
-    
+        $this->_date[$nhead] = $date;
+
         return $this->_writeMe();
+    }
+
+    # ======================
+    function addRevisionPage($log, $date=0)
+    {
+        $this->_ensureProcessed();
+
+        $fp=fopen($this->filename,'r');
+        if (!$fp) return;
+        $text='';
+        while(!feof($fp))
+            $text.=fgets($fp,2048);
+        fclose($fp);
+
+        $this->addRevisionText($text, $log, $date);
     }
 
     # ======================
@@ -503,11 +569,11 @@ Class RcsLite {
     # ======================
     # Replace the top revision
     # Return non empty string with error message if there is a problem
-    function replaceRevision($text,$comment,$user,$date)
+    function replaceRevision($text, $comment, $date)
     {
         $this->_ensureProcessed();
         $this->_delLastRevision();
-        $this->addRevision( $text, $comment, $user, $date );
+        $this->addRevisionText( $text, $comment, $date );
     }
     
     # ======================
@@ -515,17 +581,17 @@ Class RcsLite {
     function deleteRevision()
     {
         $this->_ensureProcessed();
-        if( $this->numRevisions() <= 1 );
+        if( sizeof($this->_author) <= 1 );
           return '';
         $this->_delLastRevision();
         return $this->_writeMe();
     }
     
     # ======================
-    function _delLastRevision()
+    function _delLastRevision() // XXX
     {
         $numRevisions = $this->numRevisions();
-        if( $numRevisions > 1 ) {
+        if( $numRevisions != 0 ) {
             # Need to recover text for last revision
             $lastText = $this->getRevision( $numRevisions - 1 );
             $numRevisions--;
@@ -540,6 +606,8 @@ Class RcsLite {
     function revisionDiff($rev1, $rev2, $type='diff')
     {
         $this->_ensureProcessed();
+
+        if (!$rev2) $rev2=$this->_head;
         $text1 = $this->getRevision( $rev1 );
         $text2 = $this->getRevision( $rev2 );
         $diff = $this->_diffText( $text2, $text1, $type );
@@ -551,13 +619,14 @@ Class RcsLite {
     {
         $this->_ensureProcessed();
         $head = $this->numRevisions();
-        if ($version > $head) return; // XXX
+        if ( $version != $head && !in_array($version,$this->_next))
+            return;
         if( $version == $head ) {
             return $this->delta( $version );
         } else {
             $headText = $this->delta( $head );
             $text = $this->_mySplit( $headText,1 );
-            return $this->_patchN( $text, $head-1, $version );
+            return $this->_patchN( $text, $this->_next[$head], $version );
         }
     }
     
@@ -566,6 +635,7 @@ Class RcsLite {
     # Date is in epoch based seconds
     function getRevisionInfo($version)
     {
+        // XXX ???
         $this->_ensureProcessed();
         if( ! $version )
             $version = $this->numRevisions();
@@ -590,11 +660,11 @@ Class RcsLite {
         $pos = 0;
         $last = '';
         $extra = '';
- 
+
         $ds=sizeof($delta);
         while( $pos <= $ds ) {
             $d = $delta[$pos];
-            if( preg_match("/^([ad])(\d+)\s(\d+)\n(\n*)/",$d, $match) ) {
+            if( preg_match("/^([ad])(\d+)\s(\d+)$/",$d, $match) ) {
                 $last = $match[1];
                 $extra = $match[4];
                 $offset = $match[2];
@@ -602,7 +672,6 @@ Class RcsLite {
                 if( $last == 'd' ) {
                     $start = $offset + $adj - 1;
                     $removed = array_splice( $text, $start, $length );
-                    #print "REMOVED ";print_r($removed);
                     $adj -= $length;
                     $pos++;
                 } else if( $last == 'a' ) {
@@ -615,15 +684,12 @@ Class RcsLite {
                         }
                     }
                     array_splice( $text, $offset + $adj, 0, $toAdd );
-                    #print "ADDED ";print_r($toAdd);
                     $adj += $length;
                     $pos += $length + 1;
                 }
             } else {
-                $this->warn("wrong! - should be \"[ad]<num> <num>\" and was: \""
-                    . $d . "\"\n\n" ); #FIXME remove die
-                //die( "wrong! - should be \"[ad]<num> <num>\" and was: \""
-                //  . $d . "\"\n\n" ); #FIXME remove die
+                if (trim($d))
+                    $this->_warn("wrong delta! :\"" . $d . "\"\n\n" );
                 return;
             }
         }
@@ -639,7 +705,7 @@ Class RcsLite {
         if( $version == $target ) {
             return implode('', $text );
         } else {
-            return $this->_patchN( $text, $version-1, $target );
+            return $this->_patchN( $text, $this->_next[$version], $target );
         }
     }
     
@@ -650,14 +716,16 @@ Class RcsLite {
         $ending = '';
         if( preg_match_all("/(\n)$/", $text,$match) )
             $ending = $match[1][0]; // XXX
-    
+   
         $list = preg_split( "/\n/", $text );
-        for( $i = 0; $i<sizeof($list); $i++ )
+        $sz=sizeof($list);
+        #print $sz.':';
+        for( $i = 0; $i<$sz; $i++ )
             $list[$i] .= "\n";
     
         if( $ending ) {
             if (strlen($ending) == 1) array_pop($list);
-
+/*
             if( $addEntries ) {
                 $len = strlen($ending);
                 if( $list ) {
@@ -674,6 +742,7 @@ Class RcsLite {
                     $list = array( $ending );
                 }
             }
+*/
         }
         # TODO: deal with Mac style line ending??
     
@@ -691,6 +760,7 @@ Class RcsLite {
     }
 
     # ====================== 
+    # no type means diff for putting in rcs file, diff means normal diff output
     function _diffN($new,$old,$type="")
     {
         include_once('difflib.php');
@@ -707,215 +777,6 @@ Class RcsLite {
     }
 
     # ======================
-
-    function _lastNoEmptyItem($items)
-    {
-        $pos = sizeof($items);
-        $count = 0;
-        $item;
-        while( $pos >= 0 ) {
-            $item = $items[$pos];
-            if( $item ) break;
-            $count++;
-            $pos--;
-        }
-        return array( $pos, $count );
-    }
-    
-    # ======================
-    # Deal with trailing carriage returns - Algorithm doesn't give output that RCS format is too happy with
-    function _diffEnd($new,$old,$type=0)
-    {
-       if( $type ) return; # FIXME
-       
-       list( $posNew, $countNew ) = $this->_lastNoEmptyItem( $new );
-       list( $posOld, $countOld ) = $this->_lastNoEmptyItem( $old );
-    
-       if( $countNew == $countOld );
-          return "";
-       
-       if( $DIFFEND_DEBUG ) {
-         print( "countOld, countNew, posOld, posNew, lastOld, lastNew, lenOld: " .
-                "$countOld, $countNew, $posOld, $posNew, " . sizeof($old) . ", " . sizeof($new) . 
-                "," . $old . "\n" );
-       }
-       
-       $posNew++;
-       $toDel = ( $countNew < 2 ) ? 1 : $countNew;
-       $startA = sizeof($new) - ( ( $countNew > 0 ) ? 1 : 0 );
-       $toAdd = ( $countOld < 2 ) ? 1 : $countOld;
-       $theEnd = "d$posNew $toDel\na$startA $toAdd\n";
-       for( $i=$posOld; $i<sizeof($old); $i++ ) {
-          $theEnd .= $old[$i] ? $old[$i] : "\n";
-       }
-       
-       for( $i=0; $i<$countNew; $i++ ) {array_pop($new);}
-       array_pop($new);
-       for( $i=0; $i<$countOld; $i++ ) {array_pop($old);}
-       array_pop($old);
-       
-       if( $DIFFEND_DEBUG )
-          print "--$theEnd--\n";
-          
-       return $theEnd;
-    }
-    
-    # ======================
-    # no type means diff for putting in rcs file, diff means normal diff output
-    function _diff($new,$old,$type)
-    {
-        # Work out diffs to change new to old, params are refs to lists
-        include_once('difflib.php'); // XXX
-        $diff = new Diff($old, $new);
-        //$formatter = new UnifiedDiffFormatter;
-        $formatter = new DiffFormatter;
-        $formatter->trailing_cr="";
-        $diffs = $formatter->format($diff);
-        // XXX
-
-        $adj = 0;
-        $patch = array();
-        $del = array();
-        $ins = array();
-        $out = "";
-        $start = 0;
-        $start1;
-        $chunkSign = "";
-        $count = 0;
-        $numChunks = sizeof($diffs);
-        $last = 0;
-        $lengthNew = sizeof($new) - 1;
-        foreach ( $diffs as $chunk ) {
-           $count++;
-           if( DIFF_DEBUG ) print "[\n";
-           $chunkSign = "";
-           $lines = array();
-           foreach ( $chunk as $line ) {
-               list( $sign, $pos, $what ) = $line;
-               if( DIFF_DEBUG )
-                   print "$sign $pos \"$what\"\n";
-               if( $chunkSign != $sign && $chunkSign != "") {
-                   if( $chunkSign == "-" && $type == "diff" ) {
-                      # Might be change of lines
-                      $chunkLength = sizeof($chunk);
-                      $linesSoFar = $lines;
-                      if( $chunkLength == 2 * $linesSoFar ) {
-                         $chunkSign = "c";
-                         $start1 = $pos;
-                      }
-                   }
-                   if( $chunkSign != "c" )
-                      $adj += _addChunk( $chunkSign, $out, $lines, $start, $adj, $type, $start1, $last );
-               }
-               if( ! sizeof($lines) ) {
-                   $start = $pos;
-               }
-               if( $chunkSign != "c" )
-                   $chunkSign = $sign;
-               array_push($lines, array( $what ));
-           }
-    
-           if( $count == $numChunks ) $last = 1;
-           if( $last && $chunkSign == "+" ) {
-               $endings = 0;
-               for( $i=sizeof($old); $i>=0; $i-- ) {
-                   if( $old[$i] ) {
-                       break;
-                   } else {
-                       $endings++;
-                   }
-               }
-               $has = 0;
-               for( $i=sizeof($lines); $i>=0; $i-- ) {
-                   if( $lines[$i] ) {
-                       break;
-                   } else {
-                       $has++;
-                   }
-               }
-               for( $i=0; $i<$endings-$has; $i++ ) {
-                   array_push($lines, array(""));
-               }
-           }
-           $adj += $this->_addChunk( $chunkSign, $out, $lines, $start, $adj, $type, $start1, $last, $lengthNew );
-           if( DIFF_DEBUG )
-               print "]\n";
-        }
-        # Make sure we have the correct number of carriage returns at the end
-        
-        if( $DIFFEND_DEBUG )
-           print "pre end: \"$out\"\n";
-        return $out; # . $theEnd;
-    }
-    
-    
-    # ======================
-    function _range($start,$end)
-    {
-       if( $start == $end ) {
-          return "$start";
-       } else {
-          return "$start,$end";
-       }
-    }
-    
-    # ======================
-    function _addChunk($chunkSign, $out, $lines, $start, $adj, $type, $start1, $last, $newLines )
-    {
-       $nLines = sizeof($lines);
-       if( preg_match('/(\n+)$/',$lines[sizeof($lines)],$m) ) {
-          $nLines += ( ( strlen( $m[1] ) == 0 ) ? 0 : strlen( $m[1] ) -1 );
-       }
-       if( $nLines > 0 ) {
-           if( DIFF_DEBUG )
-              print "addChunk chunkSign=$chunkSign start=$start adj=$adj type=$type " .
-                    "start1=$start1 last=$last newLines=$newLines nLines=$nLines\n";
-           if( $out && !preg_match("/\n$/",$out ))
-               $out .= "\n";
-           if( $chunkSign == "c" ) {
-              $out .= $this->_range( $start+1, $start+$nLines/2 );
-              $out .= "c";
-              $out .= $this->_range( $start1+1, $start1+$nLines/2 );
-              $out .= "\n";
-              $out .= '< ' . implode( '< ', array_slice($lines,0,$nLines/2-1) );
-              if( !preg_match('/\n$/',$lines[$nLines/2-1]) )
-                  $out .= "\n";
-              $out .= "---\n";
-              $out .= '> ' . implode( '> ', array_slice($lines,$nLines/2,$nLines-1 - $nLines/2));
-              $nLines = 0;
-           } else if( $chunkSign == "+" ) {
-              if( $type == "diff" ) {
-                  $out .= $start-$adj . "a";
-                  $out .= $this->_range( $start+1, $start+$nLines ) . "\n";
-                  $out .= "> " . implode( "> ", $lines );
-              } else {
-                  $out .= "a";
-                  $out .= $start-$adj;
-                  $out .= " $nLines\n";
-                  $out .= implode( "", $lines );
-              }
-           } else {
-              if( DIFF_DEBUG ) print "Start nLines newLines: $start $nLines $newLines\n";
-              if( $type == "diff" ) {
-                  $out .= $this->_range( $start+1, $start+$nLines );
-                  $out .= "d";
-                  $out .= $start + $adj . "\n";
-                  $out .= "< " . implode( "< ", $lines );
-              } else {
-                  $out .= "d";
-                  $out .= $start+1;
-                  $out .= " $nLines";
-                  if( $last ) $out .= "\n";
-              }
-              $nLines *= -1;
-           }
-           $lines = array();
-       }
-       return $nLines;
-    }
-    
-    
-    # ======================
     function validTo()
     {
         $this->_ensureProcessed();
@@ -923,39 +784,29 @@ Class RcsLite {
     }
 }
 
-$rcs_dir='RCS';$rcs_user='hello';
-$rcs = new RcsLite($rcs_dir,$rcs_user);
+function test() {
+    $rcs_dir='RCS';$rcs_user='hello';
+    $rcs = new RcsLite($rcs_dir,$rcs_user);
 
-$rcs->_process("m.txt");
-#process( "c:/tmp/rcs/RCS/a.txt" );
-#print "head: $rcs->_head\n";
-#print "status: $rcs->_status\n";
-#print $rcs->_where."\n";
-#print_r($rcs->_author);
-#print_r($rcs->_date);
-#print "log: ";print_r($rcs->_log);
-#print "delta: ";print_r($rcs->_delta);
+    $rcs->_process("m.txt");
+    #process( "c:/tmp/rcs/RCS/a.txt" );
+    print "head: $rcs->_head\n";
+    print_r($rcs->_next);
 
-#for ($i=0;$i<100;$i++)
-#$dd=$rcs->getRevision('10');
-#print($dd);
-//$dd=$rcs->revisionDiff('20','21');
-//$dd=$rcs->revisionDiff('22','21');
-#print_r($dd);
-## co -p1.7
-#$dd=$rcs->getRevision('7');
-#print($dd);print "---------------\n";
-#$dd=$rcs->getRevision('8');
-#print($dd);
-$rcs->check_delta();
-if ($rcs->_head > 6) {
-  ## rcsdiff -r1.3 -r1.8
-  $dd=$rcs->revisionDiff('3','8','udiff');
-  #$dd=$rcs->revisionDiff('73','74');
-  print($dd);
+    #for ($i=0;$i<10;$i++) {
+    #   $dd=$rcs->getRevision('1.'.$i);
+    #   print($dd);
+    #}
+    ## co -p1.7
+    #$dd=$rcs->getRevision('1.7');
+    #print($dd);
+    ## rcsdiff -r1.3 -r1.8
+    $dd=$rcs->revisionDiff('1.3','1.8','udiff');
+    print($dd);
+    ## ci -l
+    $rcs->addRevisionText("Bang\n\t\tHello World !\n",'hello');
+    #print $rcs->rlog("1.11");
 }
-## ci -l
-##$rcs->addRevision("Bang\nHello World !\n",'hello');
 
 // vim:et:sts=4
 ?>
