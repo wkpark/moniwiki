@@ -44,14 +44,18 @@ function get_title($page) {
   return preg_replace("/((?<=[a-z0-9]|[A-Z]{2})[A-Z][a-z])/"," \\1",$title);
 }
 
-function getTicket() {
+function getTicket($seed) {
   global $DBInfo;
+  # make a ticket based on the variables in the config.php
   $config=getConfig("config.php");
   foreach ($config as $seed) {
     if (!is_array($seed))
       $md5.=md5($seed);
   }
-  return md5($md5.time().$_SERVER['HTTP_HOST']);
+  if ($DBInfo->strict_usercheck)
+    # change user's ticket
+    return md5($md5.$seed.time().$_SERVER['HTTP_HOST']);
+  return md5($md5.$seed);
 }
 
 function log_referer($referer,$page) {
@@ -228,9 +232,9 @@ class User {
   }
 
   function setCookie() {
-     $ticket=getTicket();
-     $this->ticket=$ticket;
      if ($this->id == "Anonymous") return false;
+     $ticket=getTicket($this->id);
+     $this->ticket=$ticket;
      # set the fake cookie
      $_COOKIE['MONI_ID']=$ticket.'.'.$this->id;
      return "Set-Cookie: MONI_ID=".$ticket.'.'.$this->id.'; expires='.date('l, d-M-Y',time()+60*60*24*30).'; Path='.get_scriptname();
