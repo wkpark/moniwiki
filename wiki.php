@@ -302,6 +302,8 @@ class WikiDB {
     $this->actions= array('DeletePage','LikePages');
     $this->show_hosts= TRUE;
     $this->iconset='moni';
+    $this->template_regex='[a-z]Template$';
+    $this->category_regex='^Category[A-Z]';
 
     # set user-specified configuration
     if ($config) {
@@ -569,7 +571,26 @@ class WikiDB {
     return $lines;
   }
 
-  function savePage($page,$comment="") {
+  function _replace_variables($body,$options) {
+    if ($this->template_regex
+        && preg_match("/$this->template_regex/",$options[page]))
+      return $body;
+
+    $time=gmdate("Y-m-d\TH:i:s");
+
+    $id=$options[id];
+    if ($options[id] != 'Anonymous')
+      if (!preg_match('[A-Z][a-z0-9]',$options[id])) $id='['.$id.']';
+ 
+    $body=preg_replace("/@DATE@/","[[Date($time)]]",$body);
+    $body=preg_replace("/@TIME@/","[[DateTime($time)]]",$body);
+    $body=preg_replace("/@SIG@/","-- $id [[DateTime($time)]]",$body);
+    $body=preg_replace("/@PAGE@/",$options[page],$body);
+
+    return $body;
+  }
+
+  function savePage($page,$comment="",$options=array()) {
     $user=new User();
     $REMOTE_ADDR=$_SERVER[REMOTE_ADDR];
     $comment=escapeshellcmd($comment);
@@ -581,7 +602,8 @@ class WikiDB {
     $fp=fopen($key,"w");
     if (!$fp)
        return -1;
-    fwrite($fp, $page->body);
+    $body=$this->_replace_variables($page->body,$options);
+    fwrite($fp, $body);
     fclose($fp);
     system("ci -q -t-'".$pagename."' -l -m'".$REMOTE_ADDR.";;".
             $user->id.";;".$comment."' ".$key);
@@ -865,7 +887,7 @@ class Formatter {
 #             "(?<!\!|\[\[|[a-z])(([A-Z]+[a-z0-9]+){2,})(?!([a-z0-9]))|".
     $this->wordrule="(\[($url):[^\s\]]+(\s[^\]]*)+\])|".
              "(\!([A-Z]+[a-z0-9]+){2,})(?!(:|[a-z0-9]))|".
-             "(?<!\!|\[\[|[a-z])((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})(?!([a-z0-9]))|".
+             "(?<!\!|\[\[|[a-z])((?:\/?[A-Z]([a-z0-9]+|[A-Z]+(?=[A-Z][a-z0-9]|\b))){2,})(?!([a-z0-9]))|".
              "(?<!\[)\[([^\[:,\s\d][^\[:,]+)\](?!\])|".
              "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
              "($urlrule)|".
@@ -1003,7 +1025,8 @@ class Formatter {
 
     if ($this->gen_pagelinks) $this->add_pagelinks($page);
 
-    $url=$this->link_url($page);
+    #$url=$this->link_url($page);
+    $url=$this->link_url(_rawurlencode($page)); # XXX
 
     if ($DBInfo->hasPage($page)) {
       return "<a href='$url'>$word</a>";
@@ -1845,6 +1868,7 @@ FOOT;
       $title=preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$title);
     }
     # setup title variables
+    $heading=$this->link_to("?action=fullsearch&amp;value=$name",$title);
     $title="<font class='title'><b>$title</b></font>";
     if ($link)
       $title="<a href=\"$link\" class='title'>$title</a>";
@@ -2167,7 +2191,8 @@ if ($_SERVER[REQUEST_METHOD]=="POST") {
       print $formatter->link_to("#editor",_("Goto Editor"));
    } else {
       $page->write($savetext);
-      $ret=$DBInfo->savePage($page,$comment);
+      $options[page]=$page->name;
+      $ret=$DBInfo->savePage($page,$comment,$options);
       if ($ret == -1)
         $options[msg]=$formatter->link_tag($page->name)." is not editable";
       else
