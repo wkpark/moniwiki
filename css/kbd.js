@@ -11,14 +11,16 @@
    CHANGES
 
    * 2002/09/06 : From http://linux.sarang.net/ and heavily modified by wkpark
-   * 2003/04/16 : refactored and simlified by wkpark
+   * 2003/04/16 : simlified by wkpark
+   * 2003/06/01 : added patch by Kkabi
+   * 2003/07/14 : fixed element indices
 */
 
 /*
- <form name='go' id='go' method='get' action=''>
- <input type='text' name='value' size='20' style='width:100' />
- <input type='hidden' name='action' value='goto' />
- <input type='submit' value='Go' class='goto' style='width:23px;' />
+ <form name="go" id="go" method="get" action='$url' onsubmit="return moin_submit();">
+ <input type="text" name="value" size="20" style="width:100" />
+ <input type="hidden" name="action" value="goto" />
+ <input type="submit" name="goto" value="Go" class="goto" style="width:23px;" />
  </form>
 */
 
@@ -29,6 +31,8 @@
    F: FrontPage
    C: RecentChanges
    T: TitleIndex
+   H: ?action=home (not supported in the MoinMoin)
+   L: ?action=LikePages
 
    <ESC>: goto the 'go' form
    /: FullSearch mode
@@ -42,9 +46,12 @@
 
 //url_prefix="/mywiki";
 //FrontPage="/FrontPage";
+RecentChanges="/RecentChanges"; 
+FindPage="/FindPage"; 
+TitleIndex="/TitleIndex"; 
+HelpContents="/HelpContents"; 
 
 _dom=0;
-//strs="";
 
 function keydownhandler(e) {
         if(document.all) e= window.event; // for IE
@@ -65,8 +72,6 @@ function keydownhandler(e) {
                         ch=String.fromCharCode(e.charCode);
                 }
         }
-
-//	if (strs !="" && ch==32) return false;
 
 //	if (_dom!=3) return;
         if(EventStatus == 'INPUT' || EventStatus == 'TEXTAREA' ) {
@@ -106,58 +111,66 @@ function keypresshandler(e){
 	}
 	if(EventStatus == 'INPUT' || EventStatus == 'TEXTAREA' || _dom == 2) {
 		if ((ch == '?' || ch== '/') && EventStatus == 'INPUT') {
-			var my=""+document.go.elements[0].value;
+			var my=""+document.go.elements['value'].value;
 			if (ch == '?') {
-                		document.go.elements[1].value="titlesearch";
-                		document.go.elements[2].value="?";
+			 if (document.go.elements['goto'].value == '?') {
+                	  document.go.elements['action'].value="goto";
+                	  document.go.elements['goto'].value="Go";
+			  window.status="GoTo";
+			 } else {
+                	  document.go.elements['action'].value="titlesearch";
+                	  document.go.elements['goto'].value="?";
+			  window.status="TitleSearch";
+			 }
 			} else {
-                		document.go.elements[1].value="fullsearch";
-                		document.go.elements[2].value="/";
+			 if (document.go.elements['goto'].value == '/') {
+                	  document.go.elements['action'].value="goto";
+                	  document.go.elements['goto'].value="Go";
+			  window.status="GoTo";
+			 } else {
+                	  document.go.elements['action'].value="fullsearch";
+                	  document.go.elements['goto'].value="/";
+			  window.status="FullSearch";
+			 }
 			}
 			if (my == '/' || my == '?')
-			document.go.elements[0].value=my.substr(0,my.length-1);
+			document.go.elements['value'].value=my.substr(0,my.length-1);
                 } else if (cc== 27 && EventStatus == 'INPUT') {
-			document.go.elements[0].blur();
-			document.go.elements[0].value='';
+			document.go.elements['value'].blur();
+			document.go.elements['value'].value='';
+               		document.go.elements['action'].value="goto";
+               		document.go.elements['goto'].value="Go";
+			window.status="GoTo"+window.defaultStatus;
 		}
 		return;
         }
         if(e.altKey || e.ctrlKey) return;
 
         if(_dom != 3 && cc == 229 && ch == '') { // Mozilla
-		//strs='';
-                //document.getElementById("status").innerHTML="?/ or 한영전환";
                 window.status="?/ or change IME status";
-//        } else if(cc == 13) { // 'RETURN'
-//                if(strs.length > 0 )
-//                        self.location = url_prefix +'/?goto='+strs+'';
-//                else
-//                        strs = ""; // reset;
         } else if(_dom !=3 && cc == 112) { // 'F1' Help! (Mozilla only)
-                self.location = url_prefix + '/HelpContents';
+                self.location = url_prefix + HelpContents;
         } else if(_dom !=3 && cc == 114) { // 'F3' Find (Mozilla only)
-                self.location = url_prefix + '/FindPage';
+                self.location = url_prefix + FindPage;
         } else if(cc == 9 || cc == 27) { // 'TAB','ESC' key
                 if (cc == 27) {
-                        document.go.elements[0].focus();
+                        document.go.elements['value'].focus();
                 }
-                //strs = "";
-                //document.getElementById("status").innerHTML="";
         } else if(ch == "/" || ch == "?") {
                 if (ch == "?") {
                 // Title search as vi way
-                document.go.elements[0].focus();
-                document.go.elements[1].value="titlesearch";
-                document.go.elements[2].value="?";
+                document.go.elements['value'].focus();
+                document.go.elements['action'].value="titlesearch";
+                document.go.elements['goto'].value="?";
                 } else if ( ch == "/") {
                 // Contents search
-                document.go.elements[0].focus();
-                document.go.elements[1].value="fullsearch";
-                document.go.elements[2].value="/";
+                document.go.elements['value'].focus();
+                document.go.elements['action'].value="fullsearch";
+                document.go.elements['goto'].value="/";
                 }
         } else if(ch == "c") {
-                self.location = url_prefix + '/RecentChanges';
-        } else if(ch == "d" || ch== "i" || ch=="b" || ch=="h") {
+                self.location = url_prefix + RecentChanges;
+        } else if(ch == "d" || ch== "i" || ch=="b" || ch=="l" || ch=="h") {
                 var my=''+self.location;
                 var idx=my.indexOf("?");
                 if (idx != -1) {
@@ -171,29 +184,31 @@ function keypresshandler(e){
                     my +='?action=bookmark';
 		else if (ch == "h")
                     my +='?action=home';
+		else if (ch == "l")
+                    my +='?action=LikePages';
 		self.location=my;
 		
-        } else if(ch == "f" || ch == 'h') { // frontpage
+        } else if(ch == "f") { // frontpage
                 self.location = url_prefix + FrontPage;
         } else if(ch == "s" || ch == 'q') { // findpage
-                self.location = url_prefix + '/FindPage'
+                self.location = url_prefix + FindPage
         } else if(ch == "t") { // frontpage
-                self.location = url_prefix + '/TitleIndex'
-        } else if(ch=="e" || ch=="w" || ch=="i" || ch=="r") { // Edit or reflash
+                self.location = url_prefix + TitleIndex
+        } else if(ch=="e" || ch=="w" || ch=="r") { // Edit or reflash
                 var my=''+self.location;
                 var idx=my.indexOf("?");
                 if (idx != -1 && my.substr(idx+1,5) == "goto=") {
                         my=my.substr(idx+6,my.length-6);
                         if ((idx=my.indexOf("&")) != -1)
                                 my=my.substring(0,idx);
-                        if (ch == "e" || ch == "w" || ch =="i")
+                        if (ch == "e" || ch == "w")
                                 self.location=url_prefix +'/'+my+'?action=edit';
                         if (ch == "r") {
                                 if ((idx=my.indexOf("#")) != -1)
                                         my=my.substring(0,idx);
                                 self.location=url_prefix+ '/'+my+'?action=show';                        }
                 } else {
-                        if (ch == "e" || ch == "w" || ch =="i")
+                        if (ch == "e" || ch == "w")
                                 self.location = '?action=edit';
                         if (ch == "r") {
                                 if ((idx=my.indexOf("#")) != -1) {
@@ -214,13 +229,12 @@ function input(){
         document.onkeydown = keydownhandler;
 }
 
-function on_submit() {
-        //t = document.go.elements[0].value+''
-	//if ((!document.go.elements[0].checked && !document.go.elements[1].checked) && document.go.elements[3].name =="goto") {
-	//document.go.elements[2].name='goto';
-	//document.go.elements[2].value=document.go.elements[2].value;
-	//	return true;
-	//}
+function moin_submit() {
+	if (document.go.elements['action'].value =="goto") {
+		document.go.elements['value'].name='goto';
+		document.go.elements['action'].name='';
+		return true;
+	}
 }
 
 input();
