@@ -11,7 +11,7 @@ RETVAL=1
 while [ ! $RETVAL -eq 0 ]; do
   echo -n " Please enter the permission 777 or 2777(default 777): "
   read PERM
-  if [ x$perm = x ]; then
+  if [ x$PERM = x ]; then
     PERM=777
   fi
   echo "*** chmod $PERM . data"
