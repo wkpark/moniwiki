@@ -1982,14 +1982,14 @@ function macro_FootNote($formatter,$value="") {
        $idx=substr($dum[0],1);
        $formatter->foot_idx--; # undo ++.
        if (0 === strcmp($idx , (int)$idx)) $idx="fn$idx";
-       return "<tt class='foot'><sup><a href='#$idx'>$text</a></sup></tt>";
+       return "<tt class='foot'><a href='#$idx'>$text</a></tt>";
     }
   }
-  $formatter->foots[]="<tt class='foot'><sup>&#160;&#160&#160;".
+  $formatter->foots[]="<tt class='foot'>&#160;&#160&#160;".
                       "<a name='$idx'/>".
-                      "<a href='#r$idx'>$text</a>&#160;</sup></tt> ".
+                      "<a href='#r$idx'>$text</a>&#160;</tt> ".
                       "$value<br/>";
-  return "<tt class='foot'><a name='r$idx'/><sup><a href='#$idx'>$text</a></sup></tt>";
+  return "<tt class='foot'><a name='r$idx'/><a href='#$idx'>$text</a></tt>";
 }
 
 function macro_TableOfContents($formatter="",$value="") {
