@@ -47,7 +47,12 @@ class MoniConfig {
     $url_prefix= preg_replace("/\/([^\/]+)\.php$/","",$_SERVER['SCRIPT_NAME']);
     $config['url_prefix']="'".$url_prefix."'";
 
-    $config['rcs_user']="'".getenv('LOGNAME')."'";
+    $user = getenv('LOGNAME');
+    $user = $user ? $user : get_current_user();
+    $config['rcs_user']="'".$user."'";
+
+    if (!file_exists('wikilib.php'))
+      $config['include_path']="'.:/usr/local/share/moniwiki:/usr/share/moniwiki'";
     return $config;
   }
 
@@ -215,8 +220,15 @@ function pagenameToKey($pagename) {
 }
 
 function show_wikiseed($config,$seeddir='wikiseed') {
+  $path='.:/usr/share/moniwiki:/usr/local/share/moniwiki';
   $pages= array();
-  $handle= opendir($seeddir);
+  foreach (explode(':',$path) as $dir) {
+    $handle= @opendir($dir.'/'.$seeddir);
+    if ($handle) {
+      $seeddir=$dir.'/'.$seeddir;
+      break;
+    }
+  }
   while ($file = readdir($handle)) {
     if (is_dir($seeddir."/".$file)) continue;
     $pagename = keyToPagename($file);
@@ -276,6 +288,14 @@ function show_wikiseed($config,$seeddir='wikiseed') {
 }
 
 function sow_wikiseed($config,$seeddir='wikiseed',$seeds) {
+  $path='.:/usr/share/moniwiki:/usr/local/share/moniwiki';
+  $pages= array();
+  foreach (explode(':',$path) as $dir) {
+    if (is_dir($dir.'/'.$seeddir)) {
+      $seeddir=$dir.'/'.$seeddir;
+      break;
+    }
+  }
   umask(000);
   print "<pre class='console'>\n";
   foreach($seeds as $seed) {
@@ -486,8 +506,9 @@ if ($_SERVER['REQUEST_METHOD']!="POST") {
   if (file_exists('config.php') && !file_exists($config[data_dir]."/text/RecentChanges")) {
     print "<h3><font color='red'>WARN: You have no WikiSeed on your $config[sitename]</font></h3>\n";
     print "<h2>If you want to put wikiseeds on your wiki <a href='?action=seed'>Click here</a> now</h2>";
+  } else {
+    print "<h2>goto <a href='wiki.php'>$config[sitename]</a></h2>";
   }
-
 }
 
 ?>
