@@ -508,6 +508,7 @@ class WikiDB {
     $this->icon['updated']="<img src='$imgdir/$iconset-updated.gif' alt='U' align='middle' border='0' />";
     $this->icon['user']="UserPreferences";
     $this->icon['home']="<img src='$imgdir/$iconset-home.gif' alt='M' align='middle' border='0' />";
+    $this->icon['main']="<img src='$imgdir/$iconset-main.gif' alt='^' align='middle' border='0' />";
     $this->icon_sep=" ";
     $this->icon_bra=" ";
     $this->icon_cat=" ";
@@ -1518,10 +1519,14 @@ class Formatter {
     # User namespace extension
     if ($page[0]=='~' and ($p=strpos($page,'/'))) {
       # change ~User/Page to User~Page
+      $gpage=$page;
       $page=substr($page,1,$p-1)."~".substr($page,$p+1);
     } else if (!$nogroup and $this->group and !strpos($page,'~')) {
       if ($page[0]=='/') $page=substr($page,1);
-      else $page=$this->group.$page;
+      else {
+        $gpage=$page;
+        $page=$this->group.$page;
+      }
     } else if ($page[0]=='/') { # SubPage
       $page=$this->page->name.$page;
     } else if (preg_match('/^(\.{1,2})\//',$page,$match)) {
@@ -1542,8 +1547,14 @@ class Formatter {
 
     $page=urldecode($page); # XXX
     $url=$this->link_url(_rawurlencode($page)); # XXX
-    if (isset($this->pagelinks[$page])) {
-      $idx=$this->pagelinks[$page];
+    if ($gpage)
+      $gurl=$this->link_url(_rawurlencode($gpage));
+    if (isset($this->pagelinks[$page]) or isset($this->pagelinks[$gpage])) {
+      if (!isset($this->pagelinks[$page])) {
+        $url=$gurl;
+        $idx=$this->pagelinks[$gpage];
+      } else
+        $idx=$this->pagelinks[$page];
       switch($idx) {
         case 0:
           #return "<a class='nonexistent' href='$url'>?</a>$word";
@@ -1553,6 +1564,9 @@ class Formatter {
         case -2:
           return "<a href='$url'>$word</a>".
             "<tt class='sister'><a href='$url'>&#x203a;</a></tt>";
+        case -3:
+          return $this->link_tag($page,'',$this->icon['main']).
+            "<a href='$url'>$word</a>";
         default:
           return "<a href='$url'>$word</a>".
             "<tt class='sister'><a href='#sister$idx'>&#x203a;$idx</a></tt>";
@@ -1561,6 +1575,11 @@ class Formatter {
       $this->pagelinks[$page]=-1;
       return "<a href='$url'>$word</a>";
     } else {
+      if ($gpage and $DBInfo->hasPage($gpage)) {
+        $this->pagelinks[$gpage]=-3;
+        return $this->link_tag($page,'',$this->icon['main']).
+          "<a href='$gurl'>$word</a>";
+      }
       if ($this->sister_on) {
         $sisters=$DBInfo->metadb->getSisterSites($page, $DBInfo->use_sistersites);
         if ($sisters === true) {
@@ -2731,9 +2750,10 @@ MSG;
       if (strpos($item,' ') === false) {
         if (strpos($attr,'=') === false) $attr="accesskey='$attr'";
         # like 'MoniWiki'=>'accesskey="1"'
-        $menu[]=$this->link_tag($item,"",_($item),$attr);
+        $menu[]=$this->word_repl($item,_($item),$attr);
+#        $menu[]=$this->link_tag($item,"",_($item),$attr);
       } else {
-        # like a 'MoniWiki http://moniwiki.sf.net'
+        # like a 'http://moniwiki.sf.net MoniWiki'
         $menu[]=$this->link_repl($item,$attr);
       }
     }
