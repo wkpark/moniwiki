@@ -64,7 +64,7 @@ function processor_vim($formatter,$value) {
   unlink($tmpf);
 
   $out=preg_replace("/<title>.*title>|<\/?head>|<\/?html>|<meta.*>|<\/?body.*>/","", $out);
-  $out=preg_replace("/<pre>/","<pre style='font-family:fixedsys,fixed;color:#c0c0c0;background-color:black'>", $out);
+  $out=preg_replace("/<pre>/","<pre class='wikiSyntax' style='font-family:fixed;color:#c0c0c0;background-color:black'>", $out);
 #  $out=preg_replace("/<\/pre>/","</span></pre>", $out);
 
   return $out;
