@@ -752,7 +752,7 @@ function do_subscribe($formatter,$options) {
   $formatter->send_title($title);
   print "<form method='post'>
 <table border='0'><tr>
-<th>Subscribe pages:</th><td><textarea name='subscribed_pages' row='5' value='' />$page_lists</textarea></td></tr>
+<th>Subscribe pages:</th><td><textarea name='subscribed_pages' cols='30' rows='5' value='' />$page_lists</textarea></td></tr>
 <tr><td></td><td>
     <input type='hidden' name='action' value='subscribe' />
     <input type='submit' value='Subscribe' />
@@ -960,6 +960,33 @@ function do_userform($formatter,$options) {
   $formatter->send_title($title,"",$opts);
   $formatter->send_page("Back to UserPreferences");
   $formatter->send_footer();
+}
+
+function macro_Include($formatter,$value="") {
+  global $DBInfo;
+  static $included=array();
+
+  if ($formatter->gen_pagelinks) return '';
+
+  preg_match("/([^'\",]+)(?:\s*,\s*)?(\"[^\"]*\"|'[^']*')?$/",$value,$match);
+  if ($match) {
+    $value=trim($match[1]);
+    if ($match[2])
+      $title="=== ".substr($match[2],1,-1)." ===\n";
+  }
+
+  if ($value and !in_array($value, $included) and $DBInfo->hasPage($value)) {
+    $ipage=$DBInfo->getPage($value);
+    $ibody=$ipage->_get_raw_body();
+    $opt[nosisters]=1;
+    ob_start();
+    $formatter->send_page($title.$ibody,$opt);
+    $out= ob_get_contents();
+    ob_end_clean();
+    return $out;
+  } else {
+    return "[[Include($value)]]";
+  }
 }
 
 function macro_RandomPage($formatter,$value="") {
@@ -1407,7 +1434,6 @@ function macro_LikePages($formatter="",$args="",$opts=array()) {
 
   $opts[msg] = sprintf(_("Like \"%s\""),$args);
 
-  $prefix=get_scriptname();
   $tag=$formatter->link_to("?action=LikePages&amp;metawiki=1",_("Search all MetaWikis"));
   $opts[extra].="$tag (Slow Slow)<br />";
 
@@ -2113,7 +2139,7 @@ function processor_php($formatter="",$value="") {
 }
 
 function processor_gnuplot($formatter="",$value="") {
-  #$gnuplot="/usr/local/bin/gnuplot_pm3d";
+  global $DBInfo;
   #$gnuplot="gnuplot";
   $gnuplot="/usr/local/bin/gnuplot_pm3d";
   $vartmp_dir="/var/tmp";
@@ -2135,7 +2161,7 @@ function processor_gnuplot($formatter="",$value="") {
 
   # normalize plt
   $plt="\n".$plt."\n";
-  $plt=preg_replace("/\n\s*![^\n]+\n/","\n",$plt); # strip shell commends
+  $plt=preg_replace("/\n\s*![^\n]+\n/","\n",$plt); # strip shell commands
   $plt=preg_replace("/[ ]+/"," ",$plt);
   $plt=preg_replace("/\nset?\s+(t|o|si).*\n/", "\n",$plt);
   
@@ -2171,7 +2197,7 @@ $plt
      if ($log)
         $log ="<pre style='background-color:black;color:gold'>$log</pre>\n";
   }
-  return $log."<img src='/wiki/$cache_dir/$uniq.png' alt='gnuplot' />";
+  return $log."<img src='$DBInfo->url_prefix/$cache_dir/$uniq.png' alt='gnuplot' />";
 }
 
 ?>
