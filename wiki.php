@@ -2406,8 +2406,8 @@ class Formatter {
             $in_quote=0;
          } else {
             # htmlfy '<', '&'
-            $pre=str_replace(array('<','&'),
-                             array('&lt;','&amp;'),
+            $pre=str_replace(array('&','<'),
+                             array("&amp;","&lt;"),
                             $this->pre_line);
             $line="<pre class='wiki'>\n".$pre."</pre>\n".$line;
          }
