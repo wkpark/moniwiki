@@ -16,6 +16,9 @@ function do_sendping($formatter,$options) {
     return;
   }
 
+  if (strtolower($DBInfo->charset) == 'utf-8')
+    $checked='checked="checked"';
+
   if (!$options['trackback_url']) {
     $url=$formatter->link_url($formatter->page->urlname);
 
@@ -71,7 +74,9 @@ function do_sendping($formatter,$options) {
 <textarea class="wiki" id="content" wrap="virtual" name="excerpt"
  rows="$rows" cols="$cols" class="wiki">$excerpt</textarea><br />
 FORM;
+
     print <<<FORM2
+<b>mb encoded:</b> <input type="checkbox" name="mbencode" $checked />&nbsp;
 <input type="hidden" name="action" value="sendping" />
 <input type="submit" value="Send ping" />&nbsp;
 <input type="reset" value="Reset" />&nbsp;
@@ -84,10 +89,21 @@ FORM2;
   # send Trackback ping
 
   $trackback_url=$options['trackback_url'];
-
 	$title= urlencode(stripslashes($options['title']));
-	$excerpt= urlencode(stripslashes($options['excerpt']));
 	$blog_name= urlencode($DBInfo->sitename);
+
+	$excerpt= stripslashes($options['excerpt']);
+
+  if ($options['mbencode'] and function_exists('mb_encode_numericentity')) {
+    if ($checked and function_exists('iconv'))
+      $excerpt=iconv($DBInfo->charset,'utf-8',$excerpt);
+
+    $convmap=array(0xac00, 0xd7a3, 0x0000, 0xffff); /* for euc-kr */
+    $new=mb_encode_numericentity($excerpt,$convmap,'utf-8');
+    if ($new) $excerpt=$new;
+  }
+
+	$excerpt= urlencode($excerpt);
 
   $url= $formatter->link_url($options['page'],"#$options[value]");
   $url= urlencode(qualifiedUrl($url));
