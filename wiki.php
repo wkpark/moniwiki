@@ -3037,9 +3037,9 @@ MSG;
         $okey=$key;
         $key=strtok('/');
         if ($key)
-          $origin.=$DBInfo->arrow.$this->word_repl('"'.$parent.'"',$okey,'',1);
+          $origin.=$DBInfo->arrow.$this->word_repl('"'.$parent.'"',$okey,'',1,0);
         else
-          $origin.=$DBInfo->arrow.$this->word_repl('"'.$parent.'"',$okey,'',1);
+          $origin.=$DBInfo->arrow.$this->word_repl('"'.$parent.'"',$okey,'',1,0);
       }
       # reset pagelinks
       $this->pagelinks=array();
