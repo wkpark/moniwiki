@@ -2597,6 +2597,9 @@ class Formatter {
     global $DBInfo;
     $plain=0;
 
+    $media='media="screen"';
+    if ($options['action']=='print') $media='';
+
     if ($this->pi['#redirect'] != '' && $options['pi']) {
       $options['value']=$this->pi['#redirect'];
       $options['redirect']=1;
@@ -2657,7 +2660,7 @@ EOS;
       print '  <link rel="Alternate" media="print" title="Print View" href="'.
         $print_url."\" />\n";
       if ($options['css_url'])
-        print '  <link rel="stylesheet" type="text/css" media="screen" href="'.
+        print '  <link rel="stylesheet" type="text/css" '.$media.' href="'.
           $options['css_url'].'" />';
 # default CSS
       else print <<<EOS
@@ -2674,13 +2677,13 @@ a:hover {background-color:#E2ECE5;color:#000;}
   color:#639ACE;
   text-decoration: none;
 }
-tt.wiki {font-family:Lucida Typewriter,fixed,lucida,fixed;font-size:12px;}
-tt.foot {font-family:Tahoma,lucida,fixed;font-size:12px;}
+tt.wiki {font-family:Lucida Typewriter,fixed,lucida,monospace;font-size:12px;}
+tt.foot {font-family:Tahoma,lucida,monospace;font-size:12px;}
 
 pre.wiki {
   padding-left:6px;
   padding-top:6px; 
-  font-family:Lucida TypeWriter,monotype,lucida,fixed;font-size:14px;
+  font-family:Lucida TypeWriter,monotype,lucida,monospace;font-size:14px;
   background-color:#000000;
   color:#FFD700; /* gold */
 }
@@ -2692,7 +2695,7 @@ pre.quote {
   padding-top:6px;
   white-space:pre-wrap;
   white-space: -moz-pre-wrap; 
-  font-family:Georgia,monotype,lucida,fixed;font-size:14px;
+  font-family:Georgia,monotype,lucida,monospace;font-size:14px;
   background-color:#F7F8E6;
 }
 
@@ -2706,27 +2709,27 @@ td.wiki {
 th.info { background-color:#E2ECE2; }
 
 h1,h2,h3,h4,h5 {
-  font-family:Tahoma;
+  font-family:Tahoma,sans-serif;
   padding-left:6px;
   border-bottom:1px solid #999;
 }
 
 div.diff-added {
-  font-family:Verdana,Lucida Sans TypeWriter,Lucida Console,fixed;
+  font-family:Verdana,Lucida Sans TypeWriter,Lucida Console,monospace;
   font-size:12px;
   background-color:#61FF61;
   color:black;
 }
 
 div.diff-removed {
-  font-family:Verdana,Lucida Sans TypeWriter,Lucida Console,fixed;
+  font-family:Verdana,Lucida Sans TypeWriter,Lucida Console,monospace;
   font-size:12px;
   background-color:#E9EAB8;
   color:black;
 }
 
 div.diff-sep {
-  font-family:georgia,Verdana,Lucida Sans TypeWriter,Lucida Console,fixed;
+  font-family:georgia,Verdana,Lucida Sans TypeWriter,Lucida Console,monospace;
   font-size:12px;
   background-color:#000000;
   color:#FFD700; /* gold */
