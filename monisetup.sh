@@ -11,7 +11,7 @@ RETVAL=1
 while [ ! $RETVAL -eq 0 ]; do
   echo -n " Please enter the permission 777 or 2777(default 777): "
   read PERM
-  if [ x$perm == x ]; then
+  if [ x$perm = x ]; then
     PERM=777
   fi
   echo "*** chmod $PERM . data"
@@ -31,10 +31,10 @@ else
   else
     echo -n " Did you really want to make directories with permission '$PERM'(N/y): "
     read say
-    if [ x$say == x ]; then
+    if [ x$say = x ]; then
       say='n'
     fi
-    if [ x$say == x'n' ]; then
+    if [ x$say = x'n' ]; then
       echo ""
       echo "Please open monisetup.php again"
       echo ""
@@ -84,7 +84,7 @@ if [ $ID -eq 0 ]; then
   while [ ! $RETVAL -eq 0 ]; do
     echo -n " Please enter the nobody user id (nobody): "
     read owner
-    if [ x$owner == x ]; then
+    if [ x$owner = x ]; then
       owner=nobody
     fi
     chown $owner $DATA_DIR/{text,text/RCS,cache,user} &&
@@ -97,7 +97,7 @@ if [ $ID -eq 0 ]; then
   while [ ! $RETVAL -eq 0 ]; do
     echo -n " Please enter the nobody group id (nobody): "
     read group
-    if [ x$group == x ]; then
+    if [ x$group = x ]; then
       group=nobody
     fi
     chgrp $group $DATA_DIR/{text,text/RCS,cache,user} &&
