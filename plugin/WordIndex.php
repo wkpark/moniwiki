@@ -26,6 +26,8 @@ function macro_WordIndex($formatter,$value) {
     $tmp=preg_replace("/((?<=[A-Za-z0-9])[A-Z][a-z0-9])/"," \\1",ucwords($tmp));
     $words=preg_split("/\s+/",$tmp);
     foreach ($words as $word) {
+      $word=ltrim($word);
+      if (!$word) continue;
       if ($dict[$word])
         $dict[$word][]=$page;
       else
@@ -33,17 +35,18 @@ function macro_WordIndex($formatter,$value) {
     }
   }
   #ksort($dict);
-  uksort($dict, "strnatcasecmp");
+  ksort($dict,SORT_STRING);
+  #uksort($dict, "strnatcasecmp");
+  #uksort($dict, "strcasecmp");
 
   $key=-1;
   $out="";
   $keys=array();
   foreach ($dict as $word=>$pages) {
-    $pkey=get_key($word);
+    $pkey=get_key("$word");
 #   $key=strtoupper($page[0]);
     if ($key != $pkey) {
-      if ($key !=-1)
-        $out.="</ul>";
+      if ($key !=-1) $out.="</ul>";
       $key=$pkey;
       $keys[]=$key;
       $out.= "<a name='$key' /><h3><a href='#top'>$key</a></h3>\n";
@@ -57,8 +60,11 @@ function macro_WordIndex($formatter,$value) {
   }
 
   $index="";
-  foreach ($keys as $key)
-    $index.= "| <a href='#$key'>$key</a> ";
+  foreach ($keys as $key) {
+    $name=$key;
+    if ($key == 'Others') $name=_("Others");
+    $index.= "| <a href='#$key'>$name</a> ";
+  }
   $index[0]=" ";
 
   return "<center><a name='top' />$index</center>\n$out";
