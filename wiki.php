@@ -411,7 +411,7 @@ class WikiDB {
     $this->data_dir= './data';
     $this->query_prefix='/';
     $this->umask= 02;
-    $this->charset='euc-kr';
+    $this->charset='utf-8';
     $this->lang='auto';
     $this->dba_type="db3";
     $this->use_counter=0;
@@ -455,8 +455,9 @@ class WikiDB {
     $this->origin=0;
     $this->arrow=" &#x203a; ";
     $this->home='Home';
-    $this->diff_type='fancy_diff';
-    $this->nonexists='nonexists';
+    $this->diff_type='fancy';
+    $this->hr_type='simple';
+    $this->noexists='simple';
     $this->use_sistersites=1;
     $this->use_twinpages=1;
     $this->use_hostname=1;
@@ -1191,16 +1192,19 @@ class Formatter {
     $this->baserule=array("/<([^\s<>])/","/`([^`' ]+)'/","/(?<!`)`([^`]*)`/",
                      "/'''([^']*)'''/","/(?<!')'''(.*)'''(?!')/",
                      "/''([^']*)''/","/(?<!')''(.*)''(?!')/",
-                     "/\^([^ \^]+)\^(?=\s|$)/","/(?<!,),,([^ ,]+),,(?!,)/",
-                     "/(?<!_)__([^_]+)__(?!_)/","/^-{4,}/",
+                     "/\^([^ \^]+)\^(?=\s|$)/","/\^\^([^\^]+)\^\^(?!^)/",
+                     "/(?<!,),,([^ ,]+),,(?!,)/",
+                     "/(?<!_)__([^_]+)__(?!_)/","/^(-{4,})/e",
                      "/(?<!-)--([^-]+)--(?!-)/",
                      );
     $this->baserepl=array("&lt;\\1","&#96;\\1'","<tt class='wiki'>\\1</tt>",
                      "<strong>\\1</strong>","<strong>\\1</strong>",
                      "<i>\\1</i>","<i>\\1</i>",
-                     "<sup>\\1</sup>","<sub>\\1</sub>",
+                     "<sup>\\1</sup>","<sup>\\1</sup>",
+                     "<sub>\\1</sub>",
                      "<u>\\1</u>",
-                     "<div class='separator'><hr class='wiki' /></div>\n",
+                     "\$this->$DBInfo->hr_type"."_hr('\\1')",
+                     #"<div class='separator'><hr class='wiki' /></div>\n",
                      "<del>\\1</del>",
                      );
 
@@ -1239,7 +1243,7 @@ class Formatter {
     # "(?<!\!|\[\[)((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})\b|".
     # WikiName rule: WikiName ILoveYou (imported from the rule of NoSmoke)
     # protect WikiName rule !WikiName
-    "(?<![a-z])\!?(?:\/?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b|".
+    "(?<![a-z])\!?(?:((\.{1,2})?\/)?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b|".
     # single bracketed name [Hello World]
     "(?<!\[)\!?\[([^\[:,<\s'][^\[:,>]{1,255})\](?!\])|".
     # bracketed with double quotes ["Hello World"]
@@ -1576,7 +1580,7 @@ class Formatter {
 
   function word_repl($word,$text='',$attr='',$nogroup=0) {
     global $DBInfo;
-    $nonexists='word_'.$DBInfo->nonexists;
+    $nonexists='nonexists_'.$DBInfo->nonexists;
     if ($word[0]=='"') { # ["extended wiki name"]
       $page=substr($word,1,-1);
       $word=$page;
@@ -1607,7 +1611,7 @@ class Formatter {
       switch($idx) {
         case 0:
           #return "<a class='nonexistent' href='$url'>?</a>$word";
-          return call_user_func(array(&$this,"word_$DBInfo->nonexists"),$word,$url);
+          return call_user_func(array(&$this,$nonexists),$word,$url);
         case -1:
           return "<a href='$url' $attr>$word</a>";
         case -2:
@@ -1655,23 +1659,23 @@ class Formatter {
       }
       $this->pagelinks[$page]=0;
       #return "<a class='nonexistent' href='$url'>?</a>$word";
-      return call_user_func(array(&$this,"word_$DBInfo->nonexists"),$word,$url);
+      return call_user_func(array(&$this,$nonexists),$word,$url);
     }
   }
 
-  function word_nonexists($word,$url) {
+  function nonexists_simple($word,$url) {
     return "<a class='nonexistent' href='$url'>?</a>$word";
   }
 
-  function word_nolink($word,$url) {
+  function nonexists_nolink($word,$url) {
     return "$word";
   }
 
-  function word_forcelink($word,$url) {
+  function nonexists_forcelink($word,$url) {
     return "<a class='nonexistent' href='$url'>$word</a>";
   }
 
-  function word_fancy_nonexists($word,$url) {
+  function nonexists_fancy($word,$url) {
     global $DBInfo;
     #if (preg_match("/^[a-zA-Z0-9\/~]/",$word))
     if (ord($word[0]) < 125)
@@ -1824,6 +1828,16 @@ class Formatter {
     return $this->link_tag($this->page->urlname,$query_string,$text,$attr);
   }
 
+  function fancy_hr($rule) {
+    $sz=($sz=strlen($rule)-4) < 6 ? ($sz ? $sz+2:0):8;
+    $size=$sz ? " size='$sz'":'';
+    return "<div class='separator'><hr$size class='wiki' /></div>";
+  }
+
+  function simple_hr() {
+    return "<div class='separator'><hr class='wiki' /></div>";
+  }
+
   function _list($on,$list_type,$numtype="",$closetype="") {
     if ($list_type=="dd") {
       if ($on)
@@ -1867,22 +1881,24 @@ class Formatter {
     $tok=strtok($str,'&');
     $len=strlen($tok)/2;
     $extra=strtok('');
-    $attr='';
+    $attr=array();
     if ($extra) {
       $para=substr($extra,3,-1);
       # rowspan
       if (preg_match("/^\|(\d+)$/",$para,$match))
-        $attr="rowspan='$match[1]' ";
+        $attr[]="rowspan='$match[1]'";
       else if ($para[0]=='#')
-        $attr="bgcolor='$para' ";
+        $attr[]="bgcolor='$para'";
+      else
+        $attr[]=$para;
     }
-    if ($align) $attr.="align='center' ";
+    if ($align) $attr[]="align='center'";
     if ($len > 1)
-      $attr.=" align='center' colspan='$len'";
-    return $attr;
+      $attr[]="align='center' colspan='$len'";
+    return implode(' ',$attr);
   }
 
-  function _table($on,$attr="") {
+  function _table($on,$attr='') {
     if ($attr) {
       $attr=substr($attr,4,-1);
     }
@@ -2137,8 +2153,8 @@ class Formatter {
          $in_table=0;
       }
       if ($in_table) {
-         $line=preg_replace('/^((?:\|\|)+(&lt;[^>]+>)?)((\s?)(.*))\|\|$/e',"'<tr class=\"wiki\"><td class=\"wiki\"'.\$this->_table_span('\\1','\\4').'>\\3</td></tr>'",$line);
-         $line=preg_replace('/((\|\|)+(&lt;[^>]+>)?)(\s?)/e',"'</td><td class=\"wiki\"'.\$this->_table_span('\\1','\\4').'>\\4'",$line);
+         $line=preg_replace('/^((?:\|\|)+(&lt;[^>]+>)?)((\s?)(.*))\|\|$/e',"'<tr class=\"wiki\"><td class=\"wiki\" '.\$this->_table_span('\\1','\\4').'>\\3</td></tr>'",$line);
+         $line=preg_replace('/((\|\|)+(&lt;[^>]+>)?)(\s?)/e',"'</td><td class=\"wiki\" '.\$this->_table_span('\\1','\\4').'>\\4'",$line);
          $line=str_replace('\"','"',$line); # revert \\" to \"
       }
 
@@ -2496,7 +2512,7 @@ class Formatter {
       } else {
          $msg= _("Difference between yours and the current");
          if (!$options['raw'])
-           $ret= call_user_func(array(&$this,$DBInfo->diff_type),$out);
+           $ret= call_user_func(array(&$this,$DBInfo->diff_type.'_diff'),$out);
          else
            $ret="<pre>$out</pre>\n";
       }
@@ -2540,7 +2556,7 @@ class Formatter {
         $msg=sprintf(_("Difference between r%s and the current"),$rev1.$rev2);
       }
       if (!$options['raw'])
-        $ret= call_user_func(array(&$this,$DBInfo->diff_type),$out);
+        $ret= call_user_func(array(&$this,$DBInfo->diff_type.'_diff'),$out);
       else
         $ret="<pre>$out</pre>\n";
     }
