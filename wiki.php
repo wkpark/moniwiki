@@ -1615,6 +1615,7 @@ class Formatter {
       #$page=preg_replace("/\s+/","",$word); # concat words
       $page=normalize($word); # concat words
 
+    if (!$DBInfo->use_twikilink) $islink=0;
     list($page,$page_text,$gpage)=
       normalize_word($word,$this->group,$this->page->name,$nogroup,$islink);
     if ($text) {
