@@ -22,6 +22,7 @@ $css_url= $url_prefix.'/css/default.css';
 $kbd_script= $url_prefix.'/css/kbd.js';
 $logo_string= '<img src="'.$logo_img.'" alt="" border="0" align="middle" />';
 $use_smileys= 1;
+#$smiley='wikismiley';
 $use_counter= 0;
 $iconset= 'moni';
 $enable_latex=0;
@@ -63,4 +64,6 @@ $use_trackback=0;
 #$purple_icon='<img src="/wiki/imgs/egg.png" border="0" />';
 #$use_titlecache=1;
 #$pagetype=array("KldpDsl"=>"plain","ManPage"=>"/man","DocbookSgml"=>"/jade","LinuxDoc"=>"/linuxdoc");
+
+#$password_length=6;
 ?>
