@@ -929,9 +929,10 @@ function do_uploadfile($formatter,$options) {
   preg_match("/(.*)\.([a-z0-9]{1,4})$/i",$upfilename,$fname);
 
   if (!$upfilename) {
-     $title="No file selected";
+     #$title="No file selected";
      $formatter->send_header("",$options);
      $formatter->send_title($title,"",$options);
+     print macro_UploadFile($formatter);
      $formatter->send_footer("",$options);
      return;
   }
@@ -1271,14 +1272,17 @@ function macro_UploadFile($formatter,$value="") {
 </form>
 EOF;
 
+   if (!in_array('UploadedFiles',$formatter->actions))
+     $formatter->actions[]='UploadedFiles';
+
    return $form;
 }
 
 function do_uploadedfiles($formatter,$options) {
-  $list=macro_UploadedFiles($formatter,$options[page]);
+  $list=macro_UploadedFiles($formatter,$options[page],$options);
 
   $formatter->send_header("",$options);
-  $formatter->send_title("",$options);
+  $formatter->send_title("","",$options);
 
   $args[editable]=1;
   print $list;
@@ -1297,12 +1301,13 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
         $prefix=$formatter->link_url($value,"?action=download&amp;value=");
       $dir=$DBInfo->upload_dir."/$key";
    } else {
+      $value=$formatter->page->name;
       $key=$DBInfo->pageToKeyname($formatter->page->name);
       if ($key != $formatter->page->name)
         $prefix=$formatter->link_url($formatter->page->name,"?action=download&amp;value=");
       $dir=$DBInfo->upload_dir."/$key";
    }
-   if (file_exists($dir))
+   if ($options[value]!='top' and file_exists($dir))
       $handle= opendir($dir);
    else {
       $dir=$DBInfo->upload_dir;
@@ -1338,6 +1343,12 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
       $idx++;
    }
 
+   if (!$dirs) {
+      $link=$formatter->link_tag($value,"?action=uploadedfiles&amp;value=top","..");
+      $date=date("Y-m-d",filemtime($dir."/.."));
+      $out.="<tr><td class='wiki'>&nbsp;</td><td class='wiki'>$link</td><td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td></tr>\n";
+   }
+
    if (!$prefix) $prefix=$DBInfo->url_prefix."/".$dir."/";
 
    foreach ($upfiles as $file) {
@@ -1352,6 +1363,9 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    $out.="</table>
 Password: <input type='password' name='passwd' size='10' />
 <input type='submit' value='Delete selected files'></form>\n";
+
+   if (!$value and !in_array('UploadFile',$formatter->actions))
+     $formatter->actions[]='UploadFile';
    return $out;
 }
 
@@ -1848,17 +1862,24 @@ function macro_RecentChanges($formatter="",$value="") {
   define(MAXSIZE,5000);
   $new=1;
 
+  $template=
+  '$out.= "$icon&nbsp;&nbsp;$title $date . . . . $user $count $extra<br />\n";';
+  $use_day=1;
+
   preg_match("/(\d+)?(?:\s*,\s*)?(.*)?$/",$value,$match);
   if ($match) {
     $size=(int) $match[1];
     $args=explode(",",$match[2]);
-    #print "size: $size";
-    #print_r($args);
 
     if (in_array ("quick", $args)) $quick=1;
-    if (in_array ("nonew", $args)) $new=0;
+    if (in_array ("nonew", $args)) $checknew=0;
     if (in_array ("showhost", $args)) $showhost=1;
     if (in_array ("comment", $args)) $comment=1;
+    if (in_array ("simple", $args)) {
+      $use_day=0;
+      $template=
+  '$out.= "$icon&nbsp;&nbsp;$title @ $day $date by $user $count<br />\n";';
+    }
   }
   if ($size > MAXSIZE) $size=MAXSIZE;
 
@@ -1883,26 +1904,25 @@ function macro_RecentChanges($formatter="",$value="") {
   $time_cutoff= $time_current - ($days_to_show * $secs_per_day);
 
   foreach ($lines as $line) {
-    $parts= explode("\t", $line);
-    $page_name= $DBInfo->keyToPagename($parts[0]);
+    $parts= explode("\t", $line,3);
+    $page_key= $parts[0];
     $ed_time= $parts[2];
 
-    $day = date('Y/m/d', $ed_time);
+    $day = date('Ymd', $ed_time);
     if ($day != $ratchet_day) {
       $ratchet_day = $day;
       unset($logs);
     }
 
-    if ($editcount[$page_name]) {
-      if ($logs[$page_name]) {
-        $editcount[$page_name]++;
-        continue;
-      } else {
+    if ($editcount[$page_key]) {
+      if ($logs[$page_key]) {
+        $editcount[$page_key]++;
         continue;
       }
+      continue;
     }
-    $editcount[$page_name]= 1;
-    $logs[$page_name]= 1;
+    $editcount[$page_key]= 1;
+    $logs[$page_key]= 1;
   }
   unset($logs);
 
@@ -1911,6 +1931,9 @@ function macro_RecentChanges($formatter="",$value="") {
   foreach ($lines as $line) {
     $parts= explode("\t", $line);
     $page_key=$parts[0];
+
+    if ($logs[$page_key]) continue;
+
     $page_name= $DBInfo->keyToPagename($parts[0]);
     $addr= $parts[1];
     $ed_time= $parts[2];
@@ -1918,60 +1941,60 @@ function macro_RecentChanges($formatter="",$value="") {
     $log= $parts[5];
     $act= rtrim($parts[6]);
 
-    if ($logs[$page_name]) continue;
-
     if ($ed_time < $time_cutoff)
       break;
 
-    $day = date('Y/m/d', $ed_time);
-    if ($day != $ratchet_day) {
+    $day = date('Y-m-d', $ed_time);
+    if ($use_day and $day != $ratchet_day) {
       $out.=sprintf("<br /><font size='+1'>%s </font> <font size='-1'>[", date($DBInfo->date_fmt, $ed_time));
-      $out.=$formatter->link_to("?action=bookmark&amp;time=$ed_time",
-                               _("set bookmark"))."]</font><br />\n";
+      $out.=$formatter->link_tag($formatter->page->name,
+                                 "?action=bookmark&amp;time=$ed_time",
+                                 _("set bookmark"))."]</font><br />\n";
       $ratchet_day = $day;
-    }
+    } else
+      $day=$formatter->link_to("?action=bookmark&amp;time=$ed_time",$day);
 
     $pageurl=_rawurlencode($page_name);
 
     if (!$DBInfo->hasPage($page_name))
-       $out.= "&nbsp;&nbsp; ".$formatter->link_tag($pageurl,"?action=diff",$DBInfo->icon[del]);
+      $icon= $formatter->link_tag($pageurl,"?action=diff",$DBInfo->icon[del]);
     else if ($ed_time > $bookmark) {
-       if ($new) {
-         $p= new WikiPage($page_name);
-         $v= $p->get_rev($bookmark);
-       } else $v=1;
-       if ($v) # has 
-         $out.= "&nbsp;&nbsp; ".$formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$DBInfo->icon[updated]);
-       else
-         $out.= "&nbsp;&nbsp; ".$formatter->link_tag($pageurl,"?action=info",$DBInfo->icon['new']);
+      $icon= $formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$DBInfo->icon[updated]);
+      if ($checknew) {
+        $p= new WikiPage($page_name);
+        $v= $p->get_rev($bookmark);
+        if (!$v)
+          $icon=
+            $formatter->link_tag($pageurl,"?action=info",$DBInfo->icon['new']);
+      }
     } else
-       $out.= "&nbsp;&nbsp; ".$formatter->link_tag($pageurl,"?action=diff",$DBInfo->icon[diff]);
+      $icon= $formatter->link_tag($pageurl,"?action=diff",$DBInfo->icon[diff]);
 
-    $title=preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$page_name);
-#   $title=$page_name;
+    $title= preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$page_name);
+    $title= $formatter->link_tag($pageurl,"",$title);
 
-    $out.= "&nbsp;&nbsp;".$formatter->link_tag($pageurl,"",$title);
     if (! empty($DBInfo->changed_time_fmt))
-       $out.= date($DBInfo->changed_time_fmt, $ed_time);
+      $date= date($DBInfo->changed_time_fmt, $ed_time);
 
     if ($DBInfo->show_hosts) {
-      $out.= ' . . . . '; # traditional style
-      #$out.= '&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ';
       if ($showhost && $user == 'Anonymous')
-        $out.= $addr;
+        $user= $addr;
       else {
         if ($DBInfo->hasPage($user)) {
-          $out.= $formatter->link_tag($user);
+          $user= $formatter->link_tag($user);
         } else
-          $out.= $user;
+          $user= $user;
       }
     }
-    if ($editcount[$page_name] > 1)
-      $out.=" [".$editcount[$page_name]." changes]";
+    $count=""; $extra="";
+    if ($editcount[$page_key] > 1)
+      $count=" [".$editcount[$page_key]." changes]";
     if ($comment && $log)
-      $out.="&nbsp; &nbsp; &nbsp; <font size='-1'>$log</font>";
-    $out.= "<br />\n";
-    $logs[$page_name]= 1;
+      $extra="&nbsp; &nbsp; &nbsp; <font size='-1'>$log</font>";
+
+    eval($template);
+
+    $logs[$page_key]= 1;
   }
   return $out;
 }
