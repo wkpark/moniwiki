@@ -53,6 +53,10 @@ class Security_needtologin extends Security {
     if (method_exists($this, $method)) {
       return $this->$method ($action,$options);
     }
+    if ($options['id']!='Anonymous')
+      return 1;
+
+    // XXX
     return 1;
   }
 }

@@ -1,5 +1,5 @@
 <?php
-# a needtologin security plugin for the MoniWiki
+# a mustlogin security plugin for the MoniWiki
 # $Id$
 
 class Security_mustlogin extends Security {
