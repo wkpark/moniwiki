@@ -1755,7 +1755,7 @@ class Formatter {
 
     if (!$DBInfo->use_twikilink) $islink=0;
     list($page,$page_text,$gpage)=
-      normalize_word($word,$this->group,$this->page->name,$nogroup,$islink);
+      normalize_word($page,$this->group,$this->page->name,$nogroup,$islink);
     if ($text) {
       if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
         $text=str_replace('&','&amp;',$text);
@@ -1935,7 +1935,7 @@ class Formatter {
       else
         return "[[".$name."]]";
     }
-    $ret=call_user_func("macro_$name",$this,$args,$options);
+    $ret=call_user_func_array("macro_$name",array(&$this,$args,$options));
     return $ret;
   }
 
@@ -3050,16 +3050,30 @@ function get_locales($mode=1) {
 }
 
 function set_locale($lang,$charset='') {
+  $supported=array(
+    'en_US'=>array('ISO-8859-1'),
+    'fr_FR'=>array('ISO-8859-1'),
+    'ko_KR'=>array('EUC-KR','UHC'),
+  );
   if ($lang == 'auto') {
     # get broswer's settings
     $langs=get_locales();
     $lang= $langs[0];
 
     $charset= strtoupper($charset);
+    # XXX
     if (function_exists('nl_langinfo'))
       $server_charset= nl_langinfo(CODESET);
-    if ($charset == 'UTF-8' or $charset != $server_charset)
-      $lang.=".".$charset;
+
+    if ($charset == 'UTF-8') {
+      if ($charset != $server_charset) $lang.=".".$charset;
+    } else {
+      if ($supported[$lang] && in_array($charset,$supported[$lang])) {
+        return $lang.'.'.$charset;
+      } else {
+        return 'en_US'; // default
+      }
+    }
   }
   return $lang;
 }
@@ -3146,11 +3160,14 @@ $options['timer']=&$timing;
 $options['timer']->Check("load");
 
 $lang= set_locale($DBInfo->lang,$DBInfo->charset);
+$DBInfo->lang=$lang;
 
 if (isset($locale)) {
   if (!@include_once('locale/'.$lang.'/LC_MESSAGES/moniwiki.php'))
     @include_once('locale/'.substr($lang,0,2).'/LC_MESSAGES/moniwiki.php');
-} else if (substr($lang,0,2) != 'en') {
+} else if (substr($lang,0,2) == 'en') {
+  $test=setlocale(LC_ALL, $lang);
+} else {
   if ($DBInfo->include_path) $dirs=explode(':',$DBInfo->include_path);
   else $dirs=array('.');
 
@@ -3237,16 +3254,18 @@ if ($pagename) {
       return;
     }
     if (!$page->exists()) {
-      $npage=str_replace(' ','',$page->name);
-      if ($DBInfo->hasPage($npage)) {
-        $options['value']=$npage;
-        do_goto($formatter,$options);
-        return;
-      }
-      $options['value']=$page->name;
-      $options['check']=1;
-      if (do_titlesearch($formatter,$options))
+      if ($DBInfo->auto_search) {
+        $npage=str_replace(' ','',$page->name);
+        if ($DBInfo->hasPage($npage)) {
+          $options['value']=$npage;
+          do_goto($formatter,$options);
           return;
+        }
+        $options['value']=$page->name;
+        $options['check']=1;
+        if (do_titlesearch($formatter,$options))
+          return;
+      }
 
       $formatter->send_header("Status: 404 Not found",$options);
 
