@@ -84,7 +84,7 @@ function do_OeKaki($formatter,$options) {
 
       $formatter->page->write($body);
       # XXX Oekaki post does not hav any information about user id.
-      $DBInfo->savePage(&$formatter->page,$log,$options);
+      $DBInfo->savePage($formatter->page,$log,$options);
     }
 
     if ($backup_imgpath != $imgpath) copy($imgpath,$backup_imgpath);

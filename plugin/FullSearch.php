@@ -14,7 +14,7 @@ function do_fullsearch($formatter,$options) {
     $title= sprintf(_("BackLinks search for \"%s\""), $options['value']);
   else
     $title= sprintf(_("Full text search for \"%s\""), $options['value']);
-  $out= macro_FullSearch($formatter,$options['value'],&$ret);
+  $out= macro_FullSearch($formatter,$options['value'],$ret);
   $options['msg']=$ret['msg'];
   $formatter->send_header("",$options);
   $formatter->send_title($title,$formatter->link_url("FindPage"),$options);
@@ -30,7 +30,7 @@ function do_fullsearch($formatter,$options) {
   $formatter->send_footer($args,$options);
 }
 
-function macro_FullSearch($formatter="",$value="", $opts=array()) {
+function macro_FullSearch($formatter="",$value="", &$opts) {
   global $DBInfo;
   $needle=$value;
   if ($value === true) {

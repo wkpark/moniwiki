@@ -16,7 +16,7 @@ class Security_mustlogin extends Security {
     return $this->DB->_isWritable($options['page']);
   }
 
-  function may_edit($action,$options) {
+  function may_edit($action,&$options) {
     $public_pages=array('WikiSandBox','WikiSandbox','GuestBook','SandBox');
     if (!$options['page']) return 0; # XXX
     if (in_array($options['page'],$public_pages)) return 1;
@@ -28,7 +28,7 @@ class Security_mustlogin extends Security {
     return 1;
   }
 
-  function may_blog($action,$options) {
+  function may_blog($action,&$options) {
     if (!$options['page']) return 0; # XXX
     if ($options['id']=='Anonymous') {
       $options['err']=sprintf(_("You are not allowed to '%s' on this page"),$action);
@@ -38,7 +38,7 @@ class Security_mustlogin extends Security {
     return 1;
   }
 
-  function may_uploadfile($action,$options) {
+  function may_uploadfile($action,&$options) {
     if (!$options['page']) return 0;
     if ($options['id']=='Anonymous') {
       $options['err']=sprintf(_("You are not allowed to '%s' on this page"),$action);
@@ -48,7 +48,7 @@ class Security_mustlogin extends Security {
     return 1;
   }
 
-  function is_allowed($action="read",$options) {
+  function is_allowed($action="read",&$options) {
     $allowed_actions=array("userform");
     if (in_array($action,$allowed_actions)) return 1;
     $method='may_'.$action;

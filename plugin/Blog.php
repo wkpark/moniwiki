@@ -184,7 +184,7 @@ function do_Blog($formatter,$options) {
     }
     
     $formatter->page->write($raw_body);
-    $DBInfo->savePage(&$formatter->page,$log,$options);
+    $DBInfo->savePage($formatter->page,$log,$options);
     updateBlogList($formatter);
 
     $formatter->send_page();

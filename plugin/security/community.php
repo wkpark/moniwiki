@@ -18,7 +18,7 @@ class Security_community extends Security {
     return $this->DB->_isWritable($options['page']);
   }
 
-  function may_edit($action,$options) {
+  function may_edit($action,&$options) {
     if (!$options['page']) return 0; # XXX
     if (in_array($options['page'],$this->public_pages)) return 1;
     if ($options['id']=='Anonymous') {
@@ -29,7 +29,7 @@ class Security_community extends Security {
     return 1;
   }
 
-  function may_blog($action,$options) {
+  function may_blog($action,&$options) {
     if (!$options['page']) return 0; # XXX
     if ($options['id']=='Anonymous') {
       $options['err']=sprintf(_("You are not allowed to '%s' on this page"),$action);
@@ -39,7 +39,7 @@ class Security_community extends Security {
     return 1;
   }
 
-  function may_uploadfile($action,$options) {
+  function may_uploadfile($action,&$options) {
     if (!$options['page']) return 0;
     if ($options['id']=='Anonymous') {
       $options['err']=sprintf(_("You are not allowed to '%s' on this page"),$action);
@@ -49,7 +49,7 @@ class Security_community extends Security {
     return 1;
   }
 
-  function is_allowed($action='read',$options) {
+  function is_allowed($action='read',&$options) {
     $allowed_actions=array('theme','css','userform','bookmark','goto','dot',
       'trackback','rss_rc','rss','blogrss','urlencode','deletepage','titlesearch','info','download','comment');
     if (in_array(strtolower($action),$allowed_actions)) return 1;
@@ -60,12 +60,12 @@ class Security_community extends Security {
     }
     $method='may_'.$action;
     if (method_exists($this, $method)) {
-      return $this->$method ($action,&$options);
+      return $this->$method ($action,$options);
     }
     return 1;
   }
 
-  function is_protected($action="read",$options) {
+  function is_protected($action="read",&$options) {
     # password protected POST actions
     $protected_actions=array("rcs","rcspurge","chmod","backup","restore");
     $action=strtolower($action);

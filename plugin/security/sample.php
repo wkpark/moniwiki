@@ -16,7 +16,7 @@ class Security_sample extends Security {
     return $this->DB->_isWritable($options['page']);
   }
 
-  function is_allowed($action="read",$options) {
+  function is_allowed($action="read",&$options) {
     # basic allowed actions
     $allowed_actions=array("edit","savepage","read","diff","info","likepages","uploadfile","uploadedfiles","css","theme","deletepage");
     $action=strtolower($action);

@@ -92,7 +92,7 @@ function macro_Rss($formatter,$value) {
   $xml_parser = xml_parser_create();
 
   $rss_parser = new WikiRSSParser();
-  xml_set_object($xml_parser,&$rss_parser);
+  xml_set_object($xml_parser,$rss_parser);
   xml_set_element_handler($xml_parser, "startElement", "endElement");
   xml_set_character_data_handler($xml_parser, "characterData");
 

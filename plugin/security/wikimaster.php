@@ -19,7 +19,7 @@ class Security_wikimaster extends Security {
     return 1;
   }
 
-  function may_deletepage($action,$options) {
+  function may_deletepage($action,&$options) {
     if (!$options['page']) return 0;
     if (in_array($options['id'],$this->allowed_users)) return 1;
     $options['err']=sprintf(_("You are not allowed to '%s' on this page."),$action);
@@ -27,7 +27,7 @@ class Security_wikimaster extends Security {
     return 0;
   }
 
-  function may_deletefile($action,$options) {
+  function may_deletefile($action,&$options) {
     if (!$options['page']) return 0;
     if (in_array($options['id'],$this->allowed_users)) return 1;
     $options['err']=sprintf(_("You are not allowed to '%s' on this page."),$action);
@@ -35,7 +35,7 @@ class Security_wikimaster extends Security {
     return 0;
   }
 
-  function may_rename($action,$options) {
+  function may_rename($action,&$options) {
     if (!$options['page']) return 0;
     if (in_array($options['id'],$this->allowed_users)) return 1;
     $options['err']=sprintf(_("You are not allowed to '%s' on this page."),$action);
@@ -54,7 +54,7 @@ class Security_wikimaster extends Security {
     return 0;
   }
 
-  function is_allowed($action='read',$options) {
+  function is_allowed($action='read',&$options) {
     $allowed_actions=array('theme','css','userform','bookmark','goto','dot',
       'trackback','rss_rc','rss','blogrss','urlencode');
     if (in_array(strtolower($action),$allowed_actions)) return 1;

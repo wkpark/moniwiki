@@ -15,7 +15,7 @@
 //
 // $Id$
 
-function macro_FastSearch($formatter,$value="",$opts=array()) {
+function macro_FastSearch($formatter,$value="",&$opts) {
   global $DBInfo;
   $theDB=$DBInfo->data_dir."/index.db";
 
@@ -115,7 +115,7 @@ function do_fastsearch($formatter,$options) {
   $ret=$options;
 
   $title= sprintf(_("Full text search for \"%s\""), $options['value']);
-  $out= macro_FastSearch($formatter,$options['value'],&$ret);
+  $out= macro_FastSearch($formatter,$options['value'],$ret);
   $options['msg']=$ret['msg'];
   $formatter->send_header("",$options);
   $formatter->send_title($title,$formatter->link_url("FindPage"),$options);

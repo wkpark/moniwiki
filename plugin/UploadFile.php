@@ -133,7 +133,7 @@ function do_uploadfile($formatter,$options) {
       $raw_body.="\n";
     $raw_body.=$log_entry;
     $p->write($raw_body);
-    $DBInfo->savePage(&$p,$comment,$options);
+    $DBInfo->savePage($p,$comment,$options);
   } else
     $DBInfo->addLogEntry($key, $REMOTE_ADDR,$comment,"UPLOAD");
   

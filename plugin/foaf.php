@@ -14,7 +14,7 @@ class FoafParser {
    var $name = "";
 
    function FoafParser($info) {
-     $this->info=&$info;
+     $this->info=$info;
    }
 
    function startElement($parser, $tagName, $attrs) {
@@ -97,8 +97,8 @@ function macro_foaf($formatter,$value) {
     if (in_array ("comment", $args)) $options['comment']=1;
   }
 
-  $rss_parser = new FoafParser(&$info);
-  xml_set_object($xml_parser,&$rss_parser);
+  $rss_parser = new FoafParser($info);
+  xml_set_object($xml_parser,$rss_parser);
   xml_set_element_handler($xml_parser, "startElement", "endElement");
   xml_set_character_data_handler($xml_parser, "characterData");
 

@@ -266,7 +266,7 @@ class UserDB {
     return false;
   }
 
-  function checkUser($user) {
+  function checkUser(&$user) {
     $tmp=$this->getUser($user->id);
     if ($tmp->info['ticket'] != $user->ticket) {
       $user->id='Anonymous';
@@ -887,7 +887,7 @@ function do_titleindex($formatter,$options) {
 
 function do_titlesearch($formatter,$options) {
 
-  $out= macro_TitleSearch($formatter,$options['value'],&$ret);
+  $out= macro_TitleSearch($formatter,$options['value'],$ret);
 
   if ($ret['hits']==1) {
     $options['value']=$ret['value'];
@@ -1245,7 +1245,7 @@ function macro_UserPreferences($formatter,$value,$options='') {
   $user=new User(); # get from COOKIE VARS
   if ($user->id != 'Anonymous') {
     $udb=new UserDB($DBInfo);
-    $udb->checkUser(&$user);
+    $udb->checkUser($user);
   }
   $url=$formatter->link_url("UserPreferences");
 
@@ -1716,7 +1716,7 @@ function macro_TableOfContents($formatter="",$value="") {
 
 
 
-function macro_TitleSearch($formatter="",$needle="",$opts=array()) {
+function macro_TitleSearch($formatter="",$needle="",&$opts) {
   global $DBInfo;
 
   $url=$formatter->link_url($formatter->page->urlname);

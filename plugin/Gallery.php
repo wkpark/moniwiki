@@ -52,7 +52,7 @@ function get_pagelist($formatter,$pages,$action,$curpage=1,$listcount=10,$bra="[
   return $pnut;
 }
 
-function macro_Gallery($formatter,$value,$options='') {
+function macro_Gallery($formatter,$value,&$options) {
   global $DBInfo;
 
   # add some actions at the bottom of the page
@@ -271,7 +271,7 @@ function do_gallery($formatter,$options='') {
     return;
   }
 
-  $ret=macro_Gallery($formatter,'',&$options);
+  $ret=macro_Gallery($formatter,'',$options);
 
   if (isset($options['passwd']) and $options['comments']) {
     $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));

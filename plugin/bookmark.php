@@ -13,7 +13,7 @@ function do_bookmark($formatter,$options) {
   $user=new User(); # get cookie
   if ($user->id != 'Anonymous') {
     $udb=new UserDB($DBInfo);
-    $udb->checkUser(&$user);
+    $udb->checkUser($user);
   }
 
   if (!$options['time']) {

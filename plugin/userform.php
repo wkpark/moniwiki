@@ -12,7 +12,7 @@ function do_userform($formatter,$options) {
   $user=new User(); # get cookie
   if ($user->id != 'Anonymous') { # XXX
     $udb=new UserDB($DBInfo);
-    $udb->checkUser(&$user);
+    $udb->checkUser($user);
   }
   $id=$options['login_id'];
 

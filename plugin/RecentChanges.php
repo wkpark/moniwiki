@@ -69,7 +69,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   $user=new User(); # retrive user info
   if ($user->id != 'Anonymous') {
     $udb=new UserDB($DBInfo);
-    $udb->checkUser(&$user);
+    $udb->checkUser($user);
   }
 
   if ($user->id == 'Anonymous')

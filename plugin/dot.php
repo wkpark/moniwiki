@@ -9,7 +9,7 @@ define(DEPTH,3);
 define(LEAFCOUNT,2);
 define(FONTSIZE,8);
 
-  function getLeafs($pagename,$node,$color,$depth,$count=LEAFCOUNT) {
+  function getLeafs($pagename,&$node,&$color,$depth,$count=LEAFCOUNT) {
     $p= new WikiPage($pagename);
     $f= new Formatter($p);
     $links=$f->get_pagelinks();
@@ -33,19 +33,19 @@ define(FONTSIZE,8);
     if ($nodelink) $node[$pagename]=array_keys($nodelink);
   }
 
-  function makeTree($pagename,$node,$color,$depth=DEPTH,$count=LEAFCOUNT) {
+  function makeTree($pagename,&$node,&$color,$depth=DEPTH,$count=LEAFCOUNT) {
     if ($depth > 0) {
       if (!$color[$pagename]) $color[$pagename]=$depth;
       #print $depth."\n";
       $depth--;
-      getLeafs($pagename,&$node,&$color,$depth,$count);
+      getLeafs($pagename,$node,$color,$depth,$count);
       if ($node[$pagename]) {
         # select 25% of links
         $size= (int) (sizeof($node[$pagename]) * 0.25);
         $slice= ($size > $count) ? $size: $count;
         $selected=array_slice($node[$pagename],0,$slice);
         foreach($selected as $leaf)
-          makeTree($leaf,&$node,&$color,$depth,$count);
+          makeTree($leaf,$node,$color,$depth,$count);
       }
     }
     return;
@@ -64,7 +64,7 @@ function do_dot($formatter,$options) {
   else $fontsize=FONTSIZE;
 
   $color=array();
-  makeTree($options['page'],&$node,&$color,$depth,$count);
+  makeTree($options['page'],$node,$color,$depth,$count);
   if (!$node) $node=array($options['page']=>array());
   #print_r($color);
   foreach ($color as $key=>$val) $color[$key]=$depth-$val;

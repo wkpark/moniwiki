@@ -25,7 +25,7 @@ function do_post_rename($formatter,$options) {
           $body= preg_replace("/$regex/m",$options['name'],$body);
           $f->page->write($body);
           if (!$options['show_only'])
-            $DBInfo->savePage(&$f->page,'',$options);
+            $DBInfo->savePage($f->page,'',$options);
           $msg.=sprintf(_("'%s' is changed"),
             $f->link_tag(_rawurlencode($page),
               "?action=highlight&amp;value=".$new_encodedname))."<br />";

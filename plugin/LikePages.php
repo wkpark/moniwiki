@@ -9,7 +9,7 @@
 function do_LikePages($formatter,$options) {
 
   $opts['metawiki']=$options['metawiki'];
-  $out= macro_LikePages($formatter,$options['page'],&$opts);
+  $out= macro_LikePages($formatter,$options['page'],$opts);
   
   $title = $opts['msg'];
   $formatter->send_header("",$options);
@@ -20,7 +20,7 @@ function do_LikePages($formatter,$options) {
   $formatter->send_footer("",$options);
 }
 
-function macro_LikePages($formatter="",$args="",$opts=array()) {
+function macro_LikePages($formatter="",$args="",&$opts) {
   global $DBInfo;
 
   $pname=_preg_escape($args);

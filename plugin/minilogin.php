@@ -15,7 +15,7 @@ function macro_minilogin($formatter,$value="",$options="") {
   $user=new User(); # get from COOKIE VARS
   if ($user->id != 'Anonymous') {
     $udb=new UserDB($DBInfo);
-    $udb->checkUser(&$user);
+    $udb->checkUser($user);
   }
 
   if ($user->id == 'Anonymous') {

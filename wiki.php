@@ -729,7 +729,7 @@ class WikiDB {
     $user=new User();
     if ($user->id != 'Anonymous') {
       $udb=new UserDB($this);
-      $udb->checkUser(&$user);
+      $udb->checkUser($user);
     }
     $comment=strtr($comment,"\t"," ");
     $fp_editlog = fopen($this->editlog_name, 'a+');
@@ -807,11 +807,11 @@ class WikiDB {
     return $body;
   }
 
-  function savePage($page,$comment="",$options=array()) {
+  function savePage(&$page,$comment="",$options=array()) {
     $user=new User();
     if ($user->id != 'Anonymous') {
       $udb=new UserDB($this);
-      $udb->checkUser(&$user);
+      $udb->checkUser($user);
     }
     $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
     $comment=escapeshellcmd($comment);
@@ -1329,7 +1329,7 @@ class Formatter {
     }
   }
 
-  function get_instructions($body="") {
+  function get_instructions(&$body) {
     global $DBInfo;
     $pikeys=array('#redirect','#action','#title','#keywords','#noindex');
     $pi=array();
@@ -1591,7 +1591,7 @@ class Formatter {
       $links=$this->cache->fetch($this->page->name);
       if ($links !== false) return $links;
     }
-    $pi=$this->get_instructions();
+    $pi=$this->get_instructions($dum);
     if ($pi['#format']) return '';
     if ($this->page->exists()) {
       $body=$this->page->get_raw_body();
@@ -1799,7 +1799,7 @@ class Formatter {
       else
         return "[[".$name."]]";
     }
-    $ret=call_user_func("macro_$name",&$this,$args,&$options);
+    $ret=call_user_func("macro_$name",$this,$args,$options);
     return $ret;
   }
 
@@ -1807,11 +1807,11 @@ class Formatter {
     if (!function_exists("processor_".$processor)) {
       $pf=getProcessor($processor);
       if (!$pf)
-      return call_user_func('processor_plain',&$this,$value,$options);
+      return call_user_func('processor_plain',$this,$value,$options);
       include_once("plugin/processor/$pf.php");
       $processor=$pf;
     }
-    return call_user_func("processor_$processor",&$this,$value,$options);
+    return call_user_func("processor_$processor",$this,$value,$options);
   }
 
   function smiley_repl($smiley) {
@@ -1945,7 +1945,7 @@ class Formatter {
     return "<span class='purple'><a name='$nid' id='$nid'></a><a href='#$nid'>(".$id.")</a></span>";
   }
 
-  function _div($on,$in_div) {
+  function _div($on,&$in_div) {
     $tag=array("</div>\n","<div>\n");
     if ($on) $in_div++;
     else {
@@ -1974,21 +1974,22 @@ class Formatter {
     if ($options['fixpath']) $this->_fixpath();
 
     if ($body) {
-      $pi=$this->get_instructions(&$body);
+      $pi=$this->get_instructions($body);
       if ($pi['#format']) {
         if ($pi['args']) $pi_line="#!".$pi['#format']." $pi[args]\n";
-        print call_user_func("processor_".$pi['#format'],&$this,$pi_line.$body,$options);
+        print call_user_func("processor_".$pi['#format'],$this,
+          $pi_line.$this->page->body,$options);
         return;
       }
       $lines=explode("\n",$body);
     } else {
       #$pi=$this->get_instructions(&$body);
-      $pi=$this->get_instructions();
+      $pi=$this->get_instructions($dum);
       $body=$this->page->get_raw_body($options);
       $this->pi=$pi;
       if ($pi['#format']) {
         if ($pi['args']) $pi_line="#!".$pi['#format']." $pi[args]\n";
-        print call_user_func("processor_".$pi['#format'],&$this,$pi_line.$body,$options);
+        print call_user_func("processor_".$pi['#format'],$this,$pi_line.$body,$options);
         return;
       }
 
@@ -2042,7 +2043,7 @@ class Formatter {
           $text.=$this->_table(0)."<br />\n";$in_table=0; continue;
         } else {
           #if ($in_p) { $text.="</div><br />\n"; $in_p='';}
-          if ($in_p) { $text.=$this->_div(0,&$in_div)."<br />\n"; $in_p='';}
+          if ($in_p) { $text.=$this->_div(0,$in_div)."<br />\n"; $in_p='';}
           else if ($in_p=='') { $text.="<br />\n";}
           continue;
         }
@@ -2058,9 +2059,9 @@ class Formatter {
       $p_close='';
       if (preg_match('/^-{4,}/',$line)) {
         if ($DBInfo->auto_linebreak) $this->nobr=1; // XXX
-        if ($in_p) { $p_close=$this->_div(0,&$in_div); $in_p='';}
+        if ($in_p) { $p_close=$this->_div(0,$in_div); $in_p='';}
       } else if ($in_p == '') {
-        $p_close=$this->_div(1,&$in_div);
+        $p_close=$this->_div(1,$in_div);
         $in_p= $line;
       }
 
@@ -2231,7 +2232,7 @@ class Formatter {
          $in_pre=0;
          if ($processor) {
            $value=$this->pre_line;
-           $out= call_user_func("processor_$processor",&$this,$value,$options);
+           $out= call_user_func("processor_$processor",$this,$value,$options);
            $line=$out.$line;
          } else if ($in_quote) {
             # htmlfy '<'
@@ -2297,7 +2298,7 @@ class Formatter {
     }
     # close div
     #if ($in_p) $close.="</div>\n"; # </para>
-    if ($in_p) $close.=$this->_div(0,&$in_div); # </para>
+    if ($in_p) $close.=$this->_div(0,$in_div); # </para>
 
     # activate <del></del> tag
     #$text=preg_replace("/(&lt;)(\/?del>)/i","<\\2",$text);
@@ -3311,7 +3312,7 @@ if ($pagename) {
         $button= $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
         print $button;
         print sprintf(_(" or click %s to fullsearch this page.\n"),$formatter->link_to("?action=fullsearch&amp;value=$options[page]",_("title")));
-        print $formatter->macro_repl('LikePages',$page->name,&$err);
+        print $formatter->macro_repl('LikePages',$page->name,$err);
         if ($err['extra'])
           print $err['extra'];
 
@@ -3339,7 +3340,7 @@ if ($pagename) {
 #    }
 
     #$formatter->get_redirect();
-    $formatter->pi=$formatter->get_instructions();
+    $formatter->pi=$formatter->get_instructions($dum);
     if ($DBInfo->body_attr)
       $options['attr']=$DBInfo->body_attr;
     $formatter->send_header("",$options);
@@ -3393,7 +3394,7 @@ if ($pagename) {
   if ($action) {
     $options['metatags']='<meta name="robots" content="noindex,nofollow" />';
 
-    if (!$DBInfo->security->is_allowed($action,&$options)) {
+    if (!$DBInfo->security->is_allowed($action,$options)) {
       $msg=sprintf(_("You are not allowed to '%s'"),$action);
       $formatter->send_header("Status: 406 Not Acceptable",$options);
       $formatter->send_title($msg,"", $options);
@@ -3402,7 +3403,7 @@ if ($pagename) {
       $formatter->send_footer($args,$options);
       return;
     } else if ($_SERVER['REQUEST_METHOD']=="POST" and
-      $DBInfo->security->is_protected($action,&$options) and
+      $DBInfo->security->is_protected($action,$options) and
       !$DBInfo->security->is_valid_password($_POST['passwd'],$options)) {
       # protect some POST actions and check a password
 
