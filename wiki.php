@@ -40,7 +40,12 @@ function get_scriptname() {
 
 function _rawurlencode($url) {
   $name=rawurlencode($url);
-#  $urlname=preg_replace('/%2F/i','/',$name);
+  $urlname=preg_replace(array('/%2F/i','/%7E/i'),array('/','~'),$name);
+  return $urlname;
+}
+
+function _urlencode($url) {
+  $name=urlencode(strtr($url,"+"," "));
   $urlname=preg_replace(array('/%2F/i','/%7E/i'),array('/','~'),$name);
   return $urlname;
 }
@@ -92,8 +97,8 @@ if (!function_exists ('bindtextdomain')) {
   }
 }
 
-function goto_form($action,$option="") {
-  if ($option==1) {
+function goto_form($action,$type="",$form="") {
+  if ($type==1) {
     return "
 <form name='go' id='go' method='get' action='$action'>
 <span title='TitleSearch'>
@@ -102,10 +107,10 @@ Title</span>
 <span title='FullSearch'>
 <input type='radio' name='action' value='fullsearch' />
 Contents</span>&nbsp;
-<input type='text' name='value' class='goto' accesskey='z' size='20' />
-<input type='submit' value='Go' class='goto' style='width:23px' />
+<input type='text' name='value' class='goto' accesskey='s' size='20' />
+<input type='submit' name='goto' value='Go' class='goto' style='width:23px' />
 ";
-  } else if ($option==2) {
+  } else if ($type==2) {
     return "
 <form name='go' id='go' method='get' action='$action'>
 <select name='action' style='width:60px'>
@@ -113,23 +118,23 @@ Contents</span>&nbsp;
 <option value='titlesearch'/>TitleSearch
 <option value='fullsearch'/>FullSearch
 </select>
-<input type='text' name='value' accesskey='z' size='20' />
-<input type='submit' value='Go' />
+<input type='text' name='value' accesskey='s' size='20' />
+<input type='submit' name='goto' value='Go' />
 ";
-  } else if ($option==3) {
+  } else if ($type==3) {
     return "
 <form name='go' id='go' method='get' action='$action'>
 <table class='goto'>
 <tr><td nowrap='nowrap' style='width:220'>
-<input type='text' name='value' size='28' accesskey='z' style='width:110px' />
-<input type='submit' value='Go' class='goto' style='width:23px' />
+<input type='text' name='value' size='28' accesskey='s' style='width:110px' />
+<input type='submit' name='goto' value='Go' class='goto' style='width:23px' />
 </td></tr>
 <tr><td>
 <span title='TitleSearch' class='goto'>
 <input type='radio' name='action' value='titlesearch' class='goto' />
 Title(?)</span>
 <span title='FullSearch' class='goto'>
-<input type='radio' name='action' value='fullsearch' accesskey='z' class='goto'/>
+<input type='radio' name='action' value='fullsearch' accesskey='s' class='goto'/>
 Contents(/)</span>&nbsp;
 </td></tr>
 </table>
@@ -138,9 +143,9 @@ Contents(/)</span>&nbsp;
   } else {
     return <<<FORM
 <form name='go' id='go' method='get' action='$action' onsubmit="return moin_submit();">
-<input type='text' name='value' size='20' accesskey='z' style='width:100' />
+<input type='text' name='value' size='20' accesskey='s' style='width:100' />
 <input type='hidden' name='action' value='goto' />
-<input type='submit' value='Go' class='goto' style='width:23px;' />
+<input type='submit' name='goto' value='Go' class='goto' style='width:23px;' />
 </form>
 FORM;
   }
@@ -313,17 +318,10 @@ class Counter_dba {
 }
 
 class Counter {
-  function Counter($DB="") {
-  }
-
-  function incCounter($page,$options="") {
-  }
-
-  function pageCounter($page) {
-    return 1;
-  }
-  function close() {
-  }
+  function Counter($DB="") { }
+  function incCounter($page,$options="") { }
+  function pageCounter($page) { return 1; }
+  function close() { }
 }
 
 class Security {
@@ -434,28 +432,28 @@ class WikiDB {
     $this->changed_time_fmt= ' [h:i a]'; # used by RecentChanges macro
     $this->admin_passwd= '10sQ0sKjIJES.';
     $this->purge_passwd= '';
-    $this->rcs_user='nobody';
+    $this->rcs_user='root';
     $this->actions= array('DeletePage','LikePages');
     $this->show_hosts= TRUE;
     $this->iconset='moni';
+    $this->goto_type='';
+    $this->goto_form='';
     $this->template_regex='[a-z]Template$';
     $this->category_regex='^Category[A-Z]';
     $this->notify=0;
     $this->trail=0;
+    $this->diff_type='fancy_diff';
 #    $this->security_class="needtologin";
 
     # set user-specified configuration
     if ($config) {
-       # read configurations
-#       while (list($key,$val) = each($config)) {
-       foreach ($config as $key=>$val) {
-          $this->$key=$val;
-#          print $key."=".$val."<br/>";
-       }
+      # read configurations
+      foreach ($config as $key=>$val)
+        $this->$key=$val;
     }
 
     if (!$this->purge_passwd)
-       $this->purge_passwd=$this->admin_passwd;
+      $this->purge_passwd=$this->admin_passwd;
 
 #
     if (!$this->menu) {
@@ -485,8 +483,8 @@ class WikiDB {
     $this->icon['user']="UserPreferences";
     $this->icon['home']="<img src='$imgdir/$iconset-home.gif' alt='M' align='middle' border='0' />";
     $this->icon_sep=" ";
-    $this->icon_bra="";
-    $this->icon_cat="";
+    $this->icon_bra=" ";
+    $this->icon_cat=" ";
     }
 
     if (!$this->icons) {
@@ -518,6 +516,9 @@ class WikiDB {
     # ??? Is mod_rewrite being used to translate 'WikiWord' to
     // $this->rewrite = true;
 
+    if ($this->path)
+      putenv("PATH=".$this->path);
+
     $this->set_intermap();
     if ($this->shared_metadb)
       $this->metadb=new MetaDB_dba($this->shared_metadb,$this->dba_type);
@@ -533,10 +534,8 @@ class WikiDB {
       include_once("plugin/security/$this->security_class.php");
       $class="Security_".$this->security_class;
       $this->security=new $class ($this);
-    } else {
+    } else
       $this->security=new Security($this);
-    }
-
   }
 
   function Close() {
@@ -568,7 +567,6 @@ class WikiDB {
     $this->interwikirule.="Self";
     $this->interwiki[Self]=get_scriptname().$this->query_prefix;
   }
-
 
   function _getPageKey($pagename) {
     # normalize a pagename to uniq key
@@ -706,6 +704,7 @@ class WikiDB {
     $lines=array_reverse($lines);
     if (!$lines[0]) # delete last dummy
       unset($lines[0]);
+    if (!$lines) $lines=array();
 
     if ($quick) {
       foreach($lines as $line) {
@@ -760,9 +759,7 @@ class WikiDB {
     putenv('LOGNAME='.$DBInfo->rcs_user);
     $ret=system("ci -l -x,v/ -q -t-\"".$pagename."\" -m\"".$REMOTE_ADDR.";;".
             $user->id.";;".$comment."\" ".$key);
-    print $ret;
-    #print $key;
-    #$this->addLogEntry($page->name, $REMOTE_ADDR,$comment,"SAVE");
+    #print $ret;
     $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
     return 0;
   }
@@ -1060,13 +1057,13 @@ class Formatter {
     $this->baserule=array("/<([^\s<>])/","/`([^`]*)`/",
                      "/'''([^']*)'''/","/(?<!')'''(.*)'''(?!')/",
                      "/''([^']*)''/","/(?<!')''(.*)''(?!')/",
-                     "/\^([^ \^]+)\^/","/(?: |^)_([^ _]+)_/",
-                     "/^-{4,}/");
+                     "/\^([^ \^]+)\^(?:\s)/","/,,([^ ,]+),,(?:\s)/",
+                     "/__([^ _]+)__(?:\s)/","/^-{4,}/");
     $this->baserepl=array("&lt;\\1","<tt class='wiki'>\\1</tt>",
                      "<b>\\1</b>","<b>\\1</b>",
                      "<i>\\1</i>","<i>\\1</i>",
                      "<sup>\\1</sup>","<sub>\\1</sub>",
-                     "<hr class='wiki' />\n");
+                     "<u>\\1</u>","<hr class='wiki' />\n");
 
     # NoSmoke's MultiLineCell hack
     $this->extrarule=array("/{{\|/","/\|}}/");
@@ -1257,20 +1254,20 @@ class Formatter {
       $url[0]=" ";
       return $url;
     } else
-    if (preg_match("/:/",$url)) {
+    if (strpos($url,":")) {
       if (preg_match("/^mailto:/",$url)) {
         $url=str_replace("@","_at_",$url);
         $name=substr($url,7);
         return $this->icon['mailto']."<a href='$url'>$name</a>";
       } else
       if (preg_match("/^(w|[A-Z])/",$url)) { # InterWiki or wiki:
-        if (preg_match("/\s/",$url)) { # have a space ?
+        if (strpos($url," ")) { # have a space ?
           $dum=explode(" ",$url,2);
           return $this->interwiki_repl($dum[0],$dum[1]);
         }
         return $this->interwiki_repl($url);
       } else
-      if ($force or preg_match("/\s/",$url)) { # have a space ?
+      if ($force or strpos($url," ")) { # have a space ?
         list($url,$text)=explode(" ",$url,2);
         if (!$text) $text=$url;
         else if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text))
@@ -1317,6 +1314,13 @@ class Formatter {
     if (!$url)
       return $dum[0].":".$this->word_repl($dum[1],$text);
 
+    $urlpage=_urlencode(trim($page));
+    #$urlpage=trim($page);
+    if (strpos($url,'$PAGE') === false)
+      $url.=$urlpage;
+    else
+      $url=str_replace('$PAGE',$urlpage,$url);
+
     $img="<a href='$url' target='wiki'><img border='0' src='$DBInfo->imgs_dir/".
          strtolower($wiki)."-16.png' align='middle' height='16' width='16' ".
          "alt='$wiki:' title='$wiki:' /></a>";
@@ -1325,12 +1329,6 @@ class Formatter {
       $text= "<img border='0' alt='$text' src='$text' />";
       $img="";
     }
-
-    $page=trim($page);
-    if (strpos($url,'$PAGE') === false)
-      $url.=$page;
-    else
-      $url=str_replace('$PAGE',$page,$url);
 
     if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$url))
       return "<img border='0' alt='$text' src='$url' />";
@@ -1730,8 +1728,8 @@ class Formatter {
       $line=preg_replace($this->baserule,$this->baserepl,$line);
 
       # bullet and indentation
-      #if (!$in_pre && preg_match("/^(\s*)/",$line,$match)) {
-      if (preg_match("/^(\s*)/",$line,$match)) {
+      if ($in_pre != -1 && preg_match("/^(\s*)/",$line,$match)) {
+      #if (preg_match("/^(\s*)/",$line,$match)) {
          $open="";
          $close="";
          $indtype="dd";
@@ -1912,7 +1910,10 @@ class Formatter {
            $state=2;
            break;
         case 2:
-           $inf=preg_replace("/date:\s(.*)author:.*;\s+state:.*;/","\\1",$line);
+           $inf=preg_replace("/date:\s(.*);\s+author:.*;\s+state:.*;/","\\1",$line);
+           list($inf,$change)=explode('lines:',$inf,2);
+           $change=preg_replace("/\+(\d+)\s\-(\d+)/",
+             "<span class='diff-added'>+\\1</span><span class='diff-removed'>-\\2</span>",$change);
            $state=3;
            break;
         case 3:
@@ -1933,17 +1934,17 @@ class Formatter {
            $rowspan=1;
            if ($comment) $rowspan=2;
            $out.="<tr>\n";
-           $out.="<th valign='top' rowspan=$rowspan>r$rev</th><td>$inf</td><td>$ip&nbsp;</td>";
+           $out.="<th valign='top' rowspan=$rowspan>r$rev</th><td nowrap='nowrap'>$inf $change</td><td>$ip&nbsp;</td>";
            $achecked="";
            $bchecked="";
            if ($flag==1)
               $achecked="checked ";
            else if (!$flag)
               $bchecked="checked ";
-           $out.="<td><input type='radio' name='rev' value='$rev' $achecked/>";
+           $out.="<td nowrap='nowrap'><input type='radio' name='rev' value='$rev' $achecked/>";
            $out.="<input type='radio' name='rev2' value='$rev' $bchecked/>";
 
-           $out.="<td>".$this->link_to("?action=recall&rev=$rev","view").
+           $out.="<td nowrap='nowrap'>".$this->link_to("?action=recall&rev=$rev","view").
                  " ".$this->link_to("?action=raw&rev=$rev","raw");
            if ($flag)
               $out.= " ".$this->link_to("?action=diff&rev=$rev","diff");
@@ -1985,7 +1986,7 @@ class Formatter {
       print $this->_parse_rlog($out);
   }
 
-  function _parse_diff2($diff) {
+  function simple_diff($diff) {
     $diff=str_replace("<","&lt;",$diff);
     $lines=explode("\n",$diff);
     $out="";
@@ -2004,7 +2005,7 @@ class Formatter {
     return $out;
   }
 
-  function _parse_diff($diff) {
+  function fancy_diff($diff) {
     include_once("lib/difflib.php");
     $diff=str_replace("<","&lt;",$diff);
     $lines=explode("\n",$diff);
@@ -2109,7 +2110,8 @@ class Formatter {
       } else {
          $msg= _("Difference between yours and the current");
          print "<h2>$msg</h2>";
-         print $this->_parse_diff($out);
+         $diff_type=$DBInfo->diff_type;
+         print $this->$diff_type($out);
       }
       return;
     }
@@ -2148,7 +2150,8 @@ class Formatter {
         $msg=sprintf(_("Difference between r%s and the current"),$rev1.$rev2);
         print "<h2>$msg</h2>";
       }
-      print $this->_parse_diff($out);
+      $diff_type=$DBInfo->diff_type;
+      print $this->$diff_type($out);
     }
   }
 
@@ -2399,7 +2402,8 @@ FOOT;
     else if (empty($options['nolink']))
       $title=$this->link_to("?action=fullsearch&amp;value=$name",$title,"class='title'");
     $logo=$this->link_tag($DBInfo->logo_page,'',$DBInfo->logo_string);
-    $goto_form=goto_form($action);
+    $goto_form=$DBInfo->goto_form ?
+      $DBInfo->goto_form : goto_form($action,$DBInfo->goto_type);
 
     if ($options['msg']) {
       $msg=<<<MSG
@@ -2411,11 +2415,10 @@ MSG;
 
     # navi bar
     $menu=array();
-    foreach ($this->menu as $item=>$attr) {
-      #$menu=preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$DBInfo->menu);
+    foreach ($this->menu as $item=>$attr)
       $menu[]=$this->link_tag($item,"",_($item),$attr);
-    }
     $menu=$this->menu_bra.join($this->menu_sep,$menu).$this->menu_cat;
+
     # icons
     if ($upper)
       $upper_icon=$this->link_tag($upper,'',$this->icon['upper'])." ";
@@ -2469,14 +2472,10 @@ MSG;
     print $DBInfo->hr;
     if ($options['trail']) {
       $opt['nosisters']=1;
-      $sister_save=$this->sister_on;
-      $this->sister_on=0;
       print "<div id='wikiTrailer'>\n";
-      $this->send_page($this->trail,$opt);
-      #print preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$this->trail);
+      #$this->send_page($this->trail,$opt);
+      print $this->trail;
       print "</div>\n";
-      $this->pagelinks=array(); # reset pagelinks
-      $this->sister_on=$sister_save;
     }
     print "<div id='wikiBody'>\n";
   }
@@ -2558,16 +2557,26 @@ EOS;
   function set_trailer($trailer="",$pagename,$size=5) {
     global $DBInfo;
     if (!$trailer) $trail=$DBInfo->frontpage;
-    else $trail=str_replace("\t".$pagename."\t","\t",$trailer);
-    $trails=explode("\t",trim($trail));
+    else $trail=$trailer;
+    $trails=array_diff(explode("\t",trim($trail)),array($pagename));
+
+    $sister_save=$this->sister_on;
+    $this->sister_on=0;
+    $this->trail="";
+    foreach ($trails as $page) {
+      $this->trail.=$this->word_repl($page,"",1)." &#x203a; ";
+    }
+    $this->trail.= " $pagename";
+    $this->pagelinks=array(); # reset pagelinks
+    $this->sister_on=$sister_save;
+
     if (!in_array($pagename,$trails)) $trails[]=$pagename;
+
     $idx=count($trails) - $size;
     if ($idx > 0) $trails=array_slice($trails,$idx);
     $trail=join("\t",$trails);
 
     setcookie("MONI_TRAIL",$trail,time()+60*60*24*30,get_scriptname());
-    #$this->trail= "[\"".join("\"] > [\"",$trails)."\"]";
-    $this->trail= "wiki:".join(" > wiki:",$trails);
   }
 } # end-of-Formatter
 
@@ -2622,7 +2631,8 @@ $options=array();
 $options['id']=$user->id;
 
 # MoniWiki theme
-$theme=$_GET['theme'];
+if (!$DBInfo->theme) $theme=$_GET['theme'];
+else $theme=$DBInfo->theme;
 if ($theme) $options['theme']=$theme;
 
 if ($DBInfo->trail)
@@ -2637,6 +2647,9 @@ if ($user->id != "Anonymous") {
   $options['css_url']=$user->css;
   if (!$theme) $options['theme']=$user->theme;
 }
+
+if ($DBInfo->theme)
+  $options['css_url']=$DBInfo->url_prefix."/theme/$theme/css/default.css";
 
 $options['timer']=&$timing;
 $options['timer']->Check("load");
@@ -2738,7 +2751,18 @@ if ($pagename) {
     $formatter->send_title("","",$options);
     $formatter->write("<div id='wikiContent'>\n");
     $options['timer']->Check("init");
-    $formatter->send_page();
+#    $cache=new Cache_text('pages');
+#    if ($cache->exists($pagename)) {
+#      print $cache->fetch($pagename);
+#    } else {
+#      ob_start();
+      $formatter->send_page();
+#      $out=ob_get_contents();
+#      ob_end_clean();
+#      print $out;
+#      $cache->update($pagename,$out);
+#    }
+    
     $options['timer']->Check("send_page");
     $formatter->write("</div>\n");
     $args['editable']=1;
