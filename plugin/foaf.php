@@ -103,8 +103,8 @@ function macro_foaf($formatter,$value) {
   xml_set_character_data_handler($xml_parser, "characterData");
 
   $cache= new Cache_text("foaf");
-  if (!$cache->exists($key)) {
-    $fp = fopen("$value","r");
+  if ($_GET['update'] or !$cache->exists($key)) {
+    $fp = @fopen("$value","r");
     if (!$fp)
       return ("[[FOAF(ERR: not a valid URL! $value)]]");
 
