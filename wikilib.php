@@ -319,7 +319,7 @@ class User {
      $this->css=$_COOKIE['MONI_CSS'];
      $this->theme=$_COOKIE['MONI_THEME'];
      $this->bookmark=$_COOKIE['MONI_BOOKMARK'];
-     $this->trail=stripslashes($_COOKIE['MONI_TRAIL']);
+     $this->trail=_stripslashes($_COOKIE['MONI_TRAIL']);
   }
 
   function setID($id) {
@@ -430,7 +430,7 @@ function do_highlight($formatter,$options) {
   $formatter->send_header("",$options);
   $formatter->send_title("","",$options);
 
-  $expr= stripslashes($options['value']);
+  $expr= _stripslashes($options['value']);
 #  $expr= implode('|',preg_split('/\s+/',$expr));
 
   $formatter->highlight=$expr;
@@ -715,7 +715,7 @@ function do_post_DeletePage($formatter,$options) {
   #print $options['page'];
   if ($options['name']) $options['name']=urldecode($options['name']);
   $pagename= $formatter->page->urlname;
-  if (stripslashes($options['name']) == $options['page']) {
+  if (_stripslashes($options['name']) == $options['page']) {
     $DBInfo->deletePage($page,$options);
     $title = sprintf(_("\"%s\" is deleted !"), $page->name);
     $formatter->send_header("",$options);
@@ -787,7 +787,7 @@ function do_goto($formatter,$options) {
     }
   }
   if ($options['value']) {
-     $url=stripslashes($options['value']);
+     $url=_stripslashes($options['value']);
      $url=_rawurlencode($url);
      if ($options['redirect'])
        $url=$formatter->link_url($url,"?action=show");

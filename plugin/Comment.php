@@ -1,5 +1,5 @@
 <?php
-// Copyright 2004 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2004-2005 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a Wiki comment plugin for the MoniWiki
 //
@@ -78,7 +78,7 @@ function do_comment($formatter,$options=array()) {
   $url=$formatter->link_url($formatter->page->urlname);
 
   if ($options['savetext']) {
-    $savetext=stripslashes($options['savetext']);
+    $savetext=_stripslashes($options['savetext']);
     $savetext=str_replace("\r","",$savetext);
     $savetext=rtrim($savetext);
     #$savetext=str_replace("<","&lt;",$savetext);
@@ -115,7 +115,7 @@ function do_comment($formatter,$options=array()) {
 
   if ($options['id']=='Anonymous')
     $id=$options['name'] ?
-      stripslashes($options['name']):$_SERVER['REMOTE_ADDR'];
+      _stripslashes($options['name']):$_SERVER['REMOTE_ADDR'];
   else $id=$options['id'];
 
   if ($options['nosig']) $savetext="----\n$savetext\n";
@@ -143,4 +143,5 @@ function do_comment($formatter,$options=array()) {
   return;
 }
 
+// vim:et:sts=2:sw=2
 ?>

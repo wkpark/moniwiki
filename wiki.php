@@ -3106,7 +3106,7 @@ function get_pagename() {
     if (!$pagename) {
       $pagename = $DBInfo->frontpage;
     }
-    $pagename=stripslashes($pagename);
+    $pagename=_stripslashes($pagename);
   } else if (!empty($_SERVER['QUERY_STRING'])) {
     if (isset($goto)) $pagename=$goto;
     else {

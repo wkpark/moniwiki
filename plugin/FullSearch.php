@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a FullSearch plugin for the MoniWiki
 //
@@ -9,7 +9,7 @@ function do_fullsearch($formatter,$options) {
 
   $ret=$options;
 
-  $options['value']=stripslashes($options['value']);
+  $options['value']=_stripslashes($options['value']);
   if ($options['backlinks'])
     $title= sprintf(_("BackLinks search for \"%s\""), $options['value']);
   else

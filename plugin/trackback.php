@@ -2,7 +2,6 @@
 // Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a TrackBack receive action plugin for the MoniWiki
-// vim:et:ts=2:
 //
 // $Id$
 
@@ -89,10 +88,10 @@ function do_trackback($formatter,$options) {
   # receivie Trackback ping
 
   # strip \n
-	$title= strtr(stripslashes($options['title']),"\t\n"," \r");
-	$excerpt= strtr(stripslashes($options['excerpt']),"\t\n"," \r");
-	$blog_name= strtr(stripslashes($options['blog_name']),"\t\n"," \r");
-	$url= strtr(stripslashes($options['url']),"\t\n"," \r");
+	$title= strtr(_stripslashes($options['title']),"\t\n"," \r");
+	$excerpt= strtr(_stripslashes($options['excerpt']),"\t\n"," \r");
+	$blog_name= strtr(_stripslashes($options['blog_name']),"\t\n"," \r");
+	$url= strtr(_stripslashes($options['url']),"\t\n"," \r");
 
   $timestamp=time();
   $date= gmdate("Y-m-d\TH:i:s",$timestamp);
@@ -190,4 +189,5 @@ function macro_trackback($formatter,$value) {
   return $template_bra.$out.$template_ket;
 }
 
+// vim:et:sts=2:
 ?>

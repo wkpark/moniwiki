@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2004 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a UploadFile plugin for the MoniWiki
 //
@@ -98,7 +98,7 @@ function do_uploadfile($formatter,$options) {
   $filename=$upfilename;
   if ($options['rename'][$j]) {
     # XXX
-    $temp=explode("/",stripslashes($options['rename'][$j]));
+    $temp=explode("/",_stripslashes($options['rename'][$j]));
     $upfilename= $temp[count($temp)-1];
 
     preg_match("/^(.*)\.([a-z0-9]{1,4})$/i",$upfilename,$tname);
@@ -216,7 +216,7 @@ function macro_UploadFile($formatter,$value='',$options='') {
   for ($j=0;$j<$count;$j++) {
     if ($count > 1) $suffix="[$j]";
     if ($options['rename'][$j]) {
-      $rename=stripslashes($options['rename'][$j]);
+      $rename=_stripslashes($options['rename'][$j]);
       $extra="<input name='rename$suffix' value='$rename' />"._(": Rename")."<br />";
     } else $extra='';
     $form.= <<<EOF

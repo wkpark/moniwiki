@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // Blog action plugin for the MoniWiki
 //
@@ -88,7 +88,7 @@ function do_Blog($formatter,$options) {
 
   $savetext="";
   if ($options['savetext']) {
-    $savetext=stripslashes($options['savetext']);
+    $savetext=_stripslashes($options['savetext']);
     $savetext=str_replace("\r","",$savetext);
     $savetext=str_replace("----\n","-''''''---\n",$savetext);
     #$savetext=str_replace("<","&lt;",$savetext);
@@ -101,7 +101,7 @@ function do_Blog($formatter,$options) {
      $datestamp= $formatter->page->mtime();
 
   if ($options['title'])
-    $options['title']=stripslashes($options['title']);
+    $options['title']=_stripslashes($options['title']);
   if (!$options['button_preview'] && $savetext) {
     $savetext=preg_replace("/(?<!\\\\)}}}/","\}}}",$savetext);
 
@@ -117,7 +117,7 @@ function do_Blog($formatter,$options) {
 
     if ($options['id']=='Anonymous')
       $id=$options['name'] ?
-        stripslashes($options['name']):$_SERVER['REMOTE_ADDR'];
+        _stripslashes($options['name']):$_SERVER['REMOTE_ADDR'];
     else $id=$options['id'];
 
     if ($options['value']) {

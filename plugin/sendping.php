@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2994 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a TrackBack send action plugin for the MoniWiki
 //
@@ -94,10 +94,10 @@ FORM2;
   # send Trackback ping
 
   $trackback_url=$options['trackback_url'];
-  $title= urlencode(stripslashes($options['title']));
+  $title= urlencode(_stripslashes($options['title']));
   $blog_name= urlencode($DBInfo->sitename.":$options[id]");
 
-  $excerpt= stripslashes($options['excerpt']);
+  $excerpt= _stripslashes($options['excerpt']);
 
   if ($options['mbencode']) {
     if ($checked and function_exists('iconv')

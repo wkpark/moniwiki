@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // Gallery plugin for the MoniWiki
 //
@@ -103,7 +103,7 @@ function macro_Gallery($formatter,$value,&$options) {
 
   if ($file and $upfiles[$file] and $options['comments']) {
     // admin: edit all comments
-    $comment=stripslashes($options['comments']);
+    $comment=_stripslashes($options['comments']);
     $comment=str_replace("<","&lt;",$comment);
     $comment=str_replace("\r","",$comment);
     $comment=preg_replace("/\n----\n/","\t",$comment);
@@ -117,7 +117,7 @@ function macro_Gallery($formatter,$value,&$options) {
     if ($options['name']) $name=$options['name'];
     $date=date("(Y-m-d H:i:s) ");
 
-    $comment=stripslashes($options['comment']);
+    $comment=_stripslashes($options['comment']);
     $comment=str_replace("\r","",$comment);
     $comment=str_replace("\n","\\n",$comment);
     $comment=str_replace("\t"," ",$comment);
