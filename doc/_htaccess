@@ -1,3 +1,4 @@
 <Files mywiki>
-SetHandler application/x-httpd-php
+#SetHandler application/x-httpd-php
+ForceType application/x-httpd-php
 </Files>
