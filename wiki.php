@@ -1629,9 +1629,15 @@ class Formatter {
       $word=$text=$page_text ? $page_text:$word;
     #print $text;
 
-    $url=$this->link_url(_rawurlencode($page)); # XXX
-    $page=urldecode($page); # XXX
-    #$page=rawurldecode($page); # C++
+    $url=_urlencode($page);
+    $url_only=strtok($url,'#?'); # for [WikiName#tag] [wiki:WikiName#tag Tag]
+    #$query= substr($url,strlen($url_only));
+    $page=urldecode($url_only);
+    $url=$this->link_url($url);
+
+    //$url=$this->link_url(_rawurlencode($page)); # XXX
+    //$page=urldecode($page); # XXX
+    //$page=rawurldecode($page); # C++
     if (isset($this->pagelinks[$page])) {
       $idx=$this->pagelinks[$page];
       switch($idx) {
