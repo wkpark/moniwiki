@@ -469,7 +469,9 @@ class WikiDB {
     $this->inline_latex=0;
     $this->processors=array();
 
+    $this->perma_icon='#';
     $this->purple_icon='#';
+    $this->use_purple=0;
 
     # set user-specified configuration
     if ($config) {
@@ -792,6 +794,7 @@ class WikiDB {
       if (!preg_match('/([A-Z][a-z0-9]+){2,}/',$id)) $id='['.$id.']';
  
     $body=preg_replace("/@DATE@/","[[Date($time)]]",$body);
+    $body=preg_replace("/@USERNAME@/","$id",$body);
     $body=preg_replace("/@TIME@/","[[DateTime($time)]]",$body);
     $body=preg_replace("/@SIG@/","-- $id [[DateTime($time)]]",$body);
     $body=preg_replace("/@PAGE@/",$options['page'],$body);
@@ -1152,7 +1155,9 @@ class WikiPage {
 
 class Formatter {
   var $sister_idx=1;
-  var $group="";
+  var $group='';
+  var $use_purple=1;
+  var $purple_number=0;
 
   function Formatter($page="",$options="") {
     global $DBInfo;
@@ -1169,6 +1174,7 @@ class Formatter {
     $this->imgs_dir_url=$DBInfo->imgs_dir_url;
     $this->actions= $DBInfo->actions;
     $this->inline_latex= $DBInfo->inline_latex;
+    $this->use_purple=$DBInfo->use_purple;
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -1253,6 +1259,7 @@ class Formatter {
     # single linkage rule ?hello ?abacus
     #"(\?[A-Z]*[a-z0-9]+)";
     "(\?[A-Za-z0-9]+)";
+    $this->footrule="\[\*[^\]]*\s[^\]]+\]";
 
     $this->cache= new Cache_text("pagelinks");
   }
@@ -1302,6 +1309,9 @@ class Formatter {
     }
     if (!$this->purple_icon) {
       $this->purple_icon=$DBInfo->purple_icon;
+    }
+    if (!$this->perma_icon) {
+      $this->perma_icon=$DBInfo->perma_icon;
     }
   }
 
@@ -1413,7 +1423,8 @@ class Formatter {
       $url=substr($url,1,-1);
       $force=1;
     }
-    if ($url[0]=="{") {
+    switch ($url[0]) {
+    case '{':
       $url=substr($url,3,-3);
       if ($url[0]=='#' and ($p=strpos($url,' '))) {
         $col=strtok($url,' '); $url=strtok(' ');
@@ -1421,19 +1432,32 @@ class Formatter {
         return "<font color='$col'>$url</font>";
       }
       return "<tt class='wiki'>$url</tt>"; # No link
-    } else if ($url[0]=="[") {
+      break;
+    case '[':
       $url=substr($url,1,-1);
       return $this->macro_repl($url); # No link
-    } else if ($url[0]=='$') {
+      break;
+    case '$':
       #return processor_latex($this,"#!latex\n".$url);
       $url=preg_replace('/<\/?sup>/','^',$url);
       return $this->processor_repl($this->inline_latex,$url);
-    }
-
-    if ($url[0]=="!") {
+      break;
+    case '#': # Anchor syntax in the MoinMoin 1.1
+      $anchor=strtok($url,' ');
+      return ($word=strtok('')) ? $this->link_to($anchor,$word):
+                 "<a name='".($temp=substr($anchor,1))."' id='$temp'></a>";
+      break;
+    case '*':
+      return $this->macro_repl('FootNote',$url);
+      break;
+    case '!':
       $url=substr($url,1);
       return $url;
-    } else
+      break;
+    default:
+      break;
+    }
+
     if (strpos($url,":")) {
       if ($url[0]=='a') # attachment:
         return $this->macro_repl('Attachment',substr($url,11));
@@ -1584,10 +1608,6 @@ class Formatter {
     if ($word[0]=='"') { # ["extended wiki name"]
       $page=substr($word,1,-1);
       $word=$page;
-    } else if ($word[0]=='#') { # Anchor syntax in the MoinMoin 1.1
-      $anchor=strtok($word,' ');
-      return ($word=strtok('')) ? $this->link_to($anchor,$word):
-                 "<a name='".($temp=substr($anchor,1))."' id='$temp'></a>";
     } else
       #$page=preg_replace("/\s+/","",$word); # concat words
       $page=normalize($word); # concat words
@@ -1693,9 +1713,8 @@ class Formatter {
     }
   }
 
-  function head_repl($left,$head,$right) {
-    $dep=strlen($left);
-    if ($dep != strlen($right)) return "$left $head $right";
+  function head_repl($depth,$head) {
+    $dep=strlen($depth);
     $this->nobr=1;
 
     $head=str_replace('\"','"',$head); # revert \\" to \"
@@ -1748,9 +1767,9 @@ class Formatter {
     $prefix=$this->toc_prefix;
     if ($this->toc)
       $head="<a href='#toc'>$num</a> $head";
-    $purple=" <a class='purple' href='#s$prefix-$num'>$this->purple_icon</a>";
+    $perma=" <a class='perma' href='#s$prefix-$num'>$this->perma_icon</a>";
 
-    return "$close$open<h$dep><a id='s$prefix-$num' name='s$prefix-$num'></a> $head$purple</h$dep>";
+    return "$close$open<h$dep><a id='s$prefix-$num' name='s$prefix-$num'></a> $head$perma</h$dep>";
   }
 
   function macro_repl($macro,$value='',$options='') {
@@ -1854,7 +1873,7 @@ class Formatter {
          $list_type="dd></dl";
       $numtype='';
     } if (!$on and $closetype and $closetype !='dd')
-      $list_type=$list_type."></li";
+      $list_type=$list_type.'>'.$this->_purple().'</li';
 
     if ($on) {
       if ($numtype) {
@@ -1907,16 +1926,29 @@ class Formatter {
     return "</table>\n";
   }
 
+  function _purple() {
+    if (!$this->use_purple) return '';
+    $id=sprintf('%03d',$this->purple_number++);
+    $nid='p'.$id;
+    return "<span class='purple'><a name='$nid' id='$nid'></a><a href='#$nid'>(".$id.")</a></span>";
+  }
+
   function _div($on,$in_div) {
-    static $tag=array("</div>\n","<div>\n");
+    $tag=array("</div>\n","<div>\n");
     if ($on) $in_div++;
     else {
       if (!$in_div) return '';
       $in_div--;
     }
-
+    if (!$on) $purple=$this->_purple();
     #return "(".$in_div.")".$tag[$on];
-    return $tag[$on];
+    return $purple.$tag[$on];
+  }
+
+  function _li($on,$empty='') {
+    $tag=array("</li>\n",'<li>');
+    if (!$on and !$empty) $purple=$this->_purple();
+    return $purple.$tag[$on];
   }
 
   function _fixpath() {
@@ -1976,6 +2008,7 @@ class Formatter {
     $in_pre=0;
     $in_table=0;
     $li_open=0;
+    $li_empty=0;
     $indent_list[0]=0;
     $indent_type[0]="";
 
@@ -1984,13 +2017,15 @@ class Formatter {
     if ($DBInfo->inline_latex) # single line latex syntax
       $wordrule.="(?<=\s|^)\\$([^\\$]+)\\$(?:\s|$)|".
                  "(?<=\s|^)\\$\\$([^\\$]+)\\$\\$(?:\s|$)|";
+    #if ($DBInfo->builtin_footnote) # builtin footnote support
+    $wordrule.=$this->footrule.'|';
     $wordrule.=$this->wordrule;
 
     foreach ($lines as $line) {
       # empty line
       if (!strlen($line)) {
         if ($in_pre) { $this->pre_line.="\n";continue;}
-        if ($in_li) { $text.="<br />\n"; continue;}
+        if ($in_li) { $text.=$this->_purple()."<br />\n";$li_empty=1; continue;}
         if ($in_table) {
           $text.=$this->_table(0)."<br />\n";$in_table=0; continue;
         } else {
@@ -2008,9 +2043,10 @@ class Formatter {
         continue; # comments
       }
 
-      if ($in_p == '') {
-        #$text.="<div>\n";
-        
+      if (preg_match('/^-{4,}/',$line)) {
+        if ($DBInfo->auto_linebreak) $this->nobr=1; // XXX
+        if ($in_p) { $text.=$this->_div(0,&$in_div); $in_p='';}
+      } else if ($in_p == '') {
         $text.=$this->_div(1,&$in_div);
         $in_p= $line;
       }
@@ -2087,8 +2123,6 @@ class Formatter {
       # rules
       #$line=preg_replace("/^-{4,}/","<hr />\n",$line);
 
-      if ($DBInfo->auto_linebreak and preg_match('/^-{4,}/',$line))
-        $this->nobr=1; // XXX
       $line=preg_replace($this->baserule,$this->baserepl,$line);
       #if ($in_p and ($in_pre==1 or $in_li)) $line=$this->_check_p().$line;
 
@@ -2105,12 +2139,12 @@ class Formatter {
            if ($line[0]=='*') {
              $limatch[1]='*';
              $line=preg_replace("/^(\*\s?)/","<li>",$line);
-             if ($indent_list[$in_li] == $indlen && $indent_type[$in_li]!='dd') $line="</li>\n".$line;
+             if ($indent_list[$in_li] == $indlen && $indent_type[$in_li]!='dd') $line=$this->_li(0).$line;
              $numtype="";
              $indtype="ul";
            } elseif (preg_match("/^((\d+|[aAiI])\.)(#\d+)?\s/",$line,$limatch)){
              $line=preg_replace("/^((\d+|[aAiI])\.(#\d+)?)/","<li>",$line);
-             if ($indent_list[$in_li] == $indlen) $line="</li>\n".$line;
+             if ($indent_list[$in_li] == $indlen) $line=$this->_li(0).$line;
              $numtype=$limatch[2][0];
              if ($limatch[3])
                $numtype.=substr($limatch[3],1);
@@ -2131,12 +2165,13 @@ class Formatter {
          } else if ($indent_list[$in_li] > $indlen) {
             while($in_li >= 0 && $indent_list[$in_li] > $indlen) {
                if ($indent_type[$in_li]!='dd' && $li_open == $in_li)
-                 $close.="</li>\n";
+                 $close.=$this->_li(0,$li_empty);
                $close.=$this->_list(0,$indent_type[$in_li],"",$indent_type[$in_li-1]);
                unset($indent_list[$in_li]);
                unset($indent_type[$in_li]);
                $in_li--;
             }
+            $li_empty=0;
          }
          if ($indent_list[$in_li] <= $indlen || $limatch) $li_open=$in_li;
          else $li_open=0;
@@ -2163,8 +2198,8 @@ class Formatter {
       $line=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$line);
 
       # Headings
-      $line=preg_replace("/(?<!=)(={1,5})\s+(.*)\s+(={1,5})\s?$/e",
-                         "\$this->head_repl('\\1','\\2','\\3')",$line);
+      $line=preg_replace("/(?<!=)(={1,5})\s+(.*)\s+\\1\s?$/e",
+                         "\$this->head_repl('\\1','\\2')",$line);
       #$line=preg_replace("/(?<!=)(={1,5})\s+(.*)\s+(={1,5})\s?$/",
       #                    $this->head_repl("$1","$2","$3"),$line);
 
@@ -2175,11 +2210,6 @@ class Formatter {
       #      array("</div><table class='closure'><tr class='closure'><td class='closure'><div>","</div></td></tr></table><div>"),$line);
 
       $line=preg_replace($this->extrarule,$this->extrarepl,$line);
-
-#      if ($in_p == '') {
-#        $text.=$this->_div(1,&$in_div);
-#        $in_p= $line;
-#      }
 
       $line=$close.$open.$line;
       $open="";$close="";
@@ -2208,8 +2238,6 @@ class Formatter {
                 break;
               }
             }
-            #if ($pre_style) $class.=' '.$pre_style;
-            #if ($pre_style) $class=$pre_style.' '.$class;
             $line="<pre $attr>\n".$pre."</pre>\n".$line;
             $in_quote=0;
          } else {
@@ -2247,7 +2275,7 @@ class Formatter {
     # close indent
     while($in_li >= 0 && $indent_list[$in_li] > 0) {
       if ($indent_type[$in_li]!='dd' && $li_open == $in_li)
-        $close.="</li>\n";
+        $close.=$this->_li(0);
 #     $close.=$this->_list(0,$indent_type[$in_li]);
       $close.=$this->_list(0,$indent_type[$in_li],"",$indent_type[$in_li-1]);
       unset($indent_list[$in_li]);
@@ -2727,7 +2755,7 @@ div.message {
 </style>
 EOS;
 
-      print "\n</head>\n<body>\n";
+      print "\n</head>\n<body $options[attr]>\n";
     }
   }
 
@@ -3255,6 +3283,7 @@ if ($pagename) {
 
     #$formatter->get_redirect();
     $formatter->pi=$formatter->get_instructions();
+    $options['attr']='ondblclick="location.href=\'?action=edit\'"';
     $formatter->send_header("",$options);
     $formatter->send_title("","",$options);
 
