@@ -481,10 +481,12 @@ function macro_Edit($formatter,$value,$options='') {
 
   $COLS_MSIE= 80;
   $COLS_OTHER= 85;
+
+  $edit_rows=$DBInfo->edit_rows ? $DBInfo->edit_rows: 16;
   $cols= preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
 
-  $rows= $options['rows'] > 5 ? $options['rows']: 16;
-  $rows= $rows < 60 ? $rows: 16;
+  $rows= $options['rows'] > 5 ? $options['rows']: $edit_rows;
+  $rows= $rows < 60 ? $rows: $edit_rows;
   $cols= $options['cols'] > 60 ? $options['cols']: $cols;
 
   $text= $options['savetext'];
