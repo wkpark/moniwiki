@@ -14,7 +14,7 @@
 // $Id$
 // vim:et:ts=2:
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0rc1';
+$_release = '1.0rc2';
 
 include "wikilib.php";
 
@@ -1185,14 +1185,20 @@ class Formatter {
     $dep=strlen($left);
     if ($dep != strlen($right)) return "$left $head $right";
 
-    $depth=$dep;
-    if ($dep==1) $depth++; # depth 1 is regarded same as depth 2
-    $depth--;
+    if (!$this->depth_top) { $this->depth_top=$dep; $depth=1; }
+    else {
+      $depth=$dep - $this->depth_top + 1;
+      if ($depth <= 0) $depth=1;
+    }
+
+#    $depth=$dep;
+#    if ($dep==1) $depth++; # depth 1 is regarded same as depth 2
+#    $depth--;
 
     $num="".$this->head_num;
     $odepth=$this->head_dep;
 
-    if ($head[0] == '#' && $head[1] == ' ') {
+    if ($head[0] == '#') {
       # reset TOC numberings
       if ($this->toc_prefix) $this->toc_prefix++;
       else $this->toc_prefix=1;
@@ -1627,7 +1633,7 @@ class Formatter {
            $rowspan=1;
            if ($comment) $rowspan=2;
            $out.="<tr>\n";
-           $out.="<th rowspan=$rowspan>r$rev</th><td>$inf</td><td>$ip&nbsp;</td>";
+           $out.="<th valign='top' rowspan=$rowspan>r$rev</th><td>$inf</td><td>$ip&nbsp;</td>";
            $achecked="";
            $bchecked="";
            if ($flag==1)
@@ -2167,6 +2173,7 @@ $extra
 </form>
 EOS;
     $this->show_hints();
+    print "<a id='preview' name='preview' />";
   }
 
   function show_hints() {
@@ -2184,7 +2191,6 @@ EOS;
 <b>Tables</b>: || cell text |||| cell text spanning two columns ||;
     no trailing white space allowed after tables or titles.<br />
 </div>
-<a id='preview' name='preview' />
 EOS;
   }
 } # end-of-Formatter
