@@ -50,7 +50,8 @@ function do_userform($formatter,$options) {
       $user=$userdb->getUser($id);
       if ($user->checkPasswd($options['password'])=== true) {
         $options['msg'] = sprintf(_("Successfully login as '%s'"),$id);
-        $user->setCookie();
+        $formatter->header($user->setCookie());
+
         $userdb->saveUser($user); # XXX
       } else {
         $title = sprintf(_("Invalid password !"));
@@ -64,7 +65,7 @@ function do_userform($formatter,$options) {
     }
   } else if ($options['logout']) {
     # logout
-    $user->unsetCookie();
+    $formatter->header($user->unsetCookie());
     $title= _("Cookie deleted !");
   } else if ($user->id=="Anonymous" and $options['login_id'] and $options['password'] and $options['passwordagain']) {
     # create profile
@@ -91,25 +92,25 @@ function do_userform($formatter,$options) {
            }
 
            if ($udb->isNotUser($user)) {
-              $title= _("Successfully added!");
-              $ticket=md5(time().$user->id.$options['email']);
-              $user->info['eticket']=$ticket.".".$options['email'];
-              $user->setCookie();
-              $ret=$udb->addUser($user);
+             $title= _("Successfully added!");
+             $ticket=md5(time().$user->id.$options['email']);
+             $user->info['eticket']=$ticket.".".$options['email'];
+             $formatter->header($user->setCookie());
+             $ret=$udb->addUser($user);
 
-              # XXX
-              if ($options['email'] and preg_match('/^[a-z][a-z0-9_\-]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
-                $options['subject']="[$DBInfo->sitename] "._("E-mail confirmation");
-                $body=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
-                $body=_("Please confirm your email address")."\n".$body;
-                wiki_sendmail($body,$options);
-                $options['msg'].='<br/>'._("E-mail confirmation mail sented");
-              }
+             # XXX
+             if ($options['email'] and preg_match('/^[a-z][a-z0-9_\-]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
+               $options['subject']="[$DBInfo->sitename] "._("E-mail confirmation");
+               $body=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
+               $body=_("Please confirm your email address")."\n".$body;
+               wiki_sendmail($body,$options);
+               $options['msg'].='<br/>'._("E-mail confirmation mail sented");
+             }
            } else {# already exist user
              $user=$udb->getUser($user->id);
              if ($user->checkPasswd($options['password'])=== true) {
                $options['msg'].= sprintf(_("Successfully login as '%s'"),$id);
-               $user->setCookie();
+               $formatter->header($user->setCookie());
                $udb->saveUser($user); # XXX
              } else {
                $title = _("Invalid password !");
