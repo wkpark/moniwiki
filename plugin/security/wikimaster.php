@@ -68,7 +68,7 @@ class Security_wikimaster extends Security {
 
   function is_protected($action="read",$options) {
     # password protected POST actions
-    $protected_actions=array("chmod","backup","restore");
+    $protected_actions=array("rcs","chmod","backup","restore");
     $action=strtolower($action);
 
     if (in_array($action,$protected_actions)) {
