@@ -41,6 +41,10 @@ function _urlencode($url) {
   return preg_replace("/([^a-z0-9\/\?\.\+~#&:;=%\-]{1})/ie","'%'.strtoupper(dechex(ord('\\1')))",$url);
 }
 
+function _stripslashes($str) {
+  return get_magic_quotes_gpc() ? stripslashes($str):$str;
+}
+
 function qualifiedUrl($url) {
   if (substr($url,0,7)=="http://")
     return $url;
@@ -890,7 +894,7 @@ function do_post_savepage($formatter,$options) {
   $formatter->send_header("",$options);
 
   $savetext=str_replace("\r", "", $savetext);
-  $savetext=stripslashes($savetext);
+  $savetext=_stripslashes($savetext);
   if ($savetext and $savetext[strlen($savetext)-1] != "\n")
     $savetext.="\n";
 
@@ -959,7 +963,7 @@ function do_post_savepage($formatter,$options) {
     if ($options['category'])
       $savetext.="----\n$options[category]\n";
 
-    $comment=stripslashes($options['comment']);
+    $comment=_stripslashes($options['comment']);
     $formatter->page->write($savetext);
     $ret=$DBInfo->savePage($formatter->page,$comment,$options);
     if (($ret != -1) and $DBInfo->notify) {
