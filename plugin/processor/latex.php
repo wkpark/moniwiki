@@ -55,7 +55,7 @@ $tex
     $NULL='NUL';
   }
   
-  if ($formatter->refresh || !file_exists("$cache_dir/$uniq.png")) {
+  if ($formatter->preview || $formatter->refresh || !file_exists("$cache_dir/$uniq.png")) {
      $fp= fopen($vartmp_dir."/$uniq.tex", "w");
      fwrite($fp, $src);
      fclose($fp);
@@ -82,7 +82,7 @@ $tex
 
      system("$RM $vartmp_dir/$uniq.*");
   }
-  return "<img class='tex' src='$DBInfo->url_prefix/$cache_dir/$uniq.png' alt='tex'".
+  return "<img class='tex' src='$DBInfo->url_prefix/$cache_dir/$uniq.png' alt='tex' ".
          "title=\"$tex\" />";
 }
 
