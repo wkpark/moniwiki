@@ -2,7 +2,6 @@
 // Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a FullSearch plugin for the MoniWiki
-// vim:et:ts=2:
 //
 // $Id$
 
@@ -38,7 +37,7 @@ function macro_FullSearch($formatter="",$value="", $opts=array()) {
     $needle = $value = $formatter->page->name;
   } else {
     # for MoinMoin compatibility with [[FullSearch("blah blah")]]
-    $needle = preg_replace("/^(\'|\")(.*)(\'|\")/","\\2",$value);
+    $needle = preg_replace("/^('|\")([^\\1]*)\\1/","\\2",$value);
   }
 
   $url=$formatter->link_url($formatter->page->urlname);
@@ -129,4 +128,5 @@ EOF;
   return $out;
 }
 
+// vim:et:sts=2:
 ?>

@@ -23,11 +23,12 @@ function macro_FastSearch($formatter,$value="",$opts=array()) {
     $needle = $value = $formatter->page->name;
   } else {
     # for MoinMoin compatibility with [[FullSearch("blah blah")]]
-    $needle = preg_replace("/^(\'|\")(.*)(\'|\")/","\\2",$value);
+    $needle = $value = preg_replace("/^('|\")([^\\1]*)\\1/","\\2",$value);
   }
 
-  $needle=_preg_search_escape($value);
+  $needle=_preg_search_escape($needle);
   $pattern = '/'.$needle.'/i';
+  $fneedle=str_replace('"',"&#34;",$needle); # XXX
 
   $form= <<<EOF
 <form method='get' action='$url'>
