@@ -1952,9 +1952,8 @@ class Formatter {
       else
         header($header);
     }
-    if ($DBInfo->trail) {
+    if (isset($options[trail]))
       $this->set_trailer($options[trail],$this->page->name);
-    }
 
     if (!$plain) {
       if (!$options[title]) $options[title]=$this->page->name;
@@ -2234,7 +2233,7 @@ MSG;
     print "</div>\n";
     print $DBInfo->hr;
     print "<div id='wikiBody'>\n";
-    if ($DBInfo->trail) {
+    if ($options[trail]) {
       $opt[nosisters]=1;
       $this->send_page($this->trail,$opt);
     }
@@ -2351,7 +2350,8 @@ register_shutdown_function(array(&$DBInfo,'Close'));
 $user=new User();
 $options=array();
 $options[id]=$user->id;
-$options[trail]=$user->trail;
+if ($DBInfo->trail)
+  $options[trail]=$user->trail;
 if ($user->id != "Anonymous") {
   $udb=new UserDB($DBInfo);
   $user=$udb->getUser($user->id);
