@@ -196,16 +196,26 @@ class MetaDB_dba extends MetaDB {
 
   function getSisterSites($pagename) {
     if (dba_exists($pagename,$this->metadb)) {
-       $dum=explode(" ",dba_fetch($pagename,$this->metadb));
-       return "wiki:".join(":$pagename wiki:",$dum).":$pagename";
+       $ret="wiki:".
+         str_replace(" ",":$pagename wiki:",dba_fetch($pagename,$this->metadb)).
+         ":$pagename";
+       #$dum=explode(" ",dba_fetch($pagename,$this->metadb));
+       #$ret= "wiki:".join(":$pagename wiki:",$dum).":$pagename";
+       #return "wiki:".join(":$pagename wiki:",$dum).":$pagename";
+       return preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
     }
     return "";
   }
 
   function getTwinPages($pagename) {
     if ($pagename && dba_exists($pagename,$this->metadb)) {
-       $dum=explode(" ",dba_fetch($pagename,$this->metadb));
-       return "See TwinPages wiki:".join(":$pagename wiki:",$dum).":$pagename";
+       $ret="See TwinPages wiki:".
+         str_replace(" ",":$pagename wiki:",dba_fetch($pagename,$this->metadb)).
+         ":$pagename";
+       #$dum=explode(" ",dba_fetch($pagename,$this->metadb));
+       #$ret= "See TwinPages wiki:".$dum.":$pagename";
+       #return "See TwinPages wiki:".join(":$pagename wiki:",$dum).":$pagename";
+       return preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
     }
     return "";
   }
@@ -1503,9 +1513,6 @@ class Formatter {
             $this->pre_line.=substr($line,0,$p-2);
             $line=substr($line,$p+1);
             $in_pre=-1;
-#         } else {
-#            $line=substr_replace($line,"</pre>xx",$p-3,$p);
-#            $in_pre=0;
          }
       } else if ($in_pre) {
          $this->pre_line.=$line."\n";
@@ -1538,7 +1545,8 @@ class Formatter {
          $line=preg_replace($smiley_rule,$smiley_repl,$line);
 
       # bullet
-      if (!$in_pre && preg_match("/^(\s*)/",$line,$match)) {
+      #if (!$in_pre && preg_match("/^(\s*)/",$line,$match)) {
+      if (preg_match("/^(\s*)/",$line,$match)) {
          $open="";
          $close="";
          $indtype="dd";
@@ -1551,8 +1559,7 @@ class Formatter {
              if ($indent_list[$in_li] == $indlen) $line="</li>\n".$line;
              $numtype="";
              $indtype="ul";
-            #} else if (preg_match("/^((\d+|[aAiI])\.)/",$line,$limatch)) {
-           } else if (preg_match("/^((\d+|[aAiI])\.)(#\d+)?/",$line,$limatch)) {
+           } elseif (preg_match("/^((\d+|[aAiI])\.)(#\d+)?\s/",$line,$limatch)) {
              $line=preg_replace("/^((\d+|[aAiI])\.(#\d+)?)/","<li>",$line);
              if ($indent_list[$in_li] == $indlen) $line="</li>\n".$line;
              $numtype=$limatch[2];
@@ -2588,6 +2595,7 @@ if ($pagename) {
       }
 
       $args[editable]=1;
+      $options[timer]=$timing;
       $formatter->send_footer($args,$options);
       return;
     }
