@@ -81,7 +81,7 @@ function do_uploadfile($formatter,$options) {
     $exts=explode('.',$fname[1]);
     $ok=0;
     for ($i=1;$i<sizeof($exts);$i++) {
-      if (in_array($exts[$i],$protected)) {
+      if (in_array(strtolower($exts[$i]),$protected)) {
         $exts[$i].='s';
         $ok=1;
       }
@@ -103,7 +103,7 @@ function do_uploadfile($formatter,$options) {
     $exts=explode('.',$tname[1]);
     $ok=0;
     for ($i=1;$i<sizeof($exts);$i++) {
-      if (in_array($exts[$i],$protected)) {
+      if (in_array(strtolower($exts[$i]),$protected)) {
         $exts[$i].='s';
         $ok=1;
       }
