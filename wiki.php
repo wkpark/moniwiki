@@ -1657,10 +1657,19 @@ class Formatter {
   }
 
   function _table_span($str) {
-    $len=strlen($str)/2;
+    $tok=strtok($str,'&');
+    $len=strlen($tok)/2;
+    $extra=strtok('');
+    $attr='';
+    if ($extra) {
+      $para=substr($extra,3,-1);
+      # only rowspan supported
+      if (preg_match("/^\|(\d)$/",$para,$match))
+        $attr="rowspan='$match[1]' ";
+    }
     if ($len > 1)
-      return " align='center' colspan='$len'";
-    return "";
+      $attr.=" align='center' colspan='$len'";
+    return $attr;
   }
 
   function _table($on,$attr="") {
@@ -1889,8 +1898,8 @@ class Formatter {
          $in_table=0;
       }
       if ($in_table) {
-         $line=preg_replace('/^((?:\|\|)+)(.*)\|\|$/e',"'<tr class=\"wiki\"><td class=\"wiki\"'.\$this->_table_span('\\1').'>\\2</td></tr>'",$line);
-         $line=preg_replace('/((\|\|)+)/e',"'</td><td class=\"wiki\"'.\$this->_table_span('\\1').'>'",$line);
+         $line=preg_replace('/^((?:\|\|)+(&lt;[^>]+>)?)(.*)\|\|$/e',"'<tr class=\"wiki\"><td class=\"wiki\"'.\$this->_table_span('\\1').'>\\3</td></tr>'",$line);
+         $line=preg_replace('/((\|\|)+(&lt;[^>]+>)?)/e',"'</td><td class=\"wiki\"'.\$this->_table_span('\\1').'>'",$line);
          $line=str_replace('\"','"',$line); # revert \\" to \"
       }
 
@@ -1902,6 +1911,8 @@ class Formatter {
       # Headings
       $line=preg_replace("/(?<!=)(={1,5})\s+(.*)\s+(={1,5})\s?$/e",
                          "\$this->head_repl('\\1','\\2','\\3')",$line);
+      #$line=preg_replace("/(?<!=)(={1,5})\s+(.*)\s+(={1,5})\s?$/",
+      #                    $this->head_repl("$1","$2","$3"),$line);
 
       # Smiley
       #if ($smiley_rule) $line=preg_replace($smiley_rule,$smiley_repl,$line);
