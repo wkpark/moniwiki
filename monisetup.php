@@ -29,7 +29,9 @@ class MoniConfig {
     if (function_exists("dba_open")) {
       print '<h3>Check a dba configuration</h3>';
       $tempnam="/tmp/".time();
-      if ($db=@dba_open($tempnam,"n","db3"))
+      if ($db=@dba_open($tempnam,"n","db4"))
+        $config['dba_type']="'db4'";
+      else if ($db=@dba_open($tempnam,"n","db3"))
         $config['dba_type']="'db3'";
       else if ($db=@dba_open($tempnam,"n","db2"))
         $config['dba_type']="'db2'";
