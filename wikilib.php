@@ -138,6 +138,16 @@ function normalize_word($word,$group='',$pagename='',$nogroup=0,$islink=1) {
     }
   }
 
+  if (preg_match("/^wiki:/", $page)) { # wiki:
+    $text=$page=substr($page,6);
+ 
+    if (strpos($page,' ')) { # have a space ?
+      list($page,$text)= explode(' ',$page,2);
+    }
+ 
+    if ($page[0]=='/') $page= $pagename.$page;
+  }
+
   return array($page,$text,$main_page);
 }
 
