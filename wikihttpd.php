@@ -97,11 +97,18 @@ class simple_server {
     // handle request
     while(($buf= $this->read(2048)) !== false) { 
       $request_headers.= $buf;
-      if(preg_match("'\r\n\r\n$'s", $request_headers))
+
+      #if(preg_match("'\r\n\r\n$'s", $request_headers))
+      if(strstr($request_headers,"\r\n\r\n"))
         break;
     }
-
-    $request_headers = split("\r\n", $request_headers);
+    # M$IE bug workaround XXX
+    if (!preg_match("'\r\n\r\n$'s", $request_headers)) {
+      list($request_headers,$content) = explode("\r\n\r\n", $request_headers);
+      $this->content=$content;
+    }
+ 
+    $request_headers = explode("\r\n", $request_headers);
 
     // parse
     list($request,$data) = $this->parse_request($request_headers);
@@ -189,8 +196,9 @@ h1 {font-family:tahoma,verdana,sans-serif;}
     else if(preg_match("'^(GET|POST) ([^ ]+)$'", $request[0], $matches)) {
       $matches[]='HTTP/1.0';
       print_r($matches);
-    } else
+    } else {
       return false;
+    }
     
     list(, $req['REQUEST_METHOD'], $req['REQUEST_URI'], $req['SERVER_PROTOCOL']) = $matches;
     #print $request[0]."\n";
@@ -199,6 +207,7 @@ h1 {font-family:tahoma,verdana,sans-serif;}
       $req['QUERY_STRING']    = $p['QUERY_STRING'];
       $req['PATH_TRANSLATED'] = $this->condense_path($this->document_root . $req['REQUEST_URI']);      
     }
+
     $remote_ip=getenv('REMOTE_ADDR');
     if (!$remote_ip) $req['REMOTE_ADDR']="127.0.0.1";
     else $req['REMOTE_ADDR']=$remote_ip;
@@ -211,9 +220,23 @@ h1 {font-family:tahoma,verdana,sans-serif;}
       $HTTP[$key]=$val;
     }
 
+    #print $HTTP['CONTENT-LENGTH']."\n";
     if ($HTTP['CONTENT-LENGTH']) {
-      $content= $this->read($HTTP['CONTENT-LENGTH']);
+      if (strpos($HTTP['USER-AGENT'],'MSIE') > 0) {
+        if ($this->content) {
+          $content=$this->content;
+          $this->content='';
+        } else {
+          $content= $this->read($HTTP['CONTENT-LENGTH']);
+          # M$IE bug workaround XXX
+          # emit trailing garbage
+          $dummy= $this->read(1024);
+        }
+      } else {
+        $content= $this->read($HTTP['CONTENT-LENGTH']);
+      }
     }
+
     if ($req['REQUEST_METHOD']=='POST') {
       if ($HTTP['CONTENT-TYPE']!='application/x-www-form-urlencoded') {
         $GLOBALS['HTTP_RAW_POST_DATA']=$content;
