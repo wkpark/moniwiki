@@ -95,7 +95,7 @@ EOF;
   $idx=1;
   while (list($page_name, $count) = each($hits)) {
     $out.= '<li>'.$formatter->link_tag(_rawurlencode($page_name),
-          "?action=highlight&amp;value=$value",
+          "?action=highlight&amp;value="._urlencode($value),
           $page_name,"tabindex='$idx'");
     $out.= ' . . . . ' . $count . (($count == 1) ? ' match' : ' matches');
     $out.= $contexts[$page_name];
