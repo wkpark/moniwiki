@@ -397,6 +397,7 @@ class WikiDB {
     $this->iconset='moni';
     $this->template_regex='[a-z]Template$';
     $this->category_regex='^Category[A-Z]';
+    $this->notify=0;
 #    $this->security_class="needtologin";
 
     # set user-specified configuration
@@ -1581,7 +1582,7 @@ class Formatter {
       $open="";$close="";
 
       # InterWiki
-      $rule="/(?<!wiki:)(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})/";
+      $rule="/(?<!wiki:|[a-zA-Z])(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})/";
 #      $rule="/(?<!wiki:)(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^$punct]+\s{0,1})/";
       $repl="wiki:\\1:\\2";
       $line=preg_replace($rule, $repl, $line);
@@ -2476,10 +2477,19 @@ if ($_SERVER[REQUEST_METHOD]=="POST" && $HTTP_POST_VARS) {
       $page->write($savetext);
       $options[page]=$page->name;
       $ret=$DBInfo->savePage($page,$comment,$options);
+      if ($DBInfo->notify) {
+        $options[noaction]=1;
+        $ret2=wiki_notify($formatter,$options);
+        if ($ret2)
+          $options[msg]=sprintf(_("Mail notifications are sented."))."<br />";
+        else
+          $options[msg]=sprintf(_("No subscribers found."))."<br />";
+      }
+      
       if ($ret == -1)
-        $options[msg]=sprintf(_("%s is not editable"),$formatter->link_tag($page->name));
+        $options[msg].=sprintf(_("%s is not editable"),$formatter->link_tag($page->name));
       else
-        $options[msg]=sprintf(_("%s is saved"),$formatter->link_tag($page->name));
+        $options[msg].=sprintf(_("%s is saved"),$formatter->link_tag($page->name));
       $formatter->send_title("","",$options);
       $opt[pagelinks]=1;
       $formatter->send_page("",$opt);
