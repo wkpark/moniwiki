@@ -1198,7 +1198,7 @@ function get_key($name) {
     if (strtolower($DBInfo->charset) == 'euc-kr') {
       $korean=array('가','까','나','다','따','라','마','바','빠','사','싸','아',
                     '자','짜','차','카','타','파','하',"\xca");
-      $lastPosition='~';
+      $lastPosition='Others';
 
       $letter=substr($name,0,2);
       foreach ($korean as $position) {
@@ -1207,7 +1207,7 @@ function get_key($name) {
         $lastPosition=$position;
       }
     }
-    return '~';
+    return 'Others';
   }
 }
 
@@ -1323,7 +1323,8 @@ function macro_TitleIndex($formatter="") {
 #    $cache=new Cache_text('title');
 
   foreach ($all_pages as $page) {
-    $pkey=get_key(ltrim($page));
+    $p=ltrim($page);
+    $pkey=get_key("$p");
 #   $key=strtoupper($page[0]);
     if ($key != $pkey) {
        if ($key !=-1)
