@@ -232,59 +232,6 @@ class User {
   }
 }
 
-function do_download($formatter,$options) {
-  global $DBInfo;
-
-  if (!$options[value]) {
-    do_uploadedfiles($formatter,$options);
-    exit; 
-  }
-  $key=$DBInfo->pageToKeyname($formatter->page->name);
-  if (!$key) {
-
-    exit;
-  }
-  $dir=$DBInfo->upload_dir."/$key";
-
-  if (file_exists($dir))
-    $handle= opendir($dir);
-  else {
-    $dir=$DBInfo->upload_dir;
-    $handle= opendir($dir);
-  }
-  $file=explode("/",$options[value]);
-  $file=$file[count($file)-1];
-
-  if (!file_exists("$dir/$file")) {
-    exit;
-  }
-
-  $lines = file('/etc/mime.types');
-  foreach($lines as $line) {
-    rtrim($line);
-    if (preg_match('/^\#/', $line))
-      continue;
-    $elms = preg_split('/\s+/', $line);
-    $type = array_shift($elms);
-    foreach ($elms as $elm) {
-     $mime[$elm] = $type;
-    }
-  }
-  if (preg_match("/\.(.{1,4})$/",$file,$match))
-    $mimetype=$mime[$match[1]];
-  if (!$mimetype) $mimetype="text/plain";
-
-  header("Content-Type: $mimetype\r\n");
-  header("Content-Disposition: attachment; filename=$file" );
-  header("Content-Description: MoniWiki PHP Downloader" );
-  Header("Pragma: no-cache");
-  Header("Expires: 0");
-
-  $fp=readfile("$dir/$file");
-  return;
-  
- 
-}
 
 function do_highlight($formatter,$options) {
 
@@ -306,11 +253,17 @@ function do_edit($formatter,$options) {
   $formatter->send_footer($args,$options);
 }
 
-
 function do_info($formatter,$options) {
   $formatter->send_header("",$options);
   $formatter->send_title(sprintf(_("Info. for %s"),$options['page']),"",$options);
   $formatter->show_info();
+  $formatter->send_footer($args,$options);
+}
+
+function do_invalid($formatter,$options) {
+  $formatter->send_header("Status: 406 Not Acceptable",$options);
+  $formatter->send_title(_("406 Not Acceptable"),"",$options);
+  $formatter->send_page("== "._("Is it valid action ?")." ==\n");
   $formatter->send_footer($args,$options);
 }
 
@@ -460,44 +413,6 @@ function do_recall($formatter,$options) {
   $formatter->send_footer($args,$options);
 }
 
-function do_rename($formatter,$options) {
-  global $DBInfo;
-  
-  if (isset($options[passwd])) {
-    $check=$DBInfo->admin_passwd==crypt($options[passwd],$DBInfo->admin_passwd);
-    if ($check && $DBInfo->hasPage($options[page]) && !$DBInfo->hasPage($options[value])) {
-      $DBInfo->renamePage($options[page],$options[value]);
-      $title = sprintf(_("\"%s\" is renamed !"), $options[page]);
-      $formatter->send_header("",$options);
-      $formatter->send_title($title,"",$options);
-      $formatter->send_footer("",$options);
-      return;
-    } else {
-      $title = sprintf(_("Fail to rename \"%s\" !"), $options[page]);
-      $formatter->send_header("",$options);
-      $formatter->send_title($title,"",$options);
-      $formatter->send_footer("",$options);
-      return;
-    }
-  }
-  $title = sprintf(_("Rename \"%s\" ?"), $options[page]);
-  $formatter->send_header("",$options);
-  $formatter->send_title($title,"",$options);
-#<tr><td align='right'><input type='checkbox' name='show' checked='checked' />show only </td><td><input type='password' name='passwd'>
-  print "<form method='post'>
-<table border='0'>
-<tr><td align='right'>Old name: </td><td><b>$options[page]</b></td></tr>
-<tr><td align='right'>New name: </td><td><input name='value' /></td></tr>
-<tr><td align='right'>Password: </td><td><input type='password' name='passwd' />
-<input type='submit' name='button_rename' value='rename' />
-Only WikiMaster can rename this page</td></tr>
-</table>
-    <input type=hidden name='action' value='rename' />
-    </form>";
-#  $formatter->send_page();
-  $formatter->send_footer("",$options);
-}
-
 function do_RcsPurge($formatter,$options) {
   global $DBInfo;
   
@@ -617,121 +532,6 @@ function do_LikePages($formatter,$options) {
   $formatter->send_footer("",$options);
 }
 
-function do_rss_rc($formatter,$options) {
-  global $DBInfo;
-
-  $lines= $DBInfo->editlog_raw_lines(2000,1);
-    
-  $time_current= time();
-  $secs_per_day= 60*60*24;
-  $days_to_show= 30;
-  $time_cutoff= $time_current - ($days_to_show * $secs_per_day);
-
-  $URL=qualifiedURL($formatter->prefix);
-  $img_url=qualifiedURL($DBInfo->logo_img);
-
-  $head=<<<HEAD
-<?xml version="1.0" encoding="euc-kr"?>
-<!--<?xml-stylesheet type="text/xsl" href="/wiki/css/rss.xsl"?>-->
-<rdf:RDF xmlns:wiki="http://purl.org/rss/1.0/modules/wiki/"
-         xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-         xmlns:xlink="http://www.w3.org/1999/xlink"
-         xmlns:dc="http://purl.org/dc/elements/1.1/"
-         xmlns="http://purl.org/rss/1.0/">\n
-HEAD;
-  $url=qualifiedUrl($formatter->link_url("RecentChanges"));
-  $channel=<<<CHANNEL
-<channel rdf:about="$URL">
-  <title>$DBInfo->sitename</title>
-  <link>$url</link>
-  <description>
-    RecentChanges at $DBInfo->sitename
-  </description>
-  <image rdf:resource="$img_url"/>
-  <items>
-  <rdf:Seq>
-CHANNEL;
-  $items="";
-
-#          print('<description>'."[$data] :".$chg["action"]." ".$chg["pageName"].$comment.'</description>'."\n");
-#          print('</rdf:li>'."\n");
-#        }
-
-  $ratchet_day= FALSE;
-  if (!$lines) $lines=array();
-  foreach ($lines as $line) {
-    $parts= explode("\t", $line);
-    $page_name= $DBInfo->keyToPagename($parts[0]);
-    $addr= $parts[1];
-    $ed_time= $parts[2];
-    $user= $parts[4];
-    $act= rtrim($parts[6]);
-
-    if ($ed_time < $time_cutoff)
-      break;
-
-    if (!$DBInfo->hasPage($page_name))
-      $status='deleted';
-    else
-      $status='updated';
-    $zone = date("O");
-    $zone = $zone[0].$zone[1].$zone[2].":".$zone[3].$zone[4];
-    $date = gmdate("Y-m-d\TH:i:s",$ed_time).$zone;
-
-    $url=qualifiedUrl($formatter->link_url($page_name));
-    $channel.="    <rdf:li rdf:resource=\"$url\"/>\n";
-
-    $items.="     <item rdf:about=\"$url\">\n";
-    $items.="     <title>$page_name</title>\n";
-    $items.="     <link>$url</link>\n";
-    $items.="     <dc:date>$date</dc:date>\n";
-    $items.="     <dc:contributor>\n<rdf:Description>\n"
-          ."<rdf:value>$user</rdf:value>\n"
-          ."</rdf:Description>\n</dc:contributor>\n";
-    $items.="     <wiki:status>$status</wiki:status>\n";
-    $items.="     </item>\n";
-
-#    $out.= "&nbsp;&nbsp;".$formatter->link_tag("$page_name");
-#    if (! empty($DBInfo->changed_time_fmt))
-#       $out.= date($DBInfo->changed_time_fmt, $ed_time);
-#
-#    if ($DBInfo->show_hosts) {
-#      $out.= ' . . . . '; # traditional style
-#      #$logs[$page_name].= '&nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ';
-#      if ($user)
-#        $out.= $user;
-#      else
-#        $out.= $addr;
-#    }
-  }
-  $url=qualifiedUrl($formatter->link_url($DBInfo->frontpage));
-  $channel.= <<<FOOT
-    </rdf:Seq>
-  </items>
-</channel>
-<image rdf:about="$img_url">
-<title>$DBInfo->sitename</title>
-<link>$url</link>
-<url>$img_url</url>
-</image>
-FOOT;
-
-  $url=qualifiedUrl($formatter->link_url("FindPage"));
-  $form=<<<FORM
-<textinput>
-<title>Search</title>
-<link>$url</link>
-<name>goto</name>
-</textinput>
-FORM;
-  header("Content-Type: text/xml");
-  print $head;
-  print $channel;
-  print $items;
-  print $form;
-  print "</rdf:RDF>";
-}
-
 function do_titleindex($formatter,$options) {
   global $DBInfo;
 
@@ -756,6 +556,111 @@ function do_titlesearch($formatter,$options) {
 	($ret[hits] == 1) ? 'page' : 'pages',
 	 $ret[all]);
   $args[noaction]=1;
+  $formatter->send_footer($args,$options);
+}
+
+function do_post_savepage($formatter,$options) {
+  global $DBInfo;
+  if (!$DBInfo->security->writable($options)) {
+    do_invalid($formatter,$options);
+  }
+
+  $savetext=$options['savetext'];
+  $datestamp=$options['datestamp'];
+  $button_preview=$options['button_preview'];
+  $button_merge=$options['button_merge'];
+
+  $formatter->send_header("",$options);
+
+  $savetext=str_replace("\r", "", $savetext);
+  $savetext=stripslashes($savetext);
+  if ($savetext and $savetext[strlen($savetext)-1] != "\n")
+    $savetext.="\n";
+
+  $new=md5($savetext);
+
+  if ($formatter->page->exists()) {
+    # check difference
+    $body=$formatter->page->get_raw_body();
+    $body=str_replace("\r", "", $body);
+    $orig=md5($body);
+    # check datestamp
+    if ($formatter->page->mtime() > $datestamp) {
+      $options['msg']=sprintf(_("Someone else saved the page while you edited %s"),$formatter->link_tag($options['page']));
+      $formatter->send_title(_("Conflict error!"),"",$options);
+      $options['preview']=1; 
+      $options['conflict']=1; 
+      $options['datestamp']=$datestamp; 
+      if ($button_merge) {
+        $merge=$formatter->get_merge($savetext);
+        if ($merge) $savetext=$merge;
+          unset($options[datestamp]); 
+        }
+        $formatter->send_editor($savetext,$options);
+        print $formatter->link_tag('GoodStyle')." | ";
+        print $formatter->link_tag('InterWiki')." | ";
+        print $formatter->link_tag('HelpOnEditing')." | ";
+        print $formatter->link_to("#editor",_("Goto Editor"));
+        print "<table border='1' align='center' width='100%'><tr><td>\n";
+        $formatter->get_diff("","",$savetext);
+        print "</td></tr></table>\n";
+        $formatter->send_footer();
+        return;
+      }
+    }
+
+    if (!$button_preview && $orig == $new) {
+      $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($options[page]));
+      $formatter->send_title(_("No difference found"),"",$options);
+      $formatter->send_footer();
+      return;
+    }
+    $formatter->page->set_raw_body($savetext);
+
+    if ($button_preview) {
+      $title=sprintf(_("Preview of %s"),$formatter->link_tag($formatter->page->urlname));
+      $formatter->send_title($title,"",$options);
+     
+      $options['preview']=1; 
+      $options['datestamp']=$datestamp; 
+      $formatter->send_editor($savetext,$options);
+      print $DBInfo->hr;
+      print $formatter->link_tag('GoodStyle')." | ";
+      print $formatter->link_tag('InterWiki')." | ";
+      print $formatter->link_tag('HelpOnEditing')." | ";
+      print $formatter->link_to("#editor",_("Goto Editor"));
+      print "<div class='wikiPreview'>\n";
+      print "<table border='1' align='center' width='95%'><tr><td>\n";
+      $formatter->send_page($savetext);
+      print "</td></tr></table>\n";
+      print $DBInfo->hr;
+      print "</div>\n";
+      print $formatter->link_tag('GoodStyle')." | ";
+      print $formatter->link_tag('InterWiki')." | ";
+      print $formatter->link_tag('HelpOnEditing')." | ";
+      print $formatter->link_to("#editor",_("Goto Editor"));
+    } else {
+      $formatter->page->write($savetext);
+      $ret=$DBInfo->savePage($formatter->page,$comment,$options);
+      if ($DBInfo->notify) {
+        $options['noaction']=1;
+        $ret2=wiki_notify($formatter,$options);
+        if ($ret2)
+          $options['msg']=sprintf(_("Mail notifications are sented."))."<br />";
+        else
+          $options['msg']=sprintf(_("No subscribers found."))."<br />";
+    }
+      
+    if ($ret == -1)
+      $options['msg'].=sprintf(_("%s is not editable"),$formatter->link_tag($formatter->page->urlname));
+    else
+      $options['msg'].=sprintf(_("%s is saved"),$formatter->link_tag($formatter->page->urlname));
+    $formatter->send_title("","",$options);
+    $opt['pagelinks']=1;
+    # re-generates pagelinks
+    $formatter->send_page("",$opt);
+  }
+  $args['editable']=0;
   $formatter->send_footer($args,$options);
 }
 
@@ -817,7 +722,6 @@ function do_subscribe($formatter,$options) {
     </form>";
 #  $formatter->send_page();
   $formatter->send_footer("",$options);
-
 }
 
 function wiki_notify($formatter,$options) {
@@ -963,46 +867,12 @@ function do_uploadfile($formatter,$options) {
   $formatter->send_footer();
 }
 
-function do_post_css($formatter,$options) {
-  global $DBInfo;
-  global $HTTP_COOKIE_VARS;
-
-  if ($options[clear]) {
-    if ($options[id]=='Anonymous') {
-      header("Set-Cookie: MONI_CSS=dummy; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname());
-      $options[css_url]="";
-    } else {
-      # save profile
-      $udb=new UserDB($DBInfo);
-      $userinfo=$udb->getUser($options[id]);
-      $userinfo->info[css_url]="";
-      $udb->saveUser($userinfo);
-    }
-  } else if ($options[id]=="Anonymous" && isset($options[user_css])) {
-     setcookie("MONI_CSS",$options[user_css],time()+60*60*24*30,get_scriptname());
-     # set the fake cookie
-     $HTTP_COOKIE_VARS[MONI_CSS]=$options[user_css];
-     $title="CSS Changed";
-     $options[css_url]=$options[user_css];
-  } else if ($options[id] != "Anonymous" && isset($options[user_css])) {
-    # save profile
-    $udb=new UserDB($DBInfo);
-    $userinfo=$udb->getUser($options[id]);
-    $userinfo->info[css_url]=$options[user_css];
-    $udb->saveUser($userinfo);
-    $options[css_url]=$options[user_css];
-  }
-  $formatter->send_header("",$options);
-  $formatter->send_title($title,"",$options);
-  $formatter->send_page("Back to UserPreferences");
-  $formatter->send_footer("",$options);
-}
 
 function do_new($formatter,$options) {
   $title=_("Create a new page");
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
-  $url=$formatter->link_url($formatter->page->name);
+  $url=$formatter->link_url($formatter->page->urlname);
 
   $msg=_("Enter a page name");
   print <<<FORM
@@ -1281,10 +1151,10 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
         $prefix=$formatter->link_url($value,"?action=download&amp;value=");
       $dir=$DBInfo->upload_dir."/$key";
    } else {
-      $value=$formatter->page->name;
+      $value=$formatter->page->urlname;
       $key=$DBInfo->pageToKeyname($formatter->page->name);
       if ($key != $formatter->page->name)
-        $prefix=$formatter->link_url($formatter->page->name,"?action=download&amp;value=");
+        $prefix=$formatter->link_url($formatter->page->urlname,"?action=download&amp;value=");
       $dir=$DBInfo->upload_dir."/$key";
    }
    if ($options[value]!='top' and file_exists($dir))
@@ -1348,36 +1218,6 @@ Password: <input type='password' name='passwd' size='10' />
    if (!$value and !in_array('UploadFile',$formatter->actions))
      $formatter->actions[]='UploadFile';
    return $out;
-}
-
-function macro_Css($formatter="") {
-  global $DBInfo;
-  $out="
-<form method='post'>
-<input type='hidden' name='action' value='css' />
-  <b>Select a CSS</b>&nbsp;
-<select name='user_css'>
-";
-  $handle = opendir($DBInfo->css_dir);
-  $css=array();
-  while ($file = readdir($handle)) {
-     if (preg_match("/\.css$/i", $file,$match))
-        $css[]= $file;
-  }
-
-  foreach ($css as $item)
-     $out.="<option value='$DBInfo->url_prefix/$DBInfo->css_dir/$item'>$item</option>\n";
-
-
-  $out.="
-    </select>&nbsp; &nbsp; &nbsp;
-    <input type='submit' name='save' value='Change CSS' /> &nbsp;";
-
-  $out.="
-    <input type='submit' name='clear' value='Clear CSS cookie' /> &nbsp;";
-
-  $out.="</form>\n";
-  return $out;
 }
 
 function macro_Date($formatter,$value) {
@@ -1472,7 +1312,8 @@ function macro_InterWiki($formatter="") {
       $url=str_replace('$PAGE','index',$href);
       #$href=$url;
     }
-    $out.="<tr><td><tt><a href='$url'>$wiki</a></tt><td><tt>";
+    $icon=strtolower($wiki)."-16.png";
+    $out.="<tr><td><tt><img src='$DBInfo->imgs_dir/$icon' align='middle' alt='$wiki:'><a href='$url'>$wiki</a></tt><td><tt>";
     $out.="<a href='$href'>$href</a></tt></tr>\n";
   }
   $out.="</table>\n";
@@ -1921,7 +1762,7 @@ function macro_RecentChanges($formatter="",$value="") {
     $day = date('Y-m-d', $ed_time);
     if ($use_day and $day != $ratchet_day) {
       $out.=sprintf("<br /><font size='+1'>%s </font> <font size='-1'>[", date($DBInfo->date_fmt, $ed_time));
-      $out.=$formatter->link_tag($formatter->page->name,
+      $out.=$formatter->link_tag($formatter->page->urlname,
                                  "?action=bookmark&amp;time=$ed_time",
                                  _("set bookmark"))."]</font><br />\n";
       $ratchet_day = $day;
@@ -2260,7 +2101,7 @@ EOS;
 function macro_TitleSearch($formatter="",$needle="",$opts=array()) {
   global $DBInfo;
 
-  $url=$formatter->link_url($formatter->page->name);
+  $url=$formatter->link_url($formatter->page->urlname);
 
   if (!$needle) {
     $opts[msg] = _("Use more specific text");
@@ -2308,7 +2149,7 @@ function macro_TitleSearch($formatter="",$needle="",$opts=array()) {
 }
 
 function macro_GoTo($formatter="",$value="") {
-  $url=$formatter->link_url($formatter->page->name);
+  $url=$formatter->link_url($formatter->page->urlname);
   return "<form method='get' action='$url'>
     <input type='hidden' name='action' value='goto' />
     <input name='value' size='30' value='$value' />
