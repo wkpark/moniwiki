@@ -78,6 +78,9 @@ $use_trackback=0;
 #$password_length=6;
 #$use_convert_thumbs=0;
 
+#$processors=array('latex'=>'latex');
+#$inline_latex='mimetex';
+
 #$url_schemas='mms';
 #$vim_options='+"set encoding=utf-8"';
 ?>
