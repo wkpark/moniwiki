@@ -35,7 +35,7 @@ function do_trackback($formatter,$options) {
       $entry=substr($formatter->page->name,$pos+1);
       $pagename=substr($formatter->page->name,0,$pos);
       $page=new WikiPage($pagename);
-      $formatter=new Formatter($page);
+      $formatter=new Formatter($page,$options);
       $options['page']=$pagename;
     } else {
       $options['msg']=_("Error: Page Not found !");
