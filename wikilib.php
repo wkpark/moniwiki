@@ -97,7 +97,7 @@ class UserDB {
   function saveUser($user) {
     $config=array("css_url","datatime_fmt","email","bookmark","language",
                   "name","password","wikiname_add_spaces","subscribed_pages",
-                  "theme");
+                  "quicklinks","theme");
 
     $date=date('Y/m/d', time());
     $data="# Data saved $date\n";
@@ -319,7 +319,10 @@ function do_info($formatter,$options) {
 
 function do_invalid($formatter,$options) {
   $formatter->send_header("Status: 406 Not Acceptable",$options);
-  $formatter->send_title(_("406 Not Acceptable"),"",$options);
+  if ($options['title'])
+    $formatter->send_title('',"",$options);
+  else
+    $formatter->send_title(_("406 Not Acceptable"),"",$options);
   if ($options['action'])
     $formatter->send_page("== ".sprintf(_("%s is not valid action"),$options['action'])." ==\n");
   else
@@ -1124,12 +1127,15 @@ function macro_RandomPage($formatter,$value="") {
   $max=sizeof($pages)-1;
 
   while ($counter > 0) {
-    $selected[]=rand(0,$max);
+    $rand=rand(0,$max--);
+    $selected[]=$pages[$rand];
+    unset($pages[$rand]);
+    
     $counter--;
   }
 
   foreach ($selected as $item) {
-    $selects[]=$formatter->link_tag(_rawurlencode($pages[$item]),"",$pages[$item]);
+    $selects[]=$formatter->link_tag(_rawurlencode($item),"",$item);
   }
 
   if ($count > 1) {
@@ -1785,7 +1791,7 @@ function macro_Icon($formatter="",$value="",$extra="") {
 function macro_RecentChanges($formatter="",$value="") {
   global $DBInfo;
   define(MAXSIZE,6000);
-  $new=1;
+  $checknew=1;
 
   $template_bra="";
   $template=
