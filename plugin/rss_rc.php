@@ -57,11 +57,15 @@ CHANNEL;
         $p=new WikiPage($page_name);
         $f=new Formatter($p);
         $options['raw']=1;
-        $html=strtr($f->get_diff('','','',$options),array('&'=>'&amp;','<'=>'&lt;'));
+        $options['nomsg']=1;
+#        $html='<![CDATA['.strtr($f->get_diff('','','',$options),array('&'=>'&amp;','<'=>'&lt;'));
+        $html='<![CDATA['.$f->get_diff('','','',$options).']]>';
         if (!$html) {
           ob_start();
-          $f->send_page();
-          $html=strtr(ob_get_contents(),array('&'=>'&amp;','<'=>'&lt;'));
+          $f->send_page('',array('fixpath'=>1));
+          #$f->send_page('');
+          $html='<![CDATA['.ob_get_contents().']]>';
+          #$html=strtr(ob_get_contents(),array('&'=>'&amp;','<'=>'&lt;'));
           ob_end_clean();
         }
         $html.="&lt;br />$diff";
@@ -127,6 +131,10 @@ FORM;
 	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
 	xmlns:xlink="http://www.w3.org/1999/xlink"
 	xmlns:dc="http://purl.org/dc/elements/1.1/">\n
+<!--
+    Add "diffs=1" to add change diffs to the description of each items.
+    Add "oe=utf-8" to convert the charset of this rss to UTF-8.
+-->
 HEAD;
   header("Content-Type: text/xml");
   if ($new) print $head.$new;
