@@ -1949,6 +1949,7 @@ class Formatter {
     }
     # close div
     if ($this->in_p) $close.="</div>\n"; # </para>
+    $this->in_p='';
 
     if ($this->head_dep) {
       $odepth=$this->head_dep;
@@ -2777,7 +2778,7 @@ $options['timer']->Check("load");
 # get broswer's settings
 $langs=get_langs();
 
-if ($DBInfo->lang == 'auto') $lang= $langs[0];
+if ($DBInfo->lang == 'auto') $lang= $langs[0].strtoupper($DBInfo->charset);
 else $lang= $DBInfo->lang;
 
 if (isset($locale)) {
