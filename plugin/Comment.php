@@ -10,6 +10,7 @@
 
 function macro_Comment($formatter,$value,$options=array()) {
   global $HTTP_USER_AGENT;
+  global $DBInfo;
   if (!$options['page']) $options['page']=$formatter->page->name;
 
   if (!$DBInfo->security->writable($options)) return '';
@@ -49,8 +50,6 @@ $sig
 <input type="hidden" name="datestamp" value="$datestamp" />
 <input type="submit" value="Comment" />&nbsp;
 <input type="submit" name="button_preview" value="Preview" />
-<div style="text-align:right">
-<input type="reset" value="Reset" /></div>
 </form>
 FORM2;
 
