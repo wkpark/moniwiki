@@ -101,7 +101,7 @@ function macro_Rss($formatter,$value) {
   $cache= new Cache_text("rss");
   # reflash rss each 7200 second (60*60*2)
   if (!$cache->exists($key) or (time() > $cache->mtime($key) + 7200 )) {
-    $fp = fopen("$value","r");
+    $fp = @fopen("$value","r");
     if (!$fp)
       return ("[[RSS(ERR: not a valid URL! $value)]]");
 
@@ -130,7 +130,7 @@ function macro_Rss($formatter,$value) {
   xml_parser_free($xml_parser);
 
   #  if (strtolower(str_replace("-","",$options['oe'])) == 'euckr')
-  if (function_exists('iconv') and strtoupper($DBInfo->charset) != $charset) {
+  if (function_exists('iconv') and strtoupper($DBInfo->charset) != $charset)
     $new=iconv($charset,$DBInfo->charset,$out);
   if ($new) return $new;
 
