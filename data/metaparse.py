@@ -61,6 +61,8 @@ class MetaWiki:
          NO_CUT_REGEX, DEFAULT_MATCH_REGEX),
       "wikiX":
         ("AllPages", NO_CUT_REGEX, '\?display=(.*?)"'),
+      "PhpWiki":
+        ("AllPages", NO_CUT_REGEX, 'class="wiki">(.*?)<'),
       "tavi":
         ("action=find", "<div id=\"body\">(.*?)</div>", '\?page=([^"]+)"'),
       "PediaIndex":
