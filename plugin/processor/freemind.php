@@ -44,8 +44,9 @@ function _interwiki_repl($formatter,$url) {
 }
 
 function _link_repl($formatter,$url) {
-    if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$url))
-      $img=$url;
+    if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$url)) {
+      $img=$url; $url='';
+    }
     return array($url,$img);
 }
 
@@ -62,20 +63,35 @@ function processor_freemind($formatter,$value) {
         umask(000); mkdir($_dir,0777);
     }
 
-    $_FONT=array('Verdana','sans-serif');
+    $_FONT=array('Default','sans-serif');
     $_SIZE=array(12,20,16,14,12);
-    $_COLOR=array('#ffcc33','#336699','#336600');
+    $_COLOR=array('#003366','#336699','#336600');
 
-    $map=md5($value).'.mm';
-    if (!file_exists($_dir.'/'.$map)) {
+    $md5sum=md5($value);
+    $map=$md5sum.'.mm';
+    if ($formatter->refresh || $formatter->preview || !file_exists($_dir.'/'.$map)) {
+        include_once('lib/compat.php');
         $depth=$odepth=0;
         $dep=$odep=0;
         $out='<map version="0.7.1">'."\n";
         $lines= explode("\n",$value);
     
         foreach ($lines as $line) {
-            preg_match('/^(\s+)\*\s?(.*)$/',$line,$m);
+            preg_match('/^(\s+)(\+|\*)(<|>|@)?\s?(.*)$/',$line,$m);
             if (!$m) continue;
+            $text=$m[4];
+            $align='';
+            $folded='';
+            $cloud='';
+            $style='';
+            if ($m[2] =='+') $folded='FOLDED="true" ';
+            if ($m[3]) {
+                if ($m[3] == '@') $cloud="<cloud COLOR=\"#66ccff\"/>\n";
+                else {
+                    $align= ($m[3] == '<') ? 'POSITION="left" ':'POSITION="right" ';
+                }
+            }
+
             $dep=strlen($m[1]);
             if ($dep == $odep)
                 $out.="</node>\n";
@@ -96,7 +112,6 @@ function processor_freemind($formatter,$value) {
             if ($_COLOR[$dep]) $COLOR=$_COLOR[$dep];
             else $COLOR=$_COLOR[0];
     
-            $text=$m[2];
             $link='';
             $extra='';
             $img='';
@@ -105,26 +120,35 @@ function processor_freemind($formatter,$value) {
                 if ($match[1]=='wiki') {
                     list($link,$img)=_interwiki_repl($formatter,$link);
                     $link='LINK="'.addslashes($link).'" ';
-                    if ($img) $extra='<html><img src="'.$img.'"/></html>';
+                    if ($img) $extra='<html><img src="'.$img.'">';
                 } else {
                     list($link,$img)=_link_repl($formatter,$link);
-                    $link='LINK="'.addslashes($link).'" ';
-                    if ($img) $extra='<html><img src="'.$img.'"/></html>';
+                    $link=$link ? 'LINK="'.addslashes($link).'" ':'';
+                    if ($img) $extra='<html><img src="'.$img.'">';
                 }
+                if ($extra) $extra=htmlspecialchars($extra);
             }
-            $text=addslashes($text);
+            $text=addslashes(htmlspecialchars($text));
     
-            $out.='<node '.$link.'COLOR="'.$COLOR.'" TEXT="'.$text.'">'."\n";
+            $out.='<node '.$link.$folded.$align.'COLOR="'.$COLOR.'" TEXT="'.$extra.$text.'">'."\n";
             $out.="<font NAME=\"$FONT\" SIZE=\"$SIZE\"/>\n";
-            $out.=$extra;
+            $out.="<edge COLOR=\"#3366cc\" WIDTH=\"2\" STYLE=\"sharp_bezier\"/>\n";
+            $out.=$cloud;
       
             $odep=$dep;
         }
         for (;$odep!=0;$odep--) {
             $out.="</node>\n";
         }
-    
+
         $out.='</map>'."\n";
+
+        if (strtoupper(($DBInfo->charset)) != 'UTF-8' and function_exists('iconv')) {
+            $utf8=iconv($DBInfo->charset,'UTF-8',$out);
+            if ($utf8) $out=&$utf8;
+        }
+        $out=utf8_mb_encode($out);
+
         $fp=fopen($_dir.'/'.$map,'w');
         fwrite($fp,$out);
         fclose($fp);
@@ -132,9 +156,10 @@ function processor_freemind($formatter,$value) {
 
     $pubpath = $formatter->url_prefix.'/applets/FreeMind';
     $puburl = qualifiedUrl($formatter->url_prefix.'/'.$_dir);
+    $button = $formatter->link_to("?action=freemind&value=$md5sum","FreeMind");
     return <<<APP
 <applet code="freemind.main.FreeMindApplet.class" codebase='$pubpath'
-          archive="freemindbrowser.jar" width="100%" height="100%">
+          archive="freemindbrowser.jar" width="100%" height="300px">
   <param name="type" value="application/x-java-applet">
   <param name="scriptable" value="true">
   <param name="modes" value="freemind.modes.browsemode.BrowseMode">
@@ -143,6 +168,7 @@ function processor_freemind($formatter,$value) {
   <!--          ^ Put the path to your map here  -->
   <param name="initial_mode" value="Browse">
 </applet>
+$button
 APP;
 }
 
