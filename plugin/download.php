@@ -10,12 +10,12 @@ function do_download($formatter,$options) {
 
   if (!$options[value]) {
     do_uploadedfiles($formatter,$options);
-    exit; 
+    return; 
   }
   $key=$DBInfo->pageToKeyname($formatter->page->name);
   if (!$key) {
     // FIXME
-    exit;
+    return;
   }
   $dir=$DBInfo->upload_dir."/$key";
 
@@ -28,9 +28,8 @@ function do_download($formatter,$options) {
   $file=explode("/",$options[value]);
   $file=$file[count($file)-1];
 
-  if (!file_exists("$dir/$file")) {
-    exit;
-  }
+  if (!file_exists("$dir/$file")) 
+    return;
 
   $lines = file('data/mime.types');
   foreach($lines as $line) {
