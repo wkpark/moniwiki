@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2004 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a UploadFile plugin for the MoniWiki
 //
@@ -81,10 +81,11 @@ function do_uploadfile($formatter,$options) {
     # check extra extentions for the mod_mime
     $exts=explode('.',$fname[1]);
     $ok=0;
-    for ($i=1;$i<sizeof($exts);$i++) {
+    for ($i=sizeof($exts);$i>0;$i--) {
       if (in_array(strtolower($exts[$i]),$protected)) {
-        $exts[$i].='s';
+        $exts[$i].='.txt';
         $ok=1;
+        break;
       }
     }
     if ($ok) {
@@ -103,10 +104,11 @@ function do_uploadfile($formatter,$options) {
     preg_match("/^(.*)\.([a-z0-9]{1,4})$/i",$upfilename,$tname);
     $exts=explode('.',$tname[1]);
     $ok=0;
-    for ($i=1;$i<sizeof($exts);$i++) {
+    for ($i=sizeof($exts);$i>0;$i--) {
       if (in_array(strtolower($exts[$i]),$protected)) {
-        $exts[$i].='s';
+        $exts[$i].='.txt';
         $ok=1;
+        break;
       }
     }
     if ($ok) {
