@@ -18,6 +18,8 @@ $_release = '1.0rc10';
 
 #ob_start("ob_gzhandler");
 
+$timing=new Timer();
+
 include("wikilib.php");
 
 function _preg_escape($val) {
@@ -183,7 +185,7 @@ class Timer {
     $now=$mt[0]+$mt[1];
     $diff=$now-$this->save;
     $this->save=$now;
-    if (in_array($name,$this->timers))
+    if (isset($this->timers[$name]))
       $this->timers[$name]+=$diff;
     else
       $this->timers[$name]=$diff;
@@ -202,7 +204,6 @@ class Timer {
   }
 }
 
-$timing=new Timer();
 
 class MetaDB_dba extends MetaDB {
   var $metadb;
@@ -813,7 +814,7 @@ class Cache_text {
        else if ($this->_mtime($key) > $mtime)
           return $this->_fetch($key);
     }
-    return -1;
+    return false;
   }
 
   function exists($pagename) {
@@ -1023,14 +1024,15 @@ class Formatter {
     # InterWiki
     # strict but slow
     #"\b(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
-    "\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
+    #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
+    "\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+)|".
     # protect WikiName rule !WikiName
     #"(\!([A-Z]+[a-z0-9]+){2,})(?!(:|[a-z0-9]))|".
     "(\!([A-Z]+|[a-z0-9]+){2,})\b|".
   # "(?<!\!|\[\[)\b(([A-Z]+[a-z0-9]+){2,})\b|".
-  # "(?<!\!|\[\[)\b((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})\b|".
+  # "(?<!\!|\[\[)((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})\b|".
     # WikiName rule: WikiName ILoveYou (imported from the rule of NoSmoke)
-    "\b(?:\/?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b|".
+    "(?<![a-z])(?:\/?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b|".
     # macro rule [[Hello(World)]]
     "(?<!\[)\[([^\[:,\s\d][^\[:,]+)\](?!\])|".
     # bracketted with double quotes ["Hello World"]
@@ -1280,14 +1282,12 @@ class Formatter {
   function get_pagelinks() {
     if ($this->cache->exists($this->page->name)) {
       $links=$this->cache->fetch($this->page->name);
-      if ($links != -1) return $links;
+      if ($links !== false) return $links;
     }
     if ($this->page->exists()) {
       $body=$this->page->get_raw_body();
-      $save=$this->gen_pagelinks;
-      $this->gen_pagelinks=1;
+      # pseudo pagelinks
       preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$body);
-      $this->gen_pagelinks=$save;
       $this->store_pagelinks();
       if ($this->pagelinks) {
         $links=join("\n",array_keys($this->pagelinks))."\n";
@@ -1321,7 +1321,7 @@ class Formatter {
     } else {
       if ($this->sister_on) {
         $idx=$this->pagelinks[$page];
-        if ($idx != -1) {
+        if ($idx !== -1) {
           $sisters=$DBInfo->metadb->getSisterSites($page);
           if ($sisters) {
             $this->sisters[]="<tt class='foot'><sup>&#160;&#160;&#160;".
@@ -1338,7 +1338,7 @@ class Formatter {
         }
       }
       $url=$this->link_url(_rawurlencode($page)); # XXX
-      $this->pagelinks[$page]=-1;
+      $this->pagelinks[$page]=0;
       return "<a href='$url'>?</a>$word";
     }
   }
@@ -1495,9 +1495,7 @@ class Formatter {
   function send_page($body="",$options="") {
     global $DBInfo;
 
-    $tm=explode(" ",microtime());$now=$tm[0]+$tm[1];
-    if ($body) $this->gen_pagelinks=0;
-    else if (!$this->cache->exists($this->page->name) or $options[pagelinks])
+    if (!$this->cache->exists($this->page->name) or $options[pagelinks])
       $this->gen_pagelinks=1;
 
     if ($body) {
@@ -1571,13 +1569,14 @@ class Formatter {
 
       # empty line
       #if ($line=="") {
-      if (!trim($line)) {
+      if (!strlen($line)) {
         if ($in_pre) { $this->pre_line.="\n";continue;}
         if ($in_li) { $text.="<br />\n"; continue;}
-        if (!$in_li && !$in_table) {
-          if (!$in_p) { $text.="<div>"; $in_p=1; continue;}
-          if ($in_p==2) { $text.="</div><br />\n<div>"; $in_p=1; continue;}
-          if ($in_p) { $text.="<br />\n"; $in_p=2; continue;}
+        if (!$in_table) {
+          if (!$in_p) { $text.="<div>"; $in_p=1;}
+          else if ($in_p==2) { $text.="</div><br />\n<div>"; $in_p=1;}
+          else { $text.="<br />\n"; $in_p=2; }
+          continue;
         }
       } else if ($in_p == 1) $in_p= 2;
       if ($line[0]=='#' and $line[1]=='#') continue; # comments
@@ -1645,19 +1644,11 @@ class Formatter {
 
       # bullet and indentation
       #if (!$in_pre && preg_match("/^(\s*)/",$line,$match)) {
-      #if (preg_match("/^(\s*)/",$line,$match)) {
-      {
-         if ($line[0]==' ') {
-           preg_match("/^(\s*)/",$line,$match);
-           $indlen=strlen($match[0]);
-         } else {
-           $match[0]="";
-           $indlen=0;
-         }
+      if (preg_match("/^(\s*)/",$line,$match)) {
          $open="";
          $close="";
          $indtype="dd";
-         #$indlen=strlen($match[0]);
+         $indlen=strlen($match[0]);
          if ($indlen > 0) {
            $line=substr($line,$indlen);
            #if (preg_match("/^(\*\s*)/",$line,$limatch)) {
@@ -1751,7 +1742,6 @@ class Formatter {
       else
         $text.=$line."\n";
       $this->nobr=0;
-      #print $text;$text="";
     }
     # strip slash against double quotes
     #$text=str_replace('\"','"',$text); # XXX 
@@ -2402,11 +2392,11 @@ MSG;
     printf('<form method="post" action="%s">', $url);
     #printf('<form method="POST" action="%s/%s#preview">', get_scriptname(),$this->page->name);
     printf("<br />\n");
-    print $this->link_to("?action=edit&amp;rows=".($rows-3),"ReduceEditor")." | ";
-    print $this->link_tag('InterWiki')." | ";
-    print $this->link_tag('HelpOnEditing');
+    print $this->link_to("?action=edit&amp;rows=".($rows-3),_("ReduceEditor"))." | ";
+    print $this->link_tag('InterWiki',"",_("InterWiki"))." | ";
+    print $this->link_tag('HelpOnEditing',"",_("HelpOnEditing"));
     if ($preview)
-       print "|".$this->link_to('#preview',"Skip to preview");
+       print "|".$this->link_to('#preview',_("Skip to preview"));
     printf("<br />\n");
     if ($text) {
       $raw_body = str_replace('\r\n', '\n', $text);
@@ -2424,15 +2414,18 @@ MSG;
     else
        $datestamp= $this->page->mtime();
 
+    $preview_msg=_("Preview");
+    $save_msg=_("Save");
+    $summary_msg=_("Summary of Change");
     print <<<EOS
 <textarea class="wiki" id="content" wrap="virtual" name="savetext"
  rows="$rows" cols="$cols" style="width:100%">$raw_body</textarea><br />
-Summary of Change: <input name="comment" size="70" maxlength="70" style="width:200" /><br />
+$summary_msg: <input name="comment" size="70" maxlength="70" style="width:200" /><br />
 <input type="hidden" name="action" value="savepage" />
 <input type="hidden" name="datestamp" value="$datestamp">
-<input type="submit" value="Save" />&nbsp;
+<input type="submit" value="$save_msg" />&nbsp;
 <!-- <input type="reset" value="Reset" />&nbsp; -->
-<input type="submit" name="button_preview" value="Preview" />
+<input type="submit" name="button_preview" value="$preview_msg" />
 $extra
 </form>
 EOS;
@@ -2441,21 +2434,9 @@ EOS;
   }
 
   function show_hints() {
-    print <<<EOS
-<div id="wikiHint">
-<b>Emphasis:</b> ''<i>italics</i>''; '''<b>bold</b>'''; '''''<b><i>bold italics</i></b>''''';
-    ''<i>mixed '''<b>bold</b>''' and italics</i>''; ---- horizontal rule.<br />
-<b>Headings:</b> = Title 1 =; == Title 2 ==; === Title 3 ===;
-    ==== Title 4 ====; ===== Title 5 =====.<br />
-<b>Lists:</b> space and one of * bullets; 1., a., A., i., I. numbered items;
-    1.#n start numbering at n; space alone indents.<br />
-<b>Links:</b> JoinCapitalizedWords; ["brackets and double quotes"];
-    [bracketed words];
-    url; [url]; [url label].<br />
-<b>Tables</b>: || cell text |||| cell text spanning two columns ||;
-    no trailing white space allowed after tables or titles.<br />
-</div>
-EOS;
+    print "<div id=\"wikiHint\">\n";
+    print _("<b>Emphasis:</b> ''<i>italics</i>''; '''<b>bold</b>'''; '''''<b><i>bold italics</i></b>''''';\n''<i>mixed '''<b>bold</b>''' and italics</i>''; ---- horizontal rule.<br />\n<b>Headings:</b> = Title 1 =; == Title 2 ==; === Title 3 ===;\n==== Title 4 ====; ===== Title 5 =====.<br />\n<b>Lists:</b> space and one of * bullets; 1., a., A., i., I. numbered items;\n1.#n start numbering at n; space alone indents.<br />\n<b>Links:</b> JoinCapitalizedWords; [\"brackets and double quotes\"];\n[bracketed words];\nurl; [url]; [url label].<br />\n<b>Tables</b>: || cell text |||| cell text spanning two columns ||;\nno trailing white space allowed after tables or titles.<br />\n");
+    print "</div>\n";
   }
 
   function set_trailer($trailer="",$pagename,$size=5) {
@@ -2464,7 +2445,8 @@ EOS;
     else $trail=str_replace("\t".$pagename."\t","\t",$trailer);
     $trail=str_replace("\t\t","\t",$trail);
     $trails=explode("\t",trim($trail));
-    if (!in_array($pagename,$trails))
+    #if (!in_array($pagename,$trails))
+    if (!isset($trails[$pagename]))
       $trails[]=$pagename;
     $idx=count($trails) - $size;
     if ($idx > 0)
