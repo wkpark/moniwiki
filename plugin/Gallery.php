@@ -91,10 +91,19 @@ function macro_Gallery($formatter,$value,$options='') {
     }
   }
 
-  if ($options['value']) {
+  if ($options['value'])
     $file=urldecode($options['value']);
-  }
-  if ($file and $upfiles[$file] and $options['comment']) {
+
+  if ($file and $upfiles[$file] and $options['comments']) {
+    // admin: edit all comments
+    $comment=stripslashes($options['comments']);
+    $comment=str_replace("<","&lt;",$comment);
+    $comment=str_replace("\r","",$comment);
+    $comment=preg_replace("/\n----\n/","\t",$comment);
+    $comment=str_replace("\n","\\n",$comment);
+    $comments[$file]=$comment;
+    $update=1;
+  } else if ($file and $upfiles[$file] and $options['comment']) {
     // add new comment
     if ($options['id']=='Anonymous') $name=$_SERVER['REMOTE_ADDR'];
     else $name=$options['id'];
@@ -204,8 +213,10 @@ function macro_Gallery($formatter,$value,$options='') {
     $comment_btn=_("comment");
     if ($comments[$file] != '' and $options['value']) {
       $comment=$comments[$file];
-      $comment=str_replace("\\n","<br/>\n",$comment);
-      $comment=str_replace("\t","<br/>\n----<br/>\n",$comment);
+      $comment=str_replace("\\n","\n",$comment);
+      $comment=str_replace("\t","\n----\n",$comment);
+      $options['comments']=$comment;
+      $comment=str_replace("\n","<br/>\n",$comment);
       $comment="<br/>".$comment;
     } else if ($comments[$file] != '') {
       $comment_btn=_("show comments");
@@ -231,24 +242,42 @@ function macro_Gallery($formatter,$value,$options='') {
 }
 
 function do_gallery($formatter,$options='') {
+  global $DBInfo;
+  $cols = preg_match('/MSIE/', $HTTP_USER_AGENT) ? $COLS_MSIE : $COLS_OTHER;
+                                                                                
+  $rows=$options['rows'] > 5 ? $options['rows']: 4;
+  $cols=$options['cols'] > 60 ? $options['cols']: $cols;
+
   $formatter->send_header("",$options);
 
-  $ret=macro_Gallery($formatter,'',$options);
+  if ($options['admin'] and $options['comments'] and !$DBInfo->security->is_valid_password($options['passwd'],$options)) {
+    $title= sprintf('Invalid password !');
+    $formatter->send_header("",$options);
+    $formatter->send_title($title);
+    $formatter->send_footer();
+    return;
+  }
+
+  $ret=macro_Gallery($formatter,'',&$options);
+
   if (!$options['value']) {
     $formatter->send_title("","",$options);
     print $ret;
-  } else if (!$options['comment'] and $options['all']) {
+  } else
+  if ($options['comments'] and $options['admin'] and !$options['passwd']) {
+    // admin form
+    $rows+=5;
     $formatter->send_title("","",$options);
     print $ret;
     $url=$formatter->link_url($formatter->page->urlname);
-  $form = "<form method='post' action='$url'>\n";
-  $form.= <<<FORM
-<textarea class="wiki" id="content" wrap="virtual" name="comment"
+    $form = "<form method='post' action='$url'>\n";
+    $form.= <<<FORM
+<textarea class="wiki" id="content" wrap="virtual" name="comments"
  rows="$rows" cols="$cols" class="wiki">
 FORM;
-
-  $form.='</textarea><br />';
-  $form.= <<<FORM2
+    $form.=$options['comments'];
+    $form.='</textarea><br />';
+    $form.= <<<FORM2
 <input type="hidden" name="action" value="gallery" />
 <input type="hidden" name="value" value="$options[value]" />
 password: <input type='password' name='passwd' />
@@ -256,19 +285,25 @@ password: <input type='password' name='passwd' />
 <input type="reset" value="Reset" />&nbsp;
 </form>
 FORM2;
+    print $form;
 
+  } else if ($options['passwd'] and $options['comments']) {
+    $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
+    $formatter->send_title(_("Comments are edited "),"",$options);
   } else if (!$options['comment']) {
+    // add comment form
     $formatter->send_title("","",$options);
     print $ret;
     $url=$formatter->link_url($formatter->page->urlname);
                                                                                 
-  $form = "<form method='post' action='$url'>\n";
-  $form.= "<b>Name or Email</b>: <input name='name' size='30' maxlength='30' style='width:200' /><br />\n";
-  $form.= <<<FORM
+    $form = "<form method='post' action='$url'>\n";
+    $form.= "<input name='admin' type='submit' value='Admin' /><br />\n";
+    $form.= "<b>Name or Email</b>: <input name='name' size='30' maxlength='30' style='width:200' /><br />\n";
+    $form.= <<<FORM
 <textarea class="wiki" id="content" wrap="virtual" name="comment"
  rows="$rows" cols="$cols" class="wiki"></textarea><br />
 FORM;
-  $form.= <<<FORM2
+    $form.= <<<FORM2
 <input type="hidden" name="action" value="gallery" />
 <input type="hidden" name="value" value="$options[value]" />
 <input type="submit" value="Save" />&nbsp;
@@ -276,9 +311,6 @@ FORM;
 </form>
 FORM2;
     print $form;
-  } else {
-    $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
-    $formatter->send_title(sprintf(_("Comment added to \"%s\""),$formatter->page->name),"",$options);
 
   }
 
