@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0.2';
+$_release = '1.0.3';
 
 #ob_start("ob_gzhandler");
 
@@ -47,7 +47,7 @@ function _rawurlencode($url) {
 function _urlencode($url) {
   #$name=urlencode(strtr($url,"+"," "));
   #return preg_replace(array('/%2F/i','/%7E/i','/%23/'),array('/','~','#'),$name);
-  return preg_replace("/([^a-z0-9\/\?\.\+~#&:;=%]{1})\-/ie","'%'.strtoupper(dechex(ord('\\1')))",$url);
+  return preg_replace("/([^a-z0-9\/\?\.\+~#&:;=%\-]{1})/ie","'%'.strtoupper(dechex(ord('\\1')))",$url);
 }
 
 function qualifiedUrl($url) {
@@ -1134,6 +1134,7 @@ class Formatter {
     $this->highlight="";
     $this->prefix= get_scriptname();
     $this->url_prefix= $DBInfo->url_prefix;
+    $this->imgs_dir= $DBInfo->imgs_dir;
     $this->actions= $DBInfo->actions;
 
     if (($p=strpos($page->name,"~")))
@@ -1355,8 +1356,6 @@ class Formatter {
   }
 
   function link_repl($url,$attr='') {
-    global $DBInfo;
-
     $url=str_replace('\"','"',$url);
     if ($url[0]=="[") {
       $url=substr($url,1,-1);
@@ -1396,7 +1395,7 @@ class Formatter {
         else if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text))
           return "<a href='$url' $attr title='$url'><img border='0' alt='$url' src='$text' /></a>";
         list($icon,$dummy)=explode(":",$url,2);
-        return "<img align='middle' alt='[$icon]' src='".$DBInfo->imgs_dir."/$icon.png' />". "<a $attr href='$url'>$text</a>";
+        return "<img align='middle' alt='[$icon]' src='".$this->imgs_dir."/$icon.png' />". "<a $attr href='$url'>$text</a>";
       } else # have no space
       if (preg_match("/^(http|https|ftp)/",$url)) {
         if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$url))
@@ -1450,7 +1449,7 @@ class Formatter {
       $url=str_replace('$PAGE',$page_only,$url).$query;
     }
 
-    $img="<a href='$url' target='wiki'><img border='0' src='$DBInfo->imgs_dir/".
+    $img="<a href='$url' target='wiki'><img border='0' src='$this->imgs_dir/".
          strtolower($wiki)."-16.png' align='middle' height='16' width='16' ".
          "alt='$wiki:' title='$wiki:' /></a>";
     #if (!$text) $text=str_replace("%20"," ",$page);
@@ -1659,7 +1658,7 @@ class Formatter {
       else
         return "[[".$name."]]";
     }
-    $ret=call_user_func("macro_$name",&$this,$args,$options);
+    $ret=call_user_func("macro_$name",&$this,$args,&$options);
     return $ret;
   }
 
@@ -1679,7 +1678,7 @@ class Formatter {
 
     $alt=str_replace("<","&lt;",$smiley);
 
-    return "<img src='$DBInfo->imgs_dir/$img' align='middle' alt='$alt' title='$alt' />";
+    return "<img src='$this->imgs_dir/$img' align='middle' alt='$alt' title='$alt' />";
   }
 
   function link_url($pageurl,$query_string="") {
@@ -1792,6 +1791,12 @@ class Formatter {
 
   function send_page($body="",$options="") {
     global $DBInfo;
+
+    #if ($options['fixpath']) {
+    #  $this->url_prefix= qualifiedUrl($DBInfo->url_prefix);
+    #  $this->prefix= qualifiedUrl($this->prefix);
+    #  $this->imgs_dir= qualifiedUrl($this->imgs_dir);
+    #}
 
     if ($body) {
       $pi=$this->get_instructions(&$body);
@@ -2325,7 +2330,7 @@ class Formatter {
       $fp=popen("diff -u $tmpf ".$this->page->filename,'r');
       if (!$fp) {
          unlink($tmpf);
-         return;
+         return '';
       }
       while (!feof($fp)) {
          $line=fgets($fp,1024);
@@ -2336,16 +2341,15 @@ class Formatter {
 
       if (!$out) {
          $msg=_("No difference found");
-         $ret="<h2>$msg</h2>";
       } else {
          $msg= _("Difference between yours and the current");
-         $ret= "<h2>$msg</h2>";
          if (!$options['raw'])
-           $ret.= call_user_func(array(&$this,$DBInfo->diff_type),$out);
+           $ret= call_user_func(array(&$this,$DBInfo->diff_type),$out);
          else
-           $ret.="<pre>$out</pre>\n";
+           $ret="<pre>$out</pre>\n";
       }
-      return $ret;
+      if ($options['nomsg']) return $ret;
+      return "<h2>$msg</h2>\n$ret";
     }
 
     if (!$rev1 and !$rev2) {
@@ -2358,12 +2362,17 @@ class Formatter {
 
     if (!$option) {
       $msg= _("No older revisions available");
-      $ret= "<h2>$msg</h2>";
-      return $ret;
+      if ($options['nomsg']) return '';
+      return "<h2>$msg</h2>";
     }
     $fp=popen("rcsdiff -x,v/ -u $option ".$this->page->filename,'r');
     if (!$fp)
-      return;
+      return '';
+    if (!feof($fp)) {
+      # trashing two first line
+      $line=fgets($fp,1024);
+      $line=fgets($fp,1024);
+    }
     while (!feof($fp)) {
       $line=fgets($fp,1024);
       $out.= $line;
@@ -2371,23 +2380,21 @@ class Formatter {
     pclose($fp);
     if (!$out) {
       $msg= _("No difference found");
-      $ret.= "<h2>$msg</h2>";
     } else {
       if ($rev1==$rev2) $ret.= "<h2>"._("Difference between versions")."</h2>";
       else if ($rev1 and $rev2) {
         $msg= sprintf(_("Difference between r%s and r%s"),$rev1,$rev2);
-        $ret.= "<h2>$msg</h2>";
       }
       else if ($rev1 or $rev2) {
         $msg=sprintf(_("Difference between r%s and the current"),$rev1.$rev2);
-        $ret.= "<h2>$msg</h2>";
       }
       if (!$options['raw'])
-        $ret.= call_user_func(array(&$this,$DBInfo->diff_type),$out);
+        $ret= call_user_func(array(&$this,$DBInfo->diff_type),$out);
       else
-        $ret.="<pre>$out</pre>\n";
+        $ret="<pre>$out</pre>\n";
     }
-    return $ret;
+    if ($options['nomsg']) return $ret;
+    return "<h2>$msg</h2>\n$ret";
   }
 
   function send_header($header="",$options=array()) {
@@ -2581,19 +2588,19 @@ EOS;
 
     $banner= <<<FOOT
  <a href="http://validator.w3.org/check/referer"><img
-  src="$DBInfo->imgs_dir/valid-xhtml10.png"
+  src="$this->imgs_dir/valid-xhtml10.png"
   border="0" width="88" height="31"
   align="middle"
   alt="Valid XHTML 1.0!" /></a>
 
  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
-  src="$DBInfo->imgs_dir/vcss.png" 
+  src="$this->imgs_dir/vcss.png" 
   border="0" width="88" height="31"
   align="middle"
   alt="Valid CSS!" /></a>
 
  <a href="http://moniwiki.sourceforge.net/"><img
-  src="$DBInfo->imgs_dir/moniwiki-powerd.png" 
+  src="$this->imgs_dir/moniwiki-powerd.png" 
   border="0" width="88" height="31"
   align="middle"
   alt="powerd by MoniWiki" /></a>
@@ -2969,6 +2976,11 @@ if ($pagename) {
     $DBInfo->counter->incCounter($pagename,$options);
 
     if (!$action) $options['pi']=1; # protect a recursivly called #redirect
+
+#    if (!$DBInfo->security->is_allowed('read',&$options)) {
+#      do_invalid($formatter,$options);
+#      return;
+#    }
 
     #$formatter->get_redirect();
     $formatter->pi=$formatter->get_instructions();
