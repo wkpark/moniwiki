@@ -21,7 +21,7 @@ function do_rcspurge($formatter,$options) {
     return;
   }
   if (!preg_match("/^[\d:;\.]+$/",$options['range'])) {
-    $options['title']=_("Invalid rcsclean range");
+    $options['title']=_("Invalid rcspurge range");
     do_invalid($formatter,$options);
     return;
   }
