@@ -32,13 +32,14 @@ function do_rss_blog($formatter,$options) {
     $logs=Blog_cache::get_summary($blogs,$date);
     $rss_name=$formatter->page->name;
   }
+  usort($logs,'BlogCompare');
     
   $time_current= time();
 
   $URL=qualifiedURL($formatter->prefix);
   $img_url=qualifiedURL($DBInfo->logo_img);
 
-  $url=qualifiedUrl($formatter->link_url("RecentChanges"));
+  $url=qualifiedUrl($formatter->link_url("BlogChanges"));
   $desc=sprintf(_("BlogChanges at %s"),$DBInfo->sitename);
   $channel=<<<CHANNEL
 <channel rdf:about="$URL">
