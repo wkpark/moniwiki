@@ -28,15 +28,20 @@ function processor_chat($formatter,$value="") {
 
   $src= $value;
 
-  $options[nosisters]=1;
-  ob_start();
-  $formatter->send_page($src,$options);
-  $msg= ob_get_contents();
-  ob_end_clean();
+  if ($src) {
+    $options[nosisters]=1;
+    ob_start();
+    $formatter->send_page($src,$options);
+    $msg= ob_get_contents();
+    ob_end_clean();
+  }
 
   $out="<table align='center' width='90%' border='0' class='wiki' cellpadding='4' cellspacing='0'>";
-  if ($title)
+  if ($title) {
+    $title=preg_replace("/(".$formatter->wordrule.")/e",
+                        "\$formatter->link_repl('\\1')",$title);
     $out.="<tr><td><b>$title</b></td></tr>\n";
+  }
   $out.="<tr><td><font size='-1'>Submitted by $user $date</font></td></tr>\n".
     "<tr><td class='wiki'>$msg</td></tr>\n".
     "</table>\n";
