@@ -926,6 +926,10 @@ class Cache_text {
     fclose($fp);
   }
 
+  function _del($key) {
+    unlink($key);
+  }
+
   function fetch($pagename,$mtime="") {
     $key=$this->getKey($pagename);
     if ($this->_exists($key)) {
@@ -1167,14 +1171,17 @@ class Formatter {
                      "/'''([^']*)'''/","/(?<!')'''(.*)'''(?!')/",
                      "/''([^']*)''/","/(?<!')''(.*)''(?!')/",
                      "/\^([^ \^]+)\^(?=\s|$)/","/,,([^ ,]+),,(?=\s|$)/",
-                     "/--([^-]+)--(?=\s|$)/",
-                     "/__([^ _]+)__(?=\s|$)/","/^-{4,}/");
+                     "/__([^ _]+)__(?=\s|$)/","/^-{4,}/",
+                     "/--([^- ]+)--(?=\s|$)/",
+                     );
     $this->baserepl=array("&lt;\\1","&#96;\\1'","<tt class='wiki'>\\1</tt>",
                      "<b>\\1</b>","<b>\\1</b>",
                      "<i>\\1</i>","<i>\\1</i>",
                      "<sup>\\1</sup>","<sub>\\1</sub>",
+                     "<u>\\1</u>",
+                     "<hr class='wiki' />\n",
                      "<del>\\1</del>",
-                     "<u>\\1</u>","<hr class='wiki' />\n");
+                     );
 
     # NoSmoke's MultiLineCell hack
     $this->extrarule=array("/{{\|/","/\|}}/");
@@ -1190,7 +1197,7 @@ class Formatter {
     }
 
     #$punct="<\"\'}\]\|;,\.\!";
-    $punct="<\'}\]\|;\.\!"; # , is omitted for the WikiPedia
+    $punct="<\'}\]\|\.\!"; # , is omitted for the WikiPedia
     $url="wiki|http|https|ftp|nntp|news|irc|telnet|mailto|file|attachment";
     $urlrule="((?:$url):([^\s$punct]|(\.?[^\s$punct]))+)";
     #$urlrule="((?:$url):(\.?[^\s$punct])+)";
