@@ -34,7 +34,7 @@ function processor_jade($formatter,$value,$options=array()) {
 #         "-V %%html-prefix%%='$tmpfile-' ".
   $args= "-V '(define %use-id-as-filename% #f)' ".
          "-t sgml -i html ".
-         "-V nochunks -o /dev/stdout";
+         "-V nochunks -o /dev/stdout ";
 # jade -V nochunks -t sgml -i html vim.sgml -o /dev/stdout
 
   if ($value[0]=='#' and $value[1]=='!') {
@@ -52,10 +52,10 @@ function processor_jade($formatter,$value,$options=array()) {
       if ($DBInfo->hasPage($match[1]))
         $line='<?stylesheet href="'.getcwd().'/'.$DBInfo->text_dir.'/'.$match[1].$method.'" type="text/dsssl"?>';
       $dsssl_flag=true;
+      break;
     }
     $buff.=$line."\n";
     list($line,$body)=explode("\n",$body,2);
-    if ($dsssl_flag) break;
   }
   $src=$buff.$line."\n".$body;
   if (!$dsssl_flag and $DBInfo->default_dsssl)
