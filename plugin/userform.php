@@ -59,7 +59,7 @@ function do_userform($formatter,$options) {
       }
     } else {
       if ($options['login_id'])
-        $title= sprintf(_("\"%s\" is not exists on this wiki !"),$options['login_id']);
+        $title= sprintf(_("\"%s\" does not exists on this wiki !"),$options['login_id']);
       else
         $title= _("Make new ID on this wiki");
      $form=macro_UserPreferences($formatter,'',$options);
