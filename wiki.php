@@ -67,6 +67,31 @@ function hasProcessor($pro_name) {
   return isset($processors[$pro_name]);
 }
 
+if (0 && !function_exists ('bindtextdomain')) {
+  function gettext ($text) {
+    return $text;
+  }
+
+  function _ ($text) {
+    return $text;
+  }
+} else {
+  if (!function_exists ('bindtextdomain')) {
+    $locale = array();
+
+    function gettext ($text) {
+      global $locale;
+      if (!empty ($locale[$text]))
+        return $locale[$text];
+      return $text;
+    }
+
+    function _ ($text) {
+      return gettext($text);
+    }
+  }
+}
+
 function goto_form($action,$option="") {
   if ($option==1) {
     return "
@@ -326,11 +351,6 @@ function getConfig($configfile) {
   return array_diff($new,$org);
 }
 
-$dummy=array(
-  _("FrontPage"), _("RecentChanges"), _("FindPage"), _("UserPreferences"),
-  _("TitleIndex"), _("HelpContents")
-);
-
 class WikiDB {
   function WikiDB($config=array()) {
     # Default Configuations
@@ -373,7 +393,7 @@ class WikiDB {
     $this->iconset='moni';
     $this->template_regex='[a-z]Template$';
     $this->category_regex='^Category[A-Z]';
-    $this->security_class="needtologin";
+#    $this->security_class="needtologin";
 
     # set user-specified configuration
     if ($config) {
@@ -401,7 +421,7 @@ class WikiDB {
     $this->icon[create]="<img src='$this->imgs_dir/$iconset-create.gif' alt='N' align='middle' border='0' />";
     $this->icon['new']="<img src='$this->imgs_dir/$iconset-new.gif' alt='U' align='middle' border='0' />";
     $this->icon[updated]="<img src='$this->imgs_dir/$iconset-updated.gif' alt='U' align='middle' border='0' />";
-    $this->icon[user]=_("UserPreferences");
+    $this->icon[user]="UserPreferences";
     $this->icon[home]="<img src='$this->imgs_dir/$iconset-home.gif' alt='M' align='middle' border='0' />";
     }
 
@@ -2010,7 +2030,7 @@ MSG;
       if ($DBInfo->hasPage($options[id]))
       $home=$this->link_tag($options[id],"",$DBInfo->icon[home])." ";
     } else
-      $user_link=$this->link_tag("UserPreferences","",$DBInfo->icon[user]);
+      $user_link=$this->link_tag("UserPreferences","",_($DBInfo->icon[user]));
 
     # print the title
     kbd_handler();
@@ -2142,34 +2162,16 @@ if ($user->id != "Anonymous") {
     $options[css_url]=$user->css;
 }
 
-if (!$DBInfo->use_gettext && !function_exists ('bindtextdomain')) {
-  function gettext ($text) {
-    return $text;
-  }
-
-  function _ ($text) {
-    return $text;
-  }
+# setup like phpwiki style locale
+# XXX
+if (isset($locale)) {
+  $lf="locale/".$DBInfo->lang."/LC_MESSAGES/moniwiki.php";
+  if (file_exists($fn))
+    include($lf);
 } else {
-  if (!function_exists ('bindtextdomain')) {
-    $locale = array();
-
-    function gettext ($text) {
-      global $locale;
-      if (!empty ($locale[$text]))
-        return $locale[$text];
-      return $text;
-    }
-
-    function _ ($text) {
-      return gettext($text);
-    }
-  }
-  else {
-    setlocale(LC_ALL, $DBInfo->lang);
-    bindtextdomain("moniwiki", "locale");
-    textdomain("moniwiki");
-  }
+  setlocale(LC_ALL, $DBInfo->lang);
+  bindtextdomain("moniwiki", "locale");
+  textdomain("moniwiki");
 }
 
 if (!empty($_SERVER[PATH_INFO])) {
@@ -2200,6 +2202,8 @@ if (!empty($_SERVER[PATH_INFO])) {
 $action=$HTTP_GET_VARS[action];
 $value=$HTTP_GET_VARS[value];
 $goto=$HTTP_GET_VARS[goto];
+
+$options[page]=$pagename;
 
 if ($_SERVER[REQUEST_METHOD]=="POST") {
  $request=$HTTP_POST_VARS;
@@ -2305,8 +2309,6 @@ if ($_SERVER[REQUEST_METHOD]=="POST") {
 #   $query= $QUERY_STRING;
 
 if ($pagename) {
-  $options[page]=$pagename;
-
   if ($action=="recall" || $action=="raw" && $rev) {
     $options[rev]=$rev;
     $page = $DBInfo->getPage($pagename,$options);
