@@ -23,28 +23,31 @@ function macro_login($formatter,$value="",$options="") {
 
   $login=_("Login:");
   $pass=_("Password:");
-  $button=_("Login");
   $join=_("Join");
 
   if ($user->id == 'Anonymous')
   return <<<LOGIN
+<div id='wikiLogin'>
 <form method='post' action='$urlpage'>
 <input type="hidden" name="action" value="userform" />
-<table border='0' cellpadding='0' cellspacing='0'>
-<tr><td align='right'><font size='-1'>$login</font></td><td><input name='login_id' size='10' /></td></tr>
-<tr><td align='right'><font size='-1'>$pass</font></td><td><input name='password' type='password' size='10' /></td></tr>
-<tr><td align='right'><a href='$url'>$join</a></td><td><input type='submit' value='$button' /></td></tr>
+<table border='0' cellpadding='2' cellspacing='0'>
+<tr><td align='right'>$login</td><td><input name='login_id' size='10' /></td></tr>
+<tr><td align='right'>$pass</td><td><input name='password' type='password' size='10' /></td></tr>
+<tr><td align='right'><a href='$url'>$join</a></td><td><input type='submit' value='OK' /></td></tr>
 </table>
 </form>
+</div>
 LOGIN;
 
   $button=_("Logout");
   $option=_("UserPreferences");
   return <<<LOGOUT
+<div id='wikiLogin'>
 <form method='post' action='$url'>
 <input type="hidden" name="action" value="userform" />
 <a href='$url'>$option</a> or <input type='submit' name="logout" value="$button"/>
 </form>
+</div>
 LOGOUT;
 }
 
