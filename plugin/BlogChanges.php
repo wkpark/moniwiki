@@ -78,7 +78,12 @@ function macro_BlogChanges($formatter,$value,$options='') {
 
   if (strlen($date)==6) {
     $pre_month=intval(substr($date,4))-1;
-    $pre_date=substr($date,0,4).sprintf('%02d',$pre_month);
+    $pre_year=substr($date,0,4);
+    if ($pre_month == 0) {
+      $pre_month=12;
+      $pre_year=intval(substr($date,0,4))-1;
+    }
+    $pre_date=$pre_year.sprintf('%02d',$pre_month);
   }
   
   if (in_array('all',$opts)) {
@@ -125,11 +130,11 @@ function macro_BlogChanges($formatter,$value,$options='') {
   $time_current= time();
   $items="";
 
-  if (!$logs) return "";
+  #if (!$logs) return "";
 
   foreach ($logs as $log) {
     list($page, $user,$date,$title)= $log;
-    $url=qualifiedUrl($formatter->prefix."/".$page);
+    $url=qualifiedUrl($formatter->link_url(_urlencode($page)));
 
     if (!$opts['nouser'] and $user and $DBInfo->hasPage($user))
       $user=$formatter->link_tag(_rawurlencode($user),"",$user);
