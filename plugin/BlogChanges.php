@@ -21,14 +21,18 @@ class Blog_cache {
     return $blogs;
   }
 
-  function get_simple($blogs,$date) {
+  function get_simple($blogs,$options) {
     global $DBInfo;
+
+    $date=$options['date'];
+    $limit=$options['limit'];
     $rule="/^($date\d*)".'_2e('.join('|',$blogs).')$/';
     $logs=array();
 
-    if (!$date) $limit=10;
-    else $limit=30;
-    #print $limit;
+    if (!$limit) {
+      if ($date) $limit=30;
+      else $limit=10;
+    }
 
     $handle = @opendir($DBInfo->cache_dir."/blogchanges");
     if (!$handle) return array();
@@ -42,8 +46,7 @@ class Blog_cache {
 
     rsort($filelist);
 
-    while ((list($key, $file) = each ($filelist)) && $limit > 0)
-    {
+    while ((list($key, $file) = each ($filelist)) && $limit > 0) {
       #echo "<b>$file</b><br>";
       if (preg_match($rule,$file,$match)) {
         $fname=$DBInfo->cache_dir."/blogchanges/".$file;
@@ -53,6 +56,7 @@ class Blog_cache {
 
         $items=file($fname);
         foreach ($items as $line) {
+          if ($limit < 0) break;
           list($author,$datestamp,$dummy)=explode(' ',$line);
           #$datestamp[10]=' ';
           #$timestamp= strtotime($datestamp." GMT");
@@ -102,10 +106,16 @@ class Blog_cache {
     return array_unique($blogs);
   }
 
-  function get_summary($blogs,$date) {
+  function get_summary($blogs,$options) {
     global $DBInfo;
 
     if (!$blogs) return array();
+    $date=$options['date'];
+    $limit=$options['limit'];
+    if (!$limit) {
+      if ($date) $limit=30;
+      else $limit=10;
+    }
 
     if ($date) {
       $check=strlen($date);
@@ -118,9 +128,6 @@ class Blog_cache {
       #print $date;
     }
 
-    if ($date) $limit=30;
-    else $limit=10;
-
     $entries=array();
     $logs=array();
 
@@ -132,6 +139,7 @@ class Blog_cache {
       $temp= explode("\n",$raw);
 
       foreach ($temp as $line) {
+        if ($limit <= 0) break;
         if (!$state) {
           if (preg_match("/^({{{)?#!blog\s([^ ]+\s($date"."[^ ]+)\s.*)$/",$line,$match)) {
             $entry=explode(" ",$pagename." ".$match[2],4);
@@ -151,7 +159,6 @@ class Blog_cache {
         }
         $summary.=$line."\n";
       }
-      if ($limit < 0) break;
     }
     return $entries;
   }
@@ -179,7 +186,9 @@ function do_BlogChanges($formatter,$options='') {
 function macro_BlogChanges($formatter,$value,$options='') {
   global $DBInfo;
 
-  $opts=explode(",",$value);
+  preg_match('/(\d+)?(\s*,?\s*.*)?$/',$value,$match);
+  $opts=explode(",",$match[2]);
+  if ($match[1]) $options['limit']=$match[1];
 
   $options['date']=$_GET['date'];
 
@@ -196,9 +205,9 @@ function macro_BlogChanges($formatter,$value,$options='') {
     $blogs=array($DBInfo->pageToKeyname($formatter->page->name));
 
   if (in_array('summary',$opts))
-    $logs=Blog_cache::get_summary($blogs,$date);
+    $logs=Blog_cache::get_summary($blogs,$options);
   else
-    $logs=Blog_cache::get_simple($blogs,$date);
+    $logs=Blog_cache::get_simple($blogs,$options);
   usort($logs,'BlogCompare');
 
   if (!$options['date'] or !preg_match('/^\d+$/',$options['date']))
