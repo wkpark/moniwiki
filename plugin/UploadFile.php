@@ -2,7 +2,6 @@
 // Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a UploadFile plugin for the MoniWiki
-// vim:et:ts=2:
 //
 // $Id$
 function do_uploadfile($formatter,$options) {
@@ -69,8 +68,10 @@ function do_uploadfile($formatter,$options) {
      $pds_exts=$DBInfo->pds_allowed;
   else
      $pds_exts="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|css|exe|hwp";
-  if (!preg_match("/(".$pds_exts.")$/i",$fname[2]))
+  if (!preg_match("/(".$pds_exts.")$/i",$fname[2])) {
      $msg.=sprintf(_("%s does not allowed to upload"),$upfilename)."<br/>\n";
+     continue;
+  }
 
   $file_path= $newfile_path = $dir."/".$upfilename;
   $filename=$upfilename;
@@ -105,8 +106,10 @@ function do_uploadfile($formatter,$options) {
   } else {
     $test=@copy($upfile, $newfile_path);
   }
-  if (!$test)
+  if (!$test) {
     $msg.=sprintf(_("Fail to copy \"%s\" to \"%s\""),$upfilename,$file_path);
+    continue;
+  }
 
   chmod($newfile_path,0644);
 
@@ -208,4 +211,5 @@ EOF;
   return $form.$multiform;
 }
 
+// vim:et:sts=2:sw=2:
 ?>
