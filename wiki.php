@@ -1210,7 +1210,7 @@ class Formatter {
     # single bracketed name [Hello World]
     "(?<!\[)\!?\[([^\[:,<\s][^\[:,>]+)\](?!\])|".
     # bracketed with double quotes ["Hello World"]
-    "(?<!\[)\!\[\\\"([^\\\"]+)\\\"\](?!\])|".
+    "(?<!\[)\!?\[\\\"([^\\\"]+)\\\"\](?!\])|".
   # "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
     "($urlrule)|".
     # single linkage rule ?hello ?abacus
