@@ -116,9 +116,17 @@ function do_uploadfile($formatter,$options) {
       $upfilename=$tname[1].'.'.$fname[2];
     }
     
-    # do not change the extention of the file.
+    # check the extention of the new file name.
     $fname[1]=$tname[1];
     $newfile_path = $dir."/".$tname[1].".$fname[2]";
+    if ($tname[2] != $fname[2]) {
+      if (strtolower($tname[2])==strtolower($fname[2])) {
+        # change the case of the file ext. is allowed
+        $newfile_path = $dir."/".$tname[1].".$tname[2]";
+      } else {
+        $msg.=sprintf(_("It is not allowed to change file ext. \"%s\" to \"%s\"."),$fname[2],$tname[2]).'<br />';
+      }
+    }
   }
 
   # is file already exists ?
@@ -144,6 +152,7 @@ function do_uploadfile($formatter,$options) {
   }
   if (!$test) {
     $msg.=sprintf(_("Fail to copy \"%s\" to \"%s\""),$upfilename,$file_path);
+    $msg.='<br />'._("Please check your php.ini setting");
     continue;
   }
 
