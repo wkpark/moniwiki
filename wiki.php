@@ -534,6 +534,8 @@ class WikiDB {
 
     if ($this->path)
       putenv("PATH=".$this->path);
+    if ($this->rcs_user)
+      putenv('LOGNAME='.$this->rcs_user);
 
     $this->set_intermap();
     if ($this->shared_metadb)
@@ -762,7 +764,6 @@ class WikiDB {
   }
 
   function savePage($page,$comment="",$options=array()) {
-    global $DBInfo;
     $user=new User();
     $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
     $comment=escapeshellcmd($comment);
@@ -774,11 +775,12 @@ class WikiDB {
     $fp=fopen($key,"w");
     if (!$fp)
        return -1;
+    flock($fp,LOCK_EX);
     $body=$this->_replace_variables($page->body,$options);
     $page->write($body);
     fwrite($fp, $body);
+    flock($fp,LOCK_UN);
     fclose($fp);
-    putenv('LOGNAME='.$DBInfo->rcs_user);
     $ret=system("ci -l -x,v/ -q -t-\"".$pagename."\" -m\"".$REMOTE_ADDR.";;".
             $user->id.";;".$comment."\" ".$key);
     #print $ret;
@@ -1067,7 +1069,6 @@ class Formatter {
     $this->prefix= get_scriptname();
     $this->url_prefix= $DBInfo->url_prefix;
     $this->actions= $DBInfo->actions;
-    $this->in_p='';
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -1201,11 +1202,14 @@ class Formatter {
       $body=$this->page->get_raw_body();
     }
 
-    $key=substr($this->page->name,0,strpos($this->page->name,'/'));
-
-    if (array_key_exists($key,$DBInfo->pagetype))
-      $format=$DBInfo->pagetype[$key];
-    else if ($body[0] == '<') {
+    $pos=strpos($this->page->name,'/') ? 1:0;
+    $key=strtok($this->page->name,'/');
+    $format=$DBInfo->pagetype[$key];
+    if ($format) {
+      $temp=explode("/",$format);
+      $format=$temp[$pos];
+    } else
+    if ($body[0] == '<') {
       list($line, $dummy)= explode("\n", $body,2);
       if (substr($line,0,6) == '<?xml ')
         #$format='xslt';
@@ -1238,7 +1242,8 @@ class Formatter {
       } else if ($processor=getProcessor($format)) {
         include_once("plugin/processor/$processor.php");
         $pi['#format']=$format;
-      }
+      } else
+        $pi['#format']='plain';
     }
 
     if ($notused) $body=join("\n",$notused)."\n".$body;
@@ -1462,8 +1467,9 @@ class Formatter {
         }
         if ($idx > 0) {
           return "<a href='$url'>$word</a>".
-           "<a name='rsister$idx' id='rsister$idx'>".
-           "<tt class='sister'><a href='#sister$idx'>&#x203a;$idx</a></tt>";
+           "<tt class='sister'>".
+           "<a name='rsister$idx' id='rsister$idx'></a>".
+           "<a href='#sister$idx'>&#x203a;$idx</a></tt>";
         }
       }
       $this->pagelinks[$page]=0;
@@ -1524,6 +1530,7 @@ class Formatter {
       }
       $dum[$i]++;
       $num=join($dum,".");
+      $open.="</div>\n<div class='section'>";
     }
 
     $this->head_dep=$depth; # save old
@@ -1534,7 +1541,7 @@ class Formatter {
       $head="<a href='#toc'>$num</a> $head";
     $purple=" <a class='purple' href='#s$prefix-$num'>#</a>";
 
-    $close=$this->_check_p().$close; 
+#    $close=$this->_check_p().$close; 
 
     return "$close$open<h$dep><a id='s$prefix-$num' name='s$prefix-$num'></a> $head$purple</h$dep>";
   }
@@ -1624,11 +1631,6 @@ class Formatter {
     } if (!$on and $closetype and $closetype !='dd')
       $list_type=$list_type."></li";
 
-    if ($this->in_li==0 and $on) {
-      $close=$this->_check_p();
-      $open="<div class='list'>";
-      $this->in_p='li';
-    }
     if ($on) {
       if ($numtype) {
         $start=substr($numtype,1);
@@ -1642,10 +1644,10 @@ class Formatter {
     }
   }
 
-  function _check_p() {
-    if ($this->in_p) {
-      $this->in_p='';
-      return "</div>\n"; #close
+  function _check_p($in_p) {
+    if ($in_p) {
+      $in_p='li';
+      return "</div>\n<div>"; #close
     }
     return '';
   }
@@ -1661,6 +1663,18 @@ class Formatter {
     if ($on)
       return "<table class='wiki' cellpadding='3' cellspacing='2' $attr>\n";
     return "</table>\n";
+  }
+
+  function _div($on,$in_div) {
+    static $tag=array("</div>\n","<div>\n");
+    if ($on) $in_div++;
+    else {
+      if (!$in_div) return '';
+      $in_div--;
+    }
+
+    #return "(".$in_div.")".$tag[$on];
+    return $tag[$on];
   }
 
   function send_page($body="",$options="") {
@@ -1703,8 +1717,9 @@ class Formatter {
     # have no contents
     if (!$lines) return;
 
-    $text="";
-    #$in_p=1;
+    $text='';
+    $in_p='';
+    $in_div=0;
     $in_li=0;
     $in_pre=0;
     $in_table=0;
@@ -1729,10 +1744,15 @@ class Formatter {
         if ($in_table) {
           $text.=$this->_table(0)."<br />\n";$in_table=0; continue;
         } else {
-          if ($this->in_p) { $text.="</div><br />\n"; $this->in_p='';}
-          else if ($this->in_p=='') { $text.="<br />\n";}
+          #if ($in_p) { $text.="</div><br />\n"; $in_p='';}
+          if ($in_p) { $text.=$this->_div(0,&$in_div)."<br />\n"; $in_p='';}
+          else if ($in_p=='') { $text.="<br />\n";}
           continue;
         }
+      } else if ($in_p == '') {
+        #$text.="<div>\n";
+        $text.=$this->_div(1,&$in_div);
+        $in_p= $line;
       }
 
       if ($line[0]=='#' and $line[1]=='#') continue; # comments
@@ -1836,7 +1856,6 @@ class Formatter {
            }
          }
          if ($indent_list[$in_li] < $indlen) {
-            $this->in_li=$in_li;
             $in_li++;
             $indent_list[$in_li]=$indlen; # add list depth
             $indent_type[$in_li]=$indtype; # add list type
@@ -1849,7 +1868,6 @@ class Formatter {
                unset($indent_list[$in_li]);
                unset($indent_type[$in_li]);
                $in_li--;
-               $this->in_li=$in_li;
             }
          }
          if ($indent_list[$in_li] <= $indlen || $limatch) $li_open=$in_li;
@@ -1888,14 +1906,6 @@ class Formatter {
 
       $line=preg_replace($this->extrarule,$this->extrarepl,$line);
 
-      if ($this->in_p == '' and $line) { #and !$this->nobr) { #and !$this->nobr) {
-        $text.="<div class='p'>\n";
-        $this->in_p=$line;
-      } else if ($this->in_p and !$indlen and $li_open and 0) {
-        $close.=$this->_check_p()."<div class='p'>\n";
-        $this->in_p=$line;
-      }
-
       $line=$close.$open.$line;
       $open="";$close="";
 
@@ -1924,7 +1934,7 @@ class Formatter {
       else
         $text.=$line."\n";
       $this->nobr=0;
-    }
+    } # end rendering loop
 
     # highlight text
     if ($this->highlight) {
@@ -1954,18 +1964,21 @@ class Formatter {
       $in_li--;
     }
     # close div
-    if ($this->in_p) $close.="</div>\n"; # </para>
-    $this->in_p='';
+    #if ($in_p) $close.="##</div>\n"; # </para>
+    if ($in_p) $close.=$this->_div(0,&$in_div); # </para>
 
     if ($this->head_dep) {
       $odepth=$this->head_dep;
       $dum=explode(".",$this->head_num);
       $i=sizeof($dum)-1;
-      while (0 <= $odepth && $i >= 0) {
+      while (0 <= $odepth && $i > 0) {
+         $close.="</div>\n"; # </section>
+         #$close.=$this->_div(0,&$in_div); # </section>
+         #$close.=$this->_div(0,$odepth); # </section>
          $i--;
          $odepth--;
-         $close.="</div>\n"; # </section>
       }
+      #$close.="</div>\n"; # </section>
     }
 
     $text.=$close;
@@ -2504,7 +2517,7 @@ FOOT;
         $group="<span class='group'>".(substr($group,0,-1))." &raquo;<br /></span>";
       } else     
         $title=$this->page->name;
-      $title=preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$title);
+      $title=preg_replace("/((?<=[A-Za-z0-9])[A-Z][a-z0-9])/"," \\1",$title);
     }
     # setup title variables
     $heading=$this->link_to("?action=fullsearch&amp;value=$name",$title);
@@ -2799,8 +2812,11 @@ $options['timer']->Check("load");
 # get broswer's settings
 $langs=get_langs();
 
-if ($DBInfo->lang == 'auto') $lang= $langs[0].strtoupper($DBInfo->charset);
-else $lang= $DBInfo->lang;
+if ($DBInfo->lang == 'auto') {
+  $DBInfo->lang= $langs[0];#.".".strtoupper($DBInfo->charset);
+  $lang=$langs[0];
+} else
+  $lang= $DBInfo->lang;
 
 if (isset($locale)) {
   $lf="locale/".$lang."/LC_MESSAGES/moniwiki.php";
