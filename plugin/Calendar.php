@@ -130,7 +130,8 @@ function macro_Calendar($formatter,$value="",$option="") {
 	$calendar.= $formatter->link_tag($link,"?date=$prev_year",$year_prev_tag).'&nbsp;&nbsp;';
 	$calendar.= $formatter->link_tag($link,"?date=$prev_month",$prev_tag).'&nbsp;&nbsp;';
 
-	$calendar.="$date_info[month] $year";
+	#$calendar.=substr($date_info[month],0,3).' '.$year;
+	$calendar.=$date_info[month].' '.$year;
 
 	/* Adding next month and year */
 	$calendar.= '&nbsp;&nbsp;'.$formatter->link_tag($link,"?date=$next_month",$next_tag);
