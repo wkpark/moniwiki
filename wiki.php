@@ -1882,13 +1882,21 @@ class Formatter {
           else if ($in_p=='') { $text.="<br />\n";}
           continue;
         }
-      } else if ($in_p == '') {
+      }
+      if ($line[0]=='#' and $line[1]=='#') {
+        if ($line[2]=='[') {
+          $macro=substr($line,4,-2);
+          $text.= $this->macro_repl($macro);
+        }
+        continue; # comments
+      }
+
+      if ($in_p == '') {
         #$text.="<div>\n";
+        
         $text.=$this->_div(1,&$in_div);
         $in_p= $line;
       }
-
-      if ($line[0]=='#' and $line[1]=='#') continue; # comments
 
       if ($in_pre) {
          if (strpos($line,"}}}")===false) {
@@ -1970,7 +1978,7 @@ class Formatter {
            if ($line[0]=='*') {
              $limatch[1]='*';
              $line=preg_replace("/^(\*\s?)/","<li>",$line);
-             if ($indent_list[$in_li] == $indlen) $line="</li>\n".$line;
+             if ($indent_list[$in_li] == $indlen && $indent_type[$in_li]!='dd') $line="</li>\n".$line;
              $numtype="";
              $indtype="ul";
            } elseif (preg_match("/^((\d+|[aAiI])\.)(#\d+)?\s/",$line,$limatch)){
