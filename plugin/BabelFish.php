@@ -10,7 +10,7 @@
 #<script language="JavaScript1.2" src="http://www.altavista.com/r?entr"></script>
 function macro_BabelFish($formatter,$value) {
   $langs=array('ko','ja','en','de','fr','it','es','pt','zh');
-  $supported=array('ko_en','en_ko','en_de','en_fr','ko_jp','jp_ko');
+  $supported=array('ko_en','en_ko','en_de','en_fr');
   $msg=_("BabelFish Translation");
 
   if (!$value)
@@ -27,13 +27,16 @@ EOF;
     $msg=sprintf(_("Translate %s to %s"),$from,$to);
 
   $lp=$from."_".$to;
-  $URL=qualifiedUrl($formatter->link_url(urlencode($formatter->page->urlname)));
+  $URL=qualifiedUrl($formatter->link_url($formatter->page->urlname));
   $TR="http://babelfish.altavista.com/babelfish/urlload?tt=url";
   if (in_array($lp,$supported)) {
+    $URL=urlencode($URL);
     $TR.="&lp=$lp";
   } else {
+    // XXX
+    // not supported by http://babelfish.altavista.com/
     $lp=$from.'_en';
-    $URL=urlencode($TR."&lp=$lp&url=").$URL;
+    $URL=urlencode($TR."&lp=$lp&url=$URL");
     $lp='en_'.$to;
     $TR.="&lp=$lp";
   }
