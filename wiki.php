@@ -870,6 +870,7 @@ class WikiPage {
   }
 
   function get_raw_body($options='') {
+#    if (isset($this->body) && !$options[rev])
     if ($this->body && !$options[rev])
        return $this->body;
 
@@ -903,10 +904,10 @@ class WikiPage {
 #    }
 #    $this->$body=implode("", file($this->filename));
 #    $this->body=$body;
-    $this->$body=fread($fp,$this->fsize);
+    $this->body=fread($fp,$this->fsize);
     fclose($fp);
 
-    return $this->$body;
+    return $this->body;
   }
 
   function _get_raw_body() {
@@ -917,10 +918,10 @@ class WikiPage {
       return $out;
     }
     $size=filesize($this->filename);
-    $body=fread($fp,$size);
+    $this->body=fread($fp,$size);
     fclose($fp);
 
-    return $body;
+    return $this->body;
   }
 
   function set_raw_body($body) {
@@ -993,6 +994,26 @@ class Formatter {
              "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
              "($urlrule)|".
              "(\?[a-z0-9]+)";
+
+    if ($page) $this->get_instructions();
+  }
+
+  function get_instructions() {
+    $pi=array('#redirect','#format');
+    if (!$this->page->exists()) return '';
+    $body=$this->page->get_raw_body();
+    while ($body and $body[0] == '#') {
+      # extract first line
+      list($line, $body)= split("\n", $body,2);
+      if ($line=='#') break;
+      else if ($line[1]=='#') continue;
+      list($key,$val)= explode(" ",$line,2);
+      if (in_array($key,$pi)) {
+        $this->pi[$key]=$val;
+#       print $key."   ".$val."<br />";
+      }
+    }
+    $this->page->body=$body;
   }
 
   function highlight_repl($val) {
@@ -1774,12 +1795,19 @@ class Formatter {
   function send_header($header="",$options=array()) {
     global $DBInfo;
     $plain=0;
+
+    if ($this->pi["#redirect"] != '' && $options[pi]) {
+      $options[value]=$this->pi['#redirect'];
+      $this->pi['#redirect']='';
+      do_goto($this,$options);
+      return;
+    }
     if ($header) {
       if (is_array($header))
         foreach ($header as $head) {
           header($head);
           if (preg_match("/^content\-type: text\/plain/i",$head)) {
-             $plain=1;
+            $plain=1;
           }
         }
       else
@@ -2097,7 +2125,7 @@ MSG;
     if ($text) {
       $raw_body = str_replace('\r\n', '\n', $text);
     } else if ($this->page->exists()) {
-      $raw_body = str_replace('\r\n', '\n', $this->page->get_raw_body());
+      $raw_body = str_replace('\r\n', '\n', $this->page->_get_raw_body());
     } else if ($options[template]) {
       $p= new WikiPage($options[template]);
       $raw_body = str_replace('\r\n', '\n', $p->get_raw_body());
@@ -2166,7 +2194,7 @@ if ($user->id != "Anonymous") {
 # XXX
 if (isset($locale)) {
   $lf="locale/".$DBInfo->lang."/LC_MESSAGES/moniwiki.php";
-  if (file_exists($fn))
+  if (file_exists($lf))
     include($lf);
 } else {
   setlocale(LC_ALL, $DBInfo->lang);
@@ -2351,10 +2379,12 @@ if ($pagename) {
       }
 
       $args[editable]=1;
-      $formatter->send_footer($args);
+      $formatter->send_footer($args,$options);
       return;
     }
     $DBInfo->counter->incCounter($pagename);
+
+    $options[pi]=1;
 
     $formatter->send_header("",$options);
     $formatter->send_title("","",$options);
