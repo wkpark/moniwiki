@@ -23,12 +23,13 @@ function macro_Calendar($formatter,$value="",$option="") {
 		'Thursday','Friday','Saturday');
 	$day_heading_length = 3;
 
-	preg_match("/^((\d{4})-(\d{2}))?,?\s*([a-z, ]+)?$/i",$value,$match);
+	preg_match("/^((\d{4})-?(\d{2}))?,?\s*([a-z, ]+)?$/i",$value,$match);
 
 	/* GET argument has priority */
 	if ($date) {
-		$year = substr($date, 0, 4);
-		$month = substr($date, 5);
+		preg_match("/^((\d{4})-?(\d{1,2}))$/i",$date,$match2);
+		$year= $match2[2];
+		$month= $match2[3];
 	} else if ($match[1]) {
 		$year= $match[2];
 		$month= $match[3];
@@ -38,21 +39,8 @@ function macro_Calendar($formatter,$value="",$option="") {
 		$year= date('Y');
 		$month= date('m');
 	}
-
-	/* Calculate next/prev months and next/prev years */
-	$next_year = ($year+1).'-'.$month;
-	$prev_year = ($year-1).'-'.$month;
-
-	/* January */
-	if ($month==1)
-		$prev_month = ($year-1).'-12';
-	else
-		$prev_month = $year.'-'.($month-1);
-	/* December */
-	if ($month==12)
-		$next_month = ($year+1).'-1';
-	else
-		$next_month = $year.'-'.($month+1);
+	$month=intval($month);
+	$year=intval($year);
 
 	if ($match[4]) {
 		$args=explode(",",$match[4]);
@@ -60,6 +48,13 @@ function macro_Calendar($formatter,$value="",$option="") {
 		if (in_array ("blog", $args)) $mode='blog';
 		if (in_array ("noweek", $args)) $day_heading_length=0;
 		if (in_array ("yearlink", $args)) $yearlink=1;
+	}
+
+	$prev_month=date('Ym',mktime(0,0,0,$month - 1,1,$year));
+	$next_month=date('Ym',mktime(0,0,0,$month + 1,1,$year));
+	if ($yearlink) {
+		$prev_year=date('Ym',mktime(0,0,0,$month,1,$year - 1));
+		$next_year=date('Ym',mktime(0,0,0,$month,1,$year + 1));
 	}
 
 	if ($option)
