@@ -10,8 +10,10 @@
 
 function processor_gnuplot($formatter="",$value="") {
   global $DBInfo;
-  #$gnuplot="gnuplot";
+  #$gnuplot="gnuplot"; # Unix
+  #$gnuplot="wgnuplot"; # Win32
   $gnuplot="/usr/local/bin/gnuplot_pm3d";
+
   $vartmp_dir="/var/tmp";
   $cache_dir="pds/GnuPlot";
 
@@ -57,15 +59,26 @@ $plt
   if ($formatter->refresh || !file_exists("$cache_dir/$uniq.png")) {
 
      $flog=tempnam($vartmp_dir,"GNUPLOT");
+#
+# for Win32 wgnuplot.exe
+#
+#     $finp=tempnam($vartmp_dir,"GNUPLOT");
+#     $ifp=fopen($finp,"w");
+#     fwrite($ifp,$src);
+#     fclose($ifp);
+#
+#     $cmd= "$gnuplot $finp > $flog";
+#     $fp=system($cmd);
+#     $log=join(file($flog),"");
+#     unlink($flog);
+#     unlink($finp);
 
-     $cmd= "$gnuplot 2>$flog";
-     $fp=popen($cmd,"w");
-     fwrite($fp,$src);
-  
-#   while($s = fgets($fp, 1024)) {
-#     $log.= $s;
-#   }
-     pclose($fp);
+#
+# Unix
+#
+     $cmd= "$gnuplot 2> $flog";
+     $fp=system($cmd);
+
      $log=join(file($flog),"");
      unlink($flog);
   
