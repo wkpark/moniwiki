@@ -417,7 +417,7 @@ class WikiDB {
     $this->query_prefix='/';
     $this->umask= 02;
     $this->charset='euc-kr';
-    $this->lang='ko';
+    $this->lang='auto';
     $this->dba_type="db3";
     $this->use_counter=0;
 
@@ -630,11 +630,11 @@ class WikiDB {
   #  return preg_replace("/_([a-f0-9]{2})/e","chr(hexdec('\\1'))",$key);
   #  $pagename=preg_replace("/_([a-f0-9]{2})/","%\\1",$key);
   #  $pagename=str_replace("_","%",$key);
-    $pagename=strtr($key,"_","%");
+    $pagename=strtr($key,'_','%');
     return rawurldecode($pagename);
   }
 
-  function getPageLists($options="") {
+  function getPageLists($options='') {
     $pages = array();
     $handle = opendir($this->text_dir);
 
@@ -786,10 +786,19 @@ class WikiDB {
     fwrite($fp, $body);
     flock($fp,LOCK_UN);
     fclose($fp);
-    $ret=system("ci -l -x,v/ -q -t-\"".$pagename."\" -m\"".$REMOTE_ADDR.";;".
-            $user->id.";;".$comment."\" ".$key);
-    #print $ret;
-    $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
+    $ret=system("ci -l -x,v/ -q -t-\"".$pagename."\" -m\"".$REMOTE_ADDR.';;'.
+            $user->id.';;'.$comment."\" ".$key);
+    # check minor edits
+    $minor=0;
+    if ($this->use_minorcheck or $options['minorcheck']) {
+      $info=$page->get_info();
+      if ($info[1]) {
+        eval('$check='.$info[1].';');
+        if (abs($check) < 3) $minor=1;
+      }
+    }
+    if (!$minor)
+      $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
     return 0;
   }
 
@@ -1053,11 +1062,17 @@ class WikiPage {
     $this->body=$body;
   }
 
-  function get_rev($mtime="") {
+  function get_rev($mtime="",$last=0) {
+    if ($last==1) {
+      $tag='head:';
+      $opt='-h';
+    } else $tag='revision';
     if ($mtime) {
       $date=gmdate('Y/m/d H:i:s',$mtime);
-      if ($date) 
-         $opt="-d\<'$date'";
+      if ($date) {
+        $opt="-d\<'$date'";
+        $tag='revision';
+      }
     }
     $fp=popen("rlog -x,v/ $opt ".$this->filename,"r");
 #   if (!$fp)
@@ -1065,16 +1080,39 @@ class WikiPage {
 # XXX
     while (!feof($fp)) {
       $line=fgets($fp,1024);
-      preg_match("/^revision\s+([\d\.]+$)/",$line,$match);
+      preg_match("/^$tag\s+([\d\.]+)$/",$line,$match);
       if ($match[1]) {
-         $rev=$match[1];
-         break;
+        $rev=$match[1];
+        break;
       }
     }
     pclose($fp);
     if ($rev > 1.0)
       return $rev;
     return '';
+  }
+
+  function get_info($rev='') {
+    $info=array('','','','','');
+    if (!$rev)
+      $rev=$this->get_rev('',1);
+    if (!$rev) return $info;
+    $fp=popen("rlog -x,v/ -r$rev ".$this->filename,"r");
+    $state=0;
+    while (!feof($fp)) {
+      $line=fgets($fp,1024);
+      if ($state == 0 and preg_match("/^date:\s.*$/",$line)) {
+        $tmp=preg_replace("/date:\s(.*);\s+author:.*;\s+state:.*;/","\\1",rtrim($line));
+        $tmp=explode('lines:',$tmp);
+        $info[0]=$tmp[0];$info[1]=$tmp[1];
+        $state=1;
+      } else if ($state) {
+        list($info[2],$info[3],$info[4])=explode(';;',$line,3);
+        break;
+      }
+    }
+    pclose($fp);
+    return $info;
   }
 }
 
@@ -1719,9 +1757,11 @@ class Formatter {
     $attr='';
     if ($extra) {
       $para=substr($extra,3,-1);
-      # only rowspan supported
+      # rowspan
       if (preg_match("/^\|(\d)$/",$para,$match))
         $attr="rowspan='$match[1]' ";
+      else if ($para[0]=='#')
+        $attr="bgcolor='$para' ";
     }
     if ($len > 1)
       $attr.=" align='center' colspan='$len'";
@@ -2098,7 +2138,7 @@ class Formatter {
            $state=3;
            break;
         case 3:
-           $dummy=explode(";;",$line);
+           $dummy=explode(';;',$line,3);
            $ip=$dummy[0];
            $user=$dummy[1];
            if ($user and $user!='Anonymous') {
@@ -2234,21 +2274,21 @@ class Formatter {
 
     if (!$text) return '';
     # save new
-    $tmpf3=tempnam($DBInfo->vartmp_dir,"MERGE_NEW");
-    $fp= fopen($tmpf3, "w");
+    $tmpf3=tempnam($DBInfo->vartmp_dir,'MERGE_NEW');
+    $fp= fopen($tmpf3, 'w');
     fwrite($fp, $text);
     fclose($fp);
 
     # recall old rev
-    $opts[rev]=$this->page->get_rev();
+    $opts['rev']=$this->page->get_rev();
    
     $orig=$this->page->get_raw_body($opts);
-    $tmpf2=tempnam($DBInfo->vartmp_dir,"MERGE_ORG");
-    $fp= fopen($tmpf2, "w");
+    $tmpf2=tempnam($DBInfo->vartmp_dir,'MERGE_ORG');
+    $fp= fopen($tmpf2, 'w');
     fwrite($fp, $orig);
     fclose($fp);
 
-    $fp=popen("merge -p ".$this->page->filename." $tmpf2 $tmpf3","r");
+    $fp=popen("merge -p ".$this->page->filename." $tmpf2 $tmpf3",'r');
 
     if (!$fp) {
       unlink($tmpf2);
@@ -2268,17 +2308,17 @@ class Formatter {
     return $out;
   }
 
-  function get_diff($rev1="",$rev2="",$text="") {
+  function get_diff($rev1='',$rev2='',$text='') {
     global $DBInfo;
-    $option="";
+    $option='';
 
     if ($text) {
-      $tmpf=tempnam($DBInfo->vartmp_dir,"DIFF");
-      $fp= fopen($tmpf, "w");
+      $tmpf=tempnam($DBInfo->vartmp_dir,'DIFF');
+      $fp= fopen($tmpf, 'w');
       fwrite($fp, $text);
       fclose($fp);
 
-      $fp=popen("diff -u $tmpf ".$this->page->filename,"r");
+      $fp=popen("diff -u $tmpf ".$this->page->filename,'r');
       if (!$fp) {
          unlink($tmpf);
          return;
@@ -2305,16 +2345,16 @@ class Formatter {
       $rev1=$this->page->get_rev();
     } else if (0 === strcmp($rev1 , (int)$rev1)) {
       $rev1=$this->page->get_rev($rev1);
-    } else if ($rev1==$rev2) $rev2="";
+    } else if ($rev1==$rev2) $rev2='';
     if ($rev1) $option="-r$rev1 ";
     if ($rev2) $option.="-r$rev2 ";
 
     if (!$option) {
-      $msg= "No older revisions available";
+      $msg= _("No older revisions available");
       print "<h2>$msg</h2>";
       return;
     }
-    $fp=popen("rcsdiff -x,v/ -u $option ".$this->page->filename,"r");
+    $fp=popen("rcsdiff -x,v/ -u $option ".$this->page->filename,'r');
     if (!$fp)
       return;
     while (!feof($fp)) {
@@ -2323,7 +2363,7 @@ class Formatter {
     }
     pclose($fp);
     if (!$out) {
-      $msg= "No difference found";
+      $msg= _("No difference found");
       print "<h2>$msg</h2>";
     } else {
       if ($rev1==$rev2) print "<h2>"._("Difference between versions")."</h2>";
@@ -2343,7 +2383,7 @@ class Formatter {
     global $DBInfo;
     $plain=0;
 
-    if ($this->pi["#redirect"] != '' && $options['pi']) {
+    if ($this->pi['#redirect'] != '' && $options['pi']) {
       $options['value']=$this->pi['#redirect'];
       $options['redirect']=1;
       $this->pi['#redirect']='';
@@ -2503,7 +2543,7 @@ EOS;
       else
         $menu= _("NotEditable");
     } else
-      $menu.= $this->link_to("?action=show",_("ShowPage"));
+      $menu.= $this->link_to('?action=show',_("ShowPage"));
     $menu.=$this->menu_sep.$this->link_tag("FindPage","",_("FindPage"));
 
     if (!$args['noaction']) {
@@ -2714,10 +2754,16 @@ MSG;
 } # end-of-Formatter
 
 # setup the locale like as the phpwiki style
-function get_langs() {
+function get_locales($mode=1) {
+  $languages=array(
+    'en'=>array('en_US','english',''),
+    'fr'=>array('fr_FR','france',''),
+    'ko'=>array('ko_KR','korean',''),
+  );
   $lang= $_SERVER['HTTP_ACCEPT_LANGUAGE'];
   $langs=explode(',',preg_replace(array("/;[^;,]+/","/\-[a-z]+/"),'',$lang));
-  return $langs;
+  if ($languages[$langs[0]]) return array($languages[$langs[0]][0]);
+  return array($languages[0][0]);
 }
 
 # get the pagename
@@ -2801,20 +2847,28 @@ if ($DBInfo->theme and $DBInfo->theme_css)
 
 $options['timer']=&$timing;
 $options['timer']->Check("load");
-# get broswer's settings
-$langs=get_langs();
 
 if ($DBInfo->lang == 'auto') {
-  $DBInfo->lang= $langs[0];#.".".strtoupper($DBInfo->charset);
-  $lang=$langs[0];
+  # get broswer's settings
+  $langs=get_locales();
+  $lang= $langs[0];
+
+  $charset= strtoupper($DBInfo->charset);
+  $server_charset= nl_langinfo(CODESET);
+  if ($charset == 'UTF-8' or $charset != $server_charset)
+    $lang.=".".$charset;
 } else
   $lang= $DBInfo->lang;
 
 if (isset($locale)) {
   $lf="locale/".$lang."/LC_MESSAGES/moniwiki.php";
+  if (!file_exists($lf)) {
+    $lang=substr($lang,0,2);
+    $lf="locale/".$lang."/LC_MESSAGES/moniwiki.php";
+  }
   if (file_exists($lf)) include_once($lf);
-} else if ($lang != 'en') {
-  setlocale(LC_ALL, $lang);
+} else if (substr($lang,0,2) != 'en') {
+  $test=setlocale(LC_ALL, $lang);
   bindtextdomain("moniwiki", "locale");
   textdomain("moniwiki");
 }
