@@ -966,7 +966,8 @@ class WikiPage {
     $this->filename= $this->_filename($name);
     $this->urlname= _rawurlencode($name);
     $this->body= "";
-    $this->title=preg_replace("/((?<=[A-Za-z0-9])[A-Z][a-z0-9])/"," \\1",$name);
+    $this->title=get_title($name);
+    #$this->title=preg_replace("/((?<=[A-Za-z0-9])[A-Z][a-z0-9])/"," \\1",$name);
   }
 
   function _filename($pagename) {
@@ -2854,7 +2855,8 @@ if ($DBInfo->lang == 'auto') {
   $lang= $langs[0];
 
   $charset= strtoupper($DBInfo->charset);
-  $server_charset= nl_langinfo(CODESET);
+  if (function_exists('nl_langinfo'))
+    $server_charset= nl_langinfo(CODESET);
   if ($charset == 'UTF-8' or $charset != $server_charset)
     $lang.=".".$charset;
 } else
@@ -2925,17 +2927,18 @@ if ($pagename) {
         $formatter->send_title($page->name,"",$options);
         $twins=join("\n",$twins);
         $formatter->send_page(_("See TwinPages: ").$twins);
-        echo "<br />or ".
+        echo "<br />".
           $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
       } else {
         $formatter->send_title(sprintf("%s Not Found",$page->name),"",$options);
-        print $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
+        $button= $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
+        print $button;
+        print sprintf(_(" or click %s to fullsearch this page.\n"),$formatter->link_to("?action=fullsearch&amp;value=$options[page]",_("title")));
         print $formatter->macro_repl('LikePages',$page->name,&$err);
         if ($err['extra'])
           print $err['extra'];
 
-        print "<hr />\n";
-        print $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
+        print "<hr />\n$button";
         print _(" or alternativly, use one of these templates:\n");
         $options['linkto']="?action=edit&amp;template=";
         print macro_TitleSearch($formatter,".*Template",$options);

@@ -41,7 +41,7 @@ function get_title($page) {
   } else
     $title=$page;
 
-  return preg_replace("/((?<=[A-Za-z0-9])[A-Z][a-z0-9])/"," \\1",$title);
+  return preg_replace("/((?<=[a-z0-9]|[A-Z]{2})[A-Z][a-z])/"," \\1",$title);
 }
 
 function getTicket() {
@@ -1305,7 +1305,7 @@ function macro_TitleIndex($formatter="") {
 #    if ($DBInfo->use_titlecache and $cache->exists($page))
 #      $title=$cache->fetch($page);
 #    else
-      $title=$page;
+      $title=get_title($page);
 
     $out.= '<li>' . $formatter->word_repl('"'.$page.'"',$title)."</li>\n";
   }
