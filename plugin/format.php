@@ -1,8 +1,7 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a format plugin to connect with processors for the MoniWiki
-// vim:et:ts=2:
 //
 // $Id$
 
@@ -11,7 +10,7 @@ function do_format($formatter,$options) {
   $mimetype=$options['mimetype'];
   if (!$mimetype) $mimetype='text/plain';
 
-  $pi=$formatter->get_instructions();
+  $pi=$formatter->get_instructions($dummy);
   if ($pi['#format']=='xsltproc') {
     $options['title']= _("It is a XML format !");
     do_invalid($formatter,$options);
@@ -38,5 +37,6 @@ function do_format($formatter,$options) {
 
   return;
 }
+// vim:et:sts=2:sw=2:
 
 ?>
