@@ -91,8 +91,36 @@ function macro_Gallery($formatter,$value,$options='') {
     }
   }
 
+  if ($options['value']) {
+    $file=urldecode($options['value']);
+  }
+  if ($file and $upfiles[$file] and $options['comment']) {
+    // add new comment
+    if ($options['id']=='Anonymous') $name=$_SERVER['REMOTE_ADDR'];
+    else $name=$options['id'];
+    if ($options['name']) $name=$options['name'];
+    $date=date("@ Y-m-d");
+
+    $comment=stripslashes($options['comment']);
+    $comment=str_replace("\r","",$comment);
+    $comment=str_replace("\n","\\n",$comment);
+    $comment=str_replace("\t"," ",$comment);
+    $comment=str_replace("<","&lt;",$comment);
+    $comment.=" -- $name $date";
+    $comments[$file]=$comment."\t".$comments[$file];
+    $update=1;
+  } else if ($file and $upfiles[$file]) {
+    // show comments of the selected item
+    $mtime=$upfiles[$file];
+    $comment=$comments[$file];
+    $upfiles=array();
+    $comments=array();
+    $upfiles[$file]=$mtime;
+    $comments[$file]=$comment;
+  }
+
   $mtime=file_exists($dir."/list.txt") ? filemtime($dir."/list.txt"):0;
-  if (filemtime($dir) > $mtime) {
+  if ((filemtime($dir) > $mtime) or $update) {
     unset($upfiles);
 
     $handle= opendir($dir);
@@ -140,9 +168,11 @@ function macro_Gallery($formatter,$value,$options='') {
 
   if (!file_exists($dir."/thumbnails")) mkdir($dir."/thumbnails",0777);
 
+
   while (list($file,$mtime) = each ($upfiles)) {
     $size=filesize($dir."/".$file);
-    $link=$prefix.rawurlencode($file);
+    $id=rawurlencode($file);
+    $link=$prefix.$id;
     $date=date("Y-m-d",$mtime);
     if (preg_match("/\.(jpg|jpeg|gif|png)$/i",$file)) {
       if ($DBInfo->use_covert_thumbs and !file_exists($dir."/thumbnails/".$file)) {
@@ -157,10 +187,39 @@ function macro_Gallery($formatter,$value,$options='') {
     }
     else
       $object=$file;
+
+
+    $unit=array('Bytes','KB','MB','GB','TB');
+    $i=0;
+    for (;$i<4;$i++) {
+      if ($size <= 1024) {
+        $size= round($size,2).' '.$unit[$i];
+        break;
+      }
+      $size=$size/1024;
+    }
+#    $size=round($size,2).' '.$unit[$i];
+
     $comment='';
-    if ($comments[$file] != '') $comment="<br/>".$comments[$file];
+    $comment_btn=_("comment");
+    if ($comments[$file] != '' and $options['value']) {
+      $comment=$comments[$file];
+      $comment=str_replace("\\n","<br/>\n",$comment);
+      $comment=str_replace("\t","<br/>\n----<br/>\n",$comment);
+      $comment="<br/>".$comment;
+    } else if ($comments[$file] != '') {
+      $comment_btn=_("show comments");
+      list($comment,$dum)=explode("\t",$comments[$file],2);
+      $comment=str_replace("\\n","<br/>\n",$comment);
+      $comment=str_replace("\t","<br/>\n----<br/>\n",$comment);
+      $comment="<br/>".$comment;
+    }
     $out.="<td align='center' valign='top' class='wiki'><a href='$link'>$object</a><br />".
-          "@ $date ($size bytes)$comment</td>\n";
+          "$date ($size) ";
+    if (!$options['value'])
+      $out.='['.$formatter->link_tag($formatter->page->urlname,"?action=gallery&amp;value=$id",$comment_btn)."]<br />\n";
+    if ($comment) $out.="<div align='left' class='gallery_comments'>$comment</div>";
+    $out.="</td>\n";
     if ($idx % $col == 0) $out.="</tr>\n<tr>\n";
     $idx++;
     if ($idx > $perpage) break;
@@ -172,14 +231,58 @@ function macro_Gallery($formatter,$value,$options='') {
 }
 
 function do_gallery($formatter,$options='') {
-  $ret=macro_Gallery($formatter,'',$options);
   $formatter->send_header("",$options);
-  $formatter->send_title("","",$options);
 
-  print $ret;
+  $ret=macro_Gallery($formatter,'',$options);
+  if (!$options['value']) {
+    $formatter->send_title("","",$options);
+    print $ret;
+  } else if (!$options['comment'] and $options['all']) {
+    $formatter->send_title("","",$options);
+    print $ret;
+    $url=$formatter->link_url($formatter->page->urlname);
+  $form = "<form method='post' action='$url'>\n";
+  $form.= <<<FORM
+<textarea class="wiki" id="content" wrap="virtual" name="comment"
+ rows="$rows" cols="$cols" class="wiki">
+FORM;
+
+  $form.='</textarea><br />';
+  $form.= <<<FORM2
+<input type="hidden" name="action" value="gallery" />
+<input type="hidden" name="value" value="$options[value]" />
+password: <input type='password' name='passwd' />
+<input type="submit" value="Save" />&nbsp;
+<input type="reset" value="Reset" />&nbsp;
+</form>
+FORM2;
+
+  } else if (!$options['comment']) {
+    $formatter->send_title("","",$options);
+    print $ret;
+    $url=$formatter->link_url($formatter->page->urlname);
+                                                                                
+  $form = "<form method='post' action='$url'>\n";
+  $form.= "<b>Name or Email</b>: <input name='name' size='30' maxlength='30' style='width:200' /><br />\n";
+  $form.= <<<FORM
+<textarea class="wiki" id="content" wrap="virtual" name="comment"
+ rows="$rows" cols="$cols" class="wiki"></textarea><br />
+FORM;
+  $form.= <<<FORM2
+<input type="hidden" name="action" value="gallery" />
+<input type="hidden" name="value" value="$options[value]" />
+<input type="submit" value="Save" />&nbsp;
+<input type="reset" value="Reset" />&nbsp;
+</form>
+FORM2;
+    print $form;
+  } else {
+    $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
+    $formatter->send_title(sprintf(_("Comment added to \"%s\""),$formatter->page->name),"",$options);
+
+  }
 
   $formatter->send_footer("",$options);
-
 }
 
 ?>
