@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.0rc12';
+$_release = '1.0rc13';
 
 #ob_start("ob_gzhandler");
 
@@ -46,10 +46,9 @@ function _rawurlencode($url) {
 }
 
 function qualifiedUrl($url) {
-  global $HTTP_HOST;
   if (substr($url,0,7)=="http://")
     return $url;
-  return "http://$HTTP_HOST$url";
+  return "http://$_SERVER[HTTP_HOST]$url";
 }
 
 function getPlugin($pluginname) {
@@ -204,6 +203,10 @@ class Timer {
 
   function Total() {
     return sprintf("%4.4f sec\n",$this->total);
+  }
+
+  function Clean() {
+    $this->timers=array();
   }
 }
 
@@ -397,13 +400,18 @@ class Security_needtologin {
   }
 }
 
-function getConfig($configfile,$options="") {
-  if (!file_exists($configfile))
+function getConfig($configfile) {
+  if (!file_exists($configfile)) {
+    header("Location: monisetup.php");
+    exit;
     return array();
+  }
 
+  $org=array();
   $org=get_defined_vars();
   include($configfile);
   $new=get_defined_vars();
+  # print_r(array_diff($new,$org));
 
   return array_diff($new,$org);
 }
@@ -412,15 +420,15 @@ class WikiDB {
   function WikiDB($config=array()) {
     # Default Configuations
     $this->frontpage='FrontPage';
-    $this->sitename='MoniWiki';
-    $this->data_dir= './data';
+    $this->sitename='UnnamedWiki';
     $this->upload_dir= './pds';
+    $this->data_dir= './data';
     $this->query_prefix='/';
     $this->umask= 02;
     $this->charset='euc-kr';
     $this->lang='ko';
     $this->dba_type="db3";
-    $this->use_counter=1;
+    $this->use_counter=0;
 
     $this->text_dir= $this->data_dir.'/text';
     $this->cache_dir= $this->data_dir.'/cache';
@@ -431,7 +439,7 @@ class WikiDB {
     $this->url_prefix= '/moniwiki';
     $this->imgs_dir= $this->url_prefix.'/imgs';
     $this->css_dir= 'css';
-    $this->logo_img= $this->imgs_dir.'/moniwiki.gif';
+    $this->logo_img= $this->imgs_dir.'/moniwiki-logo.gif';
 
     $this->css_url= $this->url_prefix.'/css/default.css';
     $this->kbd_script= $this->url_prefix.'/css/kbd.js';
@@ -526,8 +534,8 @@ class WikiDB {
     $map=array_merge($map,$shared_map);
 
     for ($i=0;$i<sizeof($map);$i++) {
-      $line=trim($map[$i]);
-      if (!$line || $line[0]=="#") continue;
+      $line=rtrim($map[$i]);
+      if (!$line || $line[0]=="#" || $line[0]==" ") continue;
       if (preg_match("/^[a-z]+/i",$line)) {
         $dum=split("[[:space:]]",$line);
         $this->interwiki[$dum[0]]=trim($dum[1]);
@@ -2372,10 +2380,9 @@ MSG;
   }
 
   function send_editor($text="",$options="") {
-    global $HTTP_USER_AGENT;
     $COLS_MSIE = 80;
     $COLS_OTHER = 85;
-    $cols = preg_match('/MSIE/', $HTTP_USER_AGENT) ? $COLS_MSIE : $COLS_OTHER;
+    $cols = preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
 
     $rows=$options['rows'] > 5 ? $options['rows']: 16;
     $cols=$options['cols'] > 60 ? $options['cols']: $cols;
@@ -2464,6 +2471,13 @@ EOS;
   }
 } # end-of-Formatter
 
+# setup the locale like as the phpwiki style
+function get_langs() {
+  $lang= $_SERVER['HTTP_ACCEPT_LANGUAGE'];
+  $langs=explode(",",preg_replace(array("/;[^;,]+/","/\-[a-z]+/"),"",$lang));
+  return $langs;
+}
+
 # Start Main
 $Config=getConfig("config.php");
 
@@ -2475,7 +2489,7 @@ $options=array();
 $options['id']=$user->id;
 
 # MoniWiki theme
-$theme=$HTTP_GET_VARS['theme'];
+$theme=$_GET['theme'];
 if ($theme) $options['theme']=$theme;
 
 if ($DBInfo->trail)
@@ -2491,14 +2505,8 @@ if ($user->id != "Anonymous") {
   if (!$theme) $options['theme']=$user->theme;
 }
 
-# setup the locale like as the phpwiki style
-function get_langs() {
-  $lang= $_SERVER['HTTP_ACCEPT_LANGUAGE'];
-  $langs=explode(",",preg_replace(array("/;[^;,]+/","/\-[a-z]+/"),"",$lang));
-  return $langs;
-}
-
-$timing->Check("load");
+$options['timer']=&$timing;
+$options['timer']->Check("load");
 # get broswer's settings
 $langs=get_langs();
 
@@ -2515,159 +2523,60 @@ if (isset($locale)) {
 }
 
 # get the pagename
-// $_SERVER["PATH_INFO"] has bad value under CGI mode
-// set 'cgi.fix_pathinfo=1' in the php.ini under
-// apache 2.0.x + php4.2.x Win32
-if (!empty($_SERVER['PATH_INFO'])) {
-  if ($_SERVER['PATH_INFO'][0] == '/')
-    $pagename=substr($_SERVER['PATH_INFO'],1);
-  if (!$pagename) {
+function get_pagename() {
+  global $DBInfo;
+  // $_SERVER["PATH_INFO"] has bad value under CGI mode
+  // set 'cgi.fix_pathinfo=1' in the php.ini under
+  // apache 2.0.x + php4.2.x Win32
+  if (!empty($_SERVER['PATH_INFO'])) {
+    if ($_SERVER['PATH_INFO'][0] == '/')
+      $pagename=substr($_SERVER['PATH_INFO'],1);
+    if (!$pagename) {
+      $pagename = $DBInfo->frontpage;
+    }
+    $pagename=stripslashes($pagename);
+  } else if (!empty($_SERVER['QUERY_STRING'])) {
+    if (isset($goto)) $pagename=$goto;
+    else {
+      $pagename = $_SERVER['QUERY_STRING'];
+      $result = preg_match('/^([^&=]+)/',$pagename,$matches);
+      if ($result) {
+        $pagename = urldecode($matches[1]);
+        $_SERVER['QUERY_STRING']=substr($_SERVER['QUERY_STRING'],strlen($pagename));
+      }
+    }
+    if (!$pagename) $pagename= $DBInfo->frontpage;
+  } else {
     $pagename = $DBInfo->frontpage;
   }
-  $pagename=stripslashes($pagename);
-} else if (!empty($_SERVER['QUERY_STRING'])) {
-  if (isset($goto)) $pagename=$goto;
-  else {
-    $pagename = $_SERVER['QUERY_STRING'];
-    $result = preg_match('/^([^&=]+)/',$pagename,$matches);
-    if ($result) {
-      $pagename = urldecode($matches[1]);
-      $QUERY_STRING=substr($QUERY_STRING,strlen($pagename));
-    }
-  }
-  if (!$pagename) $pagename= $DBInfo->frontpage;
-} else {
-  $pagename = $DBInfo->frontpage;
+  return $pagename;
 }
 
-# get primary variables
-if ($_SERVER['REQUEST_METHOD']=="POST") {
-  if (!$GLOBALS['HTTP_RAW_POST_DATA']) {
-    $action=$HTTP_POST_VARS['action'];
-    $value=$HTTP_POST_VARS['value'];
-    $goto=$HTTP_POST_VARS['goto'];
-  } else {
-    # RAW posted data. the $value can be accessed under
-    # "register_globals = On" in the php.ini
-    $options['value']=$value;
-  }
-} else if ($_SERVER['REQUEST_METHOD']=="GET") {
-  $action=$HTTP_GET_VARS['action'];
-  $value=$HTTP_GET_VARS['value'];
-  $goto=$HTTP_GET_VARS['goto'];
-}
-
-$options['page']=$pagename;
-$options['timer']=&$timing;
-
-if ($_SERVER['REQUEST_METHOD']=="POST" && $HTTP_POST_VARS) {
- $request=$HTTP_POST_VARS;
- if ($action=="savepage" && $DBInfo->security->writable($options)) {
-   $savetext=$request['savetext'];
-   $datestamp=$request['datestamp'];
-   $button_preview=$request['button_preview'];
-   $button_merge=$request['button_merge'];
-
-   $page = $DBInfo->getPage($pagename);
-   $formatter = new Formatter($page,$options);
-   $formatter->send_header("",$options);
-
-   $savetext=str_replace("\r", "", $savetext);
-   $savetext=stripslashes($savetext);
-   if ($savetext and $savetext[strlen($savetext)-1] != "\n")
-     $savetext.="\n";
-   $new=md5($savetext);
-
-   if ($page->exists()) {
-      # check difference
-      $body=$page->get_raw_body();
-      $body=str_replace("\r", "", $body);
-      $orig=md5($body);
-      # check datestamp
-      if ($page->mtime() > $datestamp) {
-         $options['msg']=sprintf(_("Someone else saved the page while you edited %s"),$formatter->link_tag($page->name));
-         $formatter->send_title(_("Conflict error!"),"",$options);
-         $options['preview']=1; 
-         $options['conflict']=1; 
-         $options['datestamp']=$datestamp; 
-         if ($button_merge) {
-            $merge=$formatter->get_merge($savetext);
-            if ($merge) $savetext=$merge;
-            unset($options[datestamp]); 
-         }
-         $formatter->send_editor($savetext,$options);
-         print $formatter->link_tag('GoodStyle')." | ";
-         print $formatter->link_tag('InterWiki')." | ";
-         print $formatter->link_tag('HelpOnEditing')." | ";
-         print $formatter->link_to("#editor",_("Goto Editor"));
-         print "<table border='1' align='center' width='100%'><tr><td>\n";
-         $formatter->get_diff("","",$savetext);
-         print "</td></tr></table>\n";
-         $formatter->send_footer();
-         return;
-      }
-   }
-
-   if (!$button_preview && $orig == $new) {
-      $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($page->name));
-      $formatter->send_title(_("No difference found"),"",$options);
-      $formatter->send_footer();
-      return;
-   }
-   $formatter->page->set_raw_body($savetext);
-
-   if ($button_preview) {
-      $title=sprintf(_("Preview of %s"),$formatter->link_tag($page->name));
-      $formatter->send_title($title,"",$options);
-     
-      $options['preview']=1; 
-      $options['datestamp']=$datestamp; 
-      $formatter->send_editor($savetext,$options);
-      print $DBInfo->hr;
-      print $formatter->link_tag('GoodStyle')." | ";
-      print $formatter->link_tag('InterWiki')." | ";
-      print $formatter->link_tag('HelpOnEditing')." | ";
-      print $formatter->link_to("#editor",_("Goto Editor"));
-      print "<div class='wikiPreview'>\n";
-      print "<table border='1' align='center' width='95%'><tr><td>\n";
-      $formatter->send_page($savetext);
-      print "</td></tr></table>\n";
-      print $DBInfo->hr;
-      print "</div>\n";
-      print $formatter->link_tag('GoodStyle')." | ";
-      print $formatter->link_tag('InterWiki')." | ";
-      print $formatter->link_tag('HelpOnEditing')." | ";
-      print $formatter->link_to("#editor",_("Goto Editor"));
-   } else {
-      $page->write($savetext);
-      $options['page']=$page->name;
-      $ret=$DBInfo->savePage($page,$comment,$options);
-      if ($DBInfo->notify) {
-        $options['noaction']=1;
-        $ret2=wiki_notify($formatter,$options);
-        if ($ret2)
-          $options['msg']=sprintf(_("Mail notifications are sented."))."<br />";
-        else
-          $options['msg']=sprintf(_("No subscribers found."))."<br />";
-      }
-      
-      if ($ret == -1)
-        $options['msg'].=sprintf(_("%s is not editable"),$formatter->link_tag($page->name));
-      else
-        $options['msg'].=sprintf(_("%s is saved"),$formatter->link_tag($page->name));
-      $formatter->send_title("","",$options);
-      $opt['pagelinks']=1;
-      # re-generates pagelinks
-      $formatter->send_page("",$opt);
-   }
-   $args['editable']=0;
-   $formatter->send_footer($args,$options);
-
-   exit;
- }
-}
-
+$pagename=get_pagename();
+#function render($pagename,$options) {
 if ($pagename) {
+  global $DBInfo;
+  global $GLOBALS;
+  # get primary variables
+  if ($_SERVER['REQUEST_METHOD']=="POST") {
+    if (!$GLOBALS['HTTP_RAW_POST_DATA']) {
+      $action=$_POST['action'];
+      $value=$_POST['value'];
+      $goto=$_POST['goto'];
+    } else {
+      # RAW posted data. the $value can be accessed under
+      # "register_globals = On" in the php.ini
+      $options['value']=$value;
+    }
+  } else if ($_SERVER['REQUEST_METHOD']=="GET") {
+    $action=$_GET['action'];
+    $value=$_GET['value'];
+    $goto=$_GET['goto'];
+    $rev=$_GET['rev'];
+  }
+
+  $options['page']=$pagename;
+
   if ($action=="recall" || $action=="raw" && $rev) {
     $options['rev']=$rev;
     $page = $DBInfo->getPage($pagename,$options);
@@ -2724,9 +2633,9 @@ if ($pagename) {
     $formatter->send_header("",$options);
     $formatter->send_title("","",$options);
     $formatter->write("<div id='wikiContent'>\n");
-    $timing->Check("init");
+    $options['timer']->Check("init");
     $formatter->send_page();
-    $timing->Check("send_page");
+    $options['timer']->Check("send_page");
     $formatter->write("</div>\n");
     $args['editable']=1;
     $formatter->send_footer($args,$options);
@@ -2742,37 +2651,7 @@ if ($pagename) {
     return;
   }
 
-  if ($action=="diff") {
-    if ($button_admin) {
-      if (!$range) $range=array();
-      $rr='';
-      $dum=array();
-      foreach (array_keys($range) as $r) {
-        if (!$rr) $rr=$range[$r];
-        if ($range[$r+1]) continue;
-        else
-          $rr.=":".$range[$r];
-        $dum[]=$rr;$rr='';
-      }
-      $options['passwd']=$passwd;
-      $options['show']=$show;
-      $options['range']=$dum;
-      $options['page']=$page->name;
-      do_RcsPurge($formatter,$options);
-      return;
-    }
-    $formatter->send_header("",$options);
-    $formatter->send_title("Diff for $rev ".$page->name,"",$options);
-    if ($date)
-      print $formatter->get_diff($date);
-    else
-      print $formatter->get_diff($rev,$rev2);
-    print "<br /><hr />\n";
-    $formatter->send_page();
-    $formatter->send_footer($args,$options);
-    return;
-
-  } else if ($action) {
+  if ($action) {
     if(!function_exists("do_post_".$action) and
       !function_exists("do_".$action)){
       if ($plugin=getPlugin($action))
@@ -2781,24 +2660,23 @@ if ($pagename) {
 
     if (function_exists("do_".$action)) {
       if ($_SERVER['REQUEST_METHOD']=="POST")
-        $options=array_merge($HTTP_POST_VARS,$options);
+        $options=array_merge($_POST,$options);
       else
-        $options=array_merge($HTTP_GET_VARS,$options);
+        $options=array_merge($_GET,$options);
       eval("do_".$action."(\$formatter,\$options);");
       return;
     } else if (function_exists("do_post_".$action)) {
       if ($_SERVER['REQUEST_METHOD']=="POST")
-        $options=array_merge($HTTP_POST_VARS,$options);
-      eval("do_".$action."(\$formatter,\$options);");
+        $options=array_merge($_POST,$options);
+      eval("do_post_".$action."(\$formatter,\$options);");
       return;
     }
-    $formatter->send_header("Status: 406 Not Acceptable",$options);
-    $formatter->send_title(_("406 Not Acceptable"),"",$options);
-    $formatter->send_page("== "._("Is it valid action ?")." ==\n");
-    #print "<h2> "._("Is it valid action ?")." </h2>";
-    $formatter->send_footer($args,$options);
+    do_invalid($formatter,$options);
     return;
   }
 }
+
+#$pagename=get_pagename();
+#render($pagename,$options);
 // vim:et:ts=2:
 ?>
