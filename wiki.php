@@ -2312,7 +2312,7 @@ class Formatter {
     return $out;
   }
 
-  function get_diff($rev1='',$rev2='',$text='') {
+  function get_diff($rev1='',$rev2='',$text='',$options='') {
     global $DBInfo;
     $option='';
 
@@ -2336,13 +2336,16 @@ class Formatter {
 
       if (!$out) {
          $msg=_("No difference found");
-         print "<h2>$msg</h2>";
+         $ret="<h2>$msg</h2>";
       } else {
          $msg= _("Difference between yours and the current");
-         print "<h2>$msg</h2>";
-         print call_user_func(array(&$this,$DBInfo->diff_type),$out);
+         $ret= "<h2>$msg</h2>";
+         if (!$options['raw'])
+           $ret.= call_user_func(array(&$this,$DBInfo->diff_type),$out);
+         else
+           $ret.="<pre>$out</pre>\n";
       }
-      return;
+      return $ret;
     }
 
     if (!$rev1 and !$rev2) {
@@ -2355,7 +2358,7 @@ class Formatter {
 
     if (!$option) {
       $msg= _("No older revisions available");
-      print "<h2>$msg</h2>";
+      $ret= "<h2>$msg</h2>";
       return;
     }
     $fp=popen("rcsdiff -x,v/ -u $option ".$this->page->filename,'r');
@@ -2368,19 +2371,23 @@ class Formatter {
     pclose($fp);
     if (!$out) {
       $msg= _("No difference found");
-      print "<h2>$msg</h2>";
+      $ret.= "<h2>$msg</h2>";
     } else {
       if ($rev1==$rev2) print "<h2>"._("Difference between versions")."</h2>";
       else if ($rev1 and $rev2) {
         $msg= sprintf(_("Difference between r%s and r%s"),$rev1,$rev2);
-        print "<h2>$msg</h2>";
+        $ret.= "<h2>$msg</h2>";
       }
       else if ($rev1 or $rev2) {
         $msg=sprintf(_("Difference between r%s and the current"),$rev1.$rev2);
-        print "<h2>$msg</h2>";
+        $ret.= "<h2>$msg</h2>";
       }
-      print call_user_func(array(&$this,$DBInfo->diff_type),$out);
+      if (!$options['raw'])
+        $ret.= call_user_func(array(&$this,$DBInfo->diff_type),$out);
+      else
+        $ret.="<pre>$out</pre>\n";
     }
+    return $ret;
   }
 
   function send_header($header="",$options=array()) {
@@ -2662,11 +2669,15 @@ MSG;
     }
     $sister_save=$this->sister_on;
     $this->sister_on=0;
+    $key=1;
     foreach ($quicklinks as $item=>$attr) {
-      if (strpos($item,' ') === false)
+      if (strpos($item,' ') === false) {
+        $attr++;
+        $attr="accesskey='$attr'";
         $menu[]=$this->link_tag($item,"",_($item),$attr);
-      else
+      } else {
         $menu[]=$this->link_repl($item,$attr);
+      }
     }
     $this->sister_on=$sister_save;
     $menu=$this->menu_bra.join($this->menu_sep,$menu).$this->menu_cat;
