@@ -41,8 +41,8 @@ function do_ImportUrl($formatter,$options) {
     } else if (preg_match('/^<\/pre>/i',$split)) {
       $state='';
       $pre.="}}}\n";
-      $pre= str_replace(array("&quot;",'&lt;','&gt;','&amp;'),
-                        array('"','<','>','&'),$pre);
+      $pre= str_replace(array("&quot;",'&lt;','&gt;','&amp;','<b>','</b>'),
+                        array('"','<','>','&','',''),$pre);
       $wiki.=$pre;
       $pre='';
       continue;
@@ -75,11 +75,14 @@ function do_ImportUrl($formatter,$options) {
     # remove id tag and perma links
     $out= preg_replace("/<a\s*id=[^>]+>[^<]*<\/a>/i","",$out);
     $out= preg_replace("/<a\s*[^>]*href=['\"]#[^>]+>[^<]*<\/a>/i","",$out);
+    $out= preg_replace("/<a\s*[^>]*href=['\"]#[^>]+>[^<]*<\/a>/i","",$out);
     # remove ?WikiName links
     $out= preg_replace("/<a\s*[^>]*href=['\"][^>]+>\?<\/a>/i","",$out);
+    # remove hrefs with a blank link
+    $out= preg_replace("/<a\s*[^>]*href=['\"][^>]+><\/a>/i","",$out);
     # url
     $out= preg_replace("/<a\s*[^>]*href=['\"]([^'\"]+)['\"][^>]*>([^<]+)<\/a>/ie",
-      "'['.fix_url('$value','\\1').'\\2]'",$out);
+      "'['.fix_url('$value','\\1','\\2').'\\2]'",$out);
     # heading
     $out= preg_replace("/<h(\d)[^>]*>(?:\d+\.?\d*)*([^<]+)<\/h\d>/ie",
       "str_repeat('=', \\1).' \\2 '.str_repeat('=', \\1)",$out);
@@ -123,13 +126,17 @@ function prep_url($base_url) {
   return $path;
 }
 
-function fix_url($base_url,$url) {
+function fix_url($base_url,$url,$text='') {
   static $path=array();
 
+  if ($url== $text) return '';
   if (!$base_url) $path=array(); // reset
   else if (!count($path)) $path=prep_url($base_url);
 
-  if (substr($url,0,7)=='mailto:') return $url;
+  if (substr($url,0,7)=='mailto:') {
+    if (substr($url,7) == $text) return '';
+    return $url.' ';
+  }
 
   $p=strpos($url,'://');
   if ($p !== false) {
@@ -139,7 +146,13 @@ function fix_url($base_url,$url) {
 
   if ($url[0] == '/') {
     if (substr($url,1,5)=='imgs/') return '';
-    else if (substr($url,1,8)=='wiki.php') return '';
+    else if (substr($url,1,8)=='wiki.php') {
+      preg_match('/value=(.*)\.(gif|png|jpeg|jpg)$/',$url,$m);
+      if ($m[2])
+        return 'attachment:'.$m[1].'.'.$m[2];
+
+      return '';
+    }
     return $path[0].$url.' ';
   } else if (preg_match('@^(\./)+@',$url)) {
     // base_url: http://foo.bar.com/hello/world/
