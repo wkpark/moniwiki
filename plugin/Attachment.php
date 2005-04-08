@@ -79,9 +79,7 @@ function macro_Attachment($formatter,$value,$option='') {
   if (!$file) return 'attachment:/';
 
   $upload_file=$dir.'/'.$file;
-  if ($option == 1) {
-    return $upload_file;
-  }
+  if ($option == 1) return $upload_file;
   if (!$text) $text=$file;
 
   if (file_exists($upload_file)) {
