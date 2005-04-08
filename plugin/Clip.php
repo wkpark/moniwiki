@@ -13,7 +13,7 @@ function macro_Clip($formatter,$value) {
   $_dir=str_replace("./",'',$DBInfo->upload_dir.'/'.$keyname);
   $name=_rawurlencode($value);
 
-  $enable_edit=1;
+  $enable_edit=0;
 
   umask(000);
   if (!file_exists($_dir))
