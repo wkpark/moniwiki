@@ -9,17 +9,41 @@
 //
 // you can also replace inline latex processor with following config:
 //  $inline_latex='itex';
+//
 // and replace the latex processor:
 //  $processors=array('latex'=>'itex',...);
 //
 // $Id$
 
+/*
+  itex2MML.l patch to enable $$\alpha$$ syntax
+*/
+
+// fix MathML under HTML
+// http://www.orcca.on.ca/MathML/texmml/mathml.dtd
+
 function processor_itex($formatter="",$value="",$options='') {
     global $DBInfo;
-
-    $fix_itex=array('Sum'=>'sum','rightarrow'=>'rarr');
-
+    $patched=1;
     $use_javascript=1;
+    $fix_mathml=1;
+
+    if ($fix_mathml) {
+        # fix output for the traditional XHTML XXX
+        $fix_itex=array(
+        '&Sum;'=>'&sum;',
+        '&rightarrow;'=>'&rarr;',
+        '&partial;'=>'&part;',
+        '&PartialD;'=>'&part;',
+        '&Integral;'=>'&int;',
+        '&Hat;'=>'&#770;',
+        '&geq;'=>'&#8805;',
+        '&epsi;'=>'&#8714;',
+        '&hbar;'=>'&#x210F;',
+        '&RightVector;'=>'&#x021C0;',
+        );
+    }
+
     if ($use_javascript) {
         $flag = 0;
         $id=&$GLOBALS['_transient']['mathml'];
@@ -52,8 +76,9 @@ function processor_itex($formatter="",$value="",$options='') {
         umask(000);
         mkdir($cache_dir,0777);
     }
-  
-    $src=preg_replace('/\$\$/','$',$value);
+    if ($patched) $src=$value; # with the patched itex2MML
+    else  
+        $src=preg_replace(array('/^\$\$/','/\$\$/'),array('\[','\]'),$value); # XXX
     $uniq=md5($src);
   
     $RM='rm';
@@ -79,7 +104,7 @@ function processor_itex($formatter="",$value="",$options='') {
         pclose($fp);
         unlink($srcpath);
 
-        $out=preg_replace('/^<math /',"<math display='$type' ",$out);
+        #$out=preg_replace('/^<math /',"<math display='$type' ",$out);
         $fp=fopen($cache_dir."/$uniq".'.xml','w');
         fwrite($fp,$out);
         fclose($fp);
@@ -89,7 +114,11 @@ function processor_itex($formatter="",$value="",$options='') {
     if (!$fp) return $src;
     while (!feof($fp)) $out .= fread($fp, 1024);
     @fclose($fp);
-    $out = strtr($out,$fix_itex); # itex bug ?
+    #$out=preg_replace('/^<math [^>]+>/',"<math><mstyle fontsize='140%' displaystyle='true'>",$out);
+    #$out=preg_replace('/<\/math>/',"</mstyle></math>",$out);
+
+    if ($fix_mathml)
+        $out = strtr($out,$fix_itex); # fix output for the traditional XHTML
     $out = "<div class='itex' id=\"mathml" . $id. "\">$out" .'</div>';
     if ($use_javascript)
         $out.= "<script type=\"text/javascript\">fixMmlById('mathml" .$id.
