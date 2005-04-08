@@ -32,6 +32,7 @@ $lang='auto';
 $charset='utf-8';
 #$charset='utf-8';
 $auto_linebreak= 0;
+$auto_search='AutoGoto';
 $trail= 0;
 #$origin=1;
 #$arrow=' <img src="/wiki/imgs/moni-arrow.gif"/> ';
@@ -41,6 +42,7 @@ $use_sistersites=1;
 $use_twinpages=1;
 $use_trackback=0;
 $vim_options='+"set expandtab" +"retab"';
+$pds_allowed="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|css|exe|hwp|pdf";
 #$vim_nocheck=1;
 #$vim_options='+"set encoding=UTF-8"';
 #$nonexists='fancy';
@@ -106,4 +108,7 @@ $vim_options='+"set expandtab" +"retab"';
 #$version_class='RcsLite';
 #$use_numbering=1;
 #$use_resizer=1;
+#$use_minoredit=1; // only for wiki owners
+#$auto_search='FixMoin';
+$use_sectionedit=0;
 ?>
