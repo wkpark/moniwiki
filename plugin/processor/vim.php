@@ -43,8 +43,7 @@ function processor_vim($formatter,$value,$options) {
     if (!$jsloaded) 
       $script='<script type="text/javascript" src="'.$DBInfo->url_prefix.'/local/numbering.js"></script>';
     $script.="<script type=\"text/javascript\">
-document.write('<a href=\"#\" onClick=\"return togglenumber(\'PRE-$uniq\', 1, 1);\" \\
-class=\"codenumbers\">$button</a>');
+document.write('<a href=\"#\" onClick=\"return togglenumber(\'PRE-$uniq\', 1, 1);\" class=\"codenumbers\">$button</a>');
 </script>";
   }
 

@@ -82,7 +82,7 @@ $tex
 
      system("$RM $vartmp_dir/$uniq.*");
   }
-  return "<img class='tex' src='$DBInfo->url_prefix/$cache_dir/$uniq.png' alt='tex' ".
+  return "<img class='tex' src='$DBInfo->url_prefix/$cache_dir/$uniq.png' alt='$tex' ".
          "title=\"$tex\" />";
 }
 
