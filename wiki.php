@@ -1310,6 +1310,7 @@ class Formatter {
     $this->page=$page;
     $this->head_num=1;
     $this->head_dep=0;
+    $this->sect_num=0;
     $this->toc=0;
     $this->highlight="";
     $this->prefix= get_scriptname();
@@ -1321,6 +1322,7 @@ class Formatter {
     $this->inline_latex=
       $DBInfo->inline_latex == 1 ? 'latex':$DBInfo->inline_latex;
     $this->use_purple=$DBInfo->use_purple;
+    $this->section_edit=$DBInfo->use_sectionedit;
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -1390,7 +1392,7 @@ class Formatter {
     #"\b(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+[^\(\)<>\s\',\.:\?\!]+)|".
-    "(\b|\^?)([A-Z][a-zA-Z]+):([^\(\)<>\s\']+[^\(\)<>\s\',\.:\?\!]+)|".
+    "(\b|\^?)([A-Z][a-zA-Z]+):([^\(\)<>\s\']+[^\(\)<>\s\'\",\.:\?\!]+)|".
     # "(?<!\!|\[\[)\b(([A-Z]+[a-z0-9]+){2,})\b|".
     # "(?<!\!|\[\[)((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})\b|".
     # WikiName rule: WikiName ILoveYou (imported from the rule of NoSmoke)
@@ -1715,9 +1717,19 @@ class Formatter {
          "width='16' alt='$wiki:' title='$wiki:' /></a>";
     #if (!$text) $text=str_replace("%20"," ",$page);
     if (!$text) $text=urldecode($page);
-    else if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
-      $text= "<img border='0' alt='$text' src='$text' />";
-      $img="";
+    else if (preg_match("/^(http|ftp|attachment):.*\.(png|gif|jpeg|jpg)$/i",$text)) {
+      if (substr($text,0,11)=='attachment:') {
+        $fname=substr($text,11);
+        $ntext=$this->macro_repl('Attachment',$fname,1);
+        if (!file_exists($ntext))
+          $text=$this->macro_repl('Attachment',$fname);
+        else {
+          $text=qualifiedUrl($DBInfo->url_prefix.'/'.$ntext);
+          $text= "<img border='0' alt='$text' src='$text' />";
+        }
+      } else
+        $text= "<img border='0' alt='$text' src='$text' />";
+      $img='';
     }
 
     if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$url))
@@ -1932,8 +1944,14 @@ class Formatter {
     if ($this->toc)
       $head="<a href='#toc'>$num</a> $head";
     $perma=" <a class='perma' href='#s$prefix-$num'>$this->perma_icon</a>";
+    if ($this->section_edit && !$this->preview) {
+      $this->sect_num++;
+      $url=$this->link_url($this->page->urlname,
+        '?action=edit&amp;section='.$this->sect_num);
+      $edit="<div class='sectionEdit' style='float:right;'>[<a href='$url'>edit</a>]</div>\n";
+    }
 
-    return "$close$open<h$dep><a id='s$prefix-$num' name='s$prefix-$num'></a> $head$perma</h$dep>";
+    return "$close$open$edit<h$dep><a id='s$prefix-$num' name='s$prefix-$num'></a> $head$perma</h$dep>";
   }
 
   function macro_repl($macro,$value='',$options='') {

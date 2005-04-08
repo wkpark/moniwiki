@@ -487,13 +487,41 @@ function do_edit($formatter,$options) {
     return;
   }
   $formatter->send_header("",$options);
-  $formatter->send_title("Edit ".$options['page'],"",$options);
+  if ($options['section'])
+    $sec=' (Section)';
+  $formatter->send_title(sprintf(_("Edit %s"),$options['page']).$sec,"",$options);
   print macro_EditText($formatter,$value,$options);
   $formatter->send_footer($args,$options);
 }
 
-function _get_section($formatter,$text) {
-
+function _get_sections($body) {
+  $chunks=preg_split("/(\{\{\{.+?\}\}\})/s",$body,-1, PREG_SPLIT_DELIM_CAPTURE);
+  $sects=array();
+  $sects[]='';
+  for ($jj=0,$ii=0,$ss=count($chunks); $ii<$ss; $ii++) {
+    if (($ii%2)) {
+      $sec=array_pop($sects);
+      $sects[]=$sec.$chunks[$ii];
+      continue;
+    }
+    $parts=array();
+    $parts=preg_split("/^(\s*={1,5}\s#?.*\s+={1,5}\s?)$/m",$chunks[$ii],
+      -1, PREG_SPLIT_DELIM_CAPTURE);
+    for ($j=0,$i=0,$s=count($parts); $i<$s; $i++) {
+      if (!($i%2)) {
+        $sec=array_pop($sects);
+        $sects[]=$sec.$parts[$i];
+        continue;
+      }
+      if (preg_match("/^\s*(={1,5})\s#?.*\s+\\1\s?/",$parts[$i])) {
+        $sects[]=$parts[$i];
+      } else {
+        $sec=array_pop($sects);
+        $sects[]=$sec.$parts[$i];
+      }
+    }
+  }
+  return $sects;
 }
 
 function macro_Edit($formatter,$value,$options='') {
@@ -526,6 +554,9 @@ function macro_Edit($formatter,$value,$options='') {
 
   if ($options['conflict'])
     $extra='<input type="submit" name="button_merge" value="Merge" />';
+  if ($options['section'])
+    $hidden='<input type="hidden" name="section" value="'.$options['section'].
+            '" />';
 
   # make a edit form
   $form.= "<a id='editor' name='editor' />\n";
@@ -554,6 +585,12 @@ function macro_Edit($formatter,$value,$options='') {
     $raw_body = str_replace("\r\n", "\n", $text);
   } else if ($formatter->page->exists()) {
     $raw_body = str_replace("\r\n", "\n", $formatter->page->_get_raw_body());
+    if (isset($options['section'])) {
+      $sections= _get_sections($raw_body);
+      if ($sections[$options['section']])
+        $raw_body = $sections[$options['section']];
+      #else ignore
+    }
   } else if ($options['template']) {
     $p= new WikiPage($options['template']);
     $raw_body = str_replace("\r\n", "\n", $p->get_raw_body());
@@ -619,7 +656,7 @@ EOS;
 $summary_msg: <input name="comment" size="70" maxlength="70" style="width:200" />$extra_check<br />
 <input type="hidden" name="action" value="savepage" />
 <input type="hidden" name="datestamp" value="$datestamp" />
-$select_category
+$hidden$select_category
 <input type="submit" value="$save_msg" />&nbsp;
 <!-- <input type="reset" value="Reset" />&nbsp; -->
 <input type="submit" name="button_preview" value="$preview_msg" />
@@ -914,6 +951,17 @@ function do_post_savepage($formatter,$options) {
 
   $savetext=str_replace("\r", "", $savetext);
   $savetext=_stripslashes($savetext);
+  $section_savetext='';
+  if (isset($options['section'])) {
+    if ($formatter->page->exists()) {
+      $sections= _get_sections($formatter->page->get_raw_body());
+      if ($sections[$options['section']])
+        $sections[$options['section']]=$savetext;
+      $section_savetext=$savetext;
+      $savetext=implode('',$sections);
+    }
+  }
+
   if ($savetext and $savetext[strlen($savetext)-1] != "\n")
     $savetext.="\n";
 
@@ -967,7 +1015,9 @@ function do_post_savepage($formatter,$options) {
      
     $options['preview']=1; 
     $options['datestamp']=$datestamp; 
+    $savetext=$section_savetext ? $section_savetext:$savetext;
     $options['savetext']=$savetext;
+
     print macro_EditText($formatter,$value,$options); # XXX
     print $DBInfo->hr;
     print $menu;
