@@ -1516,18 +1516,18 @@ function macro_PageList($formatter,$arg="") {
   return $out;
 }
 
-function macro_TitleIndex($formatter="") {
+function macro_TitleIndex($formatter) {
   global $DBInfo;
 
   if ($formatter->group) {
     $group_pages = $DBInfo->getLikePages($formatter->group,1);
     foreach ($group_pages as $page)
-      $all_pages[]=str_replace($formatter->group,"",$page);
+      $all_pages[]=str_replace($formatter->group,'',$page);
   } else
     $all_pages = $DBInfo->getPageLists();
   #natcasesort($all_pages);
   #sort($all_pages,SORT_STRING);
-  usort($all_pages, "strcasecmp");
+  usort($all_pages, 'strcasecmp');
 
   $key=-1;
   $out="";
@@ -1555,16 +1555,18 @@ function macro_TitleIndex($formatter="") {
 #    else
       $title=get_title($page);
 
-    $out.= '<li>' . $formatter->word_repl('"'.$page.'"',$title,'',0,0);
+    #$out.= '<li>' . $formatter->word_repl('"'.$page.'"',$title,'',0,0);
+    $urlname=_urlencode($page);
+    $out.= '<li>' . $formatter->link_tag($urlname,'',$title);
     $keyname=$DBInfo->pageToKeyname(urldecode($page));
     if (is_dir($DBInfo->upload_dir."/$keyname"))
-       $out.=' '.$formatter->link_tag(_urlencode($page),"?action=uploadedfiles",
+       $out.=' '.$formatter->link_tag($urlname,"?action=uploadedfiles",
          $formatter->icon['attach']);
     $out.="</li>\n";
   }
   $out.= "</ul>\n";
 
-  $index="";
+  $index='';
   foreach ($keys as $key) {
     $name=$key;
     if ($key == 'Others') $name=_("Others");
