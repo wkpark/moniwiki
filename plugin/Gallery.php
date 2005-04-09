@@ -60,13 +60,29 @@ function macro_Gallery($formatter,$value,&$options) {
     $formatter->actions[]='UploadFile';
     $formatter->actions[]='UploadedFiles';
   }
+  $default_column=3;
+  $default_row=4;
+  $col=$row=0;
 
   // parse args
   preg_match("/^(('|\")([^\\2]+)\\2)?,?(\s*,?\s*.*)?$/",
     $value,$match);
   $opts=explode(',',$match[4]);
-  if (in_array('showall',$opts))
-    $show_all=1;
+  foreach ($opts as $opt) {
+    if ($opt == 'showall') $show_all=1;
+    else if (($p=strpos($opt,'='))!==false) {
+      $k=substr($opt,0,$p);
+      $v=substr($opt,$p+1);
+      if ($k=='col') $col=$v;
+      else if ($k=='row') $row=$v;
+    }
+  }
+
+  $col=($col<=0 or $col>7) ? $default_column:$col;
+  $row=($row<=0 or $row>7) ? $default_row:$row;
+  $width=$selected ? $default_width:150;
+  $perpage=$col*$row;
+
 
   $default_width=$DBInfo->gallery_img_width ? $DBInfo->gallery_img_width:600;
 
@@ -164,10 +180,6 @@ function macro_Gallery($formatter,$value,&$options) {
 
   $out.="<table border='0' cellpadding='2'>\n<tr>\n";
   $idx=1;
-
-  $col=3;
-  $width=$selected ? $default_width:150;
-  $perpage=$col*4;
 
   $pages= intval(sizeof($upfiles) / $perpage);
   if (sizeof($upfiles) % $perpage)
