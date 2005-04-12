@@ -4,7 +4,19 @@
 # Public Domain
 # $Id$
 
-require 5;
+require 5.8.0;
+
+#$charset="euc-kr";
+$charset="utf8";
+###########################################################################
+if ($charset eq "utf8") {
+  use encoding "utf8";
+  #$delim=' \t\n,:"\'~`!@#\$%\^&\*\(\)\-_\+=\[\]:;<>,\.\?\/';
+  $delim='\p{IsPunct}\p{IsSpace}';
+} else {
+  $delim='\t\n\s[:blank:][:punct:][:space:]';
+}
+
 use DB_File;    # Access DB databases
 use Fcntl;      # Needed for above...
 use File::Find; # Directory searching
@@ -28,22 +40,28 @@ untie(%indexdb); # release database
 sub IndexFile {
     if(!-f) { return; }
 
-    if(/,v$/) { return; }
+    #if(/,v$/) { return; }
+    if(substr($_,-2) eq ',v') { return; }
     { # for WikiPages
-	print "$File::Find::name\n";
-	open(TXT_FILE,$_) || die "Can't open $_: $!";
-	my($text) = <TXT_FILE>; # Read entire file
-	# Index all the words under the current key
-	my($wordsIndexed) = &IndexWords($text,$currentKey);
-	# Map key to this filename
-	$indexdb{"!?" . pack("n",$currentKey)} = $_;
-	$currentKey++; if ($currentKey % 256 ==0) { $currentKey++; }
+        print "$File::Find::name\n";
+        if ($charset eq "utf8") {
+            open(TXT_FILE,"<:utf8",$_) || die "Can't open $_: $!";
+        } else {
+            open(TXT_FILE,$_) || die "Can't open $_: $!";
+        }
+        my($text) = <TXT_FILE>; # Read entire file
+        $text=~ s/([a-z0-9]+)([A-Z])/\\1 \\2/g;
+        # Index all the words under the current key
+        my($wordsIndexed) = &IndexWords($text,$currentKey);
+        # Map key to this filename
+        $indexdb{"!?" . pack("n",$currentKey)} = $_;
+        $currentKey++; if ($currentKey % 256 ==0) { $currentKey++; }
 
-	$fileCount++;
-	if($fileCount > 500) {
-	    &FlushWordCache();
-	    $fileCount=0;
-	}
+        $fileCount++;
+        if($fileCount > 500) {
+            &FlushWordCache();
+            $fileCount=0;
+        }
     }
 }
 
@@ -53,17 +71,18 @@ sub IndexWords {
     my($words, $fileKey) = @_;
     my(%worduniq); # for unique-ifying word list
     # Split text into Array of words
-    my(@words) = split(/[^a-zA-Z0-9\xa0-\xff\+\/\_]+/, lc $words);
+    my(@words) = split(/[$delim]+/, lc $words);
     @words = grep { $worduniq{$_}++ == 0 } # Remove duplicates
-	     grep { s/^[^a-zA-Z0-9\xa0-\xff]+//; $_ } # Strip leading punct
+             grep { s/^[$delim]+//; $_ } # Strip leading punct
              grep { length > 1 } # Must be longer than one character
-             grep { /[a-zA-Z0-9\xa0-\xff]/ } # must have an alphanumeric
+             grep { /[^$delim]/ } # must have an alphanumeric
              @words;
 
     # For each word, add key to word database
     foreach (sort @words) {
-	my($a) = $wordcache{$_};
-	$a .= pack "n",$fileKey;
+        #print $_."\n";
+        my($a) = $wordcache{$_};
+        $a .= pack "n",$fileKey;
         $wordcache{$_} = $a;
     }
 
@@ -78,15 +97,15 @@ sub FlushWordCache {
     my($word,$entry);
     # Do merge in sorted order to improve cache response of on-disk DB
     foreach $word (sort keys %wordcache) {
-	$entry = $wordcache{$word};
-	if(defined $indexdb{$word}) {
-	    my($codedList);
-	    $codedList = $indexdb{$word};
-	    $entry = &MergeLists($codedList,$entry);
-	}
+        $entry = $wordcache{$word};
+        if(defined $indexdb{$word}) {
+            my($codedList);
+            $codedList = $indexdb{$word};
+            $entry = &MergeLists($codedList,$entry);
+        }
 
-	# Store merged list into database
-	$indexdb{$word} = $entry;
+        # Store merged list into database
+        $indexdb{$word} = $entry;
     }
     %wordcache = (); # Empty the holding queue
 }
@@ -107,3 +126,4 @@ sub MergeLists {
 }
 
 ###########################################################################
+# vim:et:sts=4
