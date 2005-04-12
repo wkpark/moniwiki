@@ -255,7 +255,7 @@ class UserDB {
   function saveUser($user) {
     $config=array("css_url","datatime_fmt","email","bookmark","language",
                   "name","password","wikiname_add_spaces","subscribed_pages",
-                  "quicklinks","theme","ticket","eticket");
+                  "scrapped_pages","quicklinks","theme","ticket","eticket");
 
     $date=date('Y/m/d', time());
     $data="# Data saved $date\n";
