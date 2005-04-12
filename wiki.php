@@ -79,6 +79,31 @@ function getProcessor($pro_name) {
   return $processors[strtolower($pro_name)];
 }
 
+function getFilter($filtername) {
+  static $filters=array();
+  if ($filters) return $filters[strtolower($filtername)];
+  global $DBInfo;
+  if ($DBInfo->include_path)
+    $dirs=explode(':',$DBInfo->include_path);
+  else
+    $dirs=array('.');
+
+  foreach ($dirs as $dir) {
+    $handle= @opendir($dir.'/plugin/filter');
+    if (!$handle) continue;
+    while ($file= readdir($handle)) {
+      if (is_dir($dir."/plugin/filter/$file")) continue;
+      $name= substr($file,0,-4);
+      $filters[strtolower($name)]= $name;
+    }
+  }
+
+  if (is_array($DBInfo->filters))
+    $filters=array_merge($filters,$DBInfo->filters);
+
+  return $filters[strtolower($filtername)];
+}
+
 if (!function_exists ('bindtextdomain')) {
   $locale = array();
 
@@ -1476,7 +1501,7 @@ class Formatter {
   function get_instructions(&$body) {
     global $DBInfo;
     $pikeys=array('#redirect','#action','#title','#keywords','#noindex',
-      '#twinpages','#notwins');
+      '#filter','#twinpages','#notwins');
     $pi=array();
     if (!$body) {
       if (!$this->page->exists()) return '';
@@ -1524,6 +1549,7 @@ class Formatter {
       }
       #
       if ($pi['#notwins']) $pi['#twinpages']=0;
+      if ($pi['#nofilter']) unset($pi['#filter']);
     }
 
     if ($format) {
@@ -1769,6 +1795,7 @@ class Formatter {
     global $DBInfo;
     $nonexists='nonexists_'.$DBInfo->nonexists;
     if ($word[0]=='"') { # ["extended wiki name"]
+      $extended=1;
       $page=substr($word,1,-1);
       $word=$page;
     } else
@@ -1791,12 +1818,11 @@ class Formatter {
     $url=_urlencode($page);
     $url_only=strtok($url,'#?'); # for [WikiName#tag] [wiki:WikiName#tag Tag]
     #$query= substr($url,strlen($url_only));
-    $page=urldecode($url_only);
+    if ($extended) $page=rawurldecode($url_only); # C++
+    else $page=urldecode($url_only);
     $url=$this->link_url($url);
 
     //$url=$this->link_url(_rawurlencode($page)); # XXX
-    //$page=urldecode($page); # XXX
-    //$page=rawurldecode($page); # C++
     if (isset($this->pagelinks[$page])) {
       $idx=$this->pagelinks[$page];
       switch($idx) {
@@ -1985,6 +2011,16 @@ class Formatter {
     return call_user_func("processor_$processor",$this,$value,$options);
   }
 
+  function filter_repl($filter,$value,$options='') {
+    if (!function_exists('filter_'.$filter)) {
+      $ff=getFilter($filter);
+      if (!$ff) return $value;
+      include_once("plugin/filter/$ff.php");
+      #$filter=$ff;
+    }
+    return call_user_func("filter_$filter",$this,$value,$options);
+  }
+
   function smiley_repl($smiley) {
     global $DBInfo;
 
@@ -2146,6 +2182,12 @@ class Formatter {
 
     if ($body) {
       $pi=$this->get_instructions($body);
+      if ($pi['#filter']) {
+        $fts=preg_split('/(\||,)/',$pi['#filter']);
+        foreach ($fts as $ft) {
+          $body=$this->filter_repl($ft,$body,$options);
+        }
+      }
       if ($pi['#format']) {
         if ($pi['args']) $pi_line="#!".$pi['#format']." $pi[args]\n";
         print call_user_func("processor_".$pi['#format'],$this,
@@ -2157,6 +2199,14 @@ class Formatter {
       #$pi=$this->get_instructions(&$body);
       $pi=$this->get_instructions($dum);
       $body=$this->page->get_raw_body($options);
+
+      if ($pi['#filter']) {
+        $fts=preg_split('/(\||,)/',$pi['#filter']);
+        foreach ($fts as $ft) {
+          $body=$this->filter_repl($ft,$body,$options);
+        }
+      }
+
       $this->pi=$pi;
       if ($pi['#format']) {
         if ($pi['args']) $pi_line="#!".$pi['#format']." $pi[args]\n";
