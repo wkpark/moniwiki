@@ -37,7 +37,7 @@ function macro_LikePages($formatter="",$args="",&$opts) {
 
   $count=preg_match("/(".$s_re.")/",$pname,$match);
   if ($count) {
-    $start=$match[1];
+    $start=trim($match[1]);
     $s_len=strlen($start);
   }
   $count=preg_match("/(".$e_re.")/",$pname,$match);
@@ -49,7 +49,7 @@ function macro_LikePages($formatter="",$args="",&$opts) {
   if (!$start && !$end) {
     preg_match("/^(.{2,4})/",$args,$match);
     $s_len=strlen($match[1]);
-    $start=_preg_escape($match[1]);
+    $start=trim(_preg_escape($match[1]));
   }
 
   if (!$end) {
@@ -72,7 +72,6 @@ function macro_LikePages($formatter="",$args="",&$opts) {
     else $needle="$start|$end";
     $pages = $DBInfo->metadb->getLikePages($needle);
   }
-  
   if ($start) {
     foreach ($pages as $page) {
       preg_match("/^$start/",$page,$matches);
@@ -90,8 +89,9 @@ function macro_LikePages($formatter="",$args="",&$opts) {
   }
 
   if ($start || $end) {
-    if (!$end) $similar_re=$start;
-    else $similar_re="$start|$end";
+    if ($start and $end) $similar_re="$start|$end";
+    else if ($start) $similar_re=$start;
+    else $similar_re=$end;
 
     foreach ($pages as $page) {
       preg_match("/($similar_re)/i",$page,$matches);
