@@ -12,6 +12,7 @@ function do_subscribe($formatter,$options) {
     $options['title']=_("EmailNotification is not activated");
     $options['msg']=_("If you want to subscribe this page please contact the WikiMaster to activate the e-mail notification");
     do_invalid($formatter,$options);
+    return;
   }
 
   if ($options['id'] != 'Anonymous') {
