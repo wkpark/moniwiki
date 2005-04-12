@@ -200,6 +200,9 @@ function do_uploadfile($formatter,$options) {
 }
 
 function macro_UploadFile($formatter,$value='',$options='') {
+  if ($value=='js') {
+    return $formatter->macro_repl('UploadForm');
+  }
   $use_multi=1;
   $multiform='';
   if ($options['rename'] and !is_array($options['rename'])) {
