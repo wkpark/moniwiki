@@ -40,7 +40,8 @@ function processor_blog($formatter,$value="",$options) {
 
     if (preg_match('/^[\d\.]+$/',$user)) {
       if ($DBInfo->interwiki['Whois'])
-        $user=_("Anonymous")."[<a href='".$DBInfo->interwiki['Whois']."$user'>$user</a>]";
+        #$user=_("Anonymous")."[<a href='".$DBInfo->interwiki['Whois']."$user'>$user</a>]";
+        $user="<a href='".$DBInfo->interwiki['Whois']."$user'>"._("Anonymous")."</a>";
       else
         $user=_("Anonymous");
     } else if ($DBInfo->hasPage($user)) {
