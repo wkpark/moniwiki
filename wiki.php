@@ -2261,7 +2261,12 @@ class Formatter {
       # empty line
       if (!strlen($line)) {
         if ($in_pre) { $this->pre_line.="\n";continue;}
-        if ($in_li) { $text.=$this->_purple()."<br />\n";$li_empty=1; continue;}
+        if ($in_li) {
+          $text.=$this->_purple()."<br />\n";
+          if ($li_empty==0) $text.="<br />\n";
+          $li_empty=1;
+          continue;
+        }
         if ($in_table) {
           $text.=$this->_table(0)."<br />\n";$in_table=0; continue;
         } else {
@@ -2408,8 +2413,9 @@ class Formatter {
                unset($indent_type[$in_li]);
                $in_li--;
             }
-            $li_empty=0;
+            #$li_empty=0;
          }
+         $li_empty=0;
          if ($indent_list[$in_li] <= $indlen || $limatch) $li_open=$in_li;
          else $li_open=0;
       }
