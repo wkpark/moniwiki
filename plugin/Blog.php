@@ -91,6 +91,7 @@ function do_Blog($formatter,$options) {
     $savetext=_stripslashes($options['savetext']);
     $savetext=str_replace("\r","",$savetext);
     $savetext=str_replace("----\n","-''''''---\n",$savetext);
+    $savetext=rtrim($savetext);
     #$savetext=str_replace("<","&lt;",$savetext);
   }
 
@@ -148,7 +149,7 @@ function do_Blog($formatter,$options) {
         if ($options['nosig'])
           $lines[$i]="----\n$savetext\n$endtag";
         else
-          $lines[$i]="----\n$savetext -- $id @DATE@\n$endtag";
+          $lines[$i]="----\n$savetext @SIG@\n$endtag";
         $raw_body=join("\n",$lines);
       } else {
         $formatter->send_title(_("Error: No blog entry found!"),"",$options);
@@ -278,8 +279,18 @@ function macro_Blog($formatter,$value) {
   $url=$formatter->link_url($formatter->page->urlname);
   $datestamp= $formatter->page->mtime();
 
+  if (!$options['id']) {
+    $user=new User(); # get from COOKIE VARS
+    $options['id']=$user->id;
+  }
+  if ($options['id'] != 'Anonymous')
+    $extra='<div style="text-align:right">'.'
+      <input type="submit" name="button_refresh" value="Refresh" /></div>';
+
   $form = "<form method='post' action='$url'>\n";
-  $form.= "<b>Title</b>: <input name='title' size='70' maxlength='70' style='width:200' /><br />\n";
+  if ($options['id'] == 'Anonymous')
+    $form.='<b>'._("Name")."</b>: <input name='name' size='15' maxlength='15' value='$options[name]' />\n";
+  $form.= '<b>'._("Title")."</b>: <input name='title' size='70' maxlength='70' style='width:200' /><br />\n";
   $form.= <<<FORM
 <textarea class="wiki" id="content" wrap="virtual" name="savetext"
  rows="$rows" cols="$cols" class="wiki"></textarea><br />
@@ -289,6 +300,7 @@ FORM;
 <input type="hidden" name="datestamp" value="$datestamp" />
 <input type="submit" value="Save" />&nbsp;
 <input type="submit" name="button_preview" value="Preview" />
+$extra
 </form>
 FORM2;
 
