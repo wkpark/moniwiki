@@ -1,7 +1,11 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org> all rights reserved.
+// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org> all rights reserved.
 // distributable under GPL see COPYING 
 // $Id$
+
+function _stripslashes($str) {
+  return get_magic_quotes_gpc() ? stripslashes($str):$str;
+}
 
 class MoniConfig {
   function MoniConfig($configfile="config.php") {
@@ -107,15 +111,26 @@ class MoniConfig {
 
   function _rawConfig($configfile) {
     $lines=file($configfile);
+    $key='';
     foreach ($lines as $line) {
-      if ($line[0] != '$') continue;
-
-      $d=explode("=",substr($line,1),2);
-
-      if ($d[0]) {
-        $val=preg_replace("/\s*;$/","",trim($d[1]));
-        $config[$d[0]]=$val;
+      if (!$key and $line[0] != '$') continue;
+      if ($key) {
+        $val.=$line;
+        if (!preg_match('/\s*;$/',$line)) continue;
+      } else {
+        list($key,$val)=explode('=',substr($line,1),2);
+        if (!preg_match('/\s*;$/',$val)) {
+          if (substr($val,0,3)== '<<<') $tag=substr($val,3);
+          continue;
+        }
       }
+
+      if ($key) {
+        $val=preg_replace('/\s*;$/','',rtrim($val));
+        $config[$key]=$val;
+      }
+      $key='';
+      $tag='';
     }
     return $config;
   }
@@ -123,7 +138,8 @@ class MoniConfig {
   function _getFormConfig($config,$mode=0) {
     $conf=array();
     while (list($key,$val) = each($config)) {
-      $val=stripslashes($val);
+      $val=_stripslashes($val);
+      $val=str_replace(array("\r\n","\r"),array("\n","\n"),$val);
       if (!isset($val)) $val="''";
       if (!$mode) {
         @eval("\$dum=$val;");
@@ -142,7 +158,14 @@ class MoniConfig {
     while (list($key,$val) = each($config)) {
       if ($key=='admin_passwd' or $key=='purge_passwd')
          $val="'".crypt($val,md5(time()))."'";
-      $t=@eval("\$$key=$val;");
+      if (preg_match("/^<<<([A-Za-z0-9]+)\s[^(\\1)]*\s\\1$/",$val,$m)) {
+         $save_val=$val;
+         $val=str_replace("$m[1]",'',substr($val,3));
+         $val=preg_quote($val,'"');
+         $t=@eval("\$$key=\"$val\";");
+         $val=$save_val;
+      } else
+         $t=@eval("\$$key=$val;");
       if ($t === NULL)
         $lines[]="\$$key=$val;\n";
       else
@@ -381,6 +404,13 @@ td.wiki {
   border: 0px inset #E2ECE5;
 }
 
+td.option {
+  font-family:sans-serif;
+  background-color:#000000;
+  font-weight:bold;
+  color: white;
+}
+
 //-->
 </style>
 </head>
@@ -391,7 +421,7 @@ print "<h2>Moni Wiki setup</h2>\n";
 
 if (file_exists("config.php") && !is_writable("config.php")) {
   print "<h2><font color='red'>'config.php' is not writable !!</font></h2>\n";
-  print "Please change 'config.php' permission as 666 first to write settings<br />\n";
+  print "Please execute 'monisetup.sh' first to change your settings.<br />\n";
 
   return;
 }
@@ -535,7 +565,9 @@ if ($_SERVER['REQUEST_METHOD']!="POST") {
   print "\n";
   while (list($key,$val) = each($config)) {
     if ($key != "admin_passwd" && $key != "purge_passwd")
-    print "<tr><td>\$$key</td><td>$val</td></tr>\n";
+    if (!preg_match('/<img /',$val))
+      $val=str_replace('<','&lt;',$val);
+    print "<tr><td class='option'>\$$key</td><td>$val</td></tr>\n";
   }
   print "</table>\n";
 
@@ -547,12 +579,18 @@ if ($_SERVER['REQUEST_METHOD']!="POST") {
     print "<h2>If you want to put wikiseeds on your wiki <a href='?action=seed'>Click here</a> now</h2>";
   }
   print "<form method='post' action=''>\n";
-  print "<table align=center border=1 cellpadding=2 cellspacing=2>\n";
+  print "<table align='center' border='0' cellpadding='2' cellspacing='2'>\n";
   while (list($key,$val) = each($rawconfig)) {
     if ($key != "admin_passwd") {
-      $val=str_replace('"',"&#34;",$val);
-      print "<tr><td>$$key</td>";
-      print "<td><input name='config[$key]' value=\"$val\" size='30'></td></tr>\n";
+      print "<tr><td class='option'>$$key</td>";
+      if (strpos($val,"\n")) $type="textarea";
+      else $type="input";
+      if ($type=='input') {
+        $val=str_replace('"',"&#34;",$val);
+        print "<td><$type type='text' name='config[$key]' value=\"$val\" size='s40'></td></tr>\n";
+      } else {
+        print "<td><$type name='config[$key]' rows='4' cols='40'>".$val."</$type></td></tr>\n";
+      }
     }
   }
 
