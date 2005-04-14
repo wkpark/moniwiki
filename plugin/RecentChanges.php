@@ -90,7 +90,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   $time_cutoff= $time_current - ($days_to_show * $secs_per_day);
 
   foreach ($lines as $line) {
-    $parts= explode("\t", $line,3);
+    $parts= explode("\t", $line,6);
     $page_key= $parts[0];
     $ed_time= $parts[2];
 
@@ -103,12 +103,14 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     if ($editcount[$page_key]) {
       if ($logs[$page_key]) {
         $editcount[$page_key]++;
+        #$editors[$page_key].=':'.$parts[4];
         continue;
       }
       continue;
     }
     $editcount[$page_key]= 1;
     $logs[$page_key]= 1;
+    #$editors[$page_key]= $parts[4];
   }
   unset($logs);
 
@@ -164,9 +166,9 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $pageurl=_rawurlencode($page_name);
 
     if (!$DBInfo->hasPage($page_name))
-      $icon= $formatter->link_tag($pageurl,"?action=diff",$formatter->icon[del]);
+      $icon= $formatter->link_tag($pageurl,"?action=diff",$formatter->icon['del']);
     else if ($ed_time > $bookmark) {
-      $icon= $formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon[updated]);
+      $icon= $formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon['updated']);
       if ($checknew) {
         $p= new WikiPage($page_name);
         $v= $p->get_rev($bookmark);
@@ -175,7 +177,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
             $formatter->link_tag($pageurl,"?action=info",$formatter->icon['new']);
       }
     } else
-      $icon= $formatter->link_tag($pageurl,"?action=diff",$formatter->icon[diff]);
+      $icon= $formatter->link_tag($pageurl,"?action=diff",$formatter->icon['diff']);
 
     #$title= preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$page_name);
     $title= get_title($title).$group;
