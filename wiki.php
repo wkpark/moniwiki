@@ -2115,34 +2115,31 @@ class Formatter {
     return '';
   }
 
-  function _table_span($str,$align='') {
-    $tok=strtok($str,'&');
-    $len=strlen($tok)/2;
-    $extra=strtok('');
-    $attr=array();
-    if ($extra) {
-      $para=substr($extra,3,-1);
-      # rowspan
-      if (preg_match("/^\|(\d+)$/",$para,$match))
-        $attr[]="rowspan='$match[1]'";
-      else if ($para[0]=='#')
-        $attr[]="bgcolor='$para'";
-      else
-        $attr[]=$para;
-    }
-    if ($align) $attr[]="align='center'";
-    if ($len > 1)
-      $attr[]="colspan='$len'"; #$attr[]="align='center' colspan='$len'";
+  function _td_span($str,$align='') {
+    $len=strlen($str)/2;
+    if ($len==1) return '';
+    $attr[]="colspan='$len'"; #$attr[]="align='center' colspan='$len'";
     return implode(' ',$attr);
   }
 
+  function _td_attr($val) {
+    if (!$val) return '';
+    $para=substr($val,4,-1);
+    # rowspan
+    if (preg_match("/^\|(\d+)$/",$para,$match))
+      $attr[]="rowspan='$match[1]'";
+    else if ($para[0]=='#')
+      $attr[]="bgcolor='$para'";
+    else
+      $attr[]=$para;
+    return implode(' ',$attr).' ';
+  }
+
   function _table($on,$attr='') {
-    if ($attr) {
-      $attr=substr($attr,4,-1);
-    }
-    if ($on)
-      return "<table class='wiki' cellpadding='3' cellspacing='2' $attr>\n";
-    return "</table>\n";
+    if (!$on) return "</table>\n";
+    $attr=substr($attr,4,-1);
+    if ($attr[0]=='#') $attr="bgcolor='$attr'";
+    return "<table class='wiki' cellpadding='3' cellspacing='2' $attr>\n";
   }
 
   function _purple() {
@@ -2421,19 +2418,35 @@ class Formatter {
       }
 
       #if (!$in_pre && !$in_table && preg_match("/^\|\|.*\|\|$/",$line)) {
-      if (!$in_pre && $line[0]=='|' && !$in_table && preg_match("/^((\|\|)+)(&lt;[^>]+>)?.*\|\|$/",$line,$match)) {
-         $open.=$this->_table(1,$match[3]);
-         $line=preg_replace('/^((\|\|)+)(&lt;[^>]+>)?/','\\1',$line);
-         $in_table=1;
+      if (!$in_pre && $line[0]=='|' && !$in_table && preg_match("/^((\|\|)+)(&lt;[^>\|]+>)?(.*)\|\|$/",$line,$match)) {
+        $open.=$this->_table(1,$match[3]);
+        if ($match[3]) $line=$match[1].$match[4].'||';
+        $in_table=1;
       #} elseif ($in_table && !preg_match("/^\|\|.*\|\|$/",$line)){
       } elseif ($in_table && $line[0]!='|' && !preg_match("/^\|\|.*\|\|$/",$line)){
          $close=$this->_table(0).$close;
          $in_table=0;
       }
       if ($in_table) {
-         $line=preg_replace('/^((?:\|\|)+(&lt;[^>]+>)?)((\s?)(.*))\|\|$/e',"'<tr class=\"wiki\"><td class=\"wiki\" '.\$this->_table_span('\\1','\\4').'>\\3</td></tr>'",$line);
-         $line=preg_replace('/((\|\|)+(&lt;[^>]+>)?)(\s?)/e',"'</td><td class=\"wiki\" '.\$this->_table_span('\\1','\\4').'>\\4'",$line);
-         $line=str_replace('\"','"',$line); # revert \\" to \"
+        $line=substr($line,0,-2);
+        $cells=preg_split('/((?:\|\|)+)/',$line,-1,
+          PREG_SPLIT_NO_EMPTY|PREG_SPLIT_DELIM_CAPTURE);
+        $row='';
+        for ($i=0,$s=sizeof($cells);$i<$s-1;$i+=2) {
+          $align='';
+          preg_match('/^((&lt;[^>]+>)?)(\s?)([\S\s]*\S)(\s*)?$/',
+            $cells[$i+1],$m);
+          #print_r($m);
+          $cell=$m[3].$m[4].$m[5];
+          if ($m[3] and $m[5]) $align='align="center"';
+          else if (!$m[3]) $align='';
+          else if (!$m[5]) $align='align="right"';
+          $attr=$this->_td_attr($m[1]);
+          $attr.=$this->_td_span($cells[$i]);
+          $row.="<td class=\"wiki\" $attr$align>".$cell.'</td>';
+        }
+        $line='<tr class="wiki">'.$row.'</tr>';
+        $line=str_replace('\"','"',$line); # revert \\" to \"
       }
 
       # InterWiki, WikiName, {{{ }}}, !WikiName, ?single, ["extended wiki name"]
