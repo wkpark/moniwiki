@@ -37,7 +37,7 @@ function macro_Comment($formatter,$value,$options=array()) {
 
   $url=$formatter->link_url($formatter->page->urlname);
 
-  $form = "<form method='post' action='$url'>\n";
+  $form = "<form name='editform' method='post' action='$url'>\n";
   $form.= <<<FORM
 <textarea class="wiki" id="content" name="savetext"
  rows="$rows" cols="$cols">$savetext</textarea><br />
