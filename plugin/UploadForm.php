@@ -55,12 +55,12 @@ EOS;
   <table border="0" cellspacing="0" cellpadding="0">
     <tr>
       <td valign='top' rowspan='2'>
-        <span onclick="addRow('upload$id')"  title="add files" alt="add files">$icon</span>
+        <span onclick="addRow('upload$id')" title="add files">$icon</span>
       </td>
       <td>
         <table cellspacing="0" cellpadding="0" border="0">
-          <tbody id="upload$id" border="0">
-            <tr border="0">
+          <tbody id="upload$id">
+            <tr>
               <td></td>
             </tr>
           </tbody>
