@@ -633,7 +633,7 @@ function macro_Edit($formatter,$value,$options='') {
   $summary_msg=_("Summary of Change");
   if ($DBInfo->use_resizer) {
     $form.=<<<EOS
-<script language='javascript'>
+<script type="text/javascript" language='javascript'>
 //<![CDATA[
 <!--
 function resize(obj,val) {
@@ -646,8 +646,8 @@ function resize(obj,val) {
 //-->
 //]]>
 </script>
-<input type='button' value='+' onClick='resize(this.form,3)' />
-<input type='button' value='-' onClick='resize(this.form,-3)' />
+<input type='button' value='+' onclick='resize(this.form,3)' />
+<input type='button' value='-' onclick='resize(this.form,-3)' />
 EOS;
   }
   $form.=<<<EOS
@@ -665,7 +665,7 @@ $extra
 EOS;
   if (!$options['nohints'])
     $form.= macro_EditHints($formatter);
-  $form.= "<a id='preview' name='preview' />";
+  $form.= "<a id='preview' name='preview'></a>";
   return $form;
 }
 
