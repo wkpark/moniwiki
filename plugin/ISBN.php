@@ -13,7 +13,7 @@ Aladdin http://www.aladdin.co.kr/catalog/book.asp?ISBN= http://image.aladdin.co.
 EOS;
 
   $DEFAULT_ISBN="Amazon";
-  $re_isbn="/([0-9\-]{9,}[xX]?)(?:,)?(([A-Z][A-Za-z]*)?(?:,)?(.*))?/x";
+  $re_isbn="/([0-9\-]+[xX]?)(?:,)?(([A-Z][A-Za-z]*)?(?:,)?(.*))?/x";
 
   $test=preg_match($re_isbn,$value,$match);
   if ($test === false)
