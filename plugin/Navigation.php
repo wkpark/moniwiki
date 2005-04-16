@@ -67,6 +67,7 @@ function macro_Navigation($formatter,$value) {
     #print ':'.$formatter->page->name;
     if ($indices[$i]==$current) {
       if ($i > 0) $prev=$i-1;
+      else $prev=$count - 1;
       if ($i < ($count - 1)) {
 	$next=$i+1;
       } else {

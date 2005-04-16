@@ -139,7 +139,7 @@ function normalize_word($word,$group='',$pagename='',$nogroup=0,$islink=1) {
   }
 
   if (preg_match("/^wiki:/", $page)) { # wiki:
-    $text=$page=substr($page,6);
+    $text=$page=substr($page,5);
  
     if (strpos($page,' ')) { # have a space ?
       list($page,$text)= explode(' ',$page,2);
