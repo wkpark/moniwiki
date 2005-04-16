@@ -25,6 +25,8 @@ function macro_WantedPages($formatter="",$options="") {
       }
     }
   }
+  if (!count($wants)) return '';
+
   asort($wants);
   $out="<ul>\n";
   while (list($name,$owns) = each($wants)) {
