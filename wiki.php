@@ -1349,6 +1349,7 @@ class Formatter {
       $DBInfo->inline_latex == 1 ? 'latex':$DBInfo->inline_latex;
     $this->use_purple=$DBInfo->use_purple;
     $this->section_edit=$DBInfo->use_sectionedit;
+    $this->auto_linebreak=$DBInfo->auto_linebreak;
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -2260,7 +2261,7 @@ class Formatter {
         if ($in_pre) { $this->pre_line.="\n";continue;}
         if ($in_li) {
           $text.=$this->_purple()."<br />\n";
-          if ($li_empty==0) $text.="<br />\n";
+          if ($li_empty==0 && !$this->auto_linebreak ) $text.="<br />\n";
           $li_empty=1;
           continue;
         }
@@ -2283,7 +2284,7 @@ class Formatter {
 
       $p_close='';
       if (preg_match('/^-{4,}/',$line)) {
-        if ($DBInfo->auto_linebreak) $this->nobr=1; // XXX
+        if ($this->auto_linebreak) $this->nobr=1; // XXX
         if ($in_p) { $p_close=$this->_div(0,$in_div); $in_p='';}
       } else if ($in_p == '') {
         $p_close=$this->_div(1,$in_div);
@@ -2505,7 +2506,7 @@ class Formatter {
          }
          $this->nobr=1;
       }
-      if ($DBInfo->auto_linebreak && !$in_table && !$this->nobr)
+      if ($this->auto_linebreak && !$in_table && !$this->nobr)
         $text.=$line."<br />\n"; 
       else
         $text.=$line."\n";
