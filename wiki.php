@@ -1461,8 +1461,8 @@ class Formatter {
         while (list($key,$val) = each($data)) $this->$key=$val;
       }
     }
-    if ($this->icon)
-      $this->icon=array_merge($DBInfo->icon,$this->icon);
+    #if ($this->icon)
+    $this->icon=array_merge($DBInfo->icon,$this->icon);
 
     if (!isset($this->icon_bra)) {
       $this->icon_bra=$DBInfo->icon_bra;
