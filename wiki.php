@@ -2432,13 +2432,12 @@ class Formatter {
       if ($in_table) {
         $line=substr($line,0,-2);
         $cells=preg_split('/((?:\|\|)+)/',$line,-1,
-          PREG_SPLIT_NO_EMPTY|PREG_SPLIT_DELIM_CAPTURE);
+          PREG_SPLIT_DELIM_CAPTURE);
         $row='';
-        for ($i=0,$s=sizeof($cells);$i<$s-1;$i+=2) {
-          $align='';
-          preg_match('/^((&lt;[^>]+>)?)(\s?)([\S\s]*\S)(\s*)?$/',
+        for ($i=1,$s=sizeof($cells);$i<$s;$i+=2) {
+          $align='';$attr='';
+          preg_match('/^((&lt;[^>]+>)?)(\s?)(.*)(?<!\s)(\s*)?$/',
             $cells[$i+1],$m);
-          #print_r($m);
           $cell=$m[3].$m[4].$m[5];
           if ($m[3] and $m[5]) $align='align="center"';
           else if (!$m[3]) $align='';
