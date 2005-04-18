@@ -843,7 +843,7 @@ function do_goto($formatter,$options) {
     }
   }
   if ($options['value']) {
-     $url=_stripslashes($options['value']);
+     $url=_stripslashes(rtrim($options['value']));
      $url=_rawurlencode($url);
      if ($options['redirect'])
        $url=$formatter->link_url($url,"?action=show");
