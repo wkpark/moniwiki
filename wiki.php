@@ -2344,6 +2344,7 @@ class Formatter {
          if (trim($this->pre_line))
            $this->pre_line.="\n";
          $line=substr($line,0,$p);
+         if (!$line and $this->auto_linebreak) $this->nobr=1;
       }
 #     $line=str_replace("<","&lt;",$line);
       #$line=preg_replace("/\\$/","&#36;",$line);
@@ -2466,7 +2467,11 @@ class Formatter {
       #$line=preg_replace(array("/{{\|/","/\|}}/"),
       #      array("</div><table class='closure'><tr class='closure'><td class='closure'><div>","</div></td></tr></table><div>"),$line);
 
+      if ($this->auto_linebreak and in_array(trim($line),array('{{|','|}}')))
+        $this->nobr=1;
       $line=preg_replace($this->extrarule,$this->extrarepl,$line);
+      #if ($this->auto_linebreak and preg_match('/<div>$/',$line))
+      #  $this->nobr=1;
 
       $line=$close.$p_close.$open.$line;
       $open="";$close="";
