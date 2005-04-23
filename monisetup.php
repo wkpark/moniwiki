@@ -172,6 +172,11 @@ class MoniConfig {
         print "<font color='red'>ERROR:</font> <tt>\$$key=$val;</tt><br/>";
     }
     $lines[]="?>\n";
+    if ($config['dba_type']) {
+      if (!file_exists('data/counter.db'))
+        $db=dba_open('data/counter.db','n',substr($config['dba_type'],1,-1));
+      if ($db) dba_close($db);
+    }
     return $lines;
   }
 }
