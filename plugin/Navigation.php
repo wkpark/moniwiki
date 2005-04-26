@@ -45,7 +45,7 @@ function macro_Navigation($formatter,$value) {
       list($index,$text,$dummy)= normalize_word($word,$group,$page);
       if ($group) $indices[]=$index;
       else $indices[]=$index;
-      $texts[]=$text;
+      $texts[]=$text ? $text:$word;
       $count++;
     }
   }
@@ -53,13 +53,13 @@ function macro_Navigation($formatter,$value) {
   #print_r($indices);
   if ($count > 1) {
     $prev='';
+    $next=($current == $page) ? 0:-1;
     $index_text=$value;
     if ($group) {
       $index=$value;
       $index_text=substr($index,strlen($group));
     }
     else $index=$value;
-    $next=0;
   }
 
   for ($i=0;$i<$count;$i++) {
@@ -67,11 +67,8 @@ function macro_Navigation($formatter,$value) {
     #print ':'.$formatter->page->name;
     if ($indices[$i]==$current) {
       if ($i > 0) $prev=$i-1;
-      else $prev=$count - 1;
       if ($i < ($count - 1)) {
 	$next=$i+1;
-      } else {
-        $next = 0;
       }
     }
   }
@@ -89,6 +86,7 @@ function macro_Navigation($formatter,$value) {
       $prev=$indices[$prev];
       if (($p=strpos($prev,'~'))!==false)
         $prev_text=substr($prev,$p+1);
+      if ($prev_text)
       $pnut.=$formatter->link_repl("[wiki:$prev $prev_text]"," accesskey=\",\" ");
     }
     if ($use_action) $formatter->query_string=$save;
