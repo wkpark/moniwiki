@@ -10,12 +10,14 @@
 function macro_Navigation($formatter,$value) {
   global $DBInfo;
 
+  preg_match('/([^,]+),?\s*(.*)/',$value,$match);
+  if ($match) {
+    $opts=explode(',',$match[2]);
+    $value=$match[1];
+  }
   if (!$value or !$DBInfo->hasPage($value))
-    return '[[Index('._("No Index page found").')]]';
+    return '[[Navigation('._("No Index page found").')]]';
 
-  preg_match('/([^,]+),?\s*,?(.*)/',$value,$match);
-  $opts=explode(',',$match[2]);
-  $value=$match[1];
   $use_action=0;
   if (in_array('action',$opts)) $use_action=1;
 
@@ -106,18 +108,18 @@ function macro_Navigation($formatter,$value) {
 }
 
 function do_navigation($formatter,$options) {
-  $pnut=macro_Navigation($formatter,$options['value']);
+  $pnut=macro_Navigation($formatter,$options['value'].',action');
   $formatter->send_header('',$options);
   $formatter->send_title($title,$formatter->link_url("FindPage"),$options);
   print "<div class='wikiNavigation'>\n";
   print $pnut;
-  print "</div>\n";
+  print "<hr /></div>\n";
   $formatter->send_page();
-  print "<div class='wikiNavigation'>\n";
+  print "<div class='wikiNavigation'>\n<hr />";
   print $pnut;
   print "</div>\n";
   $formatter->send_footer('',$options);
 }
 
-// vim:noet:sts=2:
+// vim:et:sts=2:
 ?>
