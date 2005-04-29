@@ -849,6 +849,8 @@ function do_goto($formatter,$options) {
        $url=$formatter->link_url($url,"?action=show");
      else
        $url=$formatter->link_url($url,"");
+     # FastCGI/PHP does not accept multiple header infos. XXX
+     #$formatter->send_header("Location: ".$url,$options);
      $formatter->send_header(array("Status: 302","Location: ".$url),$options);
   } else if ($options['url']) {
     $url=$options['url'];
