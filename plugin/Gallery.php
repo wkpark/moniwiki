@@ -62,7 +62,9 @@ function macro_Gallery($formatter,$value,&$options) {
   }
   $default_column=3;
   $default_row=4;
-  $col=$row=0;
+  $col=$options['col'] > 0 ? (int)$options['col']:0;
+  $row=$options['row'] > 0 ? (int)$options['row']:0;
+  $sort=$options['sort'] ? 1:0;
 
   // parse args
   preg_match("/^(('|\")([^\\2]+)\\2)?,?(\s*,?\s*.*)?$/",
@@ -75,6 +77,8 @@ function macro_Gallery($formatter,$value,&$options) {
       $v=substr($opt,$p+1);
       if ($k=='col') $col=$v;
       else if ($k=='row') $row=$v;
+    } else {
+      if ($opt=='sort') $sort=1;
     }
   }
 
@@ -176,7 +180,8 @@ function macro_Gallery($formatter,$value,&$options) {
   }
 
   if (!$upfiles) return "<h3>No files uploaded</h3>";
-  asort($upfiles);
+  if ($sort) arsort($upfiles);
+  else asort($upfiles);
 
   $out.="<table border='0' cellpadding='2'>\n<tr>\n";
   $idx=1;
@@ -191,7 +196,9 @@ function macro_Gallery($formatter,$value,&$options) {
   }
 
   if ($pages > 1)
-    $pnut=get_pagelist($formatter,$pages,"?action=gallery&p=",$options['p'],$perpage);
+    $pnut=get_pagelist($formatter,$pages,
+      '?action=gallery&amp;col='.$col.'&amp;row='.$row.
+      '&amp;p=',$options['p'],$perpage);
 
   if (!file_exists($dir."/thumbnails")) mkdir($dir."/thumbnails",0777);
 
