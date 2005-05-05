@@ -1,17 +1,26 @@
 <?php
-// Copyright 2003-2005 Jang,Dong-Su <jdongsu at hellocity.net>
+// Copyright 2003-2005 Dongsu Jang <iolo at hellocity.net>
 //                     Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 //
-// Firefox/Mozilla Search Plugin for MoniWiki by iolo
+// Firefox/Mozilla Search Plugin for MoniWiki
 //
-// Usage: [[SearchPlugin(<name>)]]
+// Usage: [[SearchPlugin(<prefix>,<name>,<text>)]]
+// <prefix>
+//   url(location) of both descriptor(.src) and icon(.png)(no default!)
+//   or search type(action) to use dynamic descritor(.src)
+// <type> - search type. "fullsearch", "titlesearch", "fastsearch" or somthing.(default=fullsearch)
+// <name> - identifier. if not specified, sitename will be used.(default=sitename)
+// <text> - contents text of <a> tag this plugin generates.(default=Add Search Plugin)
 //
-// <name> is a string identifier. if not specified, sitename will be used.
-//
-// It generates/uses following links:
-// - http://.../wiki.php/?action=SearchPlugin&name=<name>.src for descriptor
-// - http://.../wiki.php/?action=SearchPlugin&name=<name>.png for icon
+// This plugin generates/uses following links:
+// For static mode
+// - <url>/name.src
+// - <url>/name.png
+// For dynamic mode
+// - http://.../wiki.php/?action=SearchPlugin&name=<name>.src
+// - http://.../wiki.php/?action=SearchPlugin&name=<name>.png
+// Also, generate/uses #SearchPlugin css style class.
 //
 // FIXME:
 // filename parts of update and icon url must be identical!
@@ -26,22 +35,28 @@ function macro_SearchPlugin($formatter,$value,$options='') {
 
   $cat='General';
 
-  if (preg_match('/^http:\/\//',$value)) {
-    list($update_url,$value)=explode(',',$value,2);
-    if (substr($update_url,-1)!='/') $update_url.='/';
-  } else {
-    $update_url=
-    qualifiedUrl($formatter->link_url('FindPage','?action=SearchPlugin&amp;name='));
-    //$update_url = "http://hellocity.net/~iolo/moniwiki/";
-  }
-  if ($value) {
-    $name = $value;
-  } else {
+  // parse value and provide defaults
+  list($prefix,$name,$text)=explode(',',$value,3);
+  if (!$name) {
     $name = $DBInfo->sitename;
+  }
+  if (!$text) {
+    $text = "Add Search Plugin";
+  }
+  if (preg_match('/^http:\/\//',$prefix)) {
+    if (substr($prefix,-1)!='/') $prefix.='/';
+    $update_url = $prefix;
+  } else {
+    if (!$prefix) {
+      $prefix="fullsearch";//by default, fullsearch 
+    }
+    $update_url=
+      qualifiedUrl(
+        $formatter->link_url('FindPage','?action=SearchPlugin&amp;type='.$prefix.'&amp;name='));
   }
 
   return <<<EOS
-<div id="addSearchPlugin">
+<div class="SearchPlugin">
 <script type="text/javascript">
 <!--
 function addSearchPlugin(update_url, name)
@@ -60,7 +75,7 @@ function addSearchPlugin(update_url, name)
 }
 //-->
 </script>
-<a href="javascript:addSearchPlugin('$update_url', '$name')">Add Search Plugin </a>
+<a href="javascript:addSearchPlugin('$update_url', '$name')">$text</a>
 </div>
 EOS;
 }
@@ -72,6 +87,11 @@ function do_SearchPlugin($formatter,$options) {
     $name = $options['name'];
   } else {
     $name = $DBInfo->sitename;
+  }
+  if ($options['type']) { // fullsearch,titlesearch,fastsearch
+    $type = $options['type'];
+  } else {
+    $type = "fullsearch"; // by default fullsearch
   }
   if (strpos($name, ".png") != false) {
     header("Content-Type: image/png\r\n");
@@ -91,7 +111,6 @@ function do_SearchPlugin($formatter,$options) {
 
   $update_url =
     qualifiedUrl($formatter->link_url('FindPage',"?action=SearchPlugin&amp;name="));
-  //$update_url = "http://hellocity.net/~iolo/moniwiki/";
 
   // FIXME: what's the valid way to get http://.../wiki.php ?
   // alternative: $_SERVER["PHP_SELF"]
@@ -134,8 +153,7 @@ function do_SearchPlugin($formatter,$options) {
 <input name="value" user>
 
 # TODO: support various search actions and parameters
-#<input name="action" value="titlesearch">
-<input name="action" value="fullsearch">
+<input name="action" value="$type">
 <input name="context" value="20">
 <input name="backlinks" value="0">
 <input name="case" value="0">
