@@ -59,7 +59,7 @@ EOS;
   while (list($key,$value) = each($DBInfo->smileys)) {
     if ($last_img != $value[3]) {
       $skey=str_replace("\\","\\\\",$key);
-      $chooser.= "<span onclick='appendText(\"$skey\")'>".$formatter->smiley_repl($key)."</span>";
+      $chooser.= "<span onclick='appendText(\"$skey\")'>".$formatter->smiley_repl($key)."</span>&shy;";
       $last_img = $value[3];
       $idx++;
     }
