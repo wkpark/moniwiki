@@ -236,3 +236,5 @@ span.externalLink {
 
 div.pagebreak {page-break-before: always;}
 div.pagebreak br { display:none;}
+
+div.sectionEdit { display:none; }
