@@ -32,7 +32,7 @@ $lang='auto';
 $charset='utf-8';
 #$charset='utf-8';
 $auto_linebreak= 0;
-$auto_search='AutoGoto';
+#$auto_search='AutoGoto';
 $trail= 0;
 #$origin=1;
 #$arrow=' <img src="/wiki/imgs/moni-arrow.gif"/> ';
