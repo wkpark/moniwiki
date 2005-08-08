@@ -9,10 +9,11 @@
 
 function macro_Bar($formatter,$value) {
     global $DBInfo;
+    static $width;
 
     $imgdir=$DBInfo->imgs_dir;
     $iconset='blue';
-    $full_width=0;
+    $full_width=1;
     $notext=0;
 
     # parse args
@@ -37,14 +38,23 @@ function macro_Bar($formatter,$value) {
 
     $ival=0;
     if ($val < 100.0) $ival=100.0 - $val;
-    $img="<span style='white-space: nowrap'>";
+    $width=300;
+    if ($width) {
+        $fval=(int)($val*$width/100.0).'px';
+        $ival=(int)($ival*$width/100.0).'px';
+    } else {
+        $val.='%';
+        $ival.='%';
+    }
+    $img="<div style='white-space: nowrap;'>";
+    $img.="<div style='white-space: nowrap;left-padding:30px;'>";
     $img.="<img src='$imgdir/vote/$iconset/leftbar.gif' align='middle' />";
     $img.="<span style='white-space: nowrap'>";
     $img.="<img src='$imgdir/vote/$iconset/mainbar.gif' ".
-        "height='14' width='$val%' align='middle' />";
+        "height='14' width='$fval' align='middle' />";
     if ($full_width && $ival != 0) {
         $img.="<img src='$imgdir/vote/$iconset/b_mainbar.gif' ".
-            " height='14' width='$ival%' align='middle' /></span>";
+            " height='14' width='$ival' align='middle' /></span>";
         $img.="<img src='$imgdir/vote/$iconset/b_rightbar.gif' align='middle' />";
     } else {
         $img.="</span><img src='$imgdir/vote/$iconset/rightbar.gif' align='middle' />";
@@ -52,7 +62,7 @@ function macro_Bar($formatter,$value) {
     $state=((int)$val).'%';
     if (!$notext)
         $img.=' '.$state;
-    $img.='</span>';
+    $img.='</div></div>';
     return $img;
 }
 
