@@ -117,6 +117,7 @@ ${POT_FILE}: ../plugin/css.php
 ${POT_FILE}: ../plugin/dot.php
 ${POT_FILE}: ../plugin/download.php
 ${POT_FILE}: ../plugin/filter.php
+${POT_FILE}: ../plugin/filter/antispam.php
 ${POT_FILE}: ../plugin/filter/cite.php
 ${POT_FILE}: ../plugin/filter/sample.php
 ${POT_FILE}: ../plugin/fixmoin.php

@@ -3,7 +3,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: MoniWiki 1.1\n"
-"POT-Creation-Date: 2005-08-08 16:39+0900\n"
+"POT-Creation-Date: 2005-08-08 22:13+0900\n"
 "PO-Revision-Date: 2003-08-17 22:51+0900\n"
 "Last-Translator: Serge Stinckwich <Serge.Stinckwich@info.unicaen.fr>\n"
 "Language-Team: fr <fr@li.org>\n"
@@ -12,13 +12,13 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 # ../plugin/Attachment.php:24
-#: ../plugin/Attachment.php:32 ../plugin/Attachment.php:101
+#: ../plugin/Attachment.php:40 ../plugin/Attachment.php:111
 #, c-format
 msgid "Upload new Attachment \"%s\""
 msgstr "Télécharger le nouvel attachement \"%s\""
 
 # ../plugin/Attachment.php:24
-#: ../plugin/Attachment.php:104
+#: ../plugin/Attachment.php:114
 #, c-format
 msgid "Upload new Attachment \"%s\" on the \"%s\""
 msgstr ""
@@ -297,7 +297,7 @@ msgid "BackLinks search for \"%s\""
 msgstr ""
 
 # ../wikilib.php:1483
-#: ../plugin/FullSearch.php:103 ../wikilib.php:1778
+#: ../plugin/FullSearch.php:103 ../wikilib.php:1790
 #, c-format
 msgid "Invalid search expression \"%s\""
 msgstr "Expression de recherche \"%s\" invalide"
@@ -506,7 +506,7 @@ msgstr "Merci de vous connecter ou de construire un ID sur ce Wiki ;)"
 msgid "Voted successfully"
 msgstr "Vote réussi"
 
-#: ../plugin/WordIndex.php:65 ../wikilib.php:1574
+#: ../plugin/WordIndex.php:65 ../wikilib.php:1586
 msgid "Others"
 msgstr ""
 
@@ -577,7 +577,7 @@ msgid "No manpage found"
 msgstr "Aucune page de manuel trouvé"
 
 # ../plugin/minilogin.php:22 ../wikilib.php:1076
-#: ../plugin/minilogin.php:22 ../wikilib.php:1323
+#: ../plugin/minilogin.php:22 ../wikilib.php:1335
 msgid "Login or Join"
 msgstr "Se connecter ou se joindre à"
 
@@ -1235,7 +1235,7 @@ msgid "--Select Category--"
 msgstr "-- Sélectionner une catégorie"
 
 # ../wikilib.php:483 ../wikilib.php:1079
-#: ../wikilib.php:632 ../wikilib.php:1326
+#: ../wikilib.php:632 ../wikilib.php:1338
 msgid "Save"
 msgstr "Sauvegarder"
 
@@ -1323,7 +1323,7 @@ msgid "Delete \"%s\" ?"
 msgstr "Effacer \"%s\" ?"
 
 # ../wikilib.php:672 ../wikilib.php:1472
-#: ../wikilib.php:888 ../wikilib.php:1767
+#: ../wikilib.php:888 ../wikilib.php:1779
 msgid "Use more specific text"
 msgstr "Utiliser un texte plus spécifique"
 
@@ -1339,7 +1339,7 @@ msgid "Someone else saved the page while you edited %s"
 msgstr "Quelqu'un a sauvegardé la page tandis que vous éditiez %s"
 
 # ../wikilib.php:748 ../wikilib.php:777
-#: ../wikilib.php:986 ../wikilib.php:1015
+#: ../wikilib.php:986 ../wikilib.php:1027
 #, c-format
 msgid "Preview of %s"
 msgstr "Prévisualisation de %s"
@@ -1349,46 +1349,51 @@ msgstr "Prévisualisation de %s"
 msgid "Conflict error!"
 msgstr "Erreur de conflit !"
 
+#: ../wikilib.php:1021
+msgid ""
+"Sorry, can not save page because some messages are blocked in this wiki."
+msgstr ""
+
 # ../wikilib.php:803
-#: ../wikilib.php:1053
+#: ../wikilib.php:1065
 msgid "mail does not supported by default."
 msgstr "La messagerie n'est pas supporté par défaut."
 
 # ../wikilib.php:807
-#: ../wikilib.php:1057
+#: ../wikilib.php:1069
 msgid "Sent notification mail."
 msgstr "Des notifications par messagerie ont été envoyées."
 
 # ../wikilib.php:809
-#: ../wikilib.php:1059
+#: ../wikilib.php:1071
 msgid "No subscribers found."
 msgstr "Aucun abonné trouvé."
 
 # ../wikilib.php:814
-#: ../wikilib.php:1064
+#: ../wikilib.php:1076
 #, c-format
 msgid "%s is not editable"
 msgstr "%s n'est pas éditable"
 
 # ../wikilib.php:816
-#: ../wikilib.php:1066
+#: ../wikilib.php:1078
 #, c-format
 msgid "%s is saved"
 msgstr "%s est sauvegardé"
 
 # ../wikilib.php:838
-#: ../wikilib.php:1090
+#: ../wikilib.php:1102
 msgid "Nobody subscribed to this page."
 msgstr "Personne n'est abonné à cette page, aucun mail envoyé"
 
 # ../wikilib.php:860
-#: ../wikilib.php:1107
+#: ../wikilib.php:1119
 #, c-format
 msgid "%s page is modified"
 msgstr "la page %s est modifié"
 
 # ../wikilib.php:870
-#: ../wikilib.php:1117
+#: ../wikilib.php:1129
 #, c-format
 msgid ""
 "You have subscribed to this wiki page on \"%s\" for change notification.\n"
@@ -1399,48 +1404,48 @@ msgstr ""
 "\n"
 
 # ../wikilib.php:883
-#: ../wikilib.php:1130
+#: ../wikilib.php:1142
 msgid "Send notification mails to all subscribers"
 msgstr "Envoyez un mail de notification à tous les abonnés"
 
 # ../wikilib.php:887
-#: ../wikilib.php:1134
+#: ../wikilib.php:1146
 msgid "Mails are sent successfully"
 msgstr "Mail envoyé avec succès"
 
 # ../wikilib.php:888
-#: ../wikilib.php:1135
+#: ../wikilib.php:1147
 #, c-format
 msgid "mails are sent to '%s'"
 msgstr "un mail a été envoyé à '%s'"
 
 # ../plugin/login.php:26 ../wikilib.php:1051
-#: ../wikilib.php:1298
+#: ../wikilib.php:1310
 msgid "Login"
 msgstr "Se connecter"
 
 # ../wikilib.php:1070
-#: ../wikilib.php:1317
+#: ../wikilib.php:1329
 msgid "Make profile"
 msgstr "Faire un profil"
 
 # ../wikilib.php:1071
-#: ../wikilib.php:1318
+#: ../wikilib.php:1330
 msgid "password again"
 msgstr "mot de passe de nouveau"
 
 # ../wikilib.php:1082
-#: ../wikilib.php:1329
+#: ../wikilib.php:1341
 msgid "New password"
 msgstr "Nouveau mot de passe"
 
 # ../wikilib.php:1088
-#: ../wikilib.php:1335
+#: ../wikilib.php:1347
 msgid "logout"
 msgstr "se déconnecter"
 
 # ../wikilib.php:1479
-#: ../wikilib.php:1774
+#: ../wikilib.php:1786
 #, c-format
 msgid "Title search for \"%s\""
 msgstr "Recherche de titre pour \"%s\""

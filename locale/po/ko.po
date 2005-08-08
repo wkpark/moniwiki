@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: MoniWiki 1.1\n"
-"POT-Creation-Date: 2005-08-08 16:39+0900\n"
+"POT-Creation-Date: 2005-08-08 22:13+0900\n"
 "PO-Revision-Date: 2003-04-29 19:00+0900\n"
 "Last-Translator: Won-kyu Park <wkpark@kldp.org>\n"
 "Language-Team: ko <ko@li.org>\n"
@@ -13,12 +13,12 @@ msgstr ""
 "Content-Type: text/plain; charset=EUC-KR\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../plugin/Attachment.php:32 ../plugin/Attachment.php:101
+#: ../plugin/Attachment.php:40 ../plugin/Attachment.php:111
 #, c-format
 msgid "Upload new Attachment \"%s\""
 msgstr ""
 
-#: ../plugin/Attachment.php:104
+#: ../plugin/Attachment.php:114
 #, c-format
 msgid "Upload new Attachment \"%s\" on the \"%s\""
 msgstr ""
@@ -252,7 +252,7 @@ msgstr ""
 msgid "BackLinks search for \"%s\""
 msgstr "\"%s\"에 대한 역링크 찾기"
 
-#: ../plugin/FullSearch.php:103 ../wikilib.php:1778
+#: ../plugin/FullSearch.php:103 ../wikilib.php:1790
 #, c-format
 msgid "Invalid search expression \"%s\""
 msgstr ""
@@ -435,7 +435,7 @@ msgstr "로그인하거나 ID를 만드세요 ;)"
 msgid "Voted successfully"
 msgstr ""
 
-#: ../plugin/WordIndex.php:65 ../wikilib.php:1574
+#: ../plugin/WordIndex.php:65 ../wikilib.php:1586
 msgid "Others"
 msgstr ""
 
@@ -494,7 +494,7 @@ msgstr "Manpage가 선택되지 않았습니다"
 msgid "No manpage found"
 msgstr "Manpage가 없습니다"
 
-#: ../plugin/minilogin.php:22 ../wikilib.php:1323
+#: ../plugin/minilogin.php:22 ../wikilib.php:1335
 msgid "Login or Join"
 msgstr ""
 
@@ -1055,7 +1055,7 @@ msgstr ""
 msgid "--Select Category--"
 msgstr "--카테고리 선택--"
 
-#: ../wikilib.php:632 ../wikilib.php:1326
+#: ../wikilib.php:632 ../wikilib.php:1338
 msgid "Save"
 msgstr "저장"
 
@@ -1127,7 +1127,7 @@ msgstr ""
 msgid "Delete \"%s\" ?"
 msgstr "\"%s\"을(를) 지울까요 ?"
 
-#: ../wikilib.php:888 ../wikilib.php:1767
+#: ../wikilib.php:888 ../wikilib.php:1779
 msgid "Use more specific text"
 msgstr "좀 더 자세히 입력하세요"
 
@@ -1140,7 +1140,7 @@ msgstr "편집기로 가기"
 msgid "Someone else saved the page while you edited %s"
 msgstr "%s을(를) 고치는 동안 다른 사람이 이 페이지를 저장했습니다"
 
-#: ../wikilib.php:986 ../wikilib.php:1015
+#: ../wikilib.php:986 ../wikilib.php:1027
 #, c-format
 msgid "Preview of %s"
 msgstr "%s 미리보기"
@@ -1149,78 +1149,83 @@ msgstr "%s 미리보기"
 msgid "Conflict error!"
 msgstr "충돌!"
 
-#: ../wikilib.php:1053
+#: ../wikilib.php:1021
+msgid ""
+"Sorry, can not save page because some messages are blocked in this wiki."
+msgstr "죄송합니다. 특정 메시지가 금지되어 페이지를 저장할 수 없습니다."
+
+#: ../wikilib.php:1065
 msgid "mail does not supported by default."
 msgstr ""
 
-#: ../wikilib.php:1057
+#: ../wikilib.php:1069
 msgid "Sent notification mail."
 msgstr ""
 
-#: ../wikilib.php:1059
+#: ../wikilib.php:1071
 msgid "No subscribers found."
 msgstr "구독자가 없습니다"
 
-#: ../wikilib.php:1064
+#: ../wikilib.php:1076
 #, c-format
 msgid "%s is not editable"
 msgstr "%s은(는) 편집할 수 없습니다"
 
-#: ../wikilib.php:1066
+#: ../wikilib.php:1078
 #, c-format
 msgid "%s is saved"
 msgstr "%s이(가) 저장되었습니다"
 
-#: ../wikilib.php:1090
+#: ../wikilib.php:1102
 msgid "Nobody subscribed to this page."
 msgstr "아무도 페이지를 구독하지 않고있습니다."
 
-#: ../wikilib.php:1107
+#: ../wikilib.php:1119
 #, c-format
 msgid "%s page is modified"
 msgstr ""
 
-#: ../wikilib.php:1117
+#: ../wikilib.php:1129
 #, c-format
 msgid ""
 "You have subscribed to this wiki page on \"%s\" for change notification.\n"
 "\n"
 msgstr ""
 
-#: ../wikilib.php:1130
+#: ../wikilib.php:1142
 msgid "Send notification mails to all subscribers"
 msgstr ""
 
-#: ../wikilib.php:1134
+#: ../wikilib.php:1146
 msgid "Mails are sent successfully"
 msgstr ""
 
-#: ../wikilib.php:1135
+#: ../wikilib.php:1147
 #, c-format
 msgid "mails are sent to '%s'"
 msgstr ""
 
-#: ../wikilib.php:1298
+#: ../wikilib.php:1310
 msgid "Login"
 msgstr ""
 
-#: ../wikilib.php:1317
+#: ../wikilib.php:1329
 msgid "Make profile"
 msgstr ""
 
-#: ../wikilib.php:1318
+#: ../wikilib.php:1330
 msgid "password again"
 msgstr ""
 
-#: ../wikilib.php:1329
+#: ../wikilib.php:1341
 msgid "New password"
 msgstr "새 비밀번호"
 
-#: ../wikilib.php:1335
+#: ../wikilib.php:1347
 msgid "logout"
 msgstr ""
 
-#: ../wikilib.php:1774
+#: ../wikilib.php:1786
 #, c-format
 msgid "Title search for \"%s\""
 msgstr ""
