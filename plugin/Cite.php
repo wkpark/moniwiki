@@ -8,9 +8,15 @@
 function macro_Cite($formatter="",$value="") {
   $CITE_MAP="CiteMap";
   $DEFAULT=<<<EOS
-JCP http://jcp.aip.org/jcp/top.jsp?vol=\$VOL&amp;pg=\$PAGE
-JPC http://pubs.acs.org/journals/query/subscriberResults.jsp?Research=true&amp;yearrange1=ASAP&amp;yearrange3=current&amp;cit_qjrn=jpchax&styear=YYYY&endyear=YYYY&vol=\$VOL&spn=\$PAGE
-ChemRev http://pubs.acs.org/journals/query/subscriberResults.jsp?Research=true&amp;yearrange1=ASAP&amp;yearrange3=current&amp;cit_qjrn=chreay&styear=YYYY&endyear=YYYY&vol=\$VOL&spn=\$PAGE
+JCP,J.Chem.Phys. http://jcp.aip.org/jcp/top.jsp?vol=\$VOL&amp;pg=\$PAGE
+JACS,J.Am.Chem.Soc. http://pubs.acs.org/journals/query/subscriberResults.jsp?Research=true&amp;yearrange1=ASAP&amp;yearrange3=current&amp;cit_qjrn=jacsat&styear=YYYY&endyear=YYYY&vol=\$VOL&spn=\$PAGE
+JPC,J.Phys.Chem. http://pubs.acs.org/journals/query/subscriberResults.jsp?Research=true&amp;yearrange1=ASAP&amp;yearrange3=current&amp;cit_qjrn=jpchax&styear=YYYY&endyear=YYYY&vol=\$VOL&spn=\$PAGE
+JPCA,J.Phys.Chem.A http://pubs.acs.org/journals/query/subscriberResults.jsp?Research=true&amp;yearrange1=ASAP&amp;yearrange3=current&amp;cit_qjrn=jpcafh&styear=YYYY&endyear=YYYY&vol=\$VOL&spn=\$PAGE
+ChemRev,Chem.Rev. http://pubs.acs.org/journals/query/subscriberResults.jsp?Research=true&amp;yearrange1=ASAP&amp;yearrange3=current&amp;cit_qjrn=chreay&styear=YYYY&endyear=YYYY&vol=\$VOL&spn=\$PAGE
+RMP,Rev.Mod.Phys. http://link.aps.org/volpage?journal=RMP&volume=\$VOL&id=\$PAGE
+PR,Phys.Rev. http://link.aps.org/volpage?journal=PR&volume=\$VOL&id=\$PAGE
+PRL,Phys.Rev.Lett. http://link.aps.org/volpage?journal=PRL&volume=\$VOL&id=\$PAGE
+
 EOS;
 
   $DEFAULT_CITE="JCP";
@@ -23,9 +29,9 @@ EOS;
   list($vol,$page)=explode(',',preg_replace('/ /','',$match[2]));
 
   if ($match[1]) {
-    if (strtolower($match[1][0])=="k") $lang="JKCS";
-    else $lang=$match[1];
-  } else $lang=$DEFAULT_CITE;
+    if (strtolower($match[1][0])=="k") $cite="JKCS";
+    else $cite=$match[1];
+  } else $cite=$DEFAULT_CITE;
 
   $attr='';
   if ($match[3]) {
@@ -54,12 +60,15 @@ EOS;
         $dum[]=$CITE_list[$DEFAULT_CITE][1];
      else if (sizeof($dum) !=3) continue;
 
-     $CITE_list[$dum[0]]=array($dum[1],$dum[2]);
+     list($dum[0],$name)=explode(',',$dum[0]);
+     $CITE_list[$dum[0]]=array($dum[1],$dum[2],$name);
   }
 
-  if ($CITE_list[$lang]) {
-     $citelink=$CITE_list[$lang][0];
-     $imglink=$CITE_list[$lang][1];
+  if ($CITE_list[$cite]) {
+     $citelink=$CITE_list[$cite][0];
+     $imglink=$CITE_list[$cite][1];
+     $citename=$CITE_list[$cite][2];
+     if ($citename) $cite=str_replace('.','. ',$citename);
   } else {
      $citelink=$CITE_list[$DEFAULT_CITE][0];
      $imglink=$CITE_list[$DEFAULT_CITE][1];
@@ -69,7 +78,7 @@ EOS;
   $citelink=str_replace('$PAGE',$page,$citelink);
 
   return $formatter->icon['www'].'<a href='."'$citelink'>".
-     $lang.' <strong>'.$vol.'</strong>, '.$page.'</a>';
+     $cite.' <strong>'.$vol.'</strong>, '.$page.'</a> ';
 }
 
 ?>
