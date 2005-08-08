@@ -16,18 +16,26 @@ function macro_Attachment($formatter,$value,$option='') {
   else $mydownload='download';
 
   $text='';
+
   if (($p=strpos($value,' ')) !== false) {
     // [attachment:my.ext hello]
     // [attachment:my.ext attachment:my.png]
     // [attachment:my.ext http://url/../my.png]
-    $text=$ntext=substr($value,$p+1);
-    $value=substr($value,0,$p);
+    if ($value[0]=='"' and ($p2=strpos(substr($value,1),'"')) !== false) {
+      $text=$ntext=substr($value,$p2+3);
+      $dummy=substr($value,1,$p2);
+      $value=$dummy;
+    } else {
+      $text=$ntext=substr($value,$p+1);
+      $value=substr($value,0,$p);
+    }
     if (substr($text,0,11)=='attachment:') {
       $fname=substr($text,11);
       $ntext=macro_Attachment($formatter,$fname,1);
     }
     if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$ntext)) {
       if (!file_exists($ntext)) {
+        $fname=preg_replace('/^"([^"]*)"$/',"\\1",$fname);
         $mydownload='UploadFile&amp;rename='.$fname;
         $text=sprintf(_("Upload new Attachment \"%s\""),$fname);
         $text=str_replace('"','\'',$text);
@@ -35,6 +43,8 @@ function macro_Attachment($formatter,$value,$option='') {
       $ntext=qualifiedUrl($DBInfo->url_prefix.'/'.$ntext);
       $img_link='<img src="'.$ntext.'" alt="'.$text.'" border="0" />';
     }
+  } else {
+    $value=str_replace('%20',' ',$value);
   }
 
   if (($dummy=strpos($value,'?'))) {
@@ -85,12 +95,12 @@ function macro_Attachment($formatter,$value,$option='') {
   if (file_exists($upload_file)) {
     if (!$img_link && preg_match("/\.(png|gif|jpeg|jpg)$/i",$upload_file)) {
       if ($key != $pagename || $force_download)
-        $url=$formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=$value");
+        $url=$formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=".urlencode($value));
       else
         $url=$DBInfo->url_prefix."/"._urlencode($upload_file);
       return "<span class=\"imgAttach\"><img src='$url' alt='$file' $attr/></span>";
     } else {
-      $link=$formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=$value",$text);
+      $link=$formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=".urlencode($value),$text);
       if ($img_link)
         return "<span class=\"attach\"><a href='$link'>$img_link</a></span>";
 
@@ -98,10 +108,10 @@ function macro_Attachment($formatter,$value,$option='') {
     }
   }
   if ($pagename == $formatter->page->name)
-    return '<span class="attach">'.$formatter->link_to("?action=UploadFile&amp;rename=$file",sprintf(_("Upload new Attachment \"%s\""),$file)).'</span>';
+    return '<span class="attach">'.$formatter->link_to("?action=UploadFile&amp;rename=".urlencode($file),sprintf(_("Upload new Attachment \"%s\""),$file)).'</span>';
 
   if (!$pagename) $pagename='UploadFile';
-  return '<span class="attach">'.$formatter->link_tag($pagename,"?action=UploadFile&amp;rename=$file",sprintf(_("Upload new Attachment \"%s\" on the \"%s\""),$file, $pagename)).'</span>';
+  return '<span class="attach">'.$formatter->link_tag($pagename,"?action=UploadFile&amp;rename=".urlencode($file),sprintf(_("Upload new Attachment \"%s\" on the \"%s\""),$file, $pagename)).'</span>';
 }
 
 // vim:et:sts=2:
