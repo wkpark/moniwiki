@@ -12,7 +12,9 @@ or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
 License
 (at http://www.gnu.org/copyleft/gpl.html) for more details.
 
-2005/03/28 fix for the itex processor for the MoniWiki by wkpark
+from http://www1.chapman.edu/~jipsen/mathml/mathhtmltest.phtml
+
+2005/03/28 fix for the itex processor by wkpark
 */
 
 var mml = "http://www.w3.org/1998/Math/MathML";
