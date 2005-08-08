@@ -30,9 +30,8 @@ $iconset= 'moni';
 $inline_latex=0;
 $lang='auto';
 $charset='utf-8';
-#$charset='utf-8';
+#$charset='euc-kr';
 $auto_linebreak= 0;
-#$auto_search='AutoGoto';
 $trail= 0;
 #$origin=1;
 #$arrow=' <img src="/wiki/imgs/moni-arrow.gif"/> ';
@@ -106,9 +105,11 @@ $pds_allowed="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|css|exe|hwp|pdf";
 #$use_twikilink=1;
 #$timezone='KST'; // for windows
 #$version_class='RcsLite';
-#$use_numbering=1;
+#$use_numbering=1; // for the vim processor
 #$use_resizer=1;
 #$use_minoredit=1; // only for wiki owners
 #$auto_search='FixMoin';
+#$auto_search='AutoGoto';
 $use_sectionedit=0;
+$spam_filter='antispam';
 ?>
