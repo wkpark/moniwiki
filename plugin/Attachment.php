@@ -27,13 +27,13 @@ function macro_Attachment($formatter,$value,$option='') {
       $ntext=macro_Attachment($formatter,$fname,1);
     }
     if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$ntext)) {
-      $img_link='<img src="'.$ntext.'" alt="'.$text.'" border="0" />';
       if (!file_exists($ntext)) {
         $mydownload='UploadFile&amp;rename='.$fname;
         $text=sprintf(_("Upload new Attachment \"%s\""),$fname);
         $text=str_replace('"','\'',$text);
       }
       $ntext=qualifiedUrl($DBInfo->url_prefix.'/'.$ntext);
+      $img_link='<img src="'.$ntext.'" alt="'.$text.'" border="0" />';
     }
   }
 
