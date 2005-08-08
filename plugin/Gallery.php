@@ -216,14 +216,14 @@ function macro_Gallery($formatter,$value,&$options) {
       if (!$selected and file_exists($dir."/thumbnails/".$file)) {
         $thumb=($key == $value) ? $prefix.'thumbnails/'.$id:
           str_replace('value=','value=thumbnails/'.$id,$prefix);
-        $object="<img src='$thumb' alt='$file' />";
+        $object="<img class='imgGallery' src='$thumb' alt='$file' />";
       } else {
         $nwidth=$width;
         if (function_exists('getimagesize')) {
           list($nwidth, $height, $type, $attr) = getimagesize($dir.'/'.$file);
           $nwidth=($nwidth > $width) ? $width:$nwidth;
         }
-        $object="<img src='$linksrc' width='$nwidth' alt='$file' />";
+        $object="<img class='imgGallery' src='$linksrc' width='$nwidth' alt='$file' />";
       }
     }
     else
