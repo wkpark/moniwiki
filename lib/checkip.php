@@ -3,6 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 //
 // See also http://kr.php.net/ip2long/
+// $Id$
 // 
 
 function is_valid_network($network)
