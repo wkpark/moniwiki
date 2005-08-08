@@ -1009,6 +1009,18 @@ function do_post_savepage($formatter,$options) {
     $formatter->send_footer();
     return;
   }
+
+  if (!$button_preview and $DBInfo->spam_filter) {
+    $text=$savetext;
+    $fts=preg_split('/(\||,)/',$DBInfo->spam_filter);
+    foreach ($fts as $ft) {
+      $text=$formatter->filter_repl($ft,$text,$options);
+    }
+    if ($text != $savetext) {
+      $button_preview=1;
+      $options['msg'] = _("Sorry, can not save page because of some messages are not allowed in this wiki.");
+    }
+  }
   $formatter->page->set_raw_body($savetext);
 
   if ($button_preview) {
