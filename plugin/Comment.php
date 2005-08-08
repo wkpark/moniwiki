@@ -120,7 +120,10 @@ function do_comment($formatter,$options=array()) {
   else $id=$options['id'];
 
   if ($options['nosig']) $savetext="----\n$savetext\n";
-  else $savetext="----\n$savetext @SIG@\n";
+  else if($options['id']=='Anonymous')
+    $savetext="----\n$savetext -- $id @DATE@\n";
+  else
+    $savetext="----\n$savetext @SIG@\n";
 
   if (preg_match("/\n##Comment\n/i",$body))
     $body= preg_replace("/\n##Comment\n/i","\n##Comment\n$savetext",$body,1);
