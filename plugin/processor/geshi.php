@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2005 Dongsu Jang <iolo at hellocity.net>
 // All rights reserved. Distributable under GPL see COPYING
 // a geshi colorizer plugin for the MoniWiki
 //
