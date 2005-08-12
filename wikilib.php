@@ -1018,7 +1018,7 @@ function do_post_savepage($formatter,$options) {
     }
     if ($text != $savetext) {
       $button_preview=1;
-      $options['msg'] = _("Sorry, can not save page because of some messages are not allowed in this wiki.");
+      $options['msg'] = _("Sorry, can not save page because some messages are blocked in this wiki.");
     }
   }
   $formatter->page->set_raw_body($savetext);
@@ -1681,7 +1681,40 @@ function macro_TableOfContents(&$formatter,$value="") {
  global $DBInfo;
  $head_num=1;
  $head_dep=0;
- $TOC="\n<div class='toc'><a name='toc' id='toc' /><dl><dd><dl>\n";
+ $TOC='';
+ $title='';
+
+ if ($value) {
+  $args=explode(",",$value);
+  foreach ($args as $arg) {
+   $name=strtok($arg,'=');
+   if ($name=='title') {
+    $title=strtok('');
+   } else if ($arg) {
+    $value=$arg;
+   }
+  }
+ }
+
+ if ($DBInfo->use_toctoggle)
+  $TOC.=<<<EOS
+<script type="text/javascript" src="$DBInfo->url_prefix/local/toctoggle.js">
+</script>
+EOS;
+ if ($DBInfo->use_toctoggle)
+  $TOC_close=<<<EOS
+<script type="text/javascript">
+//<![CDATA[
+ if (window.showTocToggle) { showTocToggle('<img src="$DBInfo->imgs_dir/arrdown.png" width="16px" border="0" alt="[+]" />','<img src="$DBInfo->imgs_dir/arrup.png" width="16px" border="0" alt="[-]" />'); } 
+//]]>
+</script>
+EOS;
+ $TOC.="\n<div id='toc'>";
+ if ($title == '') $title=_("Contents");
+ $TOC.="<div id='toctitle'>
+<h2 style='display:inline'>$title</h2>
+</div>";
+ $TOC.="<a name='toc' ></a><dl><dd><dl>\n";
 
  $formatter->toc=1;
  $baseurl='';
@@ -1762,7 +1795,7 @@ function macro_TableOfContents(&$formatter,$value="") {
      $close="";
      $depth=$head_dep;
      while ($depth>1) { $depth--;$close.="</dl></dd>\n"; };
-     return $TOC.$close."</dl></dd></dl>\n</div>\n";
+     return $TOC.$close."</dl></dd></dl>\n</div>\n".$TOC_close;
   }
   else return "";
 }
