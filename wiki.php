@@ -845,6 +845,8 @@ class WikiDB {
     if ($user->id != 'Anonymous') {
       $udb=new UserDB($this);
       $udb->checkUser($user);
+    } else {
+      if (strlen($comment)>80) $comment='';
     }
     $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
     $comment=escapeshellcmd($comment);
@@ -1452,6 +1454,7 @@ class Formatter {
     $options['themedir']=$this->themedir;
     $options['themeurl']=$this->themeurl;
     $options['frontpage']=$DBInfo->frontpage;
+    $this->icon=array();
     if (file_exists($this->themedir."/theme.php")) {
       $data=getConfig($this->themedir."/theme.php",$options);
       #print_r($data);
@@ -1461,7 +1464,6 @@ class Formatter {
         while (list($key,$val) = each($data)) $this->$key=$val;
       }
     }
-    #if ($this->icon)
     $this->icon=array_merge($DBInfo->icon,$this->icon);
 
     if (!isset($this->icon_bra)) {
