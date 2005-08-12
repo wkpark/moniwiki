@@ -1378,7 +1378,9 @@ class Formatter {
                      "/\^([^ \^]+)\^(?=\s|$)/","/\^\^([^\^]+)\^\^(?!^)/",
                      "/(?<!,),,([^ ,]+),,(?!,)/",
                      "/(?<!_)__((?:(?<!_)_(?!_)|[^_])+)__(?!_)/","/^(-{4,})/e",
-                     "/(?<!-)--([^\s][^-]+[^\s])--(?!-)/",
+                     "/(?<!-)--([^-]+[^\s])--(?!-)/",
+                     "/(?<!~)~~([^~]+[^\s])~~(?!~)/",
+                     #"/(\\\\\\\\)$/", # tex, pmWiki
                      );
     $this->baserepl=array("&lt;\\1","&#96;\\1'","<tt class='wiki'>\\1</tt>",
                      "<strong>\\1</strong>","<strong>\\1</strong>",
@@ -1389,6 +1391,8 @@ class Formatter {
                      "\$this->$DBInfo->hr_type"."_hr('\\1')",
                      #"<div class='separator'><hr class='wiki' /></div>\n",
                      "<del>\\1</del>",
+                     "<del>\\1</del>",
+                     #"<br />",
                      );
 
     # NoSmoke's MultiLineCell hack
