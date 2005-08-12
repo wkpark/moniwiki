@@ -110,6 +110,8 @@ $pds_allowed="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|css|exe|hwp|pdf";
 #$use_minoredit=1; // only for wiki owners
 #$auto_search='FixMoin';
 #$auto_search='AutoGoto';
+#$hr_type='fancy';
 $use_sectionedit=0;
 $spam_filter='antispam';
+$use_toctoggle=0;
 ?>
