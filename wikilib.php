@@ -1705,7 +1705,7 @@ EOS;
   $TOC_close=<<<EOS
 <script type="text/javascript">
 //<![CDATA[
- if (window.showTocToggle) { showTocToggle('<img src="$DBInfo->imgs_dir/arrdown.png" width="16px" border="0" alt="[+]" />','<img src="$DBInfo->imgs_dir/arrup.png" width="16px" border="0" alt="[-]" />'); } 
+ if (window.showTocToggle) { showTocToggle('<img src="$DBInfo->imgs_dir/plugin/arrdown.png" width="10px" border="0" alt="[+]" title="[+]" />','<img src="$DBInfo->imgs_dir/plugin/arrup.png" width="10px" border="0" alt="[-]" title="[-]" />'); } 
 //]]>
 </script>
 EOS;
