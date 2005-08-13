@@ -1,11 +1,15 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a vim colorizer plugin for the MoniWiki
 //
 // Usage: {{{#!vim sh|c|sh|.. [number]
 // some codes
 // }}}
+//
+// Win32 note:
+//  add $path="%PATH%;/Program Files/Vim/VimXX"; in the config.php
+//
 // $Id$
 
 function processor_vim($formatter,$value,$options) {
@@ -74,7 +78,7 @@ document.write('<a href=\"#\" onClick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
   }
 
   if(getenv("OS")=="Windows_NT") {
-    $tohtml='\%VIMRUNTIME\%\\syntax\\2html.vim';
+    $tohtml='$VIMRUNTIME/syntax/2html.vim';
     $vim="gvim"; # Win32
     $fout=tempnam("/tmp","OUT");
   } else {
@@ -113,6 +117,7 @@ document.write('<a href=\"#\" onClick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
   unlink($tmpf);
 
   #$out=preg_replace("/<title.*title>|<\/?head>|<\/?html>|<meta.*>|<\/?body.*>/","", $out);
+  $out=preg_replace("/\r?\n/","\n",$out); # for Win32
   $out=preg_replace("/(^(\s|\S)*<pre>\n|\n<\/pre>(\s|\S)*$)/","",$out);
   $lines=explode("\n",$out);
   $out="<span class=\"line\">".
