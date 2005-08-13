@@ -113,6 +113,7 @@ class MoniConfig {
     $lines=file($configfile);
     $key='';
     foreach ($lines as $line) {
+      $line=rtrim($line); // for Win32
       if (!$key and $line[0] != '$') continue;
       if ($key) {
         $val.=$line;
@@ -526,7 +527,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $config) {
     print "<h3 color='blue'>Default settings are loaded...</h3>\n";
 
     $lines=$Config->_genRawConfig($rawconfig);
-    $rawconf=join("",$lines);
+    $rawconf=implode("",$lines);
     umask(000);
     $fp=fopen("config.php","w");
     fwrite($fp,$rawconf);
