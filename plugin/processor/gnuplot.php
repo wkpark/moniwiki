@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a gnuplot processor plugin for the MoniWiki
 //
@@ -64,8 +64,8 @@ function processor_gnuplot($formatter="",$value="") {
 #!  ls
 #plot sin(x)
 #';
-
   # normalize plt
+  $plt=str_replace("\r\n","\n",$plt); 
   $plt="\n".$plt."\n";
   $plt=preg_replace("/\n\s*![^\n]+\n/","\n",$plt); # strip shell commands
   $plt=preg_replace("/[ ]+/"," ",$plt);
