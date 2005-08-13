@@ -80,8 +80,10 @@ class MoniConfig {
     $user = $user ? $user : get_current_user();
     $config['rcs_user']="'".$user."'";
 
-    if(getenv("OS")=="Windows_NT")
+    if(getenv("OS")=="Windows_NT") {
       $config['timezone']="'LT'";
+      $config['version_class']="'RcsLite'";
+    }
 
     if (!file_exists('wikilib.php')) {
       $config['include_path']="'.:/usr/local/share/moniwiki:/usr/share/moniwiki'";
