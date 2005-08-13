@@ -70,13 +70,16 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   if ($user->id != 'Anonymous') {
     $udb=new UserDB($DBInfo);
     $udb->checkUser($user);
+    $bookmark= $user->info['bookmark'];
+    $tz_offset= $user->info['tz_offset'];
+  } else {
+    $bookmark= $user->bookmark;
+  }
+  if ($tz_offset == '') {
+    $tz_offset=date("Z");
+    $tz_offset;
   }
 
-  if ($user->id == 'Anonymous')
-    $bookmark= $user->bookmark;
-  else {
-    $bookmark= $user->info['bookmark'];
-  }
   if (!$bookmark) $bookmark=time();
 
   if ($quick)
@@ -94,7 +97,10 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $page_key= $parts[0];
     $ed_time= $parts[2];
 
-    $day = date('Ymd', $ed_time);
+    if ($tz_offset !='')
+      $day = gmdate('Ymd', $ed_time+$tz_offset);
+    else
+      $day = date('Ymd', $ed_time);
     if ($day != $ratchet_day) {
       $ratchet_day = $day;
       unset($logs);
@@ -145,13 +151,21 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         $title=$page_name;
     }
 
-    $day = date('Y-m-d', $ed_time);
+    if ($tz_offset !='')
+      $day = gmdate('Y-m-d', $ed_time+$tz_offset);
+    else
+      $day = date('Y-m-d', $ed_time);
     if ($use_day and $day != $ratchet_day) {
       $tag=str_replace('-','',$day);
       $perma="<a name='$tag'></a><a class='perma' href='#$tag'>$perma_icon</a>";
       $out.=$cat0;
+      if ($tz_offset != '')
+        $rcdate=gmdate($date_fmt,$ed_time+$tz_offset);
+      else
+        $rcdate=date($date_fmt,$ed_time);
+
       $out.=sprintf("%s<font class='rc-date' size='+1'>%s </font>$perma<font class='rc-bookmark' size='-1'>",
-            $br, date($date_fmt, $ed_time));
+            $br, $rcdate);
       if (!$nobookmark)
         $out.='['.$formatter->link_tag($formatter->page->urlname,
                                  "?action=bookmark&amp;time=$ed_time",
@@ -184,8 +198,12 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $title=htmlspecialchars($title);
     $title= $formatter->link_tag($pageurl,"",$title,$target);
 
-    if (! empty($DBInfo->changed_time_fmt))
-      $date= date($DBInfo->changed_time_fmt, $ed_time);
+    if (! empty($DBInfo->changed_time_fmt)) {
+      if ($tz_offset != '')
+        $date= gmdate($DBInfo->changed_time_fmt, $ed_time+$tz_offset);
+      else
+        $date= date($DBInfo->changed_time_fmt, $ed_time);
+    }
 
     if ($DBInfo->show_hosts) {
       if ($showhost && $user == 'Anonymous')

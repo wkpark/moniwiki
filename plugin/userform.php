@@ -150,8 +150,13 @@ function do_userform($formatter,$options) {
     }
     if (isset($options['user_css']))
       $userinfo->info['css_url']=$options['user_css'];
-    if (isset($options['timezone']))
-      $userinfo->info['timezone']=$options['timezone'];
+    if (isset($options['timezone'])) {
+      list($hour,$min)=explode(':',$options['timezone']);
+      $min=$min*60;
+      $min=($hour < 0) ? -1*$min:$min;
+      $tz_offset=$hour*3600 + $min;
+      $userinfo->info['tz_offset']=$tz_offset;
+    }
     if ($options['email'] and ($options['email'] != $userinfo->info['email'])) {
       if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
         $ticket=md5(time().$userinfo->info['id'].$options['email']);

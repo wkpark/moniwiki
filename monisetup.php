@@ -81,7 +81,9 @@ class MoniConfig {
     $config['rcs_user']="'".$user."'";
 
     if(getenv("OS")=="Windows_NT") {
-      $config['timezone']="'LT'";
+      $config['timezone']="'-09-09'";
+      // http://kldp.net/forum/message.php?msg_id=7675
+      // http://bugs.php.net/bug.php?id=22418
       $config['version_class']="'RcsLite'";
     }
 

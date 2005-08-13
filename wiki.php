@@ -2903,8 +2903,13 @@ EOS;
     $menu=$this->get_actions($args,$options);
 
     if ($mtime=$this->page->mtime()) {
-      $lastedit=date("Y-m-d",$mtime);
-      $lasttime=date("H:i:s",$mtime);
+      if ($options['tz_offset'] != '') {
+        $lastedit=gmdate("Y-m-d",$mtime+$options['tz_offset']);
+        $lasttime=gmdate("H:i:s",$mtime+$options['tz_offset']);
+      } else {
+        $lastedit=date("Y-m-d",$mtime);
+        $lasttime=date("H:i:s",$mtime);
+      }
     }
 
     $banner= <<<FOOT
@@ -3277,6 +3282,7 @@ if ($options['id'] != 'Anonymous') {
     $user=$userinfo;
     $options['css_url']=$user->info['css_url'];
     $options['quicklinks']=$user->info['quicklinks'];
+    $options['tz_offset']=$user->info['tz_offset'];
     if (!$theme) $options['theme']=$user->info['theme'];
   } else {
     $options['id']='Anonymous';

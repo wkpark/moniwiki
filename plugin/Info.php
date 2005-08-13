@@ -7,6 +7,13 @@
 
 function _parse_rlog($formatter,$log) {
   global $DBInfo;
+
+  $user=new User(); # get cookie
+  if ($user->id != 'Anonymous') { # XXX
+    $udb=new UserDB($DBInfo);
+    $udb->checkUser($user);
+    $tz_offset=$user->info['tz_offset'];
+  }
   $state=0;
   $flag=0;
 
@@ -45,7 +52,10 @@ function _parse_rlog($formatter,$log) {
       case 2:
          $inf=preg_replace("/date:\s(.*);\s+author:.*;\s+state:.*;/","\\1",$line);
          list($inf,$change)=explode('lines:',$inf,2);
-         $inf=date("Y-m-d H:i:s",strtotime($inf)); // localtime XXX
+         if ($tz_offset !='')
+           $inf=gmdate("Y-m-d H:i:s",strtotime($inf)+$tz_offset);
+         else
+           $inf=date("Y-m-d H:i:s",strtotime($inf)); // localtime
 
          $change=preg_replace("/\+(\d+)\s\-(\d+)/",
            "<span class='diff-added'>+\\1</span><span class='diff-removed'>-\\2</span>",$change);
