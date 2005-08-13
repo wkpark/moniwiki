@@ -150,6 +150,8 @@ function do_userform($formatter,$options) {
     }
     if (isset($options['user_css']))
       $userinfo->info['css_url']=$options['user_css'];
+    if (isset($options['timezone']))
+      $userinfo->info['timezone']=$options['timezone'];
     if ($options['email'] and ($options['email'] != $userinfo->info['email'])) {
       if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
         $ticket=md5(time().$userinfo->info['id'].$options['email']);

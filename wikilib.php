@@ -255,7 +255,8 @@ class UserDB {
   function saveUser($user) {
     $config=array("css_url","datatime_fmt","email","bookmark","language",
                   "name","password","wikiname_add_spaces","subscribed_pages",
-                  "scrapped_pages","quicklinks","theme","ticket","eticket");
+                  "scrapped_pages","quicklinks","theme","ticket","eticket",
+	  	  "timezone");
 
     $date=date('Y/m/d', time());
     $data="# Data saved $date\n";
@@ -332,6 +333,7 @@ class User {
      $this->theme=$_COOKIE['MONI_THEME'];
      $this->bookmark=$_COOKIE['MONI_BOOKMARK'];
      $this->trail=_stripslashes($_COOKIE['MONI_TRAIL']);
+     $this->timezone=_stripslashes($_COOKIE['MONI_TZ']);
   }
 
   function setID($id) {
@@ -1338,10 +1340,26 @@ EXTRA;
     $button=_("Save");
     $css=$user->info['css_url'];
     $email=$user->info['email'];
+    $timezone=$user->info['timezone'];
     $again="<b>"._("New password")."</b>&nbsp;<input type='password' size='15' maxlength='12' name='passwordagain' value='' /></td></tr>";
+
+    for ($i=-47;$i<=47;$i++) {
+      $val=1800*$i;
+      $tz=date("Y/m/d H:i",time()+$val+date('I'));
+      $hour=sprintf("%02d",abs((int)($val / 3600)));
+      $z=$hour . (($val % 3600) ? ":30":":00");
+      if ($val < 0) $z="-".$z;
+      if ($i== 0) $selected=" selected='selected'";
+      else $selected="";
+      
+      $opts.="<option value='$z'$selected>$tz [$z]</option>\n";
+    }
 
     $extra=<<<EXTRA
   <tr><td><b>Mail</b>&nbsp;</td><td><input type="text" size="40" name="email" value="$email" /></td></tr>
+  <tr><td><b>TimeZone</b>&nbsp;</td><td><select name="timezone">
+  $opts
+  </select></td></tr>
   <tr><td><b>CSS URL </b>&nbsp;</td><td><input type="text" size="40" name="user_css" value="$css" /><br />("None" for disabling CSS)</td></tr>
 EXTRA;
     $logout="<input type='submit' name='logout' value='"._("logout")."' /> &nbsp;";
@@ -1363,6 +1381,12 @@ $login
   </td></tr>
 </table>
 </form>
+<script src="$DBInfo->url_prefix/local/tz.js"></script>
+<script type="text/javascript">
+//<![CDATA[
+setTimezone();
+//]]>
+</script>
 EOF;
 }
 
