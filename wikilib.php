@@ -467,6 +467,7 @@ function macro_EditText($formatter,$value,$options='') {
     $form=$p->get_raw_body();
     $f=new Formatter($p);
 
+    $form=preg_replace('/\[\[EditText\]\]/i','#editform',$form);
     ob_start();
     $f->send_page(rtrim($form),$options);
     $form= ob_get_contents();
