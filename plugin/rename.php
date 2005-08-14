@@ -7,7 +7,13 @@
 
 function do_post_rename($formatter,$options) {
   global $DBInfo;
-  
+
+  $new=$options['name'];
+  if ($new[0] == '~' and ($p=strpos($new,'/'))!==false) {
+    // Namespace renaming
+    $dummy=substr($new,1,$p-1);$dummy2=substr($new,$p+1);
+    $options['name']=$dummy.'~'.$dummy2;
+  } 
   if (isset($options['name']) and trim($options['name'])) {
     if ($DBInfo->hasPage($options['page']) && !$DBInfo->hasPage($options['name'])) {
       $title = sprintf(_("\"%s\" is renamed !"), $options['page']);
