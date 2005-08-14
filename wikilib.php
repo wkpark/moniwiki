@@ -1714,26 +1714,36 @@ function macro_TableOfContents(&$formatter,$value="") {
  $head_num=1;
  $head_dep=0;
  $TOC='';
- $title='';
+ $a0='</a>';$a1='';
+ if ($DBInfo->toc_options)
+   $value=$DBInfo->toc_options.','.$value;
+ $toctoggle=$DBInfo->use_toctoggle;
 
- if ($value) {
-  $args=explode(",",$value);
-  foreach ($args as $arg) {
-   $name=strtok($arg,'=');
-   if ($name=='title') {
-    $title=strtok('');
+ while($value) {
+   list($arg,$value)=explode(',',$value,2);
+   $key=strtok($arg,'=');
+   if ($key=='title') {
+     $title=strtok('');
+   } else if ($key=='simple') {
+     $simple=strtok('');
+     if ($simple=='') $simple=1;
+     if ($simple) {
+       $a0='';$a1='</a>';
+     }
+   } else if ($key=='toggle') {
+     $toctoggle=strtok('');
+     if ($toctoggle=='') $toctoggle=1;
    } else if ($arg) {
-    $value=$arg;
+     $value=$value ? $arg.','.$value:$arg;
+     break;
    }
-  }
  }
 
- if ($DBInfo->use_toctoggle)
+ if ($toctoggle) {
   $TOC.=<<<EOS
 <script type="text/javascript" src="$DBInfo->url_prefix/local/toctoggle.js">
 </script>
 EOS;
- if ($DBInfo->use_toctoggle)
   $TOC_close=<<<EOS
 <script type="text/javascript">
 //<![CDATA[
@@ -1741,11 +1751,14 @@ EOS;
 //]]>
 </script>
 EOS;
+ }
  $TOC.="\n<div id='toc'>";
- if ($title == '') $title=_("Contents");
- $TOC.="<div id='toctitle'>
+ if (!isset($title)) $title=_("Contents");
+ if ($title) {
+  $TOC.="<div id='toctitle'>
 <h2 style='display:inline'>$title</h2>
 </div>";
+ }
  $TOC.="<a name='toc' ></a><dl><dd><dl>\n";
 
  $formatter->toc=1;
@@ -1774,7 +1787,10 @@ EOS;
    # do not strip basic wikitags
    $head=preg_replace($formatter->baserule,$formatter->baserepl,$head);
    $head=preg_replace("/\[\[.*\]\]/","",$head);
-   $head=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$head);
+   $head=preg_replace("/(".$formatter->wordrule.")/e",
+     "\$formatter->link_repl('\\1')",$head);
+   if ($simple)
+     $head=strip_tags($head,'<b><i><img><sub><sup><del><tt><u><strong>');
 
    if (!$depth_top) { $depth_top=$dep; $depth=1; }
    else {
@@ -1817,9 +1833,9 @@ EOS;
    $head_num=$num;
 
    if ($baseurl)
-     $TOC.=$close.$open."<dt><a href='$baseurl#s$prefix-$num'>$num</a> $head</dt>\n";
+     $TOC.=$close.$open."<dt><a href='$baseurl#s$prefix-$num'>$num$a0 $head$a1</dt>\n";
    else
-     $TOC.=$close.$open."<dt><a id='toc$prefix-$num' name='toc$prefix-$num' /><a href='#s$prefix-$num'>$num</a> $head</dt>\n";
+     $TOC.=$close.$open."<dt><a id='toc$prefix-$num' name='toc$prefix-$num' /><a href='#s$prefix-$num'>$num$a0 $head$a1</dt>\n";
 
   }
 

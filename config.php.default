@@ -114,4 +114,5 @@ $pds_allowed="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|css|exe|hwp|pdf";
 $use_sectionedit=0;
 $spam_filter='antispam';
 $use_toctoggle=0;
+#$toc_options='title=Contents,toggle,simple';
 ?>
