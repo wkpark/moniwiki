@@ -53,7 +53,7 @@ function _parse_rlog($formatter,$log) {
          $inf=preg_replace("/date:\s(.*);\s+author:.*;\s+state:.*;/","\\1",$line);
          list($inf,$change)=explode('lines:',$inf,2);
          if ($tz_offset !='')
-           $inf=gmdate("Y-m-d H:i:s",strtotime($inf)+$tz_offset);
+           $inf=gmdate("Y-m-d H:i:s",strtotime($inf.' GMT')+$tz_offset);
          else
            $inf=date("Y-m-d H:i:s",strtotime($inf)); // localtime
 
