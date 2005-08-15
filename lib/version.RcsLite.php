@@ -12,6 +12,7 @@ class Version_RcsLite extends Version_RCS {
     include_once('rcslite.php');
 
     $this->rcs=new RcsLite($DB->rcs_dir,$DB->rcs_user);
+    $this->rcs_dir=$this->rcs->rcs_dir;
     $this->DB=$DB;
   }
 
@@ -60,8 +61,10 @@ class Version_RcsLite extends Version_RCS {
   function rename($pagename,$new) {
     $keyname=$this->DB->_getPageKey($new);
     $oname=$this->DB->_getPageKey($pagename);
-    rename($this->DB->text_dir.'/'.$this->rcs_dir."/$oname,v",
-      $this->DB->text_dir.'/'.$this->rcs_dir."/$keyname,v");
+    if (file_exists($this->DB->text_dir.'/'.$this->rcs_dir."/$oname,v") and
+      !file_exists($this->DB->text_dir.'/'.$this->rcs_dir."/$keyname,v"))
+      rename($this->DB->text_dir.'/'.$this->rcs_dir."/$oname,v",
+      	$this->DB->text_dir.'/'.$this->rcs_dir."/$keyname,v");
   }
 
   function get_rev($pagename,$mtime='',$last=0) {

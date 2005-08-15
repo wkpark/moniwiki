@@ -362,7 +362,7 @@ Class RcsLite {
             if (!preg_match("/\n$/",$log)) $log.="\n";
             $rlog.= "----------------------------\n";
             $rlog.= "revision $rev\n";
-            $rlog.= "date: ".date("Y/m/d H:i:s",$this->_date[$rev]).";  author: ". $this->_author[$rev].";  state: Exp;  lines: ".$this->_change[$rev]."\n";
+            $rlog.= "date: ".gmdate("Y/m/d H:i:s",$this->_date[$rev]).";  author: ". $this->_author[$rev].";  state: Exp;  lines: ".$this->_change[$rev]."\n";
             $rlog.= $log;
         }
         $rlog.= str_repeat("=",71)."\n";
@@ -400,7 +400,7 @@ Class RcsLite {
         $this->_ensureProcessed();
         $date = $this->_date[$version];
         if( $date ) {
-            $date = date("Y/m/d H:i:s", $date );
+            $date = gmdate("Y/m/d H:i:s", $date );
         } else {
             $date = "";
         }
@@ -410,13 +410,14 @@ Class RcsLite {
     function rcsDateToEpoch($date)
     {
         $dum=explode('.',$date);
-        return date("Y/m/d H:i:s",strtotime("$dum[0]/$dum[1]/$dum[2] $dum[3]:$dum[4]:$dum[5]"));
+        return gmdate("Y/m/d H:i:s",
+            gmmktime($dum[3],$dum[4],$dum[5],$dum[1],$dum[2],$dum[0]));
     }
 
     function rcsDateToTime($date)
     {
         $dum=explode('.',$date);
-        return strtotime("$dum[0]/$dum[1]/$dum[2] $dum[3]:$dum[4]:$dum[5]");
+        return gmmktime($dum[3],$dum[4],$dum[5],$dum[1],$dum[2],$dum[0]);
     }
     
     function description()
