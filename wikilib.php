@@ -258,7 +258,7 @@ class UserDB {
                   "scrapped_pages","quicklinks","theme","ticket","eticket",
 	  	  "tz_offset");
 
-    $date=date('Y/m/d', time());
+    $date=gmdate('Y/m/d', time());
     $data="# Data saved $date\n";
 
     if ($user->ticket)
@@ -334,6 +334,7 @@ class User {
      $this->bookmark=$_COOKIE['MONI_BOOKMARK'];
      $this->trail=_stripslashes($_COOKIE['MONI_TRAIL']);
      $this->tz_offset=_stripslashes($_COOKIE['MONI_TZ']);
+     if ($this->tz_offset =='') $this->tz_offset=date('Z');
   }
 
   function setID($id) {
@@ -361,7 +362,7 @@ class User {
      $this->ticket=$ticket;
      # set the fake cookie
      $_COOKIE['MONI_ID']=$ticket.'.'.$this->id;
-     return "Set-Cookie: MONI_ID=".$ticket.'.'.$this->id.'; expires='.gmdate('l, d-M-Y',time()+60*60*24*30).'; Path='.get_scriptname();
+     return "Set-Cookie: MONI_ID=".$ticket.'.'.$this->id.'; expires='.gmdate('l, d-M-Y H:i:s GMT',time()+60*60*24*30).'; Path='.get_scriptname();
   }
 
   function unsetCookie() {
@@ -1263,32 +1264,49 @@ function macro_RandomQuote($formatter,$value="") {
 function macro_Date($formatter,$value) {
   global $DBInfo;
 
+  $user=new User(); # get from COOKIE VARS
+  if ($user->id != 'Anonymous') {
+    $udb=new UserDB($DBInfo);
+    $udb->checkUser($user);
+    $tz_offset=$user->info['tz_offset'];
+  } else {
+    $tz_offset=date('Z');
+  }
+
   $fmt=&$DBInfo->date_fmt;
   if (!$value) {
-    return date($fmt);
+    return gmdate($fmt,time()+$tz_offset);
   }
   if ($value[10]== 'T') {
     $value[10]=' ';
-    $time=strtotime($value." GMT");
-    return date($fmt,$time);
+    $time=strtotime($value.' GMT');
+    return gmdate($fmt,$time+$tz_offset);
   }
-  return date($fmt);
+  return gmdate($fmt,time()+$tz_offset);
 }
 
 function macro_DateTime($formatter,$value) {
   global $DBInfo;
 
   $fmt=&$DBInfo->datetime_fmt;
+  $user=new User(); # get from COOKIE VARS
+  if ($user->id != 'Anonymous') {
+    $udb=new UserDB($DBInfo);
+    $udb->checkUser($user);
+    $tz_offset=$user->info['tz_offset'];
+  } else {
+    $tz_offset=date('Z');
+  }
 
   if (!$value) {
-    return date($fmt);
+    return gmdate($fmt,time()+$tz_offset);
   }
   if ($value[10]== 'T') {
     $value[10]=' ';
-    $time=strtotime($value." GMT");
-    return date($fmt,$time);
+    $time=strtotime($value.' GMT');
+    return gmdate($fmt,$time+$tz_offset);
   }
-  return date("Y/m/d\TH:i:s");
+  return gmdate("Y/m/d\TH:i:s",time()+$tz_offset);
 }
 
 function macro_UserPreferences($formatter,$value,$options='') {
@@ -1344,9 +1362,10 @@ EXTRA;
     $tz_offset=$user->info['tz_offset'];
     $again="<b>"._("New password")."</b>&nbsp;<input type='password' size='15' maxlength='12' name='passwordagain' value='' /></td></tr>";
 
+    $tz_off=date('Z');
     for ($i=-47;$i<=47;$i++) {
       $val=1800*$i;
-      $tz=date("Y/m/d H:i",time()+$val+date('I'));
+      $tz=gmdate("Y/m/d H:i",time()+$val);
       $hour=sprintf("%02d",abs((int)($val / 3600)));
       $z=$hour . (($val % 3600) ? ":30":":00");
       if ($val < 0) $z="-".$z;
@@ -1521,6 +1540,14 @@ function macro_PageList($formatter,$arg="") {
   }
 
   if ($options['date']) {
+    $user=new User(); # get from COOKIE VARS
+    if ($user->id != 'Anonymous') {
+      $udb=new UserDB($DBInfo);
+      $udb->checkUser($user);
+      $tz_offset=$user->info['tz_offset'];
+    } else {
+      $tz_offset=date('Z');
+    }
     $all_pages = $DBInfo->getPageLists($options);
   } else {
     if ($options['metawiki'])
@@ -1544,7 +1571,7 @@ function macro_PageList($formatter,$arg="") {
     } else $hits=$all_pages;
     arsort($hits);
     while (list($pagename,$mtime) = @each ($hits)) {
-      $out.= '<li>'.$formatter->link_tag(_rawurlencode($pagename),"",$pagename).". . . . [".date("Y-m-d",$mtime)."]</li>\n";
+      $out.= '<li>'.$formatter->link_tag(_rawurlencode($pagename),"",$pagename).". . . . [".gmdate("Y-m-d",$mtime+$tz_offset)."]</li>\n";
     }
     $out="<ol>\n".$out."</ol>\n";
   } else {

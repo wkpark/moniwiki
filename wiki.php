@@ -3287,10 +3287,12 @@ if ($options['id'] != 'Anonymous') {
   } else {
     $options['id']='Anonymous';
     $options['css_url']=$user->css;
+    $options['tz_offset']=$user->tz_offset;
     if (!$theme) $options['theme']=$user->theme;
   }
 } else {
   $options['css_url']=$user->css;
+  $options['tz_offset']=$user->tz_offset;
   if (!$theme) $options['theme']=$user->theme;
 }
 
