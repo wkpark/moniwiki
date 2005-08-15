@@ -32,7 +32,7 @@ define(TOUR_DEPTH,4);
 
     if ($options['w'] and $options['w'] < 10) $count=$options['w'];
     else $count=TOUR_LEAFCOUNT;
-    if ($options['d'] and $options['d'] < 6) $depth=$options['d'];
+    if ($options['d'] and $options['d'] < 7) $depth=$options['d'];
     else $depth=TOUR_DEPTH;
 
     $color=array();
@@ -43,6 +43,7 @@ define(TOUR_DEPTH,4);
     asort($allnode);
 
     $id=0;
+    $outs=array();
     while (list($leafname,$leaf) = @each ($node)) {
         if (!$leafs[$leafname]) {
             $urlname=_rawurlencode($leafname);
@@ -56,10 +57,8 @@ define(TOUR_DEPTH,4);
                 $urlname=_rawurlencode($leaf);
                 $url[$leaf]=$urlname;
                 $id=$leafs[$leaf]=$leafs[$leafname]+1;
-                #$id=$color[$leaf];print $id;
-                if (!$out[$id]) $out[$id]="<$ul>\n";
-                $out[$id].= ' <li>'.$formatter->link_tag($url[$leaf],
-                    "?action=tour",$leaf)."</li>\n";
+                if (!$outs[$id]) $outs[$id]=array();
+                $outs[$id][]= $leaf;
             }
         }
     }
@@ -75,16 +74,23 @@ define(TOUR_DEPTH,4);
     }
     $title='<h3>'.sprintf(_("Total %d related pages"),sizeof($allnode)).'</h3>';
 
+    $out=array();
+    foreach ($outs as $ls) {
+        asort($ls);
+        $temp='';
+        foreach ($ls as $leaf) {
+            $temp.= ' <li>'.$formatter->link_tag($url[$leaf],
+                "?action=tour",$leaf)."</li>\n";
+        }
+        $out[]="<$ul>".$temp;
+    }
     $ret=implode($out,"\n</$ul></td><td valign='top'>\n");
     $ret='<table border="0"><tr><td valign="top">'.$ret.
         "</$ul></td></tr></table>\n";
     $ret='<table border="0"><tr><td valign="top">'.$link.$ret.'</td><td>'.
         "\n$title<ol>".$pages."</ol></td>\n".
         '</tr></table>';
-    if (strtoupper($DBInfo->charset) != 'UTF-8') {
-        $new=iconv($DBInfo->charset,'UTF-8',$ret);
-        if ($new) return $new;
-    }
+
     return $ret;
 }
 
