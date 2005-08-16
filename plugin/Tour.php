@@ -25,7 +25,7 @@ function macro_Tour($formatter,$value,$options=array()) {
     global $DBInfo;
 
 define(TOUR_LEAFCOUNT,4);
-define(TOUR_DEPTH,4);
+define(TOUR_DEPTH,3);
     $ul='ul';
 
     if (!$value) $value=$formatter->page->name;
@@ -91,7 +91,7 @@ define(TOUR_DEPTH,4);
         "\n$title<ol>".$pages."</ol></td>\n".
         '</tr></table>';
 
-    return $ret;
+    return '<div class="wikiTour">'.$ret."</div>\n";
 }
 
 // vim:et:sts=4:
