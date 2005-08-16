@@ -322,7 +322,7 @@ function show_wikiseed($config,$seeddir='wikiseed') {
   "SystemPages|TwinPages|WikiName|SystemInfo|UserPreferences|".
   "InterMap|IsbnMap|WikiSandBox|SandBox|UploadFile|UploadedFiles|".
   "InterWiki|SandBox|".
-  "BlogChanges|HotDraw|OeKaki";
+  "BadContent|BlogChanges|HotDraw|OeKaki";
 
   $WikiTag='DeleteThisPage';
   #
