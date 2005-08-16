@@ -2267,6 +2267,9 @@ class Formatter {
       if (!strlen($line)) {
         if ($in_pre) { $this->pre_line.="\n";continue;}
         if ($in_li) {
+          if ($in_table) {
+            $text.=$this->_table(0);$in_table=0;$li_empty=1;
+          }
           $text.=$this->_purple()."<br />\n";
           if ($li_empty==0 && !$this->auto_linebreak ) $text.="<br />\n";
           $li_empty=1;
