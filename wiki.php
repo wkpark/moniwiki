@@ -3459,6 +3459,13 @@ if ($pagename) {
       if (!$tcache->exists($pagename) or $_GET['update_title'])
         $tcache->update($pagename,$formatter->pi['#title']);
     }
+    if ($formatter->pi['#keywords'] and $DBInfo->use_keywords) {
+      $tcache=new Cache_text('keywords');
+      if (!$tcache->exists($pagename) or $_GET['update_keywords']) {
+        $keys=explode(',',$formatter->pi['#keywords']);
+        $tcache->update($pagename,array_flip($keys));
+      }
+    }
     $formatter->write("<div id='wikiContent'>\n");
     $options['timer']->Check("init");
     $options['pagelinks']=1;

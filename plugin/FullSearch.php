@@ -7,11 +7,13 @@
 
 function do_fullsearch($formatter,$options) {
 
-  $ret=$options;
+  $ret=&$options;
 
   $options['value']=_stripslashes($options['value']);
   if ($options['backlinks'])
     $title= sprintf(_("BackLinks search for \"%s\""), $options['value']);
+  else if ($options['keywords'])
+    $title= sprintf(_("KeyWords search for \"%s\""), $options['value']);
   else
     $title= sprintf(_("Full text search for \"%s\""), $options['value']);
   $out= macro_FullSearch($formatter,$options['value'],$ret);
@@ -124,6 +126,21 @@ EOF;
           $p= new WikiPage($page_name);
           $f= new Formatter($p);
           $links=$f->get_pagelinks();
+       }
+       $count= preg_match_all($pattern, $links, $matches);
+       if ($count) {
+         $hits[$page_name] = $count;
+       }
+     }
+  } else if ($opts['keywords']) {
+     $opts['context']=0; # turn off context-matching
+     $cache=new Cache_text("keywords");
+     foreach ($pages as $page_name) {
+       $links==-1;
+       $links=$cache->fetch($page_name);
+       if ($links==-1) {
+          $links=array();
+          continue;
        }
        $count= preg_match_all($pattern, $links, $matches);
        if ($count) {
