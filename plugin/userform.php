@@ -71,10 +71,24 @@ function do_userform($formatter,$options) {
   } else if ($user->id=="Anonymous" and $options['login_id'] and $options['password'] and $options['passwordagain']) {
     # create profile
 
+    $title='';
+    if ($DBInfo->use_ticket) {
+      if ($options['__seed'] and $options['check']) {
+        $mycheck=getTicket($options['__seed'],$_SERVER['REMOTE_ADDR'],4);
+        if ($mycheck==$options['check'])
+          $ok_ticket=1;
+        else
+          $title= _("Invalid ticket !");
+      } else {
+        $title= _("You need a ticket !");
+      }
+    } else {
+      $ok_ticket=1;
+    }
     $id=$user->getID($options['login_id']);
     $user->setID($id);
 
-    if ($user->id != "Anonymous") {
+    if ($ok_ticket and $user->id != "Anonymous") {
        $ret=$user->setPasswd($options['password'],$options['passwordagain']);
        if ($DBInfo->password_length and (strlen($options['password']) < $DBInfo->password_length)) $ret=0;
        if ($ret <= 0) {
@@ -120,7 +134,7 @@ function do_userform($formatter,$options) {
              }
            }
        }
-    } else
+    } else if ($title=='')
        $title= _("Invalid username !");
   } else if ($user->id != "Anonymous") {
     # save profile
