@@ -115,4 +115,8 @@ $use_sectionedit=0;
 $spam_filter='antispam';
 $use_toctoggle=0;
 #$toc_options='title=Contents,toggle,simple';
+#$use_ticket=1;
+#$ticket_gdfont=5;
+#$ticket_font='TTFONT';
+#$gdfontpath='./data';
 ?>
