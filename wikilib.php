@@ -164,18 +164,29 @@ function get_title($page) {
   return preg_replace("/((?<=[a-z0-9]|[B-Z]{2})([A-Z][a-z]))/"," \\1",$title);
 }
 
-function getTicket($seed) {
+function getTicket($seed,$extra='',$size=0,$flag=0) {
   global $DBInfo;
   # make a ticket based on the variables in the config.php
-  $config=getConfig("config.php");
-  foreach ($config as $seed) {
-    if (!is_array($seed))
-      $md5.=md5($seed);
+  $configs=getConfig("config.php");
+  foreach ($configs as $config) {
+    if (is_array($config)) $siteticket.=md5(base64_encode(serialize($config)));
+    else $siteticket.=md5($config);
   }
-  if ($DBInfo->strict_usercheck)
+  if ($size>3) {
+    $ticket= md5($siteticket.$seed.$extra);
+    $n=0;$passwd='';
+    for ($i=0,$n=0;$n<$size;$i++) {
+      $j=ord($ticket[$i])-48;
+      if (0<=$j and $j<=9) {
+        $passwd.="$j"; $n++;
+      }
+    }
+    return $passwd;
+  }
+  if ($flag)
     # change user's ticket
-    return md5($md5.$seed.time().$_SERVER['HTTP_HOST']);
-  return md5($md5.$seed);
+    return md5($siteticket.$seed.$extra.time());
+  return md5($siteticket.$seed.$extra);
 }
 
 function log_referer($referer,$page) {
@@ -358,7 +369,7 @@ class User {
 
   function setCookie() {
      if ($this->id == "Anonymous") return false;
-     $ticket=getTicket($this->id);
+     $ticket=getTicket($this->id,$_SERVER['REMOTE_ADDR']);
      $this->ticket=$ticket;
      # set the fake cookie
      $_COOKIE['MONI_ID']=$ticket.'.'.$this->id;
@@ -1349,9 +1360,18 @@ FORM;
       $passwd=$options['password'];
       $button=_("Make profile");
       $again="<b>"._("password again")."</b>&nbsp;<input type='password' size='15' maxlength='12' name='passwordagain' value='' /></td></tr>";
+      $mailbtn=_("Mail");
       $extra=<<<EXTRA
-  <tr><td><b>Mail</b>&nbsp;</td><td><input type="text" size="40" name="email" value="$email" /></td></tr>
+  <tr><td><b>$mailbtn</b>&nbsp;</td><td><input type="text" size="40" name="email" value="$email" /></td></tr>
 EXTRA;
+      if ($DBInfo->use_ticket) {
+        $seed=md5(base64_encode(time()));
+        $ticketimg=$formatter->link_url($formatter->page->name,'?action=ticket&amp;__seed='.$seed);
+        $extra.=<<<EXTRA
+  <tr><td><img src="$ticketimg" />&nbsp;</td><td><input type="text" size="10" name="check" />
+<input type="hidden" name="__seed" value="$seed" /></td></tr>
+EXTRA;
+      }
     } else {
       $button=_("Login or Join");
     }
