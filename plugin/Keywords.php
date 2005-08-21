@@ -94,9 +94,22 @@ function do_keywords($formatter,$options) {
 
     if (is_array($options['key']) or $options['keywords']) {
         if ($options['keywords']) {
+            // following keyword list are acceptable separated with spaces.
+            // Chemistry "Physical Chemistry" "Bio Chemistry" ...
+            $ws=preg_split('/((?<!\S)(["\'])[^\2]+?\2(?!\S)|\S+)/',
+                $options['keywords'],-1,
+                PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_NO_EMPTY);
+            $ws=array_flip(array_unique($ws));
+            unset($ws['"']); // delete delims
+            unset($ws["'"]);
+            unset($ws[' ']);
+            $ws=array_flip($ws);
+            
+            $ws= array_map(create_function('$a',
+                'return preg_replace("/^([\"\'])(.*)\\\\1$/","\\\\2",$a);'),
+                $ws); // delete ",'
             if (!is_array($options['key'])) $options['key']=array();
-            $options['key']=array_merge($options['key'],
-                preg_split("/,[ ]*/",$options['keywords']));
+            $options['key']=array_merge($options['key'],$ws);
         }
         $cache=new Cache_text('keywords');
         $keys=$options['key'];
@@ -109,19 +122,21 @@ function do_keywords($formatter,$options) {
         if (!$p->exists()) $dict=array();
         else {
             $raw=$p->get_raw_body();
+            $raw=rtrim($raw);
             $lines=explode("\n",$raw);
             $body='';
             foreach ($lines as $line) {
                 if ($line[0]=='#') continue;
-                $body.=$line.' ';
+                $body.=$line."\n";
             }
-            $dict=preg_split("/[ ]+|\n/",$body);
+            $body=rtrim($body);
+            $dict=explode("\n",$body);
         }
         $nkeys=array_diff(array_values($options['key']),$dict);
         if (!empty($nkeys)) {
-            $raw.="\n".implode(' ',$nkeys);
+            $raw.="\n".implode("\n",$nkeys);
             $p->write($raw);
-            $DBInfo->savePage($p,"Keywords are added",$options);
+            $DBInfo->savePage($p,"New keywords are added",$options);
         }
 
         $formatter->send_title(sprintf(_("Keywords for %s are updated"),
