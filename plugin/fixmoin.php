@@ -10,7 +10,7 @@
 function do_FixMoin($formatter,$options) {
     global $DBInfo;
 
-    $pagename=rawurldecode(strtr($formatter->page->name,'_','%'));
+    $pagename=rawurldecode(preg_replace('/_([0-9a-f]{2})/i','%\\1',$formatter->page->name));
     $npage=str_replace(' ','',$pagename);
     if (!$DBInfo->hasPage($npage)) {
         if (strtolower($DBInfo->charset)=='utf-8') {
