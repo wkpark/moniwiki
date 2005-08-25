@@ -205,13 +205,16 @@ function macro_UploadFile($formatter,$value='',$options='') {
   }
   $use_multi=1;
   $multiform='';
-  if ($options['rename'] and !is_array($options['rename'])) {
-    // rename option used by "attachment:" and it does not use multiple form.
-    $rename=$options['rename'];
+  if ($options['rename']) {
+    if (!is_array($options['rename'])) {
+      // rename option used by "attachment:" and it does not use multiple form.
+      $rename=$options['rename'];
+      $options['rename']=array();
+      $options['rename'][0]=$rename;
+      $use_multi=0;
+    }
+  } else
     $options['rename']=array();
-    $options['rename'][0]=$rename;
-    $use_multi=0;
-  }
   if ($use_multi) {
     $multiform="<select name='multiform' />\n";
     for ($i=2;$i<=10;$i++)
