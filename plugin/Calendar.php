@@ -54,9 +54,9 @@ function macro_Calendar($formatter,$value="",$option="") {
 		preg_match("/^((\d{4})-?(\d{1,2}))$/i",$date,$match2);
 		$year= $match2[2];
 		$month= $match2[3];
-	} else if ($match[3]) {
-		$year= $match[4];
-		$month= $match[5];
+	} else if ($match[4]) {
+		$year= $match[5];
+		$month= $match[6];
 	}
 	/* Validate date. Use system date, if date is not validated */
 	if ($month <1 || $month > 12) {
