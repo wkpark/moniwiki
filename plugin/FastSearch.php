@@ -18,6 +18,9 @@
 function macro_FastSearch($formatter,$value="",&$opts) {
   global $DBInfo;
   $theDB=$DBInfo->data_dir."/index.db";
+  if (!file_exists($theDB)) {
+    return '[[FastSearch('._("Index DB is not found.").')]]';
+  }
 
   if ($value === true) {
     $needle = $value = $formatter->page->name;
