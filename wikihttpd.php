@@ -39,7 +39,8 @@ class simple_server {
   var $runing=false;
   var $document_root;
   var $directory_index='index.html';
-  var $servername = "MoniWiki/1.0 Server";
+  var $servername = "MoniWiki/1.1 Server";
+  var $wiki_prefix = "/wiki/";
 
   function simple_server($address=0,$port=8080,$root='htdocs') {
     @set_time_limit(0);
@@ -206,6 +207,11 @@ h1 {font-family:tahoma,verdana,sans-serif;}
       $req['PATH_INFO']       = $p['PATH_INFO'];
       $req['QUERY_STRING']    = $p['QUERY_STRING'];
       $req['PATH_TRANSLATED'] = $this->condense_path($this->document_root . $req['REQUEST_URI']);      
+    }
+
+    if (substr($req['REQUEST_URI'],0,strlen($this->wiki_prefix)) ==
+      $this->wiki_prefix) {
+      $req['SCRIPT_NAME']= substr($this->wiki_prefix,0,-1);
     }
 
     $remote_ip=getenv('REMOTE_ADDR');
@@ -657,7 +663,7 @@ if ($DBInfo->httpd_docs)
 else
   $httpd=new simple_server('localhost',8080,"c:\htdocs");
 
-$wiki_prefix= '/wiki/';
+$wiki_prefix= $httpd->wiki_prefix;
 
 // Initialize Wiki
 //$httpd->loop();
