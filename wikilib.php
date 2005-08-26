@@ -509,7 +509,7 @@ function do_edit($formatter,$options) {
   $formatter->send_footer($args,$options);
 }
 
-function _get_sections($body) {
+function _get_sections($body,$lim=5) {
   $chunks=preg_split("/(\{\{\{.+?\}\}\})/s",$body,-1, PREG_SPLIT_DELIM_CAPTURE);
   $sects=array();
   $sects[]='';
@@ -520,7 +520,7 @@ function _get_sections($body) {
       continue;
     }
     $parts=array();
-    $parts=preg_split("/^(\s*={1,5}\s#?.*\s+={1,5}\s?)$/m",$chunks[$ii],
+    $parts=preg_split("/^([^\n]\s*={1,$lim}\s#?.*\s+={1,$lim}\s?)$/m",$chunks[$ii],
       -1, PREG_SPLIT_DELIM_CAPTURE);
     for ($j=0,$i=0,$s=count($parts); $i<$s; $i++) {
       if (!($i%2)) {
@@ -528,7 +528,7 @@ function _get_sections($body) {
         $sects[]=$sec.$parts[$i];
         continue;
       }
-      if (preg_match("/^\s*(={1,5})\s#?.*\s+\\1\s?/",$parts[$i])) {
+      if (preg_match("/^\s*(={1,$lim})\s#?.*\s+\\1\s?/",$parts[$i])) {
         $sects[]=$parts[$i];
       } else {
         $sec=array_pop($sects);
@@ -661,8 +661,10 @@ function resize(obj,val) {
 //-->
 //]]>
 </script>
+<div id='wikiResize'>
 <input type='button' value='+' onclick='resize(this.form,3)' />
 <input type='button' value='-' onclick='resize(this.form,-3)' />
+</div>
 EOS;
   }
   $form.=<<<EOS
