@@ -1451,8 +1451,14 @@ function macro_InterWiki($formatter="") {
       $url=str_replace('$PAGE','index',$href);
       #$href=$url;
     }
-    $icon=strtolower($wiki)."-16.png";
-    $out.="<tr><td><tt><img src='$DBInfo->imgs_dir_interwiki/$icon' align='middle' alt='$wiki:' /><a href='$url'>$wiki</a></tt></td><td><tt>";
+    $icon=$DBInfo->imgs_dir_interwiki.strtolower($wiki).'-16.png';
+    $sx=16;$sy=16;
+    if ($DBInfo->intericon[$wiki]) {
+      $icon=$DBInfo->intericon[$wiki][2];
+      $sx=$DBInfo->intericon[$wiki][0];
+      $sy=$DBInfo->intericon[$wiki][1];
+    }
+    $out.="<tr><td><tt><img src='$icon' width='$sx' height='$sy' align='middle' alt='$wiki:' /><a href='$url'>$wiki</a></tt></td><td><tt>";
     $out.="<a href='$href'>$href</a></tt></td></tr>\n";
   }
   $out.="</table>\n";
