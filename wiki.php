@@ -656,6 +656,22 @@ class WikiDB {
     }
     $this->interwikirule.="Self";
     $this->interwiki['Self']=get_scriptname().$this->query_prefix;
+
+    # read shared intericons
+    $map=array();
+    if (file_exists($this->shared_intericon))
+      $map=array_merge($map,file($this->shared_intericon));
+
+    for ($i=0;$i<sizeof($map);$i++) {
+      $line=rtrim($map[$i]);
+      if (!$line || $line[0]=="#" || $line[0]==" ") continue;
+      if (preg_match("/^[A-Z]+/",$line)) {
+        $wiki=strtok($line,' ');$icon=strtok(' ');
+        $sx=strtok('x');$sy=strtok('');
+        $sx=$sx ? $sx:16; $sy=$sy ? $sy:16;
+        $this->intericon[$wiki]=array($sx,$sy,trim($icon));
+      }
+    }
   }
 
   function _getPageKey($pagename) {
@@ -1375,7 +1391,7 @@ class Formatter {
     $this->baserule=array("/<([^\s<>])/","/`([^`' ]+)'/","/(?<!`)`([^`]*)`/",
                      "/'''([^']*)'''/","/(?<!')'''(.*)'''(?!')/",
                      "/''([^']*)''/","/(?<!')''(.*)''(?!')/",
-                     "/\^([^ \^]+)\^(?=\s|$)/","/\^\^([^\^]+)\^\^(?!^)/",
+                     "/\^([^ \^]+)\^(?=\s|$)/","/\^\^([^ \^][^\^]+[^ \^])\^\^(?!^)/",
                      "/(?<!,),,([^ ,]+),,(?!,)/",
                      "/(?<!_)__((?:(?<!_)_(?!_)|[^_])+)__(?!_)/","/^(-{4,})/e",
                      "/(?<!-)--([^-]+[^\s])--(?!-)/",
@@ -1425,7 +1441,7 @@ class Formatter {
     #"\b(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+[^\(\)<>\s\',\.:\?\!]+)|".
-    "(\b|\^?)([A-Z][a-zA-Z]+):([^\(\)<>\s\']+[^\(\)<>\s\'\",\.:\?\!]+)|".
+    "(\b|\^?)([A-Z][a-zA-Z]+):([^\(\)<>\s\']*[^\(\)<>\s\'\",\.:\?\!]*)|".
     # "(?<!\!|\[\[)\b(([A-Z]+[a-z0-9]+){2,})\b|".
     # "(?<!\!|\[\[)((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})\b|".
     # WikiName rule: WikiName ILoveYou (imported from the rule of NoSmoke)
@@ -1718,7 +1734,7 @@ class Formatter {
 #      $wiki=$dum1[0]; $page=$dum1[1];
 #    }
 
-    if (!$page) {
+    if (sizeof($dum) == 1) {
       # wiki:FrontPage(not supported in the MoinMoin
       # or [wiki:FrontPage Home Page]
       $page=$dum[0];
@@ -1732,6 +1748,7 @@ class Formatter {
     if (!$url)
       return $dum[0].":".$this->word_repl($dum[1],$text);
 
+    if ($page=='/') $page='';
     $urlpage=_urlencode(trim($page));
     #$urlpage=trim($page);
     if (strpos($url,'$PAGE') === false)
@@ -1746,10 +1763,17 @@ class Formatter {
       $url=str_replace('$PAGE',$page_only,$url).$query;
     }
 
+    $icon=$this->imgs_dir_interwiki.strtolower($wiki).'-16.png';
+    $sx=16;$sy=16;
+    if ($DBInfo->intericon[$wiki]) {
+      $icon=$DBInfo->intericon[$wiki][2];
+      $sx=$DBInfo->intericon[$wiki][0];
+      $sy=$DBInfo->intericon[$wiki][1];
+    }
+
     $img="<a href='$url' target='wiki'>".
-         "<img border='0' src='$this->imgs_dir_interwiki".
-         strtolower($wiki)."-16.png' align='middle' height='16' ".
-         "width='16' alt='$wiki:' title='$wiki:' /></a>";
+         "<img border='0' src='$icon' align='middle' height='$sy' ".
+         "width='$sx' alt='$wiki:' title='$wiki:' /></a>";
     #if (!$text) $text=str_replace("%20"," ",$page);
     if (!$text) $text=urldecode($page);
     else if (preg_match("/^(http|ftp|attachment):.*\.(png|gif|jpeg|jpg)$/i",$text)) {
