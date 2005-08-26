@@ -13,13 +13,17 @@ function macro_SystemInfo($formatter='',$value='') {
   list($aversion,$dummy)=explode(" ",$_SERVER['SERVER_SOFTWARE'],2);
 
   $pages=macro_PageCount($formatter);
+  $npage=_("Number of Pages");
+  $ver_serv=_("HTTP Server Version");
+  $ver_moni=_("MoniWiki Version");
+  $ver_php=_("PHP Version");
 
   return <<<EOF
 <table border='0' cellpadding='5'>
-<tr><th width='200'>PHP Version</th> <td>$version ($uname)</td></tr>
-<tr><th>MoniWiki Version</th> <td>Release $_release [$_revision]</td></tr>
-<tr><th>Apache Version</th> <td>$aversion</td></tr>
-<tr><th>Number of Pages</th> <td>$pages</td></tr>
+<tr><th width='200'>$ver_php</th> <td>$version ($uname)</td></tr>
+<tr><th>$ver_moni</th> <td>Release $_release [$_revision]</td></tr>
+<tr><th>$ver_serv</th> <td>$aversion</td></tr>
+<tr><th>$npage</th> <td>$pages</td></tr>
 </table>
 EOF;
 }
