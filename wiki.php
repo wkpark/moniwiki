@@ -1939,7 +1939,7 @@ class Formatter {
     }
     if (strtolower($DBInfo->charset) == 'utf-8')
       $utfword=$word;
-    if (function_exists('iconv'))
+    else if (function_exists('iconv'))
       $utfword=iconv($DBInfo->charset,'utf-8',$word);
     if ($utfword) {
       if (function_exists('mb_encode_numericentity')) {
