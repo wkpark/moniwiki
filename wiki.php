@@ -1745,8 +1745,10 @@ class Formatter {
 
     $url=$DBInfo->interwiki[$wiki];
     # invalid InterWiki name
-    if (!$url)
-      return $dum[0].":".$this->word_repl($dum[1],$text);
+    if (!$url) {
+      $dum0=preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$dum[0]);
+      return $dum0.":".$this->word_repl($dum[1],$text);
+    }
 
     if ($page=='/') $page='';
     $urlpage=_urlencode(trim($page));
@@ -1935,17 +1937,22 @@ class Formatter {
         $last=substr($word,1);
       return "<a class='nonexistent' href='$url'>$link</a>".$last;
     }
-    if (function_exists('mb_encode_numericentity')) {
-      if (function_exists('iconv') and strtolower($DBInfo->charset) != 'utf-8')
-        $utfword=iconv($DBInfo->charset,'utf-8',$word);
-      else
-        $utfword=$word;
-      $mbword=mb_encode_numericentity($utfword,$DBInfo->convmap,'utf-8');
+    if (strtolower($DBInfo->charset) == 'utf-8')
+      $utfword=$word;
+    if (function_exists('iconv'))
+      $utfword=iconv($DBInfo->charset,'utf-8',$word);
+    if ($utfword) {
+      if (function_exists('mb_encode_numericentity')) {
+        $mbword=mb_encode_numericentity($utfword,$DBInfo->convmap,'utf-8');
+      } else {
+        include_once('lib/compat.php');
+        $mbword=utf8_mb_encode($utfword);
+      }
       $tag=strtok($mbword,';').';'; $last=strtok('');
-      return "<a class='nonexistent' href='$url'>$tag</a>".$last;
-    } else {
-      return "<a class='nonexistent' href='$url'>?</a>$word";
+      if ($tag)
+        return "<a class='nonexistent' href='$url'>$tag</a>".$last;
     }
+    return "<a class='nonexistent' href='$url'>?</a>$word";
   }
 
   function head_repl($depth,$head) {
