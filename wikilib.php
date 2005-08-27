@@ -36,9 +36,7 @@ function _rawurlencode($url) {
 }
 
 function _urlencode($url) {
-  #$name=urlencode(strtr($url,"+"," "));
-  #return preg_replace(array('/%2F/i','/%7E/i','/%23/'),array('/','~','#'),$name);
-  return preg_replace("/([^a-z0-9\/\?\.\+~#&:;=%\-]{1})/ie","'%'.strtoupper(dechex(ord('\\1')))",$url);
+  return preg_replace("/([^a-z0-9\/\?\.\+~#&:;=%\-_]{1})/ie","'%'.strtoupper(dechex(ord('\\1')))",$url);
 }
 
 function _stripslashes($str) {
@@ -914,11 +912,18 @@ HEADER;
 function do_titleindex($formatter,$options) {
   global $DBInfo;
 
-  $pages = $DBInfo->getPageLists();
+  if ($options['sec'] =='') {
+    $pages = $DBInfo->getPageLists();
 
-  sort($pages);
-  header("Content-Type: text/plain");
-  print join("\n",$pages);
+    sort($pages);
+    header("Content-Type: text/plain");
+    print join("\n",$pages);
+    return;
+  }
+  $formatter->send_header("",$options);
+  $formatter->send_title("","",$options);
+  print macro_TitleIndex($formatter,$options['sec']);
+  $formatter->send_footer($args,$options);
 }
 
 function do_titlesearch($formatter,$options) {
@@ -1617,7 +1622,7 @@ function macro_PageList($formatter,$arg="") {
   return $out;
 }
 
-function macro_TitleIndex($formatter) {
+function macro_TitleIndex($formatter,$value) {
   global $DBInfo;
 
   if ($formatter->group) {
@@ -1634,22 +1639,25 @@ function macro_TitleIndex($formatter) {
   $out="";
   $keys=array();
 
+  if ($value=='' or $value=='all') $sel='.?';
+  else $sel=$value;
+  if (@preg_match('/'.$sel.'/i','')===false) $sel='.?';
+
 #  if ($DBInfo->use_titlecache)
 #    $cache=new Cache_text('title');
-
   foreach ($all_pages as $page) {
     $p=ltrim($page);
     $pkey=get_key("$p");
-#   $key=strtoupper($page[0]);
     if ($key != $pkey) {
-       if ($key !=-1)
-          $out.="</ul>";
+       if ($ok==1 and $sel!='.?') break;
        $key=$pkey;
-       $keys[]=$key;
+       $keys[]=$pkey;
+       if (!preg_match('/'.$sel.'/i',$pkey)) continue;
+       if ($out !='') $out.="</ul>";
        $out.= "<a name='$key' /><h3><a href='#top'>$key</a></h3>\n";
        $out.= "<ul>";
     }
-
+    if (!preg_match('/'.$sel.'/i',$pkey)) continue;
     #
 #    if ($DBInfo->use_titlecache and $cache->exists($page))
 #      $title=$cache->fetch($page);
@@ -1668,10 +1676,17 @@ function macro_TitleIndex($formatter) {
   $out.= "</ul>\n";
 
   $index='';
+  if ($sel != '.?') {
+    $tlink=$formatter->link_url($formatter->page->name,'?action=titleindex&amp;sec=');
+    $keys[]='all';
+  }
   foreach ($keys as $key) {
     $name=$key;
+    $tag='#'.$key;
+    $link=$tlink ? preg_replace('/sec=/','sec='._urlencode($key),$tlink):'';
     if ($key == 'Others') $name=_("Others");
-    $index.= "| <a href='#$key'>$name</a> ";
+    else if ($key == 'all') $name=_("Show all");
+    $index.= "| <a href='$link$tag'>$name</a> ";
   }
   $index[0]=" ";
   
