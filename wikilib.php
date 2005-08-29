@@ -1649,7 +1649,6 @@ function macro_TitleIndex($formatter,$value) {
     $p=ltrim($page);
     $pkey=get_key("$p");
     if ($key != $pkey) {
-       if ($ok==1 and $sel!='.?') break;
        $key=$pkey;
        $keys[]=$pkey;
        if (!preg_match('/'.$sel.'/i',$pkey)) continue;
@@ -1788,6 +1787,7 @@ function macro_TableOfContents(&$formatter,$value="") {
  if ($DBInfo->toc_options)
    $value=$DBInfo->toc_options.','.$value;
  $toctoggle=$DBInfo->use_toctoggle;
+ $secdep=5;
 
  while($value) {
    list($arg,$value)=explode(',',$value,2);
@@ -1803,6 +1803,8 @@ function macro_TableOfContents(&$formatter,$value="") {
    } else if ($key=='toggle') {
      $toctoggle=strtok('');
      if ($toctoggle=='') $toctoggle=1;
+   } else if ($arg == (int) $arg and $arg > 0) {
+     $secdep=$arg;
    } else if ($arg) {
      $value=$value ? $arg.','.$value:$arg;
      break;
@@ -1845,7 +1847,7 @@ EOS;
  $lines=explode("\n",$body);
  foreach ($lines as $line) {
    $line=preg_replace("/\n$/", "", $line); # strip \n
-   preg_match("/(?<!=)(={1,5})\s(#?)(.*)\s+\\1\s?$/",$line,$match);
+   preg_match("/(?<!=)(={1,$secdep})\s(#?)(.*)\s+\\1\s?$/",$line,$match);
 
    if (!$match) continue;
 
