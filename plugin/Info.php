@@ -129,7 +129,7 @@ function do_info($formatter,$options) {
     getModule('Version',$DBInfo->version_class);
     $class="Version_".$DBInfo->version_class;
     $version=new $class ($DBInfo);
-    $out= $version->rlog($formatter->page->name,'','','-zLT');
+    $out= $version->rlog($formatter->page->name,'','','-z');
 
     if (!$out) {
       $msg=_("No older revisions available");
