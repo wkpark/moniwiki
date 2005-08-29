@@ -565,8 +565,9 @@ function macro_Edit($formatter,$value,$options='') {
     $form.= _("To create your own templates, add a page with a 'Template' suffix.")."\n<br />\n";
   }
 
+  $merge_btn=_("Merge");
   if ($options['conflict'])
-    $extra='<input type="submit" name="button_merge" value="Merge" />';
+    $extra='<input type="submit" name="button_merge" value="'.$merge_btn.'" />';
   if ($options['section'])
     $hidden='<input type="hidden" name="section" value="'.$options['section'].
             '" />';
@@ -1005,10 +1006,15 @@ function do_post_savepage($formatter,$options) {
       $options['conflict']=1; 
       $options['datestamp']=$datestamp; 
       if ($button_merge) {
-        $option['title']=sprintf(_("Preview of %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page'],"class='wikiTitle'"));
-        $formatter->send_title("","",$options);
+        $options['msg']=sprintf(_("%s is merged with latest contents."),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
+        $options['title']=sprintf(_("Preview of %s"),$options['page']);
         $options['conflict']=0; 
         $merge=$formatter->get_merge($savetext);
+        if (preg_grep('/^<<<<<<<$/',explode("\n",$merge)))
+          $options['msg']=sprintf(_("Merging is not successful for %s. Please resolve conflicts manually."),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
+        $formatter->send_title("","",$options);
+
+        $merge=preg_replace('/^=======$/m',">>>>>>>",$merge);
         if ($merge) $savetext=$merge;
         unset($options['datestamp']); 
       } else
@@ -1046,7 +1052,7 @@ function do_post_savepage($formatter,$options) {
   $formatter->page->set_raw_body($savetext);
 
   if ($button_preview) {
-    $options['title']=sprintf(_("Preview of %s"),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page']),"class='wikiTitle'"));
+    $options['title']=sprintf(_("Preview of %s"),$options['page']);
     $formatter->send_title("","",$options);
      
     $options['preview']=1; 

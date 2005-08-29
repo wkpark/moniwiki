@@ -2701,7 +2701,7 @@ class Formatter {
       $current=$this->page->_get_raw_body();
 
       $merge= new Diff3(explode("\n",$orig),
-        explode("\n",$text),explode("\n",$current));
+        explode("\n",$current),explode("\n",$text));
       $out=implode("\n",$merge->merged_output());
     }
 
