@@ -18,7 +18,7 @@ function macro_diff($formatter,$value,&$options)
       fwrite($fp, $options['text']);
       fclose($fp);
 
-      $fp=popen("diff -u $tmpf ".$formatter->page->filename,'r');
+      $fp=popen('diff -u '.$formatter->page->filename.' '.$tmpf,'r');
       if (!$fp) {
         unlink($tmpf);
         return '';
@@ -33,7 +33,7 @@ function macro_diff($formatter,$value,&$options)
     } else {
       $current=$formatter->page->get_raw_body();
       include_once('lib/difflib.php');
-      $mydiff=new Diff(explode("\n",$options['text']),explode("\n",$current));
+      $mydiff=new Diff(explode("\n",$current),explode("\n",$options['text']));
 
       $fmtdiff = new UnifiedDiffFormatter;
       $out = $fmtdiff->format($mydiff);
