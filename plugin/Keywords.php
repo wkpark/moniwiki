@@ -10,6 +10,7 @@ function macro_Keywords($formatter,$value,$options='') {
 
     $common= <<<EOF
 i am an a b c d e f g h i j k l m n o p q r s t u v w x y z
+0 1 2 3 4 5 6 7 8 9
 if on in by it at up down over into for from to of he his she her back
 is are be or nor also and each all
 too any with here
@@ -23,8 +24,8 @@ EOF;
     if (!$page->exists()) return '';
     $raw=$page->get_raw_body();
 
-    $raw=preg_replace("/([;\"',`\\\\\/\.:@\$%\^&\*\(\)\{\}\[\]\-_\+=\|])/",' ',
-        $raw.' '.$value);
+    $raw=preg_replace("/([;\"',`\\\\\/\.:@#\!\?\$%\^&\*\(\)\{\}\[\]\-_\+=\|])/",
+        ' ', $raw.' '.$value);
     $raw=preg_replace("/((?<=[a-z0-9]|[B-Z]{2})([A-Z][a-z]))/"," \\1",$raw);
     $raw=strtolower($raw);
     $words=preg_split("/[ ]+|\n/",$raw);
