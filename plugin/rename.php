@@ -40,9 +40,9 @@ function do_post_rename($formatter,$options) {
       print $msg;
       if (!$options['show_only'])
         $DBInfo->renamePage($options['page'],$options['name'],$options);
-      print sprintf(_("'%s' is renamed as '%s' successfully"),
+      print sprintf(_("'%s' is renamed as '%s' successfully."),
         $options['page'],
-        $formatter->link_tag($new_encodedname,
+        $formatter->link_tag($options['name'],
           "?action=highlight&amp;value=".$new_encodedname));
 
       $formatter->send_footer("",$options);
@@ -60,10 +60,12 @@ function do_post_rename($formatter,$options) {
   $formatter->send_title($title,"",$options);
 #<tr><td align='right'><input type='checkbox' name='show' checked='checked' />show only </td><td><input type='password' name='passwd'>
 
+  $obtn=_("Old name:");
+  $nbtn=_("New name:");
   print "<form method='post'>
 <table border='0'>
-<tr><td align='right'>Old name: </td><td><b>$options[page]</b></td></tr>
-<tr><td align='right'>New name: </td><td><input name='name' /></td></tr>\n";
+<tr><td align='right'>$obtn </td><td><b>$options[page]</b></td></tr>
+<tr><td align='right'>$nbtn </td><td><input name='name' /></td></tr>\n";
   $rename_button=_("Rename");
   if ($options['value']=='check_backlinks') {
     print "<tr><td colspan='2'>\n";
