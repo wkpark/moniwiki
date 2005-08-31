@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a rcs action plugin for the MoniWiki
 //
@@ -9,6 +9,14 @@ function do_post_rcs($formatter,$options) {
   global $DBInfo;
 
   $supported=array('-kkv','-kk');
+  if ($DBInfo->version_class!='RCS') {
+    $title = sprintf(_("%s does not support rcs options."), $DBInfo->version_class);
+    $formatter->send_header("",$options);
+    $formatter->send_title($title,"",$options);
+    $formatter->send_footer("",$options);
+
+    return;
+  }
   
   if (isset($options['param'])) {
     if ($DBInfo->hasPage($formatter->page->name) and in_array($options['param'],$supported)) {
