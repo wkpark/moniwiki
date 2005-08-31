@@ -507,6 +507,7 @@ class WikiDB {
     $this->purple_icon='#';
     $this->use_purple=0;
     $this->version_class='RCS';
+    $this->title_rule='((?<=[a-z0-9]|[B-Z]{2})([A-Z][a-z]))';
 
     # set user-specified configuration
     if ($config) {
@@ -657,11 +658,15 @@ class WikiDB {
       if (!$line || $line[0]=="#" || $line[0]==" ") continue;
       if (preg_match("/^[A-Z]+/",$line)) {
         $wiki=strtok($line,' ');$url=strtok(' ');
+        $dumm=trim(strtok(''));
+        if (preg_match('/^(http|ftp):/',$dumm,$match)) {
+          $icon=strtok($dumm,' ');
+          $sx=strtok('x');$sy=strtok('');
+          $sx=$sx ? (int)$sx:16; $sy=$sy ? (int)$sy:16;
+          $this->intericon[$wiki]=array($sx,$sy,trim($icon));
+        }
         $this->interwiki[$wiki]=trim($url);
         $this->interwikirule.="$wiki|";
-        #$dum=split("[[:space:]]",$line);
-        #$this->interwiki[$dum[0]]=trim($dum[1]);
-        #$this->interwikirule.="$dum[0]|";
       }
     }
     $this->interwikirule.="Self";
@@ -677,8 +682,9 @@ class WikiDB {
       if (!$line || $line[0]=="#" || $line[0]==" ") continue;
       if (preg_match("/^[A-Z]+/",$line)) {
         $wiki=strtok($line,' ');$icon=strtok(' ');
+        if (!preg_match('/^(http|ftp|attachment):/',$icon,$match)) continue;
         $sx=strtok('x');$sy=strtok('');
-        $sx=$sx ? $sx:16; $sy=$sy ? $sy:16;
+        $sx=$sx ? (int)$sx:16; $sy=$sy ? (int)$sy:16;
         $this->intericon[$wiki]=array($sx,$sy,trim($icon));
       }
     }
@@ -1128,6 +1134,7 @@ class Cache_text {
 
   function update($pagename,$val,$mtime="") {
     $key=$this->getKey($pagename);
+    if (!is_writable($key)) return false;
     if ($mtime and ($mtime <= $this->mtime($key))) return false;
 
     if (is_array($val))
@@ -1405,6 +1412,17 @@ class Formatter {
     $this->external_target='';
     if ($DBInfo->external_target)
       $this->external_target='target="'.$DBInfo->external_target.'"';
+
+    # set intericons
+    if ($DBInfo->intericon) {
+      foreach ($DBInfo->intericon as $wiki=>$val) {
+        $icon=&$DBInfo->intericon[$wiki][2];
+        if ($icon[0] == 'a') {
+          $url=$this->macro_repl('Attachment',substr($icon,11),1);
+          $DBInfo->intericon[$wiki][2]=qualifiedUrl($DBInfo->url_prefix.'/'.$url);
+        }
+      }
+    }
 
     #$this->baserule=array("/<([^\s][^>]*)>/","/`([^`]*)`/",
     $this->baserule=array("/<([^\s<>])/","/`([^`' ]+)'/","/(?<!`)`([^`]*)`/",
@@ -1766,7 +1784,7 @@ class Formatter {
     # invalid InterWiki name
     if (!$url) {
       $dum0=preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$dum[0]);
-      return $dum0.":".$this->word_repl($dum[1],$text);
+      return $dum0.':'.($dum[1]?$this->word_repl($dum[1],$text):'');
     }
 
     if ($page=='/') $page='';
@@ -1863,10 +1881,11 @@ class Formatter {
         $text=str_replace('&','&amp;',$text);
         $word="<img border='0' alt='$word' src='$text' /></a>";
       } else $word=$text;
-    } else 
+    } else {
       $word=$text=$page_text ? $page_text:$word;
-    #print $text;
-    $word=htmlspecialchars($word);
+      #print $text;
+      $word=htmlspecialchars($word);
+    }
 
     $url=_urlencode($page);
     $url_only=strtok($url,'#?'); # for [WikiName#tag] [wiki:WikiName#tag Tag]
@@ -2132,7 +2151,7 @@ class Formatter {
 
   function link_to($query_string="",$text="",$attr="") {
     if (!$text)
-      $text=$this->page->name;
+      $text=htmlspecialchars($this->page->name);
     return $this->link_tag($this->page->urlname,$query_string,$text,$attr);
   }
 
@@ -2304,7 +2323,7 @@ class Formatter {
         }
       } else if ($twins) {
         if ($lines) $lines[]="----";
-        $twins[0]=_("See TwinPages: ").$twins[0];
+        $twins[0]=_("See [TwinPages]: ").$twins[0];
         $lines=array_merge($lines,$twins);
       }
     }
@@ -3489,7 +3508,7 @@ if ($pagename) {
       if ($twins) {
         $formatter->send_title($page->name,"",$options);
         $twins=join("\n",$twins);
-        $formatter->send_page(_("See TwinPages: ").$twins);
+        $formatter->send_page(_("See [TwinPages]: ").$twins);
         echo "<br />".
           $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
       } else {
