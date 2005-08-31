@@ -566,8 +566,16 @@ function macro_Edit($formatter,$value,$options='') {
   }
 
   $merge_btn=_("Merge");
-  if ($options['conflict'])
+  $merge_btn2=_("Merge manually");
+  $merge_btn3=_("Ignore conflicts");
+  if ($options['conflict']) {
     $extra='<input type="submit" name="button_merge" value="'.$merge_btn.'" />';
+    if ($options['conflict']==2) {
+      $extra.=' <input type="submit" name="manual_merge" value="'.$merge_btn2.'" />';
+      if ($DBInfo->use_forcemerge)
+        $extra.=' <input type="submit" name="force_merge" value="'.$merge_btn3.'" />';
+    }
+  }
   if ($options['section'])
     $hidden='<input type="hidden" name="section" value="'.$options['section'].
             '" />';
@@ -629,7 +637,7 @@ function macro_Edit($formatter,$value,$options='') {
   $categories=array();
   $categories= $DBInfo->getLikePages($DBInfo->category_regex);
   if ($categories) {
-    $select_category="<select name='category'>\n<option value=''>"._("--Select Category--")."</option>\n";
+    $select_category="<select name='category' tabindex='4'>\n<option value=''>"._("--Select Category--")."</option>\n";
     foreach ($categories as $category)
       $select_category.="<option value='$category'>$category</option>\n";
     $select_category.="</select>\n";
@@ -638,7 +646,7 @@ function macro_Edit($formatter,$value,$options='') {
   if ($DBInfo->use_minoredit) {
     $user=new User(); # get from COOKIE VARS
     if ($DBInfo->owners and in_array($user->id,$DBInfo->owners)) {
-      $extra_check=' '._('Minor edit')."<input type='checkbox' name='minor' />";
+      $extra_check=' '._('Minor edit')."<input type='checkbox' tabindex='3' name='minor' />";
     }
   }
 
@@ -667,15 +675,15 @@ function resize(obj,val) {
 EOS;
   }
   $form.=<<<EOS
-<textarea id="content" wrap="virtual" name="savetext"
+<textarea id="content" wrap="virtual" name="savetext" tabindex="1"
  rows="$rows" cols="$cols" class="wiki">$raw_body</textarea><br />
-$summary_msg: <input name="comment" size="70" maxlength="70" style="width:200" />$extra_check<br />
+$summary_msg: <input name="comment" size="70" maxlength="70" style="width:200" tabindex="2" />$extra_check<br />
 <input type="hidden" name="action" value="savepage" />
 <input type="hidden" name="datestamp" value="$datestamp" />
 $hidden$select_category
-<input type="submit" value="$save_msg" />&nbsp;
+<input type="submit" tabindex="5" value="$save_msg" />&nbsp;
 <!-- <input type="reset" value="Reset" />&nbsp; -->
-<input type="submit" name="button_preview" value="$preview_msg" />
+<input type="submit" tabindex="6" name="button_preview" value="$preview_msg" />
 $extra
 </form>
 EOS;
@@ -970,7 +978,9 @@ function do_post_savepage($formatter,$options) {
   $savetext=$options['savetext'];
   $datestamp=$options['datestamp'];
   $button_preview=$options['button_preview'];
-  $button_merge=$options['button_merge'];
+  $button_merge=$options['button_merge']? 1:0;
+  $button_merge=$options['manual_merge']? 2:$button_merge;
+  $button_merge=$options['force_merge']? 3:$button_merge;
 
   $formatter->send_header("",$options);
 
@@ -1004,19 +1014,36 @@ function do_post_savepage($formatter,$options) {
       $options['msg']=sprintf(_("Someone else saved the page while you edited %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
       $options['preview']=1; 
       $options['conflict']=1; 
-      $options['datestamp']=$datestamp; 
       if ($button_merge) {
         $options['msg']=sprintf(_("%s is merged with latest contents."),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
-        $options['title']=sprintf(_("Preview of %s"),$options['page']);
-        $options['conflict']=0; 
+        $options['title']=sprintf(_("%s is merged successfully"),$options['page']);
         $merge=$formatter->get_merge($savetext);
-        if (preg_grep('/^<<<<<<<$/',explode("\n",$merge)))
-          $options['msg']=sprintf(_("Merging is not successful for %s. Please resolve conflicts manually."),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
+        if (preg_grep('/^<<<<<<<$/',explode("\n",$merge))) {
+          $options['conflict']=2; 
+          $options['title']=sprintf(_("Merge conflicts are detected for %s !"),$options['page']);
+          $options['msg']=sprintf(_("Merge cancelled on %s."),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
+          $merge=preg_replace('/^>>>>>>>$/m',">>>>>>> "._("NEW"),$merge);
+          $merge=preg_replace('/^<<<<<<<$/m',"<<<<<<< "._("OLD"),$merge);
+      	  if ($button_merge>1) {
+            unset($options['datestamp']);
+            $options['conflict']=0;
+            if ($button_merge==2) {
+              $options['title']=sprintf(_("Get merge conflicts for %s"),$options['page']);
+              $options['msg']=sprintf(_("Please resolve conflicts manually."));
+              if ($merge) $savetext=$merge;
+            } else {
+              $options['title']=sprintf(_("Force merging for %s !"),$options['page']);
+              $options['msg']=sprintf(_("Please be careful, you could damage useful information."));
+            }
+          }
+	} else {
+          $options['conflict']=0; 
+      	  #$options['datestamp']=$datestamp;
+          #unset($options['datestamp']); 
+          if ($merge) $savetext=$merge;
+        }
         $formatter->send_title("","",$options);
 
-        $merge=preg_replace('/^=======$/m',">>>>>>>",$merge);
-        if ($merge) $savetext=$merge;
-        unset($options['datestamp']); 
       } else
         $formatter->send_title(_("Conflict error!"),"",$options);
       $options['savetext']=$savetext;
@@ -1024,7 +1051,10 @@ function do_post_savepage($formatter,$options) {
 
       print $menu;
       print "<div id='wikiPreview'>\n";
-      print $formatter->macro_repl('Diff','',array('text'=>$savetext));
+      if ($options['conflict'] and $merge)
+        print $formatter->macro_repl('Diff','',array('text'=>$merge));
+      else
+        print $formatter->macro_repl('Diff','',array('text'=>$savetext));
       print "</div>\n";
       $formatter->send_footer();
       return;
