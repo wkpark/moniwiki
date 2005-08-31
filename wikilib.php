@@ -159,12 +159,14 @@ function get_title($page) {
     $title=$page;
 
   #return preg_replace("/((?<=[a-z0-9]|[B-Z]{2}|A)([A-Z][a-z]|A))/"," \\1",$title);
+  if ($DBInfo->title_rule)
+    return preg_replace('/'.$DBInfo->title_rule.'/'," \\1",$title);
   return preg_replace("/((?<=[a-z0-9]|[B-Z]{2})([A-Z][a-z]))/"," \\1",$title);
 }
 
 function getTicket($seed,$extra='',$size=0,$flag=0) {
   global $DBInfo;
-  # make a ticket based on the variables in the config.php
+  # make the site specific ticket based on the variables in the config.php
   $configs=getConfig("config.php");
   foreach ($configs as $config) {
     if (is_array($config)) $siteticket.=md5(base64_encode(serialize($config)));
@@ -2045,7 +2047,7 @@ function processor_php($formatter="",$value="") {
 #  $highlighted=preg_replace("/<\/?code>/","",$highlighted);
 #  $highlighted="<pre style='color:white;background-color:black;'>".
 #               $highlighted."\n</pre>";
-  return $highlighted;
+  return '<div class="wikiSyntax">'.$highlighted.'</div>';
 }
 
 ?>
