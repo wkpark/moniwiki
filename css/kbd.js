@@ -57,11 +57,8 @@ HelpContents= "HelpContents";
 // go form ID
 _go= "go";
 
-if (_qp == '/') {
-	_ap='?';
-} else {
-	_ap='&';
-}
+if (_qp == '/') { _ap='?'; }
+else { _ap='&'; }
 
 _dom=0;
 
@@ -122,42 +119,55 @@ function keypresshandler(e){
 			ch=String.fromCharCode(e.charCode);
 		}
 	}
+	var go=document.getElementById(_go);
+	if(e.altKey || e.ctrlKey) {
+		if(ch == "z" && e.altKey) {
+			if (EventStatus != 'INPUT') {
+				go.elements['value'].focus();
+				return false;
+			} else {
+				var bot=document.getElementById('bottom');
+				if (bot) bot.focus();
+				return false;
+			}
+		}
+		return;
+	}
 	if(EventStatus == 'INPUT' || EventStatus == 'TEXTAREA' || _dom == 2) {
 		if ((ch == '?' || ch== '/') && EventStatus == 'INPUT') {
-			var my=""+document.getElementById(_go).elements['value'].value;
+			var my=""+go.elements['value'].value;
 			if (ch == '?' && (my == "/" || my =="?" || my=="")) {
-				if (document.getElementById(_go).elements['status'].value == '?') {
-					document.getElementById(_go).elements['action'].value="goto";
-					document.getElementById(_go).elements['status'].value="Go";
+				if (go.elements['status'].value == '?') {
+					go.elements['action'].value="goto";
+					go.elements['status'].value="Go";
 					window.status="GoTo";
 				} else {
-					document.getElementById(_go).elements['action'].value="titlesearch";
-					document.getElementById(_go).elements['status'].value="?";
+					go.elements['action'].value="titlesearch";
+					go.elements['status'].value="?";
 					window.status="TitleSearch";
 				}
 			} else if (ch == '/' && (my == "/" || my =="?" || my=="")) {
-				if (document.getElementById(_go).elements['status'].value == '/') {
-			 		document.getElementById(_go).elements['action'].value="goto";
-			 		document.getElementById(_go).elements['status'].value="Go";
+				if (go.elements['status'].value == '/') {
+			 		go.elements['action'].value="goto";
+			 		go.elements['status'].value="Go";
 			 		window.status="GoTo";
 				} else {
-					document.getElementById(_go).elements['action'].value="fullsearch";
-					document.getElementById(_go).elements['status'].value="/";
+					go.elements['action'].value="fullsearch";
+					go.elements['status'].value="/";
 					window.status="FullSearch";
 				}
 			}
 			if (my == '/' || my == '?')
-			document.getElementById(_go).elements['value'].value=my.substr(0,my.length-1);
+			go.elements['value'].value=my.substr(0,my.length-1);
 		} else if (cc== 27 && EventStatus == 'INPUT') {
-			document.getElementById(_go).elements['value'].blur();
-			document.getElementById(_go).elements['value'].value='';
-			document.getElementById(_go).elements['action'].value="goto";
-			document.getElementById(_go).elements['status'].value="Go";
+			go.elements['value'].blur();
+			go.elements['value'].value='';
+			go.elements['action'].value="goto";
+			go.elements['status'].value="Go";
 			window.status="GoTo"+window.defaultStatus;
 		}
 		return;
 	}
-	if(e.altKey || e.ctrlKey) return;
 
 	if(_dom != 3 && cc == 229 && ch == '') { // Mozilla
 		window.status="?/ or change IME status";
@@ -167,21 +177,26 @@ function keypresshandler(e){
 		self.location = url_prefix + _qp + FindPage;
 	} else if(cc == 9 || cc == 27) { // 'TAB','ESC' key
 		if (cc == 27) {
-			document.getElementById(_go).elements['value'].focus();
+			go.elements['value'].focus();
 		}
+	} else if(ch == "`") {
+		var bot=document.getElementById('bottom');
+		if (bot) bot.focus();
+	} else if(ch == "z") {
+		go.elements['value'].focus();
 	} else if(ch == "/" || ch == "?") {
-		var my=document.getElementById(_go).elements['value'].value + "";
+		var my=go.elements['value'].value + "";
 		if (ch == "?" && (my == "?" || my =="/" || my=="")) {
 			// Title search as vi way
-			document.getElementById(_go).elements['value'].focus();
-			document.getElementById(_go).elements['action'].value="titlesearch";
-			document.getElementById(_go).elements['status'].value="?";
+			go.elements['value'].focus();
+			go.elements['action'].value="titlesearch";
+			go.elements['status'].value="?";
 		} else
 		if (ch == "/" && (my == "?" || my =="/" || my=="")) {
 			// Contents search
-			document.getElementById(_go).elements['value'].focus();
-			document.getElementById(_go).elements['action'].value="fullsearch";
-			document.getElementById(_go).elements['status'].value="/";
+			go.elements['value'].focus();
+			go.elements['action'].value="fullsearch";
+			go.elements['status'].value="/";
 		}
 	} else if(ch == "c") {
 		self.location = url_prefix + _qp + RecentChanges;
@@ -246,12 +261,16 @@ function input(){
 	_dom=document.all ? 3 : (document.getElementById ? 1 : (document.layers ? 2 : 0));
 	document.onkeypress = keypresshandler;
 	document.onkeydown = keydownhandler;
+	var go=document.getElementById(_go);
 }
 
 function moin_submit() {
-	if (document.getElementById(_go).elements['action'].value =="goto") {
-		document.getElementById(_go).elements['value'].name='goto';
-		document.getElementById(_go).elements['action'].name='';
+	var go=document.getElementById(_go);
+	if (go.elements['value'].value.replace(/\s+/,'') =="")
+		return false;
+	if (go.elements['action'].value =="goto") {
+		go.elements['value'].name='goto';
+		go.elements['action'].name='';
 		return true;
 	}
 }
