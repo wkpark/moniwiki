@@ -15,7 +15,7 @@ function do_twinpages($formatter,$options) {
   $twins=$DBInfo->metadb->getTwinPages($options['value'],1);
   if ($twins) {
     $twins=join("\n",$twins);
-    $formatter->send_page(_("See TwinPages: ").$twins);
+    $formatter->send_page(_("See [TwinPages]: ").$twins);
   } else 
     $formatter->send_page(_("No TwinPages found."));
   $formatter->send_footer("",$options);
