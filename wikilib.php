@@ -36,7 +36,7 @@ function _rawurlencode($url) {
 }
 
 function _urlencode($url) {
-  return preg_replace("/([^a-z0-9\/\?\.\+~#&:;=%\-_]{1})/ie","'%'.strtoupper(dechex(ord('\\1')))",$url);
+  return preg_replace("/([^a-z0-9\/\?\.\+~#&:;=%\-_]{1})/ie","'%'.strtoupper(dechex(ord(substr('\\1',-1))))",$url);
 }
 
 function _stripslashes($str) {
@@ -792,10 +792,9 @@ function do_post_DeletePage($formatter,$options) {
   
   $page = $DBInfo->getPage($options['page']);
 
-  #print $options['page'];
   if ($options['name']) $options['name']=urldecode($options['name']);
   $pagename= $formatter->page->urlname;
-  if (_stripslashes($options['name']) == $options['page']) {
+  if ($options['name'] == $options['page']) {
     $DBInfo->deletePage($page,$options);
     $title = sprintf(_("\"%s\" is deleted !"), $page->name);
     $formatter->send_header("",$options);
@@ -803,6 +802,7 @@ function do_post_DeletePage($formatter,$options) {
     $formatter->send_footer('',$options);
     return;
   } else if ($options['name']) {
+    #print $options['name'];
     $options['msg'] = _("Please delete this file manually.");
   }
   $title = sprintf(_("Delete \"%s\" ?"), $page->name);
@@ -1011,28 +1011,28 @@ function do_post_savepage($formatter,$options) {
     $orig=md5($body);
     # check datestamp
     if ($formatter->page->mtime() > $datestamp) {
-      $options['msg']=sprintf(_("Someone else saved the page while you edited %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
+      $options['msg']=sprintf(_("Someone else saved the page while you edited %s"),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
       $options['preview']=1; 
       $options['conflict']=1; 
       if ($button_merge) {
-        $options['msg']=sprintf(_("%s is merged with latest contents."),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
-        $options['title']=sprintf(_("%s is merged successfully"),$options['page']);
+        $options['msg']=sprintf(_("%s is merged with latest contents."),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
+        $options['title']=sprintf(_("%s is merged successfully"),htmlspecialchars($options['page']));
         $merge=$formatter->get_merge($savetext);
         if (preg_grep('/^<<<<<<<$/',explode("\n",$merge))) {
           $options['conflict']=2; 
-          $options['title']=sprintf(_("Merge conflicts are detected for %s !"),$options['page']);
-          $options['msg']=sprintf(_("Merge cancelled on %s."),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
+          $options['title']=sprintf(_("Merge conflicts are detected for %s !"),htmlspecialchars($options['page']));
+          $options['msg']=sprintf(_("Merge cancelled on %s."),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
           $merge=preg_replace('/^>>>>>>>$/m',">>>>>>> "._("NEW"),$merge);
           $merge=preg_replace('/^<<<<<<<$/m',"<<<<<<< "._("OLD"),$merge);
       	  if ($button_merge>1) {
             unset($options['datestamp']);
             $options['conflict']=0;
             if ($button_merge==2) {
-              $options['title']=sprintf(_("Get merge conflicts for %s"),$options['page']);
+              $options['title']=sprintf(_("Get merge conflicts for %s"),htmlspecialchars($options['page']));
               $options['msg']=sprintf(_("Please resolve conflicts manually."));
               if ($merge) $savetext=$merge;
             } else {
-              $options['title']=sprintf(_("Force merging for %s !"),$options['page']);
+              $options['title']=sprintf(_("Force merging for %s !"),htmlspecialchars($options['page']));
               $options['msg']=sprintf(_("Please be careful, you could damage useful information."));
             }
           }
@@ -1062,7 +1062,7 @@ function do_post_savepage($formatter,$options) {
   }
 
   if (!$button_preview && $orig == $new) {
-    $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
+    $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
     $formatter->send_title(_("No difference found"),"",$options);
     $formatter->send_footer();
     return;
@@ -1082,7 +1082,7 @@ function do_post_savepage($formatter,$options) {
   $formatter->page->set_raw_body($savetext);
 
   if ($button_preview) {
-    $options['title']=sprintf(_("Preview of %s"),$options['page']);
+    $options['title']=sprintf(_("Preview of %s"),htmlspecialchars($options['page']));
     $formatter->send_title("","",$options);
      
     $options['preview']=1; 
@@ -1131,9 +1131,9 @@ function do_post_savepage($formatter,$options) {
     }
       
     if ($ret == -1)
-      $options['msg'].=sprintf(_("%s is not editable"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
+      $options['msg'].=sprintf(_("%s is not editable"),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
     else
-      $options['msg'].=sprintf(_("%s is saved"),$formatter->link_tag($formatter->page->urlname,"?action=show",$options['page']));
+      $options['msg'].=sprintf(_("%s is saved"),$formatter->link_tag($formatter->page->urlname,"?action=show",htmlspecialchars($options['page'])));
     $formatter->send_title("","",$options);
     $opt['pagelinks']=1;
     # re-generates pagelinks
@@ -1701,7 +1701,7 @@ function macro_TitleIndex($formatter,$value) {
 
     #$out.= '<li>' . $formatter->word_repl('"'.$page.'"',$title,'',0,0);
     $urlname=_urlencode($page);
-    $out.= '<li>' . $formatter->link_tag($urlname,'',$title);
+    $out.= '<li>' . $formatter->link_tag($urlname,'',htmlspecialchars($title));
     $keyname=$DBInfo->pageToKeyname(urldecode($page));
     if (is_dir($DBInfo->upload_dir."/$keyname"))
        $out.=' '.$formatter->link_tag($urlname,"?action=uploadedfiles",
