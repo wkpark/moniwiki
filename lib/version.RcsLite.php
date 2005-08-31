@@ -21,8 +21,8 @@ class Version_RcsLite extends Version_RCS {
 
     $this->rcs->_process($filename);
 
-    if ($this->rcs->_author[$rev]) 
-      $out=$this->rcs->getRevision($rev);
+    #if ($this->rcs->_author[$rev])
+    $out=$this->rcs->getRevision($rev);
 
     return $out;
   }

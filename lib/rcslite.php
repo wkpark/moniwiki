@@ -559,8 +559,8 @@ Class RcsLite {
     {
         $this->_ensureProcessed();
         $head = $this->numRevisions();
-        if ( $version != $head && !in_array($version,$this->_next))
-            return; // XXX
+        if ( $version != $head && !array_key_exists($version,$this->_next))
+            return $this->delta( $head );
         if( strcmp($version,$head) == 0 ) {
             return $this->delta( $version );
         } else {
