@@ -625,6 +625,16 @@ class WikiDB {
       $this->security=new $class ($this);
     } else
       $this->security=new Security($this);
+    if ($this->filters) {
+      if (!is_array($this->filters)) {
+        $this->filters=preg_split('/(\||,)/',$this->filters);
+      }
+    }
+    if ($this->postfilters) {
+      if (!is_array($this->postfilters)) {
+        $this->postfilters=preg_split('/(\||,)/',$this->postfilters);
+      }
+    }
   }
 
   function Close() {
@@ -904,15 +914,23 @@ class WikiDB {
     $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
 
     $comment=$options['comment'];
+    $user=new User();
+    if ($user->id != 'Anonymous') {
+      $udb=new UserDB($this);
+      $udb->checkUser($user);
+    }
 
     $keyname=$this->_getPageKey($page->name);
 
-    $delete=@unlink($this->text_dir."/$keyname");
-    if ($options['history'] && $this->version_class) {
+    if ($this->version_class) {
       $class=getModule('Version',$this->version_class);
       $version=new $class ($this);
-      $version->delete($page->name);
+      $log=$REMOTE_ADDR.';;'.$user->id.';;'.$comment;
+      $ret=$version->ci($page->name,$log);
+      if ($options['history'])
+        $version->delete($page->name);
     }
+    $delete=@unlink($this->text_dir."/$keyname");
     $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
 
     $handle= opendir($this->cache_dir);
@@ -1244,7 +1262,7 @@ class WikiPage {
         $out = $version->co($this->name,$rev);
         return $out;
       } else {
-        return _("Version info does not supported by this wiki");
+        return _("Version info does not supported in this wiki");
       }
     }
 
@@ -1525,7 +1543,7 @@ class Formatter {
   function get_instructions(&$body) {
     global $DBInfo;
     $pikeys=array('#redirect','#action','#title','#keywords','#noindex',
-      '#filter','#twinpages','#notwins');
+      '#filter','#postfilter','#twinpages','#notwins');
     $pi=array();
     if (!$body) {
       if (!$this->page->exists()) return '';
@@ -2060,6 +2078,18 @@ class Formatter {
     return call_user_func("filter_$filter",$this,$value,$options);
   }
 
+  function postfilter_repl($filter,$value,$options='') {
+    if (!function_exists('postfilter_'.$filter) and !function_exists('filter_'.$filter)) {
+      $ff=getFilter($filter);
+      if (!$ff) return $value;
+      include_once("plugin/filter/$ff.php");
+      #$filter=$ff;
+    }
+    if (!function_exists ("postfilter_".$filter)) return $value;
+
+    return call_user_func("postfilter_$filter",$this,$value,$options);
+  }
+
   function smiley_repl($smiley) {
     global $DBInfo;
 
@@ -2218,8 +2248,10 @@ class Formatter {
 
     if ($body) {
       $pi=$this->get_instructions($body);
-      if ($pi['#filter']) {
-        $fts=preg_split('/(\||,)/',$pi['#filter']);
+      $fts=array();
+      if ($pi['#filter']) $fts=preg_split('/(\||,)/',$pi['#filter']);
+      if ($DBInfo->filters) $fts=array_merge($fts,$DBInfo->filters);
+      if ($fts) {  
         foreach ($fts as $ft) {
           $body=$this->filter_repl($ft,$body,$options);
         }
@@ -2232,12 +2264,17 @@ class Formatter {
       }
       $lines=explode("\n",$body);
     } else {
-      #$pi=$this->get_instructions(&$body);
-      $pi=$this->get_instructions($dum);
-      $body=$this->page->get_raw_body($options);
+      if ($options['rev']) {
+        $body=$this->page->get_raw_body($options);
+        $pi=$this->get_instructions($body);
+      } else {
+        $pi=$this->get_instructions($dum);
+      }
 
-      if ($pi['#filter']) {
-        $fts=preg_split('/(\||,)/',$pi['#filter']);
+      $fts=array();
+      if ($pi['#filter']) $fts=preg_split('/(\||,)/',$pi['#filter']);
+      if ($DBInfo->filters) $fts=array_merge($fts,$DBInfo->filters);
+      if ($fts) {  
         foreach ($fts as $ft) {
           $body=$this->filter_repl($ft,$body,$options);
         }
@@ -2569,6 +2606,13 @@ class Formatter {
 
       $text=preg_replace('/((<[^>]*>)|('.$highlight.'))/ie',
                          "\$this->highlight_repl('\\1',\$colref)",$text);
+    }
+    $fts=array();
+    if ($pi['#postfilter']) $fts=preg_split('/(\||,)/',$pi['#postfilter']);
+    if ($DBInfo->postfilters) $fts=array_merge($fts,$DBInfo->postfilters);
+    if ($fts) {
+      foreach ($fts as $ft)
+        $text=$this->postfilter_repl($ft,$text,$options);
     }
 
     # close all tags
