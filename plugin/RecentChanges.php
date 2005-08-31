@@ -164,15 +164,15 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       else
         $rcdate=date($date_fmt,$ed_time);
 
-      $out.=sprintf("%s<font class='rc-date' size='+1'>%s </font>$perma<font class='rc-bookmark' size='-1'>",
+      $out.=sprintf("%s<span class='rc-date'><font class='rc-date' size='+1'>%s ",
             $br, $rcdate);
       if (!$nobookmark)
-        $out.='['.$formatter->link_tag($formatter->page->urlname,
-                                 "?action=bookmark&amp;time=$ed_time",
-                                 _("set bookmark"))."]</font><br />\n";
+        $out.="<font class='rc-bookmark' size='-1'>[".
+          $formatter->link_tag($formatter->page->urlname,"?action=bookmark&amp;time=$ed_time",
+          _("set bookmark"))."]</font>\n";
       $ratchet_day = $day;
       $br="<br />";
-      $out.=$bra;
+      $out.=$perma.'</font></span><br />'.$bra;
       $cat0=$cat;
     } else
       $day=$formatter->link_to("?action=bookmark&amp;time=$ed_time",$day);
