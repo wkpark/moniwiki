@@ -2269,6 +2269,7 @@ class Formatter {
         $pi=$this->get_instructions($body);
       } else {
         $pi=$this->get_instructions($dum);
+        $body=$this->page->get_raw_body($options);
       }
 
       $fts=array();
