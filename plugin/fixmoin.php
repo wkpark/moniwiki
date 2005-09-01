@@ -19,6 +19,12 @@ function do_FixMoin($formatter,$options) {
             if ($new) $npage=$new;
         }
     }
+    if (!$npage or !$DBInfo->hasPage($npage)) {
+        $options['redirect']=1;
+        $options['value']=$formatter->page->name;
+        do_goto($formatter,$options);
+        return true;
+    }
     $options['redirect']=1;
     $options['value']=$npage;
     do_goto($formatter,$options);
