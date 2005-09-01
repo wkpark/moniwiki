@@ -65,6 +65,13 @@ function do_comment($formatter,$options=array()) {
   global $HTTP_USER_AGENT;
 
   if (!$DBInfo->security->writable($options)) {
+    $formatter->preview=1;
+    $options['title']=_("Page is not writable");
+    do_invalid($formatter,$options);
+    return;
+  } else if (!$DBInfo->hasPage($options['page'])) {
+    $options['err']=_("You are not allowed to add a comment.");
+    $options['title']=_("Page does not exists");
     do_invalid($formatter,$options);
     return;
   }
@@ -78,6 +85,8 @@ function do_comment($formatter,$options=array()) {
 
   $url=$formatter->link_url($formatter->page->urlname);
 
+  $button_preview=$options['button_preview'];
+
   if ($options['savetext']) {
     $savetext=_stripslashes($options['savetext']);
     $savetext=str_replace("\r","",$savetext);
@@ -85,7 +94,18 @@ function do_comment($formatter,$options=array()) {
     #$savetext=str_replace("<","&lt;",$savetext);
   }
 
-  if ($options['button_preview'] && $options['savetext']) {
+  if ($savetext and !$button_preview and $DBInfo->spam_filter) {
+    $text=$savetext;
+    $fts=preg_split('/(\||,)/',$DBInfo->spam_filter);
+    foreach ($fts as $ft) {
+      $text=$formatter->filter_repl($ft,$text,$options);
+    }
+    if ($text != $savetext) {
+      $button_preview=1;
+      $options['msg'] = _("Sorry, can not save page because some messages are blocked in this wiki.");
+    }
+  }
+  if ($button_preview && $options['savetext']) {
     $formatter->send_header("",$options);
     $formatter->send_title(_("Preview comment"),"",$options);
     $formatter->send_page($savetext."\n----");
@@ -131,6 +151,7 @@ function do_comment($formatter,$options=array()) {
     $body= preg_replace("/(\[\[Comment(\([^\)]*\))?\]\])/",$savetext."\\1",$body,1);
   else
     $body.=$savetext;
+
   $formatter->page->write($body);
   $DBInfo->savePage($formatter->page,"Comment added",$options);
   $options['msg']=sprintf(_("%s is commented successfully"),$formatter->link_tag($formatter->page->urlname,"?action=show",$options['page']));
