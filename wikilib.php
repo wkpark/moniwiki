@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org> all rights reserved.
+// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org> all rights reserved.
 // distributable under GPL see COPYING
 //
 // many codes are imported from the MoinMoin
@@ -1482,8 +1482,68 @@ $script
 EOF;
 }
 
-function macro_InterWiki($formatter="") {
+function macro_InterWiki($formatter,$value,$options=array()) {
   global $DBInfo;
+
+  if (!isset($DBInfo->interwiki) or $options['init']) {
+    $interwiki=array();
+    # intitialize interwiki map
+    $map=file($DBInfo->intermap);
+    if ($DBInfo->sistermap and file_exists($DBInfo->sistermap))
+      $map=array_merge($map,file($DBInfo->sistermap));
+
+    # read shared intermap
+    if (file_exists($DBInfo->shared_intermap))
+      $map=array_merge($map,file($DBInfo->shared_intermap));
+
+    for ($i=0;$i<sizeof($map);$i++) {
+      $line=rtrim($map[$i]);
+      if (!$line || $line[0]=="#" || $line[0]==" ") continue;
+      if (preg_match("/^[A-Z]+/",$line)) {
+        $wiki=strtok($line,' ');$url=strtok(' ');
+        $dumm=trim(strtok(''));
+        if (preg_match('/^(http|ftp|attachment):/',$dumm,$match)) {
+          $icon=strtok($dumm,' ');
+          if ($icon[0]=='a') {
+            $url=$formatter->macro_repl('Attachment',substr($icon,11),1);
+            $icon=qualifiedUrl($DBInfo->url_prefix.'/'.$url);
+          }
+          $sx=strtok('x');$sy=strtok('');
+          $sx=$sx ? (int)$sx:16; $sy=$sy ? (int)$sy:16;
+          $intericon[$wiki]=array($sx,$sy,trim($icon));
+        }
+        $interwiki[$wiki]=trim($url);
+        $interwikirule.="$wiki|";
+      }
+    }
+    $interwikirule.="Self";
+    $interwiki['Self']=get_scriptname().$DBInfo->query_prefix;
+
+    # read shared intericons
+    $map=array();
+    if (file_exists($DBInfo->shared_intericon))
+      $map=array_merge($map,file($DBInfo->shared_intericon));
+
+    for ($i=0;$i<sizeof($map);$i++) {
+      $line=rtrim($map[$i]);
+      if (!$line || $line[0]=="#" || $line[0]==" ") continue;
+      if (preg_match("/^[A-Z]+/",$line)) {
+        $wiki=strtok($line,' ');$icon=trim(strtok(' '));
+        if (!preg_match('/^(http|ftp|attachment):/',$icon,$match)) continue;
+        if ($icon[0]=='a') {
+          $url=$formatter->macro_repl('Attachment',substr($icon,11),1);
+          $icon=qualifiedUrl($DBInfo->url_prefix.'/'.$url);
+        }
+        $sx=strtok('x');$sy=strtok('');
+        $sx=$sx ? (int)$sx:16; $sy=$sy ? (int)$sy:16;
+        $intericon[$wiki]=array($sx,$sy,trim($icon));
+      }
+    }
+    $DBInfo->interwiki=$interwiki;
+    $DBInfo->interwikirule=$interwikirule;
+    $DBInfo->intericon=$intericon;
+  }
+  if ($options['init']) return;
 
   $out="<table border='0' cellspacing='2' cellpadding='0'>";
   foreach (array_keys($DBInfo->interwiki) as $wiki) {
@@ -1501,8 +1561,9 @@ function macro_InterWiki($formatter="") {
       $sx=$DBInfo->intericon[$wiki][0];
       $sy=$DBInfo->intericon[$wiki][1];
     }
-    $out.="<tr><td><tt><img src='$icon' width='$sx' height='$sy' align='middle' alt='$wiki:' /><a href='$url'>$wiki</a></tt></td><td><tt>";
-    $out.="<a href='$href'>$href</a></tt></td></tr>\n";
+    $out.="<tr><td><tt><img src='$icon' width='$sx' height='$sy' ".
+      "align='middle' alt='$wiki:' /><a href='$url'>$wiki</a></tt></td>";
+    $out.="<td><tt><a href='$href'>$href</a></tt></td></tr>\n";
   }
   $out.="</table>\n";
   return $out;

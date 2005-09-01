@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2004 Won-Kyu Park <wkpark at kldp.org> all rights reserved.
+// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org> all rights reserved.
 // distributable under GPL see COPYING
 //
 // many codes are imported from the MoinMoin
@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.1';
+$_release = '1.1.1';
 
 #ob_start("ob_gzhandler");
 
@@ -609,7 +609,8 @@ class WikiDB {
     if ($this->timezone)
       putenv('TZ='.$this->timezone);
 
-    $this->set_intermap();
+    $this->interwiki=null;
+
     if ($this->shared_metadb)
       $this->metadb=new MetaDB_dba($this->shared_metadb,$this->dba_type);
     if (!$this->metadb->metadb)
@@ -641,53 +642,6 @@ class WikiDB {
   function Close() {
     $this->metadb->close();
     $this->counter->close();
-  }
-
-  function set_intermap() {
-    # intitialize interwiki map
-    $map=file($this->intermap);
-    if ($this->sistermap and file_exists($this->sistermap))
-      $map=array_merge($map,file($this->sistermap));
-
-    # read shared intermap
-    if (file_exists($this->shared_intermap))
-      $map=array_merge($map,file($this->shared_intermap));
-
-    for ($i=0;$i<sizeof($map);$i++) {
-      $line=rtrim($map[$i]);
-      if (!$line || $line[0]=="#" || $line[0]==" ") continue;
-      if (preg_match("/^[A-Z]+/",$line)) {
-        $wiki=strtok($line,' ');$url=strtok(' ');
-        $dumm=trim(strtok(''));
-        if (preg_match('/^(http|ftp):/',$dumm,$match)) {
-          $icon=strtok($dumm,' ');
-          $sx=strtok('x');$sy=strtok('');
-          $sx=$sx ? (int)$sx:16; $sy=$sy ? (int)$sy:16;
-          $this->intericon[$wiki]=array($sx,$sy,trim($icon));
-        }
-        $this->interwiki[$wiki]=trim($url);
-        $this->interwikirule.="$wiki|";
-      }
-    }
-    $this->interwikirule.="Self";
-    $this->interwiki['Self']=get_scriptname().$this->query_prefix;
-
-    # read shared intericons
-    $map=array();
-    if (file_exists($this->shared_intericon))
-      $map=array_merge($map,file($this->shared_intericon));
-
-    for ($i=0;$i<sizeof($map);$i++) {
-      $line=rtrim($map[$i]);
-      if (!$line || $line[0]=="#" || $line[0]==" ") continue;
-      if (preg_match("/^[A-Z]+/",$line)) {
-        $wiki=strtok($line,' ');$icon=strtok(' ');
-        if (!preg_match('/^(http|ftp|attachment):/',$icon,$match)) continue;
-        $sx=strtok('x');$sy=strtok('');
-        $sx=$sx ? (int)$sx:16; $sy=$sy ? (int)$sy:16;
-        $this->intericon[$wiki]=array($sx,$sy,trim($icon));
-      }
-    }
   }
 
   function _getPageKey($pagename) {
@@ -1412,17 +1366,6 @@ class Formatter {
     $this->external_target='';
     if ($DBInfo->external_target)
       $this->external_target='target="'.$DBInfo->external_target.'"';
-
-    # set intericons
-    if ($DBInfo->intericon) {
-      foreach ($DBInfo->intericon as $wiki=>$val) {
-        $icon=&$DBInfo->intericon[$wiki][2];
-        if ($icon[0] == 'a') {
-          $url=$this->macro_repl('Attachment',substr($icon,11),1);
-          $DBInfo->intericon[$wiki][2]=qualifiedUrl($DBInfo->url_prefix.'/'.$url);
-        }
-      }
-    }
 
     #$this->baserule=array("/<([^\s][^>]*)>/","/`([^`]*)`/",
     $this->baserule=array("/<([^\s<>])/","/`([^`' ]+)'/","/(?<!`)`([^`]*)`/",
@@ -3462,6 +3405,7 @@ if ($pagename) {
   $page = $DBInfo->getPage($pagename);
 
   $formatter = new Formatter($page,$options);
+  $formatter->macro_repl('InterWiki','',array('init'=>1));
   $formatter->refresh=$refresh;
 
   // check black list
