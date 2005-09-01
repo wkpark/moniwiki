@@ -111,7 +111,7 @@ function _parse_rlog($formatter,$log) {
      }
   }
   $out.="<tr><td colspan='6' align='right'><input type='checkbox' name='show' checked='checked' />show only ";
-  if ($DBInfo->security->is_protected("rcspurge",array())) {
+  if ($DBInfo->security->is_protected("rcspurge",$options)) {
     $out.="<input type='password' name='passwd'>";
   }
   $out.="<input type='submit' name='rcspurge' value='purge'></td></tr>";
