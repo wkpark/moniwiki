@@ -1088,7 +1088,7 @@ class Cache_text {
 
   function update($pagename,$val,$mtime="") {
     $key=$this->getKey($pagename);
-    if (!is_writable($key)) return false;
+    if (file_exists($key) and !is_writable($key)) return false;
     if ($mtime and ($mtime <= $this->mtime($key))) return false;
 
     if (is_array($val))

@@ -498,6 +498,7 @@ function macro_EditText($formatter,$value,$options='') {
 function do_edit($formatter,$options) {
   global $DBInfo;
   if (!$DBInfo->security->writable($options)) {
+    $formatter->preview=0;
     do_invalid($formatter,$options);
     return;
   }
@@ -1508,8 +1509,9 @@ function macro_InterWiki($formatter,$value,$options=array()) {
             $url=$formatter->macro_repl('Attachment',substr($icon,11),1);
             $icon=qualifiedUrl($DBInfo->url_prefix.'/'.$url);
           }
-          $sx=strtok('x');$sy=strtok('');
-          $sx=$sx ? (int)$sx:16; $sy=$sy ? (int)$sy:16;
+          preg_match('/^(\d+)(x(\d+))?\b/',strtok(''),$sz);
+          $sx=$sz[1];$sy=$sz[3];
+          $sx=$sx ? $sx:16; $sy=$sy ? $sy:16;
           $intericon[$wiki]=array($sx,$sy,trim($icon));
         }
         $interwiki[$wiki]=trim($url);
@@ -1534,8 +1536,9 @@ function macro_InterWiki($formatter,$value,$options=array()) {
           $url=$formatter->macro_repl('Attachment',substr($icon,11),1);
           $icon=qualifiedUrl($DBInfo->url_prefix.'/'.$url);
         }
-        $sx=strtok('x');$sy=strtok('');
-        $sx=$sx ? (int)$sx:16; $sy=$sy ? (int)$sy:16;
+        preg_match('/^(\d+)(x(\d+))?\b/',strtok(''),$sz);
+        $sx=$sz[1];$sy=$sz[3];
+        $sx=$sx ? $sx:16; $sy=$sy ? $sy:16;
         $intericon[$wiki]=array($sx,$sy,trim($icon));
       }
     }
