@@ -7,43 +7,91 @@
 
 function macro_Keywords($formatter,$value,$options='') {
     global $DBInfo;
+define(MAX_FONT_SZ,24);
+define(MIN_FONT_SZ,10);
+
+    $limit=$options['limit'] ? $options['limit']:40;
+    $opts=explode(',',$value);
+    foreach ($opts as $opt) {
+        $opt=trim($opt);
+        if ($opt == 'delicious' or $opt == 'del.icio.us')
+            $tag_link='http://del.icio.us/tag/$TAG';
+        else if ($opt == 'technorati')
+            $tag_link='http://www.technorati.com/tag/$TAG';
+        else if ($opt == 'flickr')
+            $tag_link='http://www.flickr.com/photos/tags/$TAG';
+        else if (($p=strpos($opt,'='))!==false) {
+            $k=substr($opt,0,$p);
+            $v=substr($opt,$p+1);
+            if ($k=='limit') $limit=$v;
+            else if ($k=='sort' and in_array($v,array('freq','alpha')))
+                $sort=$v;
+            else if ($k=='type' and in_array($v,array('full','title')))
+                $search_type=$v;
+            else if ($k=='url') {
+                $tag_link=$v;
+                if (preg_match('/\$TAG/',$tag_link)===false) $tag_link.='$TAG';
+            }
+            // else ignore
+        } else {
+            $page=$opt;
+        }
+    }
 
     $common= <<<EOF
 i am an a b c d e f g h i j k l m n o p q r s t u v w x y z
 0 1 2 3 4 5 6 7 8 9
-if on in by it at up down over into for from to of he his she her back
-is are be or nor also and each all
-too any with here
-so such since because but however ever
-it its the this that what where how when
+if on in by it at up as down over into for from to of he his him she her back
+is are be being been or no not nor and all through under until
+these there the top
+with here only has had both did faw few little most almost much off on out
+also each were was too any very more within then
+across before behind beneath beyond after again against around among
+so such since because but yet however ever during
+it its the this that what where how when who whoever which their them
 you your will shall may might we us our
-get got
+get got would could have
+can't won't didn't don't
+aiff arj arts asp au avi bin biz css cgi com doc edu exe firm gif gz gzip
+htm html info jpeg jpg js jsp mp3 mpeg mpg mov
+net nom org pdf php pl qt ra ram rec shop sit tar tgz tiff txt wav web zip
+one two three four five six seven eight nine ten eleven twelve
 EOF;
-    if (!$value) $value=$formatter->page->name;
-    $page=$DBInfo->getPage($value);
+    if (!$pagename) $pagename=$formatter->page->name;
+    $page=$DBInfo->getPage($pagename);
     if (!$page->exists()) return '';
     $raw=$page->get_raw_body();
 
     $raw=preg_replace("/([;\"',`\\\\\/\.:@#\!\?\$%\^&\*\(\)\{\}\[\]\-_\+=\|])/",
-        ' ', $raw.' '.$value);
+        ' ', strip_tags($raw.' '.$pagename)); // pagename also
     $raw=preg_replace("/((?<=[a-z0-9]|[B-Z]{2})([A-Z][a-z]))/"," \\1",$raw);
     $raw=strtolower($raw);
-    $words=preg_split("/[ ]+|\n/",$raw);
-    $counts=array_count_values($words);
-    $words=array_diff(array_keys($counts),preg_split("/[ ]|\n/",$common));
+    $raw=preg_replace("/&[^;\s]+;/",' ',$raw);
+    //$raw=preg_replace("/\b([0-9a-zA-Z'\"])\\1+\s*/",' ',$raw);
+    $words=preg_split("/\s+|\n/",$raw);
+    // remove common words
+    $words=array_diff($words,preg_split("/\s+|\n/",$common));
 
-    if ($options['all']) {
-        $cache=new Cache_text('keywords');
-        if ($cache->exists($value)) {
-            $keytext=$cache->fetch($value);
-            $keys=explode("\n",rtrim($keytext));
-        } else
-            $keys=array();
-        foreach ($keys as $key) {
-            $counts[$key]=50; // give weight to all selected keywords
-            $words[]=$key;
+    $preword='';
+    $bigwords=array();
+    foreach ($words as $word) {
+        if (strlen($word) > 2 and strlen($preword) > 2) {
+            if ($word == $preword) continue;
+            $key= $preword.' '.$word;
+            $rkey= $word.' '.$preword;
+            if ($bigwords[$key]) $bigwords[$key]++;
+            else if ($bigwords[$rkey]) $bigwords[$rkey]++;
+            else $bigwords[$key]++;
         }
+        $preword= $word;
     }
+
+    $words=array_count_values($words);
+    unset($words['']);
+    $ncount=array_sum($words); // total count
+
+/*   
+    $words=array_diff(array_keys($counts),preg_split("/\s+|\n/",$common));
 
     if (function_exists('array_intersect_key')) {
         $words=array_intersect_key($counts,$words);
@@ -55,33 +103,105 @@ EOF;
         }
         $words=&$ret;
     }
+*/
+    if ($bigwords) {
+        // 
+        $bigwords=array_filter($bigwords,create_function('$a','return ($a != 1);'));
+        $words=array_merge($words,$bigwords);
+    }
 
     arsort($words);
-    unset($words['']);
 
-    $link=$formatter->link_url(_rawurlencode($value),'');
-    $out="<form method='post' action='$link'><ul>\n";
-    $out.="<input type='hidden' name='action' value='keywords' />";
+    $max=current($words); // get max hit number
+
+    $nwords=array();
+    if ($options['all']) {
+        $cache=new Cache_text('keywords');
+        if ($cache->exists($pagename)) {
+            $keytext=$cache->fetch($pagename);
+            $keys=explode("\n",rtrim($keytext));
+        } else
+            $keys=array();
+        foreach ($keys as $key) {
+            $nwords[$key]=$max;
+            // give weight to all selected keywords
+        }
+    }
+
+    if ($nwords)
+        $words=array_merge($words,$nwords);
+    if ($limit and ($sz=sizeof($words))>$limit) {
+        arsort($words);
+        $words=array_slice($words,0,$limit);
+    }
+    // make criteria list
+    $fact=array();
+    $weight=$max; // $ncount
+    #print 'max='.$max.' ratio='.$weight/$ncount.':';
+    $test=array(0.8, 0.6, 0.4, 0.5, 0.5, 0.5); // six level
+    for ($i=0;$i<6 and $weight>0;$i++) {
+        $weight=(int)($weight*$test[$i]);
+        if ($weight>0) $fact[]=$weight;
+        #print $weight.'--';
+    }
+    $max=current($fact);
+    $min=max(1,end($fact));
+    // make font-size style
+    $fz=sizeof($fact);
+    $sty=array();
+    $fsh=(MAX_FONT_SZ-MIN_FONT_SZ)/($fz-1);
+    $fs=MAX_FONT_SZ; // max font-size:24px;
+    for ($i=0;$i<$fz;$i++) {
+        $ifs=(int)($fs+0.5);
+        $sty[]= "style='font-size:${ifs}px'";
+        #print '/'.$ifs;
+        $fs-=$fsh;
+        $fs=max($fs,9); // min font-size:9px
+    }
+    if ($sort!='freq') ksort($words);
+
+    $link=$formatter->link_url(_rawurlencode($pagename),'');
+    if (!isset($tag_link)) {
+        if ($search_type=='full') $search='fullsearch';
+        else if ($search_type=='title') $search='titlesearch';
+        else $search='fullsearch&amp;keywords=1';
+        $tag_link=$formatter->link_url(_rawurlencode($pagename),
+            '?action='.$search.'&amp;value=$TAG');
+    }
+    $out='';
+    if ($options['add']) {
+        $out="<form method='post' action='$link'>\n";
+        $out.="<input type='hidden' name='action' value='keywords' />\n";
+    }
+    $out.='<ul>';
     foreach ($words as $key=>$val) {
-        if ($val > 1) {
+        $style=$sty[$fz-1];
+        for ($i=0;$i<$fz;$i++) {
+            if ($val>$fact[$i]) {
+                $style=$sty[$i];
+                break;
+            }
+        }
+        if ($val > $min) {
             $checked='';
-            if ($val >= 50) {$checked='checked="checked"'; $ok=1;}
-            $out.=" <li><input type='checkbox' $checked name='key[]' ".
-                "value='$key' />".
-                $formatter->link_tag(_rawurlencode($key),
-                    '?action=fullsearch&amp;keywords=1&amp;value='.$key,$key).
-                    ' ('.$val.')</li>';
+            if ($val >= $max) {$checked='checked="checked"'; $ok=1;}
+            if ($options['add'])
+                $checkbox="<input type='checkbox' $checked name='key[]' ".
+                    "value='$key' />";
+            $out.=" <li>$checkbox"."<a href='".str_replace('$TAG',$key,$tag_link).
+                "' $style title=\"$val "._("hits").'">'.$key."</a></li>\n";
         }
     }
     if ($options['add']) {
-        $msg=_("manually add keywords");
-        $inp="<li><input type='text' name='keywords' size='20' />: $msg</li>";
+        $msg=_("add keywords");
+        $inp="<li><input type='text' name='keywords' size='12' />: $msg</li>";
+        if ($ok)
+            $btn=_("Update keywords");
+        else
+            $btn=_("Add keywords");
+        $form_close="<input type='submit' value='$btn'/></form>\n";
     }
-    if ($ok)
-        $btn=_("Update keywords");
-    else
-        $btn=_("Add keywords");
-    return $out."$inp</ul><input type='submit' value='$btn'/></form>\n";
+    return "<div class='cloudView'>".$out."$inp</ul></div>$form_close";
 }
 
 function do_keywords($formatter,$options) {
@@ -90,6 +210,12 @@ function do_keywords($formatter,$options) {
     define(LOCAL_KEYWORDS,'LocalKeywords');
 
     $page=$formatter->page->name;
+    if (!$DBInfo->hasPage($page)) {
+        $options['err']=_("You are not able to add keywords.");
+        $options['title']=_("Page does not exists");
+        do_invalid($formatter,$options);
+        return;
+    }
 
     $formatter->send_header('',$options);
 
