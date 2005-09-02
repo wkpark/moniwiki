@@ -13,6 +13,7 @@ function macro_Comment($formatter,$value,$options=array()) {
   global $DBInfo;
   if (!$options['page']) $options['page']=$formatter->page->name;
 
+  if ($options['nocomment']) return '';
   #if (!$DBInfo->_isWritable($options['page'])) return '';
   if (!$DBInfo->security->writable($options)) return '';
 

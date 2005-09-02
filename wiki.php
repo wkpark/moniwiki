@@ -1505,7 +1505,7 @@ class Formatter {
   function get_instructions(&$body) {
     global $DBInfo;
     $pikeys=array('#redirect','#action','#title','#keywords','#noindex',
-      '#filter','#postfilter','#twinpages','#notwins');
+      '#filter','#postfilter','#twinpages','#notwins','#nocomment');
     $pi=array();
     if (!$body) {
       if (!$this->page->exists()) return '';
@@ -3529,14 +3529,15 @@ if ($pagename) {
     $formatter->write("</div>\n");
 
     if ($DBInfo->extra_macros) {
+      if ($formatter->pi['#nocomment']) $options['nocomment']=1;
       if (!is_array($DBInfo->extra_macros)) {
         print '<div id="wikiExtra">'."\n";
-        print $formatter->macro_repl($DBInfo->extra_macros);
+        print $formatter->macro_repl($DBInfo->extra_macros,'',$options);
         print '</div>'."\n";
       } else {
         print '<div id="wikiExtra">'."\n";
         foreach ($DBInfo->extra_macros as $macro)
-          print $formatter->macro_repl($macro);
+          print $formatter->macro_repl($macro,'',$options);
         print '</div>'."\n";
       }
     }
