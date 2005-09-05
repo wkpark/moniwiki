@@ -5,10 +5,13 @@
 //
 // $Id$
 
+define(LOCAL_KEYWORDS,'LocalKeywords');
+
 function macro_Keywords($formatter,$value,$options='') {
     global $DBInfo;
 define(MAX_FONT_SZ,24);
 define(MIN_FONT_SZ,10);
+    $supported_lang=array('en','ko');
 
     $limit=$options['limit'] ? $options['limit']:40;
     $opts=explode(',',$value);
@@ -39,7 +42,7 @@ define(MIN_FONT_SZ,10);
     }
 
     $common= <<<EOF
-i am an a b c d e f g h i j k l m n o p q r s t u v w x y z
+am an a b c d e f g h i j k l m n o p q r s t u v w x y z
 0 1 2 3 4 5 6 7 8 9
 if on in by it at up as down over into for from to of he his him she her back
 is are be being been or no not nor and all through under until
@@ -54,22 +57,39 @@ get got would could have
 can't won't didn't don't
 aiff arj arts asp au avi bin biz css cgi com doc edu exe firm gif gz gzip
 htm html info jpeg jpg js jsp mp3 mpeg mpg mov
-net nom org pdf php pl qt ra ram rec shop sit tar tgz tiff txt wav web zip
+nom pdf php pl qt ra ram rec shop sit tar tgz tiff txt wav web zip
 one two three four five six seven eight nine ten eleven twelve
+ftp http https www web net org or kr co us de
 EOF;
     if (!$pagename) $pagename=$formatter->page->name;
     $page=$DBInfo->getPage($pagename);
     if (!$page->exists()) return '';
-    $raw=$page->get_raw_body();
+    $raw=$page->get_raw_body();$raw=rtrim($raw);
 
+    // strip macros, entities
+    $raw=preg_replace("/&[^;\s]+;|\[\[[^\[]+\]\]/",' ',$raw);
     $raw=preg_replace("/([;\"',`\\\\\/\.:@#\!\?\$%\^&\*\(\)\{\}\[\]\-_\+=\|])/",
         ' ', strip_tags($raw.' '.$pagename)); // pagename also
     $raw=preg_replace("/((?<=[a-z0-9]|[B-Z]{2})([A-Z][a-z]))/"," \\1",$raw);
     $raw=strtolower($raw);
-    $raw=preg_replace("/&[^;\s]+;/",' ',$raw);
+    $raw=preg_replace("/\b/",' ',$raw);
     //$raw=preg_replace("/\b([0-9a-zA-Z'\"])\\1+\s*/",' ',$raw);
     $words=preg_split("/\s+|\n/",$raw);
     // remove common words
+    $lang=$formatter->pi['#language'] ? $formatter->pi['#language']:
+        $DBInfo->default_language;
+    if ($lang and in_array($lang,$supported_lang)) {
+        $common_word_page=LOCAL_KEYWORDS.'/CommonWords'.ucfirst($lang);
+        if ($DBInfo->hasPage($common_word_page)) {
+            $p=$DBInfo->getPage($common_word_page);
+            $lines=explode("\n",($p->get_raw_body()));
+            foreach ($lines as $line) {
+                if ($line[0]=='#') continue;
+                $common.=$line."\n";
+            }
+            $common=rtrim($common);
+        }
+    }
     $words=array_diff($words,preg_split("/\s+|\n/",$common));
 
     $preword='';
@@ -206,8 +226,6 @@ EOF;
 
 function do_keywords($formatter,$options) {
     global $DBInfo;
-
-    define(LOCAL_KEYWORDS,'LocalKeywords');
 
     $page=$formatter->page->name;
     if (!$DBInfo->hasPage($page)) {
