@@ -770,28 +770,37 @@ class WikiDB {
   }
 
   function editlog_raw_lines($size=6000,$quick="") {
-    define(DEFSIZE,6000);
-    if ($size==0) $size=DEFSIZE;
-    $filesize= filesize($this->editlog_name);
-    if ($filesize > $size) {
-      $fp= fopen($this->editlog_name, 'r');
+    $lines=array();
 
-      fseek($fp, -$size, SEEK_END);
+    $check=time();
+    $date_from=$check-30*24*60*60; # one week
+    $date_to=$check;#-100*24*60*60;
 
-      $dumm=fgets($fp,1024); # emit dummy
-      while (!feof($fp)) {
-        $line=fgets($fp,2048);
-        $lines[]=$line;
+    $fp= fopen($this->editlog_name, 'r');
+    if(is_resource($fp)){
+      $a=-1;
+      $last='';
+      fseek($fp,0,SEEK_END);
+      while($date_from < $check and !feof($fp)){
+        $a-=1024;
+        fseek($fp,$a,SEEK_END);
+        $l=fread($fp,1024);
+        while(($p=strrpos($l,"\n"))!==false) {
+          $line=substr($l,$p+1).$last;
+          $dumm=explode("\t",$line,4);
+          $check=$dumm[2];
+          if ($date_from>$check) break;
+          if ($date_to>$check) $lines[]=$line;
+          $last='';
+          $l=substr($l,0,$p);
+        }
+        $last=$l.$last;
       }
+      #print $a;
+      #print sizeof($lines);
+      #print_r($lines);
       fclose($fp);
-    } else
-      $lines=file($this->editlog_name);
-
-    #$lines=$this->reverse($lines);
-    $lines=array_reverse($lines);
-    if (!$lines[0]) # delete last dummy
-      unset($lines[0]);
-    if (!$lines) $lines=array();
+    }
 
     if ($quick) {
       foreach($lines as $line) {
@@ -1505,7 +1514,8 @@ class Formatter {
   function get_instructions(&$body) {
     global $DBInfo;
     $pikeys=array('#redirect','#action','#title','#keywords','#noindex',
-      '#filter','#postfilter','#twinpages','#notwins','#nocomment');
+      '#filter','#postfilter','#twinpages','#notwins','#nocomment',
+      '#language',);
     $pi=array();
     if (!$body) {
       if (!$this->page->exists()) return '';
