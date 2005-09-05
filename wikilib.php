@@ -1286,10 +1286,14 @@ function macro_RandomQuote($formatter,$value="",$options=array()) {
 
   $re='/^\s*\* (.*)$/';
   $args=explode(',',$value);
+
   foreach ($args as $arg) {
     $arg=trim($arg);
     if (in_array($arg[0],array('@','/','%')) and $arg[0]==substr($arg,-1)) {
-      if (!@preg_match($arg,'')) continue;
+      if (@preg_match($arg,'',$m)===false) {
+        $log=_("Invalid regular expression !");
+        continue;
+      }
       $re=$arg;
     } else
       $pagename=$arg;
@@ -1329,7 +1333,7 @@ function macro_RandomQuote($formatter,$value="",$options=array()) {
 #  $out= ob_get_contents();
 #  ob_end_clean();
 #  return $out;
-  return $quote;
+  return $log.$quote;
 }
 
 
