@@ -769,12 +769,22 @@ class WikiDB {
     return $out;
   }
 
-  function editlog_raw_lines($size=6000,$quick="") {
+  function editlog_raw_lines($days,$opts=array()) {
     $lines=array();
 
-    $check=time();
-    $date_from=$check-30*24*60*60; # one week
-    $date_to=$check;#-100*24*60*60;
+    $time_current= time();
+    $secs_per_day= 24*60*60;
+
+    if ($opts['ago']) {
+      $date_from= $time_current - ($opts['ago'] * $secs_per_day);
+      $date_to= $date_from + ($days * $secs_per_day);
+    } else {
+      $date_from= $time_current - ($days * $secs_per_day);
+      $date_to= $time_current;
+    }
+    $check=$date_to;
+
+    $itemnum=$opts['items'] ? $opts['items']:200;
 
     $fp= fopen($this->editlog_name, 'r');
     if(is_resource($fp)){
@@ -790,7 +800,11 @@ class WikiDB {
           $dumm=explode("\t",$line,4);
           $check=$dumm[2];
           if ($date_from>$check) break;
-          if ($date_to>$check) $lines[]=$line;
+          if ($date_to>$check) {
+            $lines[]=$line;
+            $pages[$dumm[0]]=1;
+            if (sizeof($pages) >= $itemnum) { $check=0; break; }
+          }
           $last='';
           $l=substr($l,0,$p);
         }
@@ -802,7 +816,7 @@ class WikiDB {
       fclose($fp);
     }
 
-    if ($quick) {
+    if ($opts['quick']) {
       foreach($lines as $line) {
         $dum=explode("\t",$line,2);
         if ($keys[$dum[0]]) continue;

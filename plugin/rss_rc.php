@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // rss_rc action plugin for the MoniWiki
 //
@@ -7,13 +7,17 @@
 
 function do_rss_rc($formatter,$options) {
   global $DBInfo;
+define('RSS_DEFAULT_DAYS',7);
 
-  $lines= $DBInfo->editlog_raw_lines(4000,1);
+  $days=$DBInfo->rc_days ? $DBInfo->rc_days:RSS_DEFAULT_DAYS;
+  $options['quick']=1;
+  if ($options['c']) $options['items']=$options['c'];
+  $lines= $DBInfo->editlog_raw_lines($days,$options);
     
   $time_current= time();
-  $secs_per_day= 60*60*24;
-  $days_to_show= 30;
-  $time_cutoff= $time_current - ($days_to_show * $secs_per_day);
+#  $secs_per_day= 60*60*24;
+#  $days_to_show= 30;
+#  $time_cutoff= $time_current - ($days_to_show * $secs_per_day);
 
   $URL=qualifiedURL($formatter->prefix);
   $img_url=qualifiedURL($DBInfo->logo_img);
@@ -41,8 +45,8 @@ CHANNEL;
     $log= stripslashes($parts[5]);
     $act= rtrim($parts[6]);
 
-    if ($ed_time < $time_cutoff)
-      break;
+#    if ($ed_time < $time_cutoff)
+#      break;
 
     $url=qualifiedUrl($formatter->link_url(_rawurlencode($page_name)));
     $diff_url=qualifiedUrl($formatter->link_url(_rawurlencode($page_name),'?action=diff'));
