@@ -1280,23 +1280,38 @@ function macro_RandomPage($formatter,$value='') {
   return join("",$selects);
 }
 
-function macro_RandomQuote($formatter,$value="") {
+function macro_RandomQuote($formatter,$value="",$options=array()) {
   global $DBInfo;
   define(QUOTE_PAGE,'FortuneCookies');
 
-  if ($value and $DBInfo->hasPage($value))
-    $fortune=$value;
+  $re='/^\s*\* (.*)$/';
+  $args=explode(',',$value);
+  foreach ($args as $arg) {
+    $arg=trim($arg);
+    if (in_array($arg[0],array('@','/','%')) and $arg[0]==substr($arg,-1)) {
+      if (!@preg_match($arg,'')) continue;
+      $re=$arg;
+    } else
+      $pagename=$arg;
+  }
+
+  if ($pagename and $DBInfo->hasPage($pagename))
+    $fortune=$pagename;
   else
     $fortune=QUOTE_PAGE;
 
-  $page=$DBInfo->getPage($fortune);
-  if (!$page->exists()) return '';
-  $raw=$page->get_raw_body();
+  if ($options['body'])
+    $raw=$options['body'];
+  else {
+    $page=$DBInfo->getPage($fortune);
+    if (!$page->exists()) return '';
+    $raw=$page->get_raw_body();
+  }
  
   $lines=explode("\n",$raw);
 
   foreach($lines as $line) {
-    if (preg_match("/^\s\* (.*)$/",$line,$match))
+    if (preg_match($re.'i',$line,$match))
       $quotes[]=$match[1];
   }
 
