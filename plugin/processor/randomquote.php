@@ -15,7 +15,7 @@ function processor_randomquote($formatter,$value="",$options=array()) {
     if ($line)
         list($tag,$args)=explode(' ',$line,2);
 
-    return $formatter->macro_repl('RandomQuote','',array('body'=>$value));
+    return $formatter->macro_repl('RandomQuote',$args,array('body'=>$value));
 }
 
 // vim:et:ts=4:
