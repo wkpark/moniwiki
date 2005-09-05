@@ -20,7 +20,7 @@ function processor_vim($formatter,$value,$options) {
   $syntax=array("php","c","python","jsp","sh","cpp",
           "java","ruby","forth","fortran","perl",
           "haskell","lisp","st","objc","tcl","lua",
-          "asm","masm","tasm","make",
+          "asm","masm","tasm","make","mysql",
           "awk","docbk","diff","html","tex","vim",
           "xml","dtd","sql","conf","config","nosyntax","apache");
 
