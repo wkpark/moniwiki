@@ -233,6 +233,7 @@ class Timer {
 
 class MetaDB_dba extends MetaDB {
   var $metadb;
+  var $aux=array();
 
   function MetaDB_dba($file,$type="db3") {
     if (function_exists('dba_open'))
@@ -243,36 +244,57 @@ class MetaDB_dba extends MetaDB {
     dba_close($this->metadb);
   }
 
+  function attachDB($db) {
+    $this->aux=$db;
+  }
+
   function getSisterSites($pagename,$mode=1) {
-    if ($pagename and dba_exists($pagename,$this->metadb)) {
-      if (!$mode) return true;
-      $sisters=dba_fetch($pagename,$this->metadb);
-
-      if (strlen($sisters) > 40) return "TwinPages:$pagename";
-
-      $ret="wiki:".
-        str_replace(" ",":$pagename wiki:",$sisters).":$pagename";
-      $pagename=_preg_search_escape($pagename);
-      return preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
+    if (!$this->aux->hasPage($pagename) and !dba_exists($pagename,$this->metadb)) {
+      if ($mode) return '';
+      return false;
     }
-    return "";
+    if (!$mode) return true;
+    $sisters=dba_fetch($pagename,$this->metadb);
+    $addons=$this->aux->getSisterSites($pagename,$mode);
+
+    if ($twins)
+      $ret='wiki:'.str_replace(' ',":$pagename wiki:",$sisters).":$pagename";
+    $pagename=_preg_search_escape($pagename);
+    if ($addons) $ret=rtrim($addons.' '.$ret);
+
+    if ($mode==1 and strlen($ret) > 80) return "TwinPages:$pagename";
+    return preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
   }
 
   function getTwinPages($pagename,$mode=1) {
-    if ($pagename && dba_exists($pagename,$this->metadb)) {
-      if (!$mode) return true;
+    if (!$this->aux->hasPage($pagename) and !dba_exists($pagename,$this->metadb)) {
+      if ($mode) return array();
+      return false;
+    }
+    if (!$mode) return true;
 
-      $twins=dba_fetch($pagename,$this->metadb);
-      $bullet=" ";
-      if (strlen($twins) > 40) $bullet="\n * ";
-      $ret=$bullet."wiki:".
-        str_replace(" ",":$pagename$bullet"."wiki:",$twins).
-        ":$pagename";
+    $twins=dba_fetch($pagename,$this->metadb);
+    $addons=$this->aux->getTwinPages($pagename,$mode);
+    $ret=array();
+    if ($twins) {
+      $ret="wiki:".str_replace(" ",":$pagename wiki:",$twins). ":$pagename";
 
       $pagename=_preg_search_escape($pagename);
       $ret= preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
-      return explode("\n",$ret);
+      $ret= explode(' ',$ret);
     }
+
+    if ($addons) $ret=array_merge($addons,$ret);
+    if (sizeof($ret) > 8) {
+      if ($mode==1) return array("TwinPages:$pagename");
+      $ret=array_map(create_function('$a','return " * $a";'),$ret);
+    }
+
+    return $ret;
+  }
+
+  function hasPage($pagename) {
+    if (dba_exists($pagename,$this->metadb)) return true;
     return false;
   }
 
@@ -309,8 +331,9 @@ class MetaDB {
   function getSisterSites($pagename) {
     return "";
   }
-  function getTwinPages($pagename) {
-    return "";
+  function getTwinPages($pagename,$mode=1) {
+    if ($mode) return array();
+    return false;
   }
   function getAllPages() {
     return array();
@@ -319,6 +342,54 @@ class MetaDB {
     return array();
   }
   function close() {
+  }
+}
+
+class MetaDB_text extends MetaDB {
+  var $db=array();
+  function MetaDB_text($file) {
+    $lines=file($file);
+    foreach ($lines as $line) {
+      if ($line[0]=='#') continue;
+      list($key,$list)=explode(',',rtrim($line),2);
+      $this->db[$key]=$list;
+    }
+  }
+
+  function hasPage($pagename) {
+    if ($this->db[$pagename]) return true;
+    return false;
+  }
+
+  function getTwinPages($pagename,$mode=1) {
+    if (!$this->db[$pagename]) {
+      if ($mode) return array();
+      return false;
+    }
+    if (!$mode) return true;
+    $twins=$this->db[$pagename];
+
+    $ret='[wiki:'.str_replace(',',"] [wiki:",$twins).']';
+
+    $pagename=_preg_search_escape($pagename);
+    $ret= preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
+    return explode(' ',$ret);
+  }
+  function getSisterSites($pagename,$mode=1) {
+    if (!$this->db[$pagename]) {
+      if ($mode) return '';
+      return false;
+    }
+    if (!$mode) return true;
+
+    $twins=$this->db[$pagename];
+    $ret='[wiki:'.str_replace(',',"] [wiki:",$twins).']';
+
+    return $ret;
+  }
+
+  function getAllPages() {
+    return array_keys($this->db);
   }
 }
 
@@ -611,10 +682,18 @@ class WikiDB {
 
     $this->interwiki=null;
 
+    if ($this->use_alias)
+      $this->alias=new MetaDB_text($this->aliaspage);
     if ($this->shared_metadb)
       $this->metadb=new MetaDB_dba($this->shared_metadb,$this->dba_type);
-    if (!$this->metadb->metadb)
-      $this->metadb=new MetaDB();
+    if (!$this->metadb->metadb) {
+      if ($this->alias)
+        $this->metadb=$this->alias;
+      else
+        $this->metadb=new MetaDB();
+    } else {
+      $this->metadb->attachDB($this->alias);
+    }
 
     if ($this->use_counter)
       $this->counter=new Counter_dba($this);
@@ -672,7 +751,7 @@ class WikiDB {
   function hasPage($pagename) {
     if (!$pagename) return false;
     $name=$this->getPageKey($pagename);
-    return file_exists($name); 
+    return @file_exists($name); 
   }
 
   function getPage($pagename,$options="") {
@@ -962,7 +1041,7 @@ class WikiDB {
   function _isWritable($pagename) {
     $key=$this->getPageKey($pagename);
     # True if page can be changed
-    return is_writable($key) or !file_exists($key);
+    return @is_writable($key) or !@file_exists($key);
   }
 
   function getPerms($pagename) {
@@ -1213,7 +1292,7 @@ class WikiPage {
 
   function exists() {
     # Does a page for the given word already exist?
-    return file_exists($this->filename);
+    return @file_exists($this->filename);
   }
 
 #  function writable() {
@@ -2290,7 +2369,8 @@ class Formatter {
         }
       } else if ($twins) {
         if ($lines) $lines[]="----";
-        $twins[0]=_("See [TwinPages]: ").$twins[0];
+        if (sizeof($twins)>8) $twins[0]="\n".$twins[0];
+        $twins[0]=_("See [TwinPages]:").$twins[0];
         $lines=array_merge($lines,$twins);
       }
     }
@@ -3472,7 +3552,7 @@ if ($pagename) {
 
       $formatter->send_header("Status: 404 Not found",$options);
 
-      $twins=$DBInfo->metadb->getTwinPages($page->name,1);
+      $twins=$DBInfo->metadb->getTwinPages($page->name,2);
       if ($twins) {
         $formatter->send_title($page->name,"",$options);
         $twins=join("\n",$twins);
