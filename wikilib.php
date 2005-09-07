@@ -521,7 +521,7 @@ function _get_sections($body,$lim=5) {
       continue;
     }
     $parts=array();
-    $parts=preg_split("/^([^\n]\s*={1,$lim}\s#?.*\s+={1,$lim}\s?)$/m",$chunks[$ii],
+    $parts=preg_split("/^((?!\n)\s*={1,$lim}\s#?.*\s+={1,$lim}\s?)$/m",$chunks[$ii],
       -1, PREG_SPLIT_DELIM_CAPTURE);
     for ($j=0,$i=0,$s=count($parts); $i<$s; $i++) {
       if (!($i%2)) {
@@ -607,9 +607,9 @@ function macro_Edit($formatter,$value,$options='') {
   $form.=$menu;
   $form.= sprintf('<form name="editform" method="post" action="%s">', $previewurl);
   if ($text) {
-    $raw_body = str_replace("\r\n", "\n", $text);
+    $raw_body = preg_replace("/\r\n|\r/", "\n", $text);
   } else if ($formatter->page->exists()) {
-    $raw_body = str_replace("\r\n", "\n", $formatter->page->_get_raw_body());
+    $raw_body = preg_replace("/\r\n|\r/", "\n", $formatter->page->_get_raw_body());
     if (isset($options['section'])) {
       $sections= _get_sections($raw_body);
       if ($sections[$options['section']])
@@ -618,7 +618,7 @@ function macro_Edit($formatter,$value,$options='') {
     }
   } else if ($options['template']) {
     $p= new WikiPage($options['template']);
-    $raw_body = str_replace("\r\n", "\n", $p->get_raw_body());
+    $raw_body = preg_replace("/\r\n|\r/", "\n", $p->get_raw_body());
   } else {
     if (strpos($options['page'],' ') > 0) {
       $raw_body="#title $options[page]\n";
@@ -987,7 +987,7 @@ function do_post_savepage($formatter,$options) {
 
   $formatter->send_header("",$options);
 
-  $savetext=str_replace("\r", "", $savetext);
+  $savetext=preg_replace("/\r\n|\r/", "\n", $savetext);
   $savetext=_stripslashes($savetext);
   $section_savetext='';
   if (isset($options['section'])) {
@@ -1010,7 +1010,7 @@ function do_post_savepage($formatter,$options) {
   if ($formatter->page->exists()) {
     # check difference
     $body=$formatter->page->get_raw_body();
-    $body=str_replace("\r", "", $body);
+    $body=preg_replace("/\r\n|\r/", "\n", $body);
     $orig=md5($body);
     # check datestamp
     if ($formatter->page->mtime() > $datestamp) {
