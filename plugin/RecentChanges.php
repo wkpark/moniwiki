@@ -232,8 +232,15 @@ define('RC_DEFAULT_DAYS',7);
     $title=htmlspecialchars($title);
     $title= $formatter->link_tag($pageurl,"",$title,$target);
 
-    if (! empty($DBInfo->changed_time_fmt))
+    if (! empty($DBInfo->changed_time_fmt)) {
       $date= gmdate($DBInfo->changed_time_fmt, $ed_time+$tz_offset);
+      if ($DBInfo->use_rc_timeago) {
+        $time_diff=(int)($time_current - $ed_time)/60;
+        if ($time_diff < 1440) {
+          $date=sprintf(_("[%sh %sm ago]"),(int)($time_diff/60),$time_diff%60);
+        }
+      }
+    }
 
     if ($DBInfo->show_hosts) {
       if ($showhost && $user == 'Anonymous')
