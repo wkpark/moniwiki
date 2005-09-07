@@ -83,9 +83,12 @@ $smileys=array(
 
     # version 1.0
     "(./)"=>array(16, 16, 0, "smile/checkbox.png"),
+    "(V)"=>array(16, 16, 0, "smile/checkmark.png"),
     "{OK}"=>array(12, 16, 0, "smile/thumb-up.gif"),
     "{NO}"=>array(12, 16, 0, "smile/thumb-down.gif"),
     "{X}"=>array(16, 16, 0, "smile/icon-error.png"),
+    "{*}"=>array(15, 15, 0, "smile/star_on.png"),
+    "{o}"=>array(15, 15, 0, "smile/star_off.png"),
     "{i}"=>array(16, 16, 0, "smile/icon-info.png"),
     "{1}"=>array(15, 13, 0, "smile/prio1.gif"),
     "{2}"=>array(15, 13, 0, "smile/prio2.gif"),
