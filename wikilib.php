@@ -714,6 +714,12 @@ function do_invalid($formatter,$options) {
   $formatter->send_footer("",$options);
 }
 
+function ajax_invalid($formatter,$options) {
+  $formatter->send_header("Status: 406 Not Acceptable",$options);
+  print "false";
+  return;
+}
+
 function do_post_DeleteFile($formatter,$options) {
   global $DBInfo;
 
@@ -993,8 +999,10 @@ function do_post_savepage($formatter,$options) {
   if (isset($options['section'])) {
     if ($formatter->page->exists()) {
       $sections= _get_sections($formatter->page->get_raw_body());
-      if ($sections[$options['section']])
+      if ($sections[$options['section']]) {
+        if (substr($savetext,-1)!="\n") $savetext.="\n";
         $sections[$options['section']]=$savetext;
+      }
       $section_savetext=$savetext;
       $savetext=implode('',$sections);
     }

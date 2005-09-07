@@ -2156,6 +2156,18 @@ class Formatter {
     return call_user_func("postfilter_$filter",$this,$value,$options);
   }
 
+  function ajax_repl($action,$options='') {
+    if (!function_exists('ajax_'.$action) and !function_exists('do_'.$action)) {
+      $ff=getPlugin($action);
+      if (!$ff) return $value;
+      include_once("plugin/$ff.php");
+    }
+    if (!function_exists ("ajax_".$action))
+      return ajax_invalid($this,array('title'=>_("Invalid ajax action.")));
+
+    return call_user_func("ajax_$action",$this,$options);
+  }
+
   function smiley_repl($smiley) {
     global $DBInfo;
 
@@ -3492,6 +3504,10 @@ if ($pagename) {
     $goto=$_POST['goto'];
   } else if ($_SERVER['REQUEST_METHOD']=="GET") {
     $action=$_GET['action'];
+    if (($p=strpos($action,'/'))!==false) {
+      $action_mode=substr($action,$p+1);
+      $action=substr($action,0,$p);
+    }
     $value=$_GET['value'];
     $goto=$_GET['goto'];
     $rev=$_GET['rev'];
@@ -3672,6 +3688,18 @@ if ($pagename) {
       $formatter->send_title($title,"",$options);
       $formatter->send_page("== "._("Please enter the valid password")." ==");
       $formatter->send_footer("",$options);
+      return;
+    }
+
+    if (in_array($action_mode,array('ajax','macro'))) {
+      if ($_SERVER['REQUEST_METHOD']=="POST")
+        $options=array_merge($_POST,$options);
+      else
+        $options=array_merge($_GET,$options);
+      if ($action_mode=='ajax')
+        $formatter->ajax_repl($action,$options);
+      else
+        print $formatter->macro_repl($action,$options['value'],$options);
       return;
     }
 
