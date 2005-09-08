@@ -257,7 +257,7 @@ class MetaDB_dba extends MetaDB {
     $sisters=dba_fetch($pagename,$this->metadb);
     $addons=$this->aux->getSisterSites($pagename,$mode);
 
-    if ($twins)
+    if ($sisters)
       $ret='wiki:'.str_replace(' ',":$pagename wiki:",$sisters).":$pagename";
     $pagename=_preg_search_escape($pagename);
     if ($addons) $ret=rtrim($addons.' '.$ret);
@@ -328,9 +328,11 @@ class MetaDB {
   function MetaDB() {
     return;
   }
-  function getSisterSites($pagename) {
-    return "";
+  function getSisterSites($pagename,$mode=1) {
+    if ($mode) return '';
+    return false;
   }
+
   function getTwinPages($pagename,$mode=1) {
     if ($mode) return array();
     return false;
