@@ -11,7 +11,7 @@ function macro_Keywords($formatter,$value,$options='') {
     global $DBInfo;
 define(MAX_FONT_SZ,24);
 define(MIN_FONT_SZ,10);
-    $supported_lang=array('en','ko');
+    $supported_lang=array('ko');
 
     $limit=$options['limit'] ? $options['limit']:40;
     $opts=explode(',',$value);
@@ -229,16 +229,26 @@ EOF;
         else
             $btn=_("Add keywords");
         $btn1=_("Add as common words"); 
+        $btn2=_("Unselect all"); 
         $form_close="<input type='submit' value='$btn'/>\n";
         $form_close.="<input type='submit' name='common' value='$btn1' />\n";
-        $form_close.="</form>\n";
+        $form_close.="<input type='button' value='$btn2' onClick='UncheckAll(this)' />\n";
+        $form_close.="<select name='lang'><option>----</option>\n";
+        foreach ($supported_lang as $l) {
+            $form_close.="<option value='$l'>$l</option>\n";
+        }
+        $form_close.="</select>\n</form>\n";
+        $form_close.=<<<EOF
+<script type='text/javascript' src='$DBInfo->url_prefix/local/checkbox.js'>
+</script>
+EOF;
     }
     return "<div class='cloudView'>".$out."$inp</ul></div>$form_close";
 }
 
 function do_keywords($formatter,$options) {
     global $DBInfo;
-    $supported_lang=array('en','ko');
+    $supported_lang=array('ko');
 
     $page=$formatter->page->name;
     if (!$DBInfo->hasPage($page)) {
@@ -274,6 +284,7 @@ function do_keywords($formatter,$options) {
         if ($options['common']) {
             $raw="#format plain"; 
             $lang=$formatter->pi['#language'] ? $formatter->pi['#language']:'';
+            $lang=$options['lang'] ? $options['lang']:$lang;
             if (in_array($lang,$supported_lang))
                 $common_word_page=LOCAL_KEYWORDS.'/CommonWords'.ucfirst($lang);
             else
