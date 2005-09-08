@@ -46,6 +46,11 @@ $script
 <form onSubmit='return false'>
 <input type='text' size='40' class='wikiChat' onkeypress='sendMsg(event,this,"$url","chat$tag",$itemnum);' />
 </form>
+<script language='javascript'>
+<!--
+setInterval('sendMsg("poll",null,"$url","chat$tag",$itemnum)',10000);
+//-->
+</script>
 EOF;
 }
 
@@ -140,6 +145,10 @@ function ajax_chat($formatter,$options) {
         $line=preg_replace($smiley_rule,$smiley_repl,$line);
         $out.='<li>'.preg_replace("/(".$formatter->wordrule.")/e",
             "\$formatter->link_repl('\\1')",$line).'</li>';
+    }
+    if ($options['option_method']=='ajax') {
+        $formatter->header('Expires','0');
+        $formatter->header('Pragma','no-cache');
     }
     print '<ul>'.$debug.$out.'</ul>';
 }
