@@ -335,6 +335,10 @@ class MetaDB {
     if ($mode) return array();
     return false;
   }
+
+  function hasPage($pgname) {
+    return false;
+  }
   function getAllPages() {
     return array();
   }
@@ -684,13 +688,14 @@ class WikiDB {
 
     if ($this->use_alias)
       $this->alias=new MetaDB_text($this->aliaspage);
+    else
+      $this->alias=new MetaDB();
+
     if ($this->shared_metadb)
       $this->metadb=new MetaDB_dba($this->shared_metadb,$this->dba_type);
     if (!$this->metadb->metadb) {
-      if ($this->alias)
-        $this->metadb=$this->alias;
-      else
-        $this->metadb=new MetaDB();
+      if ($this->alias) $this->metadb=$this->alias;
+      else $this->metadb=new MetaDB();
     } else {
       $this->metadb->attachDB($this->alias);
     }
@@ -866,16 +871,25 @@ class WikiDB {
     $itemnum=$opts['items'] ? $opts['items']:200;
 
     $fp= fopen($this->editlog_name, 'r');
-    if(is_resource($fp)){
-      $a=-1;
+    while (is_resource($fp) and ($fz=filesize($this->editlog_name))>0){
+      fseek($fp,0,SEEK_END);
+      if ($fz < 1024) {
+        fseek($fp,0);
+        $ll=rtrim(fread($fp,1024));
+        $lines=explode("\n",$ll);
+        break;   
+      }
+      $a=-1; // hack, don't read last \n char.
       $last='';
       fseek($fp,0,SEEK_END);
       while($date_from < $check and !feof($fp)){
         $a-=1024;
+        if (-$a > $fz) { $a=-$fz;}
         fseek($fp,$a,SEEK_END);
         $l=fread($fp,1024);
         while(($p=strrpos($l,"\n"))!==false) {
           $line=substr($l,$p+1).$last;
+          $l=substr($l,0,$p);
           $dumm=explode("\t",$line,4);
           $check=$dumm[2];
           if ($date_from>$check) break;
@@ -885,7 +899,6 @@ class WikiDB {
             if (sizeof($pages) >= $itemnum) { $check=0; break; }
           }
           $last='';
-          $l=substr($l,0,$p);
         }
         $last=$l.$last;
       }
@@ -893,6 +906,7 @@ class WikiDB {
       #print sizeof($lines);
       #print_r($lines);
       fclose($fp);
+      break;   
     }
 
     if ($opts['quick']) {
@@ -3527,6 +3541,7 @@ if ($pagename) {
   $formatter = new Formatter($page,$options);
   $formatter->macro_repl('InterWiki','',array('init'=>1));
   $formatter->refresh=$refresh;
+  $formatter->tz_offset=$options['tz_offset'];
 
   // check black list
   if (!empty($DBInfo->blacklist)) {
