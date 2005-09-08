@@ -59,6 +59,8 @@ define('RC_DEFAULT_DAYS',7);
       else if ($arg=="nobookmark") $nobookmark=1;
       else if ($arg=="noperma") $perma_icon='';
       else if ($arg=="button") $button=1;
+      else if ($arg=="timesago") $timesago=1;
+      else if ($arg=="daysago") $use_daysago=1;
       else if ($arg=="simple") {
         $use_day=0;
         $template=
@@ -110,7 +112,7 @@ define('RC_DEFAULT_DAYS',7);
   $lines= $DBInfo->editlog_raw_lines($days,$opts);
 
   // make a daysago button
-  if ($DBInfo->use_daysago or $_GET['days'] or $opts['ago']) {
+  if ($use_daysago or $_GET['days']) {
     $msg[0]=_("Show changes for ");
     $agolist=array(-$days,$days,2*$days,3*$days);
     $btn=array();
@@ -234,7 +236,7 @@ define('RC_DEFAULT_DAYS',7);
 
     if (! empty($DBInfo->changed_time_fmt)) {
       $date= gmdate($DBInfo->changed_time_fmt, $ed_time+$tz_offset);
-      if ($DBInfo->use_rc_timeago) {
+      if ($timesago) {
         $time_diff=(int)($time_current - $ed_time)/60;
         if ($time_diff < 1440) {
           $date=sprintf(_("[%sh %sm ago]"),(int)($time_diff/60),$time_diff%60);
