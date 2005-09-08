@@ -75,7 +75,15 @@ EOF;
     $raw=preg_replace("/\b/",' ',$raw);
     //$raw=preg_replace("/\b([0-9a-zA-Z'\"])\\1+\s*/",' ',$raw);
     $words=preg_split("/\s+|\n/",$raw);
+
     // remove common words
+    $common_word_page0=LOCAL_KEYWORDS.'/CommonWords';
+    $lines0=array();
+    if ($DBInfo->hasPage($common_word_page0)) {
+        $p=$DBInfo->getPage($common_word_page0);
+        $lines0=explode("\n",($p->get_raw_body()));
+    }
+
     $lang=$formatter->pi['#language'] ? $formatter->pi['#language']:
         $DBInfo->default_language;
     if ($lang and in_array($lang,$supported_lang)) {
@@ -83,6 +91,7 @@ EOF;
         if ($DBInfo->hasPage($common_word_page)) {
             $p=$DBInfo->getPage($common_word_page);
             $lines=explode("\n",($p->get_raw_body()));
+            $lines=array_merge($lines,$lines0);
             foreach ($lines as $line) {
                 if ($line[0]=='#') continue;
                 $common.=$line."\n";
@@ -219,13 +228,17 @@ EOF;
             $btn=_("Update keywords");
         else
             $btn=_("Add keywords");
-        $form_close="<input type='submit' value='$btn'/></form>\n";
+        $btn1=_("Add as common words"); 
+        $form_close="<input type='submit' value='$btn'/>\n";
+        $form_close.="<input type='submit' name='common' value='$btn1' />\n";
+        $form_close.="</form>\n";
     }
     return "<div class='cloudView'>".$out."$inp</ul></div>$form_close";
 }
 
 function do_keywords($formatter,$options) {
     global $DBInfo;
+    $supported_lang=array('en','ko');
 
     $page=$formatter->page->name;
     if (!$DBInfo->hasPage($page)) {
@@ -241,21 +254,63 @@ function do_keywords($formatter,$options) {
         if ($options['keywords']) {
             // following keyword list are acceptable separated with spaces.
             // Chemistry "Physical Chemistry" "Bio Chemistry" ...
+            $keywords=_stripslashes($options['keywords']);
             $ws=preg_split('/((?<!\S)(["\'])[^\2]+?\2(?!\S)|\S+)/',
-                $options['keywords'],-1,
+                $keywords,-1,
                 PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_NO_EMPTY);
             $ws=array_flip(array_unique($ws));
             unset($ws['"']); // delete delims
             unset($ws["'"]);
             unset($ws[' ']);
             $ws=array_flip($ws);
-            
+
             $ws= array_map(create_function('$a',
                 'return preg_replace("/^([\"\'])(.*)\\\\1$/","\\\\2",$a);'),
                 $ws); // delete ",'
             if (!is_array($options['key'])) $options['key']=array();
             $options['key']=array_merge($options['key'],$ws);
         }
+
+        if ($options['common']) {
+            $raw="#format plain"; 
+            $lang=$formatter->pi['#language'] ? $formatter->pi['#language']:'';
+            if (in_array($lang,$supported_lang))
+                $common_word_page=LOCAL_KEYWORDS.'/CommonWords'.ucfirst($lang);
+            else
+                $common_word_page=LOCAL_KEYWORDS.'/CommonWords';
+
+            if ($DBInfo->hasPage($common_word_page)) {
+                $p=$DBInfo->getPage($common_word_page);
+                if (!$p->exists()) $dict=array();
+                else {
+                    $raw=$p->get_raw_body();
+                    $raw=rtrim($raw);
+                    $lines=explode("\n",$raw);
+                    $body='';
+                    foreach ($lines as $line) {
+                        if ($line[0]=='#' or $line=='') continue;
+                        $body.=$line."\n";
+                    }
+                    $body=rtrim($body);
+                    $dict=explode("\n",$body);
+                }
+                $commons=array_diff(array_values($options['key']),$dict);
+            } else {
+                $p=$DBInfo->getPage($common_word_page);
+                $commons=$options['key'];
+            }
+            if (!empty($commons)) {
+                sort($commons);
+                $raw.="\n".implode("\n",$commons);
+                $p->write($raw);
+                $DBInfo->savePage($p,"Common words are added",$options);
+            }
+            $formatter->send_title(sprintf(_("Common words are updated"),
+                $options['page']),'', $options);
+            $formatter->send_footer($args,$options);
+            return;
+        }
+
         $cache=new Cache_text('keywords');
         $keys=$options['key'];
         $keys=array_flip($keys);
@@ -271,7 +326,7 @@ function do_keywords($formatter,$options) {
             $lines=explode("\n",$raw);
             $body='';
             foreach ($lines as $line) {
-                if ($line[0]=='#') continue;
+                if ($line[0]=='#' or $line=='') continue;
                 $body.=$line."\n";
             }
             $body=rtrim($body);
@@ -279,6 +334,7 @@ function do_keywords($formatter,$options) {
         }
         $nkeys=array_diff(array_values($options['key']),$dict);
         if (!empty($nkeys)) {
+            sort($nkeys);
             $raw.="\n".implode("\n",$nkeys);
             $p->write($raw);
             $DBInfo->savePage($p,"New keywords are added",$options);
@@ -296,7 +352,8 @@ function do_keywords($formatter,$options) {
             $body=$formatter->page->get_raw_body();
             $pi=$formatter->get_instructions($dum);
             if ($pi['#keywords']) {
-                $nbody= preg_replace('/#keywords\s+'.$pi['#keywords'].'/',
+                $tag=preg_quote($pi['#keywords']);
+                $nbody= preg_replace('/^#keywords\s+'.$tag.'/',
                     '#keywords '.$ret,$body,1);
                 if ($nbody!=$body) $ok=1;
             } else {
@@ -314,11 +371,19 @@ function do_keywords($formatter,$options) {
             }
         } else {
             $link=$formatter->link_url(_rawurlencode($page),'');
+            $keys=explode(',',$ret);
+            $ret='';
+            foreach ($keys as $key) {
+                if ($key and strpos($key,' ')!==false) {
+                    $key='"'.$key.'"';
+                }
+                $ret.=$key.' ';
+            }
             $btn=_("Update with these Keywords"); 
             $form="<form method='post' action='$link'>";
             $form.='<input type="hidden" name="action" value="keywords" />';
             $form.='<input type="hidden" name="update" value="1" />';
-            $form.='<input type="hidden" name="keywords" value="'.$ret.'" />';
+            $form.='<input type="hidden" name="keywords" value=\''.$ret.'\' />';
             $form.="<input type='submit' value='$btn' />\n";
             $form.="</form>";
             print $form;
