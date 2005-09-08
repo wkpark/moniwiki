@@ -43,7 +43,9 @@ EOF;
     return <<<EOF
 $script
 <div id="chat$tag">$msg</div>
-<input type='text' size='40' class='wikiChat' onChange='sendMsg(this,"$url","chat$tag",$itemnum)' />
+<form onSubmit='return false'>
+<input type='text' size='40' class='wikiChat' onkeypress='sendMsg(event,this,"$url","chat$tag",$itemnum);' />
+</form>
 EOF;
 }
 
@@ -62,7 +64,9 @@ function ajax_chat($formatter,$options) {
         $udb=new UserDB($DBInfo);
         $udb->checkUser($user);
     }
+    // %uD55C%uD558
     $value=_stripslashes($options['value']);
+    $value=preg_replace('/%u([a-f0-9]{4})/i','&#x\\1;',$value);
     $itemnum=_stripslashes($options['item']);
     if ($itemnum > 50 or $itemnum <= 0) $itemnum=20;
     $room=escapeshellcmd(_stripslashes($options['room']));
@@ -81,11 +85,12 @@ function ajax_chat($formatter,$options) {
     }
     $lines=array();
     $fp=fopen($log,'a+');
-    while (is_resource($fp) and ($fz=filesize($log))>0) {
+    while (is_resource($fp)) {
         fseek($fp,0,SEEK_END);
         if ($value) {
             fwrite($fp,time()."\t".$user->id."\t".rtrim($value)."\n");
         }
+        if (($fz=filesize($log))==0) break;
         fseek($fp,0,SEEK_END);
         if ($fz < 512) {
             fseek($fp,0);
@@ -120,6 +125,11 @@ function ajax_chat($formatter,$options) {
         break;   
     }
 
+    #ob_start();
+    #print_r($_GET);
+    #$debug=ob_get_contents();
+    #ob_end_clean();
+
     $out='';
     $smiley_rule='/(?<=\s|^|>)('.$DBInfo->smiley_rule.')(?=\s|$)/e';
     $smiley_repl="\$formatter->smiley_repl('\\1')";
@@ -131,7 +141,7 @@ function ajax_chat($formatter,$options) {
         $out.='<li>'.preg_replace("/(".$formatter->wordrule.")/e",
             "\$formatter->link_repl('\\1')",$line).'</li>';
     }
-    print '<ul>'.$out.'</ul>';
+    print '<ul>'.$debug.$out.'</ul>';
 }
 
 // vim:et:sts=4:
