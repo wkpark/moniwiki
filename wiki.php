@@ -1517,7 +1517,7 @@ class Formatter {
     
     # set smily_rule,_repl
     if ($DBInfo->smileys) {
-      $smiley_rule='/(?<=\s|^|>)('.$DBInfo->smiley_rule.')(?=\s|<|$)/e';
+      $smiley_rule='/(?<=\s|^|>)('.$DBInfo->smiley_rule.')(?=\s|$)/e';
       $smiley_repl="\$this->smiley_repl('\\1')";
 
       $this->extrarule[]=$smiley_rule;
@@ -2193,7 +2193,7 @@ class Formatter {
 
     $alt=str_replace("<","&lt;",$smiley);
 
-    return "<img src='$this->imgs_dir/$img' align='middle' alt='$alt' title='$alt' />";
+    return "<img src='$this->imgs_dir/$img' border='0' align='middle' alt='$alt' title='$alt' />";
   }
 
   function link_url($pageurl,$query_string="") {
