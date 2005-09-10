@@ -1492,8 +1492,10 @@ class Formatter {
                      "/\^([^ \^]+)\^(?=\s|$)/","/\^\^([^ \^][^\^]+[^ \^])\^\^(?!^)/",
                      "/(?<!,),,([^ ,]+),,(?!,)/",
                      "/(?<!_)__((?:(?<!_)_(?!_)|[^_])+)__(?!_)/","/^(-{4,})/e",
-                     "/(?<!-)--([^-]+[^\s])--(?!-)/",
-                     "/(?<!~)~~([^~]+[^\s])~~(?!~)/",
+                     "/(?<!-)--(?U)([^\s].+[^\s])--(?!-)/",
+                     "/(?<!~)~~(?U)([^\s].+[^\s])~~(?!~)/",
+                     #"/(?<!-)--([^-]+[^\s])--(?!-)/",
+                     #"/(?<!~)~~([^~]+[^\s])~~(?!~)/",
                      #"/(\\\\\\\\)$/", # tex, pmWiki
                      );
     $this->baserepl=array("&lt;\\1","&#96;\\1'","<tt class='wiki'>\\1</tt>",
@@ -1515,7 +1517,7 @@ class Formatter {
     
     # set smily_rule,_repl
     if ($DBInfo->smileys) {
-      $smiley_rule='/(?<=\s|^|>)('.$DBInfo->smiley_rule.')(?=\s|$)/e';
+      $smiley_rule='/(?<=\s|^|>)('.$DBInfo->smiley_rule.')(?=\s|<|$)/e';
       $smiley_repl="\$this->smiley_repl('\\1')";
 
       $this->extrarule[]=$smiley_rule;
@@ -2417,7 +2419,7 @@ class Formatter {
     $indent_list[0]=0;
     $indent_type[0]="";
 
-    $wordrule="({{{([^}]+)}}})|".
+    $wordrule="({{{(?U)(.+)}}})|".
               "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|"; # macro
     if ($DBInfo->inline_latex) # single line latex syntax
       $wordrule.="(?<=\s|^|>)\\$([^\\$]+)\\$(?:\s|$)|".
