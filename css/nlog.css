@@ -1,5 +1,5 @@
 /* MoniWiki CSS 2003/11/01 by wkpark */
-@import url("user.css");
+@import url("_user.css");
 
 body {
   font-family:Georgia,Verdana,Lucida,sans-serif;font-size:12px;
@@ -10,8 +10,8 @@ body {
   width: 700px;
 }
 
-a {color:#000080;text-decoration:underline}
-a:hover {color:#808080;text-decoration:none}
+a {color:#000090;text-decoration:underline;}
+a:hover {text-decoration:none;}
 
 tt.wiki {font-family:Monotype,Lucida Console,lucida,monospace;font-size:12px;}
 tt.foot {
@@ -29,10 +29,11 @@ tt.sister {
 
 pre.wiki {
   padding-left:6px;
-  padding-top:6px; 
-  font-family:Lucida TypeWriter,monotype,lucida,monospace;font-size:14px;
+  padding-top:6px;
+  font-family:Bitstream Vera Sans Mono, Lucida TypeWriter,monotype, Courier New, GulimChe, monospace !important;
   background-color:#000000;
   color:#FFD700; /* gold */
+  /* color:#FFFFFF; /* white */
 }
 
 pre.console {
@@ -52,11 +53,11 @@ pre.quote {
 }
 
 table.wiki {
-//  border: 1px outset #E2ECE5;
+/*  border: 1px outset #E2ECE5; */
 }
 
 td.wiki {
-//  border: 1px inset #E2ECE5;
+/* border: 1px inset #E2ECE5; */
 }
 
 tr.wiki {
@@ -191,7 +192,7 @@ div.wikiGroup {
 }
 
 #wikiBody a {color:#000080;text-decoration:underline}
-#wikiBody a:hover {color:#808080;text-decoration:none}
+#wikiBody a:hover {text-decoration:none}
 
 #wikiContent {
   margin: 10px 10px 10px 20px; 
@@ -272,7 +273,7 @@ span.externalLink {
 }
 
 .purple a {
-    font-family: Verdana, Trebuchet, Arial, Helvetica;
+    font-family: Verdana, Arial, Helvetica;
     font-style: normal;
     font-weight: bold;
     font-size: x-small;
@@ -282,4 +283,301 @@ span.externalLink {
 
 span.lineNumber {
   color:#ffff00;
+}
+
+.wikiSyntax, .wikiSyntax code{  
+  font-family:"Bitstream Vera Sans Mono", Courier New, GulimChe, monospace !important;
+  padding:0.5em;
+}
+
+.pageNav { margin-bottom:5px;font-size : 75%; }
+.pageNext { float: right; }
+.pagePrev { float: left; }
+
+#wikiResize { float: right; }
+
+#blogCategory ul {
+  list-style:none;
+  padding-left: 20px;
+}
+
+#blogCategory span.dir {
+  display:none;
+}
+
+#wikiContent .perma:link, #wikiContent .perma:visited {
+  color:#d7d7d7;text-decoration:none;
+}
+.perma:link, .perma:visited {
+  visibility: hidden;
+}
+
+h1:hover .perma, h2:hover .perma, h3:hover .perma,
+h4:hover .perma, h5:hover .perma, h6:hover .perma {
+  visibility: visible;
+}
+
+span:hover .perma {
+  visibility: visible;
+}
+
+.rc-bookmark {
+ font-size:10px;
+}
+
+.rc-button ul {
+  list-style: none;
+  display: inline;
+  padding: 0px;
+}
+
+.rc-button li {
+  display: inline;
+}
+
+.cloudView li{
+  font-family:Trebuchet MS,Georgia,Verdana,sans-serif;
+  list-style:none;
+  white-space: nowrap;
+  display:inline;
+  padding-left:5px;
+}
+
+#wikiBody .cloudView a:link, #wikiBody .cloudView a:visited {
+  text-decoration:none;
+  color:#000000;
+}
+
+#wikiBody .cloudView a:hover {
+  text-decoration:underline;
+  color:#0000ff;
+}
+
+.cloudView ul {
+  margin:0;
+}
+
+.MC table {
+  width:99%;
+  margin:0;
+  padding:0;
+  border-left: 1px solid #A4ACBC;
+  border-top: 1px solid #A4ACBC;
+}
+
+.MC td {
+  border-right: 1px solid #A4ACBC;
+  border-bottom: 1px solid #A4ACBC;
+}
+
+.MC td.day, .MC td.today {
+  width:13%;
+  height:40px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.MC td.day:hover {
+  background-color: #EAEFE5;
+}
+
+.MC td.day {
+  background-color: #F4F3eE;
+}
+
+.MC td.dayhead {
+  width:50px;
+  background-color: #FFFFFF;
+  text-align:center;
+}
+
+.MC td.dayhead h6{
+  font-size:20px;
+  display:inline;
+  font-family: Georgia, Arial, Helvetica, sans-serif;
+}
+
+.MC td.dayhead h6.week{
+  font-size:16px;
+  color:#727b84;
+  font-family: Georgia, Arial, Helvetica, sans-serif;
+}
+
+.MC .month {
+  font-size:18px;
+  font-weight: bold;
+}
+
+.MC td.fullday {
+  width:90%;
+}
+
+.MC td.fullday li {
+  display:inline;
+}
+
+.MC td.today {
+  background-color: #E7FEDA;
+}
+
+.MC td.today:hover {
+  background-color: #F7FFEA;
+}
+
+.MC .day h6, .MC .today h6 {
+  font-family: Truchet MS, Arial, Helvetica, sans-serif;
+  font-size: 12px;
+  background-color: #d9e2e1;
+  text-align: center;
+  vertical-align: middle;
+  padding-top:0px;
+  margin-top:-1px;
+  margin-bottom: 1px;
+  margin-left: -1px;
+  width:30px;
+  /* border: #A4Acbc solid; /* */
+  border-width: 0px 1px 1px 0px;
+  padding-top: 2px;
+}
+
+.MC tr.weekhead {
+  background-color: #A2ADBC;
+  color: white;
+}
+
+.MC ul {
+  list-style:none;
+  margin:0px;
+  padding:0px;
+}
+
+.MC li {
+}
+
+.MC td.red {
+  background-color: #ffc1c1;
+}
+.MC td.red:hover {
+  background-color: #ffd1d1;
+}
+
+.MC td.blue {
+  background-color: #d1d2fe;
+}
+
+.MC td.blue:hover {
+  background-color: #e1e2fe;
+}
+
+.MC td.yellow {
+  background-color: #FAEE83;
+}
+
+.MC td.yellow:hover {
+  background-color: #FAFE93;
+}
+
+.MC td.green {
+  background-color: #AFffAF;
+}
+
+.MC td.green:hover {
+  background-color: #BAFFBA;
+}
+
+.MC .fullday li {
+  display:inline;
+}
+
+.MC .fullday ul {
+  display:inline;
+  float:left;
+}
+
+.MC .fullday ul.colorbar{
+  height:100%;
+  min-width:16px;
+  float:right;
+}
+
+.MC .day li.colorbar{
+  min-height:16px;
+}
+
+.MC .fullday ul.colorbar li{
+  float:left;
+  height:100%;
+  /* min-width:16px; /* */
+  width:16px; /* */
+}
+
+.MC .fullday ul.colorbar li:hover {
+  height:100%;
+  min-width:16px;
+  width:10%;
+  text-align:left;
+}
+
+.MC li.red {
+  display:block;
+  margin-top:1px;
+  background-color: #ffa4a4;
+  min-height:16px;
+  min-width:16px;
+}
+
+.MC .colorbar li:hover {
+  min-height:16px;
+  overflow:visible;
+  height:10%;
+  text-align:left;
+}
+
+.MC li.blue {
+  display:block;
+  margin-top:1px;
+  background-color: #b9b9ff;
+  height:16px;
+  overflow:auto;
+}
+
+.MC li.green {
+  display:block;
+  margin-top:1px;
+  background-color: #79ff79;
+  height:16px;
+  overflow:auto;
+}
+
+.MC li.yellow {
+  display:block;
+  margin-top:1px;
+  background-color: #ffff7d;
+  height:16px;
+  overflow:auto;
+}
+
+.MC li.purple {
+  display:block;
+  margin-top:1px;
+  background-color: #DFA3E4;
+  height:16px;
+  overflow:auto;
+}
+
+.wikiChat ul {
+  list-style:none;
+  padding:2px;
+  margin:0px;
+}
+
+.wikiChat span.user {
+  font-family:Trebuchet MS,sans-serif;
+  padding-left:2px;
+  padding-right:2px;
+}
+
+.wikiChat span.date {
+  font-family:Trebuchet MS,sans-serif;
+  padding-right:2px;
 }
