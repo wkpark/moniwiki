@@ -30,7 +30,7 @@ function filter_antispam($formatter,$value,$options) {
             }
         }
         for ($k=0;$k<=$i;$k++)
-            $pattern[$k]='/'.substr($pattern[$k],0,-1).'/i';
+            $pattern[$k]='/('.substr($pattern[$k],0,-1).')/i';
 
         #foreach ($whitelist_pages as $list) {
         #    $p=new WikiPage($list);
@@ -38,7 +38,7 @@ function filter_antispam($formatter,$value,$options) {
         #}
         #$goodcontents=explode("\n",$goodcontent);
 
-        return preg_replace($pattern,"",$value);
+        return preg_replace($pattern,"[[HTML(<span class='blocked'>)]]\\1[[HTML(</span>)]]",$value);
     }
     return $value;
 }
