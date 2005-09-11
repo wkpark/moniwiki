@@ -70,7 +70,7 @@ function macro_Css($formatter="") {
   $handle = opendir($DBInfo->css_dir);
   $css=array();
   while ($file = readdir($handle)) {
-     if (preg_match("/\.css$/i", $file,$match))
+     if (preg_match("/^[^_\.].*\.css$/i", $file,$match))
         $css[]= $file;
   }
 
