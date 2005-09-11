@@ -17,6 +17,8 @@ function _parseDays($formatter,$page,$options=array()) {
     $week_table=array('sun'=>0,'mon'=>1,'tue'=>2,'wed'=>3,'thu'=>4,'fri'=>5,
         'sat'=>6);
 
+    $colorbar_id=1;
+
     $lines=explode("\n",$page);
     foreach ($lines as $line) {
         if ($line=='' or $line[0]!=' ') continue;
@@ -31,6 +33,7 @@ function _parseDays($formatter,$page,$options=array()) {
                     $infocolor[$mon][$day][]=$color_table[$m[1]];
                 }
             }
+        // if it is range
         } else if (preg_match('/^\s+\*\s'.
             '(\d{1,2})[-\/,](\d{1,2})\-(\d{1,2})[-\/,](\d{1,2})\s(.*)$/',
             $line,$match)) {
@@ -40,25 +43,28 @@ function _parseDays($formatter,$page,$options=array()) {
                 if ($match[2]>=$match[4]) continue;
                 if (preg_match('/(\{\*\}|\(\!\)|\/\!\\\\|<!>|:\(|#[a-f0-9]{3}|#[a-f0-9]{6})\s/i',$match[5],$m)) {
                     if ($m[1][0]=='#') {
-                        $color='colorbar" style="background-color:'.$m[1];
+                        $color='colorbar';
+                        $custcolor=' style="background-color:'.$m[1].'"';
                         $text=substr($match[5],strlen($m[1]));
                     } else {
-                        $color=$color_table[$m[1]];
+                        $color='colorbar '.$color_table[$m[1]];
+                        $custcolor='';
                         $text=$match[5];
                     }
-
                     $mon0=sprintf("%02d",$match[1]);
                     $mon1=sprintf("%02d",$match[3]);
+                    $start_tag=$match[1].' '.$match[2];
+                    $start_tag=$start_tag.'-'.md5($start_tag.$text);
                     $text=preg_replace('/</','&lt;',$text);
-                    $coloring[$mon0][$match[2]][]=
-                        $color."\">$text</li>";
+                    $coloring[$mon0][$match[2]][$start_tag]=
+                        $color." start\"$custcolor>$text</li>";
                     // XX month for
                     for ($i=$match[2]+1;$i<$match[4];$i++) {
-                        $coloring[$mon0][$i][]=$color.'"></li>';
+                        $coloring[$mon0][$i][$start_tag]=$color."\"$custcolor></li>";
                     }
                     // $extra_class
-                    $coloring[$mon0][$i][]=
-                        $color."\" $extra_class>{END} </li>";
+                    $coloring[$mon0][$i][$start_tag]=
+                        $color." end\"$custcolor></li>";
                 }
             }
         } else if (preg_match('/^\s+\*\s'.
@@ -226,11 +232,28 @@ function macro_MoniCalendar($formatter,$value) {
  
     $save=$formatter->sister_on;
     $formatter->sister_on=0;
+    $colorkeys=array();
     while ($day <= $maxdays){
         if($column or $weekday == 7){ #start a new week
             $cal .= "</tr><tr class='week'>";
-            if ($weekday==7) $weekday = 0;
+            if ($weekday==7) {
+                $weekday = 0;
+                $colorkeys=array();
+            }
         }
+        for ($j=0;$j<7-$weekday;$j++) {
+            if (is_array($coloring[$month][$day+$j])) {
+                $keys=array_keys($coloring[$month][$day+$j]);
+                $colorkeys=array_merge($colorkeys,$keys);
+            }
+        }
+        $colorkeys=array_unique($colorkeys);
+        sort($colorkeys);
+        $colkeys=array_flip($colorkeys);
+        #print_r($colkeys);
+        foreach ($colkeys as $k=>$v)
+            $colkeys[$k]=' colorbar blank">';
+
         $daytext=($day > $maxcheckday) ? $day-$maxcheckday:$day;
         if ($column)
             $daytext.='</h6><br /><h6 class="week">'.substr($day_headings[$weekday],0,3);
@@ -244,8 +267,11 @@ function macro_MoniCalendar($formatter,$value) {
             $classes=$nonexists;
         }
         if ($coloring[$month][$day]) {
+            #print_r($coloring[$month][$day]);
+            $colorings=array_merge($colkeys,$coloring[$month][$day]);
+            #print_r($colorings);
             #$colorings=array_reverse($coloring[$month][$day]);
-            $colorings=&$coloring[$month][$day];
+            #$colorings=&$coloring[$month][$day];
             #$classes=implode(' ',$coloring[$month][$day]).' '.$classes;
             $colorbar='<ul class="colorbar"><li class="'.implode('<li class="',$colorings).'</ul>';
         } else {
@@ -287,7 +313,7 @@ function macro_MoniCalendar($formatter,$value) {
             $classes.=' fullday';
             $cal.="</td><td ".($classes ? " class=\"$classes\">":'>');
         }
-        $cal.="$todo$colorbar</td>";
+        $cal.="$colorbar$todo</td>";
 
         $day++;
         $weekday++;
