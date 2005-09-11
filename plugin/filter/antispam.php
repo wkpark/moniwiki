@@ -38,7 +38,7 @@ function filter_antispam($formatter,$value,$options) {
         #}
         #$goodcontents=explode("\n",$goodcontent);
 
-        return preg_replace($pattern,"[[HTML(<span class='blocked'>)]]\\1[[HTML(</span>)]]",$value);
+        return preg_replace($pattern,"''''''[[HTML(<span class='blocked'>)]]\\1[[HTML(</span>)]]''''''",$value);
     }
     return $value;
 }
