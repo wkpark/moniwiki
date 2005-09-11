@@ -842,6 +842,7 @@ class WikiDB {
     $time= time();
     if ($this->use_hostname) $host= gethostbyaddr($remote_name);
     else $host= $remote_name;
+    $page_name=trim($page_name);
     $msg="$page_name\t$remote_name\t$time\t$host\t$user->id\t$comment\t$action\n";
     fwrite($fp_editlog, $msg);
     fclose($fp_editlog);
@@ -1941,9 +1942,20 @@ class Formatter {
     list($page,$page_text,$gpage)=
       normalize_word($page,$this->group,$this->page->name,$nogroup,$islink);
     if ($text) {
-      if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
-        $text=str_replace('&','&amp;',$text);
-        $word="<img border='0' alt='$word' src='$text' /></a>";
+      if (preg_match("/^(http|ftp|attachment).*\.(png|gif|jpeg|jpg)$/i",$text)) {
+        if (substr($text,0,11)=='attachment:') {
+          $fname=substr($text,11);
+          $ntext=$this->macro_repl('Attachment',$fname,1);
+          if (!file_exists($ntext)) {
+            $word=$this->macro_repl('Attachment',$fname);
+          } else {
+            $text=qualifiedUrl($DBInfo->url_prefix.'/'.$ntext);
+            $word= "<img border='0' alt='$text' src='$text' /></a>";
+          }
+        } else {
+          $text=str_replace('&','&amp;',$text);
+          $word="<img border='0' alt='$word' src='$text' /></a>";
+        }
       } else $word=$text;
     } else {
       $word=$text=$page_text ? $page_text:$word;
@@ -2030,6 +2042,8 @@ class Formatter {
 
   function nonexists_fancy($word,$url) {
     global $DBInfo;
+    if ($word[0]=='<' and preg_match('/^<[^>]+>/',$word))
+      return "<a class='nonexistent' href='$url'>$word</a>";
     #if (preg_match("/^[a-zA-Z0-9\/~]/",$word))
     if (ord($word[0]) < 125) {
       $link=$word[0];
