@@ -10,7 +10,10 @@
 function _parseDays($formatter,$page,$options=array()) {
     $color_table=
         array('{*}'=>'red','/!\\'=>'blue','(!)'=>'green',
-            '<!>'=>'yellow',':('=>'purple');
+            '<!>'=>'yellow',':('=>'purple','(V)'=>'gray',
+            'red'=>'red','blue'=>'blue','green'=>'green','purple'=>'purple',
+            'yellow'=>'yellow','gray'=>'gray');
+    $color_rule=implode('|',array_map('preg_quote',array_keys($color_table)));
     $month=$options['month'] ? $options['month']:
         gmdate('m',time()+$formatter->tz_offset);
 
@@ -28,7 +31,8 @@ function _parseDays($formatter,$page,$options=array()) {
                 $day=sprintf("%d",$match[4]);
                 $info[$mon][$day][]=preg_replace('/</','&lt;',$match[5]).' ';
             }
-            if (preg_match('/(\{\*\}|\(\!\)|\/\!\\\\|<!>|:\()/',$match[5],$m)) {
+            #if (preg_match('/(\{\*\}|\(\!\)|\/\!\\\\|<!>|:\()/',$match[5],$m)) {
+            if (preg_match('@('.$color_rule.')@',$match[5],$m)) {
                 if ($color_table[$m[1]]) {
                     $infocolor[$mon][$day][]=$color_table[$m[1]];
                 }
@@ -41,7 +45,8 @@ function _parseDays($formatter,$page,$options=array()) {
                 $match[3] >= 1 and $match[3] <=12 and $match[4]<=31) {
                 if ($match[1]>$match[3]) continue;
                 if ($match[2]>=$match[4]) continue;
-                if (preg_match('/(\{\*\}|\(\!\)|\/\!\\\\|<!>|:\(|#[a-f0-9]{3}|#[a-f0-9]{6})\s/i',$match[5],$m)) {
+                #if (preg_match('/(\{\*\}|\(\!\)|\/\!\\\\|<!>|:\(|#[a-f0-9]{3}|#[a-f0-9]{6})\s/i',$match[5],$m)) {
+                if (preg_match('@('.$color_rule.'|#[a-f0-9]{3}|#[a-f0-9]{6})\s@i',$match[5],$m)) {
                     if ($m[1][0]=='#') {
                         $color='colorbar';
                         $custcolor=' style="background-color:'.$m[1].'"';
@@ -51,21 +56,27 @@ function _parseDays($formatter,$page,$options=array()) {
                         $custcolor='';
                         $text=$match[5];
                     }
+                } else {
+                    $color='colorbar gray';
+                    $text=$match[5];
+                    $custcolor='';
+                }
                     $mon0=sprintf("%02d",$match[1]);
                     $mon1=sprintf("%02d",$match[3]);
+                    if ($mon0<$month or $mon1>$month) continue;
                     $start_tag=$match[1].' '.$match[2];
-                    $start_tag=$start_tag.'-'.md5($start_tag.$text);
+                    $start_tag=$start_tag.' '.md5($start_tag.$text);
                     $text=preg_replace('/</','&lt;',$text);
-                    $coloring[$mon0][$match[2]][$start_tag]=
-                        $color." start\"$custcolor>$text</li>";
+                    $coloring[$month][$match[2]][$start_tag]=
+                        $color." start\"$custcolor><div class='text'>$text</div></li>";
                     // XX month for
                     for ($i=$match[2]+1;$i<$match[4];$i++) {
-                        $coloring[$mon0][$i][$start_tag]=$color."\"$custcolor></li>";
+                        $coloring[$month][$i][$start_tag]=$color."\"$custcolor></li>";
                     }
                     // $extra_class
-                    $coloring[$mon0][$i][$start_tag]=
+                    $coloring[$month][$i][$start_tag]=
                         $color." end\"$custcolor></li>";
-                }
+                #}
             }
         } else if (preg_match('/^\s+\*\s'.
             '(sun|mon|tue|wed|thu|fri|sat)\s(.*)$/i',$line,$match)) {
@@ -248,7 +259,7 @@ function macro_MoniCalendar($formatter,$value) {
             }
         }
         $colorkeys=array_unique($colorkeys);
-        sort($colorkeys);
+        natsort($colorkeys);
         $colkeys=array_flip($colorkeys);
         #print_r($colkeys);
         foreach ($colkeys as $k=>$v)
