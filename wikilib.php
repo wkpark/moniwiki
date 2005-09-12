@@ -2034,9 +2034,9 @@ EOS;
    $head_num=$num;
 
    if ($baseurl)
-     $TOC.=$close.$open."<dt><a href='$baseurl#s$prefix-$num'>$num$a0 $head$a1</dt>\n";
+     $TOC.=$close.$open."<dt><a href='$baseurl#s$prefix-$num'>$num$a0 $head $a1</dt>\n";
    else
-     $TOC.=$close.$open."<dt><a id='toc$prefix-$num' name='toc$prefix-$num' /><a href='#s$prefix-$num'>$num$a0 $head$a1</dt>\n";
+     $TOC.=$close.$open."<dt><a id='toc$prefix-$num' name='toc$prefix-$num' /><a href='#s$prefix-$num'>$num$a0 $head $a1</dt>\n";
 
   }
 
