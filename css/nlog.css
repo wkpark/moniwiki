@@ -385,7 +385,7 @@ span:hover .perma {
 }
 
 .MC td.day {
-  background-color: #F4F3eE;
+  background-color: #FFFFFF;
 }
 
 .MC td.fullday {
@@ -488,6 +488,7 @@ span:hover .perma {
 .MC td.red {
   background-color: #ffc1c1;
 }
+
 .MC td.red:hover {
   background-color: #ffd1d1;
 }
@@ -535,7 +536,6 @@ span:hover .perma {
 .MC .fullday ul.colorbar{
   height:100%;
   min-width:16px;
-  float:right;
   margin:0px;
   padding:0px;
   margin-bottom:0px !important;
@@ -552,29 +552,56 @@ span:hover .perma {
   float:right;
   height:100%;
   /* min-width:16px; /* */
-  width:16px; /* */
+  width:14px; /* */
   border-left:1px solid black;
   border-right:1px solid black;
   border-top:0;
   border-bottom:0;
   margin-right:2px;
+  white-space:normal !important;
 }
 
 .MC .fullday ul.colorbar li.blank {
-  width:18px; /* */
+  width:16px; /* */
 }
 
-.MC .fullday ul.colorbar li:hover {
+.MC .fullday ul.colorbar li.blank:hover {
+  width:16px; /* */
+  margin-right:2px;
+}
+
+.MC .fullday ul.colorbar li .text:hover {
   height:100% !important;
-  min-width:16px;
-  width:auto !important;
-  text-align:left;
+  min-width:100px;
+  overflow:visible;
 }
 
+.MC .fullday ul.colorbar li .text {
+  min-width:14px;
+  width:10%;
+}
 
-.MC .colorbar li.red:hover {
-/*  height:auto !important; /* */
-  text-align:left;
+.MC .fullday li .start {
+  height:100% !important;
+}
+
+.MC .colorbar .text:hover {
+  height:auto !important; /* */
+  overflow:visible;
+}
+
+.MC .colorbar li.start .text{
+  height:14px;
+}
+
+.MC .colorbar li.start .text:hover {
+  height:10%;
+  margin-left:-2px;
+  padding-left:2px;
+  margin-right:2px;
+  -moz-border-radius-topleft: 10px;
+  -moz-border-radius-bottomleft: 10px;
+  -moz-border-radius-bottomright: 10px;
 }
 
 .MC .colorbar li.start {
@@ -583,8 +610,8 @@ span:hover .perma {
   font-family:Trebuchet MS,Sans-serif;
   margin-left: 6px;
   margin-right:-1px;
-  -moz-border-radius-topleft: 14px;
-  -moz-border-radius-bottomleft: 14px;
+  -moz-border-radius-topleft: 11px;
+  -moz-border-radius-bottomleft: 11px;
   border-top:1px solid black;
   border-left:1px solid black;
   border-bottom:1px solid black;
@@ -592,14 +619,14 @@ span:hover .perma {
 
 .MC .colorbar li.end {
   margin-right: 6px;
-  -moz-border-radius-topright: 10px;
-  -moz-border-radius-bottomright: 10px;
+  -moz-border-radius-topright: 11px;
+  -moz-border-radius-bottomright: 11px;
   border-top:1px solid black;
   border-right:1px solid black;
   border-bottom:1px solid black;
 }
 
-.MC .fullday .colorbar li.start {
+.MC .fullday .colorbar .start {
   margin-top: 10px;
   margin-left:0px;
   margin-right:2px;
@@ -610,7 +637,7 @@ span:hover .perma {
   -moz-border-radius-bottomright: 0px;
 }
 
-.MC .fullday .colorbar li.end {
+.MC .fullday .colorbar .end {
   margin-bottom: 6px;
   margin-right:2px;
   -moz-border-radius-bottomleft: 10px;
@@ -619,7 +646,7 @@ span:hover .perma {
   -moz-border-radius-topleft: 0px;
 }
 
-.MC li.blue { /* color-2 */
+.MC .colorbar .blue { /* color-2 */
   display:block;
   margin:0px;
   background-color: #58F !important;
@@ -627,8 +654,17 @@ span:hover .perma {
   height:14px;
 }
 
+.MC .fullday .colorbar .text {
+  -moz-border-radius-topright: 14px;
+  -moz-border-radius-bottomright: 14px;
+  -moz-border-radius-topleft: 14px;
+}
 
-.MC li.yellow { /* color-3 */
+.MC .fullday .colorbar .blue .text {
+  background-color: #58F !important;
+}
+
+.MC .colorbar .yellow { /* color-3 */
   display:block;
   margin:0px;
   height:14px;
@@ -636,7 +672,17 @@ span:hover .perma {
   border-color: #DD8311 !important;
 }
 
-.MC li.purple { /* color-4 */
+.MC .fullday .colorbar .yellow .text {
+  background-color: #FFA533;
+  overflow:hidden; /* XXX Bug ? */
+}
+
+.MC .colorbar .yellow .text {
+  background-color: #FFA533;
+  overflow:hidden; /* XXX Bug ? */
+}
+
+.MC .colorbar .purple { /* color-4 */
   display:block;
   margin:0px;
   background-color: #8866AA !important;
@@ -644,7 +690,15 @@ span:hover .perma {
   height:14px;
 }
 
-.MC li.red { /* color-1 */
+.MC .fullday .colorbar .purple .text {
+  background-color: #8866AA !important;
+}
+
+.MC .colorbar .purple .text {
+  background-color: #8866AA !important;
+}
+
+.MC .colorbar .red { /* color-1 */
   display:block;
   margin:0px;
   background-color: #F55 !important;
@@ -652,35 +706,48 @@ span:hover .perma {
   border-color: #D33 !important;
 }
 
-.MC li.blank { /* color-0 */
+.MC .fullday .colorbar .red .text {
+  background-color: #F55 !important;
+}
+
+.MC .colorbar .blank { /* color-0 */
   display:block;
   margin:0px;
   height:16px;
   border:0px !important;
 }
-.MC li.blank:hover { /* color-0 */
+.MC .colorbar .blank:hover { /* color-0 */
   display:block;
   margin:0px;
   height:16px;
   border:0px !important;
 }
 
-.MC li.green { /* color-5 */
+.MC .colorbar .green { /* color-5 */
   display:block;
   margin:0px;
-  background-color: #79ff79;
   border-color:  #383 !important;
   background-color: #5A5 !important;
   height:14px;
 }
+.MC .fullday .colorbar .green .text {
+  background-color: #5A5 !important;
+}
 
-.MC li.gray { /* color-6 */
+.MC .colorbar .gray { /* color-6 */
   display:block;
   margin:0px;
   border-color: #777 !important;
-  background-color: #999;
+  background-color: #999 !important;
   height:14px;
-  overflow:auto;
+}
+
+.MC .colorbar .gray .text {
+  background-color: #999 !important;
+}
+
+.MC .fullday .colorbar .gray .text {
+  background-color: #999 !important;
 }
 
 .wikiChat ul {
