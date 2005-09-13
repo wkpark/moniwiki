@@ -2433,6 +2433,7 @@ class Formatter {
     $li_open=0;
     $li_empty=0;
     $div_enclose='';
+    $my_div=0;
     $indent_list[0]=0;
     $indent_type[0]="";
 
@@ -2473,10 +2474,13 @@ class Formatter {
           $text.= $this->macro_repl($macro);
         } else if ($line[2]=='#') {
           $div_enclose='<div id="'.substr($line,3).'">';
+          $my_div++;
         } else if ($line[2]=='.') {
           $div_enclose='<div class="'.substr($line,3).'">';
+          $my_div++;
         } else {
           $div_enclose='</div>';
+          $my_div--;
         }
         continue; # comments
       }
@@ -2754,6 +2758,8 @@ class Formatter {
     # close div
     #if ($in_p) $close.="</div>\n"; # </para>
     if ($in_p) $close.=$this->_div(0,$in_div,$div_enclose); # </para>
+    #if ($div_enclose) $close.=$this->_div(0,$in_div,$div_enclose);
+    while ($my_div>0) { $close.="</div>\n"; $my_div--;}
 
     # activate <del></del> tag
     #$text=preg_replace("/(&lt;)(\/?del>)/i","<\\2",$text);
