@@ -1291,6 +1291,7 @@ function macro_RandomPage($formatter,$value='') {
 function macro_RandomQuote($formatter,$value="",$options=array()) {
   global $DBInfo;
   define(QUOTE_PAGE,'FortuneCookies');
+  if ($formatter->preview==1) return '';
 
   $re='/^\s*\* (.*)$/';
   $args=explode(',',$value);
