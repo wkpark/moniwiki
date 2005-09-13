@@ -42,10 +42,12 @@ EOF;
     $chat_script=1;
     return <<<EOF
 $script
+<div class="wikiChat">
 <div id="chat$tag">$msg</div>
 <form onSubmit='return false'>
 <input type='text' size='40' class='wikiChat' onkeypress='sendMsg(event,this,"$url","chat$tag",$itemnum);' />
 </form>
+</div>
 <script language='javascript'>
 <!--
 setInterval('sendMsg("poll",null,"$url","chat$tag",$itemnum)',10000);
@@ -138,14 +140,18 @@ function ajax_chat($formatter,$options) {
     $out='';
     $smiley_rule='/(?<=\s|^|>)('.$DBInfo->smiley_rule.')(?=\s|$)/e';
     $smiley_repl="\$formatter->smiley_repl('\\1')";
+    $save=$formatter->sister_on;
+    $formatter->sister_on=0;
     foreach ($lines as $line) {
         $dumm=explode("\t",$line,3);
-        $line=gmdate("H:i:s",$dumm[0]+$options['tz_offset']).
-            '&lt;['.$dumm[1].']> '.$dumm[2];
+        $line='<span class="date">'.
+            gmdate("H:i:s",$dumm[0]+$options['tz_offset']).'</span>'.
+            '<span class="user">&lt;['.$dumm[1].']></span>'.$dumm[2];
         $line=preg_replace($smiley_rule,$smiley_repl,$line);
         $out.='<li>'.preg_replace("/(".$formatter->wordrule.")/e",
             "\$formatter->link_repl('\\1')",$line).'</li>';
     }
+    $formatter->sister_on=$save;
     if ($options['option_method']=='ajax') {
         $formatter->header('Expires','0');
         $formatter->header('Pragma','no-cache');
