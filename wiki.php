@@ -2328,16 +2328,18 @@ class Formatter {
     return "<span class='purple'><a name='$nid' id='$nid'></a><a href='#$nid'>(".$id.")</a></span>";
   }
 
-  function _div($on,&$in_div) {
+  function _div($on,&$in_div,&$enclose) {
     $tag=array("</div>\n","<div>\n");
-    if ($on) $in_div++;
+    if ($on) { $in_div++; $open=$enclose;}
     else {
       if (!$in_div) return '';
+      $close=$enclose;
       $in_div--;
     }
+    $enclose='';
     if (!$on) $purple=$this->_purple();
     #return "(".$in_div.")".$tag[$on];
-    return $purple.$tag[$on];
+    return $purple.$open.$tag[$on].$close;
   }
 
   function _li($on,$empty='') {
@@ -2430,6 +2432,7 @@ class Formatter {
     $in_table=0;
     $li_open=0;
     $li_empty=0;
+    $div_enclose='';
     $indent_list[0]=0;
     $indent_type[0]="";
 
@@ -2459,7 +2462,7 @@ class Formatter {
           $text.=$this->_table(0)."<br />\n";$in_table=0; continue;
         } else {
           #if ($in_p) { $text.="</div><br />\n"; $in_p='';}
-          if ($in_p) { $text.=$this->_div(0,$in_div)."<br />\n"; $in_p='';}
+          if ($in_p) { $text.=$this->_div(0,$in_div,$div_enclose)."<br />\n"; $in_p='';}
           else if ($in_p=='') { $text.="<br />\n";}
           continue;
         }
@@ -2468,6 +2471,12 @@ class Formatter {
         if ($line[2]=='[') {
           $macro=substr($line,4,-2);
           $text.= $this->macro_repl($macro);
+        } else if ($line[2]=='#') {
+          $div_enclose='<div id="'.substr($line,3).'">';
+        } else if ($line[2]=='.') {
+          $div_enclose='<div class="'.substr($line,3).'">';
+        } else {
+          $div_enclose='</div>';
         }
         continue; # comments
       }
@@ -2475,9 +2484,9 @@ class Formatter {
       $p_close='';
       if (preg_match('/^-{4,}/',$line)) {
         if ($this->auto_linebreak) $this->nobr=1; // XXX
-        if ($in_p) { $p_close=$this->_div(0,$in_div); $in_p='';}
+        if ($in_p) { $p_close=$this->_div(0,$in_div,$div_enclose); $in_p='';}
       } else if ($in_p == '') {
-        $p_close=$this->_div(1,$in_div);
+        $p_close=$this->_div(1,$in_div,$div_enclose);
         $in_p= $line;
       }
 
@@ -2744,7 +2753,7 @@ class Formatter {
     }
     # close div
     #if ($in_p) $close.="</div>\n"; # </para>
-    if ($in_p) $close.=$this->_div(0,$in_div); # </para>
+    if ($in_p) $close.=$this->_div(0,$in_div,$div_enclose); # </para>
 
     # activate <del></del> tag
     #$text=preg_replace("/(&lt;)(\/?del>)/i","<\\2",$text);
@@ -2885,12 +2894,12 @@ class Formatter {
       if (is_array($header))
         foreach ($header as $head) {
           $this->header($head);
-          if (preg_match("/^content\-type: text\/plain/i",$head))
+          if (preg_match("/^content\-type: text\//i",$head))
             $plain=1;
         }
       else {
         $this->header($header);
-        if (preg_match("/^content\-type: text\/plain/i",$header))
+        if (preg_match("/^content\-type: text\//i",$header))
           $plain=1;
       }
     }

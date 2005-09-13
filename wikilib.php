@@ -845,7 +845,11 @@ function form_permission($mode) {
 }
 
 function do_raw($formatter,$options) {
-  $formatter->send_header("Content-Type: text/plain",$options);
+  $supported=array('text/plain','text/css','text/javascript');
+  if ($options['mime'] and in_array($options['mime'],$supported)) {
+    $formatter->send_header("Content-Type: $options[mime]",$options);
+  } else
+    $formatter->send_header("Content-Type: text/plain",$options);
   print $formatter->page->get_raw_body($options);
 }
 
