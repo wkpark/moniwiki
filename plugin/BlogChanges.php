@@ -213,6 +213,8 @@ function do_BlogChanges($formatter,$options='') {
 function macro_BlogChanges($formatter,$value,$options=array()) {
   global $DBInfo;
 
+  $tz_off=&$formatter->tz_offset;
+
   if (empty($options)) $options=array();
   if ($_GET['date'])
     $options['date']=$date=$_GET['date'];
@@ -320,13 +322,13 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
   $day=substr($date,6,2);
 
   if (strlen($date)==8) {
-    $prev_date= date('Ymd',mktime(0,0,0,$month,intval($day) - 1,$year));
-    $next_date= date('Ymd',mktime(0,0,0,$month,intval($day) + 1,$year));
+    $prev_date= gmdate('Ymd',mktime(0,0,0,$month,intval($day) - 1,$year)+$tz_off);
+    $next_date= gmdate('Ymd',mktime(0,0,0,$month,intval($day) + 1,$year)+$tz_off);
   } else if (strlen($date)==6) {
     $cdate=date('Ym');
-    $prev_date= date('Ym',mktime(0,0,0,intval($month) - 1,1,$year));
+    $prev_date= date('Ym',mktime(0,0,0,intval($month) - 1,1,$year)+$tz_off);
     if ($cdate > $date)
-      $next_date= date('Ym',mktime(0,0,0,intval($month) + 1,1,$year));
+      $next_date= gmdate('Ym',mktime(0,0,0,intval($month) + 1,1,$year)+$tz_off);
   }
 
   // set output style
@@ -386,7 +388,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
     $date[10]=' ';
     $time=strtotime($date.' GMT');
 
-    $date= date('m-d [h:i a]',$time);
+    $date= gmdate('m-d [h:i a]',$time+$tz_off);
     if ($summary) {
       $anchor= date('Ymd',$time);
       if ($date_anchor != $anchor) {
