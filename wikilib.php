@@ -1291,14 +1291,19 @@ function macro_RandomPage($formatter,$value='') {
 function macro_RandomQuote($formatter,$value="",$options=array()) {
   global $DBInfo;
   define(QUOTE_PAGE,'FortuneCookies');
+  $formatter->randomquote=1;
+  if ($formatter->randomquote) $formatter->randomquote++;
+  else $formatter->randomquote=1;
+  if ($formatter->randomquote > 2) return '';
 
   $re='/^\s*\* (.*)$/';
   $args=explode(',',$value);
 
   foreach ($args as $arg) {
     $arg=trim($arg);
-    if (in_array($arg[0],array('@','/','%')) and $arg[0]==substr($arg,-1)) {
-      if (@preg_match($arg,'',$m)===false) {
+    if (in_array($arg[0],array('@','/','%')) and
+      preg_match('/^'.$arg[0].'.*'.$arg[0].'(s|U|x)*$/',$arg)) {
+      if (preg_match($arg,'',$m)===false) {
         $log=_("Invalid regular expression !");
         continue;
       }
@@ -1320,28 +1325,30 @@ function macro_RandomQuote($formatter,$value="",$options=array()) {
     $raw=$page->get_raw_body();
   }
  
-  $lines=explode("\n",$raw);
-
-  foreach($lines as $line) {
-    if (preg_match($re.'i',$line,$match))
-      $quotes[]=$match[1];
-  }
+  preg_match_all($re.'m',$raw,$match);
+  $quotes=&$match[1];
 
   if (!($count=sizeof($quotes))) return '';
 
   $quote=$quotes[rand(0,$count-1)];
 
-  $quote=str_replace("<","&lt;",$quote);
-  $quote=preg_replace($formatter->baserule,$formatter->baserepl,$quote);
-  $quote=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",
-         $quote);
+  $save=$formatter->preview;
+  ob_start();
+  $formatter->send_page($quote);
+  $formatter->preview=$save;
+  $out= ob_get_contents();
+  ob_end_clean();
+#  $quote=str_replace("<","&lt;",$quote);
+#  $quote=preg_replace($formatter->baserule,$formatter->baserepl,$quote);
+#  $out=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",
+#         $quote);
 #  ob_start();
 #  $options['nosisters']=1;
 #  $formatter->send_page($quote,$options);
 #  $out= ob_get_contents();
 #  ob_end_clean();
 #  return $out;
-  return $log.$quote;
+  return $log.$out;
 }
 
 
