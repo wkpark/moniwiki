@@ -52,9 +52,12 @@ function _parseDays($formatter,$page,$options=array()) {
                         $custcolor=' style="background-color:'.$m[1].'"';
                         $text=substr($match[5],strlen($m[1]));
                     } else {
+                        if (preg_match('/^(red|blue|gray|purple|yellow|green)/',$m[1])) {
+                            $text=substr($match[5],strlen($m[1]));
+                        } else
+                            $text=$match[5];
                         $color='colorbar '.$color_table[$m[1]];
                         $custcolor='';
-                        $text=$match[5];
                     }
                 } else {
                     $color='colorbar gray';
