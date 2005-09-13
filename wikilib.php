@@ -1291,10 +1291,6 @@ function macro_RandomPage($formatter,$value='') {
 function macro_RandomQuote($formatter,$value="",$options=array()) {
   global $DBInfo;
   define(QUOTE_PAGE,'FortuneCookies');
-  $formatter->randomquote=1;
-  if ($formatter->randomquote) $formatter->randomquote++;
-  else $formatter->randomquote=1;
-  if ($formatter->randomquote > 2) return '';
 
   $re='/^\s*\* (.*)$/';
   $args=explode(',',$value);
@@ -1302,7 +1298,7 @@ function macro_RandomQuote($formatter,$value="",$options=array()) {
   foreach ($args as $arg) {
     $arg=trim($arg);
     if (in_array($arg[0],array('@','/','%')) and
-      preg_match('/^'.$arg[0].'.*'.$arg[0].'(s|U|x)*$/',$arg)) {
+      preg_match('/^'.$arg[0].'.*'.$arg[0].'[sxU]*$/',$arg)) {
       if (preg_match($arg,'',$m)===false) {
         $log=_("Invalid regular expression !");
         continue;
