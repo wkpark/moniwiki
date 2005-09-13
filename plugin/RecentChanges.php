@@ -83,7 +83,6 @@ define('RC_DEFAULT_DAYS',7);
   // override ago
   if ($_GET['ago'])
     $opts['ago']=$_GET['ago'] ? abs($_GET['ago']):$opts['ago'];
-  if ($opts['ago']==0) $opts['ago']=$days;
 
   // daysago
   $daysago='&amp;days='.$days;
@@ -112,7 +111,7 @@ define('RC_DEFAULT_DAYS',7);
   $lines= $DBInfo->editlog_raw_lines($days,$opts);
 
   // make a daysago button
-  if ($use_daysago or $_GET['days']) {
+  if ($use_daysago or $_GET['ago']) {
     $msg[0]=_("Show changes for ");
     $agolist=array(-$days,$days,2*$days,3*$days);
     $btn=array();
@@ -216,7 +215,7 @@ define('RC_DEFAULT_DAYS',7);
     $pageurl=_rawurlencode($page_name);
 
     if (!$DBInfo->hasPage($page_name))
-      $icon= $formatter->link_tag($pageurl,"?action=diff",$formatter->icon['del']);
+      $icon= $formatter->link_tag($pageurl,"?action=info",$formatter->icon['del']);
     else if ($ed_time > $bookmark) {
       $icon= $formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon['updated']);
       if ($checknew) {
