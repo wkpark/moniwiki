@@ -22,6 +22,9 @@ function macro_BlogCategories($formatter,$value='') {
   $temp= explode("\n",$raw);
 
   $link=$formatter->link_url($formatter->page->name,'?action=blogchanges&amp;category=CATEGORY');
+  $odep=-1;
+  $dep=0;
+  $out='';
   foreach ($temp as $line) {
     #$line=str_replace('/','_2f',$line);
     if (preg_match('/^(\s{1'.$depth.'})\* ([^:]+)(?=\s|:|$)/',$line,$match)) {
@@ -32,11 +35,19 @@ function macro_BlogCategories($formatter,$value='') {
       if (!$no_rss)
         $rss='&nbsp;<a href="'.str_replace('blogchanges','blogrss',$lnk).'">'.
           '<img src="'.$DBInfo->imgs_dir.'/plugin/tiny-xml.png'.'" border="0" alt="xml" /></a>';
-      $dep=str_replace(' ','&nbsp;&nbsp;',$match[1]);
-      $out.="$dep<a href='$lnk'>$text/</a>$rss<br/>";
+      $dep=strlen($match[1]);
+      if ($dep > $odep) $out.="<ul>\n";
+      else if ($dep < $odep) $out.="</li>\n</ul>\n</li>\n";
+      else if ($odep != -1) $out.="</li>\n";
+      if ($dep >=2 ) $class=' class="sub"';
+      else $class='';
+      $odep=$dep;
+      $out.="\t<li$class><a href='$lnk'>$text<span class='dir'>/</span></a>$rss";
     }
   }
+  for ($i=$odep;$i>=1;$i--) $out.="</li>\n</ul>\n";
 
+  #return '<div id="blogCategory">'.$out.'</div>';
   return $out;
 }
 
