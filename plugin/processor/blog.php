@@ -51,15 +51,15 @@ function processor_blog($formatter,$value="",$options) {
     if ($date && $date[10] == 'T') {
       $date[10]=' ';
       $time=strtotime($date." GMT");
-      $date= "@ ".date("m-d [h:i a]",$time);
+      $date= "@ ".gmdate("m-d [h:i a]",$time+$formatter->tz_offset);
       $pagename=$formatter->page->name;
       $p=strrpos($pagename,'/');
       if ($p and preg_match('/(\d{4})(-\d{1,2})?(-\d{1,2})?/',substr($pagename,$p),$match)) {
         if ($match[3]) $anchor='';
-        else if ($match[2]) $anchor= date("d",$time);
-        else if ($match[1]) $anchor= date("md",$time);
+        else if ($match[2]) $anchor= gmdate("d",$time);
+        else if ($match[1]) $anchor= gmdate("md",$time);
       } else
-        $anchor= date("Ymd",$time);
+        $anchor= gmdate("Ymd",$time);
       if ($date_anchor != $anchor) {
         $anchor_date_fmt=$DBInfo->date_fmt_blog;
         $datetag= "<div class='blog-date'>".date($anchor_date_fmt,$time)." <a name='$anchor'></a><a class='perma' href='#$anchor'>$formatter->perma_icon</a></div>";
@@ -100,6 +100,8 @@ function processor_blog($formatter,$value="",$options) {
     if ($action)
       $action="<div class='blog-action'><span class='bullet'>&raquo;</span> ".$action."</div>\n";
 
+    $save=$formatter->preview;
+    $formatter->preview=1;
     ob_start();
     $formatter->send_page($src,$options);
     $msg= ob_get_contents();
@@ -111,6 +113,7 @@ function processor_blog($formatter,$value="",$options) {
       ob_end_clean();
     } else
       $comments="";
+    $formatter->preview=$save;
   }
 
   $out="$datetag<div class='blog'>";
