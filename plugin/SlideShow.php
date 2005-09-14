@@ -34,8 +34,11 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
         $urlname=$formatter->page->urlname;
     }
 
-    if ($options['p']) $sect=$options['p'];
-    else $sect=1;
+    if ($options['p']) {
+        list($sect,$dum)=explode('/',$options['p']);
+        $sect=abs(intval($sect));
+        $sect= $sect ? $sect:1;
+    } else $sect=1;
 
     $act=$options['action'] ? $options['action']:'SlideShow';
 
@@ -53,6 +56,8 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
     }
     $sz=sizeof($sections);
     if (trim($sections[$sz])=='') $sz--;
+
+    if ($sect > $sz) $sect=$sz;
 
     // get prev,next subtitle
     if ($sz > ($sect)) {
@@ -127,9 +132,17 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
     $rlink= $formatter->link_url($urlname,'?action=show');
     $return= '<a href="'.$rlink.'" title="'._("Return").' '.$pgname.'">'.
         '<img src="'.$icon_dir.'up.png'.'" border="0" alt="^" /></a>';
-    if ($options['action'])
-        return array($sections,"$return$start$prev$next$end\n");
-    return "$return$start$prev$next$end\n";
+    if ($options['action']) {
+        $form0='<form method="post" action="'.$rlink.'">';
+        $form0.='<input type="hidden" name="d" value="'.$depth.'" />';
+        $form0.='<input type="hidden" name="action" value="slideshow" />';
+        $form='<span class="slideShow" style="vertical-align:bottom;">'.
+            '<input style="text-align:center" type="text" name="p" value="'.
+            $sect.'/'.$sz.'" /></span>';
+        $form1="</form>\n";
+        return array($sections,"$form0$return$start$prev$form$next$end$form1\n");
+    }
+    return "$return$start\n";
 }
 
 function do_slideshow($formatter,$options=array()) {
