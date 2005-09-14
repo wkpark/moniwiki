@@ -10,14 +10,27 @@
 function macro_SlideShow($formatter,$value='',$options=array()) {
     global $DBInfo;
 
-    if ($value) {
-        if (!$DBInfo->hasPage($value))
+    $depth=2; // default depth
+    if ($options['d']) $depth=intval($options['d']);
+    $args=explode(',',$value);
+    $sz=sizeof($args);
+    for($i=0,$sz=sizeof($args);$i<$sz;$i++) {
+        if (($p=strpos($args[$i],'='))!==false) {
+            $k=substr($args[$i],0,$p);
+            $v=substr($args[$i],$p+1);
+            if ($k=='depth' or $k=='dep') $depth=intval($v);
+        } else {
+            $pgname=$args[$i];
+        }
+    }
+    if ($pgname) {
+        if (!$DBInfo->hasPage($pgname))
             return '[[SlideShow('._("No page found").')]]';
-        $pg=$DBInfo->getPage($value);
-        $sections=_get_sections($pg->get_raw_body(),2);
-        $urlname=_urlencode($value);
+        $pg=$DBInfo->getPage($pgname);
+        $sections=_get_sections($pg->get_raw_body(),$depth);
+        $urlname=_urlencode($pgname);
     } else {
-        $sections=_get_sections($formatter->page->get_raw_body(),2);
+        $sections=_get_sections($formatter->page->get_raw_body(),$depth);
         $urlname=$formatter->page->urlname;
     }
 
@@ -30,23 +43,28 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
     $icon_dir=$DBInfo->imgs_dir.'/plugin/SlideShow/'.$iconset.'/';
 
     // get head title section
-    list($secthead,$dumm)=explode("\n",$sections[0]);
-    preg_match('/^\s*=\s*([^=].*[^=])\s*=\s?$/',$secthead,$match);
-    $secthead=rtrim($sections[0]);
-    if ($match[1]) $title=$match[1];
+    if ($depth==2) {
+        list($secthead,$dumm)=explode("\n",$sections[0]);
+        preg_match('/^\s*=\s*([^=].*[^=])\s*=\s?$/',$secthead,$match);
+        $secthead=rtrim($sections[0]);
+        if ($match[1]) $title=$match[1];
+    } else {
+        $dep='&amp;d='.$depth;
+    }
     $sz=sizeof($sections);
+    if (trim($sections[$sz])=='') $sz--;
 
     // get prev,next subtitle
-    if ($sz > ($sect+1)) {
+    if ($sz > ($sect)) {
         list($n_title,$dumm)=explode("\n",$sections[$sect+1]);
-        preg_match('/^\s*==\s*(.*)\s*==\s?$/',$n_title,$match);
+        preg_match("/^\s*={".$depth.'}\s*(.*)\s*={'.$depth.'}\s?$/',$n_title,$match);
         if ($match[1])
             $n_title=$match[1];
         else
             $n_title='';
 
-        list($e_title,$dumm)=explode("\n",$sections[$sz-1]);
-        preg_match('/^\s*==\s*(.*)\s*==\s?$/',$e_title,$match);
+        list($e_title,$dumm)=explode("\n",$sections[$sz]);
+        preg_match("/^[ ]*={".$depth."}\s+(.*)\s+={".$depth."}\s?/",$e_title,$match);
         if ($match[1])
             $e_title=$match[1];
         else
@@ -54,15 +72,15 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
     }
     if (!$options['action'] or $sect > 1){
         list($s_title,$dumm)=explode("\n",$sections[1]);
-        preg_match('/^\s*==\s*(.*)\s*==\s?$/',$s_title,$match);
+        preg_match("/^\s*={".$depth."}\s*(.*)\s*={".$depth."}\s?$/",$s_title,$match);
         if ($match[1])
             $s_title=$match[1];
         else
             $s_title='';
     }
-    if ($sect-1 >= 1) {
+    if ($sect >= 1) {
         list($p_title,$dumm)=explode("\n",$sections[$sect-1]);
-        preg_match('/^\s*==\s*(.*)\s*==\s?$/',$p_title,$match);
+        preg_match('/^\s*={'.$depth.'}\s*(.*)\s*={'.$depth.'}\s?$/',$p_title,$match);
         if ($match[1])
             $p_title=$match[1];
         else
@@ -71,35 +89,47 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
     // make link icons
     if ($s_title!='' or !$options['action']) {
         $slink= $formatter->link_url($urlname,'?action='.$act.
-            '&amp;p=1');
+            $dep.'&amp;p=1');
         $icon=$options['action'] ? 'start':'next';
         $start= '<a href="'.$slink.'" title="'._("Start:").' '.$s_title.'">'.
             '<img src="'.$icon_dir.$icon.'.png'.'" border="0" alt="<|" /></a>';
+    } else {
+        $start= 
+            '<img src="'.$icon_dir.'start_off.png'.'" border="0" alt="<|" /></a>';
     }
     if ($e_title!='' and $options['action']) {
         $elink= $formatter->link_url($urlname,'?action='.$act.
-            '&amp;p='.($sz-1));
+            $dep.'&amp;p='.$sz);
         $end= '<a href="'.$elink.'" title="'._("End:").' '.$e_title.'">'.
             '<img src="'.$icon_dir.'end.png'.'" border="0" alt="|>" /></a>';
+    } else {
+        $end= 
+            '<img src="'.$icon_dir.'end_off.png'.'" border="0" alt="|>" /></a>';
     }
     if ($n_title!='' and $options['action']) {
         $nlink= $formatter->link_url($urlname,'?action='.$act.
-            '&amp;p='.($sect+1));
+            $dep.'&amp;p='.($sect+1));
         $next= '<a href="'.$nlink.'" title="'._("Next:").' '.$n_title.'">'.
             '<img src="'.$icon_dir.'next.png'.'" border="0" alt=">" /></a>';
+    } else {
+        $next= 
+            '<img src="'.$icon_dir.'next_off.png'.'" border="0" alt=">" /></a>';
     }
     if ($p_title!='') {
         $plink= $formatter->link_url($urlname,'?action='.$act.
-            '&amp;p='.($sect-1));
+            $dep.'&amp;p='.($sect-1));
         $prev= '<a href="'.$plink.'" title="'._("Prev:").' '.$p_title.'">'.
             '<img src="'.$icon_dir.'prev.png'.'" border="0" alt="<" /></a>';
+    } else {
+        $prev= 
+            '<img src="'.$icon_dir.'prev_off.png'.'" border="0" alt="<" /></a>';
     }
-    if ($options['action']) {
-        $return= $formatter->link_tag($urlname,'?action=show',_("Return"));
-        return array($sections,"$start$prev$next$end$return\n");
-    }
-    return "$start$prev$next$end\n";
-
+    $rlink= $formatter->link_url($urlname,'?action=show');
+    $return= '<a href="'.$rlink.'" title="'._("Return").' '.$pgname.'">'.
+        '<img src="'.$icon_dir.'up.png'.'" border="0" alt="^" /></a>';
+    if ($options['action'])
+        return array($sections,"$return$start$prev$next$end\n");
+    return "$return$start$prev$next$end\n";
 }
 
 function do_slideshow($formatter,$options=array()) {
