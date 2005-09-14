@@ -514,6 +514,8 @@ function _get_sections($body,$lim=5) {
   $chunks=preg_split("/(\{\{\{.+?\}\}\})/s",$body,-1, PREG_SPLIT_DELIM_CAPTURE);
   $sects=array();
   $sects[]='';
+  if ($lim > 1 and $lim < 6) $lim=','.$lim;
+  else $lim='';
   for ($jj=0,$ii=0,$ss=count($chunks); $ii<$ss; $ii++) {
     if (($ii%2)) {
       $sec=array_pop($sects);
@@ -521,7 +523,7 @@ function _get_sections($body,$lim=5) {
       continue;
     }
     $parts=array();
-    $parts=preg_split("/^((?!\n)\s*={1,$lim}\s#?.*\s+={1,$lim}\s?)$/m",$chunks[$ii],
+    $parts=preg_split("/^((?!\n)[ ]*={1$lim}\s#?.*\s+={1$lim}\s?)$/m",$chunks[$ii],
       -1, PREG_SPLIT_DELIM_CAPTURE);
     for ($j=0,$i=0,$s=count($parts); $i<$s; $i++) {
       if (!($i%2)) {
@@ -529,7 +531,7 @@ function _get_sections($body,$lim=5) {
         $sects[]=$sec.$parts[$i];
         continue;
       }
-      if (preg_match("/^\s*(={1,$lim})\s#?.*\s+\\1\s?/",$parts[$i])) {
+      if (preg_match("/^\s*(={1$lim})\s#?.*\s+\\1\s?/",$parts[$i])) {
         $sects[]=$parts[$i];
       } else {
         $sec=array_pop($sects);
