@@ -1297,7 +1297,7 @@ function macro_RandomPage($formatter,$value='') {
 function macro_RandomQuote($formatter,$value="",$options=array()) {
   global $DBInfo;
   define(QUOTE_PAGE,'FortuneCookies');
-  if ($formatter->preview==1) return '';
+  #if ($formatter->preview==1) return '';
 
   $re='/^\s*\* (.*)$/';
   $args=explode(',',$value);
@@ -1320,31 +1320,41 @@ function macro_RandomQuote($formatter,$value="",$options=array()) {
   else
     $fortune=QUOTE_PAGE;
 
-  if ($options['body'])
+  if ($options['body']) {
     $raw=$options['body'];
-  else {
+  } else {
     $page=$DBInfo->getPage($fortune);
     if (!$page->exists()) return '';
     $raw=$page->get_raw_body();
   }
- 
+
   preg_match_all($re.'m',$raw,$match);
   $quotes=&$match[1];
 
-  if (!($count=sizeof($quotes))) return '';
+  if (!($count=sizeof($quotes))) return '[[RandomQuote('._("No match!").')]]';
+  #if ($formatter->preview==1) return '';
+  else if ($count>3 and preg_match('/\[\[RandomQuote/',$quotes)) {
+    return '[[RandomQuote('._("Infinite loop possible!").')]]';
+  }
 
   $quote=$quotes[rand(0,$count-1)];
 
-  $save=$formatter->preview;
-  ob_start();
-  $formatter->send_page($quote);
-  $formatter->preview=$save;
-  $out= ob_get_contents();
-  ob_end_clean();
-#  $quote=str_replace("<","&lt;",$quote);
-#  $quote=preg_replace($formatter->baserule,$formatter->baserepl,$quote);
-#  $out=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",
-#         $quote);
+  $dumb=explode("\n",$quote);
+  if (sizeof($dumb)>1) {
+    $save=$formatter->preview;
+    $formatter->preview=1;
+    $options['nosisters']=1;
+    ob_start();
+    $formatter->send_page($quote,$options);
+    $formatter->preview=$save;
+    $out= ob_get_contents();
+    ob_end_clean();
+  } else {
+    $quote=str_replace("<","&lt;",$quote);
+    $quote=preg_replace($formatter->baserule,$formatter->baserepl,$quote);
+    $out=preg_replace("/(".$formatter->wordrule.")/e",
+      "\$formatter->link_repl('\\1')", $quote);
+  }
 #  ob_start();
 #  $options['nosisters']=1;
 #  $formatter->send_page($quote,$options);
