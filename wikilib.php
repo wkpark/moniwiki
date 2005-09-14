@@ -1333,9 +1333,8 @@ function macro_RandomQuote($formatter,$value="",$options=array()) {
 
   if (!($count=sizeof($quotes))) return '[[RandomQuote('._("No match!").')]]';
   #if ($formatter->preview==1) return '';
-  else if ($count>3 and preg_match('/\[\[RandomQuote/',$quotes)) {
+  if ($count<3 and preg_grep('/\[\[RandomQuote/',$quotes))
     return '[[RandomQuote('._("Infinite loop possible!").')]]';
-  }
 
   $quote=$quotes[rand(0,$count-1)];
 
