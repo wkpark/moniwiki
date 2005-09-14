@@ -21,7 +21,7 @@ function _parse_rlog($formatter,$log) {
 
   $out="<h2>"._("Revision History")."</h2>\n";
   $out.="<table class='info' border='0' cellpadding='3' cellspacing='2'>\n";
-  $out.="<form method='post' action='$url'>";
+  $out.="<form id='infoform' method='post' action='$url'>";
   $out.="<th class='info'>#</th><th class='info'>Date and Changes</th>".
        "<th class='info'>Editor</th>".
        "<th><input type='submit' value='diff'></th>".
@@ -100,8 +100,10 @@ function _parse_rlog($formatter,$log) {
             $out.= " ".$formatter->link_to("?action=diff&rev=$rev","diff");
             $out.="</td><th>";
             $out.="<input type='checkbox' name='range[$flag]' value='$rev' />";
-         } else
+         } else {
             $out.="</td><th>";
+            $out.="<input type='image' src='$DBInfo->imgs_dir/smile/checkmark.png' onClick=\"ToggleAll('infoform');return false;\"/>";
+         }
          $out.="</th></tr>\n";
          if ($comment)
             $out.="<tr><td class='info' colspan='5'>$comment&nbsp;</td></tr>\n";
@@ -116,6 +118,7 @@ function _parse_rlog($formatter,$log) {
   }
   $out.="<input type='submit' name='rcspurge' value='purge'></td></tr>";
   $out.="<input type='hidden' name='action' value='diff'/></form></table>\n";
+  $out.="<script type='text/javascript' src='$DBInfo->url_prefix/local/checkbox.js'></script>\n";
   return $out; 
 }
 
