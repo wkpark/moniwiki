@@ -8,7 +8,7 @@
 // $Id$
 
 if (!function_exists('do_dot'))
-    if ($plugin=getPlugin('dot')) include_once("plugin/$plugin.php");
+    if ($pn=getPlugin('dot')) include_once("plugin/$pn.php");
 
 function do_tour($formatter,$options) {
     #header("Content-Type: text/plain");
