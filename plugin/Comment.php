@@ -152,7 +152,7 @@ function do_comment($formatter,$options=array()) {
 
   if ($options['comment_id'] and preg_match("/^\[\[Comment\(".$options['comment_id']."\)\]\]/m",$body)) {
     $str="[[Comment($options[comment_id])]]";
-    $body= str_replace($str,$savetext.$str."\n",$body,1);
+    $body= str_replace($str,$savetext.$str,$body,1);
   } else if (preg_match("/\n##Comment\n/i",$body)) {
     $body= preg_replace("/\n##Comment\n/i","\n##Comment\n$savetext",$body,1);
   } else if ($XX) {
