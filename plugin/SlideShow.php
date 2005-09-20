@@ -54,8 +54,11 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
     } else {
         $dep='&amp;d='.$depth;
     }
-    $sz=sizeof($sections);
-    if (trim($sections[$sz])=='') $sz--;
+    $sz=sizeof($sections); // $sections[0]
+    $sz--;
+    //if (trim($sections[$sz-1])=='') $sz--;
+    //print $sections[0];
+    //print_r($sections);
 
     if ($sect > $sz) $sect=$sz;
 
@@ -112,6 +115,7 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
             '<img src="'.$icon_dir.'end_off.png'.'" border="0" alt="|>" /></a>';
     }
     if ($n_title!='' and $options['action']) {
+        $np=$sect+1;
         $nlink= $formatter->link_url($urlname,'?action='.$act.
             $dep.'&amp;p='.($sect+1));
         $next= '<a href="'.$nlink.'" title="'._("Next:").' '.$n_title.'">'.
@@ -121,6 +125,7 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
             '<img src="'.$icon_dir.'next_off.png'.'" border="0" alt=">" /></a>';
     }
     if ($p_title!='') {
+        $pp=$sect-1;
         $plink= $formatter->link_url($urlname,'?action='.$act.
             $dep.'&amp;p='.($sect-1));
         $prev= '<a href="'.$plink.'" title="'._("Prev:").' '.$p_title.'">'.
@@ -133,12 +138,13 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
     $return= '<a href="'.$rlink.'" title="'._("Return").' '.$pgname.'">'.
         '<img src="'.$icon_dir.'up.png'.'" border="0" alt="^" /></a>';
     if ($options['action']) {
-        $form0='<form method="post" action="'.$rlink.'">';
+        $form0='<form method="post" onsubmit="return false" action="'.$rlink.'">';
         $form0.='<input type="hidden" name="d" value="'.$depth.'" />';
         $form0.='<input type="hidden" name="action" value="slideshow" />';
         $form='<span class="slideShow" style="vertical-align:bottom;">'.
             '<input style="text-align:center" type="text" name="p" value="'.
-            $sect.'/'.$sz.'" /></span>';
+            $sect.'/'.$sz.'" onkeypress="slideshowhandler(event,this,'.
+            "'$rlink','$pp','$np')".'" /></span>';
         $form1="</form>\n";
         return array($sections,"$form0$return$start$prev$form$next$end$form1\n");
     }
@@ -148,12 +154,15 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
 function do_slideshow($formatter,$options=array()) {
     global $DBInfo;
 
+    $js="<script type='text/javascript' "."
+        src='$DBInfo->url_prefix/local/slideshow.js' ></script>";
     $options['css_url']=$DBInfo->url_prefix."/css/slide.css";
     $formatter->send_header("",$options);
     print "<div id='wikiContent'>";
 
     list($sections,$btn)=macro_SlideShow($formatter,$formatter->page->name,
         $options);
+    print $js;
     print '<div class="slideNav">'.$btn.'</div>';
 
     if ($options['p']) $sect=$options['p'];
