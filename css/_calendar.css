@@ -1,0 +1,396 @@
+/* for MoniCalendar */
+
+.MC table {
+  width:99%;
+  border-spacing: 0;
+  empty-cells: show;
+  margin:0;
+  padding:0;
+  border-left: 1px solid #d3d3d3;
+  border-top: 1px solid #d3d3d3;
+}
+
+.MC td {
+  border-right: 1px solid #d3d3d3;
+  border-bottom: 1px solid #d3d3d3;
+  margin: 0px;
+}
+
+.MC td.day, .MC td.today {
+  width:14%;
+  min-height:40px;
+  text-align: left;
+  vertical-align: top;
+}
+
+.MC td.day:hover {
+  background-color: #EAEFE5;
+}
+
+.MC td.day {
+  background-color: #FFFFFF;
+}
+
+.MC td.fullday {
+  margin:0px;
+  border-right: 1px solid #A4ACBC;
+  border-bottom: 1px solid #A4ACBC;
+  width:90%;
+}
+
+.MC td.dayhead {
+  width:50px;
+  background-color: #FFFFFF;
+  text-align:center;
+}
+
+.MC td.dayhead h6{
+  font-size:20px;
+  display:inline;
+  font-family: Georgia, Arial, Helvetica, sans-serif;
+}
+
+.MC td.dayhead h6.week{
+  font-size:16px;
+  color:#727b84;
+  font-family: Georgia, Arial, Helvetica, sans-serif;
+}
+
+.MC .month {
+  font-size:18px;
+  font-weight: bold;
+}
+
+.MC td.fullday li {
+  display:inline;
+  margin:0px;
+}
+
+.MC td.today {
+  background-color: #E7FEDA;
+}
+
+.MC td.today:hover {
+  background-color: #F7FFEA;
+}
+
+.MC .day h6, .MC .today h6 {
+  font-family: Trebuchet MS, Arial, Helvetica, sans-serif;
+  font-size: 12px;
+  /* background-color: #d9e2e1; /* */
+  text-align: left;
+  vertical-align: middle;
+  padding-top:0px;
+  margin-bottom: 1px;
+  margin-top: 0px;
+  /* border: #A4Acbc solid; /* */
+  /* border-width: 0px 1px 1px 0px; */
+  padding-top: 2px;
+  color:#888;
+}
+
+.MC tr.weekhead {
+  background-color: #A2ADBC;
+  color: white;
+  padding:0;
+  margin:0;
+}
+
+.MC tr.week {
+  padding:0;
+  margin:0;
+}
+
+.MC ul {
+  list-style:none;
+  margin:0px;
+  padding:0px;
+  margin-right:0px;
+  margin-left:-1px;
+}
+
+.MC td {
+  margin:0px;
+  padding:0px;
+  padding:0;
+  margin:0;
+}
+
+.MC li {
+  margin:0px;
+  padding:0px;
+  margin-bottom:2px !important;
+  padding-left:3px;
+}
+
+.MC .colorbar li {
+  border-top:1px solid black;
+  border-bottom:1px solid black;
+}
+
+.MC td.red {
+  background-color: #ffc1c1;
+}
+
+.MC td.red:hover {
+  background-color: #ffd1d1;
+}
+
+.MC td.blue {
+  background-color: #d1d2fe;
+}
+
+.MC td.blue:hover {
+  background-color: #e1e2fe;
+}
+
+.MC td.yellow {
+  background-color: #FAEE83;
+}
+
+.MC td.yellow:hover {
+  background-color: #FAFE93;
+}
+
+.MC td.green {
+  background-color: #AFffAF;
+}
+
+.MC td.green:hover {
+  background-color: #BAFFBA;
+}
+
+.MC .fullday ul li {
+  display:inline;
+  margin-bottom:1px !important;
+  margin-top:0px !important;
+  padding-bottom:1px !important;
+  margin-right:2px;
+  height:100%;
+}
+
+.MC td.fullday ul {
+  float:left;
+  margin:0px;
+  padding:0px;
+  height:100%;
+}
+
+.MC .fullday ul.colorbar{
+  height:100%;
+  min-width:16px;
+  margin:0px;
+  padding:0px;
+  margin-bottom:0px !important;
+}
+
+.MC .day li.colorbar {
+  min-height:14px;
+  border-top:1px solid black;
+  border-bottom:1px solid black;
+  white-space:nowrap;
+}
+
+.MC .fullday ul.colorbar li{
+  float:right;
+  height:100%;
+  /* min-width:16px; /* */
+  width:14px; /* */
+  border-left:1px solid black;
+  border-right:1px solid black;
+  border-top:0;
+  border-bottom:0;
+  margin-right:2px;
+  white-space:normal !important;
+}
+
+.MC .fullday ul.colorbar li.blank {
+  width:16px; /* */
+}
+
+.MC .fullday ul.colorbar li.blank:hover {
+  width:16px; /* */
+  margin-right:2px;
+}
+
+.MC .fullday ul.colorbar li .text:hover {
+  height:100% !important;
+  min-width:100px;
+  overflow:visible;
+}
+
+.MC .fullday ul.colorbar li .text {
+  min-width:14px;
+  width:10%;
+}
+
+.MC .fullday li .start {
+  height:100% !important;
+}
+
+.MC .colorbar .text:hover {
+  height:auto !important; /* */
+  overflow:visible;
+}
+
+.MC .colorbar li.start .text{
+  height:14px;
+}
+
+.MC .colorbar li.start .text:hover {
+  height:10%;
+  margin-left:-2px;
+  padding-left:2px;
+  margin-right:2px;
+  -moz-border-radius-topleft: 10px;
+  -moz-border-radius-bottomleft: 10px;
+  -moz-border-radius-bottomright: 10px;
+}
+
+.MC .colorbar li.start {
+  color:white;
+  font-size:9px;
+  font-family:Trebuchet MS,Sans-serif;
+  margin-left: 6px;
+  margin-right:-1px;
+  -moz-border-radius-topleft: 11px;
+  -moz-border-radius-bottomleft: 11px;
+  border-top:1px solid black;
+  border-left:1px solid black;
+  border-bottom:1px solid black;
+}
+
+.MC .colorbar li.end {
+  margin-right: 6px;
+  -moz-border-radius-topright: 11px;
+  -moz-border-radius-bottomright: 11px;
+  border-top:1px solid black;
+  border-right:1px solid black;
+  border-bottom:1px solid black;
+}
+
+.MC .fullday .colorbar .start {
+  margin-top: 10px;
+  margin-left:0px;
+  margin-right:2px;
+  margin-bottom:-1px;
+  -moz-border-radius-topleft: 10px;
+  -moz-border-radius-topright: 10px;
+  -moz-border-radius-bottomleft: 0px;
+  -moz-border-radius-bottomright: 0px;
+}
+
+.MC .fullday .colorbar .end {
+  margin-bottom: 6px;
+  margin-right:2px;
+  -moz-border-radius-bottomleft: 10px;
+  -moz-border-radius-bottomright: 10px;
+  -moz-border-radius-topright: 0px;
+  -moz-border-radius-topleft: 0px;
+}
+
+.MC .colorbar .blue { /* color-2 */
+  display:block;
+  margin:0px;
+  background-color: #58F !important;
+  border-color: #36D !important;
+  height:14px;
+}
+
+.MC .fullday .colorbar .text {
+  -moz-border-radius-topright: 14px;
+  -moz-border-radius-bottomright: 14px;
+  -moz-border-radius-topleft: 14px;
+}
+
+.MC .fullday .colorbar .blue .text {
+  background-color: #58F !important;
+}
+
+.MC .colorbar .yellow { /* color-3 */
+  display:block;
+  margin:0px;
+  height:14px;
+  background-color: #FFA533 !important;
+  border-color: #DD8311 !important;
+}
+
+.MC .fullday .colorbar .yellow .text {
+  background-color: #FFA533;
+  overflow:hidden; /* XXX Bug ? */
+}
+
+.MC .colorbar .yellow .text {
+  background-color: #FFA533;
+  overflow:hidden; /* XXX Bug ? */
+}
+
+.MC .colorbar .purple { /* color-4 */
+  display:block;
+  margin:0px;
+  background-color: #8866AA !important;
+  border-color: #664488 !important;
+  height:14px;
+}
+
+.MC .fullday .colorbar .purple .text {
+  background-color: #8866AA !important;
+}
+
+.MC .colorbar .purple .text {
+  background-color: #8866AA !important;
+}
+
+.MC .colorbar .red { /* color-1 */
+  display:block;
+  margin:0px;
+  background-color: #F55 !important;
+  height:14px;
+  border-color: #D33 !important;
+}
+
+.MC .fullday .colorbar .red .text {
+  background-color: #F55 !important;
+}
+
+.MC .colorbar .blank { /* color-0 */
+  display:block;
+  margin:0px;
+  height:16px;
+  border:0px !important;
+}
+
+.MC .colorbar .blank:hover { /* color-0 */
+  display:block;
+  margin:0px;
+  height:16px;
+  border:0px !important;
+}
+
+.MC .colorbar .green { /* color-5 */
+  display:block;
+  margin:0px;
+  border-color:  #383 !important;
+  background-color: #5A5 !important;
+  height:14px;
+}
+.MC .fullday .colorbar .green .text {
+  background-color: #5A5 !important;
+}
+
+.MC .colorbar .gray { /* color-6 */
+  display:block;
+  margin:0px;
+  border-color: #777 !important;
+  background-color: #999 !important;
+  height:14px;
+}
+
+.MC .colorbar .gray .text {
+  background-color: #999 !important;
+}
+
+.MC .fullday .colorbar .gray .text {
+  background-color: #999 !important;
+}
+
