@@ -1,4 +1,6 @@
-@import url("user.css");
+@import url("_user.css");
+@import url("_extra.css");
+@import url("_calendar.css");
 
 body {
   font-family:Bitstream Vera Sans,Georgia,Verdana,Lucida,sans-serif;
@@ -12,16 +14,14 @@ body {
   font-weight:bold;
   text-decoration: none;
 }
-tt.wiki {font-family:Monotype,Lucida Console,lucida,monospace;font-size:12px;}
+tt.wiki {font-family:Monotype,Lucida Console,lucida,monospace;}
 tt.foot {
   font-family:Tahoma,lucida,monospace;
-  font-size:11px;
   vertical-align: super;
 }
 
 tt.sister {
   font-family:Tahoma,lucida,monospace;
-  font-size:11px;
   vertical-align: super;
   text-decoration: none;
 }
@@ -29,9 +29,9 @@ tt.sister {
 pre.wiki {
   padding-left:6px;
   padding-top:6px; 
-  font-family:Lucida TypeWriter,monotype,lucida,monospace;font-size:14px;
-  background-color:#000000;
-  color:#FFD700; /* gold */
+  font-family:Lucida TypeWriter,monotype,lucida,monospace;
+  background-color:#e0e0e0;
+  color:#000000; /* gold */
 }
 
 pre.console {
@@ -46,7 +46,7 @@ pre.quote {
   padding-top:6px;
   white-space:pre-wrap;
   white-space: -moz-pre-wrap; 
-  font-family:Georgia,monotype,lucida,monospace;font-size:14px;
+  font-family:Georgia,monotype,lucida,monospace;
   background-color:#F7F8E6;
 }
 

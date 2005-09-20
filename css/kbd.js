@@ -62,8 +62,8 @@ else { _ap='&'; }
 
 _dom=0;
 
-function keydownhandler(e) {
-	if(document.all) e= window.event; // for IE
+function keydownhandler(ev) {
+	e=ev ? ev:window.event; // for IE
 	if(_dom==3) var EventStatus= e.srcElement.tagName;
 	else if(_dom==1) var EventStatus= e.target.nodeName; // for Mozilla
 
@@ -100,15 +100,15 @@ function keydownhandler(e) {
 	return
 }
 
-function keypresshandler(e){
-	if(document.all) e=window.event; // for IE
+function keypresshandler(ev){
+	e=ev ? ev:window.event; // for IE
 	if(_dom==3) var EventStatus= e.srcElement.tagName;
 	else if(_dom==1) var EventStatus= e.target.nodeName; // for Mozilla
 
 	var cc = '';
 	var ch = '';
 
-	if(_dom==3) { // for IE
+	if(window.event) { // for IE
 		if(e.keyCode>0) {
 			ch=String.fromCharCode(e.keyCode);
 			cc=e.keyCode;
@@ -200,7 +200,7 @@ function keypresshandler(e){
 		}
 	} else if(ch == "c") {
 		self.location = url_prefix + _qp + RecentChanges;
-	} else if(ch == "d" || ch== "i" || ch=="b" || ch=="l" || ch=="h" || ch=="p") {
+	} else if(ch == "d" || ch== "i" || ch=="b" || ch=="l" || ch=="h" || ch=="p" || ch=="a" || ch=="k") {
 		var my=''+self.location;
 		var idx = my.indexOf(_ap);
 		if (idx != -1) {
@@ -218,6 +218,10 @@ function keypresshandler(e){
 			my +=_ap + 'action=LikePages';
 		else if (ch == "p")
 			my +=_ap + 'action=print';
+		else if (ch == "a")
+			my +=_ap + 'action=randompage';
+		else if (ch == "k")
+			my +=_ap + 'action=keywords';
 		self.location=my;
 		
 	} else if(ch == "f") { // frontpage
@@ -261,7 +265,6 @@ function input(){
 	_dom=document.all ? 3 : (document.getElementById ? 1 : (document.layers ? 2 : 0));
 	document.onkeypress = keypresshandler;
 	document.onkeydown = keydownhandler;
-	var go=document.getElementById(_go);
 }
 
 function moin_submit() {

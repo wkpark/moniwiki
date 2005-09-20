@@ -3,7 +3,9 @@
  distributable under GPL
 */
 
-@import url("user.css");
+@import url("_user.css");
+@import url("_extra.css");
+@import url("_calendar.css");
 
 body {
 	font-family:"Trebuchet MS","Myungjo Newsletter","UnBatang",sans-serif;

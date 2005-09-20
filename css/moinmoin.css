@@ -6,8 +6,10 @@
 */
 
 /* user interface styles */
-@import url("moinui");
-@import url("user.css");
+@import url("_moinui");
+@import url("_user.css");
+@import url("_extra.css");
+@import url("_calendar.css");
 
 /* content styles */
 body {

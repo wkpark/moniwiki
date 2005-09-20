@@ -1,83 +1,78 @@
 /*  NoSmoke Default Styles */
-@import url("user.css");
+@import url("_user.css");
+@import url("_extra.css");
+@import url("_calendar.css");
 
 body {
-    background-color: lightyellow;
-    color: #000000;
-    font-family: Georgia,Times New,Sans-Serif;
-}
-
-.wikiTitle {
-    font-family:Tahoma,Lucida,sans-serif;
-    font-size:28px;
-    font-weight:bold;
-    text-decoration: none;
+  background-color: lightyellow;
+  color: #000000;
+  font-family: Times New Roman,Sans-Serif;
 }
 
 td.headline {
-    font-family: Helvetica,sans-serif;
-    font-size: 20pt;
+  font-family: Helvetica,sans-serif;
+  font-size: 20pt;
 }
 
 h1,h2,h3,h4,h5 {
-    font-family: Tahoma,Helvetica,sans-serif;
-    background-color: #EECC99;
-    padding-left:3pt;
-    margin-top:2pt;
-    margin-bottom:8pt;
-    border-style:none;
-    border-width:thin;
-    width:100%;
+  font-family: Helvetica,sans-serif;
+  background-color: #EECC99;
+  padding-left:3pt;
+  margin-top:2pt;
+  margin-bottom:8pt;
+  border-style:none;
+  border-width:thin;
 }
 h1 {
-    font-size: 18pt;
-    background-color: #DCA452;
+  font-size: 18pt;
+  background-color: #DCA452;
 }
 h2 {
-    font-size: 16pt;
-    padding-left:6pt;
-    background-color: #F6AF6D;
+  font-size: 16pt;
+  padding-left:6pt;
+  background-color: #F6AF6D;
 }
 h3 {
-    font-size: 13pt;
-    padding-left:10pt;
-    background-color: #FFD6B7;
+  font-size: 13pt;
+  padding-left:10pt;
+  background-color: #FFD6B7;
 }
 h4 {
-    font-size: 11pt;
-    padding-left:14pt;
-    background-color: #EEDBD6;
+  font-size: 11pt;
+  padding-left:14pt;
+  background-color: #EEDBD6;
 }
 h5 {
-    font-size: 9pt;
-    padding-left:18pt;
-    background-color: #EEEBF6;
+  font-size: 9pt;
+  padding-left:18pt;
+  background-color: #EEEBF6;
 }
 a:link {
-    color: #993306;
+  color: #993306;
 }
 a:visited {
-    color: #BB7733;
+  color: #BB7733;
 }
 a.nonexistent {
-    font-weight: bold;
-    background-color: #F8F8F8;
-    color: #FF2222;
+  font-weight: bold;
+  background-color: #F8F8F8;
+  color: #FF2222;
 }
 a.nonexistent:visited {
-    background-color: #F8F8F8;
-    color: #FF2222;
+  background-color: #F8F8F8;
+  color: #FF2222;
 }
 a.external {
-    color: #AA6600;
+  color: #AA6600;
 }
 dl,ul,ol {
-    margin-top: 1pt;
+  margin-top: 1pt;
 }
 tt {
-    padding-left:6px;
-    padding-top:6px;
-    font-family:monotype,lucida,monospace;font-size:14px;
+  padding-left:6px;
+  padding-top:6px;
+  font-family:Courier New,monotype,lucida,monospace;
+  font-size:14px;
 }
 tt.foot {
   font-family:Tahoma,lucida,monospace;
@@ -92,65 +87,72 @@ tt.sister {
   text-decoration: none;
 }
 
-pre.code {
-    margin-top: 8pt;
-    margin-bottom: 8pt;
-    background-color: #E0E0E0;
-    border-style:none;
-    border-width:thin;
-    width:100%;
+pre.wiki, pre.code {
+  font-family:Courier New,monotype,lucida,monospace;
+  margin-top: 8pt;
+  margin-bottom: 8pt;
+  padding:5px;
+  background-color: #E0E0E0;
+  border-style:none;
+  border-width:thin;
+  width:100%;
 }
 span.diffold,div.diffold {
-    /*white-space: pre-wrap;*/
-    background-color: #FFFF80;
-    border-style:none;
-    border-width:thin;
-    width:100%;
+  /*white-space: pre-wrap;*/
+  background-color: #FFFF80;
+  border-style:none;
+  border-width:thin;
+  width:100%;
 }
 span.diffnew,div.diffnew {
-    /*white-space: pre-wrap;*/
-    background-color: #80FF80;
-    border-style:none;
-    border-width:thin;
-    width:100%;
-    /*word-wrap: break-word;*/
+  /*white-space: pre-wrap;*/
+  background-color: #80FF80;
+  border-style:none;
+  border-width:thin;
+  width:100%;
+  /*word-wrap: break-word;*/
 }
 strong.highlight {
-    background-color: #FFBBBB;
+  background-color: #FFBBBB;
 }
 
 table.wiki {
-    background-color: #E0F4FF;
-    border-color:silver;
+  background-color: #E0F4FF;
+  border:1px outset silver;
+  border-spacing:0px;
+}
+
+td.wiki {
+  border:1px inset silver;
 }
 
 textarea.wiki { width:100%; }
 
 table.closure, tr.closure, td.closure {
-    background-color: #EEF2CB;
-    text-align:left;
-    padding: 5px;
-    margin: 0px 10px;
+  background-color: #EEF2CB;
+  text-align:left;
+  padding: 5px;
+  margin: 0px 10px;
 }
 span.closure {
-    background-color: #FFFF99;
+  background-color: #FFFF99;
 }
 
 .insert_diff {
-    /*white-space: pre;*/
-    background-color: #9999FF;
-    text-decoration: underline;
+  /*white-space: pre;*/
+  background-color: #9999FF;
+  text-decoration: underline;
 }
 
 .delete_diff {
-    /*white-space: pre;*/
-    background-color: red;
-    text-decoration: line-through;
+  /*white-space: pre;*/
+  background-color: red;
+  text-decoration: line-through;
 }
 
 .replace_diff {
-    /*white-space: pre;*/
-    background-color: silver;
+  /*white-space: pre;*/
+  background-color: silver;
 }
 
 span.diff-added, ins.diff-added {
@@ -165,24 +167,136 @@ span.diff-removed, del.diff-removed {
 }
 
 table.recentchanges {
-    font-size: small;
+  font-size: small;
 }
 
 .preformat {
-    white-space: pre-wrap;
-    font-family: vt100,monospace;
-    word-wrap: break-word;
+  white-space: pre-wrap;
+  font-family: vt100,monospace;
+  word-wrap: break-word;
 }
 
 /* MoniWiki */
+.wikiSyntax, .wikiSyntax code{
+  font-family:Bitstream Vera Sans Mono, Courier New, GulimChe, monospace !important;
+  padding:0.5em;
+}
+
+#wikiMenu {
+  padding: 0.2em 0.2em 0.2em 0.2em;
+  font-family:Trebuchet MS,sans-serif;
+/*  background-color:#c8c8c8; /* */
+  background-color:lavender;
+}
+
+#wikiMenu ul {
+  list-style:none;
+  padding:0;
+  margin:0;
+  white-space:nowrap;
+}
+
+#wikiMenu li {
+  display:inline;
+  padding-left:5px;
+  padding-right:5px;
+  background-color:#ebebeb;
+  background-color:whitesmoke;
+}
+
+#wikiMenu a {
+  text-decoration:none;
+  font-size:small;
+}
+
+#wikiAction ul {
+  list-style:none;
+  padding:0;
+  margin:0;
+  white-space:nowrap;
+}
+
+#wikiAction li {
+  display:inline;
+  padding-left:5px;
+  padding-right:5px;
+  border-right:1px solid #e0e0e0;
+  float:left;
+}
+
+#wikiAction a {
+  font-family:Trebuchet MS,Georgia,Verdana,sans-serif;
+  font-size:small;
+}
+
+#wikiBanner {
+  margin-left:10px;
+}
+
+#wikiIcon {
+  float:right;
+  padding: 3px 10px;
+  text-align: right;
+  vertical-align: middle;
+  margin-left: 10px;
+}
+
+#wikiLogin {
+  position:absolute;
+  right:35px;
+  top:11px;
+  height:36px;
+}
+
+div.diff-added {
+  background-color:#E0FFE0;
+  color:black;
+}
+
+div.diff-removed {
+  background-color:#E9EAB8;
+  color:black;
+}
+
+div.diff-sep {
+  color:#ff0000;
+}
+
+table.info {
+  border:1px outset silver;
+  border-spacing:0px;
+}
+
+table.info td, table.info th {
+  border:1px inset silver;
+}
+
+.wikiTitle {
+  font-family:Trebuchet MS,Helvetica,sans-serif;
+  font-size:28px;
+  font-weight:bold;
+}
+
+div.message {
+  clear:both;
+  margin-top: 3pt;
+  background-color: #E8E8E8;
+  border:1px solid #990000;
+  color:#440000;
+  padding: 0.4em 0.2em 0.2em 0.2em;
+  width:100%;
+}
 
 #wikiTrailer,#wikiOrigin {
-  padding-left: 20px;
+  clear:both;
+  padding-left: 0.4em;
   padding-bottom: 5px;
+  padding-top: 5px;
+  font-family:Trebuchet MS,sans-serif;
 }
 
 #wikiBody {
-  padding-left: 2em; /* */
+  clear:both;
 }
 
 #wikiPreview {
@@ -191,12 +305,16 @@ table.recentchanges {
   padding: 5px 1em 5px 1em;
 }
 
+#wikiExtra {
+  padding:2em;
+}
+
 .hint {
   
 }
 
 div.indent {
-  padding-left:2em;
+  padding-left:3em;
 }
 
 /* Blog CSS */
@@ -239,3 +357,41 @@ span.externalLink {
 span.lineNumber {
   color:#ffff00;
 }
+
+.rc-date {
+  font-weight:bold;
+}
+
+#wikiContent .perma:link, #wikiContent .perma:visited {
+  color:wheat;text-decoration:none;
+}
+.perma:link, .perma:visited {
+  visibility: hidden;
+}
+
+h1:hover .perma, h2:hover .perma, h3:hover .perma,
+h4:hover .perma, h5:hover .perma, h6:hover .perma {
+  visibility: visible;
+}
+
+span:hover .perma {
+  visibility: visible;
+}
+
+.rc-bookmark {
+ font-size:10px;
+ font-weight:normal;
+}
+
+.rc-button ul {
+  list-style: none;
+  display: inline;
+  padding: 0px;
+}
+
+.rc-button li {
+  display: inline;
+}
+
+div.sectionEdit { margin-right:5px; margin-top:3px; }
+div.sectionEdit:hover { background-color:wheat;}

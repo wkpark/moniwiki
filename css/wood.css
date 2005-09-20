@@ -1,5 +1,7 @@
 /* MoniWiki CSS 2003/11/01 by wkpark */
-@import url("user.css");
+@import url("_user.css");
+@import url("_extra.css");
+@import url("_calendar.css");
 
 body {
   font-family:Georgia,Verdana,Lucida,sans-serif;font-size:12px;
@@ -155,8 +157,17 @@ table.closure, td.closure{
 }
 
 #wikiTrailer, #wikiOrigin {
+  clear: both;
   padding-left: 20px;
   padding-bottom: 5px;
+  display:none;
+}
+
+#wikiLogin {
+  position:absolute;
+  right:35px;
+  top:11px;
+  height:36px;
 }
 
 #wikiHeader {
@@ -171,10 +182,50 @@ table.closure, td.closure{
   background-color:#d6c8b6; 
 }
 
+#wikiMenu {
+  padding: 0.2em 0.2em 0.2em 0.2em;
+}
+
+#wikiMenu ul {
+  list-style:none;
+  padding:0;
+  margin:0;
+  white-space:nowrap;
+}
+
+#wikiMenu li {
+  display:inline;
+  padding-left:5px;
+  padding-right:5px;
+  border-right:1px solid #000000;
+}
+
+#wikiAction ul {
+  list-style:none;
+  padding:0;
+  margin:0;
+  white-space:nowrap;
+}
+
+#wikiAction li {
+  display:inline;
+  padding-left:5px;
+  padding-right:5px;
+  border-right:1px solid #000000;
+  float:left;
+}
+
+#wikiBanner {
+  position:absolute;
+  right:35px;
+  bottom:-25x;
+}
+
 #wikiHeader a:link {color:#fff;}
 #wikiHeader a:visited {color:#f2f2f2;}
 
 #wikiBody {
+  clear: both;
   color: black;
   background-color: #fff;
   border: 2px dotted #cecece;

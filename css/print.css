@@ -1,8 +1,9 @@
-@import url("user.css");
+@import url("_user.css");
+@import url("_extra.css");
+@import url("_calendar.css");
 
 body {
   font-family:Georgia,Verdana,Lucida,sans-serif;
-  margin: 10;
 }
 
 .wikiTitle {
@@ -26,16 +27,13 @@ tt.sister {
 }
 
 pre.wiki {
-  padding-left:6px;
-  padding-top:6px; 
-  font-family:Lucida TypeWriter,monotype,lucida,monospace;font-size:14px;
-  background-color:#000000;
-  color:#FFD700; /* gold */
+  padding:1em; 
+  font-family:Courier New, Lucida TypeWriter,monotype,lucida,monospace;font-size:14px;
+  background-color:#e0e0e0;
 }
 
 pre.console {
-  background-color: #000000;
-  color: #E0E0E0;
+  background-color: #e0e0e0;
   padding: .25em ;
   border: 2px inset #808080;
 }
@@ -95,8 +93,7 @@ div.diff-removed {
 div.diff-sep {
   font-family:georgia,Verdana,Lucida Sans TypeWriter,Lucida Console,monospace;
   font-size:12px;
-  background-color:#000000;
-  color:#FFD700; /* gold */
+  background-color:#e0e0e0;
 }
 
 span.diff-added, ins.diff-added {

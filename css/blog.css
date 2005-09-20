@@ -1,4 +1,6 @@
-@import url("user.css");
+@import url("_user.css");
+@import url("_extra.css");
+@import url("_calendar.css");
 
 body {
   font-family:Georgia,Verdana,Lucida,sans-serif;
@@ -155,6 +157,7 @@ table.closure, td.closure{
 }
 
 #wikiTrailer,#wikiOrigin {
+  clear:both;
   padding-left: 20px;
   padding-bottom: 5px;
 }
@@ -224,11 +227,60 @@ table.closure, td.closure{
   padding: 5px 1em 5px 1em;
 }
 
-/*
 #wikiMenu {
-  background-color:yellow;
+  float:left;
+  padding: 0.2em 0.2em 0.2em 0.2em;
 }
-*/
+
+#wikiMenu ul {
+  list-style:none;
+  padding:0;
+  margin:0;
+  white-space:nowrap;
+}
+
+#wikiMenu li {
+  display:inline;
+  padding-left:5px;
+  padding-right:5px;
+  border-right:1px solid #000000;
+}
+
+#wikiAction ul {
+  list-style:none;
+  padding:0;
+  margin:0;
+  white-space:nowrap;
+}
+
+#wikiAction li {
+  display:inline;
+  padding-left:5px;
+  padding-right:5px;
+  border-right:1px solid #000000;
+  float:left;
+}
+
+#wikiIcon {
+  float:right;
+  padding: 3px 10px;
+  text-align: right;
+  vertical-align: middle;
+  margin-right: 20px;
+}
+
+#wikiLogin {
+  position:absolute;
+  right:35px;
+  top:11px;
+  height:36px;
+}
+
+#wikiBanner {
+  position:absolute;
+  right:35px;
+  bottom:-25x;
+}
 
 div.indent { padding-left:2em; }
 

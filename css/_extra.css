@@ -1,0 +1,105 @@
+.wikiSyntax, .wikiSyntax code{
+  font-family:Bitstream Vera Sans Mono, Courier New, GulimChe, monospace;
+  padding:0.5em;
+}
+.cloudView li{
+  font-family:Trebuchet MS,Georgia,Verdana,sans-serif;
+  list-style:none;
+  white-space: nowrap;
+  display:inline;
+  padding-left:5px;
+}
+
+#wikiBody .cloudView a:link, #wikiBody .cloudView a:visited {
+  text-decoration:none;
+  color:#000000;
+}
+
+#wikiBody .cloudView a:hover {
+  text-decoration:underline;
+  color:#0000ff;
+}
+
+.cloudView ul {
+  margin:0;
+}
+
+.wikiChat ul {
+  list-style:none;
+  padding:2px;
+  margin:0px;
+}
+
+.wikiChat span.user {
+  font-family:Trebuchet MS,sans-serif;
+  padding-left:2px;
+  padding-right:2px;
+}
+
+.wikiChat span.date {
+  font-family:Trebuchet MS,sans-serif;
+  padding-right:2px;
+}
+
+.blocked {
+  background-color:#ff0000;
+  color:#fff;
+}
+
+div.tourLeft {
+  width:60%;
+  float:left;
+}
+
+div.tourRight {
+  width:40%;
+  float:right;
+}
+
+div.tourFoot {
+  clear:both;
+}
+
+div.tourLeft > ul li {
+  display:inline;
+  margin:0;
+  padding:0;
+}
+
+.depth-1 {
+  background-color:#fafafa;
+  padding:1em;
+}
+ul.depth-2 {
+  background-color:#f0f0f0;
+  padding:1em;
+}
+ul.depth-3 {
+  background-color:#eaeaea;
+  padding:1em;
+}
+ul.depth-4 {
+  background-color:#e0e0e0;
+  padding:1em;
+}
+ul.depth-5 {
+  background-color:#b0b0b0;
+  padding:1em;
+}
+
+.wikiFortune {
+  font-family: Bitstream Vera Sans Mono,Courier New,monospace;
+  white-space:pre;
+}
+
+.soundOff {
+  background:url(../imgs/plugin/Chat/sound_off.png) no-repeat;
+  width:16px;
+  border:0;
+}
+
+.soundOn {
+  background:url(../imgs/plugin/Chat/sound_on.png) no-repeat;
+  width:16px;
+  border:0;
+}
