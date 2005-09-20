@@ -53,8 +53,10 @@ setSound('pass','$DBInfo->url_prefix/local/pass.au');
 </script>
 <div id="chat$tag">$msg</div>
 <form onSubmit='return false'>
+<div class="chatWindow">
 <input type='text' size='10' class='chatUser' /> <input type='text' size='40' class='chatMsg' onkeypress='sendMsg(event,this,"$url","chat$tag",$itemnum);' />
 <input type='button' id='{$tag}soundon' class='soundOff' onclick="Sound('pass');OnOff(this)" />
+</div>
 </form>
 </div>
 EOF;
