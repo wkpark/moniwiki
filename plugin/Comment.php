@@ -38,6 +38,9 @@ function macro_Comment($formatter,$value,$options=array()) {
 
   $url=$formatter->link_url($formatter->page->urlname);
 
+
+  if ($value)
+    $hidden='<input type="hidden" name="comment_id" value="'.$value.'" />';
   $form = "<form name='editform' method='post' action='$url'>\n";
   $form.= <<<FORM
 <textarea class="wiki" id="content" name="savetext"
@@ -50,6 +53,7 @@ FORM;
   $comment=_("Comment");
   $preview=_("Preview");
   $form.= <<<FORM2
+$hidden
 $sig
 <input type="hidden" name="action" value="comment" />
 <input type="hidden" name="datestamp" value="$datestamp" />
@@ -146,11 +150,14 @@ function do_comment($formatter,$options=array()) {
   else
     $savetext="----\n$savetext @SIG@\n";
 
-  if (preg_match("/\n##Comment\n/i",$body))
+  if ($options['comment_id'] and preg_match("/^\[\[Comment\(".$options['comment_id']."\)\]\]/m",$body)) {
+    $str="[[Comment($options[comment_id])]]";
+    $body= str_replace($str,$savetext.$str."\n",$body,1);
+  } else if (preg_match("/\n##Comment\n/i",$body)) {
     $body= preg_replace("/\n##Comment\n/i","\n##Comment\n$savetext",$body,1);
-  else if (preg_match("/\[\[Comment(\([^\)]*\))?\]\]/",$body))
-    $body= preg_replace("/(\[\[Comment(\([^\)]*\))?\]\])/",$savetext."\\1",$body,1);
-  else
+  } else if ($XX) {
+    $body.=$savetext;
+  } else
     $body.=$savetext;
 
   $formatter->page->write($body);
