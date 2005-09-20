@@ -1,7 +1,9 @@
+// from drupal
+
 /**
  * Only enable Javascript functionality if all required features are supported.
  */
-	
+
 function isJsEnabled() {
   if (document.jsEnabled == undefined) {
     // Note: ! casts to boolean implicitly.
@@ -42,6 +44,7 @@ if (typeof XMLHttpRequest == 'undefined') {
 function HTTPGet(uri, callbackFunction, callbackParameter) {
   var xmlHttp = new XMLHttpRequest();
   var bAsync = true;
+
   if (!callbackFunction)
     bAsync = false;    
   xmlHttp.open('GET', uri, bAsync);
@@ -191,3 +194,5 @@ function removeNode(node) {
     return false;
   }
 }
+
+// vim:et:sts=2:
