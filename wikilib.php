@@ -885,7 +885,8 @@ function do_goto($formatter,$options) {
      $url=_stripslashes(rtrim($options['value']));
      $url=_rawurlencode($url);
      if ($options['redirect'])
-       $url=$formatter->link_url($url,"?action=show");
+       $url=$formatter->link_url($url,"?action=show&redirect=".
+          $formatter->page->name);
      else
        $url=$formatter->link_url($url,"");
      # FastCGI/PHP does not accept multiple header infos. XXX
