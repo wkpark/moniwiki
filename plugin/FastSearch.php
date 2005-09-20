@@ -55,26 +55,18 @@ EOF;
   }
 
   $words=split(' ', strtolower($value));
-  $res=array();
-  for(reset($words); $word=current($words); next($words)) {
-    $t=strlen($keys=dba_fetch($word,$dbindex));
+  $keys='';
+  foreach ($words as $word) $keys.=dba_fetch($word,$dbindex);
 
-#   print "'$word' (" . $t/2 . ") ";
-    for($i=0; $i<$t;
-    // unpack a big-endian short
-    $res[ord(substr($keys, $i, 1))*256+ord(substr($keys, $i+1, 1))]++, $i+=2);
-  }
+  $res=unpack("n*",$keys);
   arsort($res);
 
   $pages=array();
-  for(reset($res); $k=key($res); next($res)) {
-    $key= dba_fetch("!?" . chr($k/256) . chr($k % 256),$dbindex);
+  foreach ($res as $k) {
+    $key= dba_fetch("!?".pack('n',$k),$dbindex);
     $pages[]=$key;
   }
   dba_close($dbindex);
-#  print_r($pages);
-
-#  if ($opts['case']) $pattern.="i";
 
   $hits=array();
 
