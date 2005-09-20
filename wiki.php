@@ -43,6 +43,8 @@ function getPlugin($pluginname) {
       $plugins[strtolower($name)]= $name;
     }
   }
+  if (is_array($DBInfo->myplugins))
+    $plugins=array_merge($plugins,$DBInfo->myplugins);
 
   return $plugins[strtolower($pluginname)];
 }
@@ -73,8 +75,8 @@ function getProcessor($pro_name) {
     }
   }
 
-  if (is_array($DBInfo->processors))
-    $processors=array_merge($processors,$DBInfo->processors);
+  if (is_array($DBInfo->myprocessors))
+    $processors=array_merge($processors,$DBInfo->myprocessors);
 
   return $processors[strtolower($pro_name)];
 }
@@ -557,6 +559,7 @@ class WikiDB {
     $this->actions= array('DeletePage','LikePages');
     $this->show_hosts= TRUE;
     $this->iconset='moni';
+    $this->use_oldstyle='1';
     $this->goto_type='';
     $this->goto_form='';
     $this->template_regex='[a-z]Template$';
@@ -1467,6 +1470,7 @@ class Formatter {
     $this->use_purple=$DBInfo->use_purple;
     $this->section_edit=$DBInfo->use_sectionedit;
     $this->auto_linebreak=$DBInfo->auto_linebreak;
+    $this->nonexists=$DBInfo->nonexists;
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -1486,43 +1490,45 @@ class Formatter {
     if ($DBInfo->external_target)
       $this->external_target='target="'.$DBInfo->external_target.'"';
 
-    #$this->baserule=array("/<([^\s][^>]*)>/","/`([^`]*)`/",
-    $this->baserule=array("/<([^\s<>])/","/`([^`' ]+)'/","/(?<!`)`([^`]*)`/",
+    $this->baserule=array("/<([^\s<>])/",
                      "/'''([^']*)'''/","/(?<!')'''(.*)'''(?!')/",
                      "/''([^']*)''/","/(?<!')''(.*)''(?!')/",
-                     "/\^([^ \^]+)\^(?=\s|$)/","/\^\^([^ \^][^\^]+[^ \^])\^\^(?!^)/",
-                     "/(?<!,),,([^ ,]+),,(?!,)/",
-                     "/(?<!_)__((?:(?<!_)_(?!_)|[^_])+)__(?!_)/","/^(-{4,})/e",
-                     "/(?<!-)--(?U)([^\s].+[^\s])--(?!-)/",
-                     "/(?<!~)~~(?U)([^\s].+[^\s])~~(?!~)/",
-                     #"/(?<!-)--([^-]+[^\s])--(?!-)/",
-                     #"/(?<!~)~~([^~]+[^\s])~~(?!~)/",
-                     #"/(\\\\\\\\)$/", # tex, pmWiki
+                     "/`(?<!\s)(?!`)([^`']+)(?<!\s)'/",
+                     "/`(?<!\s)(?U)(.*)(?<!\s)`/",
+                     "/^(-{4,})/e",
+                     "/,,([^,]{1,40}),,/",
+                     "/\^([^ \^]+)\^(?=\s|$)/",
+                     "/\^\^(?<!\s)(?!\^)(?U)(.+)(?<!\s)\^\^/",
+                     "/__(?<!\s)(?!_)(?U)(.+)(?<!\s)__/",
+                     "/--(?<!\s)(?!-)(?U)(.+)(?<!\s)--/",
+                     "/~~(?<!\s)(?!~)(?U)(.+)(?<!\s)~~/",
+                     #"/(\\\\\\\\)/", # tex, pmWiki
                      );
-    $this->baserepl=array("&lt;\\1","&#96;\\1'","<tt class='wiki'>\\1</tt>",
+    $this->baserepl=array("&lt;\\1",
                      "<strong>\\1</strong>","<strong>\\1</strong>",
                      "<i>\\1</i>","<i>\\1</i>",
-                     "<sup>\\1</sup>","<sup>\\1</sup>",
-                     "<sub>\\1</sub>",
-                     "<u>\\1</u>",
+                     "&#96;\\1'","<tt class='wiki'>\\1</tt>",
                      "\$this->$DBInfo->hr_type"."_hr('\\1')",
-                     #"<div class='separator'><hr class='wiki' /></div>\n",
+                     "<sub>\\1</sub>",
+                     "<sup>\\1</sup>",
+                     "<sup>\\1</sup>",
+                     "<u>\\1</u>",
                      "<del>\\1</del>",
                      "<del>\\1</del>",
-                     #"<br />",
+                     #"<br />\n",
                      );
 
     # NoSmoke's MultiLineCell hack
-    $this->extrarule=array("/{{\|/","/\|}}/");
-    $this->extrarepl=array("</div><table class='closure'><tr class='closure'><td class='closure'><div>","</div></td></tr></table><div>");
+    $this->extrarule=array("/{{\|(.*)\|}}/","/{{\|/","/\|}}/");
+    $this->extrarepl=array("<table class='closure'><tr class='closure'><td class='closure'>\\1</td></tr></table>","</div><table class='closure'><tr class='closure'><td class='closure'><div>","</div></td></tr></table><div>");
     
     # set smily_rule,_repl
     if ($DBInfo->smileys) {
       $smiley_rule='/(?<=\s|^|>)('.$DBInfo->smiley_rule.')(?=\s|$)/e';
       $smiley_repl="\$this->smiley_repl('\\1')";
 
-      $this->extrarule[]=$smiley_rule;
-      $this->extrarepl[]=$smiley_repl;
+      $this->baserule[]=$smiley_rule;
+      $this->baserepl[]=$smiley_repl;
     }
 
     #$punct="<\"\'}\]\|;,\.\!";
@@ -1542,12 +1548,13 @@ class Formatter {
     #"\b(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+[^\(\)<>\s\',\.:\?\!]+)|".
-    "(\b|\^?)([A-Z][a-zA-Z]+):([^\(\)<>\s\']*[^\(\)<>\s\'\",\.:\?\!]*)|".
+    "(\b|\^?)([A-Z][a-zA-Z]+):([^\(\)<>\s\']*[^\(\)<>\s\'\",\.:\?\!]*(\s(?![\x33-\x7e]))?)|".
     # "(?<!\!|\[\[)\b(([A-Z]+[a-z0-9]+){2,})\b|".
     # "(?<!\!|\[\[)((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})\b|".
     # WikiName rule: WikiName ILoveYou (imported from the rule of NoSmoke)
     # protect WikiName rule !WikiName
-    "(?<![a-z])\!?(?:((\.{1,2})?\/)?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b|".
+    #"(?:\!)?((?:\.{1,2}?\/)?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b|".
+    "(?<![a-zA-Z])\!?(?:((\.{1,2})?\/)?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b|".
     # single bracketed name [Hello World]
     "(?<!\[)\!?\[([^\[:,<\s'][^\[:,>]{1,255})\](?!\])|".
     # bracketed with double quotes ["Hello World"]
@@ -1734,6 +1741,9 @@ class Formatter {
         $col=strtok($url,' '); $url=strtok('');
         if (!preg_match('/^#[0-9a-f]{6}$/',$col)) $col=substr($col,1);
         return "<font color='$col'>$url</font>";
+      } else if (preg_match('/^((?:\+|\-)([1-6]?))(?=\s)(.*)$/',$url,$m)) {
+        if ($m[2]=='') $m[1].='1';
+        return "<font size='$m[1]'>$m[3]</font>";
       }
       return "<tt class='wiki'>$url</tt>"; # No link
       break;
@@ -1929,7 +1939,7 @@ class Formatter {
 
   function word_repl($word,$text='',$attr='',$nogroup=0,$islink=1) {
     global $DBInfo;
-    $nonexists='nonexists_'.$DBInfo->nonexists;
+    $nonexists='nonexists_'.$this->nonexists;
     if ($word[0]=='"') { # ["extended wiki name"]
       $extended=1;
       $page=substr($word,1,-1);
@@ -1961,6 +1971,7 @@ class Formatter {
       $word=$text=$page_text ? $page_text:$word;
       #print $text;
       $word=htmlspecialchars($word);
+      $word=str_replace('&amp;#','&#',$word); # hack
     }
 
     $url=_urlencode($page);
@@ -2034,6 +2045,10 @@ class Formatter {
 
   function nonexists_nolink($word,$url) {
     return "$word";
+  }
+
+  function nonexists_always($word,$url) {
+    return "<a href='$url'>$word</a>";
   }
 
   function nonexists_forcelink($word,$url) {
@@ -2144,14 +2159,12 @@ class Formatter {
       $name=$macro; $args=$value;
     }
 
-    if (!function_exists ("macro_".$name)) {
-
-      if ($plugin=getPlugin($name))
-        include_once("plugin/$plugin.php");
-      else
-        return "[[".$name."]]";
+    $plugin=($np=getPlugin($name))?$np:$name;
+    if (!function_exists ("macro_".$plugin)) {
+      if (!$np) return "[[".$name."]]";
+      include_once("plugin/$plugin.php");
     }
-    $ret=call_user_func_array("macro_$name",array(&$this,$args,$options));
+    $ret=call_user_func_array("macro_$plugin",array(&$this,$args,$options));
     return $ret;
   }
 
@@ -2314,11 +2327,18 @@ class Formatter {
     return implode(' ',$attr).' ';
   }
 
-  function _table($on,$attr='') {
+  function _table($on,&$attr) {
     if (!$on) return "</table>\n";
-    $attr=substr($attr,4,-1);
-    if ($attr[0]=='#') $attr="bgcolor='$attr'";
-    return "<table class='wiki' cellpadding='3' cellspacing='2' $attr>\n";
+    $tattr=substr($attr,4,-1);
+    if ($tattr[0]=='#') {
+      $tattr="bgcolor='$tattr'";
+    } else if (substr($tattr,0,5)=='table') {
+      $tattr=substr($tattr,5);
+      $attr='';
+    } else {
+      $tattr='';
+    }
+    return "<table class='wiki' cellpadding='3' cellspacing='2' $tattr>\n";
   }
 
   function _purple() {
@@ -2452,7 +2472,7 @@ class Formatter {
         if ($in_pre) { $this->pre_line.="\n";continue;}
         if ($in_li) {
           if ($in_table) {
-            $text.=$this->_table(0);$in_table=0;$li_empty=1;
+            $text.=$this->_table(0,$dumm);$in_table=0;$li_empty=1;
           }
           $text.=$this->_purple()."<br />\n";
           if ($li_empty==0 && !$this->auto_linebreak ) $text.="<br />\n";
@@ -2460,7 +2480,7 @@ class Formatter {
           continue;
         }
         if ($in_table) {
-          $text.=$this->_table(0)."<br />\n";$in_table=0; continue;
+          $text.=$this->_table(0,$dumm)."<br />\n";$in_table=0; continue;
         } else {
           #if ($in_p) { $text.="</div><br />\n"; $in_p='';}
           if ($in_p) { $text.=$this->_div(0,$in_div,$div_enclose)."<br />\n"; $in_p='';}
@@ -2548,26 +2568,21 @@ class Formatter {
          $line=substr($line,0,$p);
          if (!$line and $this->auto_linebreak) $this->nobr=1;
       }
-#     $line=str_replace("<","&lt;",$line);
-      #$line=preg_replace("/\\$/","&#36;",$line);
-      #$line=preg_replace("/<([^\s][^>]*)>/","&lt;\\1>",$line);
-      #$line=preg_replace("/`([^`]*)`/","<tt class='wiki'>\\1</tt>",$line);
 
-      # bold
-      #$line=preg_replace("/'''([^']*)'''/","<b>\\1</b>",$line);
-      #$line=preg_replace("/(?<!')'''(.*)'''(?!')/","<b>\\1</b>",$line);
-
-      # italic 
-      #$line=preg_replace("/''([^']*)''/","<i>\\1</i>",$line);
-      #$line=preg_replace("/(?<!')''(.*)''(?!')/","<i>\\1</i>",$line);
-
-      # Superscripts, subscripts
-      #$line=preg_replace("/\^([^ \^]+)\^/","<sup>\\1</sup>",$line);
-      #$line=preg_replace("/(?: |^)_([^ _]+)_/","<sub>\\1</sub>",$line);
-      # rules
-      #$line=preg_replace("/^-{4,}/","<hr />\n",$line);
-
-      $line=preg_replace($this->baserule,$this->baserepl,$line);
+      // split into chunks
+      $chunk=preg_split('/({{{.+}}})/U',$line,-1,PREG_SPLIT_DELIM_CAPTURE);
+      $nc='';
+      $k=1;
+      foreach ($chunk as $c) {
+        if ($k%2) {
+          $nc.=preg_replace($this->baserule,$this->baserepl,$c);
+        } else if (in_array($c[3],array('#','-','+'))) { # {{{#color text}}}
+          $nc.=preg_replace($this->baserule,$this->baserepl,$c);
+        } else $nc.=$c;
+        $k++;
+      }
+      $line=$nc;
+      #$line=preg_replace($this->baserule,$this->baserepl,$line);
       #if ($in_p and ($in_pre==1 or $in_li)) $line=$this->_check_p().$line;
 
       # bullet and indentation
@@ -2625,11 +2640,11 @@ class Formatter {
       #if (!$in_pre && !$in_table && preg_match("/^\|\|.*\|\|$/",$line)) {
       if (!$in_pre && $line[0]=='|' && !$in_table && preg_match("/^((\|\|)+)(&lt;[^>\|]+>)?(.*)\|\|$/",$line,$match)) {
         $open.=$this->_table(1,$match[3]);
-        if ($match[3]) $line=$match[1].$match[4].'||';
+        if (!$match[3]) $line=$match[1].$match[4].'||';
         $in_table=1;
       #} elseif ($in_table && !preg_match("/^\|\|.*\|\|$/",$line)){
       } elseif ($in_table && $line[0]!='|' && !preg_match("/^\|\|.*\|\|$/",$line)){
-         $close=$this->_table(0).$close;
+         $close=$this->_table(0,$dumm).$close;
          $in_table=0;
       }
       if ($in_table) {
@@ -3074,27 +3089,28 @@ EOS;
   }
 
   function get_actions($args='',$options) {
+    $menu=array();
     if ($this->pi['#action'] && !in_array($this->pi['#action'],$this->actions)){
       list($act,$txt)=explode(" ",$this->pi['#action'],2);
       if (!$txt) $txt=$act;
-      $menu= $this->link_to("?action=$act",_($txt),"accesskey='x'");
+      $menu[]= $this->link_to("?action=$act",_($txt),"accesskey='x'");
       if (strtolower($act) == 'blog')
         $this->actions[]='BlogRss';
         
     } else if ($args['editable']) {
       if ($args['editable']==1)
-        $menu= $this->link_to("?action=edit",_("EditText"),"accesskey='x'");
+        $menu[]= $this->link_to("?action=edit",_("EditText"),"accesskey='x'");
       else
-        $menu= _("NotEditable");
+        $menu[]= _("NotEditable");
     } else
-      $menu.= $this->link_to('?action=show',_("ShowPage"));
-    $menu.=$this->menu_sep.$this->link_tag("FindPage","",_("FindPage"));
+      $menu[]= $this->link_to('?action=show',_("ShowPage"));
+    $menu[]=$this->link_tag("FindPage","",_("FindPage"));
 
     if (!$args['noaction']) {
       foreach ($this->actions as $action)
-        $menu.= $this->menu_sep.$this->link_to("?action=$action",_($action));
+        $menu[]= $this->link_to("?action=$action",_($action));
     }
-    return $this->menu_bra.$menu.$this->menu_cat;
+    return $menu;
   }
 
   function send_footer($args='',$options='') {
@@ -3105,7 +3121,14 @@ EOS;
     if ($args['editable'] and !$DBInfo->security->writable($options))
       $args['editable']=-1;
     
-    $menu=$this->get_actions($args,$options);
+    $menus=$this->get_actions($args,$options);
+    if ($DBInfo->use_oldstyle==1) {
+      $menu=$this->menu_bra.implode($this->menu_sep,$menus).$this->menu_cat;
+    } else {
+      $menu="<div id='wikiAction'>";
+      $menu.='<ul><li>'.implode("</li>\n<li>\n",$menus)."</li></ul>";
+      $menu.="</div>";
+    }
 
     if ($mtime=$this->page->mtime()) {
       if ($options['tz_offset'] != '') {
@@ -3147,7 +3170,9 @@ FOOT;
       include($this->themedir."/footer.php");
     } else {
       print "<div id='wikiFooter'>";
-      print $menu.$banner;
+      print $menu;
+      if ($DBInfo->use_oldstyle) print $banner;
+      else print "<div id='wikiBanner'>$banner</div>\n";
       print "\n</div>\n";
     }
     print "</body>\n</html>\n";
@@ -3230,7 +3255,11 @@ MSG;
       }
     }
     $this->sister_on=$sister_save;
-    $menu=$this->menu_bra.join($this->menu_sep,$menu).$this->menu_cat;
+    if ($DBInfo->use_oldstyle) {
+      $menu=$this->menu_bra.join($this->menu_sep,$menu).$this->menu_cat;
+    } else {
+      $menu='<div id="wikiMenu"><ul><li>'.implode("</li>\n<li>",$menu)."</li></ul></div>\n";
+    }
 
     # icons
     #if ($upper)
@@ -3282,7 +3311,13 @@ MSG;
       # menu
       print "<div id='wikiHeader'>\n";
       print $header;
-      print $menu.$user_link." ".$upper_icon.$icons.$home.$rss_icon;
+      if ($DBInfo->use_oldstyle)
+        print $menu." ".$user_link." ".$upper_icon.$icons.$home.$rss_icon;
+      else {
+        print "<div id='wikiLogin'>".$user_link."</div>";
+        print "<div id='wikiIcon'>".$upper_icon.$icons.$home.$rss_icon.'</div>';
+        print $menu;
+      }
       print $msg;
       print "</div>\n";
     }
@@ -3645,6 +3680,11 @@ if ($pagename) {
     }
     # display this page
 
+    if ($DBInfo->use_redirect_msg and $action=='show' and $_GET['redirect']){
+      $options['msg']=
+        sprintf(_("Redirected from page \"%s\""),
+          $formatter->link_tag($_GET['redirect'],'?action=show'));
+    }
     # increase counter
     $DBInfo->counter->incCounter($pagename,$options);
 
@@ -3744,6 +3784,7 @@ if ($pagename) {
         $options=array_merge($_POST,$options);
       else
         $options=array_merge($_GET,$options);
+      $options['action_mode']=$action_mode;
       if ($action_mode=='ajax')
         $formatter->ajax_repl($action,$options);
       else
@@ -3751,26 +3792,26 @@ if ($pagename) {
       return;
     }
 
-    if (!function_exists("do_post_".$action) and
-      !function_exists("do_".$action)){
-      if ($plugin=getPlugin($action))
+    $plugin=($pn=getPlugin($action)) ? $pn:$action;
+    if (!function_exists("do_post_".$plugin) and
+      !function_exists("do_".$plugin)){
         include_once("plugin/$plugin.php");
     }
 
-    if (function_exists("do_".$action)) {
+    if (function_exists("do_".$plugin)) {
       if ($_SERVER['REQUEST_METHOD']=="POST")
         $options=array_merge($_POST,$options);
       else
         $options=array_merge($_GET,$options);
-      call_user_func("do_$action",$formatter,$options);
+      call_user_func("do_$plugin",$formatter,$options);
       return;
-    } else if (function_exists("do_post_".$action)) {
+    } else if (function_exists("do_post_".$plugin)) {
       if ($_SERVER['REQUEST_METHOD']=="POST")
         $options=array_merge($_POST,$options);
       else { # do_post_* set some primary variables as $options
         $options['value']=$_GET['value'];
       }
-      call_user_func("do_post_$action",$formatter,$options);
+      call_user_func("do_post_$plugin",$formatter,$options);
       return;
     }
     do_invalid($formatter,$options);
