@@ -26,7 +26,6 @@ function macro_Tour($formatter,$value,$options=array()) {
 
 define(TOUR_LEAFCOUNT,4);
 define(TOUR_DEPTH,3);
-    $ul='ul';
 
     if (!$value) $value=$formatter->page->name;
 
@@ -66,7 +65,7 @@ define(TOUR_DEPTH,3);
     $wide= $formatter->link_tag($url[$value],
         "?action=tour&amp;w=".($count+1)."&amp;d=$depth",_("links"));
     $deep= $formatter->link_tag($url[$value],
-        "?action=tour&amp;w=$count&amp;d=".($depth+1),_("wider"));
+        "?action=tour&amp;w=$count&amp;d=".($depth+1),_("deeper"));
     $link='<h3>'.sprintf(_("More %s or more %s"),$wide,$deep).'</h3>';
 
     foreach ($allnode as $node) {
@@ -75,6 +74,7 @@ define(TOUR_DEPTH,3);
     $title='<h3>'.sprintf(_("Total %d related pages"),sizeof($allnode)).'</h3>';
 
     $out=array();
+    $dep=1;
     foreach ($outs as $ls) {
         asort($ls);
         $temp='';
@@ -82,14 +82,13 @@ define(TOUR_DEPTH,3);
             $temp.= ' <li>'.$formatter->link_tag($url[$leaf],
                 "?action=tour",$leaf)."</li>\n";
         }
-        $out[]="<$ul>".$temp;
+        $out[]="<ul class='depth-$dep'>".$temp.'</ul>';
+        $dep++;
     }
-    $ret=implode($out,"\n</$ul></td><td valign='top'>\n");
-    $ret='<table border="0"><tr><td valign="top">'.$ret.
-        "</$ul></td></tr></table>\n";
-    $ret='<table border="0"><tr><td valign="top">'.$link.$ret.'</td><td>'.
-        "\n$title<ol>".$pages."</ol></td>\n".
-        '</tr></table>';
+    $ret=implode("\n",$out);
+    $ret='<div class="tourLeft">'.$link.$ret.'</div>'.
+        "<div class=\"tourRight\">$title<ol>$pages</ol></div>\n".
+        "<div class=\"tourFoot\"></div>\n";
 
     return '<div class="wikiTour">'.$ret."</div>\n";
 }
