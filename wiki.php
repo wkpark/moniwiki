@@ -1040,6 +1040,7 @@ class WikiDB {
 
     $okey=$this->getPageKey($pagename);
     $nkey=$this->getPageKey($new);
+    $okeyname=$this->_getPageKey($pagename);
     $keyname=$this->_getPageKey($new);
 
     rename($okey,$nkey);
@@ -1055,6 +1056,7 @@ class WikiDB {
     }
 
     $comment=sprintf(_("Rename %s to %s"),$pagename,$new);
+    $this->addLogEntry($okeyname, $REMOTE_ADDR,'',"SAVE");
     $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
   }
 
@@ -3794,8 +3796,8 @@ if ($pagename) {
 
     $plugin=($pn=getPlugin($action)) ? $pn:$action;
     if (!function_exists("do_post_".$plugin) and
-      !function_exists("do_".$plugin)){
-        include_once("plugin/$plugin.php");
+      !function_exists("do_".$plugin) and $pn){
+        include_once("plugin/$pn.php");
     }
 
     if (function_exists("do_".$plugin)) {
