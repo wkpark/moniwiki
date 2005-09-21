@@ -3,11 +3,23 @@
 # slightly modified to adopt to the MoniWiki 2003/07/19 by wkpark
 # Public Domain
 # $Id$
+#
+# Usage:
+# $ cd data
+# $ ls
+# ... text/ cache/
+# $ perl wiki_indexer.pl
+# ....
+# $ mkdir cache/index or rm cache/index/fullsearch.db
+# $ chmod a+rw fullsearch.db
+# $ mv fullsearch.db cache/index
+#
 
 require 5.8.0;
 
 #$charset="euc-kr";
 $charset="utf8";
+$type='n';
 ###########################################################################
 if ($charset eq "utf8") {
   use encoding "utf8";
@@ -28,11 +40,14 @@ $currentKey = 256;
 ############################################################################
 
 # Delete old index.db and attach %indexdb to database
-unlink("index.db");
-tie(%indexdb,'DB_File',"index.db",
+unlink("fullsearch.db");
+tie(%indexdb,'DB_File',"fullsearch.db",
     O_RDWR | O_CREAT, 0644, $DB_File::DB_BTREE);
 find(\&IndexFile,"text");
 &FlushWordCache();
+
+$indexdb{"!!"}=$currentKey; # save currentKey
+
 untie(%indexdb); # release database
 
 ###########################################################################
@@ -54,7 +69,8 @@ sub IndexFile {
         # Index all the words under the current key
         my($wordsIndexed) = &IndexWords($text,$currentKey);
         # Map key to this filename
-        $indexdb{"!?" . pack("n",$currentKey)} = $_;
+        $indexdb{"!?" . pack($type,$currentKey)} = $_;
+        $indexdb{"!?" . $_} = pack($type,$currentKey);
         $currentKey++; if ($currentKey % 256 ==0) { $currentKey++; }
 
         $fileCount++;
@@ -82,7 +98,7 @@ sub IndexWords {
     foreach (sort @words) {
         #print $_."\n";
         my($a) = $wordcache{$_};
-        $a .= pack "n",$fileKey;
+        $a .= pack $type,$fileKey;
         $wordcache{$_} = $a;
     }
 
@@ -117,12 +133,12 @@ sub MergeLists {
     # Simply append all the lists
     foreach (@_) { $list .= $_; }
     # Now, remove any duplicate entries
-    my(@unpackedList) = unpack("n*",$list); # Unpack into integers
+    my(@unpackedList) = unpack($type."*",$list); # Unpack into integers
     my(%uniq); # sort and unique-ify
     @unpackedList = grep { $uniq{$_}++ == 0 }
                     sort { $a <=> $b }
                     @unpackedList;
-    return pack("n*",@unpackedList); # repack
+    return pack($type."*",@unpackedList); # repack
 }
 
 ###########################################################################
