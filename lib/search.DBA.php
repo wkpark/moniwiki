@@ -9,7 +9,7 @@
 
 class IndexDB_dba {
     var $db=null;
-    var $type="N";
+    var $type="n";
 
     function IndexDB_dba($arena,$mode='r',$type) {
         global $DBInfo;
@@ -28,12 +28,12 @@ class IndexDB_dba {
     }
 
     function getPageID($pagename) {
-        print $pagename;
-        if (!$this->exists($pagename))
+        if (!$this->exists('!?'.$pagename))
             return $this->_getNewID($pagename);
 
         $pkey=dba_fetch('!?'.$pagename,$this->db);
         $pkey=unpack($this->type.'1'.$this->type,$pkey);
+        print_r($pkey);
         return $pkey[$this->type];
     }
 
@@ -44,21 +44,21 @@ class IndexDB_dba {
 
     function _fetchValues($key) {
         if (is_int($key))
-            $key=pack($this->type,$key);
+            $key='!?'.pack($this->type,$key);
 
-        $pkey=dba_fetch('!?'.$key,$this->db);
+        $pkey=dba_fetch($key,$this->db);
         return unpack($this->type.'*',$pkey);
     }
 
     function _fetch($key) {
         if (is_int($key))
-            $key=pack($this->type,$key);
+            $key='!?'.pack($this->type,$key);
 
-        return dba_fetch('!?'.$key,$this->db);
+        return dba_fetch($key,$this->db);
     }
 
     function exists($key) {
-        return dba_exists('!?'.$key,$this->db);
+        return dba_exists($key,$this->db);
     }
 
     function _current() {
@@ -80,10 +80,10 @@ class IndexDB_dba {
         $type=$this->type;
         $key=$this->getPageID($pagename);
         foreach ($words as $word) {
-            if (dba_exists('!?'.$word,$this->db)) {
-                $a=dba_fetch('!?'.$word,$this->db);
+            if (dba_exists($word,$this->db)) {
+                $a=dba_fetch($word,$this->db);
             } else {
-                dba_insert('!?'.$word,'',$this->db);
+                dba_insert($word,'',$this->db);
                 $a='';
             }
             $a.=pack($type,$key);
@@ -91,7 +91,7 @@ class IndexDB_dba {
             arsort($un);
             $na='';
             foreach ($un as $u) $na.=pack($type,$u);
-            dba_replace('!?'.$word,$na,$this->db);
+            dba_replace($word,$na,$this->db);
         }
         return;
     }
@@ -101,8 +101,8 @@ class IndexDB_dba {
         $type=$this->type;
         $key=$this->getPageID($pagename);
         foreach ($words as $word) {
-            if (dba_exists('!?'.$word,$this->db)) {
-                $a=dba_fetch('!?'.$word,$this->db);
+            if (dba_exists($word,$this->db)) {
+                $a=dba_fetch($word,$this->db);
             } else {
                 continue;
             }
@@ -112,7 +112,7 @@ class IndexDB_dba {
             $un=array_flip($ta);
             arsort($un);
             foreach ($un as $u) $na.=pack($type,$u);
-            dba_replace('!?'.$word,$na,$this->db);
+            dba_replace($word,$na,$this->db);
         }
         return;
     }
