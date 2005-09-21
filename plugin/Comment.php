@@ -155,8 +155,8 @@ function do_comment($formatter,$options=array()) {
     $body= str_replace($str,$savetext.$str,$body,1);
   } else if (preg_match("/\n##Comment\n/i",$body)) {
     $body= preg_replace("/\n##Comment\n/i","\n##Comment\n$savetext",$body,1);
-  } else if ($XX) {
-    $body.=$savetext;
+  } else if (preg_match("/^\[\[Comment(\([^\)]*\))?\]\]/m",$body)) {
+    $body= preg_replace("/^(\[\[Comment(\([^\)]*\))?\]\])/m",$savetext."\\1",$body,1);
   } else
     $body.=$savetext;
 
