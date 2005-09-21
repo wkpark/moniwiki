@@ -15,12 +15,10 @@
 //
 // $Id$
 
+include_once('lib/search.DBA.php');
+
 function macro_FastSearch($formatter,$value="",&$opts) {
   global $DBInfo;
-  $theDB=$DBInfo->data_dir."/index.db";
-  if (!file_exists($theDB)) {
-    return '[[FastSearch('._("Index DB is not found.").')]]';
-  }
 
   if ($value === true) {
     $needle = $value = $formatter->page->name;
@@ -47,26 +45,30 @@ EOF;
      return $form;
   }
 
-  if (($dbindex=@dba_open("$theDB", "r",$DBInfo->dba_type)) === false) {
+  $DB=new IndexDB_dba('fullsearch',"r",$DBInfo->dba_type);
+  if ($DB->db==null) {
     $opts['msg']="Couldn't open search database, sorry.";
     $opts['hits']= 0;
     $opts['all']= 0;
-    return;
+    return '';
   }
 
   $words=split(' ', strtolower($value));
   $keys='';
-  foreach ($words as $word) $keys.=dba_fetch($word,$dbindex);
+  $idx=array();
+  foreach ($words as $word) {
+    $idx=array_merge($idx,$DB->_fetchValues($word));
+  }
 
-  $res=unpack("n*",$keys);
-  arsort($res);
+  arsort($idx);
 
   $pages=array();
-  foreach ($res as $k) {
-    $key= dba_fetch("!?".pack('n',$k),$dbindex);
+  foreach ($idx as $id) {
+    $key= $DB->_fetch($id);
     $pages[]=$key;
+    #print $key.'<br />';
   }
-  dba_close($dbindex);
+  $DB->close();
 
   $hits=array();
 
