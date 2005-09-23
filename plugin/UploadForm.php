@@ -29,7 +29,7 @@ function addRow(id) {
     newInput.setAttribute('size', '50');
 
     rmbtn.setAttribute('type','button');
-    rmbtn.setAttribute('value','remove');
+    rmbtn.setAttribute('value','x');
     rmbtn.setAttribute('onclick',"delRow(this)");
     rmbtn.onclick=Function("delRow(this)"); // for IE
 
