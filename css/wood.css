@@ -1,7 +1,8 @@
 /* MoniWiki CSS 2003/11/01 by wkpark */
-@import url("_user.css");
+@import url("_base.css");
 @import url("_extra.css");
 @import url("_calendar.css");
+@import url("_user.css");
 
 body {
   font-family:Georgia,Verdana,Lucida,sans-serif;font-size:12px;
@@ -156,6 +157,15 @@ table.closure, td.closure{
 /* background: #000 url(hr1.gif) no-repeat scroll center; */
 }
 
+#wikiMenu a {
+  color:black !important;
+}
+
+#wikiMenu a:hover {
+  background-color:white;
+  color:black;
+}
+
 #wikiTrailer, #wikiOrigin {
   clear: both;
   padding-left: 20px;
@@ -174,45 +184,6 @@ table.closure, td.closure{
   color: #fff;
   padding: 0.2em 0em 0.2em 0.2em;
   background-color:#af9f87; 
-}
-
-#wikiMenu {
-  color: #fff;
-  padding: 0.2em 0em 0.2em 0.2em;
-  background-color:#d6c8b6; 
-}
-
-#wikiMenu {
-  padding: 0.2em 0.2em 0.2em 0.2em;
-}
-
-#wikiMenu ul {
-  list-style:none;
-  padding:0;
-  margin:0;
-  white-space:nowrap;
-}
-
-#wikiMenu li {
-  display:inline;
-  padding-left:5px;
-  padding-right:5px;
-  border-right:1px solid #000000;
-}
-
-#wikiAction ul {
-  list-style:none;
-  padding:0;
-  margin:0;
-  white-space:nowrap;
-}
-
-#wikiAction li {
-  display:inline;
-  padding-left:5px;
-  padding-right:5px;
-  border-right:1px solid #000000;
-  float:left;
 }
 
 #wikiBanner {

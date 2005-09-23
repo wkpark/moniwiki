@@ -231,6 +231,10 @@ span.externalLink {
   border-top: 5px solid #c0c0c0;
 }
 
+.commentForm {
+  display:none;
+}
+
 div.pagebreak {page-break-before: always;}
 div.pagebreak br { display:none;}
 

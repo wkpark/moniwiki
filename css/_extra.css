@@ -2,6 +2,18 @@
   font-family:Bitstream Vera Sans Mono, Courier New, GulimChe, monospace;
   padding:0.5em;
 }
+
+div.sectionEdit {
+  margin-right:5px; margin-top:3px;
+  visibility:hidden;
+}
+#wikiContent div:hover .sectionEdit {
+  visibility:visible;
+}
+div.sectionEdit:hover {
+  visibility:visible;
+}
+
 .cloudView li{
   font-family:Trebuchet MS,Georgia,Verdana,sans-serif;
   list-style:none;
@@ -103,3 +115,4 @@ ul.depth-5 {
   width:16px;
   border:0;
 }
+

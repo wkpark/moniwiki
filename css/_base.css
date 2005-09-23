@@ -1,58 +1,101 @@
-/* MoniWiki CSS 2003/11/01 by wkpark */
-@import url("_base.css");
-@import url("_extra.css");
-@import url("_calendar.css");
-@import url("_user.css");
+/* MoniWiki base CSS 2005/09/22 by wkpark */
 
 body {
-  font-family:Georgia,Verdana,Lucida,sans-serif;font-size:12px;
-  background-color:#FFFFFF;
-  color:#000;
-  padding: 0;
-  margin: auto;
-  width: 700px;
+  /* IE hover hack */
+  behavior:url("../local/csshover.htc");
 }
 
-a {color:#000090;text-decoration:underline;}
-a:hover {text-decoration:none;}
+#wikiMenu {
+  padding: 0;
+}
 
-tt.wiki {font-family:Monotype,Lucida Console,lucida,monospace;font-size:12px;}
+#wikiMenu ul {
+  list-style:none;
+  padding:0;
+  margin:0;
+  margin-left:0;
+  padding-bottom:3px !important; /* for FF */
+  padding-bottom:2px;
+  height:1.7em;
+}
+
+#wikiMenu li {
+  list-style: none;
+  padding:2px 10px;
+  margin:2px 1px;
+  background-color:whitesmoke;
+/* the next 4 lines are magic for IE */
+  display: block;
+  float: left;
+  position: relative;
+  vertical-align:top;
+}
+
+#wikiMenu li:hover {
+  background-color:white;
+  color:black;
+}
+
+#wikiMenu a {
+  text-decoration:none;
+  font-size:small;
+}
+
+#wikiAction ul {
+  list-style:none;
+  padding:0;
+  margin:0;
+  white-space:nowrap;
+}
+
+#wikiAction li {
+  display:inline;
+  padding-left:5px;
+  padding-right:5px;
+  border-right:1px solid #e0e0e0;
+  float:left;
+}
+
+#wikiAction a {
+  font-size:small;
+}
+
+#wikiLogin {
+  position:absolute;
+  right:35px;
+  top:11px;
+  height:36px;
+}
+
+tt.wiki {font-family:monospace;}
 tt.foot {
-  font-family:Tahoma,lucida,monospace;
-  font-size:11px;
+  font-family:sans-serif;
   vertical-align: super;
 }
 
 tt.sister {
-  font-family:Tahoma,lucida,monospace;
-  font-size:11px;
+  font-family:sans-serif;
   vertical-align: super;
   text-decoration: none;
 }
 
 pre.wiki {
-  padding-left:6px;
-  padding-top:6px;
-  font-family:Bitstream Vera Sans Mono, Lucida TypeWriter,monotype, Courier New, GulimChe, monospace !important;
-  background-color:#000000;
-  color:#FFD700; /* gold */
-  /* color:#FFFFFF; /* white */
+  font-family:Courier New,monospace;
+}
+
+pre {
+  font-family:Courier New,monospace;
 }
 
 pre.console {
-  background-color: #000000;
-  color: #E0E0E0;
   padding: .25em ;
   border: 2px inset #808080;
 }
 
 pre.quote {
-  padding-left:6px;
-  padding-top:6px;
   white-space:pre-wrap;
   white-space: -moz-pre-wrap; 
-  font-family:Georgia,monotype,lucida,monospace;font-size:14px;
-  background-color: #E9ECEF;
+  font-family:monospace;
 }
 
 table.wiki {
@@ -80,28 +123,22 @@ td.info {
 }
 
 h1,h2,h3,h4,h5 {
-  font-family:Tahoma,monospace;
-  padding-left:6px;
-  border-bottom: 2px solid #dddddd;
+  font-family:sans-serif;
 }
 
 div.diff-added {
-  font-family:Verdana,Lucida Sans TypeWriter,Lucida Console,monospace;
-  font-size:12px;
+  font-family:Lucida Sans TypeWriter,Lucida Console,monospace;
   background-color:#E0FFE0;
   color:black;
 }
 
 div.diff-removed {
-  font-family:Verdana,Lucida Sans TypeWriter,Lucida Console,monospace;
-  font-size:12px;
+  font-family:Lucida Sans TypeWriter,Lucida Console,monospace;
   background-color:#E9EAB8;
   color:black;
 }
 
 div.diff-sep {
-  font-family:georgia,Verdana,Lucida Sans TypeWriter,Lucida Console,monospace;
-  font-size:12px;
   background-color:#000000;
   color:#FFD700; /* gold */
 }
@@ -137,7 +174,7 @@ table.goto {
 }
 
 span.goto, input.goto {
-  font-family:Tahoma,Lucida,sans-serif;
+  font-family:sans-serif;
   font-size:10px;
 }
 
@@ -155,9 +192,8 @@ table.closure, td.closure{
 }
 
 #wikiHeader {
-  padding: 0.5em 10px 0em 10px;
+  margin-bottom:5px;
 }
-
 #wikiHeader a:link {color:black;}
 #wikiHeader a:visited {color:#505050;}
 
@@ -174,28 +210,12 @@ div.wikiGroup {
   font-size:10px;
 }
 
-
-#wikiMenu {
-  background-color:#e0e0e0;
-}
-
 #wikiTrailer, #wikiOrigin {
   clear:both;
   padding-left: 20px;
   padding-bottom: 5px;
 }
 
-
-#wikiBody {
-  clear:both;
-  color: black;
-  background-color: #fff;
-  border: 1px dotted #b0b0b0;
-  margin: 0px 10px 0px 10px;
-}
-
-#wikiBody a {color:#000080;text-decoration:underline}
-#wikiBody a:hover {text-decoration:none}
 
 #wikiContent {
   margin: 10px 10px 10px 20px; 
@@ -209,7 +229,6 @@ div.wikiGroup {
 #wikiHint {
   font-family:Georgia,Verdana,Lucida,sans-serif;
   font-size:10px;
-  background-color:#E2DAE2;
 }
 
 #wikiSister {
@@ -223,6 +242,7 @@ div.wikiGroup {
 }
 
 #wikiIcon {
+  visibility:hidden;
   float:right;
   padding: 3px 10px;
   text-align: right;
@@ -230,19 +250,12 @@ div.wikiGroup {
   margin-left: 10px;
 }
 
-#wikiLogin {
-  position:absolute;
-  right:35px;
-  top:11px;
-  height:36px;
+#wikiHeader:hover #wikiIcon {
+  visibility:visible;
 }
 
 #wikiExtra {
-  padding:10px;
-}
-
-#wikiContent div {
-  /* border:1px dashed #ff0000; /* */
+  padding:1em 2em 1em 2em;
 }
 
 div.indent { padding-left:2em; }
@@ -287,7 +300,7 @@ span.externalLink {
 }
 
 .purple a {
-    font-family: Verdana, Arial, Helvetica;
+    font-family: Verdana, Trebuchet, Arial, Helvetica;
     font-style: normal;
     font-weight: bold;
     font-size: x-small;
@@ -304,6 +317,7 @@ span.lineNumber {
   padding:0.5em;
 }
 
+
 .pageNav { margin-bottom:5px;font-size : 75%; }
 .pageNext { float: right; }
 .pagePrev { float: left; }
@@ -319,33 +333,27 @@ span.lineNumber {
   display:none;
 }
 
-#wikiContent .perma:link, #wikiContent .perma:visited {
-  color:#d7d7d7;text-decoration:none;
-}
-.perma:link, .perma:visited {
+a.perma:link, a.perma:visited {
   visibility: hidden;
 }
 
-h1:hover .perma, h2:hover .perma, h3:hover .perma,
-h4:hover .perma, h5:hover .perma, h6:hover .perma {
+* html .perma:link, a.perma:visited { /* IE hack */
   visibility: visible;
 }
 
-span:hover .perma {
+h1:hover a.perma, h2:hover a.perma, h3:hover a.perma {
+
+  visibility: visible;
+
+}
+h4:hover a.perma, h5:hover a.perma, h6:hover a.perma {
   visibility: visible;
 }
 
+.rc-date {
+ font-size:1.2em;
+}
 .rc-bookmark {
- font-size:10px;
+ font-size:11px;
+ font-weight:normal;
 }
-
-.rc-button ul {
-  list-style: none;
-  display: inline;
-  padding: 0px;
-}
-
-.rc-button li {
-  display: inline;
-}
-

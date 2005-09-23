@@ -1,7 +1,8 @@
 /* MoniWiki CSS 2003/11/01 by wkpark */
-@import url("_user.css");
+@import url("_base.css");
 @import url("_extra.css");
 @import url("_calendar.css");
+@import url("_user.css");
 
 body {
   font-family:Georgia,Verdana,Lucida,sans-serif;font-size:12px;

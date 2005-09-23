@@ -1,7 +1,8 @@
 /*  NoSmoke Default Styles */
-@import url("_user.css");
+@import url("_base.css");
 @import url("_extra.css");
 @import url("_calendar.css");
+@import url("_user.css");
 
 body {
   background-color: lightyellow;
@@ -183,25 +184,9 @@ table.recentchanges {
 }
 
 #wikiMenu {
-  padding: 0.2em 0.2em 0.2em 0.2em;
   font-family:Trebuchet MS,sans-serif;
 /*  background-color:#c8c8c8; /* */
   background-color:lavender;
-}
-
-#wikiMenu ul {
-  list-style:none;
-  padding:0;
-  margin:0;
-  white-space:nowrap;
-}
-
-#wikiMenu li {
-  display:inline;
-  padding-left:5px;
-  padding-right:5px;
-  background-color:#ebebeb;
-  background-color:whitesmoke;
 }
 
 #wikiMenu a {
@@ -305,10 +290,6 @@ div.message {
   padding: 5px 1em 5px 1em;
 }
 
-#wikiExtra {
-  padding:2em;
-}
-
 .hint {
   
 }
@@ -365,23 +346,6 @@ span.lineNumber {
 #wikiContent .perma:link, #wikiContent .perma:visited {
   color:wheat;text-decoration:none;
 }
-.perma:link, .perma:visited {
-  visibility: hidden;
-}
-
-h1:hover .perma, h2:hover .perma, h3:hover .perma,
-h4:hover .perma, h5:hover .perma, h6:hover .perma {
-  visibility: visible;
-}
-
-span:hover .perma {
-  visibility: visible;
-}
-
-.rc-bookmark {
- font-size:10px;
- font-weight:normal;
-}
 
 .rc-button ul {
   list-style: none;
@@ -393,5 +357,12 @@ span:hover .perma {
   display: inline;
 }
 
-div.sectionEdit { margin-right:5px; margin-top:3px; }
-div.sectionEdit:hover { background-color:wheat;}
+div.sectionEdit {
+  margin-right:5px; margin-top:3px;
+  visibility:hidden;
+}
+
+div.sectionEdit:hover {
+  background-color:wheat;
+  visibility:visible;
+}

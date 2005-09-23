@@ -1,6 +1,7 @@
-@import url("_user.css");
+@import url("_base.css");
 @import url("_extra.css");
 @import url("_calendar.css");
+@import url("_user.css");
 
 body {
   font-family:Georgia,Verdana,Lucida,sans-serif;
@@ -164,7 +165,7 @@ table.closure, td.closure{
 
 #wikiHeader{
 /*  border-left: 0.8em solid #7B9AC5; /* */
-  padding: 0.2em 0.2em 0.2em 0.2em;
+  padding: 0.2em 0.2em 0 0.2em;
   background-color:#666633; */
 }
 
@@ -173,7 +174,6 @@ table.closure, td.closure{
 }
 
 #wikiHeader a:link{color:#FFFFCC; }
-#wikiHeader a:visited {color:#FFFFCC; }
 
 #wikiBody {
 /*   background-color:lightyellow; */
@@ -211,6 +211,23 @@ table.closure, td.closure{
   padding: 5px 1em 5px 1em;
 }
 
+#wikiMenu ul{
+  padding-left:2px;
+  height:1.3em;
+}
+
+#wikiMenu li {
+  background-color:#cccc99;
+}
+
+#wikiMenu a {
+  color:black !important;
+}
+
+#wikiMenu a:hover {
+  background-color:white;
+  color:black;
+}
 /*
 #wikiMenu {
   background-color:yellow;
