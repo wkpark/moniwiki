@@ -315,8 +315,6 @@ function macro_MoniCalendar($formatter,$value) {
             $todo.="</li>\n</ul>\n";
             $todo=preg_replace($formatter->baserule,$formatter->baserepl,$todo);
             $todo=preg_replace('/&lt;([^>]+)>/','<\\1>',$todo);
-            $todo=preg_replace("/(".$formatter->wordrule.")/e",
-            "\$formatter->link_repl('\\1')",$todo);
         }
         $dayclasses=$column ? "dayhead":$classes;
 
@@ -333,6 +331,8 @@ function macro_MoniCalendar($formatter,$value) {
         $weekday++;
     }
     $formatter->sister_on=$save;
+    $cal=preg_replace("/(".$formatter->wordrule.")/e",
+        "\$formatter->link_repl('\\1')",$cal);
 
     while ($weekday < 7){
         $cal .= "<td class='day'>&nbsp;</td>";
