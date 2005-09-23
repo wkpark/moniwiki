@@ -559,7 +559,7 @@ class WikiDB {
     $this->actions= array('DeletePage','LikePages');
     $this->show_hosts= TRUE;
     $this->iconset='moni';
-    $this->use_oldstyle='1';
+    $this->css_friendly='0';
     $this->goto_type='';
     $this->goto_form='';
     $this->template_regex='[a-z]Template$';
@@ -1510,7 +1510,7 @@ class Formatter {
                      "<strong>\\1</strong>","<strong>\\1</strong>",
                      "<i>\\1</i>","<i>\\1</i>",
                      "&#96;\\1'","<tt class='wiki'>\\1</tt>",
-                     "\$this->$DBInfo->hr_type"."_hr('\\1')",
+                     "\$formatter->$DBInfo->hr_type"."_hr('\\1')",
                      "<sub>\\1</sub>",
                      "<sup>\\1</sup>",
                      "<sup>\\1</sup>",
@@ -1527,7 +1527,7 @@ class Formatter {
     # set smily_rule,_repl
     if ($DBInfo->smileys) {
       $smiley_rule='/(?<=\s|^|>)('.$DBInfo->smiley_rule.')(?=\s|$)/e';
-      $smiley_repl="\$this->smiley_repl('\\1')";
+      $smiley_repl="\$formatter->smiley_repl('\\1')";
 
       $this->baserule[]=$smiley_rule;
       $this->baserepl[]=$smiley_repl;
@@ -2143,12 +2143,6 @@ class Formatter {
     if ($this->toc)
       $head="<a href='#toc'>$num</a> $head";
     $perma=" <a class='perma' href='#s$prefix-$num'>$this->perma_icon</a>";
-    if ($this->section_edit && !$this->preview) {
-      $this->sect_num++;
-      $url=$this->link_url($this->page->urlname,
-        '?action=edit&amp;section='.$this->sect_num);
-      $edit="<div class='sectionEdit' style='float:right;'>[<a href='$url'>edit</a>]</div>\n";
-    }
 
     return "$close$open$edit<h$dep><a id='s$prefix-$num' name='s$prefix-$num'></a> $head$perma</h$dep>";
   }
@@ -2458,6 +2452,7 @@ class Formatter {
     $my_div=0;
     $indent_list[0]=0;
     $indent_type[0]="";
+    $oline='';
 
     $wordrule="({{{(?U)(.+)}}})|".
               "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|"; # macro
@@ -2467,6 +2462,8 @@ class Formatter {
     #if ($DBInfo->builtin_footnote) # builtin footnote support
     $wordrule.=$this->footrule.'|';
     $wordrule.=$this->wordrule;
+
+    $formatter=&$this;
 
     foreach ($lines as $line) {
       # empty line
@@ -2500,19 +2497,27 @@ class Formatter {
         } else if ($line[2]=='.') {
           $div_enclose='<div class="'.substr($line,3).'">';
           $my_div++;
-        } else {
+        } else if ($my_div>0) {
           $div_enclose='</div>';
           $my_div--;
         }
         continue; # comments
       }
+      $ll=strlen($line);
+      if ($line[$ll-1]=='&') {
+        $oline.=substr($line,0,-1)."\n";
+        continue;
+      } else {
+        $line=$oline.$line;
+        $oline='';
+      }
 
-      $p_close='';
+      $p_closeopen='';
       if (preg_match('/^-{4,}/',$line)) {
         if ($this->auto_linebreak) $this->nobr=1; // XXX
-        if ($in_p) { $p_close=$this->_div(0,$in_div,$div_enclose); $in_p='';}
-      } else if ($in_p == '') {
-        $p_close=$this->_div(1,$in_div,$div_enclose);
+        if ($in_p) { $p_closeopen=$this->_div(0,$in_div,$div_enclose); $in_p='';}
+      } else if ($in_p == '' and $line!=='') {
+        $p_closeopen=$this->_div(1,$in_div,$div_enclose);
         $in_p= $line;
       }
 
@@ -2640,12 +2645,12 @@ class Formatter {
       }
 
       #if (!$in_pre && !$in_table && preg_match("/^\|\|.*\|\|$/",$line)) {
-      if (!$in_pre && $line[0]=='|' && !$in_table && preg_match("/^((\|\|)+)(&lt;[^>\|]+>)?(.*)\|\|$/",$line,$match)) {
+      if (!$in_pre && $line[0]=='|' && !$in_table && preg_match("/^((\|\|)+)(&lt;[^>\|]+>)?(.*)\|\|$/s",$line,$match)) {
         $open.=$this->_table(1,$match[3]);
         if (!$match[3]) $line=$match[1].$match[4].'||';
         $in_table=1;
       #} elseif ($in_table && !preg_match("/^\|\|.*\|\|$/",$line)){
-      } elseif ($in_table && $line[0]!='|' && !preg_match("/^\|\|.*\|\|$/",$line)){
+      } elseif ($in_table && $line[0]!='|' && !preg_match("/^\|\|.*\|\|$/s",$line)){
          $close=$this->_table(0,$dumm).$close;
          $in_table=0;
       }
@@ -2656,9 +2661,10 @@ class Formatter {
         $row='';
         for ($i=1,$s=sizeof($cells);$i<$s;$i+=2) {
           $align='';$attr='';
-          preg_match('/^((&lt;[^>]+>)?)(\s?)(.*)(?<!\s)(\s*)?$/',
+          preg_match('/^((&lt;[^>]+>)?)(\s?)(.*)(?<!\s)(\s*)?$/s',
             $cells[$i+1],$m);
           $cell=$m[3].$m[4].$m[5];
+          $cell=str_replace("\n","<br />\n",$cell);
           if ($m[3] and $m[5]) $align='align="center"';
           else if (!$m[3]) $align='';
           else if (!$m[5]) $align='align="right"';
@@ -2675,8 +2681,27 @@ class Formatter {
       $line=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$line);
 
       # Headings
-      $line=preg_replace("/(?<!=)(={1,5})\s+(.*)\s+\\1\s?$/e",
-                         "\$this->head_repl('\\1','\\2')",$line);
+      if (preg_match("/(?<!=)(={1,5})\s+(.*)\s+\\1\s?$/",$line,$m)) {
+        $this->sect_num++;
+        if ($p_closeopen) { // ignore last open
+          $p_closeopen='';
+          $this->_div(0,$in_div,$div_enclose);
+        }
+
+        while($in_div > 0)
+          $p_closeopen.=$this->_div(0,$in_div,$div_enclose);
+        $p_closeopen.=$this->_div(1,$in_div,$div_enclose);
+        $in_p='';
+        if ($this->section_edit && !$this->preview) {
+          $url=$this->link_url($this->page->urlname,
+            '?action=edit&amp;section='.$this->sect_num);
+          $edit="<div class='sectionEdit' style='float:right;'>[<a href='$url'>edit</a>]</div>\n";
+          $anchor_id='sect-'.$this->sect_num;
+          $anchor="<a id='$anchor_id' name='$anchor_id'></a>";
+        }
+        $line=$anchor.$edit.$this->head_repl($m[1],$m[2]);
+        $edit='';$anchor='';
+      }
       #$line=preg_replace("/(?<!=)(={1,5})\s+(.*)\s+(={1,5})\s?$/",
       #                    $this->head_repl("$1","$2","$3"),$line);
 
@@ -2692,7 +2717,7 @@ class Formatter {
       #if ($this->auto_linebreak and preg_match('/<div>$/',$line))
       #  $this->nobr=1;
 
-      $line=$close.$p_close.$open.$line;
+      $line=$close.$p_closeopen.$open.$line;
       $open="";$close="";
 
       if ($in_pre==-1) {
@@ -3124,7 +3149,7 @@ EOS;
       $args['editable']=-1;
     
     $menus=$this->get_actions($args,$options);
-    if ($DBInfo->use_oldstyle==1) {
+    if (!$DBInfo->css_friendly) {
       $menu=$this->menu_bra.implode($this->menu_sep,$menus).$this->menu_cat;
     } else {
       $menu="<div id='wikiAction'>";
@@ -3173,7 +3198,7 @@ FOOT;
     } else {
       print "<div id='wikiFooter'>";
       print $menu;
-      if ($DBInfo->use_oldstyle) print $banner;
+      if (!$DBInfo->css_friendly) print $banner;
       else print "<div id='wikiBanner'>$banner</div>\n";
       print "\n</div>\n";
     }
@@ -3191,11 +3216,14 @@ FOOT;
 
     # find upper page
     $pos=strrpos($name,"/");
+    $myname=$name;
     if ($pos > 0) {
       $upper=substr($name,0,$pos);
       $upper_icon=$this->link_tag($upper,'',$this->icon['upper'])." ";
     } else if ($this->group) {
-      $upper=_urlencode(substr($this->page->name,strlen($this->group)));
+      $group=$this->group;
+      $myname=substr($this->page->name,strlen($group));
+      $upper=_urlencode($myname);
       $upper_icon=$this->link_tag($upper,'',$this->icon['main'])." ";
     }
 
@@ -3206,10 +3234,8 @@ FOOT;
       $title=htmlspecialchars($title);
     }
     if (!$title) {
-      if ($this->group) { # for UserNameSpace
-        $group=$this->group;
-        $title=substr($this->page->name,strlen($group));
-        $name=$title;
+      if ($group) { # for UserNameSpace
+        $title=$myname;
         $group="<div class='wikiGroup'>".(substr($group,0,-1))." &raquo;</div>";
       } else     
         $title=$this->page->title;
@@ -3221,7 +3247,7 @@ FOOT;
     if ($link)
       $title="<a href=\"$link\" class='wikiTitle'>$title</a>";
     else if (empty($options['nolink']))
-      $title=$this->link_to("?action=fullsearch&amp;value="._urlencode($name),$title,"class='wikiTitle'");
+      $title=$this->link_to("?action=fullsearch&amp;value="._urlencode($myname),$title,"class='wikiTitle'");
     $logo=$this->link_tag($DBInfo->logo_page,'',$DBInfo->logo_string);
     $goto_form=$DBInfo->goto_form ?
       $DBInfo->goto_form : goto_form($action,$DBInfo->goto_type);
@@ -3257,9 +3283,13 @@ MSG;
       }
     }
     $this->sister_on=$sister_save;
-    if ($DBInfo->use_oldstyle) {
+    if (!$DBInfo->css_friendly) {
       $menu=$this->menu_bra.join($this->menu_sep,$menu).$this->menu_cat;
     } else {
+      #for ($i=0,$szm=sizeof($menu);$i<$szm;$i++) {
+      #  #if $menu[$i]==
+      #  $menu[$i]="<li >".$menu[$i]."</li>\n";
+      #}
       $menu='<div id="wikiMenu"><ul><li>'.implode("</li>\n<li>",$menu)."</li></ul></div>\n";
     }
 
@@ -3313,7 +3343,7 @@ MSG;
       # menu
       print "<div id='wikiHeader'>\n";
       print $header;
-      if ($DBInfo->use_oldstyle)
+      if (!$DBInfo->css_friendly)
         print $menu." ".$user_link." ".$upper_icon.$icons.$home.$rss_icon;
       else {
         print "<div id='wikiLogin'>".$user_link."</div>";
