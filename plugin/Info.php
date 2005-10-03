@@ -5,7 +5,7 @@
 //
 // $Id$
 
-function _parse_rlog($formatter,$log) {
+function _parse_rlog($formatter,$log,$options=array()) {
   global $DBInfo;
 
   $user=new User(); # get cookie
@@ -33,10 +33,17 @@ function _parse_rlog($formatter,$log) {
   $users=array();
  
   #foreach ($lines as $line) {
+  $count=0;
+  $showcount=($options['count']>5) ? $options['count']: 10;
   for($line = strtok($log, "\n"); $line !== false; $line = strtok("\n")) {
     if (!$state) {
       if (!preg_match("/^---/",$line)) { continue;}
       else {$state=1; continue;}
+    }
+    if ($state==1 and $ok==1) {
+      $lnk=$formatter->link_to("?action=info&all=1",_("Show all revisions"));
+      $out.='<tr><td colspan="3"></td><th colspan="3">'.$lnk.'</th></tr>';
+      break;
     }
     
     switch($state) {
@@ -109,6 +116,8 @@ function _parse_rlog($formatter,$log) {
             $out.="<tr><td class='info' colspan='5'>$comment&nbsp;</td></tr>\n";
          $state=1;
          $flag++;
+         $count++;
+         if ($options['all']!=1 and $count >=$showcount) $ok=1;
          break;
      }
   }
@@ -122,12 +131,8 @@ function _parse_rlog($formatter,$log) {
   return $out; 
 }
 
-
-function do_info($formatter,$options) {
+function macro_info($formatter,$value,$options=array()) {
   global $DBInfo;
-  $formatter->send_header("",$options);
-  $formatter->send_title(sprintf(_("Info. for %s"),$options['page']),"",$options);
-
   if ($DBInfo->version_class) {
     getModule('Version',$DBInfo->version_class);
     $class="Version_".$DBInfo->version_class;
@@ -136,15 +141,24 @@ function do_info($formatter,$options) {
 
     if (!$out) {
       $msg=_("No older revisions available");
-      print "<h2>$msg</h2>";
+      $info= "<h2>$msg</h2>";
     } else {
-      print _parse_rlog($formatter,$out);
+      $info= _parse_rlog($formatter,$out,$options);
     }
   } else {
     $msg=_("Version info is not available in this wiki");
-    print "<h2>$msg</h2>";
+    $info= "<h2>$msg</h2>";
   }
+  return $info;
+}
 
+
+function do_info($formatter,$options) {
+  global $DBInfo;
+  $formatter->send_header("",$options);
+  $formatter->send_title(sprintf(_("Info. for %s"),$options['page']),"",$options);
+
+  print macro_info($formatter,'',$options);
   $formatter->send_footer($args,$options);
 }
 
