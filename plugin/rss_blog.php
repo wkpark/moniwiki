@@ -6,8 +6,7 @@
 //
 // $Id$
 
-if (!function_exists('macro_BlogChanges'))
-  if ($plugin=getPlugin('BlogChanges')) include_once("plugin/$plugin.php");
+include_once("plugin/BlogChanges.php");
 
 function do_rss_blog($formatter,$options) {
   global $DBInfo;

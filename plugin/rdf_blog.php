@@ -6,8 +6,7 @@
 // from Id: rss_blog.php,v 1.11 2003/10/17 03:51:26 wkpark Exp
 // $Id$
 
-if (!function_exists('macro_BlogChanges'))
-  if ($plugin=getPlugin('BlogChanges')) include_once("plugin/$plugin.php");
+include_once("plugin/BlogChanges.php");
 
 function do_rdf_blog($formatter,$options) {
   global $DBInfo;
