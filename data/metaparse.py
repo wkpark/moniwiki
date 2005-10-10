@@ -67,6 +67,8 @@ class MetaWiki:
         ("AllPages", NO_CUT_REGEX, 'class="wiki">(.*?)<'),
       "tavi":
         ("action=find", "<div id=\"body\">(.*?)</div>", '\?page=([^"]+)"'),
+      "TWiki":
+        ("?topic=WebIndex",NO_CUT_REGEX,TWIKI_MATCH_REGEX),
       "PediaIndex":
         ("Special:Allpages",
          '^<table>(.*)</table>',
