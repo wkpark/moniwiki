@@ -1731,6 +1731,7 @@ class Formatter {
   }
 
   function link_repl($url,$attr='') {
+    #if ($url[0]=='<') { print $url;return $url;}
     $url=str_replace('\"','"',$url);
     if ($url[0]=="[") {
       $url=substr($url,1,-1);
@@ -2317,7 +2318,7 @@ class Formatter {
     if (preg_match("/^\|(\d+)$/",$para,$match))
       $attr[]="rowspan='$match[1]'";
     else if ($para[0]=='#')
-      $attr[]="bgcolor='$para'";
+      $attr[]="bgcolor='".strtolower($para)."'";
     else
       $attr[]=$para;
     return implode(' ',$attr).' ';
@@ -2332,6 +2333,7 @@ class Formatter {
       $tattr=substr($tattr,5);
       $attr='';
     } else {
+      if ($tattr=='') $attr='';
       $tattr='';
     }
     return "<table class='wiki' cellpadding='3' cellspacing='2' $tattr>\n";
@@ -2591,6 +2593,7 @@ class Formatter {
       $line=$nc;
       #$line=preg_replace($this->baserule,$this->baserepl,$line);
       #if ($in_p and ($in_pre==1 or $in_li)) $line=$this->_check_p().$line;
+      $line=preg_replace('/(&lt;)(\/)?(ins|del)/','<\\2\\3',$nc);
 
       # bullet and indentation
       if ($in_pre != -1 && preg_match("/^(\s*)/",$line,$match)) {
@@ -2645,7 +2648,7 @@ class Formatter {
       }
 
       #if (!$in_pre && !$in_table && preg_match("/^\|\|.*\|\|$/",$line)) {
-      if (!$in_pre && $line[0]=='|' && !$in_table && preg_match("/^((\|\|)+)(&lt;[^>\|]+>)?(.*)\|\|$/s",$line,$match)) {
+      if (!$in_pre && $line[0]=='|' && !$in_table && preg_match("/^((\|\|)+)(&lt;[^>\|]*>)?(.*)\|\|$/s",$line,$match)) {
         $open.=$this->_table(1,$match[3]);
         if (!$match[3]) $line=$match[1].$match[4].'||';
         $in_table=1;
@@ -2693,9 +2696,14 @@ class Formatter {
         $p_closeopen.=$this->_div(1,$in_div,$div_enclose);
         $in_p='';
         if ($this->section_edit && !$this->preview) {
+          $act='edit';
+          if ($DBInfo->use_ajax) {
+            $onclick=' Onclick="javascript:sectionEdit(null,this,'.
+              $this->sect_num.');return false;"';
+          }
           $url=$this->link_url($this->page->urlname,
-            '?action=edit&amp;section='.$this->sect_num);
-          $edit="<div class='sectionEdit' style='float:right;'>[<a href='$url'>edit</a>]</div>\n";
+            '?action='.$act.'&amp;section='.$this->sect_num);
+          $edit="<div class='sectionEdit' style='float:right;'>[<a href='$url'$onclick>edit</a>]</div>\n";
           $anchor_id='sect-'.$this->sect_num;
           $anchor="<a id='$anchor_id' name='$anchor_id'></a>";
         }
@@ -2815,63 +2823,6 @@ class Formatter {
     }
 
     if ($options['pagelinks']) $this->store_pagelinks();
-  }
-
-  function simple_diff($diff) {
-    $diff=str_replace("<","&lt;",$diff);
-    $out="";
-    //unset($lines[0]); unset($lines[1]); // XXX
-
-    for ($line=strtok($diff,"\n"); $line !== false;$line=strtok("\n")) {
-      $marker=$line[0];
-      $line=substr($line,1);
-      if ($marker=="@") $line='<div class="diff-sep">@'."$line</div>";
-      else if ($marker=="-") $line='<div class="diff-removed">'."$line</div>";
-      else if ($marker=="+") $line='<div class="diff-added">'."$line</div>";
-      else if ($marker=="\\" && $line==" No newline at end of file") continue;
-      else $line.="<br />";
-      $out.=$line."\n";
-    }
-    return $out;
-  }
-
-  function fancy_diff($diff) {
-    global $DBInfo;
-    include_once("lib/difflib.php");
-    $diff=str_replace("<","&lt;",$diff);
-    $lines=explode("\n",$diff);
-    $out="";
-    #unset($lines[0]); unset($lines[1]);
-
-    $omarker=0;
-    $orig=array();$new=array();
-    foreach ($lines as $line) {
-      $marker=$line[0];
-      $line=substr($line,1);
-      if ($marker=="@") $line='<div class="diff-sep">@'."$line</div>";
-      else if ($marker=="-") {
-        $omarker=1; $orig[]=$line; continue;
-      }
-      else if ($marker=="+") {
-        $omarker=1; $new[]=$line; continue;
-      }
-      else if ($omarker) {
-        $omarker=0;
-        $buf="";
-        $result = new WordLevelDiff($orig, $new, $DBInfo->charset);
-        foreach ($result->orig() as $ll)
-          $buf.= "<div class=\"diff-removed\">$ll</div>\n";
-        foreach ($result->_final() as $ll)
-          $buf.= "<div class=\"diff-added\">$ll</div>\n";
-        $orig=array();$new=array();
-        $line=$buf.$line."<br />";
-      }
-      else if ($marker==" " and !$omarker)
-        $line.="<br />";
-      else if ($marker=="\\" && $line==" No newline at end of file") continue;
-      $out.=$line."\n";
-    }
-    return $out;
   }
 
   function get_merge($text,$rev="") {
@@ -3595,6 +3546,9 @@ if (isset($locale)) {
       break;
     }
   }
+  if ($DBInfo->set_lang) putenv("LANG=".$lang);
+  if (function_exists('bind_textdomain_codeset'))
+    bind_textdomain_codeset ('moniwiki', $DBInfo->charset);
 }
 
 $pagename=get_pagename();
