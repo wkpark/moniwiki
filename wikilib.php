@@ -164,6 +164,35 @@ function get_title($page) {
   return preg_replace("/((?<=[a-z0-9]|[B-Z]{2})([A-Z][a-z]))/"," \\1",$title);
 }
 
+// from php.net
+//
+// It seems that the best solution would be to use HMAC-MD5.
+// An implementation of HMAC-SHA1 was posted by mark on 30-Jan-2004 02:28
+// as a user comment to sha1() function
+// (-> http://php.net/manual/function.sha1.php#39492).
+// Here's how it would look like
+// (some other optimizations/modifications are included as well):
+// Calculate HMAC according to RFC2104
+// http://www.ietf.org/rfc/rfc2104.txt
+//
+function hmac($key, $data, $hash = 'md5', $blocksize = 64) {
+  if (strlen($key)>$blocksize) {
+   $key = pack('H*', $hash($key));
+  }
+  $key  = str_pad($key, $blocksize, chr(0));
+  $ipad = str_repeat(chr(0x36), $blocksize);
+  $opad = str_repeat(chr(0x5c), $blocksize);
+  return $hash(($key^$opad) . pack('H*', $hash(($key^$ipad) . $data)));
+}
+
+// Remember to initialize MT (using mt_srand() ) if required
+function pw_encode($password) {
+  $seed = substr('00' . dechex(mt_rand()), -3) .
+   substr('00' . dechex(mt_rand()), -3) .
+   substr('0' . dechex(mt_rand()), -2);
+  return hmac($seed, $password, 'md5', 64) . $seed;
+}
+
 function getTicket($seed,$extra='',$size=0,$flag=0) {
   global $DBInfo;
   # make the site specific ticket based on the variables in the config.php
@@ -382,11 +411,15 @@ class User {
      return "Set-Cookie: MONI_ID=".$this->id."; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname();
   }
 
-  function setPasswd($passwd,$passwd2="") {
+  function setPasswd($passwd,$passwd2="",$rawmode=0) {
      if (!$passwd2) $passwd2=$passwd;
      $ret=$this->validPasswd($passwd,$passwd2);
-     if ($ret > 0)
-        $this->info['password']=crypt($passwd);
+     if ($ret > 0) {
+        if ($rawmode)
+           $this->info['password']=$passwd;
+        else
+           $this->info['password']=crypt($passwd);
+     }
 #     else
 #        $this->info[password]="";
      return $ret;
@@ -474,14 +507,14 @@ function macro_EditHints($formatter) {
 
 function macro_EditText($formatter,$value,$options='') {
   global $DBInfo;
-  if ($DBInfo->hasPage('EditTextForm')) {
+  if (!$options['simple'] and $DBInfo->hasPage('EditTextForm')) {
     $p=$DBInfo->getPage('EditTextForm');
     $form=$p->get_raw_body();
     $f=new Formatter($p);
 
     $form=preg_replace('/\[\[EditText\]\]/i','#editform',$form);
     ob_start();
-    $f->send_page(rtrim($form),$options);
+    $formatter->send_page(rtrim($form),$options);
     $form= ob_get_contents();
     ob_end_clean();
 
@@ -508,6 +541,25 @@ function do_edit($formatter,$options) {
   $formatter->send_title(sprintf(_("Edit %s"),$options['page']).$sec,"",$options);
   print macro_EditText($formatter,$value,$options);
   $formatter->send_footer($args,$options);
+}
+
+function ajax_edit($formatter,$options) {
+  global $DBInfo;
+  if (!$DBInfo->security->writable($options)) {
+    $formatter->preview=0;
+    ajax_invalid($formatter,$options);
+    return;
+  }
+  if ($options['section'])
+    $sec=' (Section)';
+  $options['simple']=1;
+  $options['nohints']=1;
+  $options['nomenu']=1;
+  $options['nocategories']=1;
+  $options['noresizer']=1;
+  $options['rows']=12;
+  $formatter->header('Content-type:text/html;charset='.$DBInfo->charset);
+  print macro_EditText($formatter,$value,$options);
 }
 
 function _get_sections($body,$lim=5) {
@@ -586,7 +638,8 @@ function macro_Edit($formatter,$value,$options='') {
             '" />';
 
   # make a edit form
-  $form.= "<a id='editor' name='editor' />\n";
+  if (!$options['simple'])
+    $form.= "<a id='editor' name='editor' />\n";
 
   if ($options['page'])
     $previewurl=$formatter->link_url(_rawurlencode($options['page']),'#preview');
@@ -596,7 +649,7 @@ function macro_Edit($formatter,$value,$options='') {
   $menu= '';
   if ($preview)
     $menu= $formatter->link_to('#preview',_("Skip to preview"));
-  else {
+  else if (!$options['noresizer']) {
     $menu= $formatter->link_to("?action=edit&amp;rows=".($rows-3),_("ReduceEditor"));
     $menu.= ' | '.$formatter->link_to("?action=edit&amp;rows=".($rows+3),_("EnlargeEditor"));
   }
@@ -607,7 +660,11 @@ function macro_Edit($formatter,$value,$options='') {
   }
 
   $form.=$menu;
-  $form.= sprintf('<form name="editform" method="post" action="%s">', $previewurl);
+  if ($options['action_mode']=='ajax' and $DBInfo->use_ajax) {
+    $ajax=" onsubmit='savePage(this);return false'";
+  }
+  $form.= sprintf('<form name="editform" method="post" action="%s"'.$ajax.'>',
+    $previewurl);
   if ($text) {
     $raw_body = preg_replace("/\r\n|\r/", "\n", $text);
   } else if ($formatter->page->exists()) {
@@ -639,6 +696,7 @@ function macro_Edit($formatter,$value,$options='') {
   $raw_body = str_replace(array("&","<"),array("&amp;","&lt;"),$raw_body);
 
   # get categories
+  if (!$options['nocategories']) {
   $categories=array();
   $categories= $DBInfo->getLikePages($DBInfo->category_regex);
   if ($categories) {
@@ -654,8 +712,12 @@ function macro_Edit($formatter,$value,$options='') {
       $extra_check=' '._('Minor edit')."<input type='checkbox' tabindex='3' name='minor' />";
     }
   }
+  }
 
-  $preview_msg=_("Preview");
+  if (!$options['simple']) {
+    $preview_btn='<input type="submit" tabindex="6" name="button_preview" '.
+      'value="'._("Preview").'" />';
+  }
   $save_msg=_("Save");
   $summary_msg=_("Summary of Change");
   if ($DBInfo->use_resizer) {
@@ -688,13 +750,14 @@ $summary_msg: <input name="comment" size="70" maxlength="70" style="width:200" t
 $hidden$select_category
 <input type="submit" tabindex="5" value="$save_msg" />&nbsp;
 <!-- <input type="reset" value="Reset" />&nbsp; -->
-<input type="submit" tabindex="6" name="button_preview" value="$preview_msg" />
+$preview_btn
 $extra
 </form>
 EOS;
   if (!$options['nohints'])
     $form.= macro_EditHints($formatter);
-  $form.= "<a id='preview' name='preview'></a>";
+  if (!$options['simple'])
+    $form.= "<a id='preview' name='preview'></a>";
   return $form;
 }
 
@@ -1421,8 +1484,22 @@ function macro_UserPreferences($formatter,$value,$options='') {
     $udb=new UserDB($DBInfo);
     $udb->checkUser($user);
   }
-  $url=$formatter->link_url("UserPreferences");
 
+  $jscript='';
+  if ($DBInfo->use_safelogin) {
+    $onsubmit=' onsubmit="javascript:password.value=hex_hmac_md5(challenge.value, hex_md5(password.value))"';
+    $jscript.="<script src='$DBInfo->url_prefix/local/md5.js'></script>";
+    $time_seed=time();
+    $chall=md5(base64_encode(getTicket($time_seed,$_SERVER['REMOTE_ADDR'],10)));
+    $passwd_hidden="<input type='hidden' name='_seed' value='$time_seed' />";
+    $passwd_hidden.="<input type='hidden' name='challenge' value='$chall' />\n";
+    $pw_length=32;
+  } else {
+    $pw_length=20;
+  }
+
+  $passwd_btn=_("Password");
+  $url=$formatter->link_url("UserPreferences");
   # setup form
   if ($user->id == 'Anonymous') {
     if ($options['login_id'])
@@ -1435,13 +1512,14 @@ function macro_UserPreferences($formatter,$value,$options='') {
   $button=_("Login");
   if ($user->id == 'Anonymous' and !isset($options['login_id']) and $value!="simple")
     $login=<<<FORM
-<form method="post" action="$url">
+<form method="post" action="$url"$onsubmit>
 <input type="hidden" name="action" value="userform" />
 <table border="0">
   <tr><td><b>ID</b>&nbsp;</td><td>$idform</td></tr>
   <tr>
-     <td><b>Password</b>&nbsp;</td><td><input type="password" size="15" maxlength="12" name="password" value="" />
+     <td><b>$passwd_btn</b>&nbsp;</td><td><input type="password" size="15" maxlength="$pw_len" name="password" value="" />
   <tr><td></td><td>
+    $passwd_hidden
     <input type="submit" name="login" value="$button" /> &nbsp;
   </td></tr>
 </table>
@@ -1452,7 +1530,9 @@ FORM;
     if (isset($options['login_id']) or $_GET['join'] or $value!="simple") {
       $passwd=$options['password'];
       $button=_("Make profile");
-      $again="<b>"._("password again")."</b>&nbsp;<input type='password' size='15' maxlength='12' name='passwordagain' value='' /></td></tr>";
+      if (!$DBInfo->use_safelogin) {
+        $again="<b>"._("password again")."</b>&nbsp;<input type='password' size='15' maxlength='$pw_len' name='passwordagain' value='' /></td></tr>";
+      }
       $mailbtn=_("Mail");
       $extra=<<<EXTRA
   <tr><td><b>$mailbtn</b>&nbsp;</td><td><input type="text" size="40" name="email" value="$email" /></td></tr>
@@ -1473,7 +1553,7 @@ EXTRA;
     $css=$user->info['css_url'];
     $email=$user->info['email'];
     $tz_offset=$user->info['tz_offset'];
-    $again="<b>"._("New password")."</b>&nbsp;<input type='password' size='15' maxlength='12' name='passwordagain' value='' /></td></tr>";
+    $again="<b>"._("New password")."</b>&nbsp;<input type='password' size='15' maxlength='$pw_len' name='passwordagain' value='' /></td></tr>";
 
     $tz_off=date('Z');
     for ($i=-47;$i<=47;$i++) {
@@ -1490,7 +1570,7 @@ EXTRA;
       $opts.="<option value='$z'$selected>$tz [$z]</option>\n";
     }
 
-    $jscript="<script src='$DBInfo->url_prefix/local/tz.js'></script>";
+    $jscript.="<script src='$DBInfo->url_prefix/local/tz.js'></script>";
     $extra=<<<EXTRA
   <tr><td><b>Mail</b>&nbsp;</td><td><input type="text" size="40" name="email" value="$email" /></td></tr>
   <tr><td><b>Time Zone</b>&nbsp;</td><td><select name="timezone">
@@ -1509,15 +1589,25 @@ setTimezone();
 </script>
 EOF;
 
+  if (!$DBInfo->use_safelogin or $button==_("Save")) {
+    $passwd_inp=<<<PASS
+  <tr>
+     <td><b>$passwd_btn</b>&nbsp;</td><td><input type="password" size="15" maxlength="$pw_len" name="password" value="$passwd" />
+PASS;
+
+  } else {
+    $onsubmit='';
+    $passwd_hidden='';
+  }
   return <<<EOF
 $login
 $jscript
-<form method="post" action="$url">
+<form method="post" action="$url"$onsubmit>
 <input type="hidden" name="action" value="userform" />
 <table border="0">
   <tr><td><b>ID</b>&nbsp;</td><td>$idform</td></tr>
-  <tr>
-     <td><b>Password</b>&nbsp;</td><td><input type="password" size="15" maxlength="12" name="password" value="$passwd" />
+    $passwd_inp
+    $passwd_hidden
     $again
     $extra
   <tr><td></td><td>
