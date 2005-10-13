@@ -5,11 +5,119 @@
 //
 // $Id$
 
+function simple_diff($diff) {
+  $diff=str_replace("<","&lt;",$diff);
+  $out="";
+  //unset($lines[0]); unset($lines[1]); // XXX
+
+  for ($line=strtok($diff,"\n"); $line !== false;$line=strtok("\n")) {
+    $marker=$line[0];
+    $line=substr($line,1);
+    if ($marker=="@") $line='<div class="diff-sep">@'."$line</div>";
+    else if ($marker=="-") $line='<div class="diff-removed">'."$line</div>";
+    else if ($marker=="+") $line='<div class="diff-added">'."$line</div>";
+    else if ($marker=="\\" && $line==" No newline at end of file") continue;
+    else $line.="<br />";
+    $out.=$line."\n";
+  }
+  return $out;
+}
+
+function fancy_diff($diff,$options=array()) {
+  global $DBInfo;
+  include_once("lib/difflib.php");
+  $diff=str_replace("<","&lt;",$diff);
+  $lines=explode("\n",$diff);
+  $out="";
+  #unset($lines[0]); unset($lines[1]);
+
+  $omarker=0;
+  $orig=array();$new=array();
+  foreach ($lines as $line) {
+    $marker=$line[0];
+    $line=substr($line,1);
+    if ($marker=="@") $line='<div class="diff-sep">@'."$line</div>";
+    else if ($marker=="-") {
+      $omarker=1; $orig[]=$line; continue;
+    }
+    else if ($marker=="+") {
+      $omarker=1; $new[]=$line; continue;
+    }
+    else if ($omarker) {
+      $omarker=0;
+      $buf="";
+      $result = new WordLevelDiff($orig, $new, $DBInfo->charset);
+      if ($options['oldstyle']) {
+        foreach ($result->orig() as $ll)
+          $buf.= "<div class=\"diff-removed\">$ll</div>\n";
+        foreach ($result->_final() as $ll)
+          $buf.= "<div class=\"diff-added\">$ll</div>\n";
+      } else {
+        foreach ($result->all() as $ll)
+          $buf.= "<div class=\"diff\">$ll</div>\n";
+      }
+      $orig=array();$new=array();
+      $line=$buf.$line."<br />";
+    }
+    else if ($marker==" " and !$omarker)
+      $line.="<br />";
+    else if ($marker=="\\" && $line==" No newline at end of file") continue;
+    $out.=$line."\n";
+  }
+  return $out;
+}
+
+function smart_diff($diff) {
+  global $DBInfo;
+  include_once("lib/difflib.php");
+  $diff=str_replace("<","&lt;",$diff);
+  $lines=explode("\n",$diff);
+  #unset($lines[0]); unset($lines[1]);
+  $newlines=array();
+
+  $omarker=0;
+  $orig=array();$new=array();
+  foreach ($lines as $line) {
+    $marker=$line[0];
+    $line=substr($line,1);
+    if ($marker=="@" and preg_match('/^@\s\-\d+,\d+\s\+(\d+),\d+\s@@/',$line,$mat))
+      $lp=$mat[1];
+    else if ($marker=="-") {
+      $omarker=1; $orig[]=$line; continue;
+    }
+    else if ($marker=="+") {
+      $omarker=1; $new[]=$line; continue;
+    }
+    else if ($omarker) {
+      $count=sizeof($new);
+      $omarker=0;
+      $buf='';
+      $result = new WordLevelDiff($orig, $new, $DBInfo->charset);
+      foreach ($result->all() as $ll)
+        $buf.= $ll."\n";
+      $orig=array();$new=array();
+      $newlines[$lp-1]=$buf;
+      for ($i=$count-1;$i>0;$i--) $newlines[$lp+$i-1]=null;
+    }
+    else if ($marker==" " and !$omarker) {
+      $lp++;
+    }
+    else if ($marker=="\\" && $line==" No newline at end of file") continue;
+  }
+  return $newlines;
+}
+
+
 function macro_diff($formatter,$value,&$options)
 {
   global $DBInfo;
 
   $option='';
+
+  if ($options['type'] and function_exists($options['type'].'_diff'))
+    $type=$options['type'].'_diff';
+  else
+    $type=$DBInfo->diff_type.'_diff';
 
   if ($options['text']) {
     if (0) {
@@ -40,13 +148,13 @@ function macro_diff($formatter,$value,&$options)
     }
 
     if (!$out) {
-       $msg=_("No difference found");
+      $msg=_("No difference found");
     } else {
-       $msg= _("Difference between yours and the current");
-       if (!$options['raw'])
-         $ret=call_user_func(array(&$formatter,$DBInfo->diff_type.'_diff'),$out);
-       else
-         $ret="<pre>$out</pre>\n";
+      $msg= _("Difference between yours and the current");
+      if (!$options['raw'])
+        $ret=call_user_func($type,$out);
+      else
+        $ret="<pre>$out</pre>\n";
     }
     if ($options['nomsg']) return $ret;
     return "<h2>$msg</h2>\n$ret";
@@ -88,8 +196,24 @@ function macro_diff($formatter,$value,&$options)
     else if ($rev1 or $rev2) {
       $msg=sprintf(_("Difference between r%s and the current"),$rev1.$rev2);
     }
-    if (!$options['raw'])
-      $ret= call_user_func(array(&$formatter,$DBInfo->diff_type.'_diff'),$out);
+    if (!$options['raw']) {
+      #print "<pre>$out</pre>";
+      $ret= call_user_func($type,$out);
+      if (is_array($ret)) {
+        $rev=$rev2 ? $rev2:$rev1;
+        $current=$formatter->page->get_raw_body(array('rev'=>$rev));
+        $lines=explode("\n",$current);
+        #print_r($lines);
+        #print_r($ret);
+        foreach ($lines as $k => $v)
+          if (isset($ret[$k])) $lines[$k] = $ret[$k];
+        #print_r($lines);
+        $diffed=implode("\n",$lines);
+        $options['nomsg']=1;
+        return $formatter->send_page($diffed);
+        #return "<pre>$diffed</pre>";
+      }
+    }
     else
       $ret="<pre>$out</pre>\n";
   }
@@ -121,10 +245,11 @@ function do_diff($formatter,$options="") {
     do_RcsPurge($formatter,$options);
     return;
   }
+  if ($DBInfo->smart_diff) $options['type']='smart';
   $formatter->send_header("",$options);
   $formatter->send_title("Diff for $rev ".$options['page'],"",$options);
   if ($date) {
-   $options['rev']=$date;
+    $options['rev']=$date;
     print macro_diff($formatter,'',$options);
   }
   else
