@@ -852,14 +852,18 @@ class _HWLDF_WordAccumulator {
         $this->_line = '';
         $this->_group = '';
         $this->_tag = '';
+        $this->_tag_del_open="<del class='diff-removed'>";
+        $this->_tag_del_close="</del>";
+        $this->_tag_ins_open="<ins class='diff-added'>";
+        $this->_tag_ins_close="</ins>";
     }
 
     function _flushGroup ($new_tag) {
         if ($this->_group !== '') {
 	  if ($this->_tag == 'del') 
-            $this->_line .= "<del class='diff-removed'>$this->_group</del>";
+            $this->_line .= $this->_tag_del_open.$this->_group.$this->_tag_del_close;
 	  else if ($this->_tag == 'ins')
-	    $this->_line .= "<ins class='diff-added'>$this->_group</ins>";
+            $this->_line .= $this->_tag_ins_open.$this->_group.$this->_tag_ins_close;
 	  else
 	    $this->_line .= $this->_group;
 	}
@@ -900,17 +904,17 @@ class _HWLDF_WordAccumulator {
 
 class WordLevelDiff extends MappedDiff
 {
-    function WordLevelDiff ($orig_lines, $_final_lines,$charset="euc-kr") {
+    function WordLevelDiff ($orig_lines, $final_lines,$charset="euc-kr") {
         if (strtolower($charset) == 'euc-kr') # two bytes sequence rule
           $this->charset_rule='[\xb0-\xfd][\xa1-\xfe]|';
         else if (strtolower($charset) == 'utf-8') # three bytes sequence
           $this->charset_rule='[\xE1-\xEF][\x80-\xBF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|';
         
         list ($orig_words, $orig_stripped) = $this->_split($orig_lines);
-        list ($_final_words, $_final_stripped) = $this->_split($_final_lines);
+        list ($final_words, $final_stripped) = $this->_split($final_lines);
 
-        $this->MappedDiff($orig_words, $_final_words,
-                          $orig_stripped, $_final_stripped);
+        $this->MappedDiff($orig_words, $final_words,
+                          $orig_stripped, $final_stripped);
     }
 
     function _split($lines) {
@@ -946,6 +950,22 @@ class WordLevelDiff extends MappedDiff
                 $_final->addWords($edit->_final, 'ins');
         }
         return $_final->getLines();
+    }
+    function all () {
+        $text = new _HWLDF_WordAccumulator;
+
+        foreach ($this->edits as $edit) {
+            if ($edit->type == 'copy')
+                $text->addWords($edit->orig);
+            else {
+                #print "$edit->type:";
+                if ($edit->orig)
+                    $text->addWords($edit->orig, 'del');
+            	if ($edit->_final)
+                    $text->addWords($edit->_final, 'ins');
+            }
+        }
+        return $text->getLines();
     }
 }
 
