@@ -116,6 +116,11 @@ function do_Blog($formatter,$options) {
     $lines=explode("\n",$raw_body);
     $count=count($lines);
 
+    if ($options['id'] == 'Anonymous') {
+      $id=$options['name'] ?
+        _stripslashes($options['name']):$_SERVER['REMOTE_ADDR'];
+    } else $id=$options['id'];
+
     if ($options['value']) {
       # add comment
       for ($i=0;$i<$count;$i++) {

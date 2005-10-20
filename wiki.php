@@ -935,13 +935,10 @@ class WikiDB {
 
     $time=gmdate("Y-m-d\TH:i:s");
 
-    $id=$options['id'];
-    if ($id != 'Anonymous') {
-      if (!preg_match('/([A-Z][a-z0-9]+){2,}/',$id)) $id='['.$id.']';
-    } else  {
+    if ($options['id'] == 'Anonymous') {
       $id=$options['name'] ?
         _stripslashes($options['name']):$_SERVER['REMOTE_ADDR'];
-    }
+    } else $id=$options['id'];
  
     $body=preg_replace("/@DATE@/","[[Date($time)]]",$body);
     $body=preg_replace("/@USERNAME@/","$id",$body);
