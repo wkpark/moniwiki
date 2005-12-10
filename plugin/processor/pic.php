@@ -43,7 +43,7 @@ function processor_pic($formatter,$value="") {
     fclose($ifp);
 
     # convert processing
-    $fp=popen("$GROFF $outpath_pic >$outpath_ps ; $CONVERT $outpath_ps $outpath_png","w");
+    $fp=popen("$GROFF $outpath_pic >$outpath_ps ; $CONVERT $outpath_ps $outpath_png","r");
     pclose($fp);
 
     # delete temporary files

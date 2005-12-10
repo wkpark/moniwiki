@@ -55,12 +55,12 @@ function processor_metapost($formatter,$value="") {
      $dir=getcwd();
      chdir($vartmp_dir);
      $cmd= "$mpost $option $uniq >/dev/null";
-     $fp=popen($cmd,'w');
+     $fp=popen($cmd,'r');
      pclose($fp);
      chdir($dir);
 
      $cmd= "$convert $vartmp_dir/$uniq.1 $outpath";
-     $fp=popen($cmd,'w');
+     $fp=popen($cmd,'r');
      pclose($fp);
 
      @copy("$vartmp_dir/$uniq.1","$cache_dir/$uniq.ps");

@@ -66,7 +66,7 @@ $tex
      $cwd= getcwd();
      chdir($vartmp_dir);
      $cmd= "$latex $option $uniq.tex >$NULL";
-     $fp=popen($cmd,'w');
+     $fp=popen($cmd,'r');
      pclose($fp);
 
      if (!file_exists($uniq.".dvi")) {
@@ -75,12 +75,12 @@ $tex
        return;
      }
      $cmd= "$dvips -D 600 $uniq.dvi -o $uniq.ps";
-     $fp=popen($cmd,'w');
+     $fp=popen($cmd,'r');
      pclose($fp);
      chdir($cwd);
 
      $cmd= "$convert -transparent white -crop 0x0 -density 120x120 $vartmp_dir/$uniq.ps $outpath";
-     $fp=popen($cmd,'w');
+     $fp=popen($cmd,'r');
      pclose($fp);
      unlink($vartmp_dir."/$uniq.log");
      unlink($vartmp_dir."/$uniq.aux");

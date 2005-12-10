@@ -80,7 +80,7 @@ $plt
        # Unix
        #
        $cmd= "$octave 2> $flog";
-       $fp=popen($cmd,"w");
+       $fp=popen($cmd,"r");
        fwrite($fp,$src);
        pclose($fp);
        $log=implode('',file($flog));

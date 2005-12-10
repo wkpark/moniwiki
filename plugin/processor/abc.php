@@ -65,12 +65,12 @@ function processor_abc($formatter="",$value="") {
 #
 # Unix
 #
-     $cmd= "$abc2midi $tmpf -o $cache_dir/$uniq.midi 2> $flog";
-     $fp=popen($cmd,'w');
+     $cmd= "$abc2midi $tmpf -o $cache_dir/$uniq.midi";
+     $fp=popen($cmd,'r');
+     $log='';
+     while($s = fgets($fp, 1024)) $log.= $s;
      pclose($fp);
 
-     $log=join(file($flog),"");
-     unlink($flog);
      unlink($tmpf);
   
      if ($log)
