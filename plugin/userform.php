@@ -48,7 +48,24 @@ function do_userform($formatter,$options) {
     $userdb=new UserDB($DBInfo);
     if ($userdb->_exists($id)) {
       $user=$userdb->getUser($id);
-      if ($user->checkPasswd($options['password'])=== true) {
+      $login_ok=0;
+      if ($DBInfo->use_safelogin) {
+        if (isset($options['challenge']) and
+           $options['_chall']==$options['challenge']) {
+          #print '<pre>';
+          #print $options['password'].'<br />';
+          #print hmac($options['challenge'],$user->info['password']);
+          #print '</pre>';
+          if (hmac($options['challenge'],$user->info['password'])
+            == $options['password'])
+            $login_ok=1;
+        } else { # with no javascript browsers
+          $md5pw=md5($options['password']);
+          if (hmac($md5pw,$user->info['password']) == $md5pw)
+            $login_ok=1;
+        }
+      }
+      if ($login_ok or $user->checkPasswd($options['password'])=== true) {
         $options['msg'] = sprintf(_("Successfully login as '%s'"),$id);
         $options['id']=$user->id;
         $formatter->header($user->setCookie());
@@ -68,7 +85,9 @@ function do_userform($formatter,$options) {
     # logout
     $formatter->header($user->unsetCookie());
     $title= _("Cookie deleted !");
-  } else if ($user->id=="Anonymous" and $options['login_id'] and $options['password'] and $options['passwordagain']) {
+  } else if ($user->id=="Anonymous" and $options['login_id'] and
+    (($options['password'] and $options['passwordagain']) or
+     ($DBInfo->use_safelogin and $options['email'])) ) {
     # create profile
 
     $title='';
@@ -89,14 +108,21 @@ function do_userform($formatter,$options) {
     $user->setID($id);
 
     if ($ok_ticket and $user->id != "Anonymous") {
-       $ret=$user->setPasswd($options['password'],$options['passwordagain']);
+       if ($DBInfo->use_safelogin) {
+          $mypass=base64_encode(getTicket(time(),$_SERVER['REMOTE_ADDR'],10));
+          $mypass=substr($mypass,0,8);
+          $options['password']=$mypass;
+          $ret=$user->setPasswd(md5($mypass),md5($mypass),1);
+       } else {
+          $ret=$user->setPasswd($options['password'],$options['passwordagain']);
+       }
        if ($DBInfo->password_length and (strlen($options['password']) < $DBInfo->password_length)) $ret=0;
        if ($ret <= 0) {
            if ($ret==0) $title= _("too short password!");
            else if ($ret==-1) $title= _("mismatch password!");
            else if ($ret==-2) $title= _("not acceptable character found in the password!");
        } else {
-           if ($ret < 8)
+           if ($ret < 8 and !$DBInfo->use_safelogin)
               $options['msg']=_("Your password is too simple to use as a password !");
            $udb=new UserDB($DBInfo);
            if ($options['email']) {
@@ -111,7 +137,12 @@ function do_userform($formatter,$options) {
              $options['id']=$user->id;
              $ticket=md5(time().$user->id.$options['email']);
              $user->info['eticket']=$ticket.".".$options['email'];
-             $formatter->header($user->setCookie());
+             if ($DBInfo->use_safelogin) {
+               $options['msg'] =
+                 sprintf(_("Successfully added as '%s'"),$user->id);
+               $options['msg'].= '<br />'._("Please check your mailbox");
+             } else
+               $formatter->header($user->setCookie());
              $ret=$udb->addUser($user);
 
              # XXX
@@ -119,6 +150,10 @@ function do_userform($formatter,$options) {
                $options['subject']="[$DBInfo->sitename] "._("E-mail confirmation");
                $body=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
                $body=_("Please confirm your email address")."\n".$body;
+               if ($DBInfo->use_safelogin) {
+                 $body.="\n".sprintf(_("Your initial password is %s"),$mypass)."\n\n";
+                 $body.=_("Please change your password later")."\n";
+               }
                wiki_sendmail($body,$options);
                $options['msg'].='<br/>'._("E-mail confirmation mail sent");
              }
@@ -142,8 +177,23 @@ function do_userform($formatter,$options) {
     $userinfo=$udb->getUser($user->id);
 
     if ($options['password'] and $options['passwordagain']) {
-      if ($userinfo->checkPasswd($options['password'])=== true) {
-        $ret=$userinfo->setPasswd($options['passwordagain']);
+      $chall=0;
+      if ($DBInfo->use_safelogin) {
+        if (isset($options['_chall'])) {
+          $chall= $options['challenge'];
+        } else {
+          $chall= rand(100000);
+          $options['password']=hmac($chall,$options['password']);
+        }
+      }
+      //echo 'chall=',$chall,' ',$options['password'];
+      if ($userinfo->checkPasswd($options['password'],$chall)
+         === true) {
+        if ($DBInfo->use_safelogin) {
+          $mypass=md5($options['passwordagain']); // XXX
+          $ret=$userinfo->setPasswd($mypass,$mypass,1);
+        } else
+          $ret=$userinfo->setPasswd($options['passwordagain']);
 
         if ($ret <= 0) {
           if ($ret==0) $title= _("too short password!");

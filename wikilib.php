@@ -433,11 +433,16 @@ class User {
      return true;
   }
 
-  function checkPasswd($passwd) {
+  function checkPasswd($passwd,$chall=0) {
      if (strlen($passwd) < 3)
         return false;
-     if (crypt($passwd,$this->info['password']) == $this->info['password'])
+     if ($chall) {
+        if (hmac($chall,$this->info['password']) == $passwd)
         return true;
+     } else {
+        if (crypt($passwd,$this->info['password']) == $this->info['password'])
+        return true;
+     }
      return false;
   }
 
@@ -447,6 +452,7 @@ class User {
        return 0;
     if ($passwd2!="" and $passwd!=$passwd2)
        return -1;
+
     $LOWER='abcdefghijklmnopqrstuvwxyz';
     $UPPER='ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     $DIGIT='0123456789';
@@ -465,6 +471,10 @@ class User {
           $ok|=2;
        if (strpos($DIGIT,$passwd[$i]))
           $ok|=4;
+
+       if ($ok==7 and strlen($passwd)>10) return $ok+1;
+       // sufficiently safe password
+
        if (strpos($SPECIAL,$passwd[$i]))
           $ok|=8;
     }
@@ -1583,12 +1593,13 @@ function macro_UserPreferences($formatter,$value,$options='') {
 
   $jscript='';
   if ($DBInfo->use_safelogin) {
-    $onsubmit=' onsubmit="javascript:password.value=hex_hmac_md5(challenge.value, hex_md5(password.value))"';
+    $onsubmit=' onsubmit="javascript:_chall.value=challenge.value;password.value=hex_hmac_md5(challenge.value, hex_md5(password.value))"';
     $jscript.="<script src='$DBInfo->url_prefix/local/md5.js'></script>";
     $time_seed=time();
     $chall=md5(base64_encode(getTicket($time_seed,$_SERVER['REMOTE_ADDR'],10)));
     $passwd_hidden="<input type='hidden' name='_seed' value='$time_seed' />";
-    $passwd_hidden.="<input type='hidden' name='challenge' value='$chall' />\n";
+    $passwd_hidden.="<input type='hidden' name='challenge' value='$chall' />";
+    $passwd_hidden.="<input type='hidden' name='_chall' />\n";
     $pw_length=32;
   } else {
     $pw_length=20;
@@ -1613,13 +1624,14 @@ function macro_UserPreferences($formatter,$value,$options='') {
 <table border="0">
   <tr><td><b>ID</b>&nbsp;</td><td>$idform</td></tr>
   <tr>
-     <td><b>$passwd_btn</b>&nbsp;</td><td><input type="password" size="15" maxlength="$pw_len" name="password" value="" />
+     <td><b>$passwd_btn</b>&nbsp;</td><td><input type="password" size="15" maxlength="$pw_len" name="password" value="" /></td>
   <tr><td></td><td>
     $passwd_hidden
     <input type="submit" name="login" value="$button" /> &nbsp;
   </td></tr>
 </table>
 </form>
+<hr />
 FORM;
 
   if ($user->id == 'Anonymous') {
