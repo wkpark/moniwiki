@@ -781,7 +781,7 @@ function do_invalid($formatter,$options) {
 
 function ajax_invalid($formatter,$options) {
   $formatter->send_header("Status: 406 Not Acceptable",$options);
-  print "false";
+  print "false\n";
   return;
 }
 
@@ -1045,6 +1045,102 @@ function do_titlesearch($formatter,$options) {
   $args['noaction']=1;
   $formatter->send_footer($args,$options);
   return true;
+}
+
+function ajax_savepage($formatter,$options) {
+  global $DBInfo;
+  if ($_SERVER['REQUEST_METHOD']!="POST" or
+    !$DBInfo->security->writable($options)) {
+    ajax_invalid($formatter,$options);
+    return;
+  }
+  $savetext=$options['savetext'];
+  $datestamp=$options['datestamp'];
+
+  $savetext=preg_replace("/\r\n|\r/", "\n", $savetext);
+  $savetext=_stripslashes($savetext);
+  $section_savetext='';
+  if (isset($options['section'])) {
+    if ($formatter->page->exists()) {
+      $sections= _get_sections($formatter->page->get_raw_body());
+      if ($sections[$options['section']]) {
+        if (substr($savetext,-1)!="\n") $savetext.="\n";
+        $sections[$options['section']]=$savetext;
+      }
+      $section_savetext=$savetext;
+      $savetext=implode('',$sections);
+    }
+  }
+
+  if ($savetext and $savetext[strlen($savetext)-1] != "\n")
+    $savetext.="\n";
+
+  $new=md5($savetext);
+
+  if ($formatter->page->exists()) {
+    # check difference
+    $body=$formatter->page->get_raw_body();
+    $body=preg_replace("/\r\n|\r/", "\n", $body);
+    $orig=md5($body);
+    # check datestamp
+    if ($formatter->page->mtime() > $datestamp) {
+      $options['msg']=sprintf(_("Someone else saved the page while you edited %s"),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
+      print "false\n";
+      print $options['msg'];
+      return;
+    }
+  } else {
+    $options['msg']=_("Section edit is not valid for non-exists page.");
+    print "false\n";
+    print $options['msg'];
+    return;
+  }
+  if ($orig == $new) {
+    $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
+    print "false\n";
+    print $options['msg'];
+    return;
+  }
+
+  if ($DBInfo->spam_filter) {
+    $text=$savetext;
+    $fts=preg_split('/(\||,)/',$DBInfo->spam_filter);
+    foreach ($fts as $ft) {
+      $text=$formatter->filter_repl($ft,$text,$options);
+    }
+    if ($text != $savetext) {
+      $options['msg'] = _("Sorry, can not save page because some messages are blocked in this wiki.");
+      print "false\n";
+      print $options['msg'];
+      return;
+    }
+  }
+
+  $comment=_stripslashes($options['comment']);
+  $formatter->page->write($savetext);
+  $ret=$DBInfo->savePage($formatter->page,$comment,$options);
+
+  if (($ret != -1) and $DBInfo->notify and ($options['minor'] != 1)) {
+    $options['noaction']=1;
+    if (!function_exists('mail')) {
+      $options['msg']=sprintf(_("mail does not supported by default."))."<br />";
+    } else {
+      $ret2=wiki_notify($formatter,$options);
+      if ($ret2)
+        $options['msg']=sprintf(_("Sent notification mail."))."<br />";
+      else
+        $options['msg']=sprintf(_("No subscribers found."))."<br />";
+    }
+  }
+      
+  if ($ret == -1)
+    $options['msg'].=sprintf(_("%s is not editable"),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
+  else
+    $options['msg'].=sprintf(_("%s is saved"),$formatter->link_tag($formatter->page->urlname,"?action=show",htmlspecialchars($options['page'])));
+
+  print "true\n";
+  print $options['msg'];
+  return;
 }
 
 function do_post_savepage($formatter,$options) {

@@ -938,7 +938,10 @@ class WikiDB {
     if ($options['id'] == 'Anonymous') {
       $id=$options['name'] ?
         _stripslashes($options['name']):$_SERVER['REMOTE_ADDR'];
-    } else $id=$options['id'];
+    } else {
+      $id=$options['id'];
+      if (!preg_match('/([A-Z][a-z0-9]+){2,}/',$id)) $id='['.$id.']';
+    }
  
     $body=preg_replace("/@DATE@/","[[Date($time)]]",$body);
     $body=preg_replace("/@USERNAME@/","$id",$body);
@@ -3573,14 +3576,14 @@ if ($pagename) {
     $goto=$_POST['goto'];
   } else if ($_SERVER['REQUEST_METHOD']=="GET") {
     $action=$_GET['action'];
-    if (($p=strpos($action,'/'))!==false) {
-      $action_mode=substr($action,$p+1);
-      $action=substr($action,0,$p);
-    }
     $value=$_GET['value'];
     $goto=$_GET['goto'];
     $rev=$_GET['rev'];
     $refresh=$_GET['refresh'];
+  }
+  if (($p=strpos($action,'/'))!==false) {
+    $action_mode=substr($action,$p+1);
+    $action=substr($action,0,$p);
   }
 
 
