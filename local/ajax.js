@@ -73,11 +73,16 @@ function HTTPPost(uri, object, callback_function, callback_parameter) {
   if (!callback_function)
     bAsync = false;
   xmlhttp.open('POST', uri, bAsync);
+
   xmlhttp.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
-  var form_contents = '';
-  for (var i in object)
-    form_contents += (form_contents ? '&' : '') + i + '=' + escape(object[i]);
-  xmlhttp.send(form_contents);
+  var toSend = '';
+  if (typeof object == 'object') {
+    for (var i in object)
+      toSend += (toSend ? '&' : '') + i + '=' + escape(object[i]);
+  } else {
+    toSend=object;
+  }
+  xmlhttp.send(toSend);
 
   if (bAsync) {
     if (callback_function)
