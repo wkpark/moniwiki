@@ -16,6 +16,7 @@ function processor_vim($formatter,$value,$options) {
   global $DBInfo;
   static $jsloaded=0;
   $cache_dir=$DBInfo->upload_dir."/VimProcessor";
+  $vartmp_dir=&$DBInfo->vartmp_dir;
 
   $syntax=array("php","c","python","jsp","sh","cpp",
           "java","ruby","forth","fortran","perl",
@@ -80,7 +81,7 @@ document.write('<a href=\"#\" onClick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
   if(getenv("OS")=="Windows_NT") {
     $tohtml='$VIMRUNTIME/syntax/2html.vim';
     $vim="gvim"; # Win32
-    $fout=tempnam("/tmp","OUT");
+    $fout=tempnam($vartmp_dir,"OUT");
   } else {
     $tohtml='\$VIMRUNTIME/syntax/2html.vim';
     $vim="vim";
@@ -96,7 +97,7 @@ document.write('<a href=\"#\" onClick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
 #}
 #';
 
-  $tmpf=tempnam("/tmp","FOO");
+  $tmpf=tempnam($vartmp_dir,"FOO");
   $fp= fopen($tmpf, "w");
   fwrite($fp, $src);
   fclose($fp);

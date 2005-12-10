@@ -14,7 +14,7 @@ function processor_metapost($formatter,$value="") {
   $mpost="mpost";
   $dvips="dvips";
   $convert="convert -transparent white -crop 0x0 -density 120x120";
-  $vartmp_dir=$DBInfo->vartmp_dir;
+  $vartmp_dir=&$DBInfo->vartmp_dir;
   $cache_dir=$DBInfo->upload_dir."/MetaPost";
   $option='-T -interaction=batchmode ';
 
@@ -55,11 +55,13 @@ function processor_metapost($formatter,$value="") {
      $dir=getcwd();
      chdir($vartmp_dir);
      $cmd= "$mpost $option $uniq >/dev/null";
-     system($cmd);
+     $fp=popen($cmd,'w');
+     pclose($fp);
      chdir($dir);
 
      $cmd= "$convert $vartmp_dir/$uniq.1 $outpath";
-     system($cmd);
+     $fp=popen($cmd,'w');
+     pclose($fp);
 
      @copy("$vartmp_dir/$uniq.1","$cache_dir/$uniq.ps");
      unlink("$vartmp_dir/$uniq.1");

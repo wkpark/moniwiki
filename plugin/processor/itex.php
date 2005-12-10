@@ -61,7 +61,7 @@ function processor_itex($formatter="",$value="",$options='') {
 
     # site spesific variables
     $itex="itex2MML";
-    $vartmp_dir=$DBInfo->vartmp_dir;
+    $vartmp_dir=&$DBInfo->vartmp_dir;
     $cache_dir=$DBInfo->upload_dir."/itex";
 
     $type='block';

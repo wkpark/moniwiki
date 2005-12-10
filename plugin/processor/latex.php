@@ -14,7 +14,7 @@ function processor_latex($formatter="",$value="") {
   $latex="latex";
   $dvips="dvips";
   $convert="convert";
-  $vartmp_dir=$DBInfo->vartmp_dir;
+  $vartmp_dir=&$DBInfo->vartmp_dir;
   $cache_dir=$DBInfo->upload_dir."/LaTeX";
   $option='-interaction=batchmode ';
 
@@ -66,7 +66,8 @@ $tex
      $cwd= getcwd();
      chdir($vartmp_dir);
      $cmd= "$latex $option $uniq.tex >$NULL";
-     system($cmd);
+     $fp=popen($cmd,'w');
+     pclose($fp);
 
      if (!file_exists($uniq.".dvi")) {
        print "<font color='red'>ERROR:</font> LaTeX does not work properly.";
@@ -74,13 +75,17 @@ $tex
        return;
      }
      $cmd= "$dvips -D 600 $uniq.dvi -o $uniq.ps";
-     system($cmd);
+     $fp=popen($cmd,'w');
+     pclose($fp);
      chdir($cwd);
 
      $cmd= "$convert -transparent white -crop 0x0 -density 120x120 $vartmp_dir/$uniq.ps $outpath";
-     system($cmd);
-
-     system("$RM $vartmp_dir/$uniq.*");
+     $fp=popen($cmd,'w');
+     pclose($fp);
+     unlink($vartmp_dir."/$uniq.log");
+     unlink($vartmp_dir."/$uniq.aux");
+     @unlink($vartmp_dir."/$uniq.bib");
+     @unlink($vartmp_dir."/$uniq.ps");
   }
   return "<img class='tex' src='$DBInfo->url_prefix/$cache_dir/$uniq.png' alt='$tex' ".
          "title=\"$tex\" />";

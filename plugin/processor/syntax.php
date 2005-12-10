@@ -9,6 +9,8 @@
 // $Id$
 
 function processor_syntax($formatter,$value) {
+  global $DBInfo;
+
   $enscript='enscript ';
 ##enscript --help-pretty-print |grep "^Name" |cut -d" " -f 2
   $syntax=array(
@@ -18,6 +20,8 @@ function processor_syntax($formatter,$value) {
 "sh", "sql", "states", "synopsys", "tcl", "verilog", "vhdl", "vba","php");
 
   $options=array("number");
+
+  $vartmp_dir=&$DBInfo->vartmp_dir;
 
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
@@ -38,7 +42,7 @@ function processor_syntax($formatter,$value) {
     $html= ob_get_contents();
     ob_end_clean();
   } else {
-    $tmpf=tempnam("/tmp","FOO");
+    $tmpf=tempnam($vartmp_dir,"FOO");
     $fp= fopen($tmpf, "w");
     fwrite($fp, $src);
     fclose($fp);
@@ -47,10 +51,11 @@ function processor_syntax($formatter,$value) {
 
     #$cmd="ENSCRIPT_LIBRARY=/home/httpd/wiki/lib $enscript -q -o - -E$type -W html --color=ifh --word-wrap ".$tmpf;
     $cmd="$enscript -q -o - $option -E$type -W html --color=ifh --word-wrap ".$tmpf;
-    $buffer = array();
-    exec($cmd, $buffer);
+    $fp=popen($cmd, 'r');
+    $html='';
+    while($s = fgets($fp, 1024)) $html.= $s;
+    pclose($fp);
 
-    $html= join("\n", $buffer);
     $html= eregi_replace('^.*<pre>', '<div class="wikiPre"><pre class="wiki">', $html);
     $html= eregi_replace('<\/PRE>.*$', '</pre></div>', $html);
     unlink($tmpf);

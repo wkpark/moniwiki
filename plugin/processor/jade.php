@@ -20,6 +20,7 @@ function processor_jade($formatter,$value,$options=array()) {
 #  ' ' + tmpfile + '.sgml')
 
   $pagename=$formatter->page->name;
+  $vartmp_dir=&$DBInfo->vartmp_dir;
   $cache= new Cache_text("jade");
 
   if (!$formatter->refresh and !$formatter->preview and $cache->exists($pagename) and $cache->mtime($pagename) > $formatter->page->mtime())
@@ -61,7 +62,7 @@ function processor_jade($formatter,$value,$options=array()) {
   if (!$dsssl_flag and $DBInfo->default_dsssl)
     $args.=" -d $DBInfo->default_dsssl";
 
-  $tmpf=tempnam("/tmp","JADE");
+  $tmpf=tempnam($vartmp_dir,"JADE");
   $fp= fopen($tmpf, "w");
   fwrite($fp, $src);
   fclose($fp);

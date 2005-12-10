@@ -12,7 +12,7 @@ function processor_abc($formatter="",$value="") {
   global $DBInfo;
   $abc2midi="abc2midi"; # Unix
 
-  $vartmp_dir=$DBInfo->vartmp_dir;
+  $vartmp_dir=&$DBInfo->vartmp_dir;
   $cache_dir=$DBInfo->upload_dir."/Abc2Midi";
 
   #
@@ -42,7 +42,7 @@ function processor_abc($formatter="",$value="") {
   #if (1 || $formatter->refresh || !file_exists("$cache_dir/$uniq.midi")) {
   if ($formatter->refresh || !file_exists("$cache_dir/$uniq.midi")) {
 
-    $tmpf=tempnam("/tmp","FOO");
+    $tmpf=tempnam($vartmp_dir,"FOO");
     $fp= fopen($tmpf, "w");
     fwrite($fp, $abc);
     fclose($fp);
@@ -66,7 +66,8 @@ function processor_abc($formatter="",$value="") {
 # Unix
 #
      $cmd= "$abc2midi $tmpf -o $cache_dir/$uniq.midi 2> $flog";
-     $fp=system($cmd);
+     $fp=popen($cmd,'w');
+     pclose($fp);
 
      $log=join(file($flog),"");
      unlink($flog);

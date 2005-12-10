@@ -14,7 +14,7 @@ function processor_pic($formatter,$value="") {
   $GROFF="groff -e -p -ms -Tps ";
   $CONVERT="convert -transparent white -density 120x120 -crop 0x0 ";
 
-  $vartmp_dir=$DBInfo->vartmp_dir;
+  $vartmp_dir=&$DBInfo->vartmp_dir;
   $cache_dir=$DBInfo->upload_dir."/PIC";
 
   if ($value[0]=='#' and $value[1]=='!')

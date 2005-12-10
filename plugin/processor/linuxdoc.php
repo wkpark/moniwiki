@@ -15,6 +15,7 @@ function processor_linuxdoc($formatter,$value) {
   $toutf=array('ko'=>'UHC','ja'=>'nippon');
 
   $pagename=$formatter->page->name;
+  $vartmp_dir=&$DBInfo->vartmp_dir;
   $cache= new Cache_text("linuxdoc");
 
   if (!$formatter->refresh and !$formatter->preview and $cache->exists($pagename) and $cache->mtime($pagename) > $formatter->page->mtime())
@@ -36,7 +37,7 @@ function processor_linuxdoc($formatter,$value) {
   }
 
   $converted=0;
-  $tmpf=tempnam("/tmp","SGML2HTML");
+  $tmpf=tempnam($vartmp_dir,"SGML2HTML");
   $fp= fopen($tmpf.".sgml", "w");
   if (strtoupper($DBInfo->charset) == 'UTF-8' and isset($toutf[$lang])) {
     if (function_exists('iconv') and ($new=iconv('UTF-8',$toutf[$lang],$value)))
@@ -48,11 +49,15 @@ function processor_linuxdoc($formatter,$value) {
   fwrite($fp, $value);
   fclose($fp);
 
-  $cmd="cd /tmp;$sgml2html $args $tmpf".".sgml";
+  $cmd="$sgml2html $args $tmpf".".sgml";
+  $cwd=getcwd();
+  chdir($vartmp_dir);
+  $log='';
+  $fp=popen($cmd,'r');
+  while($s = fgets($fp, 1024)) $log.= $s;
+  pclose($fp);
+  chdir($cwd);
 
-  exec($cmd,$log);
-
-  $log=join("",$log);
   $tmpfh=$tmpf.'.html';
   $fp=fopen($tmpfh,'r');
   $html=fread($fp,filesize($tmpfh));

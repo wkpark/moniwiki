@@ -6,20 +6,26 @@
 // $Id$
 
 function processor_man($formatter,$value="") {
+  global $DBInfo;
+
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
 
   if ($line)
     list($tag,$args)=explode(' ',$line,2);
+  $vartmp_dir=&$DBInfo->vartmp_dir;
 
-  $tmpf=tempnam("/tmp","MAN");
+  $tmpf=tempnam($vartmp_dir,"MAN");
   $fp= fopen($tmpf, "w");
   fwrite($fp, $value);
   fclose($fp);
 
   $man2html= "man2html $tmpf";
-  exec($man2html,$out);
-  $html=join('',$out);
+  $html='';
+  while($s = fgets($fp, 1024)) $html.= $s;
+  $fp=popen($man2html,'r');
+
+  pclose($fp);
   unlink($tmpf);
 
   $html=str_replace('Content-type: text/html','',$html);

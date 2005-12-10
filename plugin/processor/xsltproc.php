@@ -18,6 +18,7 @@ function processor_xsltproc($formatter,$value) {
   }
 
   $pagename=$formatter->page->name;
+  $vartmp_dir=&$DBInfo->vartmp_dir;
 
   $cache= new Cache_text("docbook");
 
@@ -39,7 +40,7 @@ function processor_xsltproc($formatter,$value) {
   }
   $src=$buff.$line."\n".$body;
 
-  $tmpf=tempnam("/tmp","XSLT");
+  $tmpf=tempnam($vartmp_dir,"XSLT");
   $fp= fopen($tmpf, "w");
   fwrite($fp, $src);
   fclose($fp);

@@ -17,7 +17,7 @@ function processor_octave($formatter="",$value="") {
     #$octave="octave -q -H --no-init-file --no-line-editing -f ";
     $octave="octave -q -H -f ";
 
-  $vartmp_dir=$DBInfo->vartmp_dir;
+  $vartmp_dir=&$DBInfo->vartmp_dir;
   $cache_dir=$DBInfo->upload_dir."/Octave";
 
   if ($value[0]=='#' and $value[1]=='!')

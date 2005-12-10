@@ -16,7 +16,7 @@ function processor_gnuplot($formatter="",$value="") {
   else
     $gnuplot="gnuplot";
 
-  $vartmp_dir=$DBInfo->vartmp_dir;
+  $vartmp_dir=&$DBInfo->vartmp_dir;
   $cache_dir=$DBInfo->upload_dir."/GnuPlot";
 
   if ($value[0]=='#' and $value[1]=='!')
