@@ -15,7 +15,8 @@ JPCA,J.Phys.Chem.A http://pubs.acs.org/journals/query/subscriberResults.jsp?Rese
 ChemRev,Chem.Rev. http://pubs.acs.org/journals/query/subscriberResults.jsp?Research=true&amp;yearrange1=ASAP&amp;yearrange3=current&amp;cit_qjrn=chreay&styear=YYYY&endyear=YYYY&vol=\$VOL&spn=\$PAGE
 RMP,Rev.Mod.Phys. http://link.aps.org/volpage?journal=RMP&volume=\$VOL&id=\$PAGE
 PR,Phys.Rev. http://link.aps.org/volpage?journal=PR&volume=\$VOL&id=\$PAGE
-PRL,Phys.Rev.Lett. http://link.aps.org/volpage?journal=PRL&volume=\$VOL&id=\$PAGE
+PRL,Phys.Rev.Lett. http://link.aps.org/doi/10.1103/PhysRevLett.\$VOL.\$PAGE
+CPL,Chem.Phys.Lett. http://www.sciencedirect.com/science/journal/00092614
 
 EOS;
 

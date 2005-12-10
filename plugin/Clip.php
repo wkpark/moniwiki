@@ -1,7 +1,7 @@
 <?php
 // Copyright 2005 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
-// Draw plugin with the JHotDraw for the MoniWiki
+// Draw plugin with the Clip applet for the MoniWiki
 //
 // Usage: [[Clip(hello)]]
 //

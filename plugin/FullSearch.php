@@ -32,7 +32,7 @@ function do_fullsearch($formatter,$options) {
   $formatter->send_footer($args,$options);
 }
 
-function macro_FullSearch($formatter="",$value="", &$opts) {
+function macro_FullSearch($formatter,$value="", &$opts) {
   global $DBInfo;
   $needle=$value;
   if ($value === true) {

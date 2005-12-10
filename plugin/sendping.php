@@ -109,7 +109,7 @@ FORM2;
       $new=mb_encode_numericentity($title,$DBInfo->convmap,'utf-8');
       if ($new) $title=$new;
     } else {
-      include('lib/compat.php');
+      include_once('lib/compat.php');
       $new=utf8_mb_encode($excerpt);
       if ($new) $excerpt=$new;
       $new=utf8_mb_encode($title);
