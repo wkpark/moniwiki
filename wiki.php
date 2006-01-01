@@ -573,6 +573,7 @@ class WikiDB {
     $this->hr_type='simple';
     $this->nonexists='simple';
     $this->use_sistersites=1;
+    $this->use_singlebracket=1;
     $this->use_twinpages=1;
     $this->use_hostname=1;
     $this->pagetype=array();
@@ -1558,11 +1559,11 @@ class Formatter {
     # "(?<!\!|\[\[)\b(([A-Z]+[a-z0-9]+){2,})\b|".
     # "(?<!\!|\[\[)((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})\b|".
     # WikiName rule: WikiName ILoveYou (imported from the rule of NoSmoke)
-    # protect WikiName rule !WikiName
+    # and protect WikiName rule !WikiName
     #"(?:\!)?((?:\.{1,2}?\/)?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b|".
     "(?<![a-zA-Z])\!?(?:((\.{1,2})?\/)?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b|".
-    # single bracketed name [Hello World]
-    "(?<!\[)\!?\[([^\[:,<\s'][^\[:,>]{1,255})\](?!\])|".
+    # double bracketed rule similar with MediaWiki [[Hello World]]
+    "(?<!\[)\!?\[\[([^\[:,<\s'][^\[:,>]{1,255})\]\](?!\])|".
     # bracketed with double quotes ["Hello World"]
     "(?<!\[)\!?\[\\\"([^\\\"]+)\\\"\](?!\])|".
     # "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
@@ -1570,6 +1571,12 @@ class Formatter {
     # single linkage rule ?hello ?abacus
     #"(\?[A-Z]*[a-z0-9]+)";
     "(\?[A-Za-z0-9]+)";
+
+    if ($DBInfo->use_singlebracket) {
+      # single bracketed name [Hello World]
+      $this->wordrule.= "|(?<!\[)\!?\[([^\[:,<\s'][^\[:,>]{1,255})\](?!\])";
+    }
+
     $this->footrule="\[\*[^\]]*\s[^\]]+\]";
 
     $this->cache= new Cache_text("pagelinks");
@@ -2153,8 +2160,9 @@ class Formatter {
   }
 
   function macro_repl($macro,$value='',$options='') {
-    if (!$value and (strpos($macro,'(') !== false)) {
-      preg_match("/^([A-Za-z]+)(\((.*)\))?$/",$macro,$match);
+    preg_match("/^([A-Za-z]+)(\((.*)\))?$/",$macro,$match);
+    if (!$match) return $this->word_repl($macro);
+    if (!$value and $match[1] and $match[2]) { #strpos($macro,'(') !== false)) {
       $name=$match[1]; $args=($match[2] and !$match[3]) ? true:$match[3];
     } else {
       $name=$macro; $args=$value;
@@ -2162,7 +2170,8 @@ class Formatter {
 
     $plugin=($np=getPlugin($name))?$np:$name;
     if (!function_exists ("macro_".$plugin)) {
-      if (!$np) return "[[".$name."]]";
+      #if (!$np) return "[[".$name."]]";
+      if (!$np) return $this->word_repl($name);
       include_once("plugin/$plugin.php");
     }
     $ret=call_user_func_array("macro_$plugin",array(&$this,$args,$options));
@@ -2543,9 +2552,11 @@ class Formatter {
            $in_pre=-1;
          }
       #} else if ($in_pre == 0 && preg_match("/{{{[^}]*$/",$line)) {
+      #} else if (preg_match("/(\{{2,3})[^{}]*$/",$line,$m)) {
       } else if (!(strpos($line,"{{{")===false) and 
                  preg_match("/{{{[^{}]*$/",$line)) {
          #$p=strrpos($line,"{{{")-2;
+         #$p= strlen($line) - strpos(strrev($line),$m[1]) - strlen($m[1]);
          $p= strlen($line) - strpos(strrev($line),'{{{') - 3;
 
          $processor="";
@@ -2702,7 +2713,7 @@ class Formatter {
         if ($this->section_edit && !$this->preview) {
           $act='edit';
           if ($DBInfo->use_ajax) {
-            $onclick=' Onclick="javascript:sectionEdit(null,this,'.
+            $onclick=' onclick="javascript:sectionEdit(null,this,'.
               $this->sect_num.');return false;"';
           }
           $url=$this->link_url($this->page->urlname,

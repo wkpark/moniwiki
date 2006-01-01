@@ -38,6 +38,7 @@ $trail= 0;
 $notify= 0;
 $use_referer= 0;
 $use_sistersites=1;
+#$use_singlebracket=1;
 $use_twinpages=1;
 $use_trackback=0;
 $vim_options='+"set expandtab" +"retab"';
@@ -92,9 +93,11 @@ $pds_allowed="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|css|exe|hwp|pdf";
 #$password_length=6;
 #$use_convert_thumbs=0;
 
-#$processors=array('latex'=>'latex');
+#$myprocessors=array('latex'=>'latex');
+#$myplugins=array('FullSearch'=>'FastSearch');
 #$inline_latex='mimetex';
 #$inline_latex='latex';
+#$inline_latex='itex';
 #$inline_latex='1';
 
 #$url_schemas='mms';
@@ -119,4 +122,13 @@ $use_toctoggle=0;
 #$ticket_gdfont=5;
 #$ticket_font='TTFONT';
 #$gdfontpath='./data';
+$local_abbr='LocalDictionary';
+$postfilters='abbr';
+$use_forcemerge=1;
+$default_language='ko';
+$use_alias=0;
+#$aliaspage=$data_dir.'/text/AliasPageNames';
+$css_friendly=0;
+$use_redirect_msg=1;
+#$use_safelogin=0;
 ?>
