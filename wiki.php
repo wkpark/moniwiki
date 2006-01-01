@@ -1478,6 +1478,7 @@ class Formatter {
     $this->section_edit=$DBInfo->use_sectionedit;
     $this->auto_linebreak=$DBInfo->auto_linebreak;
     $this->nonexists=$DBInfo->nonexists;
+    $this->url_mappings=$DBInfo->url_mappings;
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -1795,6 +1796,15 @@ class Formatter {
         $attr.=' target="_blank" ';
         $url=substr($url,1);
         $external_icon=$this->icon['external'];
+      }
+
+      if ($this->url_mappings) {
+        foreach ($this->url_mappings as $pre=>$rpre) {
+          if (preg_match('/'.preg_quote($pre,'/').'/',$url)) {
+            $url=$rpre.substr($url,strlen($pre));
+            break;
+          }
+        }
       }
 
       if (preg_match("/^mailto:/",$url)) {

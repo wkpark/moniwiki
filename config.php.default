@@ -131,4 +131,5 @@ $use_alias=0;
 $css_friendly=0;
 $use_redirect_msg=1;
 #$use_safelogin=0;
+#$url_mappings=array('http://faq.ktug.or.kr/mywiki'=>'http://faq.ktug.or.kr/faq');
 ?>
