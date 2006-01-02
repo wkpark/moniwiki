@@ -296,7 +296,7 @@ class UserDB {
     $config=array("css_url","datatime_fmt","email","bookmark","language",
                   "name","password","wikiname_add_spaces","subscribed_pages",
                   "scrapped_pages","quicklinks","theme","ticket","eticket",
-	  	  "tz_offset");
+	  	  "tz_offset","npassword","nticket");
 
     $date=gmdate('Y/m/d', time());
     $data="# Data saved $date\n";
@@ -305,7 +305,8 @@ class UserDB {
       $user->info['ticket']=$user->ticket;
 
     foreach ($config as $key) {
-      $data.="$key=".$user->info[$key]."\n";
+      if ($user->info[$key] != '')
+        $data.="$key=".$user->info[$key]."\n";
     }
 
     #print $data;
@@ -509,7 +510,7 @@ function do_highlight($formatter,$options) {
 }
 
 function macro_EditHints($formatter) {
-  $hints = "<div class=\"hint\">\n";
+  $hints = "<div class=\"wikiHints\">\n";
   $hints.= _("<b>Emphasis:</b> ''<i>italics</i>''; '''<b>bold</b>'''; '''''<b><i>bold italics</i></b>''''';\n''<i>mixed '''<b>bold</b>''' and italics</i>''; ---- horizontal rule.<br />\n<b>Headings:</b> = Title 1 =; == Title 2 ==; === Title 3 ===;\n==== Title 4 ====; ===== Title 5 =====.<br />\n<b>Lists:</b> space and one of * bullets; 1., a., A., i., I. numbered items;\n1.#n start numbering at n; space alone indents.<br />\n<b>Links:</b> JoinCapitalizedWords; [\"brackets and double quotes\"];\n[bracketed words];\nurl; [url]; [url label].<br />\n<b>Tables</b>: || cell text |||| cell text spanning two columns ||;\nno trailing white space allowed after tables or titles.<br />\n");
   $hints.= "</div>\n";
   return $hints;
@@ -790,7 +791,8 @@ function do_invalid($formatter,$options) {
 }
 
 function ajax_invalid($formatter,$options) {
-  $formatter->send_header("Status: 406 Not Acceptable",$options);
+  $formatter->send_header(array("Content-Type: text/plain",
+			"Status: 406 Not Acceptable"),$options);
   print "false\n";
   return;
 }
@@ -1398,6 +1400,10 @@ function wiki_notify($formatter,$options) {
 function wiki_sendmail($body,$options) {
   global $DBInfo;
 
+  if (!$DBInfo->use_sendmail) {
+    return array('msg'=>_("This wiki does not support sendmail"));
+  }
+
   if ($options['id'])
     $from=$options['id'];
   else
@@ -1415,6 +1421,7 @@ function wiki_sendmail($body,$options) {
   $mailheaders.= "Content-Transfer-Encoding: 8bit\n\n";
 
   mail($email,$subject,$body,$mailheaders,'-f"'.$from.'"');
+  return 0;
 }
 
 
@@ -1707,6 +1714,13 @@ PASS;
     $onsubmit='';
     $passwd_hidden='';
   }
+  if ($button==_("Make profile")) {
+    if ($DBInfo->use_sendmail) {
+      $button2=_("E-mail new password");
+      $emailpasswd=
+        "<input type=\"submit\" name=\"login\" value=\"$button2\" />\n";
+    }
+  }
   return <<<EOF
 $login
 $jscript
@@ -1720,6 +1734,7 @@ $jscript
     $extra
   <tr><td></td><td>
     <input type="submit" name="login" value="$button" /> &nbsp;
+    $emailpasswd
     $logout
   </td></tr>
 </table>

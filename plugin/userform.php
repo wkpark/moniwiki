@@ -28,6 +28,13 @@ function do_userform($formatter,$options) {
          $userdb->saveUser($user);
          $title=_("Successfully confirmed");
          $options['msg']=_("Your e-mail address is confirmed successfully");
+       } else if ($user->info['nticket']==$options['ticket']) {
+         $title=_("Successfully confirmed");
+         $user->info['nticket']='';
+         $user->info['password']=$user->info['npassword'];
+         $user->info['npassword']='';
+         $userdb->saveUser($user);
+         $options['msg']=_("Your new password is confirmed successfully");
        } else {
          $title=_("Confirmation missmatched !");
          $options['msg']=_("Please try again to register your e-mail address");
@@ -85,6 +92,92 @@ function do_userform($formatter,$options) {
     # logout
     $formatter->header($user->unsetCookie());
     $title= _("Cookie deleted !");
+  } else if ($DBInfo->use_sendmail and
+    $options['login'] == _("E-mail new password") and
+    $user->id=="Anonymous" and $options['email'] and $options['login_id']) {
+    # email new password
+
+    $title='';
+    if ($DBInfo->use_ticket) {
+      if ($options['__seed'] and $options['check']) {
+        $mycheck=getTicket($options['__seed'],$_SERVER['REMOTE_ADDR'],4);
+        if ($mycheck==$options['check'])
+          $ok_ticket=1;
+        else
+          $title= _("Invalid ticket !");
+      } else {
+        $title= _("You need a ticket !");
+      }
+    } else {
+      $ok_ticket=1;
+    }
+    $userdb=new UserDB($DBInfo);
+    if ($userdb->_exists($id)) {
+      $user=$userdb->getUser($id);
+    }
+    if ($ok_ticket and $user->id != "Anonymous") {
+      if ($options['email'] == $user->info['email']
+        and $user->info['eticket']=='') {
+
+        #make new password
+        $mypass=base64_encode(getTicket(time(),$_SERVER['REMOTE_ADDR'],10));
+        $mypass=substr($mypass,0,8);
+        $options['password']=$mypass;
+        $old_passwd=$user->info['password'];
+        if ($DBInfo->use_safelogin) {
+          $ret=$user->setPasswd(md5($mypass),md5($mypass),1);
+        } else {
+          $ret=$user->setPasswd($mypass,$mypass);
+        }
+        $new_passwd=$user->info['password'];
+        $user->info['password']=$old_passwd;
+        $user->info['npassword']=$new_passwd;
+
+        #make ticket
+        $ticket=md5(time().$user->id.$options['email']);
+        $user->info['nticket']=$ticket.".".$options['email'];
+        $userdb->saveUser($user); # XXX
+
+        $opts['subject']="[$DBInfo->sitename] "._("New password confirmation");
+        $opts['email']=$options['email'];
+        $opts['id']='nobody';
+        $body=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
+
+        $body=_("Please confirm your new password")."\n".$body."\n";
+
+        $body.=sprintf(_("Your new password is %s"),$mypass)."\n\n";
+        $body.=_("Please change your password later")."\n";
+
+        $ret=wiki_sendmail($body,$opts);
+        if (is_array($ret)) {
+          $title=_("Fail to e-mail notification !");
+          $options['msg']=$ret['msg'];
+        } else {
+          $title=_("New password is sent to your e-mail !");
+          $options['msg']=_("Please check your e-mail");
+        }
+      } else {
+        if ($options['email'] != $user->info['email']) {
+          $title=_("Fail to e-mail notification !");
+          $options['msg']=_("E-mail mismatch !");
+        } else {
+          $title=_("Invalid request");
+          $options['msg']=_("Please confirm your e-mail address first !");
+        }
+      }
+    } else {
+      if (!$ok_ticket) {
+        $title=_("Invalid ticket !");
+      } else {
+        $title=_("ID and e-mail mismatch !");
+      }
+      $options['msg']=_("Please try again or make a new profile");
+    }
+    $formatter->send_header("",$options);
+    $formatter->send_title($title,"",$options);
+
+    $formatter->send_footer("",$options);
+    return;
   } else if ($user->id=="Anonymous" and $options['login_id'] and
     (($options['password'] and $options['passwordagain']) or
      ($DBInfo->use_safelogin and $options['email'])) ) {
