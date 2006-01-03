@@ -179,6 +179,10 @@ div.wikiGroup {
   background-color:#e0e0e0;
 }
 
+#wikiMenu li {
+  background-color:whitesmoke; 
+}
+
 #wikiTrailer, #wikiOrigin {
   clear:both;
   padding-left: 20px;

@@ -1,8 +1,8 @@
 /* MoniWiki base CSS 2005/09/22 by wkpark */
 
 body {
-  /* IE hover hack */
-  behavior:url("../local/csshover.htc");
+/* IE hover hack */
+/* behavior:url("../local/csshover.htc"); */
 }
 
 #wikiMenu {
@@ -23,7 +23,7 @@ body {
   list-style: none;
   padding:2px 10px;
   margin:2px 1px;
-  background-color:whitesmoke;
+/* background-color:whitesmoke; */
 /* the next 4 lines are magic for IE */
   display: block;
   float: left;
@@ -58,13 +58,6 @@ body {
 
 #wikiAction a {
   font-size:small;
-}
-
-#wikiLogin {
-  position:absolute;
-  right:35px;
-  top:11px;
-  height:36px;
 }
 
 tt.wiki {font-family:monospace;}
@@ -162,7 +155,6 @@ div.message {
   border-color:#990000;
   color:#440000;
   padding:0px;
-  width:100%;
 }
 
 .highlight {
@@ -216,7 +208,6 @@ div.wikiGroup {
   padding-bottom: 5px;
 }
 
-
 #wikiContent {
   margin: 10px 10px 10px 20px; 
 }
@@ -250,6 +241,10 @@ div.wikiGroup {
   margin-left: 10px;
 }
 
+* html #wikiIcon {
+  visibility:visible; /* for IE */
+}
+
 #wikiHeader:hover #wikiIcon {
   visibility:visible;
 }
@@ -258,7 +253,11 @@ div.wikiGroup {
   padding:1em 2em 1em 2em;
 }
 
-div.indent { padding-left:2em; }
+div.indent {
+  padding-top: 3px;
+  margin-top: 3px;
+  padding-left: 10px;
+}
 
 div.hint { font-size: 10px; background-color: #369; color:white;}
 a.purple { font-size: 10px; text-decoration:none;}
@@ -317,7 +316,6 @@ span.lineNumber {
   padding:0.5em;
 }
 
-
 .pageNav { margin-bottom:5px;font-size : 75%; }
 .pageNext { float: right; }
 .pagePrev { float: left; }
@@ -337,15 +335,14 @@ a.perma:link, a.perma:visited {
   visibility: hidden;
 }
 
-* html .perma:link, a.perma:visited { /* IE hack */
+* html a.perma:visited { /* IE hack */
   visibility: visible;
 }
 
 h1:hover a.perma, h2:hover a.perma, h3:hover a.perma {
-
   visibility: visible;
-
 }
+
 h4:hover a.perma, h5:hover a.perma, h6:hover a.perma {
   visibility: visible;
 }
