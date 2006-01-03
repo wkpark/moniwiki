@@ -1760,7 +1760,7 @@ class Formatter {
         if ($m[2]=='') $m[1].='1';
         return "<font size='$m[1]'>$m[3]</font>";
       }
-      return "<tt class='wiki'>$url</tt>"; # No link
+      return "<tt class='wiki'>".str_replace("<","&lt;",$url)."</tt>"; # No link
       break;
     case '[':
       $url=substr($url,1,-1);
@@ -2181,7 +2181,7 @@ class Formatter {
     $plugin=($np=getPlugin($name))?$np:$name;
     if (!function_exists ("macro_".$plugin)) {
       #if (!$np) return "[[".$name."]]";
-      if (!$np) return $this->word_repl($name);
+      if (!$np) return $this->link_repl($name);
       include_once("plugin/$plugin.php");
     }
     $ret=call_user_func_array("macro_$plugin",array(&$this,$args,$options));
@@ -2288,11 +2288,12 @@ class Formatter {
     return "<div class='separator'><hr class='wiki' /></div>";
   }
 
-  function _list($on,$list_type,$numtype="",$closetype="") {
+  function _list($on,$list_type,$numtype="",$closetype="",
+    $divtype=' class="indent"') {
     if ($list_type=="dd") {
       if ($on)
          #$list_type="dl><dd";
-         $list_type="div class='indent'";
+         $list_type="div$divtype";
       else
          #$list_type="dd></dl";
          $list_type="div";
@@ -2369,8 +2370,8 @@ class Formatter {
     return "<span class='purple'><a name='$nid' id='$nid'></a><a href='#$nid'>(".$id.")</a></span>";
   }
 
-  function _div($on,&$in_div,&$enclose) {
-    $tag=array("</div>\n","<div>\n");
+  function _div($on,&$in_div,&$enclose,$attr='') {
+    $tag=array("</div>\n","<div$attr>\n");
     if ($on) { $in_div++; $open=$enclose;}
     else {
       if (!$in_div) return '';
@@ -2621,7 +2622,7 @@ class Formatter {
       $line=preg_replace('/(&lt;)(\/)?(ins|del)/','<\\2\\3',$nc);
 
       # bullet and indentation
-      if ($in_pre != -1 && preg_match("/^(\s*)/",$line,$match)) {
+      if ($in_pre != -1 && preg_match("/^(\s*>*)/",$line,$match)) {
       #if (preg_match("/^(\s*)/",$line,$match)) {
          $open="";
          $close="";
@@ -2629,7 +2630,20 @@ class Formatter {
          $indlen=strlen($match[0]);
          if ($indlen > 0) {
            $line=substr($line,$indlen);
-           #if (preg_match("/^(\*\s*)/",$line,$limatch)) {
+           # check div type.
+           if ($match[0][$indlen-1]=='>') {
+             # get user defined style
+             if (($line[0]=='.' or $line[0]=='#') and ($p=strpos($line,' '))) {
+               if ($line[0]=='.') $dt='class';
+               else $dt='id';
+               $divtype=" $dt=\"".substr($line,1,$p-1).'"';
+               $line=substr($line,$p+1);
+             } else
+               $divtype=' class="indent quote"';
+           } else {
+             $divtype=' class="indent"';
+           }
+
            if ($line[0]=='*') {
              $limatch[1]='*';
              $line=preg_replace("/^(\*\s?)/","<li>",$line);
@@ -2655,12 +2669,13 @@ class Formatter {
             $in_li++;
             $indent_list[$in_li]=$indlen; # add list depth
             $indent_type[$in_li]=$indtype; # add list type
-            $open.=$this->_list(1,$indtype,$numtype);
+            $open.=$this->_list(1,$indtype,$numtype,'',$divtype);
          } else if ($indent_list[$in_li] > $indlen) {
             while($in_li >= 0 && $indent_list[$in_li] > $indlen) {
                if ($indent_type[$in_li]!='dd' && $li_open == $in_li)
                  $close.=$this->_li(0,$li_empty);
-               $close.=$this->_list(0,$indent_type[$in_li],"",$indent_type[$in_li-1]);
+               $close.=$this->_list(0,$indent_type[$in_li],"",
+                 $indent_type[$in_li-1]);
                unset($indent_list[$in_li]);
                unset($indent_type[$in_li]);
                $in_li--;
@@ -2793,6 +2808,7 @@ class Formatter {
       else
         $text.=$line."\n";
       $this->nobr=0;
+
     } # end rendering loop
 
     # highlight text
