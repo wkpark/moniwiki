@@ -14,6 +14,8 @@ function do_pageview($formatter,$options) {
     if ($options['p']) $sect=$options['p'];
     else $sect=1;
 
+    $act=$options['action'];
+
     // get head title section
     list($secthead,$dumm)=explode("\n",$sections[0]);
     preg_match('/^\s*=\s*([^=].*[^=])\s*=\s?$/',$secthead,$match);
@@ -63,16 +65,19 @@ function do_pageview($formatter,$options) {
 
     // make link tags
     if ($o_title!='') {
-        $olink= $formatter->link_tag($formatter->page->urlname,'?action=pageview&amp;p=1',$o_title);
+        $olink= $formatter->link_tag($formatter->page->urlname,'?action='.$act.
+            '&amp;p=1',$o_title);
         $first= _("First:").' '.$olink;
     }
     if ($n_title!='') {
-        $nlink= $formatter->link_tag($formatter->page->urlname,'?action=pageview&amp;p='.($sect+1),$n_title);
+        $nlink= $formatter->link_tag($formatter->page->urlname,'?action='.$act.
+            '&amp;p='.($sect+1),$n_title);
         $next= _("Next:").' '.$nlink;
         $nlink= "<div class='pageNext'>".$nlink." &raquo;</div>\n";
     }
     if ($p_title!='') {
-        $plink= $formatter->link_tag($formatter->page->urlname,'?action=pageview&amp;p='.($sect-1),$p_title);
+        $plink= $formatter->link_tag($formatter->page->urlname,'?action='.$act.
+            '&amp;p='.($sect-1),$p_title);
         $plink= "<div class='pagePrev'>&laquo; ".$plink."</div>\n";
     }
     print "$first$next\n<div class='pageNav'>".$plink.$nlink."</div>\n";

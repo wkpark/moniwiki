@@ -256,7 +256,7 @@ FORM2;
   if (!$savetext) {
     #print $formatter->macro_repl('SmileyChooser');
     print macro_EditHints($formatter);
-    print "<div class='hint'>"._("<b>horizontal rule</b> ---- is not applied on the blog mode.")."</div>\n";
+    print "<div class='wikiHints'>"._("<b>horizontal rule</b> ---- is not applied on the blog mode.")."</div>\n";
   }
   if ($options['button_preview'] && $options['savetext']) {
     if ($options['title'])

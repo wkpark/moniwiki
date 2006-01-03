@@ -100,10 +100,10 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
             $dep.'&amp;p=1');
         $icon=$options['action'] ? 'start':'next';
         $start= '<a href="'.$slink.'" title="'._("Start:").' '.$s_title.'">'.
-            '<img src="'.$icon_dir.$icon.'.png'.'" border="0" alt="<|" /></a>';
+            '<img src="'.$icon_dir.$icon.'.png'.'" border="0" alt="&lt;|" /></a>';
     } else {
         $start= 
-            '<img src="'.$icon_dir.'start_off.png'.'" border="0" alt="<|" /></a>';
+            '<img src="'.$icon_dir.'start_off.png'.'" border="0" alt="&lt;|" /></a>';
     }
     if ($e_title!='' and $options['action']) {
         $elink= $formatter->link_url($urlname,'?action='.$act.

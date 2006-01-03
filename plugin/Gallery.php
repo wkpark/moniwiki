@@ -211,7 +211,20 @@ function macro_Gallery($formatter,$value,&$options) {
     $date=date("Y-m-d",$mtime);
     if (preg_match("/\.(jpg|jpeg|gif|png)$/i",$file)) {
       if ($DBInfo->use_convert_thumbs and !file_exists($dir."/thumbnails/".$file)) {
-        system("convert -scale ".$width." ".$dir."/".$file." ".$dir."/thumbnails/".$file);
+        if (function_exists('imagecopyresized')) {
+          $fname=$dif.'/'.$file;
+          list($w, $h) = getimagesize($fname);
+          if ($w > $width) {
+            $nh=$w/$width*$h;
+            $thumb= imagecreatetruecolor($width,$nh);
+            // XXX only jpeg for testing now.
+            $source= imagecreatefromjpeg($fname);
+            imagecopyresized($thumb, $source, 0,0,0,0, $width, $nh, $w, $h);
+            imagejpeg ($thumb, $dir.'/thumbnails/'.$file);
+          }
+        } else {
+          system("convert -scale ".$width." ".$dir."/".$file." ".$dir."/thumbnails/".$file);
+        }
       }
       if (!$selected and file_exists($dir."/thumbnails/".$file)) {
         $thumb=($key == $value) ? $prefix.'thumbnails/'.$id:

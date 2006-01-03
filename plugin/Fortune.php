@@ -6,7 +6,6 @@
 // Usage: [[Fortune(science)]]
 //
 // $Id$
-// vim:et:ts=2:
 
 function macro_FortuneSystem($formatter,$value) {
     $ret= exec(escapeshellcmd("/usr/bin/fortune $value"),$log);
