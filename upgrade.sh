@@ -19,15 +19,20 @@ echo
 echo "+-------------------------------+"
 echo "|    MoniWiki upgrade script    |"
 echo "+-------------------------------+"
+echo "| Warning: only PHP script will |"
+echo "|   be updated and backuped.    |"
+echo "|     Please update other files |"
+echo "|   manually.                   |"
+echo "+-------------------------------+"
 echo
 $WARNING
-echo -n " Press enter to continue "
+echo -n " Press enter to continue or Control-C to exit "
 $NORMAL
 read
 
 CHECKSUM=
 PACKAGE=moniwiki
-FILELIST="wiki.php wikilib.php wikismiley.php plugin/*.php plugin/processor/*.php"
+FILELIST="wiki.php wikilib.php wikismiley.php plugin/*.php plugin/processor/*.php plugin/filter/*.php"
 for arg; do
 
         case $# in
@@ -72,7 +77,7 @@ $NORMAL
 
 UPGRADE=`diff checksum-current checksum-new |grep '^<'|cut -d' ' -f4`
 
-if [ -z $UPGRADE ]; then
+if [ -z "$UPGRADE" ]; then
 	echo "You have already installed the latest version"
 	exit
 fi
