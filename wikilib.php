@@ -981,7 +981,7 @@ function do_goto($formatter,$options) {
         $new=iconv($from,$to,$url);
         if ($new) $url=_urlencode($new);
       } else {
-        $buf=exec(escapeshellcmd("echo ".$options[page])." | ".escapeshellcmd("iconv -f $DBInfo->charset -t $to"));
+        $buf=exec(escapeshellcmd("echo ".$url." | ".escapeshellcmd("iconv -f $DBInfo->charset -t $to"));
         $url=_urlencode($buf);
       }
     }
