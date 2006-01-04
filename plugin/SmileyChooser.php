@@ -16,6 +16,7 @@ function macro_SmileyChooser($formatter,$value) {
   $chooser=<<<EOS
 <script language="javascript" type="text/javascript">
 <!--
+/*<![CDATA[*/
 // from wikibits.js
 function appendText(myText)
 {
@@ -50,6 +51,7 @@ function appendText(myText)
     txtarea.focus();
   }
 }
+/*]]*/
 //-->
 </script>
 EOS;
@@ -58,7 +60,7 @@ EOS;
   $idx=0;
   while (list($key,$value) = each($DBInfo->smileys)) {
     if ($last_img != $value[3]) {
-      $skey=str_replace("\\","\\\\",$key);
+      $skey=str_replace(array("\\","'"),array("\\\\","&#39;"),$key);
       $chooser.= "<span onclick='appendText(\"$skey\")'>".$formatter->smiley_repl($key)."</span>&shy;";
       $last_img = $value[3];
       $idx++;
