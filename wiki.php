@@ -572,6 +572,7 @@ class WikiDB {
     $this->diff_type='fancy';
     $this->hr_type='simple';
     $this->nonexists='simple';
+    $this->use_category=1;
     $this->use_sistersites=1;
     $this->use_singlebracket=1;
     $this->use_twinpages=1;
@@ -2622,7 +2623,9 @@ class Formatter {
       $line=preg_replace('/(&lt;)(\/)?(ins|del)/','<\\2\\3',$nc);
 
       # bullet and indentation
-      if ($in_pre != -1 && preg_match("/^(\s*>*)/",$line,$match)) {
+      # and quote begin with ">"
+      if ($in_pre != -1 &&
+        preg_match("/^(((>\s)*>)|(\s*>*))/",$line,$match)) {
       #if (preg_match("/^(\s*)/",$line,$match)) {
          $open="";
          $close="";
@@ -2650,7 +2653,7 @@ class Formatter {
              if ($indent_list[$in_li] == $indlen && $indent_type[$in_li]!='dd') $line=$this->_li(0).$line;
              $numtype="";
              $indtype="ul";
-           } elseif (preg_match("/^((\d+|[aAiI])\.)(#\d+)?\s/",$line,$limatch)){
+           } elseif (preg_match("/^(([1-9]\d*|[aAiI])\.)(#\d+)?\s/",$line,$limatch)){
              $line=preg_replace("/^((\d+|[aAiI])\.(#\d+)?)/","<li>",$line);
              if ($indent_list[$in_li] == $indlen) $line=$this->_li(0).$line;
              $numtype=$limatch[2][0];
@@ -2808,6 +2811,8 @@ class Formatter {
       else
         $text.=$line."\n";
       $this->nobr=0;
+      # empty line for quoted div
+      if (trim($line) =="") $text.="<br />\n";
 
     } # end rendering loop
 
@@ -3214,6 +3219,7 @@ FOOT;
       $upper_icon=$this->link_tag($upper,'',$this->icon['upper'])." ";
     } else if ($this->group) {
       $group=$this->group;
+      $groupt=substr($group,0,-1).' &raquo;';
       $myname=substr($this->page->name,strlen($group));
       $upper=_urlencode($myname);
       $upper_icon=$this->link_tag($upper,'',$this->icon['main'])." ";
@@ -3228,14 +3234,16 @@ FOOT;
     if (!$title) {
       if ($group) { # for UserNameSpace
         $title=$myname;
-        $group="<div class='wikiGroup'>".(substr($group,0,-1))." &raquo;</div>";
+        $groupt=
+          "<span class='wikiGroup'>$groupt</span>";
       } else     
         $title=$this->page->title;
       $title=htmlspecialchars($title);
     }
     # setup title variables
     #$heading=$this->link_to("?action=fullsearch&amp;value="._urlencode($name),$title);
-    $title="$group<span class='wikiTitle'><b>$title</b></span>";
+    $title="$groupt<span class='wikiTitle'>$title</span>";
+    #$title="<span class='wikiTitle'><b>$title</b></span>";
     if ($link)
       $title="<a href=\"$link\" class='wikiTitle'>$title</a>";
     else if (empty($options['nolink']))
@@ -3791,6 +3799,15 @@ if ($pagename) {
       $formatter->send_title($msg,"", $options);
       if ($options['err'])
         $formatter->send_page($options['err']);
+
+      if ($options['help'] and
+          method_exists($DBInfo->security,$options['help'])) {
+        print "<div id='wikiHelper'>";
+        $helper=$DBInfo->security->$options['help'];
+        print call_user_method($options['help'],$DBInfo->security,$formatter);
+        print "</div>\n";
+      }
+
       $formatter->send_footer($args,$options);
       return;
     } else if ($_SERVER['REQUEST_METHOD']=="POST" and
