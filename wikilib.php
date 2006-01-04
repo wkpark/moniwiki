@@ -379,7 +379,7 @@ class User {
   }
 
   function setID($id) {
-     if ($this->checkID($id)) {
+     if ($id and $this->checkID($id)) {
         $this->id=$id;
         return true;
      }
@@ -614,6 +614,8 @@ function macro_Edit($formatter,$value,$options='') {
   $edit_rows=$DBInfo->edit_rows ? $DBInfo->edit_rows: 16;
   $cols= preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
 
+  $use_js= preg_match('/Lynx|w3m|links/', $_SERVER['HTTP_USER_AGENT']) ? 0:1;
+
   $rows= $options['rows'] > 5 ? $options['rows']: $edit_rows;
   $rows= $rows < 60 ? $rows: $edit_rows;
   $cols= $options['cols'] > 60 ? $options['cols']: $cols;
@@ -657,24 +659,27 @@ function macro_Edit($formatter,$value,$options='') {
   else
     $previewurl=$formatter->link_url($formatter->page->urlname,'#preview');
 
-  $menu= '';
-  if ($preview)
+  $menu= ''; $sep= '';
+  if ($preview) {
     $menu= $formatter->link_to('#preview',_("Skip to preview"));
-  else if (!$options['noresizer']) {
+    $sep= ' | ';
+  } else if (!$DBInfo->use_resizer and (!$options['noresizer'] or !$use_js)) {
+    $sep= ' | ';
     $menu= $formatter->link_to("?action=edit&amp;rows=".($rows-3),_("ReduceEditor"));
-    $menu.= ' | '.$formatter->link_to("?action=edit&amp;rows=".($rows+3),_("EnlargeEditor"));
+    $menu.= $sep.$formatter->link_to("?action=edit&amp;rows=".($rows+3),_("EnlargeEditor"));
   }
 
   if (!$options['nomenu']) {
-    $menu.= " | ".$formatter->link_tag('InterWiki',"",_("InterWiki"));
-    $menu.= " | ".$formatter->link_tag('HelpOnEditing',"",_("HelpOnEditing"));
+    $menu.= $sep.$formatter->link_tag('InterWiki',"",_("InterWiki"));
+    $sep= ' | ';
+    $menu.= $sep.$formatter->link_tag('HelpOnEditing',"",_("HelpOnEditing"));
   }
 
   $form.=$menu;
   if ($options['action_mode']=='ajax' and $DBInfo->use_ajax) {
     $ajax=" onsubmit='savePage(this);return false'";
   }
-  $form.= sprintf('<form name="editform" method="post" action="%s"'.$ajax.'>',
+  $formh= sprintf('<form name="editform" method="post" action="%s"'.$ajax.'>',
     $previewurl);
   if ($text) {
     $raw_body = preg_replace("/\r\n|\r/", "\n", $text);
@@ -707,7 +712,7 @@ function macro_Edit($formatter,$value,$options='') {
   $raw_body = str_replace(array("&","<"),array("&amp;","&lt;"),$raw_body);
 
   # get categories
-  if (!$options['nocategories']) {
+  if ($DBInfo->use_category and !$options['nocategories']) {
   $categories=array();
   $categories= $DBInfo->getLikePages($DBInfo->category_regex);
   if ($categories) {
@@ -732,7 +737,7 @@ function macro_Edit($formatter,$value,$options='') {
   $save_msg=_("Save");
   $summary_msg=_("Summary of Change");
   if ($DBInfo->use_resizer) {
-    $form.=<<<EOS
+    $resizer=<<<EOS
 <script type="text/javascript" language='javascript'>
 //<![CDATA[
 <!--
@@ -747,8 +752,8 @@ function resize(obj,val) {
 //]]>
 </script>
 <div id='wikiResize'>
-<input type='button' value='+' onclick='resize(this.form,3)' />
-<input type='button' value='-' onclick='resize(this.form,-3)' />
+<input type='button' class='inc' value='+' onclick='resize(this.form,3)' />
+<input type='button' class='dec' value='-' onclick='resize(this.form,-3)' />
 </div>
 EOS;
   }
@@ -769,7 +774,7 @@ EOS;
     $form.= macro_EditHints($formatter);
   if (!$options['simple'])
     $form.= "<a id='preview' name='preview'></a>";
-  return $form;
+  return $formh.$resizer.$form;
 }
 
 
@@ -787,6 +792,7 @@ function do_invalid($formatter,$options) {
     else
       $formatter->send_page("== "._("Is it valid action ?")." ==\n");
   }
+
   $formatter->send_footer("",$options);
 }
 
@@ -809,7 +815,11 @@ function do_post_DeleteFile($formatter,$options) {
     }
   } else {
     // GET with 'value=filename' query string
-    $file=$options['value'];
+    if ($p=strpos($options['value'],'/')) {
+      $key=substr($options['value'],0,$p-1);
+      $file=substr($options['value'],$p+1);
+    } else
+      $file=$options['value'];
   }
 
   if (isset($options['files']) or isset($options['file'])) {

@@ -14,6 +14,7 @@ function macro_Attachment($formatter,$value,$option='') {
   if ($DBInfo->force_download) $force_download=1;
   if ($DBInfo->download_action) $mydownload=$DBInfo->download_action;
   else $mydownload='download';
+  $extra_action='';
 
   $text='';
 
@@ -52,9 +53,10 @@ function macro_Attachment($formatter,$value,$option='') {
     parse_str(substr($value,$dummy+1),$attrs);
     $value=substr($value,0,$dummy);
     foreach ($attrs as $name=>$val) {
-      if ($name=='action')
-        $mydownload=$val;
-      else
+      if ($name=='action') {
+        if ($val == 'deletefile') $extra_action=$val;
+        else $mydownload=$val;
+      } else
         $attr.="$name=\"$val\" ";
     }
 
@@ -98,8 +100,16 @@ function macro_Attachment($formatter,$value,$option='') {
         $url=$formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=".urlencode($value));
       else
         $url=$DBInfo->url_prefix."/"._urlencode($upload_file);
-      return "<span class=\"imgAttach\"><img src='$url' alt='$file' $attr/></span>";
+      $img="<img src='$url' alt='$file' $attr/>";
+
+      if ($extra_action) {
+        $url=$formatter->link_url(_urlencode($pagename),"?action=$extra_action&amp;value=".urlencode($value));
+        $img="<a href='$url'>$img</a>";
+      }
+      
+      return "<span class=\"imgAttach\">$img</span>";
     } else {
+      $mydownload= $extra_action ? $extra_action:$mydownload;
       $link=$formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=".urlencode($value),$text);
       if ($img_link)
         return "<span class=\"attach\"><a href='$link'>$img_link</a></span>";
