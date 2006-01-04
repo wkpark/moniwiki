@@ -9,6 +9,10 @@ class Security_needtologin extends Security {
     $this->DB=$DB;
   }
 
+  function help($formatter) {
+    return $formatter->macro_repl('UserPreferences');
+  }
+
 # $options[page]: pagename
 # $options[id]: user id
 
@@ -23,6 +27,7 @@ class Security_needtologin extends Security {
     if ($options['id']=='Anonymous') {
       $options['err']=sprintf(_("You are not allowed to '%s' on this page"),$action);
       $options['err'].="\n"._("Please Login or make your ID on this Wiki ;)");
+      $options['help']='help';
       return 0;
     }
     return 1;
@@ -33,6 +38,7 @@ class Security_needtologin extends Security {
     if ($options['id']=='Anonymous') {
       $options['err']=sprintf(_("You are not allowed to '%s' on this page"),$action);
       $options['err'].="\n"._("Please Login or make your ID on this Wiki ;)");
+      $options['help']='help';
       return 0;
     }
     return 1;
@@ -43,6 +49,7 @@ class Security_needtologin extends Security {
     if ($options['id']=='Anonymous') {
       $options['err']=sprintf(_("You are not allowed to '%s' on this page"),$action);
       $options['err'].="\n"._("Please Login or make your ID on this Wiki ;)");
+      $options['help']='help';
       return 0;
     }
     return 1;
