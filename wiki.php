@@ -573,6 +573,7 @@ class WikiDB {
     $this->hr_type='simple';
     $this->nonexists='simple';
     $this->use_category=1;
+    $this->use_camelcase=1;
     $this->use_sistersites=1;
     $this->use_singlebracket=1;
     $this->use_twinpages=1;
@@ -1539,6 +1540,16 @@ class Formatter {
       $this->baserule[]=$smiley_rule;
       $this->baserepl[]=$smiley_repl;
     }
+    $this->footrule="\[\*[^\]]*\s[^\]]+\]";
+
+    $this->cache= new Cache_text("pagelinks");
+  }
+
+  function set_wordrule($pis=array()) {
+    global $DBInfo;
+
+    $camelcase= isset($pis['#camelcase']) ? $pis['#camelcase']:
+      $DBInfo->use_camelcase;
 
     #$punct="<\"\'}\]\|;,\.\!";
     $punct="<\'}\]\)\|;\.\!"; # , is omitted for the WikiPedia
@@ -1557,13 +1568,18 @@ class Formatter {
     #"\b(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+[^\(\)<>\s\',\.:\?\!]+)|".
-    "(\b|\^?)([A-Z][a-zA-Z]+):([^\(\)<>\s\']*[^\(\)<>\s\'\",\.:\?\!]*(\s(?![\x33-\x7e]))?)|".
+    "(\b|\^?)([A-Z][a-zA-Z]+):([^\(\)<>\s\']*[^\(\)<>\s\'\",\.:\?\!]*(\s(?![\x33-\x7e]))?)";
+
+    if ($camelcase)
+      $this->wordrule.='|'.
+      "(?<![a-zA-Z])\!?(?:((\.{1,2})?\/)?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b";
     # "(?<!\!|\[\[)\b(([A-Z]+[a-z0-9]+){2,})\b|".
     # "(?<!\!|\[\[)((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})\b|".
     # WikiName rule: WikiName ILoveYou (imported from the rule of NoSmoke)
     # and protect WikiName rule !WikiName
     #"(?:\!)?((?:\.{1,2}?\/)?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b|".
-    "(?<![a-zA-Z])\!?(?:((\.{1,2})?\/)?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b|".
+
+    $this->wordrule.='|'.
     # double bracketed rule similar with MediaWiki [[Hello World]]
     "(?<!\[)\!?\[\[([^\[:,<\s'][^\[:,>]{1,255})\]\](?!\])|".
     # bracketed with double quotes ["Hello World"]
@@ -1578,10 +1594,7 @@ class Formatter {
       # single bracketed name [Hello World]
       $this->wordrule.= "|(?<!\[)\!?\[([^\[:,<\s'][^\[:,>]{1,255})\](?!\])";
     }
-
-    $this->footrule="\[\*[^\]]*\s[^\]]+\]";
-
-    $this->cache= new Cache_text("pagelinks");
+    return $this->wordrule;
   }
 
   function header($args) {
@@ -1649,7 +1662,7 @@ class Formatter {
     global $DBInfo;
     $pikeys=array('#redirect','#action','#title','#keywords','#noindex',
       '#filter','#postfilter','#twinpages','#notwins','#nocomment',
-      '#language',);
+      '#language','#camelcase','#nocamelcase');
     $pi=array();
     if (!$body) {
       if (!$this->page->exists()) return '';
@@ -1697,6 +1710,7 @@ class Formatter {
       }
       #
       if ($pi['#notwins']) $pi['#twinpages']=0;
+      if ($pi['#nocamelcase']) $pi['#camelcase']=0;
       if ($pi['#nofilter']) unset($pi['#filter']);
     }
 
@@ -2403,6 +2417,7 @@ class Formatter {
 
     if ($body) {
       $pi=$this->get_instructions($body);
+      $this->set_wordrule($pi);
       $fts=array();
       if ($pi['#filter']) $fts=preg_split('/(\||,)/',$pi['#filter']);
       if ($DBInfo->filters) $fts=array_merge($fts,$DBInfo->filters);
@@ -2426,6 +2441,7 @@ class Formatter {
         $pi=$this->get_instructions($dum);
         $body=$this->page->get_raw_body($options);
       }
+      $this->set_wordrule($pi);
 
       $fts=array();
       if ($pi['#filter']) $fts=preg_split('/(\||,)/',$pi['#filter']);
@@ -2812,7 +2828,8 @@ class Formatter {
         $text.=$line."\n";
       $this->nobr=0;
       # empty line for quoted div
-      if (trim($line) =="") $text.="<br />\n";
+      if (!$this->auto_linebreak and !$in_pre and trim($line) =='')
+        $text.="<br />\n";
 
     } # end rendering loop
 
