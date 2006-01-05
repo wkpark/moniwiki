@@ -729,6 +729,22 @@ class WikiDB {
         $this->postfilters=preg_split('/(\||,)/',$this->postfilters);
       }
     }
+
+    # check and prepare $url_mappings
+    if ($this->url_mappings) {
+      if (!is_array($this->url_mappings)) {
+        $maps=explode("\n",$this->url_mappings);
+        $tmap=array();
+        foreach ($maps as $map) {
+          if (strpos($map,' ')) {
+            $key=strtok($map,' ');
+            $val=strtok('');
+            $tmap["$key"]=$val;
+          }
+        }
+        $this->url_mappings=$tmap;
+      }
+    }
   }
 
   function Close() {
@@ -2221,6 +2237,8 @@ class Formatter {
       include_once("plugin/filter/$ff.php");
       #$filter=$ff;
     }
+    if (!function_exists ("filter_".$filter)) return $value;
+
     return call_user_func("filter_$filter",$this,$value,$options);
   }
 
@@ -2641,8 +2659,9 @@ class Formatter {
       # bullet and indentation
       # and quote begin with ">"
       if ($in_pre != -1 &&
-        preg_match("/^(((>\s)*>)|(\s*>*))/",$line,$match)) {
+        preg_match("/^(((>\s)*>(?!>))|(\s*>*))/",$line,$match)) {
       #if (preg_match("/^(\s*)/",$line,$match)) {
+         #print "{".$match[1].'}';
          $open="";
          $close="";
          $indtype="dd";
@@ -2873,6 +2892,8 @@ class Formatter {
     if ($in_p) $close.=$this->_div(0,$in_div,$div_enclose); # </para>
     #if ($div_enclose) $close.=$this->_div(0,$in_div,$div_enclose);
     while ($my_div>0) { $close.="</div>\n"; $my_div--;}
+    while($in_div > 0)
+      $close.=$this->_div(0,$in_div,$div_enclose);
 
     # activate <del></del> tag
     #$text=preg_replace("/(&lt;)(\/?del>)/i","<\\2",$text);
@@ -3157,7 +3178,7 @@ EOS;
   function send_footer($args='',$options='') {
     global $DBInfo;
 
-    print "</div>\n";
+    print "<!-- wikiBody --></div>\n";
     print $DBInfo->hr;
     if ($args['editable'] and !$DBInfo->security->writable($options))
       $args['editable']=-1;
@@ -3786,7 +3807,7 @@ if ($pagename) {
 #      $cache->update($pagename,$out);
 #    }
     $options['timer']->Check("send_page");
-    $formatter->write("</div>\n");
+    $formatter->write("<!-- wikiContent --></div>\n");
 
     if ($DBInfo->extra_macros) {
       if ($formatter->pi['#nocomment']) $options['nocomment']=1;
