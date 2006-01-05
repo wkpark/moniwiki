@@ -403,7 +403,7 @@ class User {
      $this->ticket=$ticket;
      # set the fake cookie
      $_COOKIE['MONI_ID']=$ticket.'.'.$this->id;
-     return "Set-Cookie: MONI_ID=".$ticket.'.'.$this->id.'; expires='.gmdate('l, d-M-Y H:i:s GMT',time()+60*60*24*30).'; Path='.get_scriptname();
+     return "Set-Cookie: MONI_ID=".$ticket.'.'.$this->id.'; expires='.gmdate('l, d-M-Y H:i:s',time()+60*60*24*30).' GMT; Path='.get_scriptname();
   }
 
   function unsetCookie() {
@@ -1373,10 +1373,25 @@ function wiki_notify($formatter,$options) {
   }
 
   $mailto=join(", ",$subs);
-  $subject="[".$DBInfo->sitename."] ".sprintf(_("%s page is modified"),$options[page]);
+  $subject="[".$DBInfo->sitename."] ".sprintf(_("%s page is modified"),
+    $options['page']);
+
+  $subject= '=?'.$DBInfo->charset.'?B?'.rtrim(base64_encode($subject)).'?=';
+
+  $rmail= "noreply@{$_SERVER['SERVER_NAME']}";
+  if(preg_match("/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/i",
+    $_SERVER['SERVER_NAME']))
+    $rmail= 'noreply@['.$_SERVER['SERVER_NAME'].']';
+
+  if ($options['id']) {
+    $return=$options['id'].' <'.$rmail.'>';
+  } else {
+    $return=$DBInfo->sitename.' <'.$rmail.'>';
+  }
  
-  $mailheaders = "Return-Path: $from\n";
-  $mailheaders.= "From: $from\n";
+  $mailheaders = "Return-Path: $return\n";
+  $mailheaders.= "From: $from <$rmail>\n";
+  $mailheaders.= "Reply-To: $return\n";
   $mailheaders.= "X-Mailer: MoniWiki form-mail interface\n";
 
   $mailheaders.= "MIME-Version: 1.0\n";
@@ -1392,7 +1407,7 @@ function wiki_notify($formatter,$options) {
     $body.=$diff;
   }
 
-  mail($mailto,$subject,$body,$mailheaders,'-f"'.$from.'"');
+  $ret=mail($mailto,$subject,$body,$mailheaders,'-fnoreply');
 
   if ($options['noaction']) return 1;
 
@@ -1400,8 +1415,12 @@ function wiki_notify($formatter,$options) {
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
   $msg= str_replace("@"," at ",$mailto);
-  print "<h2>".sprintf(_("Mails are sent successfully"))."</h2>";
-  printf(sprintf(_("mails are sent to '%s'"),$msg));
+  if ($ret) {
+    print "<h2>".sprintf(_("Mails are sent successfully"))."</h2>";
+    printf(sprintf(_("mails are sent to '%s'"),$msg));
+  } else {
+    print "<h2>".sprintf(_("Fail to send mail"))."</h2>";
+  }
   $formatter->send_footer("",$options);
   return;
 }
@@ -1414,23 +1433,33 @@ function wiki_sendmail($body,$options) {
     return array('msg'=>_("This wiki does not support sendmail"));
   }
 
-  if ($options['id'])
-    $from=$options['id'];
-  else
-    $from=$DBInfo->sitename;
+  $rmail= "noreply@{$_SERVER['SERVER_NAME']}";
+  if(preg_match("/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/i",
+    $_SERVER['SERVER_NAME']))
+    $rmail= 'noreply@['.$_SERVER['SERVER_NAME'].']';
+
+  if ($options['id']) {
+    $return=$options['id'].' <'.$rmail.'>';
+  } else {
+    $return=$DBInfo->sitename.' <'.$rmail.'>';
+  }
+
+  $from = $options['from'] ? $options['from']:$return;
 
   $email=$options['email'];
   $subject=$options['subject'];
+  $subject= '=?'.$DBInfo->charset.'?B?'.rtrim(base64_encode($subject)).'?=';
 
-  $mailheaders = "Return-Path: $from\n";
+  $mailheaders = "Return-Path: $return\n";
   $mailheaders.= "From: $from\n";
+  $mailheaders.= "Reply-To: $return\n";
   $mailheaders.= "X-Mailer: MoniWiki form-mail interface\n";
 
   $mailheaders.= "MIME-Version: 1.0\n";
   $mailheaders.= "Content-Type: text/plain; charset=$DBInfo->charset\n";
   $mailheaders.= "Content-Transfer-Encoding: 8bit\n\n";
 
-  mail($email,$subject,$body,$mailheaders,'-f"'.$from.'"');
+  mail($email,$subject,$body,$mailheaders,'-fnoreply');
   return 0;
 }
 
@@ -2087,7 +2116,7 @@ function macro_FootNote(&$formatter,$value="") {
   $formatter->foot_idx++;
   $idx=$formatter->foot_idx;
 
-  $text="[$idx&#093";
+  $text="[$idx&#093;";
   $fnidx="fn".$idx;
   if ($value[0] == '*') {
     if ($value[1] == '*') {
@@ -2146,8 +2175,9 @@ function macro_FootNote(&$formatter,$value="") {
                       "<a id='$fnidx' name='$fnidx'/>".
                       "<a href='#r$fnidx'>$text</a>&#160;</tt> ".
                       "$value<br/>";
+  $tval=str_replace("'","&#39;",$value);
   return "<tt class='foot'><a id='r$fnidx' name='r$fnidx'/>".
-    "<a href='#$fnidx' title='$value'>$text</a></tt>";
+    "<a href='#$fnidx' title='$tval'>$text</a></tt>";
 }
 
 function macro_TableOfContents(&$formatter,$value="") {
