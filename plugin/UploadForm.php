@@ -14,7 +14,7 @@ function macro_UploadForm($formatter,$value) {
     if ($id==1)
        $script=<<<EOF
 <script type="text/javascript">
-<!--
+/*<!CDATA[*/
 function addRow(id) {
     var fform = document.getElementById(id);
     var lastRow = fform.rows.length;
@@ -42,7 +42,7 @@ function delRow(obj) {
     obj.parentNode.parentNode.parentNode.removeChild(obj.parentNode.parentNode);
 }
 
-//-->
+/*]]>*/
 </script>
 EOF;
     $url=$formatter->link_url($formatter->page->urlname);

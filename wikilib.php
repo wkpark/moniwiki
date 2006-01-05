@@ -739,8 +739,7 @@ function macro_Edit($formatter,$value,$options='') {
   if ($DBInfo->use_resizer) {
     $resizer=<<<EOS
 <script type="text/javascript" language='javascript'>
-//<![CDATA[
-<!--
+/*<![CDATA[*/
 function resize(obj,val) {
   rows= obj.savetext.rows;
   rows+=val;
@@ -748,8 +747,7 @@ function resize(obj,val) {
   else if (rows < 5) rows=16;
   obj.savetext.rows=rows;
 }
-//-->
-//]]>
+/*]]>*/
 </script>
 <div id='wikiResize'>
 <input type='button' class='inc' value='+' onclick='resize(this.form,3)' />
@@ -1737,9 +1735,9 @@ EXTRA;
   if ($tz_offset=="")
     $script=<<<EOF
 <script type="text/javascript">
-//<![CDATA[
+/*<![CDATA[*/
 setTimezone();
-//]]>
+/*]]>*/
 </script>
 EOF;
 
@@ -2220,9 +2218,9 @@ function macro_TableOfContents(&$formatter,$value="") {
 EOS;
   $TOC_close=<<<EOS
 <script type="text/javascript">
-//<![CDATA[
+/*<![CDATA[*/
  if (window.showTocToggle) { showTocToggle('<img src="$DBInfo->imgs_dir/plugin/arrdown.png" width="10px" border="0" alt="[+]" title="[+]" />','<img src="$DBInfo->imgs_dir/plugin/arrup.png" width="10px" border="0" alt="[-]" title="[-]" />'); } 
-//]]>
+/*]]>*/
 </script>
 EOS;
  }

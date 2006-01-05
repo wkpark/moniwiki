@@ -58,7 +58,7 @@ function macro_SearchPlugin($formatter,$value,$options='') {
   return <<<EOS
 <div class="SearchPlugin">
 <script type="text/javascript">
-<!--
+/*<![CDATA[*/
 function addSearchPlugin(update_url, name)
 {
   if ((typeof window.sidebar == "object") &&
@@ -73,7 +73,7 @@ function addSearchPlugin(update_url, name)
     alert("Firefox, Mozilla or Compatible Browser is needed to install a search plugin");
   }
 }
-//-->
+/*]]>*/
 </script>
 <a href="javascript:addSearchPlugin('$update_url', '$name')">$text</a>
 </div>

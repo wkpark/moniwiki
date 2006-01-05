@@ -13,6 +13,7 @@ function macro_EditToolbar($formatter,$value) {
    global $DBInfo;
 
    $iconset='mediawiki';
+   $iconset='moniwiki';
    $imgdir=$DBInfo->imgs_dir.'/plugin/EditToolbar/'.$iconset;
    $script=<<<EOS
 <script type="text/javascript" src="$DBInfo->url_prefix/local/wikibits.js"></script>

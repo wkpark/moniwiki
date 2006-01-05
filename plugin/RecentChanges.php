@@ -93,6 +93,8 @@ define('RC_DEFAULT_DAYS',7);
   if ($user->id != 'Anonymous') {
     $udb=new UserDB($DBInfo);
     $udb->checkUser($user);
+  }
+  if ($user->id != 'Anonymous') {
     $bookmark= $user->info['bookmark'];
     $tz_offset= $user->info['tz_offset'];
   } else {
@@ -214,6 +216,7 @@ define('RC_DEFAULT_DAYS',7);
 
     $pageurl=_rawurlencode($page_name);
 
+    #print $ed_time."/".$bookmark."//";
     if (!$DBInfo->hasPage($page_name))
       $icon= $formatter->link_tag($pageurl,"?action=info",$formatter->icon['del']);
     else if ($ed_time > $bookmark) {

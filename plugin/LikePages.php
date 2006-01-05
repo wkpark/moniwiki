@@ -146,13 +146,16 @@ function macro_LikePages($formatter="",$args="",&$opts) {
 
   if (!$hits) {
     $out.="<h3>"._("No similar pages found")."</h3>";
-    $opts['extra']=_("You are strongly recommened to find it in MetaWikis. ");
+    if (!$metawiki)
+      $opts['extra']=_("You are strongly recommened to find it in MetaWikis. ");
   }
 
   $opts['msg'] = sprintf(_("Like \"%s\""),$args);
 
-  $tag=$formatter->link_to("?action=LikePages&amp;metawiki=1",_("Search all MetaWikis"));
-  $opts['extra'].="$tag (Slow Slow)<br />";
+  if (!$metawiki) {
+    $tag=$formatter->link_to("?action=LikePages&amp;metawiki=1",_("Search all MetaWikis"));
+    $opts['extra'].="$tag ("._("Slow Slow").")<br />";
+  }
 
   return $out;
 }

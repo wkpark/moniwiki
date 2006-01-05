@@ -51,7 +51,10 @@ class Security_community extends Security {
 
   function is_allowed($action='read',&$options) {
     $allowed_actions=array('theme','css','userform','bookmark','goto','dot',
-      'trackback','rss_rc','rss','blogrss','urlencode','deletepage','titlesearch','info','download','comment','notitle');
+      'trackback','rss_rc','rss','blogrss','urlencode','deletepage',
+      'titlesearch','info','download','comment','notitle','fixmoin');
+    $notallowed_actions=array('raw','recall','diff','info','rcs','deletepage',
+      'fullsearch');
     if (in_array(strtolower($action),$allowed_actions)) return 1;
     if ($options['id']=='Anonymous') {
       $options['err']=sprintf(_("You are not allowed to '%s' on this page."),$action);

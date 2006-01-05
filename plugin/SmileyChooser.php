@@ -15,7 +15,6 @@ function macro_SmileyChooser($formatter,$value) {
 
   $chooser=<<<EOS
 <script language="javascript" type="text/javascript">
-<!--
 /*<![CDATA[*/
 // from wikibits.js
 function appendText(myText)
@@ -51,8 +50,7 @@ function appendText(myText)
     txtarea.focus();
   }
 }
-/*]]*/
-//-->
+/*]]>*/
 </script>
 EOS;
   $chooser.= "<div id=\"smileyChooser\">\n";

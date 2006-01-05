@@ -14,7 +14,7 @@ function macro_MozTab($formatter,$value) {
 
   $tab=<<<TAB
 <script language="JavaScript">
-<!--
+/*<![CDATA[*/
  function selfside() {
     if ((typeof window.sidebar == "object") && (typeof window.sidebar.addPanel == "function")) {
           window.sidebar.addPanel ("$DBInfo->sitename", "$url","");
@@ -25,7 +25,7 @@ function macro_MozTab($formatter,$value) {
              document.location.href = "http://www.mozilla.org/";
        }
     }
-//-->
+/*]]>*/
 </script>
 <a href="javascript:selfside();"><img src="$DBInfo->imgs_dir/plugin/moztab.png" border=0 title="add mozilla tab"></a>
 TAB;

@@ -46,10 +46,10 @@ $script
 <span id="effect"></span>
 <div class="wikiChat">
 <script language='javascript'>
-<!--
+/*<![CDATA[*/
 setInterval('sendMsg("poll",null,"$url","chat$tag",$itemnum)',10000);
 setSound('pass','$DBInfo->url_prefix/local/pass.au');
-//-->
+/*]]>*/
 </script>
 <div id="chat$tag">$msg</div>
 <form onSubmit='return false'>

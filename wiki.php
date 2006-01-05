@@ -185,11 +185,11 @@ function kbd_handler() {
   $sep= $DBInfo->query_prefix;
   print <<<EOS
 <script language="JavaScript" type="text/javascript">
-<!--
+/*<![CDATA[*/
 url_prefix="$prefix";
 _qp="$sep";
 FrontPage= "$DBInfo->frontpage";
-//-->
+/*]]>*/
 </script>
 <script type="text/javascript" src="$DBInfo->kbd_script">
 </script>
