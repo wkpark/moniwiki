@@ -3,11 +3,16 @@
 # $Id$
 use POSIX qw(strftime);
 
+$admin_id='Admin';
+#$admin_id='YourWikiId';
+$mylog='127.0.0.1;;'.$admin_id.';;';
+
 open(LOG,'editlog') or die "could not open editlog: $!";
 @log=<LOG>;
 close LOG;
 
-# GLE     203.252.48.205  1041999970      chem6.skku.ac.kr        Anonymous               SAVE
+#
+# PageName     203.xxx.xx.xxx  1041999970      hello.org        Anonymous               SAVE
 foreach $line (@log) {
   ($page, $ip, $time, $host, $id, $comment,$action)=split(/\t/,$line);
   chomp($comment);
@@ -49,16 +54,18 @@ foreach $name (keys %pages) {
       $time = (stat($backup))[9];
     }
      
+    $pagename=$name;
+    $pagename=~ s/_([a-f0-9]{2})/chr(hex($1))/eg;
+    $pagename =~ s/\"/\\\"/g;
+    print "cp $backup backup/$name\n";
+    $date = strftime ("%Y%m%d%H%M", gmtime($time));
+    print "touch -t $date backup/$name\n";
     if ($logs{$time}) {
       #print $logs{$1}."\n";
-      $pagename=$name;
-      $pagename=~ s/_([a-f0-9]{2})/chr(hex($1))/eg;
-      $pagename =~ s/\"/\\\"/g;
-      print "cp $backup backup/$name\n";
-      $date = strftime ("%Y%m%d%H%M", gmtime($time));
-      print "touch -t $date backup/$name\n";
       print "ci -q -d -l -t-\"$pagename\" -m\"".$logs{$time}."\" backup/$name\n";
-      print "rm backup/$name\n";
+    } else {
+      print "ci -q -d -l -t-\"$pagename\" -m\"".$mylog."\" backup/$name\n";
     }
+    print "rm backup/$name\n";
   }
 }
