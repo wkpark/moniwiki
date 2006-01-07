@@ -200,7 +200,7 @@ function macro_Gallery($formatter,$value,&$options) {
       '?action=gallery&amp;col='.$col.'&amp;row='.$row.
       '&amp;p=',$options['p'],$perpage);
 
-  if (!file_exists($dir."/thumbnails")) mkdir($dir."/thumbnails",0777);
+  if (!file_exists($dir."/thumbnails")) @mkdir($dir."/thumbnails",0777);
 
   while (list($file,$mtime) = each ($upfiles)) {
     $size=filesize($dir."/".$file);

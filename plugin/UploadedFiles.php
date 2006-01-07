@@ -2,7 +2,7 @@
 // Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a UploadedFiles plugin for the MoniWiki
-// vim:et:ts=2:
+// vim:et:sts=4:
 //
 // $Id$
 
@@ -20,6 +20,109 @@ function do_uploadedfiles($formatter,$options) {
 
 function macro_UploadedFiles($formatter,$value="",$options="") {
    global $DBInfo;
+
+   $use_preview=$DBInfo->use_preview_uploads ? $DBInfo->use_preview_uploads:0;
+   $preview_width=64;
+
+   $use_preview=0;
+   $js_tag=0;
+   $js_script='';
+   $uploader='';
+
+   $iconset='gnome';
+   $icon_dir=$DBInfo->imgs_dir.'/plugin/UploadedFiles/'.$iconset;
+
+   $args=explode(',',$value);
+   $value='';
+
+   if ($formatter->preview) {
+     $js_tag=1;$use_preview=1;
+     $uploader='UploadForm';
+   } else if ($options['preview']) {
+     $use_preview=1;
+   }
+   foreach ($args as $arg) {
+      $arg=trim($arg);
+      if (($p=strpos($arg,'='))!==false) {
+         $k=substr($arg,0,$p);
+         $v=substr($arg,$p+1);
+         if ($k=='preview') { $use_preview=$v; }
+         else if ($k == 'tag') {
+           $js_tag=1; $use_preview=1;
+         }
+      } else {
+         $value=$arg;
+      }
+   }
+   if ($js_tag) {
+      $form='editform';
+      $js_script=<<<EOS
+      <script language="javascript" type="text/javascript">
+/*<![CDATA[*/
+// based on wikibits.js in the MediaWiki
+// small fix to use opener in the dokuwiki.
+
+function insertTags(tagOpen,tagClose,myText,replaced)
+{
+  if (document.$form)
+    var txtarea = document.$form.savetext;
+  else {
+    // some alternate form? take the first one we can find
+    var areas = document.getElementsByTagName('textarea');
+    if (areas.length > 0) {
+        var txtarea = areas[0];
+    } else if (opener.document.$form.savetext) {
+        var txtarea = opener.document.$form.savetext;
+    }
+  }
+
+  if(document.selection && document.all) {
+    var theSelection = document.selection.createRange().text;
+    txtarea.focus();
+    if(theSelection.charAt(theSelection.length - 1) == " "){
+      // exclude ending space char, if any
+      theSelection = theSelection.substring(0, theSelection.length - 1);
+      document.selection.createRange().text = theSelection + tagOpen + myText + tagClose + " ";
+    } else {
+      document.selection.createRange().text = theSelection + tagOpen + myText + tagClose + " ";
+    }
+  }
+  // Mozilla
+  else if(txtarea.selectionStart || txtarea.selectionStart == '0') {
+		//var replaced = false;
+		var startPos = txtarea.selectionStart;
+		var endPos = txtarea.selectionEnd;
+		if (!replaced && endPos-startPos)
+			replaced = true;
+		var scrollTop = txtarea.scrollTop;
+
+		if (myText.charAt(myText.length - 1) == " ") { // exclude ending space char, if any
+			subst = tagOpen + myText.substring(0, (myText.length - 1)) + tagClose + " ";
+		} else {
+			subst = tagOpen + myText + tagClose;
+		}
+		txtarea.value = txtarea.value.substring(0, startPos) + subst +
+			txtarea.value.substring(endPos, txtarea.value.length);
+		txtarea.focus();
+		//set new selection
+		if (replaced) {
+			var cPos = startPos+(tagOpen.length+myText.length+tagClose.length);
+			txtarea.selectionStart = cPos;
+			txtarea.selectionEnd = cPos;
+		} else {
+			txtarea.selectionStart = startPos+tagOpen.length;   
+			txtarea.selectionEnd = startPos+tagOpen.length+myText.length;
+		}	
+		txtarea.scrollTop = scrollTop;
+  } else { // All others
+    txtarea.value += tagOpen + myText + tagClose + " ";
+    txtarea.focus();
+  }
+}
+/*]]>*/
+</script>
+EOS;
+   }
 
    if ($DBInfo->download_action) $mydownload=$DBInfo->download_action;
    else $mydownload='download';
@@ -114,7 +217,32 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
       $size=round($size,2).' '.$unit[$i];
 
       $date=date('Y-m-d',filemtime($dir.'/'.$file));
-      $out.="<tr><td class='wiki'><input type='$checkbox' name='files[$idx]' value='$file' /></td><td class='wiki'><a href='$link'>$file</a></td><td align='right' class='wiki'>$size</td><td class='wiki'>$date</td></tr>\n";
+      $fname=$file;
+      $attr='';
+      if ($use_preview or $js_tag) {
+        $tag_open='attachment:'; $tag_close='';
+        $alt="$tag_open$file$tag_close";
+        preg_match("/\.(.{1,4})$/",$fname,$m);
+        $ext=strtolower($m[1]);
+        if ($ext and stristr('gif,png,jpeg,jpg',$ext)) {
+          $fname="<img src='$link' width='$preview_width' $alt />";
+        } else {
+          if (preg_match('/^(wmv|avi|mpeg|mpg|swf|wav|mp3|ogg|midi|mid|mov)$/',$ext)) {
+            $tag_open='[[Media('; $tag_close=')]]';
+            $alt="$tag_open$file$tag_close";
+          } else if (!preg_match('/^(bmp|c|h|java|py|bak|diff|doc|css|php|xml|html|mod|'.
+              'rpm|deb|pdf|ppt|xls|tgz|gz|bz2|zip)$/',$ext)) {
+            $ext='unknown';
+          }
+          $fname="<img src='$icon_dir/$ext.png' $alt />";
+        }
+        if ($js_tag) {
+          //if (strpos($file,' '))
+          $tag="insertTags('$tag_open','$tag_close','$file',true)";
+          $link="javascript:$tag";
+        }
+      }
+      $out.="<tr><td class='wiki'><input type='$checkbox' name='files[$idx]' value='$file' /></td><td class='wiki'><a href=\"$link\"$attr>$fname</a></td><td align='right' class='wiki'>$size</td><td class='wiki'>$date</td></tr>\n";
       $idx++;
    }
    $idx--;
@@ -126,7 +254,11 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
 
    if (!$value and !in_array('UploadFile',$formatter->actions))
      $formatter->actions[]='UploadFile';
-   return $out;
+
+   if ($uploader and !in_array('UploadedFiles',$formatter->actions)) {
+     $out.=$formatter->macro_repl($uploader);
+   }
+   return $js_script.$out;
 }
 
 ?>

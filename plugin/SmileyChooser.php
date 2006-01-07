@@ -19,7 +19,13 @@ function macro_SmileyChooser($formatter,$value) {
 // from wikibits.js
 function appendText(myText)
 {
-  var txtarea = document.$form.savetext;
+  if (document.$form)
+    var txtarea = document.$form.savetext;
+  else {
+    // some alternate form? take the first one we can find
+    var areas = document.getElementsByTagName('textarea');
+    var txtarea = areas[0];
+  }
   if(document.selection && document.all) {
     var theSelection = document.selection.createRange().text;
     txtarea.focus();

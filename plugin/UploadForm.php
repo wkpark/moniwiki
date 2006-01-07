@@ -81,6 +81,9 @@ EOF;
     if (!in_array('UploadedFiles',$formatter->actions))
         $formatter->actions[]='UploadedFiles';
     $id++;
+    if ($formatter->preview and !in_array('UploadFile',$formatter->actions)) {
+        $form=$formatter->macro_repl('UploadedFiles(tag=1)').$form;
+    }
     return $script.$form.$multiform;
 }
 
