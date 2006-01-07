@@ -129,9 +129,17 @@ function do_ticket($formatter,$options) {
         ImageString($im,$FONT, 4, 4, $passwd, $color[$pen]);
     }
 
-    _effect_blur($im,$color,1,1);
-    //_effect_grid($im,$color,$pen);
-
+    switch ($DBInfo->use_ticket) {
+        case 1:
+            _effect_blur($im,$color,1,1);
+            break;
+        case 3:
+            _effect_blur($im,$color,1,1);
+        case 2:
+        default:
+            _effect_grid($im,$color,$pen);
+            break;
+    }
 
     ImagePng($im);
     ImageDestroy($im);
