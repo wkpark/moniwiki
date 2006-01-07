@@ -16,6 +16,16 @@ function do_userform($formatter,$options) {
   }
   $id=$options['login_id'];
 
+  $use_any=0;
+  if ($DBInfo->use_textbrowsers) {
+    if (is_string($DBInfo->use_textbrowsers))
+      $use_any= preg_match('/'.$DBInfo->use_textbrowsers.'/',
+        $_SERVER['HTTP_USER_AGENT']) ? 0:1;
+    else
+      $use_any= preg_match('/Lynx|w3m|links/',
+        $_SERVER['HTTP_USER_AGENT']) ? 0:1;
+  }
+
   # e-mail conformation
   if ($options['ticket'] and $id and $id!='Anonymous') {
     $userdb=new UserDB($DBInfo);
@@ -68,7 +78,8 @@ function do_userform($formatter,$options) {
             $login_ok=1;
         } else { # with no javascript browsers
           $md5pw=md5($options['password']);
-          if (hmac($md5pw,$user->info['password']) == $md5pw)
+          //if (hmac($md5pw,$user->info['password']) == $md5pw)
+          if ($md5pw == $user->info['password'])
             $login_ok=1;
         }
       }
@@ -98,7 +109,7 @@ function do_userform($formatter,$options) {
     # email new password
 
     $title='';
-    if ($DBInfo->use_ticket) {
+    if (!$use_any and $DBInfo->use_ticket) {
       if ($options['__seed'] and $options['check']) {
         $mycheck=getTicket($options['__seed'],$_SERVER['REMOTE_ADDR'],4);
         if ($mycheck==$options['check'])
@@ -184,7 +195,7 @@ function do_userform($formatter,$options) {
     # create profile
 
     $title='';
-    if ($DBInfo->use_ticket) {
+    if (!$use_any and $DBInfo->use_ticket) {
       if ($options['__seed'] and $options['check']) {
         $mycheck=getTicket($options['__seed'],$_SERVER['REMOTE_ADDR'],4);
         if ($mycheck==$options['check'])
