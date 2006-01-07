@@ -109,8 +109,14 @@ function escapeQuotesHTML(text) {
 // use sampleText instead of selection if there is none
 // copied and adapted from phpBB
 function insertTags(tagOpen, tagClose, sampleText) {
+	if (document.editform)
+		var txtarea = document.editform.savetext;
+	else {
+		// some alternate form? take the first one we can find
+		var areas = document.getElementsByTagName('textarea');
+		var txtarea = areas[0];
+	}
 
-	var txtarea = document.editform.savetext;
 	// IE
 	if(document.selection  && !is_gecko) {
 		var theSelection = document.selection.createRange().text;
@@ -125,24 +131,33 @@ function insertTags(tagOpen, tagClose, sampleText) {
 
 	// Mozilla
 	} else if(txtarea.selectionStart || txtarea.selectionStart == '0') {
- 		var startPos = txtarea.selectionStart;
+		var replaced = false;
+		var startPos = txtarea.selectionStart;
 		var endPos = txtarea.selectionEnd;
-		var scrollTop=txtarea.scrollTop;
+		if (endPos-startPos)
+			replaced = true;
+		var scrollTop = txtarea.scrollTop;
 		var myText = (txtarea.value).substring(startPos, endPos);
-		if(!myText) { myText=sampleText;}
-		if(myText.charAt(myText.length - 1) == " "){ // exclude ending space char, if any
+		if (!myText)
+			myText=sampleText;
+		if (myText.charAt(myText.length - 1) == " ") { // exclude ending space char, if any
 			subst = tagOpen + myText.substring(0, (myText.length - 1)) + tagClose + " ";
 		} else {
 			subst = tagOpen + myText + tagClose;
 		}
 		txtarea.value = txtarea.value.substring(0, startPos) + subst +
-		  txtarea.value.substring(endPos, txtarea.value.length);
+			txtarea.value.substring(endPos, txtarea.value.length);
 		txtarea.focus();
-
-		var cPos=startPos+(tagOpen.length+myText.length+tagClose.length);
-		txtarea.selectionStart=cPos;
-		txtarea.selectionEnd=cPos;
-		txtarea.scrollTop=scrollTop;
+		//set new selection
+		if (replaced) {
+			var cPos = startPos+(tagOpen.length+myText.length+tagClose.length);
+			txtarea.selectionStart = cPos;
+			txtarea.selectionEnd = cPos;
+		} else {
+			txtarea.selectionStart = startPos+tagOpen.length;   
+			txtarea.selectionEnd = startPos+tagOpen.length+myText.length;
+		}	
+		txtarea.scrollTop = scrollTop;
 
 	// All others
 	} else {
@@ -167,7 +182,8 @@ function insertTags(tagOpen, tagClose, sampleText) {
 		noOverwrite=true;
 	}
 	// reposition cursor if possible
-	if (txtarea.createTextRange) txtarea.caretPos = document.selection.createRange().duplicate();
+	if (txtarea.createTextRange)
+		txtarea.caretPos = document.selection.createRange().duplicate();
 }
 
 function akeytt() {
