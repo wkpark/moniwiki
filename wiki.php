@@ -870,14 +870,6 @@ class WikiDB {
     fclose($fp_editlog);
   }
 
-  function reverse($arrayX) {
-    $out= array();
-    $size= count($arrayX);
-    for ($i= $size - 1; $i >= 0; $i--)
-      $out[]= $arrayX[$i];
-    return $out;
-  }
-
   function editlog_raw_lines($days,$opts=array()) {
     $lines=array();
 
@@ -888,7 +880,11 @@ class WikiDB {
       $date_from= $time_current - ($opts['ago'] * $secs_per_day);
       $date_to= $date_from + ($days * $secs_per_day);
     } else {
-      $date_from= $time_current - ($days * $secs_per_day);
+      if ($opts['items']) {
+        $date_from= $time_current - (365 * $secs_per_day);
+      } else {
+        $date_from= $time_current - ($days * $secs_per_day);
+      }
       $date_to= $time_current;
     }
     $check=$date_to;
@@ -3576,7 +3572,7 @@ $options=array();
 $options['id']=$user->id;
 
 # MoniWiki theme
-if (empty($DBInfo->theme) and isset($_GET['theme'])) $theme=$_GET['theme'];
+if ((empty($DBInfo->theme) or isset($_GET['action'])) and isset($_GET['theme'])) $theme=$_GET['theme'];
 else $theme=$DBInfo->theme;
 if ($theme) $options['theme']=$theme;
 
