@@ -614,7 +614,7 @@ function macro_Edit($formatter,$value,$options='') {
   $edit_rows=$DBInfo->edit_rows ? $DBInfo->edit_rows: 16;
   $cols= preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
 
-  $use_js= preg_match('/Lynx|w3m|links/', $_SERVER['HTTP_USER_AGENT']) ? 0:1;
+  $use_js= preg_match('/Lynx|w3m|links/',$_SERVER['HTTP_USER_AGENT']) ? 0:1;
 
   $rows= $options['rows'] > 5 ? $options['rows']: $edit_rows;
   $rows= $rows < 60 ? $rows: $edit_rows;
@@ -736,7 +736,7 @@ function macro_Edit($formatter,$value,$options='') {
   }
   $save_msg=_("Save");
   $summary_msg=_("Summary of Change");
-  if ($DBInfo->use_resizer) {
+  if ($use_js and $DBInfo->use_resizer) {
     $resizer=<<<EOS
 <script type="text/javascript" language='javascript'>
 /*<![CDATA[*/
@@ -1629,6 +1629,16 @@ function macro_DateTime($formatter,$value) {
 function macro_UserPreferences($formatter,$value,$options='') {
   global $DBInfo;
 
+  $use_any=0;
+  if ($DBInfo->use_textbrowsers) {
+    if (is_string($DBInfo->use_textbrowsers))
+      $use_any= preg_match('/'.$DBInfo->use_textbrowsers.'/',
+        $_SERVER['HTTP_USER_AGENT']) ? 1:0;
+    else
+      $use_any= preg_match('/Lynx|w3m|links/',
+        $_SERVER['HTTP_USER_AGENT']) ? 1:0;
+  }
+
   $user=new User(); # get from COOKIE VARS
   if ($user->id != 'Anonymous') {
     $udb=new UserDB($DBInfo);
@@ -1689,7 +1699,7 @@ FORM;
       $extra=<<<EXTRA
   <tr><td><b>$mailbtn</b>&nbsp;</td><td><input type="text" size="40" name="email" value="$email" /></td></tr>
 EXTRA;
-      if ($DBInfo->use_ticket) {
+      if (!$use_any and $DBInfo->use_ticket) {
         $seed=md5(base64_encode(time()));
         $ticketimg=$formatter->link_url($formatter->page->name,'?action=ticket&amp;__seed='.$seed);
         $extra.=<<<EXTRA
