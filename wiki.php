@@ -735,14 +735,17 @@ class WikiDB {
       if (!is_array($this->url_mappings)) {
         $maps=explode("\n",$this->url_mappings);
         $tmap=array();
+        $rule='';
         foreach ($maps as $map) {
           if (strpos($map,' ')) {
             $key=strtok($map,' ');
             $val=strtok('');
             $tmap["$key"]=$val;
+            $rule.=preg_quote($key,'/').'|';
           }
         }
         $this->url_mappings=$tmap;
+        $this->url_mapping_rule=substr($rule,0,-1);
       }
     }
   }
@@ -1470,6 +1473,7 @@ class Formatter {
   var $group='';
   var $use_purple=1;
   var $purple_number=0;
+  var $java_scripts=array();
 
   function Formatter($page="",$options="") {
     global $DBInfo;
@@ -1493,6 +1497,7 @@ class Formatter {
     $this->auto_linebreak=$DBInfo->auto_linebreak;
     $this->nonexists=$DBInfo->nonexists;
     $this->url_mappings=$DBInfo->url_mappings;
+    $this->url_mapping_rule=$DBInfo->url_mapping_rule;
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -1585,6 +1590,10 @@ class Formatter {
     if ($camelcase)
       $this->wordrule.='|'.
       "(?<![a-zA-Z])\!?(?:((\.{1,2})?\/)?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b";
+    else
+      # only bangmeta syntax activated
+      $this->wordrule.='|'.
+      "(?<![a-zA-Z])\!(?:((\.{1,2})?\/)?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b";
     # "(?<!\!|\[\[)\b(([A-Z]+[a-z0-9]+){2,})\b|".
     # "(?<!\!|\[\[)((?:\/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})\b|".
     # WikiName rule: WikiName ILoveYou (imported from the rule of NoSmoke)
@@ -1787,6 +1796,7 @@ class Formatter {
         if ($m[2]=='') $m[1].='1';
         return "<font size='$m[1]'>$m[3]</font>";
       }
+      if ($url[0]==' ' and stristr('#+-',$url[1])) $url=substr($url,1);
       return "<tt class='wiki'>".str_replace("<","&lt;",$url)."</tt>"; # No link
       break;
     case '[':
@@ -1826,12 +1836,8 @@ class Formatter {
       }
 
       if ($this->url_mappings) {
-        foreach ($this->url_mappings as $pre=>$rpre) {
-          if (preg_match('/'.preg_quote($pre,'/').'/',$url)) {
-            $url=$rpre.substr($url,strlen($pre));
-            break;
-          }
-        }
+        $url=
+          preg_replace('/('.$this->url_mapping_rule.')/ie',"\$this->url_mappings['\\1']",$url);
       }
 
       if (preg_match("/^mailto:/",$url)) {
@@ -1849,6 +1855,7 @@ class Formatter {
         
         return $this->interwiki_repl($url,'',$attr,$external_icon);
       }
+
       if ($force or strpos($url," ")) { # have a space ?
         list($url,$text)=explode(" ",$url,2);
         $link=str_replace('&','&amp;',$url);
@@ -2903,6 +2910,23 @@ class Formatter {
     }
 
     if ($options['pagelinks']) $this->store_pagelinks();
+  }
+
+  function register_javascripts($js) {
+    if (is_array($js)) {
+      array_merge($this->java_scripts,$js);
+    } else if (!in_array($js,$this->java_scripts)) {
+      $this->java_scripts[]=$js;
+    }
+  }
+
+  function get_javascripts() {
+    $out='';
+    foreach ($this->java_scripts as $js) {
+      $out.='<script type="text/javascript" src="'.$url_prefix.'/lib/'.$js.'>'.
+        "</script>\n";
+    }
+    return $out;
   }
 
   function get_merge($text,$rev="") {

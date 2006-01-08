@@ -164,6 +164,18 @@ function get_title($page) {
   return preg_replace("/((?<=[a-z0-9]|[B-Z]{2})([A-Z][a-z]))/"," \\1",$title);
 }
 
+function _mask_hostname($addr,$mask='&loz;') {
+  $tmp=explode('.',$addr);
+  switch($sz=sizeof($tmp)) {
+  case 4:
+    $tmp[$sz-1]=str_repeat($mask,strlen($tmp[$sz-1]));
+    break;
+  default:
+    $tmp[0]=str_repeat($mask,strlen($tmp[0]));
+  }
+  return implode('.',$tmp);
+}
+
 // from php.net
 //
 // It seems that the best solution would be to use HMAC-MD5.
@@ -1804,7 +1816,7 @@ function macro_InterWiki($formatter,$value,$options=array()) {
     if (file_exists($DBInfo->shared_intermap))
       $map=array_merge($map,file($DBInfo->shared_intermap));
 
-    for ($i=0;$i<sizeof($map);$i++) {
+    for ($i=0,$sz=sizeof($map);$i<$sz;$i++) {
       $line=rtrim($map[$i]);
       if (!$line || $line[0]=="#" || $line[0]==" ") continue;
       if (preg_match("/^[A-Z]+/",$line)) {
