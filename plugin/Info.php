@@ -77,9 +77,11 @@ function _parse_rlog($formatter,$log,$options=array()) {
            else if ($DBInfo->hasPage($user)) {
              $ip=$formatter->link_tag($user);
              $users[$user]=$ip;
-           } else if ($DBInfo->interwiki['Whois']) {
+           } else if (!$DBInfo->mask_hostname and $DBInfo->interwiki['Whois']) {
              $ip="<a href='".$DBInfo->interwiki['Whois']."$ip'>$user</a>";
            }
+         } else if ($DBInfo->mask_hostname) {
+           $ip=_mask_hostname($ip);
          } else if ($user and $DBInfo->interwiki['Whois'])
            $ip="<a href='".$DBInfo->interwiki['Whois']."$ip'>$ip</a>";
 

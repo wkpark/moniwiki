@@ -173,7 +173,7 @@ define('RC_DEFAULT_DAYS',7);
     if ($logs[$page_key]) continue;
 
     $page_name= $DBInfo->keyToPagename($parts[0]);
-    $addr= $parts[1];
+    $addr= $DBInfo->mask_hostname ? _mask_hostname($parts[1]):$parts[1];
     $ed_time= $parts[2];
     $user= $parts[4];
     $log= stripslashes($parts[5]);
