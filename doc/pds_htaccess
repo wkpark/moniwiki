@@ -1,3 +1,3 @@
 # Place this file in your 'pds' directory.
 
-AddType text/plain .cgi .pl .py .php4 .php3 .phtml .php .html
+AddType text/plain .sh .cgi .pl .py .php .php3 .php4 .phtml .html

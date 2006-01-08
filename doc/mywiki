@@ -13,21 +13,26 @@ If you don't have a access permission to configure your web server,
 do the following workaround.
 
 Make a simple php script with no .php extension.
-------------- mywiki ----------
+------------- mywiki ------------
 <?php
 // chdir("/path/to/moniwiki");
 include("wiki.php"); 
 ?>
-------------- 8X --------------
+-------------- 8X ---------------
 
 Then, add the following lines to the .htaccess file in the same directory 
 as the 'mywiki' file (create the .htaccess file if doesn't exist):
 
------------ .htaccess ---------
+-- .htaccess for Apache 1.3.xx --
 <Files mywiki>
 SetHandler application/x-httpd-php
 </Files>
------------ 8X ----------------
+
+-- .htaccess for Apache 2.0.xx --
+<Files mywiki>
+ForceType application/x-httpd-php
+</Files>
+------------- 8X ----------------
 
 This tells the apache webserver to treat the 'mywiki' file as a PHP script
 even though it doesn't have a .php extension.
