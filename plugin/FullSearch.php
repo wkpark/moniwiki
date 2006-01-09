@@ -23,11 +23,18 @@ function do_fullsearch($formatter,$options) {
 
   print $out;
 
-  if ($options['value'])
+  if ($options['value']) {
     printf(_("Found %s matching %s out of %s total pages")."<br />",
          $ret['hits'],
         ($ret['hits'] == 1) ? 'page' : 'pages',
          $ret['all']);
+    if (!$options['context']) {
+      $tag=$formatter->link_to("?action=fullsearch&amp;value=$options[value]&amp;context=20",_("Context search."));
+      printf(_(" or %s").'<br />',$tag);
+    }
+    $tag=$formatter->link_to("?action=fullsearch&amp;value=$options[value]&amp;refresh=1",_("Refresh"));
+    printf(_(" (%s search results)"),$tag);
+  }
   $args['noaction']=1;
   $formatter->send_footer($args,$options);
 }
@@ -59,7 +66,7 @@ function macro_FullSearch($formatter,$value="", &$opts) {
 EOF;
 
   if (!$needle) { # or blah blah
-     $opts['msg'] = 'No search text';
+     $opts['msg'] = _('No search text');
      return $form;
   }
   # XXX
@@ -107,7 +114,16 @@ EOF;
   }
 
   $hits = array();
-  $pages = $DBInfo->getPageLists();
+  # retrieve cache
+  $sid=md5($formatter->page->name.'.FullSearch('.$value.')');
+  $fc=new Cache_text('fullsearch');
+  if (!$formatter->refresh and $fc->exists($sid)) {
+    $data=unserialize($fc->fetch($sid));
+    if (is_array($data)) {
+      $hits=$data;
+    }
+  }
+
   $pattern = '/'.$needle.'/';
   if ($excl_needle)
     $excl_pattern = '/'.$excl_needle.'/';
@@ -116,7 +132,11 @@ EOF;
     $excl_pattern.="i";
   }
 
-  if ($opts['backlinks']) {
+  if ($hits) {
+     $pages = $DBInfo->getPageLists();
+    //continue;
+  } else if ($opts['backlinks']) {
+     $pages = $DBInfo->getPageLists();
      $opts['context']=0; # turn off context-matching
      $cache=new Cache_text("pagelinks");
      foreach ($pages as $page_name) {
@@ -133,6 +153,7 @@ EOF;
        }
      }
   } else if ($opts['keywords']) {
+     $pages = $DBInfo->getPageLists();
      $opts['context']=0; # turn off context-matching
      $cache=new Cache_text("keywords");
      foreach ($pages as $page_name) {
@@ -148,6 +169,7 @@ EOF;
        }
      }
   } else {
+     $pages = $DBInfo->getPageLists();
      while (list($_, $page_name) = each($pages)) {
        $p = new WikiPage($page_name);
        if (!$p->exists()) continue;
@@ -155,33 +177,38 @@ EOF;
        #$count = count(preg_split($pattern, $body))-1;
        $count = preg_match_all($pattern, $body,$matches);
        if ($count) {
-         # search matching contexts
-         $context= find_needle($body,$needle,$excl_needle,$opts['context']);
-         if ($opts['context'] and $context) {
-           $contexts[$page_name] = $context;
-           $hits[$page_name] = $count;
-         } else
-           $hits[$page_name] = $count;
+         $hits[$page_name] = $count;
        }
      }
   }
   arsort($hits);
 
+  $fc->update($sid,serialize($hits));
+
   $out.= "<!-- RESULT LIST START -->"; // for search plugin
   $out.= "<ul>";
   reset($hits);
+
   $idx=1;
   while (list($page_name, $count) = each($hits)) {
     if ($opts['checkbox']) $checkbox="<input type='checkbox' name='pagenames[]' value='$page_name' />";
-    $out.= "<!-- RESULT ITEM START -->"; // for search plugin
+    $out.= '<!-- RESULT ITEM START -->'; // for search plugin
     $out.= '<li>'.$checkbox.$formatter->link_tag(_rawurlencode($page_name),
-          "?action=highlight&amp;value="._urlencode($needle),
-          $page_name,"tabindex='$idx'");
+          '?action=highlight&amp;value='._urlencode($needle),
+          $page_name,'tabindex="'.$idx.'"');
     $out.= ' . . . . ' . $count . (($count == 1) ? ' match' : ' matches');
-    $out.= $contexts[$page_name];
+    if ($opts['context']) {
+      # search matching contexts
+      $p = new WikiPage($page_name);
+      if ($p->exists()) {
+        $body= $p->_get_raw_body();
+        $out.= find_needle($body,$needle,$excl_needle,$opts['context']);
+      }
+    }
     $out.= "</li>\n";
-    $out.= "<!-- RESULT ITEM END -->"; // for search plugin
+    $out.= '<!-- RESULT ITEM END -->'; // for search plugin
     $idx++;
+    #if ($idx > 50) break;
   }
   $out.= "</ul>\n";
   $out.= "<!-- RESULT LIST END -->"; // for search plugin

@@ -798,8 +798,16 @@ class WikiDB {
     return rawurldecode($pagename);
   }
 
-  function getPageLists($options='') {
+  function getPageLists($options=array()) {
     $pages = array();
+
+    $pcid=md5(serialize(sort($options)));
+    $pc=new Cache_text('pagelist');
+    if (filemtime($this->text_dir) < $pc->mtime($pcid) and $pc->exists($pcid)) {
+      $list=unserialize($pc->fetch($pcid));
+      if (is_array($list)) return $list;
+    }
+
     $handle = opendir($this->text_dir);
 
     if (!$options) {
@@ -808,6 +816,8 @@ class WikiDB {
         $pages[] = $this->keyToPagename($file);
       }
       closedir($handle);
+      $pc->update($pcid,serialize($pages));
+
       return $pages;
     } else if ($options['limit']) { # XXX
        while ($file = readdir($handle)) {
@@ -833,6 +843,7 @@ class WikiDB {
        }
        closedir($handle);
     }
+    $pc->update($pcid,serialize($pages));
     return $pages;
   }
 
