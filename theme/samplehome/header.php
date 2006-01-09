@@ -1,4 +1,4 @@
-<?
+<?php
 # $title, $logo
 # $menu, $icon, $upper_icon, $rss_icon, $user_link
 # $msg
@@ -12,19 +12,19 @@ include_once("plugin/Calendar.php");
  width: 100%;
  height: 60px;
  background-color: #e3ffc3;
-// border-bottom: 1px solid #666666;
- background: url("<?=$themeurl?>/imgs/bg.png") no-repeat;
+/* border-bottom: 1px solid #666666; */
+ background: url("<?php echo $themeurl?>/imgs/bg.png") no-repeat;
 }
 -->
 </style>
 <div id='wikiHeader'>
 <table border='0' width='100%' cellpadding='0' cellspacing='0'><tr>
-<td width='64'><img src='<?=$themeurl?>/imgs/logo.png'></td>
-<td valign='bottom'><font size='-1'><?=$menu?></font></td></tr>
-<tr><td colspan='2' align='right'><?=$goto_form?>&nbsp;&nbsp;</td></tr>
+<td width='64'><img src='<?php echo $themeurl?>/imgs/logo.png'></td>
+<td valign='bottom'><font size='-1'><?php echo $menu?></font></td></tr>
+<tr><td colspan='2' align='right'><?php echo $goto_form?>&nbsp;&nbsp;</td></tr>
 </table>
 </div>
-<div><?=$title?></div>
-<?=$msg?>
+<div><?php echo $title?></div>
+<?php echo $msg?>
 <table border='0' width='100%'><tr valign='top'>
 <td width='100%'>

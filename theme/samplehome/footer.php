@@ -1,5 +1,5 @@
 </td><td width='200'>
-<?
+<?php
 print '<div style="font-size:10px">';
 if ($options['id']=='Anonymous')
   print macro_calendar($this,"blog,noweek",'Blog');
@@ -18,7 +18,7 @@ print '</font>';
 </td>
 </tr></table>
 <div id='wikiFooter'>
-<?
+<?php
   if ($lastedit)
     print "last modified $lastedit $lasttime<br />";
   if ($options['id']!='Anonymous') print '<font size="-1">'.$menu.'</font>';

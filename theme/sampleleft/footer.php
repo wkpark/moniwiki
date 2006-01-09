@@ -1,7 +1,7 @@
 </td>
 </tr></table>
 <div id='wikiFooter'>
-<?
+<?php
   if ($lastedit)
     print "last modified $lastedit $lasttime<br />";
 ?>

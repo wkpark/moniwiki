@@ -1,4 +1,4 @@
-<?
+<?php
 # $title, $logo
 # $menu, $icon, $upper_icon, $rss_icon, $user_link
 # $msg
@@ -8,22 +8,22 @@ include_once("plugin/Calendar.php");
 <style type="text/css">
 <!--
 body {
-  background-image:url("<?=$themeurl?>/imgs/bg.gif");
+  background-image:url("<?php echo $themeurl?>/imgs/bg.gif");
 }
 -->
 </style>
 <div id='wikiHeader'>
-<img alt='ChemWiki' src='<?=$this->url_prefix?>/imgs/wikiwiki.gif' />
-<?=$title?>
+<img alt='ChemWiki' src='<?php echo $this->url_prefix?>/imgs/wikiwiki.gif' />
+<?php echo $title?>
 </div>
-<div style='background-color:#a8a8a8;text-align:right;font-size:8px;'><?=$icons?><?=$rss_icon?></div>
-<?=$msg?>
+<div style='background-color:#a8a8a8;text-align:right;font-size:8px;'><?php echo $icons?><?php echo $rss_icon?></div>
+<?php echo $msg?>
 <table border='0' cellpadding='0' cellspacing='0' width='100%'><tr valign='top'>
 <td id='wikiMenu' width='200'>
 <table border='0' width='100%' cellpadding='0' cellspacing='0'><tr>
-<tr><td align='right'><?=$goto_form?></td></tr>
+<tr><td align='right'><?php echo $goto_form?></td></tr>
 </table>
-<?
+<?php
 print '<div style="padding-left:10px;font-size:12px">';
 print "$menu<br />";
 print "</div>";

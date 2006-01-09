@@ -1,10 +1,10 @@
 <div class='wikiFooter'>
-<?
+<?php
 if ($lastedit)
     print "last modified $lastedit $lasttime<br />";
 
 ?>
 <div class="wikiFooterMenu">
-<?=$menu;?>
+<?php echo $menu;?>
 </div>
 </div>

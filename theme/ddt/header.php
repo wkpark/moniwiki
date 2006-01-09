@@ -1,4 +1,4 @@
-<?
+<?php
 # $title, $logo
 # $menu, $icon, $upper_icon, $rss_icon, $user_link
 # $themeurl
@@ -8,7 +8,7 @@
     <table border='0' width='100%' cellpadding='0' cellspacing='0'>
       <tr>
 	<td>
-	  <?=$menu?><a href="../">Home</a>|<?=$rss_icon?>
+	  <?php echo $menu?><a href="../">Home</a>|<?php echo $rss_icon?>
 	</td>
       </tr>
       <tr>
@@ -20,9 +20,9 @@
     <table border='0' width='100%'>
       <tr>
 	<td>
-	  <?=$title?>
+	  <?php echo $title?>
 	</td>
       </tr>
     </table>
 </div>
-<?=$msg?>
+<?php echo $msg?>

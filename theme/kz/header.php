@@ -1,22 +1,22 @@
 <div id="wikiMenu">
-<div id="gotoForm"><?=$goto_form?></div>
-<? echo
+<div id="gotoForm"><?php echo $goto_form?></div>
+<?php echo
 $this->link_tag($this->frontpage,"",$this->sitename,"\n").
 $this->link_tag("TitleIndex","",$this->icon['list']._("TitleIndex"),"\n").
 $this->link_tag("FindPage","",$this->icon['find']._("FindPage"),"\n").
 $this->link_tag("RecentChanges","",$this->icon['diff']._("RecentChanges"),"\n");
 ?>
 <div align="right" style="border-top: 1px solid cornflowerblue">
-<?=$this->link_tag("PageHits","","Total ".macro_PageCount()." pages");?>
+<?php echo $this->link_tag("PageHits","","Total ".macro_PageCount()." pages");?>
 </div>
 <div id="currentPage">
 <h4>Current Page</h4>
-<?=$title?>
-<div id="wikiIcons"><?=$icons?></div>
+<?php echo $title?>
+<div id="wikiIcons"><?php echo $icons?></div>
 </div>
 <div id="wikiMap">
 <h4>Central Pages</h4>
-<? echo
+<?php echo
 $this->link_tag("%B9%E6%B8%ED%B7%CF","",_("GuestBook"),"").
 $this->link_tag("UploadedFiles","",_("UploadedFiles"),"");
 /*
@@ -30,9 +30,9 @@ $this->link_tag("CategoryPoetry","","½Ã","title='Poetry'").
 */
 ?>
 </div>
-<div id="loginForm"><?
+<div id="loginForm"><?php
 include ("plugin/login.php");
 echo macro_login($this);
 ?></div>
 </div>
-<? if ($msg) echo "<div id='wikiMsg'>".$msg."</div>"; ?>
+<?php if ($msg) echo "<div id='wikiMsg'>".$msg."</div>"; ?>

@@ -6,9 +6,9 @@
 	text-align: right;
 ">
 <div align="left">
-<?=$DBInfo->counter->pageCounter($this->page->name)?>
+<?php echo $DBInfo->counter->pageCounter($this->page->name)?>
 </div>
-<?
+<?php
 # Processing Instruction의 #action 정의가 있으면,
 # $this->actions에 포함되어있는지 확인해보고,
 # 있으면 그것을 프린트한다.
@@ -19,8 +19,8 @@
 # txt 대신에 적절한 아이콘을 넣던지 합니다.
 ?>
 Best viewed with 
-<?=$this->link_tag("Mozilla","","Mozilla","")?>
+<?php echo $this->link_tag("Mozilla","","Mozilla","")?>
  latest.
 Powered by 
-<?=$this->link_tag("MoniWiki","","MoniWiki","title='MoniWiki'")?>.
+<?php echo $this->link_tag("MoniWiki","","MoniWiki","title='MoniWiki'")?>.
 </div>
