@@ -24,15 +24,16 @@ function do_fullsearch($formatter,$options) {
   print $out;
 
   if ($options['value']) {
+    $val=htmlspecialchars($options['value']);
     printf(_("Found %s matching %s out of %s total pages")."<br />",
          $ret['hits'],
         ($ret['hits'] == 1) ? 'page' : 'pages',
          $ret['all']);
     if (!$options['context']) {
-      $tag=$formatter->link_to("?action=fullsearch&amp;value=$options[value]&amp;context=20",_("Context search."));
+      $tag=$formatter->link_to("?action=fullsearch&amp;value=$val&amp;context=20",_("Context search."));
       printf(_(" or %s").'<br />',$tag);
     }
-    $tag=$formatter->link_to("?action=fullsearch&amp;value=$options[value]&amp;refresh=1",_("Refresh"));
+    $tag=$formatter->link_to("?action=fullsearch&amp;value=$val&amp;refresh=1",_("Refresh"));
     printf(_(" (%s search results)"),$tag);
   }
   $args['noaction']=1;
