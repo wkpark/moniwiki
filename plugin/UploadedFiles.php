@@ -41,6 +41,10 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    } else if ($options['preview']) {
      $use_preview=1;
    }
+
+   if ($options['tag']) {
+     $js_tag=1;$use_preview=1;
+   }
    foreach ($args as $arg) {
       $arg=trim($arg);
       if (($p=strpos($arg,'='))!==false) {
@@ -148,6 +152,13 @@ EOS;
         $prefix=$formatter->link_url($formatter->page->urlname,"?action=$mydownload&amp;value=");
       $dir=$DBInfo->upload_dir."/$key";
    }
+
+   if ($formatter->preview and $formatter->page->name == $value) { 
+     $opener='';
+   } else {
+     $opener=$value.':';
+   }
+
    if ($value!='UploadFile' and file_exists($dir))
       $handle= opendir($dir);
    else {
@@ -156,6 +167,7 @@ EOS;
       $prefix.= ($prefix ? '/':'');
       $dir=$DBInfo->upload_dir;
       $handle= opendir($dir);
+      $opener='/';
    }
 
    $upfiles=array();
@@ -181,15 +193,27 @@ EOS;
    $out.="<table border='0' cellpadding='2'>\n";
    $out.="<tr><th colspan='2'>File name</th><th>Size</th><th>Date</th></tr>\n";
    $idx=1;
+
+   if ($js_tag) {
+     $attr=' target="_blank"';
+     $extra='&amp;tag=1';
+   } else {
+     $attr='';
+     $extra='';
+   }
    foreach ($dirs as $file) {
-      $link=$formatter->link_url($file,"?action=uploadedfiles",$file);
+      $link=$formatter->link_url($file,"?action=uploadedfiles$extra",$file,$attr);
       $date=date("Y-m-d",filemtime($dir."/".$DBInfo->pageToKeyname($file)));
       $out.="<tr><td class='wiki'><input type='$checkbox' name='files[$idx]' value='$file' /></td><td class='wiki'><a href='$link'>$file/</a></td><td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td></tr>\n";
       $idx++;
    }
 
    if (!$options['nodir'] and !$dirs) {
-      $link=$formatter->link_tag('UploadFile',"?action=uploadedfiles&amp;value=top","..");
+      if ($js_tag) {
+        $attr=' target="_blank"';
+        $extra='&amp;tag=1';
+      }
+      $link=$formatter->link_tag('UploadFile',"?action=uploadedfiles&amp;value=top$extra","..",$attr);
       $date=date("Y-m-d",filemtime($dir."/.."));
       $out.="<tr><td class='wiki'>&nbsp;</td><td class='wiki'>$link</td><td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td></tr>\n";
    }
@@ -221,6 +245,8 @@ EOS;
       $attr='';
       if ($use_preview or $js_tag) {
         $tag_open='attachment:'; $tag_close='';
+        if ($opener != $value)
+            $tag_open.=$opener;
         $alt="$tag_open$file$tag_close";
         preg_match("/\.(.{1,4})$/",$fname,$m);
         $ext=strtolower($m[1]);
