@@ -56,7 +56,6 @@ function processor_linuxdoc($formatter,$value) {
   $fp=popen($cmd,'r');
   while($s = fgets($fp, 1024)) $log.= $s;
   pclose($fp);
-  chdir($cwd);
 
   $tmpfh=$tmpf.'.html';
   $fp=fopen($tmpfh,'r');
@@ -66,6 +65,7 @@ function processor_linuxdoc($formatter,$value) {
   unlink($tmpf.".sgml");
   unlink($tmpf); // XXX
   unlink($tmpfh);
+  chdir($cwd);
 
   if (!$html) {
     $src=str_replace("<","&lt;",$value);
