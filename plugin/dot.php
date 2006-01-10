@@ -9,22 +9,26 @@ define(DEPTH,3);
 define(LEAFCOUNT,2);
 define(FONTSIZE,8);
 
+class LinkTree {
+  var $cache=null;
+  function LinkTree($arena='pagelinks') {
+    if ($arena != 'pagelinks' and $arena != 'keywords')
+      $arena = 'pagelinks';
+    $this->cache=new Cache_text($arena);
+  }
+
   function getLeafs($pagename,&$node,&$color,$depth,$count=LEAFCOUNT) {
-    $p= new WikiPage($pagename);
-    $f= new Formatter($p);
-    $links=$f->get_pagelinks();
+    $links=$this->cache->fetch($pagename);
     $links=explode("\n",$links);
     foreach ($links as $page) {
       if (!$color[$page]) $color[$page]=$depth;
       if ($page) {
         if (!$node[$page]) {
-          $p= new WikiPage($page);
-          $f= new Formatter($p);
-          $leafs=$f->get_pagelinks();
+          $leafs=$this->cache->fetch($page);
           if ($leafs) {
             $leafs=explode("\n",$leafs);
             # XXX 
-            $nodelink[$page]=$p->size();
+            $nodelink[$page]=sizeof($leafs);
           }
         } else $nodelink[$page]=1;
       }
@@ -38,18 +42,19 @@ define(FONTSIZE,8);
       if (!$color[$pagename]) $color[$pagename]=$depth;
       #print $depth."\n";
       $depth--;
-      getLeafs($pagename,$node,$color,$depth,$count);
+      $this->getLeafs($pagename,$node,$color,$depth,$count);
       if ($node[$pagename]) {
         # select 25% of links
         $size= (int) (sizeof($node[$pagename]) * 0.25);
         $slice= ($size > $count) ? $size: $count;
         $selected=array_slice($node[$pagename],0,$slice);
         foreach($selected as $leaf)
-          makeTree($leaf,$node,$color,$depth,$count);
+          $this->makeTree($leaf,$node,$color,$depth,$count);
       }
     }
     return;
   }
+}
 
 function do_dot($formatter,$options) {
   global $DBInfo;
@@ -64,7 +69,8 @@ function do_dot($formatter,$options) {
   else $fontsize=FONTSIZE;
 
   $color=array();
-  makeTree($options['page'],$node,$color,$depth,$count);
+  $tree=new LinkTree($options['arena']);
+  $thee->makeTree($options['page'],$node,$color,$depth,$count);
   if (!$node) $node=array($options['page']=>array());
   #print_r($color);
   foreach ($color as $key=>$val) $color[$key]=$depth-$val;
@@ -119,4 +125,5 @@ HEAD;
   return;
 }
 
+// vim:et:sts=2
 ?>

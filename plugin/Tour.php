@@ -35,7 +35,9 @@ define(TOUR_DEPTH,3);
     else $depth=TOUR_DEPTH;
 
     $color=array();
-    makeTree($value,$node,$color,$depth,$count);
+
+    $tree=new LinkTree($options['arena']);
+    $tree->makeTree($value,$node,$color,$depth,$count);
     if (!$node) $node=array($value=>array());
 
     $allnode=array_keys($node);
@@ -69,7 +71,8 @@ define(TOUR_DEPTH,3);
     $link='<h3>'.sprintf(_("More %s or more %s"),$wide,$deep).'</h3>';
 
     foreach ($allnode as $node) {
-        $pages.='<li>'.$formatter->link_tag($url[$node],"",$node)."</li>\n";
+        $pages.='<li>'.$formatter->link_tag($url[$node],"",
+            htmlspecialchars($node))."</li>\n";
     }
     $title='<h3>'.sprintf(_("Total %d related pages"),sizeof($allnode)).'</h3>';
 
