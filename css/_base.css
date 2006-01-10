@@ -194,10 +194,15 @@ table.closure, td.closure{
   font-size:28px;
   font-weight:bold;
   text-decoration: none;
+  display:block;
+}
+
+.clear {
+  clear:both;
 }
 
 /* HierarchicalWiki */
-div.wikiGroup {
+.wikiGroup {
   font-family:Tahoma,Lucida,sans-serif;
   font-size:10px;
 }
@@ -208,8 +213,8 @@ div.wikiGroup {
   padding-bottom: 5px;
 }
 
-#wikiContent {
-  margin: 10px 10px 10px 20px; 
+#wikiBody {
+  margin: 10px 10px 10px 15px; 
 }
 
 #wikiFooter {
@@ -267,7 +272,7 @@ a.purple { font-size: 10px; text-decoration:none;}
 div.blog { width:90%; padding: 0em 1em 0em 1em; }
 div.blog-user { font-size:10px; }
 div.blog-title { font-size:16px; font-weight:bold; }
-div.blog-comments { padding: 1em 1em 1em 2em; border-left: 1px dashed #7B9AC5; background-color:#DFF0FF;}
+div.blog-comments { padding: 1em 1em 1em 2em;}
 
 div.blog-date { font-size:18px; font-weight:bold; padding-bottom:5px;}
 span.blog-user { font-size:10px; }
@@ -320,7 +325,30 @@ span.lineNumber {
 .pageNext { float: right; }
 .pagePrev { float: left; }
 
-#wikiResize { float: right; }
+#wikiHelper {
+  padding: 15px;
+  border: 2px solid red;
+  text-align: left;
+  margin: 5px auto;
+  width:430px;
+}
+
+#wikiResize {
+  float: right;
+  padding-right:10px;
+}
+
+#smileyChooser {
+  padding: 5px;
+  margin-top:3px;
+  margin-bottom:3px;
+  background-color: #d0d0d0;
+}
+
+#smileyChooser img {
+  padding: 2px;
+  border: none;
+}
 
 #blogCategory ul {
   list-style:none;
