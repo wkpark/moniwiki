@@ -2437,6 +2437,8 @@ class Formatter {
     $this->url_prefix= qualifiedUrl($DBInfo->url_prefix);
     $this->prefix= qualifiedUrl($this->prefix);
     $this->imgs_dir= qualifiedUrl($this->imgs_dir);
+    $this->imgs_dir_interwiki=qualifiedUrl($this->imgs_dir_interwiki);
+    $this->imgs_dir_url=qualifiedUrl($this->imgs_dir_url);
   }
 
   function send_page($body="",$options=array()) {
