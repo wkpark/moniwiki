@@ -725,21 +725,21 @@ function macro_Edit($formatter,$value,$options='') {
 
   # get categories
   if ($DBInfo->use_category and !$options['nocategories']) {
-  $categories=array();
-  $categories= $DBInfo->getLikePages($DBInfo->category_regex);
-  if ($categories) {
-    $select_category="<select name='category' tabindex='4'>\n<option value=''>"._("--Select Category--")."</option>\n";
-    foreach ($categories as $category)
-      $select_category.="<option value='$category'>$category</option>\n";
-    $select_category.="</select>\n";
+    $categories=array();
+    $categories= $DBInfo->getLikePages($DBInfo->category_regex);
+    if ($categories) {
+      $select_category="<select name='category' tabindex='4'>\n<option value=''>"._("--Select Category--")."</option>\n";
+      foreach ($categories as $category)
+        $select_category.="<option value='$category'>$category</option>\n";
+      $select_category.="</select>\n";
+    }
   }
 
   if ($DBInfo->use_minoredit) {
     $user=new User(); # get from COOKIE VARS
     if ($DBInfo->owners and in_array($user->id,$DBInfo->owners)) {
-      $extra_check=' '._('Minor edit')."<input type='checkbox' tabindex='3' name='minor' />";
+      $extra_check=' '._("Minor edit")."<input type='checkbox' tabindex='3' name='minor' />";
     }
-  }
   }
 
   if (!$options['simple']) {
@@ -2047,7 +2047,7 @@ function macro_TitleIndex($formatter,$value) {
   global $DBInfo;
 
   if ($formatter->group) {
-    $group_pages = $DBInfo->getLikePages($formatter->group,1);
+    $group_pages = $DBInfo->getLikePages($formatter->group);
     foreach ($group_pages as $page)
       $all_pages[]=str_replace($formatter->group,'',$page);
   } else

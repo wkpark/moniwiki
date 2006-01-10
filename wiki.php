@@ -847,19 +847,15 @@ class WikiDB {
     return $pages;
   }
 
-  function getLikePages($needle,$mode=0) {
+  function getLikePages($needle) {
     $pages= array();
-    $handle= opendir($this->text_dir);
-    if ($mode==1)
-      $needle_key= $this->pageToKeyname($needle);
-    else $needle_key=$needle;
 
-    while ($file = readdir($handle)) {
-      if (is_dir($this->text_dir."/".$file)) continue;
-      if (preg_match("/($needle_key)/",$file))
-        $pages[] = $this->keyToPagename($file);
+    $all= $this->getPageLists();
+
+    foreach ($all as $page) {
+      if (preg_match("/($needle)/",$page))
+        $pages[] = $page;
     }
-    closedir($handle);
     return $pages;
   }
 
