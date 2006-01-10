@@ -39,7 +39,7 @@ function processor_blog($formatter,$value="",$options) {
     list($tag, $user, $date, $title)=explode(" ",$line, 4);
 
     if (preg_match('/^[\d\.]+$/',$user)) {
-      if ($DBInfo->interwiki['Whois'])
+      if (!$DBInfo->mask_hostname and $DBInfo->interwiki['Whois'])
         #$user=_("Anonymous")."[<a href='".$DBInfo->interwiki['Whois']."$user'>$user</a>]";
         $user="<a href='".$DBInfo->interwiki['Whois']."$user'>"._("Anonymous")."</a>";
       else
