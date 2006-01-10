@@ -1683,12 +1683,13 @@ function macro_UserPreferences($formatter,$value,$options='') {
     $idform=$user->id;
   }
   $button=_("Login");
+  $id_btn=_("ID");
   if ($user->id == 'Anonymous' and !isset($options['login_id']) and $value!="simple")
     $login=<<<FORM
 <form method="post" action="$url"$onsubmit>
 <input type="hidden" name="action" value="userform" />
 <table border="0">
-  <tr><td><b>ID</b>&nbsp;</td><td>$idform</td></tr>
+  <tr><td><b>$id_btn</b>&nbsp;</td><td>$idform</td></tr>
   <tr>
      <td><b>$passwd_btn</b>&nbsp;</td><td><input type="password" size="15" maxlength="$pw_len" name="password" value="" /></td>
   <tr><td></td><td>
@@ -1745,9 +1746,11 @@ EXTRA;
     }
 
     $jscript.="<script src='$DBInfo->url_prefix/local/tz.js'></script>";
+    $email_btn=_("Mail");
+    $tz_btn=_("Time Zone");
     $extra=<<<EXTRA
-  <tr><td><b>Mail</b>&nbsp;</td><td><input type="text" size="40" name="email" value="$email" /></td></tr>
-  <tr><td><b>Time Zone</b>&nbsp;</td><td><select name="timezone">
+  <tr><td><b>$email_btn</b>&nbsp;</td><td><input type="text" size="40" name="email" value="$email" /></td></tr>
+  <tr><td><b>$tz_btn</b>&nbsp;</td><td><select name="timezone">
   $opts
   </select> <input type='button' value='Local timezone' onclick='javascript:setTimezone()' /></td></tr>
   <tr><td><b>CSS URL </b>&nbsp;</td><td><input type="text" size="40" name="user_css" value="$css" /><br />("None" for disabling CSS)</td></tr>
@@ -1780,13 +1783,14 @@ PASS;
         "<input type=\"submit\" name=\"login\" value=\"$button2\" />\n";
     }
   }
+  $id_btn=_("ID");
   return <<<EOF
 $login
 $jscript
 <form method="post" action="$url"$onsubmit>
 <input type="hidden" name="action" value="userform" />
 <table border="0">
-  <tr><td><b>ID</b>&nbsp;</td><td>$idform</td></tr>
+  <tr><td><b>$id_btn</b>&nbsp;</td><td>$idform</td></tr>
     $passwd_inp
     $passwd_hidden
     $again
