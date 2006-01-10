@@ -28,7 +28,7 @@ function macro_LikePages($formatter="",$args="",&$opts) {
   $metawiki=$opts['metawiki'];
 
   if (strlen($pname) < 3) {
-    $opts['msg'] = _('Use more specific text');
+    $opts['msg'] = _("Use more specific text");
     return '';
   }
 

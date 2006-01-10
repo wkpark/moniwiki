@@ -27,7 +27,7 @@ function do_fullsearch($formatter,$options) {
     $val=htmlspecialchars($options['value']);
     printf(_("Found %s matching %s out of %s total pages")."<br />",
          $ret['hits'],
-        ($ret['hits'] == 1) ? 'page' : 'pages',
+        ($ret['hits'] == 1) ? _("page") : _("pages"),
          $ret['all']);
     if (!$options['context']) {
       $tag=$formatter->link_to("?action=fullsearch&amp;value=$val&amp;context=20",_("Context search."));
@@ -67,7 +67,7 @@ function macro_FullSearch($formatter,$value="", &$opts) {
 EOF;
 
   if (!$needle) { # or blah blah
-     $opts['msg'] = _('No search text');
+     $opts['msg'] = _("No search text");
      return $form;
   }
   # XXX
