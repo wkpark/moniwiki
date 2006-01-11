@@ -1240,6 +1240,7 @@ class Cache_text {
   }
 
   function update($pagename,$val,$mtime="") {
+    if (!$pagename) return false;
     $key=$this->getKey($pagename);
     if (file_exists($key) and !is_writable($key)) return false;
     if ($mtime and ($mtime <= $this->mtime($key))) return false;
@@ -1255,8 +1256,12 @@ class Cache_text {
   function _save($key,$val) {
     umask(011);
     $fp=fopen($key,"w+");
-    fwrite($fp,$val);
-    fclose($fp);
+    if ($fp) {
+      flock($fp,LOCK_EX);
+      fwrite($fp,$val);
+      flock($fp,LOCK_UN);
+      fclose($fp);
+    }
   }
 
   function _del($key) {
@@ -1567,6 +1572,7 @@ class Formatter {
     $this->footrule="\[\*[^\]]*\s[^\]]+\]";
 
     $this->cache= new Cache_text("pagelinks");
+    $this->bcache= new Cache_text("backlinks");
   }
 
   function set_wordrule($pis=array()) {
@@ -1924,7 +1930,7 @@ class Formatter {
     # invalid InterWiki name
     if (!$url) {
       $dum0=preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$dum[0]);
-      return $dum0.':'.($dum[1]?$this->word_repl($dum[1],$text):'');
+      return $dum0.':'.($dum[1]?$this->link_repl($dum[1],$text):'');
     }
 
     if ($page=='/') $page='';
@@ -1978,28 +1984,51 @@ class Formatter {
 
   function store_pagelinks() {
     unset($this->pagelinks['TwinPages']);
-    $this->cache->update($this->page->name,$this->pagelinks,$this->page->mtime());
+    $new=array_keys($this->pagelinks);
+    $cur=unserialize($this->cache->fetch($this->page->name));
+    if (!is_array($cur)) $cur=array();
+
+    $ad=array_diff($new,$cur);
+    $de=array_diff($cur,$new);
+    // merge new links
+    foreach ($ad as $a) {
+      if (!$a) continue;
+      $bl=unserialize($this->bcache->fetch($a));
+      if (!is_array($bl)) $bl=array();
+      array_merge($bl,array($this->page->name));
+      $bl=array_unique($bl);
+      $this->bcache->update($a,serialize($bl));
+    }
+    // remove back links
+    foreach ($de as $d) {
+      if (!$d) continue;
+      $bl=unserialize($this->bcache->fetch($d));
+      if (!is_array($bl)) $bl=array();
+      $bl=array_diff($bl,array($this->page->name));
+      $this->bcache->update($d,serialize($bl));
+    }
+    // XXX
+    $this->cache->update($this->page->name,serialize($links),
+      $this->page->mtime());
   }
 
   function get_pagelinks() {
+    if (!$this->wordrule) $this->set_wordrule();
     if ($this->cache->exists($this->page->name)) {
       $links=$this->cache->fetch($this->page->name);
-      if ($links !== false) return $links;
+      if ($links !== false) return unserialize($links);
     }
-    $pi=$this->get_instructions($dum);
-    if ($pi['#format']) return '';
-    if ($this->page->exists()) {
-      $body=$this->page->get_raw_body();
-      # quickly generate a pseudo pagelinks
-      preg_replace("/(?<!\[\[)(".$this->wordrule.")/e","\$this->link_repl('\\1')",$body);
-      $this->store_pagelinks();
-      if ($this->pagelinks) {
-        $links=join("\n",array_keys($this->pagelinks))."\n";
-        $this->pagelinks=array();
-        return $links;
-      }
+    // no pagelinks found. XXX
+    return array();
+  }
+
+  function get_backlinks() {
+    if ($this->bcache->exists($this->page->name)) {
+      $links=$this->bcache->fetch($this->page->name);
+      if ($links !== false) return unserialize($links);
     }
-    return '';
+    // no backlinks found. XXX
+    return array();
   }
 
   function word_repl($word,$text='',$attr='',$nogroup=0,$islink=1) {
@@ -3309,12 +3338,13 @@ FOOT;
     }
     # setup title variables
     #$heading=$this->link_to("?action=fullsearch&amp;value="._urlencode($name),$title);
+    if ($DBInfo->use_backlinks) $qext='&amp;backlinks=1';
     $title="$groupt<span class='wikiTitle'>$title</span>";
     #$title="<span class='wikiTitle'><b>$title</b></span>";
     if ($link)
       $title="<a href=\"$link\" class='wikiTitle'>$title</a>";
     else if (empty($options['nolink']))
-      $title=$this->link_to("?action=fullsearch&amp;value="._urlencode($myname),$title,"class='wikiTitle'");
+      $title=$this->link_to("?action=fullsearch$qext&amp;value="._urlencode($myname),$title,"class='wikiTitle'");
     $logo=$this->link_tag($DBInfo->logo_page,'',$DBInfo->logo_string);
     $goto_form=$DBInfo->goto_form ?
       $DBInfo->goto_form : goto_form($action,$DBInfo->goto_type);
@@ -3813,7 +3843,7 @@ if ($pagename) {
       $tcache=new Cache_text('keywords');
       if (!$tcache->exists($pagename) or $_GET['update_keywords']) {
         $keys=explode(',',$formatter->pi['#keywords']);
-        $tcache->update($pagename,array_flip($keys));
+        $tcache->update($pagename,serialize($keys));
       }
     }
     $formatter->write("<div id='wikiContent'>\n");
