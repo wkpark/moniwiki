@@ -10,6 +10,7 @@ function do_fullsearch($formatter,$options) {
   $ret=&$options;
 
   $options['value']=_stripslashes($options['value']);
+  if (!$options['value']) $options['value']=$formatter->page->name;
   if ($options['backlinks'])
     $title= sprintf(_("BackLinks search for \"%s\""), $options['value']);
   else if ($options['keywords'])
@@ -23,17 +24,23 @@ function do_fullsearch($formatter,$options) {
 
   print $out;
 
+  $qext='';
+  if ($options['backlinks'])
+    $qext='&amp;backlinks=1';
+  else if ($options['keywords'])
+    $qext='&amp;keywords=1';
+
   if ($options['value']) {
     $val=htmlspecialchars($options['value']);
     printf(_("Found %s matching %s out of %s total pages")."<br />",
          $ret['hits'],
         ($ret['hits'] == 1) ? _("page") : _("pages"),
          $ret['all']);
-    if (!$options['context']) {
-      $tag=$formatter->link_to("?action=fullsearch&amp;value=$val&amp;context=20",_("Context search."));
-      printf(_(" or %s").'<br />',$tag);
+    if ($ret['context']==0) {
+      $tag=$formatter->link_to("?action=fullsearch&amp;value=$val&amp;context=20",_("Show Context."));
+      print $tag.'<br />';
     }
-    $tag=$formatter->link_to("?action=fullsearch&amp;value=$val&amp;refresh=1",_("Refresh"));
+    $tag=$formatter->link_to("?action=fullsearch$qext&amp;value=$val&amp;refresh=1",_("Refresh"));
     printf(_(" (%s search results)"),$tag);
   }
   $args['noaction']=1;
@@ -115,13 +122,24 @@ EOF;
   }
 
   $hits = array();
+
+  # set arena and sid
+  if ($opts['backlinks']) $arena='backlinks';
+  #else if ($opts['keywords']) $arena='keylinks';
+  else $arena='fullsearch';
+
+  if ($arena == 'fullsearch') $sid=md5($value);
+  else $sid=$value;
+
   # retrieve cache
-  $sid=md5($formatter->page->name.'.FullSearch('.$value.')');
-  $fc=new Cache_text('fullsearch');
+  $fc=new Cache_text($arena);
   if (!$formatter->refresh and $fc->exists($sid)) {
     $data=unserialize($fc->fetch($sid));
     if (is_array($data)) {
       $hits=$data;
+    }
+    if ($arena != 'fullsearch') {
+      $hits=array_count_values($hits);
     }
   }
 
@@ -138,35 +156,27 @@ EOF;
     //continue;
   } else if ($opts['backlinks']) {
      $pages = $DBInfo->getPageLists();
-     $opts['context']=0; # turn off context-matching
+     $opts['context']=-1; # turn off context-matching
      $cache=new Cache_text("pagelinks");
      foreach ($pages as $page_name) {
-       $links==-1;
-       $links=$cache->fetch($page_name);
-       if ($links==-1) {
-          $p= new WikiPage($page_name);
-          $f= new Formatter($p);
-          $links=$f->get_pagelinks();
-       }
-       $count= preg_match_all($pattern, $links, $matches);
-       if ($count) {
-         $hits[$page_name] = $count;
+       $links=unserialize($cache->fetch($page_name));
+       if (is_array($links)) {
+         if (stristr(implode(' ',$links),$needle))
+           $hits[$page_name] = -1;
+           // ignore count if < 0
        }
      }
   } else if ($opts['keywords']) {
      $pages = $DBInfo->getPageLists();
-     $opts['context']=0; # turn off context-matching
+     $opts['context']=-1; # turn off context-matching
      $cache=new Cache_text("keywords");
      foreach ($pages as $page_name) {
-       $links==-1;
-       $links=$cache->fetch($page_name);
-       if ($links==-1) {
-          $links=array();
-          continue;
-       }
-       $count= preg_match_all($pattern, $links, $matches);
-       if ($count) {
-         $hits[$page_name] = $count;
+       $links=unserialize($cache->fetch($page_name));
+       #print_r($links);
+       if (is_array($links)) {
+         if (stristr(implode(' ',$links),$needle))
+           $hits[$page_name] = -1;
+           // ignore count if < 0
        }
      }
   } else {
@@ -182,9 +192,12 @@ EOF;
        }
      }
   }
-  arsort($hits);
+  krsort($hits);
 
-  $fc->update($sid,serialize($hits));
+  if ($arena == 'fullsearch')
+    $fc->update($sid,serialize($hits));
+  else
+    $fc->update($sid,serialize(array_keys($hits)));
 
   $out.= "<!-- RESULT LIST START -->"; // for search plugin
   $out.= "<ul>";
@@ -197,8 +210,9 @@ EOF;
     $out.= '<li>'.$checkbox.$formatter->link_tag(_rawurlencode($page_name),
           '?action=highlight&amp;value='._urlencode($needle),
           $page_name,'tabindex="'.$idx.'"');
-    $out.= ' . . . . ' . $count . (($count == 1) ? ' match' : ' matches');
-    if ($opts['context']) {
+    if ($count > 0)
+      $out.= ' . . . . ' . $count . (($count == 1) ? ' match' : ' matches');
+    if ($opts['context']>0) {
       # search matching contexts
       $p = new WikiPage($page_name);
       if ($p->exists()) {

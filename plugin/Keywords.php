@@ -68,7 +68,7 @@ EOF;
 
     // strip macros, entities
     $raw=preg_replace("/&[^;\s]+;|\[\[[^\[]+\]\]/",' ',$raw);
-    $raw=preg_replace("/([;\"',`\\\\\/\.:@#\!\?\$%\^&\*\(\)\{\}\[\]\-_\+=\|])/",
+    $raw=preg_replace("/([;\"',`\\\\\/\.:@#\!\?\$%\^&\*\(\)\{\}\[\]\-_\+=\|<>])/",
         ' ', strip_tags($raw.' '.$pagename)); // pagename also
     $raw=preg_replace("/((?<=[a-z0-9]|[B-Z]{2})([A-Z][a-z]))/"," \\1",$raw);
     $raw=strtolower($raw);
@@ -147,8 +147,8 @@ EOF;
     if ($options['all']) {
         $cache=new Cache_text('keywords');
         if ($cache->exists($pagename)) {
-            $keytext=$cache->fetch($pagename);
-            $keys=explode("\n",rtrim($keytext));
+            $keys=$cache->fetch($pagename);
+            $keys=unserialize($keys);
         } else
             $keys=array();
         foreach ($keys as $key) {
@@ -176,7 +176,7 @@ EOF;
     $max=current($fact);
     $min=max(1,end($fact));
     // make font-size style
-    $fz=sizeof($fact);
+    $fz=max(sizeof($fact),2);
     $sty=array();
     $fsh=(MAX_FONT_SZ-MIN_FONT_SZ)/($fz-1);
     $fs=MAX_FONT_SZ; // max font-size:24px;
@@ -193,7 +193,7 @@ EOF;
     if (!isset($tag_link)) {
         if ($search_type=='full') $search='fullsearch';
         else if ($search_type=='title') $search='titlesearch';
-        else $search='fullsearch&amp;keywords=1';
+        else $search='fullsearch&amp;keyword=1';
         $tag_link=$formatter->link_url(_rawurlencode($pagename),
             '?action='.$search.'&amp;value=$TAG');
     }
@@ -255,6 +255,52 @@ function do_keywords($formatter,$options) {
         $options['err']=_("You are not able to add keywords.");
         $options['title']=_("Page does not exists");
         do_invalid($formatter,$options);
+        return;
+    }
+    if ($options['refresh']) {
+        $lk=$DBInfo->getPage(LOCAL_KEYWORDS);
+        if (!$lk->exists()) {
+            return 'not found';
+        }
+        $raw=$lk->get_raw_body();
+
+        # update keylinks of LocalKeywords
+        $kc=new Cache_text('keylinks');
+        $lines=explode("\n",$raw);
+        $formatter->send_header("Content-type: text/plain");
+        foreach ($lines as $l) {
+            $l=trim($l);
+            if ($l[0] == '#' or !$l) continue;
+            $ws=preg_split('/((?<!\S)(["\'])[^\2]+?\2(?!\S)|\S+)/',
+                $l,-1,
+                PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_NO_EMPTY);
+            $ws=array_flip(array_unique($ws));
+            unset($ws['"']); // delete delims
+            unset($ws["'"]);
+            unset($ws[' ']);
+            $ws=array_flip($ws);
+            $ws= array_map(create_function('$a',
+                'return preg_replace("/^([\"\'])(.*)\\\\1$/","\\\\2",$a);'),
+                $ws); // delete ",'
+            $ws=array_unique($ws);
+            foreach ($ws as $k) {
+                $rels=array_diff($ws,array($k));
+                $krels=unserialize($kc->fetch($k));
+                if (is_array($krels)) {
+                    if (($nrels=array_diff($rels,$krels))) {
+                        $rs=array_unique(array_merge($nrels,$krels));
+                        $kc->update($k,serialize($rs));
+                        print "***** updated $k\n";
+                    }
+                } else {
+                    if (is_array($rels)) {
+                        $kc->update($k,serialize($rels));
+                        print "***** save $k\n";
+                    }
+                }
+            }
+        }
+        print "OK";
         return;
     }
 
@@ -326,13 +372,23 @@ function do_keywords($formatter,$options) {
         $keys=$options['key'];
         $keys=array_flip($keys);
         unset($keys['']);
-        $cache->update($page,$keys);
+        $cache->update($page,serialize($keys));
+
+        # update 'keylinks' caches
+        $kc=new Cache_text('keylinks');
+        foreach ($options['key'] as $k) {
+            $kv=unserialize($kc->fetch($k));
+            if (!in_array($page,$kv)) {
+                $kv[]=$page;
+                $kc->update($k,serialize($kv));
+            }
+        }
 
         $raw="#format plain"; 
-        $p=$DBInfo->getPage(LOCAL_KEYWORDS);
-        if (!$p->exists()) $dict=array();
+        $lk=$DBInfo->getPage(LOCAL_KEYWORDS);
+        if (!$lk->exists()) $dict=array();
         else {
-            $raw=$p->get_raw_body();
+            $raw=$lk->get_raw_body();
             $raw=rtrim($raw);
             $lines=explode("\n",$raw);
             $body='';
@@ -344,11 +400,12 @@ function do_keywords($formatter,$options) {
             $dict=explode("\n",$body);
         }
         $nkeys=array_diff(array_values($options['key']),$dict);
+        $modi=0;
         if (!empty($nkeys)) {
             sort($nkeys);
-            $raw.="\n".implode("\n",$nkeys);
-            $p->write($raw);
-            $DBInfo->savePage($p,"New keywords are added",$options);
+            $raw.="\n".implode("\n",$nkeys)."\n";
+            $lk->write($raw);
+            $DBInfo->savePage($lk,"New keywords are added",$options);
         }
 
         $formatter->send_title(sprintf(_("Keywords for %s are updated"),

@@ -41,13 +41,13 @@ function macro_FastSearch($formatter,$value="",&$opts) {
 EOF;
 
   if (!$needle) { # or blah blah
-     $opts['msg'] = 'No search text';
+     $opts['msg'] = _("No search text");
      return $form;
   }
 
   $DB=new IndexDB_dba('fullsearch',"r",$DBInfo->dba_type);
   if ($DB->db==null) {
-    $opts['msg']="Couldn't open search database, sorry.";
+    $opts['msg']=_("Couldn't open search database, sorry.");
     $opts['hits']= 0;
     $opts['all']= 0;
     return '';
@@ -122,7 +122,7 @@ function do_fastsearch($formatter,$options) {
   if ($options['value'])
     printf(_("Found %s matching %s out of %s total pages")."<br />",
          $ret['hits'],
-        ($ret['hits'] == 1) ? 'page' : 'pages',
+        ($ret['hits'] == 1) ? _("page") : _("pages"),
          $ret['all']);
   $args['noaction']=1;
   $formatter->send_footer($args,$options);

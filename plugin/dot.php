@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2006 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // dot action plugin for the MoniWiki
 //
@@ -12,24 +12,25 @@ define(FONTSIZE,8);
 class LinkTree {
   var $cache=null;
   function LinkTree($arena='pagelinks') {
-    if ($arena != 'pagelinks' and $arena != 'keywords')
+    if (!in_array($arena,array('pagelinks','backlinks','keywords','keylinks')))
       $arena = 'pagelinks';
     $this->cache=new Cache_text($arena);
   }
 
   function getLeafs($pagename,&$node,&$color,$depth,$count=LEAFCOUNT) {
-    $links=$this->cache->fetch($pagename);
-    $links=explode("\n",$links);
+    $links=unserialize($this->cache->fetch($pagename));
+    if (!is_array($links)) $links=array();
     foreach ($links as $page) {
       if (!$color[$page]) $color[$page]=$depth;
       if ($page) {
         if (!$node[$page]) {
           $leafs=$this->cache->fetch($page);
           if ($leafs) {
-            $leafs=explode("\n",$leafs);
+            $leafs=unserialize($leafs);
             # XXX 
             $nodelink[$page]=sizeof($leafs);
-          }
+          } else
+          $nodelink[$page]=1;
         } else $nodelink[$page]=1;
       }
     }
@@ -45,8 +46,8 @@ class LinkTree {
       $this->getLeafs($pagename,$node,$color,$depth,$count);
       if ($node[$pagename]) {
         # select 25% of links
-        $size= (int) (sizeof($node[$pagename]) * 0.25);
-        $slice= ($size > $count) ? $size: $count;
+        $slice= max((int) (sizeof($node[$pagename]) * 0.25),$count);
+        #$slice= ($size > $count) ? $size: $count;
         $selected=array_slice($node[$pagename],0,$slice);
         foreach($selected as $leaf)
           $this->makeTree($leaf,$node,$color,$depth,$count);
