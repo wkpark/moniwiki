@@ -233,7 +233,7 @@ EOF;
         $form_close="<input type='submit' value='$btn'/>\n";
         $form_close.="<input type='submit' name='common' value='$btn1' />\n";
         $form_close.="<input type='button' value='$btn2' onClick='UncheckAll(this)' />\n";
-        $form_close.="<select name='lang'><option>----</option>\n";
+        $form_close.="<select name='lang'><option>---</option>\n";
         foreach ($supported_lang as $l) {
             $form_close.="<option value='$l'>$l</option>\n";
         }
@@ -257,10 +257,12 @@ function do_keywords($formatter,$options) {
         do_invalid($formatter,$options);
         return;
     }
-    if ($options['refresh']) {
+    if ($options['update'] or $options['refresh']) {
         $lk=$DBInfo->getPage(LOCAL_KEYWORDS);
+        $formatter->send_header("Content-type: text/plain");
         if (!$lk->exists()) {
-            return 'not found';
+            print sprintf(_("%s is not found."),LOCAL_KEYWORDS);
+            return;
         }
         $raw=$lk->get_raw_body();
 
@@ -293,7 +295,7 @@ function do_keywords($formatter,$options) {
                         print "***** updated $k\n";
                     }
                 } else {
-                    if (is_array($rels)) {
+                    if (sizeof($rels) > 1 and is_array($rels)) {
                         $kc->update($k,serialize($rels));
                         print "***** save $k\n";
                     }
@@ -375,14 +377,15 @@ function do_keywords($formatter,$options) {
         $cache->update($page,serialize($keys));
 
         # update 'keylinks' caches
-        $kc=new Cache_text('keylinks');
-        foreach ($options['key'] as $k) {
-            $kv=unserialize($kc->fetch($k));
-            if (!in_array($page,$kv)) {
-                $kv[]=$page;
-                $kc->update($k,serialize($kv));
-            }
-        }
+        #$kc=new Cache_text('keylinks');
+        #foreach ($options['key'] as $k) {
+        #    // XXX
+        #    $kv=unserialize($kc->fetch($k));
+        #    if (!in_array($page,$kv)) {
+        #        $kv[]=$page;
+        #        $kc->update($k,serialize($kv));
+        #    }
+        #}
 
         $raw="#format plain"; 
         $lk=$DBInfo->getPage(LOCAL_KEYWORDS);
@@ -397,15 +400,15 @@ function do_keywords($formatter,$options) {
                 $body.=$line."\n";
             }
             $body=rtrim($body);
-            $dict=explode("\n",$body);
         }
-        $nkeys=array_diff(array_values($options['key']),$dict);
-        $modi=0;
-        if (!empty($nkeys)) {
-            sort($nkeys);
-            $raw.="\n".implode("\n",$nkeys)."\n";
+        if ($options['key']) {
+            // XXX
+            $ks= array_map(create_function('$a',
+                'return (strpos($a," ") !== false) ? "\"$a\"":$a;'),
+                $options['key']);
+            $raw.="\n".implode(' ',$ks)."\n";
             $lk->write($raw);
-            $DBInfo->savePage($lk,"New keywords are added",$options);
+            $DBInfo->savePage($lk,"Keywords are added",$options);
         }
 
         $formatter->send_title(sprintf(_("Keywords for %s are updated"),
@@ -417,6 +420,7 @@ function do_keywords($formatter,$options) {
         $ret=substr($ret,0,strlen($ret)-1);
         print "<tt>#keywords $ret</tt>\n";
         if ($DBInfo->use_keywords or $options['update']) {
+            # auto update the page with selected keywords.
             $body=$formatter->page->get_raw_body();
             $pi=$formatter->get_instructions($dum);
             if ($pi['#keywords']) {
@@ -438,6 +442,7 @@ function do_keywords($formatter,$options) {
                 print "<h2>"._("There are no changes found")."</h2>";
             }
         } else {
+            # user confirmation
             $link=$formatter->link_url(_rawurlencode($page),'');
             $keys=explode(',',$ret);
             $ret='';

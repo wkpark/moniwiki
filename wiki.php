@@ -2008,8 +2008,8 @@ class Formatter {
       $this->bcache->update($d,serialize($bl));
     }
     // XXX
-    $this->cache->update($this->page->name,serialize($links),
-      $this->page->mtime());
+    $this->cache->update($this->page->name,serialize($new));
+#      $this->page->mtime());
   }
 
   function get_pagelinks() {
@@ -2251,8 +2251,9 @@ class Formatter {
     $plugin=($np=getPlugin($name))?$np:$name;
     if (!function_exists ("macro_".$plugin)) {
       #if (!$np) return "[[".$name."]]";
-      if (!$np) return $this->link_repl($name);
+      if (!$np) return $this->link_repl($name); // XXX
       include_once("plugin/$plugin.php");
+      if (!function_exists ("macro_".$plugin)) return '[['.$macro.']]';
     }
     $ret=call_user_func_array("macro_$plugin",array(&$this,$args,$options));
     return $ret;
