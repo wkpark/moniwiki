@@ -176,6 +176,22 @@ function _mask_hostname($addr,$mask='&loz;') {
   return implode('.',$tmp);
 }
 
+function _load_php_vars($filepath, $vars=array())
+{
+#   foreach ($vars as $key=>$val) $$key=$val;
+#   unset($key,$val,$vars);
+    extract($vars);
+    unset($vars);
+
+    ob_start();
+    include $filepath;
+    unset($filepath);
+    $vars=get_defined_vars();
+    ob_end_clean();
+
+    return $vars;
+}
+
 // from php.net
 //
 // It seems that the best solution would be to use HMAC-MD5.
@@ -1299,11 +1315,12 @@ function do_post_savepage($formatter,$options) {
     $savetext=$section_savetext ? $section_savetext:$savetext;
     $options['savetext']=$savetext;
 
+    $formatter->preview=1;
     print macro_EditText($formatter,$value,$options); # XXX
     print $DBInfo->hr;
     print $menu;
     print "<div id='wikiPreview'>\n";
-    $formatter->preview=1;
+    #$formatter->preview=1;
     $formatter->send_page($savetext);
     $formatter->preview=0;
     print $DBInfo->hr;
