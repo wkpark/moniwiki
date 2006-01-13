@@ -680,7 +680,7 @@ function macro_Edit($formatter,$value,$options='') {
 
   # make a edit form
   if (!$options['simple'])
-    $form.= "<a id='editor' name='editor' />\n";
+    $form.= "<a id='editor' name='editor'></a>\n";
 
   if ($options['page'])
     $previewurl=$formatter->link_url(_rawurlencode($options['page']),'#preview');
@@ -1397,6 +1397,8 @@ function wiki_notify($formatter,$options) {
     $version=new $class ($DBInfo);
     $rev=$formatter->page->get_rev();
     $diff=$version->diff($formatter->page->name,$rev);
+  } else {
+    $options['nodiff'];
   }
 
   $mailto=join(", ",$subs);
@@ -1405,10 +1407,14 @@ function wiki_notify($formatter,$options) {
 
   $subject= '=?'.$DBInfo->charset.'?B?'.rtrim(base64_encode($subject)).'?=';
 
-  $rmail= "noreply@{$_SERVER['SERVER_NAME']}";
-  if(preg_match("/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/i",
-    $_SERVER['SERVER_NAME']))
-    $rmail= 'noreply@['.$_SERVER['SERVER_NAME'].']';
+  if ($DBInfo->replyto) {
+    $rmail= $DBInfo->replyto;
+  } else {
+    $rmail= "noreply@{$_SERVER['SERVER_NAME']}";
+    if(preg_match("/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/i",
+      $_SERVER['SERVER_NAME']))
+      $rmail= 'noreply@['.$_SERVER['SERVER_NAME'].']';
+  }
 
   if ($options['id']) {
     $return=$options['id'].' <'.$rmail.'>';
@@ -1460,10 +1466,15 @@ function wiki_sendmail($body,$options) {
     return array('msg'=>_("This wiki does not support sendmail"));
   }
 
-  $rmail= "noreply@{$_SERVER['SERVER_NAME']}";
-  if(preg_match("/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/i",
-    $_SERVER['SERVER_NAME']))
-    $rmail= 'noreply@['.$_SERVER['SERVER_NAME'].']';
+  if ($DBInfo->replyto) {
+    $rmail= $DBInfo->replyto;
+  } else {
+    // make replyto address
+    $rmail= "noreply@{$_SERVER['SERVER_NAME']}";
+    if(preg_match("/^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/i",
+      $_SERVER['SERVER_NAME']))
+      $rmail= 'noreply@['.$_SERVER['SERVER_NAME'].']';
+  }
 
   if ($options['id']) {
     $return=$options['id'].' <'.$rmail.'>';
@@ -2046,7 +2057,9 @@ function macro_PageList($formatter,$arg="") {
     } else $hits=$all_pages;
     arsort($hits);
     while (list($pagename,$mtime) = @each ($hits)) {
-      $out.= '<li>'.$formatter->link_tag(_rawurlencode($pagename),"",$pagename).". . . . [".gmdate("Y-m-d",$mtime+$tz_offset)."]</li>\n";
+      $out.= '<li>'.$formatter->link_tag(_rawurlencode($pagename),"",
+	htmlspecialchars($pagename)).
+	". . . . [".gmdate("Y-m-d",$mtime+$tz_offset)."]</li>\n";
     }
     $out="<ol>\n".$out."</ol>\n";
   } else {
@@ -2056,7 +2069,8 @@ function macro_PageList($formatter,$arg="") {
     }
     sort($hits);
     foreach ($hits as $pagename) {
-      $out.= '<li>' . $formatter->link_tag(_rawurlencode($pagename),"",$pagename)."</li>\n";
+      $out.= '<li>' . $formatter->link_tag(_rawurlencode($pagename),"",
+	htmlspecialchars($pagename))."</li>\n";
     }
     $out="<ul>\n".$out."</ul>\n";
   }

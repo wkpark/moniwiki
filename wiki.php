@@ -801,7 +801,7 @@ class WikiDB {
   function getPageLists($options=array()) {
     $pages = array();
 
-    $pcid=md5(serialize(sort($options)));
+    $pcid=md5(serialize($options));
     $pc=new Cache_text('pagelist');
     if (filemtime($this->text_dir) < $pc->mtime($pcid) and $pc->exists($pcid)) {
       $list=unserialize($pc->fetch($pcid));
