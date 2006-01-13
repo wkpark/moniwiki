@@ -18,6 +18,8 @@ function processor_mimetex($formatter,$value) {
   $mimetex= $DBInfo->mimetex_path ? $DBInfo->mimetex_path:
     $DBInfo->url_prefix.'/mimetex.cgi';
 
+  $ext='gif';
+
   $debug = 0;
   # debuggin'
   if ( $debug ) {
@@ -46,14 +48,14 @@ function processor_mimetex($formatter,$value) {
       mkdir ($cache_dir, 0777);
     }
 
-    if ( $formatter->preview || $formatter->refresh || ! file_exists ("$cache_dir/$uniq.png")) {
-      $cmd = "$mimetex -e $cache_dir/$uniq.gif \"$tex\"";
+    if ( $formatter->preview || $formatter->refresh || ! file_exists ("$cache_dir/$uniq.$ext")) {
+      $cmd = "$mimetex -e $cache_dir/$uniq.$ext \"$tex\"";
       $fp = @popen ($cmd, 'r');
       if ( ! is_resource ($fp) ) return $tex;
       pclose ($fp);
     }
 
-    return "<img class='tex' src='$DBInfo->url_prefix/$cache_dir/$uniq.png' alt='$alt' ".
+    return "<img class='tex' src='$DBInfo->url_prefix/$cache_dir/$uniq.$ext' alt='$alt' ".
            "title=\"$alt\" />";
   } else {
     return '<img src=\''.$mimetex.'?'.$tex.'\' alt=\''. $alt .'\' title=\''.$alt.'\' />';
