@@ -28,6 +28,7 @@ $use_hostname= 1;
 $edit_rows=16;
 $iconset= 'moni';
 $inline_latex=0;
+#$inline_latex='mimetex';
 $lang='auto';
 $charset='utf-8';
 #$charset='euc-kr';
@@ -93,9 +94,12 @@ $pds_allowed="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|css|exe|hwp|pdf";
 #$password_length=6;
 #$use_convert_thumbs=0;
 
-#$myprocessors=array('latex'=>'latex');
+#$myprocessors=array('latex'=>'mimetex');
 #$myplugins=array('FullSearch'=>'FastSearch');
 #$inline_latex='mimetex';
+#$mimetex_path='/cgi-bin/mimetex.cgi'; # cgi mode
+#$mimetex_path='shell:mimetex'; # command line mode
+#$mimetex_path='shell:/usr/bin/mimetex';
 #$inline_latex='latex';
 #$inline_latex='itex';
 #$inline_latex='1';
@@ -132,4 +136,13 @@ $css_friendly=0;
 $use_redirect_msg=1;
 #$use_safelogin=0;
 #$url_mappings=array('http://faq.ktug.or.kr/mywiki'=>'http://faq.ktug.or.kr/faq');
+
+#$use_category=0;
+#$use_textbrowsers=1;
+$use_preview_uploads=1;
+#$use_camelcase=0;
+#$mask_hostname=1;
+#$shared_url_mappings=$data_dir.'/text/UrlMap';
+#$category_regex=urldecode('%EB%B6%84%EB%A5%98$');
+#$use_backlinks=1
 ?>
