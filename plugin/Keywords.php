@@ -1,5 +1,5 @@
 <?php
-// Copyright 2005 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2005-2006 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a 'Keywords' plugin for the MoniWiki
 //
@@ -23,6 +23,7 @@ define(MIN_FONT_SZ,10);
             $tag_link='http://www.technorati.com/tag/$TAG';
         else if ($opt == 'flickr')
             $tag_link='http://www.flickr.com/photos/tags/$TAG';
+        else if ($opt=='all') $options['all']=1;
         else if (($p=strpos($opt,'='))!==false) {
             $k=substr($opt,0,$p);
             $v=substr($opt,$p+1);
@@ -30,16 +31,54 @@ define(MIN_FONT_SZ,10);
             else if ($k=='sort' and in_array($v,array('freq','alpha')))
                 $sort=$v;
             else if ($k=='type' and in_array($v,array('full','title')))
-                $search_type=$v;
+                $search=$v.'search';
             else if ($k=='url') {
                 $tag_link=$v;
                 if (preg_match('/\$TAG/',$tag_link)===false) $tag_link.='$TAG';
             }
             // else ignore
         } else {
-            $page=$opt;
+            $pagename=$opt;
         }
     }
+
+    if (!$pagename) $pagename=$formatter->page->name;
+
+    if ($options['all']) $pages=$DBInfo->getPageLists();
+    else $pages=array($pagename);
+
+    # get cached keywords
+    $cache=new Cache_text('keywords');
+
+    $mykeys=array();
+    foreach ($pages as $pn) {
+        if ($cache->exists($pn)) {
+            $keys=$cache->fetch($pn);
+            $keys=unserialize($keys);
+        } else {
+            $keys=array();
+        }
+        if ($keys) $mykeys=array_merge($mykeys,$keys);
+    }
+    if ($options['all']) {
+        $words=array_count_values($mykeys);
+        unset($words['']);
+        $ncount=array_sum($words); // total count
+        arsort($words);
+        $max=current($words); // get max hit number
+
+        #print_r($words);
+    } else {
+        $max=3; // default weight
+        $words=array();
+        foreach ($mykeys as $key) {
+            $words[$key]=$max;
+            // give weight to all selected keywords
+        }
+    }
+
+    # automatically generate list of keywords
+    if (!$options['all'] and (!$words or $options['checknew'])):
 
     $common= <<<EOF
 am an a b c d e f g h i j k l m n o p q r s t u v w x y z
@@ -61,7 +100,6 @@ nom pdf php pl qt ra ram rec shop sit tar tgz tiff txt wav web zip
 one two three four five six seven eight nine ten eleven twelve
 ftp http https www web net org or kr co us de
 EOF;
-    if (!$pagename) $pagename=$formatter->page->name;
     $page=$DBInfo->getPage($pagename);
     if (!$page->exists()) return '';
     $raw=$page->get_raw_body();$raw=rtrim($raw);
@@ -144,21 +182,18 @@ EOF;
     $max=current($words); // get max hit number
 
     $nwords=array();
-    if ($options['all']) {
-        $cache=new Cache_text('keywords');
-        if ($cache->exists($pagename)) {
-            $keys=$cache->fetch($pagename);
-            $keys=unserialize($keys);
-        } else
-            $keys=array();
-        foreach ($keys as $key) {
+    if ($options['merge']) {
+        foreach ($mykeys as $key) {
             $nwords[$key]=$max;
             // give weight to all selected keywords
         }
     }
 
-    if ($nwords)
-        $words=array_merge($words,$nwords);
+    if ($nwords) $words=array_merge($words,$nwords);
+
+    endif;
+    //
+
     if ($limit and ($sz=sizeof($words))>$limit) {
         arsort($words);
         $words=array_slice($words,0,$limit);
@@ -174,7 +209,7 @@ EOF;
         #print $weight.'--';
     }
     $max=current($fact);
-    $min=max(1,end($fact));
+    $min=$limit ? max(1,end($fact)):0;
     // make font-size style
     $fz=max(sizeof($fact),2);
     $sty=array();
@@ -191,9 +226,7 @@ EOF;
 
     $link=$formatter->link_url(_rawurlencode($pagename),'');
     if (!isset($tag_link)) {
-        if ($search_type=='full') $search='fullsearch';
-        else if ($search_type=='title') $search='titlesearch';
-        else $search='fullsearch&amp;keyword=1';
+        if (!$search) $search='fullsearch&amp;keywords=1';
         $tag_link=$formatter->link_url(_rawurlencode($pagename),
             '?action='.$search.'&amp;value=$TAG');
     }
@@ -230,7 +263,9 @@ EOF;
             $btn=_("Add keywords");
         $btn1=_("Add as common words"); 
         $btn2=_("Unselect all"); 
+        $btnc=_("Check new Keywords"); 
         $form_close="<input type='submit' value='$btn'/>\n";
+        $form_close.="<input type='submit' name='checknew' value='$btnc' />\n";
         $form_close.="<input type='submit' name='common' value='$btn1' />\n";
         $form_close.="<input type='button' value='$btn2' onClick='UncheckAll(this)' />\n";
         $form_close.="<select name='lang'><option>---</option>\n";
@@ -308,7 +343,8 @@ function do_keywords($formatter,$options) {
 
     $formatter->send_header('',$options);
 
-    if (is_array($options['key']) or $options['keywords']) {
+    if (!$options['checknew'] and
+        (is_array($options['key']) or $options['keywords'])) {
         if ($options['keywords']) {
             // following keyword list are acceptable separated with spaces.
             // Chemistry "Physical Chemistry" "Bio Chemistry" ...
@@ -374,7 +410,7 @@ function do_keywords($formatter,$options) {
         $keys=$options['key'];
         $keys=array_flip($keys);
         unset($keys['']);
-        $cache->update($page,serialize($keys));
+        $cache->update($page,serialize(array_keys($keys)));
 
         # update 'keylinks' caches
         #$kc=new Cache_text('keylinks');
@@ -468,7 +504,7 @@ function do_keywords($formatter,$options) {
     $formatter->send_title(sprintf(_("Select keywords for %s"),
         $options['page']),'', $options);
 
-    $options['all']=1;
+    $options['merge']=1;
     $options['add']=1;
 
     print macro_KeyWords($formatter,$options['page'],$options);
