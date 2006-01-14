@@ -212,10 +212,10 @@ function macro_Gallery($formatter,$value,&$options) {
     if (preg_match("/\.(jpg|jpeg|gif|png)$/i",$file)) {
       if ($DBInfo->use_convert_thumbs and !file_exists($dir."/thumbnails/".$file)) {
         if (function_exists('imagecopyresized')) {
-          $fname=$dif.'/'.$file;
+          $fname=$dir.'/'.$file;
           list($w, $h) = getimagesize($fname);
           if ($w > $width) {
-            $nh=$w/$width*$h;
+            $nh=$width*$h/$w;
             $thumb= imagecreatetruecolor($width,$nh);
             // XXX only jpeg for testing now.
             $source= imagecreatefromjpeg($fname);
