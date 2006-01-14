@@ -3,27 +3,28 @@
 # $Id$
 
 class Security_sample extends Security {
-  var $DB;
+    var $DB;
 
-  function Security_sample($DB="") {
-    $this->DB=$DB;
-  }
+    function Security_sample($DB="") {
+        $this->DB=$DB;
+    }
 
 # $options[page]: pagename
 # $options[id]: user id
 
-  function writable($options="") {
-    return $this->DB->_isWritable($options['page']);
-  }
+    function writable($options="") {
+        return $this->DB->_isWritable($options['page']);
+    }
 
-  function is_allowed($action="read",&$options) {
-    # basic allowed actions
-    $allowed_actions=array("edit","savepage","read","diff","info","likepages","uploadfile","uploadedfiles","css","theme","deletepage");
-    $action=strtolower($action);
-    if (in_array($action,$allowed_actions))
-      return 1;
-    return 0;
-  }
+    function is_allowed($action="read",&$options) {
+        # basic allowed actions
+        $allowed_actions=array("edit","savepage","read","diff","info","likepages","uploadfile","uploadedfiles","css","theme","deletepage");
+        $action=strtolower($action);
+        if (in_array($action,$allowed_actions))
+            return 1;
+        return 0;
+    }
 }
 
+// vim:et:sts=4:
 ?>
