@@ -1,22 +1,24 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2006 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a WantedPages macro plugin for the MoniWiki
+//
 // $Id$
 
-function macro_WantedPages($formatter="",$options="") {
+function macro_WantedPages($formatter,$value='') {
   global $DBInfo;
   $pages = $DBInfo->getPageLists();
 
   $pagelinks=$formatter->pagelinks; // save
 
   $cache=new Cache_text("pagelinks");
+
   foreach ($pages as $page) {
     $p= new WikiPage($page);
     $f= new Formatter($p);
     $links=$f->get_pagelinks();
     if ($links) {
-      $lns=explode("\n",$links);
+      $lns=&$links;
       foreach($lns as $link) {
         if (!$link or $DBInfo->hasPage($link)) continue;
         if ($link and !$wants[$link])
@@ -39,4 +41,5 @@ function macro_WantedPages($formatter="",$options="") {
   return $out;
 }
 
+// vim:et:sts=2:
 ?>
