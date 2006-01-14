@@ -1580,6 +1580,8 @@ class Formatter {
 
     $camelcase= isset($pis['#camelcase']) ? $pis['#camelcase']:
       $DBInfo->use_camelcase;
+    $sbracket= isset($pis['#singlebracket']) ? $pis['#singlebracket']:
+      $DBInfo->use_singlebracket;
 
     #$punct="<\"\'}\]\|;,\.\!";
     $punct="<\'}\]\)\|;\.\!"; # , is omitted for the WikiPedia
@@ -1624,10 +1626,12 @@ class Formatter {
     #"(\?[A-Z]*[a-z0-9]+)";
     "(\?[A-Za-z0-9]+)";
 
-    if ($DBInfo->use_singlebracket) {
+    if ($sbracket)
       # single bracketed name [Hello World]
       $this->wordrule.= "|(?<!\[)\!?\[([^\[:,<\s'][^\[:,>]{1,255})\](?!\])";
-    }
+    else
+      # only anchor [#hello], footnote [* note] allowed 
+      $this->wordrule.= "|(?<!\[)\!?\[([#\*\+][^\[:,>]{1,255})\](?!\])";
     return $this->wordrule;
   }
 
@@ -1696,7 +1700,8 @@ class Formatter {
     global $DBInfo;
     $pikeys=array('#redirect','#action','#title','#keywords','#noindex',
       '#filter','#postfilter','#twinpages','#notwins','#nocomment',
-      '#language','#camelcase','#nocamelcase');
+      '#language','#camelcase','#nocamelcase',
+      '#singlebracket','#nosinglebracket');
     $pi=array();
     if (!$body) {
       if (!$this->page->exists()) return '';
@@ -1739,13 +1744,14 @@ class Formatter {
         #list($key,$val,$args)= explode(" ",$line,2); # XXX
         list($key,$val)= explode(" ",$line,2); # XXX
         $key=strtolower($key);
-        if (in_array($key,$pikeys)) { $pi[$key]=$val ? $val:1; }
+        if (in_array($key,$pikeys)) { $pi[$key]=($val == '') ? 1:$val; }
         else $notused[]=$line;
       }
       #
       if ($pi['#notwins']) $pi['#twinpages']=0;
       if ($pi['#nocamelcase']) $pi['#camelcase']=0;
       if ($pi['#nofilter']) unset($pi['#filter']);
+      if ($pi['#nosinglebracket']) $pi['#singlebracket']=0;
     }
 
     if ($format) {
@@ -1882,7 +1888,7 @@ class Formatter {
             $external_link='<span class="externalLink">('.$url.')</span>';
         }
         $icon=strtok($url,':');
-        return "<img align='middle' alt='[$icon]' src='".$this->imgs_dir_url."$icon.png' />". "<a class='externalLink' $attr $this->external_target href='$link'>$text</a>".$external_icon.$external_link;
+        return "<img class='url' alt='[$icon]' src='".$this->imgs_dir_url."$icon.png' />". "<a class='externalLink' $attr $this->external_target href='$link'>$text</a>".$external_icon.$external_link;
       } # have no space
       $link=str_replace('&','&amp;',$url);
       if (preg_match("/^(http|https|ftp)/",$url)) {
@@ -1957,7 +1963,7 @@ class Formatter {
     }
 
     $img="<a href='$url' target='wiki'>".
-         "<img border='0' src='$icon' align='middle' height='$sy' ".
+         "<img border='0' src='$icon' class='interwiki' height='$sy' ".
          "width='$sx' alt='$wiki:' title='$wiki:' /></a>";
     #if (!$text) $text=str_replace("%20"," ",$page);
     if (!$text) $text=urldecode($page);
@@ -2313,7 +2319,7 @@ class Formatter {
 
     $alt=str_replace("<","&lt;",$smiley);
 
-    return "<img src='$this->imgs_dir/$img' border='0' align='middle' alt='$alt' title='$alt' />";
+    return "<img src='$this->imgs_dir/$img' border='0' class='smiley' alt='$alt' title='$alt' />";
   }
 
   function link_url($pageurl,$query_string="") {
@@ -2768,9 +2774,10 @@ class Formatter {
       }
 
       #if (!$in_pre && !$in_table && preg_match("/^\|\|.*\|\|$/",$line)) {
-      if (!$in_pre && $line[0]=='|' && !$in_table && preg_match("/^((\|\|)+)(&lt;[^>\|]*>)?(.*)\|\|$/s",$line,$match)) {
-        $open.=$this->_table(1,$match[3]);
-        if (!$match[3]) $line=$match[1].$match[4].'||';
+      if (!$in_pre && $line[0]=='|' && !$in_table && preg_match("/^(\|([^\|]+)?\|((\|\|)*))(&lt;[^>\|]*>)?(.*)(\|\|)$/s",$line,$match)) {
+        $open.=$this->_table(1,$match[5]);
+        if ($match[2]) $open.='<caption>'.$match[2].'</caption>';
+        if (!$match[5]) $line='||'.$match[3].$match[6].'||';
         $in_table=1;
       #} elseif ($in_table && !preg_match("/^\|\|.*\|\|$/",$line)){
       } elseif ($in_table && $line[0]!='|' && !preg_match("/^\|\|.*\|\|$/s",$line)){
@@ -3828,11 +3835,13 @@ if ($pagename) {
 #      return;
 #    }
 
-    #$formatter->get_redirect();
+
     $formatter->pi=$formatter->get_instructions($dum);
     if ($DBInfo->body_attr)
       $options['attr']=$DBInfo->body_attr;
+
     $formatter->send_header("",$options);
+
     $formatter->send_title("","",$options);
 
     if ($formatter->pi['#title'] and $DBInfo->use_titlecache) {
@@ -3842,7 +3851,9 @@ if ($pagename) {
     }
     if ($formatter->pi['#keywords'] and $DBInfo->use_keywords) {
       $tcache=new Cache_text('keywords');
-      if (!$tcache->exists($pagename) or $_GET['update_keywords']) {
+      if (!$tcache->exists($pagename) or
+        $tcache->mtime($pagename) < $formatter->page->mtime() or
+        $_GET['update_keywords']) {
         $keys=explode(',',$formatter->pi['#keywords']);
         $tcache->update($pagename,serialize($keys));
       }
@@ -3890,8 +3901,17 @@ if ($pagename) {
 
   if ($action) {
     $options['metatags']='<meta name="robots" content="noindex,nofollow" />';
+    $options['custom']='';
+    $options['help']='';
 
     if (!$DBInfo->security->is_allowed($action,$options)) {
+      if ($options['custom']!='' and
+          method_exists($DBInfo->security,$options['custom'])) {
+        $options['action']=$action;
+        if ($action)
+        call_user_func(array(&$DBInfo->security,$options['custom']),$formatter,$options);
+        return;
+      }
       $msg=sprintf(_("You are not allowed to '%s'"),$action);
       $formatter->send_header("Status: 406 Not Acceptable",$options);
       $formatter->send_title($msg,"", $options);
@@ -3901,8 +3921,7 @@ if ($pagename) {
       if ($options['help'] and
           method_exists($DBInfo->security,$options['help'])) {
         print "<div id='wikiHelper'>";
-        $helper=$DBInfo->security->$options['help'];
-        print call_user_method($options['help'],$DBInfo->security,$formatter);
+        print call_user_method($options['help'],$DBInfo->security,$formatter,$options);
         print "</div>\n";
       }
 

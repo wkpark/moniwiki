@@ -1916,7 +1916,7 @@ function macro_InterWiki($formatter,$value,$options=array()) {
       $sy=$DBInfo->intericon[$wiki][1];
     }
     $out.="<tr><td><tt><img src='$icon' width='$sx' height='$sy' ".
-      "align='middle' alt='$wiki:' /><a href='$url'>$wiki</a></tt></td>";
+      "class='interwiki' alt='$wiki:' /><a href='$url'>$wiki</a></tt></td>";
     $out.="<td><tt><a href='$href'>$href</a></tt></td></tr>\n";
   }
   $out.="</table>\n";
