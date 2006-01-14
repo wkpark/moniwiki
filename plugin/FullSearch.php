@@ -125,7 +125,7 @@ EOF;
 
   # set arena and sid
   if ($opts['backlinks']) $arena='backlinks';
-  #else if ($opts['keywords']) $arena='keylinks';
+  else if ($opts['keywords']) $arena='keywords';
   else $arena='fullsearch';
 
   if ($arena == 'fullsearch') $sid=md5($value);
