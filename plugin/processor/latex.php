@@ -79,7 +79,7 @@ $tex
      pclose($fp);
      chdir($cwd);
 
-     $cmd= "$convert -transparent white -crop 0x0 -density 120x120 $vartmp_dir/$uniq.ps $outpath";
+     $cmd= "$convert -transparent white -trim -crop 0x0 -density 120x120 $vartmp_dir/$uniq.ps $outpath";
      $fp=popen($cmd,'r');
      pclose($fp);
      unlink($vartmp_dir."/$uniq.log");
