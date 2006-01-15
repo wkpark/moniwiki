@@ -132,7 +132,7 @@ Title</span>
 <input type='radio' name='action' value='fullsearch' />
 Contents</span>&nbsp;
 <input type='text' name='value' class='goto' accesskey='s' size='20' />
-<input type='submit' name='status' value='Go' class='goto' style='width:23px' />
+<input type='submit' name='status' value='Go' style='width:23px' />
 </form>
 ";
   } else if ($type==2) {
@@ -171,7 +171,7 @@ Contents(/)</span>&nbsp;
 <form name='go' id='go' method='get' action='$action' onsubmit="return moin_submit();">
 <input type='text' name='value' size='20' accesskey='s' class='goto' style='width:100px' />
 <input type='hidden' name='action' value='goto' />
-<input type='submit' name='status' value='Go' class='goto' style='width:23px;' />
+<input type='submit' name='status' value='Go' style='width:23px;' />
 </form>
 FORM;
   }
@@ -1510,6 +1510,7 @@ class Formatter {
     $this->nonexists=$DBInfo->nonexists;
     $this->url_mappings=$DBInfo->url_mappings;
     $this->url_mapping_rule=$DBInfo->url_mapping_rule;
+    $this->css_friendly=$DBInfo->css_friendly;
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -3250,7 +3251,7 @@ EOS;
       $args['editable']=-1;
     
     $menus=$this->get_actions($args,$options);
-    if (!$DBInfo->css_friendly) {
+    if (!$this->css_friendly) {
       $menu=$this->menu_bra.implode($this->menu_sep,$menus).$this->menu_cat;
     } else {
       $menu="<div id='wikiAction'>";
@@ -3299,7 +3300,7 @@ FOOT;
     } else {
       print "<div id='wikiFooter'>";
       print $menu;
-      if (!$DBInfo->css_friendly) print $banner;
+      if (!$this->css_friendly) print $banner;
       else print "<div id='wikiBanner'>$banner</div>\n";
       print "\n</div>\n";
     }
@@ -3388,7 +3389,7 @@ MSG;
       }
     }
     $this->sister_on=$sister_save;
-    if (!$DBInfo->css_friendly) {
+    if (!$this->css_friendly) {
       $menu=$this->menu_bra.join($this->menu_sep,$menu).$this->menu_cat;
     } else {
       #for ($i=0,$szm=sizeof($menu);$i<$szm;$i++) {
@@ -3448,7 +3449,7 @@ MSG;
       # menu
       print "<div id='wikiHeader'>\n";
       print $header;
-      if (!$DBInfo->css_friendly)
+      if (!$this->css_friendly)
         print $menu." ".$user_link." ".$upper_icon.$icons.$home.$rss_icon;
       else {
         print "<div id='wikiLogin'>".$user_link."</div>";

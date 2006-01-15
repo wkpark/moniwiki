@@ -553,7 +553,7 @@ function macro_EditText($formatter,$value,$options='') {
 
     $form=preg_replace('/\[\[EditText\]\]/i','#editform',$form);
     ob_start();
-    $formatter->send_page(rtrim($form),$options);
+    $f->send_page(rtrim($form),$options);
     $form= ob_get_contents();
     ob_end_clean();
 
@@ -1534,7 +1534,7 @@ function macro_RandomPage($formatter,$value='') {
 
   foreach ($selected as $idx) {
     $item=$pages[$idx];
-    $selects[]=$formatter->link_tag(_rawurlencode($item),"",$item);
+    $selects[]=$formatter->link_tag(_rawurlencode($item),"",htmlspecialchars($item));
   }
 
   if ($count > 1) {
