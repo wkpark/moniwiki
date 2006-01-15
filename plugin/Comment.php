@@ -47,7 +47,7 @@ function macro_Comment($formatter,$value,$options=array()) {
  rows="$rows" cols="$cols">$savetext</textarea><br />
 FORM;
   if ($options['id'] == 'Anonymous')
-    $sig=_("Name").": <input name='name' value='$options[name]' />";
+    $sig=_("Username").": <input name='name' value='$options[name]' />";
   else 
     $sig="<input name='nosig' type='checkbox' />"._("Don't add a signature");
   $comment=_("Comment");
@@ -57,7 +57,7 @@ $hidden
 $sig
 <input type="hidden" name="action" value="comment" />
 <input type="hidden" name="datestamp" value="$datestamp" />
-<input type="submit" value="$comment" />&nbsp;
+<input type="submit" value="$comment" />
 <input type="submit" name="button_preview" value="$preview" />
 </form>
 FORM2;
@@ -152,7 +152,7 @@ function do_comment($formatter,$options=array()) {
 
   if ($options['comment_id'] and preg_match("/^\[\[Comment\(".$options['comment_id']."\)\]\]/m",$body)) {
     $str="[[Comment($options[comment_id])]]";
-    $body= str_replace($str,$savetext.$str,$body,1);
+    $body= preg_replace('/'.preg_quote($str).'/',$savetext.$str,$body,1);
   } else if (preg_match("/\n##Comment\n/i",$body)) {
     $body= preg_replace("/\n##Comment\n/i","\n##Comment\n$savetext",$body,1);
   } else if (preg_match("/^\[\[Comment(\([^\)]*\))?\]\]/m",$body)) {
