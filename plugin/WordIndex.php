@@ -22,7 +22,7 @@ function macro_WordIndex($formatter,$value) {
       $title=$cache->fetch($page);
     else
       $title=$page;
-    $tmp=preg_replace("/[\?!$%\.\^;&\*()_\+\|\[\] \-~\/]/"," ",$title);
+    $tmp=preg_replace("/[\?!$%\.\^;&\*()_\+\|\[\]<>\"' \-~\/]/"," ",$title);
     $tmp=preg_replace("/((?<=[A-Za-z0-9])[A-Z][a-z0-9])/"," \\1",ucwords($tmp));
     $words=preg_split("/\s+/",$tmp);
     foreach ($words as $word) {
@@ -49,7 +49,8 @@ function macro_WordIndex($formatter,$value) {
       if ($key !=-1) $out.="</ul>";
       $key=$pkey;
       $keys[]=$key;
-      $out.= "<a name='$key' /><h3><a href='#top'>$key</a></h3>\n";
+      $ukey=urlencode($key);
+      $out.= "<a name='$ukey' /><h3><a href='#top'>$key</a></h3>\n";
     }
 
     $out.= "<h4>$word</h4>\n";
@@ -63,7 +64,8 @@ function macro_WordIndex($formatter,$value) {
   foreach ($keys as $key) {
     $name=$key;
     if ($key == 'Others') $name=_("Others");
-    $index.= "| <a href='#$key'>$name</a> ";
+    $ukey=urlencode($key);
+    $index.= "| <a href='#$ukey'>$name</a> ";
   }
   $index[0]=" ";
 

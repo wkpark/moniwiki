@@ -222,7 +222,7 @@ EOS;
 
    $unit=array('Bytes','KB','MB','GB','TB');
 
-   $down_mode=substr($prefix,strlen($prefix)-1) === '=';
+   $down_mode=substr($prefix,strlen($prefix)-1) != '=';
    foreach ($upfiles as $file) {
       if ($down_mode)
         $link=str_replace("value=","value=".rawurlencode($file),$prefix);
