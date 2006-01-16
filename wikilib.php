@@ -553,7 +553,10 @@ function macro_EditText($formatter,$value,$options='') {
 
     $form=preg_replace('/\[\[EditText\]\]/i','#editform',$form);
     ob_start();
-    $f->send_page(rtrim($form),$options);
+    $opi=$formatter->pi; // save pi
+    $formatter->pi=array('#format'=>'wiki'); // XXX override pi
+    $formatter->send_page(rtrim($form),$options);
+    $formatter->pi=$opi; // restore pi
     $form= ob_get_contents();
     ob_end_clean();
 
