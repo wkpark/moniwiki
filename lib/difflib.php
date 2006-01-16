@@ -1,16 +1,18 @@
 <?php
-// difflib.php
+// modified difflib.php for MoniWiki
+// support php5.x and small fix to enable utf-8/euc-kr charset.
+//
+// original message
 //
 // A PHP diff engine for phpwiki. (Taken from phpwiki-1.3.3)
 //
 // Copyright (C) 2000, 2001 Geoffrey T. Dairiki <dairiki@dairiki.org>
 // You may copy this code freely under the conditions of the GPL.
 //
-
 // FIXME: possibly remove assert()'s for production version?
+//
 // $Id$
 // original Id: difflib.php,v 1.5 2002/01/21 06:55:47 dairiki Exp
-
 // PHP3 does not have assert()
 define('USE_ASSERTS', function_exists('assert'));
 
@@ -844,18 +846,20 @@ class DiffFormatter
  */
 
 #define('NBSP', "\xA0");         // iso-8859-x non-breaking space.
-define('NBSP', "&nbsp;");         // iso-8859-x non-breaking space.
+define('NBSP', "");         // iso-8859-x non-breaking space.
 
 class _HWLDF_WordAccumulator {
-    function _HWLDF_WordAccumulator () {
+    function _HWLDF_WordAccumulator ($tags=
+        array("<del class='diff-removed'>\n","</del>",
+            "<ins class='diff-added'>\n","</ins>")) {
         $this->_lines = array();
         $this->_line = '';
         $this->_group = '';
         $this->_tag = '';
-        $this->_tag_del_open="<del class='diff-removed'>";
-        $this->_tag_del_close="</del>";
-        $this->_tag_ins_open="<ins class='diff-added'>";
-        $this->_tag_ins_close="</ins>";
+        $this->_tag_del_open=$tags[0];
+        $this->_tag_del_close=$tags[1];
+        $this->_tag_ins_open=$tags[2];
+        $this->_tag_ins_close=$tags[3];
     }
 
     function _flushGroup ($new_tag) {
@@ -904,7 +908,8 @@ class _HWLDF_WordAccumulator {
 
 class WordLevelDiff extends MappedDiff
 {
-    function WordLevelDiff ($orig_lines, $final_lines,$charset="euc-kr") {
+    function WordLevelDiff ($orig_lines, $final_lines,
+            $charset="euc-kr",$tags=array()) {
         if (strtolower($charset) == 'euc-kr') # two bytes sequence rule
           $this->charset_rule='[\xb0-\xfd][\xa1-\xfe]|';
         else if (strtolower($charset) == 'utf-8') # three bytes sequence
@@ -915,6 +920,7 @@ class WordLevelDiff extends MappedDiff
 
         $this->MappedDiff($orig_words, $final_words,
                           $orig_stripped, $final_stripped);
+        $this->tags=$tags;
     }
 
     function _split($lines) {
@@ -951,8 +957,11 @@ class WordLevelDiff extends MappedDiff
         }
         return $_final->getLines();
     }
-    function all () {
-        $text = new _HWLDF_WordAccumulator;
+    function all ($tags=array()) {
+        if (empty($tags))
+            $text = new _HWLDF_WordAccumulator();
+        else
+            $text = new _HWLDF_WordAccumulator($tags);
 
         foreach ($this->edits as $edit) {
             if ($edit->type == 'copy')
@@ -1027,4 +1036,5 @@ class DeltaDiffFormatter extends DiffFormatter
     }
 }
 
+// vim:et:sts=4:
 ?>
