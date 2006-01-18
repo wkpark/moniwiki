@@ -691,10 +691,7 @@ function macro_Edit($formatter,$value,$options='') {
     $previewurl=$formatter->link_url($formatter->page->urlname,'#preview');
 
   $menu= ''; $sep= '';
-  if ($preview) {
-    $menu= $formatter->link_to('#preview',_("Skip to preview"));
-    $sep= ' | ';
-  } else if (!$DBInfo->use_resizer and (!$options['noresizer'] or !$use_js)) {
+  if (!$DBInfo->use_resizer and (!$options['noresizer'] or !$use_js)) {
     $sep= ' | ';
     $menu= $formatter->link_to("?action=edit&amp;rows=".($rows-3),_("ReduceEditor"));
     $menu.= $sep.$formatter->link_to("?action=edit&amp;rows=".($rows+3),_("EnlargeEditor"));
@@ -764,6 +761,8 @@ function macro_Edit($formatter,$value,$options='') {
   if (!$options['simple']) {
     $preview_btn='<input type="submit" tabindex="6" name="button_preview" '.
       'value="'._("Preview").'" />';
+    if ($preview)
+      $preview_btn.= ' '.$formatter->link_to('#preview',_("Skip to preview"));
   }
   $save_msg=_("Save");
   $summary_msg=_("Summary of Change");
@@ -971,8 +970,8 @@ function do_raw($formatter,$options) {
 
 function do_recall($formatter,$options) {
   $formatter->send_header("",$options);
-  $formatter->send_title("Rev. ".$options['rev']." ".
-                                 $options['page'],"",$options);
+  $formatter->send_title(sprintf(_("%s (rev. %s)"),$options['page'],
+                                 $options['rev']),"",$options);
   $formatter->send_page("",$options);
   $formatter->send_footer($args,$options);
 }

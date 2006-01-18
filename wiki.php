@@ -647,7 +647,7 @@ class WikiDB {
     $this->icon['updated']="<img src='$imgdir/${iconset}updated.$ext' alt='U' align='middle' border='0' />";
     $this->icon['user']="UserPreferences";
     $this->icon['home']="<img src='$imgdir/${iconset}home.$ext' alt='M' align='middle' border='0' />";
-    $this->icon['main']="<img src='$imgdir/${iconset}main.$ext' alt='^' align='middle' border='0' />";
+    $this->icon['main']="<img src='$imgdir/${iconset}main.$ext' class='icon' alt='^' align='middle' border='0' />";
     $this->icon['print']="<img src='$imgdir/${iconset}print.$ext' alt='P' align='middle' border='0' />";
     $this->icon['attach']="<img src='$imgdir/${iconset}attach.$ext' alt='@' align='middle' border='0' />";
     $this->icon['external']="<img src='$imgdir/${iconset}external.$ext' alt='[]' align='middle' border='0' />";
@@ -1286,7 +1286,7 @@ class Cache_text {
   }
 
   function _exists($key) {
-    return file_exists($key);
+    return @file_exists($key);
   }
 
   function _fetch($key) {
@@ -1385,7 +1385,6 @@ class WikiPage {
         return _("Version info does not supported in this wiki");
       }
     }
-
     $fp=@fopen($this->filename,"r");
     if (!$fp) {
       if (file_exists($this->filename)) {
@@ -1511,6 +1510,7 @@ class Formatter {
     $this->url_mappings=$DBInfo->url_mappings;
     $this->url_mapping_rule=$DBInfo->url_mapping_rule;
     $this->css_friendly=$DBInfo->css_friendly;
+    $this->use_smartdiff=$DBInfo->use_smartdiff;
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -1535,7 +1535,7 @@ class Formatter {
                      "/''([^']*)''/","/(?<!')''(.*)''(?!')/",
                      "/`(?<!\s)(?!`)([^`']+)(?<!\s)'/",
                      "/`(?<!\s)(?U)(.*)(?<!\s)`/",
-                     "/^(-{4,})/e",
+                     "/(-{4,})$/e",
                      "/,,([^,]{1,40}),,/",
                      "/\^([^ \^]+)\^(?=\s|$)/",
                      "/\^\^(?<!\s)(?!\^)(?U)(.+)(?<!\s)\^\^/",
@@ -1709,8 +1709,9 @@ class Formatter {
       if ($this->pi) return $this->pi;
       $body=$this->page->get_raw_body();
       $update_body=1;
-    }{
+    }
 
+    if (!$this->pi['#format']) { # XXX
       $pos=strpos($this->page->name,'/') ? 1:0;
       $key=strtok($this->page->name,'/');
       $format=$DBInfo->pagetype[$key];
@@ -1990,6 +1991,7 @@ class Formatter {
   }
 
   function store_pagelinks() {
+    global $DBInfo;
     unset($this->pagelinks['TwinPages']);
     $new=array_keys($this->pagelinks);
     $cur=unserialize($this->cache->fetch($this->page->name));
@@ -1997,9 +1999,9 @@ class Formatter {
 
     $ad=array_diff($new,$cur);
     $de=array_diff($cur,$new);
-    // merge new links
+    // merge new backlinks
     foreach ($ad as $a) {
-      if (!$a) continue;
+      if (!$a or !$DBInfo->hasPage($a)) continue;
       $bl=unserialize($this->bcache->fetch($a));
       if (!is_array($bl)) $bl=array();
       array_merge($bl,array($this->page->name));
@@ -2008,7 +2010,7 @@ class Formatter {
     }
     // remove back links
     foreach ($de as $d) {
-      if (!$d) continue;
+      if (!$d or !$DBInfo->hasPage($d)) continue;
       $bl=unserialize($this->bcache->fetch($d));
       if (!is_array($bl)) $bl=array();
       $bl=array_diff($bl,array($this->page->name));
@@ -2597,6 +2599,7 @@ class Formatter {
           continue;
         }
       }
+
       if (!$in_pre and $line[0]=='#' and $line[1]=='#') {
         if ($line[2]=='[') {
           $macro=substr($line,4,-2);
@@ -2623,7 +2626,7 @@ class Formatter {
       }
 
       $p_closeopen='';
-      if (preg_match('/^-{4,}/',$line)) {
+      if (preg_match('/-{4,}$/',$line)) {
         if ($this->auto_linebreak) $this->nobr=1; // XXX
         if ($in_p) { $p_closeopen=$this->_div(0,$in_div,$div_enclose); $in_p='';}
       } else if ($in_p == '' and $line!=='') {
@@ -2703,7 +2706,6 @@ class Formatter {
       $line=$nc;
       #$line=preg_replace($this->baserule,$this->baserepl,$line);
       #if ($in_p and ($in_pre==1 or $in_li)) $line=$this->_check_p().$line;
-      $line=preg_replace('/(&lt;)(\/)?(ins|del)/','<\\2\\3',$nc);
 
       # bullet and indentation
       # and quote begin with ">"
@@ -2807,9 +2809,17 @@ class Formatter {
         $line=str_replace('\"','"',$line); # revert \\" to \"
       }
 
+      # FIXME for smart diff XXX (one line ins/del)
+      if ($this->use_smartdiff)
+        $line=preg_replace('/&lt;(\/)?(ins|del)/','<\\1\\2',$line);
+
       # InterWiki, WikiName, {{{ }}}, !WikiName, ?single, ["extended wiki name"]
       # urls, [single bracket name], [urls text], [[macro]]
       $line=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$line);
+
+      # FIXME for smart diff XXX (one line ins/del)
+      if ($this->use_smartdiff)
+        $line=preg_replace('/&lt;(\/)?(ins|del)/','<\\1\\2',$line);
 
       # Headings
       if (preg_match("/(?<!=)(={1,5})\s+(.*)\s+\\1\s?$/",$line,$m)) {
@@ -2858,13 +2868,23 @@ class Formatter {
 
       if ($in_pre==-1) {
          $in_pre=0;
-         if ($processor) {
+
+         # for smart diff
+         $show_raw=0;
+         if ($this->use_smartdiff and
+           preg_match('/<(ins|del) class=\'diff-(added|removed)\'>/',
+           $this->pre_line)) $show_raw=1;
+
+         if ($processor and !$show_raw) {
            $value=$this->pre_line;
            $out= call_user_func("processor_$processor",$this,$value,$options);
            $line=$out.$line;
          } else if ($in_quote) {
             # htmlfy '<'
             $pre=str_replace("<","&lt;",$this->pre_line);
+            # for smart diff
+            if ($this->use_smartdiff)
+              $pre=preg_replace("/&lt;(\/?)(ins|del)/","<\\1\\2",$pre);
             $pre=preg_replace($this->baserule,$this->baserepl,$pre);
             $pre=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$pre);
             $attr='class="quote"';
@@ -2887,6 +2907,8 @@ class Formatter {
             $pre=str_replace(array('&','<'),
                              array("&amp;","&lt;"),
                             $this->pre_line);
+            $pre=preg_replace("/&lt;(\/?)(ins|del)/","<\\1\\2",$pre);
+            # FIXME Check open/close tags in $pre
             $line="<pre class='wiki'>\n".$pre."</pre>\n".$line;
          }
          $this->nobr=1;
@@ -2901,6 +2923,10 @@ class Formatter {
         $text.="<br />\n";
 
     } # end rendering loop
+    # for smart_diff (div)
+    if ($this->use_smartdiff)
+      $text= preg_replace('/&lt;(\/)?(div( class=.diff-(added|removed).)?)>/',
+        '<\\2>',$text);
 
     # highlight text
     if ($this->highlight) {
@@ -2951,9 +2977,13 @@ class Formatter {
   
     print $text;
     if ($this->sisters and !$options['nosisters']) {
+      $sister_save=$this->sister_on;
+      $this->sister_on=0;
       $sisters=join("\n",$this->sisters);
       $sisters=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$sisters);
-      print "<div id='wikiSister'>\n<tt class='foot'>----</tt><br/>\nSister Sites Index<br />\n$sisters</div>\n";
+      $msg=_("Sister Sites Index");
+      print "<div id='wikiSister'>\n<div class='separator'><tt class='foot'>----</tt></div>\n$msg<br />\n$sisters</div>\n";
+      $this->sister_on=$sister_save;
     }
 
     if ($options['pagelinks']) $this->store_pagelinks();
