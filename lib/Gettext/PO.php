@@ -29,6 +29,7 @@
 // +----------------------------------------------------------------------+
 //
 // $Id$
+// orig Id: PO.php,v 1.2 2005/01/05 03:15:14 weizhuo Exp
 
 /**
  * File::Gettext::PO
@@ -70,36 +71,41 @@ class TGettext_PO extends TGettext
      * @return  mixed   Returns true on success or PEAR_Error on failure.
      * @param   string  $file
      */
-    function load($file = null)
+    function load($file = null,$isfile=1)
     {
         if (!isset($file)) {
             $file = $this->file;
         }
         
         // load file
-        if (!$contents = @file($file)) {
-            return false;
+	if ($isfile) {
+            if (!$contents = @file($file)) {
+                return false;
+            }
+            $contents = implode('', $contents);
+        } else {
+            $contents = &$file; // just read po contents
         }
-        $contents = implode('', $contents);
         
         // match all msgid/msgstr entries
         $matched = preg_match_all(
             '/(msgid\s+("([^"]|\\\\")*?"\s*)+)\s+' .
-            '(msgstr\s+("([^"]|\\\\")*?"\s*)+)/',
+            '(msgstr\s+("([^"]|\\\\")*?"\s*)+)\s*(?=$|#)/',
             $contents, $matches
         );
         unset($contents);
         
         if (!$matched) {
+            print "fail to match msgid/msgstr\n";
             return false;
         }
         
         // get all msgids and msgtrs
         for ($i = 0; $i < $matched; $i++) {
             $msgid = preg_replace(
-                '/\s*msgid\s*"(.*)"\s*/s', '\\1', $matches[1][$i]);
+                '/\s*msgid\s*"(.*)"\s*$/s', '\\1', $matches[1][$i]);
             $msgstr= preg_replace(
-                '/\s*msgstr\s*"(.*)"\s*/s', '\\1', $matches[4][$i]);
+                '/\s*msgstr\s*"(.*)"\s*$/s', '\\1', $matches[4][$i]);
             $this->strings[parent::prepare($msgid)] = parent::prepare($msgstr);
         }
         

@@ -29,6 +29,7 @@
 // +----------------------------------------------------------------------+
 //
 // $Id$
+// orig Id: TGettext.php,v 1.4 2005/01/09 23:36:23 qiangxue Exp
 
 /**
  * File::Gettext
@@ -66,7 +67,7 @@ class TGettext
      * @access  protected
      * @var     array
     */
-    protected $strings = array();
+    var $strings = array();
 
     /**
      * meta
@@ -77,7 +78,7 @@ class TGettext
      * @access  protected
      * @var     array
      */
-    protected $meta = array();
+    var $meta = array();
     
     /**
      * file path
@@ -85,7 +86,7 @@ class TGettext
      * @access  protected
      * @var     string
      */
-    protected $file = '';
+    var $file = '';
     
     /**
      * Factory
@@ -101,8 +102,8 @@ class TGettext
     {
         $format = strToUpper($format);
         $filename = dirname(__FILE__).'/'.$format.'.php';
-        if(is_file($filename) == false)
-        	throw new Exception ("Class file $file not found");
+        if(is_file($filename) == false) return false;
+#        	throw new Exception ("Class file $file not found");
         	
         include_once $filename;
         $class = 'TGettext_' . $format;
@@ -125,7 +126,8 @@ class TGettext
     function poFile2moFile($pofile, $mofile)
     {
         if (!is_file($pofile)) {
-            throw new Exception("File $pofile doesn't exist.");
+            return false;
+            #throw new Exception("File $pofile doesn't exist.");
         }
         
         include_once dirname(__FILE__).'/PO.php';
@@ -157,13 +159,12 @@ class TGettext
     {
         if ($reverse) {
             $smap = array('"', "\n", "\t", "\r");
-            $rmap = array('\"', '\\n"' . "\n" . '"', '\\t', '\\r');
+            $rmap = array('\\"', '\\n"' . "\n" . '"', '\\t', '\\r');
             return (string) str_replace($smap, $rmap, $string);
         } else {
-        	$string = preg_replace('/"\s+"/', '', $string);
-            $smap = array('\\n', '\\r', '\\t', '\"');
-            $rmap = array("\n", "\r", "\t", '"');
-            return (string) str_replace($smap, $rmap, $string);
+            $smap = array('/"\s+"/', '/\\\\n/', '/\\\\r/', '/\\\\t/', '/\\\\"/');
+            $rmap = array('', "\n", "\r", "\t", '"');
+            return (string) preg_replace($smap, $rmap, $string);
         }
     }
     

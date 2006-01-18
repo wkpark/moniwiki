@@ -30,6 +30,7 @@
 // +----------------------------------------------------------------------+
 //
 // $Id$
+// orig Id: MO.php,v 1.3 2005/08/27 03:21:12 weizhuo Exp
 
 /**
  * File::Gettext::MO
@@ -58,7 +59,7 @@ class TGettext_MO extends TGettext
      * @access  private
      * @var     resource
      */
-    protected $_handle = null;
+    var $_handle = null;
     
     /**
      * big endianess
@@ -68,7 +69,7 @@ class TGettext_MO extends TGettext
      * @access  public
      * @var     bool
      */
-    protected $writeBigEndian = false;
+    var $writeBigEndian = false;
     
     /**
      * Constructor
