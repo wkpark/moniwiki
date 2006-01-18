@@ -926,11 +926,16 @@ class WordLevelDiff extends MappedDiff
     function _split($lines) {
         // FIXME: fix POSIX char class.
         //if (!preg_match_all('/ ( [^\S\n]+ | [[:alnum:]]+ | . ) (?: (?!< \n) [^\S\n])? /xs',
-        if (!preg_match_all('/ ( [^\S\n]+ | [[:alnum:]]+ |'.$this->charset_rule .'. ) (?: (?!< \n) [^\S\n])? /xs',
+        $wiki_markups='\[\[[A-Za-z0-9]+\([^\)]*\)\]\] | \-{4,} |';
+        if (!preg_match_all('/ ( [^\S\n]+ | [[:alnum:]]+ | '.$wiki_markups.
+            $this->charset_rule .'. ) (?: (?!< \n) [^\S\n])? /xs',
                             implode("\n", $lines),
                             $m)) {
             return array(array(''), array(''));
         }
+        #print "<pre>";
+        #print_r( $m );
+        #print "</pre>";
         return array($m[0], $m[1]);
     }
 
