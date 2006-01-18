@@ -124,8 +124,11 @@ function smart_diff($diff) {
     else if ($marker=="\\" && $line==' No newline at end of file') continue;
   }
 
-  #print "<pre style='color:white;background-color:black'>";
+  #print "<pre style='color:black;background-color:#93FF93'>";
   #print_r($news);
+  #print "</pre>";
+  #print "<pre style='color:black;background-color:#FF9797'>";
+  #print_r($dels);
   #print "</pre>";
   return array($news,$dels);
 }
@@ -226,6 +229,17 @@ function macro_diff($formatter,$value,&$options)
         #print_r($lines);
         #print "</pre>";
         $diffed=implode("\n",$lines);
+        # change for headings
+        $diffed=preg_replace("/^\(([@%]{2})(={1,5})\s(.*)\s\\2\\1\)$/m",
+          "\\2 (\\1\\3\\1) \\2",$diffed);
+        # change for lists
+        $diffed=preg_replace("/\(([@%]{2})(\s+)(\*|\d+\.\s)(.*)\\1\)/m",
+          "\\2\\3(\\1\\4\\1)",$diffed);
+        # change for hrs
+        #$diffed=preg_replace("/\(([@%]{2})(-{4,})\\1\)/m",
+        #  "(\\1\\2\n\\1)",$diffed);
+        # XXX FIXME
+        # merge multiline diffs
         $diffed=preg_replace("/\@@\)\n\(@@/m","\n",$diffed);
         $diffed=preg_replace("/\%%\)\n\(%%/m","\n",$diffed);
         $diffed=preg_replace(array("/\(@@(.*)@@\)/","/\(%%(.*)%%\)/"),
@@ -242,6 +256,7 @@ function macro_diff($formatter,$value,&$options)
             "\n<div class='diff-removed'>","\n</div>",
             "<del class='diff-removed'>","</del>")
             ,$diffed);
+
         $options['nomsg']=0;
         $options['msg']=$msg;
         return $formatter->send_page($diffed,$options);
