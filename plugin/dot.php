@@ -19,6 +19,7 @@ class LinkTree {
 
   function getLeafs($pagename,&$node,&$color,$depth,$count=LEAFCOUNT) {
     $links=unserialize($this->cache->fetch($pagename));
+    #print_r($links);
     if (!is_array($links)) $links=array();
     foreach ($links as $page) {
       if (!$color[$page]) $color[$page]=$depth;

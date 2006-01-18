@@ -196,7 +196,7 @@ EOF;
 
   if ($arena == 'fullsearch')
     $fc->update($sid,serialize($hits));
-  else
+  else if ($DBInfo->hasPage($sid))
     $fc->update($sid,serialize(array_keys($hits)));
 
   $out.= "<!-- RESULT LIST START -->"; // for search plugin

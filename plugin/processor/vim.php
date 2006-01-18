@@ -14,6 +14,8 @@
 
 function processor_vim($formatter,$value,$options) {
   global $DBInfo;
+
+  $vim_default='-T xterm';
   static $jsloaded=0;
   $cache_dir=$DBInfo->upload_dir."/VimProcessor";
   $vartmp_dir=&$DBInfo->vartmp_dir;
@@ -104,7 +106,7 @@ document.write('<a href=\"#\" onclick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
   fwrite($fp, $src);
   fclose($fp);
 
-  $cmd= "$vim -T xterm -e -s $tmpf ".
+  $cmd= "$vim $vim_default -e -s $tmpf ".
         ' +"syntax on " +"set syntax='.$type.'" '.$option.
         ' +"so '.$tohtml.'" +"wq! '.$fout.'" +q';
 

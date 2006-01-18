@@ -16,8 +16,8 @@ function processor_diff($formatter,$value="") {
   if (in_array($type,array('fancy','simple')))
     $options['type']=$type;
   // add first two blank lines
-  $options['nomsg']=1;
-  $options['text']="\n\n".$value;
+  //$options['text']="\n\n".$value;
+  $options['text']=$value;
   return $formatter->macro_repl('Diff','',$options);
 }
 

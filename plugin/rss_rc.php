@@ -131,6 +131,7 @@ FORM;
 
   $head=<<<HEAD
 <?xml version="1.0" encoding="$charset"?>
+<!--<?xml-stylesheet href="$DBInfo->url_prefix/css/_feed.css" type="text/css"?>-->
 <rdf:RDF xmlns="http://purl.org/rss/1.0/"
 	xmlns:wiki="http://purl.org/rss/1.0/modules/wiki/"
 	xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
