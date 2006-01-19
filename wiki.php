@@ -358,9 +358,18 @@ class MetaDB_text extends MetaDB {
   function MetaDB_text($file) {
     $lines=file($file);
     foreach ($lines as $line) {
-      if ($line[0]=='#') continue;
-      list($key,$list)=explode(',',rtrim($line),2);
-      $this->db[$key]=$list;
+      if ($line[0]=='#' or !trim($line)) continue;
+      if (($p=strpos($line,'<')) !== false) {
+        list($val,$keys)=explode('<',trim($line),2);
+        $keys=explode(',',$keys);
+
+        foreach ($keys as $k) {
+          $this->db[$k]=$this->db[$k] ? $this->db[$k].','.$val:$val;
+        }
+      } else {
+        list($key,$list)=explode(',',trim($line),2);
+        $this->db[$key]=$list;
+      }
     }
   }
 
@@ -2128,6 +2137,11 @@ class Formatter {
             "$sisters <br/>";
           $this->pagelinks[$page]=$this->sister_idx++;
           $idx=$this->pagelinks[$page];
+          #if (strpos($sisters,' ') === false and $this->use_smartsister) {
+          #  $url=$this->link_repl(substr($sisters,0,-1).' '.$word.']');
+          #  return "$url";
+          #  return "<a href='$url'>$word</a>";
+          #}
         }
         if ($idx > 0) {
           return "<a href='$url'>$word</a>".
@@ -3281,12 +3295,16 @@ EOS;
       $args['editable']=-1;
     
     $menus=$this->get_actions($args,$options);
-    if (!$this->css_friendly) {
-      $menu=$this->menu_bra.implode($this->menu_sep,$menus).$this->menu_cat;
-    } else {
-      $menu="<div id='wikiAction'>";
-      $menu.='<ul><li>'.implode("</li>\n<li>\n",$menus)."</li></ul>";
-      $menu.="</div>";
+
+    if (!$DBInfo->hide_actions or
+      ($DBInfo->hide_actions and $options['id']!='Anonymous')) {
+      if (!$this->css_friendly) {
+        $menu=$this->menu_bra.implode($this->menu_sep,$menus).$this->menu_cat;
+      } else {
+        $menu="<div id='wikiAction'>";
+        $menu.='<ul><li>'.implode("</li>\n<li>\n",$menus)."</li></ul>";
+        $menu.="</div>";
+      }
     }
 
     if ($mtime=$this->page->mtime()) {
