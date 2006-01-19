@@ -116,3 +116,12 @@ ul.depth-5 {
   border:0;
 }
 
+/* for po processor */
+.msgid { color:blue; }
+.msgstr { color:blue; }
+.pofuzzy { color:red; }
+.potype { color:blue; }
+.posrc { color:red; }
+.poold { color:#909090; }
+.posym { color:red; }
+.potok { color:violet; }
