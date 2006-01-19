@@ -2420,6 +2420,7 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   sort($hits);
 
   $idx=1;
+  if ($opts['linkto']) $idx=10;
   $out='';
   foreach ($hits as $pagename) {
     if ($opts['linkto'])
