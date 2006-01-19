@@ -57,7 +57,11 @@ body {
 }
 
 #wikiAction a {
-  font-size:small;
+  font-size:12px;
+}
+
+#wikiBanner {
+  clear:both;
 }
 
 tt.wiki {font-family:monospace;}
@@ -120,15 +124,11 @@ h1,h2,h3,h4,h5 {
 }
 
 div.diff-added {
-  font-family:Lucida Sans TypeWriter,Lucida Console,monospace;
-  background-color:#E0FFE0;
-  color:black;
+  background-color:#ccffcc;
 }
 
 div.diff-removed {
-  font-family:Lucida Sans TypeWriter,Lucida Console,monospace;
-  background-color:#E9EAB8;
-  color:black;
+  background-color:#EEBfbb;
 }
 
 div.diff-sep {
@@ -137,24 +137,19 @@ div.diff-sep {
 }
 
 span.diff-added, ins.diff-added {
-  color:black;
   background-color: #60FF60;
   text-decoration: none;
 }
 
 span.diff-removed, del.diff-removed {
-  color:black;
   background-color: #FF0000;
 }
 
 div.message {
-  margin-top: 6pt;
   background-color: #E8E8E8;
-  border-style:solid;
-  border-width:1pt;
-  border-color:#990000;
+  border:2px solid #ff0000;
   color:#440000;
-  padding:0px;
+  padding:4px;
 }
 
 .highlight {
@@ -167,7 +162,7 @@ table.goto {
 
 span.goto, input.goto {
   font-family:sans-serif;
-  font-size:10px;
+  font-size:11px;
 }
 
 table.closure, td.closure{
@@ -246,6 +241,10 @@ table.closure, td.closure{
   margin-left: 10px;
 }
 
+#wikiIcon img, #wikiMenu img {
+  vertical-align: middle;
+}
+
 * html #wikiIcon {
   visibility:visible; /* for IE */
 }
@@ -287,6 +286,22 @@ td.today { background:#ffffff; text-align: center;}
 div.wikiPre i,div.wikiPre b{
   font-weight: normal;
   font-style: normal;
+}
+
+img.interwiki {
+  vertical-align:middle; /* */
+}
+
+img.smiley {
+  vertical-align:middle; /* */
+}
+
+img.url {
+  vertical-align:middle; /* */
+}
+
+img.icon {
+  vertical-align:middle; /* */
 }
 
 img.imgLeft {
