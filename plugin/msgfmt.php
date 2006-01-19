@@ -69,6 +69,25 @@ POHEAD;
         return;
     }
 
+    if ($options['po'] and $options['btn']) {
+        $formatter->send_header('',$options);
+        $formatter->send_title(sprintf(_("Translation of %s"),$options['page']),'',$options);
+
+        $comment=$options['comment'] ? _stripslashes($options['comment']):
+            "Translations are updated";
+        $po=preg_replace("/(\r\n|\r)/","\n",
+                    _stripslashes($options['po']));
+        $formatter->page->write($po);
+        $ret=$DBInfo->savePage($formatter->page,$comment,$options);
+        if ($ret != -1) {
+            print "<h2>"._("Translations are successfully updated.")."</h2>";
+        } else {
+            print "<h2>"._("Fail to save translations.")."</h2>";
+        }
+        $formatter->send_footer('',$options);
+        return;
+    }
+
     $msgkeys=array_keys($options);
     $msgids=preg_grep('/^msgid-/',$msgkeys);
     $msgstrs=preg_grep('/^msgstr-/',$msgkeys);
@@ -82,58 +101,88 @@ POHEAD;
     $lines= explode("\n",$rawpo);
 
     $po='';
+    $comment='';
     $msgid=array(); $msgstr=array();
     foreach ($lines as $l) {
         if ($l[0]!='m' and !preg_match('/^\s*"/',$l)) {
             if ($msgstr) {
                 $mid=implode("\n",$msgid);
                 $id=md5($mid);
-                $po.='msgid '.preg_replace('/(\r\n|\r)/',"\n",
-                    _stripslashes($options['msgid-'.$id]))."\n";
 
-                $msg=preg_replace('/(\r\n|\r)/',"\n",
+                $msg=preg_replace("/(\r\n|\r)/","\n",
                     _stripslashes($options['msgstr-'.$id]));
+
+                $sid=md5(rtrim($msg));
+                if ($options['md5sum-'.$id] and $options['md5sum-'.$id]!= $sid){
+                    $comment=preg_replace('/#, fuzzy\n/m','',$comment);
+                    $comment=str_replace(', fuzzy','',$comment);
+                }
                 # fix msgstr
                 #$msg=preg_replace('/(?!<\\\\)"/','\\"',$msg);
+                $po.=$comment;
+                $po.='msgid '.preg_replace('/(\r\n|\r)/',"\n",
+                    _stripslashes($options['msgid-'.$id]))."\n";
                 $po.='msgstr '.$msg."\n";
 
                 # init
-                $msgid=array();$msgstr=array();
+                $msgid=array();$msgstr=array();$comment='';
+            } 
+            if ($l[0]=='#' and $l[1]==',') {
+                if ($comment) {$po.=$comment;$comment='';}
+                $comment.=$l."\n";
+            } else {
+                if ($comment) {$po.=$comment;$comment='';}
+                $po.=$l."\n"; continue;
             }
-            $po.=$l."\n"; continue;
         } else if (preg_match('/^(msgid|msgstr)\s+(".*")\s*$/',$l,$m)) {
             if ($m[1]=='msgid') {
                 $msgid[]=$m[2];
                 continue;        
             }
             $msgstr[]=$m[2];
-        } else if (preg_match('/\s*(".*")\s*$/',$l,$m)) {
-            if ($msgstr) continue;
-            if ($msgid) $msgid[]=$m[1];
-            continue;
+        } else if (preg_match('/^\s*(".*")\s*$/',$l,$m)) {
+            if ($msgstr) $msgstr[]=$m[1];
+            else $msgid[]=$m[1];
         } else {
             $po.=$l."\n";
         }
     }
 
-    header("Content-type: text/plain");
+    $formatter->send_header('',$options);
+    $formatter->send_title(sprintf(_("Translation of %s"),$options['page']),'',$options);
 
     $e=_pocheck($po);
     #if ($e != true) return;
     #print $po;
 
-    include_once('lib/difflib.php');
-    $rawpo=array_map(create_function('$a', 'return $a."\n";'),
+    $url=$formatter->link_url($formatter->page->urlname);
+    print "<form method='post' action='$url'>\n".
+        "<input type='hidden' name='action' value='msgfmt' />\n";
+    print "<input type='submit' name='btn' value='Save Translation ?' /> ";
+    print "Summary:".
+        " <input type='text' size='60' name='comment' value='Translations are updated' />".
+        "<br />\n";
+    if ($options['patch']) {
+        include_once('lib/difflib.php');
+        $rawpo=array_map(create_function('$a', 'return $a."\n";'),
             explode("\n",$rawpo));
-    $po=array_map(create_function('$a', 'return $a."\n";'),
+        $newpo=array_map(create_function('$a', 'return $a."\n";'),
             explode("\n",$po));
-    $diff = new Diff($rawpo, $po);
+        $diff = new Diff($rawpo, $newpo);
 
-    $f = new UnifiedDiffFormatter;
-    $f->trailing_cr="";
-    $diffs = $f->format($diff);
-    print $diffs;
+        $f = new UnifiedDiffFormatter;
+        $f->trailing_cr="";
+        $diffs = $f->format($diff);
+        $sz=sizeof(explode("\n",$diffs));
+        print "<textarea cols='80' rows='$sz' style='width:80%'>";
+        print $diffs;
+        print "</textarea>\n";
+    }
+    $po=str_replace('"',"&#34;",$po);
+    print "<input type='hidden' name='po' value=\"$po\" />\n";
+    print "</form>";
 
+    $formatter->send_footer('',$options);
     return;
 }
 

@@ -45,12 +45,14 @@ JS;
             if ($msgstr) {
                 $mid=implode("\n",$msgid);
                 $msg=implode("\n",$msgstr);
+                $sid=md5(preg_replace("/(\r\n|\r)/","\n",rtrim($msg)));
+                $id=md5($mid);
                 $msg=str_replace('"',"&#34;",$msg);
                 $vmid=str_replace('"',"&#34;",$mid);
-                $id=md5($mid);
                 $test= strpos($msg,"\n");
                 $row=max(sizeof($msgstr),sizeof($msgid));
-                $out.="<input type='hidden' name='msgid-$id' value=\"$vmid\"/>";
+                $out.="<input type='hidden' name='msgid-$id' value=\"$vmid\" />";
+                $out.="<input type='hidden' name='md5sum-$id' value=\"$sid\" />";
                 $btn=
                 "<input type='button' onclick='javascript:checkmsg(this)' name='check-$id' value='check' />";
                 if ($row > 1) {
@@ -84,9 +86,9 @@ JS;
             } else {
                 $msgstr[]=$m[2];
             }
-        } else if (preg_match("/\".*\"$/",$l)) {
-            if ($msgstr) $msgstr[]=$l;
-            else $msgid[]=$l;
+        } else if (preg_match("/^\s*(\".*\")\s*$/",$l,$m)) {
+            if ($msgstr) $msgstr[]=$m[1];
+            else $msgid[]=$m[1];
         }
     }
     #$text=str_replace(array('msgid','msgstr'),
@@ -101,7 +103,10 @@ JS;
     $link=$formatter->link_url($formatter->page->urlname,'?action=msgfmt');
     $formhead="<form method='post' action='$link'>"
          ."<input type='hidden' name='action' value='msgfmt'>";
-    $formtail="<input type='submit' value='Update now' /></form>\n";
+    $formtail=
+        "<input type='submit' value='Check all' />\n".
+        "<input type='checkbox' name='patch' checked='checked' />: Show patch\n".
+        "</form>\n";
     return "$js$formhead<pre>$out</pre>$formtail";
 }
 
