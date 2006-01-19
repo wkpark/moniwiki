@@ -13,21 +13,28 @@ function _parse_rlog($formatter,$log,$options=array()) {
     $udb=new UserDB($DBInfo);
     $udb->checkUser($user);
     $tz_offset=$user->info['tz_offset'];
+  } else {
+    $tz_offset=$options['tz_offset'];
   }
   $state=0;
   $flag=0;
+
+  $time_current=time();
+
+  $simple=$options['simple'] ? 1:0;
 
   $url=$formatter->link_url($formatter->page->urlname);
 
   $out="<h2>"._("Revision History")."</h2>\n";
   $out.="<table class='info' border='0' cellpadding='3' cellspacing='2'>\n";
   $out.="<form id='infoform' method='post' action='$url'>";
-  $out.="<th class='info'>#</th><th class='info'>Date and Changes</th>".
+  $out.="<th class='info'>ver.</th><th class='info'>Date and Changes</th>".
        "<th class='info'>Editor</th>".
-       "<th><input type='submit' value='diff'></th>".
-       "<th class='info'>actions</th>".
+       "<th class='info'><input type='submit' value='diff'></th>";
+  if (!$simple) {
+    $out.="<th class='info'>actions</th>".
        "<th class='info'>admin.</th>";
-       #"<th><input type='submit' value='admin'></th>";
+  }
   $out.= "</tr>\n";
 
   $users=array();
@@ -42,7 +49,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
     }
     if ($state==1 and $ok==1) {
       $lnk=$formatter->link_to("?action=info&all=1",_("Show all revisions"));
-      $out.='<tr><td colspan="3"></td><th colspan="3">'.$lnk.'</th></tr>';
+      $out.='<tr><td colspan="2"></td><th colspan="4">'.$lnk.'</th></tr>';
       break;
     }
     
@@ -59,10 +66,29 @@ function _parse_rlog($formatter,$log,$options=array()) {
       case 2:
          $inf=preg_replace("/date:\s(.*);\s+author:.*;\s+state:.*;/","\\1",$line);
          list($inf,$change)=explode('lines:',$inf,2);
-         if ($tz_offset !='')
-           $inf=gmdate("Y-m-d H:i:s",strtotime($inf.' GMT')+$tz_offset);
-         else
-           $inf=date("Y-m-d H:i:s",strtotime($inf)); // localtime
+
+         if ($options['ago']) {
+           $ed_time=strtotime($inf.' GMT');
+           $time_diff=(int)($time_current - $ed_time)/60;
+           if ($time_diff > 1440*14) {
+             $inf=gmdate("Y-m-d H:i:s",strtotime($inf.' GMT')+$tz_offset);
+           } else if (($time_diff=$time_diff/60) > 24) {
+             $day=(int)($time_diff/24);
+             if ($day==1) $inf=_("Yesterday");
+             else $inf=sprintf(_("%s days ago"),(int)($time_diff/24));
+           } else if ($time_diff > 1) {
+             $inf=sprintf(_("%s hours ago"),(int)$time_diff);
+           } else {
+             $inf=sprintf(_("%s min ago"),$time_diff%60);
+           }
+
+         } else {
+           if ($tz_offset !='')
+             $inf=gmdate("Y-m-d H:i:s",strtotime($inf.' GMT')+$tz_offset);
+           else
+             $inf=date("Y-m-d H:i:s",strtotime($inf)); // localtime
+         }
+         $inf=$formatter->link_to("?action=recall&rev=$rev",$inf);
 
          $change=preg_replace("/\+(\d+)\s\-(\d+)/",
            "<span class='diff-added'>+\\1</span><span class='diff-removed'>-\\2</span>",$change);
@@ -91,7 +117,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
       case 4:
          if (!$rev) break;
          $rowspan=1;
-         if ($comment) $rowspan=2;
+         if (!$simple and $comment) $rowspan=2;
          $out.="<tr>\n";
          $out.="<th valign='top' rowspan=$rowspan>r$rev</th><td nowrap='nowrap'>$inf $change</td><td>$ip&nbsp;</td>";
          $achecked="";
@@ -100,9 +126,10 @@ function _parse_rlog($formatter,$log,$options=array()) {
             $achecked="checked ";
          else if (!$flag)
             $bchecked="checked ";
-         $out.="<td nowrap='nowrap'><input type='radio' name='rev' value='$rev' $achecked/>";
-         $out.="<input type='radio' name='rev2' value='$rev' $bchecked/>";
+         $out.="<th nowrap='nowrap'><input type='radio' name='rev' value='$rev' $achecked/>";
+         $out.="<input type='radio' name='rev2' value='$rev' $bchecked/></th>";
 
+         if (!$simple) {
          $out.="<td nowrap='nowrap'>".$formatter->link_to("?action=recall&rev=$rev","view").
                " ".$formatter->link_to("?action=raw&rev=$rev","raw");
          if ($flag) {
@@ -113,8 +140,9 @@ function _parse_rlog($formatter,$log,$options=array()) {
             $out.="</td><th>";
             $out.="<input type='image' src='$DBInfo->imgs_dir/smile/checkmark.png' onClick=\"ToggleAll('infoform');return false;\"/>";
          }
-         $out.="</th></tr>\n";
-         if ($comment)
+         }
+         $out.="</tr>\n";
+         if (!$simple and $comment)
             $out.="<tr><td class='info' colspan='5'>$comment&nbsp;</td></tr>\n";
          $state=1;
          $flag++;
@@ -123,18 +151,33 @@ function _parse_rlog($formatter,$log,$options=array()) {
          break;
      }
   }
+  if (!$simple) {
   $out.="<tr><td colspan='6' align='right'><input type='checkbox' name='show' checked='checked' />show only ";
   if ($DBInfo->security->is_protected("rcspurge",$options)) {
     $out.="<input type='password' name='passwd'>";
   }
   $out.="<input type='submit' name='rcspurge' value='purge'></td></tr>";
+  }
   $out.="<input type='hidden' name='action' value='diff'/></form></table>\n";
+  if (!$simple) {
   $out.="<script type='text/javascript' src='$DBInfo->url_prefix/local/checkbox.js'></script>\n";
+  }
   return $out; 
 }
 
 function macro_info($formatter,$value,$options=array()) {
   global $DBInfo;
+
+  $value=$value ? $value:$DBInfo->info_options;
+  $args=explode(',',$value);
+  if (is_array($args)) {
+    foreach ($args as $arg) {
+      $arg=trim($arg);
+      if ($arg=='simple') $options['simple']=1;
+      else if ($arg=='ago') $options['ago']=1;
+    }
+  }
+
   if ($DBInfo->version_class) {
     getModule('Version',$DBInfo->version_class);
     $class="Version_".$DBInfo->version_class;
