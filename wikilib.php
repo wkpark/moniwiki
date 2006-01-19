@@ -659,11 +659,14 @@ function macro_Edit($formatter,$value,$options='') {
 
   $preview= $options['preview'];
 
-  if (!$formatter->page->exists()) {
+  if (!$formatter->page->exists() and !$preview) {
     $options['linkto']="?action=edit&amp;template=";
-    $form = '<br />'._("Use one of the following templates as an initial release :\n");
-    $form.= macro_TitleSearch($formatter,$DBInfo->template_regex,$options);
-    $form.= _("To create your own templates, add a page with a 'Template' suffix.")."\n<br />\n";
+    $tmpls= macro_TitleSearch($formatter,$DBInfo->template_regex,$options);
+    if ($tmpls) {
+      $form = '<br />'._("Use one of the following templates as an initial release :\n");
+      $form.=$tmpls;
+      $form.= sprintf(_("To create your own templates, add a page with '%s' pattern."),$DBInfo->template_regex)."\n<br />\n";
+    }
   }
 
   $merge_btn=_("Merge");
@@ -2416,8 +2419,8 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
 
   sort($hits);
 
-  $out="<${type}l>\n";
   $idx=1;
+  $out='';
   foreach ($hits as $pagename) {
     if ($opts['linkto'])
       $out.= '<li>' . $formatter->link_to("$opts[linkto]$pagename",$pagename,"tabindex='$idx'")."</li>\n";
@@ -2426,7 +2429,7 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
     $idx++;
   }
 
-  $out.="</${type}l>\n";
+  if ($out) $out="<${type}l>$out</${type}l>\n";
   $opts['hits']= count($hits);
   if ($opts['hits']==1)
     $opts['value']=array_pop($hits);

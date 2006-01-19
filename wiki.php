@@ -3857,10 +3857,15 @@ if ($pagename) {
           print $err['extra'];
 
         print "<hr />\n$button";
-        print _(" or alternativly, use one of these templates:\n");
         $options['linkto']="?action=edit&amp;template=";
-        print macro_TitleSearch($formatter,$DBInfo->template_regex,$options);
-        print _("To create your own templates, add a page with a 'Template' suffix.\n");
+        $tmpls= macro_TitleSearch($formatter,$DBInfo->template_regex,$options);
+        if ($tmpls) {
+          print _(" or alternativly, use one of these templates:\n");
+          print $tmpls;
+        } else {
+          print "<h3>"._("You have no templates")."</h3>";
+        }
+        print sprintf(_("To create your own templates, add a page with '%s' pattern.\n"),$DBInfo->template_regex);
       }
 
       $args['editable']=1;
