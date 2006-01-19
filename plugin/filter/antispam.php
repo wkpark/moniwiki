@@ -15,6 +15,7 @@ function filter_antispam($formatter,$value,$options) {
             $p=new WikiPage($list);
             if ($p->exists()) $badcontent.=$p->get_raw_body();
         }
+        if (!$badcontent) return $value;
         $badcontents=explode("\n",$badcontent);
         $pattern[0]='';
         $i=0;
