@@ -23,7 +23,8 @@ define(MIN_FONT_SZ,10);
             $tag_link='http://www.technorati.com/tag/$TAG';
         else if ($opt == 'flickr')
             $tag_link='http://www.flickr.com/photos/tags/$TAG';
-        else if ($opt=='all') $options['all']=1;
+        else if ($opt=='all') { $options['all']=1; $limit=0; }
+        else if ($opt=='suggest') $options['suggest']=1;
         else if (($p=strpos($opt,'='))!==false) {
             $k=substr($opt,0,$p);
             $v=substr($opt,$p+1);
@@ -78,7 +79,7 @@ define(MIN_FONT_SZ,10);
     }
 
     # automatically generate list of keywords
-    if (!$options['all'] and (!$words or $options['checknew'])):
+    if (!$options['all'] and (!$words or $options['suggest'])):
 
     $common= <<<EOF
 am an a b c d e f g h i j k l m n o p q r s t u v w x y z
@@ -263,9 +264,9 @@ EOF;
             $btn=_("Add keywords");
         $btn1=_("Add as common words"); 
         $btn2=_("Unselect all"); 
-        $btnc=_("Check new Keywords"); 
+        $btnc=_("Suggest new Keywords"); 
         $form_close="<input type='submit' value='$btn'/>\n";
-        $form_close.="<input type='submit' name='checknew' value='$btnc' />\n";
+        $form_close.="<input type='submit' name='suggest' value='$btnc' />\n";
         $form_close.="<input type='submit' name='common' value='$btn1' />\n";
         $form_close.="<input type='button' value='$btn2' onClick='UncheckAll(this)' />\n";
         $form_close.="<select name='lang'><option>---</option>\n";
@@ -343,7 +344,7 @@ function do_keywords($formatter,$options) {
 
     $formatter->send_header('',$options);
 
-    if (!$options['checknew'] and
+    if (!$options['suggest'] and
         (is_array($options['key']) or $options['keywords'])) {
         if ($options['keywords']) {
             // following keyword list are acceptable separated with spaces.
