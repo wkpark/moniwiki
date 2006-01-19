@@ -145,6 +145,10 @@ function macro_diff($formatter,$value,&$options)
   else
     $type=$DBInfo->diff_type.'_diff';
 
+  $pi=$formatter->get_instructions($dum);
+  if ($pi['#format']) # is it not wiki format ?
+    $type=$DBInfo->diff_type.'_diff'; # use default diff format
+
   if ($options['text']) {
     $out= $options['text'];
     if (!$options['raw'])
