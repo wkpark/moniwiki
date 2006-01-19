@@ -37,6 +37,6 @@ SFReaders http://www.sfreaders.org/moin.cgi/
 Jangnan http://jangnan.st/wiki/
 Xper http://xper.org/wiki/xp/
 PyKug http://www.python.or.kr/pykug/
-KTUG http://faq.ktug.or.kr/mywiki/
+KTUG http://faq.ktug.or.kr/faq/
 MoniWiki http://moniwiki.sf.net/wiki.php/
 KLDPWiki http://wiki.kldp.org/wiki/
