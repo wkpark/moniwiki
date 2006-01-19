@@ -93,7 +93,7 @@ function do_ticket($formatter,$options) {
     }
         
     if ($use_ttf) {
-        $pointsize=16;
+        $pointsize=$DBInfo->ticket_font_size ? $DBInfo->ticket_font_size:16;
         $angle=0;
         //$size = Imagettfbbox($pointsize, 0, $FONT, $passwd);
         // XXX segfault :(
