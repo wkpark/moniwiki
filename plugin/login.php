@@ -43,7 +43,7 @@ LOGIN;
   $option=_("UserPreferences");
   return <<<LOGOUT
 <div id='wikiLogin'>
-<form method='post' action='$url'>
+<form method='post' action='$urlpage'>
 <input type="hidden" name="action" value="userform" />
 <a href='$url'>$option</a> or <input type='submit' name="logout" value="$button"/>
 </form>
@@ -51,5 +51,5 @@ LOGIN;
 LOGOUT;
 }
 
-// vim:et:ts=2:
+// vim:et:sts=2:
 ?>

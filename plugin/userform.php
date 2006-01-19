@@ -102,7 +102,7 @@ function do_userform($formatter,$options) {
   } else if ($options['logout']) {
     # logout
     $formatter->header($user->unsetCookie());
-    $title= _("Cookie deleted !");
+    $options['msg']= _("Cookie deleted !");
   } else if ($DBInfo->use_sendmail and
     $options['login'] == _("E-mail new password") and
     $user->id=="Anonymous" and $options['email'] and $options['login_id']) {
