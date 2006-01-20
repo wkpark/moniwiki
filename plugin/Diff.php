@@ -140,14 +140,17 @@ function macro_diff($formatter,$value,&$options)
 
   $option='';
 
+  $pi=$formatter->get_instructions($dum);
+  if ($pi['#format'] and !$options['type']) # is it not wiki format ?
+    $options['type']=$DBInfo->diff_type; # use default diff format
+
+  if (!$options['type'] and $DBInfo->use_smartdiff)
+    $options['type']='smart';
+
   if ($options['type'] and function_exists($options['type'].'_diff'))
     $type=$options['type'].'_diff';
   else
     $type=$DBInfo->diff_type.'_diff';
-
-  $pi=$formatter->get_instructions($dum);
-  if ($pi['#format']) # is it not wiki format ?
-    $type=$DBInfo->diff_type.'_diff'; # use default diff format
 
   if ($options['text']) {
     $out= $options['text'];
@@ -263,7 +266,13 @@ function macro_diff($formatter,$value,&$options)
 
         $options['nomsg']=0;
         $options['msg']=$msg;
-        return $formatter->send_page($diffed,$options);
+        $options['smart']=1;
+
+        if ($pi['#format'])
+          print '<pre class="code">'.$diffed.'</pre>';
+        else
+          $formatter->send_page($diffed,$options);
+        return;
         #return "<pre>$diffed</pre>";
       }
     }
@@ -298,7 +307,11 @@ function do_diff($formatter,$options="") {
     do_RcsPurge($formatter,$options);
     return;
   }
-  if ($DBInfo->use_smartdiff) $options['type']='smart';
+
+  if ($options['type'] and
+    !in_array($options['type'],array('smart','fancy','simple')))
+    $options['type']=$DBInfo->diff_type;
+
   $formatter->send_header("",$options);
 
   $title='';
@@ -318,7 +331,7 @@ function do_diff($formatter,$options="") {
   }
   else
     print macro_diff($formatter,'',$options);
-  if (!$DBInfo->diffonly) {
+  if (!$DBInfo->diffonly and !$options['smart']) {
     print "<br /><hr />\n";
     $formatter->send_page();
   }
