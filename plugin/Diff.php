@@ -207,7 +207,7 @@ function macro_diff($formatter,$value,&$options)
         #print_r($ret);
         $dels=$ret[1]; $ret=$ret[0];
         $rev=($rev2 and $rev2) ? $rev2:''; // get newest rev.
-        $current=$formatter->page->get_raw_body(array('rev'=>$rev));
+        $current=$formatter->page->_get_raw_body(array('rev'=>$rev));
         $lines=explode("\n",$current);
         #print_r($lines);
         #print_r($ret);
