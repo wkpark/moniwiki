@@ -359,16 +359,27 @@ class MetaDB_text extends MetaDB {
     $lines=file($file);
     foreach ($lines as $line) {
       if ($line[0]=='#' or !trim($line)) continue;
-      if (($p=strpos($line,'<')) !== false) {
-        list($val,$keys)=explode('<',trim($line),2);
-        $keys=explode(',',$keys);
+      # support three types of aliases
+      #
+      # dest<alias1,alias2,...
+      # dest,alias1,alias2,...
+      # alias>dest1,dest2,dest3,...
+      #
+      if (($p=strpos($line,'>')) !== false) {
+        list($key,$list)=explode('>',trim($line),2);
+        $this->db[$key]=$list;
+      } else {
+        if (($p=strpos($line,'<')) !== false) {
+          list($val,$keys)=explode('<',trim($line),2);
+          $keys=explode(',',$keys);
+        } else {
+          $keys=explode(',',trim($line));
+          $val=array_shift($keys);
+        }
 
         foreach ($keys as $k) {
           $this->db[$k]=$this->db[$k] ? $this->db[$k].','.$val:$val;
         }
-      } else {
-        list($key,$list)=explode(',',trim($line),2);
-        $this->db[$key]=$list;
       }
     }
   }
@@ -1520,6 +1531,7 @@ class Formatter {
     $this->url_mapping_rule=$DBInfo->url_mapping_rule;
     $this->css_friendly=$DBInfo->css_friendly;
     $this->use_smartdiff=$DBInfo->use_smartdiff;
+    $this->use_easyalias=$DBInfo->use_easyalias;
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -1528,6 +1540,7 @@ class Formatter {
     $this->sisters=array();
     $this->foots=array();
     $this->pagelinks=array();
+    $this->aliases=array();
     $this->icons="";
 
     $this->themeurl= $DBInfo->url_prefix;
@@ -2123,6 +2136,7 @@ class Formatter {
         return $this->link_tag(_rawurlencode($gpage),'',$this->icon['main']).
           "<a href='$url' $attr>$word</a>";
       }
+      if ($this->aliases[$page]) return $url;
       if ($this->sister_on) {
         $sisters=$DBInfo->metadb->getSisterSites($page, $DBInfo->use_sistersites);
         if ($sisters === true) {
@@ -2131,17 +2145,18 @@ class Formatter {
             "<tt class='sister'><a href='$url'>&#x203a;</a></tt>";
         }
         if ($sisters) {
+          if ($this->use_easyalias and strpos($sisters,' ') === false) {
+            # this is a alias
+            $url=$this->link_repl(substr($sisters,0,-1).' '.$word.']');
+            $this->aliases[$page]=$url;
+            return $url;
+          }
           $this->sisters[]="<tt class='foot'>&#160;&#160;&#160;".
             "<a name='sister$this->sister_idx' id='sister$this->sister_idx'></a>".
             "<a href='#rsister$this->sister_idx'>$this->sister_idx&#x203a;</a>&#160;</tt> ".
             "$sisters <br/>";
           $this->pagelinks[$page]=$this->sister_idx++;
           $idx=$this->pagelinks[$page];
-          #if (strpos($sisters,' ') === false and $this->use_smartsister) {
-          #  $url=$this->link_repl(substr($sisters,0,-1).' '.$word.']');
-          #  return "$url";
-          #  return "<a href='$url'>$word</a>";
-          #}
         }
         if ($idx > 0) {
           return "<a href='$url'>$word</a>".
