@@ -1877,6 +1877,10 @@ function macro_InterWiki($formatter,$value,$options=array()) {
     $interwikirule.="Self";
     $interwiki['Self']=get_scriptname().$DBInfo->query_prefix;
 
+    # set default TwinPages interwiki
+    if (!$interwiki['TwinPages'])
+      $interwiki['TwinPages']=$DBInfo->query_prefix.'action=twinpages';
+
     # read shared intericons
     $map=array();
     if (file_exists($DBInfo->shared_intericon))
