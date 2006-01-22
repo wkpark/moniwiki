@@ -2150,7 +2150,9 @@ class Formatter {
         if ($sisters) {
           if ($this->use_easyalias and strpos($sisters,' ') === false) {
             # this is a alias
+            $this->use_easyalias=0;
             $url=$this->link_repl(substr($sisters,0,-1).' '.$word.']');
+            $this->use_easyalias=1;
             $this->aliases[$page]=$url;
             return $url;
           }
