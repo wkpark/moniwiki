@@ -260,11 +260,11 @@ class MetaDB_dba extends MetaDB {
     $addons=$this->aux->getSisterSites($pagename,$mode);
 
     if ($sisters)
-      $ret='wiki:'.str_replace(' ',":$pagename wiki:",$sisters).":$pagename";
+      $ret='[wiki:'.str_replace(' ',":$pagename] [wiki:",$sisters).":$pagename]";
     $pagename=_preg_search_escape($pagename);
     if ($addons) $ret=rtrim($addons.' '.$ret);
 
-    if ($mode==1 and strlen($ret) > 80) return "TwinPages:$pagename";
+    if ($mode==1 and strlen($ret) > 80) return "[wiki:TwinPages:$pagename]";
     return preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
   }
 
@@ -1542,6 +1542,7 @@ class Formatter {
     $this->pagelinks=array();
     $this->aliases=array();
     $this->icons="";
+    $this->quote_style=$DBInfo->quote_style? $DBInfo->quote_style:'quote';
 
     $this->themeurl= $DBInfo->url_prefix;
     $this->themedir= dirname(__FILE__);
@@ -1558,6 +1559,7 @@ class Formatter {
                      "/`(?<!\s)(?!`)([^`']+)(?<!\s)'/",
                      "/`(?<!\s)(?U)(.*)(?<!\s)`/",
                      "/(-{4,})$/e",
+                     "/(={4,})$/",
                      "/,,([^,]{1,40}),,/",
                      "/\^([^ \^]+)\^(?=\s|$)/",
                      "/\^\^(?<!\s)(?!\^)(?U)(.+)(?<!\s)\^\^/",
@@ -1571,6 +1573,7 @@ class Formatter {
                      "<i>\\1</i>","<i>\\1</i>",
                      "&#96;\\1'","<tt class='wiki'>\\1</tt>",
                      "\$formatter->$DBInfo->hr_type"."_hr('\\1')",
+                     "<br clear='all' />",
                      "<sub>\\1</sub>",
                      "<sup>\\1</sup>",
                      "<sup>\\1</sup>",
@@ -1586,11 +1589,11 @@ class Formatter {
     
     # set smily_rule,_repl
     if ($DBInfo->smileys) {
-      $smiley_rule='/(?<=\s|^|>)('.$DBInfo->smiley_rule.')(?=\s|$)/e';
-      $smiley_repl="\$formatter->smiley_repl('\\1')";
+      $this->smiley_rule='/(?<=\s|^|>)('.$DBInfo->smiley_rule.')(?=\s|$)/e';
+      $this->smiley_repl="\$formatter->smiley_repl('\\1')";
 
-      $this->baserule[]=$smiley_rule;
-      $this->baserepl[]=$smiley_repl;
+      #$this->baserule[]=$smiley_rule;
+      #$this->baserepl[]=$smiley_repl;
     }
     $this->footrule="\[\*[^\]]*\s[^\]]+\]";
 
@@ -2136,7 +2139,7 @@ class Formatter {
         return $this->link_tag(_rawurlencode($gpage),'',$this->icon['main']).
           "<a href='$url' $attr>$word</a>";
       }
-      if ($this->aliases[$page]) return $url;
+      if ($this->aliases[$page]) return $this->aliases[$page];
       if ($this->sister_on) {
         $sisters=$DBInfo->metadb->getSisterSites($page, $DBInfo->use_sistersites);
         if ($sisters === true) {
@@ -2634,13 +2637,13 @@ class Formatter {
           $macro=substr($line,4,-2);
           $text.= $this->macro_repl($macro);
         } else if ($line[2]=='#') {
-          $div_enclose='<div id="'.substr($line,3).'">';
+          $div_enclose.='<div id="'.substr($line,3).'">';
           $my_div++;
         } else if ($line[2]=='.') {
-          $div_enclose='<div class="'.substr($line,3).'">';
+          $div_enclose.='<div class="'.substr($line,3).'">';
           $my_div++;
         } else if ($my_div>0) {
-          $div_enclose='</div>';
+          $div_enclose.='</div>';
           $my_div--;
         }
         continue; # comments
@@ -2757,7 +2760,7 @@ class Formatter {
                $divtype=" $dt=\"".substr($line,1,$p-1).'"';
                $line=substr($line,$p+1);
              } else
-               $divtype=' class="indent quote"';
+               $divtype=' class="indent '.$this->quote_style.'"';
            } else {
              $divtype=' class="indent"';
            }
@@ -2881,7 +2884,8 @@ class Formatter {
       #                    $this->head_repl("$1","$2","$3"),$line);
 
       # Smiley
-      #if ($smiley_rule) $line=preg_replace($smiley_rule,$smiley_repl,$line);
+      if ($this->smiley_rule)
+        $line=preg_replace($this->smiley_rule,$this->smiley_repl,$line);
       # NoSmoke's MultiLineCell hack
       #$line=preg_replace(array("/{{\|/","/\|}}/"),
       #      array("</div><table class='closure'><tr class='closure'><td class='closure'><div>","</div></td></tr></table><div>"),$line);
