@@ -6,6 +6,9 @@
 // Usage: {{{#!geshi ada|apache|asm|c|css... [number|fancy]
 // some codes
 // }}}
+//
+// or you can replace the vim processor by following option in config.php
+//  $myprocessors=array('vim'=>'geshi');
 // 
 // to use this processor:
 // download GeSHi-x.x.x.tar.gz from http://qbnz.com/highlighter/

@@ -3,12 +3,12 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a syntax colorizer plugin using the enscript for the MoniWiki
 //
-// Usage: {{{#!syntax sh|c|sh|..
+// Usage: {{{#!enscript sh|c|sh|..
 // some codes
 // }}}
 // $Id$
 
-function processor_syntax($formatter,$value) {
+function processor_enscript($formatter,$value) {
   global $DBInfo;
 
   $enscript='enscript ';
@@ -64,5 +64,5 @@ function processor_syntax($formatter,$value) {
   return $html;
 }
 
-// vim:et:ts=2:
+// vim:et:sts=2:
 ?>
