@@ -70,10 +70,9 @@ function updateBlogList($formatter) {
 
 function do_Blog($formatter,$options) {
   global $DBInfo;
-  global $HTTP_USER_AGENT;
   $COLS_MSIE = 80;
   $COLS_OTHER = 85;
-  $cols = preg_match('/MSIE/', $HTTP_USER_AGENT) ? $COLS_MSIE : $COLS_OTHER;
+  $cols = preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
 
   $rows=$options['rows'] > 5 ? $options['rows']: 8;
   $cols=$options['cols'] > 60 ? $options['cols']: $cols;
@@ -268,10 +267,9 @@ FORM2;
 }
 
 function macro_Blog($formatter,$value) {
-  global $HTTP_USER_AGENT;
   $COLS_MSIE = 80;
   $COLS_OTHER = 85;
-  $cols = preg_match('/MSIE/', $HTTP_USER_AGENT) ? $COLS_MSIE : $COLS_OTHER;
+  $cols = preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
 
   $rows=$options['rows'] > 5 ? $options['rows']: 8;
   $cols=$options['cols'] > 60 ? $options['cols']: $cols;

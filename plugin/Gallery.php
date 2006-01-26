@@ -289,7 +289,7 @@ function macro_Gallery($formatter,$value,&$options) {
 
 function do_gallery($formatter,$options='') {
   global $DBInfo;
-  $cols = preg_match('/MSIE/', $HTTP_USER_AGENT) ? $COLS_MSIE : $COLS_OTHER;
+  $cols = preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
                                                                                 
   $rows=$options['rows'] > 5 ? $options['rows']: 4;
   $cols=$options['cols'] > 60 ? $options['cols']: $cols;

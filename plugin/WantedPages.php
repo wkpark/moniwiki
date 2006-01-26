@@ -33,7 +33,7 @@ function macro_WantedPages($formatter,$value='') {
   $out="<ul>\n";
   while (list($name,$owns) = each($wants)) {
     $owns=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$owns);
-    $out.="<li>".$formatter->link_repl($name). ": $owns</li>";
+    $out.="<li>".$formatter->link_repl($name,htmlspecialchars($name)). ": $owns</li>";
   }
   $out.="</ul>\n";
   $formatter->pagelinks = $pagelinks; // restore

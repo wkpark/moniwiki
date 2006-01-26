@@ -15,6 +15,8 @@ function processor_diff($formatter,$value="") {
   list($dummy, $type)=explode(' ',$line);
   if (in_array($type,array('fancy','simple')))
     $options['type']=$type;
+  else
+    $options['type']='fancy';
   // add first two blank lines
   //$options['text']="\n\n".$value;
   $options['text']=$value;

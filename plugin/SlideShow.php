@@ -43,7 +43,7 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
     $act=$options['action'] ? $options['action']:'SlideShow';
 
     $iconset='bluecurve';
-    $icon_dir=$DBInfo->imgs_dir.'/plugin/SlideShow/'.$iconset.'/';
+    $icon_dir=$formatter->imgs_dir.'/plugin/SlideShow/'.$iconset.'/';
 
     // get head title section
     if ($depth==2) {

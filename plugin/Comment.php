@@ -9,7 +9,6 @@
 // $Id$
 
 function macro_Comment($formatter,$value,$options=array()) {
-  global $HTTP_USER_AGENT;
   global $DBInfo;
   if (!$options['page']) $options['page']=$formatter->page->name;
 
@@ -19,7 +18,7 @@ function macro_Comment($formatter,$value,$options=array()) {
 
   $COLS_MSIE = 80;
   $COLS_OTHER = 85;
-  $cols = preg_match('/MSIE/', $HTTP_USER_AGENT) ? $COLS_MSIE : $COLS_OTHER;
+  $cols = preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
 
   $rows=$options['rows'] > 5 ? $options['rows']: 5;
   $cols=$options['cols'] > 60 ? $options['cols']: $cols;
@@ -67,7 +66,6 @@ FORM2;
 
 function do_comment($formatter,$options=array()) {
   global $DBInfo;
-  global $HTTP_USER_AGENT;
 
   if (!$DBInfo->security->writable($options)) {
     $formatter->preview=1;
@@ -83,7 +81,7 @@ function do_comment($formatter,$options=array()) {
 
   $COLS_MSIE = 80;
   $COLS_OTHER = 85;
-  $cols = preg_match('/MSIE/', $HTTP_USER_AGENT) ? $COLS_MSIE : $COLS_OTHER;
+  $cols = preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
 
   $rows=$options['rows'] > 5 ? $options['rows']: 8;
   $cols=$options['cols'] > 60 ? $options['cols']: $cols;

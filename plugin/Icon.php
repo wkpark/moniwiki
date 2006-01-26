@@ -17,7 +17,7 @@ function macro_Icon($formatter,$value='',$extra='') {
     $value=$DBInfo->iconset.'/'.$value.'.png';
   }
 
-  $out=$DBInfo->imgs_dir."/$value";
+  $out=$formatter->imgs_dir."/$value";
   $out="<img src='$out' border='0' alt='icon' align='middle' />";
   return $out;
 }
