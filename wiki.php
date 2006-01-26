@@ -3955,7 +3955,7 @@ if ($pagename) {
     $options['timer']->Check("send_page");
     $formatter->write("<!-- wikiContent --></div>\n");
 
-    if ($DBInfo->extra_macros) {
+    if ($DBInfo->extra_macros and !$formatter->pi['#format']) {
       if ($formatter->pi['#nocomment']) $options['nocomment']=1;
       if (!is_array($DBInfo->extra_macros)) {
         print '<div id="wikiExtra">'."\n";

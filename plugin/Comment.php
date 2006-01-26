@@ -12,7 +12,14 @@ function macro_Comment($formatter,$value,$options=array()) {
   global $DBInfo;
   if (!$options['page']) $options['page']=$formatter->page->name;
 
-  if ($options['usemeta']) $use_meta=1;
+  if ($value) {
+    $args=explode(',',$value);
+    if (in_array('usemeta',$args)) $use_meta=1;
+  }
+
+  if ($options['usemeta'] or $use_meta) {
+    $hidden="<input type='hidden' name='usemeta' value=1 />\n";
+  }
 
   if ($options['nocomment']) return '';
   #if (!$DBInfo->_isWritable($options['page'])) return '';
@@ -41,7 +48,7 @@ function macro_Comment($formatter,$value,$options=array()) {
 
 
   if ($value)
-    $hidden='<input type="hidden" name="comment_id" value="'.$value.'" />';
+    $hidden.='<input type="hidden" name="comment_id" value="'.$value.'" />';
   $form = "<form name='editform' method='post' action='$url'>\n";
   $form.= <<<FORM
 <textarea class="wiki" id="content" name="savetext"
@@ -49,7 +56,7 @@ function macro_Comment($formatter,$value,$options=array()) {
 FORM;
   if ($options['id'] == 'Anonymous')
     $sig=_("Username").": <input name='name' value='$options[name]' />";
-  else 
+  else if (!$use_meta)
     $sig="<input name='nosig' type='checkbox' />"._("Don't add a signature");
   $comment=_("Comment");
   $preview=_("Preview");
@@ -80,6 +87,8 @@ function do_comment($formatter,$options=array()) {
     do_invalid($formatter,$options);
     return;
   }
+
+  if ($options['usemeta']) $use_meta=1;
 
   $COLS_MSIE = 80;
   $COLS_OTHER = 85;
