@@ -1559,7 +1559,7 @@ class Formatter {
                      "/`(?<!\s)(?!`)([^`']+)(?<!\s)'/",
                      "/`(?<!\s)(?U)(.*)(?<!\s)`/",
                      "/(-{4,})$/e",
-                     "/(={4,})$/",
+                     "/^(={4,})$/",
                      "/,,([^,]{1,40}),,/",
                      "/\^([^ \^]+)\^(?=\s|$)/",
                      "/\^\^(?<!\s)(?!\^)(?U)(.+)(?<!\s)\^\^/",
@@ -3864,7 +3864,7 @@ if ($pagename) {
       $twins=$DBInfo->metadb->getTwinPages($page->name,2);
       if ($twins) {
         $formatter->send_title($page->name,"",$options);
-        $twins=join("\n",$twins);
+        $twins="\n".join("\n",$twins);
         $formatter->send_page(_("See [TwinPages]: ").$twins);
         echo "<br />".
           $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
