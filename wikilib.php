@@ -1993,25 +1993,6 @@ function macro_PageCount($formatter="") {
 }
 
 
-function macro_PageLinks($formatter="",$options="") {
-  global $DBInfo;
-  $pages = $DBInfo->getPageLists();
-
-  $out="<ul>\n";
-  $cache=new Cache_text("pagelinks");
-  foreach ($pages as $page) {
-    $p= new WikiPage($page);
-    $f= new Formatter($p);
-    $out.="<li>".$f->link_to().": ";
-    $links=$f->get_pagelinks();
-    $links=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$links);
-    $out.=$links."</li>\n";
-  }
-  $out.="</ul>\n";
-  return $out;
-}
-
-
 function macro_PageList($formatter,$arg="") {
   global $DBInfo;
 
