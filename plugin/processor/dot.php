@@ -28,12 +28,13 @@ function processor_dot($formatter,$value) {
     fwrite($fp,$dot);
     fclose($fp);
   }{
+
     $cmd="$dotcmd -Tpng $webdot_dir/$md5sum.dot -o $webdot_dir/$md5sum.png";
-    $fp=popen($cmd,'w');
-    fclose($fp);
+    $fp=popen($cmd,'r');
+    pclose($fp);
     $cmd="$dotcmd -Timap $webdot_dir/$md5sum.dot -o $webdot_dir/$md5sum.map";
-    popen($cmd,'w');
-    fclose($fp);
+    $fp=popen($cmd,'r');
+    pclose($fp);
   }
 
   return "<a href='$DBInfo->url_prefix/$webdot_dir/$md5sum.map'><img border='0' src='$DBInfo->url_prefix/$webdot_dir/$md5sum.png' ismap /></a>\n";
