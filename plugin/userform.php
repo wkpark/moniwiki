@@ -78,7 +78,6 @@ function do_userform($formatter,$options) {
             $login_ok=1;
         } else { # with no javascript browsers
           $md5pw=md5($options['password']);
-          //if (hmac($md5pw,$user->info['password']) == $md5pw)
           if ($md5pw == $user->info['password'])
             $login_ok=1;
         }
