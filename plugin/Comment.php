@@ -12,6 +12,8 @@ function macro_Comment($formatter,$value,$options=array()) {
   global $DBInfo;
   if (!$options['page']) $options['page']=$formatter->page->name;
 
+  if ($options['usemeta']) $use_meta=1;
+
   if ($options['nocomment']) return '';
   #if (!$DBInfo->_isWritable($options['page'])) return '';
   if (!$DBInfo->security->writable($options)) return '';
@@ -142,11 +144,28 @@ function do_comment($formatter,$options=array()) {
       _stripslashes($options['name']):$_SERVER['REMOTE_ADDR'];
   else $id=$options['id'];
 
-  if ($options['nosig']) $savetext="----\n$savetext\n";
-  else if($options['id']=='Anonymous')
-    $savetext="----\n$savetext -- $id @DATE@\n";
-  else
-    $savetext="----\n$savetext @SIG@\n";
+  if ($use_meta) {
+    $date=gmdate('Y-m-d H:i:s').' GMT';
+
+    $idx=1;
+    if (preg_match_all('/-{4,}\nComment-Id:\s*(\d+)\n/m',$body,$m)) {
+      $idx=$m[1][sizeof($m[1])-1]+1;
+    }
+
+    if ($options['id']!='Anonymous') $id='@USERNAME@';
+    $meta=<<<META
+Comment-Id: $idx
+From: $id
+Date: $date
+META;
+    $savetext="----\n$meta\n\n$savetext\n";
+  } else {
+    if ($options['nosig']) $savetext="----\n$savetext\n";
+    else if($options['id']=='Anonymous')
+      $savetext="----\n$savetext -- $id @DATE@\n";
+    else
+      $savetext="----\n$savetext @SIG@\n";
+  }
 
   if ($options['comment_id'] and preg_match("/^\[\[Comment\(".$options['comment_id']."\)\]\]/m",$body)) {
     $str="[[Comment($options[comment_id])]]";
