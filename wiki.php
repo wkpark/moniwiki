@@ -1989,9 +1989,9 @@ class Formatter {
       $sy=$DBInfo->intericon[$wiki][1];
     }
 
-    $img="<a href='$url' target='wiki'>".
-         "<img border='0' src='$icon' class='interwiki' height='$sy' ".
-         "width='$sx' alt='$wiki:' title='$wiki:' /></a>";
+    $img="<a class=\"interwiki\" href='$url' target='wiki'>".
+         "<img class=\"interwiki\" alt=\"$wiki:\" src='$icon' border='0' height='$sy' ".
+         "width='$sx' title='$wiki:' /></a>";
     #if (!$text) $text=str_replace("%20"," ",$page);
     if (!$text) $text=urldecode($page);
     else if (preg_match("/^(http|ftp|attachment):.*\.(png|gif|jpeg|jpg)$/i",$text)) {
@@ -2012,6 +2012,7 @@ class Formatter {
     if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$url))
       return "<a href='".$url."' $attr title='$wiki:$page'><img border='0' align='middle' alt='$text' src='$url' /></a>$extra";
 
+    if (!$text) return $img;
     return $img. "<a href='".$url."' $attr title='$wiki:$page'>$text</a>$extra";
   }
 
@@ -2285,6 +2286,7 @@ class Formatter {
   function macro_repl($macro,$value='',$options='') {
     preg_match("/^([A-Za-z]+)(\((.*)\))?$/",$macro,$match);
     if (!$match) return $this->word_repl($macro);
+    if ($this->nomacro) return '<span class="wikiMarkup">[['.$macro.']]</span>';
     if (!$value and $match[1] and $match[2]) { #strpos($macro,'(') !== false)) {
       $name=$match[1]; $args=($match[2] and !$match[3]) ? true:$match[3];
     } else {
@@ -2869,13 +2871,17 @@ class Formatter {
         $in_p='';
         if ($this->section_edit && !$this->preview) {
           $act='edit';
-          if ($DBInfo->use_ajax) {
-            $onclick=' onclick="javascript:sectionEdit(null,this,'.
-              $this->sect_num.');return false;"';
+          if ($DBInfo->sectionedit_attr) {
+            if (!is_string($DBInfo->sectionedit_attr))
+              $sect_attr=' onclick="javascript:sectionEdit(null,this,'.
+                $this->sect_num.');return false;"';
+            else
+              $sect_attr=$DBInfo->sectionedit_attr;
           }
           $url=$this->link_url($this->page->urlname,
             '?action='.$act.'&amp;section='.$this->sect_num);
-          $edit="<div class='sectionEdit' style='float:right;'>[<a href='$url'$onclick>edit</a>]</div>\n";
+          $lab=_("edit");
+          $edit="<div class='sectionEdit' style='float:right;'>[<a href='$url'$sect_attr>$lab</a>]</div>\n";
           $anchor_id='sect-'.$this->sect_num;
           $anchor="<a id='$anchor_id' name='$anchor_id'></a>";
         }

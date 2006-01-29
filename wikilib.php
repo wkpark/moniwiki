@@ -707,7 +707,7 @@ function macro_Edit($formatter,$value,$options='') {
   }
 
   $form.=$menu;
-  if ($options['action_mode']=='ajax' and $DBInfo->use_ajax) {
+  if ($options['action_mode']=='ajax') {
     $ajax=" onsubmit='savePage(this);return false'";
   }
   $formh= sprintf('<form name="editform" method="post" action="%s"'.$ajax.'>',
@@ -968,7 +968,16 @@ function do_raw($formatter,$options) {
     $formatter->send_header("Content-Type: $options[mime]",$options);
   } else
     $formatter->send_header("Content-Type: text/plain",$options);
-  print $formatter->page->get_raw_body($options);
+  $raw_body=$formatter->page->get_raw_body($options);
+  if (isset($options['section'])) {
+    $sections= _get_sections($raw_body);
+    if ($sections[$options['section']])
+      $raw_body = $sections[$options['section']];
+     #else ignore
+    else
+      $raw_body = "Fill Me\n";
+  }
+  print $raw_body;
 }
 
 function do_recall($formatter,$options) {
@@ -1665,10 +1674,15 @@ function macro_DateTime($formatter,$value) {
   }
   if ($value[10]== 'T') {
     $value[10]=' ';
-    $time=strtotime($value.' GMT');
+    $value.=' GMT';
+  }
+
+  if (preg_match('/^\d{2,4}(\-|\/)\d{1,2}\\1\d{1,2}\s+\d{2}:\d{2}/',$value)) {
+    $time=strtotime($value);
     return gmdate($fmt,$time+$tz_offset);
   }
-  return gmdate("Y/m/d\TH:i:s",time()+$tz_offset);
+
+  return gmdate("Y/m/d H:i:s",time()+$tz_offset).' GMT';
 }
 
 function macro_UserPreferences($formatter,$value,$options='') {
