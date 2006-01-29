@@ -1,5 +1,5 @@
 <?php
-// Copyright 2004 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2004-2006 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a importurl action plugin for the MoniWiki
 //
@@ -9,6 +9,12 @@
 
 function do_ImportUrl($formatter,$options) {
   $value=$options['url'];
+
+  if (!preg_match('/^(http|ftp|https):\/\//',$value)) {
+    do_invalid($formatter,$options);
+    return;
+  }
+
   $fp = fopen("$value","r");
   if (!$fp) {
     do_invalid($formatter,$options);
