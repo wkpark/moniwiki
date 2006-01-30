@@ -1899,6 +1899,7 @@ class Formatter {
       if (preg_match("/^(w|[A-Z])/",$url)) { # InterWiki or wiki:
         if (strpos($url," ")) { # have a space ?
           $dum=explode(" ",$url,2);
+          if ($dum[1])
           return $this->interwiki_repl($dum[0],$dum[1],$attr,$external_icon);
         }
         
@@ -1970,6 +1971,7 @@ class Formatter {
     }
 
     if ($page=='/') $page='';
+    if (substr($page,-1)==' ') $sep='<b></b>'; // auto append SixSingleQuotes
     $urlpage=_urlencode(trim($page));
     #$urlpage=trim($page);
     if (strpos($url,'$PAGE') === false)
@@ -2016,7 +2018,7 @@ class Formatter {
       return "<a href='".$url."' $attr title='$wiki:$page'><img border='0' align='middle' alt='$text' src='$url' /></a>$extra";
 
     if (!$text) return $img;
-    return $img. "<a href='".$url."' $attr title='$wiki:$page'>$text</a>$extra";
+    return $img. "<a href='".$url."' $attr title='$wiki:$page'>$text</a>$extra$sep";
   }
 
   function store_pagelinks() {
@@ -2281,6 +2283,8 @@ class Formatter {
     $prefix=$this->toc_prefix;
     if ($this->toc)
       $head="<a href='#toc'>$num</a> $head";
+    $perma='';
+    if ($this->perma_icon)
     $perma=" <a class='perma' href='#s$prefix-$num'>$this->perma_icon</a>";
 
     return "$close$open$edit<h$dep><a id='s$prefix-$num' name='s$prefix-$num'></a> $head$perma</h$dep>";
@@ -2289,7 +2293,8 @@ class Formatter {
   function macro_repl($macro,$value='',$options='') {
     preg_match("/^([A-Za-z]+)(\((.*)\))?$/",$macro,$match);
     if (!$match) return $this->word_repl($macro);
-    if ($this->nomacro) return '<span class="wikiMarkup">[['.$macro.']]</span>';
+    if ($this->wikimarkup)
+      return '<span class="wikiMarkup">[['.$macro.']]</span>';
     if (!$value and $match[1] and $match[2]) { #strpos($macro,'(') !== false)) {
       $name=$match[1]; $args=($match[2] and !$match[3]) ? true:$match[3];
     } else {
@@ -2919,7 +2924,7 @@ class Formatter {
            preg_match('/<(ins|del) class=\'diff-(added|removed)\'>/',
            $this->pre_line)) $show_raw=1;
 
-         if ($processor and !$show_raw) {
+         if ($processor and !$show_raw and !$this->wikimarkup) {
            $value=$this->pre_line;
            $out= call_user_func("processor_$processor",$this,$value,$options);
            $line=$out.$line;
