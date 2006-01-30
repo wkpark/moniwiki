@@ -670,7 +670,7 @@ class WikiDB {
     $this->icon['main']="<img src='$imgdir/${iconset}main.$ext' class='icon' alt='^' align='middle' border='0' />";
     $this->icon['print']="<img src='$imgdir/${iconset}print.$ext' alt='P' align='middle' border='0' />";
     $this->icon['attach']="<img src='$imgdir/${iconset}attach.$ext' alt='@' align='middle' border='0' />";
-    $this->icon['external']="<img src='$imgdir/${iconset}external.$ext' alt='[]' align='middle' border='0' />";
+    $this->icon['external']="<img class='externalLink' src='$imgdir/${iconset}external.$ext' alt='[]' align='middle' border='0' />";
     $this->icon_sep=" ";
     $this->icon_bra=" ";
     $this->icon_cat=" ";
@@ -1893,7 +1893,7 @@ class Formatter {
         $url=str_replace("@","_at_",$url);
         $link=str_replace('&','&amp;',$url);
         $name=substr($url,7);
-        return $this->icon['mailto']."<a href='$link' $attr>$name</a>$external_icon";
+        return $this->icon['mailto']."<a class='externalLink' href='$link' $attr>$name</a>$external_icon";
       }
 
       if (preg_match("/^(w|[A-Z])/",$url)) { # InterWiki or wiki:
