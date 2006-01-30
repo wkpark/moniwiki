@@ -1147,7 +1147,7 @@ class Version_RCS {
 
     $fp=@popen("co -x,v/ -q -p\"".$rev."\" ".$filename,"r");
     $out='';
-    if ($fp) {
+    if (is_resource($fp)) {
       while (!feof($fp)) {
         $line=fgets($fp,2048);
         $out.= $line;
@@ -1160,7 +1160,8 @@ class Version_RCS {
   function ci($pagename,$log) {
     $key=$this->_filename($pagename);
     $pagename=escapeshellcmd($pagename);
-    $ret=system("ci -l -x,v/ -q -t-\"".$pagename."\" -m\"".$log."\" ".$key);
+    $fp=@popen("ci -l -x,v/ -q -t-\"".$pagename."\" -m\"".$log."\" ".$key,"r");
+    if ($fp) pclose($fp);
   }
 
   function rlog($pagename,$rev='',$opt='',$oldopt='') {
@@ -1184,8 +1185,10 @@ class Version_RCS {
     if ($rev) $option="-r$rev ";
     if ($rev2) $option.="-r$rev2 ";
 
+    $NULL='';
+    if(getenv("OS")!="Windows_NT") $NULL=' 2>/dev/null';
     $filename=$this->_filename($pagename);
-    $fp=popen("rcsdiff -x,v/ -u $option ".$filename,'r');
+    $fp=popen("rcsdiff -x,v/ -u $option ".$filename.$NULL,'r');
     if (!$fp) return '';
     while (!feof($fp)) {
       # trashing first two lines
