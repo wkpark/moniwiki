@@ -11,6 +11,7 @@
 function processor_mimetex($formatter,$value) {
   global $DBInfo;
 
+  $alt = str_replace ('\'','&#039;',$value);
   $value = escapeshellarg ($value);
   preg_match ('/\s*\$+([^\$]*)\$+\s*/', $value, $match);
   $tex = $match[1];
@@ -33,7 +34,6 @@ function processor_mimetex($formatter,$value) {
          "</pre>\n";
   }
 
-  $alt = str_replace ('\'','&#039;',$tex);
   if ( ! strncmp ('shell:', $mimetex, 6) ) {
     if ( ! $tex ) return;
 

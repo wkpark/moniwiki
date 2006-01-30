@@ -8,7 +8,8 @@
 function do_markup($formatter,$options) {
     $formatter->preview=1;
     $formatter->sister_on=0;
-    $formatter->nomacro=1;
+    $formatter->perma_icon='';
+    if (!$options['all']) $formatter->wikimarkup=1;
     if ($options['value']) {
         $formatter->send_page(_stripslashes($options['value']),$options);
     }
