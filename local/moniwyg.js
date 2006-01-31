@@ -21,20 +21,55 @@ Wikiwyg.prototype.saveChanges = function() {
         wikitext = this.current_mode.textarea.value;
     }
 
-    //alert(wikitext);
+    var datestamp='';
+    var section='';
+    for (var i=0;i<this.myinput.length;i++) {
+        if (this.myinput[i].name == 'datestamp')
+            datestamp=this.myinput[i].value;
+        if (this.myinput[i].name == 'section')
+        section=this.myinput[i].value;
+    }
+    //alert(datestamp+'/'+section);
+
     myWikiwyg.convertWikitextToHtmlAll(wikitext,
         function(new_html) { self.div.innerHTML = new_html });
 
-    this.displayMode();
+    // save
+    var toSend = 'action=savepage/ajax' +
+    '&savetext=' + encodeURIComponent(wikitext) +
+    '&datestamp=' + datestamp + '&section=' + section;
+    var location = this.mylocation;
+
+    var saved=self.div.innerHTML;
+    self.div.innerHTML='<img src="'+_url_prefix+'/imgs/loading.gif" />';
+    var form=HTTPPost(location,toSend);
+    if (form.substring(0,4) == 'true') {
+        // get section
+        var toSend = 'action=markup&all=1&section=' + section;
+        form=HTTPPost(location,toSend);
+        self.div.innerHTML=form;
+
+        this.displayMode();
+        return;
+    } else {
+        self.div.innerHTML=saved;
+        var f=document.createElement('div');
+        f.setAttribute('class','errorLog');
+        // show error XXX
+        f.innerHTML=form;
+        self.parentNode.appendChild(f);
+    }
+    return;
 }
 
 Wikiwyg.prototype.editMode = function(form) {
     var self = this;
     var dom = document.createElement('div');
-    dom.innerHTML=form;
+    dom.innerHTML = form;
 
-    var form=dom.getElementsByTagName('form')[0];
-    var wikitext= form.savetext.value;
+    var form = dom.getElementsByTagName('form')[0];
+    var wikitext = form.savetext.value;
+    this.mylocation = form.getAttribute('action');
 
     this.current_mode = this.first_mode;
     if (this.current_mode.classname.match(/(Wysiwyg|HTML|Preview)/)) {
@@ -89,7 +124,7 @@ proto.convert_html_to_wikitext = function(html) {
         html.replace(/<img class=.(url|externalLink).[^>]+>/g, '');
     // smiley/inline tex etc.
     html =
-        html.replace(/<img [^>]*class=.(interwiki|smiley).[^>]* alt=(.)([^\'\"]+)\2[^>]+>/g, "$3");
+        html.replace(/<img [^>]*class=.(tex|interwiki|smiley).[^>]* alt=(.)([^\'\"]+)\2[^>]+>/g, "$3");
     // interwiki links
     html =
         html.replace(/<a [^>]+ alt=(.)([^\'\"]+)\1[^>]+>/g, "$2");
@@ -117,8 +152,14 @@ proto.format_tr = function(element) {
 }
 
 proto.format_br = function(element) {
+// for plain br
+    var string = this.output[this.output.length - 1];
+    if (! string.whitespace && ! string.match(/\n$/))
+        this.insert_new_line();
     this.insert_new_line();
 }
+
+// proto.format_pre FIXME
 
 proto.assert_blank_line = function() {
     this.chomp();
@@ -135,9 +176,10 @@ proto.format_td = function(element) {
     var rowspan =element.getAttribute('rowspan');
     if (rowspan)
         this.appendOutput('<|'+rowspan+'>');
-    this.appendOutput(' ');
+    this.appendOutput('');
     this.walk(element);
-    this.appendOutput(' ');
+    this.chomp(); // XXX
+    this.appendOutput('');
 }
 
 proto = Wikiwyg.Toolbar.prototype;
@@ -313,13 +355,19 @@ wikiwygs = [];
 function sectionEdit(ev,obj,sect) {
     if (sect) {
         var sec=document.getElementById('sect-'+sect);
-        var ed=document.getElementById('editSect-'+sect);
-        if (ed) { // toogle
-            sec.parentNode.removeChild(sec.parentNode.lastChild);
-            return;
-        }
+
         var href=obj.href.replace(/=edit/,'=edit/ajax');
+        var saved=obj.cloneNode(true);
+        var loading=document.createElement('img');
+        loading.setAttribute('border',0);
+        loading.setAttribute('class','ajaxLoading');
+        loading.src=_url_prefix + '/imgs/loading.gif';
+        obj.blur();
+        obj.parentNode.replaceChild(loading,obj);
+        //alert('loading...');
         var form=HTTPGet(href);
+        loading.parentNode.replaceChild(saved,loading);
+
         if (form.substring(0,5) != 'false') {
             var myConfig = {
                 doubleClickToEdit: true,
@@ -334,6 +382,7 @@ function sectionEdit(ev,obj,sect) {
             modeClasses: [
                 'Wikiwyg.Wikitext',
                 'Wikiwyg.Wysiwyg',
+                'Wikiwyg.HTML',
                 'Wikiwyg.Preview',
             ]
         }

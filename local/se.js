@@ -33,7 +33,7 @@ function savePage(obj) {
   for (var i=0;i<obj.elements.length;i++) {
     if (obj.elements[i].name != '')  {
       toSend += (toSend ? '&' : '') + obj.elements[i].name + '='
-                                  + escape(obj.elements[i].value);
+                                  + encodeURIComponent(obj.elements[i].value);
       //alert(obj.elements[i].name+'='+obj.elements[i].value);
     }
   }
@@ -42,8 +42,13 @@ function savePage(obj) {
     var ed=document.getElementById('editSect-'+obj.section.value);
     if (ed) { // toogle
       sec.parentNode.removeChild(sec.parentNode.lastChild);
-      return false;
     }
+
+    toSend = 'action=markup&all=1&section=' + obj.section.value;
+    form=HTTPPost(self.location,toSend);
+    //
+    sec.parentNode.innerHTML=form;
+    return false;
   } else {
     var f=document.createElement('div');
     f.setAttribute('id','editSect-'+obj.section.value);
