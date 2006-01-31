@@ -6,12 +6,22 @@
 // $Id$
 
 function do_markup($formatter,$options) {
-    $formatter->preview=1;
+    $formatter->section_edit=0;
     $formatter->sister_on=0;
     $formatter->perma_icon='';
     if (!$options['all']) $formatter->wikimarkup=1;
     if ($options['value']) {
         $formatter->send_page(_stripslashes($options['value']),$options);
+    } else if (isset($options['section'])) {
+        $formatter->section_edit=1;
+        $formatter->sect_num=$options['section'] - 1;
+        $raw_body=$formatter->page->get_raw_body($options);
+        $sections= _get_sections($raw_body);
+        if ($sections[$options['section']]) {
+            $raw_body = $sections[$options['section']];
+            $formatter->send_page($raw_body,$options);
+        }
+        #else ignore
     }
     return;
 }

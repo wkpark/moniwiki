@@ -2293,8 +2293,11 @@ class Formatter {
   function macro_repl($macro,$value='',$options='') {
     preg_match("/^([A-Za-z]+)(\((.*)\))?$/",$macro,$match);
     if (!$match) return $this->word_repl($macro);
-    if ($this->wikimarkup)
-      return '<span class="wikiMarkup">[['.$macro.']]</span>';
+    $bra='';$ket='';
+    if ($this->wikimarkup and !$options['nomarkup']) {
+      $bra= "<span class='wikiMarkup'><!-- wiki:\n[[$macro]]\n-->";
+      $ket= '</span>';
+    }
     if (!$value and $match[1] and $match[2]) { #strpos($macro,'(') !== false)) {
       $name=$match[1]; $args=($match[2] and !$match[3]) ? true:$match[3];
     } else {
@@ -2309,7 +2312,7 @@ class Formatter {
       if (!function_exists ("macro_".$plugin)) return '[['.$macro.']]';
     }
     $ret=call_user_func_array("macro_$plugin",array(&$this,$args,$options));
-    return $ret;
+    return $bra.$ret.$ket;
   }
 
   function processor_repl($processor,$value,$options="") {
@@ -2645,9 +2648,10 @@ class Formatter {
       }
 
       if (!$in_pre and $line[0]=='#' and $line[1]=='#') {
+        $out='';
         if ($line[2]=='[') {
           $macro=substr($line,4,-2);
-          $text.= $this->macro_repl($macro);
+          $out= $this->macro_repl($macro,'',array('nomarkup'=>1));
         } else if ($line[2]=='#') {
           $div_enclose.='<div id="'.substr($line,3).'">';
           $my_div++;
@@ -2658,6 +2662,10 @@ class Formatter {
           $div_enclose.='</div>';
           $my_div--;
         }
+        if ($this->wikimarkup)
+          $text=$text."<span><!-- wiki:\n$line\n-->$out</span>";
+        else $text.=$out;
+        unset($out);
         continue; # comments
       }
       $ll=strlen($line);
@@ -2924,10 +2932,15 @@ class Formatter {
            preg_match('/<(ins|del) class=\'diff-(added|removed)\'>/',
            $this->pre_line)) $show_raw=1;
 
-         if ($processor and !$show_raw and !$this->wikimarkup) {
+         if ($processor and !$show_raw) {
            $value=$this->pre_line;
            $out= call_user_func("processor_$processor",$this,$value,$options);
-           $line=$out.$line;
+           if ($this->wikimarkup)
+             $line='<div class="wikiMarkup">'."<!-- wiki:\n{{{".
+               $value."}}}\n-->$out</div>";
+           else
+             $line=$out.$line;
+           unset($out);
          } else if ($in_quote) {
             # htmlfy '<'
             $pre=str_replace("<","&lt;",$this->pre_line);
@@ -2958,7 +2971,13 @@ class Formatter {
                             $this->pre_line);
             $pre=preg_replace("/&lt;(\/?)(ins|del)/","<\\1\\2",$pre);
             # FIXME Check open/close tags in $pre
-            $line="<pre class='wiki'>\n".$pre."</pre>\n".$line;
+            $out="<pre class='wiki'>\n".$pre."</pre>";
+            if ($this->wikimarkup)
+              $out='<div class="wikiMarkup">'."<!-- wiki:\n{{{\n".
+                str_replace('}}}','\}}}',$this->pre_line).
+                "}}}\n-->".$out."</div>";
+            $line=$out."\n".$line;
+            unset($out);
          }
          $this->nobr=1;
       }
