@@ -58,7 +58,7 @@ function processor_mimetex($formatter,$value) {
     return "<img class='tex' src='$DBInfo->url_prefix/$cache_dir/$uniq.$ext' alt='$alt' ".
            "title=\"$alt\" />";
   } else {
-    return '<img src=\''.$mimetex.'?'.$tex.'\' alt=\''. $alt .'\' title=\''.$alt.'\' />';
+    return '<img class=\'tex\' src=\''.$mimetex.'?'.$tex.'\' alt=\''. $alt .'\' title=\''.$alt.'\' />';
   }
 }
 // vim:et:sts=2:sw=2:
