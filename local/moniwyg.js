@@ -3,7 +3,7 @@
 //
 // $Id$
 //
-_url_prefix="/wiki";
+//_url_prefix="/wiki";
 
 Wikiwyg.prototype.saveChanges = function() {
     var self = this;
@@ -87,6 +87,32 @@ Wikiwyg.prototype.editMode = function(form) {
 }
 
 proto = Wikiwyg.Wysiwyg.prototype;
+
+proto.enableThis = function() {
+    this.superfunc('enableThis').call(this);
+    this.edit_iframe.style.border = '1px black solid';
+    this.edit_iframe.width = '100%';
+    this.setHeightOf(this.edit_iframe);
+    this.fix_up_relative_imgs();
+    this.get_edit_document().designMode = 'on';
+    // XXX - Doing stylesheets in initializeObject might get rid of blue flash
+    this.apply_stylesheets();
+    //
+    var doc    = this.get_edit_document();
+    var head   = doc.getElementsByTagName("head")[0];
+    var link = doc.createElement('link');
+    link.setAttribute('rel', 'STYLESHEET');
+    link.setAttribute('type', 'text/css');
+    link.setAttribute('media', 'screen');
+    var loc = location.protocol + '//' + location.host;
+    if (location.port) loc += ':' + location.port;
+    link.setAttribute('href',
+        loc + _url_prefix + '/local/Wikiwyg/css/wysiwyg.css');
+    head.appendChild(link);
+    this.enable_keybindings();
+    this.clear_inner_html();
+}
+
 proto.do_link = function() {
     var selection = this.get_link_selection_text();
     if (! selection) return;
@@ -101,7 +127,6 @@ proto.do_link = function() {
     }
     this.exec_command('createlink', url);
 }
-
 
 proto = Wikiwyg.Wikitext.prototype;
 
@@ -145,6 +170,55 @@ proto.convert_html_to_wikitext = function(html) {
     return this.join_output(this.output);
 }
 
+proto.format_img = function(element) {
+    var uri = element.getAttribute('src');
+    var style = element.getAttribute('style');
+    var width = element.getAttribute('width');
+    var height = element.getAttribute('height');
+    var class = element.getAttribute('class');
+    if (uri) {
+        this.assert_space_or_newline();
+        this.appendOutput(uri);
+        var attr='';
+        if (width) attr+='width='+width;
+        if (height) attr+=(attr ? '&':'') + 'height='+height;
+
+        if (style) {
+            var m = style.match(/width:\s*(\d+)px;\s*height:\s*(\d+)px/);
+            if (m[1]) attr+=(attr ? '&':'') + 'width='+m[1];
+            if (m[2]) attr+=(attr ? '&':'') + 'height='+m[2];
+        }
+
+        if (class) {
+            var m = class.match(/img(Center|Left|Right)$/);
+            if (m[1]) attr+=(attr ? '&':'') + 'align='+m[1].toLowerCase();
+        }
+
+        if (attr) this.appendOutput('?'+attr);
+    }
+}
+
+proto.format_table = function(element) {
+    this.assert_blank_line();
+    var style =element.getAttribute('style');
+    var width =element.getAttribute('width');
+    this.myattr=null;
+
+    if (width) {
+        this.myattr= '<tablewidth='+width + '>';
+    } else 
+    if (style) {
+        var attr='';
+        var m = style.match(/width:\s*(\d+)px;\s*height:\s*(\d+)px/);
+        if (m[1]) attr+= '<tablewidth='+m[1] + '>';
+        if (m[2]) attr+= '<tableheight='+m[2] + '>';
+
+        if (attr != '') this.myattr=attr;
+    }
+    this.walk(element);
+    this.assert_blank_line();
+}
+
 proto.format_tr = function(element) {
     this.walk(element);
     this.appendOutput('||');
@@ -168,14 +242,22 @@ proto.assert_blank_line = function() {
 
 proto.format_td = function(element) {
     var colspan =element.getAttribute('colspan');
+    //var align =element.getAttribute('align');
     if (colspan) {
         for (var i=0;i<colspan;i++)
             this.appendOutput('||');
     } else
         this.appendOutput('||');
+
+    if (this.myattr)
+        this.appendOutput(this.myattr);
+    this.myattr=null;
+
     var rowspan =element.getAttribute('rowspan');
     if (rowspan)
         this.appendOutput('<|'+rowspan+'>');
+
+    //if (align) this.appendOutput('<align='+align+'>');
     this.appendOutput('');
     this.walk(element);
     this.chomp(); // XXX
@@ -193,7 +275,8 @@ proto.config.controlLayout = [
     'unordered',
     'math',
     'nowiki',
-    'hr'
+    'hr',
+    'table',
 ];
 
 proto.config.controlLabels.math = 'Math';
@@ -310,7 +393,7 @@ var head = document.getElementsByTagName('head')[0];
 var link = document.createElement('link');
 link.setAttribute('rel', 'stylesheet');
 link.setAttribute('type', 'text/css');
-link.setAttribute('href', _url_prefix + '/local/Wikiwyg/css/wikiwyg.css');
+link.setAttribute('href', _url_prefix + '/local/Wikiwyg/css/moniwyg.css');
 head.appendChild(link);
 //
 
@@ -373,7 +456,7 @@ function sectionEdit(ev,obj,sect) {
                 doubleClickToEdit: true,
                 toolbar: {
                     imagesLocation:
-                        _url_prefix + '/local/Wikiwyg/demo/moin/images/',
+                        _url_prefix + '/local/Wikiwyg/moni/images/',
                 imagesExtension: '.png'
             },
             wikitext: {
