@@ -3201,6 +3201,13 @@ EOS;
 
       print '<meta http-equiv="Content-Type" content="'.$content_type.
         ';charset='.$DBInfo->charset.'" />';
+      print <<<JSHEAD
+<script language="JavaScript" type="text/javascript">
+/*<![CDATA[*/
+_url_prefix="$DBInfo->url_prefix";
+/*]]>*/
+</script>
+JSHEAD;
       print $metatags."\n".$keywords;
       print "  <title>$DBInfo->sitename: ".$options['title']."</title>\n";
       if ($upper)
