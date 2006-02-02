@@ -171,12 +171,14 @@ proto.convert_html_to_wikitext = function(html) {
 }
 
 proto.format_img = function(element) {
-    var uri = element.getAttribute('src');
-    var style = element.getAttribute('style');
-    var width = element.getAttribute('width');
-    var height = element.getAttribute('height');
-    var class = element.getAttribute('class');
+    var uri='';
+    uri = element.getAttribute('src');
     if (uri) {
+        var style = element.getAttribute('style');
+        var width = element.getAttribute('width');
+        var height = element.getAttribute('height');
+        var class = element.getAttribute('class');
+
         this.assert_space_or_newline();
         this.appendOutput(uri);
         var attr='';
@@ -197,6 +199,7 @@ proto.format_img = function(element) {
         if (attr) this.appendOutput('?'+attr);
     }
 }
+
 
 proto.format_table = function(element) {
     this.assert_blank_line();
@@ -226,18 +229,26 @@ proto.format_tr = function(element) {
 }
 
 proto.format_br = function(element) {
-// for plain br
-    var string = this.output[this.output.length - 1];
-    if (! string.whitespace && ! string.match(/\n$/))
+    var str1 = this.output[this.output.length - 1];
+    if (! str1.whitespace && ! str1.match(/\n$/)) {
         this.insert_new_line();
-    this.insert_new_line();
+        this.insert_new_line(); // two \n\n is rendered as <br />
+    } else {
+        this.insert_new_line(); // \n\n\n is rendered as <br /><br />
+    }
 }
 
-// proto.format_pre FIXME
-
 proto.assert_blank_line = function() {
+    if (! this.should_whitespace()) return
     this.chomp();
     this.insert_new_line();
+    //this.insert_new_line(); // FIX for line_alone (----)
+}
+
+proto.handle_line_alone = function (element, markup) {
+    this.assert_blank_line();
+    this.appendOutput(markup[1]);
+    this.assert_blank_line();
 }
 
 proto.format_td = function(element) {
@@ -264,6 +275,63 @@ proto.format_td = function(element) {
     this.appendOutput('');
 }
 
+proto.format_li = function(element) {
+    var level = this.list_type.length;
+    if (!level) die("List error");
+    var type = this.list_type[level - 1];
+    var markup = this.config.markupRules[type];
+    var ind = ' ';
+    this.appendOutput(ind.times(level-1) + markup[1] + ' ');
+
+    // Nasty ie hack which I don't want to talk about.
+    // But I will...
+    // *Sometimes* when pulling html out of the designmode iframe it has
+    // <LI> elements with no matching </LI> even though the </LI>s existed
+    // going in. This needs to be delved into, and we need to see if
+    // quirksmode and friends can/should be set somehow on the iframe
+    // document for wikiwyg. Also research whether we need an iframe at all on
+    // IE. Could we just use a div with contenteditable=true?
+    if (Wikiwyg.is_ie &&
+        element.firstChild &&
+        element.firstChild.nextSibling &&
+        element.firstChild.nextSibling.nodeName.match(/^[uo]l$/i))
+    {
+        try {
+            element.firstChild.nodeValue =
+              element.firstChild.nodeValue.replace(/ $/, '');
+        }
+        catch(e) { }
+    }
+
+    this.walk(element);
+
+    this.chomp();
+    this.insert_new_line();
+}
+
+proto.do_indent = function() {
+    this.selection_mangle(
+        function(that) {
+            if (that.sel == '') return false;
+            that.sel = that.sel.replace(/^(\>\s)/gm, '$1$1');
+            that.sel = that.sel.replace(/^/gm, ' '); // space indent
+            that.sel = that.sel.replace(/^ (\>\s)/gm, '$1');
+            return true;
+        }
+    )
+}
+
+proto.do_outdent = function() {
+    this.selection_mangle(
+        function(that) {
+            if (that.sel == '') return false;
+            that.sel = that.sel.replace(/^(\s(?=\s+(\*|\d+\.))|\s(?!\*|\d+\.)|\> )/gm, '');
+            return true;
+        }
+    )
+}
+
+
 proto = Wikiwyg.Toolbar.prototype;
 proto.config.controlLayout = [
     'save', 'cancel', 'mode_selector', '/',
@@ -277,10 +345,15 @@ proto.config.controlLayout = [
     'nowiki',
     'hr',
     'table',
+    'indent', 'outdent', '|',
+    'image',
+    'media',
 ];
 
 proto.config.controlLabels.math = 'Math';
 proto.config.controlLabels.nowiki = 'As Is';
+proto.config.controlLabels.image = 'Image';
+proto.config.controlLabels.media = 'Media';
 
 proto = Wikiwyg.Wikitext.prototype;
 proto.config.markupRules.bold = ['bound_phrase', "'''", "'''"];
@@ -299,15 +372,25 @@ proto.config.markupRules.h6 = ['bound_line', '====== ', ' ======'],
 proto.config.markupRules.pre = ['bound_phrase','{{{','}}}'],
 proto.config.markupRules.ordered = ['start_lines', ' 1.'];
 proto.config.markupRules.unordered = ['start_lines', ' *'];
-proto.config.markupRules.indent = ['start_lines', '>'];
+proto.config.markupRules.indent = ['start_lines', ' '];
+proto.config.markupRules.quote = ['start_lines', '> '];
 proto.config.markupRules.hr = ['line_alone', '----'];
+proto.config.markupRules.image = ['bound_phrase', 'attachment:', ''];
+proto.config.markupRules.media = ['bound_phrase', '[[Media(', ')]]'];
 proto.config.markupRules.table = ['line_alone', '|| A || B || C ||\n||   ||   ||   ||\n||   ||   ||   ||'];
 
 proto.do_math = Wikiwyg.Wikitext.make_do('math');
 proto.do_nowiki = Wikiwyg.Wikitext.make_do('nowiki');
+if (Wikiwyg.Wikitext.make_format) // Wikiwyg-0.12
+    proto.format_image = Wikiwyg.Wikitext.make_format('image');
+else // Wikiwyg snapshot
+    proto.format_image = Wikiwyg.Wikitext.make_formatter('image');
+proto.do_image = Wikiwyg.Wikitext.make_do('image');
+proto.do_media = Wikiwyg.Wikitext.make_do('media');
 
 proto.collapse = function(string) {
-    return string.replace(/\r\n/g, "\n"); // FIX
+    return string.replace(/\r\n|\r/g, ''); // FIX
+    //return string.replace(/\r\n|\r/g, "\n"); // FIX
 }
 
 proto.walk = function(element) {
@@ -319,24 +402,93 @@ proto.walk = function(element) {
         else if (part.nodeType == 3) {
             if (part.nodeValue.match(/\S/)) {
                 var string = part.nodeValue;
-                if (! string.match(/^[\'\.\,\?\!\)]/)) {
-                    this.assert_space_or_newline(); // FIX
-                    string = this.trim(string); // FIX
+                //if (! string.match(/^[\'\.\,\?\!\)]/)) {
+                    //this.assert_space_or_newline(); // FIX
+                    //string = this.trim(string); // FIX
                     //string = this.mytrim(string); // replace
-                }
-                this.appendOutput(this.collapse(string));
+                //}
+                // XXX do not auto insert/delete white spaces!!!
+                //string = this.mytrim(string); // replace
+                //this.appendOutput(this.collapse(string)); // FIX
+                this.appendOutput(string);
+                //this.appendOutput('^'+string+'_');
             }
         }
     }
 }
 
 proto.mytrim = function(string) {
-    string = string.replace(/(\s|\r\n|\n|\r)+$/, '');
-    return string.replace(/^(\r\n|\n|\r)+/, '');
+    // remove only one leading newline
+    return string.replace(/^(\r\n|\n|\r)/, '');
+    //return string.replace(/^(\r\n|\n|\r)+/, '');
+}
+
+// XXX - A lot of this is hardcoded.
+// customize of moniwiki
+proto.add_markup_lines = function(markup_start) {
+    var already_set_re = new RegExp( '^' + this.clean_regexp(markup_start), 'gm');
+    //var other_markup_re = /^(\^+|\=+|\*+|#+|>+|    )/gm;
+    var other_markup_re = /^(\s+\*|\s+\d+\.|(\>\s)+|\=+|\s+)/gm;
+
+    var match;
+    // if paragraph, reduce everything.
+    if (! markup_start.length) {
+        this.sel = this.sel.replace(other_markup_re, '');
+        this.sel = this.sel.replace(/^\ +/gm, '');
+    }
+    // if pre and not all indented, indent
+    else if ((markup_start == ' ') && this.sel.match(/^\S/m))
+        this.sel = this.sel.replace(/^/gm, markup_start);
+    // if not requesting heading and already this style, kill this style
+    else if (
+        (! markup_start.match(/[\=\^]/)) &&
+        this.sel.match(already_set_re)
+    ) {
+        this.sel = this.sel.replace(already_set_re, '');
+        if (markup_start != ' ')
+            this.sel = this.sel.replace(/^ */gm, '');
+    }
+    // if some other style, switch to new style
+    else if (match = this.sel.match(other_markup_re))
+        // if pre, just indent
+        if (markup_start == ' ')
+            this.sel = this.sel.replace(/^/gm, markup_start);
+        // if heading, just change it
+        else if (markup_start.match(/[\=\^]/))
+            this.sel = this.sel.replace(other_markup_re, markup_start);
+        // else try to change based on level
+        else
+            this.sel = this.sel.replace(
+                other_markup_re,
+                function(match) {
+                    //return markup_start.times(match.length);
+                    var lev = 0;
+                    if (match.match(/\s+\d+\./))
+                       lev = match.length - 3; 
+                    else if (match.match(/\s+\*/))
+                       lev = match.length - 2; 
+                    else if (match.match(/\>\s/))
+                       lev = match.length / 2 - 1; 
+
+                    return (' ').times(lev) + markup_start;
+                }
+            );
+    // if something selected, use this style
+    else if (this.sel.length > 0)
+        this.sel = this.sel.replace(/^(.*\S+)/gm, markup_start + ' $1');
+    // just add the markup
+    else
+        this.sel = markup_start + ' ';
+
+    var text = this.start + this.sel + this.finish;
+    var start = this.selection_start;
+    var end = this.selection_start + this.sel.length;
+    this.set_text_and_selection(text, start, end);
+    this.area.focus();
 }
 
 proto.handle_bound_phrase = function(element, markup) {
-    //this.assert_space_or_newline(); // FIX
+    this.assert_space_or_newline(); // FIX
     this.appendOutput(markup[1]);
     this.no_following_whitespace();
     this.walk(element);
@@ -434,7 +586,9 @@ function createWikiwygDiv(elem, parent) {
 //
 // dynamic section editing for MoniWiki
 //
+
 wikiwygs = [];
+
 function sectionEdit(ev,obj,sect) {
     if (sect) {
         var sec=document.getElementById('sect-'+sect);
@@ -445,7 +599,6 @@ function sectionEdit(ev,obj,sect) {
         loading.setAttribute('border',0);
         loading.setAttribute('class','ajaxLoading');
         loading.src=_url_prefix + '/imgs/loading.gif';
-        obj.blur();
         obj.parentNode.replaceChild(loading,obj);
         //alert('loading...');
         var form=HTTPGet(href);
