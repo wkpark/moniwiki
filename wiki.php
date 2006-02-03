@@ -2282,12 +2282,12 @@ class Formatter {
 
     $prefix=$this->toc_prefix;
     if ($this->toc)
-      $head="<a href='#toc'>$num</a> $head";
+      $head="<span class='tocnumber'><a href='#toc'>$num</a> </span>$head";
     $perma='';
     if ($this->perma_icon)
     $perma=" <a class='perma' href='#s$prefix-$num'>$this->perma_icon</a>";
 
-    return "$close$open$edit<h$dep><a id='s$prefix-$num' name='s$prefix-$num'></a> $head$perma</h$dep>";
+    return "$close$open$edit<h$dep><a id='s$prefix-$num' name='s$prefix-$num'></a>$head$perma</h$dep>";
   }
 
   function macro_repl($macro,$value='',$options='') {
@@ -2500,7 +2500,7 @@ class Formatter {
   }
 
   function _div($on,&$in_div,&$enclose,$attr='') {
-    $tag=array("</div>\n","<div$attr>\n");
+    $tag=array("</div>\n","<div$attr>");
     if ($on) { $in_div++; $open=$enclose;}
     else {
       if (!$in_div) return '';
