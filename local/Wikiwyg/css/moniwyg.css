@@ -11,7 +11,7 @@ span.wikiwyg_control_link a {
 
 .wikiwyg_button {
     background: #EBE8D5;
-    border: 1px solid #D3D3D3;
+    border: 1px solid #EBE8D5;
     cursor: pointer;
     width: 23px;
     height: 22px;
@@ -28,7 +28,7 @@ span.wikiwyg_control_link a {
 
 .wikiwyg_separator {
     background: #EBE8D5;
-    border: 1px solid #D3D3D3;
+    border: 1px solid #EBE8D5;
     width: 9px;
     height: 20px;
     vertical-align: bottom;

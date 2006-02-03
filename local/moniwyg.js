@@ -152,9 +152,12 @@ proto.convert_html_to_wikitext = function(html) {
         html.replace(/<img [^>]*class=.(tex|interwiki|smiley).[^>]* alt=(.)([^\'\"]+)\2[^>]+>/g, "$3");
     // interwiki links
     html =
-        html.replace(/<a [^>]+ alt=(.)([^\'\"]+)\1[^>]+>/g, "$2");
+        html.replace(/<a [^>]+ alt=(.)([^\'\"]+)\1[^>]+>/gm, "$2");
     // remove nonexists links
-    html = html.replace(/<a class=.nonexistent.[^>]+>([^<]+)<\/a>/g, "$1");
+    html = html.replace(/<a class=.nonexistent.[^>]+>([^<]+)<\/a>/gm, "$1");
+
+    // remove toc number
+    html = html.replace(/<span class=.tocnumber.>(.*)<\/span>/gm, '');
 
     //
     dom.innerHTML = html;
@@ -346,6 +349,8 @@ proto.config.controlLayout = [
     'hr',
     'table',
     'indent', 'outdent', '|',
+    'pre',
+    'quote', '|',
     'image',
     'media',
 ];
@@ -354,6 +359,7 @@ proto.config.controlLabels.math = 'Math';
 proto.config.controlLabels.nowiki = 'As Is';
 proto.config.controlLabels.image = 'Image';
 proto.config.controlLabels.media = 'Media';
+proto.config.controlLabels.quote = 'Quote';
 
 proto = Wikiwyg.Wikitext.prototype;
 proto.config.markupRules.bold = ['bound_phrase', "'''", "'''"];
@@ -373,7 +379,7 @@ proto.config.markupRules.pre = ['bound_phrase','{{{','}}}'],
 proto.config.markupRules.ordered = ['start_lines', ' 1.'];
 proto.config.markupRules.unordered = ['start_lines', ' *'];
 proto.config.markupRules.indent = ['start_lines', ' '];
-proto.config.markupRules.quote = ['start_lines', '> '];
+proto.config.markupRules.quote = ['start_lines', '>'];
 proto.config.markupRules.hr = ['line_alone', '----'];
 proto.config.markupRules.image = ['bound_phrase', 'attachment:', ''];
 proto.config.markupRules.media = ['bound_phrase', '[[Media(', ')]]'];
@@ -387,6 +393,7 @@ else // Wikiwyg snapshot
     proto.format_image = Wikiwyg.Wikitext.make_formatter('image');
 proto.do_image = Wikiwyg.Wikitext.make_do('image');
 proto.do_media = Wikiwyg.Wikitext.make_do('media');
+proto.do_quote = Wikiwyg.Wikitext.make_do('quote');
 
 proto.collapse = function(string) {
     return string.replace(/\r\n|\r/g, ''); // FIX
@@ -424,11 +431,11 @@ proto.mytrim = function(string) {
 }
 
 // XXX - A lot of this is hardcoded.
-// customize of moniwiki
+// customize for moniwiki
 proto.add_markup_lines = function(markup_start) {
     var already_set_re = new RegExp( '^' + this.clean_regexp(markup_start), 'gm');
     //var other_markup_re = /^(\^+|\=+|\*+|#+|>+|    )/gm;
-    var other_markup_re = /^(\s+\*|\s+\d+\.|(\>\s)+|\=+|\s+)/gm;
+    var other_markup_re = /^(\s+\*|\s+\d+\.|(\>\s)+|\=+)/gm;
 
     var match;
     // if paragraph, reduce everything.
@@ -451,11 +458,14 @@ proto.add_markup_lines = function(markup_start) {
     // if some other style, switch to new style
     else if (match = this.sel.match(other_markup_re))
         // if pre, just indent
-        if (markup_start == ' ')
+        if (markup_start == ' ') {
             this.sel = this.sel.replace(/^/gm, markup_start);
+            alert(this.sel);
+        }
         // if heading, just change it
-        else if (markup_start.match(/[\=\^]/))
+        else if (markup_start.match(/[\=\^]/)) {
             this.sel = this.sel.replace(other_markup_re, markup_start);
+        }
         // else try to change based on level
         else
             this.sel = this.sel.replace(
@@ -484,6 +494,105 @@ proto.add_markup_lines = function(markup_start) {
     var start = this.selection_start;
     var end = this.selection_start + this.sel.length;
     this.set_text_and_selection(text, start, end);
+    this.area.focus();
+}
+
+proto.markup_bound_phrase = function(markup_array) {
+    var markup_start = markup_array[1];
+    var markup_finish = markup_array[2];
+    var scroll_top = this.area.scrollTop;
+    if (markup_finish == 'undefined')
+        markup_finish = markup_start;
+    var multi = null;
+    if (markup_array[1].match(/\{\{\{/)) multi = 1; // fix for pre block
+    if (this.get_words(multi))
+        this.add_markup_words(markup_start, markup_finish, null);
+    this.area.scrollTop = scroll_top;
+}
+
+proto.get_words = function(multi) {
+    function is_insane(selection,multi) {
+        if (multi)
+            return selection.match(/\r?\n(\s+\*|\s\d\.)/); //FIX
+        return selection.match(/(\r?\n|\*+ |\#+ |\=+ )/);
+    }   
+
+    t = this.area; // XXX needs "var"?
+    var selection_start = t.selectionStart;
+    var selection_end = t.selectionEnd;
+
+    if (selection_start == null) {
+        selection_start = selection_end;
+        if (selection_start == null) {
+            return false
+        }
+        selection_start = selection_end =
+            t.value.substr(0, selection_start).replace(/\r/g, '').length;
+    }
+
+    var our_text = t.value.replace(/\r/g, '');
+    selection = our_text.substr(selection_start,
+        selection_end - selection_start);
+
+    selection_start = this.find_right(our_text, selection_start, /(\S|\r?\n)/);
+    if (selection_start > selection_end)
+        selection_start = selection_end;
+    selection_end = this.find_left(our_text, selection_end, /(\S|\r?\n)/);
+    if (selection_end < selection_start)
+        selection_end = selection_start;
+
+    if (is_insane(selection,multi)) {
+        this.alarm_on();
+        return false;
+    }
+
+    this.selection_start =
+        this.find_left(our_text, selection_start, Wikiwyg.Wikitext.phrase_end_re);
+    this.selection_end =
+        this.find_right(our_text, selection_end, Wikiwyg.Wikitext.phrase_end_re);
+
+    t.setSelectionRange(this.selection_start, this.selection_end);
+    t.focus();
+
+    this.start = our_text.substr(0,this.selection_start);
+    this.sel = our_text.substr(this.selection_start, this.selection_end -
+        this.selection_start);
+    this.finish = our_text.substr(this.selection_end, our_text.length);
+
+    return true;
+}
+
+proto.markup_is_on = function(start, finish) {
+    return (this.sel.match(start) && this.sel.match(finish));
+}
+
+proto.add_markup_words = function(markup_start, markup_finish, example) {
+        if (this.sel.match(/\n/)) {
+            markup_start += '\n';
+            markup_finish = '\n' + markup_finish;
+        }
+    if (this.toggle_same_format(markup_start, markup_finish)) {
+        this.selection_end = this.selection_end -
+            (markup_start.length + markup_finish.length);
+        markup_start = '';
+        markup_finish = '';
+    }
+    if (this.sel.length == 0) {
+        if (example)
+            this.sel = example;
+        var text = this.start + markup_start + this.sel +
+            markup_finish + this.finish;
+        var start = this.selection_start + markup_start.length;
+        var end = this.selection_end + markup_start.length + this.sel.length;
+        this.set_text_and_selection(text, start, end);
+    } else {
+        var text = this.start + markup_start + this.sel +
+            markup_finish + this.finish;
+        var start = this.selection_start;
+        var end = this.selection_end + markup_start.length +
+            markup_finish.length;
+        this.set_text_and_selection(text, start, end);
+    }
     this.area.focus();
 }
 
