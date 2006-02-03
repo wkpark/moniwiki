@@ -1,0 +1,649 @@
+@import url("../../../css/_base.css");
+@import url("../../../css/_extra.css");
+@import url("../../../css/_calendar.css");
+@import url("../../../css/_user.css");
+
+body {
+  font-family:Georgia,Verdana,Lucida,sans-serif;font-size:12px;
+  color:#000;
+  margin-left:0px;
+  margin-right:0px;
+  margin-top:0px;
+  margin-bottom:0px;
+}
+
+#mainBody {
+  /* top:15px; /* */
+/*  padding-left:100px;
+  padding-right:100px; */
+  min-width:750px;
+  margin: 0px auto 0px auto;
+  width: 750px;
+  /*\*/ min-width: 750px /* */
+}
+
+div {
+/*  border:1px solid red; /* */
+}
+
+#topHeader {
+  padding-left:15px;
+  padding-top:2px;
+  color:white;
+  font-family:Tahoma,Verdana,Vera Sans,sans-serif;
+  font-size:11px;
+  font-weight:bold;
+}
+
+#topHeader a{
+  color:white;
+  text-decoration:none;
+}
+
+#topBanner {
+  height:48px;
+  font-size:40px;
+  font-family:Tahoma,sans-serif;
+  color:white;
+  padding-left:8px;
+  padding-top:10px;
+  padding-bottom:0px;
+  margin:0px;
+  overflow-y:hidden;
+  /* overflow:hidden; does not work correctly in the mozilla */
+}
+#pTopLeft {
+  background: url("../imgs/ntl.png") no-repeat;
+  z-index:4;
+}
+#pTopRight {
+  background: url("../imgs/ntr.png") no-repeat right top;
+  z-index:4;
+}
+
+#pBanSpace {
+  height:3px;
+}
+
+#pBanner {
+  height:50px;
+  padding:8px;
+  font-size:36px;
+  text-align:center;
+  font-family:Trebuchet MS,Tahoma,Lucida,sans-serif;
+}
+
+#pBanLeft {
+  height:143px;
+}
+#pBanRight {
+}
+
+
+#pBottomMargin {
+  height:20px;
+}
+
+#pBottomLeft {
+  background: url("../imgs/nbl.png") no-repeat left bottom;
+  z-index:1;
+}
+#pBottomRight {
+  background: url("../imgs/nbr.png") no-repeat right bottom;
+  z-index:1;
+}
+
+#pBodyLeft {
+  background: url("../imgs/nl.png") repeat-y left;
+  z-index:-5;
+}
+#pBodyRight {
+  background: url("../imgs/nr.png") repeat-y right;
+  z-index:-5;
+}
+
+#goForm {
+  float:right;
+  padding: 3px 10px;
+}
+
+#pTitle {
+/*  border: 1px solid #7B9AC5; /* */
+  padding:0px;
+}
+
+#wikiPage {
+  margin-left:13px;
+  margin-right:15px;
+  padding-top:10px;
+  padding-bottom:10px;
+  min-height:400px;
+}
+
+#wikiBanner {
+  margin-top:10px;
+  text-align:center;
+}
+
+
+a:link { color: #0686db;}
+a:visited { color: #000000;}
+/* a:hover {background-color:#999966;color:white} /* */
+.wikiTitle {
+  padding-left:10px;
+  font-family:Trebuchet MS,Tahoma,Lucida,sans-serif;
+  font-size:22px;
+  font-weight:bold;
+  text-decoration: none;
+}
+tt.wiki {font-family:Monotype,Lucida Console,lucida,monospace;font-size:12px;}
+tt.foot {
+  font-family:Tahoma,lucida,monospace;
+  font-size:11px;
+  vertical-align: super;
+}
+
+tt.sister {
+  font-family:Tahoma,lucida,monospace;
+  font-size:11px;
+  vertical-align: super;
+  text-decoration: none;
+}
+
+pre {
+  white-space:pre-wrap;
+  white-space: -moz-pre-wrap;
+  overflow: auto;
+}
+
+pre.wiki {
+  padding-left:6px;
+  padding-top:6px; 
+  font-family:"Bitstream Vera Sans Mono", Courier, GulimChe, monospace !important;
+  background-color:#000000;
+  color:#c0c0c0;
+  border:1px solid #cccc99;
+  border-left:10px solid #cccc99;
+  padding:10px;
+  white-space:pre;
+  white-space: -moz-pre-wrap;
+}
+
+pre.console {
+  background-color: #000000;
+  color: #E0E0E0;
+  padding: .25em ;
+  border: 2px inset #808080;
+}
+
+pre.quote {
+  padding-left:6px;
+  padding-top:6px;
+  white-space:pre-wrap;
+  white-space: -moz-pre-wrap; 
+  font-family:Georgia,monotype,lucida,monospace;font-size:14px;
+  background-color: #E9ECEF;
+}
+
+pre.wikiSyntax {
+  font-family:"Bitstream Vera Sans Mono", Courier, GulimChe, monospace !important;
+  background-color: #f5f5f5 !important;
+  color: black !important;
+  border:1px solid #cccc99;
+  border-left:10px solid #cccc99;
+  padding:10px;
+  white-space:pre;
+  white-space: -moz-pre-wrap;
+}
+
+table.wiki {
+/* background-color:#E2ECE5;*/
+/* border-collapse: collapse; */
+  border: 0px outset #ddddb0;
+}
+
+td.wiki {
+  background-color: #F8F7F0;
+/* border-collapse: collapse; */
+  border: 0px inset #EAF2F4;
+}
+
+textarea.wiki { width:98%; }
+
+th.info {
+  background-color:#E2ECE2;
+/*  border-collapse: collapse; */
+/*  border: 1px solid silver; */
+}
+
+td.info {
+  background-color:#E2ECE2;
+
+}
+
+h1,h2,h3,h4,h5 {
+  font-family:Tahoma,sans-serif;
+  padding-left:2px;
+  border-bottom:1px solid #C0c0c0;
+}
+
+h1 a, h2 a, h3 a, h4 a, h5 a {
+  text-decoration:none;
+}
+
+ul li {
+  list-style-image: url(../imgs/li1.png);
+}
+
+ul li li {
+  list-style-image: url(../imgs/li2.png);
+}
+
+h2,h1 {
+  padding-top:10px;
+}
+
+* html a.perma:visited { /* IE hack */
+  color:#000;
+}
+
+div.message {
+  margin-top: 3pt;
+  background-color: #E8E8E8;
+  border-color:#ee0000;
+  color:#440000;
+  padding:3px;
+}
+
+.highlight {
+  background-color:#FFFF40;
+}
+
+#wikiGoto {
+  font-family:Tahoma,Lucida,sans-serif;
+  font-size:11px;
+}
+
+#wikiGoto input[type="text"] {
+  font-family:Tahoma,Lucida,sans-serif;
+  font-size:11px;
+  width:100px;
+}
+
+input[value="Go"] {
+  font-family:Tahoma,Lucida,sans-serif;
+  font-size:10px;
+  width:23px;
+}
+
+input[value="OK"] {
+  font-family:Tahoma,Lucida,sans-serif;
+  font-size:10px;
+  width:25px;
+}
+
+
+table.closure, td.closure{
+  background-color: #E9ECEF;
+}
+
+/*  */
+.wikiHr {
+  border:0px solid;
+  padding: 0px 0px; /* */
+  margin-top:0px;
+  height:1px;  
+/* background: #000 url(hr1.gif) no-repeat scroll center; */
+}
+
+#wikiTrailer {
+  background-color:#fafafa; 
+  padding-left: 20px;
+}
+
+.wikiNavigation {
+  background-color:#E0E0E0; 
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+#wikiOrigin {
+  background-color:#fafafa; 
+  padding-left: 20px;
+  padding-top:3px;
+  padding-bottom:3px;
+}
+
+#wikiHeader {
+/*  border-left: 0.8em solid #7B9AC5; /* */
+/*  border: 1px solid #7B9AC5; /* */
+  clear:both;
+  color: #000000;
+  padding: 0.2em 0em 0.2em 0.2em;
+}
+
+#wikiHeader a:link {color:#000000;}
+#wikiHeader a:visited {color:#000000;}
+
+#wikiMenuBar {
+  padding:6px;
+  height:43px;
+}
+
+#pMenuLeft {
+  background: url("../imgs/ml.png") no-repeat left top;
+  z-index:2;
+}
+#pMenuRight {
+  background: url("../imgs/mr.png") no-repeat right top;
+  z-index:2;
+}
+
+#wikiIcon {
+  float:right;
+  padding: 3px 10px;
+  text-align: right;
+  vertical-align: middle;
+}
+
+#wikiMenu {
+/*
+  background-color: #1690c0;
+  color: #1690c0;
+*/
+}
+
+#wikiMenu ul {
+  margin:0;
+  padding:0;
+  list-style:none;
+}
+
+#wikiMenu li {
+  display:inline;
+  padding: 4px 10px;
+  border-right: 1px solid #A8DBFD;
+  /* border-right: 1px solid #e0e0e0; */
+}
+
+#wikiMenu li:hover {
+/*  background-color: #ffffff; /* */
+  background-color: #98D3FC; /* */
+  text-decoration: none;
+}
+
+#wikiMenu li:hover a{
+/* color: #1999ee; /* */
+  color: #ffffff; /* */
+}
+
+#wikiMenu li a:active {
+  color: #b0b0b0;
+  text-decoration: none;
+}
+
+#wikiMenu a, #wikiMenu a:visited, #wikiMenu a:link {
+  margin: 0;
+  text-decoration: none;
+  color:white;
+}
+
+#wikiMenu a{
+  color:white;
+  font-size:11px;
+  font-weight:bold;
+  font-family: Tahoma,Verdana,sans-serif;
+  text-decoration:none;
+}
+
+#wikiBody {
+  color: black;
+/*  background-color: #fff; /* */
+  overflow: hidden; /* */
+/*  border: 1px dotted #c0c0c0; /* */
+/*  border-left: 0.8em solid #E2ECE2;
+  border-right: 0.8em solid #E2ECE2; */
+/*  border-left: 0.8em dotted; /*solid #6A2525; */
+/*  border-right: 0.8em solid #6A2525; */
+/*  text-transform: lowercase; /* */
+/*  margin: 10px 10px 0px 10px; */
+/*  padding: 5px 1em 5px 1em; */
+/*  margin-left: 20px; */
+/*  padding-left: 1em; /* */
+/*  text-indent: 10px; */
+/*  border: 0px outset #E2ECE5; */
+/*  font-size:16px; 
+  border-collapse:collapse; */
+}
+
+#wikiBody a:link {
+  text-decoration:none;
+  color: #125Fab;
+}
+
+#wikiBody a:visited {
+  /* border-bottom: 1px dotted #bbb; */
+  color: #125fab;
+}
+
+#wikiBody a:hover {
+  color: #2285E8;
+  text-decoration:none;
+}
+
+#wikiContent {
+}
+
+#wikiExtra {
+/*  padding-top: 1em; /* */
+}
+
+#wikiFooter {
+  clear:both;
+  padding: 0.5em 2em;
+/*  background-color:yellow; */
+}
+
+.wikiHints {
+  font-family:Georgia,Verdana,Lucida,sans-serif;
+  font-size:10px;
+  background-color:#C0D3D2;
+  padding:5px;
+}
+
+#wikiSister {
+/*  background-color:lightgreen; /* */
+}
+
+#wikiPreview {
+  border: 2px solid #a0a0a0;
+  margin: 5px 5px 5px 5px;
+  padding: 5px 1em 5px 1em;
+}
+
+
+div.indent {
+  margin-top: 3px;
+  padding-left: 22px;
+}
+
+div.quote {
+  background: transparent url("../imgs/quote-open.png") no-repeat;
+  padding-top: 3px;
+  background-color: #f8f8f8; /* */
+}
+
+div.diff-removed {
+  background-color:#EEBfbb;
+}
+
+del.diff-removed {
+  color: #999999;
+  background-color:white !important;
+}
+
+ins.diff-added {
+  background-color:#ccffcc;
+}
+
+div.hint { font-size: 10px; background-color: #369; color:white;}
+a.purple { font-size: 10px; text-decoration:none;}
+
+/* Blog CSS */
+a.purple { font-size: 10px; text-decoration:none;}
+div.blog { width:90%; padding: 0em 1em 0em 1em; }
+span.blog-user { font-size:10px; }
+div.blog-title { font-size:16px; font-weight:bold; }
+div.blog-comments { }
+div.blog-comment { padding:1em 1em 1em 2em; margin-bottom:5px;border-left: 4px solid #E4F1F4; background-color:#F0F6F8;}
+div.blog-comments .separator { display:none;}
+div.blog-action { text-align:right; font-size:9px; }
+
+div.blog-date { font-size:18px; font-weight:bold; padding-bottom:5px;}
+span.blog-user { font-size:10px; }
+
+div.blog-summary { margin-bottom:10px;}
+
+div.trackback-hint { font-size: 10px; padding: 1em 1em 1em 1em;background-color: #eee;}
+/* Calendar */
+td.day { background: #e0e0e0; text-align: center;}
+td.today { background:#ffffff; text-align: center;}
+span.blogged {
+  text-decoration:none;
+  font-weight:bold; color:#000000; text-align: center;
+}
+
+.Calendar a{text-decoration:none;color:black;}
+
+caption.month {
+  font-weight:bold;
+  white-space:nowrap;
+}
+
+/* HierarchicalWiki */
+div.wikiGroup {
+  font-family:Tahoma,Lucida,sans-serif;
+  font-size:x-small;
+}
+
+/* login */
+#wikiLogin {
+  font-family:Tahoma,sans-serif;
+  font-size:x-small;
+  font-weight:bold;
+}
+
+#wikiLogin input {
+  font-family:Verdana,sans-serif;
+  /* border:1px solid #848284; /* */
+  font-size:x-small;
+  font-weight:normal;
+}
+
+#commentForm {
+  padding:5px;
+  background-color:#eeeeee;
+}
+
+#commentForm input {
+  /* border:1px solid #848284; /* */
+  font-size:x-small;
+  font-family:Verdana,sans-serif;
+}
+
+/* enscript syntax */
+div.wikiPre i,div.wikiPre b{
+  font-weight: normal;
+  font-style: normal;
+}
+
+img.imgLeft {
+  margin-right : 15px;
+  margin-bottom : 5px;
+}
+
+img.imgRight {
+  margin-left : 10px;
+  margin-bottom : 5px;
+}
+
+span.externalLink {
+  display: none;
+}
+
+span.lineNumber {
+  color:#c0c0c0;
+  /* color:#ffff00; /* */
+}
+
+math, math[mode="inline"] {
+  font-family: CMSY10, CMEX10, Symbol, Times;
+}
+
+.sectionEdit a:link {
+  color:#3D9CB4;
+}
+
+.commentForm textarea.wiki {
+  align:right;
+  width:412px; height:136px;
+  background:url(../imgs/commentarea.png) no-repeat left top;
+  border:none;
+  padding:4px 8px;
+}
+
+* html .commentForm textarea.wiki { /* IE fix */
+  background:url(../imgs/commentarea.png) no-repeat left top fixed;
+  padding-right:20px;
+}
+
+.commentForm textarea.wiki:hover { background-position:left bottom;}
+
+#goForm input.goto {
+  width:160px !important; 
+  height:15px;
+  background:url(../imgs/goinput.png) no-repeat left top;
+  border:none;
+  padding:6px 8px;
+  font-family: "Trebuchet MS",Georgia,sans-serif;
+  font-size:12px;
+}
+
+* html #goForm input.goto { /* IE fix */
+  background:url(../imgs/goinput.png) no-repeat left top fixed;
+}
+
+#goForm input.goto:hover {
+  background-position:left bottom;
+}
+
+#goForm input.submitBtn {
+width:69px; height:26px;
+color:#FFF;
+font-weight:bold;
+padding:2px 5px;
+background:url(../imgs/gobutton.png) no-repeat left top;
+cursor:pointer;
+border:none;}
+
+#goForm input.submitBtn:hover {
+  background-position:left bottom;
+}
+
+#container {
+  margin: 0 auto;
+}
+
+#content {
+/*  margin-right:140px; /* */
+  padding-right:5px;
+}
+
+#wikiSideMenu {
+  float:right;
+  display:inline;
+  padding:5px;
+  width:140px;
+  border-left:1px dotted #e0e0e0;
+  height:100%;
+}
