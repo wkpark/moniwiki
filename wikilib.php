@@ -1879,8 +1879,8 @@ function macro_InterWiki($formatter,$value,$options=array()) {
             $url=$formatter->macro_repl('Attachment',substr($icon,11),1);
             $icon=qualifiedUrl($DBInfo->url_prefix.'/'.$url);
           }
-          preg_match('/^(\d+)(x(\d+))?\b/',strtok(''),$sz);
-          $sx=$sz[1];$sy=$sz[3];
+          preg_match('/^(\d+)(x(\d+))?\b/',strtok(''),$msz);
+          $sx=$msz[1];$sy=$msz[3];
           $sx=$sx ? $sx:16; $sy=$sy ? $sy:16;
           $intericon[$wiki]=array($sx,$sy,trim($icon));
         }
@@ -1901,7 +1901,7 @@ function macro_InterWiki($formatter,$value,$options=array()) {
     if (file_exists($DBInfo->shared_intericon))
       $map=array_merge($map,file($DBInfo->shared_intericon));
 
-    for ($i=0;$i<sizeof($map);$i++) {
+    for ($i=0,$isz=sizeof($map);$i<$isz;$i++) {
       $line=rtrim($map[$i]);
       if (!$line || $line[0]=="#" || $line[0]==" ") continue;
       if (preg_match("/^[A-Z]+/",$line)) {
