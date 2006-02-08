@@ -3754,7 +3754,7 @@ $options['id']=$user->id;
 
 # MoniWiki theme
 if ((empty($DBInfo->theme) or isset($_GET['action'])) and isset($_GET['theme'])) $theme=$_GET['theme'];
-else $theme=$DBInfo->theme;
+else if ($DBInfo->theme_css) $theme=$DBInfo->theme;
 if ($theme) $options['theme']=$theme;
 
 if ($DBInfo->trail) {
@@ -3780,10 +3780,12 @@ if ($options['id'] != 'Anonymous') {
 } else {
   $options['css_url']=$user->css;
   $options['tz_offset']=$user->tz_offset;
-  if (!$theme) $options['theme']=$user->theme;
+  if (!$theme) $options['theme']=$theme=$user->theme;
 }
 
-if ($DBInfo->theme and $DBInfo->theme_css)
+if (!$options['theme']) $options['theme']=$theme=$DBInfo->theme;
+
+if ($theme and ($DBInfo->theme_css or !$options['css_url']))
   $options['css_url']=$DBInfo->url_prefix."/theme/$theme/css/default.css";
 
 $options['timer']=&$timing;
