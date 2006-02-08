@@ -51,7 +51,7 @@ function macro_Comment($formatter,$value,$options=array()) {
     $hidden.='<input type="hidden" name="comment_id" value="'.$value.'" />';
   $form = "<form name='editform' method='post' action='$url'>\n";
   $form.= <<<FORM
-<textarea class="wiki" id="content" name="savetext"
+<textarea class="wiki" name="savetext"
  rows="$rows" cols="$cols">$savetext</textarea><br />
 FORM;
   if ($options['id'] == 'Anonymous')
