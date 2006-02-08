@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2006 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // Theme plugin for the MoniWiki
 //
@@ -10,8 +10,13 @@ function do_theme($formatter,$options) {
   global $DBInfo;
 
   if ($options['clear']) {
-    if ($options[id]=='Anonymous') {
-      header("Set-Cookie: MONI_THEME=dummy; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname());
+    if ($options['id']=='Anonymous') {
+      #header("Set-Cookie: MONI_THEME=dummy; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname());
+      #header("Set-Cookie: MONI_CSS=dummy; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname());
+      setcookie('MONI_THEME','dummy',time()-60*60*24*30,get_scriptname());
+      setcookie('MONI_CSS','dummy',time()-60*60*24*30,get_scriptname());
+      $options['css_url']='';
+      $options['theme']='';
     } else {
       # save profile
       $udb=new UserDB($DBInfo);
@@ -31,7 +36,7 @@ function do_theme($formatter,$options) {
                                get_scriptname());
         setcookie("MONI_CSS",$options['css_url'],time()+60*60*24*30,
                                get_scriptname());
-        $title="Theme is changed";
+        $title=_("Theme is changed");
         $msg="Goto ".$formatter->link_repl("UserPreferences");
       } else if ($options['save'] and $options['id']!='Anonymous') {
         # save profile
@@ -70,7 +75,7 @@ FORM;
 
 function macro_theme($formatter,$value) {
   global $DBInfo;
-  if ($DBInfo->theme) return "Theme disabled !";
+  if ($DBInfo->theme_css) return _("Theme disabled !");
   $out="
 <form method='get'>
 <input type='hidden' name='action' value='theme' />
@@ -84,7 +89,7 @@ function macro_theme($formatter,$value) {
       $themes[]= $file;
   }
 
-  $out.="<option value=''>-- Select --</option>\n";
+  $out.="<option value=''>"._("-- Select --")."</option>\n";
   foreach ($themes as $item)
      $out.="<option value='$item'>$item</option>\n";
 

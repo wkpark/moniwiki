@@ -60,7 +60,7 @@ FORM;
 
 function macro_Css($formatter="") {
   global $DBInfo;
-  if ($DBInfo->theme_css) return "CSS disabled !";
+  if ($DBInfo->theme_css) return _("CSS disabled !");
   $out="
 <form method='post'>
 <input type='hidden' name='action' value='css' />
