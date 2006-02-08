@@ -44,9 +44,14 @@ function _stripslashes($str) {
 }
 
 function qualifiedUrl($url) {
-  if (substr($url,0,7)=="http://")
+  if (substr($url,0,7)=='http://' or substr($url,0,8) == 'https://')
     return $url;
-  return "http://$_SERVER[HTTP_HOST]$url";
+  $port= ($_SERVER['SERVER_PORT'] != 80) ? ':'.$_SERVER['SERVER_PORT']:'';
+  $proto= 'http';
+  if (!empty($_SERVER['HTTPS'])) $proto= 'https';
+  else $proto= strtolower(strtok($_SERVER['SERVER_PROTOCOL'],'/'));
+  if ($url[0] != '/') $url='/'.$url; // XXX
+  return $proto.'://'.$_SERVER['HTTP_HOST'].$port.$url;
 }
 
 function find_needle($body,$needle,$exclude='',$count=0) {
