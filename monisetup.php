@@ -117,7 +117,7 @@ class MoniConfig {
     $lines=file($configfile);
     $key='';
     foreach ($lines as $line) {
-      $line=rtrim($line); // for Win32
+      $line=rtrim($line)."\n"; // for Win32
       if (!$key and $line[0] != '$') continue;
       if ($key) {
         $val.=$line;
@@ -388,22 +388,23 @@ print <<<EOF
 <html><head><title>Moni Setup</title>
 <style type="text/css">
 //<!--
-body {font-family:Tahoma;}
+body {font-family:Trebuchet MS,Tahoma,sans-serif;}
 h1,h2,h3,h4,h5 {
-  font-family:Tahoma;
+  font-family:Tahoma,sans-serif;
 /* background-color:#E07B2A; */
   padding-left:6px;
-  border-bottom:1px solid #999;
+  border-bottom:1px solid #bbb;
 }
 table.wiki {
-/* background-color:#E2ECE5;*/
 /* border-collapse: collapse; */
   border: 0px outset #E2ECE5;
+  font-family:bitstream vera sans mono,monospace;
 }
 
 pre.console {
   background-color:#000;
   padding: 1em 0.5em 0.5em 1em;
+  border: 1px inset #eeeeee;
   color:white;
   width:80%;
 }
@@ -412,11 +413,12 @@ td.wiki {
   background-color:#E2ECE2;
 /* border-collapse: collapse; */
   border: 0px inset #E2ECE5;
+  font-family:bitstream vera sans mono,monospace;
 }
 
 td.option {
-  font-family:sans-serif;
-  background-color:#000000;
+  font-family:bitstream vera sans mono,monospace;
+  background-color:#2062d0;
   font-weight:bold;
   color: white;
 }
@@ -576,7 +578,7 @@ if ($_SERVER['REQUEST_METHOD']!="POST") {
   while (list($key,$val) = each($config)) {
     if ($key != "admin_passwd" && $key != "purge_passwd")
     if (!preg_match('/<img /',$val))
-      $val=str_replace('<','&lt;',$val);
+      $val=str_replace(array('<',"\n"),array('&lt;',"<br />\n"),$val);
     print "<tr><td class='option'>\$$key</td><td>$val</td></tr>\n";
   }
   print "</table>\n";
@@ -597,21 +599,21 @@ if ($_SERVER['REQUEST_METHOD']!="POST") {
       else $type="input";
       if ($type=='input') {
         $val=str_replace('"',"&#34;",$val);
-        print "<td><$type type='text' name='config[$key]' value=\"$val\" size='s40'></td></tr>\n";
+        print "<td><$type type='text' name='config[$key]' value=\"$val\" size='60'></td></tr>\n";
       } else {
-        print "<td><$type name='config[$key]' rows='4' cols='40'>".$val."</$type></td></tr>\n";
+        print "<td><$type name='config[$key]' rows='4' cols='60'>".$val."</$type></td></tr>\n";
       }
     }
   }
 
   if (!$config['admin_passwd']) {
     print "<tr><td><b>\$admin_passwd</b></td>";
-    print "<td><input type='password' name='newpasswd' size='30'></td></tr>\n";
+    print "<td><input type='password' name='newpasswd' size='60'></td></tr>\n";
   } else  {
     print "<tr><td><b>Old password</b></td>";
-    print "<td><input type='password' name='oldpasswd' size='30'></td></tr>\n";
+    print "<td><input type='password' name='oldpasswd' size='60'></td></tr>\n";
     print "<tr><td><b>New password</b></td>";
-    print "<td><input type='password' name='newpasswd' size='30'></td></tr>\n";
+    print "<td><input type='password' name='newpasswd' size='60'></td></tr>\n";
   }
   print "<tr><td colspan=2>";
   print "<input type='submit' value='preview'> ";
