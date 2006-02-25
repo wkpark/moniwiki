@@ -58,6 +58,7 @@ $nonexists='fancy';
 #$owners=array('moniwiki','Hong');
 
 #$menu=array('MoniWiki'=>1,'FindPage'=>4,'TitleIndex'=>3,'BlogChanges'=>'','RecentChanges'=>2,'http://kldp.org KLDP'=>9);
+$menu=array('FrontPage'=>1,'FindPage'=>4,'TitleIndex'=>3,'RecentChanges'=>2,'UserPreferences'=>'');
 #$menu_sep='|';
 #$menu_bra='';
 #$menu_cat='';
@@ -136,7 +137,8 @@ $default_language='ko';
 $use_alias=0;
 #$aliaspage=$data_dir.'/text/AliasPageNames';
 $css_friendly=0;
-$use_redirect_msg=1; # like as MoinMoin
+$use_redirect_msg=0;
+#$use_redirect_msg=1; # for MoinMoin compatible
 #$use_safelogin=0;
 #$url_mappings=array('http://faq.ktug.or.kr/mywiki'=>'http://faq.ktug.or.kr/faq');
 #$shared_url_mappings=$data_dir.'/text/UrlMap'; # enable builtin fix url
