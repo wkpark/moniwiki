@@ -349,7 +349,6 @@ proto.config.controlLayout = [
     'hr',
     'table',
     'indent', 'outdent', '|',
-    'pre',
     'quote', '|',
     'image',
     'media',
@@ -375,7 +374,6 @@ proto.config.markupRules.h3 = ['bound_line', '=== ', ' ==='],
 proto.config.markupRules.h4 = ['bound_line', '==== ', ' ===='],
 proto.config.markupRules.h5 = ['bound_line', '===== ', ' ====='],
 proto.config.markupRules.h6 = ['bound_line', '====== ', ' ======'],
-proto.config.markupRules.pre = ['bound_phrase','{{{','}}}'],
 proto.config.markupRules.ordered = ['start_lines', ' 1.'];
 proto.config.markupRules.unordered = ['start_lines', ' *'];
 proto.config.markupRules.indent = ['start_lines', ' '];
