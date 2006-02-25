@@ -10,6 +10,7 @@ INSTDIR=@@INSTDIR@@
 [ ! -d imgs ] && cp -a $INSTDIR/imgs .
 [ ! -d theme ] && cp -a $INSTDIR/theme .
 [ ! -d css ] && cp -a $INSTDIR/css .
+[ ! -d local ] && cp -a $INSTDIR/css .
 [ ! -d applets ] && cp -a $INSTDIR/applets .
 cp $INSTDIR/{monisetup.*,secure.sh,config.php.default} .
 
