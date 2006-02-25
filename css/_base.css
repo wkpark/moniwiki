@@ -132,8 +132,10 @@ div.diff-removed {
 }
 
 div.diff-sep {
-  background-color:#000000;
-  color:#FFD700; /* gold */
+  font-family:"Bitstream Vera Sans mono",monospace;
+  background-color:#e0e0e0;
+  color:#000000; /* */
+  padding:2px;
 }
 
 span.diff-added, ins.diff-added {
@@ -203,7 +205,6 @@ table.closure, td.closure{
 }
 
 #wikiTrailer, #wikiOrigin {
-  clear:both;
   padding-left: 20px;
   padding-bottom: 5px;
 }
@@ -391,9 +392,14 @@ h4:hover a.perma, h5:hover a.perma, h6:hover a.perma {
 }
 
 .rc-date {
- font-size:1.2em;
+  font-size:1.2em;
 }
 .rc-bookmark {
- font-size:11px;
- font-weight:normal;
+  font-size:11px;
+  font-weight:normal;
+}
+
+.wikiMarkup {
+  font-family:Bitstream vera sans mono,Courier New,monospace; 
+  background-color:#ffff00;
 }

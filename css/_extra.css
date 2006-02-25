@@ -7,9 +7,15 @@ div.sectionEdit {
   margin-right:5px; margin-top:3px;
   visibility:hidden;
 }
+
 #wikiContent div:hover .sectionEdit {
   visibility:visible;
 }
+
+* html div.sectionEdit {
+  visibility:visible; /* for IE */
+}
+
 div.sectionEdit:hover {
   visibility:visible;
 }
@@ -125,3 +131,10 @@ ul.depth-5 {
 .poold { color:#909090; }
 .posym { color:red; }
 .potok { color:violet; }
+
+/* bts */
+.bts-comment {
+  padding-top: 3px;
+  padding-left:8px !important;
+  border-left: 3px solid #d7b7fb;
+}
