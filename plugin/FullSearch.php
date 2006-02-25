@@ -116,7 +116,11 @@ EOF;
 
   $test=@preg_match("/$needle/","",$match);
   $test2=@preg_match("/$excl_needle/","",$match);
-  if ($test === false or $test2 === false) {
+  if (!trim($needle)) {
+     $opts['msg'] = _("Empty expression");
+     return $form;
+  }
+  if (!$needle or $test === false or $test2 === false) {
      $opts['msg'] = sprintf(_("Invalid search expression \"%s\""), $needle);
      return $form;
   }
