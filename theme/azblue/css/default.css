@@ -19,7 +19,7 @@ body {
   min-width:750px;
   margin: 0px auto 0px auto;
   width: 750px;
-  /*\*/ min-width: 750px /* */
+  /*\*/ min-width: 750px; /* */
 }
 
 div {
@@ -30,7 +30,7 @@ div {
   padding-left:15px;
   padding-top:2px;
   color:white;
-  font-family:Tahoma,Verdana,Vera Sans,sans-serif;
+  font-family:Tahoma,Verdana,sans-serif;
   font-size:11px;
   font-weight:bold;
 }
