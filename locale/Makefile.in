@@ -55,7 +55,6 @@ ${POT_FILE}: ../plugin/ABBR.php
 ${POT_FILE}: ../plugin/Anchor.php
 ${POT_FILE}: ../plugin/Attachment.php
 ${POT_FILE}: ../plugin/BabelFish.php
-${POT_FILE}: ../plugin/Baduk.php
 ${POT_FILE}: ../plugin/Bar.php
 ${POT_FILE}: ../plugin/Blog.php
 ${POT_FILE}: ../plugin/BlogArchives.php
@@ -79,12 +78,10 @@ ${POT_FILE}: ../plugin/Gallery.php
 ${POT_FILE}: ../plugin/GetText.php
 ${POT_FILE}: ../plugin/ISBN.php
 ${POT_FILE}: ../plugin/Icon.php
-${POT_FILE}: ../plugin/ImportTable.php
 ${POT_FILE}: ../plugin/ImportUrl.php
 ${POT_FILE}: ../plugin/Include.php
 ${POT_FILE}: ../plugin/Info.php
 ${POT_FILE}: ../plugin/JME.php
-${POT_FILE}: ../plugin/KeywordView.php
 ${POT_FILE}: ../plugin/Keywords.php
 ${POT_FILE}: ../plugin/LikePages.php
 ${POT_FILE}: ../plugin/LineHeight.php
@@ -118,7 +115,6 @@ ${POT_FILE}: ../plugin/WantedPages.php
 ${POT_FILE}: ../plugin/WordIndex.php
 ${POT_FILE}: ../plugin/autogoto.php
 ${POT_FILE}: ../plugin/backup.php
-${POT_FILE}: ../plugin/blog2.php
 ${POT_FILE}: ../plugin/blogrss.php
 ${POT_FILE}: ../plugin/bookmark.php
 ${POT_FILE}: ../plugin/chat.php
@@ -130,7 +126,6 @@ ${POT_FILE}: ../plugin/filter.php
 ${POT_FILE}: ../plugin/filter/abbr.php
 ${POT_FILE}: ../plugin/filter/antispam.php
 ${POT_FILE}: ../plugin/filter/cite.php
-${POT_FILE}: ../plugin/filter/indexer.php
 ${POT_FILE}: ../plugin/filter/sample.php
 ${POT_FILE}: ../plugin/fixmoin.php
 ${POT_FILE}: ../plugin/foaf.php
@@ -148,7 +143,6 @@ ${POT_FILE}: ../plugin/pageview.php
 ${POT_FILE}: ../plugin/print.php
 ${POT_FILE}: ../plugin/processor/abc.php
 ${POT_FILE}: ../plugin/processor/asciimathml.php
-${POT_FILE}: ../plugin/processor/baduk.php
 ${POT_FILE}: ../plugin/processor/blog.php
 ${POT_FILE}: ../plugin/processor/chat.php
 ${POT_FILE}: ../plugin/processor/diff.php
@@ -172,7 +166,6 @@ ${POT_FILE}: ../plugin/processor/pic.php
 ${POT_FILE}: ../plugin/processor/pre.php
 ${POT_FILE}: ../plugin/processor/python.php
 ${POT_FILE}: ../plugin/processor/randomquote.php
-${POT_FILE}: ../plugin/processor/syntax.php
 ${POT_FILE}: ../plugin/processor/text_xml.php
 ${POT_FILE}: ../plugin/processor/vim.php
 ${POT_FILE}: ../plugin/processor/xslt.php
@@ -187,7 +180,6 @@ ${POT_FILE}: ../plugin/rss.php
 ${POT_FILE}: ../plugin/rss_blog.php
 ${POT_FILE}: ../plugin/rss_rc.php
 ${POT_FILE}: ../plugin/scrap.php
-${POT_FILE}: ../plugin/searchdb.php
 ${POT_FILE}: ../plugin/security/community.php
 ${POT_FILE}: ../plugin/security/desktop.php
 ${POT_FILE}: ../plugin/security/htaccesslogin.php
