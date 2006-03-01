@@ -88,8 +88,7 @@ function macro_Navigation($formatter,$value) {
       $prev=$indices[$prev];
       if (($p=strpos($prev,'~'))!==false)
         $prev_text=substr($prev,$p+1);
-      if ($prev_text)
-      $pnut.=$formatter->link_repl("[wiki:$prev $prev_text]"," accesskey=\",\" ");
+      $pnut.=$formatter->link_tag($prev, "", $prev_text," accesskey=\",\" ");
     }
     if ($use_action) $formatter->query_string=$save;
     $pnut.=" | ".$formatter->link_repl("[wiki:$index $index_text]")." | ";
@@ -99,7 +98,7 @@ function macro_Navigation($formatter,$value) {
       $next=$indices[$next];
       if (($p=strpos($next,'~'))!==false)
         $next_text=substr($next,$p+1);
-      $pnut.=$formatter->link_repl("[wiki:$next $next_text]"," accesskey=\".\" ");
+      $pnut.=$formatter->link_tag($next, "", $next_text, " accesskey=\".\" ");
     }
     $pnut.=' &raquo;';
     if ($use_action) $formatter->query_string=$save;
