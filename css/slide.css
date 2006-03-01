@@ -194,7 +194,7 @@ div.indent {
 }
 
 a.purple { font-size: 10px; display:none;}
-a.nonexists {display: none;}
+a.nonexistent {display: none;}
 /* Blog CSS */
 a.perma { font-size: 10px; display:none;}
 a.purple { display: none;}
