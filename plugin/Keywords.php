@@ -24,11 +24,19 @@ define(MIN_FONT_SZ,10);
         else if ($opt == 'flickr')
             $tag_link='http://www.flickr.com/photos/tags/$TAG';
         else if ($opt=='all') { $options['all']=1; $limit=0; }
+        else if ($opt=='random') {
+            $options['random']=$options['all']=1; }
         else if ($opt=='suggest') $options['suggest']=1;
         else if (($p=strpos($opt,'='))!==false) {
             $k=substr($opt,0,$p);
             $v=substr($opt,$p+1);
             if ($k=='limit') $limit=$v;
+            else if ($k=='random') {
+                $options['all']=1;
+                $v=(int)$v;
+                $v=($v > 0) ? $v:1;
+                $options['random']=$v;
+            }
             else if ($k=='sort' and in_array($v,array('freq','alpha')))
                 $sort=$v;
             else if ($k=='type' and in_array($v,array('full','title')))
@@ -42,6 +50,7 @@ define(MIN_FONT_SZ,10);
             $pagename=$opt;
         }
     }
+    if ($options['random'] and !$limit) $limit=0;
 
     if (!$pagename) $pagename=$formatter->page->name;
 
@@ -68,6 +77,14 @@ define(MIN_FONT_SZ,10);
         arsort($words);
         $max=current($words); // get max hit number
 
+        if ($options['random']) {
+            $rws=array();
+            $selected=array_rand($words,$options['random']);
+            foreach($selected as $k) {
+                $rws[$k]=$words[$k];
+            }
+            $words=&$rws;
+        }
         #print_r($words);
     } else {
         $max=3; // default weight
