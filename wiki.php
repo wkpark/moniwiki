@@ -924,20 +924,23 @@ class WikiDB {
     $fp= fopen($this->editlog_name, 'r');
     while (is_resource($fp) and ($fz=filesize($this->editlog_name))>0){
       fseek($fp,0,SEEK_END);
-      if ($fz < 1024) {
+      if ($fz <= 1024) {
         fseek($fp,0);
         $ll=rtrim(fread($fp,1024));
-        $lines=explode("\n",$ll);
+        $lines=array_reverse(explode("\n",$ll));
         break;   
       }
       $a=-1; // hack, don't read last \n char.
       $last='';
       fseek($fp,0,SEEK_END);
       while($date_from < $check and !feof($fp)){
-        $a-=1024;
-        if (-$a > $fz) { $a=-$fz;}
+        $rlen=$fz + $a;
+        if ($rlen > 1024) { $rlen=1024;}
+        else if ($rlen <= 0) break;
+        $a-=$rlen;
         fseek($fp,$a,SEEK_END);
-        $l=fread($fp,1024);
+        $l=fread($fp,$rlen);
+        if ($rlen != 1024) $l="\n".$l; // hack, for the first log entry.
         while(($p=strrpos($l,"\n"))!==false) {
           $line=substr($l,$p+1).$last;
           $l=substr($l,0,$p);
