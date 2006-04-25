@@ -3156,8 +3156,14 @@ class Formatter {
     }
     $content_type=
       $DBInfo->content_type ? $DBInfo->content_type: "text/html";
+
+    if ($DBInfo->force_charset)
+      $force_charset = '; charset='.$DBInfo->charset;
+
     if (!$plain)
-      $this->header('Content-type: '.$content_type);
+      $this->header('Content-type: '.$content_type.$force_charset);
+#    if (!$plain)
+#      $this->header('Content-type: '.$content_type);
 
     if (isset($this->pi['#noindex'])) {
       $metatags='<meta name="robots" content="noindex,nofollow" />';
@@ -3487,11 +3493,17 @@ MSG;
       # get from the config.php
       $quicklinks=$this->menu;
     }
+
     $sister_save=$this->sister_on;
     $this->sister_on=0;
+    $titlemnu=0;
     foreach ($quicklinks as $item=>$attr) {
       if (strpos($item,' ') === false) {
         if (strpos($attr,'=') === false) $attr="accesskey='$attr'";
+        if ($item == $this->page->name) {
+          $attr.=" class='current'";
+          $titlemnu=1;
+        }
         # like 'MoniWiki'=>'accesskey="1"'
         $menu[]=$this->word_repl($item,_($item),$attr);
 #        $menu[]=$this->link_tag($item,"",_($item),$attr);
@@ -3499,6 +3511,11 @@ MSG;
         # like a 'http://moniwiki.sf.net MoniWiki'
         $menu[]=$this->link_repl($item,$attr);
       }
+    }
+    if ($DBInfo->use_titlemenu and $titlemnu == 0 ) {
+      $attr="class='current'";
+      # XXX make title more shorter to name abbr
+      $menu[]=$this->word_repl($this->page->name,'',$attr);
     }
     $this->sister_on=$sister_save;
     if (!$this->css_friendly) {
@@ -3508,7 +3525,10 @@ MSG;
       #  #if $menu[$i]==
       #  $menu[$i]="<li >".$menu[$i]."</li>\n";
       #}
-      $menu='<div id="wikiMenu"><ul><li>'.implode("</li>\n<li>",$menu)."</li></ul></div>\n";
+      $menu='<div id="wikiMenu"><ul><li>'.implode("</li><li>",$menu)."</li></ul></div>\n";
+      # set current attribute.
+      $menu=preg_replace("/(li)>(<a\s[^>]+current[^>]+)/",
+        "$1 class='current'>$2",$menu);
     }
 
     # icons

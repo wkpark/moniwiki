@@ -51,6 +51,7 @@ $nonexists='fancy';
 #$nonexists='nolink';
 #$nonexists='forcelink';
 #$use_titlecache=0;
+#$use_titlemenu=1; # use current title name as menu
 #$security_class="needtologin";
 #$security_class="desktop";
 #$security_class="wikimaster";
