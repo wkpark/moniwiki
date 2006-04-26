@@ -361,7 +361,7 @@ table.closure, td.closure{
 
 #wikiMenu li {
   display:inline;
-  padding: 4px 10px;
+  padding: 4px 10px;margin:0px;
   border-right: 1px solid #A8DBFD;
   /* border-right: 1px solid #e0e0e0; */
 }
@@ -369,6 +369,12 @@ table.closure, td.closure{
 #wikiMenu li:hover {
 /*  background-color: #ffffff; /* */
   background-color: #98D3FC; /* */
+  text-decoration: none;
+}
+
+#wikiMenu li.current {
+/*  background-color: #ffffff; /* */
+  background-color: #0584D9; /* */
   text-decoration: none;
 }
 
