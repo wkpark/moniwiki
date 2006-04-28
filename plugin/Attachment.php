@@ -117,11 +117,18 @@ function macro_Attachment($formatter,$value,$option='') {
       return "<span class=\"attach\"><img align='middle' src='$DBInfo->imgs_dir_interwiki".'uploads-16.png\' /><a href="'.$link.'">'.$text.'</a></span>';
     }
   }
+
+  $paste='';
+  if ($DBInfo->use_clipmacro and preg_match('/^(.*)\.png$/i',$file,$m)) {
+    $now=time();
+    $url=$formatter->link_url($pagename,"?action=clip&amp;value=$m[1]&amp;now=$now");
+    $paste=" <a href='$url'>"._("or paste a new picture")."</a>";
+  }
   if ($pagename == $formatter->page->name)
-    return '<span class="attach">'.$formatter->link_to("?action=UploadFile&amp;rename=".urlencode($file),sprintf(_("Upload new Attachment \"%s\""),$file)).'</span>';
+    return '<span class="attach">'.$formatter->link_to("?action=UploadFile&amp;rename=".urlencode($file),sprintf(_("Upload new Attachment \"%s\""),$file)).$paste.'</span>';
 
   if (!$pagename) $pagename='UploadFile';
-  return '<span class="attach">'.$formatter->link_tag($pagename,"?action=UploadFile&amp;rename=".urlencode($file),sprintf(_("Upload new Attachment \"%s\" on the \"%s\""),$file, $pagename)).'</span>';
+  return '<span class="attach">'.$formatter->link_tag($pagename,"?action=UploadFile&amp;rename=".urlencode($file),sprintf(_("Upload new Attachment \"%s\" on the \"%s\""),$file, $pagename)).$paste.'</span>';
 }
 
 // vim:et:sts=2:
