@@ -692,6 +692,24 @@ class WikiDB {
     if ($this->use_smileys){
       include_once($this->smiley.".php");
       # set smileys rule
+      if ($this->shared_smileymap and file_exists($this->shared_smileymap)) {
+        $myicons=array();
+        $lines=file($this->shared_smileymap);
+        foreach ($lines as $l) {
+          if ($l[0] != ' ') continue;
+          if (!preg_match('/^ \*\s*([^ ]+)\s(.*)$/',$l,$m)) continue;
+          $name=_preg_escape($m[1]);
+          list($img,$extra)=explode(' ',$m[2]);
+          if (preg_match('/^(http|ftp):.*\.(png|jpg|jpeg|gif)/',$img)) {
+            $myicons[$name]=array(16,16,0,$img);
+          } else {
+            continue;
+          }
+        }
+        #print_r($myicons);
+        $smileys=array_merge($smileys,$myicons);
+      }
+
       $tmp=array_keys($smileys);
       $tmp=array_map("_preg_escape",$tmp);
       $rule=join($tmp,"|");
@@ -2372,6 +2390,8 @@ class Formatter {
 
     $alt=str_replace("<","&lt;",$smiley);
 
+    if (preg_match('/^(http|ftp):/',$img))
+      return "<img src='$img' border='0' class='smiley' alt='$alt' title='$alt' />";
     return "<img src='$this->imgs_dir/$img' border='0' class='smiley' alt='$alt' title='$alt' />";
   }
 
@@ -3436,15 +3456,14 @@ FOOT;
 
     # find upper page
     $pos=strrpos($name,"/");
-    $myname=$name;
+    $mypgname=$name;
     if ($pos > 0) {
       $upper=substr($name,0,$pos);
       $upper_icon=$this->link_tag($upper,'',$this->icon['upper'])." ";
     } else if ($this->group) {
       $group=$this->group;
-      $groupt=substr($group,0,-1).' &raquo;';
-      $myname=substr($this->page->name,strlen($group));
-      $upper=_urlencode($myname);
+      $mypgname=substr($this->page->name,strlen($group));
+      $upper=_urlencode($mypgname);
       $upper_icon=$this->link_tag($upper,'',$this->icon['main'])." ";
     }
 
@@ -3456,7 +3475,8 @@ FOOT;
     }
     if (!$title) {
       if ($group) { # for UserNameSpace
-        $title=$myname;
+        $title=$mypgname;
+        $groupt=substr($group,0,-1).' &raquo;';
         $groupt=
           "<span class='wikiGroup'>$groupt</span>";
       } else     
@@ -3471,7 +3491,7 @@ FOOT;
     if ($link)
       $title="<a href=\"$link\" class='wikiTitle'>$title</a>";
     else if (empty($options['nolink']))
-      $title=$this->link_to("?action=fullsearch$qext&amp;value="._urlencode($myname),$title,"class='wikiTitle'");
+      $title=$this->link_to("?action=fullsearch$qext&amp;value="._urlencode($mypgname),$title,"class='wikiTitle'");
     $logo=$this->link_tag($DBInfo->logo_page,'',$DBInfo->logo_string);
     $goto_form=$DBInfo->goto_form ?
       $DBInfo->goto_form : goto_form($action,$DBInfo->goto_type);
@@ -3515,7 +3535,8 @@ MSG;
     if ($DBInfo->use_titlemenu and $titlemnu == 0 ) {
       $attr="class='current'";
       # XXX make title more shorter to name abbr
-      $menu[]=$this->word_repl($this->page->name,'',$attr);
+      if ($DBInfo->hasPage($this->page->name))
+        $menu[]=$this->word_repl($mypgname,'',$attr);
     }
     $this->sister_on=$sister_save;
     if (!$this->css_friendly) {
