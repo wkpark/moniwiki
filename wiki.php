@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.1.1';
+$_release = '1.1.2';
 
 #ob_start("ob_gzhandler");
 
@@ -1556,6 +1556,7 @@ class Formatter {
     $this->css_friendly=$DBInfo->css_friendly;
     $this->use_smartdiff=$DBInfo->use_smartdiff;
     $this->use_easyalias=$DBInfo->use_easyalias;
+    $this->submenu=$DBInfo->submenu;
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -2135,6 +2136,9 @@ class Formatter {
     if ($extended) $page=rawurldecode($url_only); # C++
     else $page=urldecode($url_only);
     $url=$this->link_url($url);
+
+    #check current page
+    if ($page == $this->page->name) $attr.='class="current"';
 
     //$url=$this->link_url(_rawurlencode($page)); # XXX
     if (isset($this->pagelinks[$page])) {
@@ -3456,7 +3460,7 @@ FOOT;
 
     # find upper page
     $pos=strrpos($name,"/");
-    $mypgname=$name;
+    $mypgname=$this->page->name;
     if ($pos > 0) {
       $upper=substr($name,0,$pos);
       $upper_icon=$this->link_tag($upper,'',$this->icon['upper'])." ";
@@ -3536,7 +3540,7 @@ MSG;
       $attr="class='current'";
       # XXX make title more shorter to name abbr
       if ($DBInfo->hasPage($this->page->name))
-        $menu[]=$this->word_repl($mypgname,'',$attr);
+        $menu[]=$this->word_repl($mypgname,$this->page->name,$attr);
     }
     $this->sister_on=$sister_save;
     if (!$this->css_friendly) {
@@ -3550,6 +3554,53 @@ MSG;
       # set current attribute.
       $menu=preg_replace("/(li)>(<a\s[^>]+current[^>]+)/",
         "$1 class='current'>$2",$menu);
+    }
+
+    # submenu XXX
+    if ($this->submenu) {
+      $smenu=array();
+      $mnu_pgname=($group ? $group.'~':'').$this->submenu;
+      if ($DBInfo->hasPage($mnu_pgname)) {
+        $pg=$DBInfo->getPage($mnu_pgname);
+        $mnu_raw=$pg->get_raw_body();
+        $mlines=explode("\n",$mnu_raw);
+        foreach ($mlines as $l) {
+          if ($mk and preg_match('/^\s{2,}\*\s*(.*)$/',$l,$m)) {
+            if (!is_array($smenu[$mk])) $smenu[$mk]=array();
+            $smenu[$mk][]=$m[1];
+            if (!$smenu[$m[1]]) $smenu[$m[1]]=$mk;
+          } else if (preg_match('/^ \*\s*(.*)$/',$l,$m)) {
+            $mk=$m[1];
+          }
+        }
+
+        #print_r($smenu);
+
+        $cmenu=null;
+        if ($smenu[$this->page->name]) {
+          $cmenu=&$smenu[$this->page->name];
+        } else if ($smenu['Main']) {
+          $cmenu=&$smenu['Main'];
+        }
+
+        if ($cmenu) {
+          if (is_array($cmenu)) {
+            $smenua=$cmenu;
+          } else {
+            $smenua=$smenu[$cmenu];
+          }
+
+          $submenus=array();
+          foreach ($smenua as $item) {
+            $submenus[]=$this->link_repl($item);
+          }
+          #print_r($submenus);
+          $submenu='<div id="subMenu"><ul><li>'.implode("</li><li>",$submenus)."</li></ul></div>\n";
+          # set current attribute.
+          $submenu=preg_replace("/(li)>(<a\s[^>]+current[^>]+)/",
+            "$1 class='current'>$2",$submenu);
+        }
+      }
     }
 
     # icons
@@ -3581,8 +3632,8 @@ MSG;
 
     #
     if (file_exists($this->themedir."/header.php")) {
-      $trail=&$option['trail'];
-      $origin=&$this->origin;
+      $trail="<div id='wikiTrailer'>\n".$this->trail."</div>\n";
+      $origin="<div id='wikiOrigin'>\n".$this->origin."</div>\n";
 
       $themeurl=$this->themeurl;
       include($this->themedir."/header.php");
@@ -3612,7 +3663,7 @@ MSG;
       print $msg;
       print "</div>\n";
     }
-    if (empty($themeurl) or !$_NEWTHEME) {
+    if (empty($themeurl) or !$this->_newtheme) {
       print $DBInfo->hr;
       if ($options['trail']) {
         print "<div id='wikiTrailer'>\n";
@@ -3802,7 +3853,7 @@ else if ($DBInfo->theme_css) $theme=$DBInfo->theme;
 if ($theme) $options['theme']=$theme;
 
 if ($DBInfo->trail) {
-  $options['trail']=$user->trail;
+  $options['trail']=$user->trail ? $user->trail:'';
 }
 if ($options['id'] != 'Anonymous') {
   $udb=new UserDB($DBInfo);
