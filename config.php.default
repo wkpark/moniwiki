@@ -150,8 +150,13 @@ $use_preview_uploads=1;
 #$use_camelcase=0; # turn off camelcase syntax by default
 #$category_regex=urldecode('%EB%B6%84%EB%A5%98$');
 #$use_backlinks=1; # set default fullsearch behavior as backlinks search
-#$use_smartdiff=1;
+#$use_smartdiff=1; # use the experimental smart diff XXX
 #$hide_actions=0; # hide actions list for anonymous user
 #$use_easyalias=1; # direct linking to the dest page
 #$info_options='ago,simple'; # default Info macro options
+#$force_charset=1; # overriding default charset 
+#$use_titlemenu=1; # add the current pagename to the menu list
+#$submenu='SubMenu'; # dynamic submenu
+#$shared_smileymap=$data_dir.'/text/SmileyMap'; # customizable smileymap
+#$use_clipmacro=1; # use the clip macro with the attachment macro
 ?>
