@@ -240,3 +240,9 @@ div.pagebreak {page-break-before: always;}
 div.pagebreak br { display:none;}
 
 div.sectionEdit { display:none; }
+
+.codenumbers { display:none; }
+
+pre.wikiSyntax {
+  border-left: 3px solid #c0c0c0;
+}
