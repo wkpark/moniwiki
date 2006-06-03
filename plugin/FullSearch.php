@@ -140,6 +140,16 @@ EOF;
   if (!$formatter->refresh and $fc->exists($sid)) {
     $data=unserialize($fc->fetch($sid));
     if (is_array($data)) {
+      # check cache mtime
+      $cmt=$fc->mtime($sid);
+      foreach ($data as $p=>$c) {
+        $mp=$DBInfo->getPage($p);
+        $mt=$mp->mtime();
+        if ($mt > $cmt) {
+          $data=array();
+          break;
+        }
+      }
       $hits=$data;
     }
     if ($arena != 'fullsearch') {
