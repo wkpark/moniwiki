@@ -30,7 +30,7 @@ function macro_OeKaki($formatter,$value) {
   $pngname='OeKaki_'.$name.".png";
   $now=time();
 
-  $url=$formatter->link_url($formatter->page->name,"?action=OeKaki&amp;value=$name$size&amp;now=$now");
+  $url=$formatter->link_url(_rawurlencode($formatter->page->name),"?action=OeKaki&amp;value=$name$size&amp;now=$now");
 
   if (!file_exists($oekaki_dir."/$pngname"))
     return "<a href='$url'>"._("Draw new picture")."</a>";
@@ -118,8 +118,10 @@ function do_OeKaki($formatter,$options) {
   $formatter->send_title(_("Create new picture"),"",$options);
   $prefix=$formatter->prefix;
   $now=time();
-  $url_exit= $formatter->link_url($options['page'],"?ts=$now");
-  $url_save= $formatter->link_url($options['page'],"----OeKaki----$name");
+  $urlpgname=_rawurlencode($options['page']);
+  $imgname=_rawurlencode($name);
+  $url_exit= $formatter->link_url($urlpgname,"?ts=$now");
+  $url_save= $formatter->link_url($urlpgname,"----OeKaki----$imgname");
 
   $pubpath=$DBInfo->url_prefix."/applets/OekakiPlugin";
   print "<h2>"._("Edit Image")."</h2>\n";
