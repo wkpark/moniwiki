@@ -77,18 +77,23 @@ function macro_Gallery($formatter,$value,&$options) {
       $v=substr($opt,$p+1);
       if ($k=='col') $col=$v;
       else if ($k=='row') $row=$v;
+      else if ($k=='sort') $sort=$v;
     } else {
       if ($opt=='sort') $sort=1;
     }
   }
 
-  $col=($col<=0 or $col>7) ? $default_column:$col;
-  $row=($row<=0 or $row>7) ? $default_row:$row;
-  $width=$selected ? $default_width:150;
-  $perpage=$col*$row;
-
+  if (!in_array($sort,array(0,1,'name','date'))) {
+    $sort=0;
+  }
 
   $default_width=$DBInfo->gallery_img_width ? $DBInfo->gallery_img_width:600;
+
+  $col=($col<=0 or $col>7) ? $default_column:$col;
+  $row=($row<=0 or $row>7) ? $default_row:$row;
+  $perpage=$col*$row;
+
+  if ($col == 1) $img_style=' style="float:left"';
 
   if ($match[3])
     # arg has a pagename
@@ -155,6 +160,7 @@ function macro_Gallery($formatter,$value,&$options) {
     $comments[$file]=$comment;
     $selected=1;
   }
+  $width=$selected ? $default_width:150;
 
   $mtime=file_exists($dir."/list.txt") ? filemtime($dir."/list.txt"):0;
   if ((filemtime($dir) > $mtime) or $update) {
@@ -180,7 +186,13 @@ function macro_Gallery($formatter,$value,&$options) {
   }
 
   if (!$upfiles) return "<h3>No files uploaded</h3>";
-  if ($sort) arsort($upfiles);
+  if ($sort) {
+    if ($sort ==1) {
+     arsort($upfiles);
+    } elseif ($sort=='name') {
+     ksort($upfiles);
+    }
+  }
   else asort($upfiles);
 
   $out.="<table border='0' cellpadding='2'>\n<tr>\n";
@@ -271,11 +283,12 @@ function macro_Gallery($formatter,$value,&$options) {
       }
       $comment=str_replace("\\n","<br/>\n",$comment);
     }
-    $out.="<td align='center' valign='top' class='wiki'><a href='$link'>$object</a><br />".
+    $out.="<td align='center' valign='top' class='wiki'><div class='gallery-img' $img_style><a href='$link'>$object</a><br />".
           "$date ($size) ";
     if (!$options['value'])
       $out.='['.$formatter->link_tag($formatter->page->urlname,"?action=gallery&amp;value=$id",$comment_btn)."]<br />\n";
-    if ($comment) $out.="<div align='left' class='gallery-comments'>$comment</div>";
+    $out.='</div>';
+    if ($comment) $out.="<div class='gallery-comments' $comment_style>$comment</div>";
     $out.="</td>\n";
     if ($idx % $col == 0) $out.="</tr>\n<tr>\n";
     $idx++;
