@@ -86,8 +86,13 @@ function macro_Gallery($formatter,$value,&$options) {
   if (!in_array($sort,array(0,1,'name','date'))) {
     $sort=0;
   }
+  if ($col > 1) {
+    $col_td_width=(int) (100/$col);
+    $col_td_width=' width="'.$col_td_width.'%"';
+  }
 
   $default_width=$DBInfo->gallery_img_width ? $DBInfo->gallery_img_width:600;
+  $img_class="gallery-img";
 
   $col=($col<=0 or $col>7) ? $default_column:$col;
   $row=($row<=0 or $row>7) ? $default_row:$row;
@@ -159,6 +164,7 @@ function macro_Gallery($formatter,$value,&$options) {
     $upfiles[$file]=$mtime;
     $comments[$file]=$comment;
     $selected=1;
+    $img_class="gallery-sel";
   }
   $width=$selected ? $default_width:150;
 
@@ -195,7 +201,7 @@ function macro_Gallery($formatter,$value,&$options) {
   }
   else asort($upfiles);
 
-  $out.="<table border='0' cellpadding='2'>\n<tr>\n";
+  $out.="<table width='100%' border='0' cellpadding='2'>\n<tr>\n";
   $idx=1;
 
   $pages= intval(sizeof($upfiles) / $perpage);
@@ -283,7 +289,7 @@ function macro_Gallery($formatter,$value,&$options) {
       }
       $comment=str_replace("\\n","<br/>\n",$comment);
     }
-    $out.="<td align='center' valign='top' class='wiki'><div class='gallery-img' $img_style><a href='$link'>$object</a><br />".
+    $out.="<td $col_td_width align='center' valign='top' class='wiki'><div class='$img_class' $img_style><a href='$link'>$object</a><br />".
           "$date ($size) ";
     if (!$options['value'])
       $out.='['.$formatter->link_tag($formatter->page->urlname,"?action=gallery&amp;value=$id",$comment_btn)."]<br />\n";
