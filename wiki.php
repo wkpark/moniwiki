@@ -3936,7 +3936,7 @@ if ($pagename) {
     $value=$_GET['value'];
     $goto=$_GET['goto'];
     $rev=$_GET['rev'];
-    $refresh=$_GET['refresh'];
+    $refresh=($options['id'] == 'Anonymous') ? 0:$_GET['refresh'];
   }
   if (($p=strpos($action,'/'))!==false) {
     $action_mode=substr($action,$p+1);

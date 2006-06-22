@@ -40,8 +40,10 @@ function do_fullsearch($formatter,$options) {
       $tag=$formatter->link_to("?action=fullsearch&amp;value=$val&amp;context=20",_("Show Context."));
       print $tag.'<br />';
     }
+    if ($options['id'] != 'Anonymous') {
     $tag=$formatter->link_to("?action=fullsearch$qext&amp;value=$val&amp;refresh=1",_("Refresh"));
     printf(_(" (%s search results)"),$tag);
+    }
   }
   $args['noaction']=1;
   $formatter->send_footer($args,$options);
