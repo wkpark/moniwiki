@@ -72,7 +72,7 @@ function do_dot($formatter,$options) {
 
   $color=array();
   $tree=new LinkTree($options['arena']);
-  $thee->makeTree($options['page'],$node,$color,$depth,$count);
+  $tree->makeTree($options['page'],$node,$color,$depth,$count);
   if (!$node) $node=array($options['page']=>array());
   #print_r($color);
   foreach ($color as $key=>$val) $color[$key]=$depth-$val;
