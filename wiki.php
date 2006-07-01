@@ -3214,6 +3214,7 @@ class Formatter {
       else if ($DBInfo->use_keywords) {
         $keywords=strip_tags($this->page->title);
         $keywords=str_replace(" ",", ",$keywords);
+        $keywords=htmlspecialchars($keywords);
         $keywords="<meta name=\"keywords\" content=\"$keywords\" />";
       }
 
@@ -3538,9 +3539,10 @@ MSG;
     }
     if ($DBInfo->use_titlemenu and $titlemnu == 0 ) {
       $attr="class='current'";
-      # XXX make title more shorter to name abbr
-      if ($DBInfo->hasPage($this->page->name))
-        $menu[]=$this->word_repl($mypgname,$this->page->name,$attr);
+      # XXX make title more shorter ?
+      $mnuname=htmlspecialchars($this->page->name);
+      if ($DBInfo->hasPage($this->page->name) and strlen($mnuname) < 10)
+        $menu[]=$this->word_repl($mypgname,$mnuname,$attr);
     }
     $this->sister_on=$sister_save;
     if (!$this->css_friendly) {
@@ -4009,7 +4011,8 @@ if ($pagename) {
         $formatter->send_title(sprintf("%s Not Found",$page->name),"",$options);
         $button= $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
         print $button;
-        print sprintf(_(" or click %s to fullsearch this page.\n"),$formatter->link_to("?action=fullsearch&amp;value=$options[page]",_("title")));
+        $searchval=htmlspecialchars($options['page']);
+        print sprintf(_(" or click %s to fullsearch this page.\n"),$formatter->link_to("?action=fullsearch&amp;value=$searchval",_("title")));
         print $formatter->macro_repl('LikePages',$page->name,$err);
         if ($err['extra'])
           print $err['extra'];
