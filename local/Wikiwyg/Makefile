@@ -1,3 +1,6 @@
+#### WARN
+#### WARN Some functions maybe incompatible with this modified scripts.
+#### WARN
 ver=0.12
 tarball=Wikiwyg-$(ver).tar.gz
 files=lib COPYRIGHT LICENSE Changes
