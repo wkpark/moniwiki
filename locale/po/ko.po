@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: MoniWiki 1.1\n"
-"POT-Creation-Date: 2006-02-25 16:17+0900\n"
+"POT-Creation-Date: 2006-07-02 04:01+0900\n"
 "PO-Revision-Date: 2003-04-29 19:00+0900\n"
 "Last-Translator: Won-kyu Park <wkpark@kldp.org>\n"
 "Language-Team: ko <ko@li.org>\n"
@@ -13,12 +13,16 @@ msgstr ""
 "Content-Type: text/plain; charset=EUC-KR\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../plugin/Attachment.php:41 ../plugin/Attachment.php:121
+#: ../plugin/Attachment.php:41 ../plugin/Attachment.php:128
 #, c-format
 msgid "Upload new Attachment \"%s\""
 msgstr ""
 
-#: ../plugin/Attachment.php:124
+#: ../plugin/Attachment.php:125
+msgid "or paste a new picture"
+msgstr "혹은 새 그림 붙이기"
+
+#: ../plugin/Attachment.php:131
 #, c-format
 msgid "Upload new Attachment \"%s\" on the \"%s\""
 msgstr ""
@@ -175,7 +179,7 @@ msgstr "편집할 수 없습니다"
 msgid "You are not allowed to add a comment."
 msgstr "Comment는 허락되지 않습니다."
 
-#: ../plugin/Comment.php:86 ../plugin/Keywords.php:292
+#: ../plugin/Comment.php:86 ../plugin/Keywords.php:309
 msgid "Page does not exists"
 msgstr "페이지가 없습니다"
 
@@ -258,7 +262,7 @@ msgstr "오늘입니다."
 msgid "%d day(s) passed from %s."
 msgstr "%2$s로부터 %1$d일 지났습니다."
 
-#: ../plugin/FastSearch.php:44 ../plugin/FullSearch.php:77
+#: ../plugin/FastSearch.php:44 ../plugin/FullSearch.php:79
 msgid "No search text"
 msgstr ""
 
@@ -298,43 +302,43 @@ msgstr "\"%s\"에 대한 키워드 서치"
 msgid "Show Context."
 msgstr ""
 
-#: ../plugin/FullSearch.php:43
+#: ../plugin/FullSearch.php:44
 msgid "Refresh"
 msgstr "갱신"
 
-#: ../plugin/FullSearch.php:44
+#: ../plugin/FullSearch.php:45
 #, c-format
 msgid " (%s search results)"
 msgstr " (서치 결과를 %s)"
 
-#: ../plugin/FullSearch.php:120
+#: ../plugin/FullSearch.php:122
 msgid "Empty expression"
 msgstr ""
 
-#: ../plugin/FullSearch.php:124 ../wikilib.php:2410
+#: ../plugin/FullSearch.php:126 ../wikilib.php:2410
 #, c-format
 msgid "Invalid search expression \"%s\""
 msgstr "잘못된 찾기 표현식 \"%s\""
 
-#: ../plugin/Gallery.php:257 ../plugin/Gallery.php:269
+#: ../plugin/Gallery.php:275 ../plugin/Gallery.php:287
 msgid "add comment"
 msgstr "댓글 달기"
 
-#: ../plugin/Gallery.php:266
+#: ../plugin/Gallery.php:284
 msgid "show comments"
 msgstr "댓글 보기"
 
-#: ../plugin/Gallery.php:309 ../plugin/Gallery.php:312 ../wikilib.php:1166
+#: ../plugin/Gallery.php:328 ../plugin/Gallery.php:331 ../wikilib.php:1166
 #: ../wikilib.php:1309
 #, c-format
 msgid "Go back or return to %s"
 msgstr "뒤로 혹은 %s(으)로 가기"
 
-#: ../plugin/Gallery.php:310
+#: ../plugin/Gallery.php:329
 msgid "Comments are edited"
 msgstr ""
 
-#: ../plugin/Gallery.php:313
+#: ../plugin/Gallery.php:332
 msgid "Comments is added"
 msgstr ""
 
@@ -395,65 +399,65 @@ msgstr ""
 msgid "Edit new molecule"
 msgstr ""
 
-#: ../plugin/Keywords.php:255
+#: ../plugin/Keywords.php:272
 msgid "hits"
 msgstr ""
 
-#: ../plugin/Keywords.php:259
+#: ../plugin/Keywords.php:276
 msgid "add keywords"
 msgstr "키워드 더하기"
 
-#: ../plugin/Keywords.php:262
+#: ../plugin/Keywords.php:279
 msgid "Update keywords"
 msgstr "키워드 갱신"
 
-#: ../plugin/Keywords.php:264
+#: ../plugin/Keywords.php:281
 msgid "Add keywords"
 msgstr "키워드 더하기"
 
-#: ../plugin/Keywords.php:265
+#: ../plugin/Keywords.php:282
 msgid "Add as common words"
 msgstr ""
 
-#: ../plugin/Keywords.php:266
+#: ../plugin/Keywords.php:283
 msgid "Unselect all"
 msgstr "모두 선택 취소"
 
-#: ../plugin/Keywords.php:267
+#: ../plugin/Keywords.php:284
 msgid "Suggest new Keywords"
 msgstr ""
 
-#: ../plugin/Keywords.php:291
+#: ../plugin/Keywords.php:308
 msgid "You are not able to add keywords."
 msgstr "키워드를 추가할 수 없습니다."
 
-#: ../plugin/Keywords.php:300
+#: ../plugin/Keywords.php:317
 #, c-format
 msgid "%s is not found."
 msgstr "%s을(를) 찾을 수 없습니다"
 
-#: ../plugin/Keywords.php:404
+#: ../plugin/Keywords.php:421
 msgid "Common words are updated"
 msgstr ""
 
-#: ../plugin/Keywords.php:451
+#: ../plugin/Keywords.php:468
 #, c-format
 msgid "Keywords for %s are updated"
 msgstr ""
 
-#: ../plugin/Keywords.php:477
+#: ../plugin/Keywords.php:494
 msgid "Keywords are updated"
 msgstr ""
 
-#: ../plugin/Keywords.php:479
+#: ../plugin/Keywords.php:496
 msgid "There are no changes found"
 msgstr ""
 
-#: ../plugin/Keywords.php:492
+#: ../plugin/Keywords.php:509
 msgid "Update with these Keywords"
 msgstr ""
 
-#: ../plugin/Keywords.php:505
+#: ../plugin/Keywords.php:522
 #, c-format
 msgid "Select keywords for %s"
 msgstr ""
@@ -503,7 +507,7 @@ msgstr "인덱스 페이지가 없습니다"
 msgid "Create new picture"
 msgstr "새 그림 만들기"
 
-#: ../plugin/OeKaki.php:125
+#: ../plugin/OeKaki.php:127
 msgid "Edit Image"
 msgstr "그림 고치기"
 
@@ -615,7 +619,7 @@ msgstr "%d 개의 연관된 페이지"
 msgid "TwinPages of %s"
 msgstr "%s의 쌍둥이 페이지"
 
-#: ../plugin/TwinPages.php:19 ../wiki.php:3910
+#: ../plugin/TwinPages.php:19 ../wiki.php:4007
 msgid "See [TwinPages]: "
 msgstr ""
 
@@ -848,12 +852,12 @@ msgstr ""
 msgid "RCS purge \"%s\""
 msgstr ""
 
-#: ../plugin/rdf_blog.php:31 ../plugin/rss_blog.php:25
+#: ../plugin/rdf_blog.php:30 ../plugin/rss_blog.php:25
 msgid "Blog Changes"
 msgstr "바뀐 블로그"
 
 # c-format
-#: ../plugin/rdf_blog.php:45 ../plugin/rss_blog.php:103
+#: ../plugin/rdf_blog.php:44 ../plugin/rss_blog.php:103
 #, c-format
 msgid "BlogChanges at %s"
 msgstr ""
@@ -1270,118 +1274,118 @@ msgstr ""
 msgid "Whois search result for %s"
 msgstr "%s에 대한 Whois 서치 결과"
 
-#: ../wiki.php:1107
+#: ../wiki.php:1128
 #, c-format
 msgid "Rename %s to %s"
 msgstr ""
 
-#: ../wiki.php:1408
+#: ../wiki.php:1429
 msgid "Version info does not supported in this wiki"
 msgstr ""
 
-#: ../wiki.php:1418
+#: ../wiki.php:1439
 msgid "File does not exists"
 msgstr ""
 
-#: ../wiki.php:2360
+#: ../wiki.php:2385
 msgid "Invalid ajax action."
 msgstr "잘못된 ajax 액션."
 
-#: ../wiki.php:2589
+#: ../wiki.php:2616
 #, c-format
 msgid "See %s"
 msgstr ""
 
-#: ../wiki.php:2589
+#: ../wiki.php:2616
 msgid "TwinPages"
 msgstr "TwinPages"
 
-#: ../wiki.php:2594
+#: ../wiki.php:2621
 msgid "See [TwinPages]:"
 msgstr ""
 
-#: ../wiki.php:2899
+#: ../wiki.php:2926
 msgid "edit"
 msgstr ""
 
-#: ../wiki.php:3052
+#: ../wiki.php:3079
 msgid "Sister Sites Index"
 msgstr ""
 
-#: ../wiki.php:3336 ../locale/dummy.php:6
+#: ../wiki.php:3370 ../locale/dummy.php:6
 msgid "EditText"
 msgstr "고치기"
 
-#: ../wiki.php:3338
+#: ../wiki.php:3372
 msgid "NotEditable"
 msgstr "고칠수 없음"
 
-#: ../wiki.php:3340 ../locale/dummy.php:6
+#: ../wiki.php:3374 ../locale/dummy.php:6
 msgid "ShowPage"
 msgstr "보기"
 
-#: ../wiki.php:3341 ../locale/dummy.php:3 ../locale/dummy.php:5
+#: ../wiki.php:3375 ../locale/dummy.php:3 ../locale/dummy.php:5
 msgid "FindPage"
 msgstr "찾기"
 
-#: ../wiki.php:3609
+#: ../wiki.php:3706
 msgid "Main"
 msgstr ""
 
-#: ../wiki.php:3870
+#: ../wiki.php:3967
 msgid "You are in the black list"
 msgstr ""
 
-#: ../wiki.php:3871 ../wiki.php:3882
+#: ../wiki.php:3968 ../wiki.php:3979
 msgid "Please contact WikiMasters"
 msgstr ""
 
-#: ../wiki.php:3881
+#: ../wiki.php:3978
 msgid "You are blocked in this wiki"
 msgstr ""
 
-#: ../wiki.php:3912 ../wiki.php:3915 ../wikilib.php:1100
+#: ../wiki.php:4009 ../wiki.php:4012 ../wikilib.php:1100
 msgid "Create this page"
 msgstr "페이지 만들기"
 
-#: ../wiki.php:3917 ../wikilib.php:1102
+#: ../wiki.php:4015 ../wikilib.php:1102
 #, c-format
 msgid " or click %s to fullsearch this page.\n"
 msgstr ""
 
-#: ../wiki.php:3917 ../wikilib.php:1102
+#: ../wiki.php:4015 ../wikilib.php:1102
 msgid "title"
 msgstr "제목"
 
-#: ../wiki.php:3926
+#: ../wiki.php:4024
 msgid " or alternativly, use one of these templates:\n"
 msgstr " 혹은 아래의 탬플리트 목록을 이용하세요:\n"
 
-#: ../wiki.php:3929
+#: ../wiki.php:4027
 msgid "You have no templates"
 msgstr ""
 
-#: ../wiki.php:3931
+#: ../wiki.php:4029
 #, c-format
 msgid "To create your own templates, add a page with '%s' pattern.\n"
 msgstr "탬플리트를 만드시려면 '%s' 형식을 가지는 페이지를 만드세요.\n"
 
-#: ../wiki.php:3942
+#: ../wiki.php:4040
 #, c-format
 msgid "Redirected from page \"%s\""
 msgstr ""
 
-#: ../wiki.php:4032
+#: ../wiki.php:4130
 #, c-format
 msgid "You are not allowed to '%s'"
 msgstr ""
 
-#: ../wiki.php:4052
+#: ../wiki.php:4150
 #, c-format
 msgid "Fail to \"%s\" !"
 msgstr ""
 
-#: ../wiki.php:4055
+#: ../wiki.php:4153
 msgid "Please enter the valid password"
 msgstr "정확한 비밀번호를 넣어주세요"
 
