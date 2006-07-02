@@ -144,12 +144,19 @@ EOF;
     if (is_array($data)) {
       # check cache mtime
       $cmt=$fc->mtime($sid);
-      foreach ($data as $p=>$c) {
-        $mp=$DBInfo->getPage($p);
-        $mt=$mp->mtime();
-        if ($mt > $cmt) {
-          $data=array();
-          break;
+
+      # check update or not
+      $dmt=filemtime($DBInfo->text_dir.'/.');
+      if ($dmt > $cmt) { # XXX crude method
+        $data=array();
+      } else { # XXX smart but incomplete method
+        foreach ($data as $p=>$c) {
+          $mp=$DBInfo->getPage($p);
+          $mt=$mp->mtime();
+          if ($mt > $cmt) {
+            $data=array();
+            break;
+          }
         }
       }
       $hits=$data;
