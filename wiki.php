@@ -1155,6 +1155,9 @@ class Version_RCS {
 
   function Version_RCS($DB) {
     $this->DB=$DB;
+    $this->NULL='';
+    if(getenv("OS")!="Windows_NT") $this->NULL=' 2>/dev/null';
+    if ($DB->rcs_error_log) $this->NULL='';
   }
 
   function _filename($pagename) {
@@ -1166,7 +1169,7 @@ class Version_RCS {
   function co($pagename,$rev,$opt='') {
     $filename= $this->_filename($pagename);
 
-    $fp=@popen("co -x,v/ -q -p\"".$rev."\" ".$filename,"r");
+    $fp=@popen("co -x,v/ -q -p\"".$rev."\" ".$filename.$this->NULL,"r");
     $out='';
     if (is_resource($fp)) {
       while (!feof($fp)) {
@@ -1181,7 +1184,7 @@ class Version_RCS {
   function ci($pagename,$log) {
     $key=$this->_filename($pagename);
     $pagename=escapeshellcmd($pagename);
-    $fp=@popen("ci -l -x,v/ -q -t-\"".$pagename."\" -m\"".$log."\" ".$key,"r");
+    $fp=@popen("ci -l -x,v/ -q -t-\"".$pagename."\" -m\"".$log."\" ".$key.$this->NULL,"r");
     if ($fp) pclose($fp);
   }
 
@@ -1190,7 +1193,7 @@ class Version_RCS {
       $rev = "-r$rev";
     $filename=$this->_filename($pagename);
 
-    $fp= popen("rlog $opt $oldopt -x,v/ $rev ".$filename,"r");
+    $fp= popen("rlog $opt $oldopt -x,v/ $rev ".$filename.$this->NULL,"r");
     $out='';
     if ($fp) {
       while (!feof($fp)) {
@@ -1206,10 +1209,8 @@ class Version_RCS {
     if ($rev) $option="-r$rev ";
     if ($rev2) $option.="-r$rev2 ";
 
-    $NULL='';
-    if(getenv("OS")!="Windows_NT") $NULL=' 2>/dev/null';
     $filename=$this->_filename($pagename);
-    $fp=popen("rcsdiff -x,v/ -u $option ".$filename.$NULL,'r');
+    $fp=popen("rcsdiff -x,v/ -u $option ".$filename.$this->NULL,'r');
     if (!$fp) return '';
     while (!feof($fp)) {
       # trashing first two lines
@@ -3121,7 +3122,7 @@ class Formatter {
       fwrite($fp, $orig);
       fclose($fp);
 
-      $fp=popen("merge -p ".$this->page->filename." $tmpf2 $tmpf3",'r');
+      $fp=popen("merge -p ".$this->page->filename." $tmpf2 $tmpf3".$this->NULL,'r');
 
       if (!$fp) {
         unlink($tmpf2);
