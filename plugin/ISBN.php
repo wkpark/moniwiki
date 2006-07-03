@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2006 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a ISBN macro plugin for the MoniWiki
 //
@@ -11,7 +11,7 @@ function macro_ISBN($formatter="",$value="") {
   $ISBN_MAP="IsbnMap";
   $DEFAULT=<<<EOS
 Amazon http://www.amazon.com/exec/obidos/ISBN= http://images.amazon.com/images/P/\$ISBN.01.MZZZZZZZ.gif
-Aladdin http://www.aladdin.co.kr/catalog/book.asp?ISBN= http://image.aladdin.co.kr/cover/cover/\$ISBN_1.gif @/cover/(\$ISBN_1\..{3,4})\s@\\\$ISBN_1\.gif
+Aladdin http://www.aladdin.co.kr/shop/wproduct.aspx?ISBN= http://image.aladdin.co.kr/cover/cover/\$ISBN_1.gif @/cover/([^\s_/]+_1\..{3,4})\s@\\\$ISBN_1\.gif
 Gang http://kangcom.com/common/qsearch/search.asp?s_flag=T&s_text= http://kangcom.com/l_pic/\$ISBN.jpg @bookinfo\.asp\?sku=(\d+)"@\n
 EOS;
 
@@ -134,10 +134,12 @@ EOS;
      $bcache=new Cache_text('isbn');
      if ($bcache->exists($md5sum)) {
         $imgname=trim($bcache->fetch($md5sum));
+
         if ($imgrepl)
            $imglink=preg_replace('@'.$imgrepl.'@',$imgname, $imglink);
         else
            $imglink=str_replace('$ISBN', $imgname, $imglink);
+        $fetch_ok=1;
      } else {
         // fetch the bookinfo page and grep the imagname of the book.
         $fd=fopen($booklink,'r');
@@ -151,21 +153,26 @@ EOS;
                     $imglink=preg_replace('@'.$imgrepl.'@',$match[1], $imglink);
                  else
                     $imglink=str_replace('$ISBN', $match[1], $imglink);
+                 $fetch_ok=1;
                  break;
               }
            }
            fclose($fd);
         }
      }
-  } else if (strpos($imglink, '$ISBN') === false)
+  }
+
+  if (!$fetch_ok) {
+     if (strpos($imglink, '$ISBN') === false)
         $imglink.=$isbn;
-  else {
-     if (strpos($imglink, '$ISBN2') === false)
-        $imglink=str_replace('$ISBN', $isbn, $imglink);
-     else
-        $imglink=str_replace('$ISBN2', $isbn2, $imglink);
-     if ($ext)
-        $imglink=preg_replace('/\.(gif|jpeg|jpg|png|bmp)$/i', $ext, $imglink);
+     else {
+        if (strpos($imglink, '$ISBN2') === false)
+           $imglink=str_replace('$ISBN', $isbn, $imglink);
+        else
+           $imglink=str_replace('$ISBN2', $isbn2, $imglink);
+        if ($ext)
+           $imglink=preg_replace('/\.(gif|jpeg|jpg|png|bmp)$/i', $ext, $imglink);
+     }
   }
 
   if ($noimg) {
