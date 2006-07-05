@@ -5,7 +5,7 @@
 //
 // $Id$
 
-function macro_ISBN($formatter="",$value="") {
+function macro_ISBN($formatter,$value="") {
   global $DBInfo;
 
   $ISBN_MAP="IsbnMap";
@@ -97,7 +97,7 @@ EOS;
       else {
         $name=strtok($arg,'=');
         $val=strtok(' ');
-        $attr.=$name.'="'.$val.'" ';
+        if ($val) $attr.=$name.'="'.$val.'" '; #XXX
         if ($name == 'align') $attr.='class="img'.ucfirst($val).'" ';
         if ($name == 'img') $ext=$val;
       }
@@ -132,7 +132,7 @@ EOS;
      $md5sum=md5($booklink);
      // check cache
      $bcache=new Cache_text('isbn');
-     if ($bcache->exists($md5sum)) {
+     if (!$formatter->refresh and $bcache->exists($md5sum)) {
         $imgname=trim($bcache->fetch($md5sum));
 
         if ($imgrepl)
