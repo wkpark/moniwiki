@@ -160,6 +160,41 @@ EOS;
            fclose($fd);
         }
      }
+     if ($fetch_ok and $DBInfo->isbn_img_download) {
+        # some sites such as the IMDB check the referer and
+        # do not permit to show any of its images
+        # the $isbn_img_download option is needed to show such images
+        preg_match('/^(.*)\.(jpeg|jpg|gif|png)$/',$imglink,$m);
+        if ($m[1] and $m[2]) {
+           $myimglink=md5($m[1]).'.'.$m[2];
+        }
+
+        if (!$m[2]) {
+           # skip XXX
+        } else if (file_exists($DBInfo->upload_dir.'/isbn/'.$myimglink)) {
+           $mlink=macro_Attachment($formatter,'attachment:isbn/'.$myimglink,1);
+           $imglink=qualifiedUrl($DBInfo->url_prefix.'/'.$mlink);
+        } else {
+           $fd=fopen($imglink,'r');
+           if (is_resource($fd)) {
+              $myimg='';
+              while(!feof($fd)) {
+                 $myimg.=fread($fd,1024);
+              }
+              fclose($fd);
+              if (!is_dir($DBInfo->upload_dir.'/isbn/')) {
+                 umask(000);
+                 mkdir($DBInfo->upload_dir.'/isbn/',0777);
+                 umask($DBInfo->umask);
+              }
+              $fd=fopen($DBInfo->upload_dir.'/isbn/'.$myimglink,'w');
+              if (is_resource($fd)) {
+                 fwrite($fd,$myimg);
+                 fclose($fd);
+              }
+           }
+        }
+     }
   }
 
   if (!$fetch_ok) {
