@@ -399,6 +399,16 @@ h4:hover a.perma, h5:hover a.perma, h6:hover a.perma {
   font-weight:normal;
 }
 
+.rc-button ul {
+  list-style: none;
+  display: inline;
+  padding: 0px;
+}
+
+.rc-button li {
+  display: inline;
+}
+
 .wikiMarkup {
   font-family:Bitstream vera sans mono,Courier New,monospace; 
   background-color:#ffff00;
