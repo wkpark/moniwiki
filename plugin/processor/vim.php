@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2006 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a vim colorizer plugin for the MoniWiki
 //
@@ -62,7 +62,7 @@ document.write('<a href=\"#\" onclick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
   if (!file_exists($cache_dir)) {
     umask(000);
     mkdir($cache_dir,0777);
-    umask(022);
+    umask($DBInfo->umask);
   }
 
   if (file_exists($cache_dir."/$uniq".".html") && !$formatter->refresh && !$formatter->preview) {
@@ -123,7 +123,11 @@ document.write('<a href=\"#\" onclick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
 
   #$out=preg_replace("/<title.*title>|<\/?head>|<\/?html>|<meta.*>|<\/?body.*>/","", $out);
   $out=str_replace("\r\n","\n",$out); # for Win32
-  $out=preg_replace("/(^(\s|\S)*<pre>\n|\n<\/pre>(\s|\S)*$)/","",$out);
+  #$out=preg_replace("/(^(\s|\S)*<pre>\n|\n<\/pre>(\s|\S)*$)/","",$out); # XXX segfault sometime
+  $fpos=strpos($out,'<pre>');
+  $tpos=strpos($out,'</pre>');
+  $out=substr($out,$fpos+6,$tpos);
+
   $lines=explode("\n",$out);
   $out="<span class=\"line\">".
     implode("</span>\n<span class=\"line\">",$lines)."</span>\n";
