@@ -73,7 +73,7 @@ function do_uploadfile($formatter,$options) {
   if ($DBInfo->pds_allowed)
      $pds_exts=$DBInfo->pds_allowed;
   else
-     $pds_exts="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|css|exe|hwp";
+     $pds_exts="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|css|exe|pdf|hwp";
   if (!preg_match("/(".$pds_exts.")$/i",$fname[2])) {
      $msg.=sprintf(_("%s is not allowed to upload"),$upfilename)."<br/>\n";
      continue;

@@ -24,7 +24,7 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    $use_preview=$DBInfo->use_preview_uploads ? $DBInfo->use_preview_uploads:0;
    $preview_width=64;
 
-   $use_preview=0;
+   #$use_preview=0;
    $js_tag=0;
    $js_script='';
    $uploader='';
@@ -42,7 +42,7 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
      $use_preview=1;
    }
 
-   if ($options['tag']) {
+   if ($options['tag']) { # javascript tag mode
      $js_tag=1;$use_preview=1;
    }
    foreach ($args as $arg) {
@@ -164,7 +164,8 @@ EOS;
    else {
       $key='';
       $value='UploadFile';
-      $prefix.= ($prefix ? '/':'');
+      if (!$force_download)
+         $prefix.= ($prefix ? '/':'');
       $dir=$DBInfo->upload_dir;
       $handle= opendir($dir);
       $opener='/';
