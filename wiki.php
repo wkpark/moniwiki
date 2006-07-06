@@ -4119,6 +4119,7 @@ if ($pagename) {
     $options['metatags']='<meta name="robots" content="noindex,nofollow" />';
     $options['custom']='';
     $options['help']='';
+    $options['value']=$value;
 
     if (!$DBInfo->security->is_allowed($action,$options)) {
       if ($options['custom']!='' and
