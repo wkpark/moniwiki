@@ -14,11 +14,27 @@ function do_download($formatter,$options) {
     do_uploadedfiles($formatter,$options);
     return; 
   }
-  $key=$DBInfo->pageToKeyname($formatter->page->name);
-  if (!$key) {
-    // FIXME
-    return;
+  $value=&$options['value'];
+  if (($p=strpos($value,':')) !== false or ($p=strpos($value,'/')) !== false) {
+    $subpage=substr($value,0,$p);
+    $file=substr($value,$p+1);
+    $value=$subpage.'/'.$file; # normalize page arg
+    if ($subpage and $DBInfo->hasPage($subpage)) {
+      $pagename=&$subpage;
+      $key=$DBInfo->pageToKeyname($subpage);
+    } else {
+      $pagename='';
+      $key='';
+    }
+  } else {
+    $pagename=&$formatter->page->name;
+    $key=$DBInfo->pageToKeyname($formatter->page->name);
   }
+
+  #if (!$key) {
+  #  // FIXME
+  #  return;
+  #}
   $dir=$DBInfo->upload_dir."/$key";
 
   if (file_exists($dir))
