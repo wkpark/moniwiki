@@ -1,5 +1,5 @@
 <?php
-# a user based security plugin for the MoniWiki
+# a wikimaster security plugin for the MoniWiki
 # $Id$
 
 class Security_wikimaster extends Security {
@@ -8,6 +8,10 @@ class Security_wikimaster extends Security {
   function Security_wikimaster($DB='') {
     $this->DB=$DB;
     $this->allowed_users=array_merge($DB->wikimasters,$DB->owners);
+  }
+
+  function help($formatter) {
+    return $formatter->macro_repl('UserPreferences');
   }
 
   function writable($options='') {
@@ -24,6 +28,7 @@ class Security_wikimaster extends Security {
     if (in_array($options['id'],$this->allowed_users)) return 1;
     $options['err']=sprintf(_("You are not allowed to '%s' on this page."),$action);
     $options['err'].=" "._("Please contact to WikiMaster");
+    $options['help']='help';
     return 0;
   }
 
@@ -32,6 +37,7 @@ class Security_wikimaster extends Security {
     if (in_array($options['id'],$this->allowed_users)) return 1;
     $options['err']=sprintf(_("You are not allowed to '%s' on this page."),$action);
     $options['err'].=" "._("Please contact to WikiMaster");
+    $options['help']='help';
     return 0;
   }
 
@@ -40,6 +46,7 @@ class Security_wikimaster extends Security {
     if (in_array($options['id'],$this->allowed_users)) return 1;
     $options['err']=sprintf(_("You are not allowed to '%s' on this page."),$action);
     $options['err'].=" "._("Please contact to WikiMaster");
+    $options['help']='help';
     return 0;
   }
 
@@ -54,6 +61,17 @@ class Security_wikimaster extends Security {
     return 0;
   }
 
+#  function may_fullsearch($action,&$options) {
+#    if (!$options['page']) return 0; # XXX
+#    if ($options['id']=='Anonymous') {
+#      $options['err']=sprintf(_("You are not allowed to '%s' on this page"),$action);
+#      $options['err'].="\n"._("Please Login or make your ID on this Wiki ;)");
+#      $options['help']='help';
+#      return 0;
+#    }
+#    return 1;
+#  }
+
   function is_allowed($action='read',&$options) {
     $allowed_actions=array('theme','css','userform','bookmark','goto','dot',
       'trackback','rss_rc','rss','blogrss','urlencode');
@@ -61,7 +79,7 @@ class Security_wikimaster extends Security {
 
     $method='may_'.$action;
     if (method_exists($this, $method)) {
-      return $this->$method ($action,&$options);
+      return $this->$method ($action,$options);
     }
     return 1;
   }
