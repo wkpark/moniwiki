@@ -16,8 +16,16 @@ function do_man_get($formatter,$options) {
   }
 
   $cmd="man -w $options[man]";
-  exec(escapeshellcmd($cmd),$log);
-  $fname=$log[0];
+  $formatter->errlog();
+  $fp=popen(escapeshellcmd($cmd).$formatter->LOG,'r');
+  if (is_resource($fp)) {
+    $fname=rtrim(fgets($fp,1024));
+    pclose($fp);
+  }
+  $err=$formatter->get_errlog();
+  if ($err) {
+    $err='<pre class="errlog">'.$err.'</pre>';
+  }
 
   if (!$fname) {
     $options['title']=_("No manpage found");
@@ -33,8 +41,13 @@ function do_man_get($formatter,$options) {
     return;
   }
 
-  exec("zcat $fname",$raw);
-  $raw=join("\n",$raw);
+  if (function_exists('gzfile')) {
+    $raw=gzfile($fname);
+    $raw=join('',$raw);
+  } else {
+    exec("zcat $fname",$raw);
+    $raw=join("\n",$raw);
+  }
 
   $options['title']=$options['page'];
 
