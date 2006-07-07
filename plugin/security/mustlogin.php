@@ -12,6 +12,10 @@ class Security_mustlogin extends Security {
 # $options[page]: pagename
 # $options[id]: user id
 
+  function help($formatter) {
+    return $formatter->macro_repl('UserPreferences');
+  }
+
   function writable($options="") {
     return $this->DB->_isWritable($options['page']);
   }
@@ -23,6 +27,7 @@ class Security_mustlogin extends Security {
     if ($options['id']=='Anonymous') {
       $options['err']=sprintf(_("You are not allowed to '%s' on this page"),$action);
       $options['err'].="\n"._("Please Login or make your ID on this Wiki ;)");
+      $options['help']='help';
       return 0;
     }
     return 1;
@@ -33,6 +38,7 @@ class Security_mustlogin extends Security {
     if ($options['id']=='Anonymous') {
       $options['err']=sprintf(_("You are not allowed to '%s' on this page"),$action);
       $options['err'].="\n"._("Please Login or make your ID on this Wiki ;)");
+      $options['help']='help';
       return 0;
     }
     return 1;
@@ -43,21 +49,23 @@ class Security_mustlogin extends Security {
     if ($options['id']=='Anonymous') {
       $options['err']=sprintf(_("You are not allowed to '%s' on this page"),$action);
       $options['err'].="\n"._("Please Login or make your ID on this Wiki ;)");
+      $options['help']='help';
       return 0;
     }
     return 1;
   }
 
   function is_allowed($action="read",&$options) {
-    $allowed_actions=array("userform");
+    $allowed_actions=array("userform",'ticket','bookmark');
     if (in_array($action,$allowed_actions)) return 1;
     $method='may_'.$action;
     if (method_exists($this, $method)) {
-      return $this->$method ($action,&$options);
+      return $this->$method ($action,$options);
     }
     if ($options['id']=='Anonymous') {
       $options['err']=sprintf(_("You are not allowed to '%s' on this page."),$action);
       $options['err'].="\n"._("Please Login or make your ID on this Wiki ;)");
+      $options['help']='help';
       return 0;
     }
     return 1;
