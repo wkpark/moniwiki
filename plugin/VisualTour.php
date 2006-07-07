@@ -44,9 +44,11 @@ function do_VisualTour($formatter,$options) {
     fclose($fp);
   }{
     $cmd="$dotcmd -Tpng $webdot_dir/$md5sum.dot -o $webdot_dir/$md5sum.png";
-    exec($cmd,$log);
+    $fp=popen($cmd.$formatter->NULL,'r');
+    pclose($fp);
     $cmd="$dotcmd -Timap $webdot_dir/$md5sum.dot -o $webdot_dir/$md5sum.map";
-    exec($cmd,$log);
+    $fp=popen($cmd.$formatter->NULL,'r');
+    pclose($fp);
   }
 
   $selfurl=$formatter->link_to();

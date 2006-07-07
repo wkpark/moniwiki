@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Kim Jeong Yeon <see2002 at new-type.com>
+// Copyright 2003-2006 Kim Jeong Yeon <see2002 at new-type.com>
 // All rights reserved. Distributable under GPL see COPYING
 // a PIC plugin for the MoniWiki
 //
@@ -12,7 +12,7 @@ function processor_pic($formatter,$value="") {
   global $DBInfo;
 
   $GROFF="groff -e -p -ms -Tps ";
-  $CONVERT="convert -transparent white -density 120x120 -crop 0x0 ";
+  $CONVERT="convert -transparent white -density 120x120 -crop 0x0 -trim ";
 
   $vartmp_dir=&$DBInfo->vartmp_dir;
   $cache_dir=$DBInfo->upload_dir."/PIC";
@@ -43,7 +43,9 @@ function processor_pic($formatter,$value="") {
     fclose($ifp);
 
     # convert processing
-    $fp=popen("$GROFF $outpath_pic >$outpath_ps ; $CONVERT $outpath_ps $outpath_png","r");
+    $fp=popen("$GROFF $outpath_pic >$outpath_ps".$formatter->NULL,'r');
+    pclose($fp);
+    $fp=popen("$CONVERT $outpath_ps $outpath_png".$formatter->NULL,'r');
     pclose($fp);
 
     # delete temporary files

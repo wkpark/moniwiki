@@ -51,7 +51,7 @@ function processor_enscript($formatter,$value) {
 
     #$cmd="ENSCRIPT_LIBRARY=/home/httpd/wiki/lib $enscript -q -o - -E$type -W html --color=ifh --word-wrap ".$tmpf;
     $cmd="$enscript -q -o - $option -E$type -W html --color=ifh --word-wrap ".$tmpf;
-    $fp=popen($cmd, 'r');
+    $fp=popen($cmd.$formatter->NULL, 'r');
     $html='';
     while($s = fgets($fp, 1024)) $html.= $s;
     pclose($fp);

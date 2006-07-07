@@ -47,12 +47,12 @@ function processor_xsltproc($formatter,$value) {
 
   $cmd="$xsltproc --xinclude $tmpf";
 
-  $fp=popen($cmd,"r");
+  $fp=popen($cmd.$formatter->NULL,"r");
   #fwrite($fp,$src);
-
-  while($s = fgets($fp, 1024)) $html.= $s;
-
-  pclose($fp);
+  if (is_resource($fp) {
+    while($s = fgets($fp, 1024)) $html.= $s;
+    pclose($fp);
+  }
   unlink($tmpf);
 
   if (!$html) {

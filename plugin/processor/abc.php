@@ -66,7 +66,7 @@ function processor_abc($formatter="",$value="") {
 # Unix
 #
      $cmd= "$abc2midi $tmpf -o $cache_dir/$uniq.midi";
-     $fp=popen($cmd,'r');
+     $fp=popen($cmd.$formatter->NULL,'r');
      $log='';
      while($s = fgets($fp, 1024)) $log.= $s;
      pclose($fp);

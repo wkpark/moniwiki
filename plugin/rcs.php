@@ -21,7 +21,7 @@ function do_post_rcs($formatter,$options) {
   if (isset($options['param'])) {
     if ($DBInfo->hasPage($formatter->page->name) and in_array($options['param'],$supported)) {
       $key=$DBInfo->getPageKey($formatter->page->name);
-      $fp=popen( "rcs $options[param] $key",'r');
+      $fp=popen( "rcs $options[param] $key".$formatter->NULL,'r');
       pclose($fp);
       $title = sprintf(_("Change options for \"%s\""), $formatter->page->name);
       $formatter->send_header("",$options);

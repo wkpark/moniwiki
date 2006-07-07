@@ -30,10 +30,10 @@ function processor_dot($formatter,$value) {
   }{
 
     $cmd="$dotcmd -Tpng $webdot_dir/$md5sum.dot -o $webdot_dir/$md5sum.png";
-    $fp=popen($cmd,'r');
+    $fp=popen($cmd.$formatter->NULL,'r');
     pclose($fp);
     $cmd="$dotcmd -Timap $webdot_dir/$md5sum.dot -o $webdot_dir/$md5sum.map";
-    $fp=popen($cmd,'r');
+    $fp=popen($cmd.$formatter->NULL,'r');
     pclose($fp);
   }
 

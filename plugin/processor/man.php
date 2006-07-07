@@ -23,7 +23,7 @@ function processor_man($formatter,$value="") {
   $man2html= "man2html $tmpf";
   $html='';
   while($s = fgets($fp, 1024)) $html.= $s;
-  $fp=popen($man2html,'r');
+  $fp=popen($man2html.$formatter->NULL,'r');
 
   pclose($fp);
   unlink($tmpf);

@@ -53,7 +53,7 @@ function processor_linuxdoc($formatter,$value) {
   $cwd=getcwd();
   chdir($vartmp_dir);
   $log='';
-  $fp=popen($cmd,'r');
+  $fp=popen($cmd.$formatter->NULL,'r');
   while($s = fgets($fp, 1024)) $log.= $s;
   pclose($fp);
 

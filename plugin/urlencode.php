@@ -19,7 +19,7 @@ function do_urlencode($formatter,$options) {
       header("Location: $url");
     }
   } else {
-    $buf=exec(escapeshellcmd("echo ".$options[page])." | ".escapeshellcmd("iconv -f $from -t $to"));
+    $buf=exec(escapeshellcmd("echo ".$options['page'])." | ".escapeshellcmd("iconv -f $from -t $to".$formatter->NULL));
     $url=$formatter->link_url($buf);
     header("Location: $url");
   }

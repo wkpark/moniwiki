@@ -39,7 +39,7 @@ function do_rcspurge($formatter,$options) {
        else {
          #print "<b>Not enabled now</b> <tt>rcs -o$range  data_dir/".$options[page]."</tt><br />";
          print "<tt>rcs -o$range ".$options['page']."</tt><br />";
-         $fp=popen("rcs -o$range ".$formatter->page->filename,'r');
+         $fp=popen("rcs -o$range ".$formatter->page->filename.$formatter->NULL,'r');
          pclose($fp);
        }
     }

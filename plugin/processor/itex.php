@@ -99,7 +99,7 @@ function processor_itex($formatter="",$value="",$options='') {
         $cmd= "$itex < $srcpath";
   
         $out='';
-        $fp=popen($cmd,'r');
+        $fp=popen($cmd.$formatter->NULL,'r');
         while($s = fgets($fp, 1024)) $out.= $s;
         pclose($fp);
         unlink($srcpath);

@@ -48,10 +48,8 @@ $tex
 ";
   }
 
-  $RM='rm';
   $NULL='/dev/null';
   if(getenv("OS")=="Windows_NT") {
-    $RM='del';
     $NULL='NUL';
   }
   
@@ -66,7 +64,7 @@ $tex
      $cwd= getcwd();
      chdir($vartmp_dir);
      $cmd= "$latex $option $uniq.tex >$NULL";
-     $fp=popen($cmd,'r');
+     $fp=popen($cmd.$formatter->NULL,'r');
      pclose($fp);
 
      if (!file_exists($uniq.".dvi")) {
@@ -75,12 +73,12 @@ $tex
        return;
      }
      $cmd= "$dvips -D 600 $uniq.dvi -o $uniq.ps";
-     $fp=popen($cmd,'r');
+     $fp=popen($cmd.$formatter->NULL,'r');
      pclose($fp);
      chdir($cwd);
 
      $cmd= "$convert -transparent white -trim -crop 0x0 -density 120x120 $vartmp_dir/$uniq.ps $outpath";
-     $fp=popen($cmd,'r');
+     $fp=popen($cmd.$formatter->NULL,'r');
      pclose($fp);
      unlink($vartmp_dir."/$uniq.log");
      unlink($vartmp_dir."/$uniq.aux");

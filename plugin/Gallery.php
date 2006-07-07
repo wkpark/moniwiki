@@ -241,7 +241,9 @@ function macro_Gallery($formatter,$value,&$options) {
             imagejpeg ($thumb, $dir.'/thumbnails/'.$file);
           }
         } else {
-          system("convert -scale ".$width." ".$dir."/".$file." ".$dir."/thumbnails/".$file);
+          $fp=popen("convert -scale ".$width." ".$dir."/".$file." ".$dir."/thumbnails/".$file.
+          $formatter->NULL);
+          pclose($fp);
         }
       }
       if (!$selected and file_exists($dir."/thumbnails/".$file)) {
