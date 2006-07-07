@@ -21,6 +21,8 @@ function do_post_restore($formatter,$options) {
 
     if (file_exists($DBInfo->text_dir)) {
       $title = _("Error: Don't try to overwrite it");
+      $options['msg'] = _("Please rename your old 'text_dir' first.");
+      $options['msg'].= '<br />'._("e.g. \$ mv data/text data/text_old");
       $formatter->send_header("",$options);
       $formatter->send_title($title,"",$options);
     } else if (file_exists($tar)) {
@@ -33,10 +35,13 @@ function do_post_restore($formatter,$options) {
       $formatter->send_header("",$options);
       $formatter->send_title($title,"",$options);
 
-      print "<pre class='wiki'>";
+      print "<pre class='errlog'>";
       print "$ $cmd\n";
-      exec($cmd,$log);
-      print(join("\n",$log));
+      $formatter->errlog();
+      $fp=popen($cmd.$formatter->LOG,'r');
+      pclose($fp);
+      $err=$formatter->get_errlog();
+      print $err;
       print "</pre>";
     }
 
@@ -60,6 +65,7 @@ function do_post_restore($formatter,$options) {
     $formatter->send_footer("",$options);
   } else {
     $title = _("Restore backuped data");
+    $options['msg']=_("Select a tarball file to restore");
     $formatter->send_header("",$options);
     $formatter->send_title($title,"",$options);
 

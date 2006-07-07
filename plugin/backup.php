@@ -34,13 +34,21 @@ function do_post_backup($formatter,$options) {
     $cmd="tar c{$verbose_option}pzf $tar $dest_files";
 
     $formatter->send_header("",$options);
-    $formatter->send_title("","",$options);
 
-    print "<pre>";
-    print $cmd;
-    exec($cmd,$log);
-    print(join("\n",$log));
-    print "</pre>";
+    $formatter->errlog();
+    $fp=popen($cmd.' > '.$formatter->mylog,'r');
+    if (is_resource($fp)) {
+      pclose($fp);
+      $options['msg']=_("Your wiki is backuped successfully");
+      $formatter->send_title("","",$options);
+      print '<pre class="errlog">';
+      print $cmd."\n";
+      print $formatter->get_errlog();
+      print "</pre>";
+    } else {
+      $options['msg']=_("Backup failed !");
+      $formatter->send_title("","",$options);
+    }
     $formatter->send_footer("",$options);
   } else {
     $title = _("Did you want to Backup your wiki ?");

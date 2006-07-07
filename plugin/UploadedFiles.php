@@ -132,8 +132,11 @@ EOS;
    else $mydownload='download';
    $checkbox='checkbox';
    $needle="//";
-   if ($options['download'] || $DBInfo->force_download)
+   if ($options['download'] || $DBInfo->force_download) {
      $force_download=1;
+     if ($options['download'])
+       $mydownload=$options['download'];
+   }
    if ($options['needle']) $needle=$options['needle'];
    if ($options['checkbox']) $checkbox=$options['checkbox'];
 
