@@ -22,7 +22,7 @@ $css_url= $url_prefix.'/css/nlog.css';
 $kbd_script= $url_prefix.'/css/kbd.js';
 $logo_string= '<img src="'.$logo_img.'" alt="" border="0" align="middle" />';
 $use_smileys= 1;
-#$smiley='wikismiley';
+#$smiley='wikismiley'; # you can also use SmileyMap too.
 $use_counter= 0;
 $use_hostname= 1;
 #$mask_hostname=1; # hide hostname or ip address
@@ -38,6 +38,7 @@ $trail= 0;
 #$origin=1;
 #$arrow=' <img src="/wiki/imgs/moni-arrow.gif"/> ';
 $notify= 0;
+#$notify= 0; # enable email notification
 $use_referer= 0;
 $use_sistersites=1;
 #$use_singlebracket=1;
@@ -45,11 +46,10 @@ $use_twinpages=1;
 $use_trackback=0;
 $vim_options='+"set expandtab" +"retab"';
 $pds_allowed="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|css|exe|hwp|pdf";
-#$vim_nocheck=1;
-#$vim_options='+"set encoding=UTF-8"';
+#$vim_options='+"set encoding=UTF-8"'; # for UTF-8 wikis
 $nonexists='fancy';
-#$nonexists='nolink';
-#$nonexists='forcelink';
+#$nonexists='nolink'; # do not link non exists pages
+#$nonexists='forcelink'; # link always
 #$use_titlecache=0;
 #$use_titlemenu=1; # use current title name as menu
 #$security_class="needtologin";
@@ -63,10 +63,12 @@ $menu=array('FrontPage'=>1,'FindPage'=>4,'TitleIndex'=>3,'RecentChanges'=>2,'Use
 #$menu_sep='|';
 #$menu_bra='';
 #$menu_cat='';
-#$path='/usr/local/bin:/usr/bin:/bin:/usr/X11R6/bin';
+#$path='/usr/local/bin:/usr/bin:/bin:/usr/X11R6/bin'; # for unixes
+#$path='c:/windows/command;c:/Program Files/gnuplot'; # for win32
 $theme='azblue';
 $theme_css=0;
-#$blog_comments=1;
+#$title_rule='((?<=[a-z0-9])[A-Z][a-z0-9])';
+#$blog_comments=1; # show all comments
 
 #$date_fmt='Y-m-d';
 #$date_fmt_rc='Y-m-d';
@@ -85,41 +87,44 @@ $theme_css=0;
 #<link rel="Alternate" title="xml" type="application/rss+xml" href="?action=rss_rc" />
 #';
 
-#$diffonly=1;
+#$diffonly=1; # show only diff infos (do not show wiki contents)
 #$goto_type=1;
 
 #$purple_icon=''; # obsolute
 #$use_purple='';
 #$perma_icon='<img src="/wiki/imgs/egg.png" border="0" />';
 #$pagetype=array("KldpDsl"=>"plain","ManPage"=>"/man","DocbookSgml"=>"/jade","LinuxDoc"=>"/linuxdoc");
-#$default_dsssl='to_dir/kldp.dsl';
+# set default processor for jade
+#$default_dsssl='to_dir/kldp.dsl#html';
+#$docbook_xmldcl='to_dir/xml.dcl'; # utf-8 support for jade
 
 #$password_length=6;
-#$use_convert_thumbs=0;
+#$use_convert_thumbs=0; # for GalleryMacro
 
 #$myprocessors=array('latex'=>'mimetex');
-#$myplugins=array('FullSearch'=>'FastSearch');
+#$myplugins=array('FullSearch'=>'FastSearch'); # substitute action/macro
 #$inline_latex='mimetex';
 #$mimetex_path='/cgi-bin/mimetex.cgi'; # cgi mode
 #$mimetex_path='shell:mimetex'; # command line mode
 #$mimetex_path='shell:/usr/bin/mimetex';
 #$inline_latex='latex';
-#$inline_latex='itex';
-#$inline_latex='1';
+#$inline_latex='itex'; # use alternative inline latex (experimental)
+#$inline_latex='1'; # use inline latex (default)
 
 #$url_schemas='mms';
-#$blacklist='127.0.0.0/24:192.168.1.0/24:192.168.1.67';
-#$kiwirian=array('Kiwirian','Hello');
+#$blacklist='127.0.0.0/24:192.168.1.0/24:192.168.1.67'; # block ip
+#$kiwirian=array('Kiwirian','Hello'); # block users
 #$kiwirian='Kiwirian:Hello';
 #$delete_history=1;
-#$use_twikilink=1;
+#$use_twikilink=1; 
 #$timezone='KST'; // for windows
 #$version_class='RcsLite';
 #$use_numbering=1; // for the vim processor
 #$vim_nocheck=0; // do not check vim syntax.
+#$vim_nocheck=1;
 #$use_resizer=1; // javascript resizer
 #$use_minoredit=1; // only for wiki owners
-#$auto_search='FixMoin';
+#$auto_search='FixMoin'; # for old moinmoin users
 #$auto_search='AutoGoto';
 #$hr_type='fancy';
 $use_sectionedit=0;
@@ -138,6 +143,7 @@ $default_language='ko';
 $use_alias=0;
 #$aliaspage=$data_dir.'/text/AliasPageNames';
 $css_friendly=0;
+#$css_friendly=1; # for more CSS friendly support
 $use_redirect_msg=0;
 #$use_redirect_msg=1; # for MoinMoin compatible
 #$use_safelogin=0;
@@ -148,7 +154,7 @@ $use_redirect_msg=0;
 #$use_textbrowsers=1; # check some textbased browsers
 $use_preview_uploads=1;
 #$use_camelcase=0; # turn off camelcase syntax by default
-#$category_regex=urldecode('%EB%B6%84%EB%A5%98$');
+#$category_regex=urldecode('%EB%B6%84%EB%A5%98$'); # a category example for Korean
 #$use_backlinks=1; # set default fullsearch behavior as backlinks search
 #$use_smartdiff=1; # use the experimental smart diff XXX
 #$hide_actions=0; # hide actions list for anonymous user
@@ -159,4 +165,7 @@ $use_preview_uploads=1;
 #$submenu='SubMenu'; # dynamic submenu
 #$shared_smileymap=$data_dir.'/text/SmileyMap'; # customizable smileymap
 #$use_clipmacro=1; # use the clip macro with the attachment macro
+$use_errlog=1;
+#$errlog_maxline=20; # max lines to show
+#$raw_errlog=0; # do not hide some dir. infos.
 ?>
