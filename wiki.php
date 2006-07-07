@@ -4218,8 +4218,9 @@ if ($pagename) {
       $options['action_mode']=$action_mode;
       if ($action_mode=='ajax')
         $formatter->ajax_repl($action,$options);
-      else
+      else if ($DBInfo->use_macro_as_action) # XXX
         print $formatter->macro_repl($action,$options['value'],$options);
+      do_invalid($formatter,$options);
       return;
     }
 
