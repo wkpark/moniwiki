@@ -154,6 +154,13 @@ div.message {
   padding:4px;
 }
 
+pre.errlog {
+  background-color: #E8E8E8;
+  border:2px solid #ff0000;
+  color:#440000;
+  padding:4px;
+}
+
 .highlight {
   background-color:#FFFF40;
 }
