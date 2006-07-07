@@ -110,14 +110,20 @@ document.write('<a href=\"#\" onclick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
         ' +"syntax on " +"set syntax='.$type.'" '.$option.
         ' +"so '.$tohtml.'" +"wq! '.$fout.'" +q';
 
+  $log='';
   if(getenv("OS")=="Windows_NT") {
     system($cmd);
     $out=join(file($fout),"");
     unlink($fout);
   } else {
-    $fp=popen($cmd,"r");
-    while($s = fgets($fp, 1024)) $out.= $s;
-    pclose($fp);
+    $formatter->errlog();
+    $fp=popen($cmd.$formatter->LOG,"r");
+    if (is_resource($fp)) {
+      while($s = fgets($fp, 1024)) $out.= $s;
+      pclose($fp);
+    }
+    $log=$formatter->get_errlog();
+    if ($log) $log='<pre class="errlog">'.$log.'</pre>';
   }
   unlink($tmpf);
 
@@ -134,7 +140,7 @@ document.write('<a href=\"#\" onclick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
   $fp=fopen($cache_dir."/$uniq".".html","w");
   fwrite($fp,$stag.$out.$etag);
   fclose($fp);
-  return '<div>'.$script.$stag.$out.$etag.'</div>';
+  return $log.'<div>'.$script.$stag.$out.$etag.'</div>';
 }
 
 // vim:et:sts=2:
