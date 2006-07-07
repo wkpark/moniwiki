@@ -71,6 +71,7 @@ function macro_Calendar($formatter,$value="",$option="") {
 		$pagename=$match[3];
 	else
 		$pagename=$formatter->page->name;
+	$urlpagename=_urlencode($pagename);
 
 	$link_prefix=sprintf("%04d-%02d",$year,$month);
 
@@ -160,11 +161,11 @@ function macro_Calendar($formatter,$value="",$option="") {
 
 	#print the days of the month
 	if ($mode=='blog') {
-		$link=$pagename."/$link_prefix";
+		$link=$urlpagename."/$link_prefix";
 		if (!$DBInfo->hasPage($link))
 			$action="?action=blog";
 	} else if ($mode) {
-		$link=$pagename;
+		$link=$urlpagename;
 	}
 	while ($day <= $maxdays){
 		if($weekday == 7){ #start a new week
@@ -184,7 +185,7 @@ function macro_Calendar($formatter,$value="",$option="") {
 		}
 
 		if (!$mode) {
-			$link=$pagename."/".$link_prefix."-".sprintf("%02d",$day);
+			$link=$urlpagename."/".$link_prefix."-".sprintf("%02d",$day);
 			if ($DBInfo->hasPage($link))
 				$classes=$exists;
 		} else if ($mode) {
@@ -199,10 +200,10 @@ function macro_Calendar($formatter,$value="",$option="") {
                                           $anchor = '#'.$date.$day;
 					$action='?action=blogchanges&amp;date='.$date.$anchor;
 					$classes='day';
-					$link=$pagename;
+					$link=$urlpagename;
 				} else {
 					if ($day==$today)
-						$link=$pagename;
+						$link=$urlpagename;
 					else
 						$link='';
 					$action='?action=blog';
