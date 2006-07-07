@@ -12,11 +12,11 @@ function macro_Test($formatter,$value) {
 }
 
 function do_test($formatter,$options) {
-    $formatter->send_header();
-    $formatter->send_title();
-    $ret= macro_Test($formatter,$options[value]);
+    $formatter->send_header('',$options);
+    $formatter->send_title('','',$options);
+    $ret= macro_Test($formatter,$options['value']);
     $formatter->send_page($ret);
-    $formatter->send_footer("",$options);
+    $formatter->send_footer('',$options);
     return;
 }
 

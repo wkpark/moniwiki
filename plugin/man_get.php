@@ -54,8 +54,13 @@ function do_man_get($formatter,$options) {
   $formatter->send_header("",$options);
   $formatter->send_title("","",$options);
   $options['savetext']=$raw;
-  print macro_EditText($formatter,$raw,$options);
-  $formatter->send_footer("",$options);
+  if ($options['edit']) {
+    print macro_EditText($formatter,$raw,$options);
+  } else {
+    print $formatter->processor_repl('man',$raw,$options);
+    $formatter->actions[]='?action=man_get&man='.$options['man'].'&edit=1 '._("Edit");
+  }
+  $formatter->send_footer('',$options);
   return;
 }
 
