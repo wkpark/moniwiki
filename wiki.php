@@ -1574,6 +1574,9 @@ class Formatter {
     $this->themedir= dirname(__FILE__);
     $this->set_theme($options['theme']);
 
+    $this->NULL='';
+    if(getenv("OS")!="Windows_NT") $this->NULL=' 2>/dev/null';
+
     $this->external_on=0;
     $this->external_target='';
     if ($DBInfo->external_target)
@@ -3758,6 +3761,49 @@ MSG;
     $trail=join("\t",$trails);
 
     setcookie('MONI_TRAIL',$trail,time()+60*60*24*30,get_scriptname());
+  }
+
+  function errlog($prefix="LoG") {
+    global $DBInfo;
+
+    $this->mylog='';
+    $this->LOG='';
+    if ($DBInfo->use_errlog) {
+      if(getenv("OS")!="Windows_NT") {
+        $this->mylog=tempnam($DBInfo->vartmp_dir,$prefix);
+        $this->LOG=' 2>'.$this->mylog;
+      }
+    } else {
+      if(getenv("OS")!="Windows_NT") $this->LOG=' 2>/dev/null';
+    }
+  }
+
+  function get_errlog() {
+    global $DBInfo;
+
+    $log=&$this->mylog;
+    if ($log and file_exists($log) and ($sz=filesize($log))) {
+      $fd=fopen($log,'r');
+      if (is_resource($fd)) {
+        $maxl=$DBInfo->errlog_maxline ? min($DBInfo->errlog_maxline,200):20;
+        if ($sz <= $maxl*70) { # approx log size ~ line * 70
+          $out=fread($fd,$sz);
+        } else {
+          for ($i=0;($i<$maxl) and ($s=fgets($fd,1024));$i++)
+             $out.=$s;
+          $out.= "...\n";
+        }
+        fclose($fd);
+        unlink($log);
+        $this->LOG='';
+        $this->mylog='';
+
+        if (!$DBInfo->raw_errlog) {
+          $out=preg_replace('/(\/[a-z0-9.]+)+/','/XXX',$out);
+        }
+        return $out;
+      }
+    }
   }
 } # end-of-Formatter
 
