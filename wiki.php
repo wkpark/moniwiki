@@ -4099,10 +4099,10 @@ if ($pagename) {
 
     if (!$action) $options['pi']=1; # protect a recursivly called #redirect
 
-#    if (!$DBInfo->security->is_allowed('read',$options)) {
-#      do_invalid($formatter,$options);
-#      return;
-#    }
+    if ($DBInfo->control_read and !$DBInfo->security->is_allowed('read',$options)) {
+      do_invalid($formatter,$options);
+      return;
+    }
 
 
     $formatter->pi=$formatter->get_instructions($dum);
