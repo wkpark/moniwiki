@@ -3379,8 +3379,14 @@ EOS;
     $menu[]=$this->link_tag("FindPage","",_("FindPage"));
 
     if (!$args['noaction']) {
-      foreach ($this->actions as $action)
-        $menu[]= $this->link_to("?action=$action",_($action));
+      foreach ($this->actions as $action) {
+        if (strpos($action,' ')) {
+          list($act,$text)=explode(' ',$action,2);
+          $menu[]= $this->link_to($act,_($text));
+        } else {
+          $menu[]= $this->link_to("?action=$action",_($action));
+        }
+      }
     }
     return $menu;
   }
