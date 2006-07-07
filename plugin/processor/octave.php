@@ -11,13 +11,16 @@
 function processor_octave($formatter="",$value="") {
   global $DBInfo;
 
-  if(getenv("OS")=="Windows_NT")
-    $octave="woctave"; # Win32
-  else
-    #$octave="octave -q -H --no-init-file --no-line-editing -f ";
-    $octave="octave -q -H -f ";
-
   $vartmp_dir=&$DBInfo->vartmp_dir;
+
+  if(getenv("OS")=="Windows_NT") {
+    $octave="woctave"; # Win32
+  } else {
+    #$octave="octave -q -H -V --no-init-file --no-line-editing -f ";
+    $octave="octave -q -H -f ";
+    $octave='HOME='.$vartmp_dir.' '.$octave;
+  }
+
   $cache_dir=$DBInfo->upload_dir."/Octave";
 
   if ($value[0]=='#' and $value[1]=='!')
@@ -58,8 +61,7 @@ $plt
     umask(022);
   }
 
-  if ($formatter->refresh || !file_exists("$cache_dir/$uniq.png")) {
-
+  if ($formatter->preview || $formatter->refresh || !file_exists("$cache_dir/$uniq.png")) {
      $flog=tempnam($vartmp_dir,"OCTAVE");
      #
      # for Win32 woctave.exe
@@ -79,18 +81,24 @@ $plt
        #
        # Unix
        #
-       $cmd= "$octave 2> $flog";
-       $fp=popen($cmd,"r");
-       fwrite($fp,$src);
-       pclose($fp);
-       $log=implode('',file($flog));
-       #if ($log) unlink($outpath);
-       unlink($flog);
+       $formatter->errlog('Oct');
+       $cmd= $octave;
+       $fp=popen($cmd.$formatter->LOG,"w");
+       if (is_resource($fp)) {
+         fwrite($fp,$src);
+         pclose($fp);
+       }
+       $log=$formatter->get_errlog();
+
+       @unlink($vartmp_dir.'/.octave_hist');
      }
 
      if ($log)
-        $log ="<pre style='background-color:black;color:gold'>$log</pre>\n";
+        $log ="<pre class='errlog'>$log</pre>\n";
+     if (filesize("$cache_dir/$uniq.png") == 0)
+        unlink("$cache_dir/$uniq.png");
   }
+  if (!file_exists("$cache_dir/$uniq.png")) return $log;
   return $log."<img src='$DBInfo->url_prefix/$cache_dir/$uniq.png' alt='octave' />";
 }
 

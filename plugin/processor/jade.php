@@ -62,20 +62,34 @@ function processor_jade($formatter,$value,$options=array()) {
   if (!$dsssl_flag and $DBInfo->default_dsssl)
     $args.=" -d $DBInfo->default_dsssl";
 
+  if (strtolower($DBInfo->charset)=='utf-8') {
+    if ($DBInfo->docbook_xmldcl)
+      $args.=' '.$DBInfo->docbook_xmldcl;
+    else
+      $args.=' xml.dcl';
+    $sp_encoding='SP_ENCODING=utf-8 ';
+    #putenv('SP_ENCODING=utf-8');
+  }
+
   $tmpf=tempnam($vartmp_dir,"JADE");
   $fp= fopen($tmpf, "w");
   fwrite($fp, $src);
   fclose($fp);
 
-  $cmd="$jade $args $tmpf";
+  $cmd=$sp_encoding."$jade $args $tmpf";
 
-  $fp=popen($cmd,"r");
-  fwrite($fp,$src);
+  $formatter->errlog();
+  $fp=popen($cmd.$formatter->LOG,"r");
+  if (is_resource($fp)) {
+    $html='';
+    while($s = fgets($fp, 1024)) $html.= $s;
 
-  while($s = fgets($fp, 1024)) $html.= $s;
-
-  pclose($fp);
+    pclose($fp);
+  }
   unlink($tmpf);
+  $err=$formatter->get_errlog();
+
+  if ($err) $err='<pre class="errlog">'.$err.'</pre>';
 
   if (!$html) {
     $src=str_replace("<","&lt;",$value);
@@ -83,7 +97,7 @@ function processor_jade($formatter,$value,$options=array()) {
   }
 
   if (!$formatter->preview) $cache->update($pagename,$html);
-  return $html;
+  return $err.$html;
 }
 
 // vim:et:sts=2:
