@@ -24,9 +24,13 @@ function processor_gnuplot($formatter="",$value="") {
   list($dum,$szarg)=explode(' ',$line);
   if ($szarg) {
     $args= explode('x',$szarg,2);
-    $xsize=intval($args[0]);$ysize=intval($args[1]);
+    $xsize=max(intval($args[0]),50);$ysize=max(intval($args[1]),50);
     $value='#'.$line."\n".$value;
   }
+
+  $term='png';
+  if ($term=='png') $ext='png';
+  else if ($term == 'dumb') $ext='txt';
 
   $default_size="set size 0.5,0.6";
 
@@ -74,14 +78,15 @@ function processor_gnuplot($formatter="",$value="") {
   $plt=preg_replace("/\n\s*(s?plot)\s+('|\")<(\s*)/", "\n\\1 \\2\\3",$plt);
   
   #print "<pre>$plt</pre>";
-  
-  $plt="\n".$size."\n".$plt;
+
+  if ($term != 'dumb') 
+    $plt="\n".$size."\n".$plt;
   $uniq=md5($plt);
 
-  $outpath="$cache_dir/$uniq.png";
+  $outpath="$cache_dir/$uniq.$ext";
 
   $src="
-set term png
+set term $term
 set out '$outpath'
 $plt
 ";
@@ -92,7 +97,7 @@ $plt
     umask(022);
   }
 
-  if ($formatter->refresh || !file_exists("$cache_dir/$uniq.png")) {
+  if ($formatter->refresh || !file_exists("$cache_dir/$uniq.$ext")) {
 
      $flog=tempnam($vartmp_dir,"GNUPLOT");
      #
@@ -117,22 +122,29 @@ $plt
        #
        # Unix
        #
-       $cmd= "$gnuplot 2> $flog";
-       $fp=popen($cmd,"w");
-       fwrite($fp,$src);
-       pclose($fp);
-       $log=join(file($flog),"");
-       if (file_exists($outpath)) {
-         unlink($flog);
-       } else {
+       $cmd= $gnuplot;
+       $formatter->errlog('GnuPlot');
+       $fp=popen($cmd.$formatter->LOG,"w");
+       if (is_resource($fp)) {
+         fwrite($fp,$src);
+         pclose($fp);
+       }
+       $log=$formatter->get_errlog();
+       if (filesize($outpath) == 0) {
          print "<font color='red'>ERROR:</font> Gnuplot does not work correctly";
+         unlink($outpath);
        }
      }
 
      if ($log)
-        $log ="<pre style='background-color:black;color:gold'>$log</pre>\n";
+        $log ="<pre class='errlog'>$log</pre>\n";
   }
-  return $log."<img src='$DBInfo->url_prefix/$cache_dir/$uniq.png' alt='gnuplot' />";
+  if (!file_exists($outpath)) return $log;
+  if ($ext == 'png')
+  return $log."<img src='$DBInfo->url_prefix/$cache_dir/$uniq.$ext' alt='gnuplot' />";
+  if ($ext == 'txt')
+  return $log.'<pre class="gnuplot">'.(implode('',file("$cache_dir/$uniq.$ext"))).'</pre>';
+
 }
 
 ?>
