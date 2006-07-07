@@ -3804,6 +3804,7 @@ MSG;
         return $out;
       }
     }
+    return '';
   }
 } # end-of-Formatter
 
