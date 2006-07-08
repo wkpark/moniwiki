@@ -53,6 +53,7 @@ class Security_ACL extends Security {
         $groups=array();
         $groups[]='@ALL';
         $groups[]=$user;
+        if ($user != 'Anonymous') $groups[]='@User';
         $allowed=array();
         $denied=array();
         $protected=array();
@@ -78,6 +79,7 @@ class Security_ACL extends Security {
                 $rule = preg_replace('/#.*$/','',$rule); # delete comments
                 $rule = rtrim($rule);
                 $acl = preg_split('/\s+/',$rule,4);
+                if (!$acl[3]) $acl[3]='*';
 
                 if ($acl[2] == 'allow') {
                     $tmp=split(',',$acl[3]);
@@ -137,7 +139,7 @@ class Security_ACL extends Security {
             print "*** protected\n";
             print_r($protected);
             print '</pre>';
-            $options['msg']=ob_get_contents();
+            $options['msg'].=ob_get_contents();
             ob_end_clean();
         }
         $this->_acl_ok=1;
