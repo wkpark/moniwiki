@@ -236,6 +236,13 @@ function do_userform($formatter,$options) {
            }
 
            if ($udb->isNotUser($user)) {
+             if ($DBInfo->no_register) {
+               $options['msg']=_("Fail to register");
+               $options['err']=_("You are not allowed to register on this wiki");
+               $options['err'].="\n"._("Please contact WikiMasters");
+               do_invalid($formatter,$options);
+               return;
+             }
              $title= _("Successfully added!");
              $options['id']=$user->id;
              $ticket=md5(time().$user->id.$options['email']);
@@ -258,7 +265,7 @@ function do_userform($formatter,$options) {
                  $body.=_("Please change your password later")."\n";
                }
                wiki_sendmail($body,$options);
-               $options['msg'].='<br/>'._("E-mail confirmation mail sent");
+               $options['msg'].='<br/>'._("Confirmation E-mail sent");
              }
            } else {# already exist user
              $user=$udb->getUser($user->id);
