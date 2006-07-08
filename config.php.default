@@ -169,4 +169,11 @@ $use_preview_uploads=1;
 $use_errlog=1;
 #$errlog_maxline=20; # max lines to show
 #$raw_errlog=0; # do not hide some dir. infos.
+#$acl_type='default';
+#$acl_debug=1;
+#$read_control=1;
+#$use_macro_as_action=0;
+#$isbn_img_download=1; # download isbn images to local cache dir.
+#$use_clipmacro=1; # use clip applet with AttachmentMacro
+#$no_register=1; # do not allow to register anymore
 ?>
