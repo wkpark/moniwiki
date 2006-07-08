@@ -10,8 +10,7 @@
 function do_aclinfo($formatter,$options) {
     global $DBInfo;
     if ($DBInfo->security_class=='acl') {
-        $options['aclinfo']=1;
-        list($allowed,$denied)=$DBInfo->security->acl_check('aclinfo',$options);
+        list($allowed,$denied,$protected)=$DBInfo->security->get_acl('aclinfo',$options);
     } else {
         $options['msg']=_("ACL is not enabled on this Wiki");
         do_invalid($formatter,$options);
@@ -21,18 +20,25 @@ function do_aclinfo($formatter,$options) {
     $formatter->send_title('','',$options);
     print '<h2>'._("Your ACL Info").'</h2>';
     if (in_array($options['id'],$DBInfo->owners)) {
-        print '<h3>'._("You are wiki owner")."</h3>\n";
+        print '<h4>'._("You are wiki owner")."</h4>\n";
     } else if (in_array($options['id'],$DBInfo->wikimasters)) {
-        print '<h3>'._("You are wiki master")."</h3>\n";
+        print '<h4>'._("You are wiki master")."</h4>\n";
     } else {
-        print '<h3>'._("allowed actions")."</h3>\n";
-        print '<pre>';
-        print_r($allowed);
+        print '<h4>'._("Allowed actions")."</h4>\n";
+        print '<ul>';
+        foreach ($allowed as $k=>$v)
+            print '<li>'.$k.': ('.$v.')</li>';
+        print '</ul>';
+        print '<h4>'._("Denied actions")."</h4>\n";
+        print '<ul>';
+        foreach ($denied as $k=>$v)
+            print '<li>'.$k.': ('.$v.')</li>';
+        print '</ul>';
         print '</pre>';
-        print '<h3>'._("denied actions")."</h3>\n";
-        print '<pre>';
-        print_r($denied);
-        print '</pre>';
+        print '<h4>'._("Protected actions")."</h4>\n";
+        print '<ul><li>';
+        print implode('</li><li>',$protected);
+        print '</li></ul>';
     }
     $formatter->send_footer('',$options);
     return;
