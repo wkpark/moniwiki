@@ -4220,7 +4220,8 @@ if ($pagename) {
         $formatter->ajax_repl($action,$options);
       else if ($DBInfo->use_macro_as_action) # XXX
         print $formatter->macro_repl($action,$options['value'],$options);
-      do_invalid($formatter,$options);
+      else
+        do_invalid($formatter,$options);
       return;
     }
 
