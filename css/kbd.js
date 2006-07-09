@@ -35,6 +35,7 @@
    T: TitleIndex
    H: ?action=home (not supported in the MoinMoin)
    L: ?action=LikePages
+   U: ?action=UserPreferences
 
    <ESC>: goto the 'go' form
    /: FullSearch mode
@@ -53,6 +54,7 @@ RecentChanges= "RecentChanges";
 FindPage= "FindPage"; 
 TitleIndex= "TitleIndex"; 
 HelpContents= "HelpContents";
+UserPreferences= "UserPreferences";
 
 // go form ID
 _go= "go";
@@ -119,6 +121,8 @@ function keypresshandler(ev){
 			ch=String.fromCharCode(e.charCode);
 		}
 	}
+
+	ch = ch.toLowerCase();
 	var go=document.getElementById(_go);
 	if(e.altKey || e.ctrlKey) {
 		if(ch == "z" && e.altKey) {
@@ -230,6 +234,8 @@ function keypresshandler(ev){
 		self.location = url_prefix + _qp + FindPage
 	} else if(ch == "t") { // titleindex
 		self.location = url_prefix + _qp + TitleIndex
+	} else if(ch == "u") { // userpreferences
+		self.location = url_prefix + _qp + UserPreferences;
 	} else if(ch=="e" || ch=="w" || ch=="r") { // Edit or refresh
 		var my=''+self.location;
 		var idx=my.indexOf(_ap);
