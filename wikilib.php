@@ -218,6 +218,32 @@ function hmac($key, $data, $hash = 'md5', $blocksize = 64) {
   return $hash(($key^$opad) . pack('H*', $hash(($key^$ipad) . $data)));
 }
 
+/**
+ * return an obfuscated email address in line from dokuwiki
+ *
+ * @author Harry Fuecks <hfuecks@gmail.com>
+ * @author Christopher Smith <chris@jalakai.co.uk>
+ */
+function email_guard($email,$mode='hex') {
+
+  switch ($mode) {
+    case 'visible' :
+      $obfuscate = array('@' => ' [at] ', '.' => ' [dot] ', '-' => ' [dash] ');
+      return strtr($email, $obfuscate);
+
+    case 'hex' :
+      $encode = '';
+      $sz=strlen($email);
+      for ($i=0; $i<$sz; $i++)
+        $encode .= '&#x' . bin2hex($email{$i}).';';
+      return $encode;
+
+    case 'none' :
+    default :
+      return $email;
+  }
+}
+
 // Remember to initialize MT (using mt_srand() ) if required
 function pw_encode($password) {
   $seed = substr('00' . dechex(mt_rand()), -3) .
