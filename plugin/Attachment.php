@@ -24,8 +24,9 @@ function macro_Attachment($formatter,$value,$option='') {
     // [attachment:my.ext http://url/../my.png]
     if ($value[0]=='"' and ($p2=strpos(substr($value,1),'"')) !== false) {
       $text=$ntext=substr($value,$p2+3);
-      $dummy=substr($value,1,$p2);
-      $value=$dummy;
+      $dummy=substr($value,1,$p2); # "my image.png" => my image.png
+      $args=substr($value,$p2+2);
+      $value=$dummy.$args; # append query string
     } else {
       $text=$ntext=substr($value,$p+1);
       $value=substr($value,0,$p);

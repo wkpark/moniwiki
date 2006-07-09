@@ -162,14 +162,22 @@ function do_uploadfile($formatter,$options) {
 
   $title.=($title ? '<br />':'').
     sprintf(_("File \"%s\" is uploaded successfully"),$upfilename);
+
+  $fullname=$formatter->page->name."/$upfilename";
+  $upname=$upfilename;
+  if (strpos($fullname,' ')!==false);
+    $fullname='"'.$fullname.'"';
+  if (strpos($upname,' ')!==false);
+    $upname='"'.$upname.'"';
+
   if ($key == 'UploadFile') {
-    $msg.= "<ins>Uploads:$upfilename</ins> or<br />";
-    $msg.= "<ins>attachment:/$upfilename</ins><br />";
-    $log_entry.=" * attachment:/$upfilename?action=deletefile . . . @USERNAME@ @DATE@\n";
+    $msg.= "<ins>Uploads:$upname</ins> or<br />";
+    $msg.= "<ins>attachment:/$upname</ins><br />";
+    $log_entry.=" * attachment:/$upname?action=deletefile . . . @USERNAME@ @DATE@\n";
   } else {
-    $msg.= "<ins>attachment:$upfilename</ins> or<br />";
-    $msg.= "<ins>attachment:".$formatter->page->name."/$upfilename</ins><br />";
-    $log_entry.=" * attachment:".$formatter->page->name."/$upfilename?action=deletefile . . . @USERNAME@ @DATE@\n";
+    $msg.= "<ins>attachment:$upname</ins> or<br />";
+    $msg.= "<ins>attachment:$fullname</ins><br />";
+    $log_entry.=" * attachment:$fullname?action=deletefile . . . @USERNAME@ @DATE@\n";
   }
 
   } // multiple upload
