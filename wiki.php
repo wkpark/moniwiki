@@ -1983,6 +1983,10 @@ class Formatter {
         $url=$m[1];
         if (isset($m[5])) $text=$m[5];
       }
+    } else if (($p=strpos($url,' '))!==false) {
+      $dummy=substr($url,0,$p);
+      $text=substr($url,$p+1);
+      $url=$dummy;
     }
 
     if ($wiki== '') {
