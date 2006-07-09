@@ -598,6 +598,7 @@ class WikiDB {
     $this->use_singlebracket=1;
     $this->use_twinpages=1;
     $this->use_hostname=1;
+    $this->email_guard='hex';
     $this->pagetype=array();
     $this->smiley='wikismiley';
     $this->convmap=array(0xac00, 0xd7a3, 0x0000, 0xffff); /* for euc-kr */
@@ -1558,6 +1559,7 @@ class Formatter {
     $this->use_smartdiff=$DBInfo->use_smartdiff;
     $this->use_easyalias=$DBInfo->use_easyalias;
     $this->submenu=$DBInfo->submenu;
+    $this->email_guard=$DBInfo->email_guard;
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -1642,7 +1644,7 @@ class Formatter {
     $punct="<\'}\]\)\|;\.\!"; # , is omitted for the WikiPedia
     $url="wiki|http|https|ftp|nntp|news|irc|telnet|mailto|file|attachment";
     if ($DBInfo->url_schemas) $url.='|'.$DBInfo->url_schemas;
-    $urlrule="((?:$url):([^\s$punct]|(\.?[^\s$punct]))+)";
+    $urlrule="((?:$url):\"[^\"]+\"[^\s$punct]*|(?:$url):([^\s$punct]|(\.?[^\s$punct]))+)";
     #$urlrule="((?:$url):(\.?[^\s$punct])+)";
     #$urlrule="((?:$url):[^\s$punct]+(\.?[^\s$punct]+)+\s?)";
     # solw slow slow
@@ -1916,21 +1918,14 @@ class Formatter {
       }
 
       if (preg_match("/^mailto:/",$url)) {
-        $url=str_replace("@","_at_",$url);
-        $link=str_replace('&','&amp;',$url);
-        $name=substr($url,7);
-        return $this->icon['mailto']."<a class='externalLink' href='$link' $attr>$name</a>$external_icon";
+        $email=substr($url,7);
+        $link=$name=email_guard($email,$this->email_guard);
+        $link=preg_replace('/&(?!#?[a-z0-9]+;)/i','&amp;',$link);
+        return $this->icon['mailto']."<a class='externalLink' href='mailto:$link' $attr>$link</a>$external_icon";
       }
 
-      if (preg_match("/^(w|[A-Z])/",$url)) { # InterWiki or wiki:
-        if (strpos($url," ")) { # have a space ?
-          $dum=explode(" ",$url,2);
-          if ($dum[1])
-          return $this->interwiki_repl($dum[0],$dum[1],$attr,$external_icon);
-        }
-        
+      if (preg_match("/^(w|[A-Z])/",$url)) # InterWiki or wiki:
         return $this->interwiki_repl($url,'',$attr,$external_icon);
-      }
 
       if ($force or strpos($url," ")) { # have a space ?
         list($url,$text)=explode(" ",$url,2);
@@ -1973,21 +1968,32 @@ class Formatter {
 
     if ($url[0]=="w")
       $url=substr($url,5);
-    $dum=explode(":",$url,2);
-    $wiki=$dum[0]; $page=$dum[1];
-#    if (!$page) { # wiki:Wiki/FrontPage
-#      $dum1=explode("/",$url,2);
-#      $wiki=$dum1[0]; $page=$dum1[1];
-#    }
 
-    if (sizeof($dum) == 1) {
-      # wiki:FrontPage(not supported in the MoinMoin
+    $wiki='';
+    # wiki:MoinMoin:FrontPage
+    # wiki:MoinMoin/FrontPage for MoinMoin compatibility.
+    if (preg_match('/^([A-Z][a-zA-Z]+):(.*)$/',$url,$m)) {
+      $wiki=$m[1]; $url=$m[2];
+    }
+
+    # wiki:"Hello World" wiki:MoinMoin:"Hello World"
+    # [wiki:"Hello World" hello world]
+    if ($url[0]=='"') {
+      if (preg_match('/^((")?[^"]+\2)((\s+)?(.*))?$/',$url,$m)) {
+        $url=$m[1];
+        if (isset($m[5])) $text=$m[5];
+      }
+    }
+
+    if ($wiki== '') {
+      # wiki:FrontPage (not supported in the MoinMoin)
       # or [wiki:FrontPage Home Page]
-      $page=$dum[0];
+      $page=&$url;
       if (!$text)
-        return $this->word_repl($page,$page.$extra,$attr,1);
+        return $this->word_repl($page,''.$extra,$attr,1);
       return $this->word_repl($page,$text.$extra,$attr,1);
     }
+    $page=$url;
 
     $url=$DBInfo->interwiki[$wiki];
     # invalid InterWiki name
