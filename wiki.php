@@ -1994,6 +1994,8 @@ class Formatter {
       return $this->word_repl($page,$text.$extra,$attr,1);
     }
     $page=$url;
+    if ($page[0]=='"') # "extended wiki name"
+      $page=substr($page,1,-1);
 
     $url=$DBInfo->interwiki[$wiki];
     # invalid InterWiki name
