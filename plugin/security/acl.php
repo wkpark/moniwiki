@@ -47,13 +47,13 @@ class Security_ACL extends Security {
 
     function get_acl($action='read',&$options) {
         if (in_array($options['id'],$this->allowed_users)) return 1;
-        $pg=$this->DB->_getPageKey($options['page']);
+        $pg=$options['page'];
         $user=$options['id'];
 
         $groups=array();
         $groups[]='@ALL';
-        $groups[]=$user;
         if ($user != 'Anonymous') $groups[]='@User';
+        $groups[]=$user;
         $allowed=array();
         $denied=array();
         $protected=array();
@@ -66,20 +66,30 @@ class Security_ACL extends Security {
             $grp=preg_split('/\s+/',$line);
             $groups[]=$grp[0];
             if ($grp[2]) $gpriority[$grp[0]]=$grp[2]; # set group priorities
-            else $gpriority[$grp[0]]=2;
+            else $gpriority[$grp[0]]=2; # default group priority
         }
 
         $gregex=implode('|',$groups);
 
         #get ACL info.
-        $matches= preg_grep('/^('.$pg.'|\*)\s+('.$gregex.')\s+/', $this->AUTH_ACL);
+        #$matches= preg_grep('/^('.$pg.'|\*)\s+('.$gregex.')\s+/', $this->AUTH_ACL);
+        $matches= preg_grep('/^[^#@].*\s+('.$gregex.')\s+/', $this->AUTH_ACL);
         if (count($matches)) {
             foreach ($matches as $rule) {
-                if (in_array($rule[0],array('@','#'))) continue;
-                $rule = preg_replace('/#.*$/','',$rule); # delete comments
-                $rule = rtrim($rule);
-                $acl = preg_split('/\s+/',$rule,4);
+                #if (in_array($rule[0],array('@','#'))) continue;
+                $rule= preg_replace('/#.*$/','',$rule); # delete comments
+                $rule= rtrim($rule);
+                $acl= preg_split('/\s+/',$rule,4);
                 if (!$acl[3]) $acl[3]='*';
+                if ($acl[0] != '*') {
+                    $prule=$acl[0];
+                    // HelpOn* -> HelpOn.*
+                    // MoniWiki/* -> MoniWiki\/.*
+                    $prule=
+                       preg_replace(array('/(?!<\.)\*/',"/(?<!\\\\)\//"),array('.*','\/'),$prule);
+                    if (false === @preg_match("/$prule/",'')) continue;
+                    if (!preg_match("/$prule/",$pg)) continue;
+                }
 
                 if ($acl[2] == 'allow') {
                     $tmp=split(',',$acl[3]);
@@ -87,7 +97,8 @@ class Security_ACL extends Security {
                     if ($acl[1] == $user) $pri=4;
                     else if ($acl[1] == '@ALL') $pri=1;
                     else $pri= $gpriority[$acl[1]] ? $gpriority[$acl[1]]:2; # get group prio
-                    foreach ($tmp as $t=>$v) {
+                    $keys=array_keys($tmp);
+                    foreach ($keys as $t) {
                         if (isset($allowed[$t]) and $allowed[$t] > $pri)
                             unset($tmp[$t]);
                         else
@@ -105,8 +116,9 @@ class Security_ACL extends Security {
                     if ($acl[1] == $user) $pri=4;
                     else if ($acl[1] == '@ALL') $pri=1;
                     else $pri= $gpriority[$acl[1]] ? $gpriority[$acl[1]]:2; # set group prio
-                    foreach ($tmp as $t=>$v) {
-                        if (isset($allowed[$t]) and $denied[$t] > $pri)
+                    $keys=array_keys($tmp);
+                    foreach ($keys as $t) {
+                        if (isset($denied[$t]) and $denied[$t] > $pri)
                             unset($tmp[$t]);
                         else
                             $tmp[$t]=$pri;
@@ -127,18 +139,21 @@ class Security_ACL extends Security {
 
         if ($this->DB->acl_debug) {
             ob_start();
-            print '<pre>';
-            print "*** groups\n";
-            print_r($groups);
-            print "*** matches\n";
-            print_r($matches);
-            print "*** allowed\n";
-            print_r($allowed);
-            print "*** denied\n";
-            print_r($denied);
-            print "*** protected\n";
-            print_r($protected);
-            print '</pre>';
+            print "<h4>groups</h4>\n";
+            print implode(',',$groups);
+            print "\n";
+            print "<h4>Allowed actions</h4>\n";
+            foreach ($allowed as $k=>$v)
+                print $k." ($v),";
+            #print_r($allowed);
+            print "\n";
+            print "<h4>Denied actions</h4>\n";
+            foreach ($denied as $k=>$v)
+                print $k." ($v),";
+            #print_r($denied);
+            print "\n";
+            print "<h4>Protected actions</h4>\n";
+            print implode(',',$protected);
             $options['msg'].=ob_get_contents();
             ob_end_clean();
         }
@@ -154,13 +169,6 @@ class Security_ACL extends Security {
         $allowed=&$this->_allowed;
         $denied=&$this->_denied;
 
-        if (isset($allowed['*'])) {
-            if (isset($denied[$action])) {
-                if ($allowed['*'] >= $denied[$action]) return 1;
-                return 0;
-            }
-            return 1;
-        }
         if (isset($denied['*'])) {
             if (isset($allowed[$action])) {
                 if ($allowed[$action] >= $denied['*']) return 1;
@@ -168,13 +176,22 @@ class Security_ACL extends Security {
             }
             return 0;
         }
-        if (isset($allowed[$action]) and isset($denied[$action])) {
-            if ($allowed[$action] >= $denied[$action]) return 1;
-            return 0;
+        if (isset($allowed['*'])) {
+            if (isset($denied[$action])) {
+                if ($denied[$action] >= $allowed['*']) return 0;
+                return 1;
+            }
+            return 1;
         }
-        if (isset($allowed[$action])) return 1;
-        if (isset($denied[$action])) return 0;
-        return 1; # default is allow
+        if ($allowed[$action] >= $denied[$action]) return 1;
+        return 0;
+        #if (isset($allowed[$action]) and isset($denied[$action])) {
+        #    if ($allowed[$action] >= $denied[$action]) return 1;
+        #    return 0;
+        #}
+        #if (isset($allowed[$action])) return 1;
+        #if (isset($denied[$action])) return 0;
+        #return 1; # default is allow
     }
 
     function is_allowed($action="read",&$options) {
