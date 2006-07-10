@@ -50,7 +50,7 @@ define(TOUR_DEPTH,3);
 
     $head='';
     if (!$value) $value=$formatter->page->name;
-    else if ($value != $formatter->page->name)
+    #else if ($value != $formatter->page->name) XXX;
 
     if ($arena == 'backlinks') {
         $head2=_("BackLinks");

@@ -27,6 +27,8 @@ define(MIN_FONT_SZ,10);
         else if ($opt=='random') {
             $options['random']=$options['all']=1; }
         else if ($opt=='suggest') $options['suggest']=1;
+        else if ($opt=='tour') $options['tour']=1;
+        else if ($opt=='freq') $sort='freq';
         else if (($p=strpos($opt,'='))!==false) {
             $k=substr($opt,0,$p);
             $v=substr($opt,$p+1);
@@ -50,6 +52,7 @@ define(MIN_FONT_SZ,10);
             $pagename=$opt;
         }
     }
+
     if ($options['random'] and !$limit) $limit=0;
 
     if (!$pagename) $pagename=$formatter->page->name;
@@ -71,6 +74,7 @@ define(MIN_FONT_SZ,10);
         if ($keys) $mykeys=array_merge($mykeys,$keys);
     }
     if ($options['all']) {
+        $use_sty=1;
         $words=array_count_values($mykeys);
         unset($words['']);
         $ncount=array_sum($words); // total count
@@ -85,7 +89,12 @@ define(MIN_FONT_SZ,10);
             }
             $words=&$rws;
         }
+        if ($sort=='freq') ksort($words);
+        #sort($words);
+        #print $sort." $value";
+        #print "<pre>";
         #print_r($words);
+        #print "</pre>";
     } else {
         $max=3; // default weight
         $words=array();
@@ -208,6 +217,7 @@ EOF;
     }
 
     if ($nwords) $words=array_merge($words,$nwords);
+    $use_sty=1;
 
     endif;
     //
@@ -217,6 +227,8 @@ EOF;
         $words=array_slice($words,0,$limit);
     }
     // make criteria list
+
+    if ($use_sty):
     $fact=array();
     $weight=$max; // $ncount
     #print 'max='.$max.' ratio='.$weight/$ncount.':';
@@ -235,24 +247,31 @@ EOF;
     $fs=MAX_FONT_SZ; // max font-size:24px;
     for ($i=0;$i<$fz;$i++) {
         $ifs=(int)($fs+0.5);
-        $sty[]= "style='font-size:${ifs}px'";
+        $sty[]= " style='font-size:${ifs}px'";
         #print '/'.$ifs;
         $fs-=$fsh;
         $fs=max($fs,9); // min font-size:9px
     }
-    if ($sort!='freq') ksort($words);
+    endif;
+
+    if ($sort=='freq') ksort($words);
 
     $link=$formatter->link_url(_rawurlencode($pagename),'');
     if (!isset($tag_link)) {
         if (!$search) $search='fullsearch&amp;keywords=1';
-        $tag_link=$formatter->link_url(_rawurlencode($pagename),
-            '?action='.$search.'&amp;value=$TAG');
+        if ($options['tour'])
+            $tag_link=$formatter->link_url('$TAG',
+                '?action=tour&amp;arena=keylinks');
+        else 
+            $tag_link=$formatter->link_url(_rawurlencode($pagename),
+                '?action='.$search.'&amp;value=$TAG');
     }
     $out='';
     if ($options['add']) {
         $out="<form method='post' action='$link'>\n";
         $out.="<input type='hidden' name='action' value='keywords' />\n";
     }
+
     $out.='<ul>';
     foreach ($words as $key=>$val) {
         $style=$sty[$fz-1];
@@ -268,10 +287,15 @@ EOF;
             if ($options['add'])
                 $checkbox="<input type='checkbox' $checked name='key[]' ".
                     "value='$key' />";
-            $out.=" <li>$checkbox"."<a href='".str_replace('$TAG',$key,$tag_link).
-                "' $style title=\"$val "._("hits").'">'.$key."</a></li>\n";
+            $out.=" <li class=\"tag-item\"";
+            if ($use_sty) {
+                $out.=" $style title=\"$val "._("hits").'"';
+            }
+            $out.=">$checkbox"."<a href='".str_replace('$TAG',$key,$tag_link).
+                "'>".$key."</a></li>\n";
         }
     }
+
     if ($options['add']) {
         $msg=_("add keywords");
         $inp="<li><input type='text' name='keywords' size='12' />: $msg</li>";
