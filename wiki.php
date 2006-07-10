@@ -2004,8 +2004,8 @@ class Formatter {
     $url=$DBInfo->interwiki[$wiki];
     # invalid InterWiki name
     if (!$url) {
-      $dum0=preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$dum[0]);
-      return $dum0.':'.($dum[1]?$this->link_repl($dum[1],$text):'');
+      $dum0=preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$wiki);
+      return $dum0.':'.($page?$this->link_repl($page,$text):'');
     }
 
     if ($page=='/') $page='';
@@ -2618,14 +2618,24 @@ class Formatter {
         return;
       }
 
-      $twin_mode=$DBInfo->use_twinpages;
-      if (isset($pi['#twinpages'])) $twin_mode=$pi['#twinpages'];
-      $twins=$DBInfo->metadb->getTwinPages($this->page->name,$twin_mode);
       if ($body) {
         $body=rtrim($body); # delete last empty line
         $lines=explode("\n",$body);
       } else
         $lines=array();
+
+      if ($DBInfo->use_tagging and isset($pi['#keywords'])) {
+        $lines[]="----";
+        if (is_string($DBInfo->use_tagging))
+          $lines[]=$DBInfo->use_tagging;
+        else
+          $lines[]="Tags: [[Keywords]]";
+      }
+
+      $twin_mode=$DBInfo->use_twinpages;
+      if (isset($pi['#twinpages'])) $twin_mode=$pi['#twinpages'];
+      $twins=$DBInfo->metadb->getTwinPages($this->page->name,$twin_mode);
+
       if ($twins === true) {
         if ($DBInfo->interwiki['TwinPages']) {
           if ($lines) $lines[]="----";
