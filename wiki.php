@@ -4146,6 +4146,7 @@ if ($pagename) {
         $tcache->mtime($pagename) < $formatter->page->mtime() or
         $_GET['update_keywords']) {
         $keys=explode(',',$formatter->pi['#keywords']);
+        $keys=array_map('trim',$keys);
         $tcache->update($pagename,serialize($keys));
       }
     }
