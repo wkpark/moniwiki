@@ -1939,6 +1939,10 @@ class Formatter {
           if ($this->external_on)
             $external_link='<span class="externalLink">('.$url.')</span>';
         }
+        if (substr($url,0,7)=='http://' and $url[7]=='?') {
+          $link=substr($url,7);
+          return "<a href='$link'>$text</a>";
+        }
         $icon=strtok($url,':');
         return "<img class='url' alt='[$icon]' src='".$this->imgs_dir_url."$icon.png' />". "<a class='externalLink' $attr $this->external_target href='$link'>$text</a>".$external_icon.$external_link;
       } # have no space
@@ -4140,9 +4144,11 @@ if ($pagename) {
       if (!$tcache->exists($pagename) or $_GET['update_title'])
         $tcache->update($pagename,$formatter->pi['#title']);
     }
-    if ($formatter->pi['#keywords'] and $DBInfo->use_keywords) {
+    if ($DBInfo->use_keywords or $_GET['update_keywords']) {
       $tcache=new Cache_text('keywords');
-      if (!$tcache->exists($pagename) or
+      if (!$formatter->pi['#keywords']) {
+        $tcache->remove($pagename);
+      } else if (!$tcache->exists($pagename) or
         $tcache->mtime($pagename) < $formatter->page->mtime() or
         $_GET['update_keywords']) {
         $keys=explode(',',$formatter->pi['#keywords']);
