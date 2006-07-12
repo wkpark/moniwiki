@@ -83,7 +83,7 @@ define(MIN_FONT_SZ,10);
 
         if ($options['random']) {
             $rws=array();
-            $selected=array_rand($words,min($options['random'],count($words));
+            $selected=array_rand($words,min($options['random'],count($words)));
             foreach($selected as $k) {
                 $rws[$k]=$words[$k];
             }
