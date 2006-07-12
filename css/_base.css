@@ -152,6 +152,7 @@ div.message {
   border:2px solid #ff0000;
   color:#440000;
   padding:4px;
+  vertical-align: middle;
 }
 
 pre.errlog {

@@ -31,12 +31,30 @@ div.sectionEdit:hover {
   padding: 5px;
 }
 
+.cloudView {
+  display:inline;
+}
+
+.cloudView ul{
+  padding:0px;
+  margin:0px;
+  display:inline;
+}
+
 .cloudView li{
   font-family:Trebuchet MS,Georgia,Verdana,sans-serif;
   list-style:none;
   white-space: nowrap;
   display:inline;
+  padding-left:0px;
+}
+
+span.tag-name {
+}
+
+.cloudView li.tag-item {
   padding-left:5px;
+  font-size:14px;
 }
 
 #wikiBody .cloudView a:link, #wikiBody .cloudView a:visited {
