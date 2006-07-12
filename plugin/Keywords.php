@@ -13,7 +13,7 @@ define(MAX_FONT_SZ,24);
 define(MIN_FONT_SZ,10);
     $supported_lang=array('ko');
 
-    $limit=$options['limit'] ? $options['limit']:40;
+    $limit=isset($options['limit']) ? $options['limit']:40;
     $opts=explode(',',$value);
     foreach ($opts as $opt) {
         $opt=trim($opt);
@@ -332,10 +332,14 @@ function do_keywords($formatter,$options) {
         do_invalid($formatter,$options);
         return;
     }
+
     if ($options['update'] or $options['refresh']) {
         $lk=$DBInfo->getPage(LOCAL_KEYWORDS);
-        $formatter->send_header("Content-type: text/plain;charset=",
-            $DBInfo->charset);
+        $force_charset='';
+        if ($DBInfo->force_charset)
+            $force_charset = '; charset='.$DBInfo->charset;
+        $formatter->send_header("Content-type: text/plain".
+            $force_charset);
         if (!$lk->exists()) {
             print sprintf(_("%s is not found."),LOCAL_KEYWORDS);
             return;
@@ -345,7 +349,8 @@ function do_keywords($formatter,$options) {
         # update keylinks of LocalKeywords
         $kc=new Cache_text('keylinks');
         $lines=explode("\n",$raw);
-        $formatter->send_header("Content-type: text/plain");
+
+        $all_keys=array();
         foreach ($lines as $l) {
             $l=trim($l);
             if ($l[0] == '#' or !$l) continue;
@@ -361,6 +366,7 @@ function do_keywords($formatter,$options) {
                 'return preg_replace("/^([\"\'])(.*)\\\\1$/","\\\\2",$a);'),
                 $ws); // delete ",'
             $ws=array_unique($ws);
+            $all_keys=array_merge($all_keys,$ws);
             foreach ($ws as $k) {
                 $rels=array_diff($ws,array($k));
                 $krels=unserialize($kc->fetch($k));
@@ -377,6 +383,16 @@ function do_keywords($formatter,$options) {
                     }
                 }
             }
+        }
+        #print_r(array_unique($all_keys));
+        $handle= opendir("$DBInfo->cache_dir/keylinks");
+        while ($fcache= readdir($handle)) {
+            if ($fcache[0] == '.') continue;
+            $pgname=$DBInfo->keyToPagename($fcache);
+            if (!in_array($fcache,$all_keys))
+                print 'X "'.$pgname."\"\n";
+            else
+                print 'O "'.$pgname."\"\n";
         }
         print "OK";
         return;
@@ -541,12 +557,19 @@ function do_keywords($formatter,$options) {
         $formatter->send_footer($args,$options);
         return;
     }
-    
-    $formatter->send_title(sprintf(_("Select keywords for %s"),
-        $options['page']),'', $options);
 
-    $options['merge']=1;
-    $options['add']=1;
+    if ($options['all']) {
+        $formatter->send_title(sprintf(_("Select keywords for %s"),
+            $options['page']),'', $options);
+        if (!$options['limit'])
+            $options['limit']=0;
+    } else {
+        $formatter->send_title(sprintf(_("Select keywords for %s"),
+            $options['page']),'', $options);
+
+        $options['merge']=1;
+        $options['add']=1;
+    }
 
     print macro_KeyWords($formatter,$options['page'],$options);
     //$args['editable']=1;
