@@ -334,7 +334,8 @@ function do_keywords($formatter,$options) {
     }
     if ($options['update'] or $options['refresh']) {
         $lk=$DBInfo->getPage(LOCAL_KEYWORDS);
-        $formatter->send_header("Content-type: text/plain");
+        $formatter->send_header("Content-type: text/plain;charset=",
+            $DBInfo->charset);
         if (!$lk->exists()) {
             print sprintf(_("%s is not found."),LOCAL_KEYWORDS);
             return;
@@ -367,18 +368,18 @@ function do_keywords($formatter,$options) {
                     if (($nrels=array_diff($rels,$krels))) {
                         $rs=array_unique(array_merge($nrels,$krels));
                         $kc->update($k,serialize($rs));
-                        #print "***** updated $k\n";
+                        print "***** updated $k\n";
                     }
                 } else {
                     if (sizeof($rels) > 1 and is_array($rels)) {
                         $kc->update($k,serialize($rels));
-                        #print "***** save $k\n";
+                        print "***** save $k\n";
                     }
                 }
             }
         }
-        #print "OK";
-        #return;
+        print "OK";
+        return;
     }
 
     $formatter->send_header('',$options);
