@@ -260,11 +260,9 @@ EOF;
     if (!isset($tag_link)) {
         if (!$search) $search='fullsearch&amp;keywords=1';
         if ($options['tour'])
-            $tag_link=$formatter->link_url('$TAG',
-                '?action=tour&amp;arena=keylinks');
-        else 
-            $tag_link=$formatter->link_url(_rawurlencode($pagename),
-                '?action='.$search.'&amp;value=$TAG');
+            $search='tour&amp;arena=keylinks';
+        $tag_link=$formatter->link_url(_rawurlencode($pagename),
+            '?action='.$search.'&amp;value=$TAG');
     }
     $out='';
     if ($options['add']) {

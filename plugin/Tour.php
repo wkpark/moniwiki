@@ -16,7 +16,9 @@ function do_tour($formatter,$options) {
     $formatter->send_title(sprintf(_("Tour from %s"),$options['page']),'',
         $options);
 
-    print macro_Tour($formatter,$options['page'],$options);
+    if ($options['value']) $value=$options['value'];
+    else $value=$options['page'];
+    print macro_Tour($formatter,$value,$options);
     //$args['editable']=1;
     $formatter->send_footer($args,$options);
 }
@@ -59,6 +61,7 @@ define(TOUR_DEPTH,3);
         $query2='?action=fullsearch&amp;keywords=1';
         $head2=_("Keywords");
         if ($DBInfo->hasPage($value)) {
+            $link=$value;
         } else {
             $link=$formatter->link_to('?action=fullsearch&amp;value='.$value,htmlspecialchars($value));
         }
@@ -108,14 +111,28 @@ define(TOUR_DEPTH,3);
         }
     }
     unset($out[0]);
-    $wide= $formatter->link_tag($url[$value],
-        "?action=tour$query&amp;w=".($count+1)."&amp;d=$depth",_("links"));
-    $deep= $formatter->link_tag($url[$value],
-        "?action=tour$query&amp;w=$count&amp;d=".($depth+1),_("deeper"));
+    if ($DBInfo->hasPage($url[$value])) {
+        $pg=$url[$value];
+        $extra='';
+    } else {
+        $pg=$options['page'];
+        $extra='&amp;value='.$url[$value];
+    }
+    $wide= $formatter->link_tag($pg,
+       "?action=tour$query$extra&amp;w=".($count+1)."&amp;d=$depth",_("links"));
+    $deep= $formatter->link_tag($pg,
+       "?action=tour$query$extra&amp;w=$count&amp;d=".($depth+1),_("deeper"));
     $link='<h3>'.sprintf(_("More %s or more %s"),$wide,$deep).'</h3>';
 
     foreach ($allnode as $node) {
-        $pages.='<li>'.$formatter->link_tag($url[$node],$query2,
+        if ($DBInfo->hasPage($url[$node])) {
+            $pg=$url[$node];
+            $extra='';
+        } else {
+            $pg=$options['page'];
+            $extra='&amp;value='.$url[$node];
+        }
+        $pages.='<li>'.$formatter->link_tag($pg,$query2.$extra,
             htmlspecialchars($node))."</li>\n";
     }
     if ($arena == 'keywords' or $arena == 'keylinks')
@@ -131,8 +148,15 @@ define(TOUR_DEPTH,3);
         asort($ls);
         $temp='';
         foreach ($ls as $leaf) {
-            $temp.= ' <li>'.$formatter->link_tag($url[$leaf],
-                "?action=tour$query",$leaf)."</li>\n";
+            if ($DBInfo->hasPage($url[$leaf])) {
+                $pg=$url[$leaf];
+                $extra='';
+            } else {
+                $pg=$options['page'];
+                $extra='&amp;value='.$url[$leaf];
+            }
+            $temp.= ' <li>'.$formatter->link_tag($pg,
+                "?action=tour$query$extra",$leaf)."</li>\n";
         }
         $out[]="<ul class='depth-$dep'>".$temp.'</ul>';
         $dep++;
