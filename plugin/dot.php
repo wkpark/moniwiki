@@ -70,6 +70,8 @@ function do_dot($formatter,$options) {
     $fontsize=$options['f'];
   else $fontsize=FONTSIZE;
 
+  $fontsize= $DBInfo->dot_fontsize ? $DBInfo->dot_fontsize: $fontsize;
+
   $color=array();
   $tree=new LinkTree($options['arena']);
   $tree->makeTree($options['page'],$node,$color,$depth,$count);
