@@ -23,11 +23,10 @@ function processor_dot($formatter,$value) {
   $dot=$value;
 
   $md5sum=md5($dot);
-  if (!file_exists($webdot_dir."/$md5sum.dot")) {
+  if ($formatter->refresh or !file_exists($webdot_dir."/$md5sum.dot")) {
     $fp=fopen($webdot_dir."/$md5sum.dot","w");
     fwrite($fp,$dot);
     fclose($fp);
-  }{
 
     $cmd="$dotcmd -Tpng $webdot_dir/$md5sum.dot -o $webdot_dir/$md5sum.png";
 
