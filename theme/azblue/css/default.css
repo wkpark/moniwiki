@@ -256,7 +256,10 @@ div.message {
   background-color: #E8E8E8;
   border-color:#ee0000;
   color:#440000;
-  padding:3px;
+  padding:5px;
+  padding-left:55px;
+  background: #E8E8E8 url(../imgs/warn.png) 10px 10px no-repeat;
+  min-height: 40px;
 }
 
 .highlight {
