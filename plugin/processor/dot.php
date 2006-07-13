@@ -30,14 +30,21 @@ function processor_dot($formatter,$value) {
   }{
 
     $cmd="$dotcmd -Tpng $webdot_dir/$md5sum.dot -o $webdot_dir/$md5sum.png";
-    $fp=popen($cmd.$formatter->NULL,'r');
+
+    $formatter->errlog('Dot');
+    $fp=popen($cmd.$formatter->LOG,'r');
     pclose($fp);
+    $err=$formatter->get_errlog();
+    $formatter->errlog('Dot');
     $cmd="$dotcmd -Timap $webdot_dir/$md5sum.dot -o $webdot_dir/$md5sum.map";
-    $fp=popen($cmd.$formatter->NULL,'r');
+    $fp=popen($cmd.$formatter->LOG,'r');
     pclose($fp);
+    $err.=$formatter->get_errlog();
+    if ($err)
+        $err ="<pre class='errlog'>$err</pre>\n";
   }
 
-  return "<a href='$DBInfo->url_prefix/$webdot_dir/$md5sum.map'><img border='0' src='$DBInfo->url_prefix/$webdot_dir/$md5sum.png' ismap /></a>\n";
+  return $err."<a href='$DBInfo->url_prefix/$webdot_dir/$md5sum.map'><img border='0' src='$DBInfo->url_prefix/$webdot_dir/$md5sum.png' ismap /></a>\n";
 }
 
 ?>
