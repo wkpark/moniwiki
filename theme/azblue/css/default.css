@@ -262,6 +262,12 @@ div.message {
   min-height: 40px;
 }
 
+pre.errlog {
+  padding-left:55px;
+  background: #E8E8E8 url(../imgs/error.png) 10px 10px no-repeat;
+  min-height: 40px;
+}
+
 .highlight {
   background-color:#FFFF40;
 }
