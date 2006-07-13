@@ -1,8 +1,102 @@
 <?php
-// Copyright 2005 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2005-2006 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
-// a ticket plugin for the MoniWiki
+// a simple CAPTCHA ticket plugin for the MoniWiki
+//
 // $Id$
+
+function _effect_distort($image,$factor=40,$grad=1) {
+    // from http://www.codeproject.com/aspnet/CaptchaNET_2.asp Farshid Hosseini
+    $width = imagesx($image);
+    $height = imagesy($image);
+
+    $fact=$factor/25;
+    $disx=rand(4,10)*(rand(0,1) ? 1:-1)*$fact;
+    $disy=rand(4,12)*(rand(0,1) ? 1:-1)*$fact;
+    $yf=rand(30,45)*$fact;
+    $xf=rand(80,95)*$fact;
+
+    $canvas=imagecreate($width,$height);
+    $new = imagecolorallocate($canvas, $r1, $g1, $b1);
+    imagepalettecopy($canvas,$image);
+
+    for ($y = 0; $y < $height; $y++) {
+        for ($x = 0; $x < $width; $x++) {
+            // Adds a simple wave
+            $newX = 
+              ($x + ($disx * Sin(3.141592 * $y / $xf)));
+
+            $t=($x - $width/2) / $yf * 2.4;
+            $t=$t*$t;
+            $newY = 
+              #($y + ($distort * sin(1.5*3.141592 * $x / $yf)));
+              ($y + ($disy * exp(-$t)*sin(3.141592 * $x / $yf)));
+            $col = imagecolorat($image, $newX, $newY);
+
+            if ($newY >$height or $newY < 0) $newY=0;
+            if ($newX < 0) $newX=0;
+            else if ($newX > $width) $newX=$width;
+
+            if ($grad) { # with gradient effect based on above functions
+                $i = imagecolorsforindex($image, $col);
+                $r = $i['red'];
+                $g = $i['green'];
+                $b = $i['blue'];
+
+                $gratio=120;
+                $bratio=100;
+                $pratio=125;
+            
+                $red = (int)($r);
+                $green = (int)($newX/$width*$gratio+$g/255*$pratio);
+                $blue = (int)($newY/$height*$bgatio+$b/255*$pratio);
+                $new = imagecolorallocate($canvas, $red, $green, $blue);
+                $new = imagecolorclosest($canvas, $red, $green, $blue);
+                imageSetPixel($canvas,$x,$y,$new);
+            } else {
+                imageSetPixel($canvas,$x,$y,$col);
+            }
+        }
+    }
+    imageCopy($image,$canvas,0,0,0,0,$width,$height);
+}
+
+function _effect_wave($image) {
+    // from http://kr.php.net/manual/en/function.imagecopy.php#65555
+    // and some modification
+    $width = imagesx($image);
+    $height = imagesy($image);
+    $x=3;
+    $y=-5;
+
+    $ext=rand(4,7);
+    $se=rand(10,15);
+
+    $canvas=imagecreate($width,$height+5);
+    #imageCopy($canvas,$image,0,0,0,0,$width,$height);
+
+    for ($i=0;$i<$width;$i+=2){
+        imagecopy($canvas,$image,
+            $x+$i-2,$y+(-sin($i/$se+0.5)+cos($i/$se*0.8))*$ext,
+            $x+$i,$y,
+            2,$height);
+    }
+
+    $ext=rand(10,15);
+    $se=rand(15,17);
+
+    $canvas2=imagecreate($width,$height+5);
+
+    for ($i=0;$i<$height;$i+=2){
+        imagecopy($canvas2,$canvas,
+            $x+(sin($i/$se+0.5))*$ext,$y+$i+2,
+            $x,$y+$i,
+            $width,2);
+    }
+
+    imageCopy($image,$canvas2,0,0,0,0,$width,$height+5);
+}
+
 
 function _effect_blur($image,$color,$dx=1,$dy=0) {
 // please see http://www.hudzilla.org/phpbook/read.php/11_2_23
@@ -67,10 +161,13 @@ function _effect_grid($im,$color,$pen=4) {
 function do_ticket($formatter,$options) {
     global $DBInfo;
 
+    $word_length=4;
+
     if ($options['__seed']) {
         // check seed
         // check referer
-        $passwd=getTicket($options['__seed'],$_SERVER['REMOTE_ADDR'],4);
+        $passwd=getTicket($options['__seed'],$_SERVER['REMOTE_ADDR'],
+            $word_length);
     } else {
         $options['title']=_("Invalid use of ticket");
         do_invalid($formatter,$options);
@@ -97,10 +194,14 @@ function do_ticket($formatter,$options) {
         $angle=0;
         //$size = Imagettfbbox($pointsize, 0, $FONT, $passwd);
         // XXX segfault :(
+
+        $margin=$pointsize/2;
         $size=array(0,0,0,20,65);
         //$size=array(0,0,0,20,50);
-        $w=$size[4]+20; # margin=20 ?
-        $h=$size[3]- $size[5]+10; # margin= 10 ?
+        //$w=$size[4]+20; # margin=20 ?
+        $w=$pointsize*$word_length + $margin;
+        $h=$pointsize+$margin;
+        if ($DBInfo->use_ticket & 7) $h+=$pointsize/3;
     } else {
         $FONT=5; // giant
         if ($DBInfo->ticket_gdfont)
@@ -110,7 +211,6 @@ function do_ticket($formatter,$options) {
     }
 
     Header("Content-type: image/png");
-    $im= ImageCreate(($size[4]+20), ($size[5]+10));
     $im= ImageCreate($w,$h);
     $color=array();
     $color[]= ImageColorAllocate($im, 240, 240, 240); // background
@@ -120,26 +220,24 @@ function do_ticket($formatter,$options) {
     for ($i=0;$i<18;$i++)
         $color[]= ImageColorAllocate($im,rand(100,200),rand(100,200),rand(100,200));
     if ($use_ttf) {
-        ImageTtfText($im,$pointsize, $angle, 6, 25, $color[$pen], $FONT,
+        $sx=$margin;
+        $sy=$margin/2+$pointsize;
+        ImageTtfText($im,$pointsize, $angle, $sx, $sy+1, $color[$pen], $FONT,
             $passwd);
-        ImageTtfText($im,$pointsize, $angle, 7, 24, $color[$pen], $FONT,
+        ImageTtfText($im,$pointsize, $angle, $sx+1, $sy, $color[$pen], $FONT,
             $passwd);
     } else {
         ImageString($im,$FONT, 5, 3, $passwd, $color[$pen]);
         ImageString($im,$FONT, 4, 4, $passwd, $color[$pen]);
     }
 
-    switch ($DBInfo->use_ticket) {
-        case 1:
-            _effect_blur($im,$color,1,1);
-            break;
-        case 3:
-            _effect_blur($im,$color,1,1);
-        case 2:
-        default:
-            _effect_grid($im,$color,$pen);
-            break;
-    }
+    if ($DBInfo->use_ticket & 8) $grad=1;
+    if ($DBInfo->use_ticket & 4)
+        _effect_distort($im,$pointsize,$grad);
+    if ($DBInfo->use_ticket & 1)
+        _effect_blur($im,$color,1,1);
+    if ($DBInfo->use_ticket & 2)
+        _effect_grid($im,$color,$pen);
 
     ImagePng($im);
     ImageDestroy($im);
