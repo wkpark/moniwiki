@@ -177,16 +177,27 @@ EOS;
    $upfiles=array();
    $dirs=array();
 
+   $per=$DBInfo->uploadedfiles_per_page ? $DBInfo->uploadedfiles_per_page:100;
+   // XXX
+   $plink='';
+   if ($options['p'])
+      $p=$options['p'] ? (int) $options['p']:1;
+   else $p=1;
+   $pfrom=($p-1)*$per;
+   $pto=$pfrom+$per;
+   $count=0;
    while ($file= readdir($handle)) {
       if ($file[0]=='.') continue;
       if (!$options['nodir'] and is_dir($dir."/".$file)) {
         if ($value =='UploadFile')
           $dirs[]= $DBInfo->keyToPagename($file);
-      } else if (preg_match($needle,$file))
+      } else if (preg_match($needle,$file) and $count >= $pfrom)
         $upfiles[]= $file;
+      $count++;
+      if ($count >= $pto) { $plink=1; break;}
    }
    closedir($handle);
-   if (!$upfiles and !$dirs) return "<h3>No files uploaded</h3>";
+   if (!$upfiles and !$dirs) return "<h3>"._("No files found")."</h3>";
    sort($upfiles); sort($dirs);
 
    $link=$formatter->link_url($formatter->page->urlname);
@@ -221,6 +232,10 @@ EOS;
       $date=date("Y-m-d",filemtime($dir."/.."));
       $out.="<tr><td class='wiki'>&nbsp;</td><td class='wiki'>$link</td><td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td></tr>\n";
    }
+   if ($plink)
+      $plink=$formatter->link_tag('',"?action=uploadedfiles$extra&amp;p=".($p+1),_("Next page &raquo;"),$attr);
+   else if ($p > 1)
+      $plink=$formatter->link_tag('',"?action=uploadedfiles$extra",_("&laquo; First page"),$attr);
 
    if (!$prefix) $prefix=$DBInfo->url_prefix."/".$dir."/";
 
@@ -251,7 +266,7 @@ EOS;
         $tag_open='attachment:'; $tag_close='';
         if ($opener != $value)
             $tag_open.=$opener;
-        $alt="$tag_open$file$tag_close";
+        $alt="alt='$tag_open$file$tag_close'";
         preg_match("/\.(.{1,4})$/",$fname,$m);
         $ext=strtolower($m[1]);
         if ($ext and stristr('gif,png,jpeg,jpg',$ext)) {
@@ -276,7 +291,8 @@ EOS;
       $idx++;
    }
    $idx--;
-   $out.="<tr><th colspan='2'>Total $idx files</th><td></td><td></td></tr>\n";
+   $msg=sprintf(_("Total %d files"),$idx);
+   $out.="<tr><th colspan='2'>$msg</th><th colspan='2'>$plink</th></tr>\n";
    $out.="</table>\n";
    if ($DBInfo->security->is_protected("deletefile",$options))
      $out.=_("Password").": <input type='password' name='passwd' size='10' />\n";
