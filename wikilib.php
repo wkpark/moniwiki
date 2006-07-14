@@ -36,7 +36,8 @@ function _rawurlencode($url) {
 }
 
 function _urlencode($url) {
-  return preg_replace("/([^a-z0-9\/\?\.\+~#&:;=%\-_]{1})/ie","'%'.strtoupper(dechex(ord(substr('\\1',-1))))",$url);
+  $t= preg_replace("/([^a-z0-9\/\?\.\+~#&:;=%\-_]{1})/ie","'%'.strtoupper(dechex(ord(substr('\\1',-1))))",$url);
+  return preg_replace("/(%)(?!=[a-f0-9]{2})/i","%25",$t);
 }
 
 function _stripslashes($str) {
