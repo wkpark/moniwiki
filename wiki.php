@@ -2594,6 +2594,8 @@ class Formatter {
         if ($pi['args']) $pi_line="#!".$pi['#format']." $pi[args]\n";
         print call_user_func("processor_".$pi['#format'],$this,
           $pi_line.$this->page->body,$options);
+
+        
         return;
       }
       $lines=explode("\n",$body);
@@ -2620,6 +2622,14 @@ class Formatter {
       if ($pi['#format']) {
         if ($pi['args']) $pi_line="#!".$pi['#format']." $pi[args]\n";
         print call_user_func("processor_".$pi['#format'],$this,$pi_line.$body,$options);
+        if ($DBInfo->use_tagging and isset($pi['#keywords'])) {
+          $tmp="----\n";
+          if (is_string($DBInfo->use_tagging))
+            $tmp.=$DBInfo->use_tagging;
+          else
+            $tmp.="Tags: [[Keywords]]";
+          $this->send_page($tmp); // XXX
+        }
         return;
       }
 
