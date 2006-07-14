@@ -2356,6 +2356,7 @@ class Formatter {
       include_once("plugin/$plugin.php");
       if (!function_exists ("macro_".$plugin)) return '[['.$macro.']]';
     }
+
     $ret=call_user_func_array("macro_$plugin",array(&$this,$args,$options));
     return $bra.$ret.$ket;
   }
@@ -3487,7 +3488,7 @@ FOOT;
     #include "prof_results.php";
   }
 
-  function send_title($title="", $link="", $options="") {
+  function send_title($msgtitle="", $link="", $options="") {
     // Generate and output the top part of the HTML page.
     global $DBInfo;
 
@@ -3508,12 +3509,9 @@ FOOT;
       $upper_icon=$this->link_tag($upper,'',$this->icon['main'])." ";
     }
 
-    if (!$title) {
-      $title=htmlspecialchars($this->pi['#title']);
-      if (!$title) $title=$options['title'];
-    } else {
-      $title=htmlspecialchars($title);
-    }
+    $title=htmlspecialchars($this->pi['#title']);
+    if (!$title) $title=$options['title'];
+    $msgtitle=htmlspecialchars($msgtitle);
     if (!$title) {
       if ($group) { # for UserNameSpace
         $title=$mypgname;
@@ -3537,10 +3535,11 @@ FOOT;
     $goto_form=$DBInfo->goto_form ?
       $DBInfo->goto_form : goto_form($action,$DBInfo->goto_type);
 
-    if ($options['msg']) {
+    if ($options['msg'] or $msgtitle) {
+      $mtitle=$msgtitle ? "<h3>".$msgtitle."</h3>\n":"";
       $msg=<<<MSG
 <div class="message">
-$options[msg]
+$mtitle$options[msg]
 </div>
 MSG;
     }
@@ -4082,7 +4081,7 @@ if ($pagename) {
 
       $twins=$DBInfo->metadb->getTwinPages($page->name,2);
       if ($twins) {
-        $formatter->send_title($page->name,"",$options);
+        $formatter->send_title('','',$options);
         $twins="\n".join("\n",$twins);
         $formatter->send_page(_("See [TwinPages]: ").$twins);
         echo "<br />".
