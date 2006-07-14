@@ -2516,12 +2516,19 @@ class Formatter {
     if (!$val) return '';
     $para=substr($val,4,-1);
     # rowspan
-    if (preg_match("/^\|(\d+)$/",$para,$match))
-      $attr[]="rowspan='$match[1]'";
+    if (preg_match("/^(\^|v)?\|(\d+)$/",$para,$match)) {
+      $attr[]="rowspan='$match[2]'";
+      if ($match[1]) {
+        if ($match[1] == '^') $attr[]="valign='top'";
+        else $attr[]="valign='bottom'";
+      }
+    }
+    else if (preg_match("/^\-(\d+)$/",$para,$match))
+      $attr[]="colspan='$match[1]'";
     else if ($para[0]=='#')
       $attr[]="bgcolor='".strtolower($para)."'";
     else
-      $attr[]=$para;
+      $attr[]=strtolower($para);
     return implode(' ',$attr).' ';
   }
 
@@ -2529,7 +2536,7 @@ class Formatter {
     if (!$on) return "</table>\n";
     $tattr=substr($attr,4,-1);
     if ($tattr[0]=='#') {
-      $tattr="bgcolor='$tattr'";
+      $tattr="bgcolor='".strtolower($tattr)."'";
     } else if (substr($tattr,0,5)=='table') {
       $tattr=substr($tattr,5);
       $attr='';
