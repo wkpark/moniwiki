@@ -89,7 +89,7 @@ define(MIN_FONT_SZ,10);
             }
             $words=&$rws;
         }
-        if ($sort=='freq') ksort($words);
+        if ($sort!='freq') ksort($words);
         #sort($words);
         #print $sort." $value";
         #print "<pre>";
@@ -254,7 +254,7 @@ EOF;
     }
     endif;
 
-    if ($sort=='freq') ksort($words);
+    if ($sort!='freq') ksort($words);
 
     $link=$formatter->link_url(_rawurlencode($pagename),'');
     if (!isset($tag_link)) {
