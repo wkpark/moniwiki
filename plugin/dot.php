@@ -8,6 +8,7 @@
 define(DEPTH,3);
 define(LEAFCOUNT,2);
 define(FONTSIZE,8);
+define(FONTNAME,'WEBDOTFONT');
 
 class LinkTree {
   var $cache=null;
@@ -31,11 +32,14 @@ class LinkTree {
             # XXX 
             $nodelink[$page]=sizeof($leafs);
           } else
-          $nodelink[$page]=1;
+            $nodelink[$page]=1;
         } else $nodelink[$page]=1;
       }
     }
-    if (sizeof($nodelink) > $count) arsort($nodelink);
+    if (sizeof($nodelink) > $count) {
+      arsort($nodelink);
+      $nodelink=array_slice($nodelink,0,$count*2);
+    }
     if ($nodelink) $node[$pagename]=array_keys($nodelink);
   }
 
@@ -71,32 +75,39 @@ function do_dot($formatter,$options) {
   else $fontsize=FONTSIZE;
 
   $fontsize= $DBInfo->dot_fontsize ? $DBInfo->dot_fontsize: $fontsize;
+  $fontname= $DBInfo->dot_fontname ? $DBInfo->dot_fontname: FONTNAME;
 
   $color=array();
   $tree=new LinkTree($options['arena']);
-  $tree->makeTree($options['page'],$node,$color,$depth,$count);
+  $tree->makeTree($options['page'],$node,$color,$depth,$count*2);
   if (!$node) $node=array($options['page']=>array());
   #print_r($color);
   foreach ($color as $key=>$val) $color[$key]=$depth-$val;
 
   $color[$options['page']]=10;
 
+  $myaction='visualtour';
+  if (in_array($options['t'],array('visualtour','show')))
+    $myaction=$options['t'];
+
   header("Content-Type: text/plain");
   #print_r($color);
   #print_r(array_keys($node));
   $visualtour=$formatter->link_url("VisualTour");
-  $pageurl=qualifiedUrl($formatter->link_url("\\N","?action=visualtour"));
+  $pageurl=qualifiedUrl($formatter->link_url("\\N","?action=$myaction"));
 
   $colref=array('gray71',
                 'olivedrab1','olivedrab2','olivedrab3',
                 '"#A4DDF4"','"#83D0ED"','"#63C0E3"',
                 'gray53', 'gray40','gray30','yellow');
   $colidx=0;
-  $out=<<<HEAD
+  $dot_head=<<<HEAD
 digraph G {
+  nodesep="0.05"
+  ratio="compress"
   URL="$visualtour"
   node [URL="$pageurl", 
-fontcolor=black, fontname=WEBDOTFONT, fontsize=$fontsize]\n
+fontcolor=black, fontname=$fontname, fontsize=$fontsize]\n
 HEAD;
 
   $allnode=array_keys($node);
@@ -109,6 +120,7 @@ HEAD;
     #print $leafname."\n";
     #print_r($node[$leafname]);
     $selected=array_intersect($node[$leafname],$allnode);
+
     foreach ($selected as $leaf) {
       if (!$leafs[($urlname=_rawurlencode($leaf))]) {
         $leafs[$leaf]=$urlname;
@@ -119,6 +131,8 @@ HEAD;
     }
   }
   $out.= "};\n";
+
+  $out=$dot_head.$out;
 
   if (strtoupper($DBInfo->charset) != 'UTF-8') {
     $new=iconv($DBInfo->charset,'UTF-8',$out);

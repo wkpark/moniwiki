@@ -4,9 +4,8 @@
 // a VisualTour plugin for the MoniWiki
 //
 // $Id$
-// vim:et:ts=2:
 
-function do_VisualTour($formatter,$options) {
+function macro_VisualTour($formatter,$value,$options=array()) {
   global $DBInfo;
 
   putenv('GDFONTPATH='.getcwd().'/data');
@@ -23,36 +22,77 @@ function do_VisualTour($formatter,$options) {
   if (!$formatter->page->exists())
     return "";
 
+  $args=explode(',',$value);
+  $extra='';
+  foreach ($args as $arg) {
+    $arg=trim($arg);
+    if (($p=strpos($arg,'='))===false) {
+      if ($arg == 'show') $extra.='&t=show';
+      else if (is_int($arg)) $w=$arg;
+      else if ($DBInfo->hasPage($arg)) $pgname=$arg;
+    } else {
+      $k=strtok($arg,'=');
+      $v=strtok('');
+      if ($k == 'width' or $k =='w') $w=(int)$v;
+      else if ($k == 'depth' or $k =='d') $d=(int)$v;
+      else if ($k == 'arena' or $k =='a') $extra.='&arena='.$v;
+    }
+  }
+
   if ($options['w'] and $options['w'] < 6) $w=$options['w'];
-  else $w=2;
+  else $w=$w?$w:2;
   if ($options['d'] and $options['d'] < 6) $d=$options['d'];
-  else $d=3;
+  else $d=$d?$d:3;
 
-  if ($options['f']) $extra="&f=".$options['f'];
+  if ($options['f']) $extra.="&f=".$options['f'];
+  if ($options['arena']) $extra.="&arena=".$options['arena'];
 
-  $url=qualifiedUrl($formatter->link_url($formatter->page->urlname,"?action=dot&w=$w&d=$d$extra"));
+  if ($pgname)
+    $urlname=_urlencode($pgname);
+  else {
+    $urlname=$formatter->page->urlname;
+    $pgname=$formatter->page->name;
+  }
+
+  $url=qualifiedUrl($formatter->link_url($urlname,"?action=dot&w=$w&d=$d$extra"));
 
   $fp=fopen($url,"r");
   $dot="";
   while ($data= fread($fp, 4096)) $dot.=$data;
   fclose($fp);
 
-  $md5sum=$DBInfo->pageToKeyname($options['page']).".".md5($dot);
-  if (!file_exists($webdot_dir."/$md5sum.dot")) {
+  $md5sum=$DBInfo->pageToKeyname($pgname).".".md5($dot);
+  if ($formatter->refresh or !file_exists($webdot_dir."/$md5sum.dot")) {
     $fp=fopen($webdot_dir."/$md5sum.dot","w");
     fwrite($fp,$dot);
     fclose($fp);
-  }{
+
     $cmd="$dotcmd -Tpng $webdot_dir/$md5sum.dot -o $webdot_dir/$md5sum.png";
-    $fp=popen($cmd.$formatter->NULL,'r');
+    $formatter->errlog('Dot');
+    $fp=popen($cmd.$formatter->LOG,'r');
     pclose($fp);
+    $err=$formatter->get_errlog();
     $cmd="$dotcmd -Timap $webdot_dir/$md5sum.dot -o $webdot_dir/$md5sum.map";
-    $fp=popen($cmd.$formatter->NULL,'r');
+    $formatter->errlog('Dot');
+    $fp=popen($cmd.$formatter->LOG,'r');
     pclose($fp);
+    $err.=$formatter->get_errlog();
+    if ($err)
+        $err ="<pre class='errlog'>$err</pre>\n";
+
   }
 
-  $selfurl=$formatter->link_to();
+  return $err."<span class='VisualTour'><a href='$DBInfo->url_prefix/$webdot_dir/$md5sum.map'><img src='$DBInfo->url_prefix/$webdot_dir/$md5sum.png' alt='VisualTour' ismap></a></span>\n";
+}
+
+function do_VisualTour($formatter,$options) {
   $formatter->send_header();
+  $selfurl=$formatter->link_to();
+  if ($options['w'] and $options['w'] < 6) $w=$options['w'];
+  else $w=2;
+  if ($options['d'] and $options['d'] < 6) $d=$options['d'];
+  else $d=3;
+
   print "<h2 style='font-family:Tahoma,Sans-serif;'>VisualTour on $selfurl</h2>";
 
   print $formatter->link_to("?action=visualtour",_("Normal"));
@@ -62,9 +102,10 @@ function do_VisualTour($formatter,$options) {
   print $formatter->link_to("?action=visualtour&amp;w=$w&amp;d=".($d+1),_("Deeper"));
   print "<br />";
 
-  print "<a href='$DBInfo->url_prefix/$webdot_dir/$md5sum.map'><img src='$DBInfo->url_prefix/$webdot_dir/$md5sum.png' alt='VisualTour' ismap></a>\n";
+  print macro_VisualTour($formatter,'',$options);
 
   return;
 }
 
+// vim:et:sts=2:
 ?>
