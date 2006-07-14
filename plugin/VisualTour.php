@@ -100,6 +100,8 @@ function do_VisualTour($formatter,$options) {
   print $formatter->link_to("?action=visualtour&amp;w=".($w+1)."&amp;d=$d",_("Wider"));
   print "|";
   print $formatter->link_to("?action=visualtour&amp;w=$w&amp;d=".($d+1),_("Deeper"));
+  print "|";
+  print $formatter->link_to("?action=visualtour&amp;refresh=1&amp;w=$w&amp;d=".$d,_("Refresh"));
   print "<br />";
 
   print macro_VisualTour($formatter,'',$options);
