@@ -167,3 +167,11 @@ ul.depth-5 {
   padding-left:8px !important;
   border-left: 3px solid #d7b7fb;
 }
+
+span.VisualTour img {
+  border:0px;
+}
+
+span.VisualTour {
+  overflow:auto;
+}
