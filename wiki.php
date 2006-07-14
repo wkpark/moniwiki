@@ -3510,8 +3510,8 @@ FOOT;
     }
 
     $title=htmlspecialchars($this->pi['#title']);
-    if (!$title) $title=$options['title'];
     $msgtitle=htmlspecialchars($msgtitle);
+    if (!$msgtitle) $msgtitle=$options['title'];
     if (!$title) {
       if ($group) { # for UserNameSpace
         $title=$mypgname;
