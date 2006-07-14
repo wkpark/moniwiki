@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2004 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2006 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a Icon macro plugin for the MoniWiki
 //
@@ -13,6 +13,10 @@ function macro_Icon($formatter,$value='',$extra='') {
     $realdir=basename($DBInfo->imgs_dir);
     $img=strtok('');
     if (is_dir($realdir.'/'.$dir)) $value=$dir.'/'.$img;
+  } else if (isset($formatter->icon[$value])) {
+    return $formatter->icon[$value];
+  } else if ($value == 'deleted') {
+    return $formatter->icon['del'];
   } else if (! preg_match('/\.(gif|png|jpg|jpeg)$/',$value)) {
     $value=$DBInfo->iconset.'/'.$value.'.png';
   }
