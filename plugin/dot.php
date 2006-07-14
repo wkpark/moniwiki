@@ -76,6 +76,7 @@ function do_dot($formatter,$options) {
 
   $fontsize= $DBInfo->dot_fontsize ? $DBInfo->dot_fontsize: $fontsize;
   $fontname= $DBInfo->dot_fontname ? $DBInfo->dot_fontname: FONTNAME;
+  $dot_options=$DBInfo->dot_options ? $DBInfo->dot_options: '';
 
   $color=array();
   $tree=new LinkTree($options['arena']);
@@ -103,7 +104,7 @@ function do_dot($formatter,$options) {
   $colidx=0;
   $dot_head=<<<HEAD
 digraph G {
-  nodesep="0.05"
+  $dot_options
   ratio="compress"
   URL="$visualtour"
   node [URL="$pageurl", 
