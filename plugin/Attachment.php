@@ -74,7 +74,7 @@ function macro_Attachment($formatter,$value,$option='') {
     $subpage=substr($value,0,$p);
     $file=substr($value,$p+1);
     $value=$subpage.'/'.$file; # normalize page arg
-    if ($subpage and $DBInfo->hasPage($subpage)) {
+    if ($subpage and is_dir($DBInfo->upload_dir.'/'.$DBInfo->pageToKeyname($subpage))) {
       $pagename=$subpage;
       $key=$DBInfo->pageToKeyname($subpage);
     } else {

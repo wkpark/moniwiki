@@ -172,7 +172,7 @@ EOS;
         if (!$m[2]) {
            # skip XXX
         } else if (file_exists($DBInfo->upload_dir.'/isbn/'.$myimglink)) {
-           $mlink=macro_Attachment($formatter,'attachment:isbn/'.$myimglink,1);
+           $mlink=$formatter->macro_repl('attachment','isbn:'.$myimglink,1);
            $imglink=qualifiedUrl($DBInfo->url_prefix.'/'.$mlink);
         } else {
            $fd=fopen($imglink,'r');
