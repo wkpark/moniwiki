@@ -201,7 +201,7 @@ function macro_info($formatter,$value,$options=array()) {
 function do_info($formatter,$options) {
   global $DBInfo;
   $formatter->send_header("",$options);
-  $formatter->send_title(sprintf(_("Info. for %s"),$options['page']),"",$options);
+  $formatter->send_title('','',$options);
 
   print macro_info($formatter,'',$options);
   $formatter->send_footer($args,$options);
