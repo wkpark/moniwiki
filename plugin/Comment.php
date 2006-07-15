@@ -191,7 +191,13 @@ META;
   $options['msg']=sprintf(_("%s is commented successfully"),$formatter->link_tag($formatter->page->urlname,"?action=show",$options['page']));
   $title=_("Comment added successfully");
 
-  $formatter->send_header('',$options);
+  $myrefresh='';
+  if ($DBInfo->use_save_refresh) {
+    $sec=$DBInfo->use_save_refresh - 1;
+    $lnk=$formatter->link_url($formatter->page->urlname,"?action=show");
+    $myrefresh='Refresh: '.$sec.'; url='.qualifiedURL($lnk);
+  }
+  $formatter->send_header($myrefresh,$options);
   $formatter->send_title($title,'',$options);
 
   $opt['pagelinks']=1;
