@@ -81,6 +81,7 @@ function macro_Calendar($formatter,$value="",$option="") {
 
 		if (in_array ("blog", $args)) $mode='blog';
 		if (in_array ("noweek", $args)) $day_heading_length=0;
+		if (in_array ("center", $args)) $attr=' align="center"';
 		if (in_array ("shortweek", $args)) $day_heading_length=1;
 		if (in_array ("yearlink", $args)) $yearlink=1;
 		if (in_array ("archive", $args)) {
@@ -119,7 +120,7 @@ function macro_Calendar($formatter,$value="",$option="") {
 	$year= $date_info['year'];
 	$today= date("d");
 
-	$calendar= "<table class=\"Calendar\">\n";
+	$calendar= "<table class=\"Calendar\"$attr>\n";
 	#use the <caption> tag or just a normal table heading. Take your pick.
 	#http://diveintomark.org/archives/2002/07/03.html#day_18_giving_your_calendar_a_real_caption
 #	$calendar .= "<tr><th colspan=\"7\" class=\"month\">$date_info[month], $year</th></tr>\n";
