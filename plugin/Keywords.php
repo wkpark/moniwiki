@@ -54,6 +54,7 @@ define(MIN_FONT_SZ,10);
     }
 
     if ($options['random'] and !$limit) $limit=0;
+    if ($options['sort']=='freq') $sort= 'freq';
 
     if (!$pagename) $pagename=$formatter->page->name;
 
@@ -559,8 +560,23 @@ function do_keywords($formatter,$options) {
     }
 
     if ($options['all']) {
-        $formatter->send_title(sprintf(_("Select keywords for %s"),
-            $options['page']),'', $options);
+        if ($options['sort']=='freq') $sort= 'freq';
+        $formatter->send_title('','', $options);
+        $myq='?'.$_SERVER['QUERY_STRING'];
+        $myq=preg_replace('/&sort=[^&]+/i','',$myq);
+        if ($sort != 'freq') {
+            $myq.='&sort=freq';
+            $txt=_("alphabetically");
+            $ltxt=_("by frequency");
+        } else {
+            $txt=_("by size");
+            $ltxt=_("alphabetically");
+        }
+        $link=$formatter->link_tag(_rawurlencode($page),$myq,$ltxt);
+        
+        print "<h2>";
+        print sprintf(_("Keywords list %s (or %s)"),$txt,$link);
+        print "</h2>\n";
         if (!$options['limit'])
             $options['limit']=0;
     } else {

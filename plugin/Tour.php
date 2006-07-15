@@ -13,8 +13,7 @@ if (!function_exists('do_dot'))
 function do_tour($formatter,$options) {
     #header("Content-Type: text/plain");
     $formatter->send_header('',$options);
-    $formatter->send_title(sprintf(_("Tour from %s"),$options['page']),'',
-        $options);
+    $formatter->send_title('','', $options);
 
     if ($options['value']) $value=$options['value'];
     else $value=$options['page'];
