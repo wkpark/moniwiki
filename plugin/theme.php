@@ -15,8 +15,9 @@ function do_theme($formatter,$options) {
       #header("Set-Cookie: MONI_CSS=dummy; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname());
       setcookie('MONI_THEME','dummy',time()-60*60*24*30,get_scriptname());
       setcookie('MONI_CSS','dummy',time()-60*60*24*30,get_scriptname());
-      $options['css_url']='';
-      $options['theme']='';
+      $cleared=1;
+      //$options['css_url']='';
+      //$options['theme']='';
     } else {
       # save profile
       $udb=new UserDB($DBInfo);
