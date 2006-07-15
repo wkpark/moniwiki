@@ -142,19 +142,29 @@ function macro_Gallery($formatter,$value,&$options) {
     $update=1;
   } else if ($file and $upfiles[$file] and $options['comment']) {
     // add new comment
-    if ($options['id']=='Anonymous') $name=$_SERVER['REMOTE_ADDR'];
-    else $name=$options['id'];
-    if ($options['name']) $name=$options['name'];
-    $date=date("(Y-m-d H:i:s) ");
+    $comment=$text=_stripslashes($options['comment']);
 
-    $comment=_stripslashes($options['comment']);
-    $comment=str_replace("\r","",$comment);
-    $comment=str_replace("\n","\\n",$comment);
-    $comment=str_replace("\t"," ",$comment);
-    $comment=str_replace("<","&lt;",$comment);
-    $comment.=" -- $name $date";
-    $comments[$file]=$comment."\t".$comments[$file];
-    $update=1;
+    // spam filtering
+    $fts=preg_split('/(\||,)/',$DBInfo->spam_filter);
+    foreach ($fts as $ft) {
+      $text=$formatter->filter_repl($ft,$text,$options);
+    }
+    if ($text != $comment) {
+      $options['err'] = _("Sorry, can not save page because some messages are blocked in this wiki.");
+    } else {
+      if ($options['id']=='Anonymous') $name=$_SERVER['REMOTE_ADDR'];
+      else $name=$options['id'];
+      if ($options['name']) $name=$options['name'];
+      $date=date("(Y-m-d H:i:s) ");
+
+      $comment=str_replace("\r","",$comment);
+      $comment=str_replace("\n","\\n",$comment);
+      $comment=str_replace("\t"," ",$comment);
+      $comment=str_replace("<","&lt;",$comment);
+      $comment.=" -- $name $date";
+      $comments[$file]=$comment."\t".$comments[$file];
+      $update=1;
+    }
   } else if ($file and $upfiles[$file]) {
     // show comments of the selected item
     $mtime=$upfiles[$file];
@@ -191,7 +201,7 @@ function macro_Gallery($formatter,$value,&$options) {
     }
   }
 
-  if (!$upfiles) return "<h3>No files uploaded</h3>";
+  if (!$upfiles) return "<h3>"._("No files found")."</h3>\n";
   if ($sort) {
     if ($sort ==1) {
      arsort($upfiles);
@@ -315,10 +325,9 @@ function do_gallery($formatter,$options='') {
   $rows=$options['rows'] > 5 ? $options['rows']: 4;
   $cols=$options['cols'] > 60 ? $options['cols']: $cols;
 
-  $formatter->send_header("",$options);
-
   if ($options['comments'] and !$DBInfo->security->is_valid_password($options['passwd'],$options)) {
     $title= sprintf('Invalid password !');
+    $formatter->send_header("",$options);
     $formatter->send_title($title);
     $formatter->send_footer();
     return;
@@ -330,20 +339,33 @@ function do_gallery($formatter,$options='') {
     $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
     $options['title']=_("Comments are edited");
   } else if ($options['comment']) {
-    $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
-    $options['title']=_("Comments is added");
+    if (!$options['err']) {
+      $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
+      $options['title']=_("Comments is added");
+    } else
+      $options['msg']=&$options['err'];
   }
 
   if (!$options['value']) {
+    $formatter->send_header("",$options);
     $formatter->send_title("","",$options);
     print $ret;
   } else
   if ($options['comment'] or ($options['comments'] and $options['passwd'])) {
+    $myrefresh='';
+    if (!$options['err'] and $DBInfo->use_save_refresh) {
+      $sec=$DBInfo->use_save_refresh;
+      $lnk=$formatter->link_url($formatter->page->urlname,"?action=show");
+      $myrefresh='Refresh: '.$sec.'; url='.qualifiedURL($lnk);
+    }
+    $formatter->send_header($myrefresh,$options);
     $formatter->send_title("","",$options);
+    #$formatter->send_page('',$options);
   } else
   if ($options['comments'] and $options['admin'] and !$options['passwd']) {
     // admin form
     $rows+=5;
+    $formatter->send_header("",$options);
     $formatter->send_title("","",$options);
     print $ret;
     $url=$formatter->link_url($formatter->page->urlname);
@@ -365,6 +387,7 @@ FORM2;
     print $form;
   } else if (!$options['comment']) {
     // add comment form
+    $formatter->send_header("",$options);
     $formatter->send_title("","",$options);
     print $ret;
     $url=$formatter->link_url($formatter->page->urlname);
