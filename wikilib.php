@@ -1251,8 +1251,6 @@ function do_post_savepage($formatter,$options) {
   $button_merge=$options['manual_merge']? 2:$button_merge;
   $button_merge=$options['force_merge']? 3:$button_merge;
 
-  $formatter->send_header("",$options);
-
   $savetext=preg_replace("/\r\n|\r/", "\n", $savetext);
   $savetext=_stripslashes($savetext);
   $section_savetext='';
@@ -1285,6 +1283,7 @@ function do_post_savepage($formatter,$options) {
       $options['msg']=sprintf(_("Someone else saved the page while you edited %s"),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
       $options['preview']=1; 
       $options['conflict']=1; 
+      $formatter->send_header("",$options);
       if ($button_merge) {
         $options['msg']=sprintf(_("%s is merged with latest contents."),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
         $options['title']=sprintf(_("%s is merged successfully"),htmlspecialchars($options['page']));
@@ -1334,6 +1333,7 @@ function do_post_savepage($formatter,$options) {
 
   if (!$button_preview && $orig == $new) {
     $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
+    $formatter->send_header("",$options);
     $formatter->send_title(_("No difference found"),"",$options);
     $formatter->send_footer();
     return;
@@ -1354,6 +1354,7 @@ function do_post_savepage($formatter,$options) {
 
   if ($button_preview) {
     $options['title']=sprintf(_("Preview of %s"),htmlspecialchars($options['page']));
+    $formatter->send_header("",$options);
     $formatter->send_title("","",$options);
      
     $options['preview']=1; 
@@ -1406,6 +1407,14 @@ function do_post_savepage($formatter,$options) {
       $options['msg'].=sprintf(_("%s is not editable"),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
     else
       $options['msg'].=sprintf(_("%s is saved"),$formatter->link_tag($formatter->page->urlname,"?action=show",htmlspecialchars($options['page'])));
+
+    $myrefresh='';
+    if ($DBInfo->use_save_refresh) {
+       $sec=$DBInfo->use_save_refresh - 1;
+       $lnk=$formatter->link_url($formatter->page->urlname,"?action=show");
+       $myrefresh='Refresh: '.$sec.'; url='.qualifiedURL($lnk);
+    }
+    $formatter->send_header($myrefresh,$options);
     $formatter->send_title("","",$options);
     $opt['pagelinks']=1;
     # re-generates pagelinks
