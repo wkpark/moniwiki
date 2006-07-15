@@ -74,9 +74,17 @@ div {
 }
 
 #pBanLeft {
-  height:143px;
+  height:143px; /* total Banner heigt */
 }
+
 #pBanRight {
+
+}
+
+#pTitle {
+/*  border: 1px solid #7B9AC5; /* */
+  height: 30px; /* title height */
+  padding:0px;
 }
 
 
@@ -105,11 +113,6 @@ div {
 #goForm {
   float:right;
   padding: 3px 10px;
-}
-
-#pTitle {
-/*  border: 1px solid #7B9AC5; /* */
-  padding:0px;
 }
 
 #wikiPage {
@@ -198,14 +201,19 @@ pre.wikiSyntax {
 
 table.wiki {
 /* background-color:#E2ECE5;*/
+/* background-color: #F8F7F0; */
 /* border-collapse: collapse; */
   border: 0px outset #ddddb0;
 }
 
 td.wiki {
-  background-color: #F8F7F0;
+  background-color: #F8F7F0; 
 /* border-collapse: collapse; */
   border: 0px inset #EAF2F4;
+}
+tr.wiki {
+/* background-color: #F8F7F0; */
+/* border-collapse: collapse; */
 }
 
 textarea.wiki { width:98%; }
@@ -380,14 +388,16 @@ table.closure, td.closure{
 }
 
 #wikiMenu li:hover {
-/*  background-color: #ffffff; /* */
-  background-color: #98D3FC; /* */
+  background-color: #98D3FC; /* default */
+  /* background-color: #355F88; /* dark blue */
+  /* background-color: #F2B568; /* orange */
   text-decoration: none;
 }
 
 #wikiMenu li.current {
-/*  background-color: #ffffff; /* */
-  background-color: #0584D9; /* */
+  background-color: #0584D9; /* default */
+  /* background-color: #2C4F72; /* dark blue */
+  /* background-color: #E75024; /* orange */
   text-decoration: none;
 }
 
