@@ -240,7 +240,7 @@ EOF;
         #print $weight.'--';
     }
     $max=current($fact);
-    $min=$limit ? max(1,end($fact)):0;
+    $min=$limit ? max(1,end($fact))-1:0; // XXX
     // make font-size style
     $fz=max(sizeof($fact),2);
     $sty=array();
