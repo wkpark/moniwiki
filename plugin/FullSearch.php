@@ -63,6 +63,7 @@ function macro_FullSearch($formatter,$value="", &$opts) {
 
   $url=$formatter->link_url($formatter->page->urlname);
   $fneedle=str_replace('"',"&#34;",$needle); # XXX
+  $tooshort=$DBInfo->fullsearch_tooshort ? $DBInfo->fullsearch_tooshort:2;
 
   $form= <<<EOF
 <form method='get' action='$url'>
@@ -101,7 +102,7 @@ EOF;
         $len=strlen($word);
 
         if (!$match[1] and $match[2] != '"') {
-          if ($len <= 2 or in_array($word,$common_words)) {
+          if ($len <= $tooshort or in_array($word,$common_words)) {
             $common[]=$word;
             continue;
           }
@@ -215,7 +216,8 @@ EOF;
        }
      }
   }
-  krsort($hits);
+  #krsort($hits);
+  ksort($hits);
 
   if ($arena == 'fullsearch')
     $fc->update($sid,serialize($hits));
