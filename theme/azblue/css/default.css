@@ -280,6 +280,11 @@ div.message {
   height:40px;
 }
 
+div.message h3 {
+  border:0px;
+  font-family:Trebuchet MS,sans-serif;
+}
+
 pre.errlog {
   padding-left:55px;
   background: #E8E8E8 url(../imgs/error.png) 10px 10px no-repeat;
@@ -439,7 +444,7 @@ table.closure, td.closure{
 #wikiBody {
   color: black;
 /*  background-color: #fff; /* */
-  overflow: hidden; /* */
+  overflow: hidden; /* magic XXX */
 /*  border: 1px dotted #c0c0c0; /* */
 /*  border-left: 0.8em solid #E2ECE2;
   border-right: 0.8em solid #E2ECE2; */
@@ -686,4 +691,24 @@ border:none;}
   width:140px;
   border-left:1px dotted #e0e0e0;
   height:100%;
+}
+
+.randomQuote {
+  font-family: Verdana,Tahoma,sans-serif;
+  font-weight:bold;
+  margin-bottom: 10px;
+  border-bottom: 1px solid #e0e0e0;
+  border-top: 1px solid #e0e0e0;
+  padding: 10px 0px 10px 0px;
+}
+
+.randomPage {
+  font-family: Trebuchet MS,sans-serif;
+/*  border-bottom: 1px solid #e0e0e0; /* */
+  padding: 0px 0px 10px 0px;
+}
+
+.calendar {
+  font-size:11px;
+  font-family: Trebuchet MS,sans-serif;
 }

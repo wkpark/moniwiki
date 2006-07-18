@@ -2,9 +2,14 @@
 # MoniWiki Theme by wkpark at kldp.org
 # $Id$
 #
-include_once("plugin/login.php");
-include_once("plugin/RandomBanner.php");
-include_once("plugin/Calendar.php");
+if ($this->_sidebar) {
+  include_once("plugin/login.php");
+  include_once("plugin/RandomBanner.php");
+  include_once("plugin/Calendar.php");
+}
+if ($DBInfo->use_tagging) {
+  include_once("plugin/Keywords.php");
+}
 $login=macro_login($this);
 # theme options
 #$_theme['sidebar']=1;
@@ -60,19 +65,23 @@ if ($this->_sidebar==1) :
 <div id='wikiSideMenu'>
 <?php
 print macro_login($this);
-print '<div style="font-size:11px;font-family:verdana,sans-serif">';
+print '<div class="calendar">';
 if ($options['id']=='Anonymous')
-  print macro_calendar($this,"'Blog',blog,noweek,archive",'Blog');
+  print macro_calendar($this,"'Blog',blog,noweek,archive,center",'Blog');
 else
-  print macro_calendar($this,"'$options[id]',blog,noweek,archive",$options['id']);
+  print macro_calendar($this,"'$options[id]',blog,noweek,archive,center",$options['id']);
 print '</div>';
-print '<font style="font-size:12px;"><b>';
+print '<div class="randomQuote">';
 print macro_RandomQuote($this);
-print '</b></font>';
-print "<br /><br />\n";
-print '<font style="font-size:11px">';
+print '</div>';
+print '<div class="randomPage">';
 print macro_RandomPage($this,"4,simple");
-print '</font>';
+print '</div>';
+if ($DBInfo->use_tagging) {
+  print "<div>";
+  print macro_Keywords($this,"all,tour,limit=15");
+  print "</div>";
+}
 ?>
 </div>
 <?php
