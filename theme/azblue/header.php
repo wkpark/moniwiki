@@ -6,11 +6,11 @@ if ($this->_sidebar) {
   include_once("plugin/login.php");
   include_once("plugin/RandomBanner.php");
   include_once("plugin/Calendar.php");
+  $login=macro_login($this);
 }
 if ($DBInfo->use_tagging) {
   include_once("plugin/Keywords.php");
 }
-$login=macro_login($this);
 # theme options
 #$_theme['sidebar']=1;
 
