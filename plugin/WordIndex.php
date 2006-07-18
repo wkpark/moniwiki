@@ -12,6 +12,9 @@ function macro_WordIndex($formatter,$value) {
   global $DBInfo;
 
   $all_pages= $DBInfo->getPageLists();
+  $pagelinks=$formatter->pagelinks; // save
+  $save=$formatter->sister_on;
+  $formatter->sister_on=0;
 
   if ($DBInfo->use_titlecache) {
     $cache=new Cache_text('title');
@@ -68,6 +71,8 @@ function macro_WordIndex($formatter,$value) {
     $index.= "| <a href='#$ukey'>$name</a> ";
   }
   $index[0]=" ";
+  $formatter->pagelinks = $pagelinks; // restore
+  $formatter->sister_on= $save;
 
   return "<center><a name='top' />$index</center>\n$out";
 }
