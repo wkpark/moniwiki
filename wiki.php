@@ -2090,7 +2090,10 @@ class Formatter {
       $this->bcache->update($d,serialize($bl));
     }
     // XXX
-    $this->cache->update($this->page->name,serialize($new));
+    if ($new)
+      $this->cache->update($this->page->name,serialize($new));
+    else
+      $this->cache->remove($this->page->name);
 #      $this->page->mtime());
   }
 
@@ -2601,7 +2604,6 @@ class Formatter {
         if ($pi['args']) $pi_line="#!".$pi['#format']." $pi[args]\n";
         print call_user_func("processor_".$pi['#format'],$this,
           $pi_line.$this->page->body,$options);
-
         
         return;
       }
@@ -2637,6 +2639,7 @@ class Formatter {
             $tmp.="Tags: [[Keywords]]";
           $this->send_page($tmp); // XXX
         }
+        $this->store_pagelinks(); // XXX
         return;
       }
 
