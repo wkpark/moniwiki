@@ -150,7 +150,6 @@ span.diff-removed, del.diff-removed {
 div.message {
   background-color: #E8E8E8;
   border:2px solid #ff0000;
-  color:#440000;
   padding:4px;
   vertical-align: middle;
 }
