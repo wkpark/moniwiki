@@ -67,6 +67,7 @@ $menu=array('FrontPage'=>1,'FindPage'=>4,'TitleIndex'=>3,'RecentChanges'=>2,'Use
 #$path='c:/windows/command;c:/Program Files/gnuplot'; # for win32
 $theme='azblue';
 $theme_css=0;
+$hr='';
 #$title_rule='((?<=[a-z0-9])[A-Z][a-z0-9])';
 #$blog_comments=1; # show all comments
 
