@@ -313,7 +313,8 @@ EOF;
         foreach ($supported_lang as $l) {
             $form_close.="<option value='$l'>$l</option>\n";
         }
-        $form_close.="</select>\n</form>\n";
+        $langmsg=_("select language");
+        $form_close.="</select>: $langmsg\n</form>\n";
         $form_close.=<<<EOF
 <script type='text/javascript' src='$DBInfo->url_prefix/local/checkbox.js'>
 </script>
