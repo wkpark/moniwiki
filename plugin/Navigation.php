@@ -107,6 +107,7 @@ function macro_Navigation($formatter,$value) {
 }
 
 function do_navigation($formatter,$options) {
+  if (!$formatter->wordrule) $formatter->set_wordrule();
   $pnut=macro_Navigation($formatter,$options['value'].',action');
   $formatter->send_header('',$options);
   $formatter->send_title($title,$formatter->link_url("FindPage"),$options);
