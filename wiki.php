@@ -1572,8 +1572,8 @@ class Formatter {
     $this->icons="";
     $this->quote_style=$DBInfo->quote_style? $DBInfo->quote_style:'quote';
 
-    $this->themeurl= $DBInfo->url_prefix;
-    $this->themedir= dirname(__FILE__);
+    $this->themedir= $DBInfo->themedir ? $DBInfo->themedir:dirname(__FILE__);
+    $this->themeurl= $DBInfo->themeurl ? $DBInfo->themeurl:$DBInfo->url_prefix;
     $this->set_theme($options['theme']);
 
     $this->NULL='';
@@ -3984,7 +3984,7 @@ if ($options['id'] != 'Anonymous') {
 if (!$options['theme']) $options['theme']=$theme=$DBInfo->theme;
 
 if ($theme and ($DBInfo->theme_css or !$options['css_url']))
-  $options['css_url']=$DBInfo->url_prefix."/theme/$theme/css/default.css";
+  $options['css_url']=($DBInfo->themeurl ? $DBInfo->themeurl:$DBInfo->url_prefix)."/theme/$theme/css/default.css";
 
 $options['timer']=&$timing;
 $options['timer']->Check("load");

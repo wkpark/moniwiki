@@ -29,9 +29,9 @@ function do_theme($formatter,$options) {
     $msg="== "._("Theme cleared. Goto UserPreferences.")." ==";
   }
   else if ($options['theme']) {
-    $themedir="theme/$options[theme]";
+    $themedir=$formatter->themedir;
     if (file_exists($themedir."/header.php")) { # check
-      $options['css_url']=$DBInfo->url_prefix."/$themedir/css/default.css";
+      $options['css_url']=$formatter->themeurl."/css/default.css";
       if ($options['save'] and $options['id']=='Anonymous') {
         setcookie("MONI_THEME",$options['theme'],time()+60*60*24*30,
                                get_scriptname());
@@ -83,11 +83,14 @@ function macro_theme($formatter,$value) {
   <b>Supported theme lists</b>&nbsp;
 <select name='theme'>
 ";
-  $handle = opendir("theme");
   $themes=array();
-  while ($file = readdir($handle)) {
-    if (!in_array($file,array('.','..','RCS','CVS')) and is_dir("theme/".$file))
-      $themes[]= $file;
+  $path=$DBInfo->themedir ? $DBInfo->themedir: '.';
+  $handle = @opendir("$path/theme");
+  if (is_resource($handle)) {
+    while ($file = readdir($handle)) {
+      if (!in_array($file,array('.','..','RCS','CVS')) and is_dir("$path/theme/".$file))
+        $themes[]= $file;
+    }
   }
 
   $out.="<option value=''>"._("-- Select --")."</option>\n";
