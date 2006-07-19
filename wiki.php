@@ -1873,7 +1873,8 @@ class Formatter {
         if ($m[2]=='') $m[1].='1';
         return "<font size='$m[1]'>$m[3]</font>";
       }
-      if ($url[0]==' ' and stristr('#+-',$url[1])) $url=substr($url,1);
+      if ($url[0]==' ' and in_array($url[1],array('#','-','+')) !==false)
+        $url=substr($url,1);
       return "<tt class='wiki'>".str_replace("<","&lt;",$url)."</tt>"; # No link
       break;
     case '[':
@@ -3866,7 +3867,8 @@ function get_locales($mode=1) {
     'fr'=>array('fr_FR','france',''),
     'ko'=>array('ko_KR','korean',''),
   );
-  $lang= $_SERVER['HTTP_ACCEPT_LANGUAGE'];
+  $lang= strtolower($_SERVER['HTTP_ACCEPT_LANGUAGE']);
+  $lang= strtr($lang,'_','-');
   $langs=explode(',',preg_replace(array("/;[^;,]+/","/\-[a-z]+/"),'',$lang));
   if ($languages[$langs[0]]) return array($languages[$langs[0]][0]);
   return array($languages[0][0]);
