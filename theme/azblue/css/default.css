@@ -274,10 +274,12 @@ div.message {
   color:#440000;
   padding:5px;
   padding-left:55px;
-  background: #E8E8E8 url(../imgs/warn.png) 10px 10px no-repeat;
+  background: #FFF1B9 url(../imgs/warn.png) 10px 10px no-repeat;
   min-height: 40px;
   height: auto !important;
   height:40px;
+  border-width:2px 0 2px 0;
+  margin:0 10px 5px 10px;
 }
 
 div.message h3 {
@@ -287,9 +289,10 @@ div.message h3 {
 
 pre.errlog {
   padding-left:55px;
-  background: #E8E8E8 url(../imgs/error.png) 10px 10px no-repeat;
+  background: #FFE784 url(../imgs/error.png) 10px 10px no-repeat;
   min-height: 40px;
   height: auto !important;
+  border-width:2px 0 2px 0;
   height:40px;
 }
 
