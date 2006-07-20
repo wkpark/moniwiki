@@ -8,6 +8,7 @@
 
 function do_man_get($formatter,$options) {
   global $DBInfo;
+  $supported=array('ko','ja','fr','C','en');
 
   if (!$options['man']) {
     $options['title']=_("No manpage selected");
@@ -15,11 +16,18 @@ function do_man_get($formatter,$options) {
     return;
   }
 
-  $cmd="man -w $options[man]";
+  $LANG='';
+  if ($options['lang'] and in_array($options['lang'],$supported))
+    $LANG='LANG='.$options['lang'];
+  $cmd=$LANG." man $options[sect] -a -w $options[man]";
   $formatter->errlog();
   $fp=popen(escapeshellcmd($cmd).$formatter->LOG,'r');
   if (is_resource($fp)) {
-    $fname=rtrim(fgets($fp,1024));
+    $fnames=array();
+    while ($l=fgets($fp,1024)) {
+      if (preg_match('/\.gz$/',$l))
+        $fnames[]=trim($l);
+    }
     pclose($fp);
   }
   $err=$formatter->get_errlog();
@@ -27,13 +35,21 @@ function do_man_get($formatter,$options) {
     $err='<pre class="errlog">'.$err.'</pre>';
   }
 
-  if (!$fname) {
+  if (!$fnames) {
     $options['title']=_("No manpage found");
+    $options['msg']=$err; // XXX
     do_invalid($formatter,$options);
     return;
   }
-  $man= preg_replace("/\.gz$/","",basename($fname));
-  $options['page']="ManPage/$man";
+  $sz=count($fnames);
+  $man=array();
+  if ($sz >=1) {
+    foreach ($fnames as $fname) {
+      $man[]= $tmp=preg_replace("/\.gz$/","",basename($fname));
+    }
+    $options['page']="ManPage/$man[0]";
+    $fname=$fnames[0];
+  }
 
   if ($DBInfo->hasPage($options['page'])) {
     $options['value']=$options['page'];
@@ -49,19 +65,46 @@ function do_man_get($formatter,$options) {
     $raw=join("\n",$raw);
   }
 
-  $options['title']=$options['page'];
-
+  if ($sz>1) {
+    $lnk=array();
+    foreach ($fnames as $f) {
+      $tmp=preg_match("@/([^/]+)?/man./([^/]+).(.)\.gz$@",$f,$m);
+      $lang='en';
+      if ($m) {
+        if ($m[1] != 'man') $lang=$m[1];
+        $myman=$m[2];
+        $mysect=$m[3];
+        if ($lang) $lang='&amp;lang='.$lang;
+        $lnk[]=$formatter->link_tag('ManPage/'.$myman.'.'.$mysect,
+            '?action=man_get&amp;man='.$myman.'&amp;sect='.$mysect.$lang);
+      }
+    }
+    $options['msg']=implode(', ',$lnk);
+  }
   $formatter->send_header("",$options);
   $formatter->send_title("","",$options);
+
+  if ($DBInfo->man_charset and
+    $DBInfo->man_charset != $DBInfo->charset) {
+    if (function_exists('iconv')) {
+      $raw=iconv($DBInfo->man_charset,$DBInfo->charset,$raw);
+    }
+  }
   $options['savetext']=$raw;
+
   if ($options['edit']) {
     print macro_EditText($formatter,$raw,$options);
   } else {
     print $formatter->processor_repl('man',$raw,$options);
-    $formatter->actions[]='?action=man_get&man='.$options['man'].'&edit=1 '._("Edit");
+    $extra='';
+    if ($options['sect']) $extra='&amp;sect='.$options['sect'];
+    if ($options['lang']) $extra='&amp;lang='.$options['lang'];
+    $formatter->actions[]='?action=man_get&man='.$options['man'].
+        $extra.'&amp;edit=1 '._("Edit");
   }
   $formatter->send_footer('',$options);
   return;
+// vim:et:sts=4:
 }
 
 ?>

@@ -10,6 +10,22 @@
 function do_AutoGoto($formatter,$options) {
     global $DBInfo;
 
+    if ($DBInfo->autogoto_options) {
+        $opts=explode(',',$DBInfo->autogoto_options);
+        foreach ($opts as $opt) {
+            $opt=trim($opt);
+            if ($opt=='man') {
+                $v=explode(' ',trim($formatter->page->name));
+                if (strtolower($v[0])=='man') {
+                    $options['url']=
+                        $formatter->link_url('ManPage',
+                        "?action=man_get&man=".$v[1]);
+                    do_goto($formatter,$options);
+                    return true;
+                }
+            }
+        }
+    }
     $npage=str_replace(' ','',$formatter->page->name);
     if ($DBInfo->hasPage($npage)) {
         $options['value']=$npage;
