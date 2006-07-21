@@ -64,7 +64,7 @@ function macro_Gallery($formatter,$value,&$options) {
   $default_row=4;
   $col=$options['col'] > 0 ? (int)$options['col']:0;
   $row=$options['row'] > 0 ? (int)$options['row']:0;
-  $sort=$options['sort'] ? 1:0;
+  $sort=$options['sort'] ? $options['sort']:'';
 
   // parse args
   preg_match("/^(('|\")([^\\2]+)\\2)?,?(\s*,?\s*.*)?$/",
@@ -127,6 +127,14 @@ function macro_Gallery($formatter,$value,&$options) {
       $comments[$name]=$comment;
     }
   }
+  if ($sort) {
+    if ($sort ==1) {
+     arsort($upfiles);
+    } elseif ($sort=='name') {
+     ksort($upfiles);
+    }
+  }
+  else asort($upfiles);
 
   if ($options['value'])
     $file=urldecode($options['value']);
@@ -169,6 +177,12 @@ function macro_Gallery($formatter,$value,&$options) {
     // show comments of the selected item
     $mtime=$upfiles[$file];
     $comment=$comments[$file];
+
+    $values=array_keys($upfiles);
+    $prev_value=$values[array_search($file,$values)-1];
+    $next_value=$values[array_search($file,$values)+1];
+    unset($values);
+
     $upfiles=array();
     $comments=array();
     $upfiles[$file]=$mtime;
@@ -202,14 +216,6 @@ function macro_Gallery($formatter,$value,&$options) {
   }
 
   if (!$upfiles) return "<h3>"._("No files found")."</h3>\n";
-  if ($sort) {
-    if ($sort ==1) {
-     arsort($upfiles);
-    } elseif ($sort=='name') {
-     ksort($upfiles);
-    }
-  }
-  else asort($upfiles);
 
   $out.="<table width='100%' border='0' cellpadding='2'>\n<tr>\n";
   $idx=1;
@@ -223,9 +229,11 @@ function macro_Gallery($formatter,$value,&$options) {
     $upfiles=array_slice($upfiles,$slice_index);
   }
 
+  $extra=$sort ? "&amp;sort=".$sort:'';
+
   if ($pages > 1)
     $pnut=get_pagelist($formatter,$pages,
-      '?action=gallery&amp;col='.$col.'&amp;row='.$row.
+      '?action=gallery&amp;col='.$col.'&amp;row='.$row.$extra.
       '&amp;p=',$options['p'],$perpage);
 
   if (!file_exists($dir."/thumbnails")) @mkdir($dir."/thumbnails",0777);
@@ -235,7 +243,7 @@ function macro_Gallery($formatter,$value,&$options) {
     $id=rawurlencode($file);
     $linksrc=($key == $value) ? $prefix.$id:
       str_replace('value=','value='.$id,$prefix);
-    $link=$selected ? $linksrc:$formatter->link_url($formatter->page->urlname,"?action=gallery&amp;value=$id");
+    $link=$selected ? $linksrc:$formatter->link_url($formatter->page->urlname,"?action=gallery$extra&amp;value=$id");
     $date=date("Y-m-d",$mtime);
     if (preg_match("/\.(jpg|jpeg|gif|png)$/i",$file)) {
       if ($DBInfo->use_convert_thumbs and !file_exists($dir."/thumbnails/".$file)) {
@@ -315,7 +323,16 @@ function macro_Gallery($formatter,$value,&$options) {
   $idx--;
   $out.="</tr></table>\n";
 
-  return $pnut.$out.$pnut;
+  if ($prev_value) {
+    $prev_link="<a id='gallery-prev-link' href='".$formatter->link_url($formatter->page->urlname,"?action=gallery&amp;value=$prev_value")."'>prev</a>";
+  } else
+    $prev_link='';
+  if ($next_value) {
+    $next_link="<a id='gallery-next-link' href='".$formatter->link_url($formatter->page->urlname,"?action=gallery&amp;value=$next_value")."'>next</a>";
+  } else
+    $next_link='';
+
+  return $pnut.$prev_link.$out.$next_link.$pnut;
 }
 
 function do_gallery($formatter,$options='') {
