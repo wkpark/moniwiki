@@ -65,6 +65,7 @@ function macro_Gallery($formatter,$value,&$options) {
   $col=$options['col'] > 0 ? (int)$options['col']:0;
   $row=$options['row'] > 0 ? (int)$options['row']:0;
   $sort=$options['sort'] ? $options['sort']:'';
+  $nocomment=$options['nocomment'] ? $options['nocomment']:'';
 
   // parse args
   preg_match("/^(('|\")([^\\2]+)\\2)?,?(\s*,?\s*.*)?$/",
@@ -72,6 +73,7 @@ function macro_Gallery($formatter,$value,&$options) {
   $opts=explode(',',$match[4]);
   foreach ($opts as $opt) {
     if ($opt == 'showall') $show_all=1;
+    else if ($opt=='nocomment') $nocomment=1;
     else if (($p=strpos($opt,'='))!==false) {
       $k=substr($opt,0,$p);
       $v=substr($opt,$p+1);
@@ -86,15 +88,18 @@ function macro_Gallery($formatter,$value,&$options) {
   if (!in_array($sort,array(0,1,'name','date'))) {
     $sort=0;
   }
+
+  $img_default_width=150;
   if ($col > 1) {
     $col_td_width=(int) (100/$col);
     $col_td_width=' width="'.$col_td_width.'%"';
+    $img_default_width=(int) (100/$col)*5; // XXX assume 500px
   }
 
   $default_width=$DBInfo->gallery_img_width ? $DBInfo->gallery_img_width:600;
   $img_class="gallery-img";
 
-  $col=($col<=0 or $col>7) ? $default_column:$col;
+  $col=($col<=0 or $col>10) ? $default_column:$col;
   $row=($row<=0 or $row>7) ? $default_row:$row;
   $perpage=$col*$row;
 
@@ -189,8 +194,16 @@ function macro_Gallery($formatter,$value,&$options) {
     $comments[$file]=$comment;
     $selected=1;
     $img_class="gallery-sel";
+    if ($prev_value) {
+      $prev_link="<span class='gallery-prev-link'><a href='".$formatter->link_url($formatter->page->urlname,"?action=gallery&amp;value=$prev_value")."'><span class='gallery-prev-text'>&#171;Prev</span></a></span>";
+    } else
+      $prev_link='';
+    if ($next_value) {
+      $next_link="<span class='gallery-next-link'><a href='".$formatter->link_url($formatter->page->urlname,"?action=gallery&amp;value=$next_value")."'><span class='gallery-next-text'>Next&#187;</span></a></span>";
+    } else
+      $next_link='';
   }
-  $width=$selected ? $default_width:150;
+  $width=$selected ? $default_width:$img_default_width;
 
   $mtime=file_exists($dir."/list.txt") ? filemtime($dir."/list.txt"):0;
   if ((filemtime($dir) > $mtime) or $update) {
@@ -230,6 +243,7 @@ function macro_Gallery($formatter,$value,&$options) {
   }
 
   $extra=$sort ? "&amp;sort=".$sort:'';
+  $extra.=$nocomment ? "&amp;nocomment=1":'';
 
   if ($pages > 1)
     $pnut=get_pagelist($formatter,$pages,
@@ -292,14 +306,16 @@ function macro_Gallery($formatter,$value,&$options) {
 #    $size=round($size,2).' '.$unit[$i];
 
     $comment='';
-    $comment_btn=_("add comment");
+    $comment_btn='';
+    $comment_btn=$nocomment ? '':_("add comment");
+    $imginfo=(!$nocomment or $selected) ? "$date ($size) ":'';
     if ($comments[$file] != '' and $options['value']) {
       $comment=$comments[$file];
       $comment=str_replace("\\n","\n",$comment);
       $options['comments']=str_replace("\t","\n----\n",$comment);
       $comment=str_replace("\t","<div class='separator'><hr /></div>",$comment);
       $comment=str_replace("\n","<br/>\n",$comment);
-    } else if (!empty($comments[$file])) {
+    } else if ((!$nocomment or $selected) and !empty($comments[$file])) {
       if (empty($show_all)) {
         $comment_btn=_("show comments");
         list($comment,$dum)=explode("\t",$comments[$file],2);
@@ -309,11 +325,10 @@ function macro_Gallery($formatter,$value,&$options) {
       }
       $comment=str_replace("\\n","<br/>\n",$comment);
     }
-    $out.="<td $col_td_width align='center' valign='top' class='wiki'><div class='$img_class' $img_style><a href='$link'>$object</a><br />".
-          "$date ($size) ";
-    if (!$options['value'])
+    $out.="<td $col_td_width align='center' valign='top'>$prev_link<div class='$img_class' $img_style><a href='$link'>$object</a><br />".$imginfo;
+    if ($comment_btn)
       $out.='['.$formatter->link_tag($formatter->page->urlname,"?action=gallery&amp;value=$id",$comment_btn)."]<br />\n";
-    $out.='</div>';
+    $out.='</div>'.$next_link;
     if ($comment) $out.="<div class='gallery-comments' $comment_style>$comment</div>";
     $out.="</td>\n";
     if ($idx % $col == 0) $out.="</tr>\n<tr>\n";
@@ -323,16 +338,7 @@ function macro_Gallery($formatter,$value,&$options) {
   $idx--;
   $out.="</tr></table>\n";
 
-  if ($prev_value) {
-    $prev_link="<a id='gallery-prev-link' href='".$formatter->link_url($formatter->page->urlname,"?action=gallery&amp;value=$prev_value")."'>prev</a>";
-  } else
-    $prev_link='';
-  if ($next_value) {
-    $next_link="<a id='gallery-next-link' href='".$formatter->link_url($formatter->page->urlname,"?action=gallery&amp;value=$next_value")."'>next</a>";
-  } else
-    $next_link='';
-
-  return $pnut.$prev_link.$out.$next_link.$pnut;
+  return $pnut.'<div class="gallery">'.$out.'</div>'.$pnut;
 }
 
 function do_gallery($formatter,$options='') {
