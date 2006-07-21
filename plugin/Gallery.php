@@ -195,13 +195,17 @@ function macro_Gallery($formatter,$value,&$options) {
     $selected=1;
     $img_class="gallery-sel";
     if ($prev_value) {
-      $prev_link="<span class='gallery-prev-link'><a href='".$formatter->link_url($formatter->page->urlname,"?action=gallery&amp;value=$prev_value")."'><span class='gallery-prev-text'>&#171;Prev</span></a></span>";
+      $prev_link="<div class='gallery-prev-link'><a href='".$formatter->link_url($formatter->page->urlname,"?action=gallery&amp;value=$prev_value")."'><span class='gallery-prev-text'>&#171;Prev</span></a></div>";
     } else
       $prev_link='';
     if ($next_value) {
-      $next_link="<span class='gallery-next-link'><a href='".$formatter->link_url($formatter->page->urlname,"?action=gallery&amp;value=$next_value")."'><span class='gallery-next-text'>Next&#187;</span></a></span>";
+      $next_link="<div class='gallery-next-link'><a href='".$formatter->link_url($formatter->page->urlname,"?action=gallery&amp;value=$next_value")."'><span class='gallery-next-text'>Next&#187;</span></a></div>";
     } else
       $next_link='';
+    if ($next_link or $prev_link) {
+      $top_link="<div class='gallery-top-link'>$prev_link$next_link</div>";
+      $bot_link="<div class='gallery-bottom-link'>$prev_link$next_link</div>";
+    }
   }
   $width=$selected ? $default_width:$img_default_width;
 
@@ -325,10 +329,10 @@ function macro_Gallery($formatter,$value,&$options) {
       }
       $comment=str_replace("\\n","<br/>\n",$comment);
     }
-    $out.="<td $col_td_width align='center' valign='top'>$prev_link<div class='$img_class' $img_style><a href='$link'>$object</a><br />".$imginfo;
+    $out.="<td $col_td_width align='center' valign='top'>$top_link<div class='$img_class' $img_style><a href='$link'>$object</a><br />".$imginfo;
     if ($comment_btn)
       $out.='['.$formatter->link_tag($formatter->page->urlname,"?action=gallery&amp;value=$id",$comment_btn)."]<br />\n";
-    $out.='</div>'.$next_link;
+    $out.='</div>'.$bot_link;
     if ($comment) $out.="<div class='gallery-comments' $comment_style>$comment</div>";
     $out.="</td>\n";
     if ($idx % $col == 0) $out.="</tr>\n<tr>\n";
