@@ -31,6 +31,17 @@ div.sectionEdit:hover {
   padding: 5px;
 }
 
+.gallery-prev-link {
+  float:left;
+}
+.gallery-next-link {
+  float:right;
+}
+
+.gallery-top-link {
+  visibility:hidden;
+}
+
 .cloudView {
   display:inline;
 }

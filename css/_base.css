@@ -306,6 +306,7 @@ img.smiley {
 
 img.url {
   vertical-align:middle; /* */
+  border:0px;
 }
 
 img.icon {
