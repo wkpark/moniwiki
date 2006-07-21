@@ -1114,6 +1114,7 @@ function do_titlesearch($formatter,$options) {
 
   if ($ret['hits']==1) {
     $options['value']=$ret['value'];
+    $options['redirect']=1;
     do_goto($formatter,$options);
     return true;
   }
