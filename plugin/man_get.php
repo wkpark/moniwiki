@@ -19,7 +19,8 @@ function do_man_get($formatter,$options) {
   $LANG='';
   if ($options['lang'] and in_array($options['lang'],$supported))
     $LANG='LANG='.$options['lang'];
-  $cmd=$LANG." man $options[sect] -a -w $options[man]";
+  if ($options['sec']!=intval($options['sec'])) unset($options['sec']);
+  $cmd=$LANG." man $options[sec] -a -w $options[man]";
   $formatter->errlog();
   $fp=popen(escapeshellcmd($cmd).$formatter->LOG,'r');
   if (is_resource($fp)) {
@@ -73,10 +74,10 @@ function do_man_get($formatter,$options) {
       if ($m) {
         if ($m[1] != 'man') $lang=$m[1];
         $myman=$m[2];
-        $mysect=$m[3];
+        $mysec=$m[3];
         if ($lang) $lang='&amp;lang='.$lang;
-        $lnk[]=$formatter->link_tag('ManPage/'.$myman.'.'.$mysect,
-            '?action=man_get&amp;man='.$myman.'&amp;sect='.$mysect.$lang);
+        $lnk[]=$formatter->link_tag('ManPage/'.$myman.'.'.$mysec,
+            '?action=man_get&amp;man='.$myman.'&amp;sec='.$mysec.$lang);
       }
     }
     $options['msg']=implode(', ',$lnk);
@@ -97,7 +98,7 @@ function do_man_get($formatter,$options) {
   } else {
     print $formatter->processor_repl('man',$raw,$options);
     $extra='';
-    if ($options['sect']) $extra='&amp;sect='.$options['sect'];
+    if ($options['sec']) $extra='&amp;sec='.$options['sec'];
     if ($options['lang']) $extra='&amp;lang='.$options['lang'];
     $formatter->actions[]='?action=man_get&man='.$options['man'].
         $extra.'&amp;edit=1 '._("Edit");
