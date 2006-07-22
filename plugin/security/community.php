@@ -61,7 +61,6 @@ class Security_community extends Security {
       $options['err'].="\n"._("Please Login or make your ID on this Wiki ;)");
       return 0;
     }
-    print_r($options);
     $method='may_'.$action;
     if (method_exists($this, $method)) {
       return $this->$method ($action,$options);
