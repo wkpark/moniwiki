@@ -65,7 +65,6 @@ ${POT_FILE}: ../plugin/Cite.php
 ${POT_FILE}: ../plugin/Clip.php
 ${POT_FILE}: ../plugin/Comment.php
 ${POT_FILE}: ../plugin/Diff.php
-${POT_FILE}: ../plugin/DisMol.php
 ${POT_FILE}: ../plugin/Draw.php
 ${POT_FILE}: ../plugin/DueDate.php
 ${POT_FILE}: ../plugin/Echo.php
@@ -81,7 +80,6 @@ ${POT_FILE}: ../plugin/Icon.php
 ${POT_FILE}: ../plugin/ImportUrl.php
 ${POT_FILE}: ../plugin/Include.php
 ${POT_FILE}: ../plugin/Info.php
-${POT_FILE}: ../plugin/JME.php
 ${POT_FILE}: ../plugin/Keywords.php
 ${POT_FILE}: ../plugin/LikePages.php
 ${POT_FILE}: ../plugin/LineHeight.php
@@ -93,6 +91,7 @@ ${POT_FILE}: ../plugin/Note.php
 ${POT_FILE}: ../plugin/OeKaki.php
 ${POT_FILE}: ../plugin/PGBR.php
 ${POT_FILE}: ../plugin/PageHits.php
+${POT_FILE}: ../plugin/PageLinks.php
 ${POT_FILE}: ../plugin/Play.php
 ${POT_FILE}: ../plugin/RandomBanner.php
 ${POT_FILE}: ../plugin/RecentChanges.php
@@ -113,6 +112,7 @@ ${POT_FILE}: ../plugin/VisualTour.php
 ${POT_FILE}: ../plugin/Vote.php
 ${POT_FILE}: ../plugin/WantedPages.php
 ${POT_FILE}: ../plugin/WordIndex.php
+${POT_FILE}: ../plugin/aclinfo.php
 ${POT_FILE}: ../plugin/autogoto.php
 ${POT_FILE}: ../plugin/backup.php
 ${POT_FILE}: ../plugin/blogrss.php
@@ -134,9 +134,11 @@ ${POT_FILE}: ../plugin/freemind.php
 ${POT_FILE}: ../plugin/home.php
 ${POT_FILE}: ../plugin/login.php
 ${POT_FILE}: ../plugin/man_get.php
+${POT_FILE}: ../plugin/markup.php
 ${POT_FILE}: ../plugin/minilogin.php
 ${POT_FILE}: ../plugin/moniedit.php
 ${POT_FILE}: ../plugin/moztab.php
+${POT_FILE}: ../plugin/msgfmt.php
 ${POT_FILE}: ../plugin/new.php
 ${POT_FILE}: ../plugin/notitle.php
 ${POT_FILE}: ../plugin/pageview.php
@@ -146,8 +148,8 @@ ${POT_FILE}: ../plugin/processor/asciimathml.php
 ${POT_FILE}: ../plugin/processor/blog.php
 ${POT_FILE}: ../plugin/processor/chat.php
 ${POT_FILE}: ../plugin/processor/diff.php
-${POT_FILE}: ../plugin/processor/dismol.php
 ${POT_FILE}: ../plugin/processor/dot.php
+${POT_FILE}: ../plugin/processor/enscript.php
 ${POT_FILE}: ../plugin/processor/freemind.php
 ${POT_FILE}: ../plugin/processor/geshi.php
 ${POT_FILE}: ../plugin/processor/gnuplot.php
@@ -163,6 +165,7 @@ ${POT_FILE}: ../plugin/processor/metapost.php
 ${POT_FILE}: ../plugin/processor/mimetex.php
 ${POT_FILE}: ../plugin/processor/octave.php
 ${POT_FILE}: ../plugin/processor/pic.php
+${POT_FILE}: ../plugin/processor/po.php
 ${POT_FILE}: ../plugin/processor/pre.php
 ${POT_FILE}: ../plugin/processor/python.php
 ${POT_FILE}: ../plugin/processor/randomquote.php
@@ -180,6 +183,8 @@ ${POT_FILE}: ../plugin/rss.php
 ${POT_FILE}: ../plugin/rss_blog.php
 ${POT_FILE}: ../plugin/rss_rc.php
 ${POT_FILE}: ../plugin/scrap.php
+${POT_FILE}: ../plugin/security/acl.php
+${POT_FILE}: ../plugin/security/authbasic.php
 ${POT_FILE}: ../plugin/security/community.php
 ${POT_FILE}: ../plugin/security/desktop.php
 ${POT_FILE}: ../plugin/security/htaccesslogin.php
