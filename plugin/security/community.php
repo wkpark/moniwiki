@@ -50,7 +50,7 @@ class Security_community extends Security {
   }
 
   function is_allowed($action='read',&$options) {
-    $allowed_actions=array('theme','css','userform','bookmark','goto','dot',
+    $allowed_actions=array('read','theme','css','userform','bookmark','goto','dot',
       'trackback','rss_rc','rss','blogrss','urlencode','deletepage',
       'titlesearch','info','download','comment','notitle','fixmoin');
     $notallowed_actions=array('raw','recall','diff','info','rcs','deletepage',
@@ -61,6 +61,7 @@ class Security_community extends Security {
       $options['err'].="\n"._("Please Login or make your ID on this Wiki ;)");
       return 0;
     }
+    print_r($options);
     $method='may_'.$action;
     if (method_exists($this, $method)) {
       return $this->$method ($action,$options);
@@ -70,14 +71,17 @@ class Security_community extends Security {
 
   function is_protected($action="read",&$options) {
     # password protected POST actions
-    $protected_actions=array("rcs","rcspurge","chmod","backup","restore");
+    $protected_actions=array("rcs","rcspurge","chmod","backup","restore","deletefile");
+    $notprotected_actions=array("userform");
     $action=strtolower($action);
 
-    if (in_array($action,$protected_actions)) {
-      return 1;
-    }
+    if (in_array($action,$protected_actions)) return 1;
+    if (in_array($action,$notprotected_actions)) return 0;
+    if ($options['id']=='Anonymous') return 1;
+
     return 0;
   }
+// vim:et:sts=2:
 }
 
 ?>
