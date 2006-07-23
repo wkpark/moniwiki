@@ -541,7 +541,7 @@ class WikiDB {
     $this->upload_dir= 'pds';
     $this->data_dir= './data';
     $this->query_prefix='/';
-    $this->umask= 02;
+    $this->umask= 0770;
     $this->charset='utf-8';
     $this->lang='auto';
     $this->dba_type="db3";
@@ -1145,9 +1145,10 @@ class WikiDB {
   }
 
   function setPerms($pagename,$perms) {
-    umask(0700);
+    $om=umask(0700);
     $key=$this->getPageKey($pagename);
     if (file_exists($key)) chmod($key,$perms);
+    umask($om);
   }
 }
 
@@ -1272,12 +1273,13 @@ class Version_RCS {
 }
 
 class Cache_text {
-  function Cache_text($arena) {
-    global $DBInfo;
-    umask(000);
-    $this->cache_dir=$DBInfo->cache_dir."/$arena";
+  function Cache_text($arena,$depth=0) {
+    global $Config;
+    $om=umask(000);
+    $this->cache_dir=$Config['cache_dir']."/$arena";
     if (!file_exists($this->cache_dir))
-      mkdir($this->cache_dir, 0777);
+      _mkdir_p($this->cache_dir, 0777);
+    umask($om);
   }
 
   function getKey($pagename) {
@@ -1300,7 +1302,7 @@ class Cache_text {
   }
 
   function _save($key,$val) {
-    umask(011);
+    #$old=umask(011);
     $fp=fopen($key,"w+");
     if ($fp) {
       flock($fp,LOCK_EX);
@@ -2366,14 +2368,21 @@ class Formatter {
   }
 
   function processor_repl($processor,$value,$options="") {
-    if (!function_exists("processor_".$processor)) {
+    if (!($f=function_exists("processor_".$processor)) and !($c=class_exists('processor_'.$processor))) {
       $pf=getProcessor($processor);
       if (!$pf)
       return call_user_func('processor_plain',$this,$value,$options);
       include_once("plugin/processor/$pf.php");
       $processor=$pf;
+      $name='processor_'.$pf;
+      if (!($f=function_exists($name)) and !($c=class_exists($name)))
+        return call_user_func('processor_plain',$this,$value,$options);
     }
-    return call_user_func("processor_$processor",$this,$value,$options);
+    if ($f)
+      return call_user_func("processor_$processor",$this,$value,$options);
+    $classname='processor_'.$processor;
+    $myclass= & new $classname($this,$options);
+    return call_user_func(array($myclass,'process'),$value,$options);
   }
 
   function filter_repl($filter,$value,$options='') {
@@ -3013,7 +3022,7 @@ class Formatter {
 
          if ($processor and !$show_raw) {
            $value=$this->pre_line;
-           $out= call_user_func("processor_$processor",$this,$value,$options);
+           $out= $this->processor_repl($processor,$value,$options);
            if ($this->wikimarkup)
              $line='<div class="wikiMarkup">'."<!-- wiki:\n{{{".
                $value."}}}\n-->$out</div>";
