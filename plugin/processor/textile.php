@@ -214,6 +214,23 @@ class processor_textile
 	var $c;
 	var $pnct;
 
+	/**
+     	 * return processor info
+     	 */
+    	function get_info()
+	{
+     		return array(
+        		'author'  => 'Dean Allen <dean@textism.com>',
+        		'date'    => '2004-01-09',
+        		'name'    => 'Textile',
+        		'desc'    => 'Textile Procssor',
+        		'url'     => 'MoniWiki:TextileProcessor',
+			'version' => substr('$Revision$',1,-1),
+			'depend'  => '1.1.3',
+			'license' => 'BSD style',
+      		);
+    	}
+
 	function processor_textile($formatter,$options=array())
 	{
 		global $Config;
@@ -233,6 +250,9 @@ class processor_textile
 		$this->pnct = '[\!"#\$%&\'()\*\+,\-\./:;<=>\?@\[\\\]\^_`{\|}\~]';
 	}
 
+	/**
+	 * main processor
+	 */
 	function process($text, $options=array())
 	{
         	if ($text[0]=='#' and $text[1]=='!')
