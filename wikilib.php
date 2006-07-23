@@ -21,6 +21,28 @@ function _preg_search_escape($val) {
   return preg_replace('/([\/]{1})/','\\\\\1',$val);
 }
 
+function _mkdir_p($target,$mode=0777) {
+  // from php.net/mkdir user contributed notes
+  if (file_exists($target)) {
+    if (!is_dir($target)) {
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  // Attempting to create the directory may clutter up our display.
+  if (@mkdir($target,$mode)) {
+    return true;
+  }
+
+  // If the above failed, attempt to create the parent node, then try again.
+  if (_mkdir_p(dirname($target))) {
+    return _mkdir_p($target);
+  }
+  return false;
+}
+
 function get_scriptname() {
   // Return full URL of current page.
   // $_SERVER["SCRIPT_NAME"] has bad value under CGI mode
