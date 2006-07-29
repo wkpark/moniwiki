@@ -27,6 +27,8 @@
 class Security_ACL extends Security {
     var $DB;
 
+    var $_acl_ok=0;
+    var $_protected=array();
     function Security_ACL($DB="") {
         $this->DB=$DB;
         # load ACL
