@@ -715,8 +715,8 @@ class processor_textile
 			built-in htmlentities() */
 
 		return (function_exists('mb_encode_numericentity'))
-		? encode_high($text)
-		: htmlentities($text, ENT_NOQUOTES, "utf-8");
+		? encode_high($text,$this->charset)
+		: htmlentities($text, ENT_NOQUOTES,$this->charset);
 	}
 	// -------------------------------------------------------------
 	function fixEntities($text)
@@ -1033,7 +1033,7 @@ class processor_textile
 
 		$text = preg_replace('/^\t* *p\. /m', '', $text);
 
-		return $this->decode_high($text);
+		return $this->decode_high($text,$this->charset);
 	}
 	// -------------------------------------------------------------
 	function processTag($matches)
