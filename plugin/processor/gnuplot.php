@@ -17,7 +17,6 @@ function processor_gnuplot($formatter="",$value="") {
     $gnuplot="gnuplot";
 
   $vartmp_dir=&$DBInfo->vartmp_dir;
-  $cache_dir=$DBInfo->upload_dir."/GnuPlot";
 
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
@@ -28,6 +27,7 @@ function processor_gnuplot($formatter="",$value="") {
     $value='#'.$line."\n".$value;
   }
 
+  #$term='dumb'; // for w3m,lynx
   $term='png';
   if ($term=='png') $ext='png';
   else if ($term == 'dumb') $ext='txt';
@@ -82,8 +82,23 @@ function processor_gnuplot($formatter="",$value="") {
   if ($term != 'dumb') 
     $plt="\n".$size."\n".$plt;
   $uniq=md5($plt);
+  if ($DBInfo->cache_public_dir) {
+    $fc=new Cache_text('gnuplot',2,$ext,$DBInfo->cache_public_dir);
+    $pngname=$fc->_getKey($uniq,0);
+    $png= $DBInfo->cache_public_dir.'/'.$pngname;
+    $png_url=
+      $DBInfo->cache_public_url ? $DBInfo->cache_public_url.'/'.$pngname:
+      $DBInfo->url_prefix.'/'.$png;
+    $cache_dir=$DBInfo->cache_public_dir;
+  } else {
+    $cache_dir=$DBInfo->upload_dir."/GnuPlot";
+    $cache_url=$DBInfo->upload_url ? $DBInfo->upload_url.'/GnuPlot':
+    $DBInfo->url_prefix.'/'.$cache_dir;
+    $png=$cache_dir.'/'.$uniq.".$ext";
+    $png_url=$cache_url.'/'.$uniq.".$ext";
+  }
 
-  $outpath="$cache_dir/$uniq.$ext";
+  $outpath=&$png;
 
   $src="
 set term $term
@@ -91,13 +106,13 @@ set out '$outpath'
 $plt
 ";
 
-  if (!file_exists($cache_dir)) {
-    umask(000);
-    mkdir($cache_dir,0777);
-    umask(022);
+  if (!is_dir(dirname($png))) {
+    $om=umask(000);
+    _mkdir_p(dirname($png),0777);
+    umask($om);
   }
 
-  if ($formatter->refresh || !file_exists("$cache_dir/$uniq.$ext")) {
+  if ($formatter->refresh || !file_exists($outpath)) {
 
      $flog=tempnam($vartmp_dir,"GNUPLOT");
      #
@@ -131,7 +146,7 @@ $plt
        }
        $log=$formatter->get_errlog();
        if (filesize($outpath) == 0) {
-         print "<font color='red'>ERROR:</font> Gnuplot does not work correctly";
+         $log.="\n<font color='red'>ERROR:</font> Gnuplot does not work correctly";
          unlink($outpath);
        }
      }
@@ -141,9 +156,9 @@ $plt
   }
   if (!file_exists($outpath)) return $log;
   if ($ext == 'png')
-  return $log."<img src='$DBInfo->url_prefix/$cache_dir/$uniq.$ext' alt='gnuplot' />";
+  return $log."<img src='$png_url' alt='gnuplot' />";
   if ($ext == 'txt')
-  return $log.'<pre class="gnuplot">'.(implode('',file("$cache_dir/$uniq.$ext"))).'</pre>';
+  return $log.'<pre class="gnuplot">'.(implode('',file("$cache_dir/$pngname"))).'</pre>';
 
 }
 

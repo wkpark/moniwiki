@@ -17,7 +17,6 @@ function processor_vim($formatter,$value,$options) {
 
   $vim_default='-T xterm';
   static $jsloaded=0;
-  $cache_dir=$DBInfo->upload_dir."/VimProcessor";
   $vartmp_dir=&$DBInfo->vartmp_dir;
 
   $syntax=array("php","c","python","jsp","sh","cpp",
@@ -44,6 +43,16 @@ function processor_vim($formatter,$value,$options) {
     $option.=$DBInfo->vim_options.' ';
 
   $uniq=md5($option.$src);
+
+  if ($DBInfo->cache_public_dir) {
+    $fc=new Cache_text('vim',2,'html',$DBInfo->cache_public_dir);
+    $htmlname=$fc->_getKey($uniq,0);
+    $html= $DBInfo->cache_public_dir.'/'.$htmlname;
+  } else {
+    $cache_dir=$DBInfo->upload_dir."/VimProcessor";
+    $html=$cache_dir.'/'.$uniq.'.html';
+  }
+
   $script='';
   if ($DBInfo->use_numbering) {
     $button=_("Toggle line numbers");
@@ -59,23 +68,22 @@ document.write('<a href=\"#\" onclick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
   $stag="<pre class='wikiSyntax' id='PRE-$uniq' style='font-family:FixedSys,monospace;color:#c0c0c0;background-color:black'>\n";
   $etag="</pre>\n";
 
-  if (!file_exists($cache_dir)) {
-    umask(000);
-    mkdir($cache_dir,0777);
-    umask($DBInfo->umask);
+  if (!is_dir(dirname($html))) {
+    $om=umask(000);
+    _mkdir_p(dirname($html),0777);
+    umask($om);
   }
 
-  if (file_exists($cache_dir."/$uniq".".html") && !$formatter->refresh && !$formatter->preview) {
+  if (file_exists($html) && !$formatter->refresh && !$formatter->preview) {
     $out = "";
-    $fp=fopen($cache_dir."/$uniq".".html","r");
+    $fp=fopen($html,"r");
     while (!feof($fp)) $out .= fread($fp, 1024);
     @fclose($fp);
     return '<div>'.$script.$out.'</div>';
-    #return join('',file($cache_dir."/$uniq".".html"));
   }
 
   if (!empty($DBInfo->vim_nocheck) and !in_array($type,$syntax)) {
-    $lines=explode("\n",$line."\n".$src);
+    $lines=explode("\n",$line."\n".str_replace('<','&lt;',$src));
     if ($lines[sizeof($lines)-1]=="") array_pop($lines);
     $src="<span class=\"line\">".
       implode("</span>\n<span class=\"line\">",$lines)."</span>";
@@ -132,12 +140,12 @@ document.write('<a href=\"#\" onclick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
   #$out=preg_replace("/(^(\s|\S)*<pre>\n|\n<\/pre>(\s|\S)*$)/","",$out); # XXX segfault sometime
   $fpos=strpos($out,'<pre>');
   $tpos=strpos($out,'</pre>');
-  $out=substr($out,$fpos+6,$tpos);
+  $out=substr($out,$fpos+6,$tpos-$fpos-7);
 
   $lines=explode("\n",$out);
   $out="<span class=\"line\">".
     implode("</span>\n<span class=\"line\">",$lines)."</span>\n";
-  $fp=fopen($cache_dir."/$uniq".".html","w");
+  $fp=fopen($html,"w");
   fwrite($fp,$stag.$out.$etag);
   fclose($fp);
   return $log.'<div>'.$script.$stag.$out.$etag.'</div>';
