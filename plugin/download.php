@@ -55,7 +55,7 @@ function do_download($formatter,$options) {
   if (!file_exists("$dir/$file")) 
     return;
 
-  $lines = @file('data/mime.types');
+  $lines = @file($DBInfo->data_dir.'/mime.types');
   if ($lines) {
     foreach($lines as $line) {
       rtrim($line);
