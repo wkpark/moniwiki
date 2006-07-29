@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.1.2';
+$_release = '1.1.3';
 
 #ob_start("ob_gzhandler");
 
@@ -100,8 +100,8 @@ function getFilter($filtername) {
     }
   }
 
-  if (is_array($DBInfo->filters))
-    $filters=array_merge($filters,$DBInfo->filters);
+  if (is_array($DBInfo->myfilters))
+    $filters=array_merge($filters,$DBInfo->myfilters);
 
   return $filters[strtolower($filtername)];
 }
@@ -534,7 +534,7 @@ function getConfig($configfile, $options=array()) {
 }
 
 class WikiDB {
-  function WikiDB($config=array()) {
+  function WikiDB(&$config) {
     # Default Configuations
     $this->frontpage='FrontPage';
     $this->sitename='UnnamedWiki';
@@ -571,6 +571,7 @@ class WikiDB {
     $this->date_fmt_rc= 'D d M Y';
     $this->date_fmt_blog= 'M d, Y';
     $this->datetime_fmt= 'Y-m-d H:i:s';
+    $this->default_markup= 'wiki';
     #$this->changed_time_fmt = ' . . . . [h:i a]';
     $this->changed_time_fmt= ' [h:i a]'; # used by RecentChanges macro
     $this->admin_passwd= 'daEPulu0FLGhk'; # default value moniwiki
@@ -688,6 +689,7 @@ class WikiDB {
               array("HelpContents","",$this->icon['help']),
            );
     }
+    $config=get_object_vars($this); // merge default settings to $config
 
     # load smileys
     if ($this->use_smileys){
@@ -1273,18 +1275,38 @@ class Version_RCS {
 }
 
 class Cache_text {
-  function Cache_text($arena,$depth=0) {
+  var $depth=0;
+  var $ext='';
+  var $arena='default';
+  function Cache_text($arena,$depth=0,$ext='',$dir='') {
     global $Config;
-    $om=umask(000);
-    $this->cache_dir=$Config['cache_dir']."/$arena";
-    if (!file_exists($this->cache_dir))
-      _mkdir_p($this->cache_dir, 0777);
-    umask($om);
+    $this->depth=$depth;
+    $this->arena=$arena;
+    $this->ext=$ext ? '.'.$ext:'';
+    $this->cache_dir=$dir ? $dir.'/'.$arena: $Config['cache_dir'].'/'.$arena;
+  }
+
+  function _getKey($pagename,$md5=1) {
+    if ($this->depth>0) {
+      $key=$md5 ? md5($pagename):$pagename;
+      $prefix=substr($key,0,$this->depth);
+      return $this->arena.'/'.$prefix.'/'.$key.$this->ext;
+    }
+    return $this->arena.'/'.
+      preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord('\\1')))",
+      $pagename).$this->ext;
   }
 
   function getKey($pagename) {
-    $name=preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord('\\1')))",$pagename);
-    return $this->cache_dir . '/' . $name;
+    if ($this->depth>0) {
+      $key=md5($pagename);
+      $prefix=substr($key,0,$this->depth);
+      $key=$prefix.'/'.$key.$this->ext;
+      return $this->cache_dir . '/' . $key;
+    }
+    return $this->cache_dir .'/'.
+      preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord('\\1')))",
+      $pagename).$this->ext;
   }
 
   function update($pagename,$val,$mtime="") {
@@ -1302,7 +1324,12 @@ class Cache_text {
   }
 
   function _save($key,$val) {
-    #$old=umask(011);
+    $dir=dirname($key);
+    if (!is_dir($dir)) {
+      $om=umask(000);
+      _mkdir_p($dir, 0777);
+      umask($om);
+    }
     $fp=fopen($key,"w+");
     if ($fp) {
       flock($fp,LOCK_EX);
@@ -1646,6 +1673,7 @@ class Formatter {
     $punct="<\'}\]\)\|;\.\!"; # , is omitted for the WikiPedia
     $url="wiki|http|https|ftp|nntp|news|irc|telnet|mailto|file|attachment";
     if ($DBInfo->url_schemas) $url.='|'.$DBInfo->url_schemas;
+    $this->urls=$url;
     $urlrule="((?:$url):\"[^\"]+\"[^\s$punct]*|(?:$url):([^\s$punct]|(\.?[^\s$punct]))+)";
     #$urlrule="((?:$url):(\.?[^\s$punct])+)";
     #$urlrule="((?:$url):[^\s$punct]+(\.?[^\s$punct]+)+\s?)";
@@ -1756,27 +1784,28 @@ class Formatter {
   }
 
   function get_instructions(&$body) {
-    global $DBInfo;
+    global $Config;
     $pikeys=array('#redirect','#action','#title','#keywords','#noindex',
-      '#filter','#postfilter','#twinpages','#notwins','#nocomment',
-      '#language','#camelcase','#nocamelcase',
+      '#format','#filter','#postfilter','#twinpages','#notwins','#nocomment',
+      '#language','#camelcase','#nocamelcase','#cache','#nocache',
       '#singlebracket','#nosinglebracket');
     $pi=array();
     if (!$body) {
-      if (!$this->page->exists()) return '';
+      if (!$this->page->exists()) return array();
       if ($this->pi) return $this->pi;
       $body=$this->page->get_raw_body();
       $update_body=1;
     }
 
+    $format='';
     if (!$this->pi['#format']) { # XXX
       $pos=strpos($this->page->name,'/') ? 1:0;
       $key=strtok($this->page->name,'/');
-      $format=$DBInfo->pagetype[$key];
-      if ($format) {
-        $temp=explode("/",$format);
+      if (isset($Config['pagetype'][$key]) and $f=$Config['pagetype'][$key]) {
+        $temp=explode("/",$f);
         $format=$temp[$pos];
-      }
+      } else if (isset($Config['pagetype']['*']))
+        $format=$Config['pagetype']['*']; // default page type
     }
     if (!$format and $body[0] == '<') {
       list($line, $dummy)= explode("\n", $body,2);
@@ -1784,47 +1813,36 @@ class Formatter {
         #$format='xslt';
         $format='xsltproc';
     } else {
-      if ($body[0]=='#' and substr($body,0,8)=='#format ') {
-        list($line,$body)=explode("\n",$body,2);
-        list($tag,$format,$args)=explode(" ",$line,3);
-        $pi['args']=$args;
-      } else if ($body[0] == '#' and $body[1] =='!') {
+      if ($body[0] == '#' and $body[1] =='!') {
         list($line, $body)= explode("\n", $body,2);
-        list($format,$args)= explode(" ", substr($line,2),2);
-        $pi['args']=$args;
+        $format= trim(substr($line,2));
       }
-      if ($format=='wiki') $format=='';
 
+      $notused=array();
       while ($body and $body[0] == '#') {
         # extract first line
         list($line, $body)= split("\n", $body,2);
         if ($line=='#') break;
         else if ($line[1]=='#') { $notused[]=$line; continue;}
 
-        #list($key,$val,$args)= explode(" ",$line,2); # XXX
-        list($key,$val)= explode(" ",$line,2); # XXX
+        list($key,$val)= explode(" ",$line,2);
         $key=strtolower($key);
-        if (in_array($key,$pikeys)) { $pi[$key]=($val == '') ? 1:$val; }
+        $val=trim($val);
+        if (in_array($key,$pikeys)) { $pi[$key]=$val ? $val:1; }
         else $notused[]=$line;
       }
       #
-      if ($pi['#notwins']) $pi['#twinpages']=0;
-      if ($pi['#nocamelcase']) $pi['#camelcase']=0;
-      if ($pi['#nofilter']) unset($pi['#filter']);
-      if ($pi['#nosinglebracket']) $pi['#singlebracket']=0;
+      if (isset($pi['#notwins'])) $pi['#twinpages']=0;
+      if (isset($pi['#nocamelcase'])) $pi['#camelcase']=0;
+      if (isset($pi['#nocache'])) $pi['#cache']=0;
+      if (isset($pi['#nofilter'])) unset($pi['#filter']);
+      if (isset($pi['#nosinglebracket'])) $pi['#singlebracket']=0;
     }
 
-    if ($format) {
-      if ($format == 'wiki') {
-        #just ignore
-      } else if (function_exists("processor_".$format)) {
-        $pi['#format']=$format;
-      } else if ($processor=getProcessor($format)) {
-        include_once("plugin/processor/$processor.php");
-        $pi['#format']=$format;
-      } else
-        $pi['#format']='plain';
-    }
+    if (!empty($format)) $pi['#format']=$format; // override default
+    if (!isset($pi['#format'])) $pi['#format']= $Config['default_markup'];
+
+    list($pi['#format'],$pi['args'])=explode(' ',$pi['#format']);
 
     if ($notused) $body=join("\n",$notused)."\n".$body;
     if ($update_body) $this->page->write($body." "); # workaround XXX
@@ -1858,8 +1876,9 @@ class Formatter {
   }
 
   function link_repl($url,$attr='') {
+    if (is_array($url)) $url=$url[1];
     #if ($url[0]=='<') { print $url;return $url;}
-    $url=str_replace('\"','"',$url);
+    $url=str_replace('\"','"',$url); // XXX
     if ($url[0]=="[") {
       $url=substr($url,1,-1);
       $force=1;
@@ -1905,7 +1924,7 @@ class Formatter {
       break;
     }
 
-    if (strpos($url,":")) {
+    if (strpos($url,':')) {
       if ($url[0]=='a') # attachment:
         return $this->macro_repl('Attachment',substr($url,11));
 
@@ -1920,17 +1939,18 @@ class Formatter {
           preg_replace('/('.$this->url_mapping_rule.')/ie',"\$this->url_mappings['\\1']",$url);
       }
 
-      if (preg_match("/^mailto:/",$url)) {
+      if (preg_match("/^(w|[A-Z])/",$url)) # InterWiki or wiki:
+        return $this->interwiki_repl($url,'',$attr,$external_icon);
+
+      if ($url[0]=='m' and $url[1]=='a') {
+      #if (preg_match("/^mailto:/",$url)) {
         $email=substr($url,7);
         $link=$name=email_guard($email,$this->email_guard);
         $link=preg_replace('/&(?!#?[a-z0-9]+;)/i','&amp;',$link);
         return $this->icon['mailto']."<a class='externalLink' href='mailto:$link' $attr>$link</a>$external_icon";
       }
 
-      if (preg_match("/^(w|[A-Z])/",$url)) # InterWiki or wiki:
-        return $this->interwiki_repl($url,'',$attr,$external_icon);
-
-      if ($force or strpos($url," ")) { # have a space ?
+      if ($force or strpos($url,' ')) { # have a space ?
         list($url,$text)=explode(" ",$url,2);
         $link=str_replace('&','&amp;',$url);
         if (!$text) $text=$url;
@@ -2610,10 +2630,10 @@ class Formatter {
           $body=$this->filter_repl($ft,$body,$options);
         }
       }
-      if ($pi['#format']) {
+      if ($pi['#format'] != 'wiki') {
         if ($pi['args']) $pi_line="#!".$pi['#format']." $pi[args]\n";
-        print call_user_func("processor_".$pi['#format'],$this,
-          $pi_line.$this->page->body,$options);
+        print $this->processor_repl($pi['#format'],
+          $pi_line.$body,$options);
         
         return;
       }
@@ -2638,9 +2658,9 @@ class Formatter {
       }
 
       $this->pi=$pi;
-      if ($pi['#format']) {
+      if ($pi['#format'] != 'wiki') {
         if ($pi['args']) $pi_line="#!".$pi['#format']." $pi[args]\n";
-        print call_user_func("processor_".$pi['#format'],$this,$pi_line.$body,$options);
+        print $this->processor_repl($pi['#format'],$pi_line.$body,$options);
         if ($DBInfo->use_tagging and isset($pi['#keywords'])) {
           $tmp="----\n";
           if (is_string($DBInfo->use_tagging))
@@ -2955,7 +2975,9 @@ class Formatter {
 
       # InterWiki, WikiName, {{{ }}}, !WikiName, ?single, ["extended wiki name"]
       # urls, [single bracket name], [urls text], [[macro]]
-      $line=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$line);
+      $line=preg_replace_callback("/(".$wordrule.")/",
+        array(&$this,'link_repl'),$line);
+      #$line=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$line);
 
       # FIXME for smart diff XXX (one line ins/del)
       if ($this->use_smartdiff)
@@ -2992,8 +3014,6 @@ class Formatter {
         $line=$anchor.$edit.$this->head_repl($m[1],$m[2]);
         $edit='';$anchor='';
       }
-      #$line=preg_replace("/(?<!=)(={1,5})\s+(.*)\s+(={1,5})\s?$/",
-      #                    $this->head_repl("$1","$2","$3"),$line);
 
       # Smiley
       if ($this->smiley_rule)
@@ -3036,7 +3056,9 @@ class Formatter {
             if ($this->use_smartdiff)
               $pre=preg_replace("/&lt;(\/?)(ins|del)/","<\\1\\2",$pre);
             $pre=preg_replace($this->baserule,$this->baserepl,$pre);
-            $pre=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$pre);
+            $pre=preg_replace_callback("/(".$wordrule.")/",
+              array(&$this,'link_repl'),$pre);
+            #$pre=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$pre);
             $attr='class="quote"';
             if ($pre_style) {
               $tag=$pre_style[0];
@@ -3141,6 +3163,9 @@ class Formatter {
       print "<div id='wikiSister'>\n<div class='separator'><tt class='foot'>----</tt></div>\n$msg<br />\n$sisters</div>\n";
       $this->sister_on=$sister_save;
     }
+
+    if ($this->foots)
+      print $this->macro_repl('FootNote','',$options);
 
     if ($options['pagelinks']) $this->store_pagelinks();
   }
@@ -3431,6 +3456,8 @@ EOS;
         $menu[]= $this->link_to("?action=edit",_("EditText"),"accesskey='x'");
       else
         $menu[]= _("NotEditable");
+      if ($args['refresh']==1)
+        $menu[]= $this->link_to("?refresh=1",_("Refresh"),"accesskey='n'");
     } else
       $menu[]= $this->link_to('?action=show',_("ShowPage"));
     $menu[]=$this->link_tag("FindPage","",_("FindPage"));
@@ -3824,14 +3851,15 @@ MSG;
     setcookie('MONI_TRAIL',$trail,time()+60*60*24*30,get_scriptname());
   }
 
-  function errlog($prefix="LoG") {
+  function errlog($prefix="LoG",$tmpname='') {
     global $DBInfo;
 
     $this->mylog='';
     $this->LOG='';
     if ($DBInfo->use_errlog) {
       if(getenv("OS")!="Windows_NT") {
-        $this->mylog=tempnam($DBInfo->vartmp_dir,$prefix);
+        $this->mylog=$tmpname ? $DBInfo->vartmp_dir.'/'.$tmpname:
+          tempnam($DBInfo->vartmp_dir,$prefix);
         $this->LOG=' 2>'.$this->mylog;
       }
     } else {
@@ -3839,7 +3867,7 @@ MSG;
     }
   }
 
-  function get_errlog() {
+  function get_errlog($all=0,$raw=0) {
     global $DBInfo;
 
     $log=&$this->mylog;
@@ -3847,7 +3875,7 @@ MSG;
       $fd=fopen($log,'r');
       if (is_resource($fd)) {
         $maxl=$DBInfo->errlog_maxline ? min($DBInfo->errlog_maxline,200):20;
-        if ($sz <= $maxl*70) { # approx log size ~ line * 70
+        if ($all or $sz <= $maxl*70) { # approx log size ~ line * 70
           $out=fread($fd,$sz);
         } else {
           for ($i=0;($i<$maxl) and ($s=fgets($fd,1024));$i++)
@@ -3859,7 +3887,7 @@ MSG;
         $this->LOG='';
         $this->mylog='';
 
-        if (!$DBInfo->raw_errlog) {
+        if (!$DBInfo->raw_errlog and !$raw) {
           $out=preg_replace('/(\/[a-z0-9.]+)+/','/XXX',$out);
         }
         return $out;
@@ -4027,7 +4055,7 @@ if (isset($locale)) {
 $pagename=get_pagename();
 //function render($pagename,$options) {
 if ($pagename) {
-  global $DBInfo;
+  global $DBInfo,$Config;
   # get primary variables
   if ($_SERVER['REQUEST_METHOD']=="POST") {
     # hack for TWiki plugin
@@ -4059,18 +4087,14 @@ if ($pagename) {
   #print $_SERVER['REQUEST_URI'];
   $options['page']=$pagename;
 
-#  if ($action=="recall" || $action=="raw" && $rev) {
-#    $options['rev']=$rev;
-#    $page = $DBInfo->getPage($pagename,$options);
-#  } else
   $page = $DBInfo->getPage($pagename);
 
   $formatter = new Formatter($page,$options);
-  $formatter->macro_repl('InterWiki','',array('init'=>1));
   $formatter->refresh=$refresh;
+  $formatter->macro_repl('InterWiki','',array('init'=>1));
   $formatter->tz_offset=$options['tz_offset'];
 
-  // check black list
+  // simple black list check
   if (!empty($DBInfo->blacklist)) {
     include_once 'lib/checkip.php';
     if (check_ip($DBInfo->blacklist, $_SERVER['REMOTE_ADDR'])) {
@@ -4108,7 +4132,14 @@ if ($pagename) {
         break;
       }
 
-      $formatter->send_header("Status: 404 Not found",$options);
+      $msg_404='';
+      if (!$Config['no_404']) $msg_404="Status: 404 Not found"; # for IE
+      if ($Config['nofancy_404']) {
+        $formatter->header($msg_404);
+        print '<html><head></head><body><h1>'.$msg_404.'</h1></body></html>';
+        return;
+      }
+      $formatter->send_header($msg_404,$options);
 
       $twins=$DBInfo->metadb->getTwinPages($page->name,2);
       if ($twins) {
@@ -4186,29 +4217,43 @@ if ($pagename) {
         $tcache->update($pagename,serialize($keys));
       }
     }
+    if ($DBInfo->use_referer)
+      log_referer($_SERVER['HTTP_REFERER'],$pagename);
+
     $formatter->write("<div id='wikiContent'>\n");
     $options['timer']->Check("init");
     $options['pagelinks']=1;
-#    $cache=new Cache_text('pages');
-#    if ($cache->exists($pagename)) {
-#      print $cache->fetch($pagename);
-#    } else {
-#      ob_start();
+    if ($Config['cachetime'] > 0 and !$formatter->pi['#nocache']) {
+      $cache=new Cache_text('pages',2,'html');
+      $mtime=$cache->mtime($pagename);
+      $dtime=filemtime($Config['data_dir'].'/text/.'); // XXX
+      $now=time();
+      $check=$now-$mtime;
+     
+      if (!$formatter->refresh and (($mtime > $dtime) and ($check < $Config['cachetime']))) {
+        print $cache->fetch($pagename);
+        $mytime=gmdate("Y-m-d H:i:s",$mtime+$options['tz_offset']);
+        print "<!-- Cached at $mytime -->";
+      } else {
+        ob_start();
+        $formatter->send_page('',$options);
+        flush();
+        $out=ob_get_contents();
+        ob_end_clean();
+        print $out;
+        if (!$formatter->pi['#nocache'])
+          $cache->update($pagename,$out);
+      }
+      $args['refresh']=1; // add refresh menu
+    } else {
       $formatter->send_page('',$options);
-      if ($DBInfo->use_referer)
-        log_referer($_SERVER['HTTP_REFERER'],$pagename);
-      flush();
-#      ob_end_flush();
-#      ob_end_clean();
-#      $out=ob_get_contents();
-#      ob_end_clean();
-#      print $out;
-#      $cache->update($pagename,$out);
-#    }
+    }
     $options['timer']->Check("send_page");
     $formatter->write("<!-- wikiContent --></div>\n");
 
-    if ($DBInfo->extra_macros and !$formatter->pi['#format']) {
+    // XXX
+    if ($DBInfo->extra_macros and
+        $formatter->pi['#format'] == $DBInfo->default_markup) {
       if ($formatter->pi['#nocomment']) $options['nocomment']=1;
       if (!is_array($DBInfo->extra_macros)) {
         print '<div id="wikiExtra">'."\n";
