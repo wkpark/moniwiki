@@ -12,12 +12,6 @@ function macro_VisualTour($formatter,$value,$options=array()) {
   $dotcmd="dot";
   #$dotcmd="twopi";
   #$dotcmd="neato";
-  $webdot_dir=$DBInfo->upload_dir."/VisualTour";
-
-  if (!file_exists($webdot_dir)) {
-    umask(000);
-    mkdir($webdot_dir,0777);
-  }
 
   if (!$formatter->page->exists())
     return "";
@@ -54,25 +48,51 @@ function macro_VisualTour($formatter,$value,$options=array()) {
     $pgname=$formatter->page->name;
   }
 
-  $url=qualifiedUrl($formatter->link_url($urlname,"?action=dot&w=$w&d=$d$extra"));
+  $dot=$formatter->macro_repl('dot',$pgname,$options);
 
-  $fp=fopen($url,"r");
-  $dot="";
-  while ($data= fread($fp, 4096)) $dot.=$data;
-  fclose($fp);
+  $md5sum=md5($dot);
+  if ($DBInfo->cache_public_dir) {
+    $fc=new Cache_text('visualtour',2,'',$DBInfo->cache_public_dir);
+    $fname=$fc->_getKey($md5sum,0);
+    $basename= $DBInfo->cache_public_dir.'/'.$fname;
+    $dotfile= $basename.'.dot';
+    $pngfile= $basename.'.png';
+    $mapfile= $basename.'.map';
+    $urlbase=
+      $DBInfo->cache_public_url ? $DBInfo->cache_public_url.'/'.$fname:
+      $DBInfo->url_prefix.'/'.$basename;
+    $png_url= $urlbase.'.png';
+    $map_url= $urlbase.'.map';
+  } else {
+    $cache_dir= $DBInfo->upload_dir."/VisualTour";
+    $cache_url= $DBInfo->upload_url ? $DBInfo->upload_url.'/VisualTour':
+      $DBInfo->url_prefix.'/'.$cache_dir;
+    $basename= $cache_dir.'/'.$md5sum;
+    $pngfile= $basename.'.png';
+    $mapfile= $basename.'.map';
+    $dotfile= $basename.'.dot';
+    $urlbase= $cache_url.'/'.$md5sum;
+    $png_url= $urlbase.'.png';
+    $map_url= $urlbase.'.map';
+  }
 
-  $md5sum=$DBInfo->pageToKeyname($pgname).".".md5($dot);
-  if ($formatter->refresh or !file_exists($webdot_dir."/$md5sum.dot")) {
-    $fp=fopen($webdot_dir."/$md5sum.dot","w");
+  if (!is_dir(dirname($pngfile))) {
+    $om=umask(000);
+    _mkdir_p(dirname($pngfile),0777);
+    umask($om);
+  }
+
+  if ($formatter->refresh or !file_exists($dotfile)) {
+    $fp=fopen($dotfile,"w");
     fwrite($fp,$dot);
     fclose($fp);
 
-    $cmd="$dotcmd -Tpng $webdot_dir/$md5sum.dot -o $webdot_dir/$md5sum.png";
+    $cmd="$dotcmd -Tpng $dotfile -o $pngfile";
     $formatter->errlog('Dot');
     $fp=popen($cmd.$formatter->LOG,'r');
     pclose($fp);
     $err=$formatter->get_errlog();
-    $cmd="$dotcmd -Timap $webdot_dir/$md5sum.dot -o $webdot_dir/$md5sum.map";
+    $cmd="$dotcmd -Timap $dotfile -o $mapfile";
     $formatter->errlog('Dot');
     $fp=popen($cmd.$formatter->LOG,'r');
     pclose($fp);
@@ -82,7 +102,7 @@ function macro_VisualTour($formatter,$value,$options=array()) {
 
   }
 
-  return $err."<span class='VisualTour'><a href='$DBInfo->url_prefix/$webdot_dir/$md5sum.map'><img src='$DBInfo->url_prefix/$webdot_dir/$md5sum.png' alt='VisualTour' ismap></a></span>\n";
+  return $err."<span class='VisualTour'><a href='$map_url'><img src='$png_url' alt='VisualTour' ismap></a></span>\n";
 }
 
 function do_VisualTour($formatter,$options) {

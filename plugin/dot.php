@@ -32,7 +32,7 @@ class LinkTree {
             # XXX 
             $nodelink[$page]=sizeof($leafs);
           } else
-            $nodelink[$page]=1;
+            $nodelink[$page]=-1; // XXX
         } else $nodelink[$page]=1;
       }
     }
@@ -56,13 +56,16 @@ class LinkTree {
         $selected=array_slice($node[$pagename],0,$slice);
         foreach($selected as $leaf)
           $this->makeTree($leaf,$node,$color,$depth,$count);
+      } else {
+        $node[$pagename]=array(); // no links found
+        $color[$pagename]=-9;
       }
     }
     return;
   }
 }
 
-function do_dot($formatter,$options) {
+function macro_Dot($formatter,$value='',$options=array()) {
   global $DBInfo;
 
   #getLeafs($options[page],&$node);
@@ -74,24 +77,31 @@ function do_dot($formatter,$options) {
     $fontsize=$options['f'];
   else $fontsize=FONTSIZE;
 
+  if ($value and $DBInfo->hasPage($value)) {
+    $pgname=$value;
+  } else if ($DBInfo->hasPage($options['page'])) {
+    $pgname=$options['page'];
+  } else {
+    return ''; // XXX
+  }
+
   $fontsize= $DBInfo->dot_fontsize ? $DBInfo->dot_fontsize: $fontsize;
   $fontname= $DBInfo->dot_fontname ? $DBInfo->dot_fontname: FONTNAME;
   $dot_options=$DBInfo->dot_options ? $DBInfo->dot_options: '';
 
   $color=array();
   $tree=new LinkTree($options['arena']);
-  $tree->makeTree($options['page'],$node,$color,$depth,$count*2);
-  if (!$node) $node=array($options['page']=>array());
+  $tree->makeTree($pgname,$node,$color,$depth,$count*2);
+  if (!$node) $node=array($pgname=>array());
   #print_r($color);
-  foreach ($color as $key=>$val) $color[$key]=$depth-$val;
+  foreach ($color as $key=>$val) $color[$key]=$val>0 ?$depth-$val:-$val;
 
-  $color[$options['page']]=10;
+  $color[$pgname]=10;
 
   $myaction='visualtour';
   if (in_array($options['t'],array('visualtour','show')))
     $myaction=$options['t'];
 
-  header("Content-Type: text/plain");
   #print_r($color);
   #print_r(array_keys($node));
   $visualtour=$formatter->link_url("VisualTour");
@@ -100,7 +110,11 @@ function do_dot($formatter,$options) {
   $colref=array('gray71',
                 'olivedrab1','olivedrab2','olivedrab3',
                 '"#A4DDF4"','"#83D0ED"','"#63C0E3"',
-                'gray53', 'gray40','gray30','yellow');
+                'gray53', 'gray40','orangered','yellow');
+  $fcolref=array('gray71',
+                'olivedrab4','olivedrab4','olivedrab4',
+                '"#A4DDF4"','"#83D0ED"','"#63C0E3"',
+                'gray53', 'gray40','white','black');
   $colidx=0;
   $dot_head=<<<HEAD
 digraph G {
@@ -115,8 +129,12 @@ HEAD;
   while (list($leafname,$leaf) = @each ($node)) {
     if (!$leafs[($urlname=_rawurlencode($leafname))]) {
       $leafs[$leafname]=$urlname;
+
+      $extra='';
+      if ($fcolref[$color[$leafname]])
+        $extra=',fontcolor='.$fcolref[$color[$leafname]];
       $out.= '"'.$urlname."\" [label=\"$leafname\",".
-             "style=filled,fillcolor=".$colref[$color[$leafname]]."];\n";
+             "style=filled,fillcolor=".$colref[$color[$leafname]]."$extra];\n";
     }
     #print $leafname."\n";
     #print_r($node[$leafname]);
@@ -125,8 +143,11 @@ HEAD;
     foreach ($selected as $leaf) {
       if (!$leafs[($urlname=_rawurlencode($leaf))]) {
         $leafs[$leaf]=$urlname;
+        $extra='';
+        if ($fcolref[$color[$leaf]])
+          $extra=',fontcolor='.$fcolref[$color[$leaf]];
         $out.= '"'.$urlname."\" [label=\"$leaf\",".
-               "style=filled,fillcolor=".$colref[$color[$leaf]]."];\n";
+               "style=filled,fillcolor=".$colref[$color[$leaf]]."$extra];\n";
       }
       $out.= "\"".$leafs[$leafname]."\" ->\"".$leafs[$leaf]."\";\n";
     }
@@ -137,11 +158,14 @@ HEAD;
 
   if (strtoupper($DBInfo->charset) != 'UTF-8') {
     $new=iconv($DBInfo->charset,'UTF-8',$out);
-    if ($new) print $new;
-    return;
+    if ($new) return $new;
   }
-  print $out;
-  return;
+  return $out;
+}
+
+function do_dot($formatter,$options=array()) {
+  header("Content-Type: text/plain");
+  print macro_Dot($formatter,$options['page'],$options);
 }
 
 // vim:et:sts=2
