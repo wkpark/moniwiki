@@ -2246,7 +2246,7 @@ function macro_FootNote(&$formatter,$value="") {
     $foots=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$foots);
     unset($formatter->foots);
     if ($foots)
-      return "<div class='foot'><div class='separator'><tt class='wiki'>----</tt></div>\n$foots</div>";
+      return "<div class='foot'><div class='separator'><tt class='wiki'>----</tt></div><ul>\n$foots</ul></div>";
     return '';
   }
 
@@ -2308,10 +2308,10 @@ function macro_FootNote(&$formatter,$value="") {
        return "<tt class='foot'><a href='#$fnidx'>$text</a></tt>";
     }
   }
-  $formatter->foots[]="<tt class='foot'>&#160;&#160;&#160;".
+  $formatter->foots[]="<li><tt class='foot'>".
                       "<a id='$fnidx' name='$fnidx'/>".
-                      "<a href='#r$fnidx'>$text</a>&#160;</tt> ".
-                      "$value<br/>";
+                      "<a href='#r$fnidx'>$text</a></tt> ".
+                      "$value</li>";
   $tval=str_replace("'","&#39;",$value);
   return "<tt class='foot'><a id='r$fnidx' name='r$fnidx'/>".
     "<a href='#$fnidx' title='$tval'>$text</a></tt>";

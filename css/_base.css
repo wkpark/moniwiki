@@ -70,6 +70,11 @@ tt.foot {
   vertical-align: super;
 }
 
+div.foot ul{
+  list-style:none;
+  padding-left:10px;
+}
+
 tt.sister {
   font-family:sans-serif;
   vertical-align: super;
