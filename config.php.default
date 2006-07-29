@@ -182,4 +182,7 @@ $use_errlog=1;
 #$dot_fontname='WEBDOTFONT'; # webdot fontname fot graphviz 1.8.x
 #$dot_options="size \"6,6\"\n"; # extra webdot options
 $use_save_refresh=2;
+#$cache_public_dir='./_cache'; # enhanced caching
+#$no_404=1; # for IIS
+#$nofancy_404=1; # simplified 404 msg for robots etc.
 ?>
