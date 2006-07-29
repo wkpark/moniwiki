@@ -217,7 +217,7 @@ class processor_textile
 	/**
      	 * return processor info
      	 */
-    	function get_info()
+    	function info()
 	{
      		return array(
         		'author'  => 'Dean Allen <dean@textism.com>',
