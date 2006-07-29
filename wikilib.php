@@ -1920,7 +1920,16 @@ EOF;
 function macro_InterWiki($formatter,$value,$options=array()) {
   global $DBInfo;
 
-  if (!isset($DBInfo->interwiki) or $options['init']) {
+  while (!isset($DBInfo->interwiki) or $options['init']) {
+    $cf=new Cache_text('settings');
+    if (!$formatter->refresh and $cf->exists('interwiki')) {
+      $info=unserialize($cf->fetch('interwiki'));
+      $DBInfo->interwiki=$info['interwiki'];
+      $DBInfo->interwikirule=$info['interwikirule'];
+      $DBInfo->intericon=$info['intericon'];
+      break;
+    }
+
     $interwiki=array();
     # intitialize interwiki map
     $map=file($DBInfo->intermap);
@@ -1984,6 +1993,10 @@ function macro_InterWiki($formatter,$value,$options=array()) {
     $DBInfo->interwiki=$interwiki;
     $DBInfo->interwikirule=$interwikirule;
     $DBInfo->intericon=$intericon;
+    $interinfo=
+      serialize(array('interwiki'=>$interwiki,'interwikirule'=>$interwikirule,'intericon'=>$intericon));
+    $cf->update('interwiki',$interinfo);
+    break;
   }
   if ($options['init']) return;
 
@@ -2520,8 +2533,12 @@ function processor_html($formatter="",$value="") {
 function processor_plain($formatter,$value) {
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
-  $value=str_replace('<','&lt;',$value);
-  return "<pre class='code'>$value</pre>";
+  $class='wiki'; // XXX {{{#!plain myclass
+
+  $pre=str_replace(array('&','<'), array("&amp;","&lt;"), $value);
+  $pre=preg_replace("/&lt;(\/?)(ins|del)/","<\\1\\2",$pre);
+  $out="<pre class='$class'>\n".$pre."</pre>";
+  return $out;
 }
 
 function processor_php($formatter="",$value="") {
