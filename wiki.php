@@ -2233,10 +2233,10 @@ class Formatter {
             $this->aliases[$page]=$url;
             return $url;
           }
-          $this->sisters[]="<tt class='foot'>&#160;&#160;&#160;".
-            "<a name='sister$this->sister_idx' id='sister$this->sister_idx'></a>".
-            "<a href='#rsister$this->sister_idx'>$this->sister_idx&#x203a;</a>&#160;</tt> ".
-            "$sisters <br/>";
+          $this->sisters[]="<tt class='foot'>".
+            "<li><a name='sister$this->sister_idx' id='sister$this->sister_idx'></a>".
+            "<a href='#rsister$this->sister_idx'>$this->sister_idx&#x203a;</a></tt> ".
+            "$sisters </li>";
           $this->pagelinks[$page]=$this->sister_idx++;
           $idx=$this->pagelinks[$page];
         }
@@ -2669,7 +2669,7 @@ class Formatter {
             $tmp.="Tags: [[Keywords]]";
           $this->send_page($tmp); // XXX
         }
-        $this->store_pagelinks(); // XXX
+        //$this->store_pagelinks(); // XXX
         return;
       }
 
@@ -3160,7 +3160,7 @@ class Formatter {
       $sisters=join("\n",$this->sisters);
       $sisters=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$sisters);
       $msg=_("Sister Sites Index");
-      print "<div id='wikiSister'>\n<div class='separator'><tt class='foot'>----</tt></div>\n$msg<br />\n$sisters</div>\n";
+      print "<div id='wikiSister'>\n<div class='separator'><tt class='foot'>----</tt></div>\n$msg<br />\n<ul>$sisters</ul></div>\n";
       $this->sister_on=$sister_save;
     }
 
