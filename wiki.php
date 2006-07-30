@@ -29,6 +29,15 @@ function getPlugin($pluginname) {
   static $plugins=array();
   if ($plugins) return $plugins[strtolower($pluginname)];
   global $DBInfo;
+
+  $cp=new Cache_text('settings');
+
+  if ($cp->exists('plugins')) {
+    $plugins=unserialize($cp->fetch('plugins'));
+    if (is_array($DBInfo->myplugins))
+      $plugins=array_merge($plugins,$DBInfo->myplugins);
+    return $plugins[strtolower($pluginname)];
+  }
   if ($DBInfo->include_path)
     $dirs=explode(':',$DBInfo->include_path);
   else
@@ -43,6 +52,9 @@ function getPlugin($pluginname) {
       $plugins[strtolower($name)]= $name;
     }
   }
+
+  if ($plugins)
+    $cp->update('plugins',serialize($plugins));
   if (is_array($DBInfo->myplugins))
     $plugins=array_merge($plugins,$DBInfo->myplugins);
 
@@ -60,6 +72,15 @@ function getProcessor($pro_name) {
   static $processors=array();
   if ($processors) return $processors[strtolower($pro_name)];
   global $DBInfo;
+
+  $cp=new Cache_text('settings');
+
+  if ($cp->exists('processors')) {
+    $processors=unserialize($cp->fetch('processors'));
+    if (is_array($DBInfo->myprocessors))
+      $processors=array_merge($processors,$DBInfo->myprocessors);
+    return $processors[strtolower($pro_name)];
+  }
   if ($DBInfo->include_path)
     $dirs=explode(':',$DBInfo->include_path);
   else
@@ -75,6 +96,8 @@ function getProcessor($pro_name) {
     }
   }
 
+  if ($processors)
+    $cp->update('processors',serialize($processors));
   if (is_array($DBInfo->myprocessors))
     $processors=array_merge($processors,$DBInfo->myprocessors);
 
