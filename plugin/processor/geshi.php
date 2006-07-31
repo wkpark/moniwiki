@@ -29,11 +29,11 @@
 //
 // $Id$
 
-include_once(dirname(__FILE__)."/../../lib/geshi/geshi.php");
+@include_once(dirname(__FILE__)."/../../lib/geshi/geshi.php");
 
+if (defined('GESHI_VERSION')):
 function processor_geshi($formatter,$value,$options) {
   global $DBInfo;
-  $cache_dir=$DBInfo->upload_dir."/GeshiProcessor";
 
   $syntax=array(
     'actionscript', 'ada', 'apache', 'asm', 'asp', 'bash', 'c', 'c_mac',
@@ -51,18 +51,27 @@ function processor_geshi($formatter,$value,$options) {
   $src=$value;
   if (!$type) $type='nosyntax';
 
-  $uniq=md5($option.$src); if (!file_exists($cache_dir)) {
-    umask(000);
-    mkdir($cache_dir,0777);
-    umask(022);
+  $uniq=md5($option.$src);
+  if ($DBInfo->cache_public_dir) {
+    $fc=new Cache_text('geshi',2,'html',$DBInfo->cache_public_dir);
+    $htmlname=$fc->_getKey($uniq,0);
+    $html= $DBInfo->cache_public_dir.'/'.$htmlname;
+  } else {
+    $cache_dir=$DBInfo->upload_dir."/GeshiProcessor";
+    $html=$cache_dir.'/'.$uniq.'.html';
   }
 
-  if (file_exists($cache_dir."/$uniq".".html") && !$formatter->refresh) {
+  if (!is_dir(dirname($html))) {
+    $om=umask(000);
+    _mkdir_p(dirname($html),0777);
+    umask($om);
+  }
+
+  if (file_exists($html) && !$formatter->refresh) {
     $out = "";
-    $fp=fopen($cache_dir."/$uniq".".html","r");
+    $fp=fopen($html,"r");
     while (!feof($fp)) $out .= fread($fp, 1024);
     return $out;
-    #return join('',file($cache_dir."/$uniq".".html"));
   }
 
   # comment out the following two lines to freely use any syntaxes.
@@ -77,18 +86,22 @@ function processor_geshi($formatter,$value,$options) {
   } else {
     $geshi->enable_line_numbers(GESHI_NO_LINE_NUMBERS);
   }
+  $out='';
+  $geshi->set_comments_style(1, 'font-style: normal;');
   $geshi->set_header_type(GESHI_HEADER_DIV);
   #$geshi->set_header_type(GESHI_HEADER_PRE);
   #$out = '<style type="text/css"><!--'.$geshi->get_stylesheet().'--></style>';
   #$geshi->enable_classes();
-  $out = $out.$geshi->parse_code();
+  $out.= $geshi->parse_code();
 
-  $fp=fopen($cache_dir."/$uniq".".html","w");
+  $fp=fopen($html,"w");
   fwrite($fp,$out);
   fclose($fp);
 
   return $out;
 }
+
+endif;
 
 // vim:et:sts=2:
 ?>
