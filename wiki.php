@@ -1965,8 +1965,7 @@ class Formatter {
       if (preg_match("/^(w|[A-Z])/",$url)) # InterWiki or wiki:
         return $this->interwiki_repl($url,'',$attr,$external_icon);
 
-      if ($url[0]=='m' and $url[1]=='a') {
-      #if (preg_match("/^mailto:/",$url)) {
+      if (preg_match("/^mailto:/",$url)) {
         $email=substr($url,7);
         $link=$name=email_guard($email,$this->email_guard);
         $link=preg_replace('/&(?!#?[a-z0-9]+;)/i','&amp;',$link);
@@ -2207,7 +2206,7 @@ class Formatter {
     $url=$this->link_url($url);
 
     #check current page
-    if ($page == $this->page->name) $attr.='class="current"';
+    if ($page == $this->page->name) $attr.=' class="current"';
 
     //$url=$this->link_url(_rawurlencode($page)); # XXX
     if (isset($this->pagelinks[$page])) {
@@ -2411,21 +2410,36 @@ class Formatter {
   }
 
   function processor_repl($processor,$value,$options="") {
+    $bra='';$ket='';
+    if (!empty($this->wikimarkup) and empty($options['nomarkup'])) {
+      $bra= "<div class='wikiMarkup'><!-- wiki:\n{{{".$value."}}}\n-->";
+      $ket= '</div>';
+    }
+    if (!empty($this->use_smartdiff) and
+      preg_match('/<(ins|del|div) class=\'diff-(added|removed)\'>/',
+      $value)) $processor='plain';
     if (!($f=function_exists("processor_".$processor)) and !($c=class_exists('processor_'.$processor))) {
       $pf=getProcessor($processor);
-      if (!$pf)
-      return call_user_func('processor_plain',$this,$value,$options);
+      if (!$pf) {
+        $ret= call_user_func('processor_plain',$this,$value,$options);
+        return $bra.$ret.$ket;
+      }
       include_once("plugin/processor/$pf.php");
       $processor=$pf;
       $name='processor_'.$pf;
-      if (!($f=function_exists($name)) and !($c=class_exists($name)))
-        return call_user_func('processor_plain',$this,$value,$options);
+      if (!($f=function_exists($name)) and !($c=class_exists($name))) {
+        $ret= call_user_func('processor_plain',$this,$value,$options);
+        return $bra.$ret.$ket;
+      }
     }
-    if ($f)
-      return call_user_func("processor_$processor",$this,$value,$options);
+    if ($f) {
+      $ret= call_user_func("processor_$processor",$this,$value,$options);
+      return $bra.$ret.$ket;
+    }
     $classname='processor_'.$processor;
     $myclass= & new $classname($this,$options);
-    return call_user_func(array($myclass,'process'),$value,$options);
+    $ret= call_user_func(array($myclass,'process'),$value,$options);
+    return $bra.$ret.$ket;
   }
 
   function filter_repl($filter,$value,$options='') {
@@ -3059,18 +3073,19 @@ class Formatter {
 
          # for smart diff
          $show_raw=0;
-         if ($this->use_smartdiff and
-           preg_match('/<(ins|del) class=\'diff-(added|removed)\'>/',
-           $this->pre_line)) $show_raw=1;
+         #if ($this->use_smartdiff and
+         #  preg_match('/<(ins|del) class=\'diff-(added|removed)\'>/',
+         #  $this->pre_line)) $show_raw=1;
 
          if ($processor and !$show_raw) {
-           $value=$this->pre_line;
+           $value=&$this->pre_line;
            $out= $this->processor_repl($processor,$value,$options);
-           if ($this->wikimarkup)
-             $line='<div class="wikiMarkup">'."<!-- wiki:\n{{{".
-               $value."}}}\n-->$out</div>";
-           else
-             $line=$out.$line;
+           #if ($this->wikimarkup)
+           #  $line='<div class="wikiMarkup">'."<!-- wiki:\n{{{".
+           #    $value."}}}\n-->$out</div>";
+           #else
+           #  $line=$out.$line;
+           $line=$out.$line;
            unset($out);
          } else if ($in_quote) {
             # htmlfy '<'
@@ -3641,7 +3656,7 @@ MSG;
       if (strpos($item,' ') === false) {
         if (strpos($attr,'=') === false) $attr="accesskey='$attr'";
         if ($item == $this->page->name) {
-          $attr.=" class='current'";
+          #$attr.=" class='current'";
           $titlemnu=1;
         }
         # like 'MoniWiki'=>'accesskey="1"'
@@ -3653,7 +3668,7 @@ MSG;
       }
     }
     if ($DBInfo->use_titlemenu and $titlemnu == 0 ) {
-      $attr="class='current'";
+      #$attr="class='current'";
       # XXX make title more shorter ?
       $mnuname=htmlspecialchars($this->page->name);
       if ($DBInfo->hasPage($this->page->name) and strlen($mnuname) < 10)
