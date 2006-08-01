@@ -141,7 +141,7 @@ function macro_diff($formatter,$value,&$options)
   $option='';
 
   $pi=$formatter->get_instructions($dum);
-  if ($pi['#format'] and !$options['type']) # is it not wiki format ?
+  if (!in_array($pi['#format'],array('wiki','moni')) and !$options['type']) # is it not wiki format ?
     $options['type']=$DBInfo->diff_type; # use default diff format
 
   if (!$options['type'] and $DBInfo->use_smartdiff)
@@ -255,8 +255,8 @@ function macro_diff($formatter,$value,&$options)
           $diffed);
 
         $diffed=preg_replace(array(
-            "/\n\(@@/m","/@@\)\n/m","/\(@@/","/@@\)/",
-            "/\n\(%%/m","/%%\)\n/m","/\(%%/","/%%\)/"),
+            "/\n?\(@@/m","/@@\)\n/m","/\(@@/","/@@\)/",
+            "/\n?\(%%/m","/%%\)\n/m","/\(%%/","/%%\)/"),
           array(
             "\n<div class='diff-added'>","\n</div>",
             "<ins class='diff-added'>","\n</ins>",
@@ -268,7 +268,7 @@ function macro_diff($formatter,$value,&$options)
         $options['msg']=$msg;
         $options['smart']=1;
 
-        if ($pi['#format'])
+        if (!in_array($pi['#format'],array('wiki','moni')))
           print '<pre class="code">'.$diffed.'</pre>';
         else
           $formatter->send_page($diffed,$options);
