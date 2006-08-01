@@ -48,10 +48,10 @@ function processor_geshi($formatter,$value,$options) {
   # get parameters
   if ($line)
     list($tag,$type,$extra)=explode(" ",$line,3);
-  $src=$value;
+  $src=rtrim($value); // XXX
   if (!$type) $type='nosyntax';
 
-  $uniq=md5($option.$src);
+  $uniq=md5($extra.$value);
   if ($DBInfo->cache_public_dir) {
     $fc=new Cache_text('geshi',2,'html',$DBInfo->cache_public_dir);
     $htmlname=$fc->_getKey($uniq,0);
