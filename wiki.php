@@ -1967,9 +1967,12 @@ class Formatter {
 
       if (preg_match("/^mailto:/",$url)) {
         $email=substr($url,7);
-        $link=$name=email_guard($email,$this->email_guard);
+        $link=strtok($email,' ');
+        $myname=strtok('');
+        $link=email_guard($link,$this->email_guard);
+        $myname=!empty($myname) ? $myname:$link;
         $link=preg_replace('/&(?!#?[a-z0-9]+;)/i','&amp;',$link);
-        return $this->icon['mailto']."<a class='externalLink' href='mailto:$link' $attr>$link</a>$external_icon";
+        return $this->icon['mailto']."<a class='externalLink' href='mailto:$link' $attr>$myname</a>$external_icon";
       }
 
       if ($force or strpos($url,' ')) { # have a space ?
