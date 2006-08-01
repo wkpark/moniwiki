@@ -5,6 +5,12 @@
 //
 //_url_prefix="/wiki";
 
+Wikiwyg.browserIsSupported = (
+    Wikiwyg.is_gecko ||
+    Wikiwyg.is_ie ||
+    Wikiwyg.is_opera
+);
+
 Wikiwyg.prototype.saveChanges = function() {
     var self = this;
     var myWikiwyg = new Wikiwyg.Wikitext();
@@ -68,7 +74,8 @@ Wikiwyg.prototype.editMode = function(form) {
     dom.innerHTML = form;
 
     var form = dom.getElementsByTagName('form')[0];
-    var wikitext = form.savetext.value;
+    var text = dom.getElementsByTagName('textarea')[0];
+    var wikitext = text.value;
     this.mylocation = form.getAttribute('action');
 
     this.current_mode = this.first_mode;
@@ -89,12 +96,11 @@ Wikiwyg.prototype.editMode = function(form) {
 proto = Wikiwyg.Wysiwyg.prototype;
 
 proto.enableThis = function() {
-    this.superfunc('enableThis').call(this);
+    Wikiwyg.Mode.prototype.enableThis.call(this);
     this.edit_iframe.style.border = '1px black solid';
     this.edit_iframe.width = '100%';
     this.setHeightOf(this.edit_iframe);
     this.fix_up_relative_imgs();
-    this.get_edit_document().designMode = 'on';
     // XXX - Doing stylesheets in initializeObject might get rid of blue flash
     this.apply_stylesheets();
     //
@@ -108,7 +114,10 @@ proto.enableThis = function() {
     if (location.port) loc += ':' + location.port;
     link.setAttribute('href',
         loc + _url_prefix + '/local/Wikiwyg/css/wysiwyg.css');
+
     head.appendChild(link);
+    this.fix_up_relative_imgs();
+    this.get_edit_document().designMode = 'on';
     this.enable_keybindings();
     this.clear_inner_html();
 }
@@ -180,7 +189,7 @@ proto.format_img = function(element) {
         var style = element.getAttribute('style');
         var width = element.getAttribute('width');
         var height = element.getAttribute('height');
-        var class = element.getAttribute('class');
+        var myclass = element.getAttribute('class');
 
         this.assert_space_or_newline();
         this.appendOutput(uri);
@@ -194,8 +203,8 @@ proto.format_img = function(element) {
             if (m[2]) attr+=(attr ? '&':'') + 'height='+m[2];
         }
 
-        if (class) {
-            var m = class.match(/img(Center|Left|Right)$/);
+        if (myclass) {
+            var m = myclass.match(/img(Center|Left|Right)$/);
             if (m[1]) attr+=(attr ? '&':'') + 'align='+m[1].toLowerCase();
         }
 
@@ -707,7 +716,6 @@ function sectionEdit(ev,obj,sect) {
         loading.setAttribute('class','ajaxLoading');
         loading.src=_url_prefix + '/imgs/loading.gif';
         obj.parentNode.replaceChild(loading,obj);
-        //alert('loading...');
         var form=HTTPGet(href);
         loading.parentNode.replaceChild(saved,loading);
 
@@ -717,35 +725,35 @@ function sectionEdit(ev,obj,sect) {
                 toolbar: {
                     imagesLocation:
                         _url_prefix + '/local/Wikiwyg/moni/images/',
-                imagesExtension: '.png'
-            },
-            wikitext: {
-                supportCamelCaseLinks: true
-            },
-            modeClasses: [
-                'Wikiwyg.Wikitext',
-                'Wikiwyg.Wysiwyg',
-                'Wikiwyg.HTML',
-                'Wikiwyg.Preview',
-            ]
-        }
-        //var div = document.createElement('div');
-        //div.setAttribute('class', 'wikiwyg_area');
+                    imagesExtension: '.png'
+                },
+                wikitext: {
+                    supportCamelCaseLinks: true
+                },
+                modeClasses: [
+                    'Wikiwyg.Wikitext',
+                    'Wikiwyg.Wysiwyg',
+                    'Wikiwyg.Preview',
+                    'Wikiwyg.HTML',
+                ]
+            };
+            //var div = document.createElement('div');
+            //div.setAttribute('class', 'wikiwyg_area');
+            //sec.parentNode.appendChild(div);
 
-        //sec.parentNode.appendChild(div);
+            var myWikiwyg = new Wikiwyg();
+            //myWikiwyg.createWikiwygArea(div, myConfig);
+            myWikiwyg.createWikiwygArea(sec.parentNode, myConfig);
+            //myWikiwyg.createWikiwygArea(sec, myConfig);
+            wikiwygs.push(myWikiwyg);
+            myWikiwyg.editMode(form);
+            //myWikiwyg.textarea.value = wikitext;
 
-        var myWikiwyg = new Wikiwyg();
-        //myWikiwyg.createWikiwygArea(div, myConfig);
-        myWikiwyg.createWikiwygArea(sec.parentNode, myConfig);
-        wikiwygs.push(myWikiwyg);
-        myWikiwyg.editMode(form);
-        //myWikiwyg.textarea.value = wikitext;
-        //alert(sec.parentNode.innerHTML);
-
-        //var f=document.createElement('div');
-        //f.setAttribute('id','editSect-'+sect);
+            //var f=document.createElement('div');
+            //f.setAttribute('id','editSect-'+sect);
         }
     }
+    return;
 }
 
 function savePage(obj) {
