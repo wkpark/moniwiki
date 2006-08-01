@@ -89,7 +89,7 @@ proto.initializeObject = function() {
     var config = this.config;
     for (var i = 0; i < config.controlLayout.length; i++) {
         var action = config.controlLayout[i];
-        var label = config.controlLabels[action]
+        var label = config.controlLabels[action];
         if (action == 'save')
             this.addControlItem(label, 'saveChanges');
         else if (action == 'cancel')

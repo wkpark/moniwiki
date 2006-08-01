@@ -14,12 +14,13 @@ See the Wikiwyg documentation for details.
 
 AUTHORS:
 
-    Brian Ingerson <ingy@cpan.org>
+    Ingy döt Net <ingy@cpan.org>
     Casey West <casey@geeknest.com>
     Chris Dent <cdent@burningchrome.com>
     Matt Liggett <mml@pobox.com>
     Ryan King <rking@panoptic.com>
     Dave Rolsky <autarch@urth.org>
+    Kang-min Liu <gugod@gugod.org>
 
 COPYRIGHT:
 
@@ -99,7 +100,7 @@ Wikiwyg - Primary Wikiwyg base class
 // Constructor and class methods
 proto = new Subclass('Wikiwyg');
 
-Wikiwyg.VERSION = '0.12';
+Wikiwyg.VERSION = '0.13';
 
 // Browser support properties
 Wikiwyg.ua = navigator.userAgent.toLowerCase();
@@ -110,7 +111,8 @@ Wikiwyg.is_ie = (
 );
 Wikiwyg.is_gecko = (
     Wikiwyg.ua.indexOf('gecko') != -1 &&
-    Wikiwyg.ua.indexOf('safari') == -1
+    Wikiwyg.ua.indexOf('safari') == -1 &&
+    Wikiwyg.ua.indexOf('konqueror') == -1
 );
 Wikiwyg.is_safari = (
     Wikiwyg.ua.indexOf('safari') != -1
@@ -118,6 +120,9 @@ Wikiwyg.is_safari = (
 Wikiwyg.is_opera = (
     Wikiwyg.ua.indexOf('opera') != -1
 );
+Wikiwyg.is_konqueror = (
+    Wikiwyg.ua.indexOf("konqueror") != -1
+)
 Wikiwyg.browserIsSupported = (
     Wikiwyg.is_gecko ||
     Wikiwyg.is_ie
@@ -129,7 +134,7 @@ proto.createWikiwygArea = function(div, config) {
     this.initializeObject(div, config);
 };
 
-proto.config = {
+proto.default_config = {
     javascriptLocation: 'lib/',
     doubleClickToEdit: false,
     toolbarClass: 'Wikiwyg.Toolbar',
@@ -188,11 +193,16 @@ proto.initializeObject = function(div, config) {
 
 // Wikiwyg environment setup private methods
 proto.set_config = function(user_config) {
-    for (var key in this.config)
-        if (user_config && user_config[key])
+    this.config = [];
+    for (var key in this.default_config) {
+        if (user_config != null && user_config[key] != null) {
             this.config[key] = user_config[key];
-        else if (this[key] != null)
+        } else if (this.default_config[key] != null) {
+            this.config[key] = this.default_config[key];
+        } else if (this[key] != null) {
             this.config[key] = this[key];
+        }
+    }
 }
 
 proto.insert_div_before = function(div) {
@@ -272,32 +282,22 @@ Wikiwyg.createUniqueId = function() {
     return 'wikiwyg_' + Wikiwyg.unique_id_base++;
 }
 
+// This method is deprecated. Use Ajax.get and Ajax.post.
 Wikiwyg.liveUpdate = function(method, url, query, callback) {
-    var req = new XMLHttpRequest();
-    var data = null;
-    if (method == 'GET')
-        url = url + '?' + query;
-    else
-        data = query;
-    req.open(method, url);
-    req.onreadystatechange = function() {
-        if (req.readyState == 4 && req.status == 200) {
-            try {
-                response_text = req.responseText;
-            }
-            catch(e) {
-                return;
-            }
-            callback(response_text);
-        }
-    }
-    if (method == 'POST') {
-        req.setRequestHeader(
-            'Content-Type', 
-            'application/x-www-form-urlencoded'
+    if (method == 'GET') {
+        return Ajax.get(
+            url + '?' + query,
+            callback
         );
     }
-    req.send(data);
+    if (method == 'POST') {
+        return Ajax.post(
+            url,
+            query,
+            callback
+        );
+    }
+    throw("Bad method: " + method + " passed to Wikiwyg.liveUpdate");
 }
 
 Wikiwyg.htmlUnescape = function(escaped) {

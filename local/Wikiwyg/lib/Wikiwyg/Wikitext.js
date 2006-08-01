@@ -56,7 +56,8 @@ proto.config = {
         unordered: ['start_lines', '*'],
         indent: ['start_lines', '>'],
         hr: ['line_alone', '----'],
-        table: ['line_alone', '| A | B | C |\n|   |   |   |\n|   |   |   |']
+        table: ['line_alone', '| A | B | C |\n|   |   |   |\n|   |   |   |'],
+        www: ['bound_phrase', '[', ']']
     }
 }
 
@@ -77,6 +78,7 @@ proto.initialize_object = function() {
 }
 
 proto.clear_inner_text = function() {
+    if ( Wikiwyg.is_safari ) return;
     var self = this;
     this.area.onclick = function() {
         var inner_text = self.area.value;
@@ -87,7 +89,7 @@ proto.clear_inner_text = function() {
 }
 
 proto.enableThis = function() {
-    this.superfunc('enableThis').call(this);
+    Wikiwyg.Mode.prototype.enableThis.call(this);
     this.textarea.style.width = '100%';
     this.setHeightOfEditor();
     this.enable_keybindings();
@@ -97,7 +99,10 @@ proto.setHeightOfEditor = function() {
     var config = this.config;
     var adjust = config.editHeightAdjustment;
     var area   = this.textarea;
-    var text   = this.getTextArea();
+
+    if ( Wikiwyg.is_safari) return area.setAttribute('rows', 25);
+
+    var text   = this.getTextArea() ;
     var rows   = text.split(/\n/).length;
 
     var height = parseInt(rows * adjust);
@@ -303,7 +308,7 @@ proto.toggle_same_format = function(start, finish) {
 }
 
 proto.clean_regexp = function(string) {
-    string = string.replace(/([\^\$\*\+\.\?\[\]\{\}\(\)])/g, '\\$1');
+    string = string.replace(/([\^\$\*\+\.\?\[\]\{\}])/g, '\\$1');
     return string;
 }
 
@@ -509,6 +514,22 @@ proto.do_unordered = klass.make_do('unordered');
 proto.do_hr = klass.make_do('hr');
 proto.do_table = klass.make_do('table');
 
+proto.do_www = function() {
+    var  url =  prompt("Please enter a link", "Type in your link here");
+	var old = this.config.markupRules.www[1];
+	this.config.markupRules.www[1] += url + " ";
+  
+	// do the transformation 
+	var markup = this.config.markupRules['www'];
+    var handler = markup[0];
+     if (! this['markup_' + handler])
+    	die('No handler for markup: "' + handler + '"');
+    this['markup_' + handler](markup);
+
+	// reset
+	this.config.markupRules.www[1] = old;	
+}
+
 proto.selection_mangle = function(method) {
     var scroll_top = this.area.scrollTop;
     if (! this.get_lines()) {
@@ -611,8 +632,10 @@ proto.convert_html_to_wikitext = function(html) {
     this.output = [];
     this.list_type = [];
     this.indent_level = 0;
+    this.no_collapse_text = false;
 
     this.normalizeDomWhitespace(dom);
+    this.normalizeDomStructure(dom);
 
     this.walk(dom);
 
@@ -622,12 +645,100 @@ proto.convert_html_to_wikitext = function(html) {
     return this.join_output(this.output);
 }
 
+proto.normalizeDomStructure = function(dom) {
+    this.normalize_styled_blocks(dom, 'p');
+    this.normalize_styled_lists(dom, 'ol');
+    this.normalize_styled_lists(dom, 'ul');
+    this.normalize_styled_blocks(dom, 'li');
+    this.normalize_span_whitespace(dom, 'span');
+}
+
+proto.normalize_span_whitespace = function(dom,tag ) {
+    var grep = function(element) {
+       return Boolean(element.getAttribute('style'));
+    }
+        
+    var elements = this.array_elements_by_tag_name(dom, tag, grep);
+    for (var i = 0; i < elements.length; i++) {
+        var element = elements[i];
+        var node = element.firstChild;
+        while (node) {
+            if (node.nodeType == 3) {
+                node.nodeValue = node.nodeValue.replace(/^\n+/,"");
+                break;
+            }
+            node = node.nextSibling;
+        }
+        var node = element.lastChild;
+        while (node) {
+            if (node.nodeType == 3) {
+                node.nodeValue = node.nodeValue.replace(/\n+$/,"");
+                break;
+            }
+            node = node.previousSibling;
+        }
+    }
+}
+
+proto.normalize_styled_blocks = function(dom, tag) {
+    var elements = this.array_elements_by_tag_name(dom, tag);
+    for (var i = 0; i < elements.length; i++) {
+        var element = elements[i];
+        var style = element.getAttribute('style');
+        if (!style) continue;
+        element.removeAttribute('style');
+        element.innerHTML =
+            '<span style="' + style + '">' + element.innerHTML + '</span>';
+    }
+}
+
+proto.normalize_styled_lists = function(dom, tag) {
+    var elements = this.array_elements_by_tag_name(dom, tag);
+    for (var i = 0; i < elements.length; i++) {
+        var element = elements[i];
+        var style = element.getAttribute('style');
+        if (!style) continue;
+        element.removeAttribute('style');
+
+        var items = element.getElementsByTagName('li');
+        for (var j = 0; j < items.length; j++) {
+            items[j].innerHTML = 
+                '<span style="' + style + '">' + items[j].innerHTML + '</span>';
+        }
+    }
+}
+
+proto.array_elements_by_tag_name = function(dom, tag, grep) {
+    var result = dom.getElementsByTagName(tag);
+    var elements = [];
+    for (var i = 0; i < result.length; i++) {
+        if (grep && ! grep(result[i]))
+            continue;
+        elements.push(result[i]);
+    }
+    return elements;
+}
+
 proto.normalizeDomWhitespace = function(dom) {
     var tags = ['span', 'strong', 'em', 'strike', 'del', 'tt'];
     for (var ii = 0; ii < tags.length; ii++) {
         var elements = dom.getElementsByTagName(tags[ii]);
         for (var i = 0; i < elements.length; i++) {
             this.normalizePhraseWhitespace(elements[i]);
+        }
+    }
+    this.normalizeNewlines(dom, ['br', 'blockquote'], 'nextSibling');
+    this.normalizeNewlines(dom, ['p', 'div', 'blockquote'], 'firstChild');
+}
+
+proto.normalizeNewlines = function(dom, tags, relation) {
+    for (var ii = 0; ii < tags.length; ii++) {
+        var nodes = dom.getElementsByTagName(tags[ii]);
+        for (var jj = 0; jj < nodes.length; jj++) {
+            var next_node = nodes[jj][relation];
+            if (next_node && next_node.nodeType == '3') {
+                next_node.nodeValue = next_node.nodeValue.replace(/^\n/, '');
+            }
         }
     }
 }
@@ -687,7 +798,7 @@ proto.end_is_no_good = function(element) {
     if (! last_node) return true;
     if (last_node.nodeValue.match(/ $/)) return false;
     if (! next_node || next_node.nodeValue == '\n') return false;
-    return ! next_node.nodeValue.match(/^[ ."]/);
+    return ! next_node.nodeValue.match(/^[ ."\n]/);
 }
 
 proto.destroyElement = function(element) {
@@ -754,12 +865,19 @@ proto.walk = function(element) {
             this.dispatch_formatter(part);
         }
         else if (part.nodeType == 3) {
-            if (part.nodeValue.match(/[^\n]/)) {
-                var string = part.nodeValue.replace(/^\r?\n/, '');
-                this.appendOutput(this.collapse(string));
+            if (part.nodeValue.match(/[^\n]/) &&
+                ! part.nodeValue.match(/^\n[\ \t]*$/)
+               ) {
+                if (this.no_collapse_text) { 
+                    this.appendOutput(part.nodeValue);
+                }
+                else {
+                    this.appendOutput(this.collapse(part.nodeValue));
+                }
             }
         }
     }
+    this.no_collapse_text = false;
 }
 
 proto.dispatch_formatter = function(element) {
@@ -844,6 +962,7 @@ proto.format_textarea = proto.skip;
 proto.format_tfoot = proto.pass;
 proto.format_thead = proto.pass;
 proto.format_wiki = proto.pass;
+proto.format_www = proto.skip;
 
 proto.format_img = function(element) {
     var uri = element.getAttribute('src');
@@ -924,8 +1043,8 @@ proto.format_span = function(element) {
         return;
     }
 
-    if (! this.element_has_text_content(element)) return;
-
+    if (   ! this.element_has_text_content(element)
+        && ! this.element_has_only_image_content(element)) return;
     var attributes = [ 'line-through', 'bold', 'italic', 'underline' ];
     for (var i = 0; i < attributes.length; i++)
         this.check_style_and_maybe_mark_up(style, attributes[i], 1);
@@ -938,6 +1057,12 @@ proto.format_span = function(element) {
 proto.element_has_text_content = function(element) {
     return element.innerHTML.replace(/<.*?>/g, '')
                             .replace(/&nbsp;/g, '').match(/\S/);
+}
+
+proto.element_has_only_image_content = function(element) {
+    return    element.childNodes.length == 1
+           && element.firstChild.nodeType == 1
+           && element.firstChild.tagName.toLowerCase() == 'img';
 }
 
 proto.check_style_and_maybe_mark_up = function(style, attribute, open_close) {
@@ -1094,9 +1219,6 @@ proto.make_list = function(element, list_type) {
     this.list_type.push(list_type);
     this.walk(element);
     this.list_type.pop();
-
-    if (!this.list_type.length)
-        this.assert_blank_line();
 }
 
 proto.format_ol = function(element) {
@@ -1169,8 +1291,11 @@ proto.insert_new_line = function() {
     var fang = '';
     var indentChar = this.config.markupRules.indent[1];
     var newline = '\n';
-    if (this.indent_level > 0)
-        fang = indentChar.times(this.indent_level) + ' ';
+    if (this.indent_level > 0) {
+        fang = indentChar.times(this.indent_level);
+        if (fang.length)
+            fang += ' ';
+    }
     // XXX - ('\n' + fang) MUST be in the same element in this.output so that
     // it can be properly matched by chomp above.
     if (fang.length && this.first_indent_line) {
@@ -1224,7 +1349,7 @@ proto.previous_output = function(how_far_back) {
     if (! how_far_back)
         how_far_back = 1;
     var length = this.output.length;
-    return length ? this.output[length - how_far_back] : '';
+    return length && how_far_back <= length ? this.output[length - how_far_back] : '';
 }
 
 proto.handle_bound_phrase = function(element, markup) {
@@ -1324,17 +1449,18 @@ proto.smart_trailing_space = function(element) {
         // do nothing
     }
     else if (next.nodeType == 1) {
-        this.appendOutput(' ');
+        if (next.nodeName == 'BR') {
+            var nn = next.nextSibling;
+            if (! (nn && nn.nodeType == 1 && nn.nodeName == 'SPAN'))
+                this.appendOutput('\n');
+        }
+        else {
+            this.appendOutput(' ');
+        }
     }
     else if (next.nodeType == 3) {
-        var text = next.nodeValue;
-        if (text.match(/^\n/))
-            this.appendOutput('\n');
-        else if (text.match(/^\s/)) {
-            // do nothing
-        }
-        else
-            this.no_following_whitespace()
+        if (! next.nodeValue.match(/^\s/))
+            this.no_following_whitespace();
     }
 }
 
@@ -1351,6 +1477,12 @@ proto.make_wikitext_link = function(label, href, element) {
     var before = this.config.markupRules.link[1];
     var after  = this.config.markupRules.link[2];
 
+	// handle external links
+	if (this.looks_like_a_url(href)) {
+		before = this.config.markupRules.www[1];
+		after = this.config.markupRules.www[2];
+	}
+	
     this.assert_space_or_newline();
     if (! href) {
         this.appendOutput(label);

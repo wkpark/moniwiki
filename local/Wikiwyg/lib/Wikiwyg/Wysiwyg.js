@@ -46,7 +46,7 @@ proto.initializeObject = function() {
     this.set_design_mode_early();
 }
 
-proto.set_design_mode_early = function() { // Se IE, below
+proto.set_design_mode_early = function() { // See IE, below
     // Unneeded for Gecko
 }
 
@@ -69,7 +69,7 @@ proto.fix_up_relative_imgs = function() {
 }
 
 proto.enableThis = function() {
-    this.superfunc('enableThis').call(this);
+    Wikiwyg.Mode.prototype.enableThis.call(this);
     this.edit_iframe.style.border = '1px black solid';
     this.edit_iframe.width = '100%';
     this.setHeightOf(this.edit_iframe);
@@ -123,7 +123,7 @@ proto.set_inner_html = function(html) {
     this.get_edit_document().body.innerHTML = html;
 }
 
-proto.apply_stylesheets = function(styles) {
+proto.apply_stylesheets = function() {
     var styles = document.styleSheets;
     var head   = this.get_edit_document().getElementsByTagName("head")[0];
 
@@ -139,7 +139,45 @@ proto.apply_stylesheets = function(styles) {
 }
 
 proto.apply_inline_stylesheet = function(style, head) {
-    // TODO: figure this out
+    var style_string = "";
+    for ( var i = 0 ; i < style.cssRules.length ; i++ ) {
+        if ( style.cssRules[i].type == 3 ) {
+            // IMPORT_RULE
+
+            /* It's pretty strange that this doesnt work.
+               That's why Ajax.get() is used to retrive the css text.
+               
+            this.apply_linked_stylesheet({
+                href: style.cssRules[i].href,
+                type: 'text/css'
+            }, head);
+            */
+            
+            style_string += Ajax.get(style.cssRules[i].href);
+        } else {
+            style_string += style.cssRules[i].cssText + "\n";
+        }
+    }
+    if (style_string.length > 0) {
+        style_string += "\nbody { padding: 5px; }\n";
+        this.append_inline_style_element(style_string, head);
+    }
+}
+
+proto.append_inline_style_element = function(style_string, head) {
+    // Add a body padding so words are not touching borders.
+    var style_elt = document.createElement("style");
+    style_elt.setAttribute("type", "text/css");
+    if ( style_elt.styleSheet ) { /* IE */
+        style_elt.styleSheet.cssText = style_string;
+    }
+    else { /* w3c */
+        var style_text = document.createTextNode(style_string);
+        style_elt.appendChild(style_text);
+        head.appendChild(style_elt);
+    }
+    // XXX This doesn't work in IE!!
+    // head.appendChild(style_elt);
 }
 
 proto.should_link_stylesheet = function(style, head) {
@@ -242,6 +280,14 @@ proto.do_link = function() {
         url = '?' + escape(selection); 
     }
     this.exec_command('createlink', url);
+}
+
+proto.do_www = function() {
+    var selection = this.get_link_selection_text();
+	if (selection != null) {
+		var  url =  prompt("Please enter a link", "Type in your link here");
+		this.exec_command('createlink', url);
+	}
 }
 
 proto.get_selection_text = function() { // See IE, below
