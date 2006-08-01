@@ -104,6 +104,8 @@ function normalize_word($word,$group='',$pagename='',$nogroup=0,$islink=1) {
   if ($word[0]=='[') $word=substr($word,1,-1);
   if ($word[0]=='"') $word=substr($word,1,-1);
   $page=$word;
+  $text='';
+  $main_page='';
 
   # User namespace extension
   if ($page[0]=='~' and ($p=strpos($page,'/'))) {
@@ -135,7 +137,7 @@ function normalize_word($word,$group='',$pagename='',$nogroup=0,$islink=1) {
 
   if ($page[0]=='/') { # SubPage
     $page=$pagename.$page;
-  } else if ($islink && $tok=strtok($page,'.')) {
+  } else if (!empty($islink) && $tok=strtok($page,'.')) {
 #    print $tok;
     if ($tok=='Main') {
       # Main.MoniWiki => MoniWiki
@@ -452,11 +454,11 @@ class User {
      list($this->ticket,$id)=explode(".",$_COOKIE['MONI_ID'],2);
 
      $this->setID($id);
-     $this->css=$_COOKIE['MONI_CSS'];
-     $this->theme=$_COOKIE['MONI_THEME'];
-     $this->bookmark=$_COOKIE['MONI_BOOKMARK'];
-     $this->trail=_stripslashes($_COOKIE['MONI_TRAIL']);
-     $this->tz_offset=_stripslashes($_COOKIE['MONI_TZ']);
+     $this->css=isset($_COOKIE['MONI_CSS']) ? $_COOKIE['MONI_CSS']:'';
+     $this->theme=isset($_COOKIE['MONI_THEME']) ? $_COOKIE['MONI_THEME']:'';
+     $this->bookmark=isset($_COOKIE['MONI_BOOKMARK']) ? $_COOKIE['MONI_BOOKMARK']:'';
+     $this->trail=isset($_COOKIE['MONI_TRAIL']) ? _stripslashes($_COOKIE['MONI_TRAIL']):'';
+     $this->tz_offset=isset($_COOKIE['MONI_TZ']) ?_stripslashes($_COOKIE['MONI_TZ']):'';
      if ($this->tz_offset =='') $this->tz_offset=date('Z');
   }
 
