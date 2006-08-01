@@ -1865,7 +1865,7 @@ class Formatter {
     if (!empty($format)) $pi['#format']=$format; // override default
     if (!isset($pi['#format'])) $pi['#format']= $Config['default_markup'];
 
-    list($pi['#format'],$pi['args'])=explode(' ',$pi['#format']);
+    list($pi['#format'],$pi['args'])=explode(' ',$pi['#format'],2);
 
     if ($notused) $body=join("\n",$notused)."\n".$body;
     if ($update_body) $this->page->write($body." "); # workaround XXX
