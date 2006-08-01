@@ -5,6 +5,8 @@
 //
 // imported from the Soojung project http://soojung.kldp.net
 // - with some modification and simley disabled.
+//
+// $Id$
 
 class processor_bbcode {
 
@@ -22,9 +24,10 @@ class processor_bbcode {
   }
 
   function __listing($mode, $str) {
+    $str=str_replace("\\'","'",$str);
     $item = explode("[*]", $str);
     $rstr = trim($item[0]);
-    for($i=1;$i<count($item);$i++) {
+    for($i=1,$sz=count($item);$i<$sz;$i++) {
       $rstr .= "<li>".trim($item[$i])."</li>";
     }
     switch($mode) {
@@ -38,6 +41,7 @@ class processor_bbcode {
   }
 
   function __escape($str) {
+    $str=str_replace("\\'","'",$str);
     return strtr($str, array("@"=>"\0@", "://"=>"\0://", "["=>"[\0"));
   }
 
