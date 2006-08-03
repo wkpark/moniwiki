@@ -31,6 +31,22 @@ function getPlugin($pluginname) {
   global $DBInfo;
 
   $cp=new Cache_text('settings');
+  if (!$DBInfo->manual_plugin_admin) {
+    if ($DBInfo->include_path)
+      $dirs=explode(':',$DBInfo->include_path);
+    else
+      $dirs=array('.');
+    $updated=false;
+    $mt=$cp->mtime('plugins');
+    foreach ($dirs as $d) {
+      $ct=filemtime($d.'/plugin/.');
+      $updated=$ct > $mt ? true:$updated;
+    }
+    if ($updated) {
+      $cp->remove('plugins');
+      $cp->remove('processors');
+    }
+  }
 
   if ($cp->exists('plugins')) {
     $plugins=unserialize($cp->fetch('plugins'));
@@ -2387,6 +2403,9 @@ class Formatter {
   }
 
   function macro_repl($macro,$value='',$options='') {
+    // macro ID
+    $this->mid=!empty($this->mid) ? ++$this->mid:1;
+
     preg_match("/^([A-Za-z]+)(\((.*)\))?$/",$macro,$match);
     if (!$match) return $this->word_repl($macro);
     $bra='';$ket='';
@@ -2658,6 +2677,8 @@ class Formatter {
   function send_page($body="",$options=array()) {
     global $DBInfo;
     if ($options['fixpath']) $this->_fixpath();
+    // reset macro ID
+    $this->mid=0;
 
     if ($body) {
       $pi=$this->get_instructions($body);
