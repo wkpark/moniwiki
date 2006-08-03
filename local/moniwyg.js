@@ -90,36 +90,59 @@ Wikiwyg.prototype.editMode = function(form) {
     }
     this.toolbarObject.resetModeSelector();
     this.current_mode.enableThis();
+    this.current_mode.enableThis(); // hack !!
     this.myinput=dom.getElementsByTagName('input');
 }
 
 proto = Wikiwyg.Wysiwyg.prototype;
+
+proto.get_edit_iframe = function() {
+    var iframe;
+    if (this.config.iframeId) {
+        iframe = document.getElementById(this.config.iframeId);
+        iframe.iframe_hack = true;
+    }
+    else if (this.config.iframeObject) {
+        iframe = this.config.iframeObject;
+        iframe.iframe_hack = true;
+    }
+    else {
+        // XXX iframe need to be a element of the body.
+        iframe = document.createElement('iframe');
+        var body = document.getElementsByTagName('body')[0];;
+        body.appendChild(iframe);
+    }
+    return iframe;
+}
 
 proto.enableThis = function() {
     Wikiwyg.Mode.prototype.enableThis.call(this);
     this.edit_iframe.style.border = '1px black solid';
     this.edit_iframe.width = '100%';
     this.setHeightOf(this.edit_iframe);
-    this.fix_up_relative_imgs();
+    this.get_edit_document().designMode = 'on';
+    this.enable_keybindings();
     // XXX - Doing stylesheets in initializeObject might get rid of blue flash
-    this.apply_stylesheets();
     //
     var doc    = this.get_edit_document();
     var head   = doc.getElementsByTagName("head")[0];
-    var link = doc.createElement('link');
-    link.setAttribute('rel', 'STYLESHEET');
-    link.setAttribute('type', 'text/css');
-    link.setAttribute('media', 'screen');
-    var loc = location.protocol + '//' + location.host;
-    if (location.port) loc += ':' + location.port;
-    link.setAttribute('href',
-        loc + _url_prefix + '/local/Wikiwyg/css/wysiwyg.css');
-
-    head.appendChild(link);
-    this.fix_up_relative_imgs();
-    this.get_edit_document().designMode = 'on';
-    this.enable_keybindings();
-    this.clear_inner_html();
+    if (head != null) {
+        var styles = doc.styleSheets;
+        if (styles.length == 0) {
+            this.apply_stylesheets();
+            var link = doc.createElement('link');
+            link.setAttribute('rel', 'STYLESHEET');
+            link.setAttribute('type', 'text/css');
+            link.setAttribute('media', 'screen');
+            var loc = location.protocol + '//' + location.host;
+            if (location.port) loc += ':' + location.port;
+            link.setAttribute('href',
+                loc + _url_prefix + '/local/Wikiwyg/css/wysiwyg.css');
+            head.appendChild(link);
+        }
+        this.fix_up_relative_imgs();
+        this.clear_inner_html();
+    }
 }
 
 proto.do_link = function() {
@@ -145,29 +168,34 @@ proto.convert_html_to_wikitext = function(html) {
     html = html.replace(/<!-=-/g, '<!--').
                 replace(/-=->/g, '-->');
 
+    // Opera note: opera internally use upper case tag names.
+    //  e.g.) <A class=..></A> <IMG src=..
+    // IE note: IE does not quote some attributes, class,title,etc.
+    //
     // for MoniWiki
     // remove perma icons
-    html = html.replace(/<a class=.perma..*\/a>/g, '');
+    html = html.replace(/<a class=.?perma.?.*\/a>/g, '');
     // interwiki links
     // remove interwiki icons
     html =
-        html.replace(/<a class=.interwiki.[^>]+><img [^>]+><\/a><a [^>]+title=(\'|\")([^\'\"]+)\1>[^<]+<\/a>/g, "$2");
-    //html =
-    //html.replace(/<a [^>]+title=(\'|\")([^\'\"]+)\1>[^<]+<\/a>/g, "**$2");
+        html.replace(/<a class=.?interwiki.?[^>]+><img [^>]+><\/a><a [^>]*title=(\'|\")?([^\'\" ]+)\1?[^>]*>[^<]+<\/a>/ig, "$2");
     html =
-        html.replace(/<img class=.(url|externalLink).[^>]+>/g, '');
+        html.replace(/<img class=.?(url|externalLink).?[^>]+>/ig, '');
     // smiley/inline tex etc.
     html =
-        html.replace(/<img [^>]*class=.(tex|interwiki|smiley).[^>]* alt=(.)([^\'\"]+)\2[^>]+>/g, "$3");
+        html.replace(/<img [^>]*class=.?(tex|interwiki|smiley).?[^>]* alt=(\'|\")?([^\'\" ]+)\2?[^>]+>/ig, "$3");
     // interwiki links
     html =
-        html.replace(/<a [^>]+ alt=(.)([^\'\"]+)\1[^>]+>/gm, "$2");
+        html.replace(/<a [^>]*alt=(.)?([^\'\"]+)\1?[^>]*>/igm, "$2");
     // remove nonexists links
-    html = html.replace(/<a class=.nonexistent.[^>]+>([^<]+)<\/a>/gm, "$1");
+    html = html.replace(/<a class=.?nonexistent.?[^>]+>([^<]+)<\/a>/igm, "$1");
 
     // remove toc number
-    html = html.replace(/<span class=.tocnumber.>(.*)<\/span>/gm, '');
+    html = html.replace(/<span class=.?tocnumber.?>(.*)<\/span>/igm, '');
 
+    // remove all links XXX
+    html =
+        html.replace(/<a [^>]+>([^>]+)<\/a>/ig, "$1");
     //
     dom.innerHTML = html;
     this.output = [];
@@ -197,7 +225,7 @@ proto.format_img = function(element) {
         if (width) attr+='width='+width;
         if (height) attr+=(attr ? '&':'') + 'height='+height;
 
-        if (style) {
+        if (style.match) {
             var m = style.match(/width:\s*(\d+)px;\s*height:\s*(\d+)px/);
             if (m[1]) attr+=(attr ? '&':'') + 'width='+m[1];
             if (m[2]) attr+=(attr ? '&':'') + 'height='+m[2];
@@ -360,7 +388,7 @@ proto.config.controlLayout = [
     'indent', 'outdent', '|',
     'quote', '|',
     'image',
-    'media',
+    'media'
 ];
 
 proto.config.controlLabels.math = 'Math';
@@ -728,13 +756,14 @@ function sectionEdit(ev,obj,sect) {
                     imagesExtension: '.png'
                 },
                 wikitext: {
-                    supportCamelCaseLinks: true
+                    supportCamelCaseLinks: true,
+                    javascriptLocation: _url_prefix + '/local/Wikiwyg/lib/'
                 },
                 modeClasses: [
-                    'Wikiwyg.Wikitext',
                     'Wikiwyg.Wysiwyg',
+                    'Wikiwyg.Wikitext',
                     'Wikiwyg.Preview',
-                    'Wikiwyg.HTML',
+                    'Wikiwyg.HTML'
                 ]
             };
             //var div = document.createElement('div');
