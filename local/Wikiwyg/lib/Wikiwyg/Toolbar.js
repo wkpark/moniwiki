@@ -214,8 +214,8 @@ proto.addModeSelector = function() {
                 type: 'radio',
                 name: radio_name,
                 id: radio_id,
-                value: mode_object.classname,
-                'checked': checked
+                value: mode_object.classname
+                /* 'checked': checked */
             }
         );
         if (!this.firstModeRadio)
