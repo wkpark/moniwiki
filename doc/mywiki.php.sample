@@ -1,0 +1,26 @@
+<?php
+//
+// wiki.php can be included into another script.
+// This sample shows how to include wiki.php in another scripts.
+//
+// $Id$
+//
+define('INC_MONIWIKI',1);
+include_once("wiki.php");
+
+# Start Main
+$Config=getConfig("some_other_config.php",array('init'=>1));
+include("wikilib.php");
+
+$DBInfo= new WikiDB($Config);
+register_shutdown_function(array(&$DBInfo,'Close'));
+
+$options=array();
+$options['timer']=&$timing;
+$options['timer']->Check("load");
+
+$lang= set_locale($DBInfo->lang,$DBInfo->charset);
+init_locale($lang);
+init_requests($options);
+$DBInfo->lang=$lang;
+wiki_main($options);
