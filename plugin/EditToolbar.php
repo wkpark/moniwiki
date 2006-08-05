@@ -1,5 +1,5 @@
 <?php
-// Copyright 2004 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2004-2006 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a EditToolbar plugin for the MoniWiki
 //
@@ -10,12 +10,12 @@
 // $Id$
 
 function macro_EditToolbar($formatter,$value) {
-   global $DBInfo;
+    global $DBInfo;
 
-   $iconset='mediawiki';
-   $iconset='moniwiki';
-   $imgdir=$DBInfo->imgs_dir.'/plugin/EditToolbar/'.$iconset;
-   $script=<<<EOS
+    $iconset=!empty($DBInfo->toolbar_iconset) ? $DBInfo->toolbar_iconset:
+        'moniwiki';
+    $imgdir=$DBInfo->imgs_dir.'/plugin/EditToolbar/'.$iconset;
+    $script=<<<EOS
 <script type="text/javascript" src="$DBInfo->url_prefix/local/wikibits.js"></script>
 <script language="JavaScript" type='text/javascript'>
 /*<![CDATA[*/
