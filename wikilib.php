@@ -617,7 +617,7 @@ function macro_EditText($formatter,$value,$options='') {
     ob_end_clean();
 
     $editform= macro_Edit($formatter,'nohints,nomenu',$options);
-    $new=str_replace("\n#editform",$editform,$form);
+    $new=str_replace("#editform\n",$editform,$form);
     if ($form == $new) $form.=$editform;
     else $form=$new;
   } else {
@@ -826,7 +826,8 @@ function macro_Edit($formatter,$value,$options='') {
   $save_msg=_("Save");
   $summary_msg=_("Summary of Change");
   if ($use_js and $DBInfo->use_resizer) {
-    $resizer=<<<EOS
+    if ($DBInfo->use_resizer==1) {
+      $resizer=<<<EOS
 <script type="text/javascript" language='javascript'>
 /*<![CDATA[*/
 function resize(obj,val) {
@@ -836,17 +837,31 @@ function resize(obj,val) {
   else if (rows < 5) rows=16;
   obj.savetext.rows=rows;
 }
+
+var resizer=document.createElement('div');
+resizer.setAttribute('id','wikiResize');
+resizer.innerHTML="<input type='button' class='inc' value='+' onclick='resize(this.form,3)' />\\n<input type='button' class='dec' value='-' onclick='resize(this.form,-3)' />";
+
+var toolbar=document.getElementById('toolbar');
+if (toolbar) {
+  toolbar.insertBefore(resizer, toolbar.firstChild);
+} else {
+  var editor=document.getElementById('wikiEditor');
+  editor.insertBefore(resizer, editor.firstChild);
+}
 /*]]>*/
 </script>
-<div id='wikiResize'>
-<input type='button' class='inc' value='+' onclick='resize(this.form,3)' />
-<input type='button' class='dec' value='-' onclick='resize(this.form,-3)' />
-</div>
 EOS;
+    } else {
+      $resizer=<<<EOS
+<script type="text/javascript" src="$DBInfo->url_prefix/local/textarea.js"></script>
+EOS;
+    }
   }
   $form.=<<<EOS
+<div id="wikiEditor">
 <textarea id="content" wrap="virtual" name="savetext" tabindex="1"
- rows="$rows" cols="$cols" class="wiki">$raw_body</textarea><br />
+ rows="$rows" cols="$cols" class="wiki resizable">$raw_body</textarea><br />
 $summary_msg: <input name="comment" size="70" maxlength="70" style="width:200" tabindex="2" />$extra_check<br />
 <input type="hidden" name="action" value="savepage" />
 <input type="hidden" name="datestamp" value="$datestamp" />
@@ -856,12 +871,13 @@ $hidden$select_category
 $preview_btn
 $extra
 </form>
+</div>
 EOS;
   if (!$options['nohints'])
     $form.= macro_EditHints($formatter);
   if (!$options['simple'])
     $form.= "<a id='preview' name='preview'></a>";
-  return $formh.$resizer.$form;
+  return $formh.$form.$resizer;
 }
 
 
@@ -1701,14 +1717,7 @@ function macro_RandomQuote($formatter,$value="",$options=array()) {
 function macro_Date($formatter,$value) {
   global $DBInfo;
 
-  $user=new User(); # get from COOKIE VARS
-  if ($user->id != 'Anonymous') {
-    $udb=new UserDB($DBInfo);
-    $udb->checkUser($user);
-    $tz_offset=$user->info['tz_offset'];
-  } else {
-    $tz_offset=date('Z');
-  }
+  $tz_offset=&$formatter->tz_offset;
 
   $fmt=&$DBInfo->date_fmt;
   if (!$value) {
@@ -1726,14 +1735,7 @@ function macro_DateTime($formatter,$value) {
   global $DBInfo;
 
   $fmt=&$DBInfo->datetime_fmt;
-  $user=new User(); # get from COOKIE VARS
-  if ($user->id != 'Anonymous') {
-    $udb=new UserDB($DBInfo);
-    $udb->checkUser($user);
-    $tz_offset=$user->info['tz_offset'];
-  } else {
-    $tz_offset=date('Z');
-  }
+  $tz_offset=&$formatter->tz_offset;
 
   if (!$value) {
     return gmdate($fmt,time()+$tz_offset);
