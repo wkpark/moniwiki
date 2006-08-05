@@ -1,6 +1,6 @@
 <?php
 
-class Formatter_xml {
+class Formatter_xml extends Formatter {
 
   function Formatter_xml() {
     global $DBInfo;
@@ -18,7 +18,7 @@ class Formatter_xml {
                      "<keycap>\\1</keycap>","<keycap>\\1</keycap>",
                      "<emphasis>\\1</emphasis>","<emphasis>\\1</emphasis>",
                      "<superscript>\\1</superscript>","<subscript>\\1</subscript>",
-                     "<constant class='underline'>\\1</constant>","----\n");
+                     "<constant class='underline'>\\1</constant>","<!-- hr -->\n");
 
     $this->extrarule=array();
     $this->extrarepl=array();
@@ -112,8 +112,12 @@ class Formatter_xml {
       return "<constant>$url</constant>"; # No link
     } else if ($url[0]=="[") {
       $url=substr($url,1,-1);
-      #return $this->macro_repl($url); # No link
-      return $url;
+      if (preg_match('/tableofcontents/i',$url)) return '';
+      if ($this->use_cdata) {
+        $out= $this->macro_repl($url); # No link
+        return "<programlisting><![CDATA[\n".$out."\n]]></programlisting>\n";
+      }
+      return '[['.$url.']]';
     }
 
     if ($url[0]=="!") {
@@ -324,7 +328,7 @@ class Formatter_xml {
 
 }
 
-  function processor_text_xml($formatter,$value) {
+  function processor_text_xml($formatter,$value,$options=array()) {
     global $DBInfo;
 
     if ($value[0]=='#' and $value[1]=='!')
@@ -351,6 +355,8 @@ class Formatter_xml {
       $wordrule.="\\$\s([^\\$]+)\\$(?:\s|$)|".
                  "\\$\\$\s([^\\$]+)\\$\\$(?:\s|$)|";
     $wordrule.=$formatter->wordrule;
+    $formatter->no_js=1;
+    $xml->use_cdata=$options['cdata'] ? 1:0;
 
     foreach ($lines as $line) {
 
@@ -509,12 +515,16 @@ class Formatter_xml {
       if ($in_pre==-1) {
          $in_pre=0;
          if ($processor) {
-           #$value=$xml->pre_line;
-           #$out= call_user_func("processor_$processor",&$formatter,$value,$options);
+           $value=$xml->pre_line;
            if ($processor != 'docbook') {
-             $pre=str_replace("&","&amp;",$xml->pre_line);
-             $pre=str_replace("<","&lt;",$pre);
-             $line="<programlisting><![CDATA[\n".$pre."\n]]></programlisting>\n".$line;
+             if ($formatter->use_cdata) {
+               $out= call_user_func("processor_$processor",$formatter,$value,$options);
+               $line="<programlisting><![CDATA[\n".$out."\n]]></programlisting>\n".$line;
+             } else {
+               $pre=str_replace("&","&amp;",$xml->pre_line);
+               $pre=str_replace("<","&lt;",$pre);
+               $line="<programlisting><![CDATA[\n".$pre."\n]]></programlisting>\n".$line;
+             }
            } else {
              list($tag,$pre)=explode("\n",$xml->pre_line,2);
              $line=$pre;
