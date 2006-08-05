@@ -54,7 +54,7 @@ function processor_vim($formatter,$value,$options) {
   }
 
   $script='';
-  if ($DBInfo->use_numbering) {
+  if ($DBInfo->use_numbering and empty($formatter->no_js)) {
     $button=_("Toggle line numbers");
     if (!$jsloaded) 
       $script='<script type="text/javascript" src="'.$DBInfo->url_prefix.'/local/numbering.js"></script>';
