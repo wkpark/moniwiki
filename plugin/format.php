@@ -22,13 +22,13 @@ function do_format($formatter,$options) {
   } // Detect File type
   else if (array_key_exists($mimetype,$mimes)) {
     header("Content-type: ".$mimetype);
-    print $formatter->processor_repl($mimes[$mimetype],$formatter->page->get_raw_body());
+    print $formatter->processor_repl($mimes[$mimetype],$formatter->page->get_raw_body(),$options);
   } else {
     $processor=str_replace("/.","__",$mimetype);
     header("Content-type: text/plain");
 
     if (getProcessor($processor))
-      print $formatter->processor_repl($processor,$formatter->page->get_raw_body());
+      print $formatter->processor_repl($processor,$formatter->page->get_raw_body(),$options);
     else {
       do_invalid($formatter,$options);
       return;
