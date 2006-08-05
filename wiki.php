@@ -20,8 +20,6 @@ $_release = '1.1.3';
 
 error_reporting(E_ALL ^ E_NOTICE);
 #error_reporting(E_ALL);
-$Config=getConfig("config.php",array('init'=>1));
-include("wikilib.php");
 
 $timing=new Timer();
 
@@ -146,12 +144,12 @@ function getFilter($filtername) {
 }
 
 if (!function_exists ('bindtextdomain')) {
-  $locale = array();
+  $_locale = array();
 
   function gettext ($text) {
-    global $locale;
-    if (!empty ($locale[$text]))
-      return $locale[$text];
+    global $_locale;
+    if (!empty ($_locale[$text]))
+      return $_locale[$text];
     return $text;
   }
 
@@ -217,20 +215,20 @@ FORM;
 }
 
 function kbd_handler() {
-  global $DBInfo;
+  global $Config;
 
-  if (!$DBInfo->kbd_script) return '';
+  if (!$Config['kbd_script']) return '';
   $prefix=get_scriptname();
-  $sep= $DBInfo->query_prefix;
+  $sep= $Config['query_prefix'];
   print <<<EOS
 <script language="JavaScript" type="text/javascript">
 /*<![CDATA[*/
 url_prefix="$prefix";
 _qp="$sep";
-FrontPage= "$DBInfo->frontpage";
+FrontPage= "$Config[frontpage]";
 /*]]>*/
 </script>
-<script type="text/javascript" src="$DBInfo->kbd_script">
+<script type="text/javascript" src="$Config[kbd_script]">
 </script>
 EOS;
 }
@@ -4004,7 +4002,7 @@ function set_locale($lang,$charset='') {
 
 # get the pagename
 function get_pagename() {
-  global $DBInfo;
+  global $Config;
   // $_SERVER["PATH_INFO"] has bad value under CGI mode
   // set 'cgi.fix_pathinfo=1' in the php.ini under
   // apache 2.0.x + php4.2.x Win32
@@ -4012,7 +4010,7 @@ function get_pagename() {
     if ($_SERVER['PATH_INFO'][0] == '/')
       $pagename=substr($_SERVER['PATH_INFO'],1);
     if (!$pagename) {
-      $pagename = $DBInfo->frontpage;
+      $pagename = $Config['frontpage'];
     }
     $pagename=_stripslashes($pagename);
   } else if (!empty($_SERVER['QUERY_STRING'])) {
@@ -4022,7 +4020,7 @@ function get_pagename() {
       $temp = strtok($pagename,"&");
 
       if ($temp and strpos($temp,"="))
-        $pagename = $DBInfo->frontpage;
+        $pagename = $Config['frontpage'];
       else
         $result = preg_match('/^([^&=]+)/',$pagename,$matches);
       if ($result) {
@@ -4030,9 +4028,9 @@ function get_pagename() {
         $_SERVER['QUERY_STRING']=substr($_SERVER['QUERY_STRING'],strlen($pagename));
       }
     }
-    if (!$pagename) $pagename= $DBInfo->frontpage;
+    if (!$pagename) $pagename= $Config['frontpage'];
   } else {
-    $pagename = $DBInfo->frontpage;
+    $pagename = $Config['frontpage'];
   }
 
   if ($pagename[0]=='~' and ($p=strpos($pagename,"/")))
@@ -4040,13 +4038,9 @@ function get_pagename() {
   return $pagename;
 }
 
-# Start Main
-
-$DBInfo= new WikiDB($Config);
-register_shutdown_function(array(&$DBInfo,'Close'));
-
+function init_requests(&$options) {
+  global $DBInfo;
 $user=new User();
-$options=array();
 $options['id']=$user->id;
 
 # MoniWiki theme
@@ -4085,19 +4079,18 @@ if (!$options['theme']) $options['theme']=$theme=$DBInfo->theme;
 if ($theme and ($DBInfo->theme_css or !$options['css_url']))
   $options['css_url']=($DBInfo->themeurl ? $DBInfo->themeurl:$DBInfo->url_prefix)."/theme/$theme/css/default.css";
 
-$options['timer']=&$timing;
-$options['timer']->Check("load");
+  $options['pagename']=get_pagename();
+}
 
-$lang= set_locale($DBInfo->lang,$DBInfo->charset);
-$DBInfo->lang=$lang;
-
-if (isset($locale)) {
+function init_locale($lang) {
+  global $Config,$_locale;
+if (isset($_locale)) {
   if (!@include_once('locale/'.$lang.'/LC_MESSAGES/moniwiki.php'))
     @include_once('locale/'.substr($lang,0,2).'/LC_MESSAGES/moniwiki.php');
 } else if (substr($lang,0,2) == 'en') {
   $test=setlocale(LC_ALL, $lang);
 } else {
-  if ($DBInfo->include_path) $dirs=explode(':',$DBInfo->include_path);
+  if ($Config['include_path']) $dirs=explode(':',$Config['include_path']);
   else $dirs=array('.');
 
   $test=setlocale(LC_ALL, $lang);
@@ -4109,15 +4102,17 @@ if (isset($locale)) {
       break;
     }
   }
-  if ($DBInfo->set_lang) putenv("LANG=".$lang);
+  if ($Config['set_lang']) putenv("LANG=".$lang);
   if (function_exists('bind_textdomain_codeset'))
-    bind_textdomain_codeset ('moniwiki', $DBInfo->charset);
+    bind_textdomain_codeset ('moniwiki', $Config['charset']);
 }
 
-$pagename=get_pagename();
-//function render($pagename,$options) {
-if ($pagename) {
+}
+
+function wiki_main($options) {
   global $DBInfo,$Config;
+  $pagename=$options['pagename'];
+  
   # get primary variables
   if ($_SERVER['REQUEST_METHOD']=="POST") {
     # hack for TWiki plugin
@@ -4418,7 +4413,23 @@ if ($pagename) {
   }
 }
 
-//$pagename=get_pagename();
-//render($pagename,$options);
+if (!defined('INC_MONIWIKI')):
+# Start Main
+$Config=getConfig("config.php",array('init'=>1));
+include("wikilib.php");
+
+$DBInfo= new WikiDB($Config);
+register_shutdown_function(array(&$DBInfo,'Close'));
+
+$options=array();
+$options['timer']=&$timing;
+$options['timer']->Check("load");
+
+$lang= set_locale($DBInfo->lang,$DBInfo->charset);
+init_locale($lang);
+init_requests($options);
+$DBInfo->lang=$lang;
+wiki_main($options);
+endif;
 // vim:et:sts=2:
 ?>
