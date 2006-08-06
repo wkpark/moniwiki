@@ -2778,6 +2778,7 @@ class Formatter {
     $my_div=0;
     $indent_list[0]=0;
     $indent_type[0]="";
+    $_myindlen=array(0);
     $oline='';
 
     $wordrule="({{{(?U)(.+)}}})|".
@@ -2936,7 +2937,9 @@ class Formatter {
          $close="";
          $indtype="dd";
          $indlen=strlen($match[0]);
+         $liopen='';
          if ($indlen > 0) {
+           $myindlen=$indlen;
            $line=substr($line,$indlen);
            # check div type.
            if ($match[0][$indlen-1]=='>') {
@@ -2954,28 +2957,43 @@ class Formatter {
 
            if ($line[0]=='*') {
              $limatch[1]='*';
-             $line=preg_replace("/^(\*\s?)/","<li>",$line);
-             if ($indent_list[$in_li] == $indlen && $indent_type[$in_li]!='dd') $line=$this->_li(0).$line;
+             $myindlen=($line{1}==' ') ? $indlen+2:$indlen+1;
+             preg_match("/^(\*\s?)/",$line,$m);
+             $liopen='<li>'; // XXX
+             $line=substr($line,strlen($m[1]));
+             if ($indent_list[$in_li] == $indlen && $indent_type[$in_li]!='dd'){
+                $close.=$this->_li(0);
+                $_myindlen[$in_li]=$myindlen;
+             }
              $numtype="";
              $indtype="ul";
            } elseif (preg_match("/^(([1-9]\d*|[aAiI])\.)(#\d+)?\s/",$line,$limatch)){
-             $line=preg_replace("/^((\d+|[aAiI])\.(#\d+)?)/","<li>",$line);
-             if ($indent_list[$in_li] == $indlen) $line=$this->_li(0).$line;
+             $myindlen=$indlen+strlen($limatch[1])+1;
+             $liopen='<li>'; // XXX
+             $line=substr($line,strlen($limatch[0]));
+             if ($indent_list[$in_li] == $indlen) {
+                $close.=$this->_li(0);
+                $_myindlen[$in_li]=$myindlen;
+             }
              $numtype=$limatch[2][0];
              if ($limatch[3])
                $numtype.=substr($limatch[3],1);
              $indtype="ol";
            } elseif (preg_match("/^([^:]+)::\s/",$line,$limatch)) {
+             $myindlen=$indlen;
              $line=preg_replace("/^[^:]+::\s/",
                      "<dt class='wiki'>".$limatch[1]."</dt><dd>",$line);
              if ($indent_list[$in_li] == $indlen) $line="</dd>\n".$line;
              $numtype="";
              $indtype="dl";
+           } else if ($_myindlen[$in_li] == $indlen) {
+             $indlen=$indent_list[$in_li]; // XXX
            }
          }
          if ($indent_list[$in_li] < $indlen) {
             $in_li++;
             $indent_list[$in_li]=$indlen; # add list depth
+            $_myindlen[$in_li]=$myindlen; # add list depth
             $indent_type[$in_li]=$indtype; # add list type
             $open.=$this->_list(1,$indtype,$numtype,'',$divtype);
          } else if ($indent_list[$in_li] > $indlen) {
@@ -2986,10 +3004,12 @@ class Formatter {
                  $indent_type[$in_li-1]);
                unset($indent_list[$in_li]);
                unset($indent_type[$in_li]);
+               unset($_myindlen[$in_li]);
                $in_li--;
             }
             #$li_empty=0;
          }
+         if ($liopen) $open.=$liopen;
          $li_empty=0;
          if ($indent_list[$in_li] <= $indlen || $limatch) $li_open=$in_li;
          else $li_open=0;
