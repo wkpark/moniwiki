@@ -525,7 +525,7 @@ class Security {
   function is_protected($action="read",$options) {
     # password protected POST actions
     $protected_actions=array(
-      "deletepage","deletefile","rename","rcspurge","rcs","chmod","backup","restore");
+      "deletepage","deletefile","rename","rcspurge","rcs","chmod","backup","restore","rcsimport");
     $action=strtolower($action);
 
     if (in_array($action,$protected_actions)) {
@@ -1308,6 +1308,29 @@ class Version_RCS {
       }
     }
     return $rev;
+  }
+  function export($pagename) {
+    $keyname=$this->DB->_getPageKey($pagename);
+    $fname=$this->DB->text_dir."/RCS/$keyname,v";
+    $fp=fopen($fname,'r');
+    if (is_resource($fp)) {
+      $sz=filesize($fname);
+      $out=fread($fp,$sz);
+      fclose($fp);
+    }
+    return $out;
+  }
+
+  function import($pagename,$rcsfile) {
+    $keyname=$this->DB->_getPageKey($pagename);
+    $fname=$this->DB->text_dir."/RCS/$keyname,v";
+    $fp=fopen($fname,'w');
+    if (is_resource($fp)) {
+      fwrite($fp,$rcsfile);
+      fclose($fp);
+      return true;
+    }
+    return false;
   }
 }
 
