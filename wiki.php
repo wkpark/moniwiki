@@ -1210,7 +1210,8 @@ class Version_RCS {
   function co($pagename,$rev,$opt='') {
     $filename= $this->_filename($pagename);
 
-    $fp=@popen("co -x,v/ -q -p\"".$rev."\" ".$filename.$this->NULL,"r");
+    $rev=(is_numeric($rev) and $rev>0) ? "\"".$rev."\" ":'';
+    $fp=@popen("co -x,v/ -q -p$rev ".$filename.$this->NULL,"r");
     $out='';
     if (is_resource($fp)) {
       while (!feof($fp)) {
@@ -1226,17 +1227,16 @@ class Version_RCS {
     $key=$this->_filename($pagename);
     $pagename=escapeshellcmd($pagename);
     $fp=@popen("ci -l -x,v/ -q -t-\"".$pagename."\" -m\"".$log."\" ".$key.$this->NULL,"r");
-    if ($fp) pclose($fp);
+    if (is_resource($fp)) pclose($fp);
   }
 
   function rlog($pagename,$rev='',$opt='',$oldopt='') {
-    if ($rev)
-      $rev = "-r$rev";
+    $rev = (is_numeric($rev) and $rev > 0) ? "-r$rev":'';
     $filename=$this->_filename($pagename);
 
     $fp= popen("rlog $opt $oldopt -x,v/ $rev ".$filename.$this->NULL,"r");
     $out='';
-    if ($fp) {
+    if (is_resource($fp)) {
       while (!feof($fp)) {
         $line=fgets($fp,1024);
         $out .= $line;
@@ -1252,7 +1252,7 @@ class Version_RCS {
 
     $filename=$this->_filename($pagename);
     $fp=popen("rcsdiff -x,v/ -u $option ".$filename.$this->NULL,'r');
-    if (!$fp) return '';
+    if (!is_resource($fp)) return '';
     while (!feof($fp)) {
       # trashing first two lines
       $line=fgets($fp,1024);
@@ -3269,7 +3269,7 @@ class Formatter {
 
       $fp=popen("merge -p ".$this->page->filename." $tmpf2 $tmpf3".$this->NULL,'r');
 
-      if (!$fp) {
+      if (!is_resource($fp)) {
         unlink($tmpf2);
         unlink($tmpf3);
         return '';
