@@ -22,5 +22,5 @@ function processor_hello($formatter,$value="",$options=array()) {
     return $out;
 }
 
-// vim:et:ts=4:
+// vim:et:sts=4:
 ?>
