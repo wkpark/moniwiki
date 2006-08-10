@@ -153,6 +153,7 @@ function do_uploadfile($formatter,$options) {
   if (!$test) {
     $msg.=sprintf(_("Fail to copy \"%s\" to \"%s\""),$upfilename,$file_path);
     $msg.='<br />'._("Please check your php.ini setting");
+    $msg.='<br />'."<tt>upload_max_filesize=".ini_get('upload_max_filesize').'</tt>';
     continue;
   }
 
