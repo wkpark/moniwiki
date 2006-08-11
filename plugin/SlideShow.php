@@ -100,43 +100,43 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
             $dep.'&amp;p=1');
         $icon=$options['action'] ? 'start':'next';
         $start= '<a href="'.$slink.'" title="'._("Start:").' '.$s_title.'">'.
-            '<img src="'.$icon_dir.$icon.'.png'.'" border="0" alt="&lt;|" /></a>';
+            '<img src="'.$icon_dir.$icon.'.png'.'" style="border:0" alt="&lt;|" /></a>';
     } else {
         $start= 
-            '<img src="'.$icon_dir.'start_off.png'.'" border="0" alt="&lt;|" /></a>';
+            '<img src="'.$icon_dir.'start_off.png'.'" style="border:0" alt="&lt;|" /></a>';
     }
     if ($e_title!='' and $options['action']) {
         $elink= $formatter->link_url($urlname,'?action='.$act.
             $dep.'&amp;p='.$sz);
         $end= '<a href="'.$elink.'" title="'._("End:").' '.$e_title.'">'.
-            '<img src="'.$icon_dir.'end.png'.'" border="0" alt="|>" /></a>';
+            '<img src="'.$icon_dir.'end.png'.'" style="border:0" alt="|>" /></a>';
     } else {
         $end= 
-            '<img src="'.$icon_dir.'end_off.png'.'" border="0" alt="|>" /></a>';
+            '<img src="'.$icon_dir.'end_off.png'.'" style="border:0" alt="|>" /></a>';
     }
     if ($n_title!='' and $options['action']) {
         $np=$sect+1;
         $nlink= $formatter->link_url($urlname,'?action='.$act.
             $dep.'&amp;p='.($sect+1));
         $next= '<a href="'.$nlink.'" title="'._("Next:").' '.$n_title.'">'.
-            '<img src="'.$icon_dir.'next.png'.'" border="0" alt=">" /></a>';
+            '<img src="'.$icon_dir.'next.png'.'" style="border:0" alt=">" /></a>';
     } else {
         $next= 
-            '<img src="'.$icon_dir.'next_off.png'.'" border="0" alt=">" /></a>';
+            '<img src="'.$icon_dir.'next_off.png'.'" style="border:0" alt=">" /></a>';
     }
     if ($p_title!='') {
         $pp=$sect-1;
         $plink= $formatter->link_url($urlname,'?action='.$act.
             $dep.'&amp;p='.($sect-1));
         $prev= '<a href="'.$plink.'" title="'._("Prev:").' '.$p_title.'">'.
-            '<img src="'.$icon_dir.'prev.png'.'" border="0" alt="<" /></a>';
+            '<img src="'.$icon_dir.'prev.png'.'" style="border:0" alt="<" /></a>';
     } else {
         $prev= 
-            '<img src="'.$icon_dir.'prev_off.png'.'" border="0" alt="<" /></a>';
+            '<img src="'.$icon_dir.'prev_off.png'.'" style="border:0" alt="<" /></a>';
     }
     $rlink= $formatter->link_url($urlname,'?action=show');
     $return= '<a href="'.$rlink.'" title="'._("Return").' '.$pgname.'">'.
-        '<img src="'.$icon_dir.'up.png'.'" border="0" alt="^" /></a>';
+        '<img src="'.$icon_dir.'up.png'.'" style="border:0" alt="^" /></a>';
     if ($options['action']) {
         $form0='<form method="post" onsubmit="return false" action="'.$rlink.'">';
         $form0.='<input type="hidden" name="d" value="'.$depth.'" />';
