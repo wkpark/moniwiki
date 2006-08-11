@@ -742,7 +742,7 @@ function macro_Edit($formatter,$value,$options='') {
 
   # make a edit form
   if (!$options['simple'])
-    $form.= "<a id='editor' name='editor'></a>\n";
+    $form.= "<a id='editor'></a>\n";
 
   if ($options['page'])
     $previewurl=$formatter->link_url(_rawurlencode($options['page']),'#preview');
@@ -876,7 +876,7 @@ EOS;
   if (!$options['nohints'])
     $form.= macro_EditHints($formatter);
   if (!$options['simple'])
-    $form.= "<a id='preview' name='preview'></a>";
+    $form.= "<a id='preview'></a>";
   return $formh.$form.$resizer;
 }
 
@@ -2236,11 +2236,11 @@ function macro_FootNote(&$formatter,$value="") {
     }
   }
   $formatter->foots[]="<li><tt class='foot'>".
-                      "<a id='$fnidx' name='$fnidx'/>".
+                      "<a id='$fnidx' />".
                       "<a href='#r$fnidx'>$text</a></tt> ".
                       "$value</li>";
   $tval=str_replace("'","&#39;",$value);
-  return "<tt class='foot'><a id='r$fnidx' name='r$fnidx'/>".
+  return "<tt class='foot'><a id='r$fnidx' />".
     "<a href='#$fnidx' title='$tval'>$text</a></tt>";
 }
 
@@ -2373,7 +2373,7 @@ EOS;
    if ($baseurl)
      $TOC.=$close.$open."<dt><a href='$baseurl#s$prefix-$num'>$num$a0 $head $a1</dt>\n";
    else
-     $TOC.=$close.$open."<dt><a id='toc$prefix-$num' name='toc$prefix-$num' /><a href='#s$prefix-$num'>$num$a0 $head $a1</dt>\n";
+     $TOC.=$close.$open."<dt><a id='toc$prefix-$num' /><a href='#s$prefix-$num'>$num$a0 $head $a1</dt>\n";
 
   }
 
@@ -2471,11 +2471,15 @@ function processor_plain($formatter,$value) {
 function processor_php($formatter="",$value="") {
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
-  $php=$value;
+  if (substr($value,-1,1)=="\n") $value=substr($value,0,-1);
+  $php=&$value;
   ob_start();
   highlight_string($php);
   $highlighted= ob_get_contents();
   ob_end_clean();
+  $highlighted=preg_replace(array('@<font color="@','@</font>@'),
+			array('<span style="color:','</span>'),
+	$highlighted);
 #  $highlighted=preg_replace("/<code>/","<code style='background-color:#c0c0c0;'>",$highlighted);
 #  $highlighted=preg_replace("/<\/?code>/","",$highlighted);
 #  $highlighted="<pre style='color:white;background-color:black;'>".
