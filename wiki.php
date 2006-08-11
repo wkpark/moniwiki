@@ -161,7 +161,8 @@ if (!function_exists ('bindtextdomain')) {
 function goto_form($action,$type="",$form="") {
   if ($type==1) {
     return "
-<form name='go' id='go' method='get' action='$action'>
+<form id='go' method='get' action='$action'>
+<div>
 <span title='TitleSearch'>
 <input type='radio' name='action' value='titlesearch' />
 Title</span>
@@ -170,11 +171,13 @@ Title</span>
 Contents</span>&nbsp;
 <input type='text' name='value' class='goto' accesskey='s' size='20' />
 <input type='submit' name='status' value='Go' style='width:23px' />
+</div>
 </form>
 ";
   } else if ($type==2) {
     return "
-<form name='go' id='go' method='get' action='$action'>
+<form id='go' method='get' action='$action'>
+<div>
 <select name='action' style='width:60px'>
 <option value='goto'>goto</option>
 <option value='titlesearch'>TitleSearch</option>
@@ -182,11 +185,12 @@ Contents</span>&nbsp;
 </select>
 <input type='text' name='value' class='goto' accesskey='s' size='20' />
 <input type='submit' name='status' value='Go' />
+</div>
 </form>
 ";
   } else if ($type==3) {
     return "
-<form name='go' id='go' method='get' action='$action'>
+<form id='go' method='get' action='$action'>
 <table class='goto'>
 <tr><td nowrap='nowrap' style='width:220px'>
 <input type='text' name='value' size='28' accesskey='s' style='width:110px' />
@@ -205,10 +209,12 @@ Contents(/)</span>&nbsp;
 ";
   } else {
     return <<<FORM
-<form name='go' id='go' method='get' action='$action' onsubmit="return moin_submit();">
+<form id='go' method='get' action='$action' onsubmit="return moin_submit();">
+<div>
 <input type='text' name='value' size='20' accesskey='s' class='goto' style='width:100px' />
 <input type='hidden' name='action' value='goto' />
 <input type='submit' name='status' value='Go' style='width:23px;' />
+</div>
 </form>
 FORM;
   }
@@ -221,7 +227,7 @@ function kbd_handler() {
   $prefix=get_scriptname();
   $sep= $Config['query_prefix'];
   print <<<EOS
-<script language="JavaScript" type="text/javascript">
+<script type="text/javascript">
 /*<![CDATA[*/
 url_prefix="$prefix";
 _qp="$sep";
@@ -600,7 +606,7 @@ class WikiDB {
     $this->kbd_script= $this->url_prefix.'/css/kbd.js';
     $this->logo_img= $this->imgs_dir.'/moniwiki-logo.gif';
     $this->logo_page= $this->frontpage;
-    $this->logo_string= '<img src="'.$this->logo_img.'" alt="[logo]" border="0" align="middle" />';
+    $this->logo_string= '<img src="'.$this->logo_img.'" alt="[logo]" style="vertical-align:middle;border:0px" />';
     $this->metatags='<meta name="robots" content="noindex,nofollow" />';
     $this->use_smileys=1;
     $this->hr="<hr class='wikiHr' />";
@@ -690,26 +696,26 @@ class WikiDB {
     if (file_exists($imgs_realdir.'/'.$iconset.'http.png'))
       $this->imgs_dir_url=$this->imgs_dir.'/'.$iconset;
 
-    $this->icon['upper']="<img src='$imgdir/${iconset}upper.$ext' alt='U' align='middle' border='0' />";
-    $this->icon['edit']="<img src='$imgdir/${iconset}edit.$ext' alt='E' align='middle' border='0' />";
-    $this->icon['diff']="<img src='$imgdir/${iconset}diff.$ext' alt='D' align='middle' border='0' />";
-    $this->icon['del']="<img src='$imgdir/${iconset}deleted.$ext' alt='(del)' align='middle' border='0' />";
-    $this->icon['info']="<img src='$imgdir/${iconset}info.$ext' alt='I' align='middle' border='0' />";
-    $this->icon['rss']="<img src='$imgdir/${iconset}rss.$ext' alt='RSS' align='middle' border='0' />";
-    $this->icon['show']="<img src='$imgdir/${iconset}show.$ext' alt='R' align='middle' border='0' />";
-    $this->icon['find']="<img src='$imgdir/${iconset}search.$ext' alt='S' align='middle' border='0' />";
-    $this->icon['help']="<img src='$imgdir/${iconset}help.$ext' alt='H' align='middle' border='0' />";
-    $this->icon['www']="<img src='$imgdir/${iconset}www.$ext' alt='www' align='middle' border='0' />";
-    $this->icon['mailto']="<img src='$imgdir/${iconset}email.$ext' alt='M' align='middle' border='0' />";
-    $this->icon['create']="<img src='$imgdir/${iconset}create.$ext' alt='N' align='middle' border='0' />";
-    $this->icon['new']="<img src='$imgdir/${iconset}new.$ext' alt='U' align='middle' border='0' />";
-    $this->icon['updated']="<img src='$imgdir/${iconset}updated.$ext' alt='U' align='middle' border='0' />";
+    $this->icon['upper']="<img src='$imgdir/${iconset}upper.$ext' alt='U' style='vertical-align:middle;border:0px' />";
+    $this->icon['edit']="<img src='$imgdir/${iconset}edit.$ext' alt='E' style='vertical-align:middle;border:0px' />";
+    $this->icon['diff']="<img src='$imgdir/${iconset}diff.$ext' alt='D' style='vertical-align:middle;border:0px' />";
+    $this->icon['del']="<img src='$imgdir/${iconset}deleted.$ext' alt='(del)' style='vertical-align:middle;border:0px' />";
+    $this->icon['info']="<img src='$imgdir/${iconset}info.$ext' alt='I' style='vertical-align:middle;border:0px' />";
+    $this->icon['rss']="<img src='$imgdir/${iconset}rss.$ext' alt='RSS' style='vertical-align:middle;border:0px' />";
+    $this->icon['show']="<img src='$imgdir/${iconset}show.$ext' alt='R' style='vertical-align:middle;border:0px' />";
+    $this->icon['find']="<img src='$imgdir/${iconset}search.$ext' alt='S' style='vertical-align:middle;border:0px' />";
+    $this->icon['help']="<img src='$imgdir/${iconset}help.$ext' alt='H' style='vertical-align:middle;border:0px' />";
+    $this->icon['www']="<img src='$imgdir/${iconset}www.$ext' alt='www' style='vertical-align:middle;border:0px' />";
+    $this->icon['mailto']="<img src='$imgdir/${iconset}email.$ext' alt='M' style='vertical-align:middle;border:0px' />";
+    $this->icon['create']="<img src='$imgdir/${iconset}create.$ext' alt='N' style='vertical-align:middle;border:0px' />";
+    $this->icon['new']="<img src='$imgdir/${iconset}new.$ext' alt='U' style='vertical-align:middle;border:0px' />";
+    $this->icon['updated']="<img src='$imgdir/${iconset}updated.$ext' alt='U' style='vertical-align:middle;border:0px' />";
     $this->icon['user']="UserPreferences";
-    $this->icon['home']="<img src='$imgdir/${iconset}home.$ext' alt='M' align='middle' border='0' />";
-    $this->icon['main']="<img src='$imgdir/${iconset}main.$ext' class='icon' alt='^' align='middle' border='0' />";
-    $this->icon['print']="<img src='$imgdir/${iconset}print.$ext' alt='P' align='middle' border='0' />";
-    $this->icon['attach']="<img src='$imgdir/${iconset}attach.$ext' alt='@' align='middle' border='0' />";
-    $this->icon['external']="<img class='externalLink' src='$imgdir/${iconset}external.$ext' alt='[]' align='middle' border='0' />";
+    $this->icon['home']="<img src='$imgdir/${iconset}home.$ext' alt='M' style='vertical-align:middle;border:0px' />";
+    $this->icon['main']="<img src='$imgdir/${iconset}main.$ext' class='icon' alt='^' style='vertical-align:middle;border:0px' />";
+    $this->icon['print']="<img src='$imgdir/${iconset}print.$ext' alt='P' style='vertical-align:middle;border:0px' />";
+    $this->icon['attach']="<img src='$imgdir/${iconset}attach.$ext' alt='@' style='vertical-align:middle;border:0px' />";
+    $this->icon['external']="<img class='externalLink' src='$imgdir/${iconset}external.$ext' alt='[]' style='vertical-align:middle;border:0px' />";
     $this->icon_sep=" ";
     $this->icon_bra=" ";
     $this->icon_cat=" ";
@@ -1649,6 +1655,8 @@ class Formatter {
     $this->use_easyalias=$DBInfo->use_easyalias;
     $this->submenu=$DBInfo->submenu;
     $this->email_guard=$DBInfo->email_guard;
+    $this->interwiki_target=$DBInfo->interwiki_target ?
+      ' target="'.$DBInfo->interwiki_target.'"':'';
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -1690,14 +1698,14 @@ class Formatter {
                      );
     $this->baserepl=array("&lt;\\1",
                      "<strong>\\1</strong>","<strong>\\1</strong>",
-                     "<i>\\1</i>","<i>\\1</i>",
+                     "<em>\\1</em>","<em>\\1</em>",
                      "&#96;\\1'","<tt class='wiki'>\\1</tt>",
                      "\$formatter->$DBInfo->hr_type"."_hr('\\1')",
                      "<br clear='all' />",
                      "<sub>\\1</sub>",
                      "<sup>\\1</sup>",
                      "<sup>\\1</sup>",
-                     "<u>\\1</u>",
+                     "<em class='underline'>\\1</em>",
                      "<del>\\1</del>",
                      "<del>\\1</del>",
                      #"<br />\n",
@@ -1946,13 +1954,18 @@ class Formatter {
     switch ($url[0]) {
     case '{':
       $url=substr($url,3,-3);
+      if (preg_match('/^({([^{}]+)})/s',$url,$sty)) { # textile like styling
+        $url=substr($url,strlen($sty[1]));
+        return "<span style='$sty[2]'>$url</span>";
+      }
       if ($url[0]=='#' and ($p=strpos($url,' '))) {
         $col=strtok($url,' '); $url=strtok('');
-        if (!preg_match('/^#[0-9a-f]{6}$/',$col)) $col=substr($col,1);
-        return "<font color='$col'>$url</font>";
+        if (preg_match('/^#[0-9a-f]{6}$/',$col))
+          return "<span style='color:$col'>$url</span>";
+        $url=$col.' '.$url;
       } else if (preg_match('/^((?:\+|\-)([1-6]?))(?=\s)(.*)$/',$url,$m)) {
         if ($m[2]=='') $m[1].='1';
-        return "<font size='$m[1]'>$m[3]</font>";
+        return "<span style='size:$m[1]'>$m[3]</span>";
       }
       if ($url[0]==' ' and in_array($url[1],array('#','-','+')) !==false)
         $url=substr($url,1);
@@ -2019,7 +2032,7 @@ class Formatter {
         else {
           if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
             $text=str_replace('&','&amp;',$text);
-            return "<a href='$link' $attr $this->external_target title='$url'><img border='0' alt='$url' src='$text' /></a>";
+            return "<a href='$link' $attr $this->external_target title='$url'><img style='border:0px' alt='$url' src='$text' /></a>";
           }
           if ($this->external_on)
             $external_link='<span class="externalLink">('.$url.')</span>';
@@ -2121,8 +2134,8 @@ class Formatter {
       $sy=$DBInfo->intericon[$wiki][1];
     }
 
-    $img="<a class=\"interwiki\" href='$url' target='wiki'>".
-         "<img class=\"interwiki\" alt=\"$wiki:\" src='$icon' border='0' height='$sy' ".
+    $img="<a class=\"interwiki\" href='$url' $this->interwiki_target>".
+         "<img class=\"interwiki\" alt=\"$wiki:\" src='$icon' style='border:0' height='$sy' ".
          "width='$sx' title='$wiki:' /></a>";
     #if (!$text) $text=str_replace("%20"," ",$page);
     if (!$text) $text=urldecode($page);
@@ -2134,15 +2147,15 @@ class Formatter {
           $text=$this->macro_repl('Attachment',$fname);
         else {
           $text=qualifiedUrl($DBInfo->url_prefix.'/'.$ntext);
-          $text= "<img border='0' alt='$text' src='$text' />";
+          $text= "<img style='border:0' alt='$text' src='$text' />";
         }
       } else
-        $text= "<img border='0' alt='$text' src='$text' />";
+        $text= "<img style='border:0' alt='$text' src='$text' />";
       $img='';
     }
 
     if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$url))
-      return "<a href='".$url."' $attr title='$wiki:$page'><img border='0' align='middle' alt='$text' src='$url' /></a>$extra";
+      return "<a href='".$url."' $attr title='$wiki:$page'><img style='vertical-align:middle;border:0px' alt='$text' src='$url' /></a>$extra";
 
     if (!$text) return $img;
     return $img. "<a href='".$url."' $attr title='$wiki:$page'>$text</a>$extra$sep";
@@ -2224,11 +2237,11 @@ class Formatter {
             $word=$this->macro_repl('Attachment',$fname);
           } else {
             $text=qualifiedUrl($DBInfo->url_prefix.'/'.$ntext);
-            $word= "<img border='0' alt='$text' src='$text' /></a>";
+            $word= "<img style='border:0' alt='$text' src='$text' /></a>";
           }
         } else {
           $text=str_replace('&','&amp;',$text);
-          $word="<img border='0' alt='$word' src='$text' /></a>";
+          $word="<img style='border:0' alt='$word' src='$text' /></a>";
         }
       } else $word=$text;
     } else {
@@ -2363,7 +2376,7 @@ class Formatter {
   }
 
   function head_repl($depth,$head) {
-    $dep=strlen($depth);
+    $dep=&$depth;
     $this->nobr=1;
 
     $head=str_replace('\"','"',$head); # revert \\" to \"
@@ -2420,7 +2433,7 @@ class Formatter {
     if ($this->perma_icon)
     $perma=" <a class='perma' href='#s$prefix-$num'>$this->perma_icon</a>";
 
-    return "$close$open$edit<h$dep><a id='s$prefix-$num' name='s$prefix-$num'></a>$head$perma</h$dep>";
+    return "$close$open$edit<h$dep><a id='s$prefix-$num'></a>$head$perma</h$dep>";
   }
 
   function macro_repl($macro,$value='',$options='') {
@@ -2529,8 +2542,8 @@ class Formatter {
     $alt=str_replace("<","&lt;",$smiley);
 
     if (preg_match('/^(http|ftp):/',$img))
-      return "<img src='$img' border='0' class='smiley' alt='$alt' title='$alt' />";
-    return "<img src='$this->imgs_dir/$img' border='0' class='smiley' alt='$alt' title='$alt' />";
+      return "<img src='$img' style='border:0' class='smiley' alt='$alt' title='$alt' />";
+    return "<img src='$this->imgs_dir/$img' style='border:0' class='smiley' alt='$alt' title='$alt' />";
   }
 
   function link_url($pageurl,$query_string="") {
@@ -2570,12 +2583,12 @@ class Formatter {
 
   function fancy_hr($rule) {
     $sz=($sz=strlen($rule)-4) < 6 ? ($sz ? $sz+2:0):8;
-    $size=$sz ? " size='$sz'":'';
-    return "<div class='separator'><hr$size class='wiki' /></div>";
+    $size=$sz ? " style='height:{$sz}px'":'';
+    return "<div class='separator'><hr$size /></div>";
   }
 
   function simple_hr() {
-    return "<div class='separator'><hr class='wiki' /></div>";
+    return "<div class='separator'><hr /></div>";
   }
 
   function _list($on,$list_type,$numtype="",$closetype="",
@@ -2992,7 +3005,6 @@ class Formatter {
              $indtype="ul";
            } elseif (preg_match("/^(([1-9]\d*|[aAiI])\.)(#\d+)?\s/",$line,$limatch)){
              $myindlen=$indlen+strlen($limatch[1])+1;
-             $liopen='<li>'; // XXX
              $line=substr($line,strlen($limatch[0]));
              if ($indent_list[$in_li] == $indlen) {
                 $close.=$this->_li(0);
@@ -3002,6 +3014,10 @@ class Formatter {
              if ($limatch[3])
                $numtype.=substr($limatch[3],1);
              $indtype="ol";
+             $lival='';
+             if ($in_li and $limatch[3])
+               $lival=' value="'.substr($limatch[3],1).'"';
+             $liopen="<li$lival>"; // XXX
            } elseif (preg_match("/^([^:]+)::\s/",$line,$limatch)) {
              $myindlen=$indlen;
              $line=preg_replace("/^[^:]+::\s/",
@@ -3072,18 +3088,14 @@ class Formatter {
       }
 
       # FIXME for smart diff XXX (one line ins/del)
-      if ($this->use_smartdiff)
-        $line=preg_replace('/&lt;(\/)?(ins|del)/','<\\1\\2',$line);
+      ##if ($this->use_smartdiff)
+      ##  $line=preg_replace('/&lt;(\/)?(ins|del)/','<\\1\\2',$line);
 
       # InterWiki, WikiName, {{{ }}}, !WikiName, ?single, ["extended wiki name"]
       # urls, [single bracket name], [urls text], [[macro]]
       $line=preg_replace_callback("/(".$wordrule.")/",
         array(&$this,'link_repl'),$line);
       #$line=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$line);
-
-      # FIXME for smart diff XXX (one line ins/del)
-      if ($this->use_smartdiff)
-        $line=preg_replace('/&lt;(\/)?(ins|del)/','<\\1\\2',$line);
 
       # Headings
       if (preg_match("/(?<!=)(={1,5})\s+(.*)\s+\\1\s?$/",$line,$m)) {
@@ -3111,9 +3123,9 @@ class Formatter {
           $lab=_("edit");
           $edit="<div class='sectionEdit' style='float:right;'>[<a href='$url'$sect_attr>$lab</a>]</div>\n";
           $anchor_id='sect-'.$this->sect_num;
-          $anchor="<a id='$anchor_id' name='$anchor_id'></a>";
+          $anchor="<a id='$anchor_id'></a>";
         }
-        $line=$anchor.$edit.$this->head_repl($m[1],$m[2]);
+        $line=$anchor.$edit.$this->head_repl(strlen($m[1]),$m[2]);
         $edit='';$anchor='';
       }
 
@@ -3206,8 +3218,8 @@ class Formatter {
     } # end rendering loop
     # for smart_diff (div)
     if ($this->use_smartdiff)
-      $text= preg_replace('/&lt;(\/)?(div( class=.diff-(added|removed).)?)>/',
-        '<\\2>',$text);
+      $text= preg_replace('/&lt;(\/)?(...( class=.diff-(added|removed).)?)>/',
+        '<\\1\\2>',$text);
 
     # highlight text
     if ($this->highlight) {
@@ -3425,7 +3437,7 @@ EOS;
       print '<meta http-equiv="Content-Type" content="'.$content_type.
         ';charset='.$DBInfo->charset.'" />';
       print <<<JSHEAD
-<script language="JavaScript" type="text/javascript">
+<script type="text/javascript">
 /*<![CDATA[*/
 _url_prefix="$DBInfo->url_prefix";
 /*]]>*/
@@ -3612,20 +3624,17 @@ EOS;
     $banner= <<<FOOT
  <a href="http://validator.w3.org/check/referer"><img
   src="$this->imgs_dir/valid-xhtml10.png"
-  border="0" width="88" height="31"
-  align="middle"
+  style="border:0;vertical-align:middle" width="88" height="31"
   alt="Valid XHTML 1.0!" /></a>
 
  <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
   src="$this->imgs_dir/vcss.png" 
-  border="0" width="88" height="31"
-  align="middle"
+  style="border:0;vertical-align:middle" width="88" height="31"
   alt="Valid CSS!" /></a>
 
  <a href="http://moniwiki.sourceforge.net/"><img
   src="$this->imgs_dir/moniwiki-powered.png" 
-  border="0" width="88" height="31"
-  align="middle"
+  style="border:0;vertical-align:middle" width="88" height="31"
   alt="powered by MoniWiki" /></a>
 FOOT;
 
@@ -3838,7 +3847,7 @@ MSG;
       $header="<table width='100%' border='0' cellpadding='3' cellspacing='0'>";
       $header.="<tr>";
       if ($DBInfo->logo_string) {
-         $header.="<td rowspan='2' width='10%' valign='top'>";
+         $header.="<td rowspan='2' style='width:10%' valign='top'>";
          $header.=$logo;
          $header.="</td>";
       }
