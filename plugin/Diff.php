@@ -78,7 +78,7 @@ function smart_diff($diff) {
   #print_r( $lines);
   #print "</pre>";
 
-  $tags=array('(%%','%%)','(@@','@@)');
+  $tags=array("\006","\006","\010","\010");
  
   $news=array(); $dels=array();
 
@@ -237,32 +237,25 @@ function macro_diff($formatter,$value,&$options)
         #print "</pre>";
         $diffed=implode("\n",$lines);
         # change for headings
-        $diffed=preg_replace("/^\(([@%]{2})(={1,5})\s(.*)\s\\2\\1\)$/m",
-          "\\2 (\\1\\3\\1) \\2",$diffed);
+        $diffed=preg_replace("/^(\006|\010)(={1,5})\s(.*)\s\\2\\1$/m",
+          "\\2 \\1\\3\\1 \\2",$diffed);
         # change for lists
-        $diffed=preg_replace("/\(([@%]{2})(\s+)(\*|\d+\.\s)(.*)\\1\)/m",
-          "\\2\\3(\\1\\4\\1)",$diffed);
+        $diffed=preg_replace("/(\006|\010)(\s+)(\*|\d+\.\s)(.*)\\1/m",
+          "\\2\\3\\1\\4\\1",$diffed);
+
+        # fix <ins>{{{foobar</ins> to {{{<ins>foobar</ins>
+        $diffed=preg_replace("/(\006|\010)({{{)(.*)$/m","\\2\\1\\3",$diffed);
+        # fix <ins>foobar}}}</ins> to <ins>foobar</ins>}}}
+        $diffed=preg_replace("/(\006|\010)(.*)(}}})(\\1)/m","\\1\\2\\4\\3",$diffed);
         # change for hrs
-        #$diffed=preg_replace("/\(([@%]{2})(-{4,})\\1\)/m",
-        #  "(\\1\\2\n\\1)",$diffed);
+        $diffed=preg_replace("/(\006|\010)(-{4,})\\1/m",
+          "\\1\\2\n\\1",$diffed);
         # XXX FIXME
         # merge multiline diffs
-        $diffed=preg_replace("/\@@\)\n\(@@/m","\n",$diffed);
-        $diffed=preg_replace("/\%%\)\n\(%%/m","\n",$diffed);
-        $diffed=preg_replace(array("/\(@@(.*)@@\)/","/\(%%(.*)%%\)/"),
-          array("<ins class='diff-added'>\\1</ins> ",
-                "<del class='diff-removed'>\\1</del> "),
-          $diffed);
-
-        $diffed=preg_replace(array(
-            "/\n?\(@@/m","/@@\)\n/m","/\(@@/","/@@\)/",
-            "/\n?\(%%/m","/%%\)\n/m","/\(%%/","/%%\)/"),
-          array(
-            "\n<div class='diff-added'>","\n</div>",
-            "<ins class='diff-added'>","\n</ins>",
-            "\n<div class='diff-removed'>","\n</div>",
-            "<del class='diff-removed'>","</del>")
-            ,$diffed);
+        #$diffed=preg_replace("/\006([ ]*)\006$/m","\\1",$diffed);
+        #$diffed=preg_replace("/\010([ ]*)\010$/m","\\1",$diffed);
+        $diffed=preg_replace("/\006\n\006(?!\n)/m","\n",$diffed);
+        $diffed=preg_replace("/\010\n\010(?!\n)/m","\n",$diffed);
 
         $options['nomsg']=0;
         $options['msg']=$msg;
