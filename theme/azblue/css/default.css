@@ -13,17 +13,17 @@ body {
 }
 
 #mainBody {
-  /* top:15px; /* */
-/*  padding-left:100px;
+/* top:15px; /* */
+/* padding-left:100px;
   padding-right:100px; */
   min-width:750px;
   margin: 0px auto 0px auto;
   width: 750px;
-  /*\*/ min-width: 750px; /* */
+  /*\*/ min-width: 750px; /* IE fix */
 }
 
 div {
-/*  border:1px solid red; /* */
+/* border:1px solid red; /* */
 }
 
 #topHeader {
@@ -132,7 +132,7 @@ form {
 }
 
 #wikiBanner {
-  margin-top:10px;
+  padding-top:5px;
   text-align:center;
 }
 
@@ -208,20 +208,16 @@ pre.wikiSyntax {
 }
 
 table.wiki {
-/* background-color:#E2ECE5;*/
-/* background-color: #F8F7F0; */
-/* border-collapse: collapse; */
-  border: 0px outset #ddddb0;
+/* background-color:#E2ECE5;
+  background-color: #F8F7F0;
+  border-collapse: collapse;
+  border: 0px outset #ddddb0; */
 }
 
-td.wiki {
+table.wiki tr {
   background-color: #F8F7F0; 
 /* border-collapse: collapse; */
-  border: 0px inset #EAF2F4;
-}
-tr.wiki {
-/* background-color: #F8F7F0; */
-/* border-collapse: collapse; */
+/* border: 0px inset #EAF2F4; */
 }
 
 textarea.wiki { width:98%; }
@@ -234,7 +230,6 @@ th.info {
 
 td.info {
   background-color:#E2ECE2;
-
 }
 
 h1,h2,h3,h4,h5 {
@@ -682,7 +677,7 @@ border:none;}
   margin: 0 auto;
 }
 
-#content {
+#mycontent { /* theme specific */
 /*  margin-right:140px; /* */
   padding-right:5px;
 }
