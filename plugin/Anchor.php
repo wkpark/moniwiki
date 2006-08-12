@@ -16,7 +16,7 @@ function macro_Anchor($formatter,$value) {
     $tag=strtok($value," ");
     $text=($tok=strtok("")) ? "<a href='#$tag'>".$tok."</a>":"";
   }
-  return "<a name='$tag' id='$tag'>$text</a>";
+  return "<a id='$tag'></a>$text";
 }
 
 // vim:et:ts=2:

@@ -22,7 +22,7 @@ function macro_Icon($formatter,$value='',$extra='') {
   }
 
   $out=$formatter->imgs_dir."/$value";
-  $out="<img src='$out' border='0' alt='icon' align='middle' />";
+  $out="<img src='$out' alt='icon' style='vertical-align:middle;border:0' />";
   return $out;
 }
 

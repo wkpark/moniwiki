@@ -71,7 +71,7 @@ define('RC_DEFAULT_DAYS',7);
       } else if ($arg=="table") {
         $bra="<table border='0' cellpadding='0' cellspacing='0' width='100%'>";
         $template=
-  '$out.= "<tr><td nowrap=\'nowrap\' width=\'2%\'>$icon</td><td width=\'40%\'>$title</td><td width=\'15%\'>$date</td><td>$user $count $extra</td></tr>\n";';
+  '$out.= "<tr><td style=\'white-space:nowrap;width:2%\'>$icon</td><td style=\'width:40%\'>$title</td><td style=\'width:15%\'>$date</td><td>$user $count $extra</td></tr>\n";';
         $cat="</table>";
         $cat0="";
       }
@@ -201,15 +201,15 @@ define('RC_DEFAULT_DAYS',7);
       $out.=$cat0;
       $rcdate=gmdate($date_fmt,$ed_time+$tz_offset);
 
-      $out.=sprintf("%s<span class='rc-date'><font class='rc-date' size='+1'>%s ",
+      $out.=sprintf("%s<span class='rc-date'><span class='rc-date' style='font-size:large'>%s ",
             $br, $rcdate);
       if (!$nobookmark)
-        $out.="<font class='rc-bookmark' size='-1'>[".
+        $out.="<span class='rc-bookmark' style='font-size:small'>[".
           $formatter->link_tag($formatter->page->urlname,"?action=bookmark&amp;time=$ed_time".$daysago,
-          _("set bookmark"))."]</font>\n";
+          _("set bookmark"))."]</span>\n";
       $ratchet_day = $day;
       $br="<br />";
-      $out.=$perma.'</font></span><br />'.$bra;
+      $out.=$perma.'</span></span><br />'.$bra;
       $cat0=$cat;
     } else
       $day=$formatter->link_to("?action=bookmark&amp;time=$ed_time".$daysago,$day);
@@ -260,7 +260,7 @@ define('RC_DEFAULT_DAYS',7);
     if ($editcount[$page_key] > 1)
       $count=" [".$editcount[$page_key]." changes]";
     if ($comment && $log)
-      $extra="&nbsp; &nbsp; &nbsp; <font size='-1'>$log</font>";
+      $extra="&nbsp; &nbsp; &nbsp; <small>$log</small>";
 
     eval($template);
 
