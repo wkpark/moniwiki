@@ -40,10 +40,12 @@ if ($DBInfo->use_tagging) {
 <?php echo $DBInfo->sitename?>
 </div>
 <div id='goForm'>
-<form name='go' id='go' action='' method='get' onsubmit="return moin_submit();">
+<form id='go' action='' method='get' onsubmit="return moin_submit();">
+<div>
 <input type='text' name='value' size='20' accesskey='s' class='goto' style='width:120px' />
 <input type='hidden' name='action' value='goto' />
 <input type='submit' name='status' class='submitBtn' value='Go' style='width:35px;' />
+</div>
 </form>
 </div>
 <div id='pTitle'><?php echo $title?></div><div id='wikiHeader'>
@@ -88,4 +90,4 @@ if ($DBInfo->use_tagging) {
 endif;
 
 ?>
-<div id='content'>
+<div id='mycontent'>
