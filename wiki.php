@@ -1939,6 +1939,14 @@ class Formatter {
     return "<strong class='highlight'>$val</strong>";
   }
 
+  function _diff_repl($arr) {
+    if ($arr[1]{0}=="\010") { $tag='ins'; $sty='added'; }
+    else { $tag='del'; $sty='removed'; }
+    if (strpos($arr[2],"\n") !== false)
+      return "<div class='diff-$sty'>".$arr[2]."</div>";
+    return "<$tag class='diff-$sty'>".$arr[2]."</$tag>";
+  }
+
   function write($raw) {
     print $raw;
   }
@@ -1954,6 +1962,7 @@ class Formatter {
     switch ($url[0]) {
     case '{':
       $url=substr($url,3,-3);
+      $url=str_replace("<","&lt;",$url);
       if (preg_match('/^({([^{}]+)})/s',$url,$sty)) { # textile like styling
         $url=substr($url,strlen($sty[1]));
         return "<span style='$sty[2]'>$url</span>";
@@ -1969,7 +1978,7 @@ class Formatter {
       }
       if ($url[0]==' ' and in_array($url[1],array('#','-','+')) !==false)
         $url=substr($url,1);
-      return "<tt class='wiki'>".str_replace("<","&lt;",$url)."</tt>"; # No link
+      return "<tt class='wiki'>".$url."</tt>"; # No link
       break;
     case '[':
       $url=substr($url,1,-1);
@@ -1984,7 +1993,7 @@ class Formatter {
     case '#': # Anchor syntax in the MoinMoin 1.1
       $anchor=strtok($url,' ');
       return ($word=strtok('')) ? $this->link_to($anchor,$word):
-                 "<a name='".($temp=substr($anchor,1))."' id='$temp'></a>";
+                 "<a id='".($temp=substr($anchor,1))."'></a>";
       break;
     case '*':
       return $this->macro_repl('FootNote',$url);
@@ -2308,8 +2317,8 @@ class Formatter {
             $this->aliases[$page]=$url;
             return $url;
           }
-          $this->sisters[]="<tt class='foot'>".
-            "<li><a name='sister$this->sister_idx' id='sister$this->sister_idx'></a>".
+          $this->sisters[]=
+            "<li><tt class='foot'><a id='sister$this->sister_idx'></a>".
             "<a href='#rsister$this->sister_idx'>$this->sister_idx&#x203a;</a></tt> ".
             "$sisters </li>";
           $this->pagelinks[$page]=$this->sister_idx++;
@@ -2318,7 +2327,7 @@ class Formatter {
         if ($idx > 0) {
           return "<a href='$url'>$word</a>".
            "<tt class='sister'>".
-           "<a name='rsister$idx' id='rsister$idx'></a>".
+           "<a id='rsister$idx'></a>".
            "<a href='#sister$idx'>&#x203a;$idx</a></tt>";
         }
       }
@@ -2376,7 +2385,7 @@ class Formatter {
   }
 
   function head_repl($depth,$head) {
-    $dep=&$depth;
+    $dep=$depth;
     $this->nobr=1;
 
     $head=str_replace('\"','"',$head); # revert \\" to \"
@@ -2472,8 +2481,7 @@ class Formatter {
       $ket= '</div>';
     }
     if (!empty($this->use_smartdiff) and
-      preg_match('/<(ins|del|div) class=\'diff-(added|removed)\'>/',
-      $value)) $processor='plain';
+      preg_match("/\006|\010/", $value)) $processor='plain';
     if (!($f=function_exists("processor_".$processor)) and !($c=class_exists('processor_'.$processor))) {
       $pf=getProcessor($processor);
       if (!$pf) {
@@ -2638,10 +2646,70 @@ class Formatter {
     return implode(' ',$attr);
   }
 
-  function _td_attr($val) {
-    if (!$val) return '';
+  function _attr($attr,$sty=array(),$myclass=array(),$align='') {
+    $aligns=array('center'=>1,'left'=>1,'right'=>1);
+    $attrs=preg_split('@(\w+\=(?:"[^"]*"|\'[^\']*\')\s*|\w+\=[^\s]+\s*)@',
+      $attr,-1, PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_NO_EMPTY);
+
+    $myattr=array();
+    foreach ($attrs as $at) {
+      $at=str_replace(array("'",'"'),'',rtrim($at));
+      $k=strtok($at,'=');
+      $v=strtok('');
+      $k=strtolower($k);
+      if ($k == 'style') {
+        $stys=preg_split('@;\s*@',$v,-1,PREG_SPLIT_NO_EMPTY);
+        foreach ($stys as $my) {
+          $nk=strtok($my,':');
+          $nv=strtok('');
+          $sty[$nk]=$nv;
+        }
+      } else {
+        switch($k) {
+          case 'class':
+            if (isset($aligns[$v]))
+              $align=$v;
+            else $myclass[]=$v;
+            break;
+          case 'align':
+            $align=$v;
+            break;
+          case 'bgcolor':
+            $sty['background-color']=strtolower($v);
+            break;
+          case 'width':
+          case 'color':
+            $sty[$k]=strtolower($v);
+            break;
+          default:
+            $myattr[]=$k.'="'.$v.'"';
+            break;
+        }
+      }
+    }
+
+    if ($align) $myclass[]=$align;
+    if ($myclass) $myattr[]='class="'.implode(' ',array_unique($myclass)).'"';
+    if ($sty) {
+      $mysty='';
+      foreach ($sty as $k=>$v) $mysty.="$k:$v;";
+      $myattr[]='style="'.substr($mysty,0,-1).'"';
+    }
+    asort($myattr);
+    return $myattr;
+  }
+
+  function _td_attr(&$val,$align='') {
+    $myclass=array();
+    if (!$val) {
+      if ($align) return 'class="'.$align.'"';
+      return '';
+    }
     $para=substr($val,4,-1);
     # rowspan
+    $sty=array();
+    $attr=array();
+    $myattr=array();
     if (preg_match("/^(\^|v)?\|(\d+)$/",$para,$match)) {
       $attr[]="rowspan='$match[2]'";
       if ($match[1]) {
@@ -2649,28 +2717,64 @@ class Formatter {
         else $attr[]="valign='bottom'";
       }
     }
+    else if (strlen($para)==1) {
+      switch ($para) {
+      case '(':
+        $align='left';
+        break;
+      case ')':
+        $align='right';
+        break;
+      case ':':
+        $align='center';
+        break;
+      default:
+        break;
+      }
+    }
     else if (preg_match("/^\-(\d+)$/",$para,$match))
       $attr[]="colspan='$match[1]'";
     else if ($para[0]=='#')
-      $attr[]="bgcolor='".strtolower($para)."'";
-    else
-      $attr[]=strtolower($para);
+      $sty['background-color']=strtolower($para);
+    else {
+      if (substr($para,0,3)=='row') { // row properties
+        $val=substr($para,3); $myattr=$this->_attr($val);
+        $val=implode(' ',$myattr);
+        if ($align) {
+          return 'class="'.$align.'"';
+        } else return '';
+      }
+      $myattr=$this->_attr($para,$sty,$myclass,$align);
+      $attr=array_merge($myattr,$attr);
+    }
+    if (!$attr and $align) {
+      $val='';
+      return 'class="'.$align.'"';
+    }
+
+    $val='';
     return implode(' ',$attr).' ';
   }
 
   function _table($on,&$attr) {
     if (!$on) return "</table>\n";
+    $sty=array();
+    $myattr=array();
     $tattr=substr($attr,4,-1);
+    $myclass=array('wiki');
     if ($tattr[0]=='#') {
-      $tattr="bgcolor='".strtolower($tattr)."'";
+      $sty['background-color']=strtolower($tattr);
     } else if (substr($tattr,0,5)=='table') {
       $tattr=substr($tattr,5);
+      $myattr=$this->_attr($tattr,$sty,$myclass);
       $attr='';
-    } else {
+    } else { // not table attribute
       if ($tattr=='') $attr='';
-      $tattr='';
+      #else $myattr=$this->_attr($tattr,$sty,$myclass);
     }
-    return "<table class='wiki' cellpadding='3' cellspacing='2' $tattr>\n";
+    if ($myattr) $my=implode(' ',$myattr);
+    else $my='class="wiki"';
+    return "<table cellpadding='3' cellspacing='2' $my>\n";
   }
 
   function _purple() {
@@ -3060,8 +3164,7 @@ class Formatter {
         if ($match[2]) $open.='<caption>'.$match[2].'</caption>';
         if (!$match[5]) $line='||'.$match[3].$match[6].'||';
         $in_table=1;
-      #} elseif ($in_table && !preg_match("/^\|\|.*\|\|$/",$line)){
-      } elseif ($in_table && $line[0]!='|' && !preg_match("/^\|\|.*\|\|$/s",$line)){
+      } elseif ($in_table && $line[0]!='|') {
          $close=$this->_table(0,$dumm).$close;
          $in_table=0;
       }
@@ -3070,26 +3173,25 @@ class Formatter {
         $cells=preg_split('/((?:\|\|)+)/',$line,-1,
           PREG_SPLIT_DELIM_CAPTURE);
         $row='';
+        $tr_attr='';
         for ($i=1,$s=sizeof($cells);$i<$s;$i+=2) {
-          $align='';$attr='';
+          $align='';
           preg_match('/^((&lt;[^>]+>)?)(\s?)(.*)(?<!\s)(\s*)?$/s',
             $cells[$i+1],$m);
           $cell=$m[3].$m[4].$m[5];
           $cell=str_replace("\n","<br />\n",$cell);
-          if ($m[3] and $m[5]) $align='align="center"';
+          if ($m[3] and $m[5]) $align='center';
           else if (!$m[3]) $align='';
-          else if (!$m[5]) $align='align="right"';
-          $attr=$this->_td_attr($m[1]);
+          else if (!$m[5]) $align='right';
+
+          $attr=$this->_td_attr($m[1],$align);
+          if (!$tr_attr) $tr_attr=$m[1]; // XXX
           $attr.=$this->_td_span($cells[$i]);
-          $row.="<td class=\"wiki\" $attr$align>".$cell.'</td>';
+          $row.="<td $attr>".$cell.'</td>';
         }
-        $line='<tr class="wiki">'.$row.'</tr>';
+        $line="<tr $tr_attr>".$row.'</tr>';
         $line=str_replace('\"','"',$line); # revert \\" to \"
       }
-
-      # FIXME for smart diff XXX (one line ins/del)
-      ##if ($this->use_smartdiff)
-      ##  $line=preg_replace('/&lt;(\/)?(ins|del)/','<\\1\\2',$line);
 
       # InterWiki, WikiName, {{{ }}}, !WikiName, ?single, ["extended wiki name"]
       # urls, [single bracket name], [urls text], [[macro]]
@@ -3150,9 +3252,8 @@ class Formatter {
 
          # for smart diff
          $show_raw=0;
-         #if ($this->use_smartdiff and
-         #  preg_match('/<(ins|del) class=\'diff-(added|removed)\'>/',
-         #  $this->pre_line)) $show_raw=1;
+         if ($this->use_smartdiff and
+           preg_match("/\006|\010/", $this->pre_line)) $show_raw=1;
 
          if ($processor and !$show_raw) {
            $value=&$this->pre_line;
@@ -3167,9 +3268,6 @@ class Formatter {
          } else if ($in_quote) {
             # htmlfy '<'
             $pre=str_replace("<","&lt;",$this->pre_line);
-            # for smart diff
-            if ($this->use_smartdiff)
-              $pre=preg_replace("/&lt;(\/?)(ins|del)/","<\\1\\2",$pre);
             $pre=preg_replace($this->baserule,$this->baserepl,$pre);
             $pre=preg_replace_callback("/(".$wordrule.")/",
               array(&$this,'link_repl'),$pre);
@@ -3218,8 +3316,8 @@ class Formatter {
     } # end rendering loop
     # for smart_diff (div)
     if ($this->use_smartdiff)
-      $text= preg_replace('/&lt;(\/)?(...( class=.diff-(added|removed).)?)>/',
-        '<\\1\\2>',$text);
+      $text= preg_replace_callback(array("/(\006|\010)(.*)\\1/sU"),
+          array(&$this,'_diff_repl'),$text);
 
     # highlight text
     if ($this->highlight) {
