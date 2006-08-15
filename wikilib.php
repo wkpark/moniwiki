@@ -1879,7 +1879,7 @@ EXTRA;
 EXTRA;
     $logout="<input type='submit' name='logout' value='"._("logout")."' /> &nbsp;";
   }
-  if ($tz_offset=="")
+  if (empty($tz_offset) and $jscript)
     $script=<<<EOF
 <script type="text/javascript">
 /*<![CDATA[*/
