@@ -2682,7 +2682,7 @@ class Formatter {
             $sty[$k]=strtolower($v);
             break;
           default:
-            $myattr[]=$k.'="'.$v.'"';
+            if ($v) $myattr[]=$k.'="'.$v.'"';
             break;
         }
       }
@@ -2735,9 +2735,10 @@ class Formatter {
     else if (preg_match("/^\-(\d+)$/",$para,$match))
       $attr[]="colspan='$match[1]'";
     else if ($para[0]=='#')
-      $sty['background-color']=strtolower($para);
+      $attr[]='style="background-color:'.strtolower($para).'"';
     else {
-      if (substr($para,0,3)=='row') { // row properties
+      if (substr($para,0,3)=='row' and substr($para,0,7)!='rowspan') {
+        // row properties
         $val=substr($para,3); $myattr=$this->_attr($val);
         $val=implode(' ',$myattr);
         if ($align) {
@@ -3164,7 +3165,8 @@ class Formatter {
         if ($match[2]) $open.='<caption>'.$match[2].'</caption>';
         if (!$match[5]) $line='||'.$match[3].$match[6].'||';
         $in_table=1;
-      } elseif ($in_table && $line[0]!='|') {
+      } elseif ($in_table && ($line[0]!='|' or
+           !preg_match("/^\|{2}.*\|{2}$/",$line))) {
          $close=$this->_table(0,$dumm).$close;
          $in_table=0;
       }
