@@ -8,14 +8,14 @@
 function _parse_rlog($formatter,$log,$options=array()) {
   global $DBInfo;
 
-  $user=new User(); # get cookie
-  if ($user->id != 'Anonymous') { # XXX
-    $udb=new UserDB($DBInfo);
-    $udb->checkUser($user);
-    $tz_offset=$user->info['tz_offset'];
-  } else {
-    $tz_offset=$options['tz_offset'];
-  }
+  $tz_offset=$formatter->tz_offset;
+  if (in_array($options['id'],$DBInfo->wikimasters)) $admin=1;
+
+  if ($DBInfo->info_actions)
+    $actions=$DBInfo->info_actions;
+  else
+    $actions=array('recall'=>'view','raw'=>'raw');
+
   $state=0;
   $flag=0;
 
@@ -25,15 +25,16 @@ function _parse_rlog($formatter,$log,$options=array()) {
 
   $url=$formatter->link_url($formatter->page->urlname);
 
+  $diff_btn=_("Diff");
   $out="<h2>"._("Revision History")."</h2>\n";
-  $out.="<table class='info' border='0' cellpadding='3' cellspacing='2'>\n";
   $out.="<form id='infoform' method='post' action='$url'>";
+  $out.="<table class='info' cellpadding='3' cellspacing='2'><tr>\n";
   $out.="<th class='info'>ver.</th><th class='info'>Date and Changes</th>".
        "<th class='info'>Editor</th>".
-       "<th class='info'><input type='submit' value='diff'></th>";
+       "<th class='info'><input type='submit' value='$diff_btn'></th>";
   if (!$simple) {
-    $out.="<th class='info'>actions</th>".
-       "<th class='info'>admin.</th>";
+    $out.="<th class='info'>actions</th>";
+    if (isset($admin)) $out.= "<th class='info'>admin.</th>";
   }
   $out.= "</tr>\n";
 
@@ -70,7 +71,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
          if ($options['ago']) {
            $ed_time=strtotime($inf.' GMT');
            $time_diff=(int)($time_current - $ed_time)/60;
-           if ($time_diff > 1440*14) {
+           if ($time_diff > 1440*31) {
              $inf=gmdate("Y-m-d H:i:s",strtotime($inf.' GMT')+$tz_offset);
            } else if (($time_diff=$time_diff/60) > 24) {
              $day=(int)($time_diff/24);
@@ -119,28 +120,36 @@ function _parse_rlog($formatter,$log,$options=array()) {
          $rowspan=1;
          if (!$simple and $comment) $rowspan=2;
          $out.="<tr>\n";
-         $out.="<th valign='top' rowspan=$rowspan>r$rev</th><td nowrap='nowrap'>$inf $change</td><td>$ip&nbsp;</td>";
+         $out.="<th valign='top' rowspan=$rowspan>$rev</th><td nowrap='nowrap'>$inf $change</td><td>$ip&nbsp;</td>";
          $achecked="";
          $bchecked="";
          if ($flag==1)
             $achecked="checked ";
          else if (!$flag)
             $bchecked="checked ";
-         $out.="<th nowrap='nowrap'><input type='radio' name='rev' value='$rev' $achecked/>";
-         $out.="<input type='radio' name='rev2' value='$rev' $bchecked/></th>";
+         $onclick="onclick='ToggleRev(this)'";
+         $out.="<th nowrap='nowrap'><input type='radio' name='rev' value='$rev' $achecked $onclick />";
+         $out.="<input type='radio' name='rev2' value='$rev' $bchecked $onclick /></th>";
 
-         if (!$simple) {
-         $out.="<td nowrap='nowrap'>".$formatter->link_to("?action=recall&rev=$rev","view").
-               " ".$formatter->link_to("?action=raw&rev=$rev","raw");
+         if (!$simple):
+         $out.="<td nowrap='nowrap'>";
+         foreach ($actions as $k=>$v) {
+           $k=is_numeric($k) ? $v:$k;
+           $out.=$formatter->link_to("?action=$k&amp;rev=$rev",_($v)).' ';
+         }
          if ($flag) {
-            $out.= " ".$formatter->link_to("?action=diff&rev=$rev","diff");
-            $out.="</td><th>";
-            $out.="<input type='checkbox' name='range[$flag]' value='$rev' />";
+            $out.= " ".$formatter->link_to("?action=diff&amp;rev=$rev",_("diff"));
+            $out.="</td>";
+            if (isset($admin))
+              $out.=
+                "<th><input type='checkbox' name='range[$flag]' value='$rev' /></th>";
          } else {
-            $out.="</td><th>";
-            $out.="<input type='image' src='$DBInfo->imgs_dir/smile/checkmark.png' onClick=\"ToggleAll('infoform');return false;\"/>";
+            $out.="</td>";
+            if (isset($admin)) {
+              $out.="<th><input type='image' src='$DBInfo->imgs_dir/smile/checkmark.png' onClick=\"ToggleAll('infoform');return false;\"/></th>";
+            }
          }
-         }
+         endif;
          $out.="</tr>\n";
          if (!$simple and $comment)
             $out.="<tr><td class='info' colspan='5'>$comment&nbsp;</td></tr>\n";
@@ -151,17 +160,15 @@ function _parse_rlog($formatter,$log,$options=array()) {
          break;
      }
   }
-  if (!$simple) {
+  if (!$simple and $admin):
   $out.="<tr><td colspan='6' align='right'><input type='checkbox' name='show' checked='checked' />show only ";
   if ($DBInfo->security->is_protected("rcspurge",$options)) {
     $out.="<input type='password' name='passwd'>";
   }
   $out.="<input type='submit' name='rcspurge' value='purge'></td></tr>";
-  }
+  endif;
   $out.="<input type='hidden' name='action' value='diff'/></form></table>\n";
-  if (!$simple) {
   $out.="<script type='text/javascript' src='$DBInfo->url_prefix/local/checkbox.js'></script>\n";
-  }
   return $out; 
 }
 
