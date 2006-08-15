@@ -57,3 +57,10 @@ function ToggleAll(obj,idx) {
    }
 }
 
+function ToggleRev(obj) {
+   var p=obj.parentNode;
+   var i=obj.name == 'rev' ? 1:0;
+   var n=p.getElementsByTagName('input');
+   if (n[i].checked) n[i].checked=false;
+}
+
