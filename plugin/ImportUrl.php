@@ -7,28 +7,50 @@
 //
 // $Id$
 
-function do_ImportUrl($formatter,$options) {
-  $value=$options['url'];
+function macro_ImportUrl($formatter,$value='',$options=array()) {
+  $value=$value ? $value:$options['url'];
 
-  if (!preg_match('/^(http|ftp|https):\/\//',$value)) {
-    do_invalid($formatter,$options);
-    return;
+  if (!$value) {
+    return <<<EOF
+<div>
+<form method='get' action=''>
+<input type='hidden' name='action' value='importurl' />
+<input name='url' value='http://' size='60' />
+<input type='submit' value='html 2 wiki' />
+</form>
+</div>
+EOF;
   }
+
+  if (!preg_match('/^(http|ftp|https):\/\//',$value))
+    return false;
 
   $fp = fopen("$value","r");
-  if (!$fp) {
-    do_invalid($formatter,$options);
-    return;
-  }
+  if (!$fp) return false;
 
   while ($data = fread($fp, 4096)) $html_data.=$data;
   fclose($fp);
 
+  # only use <body> contents
+  preg_match("/<\s*body[^>]*>(.*)<\/\s*body\s*>/is",$html_data,$m);
+  if ($m) $html_data=$m[1];
 #  fix_url($value,$dummy);
 #  fix_url('http://hello.com/',$dummy);
 #  fix_url('http://hello.com',$dummy);
 
-  $out= strip_tags($html_data,'<pre><hr><td><tr><a><b><i><u><h1><h2><h3><h4><h5><li><img>');
+  # remove some tags
+  $out=preg_replace("@<(script|style)[^>]*>.*</\\1>@is","",$html_data);
+
+  # remove empty tags
+  $out=preg_replace("@<(h.|).[^>]*></\\1>@i","",$out);
+
+  # strip tags
+  $out= strip_tags($out,'<pre><hr><td><tr><a><b><i><u><h1><h2><h3><h4><h5><li><img>');
+
+  # fix some "\n" important sytaxes
+  $out=preg_replace(array("/(?!\n)(\s*<h.[^>]*>)/i",
+                          "/((<\/h.\s*>)(?:[ ]*)(?!\n))/i"),
+                    array("\n\\1","\\2\n"),$out);
 
   $splits=preg_split('/(<pre\s*[^>]*>|<\/pre>)/', $out,
     -1, PREG_SPLIT_DELIM_CAPTURE);
@@ -60,12 +82,12 @@ function do_ImportUrl($formatter,$options) {
     # remove leading spaces
     $out= preg_replace("/\n[ ]+/","\n",$split);
     $out= preg_replace("/\r/","",$out);
-    $out= preg_replace("/<img\s*[^>]*src=['\"]((http|ftp)[^'\"]+)['\"][^>]*>/i",
-      "\\1",$out);
-    $out = preg_replace("/<img\s*[^>]*src=['\"]([^'\"]+)['\"][^>]*>/ie",
-      "fix_url('$value','\\1')",$out);
-    $out= preg_replace("/<li>/i"," * ",$out);
-    $out= preg_replace("/<\/li>\n*/i","",$out);
+    #$out= preg_replace("/<img\s*[^>]*src=(['\"])?((http|ftp)[^'\"]+)\\1[^>]*>/i",
+    #  "\\2",$out);
+    $out = preg_replace("/<img\s*[^>]*src=(['\"])?([^'\"]+)\\1[^>]*>/ie",
+     "fix_url('$value','\\2')",$out);
+    $out= preg_replace("/<li[^>]*>/i"," * ",$out);
+    $out= preg_replace("/<\/li>\n*/i","\n",$out);
     $out= preg_replace("/<td\s*[^>]*>/i","||",$out);
     $out= preg_replace("/<\/td>\n*/i","",$out);
     $out= preg_replace("/<tr\s*[^>]*>/i","",$out);
@@ -88,7 +110,7 @@ function do_ImportUrl($formatter,$options) {
     $out= preg_replace("/<a\s*[^>]*href=['\"][^>]+><\/a>/i","",$out);
     # url
     $out= preg_replace("/<a\s*[^>]*href=['\"]([^'\"]+)['\"][^>]*>([^<]+)<\/a>/ie",
-      "'['.fix_url('$value','\\1','\\2').'\\2]'",$out);
+      "'['.fix_url('$value','\\1','\\2').trim('\\2').']'",$out);
     # heading
     $out= preg_replace("/<h(\d)[^>]*>(?:\d+\.?\d*)*([^<]+)<\/h\d>/ie",
       "str_repeat('=', \\1).' \\2 '.str_repeat('=', \\1)",$out);
@@ -101,9 +123,8 @@ function do_ImportUrl($formatter,$options) {
     $wiki.=$out;
   }
 
-  $formatter->send_header("content-type: text/plain",$options);
-  print $wiki;
-  return;
+  #$wiki=preg_replace(array("/\007\s/","/\007/"),array(" ",""),$wiki);
+  return $wiki;
 
   $options['savetext']=$out;
   $options['button_preview']=1;
@@ -117,6 +138,8 @@ function do_ImportUrl($formatter,$options) {
 }
 
 function prep_url($base_url) {
+  $base_url=trim($base_url);
+  $base_url=substr($base_url,-1,1)!='/' ? $base_url.'/':$base_url;
   $proto=strtok($base_url,'/').'//';
   $base_url=strtok('');
   $base_url=preg_replace('/(\/[^\/]+)$/','',$base_url);
@@ -178,6 +201,21 @@ function fix_url($base_url,$url,$text='') {
     }
   }
   return end($path).'/'.$url.' ';
+}
+
+function do_ImportUrl($formatter,$options=array())
+{
+  $value=$options['url'];
+
+  if (!preg_match('/^(http|ftp|https):\/\//',$value)) {
+    do_invalid($formatter,$options);
+    return;
+  }
+
+  $ret=macro_ImportUrl($formatter,$value,$options);
+
+  $formatter->send_header("content-type: text/plain",$options);
+  print $ret;
 }
 
 // vim:et:sts=2:
