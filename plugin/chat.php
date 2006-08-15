@@ -166,6 +166,7 @@ function ajax_chat($formatter,$options) {
     #ob_end_clean();
 
     $out='';
+    $formatter->set_wordrule();
     $smiley_rule='/(?<=\s|^|>)('.$DBInfo->smiley_rule.')(?=\s|$)/e';
     $smiley_repl="\$formatter->smiley_repl('\\1')";
     $save=$formatter->sister_on;
