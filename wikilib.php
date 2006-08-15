@@ -487,13 +487,20 @@ class User {
      $this->ticket=$ticket;
      # set the fake cookie
      $_COOKIE['MONI_ID']=$ticket.'.'.$this->id;
-     return "Set-Cookie: MONI_ID=".$ticket.'.'.$this->id.'; expires='.gmdate('l, d-M-Y H:i:s',time()+60*60*24*30).' GMT; Path='.get_scriptname();
+
+     $path=strpos($_SERVER['HTTP_USER_AGENT'],'Safari')===false ?
+       get_scriptname():'/';
+     return "Set-Cookie: MONI_ID=".$ticket.'.'.$this->id.'; expires='.gmdate('l, d-M-Y H:i:s',time()+60*60*24*30).' GMT; Path='.$path;
   }
 
   function unsetCookie() {
      # set the fake cookie
      $_COOKIE['MONI_ID']="Anonymous";
-     return "Set-Cookie: MONI_ID=".$this->id."; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname();
+
+     # check safari
+     $path=strpos($_SERVER['HTTP_USER_AGENT'],'Safari')===false ?
+       get_scriptname():'/';
+     return "Set-Cookie: MONI_ID=".$this->id."; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".$path;
   }
 
   function setPasswd($passwd,$passwd2="",$rawmode=0) {
