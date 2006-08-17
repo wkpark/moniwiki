@@ -3,6 +3,13 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a atom action plugin for the MoniWiki
 //
+// Date: 2006-08-15
+// Name: Atom feeder
+// Description: Atom Plugin
+// URL: MoniWiki:AtomPlugin
+// Version: $Revision$
+// License: GPL
+//
 // $Id$
 // $orig Id: rss_rc.php,v 1.12 2005/09/13 09:10:52 wkpark Exp $
 

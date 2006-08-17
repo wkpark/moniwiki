@@ -3,6 +3,13 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a Rating plugin for the MoniWiki
 //
+// Date: 2006-08-16
+// Name: Rating
+// Description: Rating Plugin
+// URL: MoniWiki:RatingPlugin
+// Version: $Revision$
+// License: GPL
+//
 // Usage: [[Rating(totalscore,count)]] or [[Rating(initial score)]]
 //
 // $Id$

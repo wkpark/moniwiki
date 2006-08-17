@@ -3,6 +3,14 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a sample plugin for the MoniWiki
 //
+// Author: Your name <foobar@foo.bar>
+// Date: 2006-01-01
+// Name: Hello world
+// Description: Hello world Plugin
+// URL: to_plugin url/interwiki name etc.
+// Version: $Revision$
+// License: GPL
+//
 // Usage: [[Test]]
 //
 // $Id$
