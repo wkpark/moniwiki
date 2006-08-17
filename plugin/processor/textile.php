@@ -2,7 +2,6 @@
 // slightly modified for MoniWiki by wkpark@kldp.org
 // $Id$
 //
-
 /**
  * class Textile
  *

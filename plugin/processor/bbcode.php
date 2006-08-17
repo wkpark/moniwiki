@@ -7,21 +7,18 @@
 // - with some modification and simley disabled.
 //
 // $Id$
+/**
+ * @author  Soojung http://soojung.kldp.net
+ * @date    2006-01-09
+ * @name    BBCode
+ * @desc    BBCode Procssor
+ * @url     MoniWiki:BBCodeProcessor
+ * @version $Revision$
+ * @depend  1.1.3
+ * @license GPL
+ */
 
 class processor_bbcode {
-
-  function info() {
-    return array(
-      'author'  => 'Soojung http://soojung.kldp.net',
-      'date'    => '2006-01-09',
-      'name'    => 'BBCode',
-      'desc'    => 'BBCode Procssor',
-      'url'     => 'MoniWiki:BBCodeProcessor',
-      'version' => substr('$Revision$',1,-1),
-      'depend'  => '1.1.3',
-      'license' => 'GPL',
-    );
-  }
 
   function __listing($mode, $str) {
     $str=str_replace("\\'","'",$str);

@@ -3,9 +3,18 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a sample plugin for the MoniWiki
 //
+// Author: Your name <foobar@foo.bar>
+// Date: 2006-01-01
+// Name: Hello world2
+// Description: Hello world2 Processor
+// URL: to_plugin url/interwiki name etc.
+// Version: $Revision$
+// License: GPL
+//
 // Usage: {{{#!chat ID @date@ title
 // Hello World
 // }}}
+//
 // $Id$
 
 function processor_chat($formatter,$value="") {
@@ -27,6 +36,7 @@ function processor_chat($formatter,$value="") {
 
     $src= $value;
 
+    $formatter->set_wordrule();
     if ($src) {
         $options['nosisters']=1;
         ob_start();
