@@ -230,6 +230,8 @@ function do_Blog($formatter,$options) {
       $extra='<div style="text-align:right">'.'
         <input type="submit" name="button_refresh" value="Refresh" /></div>';
 
+    if ($options['value'])
+      print "<a name='BlogComment'></a>";
     print "<form method='post' action='$url'>\n";
     if ($options['id'] == 'Anonymous')
       print '<b>'._("Name")."</b>: <input name='name' size='15' maxlength='15' value='$options[name]' />\n";

@@ -92,7 +92,7 @@ function processor_blog($formatter,$value="",$options) {
     else $counter='';
 
     if (!$options['noaction'] and $md5sum) {
-      $action= $formatter->link_tag($formatter->page->urlname,"?action=blog&amp;value=$md5sum",$add_button);
+      $action= $formatter->link_tag($formatter->page->urlname,"?action=blog&amp;value=$md5sum#BlogComment",$add_button);
       if (getPlugin('SendPing'))
         $action.= ' | '.$formatter->link_tag($formatter->page->urlname,"?action=trackback&amp;value=$md5sum",_("track back").$counter);
     }

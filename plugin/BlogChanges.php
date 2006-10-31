@@ -412,7 +412,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
         } else
           $add_button=_("Add comment");
         $add_button=sprintf($add_button,$commentcount);
-        $btn= $formatter->link_tag(_urlencode($page),"?action=blog&amp;value=$tag",$add_button);
+        $btn= $formatter->link_tag(_urlencode($page),"?action=blog&amp;value=$tag#BlogComment",$add_button);
 
         if ($DBInfo->use_trackback) {
           if (isset($trackback_list[$page][$tag]))

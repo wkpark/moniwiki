@@ -167,7 +167,7 @@ function generate_item($formatter, $log)
   <pubDate>$pubDate</pubDate>
   <author>$user</author>
   <category domain="$url">$page</category>
-  <comments><![CDATA[$url?action=blog&value=$tag]]></comments>
+  <comments><![CDATA[$url?action=blog&value=$tag#BlogComment]]></comments>
 </item>
 
 ITEM;
