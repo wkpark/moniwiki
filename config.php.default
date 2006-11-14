@@ -172,7 +172,7 @@ $use_errlog=1;
 #$raw_errlog=0; # do not hide some dir. infos.
 #$acl_type='default'; # XXX
 #$acl_debug=1;
-#$read_control=1; # control read action also
+#$control_read=1; # control read action also
 #$use_macro_as_action=0; # XXX warn
 #$isbn_img_download=1; # download isbn images to local cache dir.
 #$use_clipmacro=1; # use clip applet with AttachmentMacro
@@ -185,4 +185,5 @@ $use_save_refresh=2;
 #$cache_public_dir='./_cache'; # enhanced caching
 #$no_404=1; # for IIS
 #$nofancy_404=1; # simplified 404 msg for robots etc.
+#$toolbar_iconset='mediawiki'; # change the toolbar iconset 
 ?>
