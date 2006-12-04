@@ -8,6 +8,9 @@
 function do_print($formatter,$options) {
   global $DBInfo;
   $options['css_url']=$DBInfo->url_prefix."/css/print.css";
+
+  $formatter->nonexists='simple';
+
   $formatter->send_header("",$options);
   print "<div id='printHeader'>";
   print "<h2>$options[page]</h2>";
