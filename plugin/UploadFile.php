@@ -166,9 +166,9 @@ function do_uploadfile($formatter,$options) {
 
   $fullname=$formatter->page->name."/$upfilename";
   $upname=$upfilename;
-  if (strpos($fullname,' ')!==false);
+  if (strpos($fullname,' ')!==false)
     $fullname='"'.$fullname.'"';
-  if (strpos($upname,' ')!==false);
+  if (strpos($upname,' ')!==false)
     $upname='"'.$upname.'"';
 
   if ($key == 'UploadFile') {
