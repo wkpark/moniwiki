@@ -1,0 +1,82 @@
+/* SWFUpload CSS */
+		
+#filesDisplay {
+	padding-left: 10px;
+	background: #f9f9f9;
+	border: 1px solid #f3f3f3;
+	/* display: none; */
+	min-height:13px;
+	min-width:200px;
+	vertical-align: top;
+}
+
+#filePreview {
+	width:100px;
+	min-height: 13px;
+	border: 1px solid #f3f3f3;
+}
+
+.fileList td {
+	vertical-align: top;
+}
+
+.fileList input {
+	vertical-align: middle;
+}
+		
+#SWFUpload {
+	margin-left: 20px;
+}
+		
+#mmUploadFileListing {
+	margin: 0;
+	padding: 0;
+}
+		
+#mmUploadFileListing li {
+	margin: 0 0 0px 0;
+	/* border-bottom: 1px solid #f3f3f3; /* */
+/*
+	display: block;
+	float: left;
+	width: 150px;
+*/
+        list-style-image: none;
+	list-style-type: none;
+	font-size: 11px;
+}
+
+.uploading { color: #CCC; }
+.uploadDone { color: #000; }
+.uploading a, .uploading a:hover { color: #CCC; }
+
+span.progressBar {
+	width: 100px;
+	/* display: block; */
+	background-color: red;
+	font-size: 10px;
+	height: 4px;
+	margin-top: 4px;
+}
+#fileProgressInfo {
+	width:100px;
+	min-height: 14px;
+	font-size:8px;
+	font-weight:bold;
+}
+
+a.SWFUploadLink {
+	width: 300px;
+      	height: 100px;
+      	background: url(images/custom_button.png) no-repeat;
+      	display: block;
+	border: 1px solid #f3f3f3;
+}
+    
+a.SWFUploadLink:hover {
+	background: url(images/custom_button_over.png) no-repeat;
+}
+
+/*
+ * vim:et:sts=2:sw
+ */
