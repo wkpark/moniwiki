@@ -158,6 +158,10 @@ if (!function_exists ('bindtextdomain')) {
   }
 }
 
+function _t ($text) {
+  return gettext($text);
+}
+
 function goto_form($action,$type="",$form="") {
   if ($type==1) {
     return "
@@ -401,7 +405,8 @@ class MetaDB_text extends MetaDB {
   function MetaDB_text($file) {
     $lines=file($file);
     foreach ($lines as $line) {
-      if ($line[0]=='#' or !trim($line)) continue;
+      $line=trim($line);
+      if ($line[0]=='#' or !$line) continue;
       # support three types of aliases
       #
       # dest<alias1,alias2,...
@@ -409,14 +414,14 @@ class MetaDB_text extends MetaDB {
       # alias>dest1,dest2,dest3,...
       #
       if (($p=strpos($line,'>')) !== false) {
-        list($key,$list)=explode('>',trim($line),2);
+        list($key,$list)=explode('>',$line,2);
         $this->db[$key]=$list;
       } else {
         if (($p=strpos($line,'<')) !== false) {
-          list($val,$keys)=explode('<',trim($line),2);
+          list($val,$keys)=explode('<',$line,2);
           $keys=explode(',',$keys);
         } else {
-          $keys=explode(',',trim($line));
+          $keys=explode(',',$line);
           $val=array_shift($keys);
         }
 
@@ -1739,6 +1744,7 @@ class Formatter {
 
     #$punct="<\"\'}\]\|;,\.\!";
     $punct="<\'}\]\)\|;\.\!"; # , is omitted for the WikiPedia
+    #$punct="<\'}\]\|;\.\!"; # , is omitted for the WikiPedia
     $url="wiki|http|https|ftp|nntp|news|irc|telnet|mailto|file|attachment";
     if ($DBInfo->url_schemas) $url.='|'.$DBInfo->url_schemas;
     $this->urls=$url;
@@ -4278,6 +4284,11 @@ function wiki_main($options) {
     } else {
       $value=$_POST['value'];
       $action=$_POST['action'] ? $_POST['action']:$action;
+      if (!$action) $dum=explode('----',$pagename,3);
+      if ($dum[0] && $dum[1]) {
+        $pagename=$dum[0];
+        $action=$dum[1];
+      }
     }
     $goto=$_POST['goto'];
   } else if ($_SERVER['REQUEST_METHOD']=="GET") {
