@@ -8,7 +8,7 @@ function do_uploadfile($formatter,$options) {
   global $DBInfo;
 
   $files=array();
-  if (is_array($_FILES)) {
+  if (isset($_FILES['upfile']) and is_array($_FILES)) {
     if (($options['multiform'] > 1) or is_array($_FILES['upfile']['name'])) {
       $options['multiform']=$options['multiform'] ?
          $options['multiform']:sizeof($_FILES['upfile']['name']);
@@ -21,6 +21,16 @@ function do_uploadfile($formatter,$options) {
       $files['upfile']['tmp_name'][]=&$_FILES['upfile']['tmp_name'];
       $options['rename']=array($options['rename']);
       $options['replace']=array($options['replace']);
+    }
+  } else if (is_array($options['MYFILES'])) { // for SWFUpload action
+    $count=sizeof($options['MYFILES']);
+    $MYFILES=&$options['MYFILES'];
+    for ($i=0;$i<$count;$i++) {
+      $myname=$MYFILES[$i];
+      $files['upfile']['name'][]=$myname;
+      $files['upfile']['tmp_name'][]=$DBInfo->upload_dir.'/_swfupload/'.$myname; // XXX
+      $files['rename'][]='';
+      $files['replace'][]='';
     }
   }
 
