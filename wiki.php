@@ -4288,6 +4288,7 @@ function wiki_main($options) {
       if ($dum[0] && $dum[1]) {
         $pagename=$dum[0];
         $action=$dum[1];
+        $value=$dum[2] ? $dum[2]:'';
       }
     }
     $goto=$_POST['goto'];
@@ -4592,6 +4593,12 @@ $lang= set_locale($DBInfo->lang,$DBInfo->charset);
 init_locale($lang);
 init_requests($options);
 $DBInfo->lang=$lang;
+
+if (session_id()== '' && !$DBInfo->nosession){
+  session_name("MONIWIKI");
+  session_start();
+}
+
 wiki_main($options);
 endif;
 // vim:et:sts=2:
