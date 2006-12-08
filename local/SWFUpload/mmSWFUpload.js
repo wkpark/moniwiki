@@ -22,16 +22,19 @@ mmSWFUpload = {
 	init: function(settings) {
 	
 		this.settings = settings;
-		this._prefix="./jscripts";
-		
+		if (this.settings["_prefix"]) {
+                        this._prefix=this.settings["_prefix"] + "/local";
+		} else if (_url_prefix) { // for MoniWiki
+			this._prefix=_url_prefix + "/local";
+		} else {
+			this._prefix= "./jscripts";
+		}
+
 		// Remove background flicker in IE
 		try {
 		  document.execCommand('BackgroundImageCache', false, true);
 		} catch(e) {}
 
-		if (this.settings["_prefix"]) {
-			this._prefix=this.settings["_prefix"];
-		}
 		// Create SWFObject
 		var so = new SWFObject(this._prefix + "/SWFUpload/upload.swf", "_mmSWFUploadField", "1px", "1px", this.addSetting("flash_version", "8"), "#000000");
 			
@@ -63,7 +66,6 @@ mmSWFUpload = {
 			
 			link.style.display = "block";
 			swfc.appendChild(link);
-	
 		}
 		
 		if(this.settings["debug"] == true) {
