@@ -18,7 +18,55 @@
 function macro_SWFUpload($formatter,$value) {
     global $DBInfo;
 
+    if ($myid=session_id()) {
+        if ($DBInfo->swfupload_depth > 2) {
+            $depth=$DBInfo->swfupload_depth;
+        } else {
+            $depth=2;
+        }
+        $prefix=substr($myid,0,$depth);
+        $mysubdir=$prefix.'/'.$myid.'/';
+        $myoptions="<input type='hidden' name='mysubdir' value='$mysubdir' />";
+    }
+
+    if ($DBInfo->use_lightbox) {
+        $myoptions.="\n<input type='hidden' name='use_lightbox' value='1' />";
+    }
+
+    if ($formatter->preview) {
+        $js_tag=1;$jsPreview=' class="previewTag"';
+        $uploader='UploadForm';
+    } else if ($options['preview']) {
+        $jsPreview=' class="previewTag"';
+    }
+
+    $default_allowed='*.gif;*.jpg;*.png;*.psd';
+    $allowed=$default_allowed;
+    if ($DBInfo->pds_allowed) {
+        $allowed='*.'.str_replace('|',';*.',$DBInfo->pds_allowed);
+    }
+
     $swfupload_scrpit=$GLOBALS['swf_script'] ? 1:0;
+
+    // get already uploaded files list
+    $uploaded='';
+    if (is_dir($DBInfo->upload_dir.'/_swfupload/'.$mysubdir)) {
+        $mydir=$DBInfo->upload_dir.'/_swfupload/'.$mysubdir;
+        $handle = opendir($mydir);
+        if ($handle) {
+            $files=array();
+            while ($file = readdir($handle)) {
+                if (is_dir($mydir.$file) or $file[0]=='.') continue;
+                $files[] = $file;
+            }
+            closedir($handle);
+
+            foreach ($files as $f) {
+                $uploaded.="<li id='$f'><input checked=\"checked\" type=\"checkbox\">".
+                    "<a href='javascript:showImgPreview(\"$f\")'>$f</a></li>";
+            }
+        }
+    }
 
     if (!$swfupload_script) {
         $swfupload_script=<<<EOS
@@ -38,7 +86,9 @@ CSS;
     $prefix=qualifiedUrl($DBInfo->url_prefix.'/local');
     $action=$formatter->link_url($formatter->page->urlname);
     $action2=$action.'----swfupload';
+    if ($mysubdir) $action2.='----'.$mysubdir;
     $action2=qualifiedUrl($action2);
+    $myprefix=qualifiedUrl($DBInfo->url_prefix);
     $form=<<<EOF
 	<div id="SWFUpload">
 		<form action="" onsubmit="return false;">
@@ -46,22 +96,24 @@ CSS;
 			<input type="submit" value="Upload" onclick="javascript:alert('disabled...'); return false;" />
 		</form>
 	</div>
-			
-	<script type="text/javascript">
+
+        <script type="text/javascript">
+        /*<![CDATA[*/
 		mmSWFUpload.init({
-			// debug : true,
+			//debug : true,
 			upload_backend : "$action2",
 			target : "SWFUpload",
 			// cssClass : "myCustomClass",
-			_prefix : "$prefix",
+			_prefix : "$myprefix",
 			allowed_filesize : "40000",
-			allowed_filetypes : "*.gif;*.jpg;*.png;*.psd",
+			allowed_filetypes : "$allowed",
 			upload_start_callback : 'uploadStart',
 			upload_progress_callback : 'uploadProgress',
 			upload_complete_callback : 'uploadComplete',
 			// upload_error_callback : 'uploadError',
-			upload_cancel_callback : 'uploadCancel'
-		});
+                        upload_cancel_callback : 'uploadCancel'
+                });
+        /*]]>*/
 	</script>
 
 	<div class="fileList">
@@ -73,9 +125,10 @@ CSS;
 	<td>
 	<div id="filesDisplay">
                 <form method='POST' action='$action'>
-		<ul id="mmUploadFileListing"></ul>
+		<ul id="mmUploadFileListing">$uploaded</ul>
 		<span id="fileButton">
                 <input type='hidden' name='action' value='swfupload' />
+                $myoptions
 		<input type='button' value="$btn" onclick='javascript:mmSWFUpload.callSWF();' />
 		<input type='submit' value="$btn2" onclick='javascript:fileSubmit(this);' />
 		</span>
@@ -83,7 +136,7 @@ CSS;
 	</div>
 	</td>
 	<td>
-	<div id="filePreview">
+	<div id="filePreview"$jsPreview>
 	</div>
 	</td></tr>
 	</table>
@@ -96,15 +149,52 @@ EOF;
 function do_SWFUpload($formatter,$options=array()) {
     global $DBInfo;
 
-    $dir=$DBInfo->upload_dir.'/_swfupload'; // XXX
-    if(!is_dir($dir)) mkdir($dir, 0755);
+    $swfupload_dir=$DBInfo->upload_dir.'/_swfupload';
+    $mysubdir='';
+    if(!is_dir($swfupload_dir)) {
+        $om=umask(000);
+        mkdir($swfupload_dir, 0777);
+        umask($om);
+
+        $fp=fopen($swfupload_dir.'/.htaccess','w');
+        if ($fp) {
+            $htaccess=<<<EOF
+Options -Indexes
+Order deny,allow\n
+EOF;
+            fwrite($fp,$htaccess);
+            fclose($fp);
+        }
+    }
+
+    // set the personal subdir
+    if ($options['value'] and preg_match('/^[a-f0-9\/]+$/i',$options['value'])) {
+        $mysubdir=$options['value'];
+
+        if(!is_dir($swfupload_dir.'/'.$mysubdir)) {
+            $om=umask(000);
+            _mkdir_p($swfupload_dir.'/'.$mysubdir, 0777);
+            umask($om);
+        }
+    }
+
+    // debug
+    //$fp=fopen('/var/tmp/swflog.txt','w+');
+    //foreach ($options as $k=>$v) {
+    //    fwrite($fp,sprintf("%s=>%s\n",$k,$v));
+    //}
+    //fclose($fp);
+
     //move the uploaded file
     if (isset($_FILES['Filedata']['tmp_name'])) {
-        move_uploaded_file($_FILES['Filedata']['tmp_name'], $dir.'/'.$_FILES['Filedata']['name']);
+        move_uploaded_file($_FILES['Filedata']['tmp_name'],
+            $swfupload_dir.'/'.$mysubdir.$_FILES['Filedata']['name']);
         return;
     } else if (is_array($options['MYFILES'])) {
         include_once('plugin/UploadFile.php');
 
+        $options['_pds_subdir']=$mysubdir; // a temporary pds dir
+        $options['_pds_remove']=1; // remove all files in pds dir
         do_UploadFile($formatter,$options);
     } else {
         echo "Error";
