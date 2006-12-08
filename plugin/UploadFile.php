@@ -25,10 +25,11 @@ function do_uploadfile($formatter,$options) {
   } else if (is_array($options['MYFILES'])) { // for SWFUpload action
     $count=sizeof($options['MYFILES']);
     $MYFILES=&$options['MYFILES'];
+    $mysubdir=$options['mysubdir'];
     for ($i=0;$i<$count;$i++) {
       $myname=$MYFILES[$i];
       $files['upfile']['name'][]=$myname;
-      $files['upfile']['tmp_name'][]=$DBInfo->upload_dir.'/_swfupload/'.$myname; // XXX
+      $files['upfile']['tmp_name'][]=$DBInfo->upload_dir.'/_swfupload/'.$mysubdir.$myname; // XXX
       $files['rename'][]='';
       $files['replace'][]='';
     }
@@ -160,6 +161,7 @@ function do_uploadfile($formatter,$options) {
   } else {
     $test=@copy($upfile, $newfile_path);
   }
+  @unlink($upfile);
   if (!$test) {
     $msg.=sprintf(_("Fail to copy \"%s\" to \"%s\""),$upfilename,$file_path);
     $msg.='<br />'._("Please check your php.ini setting");
@@ -216,6 +218,9 @@ function do_uploadfile($formatter,$options) {
     print $msg;
   }
   $formatter->send_footer();
+
+  if (is_array($options['MYFILES']))
+    session_destroy();
 }
 
 function macro_UploadFile($formatter,$value='',$options='') {

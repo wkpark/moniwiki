@@ -42,6 +42,9 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
      $use_preview=1;
    }
 
+   if ($DBInfo->use_lightbox and !$js_tag)
+     $href_attr=' rel="lightbox[upload]" ';
+
    if ($options['tag']) { # javascript tag mode
      $js_tag=1;$use_preview=1;
    }
@@ -287,7 +290,7 @@ EOS;
           $link="javascript:$tag";
         }
       }
-      $out.="<tr><td class='wiki'><input type='$checkbox' name='files[$idx]' value='$file' /></td><td class='wiki'><a href=\"$link\"$attr>$fname</a></td><td align='right' class='wiki'>$size</td><td class='wiki'>$date</td></tr>\n";
+      $out.="<tr><td class='wiki'><input type='$checkbox' name='files[$idx]' value='$file' /></td><td class='wiki'><a href=\"$link\"$attr$href_attr>$fname</a></td><td align='right' class='wiki'>$size</td><td class='wiki'>$date</td></tr>\n";
       $idx++;
    }
    $idx--;
