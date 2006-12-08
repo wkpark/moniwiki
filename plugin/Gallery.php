@@ -67,6 +67,11 @@ function macro_Gallery($formatter,$value,&$options) {
   $sort=$options['sort'] ? $options['sort']:'';
   $nocomment=$options['nocomment'] ? $options['nocomment']:'';
 
+  if ($DBInfo->gallery_use_lightbox and $DBInfo->use_lightbox) {
+    $use_lightbox=1;
+    $href_attr=' rel="lightbox[gallery]" ';
+  }
+
   // parse args
   preg_match("/^(('|\")([^\\2]+)\\2)?,?(\s*,?\s*.*)?$/",
     $value,$match);
@@ -261,25 +266,34 @@ function macro_Gallery($formatter,$value,&$options) {
     $id=rawurlencode($file);
     $linksrc=($key == $value) ? $prefix.$id:
       str_replace('value=','value='.$id,$prefix);
-    $link=$selected ? $linksrc:$formatter->link_url($formatter->page->urlname,"?action=gallery$extra&amp;value=$id");
+    $link=($selected or $use_lightbox) ? $linksrc:$formatter->link_url($formatter->page->urlname,"?action=gallery$extra&amp;value=$id");
     $date=date("Y-m-d",$mtime);
     if (preg_match("/\.(jpg|jpeg|gif|png)$/i",$file)) {
       if ($DBInfo->use_convert_thumbs and !file_exists($dir."/thumbnails/".$file)) {
-        if (function_exists('imagecopyresized')) {
+        if (function_exists('gd_info')) {
           $fname=$dir.'/'.$file;
           list($w, $h) = getimagesize($fname);
           if ($w > $width) {
             $nh=$width*$h/$w;
             $thumb= imagecreatetruecolor($width,$nh);
             // XXX only jpeg for testing now.
-            $source= imagecreatefromjpeg($fname);
+            if (preg_match("/\.(jpg|jpeg)$/i",$file))
+              $imgtype= 'jpeg';
+            else if (preg_match("/\.png$/i",$file))
+              $imgtype= 'png';
+            else if (preg_match("/\.gif$/i",$file))
+              $imgtype= 'gif';
+
+            $myfunc='imagecreatefrom'.$imgtype;
+            $source= $myfunc($fname);
             imagecopyresized($thumb, $source, 0,0,0,0, $width, $nh, $w, $h);
-            imagejpeg ($thumb, $dir.'/thumbnails/'.$file);
+            $myfunc='image'.$imgtype;
+            $myfunc($thumb, $dir.'/thumbnails/'.$file);
           }
         } else {
           $fp=popen("convert -scale ".$width." ".$dir."/".$file." ".$dir."/thumbnails/".$file.
-          $formatter->NULL);
-          pclose($fp);
+          $formatter->NULL,'r');
+          @pclose($fp);
         }
       }
       if (!$selected and file_exists($dir."/thumbnails/".$file)) {
@@ -329,7 +343,7 @@ function macro_Gallery($formatter,$value,&$options) {
       }
       $comment=str_replace("\\n","<br/>\n",$comment);
     }
-    $out.="<td $col_td_width align='center' valign='top'>$top_link<div class='$img_class' $img_style><a href='$link'>$object</a><br />".$imginfo;
+    $out.="<td $col_td_width align='center' valign='top'>$top_link<div class='$img_class' $img_style><a href='$link'$href_attr>$object</a><br />".$imginfo;
     if ($comment_btn)
       $out.='['.$formatter->link_tag($formatter->page->urlname,"?action=gallery&amp;value=$id",$comment_btn)."]<br />\n";
     $out.='</div>'.$bot_link;
