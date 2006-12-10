@@ -63,10 +63,10 @@ function setSound(id,surl) {
     node.setAttribute('src',surl);
     node.setAttribute('id',id);
     node.setAttribute('autostart','false');
-    node.setAttribute('style','visibility:hidden');
+    //node.setAttribute('style','visibility:hidden');
     node.setAttribute('loop','false');
-    node.setAttribute('height','1px');
-    node.setAttribute('width','1px');
+    node.setAttribute('height','0px');
+    node.setAttribute('width','0px');
     sound.insertBefore(node,sound.firstChild);
 }
 
