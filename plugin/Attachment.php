@@ -49,6 +49,7 @@ function macro_Attachment($formatter,$value,$option='') {
     $value=str_replace('%20',' ',$value);
   }
 
+  $lightbox_attr='';
   if (($dummy=strpos($value,'?'))) {
     # for attachment: syntax
     parse_str(substr($value,$dummy+1),$attrs);
@@ -57,8 +58,12 @@ function macro_Attachment($formatter,$value,$option='') {
       if ($name=='action') {
         if ($val == 'deletefile') $extra_action=$val;
         else $mydownload=$val;
-      } else
+      } else {
         $attr.="$name=\"$val\" ";
+        if (in_array($name,array('width','height')) and $DBInfo->use_lightbox) {
+          $lightbox_attr=' rel="lightbox" ';
+        }
+      }
     }
 
     if ($attrs['align']) $attr.='class="img'.ucfirst($attrs['align']).'" ';
@@ -69,6 +74,8 @@ function macro_Attachment($formatter,$value,$option='') {
     foreach ($args as $arg)
       $attr.="$arg ";
   }
+
+  $attr.=$lightbox_attr;
 
   if (($p=strpos($value,':')) !== false or ($p=strpos($value,'/')) !== false) {
     $subpage=substr($value,0,$p);
