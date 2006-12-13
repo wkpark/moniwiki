@@ -115,6 +115,32 @@ proto.get_edit_iframe = function() {
     return iframe;
 }
 
+proto.apply_inline_stylesheet = function(style, head) {
+    var style_string = "";
+    for ( var i = 0 ; i < style.cssRules.length ; i++ ) {
+        if ( style.cssRules[i].type == 3 ) {
+            // IMPORT_RULE
+
+            /* It's pretty strange that this doesnt work.
+               That's why Ajax.get() is used to retrive the css text.
+
+            this.apply_linked_stylesheet({
+                href: style.cssRules[i].href,
+                type: 'text/css'
+            }, head);
+            */
+
+            style_string += HTTPGet(style.cssRules[i].href);
+        } else {
+            style_string += style.cssRules[i].cssText + "\n";
+        }
+    }
+    if (style_string.length > 0) {
+        style_string += "\nbody { padding: 5px; }\n";
+        this.append_inline_style_element(style_string, head);
+    }
+}
+
 proto.enableThis = function() {
     Wikiwyg.Mode.prototype.enableThis.call(this);
     this.edit_iframe.style.border = '1px black solid';
@@ -667,8 +693,7 @@ proto.href_is_wiki_link = function(href) {
 
 proto.convertWikitextToHtml = function(wikitext, func) {
     var postdata = 'action=markup&value=' + encodeURIComponent(wikitext);
-    Wikiwyg.liveUpdate(
-        'POST',
+    HTTPPost(
         self.location,
         postdata,
         func);
@@ -676,8 +701,7 @@ proto.convertWikitextToHtml = function(wikitext, func) {
 
 proto.convertWikitextToHtmlAll = function(wikitext, func) {
     var postdata = 'action=markup&all=1&value=' + encodeURIComponent(wikitext);
-    Wikiwyg.liveUpdate(
-        'POST',
+    HTTPPost(
         self.location,
         postdata,
         func);
