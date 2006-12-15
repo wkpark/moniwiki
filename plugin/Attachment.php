@@ -3,6 +3,14 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a Attachment macro plugin for the MoniWiki
 //
+// Date: 2006-12-15
+// Name: Attachment
+// Description: Attachment Plugin
+// URL: MoniWiki:AttachmentPlugin
+// Version: $Revision$
+// Depend: 1.1.3
+// License: GPL
+//
 // Usage: [[Attachment(filename)]]
 //
 // $Id$
@@ -17,6 +25,11 @@ function macro_Attachment($formatter,$value,$option='') {
   $extra_action='';
 
   $text='';
+
+  if ($formatter->wikimarkup and !$options['nomarkup']) {
+    $bra= "<span class='wikiMarkup'><!-- wiki:\nattachment:$value\n-->";
+    $ket= '</span>';
+  }
 
   if (($p=strpos($value,' ')) !== false) {
     // [attachment:my.ext hello]
@@ -96,7 +109,7 @@ function macro_Attachment($formatter,$value,$option='') {
     $file=$value;
   }
   // check file name XXX
-  if (!$file) return 'attachment:/';
+  if (!$file) return $bra.'attachment:/'.$ket;
 
   $upload_file=$dir.'/'.$file;
   if ($option == 1) return $upload_file;
@@ -115,14 +128,14 @@ function macro_Attachment($formatter,$value,$option='') {
         $img="<a href='$url'>$img</a>";
       }
       
-      return "<span class=\"imgAttach\">$img</span>";
+      return $bra."<span class=\"imgAttach\">$img</span>".$ket;
     } else {
       $mydownload= $extra_action ? $extra_action:$mydownload;
       $link=$formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=".urlencode($value),$text);
       if ($img_link)
-        return "<span class=\"attach\"><a href='$link'>$img_link</a></span>";
+        return $bra."<span class=\"attach\"><a href='$link'>$img_link</a></span>".$ket;
 
-      return "<span class=\"attach\"><img align='middle' src='$DBInfo->imgs_dir_interwiki".'uploads-16.png\' /><a href="'.$link.'">'.$text.'</a></span>';
+      return $bra."<span class=\"attach\"><img align='middle' src='$DBInfo->imgs_dir_interwiki".'uploads-16.png\' /><a href="'.$link.'">'.$text.'</a></span>'.$ket;
     }
   }
 
@@ -133,10 +146,10 @@ function macro_Attachment($formatter,$value,$option='') {
     $paste=" <a href='$url'>"._("or paste a new picture")."</a>";
   }
   if ($pagename == $formatter->page->name)
-    return '<span class="attach">'.$formatter->link_to("?action=UploadFile&amp;rename=".urlencode($file),sprintf(_("Upload new Attachment \"%s\""),$file)).$paste.'</span>';
+    return $bra.'<span class="attach">'.$formatter->link_to("?action=UploadFile&amp;rename=".urlencode($file),sprintf(_("Upload new Attachment \"%s\""),$file)).$paste.'</span>'.$ket;
 
   if (!$pagename) $pagename='UploadFile';
-  return '<span class="attach">'.$formatter->link_tag($pagename,"?action=UploadFile&amp;rename=".urlencode($file),sprintf(_("Upload new Attachment \"%s\" on the \"%s\""),$file, $pagename)).$paste.'</span>';
+  return $bra.'<span class="attach">'.$formatter->link_tag($pagename,"?action=UploadFile&amp;rename=".urlencode($file),sprintf(_("Upload new Attachment \"%s\" on the \"%s\""),$file, $pagename)).$paste.'</span>'.$ket;
 }
 
 // vim:et:sts=2:
