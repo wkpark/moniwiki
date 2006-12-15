@@ -1,8 +1,7 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2006 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a UploadedFiles plugin for the MoniWiki
-// vim:et:sts=4:
 //
 // $Id$
 
@@ -78,8 +77,40 @@ function insertTags(tagOpen,tagClose,myText,replaced)
     var areas = document.getElementsByTagName('textarea');
     if (areas.length > 0) {
         var txtarea = areas[0];
-    } else if (opener.document.$form.savetext) {
-        var txtarea = opener.document.$form.savetext;
+    } else {
+        // WikiWyg support
+        var wikiwyg_area=opener.document.getElementById('wikiwyg_wikitext_textarea');
+        if (opener.document.$form && opener.document.$form.savetext) {
+            var txtarea = opener.document.$form.savetext;
+        } else if (wikiwyg_area) {
+            //
+            var myWikiwyg = new opener.Wikiwyg.Wikitext();
+            var wikitext;
+            var i=0;
+
+            //for (i=0;i<opener.wikiwygs.length;i++) {
+                var my = opener.wikiwygs[i];
+
+                my.current_mode.toHtml( function(html) { my.fromHtml(html) });
+
+                if (my.current_mode.classname.match(/(Wysiwyg|HTML|Preview)/)) {
+                    my.current_mode.fromHtml(my.div.innerHTML);
+
+                    wikitext = myWikiwyg.convert_html_to_wikitext(my.div.innerHTML);
+
+                    var tmp= tagOpen + myText + tagClose;
+                    var html= myWikiwyg.convertWikitextToHtml(tmp,
+                        function(nhtml) { my.current_mode.insert_table(nhtml); });
+                    opener.focus(); // XXX
+                    return;
+                } else {
+                    wikitext = my.current_mode.textarea.value;
+                }
+            //}
+            // XXX
+            wikiwyg_area.value = wikitext;
+            txtarea=wikiwyg_area;
+        }
     }
   }
 
@@ -208,7 +239,7 @@ EOS;
    $out.="<input type='hidden' name='action' value='DeleteFile' />\n";
    if ($key)
      $out.="<input type='hidden' name='value' value='$value' />\n";
-   $out.="<table border='0' cellpadding='2'>\n";
+   $out.="<table style='border:0' cellpadding='2'>\n";
    $out.="<tr><th colspan='2'>File name</th><th>Size</th><th>Date</th></tr>\n";
    $idx=1;
 
@@ -231,7 +262,8 @@ EOS;
         $attr=' target="_blank"';
         $extra='&amp;tag=1';
       }
-      $link=$formatter->link_tag('UploadFile',"?action=uploadedfiles&amp;value=top$extra","..",$attr);
+      $link=$formatter->link_tag('UploadFile',"?action=uploadedfiles&amp;value=top$extra",
+        "<img src='".$icon_dir."/32/up.png' style='border:0' class='upper' alt='..' />",$attr);
       $date=date("Y-m-d",filemtime($dir."/.."));
       $out.="<tr><td class='wiki'>&nbsp;</td><td class='wiki'>$link</td><td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td></tr>\n";
    }
@@ -269,11 +301,11 @@ EOS;
         $tag_open='attachment:'; $tag_close='';
         if ($opener != $value)
             $tag_open.=$opener;
-        $alt="alt='$tag_open$file$tag_close'";
+        $alt="alt='$tag_open$file$tag_close' title='$file'";
         preg_match("/\.(.{1,4})$/",$fname,$m);
         $ext=strtolower($m[1]);
         if ($ext and stristr('gif,png,jpeg,jpg',$ext)) {
-          $fname="<img src='$link' width='$preview_width' $alt />";
+          $fname="<img src='$link' class='icon' width='$preview_width' $alt />";
         } else {
           if (preg_match('/^(wmv|avi|mpeg|mpg|swf|wav|mp3|ogg|midi|mid|mov)$/',$ext)) {
             $tag_open='[[Media('; $tag_close=')]]';
@@ -282,7 +314,7 @@ EOS;
               'rpm|deb|pdf|ppt|xls|tgz|gz|bz2|zip)$/',$ext)) {
             $ext='unknown';
           }
-          $fname="<img src='$icon_dir/$ext.png' $alt />";
+          $fname="<img src='$icon_dir/$ext.png' class='icon' $alt />";
         }
         if ($js_tag) {
           //if (strpos($file,' '))
@@ -310,4 +342,5 @@ EOS;
    return $js_script.$out;
 }
 
+// vim:et:sw:sts=4:
 ?>
