@@ -50,8 +50,8 @@ function macro_SWFUpload($formatter,$value) {
 
     // get already uploaded files list
     $uploaded='';
-    if (is_dir($DBInfo->upload_dir.'/_swfupload/'.$mysubdir)) {
-        $mydir=$DBInfo->upload_dir.'/_swfupload/'.$mysubdir;
+    if (is_dir($DBInfo->upload_dir.'/.swfupload/'.$mysubdir)) {
+        $mydir=$DBInfo->upload_dir.'/.swfupload/'.$mysubdir;
         $handle = opendir($mydir);
         if ($handle) {
             $files=array();
@@ -149,7 +149,7 @@ EOF;
 function do_SWFUpload($formatter,$options=array()) {
     global $DBInfo;
 
-    $swfupload_dir=$DBInfo->upload_dir.'/_swfupload';
+    $swfupload_dir=$DBInfo->upload_dir.'/.swfupload';
     $mysubdir='';
     if(!is_dir($swfupload_dir)) {
         $om=umask(000);
