@@ -1662,6 +1662,8 @@ class Formatter {
     $this->email_guard=$DBInfo->email_guard;
     $this->interwiki_target=$DBInfo->interwiki_target ?
       ' target="'.$DBInfo->interwiki_target.'"':'';
+    $this->filters=$DBInfo->filters;
+    $this->postfilters=$DBInfo->postfilters;
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -2458,7 +2460,7 @@ class Formatter {
     preg_match("/^([A-Za-z]+)(\((.*)\))?$/",$macro,$match);
     if (!$match) return $this->word_repl($macro);
     $bra='';$ket='';
-    if ($this->wikimarkup and !$options['nomarkup']) {
+    if ($this->wikimarkup and $macro != 'Attachment' and !$options['nomarkup']) {
       $bra= "<span class='wikiMarkup'><!-- wiki:\n[[$macro]]\n-->";
       $ket= '</span>';
     }
@@ -2856,7 +2858,7 @@ class Formatter {
 
       $fts=array();
       if ($pi['#filter']) $fts=preg_split('/(\||,)/',$pi['#filter']);
-      if ($DBInfo->filters) $fts=array_merge($fts,$DBInfo->filters);
+      if ($this->filters) $fts=array_merge($fts,$this->filters);
       if ($fts) {  
         foreach ($fts as $ft) {
           $body=$this->filter_repl($ft,$body,$options);
@@ -3341,7 +3343,7 @@ class Formatter {
     }
     $fts=array();
     if ($pi['#postfilter']) $fts=preg_split('/(\||,)/',$pi['#postfilter']);
-    if ($DBInfo->postfilters) $fts=array_merge($fts,$DBInfo->postfilters);
+    if ($this->postfilters) $fts=array_merge($fts,$this->postfilters);
     if ($fts) {
       foreach ($fts as $ft)
         $text=$this->postfilter_repl($ft,$text,$options);
