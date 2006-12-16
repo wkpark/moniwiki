@@ -8,6 +8,7 @@ function do_uploadfile($formatter,$options) {
   global $DBInfo;
 
   $files=array();
+
   if (isset($_FILES['upfile']) and is_array($_FILES)) {
     if (($options['multiform'] > 1) or is_array($_FILES['upfile']['name'])) {
       $options['multiform']=$options['multiform'] ?
@@ -29,10 +30,31 @@ function do_uploadfile($formatter,$options) {
     for ($i=0;$i<$count;$i++) {
       $myname=$MYFILES[$i];
       $files['upfile']['name'][]=$myname;
-      $files['upfile']['tmp_name'][]=$DBInfo->upload_dir.'/_swfupload/'.$mysubdir.$myname; // XXX
+      $files['upfile']['tmp_name'][]=$DBInfo->upload_dir.'/.swfupload/'.$mysubdir.$myname; // XXX
       $files['rename'][]='';
       $files['replace'][]='';
     }
+  }
+
+  $js='';
+  if ($options['uploadid']) {
+    $js=<<<EOF
+<script type="text/javascript">
+/*<![CDATA[*/
+function delAllForm(id) {
+  var fform = opener.document.getElementById(id);
+
+  if (fform && fform.rows.length) {
+    for (var i=fform.rows.length;i>0;i--) {
+      fform.deleteRow(i-1);
+    }
+  }
+}
+
+delAllForm('$options[uploadid]');
+/*]]>*/
+</script>\n
+EOF;
   }
 
   $ok=0;
@@ -218,6 +240,7 @@ function do_uploadfile($formatter,$options) {
     print $msg;
   }
   $formatter->send_footer();
+  print $js;
 
   if (is_array($options['MYFILES']))
     session_destroy();
