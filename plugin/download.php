@@ -18,6 +18,23 @@ function do_download($formatter,$options) {
   $down_mode=$options['mode']{0}=='a' ? 'attachment':
     ($DBInfo->download_mode ? $DBInfo->download_mode:'inline');
 
+
+  // check acceptable subdirs
+  $acceptable_dirs=array('thumbnails');
+
+  $ifile=explode('/',$options['value']);
+
+  $subdir='';
+  if (count($ifile) > 1) {
+    $subdir=in_array($ifile[count($ifile)-2],$acceptable_dirs) ?
+      $ifile[count($ifile)-2].'/':'';
+
+    if ($subdir) {
+      unset($ifile[count($ifile)-2]);
+      $value=implode('/',$ifile);
+    }
+  }
+
   if (($p=strpos($value,':')) !== false or ($p=strpos($value,'/')) !== false) {
     $subpage=substr($value,0,$p);
     $file=substr($value,$p+1);
@@ -38,7 +55,7 @@ function do_download($formatter,$options) {
   #  // FIXME
   #  return;
   #}
-  $dir=$DBInfo->upload_dir."/$key";
+  $dir=$DBInfo->upload_dir.($key ? "/$key":"");
 
   if (file_exists($dir))
     $handle= opendir($dir);
@@ -46,13 +63,8 @@ function do_download($formatter,$options) {
     $dir=$DBInfo->upload_dir;
     $handle= opendir($dir);
   }
-  $acceptable_dirs=array('thumbnails');
-  $file=explode('/',$options['value']);
-  $subdir='';
-  if (count($file) > 1)
-    $subdir=in_array($file[count($file)-2],$acceptable_dirs) ?
-      $file[count($file)-2].'/':'';
 
+  $file=explode('/',$value);
   $file=$subdir.$file[count($file)-1];
 
   if (!file_exists("$dir/$file")) {
