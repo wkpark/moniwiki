@@ -100,6 +100,29 @@ function fileSubmit(obj) {
     }
 }
 
+function alignImg(obj,val) {
+    var preview = obj.parentNode;
+    var elem = preview.getElementsByTagName("img");
+    var i,j;
+    for (i=0;i<elem.length;i++) {
+        rad=elem[i].className = 'alignImg';
+    }
+
+    obj.className = 'alignImg selected';
+
+    var tag = document.getElementById("insertTag");
+    if (tag) {
+        var href= tag.href;
+        var dum=href.split(/,/);
+        if (val == 'normal') {
+            dum[1]="''";
+        } else {
+            dum[1]="'" + '?align='+val+"'";
+        }
+        tag.href=dum.join(",");
+    }
+}
+
 function showImgPreview(filename) {
     var preview = document.getElementById("filePreview");
     if (!preview) return;
@@ -107,6 +130,7 @@ function showImgPreview(filename) {
     var href_open='',href_close='';
     var jspreview=0;
     var icon_dir = _url_prefix + '/imgs/plugin/UploadedFiles/gnome';
+    var img_dir = _url_prefix + '/local/SWFUpload/images';
     var preview_width='100px';
     var alt='';
     var fname='';
@@ -120,7 +144,7 @@ function showImgPreview(filename) {
 
     mydir = mydir ? mydir:'';
 
-    path = _url_prefix + '/pds/_swfupload/' + mydir + filename;
+    path = _url_prefix + '/pds/.swfupload/' + mydir + filename;
 
     if (preview.className=="previewTag") {
         jspreview=1;
@@ -135,9 +159,18 @@ function showImgPreview(filename) {
     var m=filename.match(/\.(.{1,4})$/);
     var ext=m[1].toLowerCase();
     var isImg=0;
+    var myAlign='';
     if (ext && ext.match(/gif|png|jpeg|jpg|bmp/)) {
         fname="<img src='" + path + "' width='" + preview_width + ' ' + alt + " />";
         isImg=1;
+
+        if (jspreview) {
+            myAlign="<div id='previewAlign'>";
+            myAlign+=" <img src='" + img_dir + "/normal.png' class='alignImg' onclick='javascript:alignImg(this,\"normal\")' />";
+            myAlign+=" <img src='" + img_dir + "/left.png'  class='alignImg' onclick='javascript:alignImg(this,\"left\")' />";
+            myAlign+=" <img src='" + img_dir + "/right.png'  class='alignImg' onclick='javascript:alignImg(this,\"light\")' />";
+            myAlign+="</div>";
+        }
     } else {
         if (ext.match(/^(wmv|avi|mpeg|mpg|swf|wav|mp3|ogg|midi|mid|mov)$/)) {
             tag_open='[[Media('; tag_close=')]]';
@@ -150,16 +183,16 @@ function showImgPreview(filename) {
     if (jspreview) {
         //if (strpos($file,' '))
         link="javascript:insertTags('" + tag_open + "','" +  tag_close + "','" + filename + "',true)";
-        href_open="<a href=\""+ link + "\">";href_close="</a>";
+        href_open="<a id='insertTag' href=\""+ link + "\">";href_close="</a>";
     } else if (isImg && form.use_lightbox.value) {
         var myclick='myLightbox.start(this)';
         if (form.use_lightbox.value == 2) {
             myclick='LightBox._show(1)';
         }
-        href_open="<a href=\""+ path + "\" rel=\"lightbox\" onclick=\"" + myclick + "; return false;\">";href_close="</a>";
+        href_open="<a href=\""+ path + "\" rel=\"lightbox[mmswf]\" onclick=\"" + myclick + "; return false;\">";href_close="</a>";
     }
 
-    preview.innerHTML=href_open + fname + href_close;
+    preview.innerHTML=myAlign + href_open + fname + href_close;
 }
 
 /*
