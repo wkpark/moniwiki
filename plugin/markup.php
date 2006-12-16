@@ -9,6 +9,9 @@ function do_markup($formatter,$options) {
     $formatter->section_edit=0;
     $formatter->sister_on=0;
     $formatter->perma_icon='';
+
+    //$options['fixpath']=1;
+    $formatter->postfilters=array('fiximgpath');
     if (!$options['all']) $formatter->wikimarkup=1;
     if ($options['value']) {
         $formatter->send_page(_stripslashes($options['value']),$options);
