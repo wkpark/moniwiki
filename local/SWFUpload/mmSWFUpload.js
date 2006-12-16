@@ -208,6 +208,7 @@ deconcept.SWFObject.prototype={setAttribute:function(_e,_f){
 	},
 
 	addVariable: function(_13,_14) {
+		_14=escape(_14); // fix Firefox error with urlencoded variables
 		this.variables[_13]=_14;
 	},
 	
