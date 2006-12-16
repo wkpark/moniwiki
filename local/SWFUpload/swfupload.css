@@ -81,6 +81,18 @@ a.SWFUploadLink:hover {
   background: url(images/custom_button_over.png) no-repeat;
 }
 
+.alignImg {
+  border: 2px solid #e0e0e0;
+}
+
+.selected {
+  border: 2px solid #0084c4;
+  background-image: url(images/gray.gif);
+  filter:alpha(opacity=60);
+  -moz-opacity: 0.6;
+  opacity: 0.6;
+}
+
 /*
  * vim:et:sts=2:sw
  */
