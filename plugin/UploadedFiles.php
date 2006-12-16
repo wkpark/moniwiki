@@ -277,12 +277,28 @@ EOS;
    $unit=array('Bytes','KB','MB','GB','TB');
 
    $down_mode=(strpos($prefix,';value=') !== false);
+   $mywidth=$preview_width;
    foreach ($upfiles as $file) {
       if ($down_mode)
         $link=str_replace("value=","value=".rawurlencode($file),$prefix);
       else
         $link=$prefix.rawurlencode($file);
+
+      $previewlink=$link;
       $size=filesize($dir.'/'.$file);
+
+      if ($use_preview > 1) {
+        list($w, $h) = getimagesize($dir.'/'.$file);
+        if ($w <= $preview_width) $mywidth=$w;
+        else $mywidth=$preview_width;
+
+        if (file_exists($dir."/thumbnails/".$file)) {
+          if ($down_mode)
+            $previewlink=str_replace('value=','value=thumbnails/',$previewlink);
+          else
+            $previewlink=$prefix.'thumbnails/'.rawurlencode($file);
+        }
+      }
 
       $i=0;
       for (;$i<4;$i++) {
@@ -305,7 +321,7 @@ EOS;
         preg_match("/\.(.{1,4})$/",$fname,$m);
         $ext=strtolower($m[1]);
         if ($ext and stristr('gif,png,jpeg,jpg',$ext)) {
-          $fname="<img src='$link' class='icon' width='$preview_width' $alt />";
+          $fname="<img src='$previewlink' class='icon' width='$mywidth' $alt />";
         } else {
           if (preg_match('/^(wmv|avi|mpeg|mpg|swf|wav|mp3|ogg|midi|mid|mov)$/',$ext)) {
             $tag_open='[[Media('; $tag_close=')]]';
