@@ -624,7 +624,7 @@ function macro_EditText($formatter,$value,$options='') {
     ob_end_clean();
 
     $editform= macro_Edit($formatter,'nohints,nomenu',$options);
-    $new=str_replace("#editform\n",$editform,$form);
+    $new=str_replace("#editform",$editform,$form); // XXX
     if ($form == $new) $form.=$editform;
     else $form=$new;
   } else {
@@ -1141,10 +1141,59 @@ HEADER;
 function do_titleindex($formatter,$options) {
   global $DBInfo;
 
-  if ($options['sec'] =='') {
+  if (isset($options['q'])) {
+    if (!$options['q']) return "<ul></ul>";
+
+    $val='';
+    $rule='';
+    while ($DBInfo->use_hangul_search) {
+      include_once("lib/unicode.php");
+      $val=$options['q'];
+      if (strtoupper($DBInfo->charset) != 'UTF-8' and function_exists('iconv')) {
+        $val=iconv($DBInfo->charset,'UTF-8',$options['q']);
+      }
+      if (!$val) break;
+        
+      $rule=utf8_hangul_getSearchRule($val);
+      //print $rule;
+
+      $test=@preg_match("/^$rule/",'');
+      if ($test === false) $rule=$options['q'];
+      break;     
+    }
+    if (!$rule) $rule=$options['q'];
+
+    $test=@preg_match("/^$rule/",'');
+    if ($test === false) return "<ul></ul>";
+
+    $pages= array();
+
+    $all= $DBInfo->getPageLists();
+
+    foreach ($all as $page) {
+      if (@preg_match("/^".$rule."/i",$page))
+        $pages[] = $page;
+    }
+
+    sort($pages);
+    array_unshift($pages, $options['q']);
+    header("Content-Type: text/plain");
+    if ($pages) {
+    	$ret= "<ul>\n<li>".implode("</li>\n<li>",$pages)."</li>\n</ul>\n";
+    } else {
+        $ret= "<ul>\n<li>".$options['q']."</li></ul>";
+    }
+    if (strtoupper($DBInfo->charset) != 'UTF-8' and function_exists('iconv')) {
+      $val=iconv('UTF-8',$DBInfo->charset,$ret);
+      if ($val) { print $val; return; }
+    }
+    print $ret;
+    return;
+  } else if ($options['sec'] =='') {
     $pages = $DBInfo->getPageLists();
 
     sort($pages);
+
     header("Content-Type: text/plain");
     print join("\n",$pages);
     return;
