@@ -936,14 +936,17 @@ class WikiDB {
     return $pages;
   }
 
-  function getLikePages($needle) {
+  function getLikePages($needle,$count=100,$opts='') {
     $pages= array();
 
+    if (!$needle) return false;
     $all= $this->getPageLists();
 
     foreach ($all as $page) {
-      if (preg_match("/($needle)/",$page))
-        $pages[] = $page;
+      if (preg_match("/$needle/".$opts,$page)) {
+        $pages[] = $page; $count--;
+      }
+      if ($count < 0) break;
     }
     return $pages;
   }
@@ -3526,6 +3529,20 @@ class Formatter {
         $keywords=htmlspecialchars($keywords);
         $keywords="<meta name=\"keywords\" content=\"$keywords\" />";
       }
+      # find sub pages
+      if ($DBInfo->use_subindex and !$options['action']) {
+        $scache=new Cache_text('subpages');
+        if (!($subs=$scache->exists($this->page->name))) {
+          $rule=_preg_search_escape($this->page->name);
+          $subs=$DBInfo->getLikePages('^'.$rule.'\/',1);
+          if ($subs) $scache->update($this->page->name,1);
+        }
+        if ($subs) {
+          $this->subindex="<fieldset id='wikiSubIndex'>".
+            "<legend title='[+]' onclick='javascript:toggleSubIndex(\"wikiSubIndex\")'>".
+            "</legend></fieldset>\n";
+        }
+      }
 
       if (empty($options['title'])) {
         $options['title']=$this->pi['#title'] ? $this->pi['#title']:
@@ -3708,8 +3725,10 @@ EOS;
     
     $menus=$this->get_actions($args,$options);
 
-    if (!$DBInfo->hide_actions or
-      ($DBInfo->hide_actions and $options['id']!='Anonymous')) {
+    $hide_actions= $this->popup + $DBInfo->hide_actions;
+
+    if (!$hide_actions or
+      ($hide_actions and $options['id']!='Anonymous')) {
       if (!$this->css_friendly) {
         $menu=$this->menu_bra.implode($this->menu_sep,$menus).$this->menu_cat;
       } else {
@@ -3977,7 +3996,7 @@ MSG;
       print $msg;
       print "</div>\n";
     }
-    if (empty($themeurl) or !$this->_newtheme) {
+    if (!$this->popup and (empty($themeurl) or !$this->_newtheme)) {
       print $DBInfo->hr;
       if ($options['trail']) {
         print "<div id='wikiTrailer'>\n";
@@ -3989,8 +4008,11 @@ MSG;
         print $this->origin;
         print "</div>\n";
       }
+      print $this->subindex;
     }
     print "<div id='wikiBody'>\n";
+    #if ($this->subindex and !$this->popup and (empty($themeurl) or !$this->_newtheme))
+    #  print $this->subindex;
     $this->pagelinks=$saved_pagelinks;
   }
 
@@ -4294,12 +4316,14 @@ function wiki_main($options) {
       }
     }
     $goto=$_POST['goto'];
+    $popup=$_POST['popup'];
   } else if ($_SERVER['REQUEST_METHOD']=="GET") {
     $action=$_GET['action'];
     $value=$_GET['value'];
     $goto=$_GET['goto'];
     $rev=$_GET['rev'];
     $refresh=($options['id'] == 'Anonymous') ? 0:$_GET['refresh'];
+    $popup=$_GET['popup'];
   }
   if (($p=strpos($action,'/'))!==false) {
     $action_mode=substr($action,$p+1);
@@ -4314,6 +4338,7 @@ function wiki_main($options) {
 
   $formatter = new Formatter($page,$options);
   $formatter->refresh=$refresh;
+  $formatter->popup=$popup;
   $formatter->macro_repl('InterWiki','',array('init'=>1));
   $formatter->tz_offset=$options['tz_offset'];
 
