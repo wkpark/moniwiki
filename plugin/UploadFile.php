@@ -37,16 +37,22 @@ function do_uploadfile($formatter,$options) {
   }
 
   $js='';
-  if ($options['uploadid']) {
+  if ($options['uploadid'] or $options['MYFILES']) {
     $js=<<<EOF
 <script type="text/javascript">
 /*<![CDATA[*/
 function delAllForm(id) {
   var fform = opener.document.getElementById(id);
 
-  if (fform && fform.rows.length) {
+  if (fform && fform.rows.length) { // for UploadForm
     for (var i=fform.rows.length;i>0;i--) {
       fform.deleteRow(i-1);
+    }
+  } else { // for SWFUpload
+    var listing = opener.document.getElementById('mmUploadFileListing');
+    if (listing) {
+      var elem = listing.getElementsByTagName("li");
+      listing.innerHTML='';
     }
   }
 }

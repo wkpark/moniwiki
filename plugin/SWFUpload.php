@@ -124,10 +124,11 @@ CSS;
 	</tr><tr>
 	<td>
 	<div id="filesDisplay">
-                <form method='POST' action='$action'>
+                <form target='_blank' method='POST' action='$action'>
 		<ul id="mmUploadFileListing">$uploaded</ul>
 		<span id="fileButton">
                 <input type='hidden' name='action' value='swfupload' />
+                <input type='hidden' name='popup' value='1' />
                 $myoptions
 		<input type='button' value="$btn" onclick='javascript:mmSWFUpload.callSWF();' />
 		<input type='submit' value="$btn2" onclick='javascript:fileSubmit(this);' />
@@ -167,10 +168,17 @@ EOF;
         }
     }
 
+    // debug
+    //$fp=fopen('/var/tmp/swflog.txt','w+');
+    //foreach ($options as $k=>$v) {
+    //    fwrite($fp,sprintf("%s=>%s\n",$k,$v));
+    //}
+    //fclose($fp);
     // set the personal subdir
     if ($options['value'] and preg_match('/^[a-f0-9\/]+$/i',$options['value'])) {
         $mysubdir=$options['value'];
 
+        list($dum,$myval,$dum2)=explode('/',$options['value'],3); // XXX
         if(!is_dir($swfupload_dir.'/'.$mysubdir)) {
             $om=umask(000);
             _mkdir_p($swfupload_dir.'/'.$mysubdir, 0777);
@@ -178,12 +186,6 @@ EOF;
         }
     }
 
-    // debug
-    //$fp=fopen('/var/tmp/swflog.txt','w+');
-    //foreach ($options as $k=>$v) {
-    //    fwrite($fp,sprintf("%s=>%s\n",$k,$v));
-    //}
-    //fclose($fp);
 
     //move the uploaded file
     if (isset($_FILES['Filedata']['tmp_name'])) {

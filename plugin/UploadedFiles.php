@@ -262,7 +262,7 @@ EOS;
         $attr=' target="_blank"';
         $extra='&amp;tag=1';
       }
-      $link=$formatter->link_tag('UploadFile',"?action=uploadedfiles&amp;value=top$extra",
+      $link=$formatter->link_tag('UploadFile',"?action=uploadedfiles&amp;value=top&amp;popup=1$extra",
         "<img src='".$icon_dir."/32/up.png' style='border:0' class='upper' alt='..' />",$attr);
       $date=date("Y-m-d",filemtime($dir."/.."));
       $out.="<tr><td class='wiki'>&nbsp;</td><td class='wiki'>$link</td><td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td></tr>\n";

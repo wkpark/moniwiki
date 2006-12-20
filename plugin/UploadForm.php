@@ -71,6 +71,7 @@ EOS;
       <td>
   <input type='button' onclick="addRow('upload$id')" value="add a file" />
   <input type="hidden" name="uploadid" value="upload$id" />
+  <input type="hidden" name="popup" value="1" />
   <input type="submit" name="upload" value="Upload files" />
   <input type="reset" name="reset" value="Reset" />
       </td>
