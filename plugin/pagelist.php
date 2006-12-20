@@ -7,7 +7,7 @@
 //
 // $Id$
 
-function macro_PageList($formatter,$arg="") {
+function macro_PageList($formatter,$arg="",$options=array()) {
   global $DBInfo;
 
   preg_match("/([^,]*)(\s*,\s*)?(.*)?$/",$arg,$match);
@@ -16,15 +16,21 @@ function macro_PageList($formatter,$arg="") {
     $arg='';
   } else if ($match) {
     $arg=$match[1];
-    $options=array();
-    if ($match[3]) $options=explode(",",$match[3]);
-    if (in_array('date',$options)) $options['date']=1;
-    if (in_array('dir',$options)) $options['dir']=1;
-    if (in_array('info',$options)) $options['info']=1;
-    else if ($arg and (in_array('metawiki',$options) or in_array('m',$options)))
+    $opts=array();
+    if ($match[3]) $opts=explode(",",$match[3]);
+    if (in_array('date',$opts)) $options['date']=1;
+    if (in_array('dir',$opts)) $options['dir']=1;
+    if (in_array('subdir',$opts)) $options['subdir']=1;
+    if (in_array('info',$opts)) $options['info']=1;
+    else if ($arg and (in_array('metawiki',$opts) or in_array('m',$opts)))
       $options['metawiki']=1;
   }
-  $needle=_preg_search_escape($arg);
+
+  if ($options['subdir']) {
+    $needle=_preg_search_escape($formatter->page->name);
+    $needle='^'.$needle.'\/';
+  } else
+    $needle=_preg_search_escape($arg);
 
   $test=@preg_match("/$needle/","",$match);
   if ($test === false) {
@@ -64,13 +70,22 @@ function macro_PageList($formatter,$arg="") {
       if ($matches) $hits[]=$page;
     }
     sort($hits);
-    if ($options['dir']) {
+    if ($options['dir'] or $options['subdir']) {
         $dirs=array();
         $files=array();
+        if ($options['subdir']) $plen=strlen($formatter->page->name)+1;
+        else $plen=0;
         foreach ($hits as $pagename) {
-            if (($p=strpos($pagename,'/'))!==false) {
-                $name=substr($pagename,0,$p);
-                $dirs[$name]=$name;
+            if (($rp=strrpos($pagename,'/'))!==false) {
+                $p=strpos($pagename,'/');
+                $name=substr($pagename,$plen);
+                $dum=explode('/',$name);
+                if (sizeof($dum) > 1) {
+                    $dirname=substr($pagename,0,$rp);
+                    $dirs[$dirname]=substr($dirname,$p+1);
+                } else {
+                    $files[$pagename]=$name;
+                }
                 continue;
             }
             $files[$pagename]=$pagename;
@@ -80,10 +95,10 @@ function macro_PageList($formatter,$arg="") {
         $dicon="<img src='$icon_dir/folder-16.png' width='16px'/>";
         $ficon="<img src='$icon_dir/text-16.png' width='16px'/>";
         $now=time();
-        foreach ($dirs as $pg) {
+        foreach ($dirs as $pg=>$name) {
             $out.= '<tr><td>'.$dicon.'</td><td>'.
                 $formatter->link_tag(_rawurlencode($pg),"",
-	    htmlspecialchars($pg)).'</td>';
+	    htmlspecialchars($name)).'</td>';
             if ($options['info']) {
                 $p=new WikiPage($pg);
                 $mtime=$p->mtime();
@@ -97,10 +112,10 @@ function macro_PageList($formatter,$arg="") {
             $out.="</tr>\n";
             if (isset($files[$pg])) unset($files[$pg]);
         }
-        foreach ($files as $pg) {
+        foreach ($files as $pg=>$name) {
             $out.= '<tr><td>'.$ficon.'</td><td>'.
                 $formatter->link_tag(_rawurlencode($pg),"",
-	    htmlspecialchars($pg)).'</td>';
+	    htmlspecialchars($name)).'</td>';
             if ($options['info']) {
                 $p=new WikiPage($pg);
                 $mtime=$p->mtime();
@@ -124,6 +139,10 @@ function macro_PageList($formatter,$arg="") {
   }
 
   return $out;
+}
+
+function do_pagelist($formatter,$options=array()) {
+  print macro_PageList($formatter,'',$options);
 }
 
 // vim:et:sts=2:
