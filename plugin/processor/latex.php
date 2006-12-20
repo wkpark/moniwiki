@@ -10,6 +10,10 @@
 
 function processor_latex($formatter="",$value="") {
   global $DBInfo;
+
+  $latex_convert_options=
+    $DBInfo->latex_convert_options ? $DBInfo->latex_convert_options:"-trim -crop 0x0 -density 120x120";
+
   # site spesific variables
   $latex="latex";
   $dvips="dvips";
@@ -100,7 +104,10 @@ $tex
      #$log2=$formatter->get_errlog();
      chdir($cwd);
 
-     $cmd= "$convert -transparent white -trim -crop 0x0 -density 120x120 $vartmp_dir/$uniq.ps $outpath";
+     $cmd= "$convert -transparent white $latex_convert_options $vartmp_dir/$uniq.ps $outpath";
+     # ImageMagick of the RedHat AS 4.x do not support -trim option correctly
+     # http://kldp.net/forum/message.php?msg_id=12024
+     #$cmd= "$convert -transparent white -trim -crop 0x0 -density 120x120 $vartmp_dir/$uniq.ps $outpath";
      $fp=popen($cmd.$formatter->NULL,'r');
      pclose($fp);
      #unlink($vartmp_dir."/$uniq.log");
