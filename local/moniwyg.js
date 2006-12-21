@@ -88,6 +88,7 @@ Wikiwyg.prototype.editMode = function(form) {
     else {
         this.current_mode.textarea.value = wikitext;
     }
+
     this.toolbarObject.resetModeSelector();
     this.current_mode.enableThis();
     this.current_mode.enableThis(); // hack !!
@@ -143,8 +144,8 @@ proto.apply_inline_stylesheet = function(style, head) {
 
 proto.enableThis = function() {
     Wikiwyg.Mode.prototype.enableThis.call(this);
-    this.edit_iframe.style.border = '1px black solid';
-    this.edit_iframe.width = '100%';
+    this.edit_iframe.style.border = '1px solid ActiveBorder';
+    this.edit_iframe.width = '99%';
     this.setHeightOf(this.edit_iframe);
     this.get_edit_document().designMode = 'on';
     this.enable_keybindings();
@@ -186,7 +187,23 @@ proto.do_link = function() {
     this.exec_command('createlink', url);
 }
 
+proto.do_image = function() {
+    var base = location.href.replace(/(.*?:\/\/.*?\/).*/, '$1');
+
+    var x=window.open("?action=uploadedfiles&tag=1&popup=1","MyWin",'toolbar=no,width=800,height=500,scrollbars=yes');
+    if (x!=null) {
+        x.focus();
+    }
+}
+
 proto = Wikiwyg.Wikitext.prototype;
+
+proto.enableThis = function() {
+    Wikiwyg.Mode.prototype.enableThis.call(this);
+    this.textarea.style.width = '99%';
+    this.setHeightOfEditor();
+    this.enable_keybindings();
+}
 
 proto.convert_html_to_wikitext = function(html) {
     this.copyhtml = html;
@@ -219,10 +236,17 @@ proto.convert_html_to_wikitext = function(html) {
     // remove toc number
     html = html.replace(/<span class=.?tocnumber.?>(.*)<\/span>/igm, '');
 
+    // remove javatag
+    html =
+        html.replace(/<a href=.javascript:[^>]+>(.*)<\/a>/ig, "$1");
     // remove all links XXX
     html =
         html.replace(/<a [^>]+>([^>]+)<\/a>/ig, "$1");
-    //
+
+    // escaped wiki markup blocks
+    html =
+        html.replace(/<tt class[^>]+>([^>]+)<\/tt>/ig, "{{{$1}}}");
+
     dom.innerHTML = html;
     this.output = [];
     this.list_type = [];
@@ -251,10 +275,12 @@ proto.format_img = function(element) {
         if (width) attr+='width='+width;
         if (height) attr+=(attr ? '&':'') + 'height='+height;
 
-        if (style.match) {
+        if (style) {
             var m = style.match(/width:\s*(\d+)px;\s*height:\s*(\d+)px/);
-            if (m[1]) attr+=(attr ? '&':'') + 'width='+m[1];
-            if (m[2]) attr+=(attr ? '&':'') + 'height='+m[2];
+            if (m) {
+                if (m[1]) attr+=(attr ? '&':'') + 'width='+m[1];
+                if (m[2]) attr+=(attr ? '&':'') + 'height='+m[2];
+            }
         }
 
         if (myclass) {
@@ -296,7 +322,7 @@ proto.format_tr = function(element) {
 
 proto.format_br = function(element) {
     var str1 = this.output[this.output.length - 1];
-    if (! str1.whitespace && ! str1.match(/\n$/)) {
+    if (str1 && ! str1.whitespace && ! str1.match(/\n$/)) {
         this.insert_new_line();
         this.insert_new_line(); // two \n\n is rendered as <br />
     } else {
@@ -397,10 +423,19 @@ proto.do_outdent = function() {
     )
 }
 
+Wikiwyg.Preview.prototype.initializeObject = function() {
+    if (this.config.divId)
+        this.div = document.getElementById(this.config.divId);
+    else
+        this.div = document.createElement('div');
+    // XXX Make this a config option.
+    this.div.setAttribute('style','background:lightyellow;padding:10px;');
+}
 
 proto = Wikiwyg.Toolbar.prototype;
+
 proto.config.controlLayout = [
-    'save', 'cancel', 'mode_selector', '/',
+    'save', 'preview', 'cancel', 'mode_selector', '/',
     'bold',
     'italic',
     'link',
@@ -459,6 +494,117 @@ proto.do_quote = Wikiwyg.Wikitext.make_do('quote');
 proto.collapse = function(string) {
     return string.replace(/\r\n|\r/g, ''); // FIX
     //return string.replace(/\r\n|\r/g, "\n"); // FIX
+}
+
+proto.get_wiki_comment = function(element) {
+    for (var node = element.firstChild; node; node = node.nextSibling) {
+        if (node.nodeType == this.COMMENT_NODE_TYPE
+            && node.data.match(/^\s*wiki/)) {
+            var ele=node.nextSibling.firstChild;
+            if (ele && node.data.match(/\nattachment:/) && ele.tagName && ele.tagName.toLowerCase() == 'img') {
+                // check the attributes of the attached images
+                var style = ele.getAttribute('style');
+                var width = ele.getAttribute('width');
+                var height = ele.getAttribute('height');
+                var myclass = ele.getAttribute('class');
+                var align = '';
+
+                var attr=new Array();
+
+                if (width) attr["width"]='width='+width;
+                if (height) attr["height"]='height='+height;
+                ele.setAttribute('width','');
+                ele.setAttribute('height','');
+
+                if (style && style.match) {
+                    var m = style.match(/width:\s*(\d+)px;\s*height:\s*(\d+)px/);
+                    if (m) {
+                        if (m[1]) attr["width"]='width='+m[1];
+                        if (m[2]) attr["height"]='height='+m[2];
+                        ele.setAttribute('style','');
+                    }
+                }
+
+                if (myclass) {
+                    var m = myclass.match(/img(Center|Left|Right)$/);
+                    if (m[1]) {
+                        attr["align"]='align='+m[1].toLowerCase();
+                        align=attr["align"];
+                    }
+                }
+
+                var newquery='';
+                if (attr) {
+                    var tattr=new Array();
+
+                    for (var key in attr) {
+                        var value = attr[key];
+                        if (typeof value == 'function') continue;
+                        tattr.push(value);
+                    }
+
+                    newquery=tattr.join("&");
+
+                    var p=node.data.indexOf("?");
+                    var orig='';
+                    var oldquery='';
+                    if (p != -1) {
+                        orig=node.data.substr(0,p);
+                        oldquery=node.data.substr(p+1);
+                    }
+                    if (oldquery) {
+                        oldquery = oldquery.replace(/\n+$/,""); // strip \n
+                        var oldattr=oldquery.split("&");
+                        var newattr=new Array();
+                        for (var j=0;j<oldattr.length;j++) {
+                            var dum=oldattr[j].split("=");
+                            if (!width && dum[0] == "width") {
+                                newattr["width"]=oldattr[j];
+                            } else if (!height && dum[0] == "height") {
+                                newattr["height"]=oldattr[j];
+                            } else if (!align && dum[0] == "align") {
+                                newattr["align"]=oldattr[j];
+                            }
+                        }
+                        if (newattr) {
+                            var tattr=[];
+                            for (var key in newattr) {
+                                var value = newattr[key];
+                                if (typeof value == 'function') continue;
+                                tattr.push(value);
+                            }
+                            var old=tattr.join("&");
+                            newquery=newquery ? (old+'&'+newquery):old;
+                        } else {
+                            newquery=oldquery+'&'+newquery;
+                        }
+                        node.data=orig+'?'+newquery + " \n";
+                    } else {
+                        node.data = node.data.replace(/\n+$/,""); // strip \n
+                        node.data+='?'+newquery + " \n";
+                    }
+
+                    return node;
+                }
+            }
+            return node;
+        }
+    }
+    return null;
+}
+
+proto.handle_opaque_phrase = function(element) {
+    var comment = this.get_wiki_comment(element);
+    if (comment) {
+        var text = comment.data;
+        text = text.replace(/^ wiki:\s+/, '')
+                   .replace(/-=/g, '-')
+                   .replace(/==/g, '=')
+                   .replace(/\s$/, '')
+                   .replace(/\{(\w+):\s*\}/, '{$1}');
+        this.appendOutput(Wikiwyg.htmlUnescape(text))
+        this.smart_trailing_space(element);
+    }
 }
 
 proto.walk = function(element) {
