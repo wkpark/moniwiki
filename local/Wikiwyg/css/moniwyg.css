@@ -1,17 +1,35 @@
 .wikiwyg_toolbar {
-    background: #EBE8D5;
-    border: 1px outset #ACA899;
-    letter-spacing: 0;
+/*  background: #EBE8D5; /* */
+/*  border: 1px outset #ACA899; /* */
+    letter-spacing: 0; /* */
+    line-height: 210%; /* */
     padding: 2px;
 }
 
 span.wikiwyg_control_link a {
-    padding-right: 8px;
+/*  padding-right: 8px; /* */
+    font-family:Trebuchet MS,sans-serif;
+    padding: 4px;
+}
+span.wikiwyg_control_link {
+}
+
+.wikiwyg_toolbar label {
+    padding:4px;
+    border:1px outset ThreeDFace;
+    background: ThreeDFace;
+}
+
+.wikiwyg_toolbar label.selected {
+    padding:4px;
+    border:1px outset ThreeDHighlight;
+    background: ThreeDHighlight;
 }
 
 .wikiwyg_button {
-    background: #EBE8D5;
-    border: 1px solid #EBE8D5;
+/*  background: #EBE8D5; /* */
+/*  border: 1px solid #EBE8D5; /* */
+    border: 1px solid #FFFFFF;
     cursor: pointer;
     width: 23px;
     height: 22px;
@@ -27,9 +45,9 @@ span.wikiwyg_control_link a {
 }
 
 .wikiwyg_separator {
-    background: #EBE8D5;
-    border: 1px solid #EBE8D5;
-    width: 9px;
+/*  background: #EBE8D5; /* */
+/*  border: 1px solid #EBE8D5; /* */
+    width: 8px;
     height: 20px;
     vertical-align: bottom;
 }

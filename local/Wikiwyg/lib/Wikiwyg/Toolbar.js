@@ -31,8 +31,9 @@ proto.config = {
     divId: null,
     imagesLocation: 'images/',
     imagesExtension: '.gif',
+    hideRadio: true,
     controlLayout: [
-        'save', 'cancel', 'mode_selector', '/',
+        'save', 'preview', 'cancel', 'mode_selector', '/',
         // 'selector',
         'h1', 'h2', 'h3', 'h4', 'p', 'pre', '|',
         'bold', 'italic', 'underline', 'strike', '|',
@@ -47,6 +48,7 @@ proto.config = {
     ],
     controlLabels: {
         save: 'Save',
+        preview: 'Preview',
         cancel: 'Cancel',
         bold: 'Bold (Ctrl+b)',
         italic: 'Italic (Ctrl+i)',
@@ -94,6 +96,8 @@ proto.initializeObject = function() {
             this.addControlItem(label, 'saveChanges');
         else if (action == 'cancel')
             this.addControlItem(label, 'cancelEdit');
+        else if (action == 'preview')
+            this.addControlItem(label, 'switchMode','Wikiwyg.Preview');
         else if (action == 'mode_selector')
             this.addModeSelector();
         else if (action == 'selector')
@@ -172,7 +176,7 @@ proto.add_separator = function() {
     );
 }
 
-proto.addControlItem = function(text, method) {
+proto.addControlItem = function(text, method,arg) {
     var span = Wikiwyg.createElementWithAttrs(
         'span', { 'class': 'wikiwyg_control_link' }
     );
@@ -184,7 +188,11 @@ proto.addControlItem = function(text, method) {
     span.appendChild(link);
     
     var self = this;
-    link.onclick = function() { eval('self.wikiwyg.' + method + '()'); return false };
+    if (arg) {
+        method=method+'("'+arg+'")';
+        this.controls=this.controls ? ','+arg:arg;
+    } else method=method+'()';
+    link.onclick = function() { eval('self.wikiwyg.' + method); return false };
 
     this.div.appendChild(span);
 }
@@ -201,9 +209,18 @@ proto.resetModeSelector = function() {
 proto.addModeSelector = function() {
     var span = document.createElement('span');
 
+    var control_buttons=[];
+    if (this.controls) {
+        var btns=this.controls.split(',');
+        for (var i=0;i < btns.length;i++) {
+            control_buttons[btns[i]]=1;
+        }
+    }
+
     var radio_name = Wikiwyg.createUniqueId();
     for (var i = 0; i < this.wikiwyg.config.modeClasses.length; i++) {
         var class_name = this.wikiwyg.config.modeClasses[i];
+        if (control_buttons[class_name]) continue;
         var mode_object = this.wikiwyg.mode_objects[class_name];
  
         var radio_id = Wikiwyg.createUniqueId();
@@ -230,6 +247,8 @@ proto.addModeSelector = function() {
             'label', { 'for': radio_id }
         );
         label.appendChild(document.createTextNode(mode_object.modeDescription));
+    	if (this.config.hideRadio)
+            radio.setAttribute('style','display:none'); /* */
 
         span.appendChild(radio);
         span.appendChild(label);
