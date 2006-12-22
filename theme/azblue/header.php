@@ -32,8 +32,10 @@ if ($DBInfo->use_tagging) {
 <div id='pBodyRight'><div id='pBodyLeft'>
 <div id='pBottomRight'><div id='pBottomLeft'>
 <div id='pTopRight'><div id='pTopLeft'>
-
 <div id='wikiPage'>
+<?php
+if ($this->popup!=1) :
+?>
 <div id='pBanSpace'></div>
 <div id='pBanRight'><div id='pBanLeft'>
 <div id='pBanner'>
@@ -57,6 +59,8 @@ if ($DBInfo->use_tagging) {
 </div></div>
 </div>
 </div>
+</div>
+<?php endif; ?>
 <div class='clear'></div>
 <?php echo $msg?>
 <div id='container'>

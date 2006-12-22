@@ -19,6 +19,9 @@ body {
   min-width:750px;
   margin: 0px auto 0px auto;
   width: 750px;
+  min-height:400px;
+  height: auto !important; /* IE min-height hack */
+  height:400px;
   /*\*/ min-width: 750px; /* IE fix */
 }
 

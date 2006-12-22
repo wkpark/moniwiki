@@ -1,4 +1,6 @@
 </div>
+</div>
+<div id='wikiFooter'>
 <?php
 
 $banner= <<<FOOT
@@ -17,11 +19,7 @@ $banner= <<<FOOT
   style='border:0;vertical-align:middle' width="80" height="15"
   alt="powered by MoniWiki" /></a>
 FOOT;
-?>
-</div>
-</div>
-<div id='wikiFooter'>
-<?php
+
   print $menu;
   print '<div style="align:center" id="wikiBanner">'.$banner.'<br />';
   if ($lastedit)
@@ -31,4 +29,5 @@ FOOT;
 ?>
 </div>
 </div></div></div></div></div></div>
-</div></div>
+</div>
+</div>
