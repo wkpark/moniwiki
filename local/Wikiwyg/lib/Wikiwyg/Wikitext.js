@@ -308,7 +308,7 @@ proto.toggle_same_format = function(start, finish) {
 }
 
 proto.clean_regexp = function(string) {
-    string = string.replace(/([\^\$\*\+\.\?\[\]\{\}])/g, '\\$1');
+    string = string.replace(/([\^\$\*\+\.\?\[\]\{\}\(\)])/g, '\\$1');
     return string;
 }
 
