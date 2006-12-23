@@ -214,6 +214,8 @@ function macro_Gallery($formatter,$value,&$options) {
   }
   $width=$selected ? $default_width:$img_default_width;
 
+  $thumb_width=$DBInfo->thumb_width ? $DBInfo->thumb_width:'250';
+
   $mtime=file_exists($dir."/list.txt") ? filemtime($dir."/list.txt"):0;
   if ((filemtime($dir) > $mtime) or $update) {
     unset($upfiles);
@@ -286,12 +288,12 @@ function macro_Gallery($formatter,$value,&$options) {
 
             $myfunc='imagecreatefrom'.$imgtype;
             $source= $myfunc($fname);
-            imagecopyresized($thumb, $source, 0,0,0,0, $width, $nh, $w, $h);
+            imagecopyresized($thumb, $source, 0,0,0,0, $thumb_width, $nh, $w, $h);
             $myfunc='image'.$imgtype;
             $myfunc($thumb, $dir.'/thumbnails/'.$file);
           }
         } else {
-          $fp=popen("convert -scale ".$width." ".$dir."/".$file." ".$dir."/thumbnails/".$file.
+          $fp=popen("convert -scale ".$thumb_width." ".$dir."/".$file." ".$dir."/thumbnails/".$file.
           $formatter->NULL,'r');
           @pclose($fp);
         }
@@ -299,7 +301,9 @@ function macro_Gallery($formatter,$value,&$options) {
       if (!$selected and file_exists($dir."/thumbnails/".$file)) {
         $thumb=($key == $value) ? $prefix.'thumbnails/'.$id:
           str_replace('value=','value=thumbnails/'.$id,$prefix);
-        $object="<img class='imgGallery' src='$thumb' alt='$file' />";
+        if ($thumb_width > $width) $mywidth=" width='".$width."' ";
+        else $mywidth='';
+        $object="<img class='imgGallery' src='$thumb' $mywidth alt='$file' />";
       } else {
         $nwidth=$width;
         if (function_exists('getimagesize')) {
@@ -324,6 +328,7 @@ function macro_Gallery($formatter,$value,&$options) {
 #    $size=round($size,2).' '.$unit[$i];
 
     $comment='';
+    if ($width > 100):
     $comment_btn='';
     $comment_btn=$nocomment ? '':_("add comment");
     $imginfo=(!$nocomment or $selected) ? "$date ($size) ":'';
@@ -343,11 +348,15 @@ function macro_Gallery($formatter,$value,&$options) {
       }
       $comment=str_replace("\\n","<br/>\n",$comment);
     }
-    $out.="<td $col_td_width align='center' valign='top'>$top_link<div class='$img_class' $img_style><a href='$link'$href_attr>$object</a><br />".$imginfo;
+    endif;
+
+    $out.="<td $col_td_width align='center' valign='top'>$top_link<div class='$img_class' $img_style><a href='$link'$href_attr>$object</a>";
+    if ($imginfo) $out.="<br />".$imginfo;
     if ($comment_btn)
       $out.='['.$formatter->link_tag($formatter->page->urlname,"?action=gallery&amp;value=$id",$comment_btn)."]<br />\n";
     $out.='</div>'.$bot_link;
     if ($comment) $out.="<div class='gallery-comments' $comment_style>$comment</div>";
+
     $out.="</td>\n";
     if ($idx % $col == 0) $out.="</tr>\n<tr>\n";
     $idx++;

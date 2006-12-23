@@ -88,8 +88,9 @@ function macro_theme($formatter,$value) {
   $handle = @opendir("$path/theme");
   if (is_resource($handle)) {
     while ($file = readdir($handle)) {
-      if (!in_array($file,array('.','..','RCS','CVS')) and is_dir("$path/theme/".$file))
-        $themes[]= $file;
+      if (!in_array($file,array('.','..','RCS','CVS')) and is_dir("$path/theme/".$file) and
+        file_exists($path.'/theme/'.$file.'/header.php'))
+          $themes[]= $file;
     }
   }
 

@@ -8,6 +8,9 @@
 function macro_ISBN($formatter,$value="") {
   global $DBInfo;
 
+  // http://www.isbn-international.org/en/identifiers/allidentifiers.html
+  $default_map=array('89'=>'Aladdin');
+
   $ISBN_MAP="IsbnMap";
   $DEFAULT=<<<EOS
 Amazon http://www.amazon.com/exec/obidos/ISBN= http://images.amazon.com/images/P/\$ISBN.01.MZZZZZZZ.gif
@@ -84,7 +87,13 @@ EOS;
   if ($match[3]) {
     if (strtolower($match[2][0])=='k') $lang='Aladdin';
     else $lang=$match[3];
-  } else $lang=$DEFAULT_ISBN;
+  } else {
+    $lang_code=substr($isbn,0,2);
+    if ($default_map[$lang_code])
+      $lang=$default_map[$lang_code];
+    else
+      $lang=$DEFAULT_ISBN;
+  }
 
   $attr='';
   $ext='';

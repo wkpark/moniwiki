@@ -20,6 +20,7 @@ function do_uploadfile($formatter,$options) {
       $count=1;
       $files['upfile']['name'][]=&$_FILES['upfile']['name'];
       $files['upfile']['tmp_name'][]=&$_FILES['upfile']['tmp_name'];
+      $files['upfile']['type'][]=&$_FILES['upfile']['type'];
       $options['rename']=array($options['rename']);
       $options['replace']=array($options['replace']);
     }
@@ -108,12 +109,23 @@ EOF;
   if (!$upfilename) continue;
   else if ($upfilename) $uploaded++;
 
+  $no_ext=0;
+  $type='';
+  if (!$fname) {
+    $no_ext=1;
+    $fname[1]=$upfilename;
+    $fname[2]='';
+    // XXX
+    if ($DBInfo->use_filetype) $type=$files['upfile']['type'] ? $files['upfile']['type']:'text/plain';
+    else $fname[2]='txt'; // XXX
+  }
+
   # upload file protection
   if ($DBInfo->pds_allowed)
      $pds_exts=$DBInfo->pds_allowed;
   else
      $pds_exts="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|css|exe|pdf|hwp";
-  if (!preg_match("/(".$pds_exts.")$/i",$fname[2])) {
+  if (!$no_ext and !preg_match("/(".$pds_exts.")$/i",$fname[2])) {
      $msg.=sprintf(_("%s is not allowed to upload"),$upfilename)."<br/>\n";
      continue;
   } else {
@@ -170,10 +182,11 @@ EOF;
 
   # is file already exists ?
   $dummy=0;
-  while (file_exists($newfile_path)) {
+  $myext=$fname[2] ? '.'.$fname[2]:'';
+  while (@file_exists($newfile_path)) {
      $dummy=$dummy+1;
      $ufname=$fname[1]."_".$dummy; // rename file
-     $upfilename=$ufname.".$fname[2]";
+     $upfilename=$ufname.$myext;
      $newfile_path= $dir."/".$upfilename;
   }
  
@@ -193,7 +206,7 @@ EOF;
   if (!$test) {
     $msg.=sprintf(_("Fail to copy \"%s\" to \"%s\""),$upfilename,$file_path);
     $msg.='<br />'._("Please check your php.ini setting");
-    $msg.='<br />'."<tt>upload_max_filesize=".ini_get('upload_max_filesize').'</tt>';
+    $msg.='<br />'."<tt>upload_max_filesize=".ini_get('upload_max_filesize').'</tt><br />';
     continue;
   }
 

@@ -7,7 +7,7 @@
 //
 // download the following javascript in the local/ dir to enable this processor:
 //  http://www1.chapman.edu/~jipsen/mathml/ASCIIMathML.js
-//  and add small code:
+//  and add small code or set $_add_func=1;
 //-----x8-----
 // function translateById(objId) {
 //   AMbody = document.getElementById(objId);
@@ -28,6 +28,8 @@
 function processor_asciimathml($formatter,$value="") {
   global $DBInfo;
 
+  $_add_func=1;
+
   $flag = 0;
   $id=&$GLOBALS['_transient']['asciimathml'];
   if ( !$id ) { $flag = 1; $id = 1; }
@@ -39,12 +41,29 @@ function processor_asciimathml($formatter,$value="") {
 
   if ( $flag ) {
     $out .= "<script type=\"text/javascript\" src=\"" .
-    $DBInfo->url_prefix ."/local/ASCIIMathML.js\"></script>";
+    $DBInfo->url_prefix ."/local/ASCIIMathML.js\"></script>\n";
     if (preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']))
       $out.='<object id="mathplayer"'.
         ' classid="clsid:32F66A20-7614-11D4-BD11-00104BD3F987">'.
         '</object>'.
         '<?import namespace="mml" implementation="#mathplayer"?>';
+
+    if ($_add_func)
+      $out.=<<<AJS
+<script type="text/javascript">
+/*<![CDATA[*/
+function translateById(objId) {
+  AMbody = document.getElementById(objId);
+  AMprocessNode(AMbody, false);
+  if (isIE) { //needed to match size and font of formula to surrounding text
+    var frag = document.getElementsByTagName('math');
+    for (var i=0;i<frag.length;i++) frag[i].update()
+  }
+}
+  AMinitSymbols();
+/*]]>*/
+</script>
+AJS;
   }
 
   $out .= "<div id=\"asciimathml" . $id . "\">$value</div>" .
