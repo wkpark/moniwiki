@@ -80,7 +80,13 @@ function macro_Attachment($formatter,$value,$option='') {
     }
 
     if ($attrs['align']) $attr.='class="img'.ucfirst($attrs['align']).'" ';
-  } else if (($dummy=strpos($value,','))) {
+  }
+
+  if (preg_match('/^data:image\/(png|jpg|jpeg);base64,/',$value)) {
+    return "<img src='".$value."' $attr />";
+  }
+
+  if (!$attr and ($dummy=strpos($value,','))) {
     # for Attachment macro
     $args=explode(',',substr($value,$dummy+1));
     $value=substr($value,0,$dummy);
