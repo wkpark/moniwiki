@@ -396,6 +396,10 @@ table.closure, td.closure{
   margin:0;
   padding:0;
   list-style:none;
+  margin-left:0;
+  padding-bottom:3px !important; /* for FF */
+  padding-bottom:2px;
+  height:1.7em;
 }
 
 #wikiMenu li {
@@ -403,6 +407,11 @@ table.closure, td.closure{
   padding: 4px 10px;margin:0px;
   border-right: 1px solid #A8DBFD;
   /* border-right: 1px solid #e0e0e0; */
+/* background-color:whitesmoke; */
+/* the next 4 lines are magic for IE */
+  float: left;
+  position: relative;
+  vertical-align:top;
 }
 
 #wikiMenu li:hover {
@@ -440,6 +449,25 @@ table.closure, td.closure{
   font-weight:bold;
   font-family: Tahoma,Verdana,sans-serif;
   text-decoration:none;
+}
+
+#wikiAction ul {
+  list-style:none;
+  padding:0;
+  margin:0;
+  white-space:nowrap;
+}
+
+#wikiAction li {
+  display:inline;
+  padding-left:5px;
+  padding-right:5px;
+  border-right:1px solid #e0e0e0;
+  float:left;
+}
+
+#wikiAction a {
+  font-size:12px;
 }
 
 #wikiBody {

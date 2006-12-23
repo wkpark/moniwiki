@@ -1,3 +1,7 @@
+@import url("../../../css/_base.css");
+@import url("../../../css/_extra.css");
+@import url("../../../css/_calendar.css");
+@import url("../../../css/_user.css");
 body {
 	margin: 1em;
 	background-color: lightgrey;
@@ -5,7 +9,7 @@ body {
 	font-family: sans-serif;
 }
 head + body {
-	background-image: url(/images/haenim_transparent.png);
+	background-image: url(../images/haenim_transparent.png);
 	background-repeat: no-repeat;
 	background-attachment: fixed;
 	background-position: right bottom;
@@ -119,7 +123,7 @@ a#editor+form select+input[type='submit'] {
 	height: 24px;
 	padding-left: 24px;
 	font-size: 18px;
-	background-image: url("/moniwiki/theme/rightmenu/imgs/stock_save_24.png");
+	background-image: url("../imgs/stock_save_24.png");
 	background-repeat: no-repeat;
 }
 

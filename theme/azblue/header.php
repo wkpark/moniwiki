@@ -53,7 +53,7 @@ if ($this->popup!=1) :
 <div id='pTitle'><?php echo $title?></div><div id='wikiHeader'>
 <div id='pMenuRight'><div id='pMenuLeft'>
 <div id='wikiMenuBar'>
-<div id='wikiIcon'><?php echo $upper_icon.$icons.$rss_icon.$home?></div>
+<div id='wikiIcon'><?php echo $upper_icon.$icons.$rss_icon?></div>
 <?php echo $menu?>
 </div>
 </div></div>
