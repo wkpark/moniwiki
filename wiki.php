@@ -672,6 +672,9 @@ class WikiDB {
     if (!$this->purge_passwd)
       $this->purge_passwd=$this->admin_passwd;
 
+    if ($this->use_wikiwyg and !$this->sectionedit_attr)
+      $this->sectionedit_attr=1;
+
 #
     if (!$this->menu) {
       $this->menu= array($this->frontpage=>"accesskey='1'",'FindPage'=>"accesskey='4'",'TitleIndex'=>"accesskey='3'",'RecentChanges'=>"accesskey='2'");
@@ -710,6 +713,7 @@ class WikiDB {
     $this->icon['show']="<img src='$imgdir/${iconset}show.$ext' alt='R' style='vertical-align:middle;border:0px' />";
     $this->icon['find']="<img src='$imgdir/${iconset}search.$ext' alt='S' style='vertical-align:middle;border:0px' />";
     $this->icon['help']="<img src='$imgdir/${iconset}help.$ext' alt='H' style='vertical-align:middle;border:0px' />";
+    $this->icon['pref']="<img src='$imgdir/${iconset}pref.$ext' alt='C' style='vertical-align:middle;border:0px' />";
     $this->icon['www']="<img src='$imgdir/${iconset}www.$ext' alt='www' style='vertical-align:middle;border:0px' />";
     $this->icon['mailto']="<img src='$imgdir/${iconset}email.$ext' alt='M' style='vertical-align:middle;border:0px' />";
     $this->icon['create']="<img src='$imgdir/${iconset}create.$ext' alt='N' style='vertical-align:middle;border:0px' />";
@@ -732,10 +736,11 @@ class WikiDB {
               array("","?action=diff",$this->icon['diff'],"accesskey='c'"),
               array("","",$this->icon['show']),
               array("FindPage","",$this->icon['find']),
-              array("","?action=info",$this->icon['info']),
-              array("","?action=subscribe",$this->icon['mailto']),
-              array("HelpContents","",$this->icon['help']),
-           );
+              array("","?action=info",$this->icon['info']));
+      if ($this->notify)
+        $this->icons['subscribe']=array("","?action=subscribe",$this->icon['mailto']);
+      $this->icons[]=array("HelpContents","",$this->icon['help']);
+      $this->icons['pref']=array("UserPreferences","",$this->icon['pref']);
     }
     $config=get_object_vars($this); // merge default settings to $config
 
@@ -1709,7 +1714,7 @@ class Formatter {
     $this->baserepl=array("&lt;\\1",
                      "<strong>\\1</strong>","<strong>\\1</strong>",
                      "<em>\\1</em>","<em>\\1</em>",
-                     "&#96;\\1'","<tt class='wiki'>\\1</tt>",
+                     "&#96;\\1'","<tt>\\1</tt>",
                      "\$formatter->$DBInfo->hr_type"."_hr('\\1')",
                      "<br clear='all' />",
                      "<sub>\\1</sub>",
@@ -1748,8 +1753,8 @@ class Formatter {
       $DBInfo->use_singlebracket;
 
     #$punct="<\"\'}\]\|;,\.\!";
-    $punct="<\'}\]\)\|;\.\!"; # , is omitted for the WikiPedia
-    #$punct="<\'}\]\|;\.\!"; # , is omitted for the WikiPedia
+    #$punct="<\'}\]\)\|;\.\!"; # , is omitted for the WikiPedia
+    $punct="<\'}\]\|\.\!"; # , is omitted for the WikiPedia
     $url="wiki|http|https|ftp|nntp|news|irc|telnet|mailto|file|attachment";
     if ($DBInfo->url_schemas) $url.='|'.$DBInfo->url_schemas;
     $this->urls=$url;
@@ -2689,6 +2694,7 @@ class Formatter {
             $sty['background-color']=strtolower($v);
             break;
           case 'width':
+          case 'height':
           case 'color':
             $sty[$k]=strtolower($v);
             break;
@@ -3407,7 +3413,7 @@ class Formatter {
   function get_javascripts() {
     $out='';
     foreach ($this->java_scripts as $js) {
-      $out.='<script type="text/javascript" src="'.$url_prefix.'/lib/'.$js.'>'.
+      $out.='<script type="text/javascript" src="'.$url_prefix.'/local/'.$js.'>'.
         "</script>\n";
     }
     return $out;
@@ -3511,6 +3517,8 @@ class Formatter {
       }
     }
 
+    $js=$DBInfo->js;
+
     if (isset($options['trail']))
       $this->set_trailer($options['trail'],$this->page->name);
     else if ($DBInfo->origin)
@@ -3538,9 +3546,15 @@ class Formatter {
           if ($subs) $scache->update($this->page->name,1);
         }
         if ($subs) {
+          $subindices='';
+          if (!$DBInfo->use_ajax) {
+            $subindices= '<div>'.$this->macro_repl('PageList','',array('subdir'=>1)).'</div>';
+            $btncls='class="close"';
+          } else
+            $btncls='';
           $this->subindex="<fieldset id='wikiSubIndex'>".
-            "<legend title='[+]' onclick='javascript:toggleSubIndex(\"wikiSubIndex\")'>".
-            "</legend></fieldset>\n";
+            "<legend title='[+]' $btncls onclick='javascript:toggleSubIndex(\"wikiSubIndex\")'></legend>".
+            $subindices."</fieldset>\n";
         }
       }
 
@@ -3568,7 +3582,7 @@ _url_prefix="$DBInfo->url_prefix";
 /*]]>*/
 </script>
 JSHEAD;
-      print $metatags."\n".$keywords;
+      print $metatags.$js."\n".$keywords;
       print "  <title>$DBInfo->sitename: ".$options['title']."</title>\n";
       if ($upper)
         print '  <link rel="Up" href="'.$this->link_url($upper)."\" />\n";
@@ -3883,11 +3897,12 @@ MSG;
       #  #if $menu[$i]==
       #  $menu[$i]="<li >".$menu[$i]."</li>\n";
       #}
-      $menu='<div id="wikiMenu"><ul><li>'.implode("</li><li>",$menu)."</li></ul></div>\n";
+      $menu='<div id="wikiMenu"><ul><li class="first">'.implode("</li><li>",$menu)."</li></ul></div>\n";
       # set current attribute.
       $menu=preg_replace("/(li)>(<a\s[^>]+current[^>]+)/",
         "$1 class='current'>$2",$menu);
     }
+    $this->topmenu=$menu;
 
     # submenu XXX
     if ($this->submenu) {
@@ -3940,6 +3955,19 @@ MSG;
     #if ($upper)
     #  $upper_icon=$this->link_tag($upper,'',$this->icon['upper'])." ";
 
+    # UserPreferences
+    if ($options['id'] != "Anonymous") {
+      $user_link=$this->link_tag("UserPreferences","",$options['id']);
+      if ($DBInfo->hasPage($options['id'])) {
+        $home=$this->link_tag($options['id'],"",$this->icon['home'])." ";
+        unset($this->icons['pref']); // insert home icon
+        $this->icons['home']=array($options['id'],"",$this->icon['home']);
+        $this->icons['pref']=array("UserPreferences","",$this->icon['pref']);
+      } else
+        $this->icons['pref']=array("UserPreferences","",$this->icon['pref']);
+    } else
+      $user_link=$this->link_tag("UserPreferences","",_($this->icon['user']));
+
     if ($this->icons) {
       $icon=array();
       foreach ($this->icons as $item) {
@@ -3952,14 +3980,6 @@ MSG;
 
     $rss_icon=$this->link_tag("RecentChanges","?action=rss_rc",$this->icon['rss'])." ";
 
-    # UserPreferences
-    if ($options['id'] != "Anonymous") {
-      $user_link=$this->link_tag("UserPreferences","",$options['id']);
-      if ($DBInfo->hasPage($options['id']))
-      $home=$this->link_tag($options['id'],"",$this->icon['home'])." ";
-    } else
-      $user_link=$this->link_tag("UserPreferences","",_($this->icon['user']));
-
     # print the title
     kbd_handler();
 
@@ -3968,6 +3988,7 @@ MSG;
       $trail="<div id='wikiTrailer'>\n".$this->trail."</div>\n";
       $origin="<div id='wikiOrigin'>\n".$this->origin."</div>\n";
 
+      $subindex=$this->subindex;
       $themeurl=$this->themeurl;
       include($this->themedir."/header.php");
     } else { #default header
@@ -4397,20 +4418,19 @@ function wiki_main($options) {
         echo "<br />".
           $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
       } else {
-        $formatter->send_title(sprintf("%s Not Found",$page->name),"",$options);
+        $formatter->send_title(sprintf(_("%s is not found in this Wiki"),$page->name),"",$options);
         $button= $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
-        print $button;
         $searchval=htmlspecialchars($options['page']);
-        print sprintf(_(" or click %s to fullsearch this page.\n"),$formatter->link_to("?action=fullsearch&amp;value=$searchval",_("title")));
+        print sprintf(_("%s or click %s to fullsearch this page.\n"),$button,$formatter->link_to("?action=fullsearch&amp;value=$searchval",_("title")));
         print $formatter->macro_repl('LikePages',$page->name,$err);
         if ($err['extra'])
           print $err['extra'];
 
-        print "<hr />\n$button";
+        print "<hr />\n";
         $options['linkto']="?action=edit&amp;template=";
         $tmpls= macro_TitleSearch($formatter,$DBInfo->template_regex,$options);
         if ($tmpls) {
-          print _(" or alternativly, use one of these templates:\n");
+          print sprintf(_("%s or alternativly, use one of these templates:\n"),$button);
           print $tmpls;
         } else {
           print "<h3>"._("You have no templates")."</h3>";

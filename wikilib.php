@@ -644,7 +644,15 @@ function do_edit($formatter,$options) {
   if ($options['section'])
     $sec=' (Section)';
   $formatter->send_title(sprintf(_("Edit %s"),$options['page']).$sec,"",$options);
-  print macro_EditText($formatter,$value,$options);
+  print '<div id="editor_area">'.macro_EditText($formatter,$value,$options).'</div>';
+  if ($DBInfo->use_wikiwyg==1)
+    print <<<JS
+<script type='text/javascript'>
+/*<![CDATA[*/
+sectionEdit(null,null,null);
+/*]]>*/
+</script>
+JS;
   $formatter->send_footer($args,$options);
 }
 
@@ -828,7 +836,12 @@ function macro_Edit($formatter,$value,$options='') {
     $preview_btn='<input type="submit" tabindex="6" name="button_preview" '.
       'value="'._("Preview").'" />';
     if ($preview)
-      $preview_btn.= ' '.$formatter->link_to('#preview',_("Skip to preview"));
+      $skip_preview= ' '.$formatter->link_to('#preview',_("Skip to preview"));
+    if ($DBInfo->use_wikiwyg) {
+      $wysiwyg_msg=_("GUI");
+      $wysiwyg_btn.='&nbsp;<input type="button" tabindex="7" value="'.$wysiwyg_msg.
+        '" onclick="javascript:sectionEdit(null,null,null)" />';
+    }
   }
   $save_msg=_("Save");
   $summary_msg=_("Summary of Change");
@@ -869,13 +882,13 @@ EOS;
 <div id="wikiEditor">
 <textarea id="content" wrap="virtual" name="savetext" tabindex="1"
  rows="$rows" cols="$cols" class="wiki resizable">$raw_body</textarea><br />
-$summary_msg: <input name="comment" size="70" maxlength="70" style="width:200" tabindex="2" />$extra_check<br />
+$summary_msg: <input name="comment" size="70" maxlength="70" style="width:80%" tabindex="2" />$extra_check<br />
 <input type="hidden" name="action" value="savepage" />
 <input type="hidden" name="datestamp" value="$datestamp" />
 $hidden$select_category
-<input type="submit" tabindex="5" value="$save_msg" />&nbsp;
+<input type="submit" tabindex="5" value="$save_msg" />
 <!-- <input type="reset" value="Reset" />&nbsp; -->
-$preview_btn
+$preview_btn$wysiwyg_btn$skip_preview
 $extra
 </form>
 </div>

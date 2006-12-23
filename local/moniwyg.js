@@ -28,7 +28,7 @@ Wikiwyg.prototype.saveChanges = function() {
     }
 
     var datestamp='';
-    var section='';
+    var section=null;
     for (var i=0;i<this.myinput.length;i++) {
         if (this.myinput[i].name == 'datestamp')
             datestamp=this.myinput[i].value;
@@ -43,7 +43,10 @@ Wikiwyg.prototype.saveChanges = function() {
     // save
     var toSend = 'action=savepage/ajax' +
     '&savetext=' + encodeURIComponent(wikitext) +
-    '&datestamp=' + datestamp + '&section=' + section;
+    '&datestamp=' + datestamp;
+
+    if (section)
+        toSend += '&section=' + section;
     var location = this.mylocation;
 
     var saved=self.div.innerHTML;
@@ -51,7 +54,9 @@ Wikiwyg.prototype.saveChanges = function() {
     var form=HTTPPost(location,toSend);
     if (form.substring(0,4) == 'true') {
         // get section
-        var toSend = 'action=markup&all=1&section=' + section;
+        var toSend = 'action=markup&all=1';
+        if (section)
+            toSend += '&section=' + section;
         form=HTTPPost(location,toSend);
         self.div.innerHTML=form;
 
@@ -68,14 +73,14 @@ Wikiwyg.prototype.saveChanges = function() {
     return;
 }
 
-Wikiwyg.prototype.editMode = function(form) {
+Wikiwyg.prototype.editMode = function(form,text) {
     var self = this;
     var dom = document.createElement('div');
     dom.innerHTML = form;
 
     var form = dom.getElementsByTagName('form')[0];
-    var text = dom.getElementsByTagName('textarea')[0];
-    var wikitext = text.value;
+    var mytext = dom.getElementsByTagName('textarea')[0];
+    var wikitext = text == null ? mytext.value:text;
     this.mylocation = form.getAttribute('action');
 
     this.current_mode = this.first_mode;
@@ -145,6 +150,8 @@ proto.apply_inline_stylesheet = function(style, head) {
 proto.enableThis = function() {
     Wikiwyg.Mode.prototype.enableThis.call(this);
     this.edit_iframe.style.border = '1px solid ActiveBorder';
+    //this.edit_iframe.style.backgroundColor = '#ffffff';
+    //this.edit_iframe.setAttribute('style','1px solid ThreeDFace;background:#fff;');
     this.edit_iframe.width = '99%';
     this.setHeightOf(this.edit_iframe);
     this.get_edit_document().designMode = 'on';
@@ -195,6 +202,8 @@ proto.do_image = function() {
         x.focus();
     }
 }
+
+proto.do_media = proto.do_image;
 
 proto = Wikiwyg.Wikitext.prototype;
 
@@ -300,14 +309,14 @@ proto.format_table = function(element) {
     this.myattr=null;
 
     if (width) {
-        this.myattr= '<tablewidth='+width + '>';
+        this.myattr= '<tablewidth="'+width + 'px">';
     } else 
     if (style) {
         var attr='';
         var m = style.match(/width:\s*(\d+)px;\s*height:\s*(\d+)px/);
-        if (m[1]) attr+= '<tablewidth='+m[1] + '>';
-        if (m[2]) attr+= '<tableheight='+m[2] + '>';
-
+        if (m)
+            attr='<tablewidth="'+m[1] + 'px" height="'+m[2]+'px">';
+        
         if (attr != '') this.myattr=attr;
     }
     this.walk(element);
@@ -331,7 +340,7 @@ proto.format_br = function(element) {
 }
 
 proto.assert_blank_line = function() {
-    if (! this.should_whitespace()) return
+    if (! this.should_whitespace()) return;
     this.chomp();
     this.insert_new_line();
     //this.insert_new_line(); // FIX for line_alone (----)
@@ -345,7 +354,7 @@ proto.handle_line_alone = function (element, markup) {
 
 proto.format_td = function(element) {
     var colspan =element.getAttribute('colspan');
-    //var align =element.getAttribute('align');
+    var align =element.getAttribute('class');
     if (colspan) {
         for (var i=0;i<colspan;i++)
             this.appendOutput('||');
@@ -362,9 +371,51 @@ proto.format_td = function(element) {
 
     //if (align) this.appendOutput('<align='+align+'>');
     this.appendOutput('');
-    this.walk(element);
-    this.chomp(); // XXX
+    this.walk_n(element);
+    this.chomp_n(); // table specific chomp
     this.appendOutput('');
+    this.chomp_n(); // chomp again
+}
+
+proto.walk_n = function(element) {
+    if (!element) return;
+    for (var part = element.firstChild; part; part = part.nextSibling) {
+        if (part.nodeType == 1) {
+            this.dispatch_formatter(part);
+        }
+        else if (part.nodeType == 3) {
+            if (part.nodeValue.match(/^[ ]*$/)) {
+                this.appendOutput(part.nodeValue);
+            }
+            else if (part.nodeValue.match(/[^\n]/)) {
+                if (this.no_collapse_text) {
+                    this.appendOutput(part.nodeValue);
+                }
+                else {
+                    this.appendOutput(this.collapse(part.nodeValue));
+                }
+            }
+        }
+    }
+    this.no_collapse_text = false;
+}
+
+proto.chomp_n = function() {
+    var string;
+    while (this.output.length) {
+        string = this.output.pop();
+        if (typeof(string) != 'string') {
+            this.appendOutput(string);
+            return;
+        }
+        if (! string.match(/^\n+>+ $/) && string.match(/(\S|\s)/)) {
+            break;
+        }
+    }
+    if (string) {
+        string = string.replace(/[\r\n]+$/, '');
+        this.appendOutput(string);
+    }
 }
 
 proto.format_li = function(element) {
@@ -434,6 +485,30 @@ Wikiwyg.Preview.prototype.initializeObject = function() {
 
 proto = Wikiwyg.Toolbar.prototype;
 
+proto.addControlItem = function(text, method,arg) {
+    var span = Wikiwyg.createElementWithAttrs(
+        'span', { 'class': 'wikiwyg_control_link' }
+    );
+
+    var link = Wikiwyg.createElementWithAttrs(
+        'input', {
+            type: 'button',
+            value: text
+        }
+    );
+    //link.appendChild(document.createTextNode(text));
+    span.appendChild(link);
+
+    var self = this;
+    if (arg) {
+        method=method+'("'+arg+'")';
+        this.controls=this.controls ? ','+arg:arg;
+    } else method=method+'()';
+    link.onclick = function() { eval('self.wikiwyg.' + method); return false };
+
+    this.div.appendChild(span);
+}
+
 proto.config.controlLayout = [
     'save', 'preview', 'cancel', 'mode_selector', '/',
     'bold',
@@ -477,8 +552,8 @@ proto.config.markupRules.unordered = ['start_lines', ' *'];
 proto.config.markupRules.indent = ['start_lines', ' '];
 proto.config.markupRules.quote = ['start_lines', '>'];
 proto.config.markupRules.hr = ['line_alone', '----'];
-proto.config.markupRules.image = ['bound_phrase', 'attachment:', ''];
-proto.config.markupRules.media = ['bound_phrase', '[[Media(', ')]]'];
+proto.config.markupRules.image = ['bound_phrase', 'attachment:', '','sample.png'];
+proto.config.markupRules.media = ['bound_phrase', '[[Media(', ')]]','sample.ogg'];
 proto.config.markupRules.table = ['line_alone', '|| A || B || C ||\n||   ||   ||   ||\n||   ||   ||   ||'];
 
 proto.do_math = Wikiwyg.Wikitext.make_do('math');
@@ -707,13 +782,14 @@ proto.add_markup_lines = function(markup_start) {
 proto.markup_bound_phrase = function(markup_array) {
     var markup_start = markup_array[1];
     var markup_finish = markup_array[2];
+    var markup_example = markup_array[3] || null;
     var scroll_top = this.area.scrollTop;
     if (markup_finish == 'undefined')
         markup_finish = markup_start;
     var multi = null;
     if (markup_array[1].match(/\{\{\{/)) multi = 1; // fix for pre block
     if (this.get_words(multi))
-        this.add_markup_words(markup_start, markup_finish, null);
+        this.add_markup_words(markup_start, markup_finish, markup_example);
     this.area.scrollTop = scroll_top;
 }
 
@@ -904,8 +980,12 @@ function createWikiwygDiv(elem, parent) {
 wikiwygs = [];
 
 function sectionEdit(ev,obj,sect) {
+    var area;
+    var text=null;
+    var form=null;
     if (sect) {
         var sec=document.getElementById('sect-'+sect);
+        area=sec.parentNode;
 
         var href=obj.href.replace(/=edit/,'=edit/ajax');
         var saved=obj.cloneNode(true);
@@ -914,10 +994,15 @@ function sectionEdit(ev,obj,sect) {
         loading.setAttribute('class','ajaxLoading');
         loading.src=_url_prefix + '/imgs/loading.gif';
         obj.parentNode.replaceChild(loading,obj);
-        var form=HTTPGet(href);
+        form=HTTPGet(href);
         loading.parentNode.replaceChild(saved,loading);
+    } else {
+        area=document.getElementById('editor_area');
+        text=area.getElementsByTagName('textarea')[0].value;
+        form=area.innerHTML;
+    }
 
-        if (form.substring(0,5) != 'false') {
+    if (form && form.substring(0,5) != 'false') {
             var myConfig = {
                 doubleClickToEdit: true,
                 toolbar: {
@@ -936,49 +1021,44 @@ function sectionEdit(ev,obj,sect) {
                     'Wikiwyg.HTML'
                 ]
             };
-            //var div = document.createElement('div');
-            //div.setAttribute('class', 'wikiwyg_area');
-            //sec.parentNode.appendChild(div);
 
             var myWikiwyg = new Wikiwyg();
-            //myWikiwyg.createWikiwygArea(div, myConfig);
-            myWikiwyg.createWikiwygArea(sec.parentNode, myConfig);
-            //myWikiwyg.createWikiwygArea(sec, myConfig);
+            myWikiwyg.createWikiwygArea(area, myConfig);
             wikiwygs.push(myWikiwyg);
-            myWikiwyg.editMode(form);
-            //myWikiwyg.textarea.value = wikitext;
-
-            //var f=document.createElement('div');
-            //f.setAttribute('id','editSect-'+sect);
-        }
+            myWikiwyg.editMode(form,text);
     }
     return;
 }
 
 function savePage(obj) {
     obj.elements['action'].value+='/ajax';
-    var sec=document.getElementById('sect-'+obj.section.value);
+    var sec=null;
+    if (obj.section)
+        sec=document.getElementById('sect-'+obj.section.value);
     var toSend = '';
     for (var i=0;i<obj.elements.length;i++) {
         if (obj.elements[i].name != '')  {
             toSend += (toSend ? '&' : '') + obj.elements[i].name + '='
                                   + escape(obj.elements[i].value);
-            //alert(obj.elements[i].name+'='+obj.elements[i].value);
         }
     }
     var form=HTTPPost(self.location,toSend);
     if (form.substring(0,4) == 'true') {
-        var ed=document.getElementById('editSect-'+obj.section.value);
-        if (ed) { // toogle
-            sec.parentNode.removeChild(sec.parentNode.lastChild);
-            return false;
+        if (sec) {
+            var ed=document.getElementById('editSect-'+obj.section.value);
+            if (ed) { // toogle
+                sec.parentNode.removeChild(sec.parentNode.lastChild);
+                return false;
+            }
         }
     } else {
         var f=document.createElement('div');
-        f.setAttribute('id','editSect-'+obj.section.value);
-        // show error XXX
-        f.innerHTML=form;
-        sec.parentNode.appendChild(f);
+        if (sec) {
+            f.setAttribute('id','editSect-'+obj.section.value);
+            // show error XXX
+            f.innerHTML=form;
+            sec.parentNode.appendChild(f);
+        }
     }
     return false;
 }
