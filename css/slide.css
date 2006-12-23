@@ -4,7 +4,8 @@
 @import url("_user.css");
 
 body {
-  font-family:Bitstream Vera Sans,Georgia,Verdana,Lucida,sans-serif;
+  /* font-family:Bitstream Vera Sans,Georgia,Verdana,Lucida,sans-serif; /* */
+  font-family:Verdana,Lucida,sans-serif;
   font-size:20px;
   margin: 10;
 }
@@ -243,4 +244,8 @@ div.sectionEdit { display:none; }
 
 div.slideNav {
    text-align:center;
+}
+
+.slideNav img {
+   vertical-align:middle;
 }

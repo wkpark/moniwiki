@@ -89,7 +89,7 @@ function keydownhandler(ev) {
 		if (_dom==3 && cc==27 && EventStatus == 'TEXTAREA')
 			return false;
 		// ESC blocking for all vim lovers
-		return;
+		return true;
 	}
 //	if (cc==8) { // Backspace blocking
 //		alert(e.keyCode);
@@ -99,7 +99,7 @@ function keydownhandler(ev) {
 //		}
 //		return false;
 //	}
-	return
+	return true;
 }
 
 function keypresshandler(ev){

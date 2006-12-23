@@ -186,3 +186,79 @@ span.VisualTour img {
 span.VisualTour {
   overflow:auto;
 }
+
+/* admin plugin */
+#admin-submenu li {
+  font-family: Trebuchet MS,sans-serif;
+  font-size:14px;
+  display: inline;
+  line-height: 200%;
+  list-style: none;
+  text-align: center;
+}
+
+#admin-submenu {
+  background: #DFE8FF;
+  border-bottom: none;
+  margin: 0;
+  padding: 3px 2em 0px 3em;
+}
+
+#admin-submenu li a,#admin-submenu li a:visited {
+  text-decoration:none;
+  color: #000;
+  font-size:14px;
+}
+
+#admin-submenu .current {
+  font-weight:bold;
+  background: #f9fcfe;
+  border-top: 1px solid #bcbcbc;
+  border-right: 2px solid #808080;
+  color: #000;
+}
+
+#admin-submenu a {
+  border: none;
+  color: #fff;
+  font-size: 12px;
+  padding: .3em .4em .33em;
+}
+
+#admin-submenu li a:hover {
+  background: #F0F4FF;
+  color: #393939;
+}
+
+#admin-submenu li {
+  line-height: 170%;
+}
+
+/* Scriptaculous autocompleter */
+.autocomplete, #autocomplete_choices {
+  font-size:11px;
+  font-family : tahoma, arial, helvetica, sans-serif;
+  width: 350px;
+  background: #fff;
+  border:1px solid #888;
+  z-index:100;
+}
+
+.autocomplete ul,#autocomplete_choices ul {
+  margin:0px;
+  padding:0px;
+  width:100%;
+  list-style-type:none;
+}
+
+.autocomplete ul li.selected,#autocomplete_choices ul li.selected {
+  background-color: #316ac5;color:white;
+}
+
+.autocomplete ul li,#autocomplete_choices ul li {
+  margin:0;
+  padding:3px;
+  list-style-image: none;
+  cursor:pointer;
+}
+
