@@ -1903,9 +1903,11 @@ class Formatter {
       }
 
       $notused=array();
+      $pilines=array();
       while ($body and $body[0] == '#') {
         # extract first line
         list($line, $body)= split("\n", $body,2);
+        $pilines[]=$line;
         if ($line=='#') break;
         else if ($line[1]=='#') { $notused[]=$line; continue;}
 
@@ -1915,6 +1917,8 @@ class Formatter {
         if (in_array($key,$pikeys)) { $pi[$key]=$val ? $val:1; }
         else $notused[]=$line;
       }
+      $piline=implode("\n",$pilines);
+      $piline=$piline ? $piline."\n":'';
       #
       if (isset($pi['#notwins'])) $pi['#twinpages']=0;
       if (isset($pi['#nocamelcase'])) $pi['#camelcase']=0;
@@ -1931,6 +1935,7 @@ class Formatter {
     if ($notused) $body=join("\n",$notused)."\n".$body;
     if ($update_body) $this->page->write($body." "); # workaround XXX
     #if ($update_body) $this->page->write($body);
+    $pi['raw']=$piline;
     return $pi;
   }
 
@@ -2004,6 +2009,7 @@ class Formatter {
       #return processor_latex($this,"#!latex\n".$url);
       $url=preg_replace('/<\/?sup>/','^',$url);
       if ($url[1] != '$') $opt=array('type'=>'inline');
+      else $opt=array('type'=>'block');
       return $this->processor_repl($this->inline_latex,$url,$opt);
       break;
     case '#': # Anchor syntax in the MoinMoin 1.1
@@ -2493,8 +2499,11 @@ class Formatter {
   function processor_repl($processor,$value,$options="") {
     $bra='';$ket='';
     if (!empty($this->wikimarkup) and empty($options['nomarkup'])) {
-      $bra= "<div class='wikiMarkup'><!-- wiki:\n{{{".$value."}}}\n-->";
-      $ket= '</div>';
+      if ($processor == 'latex' and $options['type'])
+        $bra= "<span class='wikiMarkup'><!-- wiki:\n".$value."\n-->";
+      else
+        $bra= "<span class='wikiMarkup'><!-- wiki:\n{{{".$value."}}}\n-->";
+      $ket= '</span>';
     }
     if (!empty($this->use_smartdiff) and
       preg_match("/\006|\010/", $value)) $processor='plain';
@@ -2513,7 +2522,7 @@ class Formatter {
       }
     }
     if ($f) {
-      $ret= call_user_func("processor_$processor",$this,$value,$options);
+      $ret= call_user_func_array("processor_$processor",array(&$this,$value,$options));
       return $bra.$ret.$ket;
     }
     $classname='processor_'.$processor;
@@ -2838,6 +2847,8 @@ class Formatter {
 
     if ($body) {
       $pi=$this->get_instructions($body);
+      if ($this->wikimarkup and $pi['raw'])
+        print "<span class='wikiMarkup'><!-- wiki:\n$pi[raw]\n--></span>";
       $this->set_wordrule($pi);
       $fts=array();
       if ($pi['#filter']) $fts=preg_split('/(\||,)/',$pi['#filter']);
@@ -2864,6 +2875,8 @@ class Formatter {
         $body=$this->page->get_raw_body($options);
       }
       $this->set_wordrule($pi);
+      if ($this->wikimarkup and $pi['raw'])
+        print "<span class='wikiMarkup'><!-- wiki:\n$pi[raw]\n--></span>";
 
       $fts=array();
       if ($pi['#filter']) $fts=preg_split('/(\||,)/',$pi['#filter']);
@@ -3315,9 +3328,9 @@ class Formatter {
             # FIXME Check open/close tags in $pre
             $out="<pre class='wiki'>\n".$pre."</pre>";
             if ($this->wikimarkup)
-              $out='<div class="wikiMarkup">'."<!-- wiki:\n{{{\n".
+              $out='<span class="wikiMarkup">'."<!-- wiki:\n{{{\n".
                 str_replace('}}}','\}}}',$this->pre_line).
-                "}}}\n-->".$out."</div>";
+                "}}}\n-->".$out."</span>";
             $line=$out."\n".$line;
             unset($out);
          }
@@ -3395,6 +3408,29 @@ class Formatter {
       print "<div id='wikiSister'>\n<div class='separator'><tt class='foot'>----</tt></div>\n$msg<br />\n<ul>$sisters</ul></div>\n";
       $this->sister_on=$sister_save;
     }
+
+    # postamble
+    $save= $this->wikimarkup;
+    $this->wikimarkup=0;
+    if ($this->postamble) {
+      $sz=sizeof($this->postamble);
+      for ($i=0;$i<$sz;$i++) {
+        $postamble=implode("\n",$this->postamble);
+        if (!trim($postamble)) continue;
+        list($type,$name,$val)=explode(':',$postamble,3);
+        if (in_array($type,array('macro','processor'))) {
+          switch($type) {
+            case 'macro':
+              print $this->macro_repl($name,$val,$options);
+              break;
+            case 'processor':
+              print $this->processor_repl($name,$val,$options);
+              break;
+          }
+        }
+      }
+    }
+    $this->wikimarkup=$save;
 
     if ($this->foots)
       print $this->macro_repl('FootNote','',$options);
