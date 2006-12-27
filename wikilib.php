@@ -1427,7 +1427,7 @@ function do_post_savepage($formatter,$options) {
       } else
         $formatter->send_title(_("Conflict error!"),"",$options);
       $options['savetext']=$savetext;
-      print macro_EditText($formatter,$value,$options); # XXX
+      print '<div id="editor_area">'.macro_EditText($formatter,$value,$options).'</div>'; # XXX
 
       print $menu;
       print "<div id='wikiPreview'>\n";
@@ -1473,7 +1473,7 @@ function do_post_savepage($formatter,$options) {
     $options['savetext']=$savetext;
 
     $formatter->preview=1;
-    print macro_EditText($formatter,$value,$options); # XXX
+    print '<div id="editor_area">'.macro_EditText($formatter,$value,$options).'</div>'; # XXX
     print $DBInfo->hr;
     print $menu;
     print "<div id='wikiPreview'>\n";
