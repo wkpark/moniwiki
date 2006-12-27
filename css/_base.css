@@ -45,6 +45,17 @@ pre.quote {
   font-family:monospace;
 }
 
+.preWhiteSpace {
+  padding-left:6px;
+  padding-top:6px;
+  font-family: "Courier New", GulimChe, monospace !important;
+  background-color:#000000;
+  color:#c0c0c0;
+  border:1px solid #D8E1E9;
+  border-left:10px solid #D8E1E9;
+  padding:10px;
+}
+
 table.wiki {
 /* background-color: #E9ECEF; */
 }
@@ -180,8 +191,11 @@ div.closure {
   font-family:Trebuchet MS,Georgia,Verdana,sans-serif;
   font-size:28px;
   font-weight:bold;
-  text-decoration: none;
   display:block;
+}
+
+.wikiTitle a,.wikiTitle a:active,.wikiTitle a:visited {
+  text-decoration: none;
 }
 
 .clear {
@@ -403,8 +417,6 @@ h4:hover a.perma, h5:hover a.perma, h6:hover a.perma {
 .wikiMarkup {
   font-family:Bitstream vera sans mono,Courier New,monospace; 
   background-color:#ffff00;
-  border-left:3px solid #ffff00;
-  border-right:3px solid #ffff00;
 }
 
 /* since v1.1.3 */
