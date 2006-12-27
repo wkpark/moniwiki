@@ -2501,8 +2501,10 @@ class Formatter {
     if (!empty($this->wikimarkup) and empty($options['nomarkup'])) {
       if ($processor == 'latex' and $options['type'])
         $bra= "<span class='wikiMarkup'><!-- wiki:\n".$value."\n-->";
-      else
-        $bra= "<span class='wikiMarkup'><!-- wiki:\n{{{".$value."}}}\n-->";
+      else {
+        if ($value{0}!='#' and $value{1}!='!') $notag="\n";
+        $bra= "<span class='wikiMarkup'><!-- wiki:\n{{{".$notag.$value."}}}\n-->";
+      }
       $ket= '</span>';
     }
     if (!empty($this->use_smartdiff) and
@@ -3321,16 +3323,20 @@ class Formatter {
             $in_quote=0;
          } else {
             # htmlfy '<', '&'
-            $pre=str_replace(array('&','<'),
-                             array("&amp;","&lt;"),
-                            $this->pre_line);
-            $pre=preg_replace("/&lt;(\/?)(ins|del)/","<\\1\\2",$pre);
-            # FIXME Check open/close tags in $pre
-            $out="<pre class='wiki'>\n".$pre."</pre>";
-            if ($this->wikimarkup)
-              $out='<span class="wikiMarkup">'."<!-- wiki:\n{{{\n".
-                str_replace('}}}','\}}}',$this->pre_line).
-                "}}}\n-->".$out."</span>";
+            if ($DBInfo->default_pre) {
+              $out=$this->processor_repl($DBInfo->default_pre,$this->pre_line,$options);
+            } else {
+              $pre=str_replace(array('&','<'),
+                               array("&amp;","&lt;"),
+                               $this->pre_line);
+              $pre=preg_replace("/&lt;(\/?)(ins|del)/","<\\1\\2",$pre);
+              # FIXME Check open/close tags in $pre
+              $out="<pre class='wiki'>\n".$pre."</pre>";
+              if ($this->wikimarkup)
+                $out='<span class="wikiMarkup">'."<!-- wiki:\n{{{\n".
+                  str_replace('}}}','\}}}',$this->pre_line).
+                  "}}}\n-->".$out."</span>";
+            }
             $line=$out."\n".$line;
             unset($out);
          }

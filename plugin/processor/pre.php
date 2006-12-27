@@ -22,12 +22,17 @@ function processor_pre($formatter,$value) {
     #$pre=preg_replace($formatter->baserule,$formatter->baserepl,$value);
     #$pre=
     #    preg_replace("/(".$wordrule.")/e","\$formatter->link_repl('\\1')",$value);
-    $pre = htmlspecialchars($value);
+    #$pre = htmlspecialchars($value);
+
     $pre = str_replace(
-        array("\t", "\n"),
-        array('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',"<br />\n"),
-        $pre);
-    $pre=preg_replace("/(\s\s+)/e","str_repeat('&nbsp;',strlen('\\1'))",$pre);
+        array('&','<', '>', "\t", "\n", '  '),
+        array('&amp;','&lt;', '&gt;',
+            '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;',
+            "<br />\n",
+            ' &nbsp;'),
+        $value);
+
+    #$pre=preg_replace("/(\s\s+)/e","str_repeat('&nbsp;',strlen('\\1'))",$pre);
 
     $out = "<div class='preWhiteSpace'>$pre</div>";
 
