@@ -73,6 +73,25 @@ Wikiwyg.prototype.saveChanges = function() {
     return;
 }
 
+Wikiwyg.prototype.switchMode = function(new_mode_key) {
+    var new_mode = this.modeByName(new_mode_key);
+    var old_mode = this.current_mode;
+    var self = this;
+    new_mode.enableStarted();
+    old_mode.disableStarted();
+    old_mode.toHtml(
+        function(html) {
+            self.previous_mode = old_mode;
+            new_mode.fromHtml(fixup_markup_style(html));
+            old_mode.disableThis();
+            new_mode.enableThis();
+            new_mode.enableFinished();
+            old_mode.disableFinished();
+            self.current_mode = new_mode;
+        }
+    );
+}
+
 Wikiwyg.prototype.editMode = function(form,text) {
     var self = this;
     var dom = document.createElement('div');
@@ -88,7 +107,7 @@ Wikiwyg.prototype.editMode = function(form,text) {
         var myWikiwyg = new Wikiwyg.Wikitext();
 
         myWikiwyg.convertWikitextToHtml(wikitext,
-            function(new_html) { self.current_mode.fromHtml(new_html); });
+            function(new_html) { self.current_mode.fromHtml(fixup_markup_style(new_html)); });
     }
     else {
         this.current_mode.textarea.value = wikitext;
@@ -96,28 +115,88 @@ Wikiwyg.prototype.editMode = function(form,text) {
 
     this.toolbarObject.resetModeSelector();
     this.current_mode.enableThis();
-    this.current_mode.enableThis(); // hack !!
+    //this.current_mode.enableThis(); // hack !!
     this.myinput=dom.getElementsByTagName('input');
+}
+
+//
+// change display style to 'block' for multiline markups
+//
+function fixup_markup_style(html)
+{
+    var dom = document.createElement('div');
+    dom.innerHTML = html;
+
+    var spans=dom.getElementsByTagName('span');
+
+    if (spans.length) {
+        for (var i=0;i<spans.length;i++) {
+            var cname= spans[i].getAttribute('class');
+            if (cname == 'wikiMarkup' && spans[i].innerHTML) {
+                // check marcos
+                var match=spans[i].innerHTML.match(/^(<!-- wiki:\n[^\n]+\n-->)/m);
+                if (!match) // check processors
+                    match=spans[i].innerHTML.match(/^(<!-- wiki:\n\{\{\{(.|\n)+\}\}\}\n-->)/m);
+                if (match) {
+                    var test=spans[i].innerHTML.substr(match[1].length);
+                    if (test.indexOf("\n") != -1)
+                        spans[i].style.display='block';
+                }
+            }
+        }
+        return dom.innerHTML;
+    } else {
+        return html;
+    }
 }
 
 proto = Wikiwyg.Wysiwyg.prototype;
 
 proto.get_edit_iframe = function() {
-    var iframe;
-    if (this.config.iframeId) {
+    var iframe=null;
+    if (this.config.iframeId)
         iframe = document.getElementById(this.config.iframeId);
-        iframe.iframe_hack = true;
-    }
-    else if (this.config.iframeObject) {
+    else if (this.config.iframeObject)
         iframe = this.config.iframeObject;
+    if (iframe)
         iframe.iframe_hack = true;
-    }
     else {
         // XXX iframe need to be a element of the body.
         iframe = document.createElement('iframe');
         var body = document.getElementsByTagName('body')[0];;
         body.appendChild(iframe);
     }
+
+    // from http://www.codingforums.com/archive/index.php?t-63511.html
+    var self=this;
+    iframe.onload = function() {
+        var doc = iframe.contentDocument || iframe.contentWindow.document;
+        //Fx workaround: delay modifying editorDoc.body right after iframe onload event
+        var head = doc.getElementsByTagName("head")[0];
+        setTimeout(function() {
+            doc.designMode = 'on';
+
+            self.apply_stylesheets();
+            var link = doc.createElement('link');
+            link.setAttribute('rel', 'STYLESHEET');
+            link.setAttribute('type', 'text/css');
+            link.setAttribute('media', 'screen');
+            var loc = location.protocol + '//' + location.host;
+            if (location.port) loc += ':' + location.port;
+            link.setAttribute('href',
+                loc + _url_prefix + '/local/Wikiwyg/css/wysiwyg.css');
+            head.appendChild(link);
+
+            self.fix_up_relative_imgs();
+            self.clear_inner_html();
+            self.enable_keybindings();
+        }, 0);
+
+        //editorDoc.onkeydown = editorDoc_onkeydown;
+        //where editorDoc_onkeydown is the keydown event handler you defined earlier
+        iframe = null; //IE mem leak fix
+    }
+
     return iframe;
 }
 
@@ -155,28 +234,9 @@ proto.enableThis = function() {
     this.edit_iframe.width = '99%';
     this.setHeightOf(this.edit_iframe);
     this.get_edit_document().designMode = 'on';
-    this.enable_keybindings();
     // XXX - Doing stylesheets in initializeObject might get rid of blue flash
     //
-    var doc    = this.get_edit_document();
-    var head   = doc.getElementsByTagName("head")[0];
-    if (head != null) {
-        var styles = doc.styleSheets;
-        if (styles.length == 0) {
-            this.apply_stylesheets();
-            var link = doc.createElement('link');
-            link.setAttribute('rel', 'STYLESHEET');
-            link.setAttribute('type', 'text/css');
-            link.setAttribute('media', 'screen');
-            var loc = location.protocol + '//' + location.host;
-            if (location.port) loc += ':' + location.port;
-            link.setAttribute('href',
-                loc + _url_prefix + '/local/Wikiwyg/css/wysiwyg.css');
-            head.appendChild(link);
-        }
-        this.fix_up_relative_imgs();
-        this.clear_inner_html();
-    }
+    // this.edit_iframe.contentWindow;
 }
 
 proto.do_link = function() {
@@ -575,7 +635,7 @@ proto.get_wiki_comment = function(element) {
     for (var node = element.firstChild; node; node = node.nextSibling) {
         if (node.nodeType == this.COMMENT_NODE_TYPE
             && node.data.match(/^\s*wiki/)) {
-            var ele=node.nextSibling.firstChild;
+            var ele=node.nextSibling ? node.nextSibling.firstChild:null;
             if (ele && node.data.match(/\nattachment:/) && ele.tagName && ele.tagName.toLowerCase() == 'img') {
                 // check the attributes of the attached images
                 var style = ele.getAttribute('style');
@@ -1005,6 +1065,9 @@ function sectionEdit(ev,obj,sect) {
     if (form && form.substring(0,5) != 'false') {
             var myConfig = {
                 doubleClickToEdit: true,
+                wysiwyg: {
+                    iframeId: 'default-iframe'
+                },
                 toolbar: {
                     imagesLocation:
                         _url_prefix + '/local/Wikiwyg/moni/images/',
