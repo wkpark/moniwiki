@@ -18,7 +18,10 @@ function macro_Rating($formatter,$value='',$options=array()) {
     global $Config;
     $rating_script=&$GLOBALS['rating_script'];
 
-    $mid='&amp;mid='.base64_encode($formatter->mid.',Rating,'.$value);
+    if ($options['mid'])
+        $mid='&amp;mid='.base64_encode($options['mid'].',Rating,'.$value);
+    else
+        $mid='&amp;mid='.base64_encode($formatter->mid.',Rating,'.$value);
 
     $val=explode(',',$value);
     if (sizeof($val)>=2) {
@@ -86,7 +89,7 @@ function do_rating($formatter,$options) {
     }
     $formatter->send_header('',$options);
 
-    $raw=$formatter->page->get_raw_body();
+    $oraw=$formatter->page->get_raw_body();
 
     list($nth,$dum,$v)=explode(',', base64_decode($options['mid']),3);
 
@@ -107,7 +110,9 @@ function do_rating($formatter,$options) {
 
     $total+=$rating; // increase total rating
 
-    $raw=str_replace("\n","\1",$raw);
+    if (is_numeric($nth)):
+
+    $raw=str_replace("\n","\1",$oraw);
     $chunk=preg_split("/({{{.+}}})/U",$raw,-1,PREG_SPLIT_DELIM_CAPTURE);
     #print '<pre>';
     #print_r($chunk);
@@ -145,18 +150,49 @@ function do_rating($formatter,$options) {
             ++$ii;
         }
     }
-
-    if (!$matched) {
-        $options['title']=_("Invalid rating request !");
-        $formatter->send_title('','',$options);
-        $formatter->send_footer('',$options);
-        return;
-    }
-
     if (!empty($blocks)) {
         $nnc=preg_replace("/\7(\d+)\7/e",
             "\$blocks[$1]",$nnc);
     }
+
+    endif;
+
+    if (!$matched) {
+        if ($DBInfo->use_rating) {
+            $dum='';
+            $pi=$formatter->get_instructions($dum);
+            $old=$pi['#rating'];
+            $new='#rating '.$total.','.$count;
+            if ($old) {
+                list($ts,$cnt)=explode(',',$old);
+                $raw=preg_replace('/^#rating\s+.*$/m',$new,$oraw,1);
+            } else {
+                if (!$formatter->pi)
+                    $raw=$new."\n".$oraw;
+                else {
+                    $body=$oraw;
+                    $head='';
+                    while (true) {
+                        list($line,$body)=explode("\n",$body,2);
+                        if ($line{0}=='#') $head.=$line."\n";
+                        else {
+                            $body=$line."\n".$body;
+                            break;
+                        }
+                    }
+                    $raw=$head.$new."\n".$body;
+                }
+            }
+            #print "<pre>".$raw."</pre>";
+            $nnc=&$raw;
+        } else {
+            $options['title']=_("Invalid rating request !");
+            $formatter->send_title('','',$options);
+            $formatter->send_footer('',$options);
+            return;
+        }
+    }
+
     $formatter->page->write($nnc);
     $DBInfo->savePage($formatter->page,"Rating",$options);
 
