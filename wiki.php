@@ -1672,6 +1672,7 @@ class Formatter {
       ' target="'.$DBInfo->interwiki_target.'"':'';
     $this->filters=$DBInfo->filters;
     $this->postfilters=$DBInfo->postfilters;
+    $this->use_rating=$DBInfo->use_rating;
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -1872,7 +1873,7 @@ class Formatter {
     $pikeys=array('#redirect','#action','#title','#keywords','#noindex',
       '#format','#filter','#postfilter','#twinpages','#notwins','#nocomment',
       '#language','#camelcase','#nocamelcase','#cache','#nocache',
-      '#singlebracket','#nosinglebracket');
+      '#singlebracket','#nosinglebracket','#rating');
     $pi=array();
     if (!$body) {
       if (!$this->page->exists()) return array();
@@ -1995,7 +1996,10 @@ class Formatter {
         $url=$col.' '.$url;
       } else if (preg_match('/^((?:\+|\-)([1-6]?))(?=\s)(.*)$/',$url,$m)) {
         if ($m[2]=='') $m[1].='1';
-        return "<span style='size:$m[1]'>$m[3]</span>";
+        $fsz=array(
+          '-5'=>'10%','-4'=>'20%','-3'=>'40%','-2'=>'60%','-1'=>'80%',
+          '+1'=>'140%','+2'=>'180%','+3'=>'220%','+4'=>'260%','+5'=>'200%');
+        return "<span style='font-size:".$fsz[$m[1]]."'>$m[3]</span>";
       }
       if ($url[0]==' ' and in_array($url[1],array('#','-','+')) !==false)
         $url=substr($url,1);
@@ -2849,8 +2853,10 @@ class Formatter {
 
     if ($body) {
       $pi=$this->get_instructions($body);
-      if ($this->wikimarkup and $pi['raw'])
-        print "<span class='wikiMarkup'><!-- wiki:\n$pi[raw]\n--></span>";
+      if ($this->wikimarkup and $pi['raw']) {
+        $pi_html=str_replace("\n","<br />\n",$pi['raw']);
+        print "<span class='wikiMarkup'><!-- wiki:\n$pi[raw]\n-->$pi_html</span>";
+      }
       $this->set_wordrule($pi);
       $fts=array();
       if ($pi['#filter']) $fts=preg_split('/(\||,)/',$pi['#filter']);
@@ -2879,6 +2885,16 @@ class Formatter {
       $this->set_wordrule($pi);
       if ($this->wikimarkup and $pi['raw'])
         print "<span class='wikiMarkup'><!-- wiki:\n$pi[raw]\n--></span>";
+
+      if ($this->use_rating and !$this->wikimarkup) {
+        $this->pi=$pi;
+        $old=$this->mid;
+        if ($pi['#rating']) $rval=$pi['#rating'];
+        else $rval='5';
+
+        print '<div class="wikiRating">'.$this->macro_repl('Rating',$rval,array('mid'=>'page'))."</div>\n";
+        $this->mid=$old;
+      }
 
       $fts=array();
       if ($pi['#filter']) $fts=preg_split('/(\||,)/',$pi['#filter']);
@@ -3877,12 +3893,14 @@ FOOT;
     # setup title variables
     #$heading=$this->link_to("?action=fullsearch&amp;value="._urlencode($name),$title);
     if ($DBInfo->use_backlinks) $qext='&amp;backlinks=1';
+    if ($link)
+      $title="<a href=\"$link\">$title</a>";
+    else if (empty($options['nolink']))
+      $title=$this->link_to("?action=fullsearch$qext&amp;value="._urlencode($mypgname),$title);
+
     $title="$groupt<span class='wikiTitle'>$title</span>";
     #$title="<span class='wikiTitle'><b>$title</b></span>";
-    if ($link)
-      $title="<a href=\"$link\" class='wikiTitle'>$title</a>";
-    else if (empty($options['nolink']))
-      $title=$this->link_to("?action=fullsearch$qext&amp;value="._urlencode($mypgname),$title,"class='wikiTitle'");
+
     $logo=$this->link_tag($DBInfo->logo_page,'',$DBInfo->logo_string);
     $goto_form=$DBInfo->goto_form ?
       $DBInfo->goto_form : goto_form($action,$DBInfo->goto_type);
