@@ -2,7 +2,7 @@
 #
 # $Id$
 #
-$sitename='UnnamedWiki';
+$sitename='UnnamedWiki'; # site name
 $data_dir= './data';
 $upload_dir= 'pds';
 
@@ -30,6 +30,9 @@ $edit_rows=16;
 $iconset= 'moni2';
 $inline_latex=0;
 #$inline_latex='mimetex';
+#$latex_convert_options='-crop 0x0 -density 120x120'; # change convert options for the latex processor
+#$latex_renumbering=1; # renumbering tex equations
+#$latex_allinone=1; # XXX
 $lang='auto';
 $charset='utf-8';
 #$charset='euc-kr';
@@ -88,6 +91,25 @@ $hr='';
 #<link rel="Alternate" title="xml" type="application/rss+xml" href="?action=rss_rc" />
 #';
 
+# set global javascripts
+#$js=<<<EOF
+#<script type="text/javascript" src="$url_prefix/local/ajax.js"></script>
+#<script type="text/javascript" src="$url_prefix/local/Wikiwyg/lib/Wikiwyg.js"></script>
+#<script type="text/javascript" src="$url_prefix/local/Wikiwyg/lib/Wikiwyg/Util.js"></script>
+#<script type="text/javascript" src="$url_prefix/local/Wikiwyg/lib/Wikiwyg/Toolbar.js"></script>
+#<script type="text/javascript" src="$url_prefix/local/Wikiwyg/lib/Wikiwyg/Wikitext.js"></script>
+#<script type="text/javascript" src="$url_prefix/local/Wikiwyg/lib/Wikiwyg/Preview.js"></script>
+#<script type="text/javascript" src="$url_prefix/local/Wikiwyg/lib/Wikiwyg/HTML.js"></script>
+#<script type="text/javascript" src="$url_prefix/local/Wikiwyg/lib/Wikiwyg/Wysiwyg.js"></script>
+#<script type="text/javascript" src="$url_prefix/local/moniwyg.js"></script>
+#
+#<script type="text/javascript" src="$url_prefix/local/js/prototype.js"></script>
+#<script type="text/javascript" src="$url_prefix/local/js/scriptaculous.js?load=effects,controls"></script>
+#<script type="text/javascript" src="$url_prefix/local/lightbox2/js/lightbox.js"></script>
+#<script type="text/javascript" src="$url_prefix/local/autocomplete.js"></script>
+#<script type="text/javascript" src="$url_prefix/local/subindex.js"></script>
+#EOF;
+
 #$diffonly=1; # show only diff infos (do not show wiki contents)
 #$goto_type=1;
 
@@ -129,6 +151,7 @@ $hr='';
 #$auto_search='AutoGoto';
 #$hr_type='fancy';
 $use_sectionedit=0;
+#$sectionedit_attr=1; # enable wikiwyg section editing
 $spam_filter='antispam';
 $use_toctoggle=0;
 #$toc_options='title=Contents,toggle,simple';
@@ -186,4 +209,10 @@ $use_save_refresh=2;
 #$no_404=1; # for IIS
 #$nofancy_404=1; # simplified 404 msg for robots etc.
 #$toolbar_iconset='mediawiki'; # change the toolbar iconset 
+#$use_lightbox=1;
+#$gallery_use_lightbox=1;
+#$use_subindex=1; # use subpage indices 
+#$nosession=1; # do not use session
+#$default_pre='pre'; # set the default pre processor
+#$use_rating=1; # builtin Rating support
 ?>

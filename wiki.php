@@ -1873,17 +1873,11 @@ class Formatter {
     $pikeys=array('#redirect','#action','#title','#keywords','#noindex',
       '#format','#filter','#postfilter','#twinpages','#notwins','#nocomment',
       '#language','#camelcase','#nocamelcase','#cache','#nocache',
-      '#singlebracket','#nosinglebracket','#rating');
+      '#singlebracket','#nosinglebracket','#rating','#norating');
     $pi=array();
-    if (!$body) {
-      if (!$this->page->exists()) return array();
-      if ($this->pi) return $this->pi;
-      $body=$this->page->get_raw_body();
-      $update_body=1;
-    }
 
     $format='';
-    if (!$this->pi['#format']) { # XXX
+    if (!$body and !$this->pi['#format']) { # XXX
       $pos=strpos($this->page->name,'/') ? 1:0;
       $key=strtok($this->page->name,'/');
       if (isset($Config['pagetype'][$key]) and $f=$Config['pagetype'][$key]) {
@@ -1892,6 +1886,14 @@ class Formatter {
       } else if (isset($Config['pagetype']['*']))
         $format=$Config['pagetype']['*']; // default page type
     }
+
+    if (!$body) {
+      if (!$this->page->exists()) return array();
+      if ($this->pi) return $this->pi;
+      $body=$this->page->get_raw_body();
+      $update_body=1;
+    }
+
     if (!$format and $body[0] == '<') {
       list($line, $dummy)= explode("\n", $body,2);
       if (substr($line,0,6) == '<?xml ')
@@ -2886,11 +2888,11 @@ class Formatter {
       if ($this->wikimarkup and $pi['raw'])
         print "<span class='wikiMarkup'><!-- wiki:\n$pi[raw]\n--></span>";
 
-      if ($this->use_rating and !$this->wikimarkup) {
+      if ($this->use_rating and !$this->wikimarkup and !$pi['#norating']) {
         $this->pi=$pi;
         $old=$this->mid;
         if ($pi['#rating']) $rval=$pi['#rating'];
-        else $rval='5';
+        else $rval='0';
 
         print '<div class="wikiRating">'.$this->macro_repl('Rating',$rval,array('mid'=>'page'))."</div>\n";
         $this->mid=$old;
