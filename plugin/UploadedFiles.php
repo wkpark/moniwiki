@@ -322,6 +322,7 @@ EOS;
         $ext=strtolower($m[1]);
         if ($ext and stristr('gif,png,jpeg,jpg',$ext)) {
           $fname="<img src='$previewlink' class='icon' width='$mywidth' $alt />";
+          $attr.=$href_attr;
         } else {
           if (preg_match('/^(wmv|avi|mpeg|mpg|swf|wav|mp3|ogg|midi|mid|mov)$/',$ext)) {
             $tag_open='[[Media('; $tag_close=')]]';
@@ -338,7 +339,7 @@ EOS;
           $link="javascript:$tag";
         }
       }
-      $out.="<tr><td class='wiki'><input type='$checkbox' name='files[$idx]' value='$file' /></td><td class='wiki'><a href=\"$link\"$attr$href_attr>$fname</a></td><td align='right' class='wiki'>$size</td><td class='wiki'>$date</td></tr>\n";
+      $out.="<tr><td class='wiki'><input type='$checkbox' name='files[$idx]' value='$file' /></td><td class='wiki'><a href=\"$link\"$attr>$fname</a></td><td align='right' class='wiki'>$size</td><td class='wiki'>$date</td></tr>\n";
       $idx++;
    }
    $idx--;

@@ -148,7 +148,7 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
         $form1="</form>\n";
         return array($sections,"$form0$return$start$prev$form$next$end$form1\n");
     }
-    return "$return$start\n";
+    return "$return$start";
 }
 
 function do_slideshow($formatter,$options=array()) {

@@ -101,6 +101,7 @@ function do_rating($formatter,$options) {
         $total=$val[0];
     $count=max(1,$count);
     $value=$total/$count; // averaged value
+    if ($total==0 and $count==1) $count=0;
     $value=(!empty($value) and 0 < $value and 6 > $value) ? $value:0;
     ++$count;
 

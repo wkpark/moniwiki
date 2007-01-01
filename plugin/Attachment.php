@@ -141,7 +141,7 @@ function macro_Attachment($formatter,$value,$option='') {
       if ($img_link)
         return $bra."<span class=\"attach\"><a href='$link'>$img_link</a></span>".$ket;
 
-      return $bra."<span class=\"attach\"><img align='middle' src='$DBInfo->imgs_dir_interwiki".'uploads-16.png\' /><a href="'.$link.'">'.$text.'</a></span>'.$ket;
+      return $bra."<span class=\"attach\"><img src='$DBInfo->imgs_dir_interwiki".'uploads-16.png\' /><a href="'.$link.'">'.$text.'</a></span>'.$ket;
     }
   }
 
