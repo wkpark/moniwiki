@@ -88,7 +88,7 @@ function processor_latex(&$formatter,$value="") {
   // check image file exists
   if ($DBInfo->latex_allinone and $tex) {
     $formatter->latex_uniq[]=$uniq;
-    $formatter->latex_all.=$tex."\n\\pagebreak\n";
+    $formatter->latex_all.=$tex."\n\\pagebreak\n\n";
     #print '<pre>'.$tex.'</pre>';
   }
 
@@ -129,6 +129,7 @@ function processor_latex(&$formatter,$value="") {
          $js= '<script type="text/javascript" src="'.$DBInfo->url_prefix.'/local/latex.js"></script>';
 
          $src=str_replace('@TEX@',$formatter->latex_all,$templ);
+         #print '<pre>'.$src.'</pre>';
          $uniq=md5($src);
        } else {
          $formatter->postamble['latex']='processor:latex:';
@@ -178,6 +179,7 @@ function processor_latex(&$formatter,$value="") {
 
      if ($DBInfo->latex_allinone) {
         $sz=sizeof($formatter->latex_uniq);
+
         for ($i=0;$i<$sz;$i++) {
           $id=$formatter->latex_uniq[$i];
           if ($DBInfo->cache_public_dir) {
@@ -186,7 +188,10 @@ function processor_latex(&$formatter,$value="") {
           } else {
             $img=$cache_dir.'/'.$id.'.png';
           }
-          rename($outpath.'.'.$i,$img);
+          if ($sz==1)
+            rename($outpath,$img);
+          else
+            rename($outpath.'.'.$i,$img);
         }
         $formatter->latex_all='';
         $formatter->latex_uniq=array();
