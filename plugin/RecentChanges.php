@@ -201,7 +201,7 @@ define('RC_DEFAULT_DAYS',7);
       $out.=$cat0;
       $rcdate=gmdate($date_fmt,$ed_time+$tz_offset);
 
-      $out.=sprintf("%s<span class='rc-date'><span class='rc-date' style='font-size:large'>%s ",
+      $out.=sprintf("%s<span class='rc-date' style='font-size:large'>%s ",
             $br, $rcdate);
       if (!$nobookmark)
         $out.="<span class='rc-bookmark' style='font-size:small'>[".
@@ -209,7 +209,7 @@ define('RC_DEFAULT_DAYS',7);
           _("set bookmark"))."]</span>\n";
       $ratchet_day = $day;
       $br="<br />";
-      $out.=$perma.'</span></span><br />'.$bra;
+      $out.='</span>'.$perma.'<br />'.$bra;
       $cat0=$cat;
     } else
       $day=$formatter->link_to("?action=bookmark&amp;time=$ed_time".$daysago,$day);
