@@ -472,12 +472,12 @@ class MetaDB_text extends MetaDB {
 class Counter_dba {
   var $counter;
   var $DB;
-  function Counter_dba($DB) {
+  function Counter_dba($DB,$dbname='counter') {
     if (!function_exists('dba_open')) return;
-    if (!file_exists($DB->data_dir."/counter.db"))
-      $this->counter=dba_open($DB->data_dir."/counter.db","n",$DB->dba_type);
+    if (!file_exists($DB->data_dir.'/'.$dbname.'.db'))
+      $this->counter=dba_open($DB->data_dir.'/'.$dbname.'.db',"n",$DB->dba_type);
     else
-      $this->counter=@dba_open($DB->data_dir."/counter.db","w",$DB->dba_type);
+      $this->counter=@dba_open($DB->data_dir.'/'.$dbname.'.db',"w",$DB->dba_type);
     $this->DB=&$DB;
   }
 
@@ -1756,6 +1756,7 @@ class Formatter {
     #$punct="<\"\'}\]\|;,\.\!";
     #$punct="<\'}\]\)\|;\.\!"; # , is omitted for the WikiPedia
     $punct="<\'}\]\|\.\!"; # , is omitted for the WikiPedia
+    $punct="<\'}\]\|\.\!\010\006"; # , is omitted for the WikiPedia
     $url="wiki|http|https|ftp|nntp|news|irc|telnet|mailto|file|attachment";
     if ($DBInfo->url_schemas) $url.='|'.$DBInfo->url_schemas;
     $this->urls=$url;
@@ -1772,7 +1773,7 @@ class Formatter {
     #"\b(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+[^\(\)<>\s\',\.:\?\!]+)|".
-    "(\b|\^?)([A-Z][a-zA-Z]+):([^\(\)<>\s\']*[^\(\)<>\s\'\",\.:\?\!]*(\s(?![\x21-\x7e]))?)";
+    "(\b|\^?)([A-Z][a-zA-Z]+):([^\(\)<>\s\'][^\(\)<>\s\'\",\.:\?\!\010\006]*(\s(?![\x21-\x7e]))?)";
 
     if ($camelcase)
       $this->wordrule.='|'.
@@ -2481,7 +2482,8 @@ class Formatter {
     if (!$match) return $this->word_repl($macro);
     $bra='';$ket='';
     if ($this->wikimarkup and $macro != 'Attachment' and !$options['nomarkup']) {
-      $bra= "<span class='wikiMarkup'><!-- wiki:\n[[$macro]]\n-->";
+      $markups=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$macro);
+      $bra= "<span class='wikiMarkup'><!-- wiki:\n[[$markups]]\n-->";
       $ket= '</span>';
     }
     if (!$value and $match[1] and $match[2]) { #strpos($macro,'(') !== false)) {
@@ -2505,16 +2507,16 @@ class Formatter {
   function processor_repl($processor,$value,$options="") {
     $bra='';$ket='';
     if (!empty($this->wikimarkup) and empty($options['nomarkup'])) {
-      if ($processor == 'latex' and $options['type'])
-        $bra= "<span class='wikiMarkup'><!-- wiki:\n".$value."\n-->";
-      else {
+      if ($processor == 'latex' and $options['type']) {
+        $markups=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$value);
+        $bra= "<span class='wikiMarkup'><!-- wiki:\n".$markups."\n-->";
+      } else {
         if ($value{0}!='#' and $value{1}!='!') $notag="\n";
-        $bra= "<span class='wikiMarkup'><!-- wiki:\n{{{".$notag.$value."}}}\n-->";
+        $markups=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$value);
+        $bra= "<span class='wikiMarkup'><!-- wiki:\n{{{".$notag.$markups."}}}\n-->";
       }
       $ket= '</span>';
     }
-    if (!empty($this->use_smartdiff) and
-      preg_match("/\006|\010/", $value)) $processor='plain';
     if (!($f=function_exists("processor_".$processor)) and !($c=class_exists('processor_'.$processor))) {
       $pf=getProcessor($processor);
       if (!$pf) {
@@ -2525,17 +2527,24 @@ class Formatter {
       $processor=$pf;
       $name='processor_'.$pf;
       if (!($f=function_exists($name)) and !($c=class_exists($name))) {
-        $ret= call_user_func('processor_plain',$this,$value,$options);
-        return $bra.$ret.$ket;
+        $processor='plain';
+        $f=true;
       }
     }
+
     if ($f) {
+      if (!empty($this->use_smartdiff) and
+        preg_match("/\006|\010/", $value)) $processor='plain';
+
       $ret= call_user_func_array("processor_$processor",array(&$this,$value,$options));
       return $bra.$ret.$ket;
     }
+
     $classname='processor_'.$processor;
     $myclass= & new $classname($this,$options);
     $ret= call_user_func(array($myclass,'process'),$value,$options);
+    if ($myclass->_type=='wikimarkup') return $ret;
+
     return $bra.$ret.$ket;
   }
 
@@ -2862,6 +2871,7 @@ class Formatter {
       $this->set_wordrule($pi);
       $fts=array();
       if ($pi['#filter']) $fts=preg_split('/(\||,)/',$pi['#filter']);
+      if ($this->filters) $fts=array_merge($fts,$this->filters);
       if ($DBInfo->filters) $fts=array_merge($fts,$DBInfo->filters);
       if ($fts) {  
         foreach ($fts as $ft) {
@@ -2870,9 +2880,21 @@ class Formatter {
       }
       if ($pi['#format'] != 'wiki') {
         if ($pi['args']) $pi_line="#!".$pi['#format']." $pi[args]\n";
-        print $this->processor_repl($pi['#format'],
+        $text= $this->processor_repl($pi['#format'],
           $pi_line.$body,$options);
-        
+        if ($this->use_smartdiff)
+          $text= preg_replace_callback(array("/(\006|\010)(.*)\\1/sU"),
+            array(&$this,'_diff_repl'),$text);
+
+        $fts=array();
+        if ($pi['#postfilter']) $fts=preg_split('/(\||,)/',$pi['#postfilter']);
+        if ($this->postfilters) $fts=array_merge($fts,$this->postfilters);
+        if ($fts) {
+          foreach ($fts as $ft)
+            $text=$this->postfilter_repl($ft,$text,$options);
+        }
+        print $text;
+
         return;
       }
       $lines=explode("\n",$body);
@@ -3247,6 +3269,7 @@ class Formatter {
 
       # InterWiki, WikiName, {{{ }}}, !WikiName, ?single, ["extended wiki name"]
       # urls, [single bracket name], [urls text], [[macro]]
+
       $line=preg_replace_callback("/(".$wordrule.")/",
         array(&$this,'link_repl'),$line);
       #$line=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$line);
