@@ -13,6 +13,9 @@ function do_uploadedfiles($formatter,$options) {
 
   print $list;
   $args['editable']=0;
+  if (!in_array('UploadFile',$formatter->actions))
+    $formatter->actions[]='UploadFile';
+
   $formatter->send_footer($args,$options);
   return;
 }
@@ -260,9 +263,9 @@ EOS;
    if (!$options['nodir'] and !$dirs) {
       if ($js_tag) {
         $attr=' target="_blank"';
-        $extra='&amp;tag=1';
+        $extra='&amp;popup=1&amp;tag=1';
       }
-      $link=$formatter->link_tag('UploadFile',"?action=uploadedfiles&amp;value=top&amp;popup=1$extra",
+      $link=$formatter->link_tag('UploadFile',"?action=uploadedfiles&amp;value=top$extra",
         "<img src='".$icon_dir."/32/up.png' style='border:0' class='upper' alt='..' />",$attr);
       $date=date("Y-m-d",filemtime($dir."/.."));
       $out.="<tr><td class='wiki'>&nbsp;</td><td class='wiki'>$link</td><td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td></tr>\n";
@@ -287,16 +290,21 @@ EOS;
       $previewlink=$link;
       $size=filesize($dir.'/'.$file);
 
-      if ($use_preview > 1) {
-        list($w, $h) = getimagesize($dir.'/'.$file);
-        if ($w <= $preview_width) $mywidth=$w;
-        else $mywidth=$preview_width;
+      if ($use_preview) {
+        preg_match("/\.(.{1,4})$/",$file,$m);
+        $ext=strtolower($m[1]);
 
-        if (file_exists($dir."/thumbnails/".$file)) {
-          if ($down_mode)
-            $previewlink=str_replace('value=','value=thumbnails/',$previewlink);
-          else
-            $previewlink=$prefix.'thumbnails/'.rawurlencode($file);
+        if ($use_preview > 1 and $ext and stristr('gif,png,jpeg,jpg',$ext)) {
+          list($w, $h) = getimagesize($dir.'/'.$file);
+          if ($w <= $preview_width) $mywidth=$w;
+          else $mywidth=$preview_width;
+
+          if (file_exists($dir."/thumbnails/".$file)) {
+            if ($down_mode)
+              $previewlink=str_replace('value=','value=thumbnails/',$previewlink);
+            else
+              $previewlink=$prefix.'thumbnails/'.rawurlencode($file);
+          }
         }
       }
 
@@ -318,8 +326,6 @@ EOS;
         if ($opener != $value)
             $tag_open.=$opener;
         $alt="alt='$tag_open$file$tag_close' title='$file'";
-        preg_match("/\.(.{1,4})$/",$fname,$m);
-        $ext=strtolower($m[1]);
         if ($ext and stristr('gif,png,jpeg,jpg',$ext)) {
           $fname="<img src='$previewlink' class='icon' width='$mywidth' $alt />";
           $attr.=$href_attr;

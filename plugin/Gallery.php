@@ -365,6 +365,9 @@ function macro_Gallery($formatter,$value,&$options) {
   $idx--;
   $out.="</tr></table>\n";
 
+  if (!in_array('UploadFile',$formatter->actions))
+    $formatter->actions[]='UploadFile';
+
   return $pnut.'<div class="gallery">'.$out.'</div>'.$pnut;
 }
 
@@ -458,6 +461,9 @@ FORM;
 FORM2;
     print $form;
   }
+
+  if (!in_array('UploadFile',$formatter->actions))
+    $formatter->actions[]='UploadFile';
 
   $formatter->send_footer("",$options);
   return;
