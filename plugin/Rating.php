@@ -69,7 +69,7 @@ EOF;
             '<img alt="'.$alt.'" src="'.$imgs_dir.'/star'.$t.'.png" '.
             'onmouseover="showstars(this,'.$i.
             ',\''.$msg[$i].'\')" onmouseout="showstars(this,'.intval($value).',\'\')" '.
-            'border="0" class="star" /></a>';
+            'style="border:0" class="star" /></a>';
     }
     $star.=<<<EOF
 <span class="rating-desc" style="font-size: 16px;"></span>
