@@ -87,9 +87,9 @@ function smart_diff($diff) {
   foreach ($lines as $line) {
     $marker=$line[0];
     $line=substr($line,1);
-    if ($marker=='@' and preg_match('/^@\s\-\d+,\d+\s\+(\d+),\d+\s@@/',$line,$mat))
-      $lp=$mat[1];
-    else if ($marker=='-') {
+    if ($marker=='@' and preg_match('/^@\s\-(\d+)(?:,\d+)?\s\+(\d+)(?:,\d+)?\s@@/',$line,$mat)) {
+      $lp=$mat[2]; $lm=$mat[1];
+    } else if ($marker=='-') {
       $omarker=1; $orig[]=$line; continue;
     }
     else if ($marker=='+') {
@@ -97,6 +97,7 @@ function smart_diff($diff) {
     }
     else if ($omarker) {
       $count=sizeof($new);
+      $ocount=sizeof($orig);
 
       $omarker=0;
       $buf='';
@@ -113,13 +114,18 @@ function smart_diff($diff) {
         $news[$lp-1]=$buf;
         for ($i=0;$i<$count-1;$i++) $news[$lp+$i]=null;
         #for ($i=$count-1;$i>0;$i--) $news[$lp+$i-1]=null;
-      } else {
-        $dels[$lp-1]=$buf;
+      } else if ($ocount != 0) {
+        $dels[$lm-1]=$buf;
+        for ($i=0;$i<$ocount-1;$i++) $dels[$lm+$i]=null;
       }
-      if ($marker==' ') $lp+=$count+1;
+      if ($marker==' ') {
+        $lp+=$count+1;
+        $lm+=$ocount+1;
+      }
     }
     else if ($marker==' ' and !$omarker) {
       $lp++;
+      $lm++;
     }
     else if ($marker=="\\" && $line==' No newline at end of file') continue;
   }
@@ -141,7 +147,31 @@ function macro_diff($formatter,$value,&$options)
   $option='';
 
   $pi=$formatter->get_instructions($dum);
-  if (!in_array($pi['#format'],array('wiki','moni')) and !$options['type']) # is it not wiki format ?
+
+  $processor_type=$pi['#format'];
+  while ($DBInfo->default_markup != 'wiki') { // XXX
+    $processor=$pi['#format'];
+    if (!($f=function_exists("processor_".$processor)) and !($c=class_exists('processor_'.$processor))) {
+      $pf=getProcessor($processor);
+      if (!$pf) break;
+      include_once("plugin/processor/$pf.php");
+      $processor=$pf;
+      $name='processor_'.$pf;
+      if (class_exists($name)) {
+        $classname='processor_'.$processor;
+        $myclass= & new $classname($formatter,$options);
+        $processor_type=$myclass->_type == 'wikimarkup' ? 'wiki':$pi['#format'];
+      }
+    } else if ($c=class_exists('processor_'.$processor)) {
+      $classname='processor_'.$processor;
+      $myclass= & new $classname($formatter,$options);
+      $processor_type=$myclass->_type == 'wikimarkup' ? 'wiki':$pi['#format'];
+    }
+    break;
+  }
+
+  //if (!in_array($pi['#format'],array('wiki','moni')) and !$options['type']) # is it not wiki format ?
+  if ($processor_type != 'wiki' and !$options['type']) # is it not wiki format ?
     $options['type']=$DBInfo->diff_type; # use default diff format
 
   if (!$options['type'] and $DBInfo->use_smartdiff)
@@ -231,6 +261,7 @@ function macro_diff($formatter,$value,&$options)
           #print_r($dels);
           foreach ($dels as $k => $v) {
             $lines[$k]=$v."\n".$lines[$k];
+            #$lines[$k]=$v;
           }
         }
         #print_r($lines);
@@ -261,12 +292,14 @@ function macro_diff($formatter,$value,&$options)
         $options['msg']=$msg;
         $options['smart']=1;
 
-        if (!in_array($pi['#format'],array('wiki','moni')))
+        #if (!in_array($pi['#format'],array('wiki','moni')))
+        if ($processor_type != 'wiki')
           print '<pre class="code">'.$diffed.'</pre>';
         else
           $formatter->send_page($diffed,$options);
+        #print "<pre>".str_replace(array("\010","\006"),array("+++","---"),$diffed)."</pre>";
+        #print "<pre>".$diffed."</pre>";
         return;
-        #return "<pre>$diffed</pre>";
       }
     }
     else
