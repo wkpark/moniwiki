@@ -117,8 +117,14 @@ function do_download($formatter,$options) {
   header("Content-Length: ".filesize($dir.'/'.$file));
   header("Content-Disposition: $down_mode; ".$fname );
   header("Content-Description: MoniWiki PHP Downloader" );
-  Header("Pragma: no-cache");
-  Header("Expires: 0");
+  header("Last-Modified: " . gmdate("D, d M Y H:i:s",filemtime($dir.'/'.$file)) . " GMT");
+  header("Pragma:");
+  header("Cache-Control:");
+  if (!preg_match('/^image\//',$mimetype)) {
+    Header("Pragma: no-cache");
+    Header("Cache-Control: no-cache");
+    Header("Expires: 0");
+  }
 
   $fp=readfile("$dir/$file");
   return;
@@ -168,6 +174,12 @@ function dl_file_resume($ctype,$file,$fname,$mode='inline',$header='') {
        header("Content-Range: bytes 0-$size2/$size");
        header("Content-Length: ".$size);
        header("Content-Disposition: $mode; $fname");
+       header("Last-Modified: " . gmdate("D, d M Y H:i:s",filemtime($file)) . " GMT");
+       if (!preg_match('/^image\//',$ctype)) {
+          Header("Pragma: no-cache");
+          Header("Cache-Control: no-cache");
+          Header("Expires: 0");
+       }
    }
    //open the file
    $fp=fopen("$file","rb");
