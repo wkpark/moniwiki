@@ -88,9 +88,11 @@ function macro_Navigation($formatter,$value) {
       $prev=$indices[$prev];
       if (($p=strpos($prev,'~'))!==false)
         $prev_text=substr($prev,$p+1);
-      if (strpos($prev,':')===false) $prev='"'.$prev.'"';
-      #$pnut.=$formatter->link_tag($prev, "", $prev_text," accesskey=\",\" ");
-      $pnut.=$formatter->link_repl("[wiki:$prev $prev_text]"," accesskey=\",\" ");
+      if ($prev) {
+        if (strpos($prev,':')===false) $prev='"'.$prev.'"';
+        #$pnut.=$formatter->link_tag($prev, "", $prev_text," accesskey=\",\" ");
+        $pnut.=$formatter->link_repl("[wiki:$prev $prev_text]"," accesskey=\",\" ");
+      }
     }
     if ($use_action) $formatter->query_string=$save;
     $pnut.=" | ".$formatter->link_repl("[wiki:$index $index_text]")." | ";
