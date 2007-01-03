@@ -122,6 +122,9 @@ function macro_Attachment($formatter,$value,$option='') {
   if (!$text) $text=$file;
 
   if (file_exists($upload_file)) {
+    if (!in_array('UploadedFiles',$formatter->actions))
+      $formatter->actions[]='UploadedFiles';
+
     if (!$img_link && preg_match("/\.(png|gif|jpeg|jpg)$/i",$upload_file)) {
       if ($key != $pagename || $force_download)
         $url=$formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=".urlencode($value));

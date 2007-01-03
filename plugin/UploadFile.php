@@ -76,6 +76,8 @@ EOF;
     $formatter->send_header("",$options);
     $formatter->send_title($title,"",$options);
     print macro_UploadFile($formatter,'',$options);
+    if (!in_array('UploadedFiles',$formatter->actions))
+      $formatter->actions[]='UploadedFiles';
     $formatter->send_footer("",$options);
     return;
   }
@@ -258,6 +260,7 @@ EOF;
     $formatter->send_title($title,"",$options);
     print $msg;
   }
+
   $formatter->send_footer();
   print $js;
 
@@ -268,6 +271,8 @@ EOF;
 function macro_UploadFile($formatter,$value='',$options='') {
   if ($value=='js') {
     return $formatter->macro_repl('UploadForm');
+  } else if ($value=='swf') {
+    return $formatter->macro_repl('SWFUpload');
   }
   $use_multi=1;
   $multiform='';
