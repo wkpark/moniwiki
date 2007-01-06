@@ -11,6 +11,7 @@
 function processor_gnuplot($formatter="",$value="") {
   global $DBInfo;
 
+  $convert="convert";
   if(getenv("OS")=="Windows_NT")
     $gnuplot="wgnuplot"; # Win32
   else
@@ -73,11 +74,24 @@ function processor_gnuplot($formatter="",$value="") {
   $plt="\n".$plt."\n";
   $plt=preg_replace("/\n\s*![^\n]+\n/","\n",$plt); # strip shell commands
   $plt=preg_replace("/[ ]+/"," ",$plt);
+  preg_match("/\nset?\s+(t|te|ter|term)\s(.*)\n/", $plt,$tmatch);
   $plt=preg_replace("/\nset?\s+(t|o|si).*\n/", "\n",$plt);
   #
   $plt=preg_replace("/\n\s*(s?plot)\s+('|\")<(\s*)/", "\n\\1 \\2\\3",$plt);
   
   #print "<pre>$plt</pre>";
+
+  if ($tmatch) {
+    if (preg_match('/^postscript\s*(enhanced|color)?/',$tmatch[2])) { // XXX
+      $term=$tmatch[2];
+      $ext='ps';
+      $size='#set term '.$term;
+    } else if (preg_match('/^svg/',$tmatch[2])) {
+      $term=$tmatch[2];
+      $ext='svg';
+      $size="set size 1.0,1.0\n#set term ".$term;
+    }
+  }
 
   if ($term != 'dumb') 
     $plt="\n".$size."\n".$plt;
@@ -154,12 +168,45 @@ $plt
      if ($log)
         $log ="<pre class='errlog'>$log</pre>\n";
   }
-  if (!file_exists($outpath)) return $log;
-  if ($ext == 'png')
-  return $log."<img src='$png_url' alt='gnuplot' />";
-  if ($ext == 'txt')
-  return $log.'<pre class="gnuplot">'.(implode('',file("$cache_dir/$pngname"))).'</pre>';
 
+  $rext=$ext;
+  $rpng_url=$png_url;
+
+  if ($ext == 'ps' and file_exists($outpath)) {
+     $routpath=preg_replace('/\.'.$ext.'$/','.png',$outpath);
+     if ($formatter->refresh || !file_exists($routpath)) {
+     	$cmd= "$convert -rotate 90 $outpath $routpath";
+     	$fp=popen($cmd.$formatter->NULL,'r');
+     	pclose($fp);
+     }
+     $rpng_url=preg_replace('/\.'.$ext.'$/','.png',$png_url);
+     $rext='png';
+  } else if ($ext == 'svg') {
+     $fp=fopen($outpath,'r');
+     if ($fp) {
+       $svg=fread($fp,filesize($outpath));
+       fclose($fp);
+
+       $svg=preg_replace('/<svg [^>]+>/','<svg xmlns="http://www.w3.org/2000/svg"
+     xmlns:xlink="http://www.w3.org/1999/xlink">',$svg);
+       $fp=fopen($outpath,'w');
+       if ($fp) {
+         fwrite($fp,$svg);
+         fclose($fp);
+       }
+     }
+  }
+
+  if ($ext == 'ps')
+    $extra='<a href="'.$png_url.'" />'.sprintf(_("Download %s"),$ext).'</a>';
+
+  if (!file_exists($outpath)) return $log;
+  if ($rext == 'png')
+     return $log."<img src='$rpng_url' alt='gnuplot' />".$extra;
+  if ($rext == 'svg')
+     return $log."<embed src='$rpng_url' alt='gnuplot' width='640' height='480' />".$extra;
+  if ($rext == 'txt')
+    return $log.'<pre class="gnuplot">'.(implode('',file("$cache_dir/$pngname"))).'</pre>';
 }
 
 ?>
