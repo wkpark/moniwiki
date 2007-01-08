@@ -135,6 +135,7 @@ function normalize_word($word,$group='',$pagename='',$nogroup=0,$islink=1) {
     return array($page,$text,$main_page);
   }
 
+  #if ($nogroup and $page[0]=='/') { # SubPage without group support. XXX disabled
   if ($page[0]=='/') { # SubPage
     $page=$pagename.$page;
   } else if (!empty($islink) && $tok=strtok($page,'.')) {
@@ -2159,6 +2160,7 @@ function macro_PageCount($formatter="") {
 function macro_TitleIndex($formatter,$value) {
   global $DBInfo;
 
+  $group=$formatter->group;
   if ($formatter->group) {
     $group_pages = $DBInfo->getLikePages($formatter->group);
     foreach ($group_pages as $page)
@@ -2198,7 +2200,7 @@ function macro_TitleIndex($formatter,$value) {
       $title=get_title($page);
 
     #$out.= '<li>' . $formatter->word_repl('"'.$page.'"',$title,'',0,0);
-    $urlname=_urlencode($page);
+    $urlname=_urlencode($group.$page);
     $out.= '<li>' . $formatter->link_tag($urlname,'',htmlspecialchars($title));
     $keyname=$DBInfo->pageToKeyname(urldecode($page));
     if (is_dir($DBInfo->upload_dir."/$keyname"))
