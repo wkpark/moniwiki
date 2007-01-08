@@ -536,7 +536,7 @@ class Security {
   function is_protected($action="read",$options) {
     # password protected POST actions
     $protected_actions=array(
-      "deletepage","deletefile","rename","rcspurge","rcs","chmod","backup","restore","rcsimport");
+      "deletepage","deletefile","rename","rcspurge","rcs","chmod","backup","restore","rcsimport","revert");
     $action=strtolower($action);
 
     if (in_array($action,$protected_actions)) {
@@ -1226,11 +1226,20 @@ class Version_RCS {
     return $this->DB->getPageKey($pagename);
   }
 
-  function co($pagename,$rev,$opt='') {
+  function co($pagename,$rev,$opt=array()) {
     $filename= $this->_filename($pagename);
 
     $rev=(is_numeric($rev) and $rev>0) ? "\"".$rev."\" ":'';
-    $fp=@popen("co -x,v/ -q -p$rev ".$filename.$this->NULL,"r");
+    $ropt='-p';
+    if ($opt['stdout']) $ropt='-r';
+    $fp=@popen("co -x,v/ -q $ropt$rev ".$filename.$this->NULL,"r");
+    if ($opt['stdout']) {
+      if (is_resource($fp)) {
+        pclose($fp);
+        return '';
+      }
+    }
+
     $out='';
     if (is_resource($fp)) {
       while (!feof($fp)) {
@@ -1773,7 +1782,7 @@ class Formatter {
     #"\b(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+[^\(\)<>\s\',\.:\?\!]+)|".
-    "(\b|\^?)([A-Z][a-zA-Z]+):([^\(\)<>\s\'][^\(\)<>\s\'\",\.:\?\!\010\006]*(\s(?![\x21-\x7e]))?)";
+    "(\b|\^?)([A-Z][a-zA-Z]+):([^\(\)<>\s\']?[^\(\)<>\s\'\",:\?\!\010\006]*(\s(?![\x21-\x7e]))?)";
 
     if ($camelcase)
       $this->wordrule.='|'.
@@ -1801,7 +1810,7 @@ class Formatter {
 
     if ($sbracket)
       # single bracketed name [Hello World]
-      $this->wordrule.= "|(?<!\[)\!?\[([^\[:,<\s'][^\[:,>]{1,255})\](?!\])";
+      $this->wordrule.= "|(?<!\[)\!?\[([^\[,<\s'][^\[:,>]{1,255})\](?!\])";
     else
       # only anchor [#hello], footnote [* note] allowed 
       $this->wordrule.= "|(?<!\[)\!?\[([#\*\+][^\[:,>]{1,255})\](?!\])";
@@ -2035,7 +2044,7 @@ class Formatter {
       break;
     }
 
-    if (strpos($url,':')) {
+    if (strpos($url,':') !== false) {
       if ($url[0]=='a') # attachment:
         return $this->macro_repl('Attachment',substr($url,11));
 
@@ -2050,7 +2059,7 @@ class Formatter {
           preg_replace('/('.$this->url_mapping_rule.')/ie',"\$this->url_mappings['\\1']",$url);
       }
 
-      if (preg_match("/^(w|[A-Z])/",$url)) # InterWiki or wiki:
+      if (preg_match("/^(:|w|[A-Z])/",$url)) # InterWiki or wiki:
         return $this->interwiki_repl($url,'',$attr,$external_icon);
 
       if (preg_match("/^mailto:/",$url)) {
@@ -2108,6 +2117,8 @@ class Formatter {
 
     if ($url[0]=="w")
       $url=substr($url,5);
+    else if ($url[0]==":")
+      $url=substr($url,1);
 
     $wiki='';
     # wiki:MoinMoin:FrontPage
@@ -3510,7 +3521,7 @@ class Formatter {
     $opts['rev']=$this->page->get_rev();
     $orig=$this->page->get_raw_body($opts);
 
-    if (0) {
+    if ($DBInfo->use_external_merge) {
       # save new
       $tmpf3=tempnam($DBInfo->vartmp_dir,'MERGE_NEW');
       $fp= fopen($tmpf3, 'w');
@@ -3845,13 +3856,16 @@ EOS;
       }
     }
 
+    $validator_xhtml=$DBInfo->validator_xhtml ? $DBInfo->validator_xhtml:'http://validator.w3.org/check/referer';
+    $validator_css=$DBInfo->validator_css ? $DBInfo->validator_xhtml:'http://jigsaw.w3.org/css-validator';
+
     $banner= <<<FOOT
- <a href="http://validator.w3.org/check/referer"><img
+ <a href="$validator_xhtml"><img
   src="$this->imgs_dir/valid-xhtml10.png"
   style="border:0;vertical-align:middle" width="88" height="31"
   alt="Valid XHTML 1.0!" /></a>
 
- <a href="http://jigsaw.w3.org/css-validator/check/referer"><img
+ <a href="$validator_css"><img
   src="$this->imgs_dir/vcss.png" 
   style="border:0;vertical-align:middle" width="88" height="31"
   alt="Valid CSS!" /></a>
@@ -3971,8 +3985,14 @@ MSG;
       #$attr="class='current'";
       # XXX make title more shorter ?
       $mnuname=htmlspecialchars($this->page->name);
-      if ($DBInfo->hasPage($this->page->name) and strlen($mnuname) < 10)
-        $menu[]=$this->word_repl($mypgname,$mnuname,$attr);
+      if ($DBInfo->hasPage($this->page->name)) {
+        if (strlen($mnuname) < 15) {
+          $menu[]=$this->word_repl($mypgname,$mnuname,$attr);
+        } else if (function_exists('mb_strimwidth')) {
+          $my=mb_strimwidth($mypgname,0,15,'...');
+          $menu[]=$this->word_repl($mypgname,htmlspecialchars($my),$attr);
+        }
+      }
     }
     $this->sister_on=$sister_save;
     if (!$this->css_friendly) {
@@ -4503,13 +4523,28 @@ function wiki_main($options) {
         echo "<br />".
           $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
       } else {
-        $formatter->send_title(sprintf(_("%s is not found in this Wiki"),$page->name),"",$options);
+        $oldver='';
+        if ($DBInfo->version_class) {
+          getModule('Version',$DBInfo->version_class);
+          $class="Version_".$DBInfo->version_class;
+          $version=new $class ($DBInfo);
+          $oldver= $version->rlog($formatter->page->name,'','','-z');
+        }
         $button= $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
-        $searchval=htmlspecialchars($options['page']);
-        print sprintf(_("%s or click %s to fullsearch this page.\n"),$button,$formatter->link_to("?action=fullsearch&amp;value=$searchval",_("title")));
-        print $formatter->macro_repl('LikePages',$page->name,$err);
-        if ($err['extra'])
-          print $err['extra'];
+        if ($oldver) {
+          $formatter->send_title(sprintf(_("%s has saved revisions"),$page->name),"",$options);
+          print sprintf(_("%s or click %s to fullsearch this page.\n"),$button,$formatter->link_to("?action=fullsearch&amp;value=$searchval",_("title")));
+          $options['info_actions']=array('recall'=>'view','revert'=>'revert');
+          $options['title']='<h3>'.sprintf(_("Old Revisions of the %s"),htmlspecialchars($page->name)).'</h3>';
+          print $formatter->macro_repl('Info','',$options);
+        } else {
+          $formatter->send_title(sprintf(_("%s is not found in this Wiki"),$page->name),"",$options);
+          $searchval=htmlspecialchars($options['page']);
+          print sprintf(_("%s or click %s to fullsearch this page.\n"),$button,$formatter->link_to("?action=fullsearch&amp;value=$searchval",_("title")));
+          print $formatter->macro_repl('LikePages',$page->name,$err);
+          if ($err['extra'])
+            print $err['extra'];
+        }
 
         print "<hr />\n";
         $options['linkto']="?action=edit&amp;template=";
