@@ -14,6 +14,14 @@ if ($DBInfo->use_tagging) {
 # theme options
 #$_theme['sidebar']=1;
 
+if ($this->_width) {
+  print <<<EOF
+<style type='text/css'>
+#mainBody { width:$this->_width;};
+</style>
+EOF;
+}
+
 ?>
 <div id='topHeader'>
 <!--
@@ -23,6 +31,7 @@ if ($DBInfo->use_tagging) {
 <a href='http://bbs.kldp.org'>KLDP BBS</a> &middot;
 -->
 </div>
+<div id='mainContainer'>
 <div id='mainBody'>
 <!--
 <div id='topBanner'>
@@ -37,10 +46,12 @@ if ($DBInfo->use_tagging) {
 if ($this->popup!=1) :
 ?>
 <div id='pBanSpace'></div>
+<?php if ($this->_topbanner): ?>
 <div id='pBanRight'><div id='pBanLeft'>
 <div id='pBanner'>
 <?php echo $DBInfo->sitename?>
 </div>
+<?php endif;?>
 <div id='goForm'>
 <form id='go' action='' method='get' onsubmit="return moin_submit();">
 <div>
@@ -58,8 +69,10 @@ if ($this->popup!=1) :
 </div>
 </div></div>
 </div>
+<?php if ($this->_topbanner): ?>
 </div>
 </div>
+<?php endif;?>
 <?php endif; ?>
 <div class='clear'></div>
 <?php echo $msg?>

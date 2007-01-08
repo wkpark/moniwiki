@@ -18,7 +18,7 @@ body {
   padding-right:100px; */
   min-width:750px;
   margin: 0px auto 0px auto;
-  width: 750px;
+  width: 80%;
   min-height:400px;
   height: auto !important; /* IE min-height hack */
   height:400px;
@@ -78,7 +78,6 @@ div {
 }
 
 #pBanLeft {
-  height:143px; /* total Banner heigt */
   /* border:1px solid red; /* */
 }
 
@@ -87,7 +86,6 @@ div {
 }
 
 #pTitle {
-  height: 30px; /* title height */
   padding:0px;
   /* border: 1px solid red; /* */
 }
@@ -117,7 +115,7 @@ div {
 
 #goForm {
   float:right;
-  padding: 3px 10px;
+  padding: 3px 4px;
 }
 
 form {
@@ -137,8 +135,8 @@ form {
 #wikiBanner {
   padding-top:5px;
   text-align:center;
+  font-family: Trebuchet MS,sans-serif;
 }
-
 
 a:link { color: #0686db;}
 a:visited { color: #000000;}
@@ -150,6 +148,11 @@ a:visited { color: #000000;}
   font-weight:bold;
   text-decoration: none;
 }
+
+.wikiTitle a,.wikiTitle a:active,.wikiTitle a:visited {
+  color: #0686db;
+}
+
 tt.wiki {font-family:Monotype,Lucida Console,lucida,monospace;font-size:12px;}
 tt.foot {
   font-family:Tahoma,lucida,monospace;
@@ -338,6 +341,7 @@ table.closure, td.closure{
 #wikiTrailer {
   background-color:#fafafa; 
   padding-left: 20px;
+  font-family: Trebuchet MS,sans-serif;
 }
 
 .wikiNavigation {
@@ -365,8 +369,9 @@ table.closure, td.closure{
 #wikiHeader a:visited {color:#000000;}
 
 #wikiMenuBar {
-  padding:6px;
-  height:29px;
+  padding-top:1px;
+  padding-left:5px;
+  height:42px; /* important !!! for IE */
 }
 
 #pMenuLeft {
@@ -380,7 +385,7 @@ table.closure, td.closure{
 
 #wikiIcon {
   float:right;
-  padding: 3px 10px;
+  padding: 7px 15px;
   text-align: right;
   vertical-align: middle;
 }
@@ -399,19 +404,22 @@ table.closure, td.closure{
   margin-left:0;
   padding-bottom:3px !important; /* for FF */
   padding-bottom:2px;
-  height:1.7em;
+  height:42px;
 }
 
 #wikiMenu li {
   display:inline;
-  padding: 4px 10px;margin:0px;
-  border-right: 1px solid #A8DBFD;
+  padding: 9px 10px;
+  padding-bottom:11px; /* for IE */
+  margin:0px;
+/*  border-right: 1px solid #A8DBFD; */
   /* border-right: 1px solid #e0e0e0; */
 /* background-color:whitesmoke; */
 /* the next 4 lines are magic for IE */
   float: left;
   position: relative;
   vertical-align:top;
+  background: url("../imgs/mi.png") no-repeat right top;
 }
 
 #wikiMenu li:hover {
@@ -419,6 +427,7 @@ table.closure, td.closure{
   /* background-color: #355F88; /* dark blue */
   /* background-color: #F2B568; /* orange */
   text-decoration: none;
+  background: url("../imgs/mih.png") no-repeat right top;
 }
 
 #wikiMenu li.current {
@@ -426,6 +435,7 @@ table.closure, td.closure{
   /* background-color: #2C4F72; /* dark blue */
   /* background-color: #E75024; /* orange */
   text-decoration: none;
+  background: url("../imgs/mic.png") no-repeat right top;
 }
 
 #wikiMenu li:hover a{
@@ -595,9 +605,12 @@ caption.month {
 }
 
 /* HierarchicalWiki */
-div.wikiGroup {
+.wikiGroup {
+  font-weight:bold;
+  padding-left:10px;
   font-family:Tahoma,Lucida,sans-serif;
   font-size:x-small;
+  color: #0686db;
 }
 
 /* login */
