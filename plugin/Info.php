@@ -9,9 +9,11 @@ function _parse_rlog($formatter,$log,$options=array()) {
   global $DBInfo;
 
   $tz_offset=$formatter->tz_offset;
-  if (in_array($options['id'],$DBInfo->wikimasters)) $admin=1;
+  if (is_array($DBInfo->wikimasters) and in_array($options['id'],$DBInfo->wikimasters)) $admin=1;
 
-  if ($DBInfo->info_actions)
+  if ($options['info_actions'])
+    $actions=$options['info_actions'];
+  else if ($DBInfo->info_actions)
     $actions=$DBInfo->info_actions;
   else
     $actions=array('recall'=>'view','raw'=>'raw');
@@ -26,7 +28,10 @@ function _parse_rlog($formatter,$log,$options=array()) {
   $url=$formatter->link_url($formatter->page->urlname);
 
   $diff_btn=_("Diff");
-  $out="<h2>"._("Revision History")."</h2>\n";
+  if ($options['title'])
+    $out=$options['title'];
+  else
+    $out="<h2>"._("Revision History")."</h2>\n";
   $out.="<form id='infoform' method='post' action='$url'>";
   $out.="<table class='info' cellpadding='3' cellspacing='2'><tr>\n";
   $out.="<th class='info'>ver.</th><th class='info'>Date and Changes</th>".
