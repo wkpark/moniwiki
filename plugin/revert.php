@@ -81,7 +81,7 @@ function do_revert($formatter,$options) {
     print "<form method='post'>
 $lab: <input name='comment' size='80' value='$comment' /><br />\n";
     $btn=_("Revert page");
-    $msg=sprintf(_("Only WikiMaster can %s this pagee"),_("revert"));
+    $msg=sprintf(_("Only WikiMaster can %s this page"),_("revert"));
     if ($DBInfo->security->is_protected("revert",$options))
         print _("Password").": <input type='password' name='passwd' size='20' value='' />
 $msg<br />\n";

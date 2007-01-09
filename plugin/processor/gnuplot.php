@@ -197,14 +197,16 @@ $plt
      }
   }
 
-  if ($ext == 'ps')
-    $extra='<a href="'.$png_url.'" />'.sprintf(_("Download %s"),$ext).'</a>';
+  if ($ext == 'ps') {
+    $bra='<a href="'.$png_url.'" />';
+    $ket='</a>';
+  }
 
   if (!file_exists($outpath)) return $log;
   if ($rext == 'png')
-     return $log."<img src='$rpng_url' alt='gnuplot' />".$extra;
+     return $log.$bra."<img src='$rpng_url' alt='gnuplot' style='border:0' />".$ket;
   if ($rext == 'svg')
-     return $log."<embed src='$rpng_url' alt='gnuplot' width='640' height='480' />".$extra;
+     return $log.$bra."<embed src='$rpng_url' alt='gnuplot' width='640' height='480' />".$ket;
   if ($rext == 'txt')
     return $log.'<pre class="gnuplot">'.(implode('',file("$cache_dir/$pngname"))).'</pre>';
 }
