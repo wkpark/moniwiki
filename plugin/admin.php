@@ -164,7 +164,7 @@ function macro_admin($formatter,$value='',$options=array()) {
 MENU;
     $out.="<form method='post' action=''><table algin='center'><tr valign='top'>".$pl.
         "</table>";
-    if (in_array($options['id'],$DBInfo->owners)) {
+    if (is_array($DBInfo->owners) and in_array($options['id'],$DBInfo->owners)) {
         $out.='<input type="hidden" name="action" value="admin" />';
         $out.='<input type="submit" value="Update" />';
     }
@@ -174,7 +174,7 @@ MENU;
 
 function do_admin($formatter,$options) {
     global $DBInfo;
-    if (in_array($options['id'],$DBInfo->owners) and
+    if (is_array($DBInfo->owners) and in_array($options['id'],$DBInfo->owners) and
             (is_array($options['pl']) or is_array($options['pr']))) {
         $formatter->send_header('',$options);
         $cp=new Cache_text('settings');
