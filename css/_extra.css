@@ -262,3 +262,15 @@ span.VisualTour {
   cursor:pointer;
 }
 
+.previewTex {
+  vertical-align:middle;
+}
+
+/* Styles for search word highlighting */
+@media screen {
+ .searchword0 { background: #ff9 }
+ .searchword1 { background: #cfc }
+ .searchword2 { background: #cff }
+ .searchword3 { background: #ccf }
+ .searchword4 { background: #fcf }
+}
