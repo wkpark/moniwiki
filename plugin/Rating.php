@@ -38,7 +38,7 @@ function macro_Rating($formatter,$value='',$options=array()) {
     $script=<<<EOF
 <script type="text/javascript">
 /*<![CDATA[*/
-function showstars(obj, n, desc) {
+function showstars(obj, n) {
     var my = obj.parentNode.parentNode;
     var c = my.getElementsByTagName('img');
     for( i=0; i < c.length; i++ ) {
@@ -47,7 +47,6 @@ function showstars(obj, n, desc) {
         else
             c[i].src = "$imgs_dir/star0.png"
     }
-    my.getElementsByTagName('span')[0].innerHTML = desc ? ' ' + desc:'';
 }
 
 /*]]>*/
@@ -67,12 +66,11 @@ EOF;
         $alt=$t ? '{*}':'{o}';
         $star.='<a href="?action=rating'.$mid.'&amp;rating='.$i.'">'.
             '<img alt="'.$alt.'" src="'.$imgs_dir.'/star'.$t.'.png" '.
-            'onmouseover="showstars(this,'.$i.
-            ',\''.$msg[$i].'\')" onmouseout="showstars(this,'.intval($value).',\'\')" '.
+            'onmouseover="showstars(this,'.$i.')" title="'.$msg[$i].'" '.
+            'onmouseout="showstars(this,'.intval($value).')" '.
             'style="border:0" class="star" /></a>';
     }
     $star.=<<<EOF
-<span class="rating-desc" style="font-size: 16px;"></span>
 </span>
 EOF;
     if ($rating_script) return $star;
