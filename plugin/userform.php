@@ -352,9 +352,9 @@ function do_userform($formatter,$options) {
 
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
-  if (!$title)
+  if (!$title && (!$DBInfo->control_read or $DBInfo->security->is_allowed('read',$options)) ) {
     $formatter->send_page();
-  else {
+  } else {
     if ($form) print $form;
 #    else $formatter->send_page("Goto UserPreferences");
   }
