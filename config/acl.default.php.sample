@@ -1,4 +1,4 @@
-# a sample acl.default.php
+# acl.default.php
 # <?php exit()?>
 # Please don't modify the lines above
 #
@@ -7,21 +7,18 @@
 # $Id$
 @Guest	Anonymous
 *	@ALL		deny	*
-*	@ALL		allow	edit,ticket,savepage
+*	@ALL		allow	edit,ticket,savepage,titleindex,bookmark
 *	@User		allow	*
 # some pages are allowed to edit
 WikiSandBox	@Guest	allow	edit,info,diff
 #*	Anonymous	deny	*
 # some POST actions support protected mode using admin password
-*	@ALL		protect	deletefile,deletepage,rename,rcspurge,rcs,chmod,backup,restore
+*	@ALL		protect	deletefile,deletepage,rename,rcspurge,rcs,chmod,backup,restore,revert
 # some actions allowed to @ALL
 *	@ALL		allow	read,userform,rss_rc,aclinfo,fortune,deletepage,fixmoin,ticket
 # some pages have restrict permission
 MoniWiki	@ALL	deny	edit,uploadfile,diff
-# you can use simple wildcards
 HelpOn*		@User	deny	edit,uploadfile,diff
-# and also use regex
-#MoniWiki/.*		@User	deny	edit,uploadfile
 # special pages
 ACL	@ALL		deny    edit,diff,info # a shared ACL file (not supported yet XXX)
 # set group members
@@ -29,3 +26,8 @@ ACL	@ALL		deny    edit,diff,info # a shared ACL file (not supported yet XXX)
 #@Kiwirian	foobar
 #*	@Kiwirian	deny	*
 #*	@Kiwirian	allow	read
+###
+### hide some page to show
+###
+#MySecretPage	@Guest	deny	read,raw,recall,diff
+#MySecretPage	@Guest	allow	*
