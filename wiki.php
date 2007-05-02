@@ -613,6 +613,10 @@ class WikiDB {
     $this->logo_page= $this->frontpage;
     $this->logo_string= '<img src="'.$this->logo_img.'" alt="[logo]" style="vertical-align:middle;border:0px" />';
     $this->metatags='<meta name="robots" content="noindex,nofollow" />';
+    $this->doctype=<<<EOS
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+EOS;
     $this->use_smileys=1;
     $this->hr="<hr class='wikiHr' />";
     $this->date_fmt= 'Y-m-d';
@@ -1883,7 +1887,7 @@ class Formatter {
     $pikeys=array('#redirect','#action','#title','#keywords','#noindex',
       '#format','#filter','#postfilter','#twinpages','#notwins','#nocomment',
       '#language','#camelcase','#nocamelcase','#cache','#nocache',
-      '#singlebracket','#nosinglebracket','#rating','#norating');
+      '#singlebracket','#nosinglebracket','#rating','#norating','#nodtd');
     $pi=array();
 
     $format='';
@@ -3659,12 +3663,7 @@ class Formatter {
           htmlspecialchars($options['title']);
       }
       if (empty($options['css_url'])) $options['css_url']=$DBInfo->css_url;
-      if ($DBInfo->doctype) print $DBInfo->doctype;
-      else
-        print <<<EOS
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-EOS;
+      if (!$this->pi['#nodtd']) print $DBInfo->doctype;
       print "<head>\n";
 
       print '<meta http-equiv="Content-Type" content="'.$content_type.
