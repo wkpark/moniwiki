@@ -266,6 +266,29 @@ span.VisualTour {
   vertical-align:middle;
 }
 
+/* Styles for folding processor */
+.folding {
+	background:#eee;
+	border-color:#ccc;
+	margin:10px;
+	padding:0;
+}
+
+.folding dt {
+	background-color:#bdc2bd;
+	height:20px;
+	font-weight:bold;
+	line-height:20px;
+	vertical-align:middle;
+	cursor:pointer;
+}
+
+.folding dd {
+	display:none;
+	padding:10px;
+	margin:0;
+}
+
 /* Styles for search word highlighting */
 @media screen {
  .searchword0 { background: #ff9 }
