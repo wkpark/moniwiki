@@ -26,6 +26,9 @@ function macro_Attachment($formatter,$value,$option='') {
 
   $text='';
 
+  if (!$DBInfo->security->is_allowed($mydownload,$options))
+    return $text;
+
   if ($formatter->wikimarkup and !$options['nomarkup']) {
     $bra= "<span class='wikiMarkup'><!-- wiki:\nattachment:$value\n-->";
     $ket= '</span>';
