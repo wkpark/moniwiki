@@ -724,6 +724,7 @@ function macro_Edit($formatter,$value,$options='') {
   $cols= $options['cols'] > 60 ? $options['cols']: $cols;
 
   $text= $options['savetext'];
+  $editlog= $options['editlog'] ? $options['editlog'] : "";
 
   $args= explode(',',$value);
   if (in_array('nohints',$args)) $options['nohints']=1;
@@ -883,7 +884,7 @@ EOS;
 <div id="wikiEditor">
 <textarea id="content" wrap="virtual" name="savetext" tabindex="1"
  rows="$rows" cols="$cols" class="wiki resizable">$raw_body</textarea><br />
-$summary_msg: <input name="comment" size="70" maxlength="70" style="width:80%" tabindex="2" />$extra_check<br />
+$summary_msg: <input name="comment" value="$editlog" size="70" maxlength="70" style="width:80%" tabindex="2" />$extra_check<br />
 <input type="hidden" name="action" value="savepage" />
 <input type="hidden" name="datestamp" value="$datestamp" />
 $hidden$select_category
