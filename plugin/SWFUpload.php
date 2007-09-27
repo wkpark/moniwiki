@@ -46,7 +46,7 @@ function macro_SWFUpload($formatter,$value) {
         $allowed='*.'.str_replace('|',';*.',$DBInfo->pds_allowed);
     }
 
-    $swfupload_scrpit=$GLOBALS['swf_script'] ? 1:0;
+    $swfupload_num=$GLOBALS['swfupload_num'] ? $GLOBALS['swfupload_num']:0;
 
     // get already uploaded files list
     $uploaded='';
@@ -68,7 +68,7 @@ function macro_SWFUpload($formatter,$value) {
         }
     }
 
-    if (!$swfupload_script) {
+    if (!$swfupload_num) {
         $swfupload_script=<<<EOS
 	<script type="text/javascript" src="$DBInfo->url_prefix/local/SWFUpload/mmSWFUpload.js"></script>
 	<script type="text/javascript" src="$DBInfo->url_prefix/local/SWFUpload/moni.js"></script>
