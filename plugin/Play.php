@@ -1,7 +1,15 @@
 <?php
-// Copyright 2003,2004 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2004-2007 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
-// a simple Play macro plugin for the MoniWiki
+// a media Play macro plugin for the MoniWiki
+//
+// Author: Won-Kyu Park <wkpark@kldp.org>
+// Date: 2004-08-02
+// Name: Play macro
+// Description: media Player Plugin
+// URL: MoniWikiDev:PlayMacro
+// Version: $Revision$
+// License: GPL
 //
 // Usage: [[Play(http://blah.net/blah.mp3)]]
 //
@@ -35,6 +43,55 @@ function macro_Play($formatter,$value) {
     $play="false";
   }
 
+  if ($DBInfo->use_jwmediaplayer and preg_match("/(flv|mp3)$/i",$media,$ext)) {
+    $swfobject_num=$GLOBALS['swfobject_num'] ? $GLOBALS['swfobject_num']:0;
+    if (!$swfobject_num) {
+      $swfobject_script="<script type=\"text/javascript\" src=\"$DBInfo->url_prefix/local/js/swfobject.js\"></script>\n";
+      $num=1;
+    } else {
+      $num=++$swfobject_num;
+    }
+    $GLOBALS['swfobject_num']=$num;
+
+    if (!$DBInfo->jwmediaplayer_prefix) {
+      $_swf_prefix=qualifiedUrl("$DBInfo->url_prefix/local/JWPlayers");
+    } else{
+      $_swf_prefix=$DBInfo->jwmediaplayer_prefix;
+    }
+
+    if (!preg_match("/^(http|ftp):\/\//",$url)) {
+      $url=qualifiedUrl($url);
+    }
+
+    if ($ext[1] == 'flv') {
+      $jw_script=<<<EOS
+    <p id="mediaplayer$num"></p>
+    <script type="text/javascript">
+        var _s$num = new SWFObject("$_swf_prefix/mediaplayer.swf","_mediaplayer$num","320","240","7");
+        _s$num.addParam("allowfullscreen","true");
+        _s$num.addVariable("file","$url");
+        //_s$num.addVariable("image","preview.jpg");
+        _s$num.write("mediaplayer$num");
+</script>
+EOS;
+    } else { // mp3 only
+      $jw_script=<<<EOS
+    <p id="mediaplayer$num"></p>
+    <script type="text/javascript">
+        var _s$num = new SWFObject("$_swf_prefix/mediaplayer.swf", "_mediaplayer$num", "240", "20", "7");
+        _s$num.addVariable("file","$url");
+        //_s$num.addVariable("image","cover.jpg");
+        _s$num.addVariable("width","240");
+        _s$num.addVariable("height","20");
+        _s$num.write("mediaplayer$num");
+</script>
+EOS;
+    }
+
+    return <<<EOS
+      $swfobject_script$jw_script
+EOS;
+  } else {
   if (preg_match("/(wmv|mpeg4|avi|asf)$/",$media)) {
     $classid="clsid:22D6F312-B0F6-11D0-94AB-0080C74C7E95";
     $type='type="application/x-mplayer2"';
@@ -58,6 +115,7 @@ $params
 <embed $type src="$url" $attr></embed>
 </object>
 OBJECT;
+  }
 }
 
 // vim:et:sts=2:

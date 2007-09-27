@@ -94,6 +94,7 @@ $hr='';
 # set global javascripts
 #$js=<<<EOF
 #<script type="text/javascript" src="$url_prefix/local/ajax.js"></script>
+#<script type="text/javascript" src="$url_prefix/local/se.js"></script>
 #<script type="text/javascript" src="$url_prefix/local/Wikiwyg/lib/Wikiwyg.js"></script>
 #<script type="text/javascript" src="$url_prefix/local/Wikiwyg/lib/Wikiwyg/Util.js"></script>
 #<script type="text/javascript" src="$url_prefix/local/Wikiwyg/lib/Wikiwyg/Toolbar.js"></script>
@@ -106,6 +107,7 @@ $hr='';
 #<script type="text/javascript" src="$url_prefix/local/js/prototype.js"></script>
 #<script type="text/javascript" src="$url_prefix/local/js/scriptaculous.js?load=effects,controls"></script>
 #<script type="text/javascript" src="$url_prefix/local/lightbox2/js/lightbox.js"></script>
+#<link rel="stylesheet" href="$url_prefix/local/lightbox2/css/lightbox.css" type="text/css" media="screen" />
 #<script type="text/javascript" src="$url_prefix/local/autocomplete.js"></script>
 #<script type="text/javascript" src="$url_prefix/local/subindex.js"></script>
 #EOF;
@@ -146,6 +148,7 @@ $hr='';
 #$vim_nocheck=0; // do not check vim syntax.
 #$vim_nocheck=1;
 #$use_resizer=1; // javascript resizer
+#$use_resizer=2; // drupal style resizer 
 #$use_minoredit=1; // only for wiki owners
 #$auto_search='FixMoin'; # for old moinmoin users
 #$auto_search='AutoGoto';
@@ -215,4 +218,6 @@ $use_save_refresh=2;
 #$nosession=1; # do not use session
 #$default_pre='pre'; # set the default pre processor
 #$use_rating=1; # builtin Rating support
+$use_jwmediaplayer=1;
+$jwmediaplayer_prefix='http://www.jeroenwijering.com/embed';
 ?>
