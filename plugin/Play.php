@@ -18,23 +18,52 @@
 function macro_Play($formatter,$value) {
   global $DBInfo;
   static $autoplay=1;
+  $max_width=600;
+  $max_height=400;
 
-  preg_match("/(^[^,]+)(\s*,\s*)?$/",$value,$match);
-  if (!$match) return '[[Play()]]';
+  $default_width=320;
+  $default_height=240;
 
-  $media=$match[1];
-  if ($match[3]) {
-    $attr='';
-    list($x,$y)=explode(',',$match[3]);
-  }
-  if (!preg_match("/^(http|ftp|mms|rtsp):\/\//",$media)) {
-    $fname=$formatter->macro_repl('Attachment',$media,1);
-    if (!file_exists($fname)) {
-      return $formatter->macro_repl('Attachment',$value);
+  #
+  $media=array();
+  #
+  preg_match("/^(([^,]+\s*,?\s*)+)$/",$value,$match);
+  if (!$match) return '[[Play(error!! '.$value.')]]';
+
+  if (($p=strpos($match[1],','))!==false) {
+    $my=explode(',',$match[1]);
+    for ($i=0,$sz=count($my);$i<$sz;$i++) {
+      if (strpos($my[$i],'=')) {
+        list($key,$val)=explode('=',$my[$i]);
+        if ($key == 'width' and $val > 1) {
+          $width=$val;
+        } else if ($key == 'height' and $val > 1) {
+          $height=$val;
+        }
+      } else { // multiple files
+        $media[]=$my[$i];
+      }
     }
-    $url=qualifiedUrl($DBInfo->url_prefix."/"._urlencode($fname));
   } else {
-    $url=$media;
+    $media[]=$match[1];
+  }
+  # set embeded object size
+  $width=$width ? min($width,$max_width):$default_width;
+  $height=$height ? min($height,$max_height):$default_height;
+
+  $url=array();
+  $my_check=1;
+  for ($i=0,$sz=count($media);$i<$sz;$i++) {
+    if (!preg_match("/^(http|ftp|mms|rtsp):\/\//",$media[$i])) {
+      $fname=$formatter->macro_repl('Attachment',$media[$i],1);
+      if ($my_check and !file_exists($fname)) {
+        return $formatter->macro_repl('Attachment',$value);
+      }
+      $my_check=1; // check only first file.
+      $url[]=qualifiedUrl($DBInfo->url_prefix."/"._urlencode($fname));
+    } else {
+      $url[]=$media[$i];
+    }
   }
 
   if ($autoplay==1) {
@@ -43,7 +72,25 @@ function macro_Play($formatter,$value) {
     $play="false";
   }
 
-  if ($DBInfo->use_jwmediaplayer and preg_match("/(flv|mp3)$/i",$media,$ext)) {
+  #
+  $use_flashplayer_ok=0;
+  if ($DBInfo->use_jwmediaplayer) {
+    $use_flashplayer_ok=1;
+    for ($i=0,$sz=count($media);$i<$sz;$i++) { // check type of all files
+      if (!preg_match("/(flv|mp3|mp4|swf)$/i",$media[$i])) {
+        $use_flashplayer_ok=0;
+        break;
+      }
+    }
+  }
+
+  if ($use_flashplayer_ok) {
+    # set embed flash size
+    if (($sz=count($media)) == 1 and preg_match("/(ogg|wav|mp3)$/i",$media[0])) {
+      // only one and a sound file
+      $height=20; // override the hegiht of the JW MediaPlayer
+    }
+
     $swfobject_num=$GLOBALS['swfobject_num'] ? $GLOBALS['swfobject_num']:0;
     if (!$swfobject_num) {
       $swfobject_script="<script type=\"text/javascript\" src=\"$DBInfo->url_prefix/local/js/swfobject.js\"></script>\n";
@@ -54,68 +101,134 @@ function macro_Play($formatter,$value) {
     $GLOBALS['swfobject_num']=$num;
 
     if (!$DBInfo->jwmediaplayer_prefix) {
-      $_swf_prefix=qualifiedUrl("$DBInfo->url_prefix/local/JWPlayers");
+      $_swf_prefix=qualifiedUrl("$DBInfo->url_prefix/local/JWPlayers"); // FIXME
     } else{
       $_swf_prefix=$DBInfo->jwmediaplayer_prefix;
     }
 
-    if (!preg_match("/^(http|ftp):\/\//",$url)) {
-      $url=qualifiedUrl($url);
+    if ($sz > 1) {
+      $md5sum=md5(implode(':',$media));
+      if ($DBInfo->cache_public_dir) {
+        $fc=new Cache_text('jwmediaplayer',2,'',$DBInfo->cache_public_dir);
+        $fname=$fc->_getKey($md5sum,0);
+        $basename= $DBInfo->cache_public_dir.'/'.$fname;
+        $urlbase=
+          $DBInfo->cache_public_url ? $DBInfo->cache_public_url.'/'.$fname:
+          $DBInfo->url_prefix.'/'.$basename;
+        $playfile=$basename.'.xml';
+      } else {
+        $cache_dir= $DBInfo->upload_dir."/VisualTour";
+        $cache_url= $DBInfo->upload_url ? $DBInfo->upload_url.'/VisualTour':
+          $DBInfo->url_prefix.'/'.$cache_dir;
+        $basename= $cache_dir.'/'.$md5sum;
+        $urlbase= $cache_url.'/'.$md5sum;
+        $playfile= $basename.'.xml';
+      }
+      $playlist=$urlbase.'.xml';
+
+      
+      $list=array();
+      for ($i=0;$i<$sz;$i++) {
+        if (!preg_match("/^(http|ftp):\/\//",$url[$i])) {
+          $url=qualifiedUrl($url);
+        }
+
+        $ext=substr($media[$i],-3,3); // XXX
+
+        $list[]='<title>'.$media[$i].'</title>'."\n".
+                '<location>'.$url[$i].'</location>'."\n";
+      }
+
+      $tracks="<track>\n".implode("</track>\n<track>\n",$list)."</track>\n";
+      $xml=<<<XML
+<?xml version="1.0" encoding="UTF-8"? >
+<playlist version="1" xmlns="http://xspf.org/ns/0/">
+  <title>XSPF Playlist</title>
+  <info>XSPF Playlist</info>
+  <trackList>
+$tracks
+  </trackList>
+</playlist>
+XML;
+      # check cache dir exists or not and make it
+      if (!is_dir(dirname($playfile))) {
+        $om=umask(000);
+        _mkdir_p(dirname($playfile),0777);
+        umask($om);
+      }
+
+      if ($formatter->refresh or !file_exists($playfile)) {
+        $fp=fopen($playfile,"w");
+        fwrite($fp,$xml);
+        fclose($fp);
+      }
+      $displayheight=$height;
+      $height+=$sz*40; // XXX
+      $addparam=<<<EOS
+        _s$num.addVariable("displayheight","$displayheight");
+EOS;
+      $filelist=qualifiedUrl($playlist);
+    } else {
+      $filelist=$url[0];
     }
 
-    if ($ext[1] == 'flv') {
-      $jw_script=<<<EOS
-    <p id="mediaplayer$num"></p>
-    <script type="text/javascript">
-        var _s$num = new SWFObject("$_swf_prefix/mediaplayer.swf","_mediaplayer$num","320","240","7");
+    $jw_script=<<<EOS
+<p id="mediaplayer$num"></p>
+<script type="text/javascript">
+        var _s$num = new SWFObject("$_swf_prefix/mediaplayer.swf","_mediaplayer$num","$width","$height","7");
         _s$num.addParam("allowfullscreen","true");
-        _s$num.addVariable("file","$url");
+        _s$num.addVariable("width","$width");
+        _s$num.addVariable("height","$height");
+        $addparam
+        _s$num.addVariable("file","$filelist");
         //_s$num.addVariable("image","preview.jpg");
         _s$num.write("mediaplayer$num");
 </script>
 EOS;
-    } else { // mp3 only
-      $jw_script=<<<EOS
-    <p id="mediaplayer$num"></p>
-    <script type="text/javascript">
-        var _s$num = new SWFObject("$_swf_prefix/mediaplayer.swf", "_mediaplayer$num", "240", "20", "7");
-        _s$num.addVariable("file","$url");
-        //_s$num.addVariable("image","cover.jpg");
-        _s$num.addVariable("width","240");
-        _s$num.addVariable("height","20");
-        _s$num.write("mediaplayer$num");
-</script>
-EOS;
-    }
 
     return <<<EOS
       $swfobject_script$jw_script
 EOS;
   } else {
-  if (preg_match("/(wmv|mpeg4|avi|asf)$/",$media)) {
-    $classid="clsid:22D6F312-B0F6-11D0-94AB-0080C74C7E95";
-    $type='type="application/x-mplayer2"';
-    $attr='width="320" height="280" autoplay="'.$play.'"';
-    $params="<param name='FileName' value='$url'>\n".
-      "<param name='AutoStart' value='False'>\n".
-      "<param name='ShowControls' value='True'>";
-  } else if (preg_match("/(wav|mp3|ogg)$/",$media)) {
-    $classid="clsid:02BF25D5-8C17-4B23-BC80-D3488ABDDC6B";
-    $attr='codebase="http://www.apple.com/qtactivex/qtplugin.cab" height="30"';
-    $attr.=' autoplay="'.$play.'"';
-    $params="<param name='src' value='$url'>\n".
-      "<param name='AutoStart' value='$play'>";
-  }
-  $autoplay=0;
+    $out='';
 
-  return <<<OBJECT
+    for ($i=0,$sz=count($media);$i<$sz;$i++) {
+      if (preg_match("/(wmv|mpeg4|mp4|avi|asf)$/",$media[$i])) {
+        $classid="clsid:22D6F312-B0F6-11D0-94AB-0080C74C7E95";
+        $type='type="application/x-mplayer2"';
+        $attr='width="320" height="280" autoplay="'.$play.'"';
+        $params="<param name='FileName' value='".$url[$i]."'>\n".
+          "<param name='AutoStart' value='False'>\n".
+          "<param name='ShowControls' value='True'>";
+      } else if (preg_match("/(wav|mp3|ogg)$/",$media[$i])) {
+        $classid="clsid:02BF25D5-8C17-4B23-BC80-D3488ABDDC6B";
+        $type='';
+        $attr='codebase="http://www.apple.com/qtactivex/qtplugin.cab" height="30"';
+        $attr.=' autoplay="'.$play.'"';
+        $params="<param name='src' value='".$url[$i]."'>\n".
+          "<param name='AutoStart' value='$play'>";
+      } else if (preg_match("/swf$/",$media[$i])) {
+        $type='type="application/x-shockwave-flash"';
+        $classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000";
+        $attr='codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,29,0"';
+        $attr.=' autoplay="'.$play.'"';
+        $params="<param name='movie' value='".$url[$i]."'>\n".
+          "<param name='AutoStart' value='$play'>";
+      }
+      $autoplay=0; $play='false';
+
+      $myurl=$url[$i];
+      $out.=<<<OBJECT
 <object classid="$classid" $type $attr>
 $params
 <param name="AutoRewind" value="True">
-<embed $type src="$url" $attr></embed>
+<embed $type src="$myurl" $attr></embed>
 </object>
 OBJECT;
+    }
   }
+
+  return $out;
 }
 
 // vim:et:sts=2:
