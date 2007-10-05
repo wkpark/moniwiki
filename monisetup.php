@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org> all rights reserved.
+// Copyright 2003-2007 Won-Kyu Park <wkpark at kldp.org> all rights reserved.
 // distributable under GPL see COPYING 
 // $Id$
 
@@ -12,6 +12,7 @@ class MoniConfig {
     if (file_exists($configfile)) {
       $this->config=$this->_getConfig($configfile);
       $this->rawconfig=$this->_rawConfig($configfile);
+      $this->configdesc=$this->_getConfigDesc($configfile);
     } else {
       $this->config=array();
       $this->rawconfig=array();
@@ -30,6 +31,7 @@ class MoniConfig {
 
   }
   function _getHostConfig() {
+    print '<div class="check">';
     if (function_exists("dba_open")) {
       print '<h3>Check a dba configuration</h3>';
       $tempnam="/tmp/".time();
@@ -90,6 +92,7 @@ class MoniConfig {
     if (!file_exists('wikilib.php')) {
       $config['include_path']="'.:/usr/local/share/moniwiki:/usr/share/moniwiki'";
     }
+    print '</div>';
     return $config;
   }
 
@@ -121,23 +124,52 @@ class MoniConfig {
       if (!$key and $line[0] != '$') continue;
       if ($key) {
         $val.=$line;
-        if (!preg_match('/\s*;$/',$line)) continue;
+        if (!preg_match('/\s*;(\s*#.*)?$/',$line)) continue;
       } else {
         list($key,$val)=explode('=',substr($line,1),2);
-        if (!preg_match('/\s*;$/',$val)) {
+        if (!preg_match('/\s*;(\s*#.*)?$/',$val)) {
           if (substr($val,0,3)== '<<<') $tag=substr($val,3);
           continue;
         }
       }
 
       if ($key) {
-        $val=preg_replace('/\s*;$/','',rtrim($val));
+	$val=rtrim($val);
+        $val=preg_replace('/\s*;(\s*#.*)?$/','',$val);
         $config[$key]=$val;
       }
       $key='';
       $tag='';
     }
     return $config;
+  }
+
+  function _getConfigDesc($configfile) {
+    $lines=file($configfile);
+    $key='';
+    $desc=array();
+    foreach ($lines as $line) {
+      $line=rtrim($line)."\n"; // for Win32
+      if (!$key and $line[0] != '$') continue;
+      if ($key) {
+        $val.=$line;
+        if (!preg_match('/\s*;\s*(#.*)?$/',$line)) continue;
+      } else {
+        list($key,$val)=explode('=',substr($line,1),2);
+        if (!preg_match('/\s*;\s*(#.*)?$/',$val)) {
+          if (substr($val,0,3)== '<<<') $tag=substr($val,3);
+          continue;
+        }
+      }
+
+      if ($key) {
+        preg_match('/\s*;\s*#(.*)?$/',rtrim($val),$match);
+        if ($match[1]) $desc[$key]=$match[1];
+      }
+      $key='';
+      $tag='';
+    }
+    return $desc;
   }
 
   function _getFormConfig($config,$mode=0) {
@@ -201,7 +233,7 @@ function checkConfig($config) {
      print "<h2><a href='monisetup.php'>Reload</a></h2>";
      exit;
   } else if (file_exists("config.php")) {
-     print "<h3><font color='green'>WARN: Please execute the following command after you have completed your configuration.</font></h3>\n";
+     print "<p class='notice'><span class='warn'>WARN:</span> Please execute the following command after you have completed your configuration.</p>\n";
      print "<pre class='console'>\n<font color='green'>$</font> sh secure.sh\n</pre>\n";
   }
 
@@ -245,6 +277,7 @@ function checkConfig($config) {
 
     $writables=array("upload_dir","editlog_name");
 
+    print '<div class="check">';
     foreach($writables as $file) {
       if (!is_writable($config[$file])) {
         if (file_exists($config[$file])) {
@@ -280,6 +313,7 @@ function checkConfig($config) {
       fwrite($fp,'AddType text/plain .sh .cgi .pl .py .php .php3 .php4 .phtml .html'."\n");
       fclose($fp);
     }
+    print "</div>\n";
   }
 }
 
@@ -385,20 +419,47 @@ function sow_wikiseed($config,$seeddir='wikiseed',$seeds) {
 }
 
 print <<<EOF
-<html><head><title>Moni Setup</title>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head><title>Moni Setup</title>
 <style type="text/css">
-//<!--
-body {font-family:Trebuchet MS,Tahoma,sans-serif;}
-h1,h2,h3,h4,h5 {
-  font-family:Tahoma,sans-serif;
+<!--
+html { background: #707070; }
+.body {
+  background:#fff;
+  font-family: "Trebuchet MS", Tahoma,"Times New Roman", Times, serif;
+  margin-left: 10%;
+  margin-right: 10%;
+  padding: 0.1em 1.5em;
+}
+.header {
+  background:#909090 url("imgs/setup-bg.png");
+  margin-left: 10%;
+  margin-right: 10%;
+  color: white;
+  padding-left:1em;
+}
+
+
+h1 { display:inline;
+  font-size:40px;
+  font-family: Tahoma, "Times New Roman", Times, serif;
+}
+
+h2 {
+  font-size:1.5em;
+}
+
+h2,h3,h4,h5 {
+  font-family:"Trebuchet MS",sans-serif;
 /* background-color:#E07B2A; */
   padding-left:6px;
-  border-bottom:1px solid #bbb;
+/*  border-bottom:1px solid #eee; */
 }
 table.wiki {
 /* border-collapse: collapse; */
   border: 0px outset #E2ECE5;
-  font-family:bitstream vera sans mono,monospace;
+  font-family:"bitstream vera sans mono",monospace;
 }
 
 pre.console {
@@ -413,27 +474,90 @@ td.wiki {
   background-color:#E2ECE2;
 /* border-collapse: collapse; */
   border: 0px inset #E2ECE5;
-  font-family:bitstream vera sans mono,monospace;
+  font-family:sans-serif;
+}
+
+table.wiki td {
+  border: 0px inset #E2ECE5;
+  background-color:#ffffff;
+}
+
+table.wiki td.preview {
+  font-size:12px;
+  font-family:"bitstream vera sans mono",monospace;
+  background-color:#E6E6E6;
+  font-weight:bold;
 }
 
 td.option {
+  font-size:12px;
   font-family:bitstream vera sans mono,monospace;
-  background-color:#2062d0;
+  background-color:#E6E6E6;
   font-weight:bold;
-  color: white;
+  color:black;
 }
 
-//-->
+.newset table input {
+  background-color:#ffffff;
+  border:1px solid #c0c0c0;
+}
+
+td.desc {
+  font-family:Trebuchet MS,sans-serif;
+  background-color:#E6E6E6;
+  text-align:right;
+  padding:5px;
+}
+
+span.warn {
+  color:red;
+}
+
+.notice {
+  font-size:18px;
+  color: #4BD548;
+}
+
+.check {
+  background: #f2f2f2;
+  margin-left:2em;
+  margin-right:2em;
+  padding:0.5em;
+}
+
+.oldset {
+  height: 300px;
+  overflow-y: scroll;
+  background: #f2f2f2;
+}
+
+.newset {
+  height: 300px;
+  overflow-y: scroll;
+  background: #f2f2f2;
+}
+
+.step {
+  text-align: right;
+}
+
+.step input {
+  font-size: 2em;
+  font-weight:bold;
+  font-family: Trebuchet MS, "Times New Roman", Times, serif;
+}
+
+-->
 </style>
 </head>
 <body>
 EOF;
 
-print "<h2>Moni Wiki setup</h2>\n";
+print "<div class='header'><h1><img src='imgs/setup-logo.png' style='vertical-align: middle'/> MoniWiki</h1></div><div class='body'>\n";
 
 if (file_exists("config.php") && !is_writable("config.php")) {
   print "<h2><font color='red'>'config.php' is not writable !!</font></h2>\n";
-  print "Please execute 'monisetup.sh' first to change your settings.<br />\n";
+  print "Please execute <tt>'monisetup.sh'</tt> or <tt>chmod a+w config.php</tt> first to change your settings.<br />\n";
 
   return;
 }
@@ -459,8 +583,10 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $config) {
   if ($Config->config['admin_passwd']) {
     if (crypt($oldpasswd,$Config->config['admin_passwd']) != 
       $Config->config['admin_passwd']) {
-        print "<h3><font color='red'>Invalid password error !!!</font></h3>\n";
+        if ($update=='Update') {
+        print "<h2><font color='red'>Invalid password error !!!</font></h2>\n";
         print "If you can't remember your admin password, delete password entry in the 'config.php' and restart 'monisetup'<br />\n";
+        }
         $invalid=1;
     } else {
         $rawconfig['admin_passwd']=$newpasswd;
@@ -470,7 +596,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $config) {
        $rawconfig['admin_passwd']=$newpasswd;
   }
 
-  if ($update) {
+  if ($update == 'Update') {
     if ($rawconfig['charset'] && $rawconfig['sitename']) {
       if (function_exists('iconv')) {
         $ncharset=strtoupper($rawconfig['charset']);
@@ -490,7 +616,8 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $config) {
         if ($out) $rawconfig['sitename']=$out;
       }
     }
-    print "<h3>Updated Configutations for this $config[sitename]</h3>\n";
+    if (!$invalid)
+      print "<h2>Updated Configutations for this $config[sitename]</h2>\n";
     $lines=$Config->_genRawConfig($rawconfig);
     print "<pre class='console'>\n";
     $rawconf=join("",$lines);
@@ -509,7 +636,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $config) {
       fwrite($fp,$rawconf);
       fclose($fp);
       @chmod("config.php",0666);
-      print "<h3><font color='blue'>Configurations are saved successfully</font></h3>\n";
+      print "<h2><font color='blue'>Configurations are saved successfully</font></h2>\n";
       print "<h3><font color='green'>WARN: Please check <a href='monisetup.php'> your saved configurations</a></font></h3>\n";
       print "If all is good, change 'config.php' permission as 644.<br />\n";
     } else {
@@ -517,17 +644,17 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $config) {
         print "<h3><font color='red'>You Can't write this settings to 'config.php'</font></h3>\n";
       }
     }
-  } else
-    print "<h3>Read current settings for this $config[sitename]</h3>\n";
+  }
+  # print "<h2>Read current settings for this $config[sitename]</h2>\n";
 } else {
   # read settings
 
   if (!$Config->config) {
+    print "<h2>Welcome to MoniWiki ! This is your first installation</h2>\n";
     $Config->getDefaultConfig();
     $config=$Config->config;
 
     checkConfig($config);
-    print "<h2>Welcome ! This is your first installation</h2>\n";
 
     $rawconfig=$Config->rawconfig;
     print "<h3 color='blue'>Default settings are loaded...</h3>\n";
@@ -539,13 +666,14 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $config) {
     fwrite($fp,$rawconf);
     fclose($fp);
     @chmod("config.php",0666);
-    print "<h3><font color='blue'>Initial configurations are saved successfully.</font></h3>\n";
+    print "<h2><font color='blue'>Initial configurations are saved successfully.</font></h2>\n";
     print "<h3><font color='red'>Goto <a href='monisetup.php'>MoniSetup</a> again to configure details</font></h3>\n";
     exit;
   } else {
     $config=$Config->config;
     checkConfig($config);
-    $rawconfig=$Config->rawconfig;
+    $rawconfig=&$Config->rawconfig;
+    $configdesc=&$Config->configdesc;
   }
 }
 
@@ -564,26 +692,30 @@ if ($_SERVER['REQUEST_METHOD']=="POST") {
     print "<h2><font color='red'>No WikiSeeds are selected</font></h2>";
     exit;
   }
-}
-
-if ($_SERVER['REQUEST_METHOD']!="POST") {
+} else {
   if ($action=='seed') {
     show_wikiseed($config,'wikiseed');
     exit;
   }
+}
 
-  print "<h3>Read current settings for this $config[sitename]</h3>\n";
+  if ($update == 'Preview')
+  print "<h2>Preview current settings for this $config[sitename]</h2>\n";
+  else
+  print "<h2>Read current settings for this $config[sitename]</h2>\n";
+  print "<div class='oldset'>";
   print"<table class='wiki' align=center border=1 cellpadding=2 cellspacing=2>";
   print "\n";
   while (list($key,$val) = each($config)) {
     if ($key != "admin_passwd" && $key != "purge_passwd")
     if (!preg_match('/<img /',$val))
       $val=str_replace(array('<',"\n"),array('&lt;',"<br />\n"),$val);
-    print "<tr><td class='option'>\$$key</td><td>$val</td></tr>\n";
+    print "<tr><td class='preview'>\$$key</td><td>$val</td></tr>\n";
   }
-  print "</table>\n";
+  print "</table>\n</div>\n";
 
-  print "<h3>Change your settings</h3>\n";
+if ($_SERVER['REQUEST_METHOD']!="POST") {
+  print "<h2>Change your settings</h2>\n";
   if (!$config['admin_passwd'])
   print "<h3><font color='red'>WARN: You have to enter your Admin Password</h3>\n";
   else if (file_exists('config.php') && !file_exists($config[data_dir]."/text/RecentChanges")) {
@@ -591,18 +723,22 @@ if ($_SERVER['REQUEST_METHOD']!="POST") {
     print "<h2>If you want to put wikiseeds on your wiki <a href='?action=seed'>Click here</a> now</h2>";
   }
   print "<form method='post' action=''>\n";
+  print "<div class='newset'>\n";
   print "<table align='center' border='0' cellpadding='2' cellspacing='2'>\n";
   while (list($key,$val) = each($rawconfig)) {
     if ($key != "admin_passwd") {
       print "<tr><td class='option'>$$key</td>";
       if (strpos($val,"\n")) $type="textarea";
       else $type="input";
+
       if ($type=='input') {
         $val=str_replace('"',"&#34;",$val);
-        print "<td><$type type='text' name='config[$key]' value=\"$val\" size='60'></td></tr>\n";
+        print "<td class='option'><$type type='text' name='config[$key]' value=\"$val\" size='60'></td></tr>\n";
       } else {
         print "<td><$type name='config[$key]' rows='4' cols='60'>".$val."</$type></td></tr>\n";
       }
+      if ($configdesc[$key])
+        print "<td class='desc' colspan='2'>".$configdesc[$key]."</td></tr>\n";
     }
   }
 
@@ -615,13 +751,14 @@ if ($_SERVER['REQUEST_METHOD']!="POST") {
     print "<tr><td><b>New password</b></td>";
     print "<td><input type='password' name='newpasswd' size='60'></td></tr>\n";
   }
-  print "<tr><td colspan=2>";
-  print "<input type='submit' value='preview'> ";
+  print "</table></div>";
+  print "<div class='step'>";
+  print "<input type='submit' name='update' value='Preview' /> ";
   if (!$config['admin_passwd'])
-  print "<input type='submit' name='update' value='update'></td></tr>\n";
+  print "<input type='submit' name='update' value='Update' />\n";
   else
-  print "<input type='submit' name='update' value='update'></td></tr>\n";
-  print "</table></form>\n";
+  print "<input type='submit' name='update' value='Update' />\n";
+  print "</div></form>\n";
 
   if (file_exists('config.php') && !file_exists($config[data_dir]."/text/RecentChanges")) {
     print "<h3><font color='red'>WARN: You have no WikiSeed on your $config[sitename]</font></h3>\n";
@@ -633,5 +770,6 @@ if ($_SERVER['REQUEST_METHOD']!="POST") {
       print "<h2>goto <a href='".$config[url_prefix]."'>$config[sitename]</a></h2>";
   }
 }
+  print "</div></body></html>";
 
 ?>
