@@ -1,4 +1,19 @@
 <?php
+// Copyright 2007 by keizie <keizie at gmail.com>
+// All rights reserved. Distributable under GPL see COPYING
+// a rawblog plugin for the MoniWiki
+//
+// Author: Keizie <keizie@gmail.com>
+// Date: 2007-08-01
+// Name: Raw blog action plugin
+// Description: Raw blog action Plugin to extract a blog entry from a Blog page.
+// URL: MoniWiki:RawBlogPlugin
+// Version: $Revision$
+// License: GPL
+//
+// Usage: ?action=rawblog
+//
+// $Id$
 
 function do_rawblog($formatter,$options) {
   global $DBInfo;
@@ -13,7 +28,7 @@ function do_rawblog($formatter,$options) {
   $url=$formatter->link_url($formatter->page->urlname);
   $formatter->send_header("",$options);
 
-  { # add entry or comment
+  { #
     if ($options['value']) {
       $raw_body=$formatter->page->_get_raw_body();
       $lines=explode("\n",$raw_body);
