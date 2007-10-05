@@ -1,5 +1,4 @@
-<?
-// vim:et:ts=2:
+<?php
 
 function do_referer($formatter, $options)
 {
@@ -102,4 +101,5 @@ function macro_referer($formatter="",$value, &$options) {
   return $ret;
 }
 
+// vim:et:ts=2:
 ?>
