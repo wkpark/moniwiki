@@ -171,6 +171,12 @@ class Security_ACL extends Security {
         $allowed=&$this->_allowed;
         $denied=&$this->_denied;
 
+        if ($options['explicit']) {
+            if (isset($allowed[$action])) return 1;
+            else if (isset($denied[$action])) return 0;
+            return false;
+        }
+
         if (isset($denied['*'])) {
             if (isset($allowed[$action])) {
                 if ($allowed[$action] >= $denied['*']) return 1;
@@ -199,6 +205,7 @@ class Security_ACL extends Security {
     function is_allowed($action="read",&$options) {
         # basic allowed actions
         $action=strtolower($action);
+        $action=strtr($action,'-','/'); # for myaction/macro or myaction/ajax
         if (!$this->_acl_ok) $this->get_acl($action,$options); # get acl info
 
         $ret=$this->acl_check($action,$options);
@@ -212,6 +219,7 @@ class Security_ACL extends Security {
     function is_protected($action="read",$options) {
         # password protected POST actions
         $action=strtolower($action);
+        $action=strtr($action,'-','/'); # for myaction/macro or myaction/ajax
         if (!$this->_acl_ok) $this->get_acl($action,$options); # get acl info
 
         if (in_array($action,$this->_protected)) return 1;

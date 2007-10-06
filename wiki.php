@@ -326,7 +326,7 @@ class MetaDB_dba extends MetaDB {
     $addons=$this->aux->getTwinPages($pagename,$mode);
     $ret=array();
     if ($twins) {
-      $ret="wiki:".str_replace(" ",":$pagename wiki:",$twins). ":$pagename";
+      $ret="[wiki:".str_replace(" ",":$pagename] [wiki:",$twins). ":$pagename]";
 
       $pagename=_preg_search_escape($pagename);
       $ret= preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
@@ -2587,16 +2587,22 @@ class Formatter {
     return call_user_func("postfilter_$filter",$this,$value,$options);
   }
 
-  function ajax_repl($action,$options='') {
-    if (!function_exists('ajax_'.$action) and !function_exists('do_'.$action)) {
-      $ff=getPlugin($action);
-      if (!$ff) return $value;
+  function ajax_repl($plugin,$options='') {
+    if (!function_exists('ajax_'.$plugin) and !function_exists('macro_'.$plugin)) {
+      $ff=getPlugin($plugin);
+      if (!$ff)
+        return ajax_invalid($this,array('title'=>_("Invalid ajax action.")));
       include_once("plugin/$ff.php");
     }
-    if (!function_exists ("ajax_".$action))
+    if (!function_exists ('ajax_'.$plugin)) {
+      if (function_exists('macro_'.$plugin)) {
+        print call_user_func_array('macro_'.$plugin,array(&$this,'',$options));
+        return;
+      }
       return ajax_invalid($this,array('title'=>_("Invalid ajax action.")));
+    }
 
-    return call_user_func("ajax_$action",$this,$options);
+    return call_user_func('ajax_'.$plugin,$this,$options);
   }
 
   function smiley_repl($smiley) {
@@ -4450,7 +4456,9 @@ function wiki_main($options) {
     $refresh=($options['id'] == 'Anonymous') ? 0:$_GET['refresh'];
     $popup=$_GET['popup'];
   }
+  $full_action=$action;
   if (($p=strpos($action,'/'))!==false) {
+    $full_action=strtr($action,'/','-');
     $action_mode=substr($action,$p+1);
     $action=substr($action,0,$p);
   }
@@ -4665,7 +4673,21 @@ function wiki_main($options) {
     $options['help']='';
     $options['value']=$value;
 
-    if (!$DBInfo->security->is_allowed($action,$options)) {
+    $a_allow=$DBInfo->security->is_allowed($action,$options);
+    if ($action_mode) {
+      $myopt=$options;
+      $myopt['explicit']=1;
+      $f_allow=$DBInfo->security->is_allowed($full_action,$myopt);
+      # check if hello/ajax is defined or not
+      if ($f_allow === false)
+        $f_allow=$a_allow; # follow action permission if it is not defined explicitly.
+      if (!$f_allow) {
+        if ($action_mode=='ajax') {
+          return ajax_invalid($formatter,array('title'=>_("Invalid ajax action.")));
+        }
+        return do_invalid($formatter,array('title'=>_("Invalid macro action.")));
+      }
+    } else if (!$a_allow) {
       if ($options['custom']!='' and
           method_exists($DBInfo->security,$options['custom'])) {
         $options['action']=$action;
