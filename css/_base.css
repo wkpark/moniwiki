@@ -112,11 +112,11 @@ h1,h2,h3,h4,h5 {
   font-family:sans-serif;
 }
 
-div.diff-added {
+div.diff-added, tr.diff-added {
   background-color:#ccffcc;
 }
 
-div.diff-removed {
+div.diff-removed, tr.diff-removed {
   background-color:#EEBfbb;
 }
 
@@ -134,6 +134,7 @@ span.diff-added, ins.diff-added {
 
 span.diff-removed, del.diff-removed {
   background-color: #FF0000;
+  text-decoration: none;
 }
 
 div.message {
@@ -206,6 +207,7 @@ div.closure {
 .wikiGroup {
   font-family:Tahoma,Lucida,sans-serif;
   font-size:10px;
+  display:block;
 }
 
 #wikiTrailer, #wikiOrigin {
@@ -415,8 +417,9 @@ h4:hover a.perma, h5:hover a.perma, h6:hover a.perma {
 }
 
 .wikiMarkup {
-  font-family:Bitstream vera sans mono,Courier New,monospace; 
   background-color:#ffff00;
+  border-left:2px solid #F5E238;
+  border-right:2px solid #F5E238;
 }
 
 /* since v1.1.3 */
@@ -453,12 +456,14 @@ em.underline{
   z-index:20;
 }
 
+
 #wikiSubIndex legend {
   color:#555;
   background: url(../imgs/misc/open.png) no-repeat;
   height:9px;
   width:9px;
   padding:5px;
+  margin:0px;
 }
 
 #wikiSubIndex legend.close {
@@ -470,4 +475,30 @@ em.underline{
   border:1px solid black; */
   background: #ffffff;
   padding:3px;
+}
+
+.wikiRating {
+  left:500px;
+  border-left:5px solid #72BEE2;
+  padding-left:5px;
+}
+
+.attach img {
+  vertical-align:middle;
+}
+
+.addPage {
+  margin-left:auto; /* Moz */
+  margin-right:auto; /* Moz */
+}
+
+.addPage table {
+}
+
+.addPage, .addPage input{
+  font-size:20px;
+}
+
+.addLabel {
+  text-align:right;
 }
