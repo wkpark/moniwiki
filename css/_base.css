@@ -451,7 +451,7 @@ em.underline{
   padding-bottom:0px;
   padding-left:0px;
   padding-top:0px;
-  border:1px solid transparent; /* */
+  border:0px solid transparent; /* */
   margin-right:5px;
   z-index:20;
 }

@@ -4,13 +4,21 @@ function toggleSubIndex(id)
     if (typeof id == 'object') subindex=id;
     else subindex=document.getElementById(id);
     if (!subindex) return;
-    var mode='';
+    var mode='',toggle='';
 
     if (subindex) {
         var sub=subindex.getElementsByTagName('div')[0];
         if (sub) {
             mode= sub.getAttribute('style');
-            if (mode) {
+            if (typeof mode == 'object') { // for IE
+                if (sub.style.display == 'none')
+                    toggle=true;
+                else
+                    toggle=false;
+            } else if (mode) {
+                toggle=true;
+            }
+            if (toggle) {
 	        new Effect.SlideDown(sub, { duration: 0.3, afterFinish: function() {Element.show(sub);} });
             } else {
 	        new Effect.SlideUp(sub, { duration: 0.3, afterFinish: function() {Element.hide(sub);} });
@@ -28,11 +36,11 @@ function toggleSubIndex(id)
             subindex.appendChild(sub);
 
 	    new Effect.SlideDown(sub, { duration: 0.4,afterFinish: function() {Element.show(sub);} });
-            mode=true;
+            toggle=true;
         }
         var icon=subindex.getElementsByTagName('legend')[0];
         if (icon) {
-            if (mode)
+            if (toggle)
                 icon.setAttribute('class','close');
             else
                 icon.setAttribute('class','');
