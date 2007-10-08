@@ -64,7 +64,7 @@ function setSound(id,surl) {
     node.setAttribute('id',id);
     node.setAttribute('autostart','false');
     if (navigator.appVersion.indexOf("MSIE")!=-1)
-    	node.setAttribute('style','visibility:hidden');
+    	node.setAttribute('hidden','true');
     node.setAttribute('loop','false');
     node.setAttribute('height','0px');
     node.setAttribute('width','0px');
