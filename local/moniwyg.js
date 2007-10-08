@@ -134,13 +134,19 @@ function fixup_markup_style(html)
             var cname= spans[i].getAttribute('class');
             if (cname == 'wikiMarkup' && spans[i].innerHTML) {
                 // check marcos
-                var match=spans[i].innerHTML.match(/^(<!-- wiki:\n[^\n]+\n-->)/m);
-                if (!match) // check processors
-                    match=spans[i].innerHTML.match(/^(<!-- wiki:\n\{\{\{(.|\n)+\}\}\}\n-->)/m);
-                if (match) {
-                    var test=spans[i].innerHTML.substr(match[1].length);
-                    if (test.indexOf("\n") != -1)
+                //var len=spans[i].firstChild.data.length + 7;
+
+                //if (len) {
+                //    var test=spans[i].innerHTML.substr(len);
+                //    if (test.indexOf("\n") != -1)
+                //        spans[i].style.display='block';
+                //}
+                for (var part = spans[i].firstChild; part; part = part.nextSibling) {
+                    if (part.nodeType == 1 && part.nodeName != 'IMG' &&
+                            part.innerHTML && part.innerHTML.indexOf("\n") != -1) {
                         spans[i].style.display='block';
+                        break;
+                    }
                 }
             }
         }
@@ -401,7 +407,7 @@ proto.format_br = function(element) {
 
 proto.assert_blank_line = function() {
     if (! this.should_whitespace()) return;
-    this.chomp();
+    this.chomp_n(); // FIX
     this.insert_new_line();
     //this.insert_new_line(); // FIX for line_alone (----)
 }
@@ -713,10 +719,10 @@ proto.get_wiki_comment = function(element) {
                         } else {
                             newquery=oldquery+'&'+newquery;
                         }
-                        node.data=orig+'?'+newquery + " \n";
+                        node.data=orig+'?'+newquery;
                     } else {
                         node.data = node.data.replace(/\n+$/,""); // strip \n
-                        node.data+='?'+newquery + " \n";
+                        node.data+='?'+newquery;
                     }
 
                     return node;
@@ -738,7 +744,33 @@ proto.handle_opaque_phrase = function(element) {
                    .replace(/\s$/, '')
                    .replace(/\{(\w+):\s*\}/, '{$1}');
         this.appendOutput(Wikiwyg.htmlUnescape(text))
-        this.smart_trailing_space(element);
+        this.smart_trailing_space_n(element);
+    }
+}
+
+proto.smart_trailing_space_n = function(element) {
+    var next = element.nextSibling;
+    if (! next) {
+        // do nothing
+    }
+    else if (next.nodeType == 1) {
+        if (next.nodeName == 'BR') {
+            var nn = next.nextSibling;
+            if (! (nn && nn.nodeType == 1 && nn.nodeName == 'SPAN') && nn.nodeType != 3) {
+                this.appendOutput('\n');
+                alert(nn.nodeName + nn.nodeType);
+            }
+        }
+        else {
+            this.appendOutput('');
+        }
+    }
+    else if (next.nodeType == 3) {
+        if (! next.nodeValue.match(/^\s/)) {
+            this.no_following_whitespace();
+        } else if (next.nodeValue.match(/\n/) && next.nodeValue.match(/^\s+$/)){
+            this.appendOutput(next.nodeValue);
+        }
     }
 }
 
