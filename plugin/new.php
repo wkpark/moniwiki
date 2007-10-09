@@ -7,22 +7,35 @@
 // $Id$
 
 function do_new($formatter,$options) {
+  global $DBInfo;
+
   if (!$options['value']) {
     $title=_("Create a new page");
     $formatter->send_header("",$options);
     $formatter->send_title($title,"",$options);
     $url=$formatter->link_url($formatter->page->urlname);
 
-    $msg=_("Enter a page name");
+    if ($DBInfo->hasPage('MyNewPage')) {
+        $p = $DBInfo->getPage('MyNewPage');
+        $f = new Formatter($p,$options);
+        $f->use_rating=0;
+
+        $f->send_page('',$options);
+    }
+
+    $msg=_("Page Name");
     $fixname=_("Normalize this page name");
     $btn=_("Create a new page");
     print <<<FORM
+<div class='addPage'>
 <form method='get' action='$url'>
-    $msg: <input type='hidden' name='action' value='new' />
-    <input name='value' size='30' />
-    <input type='checkbox' name='fixname' checked='checked' />$fixname<br />
-    <input type='submit' value='$btn' />
+<table style='border:0'><tr><th class='addLabel'><labe>$msg: </label></th><td><input type='hidden' name='action' value='new' />
+    <input name='value' size='30' /></td></tr>
+<tr><th class='addLabel'><input type='checkbox' name='fixname' checked='checked' /></th><td>$fixname</td></tr>
+<td></td><td><input type='submit' value='$btn' /></td>
+</tr></table>
     </form>
+</div>
 FORM;
     $formatter->send_footer();
   } else {
