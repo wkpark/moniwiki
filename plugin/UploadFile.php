@@ -264,7 +264,7 @@ EOF;
   $formatter->send_footer();
   print $js;
 
-  if (is_array($options['MYFILES']))
+  if (is_array($options['MYFILES']) and !$DBInfo->nosession)
     session_destroy();
 }
 

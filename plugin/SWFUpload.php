@@ -18,16 +18,21 @@
 function macro_SWFUpload($formatter,$value) {
     global $DBInfo;
 
-    if ($myid=session_id()) {
-        if ($DBInfo->swfupload_depth > 2) {
-            $depth=$DBInfo->swfupload_depth;
-        } else {
-            $depth=2;
-        }
-        $prefix=substr($myid,0,$depth);
-        $mysubdir=$prefix.'/'.$myid.'/';
-        $myoptions="<input type='hidden' name='mysubdir' value='$mysubdir' />";
+    if ($DBInfo->swfupload_depth > 2) {
+        $depth=$DBInfo->swfupload_depth;
+    } else {
+        $depth=2;
     }
+
+    if ($DBInfo->nosession) { // ip based
+        $myid=md5($_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI'); // FIXME
+    } else {
+        $myid=session_id();
+    }
+
+    $prefix=substr($myid,0,$depth);
+    $mysubdir=$prefix.'/'.$myid.'/';
+    $myoptions="<input type='hidden' name='mysubdir' value='$mysubdir' />";
 
     if ($DBInfo->use_lightbox) {
         $myoptions.="\n<input type='hidden' name='use_lightbox' value='1' />";
