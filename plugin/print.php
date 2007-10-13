@@ -12,6 +12,7 @@ function do_print($formatter,$options) {
   $formatter->nonexists='simple';
 
   $formatter->send_header("",$options);
+  kbd_handler();
   print "<div id='printHeader'>";
   print "<h2>$options[page]</h2>";
   print "</div>";
