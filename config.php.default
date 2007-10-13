@@ -48,7 +48,7 @@ $use_sistersites=1;
 $use_twinpages=1;
 $use_trackback=0;
 $vim_options='+"set expandtab" +"retab"';
-$pds_allowed="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|css|exe|hwp|pdf";
+$pds_allowed="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|css|exe|hwp|pdf|flv";
 #$vim_options='+"set encoding=UTF-8"'; # for UTF-8 wikis
 $nonexists='fancy';
 #$nonexists='nolink'; # do not link non exists pages
@@ -220,4 +220,5 @@ $use_save_refresh=2;
 #$use_rating=1; # builtin Rating support
 $use_jwmediaplayer=1;
 $jwmediaplayer_prefix='http://www.jeroenwijering.com/embed';
+#$icon_list='edit,diff,show,find,print,info,help'; # set the icon list
 ?>

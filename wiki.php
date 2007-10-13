@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org> all rights reserved.
+// Copyright 2003-2007 Won-Kyu Park <wkpark at kldp.org> all rights reserved.
 // distributable under GPL see COPYING
 //
 // many codes are imported from the MoinMoin
@@ -736,14 +736,14 @@ EOS;
 
     if (empty($this->icons)) {
       $this->icons=array(
-              array("","?action=edit",$this->icon['edit'],"accesskey='e'"),
-              array("","?action=diff",$this->icon['diff'],"accesskey='c'"),
-              array("","",$this->icon['show']),
-              array("FindPage","",$this->icon['find']),
-              array("","?action=info",$this->icon['info']));
+              'edit'=>array("","?action=edit",$this->icon['edit'],"accesskey='e'"),
+              'diff'=>array("","?action=diff",$this->icon['diff'],"accesskey='c'"),
+              'show'=>array("","",$this->icon['show']),
+              'find'=>array("FindPage","",$this->icon['find']),
+              'info'=>array("","?action=info",$this->icon['info']));
       if ($this->notify)
         $this->icons['subscribe']=array("","?action=subscribe",$this->icon['mailto']);
-      $this->icons[]=array("HelpContents","",$this->icon['help']);
+      $this->icons['help']=array("HelpContents","",$this->icon['help']);
       $this->icons['pref']=array("UserPreferences","",$this->icon['pref']);
     }
     $config=get_object_vars($this); // merge default settings to $config
@@ -1863,7 +1863,10 @@ class Formatter {
     }
 
     if (!$this->icons) {
-      $this->icons=&$DBInfo->icons;
+      $this->icons=$DBInfo->icons ? $DBInfo->icons:null;
+    }
+    if (!$this->icon_list) {
+      $this->icon_list=$DBInfo->icon_list ? $DBInfo->icon_list:null;
     }
     if (!$this->purple_icon) {
       $this->purple_icon=$DBInfo->purple_icon;
@@ -4080,7 +4083,21 @@ MSG;
 
     if ($this->icons) {
       $icon=array();
-      foreach ($this->icons as $item) {
+      $myicons=array();
+
+      if ($this->icon_list) {
+        $inames=explode(',',$this->icon_list);
+        foreach ($inames as $item) {
+          if (isset($this->icons[$item])) {
+            $myicons[$item]=$this->icons[$item];
+          } else if (isset($this->icon[$item])) {
+            $myicons[$item]= array("",'?action='.$item,$this->icon[$item]);
+          }
+        }
+      } else {
+        $myicons=&$this->icons;
+      }
+      foreach ($myicons as $item) {
         if ($item[3]) $attr=$item[3];
         else $attr='';
         $icon[]=$this->link_tag($item[0],$item[1],$item[2],$attr);
