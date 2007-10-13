@@ -311,7 +311,7 @@ EOS;
       $i=0;
       for (;$i<4;$i++) {
          if ($size <= 1024) {
-            $size= round($size,2).' '.$unit[$i];
+            #$size= round($size,2).' '.$unit[$i];
             break;
          }
          $size=$size/1024;

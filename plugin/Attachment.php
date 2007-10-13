@@ -124,7 +124,20 @@ function macro_Attachment($formatter,$value,$option='') {
   if ($option == 1) return $upload_file;
   if (!$text) $text=$file;
 
+
   if (file_exists($upload_file)) {
+
+    $sz=filesize($upload_file);
+    $unit=array('Bytes','KB','MB','GB','TB');
+    for ($i=0;$i<4;$i++) {
+      if ($sz <= 1024) {
+        #$sz= round($sz,2).' '.$unit[$i];
+        break;
+      }
+      $sz=$sz/1024;
+    }
+    $info=' ('.round($sz,2).' '.$unit[$i].') ';
+
     if (!in_array('UploadedFiles',$formatter->actions))
       $formatter->actions[]='UploadedFiles';
 
@@ -147,7 +160,7 @@ function macro_Attachment($formatter,$value,$option='') {
       if ($img_link)
         return $bra."<span class=\"attach\"><a href='$link'>$img_link</a></span>".$ket;
 
-      return $bra."<span class=\"attach\"><img src='$DBInfo->imgs_dir_interwiki".'uploads-16.png\' /><a href="'.$link.'">'.$text.'</a></span>'.$ket;
+      return $bra."<span class=\"attach\"><img src='$DBInfo->imgs_dir_interwiki".'uploads-16.png\' /><a href="'.$link.'">'.$text.'</a></span>'.$info.$ket;
     }
   }
 
