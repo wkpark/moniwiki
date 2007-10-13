@@ -204,7 +204,12 @@ EOF;
         $options['_pds_remove']=1; // remove all files in pds dir
         do_UploadFile($formatter,$options);
     } else {
-        echo "Error";
+        $formatter->send_header("",$options);
+        $formatter->send_title("","",$options);
+        print macro_SWFUpload($formatter,'');
+        if (!in_array('UploadedFiles',$formatter->actions))
+            $formatter->actions[]='UploadedFiles';
+        $formatter->send_footer("",$options);
     }
 }
 
