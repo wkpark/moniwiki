@@ -5,10 +5,40 @@
 //
 // $Id$
 
+
+function macro_Subscribe($formatter,$value,$options=array()) {
+  global $DBInfo;
+
+  $user=new User(); # get cookie
+
+  if ($user->id != 'Anonymous') {
+    $udb=new UserDB($DBInfo);
+    $userinfo=$udb->getUser($user->id);
+    $email=$userinfo->info['email'];
+  } else {
+    $title = _("Please login or make your ID.");
+    return $title;
+  }
+
+  if (!$userinfo->info['subscribed_pages'])
+    return _("You did'nt subscribed any pages yet.");
+  #$page_list=_preg_search_escape($userinfo->info['subscribed_pages']);
+  $page_list=$userinfo->info['subscribed_pages'];
+  if (!trim($page_list))
+    return _("You did'nt subscribed any pages yet.");
+  $page_lists=explode("\t",$page_list);
+  $page_rule='^'.join("$|^",$page_lists).'$';
+
+  $out= macro_TitleSearch($formatter,$page_rule,$ret);
+  if ($ret['hits'] > 0)
+    return '<div class="subscribePages">'.$out.'</div>';
+  return _("No subscribed pages found.");
+}
+
 function do_subscribe($formatter,$options) {
   global $DBInfo;
 
-  if (!$DBInfo->notify) {
+  if (!$DBInfo->notify and 0) { # XXX
     $options['title']=_("EmailNotification is not activated");
     $options['msg']=_("If you want to subscribe this page please contact the WikiMaster to activate the e-mail notification");
     do_invalid($formatter,$options);
@@ -52,16 +82,31 @@ function do_subscribe($formatter,$options) {
     return;
   }
 
+  $plist=_preg_search_escape($userinfo->info['subscribed_pages']);
+  $check=1;
+  if (trim($plist)) {
+    $plists=explode("\t",$plist);
+    $prule='^'.join("$|^",$plists).'$';
+    if (preg_match('/('.$prule.')/',_preg_search_escape($options['page']))) {
+      $title = sprintf(_("\"%s\" is already subscribed."), $options['page']);
+      $check=0;
+    }
+  }
   $pages=explode("\t",$userinfo->info['subscribed_pages']);
-  if (!in_array($options['page'],$pages)) $pages[]=$options['page'];
+  if ($check) {
+    if (!in_array($options['page'],$pages)) {
+      $pages[]=$options['page'];
+    }
+    $title = sprintf(_("Do you want to subscribe \"%s\" ?"), $options['page']);
+  }
   $page_lists=join("\n",$pages);
 
-  $title = sprintf(_("Do you want to subscribe \"%s\" ?"), $options['page']);
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
+  $msg=_("Subscribed pages");
   print "<form method='post'>
 <table border='0'><tr>
-<th>Subscribe pages:</th><td><textarea name='subscribed_pages' cols='30' rows='5' value='' />$page_lists</textarea></td></tr>
+<th>$msg :</th><td><textarea name='subscribed_pages' cols='30' rows='5' value='' />$page_lists</textarea></td></tr>
 <tr><td></td><td>
     <input type='hidden' name='action' value='subscribe' />
     <input type='submit' value='Subscribe' />
