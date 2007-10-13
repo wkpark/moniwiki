@@ -60,5 +60,23 @@ LOGIN;
 LOGOUT;
 }
 
+function do_login($formatter,$options) {
+  global $DBInfo;
+
+  $user=new User(); # get from COOKIE VARS
+  if ($user->id != 'Anonymous') {
+    $options['logout']=1;
+    $url=$formatter->link_url($formatter->page->urlname,'?action=userform&logout=1');
+    $formatter->send_header(array('Status: 302','Location: '.$url),$options);
+    return;
+  }
+
+  $formatter->send_header("",$options);
+  $formatter->send_title('','',$options);
+
+  print macro_Login($formatter,'',$options);
+  $formatter->send_footer($args,$options);
+}
+
 // vim:et:sts=2:
 ?>
