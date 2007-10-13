@@ -88,6 +88,7 @@ function do_userform($formatter,$options) {
         $formatter->header($user->setCookie());
 
         $userdb->saveUser($user); # XXX
+        $use_refresh=1;
       } else {
         $title = sprintf(_("Invalid password !"));
       }
@@ -102,6 +103,7 @@ function do_userform($formatter,$options) {
     # logout
     $formatter->header($user->unsetCookie());
     $options['msg']= _("Cookie deleted !");
+    $use_refresh=1;
   } else if ($DBInfo->use_sendmail and
     $options['login'] == _("E-mail new password") and
     $user->id=="Anonymous" and $options['email'] and $options['login_id']) {
@@ -350,7 +352,14 @@ function do_userform($formatter,$options) {
       $options['msg']=_("Profiles are saved successfully !");
   }
 
-  $formatter->send_header("",$options);
+  $myrefresh='';
+  if ($DBInfo->use_refresh and $use_refresh) {
+    $sec=$DBInfo->use_refresh - 1;
+    $lnk=$formatter->link_url($formatter->page->urlname,'?action=show');
+    $myrefresh='Refresh: '.$sec.'; url='.qualifiedURL($lnk);
+  }
+
+  $formatter->send_header($myrefresh,$options);
   $formatter->send_title($title,"",$options);
   if (!$title && (!$DBInfo->control_read or $DBInfo->security->is_allowed('read',$options)) ) {
     $formatter->send_page();
