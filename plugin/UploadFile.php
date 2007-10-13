@@ -261,8 +261,8 @@ EOF;
     print $msg;
   }
 
-  $formatter->send_footer();
   print $js;
+  $formatter->send_footer();
 
   if (is_array($options['MYFILES']) and !$DBInfo->nosession)
     session_destroy();
@@ -299,21 +299,26 @@ function macro_UploadFile($formatter,$value='',$options='') {
 
   $form="<form enctype='multipart/form-data' method='post' action='$url'>\n";
   $form.="<input type='hidden' name='action' value='UploadFile' />\n";
+  $msg1=_("Replace original file");
+  $msg2=_("Rename if it already exist");
   for ($j=0;$j<$count;$j++) {
     if ($count > 1) $suffix="[$j]";
     if ($options['rename'][$j]) {
       $rename=_stripslashes($options['rename'][$j]);
-      $extra="<input name='rename$suffix' value='$rename' />"._(": Rename")."<br />";
+      $extra="<input name='rename$suffix' value='$rename' />: "._("Rename")."<br />";
     } else $extra='';
     $form.= <<<EOF
    <input type='file' name='upfile$suffix' size='30' />
 EOF;
     if ($count == 1) $form.="<input type='submit' value='Upload' />";
+
+    if (1 or $DBInfo->use_swfupload)
+      $form.=' '.sprintf(_("or %s."),$formatter->link_to("?action=swfupload"),_("Upload files"));
     $form.= <<<EOF
 <br/>
    $extra
-   <input type='radio' name='replace$suffix' value='1' />Replace original file<br />
-   <input type='radio' name='replace$suffix' value='0' checked='checked' />Rename if it already exist<br />\n
+   <input type='radio' name='replace$suffix' value='1' />$msg1<br />
+   <input type='radio' name='replace$suffix' value='0' checked='checked' />$msg2<br />\n
 EOF;
   }
   if ($count > 1) $form.="<input type='submit' value='Upload files' />";
