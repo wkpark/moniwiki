@@ -14,7 +14,7 @@ function setGotoFormId(formid,id) {
         for (var i=0;i<val.length;i++) {
             if (val[i].name== 'value') {
                 val[i].setAttribute('id',id);
-                return;
+                return true;
             }
         }
     }
@@ -171,7 +171,7 @@ if (Ajax.Autocompleter) { // for prototype.js
             }
 
             this.value = this.observer.value = this.element.value;
-        },
+        }
     });
 }
 
@@ -217,8 +217,9 @@ if (typeof window.onload != 'function') {
 
 window.onload = function() {
     _oldOnload();
-    setGotoFormId('go','autocomplete_goto');
-    initGotoAutoCompleter('autocomplete_goto','autocomplete_choices',"?action=titleindex",'get');
+    if (setGotoFormId('go','autocomplete_goto')) {
+        initGotoAutoCompleter('autocomplete_goto','autocomplete_choices',"?action=titleindex",'get');
+    }
 }
 
 // vim:et:sts=4:sw:
