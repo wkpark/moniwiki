@@ -1,3 +1,8 @@
+/**
+ Support subpage index for MoniWiki with prototype.js or mootools.
+ by wkpark@kldp.org
+
+*/
 function toggleSubIndex(id)
 {
     var subindex;
@@ -6,6 +11,7 @@ function toggleSubIndex(id)
     if (!subindex) return;
     var mode='',toggle='';
 
+    var icon=subindex.getElementsByTagName('legend')[0];
     if (subindex) {
         var sub=subindex.getElementsByTagName('div')[0];
         if (sub) {
@@ -18,10 +24,12 @@ function toggleSubIndex(id)
             } else if (mode) {
                 toggle=true;
             }
-            if (toggle) {
-	        new Effect.SlideDown(sub, { duration: 0.3, afterFinish: function() {Element.show(sub);} });
-            } else {
-	        new Effect.SlideUp(sub, { duration: 0.3, afterFinish: function() {Element.hide(sub);} });
+            if (typeof Effect != 'undefined') { // prototype.js
+                if (toggle) {
+	            new Effect.SlideDown(sub, { duration: 0.3, afterFinish: function() {Element.show(sub);} });
+                } else {
+	            new Effect.SlideUp(sub, { duration: 0.3, afterFinish: function() {Element.hide(sub);} });
+                }
             }
         } else { // get subpages for the first time.
             var sub=document.createElement('div');
@@ -32,18 +40,30 @@ function toggleSubIndex(id)
 
             var form=HTTPGet(href);
             sub.innerHTML=form;
-            sub.setAttribute('style','display:none');
             subindex.appendChild(sub);
 
-	    new Effect.SlideDown(sub, { duration: 0.4,afterFinish: function() {Element.show(sub);} });
+            if (typeof Effect != 'undefined') { // prototype.js
+                sub.setAttribute('style','display:none');
+	        new Effect.SlideDown(sub, { duration: 0.4,afterFinish: function() {Element.show(sub);} });
+            } else { // mootools
+                var mySlide = new Fx.Slide(sub);
+                mySlide.wrapper.setStyle('height',0);
+
+                icon.addEvent('click',function(e) {
+                    e = new Event(e);
+                    mySlide.toggle();
+                    e.stop();
+                });
+                mySlide.slideIn();
+            }
             toggle=true;
         }
-        var icon=subindex.getElementsByTagName('legend')[0];
         if (icon) {
-            if (toggle)
-                icon.setAttribute('class','close');
-            else
+            var name=icon.getAttribute('class');
+            if (name == 'close')
                 icon.setAttribute('class','');
+            else
+                icon.setAttribute('class','close');
         }
     }
 }
