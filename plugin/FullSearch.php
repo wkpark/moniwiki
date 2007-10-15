@@ -81,24 +81,25 @@ EOF;
      return $form;
   }
   # XXX
+  $excl = array();
+  $incl = array();
+
+  $test1 = $test2 = true;
   if ($opts['noexpr']) {
     $tmp=preg_split("/\s+/",$needle);
     $needle=$value=join('|',$tmp);
     $raw_needle=implode(' ',$tmp);
     $needle=_preg_search_escape($needle);
-  } else {
-    $needle=_preg_search_escape($needle);
+  } else if (!$opts['backlinks']) {
     $terms = preg_split('/((?<!\S)[-+]?"[^"]+?"(?!\S)|\S+)/s',$needle,-1,
       PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_NO_EMPTY);
 
     $common_words=array('the','that','where','what','who','how','too','are');
-    $excl = array();
-    $incl = array();
     $common = array();
     foreach($terms as $term) {
       if (trim($term)=='') continue;
       if (preg_match('/^([-+]?)("?)([^\\2]+?)\\2$/',$term,$match)) {
-        $word=str_replace(array('/','-','\\','.','*'),'',$match[3]);
+        $word=str_replace(array('-','\\','.','*'),'',$match[3]);
         $len=strlen($word);
 
         if (!$match[1] and $match[2] != '"') {
@@ -113,17 +114,22 @@ EOF;
       }
     }
     $needle=implode('|',$incl);
+    $needle=_preg_search_escape($needle);
+
     $raw_needle=implode(' ',$incl);
     $excl_needle=implode('|',$excl);
+
+    $test2=@preg_match("/$excl_needle/","",$match);
+  } else {
+    $needle=_preg_search_escape($needle);
   }
 
   $test=@preg_match("/$needle/","",$match);
-  $test2=@preg_match("/$excl_needle/","",$match);
   if (!trim($needle)) {
      $opts['msg'] = _("Empty expression");
      return $form;
   }
-  if (!$needle or $test === false or $test2 === false) {
+  if ($test === false or $test2 === false) {
      $opts['msg'] = sprintf(_("Invalid search expression \"%s\""), $needle);
      return $form;
   }
@@ -185,7 +191,7 @@ EOF;
      foreach ($pages as $page_name) {
        $links=unserialize($cache->fetch($page_name));
        if (is_array($links)) {
-         if (stristr(implode(' ',$links),$needle))
+         if (stristr(implode(' ',$links),$value))
            $hits[$page_name] = -1;
            // ignore count if < 0
        }
@@ -211,7 +217,10 @@ EOF;
        $body= $p->_get_raw_body();
        #$count = count(preg_split($pattern, $body))-1;
        $count = preg_match_all($pattern, $body,$matches);
+
        if ($count) {
+         foreach($excl as $ex) if (stristr($body,$ex)) continue;
+         foreach($incl as $in) if (!stristr($body,$in)) continue;
          $hits[$page_name] = $count;
        }
      }
@@ -233,7 +242,7 @@ EOF;
     if ($opts['checkbox']) $checkbox="<input type='checkbox' name='pagenames[]' value='$page_name' />";
     $out.= '<!-- RESULT ITEM START -->'; // for search plugin
     $out.= '<li>'.$checkbox.$formatter->link_tag(_rawurlencode($page_name),
-          '?action=highlight&amp;value='._urlencode($needle),
+          '?action=highlight&amp;value='._urlencode($value),
           $page_name,'tabindex="'.$idx.'"');
     if ($count > 0)
       $out.= ' . . . . ' . $count . (($count == 1) ? ' match' : ' matches');
