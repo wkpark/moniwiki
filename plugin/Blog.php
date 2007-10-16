@@ -185,7 +185,10 @@ function do_Blog($formatter,$options) {
       $log="Add Comment to \"$title\"";
     } else {
       $formatter->send_title(sprintf(_("Blog entry added to \"%s\""),$options['page']),"",$options);
-      $log="Blog entry \"$options[title]\" added";
+      if ($options['title'])
+        $log=sprintf(_("Blog entry \"%s\" added"),$options['title']);
+      else
+        $log=_("Blog entry added");
     }
     
     $formatter->page->write($raw_body);
