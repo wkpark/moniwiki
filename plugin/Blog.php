@@ -159,8 +159,13 @@ function do_Blog($formatter,$options) {
       // check timestamp
       if ($formatter->page->mtime() > $datestamp) {
         $options['msg']='';
-        $formatter->send_title(_("Error: Don't make a clone!"),"",$options);
-        $formatter->send_footer("",$options);
+        if ($options['action_mode']=='ajax') {
+          print "false\n";
+          print _("Error: Don't make a clone!");
+        } else {
+          $formatter->send_title(_("Error: Don't make a clone!"),"",$options);
+          $formatter->send_footer("",$options);
+        }
         return;
       }
 
@@ -187,7 +192,11 @@ function do_Blog($formatter,$options) {
     $DBInfo->savePage($formatter->page,$log,$options);
     updateBlogList($formatter);
 
-    $formatter->send_page();
+    if ($options['action_mode']=='ajax') {
+      print "true\n";
+      print $options['msg'];
+    } else
+      $formatter->send_page();
   } else { # add entry or comment
     if ($options['value']) {
       $raw_body=$formatter->page->_get_raw_body();
@@ -232,6 +241,7 @@ function do_Blog($formatter,$options) {
 
     if ($options['value'])
       print "<a name='BlogComment'></a>";
+    print '<div id="editor_area">';
     print "<form method='post' action='$url'>\n";
     if ($options['id'] == 'Anonymous')
       print '<b>'._("Name")."</b>: <input name='name' size='15' maxlength='15' value='$options[name]' />\n";
@@ -239,6 +249,12 @@ function do_Blog($formatter,$options) {
       print "<input type='hidden' name='value' value='$options[value]' />\n";
     else
       print '<b>'._("Title")."</b>: <input name='title' value='$options[title]' size='70' maxlength='70' style='width:300px' /><br />\n";
+    $savetext=$savetext ? $savetext:'Enter blog entry';
+    if ($DBInfo->use_wikiwyg) {
+      $wysiwyg_msg=_("GUI");
+      $wysiwyg_btn.='&nbsp;<input type="button" tabindex="7" value="'.$wysiwyg_msg.
+        '" onclick="javascript:sectionEdit(null,null,null)" />';
+    }
     print <<<FORM
 <textarea class="wiki" id="content" wrap="virtual" name="savetext"
  rows="$rows" cols="$cols" class="wiki">$savetext</textarea><br />
@@ -250,9 +266,18 @@ FORM;
 <input type="hidden" name="datestamp" value="$datestamp" />
 <input type="submit" value="Save" />&nbsp;
 <input type="submit" name="button_preview" value="Preview" />
-$extra
+$wysiwyg_btn$extra
 </form>
+</div>
 FORM2;
+    if ($DBInfo->use_wikiwyg>=3)
+      print <<<JS
+<script type='text/javascript'>
+/*<![CDATA[*/
+sectionEdit(null,null,null);
+/*]]>*/
+</script>
+JS;
   }
   if (!$savetext) {
     #print $formatter->macro_repl('SmileyChooser');
@@ -269,6 +294,7 @@ FORM2;
 }
 
 function macro_Blog($formatter,$value) {
+  global $DBInfo;
   $COLS_MSIE = 80;
   $COLS_OTHER = 85;
   $cols = preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
@@ -287,7 +313,8 @@ function macro_Blog($formatter,$value) {
     $extra='<div style="text-align:right">'.'
       <input type="submit" name="button_refresh" value="Refresh" /></div>';
 
-  $form = "<form method='post' action='$url'>\n";
+  $form = '<div id="editor_area">';
+  $form.= "<form method='post' action='$url'>\n";
   if ($options['id'] == 'Anonymous')
     $form.='<b>'._("Name")."</b>: <input name='name' size='15' maxlength='15' value='$options[name]' />\n";
   $form.= '<b>'._("Title")."</b>: <input name='title' size='70' maxlength='70' style='width:200' /><br />\n";
@@ -302,9 +329,18 @@ FORM;
 <input type="submit" name="button_preview" value="Preview" />
 $extra
 </form>
+</div>
 FORM2;
+  if ($DBInfo->use_wikiwyg >=3)
+    $JS=<<<JS
+<script type='text/javascript'>
+/*<![CDATA[*/
+sectionEdit(null,null,null);
+/*]]>*/
+</script>
+JS;
 
-  return $form;
+  return $form.$JS;
 }
 
 // vim:et:sts=2:

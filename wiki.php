@@ -1559,7 +1559,7 @@ class WikiPage {
         $out.="See MoniWiki/AccessControl\n";
         return $out;
       }
-      $out=_("File does not exists");
+      $out=_("File does not exist");
       return $out;
     }
     $this->fsize=filesize($this->filename);
@@ -2591,14 +2591,17 @@ class Formatter {
   }
 
   function ajax_repl($plugin,$options='') {
-    if (!function_exists('ajax_'.$plugin) and !function_exists('macro_'.$plugin)) {
+    if (!function_exists('ajax_'.$plugin) and !function_exists('do_'.$plugin)) {
       $ff=getPlugin($plugin);
       if (!$ff)
         return ajax_invalid($this,array('title'=>_("Invalid ajax action.")));
       include_once("plugin/$ff.php");
     }
     if (!function_exists ('ajax_'.$plugin)) {
-      if (function_exists('macro_'.$plugin)) {
+      if (function_exists('do_'.$plugin)) {
+        call_user_func('do_'.$plugin,$this,$options);
+        return;
+      } else if (function_exists('macro_'.$plugin)) {
         print call_user_func_array('macro_'.$plugin,array(&$this,'',$options));
         return;
       }
@@ -3614,6 +3617,8 @@ class Formatter {
 #    if (!$plain)
 #      $this->header('Content-type: '.$content_type);
 
+    if ($options['action_mode']=='ajax') return;
+
     if (isset($this->pi['#noindex'])) {
       $metatags='<meta name="robots" content="noindex,nofollow" />';
     } else {
@@ -3834,6 +3839,8 @@ EOS;
   function send_footer($args='',$options='') {
     global $DBInfo;
 
+    if ($options['action_mode']=='ajax') return;
+
     print "<!-- wikiBody --></div>\n";
     print $DBInfo->hr;
     if ($args['editable'] and !$DBInfo->security->writable($options))
@@ -3906,6 +3913,8 @@ FOOT;
   function send_title($msgtitle="", $link="", $options="") {
     // Generate and output the top part of the HTML page.
     global $DBInfo;
+
+    if ($options['action_mode']=='ajax') return;
 
     $name=$this->page->urlname;
     $action=$this->link_url($name);

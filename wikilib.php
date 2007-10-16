@@ -646,7 +646,7 @@ function do_edit($formatter,$options) {
     $sec=' (Section)';
   $formatter->send_title(sprintf(_("Edit %s"),$options['page']).$sec,"",$options);
   print '<div id="editor_area">'.macro_EditText($formatter,$value,$options).'</div>';
-  if ($DBInfo->use_wikiwyg==1)
+  if ($DBInfo->use_wikiwyg>=2)
     print <<<JS
 <script type='text/javascript'>
 /*<![CDATA[*/
@@ -904,6 +904,12 @@ EOS;
 
 
 function do_invalid($formatter,$options) {
+
+  if ($options['action_mode'] == 'ajax') {
+    ajax_invalid($formatter,$options);
+    return;
+  }
+
   $formatter->send_header("Status: 406 Not Acceptable",$options);
   if ($options['title'])
     $formatter->send_title('',"",$options);
@@ -1087,7 +1093,7 @@ function do_goto($formatter,$options) {
   if (preg_match("/^(http:\/\/|ftp:\/\/)/",$options['value'])) {
      $options['url']=$options['value'];
      unset($options['value']);
-  } else if (preg_match("/^(".$DBInfo->interwikirule."):(.*)/",$options[value],$match)) {
+  } else if (preg_match("/^(".$DBInfo->interwikirule."):(.*)/",$options['value'],$match)) {
     $url=$DBInfo->interwiki[$match[1]];
     if ($url) {
       $page=trim($match[2]);
@@ -1157,7 +1163,7 @@ function do_titleindex($formatter,$options) {
   global $DBInfo;
 
   if (isset($options['q'])) {
-    if (!$options['q']) return "<ul></ul>";
+    if (!$options['q']) { print "<ul></ul>"; return; }
 
     $val='';
     $rule='';
@@ -1179,7 +1185,7 @@ function do_titleindex($formatter,$options) {
     if (!$rule) $rule=$options['q'];
 
     $test=@preg_match("/^$rule/",'');
-    if ($test === false) return "<ul></ul>";
+    if ($test === false) { print "<ul></ul>"; return; }
 
     $pages= array();
 

@@ -28,12 +28,15 @@ Wikiwyg.prototype.saveChanges = function() {
     }
 
     var datestamp='';
+    var myaction='';
     var section=null;
     for (var i=0;i<this.myinput.length;i++) {
         if (this.myinput[i].name == 'datestamp')
             datestamp=this.myinput[i].value;
-        if (this.myinput[i].name == 'section')
-        section=this.myinput[i].value;
+        else if (this.myinput[i].name == 'section')
+            section=this.myinput[i].value;
+        else if (this.myinput[i].name == 'action')
+            myaction=this.myinput[i].value;
     }
     //alert(datestamp+'/'+section);
 
@@ -41,7 +44,7 @@ Wikiwyg.prototype.saveChanges = function() {
         function(new_html) { self.div.innerHTML = new_html });
 
     // save
-    var toSend = 'action=savepage/ajax' +
+    var toSend = 'action=' + myaction + '/ajax' +
     '&savetext=' + encodeURIComponent(wikitext) +
     '&datestamp=' + datestamp;
 
