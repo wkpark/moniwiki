@@ -269,6 +269,7 @@ EOF;
 }
 
 function macro_UploadFile($formatter,$value='',$options='') {
+  global $DBInfo;
   if ($value=='js') {
     return $formatter->macro_repl('UploadForm');
   } else if ($value=='swf') {
@@ -312,8 +313,8 @@ function macro_UploadFile($formatter,$value='',$options='') {
 EOF;
     if ($count == 1) $form.="<input type='submit' value='Upload' />";
 
-    if (1 or $DBInfo->use_swfupload)
-      $form.=' '.sprintf(_("or %s."),$formatter->link_to("?action=swfupload"),_("Upload files"));
+    if ($DBInfo->flashupload)
+      $form.=' '.sprintf(_("or %s."),$formatter->link_to('?action='.$DBInfo->flashupload,_("Upload files")));
     $form.= <<<EOF
 <br/>
    $extra
