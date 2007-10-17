@@ -129,9 +129,10 @@ Wikiwyg.browserIsSupported = (
 );
 
 // Wikiwyg environment setup public methods
-proto.createWikiwygArea = function(div, config) {
+proto.createWikiwygArea = function(div, config, id) {
     this.set_config(config);
-    this.initializeObject(div, config);
+    this.initializeObject(div, config, id);
+    this.displayMode();
 };
 
 proto.default_config = {
@@ -146,10 +147,16 @@ proto.default_config = {
     ]
 };
 
-proto.initializeObject = function(div, config) {
+proto.initializeObject = function(div, config, id) {
     if (! Wikiwyg.browserIsSupported) return;
     if (this.enabled) return;
     this.enabled = true;
+
+    var mydiv=document.createElement('div');
+    if (id) {
+        mydiv.setAttribute('id',id);
+    }
+
     this.div = div;
     this.divHeight = this.div.offsetHeight;
     if (!config) config = {};
@@ -174,7 +181,8 @@ proto.initializeObject = function(div, config) {
         this.toolbarObject.wikiwyg = this;
         this.toolbarObject.set_config(config.toolbar);
         this.toolbarObject.initializeObject();
-        this.placeToolbar(this.toolbarObject.div);
+        //this.placeToolbar(this.toolbarObject.div);
+        mydiv.appendChild(this.toolbarObject.div);
     }
 
     // These objects must be _created_ before the toolbar is created
@@ -182,13 +190,15 @@ proto.initializeObject = function(div, config) {
     for (var i = 0; i < this.config.modeClasses.length; i++) {
         var mode_class = this.config.modeClasses[i];
         var mode_object = this.modeByName(mode_class);
-        this.insert_div_before(mode_object.div);
+        mydiv.appendChild(mode_object.div);
+        //this.insert_div_before(mode_object.div);
     }
 
     if (this.config.doubleClickToEdit) {
         var self = this;
         this.div.ondblclick = function() { self.editMode() }; 
     }
+    div.parentNode.insertBefore(mydiv, div);
 }
 
 // Wikiwyg environment setup private methods
