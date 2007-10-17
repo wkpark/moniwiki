@@ -26,6 +26,31 @@ function mySmiley(myText)
     var areas = document.getElementsByTagName('textarea');
     var txtarea = areas[0];
   }
+
+  // check WikiWyg
+  var my=document.getElementById('editor_area');
+  var mystyle=my.getAttribute('style');
+  while (mystyle && mystyle.match(/display: none/i)) { // wikiwyg hack
+    txtarea = document.getElementById('wikiwyg_wikitext_textarea');
+
+    // get iframe and check visibility.
+    var myframe = document.getElementsByTagName('iframe')[0];
+    mystyle = myframe.getAttribute('style');
+    var check = mystyle && mystyle.match(/display: none/i);
+    if (check) break;
+
+    var postdata = 'action=markup&value=' + encodeURIComponent(myText);
+    var myhtml='';
+    myhtml= HTTPPost(self.location, postdata);
+
+    var m = myhtml.match(/<div>(.*)\\n<\/div>/i); // strip div tag
+    if (m) {
+      myframe.contentWindow.document.execCommand('inserthtml', false, m[1] + ' ');
+    }
+
+    return;
+  }
+
   if(document.selection && document.all) {
     var theSelection = document.selection.createRange().text;
     txtarea.focus();

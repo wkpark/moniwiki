@@ -44,12 +44,13 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
      $use_preview=1;
    }
 
-   if ($DBInfo->use_lightbox and !$js_tag)
-     $href_attr=' rel="lightbox[upload]" ';
-
    if ($options['tag']) { # javascript tag mode
      $js_tag=1;$use_preview=1;
    }
+
+   if ($DBInfo->use_lightbox and !$js_tag)
+     $href_attr=' rel="lightbox[upload]" ';
+
    foreach ($args as $arg) {
       $arg=trim($arg);
       if (($p=strpos($arg,'='))!==false) {
@@ -73,47 +74,45 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
 
 function insertTags(tagOpen,tagClose,myText,replaced)
 {
-  if (document.$form)
+  if (document.$form) {
     var txtarea = document.$form.savetext;
-  else {
+  } else {
+
     // some alternate form? take the first one we can find
     var areas = document.getElementsByTagName('textarea');
     if (areas.length > 0) {
         var txtarea = areas[0];
-    } else {
+    } else if (opener) {
         // WikiWyg support
-        var wikiwyg_area=opener.document.getElementById('wikiwyg_wikitext_textarea');
         if (opener.document.$form && opener.document.$form.savetext) {
-            var txtarea = opener.document.$form.savetext;
-        } else if (wikiwyg_area) {
-            //
-            var myWikiwyg = new opener.Wikiwyg.Wikitext();
-            var wikitext;
-            var i=0;
-
-            //for (i=0;i<opener.wikiwygs.length;i++) {
-                var my = opener.wikiwygs[i];
-
-                my.current_mode.toHtml( function(html) { my.fromHtml(html) });
-
-                if (my.current_mode.classname.match(/(Wysiwyg|HTML|Preview)/)) {
-                    my.current_mode.fromHtml(my.div.innerHTML);
-
-                    wikitext = myWikiwyg.convert_html_to_wikitext(my.div.innerHTML);
-
-                    var tmp= tagOpen + myText + tagClose;
-                    var html= myWikiwyg.convertWikitextToHtml(tmp,
-                        function(nhtml) { my.current_mode.insert_table(nhtml); });
-                    opener.focus(); // XXX
-                    return;
-                } else {
-                    wikitext = my.current_mode.textarea.value;
-                }
-            //}
-            // XXX
-            wikiwyg_area.value = wikitext;
-            txtarea=wikiwyg_area;
+            txtarea = opener.document.$form.savetext;
+        } else {
+            txtarea = opener.document.getElementsByTagName('textarea')[0];
         }
+
+        var my=opener.document.getElementById('editor_area');
+        var mystyle=my.getAttribute('style');
+        while (mystyle && mystyle.match(/display: none/i)) { // wikiwyg hack
+            txtarea = opener.document.getElementById('wikiwyg_wikitext_textarea');
+
+            // get iframe and check visibility.
+            var myframe = opener.document.getElementsByTagName('iframe')[0];
+            mystyle = myframe.getAttribute('style');
+            var check = mystyle && mystyle.match(/display: none/i);
+            if (check) break;
+
+            var postdata = 'action=markup&value=' + encodeURIComponent(tagOpen + myText + tagClose);
+            var myhtml='';
+            myhtml= HTTPPost(self.location, postdata);
+
+            var mnew = myhtml.replace(/^<div>/i,''); // strip div tag
+            mnew = mnew.replace(/<\/div>\s*$/i,''); // strip div tag
+            myframe.contentWindow.document.execCommand('inserthtml', false, mnew + ' ');
+
+            return;
+        }
+    } else {
+        return; // XXX
     }
   }
 
