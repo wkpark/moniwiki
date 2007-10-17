@@ -104,7 +104,7 @@ function textAreaAutoAttach(event, parent) {
   }
   var textarea;
   for (var i = 0; textarea = textareas[i]; ++i) {
-    if (hasClass(textarea, 'resizable') && !hasClass(textarea.nextSibling, 'grippie')) {
+    if (hasClass(textarea, 'resizable') && (textarea.nextSibling == null|| !hasClass(textarea.nextSibling, 'grippie'))) {
       if (typeof dimensions(textarea).width != 'undefined' && dimensions(textarea).width != 0) {
         new textArea(textarea);
       }
