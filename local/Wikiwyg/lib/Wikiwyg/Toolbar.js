@@ -87,6 +87,11 @@ proto.initializeObject = function() {
             }
         );
     }
+    this.imgdiv = Wikiwyg.createElementWithAttrs(
+        'div', {
+            'class': 'wikiwyg_buttons'
+        }
+    );
 
     var config = this.config;
     for (var i = 0; i < config.controlLayout.length; i++) {
@@ -111,6 +116,7 @@ proto.initializeObject = function() {
         else
             this.add_button(action, label);
     }
+    this.div.appendChild(this.imgdiv);
 }
 
 proto.enableThis = function() {
@@ -127,12 +133,6 @@ proto.make_button = function(type, label) {
     return Wikiwyg.createElementWithAttrs(
         'img', {
             'class': 'wikiwyg_button',
-            onmouseup: "this.style.border='1px outset';",
-            onmouseover: "this.style.border='1px outset';",
-            onmouseout:
-                "this.style.borderColor=this.style.backgroundColor;" +
-                "this.style.borderStyle='solid';",
-            onmousedown:     "this.style.border='1px inset';",
             alt: label,
             title: label,
             src: base + type + ext
@@ -146,7 +146,7 @@ proto.add_button = function(type, label) {
     img.onclick = function() {
         self.wikiwyg.current_mode.process_command(type);
     };
-    this.div.appendChild(img);
+    this.imgdiv.appendChild(img);
 }
 
 proto.add_help_button = function(type, label) {
@@ -164,7 +164,7 @@ proto.add_help_button = function(type, label) {
 proto.add_separator = function() {
     var base = this.config.imagesLocation;
     var ext = this.config.imagesExtension;
-    this.div.appendChild(
+    this.imgdiv.appendChild(
         Wikiwyg.createElementWithAttrs(
             'img', {
                 'class': 'wikiwyg_separator',
@@ -257,7 +257,16 @@ proto.addModeSelector = function() {
 }
 
 proto.add_break = function() {
-    this.div.appendChild(document.createElement('br'));
+    if (this.imgdiv.childNodes.length) {
+        this.div.appendChild(this.imgdiv);
+        this.imgdiv = Wikiwyg.createElementWithAttrs(
+            'div', {
+                'class': 'wikiwyg_buttons'
+            }
+        );
+    } else {
+        this.div.appendChild(document.createElement('br'));
+    }
 }
 
 proto.add_styles = function() {

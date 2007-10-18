@@ -72,6 +72,7 @@ proto.enableThis = function() {
     Wikiwyg.Mode.prototype.enableThis.call(this);
     this.edit_iframe.style.border = '1px black solid';
     this.edit_iframe.width = '100%';
+    this.edit_iframe.frameBorder='no';
     this.setHeightOf(this.edit_iframe);
     this.fix_up_relative_imgs();
     this.get_edit_document().designMode = 'on';
