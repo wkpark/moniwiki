@@ -102,8 +102,8 @@ Wikiwyg.prototype.cancelEdit = function() {
             wikitext = this.current_mode.textarea.value;
         }
 
-        if (textarea)
-            textarea.value=wikitext; // XXX
+        //if (textarea)
+        //    textarea.value=wikitext; // XXX
     }
     this.displayMode();
 }
@@ -197,22 +197,36 @@ proto = Wikiwyg.Wysiwyg.prototype;
 
 proto.get_edit_iframe = function() {
     var iframe=null;
+    var body;
     if (this.config.iframeId)
         iframe = document.getElementById(this.config.iframeId);
     else if (this.config.iframeObject)
         iframe = this.config.iframeObject;
-    if (iframe)
+    if (iframe) {
         iframe.iframe_hack = true;
-    else {
+        return;
+    }
+    {
         // XXX iframe need to be a element of the body.
-        iframe = document.createElement('iframe');
-        var body = document.getElementsByTagName('body')[0];
-        body.appendChild(iframe);
+        if (Wikiwyg.is_ie) {
+            // http://dojofindings.blogspot.com/2007/09/dynamically-creating-iframes-with.html
+            iframe = document.createElement('<iframe onload="iframeHandler()">');
+        } else {
+            iframe = document.createElement('iframe');
+        }
+        body = document.getElementsByTagName('body')[0];
+        // body.appendChild(iframe);
+        // You can't get 'frameBorder=no' if you appendChild at this line. :( IE bug.
+        iframe.border='0';
+        iframe.frameBorder='no';
     }
 
-    // from http://www.codingforums.com/archive/index.php?t-63511.html
     var self=this;
-    iframe.onload = function() {
+
+    // from http://www.codingforums.com/archive/index.php?t-63511.html
+    // mozilla and IE hack !!
+
+    iframeHandler = function() {
         var doc = iframe.contentDocument || iframe.contentWindow.document;
         //Fx workaround: delay modifying editorDoc.body right after iframe onload event
         var head = doc.getElementsByTagName("head")[0];
@@ -233,12 +247,25 @@ proto.get_edit_iframe = function() {
             self.fix_up_relative_imgs();
             self.clear_inner_html();
             self.enable_keybindings();
+
+/*
+            iframe.onload='undefined';
+            if (typeof textArea == 'function') {
+                var x=iframe.nextSibling;
+                if (x == null || ! x.className.match(/grippe/))
+                    new textArea(self.edit_iframe);
+            }
+*/
         }, 0);
 
         //editorDoc.onkeydown = editorDoc_onkeydown;
         //where editorDoc_onkeydown is the keydown event handler you defined earlier
         iframe = null; //IE mem leak fix
     }
+
+    iframe.onload=iframeHandler; // ignored by IE :(
+
+    body.appendChild(iframe);
 
     return iframe;
 }
@@ -271,15 +298,39 @@ proto.apply_inline_stylesheet = function(style, head) {
 
 proto.enableThis = function() {
     Wikiwyg.Mode.prototype.enableThis.call(this);
-    this.edit_iframe.style.border = '1px solid ActiveBorder';
+    this.edit_iframe.style.border = '1px solid activeborder';
+    //this.edit_iframe.style.border = '1px solid ActiveBorder';
     //this.edit_iframe.style.backgroundColor = '#ffffff';
     //this.edit_iframe.setAttribute('style','1px solid ThreeDFace;background:#fff;');
     this.edit_iframe.width = '99%';
+    //this.edit_iframe.style.display='block';
+    this.edit_iframe.frameBorder='no';
+    this.edit_iframe.border='0';
     this.setHeightOf(this.edit_iframe);
+    //this.fix_up_relative_imgs();
     this.get_edit_document().designMode = 'on';
     // XXX - Doing stylesheets in initializeObject might get rid of blue flash
     //
     // this.edit_iframe.contentWindow;
+    //this.apply_stylesheets();
+/*
+    var styles = document.styleSheets;
+    var head   = this.get_edit_document().getElementsByTagName("head")[0];
+
+    if (!head) return;
+
+    for (var i = 0; i < styles.length; i++) {
+        var style = styles[i];
+
+        if (style.href == location.href)
+            this.apply_inline_stylesheet(style, head);
+        else
+            if (this.should_link_stylesheet(style))
+                this.apply_linked_stylesheet(style, head);
+    }
+*/
+    //this.enable_keybindings();
+    //this.clear_inner_html();
 }
 
 proto.do_link = function() {
@@ -410,7 +461,7 @@ proto.format_img = function(element) {
 
         if (myclass) {
             var m = myclass.match(/img(Center|Left|Right)$/);
-            if (m[1]) attr+=(attr ? '&':'') + 'align='+m[1].toLowerCase();
+            if (m && m[1]) attr+=(attr ? '&':'') + 'align='+m[1].toLowerCase();
         }
 
         if (attr) this.appendOutput('?'+attr);
@@ -730,7 +781,7 @@ proto.get_wiki_comment = function(element) {
 
                 if (myclass) {
                     var m = myclass.match(/img(Center|Left|Right)$/);
-                    if (m[1]) {
+                    if (m && m[1]) {
                         attr["align"]='align='+m[1].toLowerCase();
                         align=attr["align"];
                     }
