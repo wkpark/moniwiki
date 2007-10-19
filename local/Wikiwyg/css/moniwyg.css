@@ -7,18 +7,28 @@
 }
 
 span.wikiwyg_control_link a {
-/*  padding-right: 8px; /* */
-    font-family:Trebuchet MS,sans-serif;
+    font-family:'Trebuchet MS',sans-serif;
     padding: 4px;
 }
+
 span.wikiwyg_control_link {
+
 }
 
 .wikiwyg_toolbar label {
     padding:4px;
-    border:1px outset ThreeDFace;
-    background: ThreeDFace;
+    /*
+    border:1px outset ThreeDFace !important;
+    border:0px;
+    */
+    background: none;
 }
+
+/*
+.wikiwyg_toolbar input[type="radio"] {
+    display:none;
+}
+*/
 
 .wikiwyg_toolbar label.selected {
     padding:4px;
@@ -27,29 +37,30 @@ span.wikiwyg_control_link {
 }
 
 .wikiwyg_button {
-/*  background: #EBE8D5; /* */
-/*  border: 1px solid #EBE8D5; /* */
-    border: 1px solid transparent;
+    padding:1px;
+    background: url(../images/bg.png) repeat-x;
     cursor: pointer;
-    width: 23px;
     height: 22px;
-    vertical-align: bottom;
+    vertical-align: middle;
 }
 
 .wikiwyg_button:hover {
+    padding:0px;
     border: 1px outset;
+    background: url(../images/ibg.png) no-repeat;
 }
 
 .wikiwyg_button:active {
+    padding:0px;
     border: 1px inset;
 }
 
 .wikiwyg_separator {
-/*  background: #EBE8D5; /* */
-/*  border: 1px solid #EBE8D5; /* */
-    width: 8px;
-    height: 20px;
-    vertical-align: bottom;
+    padding:1px;
+    background: url(../images/bg.png);
+    height: 22px;
+    width: 9px;
+    vertical-align: middle;
 }
 
 .wikiwyg_selector {
