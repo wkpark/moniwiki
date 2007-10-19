@@ -55,10 +55,12 @@ div {
   overflow-y:hidden;
   /* overflow:hidden; does not work correctly in the mozilla */
 }
+
 #pTopLeft {
   background: url("../imgs/ntl.png") no-repeat;
   z-index:4;
 }
+
 #pTopRight {
   background: url("../imgs/ntr.png") no-repeat right top;
   z-index:4;
@@ -70,26 +72,41 @@ div {
 
 #pBanner {
   height:50px;
-  padding:8px;
+  padding:0px;
   font-size:36px;
   text-align:center;
   font-family:Trebuchet MS,Tahoma,Lucida,sans-serif;
-  /* border:1px solid red; /* */
+  margin:0;
+  line-height:20%;
+}
+
+#pBanner p {
+  padding:0;
+  margin:0;
+  font-size:12px;
+}
+
+#pBanner img {
+  vertical-align:middle;
 }
 
 #pBanLeft {
-  /* border:1px solid red; /* */
+  padding:0;
+  margin:0;
 }
 
 #pBanRight {
-
+  padding:0;
+  margin:0;
 }
 
 #pTitle {
   padding:0px;
-  /* border: 1px solid red; /* */
 }
 
+#pTitle img {
+  vertical-align:middle;
+}
 
 #pBottomMargin {
   height:20px;
@@ -98,44 +115,63 @@ div {
 #pBottomLeft {
   background: url("../imgs/nbl.png") no-repeat left bottom;
   z-index:1;
+  padding:0;
 }
 #pBottomRight {
   background: url("../imgs/nbr.png") no-repeat right bottom;
   z-index:1;
+  padding:0;
 }
 
-#pBodyLeft {
+.pBodyLeft {
   background: url("../imgs/nl.png") repeat-y left;
   z-index:-5;
 }
-#pBodyRight {
+.pBodyRight {
   background: url("../imgs/nr.png") repeat-y right;
   z-index:-5;
 }
 
+#wikiSplash {
+  height:150px;
+  background: url("../imgs/img2.jpg") repeat-x;
+  padding:0;
+  margin:0;
+  margin-left:20px;
+  margin-right:22px;
+}
+
 #goForm {
   float:right;
-  padding: 3px 4px;
+  padding: 3px 6px;
 }
 
 form {
   margin-bottom:0px; /* IE hack */
 }
 
-#wikiPage {
+#wikiPage, #wikiHeadPage {
   margin-left:13px;
   margin-right:15px;
-  padding-top:10px;
   padding-bottom:10px;
+}
+
+#wikiHeadPage {
+  padding-top:10px;
+}
+
+#wikiPage {
+  padding-top:0;
   min-height:400px;
   height: auto !important; /* IE min-height hack */
   height:400px;
+
 }
 
 #wikiBanner {
   padding-top:5px;
   text-align:center;
-  font-family: Trebuchet MS,sans-serif;
+  font-family: "Trebuchet MS",Georgia,sans-serif;
 }
 
 a:link { color: #0686db;}
@@ -147,6 +183,7 @@ a:visited { color: #000000;}
   font-size:22px;
   font-weight:bold;
   text-decoration: none;
+  display:inline;
 }
 
 .wikiTitle a,.wikiTitle a:active,.wikiTitle a:visited {
@@ -339,9 +376,9 @@ table.closure, td.closure{
 }
 
 #wikiTrailer {
-  background-color:#fafafa; 
+  padding:0;
   padding-left: 20px;
-  font-family: Trebuchet MS,sans-serif;
+  font-family: "Trebuchet MS",Georgia,sans-serif;
 }
 
 .wikiNavigation {
@@ -360,18 +397,21 @@ table.closure, td.closure{
 #wikiHeader {
 /*  border-left: 0.8em solid #7B9AC5; /* */
 /*  border: 1px solid #7B9AC5; /* */
-  clear:both;
   color: #000000;
-  padding: 0.2em 0em 0.2em 0.2em;
+  padding: 0;
+  margin-left:5px;
 }
 
 #wikiHeader a:link {color:#000000;}
 #wikiHeader a:visited {color:#000000;}
 
 #wikiMenuBar {
+  padding:2px;
   padding-top:1px;
-  padding-left:5px;
   height:42px; /* important !!! for IE */
+  padding-bottom:0;
+  margin:0;
+  margin-left:5px;
 }
 
 #pMenuLeft {
@@ -384,6 +424,7 @@ table.closure, td.closure{
 }
 
 #wikiIcon {
+  visibility:hidden;
   float:right;
   padding: 7px 15px;
   text-align: right;
@@ -395,6 +436,8 @@ table.closure, td.closure{
   background-color: #1690c0;
   color: #1690c0;
 */
+  margin:0;
+  padding:0;
 }
 
 #wikiMenu ul {
@@ -404,38 +447,37 @@ table.closure, td.closure{
   margin-left:0;
   padding-bottom:3px !important; /* for FF */
   padding-bottom:2px;
-  height:42px;
+  height:43px !important;
+  height:44px;
+}
+
+#wikiMenu li.first {
+  margin-left:5px;
 }
 
 #wikiMenu li {
   display:inline;
-  padding: 9px 10px;
-  padding-bottom:11px; /* for IE */
   margin:0px;
-/*  border-right: 1px solid #A8DBFD; */
-  /* border-right: 1px solid #e0e0e0; */
-/* background-color:whitesmoke; */
-/* the next 4 lines are magic for IE */
+  padding: 10px 10px;
+  padding-bottom: 8px !important; /* for FF */
+  padding-bottom: 9px;
   float: left;
   position: relative;
   vertical-align:top;
-  background: url("../imgs/mi.png") no-repeat right top;
+  background: transparent url("../imgs/mi.png") no-repeat right top;
 }
 
-#wikiMenu li:hover {
+#wikiMenu li:hover, #wikiMenu li.current:hover {
   background-color: #98D3FC; /* default */
   /* background-color: #355F88; /* dark blue */
   /* background-color: #F2B568; /* orange */
   text-decoration: none;
-  background: url("../imgs/mih.png") no-repeat right top;
+  background: transparent url("../imgs/mih.png") no-repeat right top;
 }
 
 #wikiMenu li.current {
-  background-color: #0584D9; /* default */
-  /* background-color: #2C4F72; /* dark blue */
-  /* background-color: #E75024; /* orange */
   text-decoration: none;
-  background: url("../imgs/mic.png") no-repeat right top;
+  background: transparent url("../imgs/mic.png") no-repeat right top;
 }
 
 #wikiMenu li:hover a{
@@ -563,7 +605,11 @@ div.diff-removed {
 
 del.diff-removed {
   color: #999999;
-  background-color:white !important;
+  background-color:white !important; /* */
+  /* background-color:#f0f0f0; /* */
+  border-right:2px solid #f0f0f0;
+  border-left:2px solid #f0f0f0;
+  text-decoration:line-through;
 }
 
 ins.diff-added {
@@ -753,4 +799,9 @@ border:none;}
 .calendar {
   font-size:11px;
   font-family: Trebuchet MS,sans-serif;
+}
+
+#topIcon {
+  text-align:right;
+  padding-right:20px;
 }

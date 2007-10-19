@@ -17,7 +17,7 @@ if ($DBInfo->use_tagging) {
 if ($this->_width) {
   print <<<EOF
 <style type='text/css'>
-#mainBody { width:$this->_width;};
+#mainBody { width:$this->_width;}
 </style>
 EOF;
 }
@@ -31,27 +31,37 @@ EOF;
 <a href='http://bbs.kldp.org'>KLDP BBS</a> &middot;
 -->
 </div>
-<div id='mainContainer'>
 <div id='mainBody'>
 <!--
 <div id='topBanner'>
 <img src="<?php echo $this->themeurl?>/imgs/kldpwikilogo.png"/>
 </div>
 -->
-<div id='pBodyRight'><div id='pBodyLeft'>
-<div id='pBottomRight'><div id='pBottomLeft'>
+<?php if ($this->_topicon): ?>
+<div id='topIcon'>
+<a href='?action=edit'><img src='<?php echo $this->themeurl?>/imgs/record.png' alt='*' style='border:0' /></a>
+<a href='?action=new'><img src='<?php echo $this->themeurl?>/imgs/add.png' alt='+' style='border:0' /></a>
+<a href='?action=subscribe'><img src='<?php echo $this->themeurl?>/imgs/favorite.png' alt='#' style='border:0' /></a>
+<a href='?action=rss_rc'><img src='<?php echo $this->themeurl?>/imgs/rss.png' alt='.)' style='border:0' /></a>
+-->
+</div>
+<?php endif;?>
+<div class='pBodyRight'><div class='pBodyLeft'>
 <div id='pTopRight'><div id='pTopLeft'>
-<div id='wikiPage'>
+<div id='pBanSpace'></div>
+<div id='wikiHeadPage'>
 <?php
 if ($this->popup!=1) :
 ?>
-<div id='pBanSpace'></div>
 <?php if ($this->_topbanner): ?>
 <div id='pBanRight'><div id='pBanLeft'>
-<div id='pBanner'>
-<?php echo $DBInfo->sitename?>
-</div>
-<?php endif;?>
+ <div id='pBanner'>
+<img src='<?php echo $DBInfo->logo_img?>' /><?php
+  echo $DBInfo->sitename;
+  if ($DBInfo->site_description) echo '<p class="siteDescription">'.$DBInfo->site_description.'</p>';
+?>
+ </div>
+<?php endif; /* topbanner */?>
 <div id='goForm'>
 <form id='go' action='' method='get' onsubmit="return moin_submit();">
 <div>
@@ -61,20 +71,43 @@ if ($this->popup!=1) :
 </div>
 </form>
 </div>
-<div id='pTitle'><?php echo $title?></div><div id='wikiHeader'>
-<div id='pMenuRight'><div id='pMenuLeft'>
-<div id='wikiMenuBar'>
-<div id='wikiIcon'><?php echo $upper_icon.$icons.$rss_icon?></div>
-<?php echo $menu?>
+<div id='pTitle'>
+<?php if (!$this->_topbanner and $this->_logo): ?>
+<img src='<?php echo $DBInfo->logo_img?>' style='text-align:left;' alt='moniwiki' />
+<?php endif; /* topbanner */?>
+<?php echo $title?></div>
+<?php if ($this->_topbanner): ?>
+ </div>
+</div>
+<?php endif; /* topbanner */?>
+<?php endif; /* popup */?>
 </div>
 </div></div>
+</div></div>
+<?php if ($this->_splash):?>
+<div class='pBodyRight'><div class='pBodyLeft'>
+ <div id='wikiSplash'>
+ </div>
+</div></div>
+<?php endif; /* _splash */?>
+<span class='clear' ><!-- for IE --></span>
+<div class='pBodyRight'><div class='pBodyLeft'>
+<div id='pBottomRight'><div id='pBottomLeft'>
+<div id='wikiPage'>
+<span class='clear'></span>
+<?php if ($this->popup) :?>
+&nbsp;<!-- oops!! firefox bug workaround :( -->
+<?php else:?>
+<div id='wikiHeader'>
+ <div id='pMenuRight'><div id='pMenuLeft'>
+  <div id='wikiMenuBar'>
+   <div id='wikiIcon'><?php echo $upper_icon.$icons.$rss_icon?></div>
+<?php echo $menu?>
+  </div>
+ </div></div>
 </div>
-<?php if ($this->_topbanner): ?>
-</div>
-</div>
-<?php endif;?>
-<?php endif; ?>
-<div class='clear'></div>
+<span class='clear'></span>
+<?php endif; /* popup */?>
 <?php echo $msg?>
 <div id='container'>
 <?php
@@ -83,7 +116,7 @@ if ($this->_sidebar==1) :
 ?>
 <div id='wikiSideMenu'>
 <?php
-print macro_login($this);
+if ($this->_login) print macro_login($this);
 print '<div class="calendar">';
 if ($options['id']=='Anonymous')
   print macro_calendar($this,"'Blog',blog,noweek,archive,center",'Blog');
