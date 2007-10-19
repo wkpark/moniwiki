@@ -247,8 +247,6 @@ proto.addModeSelector = function() {
             'label', { 'for': radio_id }
         );
         label.appendChild(document.createTextNode(mode_object.modeDescription));
-    	if (this.config.hideRadio)
-            radio.setAttribute('style','display:none'); /* */
 
         span.appendChild(radio);
         span.appendChild(label);
