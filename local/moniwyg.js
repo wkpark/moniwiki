@@ -1214,12 +1214,13 @@ function sectionEdit(ev,obj,sect) {
         }
     }
 
-    if (area) {
+    while (area && wikiwygs.length) {
         var x= area.previousSibling;
-        while (x.nodeType != 1) {
+        while (x && x.nodeType != 1) {
             x = x.previousSibling;
         }
-        
+        if (!x) break;
+       
         var mycheck= x.getAttribute('id');
         if (mycheck && mycheck.match(/WikiWygArea/)) {
             var tmp = mycheck.split(/_/); // get already loaded WikiWygArea
@@ -1228,6 +1229,7 @@ function sectionEdit(ev,obj,sect) {
             wikiwygs[tmp[1]].current_mode.enableThis();
             return;
         }
+        break;
     }
 
     if (form && form.substring(0,5) != 'false') {
