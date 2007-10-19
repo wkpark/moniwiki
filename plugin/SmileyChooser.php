@@ -19,6 +19,7 @@ function macro_SmileyChooser($formatter,$value) {
 // from wikibits.js
 function mySmiley(myText)
 {
+  var is_ie = document.selection && document.all;
   if (document.$form)
     var txtarea = document.$form.savetext;
   else {
@@ -30,12 +31,15 @@ function mySmiley(myText)
   // check WikiWyg
   var my=document.getElementById('editor_area');
   var mystyle=my.getAttribute('style');
+  if (typeof mystyle == 'object') mystyle = mystyle.cssText;
+  
   while (mystyle && mystyle.match(/display: none/i)) { // wikiwyg hack
     txtarea = document.getElementById('wikiwyg_wikitext_textarea');
 
     // get iframe and check visibility.
     var myframe = document.getElementsByTagName('iframe')[0];
     mystyle = myframe.getAttribute('style');
+    if (typeof mystyle == 'object') mystyle = mystyle.cssText;
     var check = mystyle && mystyle.match(/display: none/i);
     if (check) break;
 
@@ -45,13 +49,23 @@ function mySmiley(myText)
 
     var m = myhtml.match(/<div>(.*)\\n<\/div>/i); // strip div tag
     if (m) {
-      myframe.contentWindow.document.execCommand('inserthtml', false, m[1] + ' ');
+      var html = m[1] + ' ';
+      if (is_ie) {
+        var range = myframe.contentWindow.document.selection.createRange();
+        if (range.boundingTop == 2 && range.boundingLeft == 2)
+          return;
+        range.pasteHTML(html);
+        range.collapse(false);
+        range.select();
+      } else {
+        myframe.contentWindow.document.execCommand('inserthtml', false, html);
+      }
     }
 
     return;
   }
 
-  if(document.selection && document.all) {
+  if(is_ie) {
     var theSelection = document.selection.createRange().text;
     txtarea.focus();
     if(theSelection.charAt(theSelection.length - 1) == " "){
