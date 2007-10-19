@@ -42,7 +42,7 @@ $smileys=array(
 #    "=)"=> array(16, 16, 0, "smile/=).gif"),
     ":-?"=> array(16, 16, 0, "smile/8-question.png"),
     ":\\"=> array(16, 16, 0, "smile/8-ll.png"),
-    ">:>"=> array(16, 16, 0, "smile/v8v.png"),
+    "):)"=> array(16, 16, 0, "smile/v8v.png"),
     "%-)"=> array(16, 16, 0, "smile/%25-).png"),
 #    "%)"=> array(16, 16, 0, "smile/%25-).gif"),
 #    "%-6"=> array(16, 16, 0, "smile/%25-6.gif"),
