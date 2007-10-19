@@ -83,7 +83,8 @@ Wikiwyg.prototype.cancelEdit = function() {
 
     var toolbar=document.getElementById('toolbar');
     if (toolbar) { // show toolbar
-        toolbar.setAttribute('style','');
+        if (Wikiwyg.is_ie) toolbar.style.display='';
+        else toolbar.setAttribute('style','');
     }
 
     var area=document.getElementById('editor_area');
@@ -1210,7 +1211,8 @@ function sectionEdit(ev,obj,sect) {
         form=area.innerHTML;
         var toolbar=document.getElementById('toolbar');
         if (toolbar) { // hide toolbar
-            toolbar.setAttribute('style','display:none');
+            if (Wikiwyg.is_ie) toolbar.style.display='none';
+            else toolbar.setAttribute('style','display:none');
         }
     }
 
