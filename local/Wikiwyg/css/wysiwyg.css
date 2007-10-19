@@ -7,3 +7,8 @@ td.wiki, table.wiki, table.wiki td {
 .wikiMarkup td, .wikiMarkup td.wiki {
     background-color: #FFFFB0;
 }
+
+td, table {
+    border: 1px dotted black;
+    background-color: #F0F4FF;
+}
