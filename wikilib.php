@@ -645,7 +645,8 @@ function do_edit($formatter,$options) {
   if ($options['section'])
     $sec=' (Section)';
   $formatter->send_title(sprintf(_("Edit %s"),$options['page']).$sec,"",$options);
-  print '<div id="editor_area">'.macro_EditText($formatter,$value,$options).'</div>';
+  //print '<div id="editor_area">'.macro_EditText($formatter,$value,$options).'</div>';
+  print macro_EditText($formatter,$value,$options);
   if ($DBInfo->use_wikiwyg>=2)
     print <<<JS
 <script type='text/javascript'>
@@ -881,9 +882,13 @@ EOS;
     }
   }
   $form.=<<<EOS
-<div id="wikiEditor">
+<div id="editor_area">
+$formh
+<div class="resizable-textarea"><!-- IE hack -->
 <textarea id="content" wrap="virtual" name="savetext" tabindex="1"
- rows="$rows" cols="$cols" class="wiki resizable">$raw_body</textarea><br />
+ rows="$rows" cols="$cols" class="wiki resizable">$raw_body</textarea>
+</div>
+<div>
 $summary_msg: <input name="comment" value="$editlog" size="70" maxlength="70" style="width:80%" tabindex="2" />$extra_check<br />
 <input type="hidden" name="action" value="savepage" />
 <input type="hidden" name="datestamp" value="$datestamp" />
@@ -892,6 +897,7 @@ $hidden$select_category
 <!-- <input type="reset" value="Reset" />&nbsp; -->
 $preview_btn$wysiwyg_btn$skip_preview
 $extra
+</div>
 </form>
 </div>
 EOS;
@@ -899,7 +905,7 @@ EOS;
     $form.= macro_EditHints($formatter);
   if (!$options['simple'])
     $form.= "<a id='preview'></a>";
-  return $formh.$form.$resizer;
+  return $form.$resizer;
 }
 
 
@@ -1197,12 +1203,13 @@ function do_titleindex($formatter,$options) {
     }
 
     sort($pages);
-    array_unshift($pages, $options['q']);
+    //array_unshift($pages, $options['q']);
     header("Content-Type: text/plain");
     if ($pages) {
     	$ret= "<ul>\n<li>".implode("</li>\n<li>",$pages)."</li>\n</ul>\n";
     } else {
-        $ret= "<ul>\n<li>".$options['q']."</li></ul>";
+        #$ret= "<ul>\n<li>".$options['q']."</li></ul>";
+        $ret= "<ul>\n</ul>";
     }
     if (strtoupper($DBInfo->charset) != 'UTF-8' and function_exists('iconv')) {
       $val=iconv('UTF-8',$DBInfo->charset,$ret);
@@ -1435,7 +1442,8 @@ function do_post_savepage($formatter,$options) {
       } else
         $formatter->send_title(_("Conflict error!"),"",$options);
       $options['savetext']=$savetext;
-      print '<div id="editor_area">'.macro_EditText($formatter,$value,$options).'</div>'; # XXX
+      #print '<div id="editor_area">'.macro_EditText($formatter,$value,$options).'</div>'; # XXX
+      print macro_EditText($formatter,$value,$options); # XXX
 
       print $menu;
       print "<div id='wikiPreview'>\n";
@@ -1776,6 +1784,7 @@ function macro_RandomQuote($formatter,$value="",$options=array()) {
     $out= ob_get_contents();
     ob_end_clean();
   } else {
+    $formatter->set_wordrule();
     $quote=str_replace("<","&lt;",$quote);
     $quote=preg_replace($formatter->baserule,$formatter->baserepl,$quote);
     $out=preg_replace("/(".$formatter->wordrule.")/e",
