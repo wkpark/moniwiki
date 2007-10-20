@@ -14,7 +14,9 @@ function do_markup($formatter,$options) {
     $formatter->postfilters=array('fiximgpath');
     if (!$options['all']) $formatter->wikimarkup=1;
     if ($options['value']) {
-        $formatter->send_page(_stripslashes($options['value']),$options);
+        $val=_stripslashes($options['value']);
+        $val= preg_replace('/(\r\n|\n|\r)/',"\n",$val); // Win32 fix
+        $formatter->send_page(_stripslashes($val),$options);
     } else {
         if (isset($options['section'])) {
             $formatter->section_edit=1;
