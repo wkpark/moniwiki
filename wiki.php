@@ -3387,7 +3387,12 @@ class Formatter {
                 break;
               }
             }
-            $line="<pre $attr>\n".$pre."</pre>\n".$line;
+            $out="<pre $attr>\n".$pre."</pre>\n";
+            if ($this->wikimarkup)
+              $out='<span class="wikiMarkup">'."<!-- wiki:\n{{{:$pre_style\n".
+                str_replace('}}}','\}}}',$this->pre_line).
+                "}}}\n-->".$out."</span>";
+            $line=$out.$line;
             $in_quote=0;
          } else {
             # htmlfy '<', '&'
@@ -3405,7 +3410,7 @@ class Formatter {
                   str_replace('}}}','\}}}',$this->pre_line).
                   "}}}\n-->".$out."</span>";
             }
-            $line=$out."\n".$line;
+            $line=$out.$line;
             unset($out);
          }
          $this->nobr=1;
@@ -3413,7 +3418,7 @@ class Formatter {
       if ($this->auto_linebreak && !$in_table && !$this->nobr)
         $text.=$line."<br />\n"; 
       else
-        $text.=$line."\n";
+        $text.=$line ? $line."\n":'';
       $this->nobr=0;
       # empty line for quoted div
       if (!$this->auto_linebreak and !$in_pre and trim($line) =='')
