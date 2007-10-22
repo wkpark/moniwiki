@@ -65,9 +65,6 @@ document.write('<a href=\"#\" onclick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
 </script>";
   }
 
-  $stag="<pre class='wikiSyntax' id='PRE-$uniq' style='font-family:FixedSys,monospace;color:#c0c0c0;background-color:black'>\n";
-  $etag="</pre>\n";
-
   if (!is_dir(dirname($html))) {
     $om=umask(000);
     _mkdir_p(dirname($html),0777);
@@ -116,7 +113,7 @@ document.write('<a href=\"#\" onclick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
 
   $cmd= "$vim $vim_default -e -s $tmpf ".
         ' +"syntax on " +"set syntax='.$type.'" '.$option.
-        ' +"so '.$tohtml.'" +"wq! '.$fout.'" +q';
+        ' +"so '.$tohtml.'" +"wq! '.$fout.'" +qall';
 
   $log='';
   if(getenv("OS")=="Windows_NT") {
@@ -138,9 +135,22 @@ document.write('<a href=\"#\" onclick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
   #$out=preg_replace("/<title.*title>|<\/?head>|<\/?html>|<meta.*>|<\/?body.*>/","", $out);
   $out=str_replace("\r\n","\n",$out); # for Win32
   #$out=preg_replace("/(^(\s|\S)*<pre>\n|\n<\/pre>(\s|\S)*$)/","",$out); # XXX segfault sometime
+
+  $myspan='pre';
   $fpos=strpos($out,'<pre>');
-  $tpos=strpos($out,'</pre>');
-  $out=substr($out,$fpos+6,$tpos-$fpos-7);
+  if ($fpos === false) {
+    $myspan='div';
+    $fpos=strpos($out,'<body');
+    $tpos=strpos($out,'</body>');
+    $out=substr($out,$fpos+7,$tpos-$fpos-7);
+    $out=preg_replace('/^[^>]+>/','',$out);
+  } else {
+    $tpos=strpos($out,'</pre>');
+    $out=substr($out,$fpos+6,$tpos-$fpos-7);
+  }
+  $stag="<$myspan class='wikiSyntax' id='PRE-$uniq' style='font-family:FixedSys,monospace;color:#c0c0c0;background-color:black'>\n";
+  $etag="</$myspan>\n";
+
 
   $lines=explode("\n",$out);
   $out="<span class=\"line\">".
