@@ -42,10 +42,6 @@ proto.initializeObject = function() {
     this.div.style.backgroundColor = 'lightyellow';
 }
 
-proto.fromHtml = function(html) {
-    this.div.innerHTML = html;
-}
-
 proto.toHtml = function(func) {
     func(this.div.innerHTML);
 }

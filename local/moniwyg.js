@@ -11,6 +11,31 @@ Wikiwyg.browserIsSupported = (
     Wikiwyg.is_opera
 );
 
+// Wikiwyg fix for IE
+if (Wikiwyg.is_ie) {
+    // innerHTML hack :(
+    Wikiwyg.prototype.fromHtml = function(html) {
+        //html=html.replace(/<\/span>(\s+)/,"</span><span class=wikiMarkup><!-- wiki:\n$1\n-->$1</span>");
+        this.div.innerHTML = '<br>' +html; // IE hack :(
+        this.div.removeChild(this.div.firstChild);
+        alert('Wikiwyg in #1='+html); // ???
+    }
+
+    Wikiwyg.Mode.prototype.create_dom = function(html) {
+        var dom = document.createElement('div');
+        dom.innerHTML = '<br>' + html; // IE hack :(
+        dom.removeChild(dom.firstChild);
+        return dom;
+    }
+
+    Wikiwyg.Wysiwyg.prototype.set_inner_html = function(html) {
+        var body = this.get_edit_document().body;
+        body.innerHTML = '<br>' + html; // IE hack :(
+        body.removeChild(body.firstChild);
+    }
+}
+
+// Moniwiki hack
 Wikiwyg.prototype.saveChanges = function() {
     var self = this;
     var myWikiwyg = new Wikiwyg.Wikitext();
@@ -19,6 +44,7 @@ Wikiwyg.prototype.saveChanges = function() {
     this.current_mode.toHtml( function(html) { self.fromHtml(html) });
 
     if (this.current_mode.classname.match(/(Wysiwyg|HTML|Preview)/)) {
+
         this.current_mode.fromHtml(this.div.innerHTML);
 
         wikitext = myWikiwyg.convert_html_to_wikitext(this.div.innerHTML);
@@ -41,7 +67,11 @@ Wikiwyg.prototype.saveChanges = function() {
     //alert(datestamp+'/'+section);
 
     myWikiwyg.convertWikitextToHtmlAll(wikitext,
-        function(new_html) { self.div.innerHTML = new_html });
+        function(new_html) {
+            //self.div.innerHTML = new_html
+            self.div.innerHTML = "<br>" + new_html; // Bah.... IE hack :(
+            self.div.removeChild(self.div.firstChild);
+        });
 
     // save
     var toSend = 'action=' + myaction + '/ajax' +
@@ -66,7 +96,10 @@ Wikiwyg.prototype.saveChanges = function() {
         this.displayMode();
         return;
     } else {
-        self.div.innerHTML=saved;
+        //self.div.innerHTML=saved;
+        self.div.innerHTML = "<br>" + saved; // Bah.... IE hack :(
+        self.div.removeChild(self.div.firstChild);
+
         var f=document.createElement('div');
         f.setAttribute('class','errorLog');
         // show error XXX
@@ -113,6 +146,7 @@ Wikiwyg.prototype.switchMode = function(new_mode_key) {
     var new_mode = this.modeByName(new_mode_key);
     var old_mode = this.current_mode;
     var self = this;
+
     new_mode.enableStarted();
     old_mode.disableStarted();
     old_mode.toHtml(
@@ -133,6 +167,7 @@ Wikiwyg.prototype.switchMode = function(new_mode_key) {
 Wikiwyg.prototype.editMode = function(form,text) {
     var self = this;
     var dom = document.createElement('div');
+
     dom.innerHTML = form;
 
     var form = dom.getElementsByTagName('form')[0];
@@ -163,13 +198,22 @@ Wikiwyg.prototype.editMode = function(form,text) {
 function fixup_markup_style(html)
 {
     var dom = document.createElement('div');
-    dom.innerHTML = html;
+
+    alert('fixup_markup='+html);
+    if (Wikiwyg.is_ie) {
+        dom.innerHTML = "<br>" +html; // Bah.... IE hack :(
+        dom.removeChild(dom.firstChild);
+    } else {
+        dom.innerHTML = html;
+    }
+    alert('fixup innerHTML='+dom.innerHTML);
 
     var spans=dom.getElementsByTagName('span');
+    var className= Wikiwyg.is_ie ? 'className':'class';
 
     if (spans.length) {
         for (var i=0;i<spans.length;i++) {
-            var cname= spans[i].getAttribute('class');
+            var cname= spans[i].getAttribute(className) ;
             if (cname == 'wikiMarkup' && spans[i].innerHTML) {
                 // check marcos
                 //var len=spans[i].firstChild.data.length + 7;
@@ -183,6 +227,13 @@ function fixup_markup_style(html)
                     if (part.nodeType == 1 && part.nodeName != 'IMG' &&
                             part.innerHTML && part.innerHTML.indexOf("\n") != -1) {
                         spans[i].style.display='block';
+                        if (false && Wikiwyg.is_ie) {
+                            var sn=spans[i].nextSibling;
+                            var newline = document.createElement("br");
+                            if (sn && sn.nodeType == 3) {
+                                sn.parentNode.insertBefore(newline,sn); // XXX IE
+                            }
+                        }
                         break;
                     }
                 }
@@ -195,6 +246,7 @@ function fixup_markup_style(html)
 }
 
 proto = Wikiwyg.Wysiwyg.prototype;
+
 
 proto.get_edit_iframe = function() {
     var iframe=null;
@@ -300,7 +352,6 @@ proto.apply_inline_stylesheet = function(style, head) {
 proto.enableThis = function() {
     Wikiwyg.Mode.prototype.enableThis.call(this);
     this.edit_iframe.style.border = '1px solid activeborder';
-    //this.edit_iframe.style.border = '1px solid ActiveBorder';
     //this.edit_iframe.style.backgroundColor = '#ffffff';
     //this.edit_iframe.setAttribute('style','1px solid ThreeDFace;background:#fff;');
     this.edit_iframe.width = '99%';
@@ -329,9 +380,9 @@ proto.enableThis = function() {
             if (this.should_link_stylesheet(style))
                 this.apply_linked_stylesheet(style, head);
     }
+    this.enable_keybindings();
+    this.clear_inner_html();
 */
-    //this.enable_keybindings();
-    //this.clear_inner_html();
 }
 
 proto.do_link = function() {
@@ -388,6 +439,8 @@ proto.convert_html_to_wikitext = function(html) {
     html = html.replace(/<!-=-/g, '<!--').
                 replace(/-=->/g, '-->');
 
+    //alert(html);
+
     // Opera note: opera internally use upper case tag names.
     //  e.g.) <A class=..></A> <IMG src=..
     // IE note: IE does not quote some attributes, class,title,etc.
@@ -424,12 +477,16 @@ proto.convert_html_to_wikitext = function(html) {
     html =
         html.replace(/<tt class[^>]+>([^>]+)<\/tt>/ig, "{{{$1}}}");
 
-    dom.innerHTML = html;
+    dom.innerHTML = "<br>" +html; // Bah.... IE hack :(
+    dom.removeChild(dom.firstChild);
+
+    alert(dom.innerHTML);
+
     this.output = [];
     this.list_type = [];
     this.indent_level = 0;
 
-    this.walk(dom);
+    this.walk_n(dom);
 
     // add final whitespace
     this.assert_new_line();
@@ -453,14 +510,15 @@ proto.format_img = function(element) {
         if (height) attr+=(attr ? '&':'') + 'height='+height;
 
         if (style) {
-            var m = style.match(/width:\s*(\d+)px;\s*height:\s*(\d+)px/);
-            if (m) {
-                if (m[1]) attr+=(attr ? '&':'') + 'width='+m[1];
-                if (m[2]) attr+=(attr ? '&':'') + 'height='+m[2];
-            }
+            if (typeof style == 'object') style= style.cssText;
+            alert(style);
+            var w = style.match(/width:\s*(\d+)px/i);
+            var h = style.match(/height:\s*(\d+)px/i);
+            if (w) attr+=(attr ? '&':'') + 'width='+w[1];
+            if (h) attr+=(attr ? '&':'') + 'height='+h[1];
         }
 
-        if (myclass) {
+        if (myclass) { // FIXME
             var m = myclass.match(/img(Center|Left|Right)$/);
             if (m && m[1]) attr+=(attr ? '&':'') + 'align='+m[1].toLowerCase();
         }
@@ -480,8 +538,9 @@ proto.format_table = function(element) {
         this.myattr= '<tablewidth="'+width + 'px">';
     } else 
     if (style) {
+        if (typeof style == 'object') style= style.cssText;
         var attr='';
-        var m = style.match(/width:\s*(\d+)px;\s*height:\s*(\d+)px/);
+        var m = style.match(/width:\s*(\d+)px;\s*height:\s*(\d+)px/i);
         if (m)
             attr='<tablewidth="'+m[1] + 'px" height="'+m[2]+'px">';
         
@@ -522,7 +581,7 @@ proto.handle_line_alone = function (element, markup) {
 
 proto.format_td = function(element) {
     var colspan =element.getAttribute('colspan');
-    var align =element.getAttribute('class');
+    var align =element.getAttribute('class') || element.getAttribute('className');
     if (colspan) {
         for (var i=0;i<colspan;i++)
             this.appendOutput('||');
@@ -534,12 +593,19 @@ proto.format_td = function(element) {
     this.myattr=null;
 
     var rowspan =element.getAttribute('rowspan');
-    if (rowspan)
+    if (rowspan > 1)
         this.appendOutput('<|'+rowspan+'>');
 
-    //if (align) this.appendOutput('<align='+align+'>');
-    this.appendOutput('');
+    // to support the PmWiki style table alignment
+    // firstChild have to be a text node
+    // BUT IE ignore the firstChild if it is spaces!!
+    // and you can't get raw spaces info from DOM elements
+    //   see also http://www.javascriptkit.com/domref/nodetype.shtml
+    // but there is a simple way to workaround this situation!
+    // like as following line. Wow !! :>
+    if (Wikiwyg.is_ie && align.match(/right|center/)) this.appendOutput(' ');
     this.walk_n(element);
+    this.appendOutput('');
     this.chomp_n(); // table specific chomp
     this.appendOutput('');
     this.chomp_n(); // chomp again
@@ -582,7 +648,7 @@ proto.chomp_n = function() {
     }
     if (string) {
         string = string.replace(/[\r\n]+$/, '');
-        this.appendOutput(string);
+        if (string != '') this.appendOutput(string); // MY
     }
 }
 
@@ -756,12 +822,13 @@ proto.get_wiki_comment = function(element) {
         if (node.nodeType == this.COMMENT_NODE_TYPE
             && node.data.match(/^\s*wiki/)) {
             var ele=node.nextSibling ? node.nextSibling.firstChild:null;
+
             if (ele && node.data.match(/\nattachment:/) && ele.tagName && ele.tagName.toLowerCase() == 'img') {
                 // check the attributes of the attached images
                 var style = ele.getAttribute('style');
                 var width = ele.getAttribute('width');
                 var height = ele.getAttribute('height');
-                var myclass = ele.getAttribute('class');
+                var myclass = ele.getAttribute('class') || ele.getAttribute('className');
                 var align = '';
 
                 var attr=new Array();
@@ -771,12 +838,13 @@ proto.get_wiki_comment = function(element) {
                 ele.setAttribute('width','');
                 ele.setAttribute('height','');
 
-                if (style && style.match) {
+                if (style) {
+                    if (typeof style == 'object') style = style.cssText;
                     var m = style.match(/width:\s*(\d+)px;\s*height:\s*(\d+)px/);
                     if (m) {
                         if (m[1]) attr["width"]='width='+m[1];
                         if (m[2]) attr["height"]='height='+m[2];
-                        ele.setAttribute('style','');
+                        ele.setAttribute('style',null);
                     }
                 }
 
@@ -855,7 +923,7 @@ proto.handle_opaque_phrase = function(element) {
         text = text.replace(/^ wiki:\s+/, '')
                    .replace(/-=/g, '-')
                    .replace(/==/g, '=')
-                   .replace(/\s$/, '')
+                   .replace(/(\r\n|\n|\r)+$/, '') //.replace(/\s$/, '') IE fix
                    .replace(/\{(\w+):\s*\}/, '{$1}');
         this.appendOutput(Wikiwyg.htmlUnescape(text))
         this.smart_trailing_space_n(element);
@@ -872,7 +940,7 @@ proto.smart_trailing_space_n = function(element) {
             var nn = next.nextSibling;
             if (! (nn && nn.nodeType == 1 && nn.nodeName == 'SPAN') && nn.nodeType != 3) {
                 this.appendOutput('\n');
-                alert(nn.nodeName + nn.nodeType);
+                ////// XXX alert(nn.nodeName + nn.nodeType);
             }
         }
         else {
@@ -880,6 +948,19 @@ proto.smart_trailing_space_n = function(element) {
         }
     }
     else if (next.nodeType == 3) {
+        if (Wikiwyg.is_ie && this.output.length) { // IE innerHTML space hack
+            str = this.output[this.output.length - 1];
+            if (str.length) {
+                var str1 = str.length ? str.substr(str.length-1):''; // XXX
+                var str2 = (str.length > 3 && str1 == '}') ? str.substr(str.length-3):''; // XXX
+                if (str.indexOf("\n") != -1 && str2 == '}}}') {
+                    //var save = this.output.pop();
+                    //this.appendOutput("\n");
+                    //this.appendOutput(save);
+                    this.appendOutput("\n");
+                }
+            }
+        }
         if (! next.nodeValue.match(/^\s/)) {
             this.no_following_whitespace();
         } else if (next.nodeValue.match(/\n/) && next.nodeValue.match(/^\s+$/)){
@@ -1086,12 +1167,30 @@ proto.add_markup_words = function(markup_start, markup_finish, example) {
 }
 
 proto.handle_bound_phrase = function(element, markup) {
-    this.assert_space_or_newline(); // FIX
+    this.assert_space_or_newline_n(); // FIX XXX
     this.appendOutput(markup[1]);
     this.no_following_whitespace();
     this.walk(element);
     // assume that walk leaves no trailing whitespace.
     this.appendOutput(markup[2]);
+}
+
+proto.assert_space_or_newline_n = function() {
+    var string;
+    if (! this.output.length) return;
+
+    string = this.output[this.output.length - 1];
+    if (string.length) {
+        var str = string.length ? string.substr(string.length-1):''; // XXX
+        var str2 = (string.length > 3 && str == '}') ? string.substr(string.length-3):''; // XXX
+        if (Wikiwyg.is_ie && str2 == '}}}')
+            this.appendOutput("\n");
+        else
+        if (! str.whitespace && ! str.match(/(\s+|[>\|\"\':])$/)) {
+            alert(str);
+            this.appendOutput(' ');
+        }
+    }
 }
 
 proto.assert_space_or_newline = function() {
@@ -1121,6 +1220,7 @@ proto.href_is_wiki_link = function(href) {
 
 proto.convertWikitextToHtml = function(wikitext, func) {
     var postdata = 'action=markup&value=' + encodeURIComponent(wikitext);
+
     HTTPPost(
         self.location,
         postdata,
