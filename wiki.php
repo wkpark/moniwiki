@@ -1927,15 +1927,18 @@ class Formatter {
       while ($body and $body[0] == '#') {
         # extract first line
         list($line, $body)= split("\n", $body,2);
-        $pilines[]=$line;
         if ($line=='#') break;
         else if ($line[1]=='#') { $notused[]=$line; continue;}
+        $pilines[]=$line;
 
         list($key,$val)= explode(" ",$line,2);
         $key=strtolower($key);
         $val=trim($val);
         if (in_array($key,$pikeys)) { $pi[$key]=$val ? $val:1; }
-        else $notused[]=$line;
+        else {
+           $notused[]=$line;
+           array_pop($pilines);
+        }
       }
       $piline=implode("\n",$pilines);
       $piline=$piline ? $piline."\n":'';
@@ -2085,8 +2088,9 @@ class Formatter {
         if (!$text) $text=$url;
         else {
           if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
+            $atext=$text;
             $text=str_replace('&','&amp;',$text);
-            return "<a href='$link' $attr $this->external_target title='$url'><img style='border:0px' alt='$url' src='$text' /></a>";
+            return "<a class='externalLink named' href='$link' $attr $this->external_target title='$url'><img class='external' style='border:0px' alt='$atext' src='$text' /></a>";
           }
           if ($this->external_on)
             $external_link='<span class="externalLink">('.$url.')</span>';
@@ -2096,7 +2100,9 @@ class Formatter {
           return "<a href='$link'>$text</a>";
         }
         $icon=strtok($url,':');
-        return "<img class='url' alt='[$icon]' src='".$this->imgs_dir_url."$icon.png' />". "<a class='externalLink' $attr $this->external_target href='$link'>$text</a>".$external_icon.$external_link;
+        if ($text != $url) $eclass='named';
+        else $eclass='unnamed';
+        return "<img class='url' alt='[$icon]' src='".$this->imgs_dir_url."$icon.png' />". "<a class='externalLink $eclass' $attr $this->external_target href='$link'>$text</a>".$external_icon.$external_link;
       } # have no space
       $link=str_replace('&','&amp;',$url);
       if (preg_match("/^(http|https|ftp)/",$url)) {
@@ -2694,7 +2700,7 @@ class Formatter {
           return "<$list_type type='$numtype[0]' start='$start'>";
         return "<$list_type type='$numtype[0]'>";
       }
-      return "$close$open<$list_type>\n";
+      return "$close$open<$list_type>"; // FIX Wikiwyg
     } else {
       return "</$list_type>\n$close$open";
     }
@@ -2891,6 +2897,7 @@ class Formatter {
 
     if ($body) {
       $pi=$this->get_instructions($body);
+
       if ($this->wikimarkup and $pi['raw']) {
         $pi_html=str_replace("\n","<br />\n",$pi['raw']);
         print "<span class='wikiMarkup'><!-- wiki:\n$pi[raw]\n-->$pi_html</span>";
@@ -3070,8 +3077,12 @@ class Formatter {
           $div_enclose.='</div>';
           $my_div--;
         }
-        if ($this->wikimarkup)
-          $text=$text."<span><!-- wiki:\n$line\n-->$out</span>";
+
+        if ($this->wikimarkup) {
+          $out=$out ? $out:$line.'<br />';
+          $nline=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$line);
+          $text=$text."<span class='wikiMarkup'><!-- wiki:\n$nline\n\n-->$out</span>";
+        }
         else $text.=$out;
         unset($out);
         continue; # comments
@@ -3388,10 +3399,12 @@ class Formatter {
               }
             }
             $out="<pre $attr>\n".$pre."</pre>\n";
-            if ($this->wikimarkup)
+            if ($this->wikimarkup) {
+              $nline=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$this->pre_line);
               $out='<span class="wikiMarkup">'."<!-- wiki:\n{{{:$pre_style\n".
-                str_replace('}}}','\}}}',$this->pre_line).
+                str_replace('}}}','\}}}',$nline).
                 "}}}\n-->".$out."</span>";
+            }
             $line=$out.$line;
             $in_quote=0;
          } else {
@@ -3405,10 +3418,12 @@ class Formatter {
               $pre=preg_replace("/&lt;(\/?)(ins|del)/","<\\1\\2",$pre);
               # FIXME Check open/close tags in $pre
               $out="<pre class='wiki'>\n".$pre."</pre>";
-              if ($this->wikimarkup)
+              if ($this->wikimarkup) {
+                $nline=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$this->pre_line);
                 $out='<span class="wikiMarkup">'."<!-- wiki:\n{{{\n".
-                  str_replace('}}}','\}}}',$this->pre_line).
+                  str_replace('}}}','\}}}',$nline).
                   "}}}\n-->".$out."</span>";
+              }
             }
             $line=$out.$line;
             unset($out);
