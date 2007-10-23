@@ -199,14 +199,15 @@ function fixup_markup_style(html)
 {
     var dom = document.createElement('div');
 
-    alert('fixup_markup='+html);
+    //alert('fixup_markup='+html);
     if (Wikiwyg.is_ie) {
+        //html = html.replace(/(\r\n|\n|\r)/g,'\\n');
         dom.innerHTML = "<br>" +html; // Bah.... IE hack :(
         dom.removeChild(dom.firstChild);
     } else {
         dom.innerHTML = html;
     }
-    alert('fixup innerHTML='+dom.innerHTML);
+    //alert('fixup innerHTML='+dom.innerHTML);
 
     var spans=dom.getElementsByTagName('span');
     var className= Wikiwyg.is_ie ? 'className':'class';
@@ -436,8 +437,8 @@ proto.initialize_object = function() {
 proto.convert_html_to_wikitext = function(html) {
     this.copyhtml = html;
     var dom = document.createElement('div');
-    html = html.replace(/<!-=-/g, '<!--').
-                replace(/-=->/g, '-->');
+    //html = html.replace(/<!-=-/g, '<!--')
+    //           .replace(/-=->/g, '-->');
 
     //alert(html);
 
@@ -455,8 +456,8 @@ proto.convert_html_to_wikitext = function(html) {
     html =
         html.replace(/<img class=.?(url|externalLink).?[^>]+>/ig, '');
     // smiley/inline tex etc.
-    html =
-        html.replace(/<img [^>]*class=.?(tex|interwiki|smiley).?[^>]* alt=(\'|\")?([^\'\" ]+)\2?[^>]+>/ig, "$3");
+    //html =
+    //    html.replace(/<img [^>]*class=.?(tex|interwiki|smiley|external).?[^>]* alt=(\'|\")?([^\'\" ]+)\2?[^>]+>/ig, "$3");
     // interwiki links
     html =
         html.replace(/<a [^>]*alt=(.)?([^\'\"]+)\1?[^>]*>/igm, "$2");
@@ -469,6 +470,12 @@ proto.convert_html_to_wikitext = function(html) {
     // remove javatag
     html =
         html.replace(/<a href=.javascript:[^>]+>(.*)<\/a>/ig, "$1");
+    // unnamed externalLinks
+    html =
+        html.replace(/<a class=.externalLink unnamed. [^>]+>([^>]+)<\/a>/ig, "[$1]");
+    // named externalLinks
+    html =
+        html.replace(/<a class=.externalLink named. [^>]*href=(\'|\")?([^\'\"]+)\1?[^>]+>(.+)<\/a>/ig, "[$2 $3]");
     // remove all links XXX
     html =
         html.replace(/<a [^>]+>([^>]+)<\/a>/ig, "$1");
@@ -480,16 +487,22 @@ proto.convert_html_to_wikitext = function(html) {
     dom.innerHTML = "<br>" +html; // Bah.... IE hack :(
     dom.removeChild(dom.firstChild);
 
-    alert(dom.innerHTML);
+    // alert(dom.innerHTML);
 
     this.output = [];
     this.list_type = [];
+    this.ordered_type = [];
     this.indent_level = 0;
 
     this.walk_n(dom);
 
     // add final whitespace
     this.assert_new_line();
+
+    for (var i=0;i<this.output.length;i++) {
+        if (this.output[i].length)
+        this.output[i]=this.output[i].replace(/\\n/,"\n");
+    }
 
     return this.join_output(this.output);
 }
@@ -502,6 +515,12 @@ proto.format_img = function(element) {
         var width = element.getAttribute('width');
         var height = element.getAttribute('height');
         var myclass = element.getAttribute('class');
+        if (myclass) { // FIXME
+            if (myclass.match(/(tex|interwiki|smiley|external)$/)) {
+                this.appendOutput(element.getAttribute('alt'));
+                return;
+            }
+        }
 
         this.assert_space_or_newline();
         this.appendOutput(uri);
@@ -527,15 +546,91 @@ proto.format_img = function(element) {
     }
 }
 
+proto.insert_new_line = function() {
+    var fang = '';
+    var indentChar = this.config.markupRules.indent[1];
+    var newline = '\n';
+    if (this.indent_level > 0) {
+        fang = indentChar.times(this.indent_level);
+        if (fang.length)
+            fang += ' '; // needed ?? XXX
+    }
+    // XXX - ('\n' + fang) MUST be in the same element in this.output so that
+    // it can be properly matched by chomp above.
+    if (fang.length && this.first_indent_line) {
+        this.first_indent_line = false;
+    }
+    if (this.output.length)
+        this.appendOutput(newline + fang);
+    else if (fang.length)
+        this.appendOutput(fang);
+}
+
+proto.format_blockquote = function(element) {
+    var indents = 0;
+    if (element.className.toLowerCase() == 'indent')
+        indents += 1;
+
+    if (!this.indent_level)
+        this.first_indent_line = true;
+    this.indent_level += indents;
+
+    this.output = defang_last_string(this.output);
+    this.assert_new_line();
+
+    this.walk(element);
+    this.indent_level -= indents;
+
+    if (! this.indent_level) {
+        if (this.should_whitespace()) {
+            this.chomp();
+            this.appendOutput("\n");
+        }
+    } else {
+        this.chomp();
+        this.appendOutput("\n");
+    }
+
+    function defang_last_string(output) {
+        function non_string(a) { return typeof(a) != 'string' }
+
+        // Strategy: reverse the output list, take any non-strings off the
+        // head (tail of the original output list), do the substitution on the
+        // first item of the reversed head (this is the last string in the
+        // original list), then join and reverse the result.
+        //
+        // Suppose the output list looks like this, where a digit is a string,
+        // a letter is an object, and * is the substituted string: 01q234op.
+
+        var rev = output.slice().reverse();                     // po432q10
+        var rev_tail = takeWhile(non_string, rev);              // po
+        var rev_head = dropWhile(non_string, rev);              // 432q10
+
+        if (rev_head.length)
+            rev_head[0].replace(/^[ ]+/, '');                     // *32q10
+            //rev_head[0].replace(/^>+/, '');                     // *32q10
+
+        // po*3210 -> 0123*op
+
+        return rev_tail.concat(rev_head).reverse();             // 01q23*op
+    }
+}
 
 proto.format_table = function(element) {
     this.assert_blank_line();
     var style =element.getAttribute('style');
+    var cls =element.getAttribute('class') || element.getAttribute('className');
     var width =element.getAttribute('width');
-    this.myattr=null;
+    var color =element.getAttribute('bgcolor');
+    var m;
+    this.myattr='';
+
+    if (m = cls.match(/(right|center)/)) {
+        this.myattr+= '<tablealign="'+m[1]+'">';
+    }
 
     if (width) {
-        this.myattr= '<tablewidth="'+width + 'px">';
+        this.myattr+= '<tablewidth="'+width + 'px">';
     } else 
     if (style) {
         if (typeof style == 'object') style= style.cssText;
@@ -544,7 +639,7 @@ proto.format_table = function(element) {
         if (m)
             attr='<tablewidth="'+m[1] + 'px" height="'+m[2]+'px">';
         
-        if (attr != '') this.myattr=attr;
+        if (attr != '') this.myattr+=attr;
     }
     this.walk(element);
     this.assert_blank_line();
@@ -558,11 +653,14 @@ proto.format_tr = function(element) {
 
 proto.format_br = function(element) {
     var str1 = this.output[this.output.length - 1];
-    if (str1 && ! str1.whitespace && ! str1.match(/\n$/)) {
-        this.insert_new_line();
-        this.insert_new_line(); // two \n\n is rendered as <br />
+    var str2 = (this.output.length) > 2 ? this.output[this.output.length - 2]:null;
+
+    if (str1 && ! str1.whitespace && !str1.match(/\n$/)) {
+        this.output.pop();
+        this.appendOutput(str1 + "\n");
     } else {
-        this.insert_new_line(); // \n\n\n is rendered as <br /><br />
+        this.appendOutput("\n");
+        //this.insert_new_line();
     }
 }
 
@@ -581,20 +679,42 @@ proto.handle_line_alone = function (element, markup) {
 
 proto.format_td = function(element) {
     var colspan =element.getAttribute('colspan');
+    var width =element.getAttribute('width');
+    var color =element.getAttribute('bgcolor');
     var align =element.getAttribute('class') || element.getAttribute('className');
-    if (colspan) {
-        for (var i=0;i<colspan;i++)
-            this.appendOutput('||');
-    } else
-        this.appendOutput('||');
+    var style =element.getAttribute('style');
+    var attr= [];
+    var i=0;
+
+    colspan = colspan ? colspan:1;
+    if (this.has_caption) i=1;
+    this.has_caption=false;
+
+    for (;i<colspan;i++) this.appendOutput('||');
 
     if (this.myattr)
         this.appendOutput(this.myattr);
-    this.myattr=null;
+    this.myattr='';
+    //
+
+    if (width)
+        attr.push('width="'+width+'"');
+    if (color)
+        attr.push('bgcolor="'+color+'"');
+    if (style) {
+        if (typeof style == 'object') style= style.cssText;
+        var m;
+        m = style.match(/width:\s*(\d+)px/i);
+        if (m) attr.push('width="'+m[1] + 'px"');
+        m = style.match(/background-color:\s*([^;]+);?/i);
+        if (m) attr.push('bgcolor="'+m[1]+'"');
+    }
 
     var rowspan =element.getAttribute('rowspan');
     if (rowspan > 1)
         this.appendOutput('<|'+rowspan+'>');
+    if (attr.length)
+        this.appendOutput('<'+attr.join(' ')+'>');
 
     // to support the PmWiki style table alignment
     // firstChild have to be a text node
@@ -652,13 +772,46 @@ proto.chomp_n = function() {
     }
 }
 
+proto.format_caption = function(element) {
+    this.appendOutput('|');
+    this.walk(element);
+    this.appendOutput('|');
+    this.has_caption=true;
+}
+
+proto.format_ol = function(element) {
+    var type = element.getAttribute('type');
+    var start = element.getAttribute('start') || null;
+    if (start == 1) start = null; // IE fix
+
+    this.ordered_type.push(type);
+    this.ordered_start=start;
+
+    this.make_list(element, 'ordered');
+    this.ordered_type.pop();
+}
+
 proto.format_li = function(element) {
     var level = this.list_type.length;
     if (!level) die("List error");
     var type = this.list_type[level - 1];
-    var markup = this.config.markupRules[type];
+    var markup = this.config.markupRules[type][1];
     var ind = ' ';
-    this.appendOutput(ind.times(level-1) + markup[1] + ' ');
+    var start = '';
+
+    if (type == 'ordered' && this.ordered_type[this.ordered_type.length - 1]) {
+        markup = ' ' + this.ordered_type[this.ordered_type.length - 1] + '.';
+    }
+
+    if (this.ordered_start) {
+        start = '#' + this.ordered_start;
+        this.ordered_start = null;
+    }
+    
+    this.appendOutput(ind.times(level-1) + markup + start + ' ');
+
+
+    //alert(element.innerHTML);
 
     // Nasty ie hack which I don't want to talk about.
     // But I will...
@@ -680,10 +833,53 @@ proto.format_li = function(element) {
         catch(e) { }
     }
 
-    this.walk(element);
+    this.walk_li(element,markup,level);
 
     this.chomp();
     this.insert_new_line();
+}
+
+proto.walk_li = function(element,markup,level) {
+    if (!element) return;
+
+    var ind = ' ';
+    var myind = ind.times(level-1) + ind.times(markup.length) + ' ';
+    var myind0 = ind.times(level-1) + markup;
+    var mre=new RegExp('^'+myind0);
+
+    for (var part = element.firstChild; part; part = part.nextSibling) {
+        if (part.nodeType == 1) {
+            this.dispatch_formatter(part);
+        }
+        else if (part.nodeType == 3) {
+            var item = part.nodeValue.replace(/\n$/,'');
+            part.nodeValue=item;
+            if (part.nodeValue == '') continue;
+            if (Wikiwyg.is_ie) {
+                if (this.output.length &&
+                        !this.output[this.output.length - 1].match(mre))
+                    item = myind + item;
+                this.appendOutput(item);
+            }
+            else if (item.length > 0 && item.indexOf("\n") != -1) {
+                item = item.replace(/\n/g,"\n" + myind);
+                item = item.replace(/^\n/,'');
+                this.appendOutput(item);
+            }
+            else if (part.nodeValue.match(/^[ ]*$/)) {
+                this.appendOutput(part.nodeValue);
+            }
+            else if (part.nodeValue.match(/[^\n]/)) {
+                if (this.no_collapse_text) {
+                    this.appendOutput(part.nodeValue);
+                }
+                else {
+                    this.appendOutput(this.collapse(part.nodeValue));
+                }
+            }
+        }
+    }
+    this.no_collapse_text = false;
 }
 
 proto.do_indent = function() {
@@ -916,11 +1112,16 @@ proto.get_wiki_comment = function(element) {
     return null;
 }
 
+proto.is_indented = function (element) {
+    var cls = element.getAttribute('class') ||element.getAttribute('className');
+    return cls == 'indent';
+}
+
 proto.handle_opaque_phrase = function(element) {
     var comment = this.get_wiki_comment(element);
     if (comment) {
         var text = comment.data;
-        text = text.replace(/^ wiki:\s+/, '')
+        text = text.replace(/^ wiki:(\s|\\n)+/, '')
                    .replace(/-=/g, '-')
                    .replace(/==/g, '=')
                    .replace(/(\r\n|\n|\r)+$/, '') //.replace(/\s$/, '') IE fix
@@ -944,7 +1145,7 @@ proto.smart_trailing_space_n = function(element) {
             }
         }
         else {
-            this.appendOutput('');
+            this.appendOutput('\n'); // for comments and PIs
         }
     }
     else if (next.nodeType == 3) {
@@ -977,7 +1178,7 @@ proto.walk = function(element) {
         }
         else if (part.nodeType == 3) {
             if (part.nodeValue.match(/\S/)) {
-                var string = part.nodeValue;
+                var str = part.nodeValue;
                 //if (! string.match(/^[\'\.\,\?\!\)]/)) {
                     //this.assert_space_or_newline(); // FIX
                     //string = this.trim(string); // FIX
@@ -986,8 +1187,24 @@ proto.walk = function(element) {
                 // XXX do not auto insert/delete white spaces!!!
                 //string = this.mytrim(string); // replace
                 //this.appendOutput(this.collapse(string)); // FIX
-                this.appendOutput(string);
-                //this.appendOutput('^'+string+'_');
+                //this.appendOutput(string);
+                if (this.indent_level) {
+                    var markup = this.config.markupRules['indent'][1];
+                    var ind = ' ';
+                    var myind = ind.times(this.indent_level) + markup;
+
+                    str = str.replace(/\n$/,'');
+                    if (str.length > 0 && str.indexOf("\n") != -1) {
+                        //str = str.replace(/^\n/,'');
+                        str = str.replace(/\n/g,"\n" + myind);
+                        str = str.replace(/^\n/,'');
+                        this.appendOutput(str);
+                    } else if (str.length) {
+                        this.appendOutput(str);
+                    }
+                } else if (str.length) {
+                    this.appendOutput(str);
+                }
             }
         }
     }
@@ -1254,7 +1471,7 @@ function createWikiwygDiv(elem, parent) {
     var elem = elem.nextSibling;
     var check = 0;
 
-    alert(edit.innerHTML);
+    //alert(edit.innerHTML);
     while (elem) {
         for (i=0; i<elem.childNodes.length; i++) {
             if (elem.childNodes[i].className == 'sectionEdit') {
