@@ -262,7 +262,7 @@ class processor_monimarkup
                 continue;
             } else if ($_eop) {
             #} else if ($_eop and $oline) {
-                $chunk[]= $oline;
+                $chunk[]= $oline."\n"; // "\n" is important for WikiWyg :)
                 $_eop=0;
                 $oline=$line;
                 continue;
@@ -509,8 +509,10 @@ class processor_monimarkup
                     }
                     else {
                         $val1=$val;
-                        $val=preg_replace("/^[ ]*$/m","<br />",$val1);
-                        if ($val1!=$val) $val.="<br />";
+                        $val=preg_replace("/^[ ]*$/m","",$val1);
+                        # fix for Wikiwyg !!
+                        $val=preg_replace("/(\n{2,})/es",
+                            'str_repeat("\n<br />",strlen("$1"))."\n"',$val);
                         unset($val1);
                     }
                     #print "<pre>".htmlspecialchars($val)."</pre>";
@@ -533,7 +535,8 @@ class processor_monimarkup
                 if ($formatter->auto_linebreak)
                     $c=preg_replace("/(?<!>|\007|^)\n/","<br />\n",$c);
                 else
-                    $c=preg_replace("/^[ ]*$/m","<br />",$c);
+                    $c=preg_replace("/^[ ]*$/m","<br />",$c); // XXX
+
                 $c=preg_replace_callback("/(".$wordrule.")/",
                     array(&$formatter,'link_repl'),$c);
                 while($_li>0 and $_lidep[$_li] > 0) {
