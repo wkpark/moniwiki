@@ -550,10 +550,9 @@ proto.insert_new_line = function() {
     var fang = '';
     var indentChar = this.config.markupRules.indent[1];
     var newline = '\n';
-    if (this.indent_level > 0) {
-        fang = indentChar.times(this.indent_level);
-        if (fang.length)
-            fang += ' '; // needed ?? XXX
+    if (this.list_type.length > 0) {
+        fang = indentChar.times(this.list_type.length);
+        //if (fang.length) fang += ' ';
     }
     // XXX - ('\n' + fang) MUST be in the same element in this.output so that
     // it can be properly matched by chomp above.
@@ -567,6 +566,14 @@ proto.insert_new_line = function() {
 }
 
 proto.format_blockquote = function(element) {
+    this.make_list(element,'indent');
+    this.chomp();
+    this.appendOutput("\n");
+    return;
+
+}
+
+proto.format_blockquote_old = function(element) {
     var indents = 0;
     if (element.className.toLowerCase() == 'indent')
         indents += 1;
@@ -642,7 +649,9 @@ proto.format_table = function(element) {
         if (attr != '') this.myattr+=attr;
     }
     this.walk(element);
-    this.assert_blank_line();
+    this.chomp();
+    this.appendOutput("\n");
+    //this.assert_blank_line();
 }
 
 proto.format_tr = function(element) {
@@ -779,6 +788,38 @@ proto.format_caption = function(element) {
     this.has_caption=true;
 }
 
+proto.format_div = function(element) {
+    if (this.is_opaque(element)) {
+        this.handle_opaque_block(element);
+        return;
+    }
+    if (this.is_indented(element)) {
+        //this.format_blockquote(element);
+        this.make_list(element,'indent');
+        this.chomp();
+        this.appendOutput("\n");
+        return;
+    }
+    this.walk(element);
+}
+
+proto.make_list = function(element, list_type) { 
+    //this.assert_new_line();
+
+    if (! this.previous_was_newline_or_start())
+        this.appendOutput("\n");
+        //this.insert_new_line(); // XXX
+
+    this.list_type.push(list_type);
+    if (this.list_type.length)
+        this.first_indent_line = true;
+
+    this.walk(element);
+    this.first_indent_line=false;
+    this.list_type.pop();
+}
+
+
 proto.format_ol = function(element) {
     var type = element.getAttribute('type');
     var start = element.getAttribute('start') || null;
@@ -836,7 +877,7 @@ proto.format_li = function(element) {
     this.walk_li(element,markup,level);
 
     this.chomp();
-    this.insert_new_line();
+    this.appendOutput("\n");
 }
 
 proto.walk_li = function(element,markup,level) {
@@ -1177,6 +1218,8 @@ proto.walk = function(element) {
             this.dispatch_formatter(part);
         }
         else if (part.nodeType == 3) {
+            var level = this.list_type.length;
+
             if (part.nodeValue.match(/\S/)) {
                 var str = part.nodeValue;
                 //if (! string.match(/^[\'\.\,\?\!\)]/)) {
@@ -1188,15 +1231,25 @@ proto.walk = function(element) {
                 //string = this.mytrim(string); // replace
                 //this.appendOutput(this.collapse(string)); // FIX
                 //this.appendOutput(string);
-                if (this.indent_level) {
-                    var markup = this.config.markupRules['indent'][1];
-                    var ind = ' ';
-                    var myind = ind.times(this.indent_level) + markup;
+                if (level) {
+                    var ind=' ';
+                    var indent;
+                    var type = this.list_type[level - 1];
+                    var markup = this.config.markupRules[type][1];
+                    if (type.match(/ordered/)) {
+                        indent = ind.times(level)
+                            + ind.times(markup.length) + ' ';
+                    } else {
+                        indent = ind.times(level);
+                        if (this.first_indent_line) {
+                            this.appendOutput(indent);
+                            this.first_indent_line=false;
+                        }
+                    }
 
-                    str = str.replace(/\n$/,'');
+                    str = str.replace(/\n$/,''); // remove trailing \n
                     if (str.length > 0 && str.indexOf("\n") != -1) {
-                        //str = str.replace(/^\n/,'');
-                        str = str.replace(/\n/g,"\n" + myind);
+                        str = str.replace(/\n/g,"\n" + indent);
                         str = str.replace(/^\n/,'');
                         this.appendOutput(str);
                     } else if (str.length) {
