@@ -25,7 +25,9 @@ class processor_monimarkup
     function _pass1($text)
     {
         // NoSmoke MultilineCell to moniwiki for lower version compatibility
-        $text=str_replace(array('{{|','|}}'),
+        //$text=str_replace(array('{{|','|}}'),
+        //    array("{{{:.closure\n",'}}}'),$text);
+        $text=preg_replace(array('/(?<!\{)\{\{\|\n/','/\|\}\}(?!\})/'),
             array("{{{:.closure\n",'}}}'),$text);
         // Pass #1: separate code inline/blocks.
         $chunk=preg_split('/({{{|}}})/',$text,-1,
@@ -66,11 +68,11 @@ class processor_monimarkup
                                     $block[$j]=substr($block[$j],1);
                                     $arg= substr($type,1);
                                     if ($type{1}=='#' or $type{1}=='.') {
-                                        $btype[$j]='moni';
-                                        $block[$j]='#!moni '.$arg."\n".$dum;
+                                        $btype[$j]='monimarkup';
+                                        $block[$j]='#!monimarkup '.$arg."\n".$dum;
                                     } else {
-                                        $btype[$j]='moni';
-                                        $block[$j]="#!moni .quote\n$arg\n".$dum;
+                                        $btype[$j]='monimarkup';
+                                        $block[$j]="#!monimarkup .quote\n$arg\n".$dum;
                                     }
                                 } else {
                                     // XXX check processor/block type
@@ -451,13 +453,12 @@ class processor_monimarkup
                     #$out.= $formatter->$hr_func($c['value']);
                     break;
                 case 'LIST':
-                    $test=$c['type'];
-                    $type=is_numeric($test{0}) ? 'ol':$test;
+                    $type=$c['type'];
                     $linfo='';
                     $listy='';
-                    if ($type=='ol')
+                    if ($type!='ul' and $type{0} !='d')
                         $linfo=$c['attributes'] ? $c['attributes']['start']:'';
-                    else if ($test{0}=='d') {
+                    else if ($type{0}=='d') {
                         $linfo=$c['attributes'] ? $c['attributes']['class']:'';
                         if (preg_match('/^((\s*)(&lt;|=|>)?{([^}]+)})/s',$val,
                                 $sty)) {
@@ -577,12 +578,16 @@ class processor_monimarkup
                 return "</blockquote>\n";
             }
         }
+        if ($type != 'ul') {
+            $litype=$type;
+            $type='ol';
+        }
         if ($on) {
-            if ($linfo) {
-                $start=substr($linfo,1);
+            if ($litype) {
+                $start=$linfo;
                 if ($start)
-                    return "<$type type='$linfo[0]' start='$start'>";
-                return "<$type type='$linfo[0]'>";
+                    return "<$type type='$litype' start='$start'>";
+                return "<$type type='$litype'>";
             }
             return "<$type>\n";
         }
