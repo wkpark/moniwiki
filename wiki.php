@@ -1686,6 +1686,7 @@ class Formatter {
     $this->filters=$DBInfo->filters;
     $this->postfilters=$DBInfo->postfilters;
     $this->use_rating=$DBInfo->use_rating;
+    $this->use_etable=$DBInfo->use_etable;
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -2437,7 +2438,7 @@ class Formatter {
     return "<a class='nonexistent' href='$url'>?</a>$word";
   }
 
-  function head_repl($depth,$head) {
+  function head_repl($depth,$head,$attr='') {
     $dep=$depth;
     $this->nobr=1;
 
@@ -2495,7 +2496,7 @@ class Formatter {
     if ($this->perma_icon)
     $perma=" <a class='perma' href='#s$prefix-$num'>$this->perma_icon</a>";
 
-    return "$close$open$edit<h$dep><a id='s$prefix-$num'></a>$head$perma</h$dep>";
+    return "$close$open$edit<h$dep$attr><a id='s$prefix-$num'></a>$head$perma</h$dep>";
   }
 
   function macro_repl($macro,$value='',$options='') {
@@ -2773,6 +2774,29 @@ class Formatter {
     }
     asort($myattr);
     return $myattr;
+  }
+
+  function _td($line,&$tr_attr) {
+    $cells=preg_split('/((?:\|\|)+)/',$line,-1,
+      PREG_SPLIT_DELIM_CAPTURE);
+    $row='';
+    for ($i=1,$s=sizeof($cells);$i<$s;$i+=2) {
+      $align='';
+      $m=array();
+      preg_match('/^((&lt;[^>]+>)?)(\s?)(.*)(?<!\s)(\s*)?$/s',
+        $cells[$i+1],$m);
+      $cell=$m[3].$m[4].$m[5];
+      $cell=str_replace("\n","<br />\n",$cell); // XXX
+      if ($m[3] and $m[5]) $align='center';
+      else if (!$m[3]) $align='';
+      else if (!$m[5]) $align='right';
+
+      $attr=$this->_td_attr($m[1],$align);
+      if (!$tr_attr) $tr_attr=$m[1]; // XXX
+      $attr.=$this->_td_span($cells[$i]);
+      $row.="<td $attr>".$cell.'</td>';
+    }
+    return $row;
   }
 
   function _td_attr(&$val,$align='') {
@@ -3188,20 +3212,26 @@ class Formatter {
          $close="";
          $indtype="dd";
          $indlen=strlen($match[0]);
+         $line=substr($line,$indlen);
          $liopen='';
          if ($indlen > 0) {
            $myindlen=$indlen;
-           $line=substr($line,$indlen);
            # check div type.
+           $mydiv=array('indent');
            if ($match[0][$indlen-1]=='>') {
              # get user defined style
              if (($line[0]=='.' or $line[0]=='#') and ($p=strpos($line,' '))) {
-               if ($line[0]=='.') $dt='class';
-               else $dt='id';
-               $divtype=" $dt=\"".substr($line,1,$p-1).'"';
+               $divtype='';
+               $mytag=substr($line,1,$p-1);
+               if ($line[0]=='.') $mydiv[]=$mytag;
+               else $divtype=' id="'.$mytag.'"';
+               $divtype.=' class="quote '.implode(' ',$mydiv).'"';
                $line=substr($line,$p+1);
-             } else
-               $divtype=' class="indent '.$this->quote_style.'"';
+             } else {
+               if ($line[0] == ' ')
+                 $line=substr($line,1); // with space
+               $divtype=' class="quote indent '.$this->quote_style.'"';
+             }
            } else {
              $divtype=' class="indent"';
            }
@@ -3270,39 +3300,69 @@ class Formatter {
       }
 
       #if (!$in_pre && !$in_table && preg_match("/^\|\|.*\|\|$/",$line)) {
-      if (!$in_pre && $line[0]=='|' && !$in_table && preg_match("/^(\|([^\|]+)?\|((\|\|)*))(&lt;[^>\|]*>)?(.*)(\|\|)$/s",$line,$match)) {
+      if (!$in_pre && $line[0]=='|' && !$in_table && preg_match("/^(\|([^\|]+)?\|((\|\|)*))(&lt;[^>\|]*>)?(.*)$/s",$line,$match)) {
         $open.=$this->_table(1,$match[5]);
         if ($match[2]) $open.='<caption>'.$match[2].'</caption>';
-        if (!$match[5]) $line='||'.$match[3].$match[6].'||';
+        if (!$match[5]) $line='||'.$match[3].$match[6];
         $in_table=1;
-      } elseif ($in_table && ($line[0]!='|' or
-           !preg_match("/^\|{2}.*\|{2}$/",$line))) {
-         $close=$this->_table(0,$dumm).$close;
-         $in_table=0;
-      }
-      if ($in_table) {
-        $line=substr($line,0,-2);
-        $cells=preg_split('/((?:\|\|)+)/',$line,-1,
-          PREG_SPLIT_DELIM_CAPTURE);
-        $row='';
-        $tr_attr='';
-        for ($i=1,$s=sizeof($cells);$i<$s;$i+=2) {
-          $align='';
-          preg_match('/^((&lt;[^>]+>)?)(\s?)(.*)(?<!\s)(\s*)?$/s',
-            $cells[$i+1],$m);
-          $cell=$m[3].$m[4].$m[5];
-          $cell=str_replace("\n","<br />\n",$cell);
-          if ($m[3] and $m[5]) $align='center';
-          else if (!$m[3]) $align='';
-          else if (!$m[5]) $align='right';
-
-          $attr=$this->_td_attr($m[1],$align);
-          if (!$tr_attr) $tr_attr=$m[1]; // XXX
-          $attr.=$this->_td_span($cells[$i]);
-          $row.="<td $attr>".$cell.'</td>';
+        if ($this->use_etable && !preg_match('/\|\|$/',$match[6])) {
+          $text.=$open;
+          $this->table_line.=substr($line,2)."\n";
+          continue;
         }
-        $line="<tr $tr_attr>".$row.'</tr>';
+      } elseif ($in_table && ($line[0]!='|' or
+              !preg_match("/^\|{2}.*\|{2}$/",$line))) {
+        if ($this->use_etable && $in_table && preg_match('/^\|\|/',$line)) {
+          $this->table_line.=substr($line,2)."\n";
+          continue;
+        }
+        $close=$this->_table(0,$dumm).$close;
+        $in_table=0;
+      }
+      while ($in_table) {
+        $line=substr($line,0,-2);
+        if ($this->use_etable && $this->table_line) {
+          $nline='||'.$this->table_line;
+          $this->table_line='';
+          if (!preg_match('/^\|+$/',$line)) $nline.=$line;
+ 
+          $row=$this->_td($nline,$tr_attr);
+          if (!$this->in_tr) {
+            $this->in_tr=1;
+            $nline="<tr $tr_attr>".$row;
+            $tr_attr='';
+          } else {
+            $nline=$row;
+          }
+          if (preg_match('/^\|{3,}$/',$line)) {
+
+            $nline.='</tr>';
+            $this->in_tr=0;
+          }
+          $line=$nline;
+        } else {
+          $tr_attr='';
+          $row=$this->_td($line,$tr_attr);
+          $line="<tr $tr_attr>".$row.'</tr>';
+          $tr_attr='';
+        }
+
         $line=str_replace('\"','"',$line); # revert \\" to \"
+        break;
+      }
+      if ($this->use_etable && !$in_table && $this->table_line) {
+        $tline='';      
+        $row=$this->_td('||'.$this->table_line,$tr_attr);
+          if (!$this->in_tr) {
+            $tline="<tr $tr_attr>";
+            $tr_attr='';
+          }
+          $tline.=$row.'</tr>';
+          $this->in_tr=0;
+          $this->table_line='';
+          $tline=str_replace('\"','"',$tline); # revert \\" to \"
+          $tline=preg_replace_callback("/(".$wordrule.")/",
+            array(&$this,'link_repl'),$tline);
       }
 
       # InterWiki, WikiName, {{{ }}}, !WikiName, ?single, ["extended wiki name"]
@@ -3340,7 +3400,15 @@ class Formatter {
           $anchor_id='sect-'.$this->sect_num;
           $anchor="<a id='$anchor_id'></a>";
         }
-        $line=$anchor.$edit.$this->head_repl(strlen($m[1]),$m[2]);
+        $attr='';
+        if ($DBInfo->use_folding == 1) {
+          $attr=" onclick=\"document.getElementById('sc-$this->sect_num').style.display=document.getElementById('sc-$this->sect_num').style.display!='none'? 'none':'block';\"";
+        } else {
+          $attr=" onclick=\"foldingSection(this,'sc-$this->sect_num');\"";
+        }
+
+        $line=$anchor.$edit.$this->head_repl(strlen($m[1]),$m[2],$attr);
+        $line.=$this->_div(1,$in_div,$dummy,' id="sc-'.$this->sect_num.'"'); // for folding
         $edit='';$anchor='';
       }
 
@@ -3357,7 +3425,8 @@ class Formatter {
       #if ($this->auto_linebreak and preg_match('/<div>$/',$line))
       #  $this->nobr=1;
 
-      $line=$close.$p_closeopen.$open.$line;
+      $line=$tline.$close.$p_closeopen.$open.$line;
+      $tline='';
       $open="";$close="";
 
       if ($in_pre==-1) {
