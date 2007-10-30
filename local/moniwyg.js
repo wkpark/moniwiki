@@ -401,6 +401,40 @@ proto.do_link = function() {
     this.exec_command('createlink', url);
 }
 
+if (!Wikiwyg.is_ie) {
+proto.get_selection = function() { // See IE, below
+    return this.get_edit_window().getSelection();
+}
+} else {
+proto.get_selection = function() {
+    var selection = this.get_edit_document().selection;
+    if (selection != null)
+        return selection.createRange();
+    return null;
+}
+}
+
+proto.do_indent = function() {
+    var sel=this.get_selection();
+    var node=sel.focusNode.parentNode.nodeName; // XXX
+    if (node && node != 'TD' && !node.match(/^H[1-6]$/))
+        this.exec_command('indent');
+}
+
+proto.do_ordered = function() {
+    var sel=this.get_selection();
+    var node=sel.focusNode.parentNode.nodeName; // XXX
+    if (node && node != 'TD' && !node.match(/^H[1-6]$/))
+        this.exec_command('insertorderedlist');
+}
+
+proto.do_unordered = function() {
+    var sel=this.get_selection();
+    var node=sel.focusNode.parentNode.nodeName; // XXX
+    if (node && node != 'TD' && !node.match(/^H[1-6]$/))
+        this.exec_command('insertunorderedlist');
+}
+
 proto.do_image = function() {
     var base = location.href.replace(/(.*?:\/\/.*?\/).*/, '$1');
 
@@ -566,7 +600,8 @@ proto.insert_new_line = function() {
 }
 
 proto.format_blockquote = function(element) {
-    this.make_list(element,'indent');
+    this.make_list(element,'quote');
+    //this.make_list(element,'indent');
     this.chomp();
     this.appendOutput("\n");
     return;
@@ -626,7 +661,8 @@ proto.format_blockquote_old = function(element) {
 proto.format_table = function(element) {
     this.assert_blank_line();
     var style =element.getAttribute('style');
-    var cls =element.getAttribute('class') || element.getAttribute('className');
+    var cls =element.getAttribute('class') ||
+        element.getAttribute('className') || '';
     var width =element.getAttribute('width');
     var color =element.getAttribute('bgcolor');
     var m;
@@ -663,6 +699,13 @@ proto.format_tr = function(element) {
 proto.format_br = function(element) {
     var str1 = this.output[this.output.length - 1];
     var str2 = (this.output.length) > 2 ? this.output[this.output.length - 2]:null;
+
+    var pn=element.parentNode.nodeName;
+    if (pn && (pn == 'TD' || pn.match(/^H[1-6]$/))) {
+        this.output.pop();
+        this.appendOutput(str1 + "&\n");
+        return;
+    }
 
     if (str1 && ! str1.whitespace && !str1.match(/\n$/)) {
         this.output.pop();
@@ -751,11 +794,12 @@ proto.walk_n = function(element) {
                 this.appendOutput(part.nodeValue);
             }
             else if (part.nodeValue.match(/[^\n]/)) {
+                var str = part.nodeValue.replace(/^\n/,'');
                 if (this.no_collapse_text) {
-                    this.appendOutput(part.nodeValue);
+                    this.appendOutput(str);
                 }
                 else {
-                    this.appendOutput(this.collapse(part.nodeValue));
+                    this.appendOutput(this.collapse(str));
                 }
             }
         }
@@ -795,7 +839,11 @@ proto.format_div = function(element) {
     }
     if (this.is_indented(element)) {
         //this.format_blockquote(element);
-        this.make_list(element,'indent');
+        var cls = element.getAttribute('class') ||element.getAttribute('className');
+        if (cls && cls.match(/quote/))
+            this.make_list(element,'quote');
+        else
+            this.make_list(element,'indent');
         this.chomp();
         this.appendOutput("\n");
         return;
@@ -811,8 +859,20 @@ proto.make_list = function(element, list_type) {
         //this.insert_new_line(); // XXX
 
     this.list_type.push(list_type);
-    if (this.list_type.length)
+    if (this.list_type.length) {
+        this.div_tag = '';
+        if (list_type == 'indent' || list_type == 'quote') {
+            var id = element.getAttribute('id');
+            if (id) {
+                if (id) this.div_tag = '#' + id;
+            } else {
+                var cls = element.getAttribute('class') ||element.getAttribute('className');
+                var tag = cls.replace(/quote|indent/g,'').replace(/(^\s*|\s*$)/g,'');
+                if (tag) this.div_tag = '.' + tag;
+            }
+        }
         this.first_indent_line = true;
+    }
 
     this.walk(element);
     this.first_indent_line=false;
@@ -927,6 +987,7 @@ proto.do_indent = function() {
     this.selection_mangle(
         function(that) {
             if (that.sel == '') return false;
+            if (that.sel.match(/^\s*(=+)\s+.*\s+\1\s?$/)) return false;
             that.sel = that.sel.replace(/^(\>\s)/gm, '$1$1');
             that.sel = that.sel.replace(/^/gm, ' '); // space indent
             that.sel = that.sel.replace(/^ (\>\s)/gm, '$1');
@@ -934,6 +995,18 @@ proto.do_indent = function() {
         }
     )
 }
+
+proto.do_quote = function() {
+    this.selection_mangle(
+        function(that) {
+            if (that.sel == '') return false;
+            if (that.sel.match(/^\s*(=+)\s+.*\s+\1\s?$/)) return false;
+            that.sel = that.sel.replace(/^/gm, '> ');
+            return true;
+        }
+    )
+}
+
 
 proto.do_outdent = function() {
     this.selection_mangle(
@@ -1047,7 +1120,7 @@ else // Wikiwyg snapshot
     proto.format_image = Wikiwyg.Wikitext.make_formatter('image');
 proto.do_image = Wikiwyg.Wikitext.make_do('image');
 proto.do_media = Wikiwyg.Wikitext.make_do('media');
-proto.do_quote = Wikiwyg.Wikitext.make_do('quote');
+//proto.do_quote = Wikiwyg.Wikitext.make_do('quote');
 
 proto.collapse = function(string) {
     return string.replace(/\r\n|\r/g, ''); // FIX
@@ -1155,7 +1228,7 @@ proto.get_wiki_comment = function(element) {
 
 proto.is_indented = function (element) {
     var cls = element.getAttribute('class') ||element.getAttribute('className');
-    return cls == 'indent';
+    return cls && cls.match(/indent/);
 }
 
 proto.handle_opaque_phrase = function(element) {
@@ -1240,9 +1313,14 @@ proto.walk = function(element) {
                         indent = ind.times(level)
                             + ind.times(markup.length) + ' ';
                     } else {
+                        if (markup == '>') ind = markup + ind; // markup specific XXX
                         indent = ind.times(level);
                         if (this.first_indent_line) {
-                            this.appendOutput(indent);
+                            if (this.div_tag) {
+                                var myindent=indent.substr(0,indent.length-1);
+                                this.appendOutput(myindent + this.div_tag + ' ');
+                            } else 
+                                this.appendOutput(indent);
                             this.first_indent_line=false;
                         }
                     }
