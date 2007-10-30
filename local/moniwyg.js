@@ -548,10 +548,14 @@ proto.format_img = function(element) {
         var style = element.getAttribute('style');
         var width = element.getAttribute('width');
         var height = element.getAttribute('height');
-        var myclass = element.getAttribute('class');
-        if (myclass) { // FIXME
+        var myclass = element.getAttribute('class') || element.getAttribute('className');
+        if (myclass) {
             if (myclass.match(/(tex|interwiki|smiley|external)$/)) {
-                this.appendOutput(element.getAttribute('alt'));
+                if (this.output.length) {
+                    var trail=this.output[this.output.length-1];
+                    if (!trail.match(/\s$/)) this.appendOutput(' ');
+                }
+                this.appendOutput(element.getAttribute('alt')+ ' ');
                 return;
             }
         }
@@ -564,14 +568,13 @@ proto.format_img = function(element) {
 
         if (style) {
             if (typeof style == 'object') style= style.cssText;
-            alert(style);
             var w = style.match(/width:\s*(\d+)px/i);
             var h = style.match(/height:\s*(\d+)px/i);
             if (w) attr+=(attr ? '&':'') + 'width='+w[1];
             if (h) attr+=(attr ? '&':'') + 'height='+h[1];
         }
 
-        if (myclass) { // FIXME
+        if (myclass) {
             var m = myclass.match(/img(Center|Left|Right)$/);
             if (m && m[1]) attr+=(attr ? '&':'') + 'align='+m[1].toLowerCase();
         }
