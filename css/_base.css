@@ -265,9 +265,9 @@ div.closure {
 }
 
 div.indent {
-  padding-top: 3px;
-  margin-top: 3px;
-  padding-left: 10px;
+  margin:5px 0px 5px 0px;
+  padding:0px 1em 0px 0px;
+  border-left:2px solid #e0e0e0;
 }
 
 div.hint { font-size: 10px; background-color: #369; color:white;}
@@ -420,6 +420,12 @@ h4:hover a.perma, h5:hover a.perma, h6:hover a.perma {
   background-color:#ffff00;
   border-left:2px solid #F5E238;
   border-right:2px solid #F5E238;
+}
+
+.wikiMarkupEdit pre, .wikiMarkupEdit span {
+  background-color:#ffff00;
+  border:2px dotted #F5E238;
+  font-family: "Courier New",sans-serif;
 }
 
 /* since v1.1.3 */
