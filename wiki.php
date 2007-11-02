@@ -2532,9 +2532,9 @@ class Formatter {
   function processor_repl($processor,$value,$options="") {
     $bra='';$ket='';
     if (!empty($this->wikimarkup) and empty($options['nomarkup'])) {
-      if ($processor == 'latex' and $options['type']) {
+      if ($options['type'] == 'inline') {
         $markups=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$value);
-        $bra= "<span class='wikiMarkup'><!-- wiki:\n".$markups."\n-->";
+        $bra= "<span class='wikiMarkup' style='display:inline'><!-- wiki:\n".$markups."\n-->";
       } else {
         if ($value{0}!='#' and $value{1}!='!') $notag="\n";
         $markups=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$value);
@@ -3055,8 +3055,8 @@ class Formatter {
     $wordrule="({{{(?U)(.+)}}})|".
               "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|"; # macro
     if ($DBInfo->inline_latex) # single line latex syntax
-      $wordrule.="(?<=\s|^|>)\\$([^\\$]+)\\$(?:\s|$)|".
-                 "(?<=\s|^|>)\\$\\$([^\\$]+)\\$\\$(?:\s|$)|";
+      $wordrule.="(?<=\s|^|>)\\$([^\\$]+)\\$(?=\s|\.|\,|$)|".
+                 "(?<=\s|^|>)\\$\\$([^\\$]+)\\$\\$(?=\s|$)|";
     #if ($DBInfo->builtin_footnote) # builtin footnote support
     $wordrule.=$this->footrule.'|';
     $wordrule.=$this->wordrule;
