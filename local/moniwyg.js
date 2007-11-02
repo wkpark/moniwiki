@@ -35,6 +35,48 @@ if (Wikiwyg.is_ie) {
     }
 }
 
+Wikiwyg.Mode.prototype.execute_scripts = function(el) {
+    var doc;
+    var iframe=null;
+
+    if (this.classname.match(/(Wysiwyg)/)) {
+        iframe = this.edit_iframe;
+        doc = iframe.contentDocument || iframe.contentWindow.document;
+        el= this.get_edit_document().body; // XXX
+    } else if (this.classname.match(/(Preview)/)) {
+        doc = document;
+    } else {
+        return;
+    }
+
+    var head = document.getElementsByTagName("head")[0];
+    var scripts;
+
+    if (el)
+        scripts= el.getElementsByTagName('script');
+    else
+        scripts= this.div.getElementsByTagName('script');
+
+    for (var i=0;i<scripts.length;i++) {
+        var n=scripts[i].cloneNode(true);
+        if (scripts[i].src) {
+            var js=document.createElement('script');
+            js.type='text/javascript';
+            js.src=n.src;
+            head.appendChild(js);
+        } else {
+            var js1=doc.createElement('script');
+            js1.type='text/javascript';
+            if (iframe) // hack XXX
+                js1.text=n.text.replace(/document\./g,'doc.');
+            else
+                js1.text=n.text;
+            eval(js1.text); // XXX
+            //head.appendChild(js1);
+        }
+    }
+}
+
 // Returns if current position is in a wikimarkup block or not
 Wikiwyg.Wysiwyg.prototype.get_wikimarkup_node = function() {
     var p=this.get_parent_node();
@@ -49,6 +91,28 @@ Wikiwyg.Wysiwyg.prototype.get_wikimarkup_node = function() {
         p=p.parentNode;
     }
     return null;
+}
+
+Wikiwyg.Wysiwyg.prototype.check_parent_node = function() {
+    var p=this.get_parent_node();
+    while (p && (p.nodeType == 1) && (p.tagName.toLowerCase() != 'body')) {
+        if (p.nodeName == 'TD' ||
+                p.nodeName == 'PRE' ||
+                p.nodeName.match(/^H[1-6]/)) {
+            return p;
+            break;
+        } else if (p.nodeName == 'SPAN') {
+            if (p.className &&
+                    p.className.match(/wikiMarkup/) &&
+                    p.firstChild.nodeType == 8 &&
+                    p.firstChild.data.match(/^\s*wiki/)) {
+                return p;
+                break;
+            }
+        }
+        p=p.parentNode;
+    }
+    return p;
 }
 
 Wikiwyg.Wysiwyg.prototype.set_focus = function(el) {
@@ -77,10 +141,14 @@ Wikiwyg.Wysiwyg.prototype.set_focus = function(el) {
 Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag) {
     var markup = el.firstChild;
     if (markup.nodeType != 8) return false;
+    var self= this;
+    var type;
 
     if (el.className == 'wikiMarkup') {
         el.className = 'wikiMarkupEdit';
-        var pre=document.createElement('pre');
+        if (el.style.display == 'inline') type='span';
+        else type='pre';
+        var edit=document.createElement(type);
         var div=document.createElement('div');
         var text = markup.data.replace(/^ wiki:(\s|\\n)+/, '')
                    .replace(/-=/g, '-')
@@ -88,7 +156,7 @@ Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag) {
                    .replace(/(\r\n|\n|\r)+$/, '') //.replace(/\s$/, '') IE fix
                    .replace(/\{(\w+):\s*\}/, '{$1}');
         text=text.replace(/>/g,'&gt;');
-        var newhtml='<!--'+markup.data+'--><pre>'+text+'</pre>';
+        var newhtml='<!--'+markup.data+'--><'+type+'>'+text+'</'+type+'>';
 
         if (Wikiwyg.is_ie) {
             el.innerHTML = "<br>" +newhtml; // Bah.... IE hack :(
@@ -99,9 +167,9 @@ Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag) {
 
         this.set_focus(el.firstChild.nextSibling);
     } else if (flag && el.className == 'wikiMarkupEdit') {
-        var pre=markup.nextSibling;
-        if (pre==null) return;
-        var myText=pre.innerHTML
+        var edit=markup.nextSibling;
+        if (edit==null) return;
+        var myText=edit.innerHTML
                         .replace(/<br>/ig,"\n")
                         .replace(/&gt;/g,'>')
                         .replace(/&lt;/g,'<')
@@ -119,19 +187,22 @@ Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag) {
         } else {
             div.innerHTML=fixup_markup_style(myhtml);
         }
+        //alert(div.innerHTML);
 
         var n=div.firstChild;
         for (;n && n.nodeName!='SPAN';n=n.nextSibling);
 
-        if (n.nodeName=='SPAN') {
+        if (n && n.nodeName=='SPAN') {
             if (Wikiwyg.is_ie) {
                 el.innerHTML='<br>'+n.outerHTML; // IE hack
                 el.removeChild(el.firstChild);
             } else {
+                //el.innerHTML=nn.innerHTML; // not work properly :(
                 el.parentNode.insertBefore(n,el); // insert
                 el.parentNode.removeChild(el);
-                this.set_focus(el.firstChild.nextSibling);
+                this.set_focus(n.firstChild.nextSibling);
             }
+            this.execute_scripts(n);
         }
     }
     return true;
@@ -287,11 +358,14 @@ Wikiwyg.prototype.switchMode = function(new_mode_key) {
             new_mode.enableFinished();
             old_mode.disableFinished();
             self.current_mode = new_mode;
+            self.current_mode.execute_scripts(new_mode.div);
         }
     );
     if (typeof textAreaAutoAttach == 'function') // support resizable textarea
         textAreaAutoAttach();
 }
+
+
 
 Wikiwyg.prototype.editMode = function(form,text) {
     var self = this;
@@ -309,7 +383,10 @@ Wikiwyg.prototype.editMode = function(form,text) {
         var myWikiwyg = new Wikiwyg.Wikitext();
 
         myWikiwyg.convertWikitextToHtml(wikitext,
-            function(new_html) { self.current_mode.fromHtml(fixup_markup_style(new_html)); });
+            function(new_html) {
+                self.current_mode.fromHtml(fixup_markup_style(new_html));
+                self.current_mode.execute_scripts();
+            });
     }
     else {
         this.current_mode.textarea.value = wikitext;
@@ -354,6 +431,8 @@ function fixup_markup_style(html)
                 //        spans[i].style.display='block';
                 //}
                 //
+                if (spans[i].style.display == 'inline') continue;
+                // inline markups
 
                 for (var p= spans[i].firstChild; p; p= p.nextSibling) {
                     if (p.nodeType == 1 && p.nodeName != 'IMG' &&
@@ -393,7 +472,7 @@ proto.enable_edit_wikimarkup = function() {
         this.onclick_wikimarkup = this.get_onclick_wikimarkup_function();
         if (window.addEventListener) {
             this.get_keybinding_area().addEventListener(
-                'dblclick', this.onclick_wikimarkup, false
+                'dblclick', this.onclick_wikimarkup, true
             );
         } else {
             this.get_keybinding_area().attachEvent(
@@ -597,21 +676,58 @@ proto.get_parent_node = function() {
 
 
 proto.do_indent = function() {
-    var node=this.get_parent_node().nodeName;
-
-    if (node && node != 'TD' && !node.match(/^H[1-6]$/))
+    var node=this.check_parent_node().nodeName;
+    if (node && node == 'BODY')
         this.exec_command('indent');
 }
 
+proto.do_math = function() {
+    var node=this.check_parent_node().nodeName;
+    if (node && node != 'BODY') return;
+
+    var html =
+        '<span class="wikiMarkupEdit" style="display:inline">' +
+        "<!-- wiki:\n$ $\n-->" +
+        '<span>$&nbsp;$</span></span>';
+    this.insert_table(html);
+}
+
+proto.do_hr = function() {
+    var node=this.check_parent_node().nodeName;
+    if (node && node == 'BODY')
+        this.exec_command('inserthorizontalrule');
+}
+
+proto.do_h2 = function(command) {
+    var node=this.check_parent_node().nodeName;
+    if (node && node == 'BODY')
+        this.exec_command('formatblock','<' + command + '>');
+}
+
+proto.do_table = function(command) {
+    var node=this.check_parent_node().nodeName;
+    if (node && node != 'BODY') return;
+
+    var html =
+        '<table><tbody>' +
+        '<tr><td>A</td>' +
+            '<td>B</td>' +
+            '<td>C</td></tr>' +
+        '<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' +
+        '<tr><td>&nbsp;</td><td>&nbsp;</td><td>&nbsp;</td></tr>' +
+        '</tbody></table>';
+    this.insert_table(html);
+}
+
 proto.do_ordered = function() {
-    var node=this.get_parent_node().nodeName;
-    if (node && node != 'TD' && !node.match(/^H[1-6]$/))
+    var node=this.check_parent_node().nodeName;
+    if (node && node == 'BODY')
         this.exec_command('insertorderedlist');
 }
 
 proto.do_unordered = function() {
-    var node=this.get_parent_node().nodeName;
-    if (node && node != 'TD' && !node.match(/^H[1-6]$/))
+    var node=this.check_parent_node().nodeName;
+    if (node && node == 'BODY')
         this.exec_command('insertunorderedlist');
 }
 
@@ -646,6 +762,7 @@ proto.initialize_object = function() {
     this.textarea.setAttribute('id', 'wikiwyg_wikitext_textarea');
     this.textarea.setAttribute('class', 'resizable');
     this.div.appendChild(this.textarea);
+
     this.area = this.textarea;
     this.clear_inner_text();
 }
