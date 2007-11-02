@@ -1,7 +1,15 @@
 <?php
-// Copyright 2005 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2005-2007 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a asciimathml processor plugin by AnonymousDoner
+//
+// Author: Won-Kyu Park <wkpark@kldp.org> and AnonymousDoner
+// Date: 2007-11-02
+// Name: a AsciiMathML processor
+// Description: It support AsciiMathML
+// URL: MoniWiki:AsciiMathML
+// Version: $Revision$
+// License: GPL
 //
 // please see http://kldp.net/forum/message.php?msg_id=9419
 //
@@ -28,20 +36,30 @@
 function processor_asciimathml($formatter,$value="") {
   global $DBInfo;
 
-  $_add_func=1;
-
-  $flag = 0;
-  $id=&$GLOBALS['_transient']['asciimathml'];
-  if ( !$id ) { $flag = 1; $id = 1; }
   if ($value[0]=='#' and $value[1]=='!')
   list($line,$value)=explode("\n",$value,2);
 
   if ($line)
-  list($tag,$args)=explode(' ',$line,2);
+    list($tag,$args)=explode(' ',$line,2);
+
+  $_add_func=1;
+
+  $flag = 0;
+  $bgcolor='';
+  if (!$formatter->wikimarkup) {
+    $cid=&$GLOBALS['_transient']['asciimathml'];
+    if ( !$cid ) { $flag = 1; $cid = 1; }
+    $id=$cid;
+    $cid++;
+  } else {
+    $flag = 1;
+    $id=md5($value.'.'.time());
+    $bgcolor="mathbgcolor='yellow';\n";
+  }
 
   if ( $flag ) {
-    $out .= "<script type=\"text/javascript\" src=\"" .
-    $DBInfo->url_prefix ."/local/ASCIIMathML.js\"></script>\n";
+    $js=qualifiedUrl($DBInfo->url_prefix .'/local/ASCIIMathML.js');
+    $out .= "<script type=\"text/javascript\" src=\"$js\"></script>\n";
     if (preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']))
       $out.='<object id="mathplayer"'.
         ' classid="clsid:32F66A20-7614-11D4-BD11-00104BD3F987">'.
@@ -52,23 +70,27 @@ function processor_asciimathml($formatter,$value="") {
       $out.=<<<AJS
 <script type="text/javascript">
 /*<![CDATA[*/
-function translateById(objId) {
+function translateById(objId,flag) {
   AMbody = document.getElementById(objId);
+  math2ascii(AMbody); // for WikiWyg mode switching
+$bgcolor
   AMprocessNode(AMbody, false);
   if (isIE) { //needed to match size and font of formula to surrounding text
-    var frag = document.getElementsByTagName('math');
-    for (var i=0;i<frag.length;i++) frag[i].update()
+    var frag = AMbody.getElementsByTagName('math')[0];
+    frag.update()
   }
 }
-  AMinitSymbols();
+
+// AMinitSymbols();
 /*]]>*/
 </script>
 AJS;
   }
 
-  $out .= "<div id=\"asciimathml" . $id . "\">$value</div>" .
-    "<script type=\"text/javascript\">translateById('asciimathml" . $id.
-    "');</script>";
-  $id++;
+  $out .= "<span><span class=\"AM\" id=\"AM-$id\">$value</span>" .
+    "<script type=\"text/javascript\">translateById('AM-$id');".
+    "</script></span>";
   return $out;
 }
+
+// vim:et:sts=2:sw=2
