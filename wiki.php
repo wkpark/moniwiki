@@ -3607,19 +3607,28 @@ class Formatter {
   function register_javascripts($js) {
     if (is_array($js)) {
       array_merge($this->java_scripts,$js);
-    } else if (!in_array($js,$this->java_scripts)) {
-      $this->java_scripts[]=$js;
+    } else {
+      if ($js{0} == '<') { $tag=md5($js); }
+      else $tag=$js;
+      if (!empty($this->javascripts[$tag]))
+        $this->java_scripts[$tag]=$js;
     }
   }
 
   function get_javascripts() {
     $out='';
-    foreach ($this->java_scripts as $js) {
-      if (!preg_match('@^http://@',$js))
-        $js=$this->url_prefix.'/local/'.$js;
-      $out.="<script type='text/javascript' src='$js'></script>\n";
+    foreach ($this->java_scripts as $k=>$js) {
+      if ($js) {
+        if ($js{0} != '<') {
+          if (!preg_match('@^(http://|/)@',$js))
+            $js=$this->url_prefix.'/local/'.$js;
+          $out.="<script type='text/javascript' src='$js'></script>\n";
+        } else {
+          $out.=$js;
+        }
+        $this->java_scripts[$k]='';
+      }
     }
-    $this->java_scripts=array();
     return $out;
   }
 
@@ -3783,7 +3792,9 @@ _url_prefix="$DBInfo->url_prefix";
 /*]]>*/
 </script>
 JSHEAD;
-      print $metatags.$js."\n".$keywords;
+      print $metatags.$js."\n";
+      print $this->get_javascripts();
+      print $keywords;
       print "  <title>$DBInfo->sitename: ".$options['title']."</title>\n";
       if ($upper)
         print '  <link rel="Up" href="'.$this->link_url($upper)."\" />\n";
