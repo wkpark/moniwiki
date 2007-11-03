@@ -10,13 +10,15 @@ function do_markup($formatter,$options) {
     $formatter->sister_on=0;
     $formatter->perma_icon='';
 
+    $formatter->get_javascripts(); // trash default javascripts
+
     //$options['fixpath']=1;
     $formatter->postfilters=array('fiximgpath');
     if (!$options['all']) $formatter->wikimarkup=1;
     if ($options['value']) {
         $val=_stripslashes($options['value']);
         $val= preg_replace('/(\r\n|\n|\r)/',"\n",$val); // Win32 fix
-        $formatter->send_page(_stripslashes($val),$options);
+        $formatter->send_page($val,$options);
     } else {
         if (isset($options['section'])) {
             $formatter->section_edit=1;
