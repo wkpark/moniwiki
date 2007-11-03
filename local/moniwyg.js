@@ -188,7 +188,7 @@ Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag,focus) {
         var postdata = 'action=markup&value=' + encodeURIComponent(myText);
         var myhtml= HTTPPost(top.location, postdata);
 
-        var myhtml = myhtml.replace(/^(.|\n)*(<span)/i,'<span')
+        var myhtml = myhtml.replace(/^(.|\n)*<div>(\s|\n)*(<span)/i,'$3')
                 .replace(/<\/span>(\s|\n)*<\/?div>$/i,'</span>');
 
         var div=document.createElement('div');
@@ -211,7 +211,8 @@ Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag,focus) {
                 //el.innerHTML=nn.innerHTML; // not work properly :(
                 el.parentNode.insertBefore(n,el); // insert
                 el.parentNode.removeChild(el);
-                this.set_focus(n.firstChild.nextSibling,focus);
+                this.set_focus(n,focus);
+                //this.set_focus(n.firstChild.nextSibling,focus);
             }
             this.execute_scripts(n);
         }
