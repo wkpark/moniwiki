@@ -1,11 +1,17 @@
 <?php
-// Copyright 2003-2006 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2007 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a latex processor plugin for the MoniWiki
 //
 // Usage: {{{#!latex
 // $ \alpha $
 // }}}
+//
+// under Win32 env. you have to add latex/ImageMagick pathes like as following:
+// # in config.php
+// $path='./bin;C:/Program Files/MiKTeX 2.5/miktex/bin;C:/Program Files/ImageMagick-6.3.6-Q16';
+// # ImagMagick and MikTeX are used in this setting.
+//
 // $Id$
 
 function _latex_renumber($match,$tag='\\tag') {
@@ -113,6 +119,8 @@ function processor_latex(&$formatter,$value="") {
   $NULL='/dev/null';
   if(getenv("OS")=="Windows_NT") {
     $NULL='NUL';
+    $vartmp_dir=getenv('TEMP');
+    #$convert="wconvert";
   }
 
   if ($formatter->preview and !$DBInfo->latex_allinone) {
@@ -218,5 +226,5 @@ function processor_latex(&$formatter,$value="") {
          "title='$title' />".$ket;
 }
 
-// vim:et:sts=2:
+// vim:et:sts=2:sw=2
 ?>
