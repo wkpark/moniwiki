@@ -161,6 +161,9 @@ Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag,focus) {
         else type='pre';
         var edit=document.createElement(type);
         var div=document.createElement('div');
+
+        var myWikitext=new Wikiwyg.Wikitext();
+        markup = myWikitext.get_wiki_comment(el);
         var text = markup.data.replace(/^ wiki:(\s|\\n)+/, '')
                    .replace(/-=/g, '-')
                    .replace(/==/g, '=')
@@ -236,13 +239,18 @@ Wikiwyg.Wysiwyg.prototype.get_key_down_function = function() {
             var focus=0;
             var stop=false;
 
-            if (key == 'I') focus|=1;
-            else if (key == 'S') focus|=2;
-            if (wm.className == 'wikiMarkup') {
-                self.update_wikimarkup(wm,false,focus);
-                stop=true;
-            } else if (e.ctrlKey) {
-                stop=true; // FIXME
+            if (!e.ctrlKey) {
+                if (key == 'I') focus|=1;
+                else if (key == 'S') focus|=2;
+                if (wm.className == 'wikiMarkup') {
+                    self.update_wikimarkup(wm,false,focus);
+                    stop=true;
+                }
+            } else {
+                if (key == 'A' && wm.className == 'wikiMarkupEdit') { // select node
+                    self.set_focus(wm,2);
+                    stop=true;
+                }
             }
 
             if (stop) {    
@@ -295,17 +303,17 @@ Wikiwyg.prototype.saveChanges = function() {
     var self = this;
     var myWikiwyg = new Wikiwyg.Wikitext();
     var wikitext;
+    var myhtml;
 
-    this.current_mode.toHtml( function(html) { self.fromHtml(html) });
-
-    if (this.current_mode.classname.match(/(Wysiwyg|HTML|Preview)/)) {
-
-        this.current_mode.fromHtml(this.div.innerHTML);
-
-        wikitext = myWikiwyg.convert_html_to_wikitext(this.div.innerHTML);
-    }
-    else {
+    if (this.current_mode.classname == 'Wikiwyg.Wikitext') {
         wikitext = this.current_mode.textarea.value;
+    } else {
+        if (this.current_mode.classname.match(/(Wysiwyg|Preview)/)) {
+            this.current_mode.toHtml( function(html) { myhtml = html; });
+        } else if (this.current_mode.classname=='Wikiwyg.HTML') {
+            myhtml = this.current_mode.textarea.value;
+        }
+        wikitext = myWikiwyg.convert_html_to_wikitext(myhtml);
     }
 
     var datestamp='';
@@ -319,8 +327,8 @@ Wikiwyg.prototype.saveChanges = function() {
         else if (this.myinput[i].name == 'action')
             myaction=this.myinput[i].value;
     }
-    //alert(datestamp+'/'+section);
 
+    // for preview
     myWikiwyg.convertWikitextToHtmlAll(wikitext,
         function(new_html) {
             //self.div.innerHTML = new_html
@@ -328,7 +336,18 @@ Wikiwyg.prototype.saveChanges = function() {
             self.div.removeChild(self.div.firstChild);
         });
 
-    // save
+    // XXX using default form XXX
+    var area=document.getElementById('editor_area');
+    if (area) {
+        var textarea=area.getElementsByTagName('textarea')[0];
+        var form=area.getElementsByTagName('form')[0];
+        if (textarea) textarea.value=wikitext;
+
+        form.submit();
+        return;
+    }
+
+    // save section
     var toSend = 'action=' + myaction + '/ajax' +
     '&savetext=' + encodeURIComponent(wikitext) +
     '&datestamp=' + datestamp;
@@ -359,8 +378,9 @@ Wikiwyg.prototype.saveChanges = function() {
         f.setAttribute('class','errorLog');
         // show error XXX
         f.innerHTML=form;
-        self.parentNode.appendChild(f);
+        alert('Can\'t save.'); // XXX
     }
+
     return;
 }
 
@@ -554,6 +574,17 @@ proto.enable_keybindings = function() { // See IE
     }
 }
 
+proto.initializeObject = function() {
+    this.edit_iframe = this.get_edit_iframe();
+    this.wrapper=document.createElement('div');
+    this.wrapper.className='resizable wrapper';
+    this.wrapper.appendChild(this.edit_iframe);
+    this.div = this.wrapper;
+
+    //this.div = this.edit_iframe;
+    this.set_design_mode_early();
+}
+
 proto.get_edit_iframe = function() {
     var iframe=null;
     var body;
@@ -608,14 +639,11 @@ proto.get_edit_iframe = function() {
             self.enable_keybindings();
             self.enable_edit_wikimarkup();
 
-/*
+            if (typeof textAreaWrapper == 'function')
+                new textAreaWrapper(self.edit_iframe,self.wrapper);
+            /*
             iframe.onload='undefined';
-            if (typeof textArea == 'function') {
-                var x=iframe.nextSibling;
-                if (x == null || ! x.className.match(/grippe/))
-                    new textArea(self.edit_iframe);
-            }
-*/
+            */
         }, 0);
 
         //editorDoc.onkeydown = editorDoc_onkeydown;
@@ -624,6 +652,7 @@ proto.get_edit_iframe = function() {
     }
 
     iframe.onload=iframeHandler; // ignored by IE :(
+
 
     body.appendChild(iframe);
 
@@ -1586,7 +1615,7 @@ proto.get_wiki_comment = function(element) {
                         node.data=orig+'?'+newquery;
                     } else {
                         node.data = node.data.replace(/\n+$/,""); // strip \n
-                        node.data+='?'+newquery;
+                        if (newquery) node.data+='?'+newquery;
                     }
 
                     return node;
