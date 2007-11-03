@@ -62,7 +62,7 @@ function processor_asciimathml($formatter,$value="") {
     $fontcolor="mathcolor='$myfontcolor';\n";
   } else {
     $flag = 1;
-    $id=md5($value.'.'.time());
+    $id=md5($value.'.'.microtime());
 
     # normal settings
     $bgcolor="mathbgcolor='$edit_mathbgcolor';\n";
