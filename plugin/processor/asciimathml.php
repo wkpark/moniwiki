@@ -42,24 +42,35 @@ function processor_asciimathml($formatter,$value="") {
   if ($line)
     list($tag,$args)=explode(' ',$line,2);
 
+  # 1 or 0
   $_add_func=1;
+  # customizable variables
+  $edit_mathbgcolor='yellow';
+  $myfontfamily='Palatino Linotype'; # or serif
+  $myfontcolor='#2171B1'; # red(default), black etc.
 
+  #
   $flag = 0;
-  $bgcolor='';
   if (!$formatter->wikimarkup) {
+    // use a md5 tag with a wikimarkup action
     $cid=&$GLOBALS['_transient']['asciimathml'];
     if ( !$cid ) { $flag = 1; $cid = 1; }
     $id=$cid;
     $cid++;
+
+    # wikimarkup specific settings
+    $fontcolor="mathcolor='$myfontcolor';\n";
   } else {
     $flag = 1;
     $id=md5($value.'.'.time());
-    $bgcolor="mathbgcolor='yellow';\n";
+
+    # normal settings
+    $bgcolor="mathbgcolor='$edit_mathbgcolor';\n";
   }
+  $fontfamily="mathfontfamily='$myfontfamily';\n";
 
   if ( $flag ) {
-    $js=qualifiedUrl($DBInfo->url_prefix .'/local/ASCIIMathML.js');
-    $out .= "<script type=\"text/javascript\" src=\"$js\"></script>\n";
+    $formatter->register_javascripts('ASCIIMathML.js');
     if (preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']))
       $out.='<object id="mathplayer"'.
         ' classid="clsid:32F66A20-7614-11D4-BD11-00104BD3F987">'.
@@ -72,8 +83,7 @@ function processor_asciimathml($formatter,$value="") {
 /*<![CDATA[*/
 function translateById(objId,flag) {
   AMbody = document.getElementById(objId);
-  math2ascii(AMbody); // for WikiWyg mode switching
-$bgcolor
+  if (math2ascii) math2ascii(AMbody); // for WikiWyg mode switching
   AMprocessNode(AMbody, false);
   if (isIE) { //needed to match size and font of formula to surrounding text
     var frag = AMbody.getElementsByTagName('math')[0];
@@ -81,6 +91,7 @@ $bgcolor
   }
 }
 
+$bgcolor$fontfamily$fontcolor
 // AMinitSymbols();
 /*]]>*/
 </script>
