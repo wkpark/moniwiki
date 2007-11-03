@@ -114,6 +114,17 @@ $hr='';
 #<script type="text/javascript" src="$url_prefix/local/autocomplete.js"></script>
 #<script type="text/javascript" src="$url_prefix/local/subindex.js"></script>
 #EOF;
+# alternatively you can use the $javascripts option
+#$javascripts=array(
+#	'Wikiwyg/lib/Wikiwyg.js',
+#	'Wikiwyg/lib/Wikiwyg/Util.js',
+#	'Wikiwyg/lib/Wikiwyg/Toolbar.js',
+#	'Wikiwyg/lib/Wikiwyg/Wikitext.js',
+#	'Wikiwyg/lib/Wikiwyg/Preview.js',
+#	'Wikiwyg/lib/Wikiwyg/HTML.js',
+#	'Wikiwyg/lib/Wikiwyg/Wysiwyg.js',
+#	'moniwyg.js',
+#	'ASCIIMathML.js');
 
 #$diffonly=1; # show only diff infos (do not show wiki contents)
 #$goto_type=1;
@@ -226,4 +237,6 @@ $use_refresh=2;
 $use_jwmediaplayer=1;
 $jwmediaplayer_prefix='http://www.jeroenwijering.com/embed';
 #$icon_list='edit,diff,show,find,print,info,help'; # set the icon list
+#$use_folding=0; # 1:default simple js / 2:with the prototype/mootools
+#$use_etable=0; # use new extended table syntax: experimental
 ?>
