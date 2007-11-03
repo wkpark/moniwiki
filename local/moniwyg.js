@@ -115,10 +115,18 @@ Wikiwyg.Wysiwyg.prototype.check_parent_node = function() {
     return p;
 }
 
-Wikiwyg.Wysiwyg.prototype.set_focus = function(el) {
+Wikiwyg.Wysiwyg.prototype.set_focus = function(el,focus) {
     var sel = this.get_selection();
     var iframe = this.edit_iframe;
     var doc = iframe.contentDocument || iframe.contentWindow.document;
+
+    flag=false;
+    collapse=true;
+    if (focus!=null) {
+        if (focus & 1) flag= true;
+        if (focus & 2) collapse= false;
+    }
+    // focus = 0:start, 1:end, 2:no collapse
 
     // from HTMLArea 3.0 selectNodeContents() function
     // http://www.dynarch.com/projects/htmlarea/ BSD-style
@@ -126,23 +134,26 @@ Wikiwyg.Wysiwyg.prototype.set_focus = function(el) {
         var range = doc.createRange();
         range.selectNodeContents(el);
         sel.removeAllRanges();
-        range.collapse(true);
+        if (collapse) range.collapse(flag);
         sel.addRange(range);
         el.focus();
     } else {
         range = doc.body.createTextRange();
         range.moveToElementText(el);
-        range.collapse(true);
+        if (collapse) range.collapse(flag);
         range.select();
         el.focus();
     }
 }
 
-Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag) {
+Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag,focus) {
     var markup = el.firstChild;
     if (markup.nodeType != 8) return false;
     var self= this;
     var type;
+
+    if (focus==null || focus == 'undefined')
+        focus=0; // 0:start, 1:end, 2:no collapse
 
     if (el.className == 'wikiMarkup') {
         el.className = 'wikiMarkupEdit';
@@ -165,7 +176,7 @@ Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag) {
             el.innerHTML = newhtml;
         }
 
-        this.set_focus(el.firstChild.nextSibling);
+        this.set_focus(el.firstChild.nextSibling,focus);
     } else if (flag && el.className == 'wikiMarkupEdit') {
         var edit=markup.nextSibling;
         if (edit==null) return;
@@ -200,7 +211,7 @@ Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag) {
                 //el.innerHTML=nn.innerHTML; // not work properly :(
                 el.parentNode.insertBefore(n,el); // insert
                 el.parentNode.removeChild(el);
-                this.set_focus(n.firstChild.nextSibling);
+                this.set_focus(n.firstChild.nextSibling,focus);
             }
             this.execute_scripts(n);
         }
@@ -208,15 +219,58 @@ Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag) {
     return true;
 }
 
+
+Wikiwyg.Wysiwyg.prototype.get_key_down_function = function() {
+    var self = this;
+    return function(e) {
+        var ch = String.fromCharCode(Wikiwyg.is_ie ? e.keyCode : e.charCode);
+        var key = String.fromCharCode(e.keyCode); // XXX
+
+        var wm = self.get_wikimarkup_node();
+        if (e.keyCode == 27) { // ESC
+            if (wm) self.update_wikimarkup(wm,true);
+            return false;
+        }
+        if (wm && wm.className.match(/wikiMarkup/)) {
+            var focus=0;
+            var stop=false;
+
+            if (key == 'I') focus|=1;
+            else if (key == 'S') focus|=2;
+            if (wm.className == 'wikiMarkup') {
+                self.update_wikimarkup(wm,false,focus);
+                stop=true;
+            } else if (e.ctrlKey) {
+                stop=true; // FIXME
+            }
+
+            if (stop) {    
+                e.preventDefault();
+                e.stopPropagation();
+                return false;
+            }
+            return true;
+        }
+        return true;
+    };
+}
+
 Wikiwyg.Wysiwyg.prototype.get_key_press_function = function() {
     var self = this;
     return function(e) {
         var ch = String.fromCharCode(Wikiwyg.is_ie ? e.keyCode : e.charCode);
 
-        var wm = self.get_wikimarkup_node();
-        if (wm) self.update_wikimarkup(wm,false);
-
-        if (! e.ctrlKey) return;
+        if (! e.ctrlKey) {
+            /* if (e.keyCode == 8) { // backspace
+                var p = self.get_parent_node();
+                if (p.childNodes.length == 0) {
+                    alert('www');
+                    p.parentNode.removeChild(p);
+                }
+            }
+            */
+            return;
+        }
         var key = String.fromCharCode(e.charCode).toLowerCase();
         var command = '';
         switch (key) {
@@ -464,6 +518,7 @@ proto.get_onclick_wikimarkup_function = function() {
         var wm = self.get_wikimarkup_node();
         if (wm) self.update_wikimarkup(wm, true);
         //e.stopPropagation();
+        //e.preventDefault();
     };
 }
 
@@ -479,6 +534,22 @@ proto.enable_edit_wikimarkup = function() {
                 'ondblclick', this.onclick_wikimarkup
             );
         }
+    }
+}
+
+proto.enable_keybindings = function() { // See IE
+    if (!this.key_press_function) {
+        this.key_press_function = this.get_key_press_function();
+        this.get_keybinding_area().addEventListener(
+            'keypress', this.key_press_function, true
+        );
+    }
+
+    if (!this.key_down_function) {
+        this.key_down_function = this.get_key_down_function();
+        this.get_keybinding_area().addEventListener(
+            'keydown', this.key_down_function, true
+        );
     }
 }
 
@@ -1957,6 +2028,7 @@ function sectionEdit(ev,obj,sect) {
         area=document.getElementById('editor_area');
         text=area.getElementsByTagName('textarea')[0].value;
         form=area.innerHTML;
+
         var toolbar=document.getElementById('toolbar');
         if (toolbar) { // hide toolbar
             if (Wikiwyg.is_ie) toolbar.style.display='none';
