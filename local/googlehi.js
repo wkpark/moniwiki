@@ -10,8 +10,8 @@ function MoniSearchHighlight() {
     if (url.indexOf('?') == -1) return [];
     var queryString = url.substr(url.indexOf('?') + 1);
     var params = queryString.split('&');
-    for (var p in params) {
-      var param = params[p].split('=');
+    for (var i=0;i<params.length;i++) {
+      var param = params[i].split('=');
       if (param.length < 2) continue;
       if (param[0] == 'q' || param[0] == 'p') { // q= for Google, p= for Yahoo
         var query = decodeURIComponent(param[1].replace(/\+/g, ' '));
