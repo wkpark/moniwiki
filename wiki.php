@@ -1687,6 +1687,7 @@ class Formatter {
     $this->postfilters=$DBInfo->postfilters;
     $this->use_rating=$DBInfo->use_rating;
     $this->use_etable=$DBInfo->use_etable;
+    $this->java_scripts=$DBInfo->javascripts;
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -2209,7 +2210,7 @@ class Formatter {
         if (!file_exists($ntext))
           $text=$this->macro_repl('Attachment',$fname);
         else {
-          $text=qualifiedUrl($DBInfo->url_prefix.'/'.$ntext);
+          $text=qualifiedUrl($this->url_prefix.'/'.$ntext);
           $text= "<img style='border:0' alt='$text' src='$text' />";
         }
       } else
@@ -2299,7 +2300,7 @@ class Formatter {
           if (!file_exists($ntext)) {
             $word=$this->macro_repl('Attachment',$fname);
           } else {
-            $text=qualifiedUrl($DBInfo->url_prefix.'/'.$ntext);
+            $text=qualifiedUrl($this->url_prefix.'/'.$ntext);
             $word= "<img style='border:0' alt='$text' src='$text' /></a>";
           }
         } else {
@@ -2951,6 +2952,7 @@ class Formatter {
           foreach ($fts as $ft)
             $text=$this->postfilter_repl($ft,$text,$options);
         }
+        print $this->get_javascripts();
         print $text;
 
         return;
@@ -3561,6 +3563,7 @@ class Formatter {
     #$text=preg_replace("/(&lt;)(\/?del>)/i","<\\2",$text);
     $text.=$close;
   
+    print $this->get_javascripts();
     print $text;
     if ($this->sisters and !$options['nosisters']) {
       $sister_save=$this->sister_on;
@@ -3612,9 +3615,11 @@ class Formatter {
   function get_javascripts() {
     $out='';
     foreach ($this->java_scripts as $js) {
-      $out.='<script type="text/javascript" src="'.$url_prefix.'/local/'.$js.'>'.
-        "</script>\n";
+      if (!preg_match('@^http://@',$js))
+        $js=$this->url_prefix.'/local/'.$js;
+      $out.="<script type='text/javascript' src='$js'></script>\n";
     }
+    $this->java_scripts=array();
     return $out;
   }
 
@@ -4904,5 +4909,5 @@ if (session_id()== '' && !$DBInfo->nosession){
 
 wiki_main($options);
 endif;
-// vim:et:sts=2:
+// vim:et:sts=2:sw=2
 ?>
