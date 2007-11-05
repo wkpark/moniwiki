@@ -2920,6 +2920,8 @@ class Formatter {
     // reset macro ID
     $this->mid=0;
 
+    if ($this->wikimarkup) $this->nonexists='always';
+
     if ($body) {
       $pi=$this->get_instructions($body);
 
