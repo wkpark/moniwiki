@@ -112,16 +112,21 @@ function textAreaAutoAttach(event, parent) {
   }
 }
 
-function textArea(element) {
+function textArea(element,wrapper) {
   var ta = this;
   this.element = element;
   this.parent = this.element.parentNode;
   this.dimensions = dimensions(element);
 
   // Prepare wrapper
-  this.wrapper = document.createElement('div');
-  this.wrapper.className = 'resizable-textarea';
-  this.parent.insertBefore(this.wrapper, this.element);
+  if (typeof wrapper=='undefined') {
+    this.wrapper = document.createElement('div');
+    this.wrapper.className = 'resizable-textarea';
+    this.parent.insertBefore(this.wrapper, this.element);
+  } else {
+    this.wrapper=wrapper;
+    this.wrapper.className = 'resizable-textarea';
+  }
 
   // Add grippie and measure it
   this.grippie = document.createElement('div');
@@ -137,51 +142,10 @@ function textArea(element) {
   this.element.style.height = this.dimensions.height +'px';
 
   // Wrap textarea
-  removeNode(this.element);
-  this.wrapper.insertBefore(this.element, this.grippie);
-
-  // Measure difference between desired and actual textarea dimensions to account for padding/borders
-  this.widthOffset = dimensions(this.wrapper).width - this.dimensions.width;
-
-  // Make the grippie line up in various browsers
-  if (window.opera) {
-    // Opera
-    this.grippie.style.marginRight = '4px';
+  if (typeof wrapper=='undefined') {
+    removeNode(this.element);
+    this.wrapper.insertBefore(this.element, this.grippie);
   }
-  if (document.all && !window.opera) {
-    // IE
-    this.grippie.style.width = '100%';
-    this.grippie.style.paddingLeft = '2px';
-  }
-  // Mozilla
-  this.element.style.MozBoxSizing = 'border-box';
-
-  this.heightOffset = absolutePosition(this.grippie).y - absolutePosition(this.element).y - this.dimensions.height;
-}
-
-function textAreaWrapper(element,wrapper) {
-  var ta = this;
-  this.element = element;
-  this.dimensions = dimensions(element);
-  this.wrapper=wrapper;
-  this.parent = this.wrapper;
-  this.wrapper.className = 'resizable-textarea';
-
-  // Prepare wrapper
-  this.wrapper = wrapper;
-
-  // Add grippie and measure it
-  this.grippie = document.createElement('div');
-  this.grippie.className = 'grippie';
-  this.wrapper.appendChild(this.grippie);
-  this.grippie.dimensions = dimensions(this.grippie);
-  this.grippie.onmousedown = function (e) { ta.beginDrag(e); };
-
-  // Set wrapper and textarea dimensions
-  this.wrapper.style.height = this.dimensions.height + this.grippie.dimensions.height + 1 +'px';
-  this.element.style.marginBottom = '0px';
-  this.element.style.width = '100%';
-  this.element.style.height = this.dimensions.height +'px';
 
   // Measure difference between desired and actual textarea dimensions to account for padding/borders
   this.widthOffset = dimensions(this.wrapper).width - this.dimensions.width;
@@ -221,7 +185,8 @@ textArea.prototype.beginDrag = function (event) {
   this.dragOffset = event.clientY - pos.y;
 
   // Make transparent
-  this.element.style.opacity = 0.5;
+  this.element.style.opacity = 0.4;
+  if (window.event) this.element.style.filter = "alpha(opacity=40)";
 
   // Process
   this.handleDrag(event);
@@ -249,12 +214,9 @@ textArea.prototype.endDrag = function (event) {
 
   // Restore opacity
   this.element.style.opacity = 1.0;
+  if (window.event) this.element.style.filter = '';
   document.isDragging = false;
 }
-
-textAreaWrapper.prototype.beginDrag = textArea.prototype.beginDrag;
-textAreaWrapper.prototype.handleDrag = textArea.prototype.handleDrag;
-textAreaWrapper.prototype.endDrag = textArea.prototype.endDrag;
 
 if (document.jsEnabled) {
   var oldOnload = window.onload;
