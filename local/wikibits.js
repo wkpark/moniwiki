@@ -134,31 +134,29 @@ function insertTags(tagOpen, tagClose, sampleText) {
 		var replaced = false;
 		var startPos = txtarea.selectionStart;
 		var endPos = txtarea.selectionEnd;
-		if (endPos-startPos)
-			replaced = true;
 		var scrollTop = txtarea.scrollTop;
 		var myText = (txtarea.value).substring(startPos, endPos);
-		if (!myText)
-			myText=sampleText;
-		if (myText.charAt(myText.length - 1) == " ") { // exclude ending space char, if any
-			subst = tagOpen + myText.substring(0, (myText.length - 1)) + tagClose + " ";
+		var subst;
+
+		if (myText) {
+			if (myText.charAt(myText.length - 1) == " ") { // exclude ending space char, if any
+				endPos--;
+				myText=myText.substr(0,myText.length-1);
+			}
+			subst=toggleSameFormat(tagOpen,tagClose,myText);
 		} else {
+			myText=sampleText;
 			subst = tagOpen + myText + tagClose;
 		}
+
 		txtarea.value = txtarea.value.substring(0, startPos) + subst +
 			txtarea.value.substring(endPos, txtarea.value.length);
 		txtarea.focus();
 		//set new selection
-		if (replaced) {
-			var cPos = startPos+(tagOpen.length+myText.length+tagClose.length);
-			txtarea.selectionStart = cPos;
-			txtarea.selectionEnd = cPos;
-		} else {
-			txtarea.selectionStart = startPos+tagOpen.length;   
-			txtarea.selectionEnd = startPos+tagOpen.length+myText.length;
-		}	
-		txtarea.scrollTop = scrollTop;
+		txtarea.selectionStart = startPos;
+		txtarea.selectionEnd = startPos+subst.length;
 
+		txtarea.scrollTop = scrollTop;
 	// All others
 	} else {
 		var copy_alertText=alertText;
@@ -184,6 +182,30 @@ function insertTags(tagOpen, tagClose, sampleText) {
 	// reposition cursor if possible
 	if (txtarea.createTextRange)
 		txtarea.caretPos = document.selection.createRange().duplicate();
+}
+
+function toggleSameFormat(start, end, sel) {
+    var nsel=sel;
+    var start_re = start.replace(/([\^\$\*\+\.\?\[\]\{\}\(\)])/g, '\\$1')
+        .replace(/\n/,"\n?").replace(/==/,'={2,6}'); // for headings
+    var end_re = end.replace(/([\^\$\*\+\.\?\[\]\{\}\(\)])/g, '\\$1')
+        .replace(/\n/,"\n?").replace(/==/,'={2,6}');
+
+    start_re = new RegExp('^' + start_re);
+    end_re = new RegExp(end_re + '$');
+    if (sel.match(start_re) && sel.match(end_re)) {
+	nsel = sel.replace(start_re,'').replace(end_re,'');
+
+	var m;
+	if (m=sel.match(/^\n?(={1,6})/)) { // for headings
+	    var tag='='.times(m[1].length);
+	    start=start.replace(/=/,tag),end=end.replace(/=/,tag)
+	    if (start.length==9) start="\n== ",end=" ==\n"; // reset
+	} else {
+            return nsel;
+	}
+    }
+    return start+nsel+end;
 }
 
 function akeytt() {
