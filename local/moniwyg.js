@@ -167,6 +167,7 @@ Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag,focus) {
         var text = markup.data.replace(/^ wiki:(\s|\\n)+/, '')
                    .replace(/-=/g, '-')
                    .replace(/==/g, '=')
+                   .replace(/&amp;/g,'&')
                    .replace(/(\r\n|\n|\r)+$/, '') //.replace(/\s$/, '') IE fix
                    .replace(/\{(\w+):\s*\}/, '{$1}');
         text=text.replace(/>/g,'&gt;');
@@ -187,6 +188,7 @@ Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag,focus) {
                         .replace(/<br>/ig,"\n")
                         .replace(/&gt;/g,'>')
                         .replace(/&lt;/g,'<')
+                        .replace(/&amp;/g,'&')
                         ;
         var postdata = 'action=markup&value=' + encodeURIComponent(myText);
         var myhtml= HTTPPost(top.location, postdata);
@@ -260,6 +262,7 @@ Wikiwyg.Wysiwyg.prototype.get_key_down_function = function() {
             }
             return true;
         }
+
         return true;
     };
 }
@@ -270,6 +273,35 @@ Wikiwyg.Wysiwyg.prototype.get_key_press_function = function() {
         var ch = String.fromCharCode(Wikiwyg.is_ie ? e.keyCode : e.charCode);
 
         if (! e.ctrlKey) {
+            if (e.charCode == 32) { // space
+                var sel=self.get_selection();
+                if (!Wikiwyg.is_ie) {
+                    if (sel.focusNode.nodeType == 3 && sel.toString() == '') { // text node
+                        var range=self.get_range();
+                        var m = sel.focusNode.nodeValue.substr(0,sel.focusOffset).match(/^(.*\s)(\S+)\s*$/);
+                        if (m) {
+                            if (m[2].match(/^(http|https|ftp|nntp|news|irc|telnet):\/\//)) {
+                                range.setStart(sel.focusNode,m[1].length);
+                                range.setEnd(sel.focusNode,m[1].length+m[2].length);
+                                sel.addRange(range);
+                                self.do_link(); // auto linking
+
+                                sel=self.get_selection();
+                                var mynode=sel.focusNode.parentNode;
+                                sel.removeAllRanges();
+                                range=self.get_range();
+                                range.setStartAfter(mynode);
+                                range.setEndAfter(mynode);
+                                sel.addRange(range);
+
+                                return true;
+                            }
+                        }
+                        //e.preventDefault();
+                        //e.stopPropagation();
+                    }
+                }
+            }
             /* if (e.keyCode == 8) { // backspace
                 var p = self.get_parent_node();
                 if (p.childNodes.length == 0) {
@@ -639,8 +671,8 @@ proto.get_edit_iframe = function() {
             self.enable_keybindings();
             self.enable_edit_wikimarkup();
 
-            if (typeof textAreaWrapper == 'function')
-                new textAreaWrapper(self.edit_iframe,self.wrapper);
+            if (typeof textArea == 'function')
+                new textArea(self.edit_iframe,self.wrapper);
             /*
             iframe.onload='undefined';
             */
@@ -697,6 +729,7 @@ proto.enableThis = function() {
     this.setHeightOf(this.edit_iframe);
     //this.fix_up_relative_imgs();
     this.get_edit_document().designMode = 'on';
+
     // XXX - Doing stylesheets in initializeObject might get rid of blue flash
     //
     // this.edit_iframe.contentWindow;
@@ -725,7 +758,7 @@ proto.do_link = function() {
     var selection = this.get_link_selection_text();
     if (! selection) return;
     var url;
-    var match = selection.match(/(.*?)\b((?:http|https|ftp|irc):\/\/\S+)(.*)/);
+    var match = selection.match(/(.*?)\b((?:http|https|ftp|nntp|telnet|irc):\/\/\S+)(.*)/);
     if (match) {
         if (match[1] || match[3]) return null;
         url = match[2];
@@ -739,6 +772,10 @@ proto.do_link = function() {
 if (!Wikiwyg.is_ie) {
 proto.get_selection = function() { // See IE, below
     return this.get_edit_window().getSelection();
+}
+
+proto.get_range = function() {
+    return this.get_edit_document().createRange();
 }
 
 proto.get_parent_node = function() {
@@ -909,8 +946,8 @@ proto.convert_html_to_wikitext = function(html) {
     html =
         html.replace(/<a class=.externalLink named. [^>]*href=(\'|\")?([^\'\"]+)\1?[^>]+>(.+)<\/a>/ig, "[$2 $3]");
     // remove all links XXX
-    html =
-        html.replace(/<a [^>]+>([^>]+)<\/a>/ig, "$1");
+    //html =
+    //    html.replace(/<a [^>]+>([^>]+)<\/a>/ig, "$1");
 
     // escaped wiki markup blocks
     html =
@@ -1639,6 +1676,7 @@ proto.handle_opaque_phrase = function(element) {
         text = text.replace(/^ wiki:(\s|\\n)+/, '')
                    .replace(/-=/g, '-')
                    .replace(/==/g, '=')
+                   .replace(/&amp;/g,'&')
                    .replace(/(\r\n|\n|\r)+$/, '') //.replace(/\s$/, '') IE fix
                    .replace(/\{(\w+):\s*\}/, '{$1}');
         this.appendOutput(Wikiwyg.htmlUnescape(text))
@@ -1954,7 +1992,7 @@ proto.assert_space_or_newline = function() {
 proto.camel_case_link = function(label) {
     if (! this.config.supportCamelCaseLinks)
         return false;
-    return label.match(/^[A-Z]*[a-z]+/);
+    return label.match(/^[A-Z][A-Z]*[a-z]+/);
 }
 
 proto.href_is_wiki_link = function(href) {
