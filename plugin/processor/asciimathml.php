@@ -70,7 +70,7 @@ function processor_asciimathml($formatter,$value="") {
   $fontfamily="mathfontfamily='$myfontfamily';\n";
 
   if ( $flag ) {
-    if ($formatter->register_javascripts('ASCIIMathML.js'))
+    if ($formatter->register_javascripts('ASCIIMathML.js'));
       if (preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']))
         $formatter->register_javascripts('<object id="mathplayer"'.
           ' classid="clsid:32F66A20-7614-11D4-BD11-00104BD3F987" width="1px" height="1px">'.
@@ -79,19 +79,17 @@ function processor_asciimathml($formatter,$value="") {
       );
 
     if ($_add_func)
-      $out.=<<<AJS
+      $js=<<<AJS
 <script type="text/javascript">
 /*<![CDATA[*/
 function translateById(objId,flag) {
-  AMbody = document.getElementById(objId);
-  if (typeof math2ascii != "undefined") math2ascii(AMbody); // for WikiWyg mode switching
-  if (isIE) { // for WikiWyg
-    var str=AMbody.innerHTML.replace(/\\$/g,'');;
-    var math=AMparseMath(str);
-    AMbody.innerHTML=math.innerHTML;
+  var AMbody = document.getElementById(objId);
+  // for WikiWyg mode switching
+  if (typeof math2ascii != "undefined") math2ascii(AMbody);
+  if (isIE) { // for WikiWyg in the iframe
+    AMbody.innerHTML=AMparseMath(AMbody.innerHTML.replace(/\\$/g,'')).innerHTML;
     //needed to match size and font of formula to surrounding text
-    var frag = AMbody.getElementsByTagName('math')[0];
-    frag.update()
+    AMbody.getElementsByTagName('math')[0].update();
   } else {
     AMprocessNode(AMbody, false);
   }
@@ -102,6 +100,7 @@ $bgcolor$fontfamily$fontcolor
 /*]]>*/
 </script>
 AJS;
+    if ($js) $formatter->register_javascripts($js);
   }
 
   $out .= "<span><span class=\"AM\" id=\"AM-$id\">$value</span>" .
