@@ -192,8 +192,11 @@ Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag,focus) {
         var postdata = 'action=markup&value=' + encodeURIComponent(myText);
         var myhtml= HTTPPost(top.location, postdata);
 
-        var myhtml = myhtml.replace(/^(.|\s|\n)*<div>(\s|\n)*(<span)/i,'$3')
-                .replace(/<\/span>(\s|\n)*<\/?div>\s*$/i,'</span>');
+        // hack hack
+        var chunks = myhtml.split(/<div>/i);
+        myhtml = (chunks[1] ? chunks[1]:chunks[0])
+            .replace(/^(.*)<div>(\s|\n)*(<span)/i,'$3')
+            .replace(/<\/span>(\s|\n)*<\/?div>(\s)*$/i,'</span>');
 
         var div=document.createElement('div');
         if (Wikiwyg.is_ie) {
@@ -234,11 +237,10 @@ Wikiwyg.Wysiwyg.prototype.get_key_down_function = function() {
         var key = String.fromCharCode(e.keyCode); // XXX
 
         var wm = self.get_wikimarkup_node();
-        if (e.keyCode == 27 || e.keyCode == 13) { // ESC
+        if (e.keyCode == 27 || (e.keyCode== 13 && wm.style.display=='inline')) {            // ESC or RETURN
             if (wm) self.update_wikimarkup(wm,true);
-            if (Wikiwyg.is_ie) e.cancelBubble = true;
+            if (window.event) e.cancelBubble = true;
             else e.preventDefault(), e.stopPropagation();
-            return false;
         }
         if (wm && wm.className.match(/wikiMarkup/)) {
             var focus=0;
@@ -259,7 +261,7 @@ Wikiwyg.Wysiwyg.prototype.get_key_down_function = function() {
             }
 
             if (stop) {    
-                if (Wikiwyg.is_ie) e.cancelBubble = true;
+                if (window.event) e.cancelBubble = true;
                 else e.preventDefault(), e.stopPropagation();
                 return false;
             }
@@ -609,10 +611,11 @@ proto = Wikiwyg.Wysiwyg.prototype;
 proto.get_onclick_wikimarkup_function = function() {
     var self= this;
     return function(e) {
+        e = e || window.event;
         var wm = self.get_wikimarkup_node();
         if (wm) self.update_wikimarkup(wm, true);
-        //e.stopPropagation();
-        //e.preventDefault();
+        if (window.event) e.cancelBubble = true;
+        else e.preventDefault(), e.stopPropagation();
     };
 }
 
