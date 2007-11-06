@@ -1687,7 +1687,7 @@ class Formatter {
     $this->postfilters=$DBInfo->postfilters;
     $this->use_rating=$DBInfo->use_rating;
     $this->use_etable=$DBInfo->use_etable;
-    $this->java_scripts=$DBInfo->javascripts;
+    $this->register_javascripts($DBInfo->javascripts);
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -3608,12 +3608,15 @@ class Formatter {
 
   function register_javascripts($js) {
     if (is_array($js)) {
-      array_merge($this->java_scripts,$js);
+      foreach ($js as $j) $this->register_javascripts($j);
+      return true;
     } else {
       if ($js{0} == '<') { $tag=md5($js); }
       else $tag=$js;
-      if (!empty($this->javascripts[$tag]))
+      if (!isset($this->java_scripts[$tag]))
         $this->java_scripts[$tag]=$js;
+      else return false;
+      return true;
     }
   }
 
