@@ -714,7 +714,7 @@ class processor_textile
 			built-in htmlentities() */
 
 		return (function_exists('mb_encode_numericentity'))
-		? encode_high($text,$this->charset)
+		? $this->encode_high($text,$this->charset)
 		: htmlentities($text, ENT_NOQUOTES,$this->charset);
 	}
 	// -------------------------------------------------------------
