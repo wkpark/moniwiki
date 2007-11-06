@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2007 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // rss_rc action plugin for the MoniWiki
 //
@@ -13,6 +13,14 @@ define('RSS_DEFAULT_DAYS',7);
   $options['quick']=1;
   if ($options['c']) $options['items']=$options['c'];
   $lines= $DBInfo->editlog_raw_lines($days,$options);
+
+  if ($DBInfo->rss_rc_options) {
+    $opts=$DBInfo->rss_rc_options;
+    $opts=explode(',',$opts);
+    foreach ($opts as $opt) {
+      $options[$opt]=1; // FIXME
+    }
+  }
     
   $time_current= time();
 #  $secs_per_day= 60*60*24;
@@ -73,6 +81,27 @@ CHANNEL;
         }
         $html="<![CDATA[".$html.$extra."]]>";
         #$html=strtr($html.$extra,array('&'=>'&amp;','<'=>'&lt;'));
+      } else if ($options['summary']) {
+        $p=new WikiPage($page_name);
+        $f=new Formatter($p);
+        $f->section_edit=0;
+        $f->sister_on=0;
+        $f->perma_icon='';
+
+        $options['nomsg']=1;
+        $b= $p->_get_raw_body();
+        $chunks= preg_split('/\n#{4,}/',$b); # summary breaker is ####
+        ob_start();
+        if ($chunks) $f->send_page($chunks[0],array('fixpath'=>1));
+        else $f->send_page('',array('fixpath'=>1));
+        #$f->send_page('');
+        $html=ob_get_contents();
+        ob_end_clean();
+        $chunks= preg_split('/<!-- break -->/',$html); # <!-- break -->
+        if ($chunks[0]) $html=$chunks[0];
+
+        $extra='';
+        $html="<![CDATA[".$html.$extra."]]>";
       } else {
     	$html=str_replace('&','&amp;',$log);
       }
@@ -147,4 +176,6 @@ HEAD;
   else print $head.$channel.$items.$form;
   print "</rdf:RDF>\n";
 }
+
+// vim:et:sts=2:sw=2
 ?>
