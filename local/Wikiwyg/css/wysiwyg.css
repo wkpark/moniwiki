@@ -12,3 +12,11 @@ td, table {
     border: 1px dotted black;
     background-color: #F0F4FF;
 }
+
+a {text-decoration: underline; color:blue;}
+a:link { color: blue;}
+a:visited { color: blue;}
+
+* html .separator { font-size:1px; height:1px; }
+* html hr { padding:0;margin:0; }
+
