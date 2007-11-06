@@ -58,19 +58,18 @@ Wikiwyg.Mode.prototype.execute_scripts = function(el) {
         scripts= this.div.getElementsByTagName('script');
 
     for (var i=0;i<scripts.length;i++) {
-        var n=scripts[i].cloneNode(true);
         if (scripts[i].src) {
             var js=document.createElement('script');
             js.type='text/javascript';
-            js.src=n.src;
+            js.src=scripts[i].src;
             head.appendChild(js);
         } else {
             var js1=doc.createElement('script');
             js1.type='text/javascript';
             if (iframe) // hack XXX
-                js1.text=n.text.replace(/document\./g,'doc.');
+                js1.text=scripts[i].text.replace(/document\./g,'doc.');
             else
-                js1.text=n.text;
+                js1.text=scripts[i].text;
             eval(js1.text); // XXX
             //head.appendChild(js1);
         }
@@ -193,8 +192,8 @@ Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag,focus) {
         var postdata = 'action=markup&value=' + encodeURIComponent(myText);
         var myhtml= HTTPPost(top.location, postdata);
 
-        var myhtml = myhtml.replace(/^(.|\n)*<div>(\s|\n)*(<span)/i,'$3')
-                .replace(/<\/span>(\s|\n)*<\/?div>$/i,'</span>');
+        var myhtml = myhtml.replace(/^(.|\s|\n)*<div>(\s|\n)*(<span)/i,'$3')
+                .replace(/<\/span>(\s|\n)*<\/?div>\s*$/i,'</span>');
 
         var div=document.createElement('div');
         if (Wikiwyg.is_ie) {
@@ -210,7 +209,8 @@ Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag,focus) {
 
         if (n && n.nodeName=='SPAN') {
             if (Wikiwyg.is_ie) {
-                el.innerHTML='<br>'+n.outerHTML; // IE hack
+                el.className='wikiMarkup';
+                el.innerHTML='<br>'+n.innerHTML; // IE hack
                 el.removeChild(el.firstChild);
             } else {
                 //el.innerHTML=nn.innerHTML; // not work properly :(
@@ -229,12 +229,15 @@ Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag,focus) {
 Wikiwyg.Wysiwyg.prototype.get_key_down_function = function() {
     var self = this;
     return function(e) {
+        e = e || window.event;
         var ch = String.fromCharCode(Wikiwyg.is_ie ? e.keyCode : e.charCode);
         var key = String.fromCharCode(e.keyCode); // XXX
 
         var wm = self.get_wikimarkup_node();
-        if (e.keyCode == 27) { // ESC
+        if (e.keyCode == 27 || e.keyCode == 13) { // ESC
             if (wm) self.update_wikimarkup(wm,true);
+            if (Wikiwyg.is_ie) e.cancelBubble = true;
+            else e.preventDefault(), e.stopPropagation();
             return false;
         }
         if (wm && wm.className.match(/wikiMarkup/)) {
@@ -244,7 +247,7 @@ Wikiwyg.Wysiwyg.prototype.get_key_down_function = function() {
             if (!e.ctrlKey) {
                 if (key == 'I') focus|=1;
                 else if (key == 'S') focus|=2;
-                if (wm.className == 'wikiMarkup') {
+                if (focus && wm.className == 'wikiMarkup') { // check arrowkey or not
                     self.update_wikimarkup(wm,false,focus);
                     stop=true;
                 }
@@ -256,8 +259,8 @@ Wikiwyg.Wysiwyg.prototype.get_key_down_function = function() {
             }
 
             if (stop) {    
-                e.preventDefault();
-                e.stopPropagation();
+                if (Wikiwyg.is_ie) e.cancelBubble = true;
+                else e.preventDefault(), e.stopPropagation();
                 return false;
             }
             return true;
@@ -270,35 +273,73 @@ Wikiwyg.Wysiwyg.prototype.get_key_down_function = function() {
 Wikiwyg.Wysiwyg.prototype.get_key_press_function = function() {
     var self = this;
     return function(e) {
-        var ch = String.fromCharCode(Wikiwyg.is_ie ? e.keyCode : e.charCode);
+        if (e) cc=e.charCode;
+        else e=window.event,cc=e.keyCode;
+        var ch = String.fromCharCode(cc);
 
         if (! e.ctrlKey) {
-            if (e.charCode == 32) { // space
+            if (cc == 32) { // space
                 var sel=self.get_selection();
                 if (!Wikiwyg.is_ie) {
-                    if (sel.focusNode.nodeType == 3 && sel.toString() == '') { // text node
+                    var sf=sel.focusNode;
+                    if (sf.nodeType == 3 && sf.parentNode.nodeName != 'A' && sel.toString() == '') {
+                        // text node
                         var range=self.get_range();
-                        var m = sel.focusNode.nodeValue.substr(0,sel.focusOffset).match(/^(.*\s)(\S+)\s*$/);
-                        if (m) {
-                            if (m[2].match(/^(http|https|ftp|nntp|news|irc|telnet):\/\//)) {
-                                range.setStart(sel.focusNode,m[1].length);
-                                range.setEnd(sel.focusNode,m[1].length+m[2].length);
+                        var val = sf.nodeValue.substr(0,sel.focusOffset).replace(/\s+$/,'');
+                        if (val) {
+                            var m=[];
+                            var p=val.lastIndexOf(' ');
+                            if (p == -1) m[1]='',m[2]=val;
+                            else m[1]=val.substr(0,p+1),m[2]=val.substr(p+1);
+                            if (m[2].match(/^(http|https|ftp|nntp|news|irc|telnet):\/\//) ||
+                                m[2].match(/^[A-Z]([A-Z]+[0-9a-z]|[a-z0-9]+[A-Z])[0-9a-zA-Z]*\b/) ||
+                                m[2].match(/^\[.*\]$/)) { // force link, macro
+
+                                range.setStart(sf,m[1].length);
+                                range.setEnd(sf,m[1].length+m[2].length);
+                                sel.removeAllRanges(); // remove old ranges !
                                 sel.addRange(range);
+
+                                //e.preventDefault();
+                                //e.stopPropagation();
+
                                 self.do_link(); // auto linking
-
-                                sel=self.get_selection();
-                                var mynode=sel.focusNode.parentNode;
-                                sel.removeAllRanges();
-                                range=self.get_range();
-                                range.setStartAfter(mynode);
-                                range.setEndAfter(mynode);
-                                sel.addRange(range);
-
+                                nsel=self.get_selection();
+                                if (nsel.focusNode.nodeType == 3) {
+                                    var mynode=nsel.focusNode.parentNode;
+                                    nsel.removeAllRanges();
+                                    range=self.get_range();
+                                    range.setStartAfter(mynode);
+                                    range.setEndAfter(mynode);
+                                    nsel.addRange(range);
+                                }
                                 return true;
                             }
                         }
-                        //e.preventDefault();
-                        //e.stopPropagation();
+                    }
+                }
+            } else if (e.keyCode == 35 || e.keyCode == 39) { // right arrow or end key.
+                var sel = self.get_selection();
+                var sf = sel.focusNode;
+                var p = sf.parentNode;
+                if (p.nodeName=='A' && sf.nodeType==3) {
+                    if (e.keyCode == 35 ||
+                            (e.keyCode == 39 && sel.focusOffset == sf.nodeValue.length)) {
+                        range=self.get_range();
+                        if (p.nextSibling) {
+                            range.selectNode(p.nextSibling);
+                            range.setStart(p.nextSibling,0);
+                            range.setEnd(p.nextSibling,0);
+                            //range.collapse(true); // not work ;;
+                        }
+                        else
+                            range.setStartAfter(p);
+                        sel.removeAllRanges();
+                        sel.addRange(range);
+
+                        if (Wikiwyg.is_ie) e.cancelBubble = true;
+                        else e.preventDefault(), e.stopPropagation();
+                        return true;
                     }
                 }
             }
@@ -323,8 +364,8 @@ Wikiwyg.Wysiwyg.prototype.get_key_press_function = function() {
         };
 
         if (command) {
-            e.preventDefault();
-            e.stopPropagation();
+            if (Wikiwyg.is_ie) e.cancelBubble = true;
+            else e.preventDefault(), e.stopPropagation();
             self.process_command(command);
         }
     };
@@ -593,16 +634,28 @@ proto.enable_edit_wikimarkup = function() {
 proto.enable_keybindings = function() { // See IE
     if (!this.key_press_function) {
         this.key_press_function = this.get_key_press_function();
-        this.get_keybinding_area().addEventListener(
-            'keypress', this.key_press_function, true
-        );
+        if (window.addEventListener) {
+            this.get_keybinding_area().addEventListener(
+                'keypress', this.key_press_function, true
+            );
+        } else {
+            this.get_keybinding_area().attachEvent(
+                'onkeypress', this.key_press_function
+            );
+        }
     }
 
     if (!this.key_down_function) {
         this.key_down_function = this.get_key_down_function();
-        this.get_keybinding_area().addEventListener(
-            'keydown', this.key_down_function, true
-        );
+        if (window.addEventListener) {
+            this.get_keybinding_area().addEventListener(
+                'keydown', this.key_down_function, true
+            );
+        } else {
+            this.get_keybinding_area().attachEvent(
+                'onkeydown', this.key_down_function
+            );
+        }
     }
 }
 
@@ -757,16 +810,39 @@ proto.enableThis = function() {
 proto.do_link = function() {
     var selection = this.get_link_selection_text();
     if (! selection) return;
-    var url;
-    var match = selection.match(/(.*?)\b((?:http|https|ftp|nntp|telnet|irc):\/\/\S+)(.*)/);
-    if (match) {
-        if (match[1] || match[3]) return null;
-        url = match[2];
+    var url=null;
+    var urltext=null;
+    if (selection.match(/^\[\[.*\]\]$/)) { // macro or links XXX FIXME
+        var postdata = 'action=markup&value=' + encodeURIComponent(selection);
+        var myhtml= HTTPPost(top.location, postdata);
+
+        var myhtml = myhtml.replace(/^(.|\n)*<div>(\s|\n)*(<span)/i,'$3')
+                .replace(/<\/span>(\s|\n)*<\/?div>\s*$/i,'</span>')
+                .replace(/^<div>/i,'')
+                .replace(/(\s|\n)*<\/div>\s*$/i,'');
+        this.exec_command('inserthtml', fixup_markup_style('<!-- -->'+myhtml));
+        urltext=null;
+    } else
+    {
+        var match = selection.match(/(.*?)\b((?:http|https|ftp|nntp|telnet|irc):\/\/\S+)(.*)/);
+        if (match) {
+            if (match[1] || match[3]) return null;
+            url = match[2];
+        } else if (selection.match(/^\[.*\]$/)) {
+            urltext = selection.substr(1,selection.length-2);
+            url = '/' + escape(urltext);
+        }
+        else {
+            url = '/' + escape(selection); 
+        }
+        this.exec_command('createlink', url);
     }
-    else {
-        url = '/' + escape(selection); 
+    if (!Wikiwyg.is_ie && urltext) {
+        var p=this.get_selection();
+        if (p.focusNode && p.focusNode.nodeType == 3) {
+            p.focusNode.nodeValue=urltext; // change text
+        }
     }
-    this.exec_command('createlink', url);
 }
 
 if (!Wikiwyg.is_ie) {
@@ -936,6 +1012,9 @@ proto.convert_html_to_wikitext = function(html) {
     // remove toc number
     html = html.replace(/<span class=.?tocnumber.?>(.*)<\/span>/igm, '');
 
+    // six single quotes for mozilla
+    html =
+        html.replace(/<span style=[^>]+bold[^>]*><\/span>/ig, "''''''");
     // remove javatag
     html =
         html.replace(/<a href=.javascript:[^>]+>(.*)<\/a>/ig, "$1");
@@ -945,9 +1024,10 @@ proto.convert_html_to_wikitext = function(html) {
     // named externalLinks
     html =
         html.replace(/<a class=.externalLink named. [^>]*href=(\'|\")?([^\'\"]+)\1?[^>]+>(.+)<\/a>/ig, "[$2 $3]");
-    // remove all links XXX
-    //html =
-    //    html.replace(/<a [^>]+>([^>]+)<\/a>/ig, "$1");
+
+    // inner links for IE
+    var loc = location.protocol + '//' + location.host + (location.port ? ':'+location.port:'');
+    this.loc_re=new RegExp('^' + loc.replace(/\//g,'\\/'),'ig');
 
     // escaped wiki markup blocks
     html =
@@ -955,8 +1035,6 @@ proto.convert_html_to_wikitext = function(html) {
 
     dom.innerHTML = "<br>" +html; // Bah.... IE hack :(
     dom.removeChild(dom.firstChild);
-
-    // alert(dom.innerHTML);
 
     this.output = [];
     this.list_type = [];
@@ -974,6 +1052,13 @@ proto.convert_html_to_wikitext = function(html) {
     }
 
     return this.join_output(this.output);
+}
+
+if (Wikiwyg.is_ie) {
+proto.looks_like_a_url = function(string) {
+    string = string.replace(this.loc_re, ''); // for IE
+    return string.match(/^(http|https|ftp|irc|mailto|file):/);
+}
 }
 
 proto.format_img = function(element) {
@@ -1045,6 +1130,17 @@ proto.format_blockquote = function(element) {
     return;
 
 }
+
+proto.format_strong = function(element) {
+    var markup = this.config.markupRules['bold'];
+    this.appendOutput(markup[1]);
+    this.no_following_whitespace();
+    this.walk(element);
+    // assume that walk leaves no trailing whitespace.
+    this.appendOutput(markup[2]);
+}
+
+proto.format_b = proto.format_strong;
 
 proto.format_blockquote_old = function(element) {
     var indents = 0;
@@ -1992,7 +2088,7 @@ proto.assert_space_or_newline = function() {
 proto.camel_case_link = function(label) {
     if (! this.config.supportCamelCaseLinks)
         return false;
-    return label.match(/^[A-Z][A-Z]*[a-z]+/);
+    return label.match(/^[A-Z]([A-Z]+[0-9a-z]|[a-z0-9]+[A-Z])[0-9a-zA-Z]*\b/);
 }
 
 proto.href_is_wiki_link = function(href) {
