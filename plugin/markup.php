@@ -35,6 +35,7 @@ function do_markup($formatter,$options) {
         }
         #else ignore
     }
+    print $formatter->get_javascripts();
     return;
 }
 
