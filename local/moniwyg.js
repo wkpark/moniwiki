@@ -237,7 +237,7 @@ Wikiwyg.Wysiwyg.prototype.get_key_down_function = function() {
         var key = String.fromCharCode(e.keyCode); // XXX
 
         var wm = self.get_wikimarkup_node();
-        if (e.keyCode == 27 || (e.keyCode== 13 && wm.style.display=='inline')) {            // ESC or RETURN
+        if (e.keyCode == 27 || (e.keyCode== 13 && wm && wm.style.display=='inline')) {            // ESC or RETURN
             if (wm) self.update_wikimarkup(wm,true);
             if (window.event) e.cancelBubble = true;
             else e.preventDefault(), e.stopPropagation();
@@ -284,7 +284,9 @@ Wikiwyg.Wysiwyg.prototype.get_key_press_function = function() {
                 var sel=self.get_selection();
                 if (!Wikiwyg.is_ie) {
                     var sf=sel.focusNode;
-                    if (sf.nodeType == 3 && sf.parentNode.nodeName != 'A' && sel.toString() == '') {
+                    var wm=self.get_wikimarkup_node();
+                    if (sf.nodeType == 3 && sel.toString() == ''
+                            && sf.parentNode.nodeName != 'A' && wm == null) {
                         // text node
                         var range=self.get_range();
                         var val = sf.nodeValue.substr(0,sel.focusOffset).replace(/\s+$/,'');
@@ -554,6 +556,11 @@ Wikiwyg.prototype.editMode = function(form,text) {
 function fixup_markup_style(html)
 {
     var dom = document.createElement('div');
+
+    // embed or object tags
+    html =
+        html.replace(/(<\/embed>)/ig,
+                "<img src='"+ _url_prefix + "/imgs/loading.gif' width='100px' height='100px'>$1");
 
     //alert('fixup_markup='+html);
     if (Wikiwyg.is_ie) {
@@ -1036,6 +1043,9 @@ proto.convert_html_to_wikitext = function(html) {
     html =
         html.replace(/<tt class[^>]+>([^>]+)<\/tt>/ig, "{{{$1}}}");
 
+    // embed or object tags
+    //html = html.replace(/(<\/(embed|object)>)/ig, "<img src='/wiki/imgs/loading.gif' width='100px' height='100px'>$1");
+
     dom.innerHTML = "<br>" +html; // Bah.... IE hack :(
     dom.removeChild(dom.firstChild);
 
@@ -1062,6 +1072,49 @@ proto.looks_like_a_url = function(string) {
     string = string.replace(this.loc_re, ''); // for IE
     return string.match(/^(http|https|ftp|irc|mailto|file):/);
 }
+}
+
+proto.format_object = function(element) {
+    var attr=['type','classid','codebase','align','data','width','height','id'];
+    var attrs=[];
+    for (var k in attr) {
+        var v=element.getAttribute(attr[k]);
+        if (v) attrs.push(attr[k]+'="'+ v + '"');
+    }
+    if (element.innerHTML) {
+        var save_out=this.output;
+        this.output=[];
+        this.walk(element);
+        var my=this.output.join('');
+        this.output=save_out;
+        this.appendOutput('[[HTML(<object '+attrs.join(' ')+'>'+ my +'</object>)]]');
+    } else {
+        this.appendOutput('[[HTML(<object '+attrs.join(' ')+'></object>)]]');
+    }
+}
+
+proto.format_embed = function(element) {
+    var attr=['src','type','data','width','height','id','wmode',
+            'quality','align','allowScriptAccess','allowFullScreen','name','pluginspage'];
+    var attrs=[];
+    for (var k in attr) {
+        var v=element.getAttribute(attr[k]);
+        if (v) attrs.push(attr[k]+'="'+ v + '"');
+    }
+    if (element.parentNode.nodeName == 'OBJECT')
+        this.appendOutput('<embed '+attrs.join(' ')+'>' + element.innerHTML +'</embed>');
+    else
+        this.appendOutput('[[HTML(<embed '+attrs.join(' ')+'>'+element.innerHTML+'</embed>)]]');
+}
+
+proto.format_param = function(element) {
+    var attr=['name','value'];
+    var attrs=[];
+    for (var k in attr) {
+        var v=element.getAttribute(attr[k]);
+        if (v) attrs.push(attr[k]+'="'+ v + '"');
+    }
+    this.appendOutput('<param '+attrs.join(' ')+'></param>');
 }
 
 proto.format_img = function(element) {
