@@ -2,7 +2,7 @@
    MoinMoin Hotkeys
 
    Copyright(c) 2002 Byung-Chan Kim
-   Copyright(c) 2003-2004 Won-kyu Park <wkpark at kldp.org>
+   Copyright(c) 2003-2007 Won-kyu Park <wkpark at kldp.org>
 
    distributable under GPL
 
@@ -16,10 +16,11 @@
    * 2003/07/14 : fixed element indices
    * 2004/08/24 : no PATH_INFO support merged
    * 2004/10/03 : more intelligent behavior with search keys '?' '/'
+   * 2007/11/09 : simplified and cleanup.
 */
 
 /*
- <form name="go" id="go" method="get" action='$url' onsubmit="return moin_submit();">
+ <form name="go" id="go" method="get" action='$url' onsubmit="return moin_submit(this);">
  <input type="text" name="value" size="20" />
  <input type="hidden" name="action" value="goto" />
  <input type="submit" name="status" value="Go" class="goto" />
@@ -27,29 +28,39 @@
 */
 
 /*
+   A: ?action=randompage
+   B: ?action=bookmark
    D: ?action=diff
-   I: ?action=info
    E/W: ?action=edit
-   F: FrontPage
-   C: RecentChanges
-   T: TitleIndex
-   H: ?action=home (not supported in the MoinMoin)
+   H: ?action=home (not supported action in the MoinMoin)
+   I: ?action=info
+   K: ?action=keywords
    L: ?action=LikePages
+   P: ?action=print
+   R: ?action=show
    U: ?action=UserPreferences
 
-   <ESC>: goto the 'go' form
-   /: FullSearch mode
-   ?: TitleSearch mode
+   C: RecentChanges
+   F: FrontPage
+   S/Q: FindPage
+   T: TitleIndex
 
+   <ESC>: goto the 'go' form
+   /: FullSearch mode toggle
+   ?: TitleSearch mode toggle
+
+   ** mozilla only **
    F1: HelpContents
    F3: FindPage
 */
 
 // uncomment bellow three lines and customize for your wiki.
 
-//url_prefix="/mywiki";
+//_script_name="/mywiki";
 //_qp="/"; // query_prefix
 //FrontPage= "FrontPage";
+_script_name=url_prefix || _script_name; // url_prefix is depricated
+
 RecentChanges= "RecentChanges"; 
 FindPage= "FindPage"; 
 TitleIndex= "TitleIndex"; 
@@ -58,230 +69,185 @@ UserPreferences= "UserPreferences";
 
 // go form ID
 _go= "go";
+_ap = _qp == '/' ? '?':'&';
 
-if (_qp == '/') { _ap='?'; }
-else { _ap='&'; }
+function noBubble(e) {
+	if (e.preventDefault) e.preventDefault();
+	else e.cancelBubble = true;
+}
 
-_dom=0;
+function keydownhandler(e) {
+	if (e && e.target) var f = e.target, nn=f.nodeName; // Mozilla
+	else var e=window.event, f = e.srcElement, nn = f.tagName; // IE
 
-function keydownhandler(ev) {
-	e=ev ? ev:window.event; // for IE
-	if(_dom==3) var EventStatus= e.srcElement.tagName;
-	else if(_dom==1) var EventStatus= e.target.nodeName; // for Mozilla
-
-	var cc = '';
-	var ch = '';
-
-	if(_dom==3) { // for IE
-		if(e.keyCode>0) {
-			ch=String.fromCharCode(e.keyCode);
-			cc=e.keyCode;
-		}
-	} else { // for Mozilla
-		cc=e.keyCode;
-		if(e.charCode>0) {
-			ch=String.fromCharCode(e.charCode);
-		}
-	}
-
-//	if (_dom!=3) return;
-	if(EventStatus == 'INPUT' || EventStatus == 'TEXTAREA' ) {
-		if (_dom==3 && cc==27 && EventStatus == 'TEXTAREA')
-			return false;
-		// ESC blocking for all vim lovers
-		return true;
-	}
-//	if (cc==8) { // Backspace blocking
-//		alert(e.keyCode);
-//		if( _dom==3 && strs.length > 0) {
-//			//strs=strs.substr(0,strs.length-1);
-//			//document.getElementById("status").innerHTML=strs;
-//		}
-//		return false;
-//	}
+	if (window.event && e.keyCode==27 && (nn == 'TEXTAREA' || nn == 'INPUT')) return false;
+	// IE ESC blocking for all vim lovers
 	return true;
 }
 
-function keypresshandler(ev){
-	e=ev ? ev:window.event; // for IE
-	if(_dom==3) var EventStatus= e.srcElement.tagName;
-	else if(_dom==1) var EventStatus= e.target.nodeName; // for Mozilla
+function keypresshandler(e) {
+	if (window.event) var e = window.event, f = e.srcElement, nn = f.tagName;
+	else  var f = e.target, nn = f.nodeName;
+	var cc = e.charCode ? e.charCode : e.keyCode;
+	ch = (cc >= 32 && cc <=126) ? String.fromCharCode(cc).toLowerCase():0;
 
-	var cc = '';
-	var ch = '';
-
-	if(window.event) { // for IE
-		if(e.keyCode>0) {
-			ch=String.fromCharCode(e.keyCode);
-			cc=e.keyCode;
-		}
-	} else { // for Mozilla
-		cc=e.keyCode;
-		if(e.charCode>0) {
-			ch=String.fromCharCode(e.charCode);
-		}
-	}
-
-	ch = ch.toLowerCase();
+	//alert(e.keyCode+','+e.charCode+','+e.which);
 	var go=document.getElementById(_go);
-	if(e.altKey || e.ctrlKey) {
-		if(ch == "z" && e.altKey) {
-			if (EventStatus != 'INPUT') {
-				go.elements['value'].focus();
-				return false;
-			} else {
-				var bot=document.getElementById('bottom');
-				if (bot) bot.focus();
-				return false;
-			}
-		}
+	var goValue=go.elements['value'];
+	var goAction=go.elements['action'];
+	var goStatus=go.elements['status'];
+
+	if (cc == 229 && nn != 'INPUT' && nn != 'TEXTAREA') { // for Mozilla
+		goValue.focus();
+		noBubble(e);
 		return;
 	}
-	if(EventStatus == 'INPUT' || EventStatus == 'TEXTAREA' || _dom == 2) {
-		if ((ch == '?' || ch== '/') && EventStatus == 'INPUT') {
-			var my=""+go.elements['value'].value;
-			if (ch == '?' && (my == "/" || my =="?" || my=="")) {
-				if (go.elements['status'].value == '?') {
-					go.elements['action'].value="goto";
-					go.elements['status'].value="Go";
-					window.status="GoTo";
-				} else {
-					go.elements['action'].value="titlesearch";
-					go.elements['status'].value="?";
-					window.status="TitleSearch";
-				}
-			} else if (ch == '/' && (my == "/" || my =="?" || my=="")) {
-				if (go.elements['status'].value == '/') {
-			 		go.elements['action'].value="goto";
-			 		go.elements['status'].value="Go";
-			 		window.status="GoTo";
-				} else {
-					go.elements['action'].value="fullsearch";
-					go.elements['status'].value="/";
-					window.status="FullSearch";
-				}
-			}
-			if (my == '/' || my == '?')
-			go.elements['value'].value=my.substr(0,my.length-1);
-		} else if (cc== 27 && EventStatus == 'INPUT') {
-			go.elements['value'].blur();
-			go.elements['value'].value='';
-			go.elements['action'].value="goto";
-			go.elements['status'].value="Go";
-			window.status="GoTo"+window.defaultStatus;
+
+	var val = goValue.value || "", act="goto";
+	var stat = goStatus.value || "Go";
+	var i=0;
+
+	if (e.altKey && ch == 'z') {
+		if (nn != 'INPUT') {
+			goValue.focus();
+			noBubble(e);
+		} else {
+			var bot=document.getElementById('bottom');
+			if (bot) bot.focus(), noBubble(e);
 		}
 		return;
 	}
 
-	if(_dom != 3 && cc == 229 && ch == '') { // Mozilla
-		window.status="?/ or change IME status";
-	} else if(_dom !=3 && cc == 112) { // 'F1' Help! (Mozilla only)
-		self.location = url_prefix + _qp + HelpContents;
-	} else if(_dom !=3 && cc == 114) { // 'F3' Find (Mozilla only)
-		self.location = url_prefix + _qp + FindPage;
-	} else if(cc == 9 || cc == 27) { // 'TAB','ESC' key
-		if (cc == 27) {
-			go.elements['value'].focus();
+	switch(ch || cc) {
+	case 27: ch = 27;
+	case '/':
+	case '?':
+		if (nn == 'INPUT') {
+			if (val == "" || val == "/" || val =="?") {
+				if (ch == '?') {
+					if (stat == "?") { // toggle
+						stat = "Go";
+						window.status="GoTo";
+					} else {
+						act="titlesearch";
+						stat="?";
+						window.status="TitleSearch";
+					}
+				} else if (ch == '/') {
+					if (stat == "/") { // toggle
+						stat = "Go";
+				 		window.status="GoTo";
+					} else {
+						act="fullsearch";
+						stat="/";
+						window.status="FullSearch";
+					}
+				} else if (ch == 27) {
+					stat="Go";
+					goValue.blur();
+				}
+				if (val == "/" || val == "?") val=val.substr(0,val.length-1);
+				goValue.value=val;
+				goAction.value=act;
+				goStatus.value=stat;
+				return;
+			}
 		}
-	} else if(ch == "`") {
+		break;
+	}
+
+	if (nn == 'INPUT' || nn == 'TEXTAREA' || e.ctrlKey) return;
+	var loc=self.location+'';
+	var pages={'c':RecentChanges,'f':FrontPage,'s':FindPage,'t':TitleIndex,'u':UserPreferences};
+	var actions={'d':'diff', 'i':'info', 'b':'bookmark', 'h':'home', 'l':'likepages',
+		'p':'print', 'a':'randompage', 'k':'keywords'};
+
+	switch(ch || cc) {
+	case '?':
+		// Title search as vi way
+		goAction.value="titlesearch";
+		goStatus.value='?';
+		goValue.focus();
+		break;
+	case '/':
+		// Contents search
+		goAction.value="fullsearch";
+		goStatus.value='/';
+		goValue.focus();
+		break;
+	case 27: // 'ESC' key
+		goValue.focus();
+		break;
+	case 112: // 'F1' Help (Mozilla only)
+		noBubble(e);
+		self.location = _script_name + _qp + HelpContents;
+		break;
+	case 114: // 'F3' Find (Mozilla only)
+		noBubble(e);
+		self.location = _script_name + _qp + FindPage;
+		break;
+	case 229: // IME
+		window.status="?/ or change IME status";
+		break;
+	case '`':
 		var bot=document.getElementById('bottom');
 		if (bot) bot.focus();
-	} else if(ch == "z") {
-		go.elements['value'].focus();
-	} else if(ch == "/" || ch == "?") {
-		var my=go.elements['value'].value + "";
-		if (ch == "?" && (my == "?" || my =="/" || my=="")) {
-			// Title search as vi way
-			go.elements['value'].focus();
-			go.elements['action'].value="titlesearch";
-			go.elements['status'].value="?";
-		} else
-		if (ch == "/" && (my == "?" || my =="/" || my=="")) {
-			// Contents search
-			go.elements['value'].focus();
-			go.elements['action'].value="fullsearch";
-			go.elements['status'].value="/";
-		}
-	} else if(ch == "c") {
-		self.location = url_prefix + _qp + RecentChanges;
-	} else if(ch == "d" || ch== "i" || ch=="b" || ch=="l" || ch=="h" || ch=="p" || ch=="a" || ch=="k") {
-		var my=''+self.location;
-		var idx = my.indexOf(_ap);
-		if (idx != -1) {
-			my=my.substr(0,idx);
-		}
-		if (ch == "d")
-			my +=_ap + 'action=diff';
-		else if (ch == "i")
-			my +=_ap + 'action=info';
-		else if (ch == "b")
-			my +=_ap + 'action=bookmark';
-		else if (ch == "h")
-			my +=_ap + 'action=home';
-		else if (ch == "l")
-			my +=_ap + 'action=LikePages';
-		else if (ch == "p")
-			my +=_ap + 'action=print';
-		else if (ch == "a")
-			my +=_ap + 'action=randompage';
-		else if (ch == "k")
-			my +=_ap + 'action=keywords';
-		self.location=my;
-		
-	} else if(ch == "f") { // frontpage
-		self.location = url_prefix + _qp + FrontPage;
-	} else if(ch == "s" || ch == 'q') { // findpage
-		self.location = url_prefix + _qp + FindPage
-	} else if(ch == "t") { // titleindex
-		self.location = url_prefix + _qp + TitleIndex
-	} else if(ch == "u") { // userpreferences
-		self.location = url_prefix + _qp + UserPreferences;
-	} else if(ch=="e" || ch=="w" || ch=="r") { // Edit or refresh
-		var my=''+self.location;
-		var idx=my.indexOf(_ap);
-		if (idx != -1 && my.substr(idx+1,5) == "goto=") {
-			my=my.substr(idx+6,my.length-6);
-			if ((idx=my.indexOf("&")) != -1)
-				my=my.substring(0,idx);
+		break;
+	case 'z':
+		goValue.focus();
+		break;
+	case 'a': case 'b': case 'd': case 'h': case 'i': case 'k': case 'l': case 'p':
+		if ((i = loc.indexOf(_ap)) != -1) loc = loc.substr(0,i);
+		self.location=loc + _ap + 'action=' + actions[ch];
+		break;
+	case 'q': ch = 's';
+	case 'c': case 'f': case 's': case 't': case 'u':
+		self.location = _script_name + _qp + pages[ch];
+		break;
+	case 'e': case 'r': case 'w':
+		// Edit/write or refresh
+		if ((i=loc.indexOf(_ap)) != -1 && loc.substr(i+1,5) == "goto=") { // deprecated
+			loc=loc.substr(i+6,loc.length-6);
+			if ((i=loc.indexOf('&')) != -1) loc=loc.substring(0,i);
 			if (ch == "e" || ch == "w")
-				self.location=url_prefix + _qp + my + _ap +
+				self.location=_script_name + _qp + loc + _ap +
 					'action=edit';
 			if (ch == "r") {
-				if ((idx=my.indexOf("#")) != -1)
-					my=my.substring(0,idx);
-				self.location=url_prefix + _qp + my + _ap +
+				if ((i=loc.indexOf('#')) != -1)
+					loc=loc.substring(0,i);
+				self.location=_script_name + _qp + loc + _ap +
 					'action=show';
 			}
 		} else {
-			if (idx != -1) {
-				my=my.substr(0,idx);
-			} else if ((idx=my.indexOf("#")) != -1) {
-				my=my.substring(0,idx);
-			}
-			if (ch == "e" || ch == "w")
-				self.location = my + _ap + 'action=edit';
-			if (ch == "r")
-				self.location = my + _ap + 'action=show';
+			if (i != -1) loc=loc.substr(0,i);
+			else if ((i=loc.indexOf('#')) != -1) loc=loc.substring(0,i);
+			if (ch == "e" || ch == "w") self.location = loc + _ap + 'action=edit';
+			if (ch == "r") self.location = loc + _ap + 'action=show';
 		}
+		break;
 	}
 	return;
 }
 
-function input(){
-	_dom=document.all ? 3 : (document.getElementById ? 1 : (document.layers ? 2 : 0));
-	document.onkeypress = keypresshandler;
-	document.onkeydown = keydownhandler;
+function moin_init() {
+	if (document.addEventListener) {
+		document.addEventListener('keypress',keypresshandler,false);
+		document.addEventListener('keypress',keydownhandler,false);
+	} else {
+		document.attachEvent('onkeypress',keypresshandler);
+		document.attachEvent('onkeydown',keydownhandler);
+	}
 }
 
-function moin_submit() {
-	var go=document.getElementById(_go);
-	if (go.elements['value'].value.replace(/\s+/,'') =="")
-		return false;
-	if (go.elements['action'].value =="goto") {
+function moin_submit(form) {
+	if (form == null) form=document.getElementById(_go);
+	if (form == null) return true;
+	if (form.elements['value'].value.replace(/\s+/,'') == "") return false;
+	if (form.elements['action'].value =="goto") {
 		go.elements['value'].name='goto';
 		go.elements['action'].name='';
 		return true;
 	}
 }
 
-input();
+moin_init();
