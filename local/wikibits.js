@@ -118,20 +118,33 @@ function insertTags(tagOpen, tagClose, sampleText) {
 	}
 
 	// IE
+	// http://www.bazon.net/mishoo/articles.epl?art_id=1292 (used by this script)
+	// http://the-stickman.com/web-development/javascript/finding-selection-cursor-position-in-a-textarea-in-internet-explorer/
 	if(document.selection  && !is_gecko) {
-		var theSelection = document.selection.createRange().text;
-		if(!theSelection) { theSelection=sampleText;}
 		txtarea.focus();
-		if(theSelection.charAt(theSelection.length - 1) == " "){// exclude ending space char, if any
-			theSelection = theSelection.substring(0, theSelection.length - 1);
-			document.selection.createRange().text = tagOpen + theSelection + tagClose + " ";
+		var r = document.selection.createRange();
+		var range = r.duplicate();
+		var endText = '';
+
+		var myText = range.text;
+		if (myText) {
+			if (myText.charAt(myText.length - 1) == " ") { // exclude ending space char, if any
+				endText = ' ';
+				myText = myText.substring(0, myText.length - 1);
+			}
+			subst=toggleSameFormat(tagOpen,tagClose,myText);
 		} else {
-			document.selection.createRange().text = tagOpen + theSelection + tagClose;
+			myText=sampleText;
+			subst = tagOpen + myText + tagClose;
 		}
 
+		range.text = subst + endText;
+
+		range.setEndPoint('StartToStart', r);
+		txtarea.focus();
+		range.select();
 	// Mozilla
 	} else if(txtarea.selectionStart || txtarea.selectionStart == '0') {
-		var replaced = false;
 		var startPos = txtarea.selectionStart;
 		var endPos = txtarea.selectionEnd;
 		var scrollTop = txtarea.scrollTop;
@@ -187,9 +200,9 @@ function insertTags(tagOpen, tagClose, sampleText) {
 function toggleSameFormat(start, end, sel) {
     var nsel=sel;
     var start_re = start.replace(/([\^\$\*\+\.\?\[\]\{\}\(\)])/g, '\\$1')
-        .replace(/\n/,"\n?").replace(/==/,'={2,6}'); // for headings
+        .replace(/\n/,"(\r\n|\n)?").replace(/==/,'={2,6}'); // for headings
     var end_re = end.replace(/([\^\$\*\+\.\?\[\]\{\}\(\)])/g, '\\$1')
-        .replace(/\n/,"\n?").replace(/==/,'={2,6}');
+        .replace(/\n/,"(\r\n|\n)?").replace(/==/,'={2,6}');
 
     start_re = new RegExp('^' + start_re);
     end_re = new RegExp(end_re + '$');
@@ -197,10 +210,10 @@ function toggleSameFormat(start, end, sel) {
 	nsel = sel.replace(start_re,'').replace(end_re,'');
 
 	var m;
-	if (m=sel.match(/^\n?(={1,6})/)) { // for headings
-	    var tag='='.times(m[1].length);
+	if (m=sel.match(/^(\r\n|\n)?(={1,6})/)) { // for headings
+	    var tag='='.times(m[2].length);
 	    start=start.replace(/=/,tag),end=end.replace(/=/,tag)
-	    if (start.length==9) start="\n== ",end=" ==\n"; // reset
+	    if (start.replace(/(\r\n|\n)/,'').length==8) start="\n== ",end=" ==\n"; // reset
 	} else {
             return nsel;
 	}
