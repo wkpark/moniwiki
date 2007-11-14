@@ -213,7 +213,7 @@ Contents(/)</span>&nbsp;
 ";
   } else {
     return <<<FORM
-<form id='go' method='get' action='$action' onsubmit="return moin_submit();">
+<form id='go' method='get' action='$action' onsubmit="moin_submit(this);">
 <div>
 <input type='text' name='value' size='20' accesskey='s' class='goto' style='width:100px' />
 <input type='hidden' name='action' value='goto' />
