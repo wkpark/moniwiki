@@ -78,7 +78,6 @@ function do_Blog($formatter,$options) {
   $cols=$options['cols'] > 60 ? $options['cols']: $cols;
 
   $url=$formatter->link_url($formatter->page->urlname);
-  $formatter->send_header("",$options);
 
   if ($formatter->refresh or $options['button_refresh']) {
     updateBlogList($formatter);
@@ -151,6 +150,7 @@ function do_Blog($formatter,$options) {
           $lines[$i]="----\n$savetext @SIG@\n$endtag";
         $raw_body=join("\n",$lines);
       } else {
+        $formatter->send_header("",$options);
         $formatter->send_title(_("Error: No blog entry found!"),"",$options);
         $formatter->send_footer("",$options);
         return;
@@ -180,6 +180,14 @@ function do_Blog($formatter,$options) {
         $raw_body.=$entry;
     }
 
+    $myrefresh='';
+    if ($DBInfo->use_save_refresh) {
+       $sec=$DBInfo->use_save_refresh - 1;
+       $lnk=$formatter->link_url($formatter->page->urlname,"?action=show");
+       $myrefresh='Refresh: '.$sec.'; url='.qualifiedURL($lnk);
+    }
+    $formatter->send_header($myrefresh,$options);
+
     if ($options['value']) {
       $formatter->send_title(sprintf(_("Comment added to \"%s\""),$title),"",$options);
       $log="Add Comment to \"$title\"";
@@ -201,6 +209,7 @@ function do_Blog($formatter,$options) {
     } else
       $formatter->send_page();
   } else { # add entry or comment
+    $formatter->send_header("",$options);
     if ($options['value']) {
       $raw_body=$formatter->page->_get_raw_body();
       $lines=explode("\n",$raw_body);
@@ -246,12 +255,14 @@ function do_Blog($formatter,$options) {
       print "<a name='BlogComment'></a>";
     print '<div id="editor_area">';
     print "<form method='post' action='$url'>\n";
+    $myinput='';
     if ($options['id'] == 'Anonymous')
-      print '<b>'._("Name")."</b>: <input name='name' size='15' maxlength='15' value='$options[name]' />\n";
-    if ($options['value'])
-      print "<input type='hidden' name='value' value='$options[value]' />\n";
+      $myinput.='<b>'._("Name")."</b>: <input name='name' size='15' maxlength='15' value='$options[name]' />\n";
+    if (!$options['value'])
+      $myinput.='<b>'._("Title")."</b>: <input name='title' value='$options[title]' size='70' maxlength='70' style='width:300px' /><br />\n";
     else
-      print '<b>'._("Title")."</b>: <input name='title' value='$options[title]' size='70' maxlength='70' style='width:300px' /><br />\n";
+      print "<input type='hidden' name='value' value='$options[value]' />\n";
+    print '<div class="editor_area_extra">'.$myinput."</div>\n";
     $savetext=$savetext ? $savetext:'Enter blog entry';
     if ($DBInfo->use_wikiwyg) {
       $wysiwyg_msg=_("GUI");
