@@ -14,7 +14,7 @@ See the Wikiwyg documentation for details.
 
 AUTHORS:
 
-    Ingy döt Net <ingy@cpan.org>
+    Ingy dot Net <ingy@cpan.org>
     Casey West <casey@geeknest.com>
     Chris Dent <cdent@burningchrome.com>
     Matt Liggett <mml@pobox.com>
@@ -157,6 +157,18 @@ proto.initializeObject = function(div, config, id) {
         mydiv.setAttribute('id',id);
     }
 
+    var divs=div.getElementsByTagName('div');
+    this.extra=null;
+    // save some needed fields
+    for (var i=0;i < divs.length;i++) {
+        if (divs[i].className == 'editor_area_extra') {
+            this.extra=divs[i].cloneNode(true);
+            break;
+        }
+    }
+    if (this.extra) mydiv.appendChild(this.extra);
+
+    //
     this.div = div;
     this.divHeight = this.div.offsetHeight;
     if (!config) config = {};

@@ -405,6 +405,7 @@ Wikiwyg.prototype.saveChanges = function() {
             myaction=this.myinput[i].value;
     }
 
+    /*
     // for preview
     myWikiwyg.convertWikitextToHtmlAll(wikitext,
         function(new_html) {
@@ -414,11 +415,23 @@ Wikiwyg.prototype.saveChanges = function() {
         });
 
     // XXX using default form XXX
+    */
     var area=document.getElementById('editor_area');
     if (area) {
         var textarea=area.getElementsByTagName('textarea')[0];
         var form=area.getElementsByTagName('form')[0];
         if (textarea) textarea.value=wikitext;
+
+        // restore extra fields
+        if (this.extra) {
+            var extras=this.extra.getElementsByTagName('input');
+            var myinputs=form.getElementsByTagName('input');
+            for (var i=0;i < extras.length;i++) {
+                if (myinputs[extras[i].name]) {
+                    myinputs[extras[i].name].value=extras[i].value;
+                }
+            }
+        }
 
         form.submit();
         return;
@@ -548,6 +561,15 @@ Wikiwyg.prototype.editMode = function(form,text) {
     this.current_mode.enableThis();
     //this.current_mode.enableThis(); // hack !!
     this.myinput=dom.getElementsByTagName('input');
+    var divs=dom.getElementsByTagName('div');
+
+    // save some needed fields
+    for (var i=0;i < divs.length;i++) {
+        if (divs[i].className == 'editor_area_extra') {
+            this.extra_input=divs[i];
+            break;
+        }
+    }
 }
 
 //
@@ -2246,7 +2268,7 @@ function sectionEdit(ev,obj,sect) {
         loading.parentNode.replaceChild(saved,loading);
     } else {
         area=document.getElementById('editor_area');
-        text=area.getElementsByTagName('textarea')[0].value;
+        var textarea=area.getElementsByTagName('textarea')[0].value;
         form=area.innerHTML;
 
         var toolbar=document.getElementById('toolbar');
