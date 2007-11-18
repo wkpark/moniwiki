@@ -389,7 +389,7 @@ class UserDB {
     $config=array("css_url","datatime_fmt","email","bookmark","language",
                   "name","nick","password","wikiname_add_spaces","subscribed_pages",
                   "scrapped_pages","quicklinks","theme","ticket","eticket",
-	  	  "tz_offset","npassword","nticket");
+	  	  "tz_offset","npassword","nticket","idtype");
 
     $date=gmdate('Y/m/d', time());
     $data="# Data saved $date\n";
@@ -460,7 +460,8 @@ class User {
         $this->setID($id);
         return;
      }
-     list($this->ticket,$id)=explode(".",$_COOKIE['MONI_ID'],2);
+     $this->ticket=substr($_COOKIE['MONI_ID'],0,32);
+     $id=substr($_COOKIE['MONI_ID'],33);
 
      $this->setID($id);
      $this->css=isset($_COOKIE['MONI_CSS']) ? $_COOKIE['MONI_CSS']:'';
@@ -1959,7 +1960,10 @@ EXTRA;
     $css=$user->info['css_url'];
     $email=$user->info['email'];
     $tz_offset=$user->info['tz_offset'];
-    $again="<b>"._("New password")."</b>&nbsp;<input type='password' size='15' maxlength='$pw_len' name='passwordagain' value='' /></td></tr>";
+    if ($user->info['password'])
+      $again="<b>"._("New password")."</b>&nbsp;<input type='password' size='15' maxlength='$pw_len' name='passwordagain' value='' /></td></tr>";
+    else
+      $again='';
 
     $tz_off=date('Z');
     for ($i=-47;$i<=47;$i++) {
@@ -1998,6 +2002,7 @@ setTimezone();
 EOF;
 
   if (!$DBInfo->use_safelogin or $button==_("Save")) {
+    if ($user->info['password'])
     $passwd_inp=<<<PASS
   <tr>
      <td><b>$passwd_btn</b>&nbsp;</td><td><input type="password" size="15" maxlength="$pw_len" name="password" value="$passwd" />
