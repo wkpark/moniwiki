@@ -527,7 +527,7 @@ class User {
   }
 
   function checkID($id) {
-     $SPECIAL='\\,\.;:\-_#\+\*\?!"\'\?%&\/\(\)\[\]\{\}\=';
+     $SPECIAL='\\,;\$\|~`#\+\*\?!"\'\?%&\(\)\[\]\{\}\=';
      preg_match("/[$SPECIAL]/",$id,$match);
      if (!$id || $match)
         return false;
@@ -1900,7 +1900,6 @@ function macro_UserPreferences($formatter,$value,$options='') {
     <th>OpenID</th>
     <td>
       <input type="text" name="openid_url" value="" style="background:url(http://www.myopenid.com/static/openid-icon-small.gif) no-repeat scroll 3px 2px; padding: 2px 2px 2px 28px;" />
-      <input type="hidden" name="login_with_openid" value="1" />
 	    <input type="submit" name="login" value="$button" /> &nbsp;
     </td>
   </tr>
