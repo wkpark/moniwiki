@@ -210,7 +210,7 @@ function do_userform($formatter,$options) {
       $ok_ticket=1;
     }
     $id=$user->getID($options['login_id']);
-    $user->setID($id);
+    if (!preg_match("/\//",$id)) $user->setID($id); // protect http:// style id
 
     if ($ok_ticket and $user->id != "Anonymous") {
        if ($DBInfo->use_safelogin) {
@@ -361,7 +361,7 @@ function do_userform($formatter,$options) {
     $openid = new SimpleOpenID;
 	  $openid->SetIdentity($options['openid_url']);
 	  $openid->SetTrustRoot($trust_root);
-	  $openid->SetRequiredFields(array('wikiname','email','fullname'));
+	  $openid->SetRequiredFields(array('nickname','email','fullname'));
 	  $openid->SetOptionalFields(array('language','timezone'));
 
 	  if ($openid->GetOpenIDServer()){
@@ -374,7 +374,7 @@ function do_userform($formatter,$options) {
 		  #echo "ERROR DESCRIPTION: " . $error['description'] . "<br>";
       $options["msg"] = sprintf(_("Authentication request was failed: %s"),$error['description']);
     }
-  } else if ($options['id_res']) { // OpenID result
+  } else if ($options['openid_mode']=='id_res') { // OpenID result
     include_once('lib/openid.php');      
     session_start();
 
@@ -384,15 +384,27 @@ function do_userform($formatter,$options) {
     if ($openid_validation_result == true) { // OK HERE KEY IS VALID
       $userdb=new UserDB($DBInfo);
       // XXX
-      if ($userdb->_exists($id)) {
-              $user=$userdb->getUser($id);
-              // check openid
+      $user->setID($options['openid_identity']); // XXX
+      if ($userdb->_exists($options['openid_identity'])) {
+        $user=$userdb->getUser($options['openid_identity']);
+        $user->info['email']=$options['openid_sreg_email'];
+        $user->info['idtype']='openid';
+        $userdb->saveUser($user); // always save
+        $options['msg'].= sprintf(_("Successfully login as '%s' via OpenID."),$options['openid_identity']);
+        $formatter->header($user->setCookie());
       } else {
-         $user->info['tz_offset']=$tz_offset; // XXX
-         $udb->addUser($user);
-         $udb->saveUser($user);
+        //$user->info['tz_offset']=$options['openid_timezone']; // XXX
+        //$user->info['tz_offset']=$options['openid_language']; // XXX
+        //$user->info['nick']=$options['openid_nickname']; // XXX
+        $user->info['email']=$options['openid_sreg_email'];
+        $user->info['idtype']='openid';
+        $userdb->addUser($user);
+        $formatter->header($user->setCookie());
+        $userdb->saveUser($user);
+        $options["msg"] =
+          sprintf(_("OpenID Authentication successful and saved as %s."),$options['openid_identity']);
       }
-		  $options['msg'] =  _("");
+      $options['id']=$user->id;
 	  } else if($openid->IsError() == true) { // ON THE WAY, WE GOT SOME ERROR
 		  $error = $openid->GetError();
       $options["msg"] = sprintf(_("Authentication request was failed: %s"),$error['description']);
