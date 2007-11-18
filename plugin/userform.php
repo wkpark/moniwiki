@@ -60,7 +60,7 @@ function do_userform($formatter,$options) {
     return '';
   }
 
-  if ($user->id == "Anonymous" and isset($options['id']) and isset($options['password']) and !isset($options['passwordagain'])) {
+  if ($user->id == "Anonymous" and !empty($options['login_id']) and isset($options['password']) and !isset($options['passwordagain'])) {
     # login
     $userdb=new UserDB($DBInfo);
     if ($userdb->_exists($id)) {
@@ -350,6 +350,56 @@ function do_userform($formatter,$options) {
     #$options['css_url']=$options['user_css'];
     if (!isset($options['msg']))
       $options['msg']=_("Profiles are saved successfully !");
+  } else if ($user->id == "Anonymous" and isset($options['openid_url'])) {
+    # login with openid
+    include_once('lib/openid.php');      
+    session_start();
+
+    $process_url = qualifiedUrl($formatter->link_url("UserPreferences", "?action=userform"));
+    $trust_root = qualifiedUrl($formatter->link_url(""));
+
+    $openid = new SimpleOpenID;
+	  $openid->SetIdentity($options['openid_url']);
+	  $openid->SetTrustRoot($trust_root);
+	  $openid->SetRequiredFields(array('wikiname','email','fullname'));
+	  $openid->SetOptionalFields(array('language','timezone'));
+
+	  if ($openid->GetOpenIDServer()){
+		  $openid->SetApprovedURL($process_url);  	// Send Response from OpenID server to this script
+      $openid->Redirect(); 	// This will redirect user to OpenID Server
+      return;
+	  } else {
+		  $error = $openid->GetError();
+		  #echo "ERROR CODE: " . $error['code'] . "<br>";
+		  #echo "ERROR DESCRIPTION: " . $error['description'] . "<br>";
+      $options["msg"] = sprintf(_("Authentication request was failed: %s"),$error['description']);
+    }
+  } else if ($options['id_res']) { // OpenID result
+    include_once('lib/openid.php');      
+    session_start();
+
+    $openid = new SimpleOpenID;
+	  $openid->SetIdentity($options['openid_identity']);
+	  $openid_validation_result = $openid->ValidateWithServer();
+    if ($openid_validation_result == true) { // OK HERE KEY IS VALID
+      $userdb=new UserDB($DBInfo);
+      // XXX
+      if ($userdb->_exists($id)) {
+              $user=$userdb->getUser($id);
+              // check openid
+      } else {
+         $user->info['tz_offset']=$tz_offset; // XXX
+         $udb->addUser($user);
+         $udb->saveUser($user);
+      }
+		  $options['msg'] =  _("");
+	  } else if($openid->IsError() == true) { // ON THE WAY, WE GOT SOME ERROR
+		  $error = $openid->GetError();
+      $options["msg"] = sprintf(_("Authentication request was failed: %s"),$error['description']);
+	  } else {											// Signature Verification Failed
+      $options["msg"] = _("Invalid OpenID Authentication request");
+		  echo "INVALID AUTHORIZATION";
+	  }
   }
 
   $myrefresh='';
