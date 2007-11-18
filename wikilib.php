@@ -338,6 +338,14 @@ class UserDB {
     $this->user_dir=$WikiDB->data_dir.'/user';
   }
 
+  function _id_to_key($id) {
+    return preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord(substr('\\1',-1))))",$id);
+  }
+
+  function _key_to_id($key) {
+    return rawurldecode(strtr($key,'_','%'));
+  }
+
   function getUserList() {
     if ($this->users) return $this->users;
 
@@ -347,7 +355,7 @@ class UserDB {
       if (is_dir($this->user_dir."/".$file)) continue;
       if (preg_match('/^wu\-([^\.]+)$/', $file,$match))
         #$users[$match[1]] = 1;
-        $users[] = $match[1];
+        $users[] = $this->_key_to_id($match[1]);
     }
     closedir($handle);
     $this->users=$users;
@@ -379,7 +387,7 @@ class UserDB {
 
   function saveUser($user) {
     $config=array("css_url","datatime_fmt","email","bookmark","language",
-                  "name","password","wikiname_add_spaces","subscribed_pages",
+                  "name","nick","password","wikiname_add_spaces","subscribed_pages",
                   "scrapped_pages","quicklinks","theme","ticket","eticket",
 	  	  "tz_offset","npassword","nticket");
 
@@ -396,13 +404,13 @@ class UserDB {
 
     #print $data;
 
-    $fp=fopen($this->user_dir."/wu-".$user->id,"w+");
+    $fp=fopen($this->user_dir."/wu-".$this->_id_to_key($user->id),"w+");
     fwrite($fp,$data);
     fclose($fp);
   }
 
   function _exists($id) {
-    if (file_exists("$this->user_dir/wu-$id"))
+    if (file_exists("$this->user_dir/wu-" . $this->_id_to_key($id)))
       return true;
     return false;
   }
@@ -419,7 +427,7 @@ class UserDB {
 
   function getUser($id) {
     if ($this->_exists($id)) {
-       $data=file("$this->user_dir/wu-$id");
+       $data=file("$this->user_dir/wu-" . $this->_id_to_key($id));
     } else {
        $user=new User('Anonymous');
        return $user;
@@ -441,7 +449,7 @@ class UserDB {
 
   function delUser($id) {
     if ($this->_exists($id)) {
-       unlink("$this->user_dir/wu-$id");
+       unlink("$this->user_dir/wu-". $this->_id_to_key($id));
     }
   }
 }
@@ -1886,7 +1894,7 @@ function macro_UserPreferences($formatter,$value,$options='') {
 
   $button=_("Login");
   $openid_btn=_("OpenID");
-  if ($DBInfo->use_openid) {
+  if ($user->id == 'Anonymous' && $DBInfo->use_openid) {
     $openid_form=<<<OPENID
   <tr>
     <th>OpenID</th>
