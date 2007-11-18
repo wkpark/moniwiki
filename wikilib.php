@@ -1883,24 +1883,47 @@ function macro_UserPreferences($formatter,$value,$options='') {
   } else {
     $idform=$user->id;
   }
+
   $button=_("Login");
-  $id_btn=_("ID");
-  if ($user->id == 'Anonymous' and !isset($options['login_id']) and $value!="simple")
-    $login=<<<FORM
-<form method="post" action="$url"$onsubmit>
-<input type="hidden" name="action" value="userform" />
-<table border="0">
-  <tr><td><b>$id_btn</b>&nbsp;</td><td>$idform</td></tr>
+  $openid_btn=_("OpenID");
+  if ($DBInfo->use_openid) {
+    $openid_form=<<<OPENID
   <tr>
-     <td><b>$passwd_btn</b>&nbsp;</td><td><input type="password" size="15" maxlength="$pw_len" name="password" value="" /></td>
+    <th>OpenID</th>
+    <td>
+      <input type="text" name="openid_url" value="" style="background:url(http://www.myopenid.com/static/openid-icon-small.gif) no-repeat scroll 3px 2px; padding: 2px 2px 2px 28px;" />
+      <input type="hidden" name="login_with_openid" value="1" />
+	    <input type="submit" name="login" value="$button" /> &nbsp;
+    </td>
+  </tr>
+OPENID;
+    }
+  $id_btn=_("ID");
+  if ($user->id == 'Anonymous' and !isset($options['login_id']) and $value!="simple") {
+    if (isset($openid_form) and $value != 'openid') $sep="<tr><td colspan='2'><hr></td></tr>\n";
+    if ($value != 'openid')
+      $default_form=<<<MYFORM
+  <tr><th>$id_btn&nbsp;</th><td>$idform</td></tr>
+  <tr>
+     <th>$passwd_btn&nbsp;</th><td><input type="password" size="15" maxlength="$pw_len" name="password" value="" /></td>
   <tr><td></td><td>
     $passwd_hidden
     <input type="submit" name="login" value="$button" /> &nbsp;
   </td></tr>
+MYFORM;
+    $login=<<<FORM
+<form method="post" action="$url"$onsubmit>
+<input type="hidden" name="action" value="userform" />
+<table border="0">
+$openid_form
+$sep
+$default_form
 </table>
 </form>
 <hr />
 FORM;
+    $openid_form='';
+  }
 
   if ($user->id == 'Anonymous') {
     if (isset($options['login_id']) or $_GET['join'] or $value!="simple") {
@@ -1911,7 +1934,7 @@ FORM;
       }
       $mailbtn=_("Mail");
       $extra=<<<EXTRA
-  <tr><td><b>$mailbtn</b>&nbsp;</td><td><input type="text" size="40" name="email" value="$email" /></td></tr>
+  <tr><th>$mailbtn&nbsp;</th><td><input type="text" size="40" name="email" value="$email" /></td></tr>
 EXTRA;
       if (!$use_any and $DBInfo->use_ticket) {
         $seed=md5(base64_encode(time()));
@@ -1950,8 +1973,8 @@ EXTRA;
     $email_btn=_("Mail");
     $tz_btn=_("Time Zone");
     $extra=<<<EXTRA
-  <tr><td><b>$email_btn</b>&nbsp;</td><td><input type="text" size="40" name="email" value="$email" /></td></tr>
-  <tr><td><b>$tz_btn</b>&nbsp;</td><td><select name="timezone">
+  <tr><th>$email_btn&nbsp;</th><td><input type="text" size="40" name="email" value="$email" /></td></tr>
+  <tr><th>$tz_btn&nbsp;</th><td><select name="timezone">
   $opts
   </select> <input type='button' value='Local timezone' onclick='javascript:setTimezone()' /></td></tr>
   <tr><td><b>CSS URL </b>&nbsp;</td><td><input type="text" size="40" name="user_css" value="$css" /><br />("None" for disabling CSS)</td></tr>
@@ -1991,7 +2014,8 @@ $jscript
 <form method="post" action="$url"$onsubmit>
 <input type="hidden" name="action" value="userform" />
 <table border="0">
-  <tr><td><b>$id_btn</b>&nbsp;</td><td>$idform</td></tr>
+$openid_form
+  <tr><th>$id_btn&nbsp;</th><td>$idform</td></tr>
     $passwd_inp
     $passwd_hidden
     $again
