@@ -208,7 +208,7 @@ class SimpleOpenID{
 	
 	function GetOpenIDServer() {
 		#$response = $this->Request($this->openid_url_identity);
-          	call_user_func(array(&$this,$this->_request),$this->openid_url_identity);
+          	$response = call_user_func(array(&$this,$this->_request),$this->openid_url_identity);
 		list($servers, $delegates) = $this->HTML2OpenIDServer($response);
 		if (count($servers) == 0) {
 			$this->ErrorStore('OPENID_NOSERVERSFOUND');
@@ -273,7 +273,7 @@ class SimpleOpenID{
 			return false;
 		}
 		#$response = $this->Request($openid_server,'GET',$params);
-          	call_user_func(array(&$this,$this->_request),$openid_server,'GET',$params);
+          	$response = call_user_func(array(&$this,$this->_request),$openid_server,'GET',$params);
 		$data = $this->splitResponse($response);
 		if ($data['is_valid'] == "true") {
 			return true;
