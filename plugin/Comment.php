@@ -1,5 +1,5 @@
 <?php
-// Copyright 2004-2005 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2004-2007 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a Wiki comment plugin for the MoniWiki
 //
@@ -15,15 +15,17 @@ function macro_Comment($formatter,$value,$options=array()) {
   if ($value) {
     $args=explode(',',$value);
     if (in_array('usemeta',$args)) $use_meta=1;
+    if (in_array('oneliner',$args)) $oneliner=1;
   }
 
   if ($options['usemeta'] or $use_meta) {
     $hidden="<input type='hidden' name='usemeta' value=1 />\n";
   }
-
   if ($options['nocomment']) return '';
-  #if (!$DBInfo->_isWritable($options['page'])) return '';
   if (!$DBInfo->security->writable($options)) return '';
+
+  $emid=base64_encode($formatter->mid.',Comment,'.$value);
+  $mid=$formatter->mid;
 
   $COLS_MSIE = 80;
   $COLS_OTHER = 85;
@@ -47,28 +49,35 @@ function macro_Comment($formatter,$value,$options=array()) {
   $url=$formatter->link_url($formatter->page->urlname);
 
 
-  if ($value)
-    $hidden.='<input type="hidden" name="comment_id" value="'.$value.'" />';
+  $hidden.='<input type="hidden" name="comment_id" value="'.$emid.'" />';
   $form = "<form name='editform' method='post' action='$url'>\n";
   if ($use_meta)
     $form.="<a id='add_comment' name='add_comment'></a>";
-  $form.= <<<FORM
+
+  $comment=_("Comment");
+  $preview_btn=_("Preview");
+  if ($oneliner) {
+    $form.=<<<FORM
+<input class='wiki' size='$cols' name="savetext" value="$savetext" />&nbsp;
+FORM;
+  } else {
+    $preview='<input type="submit" name="button_preview" value="'.$preview_btn.'" />';
+    $form.= <<<FORM
 <textarea class="wiki" name="savetext"
  rows="$rows" cols="$cols">$savetext</textarea><br />
 FORM;
+  }
   if ($options['id'] == 'Anonymous')
-    $sig=_("Username").": <input name='name' value='$options[name]' />";
+    $sig=_("Username").": <input name='name' value='$options[name]' size='10' />";
   else if (!$use_meta)
     $sig="<input name='nosig' type='checkbox' />"._("Don't add a signature");
-  $comment=_("Comment");
-  $preview=_("Preview");
   $form.= <<<FORM2
 $hidden
 $sig
 <input type="hidden" name="action" value="comment" />
 <input type="hidden" name="datestamp" value="$datestamp" />
 <input type="submit" value="$comment" />
-<input type="submit" name="button_preview" value="$preview" />
+$preview
 </form>
 FORM2;
 
@@ -91,6 +100,8 @@ function do_comment($formatter,$options=array()) {
   }
 
   if ($options['usemeta']) $use_meta=1;
+
+  list($nth,$dum,$v)=explode(',', base64_decode($options['mid']),3);
 
   $COLS_MSIE = 80;
   $COLS_OTHER = 85;
@@ -178,6 +189,60 @@ META;
       $savetext="----\n$savetext @SIG@\n";
   }
 
+  if ($options['comment_id']) {
+    list($nth,$dum,$v)=explode(',', base64_decode($options['comment_id']),3);
+
+    if ($v) $check='[['.$dum.'('.$v.')]]';
+    else $check='[['.$dum.']]';
+
+    if (is_numeric($nth)):
+
+    $raw=str_replace("\n","\1",$body);
+    $chunk=preg_split("/({{{.+}}})/U",$raw,-1,PREG_SPLIT_DELIM_CAPTURE);
+
+    $nc='';
+    $k=1;
+    $i=1;
+    foreach ($chunk as $c) {
+        if ($k%2) {
+            $nc.=$c;
+        } else {
+            $nc.="\7".$i."\7";
+            $blocks[$i]=str_replace("\1","\n",$c);
+            ++$i;
+        }
+        $k++;
+    }
+    $nc=str_replace("\1","\n",$nc);
+    $chunk=preg_split('/((?!\!)\[\[.+\]\])/U',$nc,-1,PREG_SPLIT_DELIM_CAPTURE);
+    $nnc='';
+    $ii=1;
+    $matched=0;
+    for ($j=0,$sz=sizeof($chunk);$j<$sz;++$j) {
+        if (($j+1)%2) {
+            $nnc.=$chunk[$j];
+        } else {
+            if ($nth==$ii) {
+                $new=$savetext.$chunk[$j];
+                if ($check != $chunk[$j]) break;
+                $nnc.=$new;
+                $matched=1;
+            }
+            else
+                $nnc.=$chunk[$j];
+            ++$ii;
+        }
+    }
+    if (!empty($blocks)) {
+        $nnc=preg_replace("/\7(\d+)\7/e",
+            "\$blocks[$1]",$nnc);
+    }
+
+    endif;
+
+    if ($matched) $body=$nnc;
+  }
+  if (!$matched):
   if ($options['comment_id'] and preg_match("/^\[\[Comment\(".$options['comment_id']."\)\]\]/m",$body)) {
     $str="[[Comment($options[comment_id])]]";
     $body= preg_replace('/'.preg_quote($str).'/',$savetext.$str,$body,1);
@@ -187,6 +252,7 @@ META;
     $body= preg_replace("/^(\[\[Comment(\([^\)]*\))?\]\])/m",$savetext."\\1",$body,1);
   } else
     $body.=$savetext;
+  endif;
 
   $formatter->page->write($body);
   $DBInfo->savePage($formatter->page,"Comment added",$options);
