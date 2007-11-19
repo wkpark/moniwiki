@@ -4799,6 +4799,7 @@ function wiki_main($options) {
     if ($DBInfo->extra_macros and
         $formatter->pi['#format'] == $DBInfo->default_markup) {
       if ($formatter->pi['#nocomment']) $options['nocomment']=1;
+      $options['mid']='dummy';
       if (!is_array($DBInfo->extra_macros)) {
         print '<div id="wikiExtra">'."\n";
         print $formatter->macro_repl($DBInfo->extra_macros,'',$options);

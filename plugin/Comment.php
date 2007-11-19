@@ -24,8 +24,11 @@ function macro_Comment($formatter,$value,$options=array()) {
   if ($options['nocomment']) return '';
   if (!$DBInfo->security->writable($options)) return '';
 
-  $emid=base64_encode($formatter->mid.',Comment,'.$value);
-  $mid=$formatter->mid;
+  if ($options['mid']) $mymid=$options['mid'];
+  else $mymid=$formatter->mid;
+  $emid=base64_encode($mymid.',Comment,'.$value);
+
+  $mid=$mymid;
 
   $COLS_MSIE = 80;
   $COLS_OTHER = 85;
@@ -48,8 +51,7 @@ function macro_Comment($formatter,$value,$options=array()) {
 
   $url=$formatter->link_url($formatter->page->urlname);
 
-
-  $hidden.='<input type="hidden" name="comment_id" value="'.$emid.'" />';
+  if ($emid) $hidden.='<input type="hidden" name="comment_id" value="'.$emid.'" />';
   $form = "<form name='editform' method='post' action='$url'>\n";
   if ($use_meta)
     $form.="<a id='add_comment' name='add_comment'></a>";
@@ -100,8 +102,6 @@ function do_comment($formatter,$options=array()) {
   }
 
   if ($options['usemeta']) $use_meta=1;
-
-  list($nth,$dum,$v)=explode(',', base64_decode($options['mid']),3);
 
   $COLS_MSIE = 80;
   $COLS_OTHER = 85;
