@@ -1971,7 +1971,7 @@ EXTRA;
     else
       $again='';
 
-    if ($nick) {
+    if (preg_match("@^https?://@",$user->id)) {
       $nick_btn=_("Nickname");
       $nick=<<<NICK
   <tr><th>$nick_btn&nbsp;</th><td><input type="text" size="40" name="nick" value="$nick" /></td></tr>
