@@ -347,7 +347,7 @@ function do_userform($formatter,$options) {
       }
     }
     if ($userinfo->info['idtype']=='openid' and
-      $options['nick'] and ($options['nick'] != $userinfo->info['nick'])) {
+      isset($options['nick']) and ($options['nick'] != $userinfo->info['nick'])) {
       $nick = $userinfo->getID($options['nick']);
 
       // nickname check XXX
@@ -403,6 +403,13 @@ function do_userform($formatter,$options) {
         $options['msg'].= sprintf(_("Successfully login as '%s' via OpenID."),$options['openid_identity']);
         $formatter->header($user->setCookie());
       } else {
+        if ($DBInfo->no_register == 1) {
+          $options['msg']=_("Fail to register");
+          $options['err']=_("You are not allowed to register on this wiki");
+          $options['err'].="\n"._("Please contact WikiMasters");
+          do_invalid($formatter,$options);
+          return;
+        }
         if ($options['openid_sreg_nickname']) {
           $nick=$user->getID($options['openid_sreg_nickname']);
           if (!$userdb->_exists($nick)) $user->info['nick']=$nick;
