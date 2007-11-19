@@ -346,6 +346,14 @@ function do_userform($formatter,$options) {
         $options['msg']=_("Your email address is not valid");
       }
     }
+    if ($userinfo->info['idtype']=='openid' and
+      $options['nick'] and ($options['nick'] != $userinfo->info['nick'])) {
+      $nick = $userinfo->getID($options['nick']);
+
+      // nickname check XXX
+      if (!$udb->_exists($nick)) $userinfo->info['nick']=$nick;
+      else $options['msg']=_("Your Nickname already used as ID in this wiki");
+    }
     $udb->saveUser($userinfo);
     #$options['css_url']=$options['user_css'];
     if (!isset($options['msg']))
@@ -385,23 +393,27 @@ function do_userform($formatter,$options) {
       $userdb=new UserDB($DBInfo);
       // XXX
       $user->setID($options['openid_identity']); // XXX
+      if ($options['openid_language']) $user->info['language']=strtolower($options['openid_sreg_language']);
+      //$user->info['tz_offset']=$options['openid_timezone'];
+
       if ($userdb->_exists($options['openid_identity'])) {
         $user=$userdb->getUser($options['openid_identity']);
-        $user->info['email']=$options['openid_sreg_email'];
         $user->info['idtype']='openid';
         $userdb->saveUser($user); // always save
         $options['msg'].= sprintf(_("Successfully login as '%s' via OpenID."),$options['openid_identity']);
         $formatter->header($user->setCookie());
       } else {
-        //$user->info['tz_offset']=$options['openid_timezone']; // XXX
-        //$user->info['tz_offset']=$options['openid_language']; // XXX
-        //$user->info['nick']=$options['openid_nickname']; // XXX
+        if ($options['openid_sreg_nickname']) {
+          $nick=$user->getID($options['openid_sreg_nickname']);
+          if (!$userdb->_exists($nick)) $user->info['nick']=$nick;
+          else $options['msg']=sprintf(_("Your Nickname %s already used as ID in this Wiki."),$nick);
+        }
         $user->info['email']=$options['openid_sreg_email'];
         $user->info['idtype']='openid';
         $userdb->addUser($user);
         $formatter->header($user->setCookie());
         $userdb->saveUser($user);
-        $options["msg"] =
+        $options["msg"] .=
           sprintf(_("OpenID Authentication successful and saved as %s."),$options['openid_identity']);
       }
       $options['id']=$user->id;

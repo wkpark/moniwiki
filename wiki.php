@@ -785,6 +785,7 @@ EOS;
 
     if ($this->path)
       putenv("PATH=".$this->path);
+
     if ($this->rcs_user)
       putenv('LOGNAME='.$this->rcs_user);
     if ($this->timezone)
@@ -1068,7 +1069,7 @@ EOS;
       $id=$options['name'] ?
         _stripslashes($options['name']):$_SERVER['REMOTE_ADDR'];
     } else {
-      $id=$options['id'];
+      $id=$options['nick'] ? $options['nick']:$options['id'];
       if (!preg_match('/([A-Z][a-z0-9]+){2,}/',$id)) $id='['.$id.']';
     }
  
@@ -1096,6 +1097,13 @@ EOS;
     $keyname=$this->_getPageKey($page->name);
     $key=$this->text_dir."/$keyname";
 
+    $myid=$user->id;
+    if ($user->info['nick']) {
+      $myid.=' '.$user->info['nick'];
+      $options['nick']=$user->info['nick'];
+    }
+
+    $options['myid']=$myid;
     $fp=fopen($key,"w");
     if (!$fp)
        return -1;
@@ -1106,7 +1114,7 @@ EOS;
     flock($fp,LOCK_UN);
     fclose($fp);
 
-    $log=$REMOTE_ADDR.';;'.$user->id.';;'.$comment;
+    $log=$REMOTE_ADDR.';;'.$myid.';;'.$comment;
     if ($this->version_class) {
       $class=getModule('Version',$this->version_class);
       $version=new $class ($this);

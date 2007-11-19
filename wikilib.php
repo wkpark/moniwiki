@@ -469,6 +469,7 @@ class User {
      $this->bookmark=isset($_COOKIE['MONI_BOOKMARK']) ? $_COOKIE['MONI_BOOKMARK']:'';
      $this->trail=isset($_COOKIE['MONI_TRAIL']) ? _stripslashes($_COOKIE['MONI_TRAIL']):'';
      $this->tz_offset=isset($_COOKIE['MONI_TZ']) ?_stripslashes($_COOKIE['MONI_TZ']):'';
+     $this->nick=isset($_COOKIE['MONI_NICK']) ?_stripslashes($_COOKIE['MONI_NICK']):'';
      if ($this->tz_offset =='') $this->tz_offset=date('Z');
   }
 
@@ -497,6 +498,7 @@ class User {
      $this->ticket=$ticket;
      # set the fake cookie
      $_COOKIE['MONI_ID']=$ticket.'.'.$this->id;
+     if ($this->info['nick']) $_COOKIE['MONI_NICK']=$this->info['nick'];
 
      $path=strpos($_SERVER['HTTP_USER_AGENT'],'Safari')===false ?
        get_scriptname():'/';
@@ -1891,6 +1893,9 @@ function macro_UserPreferences($formatter,$value,$options='') {
       $idform="<input type='text' size='20' name='login_id' value='' />";
   } else {
     $idform=$user->id;
+    if ($user->info['idtype']=='openid')
+      $idform='<img src="http://www.myopenid.com/static/openid-icon-small.gif" alt="OpenID:" style="vertical-align:middle" />'.
+      '<a href="$idform">'.$idform.'</a>';
   }
 
   $button=_("Login");
@@ -1907,8 +1912,9 @@ function macro_UserPreferences($formatter,$value,$options='') {
 OPENID;
     }
   $id_btn=_("ID");
+  $sep="<tr><td colspan='2'><hr></td></tr>\n";
   if ($user->id == 'Anonymous' and !isset($options['login_id']) and $value!="simple") {
-    if (isset($openid_form) and $value != 'openid') $sep="<tr><td colspan='2'><hr></td></tr>\n";
+    if (isset($openid_form) and $value != 'openid') $sep0=$sep;
     if ($value != 'openid')
       $default_form=<<<MYFORM
   <tr><th>$id_btn&nbsp;</th><td>$idform</td></tr>
@@ -1924,11 +1930,10 @@ MYFORM;
 <input type="hidden" name="action" value="userform" />
 <table border="0">
 $openid_form
-$sep
+$sep0
 $default_form
 </table>
 </form>
-<hr />
 FORM;
     $openid_form='';
   }
@@ -1959,11 +1964,19 @@ EXTRA;
     $button=_("Save");
     $css=$user->info['css_url'];
     $email=$user->info['email'];
+    $nick=$user->info['nick'];
     $tz_offset=$user->info['tz_offset'];
     if ($user->info['password'])
       $again="<b>"._("New password")."</b>&nbsp;<input type='password' size='15' maxlength='$pw_len' name='passwordagain' value='' /></td></tr>";
     else
       $again='';
+
+    if ($nick) {
+      $nick_btn=_("Nickname");
+      $nick=<<<NICK
+  <tr><th>$nick_btn&nbsp;</th><td><input type="text" size="40" name="nick" value="$nick" /></td></tr>
+NICK;
+    }
 
     $tz_off=date('Z');
     for ($i=-47;$i<=47;$i++) {
@@ -1984,6 +1997,7 @@ EXTRA;
     $email_btn=_("Mail");
     $tz_btn=_("Time Zone");
     $extra=<<<EXTRA
+$nick
   <tr><th>$email_btn&nbsp;</th><td><input type="text" size="40" name="email" value="$email" /></td></tr>
   <tr><th>$tz_btn&nbsp;</th><td><select name="timezone">
   $opts
@@ -2002,7 +2016,7 @@ setTimezone();
 EOF;
 
   if (!$DBInfo->use_safelogin or $button==_("Save")) {
-    if ($user->info['password'])
+    if ($user->id == 'Anonymous' or $user->info['password'])
     $passwd_inp=<<<PASS
   <tr>
      <td><b>$passwd_btn</b>&nbsp;</td><td><input type="password" size="15" maxlength="$pw_len" name="password" value="$passwd" />
@@ -2020,6 +2034,7 @@ PASS;
     }
   }
   $id_btn=_("ID");
+  if ($openid_form) $sep1=$sep;
   return <<<EOF
 $login
 $jscript
@@ -2027,6 +2042,7 @@ $jscript
 <input type="hidden" name="action" value="userform" />
 <table border="0">
 $openid_form
+$sep1
   <tr><th>$id_btn&nbsp;</th><td>$idform</td></tr>
     $passwd_inp
     $passwd_hidden
