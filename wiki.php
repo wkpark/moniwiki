@@ -971,13 +971,18 @@ EOS;
       $udb=new UserDB($this);
       $udb->checkUser($user);
     }
+    $myid=$user->id;
+    if ($user->info['nick']) {
+      $myid.=' '.$user->info['nick'];
+      $options['nick']=$user->info['nick'];
+    }
     $comment=strtr($comment,"\t"," ");
     $fp_editlog = fopen($this->editlog_name, 'a+');
     $time= time();
     if ($this->use_hostname) $host= gethostbyaddr($remote_name);
     else $host= $remote_name;
     $page_name=trim($page_name);
-    $msg="$page_name\t$remote_name\t$time\t$host\t$user->id\t$comment\t$action\n";
+    $msg="$page_name\t$remote_name\t$time\t$host\t$myid\t$comment\t$action\n";
     fwrite($fp_editlog, $msg);
     fclose($fp_editlog);
   }

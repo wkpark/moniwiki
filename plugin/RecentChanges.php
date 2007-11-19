@@ -250,8 +250,9 @@ define('RC_DEFAULT_DAYS',7);
       if ($showhost && $user == 'Anonymous')
         $user= $addr;
       else {
-        if ($DBInfo->hasPage($user)) {
-          $user= $formatter->link_tag(_rawurlencode($user),"",$user);
+        if (strpos($user,' ')!==false) $user= $formatter->link_repl($user);
+        else if ($DBInfo->hasPage($user)) {
+          $user= $formatter->link_repl(_rawurlencode($user),"",$user);
         } else
           $user= $user;
       }
