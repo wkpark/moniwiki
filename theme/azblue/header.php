@@ -63,7 +63,7 @@ if ($this->popup!=1) :
  </div>
 <?php endif; /* topbanner */?>
 <div id='goForm'>
-<form id='go' action='' method='get' onsubmit="return moin_submit();">
+<form id='go' action='' method='get' onsubmit="return moin_submit(this);">
 <div>
 <input type='text' name='value' size='20' accesskey='s' class='goto' style='width:120px' />
 <input type='hidden' name='action' value='goto' />
