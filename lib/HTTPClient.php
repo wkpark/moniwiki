@@ -165,7 +165,8 @@ class HTTPClient {
             return false;
         }
         //set non blocking
-        stream_set_blocking($socket,0);
+        socket_set_blocking($socket,0);
+        //stream_set_blocking($socket,0);
 
         // build request
         $request  = "$method $request_url HTTP/".$this->http.HTTP_NL;

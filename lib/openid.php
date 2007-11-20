@@ -159,9 +159,9 @@ class SimpleOpenID{
 	function HTTP_Request($url, $method="GET", $params = "") { // Remember, SSL MUST BE SUPPORTED
 		if ($method == "GET") {
 			if (is_array($params)) $params = $this->array2url($params);
-        		$respanse = $this->HTTP->get($url . ($params ? '?' . $params:''));
+        		$response = $this->HTTP->get($url . ($params ? '?' . $params:''));
 		} else if ($method == 'POST') {
-        		$respanse = $this->HTTP->post($url, $params);
+        		$response = $this->HTTP->post($url, $params);
 		}
 		if (!$response) {
 			$this->ErrorStore('OPENID_HTTP', 'HTTP Error: '.$this->HTTP->error);
