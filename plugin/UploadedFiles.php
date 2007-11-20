@@ -349,7 +349,7 @@ EOS;
               'rpm|deb|pdf|ppt|xls|tgz|gz|bz2|zip)$/',$ext)) {
             $ext='unknown';
           }
-          $fname="<img src='$icon_dir/$ext.png' class='icon' $alt />";
+          $fname="<img src='$icon_dir/$ext.png' class='icon' $alt /><div>$file</div>";
         }
         if ($js_tag) {
           //if (strpos($file,' '))
