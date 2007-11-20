@@ -2119,6 +2119,7 @@ class Formatter {
           if ($this->udb->_exists($url)) {
             $icon='openid';
             $icon="<a class='externalLink' href='$link'><img class='url' alt='[$icon]' src='".$this->imgs_dir_url."$icon.png' /></a>";
+            $attr.=' title="'.$link.'"';
             $link=$this->link_url(_rawurlencode($text));
           }
         }
