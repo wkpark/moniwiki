@@ -1069,6 +1069,12 @@ proto.convert_html_to_wikitext = function(html) {
     // unnamed externalLinks
     html =
         html.replace(/<a class=.externalLink unnamed. [^>]+>([^>]+)<\/a>/ig, "[$1]");
+    // remove empty anchors
+    html =
+        html.replace(/<a class=.externalLink. [^>]+><\/a>/ig, "");
+    // named externalLinks with a title
+    html =
+        html.replace(/<a class=.externalLink named. [^>]*title=(\'|\")?([^\'\"]+)\1?[^>]*>(.+)<\/a>/ig, "[$2 $3]");
     // named externalLinks
     html =
         html.replace(/<a class=.externalLink named. [^>]*href=(\'|\")?([^\'\"]+)\1?[^>]+>(.+)<\/a>/ig, "[$2 $3]");
