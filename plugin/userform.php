@@ -399,9 +399,9 @@ function do_userform($formatter,$options) {
       if ($userdb->_exists($options['openid_identity'])) {
         $user=$userdb->getUser($options['openid_identity']);
         $user->info['idtype']='openid';
-        $userdb->saveUser($user); // always save
         $options['msg'].= sprintf(_("Successfully login as '%s' via OpenID."),$options['openid_identity']);
         $formatter->header($user->setCookie());
+        $userdb->saveUser($user); // always save
       } else {
         if ($DBInfo->no_register == 1) {
           $options['msg']=_("Fail to register");

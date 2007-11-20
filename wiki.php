@@ -1700,6 +1700,8 @@ class Formatter {
     $this->postfilters=$DBInfo->postfilters;
     $this->use_rating=$DBInfo->use_rating;
     $this->use_etable=$DBInfo->use_etable;
+    $this->udb=$DBInfo->udb;
+    $this->check_openid_url=$DBInfo->check_openid_url;
     $this->register_javascripts($DBInfo->javascripts);
 
     if (($p=strpos($page->name,"~")))
@@ -2010,7 +2012,7 @@ class Formatter {
     print $raw;
   }
 
-  function link_repl($url,$attr='') {
+  function link_repl($url,$attr='',$opts=array()) {
     if (is_array($url)) $url=$url[1];
     #if ($url[0]=='<') { print $url;return $url;}
     $url=str_replace('\"','"',$url); // XXX
@@ -2113,11 +2115,20 @@ class Formatter {
         if (substr($url,0,7)=='http://' and $url[7]=='?') {
           $link=substr($url,7);
           return "<a href='$link'>$text</a>";
+        } else if ($this->check_openid_url and preg_match("@^https?://@i",$url)) {
+          if ($this->udb->_exists($url)) {
+            $icon='openid';
+            $icon="<a class='externalLink' href='$link'><img class='url' alt='[$icon]' src='".$this->imgs_dir_url."$icon.png' /></a>";
+            $link=$this->link_url(_rawurlencode($text));
+          }
         }
-        $icon=strtok($url,':');
+        if (!$icon) {
+          $icon= strtok($url,':');
+          $icon="<img class='url' alt='[$icon]' src='".$this->imgs_dir_url."$icon.png' />";
+        }
         if ($text != $url) $eclass='named';
         else $eclass='unnamed';
-        return "<img class='url' alt='[$icon]' src='".$this->imgs_dir_url."$icon.png' />". "<a class='externalLink $eclass' $attr $this->external_target href='$link'>$text</a>".$external_icon.$external_link;
+        return $icon. "<a class='externalLink $eclass' $attr $this->external_target href='$link'>$text</a>".$external_icon.$external_link;
       } # have no space
       $link=str_replace('&','&amp;',$url);
       if (preg_match("/^(http|https|ftp)/",$url)) {
@@ -4503,7 +4514,6 @@ function get_pagename() {
 function init_requests(&$options) {
   global $DBInfo;
 $user=new User();
-$options['id']=$user->id;
 
 # MoniWiki theme
 if ((empty($DBInfo->theme) or isset($_GET['action'])) and isset($_GET['theme'])) $theme=$_GET['theme'];
@@ -4513,23 +4523,18 @@ if ($theme) $options['theme']=$theme;
 if ($DBInfo->trail) {
   $options['trail']=$user->trail ? $user->trail:'';
 }
-if ($options['id'] != 'Anonymous') {
-  $udb=new UserDB($DBInfo);
-  $userinfo=$udb->getUser($user->id);
 
-  # Does it have valid ticket ?
-  if ($user->ticket == $userinfo->info['ticket']) {
-    $user=$userinfo;
-    $options['css_url']=$user->info['css_url'];
-    $options['quicklinks']=$user->info['quicklinks'];
-    $options['tz_offset']=$user->info['tz_offset'];
-    if (!$theme) $options['theme']=$user->info['theme'];
-  } else {
-    $options['id']='Anonymous';
-    $options['css_url']=$user->css;
-    $options['tz_offset']=$user->tz_offset;
-    if (!$theme) $options['theme']=$user->theme;
-  }
+$udb=new UserDB($DBInfo);
+$udb->checkUser($user); # is it valid user ?
+$options['id']=$user->id;
+$DBInfo->udb=$udb; // XXX
+
+if ($options['id'] != 'Anonymous') {
+  $user=$udb->getUser($user->id); // read user info
+  $options['css_url']=$user->info['css_url'];
+  $options['quicklinks']=$user->info['quicklinks'];
+  $options['tz_offset']=$user->info['tz_offset'];
+  if (!$theme) $options['theme']=$user->info['theme'];
 } else {
   $options['css_url']=$user->css;
   $options['tz_offset']=$user->tz_offset;

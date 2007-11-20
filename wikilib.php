@@ -346,14 +346,18 @@ class UserDB {
     return rawurldecode(strtr($key,'_','%'));
   }
 
-  function getUserList() {
+  function getUserList($option='') {
     if ($this->users) return $this->users;
+
+    $type='';
+    if ($option=='del') $type='del-';
+    elseif ($options=='wait') $type='wait-';
 
     $users = array();
     $handle = opendir($this->user_dir);
     while ($file = readdir($handle)) {
       if (is_dir($this->user_dir."/".$file)) continue;
-      if (preg_match('/^wu\-([^\.]+)$/', $file,$match))
+      if (preg_match('/^'.$type.'wu\-([^\.]+)$/', $file,$match))
         #$users[$match[1]] = 1;
         $users[] = $this->_key_to_id($match[1]);
     }
@@ -385,13 +389,13 @@ class UserDB {
     return true;
   }
 
-  function saveUser($user) {
+  function saveUser($user,$options=array()) {
     $config=array("css_url","datatime_fmt","email","bookmark","language",
                   "name","nick","password","wikiname_add_spaces","subscribed_pages",
                   "scrapped_pages","quicklinks","theme","ticket","eticket",
 	  	  "tz_offset","npassword","nticket","idtype");
 
-    $date=gmdate('Y/m/d', time());
+    $date=gmdate('Y/m/d H:i:s', time());
     $data="# Data saved $date\n";
 
     if ($user->ticket)
@@ -404,7 +408,9 @@ class UserDB {
 
     #print $data;
 
-    $fp=fopen($this->user_dir."/wu-".$this->_id_to_key($user->id),"w+");
+    $wu="wu-".$this->_id_to_key($user->id);
+    if ($options['wait']) $wu='wait-'.$wu;
+    $fp=fopen($wu,"w+");
     fwrite($fp,$data);
     fclose($fp);
   }
@@ -449,8 +455,26 @@ class UserDB {
 
   function delUser($id) {
     if ($this->_exists($id)) {
-       unlink("$this->user_dir/wu-". $this->_id_to_key($id));
+      $u='wu-'. $this->_id_to_key($id);
+      $du='del-'.$u;
+      rename($this->user_dir.'/'.$u,$this->user_dir.'/'.$du);
     }
+  }
+
+  function activateUser($id) {
+    $wu='wu-'. $this->_id_to_key($id);
+    if (file_exists($this->user_dir.'/'.$wu)) return true;
+    if (file_exists($this->user_dir.'/wait-'.$wu)) {
+      $u='wait-'.$wu;
+      rename($this->user_dir.'/'.$u,$this->user_dir.'/'.$wu);
+      return true;
+    }
+    if (file_exists($this->user_dir.'/del-'.$wu)) {
+      $u='del-'.$wu;
+      rename($this->user_dir.'/'.$u,$this->user_dir.'/'.$wu);
+      return true;
+    }
+    return false;
   }
 }
 
@@ -1893,9 +1917,10 @@ function macro_UserPreferences($formatter,$value,$options='') {
       $idform="<input type='text' size='20' name='login_id' value='' />";
   } else {
     $idform=$user->id;
-    if ($user->info['idtype']=='openid')
+    if ($user->info['idtype']=='openid') {
       $idform='<img src="http://www.myopenid.com/static/openid-icon-small.gif" alt="OpenID:" style="vertical-align:middle" />'.
-      '<a href="$idform">'.$idform.'</a>';
+      '<a href="'.$idform.'">'.$idform.'</a>';
+    }
   }
 
   $button=_("Login");
@@ -2019,7 +2044,7 @@ EOF;
     if ($user->id == 'Anonymous' or $user->info['password'])
     $passwd_inp=<<<PASS
   <tr>
-     <td><b>$passwd_btn</b>&nbsp;</td><td><input type="password" size="15" maxlength="$pw_len" name="password" value="$passwd" />
+     <th>$passwd_btn&nbsp;</th><td><input type="password" size="15" maxlength="$pw_len" name="password" value="$passwd" />
 PASS;
 
   } else {
@@ -2034,7 +2059,7 @@ PASS;
     }
   }
   $id_btn=_("ID");
-  if ($openid_form) $sep1=$sep;
+  if ($openid_form or $login) $sep1=$sep;
   return <<<EOF
 $login
 $jscript
