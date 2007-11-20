@@ -410,7 +410,7 @@ class UserDB {
 
     $wu="wu-".$this->_id_to_key($user->id);
     if ($options['wait']) $wu='wait-'.$wu;
-    $fp=fopen($wu,"w+");
+    $fp=fopen("$this->user_dir/$wu","w+");
     fwrite($fp,$data);
     fclose($fp);
   }
