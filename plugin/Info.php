@@ -106,7 +106,10 @@ function _parse_rlog($formatter,$log,$options=array()) {
          $user=$dummy[1];
          if ($user and $user!='Anonymous') {
            if (in_array($user,$users)) $ip=$users[$user];
-           else if ($DBInfo->hasPage($user)) {
+           else if (strpos($user,' ') !== false) {
+             $ip=$formatter->link_repl($user);
+             $users[$user]=$ip;
+           } else if ($DBInfo->hasPage($user)) {
              $ip=$formatter->link_tag($user);
              $users[$user]=$ip;
            } else if (!$DBInfo->mask_hostname and $DBInfo->interwiki['Whois']) {
