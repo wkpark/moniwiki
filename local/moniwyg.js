@@ -275,12 +275,12 @@ Wikiwyg.Wysiwyg.prototype.get_key_down_function = function() {
 Wikiwyg.Wysiwyg.prototype.get_key_press_function = function() {
     var self = this;
     return function(e) {
-        if (e) cc=e.charCode;
+        if (e) cc=e.keyCode||e.charCode;
         else e=window.event,cc=e.keyCode;
         var ch = String.fromCharCode(cc);
 
         if (! e.ctrlKey) {
-            if (cc == 32) { // space
+            if (cc == 32 || cc == 13) { // space
                 var sel=self.get_selection();
                 if (!Wikiwyg.is_ie) {
                     var sf=sel.focusNode;
@@ -292,20 +292,31 @@ Wikiwyg.Wysiwyg.prototype.get_key_press_function = function() {
                         var val = sf.nodeValue.substr(0,sel.focusOffset).replace(/\s+$/,'');
                         if (val) {
                             var m=[];
-                            var p=val.lastIndexOf(' ');
-                            if (p == -1) m[1]='',m[2]=val;
-                            else m[1]=val.substr(0,p+1),m[2]=val.substr(p+1);
+                            var p=val.lastIndexOf('=');
+                            if (p == -1) {
+                                var p=val.lastIndexOf(' ');
+                                if (p == -1) m[1]='',m[2]=val;
+                                else m[1]=val.substr(0,p+1),m[2]=val.substr(p+1);
+                            } else {
+                                var m=val.match(/(={2,6})(\s*.*\s*)\1$/); // FIXME
+                                if (m) {
+                                    m[1]=val.substr(0,val.length - m[0].length);
+                                    m[2]=val.substr(val.length - m[0].length);
+                                } else m = [null,'',val];
+                            }
                             if (m[2].match(/^(http|https|ftp|nntp|news|irc|telnet):\/\//) ||
                                 m[2].match(/^[A-Z]([A-Z]+[0-9a-z]|[a-z0-9]+[A-Z])[0-9a-zA-Z]*\b/) ||
-                                m[2].match(/^\[.*\]$/)) { // force link, macro
+                                m[2].match(/^(\[.*\]|(={2,6}).*\2)$/)) { // force link, macro
 
                                 range.setStart(sf,m[1].length);
                                 range.setEnd(sf,m[1].length+m[2].length);
                                 sel.removeAllRanges(); // remove old ranges !
                                 sel.addRange(range);
 
-                                //e.preventDefault();
-                                //e.stopPropagation();
+                                if (cc == 13) {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                }
 
                                 self.do_link(); // auto linking
                                 nsel=self.get_selection();
@@ -582,7 +593,7 @@ function fixup_markup_style(html)
     // embed or object tags
     html =
         html.replace(/(<\/embed>)/ig,
-                "<img src='"+ _url_prefix + "/imgs/loading.gif' width='100px' height='100px'>$1");
+                "<img src='"+ _url_prefix + "/imgs/loading.gif' width='100px' height='100px'></embed>");
 
     //alert('fixup_markup='+html);
     if (Wikiwyg.is_ie) {
@@ -844,7 +855,12 @@ proto.do_link = function() {
     if (! selection) return;
     var url=null;
     var urltext=null;
-    if (selection.match(/^\[\[.*\]\]$/)) { // macro or links XXX FIXME
+    var m=null;
+    if ((m=selection.match(/^(={1,6})(.*)\1$/))) { // headings
+        var tag = 'h'+m[1].length;
+        var myhtml = '<'+tag+'>' + m[2] + '</'+ tag +'>';
+        this.exec_command('inserthtml', myhtml);
+    } else if (selection.match(/^\[\[.*\]\]$/)) { // macro or links XXX FIXME
         var postdata = 'action=markup&value=' + encodeURIComponent(selection);
         var myhtml= HTTPPost(top.location, postdata);
 
