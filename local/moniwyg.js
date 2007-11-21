@@ -528,7 +528,7 @@ Wikiwyg.prototype.switchMode = function(new_mode_key) {
     old_mode.toHtml(
         function(html) {
             self.previous_mode = old_mode;
-            new_mode.fromHtml(fixup_markup_style(html));
+            new_mode.fromHtml(fixup_markup_style(html,new_mode.classname));
             old_mode.disableThis();
             new_mode.enableThis();
             new_mode.enableFinished();
@@ -560,7 +560,7 @@ Wikiwyg.prototype.editMode = function(form,text) {
 
         myWikiwyg.convertWikitextToHtml(wikitext,
             function(new_html) {
-                self.current_mode.fromHtml(fixup_markup_style(new_html));
+                self.current_mode.fromHtml(fixup_markup_style(new_html,self.current_mode.classname));
                 self.current_mode.execute_scripts();
             });
     }
@@ -586,14 +586,11 @@ Wikiwyg.prototype.editMode = function(form,text) {
 //
 // change display style to 'block' for multiline markups
 //
-function fixup_markup_style(html)
+function fixup_markup_style(html,modename)
 {
     var dom = document.createElement('div');
 
-    // embed or object tags
-    html =
-        html.replace(/(<\/embed>)/ig,
-                "<img src='"+ _url_prefix + "/imgs/loading.gif' width='100px' height='100px'></embed>");
+    if (!modename) modename='Wysiwyg';
 
     //alert('fixup_markup='+html);
     if (Wikiwyg.is_ie) {
@@ -604,6 +601,56 @@ function fixup_markup_style(html)
         dom.innerHTML = html;
     }
     //alert('fixup innerHTML='+dom.innerHTML);
+    // fix for Mozilla
+    // var embeds=dom.getElementsByTagName('embed');
+    var objects=dom.getElementsByTagName('object');
+    var loc = location.protocol + '//' + location.host;
+    if (location.port) loc += ':' + location.port;
+
+    if (objects.length) {
+        for (var i=0;i<objects.length;i++) {
+            var n=objects[i];
+            var w=n.getAttribute('width') + 'px';
+            var h=n.getAttribute('height') + 'px';
+            var applet=null,embed=null;
+            var img = new Image();
+            img.style.width = w;
+            img.style.height = h;
+            img.src = loc + _url_prefix + '/imgs/misc/embed.png';
+
+            n=n.firstChild;
+            while (n) {
+                if (n.tagName == 'IMG') break;
+                if (n.tagName == 'APPLET') applet=n;
+                else if (n.tagName == 'EMBED') embed=n;
+                n=n.nextSibling;
+            }
+
+            if (n == null) {
+                if (modename.match(/Wysiwyg/)) objects[i].appendChild(img);
+            } else {
+                w=n.style.width || n.getAttribute('width');
+                h=n.style.height || n.getAttribute('height');
+
+                if (modename.match(/Preview/)) objects[i].removeChild(n);
+
+                objects[i].setAttribute('width',w)
+                objects[i].setAttribute('height',h)
+                if (applet) {
+                    applet.setAttribute('width',w);
+                    applet.setAttribute('height',h);
+                } else if (embed) {
+                    embed.setAttribute('width',w);
+                    embed.setAttribute('height',h);
+                }
+            }
+            if (applet) {
+                if (modename.match(/Wysiwyg/)) w='1px', h='1px'; // mozilla hack for applet tags
+                applet.setAttribute('width',w);
+                applet.setAttribute('height',h);
+            }
+        }
+    }
 
     var spans=dom.getElementsByTagName('span');
     var className= Wikiwyg.is_ie ? 'className':'class';
@@ -1086,9 +1133,6 @@ proto.convert_html_to_wikitext = function(html) {
     // escaped wiki markup blocks
     html =
         html.replace(/<tt class[^>]+>([^>]+)<\/tt>/ig, "{{{$1}}}");
-
-    // embed or object tags
-    //html = html.replace(/(<\/(embed|object)>)/ig, "<img src='/wiki/imgs/loading.gif' width='100px' height='100px'>$1");
 
     dom.innerHTML = "<br>" +html; // Bah.... IE hack :(
     dom.removeChild(dom.firstChild);
@@ -1852,6 +1896,21 @@ proto.get_wiki_comment = function(element) {
                     }
 
                     return node;
+                }
+            }
+            else if (node.data.match(/&lt;object/i)) {
+                var n=node.nextSibling.firstChild;
+                while (n) {
+                    if (n.tagName == 'IMG') break;
+                    n=n.nextSibling;
+                }
+                if (n && n.style) {
+                    var width = n.style.width;
+                    var height = n.style.height;
+                    node.data = node.data.replace(/width=([^\s]+)/ig,'width="'+width+'"')
+                        .replace(/height=([^\s]+)/ig,'height="'+height+'"');
+                    //    .replace(/width:\s*([0-9]+px)/ig,'width:'+width)
+                    //    .replace(/height:\s*([0-9]+px)/ig,'height:'+height);
                 }
             }
             return node;
