@@ -326,7 +326,7 @@ Wikiwyg.htmlUnescape = function(escaped) {
     // thanks to Randal Schwartz for the correct solution to this one
     // (from CGI.pm, CGI::unescapeHTML())
     return escaped.replace(
-        /&(.*?);/g,
+        /&(#?[0-9a-z]+);/g,
         function(dummy,s) {
             return s.match(/^amp$/i) ? '&' :
                 s.match(/^quot$/i) ? '"' :
