@@ -215,7 +215,7 @@ EOF;
     continue;
   }
 
-  chmod($nf_path,0644);
+  chmod($new_l_path,0644);
 
   $comment.="'$upfilename' ";
 
