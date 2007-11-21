@@ -95,7 +95,8 @@ function do_download($formatter,$options) {
 
   if (strstr($_SERVER['HTTP_USER_AGENT'], 'MSIE')) {
     // IE: rawurlencode()
-    $fname='filename="'.rawurlencode($_l_file).'"';
+    $fn = preg_replace('/[:\\x5c\\/*?"<>|]/', '_', $file);
+    $fname='filename="'.rawurlencode($fn).'"';
     // fix IE bug
     $fname = preg_replace('/\./', '%2e',
         $fname, substr_count($fname, '.') - 1);
@@ -104,7 +105,9 @@ function do_download($formatter,$options) {
     #header('Pragma: public');
   } else if (strstr($_SERVER['HTTP_USER_AGENT'], 'Opera')) {
     // Opera 9: RFC 2231
-    $fname='filename*='.$DBInfo->charset."*".rawurlencode($file).'';
+    $fn = preg_replace('/[:\\x5c\\/{?]/', '_', $file);
+    $fname='filename*='.$DBInfo->charset."''".rawurlencode($fn).'';
+    //$fname='filename="'.$fn.'"';
   } else // Mozilla: RFC 2047
     $fname='filename="=?'.$DBInfo->charset.'?B?'.base64_encode($file).'?="';
 
