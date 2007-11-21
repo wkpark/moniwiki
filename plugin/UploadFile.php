@@ -194,15 +194,18 @@ EOF;
  
   $upfile=$files['upfile']['tmp_name'][$j];
 
+  $_l_path=_l_filename($file_path);
+  $new_l_path=_l_filename($newfile_path);
+
   if ($options['replace'][$j]) {
     // backup
     if ($newfile_path != $file_path)
-      $test=@copy($file_path, $newfile_path);
+      $test=@copy($_l_path, $new_l_path);
     // replace
-    $test=@copy($upfile, $file_path);
+    $test=@copy($upfile, $_l_path);
     $upfilename=$filename;
   } else {
-    $test=@copy($upfile, $newfile_path);
+    $test=@copy($upfile, $new_l_path);
   }
   @unlink($upfile);
   if (!$test) {
@@ -212,7 +215,7 @@ EOF;
     continue;
   }
 
-  chmod($newfile_path,0644);
+  chmod($nf_path,0644);
 
   $comment.="'$upfilename' ";
 

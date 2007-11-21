@@ -4925,6 +4925,7 @@ if (!defined('INC_MONIWIKI')):
 # Start Main
 $Config=getConfig("config.php",array('init'=>1));
 include("wikilib.php");
+include("lib/win32fix.php");
 
 $DBInfo= new WikiDB($Config);
 register_shutdown_function(array(&$DBInfo,'Close'));

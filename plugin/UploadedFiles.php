@@ -236,7 +236,7 @@ EOS;
         if ($value =='UploadFile')
           $dirs[]= $DBInfo->keyToPagename($file);
       } else if (preg_match($needle,$file) and $count >= $pfrom)
-        $upfiles[]= $file;
+        $upfiles[]= _p_filename($file);
       $count++;
       if ($count >= $pto) { $plink=1; break;}
    }
@@ -289,13 +289,14 @@ EOS;
    $down_mode=(strpos($prefix,';value=') !== false);
    $mywidth=$preview_width;
    foreach ($upfiles as $file) {
+      $_l_file=_l_filename($file);
       if ($down_mode)
         $link=str_replace("value=","value=".rawurlencode($file),$prefix);
       else
-        $link=$prefix.rawurlencode($file);
+        $link=$prefix.rawurlencode($file); // XXX
 
       $previewlink=$link;
-      $size=filesize($dir.'/'.$file);
+      $size=filesize($dir.'/'. $_l_file);
 
       if ($use_preview) {
         preg_match("/\.(.{1,4})$/",$file,$m);
@@ -306,7 +307,7 @@ EOS;
           if ($w <= $preview_width) $mywidth=$w;
           else $mywidth=$preview_width;
 
-          if (file_exists($dir."/thumbnails/".$file)) {
+          if (file_exists($dir."/thumbnails/".$_l_file)) {
             if ($down_mode)
               $previewlink=str_replace('value=','value=thumbnails/',$previewlink);
             else
@@ -325,7 +326,7 @@ EOS;
       }
       $size=round($size,2).' '.$unit[$i];
 
-      $date=date('Y-m-d',filemtime($dir.'/'.$file));
+      $date=date('Y-m-d',filemtime($dir.'/'.$_l_file));
       $fname=$file;
       $attr='';
       if ($use_preview or $js_tag) {

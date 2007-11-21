@@ -124,10 +124,12 @@ function macro_Attachment($formatter,$value,$option='') {
   if ($option == 1) return $upload_file;
   if (!$text) $text=$file;
 
+  $_l_file=_l_filename($file);
+  $_l_upload_file=$dir.'/'.$_l_file;
 
-  if (file_exists($upload_file)) {
+  if (file_exists($_l_upload_file)) {
 
-    $sz=filesize($upload_file);
+    $sz=filesize($_l_upload_file);
     $unit=array('Bytes','KB','MB','GB','TB');
     for ($i=0;$i<4;$i++) {
       if ($sz <= 1024) {

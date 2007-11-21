@@ -67,7 +67,8 @@ function do_download($formatter,$options) {
   $file=explode('/',$value);
   $file=$subdir.$file[count($file)-1];
 
-  if (!file_exists("$dir/$file")) {
+  $_l_file=_l_filename($file);
+  if (!file_exists("$dir/$_l_file")) {
     header("HTTP/1.1 404 Not Found");
     return;
   }
@@ -94,7 +95,7 @@ function do_download($formatter,$options) {
 
   if (strstr($_SERVER['HTTP_USER_AGENT'], 'MSIE')) {
     // IE: rawurlencode()
-    $fname='filename="'.rawurlencode($file).'"';
+    $fname='filename="'.rawurlencode($_l_file).'"';
     // fix IE bug
     $fname = preg_replace('/\./', '%2e',
         $fname, substr_count($fname, '.') - 1);
@@ -109,15 +110,15 @@ function do_download($formatter,$options) {
 
   if ($DBInfo->use_resume_download) {
     $header=array("Content-Description: MoniWiki PHP Downloader");
-    dl_file_resume($mimetype,$dir.'/'.$file,$fname,$down_mode,$header);
+    dl_file_resume($mimetype,$dir.'/'. $_l_file,$fname,$down_mode,$header);
     return; 
   }
 
   header("Content-Type: $mimetype\r\n");
-  header("Content-Length: ".filesize($dir.'/'.$file));
+  header("Content-Length: ".filesize($dir.'/'. $_l_file));
   header("Content-Disposition: $down_mode; ".$fname );
   header("Content-Description: MoniWiki PHP Downloader" );
-  header("Last-Modified: " . gmdate("D, d M Y H:i:s",filemtime($dir.'/'.$file)) . " GMT");
+  header("Last-Modified: " . gmdate("D, d M Y H:i:s",filemtime($dir.'/'.$_l_file)) . " GMT");
   header("Pragma:");
   header("Cache-Control:");
   if (!preg_match('/^image\//',$mimetype)) {
@@ -126,7 +127,7 @@ function do_download($formatter,$options) {
     Header("Expires: 0");
   }
 
-  $fp=readfile("$dir/$file");
+  $fp=readfile("$dir/$_l_file");
   return;
 }
 
