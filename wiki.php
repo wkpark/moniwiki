@@ -2533,7 +2533,8 @@ class Formatter {
     if (!$match) return $this->word_repl($macro);
     $bra='';$ket='';
     if ($this->wikimarkup and $macro != 'Attachment' and !$options['nomarkup']) {
-      $markups=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$macro);
+      $markups=str_replace(array('=','-','<'),array('==','-=','&lt;'),$macro);
+      $markups=preg_replace('/&(?!#?[a-z0-9]+;)/i','&amp;',$markups);
       $bra= "<span class='wikiMarkup'><!-- wiki:\n[[$markups]]\n-->";
       $ket= '</span>';
     }
