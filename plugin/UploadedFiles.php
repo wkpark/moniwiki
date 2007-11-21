@@ -92,17 +92,12 @@ function insertTags(tagOpen,tagClose,myText,replaced)
         }
 
         var my=opener.document.getElementById('editor_area');
-        var mystyle=my.getAttribute('style');
-        if (typeof mystyle == 'object') mystyle = mystyle.cssText;
-        while (mystyle && mystyle.match(/display: none/i)) { // wikiwyg hack
+        while (my.style.display == 'none') { // wikiwyg hack
             txtarea = opener.document.getElementById('wikiwyg_wikitext_textarea');
 
             // get iframe and check visibility.
             var myframe = opener.document.getElementsByTagName('iframe')[0];
-            mystyle = myframe.getAttribute('style');
-            if (typeof mystyle == 'object') mystyle = mystyle.cssText;
-            var check = mystyle && mystyle.match(/display: none/i);
-            if (check) break;
+            if (myframe.style.display == 'none' || myframe.parentNode.style.display == 'none') break;
 
             var postdata = 'action=markup&value=' + encodeURIComponent(tagOpen + myText + tagClose);
             var myhtml='';

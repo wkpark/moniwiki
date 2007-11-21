@@ -30,18 +30,14 @@ function mySmiley(myText)
 
   // check WikiWyg
   var my=document.getElementById('editor_area');
-  var mystyle=my.getAttribute('style');
-  if (typeof mystyle == 'object') mystyle = mystyle.cssText;
   
-  while (mystyle && mystyle.match(/display: none/i)) { // wikiwyg hack
+  while (my.style && my.style.display == 'none') { // wikiwyg hack
     txtarea = document.getElementById('wikiwyg_wikitext_textarea');
 
     // get iframe and check visibility.
     var myframe = document.getElementsByTagName('iframe')[0];
-    mystyle = myframe.getAttribute('style');
-    if (typeof mystyle == 'object') mystyle = mystyle.cssText;
-    var check = mystyle && mystyle.match(/display: none/i);
-    if (check) break;
+    // hack. check wrapper also
+    if (myframe.style.display == 'none' || myframe.parentNode.style.display == 'none') break;
 
     var postdata = 'action=markup&value=' + encodeURIComponent(myText);
     var myhtml='';
@@ -65,9 +61,9 @@ function mySmiley(myText)
     return;
   }
 
+  txtarea.focus();
   if(is_ie) {
     var theSelection = document.selection.createRange().text;
-    txtarea.focus();
     if(theSelection.charAt(theSelection.length - 1) == " "){
       // exclude ending space char, if any
       theSelection = theSelection.substring(0, theSelection.length - 1);
@@ -83,7 +79,6 @@ function mySmiley(myText)
     var scrollTop=txtarea.scrollTop;
     txtarea.value = txtarea.value.substring(0, startPos) + myText + " " +
       txtarea.value.substring(endPos, txtarea.value.length);
-    txtarea.focus();
 
     var cPos=startPos+(myText.length+1);
 
