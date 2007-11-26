@@ -58,13 +58,30 @@ define(MIN_FONT_SZ,10);
 
     if (!$pagename) $pagename=$formatter->page->name;
 
+    $mc=new Cache_text('macro');
+    $mkey='Keywords.'.md5($value);
+    $mykeys=array();
+
+    if (!$formatter->refresh and $mc->exists($mkey)) {
+        # check cache mtime
+        $cmt=$mc->mtime($mkey);
+
+        # check update or not
+        $dmt=filemtime($DBInfo->text_dir.'/.');
+        if ($dmt > $cmt) { # XXX crude method
+            $mykeys=array();
+        } else {
+            $mykeys=unserialize($mc->fetch($mkey));
+        }
+    }
+
+    if (!$mykeys):
     if ($options['all']) $pages=$DBInfo->getPageLists();
     else $pages=array($pagename);
 
     # get cached keywords
     $cache=new Cache_text('keywords');
 
-    $mykeys=array();
     foreach ($pages as $pn) {
         if ($cache->exists($pn)) {
             $keys=$cache->fetch($pn);
@@ -74,6 +91,11 @@ define(MIN_FONT_SZ,10);
         }
         if ($keys) $mykeys=array_merge($mykeys,$keys);
     }
+    $mc->update($mkey,serialize($mykeys));
+
+    endif;
+
+
     if ($options['all']) {
         $use_sty=1;
         $words=array_count_values($mykeys);
