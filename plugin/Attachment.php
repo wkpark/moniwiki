@@ -15,8 +15,10 @@
 //
 // $Id$
 
-function macro_Attachment($formatter,$value,$option='') {
+function macro_Attachment($formatter,$value,$options='') {
   global $DBInfo;
+
+  if (!is_array($options) and $options==1) $options=array('link'=>1); // compatible
 
   $attr='';
   if ($DBInfo->force_download) $force_download=1;
@@ -26,7 +28,7 @@ function macro_Attachment($formatter,$value,$option='') {
 
   $text='';
 
-  if (!$DBInfo->security->is_allowed($mydownload,$options))
+  if ($options and !$DBInfo->security->is_allowed($mydownload,$options))
     return $text;
 
   if ($formatter->wikimarkup and !$options['nomarkup']) {
@@ -49,7 +51,7 @@ function macro_Attachment($formatter,$value,$option='') {
     }
     if (substr($text,0,11)=='attachment:') {
       $fname=substr($text,11);
-      $ntext=macro_Attachment($formatter,$fname,1);
+      $ntext=macro_Attachment($formatter,$fname,array('link'=>1));
     }
     if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$ntext)) {
       if (!file_exists($ntext)) {
@@ -60,6 +62,8 @@ function macro_Attachment($formatter,$value,$option='') {
       }
       $ntext=qualifiedUrl($DBInfo->url_prefix.'/'.$ntext);
       $img_link='<img src="'.$ntext.'" alt="'.$text.'" border="0" />';
+    } else {
+      $alt=$ntext;
     }
   } else {
     $value=str_replace('%20',' ',$value);
@@ -121,7 +125,7 @@ function macro_Attachment($formatter,$value,$option='') {
   if (!$file) return $bra.'attachment:/'.$ket;
 
   $upload_file=$dir.'/'.$file;
-  if ($option == 1) return $upload_file;
+  if ($options['link'] == 1) return $upload_file;
   if (!$text) $text=$file;
 
   $_l_file=_l_filename($file);
@@ -144,16 +148,19 @@ function macro_Attachment($formatter,$value,$option='') {
       $formatter->actions[]='UploadedFiles';
 
     if (!$img_link && preg_match("/\.(png|gif|jpeg|jpg)$/i",$upload_file)) {
+      $alt=$alt ? $alt:$file;
       if ($key != $pagename || $force_download)
         $url=$formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=".urlencode($value));
       else
         $url=$DBInfo->url_prefix."/"._urlencode($upload_file);
-      $img="<img src='$url' alt='$file' $attr/>";
+
+      $img="<img src='$url' title='$alt' alt='$alt' style='border:0' $attr/>";
 
       if ($extra_action) {
         $url=$formatter->link_url(_urlencode($pagename),"?action=$extra_action&amp;value=".urlencode($value));
         $img="<a href='$url'>$img</a>";
-      }
+      } else if (preg_match('@^(https?|ftp)://@',$alt))
+        $img="<a href='$alt'>$img</a>";
       
       return $bra."<span class=\"imgAttach\">$img</span>".$ket;
     } else {
