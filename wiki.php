@@ -2104,6 +2104,10 @@ class Formatter {
         $link=str_replace('&','&amp;',$url);
         if (!$text) $text=$url;
         else {
+          if (preg_match("/^attachment:/",$text)) {
+            $text=$this->macro_repl('Attachment',substr($text,11),1);
+            $text=qualifiedUrl($this->url_prefix.'/'.$text);
+          }
           if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
             $atext=$text;
             $text=str_replace('&','&amp;',$text);
