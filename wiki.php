@@ -2073,7 +2073,7 @@ class Formatter {
 
     if (strpos($url,':') !== false) {
       if ($url[0]=='a') # attachment:
-        return $this->macro_repl('Attachment',substr($url,11));
+        return $this->macro_repl('attachment',substr($url,11));
 
       if ($url[0] == '^') {
         $attr.=' target="_blank" ';
@@ -2105,11 +2105,12 @@ class Formatter {
         if (!$text) $text=$url;
         else {
           if (preg_match("/^attachment:/",$text)) {
-            $text=$this->macro_repl('Attachment',substr($text,11),1);
+            $atext=$text;
+            $text=$this->macro_repl('attachment',substr($text,11),1);
             $text=qualifiedUrl($this->url_prefix.'/'.$text);
           }
           if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
-            $atext=$text;
+            $atext=$atext ? $atext:$text;
             $text=str_replace('&','&amp;',$text);
             return "<a class='externalLink named' href='$link' $attr $this->external_target title='$url'><img class='external' style='border:0px' alt='$atext' src='$text' /></a>";
           }
@@ -2325,9 +2326,9 @@ class Formatter {
       if (preg_match("/^(http|ftp|attachment).*\.(png|gif|jpeg|jpg)$/i",$text)) {
         if (substr($text,0,11)=='attachment:') {
           $fname=substr($text,11);
-          $ntext=$this->macro_repl('Attachment',$fname,1);
+          $ntext=$this->macro_repl('attachment',$fname,1);
           if (!file_exists($ntext)) {
-            $word=$this->macro_repl('Attachment',$fname);
+            $word=$this->macro_repl('attachment',$fname);
           } else {
             $text=qualifiedUrl($this->url_prefix.'/'.$ntext);
             $word= "<img style='border:0' alt='$text' src='$text' /></a>";
@@ -2536,7 +2537,7 @@ class Formatter {
     preg_match("/^([A-Za-z]+)(\((.*)\))?$/",$macro,$match);
     if (!$match) return $this->word_repl($macro);
     $bra='';$ket='';
-    if ($this->wikimarkup and $macro != 'Attachment' and !$options['nomarkup']) {
+    if ($this->wikimarkup and $macro != 'attachment' and !$options['nomarkup']) {
       $markups=str_replace(array('=','-','<'),array('==','-=','&lt;'),$macro);
       $markups=preg_replace('/&(?!#?[a-z0-9]+;)/i','&amp;',$markups);
       $bra= "<span class='wikiMarkup'><!-- wiki:\n[[$markups]]\n-->";
