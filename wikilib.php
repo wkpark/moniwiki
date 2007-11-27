@@ -24,23 +24,11 @@ function _preg_search_escape($val) {
 function _mkdir_p($target,$mode=0777) {
   // from php.net/mkdir user contributed notes
   if (file_exists($target)) {
-    if (!is_dir($target)) {
-      return false;
-    } else {
-      return true;
-    }
+    if (!is_dir($target)) return false;
+    else return true;
   }
-
-  // Attempting to create the directory may clutter up our display.
-  if (@mkdir($target,$mode)) {
-    return true;
-  }
-
-  // If the above failed, attempt to create the parent node, then try again.
-  if (_mkdir_p(dirname($target))) {
-    return _mkdir_p($target);
-  }
-  return false;
+  // recursivly create dirs.
+  return (_mkdir_p(dirname($target),$mode) and mkdir($target,$mode));
 }
 
 function get_scriptname() {
@@ -819,7 +807,9 @@ function macro_Edit($formatter,$value,$options='') {
   if ($options['action_mode']=='ajax') {
     $ajax=" onsubmit='savePage(this);return false'";
   }
-  $formh= sprintf('<form name="editform" method="post" action="%s"'.$ajax.'>',
+  if ($DBInfo->use_autosave)
+    $form_attr='onClick="moni_autosave(this)" onsubmit="moni_autosave_reset()" ';
+  $formh= sprintf('<form name="editform" '.$form_attr.'method="post" action="%s"'.$ajax.'>',
     $previewurl);
   if ($text) {
     $raw_body = preg_replace("/\r\n|\r/", "\n", $text);
