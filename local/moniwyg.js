@@ -79,6 +79,7 @@ Wikiwyg.Mode.prototype.execute_scripts = function(el) {
 // Returns if current position is in a wikimarkup block or not
 Wikiwyg.Wysiwyg.prototype.get_wikimarkup_node = function() {
     var p=this.get_parent_node();
+
     while (p && (p.nodeType == 1) && (p.tagName.toLowerCase() != 'body')) {
         if (p.nodeName=='SPAN' && p.className &&
                 p.className.match(/wikiMarkup/) &&
@@ -951,8 +952,12 @@ proto.get_range = function() {
 
 proto.get_parent_node = function() {
     var sel= this.get_edit_window().getSelection();
+    var sf = sel.focusNode;
+    if (sf.nodeName == 'SPAN' && sf.className && sf.className.match(/wikiMarkup/))
+        return sf; // mozilla hack
     return sel.focusNode.parentNode;
 }
+
 } else {
 proto.get_selection = function() {
     return this.get_edit_document().selection;
@@ -1809,9 +1814,13 @@ proto.get_wiki_comment = function(element) {
     for (var node = element.firstChild; node; node = node.nextSibling) {
         if (node.nodeType == this.COMMENT_NODE_TYPE
             && node.data.match(/^\s*wiki/)) {
+            // for <span class='imgAttach'><img src=...
             var ele=node.nextSibling ? node.nextSibling.firstChild:null;
+            // for <span class='imgAttach'><a href=''><img src=...
+            if (ele.tagName == 'A') ele=ele.firstChild;
+            var b;
 
-            if (ele && node.data.match(/\nattachment:/) && ele.tagName && ele.tagName.toLowerCase() == 'img') {
+            if (ele && (b=node.data.match(/\n(\[?)attachment:/)) && ele.tagName == 'IMG') {
                 // check the attributes of the attached images
                 var style = ele.getAttribute('style');
                 var width = ele.getAttribute('width');
@@ -1862,6 +1871,8 @@ proto.get_wiki_comment = function(element) {
                     if (p != -1) {
                         orig=node.data.substr(0,p);
                         oldquery=node.data.substr(p+1);
+                        p=oldquery.indexOf(" ");
+                        if (p != -1) oldquery=oldquery.substr(0,p);
                     }
                     if (oldquery) {
                         oldquery = oldquery.replace(/\n+$/,""); // strip \n
@@ -1889,21 +1900,32 @@ proto.get_wiki_comment = function(element) {
                         } else {
                             newquery=oldquery+'&'+newquery;
                         }
-                        node.data=orig+'?'+newquery;
+                        if (b[1])
+                            node.data= node.data.replace(/(attachment:[^\s\?]+)\?[^\s]+(\s)/,'$1?'+newquery+' ');
+                        else node.data=orig+'?'+newquery;
                     } else {
                         node.data = node.data.replace(/\n+$/,""); // strip \n
-                        if (newquery) node.data+='?'+newquery;
+                        if (newquery) {
+                            if (b[1])
+                                node.data= node.data.replace(/(attachment:[^\s]+)(\s)/,'$1'+'?'+newquery+' ');
+                            else
+                                node.data+='?'+newquery;
+                        }
                     }
 
                     return node;
                 }
             }
-            else if (node.data.match(/&lt;object/i)) {
-                var n=node.nextSibling.firstChild;
-                while (n) {
-                    if (n.tagName == 'IMG') break;
-                    n=n.nextSibling;
+            else if (node.data.match(/&lt;object/i) || node.data.match(/wiki:\n{{{#![^ ]+/)) {
+                var n=node.nextSibling;
+                if (n.tagName != 'IMG') {
+                    var n=n.firstChild;
+                    while (n) {
+                        if (n.tagName == 'IMG') break;
+                        n=n.nextSibling;
+                    }
                 }
+
                 if (n && n.style) {
                     var width = n.style.width;
                     var height = n.style.height;
@@ -1911,6 +1933,22 @@ proto.get_wiki_comment = function(element) {
                         .replace(/height=([^\s]+)/ig,'height="'+height+'"');
                     //    .replace(/width:\s*([0-9]+px)/ig,'width:'+width)
                     //    .replace(/height:\s*([0-9]+px)/ig,'height:'+height);
+
+                    var re=new RegExp('wiki:\n({{{#![^ \n]+)([^\n]*)\n');
+                    var m = node.data.match(re);
+                    if (m && width && height) {
+                        var w = width.replace(/[^0-9]/g,'');
+                        var h = height.replace(/[^0-9]/g,'');
+                        var nm= w+'x'+h;
+                        if (m[2]) {
+                            if (m[2].match(/\b[0-9]+x[0-9]+\b/)) nm = m[2].replace(/[0-9]+x[0-9]+/,nm);
+                            else nm = m[2] + ' ' + nm;
+                        } else
+                            nm = ' ' + nm;
+
+                        if (m) node.data =
+                            ' ' + 'wiki:\n'+ m[1]+nm +'\n' + node.data.substr(m[0].length+1);
+                    }
                 }
             }
             return node;
