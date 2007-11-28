@@ -2104,15 +2104,24 @@ class Formatter {
         $link=str_replace('&','&amp;',$url);
         if (!$text) $text=$url;
         else {
+          $img_attr='';
           if (preg_match("/^attachment:/",$text)) {
             $atext=$text;
+            if (($p=strpos($text,'?')) !== false) {
+              $atext=substr($text,0,$p);
+              parse_str(substr($text,$p+1),$attrs);
+              foreach ($attrs as $n=>$v) {
+                $img_attr.="$n=\"$v\" ";
+              }
+            }
+
             $text=$this->macro_repl('attachment',substr($text,11),1);
             $text=qualifiedUrl($this->url_prefix.'/'.$text);
           }
           if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
             $atext=$atext ? $atext:$text;
             $text=str_replace('&','&amp;',$text);
-            return "<a class='externalLink named' href='$link' $attr $this->external_target title='$url'><img class='external' style='border:0px' alt='$atext' src='$text' /></a>";
+            return "<a class='externalLink named' href='$link' $attr $this->external_target title='$url'><img class='external' style='border:0px' alt='$atext' src='$text' $img_attr/></a>";
           }
           if ($this->external_on)
             $external_link='<span class="externalLink">('.$url.')</span>';
@@ -2542,6 +2551,7 @@ class Formatter {
       $markups=preg_replace('/&(?!#?[a-z0-9]+;)/i','&amp;',$markups);
       $bra= "<span class='wikiMarkup'><!-- wiki:\n[[$markups]]\n-->";
       $ket= '</span>';
+      $options['nomarkup']=1; // for the attachment macro
     }
     if (!$value and $match[1] and $match[2]) { #strpos($macro,'(') !== false)) {
       $name=$match[1]; $args=($match[2] and !$match[3]) ? true:$match[3];
