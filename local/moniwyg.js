@@ -1224,8 +1224,13 @@ proto.format_img = function(element) {
                     var trail=this.output[this.output.length-1];
                     if (!trail.match(/\s$/)) this.appendOutput(' ');
                 }
-                this.appendOutput(element.getAttribute('alt')+ ' ');
-                return;
+                var alt=element.getAttribute('alt');
+                if (!alt.match(/attachment:/)) {
+                    this.appendOutput(alt);
+                    this.appendOutput(' ');
+                    return;
+                }
+                uri=alt;
             }
         }
 
@@ -1810,6 +1815,33 @@ proto.collapse = function(string) {
     //return string.replace(/\r\n|\r/g, "\n"); // FIX
 }
 
+
+proto.get_macro_args = function(arg,attr) {
+    var attrs=[];
+    var vals=arg.split(/,/);
+    for (var i=0;i < vals.length;i++) {
+        var p;
+        var v=vals[i].replace(/^\s+/,'').replace(/\s+$/,'');
+        if ((p=v.indexOf('='))!= -1) {
+            var k=v.substr(0,p);
+            var vv=v.substr(p+1);
+            attrs[k]=vv;
+        } else
+            attrs[v]='';
+    }
+    attrs['width']=attr['width'];
+    attrs['height']=attr['height'];
+    if (attr['align']) attrs['align']=attr['align'];
+
+    var args=[];
+    for (var key in attrs) {
+        if (typeof attrs[key] == 'function') continue;
+        var val=attrs[key];
+        args.push(key + (val ? '=' + val:''));
+    }
+    return args.join(',');
+}
+
 proto.get_wiki_comment = function(element) {
     for (var node = element.firstChild; node; node = node.nextSibling) {
         if (node.nodeType == this.COMMENT_NODE_TYPE
@@ -1820,7 +1852,7 @@ proto.get_wiki_comment = function(element) {
             if (ele.tagName == 'A') ele=ele.firstChild;
             var b;
 
-            if (ele && (b=node.data.match(/\n(\[?)attachment:/)) && ele.tagName == 'IMG') {
+            if (ele && (b=node.data.match(/\n(\[+)?attachment(:|\()/i)) && ele.tagName == 'IMG') {
                 // check the attributes of the attached images
                 var style = ele.getAttribute('style');
                 var width = ele.getAttribute('width');
@@ -1828,10 +1860,10 @@ proto.get_wiki_comment = function(element) {
                 var myclass = ele.getAttribute('class') || ele.getAttribute('className');
                 var align = '';
 
-                var attr=new Array();
+                var attr={};
 
-                if (width) attr["width"]='width='+width;
-                if (height) attr["height"]='height='+height;
+                if (width) attr["width"]=width;
+                if (height) attr["height"]=height;
                 ele.setAttribute('width','');
                 ele.setAttribute('height','');
 
@@ -1839,8 +1871,8 @@ proto.get_wiki_comment = function(element) {
                     if (typeof style == 'object') style = style.cssText;
                     var m = style.match(/width:\s*(\d+)px;\s*height:\s*(\d+)px/);
                     if (m) {
-                        if (m[1]) attr["width"]='width='+m[1];
-                        if (m[2]) attr["height"]='height='+m[2];
+                        if (m[1]) attr["width"]=m[1];
+                        if (m[2]) attr["height"]=m[2];
                         ele.setAttribute('style',null);
                     }
                 }
@@ -1848,7 +1880,7 @@ proto.get_wiki_comment = function(element) {
                 if (myclass) {
                     var m = myclass.match(/img(Center|Left|Right)$/);
                     if (m && m[1]) {
-                        attr["align"]='align='+m[1].toLowerCase();
+                        attr["align"]=m[1].toLowerCase();
                         align=attr["align"];
                     }
                 }
@@ -1858,8 +1890,8 @@ proto.get_wiki_comment = function(element) {
                     var tattr=new Array();
 
                     for (var key in attr) {
-                        var value = attr[key];
-                        if (typeof value == 'function') continue;
+                        if (typeof attr[key] == 'function') continue;
+                        var value = key + '='+attr[key];
                         tattr.push(value);
                     }
 
@@ -1881,18 +1913,18 @@ proto.get_wiki_comment = function(element) {
                         for (var j=0;j<oldattr.length;j++) {
                             var dum=oldattr[j].split("=");
                             if (!width && dum[0] == "width") {
-                                newattr["width"]=oldattr[j];
+                                newattr["width"]=dum[1];
                             } else if (!height && dum[0] == "height") {
-                                newattr["height"]=oldattr[j];
+                                newattr["height"]=dum[1];
                             } else if (!align && dum[0] == "align") {
-                                newattr["align"]=oldattr[j];
+                                newattr["align"]=dum[1];
                             }
                         }
                         if (newattr) {
                             var tattr=[];
                             for (var key in newattr) {
-                                var value = newattr[key];
-                                if (typeof value == 'function') continue;
+                                if (typeof newattr[key] == 'function') continue;
+                                var value = key + '=' + newattr[key];
                                 tattr.push(value);
                             }
                             var old=tattr.join("&");
@@ -1900,15 +1932,34 @@ proto.get_wiki_comment = function(element) {
                         } else {
                             newquery=oldquery+'&'+newquery;
                         }
-                        if (b[1])
-                            node.data= node.data.replace(/(attachment:[^\s\?]+)\?[^\s]+(\s)/,'$1?'+newquery+' ');
+                        if (b[1]) {
+                            if (b[1]=='[')
+                                node.data= node.data.replace(/(attachment:[^\s\?]+)\?[^\s]+(\s)/,'$1?'+newquery+' ');
+                            else {
+                                var m= node.data.match(/Attachment\((.*)\)\]/);
+                                if (m[1]) {
+                                    var arg = this.get_macro_args(m[1],attr);
+                                    node.data= node.data.replace(/Attachment\((.*)\)/,
+                                            'Attachment(' + arg + ')');
+                                }
+                            }
+                        }
                         else node.data=orig+'?'+newquery;
                     } else {
                         node.data = node.data.replace(/\n+$/,""); // strip \n
                         if (newquery) {
-                            if (b[1])
-                                node.data= node.data.replace(/(attachment:[^\s]+)(\s)/,'$1'+'?'+newquery+' ');
-                            else
+                            if (b[1]) {
+                                if (b[1]=='[')
+                                    node.data= node.data.replace(/(attachment:[^\s]+)(\s)/,'$1'+'?'+newquery+' ');
+                                else {
+                                    var m= node.data.match(/Attachment\((.*)\)\]/);
+                                    if (m[1]) {
+                                        var arg = this.get_macro_args(m[1],attr);
+                                        node.data= node.data.replace(/Attachment\((.*)\)/,
+                                            'Attachment(' + arg + ')');
+                                    }
+                                }
+                            } else
                                 node.data+='?'+newquery;
                         }
                     }
