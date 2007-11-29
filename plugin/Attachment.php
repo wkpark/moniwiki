@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2007 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a Attachment macro plugin for the MoniWiki
 //
@@ -27,6 +27,9 @@ function macro_Attachment($formatter,$value,$options='') {
   $extra_action='';
 
   $text='';
+  $caption='';
+  $cap_bra='';
+  $cap_ket='';
 
   if ($options and !$DBInfo->security->is_allowed($mydownload,$options))
     return $text;
@@ -38,10 +41,11 @@ function macro_Attachment($formatter,$value,$options='') {
     $ket= '</span>';
   }
 
-  if (($p=strpos($value,' ')) !== false) {
-    // [attachment:my.ext hello]
-    // [attachment:my.ext attachment:my.png]
-    // [attachment:my.ext http://url/../my.png]
+  if (($p = strpos($value,' ')) !== false and (strpos(substr($value,0,$p),','))=== false) {
+    // [[Attachment(my.png,width=100,height=200,caption="Hello(space)World")]]
+    // [attachment:my.ext(space)hello]
+    // [attachment:my.ext(space)attachment:my.png]
+    // [attachment:my.ext(space)http://url/../my.png]
     if ($value[0]=='"' and ($p2=strpos(substr($value,1),'"')) !== false) {
       $text=$ntext=substr($value,$p2+3);
       $dummy=substr($value,1,$p2); # "my image.png" => my image.png
@@ -56,7 +60,8 @@ function macro_Attachment($formatter,$value,$options='') {
       $ntext=macro_Attachment($formatter,$fname,array('link'=>1));
     }
     if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$ntext)) {
-      if (!file_exists($ntext)) {
+      $_l_ntext=_l_filename($ntext);
+      if (!file_exists($_l_ntext)) {
         $fname=preg_replace('/^"([^"]*)"$/',"\\1",$fname);
         $mydownload='UploadFile&amp;rename='.$fname;
         $text=sprintf(_("Upload new Attachment \"%s\""),$fname);
@@ -65,7 +70,12 @@ function macro_Attachment($formatter,$value,$options='') {
       $ntext=qualifiedUrl($DBInfo->url_prefix.'/'.$ntext);
       $img_link='<img src="'.$ntext.'" alt="'.$text.'" border="0" />';
     } else {
-      $alt=$ntext;
+      if (($q=strpos($ntext,','))!== false) {
+        $alt=substr($ntext,0,$q);
+        $caption=substr($ntext,$q+1);
+      } else {
+        $alt=$ntext;
+      }
     }
   } else {
     $value=str_replace('%20',' ',$value);
@@ -99,8 +109,21 @@ function macro_Attachment($formatter,$value,$options='') {
     # for Attachment macro
     $args=explode(',',substr($value,$dummy+1));
     $value=substr($value,0,$dummy);
-    foreach ($args as $arg)
-      $attr.="$arg ";
+    foreach ($args as $arg) {
+      list($k,$v)=split('=',trim($arg),2);
+      if ($v) {
+        if (in_array($k,array('width','height'))) {
+          $attrs[trim($k)]=$v;
+          $attr.="$arg ";
+        } else if ($k=='align') {
+          $imgalign='img'.ucfirst($v);
+          $align='class="'.$imgalign.'" ';
+        } else if ($k=='caption') {
+          $caption=preg_replace("/^([\"'])([^\\1]+)\\1$/","\\2",trim($v));
+          #$caption=preg_replace('/^"([^"]*)"$/',"\\1",trim($v));
+        }
+      }
+    }
   }
 
   $attr.=$lightbox_attr;
@@ -135,6 +158,26 @@ function macro_Attachment($formatter,$value,$options='') {
 
   if (file_exists($_l_upload_file)) {
 
+    $imgcls='imgAttach';
+
+    if ($imgalign == 'imgCenter' or ($caption && !$imgalign)) {
+      if (!$attrs['width']) {
+        $size=getimagesize($_l_upload_file); // XXX
+        $attrs['width']=$size[0];
+      }
+      $img_width=' style="width:'.$attrs['width'].'px"';
+    }
+
+    if ($caption) {
+      $cls=$imgalign ? 'imgContainer '.$imgalign:'imgContainer'; 
+      $caption='<div class="imgCaption">'.$caption.'</div>';
+      $cap_bra='<div class="'.$cls.'"'.$img_width.'>';
+      $cap_ket='</div>';
+      $img_width='';
+    } else {
+      $imgcls=$imgalign ? 'imgAttach '.$imgalign:'imgAttach';
+    }
+
     $sz=filesize($_l_upload_file);
     $unit=array('Bytes','KB','MB','GB','TB');
     for ($i=0;$i<4;$i++) {
@@ -163,8 +206,9 @@ function macro_Attachment($formatter,$value,$options='') {
         $img="<a href='$url'>$img</a>";
       } else if (preg_match('@^(https?|ftp)://@',$alt))
         $img="<a href='$alt'>$img</a>";
-      
-      return $bra."<span class=\"imgAttach\">$img</span>".$ket;
+
+      return $bra.$cap_bra."<div class=\"$imgcls\"$img_width>$img$caption</div>".$cap_ket.$ket;
+      #return $bra.$cap_bra."<span class=\"$cls\">$img$caption</span>".$cap_ket.$ket;
     } else {
       $mydownload= $extra_action ? $extra_action:$mydownload;
       $link=$formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=".urlencode($value),$text);
