@@ -297,3 +297,21 @@ span.VisualTour {
  .searchword3 { background: #ccf }
  .searchword4 { background: #fcf }
 }
+
+.imgLeft { margin-right:5px;float:left; clear:right;}
+.imgRight { margin-left:5px;float:right; clear:left;}
+.imgCenter { margin-left: auto; margin-right: auto; }
+
+.imgCaption {
+  font-size:.8em;
+  text-indent:0;
+  margin:0;
+  clear:both;
+}
+
+.imgContainer {
+  padding:5px;
+  border:1px solid silver;
+}
+
+.imgAttach {}
