@@ -1847,9 +1847,10 @@ proto.get_wiki_comment = function(element) {
         if (node.nodeType == this.COMMENT_NODE_TYPE
             && node.data.match(/^\s*wiki/)) {
             // for <span class='imgAttach'><img src=...
-            var ele=node.nextSibling ? node.nextSibling.firstChild:null;
+            //var ele=node.nextSibling ? node.nextSibling.firstChild:null;
             // for <span class='imgAttach'><a href=''><img src=...
-            if (ele.tagName == 'A') ele=ele.firstChild;
+            //if (ele.tagName == 'A') ele=ele.firstChild;
+            var ele=node.parentNode.getElementsByTagName('img')[0];
             var b;
 
             if (ele && (b=node.data.match(/\n(\[+)?attachment(:|\()/i)) && ele.tagName == 'IMG') {
