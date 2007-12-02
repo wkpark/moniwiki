@@ -207,8 +207,9 @@ class SimpleOpenID{
 	}
 
 	function getHTTPEquiv($content) {
-		preg_match('/<meta http-equiv=("|\')?[^\\1]+\\1.*content=("|\')([^\\2]+)\\2.*>/i',$content,$match);
-		list($dummy,$url)=explode('url=',$match[3],2);
+		preg_match('/<meta http-equiv=("|\')?([^\\1]+)\\1.*content=("|\')?([^\\3]+)\\3.*>/i',$content,$match);
+		if (strtolower($match[2])=='refresh') list($dummy,$url)=explode('url=',$match[4],2);
+		else if (in_array(strtolower($match[1]),array('x-xrds-location', 'x-yadis-location'))) $url=$match[4];
 		if ($url) return $url;
 		return null;
 	}
