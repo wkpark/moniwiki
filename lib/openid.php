@@ -205,10 +205,22 @@ class SimpleOpenID{
 		$ret = array($servers, $delegates);
 		return $ret;
 	}
+
+	function getHTTPEquiv($content) {
+		preg_match('/<meta http-equiv=("|\')?[^\\1]+\\1.*content=("|\')([^\\2]+)\\2.*>/i',$content,$match);
+		list($dummy,$url)=explode('url=',$match[3],2);
+		if ($url) return $url;
+		return null;
+	}
 	
 	function GetOpenIDServer() {
 		#$response = $this->Request($this->openid_url_identity);
-          	$response = call_user_func(array(&$this,$this->_request),$this->openid_url_identity);
+		$response = call_user_func(array(&$this,$this->_request),$this->openid_url_identity);
+		$new_url=$this->getHTTPEquiv($response);
+		if ($new_url) {
+			if ($new_url{0}=='/') $new_url=$this->openid_url_identity.$new_url;
+			$response = call_user_func(array(&$this,$this->_request),$new_url);
+		}
 		list($servers, $delegates) = $this->HTML2OpenIDServer($response);
 		if (count($servers) == 0) {
 			$this->ErrorStore('OPENID_NOSERVERSFOUND');
