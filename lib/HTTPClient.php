@@ -256,8 +256,14 @@ class HTTPClient {
         // handle headers and cookies
         $this->resp_headers = $this->_parseHeaders($r_headers);
         if(isset($this->resp_headers['set-cookie'])){
-            foreach ($this->resp_headers['set-cookie'] as $c){
-                list($key, $value, $foo) = split('=', $cookie);
+            if (is_array($this->resp_headers['set-cookie'])) {
+                foreach ($this->resp_headers['set-cookie'] as $c){
+                    list($key, $value, $foo) = split('=', $c);
+                    $this->cookies[$key] = $value;
+                }
+            } else {
+                $c=$this->resp_headers['set-cookie'];
+                list($key, $value, $foo) = split('=', $c);
                 $this->cookies[$key] = $value;
             }
         }
