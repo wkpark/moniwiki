@@ -165,8 +165,8 @@ function macro_Attachment($formatter,$value,$options='') {
         $size=getimagesize($_l_upload_file); // XXX
         $attrs['width']=$size[0];
       }
-      $img_width=' style="width:'.$attrs['width'].'px"';
     }
+    if ($attrs['width']) $img_width=' style="width:'.$attrs['width'].'px"';
 
     if ($caption) {
       $cls=$imgalign ? 'imgContainer '.$imgalign:'imgContainer'; 
