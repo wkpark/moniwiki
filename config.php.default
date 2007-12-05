@@ -70,6 +70,7 @@ $menu=array('FrontPage'=>1,'FindPage'=>4,'TitleIndex'=>3,'RecentChanges'=>2,'Use
 #$menu_cat='';
 #$path='/usr/local/bin:/usr/bin:/bin:/usr/X11R6/bin'; # for unixes
 #$path='./bin;c:/windows/command;c:/Program Files/gnuplot;c:/Program Files/vim/vim71'; # for win32
+#$path='./bin;C:/Program Files/MiKTeX 2.5/miktex/bin;C:/Program Files/ImageMagick-6.3.6-Q16'; # for MikTeX
 # ./bin to use user installed bins.
 $theme='azblue';
 $theme_css=0;
@@ -213,6 +214,7 @@ $use_errlog=1;
 #$raw_errlog=0; # do not hide some dir. infos.
 #$acl_type='default'; # XXX
 #$acl_debug=1;
+#$default_download_image='/block.jpg';
 #$control_read=1; # control read action also
 #$use_macro_as_action=0; # XXX warn
 #$isbn_img_download=1; # download isbn images to local cache dir.
@@ -239,4 +241,7 @@ $jwmediaplayer_prefix='http://www.jeroenwijering.com/embed';
 #$icon_list='edit,diff,show,find,print,info,help'; # set the icon list
 #$use_folding=0; # 1:default simple js / 2:with the prototype/mootools
 #$use_etable=0; # use new extended table syntax: experimental
+#$use_openid=0; # enable openid login
+#$check_openid_url=0; # selectivly show openid icons: experimental
+#$use_autosave=1; # enable autosave feature.
 ?>
