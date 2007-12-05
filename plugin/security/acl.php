@@ -44,7 +44,9 @@ class Security_ACL extends Security {
             $this->AUTH_ACL= array('*   @ALL    allow   *');
         }
 
-        $this->allowed_users=array_merge($DB->wikimasters,$DB->owners);
+        $wikimasters=$DB->wikimasters ? $DB->wikimasters:array();
+        $owners=$DB->owners ? $DB->owners:array();
+        $this->allowed_users=array_merge($wikimasters,$owners);
     }
 
     function get_acl($action='read',&$options) {
@@ -210,6 +212,13 @@ class Security_ACL extends Security {
 
         $ret=$this->acl_check($action,$options);
         if ($ret == 0) {
+            if ($action == 'download' and
+                    preg_match('/\.(gif|png|jpg|jpeg)$/i',$options['value'])) {
+                if ($this->DB->default_download_image)
+                    $options['value']=$this->DB->default_download_image;
+                return 1;
+            }
+            
             $options['err']=sprintf(_("You are not allowed to '%s' on this page"),$action);
             $options['err'].="\n"._("Please contact WikiMasters :b");
         }
