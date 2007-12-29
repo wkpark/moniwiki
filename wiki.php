@@ -2034,6 +2034,7 @@ class Formatter {
           return "<span style='color:$col'>$url</span>";
         $url=$col.' '.$url;
       } else if (preg_match('/^((?:\+|\-)([1-6]?))(?=\s)(.*)$/',$url,$m)) {
+        $m[3]=str_replace("&lt;","<",$m[3]);
         if ($m[2]=='') $m[1].='1';
         $fsz=array(
           '-5'=>'10%','-4'=>'20%','-3'=>'40%','-2'=>'60%','-1'=>'80%',
