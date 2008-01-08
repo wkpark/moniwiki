@@ -41,6 +41,9 @@ function macro_Attachment($formatter,$value,$options='') {
     $ket= '</span>';
   }
 
+#  if ($value[0]=='"' and ($p2=strpos(substr($value,1),'"')) !== false)
+#    $value=substr($value,1,$p2); # attachment:"my image.png" => my image.png
+# FIXME attachment:"hello.png" => error
   if (($p = strpos($value,' ')) !== false and (strpos(substr($value,0,$p),','))=== false) {
     // [[Attachment(my.png,width=100,height=200,caption="Hello(space)World")]]
     // [attachment:my.ext(space)hello]
