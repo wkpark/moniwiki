@@ -47,7 +47,7 @@ function toggleSubIndex(id)
 	        new Effect.SlideDown(sub, { duration: 0.4,afterFinish: function() {Element.show(sub);} });
             } else { // mootools
                 var mySlide = new Fx.Slide(sub);
-                mySlide.wrapper.setStyle('height',0);
+                //mySlide.wrapper.setStyle('height',0);
 
                 icon.addEvent('click',function(e) {
                     e = new Event(e);
@@ -60,10 +60,10 @@ function toggleSubIndex(id)
         }
         if (icon) {
             var name=icon.getAttribute('class');
-            if (name == 'close')
-                icon.setAttribute('class','');
-            else
+            if (name != 'close')
                 icon.setAttribute('class','close');
+            else
+                icon.setAttribute('class','');
         }
     }
 }
