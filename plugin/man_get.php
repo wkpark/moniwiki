@@ -82,20 +82,28 @@ function do_man_get($formatter,$options) {
     }
     $options['msg']=implode(', ',$lnk);
   }
-  $formatter->send_header("",$options);
-  $formatter->send_title("","",$options);
-
   if ($DBInfo->man_charset and
     $DBInfo->man_charset != $DBInfo->charset) {
     if (function_exists('iconv')) {
-      $raw=iconv($DBInfo->man_charset,$DBInfo->charset,$raw);
+      $ignore='//IGNORE'; // XXX
+      $raw=iconv($DBInfo->man_charset,$DBInfo->charset.$ignore,$raw);
     }
   }
   $options['savetext']=$raw;
 
   if ($options['edit']) {
+    $formatter->send_header("",$options);
+    $formatter->send_title("","",$options);
+
     print macro_EditText($formatter,$raw,$options);
+  } else if ($options['raw']) {
+    $formatter->send_header("content-type: text/plain",$options);
+    print $raw;
+    return;
   } else {
+    $formatter->send_header("",$options);
+    $formatter->send_title("","",$options);
+
     print $formatter->processor_repl('man',$raw,$options);
     $extra='';
     if ($options['sec']) $extra='&amp;sec='.$options['sec'];
