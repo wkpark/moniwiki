@@ -76,7 +76,7 @@ function processor_abc($formatter="",$value="") {
      if ($log)
         $log ="<pre style='background-color:black;color:gold'>$log</pre>\n";
   }
-  return $log."<a href='$DBInfo->url_prefix/$cache_dir/$uniq.midi' alt='abc2midi'>abc2midi</a>";
+  return $log."<embed src='$DBInfo->url_prefix/$cache_dir/$uniq.midi' height='20' />";
 }
 
 ?>
