@@ -25,7 +25,7 @@ function processor_whtml($formatter,$value='',$options=array()) {
         list($tag,$args)=explode(' ',$line,2);
 
     $formatter->set_wordrule();
-    $smiley_rule='/(?<=\s|^|>)('.$DBInfo->smiley_rule.')(?=\s|$|<)/e';
+    $smiley_rule=$formatter->smiley_rule;
     $smiley_repl="\$formatter->smiley_repl('\\1')";
 
     $save=$formatter; // do not disturb $formatter
