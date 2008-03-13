@@ -488,6 +488,7 @@ class Counter_dba {
     if (!$count) $count=0;
     $count++;
     dba_replace($pagename,$count,$this->counter);
+    return $count;
   }
 
   function pageCounter($pagename) {

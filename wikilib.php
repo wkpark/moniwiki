@@ -183,11 +183,16 @@ function get_title($page) {
   return preg_replace("/((?<=[a-z0-9]|[B-Z]{2})([A-Z][a-z]))/"," \\1",$title);
 }
 
-function _mask_hostname($addr,$mask='&loz;') {
+function _mask_hostname($addr,$opt=1,$mask='&loz;') {
   $tmp=explode('.',$addr);
   switch($sz=sizeof($tmp)) {
   case 4:
-    $tmp[$sz-1]=str_repeat($mask,strlen($tmp[$sz-1]));
+    if ($opt >= 1)
+      $tmp[$sz-1]=str_repeat($mask,strlen($tmp[$sz-1]));
+    if ($opt == 2)
+      $tmp[$sz-2]=str_repeat($mask,strlen($tmp[$sz-2]));
+    else if ($opt == 3)
+      $tmp[$sz-3]=str_repeat($mask,strlen($tmp[$sz-3]));
     break;
   default:
     $tmp[0]=str_repeat($mask,strlen($tmp[0]));
