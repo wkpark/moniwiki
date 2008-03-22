@@ -864,26 +864,34 @@ EOS;
     #$name=preg_replace("/%([a-f0-9]{2})/ie","'_'.strtolower('\\1')",$name);
     #$name=preg_replace(".","_2e",$name);
 
-    $name=preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord(substr('\\1',-1))))",$pagename);
+    // clean up ':' like as the dokuwiki
+    $pn= preg_replace('#:+#',':',$pagename);
+    $pn= trim($pn,':._-');
+    $pn= preg_replace('#:[:\._\-]+#',':',$pn);
+
+    $pn= preg_replace("/([^a-z0-9:]{1})/ie","'_'.strtolower(dechex(ord(substr('\\1',-1))))",$pn);
+    $name=preg_replace('#:#','.d/',$pn);
     #$name=preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord('\\1')))",$pagename);
     return $name;
   }
 
   function getPageKey($pagename) {
     #$name=preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord('\\1')))",$pagename);
-    $name=preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord(substr('\\1',-1))))",$pagename);
+    $name=$this->_getPageKey($pagename);
+    #$name=preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord(substr('\\1',-1))))",$pagename);
     return $this->text_dir . '/' . $name;
   }
 
   function pageToKeyname($pagename) {
-    return preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord(substr('\\1',-1))))",$pagename);
+    return $this->_getPageKey($pagename);
+    #return preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord(substr('\\1',-1))))",$pagename);
     #return preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord('\\1')))",$pagename);
   }
 
   function hasPage($pagename) {
     if (!$pagename) return false;
     $name=$this->getPageKey($pagename);
-    return @file_exists($name); 
+    return @file_exists($name);
   }
 
   function getPage($pagename,$options="") {
@@ -894,7 +902,10 @@ EOS;
   #  return preg_replace("/_([a-f0-9]{2})/e","chr(hexdec('\\1'))",$key);
   #  $pagename=preg_replace("/_([a-f0-9]{2})/","%\\1",$key);
   #  $pagename=str_replace("_","%",$key);
-    $pagename=strtr($key,'_','%');
+
+    $pagename=preg_replace('%\.d/%',':',$key);
+
+    $pagename=strtr($pagename,'_','%');
     return rawurldecode($pagename);
   }
 
@@ -1031,6 +1042,7 @@ EOS;
         if ($rlen != 1024) $l="\n".$l; // hack, for the first log entry.
         while(($p=strrpos($l,"\n"))!==false) {
           $line=substr($l,$p+1).$last;
+          $last='';
           $l=substr($l,0,$p);
           $dumm=explode("\t",$line,4);
           $check=$dumm[2];
@@ -1089,6 +1101,30 @@ EOS;
     return $body;
   }
 
+  function _savePage($filename,$body,$options=array()) {
+    $dir=dirname($filename);
+    if (!is_dir($dir)) {
+      $om=umask(000);
+      _mkdir_p($dir, 0777);
+      umask($om);
+    }
+
+    $fp=fopen($filename,"w");
+    if (!$fp)
+       return -1;
+    flock($fp,LOCK_EX);
+    fwrite($fp, $body);
+    flock($fp,LOCK_UN);
+    fclose($fp);
+
+    if ($this->version_class) {
+      $class=getModule('Version',$this->version_class);
+      $version=new $class ($this);
+      $ret=$version->_ci($filename,$options['log']);
+    }
+    return 0;
+  }
+
   function savePage(&$page,$comment="",$options=array()) {
     $user=new User();
     if ($user->id != 'Anonymous') {
@@ -1100,32 +1136,25 @@ EOS;
     $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
     $comment=escapeshellcmd($comment);
 
-    $keyname=$this->_getPageKey($page->name);
-    $key=$this->text_dir."/$keyname";
-
     $myid=$user->id;
     if ($user->info['nick']) {
       $myid.=' '.$user->info['nick'];
       $options['nick']=$user->info['nick'];
     }
-
     $options['myid']=$myid;
-    $fp=fopen($key,"w");
-    if (!$fp)
-       return -1;
-    flock($fp,LOCK_EX);
-    $body=$this->_replace_variables($page->body,$options);
-    $page->write($body);
-    fwrite($fp, $body);
-    flock($fp,LOCK_UN);
-    fclose($fp);
 
+    $keyname=$this->_getPageKey($page->name);
+    $key=$this->text_dir."/$keyname";
+
+    $body=$this->_replace_variables($page->body,$options);
     $log=$REMOTE_ADDR.';;'.$myid.';;'.$comment;
-    if ($this->version_class) {
-      $class=getModule('Version',$this->version_class);
-      $version=new $class ($this);
-      $ret=$version->ci($page->name,$log);
-    }
+    $options['log']=$log;
+    $options['pagename']=$page->name;
+    $ret=$this->_savePage($key,$body,$options);
+    if ($ret == -1) return -1;
+    #
+    $page->write($body);
+
     # check minor edits XXX
     $minor=0;
     if ($this->use_minorcheck or $options['minorcheck']) {
@@ -1209,6 +1238,9 @@ EOS;
 
   function _isWritable($pagename) {
     $key=$this->getPageKey($pagename);
+    $dir=dirname($key);
+    # global lock
+    if (@file_exists($dir.'/.lock')) return false;
     # True if page can be changed
     return @is_writable($key) or !@file_exists($key);
   }
@@ -1271,8 +1303,18 @@ class Version_RCS {
 
   function ci($pagename,$log) {
     $key=$this->_filename($pagename);
-    $pagename=escapeshellcmd($pagename);
-    $fp=@popen("ci -l -x,v/ -q -t-\"".$pagename."\" -m\"".$log."\" ".$key.$this->NULL,"r");
+    $pgname=escapeshellcmd($pagename);
+    $this->_ci($key,$log);
+  }
+
+  function _ci($key,$log) {
+    $dir=dirname($key);
+    if (!is_dir($dir.'/RCS')) {
+      $om=umask(000);
+      _mkdir_p($dir.'/RCS', 2777);
+      umask($om);
+    }
+    $fp=@popen("ci -l -x,v/ -q -t-\"".$key."\" -m\"".$log."\" ".$key.$this->NULL,"r");
     if (is_resource($fp)) pclose($fp);
   }
 
@@ -1514,6 +1556,7 @@ class WikiPage {
       $this->rev=0; # current rev.
     $this->name= $name;
     $this->filename= $this->_filename($name);
+
     $this->urlname= _rawurlencode($name);
     $this->body= "";
     $this->title=get_title($name);
@@ -1701,6 +1744,7 @@ class Formatter {
     $this->postfilters=$DBInfo->postfilters;
     $this->use_rating=$DBInfo->use_rating;
     $this->use_etable=$DBInfo->use_etable;
+    $this->use_metadata=$DBInfo->use_metadata;
     $this->udb=$DBInfo->udb;
     $this->check_openid_url=$DBInfo->check_openid_url;
     $this->register_javascripts($DBInfo->javascripts);
@@ -1804,7 +1848,7 @@ class Formatter {
     #"\b(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+[^\(\)<>\s\',\.:\?\!]+)|".
-    "(\b|\^?)([A-Z][a-zA-Z]+):([^\(\)<>\s\']?[^\(\)<>\s\'\",:\?\!\010\006]*(\s(?![\x21-\x7e]))?)";
+    "(\b|\^?)([A-Z][a-zA-Z]+):([^:\(\)<>\s\']?[^\(\)<>\s\'\",:\?\!\010\006]*(\s(?![\x21-\x7e]))?)";
 
     if ($camelcase)
       $this->wordrule.='|'.
@@ -1832,7 +1876,7 @@ class Formatter {
 
     if ($sbracket)
       # single bracketed name [Hello World]
-      $this->wordrule.= "|(?<!\[)\!?\[([^\[,<\s'][^\[:,>]{1,255})\](?!\])";
+      $this->wordrule.= "|(?<!\[)\!?\[([^\[,<\s'][^\[,>]{1,255})\](?!\])";
     else
       # only anchor [#hello], footnote [* note] allowed 
       $this->wordrule.= "|(?<!\[)\!?\[([#\*\+][^\[:,>]{1,255})\](?!\])";
@@ -1912,12 +1956,19 @@ class Formatter {
     $pi=array();
 
     $format='';
-    if (!$body and !$this->pi['#format']) { # XXX
-      $pos=strpos($this->page->name,'/') ? 1:0;
-      $key=strtok($this->page->name,'/');
+    if (!$this->pi['#format']) { # set default page type. # XXX !$body ? v1.134 ?
+      preg_match('%(:|/)%',$this->page->name,$sep);
+      $key=strtok($this->page->name,':/');
       if (isset($Config['pagetype'][$key]) and $f=$Config['pagetype'][$key]) {
-        $temp=explode("/",$f);
-        $format=$temp[$pos];
+        $p=preg_split('%(:|/)%',$f);
+        $p2=strlen($p[0].$p[1])+1;
+        $p[1]=$p[1] ? $f{strlen($p[0])}.$p[1]:'';
+        $p[2]=$p[2] ? $f{$p2}.$p[2]:'';
+        $format=$p[0];
+        if ($sep[1]) { # have : or /
+          $format = ($sep[1]==$p[1]{0}) ? substr($p[1],1):
+                    (($sep[1]==$p[2]{0}) ? substr($p[2],1):'plain');
+        }
       } else if (isset($Config['pagetype']['*']))
         $format=$Config['pagetype']['*']; // default page type
     }
@@ -1927,6 +1978,12 @@ class Formatter {
       if ($this->pi) return $this->pi;
       $body=$this->page->get_raw_body();
       $update_body=1;
+    }
+
+    if ($this->use_metadata) {
+      include_once('lib/metadata.php');
+      list($this->metas,$nbody)=_get_metadata($body);
+      if ($nbody!=null) $body=$nbody;
     }
 
     if (!$format and $body[0] == '<') {
@@ -1968,7 +2025,7 @@ class Formatter {
       if (isset($pi['#nosinglebracket'])) $pi['#singlebracket']=0;
     }
 
-    if (!empty($format)) $pi['#format']=$format; // override default
+    if (empty($pi['#format']) and !empty($format)) $pi['#format']=$format; // override default
     if (!isset($pi['#format'])) $pi['#format']= $Config['default_markup'];
 
     list($pi['#format'],$pi['args'])=explode(' ',$pi['#format'],2);
@@ -2073,7 +2130,7 @@ class Formatter {
       break;
     }
 
-    if (strpos($url,':') !== false) {
+    if (($p=strpos($url,':')) !== false and $url{$p+1}!=':') {
       if ($url[0]=='a') # attachment:
         return $this->macro_repl('attachment',substr($url,11));
 
@@ -2211,8 +2268,9 @@ class Formatter {
     $url=$DBInfo->interwiki[$wiki];
     # invalid InterWiki name
     if (!$url) {
-      $dum0=preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$wiki);
-      return $dum0.':'.($page?$this->link_repl($page,$text):'');
+      #$dum0=preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$wiki);
+      #return $dum0.':'.($page?$this->link_repl($page,$text):'');
+      return $this->word_repl("$wiki:$page",$text.$extra,$attr,1);
     }
 
     if ($page=='/') $page='';
@@ -2678,7 +2736,18 @@ class Formatter {
     global $DBInfo;
     $sep=$DBInfo->query_prefix;
 
-    if (!$query_string and $this->query_string) $query_string=$this->query_string;
+    if (!$query_string) {
+      if ($this->query_string) $query_string=$this->query_string;
+    } else if ($query_string and $query_string{0}=='#') {
+      $query_string= $this->self_query.$query_string;
+    }
+    #{
+    #    $query_string = $this->query_string;
+    #  } else if ($query_string[0]=='?') {
+    #    $query_string= $this->query_string.'&amp;'.substr($query_string,1);
+    #  } else {
+    #  }
+    #}
 
     if ($sep == '?') {
       if ($pageurl && $query_string[0]=='?')
@@ -2706,6 +2775,7 @@ class Formatter {
   function link_to($query_string="",$text="",$attr="") {
     if (!$text)
       $text=htmlspecialchars($this->page->name);
+
     return $this->link_tag($this->page->urlname,$query_string,$text,$attr);
   }
 
@@ -3789,14 +3859,16 @@ class Formatter {
 
     if (!$plain) {
       # find upper page
-      $pos=strrpos($this->page->name,"/");
+      $pos=0;
+      preg_match('/(\:|\/)/',$this->page->name,$sep); # NameSpace/SubPage or NameSpace:SubNameSpacePage
+      if ($sep[1]) $pos=strrpos($this->page->name,$sep);
       if ($pos > 0) $upper=substr($this->page->urlname,0,$pos);
       else if ($this->group) $upper=_urlencode(substr($this->page->name,strlen($this->group)));
       if ($this->pi['#keywords'])
         $keywords='<meta name="keywords" content="'.$this->pi['#keywords'].'" />';
       else if ($DBInfo->use_keywords) {
         $keywords=strip_tags($this->page->title);
-        $keywords=str_replace(" ",", ",$keywords);
+        $keywords=str_replace(" ",", ",$keywords); # XXX
         $keywords=htmlspecialchars($keywords);
         $keywords="<meta name=\"keywords\" content=\"$keywords\" />";
       }
@@ -4074,7 +4146,9 @@ FOOT;
     $saved_pagelinks = $this->pagelinks;
 
     # find upper page
-    $pos=strrpos($name,"/");
+    $pos=0;
+    preg_match('/(\:|\/)/',$name,$sep); # NameSpace/SubPage or NameSpace:SubNameSpacePage
+    if ($sep[1]) $pos=strrpos($name,$sep[1]);
     $mypgname=$this->page->name;
     if ($pos > 0) {
       $upper=substr($name,0,$pos);
@@ -4494,39 +4568,32 @@ function set_locale($lang,$charset='') {
 
 # get the pagename
 function get_pagename() {
-  global $Config;
   // $_SERVER["PATH_INFO"] has bad value under CGI mode
   // set 'cgi.fix_pathinfo=1' in the php.ini under
   // apache 2.0.x + php4.2.x Win32
   if (!empty($_SERVER['PATH_INFO'])) {
     if ($_SERVER['PATH_INFO'][0] == '/')
       $pagename=substr($_SERVER['PATH_INFO'],1);
-    if (!$pagename) {
-      $pagename = $Config['frontpage'];
-    }
-    $pagename=_stripslashes($pagename);
   } else if (!empty($_SERVER['QUERY_STRING'])) {
     if (isset($goto)) $pagename=$goto;
     else {
       $pagename = $_SERVER['QUERY_STRING'];
       $temp = strtok($pagename,"&");
 
-      if ($temp and strpos($temp,"="))
-        $pagename = $Config['frontpage'];
-      else
-        $result = preg_match('/^([^&=]+)/',$pagename,$matches);
-      if ($result) {
-        $pagename = urldecode($matches[1]);
-        $_SERVER['QUERY_STRING']=substr($_SERVER['QUERY_STRING'],strlen($pagename));
+      if (!$temp or strpos($temp,"=")===false) {
+        if (preg_match('/^([^&=]+)/',$pagename,$matches)) {
+          $pagename = urldecode($matches[1]);
+          $_SERVER['QUERY_STRING']=substr($_SERVER['QUERY_STRING'],strlen($pagename));
+        }
       }
     }
-    if (!$pagename) $pagename= $Config['frontpage'];
-  } else {
-    $pagename = $Config['frontpage'];
   }
+  if ($pagename) {
+    $pagename=_stripslashes($pagename);
 
-  if ($pagename[0]=='~' and ($p=strpos($pagename,"/")))
-    $pagename=substr($pagename,1,$p-1)."~".substr($pagename,$p+1);
+    if ($pagename[0]=='~' and ($p=strpos($pagename,"/")))
+      $pagename=substr($pagename,1,$p-1)."~".substr($pagename,$p+1);
+  }
   return $pagename;
 }
 
@@ -4595,9 +4662,16 @@ if (isset($_locale)) {
 
 }
 
+function get_frontpage($lang) {
+  global $Config;
+
+  $lcid=substr(strtok($lang,'_'),0,2);
+  return $Config['frontpages'][$lcid] ? $Config['frontpages'][$lcid]:$Config['frontpage'];
+}
+
 function wiki_main($options) {
   global $DBInfo,$Config;
-  $pagename=$options['pagename'];
+  $pagename=$options['pagename'] ? $options['pagename']: $DBInfo->frontpage;
   
   # get primary variables
   if ($_SERVER['REQUEST_METHOD']=="POST") {
@@ -4955,6 +5029,7 @@ $options['timer']->Check("load");
 $lang= set_locale($DBInfo->lang,$DBInfo->charset);
 init_locale($lang);
 init_requests($options);
+if (!$options['pagename']) $options['pagename']= get_frontpage($lang);
 $DBInfo->lang=$lang;
 
 if (session_id()== '' && !$DBInfo->nosession){

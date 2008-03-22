@@ -41,11 +41,13 @@ function get_scriptname() {
 
 function _rawurlencode($url) {
   $name=rawurlencode($url);
-  $urlname=preg_replace(array('/%2F/i','/%7E/i'),array('/','~'),$name);
+  $urlname=preg_replace('/%(2F|7E|3A|2B)/ei',"chr(hexdec('\\1'))",$name);
+  $urlname= preg_replace('#:+#',':',$urlname);
   return $urlname;
 }
 
 function _urlencode($url) {
+  $url= preg_replace('#:+#',':',$url);
   $t= preg_replace("/([^a-z0-9\/\?\.\+~#&:;=%\-_]{1})/ie","'%'.strtoupper(dechex(ord(substr('\\1',-1))))",$url);
   return preg_replace("/(%)(?![a-f0-9]{2})/i","%25",$t);
 }
@@ -638,7 +640,9 @@ function macro_EditHints($formatter) {
 
 function macro_EditText($formatter,$value,$options='') {
   global $DBInfo;
-  if (!$options['simple'] and $DBInfo->hasPage('EditTextForm')) {
+
+  # simple == 1 : do not use EditTextForm, simple == 2 : do not use GUI/Preview
+  if (!$options['simple']!=1 and $DBInfo->hasPage('EditTextForm')) {
     $p=$DBInfo->getPage('EditTextForm');
     $form=$p->get_raw_body();
     $f=new Formatter($p);
@@ -666,6 +670,7 @@ function do_edit($formatter,$options) {
   global $DBInfo;
   if (!$DBInfo->security->writable($options)) {
     $formatter->preview=0;
+    $options['err']="#format wiki\n== "._("You are not allowed to edit this page !").' =='; # XXX
     do_invalid($formatter,$options);
     return;
   }
@@ -761,7 +766,14 @@ function macro_Edit($formatter,$value,$options='') {
 
   $preview= $options['preview'];
 
-  if (!$formatter->page->exists() and !$preview) {
+  if ($options['action']=='edit') $saveaction='savepage';
+  else $saveaction=$options['action'];
+
+  $extraform=$formatter->_extra_form ? $formatter->_extra_form:'';
+
+  $options['notmpl']=isset($options['notmpl']) ? $options['notmpl']:0;
+
+  if (!$options['notmpl'] and ($options['template'] or !$formatter->page->exists()) and !$preview) {
     $options['linkto']="?action=edit&amp;template=";
     $tmpls= macro_TitleSearch($formatter,$DBInfo->template_regex,$options);
     if ($tmpls) {
@@ -785,6 +797,8 @@ function macro_Edit($formatter,$value,$options='') {
   if ($options['section'])
     $hidden='<input type="hidden" name="section" value="'.$options['section'].
             '" />';
+  if ($options['mode'])
+    $hidden='<input type="hidden" name="mode" value="'.$options['mode'].'" />';
 
   # make a edit form
   if (!$options['simple'])
@@ -818,7 +832,13 @@ function macro_Edit($formatter,$value,$options='') {
     $previewurl);
   if ($text) {
     $raw_body = preg_replace("/\r\n|\r/", "\n", $text);
-  } else if ($formatter->page->exists()) {
+  } else if ($options['template']) {
+    $p= new WikiPage($options['template']);
+    $raw_body = preg_replace("/\r\n|\r/", "\n", $p->get_raw_body());
+  } else if (isset($formatter->_raw_body)) {
+    # low level XXX
+    $raw_body = preg_replace("/\r\n|\r/", "\n", $formatter->_raw_body);
+  } else if ($options['mode']!='edit' and $formatter->page->exists()) {
     $raw_body = preg_replace("/\r\n|\r/", "\n", $formatter->page->_get_raw_body());
     if (isset($options['section'])) {
       $sections= _get_sections($raw_body);
@@ -826,9 +846,6 @@ function macro_Edit($formatter,$value,$options='') {
         $raw_body = $sections[$options['section']];
       #else ignore
     }
-  } else if ($options['template']) {
-    $p= new WikiPage($options['template']);
-    $raw_body = preg_replace("/\r\n|\r/", "\n", $p->get_raw_body());
   } else {
     if (strpos($options['page'],' ') > 0) {
       $raw_body="#title $options[page]\n";
@@ -841,6 +858,9 @@ function macro_Edit($formatter,$value,$options='') {
   # for conflict check
   if ($options['datestamp'])
      $datestamp= $options['datestamp'];
+  else if ($formatter->_mtime)
+     # low level control XXX
+     $datestamp= $formatter->_mtime;
   else
      $datestamp= $formatter->page->mtime();
 
@@ -858,7 +878,7 @@ function macro_Edit($formatter,$value,$options='') {
     }
   }
 
-  if ($DBInfo->use_minoredit) {
+  if (!$options['minor'] and $DBInfo->use_minoredit) {
     $user=new User(); # get from COOKIE VARS
     if ($DBInfo->owners and in_array($user->id,$DBInfo->owners)) {
       $extra_check=' '._("Minor edit")."<input type='checkbox' tabindex='3' name='minor' />";
@@ -918,9 +938,10 @@ $formh
 <textarea id="content" wrap="virtual" name="savetext" tabindex="1"
  rows="$rows" cols="$cols" class="wiki resizable">$raw_body</textarea>
 </div>
+$extraform
 <div>
 $summary_msg: <input name="comment" value="$editlog" size="70" maxlength="70" style="width:80%" tabindex="2" />$extra_check<br />
-<input type="hidden" name="action" value="savepage" />
+<input type="hidden" name="action" value="$saveaction" />
 <input type="hidden" name="datestamp" value="$datestamp" />
 $hidden$select_category
 <input type="submit" tabindex="5" value="$save_msg" />
