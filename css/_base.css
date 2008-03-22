@@ -93,6 +93,11 @@ textarea.wiki { width:100%; }
   cursor: s-resize;
 }
 
+.resizable-textarea {
+  width:100% !important;
+  width:98%; /* for IE */
+}
+
 th.info {
   background-color:#E2ECE2;
 /*  border-collapse: collapse; */
@@ -183,7 +188,7 @@ div.closure {
 }
 
 #wikiHeader {
-  margin-bottom:5px;
+  margin-bottom:3px;
 }
 #wikiHeader a:link {color:black;}
 #wikiHeader a:visited {color:#505050;}
@@ -201,6 +206,7 @@ div.closure {
 
 .clear {
   clear:both;
+  height:1px; /* */
 }
 
 /* HierarchicalWiki */
@@ -240,7 +246,6 @@ div.closure {
 }
 
 #wikiIcon {
-  visibility:hidden;
   float:right;
   padding: 3px 10px;
   text-align: right;
@@ -420,6 +425,8 @@ h4:hover a.perma, h5:hover a.perma, h6:hover a.perma {
   background-color:#ffff00;
   border-left:2px solid #F5E238;
   border-right:2px solid #F5E238;
+  border-top:2px dotted #F5E238;
+  border-bottom:2px dotted #F5E238;
 }
 
 .wikiMarkupEdit pre, .wikiMarkupEdit span {
@@ -512,3 +519,8 @@ em.underline{
 .addLabel {
   text-align:right;
 }
+
+.subscribePages ol {
+  list-style:circle;
+}
+

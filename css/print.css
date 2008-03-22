@@ -246,3 +246,11 @@ div.sectionEdit { display:none; }
 pre.wikiSyntax {
   border-left: 3px solid #c0c0c0;
 }
+
+.login {
+  display:none;
+}
+
+#goForm {
+  display:none;
+}

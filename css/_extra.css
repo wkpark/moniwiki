@@ -262,6 +262,50 @@ span.VisualTour {
   cursor:pointer;
 }
 
+/* mootools r1.11 autocompleter */
+ul.autocompleter-choices
+{
+  position: absolute;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border: 1px solid #eee;
+  background-color: white;
+  border-right-color: #ddd;
+  border-bottom-color: #ddd;
+  text-align: left;
+  font-family: Verdana, Geneva, Arial, Helvetica, sans-serif;
+  z-index: 50;
+}
+
+ul.autocompleter-choices li
+{
+  position: relative;
+  padding: 0.1em 1.5em 0.1em 1em;
+  cursor: pointer;
+  font-weight: normal;
+  font-size: 1em;
+
+  padding-left:0px;
+}
+
+ul.autocompleter-choices li.autocompleter-selected
+{
+  background-color: #444;
+  color: #fff;
+}
+
+ul.autocompleter-choices span.autocompleter-queried
+{
+  font-weight: bold;
+}
+
+ul.autocompleter-choices li.autocompleter-selected span.autocompleter-queried
+{
+  color: #9FCFFF;
+}
+
+/* TeX */
 .previewTex {
   vertical-align:middle;
 }
@@ -315,3 +359,165 @@ span.VisualTour {
 }
 
 .imgAttach {}
+
+/* Moniwiki Board plugin */
+table.bbs { width:100%;}
+
+table.bbs thead {
+  background:url(../imgs/plugin/Board/titlebg.png) repeat-x;
+  color:#000000;
+  font-family:Trebuchet MS,Sans-serif;
+}
+
+table.bbs tbody tr:hover {
+  background-color:#eeeeee;
+}
+
+table.bbs tbody td {
+  font-family:Trebuchet MS,Sans-serif;
+}
+
+div.bbsArticle {
+  margin-bottom:0.5em;
+}
+
+div.bbsArticle .msg {
+  padding:0.5em;
+}
+
+.bbsArticle .head h2 { /* heading */
+  background-color:#6DC0F1;
+  border-bottom:0px;
+  margin-top:0.0em;
+  padding:5px;
+  font-size:1.2em;
+  color:black;
+  background:url(../imgs/plugin/Board/titlebg.png) repeat-x;
+}
+
+.bbsArticle h3 { /* heading */
+  text-align:right;
+  border-bottom:0px;
+  margin-top:0.0em;
+  font-size:1.1em;
+  font-weight:normal;
+}
+
+.bbsBtn {
+  text-align:right;
+}
+
+.bbsArticleBtn {
+  text-align:center;
+}
+
+.bbsAdminBtn {
+}
+
+td.hit { text-align:center; }
+td.date { text-align:center; }
+td.no { text-align:center; }
+td.title { padding-left:0.5em; }
+td.name { padding-left:0.5em; }
+
+/* from the zeroboard */
+a.button, span.button, del.button, a.button span, span.button button, span.button input, del.button span {
+  background-image:url(../imgs/plugin/Board/form_btns.png);
+}
+
+a.button, span.button, del.button {
+  background-position:0px 0px; /* XXX */
+  background-repeat:no-repeat;
+  border:medium none;
+  color:#2E523B;
+  cursor:pointer;
+  display:-moz-inline-box;
+  font-style:normal;
+  height:30px;
+  line-height:0pt;
+  margin:0pt 6px 0px 0pt;
+  padding:0pt 10px 0pt 0pt;
+  vertical-align:middle;
+}
+
+*:first-child + html a.button, *:first-child + html span.button, *:first-child + html del.button {
+  position:relative;
+  top:-4px;
+}
+
+a.button span, span.button button, span.button input, del.button span {
+  background-color:transparent;
+  background-position:100% 0pt;
+  background-repeat:no-repeat;
+  border:medium none;
+  color:#222222;
+  cursor:pointer;
+  display:-moz-inline-box;
+  font-size:12px !important;
+  font-style:normal;
+  height:30px;
+  letter-spacing:0pt !important;
+  margin:0pt -16px 0pt 10px;
+  padding:8px 20px 0pt 10px;
+  white-space:nowrap;
+}
+span.button button {
+  line-height:2.5;
+}
+html.safari a.button span, html.safari del.button span {
+  line-height:1.3;
+}
+html.safari span.button button {
+  line-height:2.6;
+}
+html.safari a.button:focus, html.safari span.button button:focus {
+  outline-color:invert;
+  outline-style:none;
+  outline-width:medium;
+}
+del.button {
+  background-position:0pt -120px;
+}
+del.button span {
+  background-position:100% -120px;
+  color:#AAAAAA !important;
+  cursor:default;
+}
+span.button button, span.button input {
+line-height:2.5;
+padding-top:0px;
+}
+a.button:hover, span.button:hover, a.button:focus, a.dom-button-focus, span.button-behavior-hover {
+  background-position:0pt -60px;
+  color:#222222;
+  text-decoration:none;
+}
+a.button:hover span, span.button:hover button, span.button:hover input, a.button:focus span, span.button-behavior-hover button, span.button-behavior-hover input {
+  background-position:100% -60px;
+}
+a.button:active, a.button:focus span {
+  color:#444444;
+}
+del.button-behavior-hover, del.button:hover {
+  background-position:0pt -180px;
+}
+del.button-behavior-hover span, del.button:hover span {
+  background-position:100% -180px;
+}
+span.button button, del.button span, span.button input {
+}
+
+/* */
+.pnut {
+  text-align:center;
+}
+
+.deleteDialog {
+  text-align:center;
+}
+
+.deleteDialog table {
+  text-align:center;
+  margin-left:auto; /* Moz */
+  margin-right:auto; /* Moz */
+}
