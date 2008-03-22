@@ -390,6 +390,7 @@ EOF;
                 # print '=>'.$check_from.', '.$check_to.', '.$check.'<br />';
                 while(($p=strrpos($l,"\n"))!==false) {
                     $line=substr($l,$p+1).$last;
+                    $last='';
                     $nline++;
                     $l=substr($l,0,$p);
                     $dumm=explode(",",$line,4);
@@ -472,8 +473,13 @@ function macro_BBS($formatter,$value,$options=array()) {
     $conf['data_dir']=$DBInfo->data_dir;
     $conf['dba_type']=$DBInfo->dba_type;
 
+    if (!$DBInfo->use_bbs) return '[[BBS]]';
+    #if ($DBInfo->use_bbs == 1);
+    #if ($DBInfo->use_bbs == 2);
     $MyBBS=new BBS_text($bname,$conf); // XXX
-    if ($options['new']) return $MyBBS;
+    if ($options['new'] and $MyBBS) return $MyBBS;
+
+    if (!$MyBBS) return '[[BBS]]';
 
     $msg='';
     $btn=array();
@@ -544,12 +550,13 @@ function macro_BBS($formatter,$value,$options=array()) {
             $formatter->self_query=$q_save;
 
             $msg.="<div class='bbsArticle'>".
-            '<div class="head"><h2>'._("No").' '.$nid.': '.$metas['Subject'].'</h2>'.
-            '<div class="user"><h3>'.$metas['Name'].
-            ' @ '.$metas['Date'].' ('._mask_hostname($metas['IP'],3).')'.
-            '</h3></div></div>'.
+            '<div class="head"><h2>'._("No").' '.$nid.': '.$metas['Subject'].'</h2></div>'.
+            '<div class="body">'.
+            '<div class="extra"> @ '.$metas['Date'].' ('._mask_hostname($metas['IP'],3).')</div>'.
+            '<div class="user"><h3>'.$metas['Name'].'</h3></div>'.
             '<div class="article">'.$body.
-            "</div>\n</div>";
+            "</div>\n</div>\n".
+            '<div class="foot"><div></div></div>'."</div>\n";
             $snid=$nid;
             $btn['edit']=$formatter->link_to("?action=bbs&amp;mode=edit&amp;no=".$nid,
                 '<span>'._("Edit").'</span>','class="button"');
@@ -567,7 +574,7 @@ function macro_BBS($formatter,$value,$options=array()) {
                 $comment=$formatter->macro_repl('Comment','usemeta',$opts);
                 unset($opts['no']); # XXX
             }
-            $msg.=$comment.'<div class="bbsArticleBtn">'.implode(" ",$btn).'</div>';
+            $msg.='<div class="bbsComment">'.$comment.'</div><div class="bbsArticleBtn">'.implode(" ",$btn).'</div>';
             unset($btn['delete']);
             unset($btn['edit']);
         }
