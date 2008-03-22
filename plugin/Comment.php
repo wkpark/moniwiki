@@ -11,6 +11,14 @@
 function macro_Comment($formatter,$value,$options=array()) {
   global $DBInfo;
   if (!$options['page']) $options['page']=$formatter->page->name;
+  if (!$options['action']) $action='comment';
+  else $action=$options['action'];
+  if ($options['mode'])
+    $hidden.="<input type='hidden' name='mode' value='".$options['mode']."' />\n";
+  if ($options['no'])
+    $hidden.="<input type='hidden' name='no' value='".$options['no']."' />\n";
+  if ($options['p'])
+    $hidden.="<input type='hidden' name='p' value='".$options['p']."' />\n";
 
   if ($value) {
     $args=explode(',',$value);
@@ -19,7 +27,7 @@ function macro_Comment($formatter,$value,$options=array()) {
   }
 
   if ($options['usemeta'] or $use_meta) {
-    $hidden="<input type='hidden' name='usemeta' value=1 />\n";
+    $hidden.="<input type='hidden' name='usemeta' value=1 />\n";
   }
   if ($options['nocomment']) return '';
   if (!$DBInfo->security->writable($options)) return '';
@@ -63,6 +71,7 @@ function macro_Comment($formatter,$value,$options=array()) {
 <input class='wiki' size='$cols' name="savetext" value="$savetext" />&nbsp;
 FORM;
   } else {
+    if (!$options['nopreview'])
     $preview='<input type="submit" name="button_preview" value="'.$preview_btn.'" />';
     $form.= <<<FORM
 <textarea class="wiki" name="savetext"
@@ -76,7 +85,7 @@ FORM;
   $form.= <<<FORM2
 $hidden
 $sig
-<input type="hidden" name="action" value="comment" />
+<input type="hidden" name="action" value="$action" />
 <input type="hidden" name="datestamp" value="$datestamp" />
 <input type="submit" value="$comment" />
 $preview
@@ -133,6 +142,7 @@ function do_comment($formatter,$options=array()) {
     }
   }
   if ($button_preview && $options['savetext']) {
+    if (!$options['saveonly']) {
     $formatter->send_header("",$options);
     $formatter->send_title(_("Preview comment"),"",$options);
     $formatter->send_page($savetext."\n----");
@@ -140,23 +150,28 @@ function do_comment($formatter,$options=array()) {
     print macro_Comment($formatter,'',$options);
     print $formatter->macro_repl('EditHints');
     $formatter->send_footer("",$options);
+    }
     return;
   } else if (!$savetext) {
+    if (!$options['saveonly']) {
     $formatter->send_header("",$options);
     $formatter->send_title(_("Add comment"),"",$options);
     print macro_Comment($formatter,'',$options);
     print $formatter->macro_repl('EditHints');
     $formatter->send_footer("",$options);
+    }
     return;
   }
 
   $datestamp= $options['datestamp'];
   if ($formatter->page->mtime() > $datestamp) {
     $options['msg']='';
+    if (!$options['saveonly']) {
     $formatter->send_header('',$options);
     $formatter->send_title(_("Error: Don't make a clone!"),'',$options);
     $formatter->send_footer('',$options);
-    return;
+    }
+    return false;
   }
 
   $body=$formatter->page->get_raw_body();
@@ -168,9 +183,11 @@ function do_comment($formatter,$options=array()) {
 
   if ($use_meta) {
     $date=gmdate('Y-m-d H:i:s').' GMT';
+    $savetext=rtrim($savetext)."\n";
+    $boundary= strtoupper(md5("COMMENT")); # XXX
 
     $idx=1;
-    if (preg_match_all('/-{4,}\nComment-Id:\s*(\d+)\n/m',$body,$m)) {
+    if (preg_match_all('/-{4}(?:'.$boundary.')?\nComment-Id:\s*(\d+)\n/m',$body,$m)) {
       $idx=$m[1][sizeof($m[1])-1]+1;
     }
 
@@ -180,7 +197,7 @@ Comment-Id: $idx
 From: $id
 Date: $date
 META;
-    $savetext="----\n$meta\n\n$savetext\n";
+    $savetext="----".$boundary."\n$meta\n\n$savetext\n";
   } else {
     if ($options['nosig']) $savetext="----\n$savetext\n";
     else if($options['id']=='Anonymous')
@@ -256,6 +273,8 @@ META;
 
   $formatter->page->write($body);
   $DBInfo->savePage($formatter->page,"Comment added",$options);
+  if ($options['saveonly']) return true;
+
   $options['msg']=sprintf(_("%s is commented successfully"),$formatter->link_tag($formatter->page->urlname,"?action=show",$options['page']));
   $title=_("Comment added successfully");
 
