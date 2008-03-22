@@ -31,7 +31,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
   if ($options['title'])
     $out=$options['title'];
   else
-    $out="<h2>"._("Revision History")."</h2>\n";
+    $out="<div class='wikiInfo'><h2>"._("Revision History")."</h2>\n";
   $out.="<form id='infoform' method='post' action='$url'>";
   $out.="<table class='info' cellpadding='3' cellspacing='2'><tr>\n";
   $out.="<th class='info'>ver.</th><th class='info'>Date and Changes</th>".
@@ -176,7 +176,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
   $out.="<input type='submit' name='rcspurge' value='purge'></td></tr>";
   endif;
   $out.="<input type='hidden' name='action' value='diff'/></form></table>\n";
-  $out.="<script type='text/javascript' src='$DBInfo->url_prefix/local/checkbox.js'></script>\n";
+  $out.="<script type='text/javascript' src='$DBInfo->url_prefix/local/checkbox.js'></script></div>\n";
   return $out; 
 }
 
