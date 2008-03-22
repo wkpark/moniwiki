@@ -360,11 +360,11 @@ ul.autocompleter-choices li.autocompleter-selected span.autocompleter-queried
 
 .imgAttach {}
 
-/* Moniwiki Board plugin */
+/* Moniwiki BBS plugin */
 table.bbs { width:100%;}
 
 table.bbs thead {
-  background:url(../imgs/plugin/Board/titlebg.png) repeat-x;
+  background:url(../imgs/plugin/BBS/titlebg.png) repeat-x;
   color:#000000;
   font-family:Trebuchet MS,Sans-serif;
 }
@@ -385,22 +385,62 @@ div.bbsArticle .msg {
   padding:0.5em;
 }
 
-.bbsArticle .head h2 { /* heading */
+.bbsArticle .head, .bbsArticle .head h2 { /* heading */
   background-color:#6DC0F1;
   border-bottom:0px;
   margin-top:0.0em;
-  padding:5px;
+  margin-bottom:0.0em;
   font-size:1.2em;
   color:black;
-  background:url(../imgs/plugin/Board/titlebg.png) repeat-x;
+  background:url(../imgs/plugin/BBS/articlebg.png) no-repeat;
+}
+
+.bbsArticle .user {
+}
+
+.bbsArticle, .bbsArticle .body {
+  background:url(../imgs/plugin/BBS/articlebodybg.png) repeat-y;
+  margin-left:5px;
+}
+
+.bbsArticle .body {
+  background-position:100% 0pt;
+  padding-right:15px;
+  padding-left:5px;
+}
+
+.bbsArticle .foot, .bbsArticle .foot div {
+  height:15px;
+  background:url(../imgs/plugin/BBS/articlefootbg.png) no-repeat;
+}
+.bbsArticle .foot {
+  background-position:0px 0px;
+}
+.bbsArticle .foot div {
+  margin-left:15px;
+  background-position:100% 0px;
+}
+
+.bbsArticle .extra {
+  float: right;
+  font-family: Trebuchet MS,Sans-serif;
+}
+
+.bbsArticle .head h2 {
+  padding:5px;
+  margin-left:15px;
+  background-position:100% 0pt;
 }
 
 .bbsArticle h3 { /* heading */
-  text-align:right;
   border-bottom:0px;
   margin-top:0.0em;
   font-size:1.1em;
   font-weight:normal;
+}
+
+.bbsComment {
+  padding:5px;
 }
 
 .bbsBtn {
@@ -421,9 +461,6 @@ td.title { padding-left:0.5em; }
 td.name { padding-left:0.5em; }
 
 /* from the zeroboard */
-a.button, span.button, del.button, a.button span, span.button button, span.button input, del.button span {
-  background-image:url(../imgs/plugin/Board/form_btns.png);
-}
 
 a.button, span.button, del.button {
   background-position:0px 0px; /* XXX */
@@ -439,12 +476,13 @@ a.button, span.button, del.button {
   padding:0pt 10px 0pt 0pt;
   vertical-align:middle;
 }
-
 *:first-child + html a.button, *:first-child + html span.button, *:first-child + html del.button {
   position:relative;
   top:-4px;
 }
-
+a.button, span.button, del.button, a.button span, span.button button, span.button input, del.button span {
+  background-image:url(../imgs/plugin/BBS/form_btns.png);
+}
 a.button span, span.button button, span.button input, del.button span {
   background-color:transparent;
   background-position:100% 0pt;
@@ -453,12 +491,15 @@ a.button span, span.button button, span.button input, del.button span {
   color:#222222;
   cursor:pointer;
   display:-moz-inline-box;
+  font-size:0pt; 
   font-size:12px !important;
   font-style:normal;
   height:30px;
   letter-spacing:0pt !important;
+  line-height:1;
   margin:0pt -16px 0pt 10px;
   padding:8px 20px 0pt 10px;
+  text-decoration:none;
   white-space:nowrap;
 }
 span.button button {
@@ -484,8 +525,8 @@ del.button span {
   cursor:default;
 }
 span.button button, span.button input {
-line-height:2.5;
-padding-top:0px;
+  line-height:2.5;
+  padding-top:0px;
 }
 a.button:hover, span.button:hover, a.button:focus, a.dom-button-focus, span.button-behavior-hover {
   background-position:0pt -60px;
