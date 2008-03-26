@@ -1081,7 +1081,15 @@ function do_post_DeletePage($formatter,$options) {
   if ($options['name'] == $options['page']) {
     $DBInfo->deletePage($page,$options);
     $title = sprintf(_("\"%s\" is deleted !"), $page->name);
-    $formatter->send_header("",$options);
+
+    $myrefresh='';
+    if ($DBInfo->use_save_refresh) {
+      $sec=$DBInfo->use_save_refresh - 1;
+      $lnk=$formatter->link_url($formatter->page->urlname,"?action=show");
+      $myrefresh='Refresh: '.$sec.'; url='.qualifiedURL($lnk);
+    }
+    $formatter->send_header($myrefresh,$options);
+
     $formatter->send_title($title,"",$options);
     $formatter->send_footer('',$options);
     return;
