@@ -562,3 +562,10 @@ span.button button, del.button span, span.button input {
   margin-left:auto; /* Moz */
   margin-right:auto; /* Moz */
 }
+
+.captcha { vertical-align:middle; }
+.captcha input { height:20px; vertical-align:middle; }
+
+.captcha img {
+  vertical-align: middle;
+}
