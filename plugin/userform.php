@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2008 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a userform action plugin for the MoniWiki
 // vim:et:ts=2:
@@ -20,10 +20,10 @@ function do_userform($formatter,$options) {
   if ($DBInfo->use_textbrowsers) {
     if (is_string($DBInfo->use_textbrowsers))
       $use_any= preg_match('/'.$DBInfo->use_textbrowsers.'/',
-        $_SERVER['HTTP_USER_AGENT']) ? 0:1;
+        $_SERVER['HTTP_USER_AGENT']) ? 1:0;
     else
       $use_any= preg_match('/Lynx|w3m|links/',
-        $_SERVER['HTTP_USER_AGENT']) ? 0:1;
+        $_SERVER['HTTP_USER_AGENT']) ? 1:0;
   }
 
   # e-mail conformation
