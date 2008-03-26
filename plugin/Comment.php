@@ -1,5 +1,5 @@
 <?php
-// Copyright 2004-2007 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2004-2008 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a Wiki comment plugin for the MoniWiki
 //
@@ -10,6 +10,26 @@
 
 function macro_Comment($formatter,$value,$options=array()) {
   global $DBInfo;
+
+  $use_any=0;
+  if ($DBInfo->use_textbrowsers) {
+    if (is_string($DBInfo->use_textbrowsers))
+      $use_any= preg_match('/'.$DBInfo->use_textbrowsers.'/',
+        $_SERVER['HTTP_USER_AGENT']) ? 1:0;
+    else
+      $use_any= preg_match('/Lynx|w3m|links/',
+        $_SERVER['HTTP_USER_AGENT']) ? 1:0;
+  }
+  $captcha='';
+  if (!$use_any and $DBInfo->use_ticket) {
+     $seed=md5(base64_encode(time()));
+     $ticketimg=$formatter->link_url($formatter->page->name,'?action=ticket&amp;__seed='.$seed);
+     $captcha=<<<EXTRA
+  <div class='captcha'><span class='captchaImg'><img src="$ticketimg" alt="captcha" /></span><input type="text" size="10" name="check" />
+<input type="hidden" name="__seed" value="$seed" /></div>
+EXTRA;
+  }
+
   if (!$options['page']) $options['page']=$formatter->page->name;
   if (!$options['action']) $action='comment';
   else $action=$options['action'];
@@ -84,6 +104,7 @@ FORM;
     $sig="<input name='nosig' type='checkbox' />"._("Don't add a signature");
   $form.= <<<FORM2
 $hidden
+$captcha
 $sig
 <input type="hidden" name="action" value="$action" />
 <input type="hidden" name="datestamp" value="$datestamp" />
@@ -122,6 +143,35 @@ function do_comment($formatter,$options=array()) {
   $url=$formatter->link_url($formatter->page->urlname);
 
   $button_preview=$options['button_preview'];
+
+
+  $use_any=0;
+  if ($DBInfo->use_textbrowsers) {
+    if (is_string($DBInfo->use_textbrowsers))
+      $use_any= preg_match('/'.$DBInfo->use_textbrowsers.'/',
+        $_SERVER['HTTP_USER_AGENT']) ? 1:0;
+    else
+      $use_any= preg_match('/Lynx|w3m|links/',
+        $_SERVER['HTTP_USER_AGENT']) ? 1:0;
+  }
+
+  $ok_ticket=0;
+  if (!$use_any and $DBInfo->use_ticket) {
+    if ($options['__seed'] and $options['check']) {
+      $mycheck=getTicket($options['__seed'],$_SERVER['REMOTE_ADDR'],4);
+      if ($mycheck==$options['check'])
+        $ok_ticket=1;
+      else {
+        $options['msg']= _("Invalid ticket !");
+        $button_preview=1;
+      }
+    } else {
+      $options['msg']= _("You need a ticket !");
+      $button_preview=1;
+    }
+  } else {
+    $ok_ticket=1;
+  }
 
   if ($options['savetext']) {
     $savetext=_stripslashes($options['savetext']);
