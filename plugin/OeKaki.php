@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2008 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 //
 // Usage: [[OeKaki(hello)]]
@@ -33,7 +33,7 @@ function macro_OeKaki($formatter,$value) {
   $url=$formatter->link_url(_rawurlencode($formatter->page->name),"?action=OeKaki&amp;value=$name$size&amp;now=$now");
 
   if (!file_exists($oekaki_dir."/$pngname"))
-    return "<a href='$url'>"._("Draw new picture")."</a>";
+    return "<a href='$url'>"._("Draw a new picture")."</a>";
 
   return "<a href='$url'><img src='$DBInfo->url_prefix/$oekaki_dir/$pngname' alt='oekaki'></a>";
 }
