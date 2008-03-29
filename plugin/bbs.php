@@ -36,7 +36,7 @@ function _get_pagelist($formatter,$pages,$action,$curpage=1,$listcount=10,$bra="
       $link=$formatter->link_tag('',$action.$i,$i);
       $pnut.=$link;
     } else
-      $pnut.="<b>$i</b>";
+      $pnut.="<strong>$i</strong>";
   }
 
   if ($i <= $pages) {
@@ -463,7 +463,7 @@ function macro_BBS($formatter,$value,$options=array()) {
     }
 
     # load a config file
-    if (file_exists('config/bbs'.$bname.'.php')) {
+    if (file_exists('config/bbs.'.$bname.'.php')) {
         $confname='bbs.'.$bname.'.php';
     } else {
         $confname='bbs.default.php';
@@ -630,6 +630,26 @@ JS;
     $pages= intval($tot / $ncount);
     if ($tot % $ncount) $pages++;
 
+    if ($options['mode'] == 'rss') {
+        $rss='<'.'?xml version="1.0" encoding="utf-8"?>'."\n".'<rss version="2.0">'."\n";
+        $rss.="<channel>\n<title>".$DBInfo->sitename.": </title>\n";
+        $rss.="<link>".qualifiedUrl($formatter->link_url($formatter->page->urlname))."</link>\n";
+        $rss.="<description></description>\n";
+        $rss.="<pubDate>".gmdate('D, j M Y H:i:s',time())." +0000</pubDate>\n";
+        foreach ($list as $l) {
+            $item="<item>\n";
+            $item.="<title><![CDATA[".$l[7]."]]></title>\n";
+            $item.="<link>".qualifiedUrl($formatter->link_url($formatter->page->urlname,"?no=$l[0]"))."</link>\n";
+            $item.="<author><![CDATA[".$l[3]."]]></author>\n";
+            $item.="<description><![CDATA[".$l[3]."]]></description>\n";
+            $item.="<pubDate>".gmdate('D, j M Y H:i:s',$l[2])." +0000</pubDate>\n</item>\n";
+            $rss.=$item;
+        }
+        $rss.="</channel>\n</rss>\n";
+
+        return $rss;
+    }
+
     if ($pages > 1)
       $pnut=_get_pagelist($formatter,$pages,
         '?'.$extra.
@@ -641,6 +661,7 @@ JS;
     $out.="<col width='3%' class='num' /><col width='1%' class='check' /><col width='63%' class='title' /><col width='14%' /><col width='13%' /><col width='7%' class='hit' />\n";
     $out.='<thead><tr><th>'.implode("</th><th>",$head)."</th></tr><thead>\n";
     $out.="<tbody>\n";
+    $item=array();
     foreach ($list as $l) {
         $nid=&$l[0];
         $ip=&$l[1];
@@ -649,14 +670,20 @@ JS;
         $subject=$formatter->link_to("?no=$nid".$extra,$l[7]);
         $hit=$MyBBS->counter->pageCounter($nid);
         $chk='<input type="checkbox" value="'.$nid.'">';
-        $item=array(in_array($nid,$nids) ? '<strong>&raquo;</strong>':$nid,$chk,$subject,$user,$date,$hit);
-        #$tmp='<tr><td>'.implode("</td><td>",$item)."</td></tr>\n";
-        $tmp="<tr><td class='no'>$item[0]</td><td class='check'>$item[1]</td>".
-            "<td class='title'>$item[2]</td><td class='name'>$item[3]</td>".
-            "<td class='date'>$item[4]</td><td class='hit'>$item[5]</td>".
-            "</tr>\n";
-        $out.=$tmp; 
+        #$item=array(in_array($nid,$nids) ? '<strong>&raquo;</strong>':$nid,$chk,$subject,$user,$date,$hit);
+        $item[]=array('num'=>in_array($nid,$nids) ? '<strong>&raquo;</strong>':$nid,'check'=>$chk,'subject'=>$subject,
+           'name'=>$user,'date'=>$date,'hit'=>$hit);
+        ##$tmp='<tr><td>'.implode("</td><td>",$item)."</td></tr>\n";
+        #$tmp="<tr><td class='no'>$item[0]</td><td class='check'>$item[1]</td>".
+        #    "<td class='title'>$item[2]</td><td class='name'>$item[3]</td>".
+        #    "<td class='date'>$item[4]</td><td class='hit'>$item[5]</td>".
+        #    "</tr>\n";
+        #$out.=$tmp; 
     }
+
+    $formatter->_vars['item']=&$item;
+    $out.= $formatter->processor_repl('tpl_','',array('path'=>'theme/plugin/BBS/blue_tpl/list.tpl'));
+    #$out.= $formatter->processor_repl('tpl_','',array('path'=>'theme/plugin/BBS/blue_tpl/list.tpl','include'=>1));
     $out.="</tbody>\n";
 
     $btn['new']=$formatter->link_to("?action=bbs&amp;mode=edit",'<span>'._("New").'</span>','class="button"');
@@ -677,7 +704,10 @@ JS;
            '<input type="hidden" name="action" />';
     $form1.="</form>\n";
     $pnut= "<div class='pnut'>$pnut</div>";
-    return $pnut."$msg$js$form0<table class='bbs' cellspacing='1' cellpadding='2'>".$out.'</table>'.$del.$form1.$pnut.$btns;
+    $info= '<div class="bbsRSS">'.sprintf(_("Total %s articles."),'<strong>'.$tot.'</strong>').' '.
+    #    $formatter->link_to('?action=bbs&amp;mode=rss','<span>RSS</span>').'</div>';
+        $formatter->link_to('?action=bbs&amp;mode=rss',$formatter->icon['rss']).'</div>';
+    return $info.$pnut."$msg$js$form0<table class='bbs' cellspacing='1' cellpadding='2'>".$out.'</table>'.$del.$form1.$pnut.$btns;
 }
 
 function do_bbs($formatter,$options=array()) {
@@ -686,31 +716,45 @@ function do_bbs($formatter,$options=array()) {
     $err='';
     $args=array();
 
+    if ($options['mode']=='rss') {
+        #$formatter->send_header("Content-Type: text/xml",$options);
+        header("Content-Type: application/xml");
+        print macro_BBS($formatter,'',$options);
+        return;
+    }
+    # load a config file
+    $bname=$formatter->page->name;
+    if (file_exists('config/bbs.'.$bname.'.php')) {
+        $confname='bbs.'.$bname.'.php';
+    } else {
+        $confname='bbs.default.php';
+    }
+    $conf=_load_php_vars('config/'.$confname);
+
+    # check valid IP
+    $check_ip=true;
+    if ($conf['allowed_ip'] and in_array($options['mode'],array('edit','delete','new'))) {
+        include_once 'lib/checkip.php';
+        if (!check_ip($conf['allowed_ip'], $_SERVER['REMOTE_ADDR'])) {
+            $options['title']=sprintf(_("Your IP address is not allowed to %s at this BBS"),$options["mode"]);
+            $check_ip=false;
+        }
+    }
+
     # password check
     while ($options['no'] and
         ($options['mode']=='delete' or $options['mode']=='edit') and $_SERVER['REQUEST_METHOD']=="POST") {
         # check admin(WikiMaster) password
-        if ($DBInfo->admin_passwd)
+        if ($DBInfo->admin_passwd) {
             $check_pass=$DBInfo->admin_passwd==crypt($options['pass'],$DBInfo->admin_passwd);
-        else
-            $check_pass=0;
+        } else
+            $check_pass=false;
 
         # check admin(BBSMaster) password
-        if (!$check_pass) {
-            # load a config file
-            if (file_exists('config/bbs'.$bname.'.php')) {
-                $confname='bbs.'.$bname.'.php';
-            } else {
-                $confname='bbs.default.php';
-            }
-            $conf=_load_php_vars('config/'.$confname);
-            if ($conf['admin_passwd']) {
-                $check_pass=$conf['admin_passwd']==crypt($options['pass'],$conf['admin_passwd']);
-            } else {
-                $check_pass=0;
-            }
-        }
-        while ($check_pass and $options['mode']== 'delete') {
+        if (!$check_pass and $conf['admin_passwd'])
+            $check_pass=$conf['admin_passwd']==crypt($options['pass'],$conf['admin_passwd']);
+
+        while ($check_ip and $check_pass and $options['mode']== 'delete') {
             $MyBBS=macro_BBS($formatter,'',array('new'=>1));
         
             if (($p=strpos($options['no'],' '))!==false)
@@ -807,7 +851,7 @@ EOF;
                 $args['pass']=_stripslashes($pass);
                 $args['home']=_stripslashes($home);
                 $args['email']=_stripslashes($email);
-                if (!$name) break;
+                if (!$name) { $options['msg']=_("No Name error."); break; }
             } else {
                 $args['name']=$options['id'];
             }
@@ -815,8 +859,9 @@ EOF;
             $args['no']=$options['no'] ? $options['no']:0;
 
             if ($options['no'] and !$check_pass) break; # edit mode
+            if (!$check_ip) break; # not allowed IPs
 
-            if (!$args['subject'] or !$savetext) break;
+            if (!$args['subject'] or !$savetext) { $options['msg']=_("No Subject error."); break; }
             if ($button_preview) break;
 
             $savetext=preg_replace("/\r\n|\r/", "\n", $savetext);
@@ -920,6 +965,8 @@ EOF;
         $formatter->_raw_body=null;
         $formatter->_extra_form=null;
     } else {
+        $formatter->send_header("",$options);
+        $formatter->send_title("","",$options);
         print macro_BBS($formatter,'no='.$options['no']);
     }
 
