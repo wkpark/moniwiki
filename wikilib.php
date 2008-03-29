@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org> all rights reserved.
+// Copyright 2003-2008 Won-Kyu Park <wkpark at kldp.org> all rights reserved.
 // distributable under GPL see COPYING
 //
 // many codes are imported from the MoinMoin
@@ -1128,11 +1128,14 @@ function form_permission($mode) {
 }
 
 function do_raw($formatter,$options) {
+  global $Config;
+  if ($Config['force_charset'])
+    $force_charset = '; charset='.$Config['charset'];
   $supported=array('text/plain','text/css','text/javascript');
   if ($options['mime'] and in_array($options['mime'],$supported)) {
     $formatter->send_header("Content-Type: $options[mime]",$options);
   } else
-    $formatter->send_header("Content-Type: text/plain",$options);
+    $formatter->send_header("Content-Type: text/plain".$force_charset,$options);
   $raw_body=$formatter->page->get_raw_body($options);
   if (isset($options['section'])) {
     $sections= _get_sections($raw_body);
