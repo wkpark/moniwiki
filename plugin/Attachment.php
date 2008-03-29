@@ -226,7 +226,12 @@ function macro_Attachment($formatter,$value,$options='') {
   if ($DBInfo->use_clipmacro and preg_match('/^(.*)\.png$/i',$file,$m)) {
     $now=time();
     $url=$formatter->link_url($pagename,"?action=clip&amp;value=$m[1]&amp;now=$now");
-    $paste=" <a href='$url'>"._("or paste a new picture")."</a>";
+    $paste=" <a href='$url'>"._("or paste a new png picture")."</a>";
+  }
+  if ($DBInfo->use_drawmacro and preg_match('/^(.*)\.gif$/i',$file,$m)) {
+    $now=time();
+    $url=$formatter->link_url($pagename,"?action=draw&amp;mode=attach&amp;value=$m[1]&amp;now=$now");
+    $paste=" <a href='$url'>"._("or draw a new gif picture")."</a>";
   }
   if ($pagename == $formatter->page->name)
     return $bra.'<span class="attach">'.$formatter->link_to("?action=UploadFile&amp;rename=".urlencode($file),sprintf(_("Upload new Attachment \"%s\""),$file)).$paste.'</span>'.$ket;
