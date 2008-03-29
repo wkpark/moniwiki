@@ -44,7 +44,7 @@ function macro_Draw($formatter,$value) {
   return "$map<img src='$DBInfo->url_prefix/$_dir/$gifname' border='0' alt='hotdraw' $maptag /></a>\n".$editable;
 }
 
-function do_post_Draw($formatter,$options) {
+function do_post_Draw($formatter,$options=array()) {
   global $DBInfo;
 
   $enable_replace=1;
@@ -114,7 +114,10 @@ function do_post_Draw($formatter,$options) {
     return;
   }
 
-  $gifname='Draw_'._rawurlencode($name);
+  $gifname=_rawurlencode($name);
+  if ($_GET['mode'] != 'attach') {
+    $gifname='Draw_'.$gifname;
+  }
 
   $imgpath="$_dir/$gifname";
 
