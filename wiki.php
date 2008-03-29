@@ -866,7 +866,7 @@ EOS;
 
     // clean up ':' like as the dokuwiki
     $pn= preg_replace('#:+#',':',$pagename);
-    $pn= trim($pn,':._-');
+    $pn= trim($pn,':-');
     $pn= preg_replace('#:[:\._\-]+#',':',$pn);
 
     $pn= preg_replace("/([^a-z0-9:]{1})/ie","'_'.strtolower(dechex(ord(substr('\\1',-1))))",$pn);
@@ -1491,14 +1491,14 @@ class Cache_text {
     unlink($key);
   }
 
-  function fetch($pagename,$mtime="") {
+  function fetch($pagename,$mtime="",$params=array()) {
     $key=$this->getKey($pagename);
     if ($this->_exists($key)) {
        if (!$mtime) {
-          return $this->_fetch($key);
+          return $this->_fetch($key,$params);
        }
        else if ($this->_mtime($key) > $mtime)
-          return $this->_fetch($key);
+          return $this->_fetch($key,$params);
     }
     return false;
   }
@@ -1512,13 +1512,44 @@ class Cache_text {
     return @file_exists($key);
   }
 
-  function _fetch($key) {
+  function _fetch($key,$params=array()) {
     $fp=fopen($key,"r");
-    $content='';
-    if (($size=filesize($key)) >0)
-      $content=fread($fp,$size);
+    if (!is_resource($fp)) return '';
+
+    $ret='';
+    
+    if (($size=filesize($key)) >0) {
+      while ($params['uniq'] and empty($params['raw'])) { # include cache if it is a valid php cache
+        # cache header : <,?,php /* Generator Version uniqid tpl_path(optional) */
+        $check=fgets($fp);
+        if ($check{0}=='<' and $check{1}=='?') {
+          list($tag,$sep,$generator,$ver,$id,$path,$extra)=explode(' ',$check);
+          $ok=1;
+          if (!empty($params['uniq']) and $params['uniq'] != $id) $ok=0;
+          if ($ok and !empty($params['path']) and $params['path'] != $path) $ok=0;
+          if ($ok) {
+            fclose($fp);
+            global $Config;
+            $TPL_VAR=&$params['_vars']; # builtin Template_ support
+            if ($params['formatter']) $formatter=&$params['formatter']; # XXX
+            if ($params['print']) {
+              return include $key; // Do we need more secure method ?
+            } else {
+              ob_start();
+              include $key;
+              $fetch = ob_get_contents();
+              ob_end_clean();
+              return $fetch;
+            }
+          }
+        }
+        break;
+      }
+      $ret=fread($fp,$size);
+    }
     fclose($fp);
-    return $content;
+    if ($params['print']) return print $ret;
+    return $ret;
   }
 
   function _mtime($key) {
@@ -2597,6 +2628,11 @@ class Formatter {
     $perma=" <a class='perma' href='#s$prefix-$num'>$this->perma_icon</a>";
 
     return "$close$open$edit<h$dep$attr><a id='s$prefix-$num'></a>$head$perma</h$dep>";
+  }
+
+  function include_functions()
+  {
+    foreach (func_get_args() as $f) function_exists($f) or include_once 'plugin/function/'.$f.'.php';
   }
 
   function macro_repl($macro,$value='',$options='') {
@@ -4342,6 +4378,12 @@ MSG;
     }
 
     $rss_icon=$this->link_tag("RecentChanges","?action=rss_rc",$this->icon['rss'])." ";
+    $this->_vars['rss_icon']=&$rss_icon;
+    $this->_vars['icons']=&$icons;
+    $this->_vars['title']=$title;
+    $this->_vars['menu']=$menu;
+    $this->_vars['upper_icon']=$upper_icon;
+    $this->_vars['home']=$home;
 
     # print the title
     kbd_handler();
@@ -4450,6 +4492,7 @@ MSG;
       $origin=$DBInfo->home;
     }
     $this->origin=$origin;
+    $this->_vars['origin']=&$this->origin;
   }
 
   function set_trailer($trailer="",$pagename,$size=5) {
@@ -4467,6 +4510,8 @@ MSG;
     $this->trail.= ' '.htmlspecialchars($pagename);
     $this->pagelinks=array(); # reset pagelinks
     $this->sister_on=$sister_save;
+
+    $this->_vars['trail']=&$this->trail;
 
     if (!in_array($pagename,$trails)) $trails[]=$pagename;
 
