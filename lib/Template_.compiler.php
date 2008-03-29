@@ -1,4 +1,19 @@
 <?php
+// Copyright 2008 Won-Kyu Park <wkpark at kldp.org>
+// All rights reserved. Distributable under GPL see COPYING
+// A modified version of the Template_ for MoniWiki
+//
+// Date: 2008-03-28
+// Name: A modified Template_ for MoniWiki
+// Description: Template_ module (division syntax is disabled)
+// URL: MoniWiki:Template_
+// Version: $Revision$
+// Depend: 1.1.3
+// License: LGPL
+//
+// Usage: please see http://www.xtac.net
+//
+// $Id$
 
 /*---------------------------------------------------------------------------
 
@@ -59,14 +74,14 @@
 
   ---------------------------------------------------------------------------*/
 
+define('__TEMPLATE_UNDERSCORE_VER__','2.2.4-mw');
+
 class Template_Compiler_
 {
-	function _compile_template(&$tpl, $tpl_path, $cpl_base, $cpl_head)
+	function _compile_template(&$tpl, $source, $params=array())
 	{
 		$this->compile_dir   =$tpl->compile_dir;
 		$this->compile_ext   =$tpl->compile_ext;
-		$this->skin          =$tpl->skin;
-		$this->template_dir  =$tpl->template_dir;
 		$this->permission    =$tpl->permission or $this->permission = 0777;
 		$this->prefilter     =$tpl->prefilter;
 		$this->postfilter    =$tpl->postfilter;
@@ -75,6 +90,9 @@ class Template_Compiler_
 		$this->safe_mode     =$tpl->safe_mode;
 		$this->auto_constant =empty($tpl->auto_constant) ? false : $tpl->auto_constant;
 		$this->tpl_path      =$tpl_path;
+		$this->params        =$params;
+		$this->data_dir      =$tpl->data_dir;
+		$this->plugin_dir    =$tpl->plugin_dir;
 		$this->plugins       =array();
 		$this->func_plugins  =array();
 		$this->obj_plugins   =array();
@@ -85,7 +103,6 @@ class Template_Compiler_
 		$this->key_words     =array('true','false','null');
 		$this->auto_globals  =array('_SERVER','_ENV','_COOKIE','_GET','_POST','_FILES','_REQUEST','_SESSION');
 		$this->constants     =array_keys(get_defined_constants());
-		$this->plugin_dir    =dirname(__FILE__) . '/tpl_plugin';
 		$this->quoted_str	 ='(?:"(?:\\\\.|[^"])*")|(?:\'(?:\\\\.|[^\'])*\')';
 		$this->on_ms		 =substr(__FILE__,0,1)!=='/';
 		$functions           =get_defined_functions();
@@ -130,45 +147,11 @@ class Template_Compiler_
 			}
 		}
 
-	// get plugin file info
-		$plugins = array();
-		$match = array();
-		$d = dir($this->plugin_dir);
-		if (false === $d) {
-			$this->report('Error #2', 'cannot access plugin directory <b>'.$this->plugin_dir.'</b>');
-			$this->exit_();
-		}
-		while ($plugin_file = $d->read()) {
-			$plugin_path = $this->plugin_dir .'/'. $plugin_file;
-			if (!is_file($plugin_path) || !preg_match('/^(object|function|prefilter|postfilter)\.([^.]+)\.php$/i', $plugin_file, $match)) continue;
-			$plugin =strtolower($match[2]);
-			if ($match[1] === 'object') {
-				if (in_array($plugin, $this->obj_plugins)) {
-					$this->report('Error #3', 'plugin file <b>object.'.$match[2].'.php</b> is overlapped');
-					$this->exit_();
-				}
-				$this->obj_plugins[$match[2]] = $plugin;
-			} else {
-				switch ($match[1]) {
-				case 'function'  : $this->func_plugins[$match[2]]=$plugin; break;
-				case 'prefilter' : $this->prefilters[$match[2]]  =$plugin; break;
-				case 'postfilter': $this->postfilters[$match[2]] =$plugin; break;
-				}
-				if (in_array($plugin, $plugins)) {
-					$this->report('Error #4', 'plugin function <b>'.$plugin.'</b> is overlapped');
-					$this->exit_();
-				}
-				$plugins[]=$plugin;
-			}
-		}
-		$this->obj_plugins_flip = array_flip($this->obj_plugins);
-		$this->func_plugins_flip= array_flip($this->func_plugins);
-		$this->prefilters_flip  = array_flip($this->prefilters);
-		$this->postfilters_flip = array_flip($this->postfilters);
+		$this->register_plugins_all();
 
 	// get safe mode functions
 		if ($this->safe_mode) {
-			$safe_list_file = $this->plugin_dir.'/functions.safe_mode.ini';
+			$safe_list_file = $this->plugin_dir.'/function/safe_mode.ini';
 			if (@is_file($safe_list_file)) {
 				$fp=fopen($safe_list_file, 'rb');
 				$fc=fread($fp, filesize($safe_list_file));
@@ -180,12 +163,14 @@ class Template_Compiler_
 		}
 
 	// get template
-		$source = '';
-		if ($source_size = filesize($tpl_path)) {
-			$fp_tpl=fopen($tpl_path,'rb');
-			$source=fread($fp_tpl,$source_size);
-			fclose($fp_tpl);
-		}
+		if (empty($source) and $params['path'] and file_exists($params['path'])) {
+			$source = '';
+			if ($source_size = filesize($params['path'])) {
+                       		$fp=fopen($params['path'],'rb');
+                       		$source=fread($fp,filesize($params['path']));
+                       		fclose($fp);
+			}
+               	}
 	
 	// remove UTF-8 BOM
 
@@ -288,11 +273,9 @@ class Template_Compiler_
 		$this->_loop_info=array();
 		$this->_size_info=array();
 		$this->_size_prefix='';
-		$this->in_div ='';
 		$this->nl_cnt = 1;
 		$this->nl = preg_match('/\r\n|\n|\r/', $source, $match) ? $match[0] : "\r\n";
 	
-		$division=array();
 		$divnames=array();
 		$nl = $this->nl;
 		if ($this->safe_mode) {
@@ -346,30 +329,6 @@ class Template_Compiler_
 							$this->report('Error #5', 'template control statement <b>{'.$this->statement.'}</b> in php code is not available', true, true);
 						}
 					} elseif ($result[0]===8) {
-						if ($result[1]) {
-							if (in_array($result[1], $divnames)) {
-								$this->report('Error #6', 'template division id <b>'.$result[1].'</b> is overlapped', true, true);
-								$this->exit_();
-							}
-							$divnames[]=$result[1];
-							$num=count($division);
-							$division[$num]=array('name'=>$result[1],'start'=>$this->_index-1);
-							if ($num && !isset($division[--$num]['end'])) $division[$num]['end']=$this->_index-1;
-							$this->in_div=$result[1];
-							$this->func_list[$result[1]]=array();
-							$this->obj_list[$result[1]]=array();
-						} elseif ($num=count($division) and !isset($division[--$num]['end'])) {
-							$division[$num]['end']=$this->_index-1;
-							$this->in_div='';
-						}
-						$this->_split[$mark_tpl-1] = preg_replace('/\s*$/',  '', $this->_split[$mark_tpl-1]);
-						if (preg_match('/^\s*/', $this->_split[$this->_index+1], $match)) {
-							$this->nl_cnt += (substr_count($match[0], $nl)-1);
-							$this->_split[$this->_index+1] = preg_replace('/^\s*/', $nl, $this->_split[$this->_index+1]);	
-						}
-						$this->_split[$this->_index-1]='';
-						$this->_split[$mark_tpl]='';
-						$this->_split[$this->_index]='';
 					} elseif ($result[0]===16) {
 						$this->_split[$this->_index-1]=$result[1];
 					} else {
@@ -405,53 +364,46 @@ class Template_Compiler_
 		$plugins = $this->_get_function().$this->_get_class();
 		$size_of_top_loop = empty($this->_size_info[1]) ? '' : $this->_get_loop_size(1);
 
-		$this->_save_result($cpl_path, $cpl_head, ' */ '.$plugins.$size_of_top_loop.'?>'.$nl, $source);
-
-		if ($division) {
-			if (!isset($division[$num=count($division)-1]['end'])) {
-				$division[$num]['end']=$this->_index;
-			}
-			for ($i=0,$s=count($division); $i<$s; $i++) {
-				$div=&$division[$i];
-				$cpl_path = $cpl_base.'.'.$div['name'].'.'.$this->compile_ext;
-				
-				$source=($i?$nl:'').trim(implode('', array_slice($this->_split, $div['start'], $div['end']-$div['start'])));
-				$plugins = $this->_get_function($div['name']) . $this->_get_class($div['name']);
-				$size_of_top_loop = empty($this->_size_info[$div['name']]) ? '' : $this->_get_loop_size(1, $div['name']);
-
-				$this->_save_result($cpl_path, $cpl_head, ' */ '.$plugins.$size_of_top_loop.'?>'.$nl, $source);
-			}
-		}
+		return '<'.'?php '.$params['cache_head'].$nl.$plugins.$size_of_top_loop.'?'.'>'.$nl.$source;
 	}
-	function _save_result($cpl_path, $cpl_head, $init_code, $source)
+
+	function register_plugins_all()
 	{
-
-		if (trim($this->postfilter)) {
-			$source=$this->_filter($source, 'post');
-		}
-
-		$source_size = strlen($cpl_head)+strlen($init_code)+strlen($source) + 9;
-
-		$source = $cpl_head.str_pad($source_size, 9, '0', STR_PAD_LEFT).$init_code.$source;
-
-		$fp_cpl=fopen($cpl_path, 'wb');
-		if (false===$fp_cpl) {
-			$this->report('Error #10', 'cannot write compiled file "<b>'.$cpl_path.'</b>"');
+	// get plugin file info
+		$plugins = array();
+		$match = array();
+		$mydir=$this->plugin_dir.'/function';
+		$d = dir($mydir);
+		if (false === $d) {
+			$this->report('Error #2', 'cannot access plugin directory <b>'.$this->plugin_dir.'</b>');
 			$this->exit_();
 		}
-		fwrite($fp_cpl, $source);
-		fclose($fp_cpl);
-
-		if (filesize($cpl_path) != strlen($source)) {
-			
-			@unlink($cpl_path);
-
-			$this->report('Error #35', 'Problem by concurrent access. Just retry after some seconds. "<b>'.$cpl_path.'</b>"');
-			$this->exit_();
+		while ($plugin_file = $d->read()) {
+			$plugin_path = $mydir .'/'. $plugin_file;
+			if (!is_file($plugin_path) || !preg_match('/^(object|function|prefilter|postfilter)?\.?([^.]+)\.php$/i', $plugin_file, $match)) continue;
+			$plugin =strtolower($match[2]);
+			if ($match[1] === 'object') {
+				if (!empty($this->obj_plugins[$plugin])) {
+					$this->report('Error #3', 'plugin file <b>object.'.$match[2].'.php</b> is overlapped');
+					$this->exit_();
+				}
+				$this->obj_plugins[$plugin] = $match[2];
+			} else {
+				switch ($match[1]) {
+				case 'function'  : $this->func_plugins[$plugin]=$match[2]; break;
+				case 'prefilter' : $this->prefilters[$plugin]  =$match[2]; break;
+				case 'postfilter': $this->postfilters[$plugin] =$match[2]; break;
+				default          : $this->func_plugins[$plugin]=$match[2]; break;
+				}
+				if (in_array($plugin, $plugins)) {
+					$this->report('Error #4', 'plugin function <b>'.$plugin.'</b> is overlapped');
+					$this->exit_();
+				}
+				$plugins[]=$plugin;
+			}
 		}
-
-		if (!$this->on_ms) @chmod($cpl_path, $this->permission&~0111);
 	}
+
 	function _compile_statement($statement)
 	{
 		$match=array();
@@ -480,7 +432,7 @@ class Template_Compiler_
 		case ''  : return (($xpr=$this->_compile_expression($src,0,1))===0) ? 0 : array(1, 'echo '.$xpr);
 		case '=' : return (($xpr=$this->_compile_expression($src,0,0))===0) ? 0 : array(1, 'echo '.$xpr);
 		case ':?': return (($xpr=$this->_compile_expression($src,0,0))===0) ? 0 : array(2, '}elseif('.$xpr.'){'); // deprecated
-		case '+' : return !strlen($src)||preg_match('/^[A-Z_a-z\x7f-\xff][\w\x7f-\xff]*$/', $src) ? array(8, $src) : 0;
+		#case '+' : return !strlen($src)||preg_match('/^[A-Z_a-z\x7f-\xff][\w\x7f-\xff]*$/', $src) ? array(8, $src) : 0;
 		case '#' : return preg_match('/^[A-Z_a-z\x7f-\xff][\w\x7f-\xff]*$/',$src) ? array(4, '$this->print_("'.$src.'",$TPL_SCP,1);') : 0;
 		case '@' :
 			$xpr = preg_match('/^[A-Z_a-z\x7f-\xff][\w\x7f-\xff]*$/', $src) ? '' : $this->_compile_expression($src,0,0);
@@ -499,7 +451,6 @@ class Template_Compiler_
 				$this->exit_();
 			}
 			$this->_size_info[$d][$src] = 1;
-			if ($d===1 && $this->in_div) $this->_size_info[$this->in_div][$src] = 1;
 			$this->_loop_stack[]=$src;
 			$this->_loop_info[$src]=$d;
 			return array(2, 'if($TPL_'.$src.'_'.$d.'){');
@@ -718,23 +669,30 @@ class Template_Compiler_
 					$var_state=array(0,'');
 					break;
 				case '(' :
+					$prefix='';
+					$self='';
 					if ($var_state[0]) {
 						if ($var_state[1]!=='obj') return 0;
 					} else {
 						if ($no_directive) return 0;
 						$func = strtolower($m[2]);
-						if (in_array($func, $this->func_plugins)) {
+						if (!empty($this->func_plugins[$func])) {
 							$func_list[$func] = $this->nl_cnt;
 						} else {
 							if ($this->safe_mode) in_array($func, $this->safe_mode_functions) or $this->exp_error[]=array(5, $m[2]);
 							else in_array($func, $this->all_functions) or $this->exp_error[]=array(7, $m[2]);
 						}
+						if (!in_array(strtolower($m[2]),$this->all_functions)) {
+                                                       $prefix='function_';
+                                                       $self='$formatter,';
+                                        	}
+
 					}
 					$prev_is_operand=0;
 					$prev_is_func=1;
 					$par_stack[]='f';
 					$var_state=array(0,'');
-					$xpr.=$m[2].'(';
+					$xpr.=$prefix.$m[2].'('.$self;
 					break;
 				case '[' :
 					switch ($var_state[0]) {
@@ -844,6 +802,7 @@ class Template_Compiler_
 					$par_stack[]='p';
 					break;
 				case ')':
+					$xpr=rtrim($xpr,',');
 					if (!$prev_is_operand && !$prev_is_func || empty($par_stack) || array_pop($par_stack)==='[') return 0;
 					$prev_is_operand=1;
 					break;
@@ -912,7 +871,6 @@ class Template_Compiler_
 			return 0;
 		}
 		foreach ($this->_outer_size as $loop_id=>$depth) {
-			if ($depth===1 && $this->in_div) $this->_size_info[$this->in_div][$loop_id] = 1;
 			if (empty($this->_size_info[$depth][$loop_id])) {
 				$this->_size_info[$depth][$loop_id] = array($this->statement, $this->nl_cnt);
 			}
@@ -922,11 +880,9 @@ class Template_Compiler_
 		}
 		if ($func_list) {
 			$this->_set_function($func_list);
-			if ($this->in_div) $this->_set_function($func_list, $this->in_div);
 		}
 		if ($this->exp_object) {
 			$this->_set_class($this->exp_object);
-			if ($this->in_div) $this->_set_class($this->exp_object, $this->in_div);
 		}
 		return $xpr;
 	}
@@ -952,7 +908,7 @@ class Template_Compiler_
 						return '';
 					}
 					$obj = strtolower($var);
-					if (in_array($obj, $this->obj_plugins)) {
+					if (!empty($this->obj_plugins[$obj])) {
 						$this->exp_object[$obj] = $this->nl_cnt;
 					} else {
 						$this->exp_error[]=array(8, $subject);
@@ -980,6 +936,7 @@ class Template_Compiler_
 			}
 			if (empty($depth)) { // not loop
 				if ($id[0]==='_') {
+					if ($id=='_config') return '$Config'.$el;
 					if ($this->safe_mode) {
 						$this->exp_error[]=array(4, $subject);
 						return 0;
@@ -1025,20 +982,21 @@ class Template_Compiler_
 	{
 		$functions=array();
 		foreach ($this->func_list[$divname] as $func => $line) {
-			$func_name = $this->func_plugins_flip[$func];
+			$func_name = $this->func_plugins[$func];
 			if (!function_exists($func)) {
-				$func_path=$this->plugin_dir.'/function.'.$func_name.'.php';
+				$func_path=$this->plugin_dir.'/function/'.$func_name.'.php';
 				if (false===include $func_path) {
 					$this->report('Error #27', 'error in plugin <b>'.$func_path.'</b>', true, $line);
 					$this->exit_();
-				} elseif (!function_exists($func)) {
+				} elseif (!function_exists('function_'.$func)) {
 					$this->report('Error #28', 'cannot find function <b>'.$func.'()</b> in plugin <b>'.$func_path.'</b>', true, $line);
 					$this->exit_();
 				}
 			}
 			$functions[]='"'.$func_name.'"';
 		}
-		return $functions ? ' $this->include_('.implode(',',$functions).');' : '';
+		return $functions ? ' $formatter->include_functions('.implode(',',$functions).');' : '';
+		#return $functions ? ' $this->include_('.implode(',',$functions).');' : '';
 	}
 	function _set_class($obj_list, $divname='')
 	{
@@ -1051,7 +1009,7 @@ class Template_Compiler_
 	{
 		$init_obj = '';
 		foreach ($this->obj_list[$divname] as $obj => $line) {
-			$obj_name=$this->obj_plugins_flip[$obj];
+			$obj_name=$this->obj_plugins[$obj];
 			$class = 'tpl_object_'.$obj_name;
 			if (!class_exists($class, false)) {
 				$class_path = $this->plugin_dir.'/object.'.$obj_name.'.php';
@@ -1079,7 +1037,7 @@ class Template_Compiler_
 					$func_args[$j]=str_replace('\\&', '&', trim($func_args[$j]));
 				}
 				$func = strtolower(array_shift($func_args));
-				$func_name   = $this->{$type.'filters_flip'}[$func];
+				$func_name   = $this->{$type.'filters'}[$func];
 				array_unshift($func_args, $source, $this);
 				$func_file = $this->plugin_dir.'/'.$type.'filter.'.$func_name.'.php';
 				if (!in_array($func, $this->{$type.'filters'})) {
@@ -1103,7 +1061,7 @@ class Template_Compiler_
 	function report($type, $msg, $file=false, $line=false)
 	{
 		$report = "<br />\n".'<span style="font:12px tahoma,arial;color:#0071DC;background:white">Template_ Compiler '.$type.': '.$msg;
-		if ($file) $report.=' in <b>'.(is_string($file)?$file:$this->tpl_path).'</b>';
+		if ($file) $report.=' in <b>'.(is_string($file)?$file:$this->params['path']).'</b>';
 		if ($line) {
 			$line=is_int($line)?$line:$this->nl_cnt;
 			foreach ($this->nl_del as $key=>$val) if ($key<=$line) break;
