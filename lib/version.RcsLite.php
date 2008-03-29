@@ -29,6 +29,9 @@ class Version_RcsLite extends Version_RCS {
 
   function ci($pagename,$log) {
     $filename=$this->_filename($pagename);
+    $this->_ci($filename,$log);
+  }
+  function _ci($filename,$log) {
     $this->rcs->_process($filename);
     $this->rcs->addRevisionPage($log);
   }
