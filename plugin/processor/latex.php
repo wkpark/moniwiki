@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2007 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2008 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a latex processor plugin for the MoniWiki
 //
@@ -159,35 +159,52 @@ function processor_latex(&$formatter,$value="") {
      $fp=popen($cmd.$formatter->NULL,'r');
      pclose($fp);
      $log=$formatter->get_errlog(1,1);
+
      if ($log) {
        list($dum,$log,$dum2)=preg_split('/\n!/',$log,3);
-       if ($log)
+       if ($log) {
          $log="<pre class='errlog'>".$log."</pre>\n";
+       }
      }
 
      if (!file_exists($uniq.".dvi")) {
        $log.="<pre class='errlog'><font color='red'>ERROR:</font> LaTeX does not work properly.</pre>";
+       trigger_error ($log, E_USER_WARNING);
        chdir($cwd);
-       return $log;
+       return '';
      }
      #$formatter->errlog('DVIPS');
      $cmd= "$dvips -D 600 $uniq.dvi -o $uniq.ps";
+     $formatter->errlog('DVI',$uniq.'.log');
      $fp=popen($cmd.$formatter->NULL,'r');
      pclose($fp);
-     #$log2=$formatter->get_errlog();
+     $log2=$formatter->get_errlog();
+     if ($log2) trigger_error ($log2, E_USER_NOTICE);
      chdir($cwd);
 
-     $cmd= "$convert -transparent white $latex_convert_options $vartmp_dir/$uniq.ps $outpath";
+     #$cmd= "$convert -transparent white $latex_convert_options $vartmp_dir/$uniq.ps $outpath";
+     chdir(dirname($outpath)); # XXX :(
+     $cmd= "$convert -transparent white $latex_convert_options $vartmp_dir/$uniq.ps ".basename($outpath);
      # ImageMagick of the RedHat AS 4.x do not support -trim option correctly
      # http://kldp.net/forum/message.php?msg_id=12024
      #$cmd= "$convert -transparent white -trim -crop 0x0 -density 120x120 $vartmp_dir/$uniq.ps $outpath";
-     $fp=popen($cmd.$formatter->NULL,'r');
+     $formatter->errlog('CNV',$uniq.'.log');
+     $fp=popen($cmd.$formatter->LOG,'r');
      pclose($fp);
-
+     $log2=$formatter->get_errlog(1,1);
+     if ($log2) trigger_error ($log2, E_USER_WARNING);
+     chdir($cwd);
 
      if ($DBInfo->latex_allinone) {
         $sz=sizeof($formatter->latex_uniq);
 
+        if ($sz > 1) {
+          $soutpath=preg_replace('/\.png/','',$outpath);
+          if (file_exists($outpath.'.0')) # old convert behavior
+            $soutpath="$soutpath.png.%d";
+          else
+            $soutpath="$soutpath-%d.png"; # new behavior :(
+        }
         for ($i=0;$i<$sz;$i++) {
           $id=$formatter->latex_uniq[$i];
           if ($DBInfo->cache_public_dir) {
@@ -198,8 +215,9 @@ function processor_latex(&$formatter,$value="") {
           }
           if ($sz==1)
             rename($outpath,$img);
-          else
-            rename($outpath.'.'.$i,$img);
+          else {
+            rename(sprintf($soutpath,$i),$img);
+          }
         }
         $formatter->latex_all='';
         $formatter->latex_uniq=array();
