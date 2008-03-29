@@ -88,6 +88,7 @@ class Template_Compiler_
 		$this->prefilters    =array();
 		$this->postfilters   =array();
 		$this->safe_mode     =$tpl->safe_mode;
+		$this->safe_mode_ini ='config/safe_mode.ini';
 		$this->auto_constant =empty($tpl->auto_constant) ? false : $tpl->auto_constant;
 		$this->tpl_path      =$tpl_path;
 		$this->params        =$params;
@@ -151,7 +152,7 @@ class Template_Compiler_
 
 	// get safe mode functions
 		if ($this->safe_mode) {
-			$safe_list_file = $this->plugin_dir.'/function/safe_mode.ini';
+			$safe_list_file = $this->safe_mode_ini;
 			if (@is_file($safe_list_file)) {
 				$fp=fopen($safe_list_file, 'rb');
 				$fc=fread($fp, filesize($safe_list_file));
