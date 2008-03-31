@@ -1531,6 +1531,8 @@ class Cache_text {
             fclose($fp);
             global $Config;
             $TPL_VAR=&$params['_vars']; # builtin Template_ support
+            if (isset($TPL_VAR['_theme']) and is_array($TPL_VAR['_theme']) and $TPL_VAR['_theme']['compat'])
+              extract($TPL_VAR['_theme']);
             $ehandle=false;
             if ($params['formatter']) {
               $formatter=&$params['formatter']; # XXX
@@ -1989,7 +1991,13 @@ class Formatter {
       $type='php';
     }
 
-    $theme_path='theme/'.$theme.'/'.$file.'.'.$type;
+    $theme_dir='theme/'.$theme;
+
+    if (file_exists($theme_dir."/theme.php")) {
+      $this->_vars['_theme']=_load_php_vars($theme_dir."/theme.php",$params);
+    }
+
+    $theme_path=$theme_dir.'/'.$file.'.'.$type;
     if (!file_exists($theme_path)) {
       trigger_error(sprintf(_("File '%s' does not exist."),$file),E_USER_NOTICE);
       return '';
@@ -2002,6 +2010,8 @@ class Formatter {
     case 'php':
       global $Config;
       $TPL_VAR=&$this->_vars;
+      if (isset($TPL_VAR['_theme']) and is_array($TPL_VAR['_theme']) and $TPL_VAR['_theme']['compat'])
+        extract($TPL_VAR);
       if ($params['print']) {
         $out=include $theme_path;
       } else {
@@ -2036,7 +2046,7 @@ class Formatter {
     $pi=array();
 
     $format='';
-    if (!$this->pi['#format']) { # set default page type. # XXX !$body ? v1.134 ?
+    if (empty($this->pi['#format'])) { # set default page type. # XXX !$body ? v1.134 ?
       preg_match('%(:|/)%',$this->page->name,$sep);
       $key=strtok($this->page->name,':/');
       if (isset($Config['pagetype'][$key]) and $f=$Config['pagetype'][$key]) {
@@ -2051,6 +2061,8 @@ class Formatter {
         }
       } else if (isset($Config['pagetype']['*']))
         $format=$Config['pagetype']['*']; // default page type
+    } else {
+      $format=$this->pi['#format'];
     }
 
     if (!$body) {
