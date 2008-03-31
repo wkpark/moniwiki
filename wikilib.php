@@ -1496,8 +1496,10 @@ function do_post_savepage($formatter,$options) {
 	} else {
           $options['conflict']=0; 
       	  #$options['datestamp']=$datestamp;
-          #unset($options['datestamp']); 
-          if ($merge) $savetext=$merge;
+          if ($merge) {
+            $savetext=$merge;
+            unset($options['datestamp']); 
+          }
         }
         $formatter->send_title("","",$options);
 
