@@ -431,7 +431,7 @@ function macro_BBS($formatter,$value,$options=array()) {
     global $DBInfo;
 
     # set defaults
-    $ncount=20;
+    $ncount=20; # default
     $bname=$formatter->page->name;
 
     $nid='';
@@ -444,18 +444,22 @@ function macro_BBS($formatter,$value,$options=array()) {
             $k=substr($arg,0,$p);
             $v=substr($arg,$p+1);
             if ($k=='no') $nid=$v;
-        } else if ($arg == 'mode') {}
-        else if ($arg == (int) $arg) { $ncount=$arg; }
+            else if ($k=='mode') $options['mode']=$v;
+        } else if ($arg == 'mode') { }
+        else if ($arg == ((int) $arg)."") { $ncount=$arg; }
         else {
             $bname=$arg;
         }
     }
+
+    $bpage=_rawurlencode($bname);
     $nid= $_GET['no'] ? $_GET['no']:$nid;
 
     $nids=preg_split('/\s+/',$nid);
     rsort($nids);
 
     $options['p']= ($_GET['p'] > 0) ? $_GET['p']:1;
+    $options['c']= ($ncount != 20) ? $ncount:'';
 
     # is it exists ?
     if (!$DBInfo->hasPage($bname)) {
@@ -558,9 +562,9 @@ function macro_BBS($formatter,$value,$options=array()) {
             "</div>\n</div>\n".
             '<div class="foot"><div></div></div>'."</div>\n";
             $snid=$nid;
-            $btn['edit']=$formatter->link_to("?action=bbs&amp;mode=edit&amp;no=".$nid,
+            $btn['edit']=$formatter->link_tag($bpage,"?action=bbs&amp;mode=edit&amp;no=".$nid,
                 '<span>'._("Edit").'</span>','class="button"');
-            $btn['delete']=$formatter->link_to("?action=bbs&amp;mode=delete&amp;no=".$nid,
+            $btn['delete']=$formatter->link_tag($bpage,"?action=bbs&amp;mode=delete&amp;no=".$nid,
                 '<span>'._("Delete").'</span>','class="button"');
             if ($narticle == 1 and $conf['use_comment']) {
                 $opts['action']='bbs';
@@ -633,13 +637,13 @@ JS;
     if ($options['mode'] == 'rss') {
         $rss='<'.'?xml version="1.0" encoding="utf-8"?>'."\n".'<rss version="2.0">'."\n";
         $rss.="<channel>\n<title>".$DBInfo->sitename.": </title>\n";
-        $rss.="<link>".qualifiedUrl($formatter->link_url($formatter->page->urlname))."</link>\n";
+        $rss.="<link>".qualifiedUrl($formatter->link_url($bpage))."</link>\n";
         $rss.="<description></description>\n";
         $rss.="<pubDate>".gmdate('D, j M Y H:i:s',time())." +0000</pubDate>\n";
         foreach ($list as $l) {
             $item="<item>\n";
             $item.="<title><![CDATA[".$l[7]."]]></title>\n";
-            $item.="<link>".qualifiedUrl($formatter->link_url($formatter->page->urlname,"?no=$l[0]"))."</link>\n";
+            $item.="<link>".qualifiedUrl($formatter->link_url($bpage,"?no=$l[0]"))."</link>\n";
             $item.="<author><![CDATA[".$l[3]."]]></author>\n";
             $item.="<description><![CDATA[".$l[3]."]]></description>\n";
             $item.="<pubDate>".gmdate('D, j M Y H:i:s',$l[2])." +0000</pubDate>\n</item>\n";
@@ -648,26 +652,44 @@ JS;
         $rss.="</channel>\n</rss>\n";
 
         return $rss;
+    } else 
+    if ($options['mode'] == 'simple') {
+        $simple="<div class='bbsSimple'><table class='bbsSimple'>\n";
+        foreach ($list as $l) {
+            $date=date("Y-m-d",$l[2]);
+            $my=$l[7];
+            $title='';
+            if (function_exists('mb_strimwidth') and strlen($l[7]) > 60) {
+                $title='title="'.$l[7].'"';
+                $my=mb_strimwidth($l[7],0,40,'...',$DBInfo->charset);
+            }
+            $simple.="<tr><td class='date'>[".$date."]</td><td>".
+                $formatter->link_tag($bpage,"?no=$l[0]".$extra,$my,$title).'</td></tr>';
+        }
+        $simple.="<tr><td colspan='2' class='more'>".$formatter->link_tag($bpage, "",_("More").'&#187;')."</td>\n</tr>\n";
+        $simple.="</table>";
+        
+        return $simple;
     }
 
     if ($pages > 1)
       $pnut=_get_pagelist($formatter,$pages,
         '?'.$extra.
-        '&amp;p=',$options['p'],$ncount);
+        ($extra ?'&amp;p=':'p='),$options['p'],$ncount);
 
     $extra=$options['p'] ? '&amp;p='.$options['p']:'';
 
-    $head=array(_("no"),'C',_("Title"),_("Name"),_("Date"),_("Hit"));
-    $out.="<col width='3%' class='num' /><col width='1%' class='check' /><col width='63%' class='title' /><col width='14%' /><col width='13%' /><col width='7%' class='hit' />\n";
-    $out.='<thead><tr><th>'.implode("</th><th>",$head)."</th></tr><thead>\n";
-    $out.="<tbody>\n";
+    #$head=array(_("no"),'C',_("Title"),_("Name"),_("Date"),_("Hit"));
+    #$out.="<col width='3%' class='num' /><col width='1%' class='check' /><col width='63%' class='title' /><col width='14%' /><col width='13%' /><col width='7%' class='hit' />\n";
+    #$out.='<thead><tr><th>'.implode("</th><th>",$head)."</th></tr><thead>\n";
+    #$out.="<tbody>\n";
     $item=array();
     foreach ($list as $l) {
         $nid=&$l[0];
         $ip=&$l[1];
         $date=date("Y-m-d",$l[2]);
         $user=$l[3];
-        $subject=$formatter->link_to("?no=$nid".$extra,$l[7]);
+        $subject=$formatter->link_tag($bpage,"?no=$nid".$extra,$l[7]);
         $hit=$MyBBS->counter->pageCounter($nid);
         $chk='<input type="checkbox" value="'.$nid.'">';
         #$item=array(in_array($nid,$nids) ? '<strong>&raquo;</strong>':$nid,$chk,$subject,$user,$date,$hit);
@@ -682,20 +704,21 @@ JS;
     }
 
     $formatter->_vars['item']=&$item;
-    $out.= $formatter->processor_repl('tpl_','',array('path'=>'theme/plugin/BBS/blue_tpl/list.tpl'));
-    #$out.= $formatter->processor_repl('tpl_','',array('path'=>'theme/plugin/BBS/blue_tpl/list.tpl','include'=>1));
-    $out.="</tbody>\n";
+    $out.= $formatter->include_theme('plugin/BBS/default','list',array());
+    #$out.= $formatter->include_theme('plugin/BBS/blue_tpl','list',array());
+    #$out.= $formatter->processor_repl('tpl_','',array('path'=>'theme/plugin/BBS/blue_tpl/list.tpl'));
+    #$out.="</tbody>\n";
 
-    $btn['new']=$formatter->link_to("?action=bbs&amp;mode=edit",'<span>'._("New").'</span>','class="button"');
+    $btn['new']=$formatter->link_tag($bpage,"?action=bbs&amp;mode=edit",'<span>'._("New").'</span>','class="button"');
     unset($btn['edit']);
-    $bn['view']=$formatter->link_to("",'<span>'._("Read").'</span>',
+    $bn['view']=$formatter->link_tag($bpage,"",'<span>'._("Read").'</span>',
         'onclick="return send_list(this)" onfocus="blur()" class="button"');
-    $bn['delete']=$formatter->link_to("",'<span>'._("Delete").'</span>',
+    $bn['delete']=$formatter->link_tag($bpage,"",'<span>'._("Delete").'</span>',
         'onclick="return send_list(this,\'delete\')" onfocus="blur()" class="button"');
     $del="<div class='bbsAdminBtn'>".implode(" ",$bn)."</div>\n";
     $btns="<div class='bbsBtn'>".implode(" ",$btn)."</div>\n";
 
-    $lnk=$formatter->link_url($formatter->page->urlname,'?action=bbs');
+    $lnk=$formatter->link_url($bpage,'?action=bbs');
     $form0="<form method='get' action='$lnk'>\n";
     $form1='<input type="hidden" name="no" />';
     if ($options['p'])
@@ -705,9 +728,9 @@ JS;
     $form1.="</form>\n";
     $pnut= "<div class='pnut'>$pnut</div>";
     $info= '<div class="bbsRSS">'.sprintf(_("Total %s articles."),'<strong>'.$tot.'</strong>').' '.
-    #    $formatter->link_to('?action=bbs&amp;mode=rss','<span>RSS</span>').'</div>';
-        $formatter->link_to('?action=bbs&amp;mode=rss',$formatter->icon['rss']).'</div>';
-    return $info.$pnut."$msg$js$form0<table class='bbs' cellspacing='1' cellpadding='2'>".$out.'</table>'.$del.$form1.$pnut.$btns;
+    #    $formatter->link_tag($bpage,'?action=bbs&amp;mode=rss','<span>RSS</span>').'</div>';
+        $formatter->link_tag($bpage,'?action=bbs&amp;mode=rss',$formatter->icon['rss']).'</div>';
+    return $info.$pnut.$msg.$js.$form0.$out.$del.$form1.$pnut.$btns;
 }
 
 function do_bbs($formatter,$options=array()) {
@@ -724,12 +747,16 @@ function do_bbs($formatter,$options=array()) {
     }
     # load a config file
     $bname=$formatter->page->name;
+    $conf0=array();
     if (file_exists('config/bbs.'.$bname.'.php')) {
         $confname='bbs.'.$bname.'.php';
+        $conf0=_load_php_vars('config/bbs.default.php');
     } else {
         $confname='bbs.default.php';
     }
     $conf=_load_php_vars('config/'.$confname);
+
+    $conf=array_merge($conf0,$conf);
 
     # check valid IP
     $check_ip=true;
