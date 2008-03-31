@@ -38,7 +38,7 @@ function processor_tpl_(&$formatter,$source,$params=array()) {
 
     if (!$formatter->preview and $cache->exists($id) and $cache->mtime($id) > $mtime) {
         $params['_vars']=&$formatter->_vars;
-        $ret = $cache->fetch($id,0,$params);
+        $ret = $cache->fetch($id,$mtime,$params);
         if ($ret === true) return '';
         if ($params['print']) return eval('?'.'>'.$ret.'<'.'?php ');
         if ($params['raw']) return $ret;
