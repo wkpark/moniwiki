@@ -1531,18 +1531,29 @@ class Cache_text {
             fclose($fp);
             global $Config;
             $TPL_VAR=&$params['_vars']; # builtin Template_ support
-            if ($params['formatter']) $formatter=&$params['formatter']; # XXX
+            $ehandle=false;
+            if ($params['formatter']) {
+              $formatter=&$params['formatter']; # XXX
+              if (method_exists($formatter,'internal_errorhandler')) {
+                set_error_handler(array($formatter,'internal_errorhandler'));
+                $ehandle=true;
+              }
+            }
             if ($params['print']) {
-              return include $key; // Do we need more secure method ?
+              $ret= include $key; // Do we need more secure method ?
+              if ($ehandle) restore_error_handler();
+              return $ret;
             } else {
               ob_start();
               include $key;
+              if ($ehandle) restore_error_handler();
               $fetch = ob_get_contents();
               ob_end_clean();
               return $fetch;
             }
           }
         }
+        rewind($fp);
         break;
       }
       $ret=fread($fp,$size);
@@ -1967,6 +1978,44 @@ class Formatter {
     if (!$this->perma_icon) {
       $this->perma_icon=$DBInfo->perma_icon;
     }
+  }
+
+  function include_theme($theme,$file='default',$params=array()) {
+    $theme=trim($theme,'.-_');
+    $theme=preg_replace(array('/\/+/','/\.+/'),array('/',''),$theme);
+    if (preg_match('/_tpl$/',$theme)) {
+      $type='tpl';
+    } else {
+      $type='php';
+    }
+
+    $theme_path='theme/'.$theme.'/'.$file.'.'.$type;
+    if (!file_exists($theme_path)) {
+      trigger_error(sprintf(_("File '%s' does not exist."),$file),E_USER_NOTICE);
+      return '';
+    }
+    switch($type) {
+    case 'tpl':
+      $params['path']=$theme_path;
+      $out= $this->processor_repl('tpl_','',$params);
+      break;
+    case 'php':
+      global $Config;
+      $TPL_VAR=&$this->_vars;
+      if ($params['print']) {
+        $out=include $theme_path;
+      } else {
+        ob_start();
+        include $theme_path;
+        $out=ob_get_contents();
+        ob_end_clean();
+      }
+      break;
+
+    default:
+      break;
+    }
+    return $out;
   }
 
   function get_redirect() {
@@ -4566,6 +4615,42 @@ MSG;
     }
     return '';
   }
+
+  function internal_errorhandler($errno, $errstr, $errfile, $errline) {
+    $errfile=basename($errfile);
+    switch ($errno) {
+    case E_WARNING:
+      echo "<div><b>WARNING</b> [$errno] $errstr<br />\n";
+      echo " in cache $errfile($errline)<br /></div>\n";
+      break;
+    case E_NOTICE:
+      #echo "<div><b>NOTICE</b> [$errno] $errstr<br />\n";
+      #echo "  on line $errline in cache $errfile<br /></div>\n";
+      break;
+    case E_USER_ERROR:
+      echo "<div><b>ERROR</b> [$errno] $errstr<br />\n";
+      echo "  Fatal error in file $errfile($errline)";
+      echo ", PHP " . PHP_VERSION . " (" . PHP_OS . ")<br />\n";
+      echo "Skip...<br /></div>\n";
+      break;
+  
+    case E_USER_WARNING:
+      echo "<b>MoniWiki WARNING</b> [$errno] $errstr<br />\n";
+      break;
+  
+    case E_USER_NOTICE:
+      echo "<b>MoniWiki NOTICE</b> [$errno] $errstr<br />\n";
+      break;
+  
+    default:
+      echo "Unknown error type: [$errno] $errstr<br />\n";
+      break;
+    }
+  
+    /* http://kr2.php.net/manual/en/function.set-error-handler.php */
+    return true;
+  }
+
 } # end-of-Formatter
 
 # setup the locale like as the phpwiki style
