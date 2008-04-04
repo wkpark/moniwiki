@@ -16,7 +16,7 @@ function processor_jmol($formatter,$value="") {
                 '#black'=>'background [0,0,0]',
                 '#white'=>'background [255,255,255]',
                 );
-    $default_size="width='200' height='200' ";
+    $default_size="width='200' height='200'";
 
     if ($value[0]=='#' and $value[1]=='!')
       list($line,$value)=explode("\n",$value,2);
@@ -32,6 +32,7 @@ function processor_jmol($formatter,$value="") {
 
     $script='set frank off; wireframe 0.18; spacefill 25%;';
     if ($DBInfo->jmol_script) $script.=$DBInfo->jmol_script;
+
 
     while ($body and $body[0] == '#') {
         # extract first line
@@ -51,9 +52,10 @@ function processor_jmol($formatter,$value="") {
     }
 
     if (!$args)
-        $args.='<param name="style" value="sticks" />';
+        $args.='<param name="style" value="sticks" />'."\n";
     if ($script)
-        $args.='<param name="script" value="'.$script.'" />';
+        $args.='<param name="script" value="'.$script.'" />'."\n";
+    $args.='<param name="mayscript" value="true" />'."\n";
 
     if ($xsize) {
       if ($xsize > 640 or $xsize < 100) $xscale=0.5;
@@ -62,22 +64,142 @@ function processor_jmol($formatter,$value="") {
     
       if (empty($yscale)) $yscale=$xscale/0.5*0.6;
 
-      $size="width='$xsize' height='$ysize' ";
+      $size="width='$xsize' height='$ysize'";
     } else $size=$default_size;
 
-    $buff=str_replace("\n","|\n",$body)."\n";
-    $molstring= trim($buff);
+    $buff=str_replace("\n","\\n\"\n+\"",$body)."\n";
+    $molstring= rtrim($buff);
+
+    $cid=&$GLOBALS['_transient']['jmol'];
+    $id=$cid+0;
+
+    $js='';
+    if ($id==0) {
+        $jsize=str_replace(array(" ","'"),array(",",""),$size);
+        $jsIE='';
+        if (preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT'])) {
+            $jsurl=qualifiedUrl($formatter->url_prefix.'/local/base64.js');
+            $base64js="<script type='text/javascript' src='$jsurl'></script>";
+            $base64url=$formatter->link_tag('/local/base64.js');
+            $jsIE=<<<IEJS
+<script type='text/javascript'>
+/*<![CDATA[*/
+function hello() {
+    function fixBase64(img) {
+        var myimg= img.cloneNode(true);
+        alert(myimg.src.substr(0,10));
+        var m=null;
+        if (m=myimg.src.match(/^(data:.*;base64,)$/i)) {
+            //img.src=decode64(m[1]);
+            alert('w');
+        }
+    }
+    for (var i = 0; i < document.images.length; i++)
+       fixBase64(document.images[i]);
+}
+/*>*/
+<\/script>
+IEJS;
+            $jsIE=preg_replace("/(\r\n|\n|\r)+/","\\\\n\"\n+\"",$jsIE);
+        }
+        $js=<<<JS
+$base64js
+<script type='text/javascript'>
+/*<![CDATA[*/
+        function open_image(base64) {
+            base64=base64.replace(/\ \|\ /g, "").replace(/\s/g, "");
+            var img = eval("("+base64+")").image;
+            var imgsrc = "data:image/jpeg;base64,"+img;
+
+            var open=window.open('','_blank',"$jsize,menubar=1,toolbar=1,scrollbars=1,status=1,resizable=1");
+            //var open=window.open('','_blank',"$jsize,menubar=0,toolbar=0,scrollbars=0,status=0");
+            //var open=window.open(imgsrc,'_blank',"$jsize,menubar=0,toolbar=0,scrollbars=0,status=0");
+            open.document.writeln(
+                '<html><head><title>Image/JPEG</title><style>body {margin:0}</style>'
+                +"$jsIE"
+                +'</head><body>'
+                +"<img src='" + imgsrc +"'" + " />"
+                +'</body></html>');
+            open.document.close();
+            open.focus();
+        }
+/*>*/
+</script>\n
+JS;
+    }
+
+    $cid++;
+    $js.=<<<JS
+<script type='text/javascript'>
+/*<![CDATA[*/
+addLoadEvent(function() {
+    setTimeout(function() {
+        var applet=document.getElementById("jmolApplet$id");
+        if (applet && applet.isActive()) {
+            var model="$molstring";
+            applet.loadInline(model);
+            applet.script("$script");
+            applet.script("mo fill nomesh;mo TITLEFORMAT \"Model %M, MO %I/%N |E = %E %U |?Symm = %S |?Occ = %O\"");
+
+            var s=applet.getPropertyAsJSON('atomInfo') + "";
+            var btns=document.getElementById('jmolButton$id');
+            var A = eval("("+s+")");
+            if (A.atomInfo != undefined && A.atomInfo[0].partialCharge) {
+                var btn = document.createElement('button');
+                var text = document.createTextNode('MEP');
+                btn.appendChild(text);
+                btn.onclick=function() {
+                    document.jmolApplet$id.script('isosurface delete resolution 0 molecular map MEP translucent');
+                };
+                btns.appendChild(btn);
+            }
+
+            s=applet.getPropertyAsJSON('auxiliaryInfo') + "";
+            A = eval("("+s+")");
+            if (A.auxiliaryInfo.models && A.auxiliaryInfo.models[0].moData) {
+                var mos=A.auxiliaryInfo.models[0].moData.mos
+                var len=mos.length;
+                var sel = document.createElement('select');
+                var opt = document.createElement('option');
+                var text = document.createTextNode('-- MO --');
+                sel.onchange=function() { document.jmolApplet$id.script(this.value); };
+                sel.appendChild(opt);
+                opt.appendChild(text);
+                for (var i=len;i>0;i--) {
+                    opt = document.createElement('option');
+                    text = document.createTextNode('#' + i + ' E:' + mos[i-1].energy);
+                    opt.appendChild(text);
+                    sel.appendChild(opt);
+                    opt.value= 'mo ' + i;
+                }
+                btns.appendChild(sel);
+            }
+        }
+    } ,1000);
+});
+/*>*/
+</script>\n
+JS;
+    $molstring=str_replace("\n","|\n",$body);
 
     $pubpath = $formatter->url_prefix.'/applets/JmolPlugin';
 
     return <<<APP
-<applet code='JmolApplet.class' $size archive='$pubpath/JmolApplet.jar' codebase='$pubpath'>
+<div>
+<applet name='jmolApplet$id' id='jmolApplet$id' code='JmolApplet.class' $size archive='$pubpath/JmolApplet.jar' codebase='$pubpath' mayscript='mayscript'>
         $args
-        <param name='inline' value='$molstring' />
     Loading a JmolApplet object.
 </applet>
+$js
+<div>
+<button onclick="javascript:open_image(document.jmolApplet$id.getPropertyAsJSON('image'))">JPEG</button>
+<span id='jmolButton$id'>
+</span>
+</div>
+</div>
 APP;
 }
 
+        //<param name='loadinline' value='$molstring' />
 // vim:et:sts=4:sw=4:
 ?>
