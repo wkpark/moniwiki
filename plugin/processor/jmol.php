@@ -133,9 +133,9 @@ JS;
 <script type='text/javascript'>
 /*<![CDATA[*/
 addLoadEvent(function() {
-    setTimeout(function() {
+    this.timer=setTimeout(function() {
         var applet=document.getElementById("jmolApplet$id");
-        if (applet && applet.isActive()) {
+        if (applet && applet.isActive != undefined) {
             var model="$molstring";
             applet.loadInline(model);
             applet.script("$script");
@@ -149,7 +149,7 @@ addLoadEvent(function() {
                 var text = document.createTextNode('MEP');
                 btn.appendChild(text);
                 btn.onclick=function() {
-                    document.jmolApplet$id.script('isosurface delete resolution 0 molecular map MEP translucent');
+                    applet.script('isosurface delete resolution 0 molecular map MEP translucent');
                 };
                 btns.appendChild(btn);
             }
@@ -162,7 +162,7 @@ addLoadEvent(function() {
                 var sel = document.createElement('select');
                 var opt = document.createElement('option');
                 var text = document.createTextNode('-- MO --');
-                sel.onchange=function() { document.jmolApplet$id.script(this.value); };
+                sel.onchange=function() { applet.script(this.value); };
                 sel.appendChild(opt);
                 opt.appendChild(text);
                 for (var i=len;i>0;i--) {
@@ -174,8 +174,9 @@ addLoadEvent(function() {
                 }
                 btns.appendChild(sel);
             }
+            clearTimeout(this.timer);
         }
-    } ,1000);
+    } ,500);
 });
 /*>*/
 </script>\n
