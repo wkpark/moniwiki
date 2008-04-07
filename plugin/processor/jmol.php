@@ -11,8 +11,8 @@ function processor_jmol($formatter,$value="") {
     $verbs=array('#sticks'=>'wireframe 0.25',
                 '#ball&stick'=>'wireframe 0.18; spacefill 25%',
                 '#wireframe'=>'wireframe 0.1',
-                '#cpk'=>'cpk 80%',
-                '#spacefill'=>'cpk %80',
+                '#cpk'=>'spacefill 80%',
+                '#spacefill'=>'spacefill %80',
                 '#black'=>'background [0,0,0]',
                 '#white'=>'background [255,255,255]',
                 );
@@ -27,7 +27,7 @@ function processor_jmol($formatter,$value="") {
     }
 
     $body = $value;
-    $args='<param name="emulate" value="chime" />';
+    //$args='<param name="emulate" value="chime" />';
     $args.='<param name="progressbar" value="true" />';
 
     $script='set frank off; wireframe 0.18; spacefill 25%;';
@@ -134,17 +134,16 @@ JS;
 /*<![CDATA[*/
 addLoadEvent(function() {
     this.timer=setTimeout(function() {
-        var applet=document.getElementById("jmolApplet$id");
+        applet=document.getElementById("jmolApplet$id");
         if (applet && applet.isActive != undefined) {
             var model="$molstring";
             applet.loadInline(model);
             applet.script("$script");
-            applet.script("mo fill nomesh;mo TITLEFORMAT \"Model %M, MO %I/%N |E = %E %U |?Symm = %S |?Occ = %O\"");
 
             var s=applet.getPropertyAsJSON('atomInfo') + "";
             var btns=document.getElementById('jmolButton$id');
             var A = eval("("+s+")");
-            if (A.atomInfo != undefined && A.atomInfo[0].partialCharge) {
+            if (A && A.atomInfo != undefined && A.atomInfo[0].partialCharge) {
                 var btn = document.createElement('button');
                 var text = document.createTextNode('MEP');
                 btn.appendChild(text);
@@ -156,7 +155,8 @@ addLoadEvent(function() {
 
             s=applet.getPropertyAsJSON('auxiliaryInfo') + "";
             A = eval("("+s+")");
-            if (A.auxiliaryInfo.models && A.auxiliaryInfo.models[0].moData) {
+            if (A && A.auxiliaryInfo.models && A.auxiliaryInfo.models[0].moData) {
+                applet.script("mo fill nomesh;mo TITLEFORMAT \"Model %M, MO %I/%N |E = %E %U |?Symm = %S |?Occ = %O\"");
                 var mos=A.auxiliaryInfo.models[0].moData.mos
                 var len=mos.length;
                 var sel = document.createElement('select');
@@ -194,6 +194,7 @@ JS;
 $js
 <div>
 <button onclick="javascript:open_image(document.jmolApplet$id.getPropertyAsJSON('image'))">JPEG</button>
+<button onclick="javascript:open_image(document.jmolApplet$id.script('set minimizationSteps 10;set minimizationRefresh true;set minimizationCriterion 0.001; set loglevel 6;select *;minimize'))">MM</button>
 <span id='jmolButton$id'>
 </span>
 </div>
