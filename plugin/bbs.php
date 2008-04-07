@@ -469,11 +469,14 @@ function macro_BBS($formatter,$value,$options=array()) {
     # load a config file
     if (file_exists('config/bbs.'.$bname.'.php')) {
         $confname='bbs.'.$bname.'.php';
+        $conf0=_load_php_vars('config/bbs.default.php');
     } else {
         $confname='bbs.default.php';
     }
-
     $conf=_load_php_vars('config/'.$confname);
+
+    $conf=array_merge($conf0,$conf);
+
     $conf['data_dir']=$DBInfo->data_dir;
     $conf['dba_type']=$DBInfo->dba_type;
 
@@ -547,10 +550,15 @@ function macro_BBS($formatter,$value,$options=array()) {
 
             $save=$formatter->preview;
             $formatter->preview=1;
+            $save_markup=$formatter->format;
             ob_start();
+            if ($conf['default_markup']) {
+                $formatter->pi['#format']=$conf['default_markup'];
+            }
             $formatter->send_page($body,$options);
             $body= ob_get_contents();
             ob_end_clean();
+            $formatter->pi['#format']= $save_markup;
             $formatter->self_query=$q_save;
 
             $msg.="<div class='bbsArticle'>".
@@ -867,11 +875,26 @@ EOF;
             $savetext=$options['savetext'];
             $datestamp=$options['datestamp'];
             $subject=$options['subject'];
+            # strip some tags from the subject
+            $subject=
+                preg_replace("%</?(marquee|embed|object|script|form|frame|iframe|img|a|)[^>]*>%",
+                    '',$subject);
             $args['subject']=_stripslashes($subject);
             if ($options['id']=='Anonymous') {
                 $name=$options['name'];
+                $name=strip_tags($name);
                 $pass=$options['pass'];
                 $home=$options['homepage'];
+                # check a homepage address
+                if (!empty($home)) {
+                    if (!preg_match('/^((ftp|http|news):\/\/)[a-z0-9][a-z0-9_\-]+\.[a-z0-9\-\.]+.*/',$home)) {
+                        $options['msg']=_("Invalid HomePage address.");
+                        break;   
+                    } else if (!eregi("^(ftp|http|news):\/\/",$home)) {
+                        $home="http://".$home;
+                    }
+                }
+                # check email address
                 $email=$options['email'];
 
                 $args['name']=_stripslashes($name);
