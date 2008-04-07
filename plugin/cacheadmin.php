@@ -102,8 +102,11 @@ function macro_CacheAdmin($formatter,$value='',$options=array()) {
 
 function do_cacheadmin($formatter,$options) {
     global $Config;
-    if (in_array($options['id'],$Config['owners']) and
-        is_array($options['val'])) {
+    while ($_SERVER['REQUEST_METHOD']=='POST') {
+        if (!in_array($options['id'],$Config['owners']) or !is_array($options['val'])) {
+            $options['title']=_("You are not WikiMaster!!"); 
+            break;
+        }
 
         if ($options['type']!='public') $dir=$Config['cache_dir'];
         else $dir=$Config['cache_public_dir'];
@@ -116,7 +119,7 @@ function do_cacheadmin($formatter,$options) {
         }
         return;
     }
-    $options['title']=_("Clear cache dirs"); 
+    $options['title']=$options['title'] ? $options['title']:_("Clear cache dirs"); 
     $formatter->send_header('',$options);
     $formatter->send_title('','',$options);
     $ret= macro_CacheAdmin($formatter,$options['value'],$options);
