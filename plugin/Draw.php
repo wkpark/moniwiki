@@ -1,9 +1,16 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2008 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // Draw plugin with the JHotDraw for the MoniWiki
 //
-// Usage: [[Draw(hello)]]
+// Author: Won-Kyu Park <wkpark@kldp.org>
+// Date: 2003-01-01
+// Name: Draw Plugin
+// Description: Draw gif drawing using the TWiki Draw plugin 
+// URL: MoniWiki:DrawPlugin
+// Version: $Revision$
+// License: GPL
+// Usage: [[Draw(hello)]] without a gif extention.
 //
 // $Id$
 
@@ -52,6 +59,10 @@ function do_post_Draw($formatter,$options=array()) {
   $keyname=$DBInfo->_getPageKey($options['page']);
   $_dir=str_replace("./",'',$DBInfo->upload_dir.'/'.$keyname);
   $pagename=$options['page'];
+
+  umask(000);
+  if (!file_exists($_dir))
+    mkdir($_dir, 0777);
 
   $name=$options['value'];
 
