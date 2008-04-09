@@ -362,6 +362,8 @@ ul.autocompleter-choices li.autocompleter-selected span.autocompleter-queried
 
 /* Moniwiki BBS plugin */
 table.bbs { width:100%;}
+.bbsSimple .date { font-family: Trebuchet MS,Sans-serif;}
+.bbsSimple .more { text-align:right;}
 
 table.bbs thead {
   background:url(../imgs/plugin/BBS/titlebg.png) repeat-x;
@@ -452,6 +454,10 @@ div.bbsArticle .msg {
 }
 
 .bbsAdminBtn {
+}
+
+.bbsRSS {
+  float:right;
 }
 
 td.hit { text-align:center; }
