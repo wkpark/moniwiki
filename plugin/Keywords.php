@@ -67,7 +67,7 @@ define(MIN_FONT_SZ,10);
         $cmt=$mc->mtime($mkey);
 
         # check update or not
-        $dmt=filemtime($DBInfo->text_dir.'/.');
+        $dmt=filemtime($DBInfo->cache_dir.'/keywords/.');
         if ($dmt > $cmt) { # XXX crude method
             $mykeys=array();
         } else {
