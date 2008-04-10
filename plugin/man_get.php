@@ -1,14 +1,17 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2008 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a man_get action plugin for the MoniWiki
 //
 // $Id$
-// vim:et:ts=2:
+// vim:et:sts=2:sw=2
 
 function do_man_get($formatter,$options) {
   global $DBInfo;
-  $supported=array('ko','ja','fr','C','en');
+  $supported=array('C',
+    'bg','de','en','fr','hu','ja','pt','ru','sr',
+    'cs','de_DE', 'es','fr_FR','id','ko','nl','pt_BR','sk','sv',
+    'da','el','fi','hr','it','pl','ro','sl');
 
   if (!$options['man']) {
     $options['title']=_("No manpage selected");
