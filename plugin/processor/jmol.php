@@ -1,5 +1,5 @@
 <?php
-// Copyright 2004 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2004-2008 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a Jmol plugin for the MoniWiki
 //
@@ -12,11 +12,13 @@ function processor_jmol($formatter,$value="") {
                 '#ball&stick'=>'wireframe 0.18; spacefill 25%',
                 '#wireframe'=>'wireframe 0.1',
                 '#cpk'=>'spacefill 80%',
-                '#spacefill'=>'spacefill %80',
+                '#spacefill'=>'spacefill 80%',
                 '#black'=>'background [0,0,0]',
                 '#white'=>'background [255,255,255]',
                 );
     $default_size="width='200' height='200'";
+
+    $use_inline=1; // MOPAC format does not recognized with a param "loadInline"
 
     if ($value[0]=='#' and $value[1]=='!')
       list($line,$value)=explode("\n",$value,2);
@@ -30,7 +32,8 @@ function processor_jmol($formatter,$value="") {
     //$args='<param name="emulate" value="chime" />';
     $args.='<param name="progressbar" value="true" />';
 
-    $script='set frank off; wireframe 0.18; spacefill 25%;';
+    $script='set defaultColors Rasmol;set frank off;wireframe 0.18;spacefill 25%;';
+    //$script='set frank off;wireframe 0.18;spacefill 25%;';
     if ($DBInfo->jmol_script) $script.=$DBInfo->jmol_script;
 
 
@@ -67,8 +70,13 @@ function processor_jmol($formatter,$value="") {
       $size="width='$xsize' height='$ysize'";
     } else $size=$default_size;
 
-    $buff=str_replace("\n","\\n\"\n+\"",$body)."\n";
-    $molstring= rtrim($buff);
+    $molstring='';
+    $molscript='';
+    if ($use_inline == 0) {
+        $buff=str_replace("\n","\\n\"\n+\"",$body)."\n";
+        $molstring= rtrim($buff);
+        $molscript=&$script;
+    }
 
     $cid=&$GLOBALS['_transient']['jmol'];
     $id=$cid+0;
@@ -123,46 +131,32 @@ $base64js
             open.document.close();
             open.focus();
         }
-/*>*/
-</script>\n
-JS;
-    }
 
-    $cid++;
-    $js.=<<<JS
-<script type='text/javascript'>
-/*<![CDATA[*/
-addLoadEvent(function() {
-    this.timer=setTimeout(function() {
-        applet=document.getElementById("jmolApplet$id");
-        if (applet && applet.isActive != undefined) {
-            var model="$molstring";
-            applet.loadInline(model);
-            applet.script("$script");
-
-            var s=applet.getPropertyAsJSON('atomInfo') + "";
-            var btns=document.getElementById('jmolButton$id');
+        function addJmolBtns(applet,btns) {
+            this.applet=applet;
+            var self=this;
+            var s=this.applet.getPropertyAsJSON('atomInfo') + "";
             var A = eval("("+s+")");
-            if (A && A.atomInfo != undefined && A.atomInfo[0].partialCharge) {
+            if (A && A.atomInfo[0] != undefined && A.atomInfo[0].partialCharge) {
                 var btn = document.createElement('button');
                 var text = document.createTextNode('MEP');
                 btn.appendChild(text);
                 btn.onclick=function() {
-                    applet.script('isosurface delete resolution 0 molecular map MEP translucent');
+                    self.applet.script('isosurface delete resolution 0 molecular map MEP translucent');
                 };
                 btns.appendChild(btn);
             }
 
-            s=applet.getPropertyAsJSON('auxiliaryInfo') + "";
+            s=this.applet.getPropertyAsJSON('auxiliaryInfo') + "";
             A = eval("("+s+")");
-            if (A && A.auxiliaryInfo.models && A.auxiliaryInfo.models[0].moData) {
-                applet.script("mo fill nomesh;mo TITLEFORMAT \"Model %M, MO %I/%N |E = %E %U |?Symm = %S |?Occ = %O\"");
+            if (A != undefined && A.auxiliaryInfo.models && A.auxiliaryInfo.models[0].moData) {
+                this.applet.script("mo fill nomesh;mo TITLEFORMAT \"Model %M, MO %I/%N |E = %E %U |?Symm = %S |?Occ = %O\"");
                 var mos=A.auxiliaryInfo.models[0].moData.mos
                 var len=mos.length;
                 var sel = document.createElement('select');
                 var opt = document.createElement('option');
                 var text = document.createTextNode('-- MO --');
-                sel.onchange=function() { applet.script(this.value); };
+                sel.onchange=function() { self.applet.script(this.value); };
                 sel.appendChild(opt);
                 opt.appendChild(text);
                 for (var i=len;i>0;i--) {
@@ -174,16 +168,45 @@ addLoadEvent(function() {
                 }
                 btns.appendChild(sel);
             }
-            clearTimeout(this.timer);
+        }
+
+var _jmolTimer=new Array();
+/*>*/
+</script>\n
+JS;
+    }
+
+    $cid++;
+    $js.=<<<JS
+<script type='text/javascript'>
+/*<![CDATA[*/
+addLoadEvent(function() {
+    _jmolTimer[$id]=setInterval(function() {
+        var model="$molstring";
+        var script="$molscript";
+        var applet=document.getElementById("jmolApplet$id");
+        if (applet && applet.isActive != undefined) {
+            if (model.length > 0 ) applet.loadInline(model);
+            if (script.length > 0 ) applet.script(script);
+
+            var btns=document.getElementById('jmolButton$id');
+
+            addJmolBtns(applet,btns);
+            clearInterval(_jmolTimer[$id]);
         }
     } ,500);
 });
 /*>*/
 </script>\n
 JS;
-    $molstring=str_replace("\n","|\n",$body);
 
     $pubpath = $formatter->url_prefix.'/applets/JmolPlugin';
+
+    if ($use_inline) {
+        $molstring=str_replace("\n","|\n",$body);
+        if ($molstring{0} == ' ') $molstring="|\n".$molstring;
+        $args.="<param name='loadinline' value='$molstring' />";
+    }
 
     return <<<APP
 <div>
@@ -194,7 +217,7 @@ JS;
 $js
 <div>
 <button onclick="javascript:open_image(document.jmolApplet$id.getPropertyAsJSON('image'))">JPEG</button>
-<button onclick="javascript:open_image(document.jmolApplet$id.script('set minimizationSteps 10;set minimizationRefresh true;set minimizationCriterion 0.001; set loglevel 6;select *;minimize'))">MM</button>
+<button onclick="javascript:document.jmolApplet$id.script('set minimizationSteps 10;set minimizationRefresh true;set minimizationCriterion 0.001; set loglevel 6;select *;minimize')">MM</button>
 <span id='jmolButton$id'>
 </span>
 </div>
@@ -202,6 +225,5 @@ $js
 APP;
 }
 
-        //<param name='loadinline' value='$molstring' />
 // vim:et:sts=4:sw=4:
 ?>
