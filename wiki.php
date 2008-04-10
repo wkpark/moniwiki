@@ -3622,6 +3622,7 @@ class Formatter {
         }
 
         $line=$anchor.$edit.$this->head_repl(strlen($m[1]),$m[2],$attr);
+        $dummy='';
         $line.=$this->_div(1,$in_div,$dummy,' id="sc-'.$this->sect_num.'"'); // for folding
         $edit='';$anchor='';
       }
