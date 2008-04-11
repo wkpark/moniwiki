@@ -190,7 +190,7 @@ Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag,focus) {
                         .replace(/&lt;/g,'<')
                         .replace(/&amp;/g,'&')
                         ;
-        var postdata = 'action=markup&value=' + encodeURIComponent(myText);
+        var postdata = 'action=markup/ajax&value=' + encodeURIComponent(myText);
         var myhtml= HTTPPost(top.location, postdata);
 
         // hack hack
@@ -463,7 +463,7 @@ Wikiwyg.prototype.saveChanges = function() {
     var form=HTTPPost(location,toSend);
     if (form.substring(0,4) == 'true') {
         // get section
-        var toSend = 'action=markup&all=1';
+        var toSend = 'action=markup/ajax&all=1';
         if (section)
             toSend += '&section=' + section;
         form=HTTPPost(location,toSend);
@@ -909,7 +909,7 @@ proto.do_link = function() {
         var myhtml = '<'+tag+'>' + m[2] + '</'+ tag +'>';
         this.exec_command('inserthtml', myhtml);
     } else if (selection.match(/^\[\[.*\]\]$/)) { // macro or links XXX FIXME
-        var postdata = 'action=markup&value=' + encodeURIComponent(selection);
+        var postdata = 'action=markup/ajax&value=' + encodeURIComponent(selection);
         var myhtml= HTTPPost(top.location, postdata);
 
         var myhtml = myhtml.replace(/^(.|\n)*<div>(\s|\n)*(<span)/i,'$3')
@@ -2351,7 +2351,7 @@ proto.href_is_wiki_link = function(href) {
 }
 
 proto.convertWikitextToHtml = function(wikitext, func) {
-    var postdata = 'action=markup&value=' + encodeURIComponent(wikitext);
+    var postdata = 'action=markup/ajax&value=' + encodeURIComponent(wikitext);
 
     HTTPPost(
         self.location,
@@ -2360,7 +2360,7 @@ proto.convertWikitextToHtml = function(wikitext, func) {
 }
 
 proto.convertWikitextToHtmlAll = function(wikitext, func) {
-    var postdata = 'action=markup&all=1&value=' + encodeURIComponent(wikitext);
+    var postdata = 'action=markup/ajax&all=1&value=' + encodeURIComponent(wikitext);
     HTTPPost(
         self.location,
         postdata,
