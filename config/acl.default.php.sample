@@ -7,7 +7,7 @@
 # $Id$
 @Guest	Anonymous
 *	@ALL		deny	*
-*	@ALL		allow	edit,ticket,savepage,titleindex,bookmark
+*	@ALL		allow	edit,markup,ticket,savepage,titleindex,bookmark,pagelist,pagelist/ajax
 *	@User		allow	*
 # some pages are allowed to edit
 WikiSandBox	@Guest	allow	edit,info,diff
