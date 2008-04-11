@@ -1339,7 +1339,7 @@ class Version_RCS {
     if ($rev2) $option.="-r$rev2 ";
 
     $filename=$this->_filename($pagename);
-    $fp=popen("rcsdiff -x,v/ -u $option ".$filename.$this->NULL,'r');
+    $fp=popen("rcsdiff -x,v/ --minimal -u $option ".$filename.$this->NULL,'r');
     if (!is_resource($fp)) return '';
     while (!feof($fp)) {
       # trashing first two lines
