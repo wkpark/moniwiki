@@ -53,10 +53,10 @@ function _get_metadata($body) {
     $val='';
     $meta=array();
     $metaok=0;
-    while($body) {
+    while(!empty($body)) {
         list($line, $body)= split("\n", $body,2);
         if ($key and ($line{0}==' ' or $line{0}=="\t")) { $meta[$key].=$line."\n";continue;}
-        if ($line=="") {
+        if (!trim($line)) {
             $metaok=1;
             break;
         }

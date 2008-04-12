@@ -78,7 +78,7 @@ class BBS_text {
 
         if (!file_exists($this->index)) {
             umask(000);
-            @mkdir($this->data_dir,0777); // XXX
+            _mkdir_p($this->data_dir,0777); // XXX
             @mkdir($this->text_dir,0777); // XXX
             @mkdir($this->text_dir,0777); // XXX
             umask(022);
@@ -234,23 +234,25 @@ EOF;
 
     function deleteIndex($id) {
         $check=0;
+        $id=trim($id);
         $fp= fopen($this->index, 'r+');
-        while (is_resource($fp) and ($fz=filesize($this->index))>0){
+        while (isset($id) and is_resource($fp) and ($fz=filesize($this->index))>0){
             fseek($fp,0,SEEK_END);
             if ($fz <= 1024) {
                 fseek($fp,0);
                 $ll=rtrim(fread($fp,1024));
                 $lines=explode("\n",$ll);
-                for ($i=sizeof($lines);$i>=0;$i--) {
-                    if (preg_match('/^'.$id.',/',$lines[$i]))
+                for ($i=0,$sz=sizeof($lines);$i<$sz;$i++) {
+                    if (preg_match('/^'.$id.',/',$lines[$i])) {
                         unset($lines[$i]);break;
+                    }
                 }
-                $all=implode("\n",$lines)."\n";
+                $all='';
+                if (sizeof($lines)) $all=implode("\n",$lines)."\n";
                 fseek($fp,0);
                 fwrite($fp,$all);
                 ftruncate($fp,strlen($all));
                 fclose($fp);
-                # XXX not tested
                 break;
             }
             $a=-1; // hack, don't read last \n char.
@@ -369,10 +371,12 @@ EOF;
         while (is_resource($fp) and ($fz=filesize($this->index))>0){
             fseek($fp,0,SEEK_END);
             if ($fz <= 1024) {
-                print '='.$nline.','.$check_to.'<br />';
                 fseek($fp,0);
                 $ll=rtrim(fread($fp,1024));
-                $lines=array_reverse(explode("\n",$ll));
+                if (trim($ll))
+                    $lines=array_reverse(explode("\n",$ll));
+                else
+                    $lines=array();
                 break;
             }
             $a=-1; // hack, don't read last \n char.
@@ -467,6 +471,7 @@ function macro_BBS($formatter,$value,$options=array()) {
     }
 
     # load a config file
+    $conf0=array();
     if (file_exists('config/bbs.'.$bname.'.php')) {
         $confname='bbs.'.$bname.'.php';
         $conf0=_load_php_vars('config/bbs.default.php');
@@ -502,6 +507,7 @@ function macro_BBS($formatter,$value,$options=array()) {
         " addReplyLink(\\1); //--></script>";
     $msg='';
     $narticle=sizeof($nids);
+
     foreach($nids as $nid) {
         if (!$nid or !$MyBBS->hasPage($nid)) continue;
         $fields=array('Name','Subject','Date','Email','HomePage','IP','Keywords');
@@ -512,7 +518,6 @@ function macro_BBS($formatter,$value,$options=array()) {
 #Email: wkpark@gmail.com
 #HomePage: 
 #IP: 2xx.xxx.xxx.x
-
         $body=$MyBBS->getPage($nid);
         if ($body != null) {
             $options['nosisters']=1;
@@ -800,6 +805,8 @@ function do_bbs($formatter,$options=array()) {
             for ($i=0,$sz=sizeof($nids);$i<$sz;$i++) {
                 if ($MyBBS->hasPage($nids[$i])) {
                     $MyBBS->deletePage($nids[$i]);
+                } else {
+                    $MyBBS->deleteIndex($nids[$i]);
                 }
             }
 
@@ -810,6 +817,7 @@ function do_bbs($formatter,$options=array()) {
                 $lnk=$formatter->link_url($formatter->page->urlname,'?'.($query ? $query:'action=show'));
                 $myrefresh='Refresh: '.$sec.'; url='.qualifiedURL($lnk);
             }
+            $options['msg']=_("Successfully deleted.");
             $header=array("Expires: " . gmdate("D, d M Y H:i:s", 0) . " GMT"); 
             if ($myrefresh) $header[]=$myrefresh;
             $formatter->send_header($header,$options);
@@ -938,7 +946,9 @@ EOF;
                 $lnk=$formatter->link_url($formatter->page->urlname,"?action=show");
                 $myrefresh='Refresh: '.$sec.'; url='.qualifiedURL($lnk);
             }
-            $header=array("Expires: " . gmdate("D, d M Y H:i:s", 0) . " GMT"); 
+            $header=array("Expires: " . gmdate("D, d M Y H:i:s", 0) . " GMT");
+            $options['msg']=_("New post added successfully");
+
             if ($myrefresh) $header[]=$myrefresh;
             $formatter->send_header($header,$options);
             $formatter->send_title("","",$options);
@@ -1010,6 +1020,7 @@ EOF;
 EOF;
         $formatter->_mtime=0;
         $options['simple']=2;
+        $options['nocategories']=1;
         $options['minor']=1; # do not show a minor checkbox
         print macro_EditText($formatter,$value,$options);
         $formatter->_raw_body=null;
