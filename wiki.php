@@ -2998,7 +2998,7 @@ class Formatter {
       preg_match('/^((&lt;[^>]+>)?)(\s?)(.*)(?<!\s)(\s*)?$/s',
         $cells[$i+1],$m);
       $cell=$m[3].$m[4].$m[5];
-      if ($this->use_enhanced)
+      if ($this->use_enhanced and strpos($cell,"\n") !== false)
         $cell=$this->processor_repl('monimarkup',$cell);
       else
         $cell=str_replace("\n","<br />\n",$cell);
@@ -3333,7 +3333,7 @@ class Formatter {
       if ($line[$ll-1]=='&') {
         $oline.=substr($line,0,-1)."\n";
         continue;
-      } else if ($in_table and !preg_match('/\|\|$/',$line)) {
+      } else if (($in_table or preg_match('/^\s*\|\|/',$oline)) and !empty($oline) and !preg_match('/\|\|$/',$line)) {
         $oline.=$line."\n";
         continue;
       } else {
