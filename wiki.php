@@ -1788,6 +1788,7 @@ class Formatter {
     $this->postfilters=$DBInfo->postfilters;
     $this->use_rating=$DBInfo->use_rating;
     $this->use_etable=$DBInfo->use_etable;
+    $this->use_enhanced=$DBInfo->use_enhanced;
     $this->use_metadata=$DBInfo->use_metadata;
     $this->udb=$DBInfo->udb;
     $this->check_openid_url=$DBInfo->check_openid_url;
@@ -2997,7 +2998,10 @@ class Formatter {
       preg_match('/^((&lt;[^>]+>)?)(\s?)(.*)(?<!\s)(\s*)?$/s',
         $cells[$i+1],$m);
       $cell=$m[3].$m[4].$m[5];
-      $cell=str_replace("\n","<br />\n",$cell); // XXX
+      if ($this->use_enhanced)
+        $cell=$this->processor_repl('monimarkup',$cell);
+      else
+        $cell=str_replace("\n","<br />\n",$cell);
       if ($m[3] and $m[5]) $align='center';
       else if (!$m[3]) $align='';
       else if (!$m[5]) $align='right';
@@ -3279,7 +3283,7 @@ class Formatter {
 
     foreach ($lines as $line) {
       # empty line
-      if (!strlen($line)) {
+      if (!strlen($line) and empty($oline)) {
         if ($in_pre) { $this->pre_line.="\n";continue;}
         if ($in_li) {
           if ($in_table) {
@@ -3328,6 +3332,9 @@ class Formatter {
       $ll=strlen($line);
       if ($line[$ll-1]=='&') {
         $oline.=substr($line,0,-1)."\n";
+        continue;
+      } else if ($in_table and !preg_match('/\|\|$/',$line)) {
+        $oline.=$line."\n";
         continue;
       } else {
         $line=$oline.$line;
@@ -3525,7 +3532,7 @@ class Formatter {
           continue;
         }
       } elseif ($in_table && ($line[0]!='|' or
-              !preg_match("/^\|{2}.*\|{2}$/",$line))) {
+              !preg_match("/^\|{2}.*\|{2}$/s",$line))) {
         if ($this->use_etable && $in_table && preg_match('/^\|\|/',$line)) {
           $this->table_line.=substr($line,2)."\n";
           continue;

@@ -1508,7 +1508,7 @@ proto.chomp_n = function() {
         }
     }
     if (string) {
-        string = string.replace(/[\r\n]+$/, '');
+        string = string.replace(/&?[\r\n]+$/, '');
         if (string != '') this.appendOutput(string); // MY
     }
 }
