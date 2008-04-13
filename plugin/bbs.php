@@ -507,6 +507,7 @@ function macro_BBS($formatter,$value,$options=array()) {
         " addReplyLink(\\1); //--></script>";
     $msg='';
     $narticle=sizeof($nids);
+    $js='';
 
     foreach($nids as $nid) {
         if (!$nid or !$MyBBS->hasPage($nid)) continue;
@@ -594,14 +595,22 @@ function macro_BBS($formatter,$value,$options=array()) {
             $msg.='<div class="bbsComment">'.$comment.'</div><div class="bbsArticleBtn">'.implode(" ",$btn).'</div>';
             unset($btn['delete']);
             unset($btn['edit']);
+            $title=str_replace('"','\"',$metas['Subject']);
+            $js.=<<<JS
+<script type="text/javascript">
+/*<![CDATA[*/
+document.title+=" [" + $snid + "] - " + "$title";
+/*]]>*/
+</script>
+JS;
         }
     }
     if (!empty($msg) and ! $_GET['p']) return $msg;
 
     if (1) { # XXX
         $nochk=_("Please check article numbers.");
-        $js=<<<JS
-<script language='javascript'>
+        $js.=<<<JS
+<script type='text/javascript'>
 /*<![CDATA[*/
   function send_list(obj,mode) {
     var tmp="";
@@ -689,6 +698,8 @@ JS;
       $pnut=_get_pagelist($formatter,$pages,
         '?'.$extra.
         ($extra ?'&amp;p=':'p='),$options['p'],$ncount);
+    else
+      $pnut="<div class='clear'></div>";
 
     $extra=$options['p'] ? '&amp;p='.$options['p']:'';
 
