@@ -48,7 +48,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
   #foreach ($lines as $line) {
   $count=0;
   $showcount=($options['count']>5) ? $options['count']: 10;
-  for($line = strtok($log, "\n"); $line !== false; $line = strtok("\n")) {
+  for(; !empty($line) or !empty($log); list($line,$log) = explode("\n",$log,2)) {
     if (!$state) {
       if (!preg_match("/^---/",$line)) { continue;}
       else {$state=1; continue;}
