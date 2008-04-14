@@ -130,6 +130,12 @@ class processor_monimarkup
         $_eop=0; // end of paragraph
         $oline=null;
         foreach ($lines as $line) {
+            if (substr($line,-1) == '&') { $oline.="\n".$line; continue; }
+            if (!empty($oline) and preg_match('/^\s*\|\|/',$oline)) {
+                if ( !preg_match('/\|\|$/',$oline)) {
+                    $oline.="\n".$line; continue;
+                }
+            }
             if (!trim($line)) {
                 if ($_in_li) $oline.="\n".$line;
                 else {
@@ -290,13 +296,23 @@ class processor_monimarkup
         $_in_table=0;
         $lines=explode("\n",$text);
         $tout='';
+        $oline='';
         foreach ($lines as $line) {
+            if (substr($line,-1) == '&') { $oline.=substr($line,0,-1)."\n"; continue; }
+            if (!empty($oline) and ($_in_table or preg_match('/^\s*\|\|/',$oline))) {
+                if (!preg_match('/\|\|$/',$line)) {
+                    $oline.=$line."\n"; continue;
+                } else {
+                    $line=$oline.$line; $oline='';
+                }
+            }
             if (!trim($line)) {
                 if ($_in_table) {
                     $tout.=$formatter->_table(0,$dumm);
                     $_in_table=0;
                 }
                 $tout.=$line."\n";
+                #$tout.=$line."<br />\n";
                 continue;
             }
             $tr_diff='';
@@ -305,10 +321,11 @@ class processor_monimarkup
                 $line=substr($line,1,-1);
             }
             if (!$_in_table and $line[0]=='|' and
-                preg_match("/^(\|([^\|]+)?\|((\|\|)*))(&lt;[^>\|]*>)?(.*)(\|\|)$/s",$line,$m)) {
+                preg_match("/^(\|([^\|]+)?\|((\|\|)*))(&lt;[^>\|]*>)?(.*)(\|\|)?$/s",$line,$m)) {
+                #print "<pre>"; print_r($m); print "</pre>";
                 $open.=$formatter->_table(1,$m[5]);
                 if ($m[2]) $open.='<caption>'.$m[2].'</caption>';
-                if (!$m[5]) $line='||'.$m[3].$m[6].'||';
+                if (!$m[5]) $line='||'.$m[3].$m[6].$m[7];
                 $_in_table=1;
             } elseif ($_in_table and $line[0]!='|') {
                 $close=$formatter->_table(0,$dumm).$close;
@@ -399,6 +416,7 @@ class processor_monimarkup
         # 2-pass
         $chunk=$this->_pass2($body);
 
+        #print "<pre>";print_r($chunk);print "</pre>";
         $hr_func=$Config['hr_type'].'_hr';
 
         $_lidep=array(0);
