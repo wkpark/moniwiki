@@ -3333,7 +3333,7 @@ class Formatter {
       if ($line[$ll-1]=='&') {
         $oline.=substr($line,0,-1)."\n";
         continue;
-      } else if (($in_table or preg_match('/^\s*\|\|/',$oline)) and !empty($oline) and !preg_match('/\|\|$/',$line)) {
+      } else if (!empty($oline) and ($in_table or preg_match('/^\s*\|\|/',$oline)) and !preg_match('/\|\|$/',$line)) {
         $oline.=$line."\n";
         continue;
       } else {
