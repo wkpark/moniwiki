@@ -23,7 +23,7 @@ function macro_Comment($formatter,$value,$options=array()) {
   $captcha='';
   if (!$use_any and $DBInfo->use_ticket) {
      $seed=md5(base64_encode(time()));
-     $ticketimg=$formatter->link_url($formatter->page->name,'?action=ticket&amp;__seed='.$seed);
+     $ticketimg=$formatter->link_url($formatter->page->urlname,'?action=ticket&amp;__seed='.$seed);
      $captcha=<<<EXTRA
   <div class='captcha'><span class='captchaImg'><img src="$ticketimg" alt="captcha" /></span><input type="text" size="10" name="check" />
 <input type="hidden" name="__seed" value="$seed" /></div>
@@ -122,13 +122,11 @@ function do_comment($formatter,$options=array()) {
   if (!$DBInfo->security->writable($options)) {
     $formatter->preview=1;
     $options['title']=_("Page is not writable");
-    do_invalid($formatter,$options);
-    return;
+    return do_invalid($formatter,$options);
   } else if (!$DBInfo->hasPage($options['page'])) {
     $options['err']=_("You are not allowed to add a comment.");
     $options['title']=_("Page does not exists");
-    do_invalid($formatter,$options);
-    return;
+    return do_invalid($formatter,$options);
   }
 
   if ($options['usemeta']) $use_meta=1;
