@@ -3214,7 +3214,7 @@ class Formatter {
           if (is_string($DBInfo->use_tagging))
             $tmp.=$DBInfo->use_tagging;
           else
-            $tmp.="Tags: [[Keywords]]";
+            $tmp.=_("Tags:")." [[Keywords]]";
           $this->send_page($tmp); // XXX
         }
         //$this->store_pagelinks(); // XXX
@@ -4997,7 +4997,7 @@ function wiki_main($options) {
       if (!$tcache->exists($pagename) or $_GET['update_title'])
         $tcache->update($pagename,$formatter->pi['#title']);
     }
-    if ($DBInfo->use_keywords or $_GET['update_keywords']) {
+    if ($DBInfo->use_keywords or $DBInfo->use_tagging or $_GET['update_keywords']) {
       $tcache=new Cache_text('keywords');
       if (!$formatter->pi['#keywords']) {
         $tcache->remove($pagename);
