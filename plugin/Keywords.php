@@ -59,7 +59,7 @@ define(MIN_FONT_SZ,10);
     if (!$pagename) $pagename=$formatter->page->name;
 
     $mc=new Cache_text('macro');
-    $mkey='Keywords.'.md5($value);
+    $mkey='Keywords.'.md5($pagename.$value);
     $mykeys=array();
 
     if (!$formatter->refresh and $mc->exists($mkey)) {
