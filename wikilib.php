@@ -963,8 +963,7 @@ EOS;
 function do_invalid($formatter,$options) {
 
   if ($options['action_mode'] == 'ajax') {
-    ajax_invalid($formatter,$options);
-    return;
+    return ajax_invalid($formatter,$options);
   }
 
   $formatter->send_header("Status: 406 Not Acceptable",$options);
@@ -982,13 +981,15 @@ function do_invalid($formatter,$options) {
   }
 
   $formatter->send_footer("",$options);
+  return false;
 }
 
 function ajax_invalid($formatter,$options) {
+  if ($options['call']) return false;
   $formatter->send_header(array("Content-Type: text/plain",
 			"Status: 406 Not Acceptable"),$options);
   print "false\n";
-  return;
+  return false;
 }
 
 function do_post_DeleteFile($formatter,$options) {
