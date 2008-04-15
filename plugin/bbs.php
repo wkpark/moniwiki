@@ -849,15 +849,21 @@ function do_bbs($formatter,$options=array()) {
         }
         $header=array("Expires: " . gmdate("D, d M Y H:i:s", 0) . " GMT"); 
         if ($myrefresh) $header[]=$myrefresh;
-        $formatter->send_header($header,$options);
-        $formatter->send_title("","",$options);
 
         $p=new WikiPage($options['page'].':'.$options['no'],$options);
         $formatter->page=$p;
         $options['page']=$options['page'].':'.$options['no'];
         $options['saveonly']=1;
         $options['minor']=1; # do not log
-        $formatter->ajax_repl('comment',$options);
+
+        $formatter->send_header($header,$options);
+        $options['action_mode']='ajax';
+        $options['call']=1;
+        $ret=$formatter->ajax_repl('comment',$options);
+        if ($ret == false)
+            $options['msg']=_("Fail to post comment.");
+        unset($options['action_mode']);
+        $formatter->send_title("","",$options);
 
         $formatter->send_footer("",$options);
         return;
