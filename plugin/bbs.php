@@ -64,6 +64,7 @@ class BBS_text {
         $this->data_dir=$conf['data_dir'].'/bbs/'.$name;
         $this->cache_dir=$this->data_dir.'/cache';
         $this->dba_type=$conf['dba_type'];
+        $this->use_attach=$conf['use_attach'];
 
         # XXX
         $this->index=$this->data_dir.'/.index';
@@ -126,7 +127,9 @@ class BBS_text {
         $fp=fopen($this->current,'w');
         if ($fp) {
             $id=$cur+1;
+            flock($fp,LOCK_EX);
             fwrite($fp,"$id");
+            flock($fp,LOCK_UN);
             fclose($fp);
         }
         return $cur;
@@ -137,7 +140,9 @@ class BBS_text {
         $fp=fopen($this->count,'w');
         if ($fp) {
             $id=$cur+1;
+            flock($fp,LOCK_EX);
             fwrite($fp,"$id");
+            flock($fp,LOCK_UN);
             fclose($fp);
         }
         return $cur;
@@ -151,7 +156,9 @@ class BBS_text {
     function setCount($num) {
         $fp=fopen($this->count,'w');
         if ($fp) {
+            flock($fp,LOCK_EX);
             fwrite($fp,"$num");
+            flock($fp,LOCK_UN);
             fclose($fp);
         }
         return $cur;
@@ -162,7 +169,9 @@ class BBS_text {
         $fp=fopen($this->count,'w');
         if ($fp) {
             $id=$cur-1;
+            flock($fp,LOCK_EX);
             fwrite($fp,"$id");
+            flock($fp,LOCK_UN);
             fclose($fp);
             print $id;
         }
@@ -222,6 +231,11 @@ EOF;
         $options['pagename']=$this->bbsname.':'.$data['no'];
         $ret=$DBInfo->_savePage($this->getPageKey($id),$message,$options);
 
+        if (!empty($data['attach'])) {
+            $cache=new Cache_Text('attachments');
+            $cache->update($options['pagename'],serialize($data['attach']));
+        }
+
         return true;
     }
 
@@ -250,8 +264,10 @@ EOF;
                 $all='';
                 if (sizeof($lines)) $all=implode("\n",$lines)."\n";
                 fseek($fp,0);
+                flock($fp,LOCK_EX);
                 fwrite($fp,$all);
                 ftruncate($fp,strlen($all));
+                flock($fp,LOCK_UN);
                 fclose($fp);
                 break;
             }
@@ -288,6 +304,7 @@ EOF;
                         $pp=$a+$p+1+strlen($line)+1;
                         fseek($fp,$pp,SEEK_END);
 
+                        flock($fp,LOCK_EX);
                         if ($pp < 0) {
                             $lastall=fread($fp,-$pp);
                             fseek($fp,$a+$p+1,SEEK_END);
@@ -298,6 +315,7 @@ EOF;
                         #print $fz."/".$nfz."<br />";
                         #print '<pre>'.$lastall."</pre>";
                         ftruncate($fp,$nfz);
+                        flock($fp,LOCK_UN);
                         
                         $check=-1; break;
                         $lines[]=$line;
@@ -316,7 +334,9 @@ EOF;
         $fp=fopen($this->index,'a');
 
         if ($fp) {
+            flock($fp,LOCK_EX);
             fwrite($fp,$cur.','.$info."\n");
+            flock($fp,LOCK_UN);
             fclose($fp);
             return true;
         }
@@ -508,6 +528,29 @@ function macro_BBS($formatter,$value,$options=array()) {
     $msg='';
     $narticle=sizeof($nids);
     $js='';
+
+    if ($narticle == 1 and $options['mode'] == 'simple') {
+        $nid=$nids[0];
+        if (!$nid or !$MyBBS->hasPage($nid)) return '[[BBS(error)]]';
+        include_once('lib/metadata.php');
+        $body=$MyBBS->getPage($nid);
+        list($metas,$body)=_get_metadata($body);
+        $img='';
+        if ($MyBBS->use_attach) {
+            $cache=new Cache_text('attachments');
+            $attachs=unserialize($cache->fetch($MyBBS->bbsname.':'.$nid));
+            if (preg_match('/^attachment:([^\?]+)(\?.*)?$/',$attachs[0],$m)) {
+                $img=$formatter->macro_repl('Attachment',$m[1].'?width=100');
+            }
+            $subject=$formatter->link_tag($bpage,"?no=$nid",$metas['Subject']);
+        }
+
+        $out="<table>\n".
+            "<tr><td>".$img.'</td><td>'.$subject.'</td></tr>'.
+            "<tr><td colspan='2'></td>\n</tr></table>";
+
+        return $out;
+    }
 
     foreach($nids as $nid) {
         if (!$nid or !$MyBBS->hasPage($nid)) continue;
@@ -792,21 +835,34 @@ function do_bbs($formatter,$options=array()) {
         }
     }
 
+    $check_pass=false;
+    $MyBBS=macro_BBS($formatter,'',array('new'=>1));
+    if ($options['id'] != 'Anonymous' and $options['mode']=='edit' and $options['no']) {
+        $body=$MyBBS->getPage($options['no']);
+        if ($body != null) {
+            include_once('lib/metadata.php');
+            list($metas,$dummy)=_get_metadata($body);
+            if ($metas['Name'] == $options['id']) # XXX
+                $check_pass=true;
+        }
+    }
     # password check
     while ($options['no'] and
         ($options['mode']=='delete' or $options['mode']=='edit') and $_SERVER['REQUEST_METHOD']=="POST") {
         # check admin(WikiMaster) password
-        if ($DBInfo->admin_passwd) {
-            $check_pass=$DBInfo->admin_passwd==crypt($options['pass'],$DBInfo->admin_passwd);
-        } else
-            $check_pass=false;
+        if (!$check_pass) {
+            if ($DBInfo->admin_passwd) {
+                $check_pass=$DBInfo->admin_passwd==crypt($options['pass'],$DBInfo->admin_passwd);
+            } else
+                $check_pass=false;
+        }
 
         # check admin(BBSMaster) password
         if (!$check_pass and $conf['admin_passwd'])
             $check_pass=$conf['admin_passwd']==crypt($options['pass'],$conf['admin_passwd']);
 
+
         while ($check_ip and $check_pass and $options['mode']== 'delete') {
-            $MyBBS=macro_BBS($formatter,'',array('new'=>1));
         
             if (($p=strpos($options['no'],' '))!==false)
                 $nids=explode(" ",$options['no']);
@@ -970,7 +1026,16 @@ EOF;
             $formatter->send_header($header,$options);
             $formatter->send_title("","",$options);
 
+            if ($MyBBS->use_attach) { # XXX
+                $args['call']=1;
+                $lists=array();
+                $lists=$formatter->macro_repl('Attachments','',$args);
+
+                unset($args['call']);
+                if (!empty($lists)) $args['attach']=$lists;
+            }
             $MyBBS->savePage($args);
+
             $formatter->send_footer("",$options);
             return;
         }
@@ -1026,15 +1091,23 @@ EOF;
 $hidden
 </div>
 EOF;
-        else
+        else {
+            if (!$check_pass and $options['mode']=='edit')
+                $pass_form=
+    "<tr><th>Password:</th><td><input type='password' name='pass' /></td></tr>";
             $formatter->_extra_form=<<<EOF
+<div>
 <table border='0' width='100%'>
 <col width='20%' /><col width='80%' />
 <tbody>
 <tr><th>Subject:</th><td><input type='text' style="width:80%" name='subject' value='$args[subject]' /></td></tr>
+$pass_form
 </tbody>
 </table>
+$hidden
+</div>
 EOF;
+        }
         $formatter->_mtime=0;
         $options['simple']=2;
         $options['nocategories']=1;
