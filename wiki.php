@@ -1707,7 +1707,7 @@ class WikiPage {
       $version=new $class ($DBInfo);
       $rev= $version->get_rev($this->name,$mtime,$last);
 
-      if ($rev > 1.0)
+      if ($rev >= 1.0)
         return $rev;
     }
     return '';
@@ -1853,7 +1853,7 @@ class Formatter {
     
     # set smily_rule,_repl
     if ($DBInfo->smileys) {
-      $this->smiley_rule='/(?<=\s|^|>)('.$DBInfo->smiley_rule.')(?=\s|$)/e';
+      $this->smiley_rule='/(?<=\s|^|>)('.$DBInfo->smiley_rule.')(?=\s|<|$)/e';
       $this->smiley_repl="\$formatter->smiley_repl('\\1')";
 
       #$this->baserule[]=$smiley_rule;
@@ -2084,6 +2084,8 @@ class Formatter {
       if (substr($line,0,6) == '<?xml ')
         #$format='xslt';
         $format='xsltproc';
+      elseif (preg_match('/^<\?php(\s|\b)/',$line))
+        $format='php'; # builtin php detect
     } else {
       if ($body[0] == '#' and $body[1] =='!') {
         list($line, $body)= explode("\n", $body,2);
@@ -2343,7 +2345,7 @@ class Formatter {
     } else if (($p=strpos($url,' '))!==false) {
       $dummy=substr($url,0,$p);
       $text=substr($url,$p+1);
-      $url=$dummy;
+      if (!empty($text)) $url=$dummy;
     }
 
     if ($wiki== '') {
@@ -2367,8 +2369,11 @@ class Formatter {
     }
 
     if ($page=='/') $page='';
-    if (substr($page,-1)==' ') $sep='<b></b>'; // auto append SixSingleQuotes
-    $urlpage=_urlencode(trim($page));
+    if (substr($page,-1)==' ') {
+      $sep='<b></b>'; // auto append SixSingleQuotes
+      $page=rtrim($page);
+    }
+    $urlpage=_urlencode($page);
     #$urlpage=trim($page);
     if (strpos($url,'$PAGE') === false)
       $url.=$urlpage;
