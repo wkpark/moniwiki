@@ -34,7 +34,7 @@ function processor_pic($formatter,$value="") {
 
     $png_url=
       $DBInfo->cache_public_url ? $DBInfo->cache_public_url.'/'.$pngname:
-      $DBInfo->url_prefix.'/'.$png;
+      $DBInfo->url_prefix.'/'.$outpath_png;
   } else {
     $outpath_png=$cache_dir.'/'.$uniq.'.png';
     $png_url=$cache_url.'/'.$uniq.'.png';
