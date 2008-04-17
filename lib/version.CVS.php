@@ -89,6 +89,12 @@ class Version_CVS extends Version_RCS {
 
   function ci($pagename,$log) {
     $key=$this->_filename($pagename);
+
+    $this->_ci($filename,$log);
+  }
+
+  function _ci($filename,$log) {
+    $key=basename($filename); // XXX
     chdir($this->DB->text_dir);
     //$ret=system("cvs commit -q -t-\"".$pagename."\" -m\"".$log."\" ".$key);
     if (!file_exists($this->cvs_root."/".$this->modname."/".$key.",v"))
