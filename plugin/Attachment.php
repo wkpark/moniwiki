@@ -94,9 +94,12 @@ function macro_Attachment($formatter,$value,$options='') {
         if ($val == 'deletefile') $extra_action=$val;
         else $mydownload=$val;
       } else {
-        $attr.="$name=\"$val\" ";
-        if (in_array($name,array('width','height')) and $DBInfo->use_lightbox) {
-          $lightbox_attr=' rel="lightbox" ';
+        if (in_array($name,array('width','height'))) {
+          $attr.="$name=\"$val\" ";
+          if ($DBInfo->use_lightbox) $lightbox_attr=' rel="lightbox" ';
+        } else if (in_array($name,array('thumb','thumbwidth','thumbheight'))){
+          $use_thumb=1;
+          $thumb[$name]=$val;
         }
       }
     }
@@ -105,6 +108,7 @@ function macro_Attachment($formatter,$value,$options='') {
   }
 
   if (preg_match('/^data:image\/(png|jpg|jpeg);base64,/',$value)) {
+    // need to hack for IE ?
     return "<img src='".$value."' $attr />";
   }
 
@@ -121,9 +125,13 @@ function macro_Attachment($formatter,$value,$options='') {
         } else if ($k=='align') {
           $imgalign='img'.ucfirst($v);
           $align='class="'.$imgalign.'" ';
-        } else if ($k=='caption') {
+        } else if (in_array($k,array('caption','alt','title'))) {
+          // XXX
           $caption=preg_replace("/^([\"'])([^\\1]+)\\1$/","\\2",trim($v));
           #$caption=preg_replace('/^"([^"]*)"$/',"\\1",trim($v));
+        } else if (in_array($k,array('thumb','thumbwidth','thumbheight'))){
+          $use_thumb=1;
+          $thumb[$k]=$v;
         }
       }
     }
@@ -154,6 +162,7 @@ function macro_Attachment($formatter,$value,$options='') {
 
   $upload_file=$dir.'/'.$file;
   if ($options['link'] == 1) return $upload_file;
+
   if (!$text) $text=$file;
 
   $_l_file=_l_filename($file);
@@ -196,11 +205,57 @@ function macro_Attachment($formatter,$value,$options='') {
       $formatter->actions[]='UploadedFiles';
 
     if (!$img_link && preg_match("/\.(png|gif|jpeg|jpg)$/i",$upload_file)) {
+      // thumbnail
+      if ($DBInfo->use_convert_thumbs and $use_thumb) {
+        $thumb_width=$thumb['thumbwidth'] ? $thumb['thumbwidth']:150;
+        if (!file_exists($dir."/thumbnails/".$_l_file)) {
+          if (!file_exists($dir."/thumbnails")) @mkdir($dir."/thumbnails",0777);
+          if (function_exists('gd_info')) {
+            $fname=$dir.'/'.$_l_file;
+            list($w, $h) = getimagesize($fname);
+            //print $w.'x'.$h;
+            if ($w > $thumb_width) {
+              $nh=intval($thumb_width*$h/$w);
+              $thumb= imagecreatetruecolor($thumb_width,$nh);
+              if (preg_match("/\.(jpg|jpeg)$/i",$file))
+                $imgtype= 'jpeg';
+              else if (preg_match("/\.png$/i",$file))
+                $imgtype= 'png';
+              else if (preg_match("/\.gif$/i",$file))
+                $imgtype= 'gif';
+
+              $myfunc='imagecreatefrom'.$imgtype;
+              $source= $myfunc($fname);
+              //imagecopyresized($thumb, $source, 0,0,0,0, $thumb_width, $nh, $w, $h);
+              imagecopyresampled($thumb, $source, 0,0,0,0, $thumb_width, $nh, $w, $h);
+              $myfunc='image'.$imgtype;
+              $myfunc($thumb, $dir.'/thumbnails/'.$_l_file);
+            }
+          } else {
+            $fp=popen("convert -scale ".$thumb_width." ".$dir."/".$_l_file." ".
+              $dir."/thumbnails/".$_l_file.
+            $formatter->NULL,'r');
+            @pclose($fp);
+          }
+        }
+      }
+
       $alt=$alt ? $alt:$file;
-      if ($key != $pagename || $force_download)
-        $url=$formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=".urlencode($value));
-      else
-        $url=$DBInfo->url_prefix."/"._urlencode($upload_file);
+      if ($key != $pagename || $force_download) {
+        $val=_urlencode($value);
+        if ($use_thumb) {
+          $thumbdir='thumbnails/';
+          if (($p=strrpos($val,'/')) !== false)
+            $val=substr($val,0,$p).'/thumbnails'.substr($val,$p);
+          $extra_action='download';
+        }
+        $url=$formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=".$val);
+      } else {
+        if ($use_thumb)
+          $url=$DBInfo->url_prefix."/thumbnails/"._urlencode($upload_file);
+        else
+          $url=$DBInfo->url_prefix."/"._urlencode($upload_file);
+      }
 
       $img="<img src='$url' title='$alt' alt='$alt' style='border:0' $attr/>";
 
