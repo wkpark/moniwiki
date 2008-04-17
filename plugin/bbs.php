@@ -477,7 +477,7 @@ function macro_BBS($formatter,$value,$options=array()) {
     }
 
     $bpage=_rawurlencode($bname);
-    $nid= $_GET['no'] ? $_GET['no']:$nid;
+    $nid= $nid ? $nid:$_GET['no'];
 
     $nids=preg_split('/\s+/',$nid);
     rsort($nids);
@@ -540,14 +540,14 @@ function macro_BBS($formatter,$value,$options=array()) {
             $cache=new Cache_text('attachments');
             $attachs=unserialize($cache->fetch($MyBBS->bbsname.':'.$nid));
             if (preg_match('/^attachment:([^\?]+)(\?.*)?$/',$attachs[0],$m)) {
-                $img=$formatter->macro_repl('Attachment',$m[1].'?width=100');
+                $img=$formatter->macro_repl('Attachment',$m[1].'?thumbwidth=100');
             }
             $subject=$formatter->link_tag($bpage,"?no=$nid",$metas['Subject']);
         }
 
-        $out="<table>\n".
-            "<tr><td>".$img.'</td><td>'.$subject.'</td></tr>'.
-            "<tr><td colspan='2'></td>\n</tr></table>";
+        $out="<div class='simpleView'><table>\n".
+            "<tr><td class='img'>".$img."</td><td class='subject'>".$subject.'</td></tr>'.
+            "<tr><td colspan='2'></td>\n</tr></table></div>";
 
         return $out;
     }
