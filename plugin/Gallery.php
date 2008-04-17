@@ -275,9 +275,9 @@ function macro_Gallery($formatter,$value,&$options) {
         if (function_exists('gd_info')) {
           $fname=$dir.'/'.$file;
           list($w, $h) = getimagesize($fname);
-          if ($w > $width) {
+          if ($w > $thumb_width) {
             $nh=$width*$h/$w;
-            $thumb= imagecreatetruecolor($width,$nh);
+            $thumb= imagecreatetruecolor($thumb_width,$nh);
             // XXX only jpeg for testing now.
             if (preg_match("/\.(jpg|jpeg)$/i",$file))
               $imgtype= 'jpeg';
@@ -288,7 +288,8 @@ function macro_Gallery($formatter,$value,&$options) {
 
             $myfunc='imagecreatefrom'.$imgtype;
             $source= $myfunc($fname);
-            imagecopyresized($thumb, $source, 0,0,0,0, $thumb_width, $nh, $w, $h);
+            imagecopyresampled($thumb, $source, 0,0,0,0, $thumb_width, $nh, $w, $h);
+            #imagecopyresized($thumb, $source, 0,0,0,0, $thumb_width, $nh, $w, $h);
             $myfunc='image'.$imgtype;
             $myfunc($thumb, $dir.'/thumbnails/'.$file);
           }
