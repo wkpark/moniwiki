@@ -61,13 +61,14 @@ function _get_metadata($body) {
             break;
         }
         $key=strtok($line,' ');
-        $val=strtok('');
+        $val=rtrim(strtok(''));
         if ($key=='From') { # mail type
             if (empty($meta['magic'])) {
                 $meta['magic']=$line; continue;
             } else break;
         }
-        if (preg_match('/(^[a-zA-Z0-9\-\_]+):/',$key,$m)) $meta[$m[1]]=$val;
+        if (preg_match('/(^[A-Z][a-zA-Z0-9\-]+):\s/',$key,$m))
+            $meta[$m[1]]=$val;
         else break;
     }
     if ($metaok) return array($meta,$body);
