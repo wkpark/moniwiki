@@ -67,7 +67,7 @@ function _get_metadata($body) {
                 $meta['magic']=$line; continue;
             } else break;
         }
-        if (preg_match('/(^[A-Z][a-zA-Z0-9\-]+):\s/',$key,$m))
+        if (preg_match('/(^[A-Z][a-zA-Z0-9\-]+):$/',$key,$m))
             $meta[$m[1]]=$val;
         else break;
     }
