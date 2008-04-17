@@ -479,8 +479,11 @@ function macro_BBS($formatter,$value,$options=array()) {
     $bpage=_rawurlencode($bname);
     $nid= $nid ? $nid:$_GET['no'];
 
-    $nids=preg_split('/\s+/',$nid);
-    rsort($nids);
+    $nids=array();
+    if ($nid) {
+        $nids=preg_split('/\s+/',$nid);
+        rsort($nids);
+    }
 
     $options['p']= ($_GET['p'] > 0) ? $_GET['p']:1;
     $options['c']= ($ncount != 20) ? $ncount:'';
@@ -529,7 +532,7 @@ function macro_BBS($formatter,$value,$options=array()) {
     $narticle=sizeof($nids);
     $js='';
 
-    if ($narticle == 1 and $options['mode'] == 'simple') {
+    if ($nid and $narticle == 1 and $options['mode'] == 'simple') {
         $nid=$nids[0];
         if (!$nid or !$MyBBS->hasPage($nid)) return '[[BBS(error)]]';
         include_once('lib/metadata.php');
