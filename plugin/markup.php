@@ -13,6 +13,7 @@ function do_markup($formatter,$options) {
     $formatter->get_javascripts(); // trash default javascripts
 
     //$options['fixpath']=1;
+    $formatter->send_header("",$options);
     $formatter->postfilters=array('fiximgpath');
     if (!$options['all']) $formatter->wikimarkup=1;
     if ($options['value']) {
