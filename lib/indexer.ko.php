@@ -19,7 +19,7 @@ class KoreanIndexer {
     function _wordDic() {
         global $DBInfo;
 
-        $lines=file(dirname(__FILE__).'/indexer/word.txt.utf-8');
+        $lines=file(dirname(__FILE__).'/../data/dict/word.txt.utf-8');
         foreach ($lines as $l) $this->_word[]=trim($l);
         $this->_word_rule=implode('|',$this->_word);
         #print $this->_eomi_rule;
@@ -31,7 +31,7 @@ class KoreanIndexer {
         #ㄱ,ㄴ,ㄹ,ㅁ
         #$jos=array('x3134','x3139','x3141','x3142');
 
-        $lines=file(dirname(__FILE__).'/indexer/eomi.txt.utf-8');
+        $lines=file(dirname(__FILE__).'/../data/dict/eomi.txt.utf-8');
         foreach ($lines as $l) {
             $l=strtr($l,"*","?");
             $l=preg_replace('/^(.*)\?/','(\\1)?',$l);
@@ -46,7 +46,7 @@ class KoreanIndexer {
     }
 
     function _josaDic() {
-        $lines=file(dirname(__FILE__).'/indexer/josa.txt.utf-8');
+        $lines=file(dirname(__FILE__).'/../data/dict/josa.txt.utf-8');
         foreach ($lines as $l) {
             $l=strtr($l,"*","?");
             $l=preg_replace('/^(.*\?)/','(\\1)',$l);
@@ -99,7 +99,7 @@ class KoreanIndexer {
         $verb=$this->getVerb($word,$vmatch);
         if ($stem or $verb) {
 
-            if (strlen($match[1]) < strlen($vmatch[1])) {
+            if (strlen($match[1]) <= strlen($vmatch[1])) {
                 $type=2;
                 $match=$vmatch;
                 $stem=$verb;
@@ -146,18 +146,27 @@ class KoreanIndexer {
         # remove eomi
         $save='';
         preg_match('/('.$this->_eomi_rule.')$/S',$word,$match);
-        if (!empty($match[1])) {
+        $word1=$this->getWordRule($word);
+        preg_match('/('.$this->_eomi_rule.')$/S',$word1,$match1);
+        if ($match[1] and $match1[1]) {
+            if ((strlen($match[1]) <= strlen($match1[1])) ) {
+                $match=$match1;
+                $word=$word1;
+            }
+        } else if (!empty($match[1])) {
             $pword=substr($word,0,-strlen($match[1]));
             $pword=$this->getWordRule($pword).$match[1];
             preg_match('/('.$this->_eomi_rule.')$/S',$pword,$nmatch);
-        } else {
-            $word=$this->getWordRule($word);
-            preg_match('/('.$this->_eomi_rule.')$/S',$word,$match);
-        }
 
-        if ($match[1] and $nmatch[1] and (strlen($match[1]) < strlen($nmatch[1]))) {
-            $match=$nmatch;
-            $word=$pword;
+            if ($match[1] and $nmatch[1]) {
+                if (strlen($match[1]) <= strlen($nmatch[1])) {
+                    $match=$nmatch;
+                    $word=$pword;
+                }
+            }
+        } else if (!empty($match1[1])) {
+            $match=$match1;
+            $word=$word1;
         }
         if ($match) {
             #print $word."==".$match[1];
@@ -248,6 +257,14 @@ class KoreanIndexer {
                         unset($ch);
                         $ch= array_pop($ustem);
                         $j= hangul_to_jamo($ch);
+                    }
+                    if (in_array($j[0],array(0x1105) /* ㄹ */ )
+                        and in_array($j[1],array(0x1161,0x1165)) /* 라,러 */ ) {
+
+                        $syll=jamo_to_syllable(array($j[0],$j[1],0x11c2)); /* 랗,렇 */
+                        array_push($ustem,$syll[0]);
+                        unset($ch);
+                        unset($j);
                     }
                 }
 
