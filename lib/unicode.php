@@ -1,5 +1,5 @@
 <?php
-// Copyright 2005-2006 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2005-2008 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a unicode module for the MoniWiki
 //
@@ -76,6 +76,7 @@ $position = strpos_unicode( $unicode , utf8_to_unicode( '42' ) );
 
 function unicode_to_utf8( $str ) {
     $utf8 = '';
+    if (!is_array($str)) $str= array($str);
     foreach( $str as $unicode ) {
         if ( $unicode < 128 ) {
             $utf8.= chr( $unicode );
@@ -148,6 +149,7 @@ function hangul_to_jamo($unicode) {
         0x3163=>0x1175,
     );
     $jamo=array();
+    if (!is_array($unicode)) $unicode=array($unicode);
     //$unicode=utf8_to_unicode($str);
     foreach ($unicode as $u) {
         if ($u >= 0xac00 and $u <=0xd7af) {
@@ -210,6 +212,160 @@ function jamo_to_syllable($jamo) {
     $ch[0] = (($choseong * njungseong) + $jungseong) * njongseong + $jongseong
     + hangul_base;
     return $ch;
+}
+
+function hangul_jamo_to_cjamo($jamo) {
+    if ($jamo >= 0x1100 && $jamo <= 0x1112)
+        return hangul_choseong_to_cjamo($jamo);
+    if ($jamo >= 0x1161 && $jamo <= 0x1175)
+        return hangul_jungseong_to_cjamo($jamo);
+    if ($jamo >= 0x11a7 && $jamo <= 0x11c2)
+        return hangul_jongseong_to_cjamo($jamo);
+    // else
+    return $jamo;
+}
+
+function hangul_choseong_to_cjamo($ch)
+{
+    static $table = array(
+    0x3131,     /* 0x1100 */
+    0x3132,     /* 0x1101 */
+    0x3134,     /* 0x1102 */
+    0x3137,     /* 0x1103 */
+    0x3138,     /* 0x1104 */
+    0x3139,     /* 0x1105 */
+    0x3141,     /* 0x1106 */
+    0x3142,     /* 0x1107 */
+    0x3143,     /* 0x1108 */
+    0x3145,     /* 0x1109 */
+    0x3146,     /* 0x110a */
+    0x3147,     /* 0x110b */
+    0x3148,     /* 0x110c */
+    0x3149,     /* 0x110d */
+    0x314a,     /* 0x110e */
+    0x314b,     /* 0x110f */
+    0x314c,     /* 0x1110 */
+    0x314d,     /* 0x1111 */
+    0x314e      /* 0x1112 */
+    );
+    if ($ch < 0x1100 || $ch > 0x1112)
+    {
+        if ($ch == 0x1140)
+            return 0x317f;
+        else if ($ch == 0x114C)
+            return 0x3181;
+        else if ($ch == 0x1159)
+            return 0x3186;
+    return 0;
+    }
+    return $table[$ch - 0x1100];
+}
+
+
+function hangul_jungseong_to_cjamo($ch)
+{
+    static $table = array(
+    0x314f,     /* 0x1161 */
+    0x3150,     /* 0x1162 */
+    0x3151,     /* 0x1163 */
+    0x3152,     /* 0x1164 */
+    0x3153,     /* 0x1165 */
+    0x3154,     /* 0x1166 */
+    0x3155,     /* 0x1167 */
+    0x3156,     /* 0x1168 */
+    0x3157,     /* 0x1169 */
+    0x3158,     /* 0x116a */
+    0x3159,     /* 0x116b */
+    0x315a,     /* 0x116c */
+    0x315b,     /* 0x116d */
+    0x315c,     /* 0x116e */
+    0x315d,     /* 0x116f */
+    0x315e,     /* 0x1170 */
+    0x315f,     /* 0x1171 */
+    0x3160,     /* 0x1172 */
+    0x3161,     /* 0x1173 */
+    0x3162,     /* 0x1174 */
+    0x3163      /* 0x1175 */
+    );
+    if ($ch < 0x1161 || $ch > 0x1175)
+    {
+        if ($ch == 0x119E)
+            return 0x318D;
+    return 0;
+    }
+    return $table[$ch - 0x1161];
+}
+
+function hangul_jongseong_to_cjamo($ch)
+{
+    static $table = array(
+    0x3131,     /* 0x11a8 */
+    0x3132,     /* 0x11a9 */
+    0x3133,     /* 0x11aa */
+    0x3134,     /* 0x11ab */
+    0x3135,     /* 0x11ac */
+    0x3136,     /* 0x11ad */
+    0x3137,     /* 0x11ae */
+    0x3139,     /* 0x11af */
+    0x313a,     /* 0x11b0 */
+    0x313b,     /* 0x11b1 */
+    0x313c,     /* 0x11b2 */
+    0x313d,     /* 0x11b3 */
+    0x313e,     /* 0x11b4 */
+    0x313f,     /* 0x11b5 */
+    0x3140,     /* 0x11b6 */
+    0x3141,     /* 0x11b7 */
+    0x3142,     /* 0x11b8 */
+    0x3144,     /* 0x11b9 */
+    0x3145,     /* 0x11ba */
+    0x3146,     /* 0x11bb */
+    0x3147,     /* 0x11bc */
+    0x3148,     /* 0x11bd */
+    0x314a,     /* 0x11be */
+    0x314b,     /* 0x11bf */
+    0x314c,     /* 0x11c0 */
+    0x314d,     /* 0x11c1 */
+    0x314e      /* 0x11c2 */
+    );
+    if ($ch < 0x11a8 || $ch > 0x11c2) {
+        if ($ch == 0x11EB)
+            return 0x317f;
+        else if ($ch == 0x11F0)
+            return 0x3181;
+        else if ($ch == 0x11F9)
+            return 0x3186;
+        return 0;
+    }
+    return $table[$ch - 0x11a8];
+}
+
+
+function hangul_choseong_to_jongseong($ch)
+{
+    static $table = array(
+      0x11a8,  /* choseong kiyeok      -> jongseong kiyeok      */
+      0x11a9,  /* choseong ssangkiyeok -> jongseong ssangkiyeok */
+      0x11ab,  /* choseong nieun       -> jongseong nieun       */
+      0x11ae,  /* choseong tikeut      -> jongseong tikeut      */
+      0x0,     /* choseong ssangtikeut -> jongseong tikeut      */
+      0x11af,  /* choseong rieul       -> jongseong rieul       */
+      0x11b7,  /* choseong mieum       -> jongseong mieum       */
+      0x11b8,  /* choseong pieup       -> jongseong pieup       */
+      0x0,     /* choseong ssangpieup  -> jongseong pieup       */
+      0x11ba,  /* choseong sios        -> jongseong sios        */
+      0x11bb,  /* choseong ssangsios   -> jongseong ssangsios   */
+      0x11bc,  /* choseong ieung       -> jongseong ieung       */
+      0x11bd,  /* choseong cieuc       -> jongseong cieuc       */
+      0x0,     /* choseong ssangcieuc  -> jongseong cieuc       */
+      0x11be,  /* choseong chieuch     -> jongseong chieuch     */
+      0x11bf,  /* choseong khieukh     -> jongseong khieukh     */
+      0x11c0,  /* choseong thieuth     -> jongseong thieuth     */
+      0x11c1,  /* choseong phieuph     -> jongseong phieuph     */
+      0x11c2   /* choseong hieuh       -> jongseong hieuh       */
+    );
+    if ($ch < 0x1100 || $ch > 0x1112)
+    return 0;
+    return $table[$ch - 0x1100];
 }
 
 // make a UTF-8 regular expression for Hangul
