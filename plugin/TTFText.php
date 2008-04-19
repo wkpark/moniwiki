@@ -29,6 +29,7 @@ function macro_TTFText($formatter,$value,$params=array()) {
     $text=array_shift($args);
 
     $float='';
+    $imagemode=0;
     $args= empty($args) ? array():($args);
     foreach ($args as $arg) {
         list($k,$v)=split('=',trim($arg),2);
@@ -44,6 +45,8 @@ function macro_TTFText($formatter,$value,$params=array()) {
             $fontsize=intval($v);
         } else if ($k == 'dropcap' and (empty($v) or $v == 1)) {
             $float="float:left;";
+        } else if ($k == 'img' or $k == 'image') {
+            $imagemode=1;
         } else if ($k == 'float' and in_array($v, array('left','middle','right'))) {
             $float="float:$v;";
         } else if ($k == 'color' and preg_match('/^#[0-9a-f]{6}$/',$v)) {
@@ -112,6 +115,10 @@ function macro_TTFText($formatter,$value,$params=array()) {
     }
     $png_url=qualifiedUrl($png_url);
 
+    if ($imagemode) {
+        $text= str_replace('"',"&#34;",$text);
+        return "<img src=\"$png_url\" alt=\"$text\" style='vertical-align:middle' />";
+    }
     return "<span style='display:block;$float".
         "background:url(\"$png_url\") no-repeat;width:${w}px;height:${h}px;' />".
         "<span style='display:none'>".$text."</span></span>";
