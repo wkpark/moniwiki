@@ -775,7 +775,7 @@ JS;
 
     $formatter->_vars['item']=&$item;
     $out.= $formatter->include_theme('plugin/BBS/default','list',array());
-    #$out.= $formatter->include_theme('plugin/BBS/blue_tpl','list',array());
+    #$out.= $formatter->include_theme('plugin/BBS/default_tpl','list',array());
     #$out.= $formatter->processor_repl('tpl_','',array('path'=>'theme/plugin/BBS/blue_tpl/list.tpl'));
     #$out.="</tbody>\n";
 
@@ -912,7 +912,6 @@ function do_bbs($formatter,$options=array()) {
         $p=new WikiPage($options['page'].':'.$options['no'],$options);
         $formatter->page=$p;
         $options['page']=$options['page'].':'.$options['no'];
-        $options['saveonly']=1;
         $options['minor']=1; # do not log
 
         $formatter->send_header($header,$options);
