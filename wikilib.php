@@ -1245,7 +1245,6 @@ function do_titleindex($formatter,$options) {
       if (!$val) break;
         
       $rule=utf8_hangul_getSearchRule($val);
-      //print $rule;
 
       $test=@preg_match("/^$rule/",'');
       if ($test === false) $rule=$options['q'];
@@ -1278,6 +1277,7 @@ function do_titleindex($formatter,$options) {
       $val=iconv('UTF-8',$DBInfo->charset,$ret);
       if ($val) { print $val; return; }
     }
+    #print 'x'.$rule;
     print $ret;
     return;
   } else if ($options['sec'] =='') {
@@ -2119,7 +2119,12 @@ function macro_InterWiki($formatter,$value,$options=array()) {
 
   while (!isset($DBInfo->interwiki) or $options['init']) {
     $cf=new Cache_text('settings');
-    if (!$formatter->refresh and $cf->exists('interwiki')) {
+
+    $force_init=0;
+    if ($DBInfo->shared_intermap and $cf->mtime('interwiki') < filemtime($DBInfo->shared_intermap) ) {
+      $force_init=1;
+    }
+    if (!$formatter->refresh and $cf->exists('interwiki') and !$force_init) {
       $info=unserialize($cf->fetch('interwiki'));
       $DBInfo->interwiki=$info['interwiki'];
       $DBInfo->interwikirule=$info['interwikirule'];
