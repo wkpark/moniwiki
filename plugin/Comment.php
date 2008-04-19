@@ -190,34 +190,34 @@ function do_comment($formatter,$options=array()) {
     }
   }
   if ($button_preview && $options['savetext']) {
-    if (!$options['saveonly']) {
-    $formatter->send_header("",$options);
-    $formatter->send_title(_("Preview comment"),"",$options);
-    $formatter->send_page($savetext."\n----");
-    $options['savetext']=$savetext;
-    print macro_Comment($formatter,'',$options);
-    print $formatter->macro_repl('EditHints');
-    $formatter->send_footer("",$options);
+    if ($options['action_mode'] != 'ajax') {
+      $formatter->send_header("",$options);
+      $formatter->send_title(_("Preview comment"),"",$options);
+      $formatter->send_page($savetext."\n----");
+      $options['savetext']=$savetext;
+      print macro_Comment($formatter,'',$options);
+      print $formatter->macro_repl('EditHints');
+      $formatter->send_footer("",$options);
     }
-    return;
+    return false;
   } else if (!$savetext) {
-    if (!$options['saveonly']) {
-    $formatter->send_header("",$options);
-    $formatter->send_title(_("Add comment"),"",$options);
-    print macro_Comment($formatter,'',$options);
-    print $formatter->macro_repl('EditHints');
-    $formatter->send_footer("",$options);
+    if ($options['action_mode'] != 'ajax') {
+      $formatter->send_header("",$options);
+      $formatter->send_title(_("Add comment"),"",$options);
+      print macro_Comment($formatter,'',$options);
+      print $formatter->macro_repl('EditHints');
+      $formatter->send_footer("",$options);
     }
-    return;
+    return false;
   }
 
   $datestamp= $options['datestamp'];
   if ($formatter->page->mtime() > $datestamp) {
     $options['msg']='';
-    if (!$options['saveonly']) {
-    $formatter->send_header('',$options);
-    $formatter->send_title(_("Error: Don't make a clone!"),'',$options);
-    $formatter->send_footer('',$options);
+    if (!$options['action_mode'] != 'ajax') {
+      $formatter->send_header('',$options);
+      $formatter->send_title(_("Error: Don't make a clone!"),'',$options);
+      $formatter->send_footer('',$options);
     }
     return false;
   }
@@ -321,7 +321,7 @@ META;
 
   $formatter->page->write($body);
   $DBInfo->savePage($formatter->page,"Comment added",$options);
-  if ($options['saveonly']) return true;
+  if ($options['action_mode'] == 'ajax') return true;
 
   $options['msg']=sprintf(_("%s is commented successfully"),$formatter->link_tag($formatter->page->urlname,"?action=show",$options['page']));
   $title=_("Comment added successfully");
