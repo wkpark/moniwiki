@@ -1863,6 +1863,7 @@ class Formatter {
 
     $this->cache= new Cache_text("pagelinks");
     $this->bcache= new Cache_text("backlinks");
+    # XXX
   }
 
   function set_wordrule($pis=array()) {
@@ -3183,6 +3184,14 @@ class Formatter {
       }
       $lines=explode("\n",$body);
     } else {
+      # XXX need to redesign pagelink method ?
+      if (!$DBInfo->without_pagelinks_cache) {
+        $dmt=filemtime($DBInfo->text_dir.'/.');
+        $this->update_pagelinks= $dmt > $this->cache->mtime($this->page->name);
+        #like as..
+        #if (!$this->update_pagelinks) $this->pagelinks=$this->get_pagelinks();
+      }
+
       if ($options['rev']) {
         $body=$this->page->get_raw_body($options);
         $pi=$this->get_instructions($body);
@@ -3829,7 +3838,7 @@ class Formatter {
     if ($this->foots)
       print $this->macro_repl('FootNote','',$options);
 
-    if ($options['pagelinks']) $this->store_pagelinks();
+    if ($this->update_pagelinks and $options['pagelinks']) $this->store_pagelinks();
   }
 
   function register_javascripts($js) {
