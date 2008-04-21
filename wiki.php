@@ -2050,7 +2050,7 @@ class Formatter {
     $pi=array();
 
     $format='';
-    if (empty($this->pi['#format'])) { # set default page type. # XXX !$body ? v1.134 ?
+    if ( empty($this->pi['#format'])) {
       preg_match('%(:|/)%',$this->page->name,$sep);
       $key=strtok($this->page->name,':/');
       if (isset($Config['pagetype'][$key]) and $f=$Config['pagetype'][$key]) {
@@ -2066,10 +2066,11 @@ class Formatter {
       } else if (isset($Config['pagetype']['*']))
         $format=$Config['pagetype']['*']; // default page type
     } else {
-      $format=$this->pi['#format'];
+      if (empty($body) and !empty($this->pi['#format']))
+        $format=$this->pi['#format'];
     }
 
-    if (!$body) {
+    if (empty($body)) {
       if (!$this->page->exists()) return array();
       if ($this->pi) return $this->pi;
       $body=$this->page->get_raw_body();
