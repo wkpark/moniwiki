@@ -44,6 +44,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
   $out.= "</tr>\n";
 
   $users=array();
+  $rr=0;
  
   #foreach ($lines as $line) {
   $count=0;
@@ -61,7 +62,8 @@ function _parse_rlog($formatter,$log,$options=array()) {
     
     switch($state) {
       case 1:
-         preg_match("/^revision ([0-9]\.([0-9\.]+))\s*/",$line,$match);
+         $rr++;
+         preg_match("/^revision ([0-9a-f\.]+)\s*/",$line,$match);
          $rev=$match[1];
          if (preg_match("/\./",$match[2])) {
             $state=0;
@@ -70,11 +72,17 @@ function _parse_rlog($formatter,$log,$options=array()) {
          $state=2;
          break;
       case 2:
-         $inf=preg_replace("/date:\s(.*);\s+author:.*;\s+state:.*;/","\\1",$line);
+         $inf=preg_replace("/date:\s([0-9\/:\s]+)(;\s+author:.*;\s+state:.*;)?/","\\1",$line);
          list($inf,$change)=explode('lines:',$inf,2);
 
          if ($options['ago']) {
-           $ed_time=strtotime($inf.' GMT');
+           if (preg_match('/^[0-9]+$/',$inf)) {
+             $rrev='#'.$rr;
+             $ed_time=$inf;
+             $inf=gmdate("Y-m-d H:i:s",$ed_time+$tz_offset);
+           } else {
+             $ed_time=strtotime($inf.' GMT');
+           }
            $time_diff=(int)($time_current - $ed_time)/60;
            if ($time_diff > 1440*31) {
              $inf=gmdate("Y-m-d H:i:s",strtotime($inf.' GMT')+$tz_offset);
@@ -89,10 +97,16 @@ function _parse_rlog($formatter,$log,$options=array()) {
            }
 
          } else {
-           if ($tz_offset !='')
-             $inf=gmdate("Y-m-d H:i:s",strtotime($inf.' GMT')+$tz_offset);
-           else
-             $inf=date("Y-m-d H:i:s",strtotime($inf)); // localtime
+           if (preg_match('/^[0-9]+$/',$inf)) {
+             $rrev='#'.$rr;
+             $ed_time=$inf;
+             $inf=gmdate("Y-m-d H:i:s",$inf+$tz_offset);
+           } else {
+             if ($tz_offset !='')
+               $inf=gmdate("Y-m-d H:i:s",strtotime($inf.' GMT')+$tz_offset);
+             else
+               $inf=date("Y-m-d H:i:s",strtotime($inf)); // localtime
+           }
          }
          $inf=$formatter->link_to("?action=recall&rev=$rev",$inf);
 
@@ -127,8 +141,11 @@ function _parse_rlog($formatter,$log,$options=array()) {
          if (!$rev) break;
          $rowspan=1;
          if (!$simple and $comment) $rowspan=2;
+
+         $rrev= $rrev ? $rrev:$rev;
          $out.="<tr>\n";
-         $out.="<th valign='top' rowspan=$rowspan>$rev</th><td nowrap='nowrap'>$inf $change</td><td>$ip&nbsp;</td>";
+         $out.="<th valign='top' rowspan=$rowspan>$rrev</th><td nowrap='nowrap'>$inf $change</td><td>$ip&nbsp;</td>";
+         $rrev='';
          $achecked="";
          $bchecked="";
          if ($flag==1)
