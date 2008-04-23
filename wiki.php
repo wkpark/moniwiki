@@ -2710,7 +2710,8 @@ class Formatter {
 
   function macro_repl($macro,$value='',$options='') {
     // macro ID
-    $this->mid=!empty($this->mid) ? ++$this->mid:1;
+    $this->mid=$options['mid'] ? $options['mid']:
+      (!empty($this->mid) ? ++$this->mid:1);
 
     preg_match("/^([A-Za-z]+)(\((.*)\))?$/",$macro,$match);
     if (!$match) return $this->word_repl($macro);
@@ -2737,8 +2738,9 @@ class Formatter {
     }
 
     if ($this->_macrocache and empty($options['call']) and isset($this->dynamic_macros[$plugin])) {
+      $macro=$plugin. ($args ? '('.$args.')':'');
       $md5sum= md5($macro);
-      $this->_macros[$md5sum]=$macro;
+      $this->_macros[$md5sum]=array($macro,$mid);
       return '[['.$md5sum.']]';
     }
 
@@ -5076,7 +5078,8 @@ function wiki_main($options) {
         $mrepl=array();
         foreach ($_macros as $k=>$v) {
           $mrule[]='[['.$k.']]';
-          $mrepl[]=$formatter->macro_repl($v,'',$options); // XXX
+          $options['mid']=$v[1];
+          $mrepl[]=$formatter->macro_repl($v[0],'',$options); // XXX
         }
         $out=str_replace($mrule,$mrepl,$out);
       }
