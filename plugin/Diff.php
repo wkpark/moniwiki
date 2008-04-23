@@ -200,8 +200,8 @@ function macro_diff($formatter,$value,&$options)
     $rev1=$formatter->page->get_rev($rev1); // date
   } else if ($rev1==$rev2) $rev2='';
 
-  if ($rev1) $option="-r$rev1 ";
-  if ($rev2) $option.="-r$rev2 ";
+  #if ($rev1) $option="-r$rev1 ";
+  #if ($rev2) $option.="-r$rev2 ";
 
   if (!$rev1 && !$rev2) {
     $msg= _("No older revisions available");
@@ -222,6 +222,8 @@ function macro_diff($formatter,$value,&$options)
   if (!$out) {
     $msg= _("No difference found");
   } else {
+    #$rev1=substr($rev1,0,5);
+    #$rev2=substr($rev2,0,5);
     if ($rev1==$rev2) $ret.= "<h2>"._("Difference between versions")."</h2>";
     else if ($rev1 and $rev2) {
       $msg= sprintf(_("Difference between r%s and r%s"),$rev1,$rev2);
@@ -342,6 +344,8 @@ function do_diff($formatter,$options="") {
 
   $title='';
   if ($DBInfo->use_smartdiff) {
+    $rev=substr($rev,0,5);
+    $rev2=substr($rev2,0,5);
     if ($rev and $rev2)
       $msg= sprintf(_("Difference between r%s and r%s"),$rev,$rev2);
     else if ($rev)

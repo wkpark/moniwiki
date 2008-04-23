@@ -1707,8 +1707,7 @@ class WikiPage {
       $version=new $class ($DBInfo);
       $rev= $version->get_rev($this->name,$mtime,$last);
 
-      if ($rev >= 1.0)
-        return $rev;
+      if ($rev) return $rev;
     }
     return '';
   }

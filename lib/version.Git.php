@@ -16,13 +16,9 @@ class Version_Git extends Version_RCS {
     $this->cwd=getcwd();
 
     $this->NULL='';
-    $this->pmark='^';
-    if(getenv("OS")=="Windows_NT") {
-      # "^^" under the Win32
-      $this->pmark='^^';
-    } else {
+    if(getenv("OS")!="Windows_NT")
       $this->NULL=' 2>/dev/null';
-    }
+
     if ($DB->rcs_error_log) $this->NULL='';
 
     $this->git_user=$DB->git_user;
@@ -131,12 +127,9 @@ class Version_Git extends Version_RCS {
 
     if ($rev and $rev2)
       $revs="$rev $rev2 ";
-    else if ($rev)
-      $revs="$rev ";
-    else
-      "HEAD".$this->pmark."$rev HEAD ";
+    else if ($rev or $rev2)
+      $revs="$rev$rev2 HEAD ";
 
-    print $revs;
     $fp= popen("git-diff --no-color ".$revs.$filename,'r');
 
     chdir($this->cwd);
@@ -154,6 +147,7 @@ class Version_Git extends Version_RCS {
       $line=fgets($fp,1024);
       $out.= $line;
     }
+
     pclose($fp);
     return $out;
   }
@@ -163,12 +157,26 @@ class Version_Git extends Version_RCS {
     if ($last==1) {
       $tag='head:';
       $opt='-h';
-    } else $tag='revision';
+    } else $tag='HEAD~1';
     if ($mtime) {
-      $date=gmdate('Y/m/d H:i:s',$mtime);
+      $date=gmdate('Y-m-d H:i:s',$mtime);
       if ($date) {
-        $opt="-d\<'$date'";
-        $tag='revision';
+        chdir($this->DB->text_dir);
+        $filename=$this->_filename($pagename);
+
+        $opt="--reverse --all --since=\"$date\" ";
+        $fp= popen("git-rev-list ".$opt.$filename,'r');
+
+        chdir($this->cwd);
+        if (!$fp) return '';
+        $out='';
+        if (!feof($fp)) {
+          # trashing first two lines XXX
+          $line=fgets($fp,1024);
+          $out.= $line;
+        }
+        $tag=rtrim($line);
+        pclose($fp);
       }
     }
 
