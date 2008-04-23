@@ -57,10 +57,10 @@ class Version_Git extends Version_RCS {
     # XXX
     $filename= $this->_filename($pagename);
 
-    if ($rev) $rev=':'.$rev;
+    #if ($rev) $rev=':'.$rev;
 
     chdir($this->DB->text_dir);
-    $fp=@popen("git co $rev ".$filename,"r");
+    $fp=@popen("git-show $rev:".$filename,"r");
     chdir($this->cwd);
     $out='';
     if ($fp) {
@@ -105,8 +105,12 @@ class Version_Git extends Version_RCS {
       $rev = ":$rev";
     $filename=$this->_filename($pagename);
 
+    $sep=str_repeat('-',28);
+    $sep2=str_repeat('=',77);
+    $rlog_format="--pretty=format:\"$sep%nrevision %H%ndate: %at%n%s%b\"";
+
     chdir($this->DB->text_dir);
-    $fp= popen("git-log $opt $rev ".$filename.$this->NULL,"r");
+    $fp= popen("git-log $rlog_format $opt $rev ".$filename.$this->NULL,"r");
     chdir($this->cwd);
     $out='';
     if ($fp) {
@@ -116,15 +120,24 @@ class Version_Git extends Version_RCS {
       }
       pclose($fp);
     }
-    return $out;
+
+    return $out."\n$sep2\n";
   }
 
   function diff($pagename,$rev='',$rev2='') {
     # XXX
     $filename=$this->_filename($pagename);
     chdir($this->DB->text_dir);
-    $fp= popen("git-diff --no-color ".
-      "HEAD".$this->pmark."$rev HEAD ".$filename,'r');
+
+    if ($rev and $rev2)
+      $revs="$rev $rev2 ";
+    else if ($rev)
+      $revs="$rev ";
+    else
+      "HEAD".$this->pmark."$rev HEAD ";
+
+    print $revs;
+    $fp= popen("git-diff --no-color ".$revs.$filename,'r');
 
     chdir($this->cwd);
 
@@ -159,7 +172,7 @@ class Version_Git extends Version_RCS {
       }
     }
 
-    return '1';
+    return $tag;
   }
 
   function purge($pagename,$rev) {
