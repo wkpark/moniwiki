@@ -642,7 +642,7 @@ function macro_EditText($formatter,$value,$options='') {
   global $DBInfo;
 
   # simple == 1 : do not use EditTextForm, simple == 2 : do not use GUI/Preview
-  if (!$options['simple']!=1 and $DBInfo->hasPage('EditTextForm')) {
+  if ($options['simple']!=1 and $DBInfo->hasPage('EditTextForm')) {
     $p=$DBInfo->getPage('EditTextForm');
     $form=$p->get_raw_body();
     $f=new Formatter($p);
@@ -885,6 +885,7 @@ function macro_Edit($formatter,$value,$options='') {
     }
   }
 
+  $summary_msg=_("Summary of Change");
   if (!$options['simple']) {
     $preview_btn='<input type="submit" tabindex="6" name="button_preview" '.
       'value="'._("Preview").'" />';
@@ -895,9 +896,11 @@ function macro_Edit($formatter,$value,$options='') {
       $wysiwyg_btn.='&nbsp;<input type="button" tabindex="7" value="'.$wysiwyg_msg.
         '" onclick="javascript:sectionEdit(null,null,null)" />';
     }
+    $summary=<<<EOS
+$summary_msg: <input name="comment" value="$editlog" size="70" maxlength="70" style="width:80%" tabindex="2" />$extra_check<br />
+EOS;
   }
   $save_msg=_("Save");
-  $summary_msg=_("Summary of Change");
   if ($use_js and $DBInfo->use_resizer) {
     if ($DBInfo->use_resizer==1) {
       $resizer=<<<EOS
@@ -940,7 +943,7 @@ $formh
 </div>
 $extraform
 <div>
-$summary_msg: <input name="comment" value="$editlog" size="70" maxlength="70" style="width:80%" tabindex="2" />$extra_check<br />
+$summary
 <input type="hidden" name="action" value="$saveaction" />
 <input type="hidden" name="datestamp" value="$datestamp" />
 $hidden$select_category

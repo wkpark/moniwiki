@@ -1094,7 +1094,7 @@ $hidden
 </div>
 EOF;
         else {
-            if (!$check_pass and $options['mode']=='edit')
+            if (!$check_pass and !empty($options['no']) and $options['mode']=='edit')
                 $pass_form=
     "<tr><th>Password:</th><td><input type='password' name='pass' /></td></tr>";
             $formatter->_extra_form=<<<EOF
