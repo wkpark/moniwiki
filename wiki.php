@@ -1793,6 +1793,7 @@ class Formatter {
     $this->udb=$DBInfo->udb;
     $this->check_openid_url=$DBInfo->check_openid_url;
     $this->register_javascripts($DBInfo->javascripts);
+    $this->dynamic_macros=$DBInfo->dynamic_macros;
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -2317,6 +2318,7 @@ class Formatter {
           return "<img alt='$link' $attr src='$url' />";
         }
       }
+      $url=urldecode($url);
       return "<a class='externalLink' $attr href='$link' $this->external_target>$url</a>";
     } else {
       if ($url[0]=="?") $url=substr($url,1);
@@ -2732,6 +2734,12 @@ class Formatter {
       if (!$np) return $this->link_repl($name); // XXX
       include_once("plugin/$plugin.php");
       if (!function_exists ("macro_".$plugin)) return '[['.$macro.']]';
+    }
+
+    if ($this->_macrocache and empty($options['call']) and isset($this->dynamic_macros[$plugin])) {
+      $md5sum= md5($macro);
+      $this->_macros[$md5sum]=$macro;
+      return '[['.$md5sum.']]';
     }
 
     $ret=call_user_func_array("macro_$plugin",array(&$this,$args,$options));
@@ -5035,25 +5043,44 @@ function wiki_main($options) {
     $options['pagelinks']=1;
     if ($Config['cachetime'] > 0 and !$formatter->pi['#nocache']) {
       $cache=new Cache_text('pages',2,'html');
+      $mcache=new Cache_text('dynamicmacros',2);
       $mtime=$cache->mtime($pagename);
       $dtime=filemtime($Config['data_dir'].'/text/.'); // XXX
       $now=time();
       $check=$now-$mtime;
+      $extra_out='';
+      $_macros=null;
      
       if (!$formatter->refresh and (($mtime > $dtime) and ($check < $Config['cachetime']))) {
-        print $cache->fetch($pagename);
+        $_macros= unserialize($mcache->fetch($pagename));
+        $out= $cache->fetch($pagename);
         $mytime=gmdate("Y-m-d H:i:s",$mtime+$options['tz_offset']);
-        print "<!-- Cached at $mytime -->";
+        $extra_out= "<!-- Cached at $mytime -->";
       } else {
+        $formatter->_macrocache=1;
         ob_start();
         $formatter->send_page('',$options);
         flush();
         $out=ob_get_contents();
         ob_end_clean();
-        print $out;
-        if (!$formatter->pi['#nocache'])
+        $formatter->_macrocache=0;
+        $_macros=&$formatter->_macros;
+        if (!$formatter->pi['#nocache']) {
           $cache->update($pagename,$out);
+          if (isset($_macros))
+            $mcache->update($pagename,serialize($_macros));
+        }
       }
+      if ($_macros) {
+        $mrule=array();
+        $mrepl=array();
+        foreach ($_macros as $k=>$v) {
+          $mrule[]='[['.$k.']]';
+          $mrepl[]=$formatter->macro_repl($v,'',$options); // XXX
+        }
+        $out=str_replace($mrule,$mrepl,$out);
+      }
+      print $out.$extra_out;
       $args['refresh']=1; // add refresh menu
     } else {
       $formatter->send_page('',$options);
