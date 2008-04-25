@@ -2755,9 +2755,11 @@ class Formatter {
         $markups=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$value);
         $bra= "<span class='wikiMarkup' style='display:inline'><!-- wiki:\n".$markups."\n-->";
       } else {
+        if ($processor == $this->pi['#format']) { $btag='';$etag=''; }
+        else { $btag='{{{';$etag='}}}'; }
         if ($value{0}!='#' and $value{1}!='!') $notag="\n";
         $markups=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$value);
-        $bra= "<span class='wikiMarkup'><!-- wiki:\n{{{".$notag.$markups."}}}\n-->";
+        $bra= "<span class='wikiMarkup'><!-- wiki:\n".$btag.$notag.$markups.$etag."\n-->";
       }
       $ket= '</span>';
     }
@@ -3174,8 +3176,11 @@ class Formatter {
       }
       if ($pi['#format'] != 'wiki') {
         if ($pi['args']) $pi_line="#!".$pi['#format']." $pi[args]\n";
+        $savepi=$this->pi; // hack;;
+        $this->pi=$pi;
         $text= $this->processor_repl($pi['#format'],
           $pi_line.$body,$options);
+        $this->pi=$savepi;
         if ($this->use_smartdiff)
           $text= preg_replace_callback(array("/(\006|\010)(.*)\\1/sU"),
             array(&$this,'_diff_repl'),$text);
