@@ -491,12 +491,6 @@ Wikiwyg.prototype.cancelEdit = function() {
     var myWikiwyg = new Wikiwyg.Wikitext();
     var wikitext;
 
-    var toolbar=document.getElementById('toolbar');
-    if (toolbar) { // show toolbar
-        if (Wikiwyg.is_ie) toolbar.style.display='';
-        else toolbar.setAttribute('style','');
-    }
-
     var area=document.getElementById('editor_area');
     if (area) {
         var textarea=area.getElementsByTagName('textarea')[0];
@@ -513,8 +507,14 @@ Wikiwyg.prototype.cancelEdit = function() {
             wikitext = this.current_mode.textarea.value;
         }
 
-        //if (textarea)
-        //    textarea.value=wikitext; // XXX
+        if (textarea && confirm('Continue to edit current text ?') )
+            textarea.value=wikitext;
+    }
+
+    var toolbar=document.getElementById('toolbar');
+    if (toolbar) { // show toolbar
+        if (Wikiwyg.is_ie) toolbar.style.display='';
+        else toolbar.setAttribute('style','');
     }
     this.displayMode();
 }
@@ -2442,6 +2442,9 @@ function sectionEdit(ev,obj,sect) {
         var textarea=area.getElementsByTagName('textarea')[0].value;
         form=area.innerHTML;
 
+        if (confirm('Continue to edit current text ?') )
+            text=textarea;
+
         var toolbar=document.getElementById('toolbar');
         if (toolbar) { // hide toolbar
             if (Wikiwyg.is_ie) toolbar.style.display='none';
@@ -2458,10 +2461,9 @@ function sectionEdit(ev,obj,sect) {
        
         var mycheck= x.getAttribute('id');
         if (mycheck && mycheck.match(/WikiWygArea/)) {
-            var tmp = mycheck.split(/_/); // get already loaded WikiWygArea
+            var tmp = mycheck.split(/_/); // get already loaded WikiWygArea XXX hack
 
-            wikiwygs[tmp[1]].toolbarObject.resetModeSelector();
-            wikiwygs[tmp[1]].current_mode.enableThis();
+            wikiwygs[tmp[1]].editMode(form,text);
             return;
         }
         break;
