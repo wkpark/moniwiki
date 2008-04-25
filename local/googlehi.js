@@ -14,6 +14,7 @@ function MoniSearchHighlight() {
       var param = params[i].split('=');
       if (param.length < 2) continue;
       if (param[0] == 'q' || param[0] == 'p') { // q= for Google, p= for Yahoo
+        if (param[1].match(/^\d+$/)) continue;
         var query = decodeURIComponent(param[1].replace(/\+/g, ' '));
         if (query[0] == '!') query = query.slice(1);
         words = query.split(/(".*?")|('.*?')|(\s+)/);
