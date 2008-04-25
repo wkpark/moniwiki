@@ -304,8 +304,10 @@ function macro_diff($formatter,$value,&$options)
         return;
       }
     }
-    else
+    else {
+      $out=str_replace('<','&lt;',$out);
       $ret="<pre>$out</pre>\n";
+    }
   }
   if ($options['nomsg']) return $ret;
   return "<h2>$msg</h2>\n$ret";
