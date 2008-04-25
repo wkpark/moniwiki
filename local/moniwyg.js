@@ -924,7 +924,7 @@ proto.do_link = function() {
         if (match) {
             if (match[1] || match[3]) return null;
             url = match[2];
-        } else if (selection.match(/^\[.*\]$/)) {
+        } else if (selection.match(/^\[.+\]$/)) {
             urltext = selection.substr(1,selection.length-2);
             url = '/' + escape(urltext);
         }
@@ -1098,8 +1098,9 @@ proto.convert_html_to_wikitext = function(html) {
     // remove interwiki icons
     html =
         html.replace(/<a class=.?interwiki.?[^>]+><img [^>]+><\/a><a [^>]*title=(\'|\")?([^\'\" ]+)\1?[^>]*>[^<]+<\/a>/ig, "$2");
-    html =
-        html.replace(/<img class=.?(url|externalLink).?[^>]+>/ig, '');
+    html = html.replace(/<img class=.?(url|externalLink).?[^>]+>/ig, '');
+    // remove upper icons
+    html = html.replace(/<a[^>]+class=.?main.?[^>]+><img [^>]+><\/a>/ig, '');
     // smiley/inline tex etc.
     //html =
     //    html.replace(/<img [^>]*class=.?(tex|interwiki|smiley|external).?[^>]* alt=(\'|\")?([^\'\" ]+)\2?[^>]+>/ig, "$3");
@@ -1227,7 +1228,6 @@ proto.format_img = function(element) {
                 var alt=element.getAttribute('alt');
                 if (!alt.match(/attachment:/)) {
                     this.appendOutput(alt);
-                    this.appendOutput(' ');
                     return;
                 }
                 uri=alt;

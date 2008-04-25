@@ -2541,7 +2541,7 @@ class Formatter {
             "<tt class='sister'><a href='$url'>&#x203a;</a></tt>";
         case -3:
           #$url=$this->link_url(_rawurlencode($gpage));
-          return $this->link_tag(_rawurlencode($gpage),'',$this->icon['main']).
+          return $this->link_tag(_rawurlencode($gpage),'',$this->icon['main'],'class="main"').
             "<a href='$url' $attr>$word</a>";
         default:
           return "<a href='$url' $attr>$word</a>".
@@ -2554,7 +2554,7 @@ class Formatter {
       if ($gpage and $DBInfo->hasPage($gpage)) {
         $this->pagelinks[$page]=-3;
         #$url=$this->link_url(_rawurlencode($gpage));
-        return $this->link_tag(_rawurlencode($gpage),'',$this->icon['main']).
+        return $this->link_tag(_rawurlencode($gpage),'',$this->icon['main'],'class="main"').
           "<a href='$url' $attr>$word</a>";
       }
       if ($this->aliases[$page]) return $this->aliases[$page];
@@ -2736,7 +2736,7 @@ class Formatter {
       if (!function_exists ("macro_".$plugin)) return '[['.$macro.']]';
     }
 
-    if ($this->_macrocache and empty($options['call']) and isset($this->dynamic_macros[$plugin])) {
+    if ($this->_macrocache and empty($options['call']) and isset($this->dynamic_macros[strtolower($plugin)])) {
       $macro=$plugin. ($args ? '('.$args.')':'');
       $md5sum= md5($macro);
       $this->_macros[$md5sum]=array($macro,$mid);
