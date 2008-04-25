@@ -92,7 +92,7 @@ function insertTags(tagOpen,tagClose,myText,replaced)
         }
 
         var my=opener.document.getElementById('editor_area');
-        while (my.style.display == 'none') { // wikiwyg hack
+        while (my == null || my.style.display == 'none') { // wikiwyg hack
             txtarea = opener.document.getElementById('wikiwyg_wikitext_textarea');
 
             // get iframe and check visibility.
