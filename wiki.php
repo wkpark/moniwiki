@@ -3654,10 +3654,12 @@ class Formatter {
           $anchor="<a id='$anchor_id'></a>";
         }
         $attr='';
-        if ($DBInfo->use_folding == 1) {
-          $attr=" onclick=\"document.getElementById('sc-$this->sect_num').style.display=document.getElementById('sc-$this->sect_num').style.display!='none'? 'none':'block';\"";
-        } else {
-          $attr=" onclick=\"foldingSection(this,'sc-$this->sect_num');\"";
+        if ($DBInfo->use_folding) {
+          if ($DBInfo->use_folding == 1) {
+            $attr=" onclick=\"document.getElementById('sc-$this->sect_num').style.display=document.getElementById('sc-$this->sect_num').style.display!='none'? 'none':'block';\"";
+          } else {
+            $attr=" onclick=\"foldingSection(this,'sc-$this->sect_num');\"";
+          }
         }
 
         $line=$anchor.$edit.$this->head_repl(strlen($m[1]),$m[2],$attr);
