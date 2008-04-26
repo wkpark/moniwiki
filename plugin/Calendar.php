@@ -79,6 +79,7 @@ function macro_Calendar($formatter,$value="",$option="") {
 	if ($match[7]) {
 		$args=explode(",",$match[7]);
 
+		if (in_array ("nolink", $args)) $nolink=1;
 		if (in_array ("blog", $args)) $mode='blog';
 		if (in_array ("noweek", $args)) $day_heading_length=0;
 		if (in_array ("center", $args)) $attr=' align="center"';
@@ -168,6 +169,7 @@ function macro_Calendar($formatter,$value="",$option="") {
 	} else if ($mode) {
 		$link=$urlpagename;
 	}
+
 	while ($day <= $maxdays){
 		if($weekday == 7){ #start a new week
 			$calendar .= "</tr>\n<tr>";
@@ -185,7 +187,7 @@ function macro_Calendar($formatter,$value="",$option="") {
 			$classes=$nonexists;
 		}
 
-		if (!$mode) {
+		if (!$mode and !isset($nolink)) {
 			$link=$urlpagename."/".$link_prefix."-".sprintf("%02d",$day);
 			if ($DBInfo->hasPage($link))
 				$classes=$exists;

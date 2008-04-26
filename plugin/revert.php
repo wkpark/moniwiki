@@ -50,7 +50,7 @@ function do_revert($formatter,$options) {
 
             $class=getModule('Version',$DBInfo->version_class);
             $version=new $class ($DBInfo);
-            if ($force) unlink($key); // try to delete
+            if ($force) @unlink($key); // try to delete
             $ret=$version->co($formatter->page->name,$_POST['rev'],array('stdout'=>1));
             chmod($key,0666);
 

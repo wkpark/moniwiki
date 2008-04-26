@@ -168,6 +168,7 @@ FORM;
 	xmlns:dc="http://purl.org/dc/elements/1.1/">
 <!--
     Add "diffs=1" to add change diffs to the description of each items.
+    Add "summary=1" to add summary to the description of each items.
     Add "oe=utf-8" to convert the charset of this rss to UTF-8.
 -->\n
 HEAD;
