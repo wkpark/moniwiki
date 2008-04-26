@@ -1160,10 +1160,10 @@ proto.convert_html_to_wikitext = function(html) {
     // add final whitespace
     this.assert_new_line();
 
-    for (var i=0;i<this.output.length;i++) {
-        if (this.output[i].length)
-        this.output[i]=this.output[i].replace(/\\n/,"\n");
-    }
+    //for (var i=0;i<this.output.length;i++) {
+    //    if (this.output[i].length)
+    //    this.output[i]=this.output[i].replace(/\\n/,"\n");
+    //} XXX
 
     return this.join_output(this.output);
 }
