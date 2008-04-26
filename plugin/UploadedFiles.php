@@ -11,7 +11,7 @@ function do_uploadedfiles($formatter,$options) {
   $formatter->send_header("",$options);
   $formatter->send_title("","",$options);
 
-  print $list;
+  print "<div class='fileList'>".$list."</div>";
   $args['editable']=0;
   if (!in_array('UploadFile',$formatter->actions))
     $formatter->actions[]='UploadFile';
@@ -27,6 +27,8 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    $preview_width=64;
 
    #$use_preview=0;
+   $use_admin=1;
+   $use_fileinfo=1;
    $js_tag=0;
    $js_script='';
    $uploader='';
@@ -37,16 +39,27 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    $args=explode(',',$value);
    $value='';
 
+   $default_column=8;
+   $col=$options['col'] > 0 ? (int)$options['col']:$default_column;
+
    if ($formatter->preview) {
      $js_tag=1;$use_preview=1;
      $uploader='UploadForm';
+     $use_admin=0;
+     $use_fileinfo=0;
    } else if ($options['preview']) {
      $use_preview=1;
+     $use_admin=0;
+     $use_fileinfo=0;
    }
 
    if ($options['tag']) { # javascript tag mode
      $js_tag=1;$use_preview=1;
+     $use_admin=0;
+     $use_fileinfo=0;
    }
+
+   if ($use_fileinfo) $col=1;
 
    if ($DBInfo->use_lightbox and !$js_tag)
      $href_attr=' rel="lightbox[upload]" ';
@@ -99,7 +112,7 @@ function insertTags(tagOpen,tagClose,myText,replaced)
             var myframe = opener.document.getElementsByTagName('iframe')[0];
             if (myframe.style.display == 'none' || myframe.parentNode.style.display == 'none') break;
 
-            var postdata = 'action=markup&value=' + encodeURIComponent(tagOpen + myText + tagClose);
+            var postdata = 'action=markup/ajax&value=' + encodeURIComponent(tagOpen + myText + tagClose);
             var myhtml='';
             myhtml= HTTPPost(self.location, postdata);
 
@@ -249,13 +262,22 @@ EOS;
    $out.="<input type='hidden' name='action' value='DeleteFile' />\n";
    if ($key)
      $out.="<input type='hidden' name='value' value='$value' />\n";
+
+
    $out.="<table style='border:0' cellpadding='2'>\n";
-   $out.="<tr><th colspan='2'>File name</th><th>Size</th><th>Date</th></tr>\n";
+   $colspan='';
+   if ($use_admin) $colspan=" colspan='2'";
+   if ($use_fileinfo) {
+     $mname=_("File name");
+     $msize=_("Size");
+     $mdate=_("Date");
+     $out.="<tr><th$colspan>$mname</th><th>$msize</th><th>$mdate</th></tr>\n";
+   }
    $idx=1;
 
    if ($js_tag) {
-     $attr=' target="_blank"';
-     $extra='&amp;tag=1';
+     #$attr=' target="_blank"';
+     $extra='&amp;popup=1&amp;tag=1';
    } else {
      $attr='';
      $extra='';
@@ -263,19 +285,32 @@ EOS;
    foreach ($dirs as $file) {
       $link=$formatter->link_url($file,"?action=uploadedfiles$extra",$file,$attr);
       $date=date("Y-m-d",filemtime($dir."/".$DBInfo->pageToKeyname($file)));
-      $out.="<tr><td class='wiki'><input type='$checkbox' name='files[$idx]' value='$file' /></td><td class='wiki'><a href='$link'>$file/</a></td><td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td></tr>\n";
+      $out.="<tr>";
+      if ($use_admin)
+        $out.="<td class='wiki'><input type='$checkbox' name='files[$idx]' value='$file' /></td>";
+
+      $out.="<td class='wiki'><a href='$link'>$file/</a></td>";
+      if ($use_fileinfo)
+        $out.="<td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td>";
+      $out.="</tr>\n";
       $idx++;
    }
 
    if (!$options['nodir'] and !$dirs) {
       if ($js_tag) {
-        $attr=' target="_blank"';
+        #$attr=' target="_blank"';
         $extra='&amp;popup=1&amp;tag=1';
       }
       $link=$formatter->link_tag('UploadFile',"?action=uploadedfiles&amp;value=top$extra",
         "<img src='".$icon_dir."/32/up.png' style='border:0' class='upper' alt='..' />",$attr);
-      $date=date("Y-m-d",filemtime($dir."/.."));
-      $out.="<tr><td class='wiki'>&nbsp;</td><td class='wiki'>$link</td><td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td></tr>\n";
+      $out.="<tr>";
+      if ($use_admin) $out.="<td class='wiki'>&nbsp;</td>";
+      $out.="<td class='wiki'>$link</td>";
+      if ($use_fileinfo) {
+        $date=date("Y-m-d",filemtime($dir."/.."));
+        $out.="<td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td>";
+      }
+      $out.="</tr>\n";
    }
    if ($plink)
       $plink=$formatter->link_tag('',"?action=uploadedfiles$extra&amp;p=".($p+1),_("Next page &raquo;"),$attr);
@@ -288,10 +323,12 @@ EOS;
 
    $down_mode=(strpos($prefix,';value=') !== false);
    $mywidth=$preview_width;
+
+   $iidx=1;
    foreach ($upfiles as $file) {
       $_l_file=_l_filename($file);
       if ($down_mode)
-        $link=str_replace("value=","value=".rawurlencode($file),$prefix);
+        $link=str_replace(";value=",";value=".rawurlencode($file),$prefix);
       else
         $link=$prefix.rawurlencode($file); // XXX
 
@@ -316,15 +353,17 @@ EOS;
         }
       }
 
-      $i=0;
-      for (;$i<4;$i++) {
-         if ($size <= 1024) {
+      if ($use_fileinfo) {
+        $i=0;
+        for (;$i<4;$i++) {
+          if ($size <= 1024) {
             #$size= round($size,2).' '.$unit[$i];
             break;
-         }
-         $size=$size/1024;
+          }
+          $size=$size/1024;
+        }
+        $size=round($size,2).' '.$unit[$i];
       }
-      $size=round($size,2).' '.$unit[$i];
 
       $date=date('Y-m-d',filemtime($dir.'/'.$_l_file));
       $fname=$file;
@@ -353,16 +392,29 @@ EOS;
           $link="javascript:$tag";
         }
       }
-      $out.="<tr><td class='wiki'><input type='$checkbox' name='files[$idx]' value='$file' /></td><td class='wiki'><a href=\"$link\"$attr>$fname</a></td><td align='right' class='wiki'>$size</td><td class='wiki'>$date</td></tr>\n";
+      if ($iidx % $col == 1)
+      $out.="<tr>";
+      if ($use_admin)
+        $out.="<td class='wiki'><input type='$checkbox' name='files[$idx]' value='$file' /></td>";
+      $out.="<td class='wiki'><a href=\"$link\"$attr>$fname</a></td>";
+      if ($use_fileinfo) {
+        $out.="<td align='right' class='wiki'>$size</td><td class='wiki'>$date</td>";
+      }
+      if ($iidx % $col == 0)
+      $out.="</tr>\n";
       $idx++;
+      $iidx++;
    }
    $idx--;
    $msg=sprintf(_("Total %d files"),$idx);
    $out.="<tr><th colspan='2'>$msg</th><th colspan='2'>$plink</th></tr>\n";
    $out.="</table>\n";
-   if ($DBInfo->security->is_protected("deletefile",$options))
-     $out.=_("Password").": <input type='password' name='passwd' size='10' />\n";
-   $out.="<input type='submit' value='"._("Delete selected files")."' /></form>\n";
+   if ($use_admin) {
+     if ($DBInfo->security->is_protected("deletefile",$options))
+       $out.=_("Password").": <input type='password' name='passwd' size='10' />\n";
+     $out.="<input type='submit' value='"._("Delete selected files")."' />";
+   }
+   $out.="</form>\n";
 
    if (!$value and !in_array('UploadFile',$formatter->actions))
      $formatter->actions[]='UploadFile';
@@ -373,5 +425,5 @@ EOS;
    return $js_script.$out;
 }
 
-// vim:et:sw:sts=4:
+// vim:et:sw=4:sts=4:
 ?>
