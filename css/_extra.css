@@ -20,6 +20,10 @@ div.sectionEdit:hover {
   visibility:visible;
 }
 
+.fileList {
+  overflow-x:auto;
+}
+
 .gallery-img {
   /* float:left; */
 }
@@ -372,7 +376,7 @@ table.bbs thead {
 }
 
 table.bbs tbody tr:hover {
-  background-color:#eeeeee;
+  background:url(../imgs/plugin/BBS/selbg.png) repeat-x;
 }
 
 table.bbs tbody td {

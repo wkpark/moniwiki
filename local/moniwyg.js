@@ -898,6 +898,13 @@ proto.enableThis = function() {
 */
 }
 
+proto.process_command = function(command) {
+    if (this['do_' + command])
+        this['do_' + command](command);
+    if (! Wikiwyg.is_ie && command != 'image' && command != 'media') // hack for open.window
+        this.get_edit_window().focus();
+}
+
 proto.do_link = function() {
     var selection = this.get_link_selection_text();
     if (! selection) return;

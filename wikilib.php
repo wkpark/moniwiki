@@ -681,15 +681,19 @@ function do_edit($formatter,$options) {
   //print '<div id="editor_area">'.macro_EditText($formatter,$value,$options).'</div>';
   print macro_EditText($formatter,$value,$options);
   if ($DBInfo->use_wikiwyg>=2) {
-    $pi=$formatter->get_instructions($dum);
-    if (in_array($pi['#format'],array('wiki','monimarkup')) )
-      print <<<JS
+    $js=<<<JS
 <script type='text/javascript'>
 /*<![CDATA[*/
 sectionEdit(null,true,null);
 /*]]>*/
 </script>
 JS;
+    if (!$DBInfo->hasPage($options['page'])) print $js;
+    else {
+      $pi=$formatter->get_instructions($dum);
+      if (in_array($pi['#format'],array('wiki','monimarkup')) )
+	print $js;
+    }
   }
   $formatter->send_footer($args,$options);
 }

@@ -4209,7 +4209,11 @@ EOS;
     print $DBInfo->hr;
     if ($args['editable'] and !$DBInfo->security->writable($options))
       $args['editable']=-1;
-    
+
+    $key=$DBInfo->pageToKeyname($options['page']);
+    if (!in_array('UploadedFiles',$this->actions) and is_dir($DBInfo->upload_dir."/$key"))
+      $this->actions[]='UploadedFiles';
+
     $menus=$this->get_actions($args,$options);
 
     $hide_actions= $this->popup + $DBInfo->hide_actions;
