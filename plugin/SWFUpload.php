@@ -36,6 +36,8 @@ function macro_SWFUpload($formatter,$value) {
 
     if ($DBInfo->use_lightbox) {
         $myoptions.="\n<input type='hidden' name='use_lightbox' value='1' />";
+    } else {
+        $myoptions.="\n<input type='hidden' name='use_lightbox' value='0' />";
     }
 
     if ($formatter->preview) {
@@ -174,13 +176,13 @@ EOF;
     }
 
     // debug
-    //$fp=fopen('/var/tmp/swflog.txt','w+');
+    //$fp=fopen($swfupload_dir.'/swflog.txt','w+');
     //foreach ($options as $k=>$v) {
-    //    fwrite($fp,sprintf("%s=>%s\n",$k,$v));
+    //    if (is_string($v))
+    //         fwrite($fp,sprintf("%s=>%s\n",$k,$v));
     //}
-    //fclose($fp);
     // set the personal subdir
-    if ($options['value'] and preg_match('/^[a-f0-9\/]+$/i',$options['value'])) {
+    if ($options['value'] and preg_match('/^[a-z0-9\/]+$/i',$options['value'])) {
         $mysubdir=$options['value'];
 
         list($dum,$myval,$dum2)=explode('/',$options['value'],3); // XXX
@@ -190,6 +192,7 @@ EOF;
             umask($om);
         }
     }
+    //fclose($fp);
 
 
     //move the uploaded file

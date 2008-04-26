@@ -2442,7 +2442,7 @@ function sectionEdit(ev,obj,sect) {
         var textarea=area.getElementsByTagName('textarea')[0].value;
         form=area.innerHTML;
 
-        if (confirm('Continue to edit current text ?') )
+        if (obj == null && confirm('Continue to edit current text ?') )
             text=textarea;
 
         var toolbar=document.getElementById('toolbar');

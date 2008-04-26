@@ -168,7 +168,7 @@ function showImgPreview(filename) {
             myAlign="<div id='previewAlign'>";
             myAlign+=" <img src='" + img_dir + "/normal.png' class='alignImg' onclick='javascript:alignImg(this,\"normal\")' />";
             myAlign+=" <img src='" + img_dir + "/left.png'  class='alignImg' onclick='javascript:alignImg(this,\"left\")' />";
-            myAlign+=" <img src='" + img_dir + "/right.png'  class='alignImg' onclick='javascript:alignImg(this,\"light\")' />";
+            myAlign+=" <img src='" + img_dir + "/right.png'  class='alignImg' onclick='javascript:alignImg(this,\"right\")' />";
             myAlign+="</div>";
         }
     } else {

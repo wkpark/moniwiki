@@ -680,14 +680,17 @@ function do_edit($formatter,$options) {
   $formatter->send_title(sprintf(_("Edit %s"),$options['page']).$sec,"",$options);
   //print '<div id="editor_area">'.macro_EditText($formatter,$value,$options).'</div>';
   print macro_EditText($formatter,$value,$options);
-  if ($DBInfo->use_wikiwyg>=2)
-    print <<<JS
+  if ($DBInfo->use_wikiwyg>=2) {
+    $pi=$formatter->get_instructions($dum);
+    if (in_array($pi['#format'],array('wiki','monimarkup')) )
+      print <<<JS
 <script type='text/javascript'>
 /*<![CDATA[*/
-sectionEdit(null,null,null);
+sectionEdit(null,true,null);
 /*]]>*/
 </script>
 JS;
+  }
   $formatter->send_footer($args,$options);
 }
 
