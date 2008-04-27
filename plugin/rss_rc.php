@@ -79,6 +79,7 @@ CHANNEL;
           ob_end_clean();
           $extra='';
         }
+    	$html=str_replace(']','&#93;',$html);
         $html="<![CDATA[".$html.$extra."]]>";
         #$html=strtr($html.$extra,array('&'=>'&amp;','<'=>'&lt;'));
       } else if ($options['summary']) {
@@ -100,8 +101,8 @@ CHANNEL;
         $chunks= preg_split('/<!-- break -->/',$html); # <!-- break -->
         if ($chunks[0]) $html=$chunks[0];
 
-        $extra='';
-        $html="<![CDATA[".$html.$extra."]]>";
+    	$html=str_replace(']','&#93;',$html);
+        $html="<![CDATA[".$html."]]>";
       } else {
     	$html=str_replace('&','&amp;',$log);
       }
