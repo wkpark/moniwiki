@@ -7,6 +7,21 @@
 //
 // $Id$
 
+function do_smileychooser($formatter,$params=array()) {
+  $list=macro_SmileyChooser($formatter,$params['page'],$params);
+
+  $formatter->send_header("",$params);
+  $formatter->send_title("","",$params);
+
+  print $list;
+  $args['editable']=0;
+  if (!in_array('UploadFile',$formatter->actions))
+    $formatter->actions[]='UploadFile';
+
+  $formatter->send_footer($args,$params);
+  return;
+}
+
 function macro_SmileyChooser($formatter,$value) {
   global $DBInfo;
 
@@ -39,7 +54,7 @@ function mySmiley(myText)
     // hack. check wrapper also
     if (myframe.style.display == 'none' || myframe.parentNode.style.display == 'none') break;
 
-    var postdata = 'action=markup&value=' + encodeURIComponent(myText);
+    var postdata = 'action=markup/ajax&value=' + encodeURIComponent(myText);
     var myhtml='';
     myhtml= HTTPPost(self.location, postdata);
 
@@ -108,5 +123,5 @@ EOS;
   return $chooser;
 }
 
-// vim:et:sts=2:
+// vim:et:sts=2:sw=2:
 ?>
