@@ -3987,6 +3987,18 @@ class Formatter {
       else {
         $metatags=$DBInfo->metatags;
       }
+
+      $mtime=$this->page->mtime(); // delay indexing from dokuwiki
+      if ($DBInfo->delayindex and ((time() - $mtime) < $DBInfo->delayindex)) {
+        if (preg_match("/<meta\s+name=('|\")?robots\\1[^>]+>/i",
+          $metatags)) {
+          $metatags=preg_replace("/<meta\s+name=('|\")?robots\\1[^>]+>/i",
+            '<meta name="Robots" content="noindex,nofollow" />',
+            $metatags);
+        } else {
+          $metatags.='<meta name="robots" content="noindex,nofollow" />'."\n";
+        }
+      }
     }
 
     $js=$DBInfo->js;
@@ -4230,13 +4242,8 @@ EOS;
     }
 
     if ($mtime=$this->page->mtime()) {
-      if ($options['tz_offset'] != '') {
-        $lastedit=gmdate("Y-m-d",$mtime+$options['tz_offset']);
-        $lasttime=gmdate("H:i:s",$mtime+$options['tz_offset']);
-      } else {
-        $lastedit=date("Y-m-d",$mtime);
-        $lasttime=date("H:i:s",$mtime);
-      }
+      $lastedit=gmdate("Y-m-d",$mtime+$options['tz_offset']);
+      $lasttime=gmdate("H:i:s",$mtime+$options['tz_offset']);
     }
 
     $validator_xhtml=$DBInfo->validator_xhtml ? $DBInfo->validator_xhtml:'http://validator.w3.org/check/referer';
