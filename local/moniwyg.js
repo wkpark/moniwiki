@@ -1383,7 +1383,8 @@ proto.format_table = function(element) {
     }
     this.walk(element);
     this.chomp();
-    this.appendOutput("\n");
+    //this.appendOutput("\n");
+    this.smart_trailing_space_n(element);
     //this.assert_blank_line();
 }
 
@@ -1417,6 +1418,38 @@ proto.format_tt = function(element) {
     this.appendOutput('`');
     this.walk(element);
     this.appendOutput('`');
+}
+
+proto.format_span = function(element) {
+    if (this.is_opaque(element)) {
+        this.handle_opaque_phrase(element);
+        return;
+    }
+
+    var style = element.getAttribute('style');
+    if (!style) {
+        this.pass(element);
+        return;
+    }
+
+    if (   ! this.element_has_text_content(element)
+        && ! this.element_has_only_image_content(element)) return;
+
+    if (typeof style == 'object') style= style.cssText.toLowerCase();
+    if (style.match(/font-size|color/i)) {
+        this.appendOutput('{{{{'+style+'}');
+        this.walk(element);
+        this.appendOutput('}}}');
+        this.smart_trailing_space_n(element);
+        return;
+    }
+    var attributes = [ 'line-through', 'bold', 'italic', 'underline' ];
+    for (var i = 0; i < attributes.length; i++)
+        this.check_style_and_maybe_mark_up(style, attributes[i], 1);
+    this.no_following_whitespace();
+    this.walk(element);
+    for (var i = attributes.length; i >= 0; i--)
+        this.check_style_and_maybe_mark_up(style, attributes[i], 2);
 }
 
 proto.assert_blank_line = function() {
@@ -1522,9 +1555,11 @@ proto.chomp_n = function() {
             break;
         }
     }
+
     if (string) {
-        string = string.replace(/&?[\r\n]+$/, '');
-        if (string != '') this.appendOutput(string); // MY
+        var str = string.replace(/&?[\r\n]+/, '');
+        if (str) this.appendOutput(str);
+        //if (string != str) this.appendOutput("\n"); // FIXME !!!
     }
 }
 
@@ -1983,7 +2018,7 @@ proto.get_wiki_comment = function(element) {
                     return node;
                 }
             }
-            else if (node.data.match(/&lt;object/i) || node.data.match(/wiki:\n{{{#![^ ]+/)) {
+            else if (node.data.match(/&lt;object/i) || node.data.match(/ wiki:\n\{\{\{#\![^ ]+/)) {
                 var n=node.nextSibling;
                 if (n.tagName != 'IMG') {
                     var n=n.firstChild;
@@ -2058,7 +2093,8 @@ proto.smart_trailing_space_n = function(element) {
             }
         }
         else {
-            this.appendOutput('\n'); // for comments and PIs
+            if (next.nodeName != 'SPAN')
+                this.appendOutput('\n'); // for comments and PIs FIXME
         }
     }
     else if (next.nodeType == 3) {
@@ -2134,6 +2170,18 @@ proto.walk = function(element) {
                     }
                 } else if (str.length) {
                     this.appendOutput(str);
+                }
+            }
+            else if (part.nodeValue.match(/^[ ]*$/)) {
+                this.appendOutput(part.nodeValue);
+            }
+            else if (part.nodeValue.match(/[^\n]/)) {
+                var str = part.nodeValue.replace(/^\n/,'');
+                if (this.no_collapse_text) {
+                    this.appendOutput(str);
+                }
+                else {
+                    this.appendOutput(this.collapse(str));
                 }
             }
         }
