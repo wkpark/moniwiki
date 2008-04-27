@@ -1,5 +1,5 @@
 <?php
-// Copyright 2006-2007 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2006-2008 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a moniwiki formatting processor for the MoniWiki
 //
@@ -564,7 +564,10 @@ class processor_monimarkup
                     --$_li;
                 }
 
-                $out.= $this->_div(1,' class="para"',$sty[4]).$c.$this->_div(0);
+                if (preg_match('/<div[^>]*>/',$c))
+                    $out.= $this->_div(1,' class="para"',$sty[4]).$c.$this->_div(0);
+                else
+                    $out.= $this->_p(1,' class="para"',$sty[4]).$c.$this->_p(0);
             }
         }
         while($_li>0 and $_lidep[$_li] > 0) {
@@ -629,6 +632,12 @@ class processor_monimarkup
     function _div($on,$attr='',$sty='') {
         if ($sty) $sty=' style="'.$sty.'"';
         $tag=array("</div>\n","<div$attr$sty>");
+        return $tag[$on].$close;
+    }
+
+    function _p($on,$attr='',$sty='') {
+        if ($sty) $sty=' style="'.$sty.'"';
+        $tag=array("</p>\n","<p$attr$sty>");
         return $tag[$on].$close;
     }
 }
