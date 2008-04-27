@@ -194,10 +194,12 @@ Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag,focus) {
         var myhtml= HTTPPost(top.location, postdata);
 
         // hack hack
-        var chunks = myhtml.split(/<div>/i);
-        myhtml = (chunks[1] ? chunks[1]:chunks[0])
-            .replace(/^(.*)<div>(\s|\n)*(<span)/i,'$3')
-            .replace(/<\/span>(\s|\n)*<\/?div>(\s)*$/i,'</span>');
+        //var chunks = myhtml.split(/^\s*<div>/i);
+        //myhtml = (chunks[1] ? chunks[1]:chunks[0])
+        var chunks = myhtml.replace(/\s*<(div|p[^>]*)>/i,'');
+        myhtml = chunks
+            .replace(/^(.*)<(?:div|p[^>]*)>(\s|\n)*(<span)/i,'$4')
+            .replace(/<\/span>(\s|\n)*<\/?(?:div|p)>(\s)*$/i,'</span>');
 
         var div=document.createElement('div');
         if (Wikiwyg.is_ie) {
@@ -1411,6 +1413,12 @@ proto.format_br = function(element) {
     }
 }
 
+proto.format_tt = function(element) {
+    this.appendOutput('`');
+    this.walk(element);
+    this.appendOutput('`');
+}
+
 proto.assert_blank_line = function() {
     if (! this.should_whitespace()) return;
     this.chomp_n(); // FIX
@@ -2326,7 +2334,7 @@ proto.assert_space_or_newline_n = function() {
             this.appendOutput("\n");
         else
         if (! str.whitespace && ! str.match(/(\s+|[>\|\"\':])$/)) {
-            alert(str);
+            //alert(str);
             this.appendOutput(' ');
         }
     }
