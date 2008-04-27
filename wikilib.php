@@ -671,8 +671,7 @@ function do_edit($formatter,$options) {
   if (!$DBInfo->security->writable($options)) {
     $formatter->preview=0;
     $options['err']="#format wiki\n== "._("You are not allowed to edit this page !").' =='; # XXX
-    do_invalid($formatter,$options);
-    return;
+    return do_invalid($formatter,$options);
   }
   $formatter->send_header("",$options);
   if ($options['section'])
@@ -702,8 +701,7 @@ function ajax_edit($formatter,$options) {
   global $DBInfo;
   if (!$DBInfo->security->writable($options)) {
     $formatter->preview=0;
-    ajax_invalid($formatter,$options);
-    return;
+    return ajax_invalid($formatter,$options);
   }
   if ($options['section'])
     $sec=' (Section)';
@@ -1343,8 +1341,7 @@ function ajax_savepage($formatter,$options) {
   global $DBInfo;
   if ($_SERVER['REQUEST_METHOD']!="POST" or
     !$DBInfo->security->writable($options)) {
-    ajax_invalid($formatter,$options);
-    return;
+    return ajax_invalid($formatter,$options);
   }
   $savetext=$options['savetext'];
   $datestamp=$options['datestamp'];
@@ -1438,8 +1435,7 @@ function ajax_savepage($formatter,$options) {
 function do_post_savepage($formatter,$options) {
   global $DBInfo;
   if (!$DBInfo->security->writable($options)) {
-    do_invalid($formatter,$options);
-    return;
+    return do_invalid($formatter,$options);
   }
 
   $savetext=$options['savetext'];
