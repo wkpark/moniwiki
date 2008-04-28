@@ -376,7 +376,8 @@ table.bbs thead {
 }
 
 table.bbs tbody tr:hover {
-  background:url(../imgs/plugin/BBS/selbg.png) repeat-x;
+  /* background:url(../imgs/plugin/BBS/titlebg.png) repeat-x; */
+  background:#f8f8f8;
 }
 
 table.bbs tbody td {
