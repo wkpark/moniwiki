@@ -1881,7 +1881,7 @@ class Formatter {
     $url="wiki|http|https|ftp|nntp|news|irc|telnet|mailto|file|attachment";
     if ($DBInfo->url_schemas) $url.='|'.$DBInfo->url_schemas;
     $this->urls=$url;
-    $urlrule="((?:$url):\"[^\"]+\"[^\s$punct]*|(?:$url):([^\s$punct]|(\.?[^\s$punct]))+)";
+    $urlrule="((?:$url):\"[^\"]+\"[^\s$punct]*|(?:$url):([^\s$punct]|(\.?[^\s$punct]))+(?<![,\.\):;\"\'>]))";
     #$urlrule="((?:$url):(\.?[^\s$punct])+)";
     #$urlrule="((?:$url):[^\s$punct]+(\.?[^\s$punct]+)+\s?)";
     # solw slow slow
@@ -1894,7 +1894,7 @@ class Formatter {
     #"\b(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+[^\(\)<>\s\',\.:\?\!]+)|".
-    "(\b|\^?)([A-Z][a-zA-Z]+):([^:\(\)<>\s\']?[^\(\)<>\s\'\",:\?\!\010\006]*(\s(?![\x21-\x7e]))?)";
+    "(\b|\^?)([A-Z][a-zA-Z]+):([^:\(\)<>\s\']?[^\s<\'\",:\?\!\010\006]*(\s(?![\x21-\x7e]))?(?<![,\.\)>]))";
     #"(\b|\^?)([A-Z][a-zA-Z]+):([^:\(\)<>\s\']?[^<>\s\'\",:\?\!\010\006]*(\s(?![\x21-\x7e]))?)";
     # for PR #301713
 
@@ -2187,6 +2187,8 @@ class Formatter {
       }
       if ($url[0]=='#' and ($p=strpos($url,' '))) {
         $col=strtok($url,' '); $url=strtok('');
+        #if (!preg_match('/^#[0-9a-f]{6}$/',$col)) $col=substr($col,1);
+        #return "<span style='color:$col'>$url</span>";
         if (preg_match('/^#[0-9a-f]{6}$/',$col))
           return "<span style='color:$col'>$url</span>";
         $url=$col.' '.$url;
@@ -2533,9 +2535,10 @@ class Formatter {
       switch($idx) {
         case 0:
           #return "<a class='nonexistent' href='$url'>?</a>$word";
-          return call_user_func(array(&$this,$nonexists),$word,$url);
+          return call_user_func(array(&$this,$nonexists),$word,$url,$page);
         case -1:
-          return "<a href='$url' $attr>$word</a>";
+          if ($page != $word) $title="title=\"$page\" ";
+          return "<a href='$url' $title$attr>$word</a>";
         case -2:
           return "<a href='$url' $attr>$word</a>".
             "<tt class='sister'><a href='$url'>&#x203a;</a></tt>";
@@ -2549,7 +2552,8 @@ class Formatter {
       }
     } else if ($DBInfo->hasPage($page)) {
       $this->pagelinks[$page]=-1;
-      return "<a href='$url' $attr>$word</a>";
+      if ($page != $word) $title="title=\"$page\" ";
+      return "<a href='$url' $title$attr>$word</a>";
     } else {
       if ($gpage and $DBInfo->hasPage($gpage)) {
         $this->pagelinks[$page]=-3;
@@ -2590,7 +2594,7 @@ class Formatter {
       }
       $this->pagelinks[$page]=0;
       #return "<a class='nonexistent' href='$url'>?</a>$word";
-      return call_user_func(array(&$this,$nonexists),$word,$url);
+      return call_user_func(array(&$this,$nonexists),$word,$url,$page);
     }
   }
 
@@ -2602,8 +2606,9 @@ class Formatter {
     return "$word";
   }
 
-  function nonexists_always($word,$url) {
-    return "<a href='$url'>$word</a>";
+  function nonexists_always($word,$url,$page) {
+    if ($page != $word) $title="title=\"$page\" ";
+    return "<a href='$url' $title>$word</a>";
   }
 
   function nonexists_forcelink($word,$url) {
