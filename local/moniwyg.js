@@ -452,7 +452,8 @@ Wikiwyg.prototype.saveChanges = function() {
     }
 
     // save section
-    var toSend = 'action=' + myaction + '/ajax' +
+    myaction=myaction.replace(/edit\//,'savepage/');
+    var toSend = 'action=' + myaction +
     '&savetext=' + encodeURIComponent(wikitext) +
     '&datestamp=' + datestamp;
 
@@ -1418,6 +1419,37 @@ proto.format_tt = function(element) {
     this.appendOutput('`');
     this.walk(element);
     this.appendOutput('`');
+}
+
+proto.make_wikitext_link = function(label, href, element) {
+    var before = this.config.markupRules.link[1];
+    var after  = this.config.markupRules.link[2];
+
+	// handle external links
+	if (this.looks_like_a_url(href)) {
+		before = this.config.markupRules.www[1];
+		after = this.config.markupRules.www[2];
+	}
+	
+    this.assert_space_or_newline();
+    if (! href) {
+        this.appendOutput(label);
+    }
+    else if (href == label) {
+        this.appendOutput(href);
+    }
+    else if (this.href_is_wiki_link(href)) {
+        var title = element.getAttribute('title');
+        if (title && title != label) {
+            this.appendOutput(before + ':' + title + ' ' + label + after);
+        } else if (this.camel_case_link(label))
+            this.appendOutput(label);
+        else
+            this.appendOutput(before + label + after);
+    }
+    else {
+        this.appendOutput(before + href + ' ' + label + after);
+    }
 }
 
 proto.format_span = function(element) {
