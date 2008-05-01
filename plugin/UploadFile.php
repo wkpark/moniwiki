@@ -134,37 +134,52 @@ EOF;
   }
   // XXX
   if ($DBInfo->use_filetype) $type=$files['upfile']['type'][$j] ? $files['upfile']['type'][$j]:'text/plain';
-  else $fname[2]=$fname[2] ? $fname[2]:'txt';
+  else {
+    $fname[2]=$fname[2] ? $fname[2]:'txt';
+    $no_ext=0;
+  }
 
+  $allowed=0;
   if ($DBInfo->use_filetype and !empty($type)) {
     list($mtype,$xtype)=explode('/',$type);
-    if (empty($mtype) or !in_array($mtype,$safe_types)) {
-      $msg.=sprintf(_("%s is not allowed type upload"),$type)."<br/>\n";
+    if (!empty($mtype) and in_array($mtype,$safe_types)) {
+      $allowed=1;
+    } else if ($no_ext) {
+      $msg.=sprintf(_("The %s type of %s is not allowed to upload"),$type,$upfilename)."<br/>\n";
       continue;
     }
-    $upfilename=$fname[1].'.'.$fname[2];
-  } else if (!$no_ext and !preg_match("/(".$pds_exts.")$/i",$fname[2])) {
-    $msg.=sprintf(_("%s is not allowed to upload"),$upfilename)."<br/>\n";
-    continue;
-  } else if ($fname[2] and in_array(strtolower($fname[2]),$safe)) {
-    $upfilename=$fname[1].'.'.$fname[2];
+  }
+
+  if ($allowed) {
+    array_shift($fname);
+    $upfilename=implode('.',$fname);
   } else {
-    # check extra extentions for the mod_mime
-    $exts=explode('.',$fname[1]);
-    $ok=0;
-    for ($i=sizeof($exts);$i>0;$i--) {
-      if (in_array(strtolower($exts[$i]),$safe)) {
-        $ok=1;
-        break;
-      } else if (in_array(strtolower($exts[$i]),$protected)) {
-        $exts[$i].='.txt'; # extra check for mod_mime: append 'txt' extension: my.pl.hwp => my.pl.txt.hwp
-        $ok=1;
-        break;
-      }
-    }
-    if ($ok) {
-      $fname[1]=implode('.',$exts);
+    if (!$no_ext and !preg_match("/(".$pds_exts.")$/i",$fname[2])) {
+      if ($DBInfo->use_filetype and !empty($type))
+        $msg.=sprintf(_("The %s type of %s is not allowed to upload"),$type,$upfilename)."<br/>\n";
+      else
+        $msg.=sprintf(_("%s is not allowed to upload"),$upfilename)."<br/>\n";
+      continue;
+    } else if ($fname[2] and in_array(strtolower($fname[2]),$safe)) {
       $upfilename=$fname[1].'.'.$fname[2];
+    } else {
+      # check extra extentions for the mod_mime
+      $exts=explode('.',$fname[1]);
+      $ok=0;
+      for ($i=sizeof($exts);$i>0;$i--) {
+        if (in_array(strtolower($exts[$i]),$safe)) {
+          $ok=1;
+          break;
+        } else if (in_array(strtolower($exts[$i]),$protected)) {
+          $exts[$i].='.txt'; # extra check for mod_mime: append 'txt' extension: my.pl.hwp => my.pl.txt.hwp
+          $ok=1;
+          break;
+        }
+      }
+      if ($ok) {
+        $fname[1]=implode('.',$exts);
+        $upfilename=$fname[1].'.'.$fname[2];
+      }
     }
   }
 
