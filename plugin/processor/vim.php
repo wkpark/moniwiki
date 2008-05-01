@@ -129,6 +129,14 @@ document.write('<a href=\"#\" onclick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
   $out=str_replace("\r\n","\n",$out); # for Win32
   #$out=preg_replace("/(^(\s|\S)*<pre>\n|\n<\/pre>(\s|\S)*$)/","",$out); # XXX segfault sometime
 
+  preg_match("/<body\s+bgcolor=(\"|')([^\\1]+)\\1\s+text=\\1([^\\1]+)\\1/U",
+    $out,$match);
+  $bgcolor='#000000';
+  $fgcolor='#c0c0c0';
+  if ($match) {
+    $bgcolor=$match[2];
+    $fgcolor=$match[3];
+  }
   $myspan='pre';
   $fpos=strpos($out,'<pre>');
   if ($fpos === false) {
@@ -141,7 +149,7 @@ document.write('<a href=\"#\" onclick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
     $tpos=strpos($out,'</pre>');
     $out=substr($out,$fpos+6,$tpos-$fpos-7);
   }
-  $stag="<$myspan class='wikiSyntax' id='PRE-$uniq' style='font-family:FixedSys,monospace;color:#c0c0c0;background-color:black'>\n";
+  $stag="<$myspan class='wikiSyntax' id='PRE-$uniq' style='font-family:FixedSys,monospace;color:$fgcolor;background-color:$bgcolor'>\n";
   $etag="</$myspan>\n";
 
 
