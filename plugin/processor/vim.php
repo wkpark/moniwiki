@@ -87,24 +87,17 @@ document.write('<a href=\"#\" onclick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
     return '<div>'.$script."<pre class='wiki' id='PRE-$uniq'>\n$src</pre></div>\n";
   }
 
-  if(getenv("OS")=="Windows_NT") {
+  $tohtml= $DBInfo->vim_2html ? $DBInfo->vim_2html:
     $tohtml='$VIMRUNTIME/syntax/2html.vim';
+  #$tohtml= realpath($DBInfo->data_dir).'/2html.vim';
+  if(getenv("OS")=="Windows_NT") {
     $vim="gvim"; # Win32
     $fout=tempnam($vartmp_dir,"OUT");
   } else {
-    $tohtml='\$VIMRUNTIME/syntax/2html.vim';
+    $tohtml='\\'.$tohtml;
     $vim="vim";
     $fout="/dev/stdout";
   }  
-
-# simple sample
-#$type='c';
-#$src='
-#void main() {
-#printf("Hello World!");
-#
-#}
-#';
 
   $tmpf=tempnam($vartmp_dir,"FOO");
   $fp= fopen($tmpf, "w");
