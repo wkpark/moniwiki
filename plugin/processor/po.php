@@ -19,7 +19,7 @@ function processor_po($formatter,$value='') {
     $msgid=array();
 
     $js=<<<JS
-<script language="javascript">
+<script type="text/javascript">
 /*<![CDATA[*/
 function checkmsg(obj) {
     var tok=obj.name.split("-");
@@ -27,14 +27,16 @@ function checkmsg(obj) {
 
     var msgid=document.getElementsByName('msgid' + '-' + id)[0];
     var msgstr=document.getElementsByName('msgstr' + '-' + id)[0];
-    //alert(msgid.value + "\\n" + msgstr.value);
 
-    var url=self.location;
-    url = url + '?action=msgfmt&msgid=' +
-        msgid.value + '&msgstr=' + msgstr.value;
+    var postdata = 'action=msgfmt/ajax&msgid=' +
+        encodeURIComponent(msgid.value) + '&msgstr=' + encodeURIComponent(msgstr.value);
 
-    var msg=HTTPGet(url);
-    alert ('*** AJAX msgfmt checker ***\\n' + msg);
+    var msg= HTTPPost(self.location, postdata);
+    if (msg.substr(0,4) == 'true') {
+        alert('OK\\n' + msg);
+    } else {
+        alert ('*** Error: AJAX msgfmt checker ***\\n' + msg);
+    }
 }
 /*]]>*/
 </script>

@@ -5,7 +5,7 @@
 //
 // $Id$
 
-function _pocheck($po,$showpo=0) {
+function _pocheck($po) {
     global $DBInfo;
     include_once 'lib/Gettext/PO.php';
 
@@ -27,10 +27,8 @@ function _pocheck($po,$showpo=0) {
     }
     unset($myPO, $myMO);
     chmod($tmp,0644);
-    unlink($tmp);
+    //unlink($tmp);
 
-    print "OK\n";
-    if ($showpo) print $po;
     return true;
 }
 
@@ -39,7 +37,7 @@ function do_msgfmt($formatter,$options) {
 
     $po='';
     $domain='PoHello';
-    if ($options['msgid'] and $options['msgstr']) {
+    if (isset($options['msgid']) or isset($options['msgstr'])) {
         # just check a single msgstr
         header("Content-type: text/plain");
         $date=date('Y-m-d h:i+0900');
@@ -65,7 +63,10 @@ POHEAD;
         $msg=_stripslashes($options['msgstr']);
         $po.= 'msgstr '.$msg."\n";
         $po.= "\n\n";
-        _pocheck($po,1);
+        $ret=_pocheck($po,1);
+        if ($ret == true) {
+            print "true\n".$po;
+        }
         return;
     }
 
