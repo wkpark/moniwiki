@@ -195,14 +195,19 @@ class KoreanIndexer {
             $sj= sizeof($j);
 
             if ($sj == 3 and $j[2] == 0x11bb /* ㅆ */ ) {
-                if (
-                #if (in_array($j[0], array(0x1100,0x110b,0x110c) ) and
-                    in_array($j[1],array(0x1165, 0x1166,0x1167)) /* ㅓ,ㅔ,ㅕ */ ) {
-                    if (in_array($j[0], array(0x1100,0x110b,0x110c)) ) {
-                        # 어 여 저 져 게
+                // 랐-다, 었-다, 겠-다, 였-다
+                if (in_array($j[1],array(0x1161,0x1165,0x1166,0x1167)) /* ㅏ,ㅓ,ㅔ,ㅕ */ ) {
+                    if ($j[0] == 0x1105 and in_array($j[1],array(0x1161,0x1165,0x1167)) ) {
+                        // 랐,렀,렸
+                        // 갈렸-다
+
+
+
+                    } else if (in_array($j[0], array(0x1100,0x110b,0x110c)) ) {
+                        # 겠,았
                         array_unshift($uend,$ch);
                         unset($ch);
-                    } else if ($j[1] == 0x1167
+                    } else if ($j[1] == 0x1167 /* ㅕ */
                         and in_array($j[0],array(0x1101,0x1102,0x1103,0x1105,0x1106,0x1107,
                                                  0x1109,0x110c,0x110e,0x110f,0x1110,0x1111,0x1112)) ) {
                         # 여 변환
@@ -214,7 +219,7 @@ class KoreanIndexer {
                         /* 혔 -> 히+었, 폈 -> 피+었 */
                         $j[1]=0x1175;
 
-                        $syll=jamo_to_syllable(array($j[0],$j[1])); /* 쓰 */
+                        $syll=jamo_to_syllable(array($j[0],$j[1]));
                         $ch=$syll[0];
                     } else if (in_array($j[0],array(0x1101,0x1104,0x110a,0x1111,0x1112)) ) {
                         # 우 불규칙
@@ -238,7 +243,8 @@ class KoreanIndexer {
                 } else { /* ㅆ를 떼어낸다. */
                     #print '~~'.$stem.'~~';
                     $syll=jamo_to_syllable(array($j[0],$j[1]));
-                    array_unshift($uend,hangul_jongseong_to_cjamo($j[2]));
+                    array_unshift($uend,$j[2]);
+                    #array_unshift($uend,hangul_jongseong_to_cjamo($j[2]));
                     $ch=$syll[0];
                     unset($j[2]);
                     #unset($ch);
@@ -249,19 +255,59 @@ class KoreanIndexer {
                 }
                 $ed= $uend[0];
                 $ej= hangul_to_jamo($ed);
+            } else if (in_array($j[2],array(0x11ab, 0x11af,0x11b8)) /* ㄴ,ㄹ,ㅂ */ ) {
+                // 합-시다   갑-시다   갈-래
+                // 하-ㅂ시다 가-ㅂ시다 가-ㄹ래
+                //
+                if ($j[2]== 0x11af and $ej[0]==0x1105) {
+                //if ($j[1] == 0x1173 and $j[2]== 0x11af and $ej[0]==0x1105) {
+                    // 르 불규칙
+                    // 흘-러:흐르+러
+                    unset($j[2]);
+                    $syll=jamo_to_syllable($j);
+                    array_push($ustem,$syll[0]); /* 흐 */
+                    $j[0]=$ej[0];
+                    $j[1]=0x1173;
+                    $syll=jamo_to_syllable($j); /* 르 */
+                    $ch=$syll[0];
+                } else {
+                    array_unshift($uend,$j[2]);
+                    $syll=jamo_to_syllable(array($j[0],$j[1]));
+                    $ch=$syll[0];
+                    $ed=$j[2];
+                    unset($j[2]);
+                }
             }
             
-            // ㄷ 불규칙 들어 -> 듣다
+            // ㄷ 불규칙
+            // 들-어 -> 듣-다
             $sj=sizeof($j);
             if ($sj == 3 and $j[2] == 0x11af and in_array($ej[0],array(0x110b,0x1105) /* ㅇ,ㄹ*/)) {
                 while (in_array($ej[1],array(0x1161,0x1165,0x1173)) /* ㅏㅓㅡ */ ) {
                     // 아어으
-                    // 러러르
-                    if ($ej[1]==0x1173 and sizeof($ej)==3 and !in_array($ej[2],0x11ab,0x11af)) break;
-                    // 은을
+                    // 라러르
+                    $se=sizeof($ej);
+                    if ($se==3) {
+                        if ($ej[1]==0x1173 and !in_array($ej[2],0x11ab,0x11af)) break;
+                        // 은을
+                    } else {
+                        if ($j[2]==0x11af and sizeof($ej)==2 and $ej[0] == 0x1105) break;
+                    }
                     $syll=jamo_to_syllable(array($j[0],$j[1],0x11ae));
                     $ch=$syll[0];
                     break;
+                }
+            }
+
+            // ㅅ 불규칙
+            // * 지-어:짓-어
+            // * 이-어:잇-어
+            if (sizeof($ej) ==2) {
+                if ($ej[0]==0x110b /* ㅓ */) {
+                    $j[2]=0x11ba;
+                    $syll=jamo_to_syllable($j); /* +ㅅ */
+                    $ch=$syll[0];
+                    $sj=3;
                 }
             }
 
@@ -287,9 +333,53 @@ class KoreanIndexer {
                     $ch= array_pop($ustem);
                     $j= hangul_to_jamo($ch);
                 }
-                if (in_array($j[0],array(0x1105) /* ㄹ */ )
-                    and in_array($j[1],array(0x1161,0x1165)) /* 라,러 */ ) {
 
+                // 음운 축약
+                if (in_array($j[0],array(0x1105, 0x1112)) and $j[1]==0x1162) {
+                    // ㅎ 불규칙(어미) 파랗+아서 -> 파라+아서 -> 파래서
+                    /* 파래-서 -> 파라-아서 */
+                    $j[1]=0x1161;
+                    $syll=jamo_to_syllable($j); /* 래 -> 라+ 아 */
+                    $ch=$syll[0];
+                    $syll=jamo_to_syllable(array(0x110b,0x1161)); /* 아 */
+                    $ed=$syll[0];
+                    array_unshift($uend,$ed);
+                    $ej[0]=0x110b;
+                    $ej[0]=0x1161;
+                } else if ($j[0]==0x1112 /* ㅎ */ and in_array($j[1],array(0x1162)) /* ㅐ */ ) {
+                    // 해-서 = 하-여서
+                    $j[1]=0x1161;
+                    $syll=jamo_to_syllable($j); /* 해 -> 하 + 여 */
+                    $ch=$syll[0];
+                    $syll=jamo_to_syllable(array(0x110b,0x1167)); /* 여 */
+                    $ed=$syll[0];
+                    array_unshift($uend,$ed);
+                    $ej[0]=0x110b;
+                    $ej[0]=0x1167;
+                } else if (in_array($j[0],array(0x1105,0x1109)) /* ㄹ,ㅅ */
+                    and in_array($j[1],array(0x1167)) /* ㅕ */ ) {
+                        // 하셔-서 = 하시-어서
+                        // 가려-서 = 가리-어서
+                    $j[1]=0x1175; /* ㅣ */
+                    $syll=jamo_to_syllable($j); /* ㅕ -> 이-어 */
+                    $ch=$syll[0];
+                    $syll=jamo_to_syllable(array(0x110b,0x1165)); /* 어 */
+                    $ed=$syll[0];
+                    array_unshift($uend,$ed);
+                    $ej[0]=0x110b;
+                    $ej[0]=0x1165;
+                }
+
+                if ($j[0]== 0x1109 and $j[1]==0x1175) { /* 시: 존칭처리 */
+                    array_unshift($uend,$ch);
+                    $ej= $j;
+                    $ch= array_pop($ustem);
+                    $j= hangul_to_jamo($ch);
+                }
+
+                // ㅎ 불규칙
+                if (in_array($j[0],array(0x1105,0x1106) /* ㄹ,ㅁ */ )
+                    and in_array($j[1],array(0x1161,0x1165)) /* 라,러 */ ) {
                     $syll=jamo_to_syllable(array($j[0],$j[1],0x11c2)); /* 랗,렇 */
                     array_push($ustem,$syll[0]);
                     unset($ch);
@@ -299,13 +389,19 @@ class KoreanIndexer {
 
             while ($sj == 2 and $j[0] == 0x110b
                 and in_array($j[1],array(0x116a,0x116e,0x116f)) and sizeof($ustem)>=1 ) {
+                    // XXX
+                // 그리워: 그리우+어 -> 그립+워
                 # /* 와 우 워 */
                 $ch1=array_pop($ustem);
                 $jamo=hangul_to_jamo($ch1);
                 if (sizeof($jamo)==2) {
-                    $syll=jamo_to_syllable(array($jamo[0],$jamo[1],0x11b8));
-                    array_push($ustem,$syll[0]);
-                    /* add ㅂ */
+                    if ($jamo[1] != 0x1175) {
+                        $syll=jamo_to_syllable(array($jamo[0],$jamo[1],0x11b8));
+                        array_push($ustem,$syll[0]);
+                        /* add ㅂ */
+                    } else {
+                        array_push($ustem,$ch1);
+                    }
                     array_unshift($uend,$ch);
                     unset($ch);
                 } else {
