@@ -16,7 +16,8 @@ function simple_diff($diff) {
     if ($marker=="@") $line='<div class="diff-sep">@'."$line</div>";
     else if ($marker=="-") $line='<div class="diff-removed">'."$line</div>";
     else if ($marker=="+") $line='<div class="diff-added">'."$line</div>";
-    else if ($marker=="\\" && $line==" No newline at end of file") continue;
+    else if ($marker=="\\") continue;
+    #else if ($marker=="\\" && $line==" No newline at end of file") continue;
     else $line.="<br />";
     $out.=$line."\n";
   }
@@ -39,10 +40,10 @@ function fancy_diff($diff,$options=array()) {
     if ($marker=="@") $line='<div class="diff-sep">@'."$line</div>";
     else if ($marker=="-") {
       $omarker=1; $orig[]=$line; continue;
-    }
-    else if ($marker=="+") {
+    } else if ($marker=="+") {
       $omarker=1; $new[]=$line; continue;
-    }
+    } else if ($marker=="\\") continue;
+    #} else if ($marker=="\\" && $line==" No newline at end of file") continue;
     else if ($omarker) {
       $omarker=0;
       $buf="";
@@ -61,7 +62,6 @@ function fancy_diff($diff,$options=array()) {
     }
     else if ($marker==" " and !$omarker)
       $line.="<br />";
-    else if ($marker=="\\" && $line==" No newline at end of file") continue;
     else $line.="<br />";
     $out.=$line."\n";
   }
@@ -91,10 +91,10 @@ function smart_diff($diff) {
       $lp=$mat[2]; $lm=$mat[1];
     } else if ($marker=='-') {
       $omarker=1; $orig[]=$line; continue;
-    }
-    else if ($marker=='+') {
+    } else if ($marker=='+') {
       $omarker=2; $new[]=$line; continue;
-    }
+    } else if ($marker=="\\") continue;
+    #} else if ($marker=="\\" && $line==' No newline at end of file') continue;
     else if ($omarker) {
       $count=sizeof($new);
       $ocount=sizeof($orig);
@@ -115,8 +115,8 @@ function smart_diff($diff) {
         for ($i=0;$i<$count-1;$i++) $news[$lp+$i]=null;
         #for ($i=$count-1;$i>0;$i--) $news[$lp+$i-1]=null;
       } else if ($ocount != 0) {
-        $dels[$lm-1]=$buf;
-        for ($i=0;$i<$ocount-1;$i++) $dels[$lm+$i]=null;
+        $dels[$lp-1]=$buf;
+        for ($i=0;$i<$ocount-1;$i++) $dels[$lp+$i]=null;
       }
       if ($marker==' ') {
         $lp+=$count+1;
@@ -127,7 +127,6 @@ function smart_diff($diff) {
       $lp++;
       $lm++;
     }
-    else if ($marker=="\\" && $line==' No newline at end of file') continue;
   }
 
   #print "<pre style='color:black;background-color:#93FF93'>";
@@ -232,17 +231,12 @@ function macro_diff($formatter,$value,&$options)
       $msg=sprintf(_("Difference between r%s and the current"),$rev1.$rev2);
     }
     if (!$options['raw']) {
-      #print "<pre>$out</pre>";
       $ret= call_user_func($type,$out);
       if (is_array($ret)) { // for smart_diff
-        #print "<pre>";
-        #print_r($ret);
         $dels=$ret[1]; $ret=$ret[0];
         $rev=($rev2 and $rev2) ? $rev2:''; // get newest rev.
         $current=$formatter->page->_get_raw_body(array('rev'=>$rev));
         $lines=explode("\n",$current);
-        #print_r($lines);
-        #print_r($ret);
         $nret=$ret;
         foreach ($ret as $k => $v) {
           if ($v=="") continue;
@@ -252,22 +246,16 @@ function macro_diff($formatter,$value,&$options)
           for ($kk=0;$kk<sizeof($tmp);$kk++)
           $nret[$k+$kk] = $tmp[$kk];
         }
-        #print_r($nret);
         foreach ($nret as $k => $v) {
           $lines[$k] = $v;
         }
-        #ksort($lines);
 
         # insert deleted lines
         if ($dels) {
-          #print_r($dels);
           foreach ($dels as $k => $v) {
             $lines[$k]=$v."\n".$lines[$k];
-            #$lines[$k]=$v;
           }
         }
-        #print_r($lines);
-        #print "</pre>";
         $diffed=implode("\n",$lines);
         # change for headings
         $diffed=preg_replace("/^(\006|\010)(={1,5})\s(.*)\s\\2\\1$/m",
@@ -371,5 +359,5 @@ function do_diff($formatter,$options="") {
   return;
 }
 
-// vim:et:sts=2:
+// vim:et:sts=2:sw=2:
 ?>
