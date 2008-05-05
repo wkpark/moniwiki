@@ -661,8 +661,8 @@ extends Diff
     function MappedDiff($from_lines, $to_lines,
                         $mapped_from_lines, $mapped_to_lines) {
 
-        assert(sizeof($from_lines) == sizeof($mapped_from_lines));
-        assert(sizeof($to_lines) == sizeof($mapped_to_lines));
+        USE_ASSERTS && assert(sizeof($from_lines) == sizeof($mapped_from_lines));
+        USE_ASSERTS && assert(sizeof($to_lines) == sizeof($mapped_to_lines));
         
         $this->Diff($mapped_from_lines, $mapped_to_lines);
 
@@ -895,7 +895,7 @@ class _HWLDF_WordAccumulator {
                 $this->_flushLine($tag);
                 $word = substr($word, 1);
             }
-            assert(!strstr($word, "\n"));
+            //USE_ASSERTS && assert(!strstr($word, "\n"));
             $this->_group .= $word;
         }
     }
@@ -1041,5 +1041,50 @@ class DeltaDiffFormatter extends DiffFormatter
     }
 }
 
+/**
+ * a Plain Diff formatter.
+ */
+class PlainDiffFormatter
+{
+    var $trailing_cr = "\n";
+
+    function PlainDiffFormatter() {
+    }
+
+    function _lines($lines, $prefix = '') {
+        foreach ($lines as $line)
+            echo "$prefix$line".$this->trailing_cr;
+    }
+
+    function _added($lines) {
+        $this->_lines($lines, "+");
+    }
+    function _deleted($lines) {
+        $this->_lines($lines, "-");
+    }
+    function _changed($orig, $_final) {
+        $this->_deleted($orig);
+        $this->_added($_final);
+    }
+
+    function _context($lines) {
+        $this->_lines($lines);
+    }
+
+    function format($diff) {
+        foreach ($diff->edits as $edit) {
+            if ($edit->type == 'copy')
+                $this->_context($edit->orig);
+            elseif ($edit->type == 'add')
+                $this->_added($edit->_final);
+            elseif ($edit->type == 'delete')
+                $this->_deleted($edit->orig);
+            elseif ($edit->type == 'change')
+                $this->_changed($edit->orig, $edit->_final);
+            else
+                trigger_error("Unknown edit type", E_USER_ERROR);
+        }
+    }   
+}
 // vim:et:sts=4:
 ?>
