@@ -13,16 +13,14 @@ class KoreanIndexer {
         include_once(dirname(__FILE__).'/unicode.php');
         $this->_eomiRule();
         $this->_josaRule();
-        $this->_wordDic();
-    }
 
-    function _wordDic() {
-        global $DBInfo;
-
-        $lines=file(dirname(__FILE__).'/../data/dict/word.txt.utf-8');
-        foreach ($lines as $l) $this->_word[]=trim($l);
-        $this->_word_rule=implode('|',$this->_word);
-        #print $this->_eomi_rule;
+        $fp = fopen(dirname(__FILE__).'/../data/dict/word.txt.utf-8','r');
+        if (!is_resource($fp)) $fp = null;
+        else
+            include_once(dirname(__FILE__).'/dict.text.php');
+        $this->_dict = &$fp;
+        $fs=fstat($fp);
+        $this->_dict_size=$fs['size'];
     }
 
     function _eomiRule() {
@@ -87,8 +85,13 @@ class KoreanIndexer {
 
     function isWord($word) {
         // XXX
-        preg_match('/^('.$this->_word_rule.')$/S',$word,$match);
-        if ($match[1]) return true;
+        
+        list($l,$min_seek,$max_seek,$scount)=
+            _fuzzy_bsearch_file($this->_dict,$word,0,$this->_dict_size/2,0,$this->_dict_size);
+        list($c,$buf,$last)=
+            _file_match($this->_dict,$word,$min_seek,$max_seek,$this->_dict_size,0,false,'UTF-8');
+        
+        if (!empty($buf)) return true;
         return false;
     }
 
@@ -422,6 +425,10 @@ class KoreanIndexer {
         #print "<pre>";
         #print($word.'-'.$match[1]);
         #print_r($match);
+    }
+
+    function close() {
+        fclose($this->_dict);
     }
 }
 
