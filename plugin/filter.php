@@ -18,11 +18,12 @@ function do_filter($formatter,$options) {
     }
     $body=$formatter->page->get_raw_body($options);
     $filters=preg_split("/(\||,)/",$options['filter']);
+    if ($options['raw']) 
+        $formatter->send_header('Content-Type: text/plain');
     foreach ($filters as $ft)
         $body=$formatter->filter_repl(trim($ft),$body,$options);
 
     if ($options['raw']) {
-        $formatter->send_header('Content-Type: text/plain');
         print $body;
         return;
     }
