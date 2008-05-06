@@ -7,6 +7,44 @@
 //
 // EXPERIMENTAL !!
 
+class TagOp {
+    var $value;
+    var $type;
+
+    function TagOp($value,$type) {
+        $this->value=$value;
+        $this->type=$type;
+    }
+
+    function toString() {
+        return $tag->value.'/'.$tag->type;
+    }
+}
+
+class TagSet extends TagOp {
+    var $value;
+    var $type;
+    var $tags;
+
+    function TagSet($value,$type) {
+        $this->value=$value;
+        $this->type=$type;
+        $this->tags=array();
+    }
+
+    function add($tag) {
+        $this->tags[]=$tag;
+    }
+
+    function toString() {
+        $tags = array();
+        foreach ($this->tags as $tag)
+            $tags[]=$tag->toString();
+
+        return implode('+',$tags);
+    }
+}
+
 class KoreanIndexer {
     function KoreanIndexer() {
         include_once(dirname(__FILE__).'/compat.php');
@@ -21,6 +59,130 @@ class KoreanIndexer {
         $this->_dict = &$fp;
         $fs=fstat($fp);
         $this->_dict_size=$fs['size'];
+        $this->_cache = array();
+    }
+
+    function tagName($name) {
+        static $full_tags = array(
+            'INI'=>'시작',
+            's,'=> '쉼표',
+            's.'=> '종결',
+            's`'=> '여는따옴표',
+            's\''=> '닫는따옴표',
+            's-'=> '이음표',
+            'su'=> '단위',
+            'sw'=> '화폐단위',
+            'sy'=> '기타기호',
+            'f'=>  '외국어',
+            'nnn'=>'숫자',
+            'nct'=>'시간성보통명사',
+            'nca'=>'동작성보통명사',
+            'ncs'=>'상태성보통명사',
+            'nc'=> '보통명사',
+            'nq'=> '고유명사',
+            'nbu'=>'단위성의존명사',
+            'nb'=> '의존명사',
+            'np'=> '대명사',
+            'npp'=>'인칭대명사',
+            'npd'=>'지시대명사',
+            'nn'=> '수사',
+            'pv'=> '동사',
+            'pad'=>'지시형용사',
+            'pa'=> '형용사',
+            'px'=> '보조용언',
+            'md'=> '지시관형사',
+            'mn'=> '수관형사',
+            'm'=>  '관형사',
+            'at'=> '시간부사',
+            'ad'=> '지시부사',
+            'ajw'=>'단어접속부사',
+            'ajs'=>'문장접속부사',
+            'a'=>  '부사',
+            'i'=>  '감탄사',
+            'jc'=> '격조사',
+            'jcm'=>'관형격조사',
+            'jcv'=>'호격조사',
+            'jca'=>'부사격조사',
+            'jcp'=>'서술격조사',
+            'jx'=> '보조사',
+            'jj'=> '접속조사',
+            'ecq'=>'대등적연결어미',
+            'ecs'=>'종속적연결어미',
+            'ecx'=>'보조적연결어미',
+            'exm'=>'관형사형전성어미',
+            'exn'=>'명사형전성어미',
+            'exa'=>'부사형전성어미',
+            'efp'=>'선어말어미',
+            'ef'=> '종결어미',
+            'xn'=> '명사접미사',
+            'xpv'=>'동사파생접미사',
+            'xpa'=>'형용사파생접미사',
+            'xa'=> '부사파생접미사',
+            'FIN'=>'끝',
+            'int'=>'매개모음',
+        );
+
+        static $tags = array(
+            'INI'=>'시',
+            's,'=> '쉼',
+            's.'=> '종',
+            's`'=> '여',
+            's\''=> '닫',
+            's-'=> '이',
+            'su'=> '단',
+            'sw'=> '화',
+            'sy'=> '기',
+            'f'=>  '외',
+            'nnn'=>'숫자',
+            'nct'=>'시간성보통명사',
+            'nca'=>'동작성보통명사',
+            'ncs'=>'상태성보통명사',
+            'nc'=> '명',
+            'nq'=> '고',
+            'nbu'=>'단의',
+            'nb'=> '의',
+            'np'=> '대', /* */
+            'npp'=>'인',
+            'npd'=>'지',
+            'nn'=> '수',
+            'pv'=> '동',
+            'pad'=>'지형',
+            'pa'=> '형',
+            'px'=> '보',
+            'md'=> '지관',
+            'mn'=> '수관',
+            'm'=>  '관',
+            'at'=> '시부',
+            'ad'=> '지',
+            'ajw'=>'단접',
+            'ajs'=>'문접',
+            'a'=>  '부',
+            'i'=>  '감',
+            'jc'=> '격',
+            'jcm'=>'관조',
+            'jcv'=>'호조',
+            'jca'=>'부조',
+            'jcp'=>'서조',
+            'jx'=> '보조',
+            'jj'=> '접',
+            'ecq'=>'대등적연결어',
+            'ecs'=>'종속적연결어',
+            'ecx'=>'보조적연결어',
+            'exm'=>'관형사형전성어',
+            'exn'=>'명사형전성어',
+            'exa'=>'부사형전성어',
+            'efp'=>'선어말어',
+            'ef'=> '종결어',
+            'xn'=> '명사접미사',
+            'xpv'=>'동사파생접미사',
+            'xpa'=>'형용사파생접미사',
+            'xa'=> '부사파생접미사',
+            'FIN'=>'끝',
+            'int'=>'매개모음',
+        );
+
+        if (in_array($name,$tags))
+            return array_search($name,$tags);
     }
 
     function _eomiRule() {
@@ -83,35 +245,61 @@ class KoreanIndexer {
         return $rule;
     }
 
-    function isWord($word) {
-        // XXX
-        
+    function isWord($word,$flag=false,$fuzzy=0.7) {
+        // simple caching
+        if (array_key_exists($word,$this->_cache))
+            return $this->_cache[$word];
+
         list($l,$min_seek,$max_seek,$scount)=
             _fuzzy_bsearch_file($this->_dict,$word,0,$this->_dict_size/2,0,$this->_dict_size);
         list($c,$buf,$last)=
-            _file_match($this->_dict,$word,$min_seek,$max_seek,$this->_dict_size,0,false,'UTF-8');
+            _file_match($this->_dict,$word,$min_seek,$max_seek,$this->_dict_size,0,$flag,'UTF-8');
         
-        if (!empty($buf)) return true;
-        return false;
+        $cand=array();
+        if (!empty($c)) {
+            $list=explode("\n",rtrim($buf));
+            foreach ($list as $l) {
+                list($k,$t,$r) = explode(':',$l);
+                $cand[]=array($k,$this->tagName($t),$r);
+            }
+            print_r($cand);
+        } else if (!empty($buf)) {
+            $list=explode("\n",rtrim($buf));
+            foreach ($list as $l) {
+                list($k,$t,$r) = explode(':',$l);
+                $cand[]=array($k,$this->tagName($t),$r);
+            }
+            print_r($cand);
+        }
+        $ret=array($c,$cand,$last);
+        $this->_cache[$word]=&$ret;
+        return $ret;
     }
 
     function getStem($word,&$match,&$type) {
         // XXX
         $type=1;
-        if ($this->isWord($word)) return $word;
-        $stem=$this->getNoun($word,$match);
-        if ($stem and $this->isWord($stem)) return $stem;
+        list($r, $cand, $last) = $this->isWord($word);
+        if ($cand[0][1]{0} == 'n') return $word;
+        else $stem=$this->getNoun($word,$match);
+
+        if ($stem) {
+            list ($r1, $cand1,$last1) = $this->isWord($stem);
+            $type=$cand1[0][1];
+            if ($cand1[0][1]{0} == 'n') return $stem;
+        }
+        #if ($stem and $this->isWord($stem) == 'n') return $stem;
         $verb=$this->getVerb($word,$vmatch);
         if ($stem or $verb) {
 
             if (strlen($match[1]) <= strlen($vmatch[1])) {
-                $type=2;
+                $type='p';
                 $match=$vmatch;
                 $stem=$verb;
             }
             return $stem;
         }
-        $type=0;
+        $type=null;
         return false;
     }
 
@@ -121,7 +309,10 @@ class KoreanIndexer {
         preg_match('/('.$this->_josa_rule.')$/S',$word,$match);
         if (!empty($match[1])) {
             $pword=substr($word,0,-strlen($match[1]));
-            if ($pword and $this->isWord($pword)) return $pword;
+            if ($pword) {
+                list ($r, $cand,$last) = $this->isWord($pword);
+                if ($cand[0][1]{0} == 'n') return $pword;
+            }
             $pword=$this->getWordRule($pword).$match[1];
             preg_match('/('.$this->_josa_rule.')$/S',$pword,$nmatch);
         } else {
