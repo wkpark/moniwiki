@@ -20,6 +20,8 @@ function do_filter($formatter,$options) {
     $filters=preg_split("/(\||,)/",$options['filter']);
     if ($options['raw']) 
         $formatter->send_header('Content-Type: text/plain');
+    else
+        $formatter->send_header('',$options);
     foreach ($filters as $ft)
         $body=$formatter->filter_repl(trim($ft),$body,$options);
 
@@ -27,7 +29,6 @@ function do_filter($formatter,$options) {
         print $body;
         return;
     }
-    $formatter->send_header('',$options);
     $formatter->send_title('','',$options);
     
     print '<pre>'.$body.'</pre>';
@@ -35,5 +36,5 @@ function do_filter($formatter,$options) {
     return;
 }
 
-// vim:et:sts=4:
+// vim:et:sts=4:sw=4:
 ?>

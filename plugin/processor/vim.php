@@ -42,7 +42,7 @@ function processor_vim($formatter,$value,$options) {
   if ($DBInfo->vim_options)
     $option.=$DBInfo->vim_options.' ';
 
-  $uniq=md5($option.$type.$src);
+  $uniq=md5($option.$extra.$type.$src);
 
   if ($DBInfo->cache_public_dir) {
     $fc=new Cache_text('vim',2,'html',$DBInfo->cache_public_dir);
