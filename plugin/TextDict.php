@@ -17,10 +17,10 @@
 //
 
 include_once(dirname(__FILE__).'/../lib/dict.text.php');
+define('TEXT_DICT',dirname(__FILE__).'/../data/dict/word.txt.utf-8');
 
 function macro_TextDict($formatter,$value,$params=array()) {
     global $Config;
-    define('TEXT_DICT',realpath($Config['data_dir']).'/dict/hanja.txt');
 
     $fp=fopen(TEXT_DICT,'r');
     if (!is_resource($fp)) return '';
@@ -45,7 +45,6 @@ function do_textdict($formatter,$options) {
 
     $_debug=$options['debug'] ? $options['debug']:0;
 
-    define('TEXT_DICT',realpath($Config['data_dir']).'/dict/hanja.txt');
     $formatter->send_header('',$options);
     $formatter->send_title('','',$options);
 
@@ -69,6 +68,7 @@ function do_textdict($formatter,$options) {
     }
 
     sort($keys);$keys=array_unique($keys);
+    if ($_debug) $options['timer']->Check("read");
 
     $fp=fopen(TEXT_DICT,'r');
     if (!is_resource($fp)) return '';
@@ -83,12 +83,14 @@ function do_textdict($formatter,$options) {
             print 'found='.$c."<br />\n";
             print 'scount='.$scount."<br />\n";
             if ($last) print 'last='.$last."<br />\n";
+            if ($_debug>50)
+                if (!empty($buf)) print $buf."<br />\n";
         }
-        if (!empty($buf)) print $buf."<br />\n";
     }
     fclose($fp);
 
     if ($_debug) {
+        print "total ".sizeof($keys)." words searched<br />\n";
         $options['timer']->Check("dict");
         print "<pre>";
         print $options['timer']->Write();
