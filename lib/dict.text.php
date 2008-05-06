@@ -17,8 +17,8 @@
 function _fuzzy_bsearch_file($fp, $key, $seek, $fuzzyoffset=0, $klen=0,$fz=0,$encoding='UTF-8') {
     # adjustable parameters
     $_fuzzy_factor = 0.65; # mid parameter: in case of binary-search: 0.5
-    $_chunk_size = 40; # average strlen parameter of lines.
-    $_howmany = 20; # this is not exact the bsearch then limit the search counter.
+    $_chunk_size = 32; # average strlen parameter of lines.
+    $_howmany = 23; # this is not exact the bsearch then limit the search counter.
     $_debug = 1; # show debug info or not
 
     if (empty($key)) return null;
@@ -59,7 +59,7 @@ function _fuzzy_bsearch_file($fp, $key, $seek, $fuzzyoffset=0, $klen=0,$fz=0,$en
 
         if ($llen < $ki) {
             if ($match) {
-                if ($_debug) print '**--<br />';
+                if ($_debug) print "**--<br />\n";
                 $lower = $myseek - strlen($l);
                 break;
             }
@@ -97,9 +97,11 @@ function _fuzzy_bsearch_file($fp, $key, $seek, $fuzzyoffset=0, $klen=0,$fz=0,$en
 
         $offset = $sign * $f_offset;
     }
-    if ($_debug) print "key=".$key.'/seek='.$lower.'/offset='.($upper - $lower).'<br />';
-    fseek($fp,$lower);
-    if ($_debug) print "<pre>==== chunk ====\n".fread($fp,$upper - $lower).'</pre>';
+    if ($_debug > 50) {
+        print "key=".$key.'/seek='.$lower.'/offset='.($upper - $lower)."<br />\n";
+        fseek($fp,$lower);
+        print "<pre>==== chunk ====\n".fread($fp,$upper - $lower)."</pre>\n";
+    }
     return array($l,$lower,$upper,$scount);
 }
 
@@ -115,7 +117,7 @@ function _file_match($fp,$key,$lower,$upper,$fsize,$klen=1,$match_prefix=true,$e
     if ($klen == 1) $match_prefix=false;
 
     if (empty($key)) return '';
-    #print $klen.':'.$lower.'/'.$upper.'<br />';
+    #print $klen.':'.$lower.'/'.$upper."<br />\n";
     //if ($lower > $upper) print 'bbbbbboooo';
 
     $ki=0;
@@ -139,44 +141,43 @@ function _file_match($fp,$key,$lower,$upper,$fsize,$klen=1,$match_prefix=true,$e
         $mykey= strtok($l,' \t\n,:');
         $llen= mb_strlen($mykey,$encoding);
         if ($llen < $ki) {
-            print '*pkey='.$pkey.'<br />';
-            if ($match) break;
-            continue;
+            if ($_debug) print '*pkey='.$pkey."<br />\n";
+            break;
         }
         if ($ki > 0) $pmykey=mb_substr($mykey,0,$ki,$encoding);
         $cmykey=mb_substr($mykey,$ki,1,$encoding);
 
         if ($ki == $klen and $pkey == $pmykey) {
             if (!$match_prefix and $llen > $klen) break;
-            //print '+'.$ki.'<br />';
+            #print '+'.$ki."<br />\n";
             $buf.=$l;
             $count++;
         } else if ($ckey == $cmykey and $pkey == $pmykey) {
             if ($ki < $klen) {
                 $ki++;
                 $pkey.=$ckey;
-                //print 'pkey='.$pkey.'<br />';
+                //print 'pkey='.$pkey."<br />\n";
                 for ($ckey=mb_substr($key,$ki,1,$encoding);$ki<=$klen;$ckey=mb_substr($key,++$ki,1,$encoding)) {
                     if ($llen > $ki) {
                         $cmykey=mb_substr($mykey,$ki,1,$encoding);
                         if ($ckey == $cmykey) {
                             $pkey.=$ckey;
-                            //print '++pkey='.$pkey.'<br />';
+                            //print '++pkey='.$pkey."<br />\n";
                             continue;
                         }
                     }
                     break;
                 }
-                //print 'pkey='.$pkey.'<br />';
+                //print 'pkey='.$pkey."<br />\n";
                 if ($ki == $klen) {
                     $match=1;
                     $buf.=$l;
-                    $count++;
+                    if ($klen == $llen) $count++;
                 }
                 continue;
             }
             if ($ki == $klen) $match = true;
-            print '+pkey='.$pkey.'<br />';
+            print '+pkey='.$pkey."<br />\n";
             if ($ki == $klen) $buf.=$l;
         } else if ($pkey != $pmykey) {
             break;
@@ -188,11 +189,24 @@ function _file_match($fp,$key,$lower,$upper,$fsize,$klen=1,$match_prefix=true,$e
         }
     }
     $cseek+=$n;
-    if ($n>100) $n='<span style="color:red">'.$n.'</span>';
-    if ($_debug) print 'fgets='.$key.'/'.$nn.'/'.$n.'/'.$cseek."<br />";
-    if ($count == 0 and !empty($pkey))
-        return array ($count, $pkey, $last);
-    return array ($count, $buf, null);
+    if ($_debug) {
+        if ($n>100) $n='<span style="color:red">'.$n.'</span>';
+        print 'fgets='.$key.'/'.$nn.'/'.$n.'/'.$cseek."<br />\n";
+    }
+    if ($count) return array ($count, $buf, null);
+    if (!empty($pkey)) {
+        $lastmatch= strtok($last,' \t\n,:');
+        $len = strlen($pkey);
+        // XXX matching ratio + fuzzy factor etc.
+        $match_ratio = $len / strlen($lastmatch);
+        if ($_debug) {
+            print $klen.' - '.$llen;
+            $suffix = substr($lastmatch,$len);
+            print 'matching ratio: '.$match_ratio.'/ suffix= "'.$suffix.'" '.$last."<br />\n";
+        }
+        return array (0, $buf, $last);
+    }
+    return array (0, null, null);
 }
 
 // vim:et:sts=4:sw=4:
