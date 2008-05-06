@@ -108,11 +108,13 @@ EOF;
   else
     $pds_exts="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|css|exe|pdf|hwp";
 
+  $allowed=0;
   if (isset($DBInfo->upload_masters) and in_array($options['id'],$DBInfo->upload_masters)) {
     // XXX WARN!!
     $pds_exts='.*';
+    $allowed=1;
   }
-  $safe_types=array('text','media','image','audio');
+  $safe_types=array('text'=>'','media'=>'','image'=>'','audio'=>'','application'=>'bin');
 
   for ($j=0;$j<$count;$j++) {
 
@@ -120,40 +122,36 @@ EOF;
   $upfilename=str_replace(" ","_",$files['upfile']['name'][$j]);
   $upfilename=str_replace(":","_",$upfilename);
 
-  preg_match("/^(.*)\.([a-z0-9]{1,4})$/i",$upfilename,$fname);
+  preg_match("/^(.*)\.?([a-z0-9]{1,5})?$/i",$upfilename,$fname);
 
   if (!$upfilename) continue;
   else if ($upfilename) $uploaded++;
 
   $no_ext=0;
-  $type='';
-  if (!$fname) {
-    $no_ext=1;
-    $fname[1]=$upfilename;
-    $fname[2]='';
-  }
-  // XXX
-  if ($DBInfo->use_filetype) $type=$files['upfile']['type'][$j] ? $files['upfile']['type'][$j]:'text/plain';
-  else {
-    $fname[2]=$fname[2] ? $fname[2]:'txt';
-    $no_ext=0;
-  }
+  if (!$fname[2]) $no_ext=1;
 
-  $allowed=0;
-  if ($DBInfo->use_filetype and !empty($type)) {
-    list($mtype,$xtype)=explode('/',$type);
-    if (!empty($mtype) and in_array($mtype,$safe_types)) {
-      $allowed=1;
-    } else if ($no_ext) {
-      $msg.=sprintf(_("The %s type of %s is not allowed to upload"),$type,$upfilename)."<br/>\n";
-      continue;
+  if (!$allowed) {
+    if ($DBInfo->use_filetype) {
+      $type='';
+      $type=$files['upfile']['type'][$j] ? $files['upfile']['type'][$j]:'text/plain';
+      list($mtype,$xtype)=explode('/',$type);
+
+      if (!empty($mtype) and array_key_exists($mtype,$safe_types)) {
+        $allowed=1;
+        $fname[2]= $fname[2] ? $fname[2]:$safe_types[$mtype];
+      } else if ($no_ext) {
+        $msg.=sprintf(_("The %s type of %s is not allowed to upload"),$type,$upfilename)."<br/>\n";
+        continue;
+      }
+    } else {
+      $fname[2]=$fname[2] ? $fname[2]:'txt';
+      $no_ext=0;
     }
   }
 
-  if ($allowed) {
-    array_shift($fname);
-    $upfilename=implode('.',$fname);
-  } else {
+  $upfilename=implode('.',array($fname[1],$fname[2]));
+
+  if (!$allowed) {
     if (!$no_ext and !preg_match("/(".$pds_exts.")$/i",$fname[2])) {
       if ($DBInfo->use_filetype and !empty($type))
         $msg.=sprintf(_("The %s type of %s is not allowed to upload"),$type,$upfilename)."<br/>\n";
@@ -190,7 +188,7 @@ EOF;
     $temp=explode("/",_stripslashes($options['rename'][$j]));
     $upfilename= $temp[count($temp)-1];
 
-    preg_match("/^(.*)\.([a-z0-9]{1,4})$/i",$upfilename,$tname);
+    preg_match("/^(.*)\.?([a-z0-9]{1,5})?$/i",$upfilename,$tname);
     $exts=explode('.',$tname[1]);
     $ok=0;
     for ($i=sizeof($exts);$i>0;$i--) {
