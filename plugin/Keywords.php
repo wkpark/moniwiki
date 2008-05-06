@@ -1,7 +1,17 @@
 <?php
-// Copyright 2005-2006 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2005-2008 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a 'Keywords' plugin for the MoniWiki
+//
+// Author: Won-Kyu Park <wkpark@kldp.org>
+// Date: 2005-08-17
+// Name: a Keywords Plugin
+// Description: a Keywords plugin to generate keywords of a page
+// URL: MoniWiki:KeywordsPlugin
+// Version: $Revision$
+// License: GPL
+//
+// Usage: [[Keywords(options)]]
 //
 // $Id$
 
@@ -174,6 +184,7 @@ EOF;
 
     $lang=$formatter->pi['#language'] ? $formatter->pi['#language']:
         $DBInfo->default_language;
+
     if ($lang and in_array($lang,$supported_lang)) {
         $common_word_page=LOCAL_KEYWORDS.'/CommonWords'.ucfirst($lang);
         if ($DBInfo->hasPage($common_word_page)) {
@@ -182,7 +193,7 @@ EOF;
             $lines=array_merge($lines,$lines0);
             foreach ($lines as $line) {
                 if ($line[0]=='#') continue;
-                $common.=$line."\n";
+                $common.="\n".$line;
             }
             $common=rtrim($common);
         }
@@ -224,7 +235,7 @@ EOF;
     if ($bigwords) {
         // 
         $bigwords=array_filter($bigwords,create_function('$a','return ($a != 1);'));
-        $words=array_merge($words,$bigwords);
+        foreach ($bigwords as $k=>$v) $words["$k"] = $v;
     }
 
     arsort($words);
@@ -239,7 +250,8 @@ EOF;
         }
     }
 
-    if ($nwords) $words=array_merge($words,$nwords);
+    if ($nwords)
+        foreach ($nwords as $k=>$v) $words[$k]=$v;
     $use_sty=1;
 
     endif;
@@ -247,7 +259,12 @@ EOF;
 
     if ($limit and ($sz=sizeof($words))>$limit) {
         arsort($words);
-        $words=array_slice($words,0,$limit);
+        $mywords=array_keys($words);
+        $mywords=array_slice($mywords,0,$limit);
+
+        $nwords=array();
+        foreach ($mywords as $k) $nwords[$k]=$words[$k];
+        $words=&$nwords;
     }
     // make criteria list
 
@@ -614,5 +631,5 @@ function do_keywords($formatter,$options) {
     //$args['editable']=1;
     $formatter->send_footer($args,$options);
 }
-// vim:et:sts=4:st=4
+// vim:et:sts=4:sw=4:
 ?>
