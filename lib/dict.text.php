@@ -45,22 +45,19 @@ function _fuzzy_bsearch_file($fp, $key, $seek, $fuzzyoffset=0, $klen=0,$fz=0,$en
         $myseek = $myseek > $fz ? $fz:($myseek < 0 ? 0:$myseek);
         fseek($fp,$myseek);
 
-        if ($rlen > 1024) { $rlen=1024;}
-
         $ll=fgets($fp,1024);
+        $myseek0=ftell($fp);
         $l=fgets($fp,1024);
-
+        if ($l=='') break;
         $mykey= strtok($l,' \t\n,:');
         $llen= mb_strlen($mykey,$encoding);
 
-        $lz=strlen($l.$ll);
-
-        $myseek+=$lz;
+        $myseek=ftell($fp);
 
         if ($llen < $ki) {
             if ($match) {
                 if ($_debug) print "**--<br />\n";
-                $lower = $myseek - strlen($l);
+                $lower = $myseek0;
                 break;
             }
             continue;
@@ -80,7 +77,7 @@ function _fuzzy_bsearch_file($fp, $key, $seek, $fuzzyoffset=0, $klen=0,$fz=0,$en
         if ($test > 0) {
             //print "&gt;".$l;
             $sign = 1;
-            $lower = $myseek - strlen($l);
+            $lower = $myseek0;
         } else {
             //print "&lt;".$l;
             $sign = -1;
