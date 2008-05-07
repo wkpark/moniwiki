@@ -122,13 +122,17 @@ EOF;
   $upfilename=str_replace(" ","_",$files['upfile']['name'][$j]);
   $upfilename=str_replace(":","_",$upfilename);
 
-  preg_match("/^(.*)\.?([a-z0-9]{1,5})?$/i",$upfilename,$fname);
+  preg_match("/^(.*)\.([a-z0-9]{1,5})$/i",$upfilename,$fname);
 
   if (!$upfilename) continue;
   else if ($upfilename) $uploaded++;
 
   $no_ext=0;
-  if (!$fname[2]) $no_ext=1;
+  if (empty($fname[2])) {
+    $fname[1]=$upfilename;
+    $fname[2]='';
+    $no_ext=1;
+  }
 
   if (!$allowed) {
     if ($DBInfo->use_filetype) {
@@ -149,7 +153,7 @@ EOF;
     }
   }
 
-  $upfilename=implode('.',array($fname[1],$fname[2]));
+  $upfilename=preg_replace('/\.$/','',implode('.',array($fname[1],$fname[2])));
 
   if (!$allowed) {
     if (!$no_ext and !preg_match("/(".$pds_exts.")$/i",$fname[2])) {
@@ -188,7 +192,7 @@ EOF;
     $temp=explode("/",_stripslashes($options['rename'][$j]));
     $upfilename= $temp[count($temp)-1];
 
-    preg_match("/^(.*)\.?([a-z0-9]{1,5})?$/i",$upfilename,$tname);
+    preg_match("/^(.*)\.([a-z0-9]{1,5})$/i",$upfilename,$tname);
     $exts=explode('.',$tname[1]);
     $ok=0;
     for ($i=sizeof($exts);$i>0;$i--) {
