@@ -17,7 +17,8 @@
 function _fuzzy_bsearch_file($fp, $key, $seek, $fuzzyoffset=0, $klen=0,$fz=0,$encoding='UTF-8') {
     # adjustable parameters
     $_fuzzy_factor = 0.65; # mid parameter: in case of binary-search: 0.5
-    $_chunk_size = 32; # average strlen parameter of lines.
+    $_fuzzy_factor2 = 0.55; # similiar pos parameter
+    $_chunk_size = 128; # average strlen parameter of lines.
     $_howmany = 23; # this is not exact the bsearch then limit the search counter.
     $_debug = 1; # show debug info or not
 
@@ -33,6 +34,7 @@ function _fuzzy_bsearch_file($fp, $key, $seek, $fuzzyoffset=0, $klen=0,$fz=0,$en
 
     $upper = $fz;
     $lower = 0;
+    $fuzzy = $_fuzzy_factor;
 
     $f_offset = $min_offset = abs($offset);
 
@@ -66,38 +68,36 @@ function _fuzzy_bsearch_file($fp, $key, $seek, $fuzzyoffset=0, $klen=0,$fz=0,$en
         $len = $llen >= $klen ? $klen:$llen;
         $pmykey=mb_substr($mykey,0,$len,$encoding);
 
-        $test= strcasecmp($pkey,$pmykey);
+        $test= strcmp($pkey,$pmykey);
         if ($test == 0) {
             $test = 1;
             // very similar pattern can use smaller factor
-            $_fuzzy_factor=0.5*0.8/$klen;
+            $fuzzy=$_fuzzy_factor*$_fuzzy_factor2/$klen;
             if ($klen <= $llen) $test = -1;
         }
 
         if ($test > 0) {
-            //print "&gt;".$l;
             $sign = 1;
             $lower = $myseek0;
         } else {
-            //print "&lt;".$l;
             $sign = -1;
             $upper = $myseek;
         }
 
-        $n_offset = intval(($upper - $lower) * $_fuzzy_factor);
-        $f_offset = min($n_offset,$f_offset);
+        $f_offset = intval(($upper - $lower) * $fuzzy);
+        #$f_offset = min($n_offset,$f_offset);
 
         if ($_debug > 50) print ' * '.($sign*$f_offset)."<br />\n";
-        if ($f_offset > $min_offset * 1.2) break;
         $min_offset = min($min_offset, $f_offset);
         if ($f_offset < $_chunk_size) $f_offset = $_chunk_size;
 
         $offset = $sign * $f_offset;
+        if (($upper - $lower) < $f_offset) break;
     }
     if ($_debug > 50) {
         print "key=".$key.'/seek='.$lower.'/offset='.($upper - $lower)."<br />\n";
         fseek($fp,$lower);
-        print "<pre>==== chunk ====\n".fread($fp,$upper - $lower)."</pre>\n";
+        print "<pre>\n==== chunk ====\n".fread($fp,$upper - $lower)."</pre>\n";
     }
     return array($l,$lower,$upper,$scount);
 }
