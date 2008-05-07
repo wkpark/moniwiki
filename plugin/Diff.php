@@ -146,6 +146,7 @@ function macro_diff($formatter,$value,&$options)
   $option='';
 
   $pi=$formatter->get_instructions($dum);
+  $formatter->pi=$pi;
 
   $processor_type=$pi['#format'];
   while ($DBInfo->default_markup != 'wiki') { // XXX
