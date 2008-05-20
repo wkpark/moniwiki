@@ -15,6 +15,12 @@ function processor_pic($formatter,$value="") {
   $CONVERT="convert -transparent white -density 120x120 -crop 0x0 -trim ";
 
   $vartmp_dir=&$DBInfo->vartmp_dir;
+  if(getenv("OS")=="Windows_NT") {
+    $NULL='NUL';
+    $vartmp_dir=getenv('TEMP');
+    #$convert="wconvert";
+  }
+
   $cache_dir=$DBInfo->upload_dir."/PIC";
   $cache_url=$DBInfo->upload_url ? $DBInfo->upload_url.'/PIC':
     $DBInfo->url_prefix.'/'.$cache_dir;
