@@ -139,13 +139,14 @@ function macro_Attachment($formatter,$value,$options='') {
 
   $attr.=$lightbox_attr;
 
-  if (($p=strpos($value,':')) !== false or ($p=strpos($value,'/')) !== false) {
+  if (($p=strpos($value,':')) !== false or ($p=strrpos($value,'/')) !== false) {
     $subpage=substr($value,0,$p);
     $file=substr($value,$p+1);
     $value=$subpage.'/'.$file; # normalize page arg
     if ($subpage and is_dir($DBInfo->upload_dir.'/'.$DBInfo->pageToKeyname($subpage))) {
       $pagename=$subpage;
       $key=$DBInfo->pageToKeyname($subpage);
+      $value=$file;
     } else {
       $pagename='';
       $key='';
