@@ -1,2 +1,2 @@
 all:
-	wget -N http://chemie.skku.ac.kr/wiki/applets/ClipPlugin/clip.jar
+	wget -N http://moniwiki.kldp.org/applets/ClipPlugin/clip.jar
