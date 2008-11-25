@@ -117,7 +117,7 @@ $width $height l
 0 $height l
 0 0 l
 stroke
-*U
+*U\n
 INFO;
                 $eps.="%%Trailer\n%%EOF\n";
                 break;

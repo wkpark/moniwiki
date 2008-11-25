@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2008 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a gnuplot processor plugin for the MoniWiki
 //
@@ -138,7 +138,7 @@ $plt
        fwrite($ifp,$src);
        fclose($ifp);
 
-       $cmd= "$gnuplot $finp > $flog";
+       $cmd= "$gnuplot \"$finp\" > $flog";
        $fp=system($cmd);
        $log=join(file($flog),"");
        if (file_exists($outpath)) {
