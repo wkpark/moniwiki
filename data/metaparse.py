@@ -72,7 +72,9 @@ class MetaWiki:
       "PediaIndex":
         ("Special:Allpages",
          '^<table>(.*)</table>',
-         '(http://.*/w/wiki.phtml\?title=Special:Allpages&amp;from.*?)"')
+         '(http://.*/w/wiki.phtml\?title=Special:Allpages&amp;from.*?)"'),
+      "GtkDoc":
+        ("?", NO_CUT_REGEX, '<dt>\s*([^,]+),\s*<a href="([^"]+)">'),
     };
 
     def __init__(self):
@@ -109,7 +111,10 @@ class MetaWiki:
                 if self.RULES.has_key(type):
                     dummy=re.search(self.RULES[type][2],line)
                     if dummy:
-                        cache.write(dummy.group(1)+"\n")
+			if dummy.group(2):
+                            cache.write(dummy.group(1)+"\t"+dummy.group(2)+"\n")
+                    	else:
+                            cache.write(dummy.group(1)+"\n")
                 else:
 		    cache.write(line)
             cache.close()
@@ -131,6 +136,11 @@ class MetaWiki:
                 indexurl=url+type
 
 	return indexurl
+
+    def _GtkDoc_rule(self,wikiname,type,url):
+        urls=[]
+        urls.append(self._get_url(wikiname,type,url))
+        self._fetch(wikiname,type,urls)
 
     def _MoinMoin_rule(self,wikiname,type,url):
         urls=[]
@@ -273,8 +283,14 @@ def updateMetaCache(wikis,dbfile,dbtype):
                 key=unicode(key,default_charset).encode(local_charset)
             except:
                 pass
-            nkey=normalize(key)
-            key=string.replace(key," ","%20")
+
+            if re.search("\t",key):
+                temp=string.split(key)
+                nkey=temp[0]
+                key=temp[1]
+            else:
+                nkey=normalize(key)
+                key=string.replace(key," ","%20")
 #
 #            print nkey+":"+key 
             if not nkey: continue
