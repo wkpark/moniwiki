@@ -2,7 +2,7 @@
    MoinMoin Hotkeys
 
    Copyright(c) 2002 Byung-Chan Kim
-   Copyright(c) 2003-2007 Won-kyu Park <wkpark at kldp.org>
+   Copyright(c) 2003-2008 Won-kyu Park <wkpark at kldp.org>
 
    distributable under GPL
 
@@ -17,6 +17,7 @@
    * 2004/08/24 : no PATH_INFO support merged
    * 2004/10/03 : more intelligent behavior with search keys '?' '/'
    * 2007/11/09 : simplified and cleanup.
+   * 2008/11/25 : do not assume the "go" form is always defined.
 */
 
 /*
@@ -80,6 +81,11 @@ function keydownhandler(e) {
 	if (e && e.target) var f = e.target, nn=f.nodeName; // Mozilla
 	else var e=window.event, f = e.srcElement, nn = f.tagName; // IE
 
+	if (window.event && (e.keyCode==112 || e.keyCode==114)) {
+		keypresshandler(e); // IE hack
+		noBubble(e);
+		return false;
+	}
 	if (window.event && e.keyCode==27 && (nn == 'TEXTAREA' || nn == 'INPUT')) return false;
 	// IE ESC blocking for all vim lovers
 	return true;
@@ -92,24 +98,31 @@ function keypresshandler(e) {
 	ch = (cc >= 32 && cc <=126) ? String.fromCharCode(cc).toLowerCase():0;
 
 	//alert(e.keyCode+','+e.charCode+','+e.which);
-	var go=document.getElementById(_go);
-	var goValue=go.elements['value'];
-	var goAction=go.elements['action'];
-	var goStatus=go.elements['status'];
+	var go, goValue, goAction, goStatus;
+	var val, stat, act;
+	go=document.getElementById(_go);
+        if (go) {
+		goValue=go.elements['value'];
+		goAction=go.elements['action'];
+		goStatus=go.elements['status'];
+		val = goValue.value || "", act="goto";
+		stat = goStatus.value || "Go";
+        } else {
+		val = "", act="goto";
+		stat = "Go";
+	}
 
 	if (cc == 229 && nn != 'INPUT' && nn != 'TEXTAREA') { // for Mozilla
-		goValue.focus();
+		go ? goValue.focus():null;
 		noBubble(e);
 		return;
 	}
 
-	var val = goValue.value || "", act="goto";
-	var stat = goStatus.value || "Go";
 	var i=0;
 
 	if (e.altKey && ch == 'z') {
 		if (nn != 'INPUT') {
-			goValue.focus();
+			go ? goValue.focus():null;
 			noBubble(e);
 		} else {
 			var bot=document.getElementById('bottom');
@@ -117,6 +130,8 @@ function keypresshandler(e) {
 		}
 		return;
 	}
+
+	if (cc == 112 || cc == 114) ch=null; // mozilla hack
 
 	switch(ch || cc) {
 	case 27: ch = 27;
@@ -144,12 +159,12 @@ function keypresshandler(e) {
 					}
 				} else if (ch == 27) {
 					stat="Go";
-					goValue.blur();
+					go ? goValue.blur():null;
 				}
 				if (val == "/" || val == "?") val=val.substr(0,val.length-1);
-				goValue.value=val;
-				goAction.value=act;
-				goStatus.value=stat;
+				go ? goValue.value=val:null;
+				go ? goAction.value=act:null;
+				go ? goStatus.value=stat:null;
 				return;
 			}
 		}
@@ -165,18 +180,18 @@ function keypresshandler(e) {
 	switch(ch || cc) {
 	case '?':
 		// Title search as vi way
-		goAction.value="titlesearch";
-		goStatus.value='?';
-		goValue.focus();
+		go ? goAction.value="titlesearch":null;
+		go ? goStatus.value='?':null;
+		go ? goValue.focus():null;
 		break;
 	case '/':
 		// Contents search
-		goAction.value="fullsearch";
-		goStatus.value='/';
-		goValue.focus();
+		go ? goAction.value="fullsearch":null;
+		go ? goStatus.value='/':null;
+		go ? goValue.focus():null;
 		break;
 	case 27: // 'ESC' key
-		goValue.focus();
+		go ? goValue.focus():null;
 		break;
 	case 112: // 'F1' Help (Mozilla only)
 		noBubble(e);
@@ -194,7 +209,7 @@ function keypresshandler(e) {
 		if (bot) bot.focus();
 		break;
 	case 'z':
-		goValue.focus();
+		go ? goValue.focus():null;
 		break;
 	case 'a': case 'b': case 'd': case 'h': case 'i': case 'k': case 'l': case 'p':
 		if ((i = loc.indexOf(_ap)) != -1) loc = loc.substr(0,i);
