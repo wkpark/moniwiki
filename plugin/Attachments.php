@@ -16,6 +16,7 @@
 // $Id$
 
 function macro_Attachments($formatter,$value,$params=array()) {
+    global $DBInfo;
     if ($value and $DBInfo->hasPage($value)) {
         $p=$DBInfo->getPage($value);
         $body=$p->get_raw_body();
