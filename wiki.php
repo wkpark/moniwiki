@@ -2044,7 +2044,7 @@ class Formatter {
   function get_instructions(&$body) {
     global $Config;
     $pikeys=array('#redirect','#action','#title','#keywords','#noindex',
-      '#format','#filter','#postfilter','#twinpages','#notwins','#nocomment',
+      '#format','#filter','#postfilter','#twinpages','#notwins','#nocomment','#comment',
       '#language','#camelcase','#nocamelcase','#cache','#nocache',
       '#singlebracket','#nosinglebracket','#rating','#norating','#nodtd');
     $pi=array();
@@ -5118,13 +5118,15 @@ function wiki_main($options) {
         $formatter->pi['#format'] == $DBInfo->default_markup) {
       if ($formatter->pi['#nocomment']) $options['nocomment']=1;
       $options['mid']='dummy';
-      if (!is_array($DBInfo->extra_macros)) {
+      $extra=$DBInfo->extra_macros;
+      if (!is_array($extra)) {
         print '<div id="wikiExtra">'."\n";
         print $formatter->macro_repl($DBInfo->extra_macros,'',$options);
         print '</div>'."\n";
       } else {
+        if ($formatter->pi['#comment']) array_unshift($extra,'Comment');
         print '<div id="wikiExtra">'."\n";
-        foreach ($DBInfo->extra_macros as $macro)
+        foreach ($extra as $macro)
           print $formatter->macro_repl($macro,'',$options);
         print '</div>'."\n";
       }
