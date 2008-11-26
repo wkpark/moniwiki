@@ -8,7 +8,8 @@
 Wikiwyg.browserIsSupported = (
     Wikiwyg.is_gecko ||
     Wikiwyg.is_ie ||
-    Wikiwyg.is_opera
+    Wikiwyg.is_opera ||
+    Wikiwyg.is_safari
 );
 
 // Wikiwyg fix for IE
@@ -796,10 +797,11 @@ proto.get_edit_iframe = function() {
     // mozilla and IE hack !!
 
     iframeHandler = function() {
-        var doc = iframe.contentDocument || iframe.contentWindow.document;
         //Fx workaround: delay modifying editorDoc.body right after iframe onload event
-        var head = doc.getElementsByTagName("head")[0];
         setTimeout(function() {
+            var doc = iframe.contentDocument || iframe.contentWindow;
+            if (doc.document) doc = doc.document; // safari/chrome fix
+            var head = doc.getElementsByTagName("head")[0];
             doc.designMode = 'on';
 
             self.apply_stylesheets();
@@ -827,7 +829,7 @@ proto.get_edit_iframe = function() {
 
         //editorDoc.onkeydown = editorDoc_onkeydown;
         //where editorDoc_onkeydown is the keydown event handler you defined earlier
-        iframe = null; //IE mem leak fix
+        if (Wikiwyg.is_ie) iframe = null; //IE mem leak fix
     }
 
     iframe.onload=iframeHandler; // ignored by IE :(
