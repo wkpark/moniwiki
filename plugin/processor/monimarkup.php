@@ -260,6 +260,9 @@ class processor_monimarkup
                     continue;
                 }
                 // not reach
+            } else if (preg_match("/^##(.*)$/",$line,$m)) {
+                $chunk[]=array('tag'=>'COMMENT','value'=>$m[1]);
+                continue;
             }
             // paragraph block
             if ($_indlen[$_in_li]) {
@@ -416,7 +419,7 @@ class processor_monimarkup
         # 2-pass
         $chunk=$this->_pass2($body);
 
-        #print "<pre>";print_r($chunk);print "</pre>";
+        print "<pre>";print_r($chunk);print "</pre>";
         $hr_func=$Config['hr_type'].'_hr';
 
         $_lidep=array(0);
@@ -536,6 +539,12 @@ class processor_monimarkup
                     }
                     #print "<pre>".htmlspecialchars($val)."</pre>";
                     $out.=$val;
+                    break;
+                case 'COMMENT':
+                    # XXX
+                    $val=$c['value'];
+                    if (preg_match('/^\[\[.*\]\]$/',$val))
+                    $out.= $formatter->macro_repl(substr($val,2,-2),'',array('nomarkup'=>1));
                     break;
                 default:
                     break;
