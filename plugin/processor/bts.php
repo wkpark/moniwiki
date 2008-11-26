@@ -208,6 +208,7 @@ TAIL;
         $msg= ob_get_contents();
         ob_end_clean();
     }
+    $msg.= $formatter->macro_repl('Comment(meta)','',$options);
     if ($bts_script) return $msg.$hidden;
     $bts_script=1;
     return $script.$msg.$hidden;
