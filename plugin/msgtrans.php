@@ -72,6 +72,14 @@ function macro_MsgTrans($formatter,$value,$param=array()) {
                 $myPO = new TGettext_PO;
                 if ( ($e = $myPO->load($pofile)) == true) {
                     $myMO = $myPO->toMO();
+                    preg_match('/charset=(.*)$/',$myMO->meta['Content-Type'],$cs);
+                    if (strtoupper($cs[1]) != $charset) {
+                        $myMO->meta['Content-Type']= 'text/plain; charset='.$charset;
+                        foreach ($myMO->strings as $k=>$v) {
+                            $nv = iconv($cs[1],$charset,$v);
+                            if (isset($nv)) $myMO->strings[$k]=$nv;
+                        }
+                    }
                 }
             }
         } else {
