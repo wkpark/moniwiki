@@ -15,12 +15,14 @@
 //
 // $Id$
 
-function macro_MsgTrans($formatter,$value) {
+function macro_MsgTrans($formatter,$value,$param=array()) {
     global $DBInfo;
 
-    if (!is_array($DBInfo->owners) or in_array($options['id'],$DBInfo->owners)) {
-	return sprintf(_("You are not allowed to \"%s\" !"),"trans");
+    $user=new User();
+    if (!is_array($DBInfo->owners) or !in_array($user->id,$DBInfo->owners)) {
+        return sprintf(_("You are not allowed to \"%s\" !"),"msgtrans");
     }
+
     if (!$pagename)
         $pagename=$DBInfo->default_translation ? $DBInfo->default_translation:'LocalTranslationKo';
     $page=$DBInfo->getPage($pagename);
@@ -36,7 +38,7 @@ function macro_MsgTrans($formatter,$value) {
     foreach ($lines as $l) {
         $l=trim($l);
         if ($l{0}=='#') {
-            if (preg_match('/^#lang (ko_KR|en_US|fr_FR)$/',$l,$m)) {
+            if (preg_match('/^#lang(?>uage)? (ko_KR|en_US|fr_FR)$/',$l,$m)) {
                 $lang=$m[1];
                 if ($DBInfo->charset) $lang.='.'.$charset;
             }
