@@ -81,12 +81,12 @@ function keydownhandler(e) {
 	if (e && e.target) var f = e.target, nn=f.nodeName; // Mozilla
 	else var e=window.event, f = e.srcElement, nn = f.tagName; // IE
 
-	if (window.event && (e.keyCode==112 || e.keyCode==114)) {
+	if (e.charCode == undefined && (e.keyCode==112 || e.keyCode==114)) {
 		keypresshandler(e); // IE hack
 		noBubble(e);
 		return false;
 	}
-	if (window.event && e.keyCode==27 && (nn == 'TEXTAREA' || nn == 'INPUT')) return false;
+	if (e.charCode == undefined && e.keyCode==27 && (nn == 'TEXTAREA' || nn == 'INPUT')) return false;
 	// IE ESC blocking for all vim lovers
 	return true;
 }
@@ -131,7 +131,7 @@ function keypresshandler(e) {
 		return;
 	}
 
-	if (cc == 112 || cc == 114) ch=null; // mozilla hack
+	if (!e.keyCode && (cc == 112 || cc == 114)) ch=ch; // mozilla hack
 
 	switch(ch || cc) {
 	case 27: ch = 27;
