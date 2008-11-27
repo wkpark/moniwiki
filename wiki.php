@@ -4846,18 +4846,32 @@ if (isset($_locale)) {
   if ($Config['include_path']) $dirs=explode(':',$Config['include_path']);
   else $dirs=array('.');
 
+  $domain='moniwiki';
+  if ($Config['use_local_translation']) {
+    # gettext cache workaround
+    # http://kr2.php.net/manual/en/function.gettext.php#58310
+    $ldir=$Config['cache_dir']."/locale/$lang/LC_MESSAGES/";
+    if (file_exists($ldir.'md5sum')) {
+      $tmp=file($ldir.'md5sum');
+      if (file_exists($ldir.'moniwiki-'.$tmp[0].'.mo')) {
+        $domain=$domain.'-'.$tmp[0];
+        array_unshift($dirs,$Config['cache_dir']);
+      }
+    }
+  }
+
   $test=setlocale(LC_ALL, $lang);
   foreach ($dirs as $dir) {
     $ldir=$dir.'/locale';
     if (is_dir($ldir)) {
-      bindtextdomain('moniwiki', $ldir);
-      textdomain("moniwiki");
+      bindtextdomain($domain, $ldir);
+      textdomain($domain);
       break;
     }
   }
   if ($Config['set_lang']) putenv("LANG=".$lang);
   if (function_exists('bind_textdomain_codeset'))
-    bind_textdomain_codeset ('moniwiki', $Config['charset']);
+    bind_textdomain_codeset ($domain, $Config['charset']);
 }
 
 }
