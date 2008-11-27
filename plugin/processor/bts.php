@@ -134,7 +134,7 @@ SCRIPT;
         }
         if ($k[0]=='X' and $k[1]=='-') {
             if ($confs[$kk])
-                $v='[[InputForm(:'.$kk.':'.str_replace($v,$v.' 1',$confs[$kk]).')]]';
+                $v='[[InputForm(:'._($kk).':'.str_replace($v,$v.' 1',$confs[$kk]).')]]';
             $k=substr($k,2);
             if ($k=='Separator') {
                 $head.="\n##\n##[[HTML(</td><td valign='top'>)]]\n";
@@ -145,19 +145,21 @@ SCRIPT;
         } else {
             if ($k=='Summary' or $k=='Keywords') {
                 $v=str_replace(':','&#58;',$v);
-                $v='[[InputForm(input:'.$k.':'.$confs[$k].':'.$v.')]]';
-                $extra.="||'''$k'''||$v||\n";
+                $v='[[InputForm(input:'._($k).':'.$confs[$k].':'.$v.')]]';
+                $extra.="||'''"._($k)."'''||$v||\n";
             } else {
                 if ($confs[$kk])
-                    $v='[[InputForm(:'.$kk.':'.str_replace($v,$v.' 1',$confs[$kk]).')]]';
-                $head.="|| '''".$k."''' ||".$v." ||\n";
+                    $v='[[InputForm(:'._($kk).':'.str_replace($v,$v.' 1',$confs[$kk]).')]]';
+                $head.="|| '''"._($k)."''' ||".$v." ||\n";
             }
         }
     }
+
+    # print '<pre>'.$head.'</pre>';
     $head.=
         "\n##\n\n##[[HTML(</td></tr></table>)]]\n".
         $extra."\n".
-        "[[InputForm(submit:Save Changes)]]\n##[[InputForm]]";
+        "[[InputForm(submit:"._("Save Changes").")]]\n##[[InputForm]]";
     print <<<HEAD
 <fieldset id="bts-properties"><legend>Change Properties</legend>
 HEAD;

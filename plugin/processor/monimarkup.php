@@ -419,7 +419,7 @@ class processor_monimarkup
         # 2-pass
         $chunk=$this->_pass2($body);
 
-        print "<pre>";print_r($chunk);print "</pre>";
+        #print "<pre>";print_r($chunk);print "</pre>";
         $hr_func=$Config['hr_type'].'_hr';
 
         $_lidep=array(0);
