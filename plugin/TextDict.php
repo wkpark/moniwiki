@@ -68,23 +68,26 @@ function do_textdict($formatter,$options) {
     }
 
     sort($keys);$keys=array_unique($keys);
-    if ($_debug) $options['timer']->Check("read");
 
     $fp=fopen(TEXT_DICT,'r');
     if (!is_resource($fp)) return '';
     $fs=fstat($fp);
     $fz=$fs['size'];
+    if ($_debug) $options['timer']->Check("read");
 
     foreach ($keys as $i=>$key) {
         list($l,$min_seek,$max_seek,$scount)= _fuzzy_bsearch_file($fp,$key,0,$fz/3,0,$fz);
+        if ($_debug) $options['timer']->Check("seek");
         list($c,$buf,$last)=
             _file_match($fp,$key,$min_seek,$max_seek,$fz,0,true,'UTF-8');
         if ($_debug) {
+            $options['timer']->Check("find");
             print 'found='.$c."<br />\n";
             print 'scount='.$scount."<br />\n";
             if ($last) print 'last='.$last."<br />\n";
             if ($_debug>50)
                 if (!empty($buf)) print $buf."<br />\n";
+            $options['timer']->Check("log");
         }
     }
     fclose($fp);

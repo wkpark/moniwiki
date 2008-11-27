@@ -12,6 +12,9 @@ function filter_indexer_ko($formatter,$value,&$options) {
     $more_specific_len=1;
     $indexer=new KoreanIndexer();
 
+    if ($options['value'])
+        $value=$options['value'];
+
     $delims=",.\|\n\r\s\(\)\[\]{}!@#\$%\^&\*\-_\+=~`';:'\"\?<>\/";
 
     # un-wikify CamelCase, change "WikiName" to "Wiki Name"
@@ -30,6 +33,7 @@ function filter_indexer_ko($formatter,$value,&$options) {
     $log='';
     $tag=array('+','-');
     foreach ($keys as $i=>$key) {
+        $match=null;
         if ($stem=$indexer->getStem(trim($key),$match,$type)) {
             $log.= $key.'=>'.$stem.$tag[$type-1].'/'.$match[1]."\n";
             if ($type==1)
