@@ -2656,12 +2656,6 @@ function macro_GoTo($formatter="",$value="") {
     </form>";
 }
 
-function processor_html($formatter="",$value="") {
-  if ($value[0]=='#' and $value[1]=='!')
-    list($line,$value)=explode("\n",$value,2);
-  return $value;
-}
-
 function processor_plain($formatter,$value) {
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
