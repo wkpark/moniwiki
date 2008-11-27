@@ -59,16 +59,32 @@ function macro_MsgTrans($formatter,$value,$param=array()) {
 
     //print_r($strs);
     if (!empty($strs)) {
-        include_once 'lib/Gettext/MO.php';
-        $myMO = new TGettext_MO;
-
+        $myMO = null;
         $ldir='locale/'.$lang.'/LC_MESSAGES';
         $mofile=$ldir.'/moniwiki.mo';
 
-        if (($e = $myMO->load($mofile))==true) {
+        if (!file_exists($mofile)) {
+            # load *.po file
+            $mylang = substr($lang,0,2);
+            $pofile = 'locale/po/'.$mylang.'.po';
+            if (file_exists($pofile)) {
+                include_once 'lib/Gettext/PO.php';
+                $myPO = new TGettext_PO;
+                if ( ($e = $myPO->load($pofile)) == true) {
+                    $myMO = $myPO->toMO();
+                }
+            }
+        } else {
+            # load *.mo file
+            include_once 'lib/Gettext/MO.php';
+            $myMO = new TGettext_MO;
+            $e = $myMO->load($mofile);
+        }
+
+        if ($myMO and $e == true) {
             $myMO->strings = array_merge($myMO->strings,$strs);
             #$myMO->meta['PO-Revision-Date']= date('Y-m-d H:iO');
-            ksort($myMO->strings); // XXX
+            ksort($myMO->strings); // important!
             #print_r($myMO->strings);
         } else {
            $meta = array(
