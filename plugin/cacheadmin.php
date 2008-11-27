@@ -1,24 +1,22 @@
 <?php
-// Copyright 2006 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2008 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a cacheadmin plugin for the MoniWiki
 //
 // Usage: ?action=cacheadmin
 //
 // $Id$
-
-function info_CacheAdmin() {
-    return array(
-        'author'  => 'Won-Kyu Park <wkpark@kldp.org>',
-        'date'    => '2006-08-05',
-        'name'    => 'CacheAdmin',
-        'desc'    => 'CacheAdmin Plugin',
-        'url'     => 'MoniWiki:CacheAdminPlugin',
-        'version' => substr('$Revision$',1,-1),
-        'depend'  => '1.1.1',
-        'license' => 'GPL',
-     );
-}
+//
+/**
+ * @author  Won-Kyu Park <wkpark@kldp.org>
+ * @date    2006-08-05
+ * @name    CacheAdmin
+ * @desc    CacheAdmin Plugin
+ * @url     MoniWiki:CacheAdminPlugin
+ * @version $Revision$
+ * @depend  1.1.1
+ * @license GPL
+ */
 
 function macro_CacheAdmin($formatter,$value='',$options=array()) {
     global $Config;
