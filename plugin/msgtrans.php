@@ -74,10 +74,14 @@ function macro_MsgTrans($formatter,$value,$param=array()) {
                     $myMO = $myPO->toMO();
                     preg_match('/charset=(.*)$/',$myMO->meta['Content-Type'],$cs);
                     if (strtoupper($cs[1]) != $charset) {
-                        $myMO->meta['Content-Type']= 'text/plain; charset='.$charset;
-                        foreach ($myMO->strings as $k=>$v) {
-                            $nv = iconv($cs[1],$charset,$v);
-                            if (isset($nv)) $myMO->strings[$k]=$nv;
+                        if (function_exists("iconv")) {
+                            $myMO->meta['Content-Type']= 'text/plain; charset='.$charset;
+                            foreach ($myMO->strings as $k=>$v) {
+                                $nv = iconv($cs[1],$charset,$v);
+                                if (isset($nv)) $myMO->strings[$k]=$nv;
+                            }
+                        } else {
+                            $e = false;
                         }
                     }
                 }
@@ -103,8 +107,7 @@ function macro_MsgTrans($formatter,$value,$param=array()) {
                 'Language-Team'     => 'MoniWiki Translator',
            );
             if (true !== ($e = $myMO->fromArray(array('meta'=>$meta,'strings'=>$strs)))) {
-                print "Fail to make a mo file.\n";
-                return $e;
+                return "Fail to make a mo file.\n";
             }
         }
 
@@ -114,28 +117,26 @@ function macro_MsgTrans($formatter,$value,$param=array()) {
         #$tmp=$vartmp_dir."/GETTEXT.mo";
 
         if (true !== ($e = $myMO->save($tmp))) {
-            print "Fail to save mo file.\n";
-            return $e;
+            return "Fail to save mo file.\n";
         }
         # gettext cache workaround
         # http://kr2.php.net/manual/en/function.gettext.php#58310
         # use md5sum instead
         $md5 = md5_file($tmp);
         $md5file = $DBInfo->cache_dir.'/'.$ldir.'/md5sum';
+        $ldir=$DBInfo->cache_dir.'/'.$ldir;
+        _mkdir_p($ldir,0777);
+
         $f = fopen($md5file,'w');
         if (is_resource($f)) {
             fwrite($f,$md5);
             fclose($f);
         }
-        $ldir=$DBInfo->cache_dir.'/'.$ldir;
-        _mkdir_p($ldir,0777);
 
-	if (!file_exists($ldir)) {
+        if (!rename($tmp,$ldir.'/moniwiki-'.$md5.'.mo')) {
+            unlink($md5file); // fail to copy ?
             return "Fail to save mo file.\n";
-	}
-        copy($tmp,$ldir.'/moniwiki-'.$md5.'.mo');
-        unlink($tmp);
-        if (!file_exists($md5file)) unlink($md5file); // fail to copy ?
+        }
 
         return _("Local translation files are successfully translated !\n");
     }
