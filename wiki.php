@@ -148,7 +148,7 @@ if (!function_exists ('bindtextdomain')) {
 
   function gettext ($text) {
     global $_locale,$locale;
-    $_locale=&$locale;
+    if (sizeof($_locale) == 0) $_locale=&$locale;
     if (!empty ($_locale[$text]))
       return $_locale[$text];
     return $text;

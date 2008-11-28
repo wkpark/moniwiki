@@ -8,7 +8,7 @@ BEGIN {
 /^msgid "/ { #"{
   if (msgid && str) {
     gsub(/\$/, "\\$", str);
-    print ("$locale[\"" msgid "\"] =\n   \"" str "\";");
+    print ("$_locale[\"" msgid "\"] =\n   \"" str "\";");
   }
   str = substr ($0, 8, length ($0) - 8);
   msgstr="";
@@ -28,7 +28,7 @@ BEGIN {
 END {
   if (msgid && str) {
     gsub(/\$/, "\\$", str);
-    print ("$locale[\"" msgid "\"] =\n   \"" str "\";");
+    print ("$_locale[\"" msgid "\"] =\n   \"" str "\";");
   }
   print ("\n?>");
 }
