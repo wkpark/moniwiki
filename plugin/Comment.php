@@ -164,7 +164,8 @@ function do_comment($formatter,$options=array()) {
         $button_preview=1;
       }
     } else {
-      $options['msg']= _("You need a ticket !");
+      if (!$button_preview)
+        $options['msg']= _("You need a ticket !");
       $button_preview=1;
     }
   } else {
