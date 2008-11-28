@@ -130,6 +130,12 @@ CSS;
 	</td>
 	</tr><tr>
 	<td>
+	<div id="previewAlign">
+	</div>
+	<div id="filePreview"$jsPreview>
+	</div>
+	</td>
+	<td>
 	<div id="filesDisplay">
                 <form target='_blank' method='POST' action='$action'>
 		<ul id="mmUploadFileListing">$uploaded</ul>
@@ -143,10 +149,7 @@ CSS;
                 </form>
 	</div>
 	</td>
-	<td>
-	<div id="filePreview"$jsPreview>
-	</div>
-	</td></tr>
+        </tr>
 	</table>
 	</div>
 EOF;
