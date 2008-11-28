@@ -563,7 +563,13 @@ class processor_monimarkup
 
                 if (preg_match('/^((\s*)(&lt;|=|>)?{([^}]+)})/s',$c,$sty)) {
                     if ($sty[3]) $sty[4].=';'.$palign[$sty[3]];
-                    $c=$sty[2].substr($c,strlen($sty[1]));
+                    # {es} => not style
+                    # {color:red} => style
+                    if (preg_match('/:/',$sty[4])) $c=$sty[2].substr($c,strlen($sty[1]));
+                    else {
+                        $c=$sty[2].'{'.$sty[4].'}'.substr($c,strlen($sty[1]));
+                        $sty[4]='';
+                    }
                 }
 
                 if ($formatter->auto_linebreak)
