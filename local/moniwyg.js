@@ -1838,7 +1838,7 @@ proto.addControlItem = function(text, method,arg) {
 }
 
 proto.config.controlLayout = [
-    'save', 'preview', 'cancel', 'mode_selector', '/',
+    'save', /* 'preview', */ 'cancel', 'mode_selector', '/',
     'bold',
     'italic',
     'link',
