@@ -147,7 +147,8 @@ if (!function_exists ('bindtextdomain')) {
   $_locale = array();
 
   function gettext ($text) {
-    global $_locale;
+    global $_locale,$locale;
+    $_locale=&$locale;
     if (!empty ($_locale[$text]))
       return $_locale[$text];
     return $text;
@@ -4836,7 +4837,7 @@ if ($theme and ($DBInfo->theme_css or !$options['css_url']))
 }
 
 function init_locale($lang) {
-  global $Config,$_locale;
+  global $Config,$_locale,$locale;
 if (isset($_locale)) {
   if (!@include_once('locale/'.$lang.'/LC_MESSAGES/moniwiki.php'))
     @include_once('locale/'.substr($lang,0,2).'/LC_MESSAGES/moniwiki.php');
