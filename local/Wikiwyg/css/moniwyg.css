@@ -11,8 +11,51 @@ span.wikiwyg_control_link a {
     padding: 4px;
 }
 
-span.wikiwyg_control_link {
+.wikiwyg_control_link input {
+    font-family:'Trebuchet MS',sans-serif;
+}
 
+.wikiwyg_mode_selector {
+    font-family:'Trebuchet MS',sans-serif;
+    list-style-image: none;
+    list-style-type: none;
+    list-style-position: outside;
+    margin: 0;
+    padding:0;
+    display: inline;
+}
+
+.wikiwyg_mode_selector li:hover {
+    cursor: pointer;
+    background-position: left -65px;
+}
+
+.wikiwyg_mode_selector li:hover span {
+    background-position: right -65px;
+}
+
+ul.wikiwyg_mode_selector {
+    display: inline;
+}
+
+.wikiwyg_mode_selector li {
+    padding: 5px 0px;
+    margin-left: 5px;
+    background: url(../images/modebtn.gif) no-repeat;
+    background-position: left -63px;
+    display: inline;
+}
+
+.wikiwyg_mode_selector span {
+    margin-left: 5px;
+    background: url(../images/modebtn.gif) no-repeat;
+}
+
+.wikiwyg_mode_selector span {
+    display: inline;
+    padding: 5px 10px;
+    padding-left:5px;
+    background-position: right -63px;
 }
 
 .wikiwyg_toolbar label {

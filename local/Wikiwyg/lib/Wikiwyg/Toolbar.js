@@ -207,7 +207,11 @@ proto.resetModeSelector = function() {
 }
 
 proto.addModeSelector = function() {
-    var span = document.createElement('span');
+    var cntrl = Wikiwyg.createElementWithAttrs(
+        'ul', {
+            class: 'wikiwyg_mode_selector'
+        }
+    );
 
     var control_buttons=[];
     if (this.controls) {
@@ -217,41 +221,41 @@ proto.addModeSelector = function() {
         }
     }
 
-    var radio_name = Wikiwyg.createUniqueId();
+    var btn_name = Wikiwyg.createUniqueId();
     for (var i = 0; i < this.wikiwyg.config.modeClasses.length; i++) {
         var class_name = this.wikiwyg.config.modeClasses[i];
         if (control_buttons[class_name]) continue;
         var mode_object = this.wikiwyg.mode_objects[class_name];
  
-        var radio_id = Wikiwyg.createUniqueId();
+        var btn_id = Wikiwyg.createUniqueId();
  
         var checked = i == 0 ? 'checked' : '';
-        var radio = Wikiwyg.createElementWithAttrs(
-            'input', {
-                type: 'radio',
-                name: radio_name,
-                id: radio_id,
-                value: mode_object.classname
+        var btn = Wikiwyg.createElementWithAttrs(
+            'li', {
+                id: btn_id,
+                class: mode_object.classname
                 /* 'checked': checked */
             }
         );
+        /*
         if (!this.firstModeRadio)
-            this.firstModeRadio = radio;
+            this.firstModeRadio = btn;
+        */
  
         var self = this;
-        radio.onclick = function() { 
-            self.wikiwyg.switchMode(this.value);
+        btn.onclick = function() { 
+            self.wikiwyg.switchMode(this.className);
         };
  
         var label = Wikiwyg.createElementWithAttrs(
-            'label', { 'for': radio_id }
+            'span', { 'for': btn_id }
         );
         label.appendChild(document.createTextNode(mode_object.modeDescription));
 
-        span.appendChild(radio);
-        span.appendChild(label);
+        cntrl.appendChild(btn);
+        btn.appendChild(label);
     }
-    this.div.appendChild(span);
+    this.div.appendChild(cntrl);
 }
 
 proto.add_break = function() {
