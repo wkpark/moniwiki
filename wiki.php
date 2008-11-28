@@ -4848,9 +4848,11 @@ if (isset($_locale)) {
 
   $domain='moniwiki';
   if ($Config['use_local_translation']) {
+    $langdir=$lang;
+    if(getenv("OS")=="Windows_NT") $langdir=substr($lang,0,2);
     # gettext cache workaround
     # http://kr2.php.net/manual/en/function.gettext.php#58310
-    $ldir=$Config['cache_dir']."/locale/$lang/LC_MESSAGES/";
+    $ldir=$Config['cache_dir']."/locale/$langdir/LC_MESSAGES/";
     if (file_exists($ldir.'md5sum')) {
       $tmp=file($ldir.'md5sum');
       if (file_exists($ldir.'moniwiki-'.$tmp[0].'.mo')) {

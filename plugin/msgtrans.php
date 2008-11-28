@@ -57,6 +57,8 @@ function macro_MsgTrans($formatter,$value,$param=array()) {
         $strs[$w]=$t;
     }
 
+    if(getenv("OS")=="Windows_NT") $lang=substr($lang,0,2);
+
     //print_r($strs);
     if (!empty($strs)) {
         $myMO = null;
