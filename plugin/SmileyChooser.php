@@ -58,7 +58,8 @@ function mySmiley(myText)
     var myhtml='';
     myhtml= HTTPPost(self.location, postdata);
 
-    var m = myhtml.match(/<div>(.*)\\n<\/div>/i); // strip div tag
+    // check the old wiki-engine or the new monimarkup
+    var m = myhtml.match(/<div>(.*)\\n<\/div>/i) || myhtml.match(/<p class="[^"]+">(.*)<\/p>/i); // strip div tag
     if (m) {
       var html = m[1] + ' ';
       if (is_ie) {
