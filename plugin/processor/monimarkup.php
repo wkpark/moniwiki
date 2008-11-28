@@ -130,13 +130,19 @@ class processor_monimarkup
         $_eop=0; // end of paragraph
         $oline=null;
         foreach ($lines as $line) {
+            $tr=strlen(trim($line));
             if (substr($line,-1) == '&') { $oline.="\n".$line; continue; }
             if (!empty($oline) and preg_match('/^\s*\|\|/',$oline)) {
                 if ( !preg_match('/\|\|$/',$oline)) {
                     $oline.="\n".$line; continue;
+                } else if (!$tr) {
+                    $chunk[]= $oline."\n".$line;
+                    $_eop=0;
+                    $oline=null;
+                    continue;
                 }
             }
-            if (!trim($line)) {
+            if (!$tr) {
                 if ($_in_li) $oline.="\n".$line;
                 else {
                     $oline.=isset($oline) ? "\n".$line:$line;
@@ -162,7 +168,7 @@ class processor_monimarkup
                 $_in_li=0;
                 $chunk[]=array('tag'=>'HR','type'=>'complete','value'=>$m[1]);
                 continue;
-            } else if (preg_match("/^((?:\>\s)*\>(\.\w+)?\s|\s+)/",$line,$m)) {
+            } else if (preg_match("/^((?:\>\s)*\>(\.\w+)?\s?|\s+)/",$line,$m)) {
                 $_eop=0;
                 $mytype=array('tag'=>'LIST','type'=>'di');
                 $indlen=$myindlen=strlen($m[0])-strlen($m[2]);
