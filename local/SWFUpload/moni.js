@@ -1,4 +1,4 @@
-﻿Math.roundf = function(val, precision) {
+Math.roundf = function(val, precision) {
     var p = this.pow(10, precision);
     return this.round(val * p) / p;
 }
@@ -165,11 +165,9 @@ function showImgPreview(filename) {
         isImg=1;
 
         if (jspreview) {
-            myAlign="<div id='previewAlign'>";
-            myAlign+=" <img src='" + img_dir + "/normal.png' class='alignImg' onclick='javascript:alignImg(this,\"normal\")' />";
+            myAlign =" <img src='" + img_dir + "/normal.png' class='alignImg' onclick='javascript:alignImg(this,\"normal\")' />";
             myAlign+=" <img src='" + img_dir + "/left.png'  class='alignImg' onclick='javascript:alignImg(this,\"left\")' />";
             myAlign+=" <img src='" + img_dir + "/right.png'  class='alignImg' onclick='javascript:alignImg(this,\"right\")' />";
-            myAlign+="</div>";
         }
     } else {
         if (ext.match(/^(wmv|avi|mpeg|mpg|swf|wav|mp3|ogg|midi|mid|mov)$/)) {
@@ -192,7 +190,9 @@ function showImgPreview(filename) {
         href_open="<a href=\""+ path + "\" rel=\"lightbox[mmswf]\" onclick=\"" + myclick + "; return false;\">";href_close="</a>";
     }
 
-    preview.innerHTML=myAlign + href_open + fname + href_close;
+    var align = document.getElementById("previewAlign");
+    align.innerHTML=myAlign;
+    preview.innerHTML=href_open + fname + href_close;
 }
 
 /*

@@ -10,10 +10,16 @@
   vertical-align: top;
 }
 
+#previewAlign {
+  text-align:center;
+}
+
 #filePreview {
-  width:100px;
-  min-height: 13px;
+  /* width:100px; */
+  min-height: 64px;
+  min-width: 64px;
   border: 1px solid #f3f3f3;
+  background: url(./images/photo.png) no-repeat;
 }
 
 .fileList td {
