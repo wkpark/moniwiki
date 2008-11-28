@@ -1,7 +1,15 @@
 <?php
-// Copyright 2006 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2006-2008 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a bug track system plugin for the MoniWiki
+//
+// Author: Won-Kyu Park <wkpark@kldp.org>
+// Date: 2006-01-09
+// Name: BugTrackingSystem
+// Description: a Simpl Bug Track System for MoniWiki
+// URL: MoniWiki:BugTrackingSystem
+// Version: $Revision$
+// License: GPL
 //
 // $Id$
 
@@ -125,8 +133,10 @@ SCRIPT;
     }
 
     $metas=getMetadata($meta);
-    $head="##[[InputForm(form:get:bts)]]\n##[[HTML(<table><tr><td valign='top'>)]]\n";
+    $head="##[[InputForm(form:get:bts)]]\n##[[HTML(<table width='100%'><tr><td @@ valign='top'>)]]\n";
     $extra='';
+    $attr='<tablewidth="100%">';
+    $sep=1;
     foreach ($metas as $k=>$v) {
         $kk=$k;
         if (in_array($k,array('Version','Component'))) {
@@ -136,30 +146,37 @@ SCRIPT;
             if ($confs[$kk])
                 $v='[[InputForm(:'._($kk).':'.str_replace($v,$v.' 1',$confs[$kk]).')]]';
             $k=substr($k,2);
-            if ($k=='Separator') {
-                $head.="\n##\n##[[HTML(</td><td valign='top'>)]]\n";
+            if (substr($k,0,9) =='Separator') {
+                $sep++;
+                $head.="\n##\n##[[HTML(</td><td @@ valign='top'>)]]\n";
+                $attr='<tablewidth="100%">';
             } else {
-                if ($k=='Date-Submitted') $v='[[DateTime('.$v.')]]';
-                $head.="|| ''".$k."'' || ".$v." ||\n";
+                if (substr($k,0,4)=='Date') $v='[[DateTime('.$v.')]]';
+                $head.="||".$attr." ''".$k."'' || ".$v." ||\n";
+                $attr='';
             }
         } else {
             if ($k=='Summary' or $k=='Keywords') {
                 $v=str_replace(':','&#58;',$v);
                 $v='[[InputForm(input:'._($k).':'.$confs[$k].':'.$v.')]]';
-                $extra.="||'''"._($k)."'''||$v||\n";
+                $extra.="|| '''"._($k)."'''''':'''||$v||\n";
             } else {
                 if ($confs[$kk])
                     $v='[[InputForm(:'._($kk).':'.str_replace($v,$v.' 1',$confs[$kk]).')]]';
-                $head.="|| '''"._($k)."''' ||".$v." ||\n";
+                $head.="||".$attr."<width='30%'> '''"._($k)."'''''':'''||".$v." ||\n";
+                $attr='';
             }
         }
     }
-
-    # print '<pre>'.$head.'</pre>';
+    $attr='width="100%"';
+    if ($sep > 1) $attr='width="'.(100/$sep).'%"';
+    $head=preg_replace('/@@/',$attr,$head);
+    
     $head.=
-        "\n##\n\n##[[HTML(</td></tr></table>)]]\n".
+        "\n##\n##[[HTML(</td></tr></table>)]]\n".
         $extra."\n".
         "[[InputForm(submit:"._("Save Changes").")]]\n##[[InputForm]]";
+    #print '<pre>'.$head.'</pre>';
     print <<<HEAD
 <fieldset id="bts-properties"><legend>Change Properties</legend>
 HEAD;
