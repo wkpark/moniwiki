@@ -108,7 +108,7 @@ function escapeQuotesHTML(text) {
 // apply tagOpen/tagClose to selection in textarea,
 // use sampleText instead of selection if there is none
 // copied and adapted from phpBB
-function insertTags(tagOpen, tagClose, sampleText) {
+function insertTags(tagOpen, tagClose, sampleText,replace) {
 	var is_ie = document.selection && document.all;
 	var my = document.getElementById('editor_area');
 	var doc = document;
@@ -179,6 +179,11 @@ function insertTags(tagOpen, tagClose, sampleText) {
 			subst = tagOpen + myText + tagClose;
 		}
 
+		if (replace && !myText.match(/== /) /* == Heading == */
+				&& subst != sampleText && myText != sampleText) {
+			subst=tagOpen + sampleText + tagClose;
+		}
+
 		range.text = subst + endText;
 
 		range.setEndPoint('StartToStart', r);
@@ -203,7 +208,7 @@ function insertTags(tagOpen, tagClose, sampleText) {
 			subst = tagOpen + myText + tagClose;
 		}
 
-		if (!myText.match(/== /) /* == Heading == */
+		if (replace && !myText.match(/== /) /* == Heading == */
 				&& subst != sampleText && myText != sampleText) {
 			subst=tagOpen + sampleText + tagClose;
 		}

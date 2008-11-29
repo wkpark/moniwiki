@@ -142,18 +142,19 @@ function showImgPreview(filename,temp) {
         mydir = form.mysubdir.value;
     }
 
-    mydir = mydir ? mydir:'';
-
     if (document.editform) {
         jspreview=1;
     }
 
+    //var loc = location.protocol + '//' + location.host;
+    //if (location.port) loc += ':' + location.port;
+    //path = loc + _url_prefix + '/pds/.swfupload/' + mydir + filename;
     path = _url_prefix + '/pds/.swfupload/' + mydir + filename;
 
     if (jspreview) {
         tag_open="attachment:"; tag_close="";
 //      if (opener != value) tag_open+=opener;
-//      alt="alt='" + tag_open + filename + tag_close +"'";
+        alt="alt='" + tag_open + filename + tag_close +"'";
     }
 
     var m=filename.match(/\.(.{1,4})$/);
