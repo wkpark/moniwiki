@@ -34,12 +34,12 @@ function _parse_rlog($formatter,$log,$options=array()) {
     $out="<div class='wikiInfo'><h2>"._("Revision History")."</h2>\n";
   $out.="<form id='infoform' method='post' action='$url'>";
   $out.="<table class='info' cellpadding='3' cellspacing='2'><tr>\n";
-  $out.="<th class='info'>ver.</th><th class='info'>Date and Changes</th>".
-       "<th class='info'>Editor</th>".
+  $out.="<th class='info'>"._("ver.")."</th><th class='info'>"._("Date and Changes")."</th>".
+       "<th class='info'>"._("Editor")."</th>".
        "<th class='info'><input type='submit' value='$diff_btn'></th>";
   if (!$simple) {
-    $out.="<th class='info'>actions</th>";
-    if (isset($admin)) $out.= "<th class='info'>admin.</th>";
+    $out.="<th class='info'>"._("actions")."</th>";
+    if (isset($admin)) $out.= "<th class='info'>"._("admin.")."</th>";
   }
   $out.= "</tr>\n";
 
@@ -144,7 +144,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
 
          $rrev= $rrev ? $rrev:$rev;
          $out.="<tr>\n";
-         $out.="<th valign='top' rowspan=$rowspan>$rrev</th><td nowrap='nowrap'>$inf $change</td><td>$ip&nbsp;</td>";
+         $out.="<th class='rev' valign='top' rowspan=$rowspan>$rrev</th><td nowrap='nowrap'>$inf $change</td><td>$ip&nbsp;</td>";
          $rrev='';
          $achecked="";
          $bchecked="";
@@ -186,11 +186,11 @@ function _parse_rlog($formatter,$log,$options=array()) {
      }
   }
   if (!$simple and $admin):
-  $out.="<tr><td colspan='6' align='right'><input type='checkbox' name='show' checked='checked' />show only ";
+  $out.="<tr><td colspan='6' align='right'><input type='checkbox' name='show' checked='checked' />"._("show only").' ';
   if ($DBInfo->security->is_protected("rcspurge",$options)) {
     $out.="<input type='password' name='passwd'>";
   }
-  $out.="<input type='submit' name='rcspurge' value='purge'></td></tr>";
+  $out.="<input type='submit' name='rcspurge' value='"._("purge")."'></td></tr>";
   endif;
   $out.="<input type='hidden' name='action' value='diff'/></form></table>\n";
   $out.="<script type='text/javascript' src='$DBInfo->url_prefix/local/checkbox.js'></script></div>\n";
