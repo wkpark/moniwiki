@@ -4345,10 +4345,12 @@ FOOT;
       $DBInfo->goto_form : goto_form($action,$DBInfo->goto_type);
 
     if ($options['msg'] or $msgtitle) {
+      $msgtype = isset($options['msgtype']) ? $options['msgtype']:'warn';
+      
       $mtitle=$msgtitle ? "<h3>".$msgtitle."</h3>\n":"";
       $msg=<<<MSG
-<div class="message">
-$mtitle$options[msg]
+<div class="message"><span class='$msgtype'>
+$mtitle$options[msg]</span>
 </div>
 MSG;
     }
