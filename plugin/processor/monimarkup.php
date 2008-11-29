@@ -353,12 +353,17 @@ class processor_monimarkup
                     preg_match('/^((&lt;[^>]+>)?)(\s?)(.*)(?<!\s)(\s*)?$/s',
                     $cells[$i+1],$m);
                     $cell=$m[3].$m[4].$m[5];
-                    if (strpos($cell,"\n"))
-                        $cell = $this->process($cell);
-                    #$cell=str_replace("\n","<br />\n",$cell);
                     if ($m[3] and $m[5]) $align='center';
                     else if (!$m[3]) $align='';
                     else if (!$m[5]) $align='right';
+                    #$cell=str_replace("\n","<br />\n",$cell);
+                    if (strpos($cell,"\n")) {
+                        $save = $formatter->section_edit;
+                        $formatter->section_edit=0;
+                        $cell = $this->process($cell);
+                        $formatter->section_edit=$save;
+                        $align='';
+                    }
 
                     $attr=$formatter->_td_attr($m[1],$align);
                     if (!$tr_attr) $tr_attr=$m[1]; // XXX
