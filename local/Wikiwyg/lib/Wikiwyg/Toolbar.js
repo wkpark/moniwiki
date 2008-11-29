@@ -209,7 +209,7 @@ proto.resetModeSelector = function() {
 proto.addModeSelector = function() {
     var cntrl = Wikiwyg.createElementWithAttrs(
         'ul', {
-            class: 'wikiwyg_mode_selector'
+            'class': 'wikiwyg_mode_selector'
         }
     );
 
@@ -233,7 +233,7 @@ proto.addModeSelector = function() {
         var btn = Wikiwyg.createElementWithAttrs(
             'li', {
                 id: btn_id,
-                class: mode_object.classname
+                'class': mode_object.classname
                 /* 'checked': checked */
             }
         );

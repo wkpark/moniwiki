@@ -123,7 +123,7 @@ function alignImg(obj,val) {
     }
 }
 
-function showImgPreview(filename) {
+function showImgPreview(filename,temp) {
     var preview = document.getElementById("filePreview");
     if (!preview) return;
     var tag_open='attachment:',tag_close='';
@@ -144,11 +144,11 @@ function showImgPreview(filename) {
 
     mydir = mydir ? mydir:'';
 
-    path = _url_prefix + '/pds/.swfupload/' + mydir + filename;
-
-    if (preview.className=="previewTag") {
+    if (document.editform) {
         jspreview=1;
     }
+
+    path = _url_prefix + '/pds/.swfupload/' + mydir + filename;
 
     if (jspreview) {
         tag_open="attachment:"; tag_close="";
@@ -161,6 +161,14 @@ function showImgPreview(filename) {
     var isImg=0;
     var myAlign='';
     if (ext && ext.match(/gif|png|jpeg|jpg|bmp/)) {
+        if (temp) {
+            var postdata = 'action=markup/ajax&value=' + encodeURIComponent("attachment:" + filename);
+            var myhtml='';
+            myhtml= HTTPPost(self.location, postdata);
+
+            var m = myhtml.match(/<img src=(\'|\")([^\'\"]+)\1/i); // strip div tag
+            path = m[2];
+        }
         fname="<img src='" + path + "' width='" + preview_width + ' ' + alt + " />";
         isImg=1;
 

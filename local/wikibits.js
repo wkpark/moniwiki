@@ -109,20 +109,61 @@ function escapeQuotesHTML(text) {
 // use sampleText instead of selection if there is none
 // copied and adapted from phpBB
 function insertTags(tagOpen, tagClose, sampleText) {
-	if (document.editform)
-		var txtarea = document.editform.savetext;
+	var is_ie = document.selection && document.all;
+	var my = document.getElementById('editor_area');
+	var doc = document;
+	if (doc.editform)
+		var txtarea = doc.editform.savetext;
 	else {
 		// some alternate form? take the first one we can find
-		var areas = document.getElementsByTagName('textarea');
-		var txtarea = areas[0];
+		var areas = doc.getElementsByTagName('textarea');
+		if (areas.length > 0) {
+			var txtarea = areas[0];
+		} else if (opener) {
+			doc = opener.document;
+			if (doc.editform && doc.editform.savetext) {
+				txtarea = doc.editform.savetext;
+			} else {
+				txtarea = doc.getElementsByTagName('textarea')[0];
+			}
+        		my = doc.getElementById('editor_area');
+		}
+	}
+
+	while (my == null || my.style.display == 'none') { // wikiwyg hack
+		txtarea = doc.getElementById('wikiwyg_wikitext_textarea');
+
+		// get iframe and check visibility.
+		var myframe = doc.getElementsByTagName('iframe')[0];
+		if (myframe.style.display == 'none' || myframe.parentNode.style.display == 'none') break;
+
+		var postdata = 'action=markup/ajax&value=' + encodeURIComponent(tagOpen + sampleText + tagClose);
+		var myhtml='';
+		myhtml= HTTPPost(self.location, postdata);
+
+		var mnew = myhtml.replace(/^<div>/i,''); // strip div tag
+		mnew = mnew.replace(/<\/div>\s*$/i,''); // strip div tag
+
+		if (is_ie) {
+			var range = myframe.contentWindow.document.selection.createRange();
+			if (range.boundingTop == 2 && range.boundingLeft == 2)
+				return;
+			range.pasteHTML(html);
+			range.collapse(false);
+			range.select();
+		} else {
+			myframe.contentWindow.document.execCommand('inserthtml', false, mnew + ' ');
+		}
+
+		return;
 	}
 
 	// IE
 	// http://www.bazon.net/mishoo/articles.epl?art_id=1292 (used by this script)
 	// http://the-stickman.com/web-development/javascript/finding-selection-cursor-position-in-a-textarea-in-internet-explorer/
-	if(document.selection  && !is_gecko) {
+	if(doc.selection  && !is_gecko) {
 		txtarea.focus();
-		var r = document.selection.createRange();
+		var r = doc.selection.createRange();
 		var range = r.duplicate();
 		var endText = '';
 
@@ -162,6 +203,11 @@ function insertTags(tagOpen, tagClose, sampleText) {
 			subst = tagOpen + myText + tagClose;
 		}
 
+		if (!myText.match(/== /) /* == Heading == */
+				&& subst != sampleText && myText != sampleText) {
+			subst=tagOpen + sampleText + tagClose;
+		}
+
 		txtarea.value = txtarea.value.substring(0, startPos) + subst +
 			txtarea.value.substring(endPos, txtarea.value.length);
 		txtarea.focus();
@@ -185,7 +231,7 @@ function insertTags(tagOpen, tagClose, sampleText) {
 		}
 		if(!text) { text=sampleText;}
 		text=tagOpen+text+tagClose;
-		document.infoform.infobox.value=text;
+		doc.infoform.infobox.value=text;
 		// in Safari this causes scrolling
 		if(!is_safari) {
 			txtarea.focus();
@@ -194,7 +240,7 @@ function insertTags(tagOpen, tagClose, sampleText) {
 	}
 	// reposition cursor if possible
 	if (txtarea.createTextRange)
-		txtarea.caretPos = document.selection.createRange().duplicate();
+		txtarea.caretPos = doc.selection.createRange().duplicate();
 }
 
 function toggleSameFormat(start, end, sel) {

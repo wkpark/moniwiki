@@ -780,29 +780,40 @@ proto.get_edit_iframe = function() {
         // XXX iframe need to be a element of the body.
         if (Wikiwyg.is_ie) {
             // http://dojofindings.blogspot.com/2007/09/dynamically-creating-iframes-with.html
-            iframe = document.createElement('<iframe onload="iframeHandler()">');
+            iframe = document.createElement('<iframe onload="iframeHandler()" frameBorder="0">');
         } else {
             iframe = document.createElement('iframe');
         }
         body = document.getElementsByTagName('body')[0];
-        // body.appendChild(iframe);
+        body.appendChild(iframe);
         // You can't get 'frameBorder=no' if you appendChild at this line. :( IE bug.
-        iframe.border='0';
-        iframe.frameBorder='no';
     }
 
     var self=this;
 
     // from http://www.codingforums.com/archive/index.php?t-63511.html
     // mozilla and IE hack !!
-
     iframeHandler = function() {
         //Fx workaround: delay modifying editorDoc.body right after iframe onload event
+        var w3c = iframe.contentDocument !== undefined ? true: false;
+        var doc = w3c ? iframe.contentDocument:iframe.contentWindow.document;
+        var head = doc.getElementsByTagName("head");
+        if (Wikiwyg.is_ie) {
+            iframe.setAttribute('style','padding:3px;border:1px solid gray;padding-right:0;padding-bottom:0;width:99%');
+            iframe.style.border = '1px solid activeborder';
+        }
+
         setTimeout(function() {
-            var doc = iframe.contentDocument || iframe.contentWindow;
-            if (doc.document) doc = doc.document; // safari/chrome fix
-            var head = doc.getElementsByTagName("head")[0];
-            doc.designMode = 'on';
+            // safari
+            // http://code.google.com/p/phpwcms/source/browse/trunk/include/inc_ext/spaw2/js/safari/editor.js
+            if (!head || head.length == 0) {
+                head = doc.createElement("head");
+                doc.childNodes[0].insertBefore(head, doc.body);
+                iframe.setAttribute('style','padding:3px;border:1px solid gray;padding-right:0;padding-bottom:0;width:97%');
+            } else {
+                head = head[0];
+            }
+            doc.designMode = w3c ? 'on':'On';
 
             self.apply_stylesheets();
             var link = doc.createElement('link');
@@ -835,7 +846,7 @@ proto.get_edit_iframe = function() {
     iframe.onload=iframeHandler; // ignored by IE :(
 
 
-    body.appendChild(iframe);
+    //body.appendChild(iframe);
 
     return iframe;
 }
@@ -871,6 +882,7 @@ proto.enableThis = function() {
     this.edit_iframe.style.border = '1px solid activeborder';
     //this.edit_iframe.style.backgroundColor = '#ffffff';
     //this.edit_iframe.setAttribute('style','1px solid ThreeDFace;background:#fff;');
+    this.edit_iframe.setAttribute('style','padding:3px;border:1px solid activeborder;padding-right:0px');
     this.edit_iframe.width = '99%';
     //this.edit_iframe.style.display='block';
     this.edit_iframe.frameBorder='no';
@@ -2512,7 +2524,7 @@ function createWikiwygDiv(elem, parent) {
 // dynamic section editing for MoniWiki
 //
 
-wikiwygs = [];
+ wikiwygs = [];
 
 function sectionEdit(ev,obj,sect) {
     var area;
