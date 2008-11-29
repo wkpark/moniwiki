@@ -136,7 +136,7 @@ function textArea(element,wrapper) {
   this.grippie.onmousedown = function (e) { ta.beginDrag(e); };
 
   // Set wrapper and textarea dimensions
-  this.wrapper.style.height = this.dimensions.height + this.grippie.dimensions.height + 1 +'px';
+  //this.wrapper.style.height = this.dimensions.height + this.grippie.dimensions.height + 1 +'px';
   this.element.style.marginBottom = '0px';
   this.element.style.width = '100%';
   this.element.style.height = this.dimensions.height +'px';
@@ -200,7 +200,7 @@ textArea.prototype.handleDrag = function (event) {
 
   // Set new height
   var height = Math.max(32, y - this.dragOffset - this.heightOffset);
-  this.wrapper.style.height = height + this.grippie.dimensions.height + 1 + 'px';
+  //this.wrapper.style.height = height + this.grippie.dimensions.height + 1 + 'px';
   this.element.style.height = height + 'px';
 
   // Avoid text selection
