@@ -15,7 +15,7 @@
 //
 // $Id$
 
-function macro_SWFUpload($formatter,$value) {
+function macro_SWFUpload($formatter,$value,$opts=array()) {
     global $DBInfo;
 
     if ($DBInfo->swfupload_depth > 2) {
@@ -75,6 +75,31 @@ function macro_SWFUpload($formatter,$value) {
         }
     }
 
+    //
+    // check already uploaed files
+    //
+    if (1) {
+        $value=$formatter->page->urlname;
+        $key=$DBInfo->pageToKeyname($formatter->page->name);
+        $mydir=$DBInfo->upload_dir."/$key";
+
+        $handle = opendir($mydir);
+        if ($handle) {
+            $files=array();
+            while ($file = readdir($handle)) {
+                if (is_dir($mydir.$file) or $file[0]=='.') continue;
+                $files[] = $file;
+            }
+            closedir($handle);
+
+            foreach ($files as $f) {
+                $uploaded.="<li><input checked=\"checked\" disabled=\"disabled\" type=\"checkbox\">".
+                    "<a href='javascript:showImgPreview(\"$f\",true)'>$f</a></li>";
+            }
+        }
+
+    }
+
     if (!$swfupload_num) {
         $swfupload_script=<<<EOS
 	<script type="text/javascript" src="$DBInfo->url_prefix/local/SWFUpload/mmSWFUpload.js"></script>
@@ -124,11 +149,8 @@ CSS;
 	</script>
 
 	<div class="fileList">
-	<table border='0' cellpadding='0'><tr>
-	<td colspan='2'>
-		<div id="fileProgressInfo"></div>
-	</td>
-	</tr><tr>
+	<table border='0' cellpadding='0'>
+	<tr>
 	<td>
 	<div id="previewAlign">
 	</div>
@@ -150,6 +172,11 @@ CSS;
 	</div>
 	</td>
         </tr>
+	<tr>
+	<td colspan='2'>
+		<div id="fileProgressInfo"></div>
+	</td>
+	</tr>
 	</table>
 	</div>
 EOF;

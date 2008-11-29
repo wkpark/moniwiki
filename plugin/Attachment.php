@@ -62,7 +62,7 @@ function macro_Attachment($formatter,$value,$options='') {
       $fname=substr($text,11);
       $ntext=macro_Attachment($formatter,$fname,array('link'=>1));
     }
-    if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$ntext)) {
+    if (preg_match("/\.(png|gif|jpeg|jpg|bmp)$/i",$ntext)) {
       $_l_ntext=_l_filename($ntext);
       if (!file_exists($_l_ntext)) {
         $fname=preg_replace('/^"([^"]*)"$/',"\\1",$fname);
@@ -170,6 +170,44 @@ function macro_Attachment($formatter,$value,$options='') {
   $_l_upload_file=$dir.'/'.$_l_file;
 
   if (file_exists($_l_upload_file)) {
+    $file_ok=1;
+  } else if ($formatter->wikimarkup and !$options['nomarkup']) {
+    if ($DBInfo->swfupload_depth > 2) {
+      $depth=$DBInfo->swfupload_depth;
+    } else {
+      $depth=2;
+    }
+
+    if ($DBInfo->nosession) { // ip based
+      $myid=md5($_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI'); // FIXME
+    } else {
+      $myid=session_id();
+    }
+    $prefix=substr($myid,0,$depth);
+    $mydir=$DBInfo->upload_dir.'/.swfupload/'.$prefix.'/'.$myid;
+    if (file_exists($mydir.'/'.$_l_file)) {
+      if (!$img_link && preg_match("/\.(png|gif|jpeg|jpg|bmp)$/i",$upload_file)) {
+        $ntext=qualifiedUrl($DBInfo->url_prefix.'/'.$mydir.'/'.$text);
+        $img_link='<img src="'.$ntext.'" alt="'.$text.'" border="0" />';
+        return $bra."<span class=\"attach\">$img_link</span>".$ket;
+      } else {
+        $sz=filesize($mydir.'/'.$_l_file);
+        $unit=array('Bytes','KB','MB','GB','TB');
+        for ($i=0;$i<4;$i++) {
+          if ($sz <= 1024) {
+            #$sz= round($sz,2).' '.$unit[$i];
+            break;
+          }
+          $sz=$sz/1024;
+        }
+        $info=' ('.round($sz,2).' '.$unit[$i].') ';
+
+        return $bra."<span class=\"attach\">".$formatter->icon['attach'].$text.'</span>'.$info.$ket;
+      }
+    }
+  }
+
+  if ($file_ok) {
 
     $imgcls='imgAttach';
 
@@ -205,7 +243,7 @@ function macro_Attachment($formatter,$value,$options='') {
     if (!in_array('UploadedFiles',$formatter->actions))
       $formatter->actions[]='UploadedFiles';
 
-    if (!$img_link && preg_match("/\.(png|gif|jpeg|jpg)$/i",$upload_file)) {
+    if (!$img_link && preg_match("/\.(png|gif|jpeg|jpg|bmp)$/i",$upload_file)) {
       // thumbnail
       if ($DBInfo->use_convert_thumbs and $use_thumb) {
         $thumb_width=$thumb['thumbwidth'] ? $thumb['thumbwidth']:150;
