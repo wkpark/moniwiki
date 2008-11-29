@@ -2538,7 +2538,8 @@ class Formatter {
           #return "<a class='nonexistent' href='$url'>?</a>$word";
           return call_user_func(array(&$this,$nonexists),$word,$url,$page);
         case -1:
-          if ($page != $word) $title="title=\"$page\" ";
+          $tpage=urlencode($page);
+          if ($tpage != $word) $title="title=\"$tpage\" ";
           return "<a href='$url' $title$attr>$word</a>";
         case -2:
           return "<a href='$url' $attr>$word</a>".
@@ -2553,7 +2554,8 @@ class Formatter {
       }
     } else if ($DBInfo->hasPage($page)) {
       $this->pagelinks[$page]=-1;
-      if ($page != $word) $title="title=\"$page\" ";
+      $tpage=urlencode($page);
+      if ($tpage != $word) $title="title=\"$tpage\" ";
       return "<a href='$url' $title$attr>$word</a>";
     } else {
       if ($gpage and $DBInfo->hasPage($gpage)) {
