@@ -308,7 +308,9 @@ class processor_monimarkup
         $oline='';
         foreach ($lines as $line) {
             if (substr($line,-1) == '&') { $oline.=substr($line,0,-1)."\n"; continue; }
-            if (!empty($oline) and ($_in_table or preg_match('/^\s*\|\|/',$oline))) {
+            if (empty($oline) and preg_match('/^\s*\|\|/',$line) and !preg_match('/\|\|$/',$line)) {
+                $oline.=$line."\n"; continue;
+            } else if (!empty($oline) and ($_in_table or preg_match('/^\s*\|\|/',$oline))) {
                 if (!preg_match('/\|\|$/',$line)) {
                     $oline.=$line."\n"; continue;
                 } else {
@@ -351,7 +353,9 @@ class processor_monimarkup
                     preg_match('/^((&lt;[^>]+>)?)(\s?)(.*)(?<!\s)(\s*)?$/s',
                     $cells[$i+1],$m);
                     $cell=$m[3].$m[4].$m[5];
-                    $cell=str_replace("\n","<br />\n",$cell);
+                    if (strpos($cell,"\n"))
+                        $cell = $this->process($cell);
+                    #$cell=str_replace("\n","<br />\n",$cell);
                     if ($m[3] and $m[5]) $align='center';
                     else if (!$m[3]) $align='';
                     else if (!$m[5]) $align='right';
@@ -824,5 +828,5 @@ FOOT;
 
 }
 
-// vim:et:sts=4
+// vim:et:sts=4:sw=4:
 ?>
