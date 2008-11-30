@@ -4780,16 +4780,20 @@ function get_pagename() {
     if ($_SERVER['PATH_INFO'][0] == '/')
       $pagename=substr($_SERVER['PATH_INFO'],1);
   } else if (!empty($_SERVER['QUERY_STRING'])) {
-    if (isset($goto)) $pagename=$goto;
+    $goto=$_POST['goto'] ? $_POST['goto']:$_GET['goto'];
+    if (!empty($goto)) $pagename=$goto;
     else {
       $pagename = $_SERVER['QUERY_STRING'];
       $temp = strtok($pagename,"&");
 
-      if (!$temp or strpos($temp,"=")===false) {
+      if (!$temp or ($p=strpos($temp,"="))===false) {
         if (preg_match('/^([^&=]+)/',$pagename,$matches)) {
           $pagename = urldecode($matches[1]);
           $_SERVER['QUERY_STRING']=substr($_SERVER['QUERY_STRING'],strlen($pagename));
         }
+      } else if ($p>0 and substr($temp,0,$p)=='value') {
+        $pagename= substr($temp,$p+1);
+        $_SERVER['QUERY_STRING']=substr($_SERVER['QUERY_STRING'],strlen($temp));
       }
     }
   }
