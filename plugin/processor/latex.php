@@ -26,7 +26,7 @@ function _latex_renumber($match,$tag='\\tag') {
   return '\\begin{'.$match[1].$star.'}'.$math.$tag.'{'.$num.'}'."\n".'\\end{'.$match[1].$star.'}';
 }
 
-function processor_latex(&$formatter,$value="") {
+function processor_latex(&$formatter,$value="",$options=array()) {
   global $DBInfo;
 
   if (!$formatter->latex_uniq) {
@@ -37,15 +37,28 @@ function processor_latex(&$formatter,$value="") {
   $latex_convert_options=
     $DBInfo->latex_convert_options ? $DBInfo->latex_convert_options:"-trim -crop 0x0 -density 120x120";
 
+  $raw_mode = $options['raw'] ? 1:0;
+
   # site spesific variables
   $latex="latex";
-  $dvips="dvips";
+  $dvicmd="dvipng";
+  $dviopt='-D 120';
   $convert="convert";
+  $mogrify="mogrify";
   $vartmp_dir=&$DBInfo->vartmp_dir;
   $cache_dir=$DBInfo->upload_dir."/LaTeX";
   $cache_url=$DBInfo->upload_url ? $DBInfo->upload_url.'/LaTeX':
     $DBInfo->url_prefix.'/'.$cache_dir;
   $option='-interaction=batchmode ';
+  $mask='';
+
+  if (preg_match('/ps$/',$dvicmd)) {
+    $tmpext='ps';
+    $dviopt='-D 600';
+  } else {
+    $tmpext='png';
+    $mask='-%d';
+  }
 
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
@@ -65,7 +78,7 @@ function processor_latex(&$formatter,$value="") {
     #print '<pre>'.$ntex.'</pre>';
     if ($tex != $ntex) { $tex=$ntex; }
     $formatter->latex_num=$GLOBALS['_latex_eq_num']; // save
-  } else if ($DBInfo->latex_allinone) {
+  } else if (!$raw_mode and $DBInfo->latex_allinone) {
     $ntex=preg_replace('/\\\\begin\{\s*(equation)\s*\}((.|\n)+)\\\\end\{\s*\1\s*\}/e',
       "_latex_renumber(array('','\\1','\\2'),\"\n%%\")",$tex);
     if ($tex != $ntex) { $tex=$ntex; }
@@ -92,7 +105,7 @@ function processor_latex(&$formatter,$value="") {
   $uniq=$tex ? md5($src):$formatter->latex_uniq[sizeof($formatter->latex_uniq)-1];
 
   // check image file exists
-  if ($DBInfo->latex_allinone and $tex) {
+  if (!$raw_mode and $DBInfo->latex_allinone and $tex) {
     $formatter->latex_uniq[]=$uniq;
     $formatter->latex_all.=$tex."\n\\pagebreak\n\n";
     #print '<pre>'.$tex.'</pre>';
@@ -132,9 +145,10 @@ function processor_latex(&$formatter,$value="") {
   while ($formatter->preview || $formatter->refresh || !$img_exists) {
   //if ($options['_tex_'.$uniq] || $formatter->refresh || !file_exists($png)) {
 
-     if ($DBInfo->latex_allinone) {
+     if (!$raw_mode and $DBInfo->latex_allinone) {
        if (!$value) {
          $js= '<script type="text/javascript" src="'.$DBInfo->url_prefix.'/local/latex.js"></script>';
+    	 #if ($formatter->register_javascripts('latex.js'));
 
          $src=str_replace('@TEX@',$formatter->latex_all,$templ);
          #print '<pre>'.$src.'</pre>';
@@ -168,23 +182,30 @@ function processor_latex(&$formatter,$value="") {
      }
 
      if (!file_exists($uniq.".dvi")) {
-       $log.="<pre class='errlog'><font color='red'>ERROR:</font> LaTeX does not work properly.</pre>";
-       trigger_error ($log, E_USER_WARNING);
+       if (!$image_mode) {
+         $log.="<pre class='errlog'><font color='red'>ERROR:</font> LaTeX does not work properly.</pre>";
+         trigger_error ($log, E_USER_WARNING);
+       }
        chdir($cwd);
        return '';
      }
      #$formatter->errlog('DVIPS');
-     $cmd= "$dvips -D 600 $uniq.dvi -o $uniq.ps";
+     $cmd= "$dvicmd $dvipot $uniq.dvi -o $uniq$mask.$tmpext";
      $formatter->errlog('DVI',$uniq.'.log');
      $fp=popen($cmd.$formatter->NULL,'r');
      pclose($fp);
      $log2=$formatter->get_errlog();
-     if ($log2) trigger_error ($log2, E_USER_NOTICE);
+     if ($log2 and !$raw_mode) trigger_error ($log2, E_USER_NOTICE);
      chdir($cwd);
 
-     #$cmd= "$convert -transparent white $latex_convert_options $vartmp_dir/$uniq.ps $outpath";
      chdir(dirname($outpath)); # XXX :(
-     $cmd= "$convert -transparent white $latex_convert_options $vartmp_dir/$uniq.ps ".basename($outpath);
+     if ($tmpext == 'ps') {
+       $cmd= "$convert -transparent white $latex_convert_options $vartmp_dir/$uniq.$tmpext ".basename($outpath);
+     } else {
+       if (!$raw_mode and $DBInfo->latex_allinone) $outpath="$vartmp_dir/$uniq.$tmpext";
+       $cmd= "$mogrify -transparent white $latex_convert_options $vartmp_dir/$uniq*.$tmpext";
+     }
+
      # ImageMagick of the RedHat AS 4.x do not support -trim option correctly
      # http://kldp.net/forum/message.php?msg_id=12024
      #$cmd= "$convert -transparent white -trim -crop 0x0 -density 120x120 $vartmp_dir/$uniq.ps $outpath";
@@ -192,13 +213,15 @@ function processor_latex(&$formatter,$value="") {
      $fp=popen($cmd.$formatter->LOG,'r');
      pclose($fp);
      $log2=$formatter->get_errlog(1,1);
-     if ($log2) trigger_error ($log2, E_USER_WARNING);
+     if (!$raw_mode and $log2) trigger_error ($log2, E_USER_WARNING);
      chdir($cwd);
 
-     if ($DBInfo->latex_allinone) {
+     if ($raw_mode and $tmpext == 'png') {
+       rename("$vartmp_dir/$uniq-1.$tmpext",$outpath);
+     } else if ($DBInfo->latex_allinone) {
         $sz=sizeof($formatter->latex_uniq);
 
-        if ($sz > 1) {
+        if ($tmpext == 'png') {
           $soutpath=preg_replace('/\.png/','',$outpath);
           if (file_exists($outpath.'.0')) # old convert behavior
             $soutpath="$soutpath.png.%d";
@@ -213,35 +236,41 @@ function processor_latex(&$formatter,$value="") {
           } else {
             $img=$cache_dir.'/'.$id.'.png';
           }
-          if ($sz==1)
+
+          if ($tmpext == 'ps' and $sz==1)
             rename($outpath,$img);
           else {
-            rename(sprintf($soutpath,$i),$img);
+            $ii=$i;
+            if ($tmpext == 'png') $ii++;
+            rename(sprintf($soutpath,$ii),$img);
           }
         }
         $formatter->latex_all='';
         $formatter->latex_uniq=array();
         $formatter->postamble['latex']='';
+     } 
 
-     }
-
-     #unlink($vartmp_dir."/$uniq.log");
-     unlink($vartmp_dir."/$uniq.aux");
+     @unlink($vartmp_dir."/$uniq.log");
+     @unlink($vartmp_dir."/$uniq.aux");
+     @unlink($vartmp_dir."/$uniq.tex");
+     @unlink($vartmp_dir."/$uniq.dvi");
      @unlink($vartmp_dir."/$uniq.bib");
      @unlink($vartmp_dir."/$uniq.ps");
      $img_exists=true;
      break;
   }
-  if (!$value) return $js;
+  if (!$raw_mode and !$value) return $js;
   $alt=str_replace("'","&#39;",$value);
   $title=$alt;
-  if (!$img_exists) {
+  if (!$raw_mode and !$img_exists) {
     $title=$png_url;
     if ($DBInfo->latex_allinone==1)
       $png_url=$DBInfo->imgs_dir.'/loading.gif';
   }
-  return $log.$bra."<img class='tex' src='$png_url' rel='$uniq' alt='$alt' ".
+  if (!$raw_mode)
+    return $log.$bra."<img class='tex' src='$png_url' rel='$uniq' alt='$alt' ".
          "title='$title' />".$ket;
+  else return $png;
 }
 
 // vim:et:sts=2:sw=2
