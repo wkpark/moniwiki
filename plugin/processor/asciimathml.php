@@ -87,9 +87,16 @@ function translateById(objId,flag) {
   // for WikiWyg mode switching
   if (typeof math2ascii != "undefined") math2ascii(AMbody);
   if (isIE) { // for WikiWyg in the iframe
-    AMbody.innerHTML=AMparseMath(AMbody.innerHTML.replace(/\\$/g,'')).innerHTML;
-    //needed to match size and font of formula to surrounding text
-    AMbody.getElementsByTagName('math')[0].update();
+    var nd = AMisMathMLavailable();
+    AMnoMathML = nd != null;
+
+    if (AMnoMathML) {
+      AMbody.insertBefore(nd,AMbody.childNodes[0]);
+    } else {
+      AMbody.innerHTML=AMparseMath(AMbody.innerHTML.replace(/\\$/g,'')).innerHTML;
+      //needed to match size and font of formula to surrounding text
+      AMbody.getElementsByTagName('math')[0].update();
+    }
   } else {
     AMprocessNode(AMbody, false);
   }
