@@ -10,9 +10,15 @@ function MoniSearchHighlight() {
     if (url.indexOf('?') == -1) return [];
     var queryString = url.substr(url.indexOf('?') + 1);
     var params = queryString.split('&');
+    var act = 0;
     for (var i=0;i<params.length;i++) {
       var param = params[i].split('=');
       if (param.length < 2) continue;
+      if (param[0] == 'action' && param[1] == 'highlight') {
+        act = 1;
+      } else if (act == 1 && param[0] == 'value') {
+        param[0] = 'q';
+      }
       if (param[0] == 'q' || param[0] == 'p') { // q= for Google, p= for Yahoo
         if (param[1].match(/^\d+$/)) continue;
         var query = decodeURIComponent(param[1].replace(/\+/g, ' '));
@@ -20,10 +26,12 @@ function MoniSearchHighlight() {
         words = query.split(/(".*?")|('.*?')|(\s+)/);
         var words2 = new Array();
         for (var w in words) {
-          words[w] = words[w].replace(/^\s+$/, '');
-          if (words[w] != '') {
-            words2.push(words[w].replace(/^['"]/, '').replace(/['"]$/, ''));
-          }
+          try {
+            words[w] = words[w].replace(/^\s+$/, '');
+            if (words[w] != '') {
+              words2.push(words[w].replace(/^['"]/, '').replace(/['"]$/, ''));
+            }
+          } catch(e){};
         }
         return words2;
       }

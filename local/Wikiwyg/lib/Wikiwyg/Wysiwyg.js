@@ -207,9 +207,9 @@ proto.apply_linked_stylesheet = function(style, head) {
     head.appendChild(link);
 }
 
-proto.process_command = function(command) {
+proto.process_command = function(command,elem) {
     if (this['do_' + command])
-        this['do_' + command](command);
+        this['do_' + command](command,elem);
     if (! Wikiwyg.is_ie)
         this.get_edit_window().focus();
 }
