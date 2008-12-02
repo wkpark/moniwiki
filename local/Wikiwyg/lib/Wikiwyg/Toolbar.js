@@ -70,6 +70,7 @@ proto.config = {
         h5: 'Heading 5',
         h6: 'Heading 6',
         link: 'Create Link',
+        smiley: 'Smiley',
         unlink: 'Remove Linkedness',
         table: 'Create Table'
     }
@@ -144,7 +145,7 @@ proto.add_button = function(type, label) {
     var img = this.make_button(type, label);
     var self = this;
     img.onclick = function() {
-        self.wikiwyg.current_mode.process_command(type);
+        self.wikiwyg.current_mode.process_command(type,this);
     };
     this.imgdiv.appendChild(img);
 }

@@ -469,9 +469,9 @@ proto.disableThis = function() {
     this.div.style.display = 'none';
 }
 
-proto.process_command = function(command) {
+proto.process_command = function(command,elem) {
     if (this['do_' + command])
-        this['do_' + command](command);
+        this['do_' + command](command,elem);
 }
 
 proto.enable_keybindings = function() { // See IE

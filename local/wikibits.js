@@ -70,6 +70,29 @@ function addButton(imageFile, speedTip, tagOpen, tagClose, sampleText) {
 	return;
 }
 
+function addLinkButton(imageFile,speedTip,id) {
+	document.write("<input type='image' onclick=\"javascript:openChooser(this,'" + id + "');\"");
+        document.write(" width=\"23\" height=\"22\" src=\""+imageFile+"\" border=\"0\" alt=\""+speedTip+"\" title=\""+speedTip+"\""+" />");
+	return;
+}
+
+function openChooser(el,id) {
+	var div = document.getElementById(id);
+	if (!div) return;
+
+	if (div.style.display == 'block') div.style.display='none';
+	else div.style.display='block';
+	if (div.style.position != 'absolute') {
+		div.style.display='block';
+		div.style.position='absolute';
+	}
+
+	div.style.top = el.offsetTop + 21 + 'px';
+	div.style.left = el.offsetLeft + 'px';
+	div.style.width = '500px';
+	//div.onmouseout= "javascript:document.getElementById(\""+id+"\").style.display='none'";
+}
+
 function addInfobox(infoText,text_alert) {
 	alertText=text_alert;
 	var clientPC = navigator.userAgent.toLowerCase(); // Get client info
@@ -133,22 +156,36 @@ function insertTags(tagOpen, tagClose, sampleText,replace) {
 	while (my == null || my.style.display == 'none') { // wikiwyg hack
 		txtarea = doc.getElementById('wikiwyg_wikitext_textarea');
 
+
 		// get iframe and check visibility.
 		var myframe = doc.getElementsByTagName('iframe')[0];
+		var mnew;
 		if (myframe.style.display == 'none' || myframe.parentNode.style.display == 'none') break;
 
-		var postdata = 'action=markup/ajax&value=' + encodeURIComponent(tagOpen + sampleText + tagClose);
-		var myhtml='';
-		myhtml= HTTPPost(self.location, postdata);
+		if (tagOpen == '$ ' && tagClose == ' $') { // latex math
+			var wikiwyg = wikiwygs[0]; // XXX
+			//var gui = false;
+			//if (wikiwyg.current_mode.classname.match(/WikiWyg/)) gui=true;
+        		mnew= '<span class="wikiMarkupEdit" style="display:inline">' +
+        			"<!-- wiki:\n$ " + sampleText + " $\n-->" +
+        			'<span>$ ' + sampleText + ' $</span></span>';
 
-		var mnew = myhtml.replace(/^<div>/i,''); // strip div tag
-		mnew = mnew.replace(/<\/div>\s*$/i,''); // strip div tag
+			wikiwyg.current_mode.insert_rawmarkup(tagOpen, tagClose, sampleText);
+			return;
+		} else {
+			var postdata = 'action=markup/ajax&value=' + encodeURIComponent(tagOpen + sampleText + tagClose);
+			var myhtml='';
+			myhtml= HTTPPost(self.location, postdata);
+
+			mnew = myhtml.replace(/^<div>/i,''); // strip div tag
+			mnew = mnew.replace(/<\/div>\s*$/i,''); // strip div tag
+		}
 
 		if (is_ie) {
 			var range = myframe.contentWindow.document.selection.createRange();
 			if (range.boundingTop == 2 && range.boundingLeft == 2)
 				return;
-			range.pasteHTML(html);
+			range.pasteHTML(mnew);
 			range.collapse(false);
 			range.select();
 		} else {
@@ -178,8 +215,10 @@ function insertTags(tagOpen, tagClose, sampleText,replace) {
 			myText=sampleText;
 			subst = tagOpen + myText + tagClose;
 		}
-
-		if (replace && !myText.match(/== /) /* == Heading == */
+		
+		if (replace == 2 ) { // append
+			subst=tagOpen + myText + sampleText + tagClose;
+		} else if (replace && !myText.match(/== /) /* == Heading == */
 				&& subst != sampleText && myText != sampleText) {
 			subst=tagOpen + sampleText + tagClose;
 		}
@@ -208,7 +247,18 @@ function insertTags(tagOpen, tagClose, sampleText,replace) {
 			subst = tagOpen + myText + tagClose;
 		}
 
-		if (replace && !myText.match(/== /) /* == Heading == */
+		if (replace == 2 ) { // append
+			var my = sampleText + tagClose;
+    			my = my.replace(/([\^\$\*\+\.\?\[\]\{\}\(\)])/g, '\\$1');
+    			var re = new RegExp(my + '$');
+			if (myText != sampleText) {
+				if (!myText.match(re)) {
+					subst= tagOpen + subst + ' ' + sampleText + tagClose;
+				} else {
+					subst = myText; // do not alter
+				}
+			}
+		} else if (replace && !myText.match(/== /) /* == Heading == */
 				&& subst != sampleText && myText != sampleText) {
 			subst=tagOpen + sampleText + tagClose;
 		}

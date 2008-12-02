@@ -39,6 +39,7 @@ function autoTexImgLoader(loadingGif) {
     }
 }
 
-autoTexImgLoader(_url_prefix + '/imgs/loading.gif');
+// autoTexImgLoader(_url_prefix + '/imgs/loading.gif');
+addLoadEvent(function() { autoTexImgLoader(_url_prefix + '/imgs/loading.gif') })
 
 // vim:et:sts=4:sw=4:

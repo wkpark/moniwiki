@@ -36,7 +36,7 @@ if (Wikiwyg.is_ie) {
     }
 }
 
-Wikiwyg.Mode.prototype.execute_scripts = function(el) {
+Wikiwyg.Mode.prototype.execute_scripts = function(el,scripts) {
     var doc;
     var iframe=null;
 
@@ -51,12 +51,13 @@ Wikiwyg.Mode.prototype.execute_scripts = function(el) {
     }
 
     var head = document.getElementsByTagName("head")[0];
-    var scripts;
 
-    if (el)
-        scripts= el.getElementsByTagName('script');
-    else
-        scripts= this.div.getElementsByTagName('script');
+    if (!scripts) {
+        if (el)
+            scripts= el.getElementsByTagName('script');
+        else
+            scripts= this.div.getElementsByTagName('script');
+    }
 
     for (var i=0;i<scripts.length;i++) {
         if (scripts[i].src) {
@@ -211,6 +212,7 @@ Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag,focus) {
         }
         //alert(div.innerHTML);
 
+        var scripts= div.getElementsByTagName('script');
         var n=div.firstChild;
         for (;n && n.nodeName!='SPAN';n=n.nextSibling);
 
@@ -226,7 +228,7 @@ Wikiwyg.Wysiwyg.prototype.update_wikimarkup = function(el,flag,focus) {
                 this.set_focus(n,focus);
                 //this.set_focus(n.firstChild.nextSibling,focus);
             }
-            this.execute_scripts(n);
+            this.execute_scripts(n,scripts);
         }
     }
     return true;
@@ -915,9 +917,9 @@ proto.enableThis = function() {
 */
 }
 
-proto.process_command = function(command) {
+proto.process_command = function(command,elem) {
     if (this['do_' + command])
-        this['do_' + command](command);
+        this['do_' + command](command,elem);
     if (! Wikiwyg.is_ie && command != 'image' && command != 'media') // hack for open.window
         this.get_edit_window().focus();
 }
@@ -1019,6 +1021,7 @@ proto.do_indent = function() {
         this.exec_command('indent');
 }
 
+/*
 proto.do_math = function() {
     var node=this.check_parent_node().nodeName;
     if (node && node != 'BODY') return;
@@ -1028,6 +1031,62 @@ proto.do_math = function() {
         "<!-- wiki:\n$ $\n-->" +
         '<span>$&nbsp;$</span></span>';
     this.insert_table(html);
+}
+*/
+
+proto.insert_rawmarkup = function(start, end, raw) {
+    var node=this.check_parent_node().nodeName;
+    if (node) {
+        var wm = this.get_wikimarkup_node();
+        if (wm == null) {
+            var html =
+                '<span class="wikiMarkupEdit" style="display:inline">' +
+                "<!-- wiki:\n$ " + raw + " $\n-->" +
+                '<span>$ ' + raw + ' $</span></span>';
+            this.insert_table(html);
+        } else {
+            // Mozilla
+            var sel = this.get_selection();
+            var sf = sel.focusNode;
+
+            var val = sf.nodeValue;
+            
+            var st='', ed='', m, val0='',ret;
+            // do we need to cleanup nodeValue ?
+            // XXX
+            // find tags
+            if ((m = val.match(/^([^\$]*\$\s)(.*)(\s\$[^\$]*)$/))) {
+                st = m[1];
+                val = m[2];
+                ed = m[3];
+            } else {
+                // XXX
+            }
+            if (sel.focusOffset < (st.length + val.length)) {
+                val0 = val.substr(0,sel.focusOffset - st.length);
+                val = val.substr(val0.length);
+            } else {
+                val0 = val;
+                val = '';
+            }
+
+            ret = start + val0;
+            var spos = ret.length + 1;
+            ret += ' ' + raw;
+            var epos = ret.length;
+            if (val0) ret += ' ' + val;
+            ret += end;
+
+            sf.nodeValue= ret;
+
+            var range=this.get_range();
+            range.setStart(sf,spos);
+            range.setEnd(sf,epos);
+
+            sel.removeAllRanges(); // remove old ranges !
+            sel.addRange(range);
+        }
+    }
 }
 
 proto.do_hr = function() {
@@ -1067,6 +1126,14 @@ proto.do_unordered = function() {
     var node=this.check_parent_node().nodeName;
     if (node && node == 'BODY')
         this.exec_command('insertunorderedlist');
+}
+
+proto.do_math = function(cmd,elm) {
+    open_chooser('mathChooser',elm);
+}
+
+proto.do_smiley = function(cmd,elm) {
+    open_chooser('smileyChooser',elm);
 }
 
 proto.do_image = function() {
@@ -1864,6 +1931,7 @@ proto.config.controlLayout = [
     'indent', 'outdent', '|',
     'quote', '|',
     'image',
+    'smiley',
     'media'
 ];
 
@@ -1896,7 +1964,6 @@ proto.config.markupRules.image = ['bound_phrase', 'attachment:', '','sample.png'
 proto.config.markupRules.media = ['bound_phrase', '[[Media(', ')]]','sample.ogg'];
 proto.config.markupRules.table = ['line_alone', '|| A || B || C ||\n||   ||   ||   ||\n||   ||   ||   ||'];
 
-proto.do_math = Wikiwyg.Wikitext.make_do('math');
 proto.do_nowiki = Wikiwyg.Wikitext.make_do('nowiki');
 if (Wikiwyg.Wikitext.make_format) // Wikiwyg-0.12
     proto.format_image = Wikiwyg.Wikitext.make_format('image');
@@ -1905,12 +1972,20 @@ else // Wikiwyg snapshot
 proto.do_image = Wikiwyg.Wikitext.make_do('image');
 proto.do_media = Wikiwyg.Wikitext.make_do('media');
 //proto.do_quote = Wikiwyg.Wikitext.make_do('quote');
+//
+//proto.do_math = Wikiwyg.Wikitext.make_do('math');
+proto.do_math = function(cmd,elm) {
+    open_chooser('mathChooser',elm);
+}
+
+proto.do_smiley = function(cmd,elm) {
+    open_chooser('smileyChooser',elm);
+}
 
 proto.collapse = function(string) {
     return string.replace(/\r\n|\r/g, ''); // FIX
     //return string.replace(/\r\n|\r/g, "\n"); // FIX
 }
-
 
 proto.get_macro_args = function(arg,attr) {
     var attrs=[];
@@ -2641,6 +2716,24 @@ function savePage(obj) {
         }
     }
     return false;
+}
+
+function open_chooser(id,elm) {
+    var base = location.href.replace(/(.*?:\/\/.*?\/).*/, '$1');
+
+    var div = document.getElementById(id);
+    if (!div) return;
+
+    if (div.style.display == 'block') div.style.display='none';
+    else div.style.display='block';
+    if (div.style.position != 'absolute') {
+        div.style.display='block';
+        div.style.position='absolute';
+    }
+
+    div.style.top = elm.offsetTop + 21 + 'px';
+    div.style.left = elm.offsetLeft + 'px';
+    div.style.width = '500px';
 }
 
 // vim:et:sts=4:sw=4:
