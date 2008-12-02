@@ -42,7 +42,7 @@ function processor_latex(&$formatter,$value="",$options=array()) {
   # site spesific variables
   $latex="latex";
   $dvicmd="dvipng";
-  $dviopt='-D 120';
+  $dviopt='-D 120 -gamma 1.5';
   $convert="convert";
   $mogrify="mogrify";
   $vartmp_dir=&$DBInfo->vartmp_dir;
