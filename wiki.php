@@ -2721,7 +2721,7 @@ class Formatter {
     $this->mid=$options['mid'] ? $options['mid']:
       (!empty($this->mid) ? ++$this->mid:1);
 
-    preg_match("/^([A-Za-z]+)(\((.*)\))?$/",$macro,$match);
+    preg_match("/^([A-Za-z0-9]+)(\((.*)\))?$/",$macro,$match);
     if (!$match) return $this->word_repl($macro);
     $bra='';$ket='';
     if ($this->wikimarkup and $macro != 'attachment' and !$options['nomarkup']) {
