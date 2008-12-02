@@ -98,6 +98,11 @@ textarea.wiki { width:100%; }
   width:98%; /* for IE */
 }
 
+.resizable-textarea textarea {
+  padding:3px;
+  padding-right:0;
+}
+
 th.info {
   background-color:#E2ECE2;
 /*  border-collapse: collapse; */
@@ -370,7 +375,7 @@ span.lineNumber {
   padding: 5px;
   margin-top:3px;
   margin-bottom:3px;
-  background-color: #d0d0d0;
+  background-color: #f0f0f0;
 }
 
 #smileyChooser img {

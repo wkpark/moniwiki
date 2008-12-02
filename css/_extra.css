@@ -580,3 +580,80 @@ span.button button, del.button span, span.button input {
 .captcha img {
   vertical-align: middle;
 }
+
+#mathChooser {
+  padding: 5px;
+  margin-top:3px;
+  margin-bottom:3px;
+  background-color: #f0f0f0;
+}
+
+#mathChooser .tabs {
+  list-style-image: none;
+  list-style-type: none;
+  list-style-position: outside;
+  margin: 0;
+  padding:0;
+  display: inline;
+  height:14px;
+  overflow:hidden;
+}
+
+#mathChooser ul.tabs li {
+  cursor: pointer;
+  display:inline;
+}
+
+#mathChooser .tabs li {
+    padding: 5px 0px;
+    padding-bottom:1px;
+    margin-left: 2px;
+    background: url(../imgs/misc/btn.gif) no-repeat;
+    background-position: left -65px;
+    display: inline;
+}
+
+#mathChooser .tabs li span {
+    margin-left: 5px;
+    background: url(../imgs/misc/btn.gif) no-repeat;
+}
+
+#mathChooser .tabs li span {
+    display: inline;
+    padding: 5px 10px;
+    padding-left:5px;
+    padding-bottom:1px;
+    background-position: right -65px;
+}
+
+#mathChooser .tabs li.active {
+    font-weight:bold;
+}
+
+.toolbar {
+  list-style-image: none;
+  list-style-type: none;
+  list-style-position: outside;
+  margin: 0;
+  padding:0;
+  display: inline;
+}
+
+.toolbar li {
+  cursor: pointer;
+  display: inline;
+}
+
+.toolbar a {
+  float:left;
+  padding:1px;
+  margin:1px;
+  border:1px solid gray;
+  background:white;
+}
+
+.toolbar a:hover {
+  border:1px solid red;
+}
+
+
