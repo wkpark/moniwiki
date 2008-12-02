@@ -280,6 +280,11 @@ class TGettext_MO extends TGettext
             @fclose($this->_handle);
             return false;
         }
+
+        // delete untranslated strs
+        foreach ($this->strings as $k=>$v) {
+            if ($v=="") unset($this->strings[$k]);
+        }
         
         // write magic number
         if ($this->writeBigEndian) {
