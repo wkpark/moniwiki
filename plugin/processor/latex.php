@@ -147,8 +147,8 @@ function processor_latex(&$formatter,$value="",$options=array()) {
 
      if (!$raw_mode and $DBInfo->latex_allinone) {
        if (!$value) {
-         $js= '<script type="text/javascript" src="'.$DBInfo->url_prefix.'/local/latex.js"></script>';
-    	 #if ($formatter->register_javascripts('latex.js'));
+         #$js= '<script type="text/javascript" src="'.$DBInfo->url_prefix.'/local/latex.js"></script>';
+    	 if ($formatter->register_javascripts('latex.js'));
 
          $src=str_replace('@TEX@',$formatter->latex_all,$templ);
          #print '<pre>'.$src.'</pre>';
@@ -264,7 +264,7 @@ function processor_latex(&$formatter,$value="",$options=array()) {
   $title=$alt;
   if (!$raw_mode and !$img_exists) {
     $title=$png_url;
-    if ($DBInfo->latex_allinone==1)
+    if ($DBInfo->latex_allinone==1 && !$formatter->wikimarkup)
       $png_url=$DBInfo->imgs_dir.'/loading.gif';
   }
   if (!$raw_mode)
