@@ -1,0 +1,25 @@
+#toolbar {
+  float:left;
+  background:url(toolbg.png) repeat-x;
+  margin-right:4px;
+}
+
+#toolbar span {
+  float:left;
+  padding-right:2px;
+  margin-left:0px;
+  background:url(toolbg.png) repeat-x;
+  position:relative;
+  left:2px;
+  background-position:right top;
+}
+
+#toolbar img, #toolbar input {
+    padding:1px;
+}
+
+#toolbar img:hover, #toolbar input:hover {
+  padding:0px;
+  border: 1px outset ThreeDHighlight;
+  background:url(itoolbg.png) repeat-x;
+}
