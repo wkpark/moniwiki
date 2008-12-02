@@ -2212,8 +2212,9 @@ class Formatter {
     case '$':
       #return processor_latex($this,"#!latex\n".$url);
       $url=preg_replace('/<\/?sup>/','^',$url);
-      if ($url[1] != '$') $opt=array('type'=>'inline');
-      else $opt=array('type'=>'block');
+      //if ($url[1] != '$') $opt=array('type'=>'inline');
+      //else $opt=array('type'=>'block');
+      $opt=array('type'=>'inline');
       return $this->processor_repl($this->inline_latex,$url,$opt);
       break;
     case '#': # Anchor syntax in the MoinMoin 1.1
@@ -3157,6 +3158,30 @@ class Formatter {
     $this->imgs_dir_url=qualifiedUrl($this->imgs_dir_url);
   }
 
+  function postambles() {
+    $save= $this->wikimarkup;
+    $this->wikimarkup=0;
+    if ($this->postamble) {
+      $sz=sizeof($this->postamble);
+      for ($i=0;$i<$sz;$i++) {
+        $postamble=implode("\n",$this->postamble);
+        if (!trim($postamble)) continue;
+        list($type,$name,$val)=explode(':',$postamble,3);
+        if (in_array($type,array('macro','processor'))) {
+          switch($type) {
+            case 'macro':
+              print $this->macro_repl($name,$val,$options);
+              break;
+            case 'processor':
+              print $this->processor_repl($name,$val,$options);
+              break;
+          }
+        }
+      }
+    }
+    $this->wikimarkup=$save;
+  }
+
   function send_page($body="",$options=array()) {
     global $DBInfo;
     if ($options['fixpath']) $this->_fixpath();
@@ -3200,6 +3225,8 @@ class Formatter {
           foreach ($fts as $ft)
             $text=$this->postfilter_repl($ft,$text,$options);
         }
+	$this->postambles();
+
         print $this->get_javascripts();
         print $text;
 
@@ -3248,7 +3275,19 @@ class Formatter {
       $this->pi=$pi;
       if ($pi['#format'] != 'wiki') {
         if ($pi['args']) $pi_line="#!".$pi['#format']." $pi[args]\n";
-        print $this->processor_repl($pi['#format'],$pi_line.$body,$options);
+        $text= $this->processor_repl($pi['#format'],$pi_line.$body,$options);
+
+        $fts=array();
+        if ($pi['#postfilter']) $fts=preg_split('/(\||,)/',$pi['#postfilter']);
+        if ($this->postfilters) $fts=array_merge($fts,$this->postfilters);
+        if ($fts) {
+          foreach ($fts as $ft)
+            $text=$this->postfilter_repl($ft,$text,$options);
+        }
+	$this->postambles();
+        print $this->get_javascripts();
+        print $text;
+
         if ($DBInfo->use_tagging and isset($pi['#keywords'])) {
           $tmp="----\n";
           if (is_string($DBInfo->use_tagging))
@@ -3825,6 +3864,9 @@ class Formatter {
     #$text=preg_replace("/(&lt;)(\/?del>)/i","<\\2",$text);
     $text.=$close;
   
+    # postamble
+    $this->postambles();
+
     print $this->get_javascripts();
     print $text;
     if ($this->sisters and !$options['nosisters']) {
@@ -3836,29 +3878,6 @@ class Formatter {
       print "<div id='wikiSister'>\n<div class='separator'><tt class='foot'>----</tt></div>\n$msg<br />\n<ul>$sisters</ul></div>\n";
       $this->sister_on=$sister_save;
     }
-
-    # postamble
-    $save= $this->wikimarkup;
-    $this->wikimarkup=0;
-    if ($this->postamble) {
-      $sz=sizeof($this->postamble);
-      for ($i=0;$i<$sz;$i++) {
-        $postamble=implode("\n",$this->postamble);
-        if (!trim($postamble)) continue;
-        list($type,$name,$val)=explode(':',$postamble,3);
-        if (in_array($type,array('macro','processor'))) {
-          switch($type) {
-            case 'macro':
-              print $this->macro_repl($name,$val,$options);
-              break;
-            case 'processor':
-              print $this->processor_repl($name,$val,$options);
-              break;
-          }
-        }
-      }
-    }
-    $this->wikimarkup=$save;
 
     if ($this->foots)
       print $this->macro_repl('FootNote','',$options);
