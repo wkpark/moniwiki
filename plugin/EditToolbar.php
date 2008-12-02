@@ -27,7 +27,8 @@ addButton('$imgdir/button_extlink.png','External link (remember http:// prefix)'
 addButton('$imgdir/button_headline.png','Level 2 headline','\\n== ',' ==\\n','Headline text');
 addButton('$imgdir/button_image.png','Embedded image','attachment:','','Example.jpg');
 addButton('$imgdir/button_media.png','Media file link','[[Media(',')]]','Example.mp3');
-addButton('$imgdir/button_math.png','Mathematical formula (LaTeX)','\$ ',' \$','Insert formula here');
+addLinkButton('$imgdir/button_math.png','Mathematical formula (LaTeX)','mathChooser');
+addLinkButton('$imgdir/button_smiley.png','Smiley','smileyChooser');
 addButton('$imgdir/button_nowiki.png','Ignore wiki formatting','{{{','}}}','Insert non-formatted text here');
 
 addButton('$imgdir/button_sig.png','Your signature with timestamp','@SIG@','','');
