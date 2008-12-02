@@ -65,15 +65,33 @@ function addButton(imageFile, speedTip, tagOpen, tagClose, sampleText) {
 	document.write("<a href=\"javascript:insertTags");
 	document.write("('"+tagOpen+"','"+tagClose+"','"+sampleText+"');\">");
 
-        document.write("<img width=\"23\" height=\"22\" src=\""+imageFile+"\" border=\"0\" alt=\""+speedTip+"\" title=\""+speedTip+"\""+mouseOver+">");
+        document.write("<img height=\"22\" src=\""+imageFile+"\" border=\"0\" alt=\""+speedTip+"\" title=\""+speedTip+"\""+mouseOver+">");
 	document.write("</a>");
 	return;
 }
 
 function addLinkButton(imageFile,speedTip,id) {
 	document.write("<input type='image' onclick=\"javascript:openChooser(this,'" + id + "');\"");
-        document.write(" width=\"23\" height=\"22\" src=\""+imageFile+"\" border=\"0\" alt=\""+speedTip+"\" title=\""+speedTip+"\""+" />");
+        document.write(" width=\"22\" height=\"22\" src=\""+imageFile+"\" border=\"0\" alt=\""+speedTip+"\" title=\""+speedTip+"\""+" />");
 	return;
+}
+
+function getPos(el) {
+  var sLeft = 0, sTop = 0;
+  var isDiv = /^div$/i.test(el.tagName);
+  if (isDiv && el.scrollLeft) {
+    sLeft = el.scrollLeft;
+  }
+  if (isDiv && el.scrollTop) {
+    sTop = el.scrollTop;
+  }
+  var r = { x: el.offsetLeft - sLeft, y: el.offsetTop - sTop };
+  if (el.offsetParent) {
+    var tmp = absolutePosition(el.offsetParent);
+    r.x += tmp.x;
+    r.y += tmp.y;
+  }
+  return r;
 }
 
 function openChooser(el,id) {
@@ -87,8 +105,9 @@ function openChooser(el,id) {
 		div.style.position='absolute';
 	}
 
-	div.style.top = el.offsetTop + 21 + 'px';
-	div.style.left = el.offsetLeft + 'px';
+	var pos = getPos(el);
+	div.style.top = pos.y + 21 + 'px';
+	div.style.left = pos.x + 'px';
 	div.style.width = '500px';
 	//div.onmouseout= "javascript:document.getElementById(\""+id+"\").style.display='none'";
 }

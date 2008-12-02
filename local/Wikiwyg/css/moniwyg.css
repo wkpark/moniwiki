@@ -6,6 +6,23 @@
     padding: 2px;
 }
 
+.wikiwyg_buttons {
+    float:left;
+    margin-right:2px;
+    margin-top:1px;
+    background: url(../images/toolbg24.png) repeat-x;
+}
+
+.wikiwyg_buttons span {
+    float:left;
+    position:relative;
+    left:2px;
+    margin-left:2px;
+    padding-right:2px;
+    background: url(../images/toolbg24.png) repeat-x;
+    background-position: right top;
+}
+
 span.wikiwyg_control_link a {
     font-family:'Trebuchet MS',sans-serif;
     padding: 4px;
@@ -55,6 +72,8 @@ ul.wikiwyg_mode_selector {
     display: inline;
     padding: 5px 10px;
     padding-left:5px;
+    position:relative;
+    left:2px;
     background-position: right -63px;
 }
 
@@ -80,8 +99,9 @@ ul.wikiwyg_mode_selector {
 }
 
 .wikiwyg_button {
+    float:left;
     padding:1px;
-    background: url(../images/bg.png) repeat-x;
+    /* background: url(../images/bg.png) repeat-x; /* */
     cursor: pointer;
     height: 22px;
     vertical-align: middle;
@@ -99,8 +119,7 @@ ul.wikiwyg_mode_selector {
 }
 
 .wikiwyg_separator {
-    padding:1px;
-    background: url(../images/bg.png);
+    float:left;
     height: 22px;
     width: 9px;
     vertical-align: middle;

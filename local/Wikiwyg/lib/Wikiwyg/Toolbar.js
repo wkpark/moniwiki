@@ -88,11 +88,12 @@ proto.initializeObject = function() {
             }
         );
     }
-    this.imgdiv = Wikiwyg.createElementWithAttrs(
+    var wrap = Wikiwyg.createElementWithAttrs(
         'div', {
             'class': 'wikiwyg_buttons'
         }
     );
+    this.imgdiv = document.createElement('SPAN');
 
     var config = this.config;
     for (var i = 0; i < config.controlLayout.length; i++) {
@@ -117,7 +118,14 @@ proto.initializeObject = function() {
         else
             this.add_button(action, label);
     }
-    this.div.appendChild(this.imgdiv);
+    this.div.appendChild(wrap);
+    wrap.appendChild(this.imgdiv);
+    var clear = Wikiwyg.createElementWithAttrs(
+        'div', {
+            'style': 'clear:both'
+        }
+    );
+    this.div.appendChild(clear);
 }
 
 proto.enableThis = function() {

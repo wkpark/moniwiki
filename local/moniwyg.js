@@ -1050,6 +1050,7 @@ proto.insert_rawmarkup = function(start, end, raw) {
             var sf = sel.focusNode;
 
             var val = sf.nodeValue;
+            if (!val) return;
             
             var st='', ed='', m, val0='',ret;
             // do we need to cleanup nodeValue ?
@@ -1931,8 +1932,8 @@ proto.config.controlLayout = [
     'indent', 'outdent', '|',
     'quote', '|',
     'image',
-    'smiley',
-    'media'
+    'media',
+    'smiley'
 ];
 
 proto.config.controlLabels.math = 'Math';
@@ -2718,6 +2719,24 @@ function savePage(obj) {
     return false;
 }
 
+function getPos(el) {
+  var sLeft = 0, sTop = 0;
+  var isDiv = /^div$/i.test(el.tagName);
+  if (isDiv && el.scrollLeft) {
+    sLeft = el.scrollLeft;
+  }
+  if (isDiv && el.scrollTop) {
+    sTop = el.scrollTop;
+  }
+  var r = { x: el.offsetLeft - sLeft, y: el.offsetTop - sTop };
+  if (el.offsetParent) {
+    var tmp = absolutePosition(el.offsetParent);
+    r.x += tmp.x;
+    r.y += tmp.y;
+  }
+  return r;
+}
+
 function open_chooser(id,elm) {
     var base = location.href.replace(/(.*?:\/\/.*?\/).*/, '$1');
 
@@ -2731,8 +2750,13 @@ function open_chooser(id,elm) {
         div.style.position='absolute';
     }
 
+    var pos=getPos(elm)
+/*
     div.style.top = elm.offsetTop + 21 + 'px';
     div.style.left = elm.offsetLeft + 'px';
+*/
+    div.style.top = pos.y + 21 + 'px';
+    div.style.left = pos.x + 'px';
     div.style.width = '500px';
 }
 
