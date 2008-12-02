@@ -17,6 +17,7 @@
 
 function macro_MathChooser($formatter,$value) {
     global $DBInfo;
+define('USER_LATEX_MAP','LatexSymbolTable');
 
     $js=<<<JS
 <script language="javascript" type="text/javascript">
@@ -39,12 +40,33 @@ function menuToogle(el)
 </script>
 JS;
 
+    $latex_map=USER_LATEX_MAP;
+    $lines=array();
+    if ($DBInfo->hasPage($latex_map)) {
+        $p=$DBInfo->getPage($latex_map);
+        $lines=explode("\n",($p->get_raw_body()));
+    }
+
+    $mytools=array();
+    if (!empty($lines)) {
+        $o='';
+        foreach ($lines as $l) {
+            $l=rtrim($l);
+            if (empty($l)) continue;
+            if ($l{0}=='#') continue;
+            if (substr($l,-1)=='&') { $o.=$l; continue; }
+            else if (!empty($o)) { $l=$o.$l; $o='';}
+            list ($k,$v)=explode(' ',$l,2);
+            $mytools[$k]=$v;
+        }
+    }
+
     $mtools=array(
         'Greek'=>'\alpha & \beta & \gamma & \delta & \epsilon & \zeta & \eta & \theta & \iota & \kappa &
 \lambda & \mu & \nu & \xi & \o & \pi & \rho & \sigma & \tau & \upsilon & \phi & \chi & \psi & \omega &
 \Gamma & \Lambda & \Sigma & \Psi & \Delta & \Xi & \Upsilon & \Omega & \Theta & \Pi &\Phi &
 \Re & \Im & \aleph & \hbar & \imath & \jmath',
-        'Math'=>'\frac{a}{b} & a^b & a_b & \sqrt{a} & \sqrt[n]{a} & \sum & \sum_{a}^{b} & \prod &
+        'Math'=>'\frac{a}{b} & a^{b} & a_{b} & \sqrt{a} & \sqrt[n]{a} & \sum & \sum_{a}^{b} & \prod &
 \prod_{a}^{b} & \int & \int_{a}^{b} & \int_{-\infty}^{\infty} & \oint & \mathop{\lim}\limits_{a \to \infty}',
         'Symbol'=>'+ & - & \pm & \mp & * & = & \div & \equiv & \sim & \approx & \ne & \doteq & \cong & \propto &
 \forall & \exists & \neg & \vee & \wedge & \in & \ni &
@@ -54,12 +76,14 @@ JS;
 \leftarrow & \rightarrow & \leftrightarrow'
     );
 
+    $mtools=array_merge($mtools,$mytools);
+
     $out='';
     $sty=' style="display:block"';
     foreach ($mtools as $k=>$tool) {
         $tool= trim($tool);
         $tmp= explode('&',$tool);
-        $col= str_repeat('|@{}c@{}',sizeof($tmp));
+        $col= str_repeat('|@{\hspace{0.2pt}}c@{}',sizeof($tmp)); // @{}: no spacing, @{\hspace{0.2pt}
         $tex= '\displaystyle '.implode('& \displaystyle ',$tmp);
         $tex = "$$\n\\begin{array}{ $col }\n$tex\n\\end{array}\n$$\n";
 
@@ -81,7 +105,8 @@ JS;
           }
         }
         $sz=sizeof($xpos);
-        $out.="<div id='toolbar_$k'$sty><ul class='toolbar' style='height:{$height}px'>\n";
+        $out.="<div id='toolbar_$k'$sty><ul class='toolbar'>\n";
+        //$out.="<div id='toolbar_$k'$sty><ul class='toolbar' style='height:{$height}px'>\n";
         for ($i=1;$i<$sz;$i++) {
           $w=($xpos[$i]-$xpos[$i-1]-1);
           $x=$xpos[$i-1];
