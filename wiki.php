@@ -965,6 +965,8 @@ EOS;
     if (!$needle) return false;
     $all= $this->getPageLists();
 
+    $m = @preg_match("/$needle/".$opts,'dummy');
+    if (!$m) return array(); 
     foreach ($all as $page) {
       if (preg_match("/$needle/".$opts,$page)) {
         $pages[] = $page; $count--;
