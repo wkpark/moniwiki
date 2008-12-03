@@ -276,7 +276,12 @@ proto.add_break = function() {
             }
         );
     } else {
-        this.div.appendChild(document.createElement('br'));
+        var clear = Wikiwyg.createElementWithAttrs(
+            'div', {
+                'style': 'clear:both'
+            }
+        );
+        this.div.appendChild(clear);
     }
 }
 
