@@ -36,6 +36,29 @@ function menuToogle(el)
   document.getElementById('toolbar_'+el.title).style.display='block';
 }
 
+function showBig(elm, e)
+{
+    var div=document.getElementById('magnify');
+    while (div.firstChild) div.removeChild(div.firstChild);
+
+    var img = new Image();
+    //img.src = 'http://www.codecogs.com/gif.latex?\\\\200dpi ' + elm.title;
+    var sep = '?';
+    var url = decodeURIComponent(String(self.location));
+    var i;
+    if ((i = url.indexOf(_ap)) != -1) url = url.substr(0,i); // _ap is global variable. ? or &
+    img.src = url + _ap + 'action=latex2png&dpi=200&value=$' + encodeURIComponent(elm.title) +'$';
+    div.appendChild(img);
+
+    var pos = getPos(elm);
+    div.style.left = pos.x + elm.clientWidth + 20 + 'px';
+    div.style.top = pos.y + elm.clientHeight + 10 + 'px';
+
+    div.style.display='block';
+    div.style.position='absolute';
+    elm.onmouseout= function() { document.getElementById('magnify').style.display='none';}
+}
+
 /*]]>*/
 </script>
 JS;
@@ -110,7 +133,10 @@ JS;
         for ($i=1;$i<$sz;$i++) {
           $w=($xpos[$i]-$xpos[$i-1]-1);
           $x=$xpos[$i-1];
-          $out.= "<li><a href='#' onclick=\"insertTags('$ ',' $','".str_replace('\\','\\\\',trim($tmp[$i-1]))."',2)\">".
+          $tex=trim($tmp[$i-1]);
+          $mouseover=' onmouseover="showBig(this,event)" ';
+          $out.= "<li><a href='#' $mouseover title='$tex' ".
+            " onclick=\"insertTags('$ ',' $','".str_replace('\\','\\\\',$tex)."',2)\">".
             "<div style='background:url($toolurl);width:{$w}px;height:{$height}px;background-position:-{$x}px 0px;'></div></a></li>\n";
         }
         $out.="\n</ul></div>\n";
@@ -123,6 +149,7 @@ JS;
 <div style='clear:both;'></div>
 $out
 </div>
+<div id='magnify' style='display:none'></div>
 <div style='clear:both;'></div>
 EOF;
 }
