@@ -70,8 +70,9 @@ function addButton(imageFile, speedTip, tagOpen, tagClose, sampleText) {
 	return;
 }
 
-function addLinkButton(imageFile,speedTip,id) {
-	document.write("<input type='image' onclick=\"javascript:openChooser(this,'" + id + "');\"");
+function addLinkButton(imageFile,speedTip,id,once) {
+	var off=once ? 'true':'false';
+	document.write("<input type='image' onclick=\"javascript:openChooser(this,'" + id + "'," + off + ");\"");
         document.write(" width=\"22\" height=\"22\" src=\""+imageFile+"\" border=\"0\" alt=\""+speedTip+"\" title=\""+speedTip+"\""+" />");
 	return;
 }
@@ -94,7 +95,7 @@ function getPos(el) {
   return r;
 }
 
-function openChooser(el,id) {
+function openChooser(el,id,once) {
 	var div = document.getElementById(id);
 	if (!div) return;
 
@@ -109,7 +110,7 @@ function openChooser(el,id) {
 	div.style.top = pos.y + 21 + 'px';
 	div.style.left = pos.x + 'px';
 	div.style.width = '500px';
-	//div.onmouseout= "javascript:document.getElementById(\""+id+"\").style.display='none'";
+	if (once) div.onclick= function () { this.style.display='none'};
 }
 
 function addInfobox(infoText,text_alert) {
