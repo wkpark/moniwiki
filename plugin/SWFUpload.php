@@ -59,7 +59,7 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
     $uploaded='';
     if (is_dir($DBInfo->upload_dir.'/.swfupload/'.$mysubdir)) {
         $mydir=$DBInfo->upload_dir.'/.swfupload/'.$mysubdir;
-        $handle = opendir($mydir);
+        $handle = @opendir($mydir);
         if ($handle) {
             $files=array();
             while ($file = readdir($handle)) {
@@ -83,7 +83,7 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
         $key=$DBInfo->pageToKeyname($formatter->page->name);
         $mydir=$DBInfo->upload_dir."/$key";
 
-        $handle = opendir($mydir);
+        $handle = @opendir($mydir);
         if ($handle) {
             $files=array();
             while ($file = readdir($handle)) {
