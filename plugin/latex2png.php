@@ -21,7 +21,11 @@ function macro_latex2png($formatter,$value,$params=array()) {
 }
 
 function do_latex2png($formatter,$options) {
-    $png= $formatter->processor_repl('latex',$options['value'],array('raw'=>1));
+    $opts=array('raw'=>1);
+    if (isset($options['dpi']) and $options['dpi'] > 120 and $options['dpi'] < 600)
+        $opts['dpi']=$options['dpi'];
+    $png= $formatter->processor_repl('latex',$options['value'],$opts);
+
     if (file_exists($png)) {
         Header("Content-type: image/png");
         readfile($png);

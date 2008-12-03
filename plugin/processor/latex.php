@@ -42,7 +42,7 @@ function processor_latex(&$formatter,$value="",$options=array()) {
   # site spesific variables
   $latex="latex";
   $dvicmd="dvipng";
-  $dviopt='-D 120 -gamma 1.5';
+  $dviopt='-D 120 -gamma 1.3';
   $convert="convert";
   $mogrify="mogrify";
   $vartmp_dir=&$DBInfo->vartmp_dir;
@@ -54,10 +54,16 @@ function processor_latex(&$formatter,$value="",$options=array()) {
 
   if (preg_match('/ps$/',$dvicmd)) {
     $tmpext='ps';
-    $dviopt='-D 600';
+    $dviopt='-D 300';
+    if ($options['dpi'])
+      $latex_convert_options.= ' -density '.$options['dpi'].'x'.$options['dpi'];
   } else {
     $tmpext='png';
     $mask='-%d';
+    if ($options['dpi']) {
+      $dviopt= preg_replace('/-D 120/','',$dviopt);
+      $dviopt.=' -D '.$options['dpi'];
+    }
   }
 
   if ($value[0]=='#' and $value[1]=='!')
@@ -190,7 +196,7 @@ function processor_latex(&$formatter,$value="",$options=array()) {
        return '';
      }
      #$formatter->errlog('DVIPS');
-     $cmd= "$dvicmd $dvipot $uniq.dvi -o $uniq$mask.$tmpext";
+     $cmd= "$dvicmd $dviopt $uniq.dvi -o $uniq$mask.$tmpext";
      $formatter->errlog('DVI',$uniq.'.log');
      $fp=popen($cmd.$formatter->NULL,'r');
      pclose($fp);
