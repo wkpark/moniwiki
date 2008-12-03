@@ -85,6 +85,10 @@ table.wiki tr {
 
 textarea.wiki { width:100%; }
 
+form { margin:0; padding:0;/* for IE */}
+
+input { font-size:1em;padding:2px; /* for IE */ }
+
 .resizable-textarea .grippie {
   height: 14px;
   background: #ECE9D6 url(../imgs/misc/grippie.png) no-repeat 100% 100%;
@@ -376,6 +380,10 @@ span.lineNumber {
   margin-top:3px;
   margin-bottom:3px;
   background-color: #f0f0f0;
+  background:url(../imgs/misc/toolbarbg.png) repeat-x;
+  border-bottom: 1px solid #808080;
+  border-right: 1px solid #bebebe;
+  border-left: 1px solid #bebebe;
 }
 
 #smileyChooser img {
