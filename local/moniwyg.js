@@ -78,6 +78,18 @@ Wikiwyg.Mode.prototype.execute_scripts = function(el,scripts) {
     }
 }
 
+Wikiwyg.Mode.prototype.get_edit_height = function() {
+    var height = parseInt(
+        this.wikiwyg.divHeight * 1.1
+    );
+    var min = 100;
+    
+    var min = this.config.editHeightMinimum;
+    return height < min
+        ? min
+        : height;
+}
+
 // Returns if current position is in a wikimarkup block or not
 Wikiwyg.Wysiwyg.prototype.get_wikimarkup_node = function() {
     var p=this.get_parent_node();
@@ -1134,7 +1146,7 @@ proto.do_math = function(cmd,elm) {
 }
 
 proto.do_smiley = function(cmd,elm) {
-    open_chooser('smileyChooser',elm);
+    open_chooser('smileyChooser',elm,true);
 }
 
 proto.do_image = function() {
@@ -1150,7 +1162,7 @@ proto.do_media = proto.do_image;
 
 proto = Wikiwyg.Wikitext.prototype;
 
-
+proto.config.editHeightMinimum = 20;
 
 proto.enableThis = function() {
     Wikiwyg.Mode.prototype.enableThis.call(this);
@@ -1980,7 +1992,7 @@ proto.do_math = function(cmd,elm) {
 }
 
 proto.do_smiley = function(cmd,elm) {
-    open_chooser('smileyChooser',elm);
+    open_chooser('smileyChooser',elm,true);
 }
 
 proto.collapse = function(string) {
@@ -2737,7 +2749,7 @@ function getPos(el) {
   return r;
 }
 
-function open_chooser(id,elm) {
+function open_chooser(id,elm,once) {
     var base = location.href.replace(/(.*?:\/\/.*?\/).*/, '$1');
 
     var div = document.getElementById(id);
@@ -2758,6 +2770,7 @@ function open_chooser(id,elm) {
     div.style.top = pos.y + 21 + 'px';
     div.style.left = pos.x + 'px';
     div.style.width = '500px';
+    if (once) div.onclick= function () { this.style.display='none'};
 }
 
 // vim:et:sts=4:sw=4:

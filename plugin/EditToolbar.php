@@ -37,7 +37,7 @@ addButton('$imgdir/button_nowiki.png','Ignore wiki formatting','{{{','}}}','Inse
 addButton('$imgdir/button_hr.png','Horizontal line (use sparingly)','\\n----\\n','','');
 addButton('$imgdir/button_image.png','Embedded image','attachment:','','Example.jpg');
 addButton('$imgdir/button_media.png','Media file link','[[Media(',')]]','Example.mp3');
-addLinkButton('$imgdir/button_smiley.png','Smiley','smileyChooser');
+addLinkButton('$imgdir/button_smiley.png','Smiley','smileyChooser',true);
 addButton('$imgdir/button_sig.png','Your signature with timestamp','@SIG@','','');
 addInfobox('Click a button to get an example text','Please enter the text you want to be formatted.\\\\n It will be shown in the infobox for copy and pasting.\\\\nExample:\\\\n\$1\\\\nwill become:\\\\n\$2');
 document.writeln("</span></div><div style='clear:both'></div>");
