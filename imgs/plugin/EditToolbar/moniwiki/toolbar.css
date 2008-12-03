@@ -15,11 +15,11 @@
 }
 
 #toolbar img, #toolbar input {
-    padding:1px;
+  padding:1px;
 }
 
 #toolbar img:hover, #toolbar input:hover {
   padding:0px;
-  border: 1px outset ThreeDHighlight;
+  border: 1px outset ThreeDHighlight; /* */
   background:url(itoolbg.png) repeat-x;
 }
