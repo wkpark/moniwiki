@@ -2747,7 +2747,9 @@ class Formatter {
       if (!function_exists ("macro_".$plugin)) return '[['.$macro.']]';
     }
 
-    if ($this->_macrocache and empty($options['call']) and isset($this->dynamic_macros[strtolower($plugin)])) {
+    if ($this->_macrocache and empty($options['call']) and
+      (isset($this->dynamic_macros[strtolower($plugin)]) or
+      isset($this->dynamic_macros[$plugin]))) {
       $macro=$plugin. ($args ? '('.$args.')':'');
       $md5sum= md5($macro);
       $this->_macros[$md5sum]=array($macro,$mid);
@@ -3414,7 +3416,10 @@ class Formatter {
       if ($line[$ll-1]=='&') {
         $oline.=substr($line,0,-1)."\n";
         continue;
-      } else if (!empty($oline) and ($in_table or preg_match('/^\s*\|\|/',$oline)) and !preg_match('/\|\|$/',$line)) {
+      } else if (empty($oline) and preg_match('/^\s*\|\|/',$line) and !preg_match('/\|\|\s*$/',$line)) {
+        $oline.=$line."\n";
+        continue;
+      } else if (!empty($oline) and ($in_table or preg_match('/^\s*\|\|/',$oline)) and !preg_match('/\|\|\s*$/',$line)) {
         $oline.=$line."\n";
         continue;
       } else {
@@ -4806,15 +4811,25 @@ function get_pagename() {
     else {
       $pagename = $_SERVER['QUERY_STRING'];
       $temp = strtok($pagename,"&");
-
-      if (!$temp or ($p=strpos($temp,"="))===false) {
+      $p=strpos($temp,"=");
+      if (!$temp or $p===false) {
         if (preg_match('/^([^&=]+)/',$pagename,$matches)) {
           $pagename = urldecode($matches[1]);
           $_SERVER['QUERY_STRING']=substr($_SERVER['QUERY_STRING'],strlen($pagename));
         }
-      } else if ($p>0 and substr($temp,0,$p)=='value') {
-        $pagename= substr($temp,$p+1);
-        $_SERVER['QUERY_STRING']=substr($_SERVER['QUERY_STRING'],strlen($temp));
+      } else if ($p>0) {
+        $k = substr($temp,0,$p);
+        $v = substr($temp,$p+1);
+        if ($k =='value') {
+          $pagename= substr($temp,$p+1);
+          $_SERVER['QUERY_STRING']=substr($_SERVER['QUERY_STRING'],strlen($temp));
+        } else if ($k =='action' and $v =='login') {
+          $pagename="UserPreferences";
+        } else {
+          $pagename='';
+        }
+      } else {
+        $pagename=''; // get default pagename later in the wiki_main().
       }
     }
   }
