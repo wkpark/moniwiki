@@ -102,6 +102,7 @@ JS;
     $mtools=array_merge($mtools,$mytools);
 
     $out='';
+    $attr=' class="active"';
     $sty=' style="display:block"';
     foreach ($mtools as $k=>$tool) {
         $tool= trim($tool);
@@ -111,7 +112,8 @@ JS;
         $tex = "$$\n\\begin{array}{ $col }\n$tex\n\\end{array}\n$$\n";
 
         $toolbar=$formatter->macro_repl('latex2png',$tex);
-        $tab.='<li title="'.$k.'" onclick="menuToogle(this)"><span>'._($k).'</span></li>';
+        $tab.='<li title="'.$k.'"'.$attr.' onclick="menuToogle(this)"><span>'._($k).'</span></li>';
+        $attr='';
 
         $im = imagecreatefrompng($toolbar);
         $col = imagecolorallocate($im, 0, 0, 0);
