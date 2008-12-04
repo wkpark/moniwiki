@@ -1560,7 +1560,7 @@ function do_post_savepage($formatter,$options) {
     $options['savetext']=$savetext;
 
     $formatter->preview=1;
-    print '<div id="editor_area">'.macro_EditText($formatter,$value,$options).'</div>'; # XXX
+    print '<div id="editor_area_wrap">'.macro_EditText($formatter,$value,$options).'</div>'; # XXX
     print $DBInfo->hr;
     print $menu;
     print "<div id='wikiPreview'>\n";
@@ -1966,7 +1966,7 @@ function macro_UserPreferences($formatter,$value,$options='') {
   <tr>
     <th>OpenID</th>
     <td>
-      <input type="text" name="openid_url" value="" style="background:url(http://www.myopenid.com/static/openid-icon-small.gif) no-repeat scroll 3px 2px; padding: 2px 2px 2px 28px;" />
+      <input type="text" name="openid_url" value="" style="background:url(http://www.myopenid.com/static/openid-icon-small.gif) no-repeat; padding:2px;padding-left:24px; border-width:1px" />
 	    <input type="submit" name="login" value="$button" /> &nbsp;
     </td>
   </tr>
