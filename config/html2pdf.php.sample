@@ -1,0 +1,19 @@
+<?php
+# a html2pdf plugin config file for the TCPDF.
+
+# installed directory name
+$tcpdf_dir='tcpdf';
+
+# default font name
+$default_font='dejavusans';
+$default_font='Times';
+#$default_font='helvetica';
+
+# default UnicodeTrueType or CID font name.
+$default_unifont='undotum';
+#$default_unifont='hysmyeongjostdmedium';
+
+#
+#$default_font='undotum';
+
+?>
