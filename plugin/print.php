@@ -9,7 +9,7 @@ function do_print($formatter,$options) {
   global $DBInfo;
   $options['css_url']=$DBInfo->url_prefix."/css/print.css";
 
-  $formatter->nonexists='simple';
+  $formatter->nonexists='always';
 
   $formatter->send_header("",$options);
   kbd_handler();
@@ -18,7 +18,7 @@ function do_print($formatter,$options) {
   print "</div>";
   print "<div id='wikiContent'>";
   $formatter->external_on=1;
-  $formatter->send_page();
+  $formatter->send_page('',array('fixpath'=>1));
   print "</div></div>";
   print "<div id='printFooter'>";
   print sprintf(_("Retrieved from %s"),
