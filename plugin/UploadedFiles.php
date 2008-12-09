@@ -259,12 +259,12 @@ EOS;
 
    $link=$formatter->link_url($formatter->page->urlname);
    $out="<form method='post' action='$link'>";
-   $out.="<input type='hidden' name='action' value='DeleteFile' />\n";
+   $out.="<p><input type='hidden' name='action' value='DeleteFile' />\n";
    if ($key)
      $out.="<input type='hidden' name='value' value='$value' />\n";
 
 
-   $out.="<table style='border:0' cellpadding='2'>\n";
+   $out.="</p><table style='border:0px' cellpadding='2'>\n";
    $colspan='';
    if ($use_admin) $colspan=" colspan='2'";
    if ($use_fileinfo) {
@@ -384,7 +384,7 @@ EOS;
               'rpm|deb|pdf|ppt|xls|tgz|gz|bz2|zip)$/',$ext)) {
             $ext='unknown';
           }
-          $fname="<img src='$icon_dir/$ext.png' class='icon' $alt /><div>$file</div>";
+          $fname="<img src='$icon_dir/$ext.png' class='icon' $alt /><span>$file</span>";
         }
         if ($js_tag) {
           //if (strpos($file,' '))
@@ -392,7 +392,7 @@ EOS;
           $link="javascript:$tag";
         }
       }
-      if ($iidx % $col == 1)
+      if (($iidx % $col) == 0)
       $out.="<tr>";
       if ($use_admin)
         $out.="<td class='wiki'><input type='$checkbox' name='files[$idx]' value='$file' /></td>";
@@ -400,7 +400,7 @@ EOS;
       if ($use_fileinfo) {
         $out.="<td align='right' class='wiki'>$size</td><td class='wiki'>$date</td>";
       }
-      if ($iidx % $col == 0)
+      if (($iidx % $col) == 0)
       $out.="</tr>\n";
       $idx++;
       $iidx++;
@@ -411,8 +411,8 @@ EOS;
    $out.="</table>\n";
    if ($use_admin) {
      if ($DBInfo->security->is_protected("deletefile",$options))
-       $out.=_("Password").": <input type='password' name='passwd' size='10' />\n";
-     $out.="<input type='submit' value='"._("Delete selected files")."' />";
+       $out.='<p>'._("Password").": <input type='password' name='passwd' size='10' /></p>\n";
+     $out.="<p><input type='submit' value='"._("Delete selected files")."' /></p>";
    }
    $out.="</form>\n";
 
