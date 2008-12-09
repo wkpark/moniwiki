@@ -17,6 +17,9 @@ function processor_jmol($formatter,$value="") {
                 '#white'=>'background [255,255,255]',
                 );
     $default_size="width='200' height='200'";
+    $sep='';
+    # old java behavior
+    if ($use_sep) { $sep='|'; }
 
     $use_inline=1; // MOPAC format does not recognized with a param "loadInline"
 
@@ -203,8 +206,11 @@ JS;
     $pubpath = $formatter->url_prefix.'/applets/JmolPlugin';
 
     if ($use_inline) {
-        $molstring=str_replace("\n","|\n",$body);
-        if ($molstring{0} == ' ') $molstring="|\n".$molstring;
+        $molstring=$body;
+        if ($use_sep) {
+            $molstring=str_replace("\n",$sep."\n",$molstring);
+        }
+        if ($molstring{0} == ' ') $molstring=$sep."\n".$molstring;
         $args.="<param name='loadinline' value='$molstring' />";
     }
 
