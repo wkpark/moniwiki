@@ -18,8 +18,21 @@
   /* width:100px; */
   min-height: 64px;
   min-width: 64px;
+  width: auto !important;
+  height: auto !important;
+  width: 64px;
+  height: 64px;
   border: 1px solid #f3f3f3;
   background: url(./images/photo.png) no-repeat;
+  
+}
+
+#filePreview img{
+  border: 2px solid #50a0d0;
+}
+
+#filePreview img:hover {
+  border: 2px solid #3077CC;
 }
 
 .fileList td {
@@ -31,7 +44,12 @@
 }
     
 #SWFUpload {
-  margin-left: 20px;
+  margin:0px;
+  padding:0px;
+  height:1px;
+}
+
+#SWFUpload a {
   height:1px;
 }
     
@@ -90,6 +108,10 @@ a.SWFUploadLink:hover {
 
 .alignImg {
   border: 2px solid #e0e0e0;
+}
+
+.alignImg:hover {
+  border: 2px solid #65b4db;
 }
 
 .selected {
