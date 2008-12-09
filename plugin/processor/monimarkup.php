@@ -332,7 +332,7 @@ class processor_monimarkup
                 $line=substr($line,1,-1);
             }
             if (!$_in_table and $line[0]=='|' and
-                preg_match("/^(\|([^\|]+)?\|((\|\|)*))(&lt;[^>\|]*>)?(.*)(\|\|)?$/s",$line,$m)) {
+                preg_match("/^(\|([^\|]+)?\|((\|\|)*))((?:&lt;[^>\|]*>)*)(.*)(\|\|)?$/s",$line,$m)) {
                 #print "<pre>"; print_r($m); print "</pre>";
                 $open.=$formatter->_table(1,$m[5]);
                 if ($m[2]) $open.='<caption>'.$m[2].'</caption>';
@@ -350,7 +350,7 @@ class processor_monimarkup
                 $tr_attr=$tr_diff ? 'class="'.$tr_diff.'"':'';
                 for ($i=1,$s=sizeof($cells);$i<$s;$i+=2) {
                     $align='';
-                    preg_match('/^((&lt;[^>]+>)?)(\s?)(.*)(?<!\s)(\s*)?$/s',
+                    preg_match('/^((&lt;[^>]+>)*)(\s?)(.*)(?<!\s)(\s*)?$/s',
                     $cells[$i+1],$m);
                     $cell=$m[3].$m[4].$m[5];
                     if ($m[3] and $m[5]) $align='center';

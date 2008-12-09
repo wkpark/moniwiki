@@ -1944,18 +1944,31 @@ class Formatter {
       $this->themedir.="/theme/$theme";
       $this->themeurl.="/theme/$theme";
     }
+
+    $data=array();
+    if (file_exists(dirname(__FILE__).'/theme.php')) {
+      $used=array('icons','icon');
+      $options['themedir']='.';
+      $options['themeurl']=$DBInfo->url_prefix;
+      $options['frontpage']=$DBInfo->frontpage;
+      $data=getConfig(dirname(__FILE__).'/theme.php',$options);
+
+      foreach ($data as $k=>$v) 
+        if (!in_array($k, $used)) unset($data[$k]);
+    }
     $options['themedir']=$this->themedir;
     $options['themeurl']=$this->themeurl;
     $options['frontpage']=$DBInfo->frontpage;
+
     $this->icon=array();
     if (file_exists($this->themedir."/theme.php")) {
-      $data=getConfig($this->themedir."/theme.php",$options);
-      #print_r($data);
-
-      if ($data) {
-        # read configurations
-        while (list($key,$val) = each($data)) $this->$key=$val;
-      }
+      $data0=getConfig($this->themedir."/theme.php",$options);
+      if (!empty($data0))
+        $data=array_merge($data0,$data);
+    }
+    if (!empty($data)) {
+      # read configurations
+      while (list($key,$val) = each($data)) $this->$key=$val;
     }
     $this->icon=array_merge($DBInfo->icon,$this->icon);
 
@@ -2968,9 +2981,9 @@ class Formatter {
     return implode(' ',$attr);
   }
 
-  function _attr($attr,$sty=array(),$myclass=array(),$align='') {
+  function _attr($attr,&$sty,$myclass=array(),$align='') {
     $aligns=array('center'=>1,'left'=>1,'right'=>1);
-    $attrs=preg_split('@(\w+\=(?:"[^"]*"|\'[^\']*\')\s*|\w+\=[^\s]+\s*)@',
+    $attrs=preg_split('@(\w+\=(?:"[^"]*"|\'[^\']*\')\s*|\w+\=[^"\']+\s*)@',
       $attr,-1, PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_NO_EMPTY);
 
     $myattr=array();
@@ -2999,26 +3012,26 @@ class Formatter {
           case 'bgcolor':
             $sty['background-color']=strtolower($v);
             break;
+          case 'border':
           case 'width':
           case 'height':
           case 'color':
             $sty[$k]=strtolower($v);
             break;
           default:
-            if ($v) $myattr[]=$k.'="'.$v.'"';
+            if ($v) $myattr[$k]=$v;
             break;
         }
       }
     }
 
     if ($align) $myclass[]=$align;
-    if ($myclass) $myattr[]='class="'.implode(' ',array_unique($myclass)).'"';
+    if ($myclass) $myattr['class']=implode(' ',array_unique($myclass));
     if ($sty) {
       $mysty='';
       foreach ($sty as $k=>$v) $mysty.="$k:$v;";
-      $myattr[]='style="'.substr($mysty,0,-1).'"';
+      $myattr['style']=$mysty;
     }
-    asort($myattr);
     return $myattr;
   }
 
@@ -3029,7 +3042,7 @@ class Formatter {
     for ($i=1,$s=sizeof($cells);$i<$s;$i+=2) {
       $align='';
       $m=array();
-      preg_match('/^((&lt;[^>]+>)?)(\s?)(.*)(?<!\s)(\s*)?$/s',
+      preg_match('/^((&lt;[^>]+>)*)(\s?)(.*)(?<!\s)(\s*)?$/s',
         $cells[$i+1],$m);
       $cell=$m[3].$m[4].$m[5];
       if ($this->use_enhanced and strpos($cell,"\n") !== false)
@@ -3054,16 +3067,22 @@ class Formatter {
       if ($align) return 'class="'.$align.'"';
       return '';
     }
-    $para=substr($val,4,-1);
+    $para=str_replace(array('&lt;','&gt'),array('<','>'),$val);
+    $paras= explode('><',substr($para,1,-1));
     # rowspan
     $sty=array();
+    $rsty=array();
     $attr=array();
+    $rattr=array();
     $myattr=array();
+    $myclass=array();
+
+    foreach ($paras as $para) {
     if (preg_match("/^(\^|v)?\|(\d+)$/",$para,$match)) {
-      $attr[]="rowspan='$match[2]'";
+      $attr['rowspan']=$match[2];
       if ($match[1]) {
-        if ($match[1] == '^') $attr[]="valign='top'";
-        else $attr[]="valign='bottom'";
+        if ($match[1] == '^') $attr['valign']='top';
+        else $attr['valign']='bottom';
       }
     }
     else if (strlen($para)==1) {
@@ -3082,47 +3101,66 @@ class Formatter {
       }
     }
     else if (preg_match("/^\-(\d+)$/",$para,$match))
-      $attr[]="colspan='$match[1]'";
+      $attr['colspan']=$match[1];
     else if ($para[0]=='#')
-      $attr[]='style="background-color:'.strtolower($para).'"';
+      $sty['background-color']=strtolower($para);
     else {
-      if (substr($para,0,3)=='row' and substr($para,0,7)!='rowspan') {
+      if (substr($para,0,7)=='rowspan') {
+        $attr['rowspan']=substr($para,7);
+      } else if (substr($para,0,3)=='row') {
         // row properties
-        $val=substr($para,3); $myattr=$this->_attr($val);
-        $val=implode(' ',$myattr);
-        if ($align) {
-          return 'class="'.$align.'"';
-        } else return '';
+        $val=substr($para,3);
+        $myattr=$this->_attr($val,$rsty);
+        $rattr=array_merge($rattr,$myattr);
+      } else {
+        $myattr=$this->_attr($para,$sty,$myclass,$align);
+        $attr=array_merge($attr,$myattr);
       }
-      $myattr=$this->_attr($para,$sty,$myclass,$align);
-      $attr=array_merge($myattr,$attr);
     }
-    if (!$attr and $align) {
-      $val='';
-      return 'class="'.$align.'"';
     }
+    $myclass=!empty($attr['class']) ? $attr['class']:'';
+    unset($attr['class']);
+    if ($align) $myclass.=' '.$align;
+    $attr['class']=trim($myclass);
 
     $val='';
-    return implode(' ',$attr).' ';
+    foreach ($rattr as $k=>$v) $val.=$k.'="'.$v.'" ';
+
+    $ret='';
+    foreach ($attr as $k=>$v) $ret.=$k.'="'.$v.'" ';
+    return $ret;
   }
 
   function _table($on,&$attr) {
     if (!$on) return "</table>\n";
+
     $sty=array();
     $myattr=array();
-    $tattr=substr($attr,4,-1);
+    $mattr=array();
+    $attrs=str_replace(array('&lt;','&gt'),array('<','>'),$attr);
+    $attrs= explode('><',substr($attrs,1,-1));
     $myclass=array('wiki');
-    if ($tattr[0]=='#') {
-      $sty['background-color']=strtolower($tattr);
-    } else if (substr($tattr,0,5)=='table') {
-      $tattr=substr($tattr,5);
-      $myattr=$this->_attr($tattr,$sty,$myclass);
-      $attr='';
-    } else { // not table attribute
-      if ($tattr=='') $attr='';
-      #else $myattr=$this->_attr($tattr,$sty,$myclass);
+    $rattr=array();
+    $attr='';
+    foreach ($attrs as $tattr) {
+      $tattr=trim($tattr);
+      if (empty($tattr)) continue;
+      if ($tattr[0]=='#') {
+        $sty['background-color']=strtolower($tattr);
+      } else if (substr($tattr,0,5)=='table') {
+        $tattr=substr($tattr,5);
+        $mattr=$this->_attr($tattr,$sty,$myclass);
+        $myattr=array_merge($myattr,$mattr);
+      } else { // not table attribute
+        $rattr[]=$tattr;
+        #else $myattr=$this->_attr($tattr,$sty,$myclass);
+      }
     }
-    if ($myattr) $my=implode(' ',$myattr);
+    if (!empty($rattr)) $attr='<'.implode('><',$rattr).'>';
+    if (!empty($myattr)) {
+      $my='';
+      foreach ($myattr as $k=>$v) $my.=$k.'="'.$v.'" ';
+    }
     else $my='class="wiki"';
     return "<table cellpadding='3' cellspacing='2' $my>\n";
   }
@@ -3607,7 +3645,7 @@ class Formatter {
       }
 
       #if (!$in_pre && !$in_table && preg_match("/^\|\|.*\|\|$/",$line)) {
-      if (!$in_pre && $line[0]=='|' && !$in_table && preg_match("/^(\|([^\|]+)?\|((\|\|)*))(&lt;[^>\|]*>)?(.*)$/s",$line,$match)) {
+      if (!$in_pre && $line[0]=='|' && !$in_table && preg_match("/^(\|([^\|]+)?\|((\|\|)*))((?:&lt;[^>\|]*>)*)(.*)$/s",$line,$match)) {
         $open.=$this->_table(1,$match[5]);
         if ($match[2]) $open.='<caption>'.$match[2].'</caption>';
         if (!$match[5]) $line='||'.$match[3].$match[6];
@@ -3796,7 +3834,8 @@ class Formatter {
                                $this->pre_line);
               $pre=preg_replace("/&lt;(\/?)(ins|del)/","<\\1\\2",$pre);
               # FIXME Check open/close tags in $pre
-              $out="<pre class='wiki'>\n".$pre."</pre>";
+              #$out="<pre class='wiki'>\n".$pre."</pre>";
+              $out="<pre class='wiki'>".$pre."</pre>";
               if ($this->wikimarkup) {
                 $nline=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$this->pre_line);
                 $out='<span class="wikiMarkup">'."<!-- wiki:\n{{{\n".
