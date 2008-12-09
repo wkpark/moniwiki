@@ -35,6 +35,9 @@ if (defined('GESHI_VERSION')):
 function processor_geshi($formatter,$value,$options) {
   global $DBInfo;
 
+  if (!class_exists('GeSHi'))
+    retrun $formatter->processor_repl('vim',$value,$options);
+
   $syntax=array(
     'actionscript', 'ada', 'apache', 'asm', 'asp', 'bash', 'c', 'c_mac',
     'caddcl', 'cadlisp', 'cpp', 'csharp', 'css-gen', 'css', 'delphi',

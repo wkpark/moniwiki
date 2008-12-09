@@ -308,7 +308,7 @@ class processor_monimarkup
         $oline='';
         foreach ($lines as $line) {
             if (substr($line,-1) == '&') { $oline.=substr($line,0,-1)."\n"; continue; }
-            if (empty($oline) and preg_match('/^\s*\|\|/',$line) and !preg_match('/\|\|$/',$line)) {
+            if (empty($oline) and preg_match('/^\s*\|\|/',$line) and !preg_match('/\|\|\s*$/',$line)) {
                 $oline.=$line."\n"; continue;
             } else if (!empty($oline) and ($_in_table or preg_match('/^\s*\|\|/',$oline))) {
                 if (!preg_match('/\|\|$/',$line)) {
