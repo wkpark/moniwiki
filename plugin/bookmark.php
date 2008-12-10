@@ -10,7 +10,7 @@ function do_bookmark($formatter,$options) {
   global $DBInfo;
   global $_COOKIE;
 
-  $user=$DBInfo->user; # get cookie
+  $user=&$DBInfo->user; # get cookie
 
   if (!$options['time']) {
      $bookmark=time();
@@ -22,6 +22,7 @@ function do_bookmark($formatter,$options) {
       setcookie("MONI_BOOKMARK",$bookmark,time()+60*60*24*30,get_scriptname());
       # set the fake cookie
       $_COOKIE['MONI_BOOKMARK']=$bookmark;
+      $user->bookmark=$bookmark;
       $options['msg'] = 'Bookmark Changed';
     } else {
       $user->info['bookmark']=$bookmark;
