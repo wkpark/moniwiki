@@ -43,7 +43,8 @@ function function_toc($formatter) {
             "\$formatter->link_repl('\\1')",$head);
 
         if ($simple)
-            $head=strip_tags($head,'<b><i><img><sub><sup><del><tt><u><strong>');
+            $head=strip_tags($head);
+            #$head=strip_tags($head,'<b><i><sub><sup><del><tt><u><strong>');
 
         if (!$depth_top) { $depth_top=$dep; $depth=1; }
         else {

@@ -8,9 +8,11 @@
 function do_format($formatter,$options) {
   $mimes=array('text/plain'=>'html','text/xml'=>'text_xml');
   $mimetype=$options['mimetype'];
+  $proc=!empty($options['proc']) ? $options['proc']:'';
   if (!$mimetype) $mimetype='text/plain';
 
   $pi=$formatter->get_instructions($dummy);
+  if (!$formatter->wordrule) $formatter->set_wordrule($pi);
   if ($pi['#format']=='xsltproc') {
     $options['title']= _("It is a XML format !");
     do_invalid($formatter,$options);
@@ -20,9 +22,17 @@ function do_format($formatter,$options) {
     do_invalid($formatter,$options);
     return;
   } // Detect File type
-  else if (array_key_exists($mimetype,$mimes)) {
+  else if (empty($proc) and array_key_exists($mimetype,$mimes)) {
     header("Content-type: ".$mimetype);
     print $formatter->processor_repl($mimes[$mimetype],$formatter->page->get_raw_body(),$options);
+  } else if (!empty($proc)) {
+    #if (getProcessor($processor)) {
+    #  do_invalid($formatter,$options);
+    #  return;
+    #}
+    #header("Content-type: ".$mimetype);
+    header("Content-type: text/plain");
+    print $formatter->processor_repl($proc,$formatter->page->get_raw_body(),$options);
   } else {
     $processor=str_replace("/.","__",$mimetype);
     header("Content-type: text/plain");
