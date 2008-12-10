@@ -4679,7 +4679,7 @@ MSG;
 
   function set_trailer($trailer="",$pagename,$size=5) {
     global $DBInfo;
-    if (!$trailer) $trail=$DBInfo->frontpage;
+    if (empty($trailer)) $trail=$DBInfo->frontpage;
     else $trail=$trailer;
     $trails=array_diff(explode("\t",trim($trail)),array($pagename));
 
@@ -4881,6 +4881,9 @@ function init_requests(&$options) {
   $udb=new UserDB($DBInfo);
   $DBInfo->udb=$udb;
 
+  if ($DBInfo->trail) // read COOKIE trailer
+    $options['trail']=trim($user->trail) ? $user->trail:'';
+
   if ($user->id != 'Anonymous') {
     $udb->checkUser($user); # is it valid user ?
     if ($user->id != 'Anonymous')
@@ -4895,10 +4898,6 @@ function init_requests(&$options) {
 if ((empty($DBInfo->theme) or isset($_GET['action'])) and isset($_GET['theme'])) $theme=$_GET['theme'];
 else if ($DBInfo->theme_css) $theme=$DBInfo->theme;
 if ($theme) $options['theme']=$theme;
-
-if ($DBInfo->trail) {
-  $options['trail']=$user->trail ? $user->trail:'';
-}
 
 if ($options['id'] != 'Anonymous') {
   $options['css_url']=$user->info['css_url'];
@@ -4917,6 +4916,7 @@ if ($theme and ($DBInfo->theme_css or !$options['css_url']))
   $options['css_url']=($DBInfo->themeurl ? $DBInfo->themeurl:$DBInfo->url_prefix)."/theme/$theme/css/default.css";
 
   $options['pagename']=get_pagename();
+
 }
 
 function init_locale($lang) {
