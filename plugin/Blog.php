@@ -319,10 +319,9 @@ function macro_Blog($formatter,$value) {
   $url=$formatter->link_url($formatter->page->urlname);
   $datestamp= $formatter->page->mtime();
 
-  if (!$options['id']) {
-    $user=new User(); # get from COOKIE VARS
-    $options['id']=$user->id;
-  }
+  if (!$options['id'])
+    $options['id']=$DBInfo->user->id;
+
   if ($options['id'] != 'Anonymous')
     $extra='<div style="text-align:right">'.'
       <input type="submit" name="button_refresh" value="Refresh" /></div>';

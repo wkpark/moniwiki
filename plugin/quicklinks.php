@@ -9,7 +9,7 @@ function do_quicklinks($formatter,$options) {
   global $DBInfo;
 
   if ($options['id'] != 'Anonymous') {
-    $udb=new UserDB($DBInfo);
+    $udb=&$DBInfo->udb;
     $userinfo=$udb->getUser($options['id']);
     $email=$userinfo->info['email'];
   } else {

@@ -13,11 +13,7 @@ function macro_login($formatter,$value="",$options="") {
   $url=$formatter->link_url('UserPreferences');
   $urlpage=$formatter->link_url($formatter->page->urlname);
 
-  $user=new User(); # get from COOKIE VARS
-  if ($user->id != 'Anonymous') {
-    $udb=new UserDB($DBInfo);
-    $udb->checkUser($user);
-  }
+  $user=&$DBInfo->user; # get from COOKIE VARS
 
   $jscript='';
   if ($user->id == 'Anonymous' and $DBInfo->use_safelogin) {
@@ -63,7 +59,7 @@ LOGOUT;
 function do_login($formatter,$options) {
   global $DBInfo;
 
-  $user=new User(); # get from COOKIE VARS
+  $user=&$DBInfo->user; # get from COOKIE VARS
   if ($user->id != 'Anonymous') {
     $options['logout']=1;
     $url=$formatter->link_url($formatter->page->urlname,'?action=userform&logout=1');

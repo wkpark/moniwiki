@@ -982,11 +982,8 @@ EOS;
   }
 
   function addLogEntry($page_name, $remote_name,$comment,$action="SAVE") {
-    $user=new User();
-    if ($user->id != 'Anonymous') {
-      $udb=new UserDB($this);
-      $udb->checkUser($user);
-    }
+    $user=&$this->user;
+  
     $myid=$user->id;
     if ($user->info['nick']) {
       $myid.=' '.$user->info['nick'];
@@ -1130,13 +1127,10 @@ EOS;
   }
 
   function savePage(&$page,$comment="",$options=array()) {
-    $user=new User();
-    if ($user->id != 'Anonymous') {
-      $udb=new UserDB($this);
-      $udb->checkUser($user);
-    } else {
-      if (strlen($comment)>80) $comment='';
-    }
+    $user=&$this->user;
+    if ($user->id == 'Anonymous')
+      if (strlen($comment)>80) $comment=''; // restrict comment length for anon.
+
     $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
     $comment=escapeshellcmd($comment);
 
@@ -1177,11 +1171,7 @@ EOS;
     $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
 
     $comment=$options['comment'];
-    $user=new User();
-    if ($user->id != 'Anonymous') {
-      $udb=new UserDB($this);
-      $udb->checkUser($user);
-    }
+    $user=&$this->user;
 
     $keyname=$this->_getPageKey($page->name);
 
@@ -1793,7 +1783,8 @@ class Formatter {
     $this->use_etable=$DBInfo->use_etable;
     $this->use_enhanced=$DBInfo->use_enhanced;
     $this->use_metadata=$DBInfo->use_metadata;
-    $this->udb=$DBInfo->udb;
+    $this->udb=&$DBInfo->udb;
+    $this->user=&$DBInfo->user;
     $this->check_openid_url=$DBInfo->check_openid_url;
     $this->register_javascripts($DBInfo->javascripts);
     $this->dynamic_macros=$DBInfo->dynamic_macros;
@@ -4883,7 +4874,20 @@ function get_pagename() {
 
 function init_requests(&$options) {
   global $DBInfo;
-$user=new User();
+
+  $user=new User();
+  $udb=new UserDB($DBInfo);
+  $DBInfo->udb=$udb;
+
+  if ($user->id != 'Anonymous') {
+    $udb->checkUser($user); # is it valid user ?
+    if ($user->id != 'Anonymous')
+      $user=$udb->getUser($user->id); // read user info
+    else
+      $user->setID('Anonymous');
+  }
+  $options['id']=$user->id;
+  $DBInfo->user=$user;
 
 # MoniWiki theme
 if ((empty($DBInfo->theme) or isset($_GET['action'])) and isset($_GET['theme'])) $theme=$_GET['theme'];
@@ -4894,13 +4898,7 @@ if ($DBInfo->trail) {
   $options['trail']=$user->trail ? $user->trail:'';
 }
 
-$udb=new UserDB($DBInfo);
-$udb->checkUser($user); # is it valid user ?
-$options['id']=$user->id;
-$DBInfo->udb=$udb; // XXX
-
 if ($options['id'] != 'Anonymous') {
-  $user=$udb->getUser($user->id); // read user info
   $options['css_url']=$user->info['css_url'];
   $options['quicklinks']=$user->info['quicklinks'];
   $options['tz_offset']=$user->info['tz_offset'];

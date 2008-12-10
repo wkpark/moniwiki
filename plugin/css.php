@@ -15,7 +15,7 @@ function do_css($formatter,$options) {
       $options['css_url']="";
     } else {
       # save profile
-      $udb=new UserDB($DBInfo);
+      $udb=&$DBInfo->udb;
       $userinfo=$udb->getUser($options['id']);
       $userinfo->info['css_url']="";
       $udb->saveUser($userinfo);
@@ -29,7 +29,7 @@ function do_css($formatter,$options) {
     $msg=_("Back to UserPreferences");
   } else if ($options['save'] && $options[id] != "Anonymous" && isset($options['user_css'])) {
     # save profile
-    $udb=new UserDB($DBInfo);
+    $udb=&$DBInfo->udb;
     $userinfo=$udb->getUser($options['id']);
     $userinfo->info['css_url']=$options['user_css'];
     $udb->saveUser($userinfo);

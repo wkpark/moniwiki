@@ -18,7 +18,7 @@
 function macro_MsgTrans($formatter,$value,$param=array()) {
     global $DBInfo;
 
-    $user=new User();
+    $user=&$DBInfo->user;
     if (!is_array($DBInfo->owners) or !in_array($user->id,$DBInfo->owners)) {
         return sprintf(_("You are not allowed to \"%s\" !"),"msgtrans");
     }

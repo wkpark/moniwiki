@@ -38,11 +38,7 @@ function do_revert($formatter,$options) {
         if ($DBInfo->version_class) {
             $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
 
-            $user=new User();
-            if ($user->id != 'Anonymous') {
-                $udb=new UserDB($this);
-                $udb->checkUser($user);
-            }
+            $user=&$DBInfo->user;
 
             $comment=_stripslashes($options['comment']);
 

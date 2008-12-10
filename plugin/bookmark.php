@@ -10,11 +10,7 @@ function do_bookmark($formatter,$options) {
   global $DBInfo;
   global $_COOKIE;
 
-  $user=new User(); # get cookie
-  if ($user->id != 'Anonymous') {
-    $udb=new UserDB($DBInfo);
-    $udb->checkUser($user);
-  }
+  $user=$DBInfo->user; # get cookie
 
   if (!$options['time']) {
      $bookmark=time();
@@ -29,7 +25,7 @@ function do_bookmark($formatter,$options) {
       $options['msg'] = 'Bookmark Changed';
     } else {
       $user->info['bookmark']=$bookmark;
-      $udb->saveUser($user);
+      $DBInfo->udb->saveUser($user);
       $options['msg'] = 'Bookmark Changed';
     }
   } else

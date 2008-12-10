@@ -9,11 +9,7 @@
 function do_userform($formatter,$options) {
   global $DBInfo;
 
-  $user=new User(); # get cookie
-  if ($user->id != 'Anonymous') { # XXX
-    $udb=new UserDB($DBInfo);
-    $udb->checkUser($user);
-  }
+  $user=&$DBInfo->user; # get cookie
   $id=$options['login_id'];
 
   $use_any=0;
@@ -28,7 +24,7 @@ function do_userform($formatter,$options) {
 
   # e-mail conformation
   if ($options['ticket'] and $id and $id!='Anonymous') {
-    $userdb=new UserDB($DBInfo);
+    $userdb=&$DBInfo->udb;
     if ($userdb->_exists($id)) {
        $user=$userdb->getUser($id);
        if ($user->info['eticket']==$options['ticket']) {
@@ -62,7 +58,7 @@ function do_userform($formatter,$options) {
 
   if ($user->id == "Anonymous" and !empty($options['login_id']) and isset($options['password']) and !isset($options['passwordagain'])) {
     # login
-    $userdb=new UserDB($DBInfo);
+    $userdb=$DBInfo->udb;
     if ($userdb->_exists($id)) {
       $user=$userdb->getUser($id);
       $login_ok=0;
@@ -123,7 +119,7 @@ function do_userform($formatter,$options) {
     } else {
       $ok_ticket=1;
     }
-    $userdb=new UserDB($DBInfo);
+    $userdb=&$DBInfo->udb;
     if ($userdb->_exists($id)) {
       $user=$userdb->getUser($id);
     }
@@ -229,7 +225,7 @@ function do_userform($formatter,$options) {
        } else {
            if ($ret < 8 and !$DBInfo->use_safelogin)
               $options['msg']=_("Your password is too simple to use as a password !");
-           $udb=new UserDB($DBInfo);
+           $udb=$DBInfo->udb;
            if ($options['email']) {
              if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
                #$user->info['email']=$options['email'];
@@ -285,7 +281,7 @@ function do_userform($formatter,$options) {
        $title= _("Invalid username !");
   } else if ($user->id != "Anonymous") {
     # save profile
-    $udb=new UserDB($DBInfo);
+    $udb=&$DBInfo->udb;
     $userinfo=$udb->getUser($user->id);
 
     if ($options['password'] and $options['passwordagain']) {
@@ -390,7 +386,7 @@ function do_userform($formatter,$options) {
 	  $openid->SetIdentity($options['openid_identity']);
 	  $openid_validation_result = $openid->ValidateWithServer();
     if ($openid_validation_result == true) { // OK HERE KEY IS VALID
-      $userdb=new UserDB($DBInfo);
+      $userdb=&$DBInfo->udb;
       // XXX
       $user->setID($options['openid_identity']); // XXX
       if ($options['openid_language']) $user->info['language']=strtolower($options['openid_sreg_language']);

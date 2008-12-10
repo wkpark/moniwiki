@@ -62,7 +62,7 @@ function macro_referer($formatter="",$value, &$options) {
     $logs = tail_file ($referer_log_filename, $number_of_lines);
   }
 
-  $user=new User(); # retrive user info
+  $user=$DBInfo->user; # retrive user info
   if ($user->id != 'Anonymous') {
     $tz_offset= $user->info['tz_offset'];
   }

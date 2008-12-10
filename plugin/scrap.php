@@ -8,15 +8,11 @@
 function macro_Scrap($formatter,$value,$options) {
   global $DBInfo;
 
-  $user=new User(); # get cookie
-  if ($user->id != 'Anonymous') {
-    $udb=new UserDB($DBInfo);
-    $udb->checkUser($user);
-  }
+  $user=&$DBInfo->user; # get cookie
   if ($user->id == 'Anonymous') {
     return '[[Scrap]]';
   }
-  $userinfo=$udb->getUser($user->id);
+  $userinfo=$DBInfo->udb->getUser($user->id);
   $pages=explode("\t",$userinfo->info['scrapped_pages']);
   if (!in_array($options['page'],$pages)) $pages[]=$options['page'];
   $out='';
@@ -43,7 +39,7 @@ function do_scrap($formatter,$options) {
     return;
   }
 
-  $udb=new UserDB($DBInfo);
+  $udb=&$DBInfo->udb;
   $userinfo=$udb->getUser($options['id']);
   if (isset($options['scrapped_pages'])) {
     $pages=preg_replace("/\n\s*/","\n",$options['scrapped_pages']);

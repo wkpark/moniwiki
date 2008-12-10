@@ -884,7 +884,7 @@ function macro_Edit($formatter,$value,$options='') {
   }
 
   if (!$options['minor'] and $DBInfo->use_minoredit) {
-    $user=new User(); # get from COOKIE VARS
+    $user=&$DBInfo->user; # get from COOKIE VARS
     if ($DBInfo->owners and in_array($user->id,$DBInfo->owners)) {
       $extra_check=' '._("Minor edit")."<input type='checkbox' tabindex='3' name='minor' />";
     }
@@ -1576,7 +1576,7 @@ function do_post_savepage($formatter,$options) {
 
     $options['minor'] = $DBInfo->use_minoredit ? $options['minor']:0;
     if ($options['minor']) {
-      $user=new User(); # get from COOKIE VARS
+      $user=$DBInfo->user; # get from COOKIE VARS
       if ($DBInfo->owners and in_array($user->id,$DBInfo->owners)) {
         $options['minor']=1;
       } else {
@@ -1630,7 +1630,7 @@ function wiki_notify($formatter,$options) {
 #  if ($options[id] != 'Anonymous')
 #
 
-  $udb=new UserDB($DBInfo);
+  $udb=&$DBInfo->udb;
   $subs=$udb->getPageSubscribers($options['page']);
   if (!$subs) {
     if ($options['noaction']) return 0;
@@ -1923,11 +1923,7 @@ function macro_UserPreferences($formatter,$value,$options='') {
         $_SERVER['HTTP_USER_AGENT']) ? 1:0;
   }
 
-  $user=new User(); # get from COOKIE VARS
-  if ($user->id != 'Anonymous') {
-    $udb=new UserDB($DBInfo);
-    $udb->checkUser($user);
-  }
+  $user=$DBInfo->user; # get from COOKIE VARS
 
   $jscript='';
   if ($DBInfo->use_safelogin) {
@@ -2295,6 +2291,8 @@ function macro_TitleIndex($formatter,$value) {
   global $DBInfo;
 
   $group=$formatter->group;
+
+  $all_pages = array();
   if ($formatter->group) {
     $group_pages = $DBInfo->getLikePages($formatter->group);
     foreach ($group_pages as $page)

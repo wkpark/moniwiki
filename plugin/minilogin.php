@@ -12,11 +12,7 @@ function macro_minilogin($formatter,$value="",$options="") {
 
   $urlpage=$formatter->link_url($formatter->page->urlname);
 
-  $user=new User(); # get from COOKIE VARS
-  if ($user->id != 'Anonymous') {
-    $udb=new UserDB($DBInfo);
-    $udb->checkUser($user);
-  }
+  $user=&$DBInfo->user; # get from COOKIE VARS
 
   if ($user->id == 'Anonymous') {
     $login=_("Login or Join");

@@ -89,11 +89,8 @@ define('RC_DEFAULT_DAYS',7);
   $daysago=$opts['ago'] ? $daysago.'&amp;ago='.$opts['ago']:$daysago;
       
 
-  $user=new User(); # retrive user info
-  if ($user->id != 'Anonymous') {
-    $udb=new UserDB($DBInfo);
-    $udb->checkUser($user);
-  }
+  $user=&$DBInfo->user; # retrive user info
+
   if ($user->id != 'Anonymous') {
     $bookmark= $user->info['bookmark'];
     $tz_offset= $user->info['tz_offset'];

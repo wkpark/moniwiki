@@ -20,7 +20,7 @@ function do_theme($formatter,$options) {
       //$options['theme']='';
     } else {
       # save profile
-      $udb=new UserDB($DBInfo);
+      $udb=$DBInfo->udb;
       $userinfo=$udb->getUser($options['id']);
       $userinfo->info['theme']="";
       $userinfo->info['css_url']="";
@@ -41,7 +41,7 @@ function do_theme($formatter,$options) {
         $msg="Goto ".$formatter->link_repl("UserPreferences");
       } else if ($options['save'] and $options['id']!='Anonymous') {
         # save profile
-        $udb=new UserDB($DBInfo);
+        $udb=$DBInfo->udb;
         $userinfo=$udb->getUser($options['id']);
         $userinfo->info['theme']=$options['theme'];
         $userinfo->info['css_url']=$options['css_url'];

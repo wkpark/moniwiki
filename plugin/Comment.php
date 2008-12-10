@@ -73,7 +73,7 @@ EXTRA;
   $savetext= str_replace(array("&","<"),array("&amp;","&lt;"),$savetext);
 
   if (!$options['id']) {
-    $user=new User(); # get from COOKIE VARS
+    $user=$DBInfo->user; # get from COOKIE VARS
     $options['id']=$user->id;
   }
 

@@ -72,13 +72,10 @@ function do_chat($formatter,$options) {
 
 function ajax_chat($formatter,$options) {
     global $DBInfo;
-    $user=new User(); # get cookie
+    $user=&$DBInfo->user; # get cookie
     $id=$user->id;
     $nic='';
-    $udb=new UserDB($DBInfo);
-    if ($user->id != 'Anonymous') {
-        $udb->checkUser($user);
-    }
+    $udb=&$DBInfo->udb;
     if ($options['nic']) {
         if (!$udb->_exists($options['nic'])) {
             $nic=' '.$options['nic'];

@@ -9,10 +9,10 @@
 function macro_Subscribe($formatter,$value,$options=array()) {
   global $DBInfo;
 
-  $user=new User(); # get cookie
+  $user=$DBInfo->user; # get cookie
 
   if ($user->id != 'Anonymous') {
-    $udb=new UserDB($DBInfo);
+    $udb=&$DBInfo->udb;
     $userinfo=$udb->getUser($user->id);
     $email=$userinfo->info['email'];
   } else {
@@ -46,7 +46,7 @@ function do_subscribe($formatter,$options) {
   }
 
   if ($options['id'] != 'Anonymous') {
-    $udb=new UserDB($DBInfo);
+    $udb=&$DBInfo->udb;
     $userinfo=$udb->getUser($options['id']);
     $email=$userinfo->info['email'];
     #$subs=$udb->getPageSubscribers($options[page]);
