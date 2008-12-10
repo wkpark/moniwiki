@@ -80,7 +80,7 @@ td.right {
 }
 
 table.wiki tr {
-   background-color: #E9ECEF;
+   background-color: #ECECEC;
 }
 
 textarea.wiki { width:100%; }
@@ -380,7 +380,8 @@ span.lineNumber {
   margin-top:3px;
   margin-bottom:3px;
   background-color: #f0f0f0;
-  background:url(../imgs/misc/toolbarbg.png) repeat-x;
+  background:url(../imgs/misc/panbg.png) repeat-x;
+  border-top: 1px solid #e4e4e4;
   border-bottom: 1px solid #808080;
   border-right: 1px solid #bebebe;
   border-left: 1px solid #bebebe;
