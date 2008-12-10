@@ -405,6 +405,7 @@ class MetaDB_text extends MetaDB {
   var $db=array();
   function MetaDB_text($file) {
     $lines=file($file);
+    if (!empty($lines))
     foreach ($lines as $line) {
       $line=trim($line);
       if ($line[0]=='#' or !$line) continue;
@@ -1777,8 +1778,8 @@ class Formatter {
     $this->section_edit=$DBInfo->use_sectionedit;
     $this->auto_linebreak=$DBInfo->auto_linebreak;
     $this->nonexists=$DBInfo->nonexists;
-    $this->url_mappings=$DBInfo->url_mappings;
-    $this->url_mapping_rule=$DBInfo->url_mapping_rule;
+    $this->url_mappings=&$DBInfo->url_mappings;
+    $this->url_mapping_rule=&$DBInfo->url_mapping_rule;
     $this->css_friendly=$DBInfo->css_friendly;
     $this->use_smartdiff=$DBInfo->use_smartdiff;
     $this->use_easyalias=$DBInfo->use_easyalias;
@@ -3243,8 +3244,7 @@ class Formatter {
       $fts=array();
       if ($pi['#filter']) $fts=preg_split('/(\||,)/',$pi['#filter']);
       if ($this->filters) $fts=array_merge($fts,$this->filters);
-      if ($DBInfo->filters) $fts=array_merge($fts,$DBInfo->filters);
-      if ($fts) {  
+      if ($fts) {
         foreach ($fts as $ft) {
           $body=$this->filter_repl($ft,$body,$options);
         }
@@ -5020,6 +5020,7 @@ function wiki_main($options) {
   $formatter->refresh=$refresh;
   $formatter->popup=$popup;
   $formatter->macro_repl('InterWiki','',array('init'=>1));
+  $formatter->macro_repl('UrlMapping','',array('init'=>1));
   $formatter->tz_offset=$options['tz_offset'];
 
   // simple black list check
@@ -5338,8 +5339,8 @@ function wiki_main($options) {
 if (!defined('INC_MONIWIKI')):
 # Start Main
 $Config=getConfig("config.php",array('init'=>1));
-include("wikilib.php");
-include("lib/win32fix.php");
+include_once("wikilib.php");
+include_once("lib/win32fix.php");
 
 $DBInfo= new WikiDB($Config);
 register_shutdown_function(array(&$DBInfo,'Close'));
