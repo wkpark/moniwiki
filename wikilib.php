@@ -32,11 +32,16 @@ function _mkdir_p($target,$mode=0777) {
 }
 
 function get_scriptname() {
+  global $Config;
   // Return full URL of current page.
   // $_SERVER["SCRIPT_NAME"] has bad value under CGI mode
   // set 'cgi.fix_pathinfo=1' in the php.ini under
   // apache 2.0.x + php4.2.x Win32
-  return $_SERVER["SCRIPT_NAME"];
+  // check mod_rewrite
+  if (strpos($_SERVER['REQUEST_URI'],$_SERVER['SCRIPT_NAME'])===false) {
+    return preg_replace('@/[^/]+\.php@','',$_SERVER['SCRIPT_NAME']);
+  }
+  return $_SERVER['SCRIPT_NAME'];
 }
 
 function _rawurlencode($url) {
