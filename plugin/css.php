@@ -20,6 +20,10 @@ function do_css($formatter,$options) {
       $userinfo->info['css_url']="";
       $udb->saveUser($userinfo);
     }
+    if (!empty($options['theme'])) {
+      $theme = $options['theme'];
+      $options['css_url']=($DBInfo->themeurl ? $DBInfo->themeurl:$DBInfo->url_prefix)."/theme/$theme/css/default.css";
+    }
   } else if ($options['save'] && $options['id']=="Anonymous" && isset($options['user_css'])) {
     setcookie("MONI_CSS",$options['user_css'],time()+60*60*24*30,get_scriptname());
     # set the fake cookie

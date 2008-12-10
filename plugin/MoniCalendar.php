@@ -293,7 +293,7 @@ function macro_MoniCalendar($formatter,$value) {
         }
         $todo='';
         $info=$dayinfo[$month][$day];
-        if ($dayinfo['week'][$weekday])
+        if (is_array($info) and isset($dayinfo['week'][$weekday]))
             $info = array_merge($info,$dayinfo['week'][$weekday]);
         if (is_array($info)) {
             if (sizeof($infocolor[$month][$day])>1) {
