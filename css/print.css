@@ -149,7 +149,14 @@ table.closure, td.closure{
 /*  border-left: 0.8em solid #7B9AC5; /* */
   padding: 0.2em 0.2em 0.2em 0.2em;
 /*  background-color:lightblue; */
+  display:none;
 }
+
+#wikiTrailer { display: none; }
+
+#wikiMenu { display:none; }
+
+#pTitle img {display:none;}
 
 #wikiBody {
 }
@@ -177,12 +184,6 @@ table.closure, td.closure{
   margin: 5px 5px 5px 5px;
   padding: 5px 1em 5px 1em;
 }
-
-/*
-#wikiMenu {
-  background-color:yellow;
-}
-*/
 
 div.indent {
   background-color: lightyellow;
