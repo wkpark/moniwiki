@@ -12,8 +12,22 @@ function macro_UrlMapping($formatter,$value,$options=array()) {
 
     #$options['load']=1;
 
-    if (!isset($DBInfo->url_mapping_rule) or $options['init']) { #or $options['load']) {
+    while (!isset($DBInfo->url_mapping_rule) or $options['init']) { #or $options['load']) {
         $mappings=array();
+
+        $cf=new Cache_text('settings');
+
+        $force_init=0;
+        if ($DBInfo->shared_url_mappings and $cf->mtime('urlmapping') < filemtime($DBInfo->shared_url_mappings) ) {
+            $force_init=1;
+        }
+        if (!$formatter->refresh and $cf->exists('urlmapping') and !$force_init) {
+            $info=unserialize($cf->fetch('urlmapping'));
+            $DBInfo->url_mappings=$info['urlmapping'];
+            $DBInfo->url_mapping_rule=$info['urlmappingrule'];
+
+            break;
+        }
 
         if (file_exists($DBInfo->shared_url_mappings)) {
             $map=file($DBInfo->shared_url_mappings);
@@ -27,11 +41,17 @@ function macro_UrlMapping($formatter,$value,$options=array()) {
                     $mapping_rule.=preg_quote($url,'/').'|';
                 }
             }
+
             $mapping_rule=substr($mapping_rule,0,-1);
             $DBInfo->url_mappings=array_merge($DBInfo->url_mappings,$mappings);
             $DBInfo->url_mapping_rule.=$DBInfo->url_mapping_rule ?
                 '|'.$mapping_rule:$mapping_rule;
         }
+        $mappinginfo=
+            serialize(array('urlmapping'=>$DBInfo->url_mappings,
+                'urlmappingrule'=>$DBInfo->url_mapping_rule));
+        $cf->update('urlmapping',$mappinginfo);
+        break;
     }
 
     if ($options['init'] or !$DBInfo->url_mappings) return '';
