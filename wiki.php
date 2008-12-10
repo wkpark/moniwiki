@@ -239,8 +239,7 @@ _qp="$sep";
 FrontPage= "$Config[frontpage]";
 /*]]>*/
 </script>
-<script type="text/javascript" src="$Config[kbd_script]">
-</script>
+<script type="text/javascript" src="$Config[kbd_script]"></script>\n
 EOS;
 }
 
@@ -4044,7 +4043,7 @@ class Formatter {
     if ($options['action_mode']=='ajax') return;
 
     if (isset($this->pi['#noindex'])) {
-      $metatags='<meta name="robots" content="noindex,nofollow" />';
+      $metatags='<meta name="robots" content="noindex,nofollow" />'."\n";
     } else {
       if ($options['metatags'])
         $metatags=$options['metatags'];
@@ -4080,12 +4079,12 @@ class Formatter {
       if ($pos > 0) $upper=substr($this->page->urlname,0,$pos);
       else if ($this->group) $upper=_urlencode(substr($this->page->name,strlen($this->group)));
       if ($this->pi['#keywords'])
-        $keywords='<meta name="keywords" content="'.$this->pi['#keywords'].'" />';
+        $keywords='<meta name="keywords" content="'.$this->pi['#keywords'].'" />'."\n";
       else if ($DBInfo->use_keywords) {
         $keywords=strip_tags($this->page->title);
         $keywords=str_replace(" ",", ",$keywords); # XXX
         $keywords=htmlspecialchars($keywords);
-        $keywords="<meta name=\"keywords\" content=\"$keywords\" />";
+        $keywords="<meta name=\"keywords\" content=\"$keywords\" />\n";
       }
       # find sub pages
       if ($DBInfo->use_subindex and !$options['action']) {
@@ -4119,7 +4118,7 @@ class Formatter {
       print "<head>\n";
 
       print '<meta http-equiv="Content-Type" content="'.$content_type.
-        ';charset='.$DBInfo->charset.'" />';
+        ';charset='.$DBInfo->charset."\" />\n";
       print <<<JSHEAD
 <script type="text/javascript">
 /*<![CDATA[*/
@@ -4139,11 +4138,14 @@ JSHEAD;
         $raw_url."\" />\n";
       print '  <link rel="Alternate" media="print" title="Print View" href="'.
         $print_url."\" />\n";
-      if ($options['css_url'])
+      if ($options['css_url']) {
         print '  <link rel="stylesheet" type="text/css" '.$media.' href="'.
-          $options['css_url'].'" />';
+          $options['css_url']."\" />\n";
+        if (file_exists('./css/_user.css'))
+          print '  <link rel="stylesheet" media="screen" type="text/css" href="'.
+            $DBInfo->url_prefix."/css/_user.css\" />\n";
 # default CSS
-      else print <<<EOS
+      } else print <<<EOS
 <style type="text/css">
 <!--
 body {font-family:Georgia,Verdana,Lucida,sans-serif; background-color:#FFF9F9;}
@@ -4239,7 +4241,7 @@ div.message {
 </style>
 EOS;
 
-      print "\n</head>\n<body $options[attr]>\n";
+      print "</head>\n<body $options[attr]>\n";
     }
   }
 
