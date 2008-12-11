@@ -671,8 +671,10 @@ EOS;
     # set user-specified configuration
     if ($config) {
       # read configurations
-      foreach ($config as $key=>$val)
+      foreach ($config as $key=>$val) {
+        if ($key{0}=='_') continue; // internal variables
         $this->$key=$val;
+      }
     }
 
     if (!$this->purge_passwd)
@@ -966,7 +968,7 @@ EOS;
     $all= $this->getPageLists();
 
     $m = @preg_match("/$needle/".$opts,'dummy');
-    if (!$m) return array(); 
+    if ($m===false) return array(); 
     foreach ($all as $page) {
       if (preg_match("/$needle/".$opts,$page)) {
         $pages[] = $page; $count--;
@@ -5017,6 +5019,18 @@ function wiki_main($options) {
   $page = $DBInfo->getPage($pagename);
 
   $formatter = new Formatter($page,$options);
+
+  if ($Config['baserule']) {
+    $dummy = 'dummy';
+    foreach ($Config['baserule'] as $rule=>$repl) {
+      $t = @preg_match($rule,$repl);
+      if ($t!==false) {
+        $formatter->baserule[]=$rule;
+        $formatter->baserepl[]=$repl;
+      }
+    }
+  }
+
   $formatter->refresh=$refresh;
   $formatter->popup=$popup;
   $formatter->macro_repl('InterWiki','',array('init'=>1));
