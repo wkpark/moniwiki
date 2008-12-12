@@ -1813,7 +1813,7 @@ class Formatter {
     if ($DBInfo->external_target)
       $this->external_target='target="'.$DBInfo->external_target.'"';
 
-    $this->baserule=array("/<([^\s<>])/",
+    $this->baserule=array("/(?<!\<)<([^\s<>])/",
                      "/'''([^']*)'''/","/(?<!')'''(.*)'''(?!')/",
                      "/''([^']*)''/","/(?<!')''(.*)''(?!')/",
                      "/`(?<!\s)(?!`)([^`']+)(?<!\s)'(?=\s|$)/",
@@ -2179,10 +2179,11 @@ class Formatter {
   }
 
   function link_repl($url,$attr='',$opts=array()) {
+    $nm = 0;
     if (is_array($url)) $url=$url[1];
     #if ($url[0]=='<') { print $url;return $url;}
     $url=str_replace('\"','"',$url); // XXX
-    if ($url[0]=="[") {
+    if ($url{0}=='[') {
       $url=substr($url,1,-1);
       $force=1;
     }
@@ -2213,6 +2214,10 @@ class Formatter {
         $url=substr($url,1);
       return "<tt class='wiki'>".$url."</tt>"; # No link
       break;
+    case '<':
+      $nm = 1; // XXX <<MacroName>> support
+      $url=substr($url,2,-2);
+      return $this->macro_repl($url); # No link
     case '[':
       $url=substr($url,1,-1);
       return $this->macro_repl($url); # No link
@@ -2269,8 +2274,10 @@ class Formatter {
         return $this->icon['mailto']."<a class='externalLink' href='mailto:$link' $attr>$myname</a>$external_icon";
       }
 
-      if ($force or strpos($url,' ')) { # have a space ?
-        list($url,$text)=explode(" ",$url,2);
+      if ($force or preg_match('@ @',$url)) { # have a space ?
+        $p = strpos($url,' ');
+        $text = substr($url,$p+1);
+        $url = substr($url,0,$p);
         $link=str_replace('&','&amp;',$url);
         if (!$text) $text=$url;
         else {
@@ -2726,7 +2733,7 @@ class Formatter {
 
   function macro_repl($macro,$value='',$options='') {
     // macro ID
-    $this->mid=$options['mid'] ? $options['mid']:
+    $this->mid=!empty($options['mid']) ? $options['mid']:
       (!empty($this->mid) ? ++$this->mid:1);
 
     preg_match("/^([A-Za-z0-9]+)(\((.*)\))?$/",$macro,$match);
@@ -2762,7 +2769,7 @@ class Formatter {
       return '[['.$md5sum.']]';
     }
 
-    $ret=call_user_func_array("macro_$plugin",array(&$this,$args,$options));
+    $ret=call_user_func_array("macro_$plugin",array(&$this,$args,&$options));
     if (is_array($ret)) return $ret;
     return $bra.$ret.$ket;
   }
@@ -3055,7 +3062,6 @@ class Formatter {
   }
 
   function _td_attr(&$val,$align='') {
-    $myclass=array();
     if (!$val) {
       if ($align) return 'class="'.$align.'"';
       return '';
@@ -3113,8 +3119,8 @@ class Formatter {
     }
     $myclass=!empty($attr['class']) ? $attr['class']:'';
     unset($attr['class']);
-    if ($align) $myclass.=' '.$align;
-    $attr['class']=trim($myclass);
+    if (!empty($myclass))
+      $attr['class']=trim($myclass);
 
     $val='';
     foreach ($rattr as $k=>$v) $val.=$k.'="'.$v.'" ';
@@ -3149,7 +3155,7 @@ class Formatter {
         #else $myattr=$this->_attr($tattr,$sty,$myclass);
       }
     }
-    if (!empty($rattr)) $attr='<'.implode('><',$rattr).'>';
+    if (!empty($rattr)) $attr='&lt;'.implode('>&lt;',$rattr).'>';
     if (!empty($myattr)) {
       $my='';
       foreach ($myattr as $k=>$v) $my.=$k.'="'.$v.'" ';
@@ -3384,7 +3390,8 @@ class Formatter {
     $oline='';
 
     $wordrule="({{{(?U)(.+)}}})|".
-              "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|"; # macro
+              "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|". # macro
+              "<<([A-Za-z0-9]+(\(((?<!\>\>).)*\))?)>>|"; # macro
     if ($DBInfo->inline_latex) # single line latex syntax
       $wordrule.="(?<=\s|^|>)\\$([^\\$]+)\\$(?=\s|\.|\,|$)|".
                  "(?<=\s|^|>)\\$\\$([^\\$]+)\\$\\$(?=\s|$)|";
@@ -3639,8 +3646,9 @@ class Formatter {
       #if (!$in_pre && !$in_table && preg_match("/^\|\|.*\|\|$/",$line)) {
       if (!$in_pre && $line[0]=='|' && !$in_table && preg_match("/^(\|([^\|]+)?\|((\|\|)*))((?:&lt;[^>\|]*>)*)(.*)$/s",$line,$match)) {
         $open.=$this->_table(1,$match[5]);
-        if ($match[2]) $open.='<caption>'.$match[2].'</caption>';
-        if (!$match[5]) $line='||'.$match[3].$match[6];
+        if (!empty($match[2])) $open.='<caption>'.$match[2].'</caption>';
+        if (empty($match[5])) $line='||'.$match[3].$match[6];
+        else $line='||'.$match[3].$match[5].$match[6];
         $in_table=1;
         if ($this->use_etable && !preg_match('/\|\|$/',$match[6])) {
           $text.=$open;
@@ -4407,7 +4415,7 @@ FOOT;
       $DBInfo->goto_form : goto_form($action,$DBInfo->goto_type);
 
     if ($options['msg'] or $msgtitle) {
-      $msgtype = isset($options['msgtype']) ? $options['msgtype']:'warn';
+      $msgtype = isset($options['msgtype']) ? ' '.$options['msgtype']:' warn';
       
       $mtitle=$msgtitle ? "<h3>".$msgtitle."</h3>\n":"";
       $msg=<<<MSG
@@ -5102,17 +5110,24 @@ function wiki_main($options) {
         $button= $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
         if ($oldver) {
           $formatter->send_title(sprintf(_("%s has saved revisions"),$page->name),"",$options);
-          print sprintf(_("%s or click %s to fullsearch this page.\n"),$button,$formatter->link_to("?action=fullsearch&amp;value=$searchval",_("title")));
+          print '<h2>'.sprintf(_("%s or click %s to search title.\n"),$button,$formatter->link_to("?action=titlesearch&amp;value=$searchval",_("here"))).'</h2>';
           $options['info_actions']=array('recall'=>'view','revert'=>'revert');
           $options['title']='<h3>'.sprintf(_("Old Revisions of the %s"),htmlspecialchars($page->name)).'</h3>';
           print $formatter->macro_repl('Info','',$options);
         } else {
           $formatter->send_title(sprintf(_("%s is not found in this Wiki"),$page->name),"",$options);
           $searchval=htmlspecialchars($options['page']);
-          print sprintf(_("%s or click %s to fullsearch this page.\n"),$button,$formatter->link_to("?action=fullsearch&amp;value=$searchval",_("title")));
+          print '<h2>'.sprintf(_("%s or click %s to search title.\n"),$button,$formatter->link_to("?action=titlesearch&amp;value=$searchval",_("here"))).'</h2>';
           print $formatter->macro_repl('LikePages',$page->name,$err);
           if ($err['extra'])
             print $err['extra'];
+
+          print '<h2>'._("Please try to search with another word").'</h2>';
+          $ret = array('call'=>1);
+          $ret = $formatter->macro_repl('TitleSearch',$page->name,$ret);
+
+          #if ($ret['hits'] == 0)
+          print "<div class='searchResult'>".$ret['form']."</div>";
         }
 
         print "<hr />\n";
@@ -5135,8 +5150,8 @@ function wiki_main($options) {
 
     if ($DBInfo->use_redirect_msg and $action=='show' and $_GET['redirect']){
       $options['msg']=
-        sprintf(_("Redirected from page \"%s\""),
-          $formatter->link_tag($_GET['redirect'],'?action=show'));
+        '<h3>'.sprintf(_("Redirected from page \"%s\""),
+          $formatter->link_tag($_GET['redirect'],'?action=show'))."</h3>";
     }
     # increase counter
     $DBInfo->counter->incCounter($pagename,$options);

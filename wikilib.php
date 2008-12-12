@@ -1320,23 +1320,40 @@ function do_titlesearch($formatter,$options) {
   }
   if (!$ret['hits'] and $options['check']) return false;
 
+  if ($ret['hits'] == 0) {
+    $ret2['form']=1;
+    $out2= $formatter->macro_repl('FullSearch',$options['value'],$ret2);
+  }
+
   $formatter->send_header("",$options);
+  $options['msgtype']='search';
   $formatter->send_title($ret['msg'],$formatter->link_url("FindPage"),$options);
 
   if ($options['check']) {
     $button= $formatter->link_to("?action=edit",$formatter->icon['create']._
 ("Create this page"));
-    print $button;
-    print sprintf(_(" or click %s to fullsearch this page.\n"),$formatter->link_to("?action=fullsearch&amp;value=$options[page]",_("title")));
+    print "<h2>".$button;
+    print sprintf(_(" or click %s to fullsearch this page.\n"),$formatter->link_to("?action=fullsearch&amp;value=$options[page]",_("title")))."</h2>";
   }
 
+  if (!empty($options['value']))
+    print $ret['form'];
   print $out;
 
   if ($options['value'])
-    printf("Found %s matching %s out of %s total pages"."<br />",
+    printf(_("Found %s matching %s out of %s total pages")."<br />",
 	 $ret['hits'],
-	($ret['hits'] == 1) ? 'page' : 'pages',
+	($ret['hits'] == 1) ? _("page") : _("pages"),
 	 $ret['all']);
+
+  if ($ret['hits'] == 0) {
+    print '<h2>'._("Please try to fulltext search")."</h2>\n";
+    print $out2;
+  } else {
+    print '<h2>'.sprintf(_("You can also click %s to fulltext search.\n"),
+      $formatter->link_to("?action=fullsearch&amp;value=$options[value]",_("here")))."</h2>\n";
+  }
+
   $args['noaction']=1;
   $formatter->send_footer($args,$options);
   return true;
@@ -2602,24 +2619,31 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
 
   $url=$formatter->link_url($formatter->page->urlname);
 
-  if (!$needle) {
-    $opts['msg'] = _("Use more specific text");
-    return "<form method='get' action='$url'>
+  $msg = _("Go");
+  $form="<form method='get' action='$url'>
       <input type='hidden' name='action' value='titlesearch' />
       <input name='value' size='30' value='$needle' />
-      <input type='submit' value='Go' />
+      <input type='submit' value='$msg' />
       </form>";
+
+  if (!$needle) {
+    $opts['msg'] = _("Use more specific text");
+    if ($opts['call']) {
+      $opts['form']=$form;
+      return $opts;
+    }
+    return $form;
   }
+
+  $opts['form'] = $form;
   $opts['msg'] = sprintf(_("Title search for \"%s\""), $needle);
   $needle=_preg_search_escape($needle);
   $test=@preg_match("/$needle/","",$match);
   if ($test === false) {
     $opts['msg'] = sprintf(_("Invalid search expression \"%s\""), $needle);
-    return "<form method='get' action=''>
-      <input type='hidden' name='action' value='titlesearch' />
-      <input name='value' size='30' value='$needle' />
-      <input type='submit' value='Go' />
-      </form>";
+    if ($opts['call'])
+      return $opts;
+    return $form;
   }
   $pages= $DBInfo->getPageLists();
   $hits=array();
@@ -2647,15 +2671,20 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   if ($opts['hits']==1)
     $opts['value']=array_pop($hits);
   $opts['all']= count($pages);
+  if ($opts['call']) {
+    $opts['out']=$out;
+    return $opts;
+  }
   return $out;
 }
 
 function macro_GoTo($formatter="",$value="") {
   $url=$formatter->link_url($formatter->page->urlname);
+  $msg = _("Go");
   return "<form method='get' action='$url'>
     <input type='hidden' name='action' value='goto' />
     <input name='value' size='30' value='$value' />
-    <input type='submit' value='Go' />
+    <input type='submit' value='$msg' />
     </form>";
 }
 
