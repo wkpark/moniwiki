@@ -421,7 +421,9 @@ class processor_monimarkup
             }
         }
         $wordrule="({{{(?U)(.+)}}})|".
-              "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|"; # macro
+              "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|". # macro
+              "<<([A-Za-z0-9]+(\(((?<!>>).)*\))?)>>|"; # macro
+
         if ($Config['inline_latex']) # single line latex syntax
             $wordrule.="(?<=\s|^|>)\\$([^\\$]+)\\$(?:\s|$)|".
                  "(?<=\s|^|>)\\$\\$([^\\$]+)\\$\\$(?:\s|$)|";
@@ -505,10 +507,9 @@ class processor_monimarkup
                     }
 
                     // new list/indent type
-                    if ($_lidep[$_li] == $c['depth'] and 
-                        $_li== 1 and $type!= $_lityp[$_li]) {
+                    if ($type != 'cdata' and $_lidep[$_li] >= $c['depth']) {
                         // close all
-                        while($_li>0) {
+                        while($_li>0 and $type!= $_lityp[$_li]) {
                             $out.=$this->_li(0,$_lityp[$_li]);
                             $out.=$this->_list(0,$_lityp[$_li]);
                             --$_li;
@@ -530,7 +531,7 @@ class processor_monimarkup
                             --$_li;
                         }
                         if ($c['type']!='cdata') {
-                            $out.=$this->_li(0,$type);
+                            $out.=$this->_li(0,$_lityp[$_li]);
                             $out.=$this->_li(1,$type,$linfo,$listy);
                         }
                     }
@@ -621,6 +622,7 @@ class processor_monimarkup
     function _list($on,$type='',$linfo='')
     {
         $close=$on ? '':'/';
+        $litype='';
         if ($type{0}=='d') {
             if ($on) {
                 $attr=$linfo ?  " class='$linfo'":" class='indent'";
@@ -662,13 +664,13 @@ class processor_monimarkup
     function _div($on,$attr='',$sty='') {
         if ($sty) $sty=' style="'.$sty.'"';
         $tag=array("</div>\n","<div$attr$sty>");
-        return $tag[$on].$close;
+        return $tag[$on];
     }
 
     function _p($on,$attr='',$sty='') {
         if ($sty) $sty=' style="'.$sty.'"';
         $tag=array("</p>\n","<p$attr$sty>");
-        return $tag[$on].$close;
+        return $tag[$on];
     }
 }
 
