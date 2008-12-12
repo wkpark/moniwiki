@@ -19,9 +19,12 @@ function do_fullsearch($formatter,$options) {
     $title= sprintf(_("Full text search for \"%s\""), $options['value']);
   $out= macro_FullSearch($formatter,$options['value'],$ret);
   $options['msg']=$ret['msg'];
+  $options['msgtype']='search';
   $formatter->send_header("",$options);
   $formatter->send_title($title,$formatter->link_url("FindPage"),$options);
 
+  if ($ret['form'])
+    print $ret['form'];
   print $out;
 
   $qext='';
@@ -65,14 +68,18 @@ function macro_FullSearch($formatter,$value="", &$opts) {
   $fneedle=str_replace('"',"&#34;",$needle); # XXX
   $tooshort=$DBInfo->fullsearch_tooshort ? $DBInfo->fullsearch_tooshort:2;
 
+  $m1=_("Display context of search results");
+  $m2=_("Search BackLinks only");
+  $m3=_("Case-sensitive searching");
+  $msg=_("Go");
   $form= <<<EOF
 <form method='get' action='$url'>
    <input type='hidden' name='action' value='fullsearch' />
    <input name='value' size='30' value='$fneedle' />
-   <input type='submit' value='Go' /><br />
-   <input type='checkbox' name='context' value='20' checked='checked' />Display context of search results<br />
-   <input type='checkbox' name='backlinks' value='1' />Search BackLinks only<br />
-   <input type='checkbox' name='case' value='1' />Case-sensitive searching<br />
+   <input type='submit' value='$msg' /><br />
+   <input type='checkbox' name='backlinks' value='1' checked='checked' />$m2<br />
+   <input type='checkbox' name='context' value='20' />$m1<br />
+   <input type='checkbox' name='case' value='1' />$m3<br />
    </form>
 EOF;
 
@@ -80,6 +87,7 @@ EOF;
      $opts['msg'] = _("No search text");
      return $form;
   }
+  $opts['form'] = $form;
   # XXX
   $excl = array();
   $incl = array();
@@ -168,9 +176,6 @@ EOF;
       }
       $hits=$data;
     }
-    if ($arena != 'fullsearch') {
-      $hits=array_count_values($hits);
-    }
   }
 
   $pattern = '/'.$needle.'/';
@@ -184,58 +189,56 @@ EOF;
   if ($hits) {
      $pages = $DBInfo->getPageLists();
     //continue;
-  } else if ($opts['backlinks']) {
-     $pages = $DBInfo->getPageLists();
-     $opts['context']=-1; # turn off context-matching
-     $cache=new Cache_text("pagelinks");
-     foreach ($pages as $page_name) {
-       $links=unserialize($cache->fetch($page_name));
-       if (is_array($links)) {
-         if (stristr(implode(' ',$links),$value))
-           $hits[$page_name] = -1;
-           // ignore count if < 0
-       }
-     }
-  } else if ($opts['keywords']) {
-     $pages = $DBInfo->getPageLists();
-     $opts['context']=-1; # turn off context-matching
-     $cache=new Cache_text("keywords");
-     foreach ($pages as $page_name) {
-       $links=unserialize($cache->fetch($page_name));
-       #print_r($links);
-       if (is_array($links)) {
-         if (stristr(implode(' ',$links),$needle))
-           $hits[$page_name] = -1;
-           // ignore count if < 0
-       }
-     }
   } else {
-     $pages = $DBInfo->getPageLists();
-     while (list($_, $page_name) = each($pages)) {
-       $p = new WikiPage($page_name);
-       if (!$p->exists()) continue;
-       $body= $p->_get_raw_body();
-       #$count = count(preg_split($pattern, $body))-1;
-       $count = preg_match_all($pattern, $body,$matches);
+    if ($opts['backlinks']) {
+      $pages = $DBInfo->getPageLists();
+      #$opts['context']=-1; # turn off context-matching
+      $cache=new Cache_text("pagelinks");
+      foreach ($pages as $page_name) {
+        $links=unserialize($cache->fetch($page_name));
+        if (is_array($links)) {
+          if (stristr(implode(' ',$links),$value))
+            $hits[$page_name] = -1;
+            // ignore count if < 0
+          }
+        }
+    } else if ($opts['keywords']) {
+      $pages = $DBInfo->getPageLists();
+      $opts['context']=-1; # turn off context-matching
+      $cache=new Cache_text("keywords");
+      foreach ($pages as $page_name) {
+        $links=unserialize($cache->fetch($page_name));
+        #print_r($links);
+        if (is_array($links)) {
+          if (stristr(implode(' ',$links),$needle))
+            $hits[$page_name] = -1;
+            // ignore count if < 0
+          }
+        }
+    } else {
+      $pages = $DBInfo->getPageLists();
+      while (list($_, $page_name) = each($pages)) {
+        $p = new WikiPage($page_name);
+        if (!$p->exists()) continue;
+        $body= $p->_get_raw_body();
+        #$count = count(preg_split($pattern, $body))-1;
+        $count = preg_match_all($pattern, $body,$matches);
 
-       if ($count) {
-         foreach($excl as $ex) if (stristr($body,$ex)) continue;
-         foreach($incl as $in) if (!stristr($body,$in)) continue;
-         $hits[$page_name] = $count;
-       }
-     }
-  }
-  #krsort($hits);
-  ksort($hits);
+        if ($count) {
+          foreach($excl as $ex) if (stristr($body,$ex)) continue;
+          foreach($incl as $in) if (!stristr($body,$in)) continue;
+          $hits[$page_name] = $count;
+        }
+      }
+    }
+    #krsort($hits);
+    ksort($hits);
 
-  if ($arena == 'fullsearch')
     $fc->update($sid,serialize($hits));
-  else if ($DBInfo->hasPage($sid))
-    $fc->update($sid,serialize(array_keys($hits)));
+  }
 
   $out.= "<!-- RESULT LIST START -->"; // for search plugin
   $out.= "<ul>";
-  reset($hits);
 
   $idx=1;
   while (list($page_name, $count) = each($hits)) {
