@@ -48,6 +48,9 @@ function do_fullsearch($formatter,$options) {
     printf(_(" (%s search results)"),$tag);
     }
   }
+  print '<h2>'.sprintf(_("You can also click %s to search title.\n"),
+    $formatter->link_to("?action=titlesearch&amp;value=$options[value]",_("here")))."</h2>\n";
+
   $args['noaction']=1;
   $formatter->send_footer($args,$options);
 }
@@ -83,7 +86,7 @@ function macro_FullSearch($formatter,$value="", &$opts) {
    </form>
 EOF;
 
-  if (!$needle) { # or blah blah
+  if (!$needle or !empty($opts['form'])) { # or blah blah
      $opts['msg'] = _("No search text");
      return $form;
   }
