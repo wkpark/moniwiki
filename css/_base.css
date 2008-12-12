@@ -153,9 +153,31 @@ span.diff-removed, del.diff-removed {
 
 div.message {
   background-color: #E8E8E8;
-  border:2px solid #ff0000;
-  padding:4px;
+  padding:0px 5px;
   vertical-align: middle;
+}
+
+div.message span {
+  padding-left:55px;
+  margin:0px 0px;
+  display:block;
+  min-height: 60px;
+  height: auto !important;
+  height:60px;
+}
+
+div.message span.warn {
+  background: url(../imgs/msg/warn.png) 10px 10px no-repeat;
+}
+
+div.message span.search {
+  background: url(../imgs/msg/search.png) 10px 10px no-repeat;
+}
+
+div.message h3 {
+  margin:0px;
+  border:0px;
+  line-height:250%;
 }
 
 pre.errlog {
