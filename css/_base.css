@@ -167,11 +167,11 @@ div.message span {
 }
 
 div.message span.warn {
-  background: url(../imgs/msg/warn.png) 10px 10px no-repeat;
+  background: url(../imgs/info/warn.png) 10px 10px no-repeat;
 }
 
 div.message span.search {
-  background: url(../imgs/msg/search.png) 10px 10px no-repeat;
+  background: url(../imgs/info/search.png) 10px 10px no-repeat;
 }
 
 div.message h3 {
@@ -560,3 +560,7 @@ em.underline{
   list-style:circle;
 }
 
+.pluginInfo fieldset div {
+  background: url(../imgs/info/plugin.png) no-repeat;
+  padding-left:70px;
+}

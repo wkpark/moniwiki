@@ -71,9 +71,11 @@ UserPreferences= "UserPreferences";
 // go form ID
 _go= "go";
 _ap = _qp == '/' ? '?':'&';
+var is_safari = navigator.appVersion.toLowerCase().indexOf('safari') != -1;
 
 function noBubble(e) {
 	if (e.preventDefault) e.preventDefault();
+	if (e.stopPropagation) e.stopPropagation();
 	else e.cancelBubble = true;
 }
 
@@ -81,6 +83,33 @@ function keydownhandler(e) {
 	if (e && e.target) var f = e.target, nn=f.nodeName; // Mozilla
 	else var e=window.event, f = e.srcElement, nn = f.tagName; // IE
 
+	if (is_safari) {
+		// safari/chrome
+		var go=document.getElementById(_go);
+		var goValue=null;
+		if (go) goValue=go.elements['value'];
+
+		if ( goValue && e.charCode != undefined && e.keyCode == 27) {
+			// 'ESC' key
+			if (goValue && nn != 'TEXTAREA' && nn != 'INPUT') {
+				goValue.focus();
+			} else {
+				goValue.blur();
+			}
+			noBubble(e);
+			return false;
+		}
+	if (e.altKey && e.keyCode == 90) { // Z
+		if (nn != 'INPUT') {
+			go ? goValue.focus():null;
+			noBubble(e);
+		} else {
+			var bot=document.getElementById('bottom');
+			if (bot) bot.focus(), noBubble(e);
+		}
+		return;
+	}
+	}
 	if (e.charCode == undefined && (e.keyCode==112 || e.keyCode==114)) {
 		keypresshandler(e); // IE hack
 		noBubble(e);
@@ -130,9 +159,11 @@ function keypresshandler(e) {
 		}
 		return;
 	}
+	if (e.altKey) return true; // mozilla
 
 	if (!e.keyCode && (cc == 112 || cc == 114)) ch=ch; // mozilla hack
 
+	//alert(ch + ',' + cc);
 	switch(ch || cc) {
 	case 27: ch = 27;
 	case '/':
@@ -247,7 +278,7 @@ function keypresshandler(e) {
 function moin_init() {
 	if (document.addEventListener) {
 		document.addEventListener('keypress',keypresshandler,false);
-		document.addEventListener('keypress',keydownhandler,false);
+		document.addEventListener('keydown',keydownhandler,false);
 	} else {
 		document.attachEvent('onkeypress',keypresshandler);
 		document.attachEvent('onkeydown',keydownhandler);
