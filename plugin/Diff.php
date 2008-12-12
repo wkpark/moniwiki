@@ -343,7 +343,7 @@ function do_diff($formatter,$options="") {
       $msg= sprintf(_("Difference between r%s and the current"),$rev);
     else
       $msg=_("latest changes");
-    $options['msg']=$msg;
+    $title=$msg;
   }
   $formatter->send_title($title,"",$options);
   if ($date) {

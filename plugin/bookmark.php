@@ -23,11 +23,11 @@ function do_bookmark($formatter,$options) {
       # set the fake cookie
       $_COOKIE['MONI_BOOKMARK']=$bookmark;
       $user->bookmark=$bookmark;
-      $options['msg'] = 'Bookmark Changed';
+      $title = 'Bookmark Changed';
     } else {
       $user->info['bookmark']=$bookmark;
       $DBInfo->udb->saveUser($user);
-      $options['msg'] = 'Bookmark Changed';
+      $title = 'Bookmark Changed';
     }
   } else
     $options['msg']="Invalid bookmark!";
