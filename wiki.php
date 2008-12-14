@@ -25,6 +25,8 @@ $timing=new Timer();
 
 function getPlugin($pluginname) {
   static $plugins=array();
+  if (is_bool($pluginname) and $pluginname)
+    return sizeof($plugins);
   if ($plugins) return $plugins[strtolower($pluginname)];
   global $DBInfo;
 
@@ -84,6 +86,8 @@ function getModule($module,$name) {
 
 function getProcessor($pro_name) {
   static $processors=array();
+  if (is_bool($pro_name) and $pro_name)
+    return sizeof($processors);
   if ($processors) return $processors[strtolower($pro_name)];
   global $DBInfo;
 
@@ -2211,7 +2215,7 @@ class Formatter {
         return "<span style='font-size:".$fsz[$m[1]]."'>$m[3]</span>";
       }
       if ($url[0]==' ' and in_array($url[1],array('#','-','+')) !==false)
-        $url=substr($url,1);
+        $url='<span class="markup invisible"> </span>'.substr($url,1);
       return "<tt class='wiki'>".$url."</tt>"; # No link
       break;
     case '<':
@@ -2275,11 +2279,12 @@ class Formatter {
       }
 
       if ($force or preg_match('@ @',$url)) { # have a space ?
-        $p = strpos($url,' ');
-        $text = substr($url,$p+1);
-        $url = substr($url,0,$p);
+        if (($p = strpos($url,' ')) !== false) {
+          $text = substr($url,$p+1);
+          $url = substr($url,0,$p);
+        }
         $link=str_replace('&','&amp;',$url);
-        if (!$text) $text=$url;
+        if (empty($text)) $text=$url;
         else {
           $img_attr='';
           if (preg_match("/^attachment:/",$text)) {
@@ -2335,6 +2340,10 @@ class Formatter {
           }
           return "<img alt='$link' $attr src='$url' />";
         }
+      }
+      if (substr($url,0,7)=='http://' and $url[7]=='?') {
+        $link=substr($url,7);
+        return "<a class='internalLink' href='$link'>$link</a>";
       }
       $url=urldecode($url);
       return "<a class='externalLink' $attr href='$link' $this->external_target>$url</a>";
@@ -2955,10 +2964,24 @@ class Formatter {
 
     if ($on) {
       if ($numtype) {
+        $lists=array(
+          'c'=>'circle',
+          's'=>'square',
+          'i'=>'lower-roman',
+          'I'=>'upper-roman',
+          'a'=>'lower-latin',
+          'A'=>'upper-latin',
+          'n'=>'none'
+        );
         $start=substr($numtype,1);
-        if ($start)
-          return "<$list_type type='$numtype[0]' start='$start'>";
-        return "<$list_type type='$numtype[0]'>";
+        $litype='';
+        if (array_key_exists($numtype{0},$lists))
+          $litype=' style="list-style-type:'.$lists[$numtype{0}].'"';
+        if (!empty($start)) {
+          #$litype[]='list-type-style:'.$lists[$numtype{0}];
+          return "<$list_type$litype start='$start'>";
+        }
+        return "<$list_type$litype>";
       }
       return "$close$open<$list_type>"; // FIX Wikiwyg
     } else {
@@ -2978,7 +3001,7 @@ class Formatter {
     $len=strlen($str)/2;
     if ($len==1) return '';
     $attr[]="colspan='$len'"; #$attr[]="align='center' colspan='$len'";
-    return implode(' ',$attr);
+    return ' '.implode(' ',$attr);
   }
 
   function _attr($attr,&$sty,$myclass=array(),$align='') {
@@ -3647,8 +3670,7 @@ class Formatter {
       if (!$in_pre && $line[0]=='|' && !$in_table && preg_match("/^(\|([^\|]+)?\|((\|\|)*))((?:&lt;[^>\|]*>)*)(.*)$/s",$line,$match)) {
         $open.=$this->_table(1,$match[5]);
         if (!empty($match[2])) $open.='<caption>'.$match[2].'</caption>';
-        if (empty($match[5])) $line='||'.$match[3].$match[6];
-        else $line='||'.$match[3].$match[5].$match[6];
+        $line='||'.$match[3].$match[5].$match[6];
         $in_table=1;
         if ($this->use_etable && !preg_match('/\|\|$/',$match[6])) {
           $text.=$open;
@@ -3890,7 +3912,7 @@ class Formatter {
     if ($in_table) $close.="</table>\n";
     # close indent
     while($in_li >= 0 && $indent_list[$in_li] > 0) {
-      if ($indent_type[$in_li]!='dd' && $li_open == $in_li)
+      if ($indent_type[$in_li]!='dl' && $li_open == $in_li) // XXX
         $close.=$this->_li(0);
 #     $close.=$this->_list(0,$indent_type[$in_li]);
       $close.=$this->_list(0,$indent_type[$in_li],"",$indent_type[$in_li-1]);
@@ -4252,6 +4274,7 @@ div.message {
 EOS;
 
       print "</head>\n<body $options[attr]>\n";
+      print '<div><a id="top" name="top" accesskey="t"></a></div>'."\n";
     }
   }
 
@@ -4305,7 +4328,7 @@ EOS;
     $menus=$this->get_actions($args,$options);
 
     $hide_actions= $this->popup + $DBInfo->hide_actions;
-
+    $menu = '';
     if (!$hide_actions or
       ($hide_actions and $options['id']!='Anonymous')) {
       if (!$this->css_friendly) {
@@ -5110,21 +5133,21 @@ function wiki_main($options) {
         $button= $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
         if ($oldver) {
           $formatter->send_title(sprintf(_("%s has saved revisions"),$page->name),"",$options);
-          print '<h2>'.sprintf(_("%s or click %s to search title.\n"),$button,$formatter->link_to("?action=titlesearch&amp;value=$searchval",_("here"))).'</h2>';
+          print '<h2>'.sprintf(_("%s or click %s to fulltext search.\n"),$button,$formatter->link_to("?action=fullsearch&amp;value=$searchval",_("here"))).'</h2>';
           $options['info_actions']=array('recall'=>'view','revert'=>'revert');
           $options['title']='<h3>'.sprintf(_("Old Revisions of the %s"),htmlspecialchars($page->name)).'</h3>';
           print $formatter->macro_repl('Info','',$options);
         } else {
           $formatter->send_title(sprintf(_("%s is not found in this Wiki"),$page->name),"",$options);
           $searchval=htmlspecialchars($options['page']);
-          print '<h2>'.sprintf(_("%s or click %s to search title.\n"),$button,$formatter->link_to("?action=titlesearch&amp;value=$searchval",_("here"))).'</h2>';
+          print '<h2>'.sprintf(_("%s or click %s to fulltext search.\n"),$button,$formatter->link_to("?action=fullsearch&amp;value=$searchval",_("here"))).'</h2>';
           print $formatter->macro_repl('LikePages',$page->name,$err);
           if ($err['extra'])
             print $err['extra'];
 
           print '<h2>'._("Please try to search with another word").'</h2>';
           $ret = array('call'=>1);
-          $ret = $formatter->macro_repl('TitleSearch',$page->name,$ret);
+          $ret = $formatter->macro_repl('TitleSearch','',$ret);
 
           #if ($ret['hits'] == 0)
           print "<div class='searchResult'>".$ret['form']."</div>";
