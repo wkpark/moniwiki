@@ -2368,6 +2368,28 @@ class Formatter {
       $wiki=$m[1]; $url=$m[2];
     }
 
+    if (empty($wiki)) {
+      # wiki:FrontPage (not supported in the MoinMoin)
+      # or [wiki:FrontPage Home Page]
+      return $this->word_repl($url,$text.$extra,$attr,1);
+    }
+
+    # invalid InterWiki name
+    if (empty($DBInfo->interwiki[$wiki])) {
+      #$dum0=preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$wiki);
+      #return $dum0.':'.($page?$this->link_repl($page,$text):'');
+
+      return $this->word_repl("$wiki:$page",$text.$extra,$attr,1);
+    }
+
+    $icon=$this->imgs_dir_interwiki.strtolower($wiki).'-16.png';
+    $sx=16;$sy=16;
+    if ($DBInfo->intericon[$wiki]) {
+      $icon=$DBInfo->intericon[$wiki][2];
+      $sx=$DBInfo->intericon[$wiki][0];
+      $sy=$DBInfo->intericon[$wiki][1];
+    }
+
     # wiki:"Hello World" wiki:MoinMoin:"Hello World"
     # [wiki:"Hello World" hello world]
     if ($url[0]=='"') {
@@ -2376,30 +2398,15 @@ class Formatter {
         if (isset($m[5])) $text=$m[5];
       }
     } else if (($p=strpos($url,' '))!==false) {
-      $dummy=substr($url,0,$p);
       $text=substr($url,$p+1);
-      if (!empty($text)) $url=$dummy;
+      $word=substr($url,0,$p);
     }
 
-    if ($wiki== '') {
-      # wiki:FrontPage (not supported in the MoinMoin)
-      # or [wiki:FrontPage Home Page]
-      $page=&$url;
-      if (!$text)
-        return $this->word_repl($page,''.$extra,$attr,1);
-      return $this->word_repl($page,$text.$extra,$attr,1);
-    }
     $page=$url;
+    $url=$DBInfo->interwiki[$wiki];
+
     if ($page[0]=='"') # "extended wiki name"
       $page=substr($page,1,-1);
-
-    $url=$DBInfo->interwiki[$wiki];
-    # invalid InterWiki name
-    if (!$url) {
-      #$dum0=preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$wiki);
-      #return $dum0.':'.($page?$this->link_repl($page,$text):'');
-      return $this->word_repl("$wiki:$page",$text.$extra,$attr,1);
-    }
 
     if ($page=='/') $page='';
     if (substr($page,-1)==' ') {
@@ -2420,13 +2427,6 @@ class Formatter {
       $url=str_replace('$PAGE',$page_only,$url).$query;
     }
 
-    $icon=$this->imgs_dir_interwiki.strtolower($wiki).'-16.png';
-    $sx=16;$sy=16;
-    if ($DBInfo->intericon[$wiki]) {
-      $icon=$DBInfo->intericon[$wiki][2];
-      $sx=$DBInfo->intericon[$wiki][0];
-      $sy=$DBInfo->intericon[$wiki][1];
-    }
 
     $img="<a class=\"interwiki\" href='$url' $this->interwiki_target>".
          "<img class=\"interwiki\" alt=\"$wiki:\" src='$icon' style='border:0' height='$sy' ".
@@ -2511,6 +2511,18 @@ class Formatter {
   function word_repl($word,$text='',$attr='',$nogroup=0,$islink=1) {
     global $DBInfo;
     $nonexists='nonexists_'.$this->nonexists;
+    # ["Hello World"]
+    # ["Hello World" Go to Hello]
+    if ($word{0}=='"') {
+      if (preg_match('/^((")?[^"]+\2)((\s+)?(.*))?$/',$word,$m)) {
+        $word=$m[1];
+        if (isset($m[5])) $text=$m[5];
+      }
+    } else if (($p=strpos($word,' '))!==false) {
+      $text=substr($word,$p+1);
+      $word=substr($word,0,$p);
+    }
+
     if ($word[0]=='"') { # ["extended wiki name"]
       $extended=1;
       $page=substr($word,1,-1);
@@ -2881,7 +2893,7 @@ class Formatter {
 
     $alt=str_replace("<","&lt;",$smiley);
 
-    if (preg_match('/^(http|ftp):/',$img))
+    if (preg_match('/^(https?|ftp):/',$img))
       return "<img src='$img' style='border:0' class='smiley' alt='$alt' title='$alt' />";
     return "<img src='$this->imgs_dir/$img' style='border:0' class='smiley' alt='$alt' title='$alt' />";
   }
