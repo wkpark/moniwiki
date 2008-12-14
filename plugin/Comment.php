@@ -80,7 +80,7 @@ EXTRA;
   $url=$formatter->link_url($formatter->page->urlname);
 
   if ($emid) $hidden.='<input type="hidden" name="comment_id" value="'.$emid.'" />';
-  $form = "<form name='editform' method='post' action='$url'>\n";
+  $form = "<form id='editform' method='post' action='$url'>\n<div>";
   if ($use_meta)
     $form.="<a id='add_comment' name='add_comment'></a>";
 
@@ -110,6 +110,7 @@ $sig
 <input type="hidden" name="datestamp" value="$datestamp" />
 <input type="submit" value="$comment" />
 $preview
+</div>
 </form>
 FORM2;
 

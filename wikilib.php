@@ -484,10 +484,13 @@ class User {
         $this->setID($id);
         return;
      }
-     $this->ticket=substr($_COOKIE['MONI_ID'],0,32);
-     $id=substr($_COOKIE['MONI_ID'],33);
-
+     $id = '';
+     if (isset($_COOKIE['MONI_ID'])) {
+     	$this->ticket=substr($_COOKIE['MONI_ID'],0,32);
+     	$id=substr($_COOKIE['MONI_ID'],33);
+     }
      $this->setID($id);
+
      $this->css=isset($_COOKIE['MONI_CSS']) ? $_COOKIE['MONI_CSS']:'';
      $this->theme=isset($_COOKIE['MONI_THEME']) ? $_COOKIE['MONI_THEME']:'';
      $this->bookmark=isset($_COOKIE['MONI_BOOKMARK']) ? $_COOKIE['MONI_BOOKMARK']:'';
@@ -838,7 +841,7 @@ function macro_Edit($formatter,$value,$options='') {
   }
   if ($DBInfo->use_autosave)
     $form_attr='onClick="moni_autosave(this)" onsubmit="moni_autosave_reset()" ';
-  $formh= sprintf('<form name="editform" '.$form_attr.'method="post" action="%s"'.$ajax.'>',
+  $formh= sprintf('<form id="editform" '.$form_attr.'method="post" action="%s"'.$ajax.'>',
     $previewurl);
   if ($text) {
     $raw_body = preg_replace("/\r\n|\r/", "\n", $text);

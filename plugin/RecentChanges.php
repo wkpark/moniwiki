@@ -264,7 +264,7 @@ define('RC_DEFAULT_DAYS',7);
 
     $logs[$page_key]= 1;
   }
-  return $btnlist.$out.$cat0;
+  return $btnlist.'<div>'.$out.$cat0.'</div>';
 }
 // vim:et:sts=2:
 ?>
