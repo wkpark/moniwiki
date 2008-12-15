@@ -268,6 +268,7 @@ class Timer {
   }
 
   function Write() {
+    $out= '';
     while (list($name,$d) = each($this->timers)) {
       $out.=sprintf("%10s :%3.4f sec (%3.2f %%)\n",$name,$d,$d/$this->total*100);
     }
@@ -2379,7 +2380,7 @@ class Formatter {
       #$dum0=preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$wiki);
       #return $dum0.':'.($page?$this->link_repl($page,$text):'');
 
-      return $this->word_repl("$wiki:$page",$text.$extra,$attr,1);
+      return $this->word_repl("$wiki:$url",$text.$extra,$attr,1);
     }
 
     $icon=$this->imgs_dir_interwiki.strtolower($wiki).'-16.png';
@@ -2399,7 +2400,7 @@ class Formatter {
       }
     } else if (($p=strpos($url,' '))!==false) {
       $text=substr($url,$p+1);
-      $word=substr($url,0,$p);
+      if (!empty($text)) $url=substr($url,0,$p);
     }
 
     $page=$url;
@@ -2511,22 +2512,16 @@ class Formatter {
   function word_repl($word,$text='',$attr='',$nogroup=0,$islink=1) {
     global $DBInfo;
     $nonexists='nonexists_'.$this->nonexists;
-    # ["Hello World"]
-    # ["Hello World" Go to Hello]
-    if ($word{0}=='"') {
-      if (preg_match('/^((")?[^"]+\2)((\s+)?(.*))?$/',$word,$m)) {
-        $word=$m[1];
-        if (isset($m[5])) $text=$m[5];
-      }
-    } else if (($p=strpos($word,' '))!==false) {
-      $text=substr($word,$p+1);
-      $word=substr($word,0,$p);
-    }
 
-    if ($word[0]=='"') { # ["extended wiki name"]
+    if ($word[0]=='"') {
+      # ["extended wiki name"]
+      # ["Hello World" Go to Hello]
+      if (preg_match('/^((")?[^"]+\2)((\s+)?(.*))?$/',$word,$m)) {
+        $word=substr($m[1],1,-1);
+        if (isset($m[5])) $text=$m[5]; // text arg ignored
+      }
       $extended=1;
-      $page=substr($word,1,-1);
-      $word=$page;
+      $page=$word;
     } else
       #$page=preg_replace("/\s+/","",$word); # concat words
       $page=normalize($word); # concat words
