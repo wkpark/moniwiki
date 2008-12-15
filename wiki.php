@@ -2369,6 +2369,18 @@ class Formatter {
       $wiki=$m[1]; $url=$m[2];
     }
 
+    # wiki:"Hello World" wiki:MoinMoin:"Hello World"
+    # [wiki:"Hello World" hello world]
+    if (isset($url{0}) and $url[0]=='"') {
+      if (preg_match('/^((")?[^"]+\2)((\s+)?(.*))?$/',$url,$m)) {
+        $url=$m[1];
+        if (isset($m[5])) $text=$m[5];
+      }
+    } else if (($p=strpos($url,' '))!==false) {
+      $text=substr($url,$p+1);
+      if (!empty($text)) $url=substr($url,0,$p);
+    }
+
     if (empty($wiki)) {
       # wiki:FrontPage (not supported in the MoinMoin)
       # or [wiki:FrontPage Home Page]
@@ -2391,17 +2403,6 @@ class Formatter {
       $sy=$DBInfo->intericon[$wiki][1];
     }
 
-    # wiki:"Hello World" wiki:MoinMoin:"Hello World"
-    # [wiki:"Hello World" hello world]
-    if ($url[0]=='"') {
-      if (preg_match('/^((")?[^"]+\2)((\s+)?(.*))?$/',$url,$m)) {
-        $url=$m[1];
-        if (isset($m[5])) $text=$m[5];
-      }
-    } else if (($p=strpos($url,' '))!==false) {
-      $text=substr($url,$p+1);
-      if (!empty($text)) $url=substr($url,0,$p);
-    }
 
     $page=$url;
     $url=$DBInfo->interwiki[$wiki];
