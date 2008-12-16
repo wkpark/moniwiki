@@ -1,5 +1,8 @@
 <?php
-$iconset='moni';
+#
+# $imgdir,$themeurl are locally used variables.
+#
+$iconset='moni2';
 $imgdir=$themeurl."/imgs";
 $icon['upper']="<img src='$imgdir/$iconset/upper.gif' alt='U' align='middle' border='0' />";
 $icon['edit']="<img src='$imgdir/$iconset/edit.gif' alt='E' align='middle' border='0' />";
@@ -12,6 +15,7 @@ $icon['find']="<img src='$imgdir/$iconset/search.gif' alt='S' align='middle' bor
 $icon['help']="<img src='$imgdir/$iconset/help.gif' alt='H' align='middle' border='0' />";
 $icon['www']="<img src='$imgdir/$iconset/www.gif' alt='www' align='middle' border='0' />";
 $icon['mailto']="<img src='$imgdir/$iconset/email.gif' alt='M' align='middle' border='0' />";
+$icon['bookmark']="<img src='$imgdir/$iconset/bookmark.png' alt='C' style='vertical-align:middle;border:0' />";
 $icon['create']="<img src='$imgdir/$iconset/create.gif' alt='N' align='middle' border='0' />";
 $icon['new']="<img src='$imgdir/$iconset/new.gif' alt='U' align='middle' border='0' />";
 $icon['updated']="<img src='$imgdir/$iconset/updated.gif' alt='U' align='middle' border='0' />";
@@ -20,30 +24,23 @@ $icon['home']="<img src='$imgdir/$iconset/home.gif' alt='M' align='middle' borde
 $icon['xml']="<img src='$imgdir/$iconset/xml.gif' alt='X' align='middle' border='0' />";
 $icon['print']="<img src='$imgdir/$iconset/print.gif' alt='P' align='middle' border='0' />";
 $icon['attach']="<img src='$imgdir/$iconset/attach.gif' alt='@' align='middle' border='0' />";
+$icon['html2pdf']="<img src='$imgdir/$iconset/html2pdf.png' alt='A' style='vertical-align:middle;border:0' />";
 
 $icon_sep=' ';
 $icon_cat=' ';
 
 $icons=array(
-   array("","?action=edit",$icon['edit'],"accesskey='e'"),
-   array("","?action=diff",$icon['diff'],"accesskey='c'"),
-   array("","",$icon['show']),
-   array("FindPage","",$icon['find']),
-   array("","?action=info",$icon['info']),
-   array("","?action=subscribe",$icon['mailto']),
-   array("HelpContents","",$icon['help']),
-   array("","?action=format&amp;mimetype=text/xml",$icon['xml']),
-   array("","?action=print",$icon['print']),
+   'edit'=>array("","?action=edit",$icon['edit'],"accesskey='e'"),
+   'diff'=>array("","?action=diff",$icon['diff'],"accesskey='c'"),
+   'show'=>array("","",$icon['show']),
+   'find'=>array("FindPage","",$icon['find']),
+   'info'=>array("","?action=info",$icon['info']),
+   'subscribe'=>array("","?action=subscribe",$icon['mailto']),
+   'scrap'=>array("","?action=scrap",$icon['bookmark']),
+   'help'=>array("HelpContents","",$icon['help']),
+   'xml'=>array("","?action=format&amp;mimetype=text/xml",$icon['xml']),
+   'print'=>array("","?action=print",$icon['print']),
+   'html2pdf'=>array("","?action=html2pdf",$icon['html2pdf']),
 );
-
-#$icons=array(
-#   array("","?action=edit","Edit"),
-#   array("","?action=diff","Diff"),
-#   array("","","Show"),
-#   array("FindPage","","Find"),
-#   array("","?action=info","Info"),
-#   array("","?action=subscribe","Email"),
-#   array("HelpContents","","Help"),
-#);
 
 ?>
