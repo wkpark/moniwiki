@@ -45,9 +45,9 @@ class MoniConfig {
         $config['dba_type']="'gdbm'";
 
       if ($db) dba_close($db);
-      print '<ul><li><b>'.$config['dba_type'].'</b> is selected.</li></ul>';
+      print '<ul><li>'.sprintf(_t("%s is selected."),"<b>$config[dba_type]</b>").'</li></ul>';
     }
-    preg_match("/Apache\/2\.0\./",$_SERVER['SERVER_SOFTWARE'],$match);
+    preg_match("/Apache\/2\./",$_SERVER['SERVER_SOFTWARE'],$match);
 
     if ($match) {
       $config['query_prefix']='"?"';
@@ -132,8 +132,8 @@ class MoniConfig {
         if (!preg_match('/\s*;(\s*#.*)?$/',$val)) {
           if (substr($val,0,3)== '<<<') $tag='^'.substr(rtrim($val),3);
           else {
-            # $tag == "'" or $tag == '"'
-            $tag = preg_quote(substr(ltrim($val),0,1),"'");
+            $val = ltrim($val);
+            $tag = '';
           }
           continue;
         }
@@ -210,13 +210,15 @@ class MoniConfig {
          $t=@eval("\$$key=\"$val\";");
          $val=$save_val;
       } else if (is_string($val)) {
-         if (strpos($val,"\n")===false)
-           $t=@eval("\$$key=$val;");
-         else {
+         if (strpos($val,"\n")===false) {
+           $val = str_replace('&gt;','>',$val);
+           $t=eval("\$$key=$val;");
+         } else {
            $t=@eval("\$$key=$val;");
          }
-      } else
+      } else {
          $t=@eval("\$$key=$val;");
+      }
       if ($t === NULL)
         $lines[]="\$$key=$val;\n";
       else
@@ -335,8 +337,8 @@ function checkConfig($config) {
 }
 
 function keyToPagename($key) {
-#  return preg_replace("/_t([a-f0-9]{2})/e","chr(hexdec('\\1'))",$key);
-  $pagename=preg_replace("/_t([a-f0-9]{2})/","%\\1",$key);
+#  return preg_replace("/_([a-f0-9]{2})/e","chr(hexdec('\\1'))",$key);
+  $pagename=preg_replace("/_([a-f0-9]{2})/","%\\1",$key);
 #  $pagename=str_replace("_","%",$key);
 #  $pagename=strtr($key,"_","%");
   return rawurldecode($pagename);
@@ -392,10 +394,33 @@ function show_wikiseed($config,$seeddir='wikiseed') {
 
   $wrap=1;
 
+  $js=<<<JS
+<script type='text/javascript'>
+function Toggle(obj) {
+   var p=document.getElementById(obj);
+   var n=p.getElementsByTagName('input');
+   for (var i=0;i<n.length;i++)
+     if (n[i].checked) n[i].checked=false;
+     else n[i].checked=true;
+}
+function deselect(obj) {
+   var p=document.getElementById(obj);
+   var n=p.getElementsByTagName('input');
+   for (var i=0;i<n.length;i++)
+     n[i].checked=false;
+}
+</script>
+JS;
+
+  print $js;
   print "<h3>Total $num pages found</h3>\n";
-  print "<form method='post' action=''>\n";
+  print "<h4><a href='#' onclick='Toggle(\"seedall\")' >"._t("Click here to toggle all")."</a> / ";
+  print "<a href='#' onclick='deselect(\"seedall\")' >"._t("Deselect all")."</a></h4>\n";
+  print "<form id='seedall' method='post' action=''>\n";
+  $ii=1;
   while (list($filter_name,$filter) = each($seed_filters)) {
-    print "<h4>$filter_name</h4>\n";
+    print "<h4>$filter_name <a href='#' onclick='Toggle(\"set$ii\")' >(toggle)</a></h4>\n";
+    print "<div id='set$ii'>\n";
     foreach ($pages as $pagename) {
       if (preg_match($filter[0],$pagename)) {
         print "<input type='checkbox' name='seeds[$idx]' value='$pagename'";
@@ -408,6 +433,8 @@ function show_wikiseed($config,$seeddir='wikiseed') {
         unset($pages[$pagename]);
       }
     }
+    print "</div>\n";
+    $ii++;
     $wrap=1;
   }
   print "<input type='hidden' name='action' value='sow_seed' />\n";
@@ -705,7 +732,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $config) {
        $rawconfig['admin_passwd']=$newpasswd;
   }
 
-  if ($update == 'Update') {
+  if ($update == _t('Update')) {
     if ($rawconfig['charset'] && $rawconfig['sitename']) {
       if (function_exists('iconv')) {
         $ncharset=strtoupper($rawconfig['charset']);
@@ -808,7 +835,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST") {
   }
 }
 
-  if ($update == 'Preview')
+  if ($update == _t('Preview'))
   print "<h2>".sprintf(_t("Preview current settings for this %s"),$config['sitename'])."</h2>\n";
   else
   print "<h2>".sprintf(_t("Read current settings for this %s"),$config['sitename'])."</h2>\n";

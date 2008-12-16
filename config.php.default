@@ -15,7 +15,7 @@ $shared_intermap= $data_dir."/text/InterMap";
 
 $url_prefix= '/moniwiki';
 $imgs_dir= $url_prefix.'/imgs';
-$logo_img= $imgs_dir.'/moniwiki-logo.gif';
+$logo_img= $imgs_dir.'/moniwiki-logo.png';
 $query_prefix= '/';
 
 $css_url= $url_prefix.'/css/nlog.css';
@@ -37,7 +37,7 @@ $lang='auto';
 $charset='utf-8';
 #$charset='euc-kr';
 $auto_linebreak= 0;
-$trail= 0;
+$trail= 1;
 #$origin=1;
 #$arrow=' <img src="/wiki/imgs/moni-arrow.gif"/> ';
 $notify= 0;
@@ -64,7 +64,7 @@ $nonexists='fancy';
 #$owners=array('moniwiki','Hong');
 
 #$menu=array('MoniWiki'=>1,'FindPage'=>4,'TitleIndex'=>3,'BlogChanges'=>'','RecentChanges'=>2,'http://kldp.org KLDP'=>9);
-$menu=array('FrontPage'=>1,'FindPage'=>4,'TitleIndex'=>3,'RecentChanges'=>2,'UserPreferences'=>'');
+$menu=array('FrontPage'=>1,'TitleIndex'=>3,'RecentChanges'=>2,'UserPreferences'=>'');
 #$menu_sep='|';
 #$menu_bra='';
 #$menu_cat='';
@@ -72,7 +72,7 @@ $menu=array('FrontPage'=>1,'FindPage'=>4,'TitleIndex'=>3,'RecentChanges'=>2,'Use
 #$path='./bin;c:/windows/command;c:/Program Files/gnuplot;c:/Program Files/vim/vim71'; # for win32
 #$path='./bin;C:/Program Files/MiKTeX 2.5/miktex/bin;C:/Program Files/ImageMagick-6.3.6-Q16'; # for MikTeX
 # ./bin to use user installed bins.
-$theme='azblue';
+$theme='azblue2';
 $theme_css=0;
 $hr='';
 #$title_rule='((?<=[a-z0-9])[A-Z][a-z0-9])';
@@ -116,16 +116,17 @@ $hr='';
 #<script type="text/javascript" src="$url_prefix/local/subindex.js"></script>
 #EOF;
 # alternatively you can use the $javascripts option
-#$javascripts=array(
-#	'Wikiwyg/lib/Wikiwyg.js',
-#	'Wikiwyg/lib/Wikiwyg/Util.js',
-#	'Wikiwyg/lib/Wikiwyg/Toolbar.js',
-#	'Wikiwyg/lib/Wikiwyg/Wikitext.js',
-#	'Wikiwyg/lib/Wikiwyg/Preview.js',
-#	'Wikiwyg/lib/Wikiwyg/HTML.js',
-#	'Wikiwyg/lib/Wikiwyg/Wysiwyg.js',
-#	'moniwyg.js',
-#	'ASCIIMathML.js');
+$javascripts=array(
+	'Wikiwyg/lib/Wikiwyg.js',
+	'Wikiwyg/lib/Wikiwyg/Util.js',
+	'Wikiwyg/lib/Wikiwyg/Toolbar.js',
+	'Wikiwyg/lib/Wikiwyg/Wikitext.js',
+	'Wikiwyg/lib/Wikiwyg/Preview.js',
+	'Wikiwyg/lib/Wikiwyg/HTML.js',
+	'Wikiwyg/lib/Wikiwyg/Wysiwyg.js',
+	'ajax.js',
+	'moniwyg.js',
+	'ASCIIMathML.js');
 
 #$diffonly=1; # show only diff infos (do not show wiki contents)
 #$goto_type=1;
@@ -133,6 +134,7 @@ $hr='';
 #$purple_icon=''; # obsolute
 #$use_purple='';
 #$perma_icon='<img src="/wiki/imgs/egg.png" border="0" />';
+$perma_icon='&#xB6;';
 #$pagetype=array("KldpDsl"=>"plain","ManPage"=>"/man","DocbookSgml"=>"/jade","LinuxDoc"=>"/linuxdoc");
 # set default processor for jade
 #$default_dsssl='to_dir/kldp.dsl#html';
@@ -163,7 +165,8 @@ $hr='';
 #$vim_nocheck=0; // do not check vim syntax.
 #$vim_nocheck=1;
 #$use_resizer=1; // javascript resizer
-#$use_resizer=2; // drupal style resizer 
+# drupal style resizer 
+$use_resizer=2;
 #$use_minoredit=1; // only for wiki owners
 #$auto_search='FixMoin'; # for old moinmoin users
 #$auto_search='AutoGoto';
@@ -180,18 +183,21 @@ $use_toctoggle=0;
 #$ticket_font='TTFONT';
 #$ticket_font_size='20';
 $local_abbr='LocalDictionary';
-$postfilters='abbr';
+#$postfilters='abbr';
+$postfilters='';
 $use_forcemerge=1;
 $default_language='ko';
-$use_alias=0;
-#$aliaspage=$data_dir.'/text/AliasPageNames';
-$css_friendly=0;
+$use_alias=1;
+$aliaspage=$data_dir.'/text/AliasPageNames';
+$use_easyalias=1; # direct linking to the dest page
+$css_friendly=1;
 #$css_friendly=1; # for more CSS friendly support
 $use_redirect_msg=0;
 #$use_redirect_msg=1; # for MoinMoin compatible
 #$use_safelogin=0;
-#$url_mappings=array('http://faq.ktug.or.kr/mywiki'=>'http://faq.ktug.or.kr/faq');
-#$shared_url_mappings=$data_dir.'/text/UrlMap'; # enable builtin fix url
+$url_mappings=array('http://faq.ktug.or.kr/mywiki'=>'http://faq.ktug.or.kr/faq');
+#$data_dir.'/text/UrlMap'; # enable builtin fix url
+$shared_url_mappings='';
 
 #$use_category=0; # on/off categories list in the edit mode
 #$use_textbrowsers=1; # check some textbased browsers
@@ -199,10 +205,10 @@ $use_preview_uploads=1;
 #$use_camelcase=0; # turn off camelcase syntax by default
 #$category_regex=urldecode('%EB%B6%84%EB%A5%98$'); # a category example for Korean
 #$use_backlinks=1; # set default fullsearch behavior as backlinks search
+$fullsearch_tooshort=2; # 
 #$use_smartdiff=1; # use the experimental smart diff XXX
 #$hide_actions=0; # hide actions list for anonymous user
 #$actions= array('DeletePage','LikePages','?action=Keywords Add keywords'); # customized act list
-#$use_easyalias=1; # direct linking to the dest page
 #$info_options='ago,simple'; # default Info macro options
 #$force_charset=1; # overriding default charset 
 #$use_titlemenu=1; # add the current pagename to the menu list
@@ -215,6 +221,8 @@ $use_errlog=1;
 #$acl_type='default'; # XXX
 #$acl_debug=1;
 #$default_download_image='/block.jpg';
+#$force_download=1;
+#$download_action='download';
 #$control_read=1; # control read action also
 #$use_macro_as_action=0; # XXX warn
 #$isbn_img_download=1; # download isbn images to local cache dir.
@@ -232,6 +240,7 @@ $use_refresh=2;
 #$toolbar_iconset='mediawiki'; # change the toolbar iconset 
 #$use_lightbox=1;
 #$gallery_use_lightbox=1;
+#$use_hangul_search=1; # use hangul search for auto-completer
 #$use_subindex=1; # use subpage indices 
 #$nosession=1; # do not use session
 #$default_pre='pre'; # set the default pre processor
@@ -240,8 +249,9 @@ $use_jwmediaplayer=1;
 $jwmediaplayer_prefix='http://www.jeroenwijering.com/embed';
 #$icon_list='edit,diff,show,find,print,info,help'; # set the icon list
 #$use_folding=0; # 1:default simple js / 2:with the prototype/mootools
-#$use_etable=0; # use new extended table syntax: experimental
+#$use_etable=0; # use new extended table syntax: deprecated!
 #$use_openid=0; # enable openid login
 #$check_openid_url=0; # selectivly show openid icons: experimental
 #$use_autosave=1; # enable autosave feature.
+#$use_bbs=0;
 ?>
