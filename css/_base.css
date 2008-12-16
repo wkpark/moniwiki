@@ -564,3 +564,7 @@ em.underline{
   background: url(../imgs/info/plugin.png) no-repeat;
   padding-left:70px;
 }
+
+span.markup.invisible {
+  display:none;
+}
