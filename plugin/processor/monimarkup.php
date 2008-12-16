@@ -59,6 +59,7 @@ class processor_monimarkup
                             $block[$j]=substr($chunk[$ci],3,-3);
                             $chunk[$ci]="\007".$j."\007";
                             list($type,$dum)= explode("\n",$block[$j],2);
+                            $tag='';
                             if (!empty($type)) {
                                 if ($type{0}=='#' and $type{1}=='!') {
                                     list($tag,$dummy)= explode(' ',$type);
@@ -171,7 +172,7 @@ class processor_monimarkup
             } else if (preg_match("/^((?:\>\s)*\>(\.\w+)?\s?|\s+)/",$line,$m)) {
                 $_eop=0;
                 $mytype=array('tag'=>'LIST','type'=>'di');
-                $indlen=$myindlen=strlen($m[0])-strlen($m[2]);
+                $indlen=$myindlen=strlen($m[0])-(isset($m[2]) ? strlen($m[2]):0);
                 if ($line{0}=='>') {
                     $myclass=$m[2] ? substr($m[2],1):'quote';
                     $mytype['attributes']=array('class'=>$myclass);
@@ -184,10 +185,10 @@ class processor_monimarkup
                 $indtype=null;
                 if (preg_match("/^((\*\s?)|(?:([1-9]\d*|[aAiI])\.)(?:#(\d+))?\s)/",
                     $cutline,$m)) {
-                    $myindlen=$indlen+strlen($m[1])-strlen($m[4]);
+                    $myindlen=$indlen+strlen($m[1])-(isset($m[4]) ? strlen($m[4]):0);
                     $type=$m[2] ? 'ul':$m[3];
                     $mytype['type']=$type;
-                    $start=$m[4] ? $m[4]:($m[3] ? $m[3]:null);
+                    $start=isset($m[4]) ? $m[4]:(isset($m[3]) ? $m[3]:null);
                     if (isset($start) and is_numeric($start) and $start > 1)
                         $mytype['attributes']=array('start'=>$start);
                     $cutline=substr($cutline,strlen($m[1]));
@@ -336,7 +337,7 @@ class processor_monimarkup
                 #print "<pre>"; print_r($m); print "</pre>";
                 $open.=$formatter->_table(1,$m[5]);
                 if ($m[2]) $open.='<caption>'.$m[2].'</caption>';
-                if (!$m[5]) $line='||'.$m[3].$m[6].$m[7];
+                $line='||'.$m[3].$m[5].$m[6].$m[7];
                 $_in_table=1;
             } elseif ($_in_table and $line[0]!='|') {
                 $close=$formatter->_table(0,$dumm).$close;
@@ -420,13 +421,13 @@ class processor_monimarkup
                 $my_divclose='</div>';
             }
         }
-        $wordrule="({{{(?U)(.+)}}})|".
-              "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|". # macro
-              "<<([A-Za-z0-9]+(\(((?<!>>).)*\))?)>>|"; # macro
+        $wordrule="(?:{{{(?U)(?:.+)}}})|".
+              "\[\[(?:[A-Za-z0-9]+(?:\((?:(?<!\]\]).)*\))?)\]\]|". # macro
+              "<<(?:[A-Za-z0-9]+(?:\((?:(?<!>>).)*\))?)>>|"; # macro
 
         if ($Config['inline_latex']) # single line latex syntax
-            $wordrule.="(?<=\s|^|>)\\$([^\\$]+)\\$(?:\s|$)|".
-                 "(?<=\s|^|>)\\$\\$([^\\$]+)\\$\\$(?:\s|$)|";
+            $wordrule.="(?<=\s|^|>)\\$(?:[^\\$]+)\\$(?:\s|$)|".
+                 "(?<=\s|^|>)\\$\\$(?:[^\\$]+)\\$\\$(?:\s|$)|";
         #if ($Config['builtin_footnote']) # builtin footnote support
         $wordrule.=$formatter->footrule.'|';
         $wordrule.=$formatter->wordrule;
@@ -439,6 +440,12 @@ class processor_monimarkup
         #print "<pre>";print_r($chunk);print "</pre>";
         $hr_func=$Config['hr_type'].'_hr';
 
+        # heading info
+        $headinfo['top'] = 0;
+        $headinfo['num'] = 1;
+        $headinfo['dep'] = 0;
+
+        # list info
         $_lidep=array(0);
         $_lityp=array(0);
         $_li=0;
@@ -448,6 +455,11 @@ class processor_monimarkup
                 $val=&$c['value'];
                 $val= preg_replace($formatter->baserule,
                     $formatter->baserepl,$val);
+
+                if (!empty($formatter->smiley_rule))
+                    $val=preg_replace($formatter->smiley_rule,
+                        $formatter->smiley_repl,$val);
+
                 if ($_li>0 and $c['tag']!='LIST')
                     while($_li>0 and $_lidep[$_li] > 0) {
                         $out.=$this->_li(0,$_lityp[$_li]);
@@ -483,7 +495,7 @@ class processor_monimarkup
 
                     if ($sect_num >1) $out.=$this->_div(0);
                     $out.=$this->_div(1," class='level$c[depth]'");
-                    $out.= $anchor.$ed.$formatter->head_repl($c['depth'],$val);
+                    $out.= $anchor.$ed.$formatter->head_repl($c['depth'],$val,$headinfo);
                     break;
                 case 'HR':
                     $out.= $c['value'];
@@ -567,10 +579,16 @@ class processor_monimarkup
                 }
             } else {
                 $c= preg_replace($formatter->baserule,$formatter->baserepl,$c);
+
+                if (!empty($formatter->smiley_rule))
+                    $c=preg_replace($formatter->smiley_rule,
+                        $formatter->smiley_repl,$c);
+
                 if (strpos($c,'||')!== false) {
                     $c=$this->_parseTable($c);
                 }
 
+                $style='';
                 if (preg_match('/^((\s*)(&lt;|=|>)?{([^}]+)})/s',$c,$sty)) {
                     if ($sty[3]) $sty[4].=';'.$palign[$sty[3]];
                     # {es} => not style
@@ -580,6 +598,7 @@ class processor_monimarkup
                         $c=$sty[2].'{'.$sty[4].'}'.substr($c,strlen($sty[1]));
                         $sty[4]='';
                     }
+                    $style=$sty[4];
                 }
 
                 if ($formatter->auto_linebreak)
@@ -596,9 +615,9 @@ class processor_monimarkup
                 }
 
                 if (preg_match('/<div[^>]*>/',$c))
-                    $out.= $this->_div(1,' class="para"',$sty[4]).$c.$this->_div(0);
+                    $out.= $this->_div(1,' class="para"',$style).$c.$this->_div(0);
                 else
-                    $out.= $this->_p(1,' class="para"',$sty[4]).$c.$this->_p(0);
+                    $out.= $this->_p(1,' class="para"',$style).$c.$this->_p(0);
             }
         }
         while($_li>0 and $_lidep[$_li] > 0) {
@@ -607,9 +626,6 @@ class processor_monimarkup
             --$_li;
         }
         if ($formatter->sect_num >1) $out.=$this->_div(0);
-        if (!empty($formatter->smiley_rule))
-            $out=preg_replace($formatter->smiley_rule,
-                $formatter->smiley_repl,$out);
 
         $out=preg_replace("/\007(\d+)\007/e",
             "\$formatter->processor_repl(\$btype[$1],\$block[$1])",$out);
