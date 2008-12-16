@@ -61,6 +61,7 @@ fi
 cat >> Makefile.new <<'MAIN'
 ${POT_FILE}: ../wiki.php
 ${POT_FILE}: ../wikilib.php
+${POT_FILE}: ../monisetup.php
 ${POT_FILE}: ../lib/difflib.php
 ${POT_FILE}: ../locale/dummy.php
 MAIN
