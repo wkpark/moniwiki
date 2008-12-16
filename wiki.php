@@ -27,12 +27,13 @@ function getPlugin($pluginname) {
   static $plugins=array();
   if (is_bool($pluginname) and $pluginname)
     return sizeof($plugins);
-  if ($plugins) return $plugins[strtolower($pluginname)];
+  $pname = strtolower($pluginname);
+  if (!empty($plugins)) return isset($plugins[$pname]) ? $plugins[$pname]:'';
   global $DBInfo;
 
   $cp=new Cache_text('settings');
-  if (!$DBInfo->manual_plugin_admin) {
-    if ($DBInfo->include_path)
+  if (empty($DBInfo->manual_plugin_admin)) {
+    if (!empty($DBInfo->include_path))
       $dirs=explode(':',$DBInfo->include_path);
     else
       $dirs=array('.');
@@ -50,9 +51,9 @@ function getPlugin($pluginname) {
 
   if ($cp->exists('plugins')) {
     $plugins=unserialize($cp->fetch('plugins'));
-    if (is_array($DBInfo->myplugins))
+    if (!empty($DBInfo->myplugins) and is_array($DBInfo->myplugins))
       $plugins=array_merge($plugins,$DBInfo->myplugins);
-    return $plugins[strtolower($pluginname)];
+    return isset($plugins[$pname]) ? $plugins[$pname]:'';
   }
   if ($DBInfo->include_path)
     $dirs=explode(':',$DBInfo->include_path);
@@ -69,12 +70,12 @@ function getPlugin($pluginname) {
     }
   }
 
-  if ($plugins)
+  if (!empty($plugins))
     $cp->update('plugins',serialize($plugins));
   if (is_array($DBInfo->myplugins))
     $plugins=array_merge($plugins,$DBInfo->myplugins);
 
-  return $plugins[strtolower($pluginname)];
+  return $plugins[$pname];
 }
 
 function getModule($module,$name) {
@@ -88,7 +89,8 @@ function getProcessor($pro_name) {
   static $processors=array();
   if (is_bool($pro_name) and $pro_name)
     return sizeof($processors);
-  if ($processors) return $processors[strtolower($pro_name)];
+  $prog = strtolower($pro_name);
+  if (!empty($processors)) return isset($processors[$prog]) ? $processors[$prog]:'';
   global $DBInfo;
 
   $cp=new Cache_text('settings');
@@ -97,7 +99,7 @@ function getProcessor($pro_name) {
     $processors=unserialize($cp->fetch('processors'));
     if (is_array($DBInfo->myprocessors))
       $processors=array_merge($processors,$DBInfo->myprocessors);
-    return $processors[strtolower($pro_name)];
+    return $processors[$prog];
   }
   if ($DBInfo->include_path)
     $dirs=explode(':',$DBInfo->include_path);
@@ -439,16 +441,16 @@ class MetaDB_text extends MetaDB {
   }
 
   function hasPage($pagename) {
-    if ($this->db[$pagename]) return true;
+    if (isset($this->db[$pagename])) return true;
     return false;
   }
 
   function getTwinPages($pagename,$mode=1) {
-    if (!$this->db[$pagename]) {
-      if ($mode) return array();
+    if (empty($this->db[$pagename])) {
+      if (!empty($mode)) return array();
       return false;
     }
-    if (!$mode) return true;
+    if (empty($mode)) return true;
     $twins=$this->db[$pagename];
 
     $ret='[wiki:'.str_replace(',',"] [wiki:",$twins).']';
@@ -458,11 +460,11 @@ class MetaDB_text extends MetaDB {
     return explode(' ',$ret);
   }
   function getSisterSites($pagename,$mode=1) {
-    if (!$this->db[$pagename]) {
+    if (empty($this->db[$pagename])) {
       if ($mode) return '';
       return false;
     }
-    if (!$mode) return true;
+    if (empty($mode)) return true;
 
     $twins=$this->db[$pagename];
     $ret='[wiki:'.str_replace(',',"] [wiki:",$twins).']';
@@ -1519,29 +1521,29 @@ class Cache_text {
     $ret='';
     
     if (($size=filesize($key)) >0) {
-      while ($params['uniq'] and empty($params['raw'])) { # include cache if it is a valid php cache
+      while (!empty($params['uniq']) and empty($params['raw'])) { # include cache if it is a valid php cache
         # cache header : <,?,php /* Generator Version uniqid tpl_path(optional) */
         $check=fgets($fp);
         if ($check{0}=='<' and $check{1}=='?') {
           list($tag,$sep,$generator,$ver,$id,$path,$extra)=explode(' ',$check);
           $ok=1;
           if (!empty($params['uniq']) and $params['uniq'] != $id) $ok=0;
-          if ($ok and !empty($params['path']) and $params['path'] != $path) $ok=0;
-          if ($ok) {
+          if (!empty($ok) and !empty($params['path']) and $params['path'] != $path) $ok=0;
+          if (!empty($ok)) {
             fclose($fp);
             global $Config;
             $TPL_VAR=&$params['_vars']; # builtin Template_ support
             if (isset($TPL_VAR['_theme']) and is_array($TPL_VAR['_theme']) and $TPL_VAR['_theme']['compat'])
               extract($TPL_VAR['_theme']);
             $ehandle=false;
-            if ($params['formatter']) {
+            if (!empty($params['formatter'])) {
               $formatter=&$params['formatter']; # XXX
               if (method_exists($formatter,'internal_errorhandler')) {
                 set_error_handler(array($formatter,'internal_errorhandler'));
                 $ehandle=true;
               }
             }
-            if ($params['print']) {
+            if (!empty($params['print'])) {
               $ret= include $key; // Do we need more secure method ?
               if ($ehandle) restore_error_handler();
               return $ret;
@@ -1561,7 +1563,7 @@ class Cache_text {
       $ret=fread($fp,$size);
     }
     fclose($fp);
-    if ($params['print']) return print $ret;
+    if (!empty($params['print'])) return print $ret;
     return $ret;
   }
 
@@ -1594,7 +1596,7 @@ class WikiPage {
   var $body;
 
   function WikiPage($name,$options="") {
-    if ($options['rev'])
+    if (!empty($options['rev']))
       $this->rev=$options['rev'];
     else
       $this->rev=0; # current rev.
@@ -1637,14 +1639,12 @@ class WikiPage {
   function get_raw_body($options='') {
     global $DBInfo;
 
-    if ($this->body && !$options['rev'])
+    if ($this->body && empty($options['rev']))
        return $this->body;
 
-    if ($this->rev || $options['rev']) {
-      if ($options['rev']) $rev=$options['rev'];
-      else $rev=$this->rev;
-
-      if ($DBInfo->version_class) {
+    $rev= !empty($options['rev']) ? $options['rev']:(!empty($this->rev) ? $this->rev:'');
+    if (!empty($rev)) {
+      if (!empty($DBInfo->version_class)) {
         $class=getModule('Version',$DBInfo->version_class);
         $version=new $class ($DBInfo);
         $out = $version->co($this->name,$rev);
@@ -1654,7 +1654,7 @@ class WikiPage {
       }
     }
     $fp=@fopen($this->filename,"r");
-    if (!$fp) {
+    if (!is_resource($fp)) {
       if (file_exists($this->filename)) {
         $out="You have no permission to see this page.\n\n";
         $out.="See MoniWiki/AccessControl\n";
@@ -1669,12 +1669,12 @@ class WikiPage {
     fclose($fp);
     $this->body=$body;
 
-    return $this->body;
+    return $body;
   }
 
   function _get_raw_body() {
     $fp=@fopen($this->filename,"r");
-    if ($fp) {
+    if (is_resource($fp)) {
       $size=filesize($this->filename);
       if ($size >0)
         $this->body=fread($fp,$size);
@@ -1702,12 +1702,12 @@ class WikiPage {
   function get_rev($mtime="",$last=0) {
     global $DBInfo;
 
-    if ($DBInfo->version_class) {
+    if (!empty($DBInfo->version_class)) {
       $class=getModule('Version',$DBInfo->version_class);
       $version=new $class ($DBInfo);
       $rev= $version->get_rev($this->name,$mtime,$last);
 
-      if ($rev) return $rev;
+      if (!empty($rev)) return $rev;
     }
     return '';
   }
@@ -1716,11 +1716,11 @@ class WikiPage {
     global $DBInfo;
 
     $info=array('','','','','');
-    if (!$rev)
+    if (empty($rev))
       $rev=$this->get_rev('',1);
-    if (!$rev) return $info;
+    if (empty($rev)) return $info;
 
-    if ($DBInfo->version_class) {
+    if (!empty($DBInfo->version_class)) {
       $class=getModule('Version',$DBInfo->version_class);
       $version=new $class ($DBInfo);
       $out= $version->rlog($this->name,$rev,$opt);
@@ -1729,7 +1729,7 @@ class WikiPage {
     }
 
     $state=0;
-    if ($out) {
+    if (isset($out)) {
       for ($line=strtok($out,"\n"); $line !== false;$line=strtok("\n")) {
         if ($state == 0 and preg_match("/^date:\s.*$/",$line)) {
           $tmp=preg_replace("/date:\s(.*);\s+author:.*;\s+state:.*;/","\\1",rtrim($line));
@@ -1761,8 +1761,10 @@ class Formatter {
     $this->head_dep=0;
     $this->sect_num=0;
     $this->toc=0;
+    $this->toc_prefix='';
     $this->highlight="";
     $this->prefix= get_scriptname();
+    $this->self_query='';
     $this->url_prefix= $DBInfo->url_prefix;
     $this->imgs_dir= $DBInfo->imgs_dir;
     $this->imgs_dir_interwiki=$DBInfo->imgs_dir_interwiki;
@@ -1813,6 +1815,9 @@ class Formatter {
     $this->NULL='';
     if(getenv("OS")!="Windows_NT") $this->NULL=' 2>/dev/null';
 
+    $this->_macrocache=0;
+    $this->wikimarkup=0;
+    $this->pi=array();
     $this->external_on=0;
     $this->external_target='';
     if ($DBInfo->external_target)
@@ -1870,10 +1875,12 @@ class Formatter {
   function set_wordrule($pis=array()) {
     global $DBInfo;
 
+    $single=''; # single bracket
     $camelcase= isset($pis['#camelcase']) ? $pis['#camelcase']:
       $DBInfo->use_camelcase;
-    $sbracket= isset($pis['#singlebracket']) ? $pis['#singlebracket']:
-      $DBInfo->use_singlebracket;
+
+    if (!empty($pis['#singlebracket']) or !empty($DBInfo->use_singlebracket))
+      $single='?';
 
     #$punct="<\"\'}\]\|;,\.\!";
     #$punct="<\'}\]\)\|;\.\!"; # , is omitted for the WikiPedia
@@ -1882,22 +1889,29 @@ class Formatter {
     $url="wiki|http|https|ftp|nntp|news|irc|telnet|mailto|file|attachment";
     if ($DBInfo->url_schemas) $url.='|'.$DBInfo->url_schemas;
     $this->urls=$url;
-    $urlrule="((?:$url):\"[^\"]+\"[^\s$punct]*|(?:$url):([^\s$punct]|(\.?[^\s$punct]))+(?<![,\.\):;\"\'>]))";
+    $urlrule="((?:$url):\"[^\"]+\"[^\s$punct]*|(?:$url):(?:[^\s$punct]|(\.?[^\s$punct]))+(?<![,\.\):;\"\'>]))";
     #$urlrule="((?:$url):(\.?[^\s$punct])+)";
     #$urlrule="((?:$url):[^\s$punct]+(\.?[^\s$punct]+)+\s?)";
     # solw slow slow
     #(?P<word>(?:/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})
     $this->wordrule=
     # single bracketed rule [http://blah.blah.com Blah Blah]
-    "(\[\^?($url):[^\s\]]+(\s[^\]]+)?\])|".
+    "(?:\[\^?($url):[^\s\]]+(?:\s[^\]]+)?\])|".
     # InterWiki
     # strict but slow
     #"\b(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+[^\(\)<>\s\',\.:\?\!]+)|".
-    "(\b|\^?)([A-Z][a-zA-Z]+):([^:\(\)<>\s\']?[^\s<\'\",:\?\!\010\006]*(\s(?![\x21-\x7e]))?(?<![,\.\)>]))";
+    "(?:\b|\^?)(?:[A-Z][a-zA-Z]+):(?:[^:\(\)<>\s\']?[^\s<\'\",:\!\010\006]*(?:\s(?![\x21-\x7e]))?(?<![,\.\)>]))|".
     #"(\b|\^?)([A-Z][a-zA-Z]+):([^:\(\)<>\s\']?[^<>\s\'\",:\?\!\010\006]*(\s(?![\x21-\x7e]))?)";
     # for PR #301713
+    #
+    # new regex pattern for
+    #  * double bracketted rule similar with MediaWiki [[Hello World]]
+    #  * single bracketted words [Hello World] etc.
+    #  * single bracketted words with double quotes ["Hello World"]
+    #  * double bracketted words with double quotes [["Hello World"]]
+    "(?<!\[)\!?\[(\[)$single(\")?(?:[^\[\]\",<\s'][^\[\],>]{1,255}[^\"])(?(4)\")(?(3)\])\](?!\])";
 
     if ($camelcase)
       $this->wordrule.='|'.
@@ -1914,21 +1928,21 @@ class Formatter {
 
     $this->wordrule.='|'.
     # double bracketed rule similar with MediaWiki [[Hello World]]
-    "(?<!\[)\!?\[\[([^\[:,<\s'][^\[:,>]{1,255})\]\](?!\])|".
+    #"(?<!\[)\!?\[\[([^\[:,<\s'][^\[:,>]{1,255})\]\](?!\])|".
     # bracketed with double quotes ["Hello World"]
-    "(?<!\[)\!?\[\\\"([^\\\"]+)\\\"\](?!\])|".
+    #"(?<!\[)\!?\[\\\"([^\\\"]+)\\\"\](?!\])|".
     # "(?<!\[)\[\\\"([^\[:,]+)\\\"\](?!\])|".
     "($urlrule)|".
     # single linkage rule ?hello ?abacus
     #"(\?[A-Z]*[a-z0-9]+)";
     "(\?[A-Za-z0-9]+)";
 
-    if ($sbracket)
-      # single bracketed name [Hello World]
-      $this->wordrule.= "|(?<!\[)\!?\[([^\[,<\s'][^\[,>]{1,255})\](?!\])";
-    else
-      # only anchor [#hello], footnote [* note] allowed 
-      $this->wordrule.= "|(?<!\[)\!?\[([#\*\+][^\[:,>]{1,255})\](?!\])";
+    #if ($sbracket)
+    #  # single bracketed name [Hello World]
+    #  $this->_wordrule.= "|(?<!\[)\!?\[([^\[,<\s'][^\[,>]{1,255})\](?!\])";
+    #else
+    #  # only anchor [#hello], footnote [* note] allowed 
+    #  $this->wordrule.= "|(?<!\[)\!?\[([#\*\+][^\[:,>]{1,255})\](?!\])";
     return $this->wordrule;
   }
 
@@ -2063,6 +2077,7 @@ class Formatter {
       '#singlebracket','#nosinglebracket','#rating','#norating','#nodtd');
     $pi=array();
 
+    $update_body=false;
     $format='';
     if ( empty($this->pi['#format'])) {
       preg_match('%(:|/)%',$this->page->name,$sep);
@@ -2088,7 +2103,7 @@ class Formatter {
       if (!$this->page->exists()) return array();
       if ($this->pi) return $this->pi;
       $body=$this->page->get_raw_body();
-      $update_body=1;
+      $update_body=true;
     }
 
     if ($this->use_metadata) {
@@ -2141,7 +2156,10 @@ class Formatter {
     if (empty($pi['#format']) and !empty($format)) $pi['#format']=$format; // override default
     if (!isset($pi['#format'])) $pi['#format']= $Config['default_markup'];
 
-    list($pi['#format'],$pi['args'])=explode(' ',$pi['#format'],2);
+    if (($p = strpos($pi['#format'],' '))!== false) {
+      $pi['args'] = substr($pi['#format'],$p+1);
+      $pi['#format']= substr($pi['#format'],0,$p);
+    }
 
     if ($notused) $body=join("\n",$notused)."\n".$body;
     if ($update_body) $this->page->write($body." "); # workaround XXX
@@ -2185,6 +2203,7 @@ class Formatter {
 
   function link_repl($url,$attr='',$opts=array()) {
     $nm = 0;
+    $force = 0;
     if (is_array($url)) $url=$url[1];
     #if ($url[0]=='<') { print $url;return $url;}
     $url=str_replace('\"','"',$url); // XXX
@@ -2251,10 +2270,12 @@ class Formatter {
       break;
     }
 
-    if (($p=strpos($url,':')) !== false and $url{$p+1}!=':') {
+    if (($p=strpos($url,':')) !== false and isset($url{$p+1}) and $url{$p+1}!=':') {
       if ($url[0]=='a') # attachment:
         return $this->macro_repl('attachment',substr($url,11));
 
+      $external_icon='';
+      $external_link='';
       if ($url[0] == '^') {
         $attr.=' target="_blank" ';
         $url=substr($url,1);
@@ -2302,25 +2323,25 @@ class Formatter {
             $text=qualifiedUrl($this->url_prefix.'/'.$text);
           }
           if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
-            $atext=$atext ? $atext:$text;
+            $atext=!empty($atext) ? $atext:$text;
             $text=str_replace('&','&amp;',$text);
             return "<a class='externalLink named' href='$link' $attr $this->external_target title='$url'><img class='external' style='border:0px' alt='$atext' src='$text' $img_attr/></a>";
           }
-          if ($this->external_on)
+          if (!empty($this->external_on))
             $external_link='<span class="externalLink">('.$url.')</span>';
         }
         if (substr($url,0,7)=='http://' and $url[7]=='?') {
           $link=substr($url,7);
           return "<a href='$link'>$text</a>";
         } else if ($this->check_openid_url and preg_match("@^https?://@i",$url)) {
-          if ($this->udb->_exists($url)) {
+          if (is_object($this->udb) and $this->udb->_exists($url)) {
             $icon='openid';
             $icon="<a class='externalLink' href='$link'><img class='url' alt='[$icon]' src='".$this->imgs_dir_url."$icon.png' /></a>";
             $attr.=' title="'.$link.'"';
             $link=$this->link_url(_rawurlencode($text));
           }
         }
-        if (!$icon) {
+        if (empty($icon)) {
           $icon= strtok($url,':');
           $icon="<img class='url' alt='[$icon]' src='".$this->imgs_dir_url."$icon.png' />";
         }
@@ -2349,7 +2370,9 @@ class Formatter {
       $url=urldecode($url);
       return "<a class='externalLink' $attr href='$link' $this->external_target>$url</a>";
     } else {
-      if ($url[0]=="?") $url=substr($url,1);
+      if ($url{0}=='?') {
+          $url=substr($url,1);
+      }
       return $this->word_repl($url,'',$attr);
     }
   }
@@ -2411,6 +2434,7 @@ class Formatter {
       $page=substr($page,1,-1);
 
     if ($page=='/') $page='';
+    $sep='';
     if (substr($page,-1)==' ') {
       $sep='<b></b>'; // auto append SixSingleQuotes
       $page=rtrim($page);
@@ -2514,6 +2538,7 @@ class Formatter {
     global $DBInfo;
     $nonexists='nonexists_'.$this->nonexists;
 
+    $extended = false;
     if ($word[0]=='"') {
       # ["extended wiki name"]
       # ["Hello World" Go to Hello]
@@ -2521,13 +2546,13 @@ class Formatter {
         $word=substr($m[1],1,-1);
         if (isset($m[5])) $text=$m[5]; // text arg ignored
       }
-      $extended=1;
+      $extended=true;
       $page=$word;
     } else
       #$page=preg_replace("/\s+/","",$word); # concat words
       $page=normalize($word); # concat words
 
-    if (!$DBInfo->use_twikilink) $islink=0;
+    if (empty($DBInfo->use_twikilink)) $islink=0;
     list($page,$page_text,$gpage)=
       normalize_word($page,$this->group,$this->page->name,$nogroup,$islink);
     if ($text) {
@@ -2564,6 +2589,7 @@ class Formatter {
     if ($page == $this->page->name) $attr.=' class="current"';
 
     //$url=$this->link_url(_rawurlencode($page)); # XXX
+    $idx = 0; // XXX
     if (isset($this->pagelinks[$page])) {
       $idx=$this->pagelinks[$page];
       switch($idx) {
@@ -2571,6 +2597,7 @@ class Formatter {
           #return "<a class='nonexistent' href='$url'>?</a>$word";
           return call_user_func(array(&$this,$nonexists),$word,$url,$page);
         case -1:
+          $title='';
           $tpage=urlencode($page);
           if ($tpage != $word) $title="title=\"$tpage\" ";
           return "<a href='$url' $title$attr>$word</a>";
@@ -2586,6 +2613,7 @@ class Formatter {
             "<tt class='sister'><a href='#sister$idx'>&#x203a;$idx</a></tt>";
       }
     } else if ($DBInfo->hasPage($page)) {
+      $title='';
       $this->pagelinks[$page]=-1;
       $tpage=urlencode($page);
       if ($tpage != $word) $title="title=\"$tpage\" ";
@@ -2597,16 +2625,16 @@ class Formatter {
         return $this->link_tag(_rawurlencode($gpage),'',$this->icon['main'],'class="main"').
           "<a href='$url' $attr>$word</a>";
       }
-      if ($this->aliases[$page]) return $this->aliases[$page];
-      if ($this->sister_on) {
+      if (!empty($this->aliases[$page])) return $this->aliases[$page];
+      if (!empty($this->sister_on)) {
         $sisters=$DBInfo->metadb->getSisterSites($page, $DBInfo->use_sistersites);
         if ($sisters === true) {
           $this->pagelinks[$page]=-2;
           return "<a href='$url'>$word</a>".
             "<tt class='sister'><a href='$url'>&#x203a;</a></tt>";
         }
-        if ($sisters) {
-          if ($this->use_easyalias and strpos($sisters,' ') === false) {
+        if (!empty($sisters)) {
+          if (!empty($this->use_easyalias) and strpos($sisters,' ') === false) {
             # this is a alias
             $this->use_easyalias=0;
             $url=$this->link_repl(substr($sisters,0,-1).' '.$word.']');
@@ -2643,6 +2671,7 @@ class Formatter {
   }
 
   function nonexists_always($word,$url,$page) {
+    $title='';
     if ($page != $word) $title="title=\"$page\" ";
     return "<a href='$url' $title>$word</a>";
   }
@@ -2682,16 +2711,16 @@ class Formatter {
     return "<a class='nonexistent' href='$url'>?</a>$word";
   }
 
-  function head_repl($depth,$head,$attr='') {
+  function head_repl($depth,$head,&$headinfo,$attr='') {
     $dep=$depth;
     $this->nobr=1;
 
     $head=str_replace('\"','"',$head); # revert \\" to \"
 
-    if (!$this->depth_top) {
-      $this->depth_top=$dep; $depth=1;
+    if (!$headinfo['top']) {
+      $headinfo['top']=$dep; $depth=1;
     } else {
-      $depth=$dep - $this->depth_top + 1;
+      $depth=$dep - $headinfo['top'] + 1;
       if ($depth <= 0) $depth=1;
     }
 
@@ -2699,12 +2728,13 @@ class Formatter {
 #    if ($dep==1) $depth++; # depth 1 is regarded same as depth 2
 #    $depth--;
 
-    $num="".$this->head_num;
-    $odepth=$this->head_dep;
+    $num=''.$headinfo['num'];
+    $odepth=$headinfo['dep'];
 
     if ($head[0] == '#') {
       # reset TOC numberings
-      if ($this->toc_prefix) $this->toc_prefix++;
+      # default prefix is empty.
+      if (!empty($this->toc_prefix)) $this->toc_prefix++;
       else $this->toc_prefix=1;
       $head[0]=' ';
       $dum=explode(".",$num);
@@ -2730,17 +2760,17 @@ class Formatter {
       $num=join($dum,".");
     }
 
-    $this->head_dep=$depth; # save old
-    $this->head_num=$num;
+    $headinfo['dep']=$depth; # save old
+    $headinfo['num']=$num;
 
     $prefix=$this->toc_prefix;
     if ($this->toc)
       $head="<span class='tocnumber'><a href='#toc'>$num</a> </span>$head";
     $perma='';
-    if ($this->perma_icon)
+    if (!empty($this->perma_icon))
     $perma=" <a class='perma' href='#s$prefix-$num'>$this->perma_icon</a>";
 
-    return "$close$open$edit<h$dep$attr><a id='s$prefix-$num'></a>$head$perma</h$dep>";
+    return "$close$open<h$dep$attr><a id='s$prefix-$num'></a>$head$perma</h$dep>";
   }
 
   function include_functions()
@@ -2754,7 +2784,7 @@ class Formatter {
       (!empty($this->mid) ? ++$this->mid:1);
 
     preg_match("/^([A-Za-z0-9]+)(\((.*)\))?$/",$macro,$match);
-    if (!$match) return $this->word_repl($macro);
+    if (empty($match)) return $this->word_repl($macro);
     $bra='';$ket='';
     if ($this->wikimarkup and $macro != 'attachment' and !$options['nomarkup']) {
       $markups=str_replace(array('=','-','<'),array('==','-=','&lt;'),$macro);
@@ -2763,30 +2793,29 @@ class Formatter {
       $ket= '</span>';
       $options['nomarkup']=1; // for the attachment macro
     }
-    if (!$value and $match[1] and $match[2]) { #strpos($macro,'(') !== false)) {
-      $name=$match[1]; $args=($match[2] and !$match[3]) ? true:$match[3];
+    if (empty($value) and isset($match[2])) { #strpos($macro,'(') !== false)) {
+      $name=$match[1]; $args=empty($match[3]) ? true:$match[3];
     } else {
       $name=$macro; $args=$value;
     }
 
-    $plugin=($np=getPlugin($name))?$np:$name;
-    if (!function_exists ("macro_".$plugin)) {
-      #if (!$np) return "[[".$name."]]";
-      if (!$np) return $this->link_repl($name); // XXX
-      include_once("plugin/$plugin.php");
-      if (!function_exists ("macro_".$plugin)) return '[['.$macro.']]';
+    if (!function_exists ('macro_'.$name)) {
+      $np = getPlugin($name);
+      if (empty($np)) return $this->link_repl($name);
+      include_once('plugin/'.$np.'.php');
+      if (!function_exists ('macro_'.$name)) return '[['.$macro.']]';
     }
 
     if ($this->_macrocache and empty($options['call']) and
-      (isset($this->dynamic_macros[strtolower($plugin)]) or
-      isset($this->dynamic_macros[$plugin]))) {
-      $macro=$plugin. ($args ? '('.$args.')':'');
+      (isset($this->dynamic_macros[strtolower($name)]) or
+      isset($this->dynamic_macros[$name]))) {
+      $macro=$name. ($args ? '('.$args.')':'');
       $md5sum= md5($macro);
       $this->_macros[$md5sum]=array($macro,$mid);
       return '[['.$md5sum.']]';
     }
 
-    $ret=call_user_func_array("macro_$plugin",array(&$this,$args,&$options));
+    $ret=call_user_func_array('macro_'.$name,array(&$this,$args,&$options));
     if (is_array($ret)) return $ret;
     return $bra.$ret.$ket;
   }
@@ -2808,7 +2837,7 @@ class Formatter {
     }
     if (!($f=function_exists("processor_".$processor)) and !($c=class_exists('processor_'.$processor))) {
       $pf=getProcessor($processor);
-      if (!$pf) {
+      if (empty($pf)) {
         $ret= call_user_func('processor_plain',$this,$value,$options);
         return $bra.$ret.$ket;
       }
@@ -2899,7 +2928,7 @@ class Formatter {
     $sep=$DBInfo->query_prefix;
 
     if (!$query_string) {
-      if ($this->query_string) $query_string=$this->query_string;
+      if (isset($this->query_string)) $query_string=$this->query_string;
     } else if ($query_string and $query_string{0}=='#') {
       $query_string= $this->self_query.$query_string;
     }
@@ -3233,7 +3262,7 @@ class Formatter {
   function postambles() {
     $save= $this->wikimarkup;
     $this->wikimarkup=0;
-    if ($this->postamble) {
+    if (!empty($this->postamble)) {
       $sz=sizeof($this->postamble);
       for ($i=0;$i<$sz;$i++) {
         $postamble=implode("\n",$this->postamble);
@@ -3256,7 +3285,7 @@ class Formatter {
 
   function send_page($body="",$options=array()) {
     global $DBInfo;
-    if ($options['fixpath']) $this->_fixpath();
+    if (!empty($options['fixpath'])) $this->_fixpath();
     // reset macro ID
     $this->mid=0;
 
@@ -3271,15 +3300,16 @@ class Formatter {
       }
       $this->set_wordrule($pi);
       $fts=array();
-      if ($pi['#filter']) $fts=preg_split('/(\||,)/',$pi['#filter']);
-      if ($this->filters) $fts=array_merge($fts,$this->filters);
-      if ($fts) {
+      if (isset($pi['#filter'])) $fts=preg_split('/(\||,)/',$pi['#filter']);
+      if (!empty($this->filters)) $fts=array_merge($fts,$this->filters);
+      if (!empty($fts)) {
         foreach ($fts as $ft) {
           $body=$this->filter_repl($ft,$body,$options);
         }
       }
-      if ($pi['#format'] != 'wiki') {
-        if ($pi['args']) $pi_line="#!".$pi['#format']." $pi[args]\n";
+      if (isset($pi['#format']) and $pi['#format'] != 'wiki') {
+        $pi_line='';
+        if (!empty($pi['args'])) $pi_line="#!".$pi['#format']." $pi[args]\n";
         $savepi=$this->pi; // hack;;
         $this->pi=$pi;
         $text= $this->processor_repl($pi['#format'],
@@ -3290,9 +3320,9 @@ class Formatter {
             array(&$this,'_diff_repl'),$text);
 
         $fts=array();
-        if ($pi['#postfilter']) $fts=preg_split('/(\||,)/',$pi['#postfilter']);
-        if ($this->postfilters) $fts=array_merge($fts,$this->postfilters);
-        if ($fts) {
+        if (isset($pi['#postfilter'])) $fts=preg_split('/(\||,)/',$pi['#postfilter']);
+        if (!empty($this->postfilters)) $fts=array_merge($fts,$this->postfilters);
+        if (!empty($fts)) {
           foreach ($fts as $ft)
             $text=$this->postfilter_repl($ft,$text,$options);
         }
@@ -3306,14 +3336,14 @@ class Formatter {
       $lines=explode("\n",$body);
     } else {
       # XXX need to redesign pagelink method ?
-      if (!$DBInfo->without_pagelinks_cache) {
+      if (empty($DBInfo->without_pagelinks_cache)) {
         $dmt=filemtime($DBInfo->text_dir.'/.');
         $this->update_pagelinks= $dmt > $this->cache->mtime($this->page->name);
         #like as..
         #if (!$this->update_pagelinks) $this->pagelinks=$this->get_pagelinks();
       }
 
-      if ($options['rev']) {
+      if (isset($options['rev'])) {
         $body=$this->page->get_raw_body($options);
         $pi=$this->get_instructions($body);
       } else {
@@ -3321,13 +3351,13 @@ class Formatter {
         $body=$this->page->get_raw_body($options);
       }
       $this->set_wordrule($pi);
-      if ($this->wikimarkup and $pi['raw'])
+      if (!empty($this->wikimarkup) and !empty($pi['raw']))
         print "<span class='wikiMarkup'><!-- wiki:\n$pi[raw]\n--></span>";
 
-      if ($this->use_rating and !$this->wikimarkup and !$pi['#norating']) {
+      if (!empty($this->use_rating) and empty($this->wikimarkup) and empty($pi['#norating'])) {
         $this->pi=$pi;
         $old=$this->mid;
-        if ($pi['#rating']) $rval=$pi['#rating'];
+        if (isset($pi['#rating'])) $rval=$pi['#rating'];
         else $rval='0';
 
         print '<div class="wikiRating">'.$this->macro_repl('Rating',$rval,array('mid'=>'page'))."</div>\n";
@@ -3335,8 +3365,8 @@ class Formatter {
       }
 
       $fts=array();
-      if ($pi['#filter']) $fts=preg_split('/(\||,)/',$pi['#filter']);
-      if ($this->filters) $fts=array_merge($fts,$this->filters);
+      if (isset($pi['#filter'])) $fts=preg_split('/(\||,)/',$pi['#filter']);
+      if (!empty($this->filters)) $fts=array_merge($fts,$this->filters);
       if ($fts) {  
         foreach ($fts as $ft) {
           $body=$this->filter_repl($ft,$body,$options);
@@ -3344,13 +3374,14 @@ class Formatter {
       }
 
       $this->pi=$pi;
-      if ($pi['#format'] != 'wiki') {
-        if ($pi['args']) $pi_line="#!".$pi['#format']." $pi[args]\n";
+      if (isset($pi['#format']) and $pi['#format'] != 'wiki') {
+        $pi_line='';
+        if (isset($pi['args'])) $pi_line="#!".$pi['#format']." $pi[args]\n";
         $text= $this->processor_repl($pi['#format'],$pi_line.$body,$options);
 
         $fts=array();
-        if ($pi['#postfilter']) $fts=preg_split('/(\||,)/',$pi['#postfilter']);
-        if ($this->postfilters) $fts=array_merge($fts,$this->postfilters);
+        if (isset($pi['#postfilter'])) $fts=preg_split('/(\||,)/',$pi['#postfilter']);
+        if (!empty($this->postfilters)) $fts=array_merge($fts,$this->postfilters);
         if ($fts) {
           foreach ($fts as $ft)
             $text=$this->postfilter_repl($ft,$text,$options);
@@ -3359,7 +3390,7 @@ class Formatter {
         print $this->get_javascripts();
         print $text;
 
-        if ($DBInfo->use_tagging and isset($pi['#keywords'])) {
+        if (!empty($DBInfo->use_tagging) and isset($pi['#keywords'])) {
           $tmp="----\n";
           if (is_string($DBInfo->use_tagging))
             $tmp.=$DBInfo->use_tagging;
@@ -3371,13 +3402,13 @@ class Formatter {
         return;
       }
 
-      if ($body) {
+      if (!empty($body)) {
         $body=rtrim($body); # delete last empty line
         $lines=explode("\n",$body);
       } else
         $lines=array();
 
-      if ($DBInfo->use_tagging and isset($pi['#keywords'])) {
+      if (!empty($DBInfo->use_tagging) and isset($pi['#keywords'])) {
         $lines[]="----";
         if (is_string($DBInfo->use_tagging))
           $lines[]=$DBInfo->use_tagging;
@@ -3390,20 +3421,25 @@ class Formatter {
       $twins=$DBInfo->metadb->getTwinPages($this->page->name,$twin_mode);
 
       if ($twins === true) {
-        if ($DBInfo->interwiki['TwinPages']) {
-          if ($lines) $lines[]="----";
+        if (isset($DBInfo->interwiki['TwinPages'])) {
+          if (!empty($lines)) $lines[]="----";
           $lines[]=sprintf(_("See %s"),"[wiki:TwinPages:".$this->page->name." "._("TwinPages")."]");
         }
-      } else if ($twins) {
-        if ($lines) $lines[]="----";
-        if (sizeof($twins)>8) $twins[0]="\n".$twins[0];
+      } else if (!empty($twins)) {
+        if (!empty($lines)) $lines[]="----";
+        if (sizeof($twins)>8) $twins[0]="\n".$twins[0]; // XXX
         $twins[0]=_("See [TwinPages]:").$twins[0];
         $lines=array_merge($lines,$twins);
       }
     }
 
     # have no contents
-    if (!$lines) return;
+    if (empty($lines)) return;
+
+    # for headings
+    $headinfo['top'] = 0;
+    $headinfo['num'] = 0;
+    $headinfo['dep'] = 0;
 
     $text='';
     $in_p='';
@@ -3420,12 +3456,12 @@ class Formatter {
     $_myindlen=array(0);
     $oline='';
 
-    $wordrule="({{{(?U)(.+)}}})|".
-              "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|". # macro
-              "<<([A-Za-z0-9]+(\(((?<!\>\>).)*\))?)>>|"; # macro
+    $wordrule="(?:{{{(?U)(?:.+)}}})|".
+              "\[\[(?:[A-Za-z0-9]+(?:\((?:(?<!\]\]).)*\))?)\]\]|". # macro
+              "<<(?:[A-Za-z0-9]+(?:\((?:(?<!\>\>).)*\))?)>>|"; # macro
     if ($DBInfo->inline_latex) # single line latex syntax
-      $wordrule.="(?<=\s|^|>)\\$([^\\$]+)\\$(?=\s|\.|\,|$)|".
-                 "(?<=\s|^|>)\\$\\$([^\\$]+)\\$\\$(?=\s|$)|";
+      $wordrule.="(?<=\s|^|>)\\$(?:[^\\$]+)\\$(?=\s|\.|\,|$)|".
+                 "(?<=\s|^|>)\\$\\$(?:[^\\$]+)\\$\\$(?=\s|$)|";
     #if ($DBInfo->builtin_footnote) # builtin footnote support
     $wordrule.=$this->footrule.'|';
     $wordrule.=$this->wordrule;
@@ -3784,7 +3820,7 @@ class Formatter {
           }
         }
 
-        $line=$anchor.$edit.$this->head_repl(strlen($m[1]),$m[2],$attr);
+        $line=$anchor.$edit.$this->head_repl(strlen($m[1]),$m[2],$headinfo,$attr);
         $dummy='';
         $line.=$this->_div(1,$in_div,$dummy,' id="sc-'.$this->sect_num.'"'); // for folding
         $edit='';$anchor='';
@@ -5256,7 +5292,7 @@ function wiki_main($options) {
             $mcache->update($pagename,serialize($_macros));
         }
       }
-      if ($_macros) {
+      if (!empty($_macros)) {
         $mrule=array();
         $mrepl=array();
         foreach ($_macros as $k=>$v) {
