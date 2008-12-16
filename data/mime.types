@@ -117,8 +117,8 @@ application/vnd.minisoft-hp3000-save
 application/vnd.mitsubishi.misty-guard.trustweb
 application/vnd.ms-artgalry
 application/vnd.ms-asf
-application/vnd.ms-excel
-application/vnd.ms-powerpoint	ppt
+application/vnd.ms-excel	xls xlsx
+application/vnd.ms-powerpoint	ppt ppx
 application/vnd.ms-project
 application/vnd.ms-tnef
 application/vnd.ms-works
@@ -260,7 +260,7 @@ multipart/voice-message
 text/css			css
 text/directory
 text/enriched
-text/plain			asc txt
+text/plain			asc txt diff patch
 text/prs.lines.tag
 text/rfc822-headers
 text/richtext			rtx
