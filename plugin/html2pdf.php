@@ -64,25 +64,29 @@ function do_html2pdf($formatter,$options) {
 		$html = preg_replace('@<title>.*</title>@','',$html);
 		$html = preg_replace('@<head>.*</head>@s','',$html);
 		$html = preg_replace('@&quot;@','"',$html);
-		$html = preg_replace('@>\s+<@',"><",$html);
+		#$html = preg_replace('@>\s+<@',"><",$html);
 		$html = preg_replace('@>\n@',">",$html);
 		$html = preg_replace('@/\*<\!\[CDATA\[.*\]\]>\*/\n?@Us','',$html);
+		$html = preg_replace('@<pre[^>]*>@','<pre style="background-color:black;color:white">',$html);
                 $dom = &parent::getHtmlDomArray($html);
                 $sz = count($dom);
                 for ($i=0; $i<$sz;$i++) {
                     $tag=&$dom[$i];
                     if (!empty($tag['opening']) and $tag['value']=='table') {
-                        $tag['attribute']['border']=1;
+                        #$tag['attribute']['border']=1;
                         #$tag['attribute']['bgcolor']=array(200,200,200);
-                        $tag['bgcolor']=array(200,200,200);
-                    } else if (!empty($tag['opening']) and $tag['value']=='pre') {
-                        $tag['bgcolor']=array(0,0,0);
-                        $tag['fgcolor']=array(255,255,255);
-                        $tag['fontname']='courier';
+                        #$tag['bgcolor']=array(200,200,200);
+                    #} else if (!empty($tag['opening']) and $tag['value']=='pre') {
+                    #    $tag['bgcolor']=array(0,0,0);
+                    #    $tag['fgcolor']=array(255,255,255);
+                    #    $tag['fontname']='courier';
                     #} else if (!empty($tag['opening']) and $tag['value']=='div') {
                     #    $tag['bgcolor']=array(100,100,100);
                     }
                 }
+                #print "<pre>";
+                #print_r($dom);
+                #print "</pre>";
                 return $dom;
             }
 
@@ -108,7 +112,7 @@ function do_html2pdf($formatter,$options) {
                     $this->Bookmark($num.' '.$this->toc[$num],$dep,$this->y);
                     next($this->toc);
                 }
-                parent::closeHTMLTagHandler(&$dom, $key, $cell);
+                parent::closeHTMLTagHandler($dom, $key, $cell);
             }
         }
     }
@@ -120,6 +124,7 @@ function do_html2pdf($formatter,$options) {
 
     $formatter->nonexists='always';
     $formatter->section_edit=0;
+    $formatter->perma_icon='';
 
     ob_start();
     $formatter->send_header();
@@ -134,6 +139,8 @@ function do_html2pdf($formatter,$options) {
     $toc = function_toc($formatter);
     $pdf->toc = $toc;
     $pdf->setFontAlias(array('monospace'=>'courier'));
+    $pdf->setLIsymbol(chr(42));
+    $pdf->setLIsymbol('a');
 
     // set default header data
     // $pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, PDF_HEADER_TITLE, PDF_HEADER_STRING);
