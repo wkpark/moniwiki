@@ -371,6 +371,7 @@ function show_wikiseed($config,$seeddir='wikiseed') {
 
   #
   $SystemPages="FrontPage|RecentChanges|TitleIndex|FindPage|WordIndex|".
+  "EditTextForm|AliasPageNames|InterIconMap|".
   "FortuneCookies|Pages$|".
   "SystemPages|TwinPages|WikiName|SystemInfo|UserPreferences|".
   "InterMap|IsbnMap|WikiSandBox|SandBox|UploadFile|UploadedFiles|".
@@ -402,12 +403,20 @@ function Toggle(obj) {
    for (var i=0;i<n.length;i++)
      if (n[i].checked) n[i].checked=false;
      else n[i].checked=true;
+   var p=document.getElementById('systemseed');
+   var n=p.getElementsByTagName('input');
+   for (var i=0;i<n.length;i++)
+     n[i].checked=true;
 }
 function deselect(obj) {
    var p=document.getElementById(obj);
    var n=p.getElementsByTagName('input');
    for (var i=0;i<n.length;i++)
      n[i].checked=false;
+   var p=document.getElementById('systemseed');
+   var n=p.getElementsByTagName('input');
+   for (var i=0;i<n.length;i++)
+     n[i].checked=true;
 }
 </script>
 JS;
@@ -419,8 +428,13 @@ JS;
   print "<form id='seedall' method='post' action=''>\n";
   $ii=1;
   while (list($filter_name,$filter) = each($seed_filters)) {
-    print "<h4>$filter_name <a href='#' onclick='Toggle(\"set$ii\")' >(toggle)</a></h4>\n";
-    print "<div id='set$ii'>\n";
+    if ($filter_name == 'SystemPages') {
+    	print "<h4>$filter_name ("._("Please be careful to deselect these pages").")</h4>\n";
+    	print "<div id='systemseed'>\n";
+    } else {
+    	print "<h4>$filter_name <a href='#' onclick='Toggle(\"set$ii\")' >(toggle)</a></h4>\n";
+    	print "<div id='set$ii'>\n";
+    }
     foreach ($pages as $pagename) {
       if (preg_match($filter[0],$pagename)) {
         print "<input type='checkbox' name='seeds[$idx]' value='$pagename'";
