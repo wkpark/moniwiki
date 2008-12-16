@@ -332,6 +332,13 @@ function toutf8($uni) {
   return chr($utf[0]).chr($utf[1]).chr($utf[2]);
 }
 
+function isRobot($name) {
+  global $Config;
+  if (preg_match('/'.$Config['robots'].'/i',$name))
+    return true;
+  return false;
+}
+
 class UserDB {
   var $users=array();
   function UserDB($WikiDB) {
@@ -2290,8 +2297,12 @@ function get_key($name) {
     }
     # if php does not support iconv(), EUC-KR assumed
     if (strtolower($DBInfo->charset) == 'euc-kr') {
-      $korean=array('가','까','나','다','따','라','마','바','빠','사','싸','아',
-                    '자','짜','차','카','타','파','하',"\xca");
+      $korean=array( // Ga,GGa,Na,Da,DDa,...
+        "\xb0\xa1","\xb1\xee","\xb3\xaa","\xb4\xd9","\xb5\xfb",
+        "\xb6\xf3","\xb8\xb6","\xb9\xd9","\xba\xfc","\xbb\xe7",
+        "\xbd\xce","\xbe\xc6","\xc0\xda","\xc2\xa5","\xc2\xf7",
+        "\xc4\xab","\xc5\xb8","\xc6\xc4","\xc7\xcf","\xca");
+
       $lastPosition='Others';
 
       $letter=substr($name,0,2);
