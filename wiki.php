@@ -2794,7 +2794,9 @@ class Formatter {
       $options['nomarkup']=1; // for the attachment macro
     }
     if (empty($value) and isset($match[2])) { #strpos($macro,'(') !== false)) {
-      $name=$match[1]; $args=empty($match[3]) ? true:$match[3];
+      $name=$match[1];
+      $args=empty($match[3]) ? true:$match[3];
+
     } else {
       $name=$macro; $args=$value;
     }
@@ -2809,7 +2811,10 @@ class Formatter {
     if ($this->_macrocache and empty($options['call']) and
       (isset($this->dynamic_macros[strtolower($name)]) or
       isset($this->dynamic_macros[$name]))) {
-      $macro=$name. ($args ? '('.$args.')':'');
+      $arg = '';
+      if ($args === true) $arg = '()';
+      else if (!empty($args)) $arg = '('.$args.')';
+      $macro=$name.$arg;
       $md5sum= md5($macro);
       $this->_macros[$md5sum]=array($macro,$mid);
       return '[['.$md5sum.']]';
@@ -4993,7 +4998,9 @@ if ($theme and ($DBInfo->theme_css or !$options['css_url']))
   $options['css_url']=($DBInfo->themeurl ? $DBInfo->themeurl:$DBInfo->url_prefix)."/theme/$theme/css/default.css";
 
   $options['pagename']=get_pagename();
-
+  if (!empty($DBInfo->robots)) {
+    $options['is_robot']=isRobot($_SERVER['HTTP_USER_AGENT']);
+  }
 }
 
 function init_locale($lang) {
@@ -5087,6 +5094,19 @@ function wiki_main($options) {
     $action=substr($action,0,$p);
   }
 
+  if (isset($options['is_robot'])) {
+    if (!empty($DBInfo->security_class_robot)) {
+      $class='Security_'.$DBInfo->security_class_robot;
+      include_once('plugin/security/'.$DBInfo->security_class_robot.'.php');
+    } else {
+      $class='Security_robot';
+      include_once('plugin/security/robot.php');
+    }
+    $DBInfo->security=new $class ($DBInfo);
+    if (!$DBInfo->security->is_allowed($action,$options))
+      $action='show';
+    $DBInfo->extra_macros='';
+  }
 
   #print $_SERVER['REQUEST_URI'];
   $options['page']=$pagename;
@@ -5152,7 +5172,7 @@ function wiki_main($options) {
 
       $msg_404='';
       if (!$Config['no_404']) $msg_404="Status: 404 Not found"; # for IE
-      if ($Config['nofancy_404']) {
+      if (!empty($options['is_robot']) or $Config['nofancy_404']) {
         $formatter->header($msg_404);
         print '<html><head></head><body><h1>'.$msg_404.'</h1></body></html>';
         return;
@@ -5221,6 +5241,7 @@ function wiki_main($options) {
           $formatter->link_tag($_GET['redirect'],'?action=show'))."</h3>";
     }
     # increase counter
+    if (empty($options['is_robot']))
     $DBInfo->counter->incCounter($pagename,$options);
 
     if (!$action) $options['pi']=1; # protect a recursivly called #redirect
@@ -5236,8 +5257,9 @@ function wiki_main($options) {
       $options['attr']=$DBInfo->body_attr;
 
     $formatter->send_header("",$options);
-
-    $formatter->send_title("","",$options);
+    if (empty($options['is_robot'])) {
+      $formatter->send_title("","",$options);
+    }
 
     if ($formatter->pi['#title'] and $DBInfo->use_titlecache) {
       $tcache=new Cache_text('title');
@@ -5330,7 +5352,8 @@ function wiki_main($options) {
     }
     
     $args['editable']=1;
-    $formatter->send_footer($args,$options);
+    if (empty($options['is_robot']))
+      $formatter->send_footer($args,$options);
     return;
   }
 
