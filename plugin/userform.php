@@ -359,6 +359,13 @@ function do_userform($formatter,$options) {
     include_once('lib/openid.php');      
     session_start();
 
+    if ( !preg_match ('/utf-?8/i', $DBInfo->charset) ) {
+      $options['openid_sreg_nickname'] =
+        iconv ('utf-8', $DBInfo->charset, $options['openid_sreg_nickname']);
+      $options['openid_sreg_fullname'] =
+        iconv ('utf-8', $DBInfo->charset, $options['openid_sreg_fullname']);
+    }
+
     $process_url = qualifiedUrl($formatter->link_url("UserPreferences", "?action=userform"));
     $trust_root = qualifiedUrl($formatter->link_url(""));
 
