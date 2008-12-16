@@ -64,7 +64,7 @@ $nonexists='fancy';
 #$owners=array('moniwiki','Hong');
 
 #$menu=array('MoniWiki'=>1,'FindPage'=>4,'TitleIndex'=>3,'BlogChanges'=>'','RecentChanges'=>2,'http://kldp.org KLDP'=>9);
-$menu=array('FrontPage'=>1,'TitleIndex'=>3,'RecentChanges'=>2,'UserPreferences'=>'');
+$menu=array('FrontPage'=>1,'FindPage'=>4,'TitleIndex'=>3,'RecentChanges'=>2,'UserPreferences'=>'');
 #$menu_sep='|';
 #$menu_bra='';
 #$menu_cat='';
@@ -223,6 +223,7 @@ $use_errlog=1;
 #$default_download_image='/block.jpg';
 #$force_download=1;
 #$download_action='download';
+$use_resume_download=1;
 #$control_read=1; # control read action also
 #$use_macro_as_action=0; # XXX warn
 #$isbn_img_download=1; # download isbn images to local cache dir.
@@ -254,4 +255,6 @@ $jwmediaplayer_prefix='http://www.jeroenwijering.com/embed';
 #$check_openid_url=0; # selectivly show openid icons: experimental
 #$use_autosave=1; # enable autosave feature.
 #$use_bbs=0;
+$robots='googlebot|yahoo'; # set robots
+#$security_class_robot='robot';
 ?>
