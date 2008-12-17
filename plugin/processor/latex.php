@@ -222,7 +222,7 @@ function processor_latex(&$formatter,$value="",$options=array()) {
      if (!$raw_mode and $log2) trigger_error ($log2, E_USER_WARNING);
      chdir($cwd);
 
-     if ($raw_mode and $tmpext == 'png') {
+     if ($raw_mode or ($tmpext == 'png' and empty($DBInfo->latex_allinone)) ) {
        rename("$vartmp_dir/$uniq-1.$tmpext",$outpath);
      } else if ($DBInfo->latex_allinone) {
         $sz=sizeof($formatter->latex_uniq);
