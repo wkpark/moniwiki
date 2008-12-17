@@ -2840,14 +2840,14 @@ class Formatter {
       }
       $ket= '</span>';
     }
-    if (!($f=function_exists("processor_".$processor)) and !($c=class_exists('processor_'.$processor))) {
-      $pf=getProcessor($processor);
-      if (empty($pf)) {
-        $ret= call_user_func('processor_plain',$this,$value,$options);
-        return $bra.$ret.$ket;
-      }
+
+    $pf=getProcessor($processor);
+    if (empty($pf)) {
+      $ret= call_user_func('processor_plain',$this,$value,$options);
+      return $bra.$ret.$ket;
+    }
+    if (!($f=function_exists('processor_'.$pf)) and !($c=class_exists('processor_'.$pf))) {
       include_once("plugin/processor/$pf.php");
-      $processor=$pf;
       $name='processor_'.$pf;
       if (!($f=function_exists($name)) and !($c=class_exists($name))) {
         $processor='plain';
@@ -2863,7 +2863,7 @@ class Formatter {
       return $bra.$ret.$ket;
     }
 
-    $classname='processor_'.$processor;
+    $classname='processor_'.$pf;
     $myclass= & new $classname($this,$options);
     $ret= call_user_func(array($myclass,'process'),$value,$options);
     if ($myclass->_type=='wikimarkup') return $ret;
@@ -3443,7 +3443,7 @@ class Formatter {
 
     # for headings
     $headinfo['top'] = 0;
-    $headinfo['num'] = 0;
+    $headinfo['num'] = 1;
     $headinfo['dep'] = 0;
 
     $text='';
