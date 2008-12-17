@@ -3,6 +3,12 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a geshi colorizer plugin for the MoniWiki
 //
+// Author:  Dongsu Jang <iolo at hellocity.net>
+// Since: 2005-04-29
+// Name: a GeSHi syntax colorizer
+// Description: a syntax colorizing processor using the GeSHi
+// URL: MoniWiki:GeshiProcessor
+// Version: $Revision$
 // Usage: {{{#!geshi ada|apache|asm|c|css... [number|fancy]
 // some codes
 // }}}
@@ -31,12 +37,11 @@
 
 @include_once(dirname(__FILE__)."/../../lib/geshi/geshi.php");
 
-if (defined('GESHI_VERSION')):
 function processor_geshi($formatter,$value,$options) {
   global $DBInfo;
 
-  if (!class_exists('GeSHi'))
-    retrun $formatter->processor_repl('vim',$value,$options);
+  if (!defined('GESHI_VERSION'))
+    return $formatter->processor_repl('vim',$value,$options);
 
   $syntax=array(
     'actionscript', 'ada', 'apache', 'asm', 'asp', 'bash', 'c', 'c_mac',
@@ -49,8 +54,16 @@ function processor_geshi($formatter,$value,$options) {
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
   # get parameters
-  if ($line)
-    list($tag,$type,$extra)=explode(" ",$line,3);
+  if ($line) {
+    $line=substr($line,2);
+    $tag = strtok($line,' ');
+    $type = strtok(' ');
+    $extra = strtok('');
+    if ($tag != 'vim') {
+      $extra = $type;
+      $type = $tag;
+    }
+  }
   $src=rtrim($value); // XXX
   if (!$type) $type='nosyntax';
 
@@ -103,8 +116,6 @@ function processor_geshi($formatter,$value,$options) {
 
   return $out;
 }
-
-endif;
 
 // vim:et:sts=2:
 ?>
