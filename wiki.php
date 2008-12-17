@@ -4017,6 +4017,79 @@ class Formatter {
   }
 
   function get_javascripts() {
+    global $Config;
+    if (!empty($Config['use_jspacker']) and !empty($Config['cache_public_dir'])) {
+      include_once('lib/fckpacker.php'); # good but not work with prototype.
+      $constProc = new FCKConstantProcessor();
+      $constProc->RemoveDeclaration = false ;
+      #include_once('lib/jspacker.php'); # bad!
+      #$packer = new JavaScriptPacker('', 0);
+      #$packer->pack(); // init
+      #include_once('lib/jsmin.php'); # not work.
+      
+
+      $out='';
+      $packed='';
+      $pjs = array();
+      $keys = array_keys($this->java_scripts);
+      sort($keys);
+      $uniq = md5(implode(';',$keys));
+
+      $cache=new Cache_text('js',2,'html');
+
+      #if ($cache->exists($uniq))
+      #  return $cache->fetch($uniq);
+
+      foreach ($this->java_scripts as $k=>$js) {
+        if ($js) {
+          if ($js{0} != '<') {
+            if (preg_match('@^(http://|/)@',$js)) {
+              $out.="<script type='text/javascript' src='$js'></script>\n";
+            } else {
+              if (file_exists('local/'.$js)) {
+                $fp = fopen('local/'.$js,'r');
+                if (is_resource($fp)) {
+                  $_js = fread($fp,filesize('local/'.$js));
+                  fclose($fp);
+                  $packed.='/* '.$js.' */'."\n";
+                  #$packed.= JSMin::minify($_js);
+                  $packed.= FCKJavaScriptCompressor::Compress($_js, $constProc)."\n";
+                  #$packed.= $packer->_pack($_js)."\n";
+                  $pjs[]=$k;
+                }
+              } else { // is it exist ?
+                $js=$this->url_prefix.'/local/'.$js;
+                $out.="<script type='text/javascript' src='$js'></script>\n";
+              }
+            }
+          } else { //
+            if (preg_match('/<script[^>]+(src=("|\')([^\\2]+)\\2)?[^>]*>(.*)<\/script>\s*$/',$js,$m)) {
+              if ($m[3]) {
+                $out.="<script type='text/javascript' src='$js'></script>\n";
+              } else if ($m[4]) {
+                $packed.='/* embeded '.$k.'*/'."\n";
+                #$packed.= $packer->_pack($js)."\n";
+                $packed.= FCKJavaScriptCompressor::Compress($js, $constProc)."\n";
+                #$packed.= JSMin::minify($js);
+                $pjs[]=$k;
+              }
+            }
+          }
+          $this->java_scripts[$k]='';
+
+        }
+      }
+      sort($pjs);
+      $suniq = md5(implode(';',$pjs));
+
+      $fc = new Cache_text('js',2,'js',$Config['cache_public_dir']);
+      $jsname = $fc->_getKey($suniq,0);
+      $out.='<script type="text/javascript" src="'.$Config['cache_public_url'].'/'.$jsname.'"></script>'."\n";
+      $cache->update($uniq,$out);
+
+      $fc->_save($Config['cache_public_dir'].'/'.$jsname,$packed);
+      return $out;
+    }
     $out='';
     foreach ($this->java_scripts as $k=>$js) {
       if ($js) {
