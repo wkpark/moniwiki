@@ -101,10 +101,11 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
     }
 
     if (!$swfupload_num) {
-        $swfupload_script=<<<EOS
-	<script type="text/javascript" src="$DBInfo->url_prefix/local/SWFUpload/mmSWFUpload.js"></script>
-	<script type="text/javascript" src="$DBInfo->url_prefix/local/SWFUpload/moni.js"></script>
-EOS;
+        $formatter->register_javascripts(array(
+            'js/swfobject.js',
+            'SWFUpload/mmSWFUpload.js',
+            'SWFUpload/moni.js',
+        ));
     }
 
     $swf_css=<<<CSS

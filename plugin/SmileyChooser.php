@@ -35,8 +35,9 @@ function macro_SmileyChooser($formatter,$value) {
 function mySmiley(myText)
 {
   var is_ie = document.selection && document.all;
-  if (document.$form)
-    var txtarea = document.$form.savetext;
+  var ef = document.getElementById('$form');
+  if (ef)
+    var txtarea = ef.savetext;
   else {
     // some alternate form? take the first one we can find
     var areas = document.getElementsByTagName('textarea');
