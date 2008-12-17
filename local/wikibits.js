@@ -154,9 +154,10 @@ function escapeQuotesHTML(text) {
 function insertTags(tagOpen, tagClose, sampleText,replace) {
 	var is_ie = document.selection && document.all;
 	var my = document.getElementById('editor_area');
+	var ef = document.getElementById('editform');
 	var doc = document;
-	if (doc.editform)
-		var txtarea = doc.editform.savetext;
+	if (ef)
+		var txtarea = ef.savetext;
 	else {
 		// some alternate form? take the first one we can find
 		var areas = doc.getElementsByTagName('textarea');
@@ -164,8 +165,8 @@ function insertTags(tagOpen, tagClose, sampleText,replace) {
 			var txtarea = areas[0];
 		} else if (opener) {
 			doc = opener.document;
-			if (doc.editform && doc.editform.savetext) {
-				txtarea = doc.editform.savetext;
+			if (ef && ef.savetext) {
+				txtarea = ef.savetext;
 			} else {
 				txtarea = doc.getElementsByTagName('textarea')[0];
 			}
