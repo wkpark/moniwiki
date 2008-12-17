@@ -653,8 +653,8 @@ function fixup_markup_style(html,modename)
 
                 if (modename.match(/Preview/)) objects[i].removeChild(n);
 
-                objects[i].setAttribute('width',w)
-                objects[i].setAttribute('height',h)
+                objects[i].setAttribute('width',w);
+                objects[i].setAttribute('height',h);
                 if (applet) {
                     applet.setAttribute('width',w);
                     applet.setAttribute('height',h);
@@ -2208,7 +2208,7 @@ proto.handle_opaque_phrase = function(element) {
                    .replace(/&amp;/g,'&')
                    .replace(/(\r\n|\n|\r)+$/, '') //.replace(/\s$/, '') IE fix
                    .replace(/\{(\w+):\s*\}/, '{$1}');
-        this.appendOutput(Wikiwyg.htmlUnescape(text))
+        this.appendOutput(Wikiwyg.htmlUnescape(text));
         this.smart_trailing_space_n(element);
     }
 }
@@ -2762,7 +2762,7 @@ function open_chooser(id,elm,once) {
         div.style.position='absolute';
     }
 
-    var pos=getPos(elm)
+    var pos=getPos(elm);
 /*
     div.style.top = elm.offsetTop + 21 + 'px';
     div.style.left = elm.offsetLeft + 'px';

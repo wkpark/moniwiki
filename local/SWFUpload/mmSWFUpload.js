@@ -56,7 +56,7 @@ mmSWFUpload = {
 			};
 			var attr={
 				"id": "_mmSWFUploadField"
-			}
+			};
 			swfobject.embedSWF(this._prefix + "/SWFUpload/upload.swf", this.addSetting("target", "flashUpload"),
 				"1px", "1px", this.addSetting("flash_version", "8"), "",vars, param, attr);
 						
@@ -64,12 +64,12 @@ mmSWFUpload = {
 			//so.write(this.addSetting("target", "flashUpload"));
 	
 			// Set up button and styles
-			var swfc = document.getElementById(this.settings["target"])
+			var swfc = document.getElementById(this.settings["target"]);
 			
 			var link = document.createElement("a");
 			link.id = "_mmSWFUploadLink";
 			link.href = "javascript:mmSWFUpload.callSWF()";
-			link.className = this.addSetting("cssClass", "SWFUploadLink")
+			link.className = this.addSetting("cssClass", "SWFUploadLink");
 			
 			link.style.display = "block";
 			swfc.appendChild(link);
@@ -123,9 +123,9 @@ mmSWFUpload = {
 	
 	getMovie: function(movieName) {
 		if (navigator.appName.indexOf("Microsoft") != -1) {
-		return window[movieName]
+		return window[movieName];
 		}	else {
-			return document[movieName]
+			return document[movieName];
 		}
     },
     

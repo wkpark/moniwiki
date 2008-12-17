@@ -27,10 +27,10 @@ if (isJsEnabled()) {
  */
 if (typeof XMLHttpRequest == 'undefined') {
  XMLHttpRequest = function () {
-   var msxmls = ['MSXML3', 'MSXML2', 'Microsoft']
+   var msxmls = ['MSXML3', 'MSXML2', 'Microsoft'];
    for (var i=0; i < msxmls.length; i++) {
      try {
-       return new ActiveXObject(msxmls[i]+'.XMLHTTP')
+       return new ActiveXObject(msxmls[i]+'.XMLHTTP');
      }
      catch (e) { }
    }
@@ -54,7 +54,7 @@ function HTTPGet(uri, callbackFunction, callbackParameter) {
     if (callbackFunction) {
       xmlHttp.onreadystatechange = function() {
         if (xmlHttp.readyState == 4)
-          callbackFunction(xmlHttp.responseText, xmlHttp, callbackParameter)
+          callbackFunction(xmlHttp.responseText, xmlHttp, callbackParameter);
       }
     }
     return true;
@@ -88,7 +88,7 @@ function HTTPPost(uri, object, callback_function, callback_parameter) {
     if (callback_function)
       xmlhttp.onreadystatechange = function() {
         if (xmlhttp.readyState == 4)
-          callback_function(xmlhttp.responseText, xmlhttp, callback_parameter)
+          callback_function(xmlhttp.responseText, xmlhttp, callback_parameter);
       }
     return true;
   } else
@@ -139,7 +139,7 @@ function hasClass(node, className) {
   if (node.className == className) {
     return true;
   }
-  var reg = new RegExp('(^| )'+ className +'($| )')
+  var reg = new RegExp('(^| )'+ className +'($| )');
   if (reg.test(node.className)) {
     return true;
   }

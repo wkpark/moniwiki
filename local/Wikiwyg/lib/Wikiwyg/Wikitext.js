@@ -1438,7 +1438,7 @@ proto.handle_opaque_phrase = function(element) {
                    .replace(/==/g, '=') 
                    .replace(/\s$/, '')
                    .replace(/\{(\w+):\s*\}/, '{$1}');
-        this.appendOutput(Wikiwyg.htmlUnescape(text))
+        this.appendOutput(Wikiwyg.htmlUnescape(text));
         this.smart_trailing_space(element);
     }
 }

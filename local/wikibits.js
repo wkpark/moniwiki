@@ -334,7 +334,7 @@ function toggleSameFormat(start, end, sel) {
 	var m;
 	if (m=sel.match(/^(\r\n|\n)?(={1,6})/)) { // for headings
 	    var tag='='.times(m[2].length);
-	    start=start.replace(/=/,tag),end=end.replace(/=/,tag)
+	    start=start.replace(/=/,tag),end=end.replace(/=/,tag);
 	    if (start.replace(/(\r\n|\n)/,'').length==8) start="\n== ",end=" ==\n"; // reset
 	} else {
             return nsel;

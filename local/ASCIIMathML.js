@@ -44,7 +44,7 @@ var doubleblankmathdelimiter = false; // if true,  x+1  is equal to `x+1`
 var isIE = document.createElementNS==null;
 if (document.getElementById==null) 
   alert("This webpage requires a recent browser such as\
-\nMozilla/Netscape 7+ or Internet Explorer 6+MathPlayer")
+\nMozilla/Netscape 7+ or Internet Explorer 6+MathPlayer");
 // all further global variables start with "AM"
 function AMcreateElementXHTML(t) {
   if (isIE) return document.createElement(t);
@@ -52,7 +52,7 @@ function AMcreateElementXHTML(t) {
 }
 function AMnoMathMLNote() {
   var nd = AMcreateElementXHTML("h3");
-  nd.setAttribute("align","center")
+  nd.setAttribute("align","center");
   nd.appendChild(AMcreateElementXHTML("p"));
   nd.appendChild(document.createTextNode("To view the "));
   var an = AMcreateElementXHTML("a");
@@ -301,7 +301,7 @@ AMtext, AMmbox, AMquote,
 {input:"mathfrak",  tag:"mstyle", atname:"mathvariant", atval:"fraktur", output:"mathfrak", tex:null, ttype:UNARY, codes:AMfrk}
 ];
 function compareNames(s1,s2) {
-  if (s1.input > s2.input) return 1
+  if (s1.input > s2.input) return 1;
   else return -1;
 }
 var AMnames = []; //list of input symbols
@@ -822,7 +822,7 @@ function AMprocessNodeR(n, linebreaks) {
 function AMprocessNode(n, linebreaks, spanclassAM) {
   var frag,st;
   if (spanclassAM!=null) {;
-    frag = document.getElementsByTagName("span")
+    frag = document.getElementsByTagName("span");
     for (var i=0;i<frag.length;i++)
       if (frag[i].className == "AM")
         AMprocessNodeR(frag[i],linebreaks);

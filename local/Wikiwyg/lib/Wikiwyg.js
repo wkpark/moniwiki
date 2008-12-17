@@ -122,7 +122,7 @@ Wikiwyg.is_opera = (
 );
 Wikiwyg.is_konqueror = (
     Wikiwyg.ua.indexOf("konqueror") != -1
-)
+);
 Wikiwyg.browserIsSupported = (
     Wikiwyg.is_gecko ||
     Wikiwyg.is_ie
