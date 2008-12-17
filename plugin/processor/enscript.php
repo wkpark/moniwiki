@@ -3,9 +3,17 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a syntax colorizer plugin using the enscript for the MoniWiki
 //
+// Author: Won-Kyu Park <wkpark@kldp.org>
+// Since: 2003-08-10
+// Date: 2008-12-17
+// Name: a Enscript syntax colorizer
+// Description: a syntax colorizing processor using the Enscript
+// URL: MoniWiki:VimProcessor
+// Version: $Revision$
 // Usage: {{{#!enscript sh|c|sh|..
 // some codes
 // }}}
+//
 // $Id$
 
 function processor_enscript($formatter,$value) {
@@ -23,11 +31,20 @@ function processor_enscript($formatter,$value) {
 
   $vartmp_dir=&$DBInfo->vartmp_dir;
 
+  $line='';
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
   # get parameters
-  if ($line)
-    list($tag,$type,$extra)=explode(" ",$line,3);
+  if ($line) {
+    $line=substr($line,2);
+    $tag = strtok($line,' ');
+    $type = strtok(' ');
+    $extra = strtok('');
+    if ($tag != 'vim') {
+      $extra = $type;
+      $type = $tag;
+    }
+  }
 
   if ($extra == "number") $option='-C ';
 

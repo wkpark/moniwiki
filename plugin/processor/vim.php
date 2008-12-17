@@ -3,6 +3,14 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a vim colorizer plugin for the MoniWiki
 //
+// Author: Won-Kyu Park <wkpark@kldp.org>
+// Since: 2003-06-04
+// Date: 2008-12-17
+// Name: a VIM syntax colorizer
+// Description: a Syntax colorizing processor using the VIM
+// URL: MoniWiki:VimProcessor
+// Version: $Revision$
+// License: GPL
 // Usage: {{{#!vim sh|c|sh|.. [number]
 // some codes
 // }}}
@@ -28,11 +36,20 @@ function processor_vim($formatter,$value,$options) {
 
   #$opts=array("number");
 
+  $line='';
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
   # get parameters
-  if ($line)
-    list($tag,$type,$extra)=preg_split('/\s+/',$line,3);
+  if ($line) {
+    $line=substr($line,2);
+    $tag = strtok($line,' ');
+    $type = strtok(' ');
+    $extra = strtok('');
+    if ($tag != 'vim') {
+      $extra = $type;
+      $type = $tag;
+    }
+  }
   $src=$value;
   if (!preg_match('/^\w+$/',$type)) $type='nosyntax';
 
