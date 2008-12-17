@@ -39,7 +39,7 @@ class FCKConstantProcessor
 
     // Private properties.
     var $_Constants ;
-    var $_ContantsRegexPart ;
+    var $_ConstantsRegexPart ;
 
     function FCKConstantProcessor()
     {
@@ -47,15 +47,15 @@ class FCKConstantProcessor
         $this->HasConstants = FALSE ;
 
         $this->_Constants = array() ;
-        $this->_ContantsRegexPart = '' ;
+        $this->_ConstantsRegexPart = '' ;
     }
 
     function AddConstant( $name, $value )
     {
-        if ( strlen( $this->_ContantsRegexPart ) > 0 )
-            $this->_ContantsRegexPart .= '|' ;
+        if ( strlen( $this->_ConstantsRegexPart ) > 0 )
+            $this->_ConstantsRegexPart .= '|' ;
 
-        $this->_ContantsRegexPart .= $name ;
+        $this->_ConstantsRegexPart .= $name ;
 
         $this->_Constants[ $name ] = $value ;
 
@@ -73,12 +73,12 @@ class FCKConstantProcessor
         {
             // /var\s+(?:BASIC_COLOR_RED|BASIC_COLOR_BLUE)\s*=.+?;/
             $output = preg_replace(
-                '/var\\s+(?:' . $this->_ContantsRegexPart . ')\\s*=.+?;/m',
+                '/var\\s+(?:' . $this->_ConstantsRegexPart . ')\\s*=.+?;/m',
                 '', $output ) ;
         }
 
         $output = preg_replace_callback(
-            '/(?<!(var |...\.))(?:' . $this->_ContantsRegexPart . ')(?!(?:\s*=)|\w)/',
+            '/(?<!(var |...\.))(?:' . $this->_ConstantsRegexPart . ')(?!(?:\s*=)|\w)/', // XXX
             array( &$this, '_Contant_Replace_Evaluator' ), $output ) ;
 
         return $output ;
@@ -166,8 +166,8 @@ class FCKFunctionProcessor
     {
         foreach ( $vars as $var )
         {
-            if ( strlen( $var) > 1 )
-                $source = preg_replace( '/(?<!\w|\d|\.)' . preg_quote( $var ) . '(?!\w|\d)/', $this->_GetVarName(), $source ) ;
+            if ( strlen( $var) > 2)
+                $source = preg_replace( '/(?<!\w|\d|\.|\$)' . preg_quote( $var ) . '(?!\w|\d|:)/', $this->_GetVarName(), $source ) ;
         }
 
         return $source ;
@@ -183,7 +183,7 @@ class FCKFunctionProcessor
 
         $var = $this->_VarPrefix . $this->_VarChars[ $this->_LastCharIndex++ ] ;
 
-        if ( preg_match( '/(?<!\w|\d|\.)' . preg_quote( $var ) . '(?!\w|\d)/', $this->_Function ) )
+        if ( preg_match( '/(?<!\w|\d|\.)' . preg_quote( $var ) . '(?!\w|\d|:)/', $this->_Function ) )
             return $this->_GetVarName() ;
         else
             return $var ;
@@ -249,17 +249,25 @@ class FCKJavaScriptCompressor
             '/^([^\r\n""\']*?\()\s+(.*?)\s+(?=\)[^\)]*$)/m',
             '$1$2', $script ) ;
 
+        # Remove spaces on "if|else (": "if|else (" = "if|else("
+        #$script = preg_replace(
+        #   '/^([^\r\n""\']*?(?:if|else))\s+\(/m',
+        #   '$1(', $script ) ;
+
         // Concatenate lines that doesn't end with [;{}] using a space
         $script = preg_replace(
             '/(?<![;{}\n\r\s])\s*[\n\r]+\s*(?![\s\n\r{}])/s',
             ' ', $script ) ;
 
-        // Concatenate lines that end with "}" using a ";", except for "else",
+        // Concatenate lines that end with "}" using a "\n", except for "else",
         // "while", "catch" and "finally" cases, or when followed by, "'", ";",
-        // "}" or ")".
+        // "}", ")" or "]".
         $script = preg_replace(
-            '/\s*}\s*[\n\r]+\s*(?!\s*(else|catch|finally|while|[}\),;]))/s',
-            '};', $script ) ;
+            '/\s*}\s*[\n\r]+\s*(?!\s*(else|catch|finally|while|[\]}\),;]))/s',
+            "}\n", $script ) ;
+
+	// Concat lines that end with ";"
+        $script = preg_replace('/\s*;\s*[\n\r]+\s*/s',';', $script ) ;
 
         // Remove blank lines, spaces at the begining or the at the end and \n\r
         $script = preg_replace(
@@ -267,7 +275,8 @@ class FCKJavaScriptCompressor
             '', $script ) ;
 
         // Remove the spaces between statements.
-        $script = FCKJavaScriptCompressor::_RemoveInnerSpaces( $script ) ;
+        #$script = FCKJavaScriptCompressor::_RemoveInnerSpaces( $script ) ;
+        # error with mootools
 
         // Process constants.   // CHECK
         if ( $constantsProcessor->HasConstants )
