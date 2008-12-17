@@ -142,7 +142,8 @@ function showImgPreview(filename,temp) {
         mydir = form.mysubdir.value;
     }
 
-    if (document.editform) {
+    var ef = document.getElementById('editform');
+    if (ef) {
         jspreview=1;
     }
 
