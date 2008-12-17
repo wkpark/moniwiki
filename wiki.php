@@ -4021,13 +4021,12 @@ class Formatter {
     if (!empty($Config['use_jspacker']) and !empty($Config['cache_public_dir'])) {
       include_once('lib/fckpacker.php'); # good but not work with prototype.
       $constProc = new FCKConstantProcessor();
-      $constProc->RemoveDeclaration = false ;
+      #$constProc->RemoveDeclaration = false ;
       #include_once('lib/jspacker.php'); # bad!
       #$packer = new JavaScriptPacker('', 0);
-      #$packer->pack(); // init
+      #$packer->pack(); // init compressor
       #include_once('lib/jsmin.php'); # not work.
       
-
       $out='';
       $packed='';
       $pjs = array();
@@ -4037,8 +4036,8 @@ class Formatter {
 
       $cache=new Cache_text('js',2,'html');
 
-      #if ($cache->exists($uniq))
-      #  return $cache->fetch($uniq);
+      #
+      if ($cache->exists($uniq)) return $cache->fetch($uniq);
 
       foreach ($this->java_scripts as $k=>$js) {
         if ($js) {
@@ -4063,13 +4062,13 @@ class Formatter {
               }
             }
           } else { //
-            if (preg_match('/<script[^>]+(src=("|\')([^\\2]+)\\2)?[^>]*>(.*)<\/script>\s*$/',$js,$m)) {
-              if ($m[3]) {
+            if (preg_match('/<script[^>]+(src=("|\')([^\\2]+)\\2)?[^>]*>(.*)<\/script>\s*$/s',$js,$m)) {
+              if (!empty($m[3])) {
                 $out.="<script type='text/javascript' src='$js'></script>\n";
-              } else if ($m[4]) {
+              } else if (!empty($m[4])) {
                 $packed.='/* embeded '.$k.'*/'."\n";
                 #$packed.= $packer->_pack($js)."\n";
-                $packed.= FCKJavaScriptCompressor::Compress($js, $constProc)."\n";
+                $packed.= FCKJavaScriptCompressor::Compress($m[4], $constProc)."\n";
                 #$packed.= JSMin::minify($js);
                 $pjs[]=$k;
               }
@@ -4087,6 +4086,7 @@ class Formatter {
       $out.='<script type="text/javascript" src="'.$Config['cache_public_url'].'/'.$jsname.'"></script>'."\n";
       $cache->update($uniq,$out);
 
+      # save real compressed js file.
       $fc->_save($Config['cache_public_dir'].'/'.$jsname,$packed);
       return $out;
     }
