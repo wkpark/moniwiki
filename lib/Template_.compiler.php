@@ -88,7 +88,7 @@ class Template_Compiler_
 		$this->prefilters    =array();
 		$this->postfilters   =array();
 		$this->safe_mode     =$tpl->safe_mode;
-		$this->safe_mode_ini ='config/safe_mode.ini';
+		$this->safe_mode_ini ='config/safe_mode.php';
 		$this->auto_constant =empty($tpl->auto_constant) ? false : $tpl->auto_constant;
 		$this->tpl_path      =$tpl_path;
 		$this->params        =$params;
