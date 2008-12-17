@@ -5094,7 +5094,7 @@ function wiki_main($options) {
     $action=substr($action,0,$p);
   }
 
-  if (isset($options['is_robot'])) {
+  if (!empty($options['is_robot'])) {
     if (!empty($DBInfo->security_class_robot)) {
       $class='Security_'.$DBInfo->security_class_robot;
       include_once('plugin/security/'.$DBInfo->security_class_robot.'.php');
