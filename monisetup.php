@@ -294,10 +294,11 @@ function checkConfig($config) {
       fclose($fp);
     }
 
-    $writables=array("upload_dir","editlog_name");
+    $writables=array("upload_dir",'cache_public_dir',"editlog_name");
 
     print '<div class="check">';
     foreach($writables as $file) {
+      if (empty($config[$file])) continue;
       if (!is_writable($config[$file])) {
         if (file_exists($config[$file])) {
           print "<h3><font color=red>".sprintf(_t("%s is not writable"),$config[$file])."</font> :( </h3>\n";
