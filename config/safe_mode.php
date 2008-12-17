@@ -1,3 +1,5 @@
+; safe_mode.ini
+; <?php exit()?>
 ; This file is used when $safe_mode property is true.
 ; On Template_'s safe mode, only functions listed here operate.
 ; Functions can be separated by whitespaces (space, tab, newline).
@@ -106,7 +108,7 @@ preg_quote
 preg_replace_callback
 preg_replace
 ereg_replace
-ereg
-eregi_replace
-eregi
-sql_regcase
+;ereg
+;eregi_replace
+;eregi
+;sql_regcase
