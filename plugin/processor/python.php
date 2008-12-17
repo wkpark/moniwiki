@@ -9,11 +9,13 @@
 // $Id$
 
 function processor_python($formatter,$value="") {
-
-  if ($value[0]=='#' and $value[1]=='!')
-    $value="#!vim ".substr($value,2);
-  else
-    $value="#!vim python\n".$value;
+  //
+  // for pre 1.1.3 version
+  //
+  #if ($value[0]=='#' and $value[1]=='!')
+  #  $value="#!vim ".substr($value,2);
+  #else
+  #  $value="#!vim python\n".$value;
   # get parameters
   return $formatter->processor_repl('vim',$value);
 }
