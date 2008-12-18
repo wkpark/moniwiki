@@ -4066,9 +4066,11 @@ class Formatter {
               }
             }
           } else { //
-            if (preg_match('/<script[^>]+(src=("|\')([^\\2]+)\\2)?[^>]*>(.*)<\/script>\s*$/s',$js,$m)) {
+            $out.=$js;
+            if ( 0 and preg_match('/<script[^>]+(src=("|\')([^\\2]+)\\2)?[^>]*>(.*)<\/script>\s*$/s',$js,$m)) {
               if (!empty($m[3])) {
-                $out.="<script type='text/javascript' src='$js'></script>\n";
+                $out.=$js;
+                #$out.="<script type='text/javascript' src='$js'></script>\n";
               } else if (!empty($m[4])) {
                 $packed.='/* embeded '.$k.'*/'."\n";
                 #$packed.= $packer->_pack($js)."\n";
