@@ -147,7 +147,6 @@ class FCKFunctionProcessor
                 $varsMatch = preg_replace( '/(\((?:(?>[^\(\)]*)|(?1))*\))+/', '', $varsMatch ) ;
                 $varsMatch = preg_replace( '/(\[(?:(?>[^\[\]]*)|(?1))*\])+/', '', $varsMatch ) ;
                 $varsMatch = preg_replace( '/({(?:(?>[^{}]*)|(?1))*})+/', '', $varsMatch ) ;
-                
                 $numVarNameMatches = preg_match_all( '/(?:^|,)\s*([^\s=,]+)/', $varsMatch, $varNameMatches ) ;
                 
                 for ( $j = 0 ; $j < $numVarNameMatches ; $j++ )
@@ -164,9 +163,10 @@ class FCKFunctionProcessor
 
     function _ProcessVars( $source, $vars )
     {
+        $protected = array('self','event');
         foreach ( $vars as $var )
         {
-            if ( strlen( $var) > 2)
+            if ( strlen( $var) > 2 and !in_array($var, $protected))
                 $source = preg_replace( '/(?<!\w|\d|\.|\$)' . preg_quote( $var ) . '(?!\w|\d|:)/', $this->_GetVarName(), $source ) ;
         }
 
@@ -435,4 +435,5 @@ class FCKStringsProcessor
     }
 }
 
+// vim:et:sts=4:sw=4:
 ?>
