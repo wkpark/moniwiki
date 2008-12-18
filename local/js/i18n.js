@@ -30,27 +30,28 @@ readLanguage = function(domain) {
         js.src = _url_prefix + '/local/js/locale/' + lang.substr(0,2) + '/' + domain + '.js';
         head.appendChild(js);
     }
-}
+};
 
 _ = function(msgid) {
-    if ( typeof _translations == "undefined") 
+    if ( typeof _translations == "undefined") {
         return msgid;
+    }
 
     var msgstr = _translations[msgid];
     if (!msgstr)
         msgstr = msgid;
 
     return msgstr;
-}
+};
 
 //
 // override the alert/confirm method.
 //
 
-var oldalert = window.alert;
-var oldconfirm = window.confirm;
+(function () {
+    var oldalert = window.alert;
+    var oldconfirm = window.confirm;
 
-function setAlert() {
     if (document.getElementById) {
         window.alert = function(txt) {
             oldalert(_(txt));
@@ -59,9 +60,8 @@ function setAlert() {
             oldconfirm(_(txt));
         }
     }
-}
+})();
 
 readLanguage('moniwiki');
-setAlert();
 
 // vim:et:sts=4:sw=4:
