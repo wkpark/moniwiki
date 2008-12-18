@@ -27,7 +27,7 @@ readLanguage = function(domain) {
         var head = document.getElementsByTagName("head")[0];
         var js = document.createElement('script');
         js.type = 'text/javascript';
-        js.src = _url_prefix + '/local/js/lang/' + lang.substr(0,2) + '/' + domain + '.js';
+        js.src = _url_prefix + '/local/js/locale/' + lang.substr(0,2) + '/' + domain + '.js';
         head.appendChild(js);
     }
 }
