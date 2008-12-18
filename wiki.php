@@ -4030,13 +4030,18 @@ class Formatter {
       $out='';
       $packed='';
       $pjs = array();
-      $keys = array_keys($this->java_scripts);
-      $uniq = md5(implode(';',$keys));
+      $keys = array();
+      foreach ($this->java_scripts as $k=>$js)
+        if (!empty($js)) $keys[]=$k;
 
+      if (empty($keys)) return '';
+      $uniq = md5(implode(';',$keys));
       $cache=new Cache_text('js',2,'html');
 
-      #
-      if ($cache->exists($uniq)) return $cache->fetch($uniq);
+      if ($cache->exists($uniq)) {
+        foreach ($keys as $k) $this->java_scripts[$k]='';
+        return $cache->fetch($uniq);
+      }
 
       foreach ($this->java_scripts as $k=>$js) {
         if ($js) {
