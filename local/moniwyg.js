@@ -4,6 +4,19 @@
 // $Id$
 //
 //_url_prefix="/wiki";
+//
+
+if ( typeof N_ == 'undefined') {
+    N_ = function(msgid) {
+        return msgid;
+    };
+}
+
+if ( typeof _ == 'undefined') {
+    _ = function(msgid) {
+        return msgid;
+    };
+}
 
 Wikiwyg.browserIsSupported = (
     Wikiwyg.is_gecko ||
@@ -1905,6 +1918,19 @@ proto.initializeObject = function() {
 
 proto = Wikiwyg.Toolbar.prototype;
 
+proto.make_button = function(type, label) {
+    var base = this.config.imagesLocation;
+    var ext = this.config.imagesExtension;
+    return Wikiwyg.createElementWithAttrs(
+        'img', {
+            'class': 'wikiwyg_button',
+            alt: _(label),
+            title: _(label),
+            src: base + type + ext
+        }
+    );
+}
+
 proto.addControlItem = function(text, method,arg) {
     var span = Wikiwyg.createElementWithAttrs(
         'span', { 'class': 'wikiwyg_control_link' }
@@ -1913,7 +1939,7 @@ proto.addControlItem = function(text, method,arg) {
     var link = Wikiwyg.createElementWithAttrs(
         'input', {
             type: 'button',
-            value: text
+            value: _(text)
         }
     );
     //link.appendChild(document.createTextNode(text));
@@ -1948,11 +1974,39 @@ proto.config.controlLayout = [
     'smiley'
 ];
 
-proto.config.controlLabels.math = 'Math';
-proto.config.controlLabels.nowiki = 'As Is';
-proto.config.controlLabels.image = 'Image';
-proto.config.controlLabels.media = 'Media';
-proto.config.controlLabels.quote = 'Quote';
+proto.config.controlLabels = {
+    save: N_("Save"),
+    preview: N_("Preview"),
+    cancel: N_("Cancel"),
+    bold: N_("Bold (Ctrl+b)"),
+    italic: N_("Italic (Ctrl+i)"),
+    underline: N_("Underline (Ctrl+u)"),
+    strike: N_("Strike Through (Ctrl+d)"),
+    hr: N_("Horizontal Rule"),
+    ordered: N_("Numbered List"),
+    unordered: N_("Bulleted List"),
+    indent: N_("More Indented"),
+    outdent: N_("Less Indented"),
+    help: N_("About Wikiwyg"),
+    label: N_("[Style]"),
+    p: N_("Normal Text"),
+    pre: N_("Preformatted"),
+    h1: N_("Heading 1"),
+    h2: N_("Heading 2"),
+    h3: N_("Heading 3"),
+    h4: N_("Heading 4"),
+    h5: N_("Heading 5"),
+    h6: N_("Heading 6"),
+    link: N_("Create Link"),
+    smiley: N_("Smiley"),
+    unlink: N_("Remove Linkedness"),
+    table: N_("Create Table"),
+    math: N_("Math"),
+    nowiki: N_("As Is"),
+    image: N_("Image"),
+    media: N_("Media"),
+    quote: N_("Quote")
+};
 
 proto = Wikiwyg.Wikitext.prototype;
 proto.config.markupRules.bold = ['bound_phrase', "'''", "'''"];
