@@ -4031,7 +4031,6 @@ class Formatter {
       $packed='';
       $pjs = array();
       $keys = array_keys($this->java_scripts);
-      sort($keys);
       $uniq = md5(implode(';',$keys));
 
       $cache=new Cache_text('js',2,'html');
@@ -4078,7 +4077,6 @@ class Formatter {
 
         }
       }
-      sort($pjs);
       $suniq = md5(implode(';',$pjs));
 
       $fc = new Cache_text('js',2,'js',$Config['cache_public_dir']);
