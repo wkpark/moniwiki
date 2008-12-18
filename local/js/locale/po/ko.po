@@ -5,13 +5,145 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoniWiki 1.1.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-12-18 19:19+0900\n"
+"POT-Creation-Date: 2008-12-18 21:45+0900\n"
 "PO-Revision-Date: 2008-12-18 17:00+0900\n"
 "Last-Translator: Won-Kyu Park <wkpark@kldp.org>\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
+#: ../../moniwyg.js:1978
+msgid "Save"
+msgstr "저장"
+
+#: ../../moniwyg.js:1979
+msgid "Preview"
+msgstr "미리보기"
+
+#: ../../moniwyg.js:1980
+msgid "Cancel"
+msgstr "취소"
+
+#: ../../moniwyg.js:1981
+msgid "Bold (Ctrl+b)"
+msgstr "굵게 (Ctrl-b)"
+
+#: ../../moniwyg.js:1982
+msgid "Italic (Ctrl+i)"
+msgstr "기울임 (Ctrl+i)"
+
+#: ../../moniwyg.js:1983
+msgid "Underline (Ctrl+u)"
+msgstr "밑줄 (Ctrl+u)"
+
+#: ../../moniwyg.js:1984
+msgid "Strike Through (Ctrl+d)"
+msgstr "삭제선 (Ctrl+d)"
+
+#: ../../moniwyg.js:1985
+msgid "Horizontal Rule"
+msgstr "수평줄"
+
+#: ../../moniwyg.js:1986
+msgid "Numbered List"
+msgstr "숫자 리스트"
+
+#: ../../moniwyg.js:1987
+msgid "Bulleted List"
+msgstr "총알 리스트"
+
+#: ../../moniwyg.js:1988
+msgid "More Indented"
+msgstr "들여쓰기"
+
+#: ../../moniwyg.js:1989
+msgid "Less Indented"
+msgstr "내어쓰기"
+
+#: ../../moniwyg.js:1990
+msgid "About Wikiwyg"
+msgstr "Wikiwyg는"
+
+#: ../../moniwyg.js:1991
+msgid "[Style]"
+msgstr ""
+
+#: ../../moniwyg.js:1992
+msgid "Normal Text"
+msgstr "일반 글씨"
+
+#: ../../moniwyg.js:1993
+msgid "Preformatted"
+msgstr ""
+
+#: ../../moniwyg.js:1994
+msgid "Heading 1"
+msgstr "제목 1"
+
+#: ../../moniwyg.js:1995
+msgid "Heading 2"
+msgstr "제목 2"
+
+#: ../../moniwyg.js:1996
+msgid "Heading 3"
+msgstr "제목 3"
+
+#: ../../moniwyg.js:1997
+msgid "Heading 4"
+msgstr "제목 4"
+
+#: ../../moniwyg.js:1998
+msgid "Heading 5"
+msgstr "제목 5"
+
+#: ../../moniwyg.js:1999
+msgid "Heading 6"
+msgstr "제목 6"
+
+#: ../../moniwyg.js:2000
+msgid "Create Link"
+msgstr "링크 생성"
+
+#: ../../moniwyg.js:2001
+msgid "Smiley"
+msgstr "스마일리"
+
+#: ../../moniwyg.js:2002
+msgid "Remove Linkedness"
+msgstr "링크 제거"
+
+#: ../../moniwyg.js:2003
+msgid "Create Table"
+msgstr "테이블"
+
+#: ../../moniwyg.js:2004
+msgid "Math"
+msgstr "수식"
+
+#: ../../moniwyg.js:2005
+msgid "As Is"
+msgstr "그대로"
+
+#: ../../moniwyg.js:2006
+msgid "Image"
+msgstr "이미지"
+
+#: ../../moniwyg.js:2007
+msgid "Media"
+msgstr "미디어"
+
+#: ../../moniwyg.js:2008
+msgid "Quote"
+msgstr "인용"
+
 #: dummy.js:1
 msgid "Continue to edit current text ?"
 msgstr "현재의 텍스트를 계속 편집하시겠습니까 ?"
+
+#: dummy.js:2
+msgid "Canceled!"
+msgstr "취소되었습니다!"
+
+#: dummy.js:3
+msgid "Please select the text you would like to turn into a link."
+msgstr "링크로 바꾸고 싶은 텍스트를 선택해주시기 바랍니다."

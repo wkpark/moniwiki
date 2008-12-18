@@ -60,6 +60,7 @@ then
     exit 0
 fi
 
+ls ../../*.js | sed 's|^|${POT_FILE}: |;' >> Makefile.new
 cat >> Makefile.new <<'MAIN'
 ${POT_FILE}: dummy.js
 MAIN
