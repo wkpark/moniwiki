@@ -66,7 +66,7 @@ uploadComplete = function(fileObj) {
 }
 
 uploadCancel = function() {
-    alert("Cancel!");
+    alert("Canceled!");
 }
 
 function delFiles() {
