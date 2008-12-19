@@ -50,7 +50,6 @@ if (Wikiwyg.is_ie) {
 }
 
 Wikiwyg.Mode.prototype.execute_scripts = function(el,scripts) {
-    var doc;
     var iframe=null;
 
     if (this.classname.match(/(Wysiwyg)/)) {
@@ -511,7 +510,7 @@ Wikiwyg.prototype.saveChanges = function() {
         f.setAttribute('class','errorLog');
         // show error XXX
         f.innerHTML=form;
-        alert('Can\'t save.'); // XXX
+        alert("Can't save."); // XXX
     }
 
     return;
@@ -1950,7 +1949,7 @@ proto.addControlItem = function(text, method,arg) {
         method=method+'("'+arg+'")';
         this.controls=this.controls ? ','+arg:arg;
     } else method=method+'()';
-    link.onclick = function() { eval('self.wikiwyg.' + method); return false };
+    link.onclick = function() { eval('self.wikiwyg.' + method); return false; };
 
     this.div.appendChild(span);
 }
