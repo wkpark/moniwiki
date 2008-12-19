@@ -3,10 +3,20 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a SFD Fontforge glyph rendering plugin for the MoniWiki
 //
-// $Id$
+//
+// Author: Won-Kyu Park <wkpark@kldp.org>
+// Since: 2008-05-20
+// Date: 2008-12-19
+// Name: a FontForge sfd renderer
+// Description: a FontForge sfd glyph renderer
+// URL: MoniWiki:FontForgePlugin
+// Version: $Revision$
+// License: GPL
 // Usage: {{{#!sfd
 // sfd char file
 // }}}
+//
+// $Id$
 
 function processor_sfd($formatter,$value="") {
     global $DBInfo;
@@ -26,8 +36,8 @@ function processor_sfd($formatter,$value="") {
         $vartmp_dir=getenv('TEMP');
         #$convert="wconvert";
     }
-    $cache_dir=$DBInfo->upload_dir."/PIC";
-    $cache_url=$DBInfo->upload_url ? $DBInfo->upload_url.'/PIC':
+    $cache_dir=$DBInfo->upload_dir."/SFD";
+    $cache_url=$DBInfo->upload_url ? $DBInfo->upload_url.'/SFD':
     $DBInfo->url_prefix.'/'.$cache_dir;
 
     if ($value[0]=='#' and $value[1]=='!')
