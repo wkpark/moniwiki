@@ -67,9 +67,12 @@ function macro_Gallery($formatter,$value,&$options) {
   $sort=$options['sort'] ? $options['sort']:'';
   $nocomment=$options['nocomment'] ? $options['nocomment']:'';
 
-  if ($DBInfo->gallery_use_lightbox and $DBInfo->use_lightbox) {
+  if (!empty($DBInfo->gallery_use_lightbox) and !empty($DBInfo->use_lightbox)) {
     $use_lightbox=1;
-    $href_attr=' rel="lightbox[gallery]" ';
+    if (is_string($DBInfo->gallery_use_lightbox))
+      $href_attr=' rel="'. $DBInfo->gallery_use_lightbox .'[gallery]" ';
+    else
+      $href_attr=' rel="lightbox[gallery]" ';
   }
 
   // parse args
