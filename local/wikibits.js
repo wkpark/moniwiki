@@ -18,6 +18,18 @@ if (clientPC.indexOf('opera')!=-1) {
     var is_opera_seven = (window.opera && document.childNodes);
 }
 
+if ( typeof N_ == 'undefined') {
+    N_ = function(msgid) {
+        return msgid;
+    };
+}
+
+if ( typeof _ == 'undefined') {
+    _ = function(msgid) {
+        return msgid;
+    };
+}
+
 // add any onload functions in this hook (please don't hard-code any events in the xhtml source)
 function onloadhook () {
     // don't run anything below this for non-dom browsers
@@ -46,10 +58,10 @@ if( window.top != window ) window.top.location = window.location;
 // we use it to avoid creating the toolbar where javascript is not enabled
 function addButton(imageFile, speedTip, tagOpen, tagClose, sampleText) {
 
-	speedTip=escapeQuotes(speedTip);
+	speedTip=escapeQuotes(_(speedTip));
 	tagOpen=escapeQuotes(tagOpen);
 	tagClose=escapeQuotes(tagClose);
-	sampleText=escapeQuotes(sampleText);
+	sampleText=escapeQuotes(_(sampleText));
 	var mouseOver="";
 
 	// we can't change the selection, so we show example texts
@@ -72,6 +84,7 @@ function addButton(imageFile, speedTip, tagOpen, tagClose, sampleText) {
 
 function addLinkButton(imageFile,speedTip,id,once) {
 	var off=once ? 'true':'false';
+	speedTip=escapeQuotes(_(speedTip));
 	document.write("<input type='image' onclick=\"javascript:openChooser(this,'" + id + "'," + off + ");\"");
         document.write(" width=\"22\" height=\"22\" src=\""+imageFile+"\" border=\"0\" alt=\""+speedTip+"\" title=\""+speedTip+"\""+" />");
 	return;
@@ -114,7 +127,7 @@ function openChooser(el,id,once) {
 }
 
 function addInfobox(infoText,text_alert) {
-	alertText=text_alert;
+	alertText=_(text_alert);
 	var clientPC = navigator.userAgent.toLowerCase(); // Get client info
 
 	var re=new RegExp("\\\\n","g");
@@ -124,7 +137,7 @@ function addInfobox(infoText,text_alert) {
 	// document.selection is an IE-only property. The full toolbar works in IE and
 	// Gecko-based browsers.
 	if(!document.selection && !is_gecko && !is_safari) {
- 		infoText=escapeQuotesHTML(infoText);
+ 		infoText=escapeQuotesHTML(_(infoText));
 	 	document.write("<form name='infoform' id='infoform'>"+
 			"<input size=80 id='infobox' name='infobox' value=\""+
 			infoText+"\" READONLY></form>");
