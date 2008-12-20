@@ -91,8 +91,9 @@ if [ ! -f "$CHECKSUM" ];then
 fi
 
 UPGRADE=`diff checksum-current checksum-new |grep '^<'|cut -d' ' -f4`
+NEW=`diff checksum-current checksum-new |grep '^\(<\|>\)' | cut -d' ' -f4|sort |uniq`
 
-if [ -z "$UPGRADE" ]; then
+if [ -z "$UPGRADE" ] && [ -z "$NEW" ] ; then
 	rm -r $TMP
 	$FAILURE
 	echo "You have already installed the latest version"
@@ -129,28 +130,35 @@ else
         BACKUP=$TMP/$PACKAGE-$DATE
 fi
 $MESSAGE
-echo "*** Backup the old files ***"
-$NORMAL
-mkdir -p $BACKUP
-tar cf - $UPGRADE|(cd $BACKUP;tar xvf -)
 
-if [ x$TYPE = xt ]; then
-	SAVED="backup/$DATE.tar.gz"
-        (cd $TMP; tar czvf ../backup/$DATE.tar.gz $PACKAGE-$DATE)
-        $MESSAGE
-        echo "   Old files are backuped as a backup/$DATE.tar.gz"
-        $NORMAL
-elif [ x$TYPE = xp ]; then
-	SAVED="backup/$PACKAGE-$DATE.diff"
-        (cd $TMP; diff -ru moniwiki-$DATE $PACKAGE > ../backup/$PACKAGE-$DATE.diff )
-        $MESSAGE
-        echo "   Old files are backuped as a backup/$PACKAGE-$DATE.diff"
-        $NORMAL
+if [ ! -z "$UPGRADE" ]; then
+	echo "*** Backup the old files ***"
+	$NORMAL
+	mkdir -p $BACKUP
+	tar cf - $UPGRADE|(cd $BACKUP;tar xvf -)
+
+	if [ x$TYPE = xt ]; then
+		SAVED="backup/$DATE.tar.gz"
+        	(cd $TMP; tar czvf ../backup/$DATE.tar.gz $PACKAGE-$DATE)
+        	$MESSAGE
+        	echo "   Old files are backuped as a backup/$DATE.tar.gz"
+        	$NORMAL
+	elif [ x$TYPE = xp ]; then
+		SAVED="backup/$PACKAGE-$DATE.diff"
+        	(cd $TMP; diff -ru moniwiki-$DATE $PACKAGE > ../backup/$PACKAGE-$DATE.diff )
+        	$MESSAGE
+        	echo "   Old files are backuped as a backup/$PACKAGE-$DATE.diff"
+        	$NORMAL
+	else
+		SAVED="$BACKUP/ dir"
+        	$MESSAGE
+        	echo "   Old files are backuped to the $SAVED"
+        	$NORMAL
+	fi
 else
-	SAVED="$BACKUP/ dir"
-        $MESSAGE
-        echo "   Old files are backuped to the $SAVED"
-        $NORMAL
+	$WARNING
+	echo " You don't need to backup files !"
+	$NORMAL
 fi
 
 $WARNING
@@ -171,7 +179,7 @@ if [ x$YES != xyes ]; then
 	echo "' to real upgrade"
 	exit -1
 fi
-(cd $TMP/$PACKAGE;tar cf - $UPGRADE|(cd ../..;tar xvf -))
+(cd $TMP/$PACKAGE;tar cf - $NEW|(cd ../..;tar xvf -))
 rm -r $TMP
 $SUCCESS
 echo
