@@ -4020,6 +4020,7 @@ class Formatter {
     global $Config;
     if (!empty($Config['use_jspacker']) and !empty($Config['cache_public_dir'])) {
       include_once('lib/fckpacker.php'); # good but not work with prototype.
+      define ('JS_PACKER','FCK_Packer/MoniWiki');
       $constProc = new FCKConstantProcessor();
       #$constProc->RemoveDeclaration = false ;
       #include_once('lib/jspacker.php'); # bad!
@@ -4091,8 +4092,10 @@ class Formatter {
       $out.='<script type="text/javascript" src="'.$Config['cache_public_url'].'/'.$jsname.'"></script>'."\n";
       $cache->update($uniq,$out);
 
+      $ver = FCKJavaScriptCompressor::Revision();
+      $header='/* '.JS_PACKER.' '.$ver.' '.md5($packed).' '.date('Y-m-d H:i:s').' */'."\n";
       # save real compressed js file.
-      $fc->_save($Config['cache_public_dir'].'/'.$jsname,$packed);
+      $fc->_save($Config['cache_public_dir'].'/'.$jsname,$header.$packed);
       return $out;
     }
     $out='';
@@ -4603,15 +4606,16 @@ MSG;
         $menu[]=$this->link_repl($item,$attr);
       }
     }
-    if ($DBInfo->use_titlemenu and $titlemnu == 0 ) {
+    if (!empty($DBInfo->use_titlemenu) and $titlemnu == 0 ) {
+      $len = $DBInfo->use_titlemenu > 15 ? $DBInfo->use_titlemenu:15;
       #$attr="class='current'";
       # XXX make title more shorter ?
       $mnuname=htmlspecialchars($this->page->name);
       if ($DBInfo->hasPage($this->page->name)) {
-        if (strlen($mnuname) < 15) {
+        if (strlen($mnuname) < $len) {
           $menu[]=$this->word_repl($mypgname,$mnuname,$attr);
         } else if (function_exists('mb_strimwidth')) {
-          $my=mb_strimwidth($mypgname,0,15,'...');
+          $my=mb_strimwidth($mypgname,0,$len,'...');
           $menu[]=$this->word_repl($mypgname,htmlspecialchars($my),$attr);
         }
       }
