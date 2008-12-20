@@ -69,9 +69,9 @@ TMP=.tmp$$
 $MESSAGE
 echo "*** Extract tarball ***"
 $NORMAL
-mkdir -p $TMP
-echo tar xzf $TAR -C$TMP
-tar xzf $TAR -C$TMP
+mkdir -p $TMP/$PACKAGE
+echo tar xzf $TAR --strip-components=1 -C$TMP/$PACKAGE
+tar xzf $TAR --strip-components=1 -C$TMP/$PACKAGE
 $MESSAGE
 echo "*** Make the checksum list for the new version ***"
 $NORMAL
@@ -93,6 +93,7 @@ fi
 UPGRADE=`diff checksum-current checksum-new |grep '^<'|cut -d' ' -f4`
 
 if [ -z "$UPGRADE" ]; then
+	rm -r $TMP
 	$FAILURE
 	echo "You have already installed the latest version"
 	$NORMAL
@@ -107,7 +108,7 @@ echo -n " What type of backup do you want to ? ("
 $MAGENTA
 echo -n B
 $WARNING
-echo -n "ackup/"
+echo -n "ackup(default)/"
 $MAGENTA
 echo -n t
 $WARNING
@@ -175,7 +176,6 @@ rm -r $TMP
 $SUCCESS
 echo
 echo "$PACKAGE is successfully upgraded."
-echo
 echo
 echo "   All different files are       "
 echo "       backuped in the           "
