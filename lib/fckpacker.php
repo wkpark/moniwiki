@@ -219,9 +219,14 @@ class FCKJavaScriptCompressor
     // Call it statically. E.g.: FCKJavaScriptCompressor::Compress( ... )
     function Compress( $script, $constantsProcessor )
     {
+        // detect cr and replace it with "\n"
+        preg_match('/[\r\n]/s', $script, $cr);
+        if (!empty($cr[0]) and $cr[0] != "\n")
+            $script = str_replace($cr[0],"\n",$script);
+
         // Concatenates all string with escaping new lines strings (ending with \).
         $script = preg_replace(
-            '/\\\\[\n\r]+/s',
+            '/\\\\\n+/s',
             '\n', $script ) ;
 
         $stringsProc = new FCKStringsProcessor() ;
@@ -229,49 +234,49 @@ class FCKJavaScriptCompressor
         // Protect the script strings.
         $script = $stringsProc->ProtectStrings( $script ) ;
 
-        // Remove "/* */" comments
+        // Remove "/* */" "//" comments
         $script = preg_replace(
-            '/(?<!\/)\/\*.*?\*\//s',
-            '', $script ) ;
-
-        // Remove "//" comments
-        $script = preg_replace(
-                '/\/\/.*$/m',
-                '', $script ) ;
+            array('/(?<!\/)\/\*.*?\*\//s', '/\/\/.*$/m'),
+            array('',''),
+            $script ) ;
         
         // Remove spaces before the ";" at the end of the lines
-        $script = preg_replace(
-            '/\s*(?=;\s*$)/m',
-            '', $script ) ;
+        //$script = preg_replace(
+        //    '/\s*(?=;\s*$)/m',
+        //    '', $script ) ;
 
         // Remove spaces next to "="
-        $script = preg_replace(
-            '/^([^"\'\r\n]*?)\s*=\s*/m',
-            '$1=', $script ) ;
+        //$script = preg_replace(
+        //    '/^([^"\'\r\n]*?)\s*=\s*/m',
+        //    '$1=', $script ) ;
 
         // Remove spaces on "()": "( content )" = "(content)"
-        $script = preg_replace(
-            '/^([^\r\n""\']*?\()\s+(.*?)\s+(?=\)[^\)]*$)/m',
-            '$1$2', $script ) ;
+        //$script = preg_replace(
+        //    '/^([^\r\n""\']*?\()\s+(.*?)\s+(?=\)[^\)]*$)/m',
+        //    '$1$2', $script ) ;
 
         // Concatenate lines that doesn't end with [;{}] using a space
         $script = preg_replace(
-            '/(?<![;{}\n\r\s])\s*[\n\r]+\s*(?![\s\n\r{}])/s',
+            '/(?<![;{}\n\s])\s*\n+\s*(?![\s\n{}])/s',
             ' ', $script ) ;
 
         // Concatenate lines that end with "}" using a "\n", except for "else",
         // "while", "catch" and "finally" cases, or when followed by, "'", ";",
         // "}", ")" or "]".
         $script = preg_replace(
-            '/\s*}\s*[\n\r]+\s*(?!\s*(else|catch|finally|while|[\]}\),;]))/s',
+            '/\s*}\s*\n+\s*(?!\s*(else|catch|finally|while|[\]}\),;]))/s',
             "}\n", $script ) ;
 
-	// Concat lines that end with ";"
-        $script = preg_replace('/\s*;\s*[\n\r]+\s*/s',';', $script ) ;
+	// Concat lines that end with ";" or "{"
+        // $script = preg_replace('/\s*([;{])\s*[\n\r]+\s*/s','\\1', $script ) ;
+        $script = preg_replace('/\s*([;{])\s*/s','\\1', $script ) ;
 
         // Remove blank lines, spaces at the begining or the at the end and \n\r
+        //$script = preg_replace(
+        //    '/(^\s*$)|(^\s+)|(\s+$\n)/m',
+        //    '', $script ) ;
         $script = preg_replace(
-            '/(^\s*$)|(^\s+)|(\s+$\n)/m',
+            '/(^\s*$)|(^\s+)/m',
             '', $script ) ;
 
         // Remove the spaces between statements.
@@ -282,15 +287,10 @@ class FCKJavaScriptCompressor
         if ( $constantsProcessor->HasConstants )
             $script = $constantsProcessor->Process( $script );
 
-        // Replace "new Object()".
+        // Replace "new Object()" "new Array()".
         $script = preg_replace(
-            '/new Object\(\)/',
-            '{}', $script ) ;
-
-        // Replace "new Array()".
-        $script = preg_replace(
-            '/new Array\(\)/',
-            '[]', $script ) ;
+            array('/new\s+Object\(\)/','/new\s+Array\(\)/'),
+            array('{}','[]'), $script ) ;
 
         // Process function contents, renaming parameters and variables.
         $script = FCKJavaScriptCompressor::_ProcessFunctions( $script ) ;
