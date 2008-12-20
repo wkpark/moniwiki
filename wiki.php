@@ -2664,7 +2664,7 @@ class Formatter {
   }
 
   function nonexists_simple($word,$url) {
-    return "<a class='nonexistent' href='$url'>?</a>$word";
+    return "<a class='nonexistent nomarkup' href='$url'>?</a>$word";
   }
 
   function nonexists_nolink($word,$url) {
@@ -2692,7 +2692,7 @@ class Formatter {
         $link=strtok($word,';').';';$last=strtok('');
       } else
         $last=substr($word,1);
-      return "<a class='nonexistent' href='$url'>$link</a>".$last;
+      return "<span><a class='nonexistent' href='$url'>$link</a>".$last.'<span>';
     }
     if (strtolower($DBInfo->charset) == 'utf-8')
       $utfword=$word;
