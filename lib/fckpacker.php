@@ -220,7 +220,7 @@ class FCKJavaScriptCompressor
     function Compress( $script, $constantsProcessor )
     {
         // detect cr and replace it with "\n"
-        preg_match('/[\r\n]/s', $script, $cr);
+        preg_match('/(\r\n|\r|\n)/s', $script, $cr);
         if (!empty($cr[0]) and $cr[0] != "\n")
             $script = str_replace($cr[0],"\n",$script);
 
