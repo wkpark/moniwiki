@@ -143,6 +143,12 @@ $perma_icon='&#xB6;';
 #$password_length=6;
 #$use_convert_thumbs=0; # for GalleryMacro
 
+$myprocessors=array('syntax'=>'vim','sh'=>'vim','csh'=>'vim',
+	'c'=>'vim','cpp'=>'vim','perl'=>'vim','lisp'=>'vim',
+	'asm'=>'vim','masm'=>'vim','make'=>'vim',
+	'java'=>'vim','ruby'=>'vim','haskell'=>'vim',
+	'awk'=>'vim','nosyntax'=>'vim','make'=>'vim',
+);
 #$myprocessors=array('latex'=>'mimetex');
 #$myplugins=array('FullSearch'=>'FastSearch'); # substitute action/macro
 #$inline_latex='mimetex';
@@ -236,6 +242,9 @@ $use_resume_download=1;
 $use_save_refresh=2;
 $use_refresh=2;
 #$cache_public_dir='./_cache'; # enhanced caching
+$cachetime=0;
+$cache_public_dir='./_cache';
+$cache_public_url=$url_prefix.'/_cache';
 #$no_404=1; # for IIS
 #$nofancy_404=1; # simplified 404 msg for robots etc.
 #$toolbar_iconset='mediawiki'; # change the toolbar iconset 
