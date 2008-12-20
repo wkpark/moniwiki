@@ -12,6 +12,8 @@
 # to update the Makefile.
 #
 
+test -f Makefile || cp -f Makefile.in Makefile
+
 # Generate the head (manually-edited part) of the new Makefile
 #
 makefile_head () {
