@@ -163,7 +163,7 @@ class FCKFunctionProcessor
 
     function _ProcessVars( $source, $vars )
     {
-        $protected = array('self','event');
+        $protected = array('self','event'); // workaround for eval()
         foreach ( $vars as $var )
         {
             if ( strlen( $var) > 2 and !in_array($var, $protected))
@@ -183,7 +183,7 @@ class FCKFunctionProcessor
 
         $var = $this->_VarPrefix . $this->_VarChars[ $this->_LastCharIndex++ ] ;
 
-        if ( preg_match( '/(?<!\w|\d|\.)' . preg_quote( $var ) . '(?!\w|\d|:)/', $this->_Function ) )
+        if ( preg_match( '/(?<!\w|\d|\.)' . preg_quote( $var ) . '(?!\w|\d)/', $this->_Function ) )
             return $this->_GetVarName() ;
         else
             return $var ;
@@ -210,6 +210,11 @@ class FCKJavaScriptCompressor
 {
     function FCKJavaScriptCompressor()
     {}
+
+    function Revision()
+    {
+        return trim(substr('$Revision$',10,-1));
+    }
 
     // Call it statically. E.g.: FCKJavaScriptCompressor::Compress( ... )
     function Compress( $script, $constantsProcessor )
@@ -249,11 +254,6 @@ class FCKJavaScriptCompressor
             '/^([^\r\n""\']*?\()\s+(.*?)\s+(?=\)[^\)]*$)/m',
             '$1$2', $script ) ;
 
-        # Remove spaces on "if|else (": "if|else (" = "if|else("
-        #$script = preg_replace(
-        #   '/^([^\r\n""\']*?(?:if|else))\s+\(/m',
-        #   '$1(', $script ) ;
-
         // Concatenate lines that doesn't end with [;{}] using a space
         $script = preg_replace(
             '/(?<![;{}\n\r\s])\s*[\n\r]+\s*(?![\s\n\r{}])/s',
@@ -275,7 +275,7 @@ class FCKJavaScriptCompressor
             '', $script ) ;
 
         // Remove the spaces between statements.
-        #$script = FCKJavaScriptCompressor::_RemoveInnerSpaces( $script ) ;
+        $script = FCKJavaScriptCompressor::_RemoveInnerSpaces( $script ) ;
         # error with mootools
 
         // Process constants.   // CHECK
@@ -306,9 +306,14 @@ class FCKJavaScriptCompressor
 
     function _RemoveInnerSpaces( $script )
     {
-        return preg_replace_callback(
-            '/(?:\s*[=?:+\-*\/&,;><|!]\s*)|(?:[(\[]\s+)|(?:\s+[)\]])/',
-            array( 'FCKJavaScriptCompressor', '_RemoveInnerSpacesMatch' ), $script ) ;
+        $script = preg_replace('/([:=?+\-*\/&,;><|!{}\[\]\(\)])[ ]+(?=\S)/', '\\1', $script);
+        $script = preg_replace('/(?<=\S)[ ]+([:=?+\-*\/&,;><|!{}\[\]\(\)])/', '\\1', $script);
+        // workaround for a = (b) ? c:d; case. c is not a object menber.
+        $script = preg_replace('/(?<=\?)([^:]+):/', ' \\1 :', $script);
+        return $script;
+        #return preg_replace_callback(
+        #    '/(?:\s*[=?:+\-*\/&,;><|!]\s*)|(?:[(\[]\s+)|(?:\s+[)\]])/',
+        #    array( 'FCKJavaScriptCompressor', '_RemoveInnerSpacesMatch' ), $script ) ;
     }
 
     function _RemoveInnerSpacesMatch( $match )
@@ -367,7 +372,9 @@ class FCKStringsProcessor
     {
         // Catches string literals, regular expressions and conditional comments.
         return preg_replace_callback(
-            '/(?:("|\').*?(?<!\\\\)\1)|(?:(?<![\*\/\\\\])\/[^\/\*].*?(?<!\\\\)\/(?=([\.\w])|(\s*[,;}\)])))|(?s:\/\*@(?:cc_on|if|elif|else|end).*?@\*\/)/',
+            // http://blog.stevenlevithan.com/archives/match-quoted-string
+            #'/(?:("|\').*?(?<!\\\\)\1)|(?:(?<![\*\/\\\\])\/[^\/\*].*?(?<!\\\\)\/(?=([\.\w])|(\s*[,;}\)])))|(?s:\/\*@(?:cc_on|if|elif|else|end).*?@\*\/)/',
+            '/(?:(["\'])(?:\\\\?+.)*?\1)|(?:(?<![\*\/\\\\])\/[^\/\*].*?(?<!\\\\)\/(?=([\.\w])|(\s*[,;}\)])))|(?s:\/\*@(?:cc_on|if|elif|else|end).*?@\*\/)/',
             array( &$this, '_ProtectStringsMatch' ), $source ) ;
     }
 
