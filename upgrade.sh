@@ -101,13 +101,57 @@ fi
 $MESSAGE
 echo "*** Backup the old files ***"
 $NORMAL
+
+$WARNING
+echo -n " What type of backup do you want to ? ("
+$MAGENTA
+echo -n B
+$WARNING
+echo -n "ackup/"
+$MAGENTA
+echo -n t
+$WARNING
+echo -n "ar/"
+$MAGENTA
+echo -n p
+$WARNING
+echo "atch) "
+$NORMAL
+
+echo "   (Type 'B/t/p')"
+read TYPE
+
 DATE=`date +%Y%m%d-%s`
-BACKUP=backup/$DATE
+if [ x$TYPE != xt ] && [ x$TYPE != xp ] ; then
+        BACKUP=backup/$DATE
+else
+        BACKUP=$TMP/$PACKAGE-$DATE
+fi
+$MESSAGE
+echo "*** Backup the old files ***"
+$NORMAL
 mkdir -p $BACKUP
 tar cf - $UPGRADE|(cd $BACKUP;tar xvf -)
-$MESSAGE
-echo "   Old files are backuped to the $BACKUP/ dir"
-$NORMAL
+
+if [ x$TYPE = xt ]; then
+	SAVED="backup/$DATE.tar.gz"
+        (cd $TMP; tar czvf ../backup/$DATE.tar.gz $PACKAGE-$DATE)
+        $MESSAGE
+        echo "   Old files are backuped as a backup/$DATE.tar.gz"
+        $NORMAL
+elif [ x$TYPE = xp ]; then
+	SAVED="backup/$PACKAGE-$DATE.diff"
+        (cd $TMP; diff -ru moniwiki-$DATE $PACKAGE > ../backup/$PACKAGE-$DATE.diff )
+        $MESSAGE
+        echo "   Old files are backuped as a backup/$PACKAGE-$DATE.diff"
+        $NORMAL
+else
+	SAVED="$BACKUP/ dir"
+        $MESSAGE
+        echo "   Old files are backuped to the $SAVED"
+        $NORMAL
+fi
+
 $WARNING
 echo " Are your really want to upgrade $PACKAGE ?"
 $NORMAL
@@ -129,10 +173,11 @@ fi
 (cd $TMP/$PACKAGE;tar cf - $UPGRADE|(cd ../..;tar xvf -))
 rm -r $TMP
 $SUCCESS
+echo
 echo "$PACKAGE is successfully upgraded."
-echo ""
-echo ""
+echo
+echo
 echo "   All different files are       "
 echo "       backuped in the           "
-echo "       $BACKUP dir now. :)       "
+echo "       $SAVED now. :)       "
 $NORMAL
