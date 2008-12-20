@@ -73,6 +73,32 @@ mkdir -p $TMP/$PACKAGE
 echo tar xzf $TAR --strip-components=1 -C$TMP/$PACKAGE
 tar xzf $TAR --strip-components=1 -C$TMP/$PACKAGE
 $MESSAGE
+
+echo "*** Check new upgrade.sh script ***"
+DIFF=$(diff $0 $TMP/$PACKAGE/upgrade.sh)
+if [ ! -z "$DIFF" ]; then
+	$FAILURE
+	echo "WARN: new upgrade.sh script found ***"
+	$NORMAL
+	cp -f $TMP/$PACKAGE/upgrade.sh up.sh
+	$WARNING
+	echo " new upgrade.sh file was copied as 'up.sh'"
+	echo " Please execute following command"
+	echo
+	$MAGENTA
+	echo " sh up.sh $TAR"
+	echo
+	$WARNING
+	echo -n "Ignore it and try to continue ? (y/N) "
+	read YES
+	if [ x$YES != xy ]; then
+		rm -r $TMP
+		$NORMAL
+		exit;
+	fi
+fi
+
+$MESSAGE
 echo "*** Make the checksum list for the new version ***"
 $NORMAL
 
