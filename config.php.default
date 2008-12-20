@@ -117,6 +117,7 @@ $hr='';
 #EOF;
 # alternatively you can use the $javascripts option
 $javascripts=array(
+	'js/i18n.js',
 	'Wikiwyg/lib/Wikiwyg.js',
 	'Wikiwyg/lib/Wikiwyg/Util.js',
 	'Wikiwyg/lib/Wikiwyg/Toolbar.js',

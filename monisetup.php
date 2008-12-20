@@ -210,8 +210,8 @@ class MoniConfig {
          $t=@eval("\$$key=\"$val\";");
          $val=$save_val;
       } else if (is_string($val)) {
+         $val = str_replace('&gt;','>',$val);
          if (strpos($val,"\n")===false) {
-           $val = str_replace('&gt;','>',$val);
            $t=eval("\$$key=$val;");
          } else {
            $t=@eval("\$$key=$val;");
