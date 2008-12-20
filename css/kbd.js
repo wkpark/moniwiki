@@ -133,9 +133,9 @@ function keypresshandler(e) {
         if (go) {
 		goValue=go.elements['value'];
 		goAction=go.elements['action'];
-		goStatus=go.elements['status'];
+		goStatus=go.elements['status'] || null;
 		val = goValue.value || "", act="goto";
-		stat = goStatus.value || "Go";
+		stat = goStatus ? goStatus.value:null;
         } else {
 		val = "", act="goto";
 		stat = "Go";
@@ -195,7 +195,7 @@ function keypresshandler(e) {
 				if (val == "/" || val == "?") val=val.substr(0,val.length-1);
 				go ? goValue.value=val:null;
 				go ? goAction.value=act:null;
-				go ? goStatus.value=stat:null;
+				go && goStatus ? goStatus.value=stat:null;
 				return;
 			}
 		}
