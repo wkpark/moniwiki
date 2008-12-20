@@ -13,26 +13,37 @@ FAILURE="echo -en \\033[1;31m"
 WARNING="echo -en \\033[1;33m"
 MESSAGE="echo -en \\033[1;34m"
 NORMAL="echo -en \\033[0;39m"
+MAGENTA="echo -en \\033[1;35m"
 
 $SUCCESS
 echo
 echo "+-------------------------------+"
 echo "|    MoniWiki upgrade script    |"
 echo "+-------------------------------+"
-echo "| Warning: only PHP script will |"
-echo "|   be updated and backuped.    |"
-echo "|     Please update other files |"
-echo "|   manually.                   |"
+echo "| This script compare all files |"
+echo "|  between current and new.     |"
+echo "|     All different files are   |"
+echo "|  backuped in the backup       |"
+echo "|  directory. And so you can    |"
+echo "|  restore old one by manually. |"
 echo "+-------------------------------+"
 echo
 $WARNING
-echo -n " Press enter to continue or Control-C to exit "
+echo -n " Press "
+$MAGENTA
+echo -n ENTER
+$WARNING
+echo -n " to continue or "
+$MAGENTA
+echo -n Control-C
+$WARNING
+echo -n " to exit "
 $NORMAL
 read
 
 CHECKSUM=
 PACKAGE=moniwiki
-FILELIST="wiki.php wikilib.php wikismiley.php plugin/*.php plugin/processor/*.php plugin/filter/*.php"
+
 for arg; do
 
         case $# in
@@ -53,15 +64,6 @@ for arg; do
 	esac
 done
 
-
-if [ ! -f "$CHECKSUM" ];then
-	$MESSAGE
-	echo "*** Make a checksum for current version ***"
-	$NORMAL
-	md5sum $FILELIST > checksum-current
-	CHECKSUM=checksum-current
-fi
-
 #
 TMP=.tmp$$
 $MESSAGE
@@ -71,14 +73,29 @@ mkdir -p $TMP
 echo tar xzf $TAR -C$TMP
 tar xzf $TAR -C$TMP
 $MESSAGE
-echo "*** Make checksum list for the new version ***"
+echo "*** Make the checksum list for the new version ***"
 $NORMAL
-(cd $TMP/$PACKAGE; md5sum $FILELIST > ../../checksum-new)
+
+FILELIST=$(find $TMP/$PACKAGE -type f | sed "s@^$TMP/$PACKAGE/@@")
+
+rm -f checksum-new
+(cd $TMP/$PACKAGE; for x in $FILELIST; do test -f $x && md5sum $x;done >> ../../checksum-new)
+
+if [ ! -f "$CHECKSUM" ];then
+	rm -rf checksum-current
+	$MESSAGE
+	echo "*** Make the checksum for current version ***"
+	$NORMAL
+	for x in $FILELIST; do test -f $x && md5sum $x;done >> checksum-current
+	CHECKSUM=checksum-current
+fi
 
 UPGRADE=`diff checksum-current checksum-new |grep '^<'|cut -d' ' -f4`
 
 if [ -z "$UPGRADE" ]; then
+	$FAILURE
 	echo "You have already installed the latest version"
+	$NORMAL
 	exit
 fi
 $MESSAGE
@@ -94,12 +111,28 @@ $NORMAL
 $WARNING
 echo " Are your really want to upgrade $PACKAGE ?"
 $NORMAL
-echo "   (Type 'yes' to upgrade or Control-C to exit)"
+echo -n "   (Type '"
+$MAGENTA
+echo -n yes
+$NORMAL
+echo -n "' to upgrade or type others to exit)  "
 read YES
 if [ x$YES != xyes ]; then
-	echo "Please type 'yes' to real upgrade"
+	rm -r $TMP
+	echo -n "Please type '"
+	$MAGENTA
+	echo -n yes
+	$NORMAL
+	echo "' to real upgrade"
 	exit -1
 fi
 (cd $TMP/$PACKAGE;tar cf - $UPGRADE|(cd ../..;tar xvf -))
 rm -r $TMP
+$SUCCESS
 echo "$PACKAGE is successfully upgraded."
+echo ""
+echo ""
+echo "   All different files are       "
+echo "       backuped in the           "
+echo "       $BACKUP dir now. :)       "
+$NORMAL
