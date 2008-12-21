@@ -2988,6 +2988,7 @@ class Formatter {
 
   function _list($on,$list_type,$numtype="",$closetype="",
     $divtype=' class="indent"') {
+    $close='';$open='';
     if ($list_type=="dd") {
       if ($on)
          #$list_type="dl><dd";
@@ -3238,6 +3239,7 @@ class Formatter {
   }
 
   function _div($on,&$in_div,&$enclose,$attr='') {
+    $close=$open='';
     $tag=array("</div>\n","<div$attr>");
     if ($on) { $in_div++; $open=$enclose;}
     else {
@@ -3246,6 +3248,7 @@ class Formatter {
       $in_div--;
     }
     $enclose='';
+    $purple='';
     if (!$on) $purple=$this->_purple();
     #return "(".$in_div.")".$tag[$on];
     return $purple.$open.$tag[$on].$close;
@@ -3253,6 +3256,7 @@ class Formatter {
 
   function _li($on,$empty='') {
     $tag=array("</li>\n",'<li>');
+    $purple='';
     if (!$on and !$empty) $purple=$this->_purple();
     return $purple.$tag[$on];
   }
@@ -3452,6 +3456,7 @@ class Formatter {
     $in_div=0;
     $in_li=0;
     $in_pre=0;
+    $in_quote=0;
     $in_table=0;
     $li_open=0;
     $li_empty=0;
@@ -3522,6 +3527,66 @@ class Formatter {
         unset($out);
         continue; # comments
       }
+
+      if ($in_pre) {
+         if (strpos($line,"}}}")===false) {
+           $this->pre_line.=$line."\n";
+           continue;
+         } else {
+           #$p=strrpos($line,"}}}");
+           $p= strlen($line) - strpos(strrev($line),'}}}') - 1;
+           if ($p>2 and $line[$p-3]=='\\') {
+             $this->pre_line.=substr($line,0,$p-3).substr($line,$p-2)."\n";
+             continue;
+           }
+           $this->pre_line.=substr($line,0,$p-2);
+           $line=substr($line,$p+1);
+           $in_pre=-1;
+         }
+      #} else if ($in_pre == 0 && preg_match("/{{{[^}]*$/",$line)) {
+      #} else if (preg_match("/(\{{2,3})[^{}]*$/",$line,$m)) {
+      } else if (!(strpos($line,"{{{")===false) and 
+                 preg_match("/{{{[^{}]*$/",$line)) {
+
+         #$p=strrpos($line,"{{{")-2;
+         #$p= strlen($line) - strpos(strrev($line),$m[1]) - strlen($m[1]);
+         $p= strlen($line) - strpos(strrev($line),'{{{') - 3;
+
+         $processor="";
+         $in_pre=1;
+         $np=0;
+
+         # check processor
+         $t = isset($line{$p+3});
+         if ($t and $line[$p+3] == "#" and $line[$p+4] == "!") {
+            list($tag,$dummy)=explode(" ",substr($line,$p+5),2);
+
+            if (function_exists("processor_".$tag)) {
+              $processor=$tag;
+            } else if ($pf=getProcessor($tag)) {
+              include_once("plugin/processor/$pf.php");
+              $processor=$pf;
+            }
+         } else if ($t and $line[$p+3] == ":") {
+            # new formatting rule for a quote block (pre block + wikilinks)
+            $line[$p+3]=" ";
+            $np=1;
+            if ($line[$p+4]=='#' or $line[$p+4]=='.') {
+              $pre_style=strtok(substr($line,$p+4),' ');
+              $np++;
+              if ($pre_style) $np+=strlen($pre_style);
+            } else
+              $pre_style='';
+            $in_quote=1;
+         }
+
+         $this->pre_line=substr($line,$p+$np+3);
+         if (trim($this->pre_line))
+           $this->pre_line.="\n";
+         $line=substr($line,0,$p);
+         if (!$line and $this->auto_linebreak) $this->nobr=1;
+      }
+
       $ll=strlen($line);
       if ($line[$ll-1]=='&') {
         $oline.=substr($line,0,-1)."\n";
@@ -3544,63 +3609,6 @@ class Formatter {
       } else if ($in_p == '' and $line!=='') {
         $p_closeopen=$this->_div(1,$in_div,$div_enclose);
         $in_p= $line;
-      }
-
-      if ($in_pre) {
-         if (strpos($line,"}}}")===false) {
-           $this->pre_line.=$line."\n";
-           continue;
-         } else {
-           #$p=strrpos($line,"}}}");
-           $p= strlen($line) - strpos(strrev($line),'}}}') - 1;
-           if ($p>2 and $line[$p-3]=='\\') {
-             $this->pre_line.=substr($line,0,$p-3).substr($line,$p-2)."\n";
-             continue;
-           }
-           $this->pre_line.=substr($line,0,$p-2);
-           $line=substr($line,$p+1);
-           $in_pre=-1;
-         }
-      #} else if ($in_pre == 0 && preg_match("/{{{[^}]*$/",$line)) {
-      #} else if (preg_match("/(\{{2,3})[^{}]*$/",$line,$m)) {
-      } else if (!(strpos($line,"{{{")===false) and 
-                 preg_match("/{{{[^{}]*$/",$line)) {
-         #$p=strrpos($line,"{{{")-2;
-         #$p= strlen($line) - strpos(strrev($line),$m[1]) - strlen($m[1]);
-         $p= strlen($line) - strpos(strrev($line),'{{{') - 3;
-
-         $processor="";
-         $in_pre=1;
-         $np=0;
-
-         # check processor
-         if ($line[$p+3] == "#" and $line[$p+4] == "!") {
-            list($tag,$dummy)=explode(" ",substr($line,$p+5),2);
-
-            if (function_exists("processor_".$tag)) {
-              $processor=$tag;
-            } else if ($pf=getProcessor($tag)) {
-              include_once("plugin/processor/$pf.php");
-              $processor=$pf;
-            }
-         } else if ($line[$p+3] == ":") {
-            # new formatting rule for a quote block (pre block + wikilinks)
-            $line[$p+3]=" ";
-            $np=1;
-            if ($line[$p+4]=='#' or $line[$p+4]=='.') {
-              $pre_style=strtok(substr($line,$p+4),' ');
-              $np++;
-              if ($pre_style) $np+=strlen($pre_style);
-            } else
-              $pre_style='';
-            $in_quote=1;
-         }
-
-         $this->pre_line=substr($line,$p+$np+3);
-         if (trim($this->pre_line))
-           $this->pre_line.="\n";
-         $line=substr($line,0,$p);
-         if (!$line and $this->auto_linebreak) $this->nobr=1;
       }
 
       // split into chunks
@@ -3767,8 +3775,8 @@ class Formatter {
         $line=str_replace('\"','"',$line); # revert \\" to \"
         break;
       }
+      $tline='';
       if ($this->use_etable && !$in_table && $this->table_line) {
-        $tline='';      
         $row=$this->_td('||'.$this->table_line,$tr_attr);
           if (!$this->in_tr) {
             $tline="<tr $tr_attr>";
@@ -3898,7 +3906,7 @@ class Formatter {
             $in_quote=0;
          } else {
             # htmlfy '<', '&'
-            if ($DBInfo->default_pre) {
+            if (!empty($DBInfo->default_pre)) {
               $out=$this->processor_repl($DBInfo->default_pre,$this->pre_line,$options);
             } else {
               $pre=str_replace(array('&','<'),
@@ -3948,8 +3956,8 @@ class Formatter {
                          "\$this->highlight_repl('\\1',\$colref)",$text);
     }
     $fts=array();
-    if ($pi['#postfilter']) $fts=preg_split('/(\||,)/',$pi['#postfilter']);
-    if ($this->postfilters) $fts=array_merge($fts,$this->postfilters);
+    if (!empty($pi['#postfilter'])) $fts=preg_split('/(\||,)/',$pi['#postfilter']);
+    if (!empty($this->postfilters)) $fts=array_merge($fts,$this->postfilters);
     if ($fts) {
       foreach ($fts as $ft)
         $text=$this->postfilter_repl($ft,$text,$options);
@@ -4000,7 +4008,7 @@ class Formatter {
     if ($this->foots)
       print $this->macro_repl('FootNote','',$options);
 
-    if ($this->update_pagelinks and $options['pagelinks']) $this->store_pagelinks();
+    if (!empty($this->update_pagelinks) and !empty($options['pagelinks'])) $this->store_pagelinks();
   }
 
   function register_javascripts($js) {
