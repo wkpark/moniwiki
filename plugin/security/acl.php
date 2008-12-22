@@ -238,7 +238,8 @@ class Security_ACL extends Security {
             $options['explicit'] = 1;
             $ret=$this->acl_check($action,$options);
             if ($ret === false) return 1;
-            return $ret;
+            // allow => not protected, deny => protected
+            return !$ret;
         }
         return 0;
     }
