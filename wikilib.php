@@ -2702,15 +2702,29 @@ function macro_GoTo($formatter="",$value="") {
     </form>";
 }
 
-function processor_plain($formatter,$value) {
-  if ($value[0]=='#' and $value[1]=='!')
-    list($line,$value)=explode("\n",$value,2);
-  $class='wiki'; // XXX {{{#!plain myclass
+function processor_plain($formatter,$value, $options=array()) {
+    if ($value[0]=='#' and $value[1]=='!')
+        list($line,$value)=explode("\n",$value,2);
 
-  $pre=str_replace(array('&','<'), array("&amp;","&lt;"), $value);
-  $pre=preg_replace("/&lt;(\/?)(ins|del)/","<\\1\\2",$pre);
-  $out="<pre class='$class'>\n".$pre."</pre>";
-  return $out;
+    $cls[] = 'wiki'; // {{{#!plain class-name
+    # get parameters
+    if (!empty($line)) {
+        $line = substr($line,2);
+        $tag = strtok($line,' ');
+        $class = strtok(' ');
+        $extra = strtok('');
+        if ($tag != 'plain') {
+            $extra = !empty($extra) ? $class.' '.$extra:$class;
+            $class = $tag;
+        }
+        if (!empty($class)) $cls[]=$class;
+    }
+    $class = implode(' ',$cls);
+
+    $pre=str_replace(array('&','<'), array("&amp;","&lt;"), $value);
+    $pre=preg_replace("/&lt;(\/?)(ins|del)/","<\\1\\2",$pre); // XXX
+    $out="<pre class='$class'>\n".$pre."</pre>";
+    return $out;
 }
 
 function processor_php($formatter="",$value="") {

@@ -545,7 +545,7 @@ class Security {
   function is_protected($action="read",$options) {
     # password protected POST actions
     $protected_actions=array(
-      "deletepage","deletefile","rename","rcspurge","rcs","chmod","backup","restore","rcsimport","revert");
+      "deletepage","deletefile","rename","rcspurge","rcs","chmod","backup","restore","rcsimport","revert","userinfo");
     $action=strtolower($action);
 
     if (in_array($action,$protected_actions)) {
@@ -4986,6 +4986,7 @@ function set_locale($lang,$charset='') {
 
     $charset= strtoupper($charset);
     # XXX
+    $server_charset = '';
     if (function_exists('nl_langinfo'))
       $server_charset= nl_langinfo(CODESET);
 
