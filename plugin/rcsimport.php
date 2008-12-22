@@ -49,7 +49,7 @@ FORM;
         $read = '';
         while(!empty($body)) {
             list($line,$body) = explode("\n",$body,2);
-            if (preg_match('/^\s+(.*):(\d+\.\d+); strict;$/',$line,$m)) {
+            if (preg_match('/^\s+(.*):(\d+\.\d+);\s*(strict;)?$/',$line,$m)) {
                 $line = "\t".$DBInfo->rcs_user.':'.$m[2].';';
                 $read.=$line."\n";
                 break;
