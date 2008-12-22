@@ -240,7 +240,9 @@ EOF;
     } else {
         $formatter->send_header("",$options);
         $formatter->send_title("","",$options);
-        print macro_SWFUpload($formatter,'');
+        $out= macro_SWFUpload($formatter,'');
+        print $formatter->get_javascripts();
+        print $out;
         if (!in_array('UploadedFiles',$formatter->actions))
             $formatter->actions[]='UploadedFiles';
         $formatter->send_footer("",$options);
