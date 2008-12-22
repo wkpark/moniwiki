@@ -29,7 +29,7 @@ function do_post_rcsimport($formatter,$options) {
 <input type='hidden' name='action' value='rcsimport' />
 FORM;
         if ($DBInfo->security->is_protected("rcsimport",$options))
-            print " <input type='password' name='passwd' /> ";
+            print _("Password"). ": <input type='password' name='passwd' /> ";
         print <<<FORM
 <input type='submit' value='Import RCS' />
 </form>
@@ -44,6 +44,19 @@ FORM;
     header('Content-type:text/plain');
     if (method_exists($version,'import')) {
         $content=base64_decode($options['rcsfile']);
+
+        $body = $content;
+        $read = '';
+        while(!empty($body)) {
+            list($line,$body) = explode("\n",$body,2);
+            if (preg_match('/^\s+(.*):(\d+\.\d+); strict;$/',$line,$m)) {
+                $line = "\t".$DBInfo->rcs_user.':'.$m[2].';';
+                $read.=$line."\n";
+                break;
+            }
+            $read.=$line."\n";
+        }
+        $content= $read.$body;
         $version->import($options['page'],$content);
     }
     print 'OK';
