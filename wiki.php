@@ -2841,13 +2841,14 @@ class Formatter {
       }
       $ket= '</span>';
     }
-
-    $pf=getProcessor($processor);
+    $pf = $processor;
+    if (!($f = function_exists('processor_'.$processor)))
+      $pf = getProcessor($processor);
     if (empty($pf)) {
       $ret= call_user_func('processor_plain',$this,$value,$options);
       return $bra.$ret.$ket;
     }
-    if (!($f=function_exists('processor_'.$pf)) and !($c=class_exists('processor_'.$pf))) {
+    if (!$f and !($c=class_exists('processor_'.$pf))) {
       include_once("plugin/processor/$pf.php");
       $name='processor_'.$pf;
       if (!($f=function_exists($name)) and !($c=class_exists($name))) {
