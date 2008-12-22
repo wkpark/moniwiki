@@ -143,20 +143,20 @@ class Security_ACL extends Security {
 
         if ($this->DB->acl_debug) {
             ob_start();
-            print "<h4>groups</h4>\n";
+            print "<h4>"._("ACL groups")."</h4>\n";
             print implode(',',$groups);
             print "\n";
-            print "<h4>Allowed actions</h4>\n";
+            print "<h4>"._("Allowed ACL actions")."</h4>\n";
             foreach ($allowed as $k=>$v)
                 print $k." ($v),";
             #print_r($allowed);
             print "\n";
-            print "<h4>Denied actions</h4>\n";
+            print "<h4>"._("Denied ACL actions")."</h4>\n";
             foreach ($denied as $k=>$v)
                 print $k." ($v),";
             #print_r($denied);
             print "\n";
-            print "<h4>Protected actions</h4>\n";
+            print "<h4>"._("Protected ACL actions")."</h4>\n";
             print implode(',',$protected);
             $options['msg'].=ob_get_contents();
             ob_end_clean();
@@ -232,9 +232,17 @@ class Security_ACL extends Security {
         if (!$this->_acl_ok) $this->get_acl($action,$options); # get acl info
 
         if (in_array($action,$this->_protected)) return 1;
+
+        $orig = parent::is_protected($action, $options);
+        if ($orig) { // check explicitly
+            $options['explicit'] = 1;
+            $ret=$this->acl_check($action,$options);
+            if ($ret === false) return 1;
+            return $ret;
+        }
         return 0;
     }
 }
 
-// vim:et:sts=4:
+// vim:et:sts=4:sw=4:
 ?>
