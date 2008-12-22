@@ -1414,6 +1414,9 @@ class Version_RCS {
   function import($pagename,$rcsfile) {
     $keyname=$this->DB->_getPageKey($pagename);
     $fname=$this->DB->text_dir."/RCS/$keyname,v";
+    $om=umask(0770);
+    chmod($fname,0664);
+    umask($om);
     $fp=fopen($fname,'w');
     if (is_resource($fp)) {
       fwrite($fp,$rcsfile);
