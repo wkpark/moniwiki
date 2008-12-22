@@ -32,9 +32,14 @@ function macro_UserInfo($formatter,$value,$options=array()) {
                 $u."</li>\n";
         }
         $formhead="<form method='POST' action=''>";
-        $formtail="<input type='hidden' name='action' value='useradmin' />".
-            "<input type='submit' value='Delete Users' />".
-            "</form>";
+        $formtail='';
+        if ($DBInfo->security->is_protected('userinfo',$options))
+            $formtail= _("Password").
+                ": <input type='password' name='passwd' /> ";
+        $formtail.="<input type='hidden' name='action' value='userinfo' />".
+            "<input type='submit' value='Delete Users' />";
+
+        $formtail.= "</form>";
     } else {
         if (!empty($DBInfo->use_userinfo)) {
         foreach ($users as $u) {
@@ -58,13 +63,23 @@ function do_post_userinfo($formatter,$options) {
             $udb=&$DBInfo->udb;
             $users=$udb->getUserList();
 
+            $del=array();
             foreach ($options['uid'] as $uid) {
                 $uid=_stripslashes($uid);
                 if (in_array($uid,$users)) {
                     $udb->delUser($uid);
+                    $del[]=$uid;
+                    
                 }
             }
-            $options['msg']= sprintf(_("You are not allowed to \"%s\" !"),"userinfo");
+            if (!empty($del)) {
+                foreach ($del as $d) {
+                    $k = array_search($d,$udb->users);
+                    unset($udb->users[$k]);
+                }
+                $deleted = implode(',',$del);
+                $options['msg']= sprintf(_("User \"%s\" are deleted !"),$deleted);
+            }
         }
         $list= macro_UserInfo($formatter,'',$options);
     } else {
