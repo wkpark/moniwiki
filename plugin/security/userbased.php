@@ -8,7 +8,9 @@ class Security_userbased extends Security {
   function Security_userbased($DB='') {
     $this->DB=$DB;
     $this->allowed_users=array_merge($DB->wikimasters,$DB->owners);
-    $this->public_pages=array_merge($DB->public_pages,array(
+
+    $pages = is_array($DB->public_pages) ? $DB->public_pages:array();
+    $this->public_pages=array_merge($pages,array(
       'WikiSandBox','WikiSandbox','GuestBook','SandBox'));
   }
 
