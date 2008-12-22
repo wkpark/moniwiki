@@ -5,6 +5,7 @@
 // 
 function shOnload() {
     var tags = document.getElementsByTagName('pre');
+    if (tags.length == 0) return;
     var head = document.getElementsByTagName("head")[0];
     var list = [];
     var syntax = {
@@ -23,7 +24,6 @@ function shOnload() {
         'html':'Xml'
     };
 
-    if (tags.length == 0) return;
     for(var i = 0; i < tags.length; i++) {
         var m = tags[i].className.match(/wiki\s+(c|cpp|c#|xml|c-sharp|css|java|javascript|php|python|ruby|xml|html)/);
         if (m && syntax[m[1]]) {
@@ -39,7 +39,9 @@ function shOnload() {
             list[syntax[m[1]]]= 1;
         }
     }
+    dp.SyntaxHighlighter.ClipboardSwf = _url_prefix + '/local/dp.SyntaxHighlighter/Scripts/clipboard.swf';
     dp.sh.HighlightAll('code',true,true);
+    return;
 }
 
 //window.addEvent("domready", shOnload);
