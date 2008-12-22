@@ -1,12 +1,15 @@
 <?php
-// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
-// All rights reserved. Distributable under GPL see COPYING
-// sample plugin for the MoniWiki
+// This is a sample plugin for MoniWiki
+//
+// Copyright 200X Your Name <foobar at foo.bar>
+// All rights reserved.
+// Distributable under GPL/LGPL/BSD etc.
+// a sample plugin for the MoniWiki
 //
 // Author: Your name <foobar@foo.bar>
-// Date: 2006-01-01
-// Name: Hello world
-// Description: Hello world Processor
+// Date: 200X-01-01
+// Name: Processor name
+// Description: this is a sample processor for the MoniWiki
 // URL: to_plugin url/interwiki name etc.
 // Version: $Revision$
 // License: GPL
@@ -30,5 +33,5 @@ function processor_hello($formatter,$value="",$options=array()) {
     return $out;
 }
 
-// vim:et:sts=4:
+// vim:et:sts=4:sw=4:
 ?>
