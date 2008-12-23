@@ -169,7 +169,7 @@ document.write('<a href=\"#\" onclick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
   $stag="<$myspan class='wikiSyntax' id='PRE-$uniq' style='font-family:FixedSys,monospace;color:$fgcolor;background-color:$bgcolor'>\n";
   $etag="</$myspan>\n";
 
-  $out = preg_replace(array("@^<font face[^>]*>\n@","@</font>\n?$@"),array('',''),$out); // vim7.x
+  $out = preg_replace(array("@^<font face[^>]*>\n@","@\n?</font>\n?$@"),array('',''),$out); // vim7.x
 
   $lines=explode("\n",$out);
   $out="<span class=\"line\">".
