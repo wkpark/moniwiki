@@ -49,6 +49,18 @@ function shOnload() {
             dp.sh.HighlightAll('code',true,true);
             return;
         }
+
+        // safari fix.
+        if (navigator.userAgent.toLowerCase().indexOf('applewebkit') != -1) {
+            (function() {
+                var timer = setInterval(function() { 
+                    if (/loaded|complete/.test(document.readyState)) {  
+                        clearInterval(timer);  
+                        dp.sh.HighlightAll('code',true,true);
+                    }
+                }, 10);
+            })();
+        }
     }
     // not work with the flash 10 :(
     // http://securityandthe.net/2008/10/16/flash-10-fixes-clipboard-hijacking-other-security-issues/
