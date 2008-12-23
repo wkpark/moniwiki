@@ -1,5 +1,5 @@
 <?php
-// Copyright 2006 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2006-2008 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // SWFUpload plugin for the MoniWiki
 //
@@ -104,6 +104,7 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
         $formatter->register_javascripts(array(
             'js/swfobject.js',
             'SWFUpload/mmSWFUpload.js',
+            'SWFUpload/preview.js',
             'SWFUpload/moni.js',
         ));
     }
@@ -206,15 +207,33 @@ EOF;
         }
     }
 
+    // check subdir
+    if ($DBInfo->swfupload_depth > 2) {
+        $depth=$DBInfo->swfupload_depth;
+    } else {
+        $depth=2;
+    }
+
+    if ($DBInfo->nosession) { // ip based
+        $myid=md5($_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI'); // FIXME
+    } else {
+        $myid=session_id();
+    }
+
+    $prefix=substr($myid,0,$depth);
+    $mysubdir=$prefix.'/'.$myid.'/';
+
     // debug
     //$fp=fopen($swfupload_dir.'/swflog.txt','w+');
     //foreach ($options as $k=>$v) {
     //    if (is_string($v))
     //         fwrite($fp,sprintf("%s=>%s\n",$k,$v));
     //}
+    //fclose($fp);
     // set the personal subdir
     if ($options['value'] and preg_match('/^[a-z0-9\/]+$/i',$options['value'])) {
-        $mysubdir=$options['value'];
+        //if ($mysubdir == $options['value']) // XXX check subdir
+        //    $mysubdir = $options['value'];
 
         list($dum,$myval,$dum2)=explode('/',$options['value'],3); // XXX
         if(!is_dir($swfupload_dir.'/'.$mysubdir)) {
@@ -223,8 +242,6 @@ EOF;
             umask($om);
         }
     }
-    //fclose($fp);
-
 
     //move the uploaded file
     if (isset($_FILES['Filedata']['tmp_name'])) {
