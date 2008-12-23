@@ -151,7 +151,8 @@ class FCKFunctionProcessor
                 
                 for ( $j = 0 ; $j < $numVarNameMatches ; $j++ )
                 {
-                    $vars[] = $varNameMatches[1][$j] ;
+                    $var = $varNameMatches[1][$j];
+                    if (strlen($var) > 2) $vars[$var] = $var ;
                 }
             }
 
@@ -164,10 +165,10 @@ class FCKFunctionProcessor
     function _ProcessVars( $source, $vars )
     {
         $protected = array('self','event'); // workaround for eval()
+        foreach ($protected as $p) unset ($vars[$p]);
         foreach ( $vars as $var )
         {
-            if ( strlen( $var) > 2 and !in_array($var, $protected))
-                $source = preg_replace( '/(?<!\w|\d|\.|\$)' . preg_quote( $var ) . '(?!\w|\d|:)/', $this->_GetVarName(), $source ) ;
+            $source = preg_replace( '/(?<!\w|\d|\.|\$)' . preg_quote( $var ) . '(?!\w|\d|:)/', $this->_GetVarName(), $source ) ;
         }
 
         return $source ;
@@ -217,12 +218,14 @@ class FCKJavaScriptCompressor
     }
 
     // Call it statically. E.g.: FCKJavaScriptCompressor::Compress( ... )
-    function Compress( $script, $constantsProcessor )
+    function Compress( $script, $constantsProcessor = null, $params=array('nofunc'=>0) )
     {
         // detect cr and replace it with "\n"
         preg_match('/(\r\n|\r|\n)/s', $script, $cr);
-        if (!empty($cr[0]) and $cr[0] != "\n")
-            $script = str_replace($cr[0],"\n",$script);
+        if (!empty($cr[0]) and $cr[0] != "\n") {
+            $script = strtr($script, $cr[0], "\n");
+            //$script = str_replace($cr[0],"\n",$script);
+        }
 
         // Concatenates all string with escaping new lines strings (ending with \).
         $script = preg_replace(
@@ -263,28 +266,28 @@ class FCKJavaScriptCompressor
         // Concatenate lines that end with "}" using a "\n", except for "else",
         // "while", "catch" and "finally" cases, or when followed by, "'", ";",
         // "}", ")" or "]".
-        $script = preg_replace(
-            '/\s*}\s*\n+\s*(?!\s*(else|catch|finally|while|[\]}\),;]))/s',
-            "}\n", $script ) ;
+        ///$script = preg_replace(
+        ///    '/\s*}\s*\n+\s*(?!\s*(else|catch|finally|while|[\]}\),;]))/s',
+        ///    "}\n", $script ) ;
+        ## not needed ## XXX
 
 	// Concat lines that end with ";" or "{"
         // $script = preg_replace('/\s*([;{])\s*[\n\r]+\s*/s','\\1', $script ) ;
         $script = preg_replace('/\s*([;{])\s*/s','\\1', $script ) ;
+        ## $script = preg_replace('/\s*([;{}])\s*/s','\\1', $script ) ; // shorter 
 
         // Remove blank lines, spaces at the begining or the at the end and \n\r
-        //$script = preg_replace(
-        //    '/(^\s*$)|(^\s+)|(\s+$\n)/m',
-        //    '', $script ) ;
         $script = preg_replace(
+        #    #'/(^\s*$)|(^\s+)|(\s+$\n)/m',
             '/(^\s*$)|(^\s+)/m',
             '', $script ) ;
 
         // Remove the spaces between statements.
-        $script = FCKJavaScriptCompressor::_RemoveInnerSpaces( $script ) ;
+        //$script = FCKJavaScriptCompressor::_RemoveInnerSpaces( $script ) ;
         # error with mootools
 
         // Process constants.   // CHECK
-        if ( $constantsProcessor->HasConstants )
+        if ( is_object($constantsProcessor) and $constantsProcessor->HasConstants )
             $script = $constantsProcessor->Process( $script );
 
         // Replace "new Object()" "new Array()".
@@ -292,8 +295,15 @@ class FCKJavaScriptCompressor
             array('/new\s+Object\(\)/','/new\s+Array\(\)/'),
             array('{}','[]'), $script ) ;
 
+        // space + delim + space => delim, except a++ +b
+        $delim = '([+\-])|([:=?*\/&,;><|!{}\[\]\(\)])';
+        $script = preg_replace('/[ ]*('.$delim.')[ ]*(?(2)(?![+\-]))/', '\\1', $script);
+        // workaround for a = (b) ? c:d; case. c is not a object menber.
+        $script = preg_replace('/(?<=\?)([^:]+):/', '\\1 :', $script);
+
         // Process function contents, renaming parameters and variables.
-        $script = FCKJavaScriptCompressor::_ProcessFunctions( $script ) ;
+        if (empty($params['nofunc']))
+            $script = FCKJavaScriptCompressor::_ProcessFunctions( $script ) ;
 
         // Join consecutive string concatened with a "+".
         $script = $stringsProc->ConcatProtectedStrings( $script );
@@ -306,11 +316,8 @@ class FCKJavaScriptCompressor
 
     function _RemoveInnerSpaces( $script )
     {
-        $script = preg_replace('/([:=?+\-*\/&,;><|!{}\[\]\(\)])[ ]+(?=\S)/', '\\1', $script);
-        $script = preg_replace('/(?<=\S)[ ]+([:=?+\-*\/&,;><|!{}\[\]\(\)])/', '\\1', $script);
-        // workaround for a = (b) ? c:d; case. c is not a object menber.
-        $script = preg_replace('/(?<=\?)([^:]+):/', ' \\1 :', $script);
-        return $script;
+        // delim + space => delim
+        return preg_replace('/([:=?+\-*\/&,;><|!{}\[\]\(\)])[ ]+(?=\S)/', '\\1', $script);
         #return preg_replace_callback(
         #    '/(?:\s*[=?:+\-*\/&,;><|!]\s*)|(?:[(\[]\s+)|(?:\s+[)\]])/',
         #    array( 'FCKJavaScriptCompressor', '_RemoveInnerSpacesMatch' ), $script ) ;
@@ -402,7 +409,9 @@ class FCKStringsProcessor
 
         $output = '@' . $leftIndex . '@' ;
 
-        while( $rightPosition < count( $indexes ) )
+        $sz = count( $indexes );
+
+        while( $rightPosition < $sz )
         {
             $rightIndex = (int)$indexes[ $rightPosition ] ;
 
