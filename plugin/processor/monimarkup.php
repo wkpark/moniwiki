@@ -608,13 +608,19 @@ class processor_monimarkup
 
                 $c=preg_replace_callback("/(".$wordrule.")/",
                     array(&$formatter,'link_repl'),$c);
+
                 while($_li>0 and $_lidep[$_li] > 0) {
                     $out.=$this->_li(0,$_lityp[$_li]);
                     $out.=$this->_list(0,$_lityp[$_li]);
                     --$_li;
                 }
 
-                if (preg_match('/<div[^>]*>/',$c))
+                $c=preg_replace("/\007(\d+)\007/e",
+                    "\$formatter->processor_repl(\$btype[$1],\$block[$1])",$c);
+                $c=preg_replace("/\035(\d+)\035/e", 
+                    "\$formatter->link_repl(\$inline[$1])",$c);
+
+                if (preg_match('/<(div|ul|ol|pre|blockquote)[^>]*>/',$c))
                     $out.= $this->_div(1,' class="para"',$style).$c.$this->_div(0);
                 else
                     $out.= $this->_p(1,' class="para"',$style).$c.$this->_p(0);
