@@ -4241,12 +4241,12 @@ class Formatter {
 
     $js=$DBInfo->js;
 
-    if (isset($options['trail']))
-      $this->set_trailer($options['trail'],$this->page->name);
-    else if ($DBInfo->origin)
-      $this->set_origin($this->page->name);
-
     if (!$plain) {
+      if (isset($options['trail']))
+        $this->set_trailer($options['trail'],$this->page->name);
+      else if ($DBInfo->origin)
+        $this->set_origin($this->page->name);
+
       # find upper page
       $pos=0;
       preg_match('/(\:|\/)/',$this->page->name,$sep); # NameSpace/SubPage or NameSpace:SubNameSpacePage
