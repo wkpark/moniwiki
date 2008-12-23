@@ -6,8 +6,11 @@
 function shOnload() {
     var tags = document.getElementsByTagName('pre');
     if (tags.length == 0) return;
+    var shdir = 'Scripts';
+    // var shdir = 'Uncompressed';
     var head = document.getElementsByTagName("head")[0];
     var list = [];
+    var js = null;
     var syntax = {
         'c':'Cpp',
         'c#':'Cpp',
@@ -23,7 +26,6 @@ function shOnload() {
         'xml':'Xml',
         'html':'Xml'
     };
-    var js = null;
 
     for(var i = 0; i < tags.length; i++) {
         var m = tags[i].className.match(/wiki\s+(c|cpp|c#|xml|c-sharp|css|java|javascript|php|python|ruby|xml|html)/);
@@ -31,7 +33,7 @@ function shOnload() {
             if (!list[syntax[m[1]]]) {
                 js = document.createElement('script');
                 js.type = 'text/javascript';
-                js.src = _url_prefix + '/local/dp.SyntaxHighlighter/Uncompressed/shBrush' + syntax[m[1]]+ '.js';
+                js.src = _url_prefix + '/local/dp.SyntaxHighlighter/' + shdir + '/shBrush' + syntax[m[1]]+ '.js';
                 head.appendChild(js);
             }
             tags[i].setAttribute('name','code');
@@ -70,10 +72,12 @@ function shOnload() {
 
 //window.addEvent("domready", shOnload);
 (function () {
+    var shdir = 'Scripts';
+    // var shdir = 'Uncompressed';
     var head = document.getElementsByTagName("head")[0];
     var js = document.createElement('script');
     js.type = 'text/javascript';
-    js.src = _url_prefix + '/local/dp.SyntaxHighlighter/Uncompressed/shCore.js';
+    js.src = _url_prefix + '/local/dp.SyntaxHighlighter/' + shdir + '/shCore.js';
     head.appendChild(js);
 
     // onload
