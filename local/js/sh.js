@@ -2,7 +2,14 @@
 // syntaxhighlighter wrapper for MoniWiki
 //
 // $Id$
-// 
+//
+
+if ( typeof _ == 'undefined') {
+    _ = function(msgid) {
+        return msgid;
+    };
+}
+
 function shOnload() {
     var tags = document.getElementsByTagName('pre');
     if (tags.length == 0) return;
@@ -26,6 +33,9 @@ function shOnload() {
         'xml':'Xml',
         'html':'Xml'
     };
+
+    //dp.sh.Toolbar.Commands.ViewSource.label = _('view plain');
+    //dp.sh.Toolbar.Commands.CopyToClipboard.label = _('copy to clipboard');
 
     for(var i = 0; i < tags.length; i++) {
         var m = tags[i].className.match(/wiki\s+(c|cpp|c#|xml|c-sharp|css|java|javascript|php|python|ruby|xml|html)/);
