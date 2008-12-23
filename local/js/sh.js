@@ -23,12 +23,13 @@ function shOnload() {
         'xml':'Xml',
         'html':'Xml'
     };
+    var js = null;
 
     for(var i = 0; i < tags.length; i++) {
         var m = tags[i].className.match(/wiki\s+(c|cpp|c#|xml|c-sharp|css|java|javascript|php|python|ruby|xml|html)/);
         if (m && syntax[m[1]]) {
             if (!list[syntax[m[1]]]) {
-                var js = document.createElement('script');
+                js = document.createElement('script');
                 js.type = 'text/javascript';
                 js.src = _url_prefix + '/local/dp.SyntaxHighlighter/Uncompressed/shBrush' + syntax[m[1]]+ '.js';
                 head.appendChild(js);
@@ -39,8 +40,19 @@ function shOnload() {
             list[syntax[m[1]]]= 1;
         }
     }
+    if (js) {
+        js.onreadystatechange = function() { // IE
+            if (this.readyState == 'complete')
+                dp.sh.HighlightAll('code',true,true);
+        }
+        js.onload = function() {
+            dp.sh.HighlightAll('code',true,true);
+            return;
+        }
+    }
+    // not work with the flash 10 :(
+    // http://securityandthe.net/2008/10/16/flash-10-fixes-clipboard-hijacking-other-security-issues/
     dp.SyntaxHighlighter.ClipboardSwf = _url_prefix + '/local/dp.SyntaxHighlighter/Scripts/clipboard.swf';
-    dp.sh.HighlightAll('code',true,true);
     return;
 }
 
