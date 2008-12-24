@@ -218,7 +218,7 @@ class FCKJavaScriptCompressor
     }
 
     // Call it statically. E.g.: FCKJavaScriptCompressor::Compress( ... )
-    function Compress( $script, $constantsProcessor = null, $params=array('nofunc'=>0) )
+    function Compress( $script, $constantsProcessor = null, $params=array('variable'=>1,'space'=>1) )
     {
         // detect cr and replace it with "\n"
         preg_match('/(\r\n|\r|\n)/s', $script, $cr);
@@ -235,6 +235,7 @@ class FCKJavaScriptCompressor
         $stringsProc = new FCKStringsProcessor() ;
 
         // Protect the script strings.
+        // buggy XXX
         $script = $stringsProc->ProtectStrings( $script ) ;
 
         // Remove "/* */" "//" comments
@@ -259,9 +260,11 @@ class FCKJavaScriptCompressor
         //    '$1$2', $script ) ;
 
         // Concatenate lines that doesn't end with [;{}] using a space
-        $script = preg_replace(
-            '/(?<![;{}\n\s])\s*\n+\s*(?![\s\n{}])/s',
-            ' ', $script ) ;
+        if (!empty($params['space'])) {
+            $script = preg_replace(
+                '/(?<![;{}\n\s])\s*\n+\s*(?![\s\n{}])/s',
+                ' ', $script ) ;
+        }
 
         // Concatenate lines that end with "}" using a "\n", except for "else",
         // "while", "catch" and "finally" cases, or when followed by, "'", ";",
@@ -295,14 +298,19 @@ class FCKJavaScriptCompressor
             array('/new\s+Object\(\)/','/new\s+Array\(\)/'),
             array('{}','[]'), $script ) ;
 
-        // space + delim + space => delim, except a++ +b
-        $delim = '([+\-])|([:=?*\/&,;><|!{}\[\]\(\)])';
-        $script = preg_replace('/[ ]*('.$delim.')[ ]*(?(2)(?![+\-]))/', '\\1', $script);
+        if (!empty($params['space'])) {
+            $delim = '([+\-])|([:=?*\/&,;><|!{}\[\]\(\)])';
+            // space + delim + space => delim, except a++ +b
+            $script = preg_replace('/[ ]*('.$delim.')[ ]*(?(2)(?![+\-]))/', '\\1', $script);
+        } else {
+            // only some spaces are removed: ' : '=> ':', ' = '=> '='
+            $script = preg_replace('/[ ]*([:=])[ ]*/', '\\1', $script);
+        }
         // workaround for a = (b) ? c:d; case. c is not a object menber.
         $script = preg_replace('/(?<=\?)([^:]+):/', '\\1 :', $script);
 
         // Process function contents, renaming parameters and variables.
-        if (empty($params['nofunc']))
+        if (!empty($params['variable']))
             $script = FCKJavaScriptCompressor::_ProcessFunctions( $script ) ;
 
         // Join consecutive string concatened with a "+".
@@ -380,8 +388,11 @@ class FCKStringsProcessor
         // Catches string literals, regular expressions and conditional comments.
         return preg_replace_callback(
             // http://blog.stevenlevithan.com/archives/match-quoted-string
+            // second regex term is buggy XXX
             #'/(?:("|\').*?(?<!\\\\)\1)|(?:(?<![\*\/\\\\])\/[^\/\*].*?(?<!\\\\)\/(?=([\.\w])|(\s*[,;}\)])))|(?s:\/\*@(?:cc_on|if|elif|else|end).*?@\*\/)/',
-            '/(?:(["\'])(?:\\\\?+.)*?\1)|(?:(?<![\*\/\\\\])\/[^\/\*].*?(?<!\\\\)\/(?=([\.\w])|(\s*[,;}\)])))|(?s:\/\*@(?:cc_on|if|elif|else|end).*?@\*\/)/',
+            '/(?:(["\'])(?:\\\\?+.)*?\1)|(?s:\/\*@(?:cc_on|if|elif|else|end).*?@\*\/)/',
+            # old
+            #'/(?:(["\'])(?:\\\\?+.)*?\1)|(?:(?<![\*\/\\\\])\/[^\/\*].*?(?<!\\\\)\/(?=([\.\w])|(\s*[,;}\)])))|(?s:\/\*@(?:cc_on|if|elif|else|end).*?@\*\/)/',
             array( &$this, '_ProtectStringsMatch' ), $source ) ;
     }
 
