@@ -26,11 +26,31 @@ function do_AutoGoto($formatter,$options) {
             }
         }
     }
+   
     $npage=str_replace(' ','',$formatter->page->name);
     if ($DBInfo->hasPage($npage)) {
         $options['value']=$npage;
         do_goto($formatter,$options);
         return true;
+    } else if (function_exists('iconv')) {
+        if (strtolower($DBInfo->charset) != 'utf-8' ) {
+            $t = @iconv('UTF-8',$DBInfo->charset,$formatter->page->name);
+            if ($t and $DBInfo->hasPage($t)) {
+                $options['value']=$t;
+                do_goto($formatter,$options);
+                return true;
+            }
+        } else if (!empty($DBInfo->url_encodings)) {
+            $cs = explode(',',$DBInfo->url_encodings);
+            foreach ($cs as $c) {
+                $t = @iconv($c, $DBInfo->charset, $formatter->page->name);
+                if ($t and $DBInfo->hasPage($t)) {
+                    $options['value']=$t;
+                    do_goto($formatter,$options);
+                    return true;
+                }
+            }
+        }
     }
     $options['value']=$formatter->page->name;
     $options['check']=1;
