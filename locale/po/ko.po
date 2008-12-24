@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoniWiki 1.1.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-12-20 02:31+0900\n"
+"POT-Creation-Date: 2008-12-23 23:10+0900\n"
 "PO-Revision-Date: 2008-12-11 12:20+0900\n"
 "Last-Translator: Won-Kyu Park <wkpark@kldp.org>\n"
 "Language-Team: Won-Kyu Park <wkpark@kldp.org>\n"
@@ -91,7 +91,7 @@ msgstr "\"%s\"에 댓글 더하기"
 msgid "Add Blog entry to \"%s\""
 msgstr "\"%s\"에 블로그 항목 더하기"
 
-#: ../plugin/Blog.php:260 ../plugin/Blog.php:332
+#: ../plugin/Blog.php:260 ../plugin/Blog.php:332 ../plugin/PluginInfo.php:45
 msgid "Name"
 msgstr "이름"
 
@@ -180,7 +180,7 @@ msgstr "클립보드의 이미지를 잘르고 붙이기"
 msgid "Comment"
 msgstr "댓글 달기"
 
-#: ../plugin/Comment.php:88 ../wikilib.php:911 ../monisetup.php:923
+#: ../plugin/Comment.php:88 ../wikilib.php:911 ../monisetup.php:924
 msgid "Preview"
 msgstr "미리보기"
 
@@ -334,7 +334,7 @@ msgstr "\"%s\"에 대한 키워드 서치"
 msgid "Show Context."
 msgstr "문맥 보기."
 
-#: ../plugin/FullSearch.php:47 ../plugin/VisualTour.php:124 ../wiki.php:4426
+#: ../plugin/FullSearch.php:47 ../plugin/VisualTour.php:124 ../wiki.php:4439
 msgid "Refresh"
 msgstr "갱신"
 
@@ -348,7 +348,7 @@ msgstr " (서치 결과를 %s)"
 msgid "You can also click %s to search title.\n"
 msgstr "%s을 눌러 제목 찾기를 할 수 있습니다.\n"
 
-#: ../plugin/FullSearch.php:52 ../wiki.php:5281 ../wiki.php:5288
+#: ../plugin/FullSearch.php:52 ../wiki.php:5296 ../wiki.php:5303
 #: ../wikilib.php:1364
 msgid "here"
 msgstr "여기"
@@ -367,7 +367,7 @@ msgstr "대소문자 구별"
 
 #: ../plugin/FullSearch.php:77 ../wikilib.php:2636 ../wikilib.php:2697
 msgid "Go"
-msgstr "가기"
+msgstr "찾기"
 
 #: ../plugin/FullSearch.php:140
 msgid "Empty expression"
@@ -629,6 +629,35 @@ msgstr "새 그림 만들기"
 msgid "Edit Image"
 msgstr "그림 고치기"
 
+#: ../plugin/PluginInfo.php:29
+#, c-format
+msgid "Total %s plugin activated."
+msgstr "총 %d 개의 플러그인이 활성화됨"
+
+#: ../plugin/PluginInfo.php:43 ../plugin/admin.php:136
+msgid "Description"
+msgstr "설명"
+
+#: ../plugin/PluginInfo.php:47
+msgid "Version"
+msgstr "버전"
+
+#: ../plugin/PluginInfo.php:49 ../plugin/admin.php:139
+msgid "Author"
+msgstr "저자"
+
+#: ../plugin/PluginInfo.php:51 ../plugin/admin.php:141
+msgid "License"
+msgstr "저작권"
+
+#: ../plugin/PluginInfo.php:53 ../plugin/admin.php:143
+msgid "Depend"
+msgstr "의존성"
+
+#: ../plugin/PluginInfo.php:57 ../plugin/admin.php:147
+msgid "URL"
+msgstr ""
+
 #: ../plugin/Rating.php:58
 msgid "Awful!"
 msgstr "최악!"
@@ -655,7 +684,7 @@ msgstr "매우 좋음"
 #: ../plugin/security/mustlogin.php:29 ../plugin/security/mustlogin.php:40
 #: ../plugin/security/mustlogin.php:51 ../plugin/security/mustlogin.php:67
 #: ../plugin/security/needtologin.php:29 ../plugin/security/needtologin.php:40
-#: ../plugin/security/needtologin.php:51 ../plugin/security/userbased.php:60
+#: ../plugin/security/needtologin.php:51 ../plugin/security/userbased.php:62
 msgid "Please Login or make your ID on this Wiki ;)"
 msgstr "로그인하거나 ID를 만드세요 ;)"
 
@@ -685,11 +714,11 @@ msgstr "북마크"
 msgid "[%sh %sm ago]"
 msgstr "[%s시간 %s분 전]"
 
-#: ../plugin/SWFUpload.php:117
+#: ../plugin/SWFUpload.php:118
 msgid "Files..."
 msgstr "파일..."
 
-#: ../plugin/SWFUpload.php:118
+#: ../plugin/SWFUpload.php:119
 msgid "Upload"
 msgstr "올리기"
 
@@ -779,7 +808,7 @@ msgstr "%d 개의 연관된 페이지"
 msgid "TwinPages of %s"
 msgstr "%s의 쌍둥이 페이지"
 
-#: ../plugin/TwinPages.php:19 ../wiki.php:5267
+#: ../plugin/TwinPages.php:19 ../wiki.php:5282
 msgid "See [TwinPages]: "
 msgstr ""
 
@@ -861,8 +890,9 @@ msgstr "&laquo; 첫 페이지"
 msgid "Total %d files"
 msgstr "총 %d 개 파일"
 
-#: ../plugin/UploadedFiles.php:414 ../plugin/rename.php:77
-#: ../plugin/revert.php:82 ../wikilib.php:1084 ../wikilib.php:1974
+#: ../plugin/UploadedFiles.php:414 ../plugin/rcsimport.php:32
+#: ../plugin/rename.php:77 ../plugin/revert.php:82 ../plugin/userinfo.php:37
+#: ../wikilib.php:1084 ../wikilib.php:1974
 msgid "Password"
 msgstr "비밀번호"
 
@@ -917,26 +947,6 @@ msgstr "거부된 액션"
 #: ../plugin/aclinfo.php:38
 msgid "Protected actions"
 msgstr "제한된 액션"
-
-#: ../plugin/admin.php:136
-msgid "Description"
-msgstr "설명"
-
-#: ../plugin/admin.php:139
-msgid "Author"
-msgstr "저자"
-
-#: ../plugin/admin.php:141
-msgid "License"
-msgstr "저작권"
-
-#: ../plugin/admin.php:143
-msgid "Depend"
-msgstr "의존성"
-
-#: ../plugin/admin.php:147
-msgid "URL"
-msgstr ""
 
 #: ../plugin/admin.php:191
 msgid "Enabled plugins"
@@ -1142,8 +1152,7 @@ msgstr "번역이 성공적으로 저장되었습니다"
 msgid "Fail to save translations."
 msgstr "번역 저장을 실패했습니다"
 
-#: ../plugin/msgtrans.php:23 ../plugin/useradmin.php:54
-#: ../plugin/useradmin.php:58
+#: ../plugin/msgtrans.php:23 ../plugin/userinfo.php:86
 #, c-format
 msgid "You are not allowed to \"%s\" !"
 msgstr "'%s'은(는) 허락되지 않았습니다"
@@ -1186,7 +1195,7 @@ msgstr ""
 msgid "Save Changes"
 msgstr "변경 저장"
 
-#: ../plugin/processor/monimarkup.php:489 ../wiki.php:3814
+#: ../plugin/processor/monimarkup.php:489 ../wiki.php:3827
 msgid "edit"
 msgstr "편집"
 
@@ -1349,7 +1358,7 @@ msgstr "백업된 데이타를 restore하기"
 msgid "Select a tarball file to restore"
 msgstr "Restore하기 위한 tarball 파일을 고르세요"
 
-#: ../plugin/revert.php:23 ../wiki.php:5283
+#: ../plugin/revert.php:23 ../wiki.php:5298
 #, c-format
 msgid "Old Revisions of the %s"
 msgstr "%s의 옛날 버전"
@@ -1407,6 +1416,22 @@ msgstr "스크랩 목록이 갱신되었습니다"
 msgid "Do you want to scrap \"%s\" ?"
 msgstr "\"%s\"을(를) 스크랩하시겠습니까 ?"
 
+#: ../plugin/security/acl.php:146
+msgid "ACL groups"
+msgstr ""
+
+#: ../plugin/security/acl.php:149
+msgid "Allowed ACL actions"
+msgstr "허락된 ACL 액션"
+
+#: ../plugin/security/acl.php:154
+msgid "Denied ACL actions"
+msgstr "거부된 ACL 액션"
+
+#: ../plugin/security/acl.php:159
+msgid "Protected ACL actions"
+msgstr "제한된 ACL 액션"
+
 #: ../plugin/security/acl.php:222 ../plugin/security/community.php:25
 #: ../plugin/security/community.php:35 ../plugin/security/community.php:45
 #: ../plugin/security/mustlogin.php:28 ../plugin/security/mustlogin.php:39
@@ -1430,9 +1455,9 @@ msgid "You must enter a valid login ID and password to access this resource.\n"
 msgstr "ID와 비밀번호가 유효해야 접근을 할 수 있습니다.\n"
 
 #: ../plugin/security/community.php:60 ../plugin/security/htaccesslogin.php:46
-#: ../plugin/security/mustlogin.php:66 ../plugin/security/userbased.php:28
-#: ../plugin/security/userbased.php:36 ../plugin/security/userbased.php:44
-#: ../plugin/security/userbased.php:59 ../plugin/security/wikimaster.php:29
+#: ../plugin/security/mustlogin.php:66 ../plugin/security/userbased.php:30
+#: ../plugin/security/userbased.php:38 ../plugin/security/userbased.php:46
+#: ../plugin/security/userbased.php:61 ../plugin/security/wikimaster.php:29
 #: ../plugin/security/wikimaster.php:38 ../plugin/security/wikimaster.php:47
 #, c-format
 msgid "You are not allowed to '%s' on this page."
@@ -1442,8 +1467,8 @@ msgstr "'%s'는 허락되지 않은 액션입니다."
 msgid "Please contact the system administrator for htaccess based logins."
 msgstr "htaccess 기반 관리를 위해 시스템 관리자에게 연락을 취하세요."
 
-#: ../plugin/security/userbased.php:29 ../plugin/security/userbased.php:37
-#: ../plugin/security/userbased.php:45 ../plugin/security/wikimaster.php:30
+#: ../plugin/security/userbased.php:31 ../plugin/security/userbased.php:39
+#: ../plugin/security/userbased.php:47 ../plugin/security/wikimaster.php:30
 #: ../plugin/security/wikimaster.php:39 ../plugin/security/wikimaster.php:48
 msgid "Please contact to WikiMaster"
 msgstr "위키 관리자에게 연락하세요"
@@ -1563,16 +1588,6 @@ msgstr "다른 블로그에 트랙백 보내기"
 #, c-format
 msgid "No TrackBack entry found for %s"
 msgstr "%s에 대한 트랙백 항목을 찾을 수 없음"
-
-#: ../plugin/useradmin.php:21
-#, c-format
-msgid "You are not allowed to use the \"%s\" macro."
-msgstr "\"%s\"매크로를 쓸 수 없습니다."
-
-#: ../plugin/useradmin.php:25
-#, c-format
-msgid "Total %d users"
-msgstr "총 %d명의 사용자"
 
 #: ../plugin/userform.php:35 ../plugin/userform.php:38
 msgid "Successfully confirmed"
@@ -1702,8 +1717,8 @@ msgstr "등록을 실패했습니다"
 msgid "You are not allowed to register on this wiki"
 msgstr "위키 등록이 허락되지 않았습니다"
 
-#: ../plugin/userform.php:240 ../plugin/userform.php:412 ../wiki.php:5221
-#: ../wiki.php:5232
+#: ../plugin/userform.php:240 ../plugin/userform.php:412 ../wiki.php:5236
+#: ../wiki.php:5247
 msgid "Please contact WikiMasters"
 msgstr "위키관리자에게 문의하세요"
 
@@ -1793,6 +1808,25 @@ msgstr ""
 msgid "Invalid OpenID Authentication request"
 msgstr ""
 
+#: ../plugin/userinfo.php:21
+#, c-format
+msgid "You are not allowed to use the \"%s\" macro."
+msgstr "\"%s\"매크로를 쓸 수 없습니다."
+
+#: ../plugin/userinfo.php:26
+#, c-format
+msgid "Total %d users"
+msgstr "총 %d명의 사용자"
+
+#: ../plugin/userinfo.php:49
+msgid "User infomation is restricted by wikimaster"
+msgstr "사용자 정보는 위키관리자만 볼 수 있습니다"
+
+#: ../plugin/userinfo.php:81
+#, c-format
+msgid "User \"%s\" are deleted !"
+msgstr "사용자 \"%s\"(이)가 지워짐 !"
+
 #: ../plugin/whois.php:119
 #, c-format
 msgid "Could not connect to %s server"
@@ -1808,131 +1842,131 @@ msgstr "%s에 대한 Whois 서치 결과"
 msgid "Rename %s to %s"
 msgstr ""
 
-#: ../wiki.php:1653
+#: ../wiki.php:1656
 msgid "Version info does not supported in this wiki"
 msgstr ""
 
-#: ../wiki.php:1663
+#: ../wiki.php:1666
 msgid "File does not exist"
 msgstr "페이지가 없습니다"
 
-#: ../wiki.php:2034
+#: ../wiki.php:2037
 #, c-format
 msgid "File '%s' does not exist."
 msgstr "파일 '%s'이(가) 없습니다"
 
-#: ../wiki.php:2902 ../wiki.php:2913 ../wiki.php:5457
+#: ../wiki.php:2907 ../wiki.php:2918 ../wiki.php:5472
 msgid "Invalid ajax action."
 msgstr "잘못된 ajax 액션."
 
-#: ../wiki.php:3403
+#: ../wiki.php:3412
 msgid "Tags:"
 msgstr "태그:"
 
-#: ../wiki.php:3431
+#: ../wiki.php:3440
 #, c-format
 msgid "See %s"
 msgstr ""
 
-#: ../wiki.php:3431
+#: ../wiki.php:3440
 #, c-format
 msgid "TwinPages"
 msgstr "TwinPages"
 
-#: ../wiki.php:3436
+#: ../wiki.php:3445
 msgid "See [TwinPages]:"
 msgstr ""
 
-#: ../wiki.php:3994
+#: ../wiki.php:4007
 msgid "Sister Sites Index"
 msgstr ""
 
-#: ../wiki.php:4422 ../locale/dummy.php:6
+#: ../wiki.php:4435 ../locale/dummy.php:6
 msgid "EditText"
 msgstr "고치기"
 
-#: ../wiki.php:4424
+#: ../wiki.php:4437
 msgid "NotEditable"
 msgstr "고칠수 없음"
 
-#: ../wiki.php:4428 ../locale/dummy.php:6
+#: ../wiki.php:4441 ../locale/dummy.php:6
 msgid "ShowPage"
 msgstr "보기"
 
-#: ../wiki.php:4429 ../locale/dummy.php:3 ../locale/dummy.php:5
+#: ../wiki.php:4442 ../locale/dummy.php:3 ../locale/dummy.php:5
 msgid "FindPage"
 msgstr "찾기"
 
-#: ../wiki.php:4811
+#: ../wiki.php:4825
 msgid "Main"
 msgstr ""
 
-#: ../wiki.php:5220
+#: ../wiki.php:5235
 msgid "You are in the black list"
 msgstr ""
 
-#: ../wiki.php:5231
+#: ../wiki.php:5246
 msgid "You are blocked in this wiki"
 msgstr ""
 
-#: ../wiki.php:5269 ../wiki.php:5278 ../wikilib.php:1344
+#: ../wiki.php:5284 ../wiki.php:5293 ../wikilib.php:1344
 msgid "Create this page"
 msgstr "페이지 만들기"
 
-#: ../wiki.php:5280
+#: ../wiki.php:5295
 #, c-format
 msgid "%s has saved revisions"
 msgstr "%s이(가) 저장된 옛버전이 있습니다"
 
-#: ../wiki.php:5281 ../wiki.php:5288
+#: ../wiki.php:5296 ../wiki.php:5303
 #, c-format
 msgid "%s or click %s to fulltext search.\n"
 msgstr "%s 혹은 %s를 눌러 전체 찾기를 할 수 있습니다.\n"
 
-#: ../wiki.php:5286
+#: ../wiki.php:5301
 #, c-format
 msgid "%s is not found in this Wiki"
 msgstr "%s 페이지를 이곳 위키에서 찾을 수 없습니다"
 
-#: ../wiki.php:5293
+#: ../wiki.php:5308
 msgid "Please try to search with another word"
 msgstr "다른 단어로 찾아보세요."
 
-#: ../wiki.php:5305
+#: ../wiki.php:5320
 #, c-format
 msgid "%s or alternativly, use one of these templates:\n"
 msgstr ""
 "%s 아이콘을 누르거나 아래의 탬플리트 목록을 이용해 새 페이지를 만드세요:\n"
 
-#: ../wiki.php:5308
+#: ../wiki.php:5323
 msgid "You have no templates"
 msgstr "템플리트가 없습니다"
 
-#: ../wiki.php:5310
+#: ../wiki.php:5325
 #, c-format
 msgid "To create your own templates, add a page with '%s' pattern.\n"
 msgstr "탬플리트를 만드시려면 '%s' 형식의 이름을 가지는 페이지를 만드세요.\n"
 
-#: ../wiki.php:5321
+#: ../wiki.php:5336
 #, c-format
 msgid "Redirected from page \"%s\""
 msgstr "\"%s\"페이지로 부터 리다리렉트됨"
 
-#: ../wiki.php:5459
+#: ../wiki.php:5474
 msgid "Invalid macro action."
 msgstr "잘못된 마크로 액션."
 
-#: ../wiki.php:5469
+#: ../wiki.php:5484
 #, c-format
 msgid "You are not allowed to '%s'"
 msgstr "'%s'은(는) 허락되지 않았습니다"
 
-#: ../wiki.php:5489
+#: ../wiki.php:5504
 #, c-format
 msgid "Fail to \"%s\" !"
 msgstr "\"%s\"을(를) 실패했습니다 !"
 
-#: ../wiki.php:5492
+#: ../wiki.php:5507
 msgid "Please enter the valid password"
 msgstr "정확한 비밀번호를 넣어주세요"
 
@@ -2418,15 +2452,15 @@ msgstr "모두 선택 취소"
 msgid "Please be careful to deselect these pages"
 msgstr "아래의 페이지를 선택해제시 주의해주세요"
 
-#: ../monisetup.php:707
+#: ../monisetup.php:708
 msgid "MoniWiki"
 msgstr "모니위키"
 
-#: ../monisetup.php:710
+#: ../monisetup.php:711
 msgid "'config.php' is not writable !"
 msgstr "'config.php' 파일이 쓰기가능하지 않습니다 !"
 
-#: ../monisetup.php:711
+#: ../monisetup.php:712
 msgid ""
 "Please execute <tt>'monisetup.sh'</tt> or <tt>chmod a+w config.php</tt> "
 "first to change your settings."
@@ -2434,94 +2468,94 @@ msgstr ""
 "<tt>'monisetup.sh'</tt> 혹은 <tt>chmod a+w config.php</tt>를 먼저실행해 주셔"
 "야 설정을 고칠 수 있습니다"
 
-#: ../monisetup.php:738
+#: ../monisetup.php:739
 msgid "Invalid password error !"
 msgstr "잘못된 비밀번호 오류 !"
 
-#: ../monisetup.php:739
+#: ../monisetup.php:740
 msgid ""
 "If you can't remember your admin password, delete password entry in the "
 "'config.php' and restart 'monisetup'"
 msgstr ""
 
-#: ../monisetup.php:771
+#: ../monisetup.php:772
 #, c-format
 msgid "Updated Configutations for this %s"
 msgstr "위키 %s의 설정이 갱신되었습니다"
 
-#: ../monisetup.php:790
+#: ../monisetup.php:791
 msgid "Configurations are saved successfully"
 msgstr "설정이 성공적으로 저장되었습니다"
 
-#: ../monisetup.php:791
+#: ../monisetup.php:792
 msgid ""
 "WARN: Please check <a href='monisetup.php'> your saved configurations</a>"
 msgstr ""
 
-#: ../monisetup.php:792
+#: ../monisetup.php:793
 msgid "If all is good, change 'config.php' permission as 644."
 msgstr "모두 마음에 드시면 'config.php'파일의 퍼미션을 644로 바꿔주세요"
 
-#: ../monisetup.php:804
+#: ../monisetup.php:805
 msgid "Welcome to MoniWiki ! This is your first installation"
 msgstr "모니위키로 오신 것을  환영합니다 ! 처음 설치 하셨군요"
 
-#: ../monisetup.php:811
+#: ../monisetup.php:812
 msgid "Default settings are loaded..."
 msgstr "기본 설정을 불러옵니다..."
 
-#: ../monisetup.php:820
+#: ../monisetup.php:821
 msgid "Initial configurations are saved successfully."
 msgstr "초기 설정치가 성공적으로 저장되었습니다."
 
-#: ../monisetup.php:821
+#: ../monisetup.php:822
 msgid "Goto <a href='monisetup.php'>MoniSetup</a> again to configure details"
 msgstr ""
 "<a href='monisetup.php'>MoniSetup</a>으로 다시 가서 자세한 설정을 합니다"
 
-#: ../monisetup.php:838 ../monisetup.php:840 ../monisetup.php:936
-#: ../monisetup.php:938
+#: ../monisetup.php:839 ../monisetup.php:841 ../monisetup.php:937
+#: ../monisetup.php:939
 #, c-format
 msgid "goto %s"
 msgstr "%s으로 가기"
 
-#: ../monisetup.php:843
+#: ../monisetup.php:844
 msgid "No WikiSeeds are selected"
 msgstr "위키씨앗을 선택하지 않았습니다"
 
-#: ../monisetup.php:854
+#: ../monisetup.php:855
 #, c-format
 msgid "Preview current settings for this %s"
 msgstr "%s 현재 설정을 미리보기"
 
-#: ../monisetup.php:856
+#: ../monisetup.php:857
 #, c-format
 msgid "Read current settings for this %s"
 msgstr "%s 위키의 현재 설정 읽기"
 
-#: ../monisetup.php:884
+#: ../monisetup.php:885
 msgid "Change your settings"
 msgstr "세팅을 바꾸기"
 
-#: ../monisetup.php:886
+#: ../monisetup.php:887
 msgid "WARN: You have to enter your Admin Password"
 msgstr "주의: 관리자 비밀번호를 넣어주시기 바랍니다"
 
-#: ../monisetup.php:888 ../monisetup.php:931
+#: ../monisetup.php:889 ../monisetup.php:932
 #, c-format
 msgid "WARN: You have no WikiSeed on your %s"
 msgstr "주의: 위키씨앗이 위키 %s에 없습니다"
 
-#: ../monisetup.php:889 ../monisetup.php:932
+#: ../monisetup.php:890 ../monisetup.php:933
 #, c-format
 msgid "If you want to put wikiseeds on your wiki %s now"
 msgstr "위키씨앗을 심기를 원하신다면 %s 누르세요"
 
-#: ../monisetup.php:890 ../monisetup.php:933
+#: ../monisetup.php:891 ../monisetup.php:934
 msgid "Click here"
 msgstr "여기를"
 
-#: ../monisetup.php:925 ../monisetup.php:927
+#: ../monisetup.php:926 ../monisetup.php:928
 msgid "Update"
 msgstr "완료"
 
