@@ -1905,7 +1905,8 @@ class Formatter {
     #"\b(".$DBInfo->interwikirule."):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+\s{0,1})|".
     #"\b([A-Z][a-zA-Z]+):([^<>\s\'\/]{1,2}[^\(\)<>\s\']+[^\(\)<>\s\',\.:\?\!]+)|".
-    "(?:\b|\^?)(?:[A-Z][a-zA-Z]+):(?:[^:\(\)<>\s\']?[^\s<\'\",:\!\010\006]+(?:\s(?![\x21-\x7e]))?(?<![,\.\)>]))|".
+    "(?:\b|\^?)(?:[A-Z][a-zA-Z]+):(?:[^:\(\)<>\s\']?[^\s<\'\",\!\010\006]+(?:\s(?![\x21-\x7e]))?(?<![,\.\)>]))|".
+    #"(?:\b|\^?)(?:[A-Z][a-zA-Z]+):(?:[^:\(\)<>\s\']?[^\s<\'\",:\!\010\006]+(?:\s(?![\x21-\x7e]))?(?<![,\.\)>]))|".
     #"(\b|\^?)([A-Z][a-zA-Z]+):([^:\(\)<>\s\']?[^<>\s\'\",:\?\!\010\006]*(\s(?![\x21-\x7e]))?)";
     # for PR #301713
     #
@@ -2424,12 +2425,11 @@ class Formatter {
 
     $icon=$this->imgs_dir_interwiki.strtolower($wiki).'-16.png';
     $sx=16;$sy=16;
-    if ($DBInfo->intericon[$wiki]) {
+    if (isset($DBInfo->intericon[$wiki])) {
       $icon=$DBInfo->intericon[$wiki][2];
       $sx=$DBInfo->intericon[$wiki][0];
       $sy=$DBInfo->intericon[$wiki][1];
     }
-
 
     $page=$url;
     $url=$DBInfo->interwiki[$wiki];
