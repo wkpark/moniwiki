@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoniWiki 1.1.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-12-23 17:57+0900\n"
+"POT-Creation-Date: 2008-12-23 18:22+0900\n"
 "PO-Revision-Date: 2008-12-18 17:00+0900\n"
 "Last-Translator: Won-Kyu Park <wkpark@kldp.org>\n"
 "MIME-Version: 1.0\n"
@@ -229,3 +229,11 @@ msgstr "코드가 클립보드로 복사되었습니다"
 #: dummy.js:7
 msgid "Printing..."
 msgstr "인쇄중..."
+
+#: dummy.js:8
+msgid "copy to clipboard"
+msgstr "클립보드 복사"
+
+#: dummy.js:9
+msgid "view plain"
+msgstr "텍스트 보기"
