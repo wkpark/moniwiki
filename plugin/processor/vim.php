@@ -172,8 +172,19 @@ document.write('<a href=\"#\" onclick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
   $out = preg_replace(array("@^<font face[^>]*>\n@","@\n?</font>\n?$@"),array('',''),$out); // vim7.x
 
   $lines=explode("\n",$out);
-  $out="<span class=\"line\">".
-    implode("</span>\n<span class=\"line\">",$lines)."</span>\n";
+  $out = '';
+  if (0) { // list style
+    $col = array(' alt','');
+    $sz = count($lines);
+    for ($i=0;$i<$sz;$i++) {
+      $cls = $col[$i % 2];
+      $out.= "<li class=\"line$cls\">".$lines[$i]."</li>\n";
+    }
+    $out = '<ul style="margin:0;padding:0;list-style:none;">'.$out.'</ul>';
+  } else {
+    $out="<span class=\"line\">".
+      implode("</span>\n<span class=\"line\">",$lines)."</span>\n";
+  }
   $fp=fopen($html,"w");
   fwrite($fp,$stag.$out.$etag);
   fclose($fp);
