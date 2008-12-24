@@ -27,7 +27,9 @@ tt.sister {
 }
 
 pre.wiki {
-  font-family:Courier New,monospace;
+  word-wrap: break-word; /* IE */
+  overflow-x: auto;
+  font-family:Courier,monospace;
 }
 
 pre {
@@ -380,7 +382,11 @@ span.lineNumber {
 
 .wikiSyntax, .wikiSyntax code{  
   font-family:"Bitstream Vera Sans Mono", Courier New, GulimChe, monospace !important;
-  padding:0.5em;
+  overflow-x:auto;
+}
+
+div.wikiSyntax {
+  word-wrap: break-word; /* IE */
 }
 
 .pageNav { margin-bottom:5px;font-size : 75%; }
