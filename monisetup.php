@@ -326,12 +326,76 @@ function checkConfig($config) {
       } else
         print "<h3><font color=blue>".sprintf(_t("%s is writable"),$config[$file])."</font> :)</h3>\n";
     }
-    if (is_dir($config['upload_dir'])
-      and !file_exists($config['upload_dir'].'/.htaccess')) {
-      $fp=fopen('pds_htaccess','w');
-      fwrite($fp,'#Options NoExecCGI'."\n");
-      fwrite($fp,'AddType text/plain .sh .cgi .pl .py .php .php3 .php4 .phtml .html'."\n");
-      fclose($fp);
+    if (is_dir($config['upload_dir'])) {
+      $chk=array(
+        'AddType'=>"AddType text/plain .sh .cgi .pl .py .php .php3 .php4 .phtml .html\n",
+        'ForceType'=>"<Files ~ '\.(php.?|pl|py|cgi)$'>\nForceType text/plain\n</Files>\n",
+        'php_value'=>"php_value engine off\n",
+        'NoExecCGI'=>"#Options NoExecCGI\n",
+      );
+      if (file_exists($config['upload_dir'].'/.htaccess')) {
+        print '<h3>'.sprintf(_t("If you want to check .htaccess file please delete '%s' file and reload it."),
+          $config['upload_dir'].'/.htaccess').'</h3>';
+      } else if (ini_get('allow_url_fopen')) {
+        $port= ($_SERVER['SERVER_PORT'] != 80) ? ':'.$_SERVER['SERVER_PORT']:'';
+        $proto= 'http';
+        if (!empty($_SERVER['HTTPS'])) $proto= 'https';
+        else $proto= strtolower(strtok($_SERVER['SERVER_PROTOCOL'],'/'));
+        $url = preg_replace('/monisetup\.php/','',$_SERVER['SCRIPT_NAME']);
+        $path = $proto.'://'.$_SERVER['HTTP_HOST'].$port.$url;
+
+        print '<h3>'._t("Security check for 'upload_dir'.").'</h3>';
+
+        $fp = fopen('pds/test.php','w');
+        if (is_resource($fp)) {
+          fwrite($fp,"<?php echo 'HelloWorld';");
+          fclose($fp);
+        }
+
+        echo "<ul>";
+        foreach ($chk as $c=>$v) {
+          $fp = fopen('pds/.htaccess','w');
+          if (is_resource($fp)) {
+            fwrite($fp,preg_replace('/^#/','',$v));
+            fclose($fp);
+
+            $fp=@fopen($path.'/pds/test.php','r');
+            if ($fp) {
+              $out='';
+              while(!feof($fp)) {
+                $out.=fgets($fp,1024);
+              }
+              fclose($fp);
+              if ($out{0} == '<') {
+                print "<li>$c => <span style='color:blue'>Good</span></li>\n";
+              } else {
+                print "<li>$c => <span style='color:red'>BAD</span></li>\n";
+              }
+              $work[$c]=$v;
+            } else {
+              print "<li>$c => "._t("Fail")."</li>";
+            }
+          } else {
+            print "<li>"._t("Unable to write .htaccess")."</li>";
+            break;
+          }
+        }
+        echo "</ul>";
+        $fp = fopen('pds_htaccess','w');
+        if (is_resource($fp)) {
+          fwrite($fp,implode('',$work));
+          fclose($fp);
+        }
+        @unlink('pds/test.php');
+        @unlink('pds/.htaccess');
+      } else {
+        print '<h3>'._t("Unable to 'url_fopen'! Please check .htaccess file manually.").'</h3>';
+        $fp = fopen('pds_htaccess','w');
+        if (is_resource($fp)) {
+          fwrite($fp,implode('',$chk));
+          fclose($fp);
+        }
+      }
     }
     print "</div>\n";
   }
@@ -505,6 +569,7 @@ function set_locale($lang,$charset='') {
 
     $charset= strtoupper($charset);
     # XXX
+    $server_charset = '';
     if (function_exists('nl_langinfo'))
       $server_charset= nl_langinfo(CODESET);
 
@@ -940,4 +1005,5 @@ if ($_SERVER['REQUEST_METHOD']!="POST") {
 }
   print "</div></body></html>";
 
+// vim:et:sts=2:sw=2:
 ?>
