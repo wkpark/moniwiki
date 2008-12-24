@@ -202,16 +202,18 @@ EOS;
 
    if ($value and $value!='UploadFile') {
       $key=$DBInfo->pageToKeyname($value);
-      if ($force_download or $key != $value)
-        $prefix=$formatter->link_url(_rawurlencode($value),"?action=$mydownload&amp;value=");
+      //if ($force_download or $key != $value)
+        $down_prefix=$formatter->link_url(_rawurlencode($value),"?action=$mydownload&amp;value=");
       $dir=$DBInfo->upload_dir."/$key";
    } else {
       $value=$formatter->page->urlname;
       $key=$DBInfo->pageToKeyname($formatter->page->name);
-      if ($force_download or $key != $formatter->page->name)
-        $prefix=$formatter->link_url($formatter->page->urlname,"?action=$mydownload&amp;value=");
+      //if ($force_download or $key != $formatter->page->name)
+        $down_prefix=$formatter->link_url($formatter->page->urlname,"?action=$mydownload&amp;value=");
       $dir=$DBInfo->upload_dir."/$key";
    }
+   if ($force_download or $key != $value)
+      $prefix = $down_prefix;
 
    if ($formatter->preview and $formatter->page->name == $value) { 
      $opener='';
@@ -327,8 +329,9 @@ EOS;
    $iidx=1;
    foreach ($upfiles as $file) {
       $_l_file=_l_filename($file);
-      if ($down_mode)
-        $link=str_replace(";value=",";value=".rawurlencode($file),$prefix);
+      // force download with some extensions. XXX
+      if ($down_mode or preg_match('/\.(pl|cgi|py|php.?)$/',$file))
+        $link=str_replace(";value=",";value=".rawurlencode($file),$down_prefix);
       else
         $link=$prefix.rawurlencode($file); // XXX
 
