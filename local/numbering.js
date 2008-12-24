@@ -3,16 +3,18 @@
 //
 
 function isnumbered(obj) {
-  var c = obj.firstChild;
-  while(true) {
-    if (c.tagName && c.className == 'line') {
-      if (c.firstChild && c.firstChild.className == 'lineNumber') {
-        return true;
-      } else {
-        return false;
-      }
+  var c = obj.getElementsByTagName('li');
+  if (c.length == 0) {
+    c = obj.getElementsByTagName('span');
+  }
+  if (c.length > 0 && c[0].className.match(/line/)) {
+    if (c[0].tagName == 'SPAN' && c[0].className == 'lineNumber') {
+      return true;
+    } else if (c[0].firstChild && c[0].firstChild.tagName == 'SPAN' && c[0].firstChild.className == 'lineNumber') {
+      return true;
+    } else {
+      return false;
     }
-    var c = c.nextSibling;
   }
   return false;
 }
@@ -22,15 +24,18 @@ function nformat(num,chrs,add) {
   return res+num+add;
 }
 function addnumber(did, nstart, nstep) {
-  var c = document.getElementById(did), l = c.firstChild, n = 1;
-  if (!isnumbered(c))
+  var c = document.getElementById(did), n = 1;
+  if (!isnumbered(c)) {
     if (typeof nstart == 'undefined') nstart = 1;
     if (typeof nstep  == 'undefined') nstep = 1;
     n = nstart;
     var ls = c.getElementsByTagName('span');
+    if (ls.length == 0)
+      ls = c.getElementsByTagName('li');
+
     for (var i=0;i<ls.length;i++) {
       var l = ls[i];
-      if (l.tagName == 'SPAN' && l.className == 'line') {
+      if (l.className.match(/line/) && l.className != 'lineNumber') {
         var s = document.createElement('SPAN');
         s.className = 'lineNumber'
         s.appendChild(document.createTextNode(nformat(n,4,' ')));
@@ -41,17 +46,27 @@ function addnumber(did, nstart, nstep) {
           l.appendChild(s)
       }
     }
-  return false;
+  }
+  return;
 }
 function remnumber(did) {
-  var c = document.getElementById(did), l = c.firstChild;
-  if (isnumbered(c))
-    var ls = c.getElementsByTagName('span');
+  var c = document.getElementById(did);
+  if (isnumbered(c)) {
+    ls = c.getElementsByTagName('li');
+    if (ls.length == 0) {
+      var ls = c.getElementsByTagName('span');
+      for (var i=0;i<ls.length;i++) {
+        var l = ls[i];
+        if (l.firstChild.tagName && l.firstChild.className == 'lineNumber') l.removeChild(l.firstChild);
+      }
+      return;
+    }
     for (var i=0;i<ls.length;i++) {
       var l = ls[i];
-      if (l.tagName == 'SPAN' && l.firstChild.className == 'lineNumber') l.removeChild(l.firstChild);
+      if (l.firstChild.className == 'lineNumber') l.removeChild(l.firstChild);
     }
-  return false;
+  }
+  return;
 }
 function togglenumber(did, nstart, nstep) {
   var c = document.getElementById(did);
