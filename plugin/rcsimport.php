@@ -43,9 +43,58 @@ FORM;
     $version=new $class ($DBInfo);
     header('Content-type:text/plain');
     if (method_exists($version,'import')) {
-        $content=base64_decode($options['rcsfile']);
+        $body = $options['rcsfile'];
+        $meta = array();
+        while(!empty($body)) {
+            list($line,$body) = explode("\n",$body,2);
+            if (!trim($line)) continue;
+            if (preg_match('/^#(.*)$/',$line,$m)) {
+                $p = strpos($line,' ');
+                if ($p !== false) {
+                    $tag = substr($line,0,$p);
+                    $val = substr($line,$p+1);
+                    if (in_array($tag, array('#title','#charset','#encrypt'))) {
+                        $meta[$tag] = $val;
+                    }
+                }
+            } else {
+                $body = $line."\n".$body;
+                break;
+            }
+        }
+        if (isset($meta['#title']) or isset($meta['#charset'])) {
+            $title = isset($meta['#title']) ? $meta['#title']: $options['page'];
+            $charset = $meta['#charset'];
 
-        $body = $content;
+            $formatter->send_header('',$options);
+            $formatter->send_title('','',$options);
+            $COLS_MSIE= 80;
+            $COLS_OTHER= 85;
+
+            $cols= preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
+
+            $tmsg = _("Page name");
+            print <<<FORM
+<form method='post' action=''>
+<div>
+<textarea name='rcsfile' class='' cols='$cols' rows='20'>
+$body
+</textarea></div>
+$tmsg: <input type='text' size='40' name='title' value='$title' /><br />
+<input type='hidden' name='charset' value='$charset' />
+<input type='hidden' name='action' value='rcsimport' />
+FORM;
+            if ($DBInfo->security->is_protected("rcsimport",$options))
+                print _("Password"). ": <input type='password' name='passwd' /> ";
+            print <<<FORM
+<input type='submit' value='Import RCS' />
+</form>
+FORM;
+            $formatter->send_footer('',$options);
+            return;
+        }
+        $body = base64_decode($body);
+
         $read = '';
         while(!empty($body)) {
             list($line,$body) = explode("\n",$body,2);
@@ -57,9 +106,19 @@ FORM;
             $read.=$line."\n";
         }
         $content= $read.$body;
+
+        if (!empty($options['title'])) $options['page'] = $options['title'];
+        if ($options['charset'] and (strcasecmp($options['charset'],$DBInfo->charset) != 0) and function_exists('iconv')) {
+            $t = @iconv($options['charset'], $DBInfo->charset, $content);
+            if (!empty($t))
+                $content = $t;
+        }
         $version->import($options['page'],$content);
+
+        $options['value'] = $options['page'];
+        do_goto($formatter, $options);
+        return;
     }
-    print 'OK';
 }
 
 // vim:et:sts=4:
