@@ -247,6 +247,7 @@ EOF;
     if (isset($_FILES['Filedata']['tmp_name'])) {
         move_uploaded_file($_FILES['Filedata']['tmp_name'],
             $swfupload_dir.'/'.$mysubdir.$_FILES['Filedata']['name']);
+        echo "Success";
         return;
     } else if (is_array($options['MYFILES'])) {
         include_once('plugin/UploadFile.php');
