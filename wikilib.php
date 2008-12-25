@@ -38,7 +38,8 @@ function get_scriptname() {
   // set 'cgi.fix_pathinfo=1' in the php.ini under
   // apache 2.0.x + php4.2.x Win32
   // check mod_rewrite
-  if (strpos($_SERVER['REQUEST_URI'],$_SERVER['SCRIPT_NAME'])===false) {
+  if (isset($_SERVER['REDIRECT_URL']) and
+      strpos($_SERVER['REQUEST_URI'],$_SERVER['SCRIPT_NAME'])===false) {
     return preg_replace('@/[^/]+\.php@','',$_SERVER['SCRIPT_NAME']);
   }
   return $_SERVER['SCRIPT_NAME'];
