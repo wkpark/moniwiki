@@ -18,10 +18,14 @@ function do_rcsexport($formatter,$options) {
     $class='Version_'.$DBInfo->version_class;
     $version=new $class ($DBInfo);
     header('Content-type:text/plain');
-    if (method_exists($version,'export'))
-        print chunk_split(base64_encode($version->export($options['page'])));
-    else
-        print 'Not supported';
+    if (method_exists($version,'export')) {
+        echo '#title '.$formatter->page->name."\n";
+        echo '#charset '.strtoupper($DBInfo->charset)."\n";
+        echo '#encrypt base64'."\n";
+        echo chunk_split(base64_encode($version->export($options['page'])));
+    } else {
+        echo 'Not supported';
+    }
 }
 
 // vim:et:sts=4:

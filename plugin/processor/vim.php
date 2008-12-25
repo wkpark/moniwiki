@@ -162,6 +162,7 @@ document.write('<a href=\"#\" onclick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
     $tpos=strpos($out,'</body>');
     $out=substr($out,$fpos+7,$tpos-$fpos-7);
     $out=preg_replace('/^[^>]+>/','',$out);
+    $out = preg_replace(array("@^<font face[^>]*>\n@","@\n?</font>\n?$@"),array('',''),$out); // vim7.x
   } else {
     $tpos=strpos($out,'</pre>');
     $out=substr($out,$fpos+6,$tpos-$fpos-7);
@@ -169,7 +170,6 @@ document.write('<a href=\"#\" onclick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
   $stag="<$myspan class='wikiSyntax' id='PRE-$uniq' style='font-family:FixedSys,monospace;color:$fgcolor;background-color:$bgcolor'>\n";
   $etag="</$myspan>\n";
 
-  $out = preg_replace(array("@^<font face[^>]*>\n@","@\n?</font>\n?$@"),array('',''),$out); // vim7.x
 
   $lines=explode("\n",$out);
   $out = '';
