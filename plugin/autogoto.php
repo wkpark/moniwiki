@@ -12,14 +12,14 @@ function do_AutoGoto($formatter,$options) {
 
     if ($DBInfo->autogoto_options) {
         $opts=explode(',',$DBInfo->autogoto_options);
+        $supported=array('man'=>'Man','google'=>'Google','macro'=>'Macro','tpl'=>'TPL');
         foreach ($opts as $opt) {
             $opt=trim($opt);
             if ($opt=='man') {
                 $v=explode(' ',trim($formatter->page->name));
-                if (strtolower($v[0])=='man') {
-                    $options['url']=
-                        $formatter->link_url('ManPage',
-                        "?action=man_get&man=".$v[1]);
+                if (array_key_exists(strtolower($v[0]),$supported)) {
+                    $val = urlencode($v[1]);
+                    $options['value'] = $supported[strtolower($v[0])].':'.$val;
                     do_goto($formatter,$options);
                     return true;
                 }
