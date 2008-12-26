@@ -4675,16 +4675,24 @@ MSG;
           }
         }
 
-        #print_r($smenu);
 
+        # make $submenu, $submain
         $cmenu=null;
-        if ($smenu[$this->page->name]) {
+        if (isset($smenu[$this->page->name])) {
           $cmenu=&$smenu[$this->page->name];
-        } else if ($smenu['Main']) {
-          $cmenu=&$smenu['Main'];
         }
 
-        if ($cmenu) {
+        $submain='';
+        if (isset($smenu['Main'])) {
+          $submenus=array();
+          foreach ($smenu['Main'] as $item) {
+            $submenus[]=$this->link_repl($item);
+          }
+          $submain='<ul><li>'.implode("</li><li>",$submenus)."</li></ul>\n";
+        }
+
+        $submenu='';
+        if ($cmenu and ($cmenu != 'Main' or !empty($DBInfo->submenu_showmain))) {
           if (is_array($cmenu)) {
             $smenua=$cmenu;
           } else {
@@ -4696,7 +4704,7 @@ MSG;
             $submenus[]=$this->link_repl($item);
           }
           #print_r($submenus);
-          $submenu='<div id="subMenu"><ul><li>'.implode("</li><li>",$submenus)."</li></ul></div>\n";
+          $submenu='<ul><li>'.implode("</li><li>",$submenus)."</li></ul>\n";
           # set current attribute.
           $submenu=preg_replace("/(li)>(<a\s[^>]+current[^>]+)/",
             "$1 class='current'>$2",$submenu);
