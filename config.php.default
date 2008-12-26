@@ -83,17 +83,18 @@ $hr='';
 #$date_fmt_blog='Y-m-d';
 
 #$sistermap=$data_dir.'/sistermap.txt';
-#$metatags='
-#<meta name="ROBOTS" content="NOINDEX,NOFOLLOW" />
-#<link rel="Start" href="FrontPage" />
-#<link rel="Index" href="TitleIndex" />
-#<link rel="Help" href="HelpOnFormatting" />
-#<link rel="Copyright" href="FrontPage" />
-#<link rel="Search" href="FindPage" />
-#<link rel="Glossary" href="WordIndex" />
-#<link rel="Alternate History" title="Page History" href="?action=info" />
-#<link rel="Alternate" title="xml" type="application/rss+xml" href="?action=rss_rc" />
-#';
+$metatags=<<<META
+<meta name="robots" content="noindex,nofollow" />
+<link rel="Start" href="FrontPage" />
+<link rel="Index" href="TitleIndex" />
+<link rel="Help" href="HelpOnFormatting" />
+<link rel="Copyright" href="FrontPage" />
+<link rel="Search" href="FindPage" />
+<link rel="Glossary" href="WordIndex" />
+<link rel="Alternate History" title="Page History" href="?action=info" />
+<link rel="Alternate" title="xml" type="application/rss+xml" href="?action=rss_rc" />
+<link rel="Alternate" title="Wiki Markup" type="text/plain" href="?action=raw" />
+META;
 
 # set global javascripts
 #$js=<<<EOF
@@ -265,6 +266,7 @@ $flashupload='swfupload';
 #$use_openid=0; # enable openid login
 #$check_openid_url=0; # selectivly show openid icons: experimental
 #$use_autosave=1; # enable autosave feature.
+#$delayindex=60*60*24*5 # delayed indexing
 #$use_bbs=0;
 $robots='googlebot|yahoo'; # set robots
 #$security_class_robot='robot';
