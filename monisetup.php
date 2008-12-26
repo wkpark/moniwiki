@@ -24,11 +24,10 @@ class MoniConfig {
 
     $hostconfig=$this->_getHostConfig();
     $this->rawconfig=array_merge($this->_rawConfig("config.php.default"),$hostconfig);
-    while (list($key,$val)=each($this->rawconfig)) {
+    while (list($key,$val)=each($hostconfig)) {
       eval("\$$key=$val;");
       eval("\$this->config[\$key]=$val;");
     }
-
   }
   function _getHostConfig() {
     print '<div class="check">';
@@ -203,6 +202,7 @@ class MoniConfig {
     while (list($key,$val) = each($config)) {
       if ($key=='admin_passwd' or $key=='purge_passwd')
          $val="'".crypt($val,md5(time()))."'";
+      $val = str_replace('&lt;','<',$val);
       if (preg_match("/^<{3}([A-Za-z0-9]+)\s.*\\1\s*$/s",$val,$m)) {
          $save_val=$val;
          $val=str_replace("$m[1]",'',substr($val,3));
@@ -288,13 +288,12 @@ function checkConfig($config) {
              "<font color='green'>$</font> chmod a+w $config[$file]\n</pre>\n";
        }
     }
-    if (is_dir('imgs') and !file_exists('imgs/.htaccess')) {
-      $fp=fopen('imgs_htaccess','w');
-      fwrite($fp,'ErrorDocument 404 '.$config['url_prefix'].'/imgs/moni/inter.png'."\n");
-      fclose($fp);
-    }
 
     $writables=array("upload_dir",'cache_public_dir',"editlog_name");
+
+    $port= ($_SERVER['SERVER_PORT'] != 80) ? $_SERVER['SERVER_PORT']:80;
+    $path = preg_replace('/monisetup\.php/','',$_SERVER['SCRIPT_NAME']);
+    $host = $_SERVER['HTTP_HOST'];
 
     print '<div class="check">';
     foreach($writables as $file) {
@@ -328,22 +327,22 @@ function checkConfig($config) {
     }
     if (is_dir($config['upload_dir'])) {
       $chk=array(
-        'AddType'=>"AddType text/plain .sh .cgi .pl .py .php .php3 .php4 .phtml .html\n",
-        'ForceType'=>"<Files ~ '\.(php.?|pl|py|cgi)$'>\nForceType text/plain\n</Files>\n",
-        'php_value'=>"php_value engine off\n",
-        'NoExecCGI'=>"#Options NoExecCGI\n",
-      );
+          'AddType'=>"AddType text/plain .sh .cgi .pl .py .php .php3 .php4 .phtml .html\n",
+          'ForceType'=>"<Files ~ '\.(php.?|pl|py|cgi)$'>\nForceType text/plain\n</Files>\n",
+          'php_value'=>"AddType text/plain .php\nphp_value engine off\n",
+          'NoExecCGI'=>"#Options NoExecCGI\n",
+          );
+      $re = array(
+          '@^HTTP/1.1\s+\d+\s+OK$@'=>1, //
+          '@^HTTP/1.1\s+500\s+@'=>-1, // Fail
+          '@^Content-Type: text/plain@'=> 2, // OK
+          '@^Content-Type: text/html@'=> 0, // BAD
+          );
+
       if (file_exists($config['upload_dir'].'/.htaccess')) {
         print '<h3>'.sprintf(_t("If you want to check .htaccess file please delete '%s' file and reload it."),
-          $config['upload_dir'].'/.htaccess').'</h3>';
-      } else if (ini_get('allow_url_fopen')) {
-        $port= ($_SERVER['SERVER_PORT'] != 80) ? ':'.$_SERVER['SERVER_PORT']:'';
-        $proto= 'http';
-        if (!empty($_SERVER['HTTPS'])) $proto= 'https';
-        else $proto= strtolower(strtok($_SERVER['SERVER_PROTOCOL'],'/'));
-        $url = preg_replace('/monisetup\.php/','',$_SERVER['SCRIPT_NAME']);
-        $path = $proto.'://'.$_SERVER['HTTP_HOST'].$port.$url;
-
+            $config['upload_dir'].'/.htaccess').'</h3>';
+      } else {
         print '<h3>'._t("Security check for 'upload_dir'.").'</h3>';
 
         $fp = fopen('pds/test.php','w');
@@ -352,53 +351,113 @@ function checkConfig($config) {
           fclose($fp);
         }
 
-        echo "<ul>";
-        foreach ($chk as $c=>$v) {
-          $fp = fopen('pds/.htaccess','w');
-          if (is_resource($fp)) {
-            fwrite($fp,preg_replace('/^#/','',$v));
-            fclose($fp);
+        $work = check_htaccess($chk, $re, $host, $port,
+          $path.'/'.$config['upload_dir'].'/test.php',
+          $config['upload_dir']);
 
-            $fp=@fopen($path.'/pds/test.php','r');
-            if ($fp) {
-              $out='';
-              while(!feof($fp)) {
-                $out.=fgets($fp,1024);
-              }
-              fclose($fp);
-              if ($out{0} == '<') {
-                print "<li>$c => <span style='color:blue'>Good</span></li>\n";
-              } else {
-                print "<li>$c => <span style='color:red'>BAD</span></li>\n";
-              }
-              $work[$c]=$v;
-            } else {
-              print "<li>$c => "._t("Fail")."</li>";
-            }
-          } else {
-            print "<li>"._t("Unable to write .htaccess")."</li>";
-            break;
-          }
-        }
-        echo "</ul>";
         $fp = fopen('pds_htaccess','w');
         if (is_resource($fp)) {
           fwrite($fp,implode('',$work));
           fclose($fp);
         }
         @unlink('pds/test.php');
-        @unlink('pds/.htaccess');
-      } else {
-        print '<h3>'._t("Unable to 'url_fopen'! Please check .htaccess file manually.").'</h3>';
-        $fp = fopen('pds_htaccess','w');
+      }
+      # 
+      $chk2=array(
+          'ErrorDocument'=>
+            "#ErrorDocument 404 ".$config['url_prefix'].'/imgs/moni/inter.png'."\n",
+          );
+      $re = array(
+          '@^HTTP/1.1\s+\d+\s+OK$@'=>1, //
+          '@^HTTP/1.1\s+500\s+@'=>-1, // Fail
+          '@^HTTP/1.1\s+404\s+@'=>2, // OK
+          '@^Content-Type: text/png@'=> 2, // OK
+          );
+      if (is_dir('imgs') and
+          !file_exists($config['upload_dir'].'/.htaccess')) {
+        print '<h3>'._t(".htaccess for 'imgs_dir'.").'</h3>';
+        $work = check_htaccess($chk2, $re, $host, $port,
+          $path.'/'.$config['upload_dir'].'/nonexists.png',
+          $config['upload_dir']);
+
+        $fp=fopen('imgs_htaccess','w');
         if (is_resource($fp)) {
-          fwrite($fp,implode('',$chk));
+          fwrite($fp,implode('',$work));
           fclose($fp);
         }
       }
     }
     print "</div>\n";
   }
+}
+
+function check_htaccess($chk, $re, $host, $port, $path, $dir) {
+  $work = array();
+
+  echo "<ul>";
+  foreach ($chk as $c=>$v) {
+    $fp = fopen($dir.'/.htaccess','w');
+    if (is_resource($fp)) {
+      fwrite($fp,preg_replace('/^#/','',$v));
+      fclose($fp);
+
+      $fp=@fopen($url,'r');
+      $fp = fsockopen($host, $port, $errno, $errstr, 30);
+
+      if (is_resource($fp)) {
+        $send = "GET $path HTTP/1.1\r\n";
+        $send.= "Host: $host\r\n";
+        $send.= "Connection: Close\r\n\r\n";
+        fwrite($fp, $send);
+
+        $out='';
+        $ok = false;
+        while(!feof($fp)) {
+          $line = fgets($fp,1024);
+          $line = rtrim($line);
+        
+          foreach ($re as $kk=>$vv) {
+            if ($vv > 0 and preg_match($kk,$line)) {
+              $ok = $vv;
+              $out .= $line."\n";
+              if ($vv == 1) continue;
+              if ($vv == 2) break 2;
+            } else if ($vv <= 0 and preg_match($kk,$line)) {
+              $ok = $vv;
+              $out .= $line."\n";
+              if ($vv == 0) continue;
+              if ($vv == -1) break 2;
+              break;
+            }
+          }
+        }
+        fclose($fp);
+
+        print "<pre>".$out."</pre>";
+        if ($ok > 0) {
+          print "<li>$c => <span style='color:blue'>Good</span></li>\n";
+          $v = preg_replace('/^#/','',$v);
+        } else if ($ok == 0) {
+          print "<li>$c => <span style='color:red'>BAD</span></li>\n";
+        } else {
+          print "<li>$c => <span style='color:red'>Fail</span></li>\n";
+          $v = preg_replace('/^## /','',$v);
+        }
+        $work[$c]=$v;
+      } else {
+        echo "<li>$c => "._t("Fail")."<br />\n";
+        echo "$errstr ($errno)<br />\n";
+        echo "</li>";
+        $work[$c]='## '.$v;
+      }
+    } else {
+      print "<li>"._t("Unable to write .htaccess")."</li>";
+      break;
+    }
+  }
+  @unlink($dir.'/.htaccess');
+  echo "</ul>";
+  return $work;
 }
 
 function keyToPagename($key) {
