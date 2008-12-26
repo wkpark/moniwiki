@@ -4445,7 +4445,11 @@ EOS;
       foreach ($this->actions as $action) {
         if (strpos($action,' ')) {
           list($act,$text)=explode(' ',$action,2);
-          $menu[]= $this->link_to($act,_($text));
+          if ($options['page'] == $this->page->name) {
+            $menu[]= $this->link_to($act,_($text));
+          } else {
+            $menu[]= $this->link_tag($options['page'],$act,_($text));
+          }
         } else {
           $menu[]= $this->link_to("?action=$action",_($action));
         }
@@ -4553,7 +4557,12 @@ FOOT;
     }
 
     $title=htmlspecialchars($this->pi['#title']);
-    $msgtitle=htmlspecialchars($msgtitle);
+    if (!empty($msgtitle)) {
+      $msgtitle = htmlspecialchars($msgtitle);
+    } else if (isset($options['msgtitle'])) {
+      $msgtitle = $options['msgtitle'];
+    }
+
     if (!$msgtitle) $msgtitle=$options['title'];
     if (!$title) {
       if ($group) { # for UserNameSpace

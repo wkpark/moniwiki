@@ -78,12 +78,17 @@ function do_man_get($formatter,$options) {
         if ($m[1] != 'man') $lang=$m[1];
         $myman=$m[2];
         $mysec=$m[3];
-        if ($lang) $lang='&amp;lang='.$lang;
+        $tag='';
+        if ($lang) {
+            $tag = ($lang == 'ko') ? '('.$lang.')':'';
+            $lang='&amp;lang='.$lang;
+        }
         $lnk[]=$formatter->link_tag('ManPage/'.$myman.'.'.$mysec,
-            '?action=man_get&amp;man='.$myman.'&amp;sec='.$mysec.$lang);
+            '?action=man_get&amp;man='.$myman.'&amp;sec='.$mysec.$lang,$myman.'.'.$mysec).$tag;
       }
     }
-    $options['msg']=implode(', ',$lnk);
+    if (sizeof($lnk) > 0)
+        $options['msgtitle'] = implode(', ',$lnk);
   }
   if ($DBInfo->man_charset and
     $DBInfo->man_charset != $DBInfo->charset) {
@@ -112,7 +117,7 @@ function do_man_get($formatter,$options) {
     if ($options['sec']) $extra='&amp;sec='.$options['sec'];
     if ($options['lang']) $extra='&amp;lang='.$options['lang'];
     $formatter->actions[]='?action=man_get&man='.$options['man'].
-        $extra.'&amp;edit=1 '._("Edit");
+        $extra.'&amp;edit=1 '._("Edit man page");
   }
   $formatter->send_footer('',$options);
   return;
