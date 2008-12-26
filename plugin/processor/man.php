@@ -20,7 +20,10 @@ function processor_man($formatter,$value="") {
   fwrite($fp, $value);
   fclose($fp);
 
-  $man2html= "man2html $tmpf";
+  if (!empty($DBInfo->man_man2html) and $DBInfo->man_man2html == 'groff')
+    $man2html= "groff -Thtml -mman $tmpf";
+  else
+    $man2html= "man2html $tmpf";
   $html='';
   $fp=popen($man2html.$formatter->NULL,'r');
   while($s = fgets($fp, 1024)) $html.= $s;
@@ -28,8 +31,9 @@ function processor_man($formatter,$value="") {
   pclose($fp);
   unlink($tmpf);
 
-  $html=str_replace('Content-type: text/html','',$html);
-  $html=preg_replace('/<HTML>|<\/HTML>|<HEAD>|<\/HEAD>|<BODY>|<\/BODY>|<TITLE>.*<\/TITLE>/','',$html);
+  $html=preg_replace('@^Content-type: text/html@','',$html);
+  $html=preg_replace('/<\/?META[^>]*>|<\/?HTML>|<\/?HEAD>|<\/?BODY>|<TITLE>[^>]+<\/TITLE>/i','',$html);
+
   $html=preg_replace('/http:\/\/localhost\/cgi\-bin\/man\/man2html\?.\+/',
                 '?action=man_get&man=',$html);
   $html=preg_replace('/http:\/\/localhost\/cgi\-bin\/man\/man2html/',
