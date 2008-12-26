@@ -2694,6 +2694,9 @@ function sectionEdit(ev,obj,sect) {
 
         if (obj == null && confirm('Continue to edit current text ?') )
             text=textarea;
+        else if (obj == false) // continue to confirm :)
+            text=textarea;
+        // else // ignore all and restart
 
         var toolbar=document.getElementById('toolbar');
         if (toolbar) { // hide toolbar

@@ -99,16 +99,26 @@ function keydownhandler(e) {
 			noBubble(e);
 			return false;
 		}
-	if (e.altKey && e.keyCode == 90) { // Z
-		if (nn != 'INPUT') {
-			go ? goValue.focus():null;
-			noBubble(e);
-		} else {
-			var bot=document.getElementById('bottom');
-			if (bot) bot.focus(), noBubble(e);
+		if (e.altKey && e.keyCode == 90) { // Z
+			if (nn != 'INPUT') {
+				go ? goValue.focus():null;
+				noBubble(e);
+			} else {
+				var bot=document.getElementById('bottom');
+				if (bot) bot.focus(), noBubble(e);
+			}
+			return;
 		}
-		return;
 	}
+
+	if (e.ctrlKey && e.keyCode == 13 && nn == 'TEXTAREA') {
+		// ctrl-Enter to submit
+		var p = f.parentNode;
+		while(p.tagName != 'FORM' && p.tagName != 'BODY') p = p.parentNode;
+		if (p.tagName == 'FORM') {
+			p.submit();
+			return;
+		}
 	}
 	if (e.charCode == undefined && (e.keyCode==112 || e.keyCode==114)) {
 		keypresshandler(e); // IE hack

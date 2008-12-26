@@ -912,10 +912,12 @@ function macro_Edit($formatter,$value,$options='') {
       'value="'._("Preview").'" />';
     if ($preview)
       $skip_preview= ' '.$formatter->link_to('#preview',_("Skip to preview"));
-    if ($DBInfo->use_wikiwyg) {
+    if (!empty($DBInfo->use_wikiwyg)) {
+      $confirm = 'null';
+      if (!empty($DBInfo->wikiwyg_confirm)) $confirm = 'false';
       $wysiwyg_msg=_("GUI");
       $wysiwyg_btn.='&nbsp;<input type="button" tabindex="7" value="'.$wysiwyg_msg.
-        '" onclick="javascript:sectionEdit(null,null,null)" />';
+        '" onclick="javascript:sectionEdit(null,'.$confirm .',null)" />';
     }
     $summary=<<<EOS
 $summary_msg: <input name="comment" value="$editlog" size="70" maxlength="70" style="width:80%" tabindex="2" />$extra_check<br />
@@ -968,7 +970,7 @@ $summary
 <input type="hidden" name="action" value="$saveaction" />
 <input type="hidden" name="datestamp" value="$datestamp" />
 $hidden$select_category
-<input type="submit" tabindex="5" value="$save_msg" />
+<input type="submit" tabindex="5" value="$save_msg" accesskey="x" />
 <!-- <input type="reset" value="Reset" />&nbsp; -->
 $preview_btn$wysiwyg_btn$skip_preview
 $extra
