@@ -138,7 +138,7 @@ JS;
           $tex=trim($tmp[$i-1]);
           $mouseover=' onmouseover="showBig(this,event)" ';
           $out.= "<li><a href='#' $mouseover title='$tex' ".
-            " onclick=\"insertTags('$ ',' $','".str_replace('\\','\\\\',$tex)."',2)\">".
+            " onclick=\"return insertTags('$ ',' $','".str_replace('\\','\\\\',$tex)."',2)\">".
             "<div style='background:url($toolurl);width:{$w}px;height:{$height}px;background-position:-{$x}px 0px;'></div></a></li>\n";
         }
         $out.="\n</ul></div>\n";

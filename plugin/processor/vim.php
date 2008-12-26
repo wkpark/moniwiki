@@ -72,12 +72,11 @@ function processor_vim($formatter,$value,$options) {
 
   $script='';
   if ($DBInfo->use_numbering and empty($formatter->no_js)) {
-    $button=_("Toggle line numbers");
-    if (!$jsloaded) 
-      $script='<script type="text/javascript" src="'.$DBInfo->url_prefix.'/local/numbering.js"></script>';
-    $script.="<script type=\"text/javascript\">
+    $formatter->register_javascripts('numbering.js');
+
+    $script="<script type=\"text/javascript\">
 /*<![CDATA[*/
-document.write('<a href=\"#\" onclick=\"return togglenumber(\'PRE-$uniq\', 1, 1);\" class=\"codenumbers\">$button</a>');
+addtogglebutton('PRE-$uniq');
 /*]]>*/
 </script>";
   }
@@ -93,7 +92,7 @@ document.write('<a href=\"#\" onclick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
     $fp=fopen($html,"r");
     while (!feof($fp)) $out .= fread($fp, 1024);
     @fclose($fp);
-    return '<div>'.$script.$out.'</div>';
+    return '<div>'.$out.$script.'</div>';
   }
 
   if (!empty($DBInfo->vim_nocheck) and !in_array($type,$syntax)) {
@@ -188,7 +187,7 @@ document.write('<a href=\"#\" onclick=\"return togglenumber(\'PRE-$uniq\', 1, 1)
   $fp=fopen($html,"w");
   fwrite($fp,$stag.$out.$etag);
   fclose($fp);
-  return $log.'<div>'.$script.$stag.$out.$etag.'</div>';
+  return $log.'<div>'.$stag.$out.$etag.$script.'</div>';
 }
 
 // vim:et:sts=2:
