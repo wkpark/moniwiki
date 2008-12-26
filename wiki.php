@@ -804,7 +804,7 @@ EOS;
 
     $this->interwiki=null;
 
-    if ($this->use_alias)
+    if (file_exists($this->use_alias))
       $this->alias=new MetaDB_text($this->aliaspage);
     else
       $this->alias=new MetaDB();
