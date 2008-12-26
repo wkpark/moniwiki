@@ -97,6 +97,8 @@ function do_man_get($formatter,$options) {
       $raw=iconv($DBInfo->man_charset,$DBInfo->charset.$ignore,$raw);
     }
   }
+  if ($DBInfo->man_filter)
+    $raw = $formatter->filter_repl('simplere',$raw,array('page'=>$DBInfo->man_filter) );
   $options['savetext']=$raw;
 
   if ($options['edit']) {
