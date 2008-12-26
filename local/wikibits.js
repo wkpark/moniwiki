@@ -205,7 +205,7 @@ function insertTags(tagOpen, tagClose, sampleText,replace) {
         			'<span>$ ' + sampleText + ' $</span></span>';
 
 			wikiwyg.current_mode.insert_rawmarkup(tagOpen, tagClose, sampleText);
-			return;
+			return false;
 		} else {
 			var postdata = 'action=markup/ajax&value=' + encodeURIComponent(tagOpen + sampleText + tagClose);
 			var myhtml='';
@@ -218,7 +218,7 @@ function insertTags(tagOpen, tagClose, sampleText,replace) {
 		if (is_ie) {
 			var range = myframe.contentWindow.document.selection.createRange();
 			if (range.boundingTop == 2 && range.boundingLeft == 2)
-				return;
+				return false;
 			range.pasteHTML(mnew);
 			range.collapse(false);
 			range.select();
@@ -226,7 +226,7 @@ function insertTags(tagOpen, tagClose, sampleText,replace) {
 			myframe.contentWindow.document.execCommand('inserthtml', false, mnew + ' ');
 		}
 
-		return;
+		return false;
 	}
 
 	// IE
@@ -330,6 +330,7 @@ function insertTags(tagOpen, tagClose, sampleText,replace) {
 	// reposition cursor if possible
 	if (txtarea.createTextRange)
 		txtarea.caretPos = doc.selection.createRange().duplicate();
+	return false;
 }
 
 function toggleSameFormat(start, end, sel) {

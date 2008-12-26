@@ -7,3 +7,4 @@ N_("The code is in your clipboard now");
 N_('Printing...');
 N_("copy to clipboard");
 N_("view plain");
+N_("Toggle line numbers");

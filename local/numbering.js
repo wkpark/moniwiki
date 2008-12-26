@@ -1,6 +1,11 @@
 //
 // from the MoinMoin: http://moinmoin.wikiwikiweb.de
 //
+if ( typeof _ == 'undefined') {
+    _ = function(msgid) {
+        return msgid;
+    };
+}
 
 function isnumbered(obj) {
   var c = obj.getElementsByTagName('li');
@@ -77,3 +82,16 @@ function togglenumber(did, nstart, nstep) {
   }
   return false;
 }
+
+function addtogglebutton(id) {
+    var c = document.getElementById(id);
+    var a = document.createElement('a');
+    var txt = document.createTextNode(_('Toggle line numbers'));
+    a.appendChild(txt);
+    a.href = '#';
+    a.className = 'codenumbers';
+    a.onclick = function() { return togglenumber(id,1,1); };
+    c.parentNode.insertBefore(a,c);
+}
+
+// vim:et:sts=4:sw=4:
