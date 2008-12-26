@@ -456,10 +456,6 @@ class processor_monimarkup
                 $val= preg_replace($formatter->baserule,
                     $formatter->baserepl,$val);
 
-                if (!empty($formatter->smiley_rule))
-                    $val=preg_replace($formatter->smiley_rule,
-                        $formatter->smiley_repl,$val);
-
                 if ($_li>0 and $c['tag']!='LIST')
                     while($_li>0 and $_lidep[$_li] > 0) {
                         $out.=$this->_li(0,$_lityp[$_li]);
@@ -580,10 +576,6 @@ class processor_monimarkup
             } else {
                 $c= preg_replace($formatter->baserule,$formatter->baserepl,$c);
 
-                if (!empty($formatter->smiley_rule))
-                    $c=preg_replace($formatter->smiley_rule,
-                        $formatter->smiley_repl,$c);
-
                 if (strpos($c,'||')!== false) {
                     $c=$this->_parseTable($c);
                 }
@@ -632,6 +624,10 @@ class processor_monimarkup
             --$_li;
         }
         if ($formatter->sect_num >1) $out.=$this->_div(0);
+
+        if (!empty($formatter->smiley_rule))
+            $out=preg_replace($formatter->smiley_rule,
+                 $formatter->smiley_repl,$out);
 
         $out=preg_replace("/\007(\d+)\007/e",
             "\$formatter->processor_repl(\$btype[$1],\$block[$1])",$out);
