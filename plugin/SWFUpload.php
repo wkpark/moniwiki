@@ -28,7 +28,12 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
     if ($DBInfo->nosession) { // ip based
         $myid=md5($_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI'); // FIXME
     } else {
-        $myid=session_id();
+        if ($_SESSION['_swfupload'])
+            $myid = $_SESSION['_swfupload'];
+        else {
+            $myid=session_id();
+            $_SESSION['_swfupload'] = $myid;
+        }
     }
 
     $prefix=substr($myid,0,$depth);
@@ -242,6 +247,7 @@ $swf_js
 	        <ul id="mmUploadFileListing">$uploaded</ul>
 		<span id="fileButton">
                 <input type='hidden' name='action' value='swfupload' />
+                <input type='hidden' name='value' value='$mysubdir' />
                 <input type='hidden' name='popup' value='1' />
                 $myoptions
                 $submit_btn
@@ -310,18 +316,28 @@ EOF;
     if ($DBInfo->nosession) { // ip based
         $myid=md5($_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI'); // FIXME
     } else {
-        $myid=session_id();
+        if (0 and $_SESSION['_swfupload']) // XXX flash bug?
+            $myid = $_SESSION['_swfupload'];
+        else {
+            list($dum,$myid,$dum2)=explode('/',$options['value'],3);
+        }
     }
 
     $prefix=substr($myid,0,$depth);
     $mysubdir=$prefix.'/'.$myid.'/';
 
     // debug
-    //$fp=fopen($swfupload_dir.'/swflog.txt','w+');
+    //$options['_mysubdir']=$mysubdir;
+    //$fp=fopen($swfupload_dir.'/swflog.txt','a+');
     //foreach ($options as $k=>$v) {
     //    if (is_string($v))
     //         fwrite($fp,sprintf("%s=>%s\n",$k,$v));
     //}
+    //foreach ($_SESSION as $k=>$v) {
+    //    if (is_string($v))
+    //         fwrite($fp,sprintf("%s=>%s\n",$k,$v));
+    //}
+    //fwrite($fp,"------------------------\n");
     //fclose($fp);
     // set the personal subdir
     if ($options['value'] and preg_match('/^[a-z0-9\/]+$/i',$options['value'])) {
