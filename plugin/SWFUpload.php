@@ -18,6 +18,7 @@
 function macro_SWFUpload($formatter,$value,$opts=array()) {
     global $DBInfo;
 
+    $swf_ver = 10;
     if ($DBInfo->swfupload_depth > 2) {
         $depth=$DBInfo->swfupload_depth;
     } else {
@@ -101,12 +102,24 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
     }
 
     if (!$swfupload_num) {
-        $formatter->register_javascripts(array(
-            'js/swfobject.js',
-            'SWFUpload/mmSWFUpload.js',
-            'SWFUpload/preview.js',
-            'SWFUpload/moni.js',
-        ));
+        if ($swf_ver == 9) {
+            $formatter->register_javascripts(array(
+                'js/swfobject.js',
+                'SWFUpload/mmSWFUpload.js',
+                'SWFUpload/preview.js',
+                'SWFUpload/moni.js',
+            ));
+        } else {
+            $formatter->register_javascripts(array(
+                'js/swfobject.js',
+                'SWFUpload/swfupload.js',
+                'SWFUpload/swfupload.swfobject.js',
+                'SWFUpload/swfupload.queue.js',
+                'SWFUpload/preview.js',
+                'SWFUpload/handlers.js',
+                #'SWFUpload/fileprogress.js',
+            ));
+        }
     }
 
     $swf_css=<<<CSS
@@ -117,20 +130,16 @@ CSS;
 
     $btn=_("Files...");
     $btn2=_("Upload");
+    $btn3=_("Cancel All files");
     $prefix=qualifiedUrl($DBInfo->url_prefix.'/local');
     $action=$formatter->link_url($formatter->page->urlname);
     $action2=$action.'----swfupload';
     if ($mysubdir) $action2.='----'.$mysubdir;
     $action2=qualifiedUrl($action2);
     $myprefix=qualifiedUrl($DBInfo->url_prefix);
-    $form=<<<EOF
-	<div id="SWFUpload">
-		<form action="" onsubmit="return false;">
-			<input type="file" name="upload" />
-			<input type="submit" value="Upload" onclick="javascript:alert('disabled...'); return false;" />
-		</form>
-	</div>
 
+    if ($swf_ver == 9) {
+        $swf_js=<<<EOF
         <script type="text/javascript">
         /*<![CDATA[*/
 		mmSWFUpload.init({
@@ -149,7 +158,74 @@ CSS;
                 });
         /*]]>*/
 	</script>
+EOF;
+        $submit_btn="<input type='button' value='$btn' onclick='javascript:mmSWFUpload.callSWF();' />\n";
+        $cancel_btn='';
+    } else {
+        $submit_btn='<span id="spanButtonPlaceHolder"><input type="file" name="upload" /></span>';
+        $cancel_btn="<input id='btnCancel' type='button' value='$btn3' onclick='swfu.cancelQueue();' disabled='disabled' />\n";
+        $swf_js=<<<EOF
+<script type="text/javascript">
+/*<![CDATA[*/
+var swfu;
 
+SWFUpload.onload = function () {
+    var settings = {
+        flash_url : "$DBInfo->url_prefix/local/SWFUpload/swfupload.swf",
+        upload_url: "$action2", // Relative to the SWF file
+        file_size_limit : "10 MB",
+        file_types : "$allowed",
+        file_types_description : "Files",
+        file_upload_limit : 100,
+        file_queue_limit : 0,
+        custom_settings : {
+            progressTarget : "fsUploadProgress",
+            cancelButtonId : "btnCancel"
+        },
+        debug: false, // true
+
+        // Button Settings
+        button_image_url : "$DBInfo->url_prefix/local/SWFUpload/images/btn.png",
+        button_placeholder_id : "spanButtonPlaceHolder",
+        button_width: 61,
+        button_height: 22,
+        button_window_mode: SWFUpload.WINDOW_MODE.TRANSPARENT,
+        button_cursor: SWFUpload.CURSOR.HAND,
+
+        // The event handler functions are defined in handlers.js
+        swfupload_loaded_handler : swfUploadLoaded,
+        file_queued_handler : fileQueued,
+        file_queue_error_handler : fileQueueError,
+        file_dialog_complete_handler : fileDialogComplete,
+        upload_start_handler : uploadStart,
+        upload_progress_handler : uploadProgress,
+        upload_error_handler : uploadError,
+        upload_success_handler : uploadSuccess,
+        upload_complete_handler : uploadComplete,
+        queue_complete_handler : queueComplete, // Queue plugin event
+        
+        // SWFObject settings
+        minimum_flash_version : "9.0.28",
+        swfupload_pre_load_handler : swfUploadPreLoad,
+        swfupload_load_failed_handler : swfUploadLoadFailed
+    };
+
+    swfu = new SWFUpload(settings);
+}
+/*]]>*/
+</script>
+
+EOF;
+
+    }
+    $form=<<<EOF
+	<div id="SWFUpload" style='display:none'>
+		<form action="" onsubmit="return false;">
+			<input type="file" name="upload" />
+			<input type="submit" value="Upload" onclick="javascript:alert('disabled...'); return false;" />
+		</form>
+	</div>
+$swf_js
 	<div class="fileList">
 	<table border='0' cellpadding='0'>
 	<tr>
@@ -160,18 +236,35 @@ CSS;
 	</div>
 	</td>
 	<td>
+
 	<div id="filesDisplay">
-                <form target='_blank' method='POST' action='$action'>
-		<ul id="mmUploadFileListing">$uploaded</ul>
+            <form id="form1" target='_blanl' action="$action" method="POST" enctype="multipart/form-data">
+	        <ul id="mmUploadFileListing">$uploaded</ul>
 		<span id="fileButton">
                 <input type='hidden' name='action' value='swfupload' />
                 <input type='hidden' name='popup' value='1' />
                 $myoptions
-		<input type='button' value="$btn" onclick='javascript:mmSWFUpload.callSWF();' />
+                $submit_btn
 		<input type='submit' value="$btn2" onclick='javascript:fileSubmit(this);' />
+                $cancel_btn
 		</span>
-                </form>
-	</div>
+            </form>
+        </div>
+        <noscript style="background-color: #FFFF66; border-top: solid 4px #FF9966; border-bottom: solid 4px #FF9966; margin: 10px 25px; padding: 10px 15px;">
+            We're sorry.  SWFUpload could not load.  You must have JavaScript enabled to enjoy SWFUpload.
+        </noscript>
+        <div id="divLoadingContent" class="content" style="background-color: #FFFF66; border-top: solid 4px #FF9966; border-bottom: solid 4px #FF9966; margin: 10px 25px; padding: 10px 15px; display: none;">
+            SWFUpload is loading. Please wait a moment...
+        </div>
+        <div id="divLongLoading" class="content" style="background-color: #FFFF66; border-top: solid 4px #FF9966; border-bottom: solid 4px #FF9966; margin: 10px 25px; padding: 10px 15px; display: none;">
+            SWFUpload is taking a long time to load or the load has failed.  Please make sure that the Flash Plugin is enabled and that a working version of the Adobe Flash Player is installed.
+        </div>
+        <div id="divAlternateContent" class="content" style="background-color: #FFFF66; border-top: solid 4px #FF9966; border-bottom: solid 4px #FF9966; margin: 10px 25px; padding: 10px 15px; display: none;">
+
+            We're sorry.  SWFUpload could not load.  You may need to install or upgrade Flash Player.
+            Visit the <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe website</a> to get the Flash Player.
+        </div>
+
 	</td>
         </tr>
 	<tr>
