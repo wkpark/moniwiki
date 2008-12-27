@@ -6,6 +6,13 @@
 // $Id$
 
 function do_uploadedfiles($formatter,$options) {
+  if (!empty($options['q'])) {
+    $q = $options['q'];
+    $t = @preg_match('@'.$q.'@','');
+    if ($t !== false) {
+      $options['needle']=$q;
+    }
+  }
   $list=macro_UploadedFiles($formatter,$options['page'],$options);
 
   $formatter->send_header("",$options);
@@ -188,13 +195,13 @@ EOS;
    if ($DBInfo->download_action) $mydownload=$DBInfo->download_action;
    else $mydownload='download';
    $checkbox='checkbox';
-   $needle="//";
+   $needle= "//";
    if ($options['download'] || $DBInfo->force_download) {
      $force_download=1;
      if ($options['download'])
        $mydownload=$options['download'];
    }
-   if ($options['needle']) $needle=$options['needle'];
+   if ($options['needle']) $needle='@'.$options['needle'].'@';
    if ($options['checkbox']) $checkbox=$options['checkbox'];
 
    if (!in_array('UploadFile',$formatter->actions))
@@ -303,6 +310,9 @@ EOS;
         #$attr=' target="_blank"';
         $extra='&amp;popup=1&amp;tag=1';
       }
+      if ($options['needle'])
+        $extra.='&amp;q='.$options['needle'];
+
       $link=$formatter->link_tag('UploadFile',"?action=uploadedfiles&amp;value=top$extra",
         "<img src='".$icon_dir."/32/up.png' style='border:0' class='upper' alt='..' />",$attr);
       $out.="<tr>";
@@ -314,6 +324,8 @@ EOS;
       }
       $out.="</tr>\n";
    }
+   if ($options['needle'])
+      $extra.='&amp;q='.$options['needle'];
    if ($plink)
       $plink=$formatter->link_tag('',"?action=uploadedfiles$extra&amp;p=".($p+1),_("Next page &raquo;"),$attr);
    else if ($p > 1)
