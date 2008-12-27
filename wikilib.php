@@ -913,8 +913,8 @@ function macro_Edit($formatter,$value,$options='') {
     if ($preview)
       $skip_preview= ' '.$formatter->link_to('#preview',_("Skip to preview"));
     if (!empty($DBInfo->use_wikiwyg)) {
-      $confirm = 'null';
-      if (!empty($DBInfo->wikiwyg_confirm)) $confirm = 'false';
+      $confirm = 'false';
+      if (!empty($DBInfo->wikiwyg_confirm)) $confirm = 'null';
       $wysiwyg_msg=_("GUI");
       $wysiwyg_btn.='&nbsp;<input type="button" tabindex="7" value="'.$wysiwyg_msg.
         '" onclick="javascript:sectionEdit(null,'.$confirm .',null)" />';
