@@ -82,10 +82,11 @@ function addButton(imageFile, speedTip, tagOpen, tagClose, sampleText) {
 	return;
 }
 
-function addLinkButton(imageFile,speedTip,id,once) {
+function addLinkButton(imageFile,speedTip,tagOpen,tagClose, sampleText, id,once) {
 	var off=once ? 'true':'false';
 	speedTip=escapeQuotes(_(speedTip));
-	document.write("<input type='image' onclick=\"javascript:openChooser(this,'" + id + "'," + off + ");\"");
+	document.write("<input type='image' onclick=\"javascript:openChooser(this,'"
+		+ tagOpen+"','" + tagClose + "','" + sampleText + "','" + id + "'," + off + ");\"");
         document.write(" width=\"22\" height=\"22\" src=\""+imageFile+"\" border=\"0\" alt=\""+speedTip+"\" title=\""+speedTip+"\""+" />");
 	return;
 }
@@ -108,9 +109,12 @@ function getPos(el) {
   return r;
 }
 
-function openChooser(el,id,once) {
+function openChooser(el, tagOpen, tagClose, sampleText, id,once) {
 	var div = document.getElementById(id);
-	if (!div) return;
+	if (!div) {
+		insertTags(tagOpen, tagClose, sampleText);
+		return;
+	}
 
 	if (div.style.display == 'block') div.style.display='none';
 	else div.style.display='block';
