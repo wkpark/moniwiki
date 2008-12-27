@@ -272,6 +272,35 @@ Wikiwyg.Wysiwyg.prototype.get_key_down_function = function() {
             if (window.event) e.cancelBubble = true;
             else e.preventDefault(), e.stopPropagation();
         }
+        if (e.keyCode == 35 || e.keyCode == 39) { // right arrow or end key.
+            var sel = self.get_selection();
+            var sf = sel.focusNode;
+            var p = sf.parentNode;
+            // XXX
+            if ((p.nodeName=='A' && sf.nodeType==3) || (p.nodeName == 'SPAN' && p.className.match(/wikiMarkup/) )) { // XXX
+                if (e.keyCode == 35 ||
+                        (e.keyCode == 39 && sel.focusOffset == sf.nodeValue.length)) {
+                    sel.removeAllRanges();
+                    range=self.get_range();
+                    if (p.nextSibling) {
+                        range.selectNode(p.nextSibling);
+                        range.setStart(p.nextSibling,0);
+                        range.setEnd(p.nextSibling,0); // XXX not work in the chrome :(
+                        range.collapse(false); // not work ;;
+                    }
+                    else {
+                        range.setStartAfter(p);
+                        range.setEndAfter(p);
+                        range.collapse(true);
+                    }
+                    sel.addRange(range);
+
+                    if (Wikiwyg.is_ie) e.cancelBubble = true;
+                    else e.preventDefault(), e.stopPropagation();
+                    return true;
+                }
+            }
+        }
         if (wm && wm.className.match(/wikiMarkup/)) {
             var focus=0;
             var stop=false;
@@ -361,30 +390,6 @@ Wikiwyg.Wysiwyg.prototype.get_key_press_function = function() {
                                 return true;
                             }
                         }
-                    }
-                }
-            } else if (e.keyCode == 35 || e.keyCode == 39) { // right arrow or end key.
-                var sel = self.get_selection();
-                var sf = sel.focusNode;
-                var p = sf.parentNode;
-                if (p.nodeName=='A' && sf.nodeType==3) {
-                    if (e.keyCode == 35 ||
-                            (e.keyCode == 39 && sel.focusOffset == sf.nodeValue.length)) {
-                        range=self.get_range();
-                        if (p.nextSibling) {
-                            range.selectNode(p.nextSibling);
-                            range.setStart(p.nextSibling,0);
-                            range.setEnd(p.nextSibling,0);
-                            //range.collapse(true); // not work ;;
-                        }
-                        else
-                            range.setStartAfter(p);
-                        sel.removeAllRanges();
-                        sel.addRange(range);
-
-                        if (Wikiwyg.is_ie) e.cancelBubble = true;
-                        else e.preventDefault(), e.stopPropagation();
-                        return true;
                     }
                 }
             }
@@ -1045,8 +1050,7 @@ proto.do_indent = function() {
         this.exec_command('indent');
 }
 
-/*
-proto.do_math = function() {
+proto.do_math_raw = function() {
     var node=this.check_parent_node().nodeName;
     if (node && node != 'BODY') return;
 
@@ -1056,7 +1060,6 @@ proto.do_math = function() {
         '<span>$&nbsp;$</span></span>';
     this.insert_table(html);
 }
-*/
 
 proto.insert_rawmarkup = function(start, end, raw) {
     var node=this.check_parent_node().nodeName;
@@ -1154,11 +1157,18 @@ proto.do_unordered = function() {
 }
 
 proto.do_math = function(cmd,elm) {
-    open_chooser('mathChooser',elm);
+    if (document.getElementById('mathChooser'))
+        open_chooser('mathChooser',elm);
+    else
+        this.do_math_raw();
+
 }
 
 proto.do_smiley = function(cmd,elm) {
-    open_chooser('smileyChooser',elm,true);
+    if (document.getElementById('smileyChooser'))
+        open_chooser('smileyChooser',elm,true);
+    //else //
+    //  this.insert_text_at_cursor(':)');
 }
 
 proto.do_image = function() {
@@ -2039,13 +2049,19 @@ proto.do_image = Wikiwyg.Wikitext.make_do('image');
 proto.do_media = Wikiwyg.Wikitext.make_do('media');
 //proto.do_quote = Wikiwyg.Wikitext.make_do('quote');
 //
-//proto.do_math = Wikiwyg.Wikitext.make_do('math');
+proto.do_math_tag = Wikiwyg.Wikitext.make_do('math');
 proto.do_math = function(cmd,elm) {
-    open_chooser('mathChooser',elm);
+    if (document.getElementById('mathChooser'))
+        open_chooser('mathChooser',elm);
+    else
+        this.do_math_tag(cmd,elm);
 }
 
 proto.do_smiley = function(cmd,elm) {
-    open_chooser('smileyChooser',elm,true);
+    if (document.getElementById('smileyChooser'))
+        open_chooser('smileyChooser',elm,true);
+    else
+        this.insert_text_at_cursor(':)');
 }
 
 proto.collapse = function(string) {
