@@ -10,20 +10,26 @@
 function do_AutoGoto($formatter,$options) {
     global $DBInfo;
 
+    $supported=array('man'=>'Man','google'=>'Google','macro'=>'Macro','tpl'=>'TPL');
+
     if ($DBInfo->autogoto_options) {
-        $opts=explode(',',$DBInfo->autogoto_options);
-        $supported=array('man'=>'Man','google'=>'Google','macro'=>'Macro','tpl'=>'TPL');
-        foreach ($opts as $opt) {
-            $opt=trim($opt);
-            if ($opt=='man') {
-                $v=explode(' ',trim($formatter->page->name));
-                if (array_key_exists(strtolower($v[0]),$supported)) {
-                    $val = urlencode($v[1]);
-                    $options['value'] = $supported[strtolower($v[0])].':'.$val;
-                    do_goto($formatter,$options);
-                    return true;
-                }
+        if (is_array($DBInfo->autogoto_options)) {
+            $supported = array_merge($supported, $DBInfo->autogoto_options);
+        } else if (is_string($DBInfo->autogoto_options)) {
+            $opts=explode(',',$DBInfo->autogoto_options);
+            foreach ($opts as $opt) {
+                $opt=trim($opt);
+                if (empty($opt)) continue;
+                $v=explode(' ',$opt);
+                if (!empty($v[1])) $supported[$v[0]]=$v[1];
             }
+        }
+        $v=explode(' ',trim($formatter->page->name));
+        if ($v[1] and array_key_exists(strtolower($v[0]),$supported)) {
+            $val = urlencode($v[1]);
+            $options['value'] = $supported[strtolower($v[0])].':'.$val;
+            do_goto($formatter,$options);
+            return true;
         }
     }
    
@@ -63,5 +69,5 @@ function do_AutoGoto($formatter,$options) {
     return true;
 }
 
-// vim:et:sts=4:
+// vim:et:sts=4:sw=4:
 ?>
