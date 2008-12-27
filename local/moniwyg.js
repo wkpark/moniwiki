@@ -285,13 +285,24 @@ Wikiwyg.Wysiwyg.prototype.get_key_down_function = function() {
                     if (p.nextSibling) {
                         range.selectNode(p.nextSibling);
                         range.setStart(p.nextSibling,0);
-                        range.setEnd(p.nextSibling,0); // XXX not work in the chrome :(
+                        if (Wikiwyg.is_safari) {
+                            range.setEnd(p.nextSibling,1); // XXX safari/chrome bug.
+                        } else {
+                            range.setEnd(p.nextSibling,0);
+                        }
                         range.collapse(false); // not work ;;
-                    }
-                    else {
-                        range.setStartAfter(p);
-                        range.setEndAfter(p);
-                        range.collapse(true);
+                    } else {
+                        if (Wikiwyg.is_safari) {
+                            var txt = document.createTextNode(' ');
+                            p.parentNode.appendChild(txt);
+                            range.selectNode(txt);
+                            range.setStart(txt,0);
+                            range.setEnd(txt,1);
+                        } else {
+                            range.setStartAfter(p);
+                            range.setEndAfter(p);
+                        }
+                        range.collapse(false);
                     }
                     sel.addRange(range);
 
@@ -344,7 +355,31 @@ Wikiwyg.Wysiwyg.prototype.get_key_press_function = function() {
                 if (!Wikiwyg.is_ie) {
                     var sf=sel.focusNode;
                     var wm=self.get_wikimarkup_node();
-                    if (sf.nodeType == 3 && sel.toString() == ''
+                    if (cc == 13
+                            && sf.nodeType == 3 && sel.toString() == ''
+                            && sf.parentNode.nodeName.match(/H\d/) && wm == null) {
+                        // safari/chrome hack XXX :(
+                        if (Wikiwyg.is_safari) {
+                            var txt;
+                            if (sf.parentNode.nextSibling) {
+                                txt = document.createElement('br');
+                                sf.parentNode.parentNode.insertBefore(txt,sf.parentNode.nextSibling);
+                            } else {
+                                txt = document.createElement('br');
+                                sf.parentNode.parentNode.appendChild(txt);
+                            }
+                            var range = self.get_range();
+                            sel.removeAllRanges();
+                            range.selectNode(txt);
+                            range.setStart(txt,0);
+                            range.setEnd(txt,0);
+                            range.collapse(false);
+                            sel.addRange(range);
+
+                            e.preventDefault();
+                            e.stopPropagation();
+                        }
+                    } else if (sf.nodeType == 3 && sel.toString() == ''
                             && sf.parentNode.nodeName != 'A' && wm == null) {
                         // text node
                         var range=self.get_range();
