@@ -40,7 +40,7 @@ function processor_enscript($formatter,$value) {
     $tag = strtok($line,' ');
     $type = strtok(' ');
     $extra = strtok('');
-    if ($tag != 'vim') {
+    if ($tag != 'enscript') {
       $extra = $type;
       $type = $tag;
     }
@@ -53,7 +53,7 @@ function processor_enscript($formatter,$value) {
   if (!in_array($type,$syntax)) 
     return "<pre class='code'>\n$line\n$src\n</pre>\n";
 
-  if ($type=='php') {
+  if ($type == 'php') {
     ob_start();
     highlight_string($src);
     $html= ob_get_contents();
@@ -66,8 +66,12 @@ function processor_enscript($formatter,$value) {
 
 #-E%s -W html -J "" -B --color --word-wrap 
 
-    #$cmd="ENSCRIPT_LIBRARY=/home/httpd/wiki/lib $enscript -q -o - -E$type -W html --color=ifh --word-wrap ".$tmpf;
-    $cmd="$enscript -q -o - $option -E$type -W html --color=ifh --word-wrap ".$tmpf;
+    #$cmd="ENSCRIPT_LIBRARY=/home/httpd/wiki/lib $enscript -q -o - -E$type -W html --color --word-wrap ".$tmpf;
+    if ($DBInfo->enscript_style)
+        $cmd="$enscript -q -o - $option -E$type --language=html $DBInfo->enscript_style --color --word-wrap ".$tmpf;
+    else
+        $cmd="$enscript -q -o - $option -E$type --language=html --style=ifh --color --word-wrap ".$tmpf;
+
     $fp=popen($cmd.$formatter->NULL, 'r');
     $html='';
     while($s = fgets($fp, 1024)) $html.= $s;
