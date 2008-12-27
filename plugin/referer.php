@@ -1,9 +1,9 @@
 <?php
-// Copyright 2007-2008 kz <Keizi@mail.co.kr>
+// Copyright 2007-2008 Keizie <keizie at gmail.com>
 // All rights reserved. Distributable under GPL see COPYING
 // a referer plugin for the MoniWiki
 //
-// Author: kz name <Keizi@mail.co.kr>
+// Author: Keizie <keizie at gmail.com>
 // Date: 2007-04-30
 // Name: a referer plugin
 // Description: show referer plugin
