@@ -1827,6 +1827,7 @@ class Formatter {
       $this->external_target='target="'.$DBInfo->external_target.'"';
 
     $this->baserule=array("/(?<!\<)<([^\s<>])/",
+                     "/&(?!([^&;]+|#[0-9]+|#x[0-9a-fA-F]+);)/",
                      "/'''([^']*)'''/","/(?<!')'''(.*)'''(?!')/",
                      "/''([^']*)''/","/(?<!')''(.*)''(?!')/",
                      "/`(?<!\s)(?!`)([^`']+)(?<!\s)'(?=\s|$)/",
@@ -1842,6 +1843,7 @@ class Formatter {
                      #"/(\\\\\\\\)/", # tex, pmWiki
                      );
     $this->baserepl=array("&lt;\\1",
+                     "&amp;",
                      "<strong>\\1</strong>","<strong>\\1</strong>",
                      "<em>\\1</em>","<em>\\1</em>",
                      "&#96;\\1'","<tt>\\1</tt>",
