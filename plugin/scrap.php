@@ -19,8 +19,9 @@ function macro_Scrap($formatter,$value,$options) {
   foreach ($pages as $p) {
     if ($DBInfo->hasPage($p))
       $out.='<li>'.($formatter->link_tag(_urlencode($p),'',$p)).'</li>';
-    else if ($p)
-      $out.=substr($formatter->macro_repl('PageList',$p),4,-6);
+    else if (!empty($p)) {
+      $out.=substr($formatter->macro_repl('PageList',$p),4,-6,array('rawre'=>1));
+    }
   }
   return '<ul>'.$out.'</ul>';
 }
@@ -41,17 +42,39 @@ function do_scrap($formatter,$options) {
 
   $udb=&$DBInfo->udb;
   $userinfo=$udb->getUser($options['id']);
-  if (isset($options['scrapped_pages'])) {
-    $pages=preg_replace("/\n\s*/","\n",$options['scrapped_pages']);
-    $pages=preg_replace("/\s*\n/","\n",$pages);
-    $pages=explode("\n",$pages);
-    $pages=array_unique ($pages);
-    $page_list=join("\t",$pages);
-    $userinfo->info['scrapped_pages']=$page_list;
+  if (isset($options['scrapped_pages']) or (empty($DBInfo->scrap_manual) and empty($options['manual']))) {
+    $pages = array();
+    if (isset($options['scrapped_pages'])) {
+        $pages = preg_replace("/\n\s*/","\n",$options['scrapped_pages']);
+        $pages = preg_replace("/\s*\n/","\n",$pages);
+        $pages = explode("\n",$pages);
+        $pages = array_unique ($pages);
+        $title = _("Scrap lists updated.");
+    } else {
+        $pages = explode("\t",$userinfo->info['scrapped_pages']);
+        if (!empty($options['unscrap'])) {
+            $tmp = array_flip($pages);
+            if (isset($tmp[$formatter->page->name]))
+                unset($tmp[$formatter->page->name]);
+            $pages = array_flip($tmp);
+            $title = sprintf(_("\"%s\" is unscrapped."), $formatter->page->name);
+        } else {
+            $pages[] = $formatter->page->name;
+            $title = sprintf(_("\"%s\" is scrapped."), $formatter->page->name);
+        }
+        $pages = array_unique ($pages);
+    }
+    $page_list = join("\t",$pages);
+    $userinfo->info['scrapped_pages'] = $page_list;
     $udb->saveUser($userinfo);
 
-    $title = _("Scrap lists updated.");
-    $formatter->send_header("",$options);
+    if ($DBInfo->use_refresh) {
+      $sec = $DBInfo->use_refresh - 1;
+      $lnk = $formatter->link_url($formatter->page->urlname,'?action=show');
+      $myrefresh = 'Refresh: '.$sec.'; url='.qualifiedURL($lnk);
+    }
+
+    $formatter->send_header($myrefresh,$options);
     $formatter->send_title($title,"",$options);
     $formatter->send_page("Goto [$options[page]]\n");
     $formatter->send_footer();
@@ -65,9 +88,10 @@ function do_scrap($formatter,$options) {
   $title = sprintf(_("Do you want to scrap \"%s\" ?"), $options['page']);
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
+  $msg = _("Scrapped pages");
   print "<form method='post'>
 <table border='0'><tr>
-<th>Scrap pages:</th><td><textarea name='scrapped_pages' cols='30' rows='5' value='' />$page_lists</textarea></td></tr>
+<th>$msg :</th><td><textarea name='scrapped_pages' cols='40' rows='5' value='' />$page_lists</textarea></td></tr>
 <tr><td></td><td>
     <input type='hidden' name='action' value='scrap' />
     <input type='submit' value='Scrap' />

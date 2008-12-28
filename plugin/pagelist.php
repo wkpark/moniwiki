@@ -29,7 +29,9 @@ function macro_PageList($formatter,$arg="",$options=array()) {
   if ($options['subdir']) {
     $needle=_preg_search_escape($formatter->page->name);
     $needle='^'.$needle.'\/';
-  } else
+  } else if (!empty($options['rawre']))
+    $needle = $arg;
+  else
     $needle=_preg_search_escape($arg);
 
   $test=@preg_match("/$needle/","",$match);

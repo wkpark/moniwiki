@@ -738,6 +738,8 @@ EOS;
     $this->icon['home']="<img src='$imgdir/${iconset}home.$ext' alt='M' style='vertical-align:middle;border:0px' />";
     $this->icon['main']="<img src='$imgdir/${iconset}main.$ext' class='icon' alt='^' style='vertical-align:middle;border:0px' />";
     $this->icon['print']="<img src='$imgdir/${iconset}print.$ext' alt='P' style='vertical-align:middle;border:0px' />";
+    $this->icon['scrap']="<img src='$imgdir/${iconset}scrap.$ext' alt='S' style='vertical-align:middle;border:0px' />";
+    $this->icon['unscrap']="<img src='$imgdir/${iconset}unscrap.$ext' alt='S' style='vertical-align:middle;border:0px' />";
     $this->icon['attach']="<img src='$imgdir/${iconset}attach.$ext' alt='@' style='vertical-align:middle;border:0px' />";
     $this->icon['external']="<img class='externalLink' src='$imgdir/${iconset}external.$ext' alt='[]' style='vertical-align:middle;border:0px' />";
     $this->icon_sep=" ";
@@ -4728,6 +4730,9 @@ MSG;
         $this->icons['pref']=array("UserPreferences","",$this->icon['pref']);
       } else
         $this->icons['pref']=array("UserPreferences","",$this->icon['pref']);
+      if ($options['scrapped'])
+        $this->icons['scrap']=array("","?action=scrap&amp;unscrap=1",$this->icon['unscrap']);
+
     } else
       $user_link=$this->link_tag("UserPreferences","",_($this->icon['user']));
 
@@ -5115,6 +5120,15 @@ if ($theme and ($DBInfo->theme_css or !$options['css_url']))
   $options['pagename']=get_pagename();
   if (!empty($DBInfo->robots)) {
     $options['is_robot']=isRobot($_SERVER['HTTP_USER_AGENT']);
+  }
+
+  if ($user->id != 'Anonymous' and !empty($DBInfo->use_scrap)) {
+    $pages = explode("\t",$user->info['scrapped_pages']);
+    $tmp = array_flip($pages);
+    if (isset($tmp[$options['pagename']]))
+      $options['scrapped']=1;
+    else
+      $options['scrapped']=0;
   }
 }
 
