@@ -9,9 +9,8 @@ function macro_Scrap($formatter,$value,$options) {
   global $DBInfo;
 
   $user=&$DBInfo->user; # get cookie
-  if ($user->id == 'Anonymous') {
-    return '[[Scrap]]';
-  }
+  if ($user->id == 'Anonymous') return '';
+
   $userinfo=$DBInfo->udb->getUser($user->id);
   $pages=explode("\t",$userinfo->info['scrapped_pages']);
   if (!in_array($options['page'],$pages)) $pages[]=$options['page'];
