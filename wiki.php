@@ -101,7 +101,7 @@ function getProcessor($pro_name) {
       $processors=array_merge($processors,$DBInfo->myprocessors);
     return $processors[$prog];
   }
-  if ($DBInfo->include_path)
+  if (!empty($DBInfo->include_path))
     $dirs=explode(':',$DBInfo->include_path);
   else
     $dirs=array('.');
@@ -500,8 +500,8 @@ class Counter_dba {
   }
 
   function pageCounter($pagename) {
-    $count=dba_fetch($pagename,$this->counter);
-    return $count;
+    $count = dba_fetch($pagename,$this->counter);
+    return $count ? $count: 0;
   }
 
   function close() {
@@ -1891,8 +1891,9 @@ class Formatter {
 
     #$punct="<\"\'}\]\|;,\.\!";
     #$punct="<\'}\]\)\|;\.\!"; # , is omitted for the WikiPedia
-    $punct="<\'}\]\|\.\!"; # , is omitted for the WikiPedia
+    #$punct="<\'}\]\|\.\!"; # , is omitted for the WikiPedia
     $punct="<\'}\]\|\.\!\010\006"; # , is omitted for the WikiPedia
+    $punct="<>\"\'}\]\|\.\!\010\006"; # " and > added
     $url="wiki|http|https|ftp|nntp|news|irc|telnet|mailto|file|attachment";
     if ($DBInfo->url_schemas) $url.='|'.$DBInfo->url_schemas;
     $this->urls=$url;
@@ -1919,7 +1920,7 @@ class Formatter {
     #  * single bracketted words [Hello World] etc.
     #  * single bracketted words with double quotes ["Hello World"]
     #  * double bracketted words with double quotes [["Hello World"]]
-    "(?<!\[)\!?\[(\[)$single(\")?(?:[^\[\]\",<\s'][^\[\],>]{1,255}[^\"])(?(4)\")(?(3)\])\](?!\])";
+    "(?<!\[)\!?\[(\[)$single(\")?(?:[^\[\]\",<\s'][^\[\],>]{0,255}[^\"])(?(4)\")(?(3)\])\](?!\])";
 
     if ($camelcase)
       $this->wordrule.='|'.
