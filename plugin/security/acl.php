@@ -107,13 +107,10 @@ class Security_ACL extends Security {
                             unset($tmp[$t]);
                         else
                             $tmp[$t]=$pri;
+                        if (isset($denied[$t]) and $denied[$t] <= $pri)
+                            unset($denied[$t]);
                     }
-
                     $allowed=array_merge($allowed,$tmp);
-                    if ($acl[3]=='*' and isset($denied['*'])) {
-                        if ($allowed['*']>=$denied['*']) unset($denied['*']);
-                        else $unset($allowed['*']);
-                    }
                 } else if ($acl[2] == 'deny') {
                     $tmp=split(',',$acl[3]);
                     $tmp=array_flip($tmp);
@@ -126,12 +123,10 @@ class Security_ACL extends Security {
                             unset($tmp[$t]);
                         else
                             $tmp[$t]=$pri;
+                        if (isset($allowed[$t]) and $allowed[$t] <= $pri)
+                            unset($allowed[$t]);
                     }
                     $denied=array_merge($denied,$tmp);
-                    if ($acl[3]=='*' and isset($allowed['*'])) {
-                        if ($allowed['*']<=$denied['*']) unset($allowed['*']);
-                        else unset($denied['*']);
-                    }
                 } else if ($acl[2] == 'protect') {
                     $tmp=split(',',$acl[3]);
                     $tmp=array_flip($tmp);
