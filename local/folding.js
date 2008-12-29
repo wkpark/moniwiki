@@ -34,9 +34,15 @@ function foldingSection(btn, id)
         } else {
           new Effect.SlideUp(sect, { duration: dur, afterFinish: function() {Element.hide(sect);} });
         }
-    } else { // get sectpages for the first time.
+    } else if (typeof MooTools != 'undefined') { // get sectpages for the first time.
         var mySlide = new Fx.Slide(sect); // mootools
         mySlide.toggle();
+    } else {
+        if (sect.style.display == 'none') {
+            sect.style.display = 'block';
+        } else {
+            sect.style.display = 'none';
+        }
     }
     if (icon) {
         var name=icon.getAttribute('class');
