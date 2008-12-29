@@ -40,7 +40,7 @@ function getPlugin($pluginname) {
     $updated=false;
     $mt=$cp->mtime('plugins');
     foreach ($dirs as $d) {
-      $ct=filemtime($d.'/plugin/.');
+      $ct=filemtime($d.'/plugin/.'); // XXX mtime fix
       $updated=$ct > $mt ? true:$updated;
     }
     if ($updated) {
@@ -128,7 +128,7 @@ function getFilter($filtername) {
   static $filters=array();
   if ($filters) return $filters[strtolower($filtername)];
   global $DBInfo;
-  if ($DBInfo->include_path)
+  if (!empty($DBInfo->include_path))
     $dirs=explode(':',$DBInfo->include_path);
   else
     $dirs=array('.');
@@ -143,7 +143,7 @@ function getFilter($filtername) {
     }
   }
 
-  if (is_array($DBInfo->myfilters))
+  if (!empty($DBInfo->myfilters) and is_array($DBInfo->myfilters))
     $filters=array_merge($filters,$DBInfo->myfilters);
 
   return $filters[strtolower($filtername)];
@@ -2279,6 +2279,9 @@ class Formatter {
       break;
     }
 
+    $url=str_replace('&lt;','<',$url); // revert from baserule
+    $url=preg_replace('/&(?!#?[a-z0-9]+;)/i','&amp;',$url);
+
     if (($p=strpos($url,':')) !== false and
         (!isset($url{$p+1}) or (isset($url{$p+1}) and $url{$p+1}!=':'))) {
       if ($url[0]=='a') # attachment:
@@ -2306,7 +2309,7 @@ class Formatter {
         $myname=strtok('');
         $link=email_guard($link,$this->email_guard);
         $myname=!empty($myname) ? $myname:$link;
-        $link=preg_replace('/&(?!#?[a-z0-9]+;)/i','&amp;',$link);
+        #$link=preg_replace('/&(?!#?[a-z0-9]+;)/i','&amp;',$link);
         return $this->icon['mailto']."<a class='externalLink' href='mailto:$link' $attr>$myname</a>$external_icon";
       }
 
@@ -2357,9 +2360,9 @@ class Formatter {
         }
         if ($text != $url) $eclass='named';
         else $eclass='unnamed';
+        $link =str_replace(array('<','>'),array('&#x3c;','&#x3e;'),$link);
         return $icon. "<a class='externalLink $eclass' $attr $this->external_target href='$link'>$text</a>".$external_icon.$external_link;
       } # have no space
-      $link=str_replace('&','&amp;',$url);
       if (preg_match("/^(http|https|ftp)/",$url)) {
         if (preg_match("/(^.*\.(png|gif|jpeg|jpg))(([\?&]([a-z]+=[0-9a-z]+))*)$/i",$url,$match)) {
           $url=$match[1];
@@ -2375,9 +2378,11 @@ class Formatter {
       }
       if (substr($url,0,7)=='http://' and $url[7]=='?') {
         $link=substr($url,7);
+        $link = str_replace(array('<','>'),array('&#x3c;','&#x3e;'),$link);
         return "<a class='internalLink' href='$link'>$link</a>";
       }
       $url=urldecode($url);
+      $link = str_replace(array('<','>'),array('&#x3c;','&#x3e;'),$link);
       return "<a class='externalLink' $attr href='$link' $this->external_target>$url</a>";
     } else {
       if ($url{0}=='?') {
@@ -3356,7 +3361,7 @@ class Formatter {
     } else {
       # XXX need to redesign pagelink method ?
       if (empty($DBInfo->without_pagelinks_cache)) {
-        $dmt=filemtime($DBInfo->text_dir.'/.');
+        $dmt=filemtime($DBInfo->text_dir.'/.'); // mtime fix XXX
         $this->update_pagelinks= $dmt > $this->cache->mtime($this->page->name);
         #like as..
         #if (!$this->update_pagelinks) $this->pagelinks=$this->get_pagelinks();
@@ -5418,7 +5423,7 @@ function wiki_main($options) {
       $cache=new Cache_text('pages',2,'html');
       $mcache=new Cache_text('dynamicmacros',2);
       $mtime=$cache->mtime($pagename);
-      $dtime=filemtime($Config['data_dir'].'/text/.'); // XXX
+      $dtime=filemtime($Config['text_dir'].'/.'); // mtime fix XXX
       $now=time();
       $check=$now-$mtime;
       $extra_out='';
