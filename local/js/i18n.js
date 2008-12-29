@@ -57,7 +57,7 @@ _ = function(msgid) {
             oldalert(_(txt));
         }
         window.confirm = function(txt) {
-            oldconfirm(_(txt));
+            return oldconfirm(_(txt));
         }
     }
 })();
