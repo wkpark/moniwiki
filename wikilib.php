@@ -535,8 +535,10 @@ class User {
      $_COOKIE['MONI_ID']=$ticket.'.'.$this->id;
      if ($this->info['nick']) $_COOKIE['MONI_NICK']=$this->info['nick'];
 
-     $path=strpos($_SERVER['HTTP_USER_AGENT'],'Safari')===false ?
-       get_scriptname():'/';
+     #$path=strpos($_SERVER['HTTP_USER_AGENT'],'Safari')===false ?
+     #  get_scriptname():'/';
+     $path = get_scriptname();
+     #$path = preg_replace('@(?<=/)[^/]+$@','',$path);
      return "Set-Cookie: MONI_ID=".$ticket.'.'.$this->id.'; expires='.gmdate('l, d-M-Y H:i:s',time()+60*60*24*30).' GMT; Path='.$path;
   }
 
@@ -545,8 +547,10 @@ class User {
      $_COOKIE['MONI_ID']="Anonymous";
 
      # check safari
-     $path=strpos($_SERVER['HTTP_USER_AGENT'],'Safari')===false ?
-       get_scriptname():'/';
+     #$path=strpos($_SERVER['HTTP_USER_AGENT'],'Safari')===false ?
+     #  get_scriptname():'/';
+     $path = get_scriptname();
+     #$path = preg_replace('@(?<=/)[^/]+$@','',$path);
      return "Set-Cookie: MONI_ID=".$this->id."; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".$path;
   }
 
@@ -973,7 +977,7 @@ $hidden$select_category
 <input type="submit" tabindex="5" value="$save_msg" accesskey="x" />
 <!-- <input type="reset" value="Reset" />&nbsp; -->
 $preview_btn$wysiwyg_btn$skip_preview
-$extra
+$extra<span id="save_state"></span>
 </div>
 </form>
 </div>
