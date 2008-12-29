@@ -36,6 +36,7 @@ define('RC_DEFAULT_DAYS',7);
   $date_fmt=$DBInfo->date_fmt_rc;
   $days=$DBInfo->rc_days ? $DBInfo->rc_days:RC_DEFAULT_DAYS;
   $perma_icon=$formatter->perma_icon;
+  $changed_time_fmt = $DBInfo->changed_time_fmt;
 
   $args=explode(',',$value);
 
@@ -56,10 +57,12 @@ define('RC_DEFAULT_DAYS',7);
       else if ($arg=="nonew") $checknew=0;
       else if ($arg=="showhost") $showhost=1;
       else if ($arg=="comment") $comment=1;
+      else if ($arg=="comments") $comment=1;
       else if ($arg=="nobookmark") $nobookmark=1;
       else if ($arg=="noperma") $perma_icon='';
       else if ($arg=="button") $button=1;
       else if ($arg=="timesago") $timesago=1;
+      else if ($arg=="hits") $use_hits=1;
       else if ($arg=="daysago") $use_daysago=1;
       else if ($arg=="simple") {
         $use_day=0;
@@ -71,9 +74,16 @@ define('RC_DEFAULT_DAYS',7);
       } else if ($arg=="table") {
         $bra="<table border='0' cellpadding='0' cellspacing='0' width='100%'>";
         $template=
-  '$out.= "<tr><td style=\'white-space:nowrap;width:2%\'>$icon</td><td style=\'width:40%\'>$title</td><td style=\'width:15%\'>$date</td><td>$user $count $extra</td></tr>\n";';
+  '$out.= "<tr><td style=\'white-space:nowrap;width:2%\'>$icon</td><td style=\'width:40%\'>$title</td><td class=\'date\' style=\'width:15%\'>$date</td><td>$user $count $extra</td></tr>\n";';
         $cat="</table>";
         $cat0="";
+      } else if ($arg=="board") {
+        $changed_time_fmt = 'm-d [H:i]';
+        $use_day=0;
+        $template_bra="<table border='0' cellpadding='0' cellspacing='0' width='100%'>";
+        $template=
+  '$out.= "<tr$alt><td style=\'white-space:nowrap;width:2%\'>$icon</td><td style=\'width:40%\'>$title</td><td class=\'date\' style=\'width:15%\'>$date</td><td class=\'user\'>$user</td><td class=\'editinfo\'>$count</td><td>$extra</td><td class=\'hits\'>$hits</td></tr>\n";';
+        $template_cat="</table>";
       }
     }
   }
@@ -163,6 +173,7 @@ define('RC_DEFAULT_DAYS',7);
   $out="";
   $ratchet_day= FALSE;
   $br="";
+  $ii = 0;
   foreach ($lines as $line) {
     $parts= explode("\t", $line);
     $page_key=$parts[0];
@@ -233,14 +244,18 @@ define('RC_DEFAULT_DAYS',7);
     $title=htmlspecialchars($title);
     $title= $formatter->link_tag($pageurl,"",$title,$target);
 
-    if (! empty($DBInfo->changed_time_fmt)) {
-      $date= gmdate($DBInfo->changed_time_fmt, $ed_time+$tz_offset);
+    if (! empty($changed_time_fmt)) {
+      $date= gmdate($changed_time_fmt, $ed_time+$tz_offset);
       if ($timesago) {
         $time_diff=(int)($time_current - $ed_time)/60;
         if ($time_diff < 1440) {
           $date=sprintf(_("[%sh %sm ago]"),(int)($time_diff/60),$time_diff%60);
         }
       }
+    }
+
+    if ($use_hits) {
+      $hits = $DBInfo->counter->pageCounter($page_name);
     }
 
     if ($DBInfo->show_hosts) {
@@ -260,11 +275,13 @@ define('RC_DEFAULT_DAYS',7);
     if ($comment && $log)
       $extra="&nbsp; &nbsp; &nbsp; <small>$log</small>";
 
+    $alt = ($ii % 2 == 0) ? ' class="alt"':'';
     eval($template);
 
     $logs[$page_key]= 1;
+    ++$ii;
   }
-  return $btnlist.'<div>'.$out.$cat0.'</div>';
+  return $btnlist.'<div class="recentChanges">'.$template_bra.$out.$template_cat.$cat0.'</div>';
 }
 // vim:et:sts=2:
 ?>
