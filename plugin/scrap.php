@@ -5,7 +5,7 @@
 //
 // $Id$
 
-function macro_Scrap($formatter,$value,$options) {
+function macro_Scrap($formatter,$value='',$options=array()) {
   global $DBInfo;
 
   $user=&$DBInfo->user; # get cookie
@@ -19,7 +19,9 @@ function macro_Scrap($formatter,$value,$options) {
     if ($DBInfo->hasPage($p))
       $out.='<li>'.($formatter->link_tag(_urlencode($p),'',$p)).'</li>';
     else if (!empty($p)) {
-      $out.=substr($formatter->macro_repl('PageList',$p),4,-6,array('rawre'=>1));
+      $list = $formatter->macro_repl('PageList',$p,array('rawre'=>1));
+      if (empty($list))
+      	$out.=substr($list,4,-6);
     }
   }
   return '<ul>'.$out.'</ul>';
