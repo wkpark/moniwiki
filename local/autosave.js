@@ -35,8 +35,13 @@ function moni_autosave(form) {
         txts=cookieToVar(val);
 
         if (txts[key]) {
-            if (confirm('Are you sure to restore page ?') )
+            if (true && confirm('Auto saved text found.\nAre you sure to restore page ?') ) {
                 form.elements['savetext'].value=txts[key];
+
+                delete txts[key];
+                var cookie = varToCookie(txts);
+                setCookie(_cookie_autosave, cookie);
+            }
         }
         self = this;
         self.form=form;
@@ -48,7 +53,11 @@ function moni_autosave(form) {
             key=key.replace(/^https?:\/\//,'');
             txts[key]=self.form.elements['savetext'].value;
             cookie=varToCookie(txts);
-            setCookie(_cookie_autosave,cookie);
+
+            var exp = new Date(); // 7-days
+            exp.setTime(exp.getTime() + 7*24*60*60*1000);
+
+            setCookie(_cookie_autosave, cookie, exp );
             } ,2000);
     }
 }
