@@ -176,14 +176,14 @@ function normalize_word($word,$group='',$pagename='',$nogroup=0,$islink=1) {
   return array($page,$text,$main_page);
 }
 
-function get_title($page) {
+function get_title($page,$title='') {
   global $DBInfo;
   if ($DBInfo->use_titlecache) {
     $cache=new Cache_text('title');
     if ($cache->exists($page)) $title=$cache->fetch($page);
-    else $title=$page;
+    else $title=$title ? $title:$page;
   } else
-    $title=$page;
+    $title=$title ? $title: $page;
 
   #return preg_replace("/((?<=[a-z0-9]|[B-Z]{2}|A)([A-Z][a-z]|A))/"," \\1",$title);
   if ($DBInfo->title_rule)
@@ -2330,6 +2330,15 @@ function macro_PageCount($formatter="") {
   return $DBInfo->getCounter();
 }
 
+function _setpagekey(&$page,$k) {
+  if (($p = strpos($k, '~'))!== false) {
+    $g = ' ('.substr($k,0,$p).')';
+    $page = substr($k, $p+1).$g;
+  } else {
+    $page = $k;
+  }
+}
+
 function macro_TitleIndex($formatter,$value) {
   global $DBInfo;
 
@@ -2342,9 +2351,14 @@ function macro_TitleIndex($formatter,$value) {
       $all_pages[]=str_replace($formatter->group,'',$page);
   } else
     $all_pages = $DBInfo->getPageLists();
+
   #natcasesort($all_pages);
   #sort($all_pages,SORT_STRING);
-  usort($all_pages, 'strcasecmp');
+  //usort($all_pages, 'strcasecmp');
+  $pages = array_flip($all_pages);
+  array_walk($pages,'_setpagekey');
+  $all_pages = array_flip($pages);
+  uksort($all_pages, 'strcasecmp');
 
   $key=-1;
   $out="";
@@ -2356,7 +2370,7 @@ function macro_TitleIndex($formatter,$value) {
 
 #  if ($DBInfo->use_titlecache)
 #    $cache=new Cache_text('title');
-  foreach ($all_pages as $page) {
+  foreach ($all_pages as $page=>$rpage) {
     $p=ltrim($page);
     $pkey=get_key("$p");
     if ($key != $pkey) {
@@ -2372,12 +2386,12 @@ function macro_TitleIndex($formatter,$value) {
 #    if ($DBInfo->use_titlecache and $cache->exists($page))
 #      $title=$cache->fetch($page);
 #    else
-      $title=get_title($page);
+      $title=get_title($rpage,$page);
 
     #$out.= '<li>' . $formatter->word_repl('"'.$page.'"',$title,'',0,0);
-    $urlname=_urlencode($group.$page);
+    $urlname=_urlencode($group.$rpage);
     $out.= '<li>' . $formatter->link_tag($urlname,'',htmlspecialchars($title));
-    $keyname=$DBInfo->pageToKeyname(urldecode($page));
+    $keyname=$DBInfo->pageToKeyname(urldecode($rpage));
     if (is_dir($DBInfo->upload_dir."/$keyname"))
        $out.=' '.$formatter->link_tag($urlname,"?action=uploadedfiles",
          $formatter->icon['attach']);
