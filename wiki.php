@@ -5466,23 +5466,27 @@ function wiki_main($options) {
     $options['timer']->Check("send_page");
     $formatter->write("<!-- wikiContent --></div>\n");
 
-    // XXX
     if ($DBInfo->extra_macros and
         $formatter->pi['#format'] == $DBInfo->default_markup) {
-      if ($formatter->pi['#nocomment']) $options['nocomment']=1;
-      $options['mid']='dummy';
-      $extra=$DBInfo->extra_macros;
-      if (!is_array($extra)) {
-        print '<div id="wikiExtra">'."\n";
-        print $formatter->macro_repl($DBInfo->extra_macros,'',$options);
-        print '</div>'."\n";
-      } else {
-        if ($formatter->pi['#comment']) array_unshift($extra,'Comment');
-        print '<div id="wikiExtra">'."\n";
-        foreach ($extra as $macro)
-          print $formatter->macro_repl($macro,'',$options);
-        print '</div>'."\n";
+      if ($formatter->pi['#nocomment']) {
+        $options['nocomment']=1;
+        $options['notoolbar']=1;
       }
+      $options['mid']='dummy';
+      print '<div id="wikiExtra">'."\n";
+      $mout = '';
+      $extra = array();
+      if (is_array($DBInfo->extra_macros))
+        $extra = $DBInfo->extra_macros;
+      else
+        $extra[] = $DBInfo->extra_macros; // XXX
+      if ($formatter->pi['#comment']) array_unshift($extra,'Comment');
+
+      foreach ($extra as $macro)
+        $mout.= $formatter->macro_repl($macro,'',$options);
+      print $formatter->get_javascripts();
+      print $mout;
+      print '</div>'."\n";
     }
     
     $args['editable']=1;
