@@ -203,24 +203,39 @@ define('RC_DEFAULT_DAYS',7);
     }
 
     $day = gmdate('Y-m-d', $ed_time+$tz_offset);
-    if ($use_day and $day != $ratchet_day) {
-      $tag=str_replace('-','',$day);
-      $perma="<a name='$tag'></a><a class='perma' href='#$tag'>$perma_icon</a>";
-      $out.=$cat0;
-      $rcdate=gmdate($date_fmt,$ed_time+$tz_offset);
 
-      $out.=sprintf("%s<span class='rc-date' style='font-size:large'>%s ",
-            $br, $rcdate);
-      if (!$nobookmark)
-        $out.="<span class='rc-bookmark' style='font-size:small'>[".
-          $formatter->link_tag($formatter->page->urlname,"?action=bookmark&amp;time=$ed_time".$daysago,
-          _("set bookmark"))."]</span>\n";
+    if (! empty($changed_time_fmt)) {
+      $date= gmdate($changed_time_fmt, $ed_time+$tz_offset);
+      if ($timesago) {
+        $time_diff=(int)($time_current - $ed_time)/60;
+        if ($time_diff < 1440) {
+          $date=sprintf(_("[%sh %sm ago]"),(int)($time_diff/60),$time_diff%60);
+        }
+      }
+    }
+
+    if ($day != $ratchet_day) {
       $ratchet_day = $day;
-      $br="<br />";
-      $out.='</span>'.$perma.'<br />'.$bra;
-      $cat0=$cat;
-    } else
-      $day=$formatter->link_to("?action=bookmark&amp;time=$ed_time".$daysago,$day);
+      if (!empty($use_day)) {
+        $tag=str_replace('-','',$day);
+        $perma="<a name='$tag'></a><a class='perma' href='#$tag'>$perma_icon</a>";
+        $out.=$cat0;
+        $rcdate=gmdate($date_fmt,$ed_time+$tz_offset);
+
+        $out.=sprintf("%s<span class='rc-date' style='font-size:large'>%s ",
+            $br, $rcdate);
+        if (!$nobookmark)
+          $out.="<span class='rc-bookmark' style='font-size:small'>[".
+            $formatter->link_tag($formatter->page->urlname,"?action=bookmark&amp;time=$ed_time".$daysago,
+            _("set bookmark"))."]</span>\n";
+        $br="<br />";
+        $out.='</span>'.$perma.'<br />'.$bra;
+        $cat0=$cat;
+      }
+    }
+    if (empty($use_day)) {
+      $date=$formatter->link_to("?action=bookmark&amp;time=$ed_time".$daysago,$date);
+    }
 
     $pageurl=_rawurlencode($page_name);
 
@@ -243,16 +258,6 @@ define('RC_DEFAULT_DAYS',7);
     $title= get_title($title).$group;
     $title=htmlspecialchars($title);
     $title= $formatter->link_tag($pageurl,"",$title,$target);
-
-    if (! empty($changed_time_fmt)) {
-      $date= gmdate($changed_time_fmt, $ed_time+$tz_offset);
-      if ($timesago) {
-        $time_diff=(int)($time_current - $ed_time)/60;
-        if ($time_diff < 1440) {
-          $date=sprintf(_("[%sh %sm ago]"),(int)($time_diff/60),$time_diff%60);
-        }
-      }
-    }
 
     if ($use_hits) {
       $hits = $DBInfo->counter->pageCounter($page_name);
