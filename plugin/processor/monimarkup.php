@@ -426,7 +426,7 @@ class processor_monimarkup
               "<<(?:[A-Za-z0-9]+(?:\((?:(?<!>>).)*\))?)>>|"; # macro
 
         if ($Config['inline_latex']) # single line latex syntax
-            $wordrule.="(?<=\s|^|>)\\$(?:[^\\$]+)\\$(?:\s|$)|".
+            $wordrule.="(?<=\s|^|>)\\$(?!(?:Id|Revision))(?:[^\\$]+)\\$(?:\s|$)|".
                  "(?<=\s|^|>)\\$\\$(?:[^\\$]+)\\$\\$(?:\s|$)|";
         #if ($Config['builtin_footnote']) # builtin footnote support
         $wordrule.=$formatter->footrule.'|';
