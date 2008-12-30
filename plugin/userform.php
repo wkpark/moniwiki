@@ -83,6 +83,7 @@ function do_userform($formatter,$options) {
         $options['id']=$user->id;
         $formatter->header($user->setCookie());
 
+        $DBInfo->user=$user;
         $userdb->saveUser($user); # XXX
         $use_refresh=1;
       } else {
@@ -99,6 +100,8 @@ function do_userform($formatter,$options) {
     # logout
     $formatter->header($user->unsetCookie());
     $options['msg']= _("Cookie deleted !");
+    $user->id = 'Anonymous';
+    $DBInfo->user=$user;
     $use_refresh=1;
   } else if ($DBInfo->use_sendmail and
     $options['login'] == _("E-mail new password") and
