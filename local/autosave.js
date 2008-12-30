@@ -127,12 +127,12 @@ function ajax_save(form) {
     postdata += '&datestamp=' + stamp;
 
     var loading = new Image();
-    loading.src = _url_prefix + '/imgs/loading.gif';
+    loading.src = _url_prefix + '/imgs/misc/saving.gif';
     loading.setAttribute('style','vertical-align:middle');
 
     var state = document.getElementById('save_state');
     if (state) {
-        txt = document.createTextNode(_("Current text saved temporary."));
+        txt = document.createTextNode(_("Current text is saved in a temporary file."));
         state.appendChild(loading);
         state.appendChild(txt);
     }
