@@ -9,7 +9,7 @@
 function do_userform($formatter,$options) {
   global $DBInfo;
 
-  $user=&$DBInfo->user; # get cookie
+  $user=$DBInfo->user; # get cookie
   $id=$options['login_id'];
 
   $use_any=0;
