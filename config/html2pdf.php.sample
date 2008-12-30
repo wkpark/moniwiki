@@ -5,15 +5,13 @@
 $tcpdf_dir='tcpdf';
 
 # default font name
-$default_font='dejavusans';
+#$default_font='dejavusans';
 $default_font='Times';
 #$default_font='helvetica';
 
 # default UnicodeTrueType or CID font name.
-$default_unifont='undotum';
-#$default_unifont='hysmyeongjostdmedium';
-
-#
-#$default_font='undotum';
+#$default_unifont='undotum';
+#$default_unifont='malgun';
+$default_unifont='hysmyeongjostdmedium';
 
 ?>
