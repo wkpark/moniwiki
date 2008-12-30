@@ -2008,7 +2008,7 @@ function macro_UserPreferences($formatter,$value,$options='') {
 OPENID;
     }
   $id_btn=_("ID");
-  $sep="<tr><td colspan='2'><hr></td></tr>\n";
+  $sep="<tr><td colspan='2'><hr /></td></tr>\n";
   if ($user->id == 'Anonymous' and !isset($options['login_id']) and $value!="simple") {
     if (isset($openid_form) and $value != 'openid') $sep0=$sep;
     if ($value != 'openid')
@@ -2016,20 +2016,25 @@ OPENID;
   <tr><th>$id_btn&nbsp;</th><td>$idform</td></tr>
   <tr>
      <th>$passwd_btn&nbsp;</th><td><input type="password" size="15" maxlength="$pw_len" name="password" value="" /></td>
+  </tr>
   <tr><td></td><td>
     $passwd_hidden
     <input type="submit" name="login" value="$button" /> &nbsp;
   </td></tr>
 MYFORM;
     $login=<<<FORM
+<div>
 <form method="post" action="$url"$onsubmit>
+<div>
 <input type="hidden" name="action" value="userform" />
 <table border="0">
 $openid_form
 $sep0
 $default_form
 </table>
+</div>
 </form>
+</div>
 FORM;
     $openid_form='';
   }
@@ -2049,7 +2054,7 @@ EXTRA;
         $seed=md5(base64_encode(time()));
         $ticketimg=$formatter->link_url($formatter->page->name,'?action=ticket&amp;__seed='.$seed);
         $extra.=<<<EXTRA
-  <tr><td><img src="$ticketimg" />&nbsp;</td><td><input type="text" size="10" name="check" />
+  <tr><td><img src="$ticketimg" alt="captcha" />&nbsp;</td><td><input type="text" size="10" name="check" />
 <input type="hidden" name="__seed" value="$seed" /></td></tr>
 EXTRA;
       }
@@ -2134,7 +2139,9 @@ PASS;
   return <<<EOF
 $login
 $jscript
+<div>
 <form method="post" action="$url"$onsubmit>
+<div>
 <input type="hidden" name="action" value="userform" />
 <table border="0">
 $openid_form
@@ -2150,7 +2157,9 @@ $sep1
     $logout
   </td></tr>
 </table>
+</div>
 </form>
+</div>
 $script
 EOF;
 }
