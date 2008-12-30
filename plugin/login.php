@@ -34,12 +34,14 @@ function macro_login($formatter,$value="",$options="") {
   return <<<LOGIN
 <div id='wikiLogin'>$jscript
 <form method='post' action='$urlpage' $onsubmit>
+<div>
 <input type="hidden" name="action" value="userform" />
 <table border='0' cellpadding='2' cellspacing='0'>
 <tr><td align='right'>$login</td><td><input name='login_id' size='10' /></td></tr>
 <tr><td align='right'>$pass</td><td><input name='password' type='password' size='10' /></td></tr>
 <tr><td align='right'><a href='$url'>$join</a></td><td><input type='submit' value='OK' />$passwd_hidden</td></tr>
 </table>
+</div>
 </form>
 </div>
 LOGIN;

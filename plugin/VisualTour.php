@@ -12,6 +12,8 @@ function macro_VisualTour($formatter,$value,$options=array()) {
   $dotcmd="dot";
   #$dotcmd="twopi";
   #$dotcmd="neato";
+  $maptype = 'imap';
+  $maptype = 'cmap';
 
   if (!$formatter->page->exists())
     return "";
@@ -92,7 +94,7 @@ function macro_VisualTour($formatter,$value,$options=array()) {
     $fp=popen($cmd.$formatter->LOG,'r');
     pclose($fp);
     $err=$formatter->get_errlog();
-    $cmd="$dotcmd -Timap $dotfile -o $mapfile";
+    $cmd="$dotcmd -T$maptype $dotfile -o $mapfile";
     $formatter->errlog('Dot');
     $fp=popen($cmd.$formatter->LOG,'r');
     pclose($fp);
@@ -102,7 +104,20 @@ function macro_VisualTour($formatter,$value,$options=array()) {
 
   }
 
-  return $err."<span class='VisualTour'><a href='$map_url'><img src='$png_url' alt='VisualTour' ismap></a></span>\n";
+  if ($maptype == 'imap') {
+    $attr = ' ismap="ismap"';
+    return $err."<span class='VisualTour'><a href='$map_url'><img src='$png_url' alt='VisualTour'$attr></a></span>\n";
+  } else {
+    $attr = ' usemap="#mainmap"';
+    $fp = fopen($mapfile,'r');
+    $map = '';
+    if (is_resource($fp)) {
+      while(!feof($fp)) $map.= fgets($fp,1024);
+      fclose($fp);
+      $map = '<map name="mainmap">'.$map.'</map>';
+    }
+    return $err."<span class='VisualTour'><img src='$png_url' alt='VisualTour'$attr>$map</span>\n";
+  }
 }
 
 function do_VisualTour($formatter,$options) {
