@@ -2363,6 +2363,7 @@ class Formatter {
         $link =str_replace(array('<','>'),array('&#x3c;','&#x3e;'),$link);
         return $icon. "<a class='externalLink $eclass' $attr $this->external_target href='$link'>$text</a>".$external_icon.$external_link;
       } # have no space
+      $link = str_replace(array('<','>'),array('&#x3c;','&#x3e;'),$url);
       if (preg_match("/^(http|https|ftp)/",$url)) {
         if (preg_match("/(^.*\.(png|gif|jpeg|jpg))(([\?&]([a-z]+=[0-9a-z]+))*)$/i",$url,$match)) {
           $url=$match[1];
@@ -2378,11 +2379,9 @@ class Formatter {
       }
       if (substr($url,0,7)=='http://' and $url[7]=='?') {
         $link=substr($url,7);
-        $link = str_replace(array('<','>'),array('&#x3c;','&#x3e;'),$link);
         return "<a class='internalLink' href='$link'>$link</a>";
       }
       $url=urldecode($url);
-      $link = str_replace(array('<','>'),array('&#x3c;','&#x3e;'),$link);
       return "<a class='externalLink' $attr href='$link' $this->external_target>$url</a>";
     } else {
       if ($url{0}=='?') {
