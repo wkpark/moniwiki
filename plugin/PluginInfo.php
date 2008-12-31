@@ -29,6 +29,13 @@ function macro_PluginInfo($formatter='',$value='') {
         return sprintf(_("Total %s plugin activated."),$num);
     }
     $file = getPlugin(strtolower($value));
+    if (empty($file)) {
+        if (($m = function_exists('macro_'.$value)) or ($m = function_exists('do_'.$value))) {
+            return sprintf(_("%s is internal plugin."),$value);
+        } else {
+            return sprintf(_("%s plugin is not found."),$value);
+        }
+    }
     $info = get_plugin_info(dirname(__FILE__)."/$file.php");
 
     $name=!empty($info['Name']) ? $info['Name'].' ('.$value.')':$value;
