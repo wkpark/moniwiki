@@ -736,7 +736,26 @@ function ajax_edit($formatter,$options) {
 }
 
 function _get_sections($body,$lim=5) {
-  $chunks=preg_split("/(\{\{\{.+?\}\}\})/s",$body,-1, PREG_SPLIT_DELIM_CAPTURE);
+  $tmp = preg_split("/(\{\{\{.+?\}\}\})/s",$body,-1, PREG_SPLIT_DELIM_CAPTURE);
+
+  // fix for inline {{{foobar}}} in the headings.
+  $chunks = array();
+  $i = $j = 0;
+  $c = count($tmp);
+  while ($i < $c) {
+    if ($i % 2) {
+      if (strpos($tmp[$i],"\n") === false) {
+        $chunks[$j-1].= $tmp[$i].$tmp[$i+1];
+        $i+=2;
+      } else {
+        $chunks[$j++] = $tmp[$i++];
+      }
+    } else {
+      $chunks[$j++] = $tmp[$i++];
+    }
+  }
+  unset($tmp);
+
   $sects=array();
   $sects[]='';
   if ($lim > 1 and $lim < 6) $lim=','.$lim;
