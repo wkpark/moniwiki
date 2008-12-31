@@ -173,13 +173,14 @@ function insertTags(tagOpen, tagClose, sampleText,replace) {
 	var my = document.getElementById('editor_area');
 	var ef = document.getElementById('editform');
 	var doc = document;
+	var txtarea;
 	if (ef)
-		var txtarea = ef.savetext;
+		txtarea = ef.savetext;
 	else {
 		// some alternate form? take the first one we can find
 		var areas = doc.getElementsByTagName('textarea');
 		if (areas.length > 0) {
-			var txtarea = areas[0];
+			txtarea = areas[0];
 		} else if (opener) {
 			doc = opener.document;
 			if (ef && ef.savetext) {
@@ -192,13 +193,13 @@ function insertTags(tagOpen, tagClose, sampleText,replace) {
 	}
 
 	while (my == null || my.style.display == 'none') { // wikiwyg hack
-		txtarea = doc.getElementById('wikiwyg_wikitext_textarea');
-
-
 		// get iframe and check visibility.
 		var myframe = doc.getElementsByTagName('iframe')[0];
 		var mnew;
+		if (! myframe) break;
 		if (myframe.style.display == 'none' || myframe.parentNode.style.display == 'none') break;
+
+		txtarea = doc.getElementById('wikiwyg_wikitext_textarea');
 
 		if (tagOpen == '$ ' && tagClose == ' $') { // latex math
 			var wikiwyg = wikiwygs[0]; // XXX
