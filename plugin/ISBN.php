@@ -14,12 +14,12 @@ function macro_ISBN($formatter,$value="") {
   $ISBN_MAP="IsbnMap";
   $DEFAULT=<<<EOS
 Amazon http://www.amazon.com/exec/obidos/ISBN= http://images.amazon.com/images/P/\$ISBN.01.MZZZZZZZ.gif
-Aladdin http://www.aladdin.co.kr/shop/wproduct.aspx?ISBN= http://image.aladdin.co.kr/cover/cover/\$ISBN_1.gif @/cover/([^\s_/]+_1\..{3,4})\s@\\\$ISBN_1\.gif
+Aladdin http://www.aladdin.co.kr/shop/wproduct.aspx?ISBN= http://image.aladdin.co.kr/cover/cover/\$ISBN_1.gif @/cover/([^\s_/]+_\d\..{3,4})\s@\\\$ISBN_1\.gif
 Gang http://kangcom.com/common/qsearch/search.asp?s_flag=T&s_text= http://kangcom.com/l_pic/\$ISBN.jpg @bookinfo\.asp\?sku=(\d+)"@\n
 EOS;
 
   $DEFAULT_ISBN="Amazon";
-  $re_isbn="/([0-9\-]+[xX]?)(?:,\s*)?(([A-Z][A-Za-z]*)?(?:,)?(.*))?/x";
+  $re_isbn="/^([0-9\-]+[xX]?)(?:,\s*)?(([A-Z][A-Za-z]*)?(?:,)?(.*))?/x";
 
   if ($value!='') {
      $test=preg_match($re_isbn,$value,$match);
@@ -88,7 +88,11 @@ EOS;
     if (strtolower($match[2][0])=='k') $lang='Aladdin';
     else $lang=$match[3];
   } else {
-    $lang_code=substr($isbn,0,2);
+    $cl = strlen($isbn);
+    if ($cl == 13)
+      $lang_code=substr($isbn,3,2); // 978 89
+    else
+      $lang_code=substr($isbn,0,2); // 89
     if ($default_map[$lang_code])
       $lang=$default_map[$lang_code];
     else
