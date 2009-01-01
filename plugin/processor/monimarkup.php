@@ -332,6 +332,7 @@ class processor_monimarkup
                 $tr_diff=$line{0} == "\010" ? 'diff-added':'diff-removed';
                 $line=substr($line,1,-1);
             }
+            $open = '';
             if (!$_in_table and $line[0]=='|' and
                 preg_match("/^(\|([^\|]+)?\|((\|\|)*))((?:&lt;[^>\|]*>)*)(.*)(\|\|)?$/s",$line,$m)) {
                 #print "<pre>"; print_r($m); print "</pre>";
@@ -611,10 +612,12 @@ class processor_monimarkup
                     --$_li;
                 }
 
-                $c=preg_replace("/\007(\d+)\007/e",
-                    "\$formatter->processor_repl(\$btype[$1],\$block[$1])",$c);
-                $c=preg_replace("/\035(\d+)\035/e", 
-                    "\$formatter->link_repl(\$inline[$1])",$c);
+                if (isset($btype[1]))
+                    $c=preg_replace("/\007(\d+)\007/e",
+                        "\$formatter->processor_repl(\$btype[$1],\$block[$1])",$c);
+                if (isset($inline[1]))
+                    $c=preg_replace("/\035(\d+)\035/e", 
+                        "\$formatter->link_repl(\$inline[$1])",$c);
 
                 if (preg_match('/<(div|ul|ol|pre|blockquote)[^>]*>/',$c))
                     $out.= $this->_div(1,' class="para"',$style).$c.$this->_div(0);
@@ -633,10 +636,12 @@ class processor_monimarkup
             $out=preg_replace($formatter->smiley_rule,
                  $formatter->smiley_repl,$out);
 
-        $out=preg_replace("/\007(\d+)\007/e",
-            "\$formatter->processor_repl(\$btype[$1],\$block[$1])",$out);
-        $out=preg_replace("/\035(\d+)\035/e", 
-            "\$formatter->link_repl(\$inline[$1])",$out);
+        if (isset($btype[1]))
+            $out=preg_replace("/\007(\d+)\007/e",
+                "\$formatter->processor_repl(\$btype[$1],\$block[$1])",$out);
+        if (isset($inline[1]))
+            $out=preg_replace("/\035(\d+)\035/e", 
+                "\$formatter->link_repl(\$inline[$1])",$out);
 
         return $my_divopen.$out.$my_divclose;
     }
