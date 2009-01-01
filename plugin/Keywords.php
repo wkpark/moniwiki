@@ -17,7 +17,7 @@
 
 define(LOCAL_KEYWORDS,'LocalKeywords');
 
-function macro_Keywords($formatter,$value,$options='') {
+function macro_Keywords($formatter,$value,$options=array()) {
     global $DBInfo;
 define(MAX_FONT_SZ,24);
 define(MIN_FONT_SZ,10);
@@ -256,6 +256,7 @@ EOF;
 
     endif;
     //
+    if ($options['call']) return $words;
 
     if ($limit and ($sz=sizeof($words))>$limit) {
         arsort($words);
