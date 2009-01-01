@@ -26,7 +26,7 @@ define('RC_DEFAULT_DAYS',7);
 
   $template_bra="";
   $template=
-  '$out.= "$icon&nbsp;&nbsp;$title $date . . . . $user $count $extra<br />\n";';
+  '$out.= "$icon&nbsp;&nbsp;$title$updated $date . . . . $user $count $extra<br />\n";';
   $template_cat="";
   $use_day=1;
 
@@ -74,7 +74,7 @@ define('RC_DEFAULT_DAYS',7);
       } else if ($arg=="table") {
         $bra="<table border='0' cellpadding='0' cellspacing='0' width='100%'>";
         $template=
-  '$out.= "<tr><td style=\'white-space:nowrap;width:2%\'>$icon</td><td style=\'width:40%\'>$title</td><td class=\'date\' style=\'width:15%\'>$date</td><td>$user $count $extra</td></tr>\n";';
+  '$out.= "<tr><td style=\'white-space:nowrap;width:2%\'>$icon</td><td style=\'width:40%\'>$title$updated</td><td class=\'date\' style=\'width:15%\'>$date</td><td>$user $count $extra</td></tr>\n";';
         $cat="</table>";
         $cat0="";
       } else if ($arg=="board") {
@@ -82,7 +82,7 @@ define('RC_DEFAULT_DAYS',7);
         $use_day=0;
         $template_bra="<table border='0' cellpadding='0' cellspacing='0' width='100%'>";
         $template=
-  '$out.= "<tr$alt><td style=\'white-space:nowrap;width:2%\'>$icon</td><td style=\'width:40%\'>$title</td><td class=\'date\' style=\'width:15%\'>$date</td><td class=\'user\'>$user</td><td class=\'editinfo\'>$count</td><td>$extra</td><td class=\'hits\'>$hits</td></tr>\n";';
+  '$out.= "<tr$alt><td style=\'white-space:nowrap;width:2%\'>$icon</td><td style=\'width:40%\'>$title$updated</td><td class=\'date\' style=\'width:15%\'>$date</td><td class=\'user\'>$user</td><td class=\'editinfo\'>$count</td><td>$extra</td><td class=\'hits\'>$hits</td></tr>\n";';
         $template_cat="</table>";
       }
     }
@@ -240,16 +240,20 @@ define('RC_DEFAULT_DAYS',7);
     $pageurl=_rawurlencode($page_name);
 
     #print $ed_time."/".$bookmark."//";
+    $updated = '';
     if (!$DBInfo->hasPage($page_name))
       $icon= $formatter->link_tag($pageurl,"?action=info",$formatter->icon['del']);
     else if ($ed_time > $bookmark) {
-      $icon= $formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon['updated']);
+      $icon= $formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon['diff']);
+      $updated= ' '.$formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon['updated']);
       if ($checknew) {
         $p= new WikiPage($page_name);
         $v= $p->get_rev($bookmark);
-        if (!$v)
+        if (empty($v)) {
           $icon=
-            $formatter->link_tag($pageurl,"?action=info",$formatter->icon['new']);
+            $formatter->link_tag($pageurl,"?action=info",$formatter->icon['show']);
+          $updated = ' '.$formatter->link_tag($pageurl,"?action=info",$formatter->icon['new']);
+        }
       }
     } else
       $icon= $formatter->link_tag($pageurl,"?action=diff",$formatter->icon['diff']);
