@@ -2009,9 +2009,10 @@ class Formatter {
       $this->menu_sep=$DBInfo->menu_sep;
     }
 
-    if (!$this->icons) {
-      $this->icons=$DBInfo->icons ? $DBInfo->icons:null;
-    }
+    if (!$this->icons)
+      $this->icons = array();
+    $this->icons = array_merge($DBInfo->icons,$this->icons);
+
     if (!$this->icon_list) {
       $this->icon_list=$DBInfo->icon_list ? $DBInfo->icon_list:null;
     }
