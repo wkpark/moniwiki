@@ -361,7 +361,7 @@ class processor_monimarkup
                     if (strpos($cell,"\n")) {
                         $save = $formatter->section_edit;
                         $formatter->section_edit=0;
-                        $cell = $this->process($cell);
+                        $cell = $this->process($cell, array('notoc'=>1));
                         $formatter->section_edit=$save;
                         $align='';
                     }
@@ -441,9 +441,13 @@ class processor_monimarkup
         $hr_func=$Config['hr_type'].'_hr';
 
         # heading info
-        $headinfo['top'] = 0;
-        $headinfo['num'] = 1;
-        $headinfo['dep'] = 0;
+        if (isset($options['notoc'])) {
+            $headinfo = null;
+        } else {
+            $headinfo['top'] = 0;
+            $headinfo['num'] = 1;
+            $headinfo['dep'] = 0;
+        }
 
         # list info
         $_lidep=array(0);
@@ -468,7 +472,7 @@ class processor_monimarkup
                         array(&$formatter,'link_repl'),$val);
                     ++$formatter->sect_num;
                     $anchor=$ed='';
-                    if (!empty($formatter->section_edit) &&
+                    if ($headinfo != null and !empty($formatter->section_edit) &&
                             empty($formatter->preview)) {
                         $act='edit';
                         $sect_num=&$formatter->sect_num;

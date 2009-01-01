@@ -1794,7 +1794,6 @@ class Formatter {
     $this->postfilters=$DBInfo->postfilters;
     $this->use_rating=$DBInfo->use_rating;
     $this->use_etable=$DBInfo->use_etable;
-    $this->use_enhanced=$DBInfo->use_enhanced;
     $this->use_metadata=$DBInfo->use_metadata;
     $this->udb=&$DBInfo->udb;
     $this->user=&$DBInfo->user;
@@ -2729,6 +2728,9 @@ class Formatter {
     $dep=$depth;
     $this->nobr=1;
 
+    if ($headinfo == null)
+      return "<h$dep$attr>$head</h$dep>";
+
     $head=str_replace('\"','"',$head); # revert \\" to \"
 
     if (!$headinfo['top']) {
@@ -3126,10 +3128,8 @@ class Formatter {
       preg_match('/^((&lt;[^>]+>)*)(\s?)(.*)(?<!\s)(\s*)?$/s',
         $cells[$i+1],$m);
       $cell=$m[3].$m[4].$m[5];
-      if ($this->use_enhanced and strpos($cell,"\n") !== false)
-        $cell=$this->processor_repl('monimarkup',$cell);
-      else
-        $cell=str_replace("\n","<br />\n",$cell);
+      if (strpos($cell,"\n") !== false)
+        $cell=$this->processor_repl('monimarkup',$cell, array('notoc'=>1));
       if ($m[3] and $m[5]) $align='center';
       else if (!$m[3]) $align='';
       else if (!$m[5]) $align='right';
@@ -3461,9 +3461,13 @@ class Formatter {
     if (empty($lines)) return;
 
     # for headings
-    $headinfo['top'] = 0;
-    $headinfo['num'] = 1;
-    $headinfo['dep'] = 0;
+    if (isset($options['notoc'])) {
+      $headinfo = null;
+    } else {
+      $headinfo['top'] = 0;
+      $headinfo['num'] = 1;
+      $headinfo['dep'] = 0;
+    }
 
     $text='';
     $in_p='';
