@@ -379,7 +379,7 @@ class UserDB {
     $subs=array();
     foreach ($users as $id) {
       $usr=$this->getUser($id);
-      if ($usr->isSubscribedPage($pagename)) $subs[]=$usr->info['email'];
+      if ($usr->hasSubscribePage($pagename)) $subs[]=$usr->info['email'];
     }
     return $subs;
   }
@@ -624,7 +624,7 @@ class User {
     return $ok;
   }
 
-  function isSubscribedPage($pagename) {
+  function hasSubscribePage($pagename) {
     if (!$this->info['email'] or !$this->info['subscribed_pages']) return false;
     $page_list=_preg_search_escape($this->info['subscribed_pages']);
     if (!trim($page_list)) return false;
