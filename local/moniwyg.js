@@ -1441,6 +1441,7 @@ proto.format_blockquote = function(element) {
     this.make_list(element,'quote');
     //this.make_list(element,'indent');
     this.chomp();
+    //if (element.parentNode.tagName != 'TD') // XXX
     this.appendOutput("\n");
     return;
 
@@ -1638,13 +1639,25 @@ proto.format_span = function(element) {
 proto.assert_blank_line = function() {
     if (! this.should_whitespace()) return;
     this.chomp_n(); // FIX
-    this.insert_new_line();
+    var str = this.output[this.output.length - 1];
+    if (!str.match(/||/)) // is it TD ? XXX FIXME
+        this.insert_new_line();
     //this.insert_new_line(); // FIX for line_alone (----)
 }
 
 proto.handle_line_alone = function (element, markup) {
-    this.assert_blank_line();
+    if (element.parentNode.tagName != 'TD')
+        this.assert_blank_line();
     this.appendOutput(markup[1]);
+    this.assert_blank_line();
+}
+
+proto.handle_bound_line = function(element,markup) {
+    if (element.parentNode.tagName != 'TD')
+        this.assert_blank_line();
+    this.appendOutput(markup[1]);
+    this.walk(element);
+    this.appendOutput(markup[2]);
     this.assert_blank_line();
 }
 
@@ -1766,18 +1779,32 @@ proto.format_div = function(element) {
         else
             this.make_list(element,'indent');
         this.chomp();
+        if (element.parentNode.tagName != 'TD') // XXX
         this.appendOutput("\n");
         return;
     }
     this.walk(element);
 }
 
+proto.format_p = function(element) {
+    if (this.is_indented(element)) {
+        this.format_blockquote(element);
+        return;
+    }
+    if (element.parentNode.tagName != 'TD') // XXX
+        this.assert_blank_line();
+    this.walk(element);
+    this.assert_blank_line();
+}
+
 proto.make_list = function(element, list_type) { 
     //this.assert_new_line();
 
-    if (! this.previous_was_newline_or_start())
-        this.appendOutput("\n");
-        //this.insert_new_line(); // XXX
+    if (! this.previous_was_newline_or_start()) {
+        if (element.parentNode.tagName != 'TD') // XXX
+            this.appendOutput("\n");
+        // this.insert_new_line();
+    }
 
     this.list_type.push(list_type);
     if (this.list_type.length) {
