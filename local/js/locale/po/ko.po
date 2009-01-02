@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoniWiki 1.1.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-12-27 11:39+0900\n"
+"POT-Creation-Date: 2008-12-30 15:59+0900\n"
 "PO-Revision-Date: 2008-12-18 17:00+0900\n"
 "Last-Translator: Won-Kyu Park <wkpark@kldp.org>\n"
 "MIME-Version: 1.0\n"
@@ -16,127 +16,127 @@ msgstr ""
 msgid "undefined"
 msgstr ""
 
-#: ../../moniwyg.js:1987
+#: ../../moniwyg.js:2022
 msgid "Save"
 msgstr "저장"
 
-#: ../../moniwyg.js:1988
+#: ../../moniwyg.js:2023
 msgid "Preview"
 msgstr "미리보기"
 
-#: ../../moniwyg.js:1989
+#: ../../moniwyg.js:2024
 msgid "Cancel"
 msgstr "취소"
 
-#: ../../moniwyg.js:1990
+#: ../../moniwyg.js:2025
 msgid "Bold (Ctrl+b)"
 msgstr "굵게 (Ctrl-b)"
 
-#: ../../moniwyg.js:1991
+#: ../../moniwyg.js:2026
 msgid "Italic (Ctrl+i)"
 msgstr "기울임 (Ctrl+i)"
 
-#: ../../moniwyg.js:1992
+#: ../../moniwyg.js:2027
 msgid "Underline (Ctrl+u)"
 msgstr "밑줄 (Ctrl+u)"
 
-#: ../../moniwyg.js:1993
+#: ../../moniwyg.js:2028
 msgid "Strike Through (Ctrl+d)"
 msgstr "삭제선 (Ctrl+d)"
 
-#: ../../moniwyg.js:1994
+#: ../../moniwyg.js:2029
 msgid "Horizontal Rule"
 msgstr "수평줄"
 
-#: ../../moniwyg.js:1995
+#: ../../moniwyg.js:2030
 msgid "Numbered List"
 msgstr "숫자 리스트"
 
-#: ../../moniwyg.js:1996
+#: ../../moniwyg.js:2031
 msgid "Bulleted List"
 msgstr "총알 리스트"
 
-#: ../../moniwyg.js:1997
+#: ../../moniwyg.js:2032
 msgid "More Indented"
 msgstr "들여쓰기"
 
-#: ../../moniwyg.js:1998
+#: ../../moniwyg.js:2033
 msgid "Less Indented"
 msgstr "내어쓰기"
 
-#: ../../moniwyg.js:1999
+#: ../../moniwyg.js:2034
 msgid "About Wikiwyg"
 msgstr "Wikiwyg는"
 
-#: ../../moniwyg.js:2000
+#: ../../moniwyg.js:2035
 msgid "[Style]"
 msgstr ""
 
-#: ../../moniwyg.js:2001
+#: ../../moniwyg.js:2036
 msgid "Normal Text"
 msgstr "일반 글씨"
 
-#: ../../moniwyg.js:2002
+#: ../../moniwyg.js:2037
 msgid "Preformatted"
 msgstr ""
 
-#: ../../moniwyg.js:2003
+#: ../../moniwyg.js:2038
 msgid "Heading 1"
 msgstr "제목 1"
 
-#: ../../moniwyg.js:2004
+#: ../../moniwyg.js:2039
 msgid "Heading 2"
 msgstr "제목 2"
 
-#: ../../moniwyg.js:2005
+#: ../../moniwyg.js:2040
 msgid "Heading 3"
 msgstr "제목 3"
 
-#: ../../moniwyg.js:2006
+#: ../../moniwyg.js:2041
 msgid "Heading 4"
 msgstr "제목 4"
 
-#: ../../moniwyg.js:2007
+#: ../../moniwyg.js:2042
 msgid "Heading 5"
 msgstr "제목 5"
 
-#: ../../moniwyg.js:2008
+#: ../../moniwyg.js:2043
 msgid "Heading 6"
 msgstr "제목 6"
 
-#: ../../moniwyg.js:2009
+#: ../../moniwyg.js:2044
 msgid "Create Link"
 msgstr "링크 생성"
 
-#: ../../moniwyg.js:2010 ../../../plugin/EditToolbar.php:40
+#: ../../moniwyg.js:2045 ../../../plugin/EditToolbar.php:40
 msgid "Smiley"
 msgstr "스마일리"
 
-#: ../../moniwyg.js:2011
+#: ../../moniwyg.js:2046
 msgid "Remove Linkedness"
 msgstr "링크 제거"
 
-#: ../../moniwyg.js:2012
+#: ../../moniwyg.js:2047
 msgid "Create Table"
 msgstr "테이블"
 
-#: ../../moniwyg.js:2013
+#: ../../moniwyg.js:2048
 msgid "Math"
 msgstr "수식"
 
-#: ../../moniwyg.js:2014
+#: ../../moniwyg.js:2049
 msgid "As Is"
 msgstr "그대로"
 
-#: ../../moniwyg.js:2015
+#: ../../moniwyg.js:2050
 msgid "Image"
 msgstr "이미지"
 
-#: ../../moniwyg.js:2016
+#: ../../moniwyg.js:2051
 msgid "Media"
 msgstr "미디어"
 
-#: ../../moniwyg.js:2017
+#: ../../moniwyg.js:2052
 msgid "Quote"
 msgstr "인용"
 
@@ -227,21 +227,35 @@ msgid "Please select the text you would like to turn into a link."
 msgstr "링크로 바꾸고 싶은 텍스트를 선택해주시기 바랍니다."
 
 #: dummy.js:6
+msgid ""
+"Auto saved text found.\n"
+"Are you sure to restore page ?\n"
+"(You can undo/redo with Ctrl-Z/Ctrl-Shift-Z)"
+msgstr ""
+"자동 저장된 텍스트가 있습니다.\n"
+"저장된 것으로 편집하시겠습니까 ?\n"
+"(Ctrl-Z/Ctrl-Shift-Z를 누르시면 undo/redo를 하실 수 있습니다)"
+
+#: dummy.js:7
+msgid "Current text is saved in a temporary file."
+msgstr "텍스트가 보존되었습니다."
+
+#: dummy.js:10
 msgid "The code is in your clipboard now"
 msgstr "코드가 클립보드로 복사되었습니다"
 
-#: dummy.js:7
+#: dummy.js:11
 msgid "Printing..."
 msgstr "인쇄중..."
 
-#: dummy.js:8
+#: dummy.js:12
 msgid "copy to clipboard"
 msgstr "클립보드 복사"
 
-#: dummy.js:9
+#: dummy.js:13
 msgid "view plain"
 msgstr "텍스트 보기"
 
-#: dummy.js:10
+#: dummy.js:14
 msgid "Toggle line numbers"
 msgstr "줄 번호 토글"
