@@ -3182,6 +3182,8 @@ class Formatter {
       default:
         break;
       }
+      $myattr=$this->_attr('',$sty,$myclass,$align);
+      $attr=array_merge($attr,$myattr);
     }
     else if (preg_match("/^\-(\d+)$/",$para,$match))
       $attr['colspan']=$match[1];
