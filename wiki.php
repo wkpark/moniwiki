@@ -1833,7 +1833,7 @@ class Formatter {
                      "/''([^']*)''/","/(?<!')''(.*)''(?!')/",
                      "/`(?<!\s)(?!`)([^`']+)(?<!\s)'(?=\s|$)/",
                      "/`(?<!\s)(?U)(.*)(?<!\s)`/",
-                     "/(-{4,})$/e",
+                     "/^[ ]*(-{4,})$/e",
                      "/^(={4,})$/",
                      "/,,([^,]{1,40}),,/",
                      "/\^([^ \^]+)\^(?=\s|$)/",
@@ -3128,6 +3128,9 @@ class Formatter {
       preg_match('/^((&lt;[^>]+>)*)(\s?)(.*)(?<!\s)(\s*)?$/s',
         $cells[$i+1],$m);
       $cell=$m[3].$m[4].$m[5];
+      if (isset($cell{0}) and $cell{strlen($cell)-1} == "\n")
+        $cell = substr($cell,0,-1).' '; // XXX
+
       if (strpos($cell,"\n") !== false)
         $cell=$this->processor_repl('monimarkup',$cell, array('notoc'=>1));
       if ($m[3] and $m[5]) $align='center';
@@ -3609,10 +3612,10 @@ class Formatter {
       if ($line[$ll-1]=='&') {
         $oline.=substr($line,0,-1)."\n";
         continue;
-      } else if (empty($oline) and preg_match('/^\s*\|\|/',$line) and !preg_match('/\|\|\s*$/',$line)) {
+      } else if (empty($oline) and preg_match('/^\s*\|\|/',$line) and !preg_match('/\|(\||-+)\s*$/',$line)) {
         $oline.=$line."\n";
         continue;
-      } else if (!empty($oline) and ($in_table or preg_match('/^\s*\|\|/',$oline)) and !preg_match('/\|\|\s*$/',$line)) {
+      } else if (!empty($oline) and ($in_table or preg_match('/^\s*\|\|/',$oline)) and !preg_match('/\|(\||-+)\s*$/',$line)) {
         $oline.=$line."\n";
         continue;
       } else {
@@ -3621,7 +3624,7 @@ class Formatter {
       }
 
       $p_closeopen='';
-      if (preg_match('/-{4,}$/',$line)) {
+      if (preg_match('/^[ ]*-{4,}$/',$line)) {
         if ($this->auto_linebreak) $this->nobr=1; // XXX
         if ($in_p) { $p_closeopen=$this->_div(0,$in_div,$div_enclose); $in_p='';}
       } else if ($in_p == '' and $line!=='') {
@@ -3748,13 +3751,13 @@ class Formatter {
         if (!empty($match[2])) $open.='<caption>'.$match[2].'</caption>';
         $line='||'.$match[3].$match[5].$match[6];
         $in_table=1;
-        if ($this->use_etable && !preg_match('/\|\|$/',$match[6])) {
+        if ($this->use_etable && !preg_match('/\|(\||-+)$/',$match[6])) {
           $text.=$open;
           $this->table_line.=substr($line,2)."\n";
           continue;
         }
       } elseif ($in_table && ($line[0]!='|' or
-              !preg_match("/^\|{2}.*\|{2}$/s",$line))) {
+              !preg_match("/^\|{2}.*(?:\|(\||-+))$/s",$line))) {
         if ($this->use_etable && $in_table && preg_match('/^\|\|/',$line)) {
           $this->table_line.=substr($line,2)."\n";
           continue;
@@ -3763,7 +3766,7 @@ class Formatter {
         $in_table=0;
       }
       while ($in_table) {
-        $line=substr($line,0,-2);
+        $line=preg_replace('/(\|\||\|-+)$/','',$line);
         if ($this->use_etable && $this->table_line) {
           $nline='||'.$this->table_line;
           $this->table_line='';

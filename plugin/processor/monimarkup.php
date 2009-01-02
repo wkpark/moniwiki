@@ -134,7 +134,7 @@ class processor_monimarkup
             $tr=strlen(trim($line));
             if (substr($line,-1) == '&') { $oline.="\n".$line; continue; }
             if (!empty($oline) and preg_match('/^\s*\|\|/',$oline)) {
-                if ( !preg_match('/\|\|$/',$oline)) {
+                if ( !preg_match('/(\|\||\|-+)$/',$oline)) {
                     $oline.="\n".$line; continue;
                 } else if (!$tr) {
                     $chunk[]= $oline."\n".$line;
@@ -309,10 +309,10 @@ class processor_monimarkup
         $oline='';
         foreach ($lines as $line) {
             if (substr($line,-1) == '&') { $oline.=substr($line,0,-1)."\n"; continue; }
-            if (empty($oline) and preg_match('/^\s*\|\|/',$line) and !preg_match('/\|\|\s*$/',$line)) {
+            if (empty($oline) and preg_match('/^\s*\|\|/',$line) and !preg_match('/(\|\||\|-+)\s*$/',$line)) {
                 $oline.=$line."\n"; continue;
             } else if (!empty($oline) and ($_in_table or preg_match('/^\s*\|\|/',$oline))) {
-                if (!preg_match('/\|\|$/',$line)) {
+                if (!preg_match('/(\|\||\|-+)$/',$line)) {
                     $oline.=$line."\n"; continue;
                 } else {
                     $line=$oline.$line; $oline='';
@@ -334,7 +334,7 @@ class processor_monimarkup
             }
             $open = '';
             if (!$_in_table and $line[0]=='|' and
-                preg_match("/^(\|([^\|]+)?\|((\|\|)*))((?:&lt;[^>\|]*>)*)(.*)(\|\|)?$/s",$line,$m)) {
+                preg_match("/^(\|([^\|]+)?\|((\|\|)*))((?:&lt;[^>\|]*>)*)(.*)(\|\||\|-+)?$/s",$line,$m)) {
                 #print "<pre>"; print_r($m); print "</pre>";
                 $open.=$formatter->_table(1,$m[5]);
                 if ($m[2]) $open.='<caption>'.$m[2].'</caption>';
@@ -345,9 +345,10 @@ class processor_monimarkup
                 $_in_table=0;
             }
             if ($_in_table) {
-                $line=substr($line,0,-2);
+                $line=preg_replace('/(\|\||\|-+)$/','',$line);
                 $cells=preg_split('/((?:\|\|)+)/',$line,-1,
                     PREG_SPLIT_DELIM_CAPTURE);
+
                 $row='';
                 $tr_attr=$tr_diff ? 'class="'.$tr_diff.'"':'';
                 for ($i=1,$s=sizeof($cells);$i<$s;$i+=2) {
@@ -358,6 +359,8 @@ class processor_monimarkup
                     if ($m[3] and $m[5]) $align='center';
                     else if (!$m[3]) $align='';
                     else if (!$m[5]) $align='right';
+                    if (isset($cell{0}) and $cell{strlen($cell)-1} == "\n")
+                        $cell = substr($cell,0,-1).' '; // XXX
                     #$cell=str_replace("\n","<br />\n",$cell);
                     if (strpos($cell,"\n")) {
                         $save = $formatter->section_edit;
@@ -427,7 +430,7 @@ class processor_monimarkup
               "<<(?:[A-Za-z0-9]+(?:\((?:(?<!>>).)*\))?)>>|"; # macro
 
         if ($Config['inline_latex']) # single line latex syntax
-            $wordrule.="(?<=\s|^|>)\\$(?!(?:Id|Revision))(?:[^\\$]+)\\$(?:\s|$)|".
+            $wordrule.="(?<=\s|^|>)\\$(?!(?:Id|Revision|Date))(?:[^\\$]+)\\$(?:\s|$)|".
                  "(?<=\s|^|>)\\$\\$(?:[^\\$]+)\\$\\$(?:\s|$)|";
         #if ($Config['builtin_footnote']) # builtin footnote support
         $wordrule.=$formatter->footrule.'|';
