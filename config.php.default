@@ -184,7 +184,7 @@ $use_wikiwyg=1; # 1 for GUI button/ 2 to set as default behavior/ 3 to set alway
 $use_sectionedit=0;
 #$sectionedit_attr=1; # enable wikiwyg section editing
 $spam_filter='antispam';
-$use_toctoggle=0;
+$toc_options='simple,toggle';
 #$toc_options='title=Contents,toggle,simple';
 #$use_ticket=1; # use ticket image to block spam bots.
 #$ticket_gdfont=5; # use a builtin gd bitmap font
@@ -262,7 +262,7 @@ $cache_public_url=$url_prefix.'/_cache';
 $use_jwmediaplayer=1;
 $jwmediaplayer_prefix='http://www.jeroenwijering.com/embed';
 $flashupload='swfupload';
-#$icon_list='edit,diff,show,find,print,info,help'; # set the icon list
+#$icon_list='edit,diff,show,find,print,info,help,pref,rss'; # set the icon list
 #$use_folding=0; # 1:default simple js / 2:with the prototype/mootools
 #$use_etable=0; # use new extended table syntax: deprecated!
 #$use_openid=0; # enable openid login
