@@ -1,7 +1,6 @@
 @import url("../../../css/_base.css");
 @import url("../../../css/_extra.css");
 @import url("../../../css/_calendar.css");
-@import url("../../../css/_user.css");
 
 body {
   font-family:Georgia,Verdana,Lucida,sans-serif;font-size:12px;
@@ -307,8 +306,6 @@ div.message {
   border-color:#ee0000;
   color:#440000;
   padding:5px;
-  padding-left:55px;
-  background: #FFF1B9 url(../imgs/warn.png) 10px 10px no-repeat;
   min-height: 40px;
   height: auto !important;
   height:40px;
