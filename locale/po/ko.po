@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoniWiki 1.1.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2008-12-31 20:11+0900\n"
+"POT-Creation-Date: 2009-01-02 14:50+0900\n"
 "PO-Revision-Date: 2008-12-11 12:20+0900\n"
 "Last-Translator: Won-Kyu Park <wkpark@kldp.org>\n"
 "Language-Team: Won-Kyu Park <wkpark@kldp.org>\n"
@@ -388,7 +388,7 @@ msgstr "쓰기가능하지 않음"
 msgid "You are not allowed to add a comment."
 msgstr "Comment는 허락되지 않습니다."
 
-#: ../plugin/Comment.php:129 ../plugin/Keywords.php:372
+#: ../plugin/Comment.php:129 ../plugin/Keywords.php:373
 msgid "Page does not exists"
 msgstr "페이지가 없습니다"
 
@@ -532,7 +532,7 @@ msgstr "\"%s\"에 대한 키워드 서치"
 msgid "Show Context."
 msgstr "문맥 보기."
 
-#: ../plugin/FullSearch.php:47 ../plugin/VisualTour.php:139 ../wiki.php:4448
+#: ../plugin/FullSearch.php:47 ../plugin/VisualTour.php:139 ../wiki.php:4453
 msgid "Refresh"
 msgstr "갱신"
 
@@ -546,7 +546,7 @@ msgstr " (서치 결과를 %s)"
 msgid "You can also click %s to search title.\n"
 msgstr "%s을 눌러 제목 찾기를 할 수 있습니다.\n"
 
-#: ../plugin/FullSearch.php:52 ../wiki.php:5334 ../wiki.php:5341
+#: ../plugin/FullSearch.php:52 ../wiki.php:5339 ../wiki.php:5346
 #: ../wikilib.php:1390
 msgid "here"
 msgstr "여기"
@@ -694,86 +694,86 @@ msgstr "분자 편집"
 msgid "Edit new molecule"
 msgstr "새 분자 편집"
 
-#: ../plugin/Keywords.php:330
+#: ../plugin/Keywords.php:331
 msgid "hits"
 msgstr ""
 
-#: ../plugin/Keywords.php:338
+#: ../plugin/Keywords.php:339
 msgid "add keywords"
 msgstr "키워드 더하기"
 
-#: ../plugin/Keywords.php:341
+#: ../plugin/Keywords.php:342
 msgid "Update keywords"
 msgstr "키워드 갱신"
 
-#: ../plugin/Keywords.php:343
+#: ../plugin/Keywords.php:344
 msgid "Add keywords"
 msgstr "키워드 더하기"
 
-#: ../plugin/Keywords.php:344
+#: ../plugin/Keywords.php:345
 msgid "Add as common words"
 msgstr "일반 단어로 추가"
 
-#: ../plugin/Keywords.php:345
+#: ../plugin/Keywords.php:346
 msgid "Unselect all"
 msgstr "모두 선택 취소"
 
-#: ../plugin/Keywords.php:346
+#: ../plugin/Keywords.php:347
 msgid "Suggest new Keywords"
 msgstr "새 키워드 제안"
 
-#: ../plugin/Keywords.php:355
+#: ../plugin/Keywords.php:356
 msgid "select language"
 msgstr "언어 고르기"
 
-#: ../plugin/Keywords.php:371
+#: ../plugin/Keywords.php:372
 msgid "You are not able to add keywords."
 msgstr "키워드를 추가할 수 없습니다."
 
-#: ../plugin/Keywords.php:385
+#: ../plugin/Keywords.php:386
 #, c-format
 msgid "%s is not found."
 msgstr "%s을(를) 찾을 수 없습니다"
 
-#: ../plugin/Keywords.php:501
+#: ../plugin/Keywords.php:502
 msgid "Common words are updated"
 msgstr "일반 단어가 갱신됨"
 
-#: ../plugin/Keywords.php:548
+#: ../plugin/Keywords.php:549
 #, c-format
 msgid "Keywords for %s are updated"
 msgstr "%s에 대한 키워드가 갱신됨"
 
-#: ../plugin/Keywords.php:574
+#: ../plugin/Keywords.php:575
 msgid "Keywords are updated"
 msgstr "키워드가 갱신되었습니다"
 
-#: ../plugin/Keywords.php:576
+#: ../plugin/Keywords.php:577
 msgid "There are no changes found"
 msgstr "변화가 없습니다"
 
-#: ../plugin/Keywords.php:589
+#: ../plugin/Keywords.php:590
 msgid "Update with these Keywords"
 msgstr "키워드 갱신하기"
 
-#: ../plugin/Keywords.php:609 ../plugin/Keywords.php:613
+#: ../plugin/Keywords.php:610 ../plugin/Keywords.php:614
 msgid "alphabetically"
 msgstr "알파벳순"
 
-#: ../plugin/Keywords.php:610
+#: ../plugin/Keywords.php:611
 msgid "by frequency"
 msgstr "빈도수"
 
-#: ../plugin/Keywords.php:612
+#: ../plugin/Keywords.php:613
 msgid "by size"
 msgstr "크기"
 
-#: ../plugin/Keywords.php:618
+#: ../plugin/Keywords.php:619
 #, c-format
 msgid "Keywords list %s (or %s)"
 msgstr "%s순 키워드 목록 (혹은 %s순)"
 
-#: ../plugin/Keywords.php:623
+#: ../plugin/Keywords.php:624
 #, c-format
 msgid "Select keywords for %s"
 msgstr "%s에 대해 키워드를 고르세요"
@@ -957,7 +957,7 @@ msgstr ""
 msgid "Save Changes"
 msgstr "변경 저장"
 
-#: ../plugin/processor/monimarkup.php:485 ../wiki.php:3836
+#: ../plugin/processor/monimarkup.php:490 ../wiki.php:3841
 msgid "edit"
 msgstr "편집"
 
@@ -1185,7 +1185,7 @@ msgstr "백업된 데이타를 restore하기"
 msgid "Select a tarball file to restore"
 msgstr "Restore하기 위한 tarball 파일을 고르세요"
 
-#: ../plugin/revert.php:23 ../wiki.php:5336
+#: ../plugin/revert.php:23 ../wiki.php:5341
 #, c-format
 msgid "Old Revisions of the %s"
 msgstr "%s의 옛날 버전"
@@ -1524,7 +1524,7 @@ msgstr "%s에 대한 트랙백 항목을 찾을 수 없음"
 msgid "TwinPages of %s"
 msgstr "%s의 쌍둥이 페이지"
 
-#: ../plugin/TwinPages.php:19 ../wiki.php:5320
+#: ../plugin/TwinPages.php:19 ../wiki.php:5325
 msgid "See [TwinPages]: "
 msgstr ""
 
@@ -1734,8 +1734,8 @@ msgstr "등록을 실패했습니다"
 msgid "You are not allowed to register on this wiki"
 msgstr "위키 등록이 허락되지 않았습니다"
 
-#: ../plugin/userform.php:243 ../plugin/userform.php:415 ../wiki.php:5274
-#: ../wiki.php:5285
+#: ../plugin/userform.php:243 ../plugin/userform.php:415 ../wiki.php:5279
+#: ../wiki.php:5290
 msgid "Please contact WikiMasters"
 msgstr "위키관리자에게 문의하세요"
 
@@ -1892,118 +1892,118 @@ msgstr "페이지가 없습니다"
 msgid "File '%s' does not exist."
 msgstr "파일 '%s'이(가) 없습니다"
 
-#: ../wiki.php:2916 ../wiki.php:2927 ../wiki.php:5514
+#: ../wiki.php:2919 ../wiki.php:2930 ../wiki.php:5519
 msgid "Invalid ajax action."
 msgstr "잘못된 ajax 액션."
 
-#: ../wiki.php:3421
+#: ../wiki.php:3422
 msgid "Tags:"
 msgstr "태그:"
 
-#: ../wiki.php:3449
+#: ../wiki.php:3450
 #, c-format
 msgid "See %s"
 msgstr ""
 
-#: ../wiki.php:3449
+#: ../wiki.php:3450
 #, c-format
 msgid "TwinPages"
 msgstr "TwinPages"
 
-#: ../wiki.php:3454
+#: ../wiki.php:3455
 msgid "See [TwinPages]:"
 msgstr ""
 
-#: ../wiki.php:4016
+#: ../wiki.php:4021
 msgid "Sister Sites Index"
 msgstr ""
 
-#: ../wiki.php:4444 ../locale/dummy.php:6
+#: ../wiki.php:4449 ../locale/dummy.php:6
 msgid "EditText"
 msgstr "고치기"
 
-#: ../wiki.php:4446
+#: ../wiki.php:4451
 msgid "NotEditable"
 msgstr "고칠수 없음"
 
-#: ../wiki.php:4450 ../locale/dummy.php:6
+#: ../wiki.php:4455 ../locale/dummy.php:6
 msgid "ShowPage"
 msgstr "보기"
 
-#: ../wiki.php:4451 ../locale/dummy.php:3 ../locale/dummy.php:5
+#: ../wiki.php:4456 ../locale/dummy.php:3 ../locale/dummy.php:5
 msgid "FindPage"
 msgstr "찾기"
 
-#: ../wiki.php:4854
+#: ../wiki.php:4859
 msgid "Main"
 msgstr ""
 
-#: ../wiki.php:5273
+#: ../wiki.php:5278
 msgid "You are in the black list"
 msgstr ""
 
-#: ../wiki.php:5284
+#: ../wiki.php:5289
 msgid "You are blocked in this wiki"
 msgstr ""
 
-#: ../wiki.php:5322 ../wiki.php:5331 ../wikilib.php:1370
+#: ../wiki.php:5327 ../wiki.php:5336 ../wikilib.php:1370
 msgid "Create this page"
 msgstr "페이지 만들기"
 
-#: ../wiki.php:5333
+#: ../wiki.php:5338
 #, c-format
 msgid "%s has saved revisions"
 msgstr "%s이(가) 저장된 옛버전이 있습니다"
 
-#: ../wiki.php:5334 ../wiki.php:5341
+#: ../wiki.php:5339 ../wiki.php:5346
 #, c-format
 msgid "%s or click %s to fulltext search.\n"
 msgstr "%s 혹은 %s를 눌러 전체 찾기를 할 수 있습니다.\n"
 
-#: ../wiki.php:5339
+#: ../wiki.php:5344
 #, c-format
 msgid "%s is not found in this Wiki"
 msgstr "%s 페이지를 이곳 위키에서 찾을 수 없습니다"
 
-#: ../wiki.php:5346
+#: ../wiki.php:5351
 msgid "Please try to search with another word"
 msgstr "다른 단어로 찾아보세요."
 
-#: ../wiki.php:5358
+#: ../wiki.php:5363
 #, c-format
 msgid "%s or alternativly, use one of these templates:\n"
 msgstr ""
 "%s 아이콘을 누르거나 아래의 탬플리트 목록을 이용해 새 페이지를 만드세요:\n"
 
-#: ../wiki.php:5361
+#: ../wiki.php:5366
 msgid "You have no templates"
 msgstr "템플리트가 없습니다"
 
-#: ../wiki.php:5363
+#: ../wiki.php:5368
 #, c-format
 msgid "To create your own templates, add a page with '%s' pattern.\n"
 msgstr "탬플리트를 만드시려면 '%s' 형식의 이름을 가지는 페이지를 만드세요.\n"
 
-#: ../wiki.php:5374
+#: ../wiki.php:5379
 #, c-format
 msgid "Redirected from page \"%s\""
 msgstr "\"%s\"페이지로 부터 리다리렉트됨"
 
-#: ../wiki.php:5516
+#: ../wiki.php:5521
 msgid "Invalid macro action."
 msgstr "잘못된 마크로 액션."
 
-#: ../wiki.php:5526
+#: ../wiki.php:5531
 #, c-format
 msgid "You are not allowed to '%s'"
 msgstr "'%s'은(는) 허락되지 않았습니다"
 
-#: ../wiki.php:5546
+#: ../wiki.php:5551
 #, c-format
 msgid "Fail to \"%s\" !"
 msgstr "\"%s\"을(를) 실패했습니다 !"
 
-#: ../wiki.php:5549
+#: ../wiki.php:5554
 msgid "Please enter the valid password"
 msgstr "정확한 비밀번호를 넣어주세요"
 
