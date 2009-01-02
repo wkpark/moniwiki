@@ -22,7 +22,7 @@ function macro_PageHits($formatter="",$value) {
   else arsort($hits);
   while(list($name,$hit)=each($hits)) {
     if (!$hit) $hit=0;
-    $name=$formatter->link_tag(_rawurlencode($name),"",$name);
+    $name=$formatter->link_tag(_rawurlencode($name),"",htmlspecialchars($name));
     $out.="<li>$name . . . . [$hit]</li>\n";
   }
   return "<ol>\n".$out."</ol>\n";
