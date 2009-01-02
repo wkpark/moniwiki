@@ -139,8 +139,8 @@ function do_html2pdf($formatter,$options) {
     $toc = function_toc($formatter);
     $pdf->toc = $toc;
     $pdf->setFontAlias(array('monospace'=>'courier'));
-    $pdf->setLIsymbol(chr(42));
-    $pdf->setLIsymbol('a');
+    #$pdf->setLIsymbol(chr(42));
+    #$pdf->setLIsymbol('a');
 
     // set default header data
     // $pdf->SetHeaderData(PDF_HEADER_LOGO, PDF_HEADER_LOGO_WIDTH, PDF_HEADER_TITLE, PDF_HEADER_STRING);
