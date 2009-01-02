@@ -2451,7 +2451,7 @@ function macro_HTML($formatter,$value) {
 }
 
 function macro_BR($formatter) {
-  return "<br />\n";
+  return "<br class='macro' />\n";
 }
 
 function macro_FootNote(&$formatter,$value="") {
