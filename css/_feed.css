@@ -1,0 +1,60 @@
+rss channel, feed, RDF {
+  font-family: Bitstream Vera Sans,Trebuchet MS, Georgia, Verdana, Lucida, Helvetica, Arial, sans-serif;
+  font-size: 80%;
+  background-color: White;
+  color: Black;
+}
+
+
+link, description, language, managingEditor, copyright, lastBuildDate, date,
+pubDate, generator, webMaster, ttl, docs, tagline, author, copyright,
+generator, content, created, issued, modified, subject, id, format, creator,
+category {
+  display: none;
+}
+
+item link, entry id {
+  display: block;
+  text-decoration:underline;
+}
+
+channel title, feed title {
+  display: block;
+  font-size:2em;
+  font-weight:bolder;
+  text-decoration:none;
+}
+
+:root:before, :root:before {
+  content: "This data file is meant to be read in a XML feed reader. See document source.";
+  background-color:#eee;
+}
+
+item, entry {
+  display: block;
+  margin: 1em 180px 1em 1em;
+  border-bottom: 1px solid #a0a0a0;
+  padding-bottom: 1em;
+}
+
+item title, entry title {
+  display: block;
+  background: transparent none;
+  border: 0px solid #ffffff;
+  padding: 0;
+  color: #222;
+  font-size: 1.4em;
+  font-weight: bold;
+}
+
+item pubDate, entry modified, item date {
+  display: inline;
+  color: #AAA;
+  font: 1em trebuchet ms, arial, helvetica, sans-serif;
+}
+
+item description, entry summary {
+  display: block;
+  clear: both;
+  padding-top: 0.5em;
+}
