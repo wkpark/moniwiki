@@ -4743,8 +4743,12 @@ MSG;
         $this->icons['pref']=array("UserPreferences","",$this->icon['pref']);
       } else
         $this->icons['pref']=array("UserPreferences","",$this->icon['pref']);
-      if ($options['scrapped'])
-        $this->icons['scrap']=array("","?action=scrap&amp;unscrap=1",$this->icon['unscrap']);
+      if (isset($options['scrapped'])) {
+        if ($options['scrapped'])
+          $this->icons['scrap']=array('','?action=scrap&amp;unscrap=1',$this->icon['unscrap']);
+        else
+          $this->icons['scrap']=array('','?action=scrap',$this->icon['scrap']);
+      }
 
     } else
       $user_link=$this->link_tag("UserPreferences","",_($this->icon['user']));
