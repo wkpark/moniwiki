@@ -233,6 +233,7 @@ image/x-rgb			rgb
 image/x-xbitmap			xbm
 image/x-xpixmap			xpm
 image/x-xwindowdump		xwd
+image/svg+xml			svg
 message/delivery-status
 message/disposition-notification
 message/external-body
