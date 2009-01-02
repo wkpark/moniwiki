@@ -20,8 +20,7 @@ function foldingSection(btn, id)
         icon=btn.getElementsByTagName('img')[0];
         if (!icon) {
             icon = new Image();
-            icon.src = _url_prefix + '/imgs/plugin/arrdown.png';
-            icon.style.width = '12px';
+            icon.src = _url_prefix + '/imgs/misc/open.png';
             btn.insertBefore(icon, btn.firstChild);
             //btn.appendChild(icon);
         }
@@ -47,10 +46,10 @@ function foldingSection(btn, id)
     if (icon) {
         var name=icon.getAttribute('class');
         if (name == 'close') {
-            icon.src = _url_prefix + '/imgs/plugin/arrup.png';
+            icon.src = _url_prefix + '/imgs/misc/close.png';
             icon.setAttribute('class','');
         } else {
-            icon.src = _url_prefix + '/imgs/plugin/arrdown.png';
+            icon.src = _url_prefix + '/imgs/misc/open.png';
             icon.setAttribute('class','close');
         }
     }
