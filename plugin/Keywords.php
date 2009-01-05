@@ -68,14 +68,18 @@ define(MIN_FONT_SZ,10);
 
     if (!$pagename) $pagename=$formatter->page->name;
 
+    # get cached keywords
+    $cache=new Cache_text('keywords');
+    $pkey=$pagename;
+
     $mc=new Cache_text('macro');
     $mkey='Keywords.'.md5($pagename.$value);
     $mykeys=array();
 
-    if (!$formatter->refresh and $mc->exists($mkey)) {
-        # check cache mtime
-        $cmt=$mc->mtime($mkey);
-
+    # check cache mtime
+    $cmt=$mc->mtime($mkey);
+    $pmt=$cache->mtime($pkey);
+    if ($cmt > $pmt) {
         # check update or not
         $dmt=filemtime($DBInfo->cache_dir.'/keywords/.');
         if ($dmt > $cmt) { # XXX crude method
@@ -88,9 +92,6 @@ define(MIN_FONT_SZ,10);
     if (!$mykeys):
     if ($options['all']) $pages=$DBInfo->getPageLists();
     else $pages=array($pagename);
-
-    # get cached keywords
-    $cache=new Cache_text('keywords');
 
     foreach ($pages as $pn) {
         if ($cache->exists($pn)) {
