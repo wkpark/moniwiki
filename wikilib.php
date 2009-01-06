@@ -2251,13 +2251,13 @@ function macro_InterWiki($formatter,$value,$options=array()) {
       if (preg_match("/^[A-Z]+/",$line)) {
         $wiki=strtok($line,' ');$icon=trim(strtok(' '));
         if (!preg_match('/^(http|ftp|attachment):/',$icon,$match)) continue;
+        preg_match('/^(\d+)(x(\d+))?\b/',strtok(''),$sz);
+        $sx=$sz[1];$sy=$sz[3];
+        $sx=$sx ? $sx:16; $sy=$sy ? $sy:16;
         if ($icon[0]=='a') {
           $url=$formatter->macro_repl('Attachment',substr($icon,11),1);
           $icon=qualifiedUrl($DBInfo->url_prefix.'/'.$url);
         }
-        preg_match('/^(\d+)(x(\d+))?\b/',strtok(''),$sz);
-        $sx=$sz[1];$sy=$sz[3];
-        $sx=$sx ? $sx:16; $sy=$sy ? $sy:16;
         $intericon[$wiki]=array($sx,$sy,trim($icon));
       }
     }
