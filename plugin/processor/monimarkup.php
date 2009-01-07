@@ -137,7 +137,13 @@ class processor_monimarkup
                 if ( !preg_match('/(\|\||\|-+)$/',$oline)) {
                     $oline.="\n".$line; continue;
                 } else if (!$tr) {
-                    $chunk[]= $oline."\n".$line;
+                    $oline.="\n".$line;
+                    if ($_indlen[$_in_li]) {
+                        $chunk[]= $this->_node($_in_li,$_nodtype,$oline);
+                        $_in_li=0;
+                    } else {
+                        $chunk[]= $oline;
+                    }
                     $_eop=0;
                     $oline=null;
                     continue;
@@ -186,7 +192,7 @@ class processor_monimarkup
                 if (preg_match("/^((\*\s?)|(?:([1-9]\d*|[aAiI])\.)(?:#(\d+))?\s)/",
                     $cutline,$m)) {
                     $myindlen=$indlen+strlen($m[1])-(isset($m[4]) ? strlen($m[4]):0);
-                    $type=$m[2] ? 'ul':$m[3];
+                    $type=!empty($m[2]) ? 'ul':$m[3];
                     $mytype['type']=$type;
                     $start=isset($m[4]) ? $m[4]:(isset($m[3]) ? $m[3]:null);
                     if (isset($start) and is_numeric($start) and $start > 1)
@@ -218,9 +224,9 @@ class processor_monimarkup
                 }
                 if ($_indtype[$_in_li] == $indtype) {
                     if ($indlen == $_indlen[$_in_li]) {
-                        if ($indtype or
-                            $_nodtype[$_in_li]['attributes']['class'] !=
-                            $mytype['attributes']['class']) {
+                        $class = isset($mytype['attributes']['class']) ? $mytype['attributes']['class']:'';
+                        if ($indtype or (isset($_nodtype[$_in_li]['attributes']['class']) and
+                            $_nodtype[$_in_li]['attributes']['class'] != $class)) {
                             # another list/indent
                             if ($oline)
                                 $chunk[]=
@@ -298,6 +304,7 @@ class processor_monimarkup
             $_del_cr=1;
             $text=substr($text,0,-1);
         }
+        $_diff='';
         if (preg_match("/^(\010|\006).*\\1/s",$text,$m)) {
             $_diff=$m[1];
             $text=substr($text,1,-1);
@@ -306,6 +313,7 @@ class processor_monimarkup
         $_in_table=0;
         $lines=explode("\n",$text);
         $tout='';
+        $close='';
         $oline='';
         foreach ($lines as $line) {
             if (substr($line,-1) == '&') { $oline.=substr($line,0,-1)."\n"; continue; }
@@ -335,6 +343,7 @@ class processor_monimarkup
             $open = '';
             if (!$_in_table and $line[0]=='|' and
                 preg_match("/^(\|([^\|]+)?\|((\|\|)*))((?:&lt;[^>\|]*>)*)(.*)(\|\||\|-+)?$/s",$line,$m)) {
+                $m[7] = isset($m[7]) ? $m[7]:'';
                 #print "<pre>"; print_r($m); print "</pre>";
                 $open.=$formatter->_table(1,$m[5]);
                 if ($m[2]) $open.='<caption>'.$m[2].'</caption>';
@@ -511,9 +520,9 @@ class processor_monimarkup
                     $linfo='';
                     $listy='';
                     if ($type!='ul' and $type{0} !='d')
-                        $linfo=$c['attributes'] ? $c['attributes']['start']:'';
+                        $linfo=!empty($c['attributes']['start']) ? $c['attributes']['start']:'';
                     else if ($type{0}=='d') {
-                        $linfo=$c['attributes'] ? $c['attributes']['class']:'';
+                        $linfo=!empty($c['attributes']['class']) ? $c['attributes']['class']:'';
                         if (preg_match('/^((\s*)(&lt;|=|>)?{([^}]+)})/s',$val,
                                 $sty)) {
                             if ($sty[3]) $sty[4].=';'.$palign[$sty[3]];
