@@ -332,7 +332,7 @@ EOF;
                 $out.=" $style title=\"$val "._("hits").'"';
             }
             $out.=">$checkbox"."<a href='".str_replace('$TAG',$key,$tag_link).
-                "'>".$key."</a></li>\n";
+                "' rel='nofollow'>".$key."</a></li>\n";
         }
     }
 
@@ -368,7 +368,10 @@ function do_keywords($formatter,$options) {
     global $DBInfo;
     $supported_lang=array('ko');
 
-    $page=$formatter->page->name;
+    $page = $formatter->page->name;
+    if (empty($options['update']) and !empty($options['value']))
+        $page = $options['value'];
+
     if (!$DBInfo->hasPage($page)) {
         $options['err']=_("You are not able to add keywords.");
         $options['title']=_("Page does not exists");
@@ -548,7 +551,7 @@ function do_keywords($formatter,$options) {
         }
 
         $formatter->send_title(sprintf(_("Keywords for %s are updated"),
-            $options['page']),'', $options);
+            $page),'', $options);
         $ret='';
         foreach ($keys as $key=>$val) {
             $ret.=$key.',';
@@ -601,7 +604,7 @@ function do_keywords($formatter,$options) {
         return;
     }
 
-    if ($options['all']) {
+    if ($options['all'] or $options['tour']) {
         if ($options['sort']=='freq') $sort= 'freq';
         $formatter->send_title('','', $options);
         $myq='?'.$_SERVER['QUERY_STRING'];

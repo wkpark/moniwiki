@@ -2676,7 +2676,7 @@ class Formatter {
   }
 
   function nonexists_simple($word,$url) {
-    return "<a class='nonexistent nomarkup' href='$url'>?</a>$word";
+    return "<a class='nonexistent nomarkup' href='$url' rel='nofollow'>?</a>$word";
   }
 
   function nonexists_nolink($word,$url) {
@@ -2686,17 +2686,17 @@ class Formatter {
   function nonexists_always($word,$url,$page) {
     $title='';
     if ($page != $word) $title="title=\"$page\" ";
-    return "<a href='$url' $title>$word</a>";
+    return "<a href='$url' $title rel='nofollow'>$word</a>";
   }
 
   function nonexists_forcelink($word,$url) {
-    return "<a class='nonexistent' href='$url'>$word</a>";
+    return "<a class='nonexistent' rel='nofollow' href='$url'>$word</a>";
   }
 
   function nonexists_fancy($word,$url) {
     global $DBInfo;
     if ($word[0]=='<' and preg_match('/^<[^>]+>/',$word))
-      return "<a class='nonexistent' href='$url'>$word</a>";
+      return "<a class='nonexistent' rel='nofollow' href='$url'>$word</a>";
     #if (preg_match("/^[a-zA-Z0-9\/~]/",$word))
     if (ord($word[0]) < 125) {
       $link=$word[0];
@@ -2704,7 +2704,7 @@ class Formatter {
         $link=strtok($word,';').';';$last=strtok('');
       } else
         $last=substr($word,1);
-      return "<span><a class='nonexistent' href='$url'>$link</a>".$last.'<span>';
+      return "<span><a class='nonexistent' rel='nofollow' href='$url'>$link</a>".$last.'<span>';
     }
     if (strtolower($DBInfo->charset) == 'utf-8')
       $utfword=$word;
@@ -2719,9 +2719,9 @@ class Formatter {
       }
       $tag=strtok($mbword,';').';'; $last=strtok('');
       if ($tag)
-        return "<a class='nonexistent' href='$url'>$tag</a>".$last;
+        return "<span><a class='nonexistent' rel='nofollow' href='$url'>$tag</a>".$last.'<span>';
     }
-    return "<a class='nonexistent' href='$url'>?</a>$word";
+    return "<a class='nonexistent nomarkup' rel='nofollow' href='$url'>?</a>$word";
   }
 
   function head_repl($depth,$head,&$headinfo,$attr='') {
@@ -2981,6 +2981,7 @@ class Formatter {
       $text= $pageurl; # XXX
     if (!$pageurl)
       $pageurl=$this->page->urlname;
+    if ($query_string{0}=='?') $attr=empty($attr) ? 'rel="nofollow"':$attr.' rel="nofollow"';
     $url=$this->link_url($pageurl,$query_string);
     return sprintf("<a href=\"%s\" %s>%s</a>", $url, $attr, $text);
   }
@@ -4154,7 +4155,7 @@ class Formatter {
     $opts['rev']=$this->page->get_rev();
     $orig=$this->page->get_raw_body($opts);
 
-    if ($DBInfo->use_external_merge) {
+    if (!empty($DBInfo->use_external_merge)) {
       # save new
       $tmpf3=tempnam($DBInfo->vartmp_dir,'MERGE_NEW');
       $fp= fopen($tmpf3, 'w');
