@@ -1577,9 +1577,9 @@ function do_post_savepage($formatter,$options) {
       print $menu;
       print "<div id='wikiPreview'>\n";
       if ($options['conflict'] and $merge)
-        print $formatter->macro_repl('Diff','',array('text'=>$merge));
+        print $formatter->macro_repl('Diff','',array('text'=>$merge,'raw'=>1));
       else
-        print $formatter->macro_repl('Diff','',array('text'=>$savetext));
+        print $formatter->macro_repl('Diff','',array('text'=>$savetext,'raw'=>1));
       print "</div>\n";
       $formatter->send_footer();
       return;
