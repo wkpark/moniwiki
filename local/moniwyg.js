@@ -1640,8 +1640,12 @@ proto.assert_blank_line = function() {
     if (! this.should_whitespace()) return;
     this.chomp_n(); // FIX
     var str = this.output[this.output.length - 1];
-    if (!str.match(/||/)) // is it TD ? XXX FIXME
+    if (str) {
+        if (!str.match(/\|\|/)) // is it TD ? XXX FIXME
+            this.insert_new_line();
+    } else {
         this.insert_new_line();
+    }
     //this.insert_new_line(); // FIX for line_alone (----)
 }
 
