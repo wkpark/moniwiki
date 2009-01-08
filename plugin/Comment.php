@@ -3,13 +3,23 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a Wiki comment plugin for the MoniWiki
 //
+// Author: Won-Kyu Park <wkpark@kldp.org>
+// Since: 2004-08-16
+// Modified: $Date$
+// Name: Comment plugin
+// Description: Comment Plugin
+// URL: MoniWiki:CommentPlugin
+// Version: $Revision$
+// License: GPL
 // Usage: [[Comment]], ?action=comment
-//
 //
 // $Id$
 
 function macro_Comment($formatter,$value,$options=array()) {
   global $DBInfo;
+
+  $user=$DBInfo->user; # get from COOKIE VARS
+  $options['id']=$user->id;
 
   $use_any=0;
   if ($DBInfo->use_textbrowsers) {
@@ -21,7 +31,7 @@ function macro_Comment($formatter,$value,$options=array()) {
         $_SERVER['HTTP_USER_AGENT']) ? 1:0;
   }
   $captcha='';
-  if (!$use_any and $DBInfo->use_ticket) {
+  if (!$use_any and $DBInfo->use_ticket and $options['id'] == 'Anonymous') {
      $seed=md5(base64_encode(time()));
      $ticketimg=$formatter->link_url($formatter->page->urlname,'?action=ticket&amp;__seed='.$seed);
      $captcha=<<<EXTRA
@@ -71,11 +81,6 @@ EXTRA;
     $datestamp= $formatter->page->mtime();
   $savetext=$options['savetext'];
   $savetext= str_replace(array("&","<"),array("&amp;","&lt;"),$savetext);
-
-  if (!$options['id']) {
-    $user=$DBInfo->user; # get from COOKIE VARS
-    $options['id']=$user->id;
-  }
 
   $url=$formatter->link_url($formatter->page->urlname);
 
@@ -155,7 +160,7 @@ function do_comment($formatter,$options=array()) {
   }
 
   $ok_ticket=0;
-  if (!$use_any and $DBInfo->use_ticket) {
+  if (!$use_any and $DBInfo->use_ticket and $options['id'] == 'Anonymous') {
     if ($options['__seed'] and $options['check']) {
       $mycheck=getTicket($options['__seed'],$_SERVER['REMOTE_ADDR'],4);
       if ($mycheck==$options['check'])
