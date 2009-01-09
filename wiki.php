@@ -4285,11 +4285,14 @@ class Formatter {
       if ($DBInfo->use_subindex and !$options['action']) {
         $scache=new Cache_text('subpages');
         if (!($subs=$scache->exists($this->page->name))) {
-          $rule=_preg_search_escape($this->page->name);
+          if (($p = strrpos($this->page->name,'/')) !== false)
+            $rule=_preg_search_escape(substr($this->page->name,0,$p));
+          else
+            $rule=_preg_search_escape($this->page->name);
           $subs=$DBInfo->getLikePages('^'.$rule.'\/',1);
           if ($subs) $scache->update($this->page->name,1);
         }
-        if ($subs) {
+        if (!empty($subs)) {
           $subindices='';
           if (!$DBInfo->use_ajax) {
             $subindices= '<div>'.$this->macro_repl('PageList','',array('subdir'=>1)).'</div>';
