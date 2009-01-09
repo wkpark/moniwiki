@@ -26,7 +26,10 @@ function macro_PageList($formatter,$arg="",$options=array()) {
       $options['metawiki']=1;
   }
 
+  $upper = '';
   if ($options['subdir']) {
+    if (($p = strrpos($formatter->page->name,'/')) !== false)
+      $upper = substr($formatter->page->name,0,$p);
     $needle=_preg_search_escape($formatter->page->name);
     $needle='^'.$needle.'\/';
   } else if (!empty($options['rawre']))
@@ -95,8 +98,13 @@ function macro_PageList($formatter,$arg="",$options=array()) {
         $iconset='tango';
         $icon_dir=$DBInfo->imgs_dir.'/plugin/UploadedFiles/'.$iconset;
         $dicon="<img src='$icon_dir/folder-16.png' width='16px'/>";
+        $uicon="<img src='$icon_dir/up-16.png' width='16px'/>";
         $ficon="<img src='$icon_dir/text-16.png' width='16px'/>";
         $now=time();
+        if ($upper)
+            $out.= '<tr><td>'.$uicon.'</td><td>'.
+                $formatter->link_tag(_rawurlencode($upper),"",'..').'</td>';
+            
         foreach ($dirs as $pg=>$name) {
             $out.= '<tr><td>'.$dicon.'</td><td>'.
                 $formatter->link_tag(_rawurlencode($pg),"",
