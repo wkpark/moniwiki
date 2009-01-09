@@ -30,6 +30,11 @@ function toggleSubIndex(id)
                 } else {
 	            new Effect.SlideUp(sub, { duration: 0.3, afterFinish: function() {Element.hide(sub);} });
                 }
+            } else if (typeof Fx.Slide == 'undefined') { // get sectpages for the first time.
+                if (sub.style.display == 'none')
+                    sub.style.display = 'block';
+                else
+                    sub.style.display = 'none';
             }
         } else { // get subpages for the first time.
             var sub=document.createElement('div');
@@ -45,7 +50,7 @@ function toggleSubIndex(id)
             if (typeof Effect != 'undefined') { // prototype.js
                 sub.setAttribute('style','display:none');
 	        new Effect.SlideDown(sub, { duration: 0.4,afterFinish: function() {Element.show(sub);} });
-            } else { // mootools
+            } else if (typeof Fx.Slide != 'undefined') { // get sectpages for the first time.
                 var mySlide = new Fx.Slide(sub);
                 //mySlide.wrapper.setStyle('height',0);
 
