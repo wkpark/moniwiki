@@ -109,15 +109,16 @@ class Version_Git extends Version_RCS {
     $fp= popen("git-log $rlog_format $opt $rev ".$filename.$this->NULL,"r");
     chdir($this->cwd);
     $out='';
-    if ($fp) {
+    if (is_resource($fp)) {
       while (!feof($fp)) {
         $line=fgets($fp,1024);
         $out .= $line;
       }
       pclose($fp);
+      if ($out)
+        return $out."\n$sep2\n";
     }
-
-    return $out."\n$sep2\n";
+    return '';
   }
 
   function diff($pagename,$rev='',$rev2='') {
