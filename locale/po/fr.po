@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoniWiki 1.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2009-01-02 14:50+0900\n"
+"POT-Creation-Date: 2009-01-09 01:09+0900\n"
 "PO-Revision-Date: 2003-08-17 22:51+0900\n"
 "Last-Translator: Serge Stinckwich <Serge.Stinckwich@info.unicaen.fr>\n"
 "Language-Team: fr <fr@li.org>\n"
@@ -433,7 +433,7 @@ msgid "You are not allowed to add a comment."
 msgstr ""
 
 # ../plugin/restore.php:27
-#: ../plugin/Comment.php:129 ../plugin/Keywords.php:373
+#: ../plugin/Comment.php:129 ../plugin/Keywords.php:377
 msgid "Page does not exists"
 msgstr ""
 
@@ -600,7 +600,7 @@ msgstr ""
 msgid "Show Context."
 msgstr ""
 
-#: ../plugin/FullSearch.php:47 ../plugin/VisualTour.php:139 ../wiki.php:4453
+#: ../plugin/FullSearch.php:47 ../plugin/VisualTour.php:139 ../wiki.php:4458
 msgid "Refresh"
 msgstr ""
 
@@ -617,7 +617,7 @@ msgstr ""
 " ou cliquer sur %s pour faire une recherche en texte int?gral de cette "
 "page.\n"
 
-#: ../plugin/FullSearch.php:52 ../wiki.php:5339 ../wiki.php:5346
+#: ../plugin/FullSearch.php:52 ../wiki.php:5348 ../wiki.php:5355
 #: ../wikilib.php:1390
 msgid "here"
 msgstr ""
@@ -777,89 +777,89 @@ msgstr ""
 msgid "Edit new molecule"
 msgstr ""
 
-#: ../plugin/Keywords.php:331
+#: ../plugin/Keywords.php:332
 msgid "hits"
 msgstr ""
 
-#: ../plugin/Keywords.php:339
+#: ../plugin/Keywords.php:340
 msgid "add keywords"
 msgstr ""
 
-#: ../plugin/Keywords.php:342
+#: ../plugin/Keywords.php:343
 msgid "Update keywords"
 msgstr ""
 
-#: ../plugin/Keywords.php:344
+#: ../plugin/Keywords.php:345
 msgid "Add keywords"
 msgstr ""
 
-#: ../plugin/Keywords.php:345
+#: ../plugin/Keywords.php:346
 msgid "Add as common words"
 msgstr ""
 
-#: ../plugin/Keywords.php:346
+#: ../plugin/Keywords.php:347
 msgid "Unselect all"
 msgstr ""
 
-#: ../plugin/Keywords.php:347
+#: ../plugin/Keywords.php:348
 msgid "Suggest new Keywords"
 msgstr ""
 
-#: ../plugin/Keywords.php:356
+#: ../plugin/Keywords.php:357
 msgid "select language"
 msgstr ""
 
 # ../wiki.php:3009
-#: ../plugin/Keywords.php:372
+#: ../plugin/Keywords.php:376
 msgid "You are not able to add keywords."
 msgstr ""
 
 # ../wikilib.php:814
-#: ../plugin/Keywords.php:386
+#: ../plugin/Keywords.php:390
 #, c-format
 msgid "%s is not found."
 msgstr ""
 
-#: ../plugin/Keywords.php:502
+#: ../plugin/Keywords.php:506
 msgid "Common words are updated"
 msgstr ""
 
-#: ../plugin/Keywords.php:549
+#: ../plugin/Keywords.php:553
 #, c-format
 msgid "Keywords for %s are updated"
 msgstr ""
 
 # ../plugin/quicklinks.php:38
-#: ../plugin/Keywords.php:575
+#: ../plugin/Keywords.php:579
 msgid "Keywords are updated"
 msgstr ""
 
-#: ../plugin/Keywords.php:577
+#: ../plugin/Keywords.php:581
 msgid "There are no changes found"
 msgstr ""
 
-#: ../plugin/Keywords.php:590
+#: ../plugin/Keywords.php:594
 msgid "Update with these Keywords"
 msgstr ""
 
-#: ../plugin/Keywords.php:610 ../plugin/Keywords.php:614
+#: ../plugin/Keywords.php:614 ../plugin/Keywords.php:618
 msgid "alphabetically"
 msgstr ""
 
-#: ../plugin/Keywords.php:611
+#: ../plugin/Keywords.php:615
 msgid "by frequency"
 msgstr ""
 
-#: ../plugin/Keywords.php:613
+#: ../plugin/Keywords.php:617
 msgid "by size"
 msgstr ""
 
-#: ../plugin/Keywords.php:619
+#: ../plugin/Keywords.php:623
 #, c-format
 msgid "Keywords list %s (or %s)"
 msgstr ""
 
-#: ../plugin/Keywords.php:624
+#: ../plugin/Keywords.php:628
 #, c-format
 msgid "Select keywords for %s"
 msgstr ""
@@ -1065,7 +1065,7 @@ msgstr ""
 msgid "Save Changes"
 msgstr ""
 
-#: ../plugin/processor/monimarkup.php:490 ../wiki.php:3841
+#: ../plugin/processor/monimarkup.php:502 ../wiki.php:3846
 msgid "edit"
 msgstr ""
 
@@ -1326,7 +1326,7 @@ msgstr "Restaurer des donn?es sauvegard?es"
 msgid "Select a tarball file to restore"
 msgstr ""
 
-#: ../plugin/revert.php:23 ../wiki.php:5341
+#: ../plugin/revert.php:23 ../wiki.php:5350
 #, c-format
 msgid "Old Revisions of the %s"
 msgstr ""
@@ -1626,47 +1626,47 @@ msgstr ""
 msgid "Invalid use of ticket"
 msgstr ""
 
-#: ../plugin/Tour.php:57
+#: ../plugin/Tour.php:81
 msgid "BackLinks"
 msgstr ""
 
-#: ../plugin/Tour.php:61
+#: ../plugin/Tour.php:85
 msgid "Keywords"
 msgstr ""
 
 # ../plugin/minilogin.php:30
-#: ../plugin/Tour.php:70
+#: ../plugin/Tour.php:94
 #, c-format
 msgid " from %s"
 msgstr ""
 
 # ../plugin/minilogin.php:30
-#: ../plugin/Tour.php:73
+#: ../plugin/Tour.php:97
 #, c-format
 msgid "%s Tour %s"
 msgstr ""
 
-#: ../plugin/Tour.php:121
+#: ../plugin/Tour.php:156
 msgid "links"
 msgstr ""
 
 # ../plugin/VisualTour.php:59
-#: ../plugin/Tour.php:123
+#: ../plugin/Tour.php:158
 msgid "deeper"
 msgstr ""
 
 # ../plugin/minilogin.php:30
-#: ../plugin/Tour.php:124
+#: ../plugin/Tour.php:159
 #, c-format
 msgid "More %s or more %s"
 msgstr ""
 
-#: ../plugin/Tour.php:139
+#: ../plugin/Tour.php:174
 #, c-format
 msgid "Total %d related keywords"
 msgstr ""
 
-#: ../plugin/Tour.php:142
+#: ../plugin/Tour.php:177
 #, c-format
 msgid "Total %d related pages"
 msgstr ""
@@ -1710,7 +1710,7 @@ msgid "TwinPages of %s"
 msgstr "TwinPages de %s"
 
 # ../plugin/TwinPages.php:18 ../wiki.php:1828 ../wiki.php:2943
-#: ../plugin/TwinPages.php:19 ../wiki.php:5325
+#: ../plugin/TwinPages.php:19 ../wiki.php:5334
 msgid "See [TwinPages]: "
 msgstr "Voir [TwinPages]: "
 
@@ -1945,8 +1945,8 @@ msgstr ""
 msgid "You are not allowed to register on this wiki"
 msgstr ""
 
-#: ../plugin/userform.php:243 ../plugin/userform.php:415 ../wiki.php:5279
-#: ../wiki.php:5290
+#: ../plugin/userform.php:243 ../plugin/userform.php:415 ../wiki.php:5288
+#: ../wiki.php:5299
 msgid "Please contact WikiMasters"
 msgstr ""
 
@@ -2118,133 +2118,133 @@ msgid "File '%s' does not exist."
 msgstr ""
 
 # ../wikilib.php:521
-#: ../wiki.php:2919 ../wiki.php:2930 ../wiki.php:5519
+#: ../wiki.php:2919 ../wiki.php:2930 ../wiki.php:5528
 msgid "Invalid ajax action."
 msgstr ""
 
-#: ../wiki.php:3422
+#: ../wiki.php:3427
 msgid "Tags:"
 msgstr ""
 
 # ../wiki.php:1824
-#: ../wiki.php:3450
+#: ../wiki.php:3455
 #, c-format
 msgid "See %s"
 msgstr "Voir %s"
 
 # ../wiki.php:1824
-#: ../wiki.php:3450
+#: ../wiki.php:3455
 #, c-format
 msgid "TwinPages"
 msgstr ""
 
 # ../plugin/TwinPages.php:18 ../wiki.php:1828 ../wiki.php:2943
-#: ../wiki.php:3455
+#: ../wiki.php:3460
 msgid "See [TwinPages]:"
 msgstr "Voir [TwinPages]: "
 
-#: ../wiki.php:4021
+#: ../wiki.php:4026
 msgid "Sister Sites Index"
 msgstr ""
 
 # ../locale/dummy.php:6 ../wiki.php:2553
-#: ../wiki.php:4449 ../locale/dummy.php:6
+#: ../wiki.php:4454 ../locale/dummy.php:6
 msgid "EditText"
 msgstr "?ditionTexte"
 
 # ../wiki.php:2555
-#: ../wiki.php:4451
+#: ../wiki.php:4456
 msgid "NotEditable"
 msgstr "Pas?ditable"
 
 # ../locale/dummy.php:6 ../wiki.php:2557
-#: ../wiki.php:4455 ../locale/dummy.php:6
+#: ../wiki.php:4460 ../locale/dummy.php:6
 msgid "ShowPage"
 msgstr "MontrePage"
 
 # ../locale/dummy.php:3 ../locale/dummy.php:5 ../wiki.php:2558
-#: ../wiki.php:4456 ../locale/dummy.php:3 ../locale/dummy.php:5
+#: ../wiki.php:4461 ../locale/dummy.php:3 ../locale/dummy.php:5
 msgid "FindPage"
 msgstr "TrouvePage"
 
-#: ../wiki.php:4859
+#: ../wiki.php:4868
 msgid "Main"
 msgstr ""
 
-#: ../wiki.php:5278
+#: ../wiki.php:5287
 msgid "You are in the black list"
 msgstr ""
 
-#: ../wiki.php:5289
+#: ../wiki.php:5298
 msgid "You are blocked in this wiki"
 msgstr ""
 
 # ../wiki.php:2945 ../wiki.php:2948
-#: ../wiki.php:5327 ../wiki.php:5336 ../wikilib.php:1370
+#: ../wiki.php:5336 ../wiki.php:5345 ../wikilib.php:1370
 msgid "Create this page"
 msgstr "Cr?er cette page"
 
 # ../wikilib.php:816
-#: ../wiki.php:5338
+#: ../wiki.php:5347
 #, c-format
 msgid "%s has saved revisions"
 msgstr "%s est sauvegard?"
 
 # ../wiki.php:2950
-#: ../wiki.php:5339 ../wiki.php:5346
+#: ../wiki.php:5348 ../wiki.php:5355
 #, c-format
 msgid "%s or click %s to fulltext search.\n"
 msgstr ""
 
-#: ../wiki.php:5344
+#: ../wiki.php:5353
 #, c-format
 msgid "%s is not found in this Wiki"
 msgstr ""
 
-#: ../wiki.php:5351
+#: ../wiki.php:5360
 msgid "Please try to search with another word"
 msgstr ""
 
 # ../wiki.php:2956
-#: ../wiki.php:5363
+#: ../wiki.php:5372
 #, c-format
 msgid "%s or alternativly, use one of these templates:\n"
 msgstr "%s ou alternativement, utiliser un de ces mod?les de page :\n"
 
-#: ../wiki.php:5366
+#: ../wiki.php:5375
 msgid "You have no templates"
 msgstr ""
 
 # ../wikilib.php:427
-#: ../wiki.php:5368
+#: ../wiki.php:5377
 #, c-format
 msgid "To create your own templates, add a page with '%s' pattern.\n"
 msgstr ""
 
-#: ../wiki.php:5379
+#: ../wiki.php:5388
 #, c-format
 msgid "Redirected from page \"%s\""
 msgstr ""
 
 # ../wikilib.php:521
-#: ../wiki.php:5521
+#: ../wiki.php:5530
 msgid "Invalid macro action."
 msgstr ""
 
 # ../wiki.php:3009
-#: ../wiki.php:5531
+#: ../wiki.php:5540
 #, c-format
 msgid "You are not allowed to '%s'"
 msgstr "Vous n'?tes pas autoris? ? '%s'"
 
 # ../wiki.php:3021
-#: ../wiki.php:5551
+#: ../wiki.php:5560
 #, c-format
 msgid "Fail to \"%s\" !"
 msgstr "Impossible de pouvoir \"%s\" !"
 
 # ../wiki.php:3024
-#: ../wiki.php:5554
+#: ../wiki.php:5563
 msgid "Please enter the valid password"
 msgstr "Merci d'entrer un mot de passe valide"
 
