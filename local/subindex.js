@@ -22,7 +22,10 @@ function toggleSubIndex(id)
                 else
                     toggle=false;
             } else if (mode) {
-                toggle=true;
+                if (sub.style.display == 'none')
+                    toggle = true;
+                else
+                    toggle = false;
             }
             if (typeof Effect != 'undefined') { // prototype.js
                 if (toggle) {
