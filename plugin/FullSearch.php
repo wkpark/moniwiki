@@ -110,7 +110,7 @@ EOF;
     foreach($terms as $term) {
       if (trim($term)=='') continue;
       if (preg_match('/^([-+]?)("?)([^\\2]+?)\\2$/',$term,$match)) {
-        $word=str_replace(array('-','\\','.','*'),'',$match[3]);
+        $word=str_replace(array('\\','.','*'),'',$match[3]);
         $len=strlen($word);
 
         if (!$match[1] and $match[2] != '"') {
