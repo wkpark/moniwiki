@@ -674,6 +674,7 @@ EOS;
     $this->use_purple=0;
     $this->version_class='RCS';
     $this->title_rule='((?<=[a-z0-9]|[B-Z]{2})([A-Z][a-z]))';
+    $this->login_strict=1;
 
     # set user-specified configuration
     if ($config) {
@@ -1795,6 +1796,7 @@ class Formatter {
     $this->use_rating=$DBInfo->use_rating;
     $this->use_etable=$DBInfo->use_etable;
     $this->use_metadata=$DBInfo->use_metadata;
+    $this->use_namespace=$DBInfo->use_namespace;
     $this->udb=&$DBInfo->udb;
     $this->user=&$DBInfo->user;
     $this->check_openid_url=$DBInfo->check_openid_url;
@@ -2216,7 +2218,11 @@ class Formatter {
     if (is_array($url)) $url=$url[1];
     #if ($url[0]=='<') { print $url;return $url;}
     $url=str_replace('\"','"',$url); // XXX
+    $bra = '';
+    $ket = '';
     if ($url{0}=='[') {
+      $bra='[';
+      $ket=']';
       $url=substr($url,1,-1);
       $force=1;
     }
@@ -2300,8 +2306,14 @@ class Formatter {
           preg_replace('/('.$this->url_mapping_rule.')/ie',"\$this->url_mappings['\\1']",$url);
       }
 
-      if (preg_match("/^(:|w|[A-Z])/",$url)) # InterWiki or wiki:
+      if (preg_match("/^(:|w|[A-Z])/",$url))
         return $this->interwiki_repl($url,'',$attr,$external_icon);
+      else if (!preg_match('/^('.$this->urls.')/',$url)) {
+        if ($this->use_namespace)
+          return $this->interwiki_repl($url,'',$attr,$external_icon);
+        else
+          return $bra.$url.$ket;
+      }
 
       if (preg_match("/^mailto:/",$url)) {
         $email=substr($url,7);
@@ -2365,14 +2377,15 @@ class Formatter {
       } # have no space
       $link = str_replace(array('<','>'),array('&#x3c;','&#x3e;'),$url);
       if (preg_match("/^(http|https|ftp)/",$url)) {
-        if (preg_match("/(^.*\.(png|gif|jpeg|jpg))(([\?&]([a-z]+=[0-9a-z]+))*)$/i",$url,$match)) {
+        if (preg_match("/(^.*\.(png|gif|jpeg|jpg))(\?.*?)$/i",$url,$match)) {
+          $url=preg_replace('/&amp;/','&',$url);
           $url=$match[1];
           $attrs=explode('&',substr($match[3],1));
           foreach ($attrs as $arg) {
             $name=strtok($arg,'=');
             $val=strtok(' ');
-            if ($name and $val) $attr.=$name.'="'.$val.'" ';
-            if ($name == 'align') $attr.='class="img'.ucfirst($val).'" ';
+            if ($name and $val) $attr.=' '.$name.'="'.urldecode($val).'"';
+            if ($name == 'align') $attr.=' class="img'.ucfirst($val).'"';
           }
           return "<img alt='$link' $attr src='$url' />";
         }
@@ -4210,8 +4223,10 @@ class Formatter {
       do_goto($this,$options);
       return;
     }
+    $header = !empty($header) ? $header:(!empty($options['header']) ? $options['header']:null) ;
+    #print_r($header);
     #$this->header("Expires: Tue, 01 Jan 2002 00:00:00 GMT");
-    if ($header) {
+    if (!empty($header)) {
       if (is_array($header))
         foreach ($header as $head) {
           $this->header($head);
@@ -5110,11 +5125,19 @@ function init_requests(&$options) {
     $options['trail']=trim($user->trail) ? $user->trail:'';
 
   if ($user->id != 'Anonymous') {
-    $udb->checkUser($user); # is it valid user ?
+    $test = $udb->checkUser($user); # is it valid user ?
     if ($user->id != 'Anonymous')
       $user=$udb->getUser($user->id); // read user info
     else
       $user->setID('Anonymous');
+    if ($test == 1) {
+      if ($DBInfo->login_strict > 0 ) {
+        # auto logout
+        $options['header'] = $user->unsetCookie();
+      } else if ($DBInfo->login_strict < 0 ) {
+        $options['msg'] = _("Someone logged in at another place !");
+      }
+    }
   }
   $options['id']=$user->id;
   $DBInfo->user=$user;
