@@ -344,6 +344,7 @@ class UserDB {
   var $users=array();
   function UserDB($WikiDB) {
     $this->user_dir=$WikiDB->data_dir.'/user';
+    $this->strict = $WikiDB->login_strict;
   }
 
   function _id_to_key($id) {
@@ -432,7 +433,8 @@ class UserDB {
   function checkUser(&$user) {
     $tmp=$this->getUser($user->id);
     if ($tmp->info['ticket'] != $user->ticket) {
-      $user->id='Anonymous';
+      if ($this->strict > 0)
+        $user->id='Anonymous';
       return 1;
     }
     $user=$tmp;
