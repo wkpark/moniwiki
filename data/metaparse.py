@@ -46,7 +46,7 @@ class MetaWiki:
         ("?action=titleindex", NO_CUT_REGEX, DEFAULT_MATCH_REGEX),
       "PediaWiki":
         #("Special:Allpages", '<table (.*)</table>', DEFAULT_MATCH_REGEX),
-        ("Special:Allpages", '<table (.*)</table>', '/wiki/(.*?)"'),
+        ("Special:AllPages", '<\!\-\- start content \-\->(.*)<\!\-\- end content \-\->', '"/wiki/([^"]+)"'),
       "foldoc":
         ("http://foldoc.doc.ic.ac.uk/foldoc/contents/all.html",
          NO_CUT_REGEX, r'\?(.*)"'),
@@ -70,9 +70,9 @@ class MetaWiki:
       "TWiki":
         ("?topic=WebIndex",NO_CUT_REGEX,TWIKI_MATCH_REGEX),
       "PediaIndex":
-        ("Special:Allpages",
-         '^<table>(.*)</table>',
-         '(http://.*/w/wiki.phtml\?title=Special:Allpages&amp;from.*?)"'),
+        ("Special:AllPages",
+         '<\!\-\- start content -->(.*)<\!\-\- end content \-\->',
+         '/w/index.php\?title=(Special:AllPages&amp;from=.*?)"'),
       "GtkDoc":
         ("?", NO_CUT_REGEX, '<dt>\s*([^,]+),\s*<a href="([^"]+)">'),
     };
@@ -82,18 +82,23 @@ class MetaWiki:
             os.mkdir(cache_dir, 0777)
 	return
 
-    def _fetch(self,wikiname,type,urls):
+    def _fetch(self,wikiname,type,urls,findall=False):
+        class MyURLopener(urllib.FancyURLopener):
+            version = "App/0.1"
+
+        myurllib = MyURLopener()
+
         catcmd = 'cat %s'
         num=0
         for url in urls:
             sys.stderr.write("Fetching %s\n" % url)
             try:
-                archive, headers = urllib.urlretrieve(url, None, progress)
+                archive, headers = myurllib.retrieve(url, None, progress,None)
                 #archive, headers = urllib.urlretrieve(url, None)
 
             except TypeError:           # 1.5.1 does not accept 3rd argument
                 try:
-                    archive, headers = urllib.urlretrieve(url, None)
+                    archive, headers = myurllib.retrieve(url, None,None,None)
                 except IOError:
                     sys.stderr.write(" apparently not found\n")
                     continue
@@ -102,6 +107,20 @@ class MetaWiki:
                 continue
 #        if os.system(catcmd % archive) != 0:
 #            raise "Fetch failed"
+            # 
+	    fp = open(archive)
+            all = fp.readlines()
+            fp.close()
+            content = "".join(all);
+
+            p = re.compile(self.RULES[type][1],re.M | re.S)
+
+            dummy=p.search(content)
+            if dummy:
+                cache=open(archive,'w')
+                cache.write(dummy.group(1))
+                cache.close()
+
             if num==0:
                 cache=open(os.path.join(cache_dir,wikiname),'w')
             else:
@@ -109,14 +128,20 @@ class MetaWiki:
             num=num+1
             for line in os.popen(catcmd % archive).readlines():
                 if self.RULES.has_key(type):
-                    dummy=re.search(self.RULES[type][2],line)
-                    if dummy:
-			if dummy.group(2):
-                            cache.write(dummy.group(1)+"\t"+dummy.group(2)+"\n")
-                    	else:
-                            cache.write(dummy.group(1)+"\n")
+                    if findall:
+                        dummy=re.findall(self.RULES[type][2],line)
+                        if dummy:
+                            sa = set(dummy)
+                            cache.write("\n".join(sa) + "\n")
+                    else:
+                        dummy=re.search(self.RULES[type][2],line)
+                        if dummy:
+                            try:
+                                cache.write(dummy.group(1)+"\t"+dummy.group(2)+"\n")
+                    	    except IndexError:
+                                cache.write(dummy.group(1)+"\n")
                 else:
-		    cache.write(line)
+                    cache.write(line)
             cache.close()
 
     def _get_url(self,wikiname,type,url):
@@ -157,14 +182,30 @@ class MetaWiki:
         urls.append(self._get_url(wikiname,type,url))
         #urls.append("http://www.wikipedia.org/w/wiki.phtml?title=Special:Allpages&from=!")
         #self._fetch(wikiname,type,urls)
-        self._fetch(wikiname,"PediaIndex",urls)
-	fp=open("cache/metawiki/WikiPedia")
+        self._fetch(wikiname,"PediaIndex",urls,True)
+	fp=open("cache/metawiki/" + wikiname)
         all=fp.readlines()
         fp.close()
         urls=[]
-        for url in all:
-          urls.append(string.replace(url,'&amp;','&'))
-        self._fetch(wikiname,type,urls)
+        for idx in all:
+          urls.append(url + string.replace(idx,'&amp;','&'))
+        self._fetch("PediaIndex","PediaIndex",urls,True)
+
+	fp=open("cache/metawiki/PediaIndex")
+        all=fp.readlines()
+        fp.close()
+        urls=[]
+        for idx in all:
+          urls.append(url + string.replace(idx,'&amp;','&'))
+        self._fetch("PediaIndex","PediaIndex",urls,True)
+
+	fp=open("cache/metawiki/PediaIndex")
+        all=fp.readlines()
+        fp.close()
+        urls=[]
+        for idx in all:
+          urls.append(url + string.replace(idx,'&amp;','&'))
+        self._fetch(wikiname,type,urls,True)
 
     def _foldoc_rule(self,wikiname,type,url):
         urls=[]
@@ -369,3 +410,5 @@ if __name__ == "__main__":
     if not fetchonly:
        updateMetaCache(wikis,shared_metadb,db_type)
     sys.stderr.write("\nOK!\n")
+
+# vim:et:sts=4:sw=4:
