@@ -614,7 +614,7 @@ Wikiwyg.prototype.switchMode = function(new_mode_key) {
 
 
 
-Wikiwyg.prototype.editMode = function(form,text) {
+Wikiwyg.prototype.editMode = function(form,text,mode) {
     var self = this;
     var dom = document.createElement('div');
 
@@ -625,7 +625,11 @@ Wikiwyg.prototype.editMode = function(form,text) {
     var wikitext = text == null ? mytext.value:text;
     this.mylocation = form.getAttribute('action');
 
-    this.current_mode = this.first_mode;
+    if (typeof mode == 'undefined')
+        this.current_mode = this.first_mode;
+    else
+        this.current_mode = this.modeByName('Wikiwyg.Wikitext');
+
     if (this.current_mode.classname.match(/(Wysiwyg|HTML|Preview)/)) {
         var myWikiwyg = new Wikiwyg.Wikitext();
 
@@ -2749,7 +2753,7 @@ function createWikiwygDiv(elem, parent) {
 
  wikiwygs = [];
 
-function sectionEdit(ev,obj,sect) {
+function sectionEdit(ev,obj,sect,mode) {
     var area;
     var text=null;
     var form=null;
@@ -2798,7 +2802,7 @@ function sectionEdit(ev,obj,sect) {
         if (mycheck && mycheck.match(/WikiWygArea/)) {
             var tmp = mycheck.split(/_/); // get already loaded WikiWygArea XXX hack
 
-            wikiwygs[tmp[1]].editMode(form,text);
+            wikiwygs[tmp[1]].editMode(form,text,mode);
             return;
         }
         break;
@@ -2830,7 +2834,7 @@ function sectionEdit(ev,obj,sect) {
             var myWikiwyg = new Wikiwyg();
             myWikiwyg.createWikiwygArea(area, myConfig, area_id);
             wikiwygs.push(myWikiwyg);
-            myWikiwyg.editMode(form,text);
+            myWikiwyg.editMode(form,text,mode);
 
     }
     return;

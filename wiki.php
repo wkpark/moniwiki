@@ -3848,10 +3848,15 @@ class Formatter {
         $in_p='';
         if ($this->section_edit && !$this->preview) {
           $act='edit';
+
+          $wikiwyg_mode='';
+          if ($DBInfo->use_wikiwyg ==1) {
+            $wikiwyg_mode=',true';
+          }
           if ($DBInfo->sectionedit_attr) {
             if (!is_string($DBInfo->sectionedit_attr))
               $sect_attr=' onclick="javascript:sectionEdit(null,this,'.
-                $this->sect_num.');return false;"';
+                $this->sect_num.$wikiwyg_mode.');return false;"';
             else
               $sect_attr=$DBInfo->sectionedit_attr;
           }
