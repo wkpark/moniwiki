@@ -2724,10 +2724,11 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   if ($opts['linkto']) $idx=10;
   $out='';
   foreach ($hits as $pagename) {
+    $pagetext=htmlspecialchars(urldecode($pagename));
     if ($opts['linkto'])
-      $out.= '<li>' . $formatter->link_to("$opts[linkto]$pagename",$pagename,"tabindex='$idx'")."</li>\n";
+      $out.= '<li>' . $formatter->link_to("$opts[linkto]$pagename",$pagetext,"tabindex='$idx'")."</li>\n";
     else
-      $out.= '<li>' . $formatter->link_tag(_rawurlencode($pagename),"",$pagename,"tabindex='$idx'")."</li>\n";
+      $out.= '<li>' . $formatter->link_tag(_rawurlencode($pagename),"",$pagetext,"tabindex='$idx'")."</li>\n";
     $idx++;
   }
 
