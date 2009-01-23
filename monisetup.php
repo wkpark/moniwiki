@@ -645,9 +645,11 @@ function set_locale($lang,$charset='') {
   return $lang;
 }
 
+$_locale = array();
+
 function initlocale($lang,$charset) {
   global $_Config,$_locale,$locale;
-  if (!@include_once('locale/'.$lang.'/LC_MESSAGES/moniwiki.php') or
+  if (!@include_once('locale/'.$lang.'/LC_MESSAGES/moniwiki.php') and
      @include_once('locale/'.substr($lang,0,2).'/LC_MESSAGES/moniwiki.php')) {
     if (!empty($_locale)) {
       function _t($text) {
