@@ -93,7 +93,7 @@ function do_download($formatter,$options) {
 
   # set filename
   if (preg_match("/\.(.{1,4})$/",$file,$match))
-    $mimetype=strtolower($mime[$match[1]]);
+    $mimetype=$mime[strtolower($match[1])];
   if (!$mimetype) $mimetype="application/x-unknown";
 
   if (strstr($_SERVER['HTTP_USER_AGENT'], 'MSIE')) {
