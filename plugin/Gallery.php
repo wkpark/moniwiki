@@ -279,7 +279,7 @@ function macro_Gallery($formatter,$value,&$options) {
           $fname=$dir.'/'.$file;
           list($w, $h) = getimagesize($fname);
           if ($w > $thumb_width) {
-            $nh=$width*$h/$w;
+            $nh=$thumb_width*$h/$w;
             $thumb= imagecreatetruecolor($thumb_width,$nh);
             // XXX only jpeg for testing now.
             if (preg_match("/\.(jpg|jpeg)$/i",$file))
