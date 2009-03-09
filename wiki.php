@@ -2290,8 +2290,10 @@ class Formatter {
 
     if (($p=strpos($url,':')) !== false and
         (!isset($url{$p+1}) or (isset($url{$p+1}) and $url{$p+1}!=':'))) {
-      if ($url[0]=='a') # attachment:
+      if ($url[0]=='a') { # attachment:
+        $url=preg_replace('/&amp;/i','&',$url);
         return $this->macro_repl('attachment',substr($url,11));
+      }
 
       $external_icon='';
       $external_link='';
