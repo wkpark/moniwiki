@@ -2379,7 +2379,7 @@ class Formatter {
       } # have no space
       $link = str_replace(array('<','>'),array('&#x3c;','&#x3e;'),$url);
       if (preg_match("/^(http|https|ftp)/",$url)) {
-        if (preg_match("/(^.*\.(png|gif|jpeg|jpg))(\?.*?)$/i",$url,$match)) {
+        if (preg_match("/(^.*\.(png|gif|jpeg|jpg))(\?.*?)?$/i",$url,$match)) {
           $url=preg_replace('/&amp;/','&',$url);
           $url=$match[1];
           $attrs=explode('&',substr($match[3],1));
