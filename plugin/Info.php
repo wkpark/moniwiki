@@ -28,10 +28,11 @@ function _parse_rlog($formatter,$log,$options=array()) {
   $url=$formatter->link_url($formatter->page->urlname);
 
   $diff_btn=_("Diff");
+  $out = "<div class='wikiInfo'>\n";
   if ($options['title'])
-    $out=$options['title'];
+    $out.=$options['title'];
   else
-    $out="<div class='wikiInfo'><h2>"._("Revision History")."</h2>\n";
+    $out.="<h2>"._("Revision History")."</h2>\n";
   $out.="<form id='infoform' method='post' action='$url'>";
   $out.="<table class='info' cellpadding='3' cellspacing='2'><tr>\n";
   $out.="<th class='info'>"._("ver.")."</th><th class='info'>"._("Date and Changes")."</th>".
