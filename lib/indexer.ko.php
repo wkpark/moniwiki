@@ -209,7 +209,7 @@ class KoreanIndexer {
         $lines=file(dirname(__FILE__).'/../data/dict/josa.txt.utf-8');
         foreach ($lines as $l) {
             $l=strtr($l,"*","?");
-            $l=preg_replace('/^(.*\?)/','(\\1)',$l);
+            $l=preg_replace('/^(.*)\?/','(\\1)?',$l);
             $this->_josa[]=trim($l);
         }
 
@@ -245,31 +245,79 @@ class KoreanIndexer {
         return $rule;
     }
 
-    function isWord($word,$flag=false,$fuzzy=0.7) {
+    function isWord($word, $flag=false, $fuzzy=0.7) {
         // simple caching
-        if (array_key_exists($word,$this->_cache))
-            return $this->_cache[$word];
+        $encoding = 'UTF-8';
+
+        $words = preg_split('/\s+/',$word);
+        $cword = implode($words);
+        if (array_key_exists($cword,$this->_cache))
+            return $this->_cache[$cword];
+
+        $word = array_pop($words);
 
         list($l,$min_seek,$max_seek,$scount)=
             _fuzzy_bsearch_file($this->_dict,$word,0,$this->_dict_size/2,0,$this->_dict_size);
         list($c,$buf,$last)=
-            _file_match($this->_dict,$word,$min_seek,$max_seek,$this->_dict_size,0,$flag,'UTF-8');
+            _file_match($this->_dict,$word,$min_seek,$max_seek,$this->_dict_size,0,$flag,$encoding);
         
         $cand=array();
         if (!empty($c)) {
+            $pre = '';
+            if (!empty($words))
+                $pre = implode('-',$words).'-';
             $list=explode("\n",rtrim($buf));
+
             foreach ($list as $l) {
                 list($k,$t,$r) = explode(':',$l);
-                $cand[]=array($k,$this->tagName($t),$r);
+                $cand[]=array($pre.$k,$this->tagName($t),$r);
             }
-            print_r($cand);
-        } else if (!empty($buf)) {
-            $list=explode("\n",rtrim($buf));
-            foreach ($list as $l) {
-                list($k,$t,$r) = explode(':',$l);
-                $cand[]=array($k,$this->tagName($t),$r);
+            #print_r($cand);
+        } else if (!empty($last)) {
+            // similar match found 
+            $list = rtrim($buf);
+            list($k,$t,$r) = explode(':',$buf); // XXX get shortest match word
+            #print($buf);
+            $type = $this->tagName($t);
+            $pre = $k;
+            $pl = strlen(utf8_decode($pre));
+            if ($pl == 1 and strlen($word) > 1) { // not found
+                // split word to prefix + new word
+                // 5 => 2 + 3, 3 + 2 / 1 + 4
+                // 4 => 2 + 2 / 1 + 3
+                // 6 => 2 + 4, 3 + 3 / 1 + 5
+                #$nword = substr($word, strlen($pre)); // 1-char + new word
+                #$words[] = $pre;
+                #$pre = implode('-',$words);
+                #$nret = $this->isWord($pre.' '.$nword);
+                #if (!empty($nret[0])) {
+                #    #print_r($nret[1][0]);
+                #    return $nret;
+                #} else {
+                #    array_pop($words);
+                #    $pre = mb_substr($word,0,2,$encoding);
+                #}
+                $pre = mb_substr($word,0,2,$encoding);
             }
-            print_r($cand);
+            $nword = substr($word, strlen($pre)); // next word
+
+            $words[] = $pre;
+            $pre = implode('-',$words);
+
+            if (!empty($nword)) {
+                if ($type{0} == 'n') { // noun
+                    $stem = $this->getNoun($nword, $match);
+                    #print '*** stem'.$nword.'=='.$stem."\n";
+                    if (!empty($stem))
+                        return $this->isWord($pre.' '.$stem);
+                } else { // not noun
+                    $stem = $this->getNoun($nword, $match);
+                    #print '*** stem'.$nword.'=='.$stem."\n";
+                    if (!empty($stem))
+                        return $this->isWord($pre.' '.$stem);
+                }
+            }
+
         }
         $ret=array($c,$cand,$last);
         $this->_cache[$word]=&$ret;
@@ -277,10 +325,11 @@ class KoreanIndexer {
     }
 
     function getStem($word,&$match,&$type) {
-        // XXX
         $type=1;
         list($r, $cand, $last) = $this->isWord($word);
-        if ($cand[0][1]{0} == 'n') return $word;
+
+        // return first candidate XXX
+        if (isset($cand[0]) and $cand[0][1]{0} == 'n') return $cand[0][0];
         else $stem=$this->getNoun($word,$match);
 
         if ($stem) {
@@ -307,6 +356,10 @@ class KoreanIndexer {
         // XXX
         # remove josa
         preg_match('/('.$this->_josa_rule.')$/S',$word,$match);
+
+        #print 'getNoun ('.$word.")\n";
+        #print $this->_josa_rule;
+        #print_r($match);
         if (!empty($match[1])) {
             $pword=substr($word,0,-strlen($match[1]));
             if ($pword) {
@@ -319,11 +372,11 @@ class KoreanIndexer {
             $word=$this->getWordRule($word);
             preg_match('/('.$this->_josa_rule.')$/S',$word,$match);
         }
-        if ($match[1] and $nmatch[1] and (strlen($match[1]) < strlen($nmatch[1]))) {
+        if (isset($match[1]) and isset($nmatch[1]) and (strlen($match[1]) < strlen($nmatch[1]))) {
             $match=$nmatch;
             $word=$pword;
         }
-        if ($match) {
+        if (!empty($match)) {
             #print "<pre>";
             #print_r($match);
             #print "</pre>";
@@ -345,7 +398,7 @@ class KoreanIndexer {
         preg_match('/('.$this->_eomi_rule.')$/S',$word,$match);
         $word1=$this->getWordRule($word);
         preg_match('/('.$this->_eomi_rule.')$/S',$word1,$match1);
-        if ($match[1] and $match1[1]) {
+        if (!empty($match[1]) and !empty($match1[1])) {
             if ((strlen($match[1]) <= strlen($match1[1])) ) {
                 $match=$match1;
                 $word=$word1;
@@ -381,6 +434,7 @@ class KoreanIndexer {
         $uend= utf8_to_unicode($match[1]);
         $ch= array_pop($ustem);
         $ed= $uend[0];
+        $save='';
 
         if ($this->isHangul($ch)) {
             $j= hangul_to_jamo($ch);
@@ -449,7 +503,7 @@ class KoreanIndexer {
                 }
                 $ed= $uend[0];
                 $ej= hangul_to_jamo($ed);
-            } else if (in_array($j[2],array(0x11ab, 0x11af,0x11b8)) /* ㄴ,ㄹ,ㅂ */ ) {
+            } else if (!empty($j[2]) and in_array($j[2],array(0x11ab, 0x11af,0x11b8)) /* ㄴ,ㄹ,ㅂ */ ) {
                 // 합-시다   갑-시다   갈-래
                 // 하-ㅂ시다 가-ㅂ시다 가-ㄹ래
                 //

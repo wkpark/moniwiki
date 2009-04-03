@@ -140,6 +140,7 @@ function _file_match($fp,$key,$lower,$upper,$fsize,$klen=1,$match_prefix=true,$e
 
         if ($l{0} == '#') continue;
         $mykey= strtok($l,' \t\n,:');
+        #print '==>'.$l;
         #$llen = mb_strlen($mykey,$encoding);
         $llen = strlen(utf8_decode($mykey));
         if ($llen < $ki) {
@@ -156,6 +157,7 @@ function _file_match($fp,$key,$lower,$upper,$fsize,$klen=1,$match_prefix=true,$e
             $count++;
         } else if ($ckey == $cmykey and $pkey == $pmykey) {
             if ($ki < $klen) {
+                $plast = $l;
                 $ki++;
                 $pkey.=$ckey;
                 //print 'pkey='.$pkey."<br />\n";
@@ -164,6 +166,7 @@ function _file_match($fp,$key,$lower,$upper,$fsize,$klen=1,$match_prefix=true,$e
                         $cmykey=mb_substr($mykey,$ki,1,$encoding);
                         if ($ckey == $cmykey) {
                             $pkey.=$ckey;
+                            $plast = $l;
                             //print '++pkey='.$pkey."<br />\n";
                             continue;
                         }
@@ -179,7 +182,7 @@ function _file_match($fp,$key,$lower,$upper,$fsize,$klen=1,$match_prefix=true,$e
                 continue;
             }
             if ($ki == $klen) $match = true;
-            print '+pkey='.$pkey."<br />\n";
+            #print '+pkey='.$pkey."<br />\n";
             if ($ki == $klen) $buf.=$l;
         } else if ($pkey != $pmykey) {
             break;
@@ -197,6 +200,41 @@ function _file_match($fp,$key,$lower,$upper,$fsize,$klen=1,$match_prefix=true,$e
     }
     if ($count) return array ($count, $buf, null);
     if (!empty($pkey)) {
+        # not found but try to return similar patterns
+        $seek -= strlen($l) + 1; // +1 mean do not read last "\n"
+        fseek($fp,$seek);
+
+        # backward seek dictionary
+        $ll = '';
+        $guess = array();
+        $maxcheck = 0;
+        while ( $seek > 0 ) {
+            $rlen = $fsize - $seek;
+            if ($rlen > 1024) { $rlen = 1024;}
+            else if ($rlen <= 0) break;
+            $seek -= $rlen;
+            fseek($fp,$seek);
+
+            $l = fread($fp, $rlen);
+            if ($rlen != 1024) $l = "\n" . $l; // hack, for the first dict entry.
+            while( ($p = strrpos($l,"\n") ) !== false) {
+                $check++;
+                $line = substr($l, $p+1) . $ll;
+                #print '*'.$line."\n";
+                $ll = '';
+                $l = substr($l, 0, $p);
+                $mykey= strtok($line,' \t\n,:');
+                $cmykey = mb_substr($mykey, 0, $ki, $encoding); // XXX
+                if ($cmykey != $pkey) break 2;
+                $guess[] = $line;
+                $ll = '';
+                if ($maxcheck > 10) break 2;
+            }
+            $ll = $l.$ll;
+        }
+        $guess = array_reverse($guess);
+        $buf = implode("\n",$guess);
+
         $lastmatch= strtok($last,' \t\n,:');
         $len = strlen($pkey);
         // XXX matching ratio + fuzzy factor etc.
@@ -205,6 +243,7 @@ function _file_match($fp,$key,$lower,$upper,$fsize,$klen=1,$match_prefix=true,$e
             print $klen.' - '.$llen;
             $suffix = substr($lastmatch,$len);
             print 'matching ratio: '.$match_ratio.'/ suffix= "'.$suffix.'" '.$last."<br />\n";
+            print 'pkey='.$pkey.','.$plast."<br />\n";
         }
         return array (0, $buf, $last);
     }

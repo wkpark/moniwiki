@@ -72,7 +72,7 @@ function strpos_unicode( $haystack , $needle , $offset = 0 ) {
     return ( $found == TRUE ) ? $position : FALSE;
 }
 
-$position = strpos_unicode( $unicode , utf8_to_unicode( '42' ) );
+#$position = strpos_unicode( $unicode , utf8_to_unicode( '42' ) );
 
 function unicode_to_utf8( $str ) {
     $utf8 = '';
@@ -176,14 +176,14 @@ function utf8_hangul_to_jamo($str) {
     return hangul_to_jamo($unicode);
 }
 
-function jamo_to_syllable($jamo) {
-    define('hangul_base', 0xac00);
-    define('choseong_base', 0x1100);
-    define('jungseong_base', 0x1161);
-    define('jongseong_base', 0x11a7);
-    define('njungseong', 21);
-    define('njongseong', 28);
+define('hangul_base', 0xac00);
+define('choseong_base', 0x1100);
+define('jungseong_base', 0x1161);
+define('jongseong_base', 0x11a7);
+define('njungseong', 21);
+define('njongseong', 28);
 
+function jamo_to_syllable($jamo) {
     if (sizeof($jamo)<=3) {
         $choseong=$jamo[0];
         $jungseong=$jamo[1];
