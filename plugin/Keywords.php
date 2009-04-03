@@ -15,12 +15,12 @@
 //
 // $Id$
 
-define(LOCAL_KEYWORDS,'LocalKeywords');
+define('LOCAL_KEYWORDS','LocalKeywords');
 
 function macro_Keywords($formatter,$value,$options=array()) {
     global $DBInfo;
-define(MAX_FONT_SZ,24);
-define(MIN_FONT_SZ,10);
+define('MAX_FONT_SZ',24);
+define('MIN_FONT_SZ',10);
     $supported_lang=array('ko');
 
     $limit=isset($options['limit']) ? $options['limit']:40;
@@ -63,8 +63,8 @@ define(MIN_FONT_SZ,10);
         }
     }
 
-    if ($options['random'] and !$limit) $limit=0;
-    if ($options['sort']=='freq') $sort= 'freq';
+    if (isset($options['random']) and empty($limit)) $limit=0;
+    if (isset($options['sort']) and $options['sort']=='freq') $sort= 'freq';
 
     if (!$pagename) $pagename=$formatter->page->name;
 
@@ -90,7 +90,7 @@ define(MIN_FONT_SZ,10);
     }
 
     if (!$mykeys):
-    if ($options['all']) $pages=$DBInfo->getPageLists();
+    if (!empty($options['all'])) $pages=$DBInfo->getPageLists();
     else $pages=array($pagename);
 
     foreach ($pages as $pn) {
@@ -107,7 +107,7 @@ define(MIN_FONT_SZ,10);
     endif;
 
 
-    if ($options['all']) {
+    if (!empty($options['all'])) {
         $use_sty=1;
         $words=array_count_values($mykeys);
         unset($words['']);
@@ -139,7 +139,7 @@ define(MIN_FONT_SZ,10);
     }
 
     # automatically generate list of keywords
-    if (!$options['all'] and (!$words or $options['suggest'])):
+    if (empty($options['all']) and (empty($words) or isset($options['suggest']))):
 
     $common= <<<EOF
 am an a b c d e f g h i j k l m n o p q r s t u v w x y z
@@ -167,6 +167,7 @@ EOF;
 
     // strip macros, entities
     $raw=preg_replace("/&[^;\s]+;|\[\[[^\[]+\]\]/",' ',$raw);
+    $raw=preg_replace("/^##.*$/m",' ',$raw);
     $raw=preg_replace("/([;\"',`\\\\\/\.:@#\!\?\$%\^&\*\(\)\{\}\[\]\-_\+=\|<>])/",
         ' ', strip_tags($raw.' '.$pagename)); // pagename also
     $raw=preg_replace("/((?<=[a-z0-9]|[B-Z]{2})([A-Z][a-z]))/"," \\1",$raw);
@@ -183,7 +184,7 @@ EOF;
         $lines0=explode("\n",($p->get_raw_body()));
     }
 
-    $lang=$formatter->pi['#language'] ? $formatter->pi['#language']:
+    $lang=isset($formatter->pi['#language']) ? $formatter->pi['#language']:
         $DBInfo->default_language;
 
     if ($lang and in_array($lang,$supported_lang)) {
@@ -193,13 +194,40 @@ EOF;
             $lines=explode("\n",($p->get_raw_body()));
             $lines=array_merge($lines,$lines0);
             foreach ($lines as $line) {
-                if ($line[0]=='#') continue;
+                if (isset($line{0}) and $line{0}=='#') continue;
                 $common.="\n".$line;
             }
             $common=rtrim($common);
         }
     }
     $words=array_diff($words,preg_split("/\s+|\n/",$common));
+
+    while (!empty($DBInfo->use_indexer)) {
+        include_once(dirname(__FILE__).'/../lib/indexer.ko.php');
+        include_once(dirname(__FILE__).'/../lib/stemmer.php');
+        $indexer=new KoreanIndexer();
+
+        if (!is_resource($indexer->_dict)) break;
+        $founds = array();
+        foreach ($words as $key) {
+            if (preg_match('/^[a-zA-Z0-9]+$/',$key)) {
+                // ignore alphanumeric
+                $stem = PorterStemmer::Stem($key);
+                $founds[] = $stem;
+                continue;
+            }
+            $match=null;
+            $stem = $indexer->getStem(trim($key),$match,$type);
+            if (!empty($stem))
+                $founds[] = $stem;
+            else if (!empty($last)) {
+                //print_r($match);
+            }
+        }
+        $words = $founds;
+        $indexer->close();
+        break;
+    }
 
     $preword='';
     $bigwords=array();
@@ -208,15 +236,16 @@ EOF;
             if ($word == $preword) continue;
             $key= $preword.' '.$word;
             $rkey= $word.' '.$preword;
-            if ($bigwords[$key]) $bigwords[$key]++;
-            else if ($bigwords[$rkey]) $bigwords[$rkey]++;
-            else $bigwords[$key]++;
+            if (isset($bigwords[$key])) $bigwords[$key]++;
+            else if (isset($bigwords[$rkey])) $bigwords[$rkey]++;
+            else $bigwords[$key]=1;
         }
         $preword= $word;
     }
 
     $words=array_count_values($words);
     unset($words['']);
+
     $ncount=array_sum($words); // total count
 
 /*   
@@ -244,7 +273,7 @@ EOF;
     $max=current($words); // get max hit number
 
     $nwords=array();
-    if ($options['merge']) {
+    if (isset($options['merge'])) {
         foreach ($mykeys as $key) {
             $nwords[$key]=$max;
             // give weight to all selected keywords
@@ -257,7 +286,7 @@ EOF;
 
     endif;
     //
-    if ($options['call']) return $words;
+    if (!empty($options['call'])) return $words;
 
     if ($limit and ($sz=sizeof($words))>$limit) {
         arsort($words);
