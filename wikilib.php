@@ -1283,7 +1283,8 @@ function do_titleindex($formatter,$options) {
   global $DBInfo;
 
   if (isset($options['q'])) {
-    if (!$options['q']) { print "<ul></ul>"; return; }
+    if (!$options['q']) { print ''; return; }
+    #if (!$options['q']) { print "<ul></ul>"; return; }
 
     $val='';
     $rule='';
@@ -1304,7 +1305,8 @@ function do_titleindex($formatter,$options) {
     if (!$rule) $rule=$options['q'];
 
     $test=@preg_match("/^$rule/",'');
-    if ($test === false) { print "<ul></ul>"; return; }
+    if ($test === false) { print ''; return; }
+    #if ($test === false) { print "<ul></ul>"; return; }
 
     $pages= array();
 
@@ -1319,10 +1321,12 @@ function do_titleindex($formatter,$options) {
     //array_unshift($pages, $options['q']);
     header("Content-Type: text/plain");
     if ($pages) {
-    	$ret= "<ul>\n<li>".implode("</li>\n<li>",$pages)."</li>\n</ul>\n";
+    	$ret= implode("\n",$pages);
+    	#$ret= "<ul>\n<li>".implode("</li>\n<li>",$pages)."</li>\n</ul>\n";
     } else {
         #$ret= "<ul>\n<li>".$options['q']."</li></ul>";
-        $ret= "<ul>\n</ul>";
+        $ret= '';
+        #$ret= "<ul>\n</ul>";
     }
     if (strtoupper($DBInfo->charset) != 'UTF-8' and function_exists('iconv')) {
       $val=iconv('UTF-8',$DBInfo->charset,$ret);
