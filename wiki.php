@@ -3865,7 +3865,7 @@ class Formatter {
           $url=$this->link_url($this->page->urlname,
             '?action='.$act.'&amp;section='.$this->sect_num);
           $lab=_("edit");
-          $edit="<div class='sectionEdit' style='float:right;'>[<a href='$url'$sect_attr>$lab</a>]</div>\n";
+          $edit="<div class='sectionEdit' style='float:right;'><span class='sep'>[</span><span><a href='$url'$sect_attr><span>$lab</span></a></span><span class='sep'>]</span></div>\n";
           $anchor_id='sect-'.$this->sect_num;
           $anchor="<a id='$anchor_id'></a>";
         }
@@ -4943,6 +4943,9 @@ MSG;
 
     if (!in_array($pagename,$trails)) $trails[]=$pagename;
 
+    if (!empty($DBInfo->trail) and $DBInfo->trail > 5)
+      $size = $DBInfo->trail;
+
     $idx=count($trails) - $size;
     if ($idx > 0) $trails=array_slice($trails,$idx);
     $trail=join("\t",$trails);
@@ -5128,7 +5131,7 @@ function init_requests(&$options) {
   $udb=new UserDB($DBInfo);
   $DBInfo->udb=$udb;
 
-  if ($DBInfo->trail) // read COOKIE trailer
+  if (!empty($DBInfo->trail)) // read COOKIE trailer
     $options['trail']=trim($user->trail) ? $user->trail:'';
 
   if ($user->id != 'Anonymous') {
