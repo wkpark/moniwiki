@@ -43,7 +43,11 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    $iconset='gnome';
    $icon_dir=$DBInfo->imgs_dir.'/plugin/UploadedFiles/'.$iconset;
 
-   $args=explode(',',$value);
+   $args = !empty($DBInfo->uploadedfiles_options) ?
+      explode(',',$DBInfo->uploadedfiles_options):array();
+   $nargs = explode(',',$value);
+   if (!empty($nargs)) $args = array_merge($args,$nargs);
+
    $value='';
 
    $default_column=8;
@@ -71,12 +75,14 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    if ($DBInfo->use_lightbox and !$js_tag)
      $href_attr=' rel="lightbox[upload]" ';
 
+   $nodir = 0;
    foreach ($args as $arg) {
       $arg=trim($arg);
       if (($p=strpos($arg,'='))!==false) {
          $k=substr($arg,0,$p);
          $v=substr($arg,$p+1);
          if ($k=='preview') { $use_preview=$v; }
+         else if ($k == 'nodir') { $nodir=$v; }
          else if ($k == 'tag') {
            $js_tag=1; $use_preview=1;
          }
@@ -84,6 +90,13 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
          $value=$arg;
       }
    }
+   if (!isset($options['nodir']))
+      $options['nodir'] = $nodir;
+
+   if (!empty($options['page']))
+      $value = $options['page'];
+   // avoid to set the pagename of the "page,name" as "name"
+
    if ($js_tag) {
       $form='editform';
       $js_script=<<<EOS
@@ -254,11 +267,17 @@ EOS;
    $count=0;
    while ($file= readdir($handle)) {
       if ($file[0]=='.') continue;
-      if (!$options['nodir'] and is_dir($dir."/".$file)) {
-        if ($value =='UploadFile')
-          $dirs[]= $DBInfo->keyToPagename($file);
-      } else if (preg_match($needle,$file) and $count >= $pfrom)
-        $upfiles[]= _p_filename($file);
+      if ($count >= $pfrom) {
+        if (is_dir($dir."/".$file)) {
+          if ($options['nodir']) continue;
+          if ($value =='UploadFile')
+            $dirs[]= $DBInfo->keyToPagename($file);
+        } else if (preg_match($needle,$file) and $count >= $pfrom) {
+          if ($count < $pto) {
+            $upfiles[]= _p_filename($file);
+          }
+        }
+      }
       $count++;
       if ($count >= $pto) { $plink=1; break;}
    }
@@ -305,7 +324,7 @@ EOS;
       $idx++;
    }
 
-   if (!$options['nodir'] and !$dirs) {
+   if (!empty($value) and $value!='UploadFile') {
       if ($js_tag) {
         #$attr=' target="_blank"';
         $extra='&amp;popup=1&amp;tag=1';
@@ -326,6 +345,8 @@ EOS;
    }
    if ($options['needle'])
       $extra.='&amp;q='.$options['needle'];
+   if (isset($options['nodir']))
+      $extra.='&amp;nodir='.$options['nodir'];
    if ($plink)
       $plink=$formatter->link_tag('',"?action=uploadedfiles$extra&amp;p=".($p+1),_("Next page &raquo;"),$attr);
    else if ($p > 1)
