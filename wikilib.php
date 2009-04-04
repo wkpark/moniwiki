@@ -931,6 +931,16 @@ function macro_Edit($formatter,$value,$options='') {
     }
   }
 
+  $captcha='';
+  if ($use_js and $DBInfo->use_ticket and $options['id'] == 'Anonymous') {
+     $seed=md5(base64_encode(time()));
+     $ticketimg=$formatter->link_url($formatter->page->urlname,'?action=ticket&amp;__seed='.$seed);
+     $captcha=<<<EXTRA
+  <div class='captcha'><span class='captchaImg'><img src="$ticketimg" alt="captcha" /></span><input type="text" size="10" name="check" />
+<input type="hidden" name="__seed" value="$seed" /></div>
+EXTRA;
+  }
+
   $summary_msg=_("Summary of Change");
   if (!$options['simple']) {
     $preview_btn='<input type="submit" tabindex="6" name="button_preview" '.
@@ -1000,6 +1010,7 @@ $hidden$select_category
 $preview_btn$wysiwyg_btn$skip_preview
 $extra<span id="save_state"></span>
 </div>
+$captcha
 </form>
 </div>
 EOS;
@@ -1599,6 +1610,37 @@ function do_post_savepage($formatter,$options) {
     $formatter->send_footer();
     return;
   }
+
+  // XXX captcha
+  $use_any=0;
+  if ($DBInfo->use_textbrowsers) {
+    if (is_string($DBInfo->use_textbrowsers))
+      $use_any= preg_match('/'.$DBInfo->use_textbrowsers.'/',
+        $_SERVER['HTTP_USER_AGENT']) ? 1:0;
+    else
+      $use_any= preg_match('/Lynx|w3m|links/',
+        $_SERVER['HTTP_USER_AGENT']) ? 1:0;
+  }
+
+  $ok_ticket=0;
+  if (!$button_preview and !$use_any and $DBInfo->use_ticket and $options['id'] == 'Anonymous') {
+    if ($options['__seed'] and $options['check']) {
+      $mycheck=getTicket($options['__seed'],$_SERVER['REMOTE_ADDR'],4);
+      if ($mycheck==$options['check'])
+        $ok_ticket=1;
+      else {
+        $options['msg']= _("Invalid ticket !");
+        $button_preview=1;
+      }
+    } else {
+      if (!$button_preview)
+        $options['msg']= _("You need a ticket !");
+      $button_preview=1;
+    }
+  } else {
+    $ok_ticket=1;
+  }
+  // XXX
 
   if (!$button_preview and $DBInfo->spam_filter) {
     $text=$savetext;
