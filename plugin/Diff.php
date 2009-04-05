@@ -235,8 +235,12 @@ function macro_diff($formatter,$value,&$options)
       $ret= call_user_func($type,$out);
       if (is_array($ret)) { // for smart_diff
         $dels=$ret[1]; $ret=$ret[0];
-        $rev=($rev2 and $rev2) ? $rev2:''; // get newest rev.
-        $current=$formatter->page->_get_raw_body(array('rev'=>$rev));
+        $rev=($rev1 and $rev2) ? $rev2:''; // get newest rev.
+        if (!empty($rev)) {
+          $current=$formatter->page->get_raw_body(array('rev'=>$rev));
+        } else {
+          $current=$formatter->page->_get_raw_body();
+        }
         $lines=explode("\n",$current);
         $nret=$ret;
         foreach ($ret as $k => $v) {
