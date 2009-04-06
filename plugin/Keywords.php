@@ -4,7 +4,7 @@
 // a 'Keywords' plugin for the MoniWiki
 //
 // Author: Won-Kyu Park <wkpark@kldp.org>
-// Date: 2005-08-17
+// Since: 2005-08-17
 // Name: a Keywords Plugin
 // Description: a Keywords plugin to generate keywords of a page
 // URL: MoniWiki:KeywordsPlugin
@@ -38,6 +38,7 @@ define('MIN_FONT_SZ',10);
             $options['random']=$options['all']=1; }
         else if ($opt=='suggest') $options['suggest']=1;
         else if ($opt=='tour') $options['tour']=1;
+        else if ($opt=='cloud') $options['cloud']=1;
         else if ($opt=='freq') $sort='freq';
         else if (($p=strpos($opt,'='))!==false) {
             $k=substr($opt,0,$p);
@@ -318,7 +319,7 @@ EOF;
     $fs=MAX_FONT_SZ; // max font-size:24px;
     for ($i=0;$i<$fz;$i++) {
         $ifs=(int)($fs+0.5);
-        $sty[]= " style='font-size:${ifs}px'";
+        $sty[]= " style='font-size:${ifs}px;'";
         #print '/'.$ifs;
         $fs-=$fsh;
         $fs=max($fs,9); // min font-size:9px
@@ -341,6 +342,58 @@ EOF;
         $out.="<input type='hidden' name='action' value='keywords' />\n";
     }
 
+    if (isset($options['cloud'])) {
+        $out = '';
+        
+        foreach ($words as $key=>$val) {
+            $style=$sty[$fz-1];
+            for ($i=0;$i<$fz;$i++) {
+                if ($val>$fact[$i]) {
+                    $style=$sty[$i];
+                    break;
+                }
+            }
+            if ($val > $min) {
+                $out .= "<a href='" . qualifiedUrl(str_replace('$TAG',$key,$tag_link))."'";
+                if ($use_sty)
+                    $out .= ' ' . $style;
+                else
+                    $out .= " style='12'";
+                $out .= ">".$key."</a>";
+            }
+        }
+        $out = preg_replace('/&amp;/',urlencode('&'),$out);
+
+        $tout = "<a href='http://www.roytanck.com/tag1' style='font-size:20px'>Tag name</a><a href='http://www.roytanck.com/tag2' style='font-size:10px'>Tag two</a>";
+
+        $formatter->register_javascripts(array('js/swfobject.js'));
+        $_swf_prefix=qualifiedUrl("$DBInfo->url_prefix/local/wp-cumulus"); // FIXME
+        return <<<SWF
+<script type="text/javascript">
+var flashvars = {
+   mode : "tags",
+   distr : "true",
+   tcolor : "0xffffff",
+   tcolor2 : "0x86B9F2",
+   hicolor : "0xBAD8F8",
+   tagcloud : "<tags>$out</tags>"
+};
+
+var params = {
+   wmode: "opaque",
+   bgcolor: "#333333"
+};
+
+var attrs = {
+   id: "myCloudContent"
+};
+
+swfobject.embedSWF("$_swf_prefix/tagcloud.swf", "myCloud", "200", "200", "9.0.0","expressInstall.swf", flashvars, params, attrs);
+</script>
+<div id="myCloud">
+</div>
+SWF;
+    }
     $out.='<ul>';
     foreach ($words as $key=>$val) {
         $style=$sty[$fz-1];
