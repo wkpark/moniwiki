@@ -165,9 +165,7 @@ XML;
       }
       $displayheight=$height;
       $height+=$sz*40; // XXX
-      $addparam=<<<EOS
-        _s$num.addVariable("displayheight","$displayheight");
-EOS;
+      $addparam="displayheight: '$displayheight'";
       $filelist=qualifiedUrl($playlist);
     } else {
       $filelist=$url[0];
@@ -176,14 +174,22 @@ EOS;
     $jw_script=<<<EOS
 <p id="mediaplayer$num"></p>
 <script type="text/javascript">
-        var _s$num = new SWFObject("$_swf_prefix/mediaplayer.swf","_mediaplayer$num","$width","$height","7");
-        _s$num.addParam("allowfullscreen","true");
-        _s$num.addVariable("width","$width");
-        _s$num.addVariable("height","$height");
-        $addparam
-        _s$num.addVariable("file","$filelist");
-        //_s$num.addVariable("image","preview.jpg");
-        _s$num.write("mediaplayer$num");
+    (function() {
+        var params = {
+          allowfullscreen: "true"
+        };
+
+        var flashvars = {
+          width: "$width",
+          height: "$height",
+          // image: "preview.jpg",
+          $addparam
+          file: "$filelist"
+        };
+
+        swfobject.embedSWF("$_swf_prefix/mediaplayer.swf","mediaplayer$num","$width","$height","0.0.9",
+        "expressInstall.swf",flashvars,params);
+    })();
 </script>
 EOS;
 
