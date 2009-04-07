@@ -497,7 +497,7 @@ class User {
      $id = '';
      if (isset($_COOKIE['MONI_ID'])) {
      	$this->ticket=substr($_COOKIE['MONI_ID'],0,32);
-     	$id=substr($_COOKIE['MONI_ID'],33);
+     	$id=urldecode(substr($_COOKIE['MONI_ID'],33));
      }
      $this->setID($id);
 
@@ -534,14 +534,14 @@ class User {
      $ticket=getTicket($this->id,$_SERVER['REMOTE_ADDR']);
      $this->ticket=$ticket;
      # set the fake cookie
-     $_COOKIE['MONI_ID']=$ticket.'.'.$this->id;
+     $_COOKIE['MONI_ID']=$ticket.'.'.urlencode($this->id);
      if ($this->info['nick']) $_COOKIE['MONI_NICK']=$this->info['nick'];
 
      #$path=strpos($_SERVER['HTTP_USER_AGENT'],'Safari')===false ?
      #  get_scriptname():'/';
      $path = get_scriptname();
      #$path = preg_replace('@(?<=/)[^/]+$@','',$path);
-     return "Set-Cookie: MONI_ID=".$ticket.'.'.$this->id.'; expires='.gmdate('l, d-M-Y H:i:s',time()+60*60*24*30).' GMT; Path='.$path;
+     return "Set-Cookie: MONI_ID=".$ticket.'.'.urlencode($this->id).'; expires='.gmdate('l, d-M-Y H:i:s',time()+60*60*24*30).' GMT; Path='.$path;
   }
 
   function unsetCookie() {
@@ -1313,7 +1313,7 @@ function do_titleindex($formatter,$options) {
       if ($test === false) $rule=$options['q'];
       break;     
     }
-    if (!$rule) $rule=$options['q'];
+    if (!$rule) $rule=trim($options['q']);
 
     $test=@preg_match("/^$rule/",'');
     if ($test === false) { print ''; return; }
