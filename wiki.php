@@ -4658,32 +4658,40 @@ MSG;
     $sister_save=$this->sister_on;
     $this->sister_on=0;
     $titlemnu=0;
+    if (isset($quicklinks[$this->page->name])) {
+      #$attr.=" class='current'";
+      $titlemnu=1;
+    } else {
+      $quicklinks[$this->page->name]='';
+    }
+
+    if ($DBInfo->use_userlink and isset($quicklinks['UserPreferences']) and $options['id'] != 'Anonymous') {
+        $tmpid= 'wiki:UserPreferences '.$options['id'];
+        $quicklinks[$tmpid]= $quicklinks['UserPreferences'];
+        unset($quicklinks['UserPreferences']);
+    }
+
     foreach ($quicklinks as $item=>$attr) {
       if (strpos($item,' ') === false) {
         if (strpos($attr,'=') === false) $attr="accesskey='$attr'";
-        if ($item == $this->page->name) {
-          #$attr.=" class='current'";
-          $titlemnu=1;
-        }
         # like 'MoniWiki'=>'accesskey="1"'
-        $menu[]=$this->word_repl($item,_($item),$attr);
+        $menu[$item]=$this->word_repl($item,_($item),$attr);
 #        $menu[]=$this->link_tag($item,"",_($item),$attr);
       } else {
         # like a 'http://moniwiki.sf.net MoniWiki'
-        $menu[]=$this->link_repl($item,$attr);
+        $menu[$item]=$this->link_repl($item,$attr);
       }
     }
     if (!empty($DBInfo->use_titlemenu) and $titlemnu == 0 ) {
       $len = $DBInfo->use_titlemenu > 15 ? $DBInfo->use_titlemenu:15;
       #$attr="class='current'";
-      # XXX make title more shorter ?
       $mnuname=htmlspecialchars($this->page->name);
       if ($DBInfo->hasPage($this->page->name)) {
         if (strlen($mnuname) < $len) {
-          $menu[]=$this->word_repl($mypgname,$mnuname,$attr);
+          $menu[$this->page->name]=$this->word_repl($mypgname,$mnuname,$attr);
         } else if (function_exists('mb_strimwidth')) {
           $my=mb_strimwidth($mypgname,0,$len,'...');
-          $menu[]=$this->word_repl($mypgname,htmlspecialchars($my),$attr);
+          $menu[$this->page->name]=$this->word_repl($mypgname,htmlspecialchars($my),$attr);
         }
       }
     }
