@@ -1116,14 +1116,15 @@ EOS;
   function _savePage($filename,$body,$options=array()) {
     $dir=dirname($filename);
     if (!is_dir($dir)) {
-      $om=umask(000);
+      $om=umask(~$this->umask);
       _mkdir_p($dir, 0777);
       umask($om);
     }
 
     $fp=fopen($filename,"w");
-    if (!$fp)
+    if (!is_resource($fp))
        return -1;
+
     flock($fp,LOCK_EX);
     fwrite($fp, $body);
     flock($fp,LOCK_UN);
@@ -1132,7 +1133,10 @@ EOS;
     if ($this->version_class) {
       $class=getModule('Version',$this->version_class);
       $version=new $class ($this);
+      $om=umask(~$this->umask);
       $ret=$version->_ci($filename,$options['log']);
+      chmod($filename,0666 & $this->umask);
+      umask($om);
     }
     return 0;
   }
