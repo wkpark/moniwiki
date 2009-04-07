@@ -4841,10 +4841,10 @@ MSG;
       print "<div id='wikiHeader'>\n";
       print $header;
       if (!$this->css_friendly)
-        print $menu." ".$user_link." ".$upper_icon.$icons.$home.$rss_icon;
+        print $menu." ".$user_link." ".$upper_icon.$icons.$rss_icon;
       else {
         print "<div id='wikiLogin'>".$user_link."</div>";
-        print "<div id='wikiIcon'>".$upper_icon.$icons.$home.$rss_icon.'</div>';
+        print "<div id='wikiIcon'>".$upper_icon.$icons.$rss_icon.'</div>';
         print $menu;
       }
       print $msg;
