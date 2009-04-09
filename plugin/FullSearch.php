@@ -200,18 +200,18 @@ EOF;
       foreach ($pages as $page_name) {
         $links=unserialize($cache->fetch($page_name));
         if (is_array($links)) {
-          if (stristr(implode(' ',$links),$value))
+          if (in_array($value,$links))
             $hits[$page_name] = -1;
             // ignore count if < 0
-          }
         }
+      }
     } else if ($opts['keywords']) {
       $pages = $DBInfo->getPageLists();
       $opts['context']=-1; # turn off context-matching
       $cache=new Cache_text("keywords");
       foreach ($pages as $page_name) {
         $links=unserialize($cache->fetch($page_name));
-        #print_r($links);
+        // XXX
         if (is_array($links)) {
           if (stristr(implode(' ',$links),$needle))
             $hits[$page_name] = -1;
