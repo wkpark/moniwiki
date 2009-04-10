@@ -850,24 +850,22 @@ define('NBSP', "");         // iso-8859-x non-breaking space.
 
 class _HWLDF_WordAccumulator {
     function _HWLDF_WordAccumulator ($tags=
-        array("<del class='diff-removed'>\n","</del>",
-            "<ins class='diff-added'>\n","</ins>")) {
+        array("<del class='diff-removed'>","</del>",
+            "<ins class='diff-added'>","</ins>")) {
         $this->_lines = array();
         $this->_line = '';
         $this->_group = '';
         $this->_tag = '';
-        $this->_tag_del_open=$tags[0];
-        $this->_tag_del_close=$tags[1];
-        $this->_tag_ins_open=$tags[2];
-        $this->_tag_ins_close=$tags[3];
+        $this->_tag_open['del']=$tags[0];
+        $this->_tag_close['del']=$tags[1];
+        $this->_tag_open['ins']=$tags[2];
+        $this->_tag_close['ins']=$tags[3];
     }
 
     function _flushGroup ($new_tag) {
         if ($this->_group !== '') {
-	  if ($this->_tag == 'del') 
-            $this->_line .= $this->_tag_del_open.$this->_group.$this->_tag_del_close;
-	  else if ($this->_tag == 'ins')
-            $this->_line .= $this->_tag_ins_open.$this->_group.$this->_tag_ins_close;
+	  if ($this->_tag != '') 
+            $this->_line .= $this->_tag_open[$this->_tag].$this->_group.$this->_tag_close[$this->_tag];
 	  else
 	    $this->_line .= $this->_group;
 	}
@@ -877,8 +875,14 @@ class _HWLDF_WordAccumulator {
     
     function _flushLine ($new_tag) {
         $this->_flushGroup($new_tag);
+        $tag_open = '';
+        $tag_close = '';
+        if ($this->_tag) {
+            $tag_open = str_replace(array('ins','del'),array('div','div'),$this->_tag_open[$this->_tag]);
+            $tag_close = str_replace(array('ins','del'),array('div','div'),$this->_tag_close[$this->_tag]);
+        }
         if ($this->_line != '')
-            $this->_lines[] = $this->_line;
+            $this->_lines[] = $tag_open.$this->_line.$tag_close;
         $this->_line = '';
     }
                 
@@ -1008,6 +1012,34 @@ class UnifiedDiffFormatter extends DiffFormatter
     }
     function _deleted($lines) {
         $this->_lines($lines, "-");
+    }
+    function _changed($orig, $_final) {
+        $this->_deleted($orig);
+        $this->_added($_final);
+    }
+}
+
+/**
+ * "Inline" diff formatter.
+ *
+ * This class formats the diff in classic "unified diff" format.
+ */
+class InlineDiffFormatter extends DiffFormatter
+{
+    function InlineDiffFormatter($context_lines = 10000) {
+        $this->leading_context_lines = $context_lines;
+        $this->trailing_context_lines = $context_lines;
+    }
+    
+    function _block_header($xbeg, $xlen, $ybeg, $ylen) {
+        return '';
+    }
+
+    function _added($lines) {
+        $this->_lines($lines, "");
+    }
+    function _deleted($lines) {
+        $this->_lines($lines, "");
     }
     function _changed($orig, $_final) {
         $this->_deleted($orig);
