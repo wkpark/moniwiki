@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.1.3';
+$_release = '1.1.4-CVS';
 
 #ob_start("ob_gzhandler");
 
@@ -4675,6 +4675,8 @@ MSG;
         unset($quicklinks['UserPreferences']);
     }
 
+    $save = $this->nonexists;
+    $this->nonexists = 'forcelink';
     foreach ($quicklinks as $item=>$attr) {
       if (strpos($item,' ') === false) {
         if (strpos($attr,'=') === false) $attr="accesskey='$attr'";
@@ -4699,6 +4701,7 @@ MSG;
         }
       }
     }
+    $this->nonexists = $save;
     $this->sister_on=$sister_save;
     if (!$this->css_friendly) {
       $menu=$this->menu_bra.join($this->menu_sep,$menu).$this->menu_cat;
@@ -4944,9 +4947,12 @@ MSG;
     $sister_save=$this->sister_on;
     $this->sister_on=0;
     $this->trail="";
+    $save = $this->nonexists;
+    $this->nonexists = 'forcelink';
     foreach ($trails as $page) {
       $this->trail.=$this->word_repl('"'.$page.'"','','',1,0).$DBInfo->arrow;
     }
+    $this->nonexists = $save;
     $this->trail.= ' '.htmlspecialchars($pagename);
     $this->pagelinks=array(); # reset pagelinks
     $this->sister_on=$sister_save;
