@@ -5145,7 +5145,14 @@ function get_pagename() {
 function init_requests(&$options) {
   global $DBInfo;
 
-  $user=new User();
+  if (!empty($DBInfo->user_class)) {
+    include_once('user/'.$DBInfo->user_class.'.php');
+    $class = 'User_'.$this->user_class;
+    $user = new $class();
+  } else {
+    $user = new User();
+  }
+
   $udb=new UserDB($DBInfo);
   $DBInfo->udb=$udb;
 
