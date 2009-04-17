@@ -565,6 +565,7 @@ function getConfig($configfile, $options=array()) {
     if ($options['init']) {
       $script= preg_replace("/\/([^\/]+)\.php$/","/monisetup.php",
                $_SERVER['SCRIPT_NAME']);
+      if (is_string($options['init'])) $script .= '?init='.$options['init'];
       header("Location: $script");
       exit;
     }
@@ -703,7 +704,8 @@ EOS;
     $this->imgs_dir_url=$this->imgs_dir.'/';
     $this->imgs_dir_interwiki=$this->imgs_dir.'/';
 
-    $imgs_realdir=basename($this->imgs_dir);
+    $doc_root = getenv("DOCUMENT_ROOT"); // for Unix
+    $imgs_realdir= $doc_root.$this->imgs_dir;
     if (file_exists($imgs_realdir.'/interwiki/'.'moniwiki-16.png'))
       $this->imgs_dir_interwiki=$this->imgs_dir.'/interwiki/';
 
@@ -715,6 +717,7 @@ EOS;
     $ext='png';
     if (is_dir($imgs_realdir.'/'.$iconset)) $iconset.='/';
     else $iconset.='-';
+
     if (!file_exists($imgs_realdir.'/'.$iconset.'home.png')) $ext='gif';
 
     if (file_exists($imgs_realdir.'/'.$iconset.'http.png'))
@@ -5146,11 +5149,11 @@ function init_requests(&$options) {
   global $DBInfo;
 
   if (!empty($DBInfo->user_class)) {
-    include_once('user/'.$DBInfo->user_class.'.php');
-    $class = 'User_'.$this->user_class;
+    include_once('plugin/user/'.$DBInfo->user_class.'.php');
+    $class = 'User_'.$DBInfo->user_class;
     $user = new $class();
   } else {
-    $user = new User();
+    $user = new WikiUser();
   }
 
   $udb=new UserDB($DBInfo);

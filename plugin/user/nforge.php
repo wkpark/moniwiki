@@ -16,8 +16,8 @@
 //
 // $Id$
 
-class User_nforge extends User {
-    function WikiUser($id = '') {
+class User_nforge extends WikiUser {
+    function User_nforge($id = '') {
         if ($id) {
             $this->setID($id);
             $u =& user_get_object_by_name($id);
@@ -36,6 +36,16 @@ class User_nforge extends User {
         $this->tz_offset=isset($_COOKIE['MONI_TZ']) ?_stripslashes($_COOKIE['MONI_TZ']):'';
         $this->nick=isset($_COOKIE['MONI_NICK']) ?_stripslashes($_COOKIE['MONI_NICK']):'';
         if ($this->tz_offset == '') $this->tz_offset = date('Z');
+
+        if (!empty($id)) {
+            global $DBInfo;
+            $udb = new UserDB($DBInfo);
+
+            if (!$udb->_exists($id)) {
+                $this->ticket = md5(time());
+	        $dummy=$udb->saveUser($this);
+            }
+        }
     }
 }
 

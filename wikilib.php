@@ -458,7 +458,7 @@ class UserDB {
        $val=substr($line,$p+1,-1);
        $info[$key]=$val;
     }
-    $user=new User($id);
+    $user=new WikiUser($id);
     $user->info=$info;
     return $user;
   }
@@ -488,8 +488,8 @@ class UserDB {
   }
 }
 
-class User {
-  function User($id="") {
+class WikiUser {
+  function WikiUser($id="") {
      if ($id) {
         $this->setID($id);
         return;
