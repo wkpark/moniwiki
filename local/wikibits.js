@@ -74,7 +74,7 @@ function addButton(imageFile, speedTip, tagOpen, tagClose, sampleText) {
 		mouseOver = "onMouseover=\"if(!noOverwrite){document.infoform.infobox.value='"+tagOpen+sampleText+tagClose+"'};\"";
 	}
 
-	document.write("<a href=\"javascript:insertTags");
+	document.write("<a href='#' onclick=\"javascript:insertTags");
 	document.write("('"+tagOpen+"','"+tagClose+"','"+sampleText+"');\">");
 
         document.write("<img height=\"22\" src=\""+imageFile+"\" border=\"0\" alt=\""+speedTip+"\" title=\""+speedTip+"\""+mouseOver+">");
