@@ -19,11 +19,11 @@ class MoniConfig {
     }
   }
 
-  function getDefaultConfig() {
-    $this->config=$this->_getConfig("config.php.default");
+  function getDefaultConfig($configfile = 'config.php.default') {
+    $this->config=$this->_getConfig($configfile);
 
     $hostconfig=$this->_getHostConfig();
-    $this->rawconfig=array_merge($this->_rawConfig("config.php.default"),$hostconfig);
+    $this->rawconfig=array_merge($this->_rawConfig($configfile),$hostconfig);
     while (list($key,$val)=each($hostconfig)) {
       eval("\$$key=$val;");
       eval("\$this->config[\$key]=$val;");
@@ -90,7 +90,14 @@ class MoniConfig {
     }
 
     if (!file_exists('wikilib.php')) {
-      $config['include_path']="'.:/usr/local/share/moniwiki:/usr/share/moniwiki'";
+      $checkfile = array('index.php','plugin');
+      $dir='';
+      foreach ($checkfile as $f) {
+        if (is_link($f)) {
+          $dir = dirname(readlink($f));
+        }
+      }
+      $config['include_path']="'.:$dir'";
     }
     print '</div>';
     return $config;
@@ -574,21 +581,29 @@ function pagenameToKey($pagename) {
 }
 
 function show_wikiseed($config,$seeddir='wikiseed') {
-  $path='.:/usr/share/moniwiki:/usr/local/share/moniwiki';
+  if ($config['include_path'])
+    $path = $config['include_path'];
+  else
+    $path='.:/usr/share/moniwiki:/usr/local/share/moniwiki';
   $pages= array();
   foreach (explode(':',$path) as $dir) {
-    $handle= @opendir($dir.'/'.$seeddir);
-    if ($handle) {
+    if (is_dir($dir.'/'.$seeddir)) {
       $seeddir=$dir.'/'.$seeddir;
+      break;
+    } else if (is_dir($dir.'/data/text') and file_exists($dir.'/data/text/FrontPage')) {
+      $seeddir=$dir.'/data/text';
       break;
     }
   }
-  while ($file = readdir($handle)) {
-    if (is_dir($seeddir."/".$file)) continue;
-    $pagename = keyToPagename($file);
-    $pages[$pagename] = $pagename;
+  $handle= @opendir($seeddir);
+  if (is_resource($handle)) {
+    while ($file = readdir($handle)) {
+      if (is_dir($seeddir."/".$file)) continue;
+      $pagename = keyToPagename($file);
+      $pages[$pagename] = $pagename;
+    }
+    closedir($handle);
   }
-  closedir($handle);
 #  sort($pages);
   $idx=1;
 
@@ -681,11 +696,17 @@ JS;
 }
 
 function sow_wikiseed($config,$seeddir='wikiseed',$seeds) {
-  $path='.:/usr/share/moniwiki:/usr/local/share/moniwiki';
+  if ($config['include_path'])
+    $path = $config['include_path'];
+  else
+    $path='.:/usr/share/moniwiki:/usr/local/share/moniwiki';
   $pages= array();
   foreach (explode(':',$path) as $dir) {
     if (is_dir($dir.'/'.$seeddir)) {
       $seeddir=$dir.'/'.$seeddir;
+      break;
+    } else if (is_dir($dir.'/data/text') and file_exists($dir.'/data/text/FrontPage')) {
+      $seeddir=$dir.'/data/text';
       break;
     }
   }
@@ -1028,7 +1049,10 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $config) {
 
   if (!$Config->config) {
     print "<h2>"._t("Welcome to MoniWiki ! This is your first installation")."</h2>\n";
-    $Config->getDefaultConfig();
+    $initconfig = 'config.php.default';
+    if (!empty($_GET['init']) and file_exists($_GET['init']))
+      $initconfig = $_GET['init'];
+    $Config->getDefaultConfig($initconfig);
     $config=$Config->config;
 
     checkConfig($config);
@@ -1036,7 +1060,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && $config) {
     $rawconfig=$Config->rawconfig;
     print "<h3 color='blue'>"._t("Default settings are loaded...")."</h3>\n";
 
-    $rawconf=$Config->_genRawConfig($rawconfig);
+    $rawconf=$Config->_genRawConfig($rawconfig, 0, 'config.php', $initconfig);
     umask(000);
     $fp=fopen("config.php","w");
     fwrite($fp,$rawconf);
