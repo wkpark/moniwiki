@@ -90,7 +90,7 @@ class MoniConfig {
     }
 
     if (!file_exists('wikilib.php')) {
-      $checkfile = array('index.php','plugin');
+      $checkfile = array('plugin','locale');
       $dir='';
       foreach ($checkfile as $f) {
         if (is_link($f)) {
