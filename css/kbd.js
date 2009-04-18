@@ -70,7 +70,7 @@ UserPreferences= "UserPreferences";
 
 // go form ID
 _go= "go";
-_govalue= _govalue || "value";
+_govalue= _govalue || "value"; // elements['value']
 _ap = _qp == '/' ? '?':'&';
 var is_safari = navigator.appVersion.toLowerCase().indexOf('safari') != -1;
 
@@ -112,15 +112,18 @@ function keydownhandler(e) {
 		}
 	}
 
-	if (e.ctrlKey && e.keyCode == 13 && nn == 'TEXTAREA') {
-		// ctrl-Enter to submit
-		var p = f.parentNode;
-		while(p.tagName != 'FORM' && p.tagName != 'BODY') p = p.parentNode;
-		if (p.tagName == 'FORM') {
-			p.submit();
-			return;
+	if (e.ctrlKey && nn == 'TEXTAREA') {
+		if (e.keyCode == 13) {
+			// ctrl-Enter to submit
+			var p = f.parentNode;
+			while(p.tagName != 'FORM' && p.tagName != 'BODY') p = p.parentNode;
+			if (p.tagName == 'FORM') {
+				p.submit();
+				return;
+			}
 		}
 	}
+
 	if (e.charCode == undefined && (e.keyCode==112 || e.keyCode==114)) {
 		keypresshandler(e); // IE hack
 		noBubble(e);
@@ -288,13 +291,32 @@ function keypresshandler(e) {
 
 function moin_init() {
 	if (document.addEventListener) {
-		document.addEventListener('keypress',keypresshandler,false);
-		document.addEventListener('keydown',keydownhandler,false);
+		document.addEventListener('keypress', keypresshandler,false);
+		document.addEventListener('keydown', keydownhandler,false);
 	} else {
 		document.attachEvent('onkeypress',keypresshandler);
 		document.attachEvent('onkeydown',keydownhandler);
 	}
+	// check the editor_area
+	var form = document.getElementById('editor_area');
+	if (form) return;
+	var go = document.getElementById(_go);
+	// focus on to the input form
+	if (go) go.elements[_govalue].focus();
 }
+
+(function () {
+	// onload
+	var oldOnload = window.onload;
+	if (typeof window.onload != 'function') {
+		window.onload = moin_init();
+	} else {
+        	window.onload = function() {
+			oldOnload();
+			moin_init();
+		}
+        }
+})();
 
 function moin_submit(form) {
 	if (form == null) form=document.getElementById(_go);
@@ -306,5 +328,3 @@ function moin_submit(form) {
 		return true;
 	}
 }
-
-moin_init();
