@@ -10,7 +10,9 @@ function _stripslashes($str) {
 class MoniConfig {
   function MoniConfig($configfile="config.php") {
     if (file_exists($configfile)) {
-      $this->config=$this->_getConfig($configfile);
+      $url_prefix= preg_replace("/\/([^\/]+)\.php$/","",$_SERVER['SCRIPT_NAME']);
+      $config['url_prefix']=$url_prefix;
+      $this->config=$this->_getConfig($configfile,$config);
       $this->rawconfig=$this->_rawConfig($configfile);
       $this->configdesc=$this->_getConfigDesc($configfile);
     } else {
@@ -20,11 +22,12 @@ class MoniConfig {
   }
 
   function getDefaultConfig($configfile = 'config.php.default') {
-    $this->config=$this->_getConfig($configfile);
-
     $hostconfig=$this->_getHostConfig();
-    $this->rawconfig=array_merge($this->_rawConfig($configfile),$hostconfig);
-    while (list($key,$val)=each($hostconfig)) {
+    $this->config=$this->_getConfig($configfile,$hostconfig);
+
+    $hostconf = $this->_quote_config($hostconfig);
+    $this->rawconfig=array_merge($this->_rawConfig($configfile),$hostconf);
+    while (list($key,$val)=each($hostconf)) {
       eval("\$$key=$val;");
       eval("\$this->config[\$key]=$val;");
     }
@@ -35,13 +38,13 @@ class MoniConfig {
       print '<h3>'._t("Check a dba configuration").'</h3>';
       $tempnam="/tmp/".time();
       if ($db=@dba_open($tempnam,"n","db4"))
-        $config['dba_type']="'db4'";
+        $config['dba_type']="db4";
       else if ($db=@dba_open($tempnam,"n","db3"))
-        $config['dba_type']="'db3'";
+        $config['dba_type']="db3";
       else if ($db=@dba_open($tempnam,"n","db2"))
-        $config['dba_type']="'db2'";
+        $config['dba_type']="db2";
       else if ($db=@dba_open($tempnam,"n","gdbm"))
-        $config['dba_type']="'gdbm'";
+        $config['dba_type']="gdbm";
 
       if ($db) dba_close($db);
       print '<ul><li>'.sprintf(_t("%s is selected."),"<b>$config[dba_type]</b>").'</li></ul>';
@@ -49,7 +52,7 @@ class MoniConfig {
     preg_match("/Apache\/2\./",$_SERVER['SERVER_SOFTWARE'],$match);
 
     if ($match) {
-      $config['query_prefix']='"?"';
+      $config['query_prefix']='?';
       while (ini_get('allow_url_fopen')) {
         print '<h3>'._t("Check a AcceptPathInfo setting for Apache 2.x.xx").'</h3>';
         print '<ul>';
@@ -67,7 +70,7 @@ class MoniConfig {
           print "<li><b><a href='http://moniwiki.sf.net/wiki.php/AcceptPathInfo'>AcceptPathInfo</a> <font color='red'>"._t("Off")."</font></b></li>\n";
         } else {
           print "<li><b>AcceptPathInfo <font color='blue'>"._t("On")."</font></b></li>\n";
-          $config['query_prefix']='"/"';
+          $config['query_prefix']='/';
         }
         print '</ul>';
         break;
@@ -75,18 +78,18 @@ class MoniConfig {
     }
 
     $url_prefix= preg_replace("/\/([^\/]+)\.php$/","",$_SERVER['SCRIPT_NAME']);
-    $config['url_prefix']="'".$url_prefix."'";
+    $config['url_prefix']=$url_prefix;
 
     $user = getenv('LOGNAME');
     $user = $user ? $user : get_current_user();
-    $config['rcs_user']="'".$user."'";
+    $config['rcs_user']=$user;
 
     if(getenv("OS")=="Windows_NT") {
       $config['timezone']="'-09-09'";
       // http://kldp.net/forum/message.php?msg_id=7675
       // http://bugs.php.net/bug.php?id=22418
       //$config['version_class']="'RcsLite'";
-      $config['path']="'./bin;c:/program files/vim/vimXX'";
+      $config['path']="./bin;c:/program files/vim/vimXX";
     }
 
     if (!file_exists('wikilib.php')) {
@@ -97,7 +100,7 @@ class MoniConfig {
           $dir = dirname(readlink($f));
         }
       }
-      $config['include_path']="'.:$dir'";
+      $config['include_path']=".:$dir";
     }
     print '</div>';
     return $config;
@@ -111,19 +114,20 @@ class MoniConfig {
     $this->rawconfig=$config;
   }
 
-  function _getConfig($configfile) {
+  function _getConfig($configfile, $options = array()) {
     if (!file_exists($configfile))
       return array();
 
-    $org=array();
-    $org=get_defined_vars();
+    extract($options);
+    unset($options);
     include($configfile);
-    $new=get_defined_vars();
+    unset($configfile);
+    $config=get_defined_vars();
 
-    return array_diff($new,$org);
+    return $config;
   }
 
-  function _rawConfig($configfile) {
+  function _rawConfig($configfile, $options = array()) {
     $lines=file($configfile);
     $key='';
     foreach ($lines as $line) {
@@ -204,78 +208,130 @@ class MoniConfig {
     return $conf;
   }
 
-  function _genRawConfig($newconfig, $mode = 0, $configfile='config.php', $default='config.php.default') {
-    if ($mode == 1) {
-      foreach ($newconfig as $k=>$v) {
-        if (is_string($v)) {
-          $v='"'.$v.'"';
-        } else if (is_bool($v)) {
-          if ($v) $nline="true";
-          else $v="false";
-        }
-        $newconfig[$k] = $v;
+  function _quote_config($config) {
+    foreach ($config as $k=>$v) {
+      if (is_string($v)) {
+        $v='"'.$v.'"'; // XXX need to check quotes
+      } else if (is_bool($v)) {
+        if ($v) $nline="true";
+        else $v="false";
       }
+      $config[$k] = $v;
     }
+    return $config;
+  }
+
+  function _genRawConfig($newconfig, $mode = 0, $configfile='config.php', $default='config.php.default') {
+    if ($mode == 1)
+      $newconfig = $this->_quote_config($newconfig);
 
     if (file_exists($configfile))
       $conf_file = $configfile;
     else if (file_exists($default))
       $conf_file = $default;
     else
-      return _genRawConfigSimple($newconfig);
+      return $this->_genRawConfigSimple($newconfig);
   
     $lines = file($conf_file);
 
+    $config = array();
     $nlines='';
     $key='';
     $tag='';
     foreach ($lines as $line) {
       $line=rtrim($line)."\n"; // for Win32
 
-      if (!$key and $line[0] != '$') {
-        $nlines[]=$line;
-        continue;
+      if (!$key) {
+        // first line
+        if ($line{0} == '<' and $line{1} == '?') {
+          $date = date('Y-m-d h:i:s');
+          $nlines[]='<'.'?php'."\n";
+          $nlines[]=<<<HEADER
+# This is a config.php file for the MoniWiki
+# automatically detect your environment and set some default variables.
+# $date by monisetup.php\n
+HEADER;
+          continue;
+        } else if (preg_match('/^(#{1,}\s*)?\$[a-zA-Z][a-zA-Z0-9_]*\s*=/', $line, $m)) {
+          $marker = $m[1];
+          if ($marker != '')
+            $mre = '#{1,}';
+          else
+            $mre = '';
+          $mlen = strlen($marker.'$');
+        } else {
+          $nlines[]=$line;
+          continue;
+        }
       }
 
       if ($key) {
         $val.=$line;
-        if (!preg_match("/$tag\s*;(\s*#.*)?\s*$/",$line)) continue;
+        if (!preg_match("/$tag\s*;(\s*#.*)?\s*$/",$line,$m)) continue;
+        $mre = '';
+        $desc[$key] = rtrim($m[1]);
       } else {
-        list($key,$val)=explode('=',substr($line,1),2);
+        list($key,$val)=explode('=',substr($line,$mlen),2);
         $key = trim($key);
-        if (!preg_match('/\s*;(\s*#.*)?$/',$val,$match)) {
-          if (substr($val,0,3)== '<<<') $tag='^'.substr(rtrim($val),3);
-          else {
+        if (!preg_match('/(\s*;(\s*#.*)?)$/',$val,$match)) {
+          if (substr($val,0,3)== '<<<') {
+            $tag='^'.$mre.substr(rtrim($val),3);
+          } else {
             $val = ltrim($val);
             $tag = '';
           }
           continue;
         } else {
-          if ($match[1]) {
-            $desc[$key] = rtrim($match[1]);
+          $val = substr($val,0,-strlen($match[1])-1);
+          #$val .= '##########X'.$val.'==='.$match[1].'XX####';
+          if ($match[2]) {
+            $desc[$key] = rtrim($match[2]);
+          } else {
+            $desc[$key] = '';
           }
         }
       }
 
-      if ($key) {
+      if (trim($key)) {
+        $t = true;
         if (isset($newconfig[$key])) {
-          $val=$newconfig[$key];
-          unset($newconfig[$key]);
+          if (!isset($config[$key])) {
+            $val=$newconfig[$key];
+            $newconfig[$key] = NULL;
+            $marker = ''; # uncomment marker
+          }
         } else {
           $val=preg_replace(array('@<@','@>@'),array('&lt;','&gt;'),$val);
           #print $key.'|=='.preg_quote($val);
           $val=rtrim($val);
-          $val=preg_replace('/\s*;(\s*#.*)?$/','',$val);
-          $config[$key] = $val;
+          if (empty($marker))
+            $val=preg_replace('/\s*;(\s*#.*)?$/','',$val);
         }
         $val = str_replace(array('&lt;','&gt;'),array('<','>'),$val);
-        if (preg_match("/^<{3}([A-Za-z0-9]+)\s.*\\1\s*$/s",$val,$m)) {
+        if (isset($config[$key])) {
+          $val = rtrim($val);
+          $val = str_replace("\n", "\n#", $val);
+          if (!$marker) $marker = '#';
+          $nline=$marker."\$$key=$val;"; # XXX
+          if ($desc[$key]) $nline .= $desc[$key];
+          $nline .= "\n";
+          $t=NULL;
+        } else if (empty($marker) and preg_match("/^<{3}([A-Za-z0-9]+)\s.*\\1\s*$/s",$val,$m)) {
+          $config[$key] = $val;
           $save_val=$val;
           $val=str_replace("$m[1]",'',substr($val,3));
           $val=str_replace('"','\"',$val);
           $t=eval("\$$key=\"$val\";");
           $val=$save_val;
           $nline="\$$key=$val;\n";
+        } else if ($marker) {
+          $val = str_replace('&gt;','>',$val);
+          $nline=$marker."\$$key=$val";
+          if (empty($tag)) $nline .=';';
+          if ($desc[$key]) $nline .= $desc[$key];
+          $nline .= "\n";
+          $config[$key] = $val;
+          $t=NULL;
         } else if (is_string($val)) {
           $val = str_replace('&gt;','>',$val);
           if (strpos($val,"\n")===false) {
@@ -289,8 +345,10 @@ class MoniConfig {
         } else {
           $t=@eval("\$$key=$val;");
         }
-        if ($t === NULL)
+        if ($t === NULL) {
           $nlines[]=$nline;
+          $config[$key] = $val;
+        }
         else
           print "ERROR: \$$key =$val;\n";
         $key = '';
@@ -298,8 +356,10 @@ class MoniConfig {
       }
     }
     if (!empty($newconfig)) {
-      foreach ($newconfig as $k=>$v)
+      foreach ($newconfig as $k=>$v) {
+        if ($v != NULL)
         $nlines[] = '$'.$k.'='.$v.";\n";
+      }
     }
 
     return join('',$nlines);
