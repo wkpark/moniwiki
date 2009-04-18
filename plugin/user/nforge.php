@@ -42,7 +42,6 @@ class User_nforge extends WikiUser {
             $udb = new UserDB($DBInfo);
 
             if (!$udb->_exists($id)) {
-                $this->ticket = md5(time());
 	        $dummy=$udb->saveUser($this);
             }
         }
