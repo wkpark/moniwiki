@@ -70,6 +70,7 @@ UserPreferences= "UserPreferences";
 
 // go form ID
 _go= "go";
+_govalue= _govalue || "value";
 _ap = _qp == '/' ? '?':'&';
 var is_safari = navigator.appVersion.toLowerCase().indexOf('safari') != -1;
 
@@ -87,7 +88,7 @@ function keydownhandler(e) {
 		// safari/chrome
 		var go=document.getElementById(_go);
 		var goValue=null;
-		if (go) goValue=go.elements['value'];
+		if (go) goValue=go.elements[_govalue];
 
 		if ( goValue && e.charCode != undefined && e.keyCode == 27) {
 			// 'ESC' key
@@ -141,8 +142,8 @@ function keypresshandler(e) {
 	var val, stat, act;
 	go=document.getElementById(_go);
         if (go) {
-		goValue=go.elements['value'];
-		goAction=go.elements['action'];
+		goValue=go.elements[_govalue];
+		goAction=go.elements['action'] || null;
 		goStatus=go.elements['status'] || null;
 		val = goValue.value || "", act="goto";
 		stat = goStatus ? goStatus.value:null;
@@ -204,7 +205,7 @@ function keypresshandler(e) {
 				}
 				if (val == "/" || val == "?") val=val.substr(0,val.length-1);
 				go ? goValue.value=val:null;
-				go ? goAction.value=act:null;
+				goAction ? goAction.value=act:null;
 				go && goStatus ? goStatus.value=stat:null;
 				return;
 			}
@@ -221,15 +222,15 @@ function keypresshandler(e) {
 	switch(ch || cc) {
 	case '?':
 		// Title search as vi way
-		go ? goAction.value="titlesearch":null;
-		go ? goStatus.value='?':null;
-		go ? goValue.focus():null;
+		goAction ? goAction.value="titlesearch":null;
+		goStatus ? goStatus.value='?':null;
+		goValue ? goValue.focus():null;
 		break;
 	case '/':
 		// Contents search
-		go ? goAction.value="fullsearch":null;
-		go ? goStatus.value='/':null;
-		go ? goValue.focus():null;
+		goAction ? goAction.value="fullsearch":null;
+		goStatus ? goStatus.value='/':null;
+		goValue ? goValue.focus():null;
 		break;
 	case 27: // 'ESC' key
 		go ? goValue.focus():null;
@@ -298,9 +299,9 @@ function moin_init() {
 function moin_submit(form) {
 	if (form == null) form=document.getElementById(_go);
 	if (form == null) return true;
-	if (form.elements['value'].value.replace(/\s+/,'') == "") return false;
+	if (form.elements[_govalue].value.replace(/\s+/,'') == "") return false;
 	if (form.elements['action'].value =="goto") {
-		go.elements['value'].name='goto';
+		go.elements[_govalue].name='goto';
 		go.elements['action'].name='';
 		return true;
 	}
