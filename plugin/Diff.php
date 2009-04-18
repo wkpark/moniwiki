@@ -5,6 +5,209 @@
 //
 // $Id$
 
+
+function code_diff($diff, $options = array()) {
+  global $Config;
+  include_once("lib/difflib.php");
+  $click = '';
+  $numid = '';
+  $divs = array();
+  $anums = array();
+  $fid = 0;
+
+  $header = '';
+  $buf = str_replace('<','&lt;', $diff);
+  #$buf = str_replace(array('<',"\t"),array('&lt;','        '), $diff);
+  $lines = explode("\n",$buf);
+  $sz = sizeof($lines);
+  $i = 0;
+  while($i < $sz) {
+    for (; $i < $sz; $i++) {
+      if ($lines[$i]{0} == '@') {
+        break;
+      } else if (preg_match('/^-{3} ([^ \t]+)/',$lines[$i], $m)
+        and preg_match('/^\+{3} /',$lines[$i+1])) {
+        // get filename
+        //$files[] = $m[1];
+        break;
+      } else if (preg_match('/^={66}/',$lines[$i])) {
+        $lines[$i] = "\n";
+      }
+      $header .= $lines[$i];
+    }
+    $omarker = 0;
+    $orig = array();
+    $new = array();
+
+    // for pre block
+    $br="\n"; $nl='';
+    // for div block
+    #$br="<br />"; $nl="\n";
+    $next_patch = 0;
+    for (;$i < $sz; $i++) {
+      $line = $lines[$i];
+      $marker = $line{0};
+      if (in_array($marker, array('-','+','@',' '))) $line = substr($line, 1);
+      else {
+        if (empty($new) and empty($orig)) break;
+        $next_patch = 1;
+      }
+      if ($marker=='@' and preg_match('/^@\s\-(\d+)(?:,\d+)?\s\+(\d+)(?:,\d+)?\s@@/',$line,$mat)) {
+        $orig = array(); $new=array();
+        $omarker = 0;
+        $lp = intval($mat[2]); $lm = intval($mat[1]);
+
+        $line = '<div class="diff-sep">@' . "$line</div>";
+        $out .= $line . $nl;
+        continue;
+      }
+      else if ($marker == "-") {
+        $omarker = 1; $orig[] = $line; continue;
+      }
+      else if ($marker == "+") {
+        $omarker = 1; $new[] = $line; continue;
+      }
+      else if ($marker == "\\") continue;
+      else if ($omarker) {
+        $tabidx = ' tabindex="'.($anum + 1).'"';
+        $bp = "<a href='#' name='#cr_view".$anum."' id='cr_view".$anum."' class='diffBlock'></a>";
+
+        $anums[] = $fid;
+        $anum++;
+
+        $count = sizeof($new);
+        $ocount = sizeof($orig);
+
+        $omarker = 0;
+        $buf = '';
+        $result = new WordLevelDiff($orig, $new, $Config['charset']);
+        if (1 or $options['oldstyle']) {
+          foreach ($result->orig() as $ll) {
+            if (isset($fid)) {
+              $key = "f$fid"."_o$lm";
+              $anchor = "<a name='but_f$fid"."_o$lm' href='#'></a>";
+              $cmtag = '';
+              if (isset($review_ar[$key])) {
+                $cmtag = "<span class='commentflag selected' onmouseover=\"df_view('overdiv_$key')\" onmouseout=\"hide_div('overdiv_$key')\">".
+                  $anchor. $review_ar[$key]['count'] . "</span>";
+
+                $overdivs .= "<div id='overdiv_$key' class='reviewComment'>\n".
+                "<strong>".$review_ar[$key]['user']." ".$review_ar[$key]['date']."</strong><br>\n".
+                nl2br($review_ar[$key]['body']);
+                for ($li=2; $li <= $review_ar[$key]['count']; $li++) {
+                  $aikey = 'ai'.$li.$key;
+                  $overdivs .= "<br><br>\n<strong>".$review_ar[$aikey]['user']." ".
+                    $review_ar[$aikey]['date']."</strong><br>\n".
+                    nl2br($review_ar[$aikey]['body']);
+                }
+                $overdivs .= "</div>\n";
+              } else {
+                $cmtag = $anchor."<span class='commentflag'></span>";
+              }
+              $click = " onclick=\"ccmt('o$lm', '$fid');\"";
+              $numid = " id='f$fid"."_o$lm'";
+            }
+            $lm1 = $lm;
+            if ($tabidx) {
+              $lm1 = "<a href='#but_f$key'$tabidx>".$lm.'</a>';
+              $tabidx = '';
+            }
+
+            $lll = preg_replace('/^\s*(<div[^>]+>)/',
+                "$1<span class='num'>$lm1</span>",$ll,1);
+            if ($lll == $ll) $lmm = "<span class='num'>$lm1</span>";
+            $buf.= "<div class=\"diff-removed\"$numid$click>$bp$cmtag$lmm$lll</div>".$nl;
+            $lmm = '';
+            $bp = '';
+            $lm++;
+          }
+          foreach ($result->_final() as $ll) {
+            if (isset($fid)) {
+              $key = "f$fid"."_n$lp";
+              $anchor = "<a name='but_f$fid"."_n$lp'></a>";
+              $cmtag = '';
+              if (isset($review_ar[$key])) {
+                $cmtag = "<span class='commentflag selected' onmouseover=\"df_view('overdiv_$key')\" onmouseout=\"hide_div('overdiv_$key')\">".
+                  $anchor. $review_ar[$key]['count'] . "</span>";
+
+                $overdivs .= "<div id='overdiv_$key' class='reviewComment'>\n".
+                "<strong>".$review_ar[$key]['user']." ".$review_ar[$key]['date']."</strong><br>\n".
+                nl2br($review_ar[$key]['body']);
+                for ($li=2; $li <= $review_ar[$key]['count']; $li++) {
+                  $aikey = 'ai'.$li.$key;
+                  $overdivs .= "<br><br>\n<strong>".$review_ar[$aikey]['user']." ".
+                    $review_ar[$aikey]['date']."</strong><br>\n".
+                    nl2br($review_ar[$aikey]['body']);
+                }
+                $overdivs .= "</div>\n";
+              } else {
+                $cmtag = $anchor."<span class='commentflag'></span>";
+              }
+              $click = " onclick=\"ccmt('n$lp', '$fid');\"";
+              $numid = " id='f$fid"."_n$lp'";
+            }
+            $lp1 = $lp;
+            if ($tabidx) {
+              $lp1 = "<a href='#but_f$key'$tabidx>".$lp.'</a>';
+              $tabidx = '';
+            }
+
+            $lll = preg_replace('/^\s*(<div[^>]+>)/',
+                "$1<span class='num'>$lp1</span>",$ll,1);
+            if ($lll == $ll) $lpp = "<span class='num'>$lp1</span>";
+            $buf.= "<div class=\"diff-added\"$numid$click>$bp$cmtag$lpp$lll</div>".$nl;
+            $lpp = '';
+            $bp = '';
+            $lp++;
+          }
+        } else {
+          foreach ($result->all() as $ll)
+            $buf.= "<div class=\"diff\"><span class='num'>$lp</span>$ll</div>".$nl;
+        }
+        $orig = array(); $new = array();
+        $out .= $buf;
+        if ($next_patch) {
+          $i --;
+          break;
+        }
+        $line .= $br;
+        $line = '<span class="num">'.$lm.'</span>'.$line;
+        $lp++;
+        $lm++;
+      }
+      else if ($marker==" " and !$omarker) {
+        $line .= $br;
+        $line = '<span class="num">'.$lm.'</span>'.$line;
+        $lp++;
+        $lm++;
+      } else {
+        $line .= $br;
+        $line = '<span class="num">'.$lm.'</span>'.$line;
+        $lp++;
+        $lm++;
+      }
+      $out .= $line . $nl;
+    }
+    $click = " onclick=\"var d=$('diffdiv$fid');d.style.display=(d.style.display=='none') ? 'block':'none'; hide_click_comment_div(); \"";
+    $divs[] = "<div class='label2'$click><h4 class='h_label'><span>$header</span></h4></div>".'<pre>'.$out.'</pre>';
+    $header = '';
+    $out = '';
+    if (isset($fid)) $fid ++;
+  }
+  $anumary = "'". implode("','", $anums) ."'";
+
+  $out = '';
+  $j = 0;
+  $divview = 'block'; # XXX
+  foreach ($divs as $d) {
+    $out .= "<div class='label_box codeDiff' id='diffdiv$j' style='display:$divview;'>".
+      "<a name='difftit$j'></a>" . $d . "</div>\n";
+    $j ++;
+  }
+
+  return $out.$overdivs;
+}
+
 function simple_diff($diff) {
   $diff=str_replace("<","&lt;",$diff);
   $out="";
