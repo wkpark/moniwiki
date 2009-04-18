@@ -1,4 +1,5 @@
 <?php
+# This is a default 
 #
 # $Id$
 #
@@ -23,35 +24,38 @@ $kbd_script= $url_prefix.'/css/kbd.js';
 $logo_string= '<img src="'.$logo_img.'" alt="" border="0" align="middle" />';
 $use_smileys= 1;
 #$smiley='wikismiley'; # you can also use SmileyMap too.
-$use_counter= 0;
-$use_hostname= 1;
-$mask_hostname=1; # hide hostname or ip address
-$edit_rows=16;
-$iconset= 'moni2';
-$inline_latex=0;
+$use_counter= 0; # counter
+$use_hostname= 1; # use hostname or ip address
+$mask_hostname=1; # hide some part of hostnames or ip addresses
+$edit_rows=16; # editer rows
+$iconset= 'moni2'; # moni, moni2
+$inline_latex=0; # 0/1(on/off), mimetex, itex, etc.
 #$inline_latex='mimetex';
+#$mimetex_path='/cgi-bin/mimetex.cgi'; # cgi mode
+#$mimetex_path='shell:mimetex'; # command line mode
+#$mimetex_path='shell:/usr/bin/mimetex';
+#$inline_latex='latex';
+#$inline_latex='itex'; # use alternative inline latex (experimental)
+#$inline_latex='1'; # use inline latex (default)
 #$latex_convert_options='-crop 0x0 -density 120x120'; # change convert options for the latex processor
 #$latex_renumbering=1; # renumbering tex equations
-#$latex_allinone=1; # XXX
-$lang='auto';
-$charset='utf-8';
-#$charset='euc-kr';
-$auto_linebreak= 0;
-$trail= 1;
-#$origin=1;
+#$latex_allinone=1; # experimental feature. make a temporary latex file into all in one text.
+$lang='auto'; # check language automatically.
+$charset='utf-8'; # default character set. euc-kr etc.
+$auto_linebreak= 0; # NoSmoke style insert <br> automatically.
+$trail= 1; # use trailer (navagation list of some recently visited pages)
+#$origin=1; # show upper pages like as Language/Script/Perl => Language > Script > Perl
 #$arrow=' <img src="/wiki/imgs/moni-arrow.gif"/> ';
-$notify= 0;
-#$notify= 0; # enable email notification
-$use_referer= 0;
-$use_sistersites=1;
-#$use_singlebracket=1;
+$notify= 0; # enable email notification
+$use_referer= 0; # use some basic referer feature.
+$use_sistersites=1; # use sistersites/siterwiki feature.
+#$use_singlebracket=1; #
 $use_twinpages=1;
 $use_trackback=0;
-$vim_options='+"set expandtab" +"retab"';
-#$vim_options='+"set expandtab" +"retab" +"let g:html_use_css=0"';
-# with vim7.1 but hang... why ? :(
-$pds_allowed="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|css|exe|hwp|pdf|flv";
+$vim_options='+"set expandtab" +"retab"'; # expand tabs in the Vim 6.x
+#$vim_options='+"set expandtab" +"retab" +"let g:html_use_css=0"'; # with vim7.1 but hang... why ? :(
 #$vim_options='+"set encoding=UTF-8"'; # for UTF-8 wikis
+$pds_allowed="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|css|exe|hwp|pdf|flv"; # some allowed file extension to upload.
 $nonexists='fancy';
 #$nonexists='nolink'; # do not link non exists pages
 #$nonexists='forcelink'; # link always
@@ -60,23 +64,24 @@ $nonexists='fancy';
 #$security_class="needtologin";
 #$security_class="desktop";
 #$security_class="wikimaster";
+#$security_class="community";
 #$wikimasters=array('CsKim','SjPark');
 #$owners=array('moniwiki','Hong');
 
 #$menu=array('MoniWiki'=>1,'FindPage'=>4,'TitleIndex'=>3,'BlogChanges'=>'','RecentChanges'=>2,'http://kldp.org KLDP'=>9);
 $menu=array('FrontPage'=>1,'FindPage'=>4,'TitleIndex'=>3,'RecentChanges'=>2,'UserPreferences'=>'');
-#$menu_sep='|';
-#$menu_bra='';
-#$menu_cat='';
+#$menu_sep='|'; # obsolute
+#$menu_bra=''; # obsolute
+#$menu_cat=''; # obsolut
 #$path='/usr/local/bin:/usr/bin:/bin:/usr/X11R6/bin'; # for unixes
 #$path='./bin;c:/windows/command;c:/Program Files/gnuplot;c:/Program Files/vim/vim71'; # for win32
 #$path='./bin;C:/Program Files/MiKTeX 2.5/miktex/bin;C:/Program Files/ImageMagick-6.3.6-Q16'; # for MikTeX
 # ./bin to use user installed bins.
-$theme='azblue2';
-$theme_css=0;
-$hr='';
-#$title_rule='((?<=[a-z0-9])[A-Z][a-z0-9])';
-#$blog_comments=1; # show all comments
+$theme='azblue2'; # set the theme
+$theme_css=0; # change css of theme or not
+$hr=''; # obsolute
+#$title_rule='((?<=[a-z0-9])[A-Z][a-z0-9])'; #
+#$blog_comments=1; # show all comments of a blog entry
 
 #$date_fmt='Y-m-d';
 #$date_fmt_rc='Y-m-d';
@@ -96,7 +101,7 @@ $metatags=<<<META
 <link rel="Alternate" title="Wiki Markup" type="text/plain" href="?action=raw" />
 META;
 
-# set global javascripts
+# set global javascripts (lowlevel)
 #$js=<<<EOF
 #<script type="text/javascript" src="$url_prefix/local/ajax.js"></script>
 #<script type="text/javascript" src="$url_prefix/local/se.js"></script>
@@ -116,7 +121,7 @@ META;
 #<script type="text/javascript" src="$url_prefix/local/autocomplete.js"></script>
 #<script type="text/javascript" src="$url_prefix/local/subindex.js"></script>
 #EOF;
-# alternatively you can use the $javascripts option
+# alternatively you can use the $javascripts option (more inteligent method)
 $javascripts=array(
 	'js/i18n.js',
 	'Wikiwyg/lib/Wikiwyg.js',
@@ -134,8 +139,8 @@ $javascripts=array(
 #$goto_type=1;
 
 #$purple_icon=''; # obsolute
-#$use_purple='';
-#$perma_icon='<img src="/wiki/imgs/egg.png" border="0" />';
+#$use_purple=''; # obsolute
+#$perma_icon='<img src="/wiki/imgs/egg.png" border="0" />'; # obsolute
 $perma_icon='&#xB6;';
 #$pagetype=array("KldpDsl"=>"plain","ManPage"=>"/man","DocbookSgml"=>"/jade","LinuxDoc"=>"/linuxdoc");
 # set default processor for jade
@@ -153,13 +158,6 @@ $myprocessors=array('syntax'=>'vim','sh'=>'vim','csh'=>'vim',
 );
 #$myprocessors=array('latex'=>'mimetex');
 #$myplugins=array('FullSearch'=>'FastSearch'); # substitute action/macro
-#$inline_latex='mimetex';
-#$mimetex_path='/cgi-bin/mimetex.cgi'; # cgi mode
-#$mimetex_path='shell:mimetex'; # command line mode
-#$mimetex_path='shell:/usr/bin/mimetex';
-#$inline_latex='latex';
-#$inline_latex='itex'; # use alternative inline latex (experimental)
-#$inline_latex='1'; # use inline latex (default)
 
 #$url_schemas='mms';
 #$blacklist='127.0.0.0/24:192.168.1.0/24:192.168.1.67'; # block ip
@@ -274,4 +272,5 @@ $robots='googlebot|yahoo'; # set robots
 #$security_class_robot='robot';
 #$url_encodings='euc-kr,uhc'; # autogoto option: search invalid urls with different encodings
 #$use_scrap=1; # use scrap
-?>
+#$login_strict=0; # strict check
+#$use_userlink=0; # replace the UserPreference link to the UserHomePage
