@@ -68,8 +68,8 @@ $nonexists='fancy';
 #$wikimasters=array('CsKim','SjPark');
 #$owners=array('moniwiki','Hong');
 
-#$menu=array('MoniWiki'=>1,'FindPage'=>4,'TitleIndex'=>3,'BlogChanges'=>'','RecentChanges'=>2,'http://kldp.org KLDP'=>9);
 $menu=array('FrontPage'=>1,'FindPage'=>4,'TitleIndex'=>3,'RecentChanges'=>2,'UserPreferences'=>'');
+#$menu=array('MoniWiki'=>1,'FindPage'=>4,'TitleIndex'=>3,'BlogChanges'=>'','RecentChanges'=>2,'http://kldp.org KLDP'=>9);
 #$menu_sep='|'; # obsolute
 #$menu_bra=''; # obsolute
 #$menu_cat=''; # obsolut
@@ -140,8 +140,8 @@ $javascripts=array(
 
 #$purple_icon=''; # obsolute
 #$use_purple=''; # obsolute
-#$perma_icon='<img src="/wiki/imgs/egg.png" border="0" />'; # obsolute
 $perma_icon='&#xB6;';
+#$perma_icon='<img src="/wiki/imgs/egg.png" border="0" />';
 #$pagetype=array("KldpDsl"=>"plain","ManPage"=>"/man","DocbookSgml"=>"/jade","LinuxDoc"=>"/linuxdoc");
 # set default processor for jade
 #$default_dsssl='to_dir/kldp.dsl#html';
@@ -203,8 +203,8 @@ $use_redirect_msg=0;
 #$use_redirect_msg=1; # for MoinMoin compatible
 #$use_safelogin=0;
 $url_mappings=array('http://faq.ktug.or.kr/mywiki'=>'http://faq.ktug.or.kr/faq');
-#$data_dir.'/text/UrlMap'; # enable builtin fix url
 $shared_url_mappings='';
+#$shared_url_mappings=$data_dir.'/text/UrlMap'; # enable builtin fix url
 
 #$use_category=0; # on/off categories list in the edit mode
 #$use_textbrowsers=1; # check some textbased browsers
@@ -243,9 +243,8 @@ $use_resume_download=1;
 #$dot_options="size \"6,6\"\n"; # extra webdot options
 $use_save_refresh=2;
 $use_refresh=2;
-#$cache_public_dir='./_cache'; # enhanced caching
 $cachetime=0;
-$cache_public_dir='./_cache';
+$cache_public_dir='./_cache'; # enhanced caching
 $cache_public_url=$url_prefix.'/_cache';
 #$no_404=1; # for IIS
 #$nofancy_404=1; # simplified 404 msg for robots etc.
@@ -274,3 +273,4 @@ $robots='googlebot|yahoo'; # set robots
 #$use_scrap=1; # use scrap
 #$login_strict=0; # strict check
 #$use_userlink=0; # replace the UserPreference link to the UserHomePage
+$use_local_translation=0; # automatic translation
