@@ -20,7 +20,7 @@ fi
 [ ! -d css ] && ln -s $INSTDIR/css .
 [ ! -d local ] && ln -s $INSTDIR/local .
 [ ! -d locale ] && ln -s $INSTDIR/locale .
-[ ! -d config ] && ln -s $INSTDIR/config .
+[ ! -d config ] && mkdir config && cp -a $INSTDIR/config/* config/
 [ ! -d applets ] && ln -s $INSTDIR/applets .
 [ ! -d plugin ] && ln -s $INSTDIR/plugin .
 [ ! -f config.php.default ] && ln -s $INSTDIR/config.php.default .
