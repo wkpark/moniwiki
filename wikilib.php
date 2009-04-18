@@ -2494,10 +2494,6 @@ function macro_TitleIndex($formatter,$value) {
 }
 
 
-function macro_HTML($formatter,$value) {
-  return str_replace("&lt;","<",$value);
-}
-
 function macro_BR($formatter) {
   return "<br class='macro' />\n";
 }
