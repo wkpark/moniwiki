@@ -4468,8 +4468,6 @@ div.message {
 </style>
 EOS;
 
-      print "</head>\n<body $options[attr]>\n";
-      print '<div><a id="top" name="top" accesskey="t"></a></div>'."\n";
     }
   }
 
@@ -4834,6 +4832,10 @@ MSG;
     # print the title
     kbd_handler();
 
+    if (empty($this->newtheme) or $this->newtheme != 2) {
+      print "</head>\n<body $options[attr]>\n";
+      print '<div><a id="top" name="top" accesskey="t"></a></div>'."\n";
+    }
     #
     if (file_exists($this->themedir."/header.php")) {
       $trail="<div id='wikiTrailer'>\n".$this->trail."</div>\n";
