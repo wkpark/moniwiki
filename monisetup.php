@@ -90,6 +90,8 @@ class MoniConfig {
       // http://bugs.php.net/bug.php?id=22418
       //$config['version_class']="'RcsLite'";
       $config['path']="./bin;c:/program files/vim/vimXX";
+    } else {
+      $config['rcs_user']='root'; // XXX
     }
 
     if (!file_exists('wikilib.php')) {
@@ -222,8 +224,19 @@ class MoniConfig {
   }
 
   function _genRawConfig($newconfig, $mode = 0, $configfile='config.php', $default='config.php.default') {
-    if ($mode == 1)
+    if ($newconfig['admin_passwd'])
+      $newconfig['admin_passwd']=crypt($newconfig['admin_passwd'],md5(time()));
+    if ($newconfig['purge_passwd'])
+      $newconfig['purge_passwd']=crypt($newconfig['purge_passwd'],md5(time()));
+
+    if ($mode == 1) {
       $newconfig = $this->_quote_config($newconfig);
+    } else {
+      if ($newconfig['admin_passwd'])
+        $newconfig['admin_passwd']="'".$newconfig['admin_passwd']."'";
+      if ($newconfig['purge_passwd'])
+        $newconfig['purge_passwd']="'".$newconfig['purge_passwd']."'";
+    }
 
     if (file_exists($configfile))
       $conf_file = $configfile;
@@ -422,6 +435,21 @@ function checkConfig($config) {
      print "<p class='notice'><span class='warn'>"._t("WARN").":</span> ".
 	_t("Please execute the following command after you have completed your configuration.")."</p>\n";
      print "<pre class='console'>\n<font color='green'>$</font> sh secure.sh\n</pre>\n";
+     if (is_writable('config.php')) {
+       if (empty($config['admin_passwd'])) {
+         print "<h2><font color='red'>"._t("WARN: You have to enter your Admin Password")."</font></h2>\n";
+       } else {
+         $owner = fileowner('.');
+         print "<h2><font color='red'>"._t("WARN: If you have any permission to execute 'secure.sh'. press the following button")."</font></h2>\n";
+         
+         $msg = _t("Protect my config.php now!");
+         echo <<<FORM
+<form method='post' action=''>
+<div class='protect'><input type='hidden' name='action' value='protect' /><input type='submit' name='protect' value='$msg' /></div>
+</form>
+FORM;
+       }
+     }
   }
 
   if (file_exists("config.php")) {
@@ -1006,6 +1034,17 @@ span.warn {
   font-family: Trebuchet MS, "Times New Roman", Times, serif;
 }
 
+.protect {
+  font-size: 30px;
+  font-family: Trebuchet MS, "Times New Roman", Times, serif;
+}
+
+.protect input {
+  font-size: 30px;
+  font-weight:bold;
+  font-family: Trebuchet MS, "Times New Roman", Times, serif;
+}
+
 -->
 </style>
 </head>
@@ -1014,10 +1053,20 @@ EOF;
 
 print "<div class='header'><h1><img src='imgs/moniwiki-logo.png' style='vertical-align: middle'/> "._t("MoniWiki")."</h1></div><div class='body'>\n";
 
-if (file_exists("config.php") && !is_writable("config.php")) {
+if (empty($_POST['action']) && file_exists("config.php") && !is_writable("config.php")) {
   print "<h2><font color='red'>"._t("'config.php' is not writable !")."</font></h2>\n";
   print _t("Please execute <tt>'monisetup.sh'</tt> or <tt>chmod a+w config.php</tt> first to change your settings.")."<br />\n";
 
+  $msg = _t("Unprotect my config.php");
+  echo "<form method='post' action=''>";
+  echo "<div class='protect'>";
+  echo "<table><tr><td><strong>Password</strong></td>";
+  echo "<td><input type='password' name='oldpasswd' size='10'></td></tr>\n";
+  echo "</table>";
+  echo <<<FORM
+<input type='hidden' name='action' value='protect' /><input type='submit' name='protect' value='$msg' /></div>
+</form>
+FORM;
   return;
 }
 
@@ -1034,7 +1083,29 @@ if (!empty($_GET['action']) and $_GET['action'] =='pathinfo') {
   return;
 }
 
-if ($_SERVER['REQUEST_METHOD']=="POST" && $config) {
+if ($_SERVER['REQUEST_METHOD']=="POST" && ($config or $action == 'protect')) {
+
+  if ($action == 'protect') {
+    if (is_writable('config.php')) {
+      $old = 0222 & fileperms("config.php"); # check permission
+      if ($old) {
+        chmod('config.php',0444);
+        print "<h2><font color='red'>"._t("config.php is protected now !")."</font></h2>\n";
+      }
+    } else if (!empty($Config->config['admin_passwd'])) {
+      if (crypt($oldpasswd,$Config->config['admin_passwd']) != 
+          $Config->config['admin_passwd']) {
+        print "<h2><font color='red'>"._t("Invalid password error !")."</font></h2>\n";
+        print _t("If you can't remember your admin password, delete password entry in the 'config.php' and restart 'monisetup'")."<br />\n";
+        $invalid=1;
+        return;
+      }
+      chmod('config.php',0644);
+      print "<h2><font color='red'>"._t("config.php is unprotected now !")."</font></h2>\n";
+    }
+    return;
+  }
+
   $conf=$Config->_getFormConfig($config);
   $rawconfig=$Config->_getFormConfig($config,1);
   $config=$conf;
