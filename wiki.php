@@ -829,7 +829,7 @@ EOS;
     if (!$this->counter->counter)
       $this->counter=new Counter();
 
-    if (isset($this->security_class)) {
+    if (!empty($this->security_class)) {
       include_once("plugin/security/$this->security_class.php");
       $class="Security_".$this->security_class;
       $this->security=new $class ($this);
