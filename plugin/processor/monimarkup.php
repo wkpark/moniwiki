@@ -136,7 +136,7 @@ class processor_monimarkup
             if (!empty($oline) and preg_match('/^\s*\|\|/',$oline)) {
                 if ( !preg_match('/(\|\||\|-+)$/',$oline)) {
                     $oline.="\n".$line; continue;
-                } else if (!$tr) {
+                } else {
                     $oline.="\n".$line;
                     if ($_indlen[$_in_li]) {
                         $chunk[]= $this->_node($_in_li,$_nodtype,$oline);
