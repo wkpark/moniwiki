@@ -133,10 +133,15 @@ class processor_monimarkup
         foreach ($lines as $line) {
             $tr=strlen(trim($line));
             if (substr($line,-1) == '&') { $oline.="\n".$line; continue; }
-            if (!empty($oline) and preg_match('/^\s*\|\|/',$oline)) {
-                if ( !preg_match('/(\|\||\|-+)$/',$oline)) {
+            if (empty($oline) and preg_match('/^\s*\|\|/',$line)
+                    and !preg_match('/(\|\||\|-+)\s*$/',$line)) {
+                $oline.=$line;
+                continue;
+            } else if (!empty($oline) and preg_match('/^\s*\|\|/',$oline)) {
+                if ( !preg_match('/(\|\||\|-+)\s*$/',$oline)
+                        and !preg_match('/^(={1,6})\s+.*(\1)\s*$/',$line)) {
                     $oline.="\n".$line; continue;
-                } else {
+                } else if (!$tr) {
                     $oline.="\n".$line;
                     if ($_indlen[$_in_li]) {
                         $chunk[]= $this->_node($_in_li,$_nodtype,$oline);
@@ -320,7 +325,7 @@ class processor_monimarkup
             if (empty($oline) and preg_match('/^\s*\|\|/',$line) and !preg_match('/(\|\||\|-+)\s*$/',$line)) {
                 $oline.=$line."\n"; continue;
             } else if (!empty($oline) and ($_in_table or preg_match('/^\s*\|\|/',$oline))) {
-                if (!preg_match('/(\|\||\|-+)$/',$line)) {
+                if (!preg_match('/(\|\||\|-+)\s*$/',$line)) {
                     $oline.=$line."\n"; continue;
                 } else {
                     $line=$oline.$line; $oline='';
@@ -631,7 +636,7 @@ class processor_monimarkup
                     $c=preg_replace("/\035(\d+)\035/e", 
                         "\$formatter->link_repl(\$inline[$1])",$c);
 
-                if (preg_match('/<(div|ul|ol|pre|blockquote)[^>]*>/',$c))
+                if (preg_match('/<(div|ul|ol|pre|table|blockquote)[^>]*>/',$c))
                     $out.= $this->_div(1,' class="para"',$style).$c.$this->_div(0);
                 else
                     $out.= $this->_p(1,' class="para"',$style).$c.$this->_p(0);
