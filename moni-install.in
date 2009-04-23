@@ -29,8 +29,10 @@ conf=`ls $INSTDIR/config.php.*|grep -v config.php.default`
 cp -a $INSTDIR/{monisetup.sh,secure.sh} .
 cp -a $conf .
 
-cat <<PHP >index.php
+if [ ! -f index.php ]; then
+  cat <<PHP >index.php
 <?php
 include("$INSTDIR/$MAIN");
 ?>
 PHP
+fi
