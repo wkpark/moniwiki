@@ -117,13 +117,15 @@ class MoniConfig {
   }
 
   function _getConfig($configfile, $options = array()) {
-    if (!file_exists($configfile))
+    $myconfig = basename($configfile);
+    if (!file_exists($myconfig))
       return array();
 
     extract($options);
     unset($options);
-    include($configfile);
+    include($myconfig);
     unset($configfile);
+    unset($myconfig);
     $config=get_defined_vars();
 
     return $config;
