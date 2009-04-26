@@ -2339,7 +2339,8 @@ class Formatter {
           $text = substr($url,$p+1);
           $url = substr($url,0,$p);
         }
-        $link=str_replace('&','&amp;',$url);
+        #$link=str_replace('&','&amp;',$url);
+        $link=preg_replace('/&(?!#?[a-z0-9]+;)/i','&amp;',$url);
         if (empty($text)) $text=$url;
         else {
           $img_attr='';
