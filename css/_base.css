@@ -85,7 +85,10 @@ table.wiki tr {
    background-color: #ECECEC;
 }
 
-textarea.wiki { width:100%; }
+textarea {
+  font-family: monospace;
+  font-size:14px; width:100%;
+}
 
 form { margin:0; padding:0;/* for IE */}
 
@@ -133,7 +136,7 @@ div.diff-added, tr.diff-added {
 }
 
 div.diff-removed, tr.diff-removed {
-  background-color:#EEBfbb;
+  background-color:#FFDDDD;
 }
 
 div.diff-sep {
@@ -144,14 +147,27 @@ div.diff-sep {
 }
 
 span.diff-added, ins.diff-added {
-  background-color: #60FF60;
+  background-color: #DDFFDD;
   text-decoration: none;
 }
 
 span.diff-removed, del.diff-removed {
-  background-color: #FF0000;
+  background-color: #FFDDDD;
   text-decoration: none;
 }
+
+div.codeDiff span.num { padding-right:4px; text-align:right; width:40px; display:inline-block; }
+div.codeDiff span.num { background-color:#dddddd; border-right:3px solid #9b9b9b;}
+div.diff-added span.num { background-color:#00ea00; border-right:3px solid #00b700 ;}
+div.diff-removed span.num { background-color:#ff6a6a; border-right:3px solid #cc0000; }
+div.diff-removed span.num:hover { background-color:#ffecec; border-right:3px solid #cc0000; }
+div.diff-added span.num:hover { background-color:#BBFFBB; border-right:3px solid #00b700 ;}
+.codeDiff span.num:hover { background-color:#f0f0f0; border-right:3px solid #9b9b9b;}
+
+.codeDiff h2 { padding-left:5px; }
+
+div.diff-removed.selected { background-color: #FFB5B5; }
+div.diff-added.selected { background-color: #26FF26; }
 
 div.message {
   background-color: #E8E8E8;
