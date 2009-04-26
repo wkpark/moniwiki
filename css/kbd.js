@@ -18,6 +18,7 @@
    * 2004/10/03 : more intelligent behavior with search keys '?' '/'
    * 2007/11/09 : simplified and cleanup.
    * 2008/11/25 : do not assume the "go" form is always defined.
+   * 2009/04/19 : changeable name of the default input form. use control-Enter to save.
 */
 
 /*
@@ -70,7 +71,7 @@ UserPreferences= "UserPreferences";
 
 // go form ID
 _go= "go";
-_govalue= _govalue || "value"; // elements['value']
+_govalue= (typeof _govalue != 'undefined') ? _govalue:"value"; // elements['value']
 _ap = _qp == '/' ? '?':'&';
 var is_safari = navigator.appVersion.toLowerCase().indexOf('safari') != -1;
 
