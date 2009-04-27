@@ -40,8 +40,10 @@ function getPlugin($pluginname) {
     $updated=false;
     $mt=$cp->mtime('plugins');
     foreach ($dirs as $d) {
-      $ct=filemtime($d.'/plugin/.'); // XXX mtime fix
-      $updated=$ct > $mt ? true:$updated;
+      if (is_dir($d.'/plugin/')) {
+        $ct=filemtime($d.'/plugin/.'); // XXX mtime fix
+        $updated=$ct > $mt ? true:$updated;
+      }
     }
     if ($updated) {
       $cp->remove('plugins');
@@ -1766,7 +1768,7 @@ class Formatter {
   var $purple_number=0;
   var $java_scripts=array();
 
-  function Formatter($page="",$options="") {
+  function Formatter($page="",$options=array() {
     global $DBInfo;
 
     $this->page=$page;
@@ -1776,7 +1778,7 @@ class Formatter {
     $this->toc=0;
     $this->toc_prefix='';
     $this->highlight="";
-    $this->prefix= get_scriptname();
+    $this->prefix= (isset($options['prefix'])) ? $options['prefix']:get_scriptname();
     $this->self_query='';
     $this->url_prefix= $DBInfo->url_prefix;
     $this->imgs_dir= $DBInfo->imgs_dir;
