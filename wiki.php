@@ -1768,7 +1768,7 @@ class Formatter {
   var $purple_number=0;
   var $java_scripts=array();
 
-  function Formatter($page="",$options=array() {
+  function Formatter($page="",$options=array()) {
     global $DBInfo;
 
     $this->page=$page;
