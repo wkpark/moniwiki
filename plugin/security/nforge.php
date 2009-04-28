@@ -25,7 +25,7 @@ class Security_nforge extends Security {
   }
 
   function may_edit($action,&$options) {
-    # $public_pages=array('WikiSandBox','WikiSandbox','GuestBook','SandBox');
+    $public_pages=array('WikiSandBox');
     if (!$options['page']) return 0; # XXX
     if (in_array($options['page'],$public_pages)) return 1;
     if ($options['id']=='Anonymous') {
@@ -70,6 +70,21 @@ class Security_nforge extends Security {
     return 1;
   }
 
+  function is_protected($action="read",&$options) {
+    if ($this->DB->group->userIsAdmin())
+        return 0;
+
+    # password protected POST actions
+    $protected_actions=array("rcs","rcspurge","chmod","backup","restore","deletefile","deletepage");
+    $notprotected_actions=array("userform");
+    $action=strtolower($action);
+
+    if (in_array($action,$protected_actions)) return 1;
+    if (in_array($action,$notprotected_actions)) return 0;
+    if ($options['id']=='Anonymous') return 1;
+
+    return 0;
+  }
 }
 
 ?>

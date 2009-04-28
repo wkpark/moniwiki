@@ -3613,7 +3613,8 @@ class Formatter {
             if (function_exists("processor_".$tag)) {
               $processor=$tag;
             } else if ($pf=getProcessor($tag)) {
-              include_once("plugin/processor/$pf.php");
+              if (!function_exists("processor_".$pf))
+                include_once("plugin/processor/$pf.php");
               $processor=$pf;
             }
          } else if ($t and $line[$p+3] == ":") {
