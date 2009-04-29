@@ -706,6 +706,9 @@ EOS;
     $this->imgs_dir_url=$this->imgs_dir.'/';
     $this->imgs_dir_interwiki=$this->imgs_dir.'/';
 
+    if (empty($this->upload_dir_url))
+      $this->upload_dir_url= $this->upload_dir;
+
     $doc_root = getenv("DOCUMENT_ROOT"); // for Unix
     $imgs_realdir= $doc_root.$this->imgs_dir;
     if (file_exists($imgs_realdir.'/interwiki/'.'moniwiki-16.png'))

@@ -71,11 +71,16 @@ class Security_nforge extends Security {
   }
 
   function is_protected($action="read",&$options) {
-    if ($this->DB->group->userIsAdmin())
-        return 0;
+    $perm =& $this->DB->group->getPermission( session_get_user() );
+    // check if the user is docman's admin
+    if (!$perm || $perm->isError() || !$perm->isDocEditor() || !$perm->isAdmin()) {
+      return 1;
+    } else {
+      return 0;
+    }
 
     # password protected POST actions
-    $protected_actions=array("rcs","rcspurge","chmod","backup","restore","deletefile","deletepage");
+    $protected_actions=array("rcs","rename", "revert", "rcspurge","chmod","backup","restore","deletefile","deletepage");
     $notprotected_actions=array("userform");
     $action=strtolower($action);
 
@@ -85,6 +90,7 @@ class Security_nforge extends Security {
 
     return 0;
   }
+
 }
 
 ?>

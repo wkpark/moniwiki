@@ -352,7 +352,7 @@ EOS;
    else if ($p > 1)
       $plink=$formatter->link_tag('',"?action=uploadedfiles$extra",_("&laquo; First page"),$attr);
 
-   if (!$prefix) $prefix=$DBInfo->url_prefix."/".$dir."/";
+   if (!$prefix) $prefix=str_replace($DBInfo->upload_dir, $DBInfo->upload_dir_url,$dir).'/';
 
    $unit=array('Bytes','KB','MB','GB','TB');
 

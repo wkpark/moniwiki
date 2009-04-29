@@ -290,10 +290,12 @@ function macro_Attachment($formatter,$value,$options='') {
         }
         $url=$formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=".$val);
       } else {
-        if ($use_thumb)
-          $url=$DBInfo->url_prefix.'/'.$dir.'/thumbnails/'._urlencode($_l_file);
-        else
-          $url=$DBInfo->url_prefix.'/'._urlencode($_l_upload_file);
+        if ($use_thumb) {
+          $url=$DBInfo->upload_dir_url.'/thumbnails/'._urlencode($_l_file);
+        } else {
+          $_l_upload_file=str_replace($DBInfo->upload_dir, $DBInfo->upload_dir_url,$_l_upload_file);
+          $url=_urlencode($_l_upload_file);
+        }
       }
 
       $img="<img src='$url' title='$alt' alt='$alt' style='border:0' $attr/>";

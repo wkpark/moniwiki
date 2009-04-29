@@ -60,7 +60,8 @@ function macro_Play($formatter,$value) {
         return $formatter->macro_repl('Attachment',$value);
       }
       $my_check=1; // check only first file.
-      $url[]=qualifiedUrl($DBInfo->url_prefix."/"._urlencode($fname));
+      $fname=str_replace($DBInfo->upload_dir, $DBInfo->upload_dir_url,$fname);
+      $url[]=qualifiedUrl(_urlencode($fname));
     } else {
       $url[]=$media[$i];
     }
