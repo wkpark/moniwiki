@@ -609,6 +609,7 @@ class WikiDB {
 
     $this->text_dir= $this->data_dir.'/text';
     $this->cache_dir= $this->data_dir.'/cache';
+    $this->user_dir= $this->data_dir.'/user';
     $this->vartmp_dir= '/var/tmp';
     $this->intermap= $this->data_dir.'/intermap.txt';
     $this->interwikirule='';
@@ -1004,10 +1005,7 @@ EOS;
     $user=&$this->user;
   
     $myid=$user->id;
-    if ($user->info['nick']) {
-      $myid.=' '.$user->info['nick'];
-      $options['nick']=$user->info['nick'];
-    }
+
     $comment=strtr($comment,"\t"," ");
     $fp_editlog = fopen($this->editlog_name, 'a+');
     $time= time();

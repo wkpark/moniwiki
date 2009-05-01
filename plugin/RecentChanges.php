@@ -29,6 +29,7 @@ define('RC_DEFAULT_DAYS',7);
   '$out.= "$icon&nbsp;&nbsp;$title$updated $date . . . . $user $count $extra<br />\n";';
   $template_cat="";
   $use_day=1;
+  $users = array();
 
   if ($options['target']) $target="target='$options[target]'";
 
@@ -271,12 +272,28 @@ define('RC_DEFAULT_DAYS',7);
       if ($showhost && $user == 'Anonymous')
         $user= $addr;
       else {
-        if (strpos($user,' ')!==false) $user= $formatter->link_repl($user);
-        else if ($DBInfo->hasPage($user)) {
+        $ouser= $user;
+        if (isset($users[$ouser])) $user = $users[$ouser];
+        else if (!empty($DBInfo->use_nick)) {
+          $uid = $user;
+          if (($p = strpos($uid,' '))!==false)
+            $uid= substr($uid, 0, $p);
+          $u = $DBInfo->udb->getUser($uid);
+          if (!empty($u->info['nick'])) {
+            $user = $formatter->link_repl('[wiki:'.$uid.' '.$u->info['nick'].']');
+          }
+          $users[$ouser] = $user;
+        } else if (strpos($user,' ')!==false) {
+          $user= $formatter->link_repl($user);
+          $users[$ouser] = $user;
+        } else if ($DBInfo->hasPage($user)) {
           $user= $formatter->link_tag(_rawurlencode($user),"",$user);
+          $users[$ouser] = $user;
         } else
           $user= $user;
       }
+    } else {
+      $user = '&nbsp;';
     }
     $count=""; $extra="";
     if ($editcount[$page_key] > 1)

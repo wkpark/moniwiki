@@ -343,7 +343,7 @@ function isRobot($name) {
 class UserDB {
   var $users=array();
   function UserDB($WikiDB) {
-    $this->user_dir=$WikiDB->data_dir.'/user';
+    $this->user_dir=$WikiDB->user_dir;
     $this->strict = $WikiDB->login_strict;
   }
 

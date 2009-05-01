@@ -118,10 +118,19 @@ function _parse_rlog($formatter,$log,$options=array()) {
       case 3:
          $dummy=explode(';;',$line,3);
          $ip=$dummy[0];
-         $user=$dummy[1];
+         $user=trim($dummy[1]);
+         if (!empty($DBInfo->use_nick) and ($p = strpos($user,' ')) !== false) // XXX
+           $user = substr($user, 0, $p);
+
          if ($user and $user!='Anonymous') {
            if (in_array($user,$users)) $ip=$users[$user];
-           else if (strpos($user,' ') !== false) {
+           else if (!empty($DBInfo->use_nick)) {
+             $u = $DBInfo->udb->getUser($user);
+             if (!empty($u->info['nick'])) {
+               $ip=$formatter->link_repl('[wiki:'.$user.' '.$u->info['nick'].']');
+             }
+             $users[$user]=$ip;
+           } else if (strpos($user,' ') !== false) {
              $ip=$formatter->link_repl($user);
              $users[$user]=$ip;
            } else if (empty($DBInfo->use_hostname) or $DBInfo->hasPage($user)) {
