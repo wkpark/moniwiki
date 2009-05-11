@@ -1,44 +1,23 @@
 <?php
-/**
- * TGettext_MO class file.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the BSD License.
- *
- * Copyright(c) 2004 by Qiang Xue. All rights reserved.
- *
- * To contact the author write to {@link mailto:qiang.xue@gmail.com Qiang Xue}
- * The latest version of PRADO can be obtained from:
- * {@link http://prado.sourceforge.net/}
- *
- * @author Wei Zhuo <weizhuo[at]gmail[dot]com>
- * @version $Revision$  $Date$
- * @package System.I18N.core
- */
-
- 
-// +----------------------------------------------------------------------+
-// | PEAR :: File :: Gettext :: MO                                        |
-// +----------------------------------------------------------------------+
-// | This source file is subject to version 3.0 of the PHP license,       |
-// | that is available at http://www.php.net/license/3_0.txt              |
-// | If you did not receive a copy of the PHP license and are unable      |
-// | to obtain it through the world-wide-web, please send a note to       |
-// | license@php.net so we can mail you a copy immediately.               |
-// +----------------------------------------------------------------------+
-// | Copyright (c) 2004 Michael Wallner <mike@iworks.at>                  |
-// +----------------------------------------------------------------------+
-//
-// $Id$
-// orig Id: MO.php,v 1.3 2005/08/27 03:21:12 weizhuo Exp
+/* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
 /**
- * File::Gettext::MO
+ * File::Gettext
  * 
- * @author      Michael Wallner <mike@php.net>
- * @license     PHP License
+ * PHP versions 4 and 5
+ *
+ * @category   FileFormats
+ * @package    File_Gettext
+ * @author     Michael Wallner <mike@php.net>
+ * @copyright  2004-2005 Michael Wallner
+ * @license    BSD, revised
+ * @version    CVS: $Id$
+ * @link       http://pear.php.net/package/File_Gettext
  */
 
+/**
+ * Requires File_Gettext
+ */
 require_once dirname(__FILE__).'/TGettext.php';
 
 /** 
@@ -49,9 +28,8 @@ require_once dirname(__FILE__).'/TGettext.php';
  * @author      Michael Wallner <mike@php.net>
  * @version     $Revision$
  * @access      public
- * @package System.I18N.core 
  */
-class TGettext_MO extends TGettext
+class File_Gettext_MO extends File_Gettext
 {
     /**
      * file handle
@@ -78,7 +56,7 @@ class TGettext_MO extends TGettext
      * @return  object      File_Gettext_MO
      * @param   string      $file   path to GNU MO file
      */
-    function TGettext_MO($file = '')
+    function File_Gettext_MO($file = '')
     {
         $this->file = $file;
     }
@@ -107,9 +85,7 @@ class TGettext_MO extends TGettext
      */
     function _readInt($bigendian = false)
     {
-		//unpack returns a reference????
-		$unpacked = unpack($bigendian ? 'N' : 'V', $this->_read(4));
-        return array_shift($unpacked);
+        return current($array = unpack($bigendian ? 'N' : 'V', $this->_read(4)));
     }
     
     /**
@@ -171,25 +147,24 @@ class TGettext_MO extends TGettext
      */
     function load($file = null)
     {
+        $this->strings = array();
+        
         if (!isset($file)) {
             $file = $this->file;
         }
         
         // open MO file
         if (!is_resource($this->_handle = @fopen($file, 'rb'))) {
-            return false;
+            return parent::raiseError($php_errormsg . ' ' . $file);
         }
         // lock MO file shared
         if (!@flock($this->_handle, LOCK_SH)) {
             @fclose($this->_handle);
-            return false;
+            return parent::raiseError($php_errormsg . ' ' . $file);
         }
         
         // read (part of) magic number from MO file header and define endianess
-
-		//unpack returns a reference????
-		$unpacked = unpack('c', $this->_read(4));
-        switch ($magic = array_shift($unpacked))
+        switch ($magic = current($array = unpack('c', $this->_read(4))))
         {
             case -34:
                 $be = false;
@@ -200,12 +175,12 @@ class TGettext_MO extends TGettext
             break;
             
             default:
-                return false;
+                return parent::raiseError("No GNU mo file: $file (magic: $magic)");
         }
 
         // check file format revision - we currently only support 0
         if (0 !== ($_rev = $this->_readInt($be))) {
-            return false;
+            return parent::raiseError('Invalid file format revision: ' . $_rev);
         }
        
         // count of strings in this file
@@ -273,17 +248,16 @@ class TGettext_MO extends TGettext
         
         // open MO file
         if (!is_resource($this->_handle = @fopen($file, 'wb'))) {
-            return false;
+            return parent::raiseError($php_errormsg . ' ' . $file);
         }
         // lock MO file exclusively
         if (!@flock($this->_handle, LOCK_EX)) {
             @fclose($this->_handle);
-            return false;
+            return parent::raiseError($php_errormsg . ' ' . $file);
         }
-
         // delete untranslated strs
         foreach ($this->strings as $k=>$v) {
-            if ($v=="") unset($this->strings[$k]);
+            if ($v=='') unset($this->strings[$k]);
         }
         
         // write magic number

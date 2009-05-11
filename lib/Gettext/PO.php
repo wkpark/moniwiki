@@ -1,43 +1,23 @@
 <?php
-/**
- * TGettext_PO class file.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the BSD License.
- *
- * Copyright(c) 2004 by Qiang Xue. All rights reserved.
- *
- * To contact the author write to {@link mailto:qiang.xue@gmail.com Qiang Xue}
- * The latest version of PRADO can be obtained from:
- * {@link http://prado.sourceforge.net/}
- *
- * @author Wei Zhuo <weizhuo[at]gmail[dot]com>
- * @version $Revision$  $Date$
- * @package System.I18N.core
- */
-
-// +----------------------------------------------------------------------+
-// | PEAR :: File :: Gettext :: PO                                        |
-// +----------------------------------------------------------------------+
-// | This source file is subject to version 3.0 of the PHP license,       |
-// | that is available at http://www.php.net/license/3_0.txt              |
-// | If you did not receive a copy of the PHP license and are unable      |
-// | to obtain it through the world-wide-web, please send a note to       |
-// | license@php.net so we can mail you a copy immediately.               |
-// +----------------------------------------------------------------------+
-// | Copyright (c) 2004 Michael Wallner <mike@iworks.at>                  |
-// +----------------------------------------------------------------------+
-//
-// $Id$
-// orig Id: PO.php,v 1.2 2005/01/05 03:15:14 weizhuo Exp
+/* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
 /**
- * File::Gettext::PO
+ * File::Gettext
  * 
- * @author      Michael Wallner <mike@php.net>
- * @license     PHP License
+ * PHP versions 4 and 5
+ *
+ * @category   FileFormats
+ * @package    File_Gettext
+ * @author     Michael Wallner <mike@php.net>
+ * @copyright  2004-2005 Michael Wallner
+ * @license    BSD, revised
+ * @version    CVS: $Id$
+ * @link       http://pear.php.net/package/File_Gettext
  */
- 
+
+/**
+ * Requires File_Gettext
+ */
 require_once dirname(__FILE__).'/TGettext.php';
 
 /** 
@@ -48,9 +28,8 @@ require_once dirname(__FILE__).'/TGettext.php';
  * @author      Michael Wallner <mike@php.net>
  * @version     $Revision$
  * @access      public
- * @package System.I18N.core 
  */
-class TGettext_PO extends TGettext
+class File_Gettext_PO extends File_Gettext
 {
     /**
      * Constructor
@@ -59,7 +38,7 @@ class TGettext_PO extends TGettext
      * @return  object      File_Gettext_PO
      * @param   string      path to GNU PO file
      */
-    function TGettext_PO($file = '')
+    function File_Gettext_PO($file = '')
     {
         $this->file = $file;
     }
@@ -71,21 +50,19 @@ class TGettext_PO extends TGettext
      * @return  mixed   Returns true on success or PEAR_Error on failure.
      * @param   string  $file
      */
-    function load($file = null,$isfile=1)
+    function load($file = null)
     {
+        $this->strings = array();
+        
         if (!isset($file)) {
             $file = $this->file;
         }
         
         // load file
-	if ($isfile) {
-            if (!$contents = @file($file)) {
-                return false;
-            }
-            $contents = implode('', $contents);
-        } else {
-            $contents = &$file; // just read po contents
+        if (!$contents = @file($file)) {
+            return parent::raiseError($php_errormsg . ' ' . $file);
         }
+        $contents = implode('', $contents);
         
         // match all msgid/msgstr entries
         $matched = preg_match_all(
@@ -96,8 +73,7 @@ class TGettext_PO extends TGettext
         unset($contents);
         
         if (!$matched) {
-            print "fail to match msgid/msgstr\n";
-            return false;
+            return parent::raiseError('No msgid/msgstr entries found');
         }
         
         // get all msgids and msgtrs
@@ -130,17 +106,17 @@ class TGettext_PO extends TGettext
         if (!isset($file)) {
             $file = $this->file;
         }
-
+        
         // open PO file
         if (!is_resource($fh = @fopen($file, 'w'))) {
-            return false;
+            return parent::raiseError($php_errormsg . ' ' . $file);
         }
-
         // lock PO file exclusively
-        if (!flock($fh, LOCK_EX)) {
-            fclose($fh);
-            return false;
+        if (!@flock($fh, LOCK_EX)) {
+            @fclose($fh);
+            return parent::raiseError($php_errmsg . ' ' . $file);
         }
+        
         // write meta info
         if (count($this->meta)) {
             $meta = 'msgid ""' . "\nmsgstr " . '""' . "\n";

@@ -1,41 +1,18 @@
 <?php
-/**
- * TGettext class file.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the BSD License.
- *
- * Copyright(c) 2004 by Qiang Xue. All rights reserved.
- *
- * To contact the author write to {@link mailto:qiang.xue@gmail.com Qiang Xue}
- * The latest version of PRADO can be obtained from:
- * {@link http://prado.sourceforge.net/}
- *
- * @author Wei Zhuo <weizhuo[at]gmail[dot]com>
- * @version $Revision$  $Date$
- * @package System.I18N.core
- */
-
-// +----------------------------------------------------------------------+
-// | PEAR :: File :: Gettext                                              |
-// +----------------------------------------------------------------------+
-// | This source file is subject to version 3.0 of the PHP license,       |
-// | that is available at http://www.php.net/license/3_0.txt              |
-// | If you did not receive a copy of the PHP license and are unable      |
-// | to obtain it through the world-wide-web, please send a note to       |
-// | license@php.net so we can mail you a copy immediately.               |
-// +----------------------------------------------------------------------+
-// | Copyright (c) 2004 Michael Wallner <mike@iworks.at>                  |
-// +----------------------------------------------------------------------+
-//
-// $Id$
-// orig Id: TGettext.php,v 1.4 2005/01/09 23:36:23 qiangxue Exp
+/* vim: set expandtab tabstop=4 shiftwidth=4 softtabstop=4: */
 
 /**
  * File::Gettext
  * 
- * @author      Michael Wallner <mike@php.net>
- * @license     PHP License
+ * PHP versions 4 and 5
+ *
+ * @category   FileFormats
+ * @package    File_Gettext
+ * @author     Michael Wallner <mike@php.net>
+ * @copyright  2004-2005 Michael Wallner
+ * @license    BSD, revised
+ * @version    CVS: $Id$
+ * @link       http://pear.php.net/package/File_Gettext
  */
 
 /**
@@ -55,9 +32,8 @@
  * @author      Michael Wallner <mike@php.net>
  * @version     $Revision$
  * @access      public
- * @package System.I18N.core 
  */
-class TGettext
+class File_Gettext
 {
     /**
      * strings
@@ -98,17 +74,15 @@ class TGettext
      * @param   string  $format MO or PO
      * @param   string  $file   path to GNU gettext file
      */
-    function factory($format, $file = '')
+    function &factory($format, $file = '')
     {
         $format = strToUpper($format);
-        $filename = dirname(__FILE__).'/'.$format.'.php';
-        if(is_file($filename) == false) return false;
-#        	throw new Exception ("Class file $file not found");
-        	
-        include_once $filename;
-        $class = 'TGettext_' . $format;
-
-        return new $class($file);
+        if (!@include_once dirname(__FILE__) . $format . '.php') {
+            return File_Gettext::raiseError($php_errormsg);
+        }
+        $class = 'File_Gettext_' . $format;
+        $obref = &new $class($file);
+        return $obref;
     }
 
     /**
@@ -126,18 +100,17 @@ class TGettext
     function poFile2moFile($pofile, $mofile)
     {
         if (!is_file($pofile)) {
-            return false;
-            #throw new Exception("File $pofile doesn't exist.");
+            return File_Gettext::raiseError("File $pofile doesn't exist.");
         }
         
         include_once dirname(__FILE__).'/PO.php';
         
-        $PO = new TGettext_PO($pofile);
+        $PO = &new File_Gettext_PO($pofile);
         if (true !== ($e = $PO->load())) {
             return $e;
         }
         
-        $MO = $PO->toMO();
+        $MO = &$PO->toMO();
         if (true !== ($e = $MO->save($mofile))) {
             return $e;
         }
@@ -263,10 +236,10 @@ class TGettext
      * @access  protected
      * @return  object  File_Gettext_MO
      */
-    function toMO()
+    function &toMO()
     {
         include_once dirname(__FILE__).'/MO.php';
-        $MO = new TGettext_MO;
+        $MO = &new File_Gettext_MO;
         $MO->fromArray($this->toArray());
         return $MO;
     }
@@ -277,12 +250,31 @@ class TGettext
      * @access  protected
      * @return  object      File_Gettext_PO
      */
-    function toPO()
+    function &toPO()
     {
         include_once dirname(__FILE__).'/PO.php';
-        $PO = new TGettext_PO;
+        $PO = &new File_Gettext_PO;
         $PO->fromArray($this->toArray());
         return $PO;
+    }
+    
+    /**
+     * Raise PEAR error
+     *
+     * @static
+     * @access  protected
+     * @return  object
+     * @param   string  $error
+     * @param   int     $code
+     */
+    function raiseError($error = null, $code = null)
+    {
+/*
+        include_once 'PEAR.php';
+        return PEAR::raiseError($error, $code);
+*/
+        echo $error,'::', $code;
+        return exit($code);
     }
 }
 ?>
