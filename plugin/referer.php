@@ -15,7 +15,7 @@
 
 function do_referer($formatter, $options)
 {
-    $out= macro_referer($formatter,$options['value'],&$options);
+    $out= macro_referer($formatter,$options['value'],$options);
 
     return $out;
 }
