@@ -71,7 +71,7 @@ function macro_MsgTrans($formatter,$value,$param=array()) {
             $pofile = 'locale/po/'.$mylang.'.po';
             if (file_exists($pofile)) {
                 include_once 'lib/Gettext/PO.php';
-                $myPO = new TGettext_PO;
+                $myPO = new File_Gettext_PO;
                 if ( ($e = $myPO->load($pofile)) == true) {
                     $myMO = $myPO->toMO();
                     preg_match('/charset=(.*)$/',$myMO->meta['Content-Type'],$cs);
@@ -91,7 +91,7 @@ function macro_MsgTrans($formatter,$value,$param=array()) {
         } else {
             # load *.mo file
             include_once 'lib/Gettext/MO.php';
-            $myMO = new TGettext_MO;
+            $myMO = new File_Gettext_MO;
             $e = $myMO->load($mofile);
         }
 
