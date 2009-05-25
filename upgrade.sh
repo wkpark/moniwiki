@@ -1,9 +1,12 @@
 #!/bin/sh
 # $Id$
 
+CHECKSUM=
+PACKAGE=moniwiki
+
 if [ -z "$1" ]; then
 	cat <<HELP
-Usage: $0 moniwiki-<ver>.tgz
+Usage: $0 $PACKAGE-<ver>.tgz
 HELP
 	exit 0
 fi
@@ -15,10 +18,12 @@ MESSAGE="echo -en \\033[1;34m"
 NORMAL="echo -en \\033[0;39m"
 MAGENTA="echo -en \\033[1;35m"
 
+NAME="MoniWiki"
+
 $SUCCESS
 echo
 echo "+-------------------------------+"
-echo "|    MoniWiki upgrade script    |"
+echo "|    $NAME upgrade script    |"
 echo "+-------------------------------+"
 echo "| This script compare all files |"
 echo "|  between current and new.     |"
@@ -40,9 +45,6 @@ $WARNING
 echo -n " to exit "
 $NORMAL
 read
-
-CHECKSUM=
-PACKAGE=moniwiki
 
 for arg; do
 
@@ -75,7 +77,8 @@ tar xzf $TAR --strip-components=1 -C$TMP/$PACKAGE
 $MESSAGE
 
 echo "*** Check new upgrade.sh script ***"
-DIFF=$(diff $0 $TMP/$PACKAGE/upgrade.sh)
+DIFF=
+[ -f $TMP/$PACKAGE/upgrade.sh ] && DIFF=$(diff $0 $TMP/$PACKAGE/upgrade.sh)
 if [ ! -z "$DIFF" ]; then
 	$FAILURE
 	echo "WARN: new upgrade.sh script found ***"
@@ -102,7 +105,7 @@ $MESSAGE
 echo "*** Make the checksum list for the new version ***"
 $NORMAL
 
-FILELIST=$(find $TMP/$PACKAGE -type f | sed "s@^$TMP/$PACKAGE/@@")
+FILELIST=$(find $TMP/$PACKAGE -type f | sort | sed "s@^$TMP/$PACKAGE/@@")
 
 rm -f checksum-new
 (cd $TMP/$PACKAGE; for x in $FILELIST; do test -f $x && md5sum $x;done >> ../../checksum-new)
@@ -160,6 +163,7 @@ $MESSAGE
 if [ ! -z "$UPGRADE" ]; then
 	echo "*** Backup the old files ***"
 	$NORMAL
+	mkdir -p backup
 	mkdir -p $BACKUP
 	tar cf - $UPGRADE|(cd $BACKUP;tar xvf -)
 
@@ -171,7 +175,7 @@ if [ ! -z "$UPGRADE" ]; then
         	$NORMAL
 	elif [ x$TYPE = xp ]; then
 		SAVED="backup/$PACKAGE-$DATE.diff"
-        	(cd $TMP; diff -ru moniwiki-$DATE $PACKAGE > ../backup/$PACKAGE-$DATE.diff )
+        	(cd $TMP; diff -ruN $PACKAGE-$DATE $PACKAGE > ../backup/$PACKAGE-$DATE.diff )
         	$MESSAGE
         	echo "   Old files are backuped as a backup/$PACKAGE-$DATE.diff"
         	$NORMAL
