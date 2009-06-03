@@ -588,7 +588,7 @@ function getConfig($configfile, $options=array()) {
 #  if ($icon) $config['icon']=$icon;
 #  if ($actions) $config['actions']=$actions;
   if (isset($config['include_path']))
-    ini_set('include_path',$config['include_path']);
+    ini_set('include_path',ini_get('include_path').PATH_SEPARATOR.$config['include_path']);
 
   return $config;
 }
@@ -1562,6 +1562,7 @@ class Cache_text {
             if (!empty($params['print'])) {
               $ret= include $key; // Do we need more secure method ?
               if ($ehandle) restore_error_handler();
+              fclose($fp);
               return $ret;
             } else {
               ob_start();
@@ -1569,6 +1570,7 @@ class Cache_text {
               if ($ehandle) restore_error_handler();
               $fetch = ob_get_contents();
               ob_end_clean();
+              fclose($fp);
               return $fetch;
             }
           }
