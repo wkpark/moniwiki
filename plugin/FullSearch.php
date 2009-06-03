@@ -36,8 +36,8 @@ function do_fullsearch($formatter,$options) {
   if ($options['value']) {
     $val=htmlspecialchars($options['value']);
     printf(_("Found %s matching %s out of %s total pages")."<br />",
-         $ret['hits'],
-        ($ret['hits'] == 1) ? _("page") : _("pages"),
+         $ret['hit'],
+        ($ret['hit'] == 1) ? _("page") : _("pages"),
          $ret['all']);
     if ($ret['context']==0) {
       $tag=$formatter->link_to("?action=fullsearch&amp;value=$val&amp;context=20",_("Show Context."));
@@ -240,6 +240,12 @@ EOF;
     $fc->update($sid,serialize($hits));
   }
 
+  $opts['hits']= $hits;
+  $opts['hit']= count($hits);
+  $opts['all']= count($pages);
+
+  if ($opts['call']) return $hits;
+
   $out.= "<!-- RESULT LIST START -->"; // for search plugin
   $out.= "<ul>";
 
@@ -268,8 +274,6 @@ EOF;
   $out.= "</ul>\n";
   $out.= "<!-- RESULT LIST END -->"; // for search plugin
 
-  $opts['hits']= count($hits);
-  $opts['all']= count($pages);
   return $out;
 }
 
