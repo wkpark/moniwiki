@@ -201,33 +201,38 @@ EOS;
     $out='';
 
     for ($i=0,$sz=count($media);$i<$sz;$i++) {
+      $classid = '';
       if (preg_match("/(wmv|mpeg4|mp4|avi|asf)$/",$media[$i])) {
-        $classid="clsid:22D6F312-B0F6-11D0-94AB-0080C74C7E95";
+        $classid="classid='clsid:22D6F312-B0F6-11D0-94AB-0080C74C7E95'";
         $type='type="application/x-mplayer2"';
         $attr='width="320" height="280" autoplay="'.$play.'"';
-        $params="<param name='FileName' value='".$url[$i]."'>\n".
-          "<param name='AutoStart' value='False'>\n".
-          "<param name='ShowControls' value='True'>";
+        $params="<param name='FileName' value='".$url[$i]."' />\n".
+          "<param name='AutoStart' value='False' />\n".
+          "<param name='ShowControls' value='True' />";
       } else if (preg_match("/(wav|mp3|ogg)$/",$media[$i])) {
-        $classid="clsid:02BF25D5-8C17-4B23-BC80-D3488ABDDC6B";
+        $classid="classid='clsid:02BF25D5-8C17-4B23-BC80-D3488ABDDC6B'";
         $type='';
         $attr='codebase="http://www.apple.com/qtactivex/qtplugin.cab" height="30"';
         $attr.=' autoplay="'.$play.'"';
         $params="<param name='src' value='".$url[$i]."'>\n".
-          "<param name='AutoStart' value='$play'>";
+          "<param name='AutoStart' value='$play' />";
       } else if (preg_match("/swf$/",$media[$i])) {
         $type='type="application/x-shockwave-flash"';
-        $classid="clsid:D27CDB6E-AE6D-11cf-96B8-444553540000";
+        $classid="classid='clsid:D27CDB6E-AE6D-11cf-96B8-444553540000'";
         $attr='codebase="http://download.macromedia.com/pub/shockwave/cabs/flash/swflash.cab#version=6,0,29,0"';
         $attr.=' autoplay="'.$play.'"';
-        $params="<param name='movie' value='".$url[$i]."'>\n".
-          "<param name='AutoStart' value='$play'>";
+        $params="<param name='movie' value='".$url[$i]."' />\n".
+          "<param name='AutoStart' value='$play' />";
+      } else if (preg_match("/\.xap/",$media[$i])) {
+        $type='type="application/x-silverlight-2"';
+        $attr='width="320" height="320" data="data:application/x-silverlight,"';
+        $params="<param name='source' value='".$url[$i]."' />\n";
       }
       $autoplay=0; $play='false';
 
       $myurl=$url[$i];
       $out.=<<<OBJECT
-<object classid="$classid" $type $attr>
+<object $classid $type $attr>
 $params
 <param name="AutoRewind" value="True">
 <embed $type src="$myurl" $attr></embed>
