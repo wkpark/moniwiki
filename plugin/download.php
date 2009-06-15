@@ -166,6 +166,7 @@ function dl_file_resume($ctype,$file,$fname,$mode='inline',$header='') {
   
    $size=filesize($file);
    //check if http_range is sent by browser (or download manager)
+   $range = 0;
    if(isset($_SERVER['HTTP_RANGE'])) {
        list($a, $range)=explode("=",$_SERVER['HTTP_RANGE']);
        //if yes, download missing part
@@ -193,12 +194,15 @@ function dl_file_resume($ctype,$file,$fname,$mode='inline',$header='') {
    //seek to start of missing part
    fseek($fp,$range);
    //start buffered download
+   //reset time limit for big files
+   set_time_limit(0);
+   $chunksize = 1*(1024*1024); // 1MB chunks
+   $left = $size;
    while(!feof($fp)){
-       //reset time limit for big files
-       set_time_limit(0);
-       print(fread($fp,1024*8));
+       print(fread($fp, $chunksize < $left ? $chunksize: $left));
        flush();
        ob_flush();
+       $left -= $chunksize;
    }
    fclose($fp);
    exit;
