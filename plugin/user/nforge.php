@@ -23,17 +23,19 @@ class User_nforge extends WikiUser {
             $u =& user_get_object_by_name($id);
         } else {
             $u =& user_get_object(user_getid());
-            if ($u) {
+            if ($u and is_object($u) and !$u->isError()) {
                 global $DBInfo;
                 $id = $u->getUnixName();
             }
-            $this->setID($id);
-            $udb=new UserDB($DBInfo);
-            $tmp = $udb->getUser($id);
-            if (empty($tmp->info['nick']) or $tmp->info['nick']!=$u->data_array['realname']) {
-                // register user
-                $tmp->info['nick']=$u->data_array['realname'];
-                $udb->saveUser($tmp);
+            if (!empty($id)) {
+                $this->setID($id);
+                $udb=new UserDB($DBInfo);
+                $tmp = $udb->getUser($id);
+                if (empty($tmp->info['nick']) or $tmp->info['nick']!=$u->data_array['realname']) {
+                    // register user
+                    $tmp->info['nick']=$u->data_array['realname'];
+                    $udb->saveUser($tmp);
+                }
             }
         }
 
