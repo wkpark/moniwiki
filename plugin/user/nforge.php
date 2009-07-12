@@ -36,6 +36,9 @@ class User_nforge extends WikiUser {
                     $tmp->info['nick']=$u->data_array['realname'];
                     $udb->saveUser($tmp);
                 }
+            } else {
+                $id = 'Anonymous';
+                $this->setID('Anonymous');
             }
         }
 
@@ -47,7 +50,7 @@ class User_nforge extends WikiUser {
         $this->nick=isset($_COOKIE['MONI_NICK']) ?_stripslashes($_COOKIE['MONI_NICK']):'';
         if ($this->tz_offset == '') $this->tz_offset = date('Z');
 
-        if (!empty($id)) {
+        if (!empty($id) and $id != 'Anonymous') {
             global $DBInfo;
             $udb = new UserDB($DBInfo);
 
