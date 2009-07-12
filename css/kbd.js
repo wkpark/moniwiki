@@ -310,7 +310,9 @@ function moin_init() {
 	// onload
 	var oldOnload = window.onload;
 	if (typeof window.onload != 'function') {
-		window.onload = moin_init();
+		window.onload = function() {
+			moin_init();
+		}
 	} else {
         	window.onload = function() {
 			oldOnload();
