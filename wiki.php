@@ -2094,7 +2094,7 @@ class Formatter {
 
   function get_instructions(&$body) {
     global $Config;
-    $pikeys=array('#redirect','#action','#title','#keywords','#noindex',
+    $pikeys=array('#redirect','#action','#title','#notitle','#keywords','#noindex',
       '#format','#filter','#postfilter','#twinpages','#notwins','#nocomment','#comment',
       '#language','#camelcase','#nocamelcase','#cache','#nocache',
       '#singlebracket','#nosinglebracket','#rating','#norating','#nodtd');
@@ -4639,8 +4639,10 @@ FOOT;
     else if (empty($options['nolink']))
       $title=$this->link_to("?action=fullsearch$qext&amp;value="._urlencode($mypgname),$title);
 
-    $title="$groupt<span class='wikiTitle'>$title</span>";
-    #$title="<span class='wikiTitle'><b>$title</b></span>";
+    if (isset($this->pi['#notitle']))
+      $title = '';
+    else
+      $title="$groupt<span class='wikiTitle'>$title</span>";
 
     $logo=$this->link_tag($DBInfo->logo_page,'',$DBInfo->logo_string);
     $goto_form=$DBInfo->goto_form ?
@@ -4651,10 +4653,25 @@ FOOT;
       
       $mtitle=$msgtitle ? "<h3>".$msgtitle."</h3>\n":"";
       $msg=<<<MSG
-<div class="message"><span class='$msgtype'>
+<div class="message" id="wiki-message"><span class='$msgtype'>
 $mtitle$options[msg]</span>
 </div>
 MSG;
+      if (isset($DBInfo->hide_log) and $DBInfo->hide_log > 0 and preg_match('/timer/', $msgtype)) {
+        $time = intval($DBInfo->hide_log * 1000); // sec to ms
+        $js = array('js/scriptaculous.js', 'js/effects.js');
+        $this->register_javascripts(array($js));
+        $msg .= $this->get_javascripts();
+          $msg .=<<<MSG
+<script type="text/javascript">
+/*<![CDATA[*/
+Event.observe(window, 'load', function() {
+    setTimeout("$('wiki-message').fade()", $time);
+});
+/*]]>*/
+</script>
+MSG;
+      }
     }
 
     # navi bar
