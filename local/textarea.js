@@ -130,8 +130,10 @@ function textArea(element,wrapper) {
 
   // Add grippie and measure it
   this.grippie = document.createElement('div');
+  var icon = document.createElement('span');
   this.grippie.className = 'grippie';
   this.wrapper.appendChild(this.grippie);
+  this.grippie.appendChild(icon);
   this.grippie.dimensions = dimensions(this.grippie);
   this.grippie.onmousedown = function (e) { ta.beginDrag(e); };
 
@@ -159,6 +161,12 @@ function textArea(element,wrapper) {
     // IE
     this.grippie.style.width = '100%';
     this.grippie.style.paddingLeft = '2px';
+    this.grippie.style.paddingRight = '1px';
+  }
+  if (/Safari/.test(navigator.userAgent)) {
+    // Safari / chrome
+    var test = this.element.offsetWidth - 10;
+    this.element.style.width = test + 'px';
   }
   // Mozilla
   this.element.style.MozBoxSizing = 'border-box';
