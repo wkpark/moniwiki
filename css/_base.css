@@ -92,7 +92,11 @@ textarea {
 
 form { margin:0; padding:0;/* for IE */}
 
-input { font-size:1em;padding:2px; /* for IE */ }
+input { font-size:1em; padding:2px; /* for IE */ }
+button { font-size:1em; padding:2px; /* for IE */ }
+
+#editor_info ul {list-style:none; margin:2px 0 2px 0; padding:0;}
+#editor_info li {padding:2px;}
 
 .resizable-textarea .grippie {
   height: 14px;
@@ -176,7 +180,7 @@ div.message {
 }
 
 div.message span {
-  padding-left:55px;
+  padding-left:65px;
   margin:0px 0px;
   display:block;
   min-height: 60px;
@@ -275,7 +279,7 @@ div.closure {
 }
 
 #wikiFooter {
-  padding: 0.5em 2em;
+/*  padding: 0.5em 2em; */
 /*  background-color:yellow; */
 }
 
@@ -593,3 +597,4 @@ em.underline{
 span.markup.invisible {
   display:none;
 }
+
