@@ -226,17 +226,17 @@ class MoniConfig {
   }
 
   function _genRawConfig($newconfig, $mode = 0, $configfile='config.php', $default='config.php.default') {
-    if ($newconfig['admin_passwd'])
+    if (!empty($newconfig['admin_passwd']))
       $newconfig['admin_passwd']=crypt($newconfig['admin_passwd'],md5(time()));
-    if ($newconfig['purge_passwd'])
+    if (!empty($newconfig['purge_passwd']))
       $newconfig['purge_passwd']=crypt($newconfig['purge_passwd'],md5(time()));
 
     if ($mode == 1) {
       $newconfig = $this->_quote_config($newconfig);
     } else {
-      if ($newconfig['admin_passwd'])
+      if (isset($newconfig['admin_passwd']))
         $newconfig['admin_passwd']="'".$newconfig['admin_passwd']."'";
-      if ($newconfig['purge_passwd'])
+      if (isset($newconfig['purge_passwd']))
         $newconfig['purge_passwd']="'".$newconfig['purge_passwd']."'";
     }
 
@@ -268,7 +268,7 @@ class MoniConfig {
 HEADER;
           continue;
         } else if (preg_match('/^(#{1,}\s*)?\$[a-zA-Z][a-zA-Z0-9_]*\s*=/', $line, $m)) {
-          $marker = $m[1];
+          $marker = isset($m[1]) ? $m[1] : '';
           if ($marker != '')
             $mre = '#{1,}';
           else
@@ -284,7 +284,7 @@ HEADER;
         $val.=$line;
         if (!preg_match("/$tag\s*;(\s*#.*)?\s*$/",$line,$m)) continue;
         $mre = '';
-        $desc[$key] = rtrim($m[1]);
+        $desc[$key] = isset($m[1]) ? rtrim($m[1]) : '';
       } else {
         list($key,$val)=explode('=',substr($line,$mlen),2);
         $key = trim($key);
@@ -299,7 +299,7 @@ HEADER;
         } else {
           $val = substr($val,0,-strlen($match[1])-1);
           #$val .= '##########X'.$val.'==='.$match[1].'XX####';
-          if ($match[2]) {
+          if (isset($match[2])) {
             $desc[$key] = rtrim($match[2]);
           } else {
             $desc[$key] = '';
