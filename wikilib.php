@@ -698,6 +698,7 @@ function do_edit($formatter,$options) {
   $formatter->send_header("",$options);
   if ($options['section'])
     $sec=' (Section)';
+  $options['msgtype'] = isset($options['msgtype']) ? $options['msgtype'] : 'warn timer';
   $formatter->send_title(sprintf(_("Edit %s"),$options['page']).$sec,"",$options);
   //print '<div id="editor_area">'.macro_EditText($formatter,$value,$options).'</div>';
   print macro_EditText($formatter,$value,$options);
@@ -913,13 +914,24 @@ function macro_Edit($formatter,$value,$options='') {
   $raw_body = str_replace(array("&","<"),array("&amp;","&lt;"),$raw_body);
 
   # get categories
+  $has_extra = 0;
   if ($DBInfo->use_category and !$options['nocategories']) {
+    $has_extra = 1;
     $categories=array();
     $categories= $DBInfo->getLikePages($DBInfo->category_regex);
     if ($categories) {
-      $select_category="<select name='category' tabindex='4'>\n<option value=''>"._("--Select Category--")."</option>\n";
-      foreach ($categories as $category)
-        $select_category.="<option value='$category'>$category</option>\n";
+      $select_category="<label for='category-select'>"._("Category")."</label><select id='category-select' name='category' tabindex='4'>\n";
+      $mlen = 0;
+      $opts = '';
+      foreach ($categories as $category) {
+        $len = mb_strwidth($category);
+        if ($len > $mlen) $mlen = $len;
+        $opts .= "<option value='$category'>$category</option>\n";
+      }
+      $lab = _(" Select ");
+      $len = intval(($mlen - mb_strwidth($lab)) / 2);
+      $pad = str_repeat('-', $len);
+      $select_category.= "<option value=''>".$pad.$lab.$pad."</option>\n".$opts;
       $select_category.="</select>\n";
     }
   }
@@ -933,29 +945,37 @@ function macro_Edit($formatter,$value,$options='') {
 
   $captcha='';
   if ($use_js and $DBInfo->use_ticket and $options['id'] == 'Anonymous') {
+     $msg = _("Refresh");
      $seed=md5(base64_encode(time()));
-     $ticketimg=$formatter->link_url($formatter->page->urlname,'?action=ticket&amp;__seed='.$seed);
+     $ticketimg=$formatter->link_url($formatter->page->urlname,'?action=ticket&amp;__seed='.$seed.'&amp;t=');
+     $trows = '';
+     if ($has_extra) $trows = " rowspan='2' width='10%'";
+     $onclick = " onclick=\"document.getElementById('captcha_img').src ='".$ticketimg."'+ Math.random()\"";
      $captcha=<<<EXTRA
-  <div class='captcha'><span class='captchaImg'><img src="$ticketimg" alt="captcha" /></span><input type="text" size="10" name="check" />
+  <td$trows>
+  <div class='captcha'><div><span class='captchaImg'><img id="captcha_img" src="$ticketimg" alt="captcha" /></span></div>
+  <button type='button' class='refresh-icon'$onclick><span>$msg</span></button><input type="text" tabindex="4" size="10" name="check" />
 <input type="hidden" name="__seed" value="$seed" /></div>
+  </td>
 EXTRA;
   }
 
-  $summary_msg=_("Summary of Change");
+  $summary_msg=_("Summary");
   if (!$options['simple']) {
-    $preview_btn='<input type="submit" tabindex="6" name="button_preview" '.
-      'value="'._("Preview").'" />';
+    $preview_btn='<button type="submit" tabindex="6" name="button_preview" value="1"><span>'.
+      _("Preview").'</span></button>';
     if ($preview)
       $skip_preview= ' '.$formatter->link_to('#preview',_("Skip to preview"));
     if (!empty($DBInfo->use_wikiwyg)) {
       $confirm = 'false';
       if (!empty($DBInfo->wikiwyg_confirm)) $confirm = 'null';
       $wysiwyg_msg=_("GUI");
-      $wysiwyg_btn.='&nbsp;<input type="button" tabindex="7" value="'.$wysiwyg_msg.
-        '" onclick="javascript:sectionEdit(null,'.$confirm .',null)" />';
+      $wysiwyg_btn.='&nbsp;<button type="button" tabindex="7"'.
+        '" onclick="javascript:sectionEdit(null,'.$confirm .',null)" ><span>'.
+	$wysiwyg_msg.'</span></button>';
     }
     $summary=<<<EOS
-$summary_msg: <input name="comment" value="$editlog" size="70" maxlength="70" style="width:80%" tabindex="2" />$extra_check<br />
+<span id='edit-summary'><label for='input-summary'>$summary_msg</label><input name="comment" id='input-summary' value="$editlog" size="60" maxlength="128" tabindex="2" />$extra_check</span>
 EOS;
   }
   $save_msg=_("Save");
@@ -1000,17 +1020,30 @@ $formh
  rows="$rows" cols="$cols" class="wiki resizable">$raw_body</textarea>
 </div>
 $extraform
+<div id="editor_info">
+<table cellpadding='0' cellspacing='0' border='0'>
+<tr>
+<td>
 <div>
-$summary
+<ul>
+<li>$summary</li>
+<li>$select_category
+<span>
 <input type="hidden" name="action" value="$saveaction" />
 <input type="hidden" name="datestamp" value="$datestamp" />
-$hidden$select_category
-<input type="submit" tabindex="5" value="$save_msg" accesskey="x" />
+$hidden
+<button type="submit" class='save-button' tabindex="5" accesskey="x" ><span>$save_msg</span></button>
 <!-- <input type="reset" value="Reset" />&nbsp; -->
 $preview_btn$wysiwyg_btn$skip_preview
 $extra<span id="save_state"></span>
+</span>
+</li></ul>
 </div>
+</td>
 $captcha
+</tr>
+</table>
+</div>
 </form>
 </div>
 EOS;
