@@ -40,7 +40,12 @@
 }
 
 .fileList input {
-  vertical-align: middle;
+  vertical-align: top;
+  padding:auto;
+  padding-bottom:1px;
+  font-size:11px;
+  font-family:DotumChe, sans-serif;
+  letter-spacing:-1px;
 }
     
 #SWFUpload {
