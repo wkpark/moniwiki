@@ -579,7 +579,7 @@ span.button button, del.button span, span.button input {
   height:17px; /* reload icon height */
 }
 
-.captcha {
+#editor_area .captcha {
   vertical-align:middle;
   position:absolute;
   padding:0px;
