@@ -22,6 +22,23 @@ function addRow(id, size) {
     if (size == undefined)
         size = 50;
 
+    // check editform
+    var editform = document.getElementById('editform');
+    if (editform) {
+        var iframe = document.getElementById('upload-iframe');
+        if (!iframe) {
+            if (document.all)
+                iframe = document.createElement('<iframe frameBorder="0" name="upload-iframe" width="1px" height="1px">');
+            else
+                iframe = document.createElement('iframe');
+            iframe.setAttribute('id','upload-iframe');
+            iframe.setAttribute('name','upload-iframe');
+            iframe.setAttribute('style','display:none;border:0;');
+            //iframe.setAttribute('style','border:0;');
+            var body = document.getElementsByTagName('body')[0];
+            body.appendChild(iframe);
+        }
+    }
     var fform = document.getElementById(id);
     var lastRow = fform.rows.length;
     var row = fform.insertRow(lastRow);
@@ -81,14 +98,41 @@ function delRow(obj) {
 
 function check_attach(id) {
     // check if the form has attached files.
-    var attach = document.getElementById(id);
+    attach = document.getElementById(id);
+    var ok = false;
     inputs = attach.getElementsByTagName('input');
     for (i = 0; i < inputs.length; i++) {
         if (inputs[i].type == 'file' && inputs[i].value != '') {
-            return true;
+            ok = true;
+            break;
         }
     }
-    return false;
+    if (ok == false)
+        return false;
+    // check editform
+    var editform = document.getElementById('editform');
+    if (editform) {
+        // iframe upload
+        iframe = document.getElementById('upload-iframe');
+        var attachform = document.getElementById('form-'+id);
+        if (attachform) {
+            attachform.setAttribute('target', 'upload-iframe');
+        }
+
+        // TODO check success or fail
+        setTimeout("iframe.parentNode.removeChild(iframe);resetForm(attach)", 1500);
+        //alert(_("Successfully Uploaded"));
+        return ok;
+    }
+    return ok;
+}
+
+function resetForm(form) {
+    if (form && form.rows.length) { // for UploadForm
+        for (var i=form.rows.length;i>0;i--) {
+            form.deleteRow(i-1);
+        }
+    }
 }
 
 /*]]>*/
@@ -101,7 +145,7 @@ EOF;
     $attach_msg = _("Attachments");
     $url=$formatter->link_url($formatter->page->urlname);
     $form=<<<EOS
-  <form target='_blank' method="post" action="$url" enctype="multipart/form-data">
+  <form target='_blank' id="form-upload$id" method="post" action="$url" enctype="multipart/form-data">
   <div class='uploadForm'>
   <input type='hidden' name='action' value='UploadFile' />
 EOS;
@@ -128,7 +172,7 @@ EOS;
   <button type='button' class='add-file' onclick="addRow('upload$id')"><span>$msg2</span></button>
   <input type="hidden" name="uploadid" value="upload$id" />
   <input type="hidden" name="popup" value="1" />
-  <button type="submit" class='upload-file save-button' onclick="return check_attach('upload$id')" name="upload"><span>$msg3</span></button>
+  <button type="submit" class='upload-file' onclick="check_attach('upload$id')" name="upload"><span>$msg3</span></button>
   <!-- <input type="reset" name="reset" value="$msg4" /> -->
       </div>
       </td>
