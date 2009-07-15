@@ -660,10 +660,11 @@ function macro_EditHints($formatter) {
   return $hints;
 }
 
-function macro_EditText($formatter,$value,$options='') {
+function macro_EditText($formatter,$value,$options) {
   global $DBInfo;
 
   # simple == 1 : do not use EditTextForm, simple == 2 : do not use GUI/Preview
+  $has_form = false;
   if ($options['simple']!=1 and $DBInfo->hasPage('EditTextForm')) {
     $p=$DBInfo->getPage('EditTextForm');
     $form=$p->get_raw_body();
@@ -677,6 +678,10 @@ function macro_EditText($formatter,$value,$options='') {
     $formatter->pi=$opi; // restore pi
     $form= ob_get_contents();
     ob_end_clean();
+    preg_match('@(</form>)@i', $form, $m);
+    if (isset($options['has_form']))
+      $has_form = &$options['has_form'];
+    if (isset($m[1])) $has_form = true;
 
     $editform= macro_Edit($formatter,'nohints,nomenu',$options);
     $new=str_replace("#editform",$editform,$form); // XXX
@@ -685,7 +690,65 @@ function macro_EditText($formatter,$value,$options='') {
   } else {
     $form = macro_Edit($formatter,$value,$options);
   }
-  return $form;
+  $js = '';
+  if ($has_form) {
+    $js=<<<JS
+<style type='text/css'>
+#mycontent button.save-button { display: none; }
+button.save-button { display: none; }
+</style>
+<script type='text/javascript'>
+/*<![CDATA[*/
+function submit_all_forms() {
+  var form = document.getElementById('editform'); // main edit form
+  var all = document.getElementById('all-forms');
+  var all_forms = all.getElementsByTagName('form'); // all extra forms
+  for (var i=0; i < all_forms.length; i++) {
+    if (all_forms[i] == form) continue;
+    if (all_forms[i].encoding == "multipart/form-data" || all_forms[i].enctype == "multipart/form-data") {
+      form.encoding = "multipart/form-data";
+      form.encoding = "multipart/form-data";
+    }
+    for (var j=0; j < all_forms[i].elements.length; j++) {
+      if (all_forms[i].elements[j].type == 'button' || all_forms[i].elements[j].type == 'submit') continue;
+      if (all_forms[i].elements[j].name == 'action' || all_forms[i].elements[j].name == '') continue;
+      var newopt = all_forms[i].elements[j];
+      //newopt.setAttribute('style', 'display:none');
+      form.appendChild(newopt);
+    }
+  }
+  form.elements['button_preview'].value = '';
+  form.submit();
+}
+
+function check_uploadform() {
+  var form = document.getElementById('editform'); // main edit form
+  var all = document.getElementById('all-forms');
+  var all_forms = all.getElementsByTagName('form'); // all extra forms
+  for (var i=0; i < all_forms.length; i++) {
+    if (all_forms[i].encoding == "multipart/form-data" || all_forms[i].enctype == "multipart/form-data") {
+      for (var j=0; j < all_forms[i].elements.length; j++) {
+        if (all_forms[i].elements[j].type == 'file' && all_forms[i].elements[j].value != '') {
+          alert("Please upload your files first!");
+          return;
+        }
+      }
+    }
+  }
+  if (form.elements['button_preview']) {
+    var newopt = document.createElement('input');
+    newopt.setAttribute('name','button_preview');
+    newopt.setAttribute('value','preview');
+    newopt.setAttribute('type','hidden');
+    form.appendChild(newopt);
+  }
+  form.submit();
+}
+/*]]>*/
+</script>\n
+JS;
+  }
+  return $js.'<div id="all-forms">'.$form.'</div>';
 }
 
 function do_edit($formatter,$options) {
@@ -701,7 +764,9 @@ function do_edit($formatter,$options) {
   $options['msgtype'] = isset($options['msgtype']) ? $options['msgtype'] : 'warn timer';
   $formatter->send_title(sprintf(_("Edit %s"),$options['page']).$sec,"",$options);
   //print '<div id="editor_area">'.macro_EditText($formatter,$value,$options).'</div>';
-  print macro_EditText($formatter,$value,$options);
+  $has_form = false;
+  $options['has_form'] = &$has_form;
+  echo macro_EditText($formatter,$value,$options);
   if ($DBInfo->use_wikiwyg>=2) {
     $js=<<<JS
 <script type='text/javascript'>
@@ -717,6 +782,19 @@ JS;
 	print $js;
     }
   }
+  if ($has_form) {
+    $msg = _("Save");
+    $onclick=' onclick="submit_all_forms()"';
+    $onclick1=' onclick="check_uploadform()"';
+    echo "<div id='save-buttons'>\n";
+    echo "<button type='button'$onclick tabindex='10'><span>$msg</span></button>\n";
+    echo "<button type='button'$onclick1 tabindex='11' name='button_preview' value='1'><span>".
+      _("Preview").'</span></button>';
+    if ($preview)
+      echo ' '.$formatter->link_to('#preview',_("Skip to preview"));
+    echo "</div>\n";
+  }
+
   $formatter->send_footer($args,$options);
 }
 
@@ -914,9 +992,7 @@ function macro_Edit($formatter,$value,$options='') {
   $raw_body = str_replace(array("&","<"),array("&amp;","&lt;"),$raw_body);
 
   # get categories
-  $has_extra = 0;
   if ($DBInfo->use_category and !$options['nocategories']) {
-    $has_extra = 1;
     $categories=array();
     $categories= $DBInfo->getLikePages($DBInfo->category_regex);
     if ($categories) {
@@ -948,15 +1024,11 @@ function macro_Edit($formatter,$value,$options='') {
      $msg = _("Refresh");
      $seed=md5(base64_encode(time()));
      $ticketimg=$formatter->link_url($formatter->page->urlname,'?action=ticket&amp;__seed='.$seed.'&amp;t=');
-     $trows = '';
-     if ($has_extra) $trows = " rowspan='2' width='10%'";
      $onclick = " onclick=\"document.getElementById('captcha_img').src ='".$ticketimg."'+ Math.random()\"";
      $captcha=<<<EXTRA
-  <td$trows>
-  <div class='captcha'><div><span class='captchaImg'><img id="captcha_img" src="$ticketimg" alt="captcha" /></span></div>
-  <button type='button' class='refresh-icon'$onclick><span>$msg</span></button><input type="text" tabindex="4" size="10" name="check" />
+  <div class='captcha' style='float:right'><div><span class='captchaImg'><img id="captcha_img" src="$ticketimg" alt="captcha" /></span></div>
+  <button type='button' class='refresh-icon'$onclick><span>$msg</span></button><input type="text" tabindex="2" size="10" name="check" />
 <input type="hidden" name="__seed" value="$seed" /></div>
-  </td>
 EXTRA;
   }
 
@@ -1015,16 +1087,13 @@ EOS;
   $form.=<<<EOS
 <div id="editor_area">
 $formh
-<div class="resizable-textarea"><!-- IE hack -->
+<div class="resizable-textarea" style='position:relative'><!-- IE hack -->
 <textarea id="content" wrap="virtual" name="savetext" tabindex="1"
  rows="$rows" cols="$cols" class="wiki resizable">$raw_body</textarea>
+$captcha
 </div>
 $extraform
 <div id="editor_info">
-<table cellpadding='0' cellspacing='0' border='0'>
-<tr>
-<td>
-<div>
 <ul>
 <li>$summary</li>
 <li>$select_category
@@ -1038,11 +1107,6 @@ $preview_btn$wysiwyg_btn$skip_preview
 $extra<span id="save_state"></span>
 </span>
 </li></ul>
-</div>
-</td>
-$captcha
-</tr>
-</table>
 </div>
 </form>
 </div>
@@ -1546,6 +1610,13 @@ function do_post_savepage($formatter,$options) {
     return do_invalid($formatter,$options);
   }
 
+  if ((isset($_FILES['upfile']) and is_array($_FILES)) or is_array($options['MYFILES'])) {
+    $retstr = false;
+    $options['retval'] = &$retstr;
+    include_once('plugin/UploadFile.php');
+    do_uploadfile($formatter, $options);
+  }
+
   $savetext=$options['savetext'];
   $datestamp=$options['datestamp'];
   $button_preview=$options['button_preview'];
@@ -1622,8 +1693,22 @@ function do_post_savepage($formatter,$options) {
         $formatter->send_title(_("Conflict error!"),"",$options);
       $options['savetext']=$savetext;
       #print '<div id="editor_area">'.macro_EditText($formatter,$value,$options).'</div>'; # XXX
+      $has_form = false;
+      $options['has_form'] = &$has_form;
       print macro_EditText($formatter,$value,$options); # XXX
 
+      if ($has_form) {
+        $msg = _("Save");
+        $onclick=' onclick="submit_all_forms()"';
+        $onclick1=' onclick="check_uploadform()"';
+        echo "<div id='save-buttons'>\n";
+        echo "<button type='button'$onclick tabindex='10'><span>$msg</span></button>\n";
+        echo "<button type='button'$onclick1 tabindex='11' name='button_preview' value='1'><span>".
+          _("Preview").'</span></button>';
+        if ($preview)
+          echo ' '.$formatter->link_to('#preview',_("Skip to preview"));
+	echo "</div>\n";
+      }
       print $menu;
       print "<div id='wikiPreview'>\n";
       if ($options['conflict'] and $merge)
@@ -1699,7 +1784,22 @@ function do_post_savepage($formatter,$options) {
     $options['savetext']=$savetext;
 
     $formatter->preview=1;
-    print '<div id="editor_area_wrap">'.macro_EditText($formatter,$value,$options).'</div>'; # XXX
+    $has_form = false;
+    $options['has_form'] = &$has_form;
+    print '<div id="editor_area_wrap">'.macro_EditText($formatter,$value,$options);
+    if ($has_form) {
+      $msg = _("Save");
+      $onclick=' onclick="submit_all_forms()"';
+      $onclick1=' onclick="check_uploadform()"';
+      echo "<div id='save-buttons'>\n";
+      echo "<button type='button'$onclick tabindex='10'><span>$msg</span></button>\n";
+      echo "<button type='button'$onclick1 tabindex='11' name='button_preview' value='1'><span>".
+      	_("Preview").'</span></button>';
+      if ($preview)
+        echo ' '.$formatter->link_to('#preview',_("Skip to preview"));
+      echo "</div>\n";
+    }
+    print '</div>'; # XXX
     print $DBInfo->hr;
     print $menu;
     print "<div id='wikiPreview'>\n";
