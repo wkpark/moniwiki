@@ -58,6 +58,7 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
      $uploader='UploadForm';
      $use_admin=0;
      $use_fileinfo=0;
+     $col = 10000;
    } else if ($options['preview']) {
      $use_preview=1;
      $use_admin=0;
@@ -68,6 +69,7 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
      $js_tag=1;$use_preview=1;
      $use_admin=0;
      $use_fileinfo=0;
+     $col = 10000;
    }
 
    if ($use_fileinfo) $col=1;
@@ -457,6 +459,10 @@ EOS;
 
    if ($uploader and !in_array('UploadedFiles',$formatter->actions)) {
      $out.=$formatter->macro_repl($uploader);
+   }
+   if ($use_preview) {
+     $class = ' class="fileList preview"';
+     return $js_script."<div$class>".$out."</div>\n";
    }
    return $js_script.$out;
 }
