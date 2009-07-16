@@ -691,11 +691,14 @@ function macro_EditText($formatter,$value,$options) {
     $form = macro_Edit($formatter,$value,$options);
   }
   $js = '';
+  if (empty($DBInfo->edit_with_sidebar))
+    $sidebar_style="#wikiSideMenuContainer { display: none; }\n";
   if ($has_form) {
     $js=<<<JS
 <style type='text/css'>
 #mycontent button.save-button { display: none; }
 button.save-button { display: none; }
+$sidebar_style
 </style>
 <script type='text/javascript'>
 /*<![CDATA[*/
@@ -912,11 +915,11 @@ function macro_Edit($formatter,$value,$options='') {
   $merge_btn2=_("Merge manually");
   $merge_btn3=_("Ignore conflicts");
   if ($options['conflict']) {
-    $extra='<input type="submit" name="button_merge" value="'.$merge_btn.'" />';
+    $extra='<button type="submit" name="button_merge" value="1"><span>'.$merge_btn.'</span></button>';
     if ($options['conflict']==2) {
-      $extra.=' <input type="submit" name="manual_merge" value="'.$merge_btn2.'" />';
+      $extra.=' <button type="submit" name="manual_merge" value="1"><span>'.$merge_btn2.'</span></button>';
       if ($DBInfo->use_forcemerge)
-        $extra.=' <input type="submit" name="force_merge" value="'.$merge_btn3.'" />';
+        $extra.=' <button type="submit" name="force_merge" value="1"><span>'.$merge_btn3.'</span></button>';
     }
   }
   if ($options['section'])
