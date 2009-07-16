@@ -111,7 +111,13 @@ JS;
         $tex= '\displaystyle '.implode('& \displaystyle ',$tmp);
         $tex = "$$\n\\begin{array}{ $col }\n$tex\n\\end{array}\n$$\n";
 
-        $toolbar=$formatter->macro_repl('latex2png',$tex);
+        $my = $formatter->macro_repl('latex2png',$tex);
+        if (!is_array($my)) {
+            $toolbar = $my;
+        } else {
+            $toolbar = $my[0];
+            $turl = $my[1];
+        }
         $tab.='<li title="'.$k.'"'.$attr.' onclick="menuToogle(this)"><span>'._($k).'</span></li>';
         $attr='';
 
@@ -119,7 +125,7 @@ JS;
         $col = imagecolorallocate($im, 0, 0, 0);
         list($width, $height, $type, $attr) = getimagesize($toolbar);
 
-	$toolurl=qualifiedUrl($DBInfo->url_prefix.'/'.$toolbar); // XXX
+	$toolurl=qualifiedUrl($turl); // XXX
 
         $x= 0;
         $c= imagecolorat($im,0,0);

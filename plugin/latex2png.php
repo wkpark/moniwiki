@@ -24,7 +24,11 @@ function do_latex2png($formatter,$options) {
     $opts=array('raw'=>1);
     if (isset($options['dpi']) and $options['dpi'] > 120 and $options['dpi'] < 600)
         $opts['dpi']=$options['dpi'];
-    $png= $formatter->processor_repl('latex',$options['value'],$opts);
+    $my= $formatter->processor_repl('latex',$options['value'],$opts);
+    if (!is_array($my))
+        $png = $my;
+    else
+        $png = $my[0];
 
     if (file_exists($png)) {
         Header("Content-type: image/png");

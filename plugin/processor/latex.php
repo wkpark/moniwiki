@@ -276,7 +276,7 @@ function processor_latex(&$formatter,$value="",$options=array()) {
   if (!$raw_mode)
     return $log.$bra."<img class='tex' src='$png_url' rel='$uniq' alt='$alt' ".
          "title='$title' />".$ket;
-  else return $png;
+  return array($png, $png_url);
 }
 
 // vim:et:sts=2:sw=2
