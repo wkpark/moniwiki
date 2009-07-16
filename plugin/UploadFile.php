@@ -43,6 +43,7 @@ function do_uploadfile($formatter,$options) {
 <script type="text/javascript">
 /*<![CDATA[*/
 function delAllForm(id) {
+  if (!opener) return;
   var fform = opener.document.getElementById(id);
 
   if (fform && fform.rows.length) { // for UploadForm
@@ -72,6 +73,7 @@ EOF;
   }
 
   if (!$ok) {
+    if (isset($options['retval'])) return; // ignore
     #$title="No file selected";
     $formatter->send_header("",$options);
     $formatter->send_title($title,"",$options);
@@ -290,7 +292,13 @@ EOF;
     $DBInfo->savePage($p,$comment,$options);
   } else
     $DBInfo->addLogEntry($key, $REMOTE_ADDR,$comment,"UPLOAD");
-  
+
+  if (isset($options['retval'])) {
+    $retval = array('title'=>$title, 'msg'=>$msg, 'uploaded'=>$uploaded);
+    $ret = &$options['retval'];
+    $ret = $retval;
+    return;
+  } 
   $formatter->send_header("",$options);
   if ($uploaded < 2) {
     $formatter->send_title($title,"",$options);
