@@ -188,7 +188,6 @@ function do_ticket($formatter,$options) {
             }
         }
     }
-        
     if ($use_ttf) {
         $pointsize=$DBInfo->ticket_font_size ? $DBInfo->ticket_font_size:16;
         $angle=0;
@@ -213,10 +212,18 @@ function do_ticket($formatter,$options) {
     Header("Content-type: image/png");
     $im= ImageCreate($w,$h);
     $color=array();
-    $color[]= ImageColorAllocate($im, 240, 240, 240); // background
+    if (isset($DBInfo->captcha_bgcolor) and preg_match('/^#[0-9a-fA-F]$/', $DBInfo->captcha_bgcolor)) {
+        $r = substr($DBInfo->captcha_bgcolor, 1, 2);
+        $g = substr($DBInfo->captcha_bgcolor, 3, 2);
+        $b = substr($DBInfo->captcha_bgcolor, 5, 2);
+        $color[]= ImageColorAllocate($im, hexdec($r), hexdec($g), hexdec($b)); // background
+    } else {
+        $color[]= ImageColorAllocate($im, 240, 240, 240); // default background
+    }
     $color[]= ImageColorAllocate($im, 0, 0, 0); // black
     $color[]= ImageColorAllocate($im, 255, 255, 255); // white
     $pen=rand(3,19);
+    $pen1=rand(3,19);
     for ($i=0;$i<18;$i++)
         $color[]= ImageColorAllocate($im,rand(100,200),rand(100,200),rand(100,200));
     if ($use_ttf) {
@@ -237,7 +244,7 @@ function do_ticket($formatter,$options) {
     if ($DBInfo->use_ticket & 1)
         _effect_blur($im,$color,1,1);
     if ($DBInfo->use_ticket & 2)
-        _effect_grid($im,$color,$pen);
+        _effect_grid($im,$color,$pen1);
 
     ImagePng($im);
     ImageDestroy($im);
