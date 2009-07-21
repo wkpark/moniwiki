@@ -2869,7 +2869,7 @@ class Formatter {
     return $bra.$ret.$ket;
   }
 
-  function processor_repl($processor,$value,$options="") {
+  function processor_repl($processor,$value,&$options) {
     $bra='';$ket='';
     if (!empty($this->wikimarkup) and empty($options['nomarkup'])) {
       if ($options['type'] == 'inline') {
@@ -2913,7 +2913,6 @@ class Formatter {
     $myclass= & new $classname($this,$options);
     $ret= call_user_func(array($myclass,'process'),$value,$options);
     if ($myclass->_type=='wikimarkup') return $ret;
-    if (!is_string($ret)) return $ret;
     return $bra.$ret.$ket;
   }
 
@@ -3161,8 +3160,10 @@ class Formatter {
       if (isset($cell{0}) and $cell{strlen($cell)-1} == "\n")
         $cell = substr($cell,0,-1).' '; // XXX
 
-      if (strpos($cell,"\n") !== false)
-        $cell=$this->processor_repl('monimarkup',$cell, array('notoc'=>1));
+      if (strpos($cell,"\n") !== false) {
+        $params = array('notoc'=>1);
+        $cell=$this->processor_repl('monimarkup',$cell, $params);
+      }
       if ($m[3] and $m[5]) $align='center';
       else if (!$m[3]) $align='';
       else if (!$m[5]) $align='right';

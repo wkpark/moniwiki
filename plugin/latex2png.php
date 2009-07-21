@@ -16,19 +16,21 @@
 // $Id$
 
 function macro_latex2png($formatter,$value,$params=array()) {
-    $png= $formatter->processor_repl('latex',$value,array('raw'=>1));
+    $png= $formatter->processor_repl('latex',$value, $params);
     return $png;
 }
 
 function do_latex2png($formatter,$options) {
-    $opts=array('raw'=>1);
+    $retval = false;
+    $opts = array();
+    $opts['retval'] = &$retval;
     if (isset($options['dpi']) and $options['dpi'] > 120 and $options['dpi'] < 600)
         $opts['dpi']=$options['dpi'];
     $my= $formatter->processor_repl('latex',$options['value'],$opts);
-    if (!is_array($my))
-        $png = $my;
+    if (!empty($opts['retval']))
+        $png = $opts['retval'];
     else
-        $png = $my[0];
+        $png = $my;
 
     if (file_exists($png)) {
         Header("Content-type: image/png");

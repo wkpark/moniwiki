@@ -111,12 +111,17 @@ JS;
         $tex= '\displaystyle '.implode('& \displaystyle ',$tmp);
         $tex = "$$\n\\begin{array}{ $col }\n$tex\n\\end{array}\n$$\n";
 
-        $my = $formatter->macro_repl('latex2png',$tex);
-        if (!is_array($my)) {
+        $retval = false;
+        $params = array();
+        $params['retval'] = &$retval;
+        
+        $my = $formatter->macro_repl('latex2png',$tex, $params);
+        if (empty($params['retval'])) {
             $toolbar = $my;
+            $turl = $my;
         } else {
-            $toolbar = $my[0];
-            $turl = $my[1];
+            $toolbar = $params['retval'];
+            $turl = $my;
         }
         $tab.='<li title="'.$k.'"'.$attr.' onclick="menuToogle(this)"><span>'._($k).'</span></li>';
         $attr='';

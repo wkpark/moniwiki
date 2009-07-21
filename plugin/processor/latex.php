@@ -37,7 +37,7 @@ function processor_latex(&$formatter,$value="",$options=array()) {
   $latex_convert_options=
     $DBInfo->latex_convert_options ? $DBInfo->latex_convert_options:"-trim -crop 0x0 -density 120x120";
 
-  $raw_mode = $options['raw'] ? 1:0;
+  $raw_mode = isset($options['retval']) ? 1:0;
 
   # site spesific variables
   $latex="latex";
@@ -276,7 +276,9 @@ function processor_latex(&$formatter,$value="",$options=array()) {
   if (!$raw_mode)
     return $log.$bra."<img class='tex' src='$png_url' rel='$uniq' alt='$alt' ".
          "title='$title' />".$ket;
-  return array($png, $png_url);
+  $retval = &$options['retval'];
+  $retval = $png;
+  return $png_url;
 }
 
 // vim:et:sts=2:sw=2
