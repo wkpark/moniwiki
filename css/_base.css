@@ -116,8 +116,8 @@ button { font-size:1em; padding:2px; /* for IE */ }
   padding-right:0;
 }
 
-th.info {
-  background-color:#E2ECE2;
+.info th {
+  background-color:#FBFBFB;
 /*  border-collapse: collapse; */
 /*  border: 1px solid silver; */
 }
@@ -127,8 +127,14 @@ th.info {
   color:gray;
 }
 
-td.info {
-  background-color:#E2ECE2;
+.info td {
+  background-color:#FEFEFE;
+}
+table.info {
+  border-spacing:2px;
+/*  border-collapse:collapse; /* */
+  border-collapse:separate;
+  padding:3px;
 }
 
 h1,h2,h3,h4,h5 {
@@ -275,7 +281,7 @@ div.closure {
 }
 
 #wikiBody {
-  margin: 10px 10px 10px 15px; 
+  margin: 10px 10px 0px 15px;
 }
 
 #wikiFooter {

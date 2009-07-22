@@ -13,10 +13,10 @@ function _parse_rlog($formatter,$log,$options=array()) {
 
   if ($options['info_actions'])
     $actions=$options['info_actions'];
-  else if ($DBInfo->info_actions)
+  else if (isset($DBInfo->info_actions))
     $actions=$DBInfo->info_actions;
   else
-    $actions=array('recall'=>'view','raw'=>'raw');
+    $actions=array('recall'=>'view','raw'=>'source');
 
   $state=0;
   $flag=0;
@@ -27,20 +27,21 @@ function _parse_rlog($formatter,$log,$options=array()) {
 
   $url=$formatter->link_url($formatter->page->urlname);
 
-  $diff_btn=_("Diff");
+  $diff_btn=_("Compare");
   $out = "<div class='wikiInfo'>\n";
   if ($options['title'])
     $out.=$options['title'];
   else
     $out.="<h2>"._("Revision History")."</h2>\n";
   $out.="<form id='infoform' method='post' action='$url'>";
-  $out.="<table class='info' cellpadding='3' cellspacing='2'><tr>\n";
-  $out.="<th class='info'>"._("ver.")."</th><th class='info'>"._("Date and Changes")."</th>".
-       "<th class='info'>"._("Editor")."</th>".
-       "<th class='info'><input type='submit' value='$diff_btn'></th>";
+  $out.="<div><table class='info'><tr class='head'>\n";
+  $out.="<th>"._("Ver.")."</th><th>"._("Date")."</th>".
+       "<th>"._("Changes")."</th>".
+       "<th>"._("Editor")."</th>".
+       "<th><button type='submit'><span>$diff_btn</span></button></th>";
   if (!$simple) {
-    $out.="<th class='info'>"._("actions")."</th>";
-    if (isset($admin)) $out.= "<th class='info'>"._("admin.")."</th>";
+    $out.="<th>"._("View")."</th>";
+    if (isset($admin)) $out.= "<th>"._("admin.")."</th>";
   }
   $out.= "</tr>\n";
 
@@ -152,9 +153,9 @@ function _parse_rlog($formatter,$log,$options=array()) {
          $rowspan=1;
          if (!$simple and $comment) $rowspan=2;
 
-         $rrev= $rrev ? $rrev:$rev;
+         $rrev= $rrev ? $rrev:$formatter->link_to("?action=recall&rev=$rev",$rev);
          $out.="<tr>\n";
-         $out.="<th class='rev' valign='top' rowspan=$rowspan>$rrev</th><td nowrap='nowrap'>$inf $change</td><td>$ip&nbsp;</td>";
+         $out.="<th class='rev' valign='top' rowspan=$rowspan>$rrev</th><td nowrap='nowrap'>$inf</td><td>$change</td><td>$ip&nbsp;</td>";
          $rrev='';
          $achecked="";
          $bchecked="";
@@ -170,10 +171,10 @@ function _parse_rlog($formatter,$log,$options=array()) {
          $out.="<td nowrap='nowrap'>";
          foreach ($actions as $k=>$v) {
            $k=is_numeric($k) ? $v:$k;
-           $out.=$formatter->link_to("?action=$k&amp;rev=$rev",_($v)).' ';
+           $out.=$formatter->link_to("?action=$k&amp;rev=$rev",'<span>'._($v).'</span>', ' class="button small"').' ';
          }
          if ($flag) {
-            $out.= " ".$formatter->link_to("?action=diff&amp;rev=$rev",_("diff"));
+            $out.= " ".$formatter->link_to("?action=diff&amp;rev=$rev",'<span>'._("diff").'</span>', ' class="button small"');
             $out.="</td>";
             if (isset($admin))
               $out.=
@@ -202,7 +203,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
   }
   $out.="<input type='submit' name='rcspurge' value='"._("purge")."'></td></tr>";
   endif;
-  $out.="<input type='hidden' name='action' value='diff'/></form></table>\n";
+  $out.="<input type='hidden' name='action' value='diff'/></table></div></form>\n";
   $out.="<script type='text/javascript' src='$DBInfo->url_prefix/local/checkbox.js'></script></div>\n";
   return $out; 
 }
