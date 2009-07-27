@@ -472,9 +472,9 @@ td.title { padding-left:0.5em; }
 td.name { padding-left:0.5em; }
 
 /* from the zeroboard */
-
-a.button, span.button, del.button {
-  background-position:0px 0px; /* XXX */
+/*
+#mycontent a.button, span.button, del.button {
+  background-position:0px 0px;
   background-repeat:no-repeat;
   border:medium none;
   color:#2E523B;
@@ -494,7 +494,7 @@ a.button, span.button, del.button {
 a.button, span.button, del.button, a.button span, span.button button, span.button input, del.button span {
   background-image:url(../imgs/plugin/BBS/form_btns.png);
 }
-a.button span, span.button button, span.button input, del.button span {
+#mycontent a.button span, span.button button, span.button input, del.button span {
   background-color:transparent;
   background-position:100% 0pt;
   background-repeat:no-repeat;
@@ -559,6 +559,8 @@ del.button-behavior-hover span, del.button:hover span {
 span.button button, del.button span, span.button input {
 }
 
+*/
+
 /* */
 .pnut {
   text-align:center;
@@ -582,15 +584,19 @@ span.button button, del.button span, span.button input {
 #editor_area .captcha {
   vertical-align:middle;
   position:absolute;
-  padding:0px;
   right:17px; /* ~ scrollbar width */
   bottom:14px; /* ~ resizer grip height */
   opacity:0.7;filter:alpha(opacity=70);
+  /* IE Fix */
+  _float:right;
+  _margin-top:-73px;
+  _margin-right:0px;
+  _position:relative;
   _opacity:1;
   _filter:alpha(opacity=100);
 }
 
-.captcha:hover {
+#editor_area .captcha:hover {
   opacity:1;filter:alpha(opacity=100);
 }
 
@@ -602,6 +608,7 @@ span.button button, del.button span, span.button input {
   padding: 2px;
   margin-top:3px;
   margin-bottom:3px;
+  display:inline-block;
   /* background-color: #f0f0f0; /* */
 }
 
@@ -671,13 +678,16 @@ span.button button, del.button span, span.button input {
   background:#FFFFE1;
 }
 
-.toolbar {
+#wikiBody ul.toolbar {
+  display:inline-block;
   list-style-image: none;
   list-style-type: none;
   list-style-position: outside;
   margin: 2px;
   margin-top:0px;
   padding:0 2px;
+  _padding-bottom:2px;
+  _margin-left:1px;
   float:left;
   background:url(../imgs/misc/panbg.png) repeat-x;
   border-top: 0;
@@ -692,7 +702,7 @@ span.button button, del.button span, span.button input {
   margin-top:2px;
   margin-bottom:2px;
   cursor: pointer;
-  display: inline;
+  display: inline-block;
   float:left;
 }
 
