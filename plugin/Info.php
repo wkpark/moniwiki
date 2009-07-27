@@ -16,7 +16,13 @@ function _parse_rlog($formatter,$log,$options=array()) {
   else if (isset($DBInfo->info_actions))
     $actions=$DBInfo->info_actions;
   else
-    $actions=array('recall'=>'view','raw'=>'source');
+    $actions=array('recall'=>'view','raw'=>'source','diff'=>'diff');
+
+  $diff_action = null;
+  if (isset($actions['diff'])) {
+    $diff_action = _($actions['diff']);
+    unset($actions['diff']);
+  }
 
   $state=0;
   $flag=0;
@@ -34,17 +40,19 @@ function _parse_rlog($formatter,$log,$options=array()) {
   else
     $out.="<h2>"._("Revision History")."</h2>\n";
   $out.="<form id='infoform' method='post' action='$url'>";
-  $out.="<div><table class='info'><tr class='head'>\n";
+  $out.="<div><table class='info'><thead><tr>\n";
   $out.="<th>"._("Ver.")."</th><th>"._("Date")."</th>".
        "<th>"._("Changes")."</th>".
        "<th>"._("Editor")."</th>".
-       "<th><button type='submit'><span>$diff_btn</span></button></th>";
+       "<th><button type='submit'><span>$diff_btn</span></button></th>\n";
   if (!$simple) {
-    $out.="<th>"._("View")."</th>";
+    if (!empty($actions))
+      $out.="<th>"._("View")."</th>";
     if (isset($admin)) $out.= "<th>"._("admin.")."</th>";
   }
-  $out.= "</tr>\n";
+  $out.= "</tr>\n</thead>\n";
 
+  $out.= "<tbody>\n";
   $users=array();
   $rr=0;
  
@@ -155,7 +163,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
 
          $rrev= $rrev ? $rrev:$formatter->link_to("?action=recall&rev=$rev",$rev);
          $out.="<tr>\n";
-         $out.="<th class='rev' valign='top' rowspan=$rowspan>$rrev</th><td nowrap='nowrap'>$inf</td><td>$change</td><td>$ip&nbsp;</td>";
+         $out.="<th class='rev' valign='top' rowspan=$rowspan>$rrev</th><td nowrap='nowrap' class='date'>$inf</td><td class='change'>$change</td><td class='author'>$ip&nbsp;</td>";
          $rrev='';
          $achecked="";
          $bchecked="";
@@ -164,17 +172,18 @@ function _parse_rlog($formatter,$log,$options=array()) {
          else if (!$flag)
             $bchecked="checked ";
          $onclick="onclick='ToggleRev(this)'";
-         $out.="<th nowrap='nowrap'><input type='radio' name='rev' value='$rev' $achecked $onclick />";
+         $out.="<th nowrap='nowrap' class='check'><input type='radio' name='rev' value='$rev' $achecked $onclick />\n";
          $out.="<input type='radio' name='rev2' value='$rev' $bchecked $onclick /></th>";
 
          if (!$simple):
          $out.="<td nowrap='nowrap'>";
          foreach ($actions as $k=>$v) {
            $k=is_numeric($k) ? $v:$k;
-           $out.=$formatter->link_to("?action=$k&amp;rev=$rev",'<span>'._($v).'</span>', ' class="button small"').' ';
+           $out.=$formatter->link_to("?action=$k&amp;rev=$rev",'<span>'._($v).'</span>', ' class="button-small"').' ';
          }
          if ($flag) {
-            $out.= " ".$formatter->link_to("?action=diff&amp;rev=$rev",'<span>'._("diff").'</span>', ' class="button small"');
+            if ($diff_action)
+              $out.= " ".$formatter->link_to("?action=diff&amp;rev=$rev",'<span>'.$diff_action.'</span>', ' class="button-small"');
             $out.="</td>";
             if (isset($admin))
               $out.=
@@ -188,7 +197,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
          endif;
          $out.="</tr>\n";
          if (!$simple and $comment)
-            $out.="<tr><td class='info' colspan='5'>$comment&nbsp;</td></tr>\n";
+            $out.="<tr class='log'><td colspan='5'>$comment&nbsp;</td></tr>\n";
          $state=1;
          $flag++;
          $count++;
@@ -203,7 +212,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
   }
   $out.="<input type='submit' name='rcspurge' value='"._("purge")."'></td></tr>";
   endif;
-  $out.="<input type='hidden' name='action' value='diff'/></table></div></form>\n";
+  $out.="<input type='hidden' name='action' value='diff'/>\n</tbody></table></div></form>\n";
   $out.="<script type='text/javascript' src='$DBInfo->url_prefix/local/checkbox.js'></script></div>\n";
   return $out; 
 }
