@@ -95,6 +95,8 @@ form { margin:0; padding:0;/* for IE */}
 input { font-size:1em; padding:2px; /* for IE */ }
 button { font-size:1em; padding:2px; /* for IE */ }
 
+label { padding-right:3px; }
+
 #editor_info ul {list-style:none; margin:2px 0 2px 0; padding:0;}
 #editor_info li {padding:2px;}
 
