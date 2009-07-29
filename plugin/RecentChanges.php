@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2009 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a RecentChanges plugin for the MoniWiki
 //
@@ -13,6 +13,27 @@ function do_RecentChanges($formatter,$options='') {
   print macro_RecentChanges($formatter,'nobookmark,moztab',array('target'=>'_content'));
   print "</div></body></html>";
   return;
+}
+
+function _timesago($timestamp, $date_fmt='Y-m-d', $tz_offset = 0) {
+	// FIXME use $sys_datafmt ?
+	$time_current = time();
+	$diff=(int)($time_current - $timestamp);
+
+	if ($diff < 0) {
+		$ago = gmdate( $date_fmt, $timestamp + $tz_offset);
+		return $ago;
+	}
+	if ($diff < 60*60 or $diff < 0) {
+		$ago = sprintf(_("%d minute ago"),(int)($diff / 60), $diff % 60);
+	} else if ( $diff < 60*60*24) {
+		$ago = sprintf(_("%d hours ago"),(int)($diff / 60 / 60), ($diff / 60) % 60);
+	} else if ( $diff < 60*60*24*7*2) {
+		$ago = sprintf(_("%d days ago"),(int)($diff / 60 / 60 / 24), ($diff / 60 / 60) % 24);
+	} else {
+		$ago = gmdate( $date_fmt, $timestamp + $tz_offset);
+	}
+	return $ago;
 }
 
 function macro_RecentChanges($formatter,$value='',$options='') {
@@ -82,9 +103,18 @@ define('RC_DEFAULT_DAYS',7);
         $changed_time_fmt = 'm-d [H:i]';
         $use_day=0;
         $template_bra="<table border='0' cellpadding='0' cellspacing='0' width='100%'>";
+        $template_bra.="<thead><th colspan='3' class='title'>"._("Title")."</th><th class='date'>"._("Change Date").
+          "</th><th class='author'>"._("Editor")."</th><th class='editinfo'>"._("Changes").'</th>';
+        if ($DBInfo->use_counter)
+          $template_bra.="<th class='hits'>"._("Hits")."</th>";
+        $template_bra.="</thead>\n<tbody>\n";
         $template=
-  '$out.= "<tr$alt><td style=\'white-space:nowrap;width:2%\'>$icon</td><td style=\'width:40%\'>$title$updated</td><td class=\'date\' style=\'width:15%\'>$date</td><td class=\'user\'>$user</td><td class=\'editinfo\'>$count</td><td>$extra</td><td class=\'hits\'>$hits</td></tr>\n";';
-        $template_cat="</table>";
+  '$out.= "<tr$alt><td style=\'white-space:nowrap;width:2%\'>$icon</td><td class=\'title\' style=\'width:40%\'>$title$updated</td><td>$bmark</td><td class=\'date\' style=\'width:15%\'>$date</td><td class=\'author\'>$user</td><td class=\'editinfo\'>$count</td>';
+        if ($DBInfo->use_counter)
+          $template.='<td class=\'hits\'>$hits</td>';
+        $template_extra=$template.'</tr>\n<tr><td class=\'log\' colspan=\'6\'>$extra</td></tr>\n";';
+        $template.='</tr>\n";';
+        $template_cat="</tbody></table>";
       }
     }
   }
@@ -208,13 +238,17 @@ define('RC_DEFAULT_DAYS',7);
     if (! empty($changed_time_fmt)) {
       $date= gmdate($changed_time_fmt, $ed_time+$tz_offset);
       if ($timesago) {
+        $date = _timesago($ed_time, 'Y-m-d', $tz_offset);
+        /*
         $time_diff=(int)($time_current - $ed_time)/60;
         if ($time_diff < 1440) {
           $date=sprintf(_("[%sh %sm ago]"),(int)($time_diff/60),$time_diff%60);
         }
+        */
       }
     }
 
+    $bmark = '';
     if ($day != $ratchet_day) {
       $ratchet_day = $day;
       if (!empty($use_day)) {
@@ -232,6 +266,8 @@ define('RC_DEFAULT_DAYS',7);
         $br="<br />";
         $out.='</span>'.$perma.'<br />'.$bra;
         $cat0=$cat;
+      } else {
+        $bmark=$formatter->link_to("?action=bookmark&amp;time=$ed_time".$daysago,'<span>'._("Bookmark").'</span>', 'class="button-small"');
       }
     }
     if (empty($use_day)) {
@@ -297,17 +333,22 @@ define('RC_DEFAULT_DAYS',7);
     }
     $count=""; $extra="";
     if ($editcount[$page_key] > 1)
-      $count=" [".$editcount[$page_key]." changes]";
+      $count=sprintf(_("%s changes"), " <span class='num'>".$editcount[$page_key]."</span>");
     if ($comment && $log)
       $extra="&nbsp; &nbsp; &nbsp; <small>$log</small>";
 
     $alt = ($ii % 2 == 0) ? ' class="alt"':'';
-    eval($template);
+    if ($extra and isset($template_extra)) {
+      eval($template_extra);
+    } else {
+      eval($template);
+    }
 
     $logs[$page_key]= 1;
     ++$ii;
   }
-  return $btnlist.'<div class="recentChanges">'.$template_bra.$out.$template_cat.$cat0.'</div>';
+  $title = "<h2>"._("Recent Changes")."</h2>";
+  return $btnlist.'<div class="recentChanges">'.$title.$template_bra.$out.$template_cat.$cat0.'</div>';
 }
 // vim:et:sts=2:
 ?>

@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2004 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2009 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a Info plugin for the MoniWiki
 //
@@ -176,7 +176,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
          $out.="<input type='radio' name='rev2' value='$rev' $bchecked $onclick /></th>";
 
          if (!$simple):
-         $out.="<td nowrap='nowrap'>";
+         $out.="<td nowrap='nowrap' class='view'>";
          foreach ($actions as $k=>$v) {
            $k=is_numeric($k) ? $v:$k;
            $out.=$formatter->link_to("?action=$k&amp;rev=$rev",'<span>'._($v).'</span>', ' class="button-small"').' ';
