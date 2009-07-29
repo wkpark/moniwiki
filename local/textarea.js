@@ -141,6 +141,7 @@ function textArea(element,wrapper) {
   //this.wrapper.style.height = this.dimensions.height + this.grippie.dimensions.height + 1 +'px';
   this.element.style.marginBottom = '0px';
   this.element.style.width = '100%';
+  //this.element.style.marginLeft = '0'; // XXX
   this.element.style.height = this.dimensions.height +'px';
 
   // Wrap textarea

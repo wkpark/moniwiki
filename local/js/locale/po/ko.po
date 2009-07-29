@@ -16,203 +16,129 @@ msgstr ""
 msgid "undefined"
 msgstr ""
 
-#: ../../moniwyg.js:2022
+#: ../../moniwyg.js:2057
 msgid "Save"
 msgstr "저장"
 
-#: ../../moniwyg.js:2023
+#: ../../moniwyg.js:2058
 msgid "Preview"
 msgstr "미리보기"
 
-#: ../../moniwyg.js:2024
+#: ../../moniwyg.js:2059
 msgid "Cancel"
 msgstr "취소"
 
-#: ../../moniwyg.js:2025
+#: ../../moniwyg.js:2060
 msgid "Bold (Ctrl+b)"
 msgstr "굵게 (Ctrl-b)"
 
-#: ../../moniwyg.js:2026
+#: ../../moniwyg.js:2061
 msgid "Italic (Ctrl+i)"
 msgstr "기울임 (Ctrl+i)"
 
-#: ../../moniwyg.js:2027
+#: ../../moniwyg.js:2062
 msgid "Underline (Ctrl+u)"
 msgstr "밑줄 (Ctrl+u)"
 
-#: ../../moniwyg.js:2028
+#: ../../moniwyg.js:2063
 msgid "Strike Through (Ctrl+d)"
 msgstr "삭제선 (Ctrl+d)"
 
-#: ../../moniwyg.js:2029
+#: ../../moniwyg.js:2064
 msgid "Horizontal Rule"
 msgstr "수평줄"
 
-#: ../../moniwyg.js:2030
+#: ../../moniwyg.js:2065
 msgid "Numbered List"
 msgstr "숫자 리스트"
 
-#: ../../moniwyg.js:2031
+#: ../../moniwyg.js:2066
 msgid "Bulleted List"
 msgstr "총알 리스트"
 
-#: ../../moniwyg.js:2032
+#: ../../moniwyg.js:2067
 msgid "More Indented"
 msgstr "들여쓰기"
 
-#: ../../moniwyg.js:2033
+#: ../../moniwyg.js:2068
 msgid "Less Indented"
 msgstr "내어쓰기"
 
-#: ../../moniwyg.js:2034
+#: ../../moniwyg.js:2069
 msgid "About Wikiwyg"
 msgstr "Wikiwyg는"
 
-#: ../../moniwyg.js:2035
+#: ../../moniwyg.js:2070
 msgid "[Style]"
 msgstr ""
 
-#: ../../moniwyg.js:2036
+#: ../../moniwyg.js:2071
 msgid "Normal Text"
 msgstr "일반 글씨"
 
-#: ../../moniwyg.js:2037
+#: ../../moniwyg.js:2072
 msgid "Preformatted"
 msgstr ""
 
-#: ../../moniwyg.js:2038
+#: ../../moniwyg.js:2073
 msgid "Heading 1"
 msgstr "제목 1"
 
-#: ../../moniwyg.js:2039
+#: ../../moniwyg.js:2074
 msgid "Heading 2"
 msgstr "제목 2"
 
-#: ../../moniwyg.js:2040
+#: ../../moniwyg.js:2075
 msgid "Heading 3"
 msgstr "제목 3"
 
-#: ../../moniwyg.js:2041
+#: ../../moniwyg.js:2076
 msgid "Heading 4"
 msgstr "제목 4"
 
-#: ../../moniwyg.js:2042
+#: ../../moniwyg.js:2077
 msgid "Heading 5"
 msgstr "제목 5"
 
-#: ../../moniwyg.js:2043
+#: ../../moniwyg.js:2078
 msgid "Heading 6"
 msgstr "제목 6"
 
-#: ../../moniwyg.js:2044
+#: ../../moniwyg.js:2079
 msgid "Create Link"
 msgstr "링크 생성"
 
-#: ../../moniwyg.js:2045 ../../../plugin/EditToolbar.php:40
+#: ../../moniwyg.js:2080
 msgid "Smiley"
 msgstr "스마일리"
 
-#: ../../moniwyg.js:2046
+#: ../../moniwyg.js:2081
 msgid "Remove Linkedness"
 msgstr "링크 제거"
 
-#: ../../moniwyg.js:2047
+#: ../../moniwyg.js:2082
 msgid "Create Table"
 msgstr "테이블"
 
-#: ../../moniwyg.js:2048
+#: ../../moniwyg.js:2083
 msgid "Math"
 msgstr "수식"
 
-#: ../../moniwyg.js:2049
+#: ../../moniwyg.js:2084
 msgid "As Is"
 msgstr "그대로"
 
-#: ../../moniwyg.js:2050
+#: ../../moniwyg.js:2085
 msgid "Image"
 msgstr "이미지"
 
-#: ../../moniwyg.js:2051
+#: ../../moniwyg.js:2086
 msgid "Media"
 msgstr "미디어"
 
-#: ../../moniwyg.js:2052
+#: ../../moniwyg.js:2087
 msgid "Quote"
 msgstr "인용"
-
-#: ../../../plugin/EditToolbar.php:30
-msgid "Bold text"
-msgstr "굵게"
-
-#: ../../../plugin/EditToolbar.php:31
-msgid "Italic text"
-msgstr "기울임"
-
-#: ../../../plugin/EditToolbar.php:32
-msgid "Internal link"
-msgstr "내부링크"
-
-#: ../../../plugin/EditToolbar.php:32
-msgid "Link title"
-msgstr "링크 제목"
-
-#: ../../../plugin/EditToolbar.php:33
-msgid "External link (remember http:// prefix)"
-msgstr "외부 링크 (http://로 가리키는)"
-
-#: ../../../plugin/EditToolbar.php:33
-msgid "http://www.example.com link title"
-msgstr "http://www.example.com 링크 제목"
-
-#: ../../../plugin/EditToolbar.php:34
-msgid "Level 2 headline"
-msgstr "제목 2"
-
-#: ../../../plugin/EditToolbar.php:34
-msgid "Headline text"
-msgstr "제목"
-
-#: ../../../plugin/EditToolbar.php:35
-msgid "Mathematical formula (LaTeX)"
-msgstr "수식 넣기 (LaTeX)"
-
-#: ../../../plugin/EditToolbar.php:35
-msgid "Insert latex formula here"
-msgstr "LaTeX 수식을 넣으세요"
-
-#: ../../../plugin/EditToolbar.php:36
-msgid "Ignore wiki formatting"
-msgstr "위키 포맷 무시"
-
-#: ../../../plugin/EditToolbar.php:36
-msgid "Insert non-formatted text here"
-msgstr "포맷없는 텍스트를 넣으세요"
-
-#: ../../../plugin/EditToolbar.php:37
-msgid "Horizontal line (use sparingly)"
-msgstr "수평줄 (조금만 쓰세요)"
-
-#: ../../../plugin/EditToolbar.php:38
-msgid "Embedded image"
-msgstr "이미지 넣기"
-
-#: ../../../plugin/EditToolbar.php:39
-msgid "Media file link"
-msgstr "미디어 파일 링크"
-
-#: ../../../plugin/EditToolbar.php:41
-msgid "Your signature with timestamp"
-msgstr "서명 넣기 (시간과 함께)"
-
-#: ../../../plugin/EditToolbar.php:42
-msgid "Click a button to get an example text"
-msgstr "버튼을 누르면 예제 텍스트가 들어갑니다"
-
-#: ../../../plugin/EditToolbar.php:42
-msgid ""
-"Please enter the text you want to be formatted.\\\\n It will be shown in the "
-"infobox for copy and pasting.\\\\nExample:\\\\n\\$1\\\\nwill become:\\\\n\\$2"
-msgstr ""
 
 #: dummy.js:1
 msgid "Continue to edit current text ?"
@@ -259,3 +185,54 @@ msgstr "텍스트 보기"
 #: dummy.js:14
 msgid "Toggle line numbers"
 msgstr "줄 번호 토글"
+
+#~ msgid "Bold text"
+#~ msgstr "굵게"
+
+#~ msgid "Italic text"
+#~ msgstr "기울임"
+
+#~ msgid "Internal link"
+#~ msgstr "내부링크"
+
+#~ msgid "Link title"
+#~ msgstr "링크 제목"
+
+#~ msgid "External link (remember http:// prefix)"
+#~ msgstr "외부 링크 (http://로 가리키는)"
+
+#~ msgid "http://www.example.com link title"
+#~ msgstr "http://www.example.com 링크 제목"
+
+#~ msgid "Level 2 headline"
+#~ msgstr "제목 2"
+
+#~ msgid "Headline text"
+#~ msgstr "제목"
+
+#~ msgid "Mathematical formula (LaTeX)"
+#~ msgstr "수식 넣기 (LaTeX)"
+
+#~ msgid "Insert latex formula here"
+#~ msgstr "LaTeX 수식을 넣으세요"
+
+#~ msgid "Ignore wiki formatting"
+#~ msgstr "위키 포맷 무시"
+
+#~ msgid "Insert non-formatted text here"
+#~ msgstr "포맷없는 텍스트를 넣으세요"
+
+#~ msgid "Horizontal line (use sparingly)"
+#~ msgstr "수평줄 (조금만 쓰세요)"
+
+#~ msgid "Embedded image"
+#~ msgstr "이미지 넣기"
+
+#~ msgid "Media file link"
+#~ msgstr "미디어 파일 링크"
+
+#~ msgid "Your signature with timestamp"
+#~ msgstr "서명 넣기 (시간과 함께)"
+
+#~ msgid "Click a button to get an example text"
+#~ msgstr "버튼을 누르면 예제 텍스트가 들어갑니다"
