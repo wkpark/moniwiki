@@ -932,10 +932,15 @@ function macro_Edit($formatter,$value,$options='') {
   if (!$options['simple'])
     $form.= "<a id='editor'></a>\n";
 
-  if ($options['page'])
-    $previewurl=$formatter->link_url(_rawurlencode($options['page']),'#preview');
+  if (isset($DBInfo->use_preview_anchor))
+    $preview_anchor = '#preview';
   else
-    $previewurl=$formatter->link_url($formatter->page->urlname,'#preview');
+    $preview_anchor = '';
+
+  if ($options['page'])
+    $previewurl=$formatter->link_url(_rawurlencode($options['page']), $preview_anchor);
+  else
+    $previewurl=$formatter->link_url($formatter->page->urlname, $preview_anchor);
 
   $menu= ''; $sep= '';
   if (!$DBInfo->use_resizer and (!$options['noresizer'] or !$use_js)) {
