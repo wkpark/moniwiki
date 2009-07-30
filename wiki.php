@@ -233,13 +233,13 @@ FORM;
   }
 }
 
-function kbd_handler() {
+function kbd_handler($prefix = '') {
   global $Config;
 
   if (!$Config['kbd_script']) return '';
-  $prefix=get_scriptname();
+  $prefix ? null : $prefix = get_scriptname();
   $sep= $Config['query_prefix'];
-  print <<<EOS
+  return <<<EOS
 <script type="text/javascript">
 /*<![CDATA[*/
 url_prefix="$prefix";
@@ -4244,7 +4244,7 @@ class Formatter {
       $options['redirect']=1;
       $this->pi['#redirect']='';
       do_goto($this,$options);
-      return;
+      return true;
     }
     $header = !empty($header) ? $header:(!empty($options['header']) ? $options['header']:null) ;
     #print_r($header);
@@ -4273,7 +4273,7 @@ class Formatter {
 #    if (!$plain)
 #      $this->header('Content-type: '.$content_type);
 
-    if ($options['action_mode']=='ajax') return;
+    if ($options['action_mode']=='ajax') return true;
 
     if (isset($this->pi['#noindex'])) {
       $metatags='<meta name="robots" content="noindex,nofollow" />'."\n";
@@ -4350,38 +4350,41 @@ class Formatter {
           htmlspecialchars($options['title']);
       }
       if (empty($options['css_url'])) $options['css_url']=$DBInfo->css_url;
-      if (!$this->pi['#nodtd']) print $DBInfo->doctype;
-      print "<head>\n";
+      if (!$this->pi['#nodtd'] and !isset($options['retstr']) and $this->_newtheme != 2) echo $DBInfo->doctype;
+      if ((isset($this->_newtheme) and $this->_newtheme == 2) or isset($options['retstr']))
+        ob_start();
+      else
+        echo "<head>\n";
 
-      print '<meta http-equiv="Content-Type" content="'.$content_type.
+      echo '<meta http-equiv="Content-Type" content="'.$content_type.
         ';charset='.$DBInfo->charset."\" />\n";
-      print <<<JSHEAD
+      echo <<<JSHEAD
 <script type="text/javascript">
 /*<![CDATA[*/
 _url_prefix="$DBInfo->url_prefix";
 /*]]>*/
 </script>
 JSHEAD;
-      print $metatags.$js."\n";
-      print $this->get_javascripts();
-      print $keywords;
-      print "  <title>$DBInfo->sitename: ".$options['title']."</title>\n";
+      echo $metatags.$js."\n";
+      echo $this->get_javascripts();
+      echo $keywords;
+      echo "  <title>$DBInfo->sitename: ".$options['title']."</title>\n";
       if ($upper)
-        print '  <link rel="Up" href="'.$this->link_url($upper)."\" />\n";
+        echo '  <link rel="Up" href="'.$this->link_url($upper)."\" />\n";
       $raw_url=$this->link_url($this->page->urlname,"?action=raw");
       $print_url=$this->link_url($this->page->urlname,"?action=print");
-      print '  <link rel="Alternate" title="Wiki Markup" href="'.
+      echo '  <link rel="Alternate" title="Wiki Markup" href="'.
         $raw_url."\" />\n";
-      print '  <link rel="Alternate" media="print" title="Print View" href="'.
+      echo '  <link rel="Alternate" media="print" title="Print View" href="'.
         $print_url."\" />\n";
       if ($options['css_url']) {
-        print '  <link rel="stylesheet" type="text/css" '.$media.' href="'.
+        echo '  <link rel="stylesheet" type="text/css" '.$media.' href="'.
           $options['css_url']."\" />\n";
         if (file_exists('./css/_user.css'))
-          print '  <link rel="stylesheet" media="screen" type="text/css" href="'.
+          echo '  <link rel="stylesheet" media="screen" type="text/css" href="'.
             $DBInfo->url_prefix."/css/_user.css\" />\n";
 # default CSS
-      } else print <<<EOS
+      } else echo <<<EOS
 <style type="text/css">
 <!--
 body {font-family:Georgia,Verdana,Lucida,sans-serif; background-color:#FFF9F9;}
@@ -4478,6 +4481,19 @@ div.message {
 EOS;
 
     }
+
+    echo kbd_handler(!empty($options['prefix']) ? $options['prefix'] : '');
+
+    if ((isset($this->_newtheme) and $this->_newtheme == 2) or isset($options['retstr'])) {
+      $ret = ob_get_contents();
+      ob_end_clean();
+      if (isset($options['retstr']))
+        $options['retstr'] = $ret;
+      $this->header_html = $ret;
+    } else {
+      echo "</head>\n";
+    }
+    return true;
   }
 
   function get_actions($args='',$options) {
@@ -4586,7 +4602,8 @@ FOOT;
       else print "<div id='wikiBanner'>$banner</div>\n";
       print "\n</div>\n";
     }
-    print "</body>\n</html>\n";
+    if (empty($this->_newtheme) or $this->_newtheme != 2)
+      print "</body>\n</html>\n";
     #include "prof_results.php";
   }
 
@@ -4854,13 +4871,17 @@ MSG;
     $this->_vars['menu']=$menu;
     $this->_vars['upper_icon']=$upper_icon;
     $this->_vars['home']=$home;
+    if (!empty($options['header']))
+      $this->_vars['header'] = $header = $options['header'];
+    else if (isset($this->_newtheme) and $this->_newtheme == 2 and !empty($this->header_html))
+      $this->_vars['header'] = $header = $this->header_html;
 
     # print the title
-    kbd_handler();
 
-    if (empty($this->newtheme) or $this->newtheme != 2) {
-      print "</head>\n<body $options[attr]>\n";
-      print '<div><a id="top" name="top" accesskey="t"></a></div>'."\n";
+    if (empty($this->_newtheme) or $this->_newtheme != 2) {
+      if ($this->_newtheme != 2)
+        echo "<body $options[attr]>\n";
+      echo '<div><a id="top" name="top" accesskey="t"></a></div>'."\n";
     }
     #
     if (file_exists($this->themedir."/header.php")) {
@@ -5297,9 +5318,14 @@ function get_frontpage($lang) {
 function wiki_main($options) {
   global $DBInfo,$Config;
   $pagename=$options['pagename'] ? $options['pagename']: $DBInfo->frontpage;
-  
+
   # get primary variables
   if ($_SERVER['REQUEST_METHOD']=="POST") {
+    if (isset($_POST['retstr']))
+      unset($_POST['retstr']);
+    if (isset($_POST['header']))
+      unset($_POST['header']);
+
     # hack for TWiki plugin
     if ($_FILES['filepath']['name']) $action='draw';
     if ($GLOBALS['HTTP_RAW_POST_DATA']) {
@@ -5321,6 +5347,11 @@ function wiki_main($options) {
     $goto=$_POST['goto'];
     $popup=$_POST['popup'];
   } else if ($_SERVER['REQUEST_METHOD']=="GET") {
+    if (isset($_GET['retstr']))
+      unset($_GET['retstr']);
+    if (isset($_POST['header']))
+      unset($_POST['header']);
+
     $action=$_GET['action'];
     $value=$_GET['value'];
     $goto=$_GET['goto'];
@@ -5380,7 +5411,7 @@ function wiki_main($options) {
       $options['title']=_("You are in the black list");
       $options['msg']=_("Please contact WikiMasters");
       do_invalid($formatter,$options);
-      return;
+      return false;
     }
   }
   if (!empty($DBInfo->kiwirian)) {
@@ -5391,7 +5422,7 @@ function wiki_main($options) {
       $options['title']=_("You are blocked in this wiki");
       $options['msg']=_("Please contact WikiMasters");
       do_invalid($formatter,$options);
-      return;
+      return false;
     }
   }
 
@@ -5399,13 +5430,15 @@ function wiki_main($options) {
     if ($value) { # ?value=Hello
       $options['value']=$value;
       do_goto($formatter,$options);
-      return;
+      return true;
     } else if ($goto) { # ?goto=Hello
       $options['value']=$goto;
       do_goto($formatter,$options);
-      return;
+      return true;
     }
     if (!$page->exists()) {
+      if (isset($options['retstr']))
+        return false;
       if ($DBInfo->auto_search && $action!='show' && $p=getPlugin($DBInfo->auto_search)) {
         $action=$DBInfo->auto_search;
         break;
@@ -5416,7 +5449,7 @@ function wiki_main($options) {
       if (!empty($options['is_robot']) or $Config['nofancy_404']) {
         $formatter->header($msg_404);
         print '<html><head></head><body><h1>'.$msg_404.'</h1></body></html>';
-        return;
+        return true;
       }
       $formatter->send_header($msg_404,$options);
 
@@ -5497,7 +5530,8 @@ function wiki_main($options) {
     if ($DBInfo->body_attr)
       $options['attr']=$DBInfo->body_attr;
 
-    $formatter->send_header("",$options);
+    $ret = $formatter->send_header('', $options);
+
     if (empty($options['is_robot'])) {
       $formatter->send_title("","",$options);
     }
@@ -5684,6 +5718,7 @@ function wiki_main($options) {
         $options=array_merge($_POST,$options);
       else
         $options=array_merge($_GET,$options);
+
       call_user_func("do_$plugin",$formatter,$options);
       return;
     } else if (function_exists("do_post_".$plugin)) {
