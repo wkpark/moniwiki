@@ -12,6 +12,7 @@ function macro_UploadForm($formatter,$value) {
     static $id=1;
 
     $use_fake = 1;
+    $hide_btn = 1;
 
     $msg = _("Choose File");
     if ($id==1)
@@ -53,6 +54,13 @@ function addRow(id, size) {
     newInput.setAttribute('style', 'font-size:14px;position:absolute;width:65px;right:0;padding:0;filter:alpha(opacity=0);opacity:0;cursor:pointer;');
 
 EOF;
+    if ($id == 1 and $hide_btn)
+        $script .=<<<EOF
+    var btn = document.getElementById('button-' + id);
+    btn.setAttribute('style','display:inline-block;');
+    btn.style.display = 'inline-block';
+
+EOF;
     if ($id == 1 and $use_fake)
         $script.=<<<EOF
     newInput.className = 'form-file';
@@ -67,7 +75,7 @@ EOF;
     fakeInp.setAttribute('readonly', 'true');
     if (document.all)
         fakeInp.readOnly = true; // for IE
-    fakeInp.onclick = function() {if (this.value) { this.value = ''; newInput.value = ''; } else {delRow(this);} };
+    fakeInp.onclick = function() {if (this.value) { this.value = ''; newInput.value = ''; } else {delRow(id,this);} };
 
     var addbtn = document.createElement('button');
     var span2 = document.createElement('span');
@@ -92,8 +100,27 @@ EOF;
         $script .=<<<EOF
 }
 
-function delRow(obj) {
-    obj.parentNode.parentNode.parentNode.removeChild(obj.parentNode.parentNode);
+function delRow(id,obj) {
+    obj.parentNode.parentNode.parentNode.parentNode.removeChild(obj.parentNode.parentNode.parentNode);
+
+EOF;
+    if ($id == 1 and $hide_btn)
+        $script .=<<<EOF
+    var form = document.getElementById("form-" + id);
+    var inputs = form.getElementsByTagName('input');
+    var mysubmit = null;
+    for (i = 0; i < inputs.length; i++) {
+        if (inputs[i].type == 'file') {
+            return;
+        }
+    }
+    var btn = document.getElementById('button-' + id);
+    btn.style.display = 'none';
+
+EOF;
+    if ($id == 1)
+        $script .=<<<EOF
+    
 }
 
 function check_attach(id) {
@@ -159,9 +186,6 @@ EOS;
       <td>
         <table cellspacing="0" cellpadding="0" border="0">
           <tbody id="upload$id">
-            <tr>
-              <td></td>
-            </tr>
           </tbody>
         </table>
       </td>
@@ -172,7 +196,7 @@ EOS;
   <button type='button' class='add-file' onclick="addRow('upload$id')"><span>$msg2</span></button>
   <input type="hidden" name="uploadid" value="upload$id" />
   <input type="hidden" name="popup" value="1" />
-  <button type="submit" class='upload-file' onclick="check_attach('upload$id')" name="upload"><span>$msg3</span></button>
+  <button type="submit" class='upload-file' id='button-upload$id' onclick="check_attach('upload$id')" name="upload"><span>$msg3</span></button>
   <!-- <input type="reset" name="reset" value="$msg4" /> -->
       </div>
       </td>
@@ -182,6 +206,9 @@ EOS;
   </form>
 <script type="text/javascript">
 /*<![CDATA[*/
+(function () {
+    var btn = document.getElementById('button-upload$id'); btn.style.display = 'none';
+})();
 //addRow('upload$id');
 /*]]>*/
 </script>
