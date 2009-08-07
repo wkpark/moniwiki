@@ -877,7 +877,7 @@ class _HWLDF_WordAccumulator {
         $this->_flushGroup($new_tag);
         $tag_open = '';
         $tag_close = '';
-        if ($this->_tag) {
+        if ($this->_tag and $this->_tag != '~done') {
             $tag_open = str_replace(array('ins','del'),array('div','div'),$this->_tag_open[$this->_tag]);
             $tag_close = str_replace(array('ins','del'),array('div','div'),$this->_tag_close[$this->_tag]);
         }
