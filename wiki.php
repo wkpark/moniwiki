@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.1.4-RC1';
+$_release = '1.1.4-RC2';
 
 #ob_start("ob_gzhandler");
 
@@ -2869,7 +2869,7 @@ class Formatter {
     return $bra.$ret.$ket;
   }
 
-  function processor_repl($processor,$value,&$options) {
+  function processor_repl($processor,$value, $options = false) {
     $bra='';$ket='';
     if (!empty($this->wikimarkup) and empty($options['nomarkup'])) {
       if ($options['type'] == 'inline') {
