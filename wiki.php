@@ -3278,7 +3278,7 @@ class Formatter {
       foreach ($myattr as $k=>$v) $my.=$k.'="'.$v.'" ';
     }
     else $my='class="wiki"';
-    return "<table cellpadding='3' cellspacing='2' $my>\n";
+    return "<table cellspacing='0' $my>\n";
   }
 
   function _purple() {

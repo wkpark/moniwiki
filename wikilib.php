@@ -692,13 +692,15 @@ function macro_EditText($formatter,$value,$options) {
   }
   $js = '';
   if (empty($DBInfo->edit_with_sidebar))
-    $sidebar_style="#wikiSideMenuContainer { display: none; }\n";
+    $sidebar_style="#wikiSideMenu { display: none; }\n";
   if ($has_form) {
     $js=<<<JS
 <style type='text/css'>
+/*<![CDATA[*/
 #mycontent button.save-button { display: none; }
 button.save-button { display: none; }
 $sidebar_style
+/*]]>*/
 </style>
 <script type='text/javascript'>
 /*<![CDATA[*/
@@ -1096,7 +1098,7 @@ EOS;
 <div id="editor_area">
 $formh
 <div class="resizable-textarea" style='position:relative'><!-- IE hack -->
-<textarea id="content" wrap="virtual" name="savetext" tabindex="1"
+<textarea id="wikicontent" wrap="virtual" name="savetext" tabindex="1"
  rows="$rows" cols="$cols" class="wiki resizable">$raw_body</textarea>
 $captcha
 </div>
