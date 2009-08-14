@@ -4480,18 +4480,17 @@ div.message {
 </style>
 EOS;
 
-    }
+      echo kbd_handler(!empty($options['prefix']) ? $options['prefix'] : '');
 
-    echo kbd_handler(!empty($options['prefix']) ? $options['prefix'] : '');
-
-    if ((isset($this->_newtheme) and $this->_newtheme == 2) or isset($options['retstr'])) {
-      $ret = ob_get_contents();
-      ob_end_clean();
-      if (isset($options['retstr']))
-        $options['retstr'] = $ret;
-      $this->header_html = $ret;
-    } else {
-      echo "</head>\n";
+      if ((isset($this->_newtheme) and $this->_newtheme == 2) or isset($options['retstr'])) {
+        $ret = ob_get_contents();
+        ob_end_clean();
+        if (isset($options['retstr']))
+          $options['retstr'] = $ret;
+        $this->header_html = $ret;
+      } else {
+        echo "</head>\n";
+      }
     }
     return true;
   }
