@@ -139,10 +139,6 @@ table.info {
   padding:3px;
 }
 
-h1,h2,h3,h4,h5 {
-  font-family:sans-serif;
-}
-
 div.diff-added, tr.diff-added {
   background-color:#ccffcc;
 }
@@ -255,7 +251,7 @@ div.closure {
 #wikiHeader a:visited {color:#505050;}
 
 .wikiTitle {
-  font-family:Trebuchet MS,Georgia,Verdana,sans-serif;
+  font-family:sans-serif;
   font-size:28px;
   font-weight:bold;
   display:block;
