@@ -90,10 +90,7 @@ textarea {
   font-size:14px; width:100%;
 }
 
-form { margin:0; padding:0;/* for IE */}
-
-input { font-size:1em; padding:2px; /* for IE */ }
-button { font-size:1em; padding:2px; /* for IE */ }
+form, input, button { margin:0; padding:0;/* for IE */}
 
 label { padding-right:3px; }
 

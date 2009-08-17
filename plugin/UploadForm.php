@@ -51,7 +51,9 @@ function addRow(id, size) {
     newInput.setAttribute('type', 'file');
     newInput.setAttribute('name', 'upfile[]');
     newInput.setAttribute('size', size);
-    newInput.setAttribute('style', 'font-size:14px;position:absolute;width:65px;right:0;padding:0;filter:alpha(opacity=0);opacity:0;cursor:pointer;');
+    newInput.style.position = 'absolute'; // IE
+    newInput.style.left = -8; // IE
+    newInput.setAttribute('style', 'position:absolute;left:-5;');
 
 EOF;
     if ($id == 1 and $hide_btn)
@@ -68,6 +70,7 @@ EOF;
     newInput.onchange = function() { fakeInp.value = this.value.replace(/^.*[\\\\]/g, '');};
 
     var span = document.createElement('span');
+    span.style.position='relative';
     var fakeInp = document.createElement('input');
     fakeInp.setAttribute('type', 'text');
     fakeInp.setAttribute('size', size);

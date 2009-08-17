@@ -73,10 +73,9 @@ class Security_nforge extends Security {
   function is_protected($action="read",&$options) {
     $perm =& $this->DB->group->getPermission( session_get_user() );
     // check if the user is docman's admin
-    if (!$perm || $perm->isError() || !$perm->isDocEditor() || !$perm->isAdmin()) {
-      return 1;
-    } else {
-      return 0;
+    if ($perm and !$perm->isError()) {
+      if ($perm->isDocEditor() || $perm->isAdmin())
+        return 0;
     }
 
     # password protected POST actions
