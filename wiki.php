@@ -2732,7 +2732,7 @@ class Formatter {
         $link=strtok($word,';').';';$last=strtok('');
       } else
         $last=substr($word,1);
-      return "<span><a class='nonexistent' rel='nofollow' href='$url'>$link</a>".$last.'<span>';
+      return "<span><a class='nonexistent' rel='nofollow' href='$url'>$link</a>".$last.'</span>';
     }
     if (strtolower($DBInfo->charset) == 'utf-8')
       $utfword=$word;
@@ -2747,7 +2747,7 @@ class Formatter {
       }
       $tag=strtok($mbword,';').';'; $last=strtok('');
       if ($tag)
-        return "<span><a class='nonexistent' rel='nofollow' href='$url'>$tag</a>".$last.'<span>';
+        return "<span><a class='nonexistent' rel='nofollow' href='$url'>$tag</a>".$last.'</span>';
     }
     return "<a class='nonexistent nomarkup' rel='nofollow' href='$url'>?</a>$word";
   }
