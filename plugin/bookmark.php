@@ -23,14 +23,14 @@ function do_bookmark($formatter,$options) {
       # set the fake cookie
       $_COOKIE['MONI_BOOKMARK']=$bookmark;
       $user->bookmark=$bookmark;
-      $title = 'Bookmark Changed';
+      $title = _('Bookmark Changed');
     } else {
       $user->info['bookmark']=$bookmark;
       $DBInfo->udb->saveUser($user);
-      $title = 'Bookmark Changed';
+      $title = _('Bookmark Changed');
     }
   } else
-    $options['msg']="Invalid bookmark!";
+    $options['msg']=_("Invalid bookmark!");
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
   if (!$DBInfo->control_read or $DBInfo->security->is_allowed('read',$options)) {

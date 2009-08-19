@@ -34,6 +34,8 @@ class User_nforge extends WikiUser {
                 if (empty($tmp->info['nick']) or $tmp->info['nick']!=$u->data_array['realname']) {
                     // register user
                     $tmp->info['nick']=$u->data_array['realname'];
+                    if (!empty($DBInfo->use_homepage_url))
+                        $tmp->info['home']=util_make_url_u($u->getID(), true);
                     $udb->saveUser($tmp);
                 }
             } else {

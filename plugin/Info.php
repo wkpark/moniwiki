@@ -65,7 +65,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
       else {$state=1; continue;}
     }
     if ($state==1 and $ok==1) {
-      $lnk=$formatter->link_to("?action=info&all=1",_("Show all revisions"));
+      $lnk=$formatter->link_to("?action=info&all=1",'<span>'._("Show all revisions").'</span>',' class="button small"');
       $out.='<tr><td colspan="2"></td><th colspan="4">'.$lnk.'</th></tr>';
       break;
     }

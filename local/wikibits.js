@@ -264,9 +264,14 @@ function insertTags(tagOpen, tagClose, sampleText,replace) {
 
 		range.text = subst + endText;
 
-		range.setEndPoint('StartToStart', r);
+		if (replace == 3 ) {
+			range.setEndPoint('StartToEnd', r);
+		} else {
+			range.setEndPoint('StartToStart', r);
+		}
 		txtarea.focus();
-		range.select();
+		if (replace != 3 )
+			range.select();
 	// Mozilla
 	} else if(txtarea.selectionStart || txtarea.selectionStart == '0') {
 		var startPos = txtarea.selectionStart;
@@ -307,6 +312,9 @@ function insertTags(tagOpen, tagClose, sampleText,replace) {
 		txtarea.focus();
 		//set new selection
 		txtarea.selectionStart = startPos;
+		if (replace == 3 ) { // append
+			txtarea.selectionStart = startPos + subst.length;
+		}
 		txtarea.selectionEnd = startPos+subst.length;
 
 		txtarea.scrollTop = scrollTop;

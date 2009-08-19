@@ -315,7 +315,9 @@ define('RC_DEFAULT_DAYS',7);
           if (($p = strpos($uid,' '))!==false)
             $uid= substr($uid, 0, $p);
           $u = $DBInfo->udb->getUser($uid);
-          if (!empty($u->info['nick'])) {
+          if (!empty($u->info['home'])) {
+            $user = $formatter->link_repl('['.$u->info['home'].' '.$u->info['nick'].']');
+          } else if (!empty($u->info['nick'])) {
             $user = $formatter->link_repl('[wiki:'.$uid.' '.$u->info['nick'].']');
           }
           $users[$ouser] = $user;

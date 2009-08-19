@@ -399,7 +399,7 @@ class UserDB {
   }
 
   function saveUser($user,$options=array()) {
-    $config=array("css_url","datatime_fmt","email","bookmark","language",
+    $config=array("css_url","datatime_fmt","email","bookmark","language","home",
                   "name","nick","password","wikiname_add_spaces","subscribed_pages",
                   "scrapped_pages","quicklinks","theme","ticket","eticket",
 	  	  "tz_offset","npassword","nticket","idtype");
@@ -1849,10 +1849,11 @@ function do_post_savepage($formatter,$options) {
       }
     }
       
-    if ($ret == -1)
-      $options['msg'].=sprintf(_("%s is not editable"),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
-    else
-      $options['msg'].=sprintf(_("%s is saved"),$formatter->link_tag($formatter->page->urlname,"?action=show",htmlspecialchars($options['page'])));
+    if ($ret == -1) {
+      $options['title'] = sprintf(_("%s is not editable"),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
+    } else {
+      $options['title'] = sprintf(_("%s is saved"),$formatter->link_tag($formatter->page->urlname,"?action=show",htmlspecialchars($options['page'])));
+    }
 
     $myrefresh='';
     if ($DBInfo->use_save_refresh) {

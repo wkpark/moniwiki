@@ -340,7 +340,7 @@ function macro_UploadFile($formatter,$value='',$options='') {
     $multiform="<select name='multiform' />\n";
     for ($i=2;$i<=10;$i++)
       $multiform.="<option value='$i'>$i</option>\n";
-    $multiform.="</select><input type='submit' value='Multi upload form' />\n";
+    $multiform.="</select><button type='submit'><span>"._("Multi upload form")."</span></button>\n";
   }
 
   $url=$formatter->link_url($formatter->page->urlname);
@@ -360,10 +360,10 @@ function macro_UploadFile($formatter,$value='',$options='') {
     $form.= <<<EOF
    <input type='file' name='upfile$suffix' size='30' />
 EOF;
-    if ($count == 1) $form.="<input type='submit' value='Upload' />";
+    if ($count == 1) $form.="<button type='submit'><span>"._("Upload") ."</span></button>";
 
     if ($DBInfo->flashupload)
-      $form.=' '.sprintf(_("or %s."),$formatter->link_to('?action='.$DBInfo->flashupload,_("Upload files")));
+      $form.=' '.sprintf(_("or %s."),$formatter->link_to('?action='.$DBInfo->flashupload,_("Multiple Upload files")));
     $form.= <<<EOF
 <br/>
    $extra
@@ -371,7 +371,7 @@ EOF;
    <input type='radio' name='replace$suffix' value='0' checked='checked' />$msg2<br />\n
 EOF;
   }
-  if ($count > 1) $form.="<input type='submit' value='Upload files' />";
+  if ($count > 1) $form.="<button type='submit'><span>"._("Upload files")."</span></button>";
   $form.="</form>\n";
 
   if ($use_multi) {

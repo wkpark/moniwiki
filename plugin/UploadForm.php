@@ -14,7 +14,9 @@ function macro_UploadForm($formatter,$value) {
     $use_fake = 1;
     $hide_btn = 1;
 
+    $msg2 = _("Successfully Uploaded");
     $msg = _("Choose File");
+    $formatter->register_javascripts("wikibits.js");
     if ($id==1)
        $script=<<<EOF
 <script type="text/javascript">
@@ -130,11 +132,16 @@ function check_attach(id) {
     // check if the form has attached files.
     attach = document.getElementById(id);
     var ok = false;
+    files = '';
+    js = '';
+    var tmp = '';
     inputs = attach.getElementsByTagName('input');
     for (i = 0; i < inputs.length; i++) {
         if (inputs[i].type == 'file' && inputs[i].value != '') {
             ok = true;
-            break;
+            tmp = inputs[i].value.replace(/^.*[\\\\]/g, '');
+            files += 'attachment:'+tmp + "\\n";
+            js += "insertTags('attachment:',' ','" + tmp + "',3);";
         }
     }
     if (ok == false)
@@ -150,8 +157,7 @@ function check_attach(id) {
         }
 
         // TODO check success or fail
-        setTimeout("iframe.parentNode.removeChild(iframe);resetForm(attach)", 1500);
-        //alert(_("Successfully Uploaded"));
+        setTimeout("iframe.parentNode.removeChild(iframe);alert(files + '$msg2');"+js+"resetForm(attach)", 1500);
         return ok;
     }
     return ok;

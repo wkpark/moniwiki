@@ -168,7 +168,7 @@ EOF;
         $cancel_btn='';
     } else {
         $submit_btn='<span id="spanButtonPlaceHolder"><input type="file" name="upload" /></span>';
-        $cancel_btn="<input id='btnCancel' type='button' value='$btn3' onclick='swfu.cancelQueue();' disabled='disabled' />\n";
+        $cancel_btn="<button id='btnCancel' onclick='swfu.cancelQueue();' disabled='disabled' ><span>".$btn3."</span></button>\n";
         $swf_js=<<<EOF
 <script type="text/javascript">
 /*<![CDATA[*/
@@ -251,7 +251,7 @@ $swf_js
                 <input type='hidden' name='popup' value='1' />
                 $myoptions
                 $submit_btn
-		<input type='submit' value="$btn2" onclick='javascript:fileSubmit(this);' />
+		<button type='submit' onclick='javascript:fileSubmit(this);' ><span>$btn2</span></button>
                 $cancel_btn
 		</span>
             </form>
