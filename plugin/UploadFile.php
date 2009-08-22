@@ -332,9 +332,12 @@ EOF;
     $DBInfo->addLogEntry($key, $REMOTE_ADDR,$comment,"UPLOAD");
 
   if (!empty($options['action_mode']) and $options['action_mode'] == 'ajax') {
+    $err = implode("\\n", $err_msg);
+    $err = strip_tags($err);
+    if ($err) $err .= "\\n";
     echo '
     {"title": "' . str_replace(array('"','<'), array("'",'&lt;'), $title) . '",
-     "msg": ["' . strip_tags(implode("\\n", $msg )) . '"],
+     "msg": ["' . $err.strip_tags(implode("\\n", $msg )) . '"],
      "uploaded":' . $uploaded.',
      "files": ["' . implode("\"\n,\"", $upload_ok ) . '"]
     }';

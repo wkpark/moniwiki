@@ -169,6 +169,7 @@ function check_upload_result (iframe) {
         iframe.parentNode.removeChild(iframe);
         alert(ret['title'] + "\\n" + ret['msg']);
         for (var i = 0; i < ret['files'].length; i++) {
+            if (ret['files'][i] == '') continue;
             insertTags('attachment:',' ', ret['files'][i], 3);
         }
     }
