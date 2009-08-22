@@ -1006,6 +1006,7 @@ EOS;
   
     $myid=$user->id;
 
+    $comment=preg_replace("/\r\n|\r/", " ", $comment);
     $comment=strtr($comment,"\t"," ");
     $fp_editlog = fopen($this->editlog_name, 'a+');
     $time= time();
@@ -3011,7 +3012,7 @@ class Formatter {
       $pageurl=$this->page->urlname;
     if ($query_string{0}=='?') $attr=empty($attr) ? 'rel="nofollow"':$attr.' rel="nofollow"';
     $url=$this->link_url($pageurl,$query_string);
-    return sprintf("<a href=\"%s\" %s>%s</a>", $url, $attr, $text);
+    return sprintf("<a href=\"%s\" %s><span>%s</span></a>", $url, $attr, $text);
   }
 
   function link_to($query_string="",$text="",$attr="") {
@@ -4556,7 +4557,7 @@ EOS;
         $menu=$this->menu_bra.implode($this->menu_sep,$menus).$this->menu_cat;
       } else {
         $menu="<div id='wikiAction'>";
-        $menu.='<ul><li>'.implode("</li>\n<li>\n",$menus)."</li></ul>";
+        $menu.='<ul><li class="first">'.implode("</li>\n<li>\n",$menus)."</li></ul>";
         $menu.="</div>";
       }
     }
@@ -5124,25 +5125,24 @@ function set_locale($lang,$charset='') {
     'fr_FR'=>array('ISO-8859-1'),
     'ko_KR'=>array('EUC-KR','UHC'),
   );
+  $charset= strtoupper($charset);
   if ($lang == 'auto') {
     # get broswer's settings
     $langs=get_locales();
-    $lang= $langs[0];
+    $lang= $langs[0]; // XXX
+  }
+  // check server charset
+  $server_charset = '';
+  if (function_exists('nl_langinfo'))
+    $server_charset= nl_langinfo(CODESET);
 
-    $charset= strtoupper($charset);
-    # XXX
-    $server_charset = '';
-    if (function_exists('nl_langinfo'))
-      $server_charset= nl_langinfo(CODESET);
-
-    if ($charset == 'UTF-8') {
-      if ($charset != $server_charset) $lang.=".".$charset;
+  if ($charset == 'UTF-8') {
+    if ($charset != $server_charset) $lang.=".".$charset;
+  } else {
+    if ($supported[$lang] && in_array($charset,$supported[$lang])) {
+      return $lang.'.'.$charset;
     } else {
-      if ($supported[$lang] && in_array($charset,$supported[$lang])) {
-        return $lang.'.'.$charset;
-      } else {
-        return 'en_US'; // default
-      }
+      return 'en_US'; // default
     }
   }
   return $lang;

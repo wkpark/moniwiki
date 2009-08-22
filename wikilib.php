@@ -1636,6 +1636,7 @@ function do_post_savepage($formatter,$options) {
 
   $savetext=preg_replace("/\r\n|\r/", "\n", $savetext);
   $savetext=_stripslashes($savetext);
+  $comment=_stripslashes($options['comment']);
   $section_savetext='';
   if (isset($options['section'])) {
     if ($formatter->page->exists()) {
@@ -1738,6 +1739,13 @@ function do_post_savepage($formatter,$options) {
     $formatter->send_footer();
     return;
   }
+  if ($comment && (function_exists('mb_strlen') and mb_strlen($comment, $DBInfo->charset) > 256) or (strlen($comment) > 256) ) {
+    $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
+    $formatter->send_header("",$options);
+    $formatter->send_title(_("Too long Comment"),"",$options);
+    $formatter->send_footer();
+    return;
+  }
 
   // XXX captcha
   $use_any=0;
@@ -1833,7 +1841,6 @@ function do_post_savepage($formatter,$options) {
       }
     }
 
-    $comment=_stripslashes($options['comment']);
     $formatter->page->write($savetext);
     $ret=$DBInfo->savePage($formatter->page,$comment,$options);
     if (($ret != -1) and $DBInfo->notify and ($options['minor'] != 1)) {
