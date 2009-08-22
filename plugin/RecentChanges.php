@@ -6,12 +6,25 @@
 // $Id$
 
 function do_RecentChanges($formatter,$options='') {
+  global $DBInfo;
+  if ($options['moztab']) {
   $options['trail']='';
   $options['css_url']=$formatter->url_prefix.'/css/sidebar.css';
-  $formatter->send_header("",$options);
-  print "<div id='wikiBody'>";
-  print macro_RecentChanges($formatter,'nobookmark,moztab',array('target'=>'_content'));
-  print "</div></body></html>";
+    $arg = 'nobookmark,moztab';
+    $formatter->send_header('',$options);
+    echo "<div id='wikiBody'>";
+    echo macro_RecentChanges($formatter, $arg, array('target'=>'_content'));
+    echo "</div></body></html>";
+    return;
+  } else if (!empty($DBInfo->rc_options)) {
+    $arg = $DBInfo->rc_options;
+  } else {
+    $arg = 'table,comment,timesago,item=20';
+  }
+  $formatter->send_header('',$options);
+  $formatter->send_title('',$options);
+  echo macro_RecentChanges($formatter, $arg, $options);
+  $formatter->send_footer('',$options);
   return;
 }
 
@@ -267,7 +280,7 @@ define('RC_DEFAULT_DAYS',7);
         $out.='</span>'.$perma.'<br />'.$bra;
         $cat0=$cat;
       } else {
-        $bmark=$formatter->link_to("?action=bookmark&amp;time=$ed_time".$daysago,'<span>'._("Bookmark").'</span>', 'class="button-small"');
+        $bmark=$formatter->link_to("?action=bookmark&amp;time=$ed_time".$daysago,_("Bookmark"), 'class="button-small"');
       }
     }
     if (empty($use_day)) {
@@ -315,10 +328,14 @@ define('RC_DEFAULT_DAYS',7);
           if (($p = strpos($uid,' '))!==false)
             $uid= substr($uid, 0, $p);
           $u = $DBInfo->udb->getUser($uid);
-          if (!empty($u->info['home'])) {
+          if (!empty($u->info)) {
+            if (!empty($DBInfo->interwiki['User'])) {
+              $user = $formatter->link_repl('[wiki:User:'.$uid.' '.$u->info['nick'].']');
+            } else if (!empty($u->info['home'])) {
             $user = $formatter->link_repl('['.$u->info['home'].' '.$u->info['nick'].']');
           } else if (!empty($u->info['nick'])) {
             $user = $formatter->link_repl('[wiki:'.$uid.' '.$u->info['nick'].']');
+          }
           }
           $users[$ouser] = $user;
         } else if (strpos($user,' ')!==false) {
