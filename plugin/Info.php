@@ -138,9 +138,11 @@ function _parse_rlog($formatter,$log,$options=array()) {
              if (!empty($u->info['nick'])) {
                if ($DBInfo->interwiki['User']) {
                  $ip=$formatter->link_repl('[wiki:User:'.$user.' '.$u->info['nick'].']');
+               } else if (!empty($u->info['home'])) {
+                 $ip=$formatter->link_repl('['.$u->info['home'].' '.$u->info['nick'].']');
                } else {
-               $ip=$formatter->link_repl('[wiki:'.$user.' '.$u->info['nick'].']');
-             }
+                 $ip=$formatter->link_repl('[wiki:'.$user.' '.$u->info['nick'].']');
+               }
              }
              $users[$user]=$ip;
            } else if (strpos($user,' ') !== false) {
