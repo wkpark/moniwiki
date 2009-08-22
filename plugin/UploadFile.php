@@ -1,9 +1,31 @@
 <?php
-// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2009 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a UploadFile plugin for the MoniWiki
 //
 // $Id$
+
+function _upload_err_msg($error_code) {
+    switch ($error_code) { 
+    case UPLOAD_ERR_INI_SIZE:
+        return _("The uploaded file exceeds the upload_max_filesize directive in php.ini");
+    case UPLOAD_ERR_FORM_SIZE:
+        return _("The uploaded file exceeds the MAX_FILE_SIZE directive that was specified in the HTML form");
+    case UPLOAD_ERR_PARTIAL:
+        return _("The uploaded file was only partially uploaded");
+    case UPLOAD_ERR_NO_FILE:
+        return _("No file was uploaded");
+    case UPLOAD_ERR_NO_TMP_DIR:
+        return _("Missing a temporary folder");
+    case UPLOAD_ERR_CANT_WRITE:
+        return _("Failed to write file to disk");
+    case UPLOAD_ERR_EXTENSION:
+        return _("File upload stopped by extension");
+    default:
+        return _("Unknown upload error");
+    } 
+} 
+
 function do_uploadfile($formatter,$options) {
   global $DBInfo;
 
@@ -20,6 +42,7 @@ function do_uploadfile($formatter,$options) {
       $count=1;
       $files['upfile']['name'][]=&$_FILES['upfile']['name'];
       $files['upfile']['tmp_name'][]=&$_FILES['upfile']['tmp_name'];
+      $files['upfile']['error'][]=&$_FILES['upfile']['error'];
       $files['upfile']['type'][]=&$_FILES['upfile']['type'];
       $options['rename']=array($options['rename']);
       $options['replace']=array($options['replace']);
@@ -36,6 +59,14 @@ function do_uploadfile($formatter,$options) {
       $files['replace'][]='';
     }
   }
+  // Set upload err msg func.
+  if (!empty($DBInfo->upload_err_func) and function_exists($DBInfo->upload_err_func))
+    $upload_err_func = $DBInfo->upload_err_func;
+  else
+    $upload_err_func = '_upload_err_msg';
+  $msg = array();
+  $err_msg = array();
+  $upload_ok = array();
 
   $js='';
   if ($options['uploadid'] or $options['MYFILES']) {
@@ -73,7 +104,7 @@ EOF;
   }
 
   if (!$ok) {
-    if (isset($options['retval'])) return; // ignore
+    if (isset($options['retval'])) return false; // ignore
     #$title="No file selected";
     $formatter->send_header("",$options);
     $formatter->send_title($title,"",$options);
@@ -81,7 +112,7 @@ EOF;
     if (!in_array('UploadedFiles',$formatter->actions))
       $formatter->actions[]='UploadedFiles';
     $formatter->send_footer("",$options);
-    return;
+    return false;
   }
 
   $key=$DBInfo->pageToKeyname($formatter->page->name);
@@ -146,7 +177,7 @@ EOF;
         $allowed=1;
         $fname[2]= $fname[2] ? $fname[2]:$safe_types[$mtype];
       } else if ($no_ext) {
-        $msg.=sprintf(_("The %s type of %s is not allowed to upload"),$type,$upfilename)."<br/>\n";
+        $err_msg[]=sprintf(_("The %s type of %s is not allowed to upload"),$type,$upfilename);
         continue;
       }
     } else {
@@ -160,9 +191,9 @@ EOF;
   if (!$allowed) {
     if (!$no_ext and !preg_match("/(".$pds_exts.")$/i",$fname[2])) {
       if ($DBInfo->use_filetype and !empty($type))
-        $msg.=sprintf(_("The %s type of %s is not allowed to upload"),$type,$upfilename)."<br/>\n";
+        $err_msg[]=sprintf(_("The %s type of %s is not allowed to upload"),$type,$upfilename);
       else
-        $msg.=sprintf(_("%s is not allowed to upload"),$upfilename)."<br/>\n";
+        $err_msg[]=sprintf(_("%s is not allowed to upload"),$upfilename);
       continue;
     } else if ($fname[2] and in_array(strtolower($fname[2]),$safe)) {
       $upfilename=$fname[1].'.'.$fname[2];
@@ -217,7 +248,7 @@ EOF;
         # change the case of the file ext. is allowed
         $newfile_path = $dir."/".$tname[1].".$tname[2]";
       } else {
-        $msg.=sprintf(_("It is not allowed to change file ext. \"%s\" to \"%s\"."),$fname[2],$tname[2]).'<br />';
+        $err_msg[]=sprintf(_("It is not allowed to change file ext. \"%s\" to \"%s\"."),$fname[2],$tname[2]);
       }
     }
   }
@@ -233,6 +264,12 @@ EOF;
   }
  
   $upfile=$files['upfile']['tmp_name'][$j];
+  if ($files['upfile']['error'][$j] != UPLOAD_ERR_OK) {
+    $err_msg[]=_("ERROR:").' <tt>'.$upload_err_func($files['upfile']['error'][$j]).' : '.$upfilename .'</tt>';
+    if ($files['upfile']['error'][$j] == UPLOAD_ERR_INI_SIZE)
+      $err_msg[]="<tt>upload_max_filesize=".ini_get('upload_max_filesize').'</tt>';
+    continue;
+  }
 
   $_l_path=_l_filename($file_path);
   $new_l_path=_l_filename($newfile_path);
@@ -249,9 +286,9 @@ EOF;
   }
   @unlink($upfile);
   if (!$test) {
-    $msg.=sprintf(_("Fail to copy \"%s\" to \"%s\""),$upfilename,$file_path);
-    $msg.='<br />'._("Please check your php.ini setting");
-    $msg.='<br />'."<tt>upload_max_filesize=".ini_get('upload_max_filesize').'</tt><br />';
+    $err_msg[]=sprintf(_("Fail to copy \"%s\" to \"%s\""),$upfilename,$file_path);
+    if ($files['upfile']['error'][$j] == UPLOAD_ERR_INI_SIZE)
+      $err_msg[]="<tt>upload_max_filesize=".ini_get('upload_max_filesize').'</tt>';
     continue;
   }
 
@@ -259,7 +296,7 @@ EOF;
 
   $comment.="'$upfilename' ";
 
-  $title.=($title ? '<br />':'').
+  $title.=($title ? "\n":'').
     sprintf(_("File \"%s\" is uploaded successfully"),$upfilename);
 
   $fullname=$formatter->page->name."/$upfilename";
@@ -270,12 +307,13 @@ EOF;
     $upname='"'.$upname.'"';
 
   if ($key == 'UploadFile') {
-    $msg.= "<ins>Uploads:$upname</ins> or<br />";
-    $msg.= "<ins>attachment:/$upname</ins><br />";
+    $msg[]= "<ins>attachment:/$upname</ins>";
+    $upload_ok[] = '/'.$upname;
     $log_entry.=" * attachment:/$upname?action=deletefile . . . @USERNAME@ @DATE@\n";
   } else {
-    $msg.= "<ins>attachment:$upname</ins> or<br />";
-    $msg.= "<ins>attachment:$fullname</ins><br />";
+    $msg[]= "<ins>attachment:$upname</ins> or";
+    $msg[]= "<ins>attachment:$fullname</ins>";
+    $upload_ok[] = $upname;
     $log_entry.=" * attachment:$fullname?action=deletefile . . . @USERNAME@ @DATE@\n";
   }
 
@@ -293,21 +331,33 @@ EOF;
   } else
     $DBInfo->addLogEntry($key, $REMOTE_ADDR,$comment,"UPLOAD");
 
+  if (!empty($options['action_mode']) and $options['action_mode'] == 'ajax') {
+    echo '
+    {"title": "' . str_replace(array('"','<'), array("'",'&lt;'), $title) . '",
+     "msg": ["' . strip_tags(implode("\\n", $msg )) . '"],
+     "uploaded":' . $uploaded.',
+     "files": ["' . implode("\"\n,\"", $upload_ok ) . '"]
+    }';
+    return true;
+  }
+
+  $msgs = implode("<br />\n", $err_msg);
+  $msgs.= implode("<br />\n", $msg);
   if (isset($options['retval'])) {
-    $retval = array('title'=>$title, 'msg'=>$msg, 'uploaded'=>$uploaded);
+    $retval = array('title'=>$title, 'msg'=>$msgs, 'uploaded'=>$uploaded, 'files'=>$upload_ok);
     $ret = &$options['retval'];
     $ret = $retval;
-    return;
+    return true;
   } 
   $formatter->send_header("",$options);
   if ($uploaded < 2) {
     $formatter->send_title($title,"",$options);
-    print $msg;
+    print $msgs;
   } else {
     $msg=$title.'<br />'.$msg;
     $title=sprintf(_("Files are uploaded successfully"),$upfilename);
     $formatter->send_title($title,"",$options);
-    print $msg;
+    print $msgs;
   }
 
   print $js;
@@ -315,6 +365,7 @@ EOF;
 
   if (is_array($options['MYFILES']) and !$DBInfo->nosession)
     session_destroy();
+  return true;
 }
 
 function macro_UploadFile($formatter,$value='',$options='') {
@@ -347,8 +398,12 @@ function macro_UploadFile($formatter,$value='',$options='') {
 
   $count= ($options['multiform'] > 1) ? $options['multiform']:1;
 
+  $mode = '';
+  if ($options['action_mode'] == 'ajax') {
+    $mode = '/ajax';
+  }
   $form="<form enctype='multipart/form-data' method='post' action='$url'>\n";
-  $form.="<input type='hidden' name='action' value='UploadFile' />\n";
+  $form.="<input type='hidden' name='action' value='UploadFile$mode' />\n";
   $msg1=_("Replace original file");
   $msg2=_("Rename if it already exist");
   for ($j=0;$j<$count;$j++) {
@@ -377,7 +432,7 @@ EOF;
   if ($use_multi) {
     $multiform= <<<EOF
 <form enctype="multipart/form-data" method='post' action='$url'>
-   <input type='hidden' name='action' value='UploadFile' />
+   <input type='hidden' name='action' value='UploadFile$mode' />
    $multiform
 </form>
 EOF;
@@ -391,5 +446,5 @@ EOF;
   return $form.$multiform;
 }
 
-// vim:et:sts=2:sw=2:
+// vim:et:sts=4:sw=4:
 ?>

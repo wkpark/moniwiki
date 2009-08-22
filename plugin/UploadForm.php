@@ -133,15 +133,12 @@ function check_attach(id) {
     attach = document.getElementById(id);
     var ok = false;
     files = '';
-    js = '';
     var tmp = '';
     inputs = attach.getElementsByTagName('input');
     for (i = 0; i < inputs.length; i++) {
         if (inputs[i].type == 'file' && inputs[i].value != '') {
             ok = true;
-            tmp = inputs[i].value.replace(/^.*[\\\\]/g, '');
-            files += 'attachment:'+tmp + "\\n";
-            js += "insertTags('attachment:',' ','" + tmp + "',3);";
+            break;
         }
     }
     if (ok == false)
@@ -154,13 +151,27 @@ function check_attach(id) {
         var attachform = document.getElementById('form-'+id);
         if (attachform) {
             attachform.setAttribute('target', 'upload-iframe');
+            attachform.elements['action'].value='UploadFile/ajax';
         }
 
-        // TODO check success or fail
-        setTimeout("iframe.parentNode.removeChild(iframe);alert(files + '$msg2');"+js+"resetForm(attach)", 1500);
+        setTimeout("check_upload_result(iframe);resetForm(attach)", 1500);
         return ok;
     }
     return ok;
+}
+
+function check_upload_result (iframe) {
+    var doc = iframe.contentDocument || iframe.contentWindow.document;
+    var p = doc.body.firstChild;
+    if (p.nodeType == 3 && p.nodeValue) { // text node
+        eval("var ret = " + p.nodeValue);
+        // remove iframe;
+        iframe.parentNode.removeChild(iframe);
+        alert(ret['title'] + "\\n" + ret['msg']);
+        for (var i = 0; i < ret['files'].length; i++) {
+            insertTags('attachment:',' ', ret['files'][i], 3);
+        }
+    }
 }
 
 function resetForm(form) {
