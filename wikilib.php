@@ -766,7 +766,7 @@ function do_edit($formatter,$options) {
   $formatter->send_header("",$options);
   if ($options['section'])
     $sec=' (Section)';
-  $options['msgtype'] = isset($options['msgtype']) ? $options['msgtype'] : 'warn timer';
+  $options['msgtype'] = isset($options['msgtype']) ? $options['msgtype'] : 'warn';
   $formatter->send_title(sprintf(_("Edit %s"),$options['page']).$sec,"",$options);
   //print '<div id="editor_area">'.macro_EditText($formatter,$value,$options).'</div>';
   $has_form = false;
