@@ -65,7 +65,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
       else {$state=1; continue;}
     }
     if ($state==1 and $ok==1) {
-      $lnk=$formatter->link_to("?action=info&all=1",'<span>'._("Show all revisions").'</span>',' class="button small"');
+      $lnk=$formatter->link_to("?action=info&all=1",_("Show all revisions"),' class="button small"');
       $out.='<tr><td colspan="2"></td><th colspan="4">'.$lnk.'</th></tr>';
       break;
     }
@@ -136,7 +136,11 @@ function _parse_rlog($formatter,$log,$options=array()) {
            else if (!empty($DBInfo->use_nick)) {
              $u = $DBInfo->udb->getUser($user);
              if (!empty($u->info['nick'])) {
+               if ($DBInfo->interwiki['User']) {
+                 $ip=$formatter->link_repl('[wiki:User:'.$user.' '.$u->info['nick'].']');
+               } else {
                $ip=$formatter->link_repl('[wiki:'.$user.' '.$u->info['nick'].']');
+             }
              }
              $users[$user]=$ip;
            } else if (strpos($user,' ') !== false) {
@@ -179,11 +183,11 @@ function _parse_rlog($formatter,$log,$options=array()) {
          $out.="<td nowrap='nowrap' class='view'>";
          foreach ($actions as $k=>$v) {
            $k=is_numeric($k) ? $v:$k;
-           $out.=$formatter->link_to("?action=$k&amp;rev=$rev",'<span>'._($v).'</span>', ' class="button-small"').' ';
+           $out.=$formatter->link_to("?action=$k&amp;rev=$rev",_($v), ' class="button-small"').' ';
          }
          if ($flag) {
             if ($diff_action)
-              $out.= " ".$formatter->link_to("?action=diff&amp;rev=$rev",'<span>'.$diff_action.'</span>', ' class="button-small"');
+              $out.= " ".$formatter->link_to("?action=diff&amp;rev=$rev",$diff_action, ' class="button-small"');
             $out.="</td>";
             if (isset($admin))
               $out.=
