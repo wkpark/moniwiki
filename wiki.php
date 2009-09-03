@@ -5288,6 +5288,9 @@ if (isset($_locale)) {
         $domain=$domain.'-'.$tmp[0];
         array_unshift($dirs,$Config['cache_dir']);
       }
+    } else {
+      include_once(dirname(__FILE__).'/plugin/msgtrans.php');
+      macro_msgtrans(null,null,array('init'=>1));
     }
   }
 
