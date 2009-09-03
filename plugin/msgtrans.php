@@ -19,14 +19,16 @@ function macro_MsgTrans($formatter,$value,$param=array()) {
     global $DBInfo;
 
     $user=&$DBInfo->user;
-    if (!is_array($DBInfo->owners) or !in_array($user->id,$DBInfo->owners)) {
+    if (empty($param['init']) and (!is_array($DBInfo->owners) or !in_array($user->id,$DBInfo->owners))) {
         return sprintf(_("You are not allowed to \"%s\" !"),"msgtrans");
     }
 
     if (!$pagename)
         $pagename=$DBInfo->default_translation ? $DBInfo->default_translation:'LocalTranslationKo';
     $page=$DBInfo->getPage($pagename);
-    if (!$page->exists()) return '';
+    $strs = array();
+
+    if ($page->exists()) {
     $raw=$page->get_raw_body();$raw=rtrim($raw);
 
     $lines = explode("\n",$raw);
@@ -34,7 +36,6 @@ function macro_MsgTrans($formatter,$value,$param=array()) {
     $charset = strtoupper($DBInfo->charset);
     $lang = $DBInfo->lang ? $DBInfo->lang:'en_US.'.$charset;
 
-    $strs = array();
     foreach ($lines as $l) {
         $l=trim($l);
         if ($l{0}=='#') {
@@ -56,11 +57,12 @@ function macro_MsgTrans($formatter,$value,$param=array()) {
         }
         $strs[$w]=$t;
     }
+    }
 
     if(getenv("OS")=="Windows_NT") $lang=substr($lang,0,2);
 
     //print_r($strs);
-    if (!empty($strs)) {
+    if (!empty($strs) or !empty($param['init'])) {
         $myMO = null;
         $ldir='locale/'.$lang.'/LC_MESSAGES';
         $mofile=$ldir.'/moniwiki.mo';
@@ -69,6 +71,9 @@ function macro_MsgTrans($formatter,$value,$param=array()) {
             # load *.po file
             $mylang = substr($lang,0,2);
             $pofile = 'locale/po/'.$mylang.'.po';
+            if (!file_exists($pofile)) {
+                $pofile = dirname(__FILE__).'/../locale/po/'.$mylang.'.po';
+            }
             if (file_exists($pofile)) {
                 include_once 'lib/Gettext/PO.php';
                 $myPO = new File_Gettext_PO;
