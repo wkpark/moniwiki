@@ -66,7 +66,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
     }
     if ($state==1 and $ok==1) {
       $lnk=$formatter->link_to("?action=info&all=1",_("Show all revisions"),' class="button small"');
-      $out.='<tr><td colspan="2"></td><th colspan="4">'.$lnk.'</th></tr>';
+      $out.='<tr><td colspan="2"></td><td colspan="'.(!empty($admin) ? 5:4).'">'.$lnk.'</td></tr>';
       break;
     }
     
@@ -193,17 +193,17 @@ function _parse_rlog($formatter,$log,$options=array()) {
             $out.="</td>";
             if (isset($admin))
               $out.=
-                "<th><input type='checkbox' name='range[$flag]' value='$rev' /></th>";
+                "<td><input type='checkbox' name='range[$flag]' value='$rev' /></td>";
          } else {
             $out.="</td>";
             if (isset($admin)) {
-              $out.="<th><input type='image' src='$DBInfo->imgs_dir/smile/checkmark.png' onClick=\"ToggleAll('infoform');return false;\"/></th>";
+              $out.="<td><input type='image' src='$DBInfo->imgs_dir/smile/checkmark.png' onClick=\"ToggleAll('infoform');return false;\"/></td>";
             }
          }
          endif;
          $out.="</tr>\n";
          if (!$simple and $comment)
-            $out.="<tr class='log'><td colspan='5'>$comment&nbsp;</td></tr>\n";
+            $out.="<tr class='log'><td colspan='".(!empty($admin) ? 6:5). "'><p name='word-break'>$comment</p>&nbsp;</td></tr>\n";
          $state=1;
          $flag++;
          $count++;
@@ -212,7 +212,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
      }
   }
   if (!$simple and $admin):
-  $out.="<tr><td colspan='6' align='right'><input type='checkbox' name='show' checked='checked' />"._("show only").' ';
+  $out.="<tr><td colspan='".(!empty($admin) ? 7:6)."' align='right'><input type='checkbox' name='show' checked='checked' />"._("show only").' ';
   if ($DBInfo->security->is_protected("rcspurge",$options)) {
     $out.="<input type='password' name='passwd'>";
   }
