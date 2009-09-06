@@ -309,9 +309,14 @@ define('RC_DEFAULT_DAYS',7);
       $icon= $formatter->link_tag($pageurl,"?action=diff",$formatter->icon['diff']);
 
     #$title= preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$page_name);
-    $title= get_title($title).$group;
-    $title=htmlspecialchars($title);
-    $title= $formatter->link_tag($pageurl,"",$title,$target);
+    $title0= get_title($title).$group;
+    $title0=htmlspecialchars($title0);
+    $attr = '';
+    if (strlen(get_title($title)) > 20 and function_exists('mb_strimwidth')) {
+      $title0=mb_strimwidth($title0,0,20,'...');
+      $attr = ' title="'.$title.'"';
+    }
+    $title= $formatter->link_tag($pageurl,"",$title0,$target.$attr);
 
     if ($use_hits) {
       $hits = $DBInfo->counter->pageCounter($page_name);
@@ -354,7 +359,7 @@ define('RC_DEFAULT_DAYS',7);
     if ($editcount[$page_key] > 1)
       $count=sprintf(_("%s changes"), " <span class='num'>".$editcount[$page_key]."</span>");
     if ($comment && $log)
-      $extra="&nbsp; &nbsp; &nbsp; <small>$log</small>";
+      $extra="&nbsp; &nbsp; &nbsp; <small name='word-break'>$log</small>";
 
     $alt = ($ii % 2 == 0) ? ' class="alt"':'';
     if ($extra and isset($template_extra)) {
