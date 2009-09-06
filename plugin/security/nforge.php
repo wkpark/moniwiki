@@ -9,8 +9,17 @@
 class Security_nforge extends Security {
   var $DB;
 
-  function Security_nforge($DB='') {
+  function Security_nforge(&$DB) {
     $this->DB=$DB;
+    $u = session_get_user();
+    $group =& group_get_object($DB->group_id);
+    $perm =& $group->getPermission( $u );
+    // check if the user is docman's admin
+    if ($perm and !$perm->isError()) {
+      if ($perm->isDocEditor() || $perm->isAdmin()) {
+        $DB->wikimasters=array($u->getUnixName());
+      }
+    }
   }
 
   function help($formatter) {
