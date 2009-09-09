@@ -239,9 +239,11 @@ EOF;
         $formatter->actions[]='UploadedFiles';
     $id++;
     if ($formatter->preview and !in_array('UploadFile',$formatter->actions)) {
-        $keyname=$DBInfo->pageToKeyname($formatter->page->name);
-        if (is_dir($DBInfo->upload_dir.'/'.$keyname))
-        $form=$formatter->macro_repl('UploadedFiles(tag=1)').$form;
+        if (!empty($DBInfo->use_preview_uploads)) {
+            $keyname=$DBInfo->pageToKeyname($formatter->page->name);
+            if (is_dir($DBInfo->upload_dir.'/'.$keyname))
+            $form=$formatter->macro_repl('UploadedFiles(tag=1)').$form;
+        }
     }
     return $script.$form.$multiform;
 }
