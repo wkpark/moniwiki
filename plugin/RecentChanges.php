@@ -8,8 +8,8 @@
 function do_RecentChanges($formatter,$options='') {
   global $DBInfo;
   if ($options['moztab']) {
-  $options['trail']='';
-  $options['css_url']=$formatter->url_prefix.'/css/sidebar.css';
+    $options['trail']='';
+    $options['css_url']=$formatter->url_prefix.'/css/sidebar.css';
     $arg = 'nobookmark,moztab';
     $formatter->send_header('',$options);
     echo "<div id='wikiBody'>";
@@ -19,7 +19,7 @@ function do_RecentChanges($formatter,$options='') {
   } else if (!empty($DBInfo->rc_options)) {
     $arg = $DBInfo->rc_options;
   } else {
-    $arg = 'table,comment,timesago,item=20';
+    $arg = 'board,comment,timesago,item=20';
   }
   $formatter->send_header('',$options);
   $formatter->send_title('',$options);
@@ -337,10 +337,10 @@ define('RC_DEFAULT_DAYS',7);
             if (!empty($DBInfo->interwiki['User'])) {
               $user = $formatter->link_repl('[wiki:User:'.$uid.' '.$u->info['nick'].']');
             } else if (!empty($u->info['home'])) {
-            $user = $formatter->link_repl('['.$u->info['home'].' '.$u->info['nick'].']');
-          } else if (!empty($u->info['nick'])) {
-            $user = $formatter->link_repl('[wiki:'.$uid.' '.$u->info['nick'].']');
-          }
+              $user = $formatter->link_repl('['.$u->info['home'].' '.$u->info['nick'].']');
+            } else if (!empty($u->info['nick'])) {
+              $user = $formatter->link_repl('[wiki:'.$uid.' '.$u->info['nick'].']');
+            }
           }
           $users[$ouser] = $user;
         } else if (strpos($user,' ')!==false) {
