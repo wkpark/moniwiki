@@ -5290,7 +5290,7 @@ if (isset($_locale)) {
       }
     } else {
       include_once(dirname(__FILE__).'/plugin/msgtrans.php');
-      macro_msgtrans(null,null,array('init'=>1));
+      macro_msgtrans(null,$lang,array('init'=>1));
     }
   }
 
