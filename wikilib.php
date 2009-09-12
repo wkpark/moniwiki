@@ -793,10 +793,10 @@ JS;
     $onclick1=' onclick="check_uploadform()"';
     echo "<div id='save-buttons'>\n";
     echo "<button type='button'$onclick tabindex='10'><span>$msg</span></button>\n";
-    echo "<button type='button'$onclick1 tabindex='11' name='button_preview' value='1'><span>".
+    echo "<button type='submit'$onclick1 tabindex='11' name='button_preview' value='1'><span>".
       _("Preview").'</span></button>';
     if ($preview)
-      echo ' '.$formatter->link_to('#preview',_("Skip to preview"));
+      echo ' '.$formatter->link_to('#preview',_("Skip to preview"),' class="preview-anchor"');
     echo "</div>\n";
   }
 
@@ -889,6 +889,8 @@ function macro_Edit($formatter,$value,$options='') {
 
   $text= $options['savetext'];
   $editlog= $options['editlog'] ? $options['editlog'] : "";
+  if (empty($editlog) and !empty($options['comment']))
+      $editlog=_stripslashes($options['comment']);
 
   $args= explode(',',$value);
   if (in_array('nohints',$args)) $options['nohints']=1;
@@ -1047,7 +1049,7 @@ EXTRA;
     $preview_btn='<button type="submit" tabindex="6" name="button_preview" value="1"><span>'.
       _("Preview").'</span></button>';
     if ($preview)
-      $skip_preview= ' '.$formatter->link_to('#preview',_("Skip to preview"));
+      $skip_preview= ' '.$formatter->link_to('#preview',_("Skip to preview"),' class="preview-anchor"');
     if (!empty($DBInfo->use_wikiwyg)) {
       $confirm = 'false';
       if (!empty($DBInfo->wikiwyg_confirm)) $confirm = 'null';
@@ -1655,7 +1657,7 @@ function do_post_savepage($formatter,$options) {
 
   $new=md5($savetext);
 
-  $menu = $formatter->link_to("#editor",_("Goto Editor"));
+  $menu = $formatter->link_to("#editor",_("Goto Editor"), ' class="preview-anchor"');
 
   if ($formatter->page->exists()) {
     # check difference
@@ -1717,7 +1719,7 @@ function do_post_savepage($formatter,$options) {
         echo "<button type='button'$onclick1 tabindex='11' name='button_preview' value='1'><span>".
           _("Preview").'</span></button>';
         if ($preview)
-          echo ' '.$formatter->link_to('#preview',_("Skip to preview"));
+          echo ' '.$formatter->link_to('#preview',_("Skip to preview"), ' class="preview-anchor"');
 	echo "</div>\n";
       }
       print $menu;
@@ -1814,7 +1816,7 @@ function do_post_savepage($formatter,$options) {
       echo "<button type='button'$onclick1 tabindex='11' name='button_preview' value='1'><span>".
       	_("Preview").'</span></button>';
       if ($preview)
-        echo ' '.$formatter->link_to('#preview',_("Skip to preview"));
+        echo ' '.$formatter->link_to('#preview',_("Skip to preview"),' class="preview-anchor"');
       echo "</div>\n";
     }
     print '</div>'; # XXX
