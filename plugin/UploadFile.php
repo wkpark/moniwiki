@@ -335,7 +335,12 @@ EOF;
     $err = implode("\\n", $err_msg);
     $err = strip_tags($err);
     if ($err) $err .= "\\n";
-    echo '
+
+    $scr = '';
+    if (!empty($options['domain']) and preg_match('/^[a-z][a-z0-9]+(\.[a-z][a-z0-9]+)*$/i', $options['domain'])) {
+        $scr = '<script type="text/javascript">document.domain="'.$options['domain'].'";</script>';
+    }
+    echo $scr.'
     {"title": "' . str_replace(array('"','<'), array("'",'&lt;'), $title) . '",
      "msg": ["' . $err.strip_tags(implode("\\n", $msg )) . '"],
      "uploaded":' . $uploaded.',

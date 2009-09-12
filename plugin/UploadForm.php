@@ -37,7 +37,12 @@ function addRow(id, size) {
             iframe.setAttribute('id','upload-iframe');
             iframe.setAttribute('name','upload-iframe');
             iframe.setAttribute('style','display:none;border:0;');
-            //iframe.setAttribute('style','border:0;');
+            if (document.all) {
+                var IE6 = false /*@cc_on || @_jscript_version < 5.7 @*/;
+                // magic for IE6
+                if (IE6)
+                    iframe.src = 'javascript:document.write("' + "<script>document.domain='" + document.domain + "';</" + "script>" + '");';
+            }
             var body = document.getElementsByTagName('body')[0];
             body.appendChild(iframe);
         }
@@ -150,20 +155,44 @@ function check_attach(id) {
         iframe = document.getElementById('upload-iframe');
         var attachform = document.getElementById('form-'+id);
         if (attachform) {
+            // set domain name.
+            if (location.host != document.domain) {
+                if (document.all) {
+                    var mydomain = document.createElement('<input name="domain">');
+                } else {
+                    var mydomain = document.createElement('input');
+                    mydomain.setAttribute('name', 'domain');
+                }
+
+                mydomain.setAttribute('type', 'hidden');
+                mydomain.setAttribute('value', document.domain + '');
+                attachform.appendChild(mydomain);
+            }
+
             attachform.setAttribute('target', 'upload-iframe');
             attachform.elements['action'].value='UploadFile/ajax';
         }
 
-        setTimeout("check_upload_result(iframe);resetForm(attach)", 1500);
+        var timer = setInterval(function() {check_upload_result(iframe, attach, timer);}, 1500);
         return ok;
     }
     return ok;
 }
 
-function check_upload_result (iframe) {
-    var doc = iframe.contentDocument || iframe.contentWindow.document;
+function check_upload_result (iframe,attach, timer) {
+    if (!iframe) return;
+
+    try {
+        var doc = iframe.contentDocument || iframe.contentWindow.document;
+    } catch(e) {
+        // silently ignore
+        alert('Error: '+ e + ' - Security restriction detected !\\nPlease check your "document.domain=' + document.domain + '"');
+        return;
+    }
+    if (!doc || !doc.body) return;
+
     var p = doc.body.firstChild;
-    if (p.nodeType == 3 && p.nodeValue) { // text node
+    if (p && p.nodeType == 3 && p.nodeValue) { // text node
         eval("var ret = " + p.nodeValue);
         // remove iframe;
         iframe.parentNode.removeChild(iframe);
@@ -172,6 +201,8 @@ function check_upload_result (iframe) {
             if (ret['files'][i] == '') continue;
             insertTags('attachment:',' ', ret['files'][i], 3);
         }
+        clearInterval(timer);
+        resetForm(attach);
     }
 }
 
