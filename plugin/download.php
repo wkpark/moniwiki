@@ -146,7 +146,8 @@ function dl_file_resume($ctype,$file,$fname,$mode='inline',$header='') {
    # ans some modification
   
    //Gather relevent info about file
-   $len = filesize($file);
+   $size = filesize($file);
+   if ($size == 0) return;
   
    //Begin writing headers
    header("Cache-Control:");
@@ -164,7 +165,6 @@ function dl_file_resume($ctype,$file,$fname,$mode='inline',$header='') {
    }
    header("Accept-Ranges: bytes");
   
-   $size=filesize($file);
    //check if http_range is sent by browser (or download manager)
    $range = 0;
    if(isset($_SERVER['HTTP_RANGE'])) {
@@ -191,6 +191,7 @@ function dl_file_resume($ctype,$file,$fname,$mode='inline',$header='') {
    }
    //open the file
    $fp=fopen("$file","rb");
+   if (!is_resource($fp)) return;
    //seek to start of missing part
    fseek($fp,$range);
    //start buffered download
@@ -198,13 +199,18 @@ function dl_file_resume($ctype,$file,$fname,$mode='inline',$header='') {
    set_time_limit(0);
    $chunksize = 1*(1024*1024); // 1MB chunks
    $left = $size;
-   while(!feof($fp)){
-       print(fread($fp, $chunksize < $left ? $chunksize: $left));
+
+   // start output buffering
+   ob_start();
+   while(!feof($fp) and $left > 0){
+       $sz = $chunksize < $left ? $chunksize : $left;
+       echo fread($fp, $sz);
        flush();
        ob_flush();
-       $left -= $chunksize;
+       $left -= $sz;
    }
    fclose($fp);
+   ob_end_flush();
    exit;
 }
 
