@@ -85,6 +85,7 @@ function macro_MsgTrans($formatter,$value,$param=array()) {
 
         if (!file_exists($mofile)) {
             # load *.po file
+            $e = false;
             $mylang = substr($lang,0,2);
             $pofile = 'locale/po/'.$mylang.'.po';
             if (!file_exists($pofile)) {
@@ -116,19 +117,20 @@ function macro_MsgTrans($formatter,$value,$param=array()) {
             $e = $myMO->load($mofile);
         }
 
-        if ($myMO and $e == true) {
+        if (!is_object($myMO)) return;
+        if ($e == true) {
             $myMO->strings = array_merge($myMO->strings,$strs);
             #$myMO->meta['PO-Revision-Date']= date('Y-m-d H:iO');
             ksort($myMO->strings); // important!
             #print_r($myMO->strings);
         } else {
-           $meta = array(
+            $meta = array(
                 'Content-Type'      => 'text/plain; charset='.$charset,
                 'Last-Translator'   => 'MoniWiki Translator',
                 'PO-Revision-Date'  => date('Y-m-d H:iO'),
                 'MIME-Version'      => '1.0',
                 'Language-Team'     => 'MoniWiki Translator',
-           );
+            );
             if (true !== ($e = $myMO->fromArray(array('meta'=>$meta,'strings'=>$strs)))) {
                 return "Fail to make a mo file.\n";
             }
