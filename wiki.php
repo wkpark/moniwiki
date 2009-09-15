@@ -4501,17 +4501,17 @@ EOS;
     if ($this->pi['#action'] && !in_array($this->pi['#action'],$this->actions)){
       list($act,$txt)=explode(" ",$this->pi['#action'],2);
       if (!$txt) $txt=$act;
-      $menu[]= $this->link_to("?action=$act",_($txt),"accesskey='x'");
+      $menu[]= $this->link_to("?action=$act",_($txt)," rel='nofollow' accesskey='x'");
       if (strtolower($act) == 'blog')
         $this->actions[]='BlogRss';
         
     } else if ($args['editable']) {
       if ($args['editable']==1)
-        $menu[]= $this->link_to("?action=edit",_("EditText"),"accesskey='x'");
+        $menu[]= $this->link_to("?action=edit",_("EditText")," rel='nofollow' accesskey='x'");
       else
         $menu[]= _("NotEditable");
       if ($args['refresh']==1)
-        $menu[]= $this->link_to("?refresh=1",_("Refresh"),"accesskey='n'");
+        $menu[]= $this->link_to("?refresh=1",_("Refresh")," rel='nofollow' accesskey='n'");
     } else
       $menu[]= $this->link_to('?action=show',_("ShowPage"));
     $menu[]=$this->link_tag("FindPage","",_("FindPage"));
@@ -4526,7 +4526,7 @@ EOS;
             $menu[]= $this->link_tag($options['page'],$act,_($text));
           }
         } else {
-          $menu[]= $this->link_to("?action=$action",_($action));
+          $menu[]= $this->link_to("?action=$action",_($action), " rel='nofollow'");
         }
       }
     }
