@@ -44,13 +44,13 @@ function macro_MsgTrans($formatter,$value,$param=array()) {
     $page=$DBInfo->getPage($pagename);
     $strs = array();
 
+    $charset = strtoupper($DBInfo->charset);
+    $lang = !empty($value) ? $value:($DBInfo->lang ? $DBInfo->lang:'en_US.'.$charset);
+
     if ($page->exists()) {
     $raw=$page->get_raw_body();$raw=rtrim($raw);
 
     $lines = explode("\n",$raw);
-
-    $charset = strtoupper($DBInfo->charset);
-    $lang = $DBInfo->lang ? $DBInfo->lang:'en_US.'.$charset;
 
     foreach ($lines as $l) {
         $l=trim($l);
