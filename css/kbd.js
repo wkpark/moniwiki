@@ -12,13 +12,14 @@
 
    * 2002/09/06 : From http://linux.sarang.net/ and heavily modified by wkpark
    * 2003/04/16 : simlified by wkpark
-   * 2003/06/01 : added patch by Kkabi
+   * 2003/06/01 : added patch by McKkabi
    * 2003/07/14 : fixed element indices
    * 2004/08/24 : no PATH_INFO support merged
    * 2004/10/03 : more intelligent behavior with search keys '?' '/'
    * 2007/11/09 : simplified and cleanup.
    * 2008/11/25 : do not assume the "go" form is always defined.
    * 2009/04/19 : changeable name of the default input form. use control-Enter to save.
+   * 2009/09/16 : MetaKey patch by McKkabi [#305355]
 */
 
 /*
@@ -174,7 +175,7 @@ function keypresshandler(e) {
 		}
 		return;
 	}
-	if (e.altKey) return true; // mozilla
+	if (e.altKey || e.metaKey) return true; // mozilla
 
 	if (!e.keyCode && (cc == 112 || cc == 114)) ch=ch; // mozilla hack
 
