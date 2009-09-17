@@ -31,8 +31,16 @@ class User_nforge extends WikiUser {
                 $this->setID($id);
                 $udb=new UserDB($DBInfo);
                 $tmp = $udb->getUser($id);
-                if (empty($tmp->info['nick']) or $tmp->info['nick']!=$u->data_array['realname']) {
+                // get timezone and make timezone offset
+                $tz_offset = date('Z');
+                $update = 0;
+                if ($tz_offset != $tmp->info['tz_offset'])
+                    $update = 1;
+
+                if ((!empty($DBInfo->use_homepage_url) and empty($tmp->info['home'])) or $update or
+                        empty($tmp->info['nick']) or $tmp->info['nick']!=$u->data_array['realname']) {
                     // register user
+                    $tmp->info['tz_offset'] = $tz_offset;
                     $tmp->info['nick']=$u->data_array['realname'];
                     if (!empty($DBInfo->use_homepage_url))
                         $tmp->info['home']=util_make_url_u($u->getID(), true);
