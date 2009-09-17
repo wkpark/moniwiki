@@ -2116,7 +2116,7 @@ msgstr "이 페이지를 고칠 수 있도록 허락되어있지 않습니다 !"
 #: ../wikilib.php:770
 #, c-format
 msgid "Edit %s"
-msgstr ""
+msgstr "%s 고치기"
 
 #: ../wikilib.php:791 ../wikilib.php:1063 ../wikilib.php:1711
 #: ../wikilib.php:1801 ../wikilib.php:2276 ../wikilib.php:2330
