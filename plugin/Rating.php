@@ -64,7 +64,7 @@ EOF;
     for ($i=1;$i<=5;++$i) {
         $t=($i <= $value) ? '1':'0';
         $alt=$t ? '{*}':'{o}';
-        $star.='<a href="?action=rating'.$mid.'&amp;rating='.$i.'">'.
+        $star.='<a href="?action=rating'.$mid.'&amp;rating='.$i.'" rel="nofollow">'.
             '<img alt="'.$alt.'" src="'.$imgs_dir.'/star'.$t.'.png" '.
             'onmouseover="showstars(this,'.$i.')" title="'.$msg[$i].'" '.
             'onmouseout="showstars(this,'.intval($value).')" '.
