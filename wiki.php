@@ -710,8 +710,11 @@ EOS;
     if (empty($this->upload_dir_url))
       $this->upload_dir_url= $this->upload_dir;
 
-    $doc_root = getenv("DOCUMENT_ROOT"); // for Unix
-    $imgs_realdir= $doc_root.$this->imgs_dir;
+    // getenv("DOCUMENT_ROOT") != doc_root or not ?
+    $doc_root = isset($this->doc_root) ? $this->doc_root : dirname(dirname(__FILE__));
+    $doc_root = preg_replace('@/$@', '', $doc_root);
+
+    $imgs_realdir= $doc_root.'/'.$this->imgs_dir;
     if (file_exists($imgs_realdir.'/interwiki/'.'moniwiki-16.png'))
       $this->imgs_dir_interwiki=$this->imgs_dir.'/interwiki/';
 
