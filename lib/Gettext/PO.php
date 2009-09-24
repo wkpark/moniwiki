@@ -67,11 +67,11 @@ class File_Gettext_PO extends File_Gettext
         // match all msgid/msgstr entries
         $matched = preg_match_all(
             '/(msgid\s+("([^"]|\\\\")*?"\s*)+)\s+' .
-            '(msgstr\s+("([^"]|\\\\")*?"\s*)+)\s*(?=$|#)/',
+            '(msgstr\s+(\s*"([^"]|\\\\")*?"\s*)+)\s*(?=$|#)/m',
             $contents, $matches
         );
         unset($contents);
-        
+
         if (!$matched) {
             return parent::raiseError('No msgid/msgstr entries found');
         }
@@ -114,7 +114,7 @@ class File_Gettext_PO extends File_Gettext
         // lock PO file exclusively
         if (!@flock($fh, LOCK_EX)) {
             @fclose($fh);
-            return parent::raiseError($php_errmsg . ' ' . $file);
+            return parent::raiseError($php_errormsg . ' ' . $file);
         }
         
         // write meta info
