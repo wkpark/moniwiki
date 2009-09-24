@@ -9,12 +9,10 @@
 // Copyright (C) 2000, 2001 Geoffrey T. Dairiki <dairiki@dairiki.org>
 // You may copy this code freely under the conditions of the GPL.
 //
-// FIXME: possibly remove assert()'s for production version?
-//
 // $Id$
 // original Id: difflib.php,v 1.5 2002/01/21 06:55:47 dairiki Exp
-// PHP3 does not have assert()
-define('USE_ASSERTS', function_exists('assert'));
+//assert_options(ASSERT_ACTIVE, 0);
+define('USE_ASSERTS', false);
 
 class _DiffOp {
     var $type;
@@ -44,8 +42,9 @@ class _DiffOp_Copy extends _DiffOp {
         $this->_final = $_final;
     }
 
-    function reverse() {
-        return new _DiffOp_Copy($this->_final, $this->orig);
+    function &reverse() {
+        $rev = &new _DiffOp_Copy($this->_final, $this->orig);
+        return $rev;
     }
 }
 
@@ -57,8 +56,9 @@ class _DiffOp_Delete extends _DiffOp {
         $this->_final = false;
     }
 
-    function reverse() {
-        return new _DiffOp_Add($this->orig);
+    function &reverse() {
+        $rev = &new _DiffOp_Add($this->orig);
+        return $rev;
     }
 }
 
@@ -70,8 +70,9 @@ class _DiffOp_Add extends _DiffOp {
         $this->orig = false;
     }
 
-    function reverse() {
-        return new _DiffOp_Delete($this->_final);
+    function &reverse() {
+        $rev = &new _DiffOp_Delete($this->_final);
+        return $rev;
     }
 }
 
@@ -83,8 +84,9 @@ class _DiffOp_Change extends _DiffOp {
         $this->_final = $_final;
     }
 
-    function reverse() {
-        return new _DiffOp_Change($this->_final, $this->orig);
+    function &reverse() {
+        $rev = &new _DiffOp_Change($this->_final, $this->orig);
+        return $rev;
     }
 }
         
@@ -124,14 +126,14 @@ class _DiffEngine
          
         // Skip leading common lines.
         for ($skip = 0; $skip < $n_from && $skip < $n_to; $skip++) {
-            if ($from_lines[$skip] != $to_lines[$skip])
+            if ($from_lines[$skip] !== $to_lines[$skip])
                 break;
             $this->xchanged[$skip] = $this->ychanged[$skip] = false;
         }
         // Skip trailing common lines.
         $xi = $n_from; $yi = $n_to;
         for ($endskip = 0; --$xi > $skip && --$yi > $skip; $endskip++) {
-            if ($from_lines[$xi] != $to_lines[$yi])
+            if ($from_lines[$xi] !== $to_lines[$yi])
                 break;
             $this->xchanged[$xi] = $this->ychanged[$yi] = false;
         }
@@ -166,8 +168,8 @@ class _DiffEngine
         $edits = array();
         $xi = $yi = 0;
         while ($xi < $n_from || $yi < $n_to) {
-            USE_ASSERTS && assert($yi < $n_to || $this->xchanged[$xi]);
-            USE_ASSERTS && assert($xi < $n_from || $this->ychanged[$yi]);
+            //USE_ASSERTS && assert($yi < $n_to || $this->xchanged[$xi]);
+            //USE_ASSERTS && assert($xi < $n_from || $this->ychanged[$yi]);
 
             // Skip matching "snake".
             $copy = array();
@@ -177,7 +179,7 @@ class _DiffEngine
                 ++$yi;
             }
             if ($copy)
-                $edits[] = new _DiffOp_Copy($copy);
+                $edits[] = &new _DiffOp_Copy($copy);
 
             // Find deletes & adds.
             $delete = array();
@@ -189,11 +191,11 @@ class _DiffEngine
                 $add[] = $to_lines[$yi++];
             
             if ($delete && $add)
-                $edits[] = new _DiffOp_Change($delete, $add);
+                $edits[] = &new _DiffOp_Change($delete, $add);
             elseif ($delete)
-                $edits[] = new _DiffOp_Delete($delete);
+                $edits[] = &new _DiffOp_Delete($delete);
             elseif ($add)
-                $edits[] = new _DiffOp_Add($add);
+                $edits[] = &new _DiffOp_Add($add);
         }
         return $edits;
     }
@@ -217,13 +219,16 @@ class _DiffEngine
      */
     function _diag ($xoff, $xlim, $yoff, $ylim, $nchunks) {
 	$flip = false;
-	
+
 	if ($xlim - $xoff > $ylim - $yoff) {
 	    // Things seems faster (I'm not sure I understand why)
             // when the shortest sequence in X.
             $flip = true;
-	    list ($xoff, $xlim, $yoff, $ylim)
-		= array( $yoff, $ylim, $xoff, $xlim);
+	    #list ($xoff, $xlim, $yoff, $ylim)
+		#= array( $yoff, $ylim, $xoff, $xlim);
+            # XOR swap is slightly faster and less memory consumed.
+            $xoff ^= $yoff ^= $xoff ^= $yoff;
+            $xlim ^= $ylim ^= $xlim ^= $ylim;
         }
 
 	if ($flip)
@@ -255,13 +260,13 @@ class _DiffEngine
 		while (list ($junk, $y) = each($matches))
 		    if (empty($this->in_seq[$y])) {
 			$k = $this->_lcs_pos($y);
-			USE_ASSERTS && assert($k > 0);
+			//USE_ASSERTS && assert($k > 0);
 			$ymids[$k] = $ymids[$k-1];
 			break;
                     }
 		while (list ($junk, $y) = each($matches)) {
 		    if ($y > $this->seq[$k-1]) {
-			USE_ASSERTS && assert($y < $this->seq[$k]);
+			//USE_ASSERTS && assert($y < $this->seq[$k]);
 			// Optimization: this is a common case:
 			//  next match is just replacing previous match.
 			$this->in_seq[$this->seq[$k]] = false;
@@ -270,7 +275,7 @@ class _DiffEngine
                     }
 		    else if (empty($this->in_seq[$y])) {
 			$k = $this->_lcs_pos($y);
-			USE_ASSERTS && assert($k > 0);
+			//USE_ASSERTS && assert($k > 0);
 			$ymids[$k] = $ymids[$k-1];
                     }
                 }
@@ -406,7 +411,7 @@ class _DiffEngine
 		$j++;
 	    
 	    while ($i < $len && ! $changed[$i]) {
-		USE_ASSERTS && assert('$j < $other_len && ! $other_changed[$j]');
+		//USE_ASSERTS && assert('$j < $other_len && ! $other_changed[$j]');
 		$i++; $j++;
 		while ($j < $other_len && $other_changed[$j])
 		    $j++;
@@ -438,10 +443,10 @@ class _DiffEngine
 		    $changed[--$i] = false;
 		    while ($start > 0 && $changed[$start - 1])
 			$start--;
-		    USE_ASSERTS && assert('$j > 0');
+		    //USE_ASSERTS && assert('$j > 0');
 		    while ($other_changed[--$j])
 			continue;
-		    USE_ASSERTS && assert('$j >= 0 && !$other_changed[$j]');
+		    //USE_ASSERTS && assert('$j >= 0 && !$other_changed[$j]');
                 }
 
 		/*
@@ -464,7 +469,7 @@ class _DiffEngine
 		    while ($i < $len && $changed[$i])
 			$i++;
 
-		    USE_ASSERTS && assert('$j < $other_len && ! $other_changed[$j]');
+		    //USE_ASSERTS && assert('$j < $other_len && ! $other_changed[$j]');
 		    $j++;
 		    if ($j < $other_len && $other_changed[$j]) {
 			$corresponding = $i;
@@ -481,10 +486,10 @@ class _DiffEngine
 	    while ($corresponding < $i) {
 		$changed[--$start] = 1;
 		$changed[--$i] = 0;
-		USE_ASSERTS && assert('$j > 0');
+		//USE_ASSERTS && assert('$j > 0');
 		while ($other_changed[--$j])
 		    continue;
-		USE_ASSERTS && assert('$j >= 0 && !$other_changed[$j]');
+		//USE_ASSERTS && assert('$j >= 0 && !$other_changed[$j]');
             }
         }
     }
@@ -538,7 +543,7 @@ class Diff
      */
     function isEmpty () {
         foreach ($this->edits as $edit) {
-            if ($edit->type != 'copy')
+            if (!is_a($edit, '_DiffOp_Copy'))
                 return false;
         }
         return true;
@@ -554,7 +559,7 @@ class Diff
     function lcs () {
 	$lcs = 0;
         foreach ($this->edits as $edit) {
-            if ($edit->type == 'copy')
+            if (is_a($edit, '_DiffOp_Copy'))
                 $lcs += sizeof($edit->orig);
         }
 	return $lcs;
@@ -614,11 +619,11 @@ class Diff
             trigger_error("Reversed final doesn't match", E_USER_ERROR);
 
 
-        $prevtype = 'none';
+        $prevtype = null;
         foreach ($this->edits as $edit) {
-            if ( $prevtype == $edit->type )
+            if ( $prevtype == get_class($edit) )
                 trigger_error("Edit sequence is non-optimal", E_USER_ERROR);
-            $prevtype = $edit->type;
+            $prevtype = get_class($edit);
         }
 
         $lcs = $this->lcs();
@@ -728,8 +733,13 @@ class DiffFormatter
 
         $this->_start_diff();
 
-        foreach ($diff->edits as $edit) {
-            if ($edit->type == 'copy') {
+        if (is_object($diff))
+            $edits = &$diff->edits;
+        else
+            $edits = &$diff;
+
+        foreach ($edits as $edit) {
+            if (is_a($edit, '_DiffOp_Copy')) {
                 if (is_array($block)) {
                     if (sizeof($edit->orig) <= $nlead + $ntrail) {
                         $block[] = $edit;
@@ -737,7 +747,7 @@ class DiffFormatter
                     else{
                         if ($ntrail) {
                             $context = array_slice($edit->orig, 0, $ntrail);
-                            $block[] = new _DiffOp_Copy($context);
+                            $block[] = &new _DiffOp_Copy($context);
                         }
                         $this->_block($x0, $ntrail + $xi - $x0,
                                       $y0, $ntrail + $yi - $y0,
@@ -754,7 +764,7 @@ class DiffFormatter
                     $y0 = $yi - sizeof($context);
                     $block = array();
                     if ($context)
-                        $block[] = new _DiffOp_Copy($context);
+                        $block[] = &new _DiffOp_Copy($context);
                 }
                 $block[] = $edit;
             }
@@ -776,13 +786,13 @@ class DiffFormatter
     function _block($xbeg, $xlen, $ybeg, $ylen, &$edits) {
         $this->_start_block($this->_block_header($xbeg, $xlen, $ybeg, $ylen));
         foreach ($edits as $edit) {
-            if ($edit->type == 'copy')
+            if (is_a($edit, '_DiffOp_Copy'))
                 $this->_context($edit->orig);
-            elseif ($edit->type == 'add')
+            elseif (is_a($edit, '_DiffOp_Add'))
                 $this->_added($edit->_final);
-            elseif ($edit->type == 'delete')
+            elseif (is_a($edit, '_DiffOp_Delete'))
                 $this->_deleted($edit->orig);
-            elseif ($edit->type == 'change')
+            elseif (is_a($edit, '_DiffOp_Change'))
                 $this->_changed($edit->orig, $edit->_final);
             else
                 trigger_error("Unknown edit type", E_USER_ERROR);
@@ -947,7 +957,7 @@ class WordLevelDiff extends MappedDiff
         $orig = new _HWLDF_WordAccumulator;
         
         foreach ($this->edits as $edit) {
-            if ($edit->type == 'copy')
+            if (is_a($edit, '_DiffOp_Copy'))
                 $orig->addWords($edit->orig);
             elseif ($edit->orig)
                 $orig->addWords($edit->orig, 'del');
@@ -959,7 +969,7 @@ class WordLevelDiff extends MappedDiff
         $_final = new _HWLDF_WordAccumulator;
         
         foreach ($this->edits as $edit) {
-            if ($edit->type == 'copy')
+            if (is_a($edit, '_DiffOp_Copy'))
                 $_final->addWords($edit->_final);
             elseif ($edit->_final)
                 $_final->addWords($edit->_final, 'ins');
@@ -973,10 +983,9 @@ class WordLevelDiff extends MappedDiff
             $text = new _HWLDF_WordAccumulator($tags);
 
         foreach ($this->edits as $edit) {
-            if ($edit->type == 'copy')
+            if (is_a($edit, '_DiffOp_Copy'))
                 $text->addWords($edit->orig);
             else {
-                #print "$edit->type:";
                 if ($edit->orig)
                     $text->addWords($edit->orig, 'del');
             	if ($edit->_final)
@@ -1076,7 +1085,7 @@ class DeltaDiffFormatter extends DiffFormatter
 /**
  * a Plain Diff formatter.
  */
-class PlainDiffFormatter
+class PlainDiffFormatter 
 {
     var $trailing_cr = "\n";
 
@@ -1105,13 +1114,13 @@ class PlainDiffFormatter
 
     function format($diff) {
         foreach ($diff->edits as $edit) {
-            if ($edit->type == 'copy')
+            if (is_a($edit, '_DiffOp_Copy'))
                 $this->_context($edit->orig);
-            elseif ($edit->type == 'add')
+            elseif (is_a($edit, '_DiffOp_Add'))
                 $this->_added($edit->_final);
-            elseif ($edit->type == 'delete')
+            elseif (is_a($edit, '_DiffOp_Delete'))
                 $this->_deleted($edit->orig);
-            elseif ($edit->type == 'change')
+            elseif (is_a($edit, '_DiffOp_Change'))
                 $this->_changed($edit->orig, $edit->_final);
             else
                 trigger_error("Unknown edit type", E_USER_ERROR);
