@@ -714,8 +714,8 @@ EOS;
     $doc_root = isset($this->doc_root) ? $this->doc_root : dirname(dirname(__FILE__));
     $doc_root = preg_replace('@/$@', '', $doc_root);
 
-    $imgs_realdir= $doc_root.'/'.$this->imgs_dir;
-    if (file_exists($imgs_realdir.'/interwiki/'.'moniwiki-16.png'))
+    $imgs_real_dir= !empty($this->imgs_real_dir) ? $this->imgs_real_dir : $doc_root.'/'.$this->imgs_dir;
+    if (file_exists($imgs_real_dir.'/interwiki/'.'moniwiki-16.png'))
       $this->imgs_dir_interwiki=$this->imgs_dir.'/interwiki/';
 
     if (empty($this->icon)) {
@@ -724,12 +724,12 @@ EOS;
 
     // for lower version compatibility
     $ext='png';
-    if (is_dir($imgs_realdir.'/'.$iconset)) $iconset.='/';
+    if (is_dir($imgs_real_dir.'/'.$iconset)) $iconset.='/';
     else $iconset.='-';
 
-    if (!file_exists($imgs_realdir.'/'.$iconset.'home.png')) $ext='gif';
+    if (!file_exists($imgs_real_dir.'/'.$iconset.'home.png')) $ext='gif';
 
-    if (file_exists($imgs_realdir.'/'.$iconset.'http.png'))
+    if (file_exists($imgs_real_dir.'/'.$iconset.'http.png'))
       $this->imgs_dir_url=$this->imgs_dir.'/'.$iconset;
 
     $this->icon['upper']="<img src='$imgdir/${iconset}upper.$ext' alt='U' style='vertical-align:middle;border:0px' />";
