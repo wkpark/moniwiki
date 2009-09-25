@@ -681,22 +681,22 @@ EOS;
     $this->login_strict=1;
 
     # set user-specified configuration
-    if ($config) {
+    if (!empty($config)) {
       # read configurations
       foreach ($config as $key=>$val) {
-        if ($key{0}=='_') continue; // internal variables
+        if ($key[0]=='_') continue; // internal variables
         $this->$key=$val;
       }
     }
 
-    if (!$this->purge_passwd)
+    if (empty($this->purge_passwd))
       $this->purge_passwd=$this->admin_passwd;
 
-    if ($this->use_wikiwyg and !$this->sectionedit_attr)
+    if (!empty($this->use_wikiwyg) and empty($this->sectionedit_attr))
       $this->sectionedit_attr=1;
 
 #
-    if (!$this->menu) {
+    if (empty($this->menu)) {
       $this->menu= array($this->frontpage=>"accesskey='1'",'FindPage'=>"accesskey='4'",'TitleIndex'=>"accesskey='3'",'RecentChanges'=>"accesskey='2'");
       $this->menu_bra="";
       $this->menu_cat="|";
@@ -727,10 +727,10 @@ EOS;
     if (is_dir($imgs_real_dir.'/'.$iconset)) $iconset.='/';
     else $iconset.='-';
 
-    if (!file_exists($imgs_real_dir.'/'.$iconset.'home.png')) $ext='gif';
-
-    if (file_exists($imgs_real_dir.'/'.$iconset.'http.png'))
+    if (file_exists($imgs_real_dir.'/'.$iconset.'home.png'))
       $this->imgs_dir_url=$this->imgs_dir.'/'.$iconset;
+    else
+      $ext = 'gif';
 
     $this->icon['upper']="<img src='$imgdir/${iconset}upper.$ext' alt='U' style='vertical-align:middle;border:0px' />";
     $this->icon['edit']="<img src='$imgdir/${iconset}edit.$ext' alt='E' style='vertical-align:middle;border:0px' />";
@@ -767,7 +767,7 @@ EOS;
               'show'=>array("","",$this->icon['show']),
               'find'=>array("FindPage","",$this->icon['find']),
               'info'=>array("","?action=info",$this->icon['info']));
-      if ($this->notify)
+      if (!empty($this->notify))
         $this->icons['subscribe']=array("","?action=subscribe",$this->icon['mailto']);
       $this->icons['help']=array("HelpContents","",$this->icon['help']);
       $this->icons['pref']=array("UserPreferences","",$this->icon['pref']);
@@ -775,8 +775,8 @@ EOS;
     $config=get_object_vars($this); // merge default settings to $config
 
     # load smileys
-    if ($this->use_smileys){
-      include_once($this->smiley.".php");
+    if (!empty($this->use_smileys)) {
+      include_once($this->smiley.'.php');
       # set smileys rule
       if ($this->shared_smileymap and file_exists($this->shared_smileymap)) {
         $myicons=array();
@@ -809,54 +809,54 @@ EOS;
     # ??? Is mod_rewrite being used to translate 'WikiWord' to
     // $this->rewrite = true;
 
-    if ($this->path)
+    if (!empty($this->path))
       putenv("PATH=".$this->path);
 
-    if ($this->rcs_user)
+    if (!empty($this->rcs_user))
       putenv('LOGNAME='.$this->rcs_user);
-    if ($this->timezone)
+    if (!empty($this->timezone))
       putenv('TZ='.$this->timezone);
 
     $this->interwiki=null;
 
     if (!empty($this->use_alias) and file_exists($this->aliaspage))
-      $this->alias=new MetaDB_text($this->aliaspage);
+      $this->alias=&new MetaDB_text($this->aliaspage);
     else
-      $this->alias=new MetaDB();
+      $this->alias=&new MetaDB();
 
-    if ($this->shared_metadb)
-      $this->metadb=new MetaDB_dba($this->shared_metadb,$this->dba_type);
-    if (!$this->metadb->metadb) {
-      if ($this->alias) $this->metadb=$this->alias;
-      else $this->metadb=new MetaDB();
+    if (!empty($this->shared_metadb))
+      $this->metadb=&new MetaDB_dba($this->shared_metadb,$this->dba_type);
+    if (empty($this->metadb->metadb)) {
+      if (is_object($this->alias)) $this->metadb=$this->alias;
+      else $this->metadb=&new MetaDB();
     } else {
       $this->metadb->attachDB($this->alias);
     }
 
-    if ($this->use_counter)
-      $this->counter=new Counter_dba($this);
+    if (!empty($this->use_counter))
+      $this->counter=&new Counter_dba($this);
     if (!$this->counter->counter)
-      $this->counter=new Counter();
+      $this->counter=&new Counter();
 
     if (!empty($this->security_class)) {
       include_once("plugin/security/$this->security_class.php");
-      $class="Security_".$this->security_class;
+      $class='Security_'.$this->security_class;
       $this->security=new $class ($this);
     } else
       $this->security=new Security($this);
-    if ($this->filters) {
+    if (!empty($this->filters)) {
       if (!is_array($this->filters)) {
         $this->filters=preg_split('/(\||,)/',$this->filters);
       }
     }
-    if ($this->postfilters) {
+    if (!empty($this->postfilters)) {
       if (!is_array($this->postfilters)) {
         $this->postfilters=preg_split('/(\||,)/',$this->postfilters);
       }
     }
 
     # check and prepare $url_mappings
-    if ($this->url_mappings) {
+    if (!empty($this->url_mappings)) {
       if (!is_array($this->url_mappings)) {
         $maps=explode("\n",$this->url_mappings);
         $tmap=array();
@@ -2978,25 +2978,18 @@ class Formatter {
     return "<img src='$this->imgs_dir/$img' style='border:0' class='smiley' alt='$alt' title='$alt' />";
   }
 
-  function link_url($pageurl,$query_string="") {
+  function link_url($pageurl, $query_string='') {
     global $DBInfo;
     $sep=$DBInfo->query_prefix;
 
-    if (!$query_string) {
+    if (empty($query_string)) {
       if (isset($this->query_string)) $query_string=$this->query_string;
-    } else if ($query_string and $query_string{0}=='#') {
+    } else if ($query_string[0] == '#') {
       $query_string= $this->self_query.$query_string;
     }
-    #{
-    #    $query_string = $this->query_string;
-    #  } else if ($query_string[0]=='?') {
-    #    $query_string= $this->query_string.'&amp;'.substr($query_string,1);
-    #  } else {
-    #  }
-    #}
 
     if ($sep == '?') {
-      if ($pageurl && $query_string[0]=='?')
+      if (isset($pageurl[0]) && $query_string[0]=='?')
         # add 'dummy=1' to work around the buggy php
         $query_string= '&amp;'.substr($query_string,1).'&amp;dummy=1';
         # Did you have a problem with &amp;dummy=1 ?
@@ -3005,22 +2998,22 @@ class Formatter {
       $query_string= $pageurl.$query_string;
     } else
       $query_string= $pageurl.$query_string;
-    return sprintf("%s%s%s", $this->prefix, $sep, $query_string);
+    return $this->prefix . $sep . $query_string;
   }
 
   function link_tag($pageurl,$query_string="", $text="",$attr="") {
     # Return a link with given query_string.
-    if (!$text)
+    if (empty($text))
       $text= $pageurl; # XXX
-    if (!$pageurl)
+    if (empty($pageurl))
       $pageurl=$this->page->urlname;
-    if ($query_string{0}=='?') $attr=empty($attr) ? 'rel="nofollow"':$attr.' rel="nofollow"';
+    if ($query_string[0]=='?') $attr=empty($attr) ? 'rel="nofollow"':$attr.' rel="nofollow"';
     $url=$this->link_url($pageurl,$query_string);
-    return sprintf("<a href=\"%s\" %s><span>%s</span></a>", $url, $attr, $text);
+    return '<a href="'.$url.'" '. $attr .'><span>'.$text.'</span></a>';
   }
 
   function link_to($query_string="",$text="",$attr="") {
-    if (!$text)
+    if (empty($text))
       $text=htmlspecialchars($this->page->name);
 
     return $this->link_tag($this->page->urlname,$query_string,$text,$attr);
@@ -4701,7 +4694,7 @@ MSG;
 
     # navi bar
     $menu=array();
-    if ($options['quicklinks']) {
+    if (!empty($options['quicklinks'])) {
       # get from the user setting
       $quicklinks=array_flip(explode("\t",$options['quicklinks']));
     } else {
