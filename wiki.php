@@ -5267,50 +5267,53 @@ if ($theme and ($DBInfo->theme_css or !$options['css_url']))
   }
 }
 
-function init_locale($lang) {
-  global $Config,$_locale,$locale;
-if (isset($_locale)) {
-  if (!@include_once('locale/'.$lang.'/LC_MESSAGES/moniwiki.php'))
-    @include_once('locale/'.substr($lang,0,2).'/LC_MESSAGES/moniwiki.php');
-} else if (substr($lang,0,2) == 'en') {
-  $test=setlocale(LC_ALL, $lang);
-} else {
-  if ($Config['include_path']) $dirs=explode(':',$Config['include_path']);
-  else $dirs=array('.');
+function init_locale($lang, $domain = 'moniwiki', $init = false) {
+  global $Config,$_locale;
+  if (isset($_locale)) {
+    if (!@include_once('locale/'.$lang.'/LC_MESSAGES/'.$domain.'.php'))
+      @include_once('locale/'.substr($lang,0,2).'/LC_MESSAGES/'.$domain.'.php');
+  } else if (substr($lang,0,2) == 'en') {
+    $test=setlocale(LC_ALL, $lang);
+  } else {
+    if ($Config['include_path']) $dirs=explode(':',$Config['include_path']);
+    else $dirs=array('.');
 
-  $domain='moniwiki';
-  if ($Config['use_local_translation']) {
-    $langdir=$lang;
-    if(getenv("OS")=="Windows_NT") $langdir=substr($lang,0,2);
-    # gettext cache workaround
-    # http://kr2.php.net/manual/en/function.gettext.php#58310
-    $ldir=$Config['cache_dir']."/locale/$langdir/LC_MESSAGES/";
-    if (file_exists($ldir.'md5sum')) {
-      $tmp=file($ldir.'md5sum');
-      if (file_exists($ldir.'moniwiki-'.$tmp[0].'.mo')) {
-        $domain=$domain.'-'.$tmp[0];
+    while ($Config['use_local_translation']) {
+      $langdir=$lang;
+      if(getenv("OS")=="Windows_NT") $langdir=substr($lang,0,2);
+      # gettext cache workaround
+      # http://kr2.php.net/manual/en/function.gettext.php#58310
+      $ldir=$Config['cache_dir']."/locale/$langdir/LC_MESSAGES/";
+
+      $tmp = '';
+      $fp = fopen($ldir.'md5sum', 'r');
+      if (is_resource($fp)) {
+        $tmp = '-'.trim(fgets($fp,1024));
+        fclose($fp);
+      }
+      if ($init and !file_exists($ldir.$domain.$tmp.'mo')) {
+        include_once(dirname(__FILE__).'/plugin/msgtrans.php');
+        macro_msgtrans(null,$lang,array('init'=>1));
+      } else {
+        $domain=$domain.$tmp;
         array_unshift($dirs,$Config['cache_dir']);
       }
-    } else {
-      include_once(dirname(__FILE__).'/plugin/msgtrans.php');
-      macro_msgtrans(null,$lang,array('init'=>1));
-    }
-  }
-
-  $test=setlocale(LC_ALL, $lang);
-  foreach ($dirs as $dir) {
-    $ldir=$dir.'/locale';
-    if (is_dir($ldir)) {
-      bindtextdomain($domain, $ldir);
-      textdomain($domain);
       break;
     }
-  }
-  if ($Config['set_lang']) putenv("LANG=".$lang);
-  if (function_exists('bind_textdomain_codeset'))
-    bind_textdomain_codeset ($domain, $Config['charset']);
-}
 
+    $test=setlocale(LC_ALL, $lang);
+    foreach ($dirs as $dir) {
+      $ldir=$dir.'/locale';
+      if (is_dir($ldir)) {
+        bindtextdomain($domain, $ldir);
+        textdomain($domain);
+        break;
+      }
+    }
+    if ($Config['set_lang']) putenv("LANG=".$lang);
+    if (function_exists('bind_textdomain_codeset'))
+      bind_textdomain_codeset ($domain, $Config['charset']);
+  }
 }
 
 function get_frontpage($lang) {
