@@ -1078,8 +1078,8 @@ EOS;
         }
         $last=$l.$last;
       }
-      #print $a;
-      #print sizeof($lines);
+      #echo $a;
+      #echo sizeof($lines);
       #print_r($lines);
       fclose($fp);
       break;   
@@ -1221,7 +1221,7 @@ EOS;
         if ($file == 'blogchanges') {
           $handle2= opendir("$this->cache_dir/$file");
           while ($fcache= readdir($handle2)) {
-            #print $keyname.';'.$fcache."\n";
+            #echo $keyname.';'.$fcache."\n";
             if (preg_match("/\d+_2e$keyname$/",$fcache))
               unlink("$this->cache_dir/$file/$fcache");
           }
@@ -2223,14 +2223,14 @@ class Formatter {
   }
 
   function write($raw) {
-    print $raw;
+    echo $raw;
   }
 
   function link_repl($url,$attr='',$opts=array()) {
     $nm = 0;
     $force = 0;
     if (is_array($url)) $url=$url[1];
-    #if ($url[0]=='<') { print $url;return $url;}
+    #if ($url[0]=='<') { echo $url;return $url;}
     $url=str_replace('\"','"',$url); // XXX
     $bra = '';
     $ket = '';
@@ -2616,7 +2616,7 @@ class Formatter {
       } else $word=$text;
     } else {
       $word=$text=$page_text ? $page_text:$word;
-      #print $text;
+      #echo $text;
       $word=htmlspecialchars($word);
       $word=str_replace('&amp;#','&#',$word); # hack
     }
@@ -2954,7 +2954,7 @@ class Formatter {
         call_user_func('do_'.$plugin,$this,$options);
         return;
       } else if (function_exists('macro_'.$plugin)) {
-        print call_user_func_array('macro_'.$plugin,array(&$this,'',$options));
+        echo call_user_func_array('macro_'.$plugin,array(&$this,'',$options));
         return;
       }
       return ajax_invalid($this,array('title'=>_("Invalid ajax action.")));
@@ -3333,10 +3333,10 @@ class Formatter {
         if (in_array($type,array('macro','processor'))) {
           switch($type) {
             case 'macro':
-              print $this->macro_repl($name,$val,$options);
+              echo $this->macro_repl($name,$val,$options);
               break;
             case 'processor':
-              print $this->processor_repl($name,$val,$options);
+              echo $this->processor_repl($name,$val,$options);
               break;
           }
         }
@@ -3358,7 +3358,7 @@ class Formatter {
 
       if ($this->wikimarkup and $pi['raw']) {
         $pi_html=str_replace("\n","<br />\n",$pi['raw']);
-        print "<span class='wikiMarkup'><!-- wiki:\n$pi[raw]\n-->$pi_html</span>";
+        echo "<span class='wikiMarkup'><!-- wiki:\n$pi[raw]\n-->$pi_html</span>";
       }
       $this->set_wordrule($pi);
       $fts=array();
@@ -3390,8 +3390,8 @@ class Formatter {
         }
 	$this->postambles();
 
-        print $this->get_javascripts();
-        print $text;
+        echo $this->get_javascripts();
+        echo $text;
 
         return;
       }
@@ -3414,7 +3414,7 @@ class Formatter {
       }
       $this->set_wordrule($pi);
       if (!empty($this->wikimarkup) and !empty($pi['raw']))
-        print "<span class='wikiMarkup'><!-- wiki:\n$pi[raw]\n--></span>";
+        echo "<span class='wikiMarkup'><!-- wiki:\n$pi[raw]\n--></span>";
 
       if (!empty($this->use_rating) and empty($this->wikimarkup) and empty($pi['#norating'])) {
         $this->pi=$pi;
@@ -3422,7 +3422,7 @@ class Formatter {
         if (isset($pi['#rating'])) $rval=$pi['#rating'];
         else $rval='0';
 
-        print '<div class="wikiRating">'.$this->macro_repl('Rating',$rval,array('mid'=>'page'))."</div>\n";
+        echo '<div class="wikiRating">'.$this->macro_repl('Rating',$rval,array('mid'=>'page'))."</div>\n";
         $this->mid=$old;
       }
 
@@ -3449,8 +3449,8 @@ class Formatter {
             $text=$this->postfilter_repl($ft,$text,$options);
         }
 	$this->postambles();
-        print $this->get_javascripts();
-        print $text;
+        echo $this->get_javascripts();
+        echo $text;
 
         if (!empty($DBInfo->use_tagging) and isset($pi['#keywords'])) {
           $tmp="----\n";
@@ -3689,7 +3689,7 @@ class Formatter {
       if ($in_pre != -1 &&
         preg_match("/^(((>\s)*>(?!>))|(\s*>*))/",$line,$match)) {
       #if (preg_match("/^(\s*)/",$line,$match)) {
-         #print "{".$match[1].'}';
+         #echo "{".$match[1].'}';
          $open="";
          $close="";
          $indtype="dd";
@@ -4055,20 +4055,20 @@ class Formatter {
     # postamble
     $this->postambles();
 
-    print $this->get_javascripts();
-    print $text;
+    echo $this->get_javascripts();
+    echo $text;
     if ($this->sisters and !$options['nosisters']) {
       $sister_save=$this->sister_on;
       $this->sister_on=0;
       $sisters=join("\n",$this->sisters);
       $sisters=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$sisters);
       $msg=_("Sister Sites Index");
-      print "<div id='wikiSister'>\n<div class='separator'><tt class='foot'>----</tt></div>\n$msg<br />\n<ul>$sisters</ul></div>\n";
+      echo "<div id='wikiSister'>\n<div class='separator'><tt class='foot'>----</tt></div>\n$msg<br />\n<ul>$sisters</ul></div>\n";
       $this->sister_on=$sister_save;
     }
 
     if ($this->foots)
-      print $this->macro_repl('FootNote','',$options);
+      echo $this->macro_repl('FootNote','',$options);
 
     if (!empty($this->update_pagelinks) and !empty($options['pagelinks'])) $this->store_pagelinks();
   }
@@ -4539,8 +4539,8 @@ EOS;
 
     if ($options['action_mode']=='ajax') return;
 
-    print "<!-- wikiBody --></div>\n";
-    print $DBInfo->hr;
+    echo "<!-- wikiBody --></div>\n";
+    echo $DBInfo->hr;
     if ($args['editable'] and !$DBInfo->security->writable($options))
       $args['editable']=-1;
 
@@ -4597,14 +4597,14 @@ FOOT;
       $themeurl=$this->themeurl;
       include($this->themedir."/footer.php");
     } else {
-      print "<div id='wikiFooter'>";
-      print $menu;
-      if (!$this->css_friendly) print $banner;
-      else print "<div id='wikiBanner'>$banner</div>\n";
-      print "\n</div>\n";
+      echo "<div id='wikiFooter'>";
+      echo $menu;
+      if (!$this->css_friendly) echo $banner;
+      else echo "<div id='wikiBanner'>$banner</div>\n";
+      echo "\n</div>\n";
     }
     if (empty($this->_newtheme) or $this->_newtheme != 2)
-      print "</body>\n</html>\n";
+      echo "</body>\n</html>\n";
     #include "prof_results.php";
   }
 
@@ -4621,30 +4621,32 @@ FOOT;
     # find upper page
     $pos=0;
     preg_match('/(\:|\/)/',$name,$sep); # NameSpace/SubPage or NameSpace:SubNameSpacePage
-    if ($sep[1]) $pos=strrpos($name,$sep[1]);
+    if (isset($sep[1])) $pos=strrpos($name,$sep[1]);
     $mypgname=$this->page->name;
     if ($pos > 0) {
       $upper=substr($name,0,$pos);
       $upper_icon=$this->link_tag($upper,'',$this->icon['upper'])." ";
-    } else if ($this->group) {
+    } else if (!empty($this->group)) {
       $group=$this->group;
       $mypgname=substr($this->page->name,strlen($group));
       $upper=_urlencode($mypgname);
       $upper_icon=$this->link_tag($upper,'',$this->icon['main'])." ";
     }
 
-    $title=htmlspecialchars($this->pi['#title']);
+    $title = '';
+    if (isset($this->pi['#title']))
+      $title=htmlspecialchars($this->pi['#title']);
     if (!empty($msgtitle)) {
       $msgtitle = htmlspecialchars($msgtitle);
     } else if (isset($options['msgtitle'])) {
       $msgtitle = $options['msgtitle'];
     }
 
-    if (!$msgtitle) $msgtitle=$options['title'];
-    if (!$title) {
-      if ($group) { # for UserNameSpace
+    if (empty($msgtitle) and !empty($options['title'])) $msgtitle=$options['title'];
+    if (empty($title)) {
+      if (!empty($group)) { # for UserNameSpace
         $title=$mypgname;
-        $groupt=substr($group,0,-1).' &raquo;';
+        $groupt=substr($group,0,-1).' &raquo;'; // XXX
         $groupt=
           "<span class='wikiGroup'>$groupt</span>";
       } else     
@@ -4653,8 +4655,8 @@ FOOT;
     }
     # setup title variables
     #$heading=$this->link_to("?action=fullsearch&amp;value="._urlencode($name),$title);
-    if ($DBInfo->use_backlinks) $qext='&amp;backlinks=1';
-    if ($link)
+    if (!empty($DBInfo->use_backlinks)) $qext='&amp;backlinks=1';
+    if (!empty($link))
       $title="<a href=\"$link\">$title</a>";
     else if (empty($options['nolink']))
       $title=$this->link_to("?action=fullsearch$qext&amp;value="._urlencode($mypgname),$title);
@@ -4662,16 +4664,16 @@ FOOT;
     if (isset($this->pi['#notitle']))
       $title = '';
     else
-      $title="$groupt<span class='wikiTitle'>$title</span>";
+      $title=$groupt."<span class='wikiTitle'>$title</span>";
 
     $logo=$this->link_tag($DBInfo->logo_page,'',$DBInfo->logo_string);
     $goto_form=$DBInfo->goto_form ?
       $DBInfo->goto_form : goto_form($action,$DBInfo->goto_type);
 
-    if ($options['msg'] or $msgtitle) {
+    if (!empty($options['msg']) or !empty($msgtitle)) {
       $msgtype = isset($options['msgtype']) ? ' '.$options['msgtype']:' warn';
       
-      $mtitle=$msgtitle ? "<h3>".$msgtitle."</h3>\n":"";
+      $mtitle=!empty($msgtitle) ? "<h3>".$msgtitle."</h3>\n":"";
       $msg=<<<MSG
 <div class="message" id="wiki-message"><span class='$msgtype'>
 $mtitle$options[msg]</span>
@@ -4714,7 +4716,7 @@ MSG;
       $quicklinks[$this->page->name]='';
     }
 
-    if ($DBInfo->use_userlink and isset($quicklinks['UserPreferences']) and $options['id'] != 'Anonymous') {
+    if (!empty($DBInfo->use_userlink) and isset($quicklinks['UserPreferences']) and $options['id'] != 'Anonymous') {
         $tmpid= 'wiki:UserPreferences '.$options['id'];
         $quicklinks[$tmpid]= $quicklinks['UserPreferences'];
         unset($quicklinks['UserPreferences']);
@@ -4748,8 +4750,8 @@ MSG;
     }
     $this->nonexists = $save;
     $this->sister_on=$sister_save;
-    if (!$this->css_friendly) {
-      $menu=$this->menu_bra.join($this->menu_sep,$menu).$this->menu_cat;
+    if (empty($this->css_friendly)) {
+      $menu=$this->menu_bra.implode($this->menu_sep,$menu).$this->menu_cat;
     } else {
       #for ($i=0,$szm=sizeof($menu);$i<$szm;$i++) {
       #  #if $menu[$i]==
@@ -4763,7 +4765,7 @@ MSG;
     $this->topmenu=$menu;
 
     # submenu XXX
-    if ($this->submenu) {
+    if (!empty($this->submenu)) {
       $smenu=array();
       $mnu_pgname=($group ? $group.'~':'').$this->submenu;
       if ($DBInfo->hasPage($mnu_pgname)) {
@@ -4841,11 +4843,11 @@ MSG;
     } else
       $user_link=$this->link_tag("UserPreferences","",_($this->icon['user']));
 
-    if ($this->icons) {
+    if (!empty($this->icons)) {
       $icon=array();
       $myicons=array();
 
-      if ($this->icon_list) {
+      if (!empty($this->icon_list)) {
         $inames=explode(',',$this->icon_list);
         foreach ($inames as $item) {
           if (isset($this->icons[$item])) {
@@ -4906,35 +4908,35 @@ MSG;
       $header.="</td></tr></table>\n";
 
       # menu
-      print "<div id='wikiHeader'>\n";
-      print $header;
+      echo "<div id='wikiHeader'>\n";
+      echo $header;
       if (!$this->css_friendly)
-        print $menu." ".$user_link." ".$upper_icon.$icons.$rss_icon;
+        echo $menu." ".$user_link." ".$upper_icon.$icons.$rss_icon;
       else {
-        print "<div id='wikiLogin'>".$user_link."</div>";
-        print "<div id='wikiIcon'>".$upper_icon.$icons.$rss_icon.'</div>';
-        print $menu;
+        echo "<div id='wikiLogin'>".$user_link."</div>";
+        echo "<div id='wikiIcon'>".$upper_icon.$icons.$rss_icon.'</div>';
+        echo $menu;
       }
-      print $msg;
-      print "</div>\n";
+      echo $msg;
+      echo "</div>\n";
     }
-    if (!$this->popup and (empty($themeurl) or !$this->_newtheme)) {
-      print $DBInfo->hr;
+    if (empty($this->popup) and (empty($themeurl) or !$this->_newtheme)) {
+      echo $DBInfo->hr;
       if ($options['trail']) {
-        print "<div id='wikiTrailer'>\n";
-        print $this->trail;
-        print "</div>\n";
+        echo "<div id='wikiTrailer'>\n";
+        echo $this->trail;
+        echo "</div>\n";
       }
       if ($this->origin) {
-        print "<div id='wikiOrigin'>\n";
-        print $this->origin;
-        print "</div>\n";
+        echo "<div id='wikiOrigin'>\n";
+        echo $this->origin;
+        echo "</div>\n";
       }
-      print $this->subindex;
+      echo $this->subindex;
     }
-    print "<div id='wikiBody'>\n";
+    echo "<div id='wikiBody'>\n";
     #if ($this->subindex and !$this->popup and (empty($themeurl) or !$this->_newtheme))
-    #  print $this->subindex;
+    #  echo $this->subindex;
     $this->pagelinks=$saved_pagelinks;
   }
 
@@ -5324,10 +5326,9 @@ function wiki_main($options) {
 
   # get primary variables
   if ($_SERVER['REQUEST_METHOD']=="POST") {
-    if (isset($_POST['retstr']))
-      unset($_POST['retstr']);
-    if (isset($_POST['header']))
-      unset($_POST['header']);
+    // reset some reserved variables
+    if (isset($_POST['retstr'])) unset($_POST['retstr']);
+    if (isset($_POST['header'])) unset($_POST['header']);
 
     # hack for TWiki plugin
     if ($_FILES['filepath']['name']) $action='draw';
@@ -5350,10 +5351,9 @@ function wiki_main($options) {
     $goto=$_POST['goto'];
     $popup=$_POST['popup'];
   } else if ($_SERVER['REQUEST_METHOD']=="GET") {
-    if (isset($_GET['retstr']))
-      unset($_GET['retstr']);
-    if (isset($_POST['header']))
-      unset($_POST['header']);
+    // reset some reserved variables
+    if (isset($_GET['retstr'])) unset($_GET['retstr']);
+    if (isset($_POST['header'])) unset($_POST['header']);
 
     $action=$_GET['action'];
     $value=$_GET['value'];
@@ -5362,6 +5362,8 @@ function wiki_main($options) {
     $refresh=($options['id'] == 'Anonymous') ? 0:$_GET['refresh'];
     $popup=$_GET['popup'];
   }
+  // parse action
+  // action=foobar, action=foobar/macro, action=foobar/json etc.
   $full_action=$action;
   if (($p=strpos($action,'/'))!==false) {
     $full_action=strtr($action,'/','-');
@@ -5369,6 +5371,7 @@ function wiki_main($options) {
     $action=substr($action,0,$p);
   }
 
+  // is it robot ?
   if (!empty($options['is_robot'])) {
     if (!empty($DBInfo->security_class_robot)) {
       $class='Security_'.$DBInfo->security_class_robot;
@@ -5377,18 +5380,18 @@ function wiki_main($options) {
       $class='Security_robot';
       include_once('plugin/security/robot.php');
     }
-    $DBInfo->security=new $class ($DBInfo);
+    $DBInfo->security = &new $class ($DBInfo);
+    // is it allowed to robot ?
     if (!$DBInfo->security->is_allowed($action,$options))
       $action='show';
     $DBInfo->extra_macros='';
   }
 
-  #print $_SERVER['REQUEST_URI'];
   $options['page']=$pagename;
 
   $page = $DBInfo->getPage($pagename);
 
-  $formatter = new Formatter($page,$options);
+  $formatter = &new Formatter($page,$options);
 
   if ($Config['baserule']) {
     $dummy = 'dummy';
@@ -5451,7 +5454,7 @@ function wiki_main($options) {
       if (!$Config['no_404']) $msg_404="Status: 404 Not found"; # for IE
       if (!empty($options['is_robot']) or $Config['nofancy_404']) {
         $formatter->header($msg_404);
-        print '<html><head></head><body><h1>'.$msg_404.'</h1></body></html>';
+        echo '<html><head></head><body><h1>'.$msg_404.'</h1></body></html>';
         return true;
       }
       $formatter->send_header($msg_404,$options);
@@ -5474,36 +5477,36 @@ function wiki_main($options) {
         $button= $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
         if ($oldver) {
           $formatter->send_title(sprintf(_("%s has saved revisions"),$page->name),"",$options);
-          print '<h2>'.sprintf(_("%s or click %s to fulltext search.\n"),$button,$formatter->link_to("?action=fullsearch&amp;value=$searchval",_("here"))).'</h2>';
+          echo '<h2>'.sprintf(_("%s or click %s to fulltext search.\n"),$button,$formatter->link_to("?action=fullsearch&amp;value=$searchval",_("here"))).'</h2>';
           $options['info_actions']=array('recall'=>'view','revert'=>'revert');
           $options['title']='<h3>'.sprintf(_("Old Revisions of the %s"),htmlspecialchars($page->name)).'</h3>';
-          print $formatter->macro_repl('Info','',$options);
+          echo $formatter->macro_repl('Info','',$options);
         } else {
           $formatter->send_title(sprintf(_("%s is not found in this Wiki"),$page->name),"",$options);
           $searchval=htmlspecialchars($options['page']);
-          print '<h2>'.sprintf(_("%s or click %s to fulltext search.\n"),$button,$formatter->link_to("?action=fullsearch&amp;value=$searchval",_("here"))).'</h2>';
-          print $formatter->macro_repl('LikePages',$page->name,$err);
+          echo '<h2>'.sprintf(_("%s or click %s to fulltext search.\n"),$button,$formatter->link_to("?action=fullsearch&amp;value=$searchval",_("here"))).'</h2>';
+          echo $formatter->macro_repl('LikePages',$page->name,$err);
           if ($err['extra'])
-            print $err['extra'];
+            echo $err['extra'];
 
-          print '<h2>'._("Please try to search with another word").'</h2>';
+          echo '<h2>'._("Please try to search with another word").'</h2>';
           $ret = array('call'=>1);
           $ret = $formatter->macro_repl('TitleSearch','',$ret);
 
           #if ($ret['hits'] == 0)
-          print "<div class='searchResult'>".$ret['form']."</div>";
+          echo "<div class='searchResult'>".$ret['form']."</div>";
         }
 
-        print "<hr />\n";
+        echo "<hr />\n";
         $options['linkto']="?action=edit&amp;template=";
         $tmpls= macro_TitleSearch($formatter,$DBInfo->template_regex,$options);
         if ($tmpls) {
-          print sprintf(_("%s or alternativly, use one of these templates:\n"),$button);
-          print $tmpls;
+          echo sprintf(_("%s or alternativly, use one of these templates:\n"),$button);
+          echo $tmpls;
         } else {
-          print "<h3>"._("You have no templates")."</h3>";
+          echo "<h3>"._("You have no templates")."</h3>";
         }
-        print sprintf(_("To create your own templates, add a page with '%s' pattern.\n"),$DBInfo->template_regex);
+        echo sprintf(_("To create your own templates, add a page with '%s' pattern.\n"),$DBInfo->template_regex);
       }
 
       $args['editable']=1;
@@ -5512,25 +5515,25 @@ function wiki_main($options) {
     }
     # display this page
 
-    if ($DBInfo->use_redirect_msg and $action=='show' and $_GET['redirect']){
+    if (isset($_GET['redirect']) and !empty($DBInfo->use_redirect_msg) and $action=='show'){
       $options['msg']=
         '<h3>'.sprintf(_("Redirected from page \"%s\""),
           $formatter->link_tag($_GET['redirect'],'?action=show'))."</h3>";
     }
     # increase counter
     if (empty($options['is_robot']))
-    $DBInfo->counter->incCounter($pagename,$options);
+      $DBInfo->counter->incCounter($pagename,$options);
 
-    if (!$action) $options['pi']=1; # protect a recursivly called #redirect
+    if (empty($action)) $options['pi']=1; # protect a recursivly called #redirect
 
-    if ($DBInfo->control_read and !$DBInfo->security->is_allowed('read',$options)) {
+    if (!empty($DBInfo->control_read) and !$DBInfo->security->is_allowed('read',$options)) {
       do_invalid($formatter,$options);
       return;
     }
 
 
     $formatter->pi=$formatter->get_instructions($dum);
-    if ($DBInfo->body_attr)
+    if (!empty($DBInfo->body_attr))
       $options['attr']=$DBInfo->body_attr;
 
     $ret = $formatter->send_header('', $options);
@@ -5539,32 +5542,32 @@ function wiki_main($options) {
       $formatter->send_title("","",$options);
     }
 
-    if ($formatter->pi['#title'] and $DBInfo->use_titlecache) {
-      $tcache=new Cache_text('title');
+    if (!empty($formatter->pi['#title']) and !empty($DBInfo->use_titlecache)) {
+      $tcache=&new Cache_text('title');
       if (!$tcache->exists($pagename) or $_GET['update_title'])
         $tcache->update($pagename,$formatter->pi['#title']);
     }
-    if ($DBInfo->use_keywords or $DBInfo->use_tagging or $_GET['update_keywords']) {
-      $tcache=new Cache_text('keywords');
-      if (!$formatter->pi['#keywords']) {
+    if (!empty($DBInfo->use_keywords) or !empty($DBInfo->use_tagging) or !empty($_GET['update_keywords'])) {
+      $tcache=&new Cache_text('keywords');
+      if (empty($formatter->pi['#keywords'])) {
         $tcache->remove($pagename);
       } else if (!$tcache->exists($pagename) or
         $tcache->mtime($pagename) < $formatter->page->mtime() or
-        $_GET['update_keywords']) {
+        !empty($_GET['update_keywords'])) {
         $keys=explode(',',$formatter->pi['#keywords']);
         $keys=array_map('trim',$keys);
         $tcache->update($pagename,serialize($keys));
       }
     }
-    if ($DBInfo->use_referer)
+    if (!empty($DBInfo->use_referer))
       log_referer($_SERVER['HTTP_REFERER'],$pagename);
 
     $formatter->write("<div id='wikiContent'>\n");
     $options['timer']->Check("init");
     $options['pagelinks']=1;
     if ($Config['cachetime'] > 0 and !$formatter->pi['#nocache']) {
-      $cache=new Cache_text('pages',2,'html');
-      $mcache=new Cache_text('dynamicmacros',2);
+      $cache=&new Cache_text('pages',2,'html');
+      $mcache=&new Cache_text('dynamicmacros',2);
       $mtime=$cache->mtime($pagename);
       $dtime=filemtime($Config['text_dir'].'/.'); // mtime fix XXX
       $now=time();
@@ -5602,7 +5605,7 @@ function wiki_main($options) {
         }
         $out=str_replace($mrule,$mrepl,$out);
       }
-      print $out.$extra_out;
+      echo $out,$extra_out;
       $args['refresh']=1; // add refresh menu
     } else {
       $formatter->send_page('',$options);
@@ -5617,7 +5620,7 @@ function wiki_main($options) {
         $options['notoolbar']=1;
       }
       $options['mid']='dummy';
-      print '<div id="wikiExtra">'."\n";
+      echo '<div id="wikiExtra">'."\n";
       $mout = '';
       $extra = array();
       if (is_array($DBInfo->extra_macros))
@@ -5628,11 +5631,11 @@ function wiki_main($options) {
 
       foreach ($extra as $macro)
         $mout.= $formatter->macro_repl($macro,'',$options);
-      print $formatter->get_javascripts();
-      print $mout;
-      print '</div>'."\n";
+      echo $formatter->get_javascripts();
+      echo $mout;
+      echo '</div>'."\n";
     }
-    
+
     $args['editable']=1;
     if (empty($options['is_robot']))
       $formatter->send_footer($args,$options);
@@ -5675,9 +5678,9 @@ function wiki_main($options) {
 
       if ($options['help'] and
           method_exists($DBInfo->security,$options['help'])) {
-        print "<div id='wikiHelper'>";
-        print call_user_method($options['help'],$DBInfo->security,$formatter,$options);
-        print "</div>\n";
+        echo "<div id='wikiHelper'>";
+        echo call_user_method($options['help'],$DBInfo->security,$formatter,$options);
+        echo "</div>\n";
       }
 
       $formatter->send_footer($args,$options);
@@ -5704,7 +5707,7 @@ function wiki_main($options) {
       if ($action_mode=='ajax')
         $formatter->ajax_repl($action,$options);
       else if ($DBInfo->use_macro_as_action) # XXX
-        print $formatter->macro_repl($action,$options['value'],$options);
+        echo $formatter->macro_repl($action,$options['value'],$options);
       else
         do_invalid($formatter,$options);
       return;
