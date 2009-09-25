@@ -873,11 +873,14 @@ EOS;
         $this->url_mapping_rule=substr($rule,0,-1);
       }
     }
+    register_shutdown_function(array(&$this,'Close'));
   }
 
   function Close() {
-    $this->metadb->close();
-    $this->counter->close();
+    if (is_object($this->metadb))
+      $this->metadb->close();
+    if (is_object($this->counter))
+      $this->counter->close();
   }
 
   function _getPageKey($pagename) {
@@ -5751,7 +5754,6 @@ include_once("wikilib.php");
 include_once("lib/win32fix.php");
 
 $DBInfo= new WikiDB($Config);
-register_shutdown_function(array(&$DBInfo,'Close'));
 
 $options=array();
 $options['timer']=&$timing;
