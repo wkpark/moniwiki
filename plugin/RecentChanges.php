@@ -313,7 +313,7 @@ define('RC_DEFAULT_DAYS',7);
     $title0=htmlspecialchars($title0);
     $attr = '';
     if (strlen(get_title($title)) > 20 and function_exists('mb_strimwidth')) {
-      $title0=mb_strimwidth($title0,0,20,'...');
+      $title0=mb_strimwidth($title0,0,20,'...', $DBInfo->charset);
       $attr = ' title="'.$title.'"';
     }
     $title= $formatter->link_tag($pageurl,"",$title0,$target.$attr);
