@@ -727,10 +727,10 @@ EOS;
     if (is_dir($imgs_real_dir.'/'.$iconset)) $iconset.='/';
     else $iconset.='-';
 
-    if (file_exists($imgs_real_dir.'/'.$iconset.'home.png'))
+    if (!file_exists($imgs_real_dir.'/'.$iconset.'home.png')) $ext = 'gif';
+
+    if (file_exists($imgs_real_dir.'/'.$iconset.'http.png'))
       $this->imgs_dir_url=$this->imgs_dir.'/'.$iconset;
-    else
-      $ext = 'gif';
 
     $this->icon['upper']="<img src='$imgdir/${iconset}upper.$ext' alt='U' style='vertical-align:middle;border:0px' />";
     $this->icon['edit']="<img src='$imgdir/${iconset}edit.$ext' alt='E' style='vertical-align:middle;border:0px' />";
