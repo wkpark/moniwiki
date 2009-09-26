@@ -113,7 +113,7 @@ EOS;
   $chooser.= "<div id=\"smileyChooser\">\n";
   $last_img = '';
   $idx=0;
-  while (list($key,$value) = each($DBInfo->smileys)) {
+  while (list($key,$value) = each($formatter->smileys)) {
     if ($last_img != $value[3]) {
       $skey=str_replace(array("\\","'"),array("\\\\","&#39;"),$key);
       $chooser.= "<span onclick='mySmiley(\"$skey\")'>".$formatter->smiley_repl($key)."</span>&shy;";

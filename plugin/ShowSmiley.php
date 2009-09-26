@@ -8,8 +8,6 @@
 // $Id$
 
 function macro_ShowSmiley($formatter,$value) {
-  global $DBInfo;
-
   $idx=0;
   $out='<table class="wiki"><tr class="wiki">';
   $col=4;
@@ -19,7 +17,7 @@ function macro_ShowSmiley($formatter,$value) {
   }
   $out.='</tr><tr class="wiki">';
 
-  foreach ($DBInfo->smileys as $key=>$value) {
+  foreach ($formatter->smileys as $key=>$value) {
     $skey=str_replace("\\","\\\\",$key);
     $out.= '<td>'.$key.'</td><td>'.$formatter->smiley_repl($key)."</td>";
     $idx++;

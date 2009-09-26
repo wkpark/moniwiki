@@ -340,6 +340,30 @@ function isRobot($name) {
   return false;
 }
 
+function getSmileys() {
+  global $DBInfo;
+
+  include_once($DBInfo->smiley.'.php');
+  # set smileys
+  if (!empty($DBInfo->shared_smileymap) and file_exists($DBInfo->shared_smileymap)) {
+    $myicons=array();
+    $lines=file($DBInfo->shared_smileymap);
+    foreach ($lines as $l) {
+      if ($l[0] != ' ') continue;
+      if (!preg_match('/^ \*\s*([^ ]+)\s(.*)$/',$l,$m)) continue;
+      $name=_preg_escape($m[1]);
+      list($img,$extra)=explode(' ',$m[2]);
+      if (preg_match('/^(http|ftp):.*\.(png|jpg|jpeg|gif)/',$img)) {
+        $myicons[$name]=array(16,16,0,$img);
+      } else {
+        continue;
+      }
+    }
+    $smileys=array_merge($smileys,$myicons);
+  }
+  return $smileys;
+}
+
 class UserDB {
   var $users=array();
   function UserDB($WikiDB) {

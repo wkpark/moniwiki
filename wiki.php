@@ -774,35 +774,6 @@ EOS;
     }
     $config=get_object_vars($this); // merge default settings to $config
 
-    # load smileys
-    if (!empty($this->use_smileys)) {
-      include_once($this->smiley.'.php');
-      # set smileys rule
-      if ($this->shared_smileymap and file_exists($this->shared_smileymap)) {
-        $myicons=array();
-        $lines=file($this->shared_smileymap);
-        foreach ($lines as $l) {
-          if ($l[0] != ' ') continue;
-          if (!preg_match('/^ \*\s*([^ ]+)\s(.*)$/',$l,$m)) continue;
-          $name=_preg_escape($m[1]);
-          list($img,$extra)=explode(' ',$m[2]);
-          if (preg_match('/^(http|ftp):.*\.(png|jpg|jpeg|gif)/',$img)) {
-            $myicons[$name]=array(16,16,0,$img);
-          } else {
-            continue;
-          }
-        }
-        #print_r($myicons);
-        $smileys=array_merge($smileys,$myicons);
-      }
-
-      $tmp=array_keys($smileys);
-      $tmp=array_map("_preg_escape",$tmp);
-      $rule=join($tmp,"|");
-      $this->smiley_rule=$rule;
-      $this->smileys=$smileys;
-    }
-
     # ??? Number of lines output per each flush() call.
     // $this->lines_per_flush = 10;
 
@@ -1883,7 +1854,15 @@ class Formatter {
     $this->extrarepl=array("<table class='closure'><tr class='closure'><td class='closure'>\\1</td></tr></table>","</div><table class='closure'><tr class='closure'><td class='closure'><div>","</div></td></tr></table><div>");
     
     # set smily_rule,_repl
-    if ($DBInfo->smileys) {
+    # load smileys
+    if (!empty($DBInfo->use_smileys)) {
+      $this->smileys = getSmileys();
+
+      $tmp=array_keys($this->smileys);
+      $tmp=array_map('_preg_escape',$tmp);
+      $rule=join($tmp,'|');
+      $DBInfo->smiley_rule=$rule;
+
       $this->smiley_rule='/(?<=\s|^|>)('.$DBInfo->smiley_rule.')(?=\s|<|$)/e';
       $this->smiley_repl="\$formatter->smiley_repl('\\1')";
 
@@ -2967,9 +2946,7 @@ class Formatter {
   }
 
   function smiley_repl($smiley) {
-    global $DBInfo;
-
-    $img=$DBInfo->smileys[$smiley][3];
+    $img=$this->smileys[$smiley][3];
 
     $alt=str_replace("<","&lt;",$smiley);
 
