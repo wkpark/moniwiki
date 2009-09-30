@@ -711,7 +711,8 @@ EOS;
       $this->upload_dir_url= $this->upload_dir;
 
     // getenv("DOCUMENT_ROOT") != doc_root or not ?
-    $doc_root = isset($this->doc_root) ? $this->doc_root : dirname(dirname(__FILE__));
+    $doc_root = isset($this->doc_root) ? $this->doc_root :
+      ($this->url_prefix ? dirname(dirname(__FILE__)) : dirname(__FILE__));
     $doc_root = preg_replace('@/$@', '', $doc_root);
 
     $imgs_real_dir= !empty($this->imgs_real_dir) ? $this->imgs_real_dir : $doc_root.'/'.$this->imgs_dir;
