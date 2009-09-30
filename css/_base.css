@@ -189,6 +189,13 @@ div.message span {
   height:60px;
 }
 
+div.message span a span {
+  display:inline;
+  padding:0; margin:0;
+  height:auto;
+  min-width:none;
+}
+
 div.message span.warn {
   background: url(../imgs/info/warn.png) 10px 10px no-repeat;
 }
