@@ -1460,7 +1460,7 @@ class Cache_text {
     if ($mtime and ($mtime <= $this->mtime($key))) return false;
 
     if (is_array($val))
-      $val=join("\n",array_keys($val))."\n";
+      $val=implode("\n",array_keys($val))."\n";
     else
       $val=str_replace("\r","",$val);
     $this->_save($key,$val);
@@ -1860,7 +1860,7 @@ class Formatter {
 
       $tmp=array_keys($this->smileys);
       $tmp=array_map('_preg_escape',$tmp);
-      $rule=join($tmp,'|');
+      $rule=implode('|', $tmp);
       $DBInfo->smiley_rule=$rule;
 
       $this->smiley_rule='/(?<=\s|^|>)('.$DBInfo->smiley_rule.')(?=\s|<|$)/e';
@@ -2168,7 +2168,7 @@ class Formatter {
       $pi['#format']= substr($pi['#format'],0,$p);
     }
 
-    if ($notused) $body=join("\n",$notused)."\n".$body;
+    if ($notused) $body=implode("\n",$notused)."\n".$body;
     if ($update_body) $this->page->write($body." "); # workaround XXX
     #if ($update_body) $this->page->write($body);
     $pi['raw']=$piline;
@@ -2769,7 +2769,7 @@ class Formatter {
       $i=sizeof($dum);
       for ($j=0;$j<$i;$j++) $dum[$j]=1;
       $dum[$i-1]=0;
-      $num=join($dum,".");
+      $num=implode('.', $dum);
     }
     $open="";
     $close="";
@@ -2785,7 +2785,7 @@ class Formatter {
          $odepth--;
       }
       $dum[$i]++;
-      $num=join($dum,".");
+      $num=implode('.', $dum);
     }
 
     $headinfo['dep']=$depth; # save old
@@ -3984,7 +3984,7 @@ class Formatter {
 
       $colref=preg_split("/\|/",$highlight);
       #$colref=preg_split("/\s+/",$highlight);
-      $highlight=join("|",$colref);
+      $highlight=implode('|', $colref);
       $colref=array_flip(array_map("strtolower",$colref));
 
       $text=preg_replace('/((<[^>]*>)|('.$highlight.'))/ie',
@@ -4033,7 +4033,7 @@ class Formatter {
     if ($this->sisters and !$options['nosisters']) {
       $sister_save=$this->sister_on;
       $this->sister_on=0;
-      $sisters=join("\n",$this->sisters);
+      $sisters=implode("\n",$this->sisters);
       $sisters=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$sisters);
       $msg=_("Sister Sites Index");
       echo "<div id='wikiSister'>\n<div class='separator'><tt class='foot'>----</tt></div>\n$msg<br />\n<ul>$sisters</ul></div>\n";
@@ -4837,7 +4837,7 @@ MSG;
         else $attr='';
         $icon[]=$this->link_tag($item[0],$item[1],$item[2],$attr);
       }
-      $icons=$this->icon_bra.join($this->icon_sep,$icon).$this->icon_cat;
+      $icons=$this->icon_bra.implode($this->icon_sep,$icon).$this->icon_cat;
     }
 
     $rss_icon=$this->link_tag("RecentChanges","?action=rss_rc",$this->icon['rss'])." ";
@@ -4994,7 +4994,7 @@ MSG;
 
     $idx=count($trails) - $size;
     if ($idx > 0) $trails=array_slice($trails,$idx);
-    $trail=join("\t",$trails);
+    $trail=implode("\t",$trails);
 
     setcookie('MONI_TRAIL',$trail,time()+60*60*24*30,get_scriptname());
   }
@@ -5438,7 +5438,7 @@ function wiki_main($options) {
       $twins=$DBInfo->metadb->getTwinPages($page->name,2);
       if ($twins) {
         $formatter->send_title('','',$options);
-        $twins="\n".join("\n",$twins);
+        $twins="\n".implode("\n",$twins);
         $formatter->send_page(_("See [TwinPages]: ").$twins);
         echo "<br />".
           $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
