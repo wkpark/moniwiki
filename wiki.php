@@ -57,7 +57,7 @@ function getPlugin($pluginname) {
       $plugins=array_merge($plugins,$DBInfo->myplugins);
     return isset($plugins[$pname]) ? $plugins[$pname]:'';
   }
-  if ($DBInfo->include_path)
+  if (!empty($DBInfo->include_path))
     $dirs=explode(':',$DBInfo->include_path);
   else
     $dirs=array('.');
@@ -74,7 +74,7 @@ function getPlugin($pluginname) {
 
   if (!empty($plugins))
     $cp->update('plugins',serialize($plugins));
-  if (is_array($DBInfo->myplugins))
+  if (!empty($DBInfo->myplugins) and is_array($DBInfo->myplugins))
     $plugins=array_merge($plugins,$DBInfo->myplugins);
 
   return $plugins[$pname];
@@ -807,7 +807,7 @@ EOS;
 
     if (!empty($this->use_counter))
       $this->counter=&new Counter_dba($this);
-    if (!$this->counter->counter)
+    if (!isset($this->counter->counter))
       $this->counter=&new Counter();
 
     if (!empty($this->security_class)) {
@@ -820,11 +820,15 @@ EOS;
       if (!is_array($this->filters)) {
         $this->filters=preg_split('/(\||,)/',$this->filters);
       }
+    } else {
+      $this->filters = '';
     }
     if (!empty($this->postfilters)) {
       if (!is_array($this->postfilters)) {
         $this->postfilters=preg_split('/(\||,)/',$this->postfilters);
       }
+    } else {
+      $this->postfilters = '';
     }
 
     # check and prepare $url_mappings
@@ -1769,7 +1773,7 @@ class Formatter {
       $DBInfo->inline_latex == 1 ? 'latex':$DBInfo->inline_latex;
     $this->use_purple=$DBInfo->use_purple;
     $this->section_edit=$DBInfo->use_sectionedit;
-    $this->auto_linebreak=$DBInfo->auto_linebreak;
+    $this->auto_linebreak=!empty($DBInfo->auto_linebreak) ? 1 : 0;
     $this->nonexists=$DBInfo->nonexists;
     $this->url_mappings=&$DBInfo->url_mappings;
     $this->url_mapping_rule=&$DBInfo->url_mapping_rule;
@@ -1778,14 +1782,14 @@ class Formatter {
     $this->use_easyalias=$DBInfo->use_easyalias;
     $this->submenu=$DBInfo->submenu;
     $this->email_guard=$DBInfo->email_guard;
-    $this->interwiki_target=$DBInfo->interwiki_target ?
+    $this->interwiki_target=!empty($DBInfo->interwiki_target) ?
       ' target="'.$DBInfo->interwiki_target.'"':'';
     $this->filters=$DBInfo->filters;
     $this->postfilters=$DBInfo->postfilters;
     $this->use_rating=$DBInfo->use_rating;
-    $this->use_etable=$DBInfo->use_etable;
+    $this->use_etable=!empty($DBInfo->use_etable) ? 1 : 0;
     $this->use_metadata=$DBInfo->use_metadata;
-    $this->use_namespace=$DBInfo->use_namespace;
+    $this->use_namespace=!empty($DBInfo->use_namespace) ? $DBInfo->use_namespace : '';
     $this->udb=&$DBInfo->udb;
     $this->user=&$DBInfo->user;
     $this->check_openid_url=$DBInfo->check_openid_url;
@@ -1801,10 +1805,10 @@ class Formatter {
     $this->pagelinks=array();
     $this->aliases=array();
     $this->icons="";
-    $this->quote_style=$DBInfo->quote_style? $DBInfo->quote_style:'quote';
+    $this->quote_style= !empty($DBInfo->quote_style) ? $DBInfo->quote_style:'quote';
 
-    $this->themedir= $DBInfo->themedir ? $DBInfo->themedir:dirname(__FILE__);
-    $this->themeurl= $DBInfo->themeurl ? $DBInfo->themeurl:$DBInfo->url_prefix;
+    $this->themedir= !empty($DBInfo->themedir) ? $DBInfo->themedir:dirname(__FILE__);
+    $this->themeurl= !empty($DBInfo->themeurl) ? $DBInfo->themeurl:$DBInfo->url_prefix;
     $this->set_theme($options['theme']);
 
     $this->NULL='';
@@ -1815,7 +1819,7 @@ class Formatter {
     $this->pi=array();
     $this->external_on=0;
     $this->external_target='';
-    if ($DBInfo->external_target)
+    if (!empty($DBInfo->external_target))
       $this->external_target='target="'.$DBInfo->external_target.'"';
 
     $this->baserule=array("/(?<!\<)<([^\s<>])/",
@@ -1997,7 +2001,7 @@ class Formatter {
       $this->icon_sep=$DBInfo->icon_sep;
     }
 
-    if (!$this->menu) {
+    if (empty($this->menu)) {
       $this->menu=&$DBInfo->menu;
     }
 
@@ -2011,13 +2015,13 @@ class Formatter {
       $this->icons = array();
     $this->icons = array_merge($DBInfo->icons,$this->icons);
 
-    if (!$this->icon_list) {
-      $this->icon_list=$DBInfo->icon_list ? $DBInfo->icon_list:null;
+    if (empty($this->icon_list)) {
+      $this->icon_list=!empty($DBInfo->icon_list) ? $DBInfo->icon_list:null;
     }
-    if (!$this->purple_icon) {
+    if (empty($this->purple_icon)) {
       $this->purple_icon=$DBInfo->purple_icon;
     }
-    if (!$this->perma_icon) {
+    if (empty($this->perma_icon)) {
       $this->perma_icon=$DBInfo->perma_icon;
     }
   }
@@ -2142,7 +2146,11 @@ class Formatter {
         else if ($line[1]=='#') { $notused[]=$line; continue;}
         $pilines[]=$line;
 
-        list($key,$val)= explode(" ",$line,2);
+        $val = '';
+        if (($pos = strpos($line, ' ')) !== false) 
+          list($key,$val)= explode(' ',$line,2);
+        else
+          $key = trim($line);
         $key=strtolower($key);
         $val=trim($val);
         if (in_array($key,$pikeys)) { $pi[$key]=$val ? $val:1; }
@@ -2845,7 +2853,7 @@ class Formatter {
       else if (!empty($args)) $arg = '('.$args.')';
       $macro=$name.$arg;
       $md5sum= md5($macro);
-      $this->_macros[$md5sum]=array($macro,$mid);
+      $this->_macros[$md5sum]=array($macro,$this->mid);
       return '[['.$md5sum.']]';
     }
 
@@ -2985,7 +2993,8 @@ class Formatter {
       $text= $pageurl; # XXX
     if (empty($pageurl))
       $pageurl=$this->page->urlname;
-    if ($query_string[0]=='?') $attr=empty($attr) ? 'rel="nofollow"':$attr.' rel="nofollow"';
+    if (isset($query_string[0]) and $query_string[0]=='?')
+      $attr=empty($attr) ? 'rel="nofollow"':$attr.' rel="nofollow"';
     $url=$this->link_url($pageurl,$query_string);
     return '<a href="'.$url.'" '. $attr .'><span>'.$text.'</span></a>';
   }
@@ -3840,7 +3849,7 @@ class Formatter {
           $p_closeopen.=$this->_div(0,$in_div,$div_enclose);
         $p_closeopen.=$this->_div(1,$in_div,$div_enclose);
         $in_p='';
-        if ($this->section_edit && !$this->preview) {
+        if ($this->section_edit && empty($this->preview)) {
           $act='edit';
 
           $wikiwyg_mode='';
@@ -4213,9 +4222,9 @@ class Formatter {
     $plain=0;
 
     $media='media="screen"';
-    if ($options['action']=='print') $media='';
+    if (isset($options['action']) and $options['action']=='print') $media='';
 
-    if ($this->pi['#redirect'] != '' && $options['pi']) {
+    if (isset($this->pi['#redirect']) and $this->pi['#redirect'] != '' && $options['pi']) {
       $options['value']=$this->pi['#redirect'];
       $options['redirect']=1;
       $this->pi['#redirect']='';
@@ -4239,7 +4248,7 @@ class Formatter {
       }
     }
     $content_type=
-      $DBInfo->content_type ? $DBInfo->content_type: "text/html";
+      !empty($DBInfo->content_type) ? $DBInfo->content_type: "text/html";
 
     if ($DBInfo->force_charset)
       $force_charset = '; charset='.$DBInfo->charset;
@@ -4249,19 +4258,19 @@ class Formatter {
 #    if (!$plain)
 #      $this->header('Content-type: '.$content_type);
 
-    if ($options['action_mode']=='ajax') return true;
+    if (!empty($options['action_mode']) and $options['action_mode'] =='ajax') return true;
 
     if (isset($this->pi['#noindex'])) {
       $metatags='<meta name="robots" content="noindex,nofollow" />'."\n";
     } else {
-      if ($options['metatags'])
+      if (!empty($options['metatags']))
         $metatags=$options['metatags'];
       else {
         $metatags=$DBInfo->metatags;
       }
 
       $mtime=$this->page->mtime(); // delay indexing from dokuwiki
-      if ($DBInfo->delayindex and ((time() - $mtime) < $DBInfo->delayindex)) {
+      if (!empty($DBInfo->delayindex) and ((time() - $mtime) < $DBInfo->delayindex)) {
         if (preg_match("/<meta\s+name=('|\")?robots\\1[^>]+>/i",
           $metatags)) {
           $metatags=preg_replace("/<meta\s+name=('|\")?robots\\1[^>]+>/i",
@@ -4284,10 +4293,10 @@ class Formatter {
       # find upper page
       $pos=0;
       preg_match('/(\:|\/)/',$this->page->name,$sep); # NameSpace/SubPage or NameSpace:SubNameSpacePage
-      if ($sep[1]) $pos=strrpos($this->page->name,$sep);
+      if (isset($sep[1])) $pos=strrpos($this->page->name,$sep);
       if ($pos > 0) $upper=substr($this->page->urlname,0,$pos);
       else if ($this->group) $upper=_urlencode(substr($this->page->name,strlen($this->group)));
-      if ($this->pi['#keywords'])
+      if (!empty($this->pi['#keywords']))
         $keywords='<meta name="keywords" content="'.$this->pi['#keywords'].'" />'."\n";
       else if ($DBInfo->use_keywords) {
         $keywords=strip_tags($this->page->title);
@@ -4296,7 +4305,7 @@ class Formatter {
         $keywords="<meta name=\"keywords\" content=\"$keywords\" />\n";
       }
       # find sub pages
-      if ($DBInfo->use_subindex and !$options['action']) {
+      if ($DBInfo->use_subindex and empty($options['action'])) {
         $scache=new Cache_text('subpages');
         if (!($subs=$scache->exists($this->page->name))) {
           if (($p = strrpos($this->page->name,'/')) !== false)
@@ -4320,13 +4329,13 @@ class Formatter {
       }
 
       if (empty($options['title'])) {
-        $options['title']=$this->pi['#title'] ? $this->pi['#title']:
+        $options['title']=!empty($this->pi['#title']) ? $this->pi['#title']:
           $this->page->title;
         $options['title']=
           htmlspecialchars($options['title']);
       }
       if (empty($options['css_url'])) $options['css_url']=$DBInfo->css_url;
-      if (!$this->pi['#nodtd'] and !isset($options['retstr']) and $this->_newtheme != 2) echo $DBInfo->doctype;
+      if (empty($this->pi['#nodtd']) and !isset($options['retstr']) and $this->_newtheme != 2) echo $DBInfo->doctype;
       if ((isset($this->_newtheme) and $this->_newtheme == 2) or isset($options['retstr']))
         ob_start();
       else
@@ -4345,7 +4354,7 @@ JSHEAD;
       echo $this->get_javascripts();
       echo $keywords;
       echo "  <title>$DBInfo->sitename: ".$options['title']."</title>\n";
-      if ($upper)
+      if (!empty($upper))
         echo '  <link rel="Up" href="'.$this->link_url($upper)."\" />\n";
       $raw_url=$this->link_url($this->page->urlname,"?action=raw");
       $print_url=$this->link_url($this->page->urlname,"?action=print");
@@ -4473,7 +4482,7 @@ EOS;
 
   function get_actions($args='',$options) {
     $menu=array();
-    if ($this->pi['#action'] && !in_array($this->pi['#action'],$this->actions)){
+    if (!empty($this->pi['#action']) && !in_array($this->pi['#action'],$this->actions)){
       list($act,$txt)=explode(" ",$this->pi['#action'],2);
       if (!$txt) $txt=$act;
       $menu[]= $this->link_to("?action=$act",_($txt)," rel='nofollow' accesskey='x'");
@@ -4485,13 +4494,13 @@ EOS;
         $menu[]= $this->link_to("?action=edit",_("EditText")," rel='nofollow' accesskey='x'");
       else
         $menu[]= _("NotEditable");
-      if ($args['refresh']==1)
+      if (!empty($args['refresh']) and $args['refresh'] ==1)
         $menu[]= $this->link_to("?refresh=1",_("Refresh")," rel='nofollow' accesskey='n'");
     } else
       $menu[]= $this->link_to('?action=show',_("ShowPage"));
     $menu[]=$this->link_tag("FindPage","",_("FindPage"));
 
-    if (!$args['noaction']) {
+    if (empty($args['noaction'])) {
       foreach ($this->actions as $action) {
         if (strpos($action,' ')) {
           list($act,$text)=explode(' ',$action,2);
@@ -4511,7 +4520,7 @@ EOS;
   function send_footer($args='',$options='') {
     global $DBInfo;
 
-    if ($options['action_mode']=='ajax') return;
+    if (!empty($options['action_mode']) and $options['action_mode'] =='ajax') return;
 
     echo "<!-- wikiBody --></div>\n";
     echo $DBInfo->hr;
@@ -4542,8 +4551,8 @@ EOS;
       $lasttime=gmdate("H:i:s",$mtime+$options['tz_offset']);
     }
 
-    $validator_xhtml=$DBInfo->validator_xhtml ? $DBInfo->validator_xhtml:'http://validator.w3.org/check/referer';
-    $validator_css=$DBInfo->validator_css ? $DBInfo->validator_xhtml:'http://jigsaw.w3.org/css-validator';
+    $validator_xhtml=!empty($DBInfo->validator_xhtml) ? $DBInfo->validator_xhtml:'http://validator.w3.org/check/referer';
+    $validator_css=!empty($DBInfo->validator_css) ? $DBInfo->validator_xhtml:'http://jigsaw.w3.org/css-validator';
 
     $banner= <<<FOOT
  <a href="$validator_xhtml"><img
@@ -4586,7 +4595,7 @@ FOOT;
     // Generate and output the top part of the HTML page.
     global $DBInfo;
 
-    if ($options['action_mode']=='ajax') return;
+    if (!empty($options['action_mode']) and $options['action_mode']=='ajax') return;
 
     $name=$this->page->urlname;
     $action=$this->link_url($name);
@@ -4623,8 +4632,10 @@ FOOT;
         $groupt=substr($group,0,-1).' &raquo;'; // XXX
         $groupt=
           "<span class='wikiGroup'>$groupt</span>";
-      } else     
+      } else {
+        $groupt = '';
         $title=$this->page->title;
+      }
       $title=htmlspecialchars($title);
     }
     # setup title variables
@@ -4741,16 +4752,16 @@ MSG;
     # submenu XXX
     if (!empty($this->submenu)) {
       $smenu=array();
-      $mnu_pgname=($group ? $group.'~':'').$this->submenu;
+      $mnu_pgname=(!empty($group) ? $group.'~':'').$this->submenu;
       if ($DBInfo->hasPage($mnu_pgname)) {
         $pg=$DBInfo->getPage($mnu_pgname);
         $mnu_raw=$pg->get_raw_body();
         $mlines=explode("\n",$mnu_raw);
         foreach ($mlines as $l) {
-          if ($mk and preg_match('/^\s{2,}\*\s*(.*)$/',$l,$m)) {
-            if (!is_array($smenu[$mk])) $smenu[$mk]=array();
+          if (!empty($mk) and preg_match('/^\s{2,}\*\s*(.*)$/',$l,$m)) {
+            if (isset($smenu[$mk]) and !is_array($smenu[$mk])) $smenu[$mk]=array();
             $smenu[$mk][]=$m[1];
-            if (!$smenu[$m[1]]) $smenu[$m[1]]=$mk;
+            if (isset($smenu[$m[1]])) $smenu[$m[1]]=$mk;
           } else if (preg_match('/^ \*\s*(.*)$/',$l,$m)) {
             $mk=$m[1];
           }
@@ -4834,7 +4845,7 @@ MSG;
         $myicons=&$this->icons;
       }
       foreach ($myicons as $item) {
-        if ($item[3]) $attr=$item[3];
+        if (!empty($item[3])) $attr=$item[3];
         else $attr='';
         $icon[]=$this->link_tag($item[0],$item[1],$item[2],$attr);
       }
@@ -4846,8 +4857,8 @@ MSG;
     $this->_vars['icons']=&$icons;
     $this->_vars['title']=$title;
     $this->_vars['menu']=$menu;
-    $this->_vars['upper_icon']=$upper_icon;
-    $this->_vars['home']=$home;
+    isset($upper_icon) ? $this->_vars['upper_icon']=$upper_icon : null;
+    isset($home) ? $this->_vars['home']=$home : null;
     if (!empty($options['header']))
       $this->_vars['header'] = $header = $options['header'];
     else if (isset($this->_newtheme) and $this->_newtheme == 2 and !empty($this->header_html))
@@ -4857,15 +4868,17 @@ MSG;
 
     if (empty($this->_newtheme) or $this->_newtheme != 2) {
       if ($this->_newtheme != 2)
-        echo "<body $options[attr]>\n";
+        echo '<body'.(!empty($options['attr']) ? ' ' . $options['attr'] : '' ) .">\n";
       echo '<div><a id="top" name="top" accesskey="t"></a></div>'."\n";
     }
     #
     if (file_exists($this->themedir."/header.php")) {
-      $trail="<div id='wikiTrailer'>\n".$this->trail."</div>\n";
-      $origin="<div id='wikiOrigin'>\n".$this->origin."</div>\n";
+      if (!empty($this->trail))
+        $trail="<div id='wikiTrailer'>\n".$this->trail."</div>\n";
+      if (!empty($this->origin))
+        $origin="<div id='wikiOrigin'>\n".$this->origin."</div>\n";
 
-      $subindex=$this->subindex;
+      $subindex=!empty($this->subindex) ? $this->subindex : '';
       $themeurl=$this->themeurl;
       include($this->themedir."/header.php");
     } else { #default header
@@ -5130,6 +5143,7 @@ function get_pagename() {
   // $_SERVER["PATH_INFO"] has bad value under CGI mode
   // set 'cgi.fix_pathinfo=1' in the php.ini under
   // apache 2.0.x + php4.2.x Win32
+  $pagename = '';
   if (!empty($_SERVER['PATH_INFO'])) {
     if ($_SERVER['PATH_INFO'][0] == '/')
       $pagename=substr($_SERVER['PATH_INFO'],1);
@@ -5153,15 +5167,11 @@ function get_pagename() {
           $_SERVER['QUERY_STRING']=substr($_SERVER['QUERY_STRING'],strlen($temp));
         } else if ($k =='action' and $v =='login') {
           $pagename="UserPreferences";
-        } else {
-          $pagename='';
         }
-      } else {
-        $pagename=''; // get default pagename later in the wiki_main().
       }
     }
   }
-  if ($pagename) {
+  if (!empty($pagename)) {
     $pagename=_stripslashes($pagename);
 
     if ($pagename[0]=='~' and ($p=strpos($pagename,"/")))
@@ -5208,7 +5218,7 @@ function init_requests(&$options) {
 # MoniWiki theme
 if ((empty($DBInfo->theme) or isset($_GET['action'])) and isset($_GET['theme'])) $theme=$_GET['theme'];
 else if ($DBInfo->theme_css) $theme=$DBInfo->theme;
-if ($theme) $options['theme']=$theme;
+if (!empty($theme)) $options['theme']=$theme;
 
 if ($options['id'] != 'Anonymous') {
   $options['css_url']=$user->info['css_url'];
@@ -5218,13 +5228,13 @@ if ($options['id'] != 'Anonymous') {
 } else {
   $options['css_url']=$user->css;
   $options['tz_offset']=$user->tz_offset;
-  if (!$theme) $options['theme']=$theme=$user->theme;
+  if (empty($theme)) $options['theme']=$theme=$user->theme;
 }
 
 if (!$options['theme']) $options['theme']=$theme=$DBInfo->theme;
 
 if ($theme and ($DBInfo->theme_css or !$options['css_url']))
-  $options['css_url']=($DBInfo->themeurl ? $DBInfo->themeurl:$DBInfo->url_prefix)."/theme/$theme/css/default.css";
+  $options['css_url']=(!empty($DBInfo->themeurl) ? $DBInfo->themeurl:$DBInfo->url_prefix)."/theme/$theme/css/default.css";
 
   $options['pagename']=get_pagename();
   if (!empty($DBInfo->robots)) {
@@ -5249,7 +5259,7 @@ function init_locale($lang, $domain = 'moniwiki', $init = false) {
   } else if (substr($lang,0,2) == 'en') {
     $test=setlocale(LC_ALL, $lang);
   } else {
-    if ($Config['include_path']) $dirs=explode(':',$Config['include_path']);
+    if (!empty($Config['include_path'])) $dirs=explode(':',$Config['include_path']);
     else $dirs=array('.');
 
     while ($Config['use_local_translation']) {
@@ -5332,12 +5342,15 @@ function wiki_main($options) {
     if (isset($_GET['retstr'])) unset($_GET['retstr']);
     if (isset($_POST['header'])) unset($_POST['header']);
 
-    $action=$_GET['action'];
-    $value=$_GET['value'];
-    $goto=$_GET['goto'];
-    $rev=$_GET['rev'];
-    $refresh=($options['id'] == 'Anonymous') ? 0:$_GET['refresh'];
-    $popup=$_GET['popup'];
+    $action=!empty($_GET['action']) ? $_GET['action'] : '';
+    $value=!empty($_GET['value']) ? $_GET['value'] : '';
+    $goto=!empty($_GET['goto']) ? $_GET['goto'] : '';
+    $rev=!empty($_GET['rev']) ? $$_GET['rev'] : '';
+    if ($options['id'] == 'Anonymous')
+      $refresh = 0;
+    else
+      $refresh = !empty($_GET['refresh']) ? $_GET['refresh'] : '';
+    $popup=!empty($_GET['popup']) ? 1 : 0;
   }
   // parse action
   // action=foobar, action=foobar/macro, action=foobar/json etc.
@@ -5370,7 +5383,7 @@ function wiki_main($options) {
 
   $formatter = &new Formatter($page,$options);
 
-  if ($Config['baserule']) {
+  if (!empty($Config['baserule'])) {
     $dummy = 'dummy';
     foreach ($Config['baserule'] as $rule=>$repl) {
       $t = @preg_match($rule,$repl);
@@ -5536,13 +5549,13 @@ function wiki_main($options) {
         $tcache->update($pagename,serialize($keys));
       }
     }
-    if (!empty($DBInfo->use_referer))
+    if (!empty($DBInfo->use_referer) and isset($_SERVER['HTTP_REFERER']))
       log_referer($_SERVER['HTTP_REFERER'],$pagename);
 
     $formatter->write("<div id='wikiContent'>\n");
     $options['timer']->Check("init");
     $options['pagelinks']=1;
-    if ($Config['cachetime'] > 0 and !$formatter->pi['#nocache']) {
+    if (!empty($Config['cachetime']) and $Config['cachetime'] > 0 and empty($formatter->pi['#nocache'])) {
       $cache=&new Cache_text('pages',2,'html');
       $mcache=&new Cache_text('dynamicmacros',2);
       $mtime=$cache->mtime($pagename);
@@ -5566,7 +5579,7 @@ function wiki_main($options) {
         ob_end_clean();
         $formatter->_macrocache=0;
         $_macros=&$formatter->_macros;
-        if (!$formatter->pi['#nocache']) {
+        if (empty($formatter->pi['#nocache'])) {
           $cache->update($pagename,$out);
           if (isset($_macros))
             $mcache->update($pagename,serialize($_macros));
@@ -5590,9 +5603,9 @@ function wiki_main($options) {
     $options['timer']->Check("send_page");
     $formatter->write("<!-- wikiContent --></div>\n");
 
-    if ($DBInfo->extra_macros and
+    if (!empty($DBInfo->extra_macros) and
         $formatter->pi['#format'] == $DBInfo->default_markup) {
-      if ($formatter->pi['#nocomment']) {
+      if (!empty($formatter->pi['#nocomment'])) {
         $options['nocomment']=1;
         $options['notoolbar']=1;
       }
@@ -5604,7 +5617,7 @@ function wiki_main($options) {
         $extra = $DBInfo->extra_macros;
       else
         $extra[] = $DBInfo->extra_macros; // XXX
-      if ($formatter->pi['#comment']) array_unshift($extra,'Comment');
+      if (!empty($formatter->pi['#comment'])) array_unshift($extra,'Comment');
 
       foreach ($extra as $macro)
         $mout.= $formatter->macro_repl($macro,'',$options);
@@ -5626,7 +5639,7 @@ function wiki_main($options) {
     $options['value']=$value;
 
     $a_allow=$DBInfo->security->is_allowed($action,$options);
-    if ($action_mode) {
+    if (!empty($action_mode)) {
       $myopt=$options;
       $myopt['explicit']=1;
       $f_allow=$DBInfo->security->is_allowed($full_action,$myopt);
@@ -5675,7 +5688,7 @@ function wiki_main($options) {
       return;
     }
 
-    if (in_array($action_mode,array('ajax','macro'))) {
+    if (!empty($action_mode) and in_array($action_mode,array('ajax','macro'))) {
       if ($_SERVER['REQUEST_METHOD']=="POST")
         $options=array_merge($_POST,$options);
       else

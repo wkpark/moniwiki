@@ -283,6 +283,7 @@ function getTicket($seed,$extra='',$size=0,$flag=0) {
   global $DBInfo;
   # make the site specific ticket based on the variables in the config.php
   $configs=getConfig("config.php");
+  $siteticket = '';
   foreach ($configs as $config) {
     if (is_array($config)) $siteticket.=md5(base64_encode(serialize($config)));
     else $siteticket.=md5($config);
@@ -342,6 +343,8 @@ function isRobot($name) {
 
 function getSmileys() {
   global $DBInfo;
+  static $smileys = null;
+  if ($smileys) return $smileys;
 
   include_once($DBInfo->smiley.'.php');
   # set smileys
@@ -352,7 +355,10 @@ function getSmileys() {
       if ($l[0] != ' ') continue;
       if (!preg_match('/^ \*\s*([^ ]+)\s(.*)$/',$l,$m)) continue;
       $name=_preg_escape($m[1]);
-      list($img,$extra)=explode(' ',$m[2]);
+      if (($pos = strpos($m[2], ' ')) !== false)
+        list($img,$extra)=explode(' ',$m[2]);
+      else
+        $img = trim($m[2]);
       if (preg_match('/^(http|ftp):.*\.(png|jpg|jpeg|gif)/',$img)) {
         $myicons[$name]=array(16,16,0,$img);
       } else {
@@ -2219,6 +2225,8 @@ function macro_UserPreferences($formatter,$value,$options='') {
     $passwd_hidden.="<input type='hidden' name='_chall' />\n";
     $pw_length=32;
   } else {
+    $passwd_hidden = '';
+    $onsubmit = '';
     $pw_length=20;
   }
 
@@ -2226,7 +2234,7 @@ function macro_UserPreferences($formatter,$value,$options='') {
   $url=$formatter->link_url("UserPreferences");
   # setup form
   if ($user->id == 'Anonymous') {
-    if ($options['login_id'])
+    if (!empty($options['login_id']))
       $idform="$options[login_id]<input type='hidden' name='login_id' value=\"$options[login_id]\" />";
     else
       $idform="<input type='text' size='20' name='login_id' value='' />";
@@ -2259,7 +2267,7 @@ OPENID;
       $default_form=<<<MYFORM
   <tr><th>$id_btn&nbsp;</th><td>$idform</td></tr>
   <tr>
-     <th>$passwd_btn&nbsp;</th><td><input type="password" size="15" maxlength="$pw_len" name="password" value="" /></td>
+     <th>$passwd_btn&nbsp;</th><td><input type="password" size="15" maxlength="$pw_length" name="password" value="" /></td>
   </tr>
   <tr><td></td><td>
     $passwd_hidden
@@ -2284,15 +2292,15 @@ FORM;
   }
 
   if ($user->id == 'Anonymous') {
-    if (isset($options['login_id']) or $_GET['join'] or $value!="simple") {
-      $passwd=$options['password'];
+    if (isset($options['login_id']) or !empty($_GET['join']) or $value!="simple") {
+      $passwd=!empty($options['password']) ? $options['password'] : '';
       $button=_("Make profile");
       if (!$DBInfo->use_safelogin) {
-        $again="<b>"._("password again")."</b>&nbsp;<input type='password' size='15' maxlength='$pw_len' name='passwordagain' value='' /></td></tr>";
+        $again="<b>"._("password again")."</b>&nbsp;<input type='password' size='15' maxlength='$pw_length' name='passwordagain' value='' /></td></tr>";
       }
       $mailbtn=_("Mail");
       $extra=<<<EXTRA
-  <tr><th>$mailbtn&nbsp;</th><td><input type="text" size="40" name="email" value="$email" /></td></tr>
+  <tr><th>$mailbtn&nbsp;</th><td><input type="text" size="40" name="email" value="" /></td></tr>
 EXTRA;
       if (!$use_any and $DBInfo->use_ticket) {
         $seed=md5(base64_encode(time()));
@@ -2364,7 +2372,7 @@ EOF;
     if ($user->id == 'Anonymous' or $user->info['password'])
     $passwd_inp=<<<PASS
   <tr>
-     <th>$passwd_btn&nbsp;</th><td><input type="password" size="15" maxlength="$pw_len" name="password" value="$passwd" />
+     <th>$passwd_btn&nbsp;</th><td><input type="password" size="15" maxlength="$pw_length" name="password" value="$passwd" />
 PASS;
 
   } else {
@@ -2912,7 +2920,7 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
 
   if (!$needle) {
     $opts['msg'] = _("Use more specific text");
-    if ($opts['call']) {
+    if (!empty($opts['call'])) {
       $opts['form']=$form;
       return $opts;
     }
