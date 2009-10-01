@@ -27,8 +27,10 @@ function macro_Rating($formatter,$value='',$options=array()) {
     if (sizeof($val)>=2) {
         $total=$val[0];
         $count=$val[1];
-    } else
+    } else {
         $total=$val[0];
+        $count= 0;
+    }
     $count=max(1,$count);
     $value=$total/$count; // averaged value
     $value=(!empty($value) and 0 < $value and 6 > $value) ? $value:0;

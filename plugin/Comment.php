@@ -40,14 +40,15 @@ function macro_Comment($formatter,$value,$options=array()) {
 EXTRA;
   }
 
+  $hidden = '';
   if (!$options['page']) $options['page']=$formatter->page->name;
-  if (!$options['action']) $action='comment';
+  if (empty($options['action'])) $action='comment';
   else $action=$options['action'];
-  if ($options['mode'])
+  if (!empty($options['mode']))
     $hidden.="<input type='hidden' name='mode' value='".$options['mode']."' />\n";
-  if ($options['no'])
+  if (!empty($options['no']))
     $hidden.="<input type='hidden' name='no' value='".$options['no']."' />\n";
-  if ($options['p'])
+  if (!empty($options['p']))
     $hidden.="<input type='hidden' name='p' value='".$options['p']."' />\n";
 
   if ($value) {
@@ -56,10 +57,10 @@ EXTRA;
     if (in_array('oneliner',$args)) $oneliner=1;
   }
 
-  if ($options['usemeta'] or $use_meta) {
+  if (!empty($options['usemeta']) or !empty($use_meta)) {
     $hidden.="<input type='hidden' name='usemeta' value=1 />\n";
   }
-  if ($options['nocomment']) return '';
+  if (!empty($options['nocomment'])) return '';
   if (!$DBInfo->security->writable($options)) return '';
 
   if ($options['mid']) $mymid=$options['mid'];
@@ -72,39 +73,41 @@ EXTRA;
   $COLS_OTHER = 85;
   $cols = preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
 
-  $rows=$options['rows'] > 5 ? $options['rows']: 5;
-  $cols=$options['cols'] > 60 ? $options['cols']: $cols;
+  $rows = (!empty($options['rows']) and $options['rows'] > 5) ? $options['rows']: 5;
+  $cols = (!empty($options['cols']) and $options['cols'] > 60) ? $options['cols']: $cols;
 
-  if ($options['datestamp'])
+  if (!empty($options['datestamp']))
     $datestamp= $options['datestamp'];
   else
     $datestamp= $formatter->page->mtime();
-  $savetext=$options['savetext'];
+  $savetext=!empty($options['savetext']) ? $options['savetext'] : '';
   $savetext= str_replace(array("&","<"),array("&amp;","&lt;"),$savetext);
 
   $url=$formatter->link_url($formatter->page->urlname);
 
   if ($emid) $hidden.='<input type="hidden" name="comment_id" value="'.$emid.'" />';
   $form = "<form id='editform' method='post' action='$url'>\n<div>";
-  if ($use_meta)
+  if (!empty($use_meta))
     $form.="<a id='add_comment' name='add_comment'></a>";
 
   $comment=_("Comment");
   $preview_btn=_("Preview");
-  if ($oneliner) {
+  if (!empty($oneliner)) {
     $form.=<<<FORM
 <input class='wiki' size='$cols' name="savetext" value="$savetext" />&nbsp;
 FORM;
   } else {
-    if (!$options['nopreview'])
+    if (empty($options['nopreview']))
     $preview='<input type="submit" name="button_preview" value="'.$preview_btn.'" />';
     $form.= <<<FORM
 <textarea class="wiki" name="savetext"
  rows="$rows" cols="$cols">$savetext</textarea><br />
 FORM;
   }
-  if ($options['id'] == 'Anonymous')
-    $sig=_("Username").": <input name='name' value='$options[name]' size='10' />";
+  if ($options['id'] == 'Anonymous') {
+    $name = !empty($options['name']) ? $options['name'] : '';
+    $sig=_("Username").": <input name='name' value='$name' size='10' />";
+  }
   else if (!$use_meta)
     $sig="<input name='nosig' type='checkbox' />"._("Don't add a signature");
   $form.= <<<FORM2

@@ -17,6 +17,7 @@ function _effect_distort($image,$factor=40,$grad=1) {
     $xf=rand(80,95)*$fact;
 
     $canvas=imagecreate($width,$height);
+    $r1 = $g1 = $b1 = 0;
     $new = imagecolorallocate($canvas, $r1, $g1, $b1);
     imagepalettecopy($canvas,$image);
 
@@ -31,7 +32,7 @@ function _effect_distort($image,$factor=40,$grad=1) {
             $newY = 
               #($y + ($distort * sin(1.5*3.141592 * $x / $yf)));
               ($y + ($disy * exp(-$t)*sin(3.141592 * $x / $yf)));
-            $col = imagecolorat($image, $newX, $newY);
+            $col = @imagecolorat($image, $newX, $newY);
 
             if ($newY >$height or $newY < 0) $newY=0;
             if ($newX < 0) $newX=0;
@@ -238,6 +239,7 @@ function do_ticket($formatter,$options) {
         ImageString($im,$FONT, 4, 4, $passwd, $color[$pen]);
     }
 
+    $grad = '';
     if ($DBInfo->use_ticket & 8) $grad=1;
     if ($DBInfo->use_ticket & 4)
         _effect_distort($im,$pointsize,$grad);
