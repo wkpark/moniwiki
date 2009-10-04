@@ -416,7 +416,7 @@ class MetaDB_text extends MetaDB {
     if (!empty($lines))
     foreach ($lines as $line) {
       $line=trim($line);
-      if ($line[0]=='#' or !$line) continue;
+      if (empty($line) or $line[0]=='#') continue;
       # support three types of aliases
       #
       # dest<alias1,alias2,...
@@ -816,20 +816,6 @@ EOS;
       $this->security=new $class ($this);
     } else
       $this->security=new Security($this);
-    if (!empty($this->filters)) {
-      if (!is_array($this->filters)) {
-        $this->filters=preg_split('/(\||,)/',$this->filters);
-      }
-    } else {
-      $this->filters = '';
-    }
-    if (!empty($this->postfilters)) {
-      if (!is_array($this->postfilters)) {
-        $this->postfilters=preg_split('/(\||,)/',$this->postfilters);
-      }
-    } else {
-      $this->postfilters = '';
-    }
 
     # check and prepare $url_mappings
     if (!empty($this->url_mappings)) {
@@ -1821,6 +1807,21 @@ class Formatter {
     $this->external_target='';
     if (!empty($DBInfo->external_target))
       $this->external_target='target="'.$DBInfo->external_target.'"';
+
+    if (!empty($this->filters)) {
+      if (!is_array($this->filters)) {
+        $this->filters=preg_split('/(\||,)/',$this->filters);
+      }
+    } else {
+      $this->filters = '';
+    }
+    if (!empty($this->postfilters)) {
+      if (!is_array($this->postfilters)) {
+        $this->postfilters=preg_split('/(\||,)/',$this->postfilters);
+      }
+    } else {
+      $this->postfilters = '';
+    }
 
     $this->baserule=array("/(?<!\<)<([^\s<>])/",
                      "/&(?!([^&;]+|#[0-9]+|#x[0-9a-fA-F]+);)/",
