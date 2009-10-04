@@ -26,7 +26,12 @@ function check_ip($rules,$ip) {
     $rules = explode(':',$rules);
     foreach ($rules as $rule)
     {
-        list($network,$netmask)=explode('/',$rule);
+        $netmask = '';
+        if (($pos = strpos($rule, '/')) !== false)
+            list($network,$netmask)=explode('/',$rule);
+        else
+            $network = trim($rule);
+
         if (!is_valid_network($network)) continue; // ignore error
 
         $network = ip2long($network);
