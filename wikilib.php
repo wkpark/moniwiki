@@ -723,7 +723,7 @@ function macro_EditText($formatter,$value,$options) {
   $js = '';
   if (empty($DBInfo->edit_with_sidebar))
     $sidebar_style="#wikiSideMenu { display: none; }\n";
-  if ($has_form) {
+  if ($has_form and !empty($DBInfo->use_jsbuttons)) {
     $js=<<<JS
 <style type='text/css'>
 /*<![CDATA[*/
@@ -800,6 +800,7 @@ function do_edit($formatter,$options) {
   $formatter->send_title(sprintf(_("Edit %s"),$options['page']).$sec,"",$options);
   //print '<div id="editor_area">'.macro_EditText($formatter,$value,$options).'</div>';
   $has_form = false;
+
   $options['has_form'] = &$has_form;
   echo macro_EditText($formatter,$value,$options);
   if ($DBInfo->use_wikiwyg>=2) {
@@ -817,7 +818,7 @@ JS;
 	print $js;
     }
   }
-  if ($has_form) {
+  if ($has_form and !empty($DBInfo->use_jsbuttons)) {
     $msg = _("Save");
     $onclick=' onclick="submit_all_forms()"';
     $onclick1=' onclick="check_uploadform()"';

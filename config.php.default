@@ -278,3 +278,4 @@ $robots='googlebot|yahoo'; # set robots
 #$login_strict=0; # strict check
 #$use_userlink=0; # replace the UserPreference link to the UserHomePage
 $use_local_translation=0; # automatic translation
+#$use_jsbutton=0; # use javascript fake buttons.
