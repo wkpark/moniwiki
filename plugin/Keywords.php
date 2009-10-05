@@ -70,7 +70,7 @@ define('MIN_FONT_SZ',10);
     if (!$pagename) $pagename=$formatter->page->name;
 
     # get cached keywords
-    $cache=new Cache_text('keywords');
+    $cache=new Cache_text('keyword');
     $pkey=$pagename;
 
     $mc=new Cache_text('macro');
@@ -82,12 +82,14 @@ define('MIN_FONT_SZ',10);
     $pmt=$cache->mtime($pkey);
     if ($cmt > $pmt) {
         # check update or not
-        $dmt=filemtime($DBInfo->cache_dir.'/keywords/.');
+        $dmt=filemtime($DBInfo->cache_dir.'/keyword/.');
         if ($dmt > $cmt) { # XXX crude method
             $mykeys=array();
         } else {
             $mykeys=unserialize($mc->fetch($mkey));
         }
+    } else {
+        $mc->remove($mkey);
     }
 
     if (!$mykeys):
@@ -591,7 +593,7 @@ function do_keywords($formatter,$options) {
             return;
         }
 
-        $cache=new Cache_text('keywords');
+        $cache=new Cache_text('keyword');
         $keys=$options['key'];
         $keys=array_flip($keys);
         unset($keys['']);

@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.1.4-RC5';
+$_release = '1.1.4-RC6';
 
 #ob_start("ob_gzhandler");
 
@@ -5539,7 +5539,7 @@ function wiki_main($options) {
         $tcache->update($pagename,$formatter->pi['#title']);
     }
     if (!empty($DBInfo->use_keywords) or !empty($DBInfo->use_tagging) or !empty($_GET['update_keywords'])) {
-      $tcache=&new Cache_text('keywords');
+      $tcache=&new Cache_text('keyword');
       if (empty($formatter->pi['#keywords'])) {
         $tcache->remove($pagename);
       } else if (!$tcache->exists($pagename) or
