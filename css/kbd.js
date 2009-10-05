@@ -302,9 +302,11 @@ function moin_init() {
 	// check the editor_area
 	var form = document.getElementById('editor_area');
 	if (form) return;
-	var go = document.getElementById(_go);
-	// focus on to the input form
-	if (go) go.elements[_govalue].focus();
+	if (typeof _focus_on != 'undefined') {
+		var go = document.getElementById(_go);
+		// focus on to the input form
+		if (go) go.elements[_govalue].focus();
+	}
 }
 
 (function () {
