@@ -711,12 +711,21 @@ EOS;
       $this->upload_dir_url= $this->upload_dir;
 
     // getenv("DOCUMENT_ROOT") != doc_root or not ?
-    $doc_root = isset($this->doc_root) ? $this->doc_root :
-      ($this->url_prefix ? dirname(dirname(__FILE__)) : dirname(__FILE__));
-    $doc_root = preg_replace('@/$@', '', $doc_root);
+    if (empty($this->imgs_real_dir)) {
+      if (function_exists('apache_lookup_uri')) {
+        $info = apache_lookup_uri($this->imgs_dir_url);
+        if (isset($info->filename)) {
+          if (preg_match('@/$@', $info->filename))
+            $this->imgs_real_dir = $info->filename;
+          else
+            $this->imgs_real_dir = dirname($info->filename);
+        }
+      }
+    } else {
+      $this->imgs_real_dir = basename($this->imgs_dir); // XXX
+    }
 
-    $imgs_real_dir= !empty($this->imgs_real_dir) ? $this->imgs_real_dir : $doc_root.'/'.$this->imgs_dir;
-    if (file_exists($imgs_real_dir.'/interwiki/'.'moniwiki-16.png'))
+    if (file_exists($this->imgs_real_dir.'/interwiki/'.'moniwiki-16.png'))
       $this->imgs_dir_interwiki=$this->imgs_dir.'/interwiki/';
 
     if (empty($this->icon)) {
@@ -725,12 +734,12 @@ EOS;
 
     // for lower version compatibility
     $ext='png';
-    if (is_dir($imgs_real_dir.'/'.$iconset)) $iconset.='/';
+    if (is_dir($this->imgs_real_dir.'/'.$iconset)) $iconset.='/';
     else $iconset.='-';
 
-    if (!file_exists($imgs_real_dir.'/'.$iconset.'home.png')) $ext = 'gif';
+    if (!file_exists($this->imgs_real_dir.'/'.$iconset.'home.png')) $ext = 'gif';
 
-    if (file_exists($imgs_real_dir.'/'.$iconset.'http.png'))
+    if (file_exists($this->imgs_real_dir.'/'.$iconset.'http.png'))
       $this->imgs_dir_url=$this->imgs_dir.'/'.$iconset;
 
     $this->icon['upper']="<img src='$imgdir/${iconset}upper.$ext' alt='U' style='vertical-align:middle;border:0px' />";
