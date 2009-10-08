@@ -824,7 +824,7 @@ JS;
     $onclick1=' onclick="check_uploadform()"';
     echo "<div id='save-buttons'>\n";
     echo "<button type='button'$onclick tabindex='10'><span>$msg</span></button>\n";
-    echo "<button type='submit'$onclick1 tabindex='11' name='button_preview' value='1'><span>".
+    echo "<button type='button'$onclick1 tabindex='11' name='button_preview' value='1'><span>".
       _("Preview").'</span></button>';
     if ($preview)
       echo ' '.$formatter->link_to('#preview',_("Skip to preview"),' class="preview-anchor"');
@@ -1077,7 +1077,7 @@ EXTRA;
 
   $summary_msg=_("Summary");
   if (!$options['simple']) {
-    $preview_btn='<button type="submit" tabindex="6" name="button_preview" value="1"><span>'.
+    $preview_btn='<button type="submit" tabindex="6" name="button_preview" onclick="this.value=1" value="1"><span>'.
       _("Preview").'</span></button>';
     if ($preview)
       $skip_preview= ' '.$formatter->link_to('#preview',_("Skip to preview"),' class="preview-anchor"');
@@ -1662,7 +1662,7 @@ function do_post_savepage($formatter,$options) {
 
   $savetext=$options['savetext'];
   $datestamp=$options['datestamp'];
-  $button_preview=$options['button_preview'];
+  $button_preview=is_numeric($options['button_preview']);
   $button_merge=$options['button_merge']? 1:0;
   $button_merge=$options['manual_merge']? 2:$button_merge;
   $button_merge=$options['force_merge']? 3:$button_merge;
@@ -1741,7 +1741,7 @@ function do_post_savepage($formatter,$options) {
       $options['has_form'] = &$has_form;
       print macro_EditText($formatter,$value,$options); # XXX
 
-      if ($has_form) {
+      if ($has_form and !empty($DBInfo->use_jsbuttons)) {
         $msg = _("Save");
         $onclick=' onclick="submit_all_forms()"';
         $onclick1=' onclick="check_uploadform()"';
@@ -1838,7 +1838,7 @@ function do_post_savepage($formatter,$options) {
     $has_form = false;
     $options['has_form'] = &$has_form;
     print '<div id="editor_area_wrap">'.macro_EditText($formatter,$value,$options);
-    if ($has_form) {
+    if ($has_form and !empty($DBInfo->use_jsbuttons)) {
       $msg = _("Save");
       $onclick=' onclick="submit_all_forms()"';
       $onclick1=' onclick="check_uploadform()"';
