@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.1.4-RC8';
+$_release = '1.1.4-RC9';
 
 #ob_start("ob_gzhandler");
 
@@ -824,24 +824,6 @@ EOS;
     } else
       $this->security=new Security($this);
 
-    # check and prepare $url_mappings
-    if (!empty($this->url_mappings)) {
-      if (!is_array($this->url_mappings)) {
-        $maps=explode("\n",$this->url_mappings);
-        $tmap=array();
-        $rule='';
-        foreach ($maps as $map) {
-          if (strpos($map,' ')) {
-            $key=strtok($map,' ');
-            $val=strtok('');
-            $tmap["$key"]=$val;
-            $rule.=preg_quote($key,'/').'|';
-          }
-        }
-        $this->url_mappings=$tmap;
-        $this->url_mapping_rule=substr($rule,0,-1);
-      }
-    }
     register_shutdown_function(array(&$this,'Close'));
   }
 
@@ -1769,7 +1751,6 @@ class Formatter {
     $this->auto_linebreak=!empty($DBInfo->auto_linebreak) ? 1 : 0;
     $this->nonexists=$DBInfo->nonexists;
     $this->url_mappings=&$DBInfo->url_mappings;
-    $this->url_mapping_rule=&$DBInfo->url_mapping_rule;
     $this->css_friendly=$DBInfo->css_friendly;
     $this->use_smartdiff=$DBInfo->use_smartdiff;
     $this->use_easyalias=$DBInfo->use_easyalias;
@@ -1885,17 +1866,14 @@ class Formatter {
       if (!is_array($DBInfo->url_mappings)) {
         $maps=explode("\n",$DBInfo->url_mappings);
         $tmap=array();
-        $rule='';
         foreach ($maps as $map) {
           if (strpos($map,' ')) {
             $key=strtok($map,' ');
             $val=strtok('');
             $tmap["$key"]=$val;
-            $rule.=preg_quote($key,'/').'|';
           }
         }
         $this->url_mappings=$tmap;
-        $this->url_mapping_rule=substr($rule,0,-1);
       }
     }
 
@@ -2348,7 +2326,9 @@ class Formatter {
         $external_icon=$this->icon['external'];
       }
 
-      if ($this->url_mappings) {
+      if (!empty($this->url_mappings)) {
+        if (empty($this->url_mapping_rule))
+          $this->macro_repl('UrlMapping', '', array('init'=>1));
         $url=
           preg_replace('/('.$this->url_mapping_rule.')/ie',"\$this->url_mappings['\\1']",$url);
       }
