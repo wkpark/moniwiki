@@ -3392,7 +3392,7 @@ class Formatter {
     } else {
       # XXX need to redesign pagelink method ?
       if (empty($DBInfo->without_pagelinks_cache)) {
-        $dmt=filemtime($DBInfo->text_dir.'/.'); // mtime fix XXX
+        $dmt=filemtime($DBInfo->editlog_name); // workaround to check the dir mtime of the text_dir
         $this->update_pagelinks= $dmt > $this->cache->mtime($this->page->name);
         #like as..
         #if (!$this->update_pagelinks) $this->pagelinks=$this->get_pagelinks();
@@ -5569,7 +5569,7 @@ function wiki_main($options) {
       $cache=&new Cache_text('pages',2,'html');
       $mcache=&new Cache_text('dynamicmacros',2);
       $mtime=$cache->mtime($pagename);
-      $dtime=filemtime($Config['text_dir'].'/.'); // mtime fix XXX
+      $dtime=filemtime($DBInfo->editlog_name); // workaround to check the dir mtime of the text_dir
       $now=time();
       $check=$now-$mtime;
       $extra_out='';
