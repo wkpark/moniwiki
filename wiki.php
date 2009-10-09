@@ -14,14 +14,12 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.1.4-RC7';
+$_release = '1.1.4-RC8';
 
 #ob_start("ob_gzhandler");
 
 error_reporting(E_ALL ^ E_NOTICE);
 #error_reporting(E_ALL);
-
-$timing=new Timer();
 
 function getPlugin($pluginname) {
   static $plugins=array();
@@ -1784,6 +1782,7 @@ class Formatter {
     $this->use_rating=$DBInfo->use_rating;
     $this->use_etable=!empty($DBInfo->use_etable) ? 1 : 0;
     $this->use_metadata=$DBInfo->use_metadata;
+    $this->use_smileys=$DBInfo->use_smileys;
     $this->use_namespace=!empty($DBInfo->use_namespace) ? $DBInfo->use_namespace : '';
     $this->udb=&$DBInfo->udb;
     $this->user=&$DBInfo->user;
@@ -1817,6 +1816,7 @@ class Formatter {
     if (!empty($DBInfo->external_target))
       $this->external_target='target="'.$DBInfo->external_target.'"';
 
+    // set filter
     if (!empty($this->filters)) {
       if (!is_array($this->filters)) {
         $this->filters=preg_split('/(\||,)/',$this->filters);
@@ -1867,28 +1867,58 @@ class Formatter {
     # NoSmoke's MultiLineCell hack
     $this->extrarule=array("/{{\|(.*)\|}}/","/{{\|/","/\|}}/");
     $this->extrarepl=array("<table class='closure'><tr class='closure'><td class='closure'>\\1</td></tr></table>","</div><table class='closure'><tr class='closure'><td class='closure'><div>","</div></td></tr></table><div>");
-    
-    # set smily_rule,_repl
-    # load smileys
-    if (!empty($DBInfo->use_smileys)) {
-      $this->smileys = getSmileys();
 
-      $tmp=array_keys($this->smileys);
-      $tmp=array_map('_preg_escape',$tmp);
-      $rule=implode('|', $tmp);
-      $DBInfo->smiley_rule=$rule;
-
-      $this->smiley_rule='/(?<=\s|^|>)('.$DBInfo->smiley_rule.')(?=\s|<|$)/e';
-      $this->smiley_repl="\$formatter->smiley_repl('\\1')";
-
-      #$this->baserule[]=$smiley_rule;
-      #$this->baserepl[]=$smiley_repl;
+    // set extra baserule
+    if (!empty($DBInfo->baserule)) {
+      $dummy = 'dummy';
+      foreach ($DBInfo->baserule as $rule=>$repl) {
+        $t = @preg_match($rule,$repl);
+        if ($t!==false) {
+          $this->baserule[]=$rule;
+          $this->baserepl[]=$repl;
+        }
+      }
     }
+
+    // check and prepare $url_mappings
+    if (!empty($DBInfo->url_mappings)) {
+      if (!is_array($DBInfo->url_mappings)) {
+        $maps=explode("\n",$DBInfo->url_mappings);
+        $tmap=array();
+        $rule='';
+        foreach ($maps as $map) {
+          if (strpos($map,' ')) {
+            $key=strtok($map,' ');
+            $val=strtok('');
+            $tmap["$key"]=$val;
+            $rule.=preg_quote($key,'/').'|';
+          }
+        }
+        $this->url_mappings=$tmap;
+        $this->url_mapping_rule=substr($rule,0,-1);
+      }
+    }
+
     $this->footrule="\[\*[^\]]*\s[^\]]+\]";
 
     $this->cache= new Cache_text("pagelinks");
     $this->bcache= new Cache_text("backlinks");
     # XXX
+  }
+
+  /**
+   * init Smileys
+   * load smileys and set smily_rule and smiley_repl
+   */
+  function initSmileys() {
+    $this->smileys = getSmileys();
+
+    $tmp = array_keys($this->smileys);
+    $tmp = array_map('_preg_escape', $tmp);
+    $rule = implode('|', $tmp);
+
+    $this->smiley_rule = '/(?<=\s|^|>)('.$rule.')(?=\s|<|$)/e';
+    $this->smiley_repl = "\$formatter->smiley_repl('\\1')";
   }
 
   function set_wordrule($pis=array()) {
@@ -3896,7 +3926,10 @@ class Formatter {
       }
 
       # Smiley
-      if ($this->smiley_rule)
+      if (!empty($this->use_smileys) and empty($this->smiley_rule))
+        $this->initSmileys();
+
+      if (!empty($this->smiley_rule))
         $line=preg_replace($this->smiley_rule,$this->smiley_repl,$line);
       # NoSmoke's MultiLineCell hack
       #$line=preg_replace(array("/{{\|/","/\|}}/"),
@@ -4581,7 +4614,7 @@ EOS;
   alt="powered by MoniWiki" /></a>
 FOOT;
 
-    if ($options['timer']) {
+    if (is_object($options['timer'])) {
       $options['timer']->Check();
       $timer=$options['timer']->Total();
     }
@@ -5393,17 +5426,6 @@ function wiki_main($options) {
 
   $formatter = &new Formatter($page,$options);
 
-  if (!empty($Config['baserule'])) {
-    $dummy = 'dummy';
-    foreach ($Config['baserule'] as $rule=>$repl) {
-      $t = @preg_match($rule,$repl);
-      if ($t!==false) {
-        $formatter->baserule[]=$rule;
-        $formatter->baserepl[]=$repl;
-      }
-    }
-  }
-
   $formatter->refresh=$refresh;
   $formatter->popup=$popup;
   $formatter->macro_repl('InterWiki','',array('init'=>1));
@@ -5563,7 +5585,9 @@ function wiki_main($options) {
       log_referer($_SERVER['HTTP_REFERER'],$pagename);
 
     $formatter->write("<div id='wikiContent'>\n");
-    $options['timer']->Check("init");
+    if (is_object($options['timer'])) {
+      $options['timer']->Check("init");
+    }
     $options['pagelinks']=1;
     if (!empty($Config['cachetime']) and $Config['cachetime'] > 0 and empty($formatter->pi['#nocache'])) {
       $cache=&new Cache_text('pages',2,'html');
@@ -5610,7 +5634,9 @@ function wiki_main($options) {
     } else {
       $formatter->send_page('',$options);
     }
-    $options['timer']->Check("send_page");
+    if (is_object($options['timer'])) {
+      $options['timer']->Check("send_page");
+    }
     $formatter->write("<!-- wikiContent --></div>\n");
 
     if (!empty($DBInfo->extra_macros) and
@@ -5747,11 +5773,15 @@ $Config=getConfig("config.php",array('init'=>1));
 include_once("wikilib.php");
 include_once("lib/win32fix.php");
 
+$options = array();
+$timing = &new Timer();
+$options['timer'] = &$timing;
+
 $DBInfo= new WikiDB($Config);
 
-$options=array();
-$options['timer']=&$timing;
-$options['timer']->Check("load");
+if (is_object($options['timer'])) {
+  $options['timer']->Check("load");
+}
 
 $lang= set_locale($DBInfo->lang,$DBInfo->charset);
 init_locale($lang);

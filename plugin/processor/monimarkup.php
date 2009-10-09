@@ -649,6 +649,9 @@ class processor_monimarkup
         }
         if ($formatter->sect_num >1) $out.=$this->_div(0);
 
+        if (!empty($formatter->use_smileys) and empty($formatter->smiley_rule))
+            $formatter->initSmileys();
+ 
         if (!empty($formatter->smiley_rule))
             $out=preg_replace($formatter->smiley_rule,
                  $formatter->smiley_repl,$out);
