@@ -707,7 +707,7 @@ EOS;
       if (function_exists('apache_lookup_uri')) {
         $info = apache_lookup_uri($this->imgs_dir_url);
         if (isset($info->filename)) {
-          if (preg_match('@/$@', $info->filename))
+          if (is_dir($info->filename))
             $this->imgs_real_dir = $info->filename;
           else
             $this->imgs_real_dir = dirname($info->filename);
@@ -4749,7 +4749,7 @@ MSG;
         if (strlen($mnuname) < $len) {
           $menu[$this->page->name]=$this->word_repl($mypgname,$mnuname,$attr);
         } else if (function_exists('mb_strimwidth')) {
-          $my=mb_strimwidth($mypgname,0,$len,'...');
+          $my=mb_strimwidth($mypgname,0,$len,'...', $DBInfo->charset);
           $menu[$this->page->name]=$this->word_repl($mypgname,htmlspecialchars($my),$attr);
         }
       }
