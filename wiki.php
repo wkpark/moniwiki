@@ -561,30 +561,25 @@ class Security {
 }
 
 function getConfig($configfile, $options=array()) {
-  if (!file_exists($configfile)) {
-    if ($options['init']) {
-      $script= preg_replace("/\/([^\/]+)\.php$/","/monisetup.php",
+  extract($options);
+  unset($key,$val,$options);
+  $myret = @include($configfile);
+
+  if ($myret === false) {
+    if ($init) {
+      $script= preg_replace("/\/([^\/]+)\.php$/",'/monisetup.php',
                $_SERVER['SCRIPT_NAME']);
-      if (is_string($options['init'])) $script .= '?init='.$options['init'];
+      if (is_string($init)) $script .= '?init='.$init;
       header("Location: $script");
       exit;
     }
     return array();
   } 
-
-  #foreach ($options as $key=>$val) $$key=$val;
-  extract($options);
-  unset($key,$val,$options);
-  include($configfile);
   unset($configfile);
+  unset($myret);
 
   $config=get_defined_vars();
-#  print_r($config);
 
-#  if ($menu) $config['menu']=$menu;
-#  if ($icons) $config['icons']=$icons;
-#  if ($icon) $config['icon']=$icon;
-#  if ($actions) $config['actions']=$actions;
   if (isset($config['include_path']))
     ini_set('include_path',ini_get('include_path').PATH_SEPARATOR.$config['include_path']);
 
@@ -610,7 +605,6 @@ class WikiDB {
     $this->user_dir= $this->data_dir.'/user';
     $this->vartmp_dir= '/var/tmp';
     $this->intermap= $this->data_dir.'/intermap.txt';
-    $this->interwikirule='';
     $this->editlog_name= $this->data_dir.'/editlog';
     $this->shared_intermap=$this->data_dir."/text/InterMap";
     $this->shared_metadb=$this->data_dir."/metadb";
@@ -723,7 +717,7 @@ EOS;
       $this->imgs_real_dir = basename($this->imgs_dir); // XXX
     }
 
-    if (file_exists($this->imgs_real_dir.'/interwiki/'.'moniwiki-16.png'))
+    if (is_dir($this->imgs_real_dir.'/interwiki'))
       $this->imgs_dir_interwiki=$this->imgs_dir.'/interwiki/';
 
     if (empty($this->icon)) {
@@ -798,6 +792,20 @@ EOS;
 
     $this->interwiki=null;
 
+    if (!empty($this->use_counter))
+      $this->counter=&new Counter_dba($this);
+
+    if (!empty($this->security_class)) {
+      include_once("plugin/security/$this->security_class.php");
+      $class='Security_'.$this->security_class;
+      $this->security=new $class ($this);
+    } else
+      $this->security=new Security($this);
+
+    register_shutdown_function(array(&$this,'Close'));
+  }
+
+  function initMetaDB() {
     if (!empty($this->use_alias) and file_exists($this->aliaspage))
       $this->alias=&new MetaDB_text($this->aliaspage);
     else
@@ -811,20 +819,6 @@ EOS;
     } else {
       $this->metadb->attachDB($this->alias);
     }
-
-    if (!empty($this->use_counter))
-      $this->counter=&new Counter_dba($this);
-    if (!isset($this->counter->counter))
-      $this->counter=&new Counter();
-
-    if (!empty($this->security_class)) {
-      include_once("plugin/security/$this->security_class.php");
-      $class='Security_'.$this->security_class;
-      $this->security=new $class ($this);
-    } else
-      $this->security=new Security($this);
-
-    register_shutdown_function(array(&$this,'Close'));
   }
 
   function Close() {
@@ -2465,7 +2459,11 @@ class Formatter {
       return $this->word_repl($url,$text.$extra,$attr,1);
     }
 
-    # invalid InterWiki name
+    if (empty($DBInfo->interwiki)) {
+      $this->macro_repl('InterWiki', '', array('init'=>1));
+    }
+
+    // invalid InterWiki name
     if (empty($DBInfo->interwiki[$wiki])) {
       #$dum0=preg_replace("/(".$this->wordrule.")/e","\$this->link_repl('\\1')",$wiki);
       #return $dum0.':'.($page?$this->link_repl($page,$text):'');
@@ -2681,6 +2679,7 @@ class Formatter {
       }
       if (!empty($this->aliases[$page])) return $this->aliases[$page];
       if (!empty($this->sister_on)) {
+        if (empty($DBInfo->metadb)) $DBInfo->initMetaDB();
         $sisters=$DBInfo->metadb->getSisterSites($page, $DBInfo->use_sistersites);
         if ($sisters === true) {
           $this->pagelinks[$page]=-2;
@@ -3483,6 +3482,7 @@ class Formatter {
 
       $twin_mode=$DBInfo->use_twinpages;
       if (isset($pi['#twinpages'])) $twin_mode=$pi['#twinpages'];
+      if (empty($DBInfo->metadb)) $DBInfo->initMetaDB();
       $twins=$DBInfo->metadb->getTwinPages($this->page->name,$twin_mode);
 
       if ($twins === true) {
@@ -4273,13 +4273,11 @@ class Formatter {
     $content_type=
       !empty($DBInfo->content_type) ? $DBInfo->content_type: "text/html";
 
-    if ($DBInfo->force_charset)
+    if (!empty($DBInfo->force_charset))
       $force_charset = '; charset='.$DBInfo->charset;
 
     if (!$plain)
       $this->header('Content-type: '.$content_type.$force_charset);
-#    if (!$plain)
-#      $this->header('Content-type: '.$content_type);
 
     if (!empty($options['action_mode']) and $options['action_mode'] =='ajax') return true;
 
@@ -4321,15 +4319,15 @@ class Formatter {
       else if ($this->group) $upper=_urlencode(substr($this->page->name,strlen($this->group)));
       if (!empty($this->pi['#keywords']))
         $keywords='<meta name="keywords" content="'.$this->pi['#keywords'].'" />'."\n";
-      else if ($DBInfo->use_keywords) {
+      else if (!empty($DBInfo->use_keywords)) {
         $keywords=strip_tags($this->page->title);
         $keywords=str_replace(" ",", ",$keywords); # XXX
         $keywords=htmlspecialchars($keywords);
         $keywords="<meta name=\"keywords\" content=\"$keywords\" />\n";
       }
       # find sub pages
-      if ($DBInfo->use_subindex and empty($options['action'])) {
-        $scache=new Cache_text('subpages');
+      if (!empty($DBInfo->use_subindex) and empty($options['action'])) {
+        $scache=&new Cache_text('subpages');
         if (!($subs=$scache->exists($this->page->name))) {
           if (($p = strrpos($this->page->name,'/')) !== false)
             $rule=_preg_search_escape(substr($this->page->name,0,$p));
@@ -4373,24 +4371,24 @@ _url_prefix="$DBInfo->url_prefix";
 /*]]>*/
 </script>
 JSHEAD;
-      echo $metatags.$js."\n";
+      echo $metatags,$js,"\n";
       echo $this->get_javascripts();
       echo $keywords;
-      echo "  <title>$DBInfo->sitename: ".$options['title']."</title>\n";
+      echo "  <title>$DBInfo->sitename: ",$options['title'],"</title>\n";
       if (!empty($upper))
-        echo '  <link rel="Up" href="'.$this->link_url($upper)."\" />\n";
+        echo '  <link rel="Up" href="',$this->link_url($upper),"\" />\n";
       $raw_url=$this->link_url($this->page->urlname,"?action=raw");
       $print_url=$this->link_url($this->page->urlname,"?action=print");
-      echo '  <link rel="Alternate" title="Wiki Markup" href="'.
-        $raw_url."\" />\n";
-      echo '  <link rel="Alternate" media="print" title="Print View" href="'.
-        $print_url."\" />\n";
+      echo '  <link rel="Alternate" title="Wiki Markup" href="',
+        $raw_url,"\" />\n";
+      echo '  <link rel="Alternate" media="print" title="Print View" href="',
+        $print_url,"\" />\n";
       if ($options['css_url']) {
-        echo '  <link rel="stylesheet" type="text/css" '.$media.' href="'.
+        echo '  <link rel="stylesheet" type="text/css" ',$media,' href="',
           $options['css_url']."\" />\n";
-        if (file_exists('./css/_user.css'))
-          echo '  <link rel="stylesheet" media="screen" type="text/css" href="'.
-            $DBInfo->url_prefix."/css/_user.css\" />\n";
+        if (file_exists('./css/_user.css')) // FIXME
+          echo '  <link rel="stylesheet" media="screen" type="text/css" href="',
+            $DBInfo->url_prefix,"/css/_user.css\" />\n";
 # default CSS
       } else echo <<<EOS
 <style type="text/css">
@@ -5332,35 +5330,34 @@ function get_frontpage($lang) {
 
 function wiki_main($options) {
   global $DBInfo,$Config;
-  $pagename=$options['pagename'] ? $options['pagename']: $DBInfo->frontpage;
+  $pagename=!empty($options['pagename']) ? $options['pagename']: $DBInfo->frontpage;
 
   # get primary variables
-  if ($_SERVER['REQUEST_METHOD']=="POST") {
+  if ($_SERVER['REQUEST_METHOD']=='POST') {
     // reset some reserved variables
     if (isset($_POST['retstr'])) unset($_POST['retstr']);
     if (isset($_POST['header'])) unset($_POST['header']);
 
     # hack for TWiki plugin
     if ($_FILES['filepath']['name']) $action='draw';
-    if ($GLOBALS['HTTP_RAW_POST_DATA']) {
-      # RAW posted data. the $value and $action could be accessed under
-      # "register_globals = On" in the php.ini
+    if (isset($GLOBALS['HTTP_RAW_POST_DATA'])) {
       # hack for Oekaki: PageName----action----filename
       list($pagename,$action,$value)=explode('----',$pagename,3);
       $options['value']=$value;
     } else {
-      $value=$_POST['value'];
-      $action=$_POST['action'] ? $_POST['action']:$action;
-      if (!$action) $dum=explode('----',$pagename,3);
-      if ($dum[0] && $dum[1]) {
+      $value=!empty($_POST['value']) ? $_POST['value'] : '';
+      $action=!empty($_POST['action']) ? $_POST['action'] : '';
+      if (empty($action))
+        $dum=explode('----',$pagename,3);
+      if (isset($dum[0]) && isset($dum[1])) {
         $pagename=$dum[0];
         $action=$dum[1];
-        $value=$dum[2] ? $dum[2]:'';
+        $value=!empty($dum[2]) ? $dum[2] : '';
       }
     }
-    $goto=$_POST['goto'];
-    $popup=$_POST['popup'];
-  } else if ($_SERVER['REQUEST_METHOD']=="GET") {
+    $goto=!empty($_POST['goto']) ? $_POST['goto'] : '';
+    $popup=!empty($_POST['popup']) ? 1 : 0;
+  } else if ($_SERVER['REQUEST_METHOD']=='GET') {
     // reset some reserved variables
     if (isset($_GET['retstr'])) unset($_GET['retstr']);
     if (isset($_POST['header'])) unset($_POST['header']);
@@ -5409,7 +5406,6 @@ function wiki_main($options) {
   $formatter->refresh=$refresh;
   $formatter->popup=$popup;
   $formatter->macro_repl('InterWiki','',array('init'=>1));
-  $formatter->macro_repl('UrlMapping','',array('init'=>1));
   $formatter->tz_offset=$options['tz_offset'];
 
   // simple black list check
@@ -5434,12 +5430,12 @@ function wiki_main($options) {
     }
   }
 
-  while (!$action or $action=='show') {
-    if ($value) { # ?value=Hello
+  while (empty($action) or $action=='show') {
+    if (!empty($value)) { # ?value=Hello
       $options['value']=$value;
       do_goto($formatter,$options);
       return true;
-    } else if ($goto) { # ?goto=Hello
+    } else if (!empty($goto)) { # ?goto=Hello
       $options['value']=$goto;
       do_goto($formatter,$options);
       return true;
@@ -5447,20 +5443,21 @@ function wiki_main($options) {
     if (!$page->exists()) {
       if (isset($options['retstr']))
         return false;
-      if ($DBInfo->auto_search && $action!='show' && $p=getPlugin($DBInfo->auto_search)) {
+      if (!empty($DBInfo->auto_search) && $action!='show' && $p=getPlugin($DBInfo->auto_search)) {
         $action=$DBInfo->auto_search;
         break;
       }
 
       $msg_404='';
-      if (!$Config['no_404']) $msg_404="Status: 404 Not found"; # for IE
-      if (!empty($options['is_robot']) or $Config['nofancy_404']) {
+      if (empty($Config['no_404'])) $msg_404="Status: 404 Not found"; # for IE
+      if (!empty($options['is_robot']) or !empty($Config['nofancy_404'])) {
         $formatter->header($msg_404);
         echo '<html><head></head><body><h1>'.$msg_404.'</h1></body></html>';
         return true;
       }
       $formatter->send_header($msg_404,$options);
 
+      if (empty($DBInfo->metadb)) $DBInfo->initMetaDB();
       $twins=$DBInfo->metadb->getTwinPages($page->name,2);
       if ($twins) {
         $formatter->send_title('','',$options);
@@ -5523,7 +5520,7 @@ function wiki_main($options) {
           $formatter->link_tag($_GET['redirect'],'?action=show'))."</h3>";
     }
     # increase counter
-    if (empty($options['is_robot']))
+    if (empty($options['is_robot']) and $DBInfo->use_counter)
       $DBInfo->counter->incCounter($pagename,$options);
 
     if (empty($action)) $options['pi']=1; # protect a recursivly called #redirect
@@ -5546,7 +5543,7 @@ function wiki_main($options) {
 
     if (!empty($formatter->pi['#title']) and !empty($DBInfo->use_titlecache)) {
       $tcache=&new Cache_text('title');
-      if (!$tcache->exists($pagename) or $_GET['update_title'])
+      if (!$tcache->exists($pagename) or !empty($_GET['update_title']))
         $tcache->update($pagename,$formatter->pi['#title']);
     }
     if (!empty($DBInfo->use_keywords) or !empty($DBInfo->use_tagging) or !empty($_GET['update_keywords'])) {
