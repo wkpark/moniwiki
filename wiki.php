@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.1.4-RC9';
+$_release = '1.1.4-RC10';
 
 #ob_start("ob_gzhandler");
 
@@ -700,7 +700,7 @@ EOS;
     $this->imgs_dir_interwiki=$this->imgs_dir.'/';
 
     if (empty($this->upload_dir_url))
-      $this->upload_dir_url= $this->upload_dir;
+      $this->upload_dir_url= $this->url_prefix . '/' . $this->upload_dir;
 
     // getenv("DOCUMENT_ROOT") != doc_root or not ?
     if (empty($this->imgs_real_dir)) {
