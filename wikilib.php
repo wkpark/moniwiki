@@ -475,7 +475,7 @@ class UserDB {
     if ($this->_exists($id)) {
        $data=file("$this->user_dir/wu-" . $this->_id_to_key($id));
     } else {
-       $user=new User('Anonymous');
+       $user=new WikiUser('Anonymous');
        return $user;
     }
     $info=array();
