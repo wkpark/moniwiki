@@ -759,7 +759,7 @@ JS;
   $ii=1;
   while (list($filter_name,$filter) = each($seed_filters)) {
     if ($filter_name == 'SystemPages') {
-    	print "<h4>$filter_name ("._("Please be careful to deselect these pages").")</h4>\n";
+    	print "<h4>$filter_name ("._t("Please be careful to deselect these pages").")</h4>\n";
     	print "<div id='systemseed'>\n";
     } else {
     	print "<h4>$filter_name <a href='#' onclick='Toggle(\"set$ii\")' >(toggle)</a></h4>\n";
