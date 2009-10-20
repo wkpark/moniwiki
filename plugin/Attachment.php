@@ -293,8 +293,8 @@ function macro_Attachment($formatter,$value,$options='') {
         if ($use_thumb) {
           $url=$DBInfo->upload_dir_url.'/thumbnails/'._urlencode($_l_file);
         } else {
-          $_l_upload_file=str_replace($DBInfo->upload_dir, $DBInfo->upload_dir_url,$_l_upload_file);
-          $url=_urlencode($_l_upload_file);
+          $_my_file=str_replace($DBInfo->upload_dir, $DBInfo->upload_dir_url,$dir . '/' . $file);
+          $url=_urlencode($_my_file);
         }
       }
 
