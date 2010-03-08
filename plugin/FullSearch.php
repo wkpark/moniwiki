@@ -208,7 +208,7 @@ EOF;
     } else if ($opts['keywords']) {
       $pages = $DBInfo->getPageLists();
       $opts['context']=-1; # turn off context-matching
-      $cache=new Cache_text("keywords");
+      $cache=new Cache_text("keyword");
       foreach ($pages as $page_name) {
         $links=unserialize($cache->fetch($page_name));
         // XXX
