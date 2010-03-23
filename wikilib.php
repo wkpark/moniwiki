@@ -75,6 +75,12 @@ function qualifiedUrl($url) {
 
 function find_needle($body,$needle,$exclude='',$count=0) {
   if (!$body) return '';
+
+  $test=@preg_match("/$needle/","",$match);
+  if ($test === false) {
+    return '';
+  }
+
   $lines=explode("\n",$body);
   $out="";
   $matches=preg_grep("/($needle)/i",$lines);
