@@ -201,16 +201,16 @@ function dl_file_resume($ctype,$file,$fname,$mode='inline',$header='') {
    $left = $size;
 
    // start output buffering
-   ob_start();
+   //ob_start();
    while(!feof($fp) and $left > 0){
        $sz = $chunksize < $left ? $chunksize : $left;
        echo fread($fp, $sz);
        flush();
-       ob_flush();
+       @ob_flush();
        $left -= $sz;
    }
    fclose($fp);
-   ob_end_flush();
+   //ob_end_flush();
    exit;
 }
 
