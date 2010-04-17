@@ -69,7 +69,7 @@ function qualifiedUrl($url) {
   $proto= 'http';
   if (!empty($_SERVER['HTTPS'])) $proto= 'https';
   else $proto= strtolower(strtok($_SERVER['SERVER_PROTOCOL'],'/'));
-  if ($url[0] != '/') $url='/'.$url; // XXX
+  if (isset($url[0]) and $url[0] != '/') $url='/'.$url; // XXX
   return $proto.'://'.$_SERVER['HTTP_HOST'].$port.$url;
 }
 
@@ -443,18 +443,18 @@ class UserDB {
     $date=gmdate('Y/m/d H:i:s', time());
     $data="# Data saved $date\n";
 
-    if ($user->ticket)
+    if (!empty($user->ticket))
       $user->info['ticket']=$user->ticket;
 
     foreach ($config as $key) {
-      if ($user->info[$key] != '')
+      if (!empty($user->info[$key]))
         $data.="$key=".$user->info[$key]."\n";
     }
 
     #print $data;
 
     $wu="wu-".$this->_id_to_key($user->id);
-    if ($options['wait']) $wu='wait-'.$wu;
+    if (!empty($options['wait'])) $wu='wait-'.$wu;
     $fp=fopen("$this->user_dir/$wu","w+");
     fwrite($fp,$data);
     fclose($fp);
@@ -701,7 +701,7 @@ function macro_EditText($formatter,$value,$options) {
 
   # simple == 1 : do not use EditTextForm, simple == 2 : do not use GUI/Preview
   $has_form = false;
-  if ($options['simple']!=1 and $DBInfo->hasPage('EditTextForm')) {
+  if (!empty($options['simple']) and $options['simple']!=1 and $DBInfo->hasPage('EditTextForm')) {
     $p=$DBInfo->getPage('EditTextForm');
     $form=$p->get_raw_body();
     $f=new Formatter($p);
@@ -800,7 +800,8 @@ function do_edit($formatter,$options) {
     return do_invalid($formatter,$options);
   }
   $formatter->send_header("",$options);
-  if ($options['section'])
+  $sec = '';
+  if (!empty($options['section']))
     $sec=' (Section)';
   $options['msgtype'] = isset($options['msgtype']) ? $options['msgtype'] : 'warn';
   $formatter->send_title(sprintf(_("Edit %s"),$options['page']).$sec,"",$options);
@@ -808,6 +809,7 @@ function do_edit($formatter,$options) {
   $has_form = false;
 
   $options['has_form'] = &$has_form;
+  $value = '';
   echo macro_EditText($formatter,$value,$options);
   if ($DBInfo->use_wikiwyg>=2) {
     $js=<<<JS
@@ -837,7 +839,7 @@ JS;
     echo "</div>\n";
   }
 
-  $formatter->send_footer($args,$options);
+  $formatter->send_footer('',$options);
 }
 
 function ajax_edit($formatter,$options) {
@@ -914,18 +916,19 @@ function macro_Edit($formatter,$value,$options='') {
 
   $COLS_MSIE= 80;
   $COLS_OTHER= 85;
-
+ 
+  $options['mode'] = !empty($options['mode']) ? $options['mode'] : '';
   $edit_rows=$DBInfo->edit_rows ? $DBInfo->edit_rows: 16;
   $cols= preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
 
   $use_js= preg_match('/Lynx|w3m|links/',$_SERVER['HTTP_USER_AGENT']) ? 0:1;
 
-  $rows= $options['rows'] > 5 ? $options['rows']: $edit_rows;
+  $rows= (!empty($options['rows']) and $options['rows'] > 5) ? $options['rows']: $edit_rows;
   $rows= $rows < 60 ? $rows: $edit_rows;
-  $cols= $options['cols'] > 60 ? $options['cols']: $cols;
+  $cols= (!empty($options['cols']) and $options['cols'] > 60) ? $options['cols']: $cols;
 
-  $text= $options['savetext'];
-  $editlog= $options['editlog'] ? $options['editlog'] : "";
+  $text= !empty($options['savetext']) ? $options['savetext'] : '';
+  $editlog= !empty($options['editlog']) ? $options['editlog'] : "";
   if (empty($editlog) and !empty($options['comment']))
       $editlog=_stripslashes($options['comment']);
 
@@ -933,16 +936,17 @@ function macro_Edit($formatter,$value,$options='') {
   if (in_array('nohints',$args)) $options['nohints']=1;
   if (in_array('nomenu',$args)) $options['nomenu']=1;
 
-  $preview= $options['preview'];
+  $preview= !empty($options['preview']) ? $options['preview'] : 0;
 
   if ($options['action']=='edit') $saveaction='savepage';
   else $saveaction=$options['action'];
 
-  $extraform=$formatter->_extra_form ? $formatter->_extra_form:'';
+  $extraform=!empty($formatter->_extra_form) ? $formatter->_extra_form:'';
 
   $options['notmpl']=isset($options['notmpl']) ? $options['notmpl']:0;
+  $form = '';
 
-  if (!$options['notmpl'] and ($options['template'] or !$formatter->page->exists()) and !$preview) {
+  if (!$options['notmpl'] and (!empty($options['template']) or !$formatter->page->exists()) and !$preview) {
     $options['linkto']="?action=edit&amp;template=";
     $tmpls= macro_TitleSearch($formatter,$DBInfo->template_regex,$options);
     if ($tmpls) {
@@ -955,7 +959,8 @@ function macro_Edit($formatter,$value,$options='') {
   $merge_btn=_("Merge");
   $merge_btn2=_("Merge manually");
   $merge_btn3=_("Ignore conflicts");
-  if ($options['conflict']) {
+  $extra = '';
+  if (!empty($options['conflict'])) {
     $extra='<button type="submit" name="button_merge" value="1"><span>'.$merge_btn.'</span></button>';
     if ($options['conflict']==2) {
       $extra.=' <button type="submit" name="manual_merge" value="1"><span>'.$merge_btn2.'</span></button>';
@@ -963,14 +968,16 @@ function macro_Edit($formatter,$value,$options='') {
         $extra.=' <button type="submit" name="force_merge" value="1"><span>'.$merge_btn3.'</span></button>';
     }
   }
-  if ($options['section'])
+
+  $hidden = '';
+  if (!empty($options['section']))
     $hidden='<input type="hidden" name="section" value="'.$options['section'].
             '" />';
-  if ($options['mode'])
+  if (!empty($options['mode']))
     $hidden='<input type="hidden" name="mode" value="'.$options['mode'].'" />';
 
   # make a edit form
-  if (!$options['simple'])
+  if (empty($options['simple']))
     $form.= "<a id='editor'></a>\n";
 
   if (isset($DBInfo->use_preview_anchor))
@@ -978,35 +985,37 @@ function macro_Edit($formatter,$value,$options='') {
   else
     $preview_anchor = '';
 
-  if ($options['page'])
+  if (!empty($options['page']))
     $previewurl=$formatter->link_url(_rawurlencode($options['page']), $preview_anchor);
   else
     $previewurl=$formatter->link_url($formatter->page->urlname, $preview_anchor);
 
   $menu= ''; $sep= '';
-  if (!$DBInfo->use_resizer and (!$options['noresizer'] or !$use_js)) {
+  if (empty($DBInfo->use_resizer) and (empty($options['noresizer']) or !$use_js)) {
     $sep= ' | ';
     $menu= $formatter->link_to("?action=edit&amp;rows=".($rows-3),_("ReduceEditor"));
     $menu.= $sep.$formatter->link_to("?action=edit&amp;rows=".($rows+3),_("EnlargeEditor"));
   }
 
-  if (!$options['nomenu']) {
+  if (empty($options['nomenu'])) {
     $menu.= $sep.$formatter->link_tag('InterWiki',"",_("InterWiki"));
     $sep= ' | ';
     $menu.= $sep.$formatter->link_tag('HelpOnEditing',"",_("HelpOnEditing"));
   }
 
   $form.=$menu;
-  if ($options['action_mode']=='ajax') {
+  $ajax = '';
+  if (!empty($options['action_mode']) and $options['action_mode']=='ajax') {
     $ajax=" onsubmit='savePage(this);return false'";
   }
-  if ($DBInfo->use_autosave)
+  $form_attr = '';
+  if (!empty($DBInfo->use_autosave))
     $form_attr='onClick="moni_autosave(this)" onsubmit="moni_autosave_reset()" ';
   $formh= sprintf('<form id="editform" '.$form_attr.'method="post" action="%s"'.$ajax.'>',
     $previewurl);
   if ($text) {
     $raw_body = preg_replace("/\r\n|\r/", "\n", $text);
-  } else if ($options['template']) {
+  } else if (!empty($options['template'])) {
     $p= new WikiPage($options['template']);
     $raw_body = preg_replace("/\r\n|\r/", "\n", $p->get_raw_body());
   } else if (isset($formatter->_raw_body)) {
@@ -1030,9 +1039,9 @@ function macro_Edit($formatter,$value,$options='') {
 
 
   # for conflict check
-  if ($options['datestamp'])
+  if (!empty($options['datestamp']))
      $datestamp= $options['datestamp'];
-  else if ($formatter->_mtime)
+  else if (!empty($formatter->_mtime))
      # low level control XXX
      $datestamp= $formatter->_mtime;
   else
@@ -1041,7 +1050,7 @@ function macro_Edit($formatter,$value,$options='') {
   $raw_body = str_replace(array("&","<"),array("&amp;","&lt;"),$raw_body);
 
   # get categories
-  if ($DBInfo->use_category and !$options['nocategories']) {
+  if (!empty($DBInfo->use_category) and empty($options['nocategories'])) {
     $categories=array();
     $categories= $DBInfo->getLikePages($DBInfo->category_regex);
     if ($categories) {
@@ -1061,15 +1070,16 @@ function macro_Edit($formatter,$value,$options='') {
     }
   }
 
-  if (!$options['minor'] and $DBInfo->use_minoredit) {
+  $extra_check = '';
+  if (empty($options['minor']) and !empty($DBInfo->use_minoredit)) {
     $user=&$DBInfo->user; # get from COOKIE VARS
-    if ($DBInfo->owners and in_array($user->id,$DBInfo->owners)) {
+    if (!empty($DBInfo->owners) and in_array($user->id,$DBInfo->owners)) {
       $extra_check=' '._("Minor edit")."<input type='checkbox' tabindex='3' name='minor' />";
     }
   }
 
   $captcha='';
-  if ($use_js and $DBInfo->use_ticket and $options['id'] == 'Anonymous') {
+  if ($use_js and !empty($DBInfo->use_ticket) and $options['id'] == 'Anonymous') {
      $msg = _("Refresh");
      $seed=md5(base64_encode(time()));
      $ticketimg=$formatter->link_url($formatter->page->urlname,'?action=ticket&amp;__seed='.$seed.'&amp;t=');
@@ -1082,7 +1092,9 @@ EXTRA;
   }
 
   $summary_msg=_("Summary");
-  if (!$options['simple']) {
+  $wysiwyg_btn = '';
+  $skip_preview = '';
+  if (empty($options['simple'])) {
     $preview_btn='<button type="submit" tabindex="6" name="button_preview" onclick="this.value=1" value="1"><span>'.
       _("Preview").'</span></button>';
     if ($preview)
@@ -1100,7 +1112,7 @@ EXTRA;
 EOS;
   }
   $save_msg=_("Save");
-  if ($use_js and $DBInfo->use_resizer) {
+  if ($use_js and !empty($DBInfo->use_resizer)) {
     if ($DBInfo->use_resizer==1) {
       $resizer=<<<EOS
 <script type="text/javascript" language='javascript'>
@@ -1160,9 +1172,9 @@ $extra<span id="save_state"></span>
 </form>
 </div>
 EOS;
-  if (!$options['nohints'])
+  if (empty($options['nohints']))
     $form.= macro_EditHints($formatter);
-  if (!$options['simple'])
+  if (empty($options['simple']))
     $form.= "<a id='preview'></a>";
   return $form.$resizer;
 }
@@ -1338,10 +1350,11 @@ function form_permission($mode) {
 
 function do_raw($formatter,$options) {
   global $Config;
-  if ($Config['force_charset'])
+  $force_charset = '';
+  if (!empty($Config['force_charset']))
     $force_charset = '; charset='.$Config['charset'];
   $supported=array('text/plain','text/css','text/javascript');
-  if ($options['mime'] and in_array($options['mime'],$supported)) {
+  if (!empty($options['mime']) and in_array($options['mime'],$supported)) {
     $formatter->send_header("Content-Type: $options[mime]",$options);
   } else
     $formatter->send_header("Content-Type: text/plain".$force_charset,$options);
@@ -1362,7 +1375,7 @@ function do_recall($formatter,$options) {
   $formatter->send_title(sprintf(_("%s (rev. %s)"),$options['page'],
                                  $options['rev']),"",$options);
   $formatter->send_page("",$options);
-  $formatter->send_footer($args,$options);
+  $formatter->send_footer('',$options);
 }
 
 function do_goto($formatter,$options) {
@@ -1659,7 +1672,8 @@ function do_post_savepage($formatter,$options) {
     return do_invalid($formatter,$options);
   }
 
-  if ((isset($_FILES['upfile']) and is_array($_FILES)) or is_array($options['MYFILES'])) {
+  if ((isset($_FILES['upfile']) and is_array($_FILES)) or
+      (isset($options['MYFILES']) and is_array($options['MYFILES']))) {
     $retstr = false;
     $options['retval'] = &$retstr;
     include_once('plugin/UploadFile.php');
@@ -1669,9 +1683,9 @@ function do_post_savepage($formatter,$options) {
   $savetext=$options['savetext'];
   $datestamp=$options['datestamp'];
   $button_preview=is_numeric($options['button_preview']);
-  $button_merge=$options['button_merge']? 1:0;
-  $button_merge=$options['manual_merge']? 2:$button_merge;
-  $button_merge=$options['force_merge']? 3:$button_merge;
+  $button_merge=!empty($options['button_merge']) ? 1:0;
+  $button_merge=!empty($options['manual_merge']) ? 2:$button_merge;
+  $button_merge=!empty($options['force_merge']) ? 3:$button_merge;
 
   $savetext=preg_replace("/\r\n|\r/", "\n", $savetext);
   $savetext=_stripslashes($savetext);
@@ -1745,7 +1759,7 @@ function do_post_savepage($formatter,$options) {
       #print '<div id="editor_area">'.macro_EditText($formatter,$value,$options).'</div>'; # XXX
       $has_form = false;
       $options['has_form'] = &$has_form;
-      print macro_EditText($formatter,$value,$options); # XXX
+      print macro_EditText($formatter,'',$options); # XXX
 
       if ($has_form and !empty($DBInfo->use_jsbuttons)) {
         $msg = _("Save");
@@ -1843,7 +1857,7 @@ function do_post_savepage($formatter,$options) {
     $formatter->preview=1;
     $has_form = false;
     $options['has_form'] = &$has_form;
-    print '<div id="editor_area_wrap">'.macro_EditText($formatter,$value,$options);
+    print '<div id="editor_area_wrap">'.macro_EditText($formatter,'',$options);
     if ($has_form and !empty($DBInfo->use_jsbuttons)) {
       $msg = _("Save");
       $onclick=' onclick="submit_all_forms()"';
@@ -2098,15 +2112,16 @@ function macro_RandomPage($formatter,$value='') {
 
 function macro_RandomQuote($formatter,$value="",$options=array()) {
   global $DBInfo;
-  define(QUOTE_PAGE,'FortuneCookies');
+  define('QUOTE_PAGE','FortuneCookies');
   #if ($formatter->preview==1) return '';
 
   $re='/^\s*\* (.*)$/';
   $args=explode(',',$value);
 
+  $log = '';
   foreach ($args as $arg) {
     $arg=trim($arg);
-    if (in_array($arg[0],array('@','/','%')) and
+    if (!empty($arg[0]) and in_array($arg[0],array('@','/','%')) and
       preg_match('/^'.$arg[0].'.*'.$arg[0].'[sxU]*$/',$arg)) {
       if (preg_match($arg,'',$m)===false) {
         $log=_("Invalid regular expression !");
@@ -2122,7 +2137,7 @@ function macro_RandomQuote($formatter,$value="",$options=array()) {
   else
     $fortune=QUOTE_PAGE;
 
-  if ($options['body']) {
+  if (!empty($options['body'])) {
     $raw=$options['body'];
   } else {
     $page=$DBInfo->getPage($fortune);
@@ -2247,7 +2262,7 @@ function macro_UserPreferences($formatter,$value,$options='') {
       $idform="<input type='text' size='20' name='login_id' value='' />";
   } else {
     $idform=$user->id;
-    if ($user->info['idtype']=='openid') {
+    if (!empty($user->info['idtype']) and $user->info['idtype']=='openid') {
       $idform='<img src="http://www.myopenid.com/static/openid-icon-small.gif" alt="OpenID:" style="vertical-align:middle" />'.
       '<a href="'.$idform.'">'.$idform.'</a>';
     }
@@ -2270,6 +2285,7 @@ OPENID;
   $id_btn=_("ID");
   $sep="<tr><td colspan='2'><hr /></td></tr>\n";
   $sep0='';
+  $login = '';
   if ($user->id == 'Anonymous' and !isset($options['login_id']) and $value!="simple") {
     if (isset($openid_form) and $value != 'openid') $sep0=$sep;
     if ($value != 'openid')
@@ -2325,12 +2341,12 @@ EXTRA;
     }
   } else {
     $button=_("Save");
-    $css=$user->info['css_url'];
+    $css=!empty($user->info['css_url']) ? $user->info['css_url'] : '';
     $email=$user->info['email'];
-    $nick=$user->info['nick'];
-    $tz_offset=$user->info['tz_offset'];
+    $nick=!empty($user->info['nick']) ? $user->info['nick'] : '';
+    $tz_offset=!empty($user->info['tz_offset']) ? $user->info['tz_offset'] : 0;
     if ($user->info['password'])
-      $again="<b>"._("New password")."</b>&nbsp;<input type='password' size='15' maxlength='$pw_len' name='passwordagain' value='' /></td></tr>";
+      $again="<b>"._("New password")."</b>&nbsp;<input type='password' size='15' maxlength='$pw_length' name='passwordagain' value='' /></td></tr>";
     else
       $again='';
 
@@ -2342,6 +2358,7 @@ NICK;
     }
 
     $tz_off=date('Z');
+    $opts = '';
     for ($i=-47;$i<=47;$i++) {
       $val=1800*$i;
       $tz=gmdate("Y/m/d H:i",time()+$val);
@@ -2379,6 +2396,7 @@ setTimezone();
 </script>
 EOF;
 
+  $passwd = !empty($passwd) ? $passwd : '';
   if (empty($DBInfo->use_safelogin) or $button==_("Save")) {
     if ($user->id == 'Anonymous' or $user->info['password'])
     $passwd_inp=<<<PASS
@@ -2399,7 +2417,8 @@ PASS;
     }
   }
   $id_btn=_("ID");
-  if ($openid_form or $login) $sep1=$sep;
+  $sep1 = '';
+  if (!empty($openid_form) or !empty($login)) $sep1=$sep;
   return <<<EOF
 $login
 $jscript
@@ -2435,7 +2454,7 @@ function macro_InterWiki($formatter,$value,$options=array()) {
     $cf=new Cache_text('settings');
 
     $force_init=0;
-    if ($DBInfo->shared_intermap and $cf->mtime('interwiki') < filemtime($DBInfo->shared_intermap) ) {
+    if (!empty($DBInfo->shared_intermap) and $cf->mtime('interwiki') < filemtime($DBInfo->shared_intermap) ) {
       $force_init=1;
     }
     if (!$formatter->refresh and $cf->exists('interwiki') and !$force_init) {
@@ -2449,13 +2468,14 @@ function macro_InterWiki($formatter,$value,$options=array()) {
     $interwiki=array();
     # intitialize interwiki map
     $map=file($DBInfo->intermap);
-    if ($DBInfo->sistermap and file_exists($DBInfo->sistermap))
+    if (!empty($DBInfo->sistermap) and file_exists($DBInfo->sistermap))
       $map=array_merge($map,file($DBInfo->sistermap));
 
     # read shared intermap
     if (file_exists($DBInfo->shared_intermap))
       $map=array_merge($map,file($DBInfo->shared_intermap));
 
+    $interwikirule = '';
     for ($i=0,$sz=sizeof($map);$i<$sz;$i++) {
       $line=rtrim($map[$i]);
       if (!$line || $line[0]=="#" || $line[0]==" ") continue;
@@ -2481,15 +2501,16 @@ function macro_InterWiki($formatter,$value,$options=array()) {
     $interwiki['Self']=get_scriptname().$DBInfo->query_prefix;
 
     # set default TwinPages interwiki
-    if (!$interwiki['TwinPages'])
+    if (empty($interwiki['TwinPages']))
       $interwiki['TwinPages']=(($DBInfo->query_prefix == '?') ? '&amp;':'?').
         'action=twinpages&amp;value=';
 
     # read shared intericons
     $map=array();
-    if (file_exists($DBInfo->shared_intericon))
+    if (!empty($DBInfo->shared_intericon) and file_exists($DBInfo->shared_intericon))
       $map=array_merge($map,file($DBInfo->shared_intericon));
 
+    $intericon = array();
     for ($i=0,$isz=sizeof($map);$i<$isz;$i++) {
       $line=rtrim($map[$i]);
       if (!$line || $line[0]=="#" || $line[0]==" ") continue;

@@ -975,11 +975,11 @@ EOS;
     $time_current= time();
     $secs_per_day= 24*60*60;
 
-    if ($opts['ago']) {
+    if (!empty($opts['ago'])) {
       $date_from= $time_current - ($opts['ago'] * $secs_per_day);
       $date_to= $date_from + ($days * $secs_per_day);
     } else {
-      if ($opts['items']) {
+      if (!empty($opts['items'])) {
         $date_from= $time_current - (365 * $secs_per_day);
       } else {
         $date_from= $time_current - ($days * $secs_per_day);
@@ -988,7 +988,7 @@ EOS;
     }
     $check=$date_to;
 
-    $itemnum=$opts['items'] ? $opts['items']:200;
+    $itemnum=!empty($opts['items']) ? $opts['items']:200;
 
     $fp= fopen($this->editlog_name, 'r');
     while (is_resource($fp) and ($fz=filesize($this->editlog_name))>0){
@@ -1034,6 +1034,7 @@ EOS;
     }
 
     if (!empty($opts['quick'])) {
+      $out = array();
       foreach($lines as $line) {
         $dum=explode("\t",$line,2);
         if ($keys[$dum[0]]) continue;
@@ -1248,9 +1249,9 @@ class Version_RCS {
 
     $rev=(is_numeric($rev) and $rev>0) ? "\"".$rev."\" ":'';
     $ropt='-p';
-    if ($opt['stdout']) $ropt='-r';
+    if (!empty($opt['stdout'])) $ropt='-r';
     $fp=@popen("co -x,v/ -q $ropt$rev ".$filename.$this->NULL,"r");
-    if ($opt['stdout']) {
+    if (!empty($opt['stdout'])) {
       if (is_resource($fp)) {
         pclose($fp);
         return '';
@@ -1316,6 +1317,7 @@ class Version_RCS {
         break;
       }
     }
+    $out = '';
     while (!feof($fp)) {
       $line=fgets($fp,1024);
       $out.= $line;
@@ -1340,6 +1342,7 @@ class Version_RCS {
   }
 
   function get_rev($pagename,$mtime='',$last=0) {
+    $opt = '';
     if ($last==1) {
       $tag='head:';
       $opt='-h';
@@ -1352,11 +1355,12 @@ class Version_RCS {
       }
     }
 
+    $rev = '';
     $out= $this->rlog($pagename,'',$opt);
     if ($out) {
       for ($line=strtok($out,"\n"); $line !== false;$line=strtok("\n")) {
         preg_match("/^$tag\s+([\d\.]+)$/",$line,$match);
-        if ($match[1]) {
+        if (isset($match[1])) {
           $rev=$match[1];
           break;
         }
@@ -3870,6 +3874,7 @@ class Formatter {
           $p_closeopen.=$this->_div(0,$in_div,$div_enclose);
         $p_closeopen.=$this->_div(1,$in_div,$div_enclose);
         $in_p='';
+        $edit = ''; $anchor = '';
         if ($this->section_edit && empty($this->preview)) {
           $act='edit';
 
@@ -3892,7 +3897,7 @@ class Formatter {
           $anchor="<a id='$anchor_id'></a>";
         }
         $attr='';
-        if ($DBInfo->use_folding) {
+        if (!empty($DBInfo->use_folding)) {
           if ($DBInfo->use_folding == 1) {
             $attr=" onclick=\"document.getElementById('sc-$this->sect_num').style.display=document.getElementById('sc-$this->sect_num').style.display!='none'? 'none':'block';\"";
           } else {
@@ -4513,7 +4518,7 @@ EOS;
       if (strtolower($act) == 'blog')
         $this->actions[]='BlogRss';
         
-    } else if ($args['editable']) {
+    } else if (!empty($args['editable'])) {
       if ($args['editable']==1)
         $menu[]= $this->link_to("?action=edit",_("EditText")," rel='nofollow' accesskey='x'");
       else
@@ -4548,7 +4553,7 @@ EOS;
 
     echo "<!-- wikiBody --></div>\n";
     echo $DBInfo->hr;
-    if ($args['editable'] and !$DBInfo->security->writable($options))
+    if (!empty($args['editable']) and !$DBInfo->security->writable($options))
       $args['editable']=-1;
 
     $key=$DBInfo->pageToKeyname($options['page']);
@@ -4685,10 +4690,11 @@ FOOT;
     if (!empty($options['msg']) or !empty($msgtitle)) {
       $msgtype = isset($options['msgtype']) ? ' '.$options['msgtype']:' warn';
       
+      $mtitle0=!empty($options['msg']) ? $options['msg'] : '';
       $mtitle=!empty($msgtitle) ? "<h3>".$msgtitle."</h3>\n":"";
       $msg=<<<MSG
 <div class="message" id="wiki-message"><span class='$msgtype'>
-$mtitle$options[msg]</span>
+$mtitle$mtitle0</span>
 </div>
 MSG;
       if (isset($DBInfo->hide_log) and $DBInfo->hide_log > 0 and preg_match('/timer/', $msgtype)) {
@@ -5248,10 +5254,10 @@ else if ($DBInfo->theme_css) $theme=$DBInfo->theme;
 if (!empty($theme)) $options['theme']=$theme;
 
 if ($options['id'] != 'Anonymous') {
-  $options['css_url']=$user->info['css_url'];
-  $options['quicklinks']=$user->info['quicklinks'];
-  $options['tz_offset']=$user->info['tz_offset'];
-  if (!$theme) $options['theme']=$user->info['theme'];
+  $options['css_url']=!empty($user->info['css_url']) ? $user->info['css_url'] : '';
+  $options['quicklinks']=!empty($user->info['quicklinks']) ? $user->info['quicklinks'] : '';
+  $options['tz_offset']=!empty($user->info['tz_offset']) ? $user->info['tz_offset'] : '';
+  if (empty($theme)) $options['theme']=!empty($user->info['theme']) ? $user->info['theme'] : '';
 } else {
   $options['css_url']=$user->css;
   $options['tz_offset']=$user->tz_offset;
@@ -5345,7 +5351,7 @@ function wiki_main($options) {
     if (isset($_POST['header'])) unset($_POST['header']);
 
     # hack for TWiki plugin
-    if ($_FILES['filepath']['name']) $action='draw';
+    if (!empty($_FILES['filepath']['name'])) $action='draw';
     if (isset($GLOBALS['HTTP_RAW_POST_DATA'])) {
       # hack for Oekaki: PageName----action----filename
       list($pagename,$action,$value)=explode('----',$pagename,3);
@@ -5371,7 +5377,7 @@ function wiki_main($options) {
     $action=!empty($_GET['action']) ? $_GET['action'] : '';
     $value=!empty($_GET['value']) ? $_GET['value'] : '';
     $goto=!empty($_GET['goto']) ? $_GET['goto'] : '';
-    $rev=!empty($_GET['rev']) ? $$_GET['rev'] : '';
+    $rev=!empty($_GET['rev']) ? $_GET['rev'] : '';
     if ($options['id'] == 'Anonymous')
       $refresh = 0;
     else
@@ -5409,8 +5415,8 @@ function wiki_main($options) {
 
   $formatter = &new Formatter($page,$options);
 
-  $formatter->refresh=$refresh;
-  $formatter->popup=$popup;
+  $formatter->refresh=!empty($refresh) ? $refresh : '';
+  $formatter->popup=!empty($popup) ? $popup : '';
   $formatter->macro_repl('InterWiki','',array('init'=>1));
   $formatter->tz_offset=$options['tz_offset'];
 
