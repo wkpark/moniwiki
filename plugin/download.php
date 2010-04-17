@@ -15,8 +15,8 @@ function do_download($formatter,$options) {
     return; 
   }
   $value=&$options['value'];
-  $down_mode=$options['mode']{0}=='a' ? 'attachment':
-    ($DBInfo->download_mode ? $DBInfo->download_mode:'inline');
+  $down_mode=(!empty($options['mode']) and $options['mode']{0}=='a') ? 'attachment':
+    (!empty($DBInfo->download_mode) ? $DBInfo->download_mode:'inline');
 
 
   // check acceptable subdirs

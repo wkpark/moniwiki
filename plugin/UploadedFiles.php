@@ -51,21 +51,21 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    $value='';
 
    $default_column=8;
-   $col=$options['col'] > 0 ? (int)$options['col']:$default_column;
+   $col=(!empty($options['col']) and $options['col'] > 0) ? (int)$options['col']:$default_column;
 
-   if ($formatter->preview) {
+   if (!empty($formatter->preview)) {
      $js_tag=1;$use_preview=1;
      $uploader='UploadForm';
      $use_admin=0;
      $use_fileinfo=0;
      $col = 10000;
-   } else if ($options['preview']) {
+   } else if (!empty($options['preview'])) {
      $use_preview=1;
      $use_admin=0;
      $use_fileinfo=0;
    }
 
-   if ($options['tag']) { # javascript tag mode
+   if (!empty($options['tag'])) { # javascript tag mode
      $js_tag=1;$use_preview=1;
      $use_admin=0;
      $use_fileinfo=0;
@@ -74,7 +74,8 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
 
    if ($use_fileinfo) $col=1;
 
-   if ($DBInfo->use_lightbox and !$js_tag)
+   $href_attr = '';
+   if (!empty($DBInfo->use_lightbox) and !$js_tag)
      $href_attr=' rel="lightbox[upload]" ';
 
    $nodir = 0;
@@ -207,17 +208,17 @@ function insertTags(tagOpen,tagClose,myText,replaced)
 EOS;
    }
 
-   if ($DBInfo->download_action) $mydownload=$DBInfo->download_action;
+   if (!empty($DBInfo->download_action)) $mydownload=$DBInfo->download_action;
    else $mydownload='download';
    $checkbox='checkbox';
    $needle= "//";
-   if ($options['download'] || $DBInfo->force_download) {
+   if (!empty($options['download']) || !empty($DBInfo->force_download)) {
      $force_download=1;
-     if ($options['download'])
+     if (!empty($options['download']))
        $mydownload=$options['download'];
    }
-   if ($options['needle']) $needle='@'.$options['needle'].'@';
-   if ($options['checkbox']) $checkbox=$options['checkbox'];
+   if (!empty($options['needle'])) $needle='@'.$options['needle'].'@';
+   if (!empty($options['checkbox'])) $checkbox=$options['checkbox'];
 
    if (!in_array('UploadFile',$formatter->actions))
      $formatter->actions[]='UploadFile';
@@ -234,10 +235,10 @@ EOS;
         $down_prefix=$formatter->link_url($formatter->page->urlname,"?action=$mydownload&amp;value=");
       $dir=$DBInfo->upload_dir."/$key";
    }
-   if ($force_download or $key != $value)
+   if (!empty($force_download) or $key != $value)
       $prefix = $down_prefix;
 
-   if ($formatter->preview and $formatter->page->name == $value) { 
+   if (!empty($formatter->preview) and $formatter->page->name == $value) { 
      $opener='';
    } else {
      $opener=$value.':';
@@ -258,10 +259,10 @@ EOS;
    $upfiles=array();
    $dirs=array();
 
-   $per=$DBInfo->uploadedfiles_per_page ? $DBInfo->uploadedfiles_per_page:100;
+   $per=!empty($DBInfo->uploadedfiles_per_page) ? $DBInfo->uploadedfiles_per_page:100;
    // XXX
    $plink='';
-   if ($options['p'])
+   if (!empty($options['p']))
       $p=$options['p'] ? (int) $options['p']:1;
    else $p=1;
    $pfrom=($p-1)*$per;
@@ -331,7 +332,7 @@ EOS;
         #$attr=' target="_blank"';
         $extra='&amp;popup=1&amp;tag=1';
       }
-      if ($options['needle'])
+      if (!empty($options['needle']))
         $extra.='&amp;q='.$options['needle'];
 
       $link=$formatter->link_tag('UploadFile',"?action=uploadedfiles&amp;value=top$extra",
@@ -345,7 +346,7 @@ EOS;
       }
       $out.="</tr>\n";
    }
-   if ($options['needle'])
+   if (!empty($options['needle']))
       $extra.='&amp;q='.$options['needle'];
    if (isset($options['nodir']))
       $extra.='&amp;nodir='.$options['nodir'];

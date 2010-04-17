@@ -9,9 +9,9 @@ function _parse_rlog($formatter,$log,$options=array()) {
   global $DBInfo;
 
   $tz_offset=$formatter->tz_offset;
-  if (is_array($DBInfo->wikimasters) and in_array($options['id'],$DBInfo->wikimasters)) $admin=1;
+  if (!empty($DBInfo->wikimasters) and is_array($DBInfo->wikimasters) and in_array($options['id'],$DBInfo->wikimasters)) $admin=1;
 
-  if ($options['info_actions'])
+  if (!empty($options['info_actions']))
     $actions=$options['info_actions'];
   else if (isset($DBInfo->info_actions))
     $actions=$DBInfo->info_actions;
@@ -29,13 +29,13 @@ function _parse_rlog($formatter,$log,$options=array()) {
 
   $time_current=time();
 
-  $simple=$options['simple'] ? 1:0;
+  $simple=!empty($options['simple']) ? 1:0;
 
   $url=$formatter->link_url($formatter->page->urlname);
 
   $diff_btn=_("Compare");
   $out = "<div class='wikiInfo'>\n";
-  if ($options['title'])
+  if (!empty($options['title']))
     $out.=$options['title'];
   else
     $out.="<h2>"._("Revision History")."</h2>\n";
@@ -58,7 +58,10 @@ function _parse_rlog($formatter,$log,$options=array()) {
  
   #foreach ($lines as $line) {
   $count=0;
-  $showcount=($options['count']>5) ? $options['count']: 10;
+  $showcount=(!empty($options['count']) and $options['count']>5) ? $options['count']: 10;
+  $line = '';
+  $ok = 0;
+  $log.="\n"; // hack
   for(; !empty($line) or !empty($log); list($line,$log) = explode("\n",$log,2)) {
     if (!$state) {
       if (!preg_match("/^---/",$line)) { continue;}
@@ -75,17 +78,19 @@ function _parse_rlog($formatter,$log,$options=array()) {
          $rr++;
          preg_match("/^revision ([0-9a-f\.]+)\s*/",$line,$match);
          $rev=$match[1];
-         if (preg_match("/\./",$match[2])) {
+         if (isset($match[2]) and preg_match("/\./",$match[2])) {
             $state=0;
             break;
          }
          $state=2;
          break;
       case 2:
+         $change = '';
          $inf=preg_replace("/date:\s([0-9\/:\s]+)(;\s+author:.*;\s+state:.*;)?/","\\1",$line);
-         list($inf,$change)=explode('lines:',$inf,2);
+         if (strstr($inf, 'lines:') !== FALSE)
+           list($inf,$change)=explode('lines:',$inf,2);
 
-         if ($options['ago']) {
+         if (!empty($options['ago'])) {
            if (preg_match('/^[0-9]+$/',$inf)) {
              $rrev='#'.$rr;
              $ed_time=$inf;
@@ -159,7 +164,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
          } else if ($user and $DBInfo->interwiki['Whois'])
            $ip="<a href='".$DBInfo->interwiki['Whois']."$ip'>$ip</a>";
 
-         $comment=stripslashes($dummy[2]);
+         $comment=!empty($dummy[2]) ? stripslashes($dummy[2]) : '';
          $state=4;
          break;
       case 4:
@@ -167,7 +172,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
          $rowspan=1;
          if (!$simple and $comment) $rowspan=2;
 
-         $rrev= $rrev ? $rrev:$formatter->link_to("?action=recall&rev=$rev",$rev);
+         $rrev= !empty($rrev) ? $rrev:$formatter->link_to("?action=recall&rev=$rev",$rev);
          $out.="<tr>\n";
          $out.="<th class='rev' valign='top' rowspan=$rowspan>$rrev</th><td nowrap='nowrap' class='date'>$inf</td><td class='change'>$change</td><td class='author'>$ip&nbsp;</td>";
          $rrev='';
@@ -207,11 +212,11 @@ function _parse_rlog($formatter,$log,$options=array()) {
          $state=1;
          $flag++;
          $count++;
-         if ($options['all']!=1 and $count >=$showcount) $ok=1;
+         if (!empty($options['all']) and $options['all'] != 1 and $count >=$showcount) $ok=1;
          break;
      }
   }
-  if (!$simple and $admin):
+  if (!$simple and !empty($admin)):
   $out.="<tr><td colspan='".(!empty($admin) ? 7:6)."' align='right'><input type='checkbox' name='show' checked='checked' />"._("show only").' ';
   if ($DBInfo->security->is_protected("rcspurge",$options)) {
     $out.="<input type='password' name='passwd'>";
@@ -226,7 +231,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
 function macro_info($formatter,$value,$options=array()) {
   global $DBInfo;
 
-  $value=$value ? $value:$DBInfo->info_options;
+  $value=(empty($value) and !empty($DBInfo->info_options)) ? $DBInfo->info_options : $value;
   $args=explode(',',$value);
   if (is_array($args)) {
     foreach ($args as $arg) {
@@ -262,7 +267,7 @@ function do_info($formatter,$options) {
   $formatter->send_title('','',$options);
 
   print macro_info($formatter,'',$options);
-  $formatter->send_footer($args,$options);
+  $formatter->send_footer('',$options);
 }
 
 // vim:et:sts=2:

@@ -9,12 +9,12 @@ function do_rss_rc($formatter,$options) {
   global $DBInfo;
 define('RSS_DEFAULT_DAYS',7);
 
-  $days=$DBInfo->rc_days ? $DBInfo->rc_days:RSS_DEFAULT_DAYS;
+  $days=!empty($DBInfo->rc_days) ? $DBInfo->rc_days:RSS_DEFAULT_DAYS;
   $options['quick']=1;
-  if ($options['c']) $options['items']=$options['c'];
+  if (!empty($options['c'])) $options['items']=$options['c'];
   $lines= $DBInfo->editlog_raw_lines($days,$options);
 
-  if ($DBInfo->rss_rc_options) {
+  if (!empty($DBInfo->rss_rc_options)) {
     $opts=$DBInfo->rss_rc_options;
     $opts=explode(',',$opts);
     foreach ($opts as $opt) {
@@ -150,7 +150,7 @@ FOOT;
 FORM;
 
   $new="";
-  if ($options['oe'] and (strtolower($options['oe']) != $DBInfo->charset)) {
+  if (!empty($options['oe']) and (strtolower($options['oe']) != $DBInfo->charset)) {
     $charset=$options['oe'];
     if (function_exists('iconv')) {
       $out=$head.$channel.$items.$form;

@@ -84,8 +84,8 @@ function macro_Navigation($formatter,$value) {
     }
     $pnut='&laquo; ';
     if ($prev >= 0) {
-      $prev_text=$texts[$prev];
-      $prev=$indices[$prev];
+      $prev_text=!empty($texts[$prev]) ? $texts[$prev] : '';
+      $prev=!empty($indices[$prev]) ? $indices[$prev] : '';
       if (($p=strpos($prev,'~'))!==false)
         $prev_text=substr($prev,$p+1);
       if ($prev) {

@@ -238,6 +238,7 @@ function fancy_diff($diff,$options=array()) {
   $omarker=0;
   $orig=array();$new=array();
   foreach ($lines as $line) {
+    if (empty($line[0])) continue;
     $marker=$line[0];
     if (in_array($marker,array('-','+','@'))) $line=substr($line,1);
     if ($marker=="@") $line='<div class="diff-sep">@'."$line</div>";
@@ -251,7 +252,7 @@ function fancy_diff($diff,$options=array()) {
       $omarker=0;
       $buf="";
       $result = new WordLevelDiff($orig, $new, $DBInfo->charset);
-      if ($options['oldstyle']) {
+      if (empty($options['oldstyle'])) {
         foreach ($result->orig() as $ll)
           $buf.= "<div class=\"diff-removed\">$ll</div>\n";
         foreach ($result->_final() as $ll)
@@ -377,15 +378,15 @@ function macro_diff($formatter,$value,&$options)
   if ($processor_type != 'wiki' and !$options['type']) # is it not wiki format ?
     $options['type']=$DBInfo->diff_type; # use default diff format
 
-  if (!$options['type'] and $DBInfo->use_smartdiff)
+  if (empty($options['type']) and !empty($DBInfo->use_smartdiff))
     $options['type']='smart';
 
-  if ($options['type'] and function_exists($options['type'].'_diff'))
+  if (!empty($options['type']) and function_exists($options['type'].'_diff'))
     $type=$options['type'].'_diff';
   else
     $type=$DBInfo->diff_type.'_diff';
 
-  if ($options['text']) {
+  if (!empty($options['text'])) {
     $out= $options['text'];
     if (!$options['raw'])
       $ret=call_user_func($type,$out);
@@ -395,8 +396,8 @@ function macro_diff($formatter,$value,&$options)
     return $ret;
   }
 
-  $rev1=$options['rev']; // old
-  $rev2=$options['rev2']; // new
+  $rev1=!empty($options['rev']) ? $options['rev'] : ''; // old
+  $rev2=!empty($options['rev2']) ? $options['rev2'] : ''; // new
   if (!$rev1 and !$rev2) {
     $rev1=$formatter->page->get_rev();
   } else if (0 === strcmp($rev1 , (int)$rev1)) {
@@ -434,7 +435,7 @@ function macro_diff($formatter,$value,&$options)
     else if ($rev1 or $rev2) {
       $msg=sprintf(_("Difference between r%s and the current"),$rev1.$rev2);
     }
-    if (!$options['raw']) {
+    if (empty($options['raw'])) {
       $ret= call_user_func($type,$out);
       if (is_array($ret)) { // for smart_diff
         $dels=$ret[1]; $ret=$ret[0];
@@ -505,18 +506,18 @@ function macro_diff($formatter,$value,&$options)
       $ret="<pre>$out</pre>\n";
     }
   }
-  if ($options['nomsg']) return $ret;
+  if (!empty($options['nomsg'])) return $ret;
   return "<h2>$msg</h2>\n$ret";
 }
 
 function do_diff($formatter,$options="") {
   global $DBInfo;
 
-  $range=$options['range'];
-  $date=$options['date'];
-  $rev=$options['rev'];
-  $rev2=$options['rev2'];
-  if ($options['rcspurge']) {
+  $range=!empty($options['range']) ? $options['range'] : '';
+  $date=!empty($options['date']) ? $options['date'] : '';
+  $rev=!empty($options['rev']) ? $options['rev'] : '';
+  $rev2=!empty($options['rev2']) ? $options['rev2'] : '';
+  if (!empty($options['rcspurge'])) {
     if (!$range) $range=array();
     $rr='';
     $dum=array();
@@ -534,14 +535,14 @@ function do_diff($formatter,$options="") {
     return;
   }
 
-  if ($options['type'] and
+  if (!empty($options['type']) and
     !in_array($options['type'],array('smart','fancy','simple')))
     $options['type']=$DBInfo->diff_type;
 
   $formatter->send_header("",$options);
 
   $title='';
-  if ($DBInfo->use_smartdiff) {
+  if (!empty($DBInfo->use_smartdiff)) {
     $rev=substr($rev,0,5);
     $rev2=substr($rev2,0,5);
     if ($rev and $rev2)
@@ -559,11 +560,11 @@ function do_diff($formatter,$options="") {
   }
   else
     print macro_diff($formatter,'',$options);
-  if (!$DBInfo->diffonly and !$options['smart']) {
+  if (empty($DBInfo->diffonly) and empty($options['smart'])) {
     print "<br /><hr />\n";
     $formatter->send_page();
   }
-  $formatter->send_footer($args,$options);
+  $formatter->send_footer('',$options);
   return;
 }
 

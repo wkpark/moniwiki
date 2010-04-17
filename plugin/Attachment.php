@@ -21,8 +21,8 @@ function macro_Attachment($formatter,$value,$options='') {
   if (!is_array($options) and $options==1) $options=array('link'=>1); // compatible
 
   $attr='';
-  if ($DBInfo->force_download) $force_download=1;
-  if ($DBInfo->download_action) $mydownload=$DBInfo->download_action;
+  if (!empty($DBInfo->force_download)) $force_download=1;
+  if (!empty($DBInfo->download_action)) $mydownload=$DBInfo->download_action;
   else $mydownload='download';
   $extra_action='';
 
@@ -30,6 +30,8 @@ function macro_Attachment($formatter,$value,$options='') {
   $caption='';
   $cap_bra='';
   $cap_ket='';
+  $bra = '';
+  $ket = '';
 
   if ($options and !$DBInfo->security->is_allowed($mydownload,$options))
     return $text;
@@ -112,6 +114,7 @@ function macro_Attachment($formatter,$value,$options='') {
     return "<img src='".$value."' $attr />";
   }
 
+  $imgalign = '';
   if (!$attr and ($dummy=strpos($value,','))) {
     # for Attachment macro
     $args=explode(',',substr($value,$dummy+1));
@@ -162,7 +165,7 @@ function macro_Attachment($formatter,$value,$options='') {
   if (!$file) return $bra.'attachment:/'.$ket;
 
   $upload_file=$dir.'/'.$file;
-  if ($options['link'] == 1) return $upload_file;
+  if (!empty($options['link']) and $options['link'] == 1) return $upload_file;
 
   if (!$text) $text=$file;
 
@@ -211,13 +214,15 @@ function macro_Attachment($formatter,$value,$options='') {
 
     $imgcls='imgAttach';
 
-    if ($imgalign == 'imgCenter' or ($caption && !$imgalign)) {
+    if ($imgalign == 'imgCenter' or ($caption && empty($imgalign))) {
       if (!$attrs['width']) {
         $size=getimagesize($_l_upload_file); // XXX
         $attrs['width']=$size[0];
       }
     }
-    if ($attrs['width']) $img_width=' style="width:'.$attrs['width'].'px"';
+
+    $img_width='';
+    if (!empty($attrs['width'])) $img_width=' style="width:'.$attrs['width'].'px"';
 
     if ($caption) {
       $cls=$imgalign ? 'imgContainer '.$imgalign:'imgContainer'; 
@@ -243,9 +248,9 @@ function macro_Attachment($formatter,$value,$options='') {
     if (!in_array('UploadedFiles',$formatter->actions))
       $formatter->actions[]='UploadedFiles';
 
-    if (!$img_link && preg_match("/\.(png|gif|jpeg|jpg|bmp)$/i",$upload_file)) {
+    if (empty($img_link) && preg_match("/\.(png|gif|jpeg|jpg|bmp)$/i",$upload_file)) {
       // thumbnail
-      if ($DBInfo->use_convert_thumbs and $use_thumb) {
+      if (!empty($DBInfo->use_convert_thumbs) and $use_thumb) {
         $thumb_width=$thumb['thumbwidth'] ? $thumb['thumbwidth']:150;
         if (!file_exists($dir."/thumbnails/".$_l_file)) {
           if (!file_exists($dir."/thumbnails")) @mkdir($dir."/thumbnails",0777);
@@ -279,10 +284,10 @@ function macro_Attachment($formatter,$value,$options='') {
         }
       }
 
-      $alt=$alt ? $alt:$file;
+      $alt=!empty($alt) ? $alt:$file;
       if ($key != $pagename || $force_download) {
         $val=_urlencode($value);
-        if ($use_thumb) {
+        if (!empty($use_thumb)) {
           $thumbdir='thumbnails/';
           if (($p=strrpos($val,'/')) !== false)
             $val=substr($val,0,$p).'/thumbnails'.substr($val,$p);
@@ -311,7 +316,7 @@ function macro_Attachment($formatter,$value,$options='') {
     } else {
       $mydownload= $extra_action ? $extra_action:$mydownload;
       $link=$formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=".urlencode($value),$text);
-      if ($img_link)
+      if (!empty($img_link))
         return $bra."<span class=\"attach\"><a href='$link'>$img_link</a></span>".$ket;
 
       return $bra."<span class=\"attach\">".$formatter->icon['attach'].'<a href="'.$link.'">'.$text.'</a></span>'.$info.$ket;

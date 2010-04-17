@@ -29,6 +29,8 @@ function macro_UrlMapping($formatter,$value,$options=array()) {
             break;
         }
 
+        $DBInfo->url_mappings = array();
+        $DBInfo->url_mapping_rule = '';
         if (file_exists($DBInfo->shared_url_mappings)) {
             $map=file($DBInfo->shared_url_mappings);
 

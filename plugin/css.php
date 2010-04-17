@@ -9,6 +9,7 @@ function do_css($formatter,$options) {
   global $DBInfo;
   global $HTTP_COOKIE_VARS;
 
+  $title = '';
   if ($options['clear']) {
     if ($options['id']=='Anonymous') {
       header("Set-Cookie: MONI_CSS=dummy; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname());
@@ -22,7 +23,7 @@ function do_css($formatter,$options) {
     }
     if (!empty($options['theme'])) {
       $theme = $options['theme'];
-      $options['css_url']=($DBInfo->themeurl ? $DBInfo->themeurl:$DBInfo->url_prefix)."/theme/$theme/css/default.css";
+      $options['css_url']=(!empty($DBInfo->themeurl) ? $DBInfo->themeurl:$DBInfo->url_prefix)."/theme/$theme/css/default.css";
     }
   } else if ($options['save'] && $options['id']=="Anonymous" && isset($options['user_css'])) {
     setcookie("MONI_CSS",$options['user_css'],time()+60*60*24*30,get_scriptname());
