@@ -65,11 +65,12 @@ define('RC_DEFAULT_DAYS',7);
   $use_day=1;
   $users = array();
 
-  if ($options['target']) $target="target='$options[target]'";
+  $target = '';
+  if (!empty($options['target'])) $target="target='$options[target]'";
 
   // $date_fmt='D d M Y';
   $date_fmt=$DBInfo->date_fmt_rc;
-  $days=$DBInfo->rc_days ? $DBInfo->rc_days:RC_DEFAULT_DAYS;
+  $days=!empty($DBInfo->rc_days) ? $DBInfo->rc_days:RC_DEFAULT_DAYS;
   $perma_icon=$formatter->perma_icon;
   $changed_time_fmt = $DBInfo->changed_time_fmt;
 
@@ -132,11 +133,11 @@ define('RC_DEFAULT_DAYS',7);
     }
   }
   // override days
-  $days=$_GET['days'] ? min(abs($_GET['days']),RC_MAX_DAYS):$days;
+  $days=!empty($_GET['days']) ? min(abs($_GET['days']),RC_MAX_DAYS):$days;
 
   // override ago
-  if ($_GET['ago'])
-    $opts['ago']=$_GET['ago'] ? abs($_GET['ago']):$opts['ago'];
+  empty($opts['ago']) ? $opts['ago'] = 0:null;
+  $opts['ago']=!empty($_GET['ago']) ? abs($_GET['ago']):$opts['ago'];
 
   // daysago
   $daysago='&amp;days='.$days;
@@ -151,7 +152,7 @@ define('RC_DEFAULT_DAYS',7);
   } else {
     $bookmark= $user->bookmark;
   }
-  if ($tz_offset == '') {
+  if (empty($tz_offset)) {
     $tz_offset=date("Z");
     $tz_offset;
   }
@@ -164,7 +165,8 @@ define('RC_DEFAULT_DAYS',7);
   $lines= $DBInfo->editlog_raw_lines($days,$opts);
 
   // make a daysago button
-  if ($use_daysago or $_GET['ago']) {
+  $btnlist = '';
+  if (!empty($use_daysago) or !empty($_GET['ago'])) {
     $msg[0]=_("Show changes for ");
     $agolist=array(-$days,$days,2*$days,3*$days);
     $btn=array();
@@ -189,6 +191,7 @@ define('RC_DEFAULT_DAYS',7);
     $btnlist=$script."<div class='rc-button'>\n".$btnlist."</div>\n";
   }
 
+  $ratchet_day = FALSE;
   foreach ($lines as $line) {
     $parts= explode("\t", $line,6);
     $page_key= $parts[0];
@@ -200,8 +203,8 @@ define('RC_DEFAULT_DAYS',7);
       unset($logs);
     }
 
-    if ($editcount[$page_key]) {
-      if ($logs[$page_key]) {
+    if (!empty($editcount[$page_key])) {
+      if (!empty($logs[$page_key])) {
         $editcount[$page_key]++;
         #$editors[$page_key].=':'.$parts[4];
         continue;
@@ -222,7 +225,7 @@ define('RC_DEFAULT_DAYS',7);
     $parts= explode("\t", $line);
     $page_key=$parts[0];
 
-    if ($logs[$page_key]) continue;
+    if (!empty($logs[$page_key])) continue;
 
     $page_name= $DBInfo->keyToPagename($parts[0]);
     $addr= $DBInfo->mask_hostname ? _mask_hostname($parts[1]):$parts[1];
@@ -272,7 +275,7 @@ define('RC_DEFAULT_DAYS',7);
 
         $out.=sprintf("%s<span class='rc-date' style='font-size:large'>%s ",
             $br, $rcdate);
-        if (!$nobookmark)
+        if (empty($nobookmark))
           $out.="<span class='rc-bookmark' style='font-size:small'>[".
             $formatter->link_tag($formatter->page->urlname,"?action=bookmark&amp;time=$ed_time".$daysago,
             _("set bookmark"))."]</span>\n";
@@ -318,7 +321,7 @@ define('RC_DEFAULT_DAYS',7);
     }
     $title= $formatter->link_tag($pageurl,"",$title0,$target.$attr);
 
-    if ($use_hits) {
+    if (!empty($use_hits)) {
       $hits = $DBInfo->counter->pageCounter($page_name);
     }
 

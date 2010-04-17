@@ -16,7 +16,9 @@ function macro_login($formatter,$value="",$options="") {
   $user=&$DBInfo->user; # get from COOKIE VARS
 
   $jscript='';
-  if ($user->id == 'Anonymous' and $DBInfo->use_safelogin) {
+  $onsubmit = '';
+  $passwd_hidden = '';
+  if ($user->id == 'Anonymous' and !empty($DBInfo->use_safelogin)) {
     $onsubmit=' onsubmit="javascript:_chall.value=challenge.value;password.value=hex_hmac_md5(challenge.value, hex_md5(password.value))"';
     $jscript.="<script src='$DBInfo->url_prefix/local/md5.js'></script>";
     $time_seed=time();

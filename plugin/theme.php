@@ -84,7 +84,7 @@ function macro_theme($formatter,$value) {
 <select name='theme'>
 ";
   $themes=array();
-  $path=$DBInfo->themedir ? $DBInfo->themedir: '.';
+  $path=!empty($DBInfo->themedir) ? $DBInfo->themedir: '.';
   $handle = @opendir("$path/theme");
   if (is_resource($handle)) {
     while ($file = readdir($handle)) {
