@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.1.4';
+$_release = '1.1.5-CVS';
 
 #ob_start("ob_gzhandler");
 
@@ -434,7 +434,7 @@ class MetaDB_text extends MetaDB {
         }
 
         foreach ($keys as $k) {
-          $this->db[$k]=$this->db[$k] ? $this->db[$k].','.$val:$val;
+          $this->db[$k]=!empty($this->db[$k]) ? $this->db[$k].','.$val:$val;
         }
       }
     }
@@ -822,9 +822,9 @@ EOS;
   }
 
   function Close() {
-    if (is_object($this->metadb))
+    if (!empty($this->metadb) and is_object($this->metadb))
       $this->metadb->close();
-    if (is_object($this->counter))
+    if (!empty($this->counter) and is_object($this->counter))
       $this->counter->close();
   }
 
@@ -1033,7 +1033,7 @@ EOS;
       break;   
     }
 
-    if ($opts['quick']) {
+    if (!empty($opts['quick'])) {
       foreach($lines as $line) {
         $dum=explode("\t",$line,2);
         if ($keys[$dum[0]]) continue;
@@ -1234,7 +1234,7 @@ class Version_RCS {
     $this->DB=$DB;
     $this->NULL='';
     if(getenv("OS")!="Windows_NT") $this->NULL=' 2>/dev/null';
-    if ($DB->rcs_error_log) $this->NULL='';
+    if (!empty($DB->rcs_error_log)) $this->NULL='';
   }
 
   function _filename($pagename) {
@@ -1746,24 +1746,24 @@ class Formatter {
     $this->nonexists=$DBInfo->nonexists;
     $this->url_mappings=&$DBInfo->url_mappings;
     $this->css_friendly=$DBInfo->css_friendly;
-    $this->use_smartdiff=$DBInfo->use_smartdiff;
+    $this->use_smartdiff=!empty($DBInfo->use_smartdiff) ? $DBInfo->use_smartdiff : 0;
     $this->use_easyalias=$DBInfo->use_easyalias;
-    $this->submenu=$DBInfo->submenu;
+    $this->submenu=!empty($DBInfo->submenu) ? $DBInfo->submenu : null;
     $this->email_guard=$DBInfo->email_guard;
     $this->interwiki_target=!empty($DBInfo->interwiki_target) ?
       ' target="'.$DBInfo->interwiki_target.'"':'';
-    $this->filters=$DBInfo->filters;
+    $this->filters=!empty($DBInfo->filters) ? $DBInfo->filters : null;
     $this->postfilters=$DBInfo->postfilters;
-    $this->use_rating=$DBInfo->use_rating;
+    $this->use_rating=!empty($DBInfo->use_rating) ? $DBInfo->use_rating : 0;
     $this->use_etable=!empty($DBInfo->use_etable) ? 1 : 0;
-    $this->use_metadata=$DBInfo->use_metadata;
+    $this->use_metadata=!empty($DBInfo->use_metadata) ? $DBInfo->use_metadata : 0;
     $this->use_smileys=$DBInfo->use_smileys;
     $this->use_namespace=!empty($DBInfo->use_namespace) ? $DBInfo->use_namespace : '';
     $this->udb=&$DBInfo->udb;
     $this->user=&$DBInfo->user;
-    $this->check_openid_url=$DBInfo->check_openid_url;
+    $this->check_openid_url=!empty($DBInfo->check_openid_url) ? $DBInfo->check_openid_url : 0;
     $this->register_javascripts($DBInfo->javascripts);
-    $this->dynamic_macros=$DBInfo->dynamic_macros;
+    $this->dynamic_macros=!empty($DBInfo->dynamic_macros) ? $DBInfo->dynamic_macros : null;
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -1909,7 +1909,7 @@ class Formatter {
     $punct="<\'}\]\|\.\!\010\006"; # , is omitted for the WikiPedia
     $punct="<>\"\'}\]\|\.\!\010\006"; # " and > added
     $url="wiki|http|https|ftp|nntp|news|irc|telnet|mailto|file|attachment";
-    if ($DBInfo->url_schemas) $url.='|'.$DBInfo->url_schemas;
+    if (!empty($DBInfo->url_schemas)) $url.='|'.$DBInfo->url_schemas;
     $this->urls=$url;
     $urlrule="((?:$url):\"[^\"]+\"[^\s$punct]*|(?:$url):(?:[^\s$punct]|(\.?[^\s$punct]))+(?<![,\.\):;\"\'>]))";
     #$urlrule="((?:$url):(\.?[^\s$punct])+)";
@@ -2018,9 +2018,9 @@ class Formatter {
     }
 
     if (!isset($this->menu_bra)) {
-      $this->menu_bra=$DBInfo->menu_bra;
-      $this->menu_cat=$DBInfo->menu_cat;
-      $this->menu_sep=$DBInfo->menu_sep;
+      $this->menu_bra=!empty($DBInfo->menu_bra) ? $DBInfo->menu_bra : '';
+      $this->menu_cat=!empty($DBInfo->menu_cat) ? $DBInfo->menu_cat : '';
+      $this->menu_sep=!empty($DBInfo->menu_sep) ? $DBInfo->menu_sep : '';
     }
 
     if (!$this->icons)
@@ -2321,10 +2321,11 @@ class Formatter {
       }
 
       if (!empty($this->url_mappings)) {
-        if (empty($this->url_mapping_rule))
+        if (!isset($this->url_mapping_rule))
           $this->macro_repl('UrlMapping', '', array('init'=>1));
-        $url=
-          preg_replace('/('.$this->url_mapping_rule.')/ie',"\$this->url_mappings['\\1']",$url);
+        if (!empty($this->url_mapping_rule))
+          $url=
+            preg_replace('/('.$this->url_mapping_rule.')/ie',"\$this->url_mappings['\\1']",$url);
       }
 
       if (preg_match("/^(:|w|[A-Z])/",$url))
@@ -2445,8 +2446,8 @@ class Formatter {
     # [wiki:"Hello World" hello world]
     if (isset($url{0}) and $url[0]=='"') {
       if (preg_match('/^((")?[^"]+\2)((\s+)?(.*))?$/',$url,$m)) {
-        $url=$m[1];
-        if (isset($m[5])) $text=$m[5];
+        #$url=$m[1];
+        #if (isset($m[5])) $text=$m[5];
       }
     } else if (($p=strpos($url,' '))!==false) {
       $text=substr($url,$p+1);
@@ -4273,6 +4274,7 @@ class Formatter {
     $content_type=
       !empty($DBInfo->content_type) ? $DBInfo->content_type: "text/html";
 
+    $force_charset = '';
     if (!empty($DBInfo->force_charset))
       $force_charset = '; charset='.$DBInfo->charset;
 
@@ -4303,7 +4305,7 @@ class Formatter {
       }
     }
 
-    $js=$DBInfo->js;
+    $js=!empty($DBInfo->js) ? $DBInfo->js : '';
 
     if (!$plain) {
       if (isset($options['trail']))
@@ -4317,6 +4319,7 @@ class Formatter {
       if (isset($sep[1])) $pos=strrpos($this->page->name,$sep);
       if ($pos > 0) $upper=substr($this->page->urlname,0,$pos);
       else if ($this->group) $upper=_urlencode(substr($this->page->name,strlen($this->group)));
+      $keywords = '';
       if (!empty($this->pi['#keywords']))
         $keywords='<meta name="keywords" content="'.$this->pi['#keywords'].'" />'."\n";
       else if (!empty($DBInfo->use_keywords)) {
@@ -4554,7 +4557,8 @@ EOS;
 
     $menus=$this->get_actions($args,$options);
 
-    $hide_actions= $this->popup + $DBInfo->hide_actions;
+    $hide_actions=!empty($DBInfo->hide_actions) ? $DBInfo->hide_actions : 0;
+    $hide_actions+= $this->popup;
     $menu = '';
     if (!$hide_actions or
       ($hide_actions and $options['id']!='Anonymous')) {
@@ -4627,6 +4631,7 @@ FOOT;
     preg_match('/(\:|\/)/',$name,$sep); # NameSpace/SubPage or NameSpace:SubNameSpacePage
     if (isset($sep[1])) $pos=strrpos($name,$sep[1]);
     $mypgname=$this->page->name;
+    $upper_icon = '';
     if ($pos > 0) {
       $upper=substr($name,0,$pos);
       $upper_icon=$this->link_tag($upper,'',$this->icon['upper'])." ";
@@ -4661,6 +4666,7 @@ FOOT;
     }
     # setup title variables
     #$heading=$this->link_to("?action=fullsearch&amp;value="._urlencode($name),$title);
+    $qext = '';
     if (!empty($DBInfo->use_backlinks)) $qext='&amp;backlinks=1';
     if (!empty($link))
       $title="<a href=\"$link\">$title</a>";
@@ -5315,7 +5321,7 @@ function init_locale($lang, $domain = 'moniwiki', $init = false) {
         break;
       }
     }
-    if ($Config['set_lang']) putenv("LANG=".$lang);
+    if (!empty($Config['set_lang'])) putenv("LANG=".$lang);
     if (function_exists('bind_textdomain_codeset'))
       bind_textdomain_codeset ($domain, $Config['charset']);
   }
@@ -5325,7 +5331,7 @@ function get_frontpage($lang) {
   global $Config;
 
   $lcid=substr(strtok($lang,'_'),0,2);
-  return $Config['frontpages'][$lcid] ? $Config['frontpages'][$lcid]:$Config['frontpage'];
+  return !empty($Config['frontpages'][$lcid]) ? $Config['frontpages'][$lcid]:$Config['frontpage'];
 }
 
 function wiki_main($options) {
@@ -5766,7 +5772,7 @@ init_requests($options);
 if (!$options['pagename']) $options['pagename']= get_frontpage($lang);
 $DBInfo->lang=$lang;
 
-if (session_id()== '' && !$DBInfo->nosession){
+if (session_id()== '' && empty($Config['nosession'])){
   session_name("MONIWIKI");
   session_start();
 }

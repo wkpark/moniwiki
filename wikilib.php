@@ -184,7 +184,7 @@ function normalize_word($word,$group='',$pagename='',$nogroup=0,$islink=1) {
 
 function get_title($page,$title='') {
   global $DBInfo;
-  if ($DBInfo->use_titlecache) {
+  if (!empty($DBInfo->use_titlecache)) {
     $cache=new Cache_text('title');
     if ($cache->exists($page)) $title=$cache->fetch($page);
     else $title=$title ? $title:$page;
@@ -1788,7 +1788,7 @@ function do_post_savepage($formatter,$options) {
 
   // XXX captcha
   $use_any=0;
-  if ($DBInfo->use_textbrowsers) {
+  if (!empty($DBInfo->use_textbrowsers)) {
     if (is_string($DBInfo->use_textbrowsers))
       $use_any= preg_match('/'.$DBInfo->use_textbrowsers.'/',
         $_SERVER['HTTP_USER_AGENT']) ? 1:0;
@@ -2010,7 +2010,7 @@ function wiki_notify($formatter,$options) {
 function wiki_sendmail($body,$options) {
   global $DBInfo;
 
-  if (!$DBInfo->use_sendmail) {
+  if (empty($DBInfo->use_sendmail)) {
     return array('msg'=>_("This wiki does not support sendmail"));
   }
 
@@ -2210,7 +2210,7 @@ function macro_UserPreferences($formatter,$value,$options='') {
   global $DBInfo;
 
   $use_any=0;
-  if ($DBInfo->use_textbrowsers) {
+  if (!empty($DBInfo->use_textbrowsers)) {
     if (is_string($DBInfo->use_textbrowsers))
       $use_any= preg_match('/'.$DBInfo->use_textbrowsers.'/',
         $_SERVER['HTTP_USER_AGENT']) ? 1:0;
@@ -2222,7 +2222,7 @@ function macro_UserPreferences($formatter,$value,$options='') {
   $user=$DBInfo->user; # get from COOKIE VARS
 
   $jscript='';
-  if ($DBInfo->use_safelogin) {
+  if (!empty($DBInfo->use_safelogin)) {
     $onsubmit=' onsubmit="javascript:_chall.value=challenge.value;password.value=hex_hmac_md5(challenge.value, hex_md5(password.value))"';
     $jscript.="<script src='$DBInfo->url_prefix/local/md5.js'></script>";
     $time_seed=time();
@@ -2255,7 +2255,8 @@ function macro_UserPreferences($formatter,$value,$options='') {
 
   $button=_("Login");
   $openid_btn=_("OpenID");
-  if ($user->id == 'Anonymous' && $DBInfo->use_openid) {
+  $openid_form='';
+  if ($user->id == 'Anonymous' && !empty($DBInfo->use_openid)) {
     $openid_form=<<<OPENID
   <tr>
     <th>OpenID</th>
@@ -2268,6 +2269,7 @@ OPENID;
     }
   $id_btn=_("ID");
   $sep="<tr><td colspan='2'><hr /></td></tr>\n";
+  $sep0='';
   if ($user->id == 'Anonymous' and !isset($options['login_id']) and $value!="simple") {
     if (isset($openid_form) and $value != 'openid') $sep0=$sep;
     if ($value != 'openid')
@@ -2298,18 +2300,19 @@ FORM;
     $openid_form='';
   }
 
+  $logout = '';
   if ($user->id == 'Anonymous') {
     if (isset($options['login_id']) or !empty($_GET['join']) or $value!="simple") {
       $passwd=!empty($options['password']) ? $options['password'] : '';
       $button=_("Make profile");
-      if (!$DBInfo->use_safelogin) {
+      if (empty($DBInfo->use_safelogin)) {
         $again="<b>"._("password again")."</b>&nbsp;<input type='password' size='15' maxlength='$pw_length' name='passwordagain' value='' /></td></tr>";
       }
       $mailbtn=_("Mail");
       $extra=<<<EXTRA
   <tr><th>$mailbtn&nbsp;</th><td><input type="text" size="40" name="email" value="" /></td></tr>
 EXTRA;
-      if (!$use_any and $DBInfo->use_ticket) {
+      if (!$use_any and !empty($DBInfo->use_ticket)) {
         $seed=md5(base64_encode(time()));
         $ticketimg=$formatter->link_url($formatter->page->name,'?action=ticket&amp;__seed='.$seed);
         $extra.=<<<EXTRA
@@ -2366,6 +2369,7 @@ $nick
 EXTRA;
     $logout="<input type='submit' name='logout' value='"._("logout")."' /> &nbsp;";
   }
+  $script = '';
   if (empty($tz_offset) and $jscript)
     $script=<<<EOF
 <script type="text/javascript">
@@ -2375,7 +2379,7 @@ setTimezone();
 </script>
 EOF;
 
-  if (!$DBInfo->use_safelogin or $button==_("Save")) {
+  if (empty($DBInfo->use_safelogin) or $button==_("Save")) {
     if ($user->id == 'Anonymous' or $user->info['password'])
     $passwd_inp=<<<PASS
   <tr>
@@ -2386,8 +2390,9 @@ PASS;
     $onsubmit='';
     $passwd_hidden='';
   }
+  $emailpasswd = '';
   if ($button==_("Make profile")) {
-    if ($DBInfo->use_sendmail) {
+    if (!empty($DBInfo->use_sendmail)) {
       $button2=_("E-mail new password");
       $emailpasswd=
         "<input type=\"submit\" name=\"login\" value=\"$button2\" />\n";
@@ -2668,6 +2673,7 @@ function macro_TitleIndex($formatter,$value) {
   $out.= "</ul>\n";
 
   $index='';
+  $tlink='';
   if ($sel != '.?') {
     $tlink=$formatter->link_url($formatter->page->name,'?action=titleindex&amp;sec=');
     $keys[]='all';
@@ -2675,7 +2681,7 @@ function macro_TitleIndex($formatter,$value) {
   foreach ($keys as $key) {
     $name=$key;
     $tag='#'.$key;
-    $link=$tlink ? preg_replace('/sec=/','sec='._urlencode($key),$tlink):'';
+    $link=!empty($tlink) ? preg_replace('/sec=/','sec='._urlencode($key),$tlink):'';
     if ($key == 'Others') $name=_("Others");
     else if ($key == 'all') $name=_("Show all");
     $index.= "| <a href='$link$tag'>$name</a> ";
