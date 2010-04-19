@@ -1,5 +1,5 @@
 <?php
-// Copyright 2008 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2008-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a HTML to PDF plugin using the TCPDF for the MoniWiki
 //
@@ -149,7 +149,7 @@ function do_html2pdf($formatter,$options) {
     # $pdf->SetAuthor('Your name');
     $pdf->SetCreator('TCPDF/MoniWiki');
     $pdf->SetSubject($formatter->page->name);
-    if ($formatter->pi['#keywords'])
+    if (!empty($formatter->pi['#keywords']))
         $pdf->SetKeywords($keywords=$formatter->pi['#keywords']);
 
     // load default font

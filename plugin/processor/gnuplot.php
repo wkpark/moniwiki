@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2008 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a gnuplot processor plugin for the MoniWiki
 //
@@ -21,10 +21,12 @@ function processor_gnuplot($formatter="",$value="") {
 
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
-  list($dum,$szarg)=explode(' ',$line);
-  if ($szarg) {
+  if (strpos($line, ' ') !== false) {
+    list($dum,$szarg)=explode(' ',$line);
     $args= explode('x',$szarg,2);
-    $xsize=max(intval($args[0]),50);$ysize=max(intval($args[1]),50);
+    if (count($args) > 2) {
+      $xsize=max(intval($args[0]),50);$ysize=max(intval($args[1]),50);
+    }
     $value='#'.$line."\n".$value;
   }
 
@@ -53,7 +55,7 @@ function processor_gnuplot($formatter="",$value="") {
       $xsize=intval($args[0]);$ysize=intval($args[1]);
     }
   }
-  if ($xsize != '') {
+  if (!empty($xsize)) {
     if ($xsize > 640 or $xsize < 100) $xscale=0.5;
     if ($xscale and ($ysize > 480 or $ysize < 100)) $yscale=0.6;
     $xscale=$xsize/640.0;
@@ -126,6 +128,7 @@ $plt
     umask($om);
   }
 
+  $log = '';
   if ($formatter->refresh || !file_exists($outpath)) {
 
      $flog=tempnam($vartmp_dir,"GNUPLOT");
@@ -197,6 +200,7 @@ $plt
      }
   }
 
+  $bra = ''; $ket = '';
   if ($ext == 'ps') {
     $bra='<a href="'.$png_url.'" />';
     $ket='</a>';

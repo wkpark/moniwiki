@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2008 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a userform action plugin for the MoniWiki
 // vim:et:ts=2:
@@ -9,11 +9,11 @@
 function do_userform($formatter,$options) {
   global $DBInfo;
 
-  $user=$DBInfo->user; # get cookie
-  $id=$options['login_id'];
+  $user=&$DBInfo->user; # get cookie
+  $id=!empty($options['login_id']) ? $options['login_id'] : '';
 
   $use_any=0;
-  if ($DBInfo->use_textbrowsers) {
+  if (!empty($DBInfo->use_textbrowsers)) {
     if (is_string($DBInfo->use_textbrowsers))
       $use_any= preg_match('/'.$DBInfo->use_textbrowsers.'/',
         $_SERVER['HTTP_USER_AGENT']) ? 1:0;
@@ -22,8 +22,9 @@ function do_userform($formatter,$options) {
         $_SERVER['HTTP_USER_AGENT']) ? 1:0;
   }
 
+  $options['msg'] = '';
   # e-mail conformation
-  if ($options['ticket'] and $id and $id!='Anonymous') {
+  if (!empty($options['ticket']) and $id and $id!='Anonymous') {
     $userdb=&$DBInfo->udb;
     if ($userdb->_exists($id)) {
        $user=$userdb->getUser($id);
@@ -56,13 +57,14 @@ function do_userform($formatter,$options) {
     return '';
   }
 
+  $title='';
   if ($user->id == "Anonymous" and !empty($options['login_id']) and isset($options['password']) and !isset($options['passwordagain'])) {
     # login
     $userdb=$DBInfo->udb;
     if ($userdb->_exists($id)) {
       $user=$userdb->getUser($id);
       $login_ok=0;
-      if ($DBInfo->use_safelogin) {
+      if (!empty($DBInfo->use_safelogin)) {
         if (isset($options['challenge']) and
            $options['_chall']==$options['challenge']) {
           #print '<pre>';
@@ -96,16 +98,16 @@ function do_userform($formatter,$options) {
         $title= _("Make new ID on this wiki");
      $form=macro_UserPreferences($formatter,'',$options);
     }
-  } else if ($options['logout']) {
+  } else if (!empty($options['logout'])) {
     # logout
     $formatter->header($user->unsetCookie());
     $options['msg']= _("Cookie deleted !");
     $user->id = 'Anonymous';
     $DBInfo->user=$user;
     $use_refresh=1;
-  } else if ($DBInfo->use_sendmail and
+  } else if (!empty($DBInfo->use_sendmail) and
     $options['login'] == _("E-mail new password") and
-    $user->id=="Anonymous" and $options['email'] and $options['login_id']) {
+    $user->id=="Anonymous" and !empty($options['email']) and !empty($options['login_id'])) {
     # email new password
 
     $title='';
@@ -189,13 +191,13 @@ function do_userform($formatter,$options) {
 
     $formatter->send_footer("",$options);
     return;
-  } else if ($user->id=="Anonymous" and $options['login_id'] and
+  } else if ($user->id=="Anonymous" and !empty($options['login_id']) and
     (($options['password'] and $options['passwordagain']) or
      ($DBInfo->use_safelogin and $options['email'])) ) {
     # create profile
 
     $title='';
-    if (!$use_any and $DBInfo->use_ticket) {
+    if (!$use_any and !empty($DBInfo->use_ticket)) {
       if ($options['__seed'] and $options['check']) {
         $mycheck=getTicket($options['__seed'],$_SERVER['REMOTE_ADDR'],4);
         if ($mycheck==$options['check'])
@@ -212,7 +214,7 @@ function do_userform($formatter,$options) {
     if (!preg_match("/\//",$id)) $user->setID($id); // protect http:// style id
 
     if ($ok_ticket and $user->id != "Anonymous") {
-       if ($DBInfo->use_safelogin) {
+       if (!empty($DBInfo->use_safelogin)) {
           $mypass=base64_encode(getTicket(time(),$_SERVER['REMOTE_ADDR'],10));
           $mypass=substr($mypass,0,8);
           $options['password']=$mypass;
@@ -220,13 +222,13 @@ function do_userform($formatter,$options) {
        } else {
           $ret=$user->setPasswd($options['password'],$options['passwordagain']);
        }
-       if ($DBInfo->password_length and (strlen($options['password']) < $DBInfo->password_length)) $ret=0;
+       if (!empty($DBInfo->password_length) and (strlen($options['password']) < $DBInfo->password_length)) $ret=0;
        if ($ret <= 0) {
            if ($ret==0) $title= _("too short password!");
            else if ($ret==-1) $title= _("mismatch password!");
            else if ($ret==-2) $title= _("not acceptable character found in the password!");
        } else {
-           if ($ret < 8 and !$DBInfo->use_safelogin)
+           if ($ret < 8 and empty($DBInfo->use_safelogin))
               $options['msg']=_("Your password is too simple to use as a password !");
            $udb=$DBInfo->udb;
            if ($options['email']) {
@@ -237,7 +239,7 @@ function do_userform($formatter,$options) {
            }
 
            if ($udb->isNotUser($user)) {
-             if ($DBInfo->no_register) {
+             if (!empty($DBInfo->no_register)) {
                $options['msg']=_("Fail to register");
                $options['err']=_("You are not allowed to register on this wiki");
                $options['err'].="\n"._("Please contact WikiMasters");
@@ -248,7 +250,7 @@ function do_userform($formatter,$options) {
              $options['id']=$user->id;
              $ticket=md5(time().$user->id.$options['email']);
              $user->info['eticket']=$ticket.".".$options['email'];
-             if ($DBInfo->use_safelogin) {
+             if (!empty($DBInfo->use_safelogin)) {
                $options['msg'] =
                  sprintf(_("Successfully added as '%s'"),$user->id);
                $options['msg'].= '<br />'._("Please check your mailbox");
@@ -257,11 +259,11 @@ function do_userform($formatter,$options) {
              $ret=$udb->addUser($user);
 
              # XXX
-             if ($options['email'] and preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
+             if (!empty($options['email']) and preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
                $options['subject']="[$DBInfo->sitename] "._("E-mail confirmation");
                $body=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
                $body=_("Please confirm your email address")."\n".$body;
-               if ($DBInfo->use_safelogin) {
+               if (!empty($DBInfo->use_safelogin)) {
                  $body.="\n".sprintf(_("Your initial password is %s"),$mypass)."\n\n";
                  $body.=_("Please change your password later")."\n";
                }
@@ -280,16 +282,16 @@ function do_userform($formatter,$options) {
              }
            }
        }
-    } else if ($title=='')
+    } else if (!empty($title))
        $title= _("Invalid username !");
   } else if ($user->id != "Anonymous") {
     # save profile
     $udb=&$DBInfo->udb;
     $userinfo=$udb->getUser($user->id);
 
-    if ($options['password'] and $options['passwordagain']) {
+    if (!empty($options['password']) and !empty($options['passwordagain'])) {
       $chall=0;
-      if ($DBInfo->use_safelogin) {
+      if (!empty($DBInfo->use_safelogin)) {
         if (isset($options['_chall'])) {
           $chall= $options['challenge'];
         } else {
@@ -332,7 +334,7 @@ function do_userform($formatter,$options) {
       $tz_offset=$hour*3600 + $min;
       $userinfo->info['tz_offset']=$tz_offset;
     }
-    if ($options['email'] and ($options['email'] != $userinfo->info['email'])) {
+    if (!empty($options['email']) and ($options['email'] != $userinfo->info['email'])) {
       if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
         $ticket=md5(time().$userinfo->info['id'].$options['email']);
         $userinfo->info['eticket']=$ticket.".".$options['email'];
@@ -381,9 +383,8 @@ function do_userform($formatter,$options) {
 		  #echo "ERROR DESCRIPTION: " . $error['description'] . "<br>";
       $options["msg"] = sprintf(_("Authentication request was failed: %s"),$error['description']);
     }
-  } else if ($options['openid_mode']=='id_res') { // OpenID result
+  } else if (!empty($options['openid_mode']) and $options['openid_mode']=='id_res') { // OpenID result
     include_once('lib/openid.php');      
-    session_start();
 
     if ( !preg_match ('/utf-?8/i', $DBInfo->charset) ) {
       $options['openid_sreg_nickname'] =
@@ -399,7 +400,7 @@ function do_userform($formatter,$options) {
       $userdb=&$DBInfo->udb;
       // XXX
       $user->setID($options['openid_identity']); // XXX
-      if ($options['openid_language']) $user->info['language']=strtolower($options['openid_sreg_language']);
+      if (!empty($options['openid_language'])) $user->info['language']=strtolower($options['openid_sreg_language']);
       //$user->info['tz_offset']=$options['openid_timezone'];
 
       if ($userdb->_exists($options['openid_identity'])) {
@@ -409,7 +410,7 @@ function do_userform($formatter,$options) {
         $formatter->header($user->setCookie());
         $userdb->saveUser($user); // always save
       } else {
-        if ($DBInfo->no_register == 1) {
+        if (!empty($DBInfo->no_register) and $DBInfo->no_register == 1) {
           $options['msg']=_("Fail to register");
           $options['err']=_("You are not allowed to register on this wiki");
           $options['err'].="\n"._("Please contact WikiMasters");
@@ -440,7 +441,7 @@ function do_userform($formatter,$options) {
   }
 
   $myrefresh='';
-  if ($DBInfo->use_refresh and $use_refresh) {
+  if (!empty($DBInfo->use_refresh) and !empty($use_refresh)) {
     $sec=$DBInfo->use_refresh - 1;
     $lnk=$formatter->link_url($formatter->page->urlname,'?action=show');
     $myrefresh='Refresh: '.$sec.'; url='.qualifiedURL($lnk);
@@ -448,10 +449,10 @@ function do_userform($formatter,$options) {
 
   $formatter->send_header($myrefresh,$options);
   $formatter->send_title($title,"",$options);
-  if (!$title && (!$DBInfo->control_read or $DBInfo->security->is_allowed('read',$options)) ) {
+  if (!$title && (empty($DBInfo->control_read) or $DBInfo->security->is_allowed('read',$options)) ) {
     $formatter->send_page();
   } else {
-    if ($form) print $form;
+    if (!empty($form)) print $form;
 #    else $formatter->send_page("Goto UserPreferences");
   }
   $formatter->send_footer("",$options);

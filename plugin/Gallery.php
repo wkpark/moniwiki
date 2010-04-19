@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // Gallery plugin for the MoniWiki
 //
@@ -62,11 +62,12 @@ function macro_Gallery($formatter,$value,&$options) {
   }
   $default_column=3;
   $default_row=4;
-  $col=$options['col'] > 0 ? (int)$options['col']:0;
-  $row=$options['row'] > 0 ? (int)$options['row']:0;
-  $sort=$options['sort'] ? $options['sort']:'';
-  $nocomment=$options['nocomment'] ? $options['nocomment']:'';
+  $col=(!empty($options['col']) and $options['col'] > 0) ? (int)$options['col']:0;
+  $row=(!empty($options['row']) and $options['row'] > 0) ? (int)$options['row']:0;
+  $sort=!empty($options['sort']) ? $options['sort']:'';
+  $nocomment=!empty($options['nocomment']) ? $options['nocomment']:'';
 
+  $href_attr='';
   if (!empty($DBInfo->gallery_use_lightbox) and !empty($DBInfo->use_lightbox)) {
     $use_lightbox=1;
     if (is_string($DBInfo->gallery_use_lightbox))
@@ -98,22 +99,24 @@ function macro_Gallery($formatter,$value,&$options) {
   }
 
   $img_default_width=150;
+  $col_td_width = '';
   if ($col > 1) {
     $col_td_width=(int) (100/$col);
     $col_td_width=' width="'.$col_td_width.'%"';
     $img_default_width=(int) (100/$col)*5; // XXX assume 500px
   }
 
-  $default_width=$DBInfo->gallery_img_width ? $DBInfo->gallery_img_width:600;
+  $default_width=!empty($DBInfo->gallery_img_width) ? $DBInfo->gallery_img_width:600;
   $img_class="gallery-img";
 
   $col=($col<=0 or $col>10) ? $default_column:$col;
   $row=($row<=0 or $row>7) ? $default_row:$row;
   $perpage=$col*$row;
 
+  $img_style = '';
   if ($col == 1) $img_style=' style="float:left"';
 
-  if ($match[3])
+  if (!empty($match[3]))
     # arg has a pagename
     $value=$match[3];
   else
@@ -123,21 +126,26 @@ function macro_Gallery($formatter,$value,&$options) {
   if ($key != $value)
     $prefix=$formatter->link_url(_rawurlencode($value),"?action=download&amp;value=");
   $dir=$DBInfo->upload_dir."/$key";
-  if (!$prefix) $prefix=$DBInfo->url_prefix."/".$dir."/";
+  if (empty($prefix)) $prefix=$DBInfo->url_prefix."/".$dir."/";
 
   if (!file_exists($dir)) {
     umask(000);
     mkdir($dir,0777);
   }
 
+  $top_link = '';
+  $bot_link = '';
   $upfiles=array();
   $comments=array();
   if (file_exists($dir."/list.txt")) {
     $cache=file($dir."/list.txt");
     foreach ($cache as $line) {
-      list($name,$mtime,$comment)=explode("\t",rtrim($line),3);
-      $upfiles[$name]=$mtime;
-      $comments[$name]=$comment;
+      #list($name,$mtime,$comment)=explode("\t",rtrim($line),3);
+      $tmp=explode("\t",rtrim($line),3);
+      $name = $tmp[0];
+      $upfiles[$name]=$tmp[1];
+      if (isset($tmp[2]))
+        $comments[$name]=$tmp[2];
     }
   }
   if ($sort) {
@@ -149,10 +157,10 @@ function macro_Gallery($formatter,$value,&$options) {
   }
   else asort($upfiles);
 
-  if ($options['value'])
+  if (!empty($options['value']))
     $file=urldecode($options['value']);
 
-  if ($file and $upfiles[$file] and $options['comments']) {
+  if (!empty($file) and !empty($upfiles[$file]) and !empty($options['comments'])) {
     // admin: edit all comments
     $comment=_stripslashes($options['comments']);
     $comment=str_replace("<","&lt;",$comment);
@@ -161,7 +169,7 @@ function macro_Gallery($formatter,$value,&$options) {
     $comment=str_replace("\n","\\n",$comment);
     $comments[$file]=$comment;
     $update=1;
-  } else if ($file and $upfiles[$file] and $options['comment']) {
+  } else if (!empty($file) and !empty($upfiles[$file]) and !empty($options['comment'])) {
     // add new comment
     $comment=$text=_stripslashes($options['comment']);
 
@@ -186,10 +194,10 @@ function macro_Gallery($formatter,$value,&$options) {
       $comments[$file]=$comment."\t".$comments[$file];
       $update=1;
     }
-  } else if ($file and $upfiles[$file]) {
+  } else if (!empty($file) and !empty($upfiles[$file])) {
     // show comments of the selected item
     $mtime=$upfiles[$file];
-    $comment=$comments[$file];
+    $comment=!empty($comments[$file]) ? $comments[$file] : '';
 
     $values=array_keys($upfiles);
     $prev_value=$values[array_search($file,$values)-1];
@@ -202,25 +210,25 @@ function macro_Gallery($formatter,$value,&$options) {
     $comments[$file]=$comment;
     $selected=1;
     $img_class="gallery-sel";
-    if ($prev_value) {
+    if (!empty($prev_value)) {
       $prev_link="<div class='gallery-prev-link'><a href='".$formatter->link_url($formatter->page->urlname,"?action=gallery&amp;value=$prev_value")."'><span class='gallery-prev-text'>&#171;Prev</span></a></div>";
     } else
       $prev_link='';
-    if ($next_value) {
+    if (!empty($next_value)) {
       $next_link="<div class='gallery-next-link'><a href='".$formatter->link_url($formatter->page->urlname,"?action=gallery&amp;value=$next_value")."'><span class='gallery-next-text'>Next&#187;</span></a></div>";
     } else
       $next_link='';
-    if ($next_link or $prev_link) {
+    if (!empty($next_link) or !empty($prev_link)) {
       $top_link="<div class='gallery-top-link'>$prev_link$next_link</div>";
       $bot_link="<div class='gallery-bottom-link'>$prev_link$next_link</div>";
     }
   }
-  $width=$selected ? $default_width:$img_default_width;
+  $width=!empty($selected) ? $default_width:$img_default_width;
 
-  $thumb_width=$DBInfo->thumb_width ? $DBInfo->thumb_width:'250';
+  $thumb_width=!empty($DBInfo->thumb_width) ? $DBInfo->thumb_width:'250';
 
   $mtime=file_exists($dir."/list.txt") ? filemtime($dir."/list.txt"):0;
-  if ((filemtime($dir) > $mtime) or $update) {
+  if ((filemtime($dir) > $mtime) or !empty($update)) {
     unset($upfiles);
 
     $handle= opendir($dir);
@@ -231,7 +239,7 @@ function macro_Gallery($formatter,$value,&$options) {
       $mtime=filemtime($dir."/".$file);
       $cache.=$cr.$file."\t".$mtime;
       $upfiles[$file]= $mtime;
-      if ($comments[$file] != '') $cache.="\t".$comments[$file];
+      if (!empty($comments[$file])) $cache.="\t".$comments[$file];
       $cr="\n";
     }
     closedir($handle);
@@ -242,16 +250,15 @@ function macro_Gallery($formatter,$value,&$options) {
     }
   }
 
-  if (!$upfiles) return "<h3>"._("No files found")."</h3>\n";
-
-  $out.="<table width='100%' border='0' cellpadding='2'>\n<tr>\n";
+  if (empty($upfiles)) return "<h3>"._("No files found")."</h3>\n";
+  $out="<table width='100%' border='0' cellpadding='2'>\n<tr>\n";
   $idx=1;
 
   $pages= intval(sizeof($upfiles) / $perpage);
   if (sizeof($upfiles) % $perpage)
     $pages++;
 
-  if ($options['p'] > 1) {
+  if (!empty($options['p']) and $options['p'] > 1) {
     $slice_index=$perpage*(intval($options['p'] - 1));
     $upfiles=array_slice($upfiles,$slice_index);
   }
@@ -259,10 +266,11 @@ function macro_Gallery($formatter,$value,&$options) {
   $extra=$sort ? "&amp;sort=".$sort:'';
   $extra.=$nocomment ? "&amp;nocomment=1":'';
 
+  $pnut = '';
   if ($pages > 1)
     $pnut=get_pagelist($formatter,$pages,
       '?action=gallery&amp;col='.$col.'&amp;row='.$row.$extra.
-      '&amp;p=',$options['p'],$perpage);
+      '&amp;p=',!empty($options['p']) ? $options['p'] : '',$perpage);
 
   if (!file_exists($dir."/thumbnails")) @mkdir($dir."/thumbnails",0777);
 
@@ -271,10 +279,10 @@ function macro_Gallery($formatter,$value,&$options) {
     $id=rawurlencode($file);
     $linksrc=($key == $value) ? $prefix.$id:
       str_replace('value=','value='.$id,$prefix);
-    $link=($selected or $use_lightbox) ? $linksrc:$formatter->link_url($formatter->page->urlname,"?action=gallery$extra&amp;value=$id");
+    $link=(!empty($selected) or !empty($use_lightbox)) ? $linksrc:$formatter->link_url($formatter->page->urlname,"?action=gallery$extra&amp;value=$id");
     $date=date("Y-m-d",$mtime);
     if (preg_match("/\.(jpg|jpeg|gif|png)$/i",$file)) {
-      if ($DBInfo->use_convert_thumbs and !file_exists($dir."/thumbnails/".$file)) {
+      if (!empty($DBInfo->use_convert_thumbs) and !file_exists($dir."/thumbnails/".$file)) {
         if (function_exists('gd_info')) {
           $fname=$dir.'/'.$file;
           list($w, $h) = getimagesize($fname);
@@ -302,7 +310,7 @@ function macro_Gallery($formatter,$value,&$options) {
           @pclose($fp);
         }
       }
-      if (!$selected and file_exists($dir."/thumbnails/".$file)) {
+      if (empty($selected) and file_exists($dir."/thumbnails/".$file)) {
         $thumb=($key == $value) ? $prefix.'thumbnails/'.$id:
           str_replace('value=','value=thumbnails/'.$id,$prefix);
         if ($thumb_width > $width) $mywidth=" width='".$width."' ";
@@ -336,16 +344,18 @@ function macro_Gallery($formatter,$value,&$options) {
     $comment_btn='';
     $comment_btn=$nocomment ? '':_("add comment");
     $imginfo=(!$nocomment or $selected) ? "$date ($size) ":'';
-    if ($comments[$file] != '' and $options['value']) {
+    if (!empty($comments[$file]) and !empty($options['value'])) {
       $comment=$comments[$file];
       $comment=str_replace("\\n","\n",$comment);
       $options['comments']=str_replace("\t","\n----\n",$comment);
       $comment=str_replace("\t","<div class='separator'><hr /></div>",$comment);
       $comment=str_replace("\n","<br/>\n",$comment);
-    } else if ((!$nocomment or $selected) and !empty($comments[$file])) {
+    } else if ((empty($nocomment) or !empty($selected)) and !empty($comments[$file])) {
       if (empty($show_all)) {
         $comment_btn=_("show comments");
-        list($comment,$dum)=explode("\t",$comments[$file],2);
+        //list($comment,$dum)=explode("\t",$comments[$file],2);
+        $tmp=explode("\t",$comments[$file],2);
+        $comment = $tmp[0];
       } else {
         $comment_btn=_("add comment");
         $comment=str_replace("\t","<div class='separator'><hr /></div>\n",$comments[$file]);
@@ -355,11 +365,11 @@ function macro_Gallery($formatter,$value,&$options) {
     endif;
 
     $out.="<td $col_td_width align='center' valign='top'>$top_link<div class='$img_class' $img_style><a href='$link'$href_attr>$object</a>";
-    if ($imginfo) $out.="<br />".$imginfo;
-    if ($comment_btn)
+    if (!empty($imginfo)) $out.="<br />".$imginfo;
+    if (!empty($comment_btn))
       $out.='['.$formatter->link_tag($formatter->page->urlname,"?action=gallery&amp;value=$id",$comment_btn)."]<br />\n";
     $out.='</div>'.$bot_link;
-    if ($comment) $out.="<div class='gallery-comments' $comment_style>$comment</div>";
+    if (!empty($comment)) $out.="<div class='gallery-comments'>$comment</div>";
 
     $out.="</td>\n";
     if ($idx % $col == 0) $out.="</tr>\n<tr>\n";
@@ -377,12 +387,15 @@ function macro_Gallery($formatter,$value,&$options) {
 
 function do_gallery($formatter,$options='') {
   global $DBInfo;
+  $COLS_MSIE= 80;
+  $COLS_OTHER= 85;
+ 
   $cols = preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
                                                                                 
-  $rows=$options['rows'] > 5 ? $options['rows']: 4;
-  $cols=$options['cols'] > 60 ? $options['cols']: $cols;
+  $rows=(!empty($options['rows']) and $options['rows'] > 5) ? $options['rows']: 4;
+  $cols=(!empty($options['cols']) and $options['cols'] > 60) ? $options['cols']: $cols;
 
-  if ($options['comments'] and !$DBInfo->security->is_valid_password($options['passwd'],$options)) {
+  if (!empty($options['comments']) and !$DBInfo->security->is_valid_password($options['passwd'],$options)) {
     $title= sprintf('Invalid password !');
     $formatter->send_header("",$options);
     $formatter->send_title($title);
@@ -392,10 +405,10 @@ function do_gallery($formatter,$options='') {
 
   $ret=macro_Gallery($formatter,'',$options);
 
-  if (isset($options['passwd']) and $options['comments']) {
+  if (isset($options['passwd']) and !empty($options['comments'])) {
     $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
     $options['title']=_("Comments are edited");
-  } else if ($options['comment']) {
+  } else if (!empty($options['comment'])) {
     if (!$options['err']) {
       $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",$options['page']));
       $options['title']=_("Comments is added");
@@ -408,7 +421,7 @@ function do_gallery($formatter,$options='') {
     $formatter->send_title("","",$options);
     print $ret;
   } else
-  if ($options['comment'] or ($options['comments'] and $options['passwd'])) {
+  if (!empty($options['comment']) or (!empty($options['comments']) and !empty($options['passwd']))) {
     $myrefresh='';
     if (!$options['err'] and $DBInfo->use_save_refresh) {
       $sec=$DBInfo->use_save_refresh;
@@ -419,7 +432,7 @@ function do_gallery($formatter,$options='') {
     $formatter->send_title("","",$options);
     #$formatter->send_page('',$options);
   } else
-  if ($options['comments'] and $options['admin'] and !$options['passwd']) {
+  if (!empty($options['comments']) and !empty($options['admin']) and empty($options['passwd'])) {
     // admin form
     $rows+=5;
     $formatter->send_header("",$options);
@@ -442,7 +455,7 @@ password: <input type='password' name='passwd' />
 </form>
 FORM2;
     print $form;
-  } else if (!$options['comment']) {
+  } else if (empty($options['comment'])) {
     // add comment form
     $formatter->send_header("",$options);
     $formatter->send_title("","",$options);

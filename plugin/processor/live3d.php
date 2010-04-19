@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2004 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a Live3D plugin for the MoniWiki
 //
@@ -31,9 +31,9 @@ function processor_live3d($formatter,$value="") {
     }
 
     $extra= '';
-    if ($dependent)
+    if (!empty($dependent))
         $extra.='<param name="DEPENDENT_VARIABLES" value="'.$dependent.'" />';
-    if ($independent)
+    if (!empty($independent))
         $extra.='<param name="INDEPENDENT_VARIABLES" value="'.$independent.'" />';
 
     $pubpath = $formatter->url_prefix.'/applets/LiveGraphics3D';

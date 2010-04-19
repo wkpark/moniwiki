@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // Blog plugin for the MoniWiki
 //
@@ -88,21 +88,23 @@ function processor_blog($formatter,$value="",$options) {
       }
     }
 
-    if ($formatter->trackback_list[$md5sum]) $counter=' ('.$formatter->trackback_list[$md5sum].')';
+    if (!empty($formatter->trackback_list[$md5sum])) $counter=' ('.$formatter->trackback_list[$md5sum].')';
     else $counter='';
 
-    if (!$options['noaction'] and $md5sum) {
+    if (empty($options['noaction']) and $md5sum) {
       $action= $formatter->link_tag($formatter->page->urlname,"?action=blog&amp;value=$md5sum#BlogComment",$add_button);
       if (getPlugin('SendPing'))
         $action.= ' | '.$formatter->link_tag($formatter->page->urlname,"?action=trackback&amp;value=$md5sum",_("track back").$counter);
-      if ($DBInfo->use_rawblog)
+      if (!empty($DBInfo->use_rawblog))
         $action.= ' | '.$formatter->link_tag($formatter->page->urlname,"?action=rawblog&amp;value=$md5sum",_("raw"));
     }
 
-    if ($action)
+    if (!empty($action))
       $action="<div class='blog-action'><span class='bullet'>&raquo;</span> ".$action."</div>\n";
+    else
+      $action='';
 
-    $save=$formatter->preview;
+    $save=!empty($formatter->preview) ? $formatter->preview : '';
     $formatter->preview=1;
     ob_start();
     $formatter->send_page($src,$options);
@@ -115,11 +117,11 @@ function processor_blog($formatter,$value="",$options) {
       ob_end_clean();
     } else
       $comments="";
-    $formatter->preview=$save;
+    !empty($save) ? $formatter->preview=$save : null;
   }
 
   $out="$datetag<div class='blog'>";
-  if ($title) {
+  if (!empty($title)) {
     #$tag=normalize($title);
     $tag=$md5sum;
     if ($tag[0]=='%') $tag="n".$tag;

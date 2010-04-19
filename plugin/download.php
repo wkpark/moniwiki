@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2004 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // download action plugin for the MoniWiki
 //
@@ -92,9 +92,11 @@ function do_download($formatter,$options) {
     $mime=array();
 
   # set filename
-  if (preg_match("/\.(.{1,4})$/",$file,$match))
-    $mimetype=$mime[strtolower($match[1])];
-  if (!$mimetype) $mimetype="application/x-unknown";
+  if (preg_match("/\.(.{1,4})$/",$file,$match)) {
+    $ext = strtolower($match[1]);
+    $mimetype= !empty($mime[$ext]) ? $mime[$ext] : '';
+  }
+  if (empty($mimetype)) $mimetype="application/x-unknown";
 
   if (strstr($_SERVER['HTTP_USER_AGENT'], 'MSIE')) {
     // IE: rawurlencode()

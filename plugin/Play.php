@@ -1,5 +1,5 @@
 <?php
-// Copyright 2004-2007 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2004-2010 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a media Play macro plugin for the MoniWiki
 //
@@ -48,14 +48,14 @@ function macro_Play($formatter,$value) {
     $media[]=$match[1];
   }
   # set embeded object size
-  $width=$width ? min($width,$max_width):$default_width;
-  $height=$height ? min($height,$max_height):$default_height;
+  $width=!empty($width) ? min($width,$max_width):$default_width;
+  $height=!empty($height) ? min($height,$max_height):$default_height;
 
   $url=array();
   $my_check=1;
   for ($i=0,$sz=count($media);$i<$sz;$i++) {
     if (!preg_match("/^(http|ftp|mms|rtsp):\/\//",$media[$i])) {
-      $fname=$formatter->macro_repl('Attachment',$media[$i],1);
+      $fname=$formatter->macro_repl('Attachment',$media[$i],array('link'=>1));
       if ($my_check and !file_exists($fname)) {
         return $formatter->macro_repl('Attachment',$value);
       }
@@ -92,7 +92,8 @@ function macro_Play($formatter,$value) {
       $height=20; // override the hegiht of the JW MediaPlayer
     }
 
-    $swfobject_num=$GLOBALS['swfobject_num'] ? $GLOBALS['swfobject_num']:0;
+    $swfobject_num = !empty($GLOBALS['swfobject_num']) ? $GLOBALS['swfobject_num']:0;
+    $swfobject_script = '';
     if (!$swfobject_num) {
       $swfobject_script="<script type=\"text/javascript\" src=\"$DBInfo->url_prefix/local/js/swfobject.js\"></script>\n";
       $num=1;
@@ -107,6 +108,7 @@ function macro_Play($formatter,$value) {
       $_swf_prefix=$DBInfo->jwmediaplayer_prefix;
     }
 
+    $addparam = '';
     if ($sz > 1) {
       $md5sum=md5(implode(':',$media));
       if ($DBInfo->cache_public_dir) {

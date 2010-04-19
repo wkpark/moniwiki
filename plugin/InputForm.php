@@ -1,5 +1,5 @@
 <?php
-// Copyright 2006 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2006-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a sample plugin for the MoniWiki
 //
@@ -22,7 +22,9 @@ function macro_InputForm($formatter,$value,$options=array()) {
     $myname=$name;
     switch($type) {
     case 'form':
-        list($method,$action,$dum)=explode(':',$value);
+        #list($method,$action,$dum)=explode(':',$value);
+        $tmp = explode(':',$value);
+        $method = $tmp[0]; $action = $tmp[1];
         $method= in_array(strtolower($method),array('post','get')) ? $method:'get';
         $url=$formatter->link_url($formatter->page->urlname);
         $out="<form method='$method' action='$url'>\n".

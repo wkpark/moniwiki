@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2007 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // rss_rc action plugin for the MoniWiki
 //
@@ -65,7 +65,7 @@ CHANNEL;
       $html="<a href='$url'>$page_name</a> is deleted\n";
     } else {
       $status='updated';
-      if ($options['diffs']) {
+      if (!empty($options['diffs'])) {
         $p=new WikiPage($page_name);
         $f=new Formatter($p);
         $options['raw']=1;
@@ -82,7 +82,7 @@ CHANNEL;
     	$html=str_replace(']','&#93;',$html);
         $html="<![CDATA[".$html.$extra."]]>";
         #$html=strtr($html.$extra,array('&'=>'&amp;','<'=>'&lt;'));
-      } else if ($options['summary']) {
+      } else if (!empty($options['summary'])) {
         $p=new WikiPage($page_name);
         $f=new Formatter($p);
         $f->section_edit=0;

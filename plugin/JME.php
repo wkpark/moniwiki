@@ -1,5 +1,5 @@
 <?php
-// Copyright 2006-2008 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2006-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a JME plugin for the MoniWiki
 //
@@ -68,6 +68,7 @@ function macro_JME($formatter,$value) {
 
     $fp=fopen($draw_dir.'/'.$molname,'r');
     if ($fp) {
+        $mol = '';
         while(!feof($fp)) $mol.=fgets($fp,2048);
         fclose($fp);
         $mol=str_replace("\r\n","|\n",$mol);
@@ -88,8 +89,8 @@ function do_post_jme($formatter,$options) {
     $draw_dir=str_replace("./",'',$DBInfo->upload_dir.'/JME');
     $pagename=$options['page'];
 
-    $name=$options['value'] ? $options['value']:$options['name'];
-    if (!$name) $name=time();
+    !empty($options['value']) ? $name = $options['value']: !empty($options['name']) ? $name = $options['name'] : null;
+    if (empty($name)) $name=time();
 
     if ($_SERVER['REQUEST_METHOD']=='POST' and $options['mol']) {
         $dummy=explode('/',$name);

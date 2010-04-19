@@ -1,5 +1,5 @@
 <?php
-// Copyright 2008 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2008-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a Template_ processor for the MoniWiki
 //
@@ -32,16 +32,16 @@ function processor_tpl_(&$formatter,$source,$params=array()) {
     $params['uniq']=$id;
     $params['formatter']=&$formatter;
 
-    $params['cache_head']='/* Template_ '.__TEMPLATE_UNDERSCORE_VER__.' '.$id.($params['path']? ' '.$params['path']:'').' */';
+    $params['cache_head']='/* Template_ '.__TEMPLATE_UNDERSCORE_VER__.' '.$id.(!empty($params['path'])? ' '.$params['path']:'').' */';
 
     $TPL_VAR=&$formatter->_vars;
 
-    if (!$formatter->preview and $cache->exists($id) and $cache->mtime($id) > $mtime) {
+    if (empty($formatter->preview) and $cache->exists($id) and $cache->mtime($id) > $mtime) {
         $params['_vars']=&$formatter->_vars;
         $ret = $cache->fetch($id,$mtime,$params);
         if ($ret === true) return '';
-        if ($params['print']) return eval('?'.'>'.$ret.'<'.'?php ');
-        if ($params['raw']) return $ret;
+        if (!empty($params['print'])) return eval('?'.'>'.$ret.'<'.'?php ');
+        if (!empty($params['raw'])) return $ret;
         ob_start();
         eval('?'.'>'.$ret.'<'.'?php ');
         $fetch = ob_get_contents();
@@ -56,13 +56,13 @@ function processor_tpl_(&$formatter,$source,$params=array()) {
 
     if ($source[0]=='#' and $source[1]=='!')
         list($line,$source)=explode("\n",$source,2);
-    if ($line) list($tag,$args)=explode(' ',$line,2);
+    //if (!empty($line)) list($tag,$args)=explode(' ',$line,2);
 
     $out=$compiler->_compile_template($formatter, $source, $params);
     if (!$formatter->preview)
         $cache->update($id,$out);
-    if ($params['print']) return eval('?'.'>'.$out.'<'.'?php ');
-    if ($params['raw']) return $out;
+    if (!empty($params['print'])) return eval('?'.'>'.$out.'<'.'?php ');
+    if (!empty($params['raw'])) return $out;
     #print '<pre>'.(preg_replace('/</','&lt;',$out)).'</pre>';
     ob_start();
     eval('?'.'>'.$out.'<'.'?php ');

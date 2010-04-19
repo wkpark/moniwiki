@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2004 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a diff plugin for the MoniWiki
 //
@@ -388,7 +388,7 @@ function macro_diff($formatter,$value,&$options)
 
   if (!empty($options['text'])) {
     $out= $options['text'];
-    if (!$options['raw'])
+    if (empty($options['raw']))
       $ret=call_user_func($type,$out);
     else
       $ret="<pre>$out</pre>\n";
@@ -423,6 +423,7 @@ function macro_diff($formatter,$value,&$options)
 
   $out=$version->diff($formatter->page->name,$rev1,$rev2);
 
+  $ret = '';
   if (!$out) {
     $msg= _("No difference found");
   } else {

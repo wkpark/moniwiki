@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a syntax colorizer plugin using the enscript for the MoniWiki
 //
@@ -46,6 +46,7 @@ function processor_enscript($formatter,$value) {
     }
   }
 
+  $option = '';
   if ($extra == "number") $option='-C ';
 
   $src=$value;
@@ -67,7 +68,7 @@ function processor_enscript($formatter,$value) {
 #-E%s -W html -J "" -B --color --word-wrap 
 
     #$cmd="ENSCRIPT_LIBRARY=/home/httpd/wiki/lib $enscript -q -o - -E$type -W html --color --word-wrap ".$tmpf;
-    if ($DBInfo->enscript_style)
+    if (!empty($DBInfo->enscript_style))
         $cmd="$enscript -q -o - $option -E$type --language=html $DBInfo->enscript_style --color --word-wrap ".$tmpf;
     else
         $cmd="$enscript -q -o - $option -E$type --language=html --style=ifh --color --word-wrap ".$tmpf;

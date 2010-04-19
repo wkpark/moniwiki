@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a WordIndex plugin for the MoniWiki
 //
@@ -16,12 +16,12 @@ function macro_WordIndex($formatter,$value) {
   $save=$formatter->sister_on;
   $formatter->sister_on=0;
 
-  if ($DBInfo->use_titlecache) {
+  if (!empty($DBInfo->use_titlecache)) {
     $cache=new Cache_text('title');
   }
 
   foreach ($all_pages as $page) {
-    if ($DBInfo->use_titlecache and $cache->exists($page))
+    if (!empty($DBInfo->use_titlecache) and $cache->exists($page))
       $title=$cache->fetch($page);
     else
       $title=$page;
@@ -31,7 +31,7 @@ function macro_WordIndex($formatter,$value) {
     foreach ($words as $word) {
       $word=ltrim($word);
       if (!$word) continue;
-      if ($dict[$word])
+      if (!empty($dict[$word]))
         $dict[$word][]=$page;
       else
         $dict[$word]=array($page);

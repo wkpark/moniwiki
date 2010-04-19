@@ -1,5 +1,5 @@
 <?php
-// Copyright 2004-2006 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2004-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a EditToolbar plugin for the MoniWiki
 //
@@ -11,7 +11,7 @@
 
 function macro_EditToolbar($formatter,$value, $options=array()) {
     global $DBInfo;
-    if ($options['notoolbar']) return '';
+    if (!empty($options['notoolbar'])) return '';
 
     $default = array('bold','italic','link','extlink','headline',
         'math','nowiki','hr','image','media','smiley','sig','infobox');

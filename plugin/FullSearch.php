@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a FullSearch plugin for the MoniWiki
 //
@@ -11,35 +11,35 @@ function do_fullsearch($formatter,$options) {
 
   $options['value']=_stripslashes($options['value']);
   if (!$options['value']) $options['value']=$formatter->page->name;
-  if ($options['backlinks'])
+  if (!empty($options['backlinks']))
     $title= sprintf(_("BackLinks search for \"%s\""), $options['value']);
-  else if ($options['keywords'])
+  else if (!empty($options['keywords']))
     $title= sprintf(_("KeyWords search for \"%s\""), $options['value']);
   else
     $title= sprintf(_("Full text search for \"%s\""), $options['value']);
   $out= macro_FullSearch($formatter,$options['value'],$ret);
-  $options['msg']=$ret['msg'];
+  $options['msg']=!empty($ret['msg']) ? $ret['msg'] : '';
   $options['msgtype']='search';
   $formatter->send_header("",$options);
   $formatter->send_title($title,$formatter->link_url("FindPage"),$options);
 
-  if ($ret['form'])
+  if (!empty($ret['form']))
     print $ret['form'];
   print $out;
 
   $qext='';
-  if ($options['backlinks'])
+  if (!empty($options['backlinks']))
     $qext='&amp;backlinks=1';
-  else if ($options['keywords'])
+  else if (!empty($options['keywords']))
     $qext='&amp;keywords=1';
 
-  if ($options['value']) {
+  if (!empty($options['value'])) {
     $val=htmlspecialchars($options['value']);
     printf(_("Found %s matching %s out of %s total pages")."<br />",
          $ret['hit'],
         ($ret['hit'] == 1) ? _("page") : _("pages"),
          $ret['all']);
-    if ($ret['context']==0) {
+    if (!empty($ret['context']) and $ret['context']==0) {
       $tag=$formatter->link_to("?action=fullsearch&amp;value=$val&amp;context=20",_("Show Context."));
       print $tag.'<br />';
     }
@@ -96,12 +96,12 @@ EOF;
   $incl = array();
 
   $test1 = $test2 = true;
-  if ($opts['noexpr']) {
+  if (!empty($opts['noexpr'])) {
     $tmp=preg_split("/\s+/",$needle);
     $needle=$value=join('|',$tmp);
     $raw_needle=implode(' ',$tmp);
     $needle=_preg_search_escape($needle);
-  } else if (!$opts['backlinks']) {
+  } else if (empty($opts['backlinks'])) {
     $terms = preg_split('/((?<!\S)[-+]?"[^"]+?"(?!\S)|\S+)/s',$needle,-1,
       PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_NO_EMPTY);
 
@@ -148,8 +148,8 @@ EOF;
   $hits = array();
 
   # set arena and sid
-  if ($opts['backlinks']) $arena='backlinks';
-  else if ($opts['keywords']) $arena='keywords';
+  if (!empty($opts['backlinks'])) $arena='backlinks';
+  else if (!empty($opts['keywords'])) $arena='keywords';
   else $arena='fullsearch';
 
   if ($arena == 'fullsearch') $sid=md5($value);
@@ -182,9 +182,9 @@ EOF;
   }
 
   $pattern = '/'.$needle.'/';
-  if ($excl_needle)
+  if (!empty($excl_needle))
     $excl_pattern = '/'.$excl_needle.'/';
-  if ($opts['case']) {
+  if (!empty($opts['case'])) {
     $pattern.="i";
     $excl_pattern.="i";
   }
@@ -193,7 +193,7 @@ EOF;
      $pages = $DBInfo->getPageLists();
     //continue;
   } else {
-    if ($opts['backlinks']) {
+    if (!empty($opts['backlinks'])) {
       $pages = $DBInfo->getPageLists();
       #$opts['context']=-1; # turn off context-matching
       $cache=new Cache_text("pagelinks");
@@ -205,7 +205,7 @@ EOF;
             // ignore count if < 0
         }
       }
-    } else if ($opts['keywords']) {
+    } else if (!empty($opts['keywords'])) {
       $pages = $DBInfo->getPageLists();
       $opts['context']=-1; # turn off context-matching
       $cache=new Cache_text("keyword");
@@ -244,21 +244,22 @@ EOF;
   $opts['hit']= count($hits);
   $opts['all']= count($pages);
 
-  if ($opts['call']) return $hits;
+  if (!empty($opts['call'])) return $hits;
 
-  $out.= "<!-- RESULT LIST START -->"; // for search plugin
+  $out= "<!-- RESULT LIST START -->"; // for search plugin
   $out.= "<ul>";
 
   $idx=1;
+  $checkbox = '';
   while (list($page_name, $count) = each($hits)) {
-    if ($opts['checkbox']) $checkbox="<input type='checkbox' name='pagenames[]' value='$page_name' />";
+    if (!empty($opts['checkbox'])) $checkbox="<input type='checkbox' name='pagenames[]' value='$page_name' />";
     $out.= '<!-- RESULT ITEM START -->'; // for search plugin
     $out.= '<li>'.$checkbox.$formatter->link_tag(_rawurlencode($page_name),
           '?action=highlight&amp;value='._urlencode($value),
           $page_name,'tabindex="'.$idx.'"');
     if ($count > 0)
       $out.= ' . . . . ' . $count . (($count == 1) ? _(" match") : _(" matches"));
-    if ($opts['context']>0) {
+    if (!empty($opts['context']) and $opts['context']>0) {
       # search matching contexts
       $p = new WikiPage($page_name);
       if ($p->exists()) {

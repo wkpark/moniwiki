@@ -1,5 +1,5 @@
 <?php
-// Copyright 2008 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2008-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a SFD Fontforge glyph rendering plugin for the MoniWiki
 //
@@ -37,7 +37,7 @@ function processor_sfd($formatter,$value="") {
         #$convert="wconvert";
     }
     $cache_dir=$DBInfo->upload_dir."/SFD";
-    $cache_url=$DBInfo->upload_url ? $DBInfo->upload_url.'/SFD':
+    $cache_url=!empty($DBInfo->upload_url) ? $DBInfo->upload_url.'/SFD' :
     $DBInfo->url_prefix.'/'.$cache_dir;
 
     if ($value[0]=='#' and $value[1]=='!')
@@ -54,6 +54,7 @@ function processor_sfd($formatter,$value="") {
     $f=0;
     $stat=0;
     $eps='';
+    $oop='';
     foreach ($lines as $l) {
         if ($stat == 0 and preg_match('/^StartChar:\s+(.*)$/',$l)) {
             $stat=1;

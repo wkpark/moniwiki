@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2006 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a ISBN macro plugin for the MoniWiki
 //
@@ -14,7 +14,7 @@ function macro_ISBN($formatter,$value="") {
   $ISBN_MAP="IsbnMap";
   $DEFAULT=<<<EOS
 Amazon http://www.amazon.com/exec/obidos/ISBN= http://images.amazon.com/images/P/\$ISBN.01.MZZZZZZZ.gif
-Aladdin http://www.aladdin.co.kr/shop/wproduct.aspx?ISBN= http://image.aladdin.co.kr/cover/cover/\$ISBN_1.gif @/cover/([^\s_/]+_\d\..{3,4})\s@\\\$ISBN_1\.gif
+Aladdin http://www.aladdin.co.kr/shop/wproduct.aspx?ISBN= http://image.aladdin.co.kr/cover/cover/\$ISBN_1.gif @/cover/([^\s_/]+\$ISBN_\d\..{3,4})\s@\\\$ISBN_1\.gif
 Gang http://kangcom.com/common/qsearch/search.asp?s_flag=T&s_text= http://kangcom.com/l_pic/\$ISBN.jpg @bookinfo\.asp\?sku=(\d+)"@\n
 EOS;
 
@@ -93,7 +93,7 @@ EOS;
       $lang_code=substr($isbn,3,2); // 978 89
     else
       $lang_code=substr($isbn,0,2); // 89
-    if ($default_map[$lang_code])
+    if (!empty($default_map[$lang_code]))
       $lang=$default_map[$lang_code];
     else
       $lang=$DEFAULT_ISBN;
@@ -145,7 +145,7 @@ EOS;
      $md5sum=md5($booklink);
      // check cache
      $bcache=new Cache_text('isbn');
-     if (!$formatter->refresh and $bcache->exists($md5sum)) {
+     if (empty($formatter->refresh) and $bcache->exists($md5sum)) {
         $imgname=trim($bcache->fetch($md5sum));
 
         if ($imgrepl)
@@ -160,12 +160,13 @@ EOS;
            while(!feof($fd)) {
               $line=fgets($fd,1024);
               preg_match($imgre,$line,$match);
-              if ($match[1]) {
+              if (!empty($match[1])) {
                  $bcache->update($md5sum,$match[1]);
                  if ($imgrepl)
                     $imglink=preg_replace('@'.$imgrepl.'@',$match[1], $imglink);
                  else
                     $imglink=str_replace('$ISBN', $match[1], $imglink);
+                 $imglink = preg_replace('/[\'"]$/','', $imglink);
                  $fetch_ok=1;
                  break;
               }
@@ -173,7 +174,7 @@ EOS;
            fclose($fd);
         }
      }
-     if ($fetch_ok and $DBInfo->isbn_img_download) {
+     if (!empty($fetch_ok) and !empty($DBInfo->isbn_img_download)) {
         # some sites such as the IMDB check the referer and
         # do not permit to show any of its images
         # the $isbn_img_download option is needed to show such images
@@ -210,7 +211,7 @@ EOS;
      }
   }
 
-  if (!$fetch_ok) {
+  if (empty($fetch_ok)) {
      if (strpos($imglink, '$ISBN') === false)
         $imglink.=$isbn;
      else {
@@ -223,7 +224,7 @@ EOS;
      }
   }
 
-  if ($noimg) {
+  if (!empty($noimg)) {
     $icon=$DBInfo->imgs_dir_interwiki.strtolower($lang).'-16.png';
     $sx=16;$sy=16;
     if ($DBInfo->intericon[$lang]) {

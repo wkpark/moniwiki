@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2008 Kim Jeong Yeon <see2002 at new-type.com>
+// Copyright 2003-2010 Kim Jeong Yeon <see2002 at new-type.com>
 // All rights reserved. Distributable under GPL see COPYING
 // a PIC plugin for the MoniWiki
 //
@@ -22,7 +22,7 @@ function processor_pic($formatter,$value="") {
   }
 
   $cache_dir=$DBInfo->upload_dir."/PIC";
-  $cache_url=$DBInfo->upload_url ? $DBInfo->upload_url.'/PIC':
+  $cache_url=!empty($DBInfo->upload_url) ? $DBInfo->upload_url.'/PIC':
     $DBInfo->url_prefix.'/'.$cache_dir;
 
   if ($value[0]=='#' and $value[1]=='!')

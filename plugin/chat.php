@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a sample plugin for the MoniWiki
 //
@@ -16,6 +16,7 @@ function macro_Chat($formatter,$value,$options=array()) {
     $args=explode(',',$value);
     $itemnum=20; // default
 
+    $tag = '';
     foreach ($args as $arg) {
         if (is_int($arg)) {
             $itemnum=$arg;
@@ -34,7 +35,8 @@ function macro_Chat($formatter,$value,$options=array()) {
     $msg=ob_get_contents();
     ob_end_clean();
     if ($msg=='false') $msg=_("No messages");
-    if (!$chat_script)
+    $script = '';
+    if (empty($chat_script))
         $script=<<<EOF
 <script type='text/javascript' src='$DBInfo->url_prefix/local/ajax.js'></script>
 <script type='text/javascript' src='$DBInfo->url_prefix/local/chat.js'></script>
@@ -76,7 +78,7 @@ function ajax_chat($formatter,$options) {
     $id=$user->id;
     $nic='';
     $udb=&$DBInfo->udb;
-    if ($options['nic']) {
+    if (!empty($options['nic'])) {
         if (!$udb->_exists($options['nic'])) {
             $nic=' '.$options['nic'];
         } else if ($user->id=='Anonymous') {
@@ -109,7 +111,7 @@ function ajax_chat($formatter,$options) {
             return;
         }
         $mtime=filemtime($log);
-        if ($mtime <= $options['laststamp']) {
+        if (empty($options['laststamp']) or $mtime <= $options['laststamp']) {
             print 'false';
             return;
         }
@@ -157,6 +159,7 @@ function ajax_chat($formatter,$options) {
         break;   
     }
 
+    $debug = '';
     #ob_start();
     #print_r($_GET);
     #$debug=ob_get_contents();
@@ -190,7 +193,7 @@ function ajax_chat($formatter,$options) {
     }
     $formatter->sister_on=$save;
     $formatter->nonexists=$save2;
-    if ($options['option_method']=='ajax') {
+    if (!empty($options['action_mode']) and $options['action_mode']=='ajax') {
         $formatter->header('Expires','0');
         $formatter->header('Cache-Control','no-cache');
         $formatter->header('Pragma','no-cache');

@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2009 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a RecentChanges plugin for the MoniWiki
 //
@@ -147,8 +147,8 @@ define('RC_DEFAULT_DAYS',7);
   $user=&$DBInfo->user; # retrive user info
 
   if ($user->id != 'Anonymous') {
-    $bookmark= $user->info['bookmark'];
-    $tz_offset= $user->info['tz_offset'];
+    $bookmark= !empty($user->info['bookmark']) ? $user->info['bookmark'] : '';
+    $tz_offset= !empty($user->info['tz_offset']) ? $user->info['tz_offset'] : '';
   } else {
     $bookmark= $user->bookmark;
   }

@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2004 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a diff colorizer plugin for the MoniWiki
 //
@@ -12,7 +12,9 @@
 function processor_diff($formatter,$value="") {
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
-  list($dummy, $type)=explode(' ',$line);
+  #list($dummy, $type)=explode(' ',$line);
+  $tmp = explode(' ',$line);
+  $type = isset($tmp[1]) ? $tmp[1] : '';
   if (in_array($type,array('fancy','simple')))
     $options['type']=$type;
   else

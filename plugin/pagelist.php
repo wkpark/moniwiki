@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2006 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a PageList plugin for the MoniWiki
 //
@@ -27,7 +27,7 @@ function macro_PageList($formatter,$arg="",$options=array()) {
   }
 
   $upper = '';
-  if ($options['subdir']) {
+  if (!empty($options['subdir'])) {
     if (($p = strrpos($formatter->page->name,'/')) !== false)
       $upper = substr($formatter->page->name,0,$p);
     $needle=_preg_search_escape($formatter->page->name);
@@ -43,11 +43,11 @@ function macro_PageList($formatter,$arg="",$options=array()) {
     return "[[PageList(<font color='red'>Invalid \"$arg\"</font>)]]";
   }
 
-  if ($options['date']) {
+  if (!empty($options['date'])) {
     $tz_offset=&$formatter->tz_offset;
     $all_pages = $DBInfo->getPageLists($options);
   } else {
-    if ($options['metawiki'])
+    if (!empty($options['metawiki']))
       $all_pages = $DBInfo->metadb->getLikePages($needle);
     else
       $all_pages = $DBInfo->getPageLists();
@@ -55,7 +55,8 @@ function macro_PageList($formatter,$arg="",$options=array()) {
 
   $hits=array();
 
-  if ($options['date']) {
+  $out = '';
+  if (!empty($options['date'])) {
     if ($needle) {
       while (list($pagename,$mtime) = @each ($all_pages)) {
         preg_match("/$needle/",$pagename,$matches);
@@ -75,7 +76,7 @@ function macro_PageList($formatter,$arg="",$options=array()) {
       if ($matches) $hits[]=$page;
     }
     sort($hits);
-    if ($options['dir'] or $options['subdir']) {
+    if (!empty($options['dir']) or !empty($options['subdir'])) {
         $dirs=array();
         $files=array();
         if ($options['subdir']) $plen=strlen($formatter->page->name)+1;
@@ -126,7 +127,7 @@ function macro_PageList($formatter,$arg="",$options=array()) {
             $out.= '<tr><td>'.$ficon.'</td><td>'.
                 $formatter->link_tag(_rawurlencode($pg),"",
 	    htmlspecialchars($name)).'</td>';
-            if ($options['info']) {
+            if (!empty($options['info'])) {
                 $p=new WikiPage($pg);
                 $mtime=$p->mtime();
                 $time_diff=(int)($now - $mtime)/60;

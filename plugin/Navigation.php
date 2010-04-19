@@ -1,5 +1,5 @@
 <?php
-// Copyright 2004 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2004-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a Navigation plugin for the MoniWiki
 //
@@ -78,7 +78,7 @@ function macro_Navigation($formatter,$value) {
 
   if ($count > 1) {
     if ($use_action) {
-      $save=$formatter->query_string;
+      $save=!empty($formatter->query_string) ? $formatter->query_string : '';
       $query='?action=navigation&amp;value='.$value;
       $formatter->query_string=$query;
     }

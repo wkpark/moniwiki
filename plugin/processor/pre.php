@@ -1,5 +1,5 @@
 <?php
-// Copyright 2005 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2005-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a preserve whitespace processor plugin for the MoniWiki
 //   by Anonymous Doner :)
@@ -16,8 +16,10 @@ function processor_pre($formatter,$value) {
     if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
 
+    /*
     if ($line)
     list($tag,$args)=explode(' ',$line,2);
+    */
 
     #$pre=preg_replace($formatter->baserule,$formatter->baserepl,$value);
     #$pre=

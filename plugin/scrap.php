@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a scrap action plugin for the MoniWiki
 //
@@ -12,8 +12,10 @@ function macro_Scrap($formatter,$value='',$options=array()) {
   if ($user->id == 'Anonymous') return '';
 
   $userinfo=$DBInfo->udb->getUser($user->id);
-  $pages=explode("\t",$userinfo->info['scrapped_pages']);
-  if (!in_array($options['page'],$pages)) $pages[]=$options['page'];
+  $pages = array();
+  if (!empty($userinfo->info['scrapped_pages']))
+    $pages=explode("\t",$userinfo->info['scrapped_pages']);
+  if (!empty($options['page']) and !in_array($options['page'],$pages)) $pages[]=$options['page'];
   $out='';
   foreach ($pages as $p) {
     if ($DBInfo->hasPage($p))
@@ -52,7 +54,9 @@ function do_scrap($formatter,$options) {
         $pages = array_unique ($pages);
         $title = _("Scrap lists updated.");
     } else {
-        $pages = explode("\t",$userinfo->info['scrapped_pages']);
+        $pages = array();
+        if (!empty($userinfo->info['scrapped_pages']))
+            $pages = explode("\t",$userinfo->info['scrapped_pages']);
         if (!empty($options['unscrap'])) {
             $tmp = array_flip($pages);
             if (isset($tmp[$formatter->page->name]))
@@ -69,7 +73,8 @@ function do_scrap($formatter,$options) {
     $userinfo->info['scrapped_pages'] = $page_list;
     $udb->saveUser($userinfo);
 
-    if ($DBInfo->use_refresh) {
+    $myrefresh = '';
+    if (!empty($DBInfo->use_refresh)) {
       $sec = $DBInfo->use_refresh - 1;
       $lnk = $formatter->link_url($formatter->page->urlname,'?action=show');
       $myrefresh = 'Refresh: '.$sec.'; url='.qualifiedURL($lnk);
@@ -78,7 +83,7 @@ function do_scrap($formatter,$options) {
     $formatter->send_header($myrefresh,$options);
     $formatter->send_title($title,"",$options);
     $formatter->send_page("Goto [$options[page]]\n");
-    $formatter->send_footer();
+    $formatter->send_footer('', $options);
     return;
   }
 

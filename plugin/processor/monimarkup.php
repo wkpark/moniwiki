@@ -1,5 +1,5 @@
 <?php
-// Copyright 2006-2008 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2006-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a moniwiki formatting processor for the MoniWiki
 //
@@ -62,7 +62,9 @@ class processor_monimarkup
                             $tag='';
                             if (!empty($type)) {
                                 if ($type{0}=='#' and $type{1}=='!') {
-                                    list($tag,$dummy)= explode(' ',$type);
+                                    #list($tag,$dummy)= explode(' ',$type);
+                                    $tmp = explode(' ',$type);
+                                    $tag = $tmp[0];
                                     $btype[$j]=substr($tag,2);
                                 } else if ($type{0} == ':') {
                                     # for a quote block
@@ -184,8 +186,8 @@ class processor_monimarkup
                 $_eop=0;
                 $mytype=array('tag'=>'LIST','type'=>'di');
                 $indlen=$myindlen=strlen($m[0])-(isset($m[2]) ? strlen($m[2]):0);
-                if ($line{0}=='>') {
-                    $myclass=$m[2] ? substr($m[2],1):'quote';
+                if ($line[0]=='>') {
+                    $myclass=!empty($m[2]) ? substr($m[2],1):'quote';
                     $mytype['attributes']=array('class'=>$myclass);
                     $mytype['type']='dq';
                     $indlen=$myindlen=$myindlen>>1;
@@ -228,7 +230,7 @@ class processor_monimarkup
                     continue;
                 }
                 if ($_indtype[$_in_li] == $indtype) {
-                    if ($indlen == $_indlen[$_in_li]) {
+                    if (!empty($_indlen[$_in_li]) and $indlen == $_indlen[$_in_li]) {
                         $class = isset($mytype['attributes']['class']) ? $mytype['attributes']['class']:'';
                         if ($indtype or (isset($_nodtype[$_in_li]['attributes']['class']) and
                             $_nodtype[$_in_li]['attributes']['class'] != $class)) {
@@ -511,7 +513,7 @@ class processor_monimarkup
                         $anchor="<a id='$anchor_id'></a>";
                     }
 
-                    if ($sect_num >1) $out.=$this->_div(0);
+                    if (!empty($sect_num) and $sect_num >1) $out.=$this->_div(0);
                     $out.=$this->_div(1," class='level$c[depth]'");
                     $out.= $anchor.$ed.$formatter->head_repl($c['depth'],$val,$headinfo);
                     break;
@@ -721,7 +723,7 @@ class processor_monimarkup
     }
 }
 
-if (basename($_SERVER['argv'][0]) == basename(__FILE__)) {
+if (!empty($_SERVER['argv']) and basename($_SERVER['argv'][0]) == basename(__FILE__)) {
 //if (basename($_SERVER['SCRIPT_NAME']) == basename(__FILE__)) {
 
 $text=<<<EOF

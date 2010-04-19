@@ -1,5 +1,5 @@
 <?php
-// Copyright 2006-2008 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2006-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a bug track system plugin for the MoniWiki
 //
@@ -19,8 +19,11 @@ function _get_btsConfig($raw) {
     $meta='';
     $body=&$raw;
     while(true) {
-        list($line,$body)=explode("\n",$body,2);
-        if ($line[0]=='#') continue;
+        #list($line,$body)=explode("\n",$body,2);
+        $tmp=explode("\n",$body,2);
+        $line = $tmp[0];
+        $body = isset($tmp[1]) ? $tmp[1] : '';
+        if (isset($line[0]) and $line[0]=='#') continue;
         if (strpos($line,':')===false or trim($line)=='') break;
         $meta.=$line."\n";
     }
@@ -100,7 +103,7 @@ SCRIPT;
 
     if ($value[0]=='#' and $value[1]=='!')
         list($arg,$value)=explode("\n",$value,2);
-    if ($arg) {
+    if (!empty($arg)) {
         # get parameters
         list($tag, $user, $date, $title)=explode(" ",$line, 4);
 
@@ -127,7 +130,7 @@ SCRIPT;
     $meta='';
     while(true) {
         list($line,$body)=explode("\n",$body,2);
-        if ($line[0]=='#') continue;
+        if (isset($line[0]) and $line[0]=='#') continue;
         if (strpos($line,':')===false or !trim($line)) break;
         $meta.=$line."\n";
     }
@@ -143,7 +146,7 @@ SCRIPT;
             $kk=str_replace(' ','-',ucwords($metas['Product'])).'-'.$k;
         }
         if ($k[0]=='X' and $k[1]=='-') {
-            if ($confs[$kk])
+            if (isset($confs[$kk]))
                 $v='[[InputForm(:'._($kk).':'.str_replace($v,$v.' 1',$confs[$kk]).')]]';
             $k=substr($k,2);
             if (substr($k,0,9) =='Separator') {
@@ -161,7 +164,7 @@ SCRIPT;
                 $v='[[InputForm(input:'._($k).':'.$confs[$k].':'.$v.')]]';
                 $extra.="|| '''"._($k)."'''''':'''||$v||\n";
             } else {
-                if ($confs[$kk])
+                if (isset($confs[$kk]))
                     $v='[[InputForm(:'._($kk).':'.str_replace($v,$v.' 1',$confs[$kk]).')]]';
                 $head.="||".$attr."<width='30%'> '''"._($k)."'''''':'''||".$v." ||\n";
                 $attr='';
@@ -190,9 +193,15 @@ TAIL;
 
         $copy=$body;
         $hidden='';
-        list($comment,$copy)=explode("----\n",$copy,2);
+        #list($comment,$copy)=explode("----\n",$copy,2);
+        $tmp=explode("----\n",$copy,2);
+        $comment = $tmp[0];
+        $copy = isset($tmp[1]) ? $tmp[1] : '';
         while(!empty($comment)) {
-            list($comment,$copy)=explode("----\n",$copy,2);
+            #list($comment,$copy)=explode("----\n",$copy,2);
+            $tmp=explode("----\n",$copy,2);
+            $comment = $tmp[0];
+            $copy = isset($tmp[1]) ? $tmp[1] : '';
             if (preg_match('/^Comment-Id:\s*(\d+)/i',$comment,$m)) {
                 list($myhead,$my)=explode("\n\n",$comment,2);
                 $hidden.='<pre style="display:none;" id="comment_text_'.$m[1].'">'.htmlspecialchars($my).'</pre>';
@@ -228,7 +237,7 @@ TAIL;
         ob_end_clean();
     }
     $msg.= $formatter->macro_repl('Comment(meta)','',$options);
-    if ($bts_script) return $msg.$hidden;
+    if (!empty($bts_script)) return $msg.$hidden;
     $bts_script=1;
     return $script.$msg.$hidden;
 }

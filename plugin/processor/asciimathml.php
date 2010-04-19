@@ -1,5 +1,5 @@
 <?php
-// Copyright 2005-2007 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2005-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a asciimathml processor plugin by AnonymousDoner
 //
@@ -39,7 +39,7 @@ function processor_asciimathml($formatter,$value="") {
   if ($value[0]=='#' and $value[1]=='!')
   list($line,$value)=explode("\n",$value,2);
 
-  if ($line)
+  if ($line and strpos($line, ' ') !== FALSE)
     list($tag,$args)=explode(' ',$line,2);
 
   # 1 or 0
@@ -51,7 +51,7 @@ function processor_asciimathml($formatter,$value="") {
 
   #
   $flag = 0;
-  if (!$formatter->wikimarkup) {
+  if (empty($formatter->wikimarkup)) {
     // use a md5 tag with a wikimarkup action
     $cid=&$GLOBALS['_transient']['asciimathml'];
     if ( !$cid ) { $flag = 1; $cid = 1; }
@@ -59,6 +59,7 @@ function processor_asciimathml($formatter,$value="") {
     $cid++;
 
     # wikimarkup specific settings
+    $bgcolor = '';
     $fontcolor="mathcolor='$myfontcolor';\n";
   } else {
     $flag = 1;
@@ -110,7 +111,7 @@ AJS;
     if ($js) $formatter->register_javascripts($js);
   }
 
-  $out .= "<span><span class=\"AM\" id=\"AM-$id\">$value</span>" .
+  $out = "<span><span class=\"AM\" id=\"AM-$id\">$value</span>" .
     "<script type=\"text/javascript\">translateById('AM-$id');".
     "</script></span>";
   return $out;

@@ -1,5 +1,5 @@
 <?php
-// Copyright 2004 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2004-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a FreeMind plugin for the MoniWiki
 //
@@ -11,8 +11,10 @@ function _interwiki_repl($formatter,$url) {
     if ($url[0]=="w")
       $url=substr($url,5);
     $dum=explode(":",$url,2);
-    $wiki=$dum[0]; $page=$dum[1];
-    if (!$page) {
+    $wiki=$dum[0];
+    if (isset($dum[1])) {
+      $page=$dum[1];
+    } else {
       $page=$dum[0];
       return array($formatter->link_url($page));
     }
@@ -44,6 +46,7 @@ function _interwiki_repl($formatter,$url) {
 }
 
 function _link_repl($formatter,$url) {
+    $img = '';
     if (preg_match("/\.(png|gif|jpeg|jpg)$/i",$url)) {
       $img=$url; $url='';
     }
@@ -69,7 +72,7 @@ function processor_freemind($formatter,$value) {
 
     $md5sum=md5($value);
     $map=$md5sum.'.mm';
-    if ($formatter->refresh || $formatter->preview || !file_exists($_dir.'/'.$map)) {
+    if (!empty($formatter->refresh) || !empty($formatter->preview) || !file_exists($_dir.'/'.$map)) {
         $depth=$odepth=0;
         $dep=$odep=0;
         $out='<map version="0.7.1">'."\n";
@@ -104,28 +107,30 @@ function processor_freemind($formatter,$value) {
                 $odep++;
             }
     
-            if ($_FONT[$dep]) $FONT=$_FONT[$dep];
+            if (!empty($_FONT[$dep])) $FONT=$_FONT[$dep];
             else $FONT=$_FONT[0];
-            if ($_SIZE[$dep]) $SIZE=$_SIZE[$dep];
+            if (!empty($_SIZE[$dep])) $SIZE=$_SIZE[$dep];
             else $SIZE=$_SIZE[0];
-            if ($_COLOR[$dep]) $COLOR=$_COLOR[$dep];
+            if (!empty($_COLOR[$dep])) $COLOR=$_COLOR[$dep];
             else $COLOR=$_COLOR[0];
     
             $link='';
             $extra='';
             $img='';
             if (preg_match('/^(http|mailto|wiki):/',$text,$match)) {
-                list($link,$text)=explode(' ',$text,2);
-                if ($match[1]=='wiki') {
-                    list($link,$img)=_interwiki_repl($formatter,$link);
-                    $link='LINK="'.addslashes($link).'" ';
-                    if ($img) $extra='<html><img src="'.$img.'">';
+                if (strpos($text, ' ') !== FALSE)
+                    list($link,$text)=explode(' ',$text,2);
+                if (isset($match[1]) and $match[1]=='wiki') {
+                    $tmp=_interwiki_repl($formatter,$link);
+                    //list($link,$img)=_interwiki_repl($formatter,$link);
+                    $link='LINK="'.addslashes($tmp[0]).'" ';
+                    if (!empty($tmp[1])) $extra='<html><img src="'.$tmp[1].'">';
                 } else {
                     list($link,$img)=_link_repl($formatter,$link);
                     $link=$link ? 'LINK="'.addslashes($link).'" ':'';
                     if ($img) $extra='<html><img src="'.$img.'">';
                 }
-                if ($extra) $extra=htmlspecialchars($extra);
+                if (!empty($extra)) $extra=htmlspecialchars($extra);
             }
             $text=addslashes(htmlspecialchars($text));
     

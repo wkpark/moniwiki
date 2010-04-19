@@ -37,7 +37,7 @@ function calendar_get_dates($formatter,$date='',$page='') {
 function macro_Calendar($formatter,$value="",$option="") {
 	global $DBInfo;
 
-	$date=$_GET['date'];
+	$date=!empty($_GET['date']) ? $_GET['date'] : '';
 
 	$prev_tag='&laquo;';
 	$next_tag='&raquo;';
@@ -50,11 +50,13 @@ function macro_Calendar($formatter,$value="",$option="") {
 
 	#print_r($match);
 	/* GET argument has priority */
+        $month = '';
+        $year = '';
 	if ($date) {
 		preg_match("/^((\d{4})-?(\d{1,2}))$/i",$date,$match2);
 		$year= $match2[2];
 		$month= $match2[3];
-	} else if ($match[4]) {
+	} else if (!empty($match[4])) {
 		$year= $match[5];
 		$month= $match[6];
 	}
@@ -67,7 +69,7 @@ function macro_Calendar($formatter,$value="",$option="") {
 	$month=intval($month);
 	$year=intval($year);
 
-	if ($match[3])
+	if (!empty($match[3]))
 		$pagename=$match[3];
 	else
 		$pagename=$formatter->page->name;
@@ -76,7 +78,9 @@ function macro_Calendar($formatter,$value="",$option="") {
 	$link_prefix=sprintf("%04d-%02d",$year,$month);
 
 	$archives=array();
-	if ($match[7]) {
+        $attr = '';
+        $link = '';
+	if (!empty($match[7])) {
 		$args=explode(",",$match[7]);
 
 		if (in_array ("nolink", $args)) $nolink=1;
@@ -86,7 +90,7 @@ function macro_Calendar($formatter,$value="",$option="") {
 		if (in_array ("shortweek", $args)) $day_heading_length=1;
 		if (in_array ("yearlink", $args)) $yearlink=1;
 		if (in_array ("archive", $args)) {
-			if ($mode) // blog mode
+			if (!empty($mode)) // blog mode
 				$archives=calendar_get_dates($formatter,$date,$pagename.'/'.$link_prefix);
 			else {
 				$archives=calendar_get_dates($formatter,$date);
@@ -97,7 +101,7 @@ function macro_Calendar($formatter,$value="",$option="") {
 
 	$prev_month=date('Ym',mktime(0,0,0,$month - 1,1,$year));
 	$next_month=date('Ym',mktime(0,0,0,$month + 1,1,$year));
-	if ($yearlink) {
+	if (!empty($yearlink)) {
 		$prev_year=date('Ym',mktime(0,0,0,$month,1,$year - 1));
 		$next_year=date('Ym',mktime(0,0,0,$month,1,$year + 1));
 
@@ -129,16 +133,16 @@ function macro_Calendar($formatter,$value="",$option="") {
 	$calendar.= "<caption class=\"month\">";
 
         /* Adding previous month and year */
-	if ($yearlink)
+	if (!empty($yearlink))
 	$calendar.= $formatter->link_tag($link,"?date=$prev_year",$year_prev_tag).'&nbsp;&nbsp;';
 	$calendar.= $formatter->link_tag($link,"?date=$prev_month",$prev_tag).'&nbsp;&nbsp;';
 
 	#$calendar.=substr($date_info[month],0,3).' '.$year;
-	$calendar.=$date_info[month].' '.$year;
+	$calendar.=$date_info['month'].' '.$year;
 
 	/* Adding next month and year */
 	$calendar.= '&nbsp;&nbsp;'.$formatter->link_tag($link,"?date=$next_month",$next_tag);
-	if ($yearlink)
+	if (!empty($yearlink))
 	$calendar.= '&nbsp;&nbsp;'.$formatter->link_tag($link,"?date=$next_year",$year_next_tag);
 	$calendar.= "</caption>\n";
 
@@ -162,11 +166,12 @@ function macro_Calendar($formatter,$value="",$option="") {
 	if($weekday > 0){$calendar .= "<td colspan=\"$weekday\">&nbsp;</td>";}
 
 	#print the days of the month
-	if ($mode=='blog') {
+        $action = '';
+	if (!empty($mode) and $mode=='blog') {
 		$link=$urlpagename."/$link_prefix";
 		if (!$DBInfo->hasPage($link))
 			$action="?action=blog";
-	} else if ($mode) {
+	} else if (!empty($mode)) {
 		$link=$urlpagename;
 	}
 
@@ -187,16 +192,16 @@ function macro_Calendar($formatter,$value="",$option="") {
 			$classes=$nonexists;
 		}
 
-		if (!$mode and !isset($nolink)) {
+		if (empty($mode) and !isset($nolink)) {
 			$link=$urlpagename."/".$link_prefix."-".sprintf("%02d",$day);
 			if ($DBInfo->hasPage($link))
 				$classes=$exists;
-		} else if ($mode) {
-			if ($archives[$day]) {
+		} else if (!empty($mode)) {
+			if (!empty($archives[$day])) {
 				 $daytext='<span class="blogged"><b>'.$day.'</b></span>';
 			}
 			if ($mode == 'archive') {
-				if ($archives[$day]) {
+				if (!empty($archives[$day])) {
                                         if ($day < 10)
                                           $anchor = '#'.$date.'0'.$day;
                                         else

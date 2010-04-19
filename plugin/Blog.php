@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // Blog action plugin for the MoniWiki
 //
@@ -74,18 +74,18 @@ function do_Blog($formatter,$options) {
   $COLS_OTHER = 85;
   $cols = preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
 
-  $rows=$options['rows'] > 5 ? $options['rows']: 8;
-  $cols=$options['cols'] > 60 ? $options['cols']: $cols;
+  $rows=(!empty($options['rows']) and $options['rows'] > 5) ? $options['rows']: 8;
+  $cols=(!empty($options['cols']) and $options['cols'] > 60) ? $options['cols']: $cols;
 
   $url=$formatter->link_url($formatter->page->urlname);
 
-  if ($formatter->refresh or $options['button_refresh']) {
+  if (!empty($formatter->refresh) or !empty($options['button_refresh'])) {
     updateBlogList($formatter);
     $options['msg']=sprintf(_("Blog cache of \"%s\" is refreshed"),$formatter->page->name);
   }
 
   $savetext="";
-  if ($options['savetext']) {
+  if (!empty($options['savetext'])) {
     $savetext=_stripslashes($options['savetext']);
     $savetext=str_replace("\r","",$savetext);
     $savetext=str_replace("----\n","-''''''---\n",$savetext);
@@ -94,14 +94,16 @@ function do_Blog($formatter,$options) {
   }
 
   # for conflict check
-  if ($options['datestamp'])
+  if (!empty($options['datestamp']))
      $datestamp= $options['datestamp'];
   else
      $datestamp= $formatter->page->mtime();
 
-  if ($options['title'])
+  if (!empty($options['title']))
     $options['title']=_stripslashes($options['title']);
-  if (!$options['button_preview'] && $savetext) {
+  else
+    $options['title'] = '';
+  if (empty($options['button_preview']) && !empty($savetext)) {
     $savetext=preg_replace("/(?<!\\\\)}}}/","\}}}",$savetext);
 
     $url=$formatter->link_tag($formatter->page->urlname,"",$options['page']);
@@ -119,7 +121,7 @@ function do_Blog($formatter,$options) {
         _stripslashes($options['name']):$_SERVER['REMOTE_ADDR'];
     } else $id=$options['id'];
 
-    if ($options['value']) {
+    if (!empty($options['value'])) {
       # add comment
       for ($i=0;$i<$count;$i++) {
         if (preg_match("/^({{{)?#!blog (.*)$/",$lines[$i],$match)) {
@@ -132,8 +134,8 @@ function do_Blog($formatter,$options) {
         }
       }
 
-      if ($found) {
-        if ($endtag)
+      if (!empty($found)) {
+        if (!empty($endtag))
           for (;$i<$count;$i++) {
             if (preg_match("/^}}}$/",$lines[$i])) {
               $found=1; 
@@ -144,7 +146,7 @@ function do_Blog($formatter,$options) {
           $lines=explode("\n",rtrim($raw_body));
           $i=count($lines);
         }
-        if ($options['nosig'])
+        if (!empty($options['nosig']))
           $lines[$i]="----\n$savetext\n$endtag";
         else
           $lines[$i]="----\n$savetext @SIG@\n$endtag";
@@ -170,7 +172,7 @@ function do_Blog($formatter,$options) {
       }
 
       $entry="{{{#!blog $id @date@";
-      if ($options['title'])
+      if (!empty($options['title']))
         $entry.=" ".$options['title'];
       $entry.="\n$savetext\n}}}\n\n";
 
@@ -181,19 +183,19 @@ function do_Blog($formatter,$options) {
     }
 
     $myrefresh='';
-    if ($DBInfo->use_save_refresh) {
+    if (!empty($DBInfo->use_save_refresh)) {
        $sec=$DBInfo->use_save_refresh - 1;
        $lnk=$formatter->link_url($formatter->page->urlname,"?action=show");
        $myrefresh='Refresh: '.$sec.'; url='.qualifiedURL($lnk);
     }
     $formatter->send_header($myrefresh,$options);
 
-    if ($options['value']) {
+    if (!empty($options['value'])) {
       $formatter->send_title(sprintf(_("Comment added to \"%s\""),$title),"",$options);
       $log="Add Comment to \"$title\"";
     } else {
       $formatter->send_title(sprintf(_("Blog entry added to \"%s\""),$options['page']),"",$options);
-      if ($options['title'])
+      if (!empty($options['title']))
         $log=sprintf(_("Blog entry \"%s\" added"),$options['title']);
       else
         $log=_("Blog entry added");
@@ -210,7 +212,7 @@ function do_Blog($formatter,$options) {
       $formatter->send_page();
   } else { # add entry or comment
     $formatter->send_header("",$options);
-    if ($options['value']) {
+    if (!empty($options['value'])) {
       $raw_body=$formatter->page->_get_raw_body();
       $lines=explode("\n",$raw_body);
       $count=count($lines);
@@ -225,14 +227,15 @@ function do_Blog($formatter,$options) {
         }
       }
 
-      if ($found) {
+      if (!empty($found)) {
+        $quote = '';
         for (;$i<$count;$i++) {
           if (preg_match("/^}}}$/",$lines[$i])) break;
           $quote.=$lines[$i]."\n";
         }
       }
-      if (!$title) $title=$options['page'];
-      if (!$found) {
+      if (empty($title)) $title=$options['page'];
+      if (empty($found)) {
         $formatter->send_title("Error: No entry found!","",$options);
         $formatter->send_footer("",$options);
         return;
@@ -242,7 +245,7 @@ function do_Blog($formatter,$options) {
       $formatter->send_title(sprintf(_("Add Blog entry to \"%s\""),$options['page']),"",$options);
     }
     $options['noaction']=1;
-    if ($quote) {
+    if (!empty($quote)) {
       $quote=str_replace('\}}}','}}}',$quote);
       print $formatter->processor_repl('blog',$quote,$options);
       #print $formatter->send_page($quote,$options);
@@ -251,29 +254,29 @@ function do_Blog($formatter,$options) {
       $extra='<div style="text-align:right">'.'
         <input type="submit" name="button_refresh" value="Refresh" /></div>';
 
-    if ($options['value'])
+    if (!empty($options['value']))
       print "<a name='BlogComment'></a>";
     print '<div id="editor_area">';
     print "<form method='post' action='$url'>\n";
     $myinput='';
     if ($options['id'] == 'Anonymous')
       $myinput.='<b>'._("Name")."</b>: <input name='name' size='15' maxlength='15' value='$options[name]' />\n";
-    if (!$options['value'])
+    if (empty($options['value']))
       $myinput.='<b>'._("Title")."</b>: <input name='title' value='$options[title]' size='70' maxlength='70' style='width:300px' /><br />\n";
     else
       print "<input type='hidden' name='value' value='$options[value]' />\n";
     print '<div class="editor_area_extra">'.$myinput."</div>\n";
     $savetext=$savetext ? $savetext:'Enter blog entry';
-    if ($DBInfo->use_wikiwyg) {
+    if (!empty($DBInfo->use_wikiwyg)) {
       $wysiwyg_msg=_("GUI");
-      $wysiwyg_btn.='&nbsp;<input type="button" tabindex="7" value="'.$wysiwyg_msg.
+      $wysiwyg_btn='&nbsp;<input type="button" tabindex="7" value="'.$wysiwyg_msg.
         '" onclick="javascript:sectionEdit(null,null,null)" />';
     }
     print <<<FORM
 <textarea class="wiki" id="content" wrap="virtual" name="savetext"
  rows="$rows" cols="$cols" class="wiki">$savetext</textarea><br />
 FORM;
-    if ($options['value'])
+    if (!empty($options['value']))
       print "<input name='nosig' type='checkbox' />"._("Don't add a signature")."<br />";
     print <<<FORM2
 <input type="hidden" name="action" value="Blog" />
@@ -284,7 +287,7 @@ $wysiwyg_btn$extra
 </form>
 </div>
 FORM2;
-    if ($DBInfo->use_wikiwyg>=3)
+    if (!empty($DBInfo->use_wikiwyg) and $DBInfo->use_wikiwyg>=3)
       print <<<JS
 <script type='text/javascript'>
 /*<![CDATA[*/
@@ -293,13 +296,13 @@ sectionEdit(null,null,null);
 </script>
 JS;
   }
-  if (!$savetext) {
+  if (empty($savetext)) {
     #print $formatter->macro_repl('SmileyChooser');
     print macro_EditHints($formatter);
     print "<div class='wikiHints'>"._("<b>horizontal rule</b> ---- is not applied on the blog mode.")."</div>\n";
   }
-  if ($options['button_preview'] && $options['savetext']) {
-    if ($options['title'])
+  if (!empty($options['button_preview']) && !empty($options['savetext'])) {
+    if (!empty($options['title']))
       $formatter->send_page("== $options[title] ==\n");
     $formatter->send_page($savetext);
   }
@@ -313,13 +316,13 @@ function macro_Blog($formatter,$value) {
   $COLS_OTHER = 85;
   $cols = preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
 
-  $rows=$options['rows'] > 5 ? $options['rows']: 8;
-  $cols=$options['cols'] > 60 ? $options['cols']: $cols;
+  $rows=(!empty($options['rows']) and $options['rows'] > 5) ? $options['rows']: 8;
+  $cols=(!empty($options['cols']) and $options['cols'] > 60) ? $options['cols']: $cols;
 
   $url=$formatter->link_url($formatter->page->urlname);
   $datestamp= $formatter->page->mtime();
 
-  if (!$options['id'])
+  if (empty($options['id']))
     $options['id']=$DBInfo->user->id;
 
   if ($options['id'] != 'Anonymous')
@@ -344,7 +347,7 @@ $extra
 </form>
 </div>
 FORM2;
-  if ($DBInfo->use_wikiwyg >=3)
+  if (!empty($DBInfo->use_wikiwyg) and $DBInfo->use_wikiwyg >=3)
     $JS=<<<JS
 <script type='text/javascript'>
 /*<![CDATA[*/

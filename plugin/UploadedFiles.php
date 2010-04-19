@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2006 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a UploadedFiles plugin for the MoniWiki
 //
@@ -355,7 +355,7 @@ EOS;
    else if ($p > 1)
       $plink=$formatter->link_tag('',"?action=uploadedfiles$extra",_("&laquo; First page"),$attr);
 
-   if (!$prefix) $prefix=str_replace($DBInfo->upload_dir, $DBInfo->upload_dir_url,$dir).'/';
+   if (empty($prefix)) $prefix=str_replace($DBInfo->upload_dir, $DBInfo->upload_dir_url,$dir).'/';
 
    $unit=array('Bytes','KB','MB','GB','TB');
 

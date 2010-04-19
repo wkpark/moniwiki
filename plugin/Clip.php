@@ -1,5 +1,5 @@
 <?php
-// Copyright 2005 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2005-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // Draw plugin with the Clip applet for the MoniWiki
 //
@@ -27,6 +27,7 @@ function macro_Clip($formatter,$value) {
   if (!file_exists($_dir."/$pngname"))
     return "<a href='$url'>"._("Paste a new picture")."</a>";
   $edit='';
+  $end_tag='';
   if ($enable_edit) {
     $edit="<a href='$url'>";
     $end_tag='</a>';

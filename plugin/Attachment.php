@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2007 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a Attachment macro plugin for the MoniWiki
 //
@@ -15,7 +15,7 @@
 //
 // $Id$
 
-function macro_Attachment($formatter,$value,$options='') {
+function macro_Attachment($formatter,$value,$options=array()) {
   global $DBInfo;
 
   if (!is_array($options) and $options==1) $options=array('link'=>1); // compatible
@@ -36,7 +36,7 @@ function macro_Attachment($formatter,$value,$options='') {
   if ($options and !$DBInfo->security->is_allowed($mydownload,$options))
     return $text;
 
-  if ($formatter->wikimarkup and !$options['nomarkup']) {
+  if (!empty($formatter->wikimarkup) and empty($options['nomarkup'])) {
     $ll=$rr='';
     if (strpos($value,' ') !==false) { $ll='['; $rr=']'; }
     $bra= "<span class='wikiMarkup'><!-- wiki:\n${ll}attachment:$value$rr\n-->";
@@ -98,7 +98,7 @@ function macro_Attachment($formatter,$value,$options='') {
       } else {
         if (in_array($name,array('width','height'))) {
           $attr.="$name=\"$val\" ";
-          if ($DBInfo->use_lightbox) $lightbox_attr=' rel="lightbox" ';
+          if (!empty($DBInfo->use_lightbox)) $lightbox_attr=' rel="lightbox" ';
         } else if (in_array($name,array('thumb','thumbwidth','thumbheight'))){
           $use_thumb=1;
           $thumb[$name]=$val;
@@ -120,7 +120,10 @@ function macro_Attachment($formatter,$value,$options='') {
     $args=explode(',',substr($value,$dummy+1));
     $value=substr($value,0,$dummy);
     foreach ($args as $arg) {
-      list($k,$v)=split('=',trim($arg),2);
+      //list($k,$v)=split('=',trim($arg),2);
+      $tmp = split('=',trim($arg),2);
+      $k = $tmp[0];
+      $v = !empty($tmp[1]) ? $tmp[1] : '';
       if ($v) {
         if (in_array($k,array('width','height'))) {
           $attrs[trim($k)]=$v;
@@ -174,14 +177,14 @@ function macro_Attachment($formatter,$value,$options='') {
 
   if (file_exists($_l_upload_file)) {
     $file_ok=1;
-  } else if ($formatter->wikimarkup and !$options['nomarkup']) {
-    if ($DBInfo->swfupload_depth > 2) {
+  } else if (!empty($formatter->wikimarkup) and empty($options['nomarkup'])) {
+    if (!empty($DBInfo->swfupload_depth) and $DBInfo->swfupload_depth > 2) {
       $depth=$DBInfo->swfupload_depth;
     } else {
       $depth=2;
     }
 
-    if ($DBInfo->nosession) { // ip based
+    if (!empty($DBInfo->nosession)) { // ip based
       $myid=md5($_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI'); // FIXME
     } else {
       $myid=session_id();
@@ -210,7 +213,7 @@ function macro_Attachment($formatter,$value,$options='') {
     }
   }
 
-  if ($file_ok) {
+  if (!empty($file_ok)) {
 
     $imgcls='imgAttach';
 
@@ -285,7 +288,7 @@ function macro_Attachment($formatter,$value,$options='') {
       }
 
       $alt=!empty($alt) ? $alt:$file;
-      if ($key != $pagename || $force_download) {
+      if ($key != $pagename || !empty($force_download)) {
         $val=_urlencode($value);
         if (!empty($use_thumb)) {
           $thumbdir='thumbnails/';
@@ -295,7 +298,7 @@ function macro_Attachment($formatter,$value,$options='') {
         }
         $url=$formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=".$val);
       } else {
-        if ($use_thumb) {
+        if (!empty($use_thumb)) {
           $url=$DBInfo->upload_dir_url.'/thumbnails/'._urlencode($_l_file);
         } else {
           $_my_file=str_replace($DBInfo->upload_dir, $DBInfo->upload_dir_url,$dir . '/' . $file);
@@ -324,12 +327,12 @@ function macro_Attachment($formatter,$value,$options='') {
   }
 
   $paste='';
-  if ($DBInfo->use_clipmacro and preg_match('/^(.*)\.png$/i',$file,$m)) {
+  if (!empty($DBInfo->use_clipmacro) and preg_match('/^(.*)\.png$/i',$file,$m)) {
     $now=time();
     $url=$formatter->link_url($pagename,"?action=clip&amp;value=$m[1]&amp;now=$now");
     $paste=" <a href='$url'>"._("or paste a new png picture")."</a>";
   }
-  if ($DBInfo->use_drawmacro and preg_match('/^(.*)\.gif$/i',$file,$m)) {
+  if (!empty($DBInfo->use_drawmacro) and preg_match('/^(.*)\.gif$/i',$file,$m)) {
     $now=time();
     $url=$formatter->link_url($pagename,"?action=draw&amp;mode=attach&amp;value=$m[1]&amp;now=$now");
     $paste=" <a href='$url'>"._("or draw a new gif picture")."</a>";

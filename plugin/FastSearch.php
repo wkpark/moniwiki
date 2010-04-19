@@ -2,7 +2,7 @@
 // from http://www.heddley.com/edd/php/search.html
 // code itself http://www.heddley.com/edd/php/indexer.tar.gz
 //
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 //
 // indexer.tar.gz is modified to adopt under MoniWiki
@@ -30,6 +30,7 @@ function macro_FastSearch($formatter,$value="",&$opts) {
   $needle=_preg_search_escape($needle);
   $pattern = '/'.$needle.'/i';
   $fneedle=str_replace('"',"&#34;",$needle); # XXX
+  $url=$formatter->link_url($formatter->page->urlname);
 
   $form= <<<EOF
 <form method='get' action='$url'>

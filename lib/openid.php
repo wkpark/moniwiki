@@ -128,6 +128,7 @@ class SimpleOpenID{
 		if (!is_array($arr)) {
 			return false;
 		}
+		$query = '';
 		foreach($arr as $key => $value) {
 			$query .= $key . "=" . $value . "&";
 		}
@@ -208,9 +209,9 @@ class SimpleOpenID{
 
 	function getHTTPEquiv($content) {
 		preg_match('/<meta http-equiv=("|\')?([^\\1]+)\\1.*content=("|\')?([^\\3]+)\\3.*>/i',$content,$match);
-		if (strtolower($match[2])=='refresh') list($dummy,$url)=explode('url=',$match[4],2);
-		else if (in_array(strtolower($match[1]),array('x-xrds-location', 'x-yadis-location'))) $url=$match[4];
-		if ($url) return $url;
+		if (isset($match[2]) and strtolower($match[2])=='refresh') list($dummy,$url)=explode('url=',$match[4],2);
+		else if (isset($match[1]) and in_array(strtolower($match[1]),array('x-xrds-location', 'x-yadis-location'))) $url=$match[4];
+		if (!empty($url)) return $url;
 		return null;
 	}
 	
@@ -227,7 +228,7 @@ class SimpleOpenID{
 			$this->ErrorStore('OPENID_NOSERVERSFOUND');
 			return false;
 		}
-		if ($delegates[0] != "") {
+		if (!empty($delegates[0])) {
 			$this->openid_url_identity = $delegates[0];
 		}
 		$this->SetOpenIDServer($servers[0]);

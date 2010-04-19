@@ -1,5 +1,5 @@
 <?php
-// Copyright 2004-2008 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2004-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a Wiki comment plugin for the MoniWiki
 //
@@ -22,7 +22,7 @@ function macro_Comment($formatter,$value,$options=array()) {
   $options['id']=$user->id;
 
   $use_any=0;
-  if ($DBInfo->use_textbrowsers) {
+  if (!empty($DBInfo->use_textbrowsers)) {
     if (is_string($DBInfo->use_textbrowsers))
       $use_any= preg_match('/'.$DBInfo->use_textbrowsers.'/',
         $_SERVER['HTTP_USER_AGENT']) ? 1:0;
@@ -31,7 +31,7 @@ function macro_Comment($formatter,$value,$options=array()) {
         $_SERVER['HTTP_USER_AGENT']) ? 1:0;
   }
   $captcha='';
-  if (!$use_any and $DBInfo->use_ticket and $options['id'] == 'Anonymous') {
+  if (empty($use_any) and !empty($DBInfo->use_ticket) and $options['id'] == 'Anonymous') {
      $seed=md5(base64_encode(time()));
      $ticketimg=$formatter->link_url($formatter->page->urlname,'?action=ticket&amp;__seed='.$seed);
      $captcha=<<<EXTRA
@@ -41,7 +41,7 @@ EXTRA;
   }
 
   $hidden = '';
-  if (!$options['page']) $options['page']=$formatter->page->name;
+  if (empty($options['page'])) $options['page']=$formatter->page->name;
   if (empty($options['action'])) $action='comment';
   else $action=$options['action'];
   if (!empty($options['mode']))
@@ -63,7 +63,7 @@ EXTRA;
   if (!empty($options['nocomment'])) return '';
   if (!$DBInfo->security->writable($options)) return '';
 
-  if ($options['mid']) $mymid=$options['mid'];
+  if (!empty($options['mid'])) $mymid=$options['mid'];
   else $mymid=$formatter->mid;
   $emid=base64_encode($mymid.',Comment,'.$value);
 
@@ -92,6 +92,7 @@ EXTRA;
 
   $comment=_("Comment");
   $preview_btn=_("Preview");
+  $preview = '';
   if (!empty($oneliner)) {
     $form.=<<<FORM
 <input class='wiki' size='$cols' name="savetext" value="$savetext" />&nbsp;
@@ -104,11 +105,12 @@ FORM;
  rows="$rows" cols="$cols">$savetext</textarea><br />
 FORM;
   }
+  $sig = '';
   if ($options['id'] == 'Anonymous') {
     $name = !empty($options['name']) ? $options['name'] : '';
     $sig=_("Username").": <input name='name' value='$name' size='10' />";
   }
-  else if (!$use_meta)
+  else if (empty($use_meta))
     $sig="<input name='nosig' type='checkbox' />"._("Don't add a signature");
   $form.= <<<FORM2
 $hidden
@@ -138,22 +140,22 @@ function do_comment($formatter,$options=array()) {
     return do_invalid($formatter,$options);
   }
 
-  if ($options['usemeta']) $use_meta=1;
+  if (!empty($options['usemeta'])) $use_meta=1;
 
   $COLS_MSIE = 80;
   $COLS_OTHER = 85;
   $cols = preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
 
-  $rows=$options['rows'] > 5 ? $options['rows']: 8;
-  $cols=$options['cols'] > 60 ? $options['cols']: $cols;
+  $rows=(!empty($options['rows']) and $options['rows'] > 5) ? $options['rows']: 8;
+  $cols=(!empty($options['cols']) and $options['cols'] > 60) ? $options['cols']: $cols;
 
   $url=$formatter->link_url($formatter->page->urlname);
 
-  $button_preview=$options['button_preview'];
+  $button_preview=!empty($options['button_preview']) ? $options['button_preview'] : 0;
 
 
   $use_any=0;
-  if ($DBInfo->use_textbrowsers) {
+  if (!empty($DBInfo->use_textbrowsers)) {
     if (is_string($DBInfo->use_textbrowsers))
       $use_any= preg_match('/'.$DBInfo->use_textbrowsers.'/',
         $_SERVER['HTTP_USER_AGENT']) ? 1:0;
@@ -163,7 +165,7 @@ function do_comment($formatter,$options=array()) {
   }
 
   $ok_ticket=0;
-  if (!$use_any and $DBInfo->use_ticket and $options['id'] == 'Anonymous') {
+  if (empty($use_any) and !empty($DBInfo->use_ticket) and $options['id'] == 'Anonymous') {
     if ($options['__seed'] and $options['check']) {
       $mycheck=getTicket($options['__seed'],$_SERVER['REMOTE_ADDR'],4);
       if ($mycheck==$options['check'])
@@ -188,7 +190,7 @@ function do_comment($formatter,$options=array()) {
     #$savetext=str_replace("<","&lt;",$savetext);
   }
 
-  if ($savetext and !$button_preview and $DBInfo->spam_filter) {
+  if (!empty($savetext) and empty($button_preview) and !empty($DBInfo->spam_filter)) {
     $text=$savetext;
     $fts=preg_split('/(\||,)/',$DBInfo->spam_filter);
     foreach ($fts as $ft) {
@@ -199,8 +201,8 @@ function do_comment($formatter,$options=array()) {
       $options['msg'] = _("Sorry, can not save page because some messages are blocked in this wiki.");
     }
   }
-  if ($button_preview && $options['savetext']) {
-    if ($options['action_mode'] != 'ajax') {
+  if (!empty($button_preview) && !empty($options['savetext'])) {
+    if (empty($options['action_mode']) or $options['action_mode'] != 'ajax') {
       $formatter->send_header("",$options);
       $formatter->send_title(_("Preview comment"),"",$options);
       $formatter->send_page($savetext."\n----");
@@ -210,8 +212,8 @@ function do_comment($formatter,$options=array()) {
       $formatter->send_footer("",$options);
     }
     return false;
-  } else if (!$savetext) {
-    if ($options['action_mode'] != 'ajax') {
+  } else if (empty($savetext)) {
+    if (empty($options['action_mode']) or $options['action_mode'] != 'ajax') {
       $formatter->send_header("",$options);
       $formatter->send_title(_("Add comment"),"",$options);
       print macro_Comment($formatter,'',$options);
@@ -224,7 +226,7 @@ function do_comment($formatter,$options=array()) {
   $datestamp= $options['datestamp'];
   if ($formatter->page->mtime() > $datestamp) {
     $options['msg']='';
-    if (!$options['action_mode'] != 'ajax') {
+    if (empty($options['action_mode']) or $options['action_mode'] != 'ajax') {
       $formatter->send_header('',$options);
       $formatter->send_title(_("Error: Don't make a clone!"),'',$options);
       $formatter->send_footer('',$options);
@@ -239,7 +241,7 @@ function do_comment($formatter,$options=array()) {
       _stripslashes($options['name']):$_SERVER['REMOTE_ADDR'];
   else $id=$options['id'];
 
-  if ($use_meta) {
+  if (!empty($use_meta)) {
     $date=gmdate('Y-m-d H:i:s').' GMT';
     $savetext=rtrim($savetext)."\n";
     $boundary= strtoupper(md5("COMMENT")); # XXX
@@ -257,7 +259,7 @@ Date: $date
 META;
     $savetext="----".$boundary."\n$meta\n\n$savetext\n";
   } else {
-    if ($options['nosig']) $savetext="----\n$savetext\n";
+    if (!empty($options['nosig'])) $savetext="----\n$savetext\n";
     else if($options['id']=='Anonymous')
       $savetext="----\n$savetext -- $id @DATE@\n";
     else

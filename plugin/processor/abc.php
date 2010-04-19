@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a abc2midi processor plugin for the MoniWiki
 //
@@ -39,8 +39,8 @@ function processor_abc($formatter="",$value="") {
     umask(022);
   }
 
-  #if (1 || $formatter->refresh || !file_exists("$cache_dir/$uniq.midi")) {
-  if ($formatter->refresh || !file_exists("$cache_dir/$uniq.midi")) {
+  $log='';
+  if (!empty($formatter->refresh) || !file_exists("$cache_dir/$uniq.midi")) {
 
     $tmpf=tempnam($vartmp_dir,"FOO");
     $fp= fopen($tmpf, "w");
@@ -67,13 +67,12 @@ function processor_abc($formatter="",$value="") {
 #
      $cmd= "$abc2midi $tmpf -o $cache_dir/$uniq.midi";
      $fp=popen($cmd.$formatter->NULL,'r');
-     $log='';
      while($s = fgets($fp, 1024)) $log.= $s;
      pclose($fp);
 
      unlink($tmpf);
   
-     if ($log)
+     if (!empty($log))
         $log ="<pre style='background-color:black;color:gold'>$log</pre>\n";
   }
   return $log."<embed src='$DBInfo->url_prefix/$cache_dir/$uniq.midi' height='20' />";

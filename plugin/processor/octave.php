@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003,2004 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003,2010 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a octave processor plugin for the MoniWiki
 //
@@ -61,7 +61,8 @@ $plt
     umask(022);
   }
 
-  if ($formatter->preview || $formatter->refresh || !file_exists("$cache_dir/$uniq.png")) {
+  $log = '';
+  if (!empty($formatter->preview) || !empty($formatter->refresh) || !file_exists("$cache_dir/$uniq.png")) {
      $flog=tempnam($vartmp_dir,"OCTAVE");
      #
      # for Win32 woctave.exe

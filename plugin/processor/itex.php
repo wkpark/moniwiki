@@ -1,5 +1,5 @@
 <?php
-// Copyright 2005 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2005-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a latex processor plugin for the MoniWiki
 //
@@ -65,7 +65,7 @@ function processor_itex($formatter="",$value="",$options='') {
     $cache_dir=$DBInfo->upload_dir."/itex";
 
     $type='block';
-    if ($options['type']) $type=$options['type'];
+    if (!empty($options['type'])) $type=$options['type'];
   
     if ($value[0]=='#' and $value[1]=='!')
         list($line,$value)=explode("\n",$value,2);
@@ -88,7 +88,7 @@ function processor_itex($formatter="",$value="",$options='') {
         $NULL='NUL';
     }
     
-    if ($formatter->preview || $formatter->refresh || !file_exists("$cache_dir/$uniq.xml")) {
+    if (!empty($formatter->preview) || !empty($formatter->refresh) || !file_exists("$cache_dir/$uniq.xml")) {
         $srcpath="$vartmp_dir/$uniq.itex";
         $outpath="$cache_dir/$uniq.xml";
 

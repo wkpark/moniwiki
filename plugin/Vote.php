@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a Vote plugin for the MoniWiki
 // vim:et:ts=2:
@@ -32,7 +32,7 @@ function macro_Vote($formatter,$value) {
   $cat_bar="<img src='$imgdir/vote/$iconset/rightbar.gif'>";
 
   $out='';
-  if (!$vote_off)
+  if (empty($vote_off))
     $out.="<form method='post'>
 <input type='hidden' name='ticket' value='$md5' />
 <input type='hidden' name='action' value='vote' />";
@@ -47,12 +47,12 @@ function macro_Vote($formatter,$value) {
     $md5=md5($item);
     $out.="<tr><td>$item </td><td nowrap='nowrap'>$bar</td><td>".
          sprintf("%3d (%3.2f %%)",$count,$ratio);
-    if (!$vote_off)
+    if (empty($vote_off))
       $out.="<input type='radio' name='vote' value='$md5' />";
     $out.="</td></tr>\n";
   }
   $out.="<tr><td colspan='2' align='right'><b>Total votes</b></td><td align='center'>$total";
-  if (!$vote_off)
+  if (empty($vote_off))
     $out.="<input type='submit' value='Vote' /></td></tr>\n</table></form>\n";
   else
     $out.="</td></tr>\n</table>\n";

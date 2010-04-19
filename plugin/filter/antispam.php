@@ -1,5 +1,5 @@
 <?php
-// Copyright 2005 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2005-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a Antispam filter plugin for the MoniWiki
 //
@@ -11,6 +11,7 @@ function filter_antispam($formatter,$value,$options) {
     if (! in_array($formatter->page->name,$blacklist_pages) and
         ! in_array($formatter->page->name,$whitelist_pages)) {
 
+        $badcontent = '';
         foreach ($blacklist_pages as $list) {
             $p=new WikiPage($list);
             if ($p->exists()) $badcontent.=$p->get_raw_body();
@@ -20,7 +21,7 @@ function filter_antispam($formatter,$value,$options) {
         $pattern[0]='';
         $i=0;
         foreach ($badcontents as $line) {
-            if ($line[0]=='#') continue;
+            if (isset($line[0]) and $line[0]=='#') continue;
             $line=preg_replace('/[ ]*#.*$/','',$line);
             $test=@preg_match("/$line/i","");
             if ($test === false) $line=preg_quote($line,'/');

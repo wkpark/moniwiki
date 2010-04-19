@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2006 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 //                     JoungKyun Kim <http://www.oops.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a mimetex processor plugin for the MoniWiki
@@ -16,7 +16,7 @@ function processor_mimetex($formatter,$value) {
   preg_match ('/\s*\$+([^\$]*)\$+\s*/', $value, $match);
   $tex = $match[1];
 
-  $mimetex= $DBInfo->mimetex_path ? $DBInfo->mimetex_path:
+  $mimetex= !empty($DBInfo->mimetex_path) ? $DBInfo->mimetex_path:
     $DBInfo->url_prefix.'/mimetex.cgi';
 
   $ext='gif';

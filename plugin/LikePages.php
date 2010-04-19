@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a LikePages plugin for the MoniWiki
 // vim:et:ts=2:
@@ -8,7 +8,7 @@
 
 function do_LikePages($formatter,$options) {
 
-  $opts['metawiki']=$options['metawiki'];
+  $opts['metawiki']=!empty($options['metawiki']) ? $options['metawiki'] : '';
   $out= macro_LikePages($formatter,$options['page'],$opts);
   
   $title = $opts['msg'];
@@ -25,12 +25,13 @@ function macro_LikePages($formatter="",$args="",&$opts) {
 
   $pname=_preg_escape($args);
 
-  $metawiki=$opts['metawiki'];
+  $metawiki=!empty($opts['metawiki']) ? $opts['metawiki'] : '';
 
   if (strlen($pname) < 3) {
     $opts['msg'] = _("Use more specific text");
     return '';
   }
+  $opts['extra'] = '';
 
   $s_re="^[A-Z][a-z0-9]+";
   $e_re="[A-Z][a-z0-9]+$";
@@ -46,16 +47,16 @@ function macro_LikePages($formatter="",$args="",&$opts) {
     $e_len=strlen($end);
   }
 
-  if (!$start && !$end) {
+  if (empty($start) && empty($end)) {
     preg_match("/^(.{2,4})/",$args,$match);
     $s_len=strlen($match[1]);
     $start=trim(_preg_escape($match[1]));
   }
 
-  if (!$end) {
+  if (empty($end)) {
     $end=substr($args,$s_len);
     preg_match("/(.{2,6})$/",$end,$match);
-    $end=$match[1];
+    $end=isset($match[1]) ? $match[1] : '';
     $e_len=strlen($end);
     if ($e_len < 2) $end="";
     else $end=_preg_escape($end);
@@ -65,9 +66,14 @@ function macro_LikePages($formatter="",$args="",&$opts) {
   $ends=array();
   $likes=array();
 
-  if (!$metawiki) {
+  if (empty($metawiki)) {
     $pages = $DBInfo->getPageLists();
   } else {
+    if (empty($DBInfo->metadb)) $DBInfo->initMetaDB();
+    if (empty($DBInfo->metadb)) {
+      $opts['msg'] = _("No metadb found");
+      return '';
+    }
     if (!$end) $needle=$start;
     else $needle="$start|$end";
     $pages = $DBInfo->metadb->getLikePages($needle);
@@ -95,7 +101,7 @@ function macro_LikePages($formatter="",$args="",&$opts) {
 
     foreach ($pages as $page) {
       preg_match("/($similar_re)/i",$page,$matches);
-      if ($matches && !$starts[$page] && !$ends[$page])
+      if ($matches && empty($starts[$page]) && empty($ends[$page]))
         $likes[$page]=1;
     }
   }
@@ -140,21 +146,24 @@ function macro_LikePages($formatter="",$args="",&$opts) {
       $idx++;
     }
     $out.="</ol>\n</td></tr></table>\n";
-    $opts['extra']=_("If you can't find this page, ");
     $hits+=count($starts) + count($ends);
   }
 
-  if (!$hits) {
+  if (empty($hits)) {
     $out.="<h3>"._("No similar pages found")."</h3>";
-    if (!$metawiki)
-      $opts['extra']=_("You are strongly recommened to find it in MetaWikis. ");
   }
 
   $opts['msg'] = sprintf(_("Like \"%s\""),$args);
 
-  if (!$metawiki) {
+  while (empty($metawiki)) {
+    if (empty($DBInfo->metadb)) $DBInfo->initMetaDB();
+    if (empty($DBInfo->metadb)) break;
+    $opts['extra']=_("If you can't find this page, ");
+    if (empty($hits) and empty($metawiki) and !empty($DBInfo->metadb))
+      $opts['extra']=_("You are strongly recommened to find it in MetaWikis. ");
     $tag=$formatter->link_to("?action=LikePages&amp;metawiki=1",_("Search all MetaWikis"));
     $opts['extra'].="$tag ("._("Slow Slow").")<br />";
+    break;
   }
 
   return $out;

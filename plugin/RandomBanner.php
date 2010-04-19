@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2006 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a RandomBanner macro plugin for the MoniWiki
 //
@@ -12,8 +12,10 @@ function macro_RandomBanner($formatter,$value="") {
   global $DBInfo;
 
   $test=preg_match("/^([^ ,0-9]*)\s*,?\s*(\d+)?$/",$value,$match);
-  if ($test) 
-    $pagename=$match[1];$number=$match[2];
+  if ($test) {
+    $pagename=!empty($match[1]) ? $match[1] : '';
+    $number=!empty($match[2]) ? $match[2] : '';
+  }
 
   if (!$pagename) $pagename='RandomBanner';
   if (!$number) $number=3;
@@ -29,9 +31,9 @@ function macro_RandomBanner($formatter,$value="") {
   foreach ($lines as $line) {
     if (substr($line,0,10)!= ' * http://') continue;
     $dummy=explode(" ",substr($line,3),3);
-    $text=$dummy[1];
-    $title=$dummy[2];
-    if (preg_match(",^(http|ftp|attachment):.*\.(gif|png|jpg|jpeg)$,",$text,$match)) {
+    $text=!empty($dummy[1]) ? $dummy[1] : '';
+    $title=!empty($dummy[2]) ? $dummy[2] : '';
+    if (!empty($text) and preg_match(",^(http|ftp|attachment):.*\.(gif|png|jpg|jpeg)$,",$text,$match)) {
       if ($match[1]=='attachment') {
         $fname=$pagename.'/'.substr($text,11);
         $ntext=$formatter->macro_repl('Attachment',$fname,1);

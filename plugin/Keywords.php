@@ -1,5 +1,5 @@
 <?php
-// Copyright 2005-2008 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2005-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a 'Keywords' plugin for the MoniWiki
 //
@@ -25,6 +25,7 @@ define('MIN_FONT_SZ',10);
 
     $limit=isset($options['limit']) ? $options['limit']:40;
     $opts=explode(',',$value);
+    $sort = '';
     foreach ($opts as $opt) {
         $opt=trim($opt);
         if ($opt == 'delicious' or $opt == 'del.icio.us')
@@ -67,7 +68,7 @@ define('MIN_FONT_SZ',10);
     if (isset($options['random']) and empty($limit)) $limit=0;
     if (isset($options['sort']) and $options['sort']=='freq') $sort= 'freq';
 
-    if (!$pagename) $pagename=$formatter->page->name;
+    if (empty($pagename)) $pagename=$formatter->page->name;
 
     # get cached keywords
     $cache=new Cache_text('keyword');
@@ -118,7 +119,7 @@ define('MIN_FONT_SZ',10);
         arsort($words);
         $max=current($words); // get max hit number
 
-        if ($options['random']) {
+        if (!empty($options['random'])) {
             $rws=array();
             $selected=array_rand($words,min($options['random'],count($words)));
             foreach($selected as $k) {
@@ -328,18 +329,18 @@ EOF;
     }
     endif;
 
-    if ($sort!='freq') ksort($words);
+    if (empty($sort) or $sort!='freq') ksort($words);
 
     $link=$formatter->link_url(_rawurlencode($pagename),'');
     if (!isset($tag_link)) {
-        if (!$search) $search='fullsearch&amp;keywords=1';
-        if ($options['tour'])
+        if (empty($search)) $search='fullsearch&amp;keywords=1';
+        if (!empty($options['tour']))
             $search='tour&amp;arena=keylinks';
         $tag_link=$formatter->link_url(_rawurlencode($pagename),
             '?action='.$search.'&amp;value=$TAG');
     }
     $out='';
-    if ($options['add']) {
+    if (!empty($options['add'])) {
         $out="<form method='post' action='$link'>\n";
         $out.="<input type='hidden' name='action' value='keywords' />\n";
     }
@@ -397,6 +398,7 @@ swfobject.embedSWF("$_swf_prefix/tagcloud.swf", "myCloud", "200", "200", "9.0.0"
 SWF;
     }
     $out.='<ul>';
+    $checkbox = '';
     foreach ($words as $key=>$val) {
         $style=$sty[$fz-1];
         for ($i=0;$i<$fz;$i++) {
@@ -408,11 +410,11 @@ SWF;
         if ($val > $min) {
             $checked='';
             if ($val >= $max) {$checked='checked="checked"'; $ok=1;}
-            if ($options['add'])
+            if (!empty($options['add']))
                 $checkbox="<input type='checkbox' $checked name='key[]' ".
                     "value='$key' />";
             $out.=" <li class=\"tag-item\"";
-            if ($use_sty) {
+            if (!empty($use_sty)) {
                 $out.=" $style title=\"$val "._("hits").'"';
             }
             $out.=">$checkbox"."<a href='".str_replace('$TAG',$key,$tag_link).
@@ -420,7 +422,9 @@ SWF;
         }
     }
 
-    if ($options['add']) {
+    $inp = '';
+    $form_close = '';
+    if (!empty($options['add'])) {
         $msg=_("add keywords");
         $inp="<li><input type='text' name='keywords' size='12' />: $msg</li>";
         if ($ok)
@@ -463,7 +467,7 @@ function do_keywords($formatter,$options) {
         return;
     }
 
-    if ($options['update'] or $options['refresh']) {
+    if (!empty($options['update']) or !empty($options['refresh'])) {
         $lk=$DBInfo->getPage(LOCAL_KEYWORDS);
         $force_charset='';
         if ($DBInfo->force_charset)
@@ -530,9 +534,9 @@ function do_keywords($formatter,$options) {
 
     $formatter->send_header('',$options);
 
-    if (!$options['suggest'] and
-        (is_array($options['key']) or $options['keywords'])) {
-        if ($options['keywords']) {
+    if (empty($options['suggest']) and
+        (is_array($options['key']) or !empty($options['keywords']))) {
+        if (!empty($options['keywords'])) {
             // following keyword list are acceptable separated with spaces.
             // Chemistry "Physical Chemistry" "Bio Chemistry" ...
             $keywords=_stripslashes($options['keywords']);
@@ -552,7 +556,7 @@ function do_keywords($formatter,$options) {
             $options['key']=array_merge($options['key'],$ws);
         }
 
-        if ($options['common']) {
+        if (!empty($options['common'])) {
             $raw="#format plain"; 
             $lang=$formatter->pi['#language'] ? $formatter->pi['#language']:'';
             $lang=$options['lang'] ? $options['lang']:$lang;
@@ -624,7 +628,7 @@ function do_keywords($formatter,$options) {
             }
             $body=rtrim($body);
         }
-        if ($options['key']) {
+        if (!empty($options['key'])) {
             // XXX
             $ks= array_map(create_function('$a',
                 'return (strpos($a," ") !== false) ? "\"$a\"":$a;'),
@@ -642,11 +646,11 @@ function do_keywords($formatter,$options) {
         }
         $ret=substr($ret,0,strlen($ret)-1);
         print "<tt>#keywords $ret</tt>\n";
-        if ($DBInfo->use_keywords or $options['update']) {
+        if (!empty($DBInfo->use_keywords) or !empty($options['update'])) {
             # auto update the page with selected keywords.
             $body=$formatter->page->get_raw_body();
             $pi=$formatter->get_instructions($dum);
-            if ($pi['#keywords']) {
+            if (!empty($pi['#keywords'])) {
                 $tag=preg_quote($pi['#keywords']);
                 $nbody= preg_replace('/^#keywords\s+'.$tag.'/',
                     '#keywords '.$ret,$body,1);
@@ -655,7 +659,7 @@ function do_keywords($formatter,$options) {
                 $nbody='#keywords '.$ret."\n".$body;
                 $ok=2;
             }
-            if ($ok) {
+            if (!empty($ok)) {
                 if ($ok==1) $comment="Keywords are updated";
                 else $comment="Keywords are added";
                 $formatter->page->write($nbody);
@@ -688,8 +692,8 @@ function do_keywords($formatter,$options) {
         return;
     }
 
-    if ($options['all'] or $options['tour']) {
-        if ($options['sort']=='freq') $sort= 'freq';
+    if (!empty($options['all']) or !empty($options['tour'])) {
+        if (!empty($optiopns['sort']) and $options['sort']=='freq') $sort= 'freq';
         $formatter->send_title('','', $options);
         $myq='?'.$_SERVER['QUERY_STRING'];
         $myq=preg_replace('/&sort=[^&]+/i','',$myq);

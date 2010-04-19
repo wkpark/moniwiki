@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2008 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // Draw plugin with the JHotDraw for the MoniWiki
 //
@@ -66,7 +66,7 @@ function do_post_Draw($formatter,$options=array()) {
 
   $name=$options['value'];
 
-  if ($_FILES['filepath']) {
+  if (!empty($_FILES['filepath'])) {
     $upfile=$_FILES['filepath']['tmp_name'];
     $temp=explode("/",$_FILES['filepath']['name']);
     $upfilename= $temp[count($temp)-1];
@@ -126,7 +126,7 @@ function do_post_Draw($formatter,$options=array()) {
   }
 
   $gifname=_rawurlencode($name);
-  if ($_GET['mode'] != 'attach') {
+  if (empty($_GET['mode']) or $_GET['mode'] != 'attach') {
     $gifname='Draw_'.$gifname;
   }
 

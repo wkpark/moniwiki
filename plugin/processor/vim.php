@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2006 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a vim colorizer plugin for the MoniWiki
 //
@@ -53,6 +53,7 @@ function processor_vim($formatter,$value,$options) {
   $src=$value;
   if (!preg_match('/^\w+$/',$type)) $type='nosyntax';
 
+  $option = '';
   if ($extra == "number") 
     $option='+"set number" ';
 
@@ -71,7 +72,7 @@ function processor_vim($formatter,$value,$options) {
   }
 
   $script='';
-  if ($DBInfo->use_numbering and empty($formatter->no_js)) {
+  if (!empty($DBInfo->use_numbering) and empty($formatter->no_js)) {
     $formatter->register_javascripts('numbering.js');
 
     $script="<script type=\"text/javascript\">
@@ -87,7 +88,7 @@ addtogglebutton('PRE-$uniq');
     umask($om);
   }
 
-  if (file_exists($html) && !$formatter->refresh && !$formatter->preview) {
+  if (file_exists($html) && empty($formatter->refresh) && empty($formatter->preview)) {
     $out = "";
     $fp=fopen($html,"r");
     while (!feof($fp)) $out .= fread($fp, 1024);
@@ -103,7 +104,7 @@ addtogglebutton('PRE-$uniq');
     return '<div>'.$script."<pre class='wiki' id='PRE-$uniq'>\n$src</pre></div>\n";
   }
 
-  $tohtml= $DBInfo->vim_2html ? $DBInfo->vim_2html:
+  $tohtml= !empty($DBInfo->vim_2html) ? $DBInfo->vim_2html:
     $tohtml='$VIMRUNTIME/syntax/2html.vim';
   #$tohtml= realpath($DBInfo->data_dir).'/2html.vim';
   if(getenv("OS")=="Windows_NT") {
@@ -125,6 +126,7 @@ addtogglebutton('PRE-$uniq');
         ' +"so '.$tohtml.'" +"wq! '.$fout.'" +qall';
 
   $log='';
+  $out = '';
   if(getenv("OS")=="Windows_NT") {
     system($cmd);
     $out=join(file($fout),"");

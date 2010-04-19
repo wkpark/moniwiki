@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2008 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a latex processor plugin for the MoniWiki
 //
@@ -29,13 +29,13 @@ function _latex_renumber($match,$tag='\\tag') {
 function processor_latex(&$formatter,$value="",$options=array()) {
   global $DBInfo;
 
-  if (!$formatter->latex_uniq) {
+  if (empty($formatter->latex_uniq)) {
     $formatter->latex_all='';
     $formatter->latex_uniq=array();
   }
 
   $latex_convert_options=
-    $DBInfo->latex_convert_options ? $DBInfo->latex_convert_options:"-trim -crop 0x0 -density 120x120";
+    !empty($DBInfo->latex_convert_options) ? $DBInfo->latex_convert_options:"-trim -crop 0x0 -density 120x120";
 
   $raw_mode = isset($options['retval']) ? 1:0;
 
@@ -47,7 +47,7 @@ function processor_latex(&$formatter,$value="",$options=array()) {
   $mogrify="mogrify";
   $vartmp_dir=&$DBInfo->vartmp_dir;
   $cache_dir=$DBInfo->upload_dir."/LaTeX";
-  $cache_url=$DBInfo->upload_url ? $DBInfo->upload_url.'/LaTeX':
+  $cache_url=!empty($DBInfo->upload_url) ? $DBInfo->upload_url.'/LaTeX':
     $DBInfo->url_prefix.'/'.$cache_dir;
   $option='-interaction=batchmode ';
   $mask='';
@@ -55,12 +55,12 @@ function processor_latex(&$formatter,$value="",$options=array()) {
   if (preg_match('/ps$/',$dvicmd)) {
     $tmpext='ps';
     $dviopt='-D 300';
-    if ($options['dpi'])
+    if (!empty($options['dpi']))
       $latex_convert_options.= ' -density '.$options['dpi'].'x'.$options['dpi'];
   } else {
     $tmpext='png';
     $mask='-%d';
-    if ($options['dpi']) {
+    if (!empty($options['dpi'])) {
       $dviopt= preg_replace('/-D 120/','',$dviopt);
       $dviopt.=' -D '.$options['dpi'];
     }
@@ -70,13 +70,13 @@ function processor_latex(&$formatter,$value="",$options=array()) {
     list($line,$value)=explode("\n",$value,2);
 
   if (!$value) {
-    if (!$DBInfo->latex_allinone) return '';
+    if (empty($DBInfo->latex_allinone)) return '';
   }
 
   $tex=$value;
 
-  if ($DBInfo->latex_renumbering) {
-    $GLOBALS['_latex_eq_num']=$formatter->latex_num ? $formatter->latex_num:0;
+  if (!empty($DBInfo->latex_renumbering)) {
+    $GLOBALS['_latex_eq_num']=!empty($formatter->latex_num) ? $formatter->latex_num:0;
     // renumbering
     //  just remove numbers and use \\tag{num}
     $ntex=preg_replace_callback('/\\\\begin\{\s*(equation)\s*\}((.|\n)+)\\\\end\{\s*\1\s*\}/',
@@ -84,20 +84,21 @@ function processor_latex(&$formatter,$value="",$options=array()) {
     #print '<pre>'.$ntex.'</pre>';
     if ($tex != $ntex) { $tex=$ntex; }
     $formatter->latex_num=$GLOBALS['_latex_eq_num']; // save
-  } else if (!$raw_mode and $DBInfo->latex_allinone) {
+  } else if (!$raw_mode and !empty($DBInfo->latex_allinone)) {
     $ntex=preg_replace('/\\\\begin\{\s*(equation)\s*\}((.|\n)+)\\\\end\{\s*\1\s*\}/e',
       "_latex_renumber(array('','\\1','\\2'),\"\n%%\")",$tex);
     if ($tex != $ntex) { $tex=$ntex; }
     #print '<pre>'.$ntex.'</pre>';
   }
 
-  if ($DBInfo->latex_template and file_exists($DBInfo->data_dir.'/'.$DBInfo->latex_template)) {
+  if (!empty($DBInfo->latex_template) and file_exists($DBInfo->data_dir.'/'.$DBInfo->latex_template)) {
     $templ=implode('',file($DBInfo->data_dir.'/'.$DBInfo->latex_template));
   } else {
+    $head = !empty($DBInfo->latex_header) ? $DBInfo->latex_header : '';
     $templ="\\documentclass[10pt,notitlepage]{article}
 \\usepackage{amsmath}
 \\usepackage{amssymb}
-\\usepackage{amsfonts}$DBInfo->latex_header
+\\usepackage{amsfonts}$head
 %%\usepackage[all]{xy}
 \\pagestyle{empty}
 \\begin{document}
@@ -111,18 +112,18 @@ function processor_latex(&$formatter,$value="",$options=array()) {
   $uniq=$tex ? md5($src):$formatter->latex_uniq[sizeof($formatter->latex_uniq)-1];
 
   // check image file exists
-  if (!$raw_mode and $DBInfo->latex_allinone and $tex) {
+  if (empty($raw_mode) and !empty($DBInfo->latex_allinone) and $tex) {
     $formatter->latex_uniq[]=$uniq;
     $formatter->latex_all.=$tex."\n\\pagebreak\n\n";
     #print '<pre>'.$tex.'</pre>';
   }
 
-  if ($DBInfo->cache_public_dir) {
+  if (!empty($DBInfo->cache_public_dir)) {
     $fc=new Cache_text('latex',2,'png',$DBInfo->cache_public_dir);
     $pngname=$fc->_getKey($uniq,0);
     $png= $DBInfo->cache_public_dir.'/'.$pngname;
     $png_url=
-      $DBInfo->cache_public_url ? $DBInfo->cache_public_url.'/'.$pngname:
+      !empty($DBInfo->cache_public_url) ? $DBInfo->cache_public_url.'/'.$pngname:
       $DBInfo->url_prefix.'/'.$png;
   } else {
     $png=$cache_dir.'/'.$uniq.'.png';
@@ -142,17 +143,19 @@ function processor_latex(&$formatter,$value="",$options=array()) {
     #$convert="wconvert";
   }
 
-  if ($formatter->preview and !$DBInfo->latex_allinone) {
+  $bra = ''; $ket = '';
+  if (!empty($formatter->preview) and empty($DBInfo->latex_allinone)) {
     $bra='<span class="previewTex"><input type="checkbox" class="previewTex" name="_tex_'.$uniq.'" />';
     $ket='</span>';
   }
 
   $img_exists=file_exists($png);
-  while ($formatter->preview || $formatter->refresh || !$img_exists) {
+  $log = '';
+  while (!empty($formatter->preview) || !empty($formatter->refresh) || !$img_exists) {
   //if ($options['_tex_'.$uniq] || $formatter->refresh || !file_exists($png)) {
 
-     if (!$raw_mode and $DBInfo->latex_allinone) {
-       if (!$value) {
+     if (empty($raw_mode) and !empty($DBInfo->latex_allinone)) {
+       if (empty($value)) {
          #$js= '<script type="text/javascript" src="'.$DBInfo->url_prefix.'/local/latex.js"></script>';
     	 if ($formatter->register_javascripts('latex.js'));
 
@@ -181,9 +184,12 @@ function processor_latex(&$formatter,$value="",$options=array()) {
      $log=$formatter->get_errlog(1,1);
 
      if ($log) {
-       list($dum,$log,$dum2)=preg_split('/\n!/',$log,3);
-       if ($log) {
+       #list($dum,$log,$dum2)=preg_split('/\n!/',$log,3);
+       if (($p = strpos($log, "\n!")) !== FALSE) {
+         $log = substr($log,$p);
          $log="<pre class='errlog'>".$log."</pre>\n";
+       } else {
+         $log = '';
        }
      }
 
@@ -208,7 +214,7 @@ function processor_latex(&$formatter,$value="",$options=array()) {
      if ($tmpext == 'ps') {
        $cmd= "$convert -transparent white $latex_convert_options $vartmp_dir/$uniq.$tmpext ".basename($outpath);
      } else {
-       if (!$raw_mode and $DBInfo->latex_allinone) $outpath="$vartmp_dir/$uniq.$tmpext";
+       if (!$raw_mode and !empty($DBInfo->latex_allinone)) $outpath="$vartmp_dir/$uniq.$tmpext";
        $cmd= "$mogrify -transparent white $latex_convert_options $vartmp_dir/$uniq*.$tmpext";
      }
 
@@ -270,7 +276,7 @@ function processor_latex(&$formatter,$value="",$options=array()) {
   $title=$alt;
   if (!$raw_mode and !$img_exists) {
     $title=$png_url;
-    if ($DBInfo->latex_allinone==1 && !$formatter->wikimarkup)
+    if ($DBInfo->latex_allinone==1 && empty($formatter->wikimarkup))
       $png_url=$DBInfo->imgs_dir.'/loading.gif';
   }
   if (!$raw_mode)

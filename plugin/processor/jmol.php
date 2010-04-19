@@ -1,5 +1,5 @@
 <?php
-// Copyright 2004-2008 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2004-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a Jmol plugin for the MoniWiki
 //
@@ -8,6 +8,8 @@
 // $Id$
 
 function processor_jmol($formatter,$value="") {
+    global $DBInfo;
+
     $verbs=array('#sticks'=>'wireframe 0.25',
                 '#ball&stick'=>'wireframe 0.18; spacefill 25%',
                 '#wireframe'=>'wireframe 0.1',
@@ -19,25 +21,27 @@ function processor_jmol($formatter,$value="") {
     $default_size="width='200' height='200'";
     $sep='';
     # old java behavior
-    if ($use_sep) { $sep='|'; }
+    if (!empty($use_sep)) { $sep='|'; }
 
     $use_inline=1; // MOPAC format does not recognized with a param "loadInline"
 
     if ($value[0]=='#' and $value[1]=='!')
       list($line,$value)=explode("\n",$value,2);
-    list($dum,$szarg)=explode(' ',$line);
-    if ($szarg) {
+    $dum=explode(' ',$line);
+    $szarg = !empty($dum[1]) ? $dum[1] : '';
+    if (!empty($szarg)) {
       $args= explode('x',$szarg,2);
       $xsize=intval($args[0]);$ysize=intval($args[1]);
     }
 
     $body = $value;
     //$args='<param name="emulate" value="chime" />';
+    $args = '';
     $args.='<param name="progressbar" value="true" />';
 
     $script='set defaultColors Rasmol;set frank off;wireframe 0.18;spacefill 25%;';
     //$script='set frank off;wireframe 0.18;spacefill 25%;';
-    if ($DBInfo->jmol_script) $script.=$DBInfo->jmol_script;
+    if (!empty($DBInfo->jmol_script)) $script.=$DBInfo->jmol_script;
 
 
     while ($body and $body[0] == '#') {
@@ -63,7 +67,7 @@ function processor_jmol($formatter,$value="") {
         $args.='<param name="script" value="'.$script.'" />'."\n";
     $args.='<param name="mayscript" value="true" />'."\n";
 
-    if ($xsize) {
+    if (!empty($xsize)) {
       if ($xsize > 640 or $xsize < 100) $xscale=0.5;
       if ($xscale and ($ysize > 480 or $ysize < 100)) $yscale=0.6;
       $xscale=$xsize/640.0;
@@ -88,6 +92,8 @@ function processor_jmol($formatter,$value="") {
     if ($id==0) {
         $jsize=str_replace(array(" ","'"),array(",",""),$size);
         $jsIE='';
+        $base64js = '';
+        $base64url = '';
         if (preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT'])) {
             $jsurl=qualifiedUrl($formatter->url_prefix.'/local/base64.js');
             $base64js="<script type='text/javascript' src='$jsurl'></script>";
@@ -205,12 +211,12 @@ JS;
 
     $pubpath = $formatter->url_prefix.'/applets/JmolPlugin';
 
-    if ($use_inline) {
+    if (!empty($use_inline)) {
         $molstring=$body;
-        if ($use_sep) {
+        if (!empty($use_sep)) {
             $molstring=str_replace("\n",$sep."\n",$molstring);
         }
-        if ($molstring{0} == ' ') $molstring=$sep."\n".$molstring;
+        if ($molstring[0] == ' ') $molstring=$sep."\n".$molstring;
         $args.="<param name='loadinline' value='$molstring' />";
     }
 

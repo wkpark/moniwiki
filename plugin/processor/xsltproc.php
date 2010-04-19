@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a xml processor plugin for the MoniWiki
 //
@@ -22,7 +22,7 @@ function processor_xsltproc($formatter,$value) {
 
   $cache= new Cache_text("docbook");
 
-  if (!$formatter->preview and !$formatter->refresh and $cache->exists($pagename) and $cache->mtime($pagename) > $formatter->page->mtime())
+  if (empty($formatter->preview) and empty($formatter->refresh) and $cache->exists($pagename) and $cache->mtime($pagename) > $formatter->page->mtime())
     return $cache->fetch($pagename);
 
   list($line,$body)=explode("\n",$value,2);
@@ -36,7 +36,7 @@ function processor_xsltproc($formatter,$value) {
     }
     $buff.=$line."\n";
     list($line,$body)=explode("\n",$body,2);
-    if ($flag) break;
+    if (!empty($flag)) break;
   }
   $src=$buff.$line."\n".$body;
 
@@ -49,13 +49,14 @@ function processor_xsltproc($formatter,$value) {
 
   $fp=popen($cmd.$formatter->NULL,"r");
   #fwrite($fp,$src);
+  $html = '';
   if (is_resource($fp)) {
     while($s = fgets($fp, 1024)) $html.= $s;
     pclose($fp);
   }
   unlink($tmpf);
 
-  if (!$html) {
+  if (empty($html)) {
     $src=str_replace("<","&lt;",$value);
     $cache->remove($pagename);
     return "<pre class='code'>$src\n</pre>\n";
@@ -66,7 +67,7 @@ function processor_xsltproc($formatter,$value) {
     if ($new) $html=$new;
   }
 
-  if (!$formatter->preview)
+  if (empty($formatter->preview))
     $cache->update($pagename,$html);
 
   return $html;

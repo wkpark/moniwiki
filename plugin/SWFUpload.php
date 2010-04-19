@@ -1,5 +1,5 @@
 <?php
-// Copyright 2006-2008 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2006-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // SWFUpload plugin for the MoniWiki
 //
@@ -19,13 +19,13 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
     global $DBInfo;
 
     $swf_ver = 10;
-    if ($DBInfo->swfupload_depth > 2) {
+    if (!empty($DBInfo->swfupload_depth) and $DBInfo->swfupload_depth > 2) {
         $depth=$DBInfo->swfupload_depth;
     } else {
         $depth=2;
     }
 
-    if ($DBInfo->nosession) { // ip based
+    if (!empty($DBInfo->nosession)) { // ip based
         $myid=md5($_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI'); // FIXME
     } else {
         if ($_SESSION['_swfupload'])
@@ -40,26 +40,27 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
     $mysubdir=$prefix.'/'.$myid.'/';
     $myoptions="<input type='hidden' name='mysubdir' value='$mysubdir' />";
 
-    if ($DBInfo->use_lightbox) {
+    if (!empty($DBInfo->use_lightbox)) {
         $myoptions.="\n<input type='hidden' name='use_lightbox' value='1' />";
     } else {
         $myoptions.="\n<input type='hidden' name='use_lightbox' value='0' />";
     }
 
-    if ($formatter->preview) {
+    $jsPreview = '';
+    if (!empty($formatter->preview)) {
         $js_tag=1;$jsPreview=' class="previewTag"';
         $uploader='UploadForm';
-    } else if ($options['preview']) {
+    } else if (!empty($options['preview'])) {
         $jsPreview=' class="previewTag"';
     }
 
     $default_allowed='*.gif;*.jpg;*.png;*.psd';
     $allowed=$default_allowed;
-    if ($DBInfo->pds_allowed) {
+    if (!empty($DBInfo->pds_allowed)) {
         $allowed='*.'.str_replace('|',';*.',$DBInfo->pds_allowed);
     }
 
-    $swfupload_num=$GLOBALS['swfupload_num'] ? $GLOBALS['swfupload_num']:0;
+    $swfupload_num=!empty($GLOBALS['swfupload_num']) ? $GLOBALS['swfupload_num']:0;
 
     // get already uploaded files list
     $uploaded='';
@@ -106,7 +107,7 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
 
     }
 
-    if (!$swfupload_num) {
+    if (empty($swfupload_num)) {
         if ($swf_ver == 9) {
             $formatter->register_javascripts(array(
                 'js/swfobject.js',
@@ -142,6 +143,7 @@ CSS;
     if ($mysubdir) $action2.='----'.$mysubdir;
     $action2=qualifiedUrl($action2);
     $myprefix=qualifiedUrl($DBInfo->url_prefix);
+    $swfupload_script = '';
 
     if ($swf_ver == 9) {
         $swf_js=<<<EOF

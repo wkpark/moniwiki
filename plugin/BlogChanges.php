@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2004 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a BlogChanges action plugin for the MoniWiki
 //
@@ -148,8 +148,9 @@ class Blog_cache {
       $raw=$page->get_raw_body();
       $temp= explode("\n",$raw);
 
+      $summary = '';
       foreach ($temp as $line) {
-        if (!$state) {
+        if (empty($state)) {
           if (preg_match("/^({{{)?#!blog\s([^ ]+\s($date"."[^ ]+)\s.*)$/",$line,$match)) {
             $entry=explode(' ',$pageurl.' '.$match[2],4);
             if ($match[1]) $endtag='}}}';
@@ -191,10 +192,14 @@ function do_BlogChanges($formatter,$options='') {
   $options['simple']=1;
   $options['all']=1;
 # $options['mode'] // XXX
+  if (!empty($options['mode']))
+    $arg = 'all,'.$options['mode'];
+  else
+    $arg = 'all';
 
-  $changes=macro_BlogChanges($formatter,'all,'.$options['mode'],$options);
+  $changes=macro_BlogChanges($formatter,$arg,$options);
   $formatter->send_header('',$options);
-  if ($options['category'])
+  if (!empty($options['category']))
     $formatter->send_title(_("Category: ").$options['category'],'',$options);
   else
     $formatter->send_title(_("BlogChanges"),'',$options);
@@ -233,10 +238,10 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
 
   $category_pages=array();
 
-  $options['category']=$options['category'] ? $options['category']:$match[3];
+  $options['category']=!empty($options['category']) ? $options['category']:$match[3];
 
 
-  if ($options['category']) {
+  if (!empty($options['category'])) {
     $options['category']=
       preg_replace('/(?<!\.|\)|\])\*/','.*',$options['category']);
     
@@ -362,6 +367,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
     
   $time_current= time();
   $items='';
+  $date_anchor = '';
 
   $sendopt['nosisters']=1;
 
@@ -371,7 +377,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
     $datetag='';
 
     $url=qualifiedUrl($formatter->link_url(_urlencode($page)));
-    if (!$opts['nouser']) {
+    if (empty($opts['nouser'])) {
       if (preg_match('/^[\d\.]+$/',$user)) {
         if (!$DBInfo->mask_hostname and $DBInfo->interwiki['Whois'])
           $user='<a href="'.$DBInfo->interwiki['Whois'].$user.'">'.
@@ -389,7 +395,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
     $time=strtotime($date.' GMT');
 
     $date= gmdate('m-d [h:i a]',$time+$tz_off);
-    if ($summary) {
+    if (!empty($summary)) {
       $anchor= date('Ymd',$time);
       if ($date_anchor != $anchor) {
         $date_anchor_fmt=$DBInfo->date_fmt_blog;
@@ -406,7 +412,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
       $summary=ob_get_contents();
       ob_end_clean();
 
-      if (!$options['noaction']) {
+      if (empty($options['noaction'])) {
         if ($commentcount) {
           $add_button=($commentcount == 1) ? _("%d comment"):_("%d comments");
         } else
@@ -435,13 +441,14 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
   $url=qualifiedUrl($formatter->link_url($DBInfo->frontpage));
 
   # make pnut
-  if ($options['action']) $action='action=blogchanges&amp;';
-  if ($options['category']) $action.='category='.$options['category'].'&amp;';
-  if ($options['mode']) $action.='mode='.$options['mode'].'&amp;';
+  if (!empty($options['action'])) $action='action=blogchanges&amp;';
+  if (!empty($options['category'])) $action.='category='.$options['category'].'&amp;';
+  if (!empty($options['mode'])) $action.='mode='.$options['mode'].'&amp;';
 
   $prev=$formatter->link_to('?'.$action.'date='.$prev_date,'&laquo; '.
     _("Previous"));
-  if ($next_date)
+  $next = '';
+  if (!empty($next_date))
     $next=" | ".$formatter->link_to('?'.$action.'date='.$next_date,
       _("Next").' &raquo;');
   return $bra.$items.$cat.'<div class="blog-action">'.$prev.$next.'</div>';
