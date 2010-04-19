@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2008 Won-Kyu Park <wkpark at kldp.org> all rights reserved.
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org> all rights reserved.
 // distributable under GPL see COPYING
 //
 // many codes are imported from the MoinMoin
@@ -69,7 +69,7 @@ function qualifiedUrl($url) {
   $proto= 'http';
   if (!empty($_SERVER['HTTPS'])) $proto= 'https';
   else $proto= strtolower(strtok($_SERVER['SERVER_PROTOCOL'],'/'));
-  if (isset($url[0]) and $url[0] != '/') $url='/'.$url; // XXX
+  if (empty($url[0]) or $url[0] != '/') $url='/'.$url; // XXX
   return $proto.'://'.$_SERVER['HTTP_HOST'].$port.$url;
 }
 
@@ -571,7 +571,7 @@ class WikiUser {
      $this->ticket=$ticket;
      # set the fake cookie
      $_COOKIE['MONI_ID']=$ticket.'.'.urlencode($this->id);
-     if ($this->info['nick']) $_COOKIE['MONI_NICK']=$this->info['nick'];
+     if (!empty($this->info['nick'])) $_COOKIE['MONI_NICK']=$this->info['nick'];
 
      #$path=strpos($_SERVER['HTTP_USER_AGENT'],'Safari')===false ?
      #  get_scriptname():'/';
@@ -1187,14 +1187,14 @@ function do_invalid($formatter,$options) {
   }
 
   $formatter->send_header("Status: 406 Not Acceptable",$options);
-  if ($options['title'])
+  if (!empty($options['title']))
     $formatter->send_title('',"",$options);
   else
     $formatter->send_title(_("406 Not Acceptable"),"",$options);
-  if ($options['err']) {
+  if (!empty($options['err'])) {
     $formatter->send_page($options['err']);
   } else {
-    if ($options['action'])
+    if (!empty($options['action']))
       $formatter->send_page("== ".sprintf(_("%s is not valid action"),$options['action'])." ==\n");
     else
       $formatter->send_page("== "._("Is it valid action ?")." ==\n");
@@ -1205,7 +1205,7 @@ function do_invalid($formatter,$options) {
 }
 
 function ajax_invalid($formatter,$options) {
-  if ($options['call']) return false;
+  if (!empty($options['call'])) return false;
   $formatter->send_header(array("Content-Type: text/plain",
 			"Status: 406 Not Acceptable"),$options);
   print "false\n";
@@ -1297,14 +1297,14 @@ function do_post_DeletePage($formatter,$options) {
   
   $page = $DBInfo->getPage($options['page']);
 
-  if ($options['name']) $options['name']=urldecode($options['name']);
+  if (!empty($options['name'])) $options['name']=urldecode($options['name']);
   $pagename= $formatter->page->urlname;
-  if ($options['name'] == $options['page']) {
+  if (!empty($options['name']) and $options['name'] == $options['page']) {
     $DBInfo->deletePage($page,$options);
     $title = sprintf(_("\"%s\" is deleted !"), $page->name);
 
     $myrefresh='';
-    if ($DBInfo->use_save_refresh) {
+    if (!empty($DBInfo->use_save_refresh)) {
       $sec=$DBInfo->use_save_refresh - 1;
       $lnk=$formatter->link_url($formatter->page->urlname,"?action=show");
       $myrefresh='Refresh: '.$sec.'; url='.qualifiedURL($lnk);
@@ -1314,7 +1314,7 @@ function do_post_DeletePage($formatter,$options) {
     $formatter->send_title($title,"",$options);
     $formatter->send_footer('',$options);
     return;
-  } else if ($options['name']) {
+  } else if (!empty($options['name'])) {
     #print $options['name'];
     $options['msg'] = _("Please delete this file manually.");
   }
@@ -1323,7 +1323,7 @@ function do_post_DeletePage($formatter,$options) {
   $formatter->send_title($title,"",$options);
   print "<form method='post'>
 Comment: <input name='comment' size='80' value='' /><br />\n";
-  if ($DBInfo->delete_history)
+  if (!empty($DBInfo->delete_history))
     print _("with revision history")." <input type='checkbox' name='history' />\n";
   if ($DBInfo->security->is_protected("DeletePage",$options))
     print "Password: <input type='password' name='passwd' size='20' value='' />
@@ -1682,7 +1682,7 @@ function do_post_savepage($formatter,$options) {
 
   $savetext=$options['savetext'];
   $datestamp=$options['datestamp'];
-  $button_preview=is_numeric($options['button_preview']);
+  $button_preview=!empty($options['button_preview']) ? is_numeric($options['button_preview']) : '';
   $button_merge=!empty($options['button_merge']) ? 1:0;
   $button_merge=!empty($options['manual_merge']) ? 2:$button_merge;
   $button_merge=!empty($options['force_merge']) ? 3:$button_merge;
@@ -1785,7 +1785,7 @@ function do_post_savepage($formatter,$options) {
     }
   }
 
-  if (!$button_preview && $orig == $new) {
+  if (empty($button_preview) && !empty($orig) && $orig == $new) {
     $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
     $formatter->send_header("",$options);
     $formatter->send_title(_("No difference found"),"",$options);
@@ -1812,7 +1812,7 @@ function do_post_savepage($formatter,$options) {
   }
 
   $ok_ticket=0;
-  if (!$button_preview and !$use_any and $DBInfo->use_ticket and $options['id'] == 'Anonymous') {
+  if (!$button_preview and !$use_any and !empty($DBInfo->use_ticket) and $options['id'] == 'Anonymous') {
     if ($options['__seed'] and $options['check']) {
       $mycheck=getTicket($options['__seed'],$_SERVER['REMOTE_ADDR'],4);
       if ($mycheck==$options['check'])
@@ -1884,7 +1884,7 @@ function do_post_savepage($formatter,$options) {
     if ($options['category'])
       $savetext.="----\n$options[category]\n";
 
-    $options['minor'] = $DBInfo->use_minoredit ? $options['minor']:0;
+    $options['minor'] = !empty($DBInfo->use_minoredit) ? $options['minor']:0;
     if ($options['minor']) {
       $user=$DBInfo->user; # get from COOKIE VARS
       if ($DBInfo->owners and in_array($user->id,$DBInfo->owners)) {
@@ -2079,9 +2079,11 @@ function macro_RandomPage($formatter,$value='') {
   $pages = $DBInfo->getPageLists();
 
   $test=preg_match("/^(\d+)\s*,?\s?(simple|nobr)?$/",$value,$match);
+  $count = '';
+  $mode = '';
   if ($test) {
     $count= intval($match[1]);
-    $mode=$match[2];
+    $mode= !empty($match[2]) ? $match[2] : '';
   }
   if ($count <= 0) $count=1;
   $counter= $count;
@@ -2208,7 +2210,7 @@ function macro_DateTime($formatter,$value) {
   if (!$value) {
     return gmdate($fmt,time()+$tz_offset);
   }
-  if ($value[10]== 'T') {
+  if (isset($value[10]) and $value[10]== 'T') {
     $value[10]=' ';
     $value.=' GMT';
   }
@@ -2342,10 +2344,10 @@ EXTRA;
   } else {
     $button=_("Save");
     $css=!empty($user->info['css_url']) ? $user->info['css_url'] : '';
-    $email=$user->info['email'];
+    $email=!empty($user->info['email']) ? $user->info['email'] : '';
     $nick=!empty($user->info['nick']) ? $user->info['nick'] : '';
     $tz_offset=!empty($user->info['tz_offset']) ? $user->info['tz_offset'] : 0;
-    if ($user->info['password'])
+    if (!empty($user->info['password']))
       $again="<b>"._("New password")."</b>&nbsp;<input type='password' size='15' maxlength='$pw_length' name='passwordagain' value='' /></td></tr>";
     else
       $again='';
@@ -2397,8 +2399,9 @@ setTimezone();
 EOF;
 
   $passwd = !empty($passwd) ? $passwd : '';
+  $passwd_inp = '';
   if (empty($DBInfo->use_safelogin) or $button==_("Save")) {
-    if ($user->id == 'Anonymous' or $user->info['password'])
+    if ($user->id == 'Anonymous' or !empty($user->info['password']))
     $passwd_inp=<<<PASS
   <tr>
      <th>$passwd_btn&nbsp;</th><td><input type="password" size="15" maxlength="$pw_length" name="password" value="$passwd" />
@@ -2450,7 +2453,7 @@ EOF;
 function macro_InterWiki($formatter,$value,$options=array()) {
   global $DBInfo;
 
-  while (!isset($DBInfo->interwiki) or $options['init']) {
+  while (!isset($DBInfo->interwiki) or !empty($options['init'])) {
     $cf=new Cache_text('settings');
 
     $force_init=0;
@@ -2535,7 +2538,7 @@ function macro_InterWiki($formatter,$value,$options=array()) {
     $cf->update('interwiki',$interinfo);
     break;
   }
-  if ($options['init']) return;
+  if (!empty($options['init'])) return;
 
   $out="<table border='0' cellspacing='2' cellpadding='0'>";
   foreach (array_keys($DBInfo->interwiki) as $wiki) {
@@ -2548,7 +2551,7 @@ function macro_InterWiki($formatter,$value,$options=array()) {
     }
     $icon=$DBInfo->imgs_dir_interwiki.strtolower($wiki).'-16.png';
     $sx=16;$sy=16;
-    if ($DBInfo->intericon[$wiki]) {
+    if (!empty($DBInfo->intericon[$wiki])) {
       $icon=$DBInfo->intericon[$wiki][2];
       $sx=$DBInfo->intericon[$wiki][0];
       $sy=$DBInfo->intericon[$wiki][1];
@@ -2801,10 +2804,11 @@ function macro_TableOfContents(&$formatter,$value="") {
  $head_dep=0;
  $TOC='';
  $a0='</a>';$a1='';
- if ($DBInfo->toc_options)
+ if (!empty($DBInfo->toc_options))
    $value=$DBInfo->toc_options.','.$value;
- $toctoggle=$DBInfo->use_toctoggle;
+ $toctoggle=!empty($DBInfo->use_toctoggle) ? $DBInfo->use_toctoggle : '';
  $secdep=5;
+ $prefix = '';
 
  while($value) {
    list($arg,$value)=explode(',',$value,2);
@@ -2881,7 +2885,7 @@ EOS;
    if ($simple)
      $head=strip_tags($head,'<b><i><img><sub><sup><del><tt><u><strong>');
 
-   if (!$depth_top) { $depth_top=$dep; $depth=1; }
+   if (empty($depth_top)) { $depth_top=$dep; $depth=1; }
    else {
      $depth=$dep - $depth_top + 1;
      if ($depth <= 0) $depth=1;
@@ -2892,7 +2896,7 @@ EOS;
    $open="";
    $close="";
 
-   if ($match[2]) {
+   if (!empty($match[2])) {
       # reset TOC numberings
       $dum=explode(".",$num);
       $i=sizeof($dum);
@@ -2998,7 +3002,7 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   if ($opts['hits']==1)
     $opts['value']=array_pop($hits);
   $opts['all']= count($pages);
-  if ($opts['call']) {
+  if (!empty($opts['call'])) {
     $opts['out']=$out;
     return $opts;
   }

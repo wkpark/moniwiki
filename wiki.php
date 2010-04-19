@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2009 Won-Kyu Park <wkpark at kldp.org> all rights reserved.
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org> all rights reserved.
 // distributable under GPL see COPYING
 //
 // many codes are imported from the MoinMoin
@@ -75,7 +75,7 @@ function getPlugin($pluginname) {
   if (!empty($DBInfo->myplugins) and is_array($DBInfo->myplugins))
     $plugins=array_merge($plugins,$DBInfo->myplugins);
 
-  return $plugins[$pname];
+  return isset($plugins[$pname]) ? $plugins[$pname]:'';
 }
 
 function getModule($module,$name) {
@@ -99,7 +99,7 @@ function getProcessor($pro_name) {
     $processors=unserialize($cp->fetch('processors'));
     if (is_array($DBInfo->myprocessors))
       $processors=array_merge($processors,$DBInfo->myprocessors);
-    return $processors[$prog];
+    return isset($processors[$prog]) ? $processors[$prog]:'';
   }
   if (!empty($DBInfo->include_path))
     $dirs=explode(':',$DBInfo->include_path);
@@ -121,7 +121,7 @@ function getProcessor($pro_name) {
   if (is_array($DBInfo->myprocessors))
     $processors=array_merge($processors,$DBInfo->myprocessors);
 
-  return $processors[strtolower($pro_name)];
+  return isset($processors[$prog]) ? $processors[$prog]:'';
 }
 
 function getFilter($filtername) {
@@ -313,6 +313,7 @@ class MetaDB_dba extends MetaDB {
     $sisters=dba_fetch($pagename,$this->metadb);
     $addons=$this->aux->getSisterSites($pagename,$mode);
 
+    $ret = '';
     if ($sisters)
       $ret='[wiki:'.str_replace(' ',":$pagename] [wiki:",$sisters).":$pagename]";
     $pagename=_preg_search_escape($pagename);
@@ -903,14 +904,14 @@ EOS;
       $pc->update($pcid,serialize($pages));
 
       return $pages;
-    } else if ($options['limit']) { # XXX
+    } else if (!empty($options['limit'])) { # XXX
        while ($file = readdir($handle)) {
           if (is_dir($this->text_dir."/".$file)) continue;
           if (filemtime($this->text_dir."/".$file) > $options['limit'])
              $pages[] = $this->keyToPagename($file);
        }
        closedir($handle);
-    } else if ($options['count']) {
+    } else if (!empty($options['count'])) {
        $count=$options['count'];
        while (($file = readdir($handle)) && $count > 0) {
           if (is_dir($this->text_dir."/".$file)) continue;
@@ -1037,7 +1038,7 @@ EOS;
       $out = array();
       foreach($lines as $line) {
         $dum=explode("\t",$line,2);
-        if ($keys[$dum[0]]) continue;
+        if (!empty($dum[0]) and !empty($keys[$dum[0]])) continue;
         $keys[$dum[0]]=1;
         $out[]=$line;
       }
@@ -1055,7 +1056,7 @@ EOS;
     $time=gmdate("Y-m-d\TH:i:s");
 
     if ($options['id'] == 'Anonymous') {
-      $id=$options['name'] ?
+      $id=!empty($options['name']) ?
         _stripslashes($options['name']):$_SERVER['REMOTE_ADDR'];
     } else {
       $id=$options['nick'] ? $options['nick']:$options['id'];
@@ -1109,7 +1110,7 @@ EOS;
     $comment=escapeshellcmd($comment);
 
     $myid=$user->id;
-    if ($user->info['nick']) {
+    if (!empty($user->info['nick'])) {
       $myid.=' '.$user->info['nick'];
       $options['nick']=$user->info['nick'];
     }
@@ -1129,14 +1130,14 @@ EOS;
 
     # check minor edits XXX
     $minor=0;
-    if ($this->use_minorcheck or $options['minorcheck']) {
+    if (!empty($this->use_minorcheck) or !empty($options['minorcheck'])) {
       $info=$page->get_info();
       if ($info[1]) {
         eval('$check='.$info[1].';');
         if (abs($check) < 3) $minor=1;
       }
     }
-    if (!$options['minor'] and !$minor)
+    if (empty($options['minor']) and !$minor)
       $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
     return 0;
   }
@@ -1154,7 +1155,7 @@ EOS;
       $version=new $class ($this);
       $log=$REMOTE_ADDR.';;'.$user->id.';;'.$comment;
       $ret=$version->ci($page->name,$log);
-      if ($options['history'])
+      if (!empty($options['history']))
         $version->delete($page->name);
     }
     $delete=@unlink($this->text_dir."/$keyname");
@@ -1303,6 +1304,7 @@ class Version_RCS {
   }
 
   function diff($pagename,$rev="",$rev2="") {
+    $option = '';
     if ($rev) $option="-r$rev ";
     if ($rev2) $option.="-r$rev2 ";
 
@@ -1497,7 +1499,7 @@ class Cache_text {
         # cache header : <,?,php /* Generator Version uniqid tpl_path(optional) */
         $check=fgets($fp);
         if ($check{0}=='<' and $check{1}=='?') {
-          list($tag,$sep,$generator,$ver,$id,$path,$extra)=explode(' ',$check);
+          @list($tag,$sep,$generator,$ver,$id,$path,$extra)=explode(' ',$check);
           $ok=1;
           if (!empty($params['uniq']) and $params['uniq'] != $id) $ok=0;
           if (!empty($ok) and !empty($params['path']) and $params['path'] != $path) $ok=0;
@@ -1782,7 +1784,7 @@ class Formatter {
 
     $this->themedir= !empty($DBInfo->themedir) ? $DBInfo->themedir:dirname(__FILE__);
     $this->themeurl= !empty($DBInfo->themeurl) ? $DBInfo->themeurl:$DBInfo->url_prefix;
-    $this->set_theme($options['theme']);
+    $this->set_theme(!empty($options['theme']) ? $options['theme'] : '');
 
     $this->NULL='';
     if(getenv("OS")!="Windows_NT") $this->NULL=' 2>/dev/null';
@@ -1979,7 +1981,7 @@ class Formatter {
 
   function set_theme($theme="") {
     global $DBInfo;
-    if ($theme) {
+    if (!empty($theme)) {
       $this->themedir.="/theme/$theme";
       $this->themeurl.="/theme/$theme";
     }
@@ -2134,7 +2136,7 @@ class Formatter {
       $update_body=true;
     }
 
-    if ($this->use_metadata) {
+    if (!empty($this->use_metadata)) {
       include_once('lib/metadata.php');
       list($this->metas,$nbody)=_get_metadata($body);
       if ($nbody!=null) $body=$nbody;
@@ -2193,10 +2195,10 @@ class Formatter {
       $pi['#format']= substr($pi['#format'],0,$p);
     }
 
-    if ($notused) $body=implode("\n",$notused)."\n".$body;
-    if ($update_body) $this->page->write($body." "); # workaround XXX
+    if (!empty($notused)) $body=implode("\n",$notused)."\n".$body;
+    if (!empty($update_body)) $this->page->write($body." "); # workaround XXX
     #if ($update_body) $this->page->write($body);
-    $pi['raw']=$piline;
+    $pi['raw']=!empty($piline) ? $piline : '';
     return $pi;
   }
 
@@ -2334,7 +2336,7 @@ class Formatter {
 
       if (preg_match("/^(:|w|[A-Z])/",$url))
         return $this->interwiki_repl($url,'',$attr,$external_icon);
-      else if (!preg_match('/^('.$this->urls.')/',$url)) {
+      else if (!empty($this->urls) and !preg_match('/^('.$this->urls.')/',$url)) {
         if ($this->use_namespace)
           return $this->interwiki_repl($url,'',$attr,$external_icon);
         else
@@ -2407,7 +2409,7 @@ class Formatter {
         if (preg_match("/(^.*\.(png|gif|jpeg|jpg))(\?.*?)?$/i",$url,$match)) {
           $url=preg_replace('/&amp;/','&',$url);
           $url=$match[1];
-          $attrs=explode('&',substr($match[3],1));
+          $attrs=!empty($match[3]) ? explode('&',substr($match[3],1)) : array();
           foreach ($attrs as $arg) {
             $name=strtok($arg,'=');
             $val=strtok(' ');
@@ -2839,7 +2841,7 @@ class Formatter {
     foreach (func_get_args() as $f) function_exists($f) or include_once 'plugin/function/'.$f.'.php';
   }
 
-  function macro_repl($macro,$value='',$options='') {
+  function macro_repl($macro,$value='',$options=array()) {
     // macro ID
     $this->mid=!empty($options['mid']) ? $options['mid']:
       (!empty($this->mid) ? ++$this->mid:1);
@@ -2847,7 +2849,7 @@ class Formatter {
     preg_match("/^([A-Za-z0-9]+)(\((.*)\))?$/",$macro,$match);
     if (empty($match)) return $this->word_repl($macro);
     $bra='';$ket='';
-    if ($this->wikimarkup and $macro != 'attachment' and !$options['nomarkup']) {
+    if (!empty($this->wikimarkup) and $macro != 'attachment' and empty($options['nomarkup'])) {
       $markups=str_replace(array('=','-','<'),array('==','-=','&lt;'),$macro);
       $markups=preg_replace('/&(?!#?[a-z0-9]+;)/i','&amp;',$markups);
       $bra= "<span class='wikiMarkup'><!-- wiki:\n[[$markups]]\n-->";
@@ -2889,12 +2891,13 @@ class Formatter {
   function processor_repl($processor,$value, $options = false) {
     $bra='';$ket='';
     if (!empty($this->wikimarkup) and empty($options['nomarkup'])) {
-      if ($options['type'] == 'inline') {
+      if (!empty($options['type']) and $options['type'] == 'inline') {
         $markups=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$value);
         $bra= "<span class='wikiMarkup' style='display:inline'><!-- wiki:\n".$markups."\n-->";
       } else {
-        if ($processor == $this->pi['#format']) { $btag='';$etag=''; }
+        if (!empty($this->pi['#format']) and $processor == $this->pi['#format']) { $btag='';$etag=''; }
         else { $btag='{{{';$etag='}}}'; }
+        $notag = '';
         if ($value{0}!='#' and $value{1}!='!') $notag="\n";
         $markups=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$value);
         $bra= "<span class='wikiMarkup'><!-- wiki:\n".$btag.$notag.$markups.$etag."\n-->";
@@ -2929,7 +2932,7 @@ class Formatter {
     $classname='processor_'.$pf;
     $myclass= & new $classname($this,$options);
     $ret= call_user_func(array($myclass,'process'),$value,$options);
-    if ($myclass->_type=='wikimarkup') return $ret;
+    if (!empty($myclass->_type) and $myclass->_type=='wikimarkup') return $ret;
     return $bra.$ret.$ket;
   }
 
@@ -3321,7 +3324,7 @@ class Formatter {
   }
 
   function _fixpath() {
-    $this->url_prefix= qualifiedUrl($DBInfo->url_prefix);
+    //$this->url_prefix= qualifiedUrl($this->url_prefix);
     $this->prefix= qualifiedUrl($this->prefix);
     $this->imgs_dir= qualifiedUrl($this->imgs_dir);
     $this->imgs_dir_interwiki=qualifiedUrl($this->imgs_dir_interwiki);
@@ -3566,15 +3569,16 @@ class Formatter {
         }
       }
 
-      if (!$in_pre and $line[0]=='#' and $line[1]=='#') {
+      if (!$in_pre and isset($line[1]) and $line[0]=='#' and $line[1]=='#') {
         $out='';
-        if ($line[2]=='[') {
+        $ll = isset($line[2]) ? $line[2] : '';
+        if ($ll=='[') {
           $macro=substr($line,4,-2);
           $out= $this->macro_repl($macro,'',array('nomarkup'=>1));
-        } else if ($line[2]=='#') {
+        } else if ($ll=='#') {
           $div_enclose.='<div id="'.substr($line,3).'">';
           $my_div++;
-        } else if ($line[2]=='.') {
+        } else if ($ll=='.') {
           $div_enclose.='<div class="'.substr($line,3).'">';
           $my_div++;
         } else if ($my_div>0) {
@@ -3623,7 +3627,8 @@ class Formatter {
          # check processor
          $t = isset($line{$p+3});
          if ($t and $line[$p+3] == "#" and $line[$p+4] == "!") {
-            list($tag,$dummy)=explode(" ",substr($line,$p+5),2);
+            $dummy=explode(" ",substr($line,$p+5),2);
+            $tag = $dummy[0];
 
             if (function_exists("processor_".$tag)) {
               $processor=$tag;
@@ -3653,7 +3658,7 @@ class Formatter {
       }
 
       $ll=strlen($line);
-      if ($line[$ll-1]=='&') {
+      if ($ll and $line[$ll-1]=='&') {
         $oline.=substr($line,0,-1)."\n";
         continue;
       } else if (empty($oline) and preg_match('/^\s*\|\|/',$line) and !preg_match('/\|(\||-+)\s*$/',$line)) {
@@ -3726,9 +3731,10 @@ class Formatter {
              $divtype=' class="indent"';
            }
 
+           $numtype = '';
            if ($line[0]=='*') {
              $limatch[1]='*';
-             $myindlen=($line{1}==' ') ? $indlen+2:$indlen+1;
+             $myindlen=(isset($line[1]) and $line[1]==' ') ? $indlen+2:$indlen+1;
              preg_match("/^(\*\s?)/",$line,$m);
              $liopen='<li>'; // XXX
              $line=substr($line,strlen($m[1]));
@@ -3746,11 +3752,11 @@ class Formatter {
                 $_myindlen[$in_li]=$myindlen;
              }
              $numtype=$limatch[2][0];
-             if ($limatch[3])
+             if (isset($limatch[3]))
                $numtype.=substr($limatch[3],1);
              $indtype="ol";
              $lival='';
-             if ($in_li and $limatch[3])
+             if ($in_li and isset($limatch[3]))
                $lival=' value="'.substr($limatch[3],1).'"';
              $liopen="<li$lival>"; // XXX
            } elseif (preg_match("/^([^:]+)::\s/",$line,$limatch)) {
@@ -4069,7 +4075,7 @@ class Formatter {
 
     echo $this->get_javascripts();
     echo $text;
-    if ($this->sisters and !$options['nosisters']) {
+    if (!empty($this->sisters) and empty($options['nosisters'])) {
       $sister_save=$this->sister_on;
       $this->sister_on=0;
       $sisters=implode("\n",$this->sisters);
@@ -4512,8 +4518,9 @@ EOS;
   function get_actions($args='',$options) {
     $menu=array();
     if (!empty($this->pi['#action']) && !in_array($this->pi['#action'],$this->actions)){
-      list($act,$txt)=explode(" ",$this->pi['#action'],2);
-      if (!$txt) $txt=$act;
+      $tmp =explode(" ",$this->pi['#action'],2);
+      $act = $txt = $tmp[0];
+      if (!empty($tmp[1])) $txt = $tmp[1];
       $menu[]= $this->link_to("?action=$act",_($txt)," rel='nofollow' accesskey='x'");
       if (strtolower($act) == 'blog')
         $this->actions[]='BlogRss';
@@ -4601,7 +4608,7 @@ EOS;
   alt="powered by MoniWiki" /></a>
 FOOT;
 
-    if (is_object($options['timer'])) {
+    if (isset($options['timer']) and is_object($options['timer'])) {
       $options['timer']->Check();
       $timer=$options['timer']->Total();
     }
@@ -4657,6 +4664,7 @@ FOOT;
     }
 
     if (empty($msgtitle) and !empty($options['title'])) $msgtitle=$options['title'];
+    $groupt = '';
     if (empty($title)) {
       if (!empty($group)) { # for UserNameSpace
         $title=$mypgname;
@@ -5069,7 +5077,7 @@ MSG;
     if ($log and file_exists($log) and ($sz=filesize($log))) {
       $fd=fopen($log,'r');
       if (is_resource($fd)) {
-        $maxl=$DBInfo->errlog_maxline ? min($DBInfo->errlog_maxline,200):20;
+        $maxl=!empty($DBInfo->errlog_maxline) ? min($DBInfo->errlog_maxline,200):20;
         if ($all or $sz <= $maxl*70) { # approx log size ~ line * 70
           $out=fread($fd,$sz);
         } else {
@@ -5082,7 +5090,7 @@ MSG;
         $this->LOG='';
         $this->mylog='';
 
-        if (!$DBInfo->raw_errlog and !$raw) {
+        if (empty($DBInfo->raw_errlog) and !$raw) {
           $out=preg_replace('/(\/[a-z0-9.]+)+/','/XXX',$out);
         }
         return $out;
@@ -5387,6 +5395,7 @@ function wiki_main($options) {
   // parse action
   // action=foobar, action=foobar/macro, action=foobar/json etc.
   $full_action=$action;
+  $action_mode='';
   if (($p=strpos($action,'/'))!==false) {
     $full_action=strtr($action,'/','-');
     $action_mode=substr($action,$p+1);
@@ -5488,16 +5497,19 @@ function wiki_main($options) {
         $button= $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
         if ($oldver) {
           $formatter->send_title(sprintf(_("%s has saved revisions"),$page->name),"",$options);
+          $searchval=htmlspecialchars($options['page']);
           echo '<h2>'.sprintf(_("%s or click %s to fulltext search.\n"),$button,$formatter->link_to("?action=fullsearch&amp;value=$searchval",_("here"))).'</h2>';
           $options['info_actions']=array('recall'=>'view','revert'=>'revert');
           $options['title']='<h3>'.sprintf(_("Old Revisions of the %s"),htmlspecialchars($page->name)).'</h3>';
+          #if (empty($formatter->wordrule)) $formatter->set_wordrule();
           echo $formatter->macro_repl('Info','',$options);
         } else {
           $formatter->send_title(sprintf(_("%s is not found in this Wiki"),$page->name),"",$options);
           $searchval=htmlspecialchars($options['page']);
           echo '<h2>'.sprintf(_("%s or click %s to fulltext search.\n"),$button,$formatter->link_to("?action=fullsearch&amp;value=$searchval",_("here"))).'</h2>';
+          $err = array();
           echo $formatter->macro_repl('LikePages',$page->name,$err);
-          if ($err['extra'])
+          if (!empty($err['extra']))
             echo $err['extra'];
 
           echo '<h2>'._("Please try to search with another word").'</h2>';
@@ -5588,7 +5600,7 @@ function wiki_main($options) {
       $extra_out='';
       $_macros=null;
      
-      if (!$formatter->refresh and (($mtime > $dtime) and ($check < $Config['cachetime']))) {
+      if (empty($formatter->refresh) and (($mtime > $dtime) and ($check < $Config['cachetime']))) {
         $_macros= unserialize($mcache->fetch($pagename));
         $out= $cache->fetch($pagename);
         $mytime=gmdate("Y-m-d H:i:s",$mtime+$options['tz_offset']);
@@ -5713,6 +5725,7 @@ function wiki_main($options) {
       return;
     }
 
+    $options['action_mode']='';
     if (!empty($action_mode) and in_array($action_mode,array('ajax','macro'))) {
       if ($_SERVER['REQUEST_METHOD']=="POST")
         $options=array_merge($_POST,$options);
@@ -5746,7 +5759,7 @@ function wiki_main($options) {
       if ($_SERVER['REQUEST_METHOD']=="POST")
         $options=array_merge($_POST,$options);
       else { # do_post_* set some primary variables as $options
-        $options['value']=$_GET['value'];
+        $options['value']=!empty($_GET['value']) ? $_GET['value'] : '';
       }
       call_user_func("do_post_$plugin",$formatter,$options);
       return;
