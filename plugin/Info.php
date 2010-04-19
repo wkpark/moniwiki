@@ -212,7 +212,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
          $state=1;
          $flag++;
          $count++;
-         if (!empty($options['all']) and $options['all'] != 1 and $count >=$showcount) $ok=1;
+         if ((empty($options['all']) or $options['all'] != 1) and $count >=$showcount) $ok=1;
          break;
      }
   }
