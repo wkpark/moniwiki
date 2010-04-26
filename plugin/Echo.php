@@ -9,8 +9,8 @@
 // vim:et:ts=2:
 
 function macro_Echo($formatter,$value) {
-  if ($_SERVER[$value]) return $_SERVER[$value];
-  if ($_ENV[$value]) return $_ENV[$value];
+  if (!empty($_SERVER[$value])) return $_SERVER[$value];
+  if (!empty($_ENV[$value])) return $_ENV[$value];
   return '';
 }
 

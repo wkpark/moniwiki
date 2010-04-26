@@ -21,7 +21,7 @@ function macro_Attachments($formatter,$value,$params=array()) {
         $p=$DBInfo->getPage($value);
         $body=$p->get_raw_body();
         $baseurl=$formatter->link_url(_urlencode($value));
-        $formatter->page=&$p;
+        //$formatter->page=&$p;
     } else if ($params['text']) {
         $body=$params['text'];
     } else {
@@ -45,7 +45,7 @@ function macro_Attachments($formatter,$value,$params=array()) {
     }
     $my=array_unique($my);
 
-    if ($params['call']) return $my;
+    if (!empty($params['call'])) return $my;
 
     return " * ".implode("\n * ",$my);
 }

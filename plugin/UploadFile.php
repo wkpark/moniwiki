@@ -30,6 +30,7 @@ function do_uploadfile($formatter,$options) {
   global $DBInfo;
 
   $files=array();
+  $title = '';
 
   if (isset($_FILES['upfile']) and is_array($_FILES)) {
     if (($options['multiform'] > 1) or is_array($_FILES['upfile']['name'])) {
@@ -69,12 +70,14 @@ function do_uploadfile($formatter,$options) {
   $upload_ok = array();
 
   $js='';
-  if ($options['uploadid'] or $options['MYFILES']) {
+  $uploadid = !empty($options['uploadid']) ? $options['uploadid'] : '';
+  if (!empty($uploadid) or !empty($options['MYFILES'])) {
     $js=<<<EOF
 <script type="text/javascript">
 /*<![CDATA[*/
 function delAllForm(id) {
   if (!opener) return;
+  if (id == '') return;
   var fform = opener.document.getElementById(id);
 
   if (fform && fform.rows.length) { // for UploadForm
@@ -90,7 +93,7 @@ function delAllForm(id) {
   }
 }
 
-delAllForm('$options[uploadid]');
+delAllForm('$uploadid');
 /*]]>*/
 </script>\n
 EOF;
@@ -126,17 +129,18 @@ EOF;
     umask(02);
   }
   $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
-  $comment.="File ";
+  $comment = "File ";
+  $uploaded = '';
 
   $log_entry='';
 
-  $protected_exts=$DBInfo->pds_protected ? $DBInfo->pds_protected :"pl|cgi|php";
-  $safe_exts=$DBInfo->pds_safe ? $DBInfo->pds_safe :"txt|gif|png|jpg|jpeg";
+  $protected_exts=!empty($DBInfo->pds_protected) ? $DBInfo->pds_protected :"pl|cgi|php";
+  $safe_exts=!empty($DBInfo->pds_safe) ? $DBInfo->pds_safe :"txt|gif|png|jpg|jpeg";
   $protected=explode('|',$protected_exts);
   $safe=explode('|',$safe_exts);
 
   # upload file protection
-  if ($DBInfo->pds_allowed)
+  if (!empty($DBInfo->pds_allowed))
     $pds_exts=$DBInfo->pds_allowed;
   else
     $pds_exts="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|css|exe|pdf|hwp";
@@ -168,7 +172,7 @@ EOF;
   }
 
   if (!$allowed) {
-    if ($DBInfo->use_filetype) {
+    if (!empty($DBInfo->use_filetype)) {
       $type='';
       $type=$files['upfile']['type'][$j] ? $files['upfile']['type'][$j]:'text/plain';
       list($mtype,$xtype)=explode('/',$type);
@@ -220,7 +224,7 @@ EOF;
 
   $file_path= $newfile_path = $dir."/".$upfilename;
   $filename=$upfilename;
-  if ($options['rename'][$j]) {
+  if (!empty($options['rename'][$j])) {
     # XXX
     $temp=explode("/",_stripslashes($options['rename'][$j]));
     $upfilename= $temp[count($temp)-1];
@@ -264,7 +268,8 @@ EOF;
   }
  
   $upfile=$files['upfile']['tmp_name'][$j];
-  if ($files['upfile']['error'][$j] != UPLOAD_ERR_OK) {
+  if (!empty($files['upfile']['error'][$j]) and
+      $files['upfile']['error'][$j] != UPLOAD_ERR_OK) {
     $err_msg[]=_("ERROR:").' <tt>'.$upload_err_func($files['upfile']['error'][$j]).' : '.$upfilename .'</tt>';
     if ($files['upfile']['error'][$j] == UPLOAD_ERR_INI_SIZE)
       $err_msg[]="<tt>upload_max_filesize=".ini_get('upload_max_filesize').'</tt>';
@@ -274,7 +279,7 @@ EOF;
   $_l_path=_l_filename($file_path);
   $new_l_path=_l_filename($newfile_path);
 
-  if ($options['replace'][$j]) {
+  if (!empty($options['replace'][$j])) {
     // backup
     if ($newfile_path != $file_path)
       $test=@copy($_l_path, $new_l_path);
@@ -296,7 +301,7 @@ EOF;
 
   $comment.="'$upfilename' ";
 
-  $title.=($title ? "\n":'').
+  $title.=(!empty($title) ? "\n":'').
     sprintf(_("File \"%s\" is uploaded successfully"),$upfilename);
 
   $fullname=$formatter->page->name."/$upfilename";
@@ -369,9 +374,9 @@ EOF;
   }
 
   print $js;
-  $formatter->send_footer();
+  $formatter->send_footer('', $options);
 
-  if (is_array($options['MYFILES']) and !$DBInfo->nosession)
+  if (is_array($options['MYFILES']) and empty($DBInfo->nosession))
     session_destroy();
   return true;
 }

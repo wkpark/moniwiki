@@ -28,7 +28,7 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
     if (!empty($DBInfo->nosession)) { // ip based
         $myid=md5($_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI'); // FIXME
     } else {
-        if ($_SESSION['_swfupload'])
+        if (!empty($_SESSION['_swfupload']))
             $myid = $_SESSION['_swfupload'];
         else {
             $myid=session_id();
@@ -309,13 +309,13 @@ EOF;
     }
 
     // check subdir
-    if ($DBInfo->swfupload_depth > 2) {
+    if (!empty($DBInfo->swfupload_depth) and $DBInfo->swfupload_depth > 2) {
         $depth=$DBInfo->swfupload_depth;
     } else {
         $depth=2;
     }
 
-    if ($DBInfo->nosession) { // ip based
+    if (!empty($DBInfo->nosession)) { // ip based
         $myid=md5($_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI'); // FIXME
     } else {
         if (0 and $_SESSION['_swfupload']) // XXX flash bug?

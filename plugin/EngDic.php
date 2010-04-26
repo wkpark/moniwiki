@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 //
 // Usage: [[EngDic(hello)]]
@@ -15,21 +15,23 @@ function macro_EngDic($formatter,$value) {
 <input type='submit' value='Get' />
 </form>";
   }
-  $url='http://kr.engdic.yahoo.com/search/engdic?p=';
+  $url='http://kr.dictionary.search.yahoo.com/search/dictionaryp?p=';
 
+  if (empty($value)) $value='hello';
   $fp=fopen($url.$value,"r");
+  if (!is_resource($fp))
+    return '';
   while(!feof($fp)) {
     $buf=fgets($fp,1024);
-    @preg_match("/javascript:ListenSound\('$value','([^']+)'\)/",$buf,$match);
-    if ($match[1]) {
+    @preg_match("/mp3Src=(http:\/\/.*\.mp3)/",$buf,$match);
+    if (isset($match[1])) {
       $soundid=$match[1];
       fclose($fp);
       break;
     }
   }
-  if (!$value) $value='wiki';
   return <<<RET
-<a target='sound' href="http://kr.engdic.yahoo.com/sound.html?p=$value&amp;soundid=$soundid"><img
+<a target='sound' href="$soundid"><img
 src="http://img.yahoo.co.kr/dic/sound.gif" border='0'></a>
 <a href="$url$value">$value</a>
 RET;
@@ -43,15 +45,6 @@ function do_EngDic($formatter,$options) {
   $args['noaction']=1;
   $formatter->send_footer($args,$options);
 }
-
-#function do_test($formatter,$options) {
-#  $formatter->send_header();
-#  $formatter->send_title();
-#  $ret= macro_Test($formatter,$options[value]);
-#  $formatter->send_page($ret);
-#  $formatter->send_footer("",$options);
-#  return;
-#}
 
 // vim:et:sts=4:sw=4:
 ?>

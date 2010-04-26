@@ -374,9 +374,9 @@ EOS;
       $previewlink=$link;
       $size=filesize($dir.'/'. $_l_file);
 
-      if ($use_preview) {
+      if (!empty($use_preview)) {
         preg_match("/\.(.{1,4})$/",$file,$m);
-        $ext=strtolower($m[1]);
+        $ext=isset($m[1]) ? strtolower($m[1]) : '';
 
         if ($use_preview > 1 and $ext and stristr('gif,png,jpeg,jpg',$ext)) {
           list($w, $h) = getimagesize($dir.'/'.$file);
@@ -392,7 +392,7 @@ EOS;
         }
       }
 
-      if ($use_fileinfo) {
+      if (!empty($use_fileinfo)) {
         $i=0;
         for (;$i<4;$i++) {
           if ($size <= 1024) {
