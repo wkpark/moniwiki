@@ -72,7 +72,7 @@ class Security_nforge extends Security {
     $method='may_'.$action;
     if (method_exists($this, $method)) {
       if (!$this->$method($action,$options)) {
-        header('Location: /account/login.php?return_to='.$_SERVER['SCRIPT_URI']);
+        header('Location: '.util_make_url('/account/login.php?return_to='.$_SERVER['SCRIPT_URI']));
         exit;
       }
     }
