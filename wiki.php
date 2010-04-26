@@ -4553,8 +4553,13 @@ EOS;
     return $menu;
   }
 
-  function send_footer($args='',$options='') {
+  function send_footer($args='',$options=array()) {
     global $DBInfo;
+
+    empty($options) ? $options = array('id'=>'Anonymous',
+                                  'tz_offset'=>$this->tz_offset,
+                                  'page'=>$this->page->name) : null;
+    
 
     if (!empty($options['action_mode']) and $options['action_mode'] =='ajax') return;
 
