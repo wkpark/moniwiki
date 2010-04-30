@@ -906,6 +906,11 @@ $lang = 'auto';
 $lang = set_locale($lang,$_Config['charset']);
 initlocale($lang,$_Config['charset']);
 
+if (!empty($_GET['action']) and $_GET['action'] =='pathinfo') {
+  print $_SERVER['PATH_INFO'].'****';
+  return;
+}
+
 print <<<EOF
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 <html xmlns="http://www.w3.org/1999/xhtml">
@@ -1079,11 +1084,6 @@ $update=isset($_POST['update']) ? $_POST['update']:'';
 $action=isset($_GET['action']) ? $_GET['action']:(isset($_POST['action']) ? $_POST['action']:'');
 $newpasswd=isset($_POST['newpasswd']) ? $_POST['newpasswd']:'';
 $oldpasswd=isset($_POST['oldpasswd']) ? $_POST['oldpasswd']:'';
-
-if (!empty($_GET['action']) and $_GET['action'] =='pathinfo') {
-  print $_SERVER['PATH_INFO'].'****';
-  return;
-}
 
 if ($_SERVER['REQUEST_METHOD']=="POST" && ($config or $action == 'protect')) {
 
