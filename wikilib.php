@@ -701,7 +701,7 @@ function macro_EditText($formatter,$value,$options) {
 
   # simple == 1 : do not use EditTextForm, simple == 2 : do not use GUI/Preview
   $has_form = false;
-  if (!empty($options['simple']) and $options['simple']!=1 and $DBInfo->hasPage('EditTextForm')) {
+  if ((empty($options['simple']) or $options['simple']!=1) and $DBInfo->hasPage('EditTextForm')) {
     $p=$DBInfo->getPage('EditTextForm');
     $form=$p->get_raw_body();
     $f=new Formatter($p);
