@@ -5364,6 +5364,7 @@ function wiki_main($options) {
     if (isset($_POST['header'])) unset($_POST['header']);
 
     # hack for TWiki plugin
+    $action = '';
     if (!empty($_FILES['filepath']['name'])) $action='draw';
     if (isset($GLOBALS['HTTP_RAW_POST_DATA'])) {
       # hack for Oekaki: PageName----action----filename
@@ -5371,7 +5372,7 @@ function wiki_main($options) {
       $options['value']=$value;
     } else {
       $value=!empty($_POST['value']) ? $_POST['value'] : '';
-      $action=!empty($_POST['action']) ? $_POST['action'] : '';
+      $action=!empty($_POST['action']) ? $_POST['action'] : $action;
       if (empty($action))
         $dum=explode('----',$pagename,3);
       if (isset($dum[0]) && isset($dum[1])) {
