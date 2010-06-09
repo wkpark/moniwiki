@@ -902,8 +902,10 @@ class _HWLDF_WordAccumulator {
 
         foreach ($words as $word) {
             // new-line should only come as first char of word.
-            if ($word == '')
+            if ($word == '') {
+                $this->_group .= " "; // XXX workaround to render inserted empty lines correctly.
                 continue;
+            }
             if ($word[0] == "\n") {
                 $this->_group .= NBSP;
                 $this->_flushLine($tag);
@@ -945,7 +947,8 @@ class WordLevelDiff extends MappedDiff
             $this->charset_rule .'. ) (?: (?!< \n) [^\S\n])? /xs',
                             implode("\n", $lines),
                             $m)) {
-            return array(array(''), array(''));
+            // return array(array(''), array(''));
+            return array($lines, $lines);
         }
         #print "<pre>";
         #print_r( $m );
