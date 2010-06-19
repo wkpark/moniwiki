@@ -158,16 +158,26 @@ function textArea(element,wrapper) {
     // Opera
     this.grippie.style.marginRight = '4px';
   }
-  if (document.all && !window.opera) {
-    // IE
-    this.grippie.style.width = '100%';
-    this.grippie.style.paddingLeft = '2px';
-    this.grippie.style.paddingRight = '1px';
-  }
   if (/Safari/.test(navigator.userAgent)) {
     // Safari / chrome
-    var test = this.element.offsetWidth - 10;
+    var offset = this.wrapper.offsetWidth - this.element.offsetWidth;
+    var test = this.wrapper.offsetWidth + offset;
     this.element.style.width = test + 'px';
+  } else if (document.all && !window.opera) {
+    // IE
+    this.grippie.style.width = '100%';
+    this.grippie.style.paddingLeft = '2px'; // XXX
+    this.grippie.style.paddingRight = '1px'; // XXX
+
+    if (this.grippie.offsetWidth != this.element.offsetWidth) {
+      var offset = this.grippie.offsetWidth - this.element.offsetWidth;
+      if (offset < 0) {
+        test = this.element.clientWidth; // XXX
+      } else {
+        test = this.element.offsetWidth + offset; // XXX
+      }
+      this.element.style.width = test + 'px';
+    }
   }
   // Mozilla
   this.element.style.MozBoxSizing = 'border-box';
