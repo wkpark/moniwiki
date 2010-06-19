@@ -117,14 +117,20 @@ define('RC_DEFAULT_DAYS',7);
         $changed_time_fmt = 'm-d [H:i]';
         $use_day=0;
         $template_bra="<table border='0' cellpadding='0' cellspacing='0' width='100%'>";
-        $template_bra.="<thead><th colspan='3' class='title'>"._("Title")."</th><th class='date'>"._("Change Date").
-          "</th><th class='author'>"._("Editor")."</th><th class='editinfo'>"._("Changes").'</th>';
-        if ($DBInfo->use_counter)
+        $template_bra.="<thead><th colspan='3' class='title'>"._("Title")."</th><th class='date'>".
+          _("Change Date").'</th>';
+        if (!empty($DBInfo->show_hosts))
+          $template_bra.="<th class='author'>"._("Editor").'</th>';
+        $template_bra.="<th class='editinfo'>"._("Changes").'</th>';
+        if (!empty($DBInfo->use_counter))
           $template_bra.="<th class='hits'>"._("Hits")."</th>";
         $template_bra.="</thead>\n<tbody>\n";
         $template=
-  '$out.= "<tr$alt><td style=\'white-space:nowrap;width:2%\'>$icon</td><td class=\'title\' style=\'width:40%\'>$title$updated</td><td>$bmark</td><td class=\'date\' style=\'width:15%\'>$date</td><td class=\'author\'>$user</td><td class=\'editinfo\'>$count</td>';
-        if ($DBInfo->use_counter)
+  '$out.= "<tr$alt><td style=\'white-space:nowrap;width:2%\'>$icon</td><td class=\'title\' style=\'width:40%\'>$title$updated</td><td>$bmark</td><td class=\'date\' style=\'width:15%\'>$date</td>';
+        if (!empty($DBInfo->show_hosts))
+          $template.='<td class=\'author\'>$user</td>';
+        $template.='<td class=\'editinfo\'>$count</td>';
+        if (!empty($DBInfo->use_counter))
           $template.='<td class=\'hits\'>$hits</td>';
         $template_extra=$template.'</tr>\n<tr><td class=\'log\' colspan=\'6\'>$extra</td></tr>\n";';
         $template.='</tr>\n";';
@@ -325,7 +331,7 @@ define('RC_DEFAULT_DAYS',7);
       $hits = $DBInfo->counter->pageCounter($page_name);
     }
 
-    if ($DBInfo->show_hosts) {
+    if (!empty($DBInfo->show_hosts)) {
       if ($showhost && $user == 'Anonymous')
         $user= $addr;
       else {
