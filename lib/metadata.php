@@ -54,7 +54,7 @@ function _get_metadata($body) {
     $meta = array();
     $metaok = 0;
     while(!empty($body)) {
-        list($line, $body) = split("\n", $body, 2);
+        list($line, $body) = explode("\n", $body, 2);
         if ($key and ($line[0] == ' ' or $line[0] == "\t")) {
             $meta[$key].= $line . "\n";
             continue;

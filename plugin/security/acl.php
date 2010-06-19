@@ -96,7 +96,7 @@ class Security_ACL extends Security {
                 }
 
                 if ($acl[2] == 'allow') {
-                    $tmp=split(',',$acl[3]);
+                    $tmp=explode(',',$acl[3]);
                     $tmp=array_flip($tmp);
                     if ($acl[1] == $user) $pri=4;
                     else if ($acl[1] == '@ALL') $pri=1;
@@ -112,7 +112,7 @@ class Security_ACL extends Security {
                     }
                     $allowed=array_merge($allowed,$tmp);
                 } else if ($acl[2] == 'deny') {
-                    $tmp=split(',',$acl[3]);
+                    $tmp=explode(',',$acl[3]);
                     $tmp=array_flip($tmp);
                     if ($acl[1] == $user) $pri=4;
                     else if ($acl[1] == '@ALL') $pri=1;
@@ -128,7 +128,7 @@ class Security_ACL extends Security {
                     }
                     $denied=array_merge($denied,$tmp);
                 } else if ($acl[2] == 'protect') {
-                    $tmp=split(',',$acl[3]);
+                    $tmp=explode(',',$acl[3]);
                     $tmp=array_flip($tmp);
                     $protected=array_merge($protected,$tmp);
                 }

@@ -260,7 +260,7 @@ class HTTPClient {
                 foreach ($this->resp_headers['set-cookie'] as $c){
                     $cs=explode(';',$c);
                     foreach ($cs as $c) {
-                        list($key, $value) = split('=', $c, 2);
+                        list($key, $value) = explode('=', $c, 2);
                         $this->cookies[trim($key)] = $value;
                     }
                 }
@@ -268,7 +268,7 @@ class HTTPClient {
                 $c=$this->resp_headers['set-cookie'];
                 $cs=explode(';',$c);
                 foreach ($cs as $c) {
-                    list($key, $value) = split('=', $c, 2);
+                    list($key, $value) = explode('=', $c, 2);
                     $this->cookies[trim($key)] = $value;
                 }
             }

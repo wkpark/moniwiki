@@ -2159,7 +2159,7 @@ class Formatter {
       $pilines=array();
       while ($body and $body[0] == '#') {
         # extract first line
-        list($line, $body)= split("\n", $body,2);
+        list($line, $body)= explode("\n", $body,2);
         if ($line=='#') break;
         else if ($line[1]=='#') { $notused[]=$line; continue;}
         $pilines[]=$line;

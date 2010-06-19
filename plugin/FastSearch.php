@@ -54,7 +54,7 @@ EOF;
     return '';
   }
 
-  $words=split(' ', strtolower($value));
+  $words=explode(' ', strtolower($value));
   $keys='';
   $idx=array();
   foreach ($words as $word) {

@@ -647,7 +647,7 @@ Class RcsLite {
     # Split and make sure we have trailing carriage returns
     function _mySplit($text)
     {
-        $list = split( "\n", $text );
+        $list = explode( "\n", $text );
         $sz=sizeof($list);
         if ($list[$sz-1]=="\n") {
             array_pop($list);

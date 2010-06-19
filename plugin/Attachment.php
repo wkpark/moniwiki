@@ -121,7 +121,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
     $value=substr($value,0,$dummy);
     foreach ($args as $arg) {
       //list($k,$v)=split('=',trim($arg),2);
-      $tmp = split('=',trim($arg),2);
+      $tmp = explode('=',trim($arg),2);
       $k = $tmp[0];
       $v = !empty($tmp[1]) ? $tmp[1] : '';
       if ($v) {

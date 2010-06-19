@@ -610,7 +610,7 @@ function get_authorinfo($body) {
 
   while ($body and $body[0] == '#') {
     # extract first line
-    list($line, $body)= split("\n", $body,2);
+    list($line, $body)= explode("\n", $body,2);
     if ($line[1]=='#' and preg_match('/^##\$'.'Log: /',$line)) {
       $log=1; $state=0;
       continue;
