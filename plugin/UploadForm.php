@@ -13,6 +13,8 @@ function macro_UploadForm($formatter,$value) {
 
     $use_fake = 1;
     $hide_btn = 1;
+    $name = 'upfile';
+    $show = true;
 
     $msg2 = _("Successfully Uploaded");
     $msg = _("Choose File");
@@ -21,7 +23,7 @@ function macro_UploadForm($formatter,$value) {
        $script=<<<EOF
 <script type="text/javascript">
 /*<![CDATA[*/
-function addRow(id, size) {
+function addRow(id, name, size) {
     if (size == undefined)
         size = 50;
 
@@ -56,25 +58,39 @@ function addRow(id, size) {
     div.setAttribute('style', 'position:relative');
     var newInput = document.createElement('input');
     newInput.setAttribute('type', 'file');
-    newInput.setAttribute('name', 'upfile[]');
+    newInput.setAttribute('name', name+'[]');
     newInput.setAttribute('size', size);
+
     newInput.style.position = 'absolute'; // IE
     newInput.style.left = -8; // IE
     newInput.setAttribute('style', 'position:absolute;left:-5;');
 
+    var btn = document.getElementById('button-' + id);
+    if (btn) {
+        btn.setAttribute('style','display:none;');
+        btn.style.display = 'none';
+    }
+
 EOF;
     if ($id == 1 and $hide_btn)
         $script .=<<<EOF
-    var btn = document.getElementById('button-' + id);
-    btn.setAttribute('style','display:inline-block;');
-    btn.style.display = 'inline-block';
 
 EOF;
     if ($id == 1 and $use_fake)
         $script.=<<<EOF
     newInput.className = 'form-file';
     // get basename with replace() for IE
-    newInput.onchange = function() { fakeInp.value = this.value.replace(/^.*[\\\\]/g, '');};
+    newInput.onchange = function() {
+        addRow(id, name, size);
+        fakeInp.style.display='inline-block';
+        fakeInp.value = this.value.replace(/^.*[\\\\]/g, '');
+
+        var btn = document.getElementById('button-' + id);
+        if (btn) {
+            btn.setAttribute('style','display:inline-block;');
+            btn.style.display = 'inline-block';
+        }
+    };
 
     var span = document.createElement('span');
     span.style.position='relative';
@@ -83,6 +99,7 @@ EOF;
     fakeInp.setAttribute('size', size);
     fakeInp.className = 'fake-file';
     fakeInp.setAttribute('readonly', 'true');
+    fakeInp.style.display = 'none';
     if (document.all)
         fakeInp.readOnly = true; // for IE
     fakeInp.onclick = function() {if (this.value) { this.value = ''; newInput.value = ''; } else {delRow(id,this);} };
@@ -93,17 +110,20 @@ EOF;
     span2.appendChild(txt);
     addbtn.appendChild(span2);
     addbtn.setAttribute('onclick',"return false;");
+    addbtn.className = 'add-file';
 
     div.appendChild(fakeInp);
     span.appendChild(addbtn);
     span.appendChild(newInput);
     div.appendChild(span);
     cell.appendChild(div);
+    /* newInput.click(); /* */
 EOF;
     else if ($id == 1)
         $script .=<<<EOF
     div.appendChild(newInput);
     cell.appendChild(div);
+    /* newInput.click(); /* */
 EOF;
     
     if ($id == 1)
@@ -120,12 +140,12 @@ EOF;
     var inputs = form.getElementsByTagName('input');
     var mysubmit = null;
     for (i = 0; i < inputs.length; i++) {
-        if (inputs[i].type == 'file') {
+        if (inputs[i].type == 'file' && inputs[i].value != '') {
             return;
         }
     }
     var btn = document.getElementById('button-' + id);
-    btn.style.display = 'none';
+    if (btn) btn.style.display = 'none';
 
 EOF;
     if ($id == 1)
@@ -207,11 +227,23 @@ function check_upload_result (iframe,attach, timer) {
 }
 
 function resetForm(form) {
+    inputs = form.getElementsByTagName('input');
+    var name = "$name", size = 50; // default
+    for (i = 0; i < inputs.length; i++) {
+        if (inputs[i].type == 'file') {
+            name = inputs[i].getAttribute('name');
+            size = inputs[i].getAttribute('size');
+            break;
+        }
+    }
+
     if (form && form.rows.length) { // for UploadForm
         for (var i=form.rows.length;i>0;i--) {
             form.deleteRow(i-1);
         }
     }
+    name = name.replace(/\[\]$/g, '');
+    addRow(form.getAttribute('id'), name, size);
 }
 
 /*]]>*/
@@ -233,7 +265,7 @@ EOS;
   <table border="0" cellspacing="0" cellpadding="0">
     <tr>
       <td valign='top' rowspan='2'>
-        <span onclick="addRow('upload$id')" class='icon-clip' title="$msg">$attach_msg</span>
+        <span onclick="addRow('upload$id','$name')" class='icon-clip' title="$msg">$attach_msg</span>
       </td>
       <td>
         <table cellspacing="0" cellpadding="0" border="0">
@@ -245,11 +277,16 @@ EOS;
     <tr>
       <td>
       <div class='buttons'>
-  <button type='button' class='add-file' onclick="addRow('upload$id')"><span>$msg2</span></button>
-  <input type="hidden" name="uploadid" value="upload$id" />
+  <!-- button type='button' class='add-file' onclick="addRow('upload$id','$name')"><span>$msg2</span></button -->
+  <input type="hidden" name="upload$id" value="upload$id" />
   <input type="hidden" name="popup" value="1" />
+EOF;
+    if (!empty($show))
+        $multiform.=<<<EOF
   <button type="submit" class='upload-file' id='button-upload$id' onclick="check_attach('upload$id')" name="upload"><span>$msg3</span></button>
   <!-- <input type="reset" name="reset" value="$msg4" /> -->
+EOF;
+    $multiform.=<<<EOF
       </div>
       </td>
     </tr>
@@ -259,9 +296,10 @@ EOS;
 <script type="text/javascript">
 /*<![CDATA[*/
 (function () {
-    var btn = document.getElementById('button-upload$id'); btn.style.display = 'none';
+    var btn = document.getElementById('button-upload$id');
+    if (btn) btn.style.display = 'none';
 })();
-//addRow('upload$id');
+addRow('upload$id','$name');
 /*]]>*/
 </script>
 EOF;
