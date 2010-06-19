@@ -69,7 +69,7 @@ function macro_FullSearch($formatter,$value="", &$opts) {
 
   $url=$formatter->link_url($formatter->page->urlname);
   $fneedle=str_replace('"',"&#34;",$needle); # XXX
-  $tooshort=$DBInfo->fullsearch_tooshort ? $DBInfo->fullsearch_tooshort:2;
+  $tooshort=!empty($DBInfo->fullsearch_tooshort) ? $DBInfo->fullsearch_tooshort:2;
 
   $m1=_("Display context of search results");
   $m2=_("Search BackLinks only");

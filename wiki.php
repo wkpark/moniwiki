@@ -3002,7 +3002,7 @@ class Formatter {
     }
 
     if ($sep == '?') {
-      if (isset($pageurl[0]) && $query_string[0]=='?')
+      if (isset($pageurl[0]) && isset($query_string[0]) && $query_string[0]=='?')
         # add 'dummy=1' to work around the buggy php
         $query_string= '&amp;'.substr($query_string,1).'&amp;dummy=1';
         # Did you have a problem with &amp;dummy=1 ?
@@ -5194,7 +5194,7 @@ function get_pagename() {
     if ($_SERVER['PATH_INFO'][0] == '/')
       $pagename=substr($_SERVER['PATH_INFO'],1);
   } else if (!empty($_SERVER['QUERY_STRING'])) {
-    $goto=$_POST['goto'] ? $_POST['goto']:$_GET['goto'];
+    $goto=!empty($_POST['goto']) ? $_POST['goto']:(!empty($_GET['goto']) ? $_GET['goto'] : '');
     if (!empty($goto)) $pagename=$goto;
     else {
       $pagename = $_SERVER['QUERY_STRING'];

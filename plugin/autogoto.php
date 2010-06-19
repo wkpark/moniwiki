@@ -12,7 +12,7 @@ function do_AutoGoto($formatter,$options) {
 
     $supported=array('man'=>'Man','google'=>'Google','macro'=>'Macro','tpl'=>'TPL');
 
-    if ($DBInfo->autogoto_options) {
+    if (!empty($DBInfo->autogoto_options)) {
         if (is_array($DBInfo->autogoto_options)) {
             $supported = array_merge($supported, $DBInfo->autogoto_options);
         } else if (is_string($DBInfo->autogoto_options)) {
