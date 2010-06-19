@@ -4368,6 +4368,8 @@ class Formatter {
           $this->page->title;
         $options['title']=
           htmlspecialchars($options['title']);
+      } else {
+        $options['title'] = strip_tags($options['title']);
       }
       if (empty($options['css_url'])) $options['css_url']=$DBInfo->css_url;
       if (empty($this->pi['#nodtd']) and !isset($options['retstr']) and $this->_newtheme != 2) echo $DBInfo->doctype;
