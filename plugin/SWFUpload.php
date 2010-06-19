@@ -135,7 +135,7 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
 CSS;
 
     $btn=_("Files...");
-    $btn2=_("Upload");
+    $btn2=_("Upload files");
     $btn3=_("Cancel All files");
     $prefix=qualifiedUrl($DBInfo->url_prefix.'/local');
     $action=$formatter->link_url($formatter->page->urlname);
@@ -192,7 +192,10 @@ SWFUpload.onload = function () {
         debug: false, // true
 
         // Button Settings
-        button_image_url : "$DBInfo->url_prefix/local/SWFUpload/images/btn.png",
+        button_image_url : "$DBInfo->url_prefix/local/SWFUpload/images/btn0.png",
+        button_text : '<span class="button" style="text-align:center">$btn</span>',
+        button_text_style : '.button {font-family:Gulim,Sans-serif;text-align:center;}',
+        button_text_top_padding : 3,
         button_placeholder_id : "spanButtonPlaceHolder",
         button_width: 61,
         button_height: 22,
