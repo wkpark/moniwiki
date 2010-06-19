@@ -90,6 +90,7 @@ textarea {
 }
 
 form, input, button { margin:0; padding:0;/* for IE */}
+button { overflow:visible; /* for IE */}
 
 label { padding-right:3px; }
 
@@ -605,3 +606,40 @@ span.markup.invisible {
   display:none;
 }
 
+.uploadForm input.fake-file {
+  vertical-align: middle;
+  border:1px solid #cfcfcf;
+  width:292px;
+  background:url("../imgs/misc/x2.png") no-repeat 290px 3px; /* reset icon */
+  font-family:DotumChe, monospace, sans-serif;
+  font-size:12px;
+  padding:2px;
+  padding-right:11px;
+  margin-right:4px;
+  margin-bottom:4px;
+  _height:15px;
+  _margin-top:-2px;
+}
+
+.uploadForm .form-file {
+  padding:0;
+  margin:0;
+  font-size:12px;
+  height:20px;
+  width:76px;
+  left:-3px; /* */
+  filter:alpha(opacity=0.0);
+  opacity:0;
+  cursor:pointer;
+}
+
+.uploadForm .form-file:active {
+  border:1px solid red;
+}
+
+.uploadForm button.add-file {
+  cursor:pointer;
+}
+
+*html .uploadForm .form-file { height:32px; margin-top:-3px; }
+*+html .uploadForm .form-file { height:32px; margin-top:-3px; top:0;}
