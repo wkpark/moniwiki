@@ -15,7 +15,7 @@ class Security_htaccesslogin extends Security {
     $id=getenv('REMOTE_USER');
     if ($id != "") {
       $userdb=new UserDB($DB);
-      $user=new User(); # get from COOKIE VARS
+      $user=new WikiUser(); # get from COOKIE VARS
 
       if ($userdb->_exists($id)) {
         # login
