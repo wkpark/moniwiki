@@ -5154,7 +5154,7 @@ function get_locales($mode=1) {
   $lang= strtr($lang,'_','-');
   $langs=explode(',',preg_replace(array("/;[^;,]+/","/\-[a-z]+/"),'',$lang));
   if ($languages[$langs[0]]) return array($languages[$langs[0]][0]);
-  return array($languages[0][0]);
+  return array($languages['en'][0]);
 }
 
 function set_locale($lang,$charset='') {
