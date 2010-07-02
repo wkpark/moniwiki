@@ -3575,10 +3575,12 @@ class Formatter {
         if ($ll=='[') {
           $macro=substr($line,4,-2);
           $out= $this->macro_repl($macro,'',array('nomarkup'=>1));
-        } else if ($ll=='#') {
+          # XXX deprecated css id syntax.
+        } else if ($ll=='#' and preg_match('/^###[a-z][a-z0-9_-]*$/', $line)) {
           $div_enclose.='<div id="'.substr($line,3).'">';
           $my_div++;
-        } else if ($ll=='.') {
+          # XXX deprecated css class syntax.
+        } else if ($ll=='.' and preg_match('/^##\.[a-z][a-z0-9_-]*$/', $line)) {
           $div_enclose.='<div class="'.substr($line,3).'">';
           $my_div++;
         } else if ($my_div>0) {
