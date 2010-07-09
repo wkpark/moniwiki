@@ -470,7 +470,7 @@ class UserDB {
 
   function checkUser(&$user) {
     $tmp=$this->getUser($user->id);
-    if ($tmp->info['ticket'] != $user->ticket) {
+    if (!empty($tmp->info['ticket']) and $tmp->info['ticket'] != $user->ticket) {
       if ($this->strict > 0)
         $user->id='Anonymous';
       return 1;
