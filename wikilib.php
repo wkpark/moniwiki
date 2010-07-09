@@ -1532,7 +1532,7 @@ function do_titlesearch($formatter,$options) {
     do_goto($formatter,$options);
     return true;
   }
-  if (!$ret['hits'] and $options['check']) return false;
+  if (!$ret['hits'] and !empty($options['check'])) return false;
 
   if ($ret['hits'] == 0) {
     $ret2['form']=1;
@@ -1543,7 +1543,7 @@ function do_titlesearch($formatter,$options) {
   $options['msgtype']='search';
   $formatter->send_title($ret['msg'],$formatter->link_url("FindPage"),$options);
 
-  if ($options['check']) {
+  if (!empty($options['check'])) {
     $button= $formatter->link_to("?action=edit",$formatter->icon['create']._
 ("Create this page"));
     print "<h2>".$button;
@@ -2991,11 +2991,11 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   sort($hits);
 
   $idx=1;
-  if ($opts['linkto']) $idx=10;
+  if (!empty($opts['linkto'])) $idx=10;
   $out='';
   foreach ($hits as $pagename) {
     $pagetext=htmlspecialchars(urldecode($pagename));
-    if ($opts['linkto'])
+    if (!empty($opts['linkto']))
       $out.= '<li>' . $formatter->link_to("$opts[linkto]$pagename",$pagetext,"tabindex='$idx'")."</li>\n";
     else
       $out.= '<li>' . $formatter->link_tag(_rawurlencode($pagename),"",$pagetext,"tabindex='$idx'")."</li>\n";
