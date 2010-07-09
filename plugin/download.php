@@ -108,13 +108,15 @@ function do_download($formatter,$options) {
 
     #header('Cache-Control: must-revalidate, post-check=0, pre-check=0');
     #header('Pragma: public');
-  } else if (strstr($_SERVER['HTTP_USER_AGENT'], 'Opera')) {
-    // Opera 9: RFC 2231
+  } else if (strstr($_SERVER['HTTP_USER_AGENT'], 'Mozilla')) {
+    // Mozilla: RFC 2047
+    $fname='filename="=?'.$DBInfo->charset.'?B?'.base64_encode($file).'?="';
+  } else {
+    // etc. Safari, Opera 9: RFC 2231
     $fn = preg_replace('/[:\\x5c\\/{?]/', '_', $file);
     $fname='filename*='.$DBInfo->charset."''".rawurlencode($fn).'';
     //$fname='filename="'.$fn.'"';
-  } else // Mozilla: RFC 2047
-    $fname='filename="=?'.$DBInfo->charset.'?B?'.base64_encode($file).'?="';
+  }
 
   if ($DBInfo->use_resume_download) {
     $header=array("Content-Description: MoniWiki PHP Downloader");
