@@ -7,7 +7,7 @@
 
 function do_RecentChanges($formatter,$options='') {
   global $DBInfo;
-  if ($options['moztab']) {
+  if (!empty($options['moztab'])) {
     $options['trail']='';
     $options['css_url']=$formatter->url_prefix.'/css/sidebar.css';
     $arg = 'nobookmark,moztab';
@@ -135,6 +135,7 @@ define('RC_DEFAULT_DAYS',7);
         $template_extra=$template.'</tr>\n<tr><td class=\'log\' colspan=\'6\'>$extra</td></tr>\n";';
         $template.='</tr>\n";';
         $template_cat="</tbody></table>";
+        $cat0="";
       }
     }
   }
@@ -332,7 +333,7 @@ define('RC_DEFAULT_DAYS',7);
     }
 
     if (!empty($DBInfo->show_hosts)) {
-      if ($showhost && $user == 'Anonymous')
+      if (!empty($showhost) && $user == 'Anonymous')
         $user= $addr;
       else {
         $ouser= $user;

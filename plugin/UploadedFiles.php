@@ -75,6 +75,7 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    if ($use_fileinfo) $col=1;
 
    $href_attr = '';
+   $attr='';
    if (!empty($DBInfo->use_lightbox) and !$js_tag)
      $href_attr=' rel="lightbox[upload]" ';
 
@@ -406,7 +407,6 @@ EOS;
 
       $date=date('Y-m-d',filemtime($dir.'/'.$_l_file));
       $fname=$file;
-      $attr='';
       if ($use_preview or $js_tag) {
         $tag_open='attachment:'; $tag_close='';
         if ($opener != $value)
