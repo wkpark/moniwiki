@@ -2680,7 +2680,7 @@ function macro_TitleIndex($formatter,$value) {
        $keys[]=$pkey;
        if (!preg_match('/'.$sel.'/i',$pkey)) continue;
        if ($out !='') $out.="</ul>";
-       $out.= "<a name='$key' /><h3><a href='#top'>$key</a></h3>\n";
+       $out.= "<a name='$key'></a><h3><a href='#top'>$key</a></h3>\n";
        $out.= "<ul>";
     }
     if (!preg_match('/'.$sel.'/i',$pkey)) continue;
@@ -2717,7 +2717,7 @@ function macro_TitleIndex($formatter,$value) {
   }
   $index[0]=" ";
   
-  return "<center><a name='top' />$index</center>\n$out";
+  return "<center><a name='top'></a>$index</center>\n$out";
 }
 
 
