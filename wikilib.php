@@ -2955,7 +2955,7 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   $form="<form method='get' action='$url'>
       <input type='hidden' name='action' value='titlesearch' />
       <input name='value' size='30' value='$needle' />
-      <input type='submit' value='$msg' />
+      <button type='submit'><span>$msg</span></button>
       </form>";
 
   if (!$needle) {
@@ -3017,7 +3017,7 @@ function macro_GoTo($formatter="",$value="") {
   return "<form method='get' action='$url'>
     <input type='hidden' name='action' value='goto' />
     <input name='value' size='30' value='$value' />
-    <input type='submit' value='$msg' />
+    <button type='submit'><span>$msg</span></button>
     </form>";
 }
 
