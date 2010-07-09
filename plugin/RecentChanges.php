@@ -22,7 +22,7 @@ function do_RecentChanges($formatter,$options='') {
     $arg = 'board,comment,timesago,item=20';
   }
   $formatter->send_header('',$options);
-  $formatter->send_title('',$options);
+  $formatter->send_title('', '', $options);
   echo macro_RecentChanges($formatter, $arg, $options);
   $formatter->send_footer('',$options);
   return;
