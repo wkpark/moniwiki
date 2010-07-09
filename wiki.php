@@ -713,9 +713,9 @@ EOS;
           else
             $this->imgs_real_dir = dirname($info->filename);
         }
+      } else {
+        $this->imgs_real_dir = basename($this->imgs_dir); // XXX
       }
-    } else {
-      $this->imgs_real_dir = basename($this->imgs_dir); // XXX
     }
 
     if (is_dir($this->imgs_real_dir.'/interwiki'))
