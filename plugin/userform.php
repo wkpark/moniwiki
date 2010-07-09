@@ -90,6 +90,7 @@ function do_userform($formatter,$options) {
         $use_refresh=1;
       } else {
         $title = sprintf(_("Invalid password !"));
+        $user->setID('Anonymous');
       }
     } else {
       if ($options['login_id'])
