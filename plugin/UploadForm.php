@@ -19,6 +19,7 @@ function macro_UploadForm($formatter,$value) {
     $msg2 = _("Successfully Uploaded");
     $msg = _("Choose File");
     $formatter->register_javascripts("wikibits.js");
+    $script = '';
     if ($id==1)
        $script=<<<EOF
 <script type="text/javascript">
@@ -26,6 +27,8 @@ function macro_UploadForm($formatter,$value) {
 function addRow(id, name, size) {
     if (size == undefined)
         size = 50;
+    if((tmpbutton = document.getElementById(id).getElementsByTagName('button').item(0)) != undefined)
+	tmpbutton = tmpbutton.clientWidth;
 
     // check editform
     var editform = document.getElementById('editform');
@@ -61,9 +64,16 @@ function addRow(id, name, size) {
     newInput.setAttribute('name', name+'[]');
     newInput.setAttribute('size', size);
 
+    var tmpstyle = "width:80px";
+    if(tmpbutton != undefined)
+	tmpstyle = "width:" + tmpbutton + "px;";
+    else
+	tmpbutton = 80; // set 80px for IE
+
     newInput.style.position = 'absolute'; // IE
     newInput.style.left = -8; // IE
-    newInput.setAttribute('style', 'position:absolute;left:-5;');
+    newInput.style.width = tmpbutton+3; // IE
+    newInput.setAttribute('style', 'position:absolute;left:-5;'+tmpstyle);
 
     var btn = document.getElementById('button-' + id);
     if (btn) {
@@ -307,7 +317,7 @@ EOF;
     if (!in_array('UploadedFiles',$formatter->actions))
         $formatter->actions[]='UploadedFiles';
     $id++;
-    if ($formatter->preview and !in_array('UploadFile',$formatter->actions)) {
+    if (!empty($formatter->preview) and !in_array('UploadFile',$formatter->actions)) {
         if (!empty($DBInfo->use_preview_uploads)) {
             $keyname=$DBInfo->pageToKeyname($formatter->page->name);
             if (is_dir($DBInfo->upload_dir.'/'.$keyname))
