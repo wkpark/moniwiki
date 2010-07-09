@@ -79,7 +79,7 @@ function macro_FullSearch($formatter,$value="", &$opts) {
 <form method='get' action='$url'>
    <input type='hidden' name='action' value='fullsearch' />
    <input name='value' size='30' value='$fneedle' />
-   <input type='submit' value='$msg' /><br />
+   <button type='submit'><span>$msg</span></button><br />
    <input type='checkbox' name='backlinks' value='1' checked='checked' />$m2<br />
    <input type='checkbox' name='context' value='20' />$m1<br />
    <input type='checkbox' name='case' value='1' />$m3<br />
