@@ -58,8 +58,10 @@ function _urlencode($url) {
   return preg_replace("/(%)(?![a-f0-9]{2})/i","%25",$t);
 }
 
+if (!function_exists('_stripslashes')) {
 function _stripslashes($str) {
   return get_magic_quotes_gpc() ? stripslashes($str):$str;
+}
 }
 
 function qualifiedUrl($url) {
