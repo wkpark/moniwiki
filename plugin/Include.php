@@ -13,9 +13,10 @@ function macro_Include($formatter,$value="") {
 #  $savelinks=$formatter->pagelinks; # don't update pagelinks with Included files
 
   preg_match("/([^'\",]+)(?:\s*,\s*)?(\"[^\"]*\"|'[^']*')?(?:\s*,\s*)?([0-9]+)?$/",$value,$match);
+  $title = '';
   if ($match) {
     $value=trim($match[1]);
-    if ($match[2]) {
+    if (isset($match[2])) {
       if ($match[3])
         $level = $match[3];
       else
