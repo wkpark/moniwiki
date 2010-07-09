@@ -164,7 +164,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
          } else if ($user and $DBInfo->interwiki['Whois'])
            $ip="<a href='".$DBInfo->interwiki['Whois']."$ip'>$ip</a>";
 
-         $comment=!empty($dummy[2]) ? stripslashes($dummy[2]) : '';
+         $comment=!empty($dummy[2]) ? _stripslashes($dummy[2]) : '';
          $state=4;
          break;
       case 4:

@@ -50,7 +50,7 @@ CHANNEL;
     $addr= $parts[1];
     $ed_time= $parts[2];
     $user= $parts[4];
-    $log= stripslashes($parts[5]);
+    $log= _stripslashes($parts[5]);
     $act= rtrim($parts[6]);
 
 #    if ($ed_time < $time_cutoff)

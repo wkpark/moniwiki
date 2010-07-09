@@ -55,7 +55,7 @@ CHANNEL;
       $user_uri= $formatter->link_url(_rawurlencode($user),"",$user);
       $user_uri='<uri>'.$user_uri.'</uri>';
     }
-    $log= stripslashes($parts[5]);
+    $log= _stripslashes($parts[5]);
     $act= rtrim($parts[6]);
 
     $url=qualifiedUrl($formatter->link_url(_rawurlencode($page_name)));
