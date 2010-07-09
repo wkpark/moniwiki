@@ -836,7 +836,7 @@ JS;
     echo "<button type='button'$onclick tabindex='10'><span>$msg</span></button>\n";
     echo "<button type='button'$onclick1 tabindex='11' name='button_preview' value='1'><span>".
       _("Preview").'</span></button>';
-    if ($preview)
+    if (!empty($formatter->preview))
       echo ' '.$formatter->link_to('#preview',_("Skip to preview"),' class="preview-anchor"');
     echo "</div>\n";
   }
@@ -1097,7 +1097,7 @@ EXTRA;
   $wysiwyg_btn = '';
   $skip_preview = '';
   if (empty($options['simple'])) {
-    $preview_btn='<button type="submit" tabindex="6" name="button_preview" onclick="this.value=1" value="1"><span>'.
+    $preview_btn='<button type="submit" tabindex="6" name="button_preview" value="1"><span>'.
       _("Preview").'</span></button>';
     if ($preview)
       $skip_preview= ' '.$formatter->link_to('#preview',_("Skip to preview"),' class="preview-anchor"');
@@ -1684,7 +1684,10 @@ function do_post_savepage($formatter,$options) {
 
   $savetext=$options['savetext'];
   $datestamp=$options['datestamp'];
-  $button_preview=!empty($options['button_preview']) ? is_numeric($options['button_preview']) : '';
+  $button_preview = !empty($options['button_preview']) ? 1 : 0;
+
+  if ($button_preview)
+    $formatter->preview = 1;
   $button_merge=!empty($options['button_merge']) ? 1:0;
   $button_merge=!empty($options['manual_merge']) ? 2:$button_merge;
   $button_merge=!empty($options['force_merge']) ? 3:$button_merge;
@@ -1771,7 +1774,7 @@ function do_post_savepage($formatter,$options) {
         echo "<button type='button'$onclick tabindex='10'><span>$msg</span></button>\n";
         echo "<button type='button'$onclick1 tabindex='11' name='button_preview' value='1'><span>".
           _("Preview").'</span></button>';
-        if ($preview)
+        if ($button_preview)
           echo ' '.$formatter->link_to('#preview',_("Skip to preview"), ' class="preview-anchor"');
 	echo "</div>\n";
       }
@@ -1868,7 +1871,7 @@ function do_post_savepage($formatter,$options) {
       echo "<button type='button'$onclick tabindex='10'><span>$msg</span></button>\n";
       echo "<button type='button'$onclick1 tabindex='11' name='button_preview' value='1'><span>".
       	_("Preview").'</span></button>';
-      if ($preview)
+      if ($button_preview)
         echo ' '.$formatter->link_to('#preview',_("Skip to preview"),' class="preview-anchor"');
       echo "</div>\n";
     }
