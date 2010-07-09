@@ -567,7 +567,7 @@ function getConfig($configfile, $options=array()) {
   $myret = @include($configfile);
 
   if ($myret === false) {
-    if ($init) {
+    if (!empty($init)) {
       $script= preg_replace("/\/([^\/]+)\.php$/",'/monisetup.php',
                $_SERVER['SCRIPT_NAME']);
       if (is_string($init)) $script .= '?init='.$init;

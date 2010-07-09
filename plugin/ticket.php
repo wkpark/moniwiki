@@ -164,7 +164,7 @@ function do_ticket($formatter,$options) {
 
     $word_length=4;
 
-    if ($options['__seed']) {
+    if (!empty($options['__seed'])) {
         // check seed
         // check referer
         $passwd=getTicket($options['__seed'],$_SERVER['REMOTE_ADDR'],
@@ -175,10 +175,10 @@ function do_ticket($formatter,$options) {
         return;
     }
 
-    if ($DBInfo->gdfontpath)
+    if (!empty($DBInfo->gdfontpath))
         putenv('GDFONTPATH='.$DBInfo->gdfontpath);
     if (function_exists('ImageTtfText')) {
-        if ($DBInfo->ticket_font) {
+        if (!empty($DBInfo->ticket_font)) {
             $FONT=$DBInfo->ticket_font;
             //$FONT="/home/foobar/data/PenguinAttack.ttf";
             if ($FONT{0}=='/' and !file_exists($FONT)) {
@@ -189,8 +189,8 @@ function do_ticket($formatter,$options) {
             }
         }
     }
-    if ($use_ttf) {
-        $pointsize=$DBInfo->ticket_font_size ? $DBInfo->ticket_font_size:16;
+    if (!empty($use_ttf)) {
+        $pointsize=!empty($DBInfo->ticket_font_size) ? $DBInfo->ticket_font_size:16;
         $angle=0;
         //$size = Imagettfbbox($pointsize, 0, $FONT, $passwd);
         // XXX segfault :(
@@ -204,7 +204,7 @@ function do_ticket($formatter,$options) {
         if ($DBInfo->use_ticket & 7) $h+=$pointsize/3;
     } else {
         $FONT=5; // giant
-        if ($DBInfo->ticket_gdfont)
+        if (!empty($DBInfo->ticket_gdfont))
             $FONT=$DBInfo->ticket_gdfont;
         $w=imagefontwidth($FONT)*strlen($passwd)+10;
         $h=imagefontheight($FONT)+10;
@@ -227,7 +227,7 @@ function do_ticket($formatter,$options) {
     $pen1=rand(3,19);
     for ($i=0;$i<18;$i++)
         $color[]= ImageColorAllocate($im,rand(100,200),rand(100,200),rand(100,200));
-    if ($use_ttf) {
+    if (!empty($use_ttf)) {
         $sx=$margin;
         $sy=$margin/2+$pointsize;
         ImageTtfText($im,$pointsize, $angle, $sx, $sy+1, $color[$pen], $FONT,
