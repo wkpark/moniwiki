@@ -151,13 +151,13 @@ define('RC_DEFAULT_DAYS',7);
   $daysago=$opts['ago'] ? $daysago.'&amp;ago='.$opts['ago']:$daysago;
       
 
-  $user=&$DBInfo->user; # retrive user info
+  $u=$DBInfo->user; # retrive user info
 
-  if ($user->id != 'Anonymous') {
-    $bookmark= !empty($user->info['bookmark']) ? $user->info['bookmark'] : '';
-    $tz_offset= !empty($user->info['tz_offset']) ? $user->info['tz_offset'] : '';
+  if ($u->id != 'Anonymous') {
+    $bookmark= !empty($u->info['bookmark']) ? $u->info['bookmark'] : '';
+    $tz_offset= !empty($u->info['tz_offset']) ? $u->info['tz_offset'] : '';
   } else {
-    $bookmark= $user->bookmark;
+    $bookmark= $u->bookmark;
   }
   if (empty($tz_offset)) {
     $tz_offset=date("Z");
