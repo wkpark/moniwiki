@@ -18,6 +18,7 @@
 function macro_Comment($formatter,$value,$options=array()) {
   global $DBInfo;
 
+  if (!empty($options['nocomment'])) return '';
   $user=$DBInfo->user; # get from COOKIE VARS
   $options['id']=$user->id;
 
@@ -60,7 +61,6 @@ EXTRA;
   if (!empty($options['usemeta']) or !empty($use_meta)) {
     $hidden.="<input type='hidden' name='usemeta' value=1 />\n";
   }
-  if (!empty($options['nocomment'])) return '';
   if (!$DBInfo->security->writable($options)) return '';
 
   if (!empty($options['mid'])) $mymid=$options['mid'];
