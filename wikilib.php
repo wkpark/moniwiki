@@ -72,6 +72,8 @@ function qualifiedUrl($url) {
   if (!empty($_SERVER['HTTPS'])) $proto= 'https';
   else $proto= strtolower(strtok($_SERVER['SERVER_PROTOCOL'],'/'));
   if (empty($url[0]) or $url[0] != '/') $url='/'.$url; // XXX
+  if (strpos($_SERVER['HTTP_HOST'],':') !== false)
+    $port = '';
   return $proto.'://'.$_SERVER['HTTP_HOST'].$port.$url;
 }
 
