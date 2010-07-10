@@ -75,9 +75,9 @@ function addButton(imageFile, speedTip, tagOpen, tagClose, sampleText) {
 	}
 
 	document.write("<a href='#' onclick=\"javascript:insertTags");
-	document.write("('"+tagOpen+"','"+tagClose+"','"+sampleText+"');\">");
+	document.write("('"+tagOpen+"','"+tagClose+"','"+sampleText+"');return false;\">");
 
-        document.write("<img height=\"22\" src=\""+imageFile+"\" border=\"0\" alt=\""+speedTip+"\" title=\""+speedTip+"\""+mouseOver+">");
+        document.write("<img src=\""+imageFile+"\" border=\"0\" alt=\""+speedTip+"\" title=\""+speedTip+"\""+mouseOver+" />");
 	document.write("</a>");
 	return;
 }
@@ -85,9 +85,10 @@ function addButton(imageFile, speedTip, tagOpen, tagClose, sampleText) {
 function addLinkButton(imageFile,speedTip,tagOpen,tagClose, sampleText, id,once) {
 	var off=once ? 'true':'false';
 	speedTip=escapeQuotes(_(speedTip));
-	document.write("<input type='image' onclick=\"javascript:openChooser(this,'"
-		+ tagOpen+"','" + tagClose + "','" + sampleText + "','" + id + "'," + off + ");\"");
-        document.write(" width=\"22\" height=\"22\" src=\""+imageFile+"\" border=\"0\" alt=\""+speedTip+"\" title=\""+speedTip+"\""+" />");
+	document.write("<a href='#' onclick=\"javascript:openChooser(this,'"
+		+ tagOpen+"','" + tagClose + "','" + sampleText + "','" + id + "'," + off + ");return false;\">");
+        document.write("<img src=\""+imageFile+"\" border=\"0\" alt=\""+speedTip+"\" title=\""+speedTip+"\""+" />");
+	document.write("</a>");
 	return;
 }
 

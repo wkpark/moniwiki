@@ -14,11 +14,15 @@
   background-position:right top;
 }
 
-#toolbar img, #toolbar input {
+#toolbar span a {
+  display:inline-block;
+}
+
+#toolbar img {
   padding:1px;
 }
 
-#toolbar img:hover, #toolbar input:hover {
+#toolbar span a:hover img {
   padding:0px;
   border: 1px outset ThreeDHighlight; /* */
   background:url(itoolbg.png) repeat-x;
