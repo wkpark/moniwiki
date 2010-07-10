@@ -348,7 +348,7 @@ function do_userform($formatter,$options) {
         $options['msg']=_("Your email address is not valid");
       }
     }
-    if ($userinfo->info['idtype']=='openid' and
+    if (!empty($userinfo->info['idtype']) and $userinfo->info['idtype']=='openid' and
       isset($options['nick']) and ($options['nick'] != $userinfo->info['nick'])) {
       $nick = $userinfo->getID($options['nick']);
 

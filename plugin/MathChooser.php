@@ -102,6 +102,7 @@ JS;
     $mtools=array_merge($mtools,$mytools);
 
     $out='';
+    $tab='';
     $attr=' class="active"';
     $sty=' style="display:block"';
     foreach ($mtools as $k=>$tool) {
@@ -135,7 +136,7 @@ JS;
         $x= 0;
         $c= imagecolorat($im,0,0);
         $xpos= array();
-        while($x <= $width) {
+        while($x < $width) {
           if ($c == imagecolorat($im,$x++,0)) {
             $xpos[]=$x;
           }

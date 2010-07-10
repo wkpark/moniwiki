@@ -33,7 +33,7 @@ function do_bookmark($formatter,$options) {
     $options['msg']=_("Invalid bookmark!");
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
-  if (!$DBInfo->control_read or $DBInfo->security->is_allowed('read',$options)) {
+  if (empty($DBInfo->control_read) or $DBInfo->security->is_allowed('read',$options)) {
     $formatter->send_page();
   }
   $formatter->send_footer("",$options);

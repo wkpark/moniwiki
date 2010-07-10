@@ -71,12 +71,14 @@ function processor_blog($formatter,$value="",$options) {
 
   $src= rtrim($value);
 
-  if ($src) {
+  if (!empty($src)) {
     $options['nosisters']=1;
-    list($src,$comments)=explode("----\n",$src,2);
+    $tmp = explode("----\n",$src,2);
+    $src = $tmp[0];
+    if (!empty($tmp[1])) $comments = $tmp[1];
 
     $add_button= _("Add comment");
-    if ($comments) {
+    if (!empty($comments)) {
       $count=sizeof(explode("----\n",$comments));
 
       if ($options['noaction'] or $DBInfo->blog_comments) {
@@ -110,7 +112,7 @@ function processor_blog($formatter,$value="",$options) {
     $formatter->send_page($src,$options);
     $msg= ob_get_contents();
     ob_end_clean();
-    if ($comments) {
+    if (!empty($comments)) {
       ob_start();
       $formatter->send_page($comments,$options);
       $comments= "<div class='blog-comments'><div class='blog-comment'>".ob_get_contents()."</div></div>";
