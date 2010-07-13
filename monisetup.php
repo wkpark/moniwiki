@@ -36,7 +36,7 @@ class MoniConfig {
     print '<div class="check">';
     if (function_exists("dba_open")) {
       print '<h3>'._t("Check a dba configuration").'</h3>';
-      $tempnam="/tmp/".time();
+      $tempnam=tempnam(".",'dba-'.time());
       if ($db=@dba_open($tempnam,"n","db4"))
         $config['dba_type']="db4";
       else if ($db=@dba_open($tempnam,"n","db3"))
@@ -46,8 +46,12 @@ class MoniConfig {
       else if ($db=@dba_open($tempnam,"n","gdbm"))
         $config['dba_type']="gdbm";
 
-      if ($db) dba_close($db);
-      print '<ul><li>'.sprintf(_t("%s is selected."),"<b>$config[dba_type]</b>").'</li></ul>';
+      if (is_resource($db)) {
+        dba_close($db);
+        print '<ul><li>'.sprintf(_t("%s is selected."),"<b>$config[dba_type]</b>").'</li></ul>';
+      } else {
+        print '<p>'.sprintf(_t("No \$dba_type selected.")).'</p>';
+      }
     }
     preg_match("/Apache\/2\./",$_SERVER['SERVER_SOFTWARE'],$match);
 
@@ -671,7 +675,7 @@ function pagenameToKey($pagename) {
 }
 
 function show_wikiseed($config,$seeddir='wikiseed') {
-  if ($config['include_path'])
+  if (!empty($config['include_path']))
     $path = $config['include_path'];
   else
     $path='.:/usr/share/moniwiki:/usr/local/share/moniwiki';
@@ -786,7 +790,7 @@ JS;
 }
 
 function sow_wikiseed($config,$seeddir='wikiseed',$seeds) {
-  if ($config['include_path'])
+  if (!empty($config['include_path']))
     $path = $config['include_path'];
   else
     $path='.:/usr/share/moniwiki:/usr/local/share/moniwiki';
