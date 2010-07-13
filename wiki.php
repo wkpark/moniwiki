@@ -4788,14 +4788,17 @@ MSG;
     if (empty($this->css_friendly)) {
       $menu=$this->menu_bra.implode($this->menu_sep,$menu).$this->menu_cat;
     } else {
-      #for ($i=0,$szm=sizeof($menu);$i<$szm;$i++) {
-      #  #if $menu[$i]==
-      #  $menu[$i]="<li >".$menu[$i]."</li>\n";
-      #}
-      $menu='<div id="wikiMenu"><ul><li class="first">'.implode("</li><li>",$menu)."</li></ul></div>\n";
-      # set current attribute.
-      $menu=preg_replace("/(li)>(<a\s[^>]+current[^>]+)/",
-        "$1 class='current'>$2",$menu);
+      $cls = 'first';
+      $mnu = '';
+      foreach ($menu as $k=>$v) {
+        if (preg_match('/current/', $v)) {
+          $cls .=' current';
+        }
+        # set current page attribute.
+        $mnu.='<li'.(!empty($cls) ? ' class="'. $cls .'"' : '').'>'.$menu[$k]."</li>\n";
+        $cls = '';
+      }
+      $menu='<div id="wikiMenu"><ul>'.$mnu."</ul></div>\n";
     }
     $this->topmenu=$menu;
 
@@ -4924,9 +4927,9 @@ MSG;
     #
     if (file_exists($this->themedir."/header.php")) {
       if (!empty($this->trail))
-        $trail="<div id='wikiTrailer'>\n".$this->trail."</div>\n";
+        $trail=&$this->trail;
       if (!empty($this->origin))
-        $origin="<div id='wikiOrigin'>\n".$this->origin."</div>\n";
+        $origin=&$this->origin;
 
       $subindex=!empty($this->subindex) ? $this->subindex : '';
       $themeurl=$this->themeurl;
@@ -4960,14 +4963,14 @@ MSG;
     if (empty($this->popup) and (empty($themeurl) or !$this->_newtheme)) {
       echo $DBInfo->hr;
       if ($options['trail']) {
-        echo "<div id='wikiTrailer'>\n";
+        echo "<div id='wikiTrailer'><p>\n";
         echo $this->trail;
-        echo "</div>\n";
+        echo "</p></div>\n";
       }
       if ($this->origin) {
-        echo "<div id='wikiOrigin'>\n";
+        echo "<div id='wikiOrigin'><p>\n";
         echo $this->origin;
-        echo "</div>\n";
+        echo "</p></div>\n";
       }
       echo $this->subindex;
     }
@@ -5042,7 +5045,7 @@ MSG;
     $save = $this->nonexists;
     $this->nonexists = 'forcelink';
     foreach ($trails as $page) {
-      $this->trail.=$this->word_repl('"'.$page.'"','','',1,0).$DBInfo->arrow;
+      $this->trail.=$this->word_repl('"'.$page.'"','','',1,0).'<span class="separator">'.$DBInfo->arrow.'</span>';
     }
     $this->nonexists = $save;
     $this->trail.= ' '.htmlspecialchars($pagename);
