@@ -2797,12 +2797,11 @@ function macro_FootNote(&$formatter,$value="") {
     }
   }
   $formatter->foots[]="<li><tt class='foot'>".
-                      "<a id='$fnidx' />".
-                      "<a href='#r$fnidx'>$text</a></tt> ".
+                      "<a id='$fnidx' href='#r$fnidx'>$text</a></tt> ".
                       "$value</li>";
   $tval=str_replace("'","&#39;",$value);
-  return "<tt class='foot'><a id='r$fnidx' />".
-    "<a href='#$fnidx' title='$tval'>$text</a></tt>";
+  return "<tt class='foot'>".
+    "<a id='r$fnidx' href='#$fnidx' title='$tval'>$text</a></tt>";
 }
 
 function macro_TableOfContents(&$formatter,$value="") {
@@ -2935,7 +2934,7 @@ EOS;
    if ($baseurl)
      $TOC.=$close.$open."<dt><a href='$baseurl#s$prefix-$num'>$num$a0 $head $a1</dt>\n";
    else
-     $TOC.=$close.$open."<dt><a id='toc$prefix-$num' /><a href='#s$prefix-$num'>$num$a0 $head $a1</dt>\n";
+     $TOC.=$close.$open."<dt><a id='toc$prefix-$num' href='#s$prefix-$num'>$num$a0 $head $a1</dt>\n";
 
   }
 
