@@ -268,8 +268,12 @@ function do_userform($formatter,$options) {
                  $body.="\n".sprintf(_("Your initial password is %s"),$mypass)."\n\n";
                  $body.=_("Please change your password later")."\n";
                }
-               wiki_sendmail($body,$options);
-               $options['msg'].='<br/>'._("Confirmation E-mail sent");
+               $ret = wiki_sendmail($body,$options);
+               if (is_array($ret)) {
+                 $options['msg'].=$ret['msg'];
+               } else {
+                 $options['msg'].='<br/>'._("Confirmation E-mail sent");
+               }
              }
            } else {# already exist user
              $user=$udb->getUser($user->id);
@@ -342,8 +346,12 @@ function do_userform($formatter,$options) {
         $options['subject']="[$DBInfo->sitename] "._("E-mail confirmation");
         $body=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
         $body=_("Please confirm your email address")."\n".$body;
-        wiki_sendmail($body,$options);
-        $options['msg']=_("E-mail confirmation mail sent");
+        $ret = wiki_sendmail($body,$options);
+        if (is_array($ret)) {
+          $options['msg']=$ret['msg'];
+        } else {
+          $options['msg']=_("E-mail confirmation mail sent");
+        }
       } else {
         $options['msg']=_("Your email address is not valid");
       }
