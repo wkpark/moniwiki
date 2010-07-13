@@ -20,7 +20,7 @@ function _fuzzy_bsearch_file($fp, $key, $seek, $fuzzyoffset=0, $klen=0,$fz=0,$en
     $_fuzzy_factor2 = 0.55; # similiar pos parameter
     $_chunk_size = 128; # average strlen parameter of lines.
     $_howmany = 23; # this is not exact the bsearch then limit the search counter.
-    $_debug = 1; # show debug info or not
+    $_debug = 0; # show debug info or not
 
     if (empty($key)) return null;
     if ($fz == 0) return null;
@@ -107,7 +107,7 @@ function _fuzzy_bsearch_file($fp, $key, $seek, $fuzzyoffset=0, $klen=0,$fz=0,$en
 
 function _file_match($fp,$key,$lower,$upper,$fsize,$klen=1,$match_prefix=true,$encoding='UTF-8') {
     static $cseek=0;
-    $_debug=1;
+    $_debug=0;
 
     $count=0;
 
