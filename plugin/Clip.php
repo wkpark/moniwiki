@@ -61,7 +61,7 @@ function do_Clip($formatter,$options) {
 
   //$imgpath="$_dir/$pngname";
   $imgpath="$pngname";
-
+  $imgparam = '';
   if (file_exists($_dir.'/'.$imgpath.'.png')) {
     $url=qualifiedUrl($DBInfo->url_prefix.'/'.$_dir.'/'.$imgpath.'.png');
     $imgparam="<param name='image' value='$url' />";

@@ -48,7 +48,7 @@ function macro_Draw($formatter,$value) {
     $map=preg_replace("/%MAPNAME%/",$name,$map);
   }
 
-  return "$map<img src='$DBInfo->url_prefix/$_dir/$gifname' border='0' alt='hotdraw' $maptag /></a>\n".$editable;
+  return "$map<img src='$DBInfo->upload_dir_url/$keyname/$gifname' border='0' alt='hotdraw' $maptag /></a>\n".$editable;
 }
 
 function do_post_Draw($formatter,$options=array()) {
@@ -131,6 +131,7 @@ function do_post_Draw($formatter,$options=array()) {
   }
 
   $imgpath="$_dir/$gifname";
+  $ufname = $gifname;
 
   $dummy=0;
   while (file_exists($imgpath)) {
@@ -139,8 +140,8 @@ function do_post_Draw($formatter,$options=array()) {
      $imgpath= "$_dir/$ufname";
   }
 
-  $draw_url="$DBInfo->url_prefix/$imgpath.draw";
-  $gif_url="$DBInfo->url_prefix/$imgpath.gif";
+  $draw_url="$DBInfo->upload_dir_url/$keyname/$ufname.draw";
+  $gif_url="$DBInfo->upload_dir_url/$keyname/$ufname.gif";
 
   $formatter->send_header("",$options);
   $formatter->send_title(_("Edit drawing"),"",$options);
