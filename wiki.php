@@ -1059,7 +1059,7 @@ EOS;
       $id=!empty($options['name']) ?
         _stripslashes($options['name']):$_SERVER['REMOTE_ADDR'];
     } else {
-      $id=$options['nick'] ? $options['nick']:$options['id'];
+      $id=!empty($options['nick']) ? $options['nick']:$options['id'];
       if (!preg_match('/([A-Z][a-z0-9]+){2,}/',$id)) $id='['.$id.']';
     }
  
