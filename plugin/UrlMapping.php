@@ -21,7 +21,7 @@ function macro_UrlMapping($formatter,$value,$options=array()) {
         if ($DBInfo->shared_url_mappings and $cf->mtime('urlmapping') < filemtime($DBInfo->shared_url_mappings) ) {
             $force_init=1;
         }
-        if (!$formatter->refresh and $cf->exists('urlmapping') and !$force_init) {
+        if (!empty($formatter->refresh) and $cf->exists('urlmapping') and !$force_init) {
             $info=unserialize($cf->fetch('urlmapping'));
             $DBInfo->url_mappings=$info['urlmapping'];
             $DBInfo->url_mapping_rule=$info['urlmappingrule'];
