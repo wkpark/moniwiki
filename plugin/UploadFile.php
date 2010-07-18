@@ -33,8 +33,8 @@ function do_uploadfile($formatter,$options) {
   $title = '';
 
   if (isset($_FILES['upfile']) and is_array($_FILES)) {
-    if (($options['multiform'] > 1) or is_array($_FILES['upfile']['name'])) {
-      $options['multiform']=$options['multiform'] ?
+    if ((!empty($options['multiform']) and $options['multiform'] > 1) or is_array($_FILES['upfile']['name'])) {
+      $options['multiform']=!empty($options['multiform']) ?
          $options['multiform']:sizeof($_FILES['upfile']['name']);
       $count=$options['multiform'];
       $files=&$_FILES;
