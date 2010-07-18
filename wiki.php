@@ -4747,8 +4747,6 @@ MSG;
     if (isset($quicklinks[$this->page->name])) {
       #$attr.=" class='current'";
       $titlemnu=1;
-    } else {
-      $quicklinks[$this->page->name]='';
     }
 
     if (!empty($DBInfo->use_userlink) and isset($quicklinks['UserPreferences']) and $options['id'] != 'Anonymous') {
