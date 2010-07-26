@@ -301,7 +301,7 @@ EOF;
 
   $comment.="'$upfilename' ";
 
-  $title.=(!empty($title) ? "\n":'').
+  $title.=(!empty($title) ? "\\n":'').
     sprintf(_("File \"%s\" is uploaded successfully"),$upfilename);
 
   $fullname=$formatter->page->name."/$upfilename";
