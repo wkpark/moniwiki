@@ -2868,7 +2868,8 @@ class Formatter {
       $np = getPlugin($name);
       if (empty($np)) return $this->link_repl($name);
       include_once('plugin/'.$np.'.php');
-      if (!function_exists ('macro_'.$name)) return '[['.$macro.']]';
+      if (!function_exists ('macro_'.$np)) return '[['.$macro.']]';
+      $name = $np;
     }
 
     if ($this->_macrocache and empty($options['call']) and
