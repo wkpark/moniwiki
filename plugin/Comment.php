@@ -317,9 +317,9 @@ META;
 
     endif;
 
-    if ($matched) $body=$nnc;
+    if (!empty($matched)) $body=$nnc;
   }
-  if (!$matched):
+  if (empty($matched)):
   if ($options['comment_id'] and preg_match("/^\[\[Comment\(".$options['comment_id']."\)\]\]/m",$body)) {
     $str="[[Comment($options[comment_id])]]";
     $body= preg_replace('/'.preg_quote($str).'/',$savetext.$str,$body,1);
