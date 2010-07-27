@@ -73,6 +73,9 @@ EOF;
 
   $hits=array();
 
+  $context = !empty($opts['context']) ? $opts['context'] : 0;
+  $contexts = array();
+
   foreach ($pages as $key) {
     $page_name= $DBInfo->keyToPagename($key);
     $p = new WikiPage($page_name);
@@ -83,13 +86,13 @@ EOF;
     if ($count) {
       $hits[$page_name] = $count;
       # search matching contexts
-      $contexts[$page_name] = find_needle($body,$needle,'',$opts['context']);
+      $contexts[$page_name] = find_needle($body,$needle,'',$context);
     }
   }
 
   arsort($hits);
 
-  $out.= "<ul>";
+  $out = "<ul>";
   reset($hits);
   $idx=1;
   while (list($page_name, $count) = each($hits)) {
@@ -114,7 +117,7 @@ function do_fastsearch($formatter,$options) {
 
   $title= sprintf(_("Full text search for \"%s\""), $options['value']);
   $out= macro_FastSearch($formatter,$options['value'],$ret);
-  $options['msg']=$ret['msg'];
+  $options['msg']=!empty($ret['msg']) ? $ret['msg'] : '';
   $formatter->send_header("",$options);
   $formatter->send_title($title,$formatter->link_url("FindPage"),$options);
 
