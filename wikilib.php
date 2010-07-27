@@ -2287,7 +2287,7 @@ function macro_UserPreferences($formatter,$value,$options='') {
     <th>OpenID</th>
     <td>
       <input type="text" name="openid_url" value="" style="background:url(http://www.myopenid.com/static/openid-icon-small.gif) no-repeat; padding:2px;padding-left:24px; border-width:1px" />
-	    <input type="submit" name="login" value="$button" /> &nbsp;
+	    <span class="button"><input type="submit" class="button" name="login" value="$button" /></span> &nbsp;
     </td>
   </tr>
 OPENID;
@@ -2306,7 +2306,7 @@ OPENID;
   </tr>
   <tr><td></td><td>
     $passwd_hidden
-    <input type="submit" name="login" value="$button" /> &nbsp;
+    <span class="button"><input type="submit" class="button" name="login" value="$button" /></span> &nbsp;
   </td></tr>
 MYFORM;
     $login=<<<FORM
@@ -2391,10 +2391,10 @@ $nick
   <tr><th>$email_btn&nbsp;</th><td><input type="text" size="40" name="email" value="$email" /></td></tr>
   <tr><th>$tz_btn&nbsp;</th><td><select name="timezone">
   $opts
-  </select> <input type='button' value='Local timezone' onclick='javascript:setTimezone()' /></td></tr>
+  </select> <span class='button'><input type='button' class='button' value='Local timezone' onclick='javascript:setTimezone()' /></span></td></tr>
   <tr><td><b>CSS URL </b>&nbsp;</td><td><input type="text" size="40" name="user_css" value="$css" /><br />("None" for disabling CSS)</td></tr>
 EXTRA;
-    $logout="<input type='submit' name='logout' value='"._("logout")."' /> &nbsp;";
+    $logout="<span class='button'><input type='submit' class='button' name='logout' value='"._("logout")."' /></span> &nbsp;";
   }
   $script = '';
   if (empty($tz_offset) and $jscript)
@@ -2424,7 +2424,7 @@ PASS;
     if (!empty($DBInfo->use_sendmail)) {
       $button2=_("E-mail new password");
       $emailpasswd=
-        "<input type=\"submit\" name=\"login\" value=\"$button2\" />\n";
+        "<span class='button'><input type=\"submit\" class='button' name=\"login\" value=\"$button2\" /></span>\n";
     }
   }
   $id_btn=_("ID");
@@ -2446,7 +2446,7 @@ $sep1
     $again
     $extra
   <tr><td></td><td>
-    <input type="submit" name="login" value="$button" /> &nbsp;
+    <span class="button"><input type="submit" class="button" name="login" value="$button" /></span> &nbsp;
     $emailpasswd
     $logout
   </td></tr>
@@ -2960,7 +2960,7 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   $form="<form method='get' action='$url'>
       <input type='hidden' name='action' value='titlesearch' />
       <input name='value' size='30' value='$needle' />
-      <button type='submit'><span>$msg</span></button>
+      <span class='button'><input type='submit' class='button' value='$msg' /></span>
       </form>";
 
   if (!$needle) {
@@ -3022,7 +3022,7 @@ function macro_GoTo($formatter="",$value="") {
   return "<form method='get' action='$url'>
     <input type='hidden' name='action' value='goto' />
     <input name='value' size='30' value='$value' />
-    <button type='submit'><span>$msg</span></button>
+    <span class='button'><input type='submit' class='button' value='$msg' /></span>
     </form>";
 }
 
