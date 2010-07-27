@@ -99,7 +99,7 @@ EXTRA;
 FORM;
   } else {
     if (empty($options['nopreview']))
-    $preview='<input type="submit" name="button_preview" value="'.$preview_btn.'" />';
+    $preview='<span class="button"><input type="submit" class="button" name="button_preview" value="'.$preview_btn.'" /></span>';
     $form.= <<<FORM
 <textarea class="wiki" name="savetext"
  rows="$rows" cols="$cols">$savetext</textarea><br />
@@ -118,7 +118,7 @@ $captcha
 $sig
 <input type="hidden" name="action" value="$action" />
 <input type="hidden" name="datestamp" value="$datestamp" />
-<input type="submit" value="$comment" />
+<span class="button"><input type="submit" class="button" value="$comment" /></span>
 $preview
 </div>
 </form>
