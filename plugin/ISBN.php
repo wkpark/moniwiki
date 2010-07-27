@@ -227,7 +227,7 @@ EOS;
   if (!empty($noimg)) {
     $icon=$DBInfo->imgs_dir_interwiki.strtolower($lang).'-16.png';
     $sx=16;$sy=16;
-    if ($DBInfo->intericon[$lang]) {
+    if (!empty($DBInfo->intericon[$lang])) {
       $icon=$DBInfo->intericon[$lang][2];
       $sx=$DBInfo->intericon[$lang][0];
       $sy=$DBInfo->intericon[$lang][1];

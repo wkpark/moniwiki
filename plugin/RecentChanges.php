@@ -80,6 +80,7 @@ define('RC_DEFAULT_DAYS',7);
   if (preg_match("/^[\s\/\-:aABdDFgGhHiIjmMOrSTY]+$/",$args[0]))
     $date_fmt=$args[0];
 
+  $cat0="";
   foreach ($args as $arg) {
     $arg=trim($arg);
     if (($p=strpos($arg,'='))!==false) {
