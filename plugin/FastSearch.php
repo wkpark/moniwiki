@@ -32,12 +32,14 @@ function macro_FastSearch($formatter,$value="",&$opts) {
   $fneedle=str_replace('"',"&#34;",$needle); # XXX
   $url=$formatter->link_url($formatter->page->urlname);
 
+  $msg = _("Fast search");
+  $msg2 = _("Display context of search results");
   $form= <<<EOF
 <form method='get' action='$url'>
    <input type='hidden' name='action' value='fastsearch' />
    <input name='value' size='30' value='$fneedle' />
-   <input type='submit' value='Fast search' /><br />
-   <input type='checkbox' name='context' value='20' checked='checked' />Display context of search results<br />
+   <span class='button'><input type='submit' class='button' value='$msg' /></span><br />
+   <input type='checkbox' name='context' value='20' checked='checked' />$msg2<br />
    </form>
 EOF;
 
