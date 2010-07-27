@@ -80,7 +80,10 @@ define('RC_DEFAULT_DAYS',7);
   if (preg_match("/^[\s\/\-:aABdDFgGhHiIjmMOrSTY]+$/",$args[0]))
     $date_fmt=$args[0];
 
-  $cat0="";
+  $bra = '';
+  $cat = '';
+  $cat0 = '';
+  $rctitle = "<h2>"._("Recent Changes")."</h2>";
   foreach ($args as $arg) {
     $arg=trim($arg);
     if (($p=strpos($arg,'='))!==false) {
@@ -99,6 +102,7 @@ define('RC_DEFAULT_DAYS',7);
       else if ($arg=="noperma") $perma_icon='';
       else if ($arg=="button") $button=1;
       else if ($arg=="timesago") $timesago=1;
+      else if ($arg=="notitle") $rctitle='';
       else if ($arg=="hits") $use_hits=1;
       else if ($arg=="daysago") $use_daysago=1;
       else if ($arg=="simple") {
@@ -382,8 +386,7 @@ define('RC_DEFAULT_DAYS',7);
     $logs[$page_key]= 1;
     ++$ii;
   }
-  $title = "<h2>"._("Recent Changes")."</h2>";
-  return $btnlist.'<div class="recentChanges">'.$title.$template_bra.$out.$template_cat.$cat0.'</div>';
+  return $btnlist.'<div class="recentChanges">'.$rctitle.$template_bra.$out.$template_cat.$cat0.'</div>';
 }
 // vim:et:sts=2:
 ?>
