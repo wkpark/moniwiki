@@ -738,6 +738,7 @@ function macro_EditText($formatter,$value,$options) {
 <style type='text/css'>
 /*<![CDATA[*/
 #mycontent button.save-button { display: none; }
+#mycontent button.preview-button { display: none; }
 button.save-button { display: none; }
 $sidebar_style
 /*]]>*/
@@ -1099,7 +1100,7 @@ EXTRA;
   $wysiwyg_btn = '';
   $skip_preview = '';
   if (empty($options['simple'])) {
-    $preview_btn='<button type="submit" tabindex="6" name="button_preview" value="1"><span>'.
+    $preview_btn='<button type="submit" tabindex="6" name="button_preview" class="preview-button" value="1"><span>'.
       _("Preview").'</span></button>';
     if ($preview)
       $skip_preview= ' '.$formatter->link_to('#preview',_("Skip to preview"),' class="preview-anchor"');
