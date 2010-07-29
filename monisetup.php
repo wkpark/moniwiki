@@ -45,6 +45,8 @@ class MoniConfig {
         $config['dba_type']="db2";
       else if ($db=@dba_open($tempnam,"n","gdbm"))
         $config['dba_type']="gdbm";
+      else if ($db=@dba_open($tempnam,"n","flatfile"))
+        $config['dba_type']="flatfile";
 
       if (is_resource($db)) {
         dba_close($db);
