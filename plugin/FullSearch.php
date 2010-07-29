@@ -235,7 +235,9 @@ EOF;
       }
     }
     #krsort($hits);
-    ksort($hits);
+    #ksort($hits);
+    $name = array_keys($hits);
+    array_multisort($hits, SORT_DESC, $name, SORT_ASC);
 
     $fc->update($sid,serialize($hits));
   }

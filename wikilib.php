@@ -315,6 +315,28 @@ function getTicket($seed,$extra='',$size=0,$flag=0) {
   return md5($siteticket.$seed.$extra);
 }
 
+function getTokens($string, $params = null) {
+    $words = array();
+
+    // strip macros, entities
+    $raw = preg_replace("/&[^;\s]+;|\[\[[^\[]+\]\]/", ' ', $string);
+    // strip comments
+    $raw = preg_replace("/^##.*$/m", ' ', $raw);
+    $raw = preg_replace("/([;\"',`\\\\\/\.:@#\!\?\$%\^&\*\(\)\{\}\[\]\~\-_\+=\|<>])/",
+        ' ', strip_tags($raw));
+
+    // split wiki words
+    $raw = preg_replace("/((?<=[a-z0-9]|[B-Z]{2})([A-Z][a-z]))/", " \\1", $raw);
+    $raw = strtolower($raw);
+    $raw = preg_replace("/\b/", ' ', $raw);
+    //$raw=preg_replace("/\b([0-9a-zA-Z'\"])\\1+\s*/",' ',$raw);
+
+    $words = preg_split("/\s+|\n/", trim($raw));
+
+    asort($words);
+    return array_unique($words);
+}
+
 function log_referer($referer,$page) {
   global $DBInfo;
   if (!$referer) return;
