@@ -7,7 +7,8 @@ include_once("wiki.php");
 $Config=getConfig("config.php");
 include("wikilib.php");
 include("lib/win32fix.php");
-include("lib/search.DBA.php");
+#include("lib/tokenizer.php");
+include("lib/indexer.DBA.php");
 
 $DBInfo= new WikiDB($Config);
 
@@ -16,7 +17,7 @@ $timing = &new Timer();
 $options['timer']=&$timing;
 $options['timer']->Check("load");
 
-$indexer = new IndexDB_DBA('fullsearch', 'w', $DBInfo->dba_type);
+$indexer = new Indexer_DBA('fullsearch', 'w', $DBInfo->dba_type, 'new');
 #$indexer->test();
 #exit;
 

@@ -1120,6 +1120,27 @@ EOS;
     $key=$this->text_dir."/$keyname";
 
     $body=$this->_replace_variables($page->body,$options);
+
+    // update fulltext index
+    if (!empty($this->use_indexer)) {
+      #include_once("lib/tokenizer.php");
+      include_once("lib/indexer.DBA.php");
+      $indexer = new Indexer_dba('fullsearch', 'w', $this->dba_type);
+
+      $new_words = getTokens($body);
+      if ($indexer->hasPage($page->name)) {
+        $old_body = $page->_get_raw_body();
+        $old_words = getTokens($old_body);
+
+        $del_words = array_diff($old_words, $new_words);
+        $add_words = array_diff($new_words, $old_words);
+        $indexer->delWords($page->name, $del_words);
+        $indexer->addWords($page->name, $add_words);
+      } else {
+        $indexer->addWords($page->name, $new_words);
+      }
+    }
+
     $log=$REMOTE_ADDR.';;'.$myid.';;'.$comment;
     $options['log']=$log;
     $options['pagename']=$page->name;
@@ -1149,6 +1170,20 @@ EOS;
     $user=&$this->user;
 
     $keyname=$this->_getPageKey($page->name);
+
+    // update fulltext index
+    if (!empty($this->use_indexer)) {
+      #include_once("lib/tokenizer.php");
+      include_once("lib/indexer.DBA.php");
+      $indexer = new Indexer_dba('fullsearch', 'w', $this->dba_type);
+
+      if ($indexer->hasPage($page->name)) {
+        $old_body = $page->_get_raw_body();
+        $old_words = getTokens($old_body);
+        $indexer->delWords($page->name, $old_words);
+        $indexer->deletePage($page->name);
+      }
+    }
 
     if ($this->version_class) {
       $class=getModule('Version',$this->version_class);
@@ -1182,6 +1217,20 @@ EOS;
 
   function renamePage($pagename,$new,$options='') {
     $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
+
+    // update fulltext index
+    if (!empty($this->use_indexer)) {
+      #include_once("lib/tokenizer.php");
+      include_once("lib/indexer.DBA.php");
+      $indexer = new Indexer_dba('fullsearch', 'w', $this->dba_type);
+
+      $page = $this->getPage($pagename);
+
+      $old_body = $page->_get_raw_body();
+      $old_words = getTokens($old_body);
+      $indexer->delWords($pagename, $old_words);
+      $indexer->addWords($new, $old_words);
+    }
 
     $okey=$this->getPageKey($pagename);
     $nkey=$this->getPageKey($new);

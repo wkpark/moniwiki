@@ -1,7 +1,7 @@
 <?php
 // Copyright 2005-2006 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
-// a KoreanIndexer class for the MoniWiki
+// a KoreanStemmer class for the MoniWiki
 //
 // $Id$
 //
@@ -45,8 +45,8 @@ class TagSet extends TagOp {
     }
 }
 
-class KoreanIndexer {
-    function KoreanIndexer() {
+class KoreanStemmer {
+    function KoreanStemmer() {
         include_once(dirname(__FILE__).'/compat.php');
         include_once(dirname(__FILE__).'/unicode.php');
         $this->_eomiRule();

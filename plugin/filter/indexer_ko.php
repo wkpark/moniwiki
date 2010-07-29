@@ -6,11 +6,11 @@
 // $Id$
 //
 
-include_once(dirname(__FILE__).'/../../lib/indexer.ko.php');
+include_once(dirname(__FILE__).'/../../lib/stemmer.ko.php');
 
 function filter_indexer_ko($formatter,$value,&$options) {
     $more_specific_len=1;
-    $indexer=new KoreanIndexer();
+    $indexer=new KoreanStemmer();
 
     if ($options['value'])
         $value=$options['value'];

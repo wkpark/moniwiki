@@ -7,24 +7,44 @@
 // heavily modified to adopt to the MoniWiki 2003/07/19 by wkpark
 // $Id$
 
-class IndexDB_dba {
+class Indexer_dba {
     var $db = null;
     var $type = 'n'; // N for 32-bit. n for 16 bit.
     var $wordcache = array();
+    var $arena = '';
 
-    function IndexDB_dba($arena,$mode='r',$type) {
+    var $dbname = ''; // db file name
+    var $prefix = '';
+
+    function Indexer_dba($arena,$mode='r',$type, $prefix = '') {
         global $DBInfo;
+
         $this->index_dir=$DBInfo->cache_dir.'/index';
         if (!file_exists($this->index_dir))
             mkdir($this->index_dir, 0777);
-        $db=$this->index_dir.'/'.$arena.'.db';
-        if (($this->db=@dba_open($db, $mode,$type)) === false) {
-            if (($this->db=@dba_open($db, 'n',$type)) === false)
+
+        $this->prefix = $prefix;
+        if (!empty($prefix))
+            $prefix = $prefix . '.';
+
+        $this->dbname = $this->index_dir.'/'.$prefix.$arena.'.db';
+        $this->arena = $arena;
+
+        // check updated db file.
+        if (empty($prefix) and file_exists($this->index_dir.'/'.$arena.'.new.db')) {
+            if (filemtime($this->index_dir.'/'.$arena.'.new.db') > filemtime($this->dbname)) {
+                copy($this->index_dir.'/'.$arena.'.new.db', $this->dbname);
+            }
+        }
+
+        if (($this->db=@dba_open($this->dbname, $mode,$type)) === false) {
+            if (($this->db=@dba_open($this->dbname, 'n',$type)) === false)
                 return false;
             // startkey==256
             dba_insert('!!',256,$this->db);
             dba_sync($this->db);
         }
+        register_shutdown_function(array(&$this,'close'));
         return true;
     }
 
@@ -104,17 +124,10 @@ class IndexDB_dba {
         $type = $this->type;
         $key = $this->getPageID($pagename);
 
-        $nwords = array();
         foreach ($words as $word) {
-            $ws = $this->_getIndexWords($word);
-            if (!is_array($ws))
-                $ws = array($word);
-
-            foreach ($ws as $w) {
-                $a = !empty($this->wordcache[$w]) ? $this->wordcache[$w] : '';
-                $a.= pack($this->type, $key);
-                $this->wordcache[$w] = $a;
-            }
+            $a = !empty($this->wordcache[$word]) ? $this->wordcache[$word] : '';
+            $a.= pack($this->type, $key);
+            $this->wordcache[$word] = $a;
         }
         return;
     }
@@ -149,7 +162,7 @@ class IndexDB_dba {
     }
 
     function addWords($pagename,$words) {
-        if (!is_array($words)) return;
+        if (!is_array($words) or empty($words)) return;
         $type=$this->type;
         $key=$this->getPageID($pagename);
 
@@ -171,9 +184,11 @@ class IndexDB_dba {
     }
 
     function delWords($pagename,$words,$mode='') {
-        if (!is_array($words)) return;
+        if (!is_array($words) or empty($words)) return;
         $type=$this->type;
         $key=$this->getPageID($pagename);
+        #print $key."<br />";
+        #print "<pre>";
         foreach ($words as $word) {
             if (dba_exists($word,$this->db)) {
                 $a=dba_fetch($word,$this->db);
@@ -185,14 +200,49 @@ class IndexDB_dba {
             unset($ta[$key]);
             $un=array_flip($ta);
             asort($un);
+            #print $word."\n";
+            #print_r($un);
+            $na = '';
             foreach ($un as $u) $na.=pack($type,$u);
-            dba_replace($word,$na,$this->db);
+            if (empty($na))
+                dba_delete($word,$this->db);
+            else
+                dba_replace($word,$na,$this->db);
         }
+        #print "</pre>";
         return;
     }
 
+    function deletePage($pagename) {
+        if (dba_exists('!?'.$pagename, $this->db)) {
+            $key = dba_fetch('!?'.$pagename, $this->db);
+            $keyval = unpack($this->type.'1'.$this->type, $key);
+            dba_delete('!?'.$key, $this->db);
+            dba_delete('!?'.$pagename, $this->db);
+            return true;
+        }
+        return false;
+    }
+
+    function hasPage($pagename) {
+        if (dba_exists('!?'.$pagename, $this->db))
+            return true;
+
+        return false;
+    }
+
     function close() {
-        return dba_close($this->db);
+        if (is_resource($this->db)) {
+            $this->flushWordCache();
+            $ret = dba_close($this->db);
+
+            if (!empty($this->prefix)) {
+                $postfix = $this->prefix.'.';
+                rename($this->db, $this->index_dir.'/'.$this->arena.$postfix.'.db');
+            }
+            return $ret;
+        }
+        return false;
     }
 
     function sort() {

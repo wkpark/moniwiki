@@ -15,7 +15,7 @@
 //
 // $Id$
 
-include_once('lib/search.DBA.php');
+include_once('lib/indexer.DBA.php');
 
 function macro_FastSearch($formatter,$value="",&$opts) {
   global $DBInfo;
@@ -48,7 +48,7 @@ EOF;
      return $form;
   }
 
-  $DB=new IndexDB_dba('fullsearch',"r",$DBInfo->dba_type);
+  $DB=new Indexer_dba('fullsearch',"r",$DBInfo->dba_type);
   if ($DB->db==null) {
     $opts['msg']=_("Couldn't open search database, sorry.");
     $opts['hits']= 0;

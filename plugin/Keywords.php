@@ -206,10 +206,10 @@ EOF;
     }
     $words=array_diff($words,preg_split("/\s+|\n/",$common));
 
-    while (!empty($DBInfo->use_indexer)) {
-        include_once(dirname(__FILE__).'/../lib/indexer.ko.php');
+    while (!empty($DBInfo->use_stemmer)) {
+        include_once(dirname(__FILE__).'/../lib/stemmer.ko.php');
         include_once(dirname(__FILE__).'/../lib/stemmer.php');
-        $indexer=new KoreanIndexer();
+        $indexer=new KoreanStemmer();
 
         if (!is_resource($indexer->_dict)) break;
         $founds = array();
