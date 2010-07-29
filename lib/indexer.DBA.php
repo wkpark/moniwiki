@@ -15,6 +15,7 @@ class Indexer_dba {
 
     var $dbname = ''; // db file name
     var $prefix = '';
+    var $use_stemming = 1; // 0: noop / 1: fake stemming / 2: using KoreanStemmer 
 
     function Indexer_dba($arena,$mode='r',$type, $prefix = '') {
         global $DBInfo;
@@ -96,37 +97,70 @@ class Indexer_dba {
         return $pkey;
     }
 
-    function _getIndexWords($string) {
-        if (preg_match('/[^0-9A-Za-z]/u', $string)) {
+    function _getIndexWords($string, &$words) {
+        if (empty($string)) return false;
+
+        if (preg_match('/[^0-9A-Za-z]/u', $string)) { // FIXME
             // split into single chars
-            $charstr = @preg_replace('/(.)/u',' \1 ',$string);
-            if(!is_null($charstr)) $string = $charstr; //recover from regexp failure
+	    $chars = preg_split('//u', $string, -1, PREG_SPLIT_NO_EMPTY);
 
             // make fake words for indexing
             // Please see MoniWiki:FastSearchMacro, MoniWiki:FullTextIndexer
-            if (strpos($string, ' ') !== false) {
-                $ws = preg_split('/\s+/', trim($string));
-                $words = array();
-                $n = '';
-                foreach ($ws as $w) {
-                    $n.= $w;
+            $sz = count($chars);
+            if ($sz > 1) {
+                $n = $chars[0];
+                for ($i=1; $i < $sz; $i++) {
+                    $n.= $chars[$i];
                     $words[] = $n;
                 }
                 #print_r($words);
-                return $words;
+                return true;
             }
         }
         return false;
     }
+
+    function _stemmingWords($words) {
+        static $indexer = null;
+        if ($this->use_stemming > 1) {
+            include_once(dirname(__FILE__).'/stemmer.ko.php');
+            if (empty($indexer))
+                $indexer = new KoreanStemmer();
+
+            $founds = array();
+            foreach ($words as $word) {
+                if (preg_match('/[^0-9A-Za-z]/u', $word)) {
+                    $match = null;
+                    $stem = $indexer->getStem(trim($word), $match, $type);
+                    if (!empty($stem))
+                        $founds[] = $stem;
+                } else {
+                    $founds[] = $word;
+                }
+            }
+            return $founds;
+        }
+
+        $new_words = array();
+        foreach ($words as $word) {
+            $this->_getIndexWords($word, $new_words);
+        }
+        $words = array_unique(array_merge($words, $new_words));
+        return $words;
+    }
+
 
     function addWordCache($pagename,$words) {
         if (!is_array($words)) return;
         $type = $this->type;
         $key = $this->getPageID($pagename);
 
+        if ($this->use_stemming)
+            $words = $this->_stemmingWords($words);
+        $packed = pack($this->type, $key);
         foreach ($words as $word) {
             $a = !empty($this->wordcache[$word]) ? $this->wordcache[$word] : '';
-            $a.= pack($this->type, $key);
+            $a.= $packed;
             $this->wordcache[$word] = $a;
         }
         return;
@@ -166,6 +200,9 @@ class Indexer_dba {
         $type=$this->type;
         $key=$this->getPageID($pagename);
 
+        if ($this->use_stemming)
+            $words = $this->_stemmingWords($words);
+        $packed = pack($type, $key);
         foreach ($words as $word) {
             if (dba_exists($word,$this->db)) {
                 $a=dba_fetch($word,$this->db);
@@ -173,7 +210,7 @@ class Indexer_dba {
                 dba_insert($word,'',$this->db);
                 $a='';
             }
-            $a.=pack($type,$key);
+            $a.= $packed;
             $un=array_unique(unpack($type.'*',$a));
             asort($un);
             $na='';
@@ -189,6 +226,9 @@ class Indexer_dba {
         $key=$this->getPageID($pagename);
         #print $key."<br />";
         #print "<pre>";
+
+        if ($this->use_stemming)
+            $words = $this->_stemmingWords($words);
         foreach ($words as $word) {
             if (dba_exists($word,$this->db)) {
                 $a=dba_fetch($word,$this->db);
@@ -238,7 +278,7 @@ class Indexer_dba {
 
             if (!empty($this->prefix)) {
                 $postfix = $this->prefix.'.';
-                rename($this->db, $this->index_dir.'/'.$this->arena.$postfix.'.db');
+                rename($this->dbname, $this->index_dir.'/'.$this->arena.$postfix.'.db');
             }
             return $ret;
         }
