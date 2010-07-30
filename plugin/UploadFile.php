@@ -341,6 +341,7 @@ EOF;
     $err = strip_tags($err);
     if ($err) $err .= "\\n";
 
+    $formatter->header('Content-type: text/html; charset='.$DBInfo->charset);
     $scr = '';
     if (!empty($options['domain']) and preg_match('/^[a-z][a-z0-9]+(\.[a-z][a-z0-9]+)*$/i', $options['domain'])) {
         $scr = '<script type="text/javascript">document.domain="'.$options['domain'].'";</script>';
