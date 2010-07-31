@@ -34,8 +34,10 @@ class Indexer_dba {
         // check updated db file.
         if (empty($prefix) and file_exists($this->index_dir.'/'.$arena.'.new.db')) {
             if (filemtime($this->index_dir.'/'.$arena.'.new.db') > filemtime($this->dbname)) {
-                copy($this->index_dir.'/'.$arena.'.new.db', $this->dbname.'tmp');
-                rename($this->dbname.'tmp', $this->dbname);
+                touch($this->dbname);
+                $tmpname = '.tmp_'.time();
+                copy($this->index_dir.'/'.$arena.'.new.db', $this->dbname.$tmpname);
+                rename($this->dbname.$tmpname, $this->dbname);
             }
         }
 
