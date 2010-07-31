@@ -43,7 +43,7 @@ class _DiffOp_Copy extends _DiffOp {
     }
 
     function &reverse() {
-        $rev = &new _DiffOp_Copy($this->_final, $this->orig);
+        $rev = new _DiffOp_Copy($this->_final, $this->orig);
         return $rev;
     }
 }
@@ -57,7 +57,7 @@ class _DiffOp_Delete extends _DiffOp {
     }
 
     function &reverse() {
-        $rev = &new _DiffOp_Add($this->orig);
+        $rev = new _DiffOp_Add($this->orig);
         return $rev;
     }
 }
@@ -71,7 +71,7 @@ class _DiffOp_Add extends _DiffOp {
     }
 
     function &reverse() {
-        $rev = &new _DiffOp_Delete($this->_final);
+        $rev = new _DiffOp_Delete($this->_final);
         return $rev;
     }
 }
@@ -85,7 +85,7 @@ class _DiffOp_Change extends _DiffOp {
     }
 
     function &reverse() {
-        $rev = &new _DiffOp_Change($this->_final, $this->orig);
+        $rev = new _DiffOp_Change($this->_final, $this->orig);
         return $rev;
     }
 }
@@ -179,7 +179,7 @@ class _DiffEngine
                 ++$yi;
             }
             if ($copy)
-                $edits[] = &new _DiffOp_Copy($copy);
+                $edits[] = new _DiffOp_Copy($copy);
 
             // Find deletes & adds.
             $delete = array();
@@ -191,11 +191,11 @@ class _DiffEngine
                 $add[] = $to_lines[$yi++];
             
             if ($delete && $add)
-                $edits[] = &new _DiffOp_Change($delete, $add);
+                $edits[] = new _DiffOp_Change($delete, $add);
             elseif ($delete)
-                $edits[] = &new _DiffOp_Delete($delete);
+                $edits[] = new _DiffOp_Delete($delete);
             elseif ($add)
-                $edits[] = &new _DiffOp_Add($add);
+                $edits[] = new _DiffOp_Add($add);
         }
         return $edits;
     }
@@ -747,7 +747,7 @@ class DiffFormatter
                     else{
                         if ($ntrail) {
                             $context = array_slice($edit->orig, 0, $ntrail);
-                            $block[] = &new _DiffOp_Copy($context);
+                            $block[] = new _DiffOp_Copy($context);
                         }
                         $this->_block($x0, $ntrail + $xi - $x0,
                                       $y0, $ntrail + $yi - $y0,
@@ -764,7 +764,7 @@ class DiffFormatter
                     $y0 = $yi - sizeof($context);
                     $block = array();
                     if ($context)
-                        $block[] = &new _DiffOp_Copy($context);
+                        $block[] = new _DiffOp_Copy($context);
                 }
                 $block[] = $edit;
             }
