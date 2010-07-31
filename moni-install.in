@@ -15,7 +15,7 @@ fi
 
 [ ! -d data ] && cp -a $INSTDIR/data .
 [ ! -d imgs ] && ln -s $INSTDIR/imgs .
-[ ! -d images ] && ln -s $INSTDIR/imgs .
+[ ! -d images ] && ln -s $INSTDIR/images .
 [ ! -d theme ] && ln -s $INSTDIR/theme .
 [ ! -d css ] && ln -s $INSTDIR/css .
 [ ! -d local ] && ln -s $INSTDIR/local .
@@ -26,8 +26,10 @@ fi
 [ ! -f config.php.default ] && ln -s $INSTDIR/config.php.default .
 [ ! -f monisetup.php ] && ln -s $INSTDIR/monisetup.php .
 conf=`ls $INSTDIR/config.php.*|grep -v config.php.default`
-cp -a $INSTDIR/{monisetup.sh,secure.sh} .
-cp -a $conf .
+cp -a $INSTDIR/monisetup.sh $INSTDIR/secure.sh .
+if [ -n "$conf" ]; then
+	cp -a $conf .
+fi
 
 if [ ! -f index.php ]; then
   cat <<PHP >index.php
