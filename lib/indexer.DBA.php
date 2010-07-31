@@ -34,7 +34,8 @@ class Indexer_dba {
         // check updated db file.
         if (empty($prefix) and file_exists($this->index_dir.'/'.$arena.'.new.db')) {
             if (filemtime($this->index_dir.'/'.$arena.'.new.db') > filemtime($this->dbname)) {
-                copy($this->index_dir.'/'.$arena.'.new.db', $this->dbname);
+                copy($this->index_dir.'/'.$arena.'.new.db', $this->dbname.'tmp');
+                rename($this->dbname.'tmp', $this->dbname);
             }
         }
 
@@ -277,7 +278,7 @@ class Indexer_dba {
             $ret = dba_close($this->db);
 
             if (!empty($this->prefix)) {
-                $postfix = $this->prefix.'.';
+                $postfix = '.'.$this->prefix;
                 rename($this->dbname, $this->index_dir.'/'.$this->arena.$postfix.'.db');
             }
             return $ret;
