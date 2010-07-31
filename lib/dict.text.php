@@ -218,7 +218,7 @@ function _file_match($fp,$key,$lower,$upper,$fsize,$klen=1,$match_prefix=true,$e
             $l = fread($fp, $rlen);
             if ($rlen != 1024) $l = "\n" . $l; // hack, for the first dict entry.
             while( ($p = strrpos($l,"\n") ) !== false) {
-                $check++;
+                $maxcheck++;
                 $line = substr($l, $p+1) . $ll;
                 #print '*'.$line."\n";
                 $ll = '';
