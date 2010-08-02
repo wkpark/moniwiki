@@ -531,7 +531,7 @@ class Security {
   }
 
   function writable($options="") {
-    if (!$options['page']) return 0; # XXX
+    if (!isset($options['page'][0])) return 0; # XXX
     return $this->DB->_isWritable($options['page']);
   }
 
@@ -863,7 +863,7 @@ EOS;
   }
 
   function hasPage($pagename) {
-    if (!$pagename) return false;
+    if (!isset($pagename[0])) return false;
     $name=$this->getPageKey($pagename);
     return @file_exists($name);
   }
@@ -5245,7 +5245,7 @@ function get_pagename() {
   // set 'cgi.fix_pathinfo=1' in the php.ini under
   // apache 2.0.x + php4.2.x Win32
   $pagename = '';
-  if (!empty($_SERVER['PATH_INFO'])) {
+  if (isset($_SERVER['PATH_INFO'])) {
     if ($_SERVER['PATH_INFO'][0] == '/')
       $pagename=substr($_SERVER['PATH_INFO'],1);
   } else if (!empty($_SERVER['QUERY_STRING'])) {
@@ -5272,7 +5272,7 @@ function get_pagename() {
       }
     }
   }
-  if (!empty($pagename)) {
+  if (isset($pagename[0])) {
     $pagename=_stripslashes($pagename);
 
     if ($pagename[0]=='~' and ($p=strpos($pagename,"/")))
@@ -5410,7 +5410,7 @@ function get_frontpage($lang) {
 
 function wiki_main($options) {
   global $DBInfo,$Config;
-  $pagename=!empty($options['pagename']) ? $options['pagename']: $DBInfo->frontpage;
+  $pagename=isset($options['pagename'][0]) ? $options['pagename']: $DBInfo->frontpage;
 
   # get primary variables
   if ($_SERVER['REQUEST_METHOD']=='POST') {
@@ -5849,7 +5849,7 @@ if (is_object($options['timer'])) {
 $lang= set_locale($DBInfo->lang,$DBInfo->charset);
 init_locale($lang);
 init_requests($options);
-if (!$options['pagename']) $options['pagename']= get_frontpage($lang);
+if (!isset($options['pagename'][0])) $options['pagename']= get_frontpage($lang);
 $DBInfo->lang=$lang;
 
 if (session_id()== '' && empty($Config['nosession'])){
