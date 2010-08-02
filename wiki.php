@@ -840,8 +840,8 @@ EOS;
 
     // clean up ':' like as the dokuwiki
     $pn= preg_replace('#:+#',':',$pagename);
-    $pn= trim($pn,':-');
-    $pn= preg_replace('#:[:\._\-]+#',':',$pn);
+    $pn= trim($pn,':');
+    $pn= preg_replace('#:+#',':',$pn);
 
     $pn= preg_replace("/([^a-z0-9:]{1})/ie","'_'.strtolower(dechex(ord(substr('\\1',-1))))",$pn);
     $name=preg_replace('#:#','.d/',$pn);
