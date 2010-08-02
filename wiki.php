@@ -2506,7 +2506,7 @@ class Formatter {
       }
     } else if (($p=strpos($url,' '))!==false) {
       $text=substr($url,$p+1);
-      if (!empty($text)) $url=substr($url,0,$p);
+      if (isset($text[0])) $url=substr($url,0,$p);
     }
 
     if (empty($wiki)) {
@@ -3066,9 +3066,9 @@ class Formatter {
 
   function link_tag($pageurl,$query_string="", $text="",$attr="") {
     # Return a link with given query_string.
-    if (empty($text))
+    if (!isset($text[0]))
       $text= $pageurl; # XXX
-    if (empty($pageurl))
+    if (!isset($pageurl[0]))
       $pageurl=$this->page->urlname;
     if (isset($query_string[0]) and $query_string[0]=='?')
       $attr=empty($attr) ? 'rel="nofollow"':$attr.' rel="nofollow"';

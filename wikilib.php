@@ -3004,7 +3004,7 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
       <span class='button'><input type='submit' class='button' value='$msg' /></span>
       </form>";
 
-  if (!$needle) {
+  if (!isset($needle[0])) {
     $opts['msg'] = _("Use more specific text");
     if (!empty($opts['call'])) {
       $opts['form']=$form;
