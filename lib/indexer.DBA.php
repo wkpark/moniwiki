@@ -103,7 +103,7 @@ class Indexer_dba {
     function _getIndexWords($string, &$words) {
         if (empty($string)) return false;
 
-        if (preg_match('/[^0-9A-Za-z]/u', $string)) { // FIXME
+        if (preg_match('/^[\x{AC00}-\x{D7AF}]+$/u', $string)) { // XXX
             // split into single chars
 	    $chars = preg_split('//u', $string, -1, PREG_SPLIT_NO_EMPTY);
 
@@ -289,11 +289,11 @@ class Indexer_dba {
     }
 
     function sort() {
-        for ($k = dba_firstkey($this->db); $k != false; $k = dba_nextkey($this->db)) {
+        for ($k = dba_firstkey($this->db); $k !== false; $k = dba_nextkey($this->db)) {
             if (isset($k[1]) and $k[0] == '!') continue;
 
             $a = dba_fetch($k, $this->db);
-            $aa = unpack($this->type.'*', $a);
+            $aa = array_unique(unpack($this->type.'*', $a)); // FIXME slow
             asort($aa);
             $na = '';
             foreach ($aa as $u) $na.=pack($this->type, $u);
@@ -302,7 +302,7 @@ class Indexer_dba {
     }
 
     function test() {
-        for ($k = dba_firstkey($this->db); $k != false; $k = dba_nextkey($this->db)) {
+        for ($k = dba_firstkey($this->db); $k !== false; $k = dba_nextkey($this->db)) {
             if (isset($k[1]) and $k[0] == '!' and $k[1] == '?' and strlen($k) == 4) {
                 #print $k."=>\n";
                 #$kk = unpack($this->type.'1', substr($k,2));

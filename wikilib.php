@@ -322,6 +322,7 @@ function getTokens($string, $params = null) {
     $raw = preg_replace("/&[^;\s]+;|\[\[[^\[]+\]\]/", ' ', $string);
     // strip comments
     $raw = preg_replace("/^##.*$/m", ' ', $raw);
+    // strip puncts.
     $raw = preg_replace("/([;\"',`\\\\\/\.:@#\!\?\$%\^&\*\(\)\{\}\[\]\~\-_\+=\|<>])/",
         ' ', strip_tags($raw));
 
@@ -331,7 +332,25 @@ function getTokens($string, $params = null) {
     $raw = preg_replace("/\b/", ' ', $raw);
     //$raw=preg_replace("/\b([0-9a-zA-Z'\"])\\1+\s*/",' ',$raw);
 
-    $words = preg_split("/\s+|\n/", trim($raw));
+    // split words
+    $words = preg_split("/[\s\n\x{3000}]+/u", trim($raw));
+
+    // dokuwiki like indexing except Hangul Sylables XXX
+    $words = array_unique($words);
+    $new_words = array();
+    foreach ($words as $k=>&$word) {
+	if (empty($word)) continue;
+    	if (preg_match('/[^0-9A-Za-z]/u', $word)) {
+	    $ws = preg_split('/([^\x{AC00}-\x{D7AF}])/u', $word, -1,  PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+            if (count($ws) > 1) {
+                unset($words[$k]);
+                foreach ($ws as $w) {
+                    $new_words[] = $w;
+                }
+            }
+	}
+    }
+    $words = array_merge($words, $new_words);
 
     asort($words);
     return array_unique($words);
