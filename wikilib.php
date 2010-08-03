@@ -2138,6 +2138,9 @@ function macro_RandomPage($formatter,$value='') {
   $counter= $count;
 
   $max=sizeof($pages);
+  if (empty($max))
+    return '';
+
   $number=min($max,$counter);
 
   $selected=array_rand($pages,$number);
@@ -2677,9 +2680,9 @@ function macro_PageCount($formatter="") {
 }
 
 function _setpagekey(&$page,$k) {
-  if (($p = strpos($k, '~'))!== false) {
-    $g = ' ('.substr($k,0,$p).')';
-    $page = substr($k, $p+1).$g;
+  if (($p = strpos($k, '~'))) {
+    $g = '('.trim(substr($k,0,$p)).')';
+    $page = trim(substr($k, $p+1)).$g;
   } else {
     $page = $k;
   }
@@ -2722,12 +2725,12 @@ function macro_TitleIndex($formatter,$value) {
     if ($key != $pkey) {
        $key=$pkey;
        $keys[]=$pkey;
-       if (!preg_match('/'.$sel.'/i',$pkey)) continue;
+       if (!preg_match('/^'.$sel.'/i',$pkey)) continue;
        if ($out !='') $out.="</ul>";
        $out.= "<a name='$key'></a><h3><a href='#top'>$key</a></h3>\n";
        $out.= "<ul>";
     }
-    if (!preg_match('/'.$sel.'/i',$pkey)) continue;
+    if (!preg_match('/^'.$sel.'/i',$pkey)) continue;
     #
 #    if ($DBInfo->use_titlecache and $cache->exists($page))
 #      $title=$cache->fetch($page);
@@ -2749,19 +2752,31 @@ function macro_TitleIndex($formatter,$value) {
   $tlink='';
   if ($sel != '.?') {
     $tlink=$formatter->link_url($formatter->page->name,'?action=titleindex&amp;sec=');
-    $keys[]='all';
   }
+  $keys = array_unique($keys);
+  sort($keys);
+
+  $rkeys = array_flip($keys);
+  if (isset($rkeys['Others'])) {
+    unset($rkeys['Others']);
+    $keys = array_flip($rkeys);
+    $keys[] = 'Others';
+  }
+  if (!empty($tlink))
+    $keys[]='all';
+
+  $index = array();
   foreach ($keys as $key) {
-    $name=$key;
+    $name = strval($key);
     $tag='#'.$key;
     $link=!empty($tlink) ? preg_replace('/sec=/','sec='._urlencode($key),$tlink):'';
-    if ($key == 'Others') $name=_("Others");
-    else if ($key == 'all') $name=_("Show all");
-    $index.= "| <a href='$link$tag'>$name</a> ";
+    if ($name == 'Others') $name=_("Others");
+    else if ($name == 'all') $name=_("Show all");
+    $index[] = "<a href='$link$tag'>$name</a>";
   }
-  $index[0]=" ";
+  $str = implode(' | ', $index);
   
-  return "<center><a name='top'></a>$index</center>\n$out";
+  return "<center><a name='top'></a>$str</center>\n$out";
 }
 
 
