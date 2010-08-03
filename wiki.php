@@ -894,18 +894,19 @@ EOS;
     }
 
     $handle = opendir($this->text_dir);
+    if (!is_resource($handle))
+      return array();
 
-    if (!$options) {
-      while ($file = readdir($handle)) {
+    if (empty($options)) {
+      while (($file = readdir($handle)) !== false) {
         if (is_dir($this->text_dir."/".$file)) continue;
         $pages[] = $this->keyToPagename($file);
       }
       closedir($handle);
       $pc->update($pcid,serialize($pages));
-
       return $pages;
     } else if (!empty($options['limit'])) { # XXX
-       while ($file = readdir($handle)) {
+       while (($file = readdir($handle)) !== false) {
           if (is_dir($this->text_dir."/".$file)) continue;
           if (filemtime($this->text_dir."/".$file) > $options['limit'])
              $pages[] = $this->keyToPagename($file);
@@ -913,14 +914,14 @@ EOS;
        closedir($handle);
     } else if (!empty($options['count'])) {
        $count=$options['count'];
-       while (($file = readdir($handle)) && $count > 0) {
+       while (($file = readdir($handle)) !== false && $count > 0) {
           if (is_dir($this->text_dir."/".$file)) continue;
           $pages[] = $this->keyToPagename($file);
           $count--;
        }
        closedir($handle);
     } else if ($options['date']) {
-       while ($file = readdir($handle)) {
+       while (($file = readdir($handle)) !== false) {
           if (is_dir($this->text_dir."/".$file)) continue;
           $mtime=filemtime($this->text_dir."/".$file);
           $pagename= $this->keyToPagename($file);
