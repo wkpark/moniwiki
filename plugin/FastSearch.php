@@ -74,23 +74,24 @@ EOF;
   $word = array_shift($words);
   $idx = $DB->_fetchValues($word);
   foreach ($words as $word) {
-    $idx = array_merge($idx, $DB->_fetchValues($word)); // FIXME
+    $ids = $DB->_fetchValues($word); // FIXME
+    foreach ($ids as $id) $idx[] = $id;
   }
 
-  //arsort($idx);
-  $all_pages = $DBInfo->getPageLists();
-  $all_count = count($all_pages);
-  unset($all_pages);
+  $init_hits = array_count_values($idx); // initial hits
+  $idx = array_keys($init_hits);
 
-  $pages=array();
+  //arsort($idx);
+  $all_count = $DBInfo->getCounter();
+
+  $pages = array();
+  $hits = array();
   foreach ($idx as $id) {
     $key= $DB->_fetch($id);
     $pages[$id]=$key;
-    #print $key.'<br />';
+    $hits['_'.$key] = $init_hits[$id]; // HACK. prefix '_' to numerical named pages
   }
   $DB->close();
-
-  $hits = array();
 
   $context = !empty($opts['context']) ? $opts['context'] : 0;
   $limit = isset($opts['limit'][0]) ? $opts['limit'] : $default_limit;
@@ -98,20 +99,18 @@ EOF;
 
   $idx = 1;
   foreach ($pages as $page_name) {
-    $count = 0;
-    if (empty($limit) or $idx <= $limit) {
-      $p = new WikiPage($page_name);
-      if (!$p->exists()) continue;
-      $body = $p->_get_raw_body();
-      $count = preg_match_all($pattern, $body,$matches);
+    if (!empty($limit) and $idx > $limit) break;
 
-      if ($context) {
-        # search matching contexts
-        $contexts[$page_name] = find_needle($body,$needle,'',$context);
-      }
+    $p = new WikiPage($page_name);
+    if (!$p->exists()) continue;
+    $body = $p->_get_raw_body();
+    $count = preg_match_all($pattern, $body,$matches); // more precisely count matches
+
+    if ($context) {
+      # search matching contexts
+      $contexts[$page_name] = find_needle($body,$needle,'',$context);
     }
-    #$hits[strval($page_name)] = $count; // XXX hack for numberd pages
-    $hits['_'.$page_name] = $count; // XXX hack for numberd pages
+    $hits['_'.$page_name] = $count; // XXX hack for numerical named pages
     $idx++;
   }
 
