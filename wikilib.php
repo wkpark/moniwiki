@@ -332,28 +332,17 @@ function getTokens($string, $params = null) {
     $raw = preg_replace("/\b/", ' ', $raw);
     //$raw=preg_replace("/\b([0-9a-zA-Z'\"])\\1+\s*/",' ',$raw);
 
-    // split words
-    $words = preg_split("/[\s\n\x{3000}]+/u", trim($raw));
+    // split hangul syllable bloundries
+    $raw = preg_replace('/([\x{AC00}-\x{D7AF}]+)/u', " \\1 ", $raw);
 
-    // dokuwiki like indexing except Hangul Sylables XXX
+    // split ASCII punctuation boundries U+00A0 ~ U+00BF
+    // split General punctuation boundries U+2000 ~ U+206F
+    // split CJK punctuation boundries U+3001 ~ U+303F
+    $words = preg_split("/[\s\n\x{A0}-\x{BF}\x{3000}\x{3001}-\x{303F}\x{2000}-\x{206F}]+/u", trim($raw));
+
     $words = array_unique($words);
-    $new_words = array();
-    foreach ($words as $k=>&$word) {
-	if (empty($word)) continue;
-    	if (preg_match('/[^0-9A-Za-z]/u', $word)) {
-	    $ws = preg_split('/([^\x{AC00}-\x{D7AF}])/u', $word, -1,  PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
-            if (count($ws) > 1) {
-                unset($words[$k]);
-                foreach ($ws as $w) {
-                    $new_words[] = $w;
-                }
-            }
-	}
-    }
-    $words = array_merge($words, $new_words);
-
     asort($words);
-    return array_unique($words);
+    return $words;
 }
 
 function log_referer($referer,$page) {
@@ -2648,9 +2637,6 @@ function get_key($name) {
     }
     return 'Others';
   } else {
-    if (preg_match('/[a-z0-9]/i',$name[0])) {
-      return strtoupper($name[0]);
-    }
     # if php does not support iconv(), EUC-KR assumed
     if (strtolower($DBInfo->charset) == 'euc-kr') {
       $korean=array( // Ga,GGa,Na,Da,DDa,...

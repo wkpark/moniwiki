@@ -15,7 +15,7 @@ class Indexer_dba {
 
     var $dbname = ''; // db file name
     var $prefix = '';
-    var $use_stemming = 1; // 0: noop / 1: fake stemming / 2: using KoreanStemmer 
+    var $use_stemming = 0; // 0: noop / 1: fake stemming / 2: using KoreanStemmer 
 
     function Indexer_dba($arena,$mode='r',$type, $prefix = '') {
         global $DBInfo;
@@ -33,7 +33,7 @@ class Indexer_dba {
 
         // check updated db file.
         if (empty($prefix) and file_exists($this->index_dir.'/'.$arena.'.new.db')) {
-            if (filemtime($this->index_dir.'/'.$arena.'.new.db') > filemtime($this->dbname)) {
+            if (!file_exists($this->dbname) or filemtime($this->index_dir.'/'.$arena.'.new.db') > filemtime($this->dbname)) {
                 touch($this->dbname);
                 $tmpname = '.tmp_'.time();
                 copy($this->index_dir.'/'.$arena.'.new.db', $this->dbname.$tmpname);
@@ -53,10 +53,10 @@ class Indexer_dba {
     }
 
     function getPageID($pagename) {
-        if (!$this->exists('!?'.$pagename))
+        if (!$this->exists('?!'.$pagename))
             return $this->_getNewID($pagename);
 
-        $pkey = dba_fetch('!?'.$pagename,$this->db);
+        $pkey = dba_fetch('?!'.$pagename,$this->db);
         $pkey = unpack($this->type.'1'.$this->type, $pkey);
         return $pkey[$this->type];
     }
@@ -93,19 +93,18 @@ class Indexer_dba {
         $pkey=$nkey=$this->_current();
         $type=$this->type;
         // Map key to this filename
-        dba_insert('!?' . $pagename, pack($this->type, $pkey), $this->db);
+        dba_insert('?!' . $pagename, pack($this->type, $pkey), $this->db);
         dba_insert('!?' . pack($this->type, $pkey), $pagename, $this->db);
         $nkey++; if ($nkey % 256 == 0) { $nkey++; }
         dba_replace('!!',$nkey,$this->db);
         return $pkey;
     }
 
-    function _getIndexWords($string, &$words) {
-        if (empty($string)) return false;
 
+    function _fakeIndexWords($string, &$words) {
         if (preg_match('/^[\x{AC00}-\x{D7AF}]+$/u', $string)) { // XXX
             // split into single chars
-	    $chars = preg_split('//u', $string, -1, PREG_SPLIT_NO_EMPTY);
+            $chars = preg_split('//u', $string, -1, PREG_SPLIT_NO_EMPTY);
 
             // make fake words for indexing
             // Please see MoniWiki:FastSearchMacro, MoniWiki:FullTextIndexer
@@ -119,6 +118,22 @@ class Indexer_dba {
                 #print_r($words);
                 return true;
             }
+        }
+        return false;
+    }
+
+    function _chunkWords($string, &$words, $all = true) {
+        // dokuwiki like indexing
+        if (!$all) // except hangul syllables
+	    $ws = preg_split('/([^\x{AC00}-\x{D7AF}])/u', $string, -1,  PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+        else
+	    $ws = preg_split('//u', $string, -1,  PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+
+        if (count($ws) > 1) {
+            foreach ($ws as $w) {
+                $words[] = $w;
+            }
+            return true;
         }
         return false;
     }
@@ -145,8 +160,14 @@ class Indexer_dba {
         }
 
         $new_words = array();
-        foreach ($words as $word) {
-            $this->_getIndexWords($word, $new_words);
+        foreach ($words as $k=>$word) {
+            if (!isset($word[0])) continue;
+
+            if (preg_match('/[^0-9A-Za-z]/u', $word)) {
+                //$ret = $this->_fakeIndexWords($word, $new_words);
+                $ret = $this->_chunkWords($word, $new_words, true);
+                if ($ret) unset($words[$k]); // XXX
+            }
         }
         $words = array_unique(array_merge($words, $new_words));
         return $words;
@@ -257,18 +278,18 @@ class Indexer_dba {
     }
 
     function deletePage($pagename) {
-        if (dba_exists('!?'.$pagename, $this->db)) {
-            $key = dba_fetch('!?'.$pagename, $this->db);
+        if (dba_exists('?!'.$pagename, $this->db)) {
+            $key = dba_fetch('?!'.$pagename, $this->db);
             $keyval = unpack($this->type.'1'.$this->type, $key);
             dba_delete('!?'.$key, $this->db);
-            dba_delete('!?'.$pagename, $this->db);
+            dba_delete('?!'.$pagename, $this->db);
             return true;
         }
         return false;
     }
 
     function hasPage($pagename) {
-        if (dba_exists('!?'.$pagename, $this->db))
+        if (dba_exists('?!'.$pagename, $this->db))
             return true;
 
         return false;
@@ -311,6 +332,69 @@ class Indexer_dba {
                 print $k."=>\n";
             }
         }
+    }
+
+    function title() {
+        $count = 0;
+        for ($k = dba_firstkey($this->db); $k !== false; $k = dba_nextkey($this->db)) {
+            if (isset($k[2]) and $k[0] == '?' and $k[1] == '!') {
+                $count++;
+                print substr($k,2)."\n";
+            }
+        }
+        #print 'Total '.$count."\n";
+    }
+
+    // store same length words to '??<length>' key to search all words.
+    function packWords() {
+        $words = array();
+        for ($k = dba_firstkey($this->db); $k !== false; $k = dba_nextkey($this->db)) {
+            if (isset($k[0]) and $k[0] != '!' and $k[0] != '?') {
+                // is it UTF-8 3-bytes ? FIXME
+                //if (preg_match('/^([\xe0-\xef][\x80-\xbf]{2})+$/', $k)) {
+                if (preg_match('/[^a-zA-Z0-9]/u', $k)) {
+                    $len = mb_strlen($k, 'UTF-8'); // FIXME
+                    $words[$len] .= $k."\n";
+                }
+            }
+        }
+
+        foreach ($words as $len=>$w) {
+            // XXX debug
+            // file_put_contents($this->index_dir.'/'.$this->arena.'.w'.$len.'.txt' , $words[$len]);
+            if (dba_exists('??'.$len, $this->db)) {
+                dba_replace('??'.$len, $w, $this->db);
+            } else {
+                dba_insert('??'.$len, $w, $this->db);
+            }
+        }
+    }
+
+    // match word individually - slow slow
+    function _match($word) {
+        $words = array();
+        for ($k = dba_firstkey($this->db); $k !== false; $k = dba_nextkey($this->db)) {
+            if (isset($k[0]) and $k[0] != '?' and $k[0] != '!' and preg_match('@'.$word.'@', $k)) {
+                $words[] = $k;
+            }
+        }
+        return $words;
+    }
+
+    // faster than _match()
+    function _search($word) {
+        $words = array();
+        $len = mb_strlen($word, 'UTF-8'); // FIXME
+        for (; $len < 20; $len++) {
+            if (dba_exists('??'.$len, $this->db)) {
+                $content = dba_fetch('??'.$len, $this->db);
+                preg_match_all('@^.*'.$word.'.*$@m', $content, $match);
+                if (isset($match[0])) {
+                    foreach ($match[0] as $m) $words[] = $m;
+                }
+            }
+        }
+        return $words;
     }
 }
 

@@ -9,7 +9,7 @@
 // the indexer engine is a perl program, slightly modified by wkpark
 // the lookup script also imported and modified.
 //
-// a FasetSearch plugin using a index.db for the MoniWiki
+// a FasetSearch plugin for the MoniWiki
 //
 // Usage: [[FastSearch(string)]]
 //
@@ -19,6 +19,8 @@ include_once('lib/indexer.DBA.php');
 
 function macro_FastSearch($formatter,$value="",&$opts) {
   global $DBInfo;
+
+  $default_limit = isset($DBInfo->fastsearch_limit) ? $DBInfo->fastsearch_limit : 30;
 
   if ($value === true) {
     $needle = $value = $formatter->page->name;
@@ -51,7 +53,8 @@ EOF;
   $DB=new Indexer_dba('fullsearch',"r",$DBInfo->dba_type);
   if ($DB->db==null) {
     $opts['msg']=_("Couldn't open search database, sorry.");
-    $opts['hits']= 0;
+    $opts['hits']= array();
+    $opts['hit']= 0;
     $opts['all']= 0;
     return '';
   }
@@ -59,10 +62,19 @@ EOF;
 
   $words = getTokens($value);
   // $words=explode(' ', strtolower($value));
-  $keys='';
-  $idx=array();
+
+  $idx = array();
+  $new_words = array();
   foreach ($words as $word) {
-    $idx=array_merge($idx,$DB->_fetchValues($word));
+    $new_words = array_merge($idx,$DB->_search($word));
+  }
+  $words = array_merge($words, $new_words);
+
+  //
+  $word = array_shift($words);
+  $idx = $DB->_fetchValues($word);
+  foreach ($words as $word) {
+    $idx = array_merge($idx, $DB->_fetchValues($word)); // FIXME
   }
 
   //arsort($idx);
@@ -73,31 +85,34 @@ EOF;
   $pages=array();
   foreach ($idx as $id) {
     $key= $DB->_fetch($id);
-    $pages[]=$key;
+    $pages[$id]=$key;
     #print $key.'<br />';
   }
   $DB->close();
 
-  $pages = array_unique($pages);
-  usort($pages, 'strcasecmp');
-
-  $hits=array();
+  $hits = array();
 
   $context = !empty($opts['context']) ? $opts['context'] : 0;
+  $limit = isset($opts['limit'][0]) ? $opts['limit'] : $default_limit;
   $contexts = array();
 
-  foreach ($pages as $key) {
-    $page_name = $key;
-    $p = new WikiPage($page_name);
-    if (!$p->exists()) continue;
+  $idx = 1;
+  foreach ($pages as $page_name) {
+    $count = 0;
+    if (empty($limit) or $idx <= $limit) {
+      $p = new WikiPage($page_name);
+      if (!$p->exists()) continue;
+      $body = $p->_get_raw_body();
+      $count = preg_match_all($pattern, $body,$matches);
 
-    $body= $p->_get_raw_body();
-    $count = preg_match_all($pattern, $body,$matches);
-    if ($count) {
-      $hits[$page_name] = $count;
-      # search matching contexts
-      $contexts[$page_name] = find_needle($body,$needle,'',$context);
+      if ($context) {
+        # search matching contexts
+        $contexts[$page_name] = find_needle($body,$needle,'',$context);
+      }
     }
+    #$hits[strval($page_name)] = $count; // XXX hack for numberd pages
+    $hits['_'.$page_name] = $count; // XXX hack for numberd pages
+    $idx++;
   }
 
   //uasort($hits, 'strcasecmp');
@@ -106,31 +121,41 @@ EOF;
   $name = array_keys($hits);
   array_multisort($hits, SORT_DESC, $name, SORT_ASC);
 
+  $opts['hits']= $hits;
+  $opts['hit']= count($hits);
+  $opts['all']= $all_count;
+  if (!empty($opts['call'])) return $hits;
+
   $out = "<!-- RESULT LIST START -->"; // for search plugin
   $out.= "<ul>";
-  reset($hits);
   $idx=1;
   while (list($page_name, $count) = each($hits)) {
+    $page_name = substr($page_name, 1);
     $out.= '<!-- RESULT ITEM START -->'; // for search plugin
     $out.= '<li>'.$formatter->link_tag(_rawurlencode($page_name),
           "?action=highlight&amp;value="._urlencode($needle),
           $page_name,"tabindex='$idx'");
-    $out.= ' . . . . ' . $count . (($count == 1) ? _(" match") : _(" matches"));
-    $out.= $contexts[$page_name];
+    if ($count) {
+      $out.= ' . . . . ' . $count . (($count == 1) ? _(" match") : _(" matches"));
+      $out.= $contexts[$page_name];
+    }
     $out.= "</li>\n";
     $out.= '<!-- RESULT ITEM END -->'; // for search plugin
     $idx++;
+
+    if (!empty($limit) and $idx > $limit)
+      break;
   }
   $out.= "</ul>\n";
   $out.= "<!-- RESULT LIST END -->"; // for search plugin
 
-  $opts['hits']= count($hits);
-  $opts['all']= $all_count;
   return $out;
 }
 
 function do_fastsearch($formatter,$options) {
+  global $DBInfo;
 
+  $default_limit = isset($DBInfo->fastsearch_limit) ? $DBInfo->fastsearch_limit : 30;
   $ret=$options;
 
   $title= sprintf(_("Full text search for \"%s\""), $options['value']);
@@ -143,11 +168,22 @@ function do_fastsearch($formatter,$options) {
     print $ret['form'];
   print $out;
 
-  if ($options['value'])
-    printf(_("Found %s matching %s out of %s total pages")."<br />",
-         $ret['hits'],
-        ($ret['hits'] == 1) ? _("page") : _("pages"),
+  $context = !empty($options['context']) ? $options['context'] : 0;
+  $limit = isset($options['limit'][0]) ? $options['limit'] : $default_limit;
+  $cont = '';
+  if ($context)
+    $cont = '&amp;context='.$context;
+
+  if ($options['value']) {
+    printf(_("Found %s matching %s out of %s total pages")."<br />\n",
+         $ret['hit'],
+        ($ret['hit'] == 1) ? _("page") : _("pages"),
          $ret['all']);
+
+    if (!empty($limit) and $ret['hits'] > $limit)
+      echo $formatter->link_to("?action=fastsearch&amp;value=$options[value]&amp;limit=0".$cont,
+        sprintf(_("Show all %d results"), $ret['hit']))."<br />\n";
+  }
   $args['noaction']=1;
   $formatter->send_footer($args,$options);
 }
