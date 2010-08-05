@@ -2104,17 +2104,24 @@ function wiki_sendmail($body,$options) {
 
 function do_RandomPage($formatter,$options='') {
   global $DBInfo;
-  $pages= $DBInfo->getPageLists();
-  $max=sizeof($pages)-1;
-  $rand=rand(0,$max);
-  $options['value']=$pages[$rand];
+
+  $max = $DBInfo->getCounter();
+  $rand = rand(1,$max);
+  if (!empty($DBInfo->use_indexer)) {
+    require_once("lib/indexer.DBA.php");
+    $indexer = new Indexer_DBA('fullsearch', 'r', $DBInfo->dba_type);
+    $page = $indexer->_fetch($rand);
+    $options['value'] = $page;
+  } else {
+    $pages = $DBInfo->getPageLists();
+    $options['value'] = $pages[$rand - 1];
+  }
   do_goto($formatter,$options);
   return;
 }
 
 function macro_RandomPage($formatter,$value='') {
   global $DBInfo;
-  $pages = $DBInfo->getPageLists();
 
   $test=preg_match("/^(\d+)\s*,?\s?(simple|nobr)?$/",$value,$match);
   $count = '';
@@ -2126,19 +2133,36 @@ function macro_RandomPage($formatter,$value='') {
   if ($count <= 0) $count=1;
   $counter= $count;
 
-  $max=sizeof($pages);
+  $max = $DBInfo->getCounter();
+
   if (empty($max))
     return '';
 
   $number=min($max,$counter);
 
-  $selected=array_rand($pages,$number);
+  // select pages
+  $selected = array();
+  for ($i = 0; $i < $number; $i++) {
+    $selected[] = rand(1, $max);   
+  }
+  $selected = array_unique($selected);
 
-  if ($number==1)
-    $selected=array($selected);
+  $sel_pages = array();
+  if (!empty($DBInfo->use_indexer)) {
+    require_once("lib/indexer.DBA.php");
+    $indexer = new Indexer_DBA('fullsearch', 'r', $DBInfo->dba_type);
+    foreach ($selected as $idx) {
+      $sel_pages[] = $indexer->_fetch($idx);
+    }
+  } else {
+    $all_pages = $DBInfo->getPageLists();
+    foreach ($selected as $idx) {
+      $sel_pages[] = $all_pages[$idx - 1]; 
+    }
+  }
 
-  foreach ($selected as $idx) {
-    $item=$pages[$idx];
+  $selects = array();
+  foreach ($sel_pages as $item) {
     $selects[]=$formatter->link_tag(_rawurlencode($item),"",htmlspecialchars($item));
   }
 

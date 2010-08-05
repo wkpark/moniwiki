@@ -45,7 +45,7 @@ class Indexer_dba {
             if (($this->db=@dba_open($this->dbname, 'n',$type)) === false)
                 return false;
             // startkey==256
-            dba_insert('!!',256,$this->db);
+            dba_insert('!!', 1,$this->db);
             dba_sync($this->db);
         }
         register_shutdown_function(array(&$this,'close'));
@@ -95,7 +95,8 @@ class Indexer_dba {
         // Map key to this filename
         dba_insert('?!' . $pagename, pack($this->type, $pkey), $this->db);
         dba_insert('!?' . pack($this->type, $pkey), $pagename, $this->db);
-        $nkey++; if ($nkey % 256 == 0) { $nkey++; }
+        $nkey++;
+        // if ($nkey % 256 == 0) { $nkey++; }
         dba_replace('!!',$nkey,$this->db);
         return $pkey;
     }

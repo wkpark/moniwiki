@@ -904,6 +904,7 @@ EOS;
       }
       closedir($handle);
       $pc->update($pcid,serialize($pages));
+      $pc->update('counter', count($pages));
       return $pages;
     } else if (!empty($options['limit'])) { # XXX
        while (($file = readdir($handle)) !== false) {
@@ -951,6 +952,9 @@ EOS;
   }
 
   function getCounter() {
+    $pc = new Cache_text('pagelist');
+    if ($pc->exists('counter'))
+      return $pc->fetch('counter');
     return sizeof($this->getPageLists());
   }
 
