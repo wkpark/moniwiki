@@ -279,3 +279,4 @@ $robots='googlebot|yahoo'; # set robots
 #$use_userlink=0; # replace the UserPreference link to the UserHomePage
 $use_local_translation=0; # automatic translation
 #$use_jsbutton=0; # use javascript fake buttons.
+#$use_namespace=0; # support dokuwiki like namespace

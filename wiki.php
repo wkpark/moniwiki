@@ -844,7 +844,10 @@ EOS;
     $pn= preg_replace('#:+#',':',$pn);
 
     $pn= preg_replace("/([^a-z0-9:]{1})/ie","'_'.strtolower(dechex(ord(substr('\\1',-1))))",$pn);
-    $name=preg_replace('#:#','.d/',$pn);
+    if (!empty($this->use_namespace))
+      $name=preg_replace('#:#','.d/',$pn);
+    else
+      $name = $pn;
     #$name=preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord('\\1')))",$pagename);
     return $name;
   }
@@ -877,7 +880,9 @@ EOS;
   #  $pagename=preg_replace("/_([a-f0-9]{2})/","%\\1",$key);
   #  $pagename=str_replace("_","%",$key);
 
-    $pagename=preg_replace('%\.d/%',':',$key);
+    $pagename = $key;
+    if (!empty($this->use_namespace))
+      $pagename=preg_replace('%\.d/%',':',$key);
 
     $pagename=strtr($pagename,'_','%');
     return rawurldecode($pagename);
