@@ -2658,13 +2658,13 @@ class Formatter {
     $nonexists='nonexists_'.$this->nonexists;
 
     $extended = false;
-    if ($word[0]=='"') {
+    if (($word[0] == '"' or $word[0] == 'w') and preg_match('/^(?:wiki\:)?((")?[^"]+\2)((\s+)?(.*))?$/', $word, $m)) {
       # ["extended wiki name"]
       # ["Hello World" Go to Hello]
-      if (preg_match('/^((")?[^"]+\2)((\s+)?(.*))?$/',$word,$m)) {
-        $word=substr($m[1],1,-1);
-        if (isset($m[5])) $text=$m[5]; // text arg ignored
-      }
+      # [wiki:"Hello World" Go to Main]
+      $word = substr($m[1], 1, -1);
+      if (isset($m[5])) $text = $m[5]; // text arg ignored
+
       $extended=true;
       $page=$word;
     } else
@@ -2915,7 +2915,8 @@ class Formatter {
     if (!preg_match('/^[A-Za-z0-9]+$/', $name)) {
       $myname = getPlugin($name);
       if (empty($myname)) {
-        if ($macro[0] != '"') $macro = '"'.$macro.'"';
+        if (($p = strpos('"', $macro)) !== false)
+          $macro = '"'.$macro.'"';
         return $this->word_repl($macro);
       }
       $name = $myname;
