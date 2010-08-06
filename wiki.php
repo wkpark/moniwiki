@@ -1994,7 +1994,7 @@ class Formatter {
     #  * single bracketted words [Hello World] etc.
     #  * single bracketted words with double quotes ["Hello World"]
     #  * double bracketted words with double quotes [["Hello World"]]
-    "(?<!\[)\!?\[(\[)$single(\")?(?:[^\[\]\",<\s'][^\[\],>]{0,255}[^\"])(?(4)\")(?(3)\])\](?!\])";
+    "(?<!\[)\!?\[(\[)$single(\")?(?:[^\[\]\",<\s'][^\[\],>]{0,255}[^\"])(?(4)\"(?:[^\"]*))(?(3)\])\](?!\])";
 
     if ($camelcase)
       $this->wordrule.='|'.
@@ -2336,6 +2336,12 @@ class Formatter {
       return $this->macro_repl($url); # No link
     case '[':
       $url=substr($url,1,-1);
+
+      preg_match("/^([A-Za-z0-9]+)(\((.*)\))?$/",$url,$match); // is it macro ?
+      if (empty($match)) {
+        if ($url[0] != '"') $url = '"'.$url.'"';
+        return $this->word_repl($url);
+      }
       return $this->macro_repl($url); # No link
       break;
     case '$':
@@ -2901,7 +2907,11 @@ class Formatter {
       (!empty($this->mid) ? ++$this->mid:1);
 
     preg_match("/^([A-Za-z0-9]+)(\((.*)\))?$/",$macro,$match);
-    if (empty($match)) return $this->word_repl($macro);
+    if (empty($match)) {
+      if ($macro[0] != '"')
+        $macro = '"'.$macro.'"';
+      return $this->word_repl($macro);
+    }
     $bra='';$ket='';
     if (!empty($this->wikimarkup) and $macro != 'attachment' and empty($options['nomarkup'])) {
       $markups=str_replace(array('=','-','<'),array('==','-=','&lt;'),$macro);
