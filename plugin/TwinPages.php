@@ -12,6 +12,7 @@ function do_twinpages($formatter,$options) {
   $formatter->send_header("",$options);
   $formatter->send_title(sprintf(_("TwinPages of %s"),$options['value']),"",$options);
 
+  if (empty($DBInfo->metadb)) $DBInfo->initMetaDB();
   $twins=$DBInfo->metadb->getTwinPages($options['value'],2);
   if ($twins) {
     if (sizeof($twins) > 7) $twins[0]="\n".$twins[0];
