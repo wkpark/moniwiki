@@ -2718,7 +2718,7 @@ class Formatter {
         case -1:
           $title='';
           $tpage=urlencode($page);
-          if ($tpage != $word) $title="title=\"$tpage\" ";
+          if ($tpage != $word) $title="title=\"$page\" ";
           return "<a href='$url' $title$attr>$word</a>";
         case -2:
           return "<a href='$url' $attr>$word</a>".
@@ -2735,7 +2735,7 @@ class Formatter {
       $title='';
       $this->pagelinks[$page]=-1;
       $tpage=urlencode($page);
-      if ($tpage != $word) $title="title=\"$tpage\" ";
+      if ($tpage != $word) $title="title=\"$page\" ";
       return "<a href='$url' $title$attr>$word</a>";
     } else {
       if ($gpage and $DBInfo->hasPage($gpage)) {
@@ -2782,8 +2782,10 @@ class Formatter {
     }
   }
 
-  function nonexists_simple($word,$url) {
-    return "<a class='nonexistent nomarkup' href='$url' rel='nofollow'>?</a>$word";
+  function nonexists_simple($word, $url, $page) {
+    $title = '';
+    if ($page != $word) $title = "title=\"$page\" ";
+    return "<a class='nonexistent nomarkup' {$title}href='$url' rel='nofollow'>?</a>$word";
   }
 
   function nonexists_nolink($word,$url) {
@@ -2791,19 +2793,23 @@ class Formatter {
   }
 
   function nonexists_always($word,$url,$page) {
-    $title='';
-    if ($page != $word) $title="title=\"$page\" ";
-    return "<a href='$url' $title rel='nofollow'>$word</a>";
+    $title = '';
+    if ($page != $word) $title = "title=\"$page\" ";
+    return "<a href='$url' {$title}rel='nofollow'>$word</a>";
   }
 
-  function nonexists_forcelink($word,$url) {
-    return "<a class='nonexistent' rel='nofollow' href='$url'>$word</a>";
+  function nonexists_forcelink($word, $url, $page) {
+    $title = '';
+    if ($page != $word) $title = "title=\"$page\" ";
+    return "<a class='nonexistent' rel='nofollow' {$title}href='$url'>$word</a>";
   }
 
-  function nonexists_fancy($word,$url) {
+  function nonexists_fancy($word, $url, $page) {
     global $DBInfo;
+    $title = '';
+    if ($page != $word) $title = "title=\"$page\" ";
     if ($word[0]=='<' and preg_match('/^<[^>]+>/',$word))
-      return "<a class='nonexistent' rel='nofollow' href='$url'>$word</a>";
+      return "<a class='nonexistent' rel='nofollow' {$title}href='$url'>$word</a>";
     #if (preg_match("/^[a-zA-Z0-9\/~]/",$word))
     if (ord($word[0]) < 125) {
       $link=$word[0];
@@ -2811,7 +2817,7 @@ class Formatter {
         $link=strtok($word,';').';';$last=strtok('');
       } else
         $last=substr($word,1);
-      return "<span><a class='nonexistent' rel='nofollow' href='$url'>$link</a>".$last.'</span>';
+      return "<span><a class='nonexistent' rel='nofollow' {$title}href='$url'>$link</a>".$last.'</span>';
     }
     if (strtolower($DBInfo->charset) == 'utf-8')
       $utfword=$word;
@@ -2826,9 +2832,9 @@ class Formatter {
       }
       $tag=strtok($mbword,';').';'; $last=strtok('');
       if ($tag)
-        return "<span><a class='nonexistent' rel='nofollow' href='$url'>$tag</a>".$last.'</span>';
+        return "<span><a class='nonexistent' rel='nofollow' {$title}href='$url'>$tag</a>".$last.'</span>';
     }
-    return "<a class='nonexistent nomarkup' rel='nofollow' href='$url'>?</a>$word";
+    return "<a class='nonexistent nomarkup' rel='nofollow' {$title}href='$url'>?</a>$word";
   }
 
   function head_repl($depth,$head,&$headinfo,$attr='') {
