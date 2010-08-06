@@ -2337,11 +2337,6 @@ class Formatter {
     case '[':
       $url=substr($url,1,-1);
 
-      preg_match("/^([A-Za-z0-9]+)(\((.*)\))?$/",$url,$match); // is it macro ?
-      if (empty($match)) {
-        if ($url[0] != '"') $url = '"'.$url.'"';
-        return $this->word_repl($url);
-      }
       return $this->macro_repl($url); # No link
       break;
     case '$':
@@ -2902,16 +2897,29 @@ class Formatter {
   }
 
   function macro_repl($macro,$value='',$options=array()) {
+    preg_match("/^([^\(]+)(\((.*)\))?$/", $macro, $match);
+    if (empty($value) and isset($match[2])) { #strpos($macro,'(') !== false)) {
+      $name = $match[1];
+      $args = empty($match[3]) ? true : $match[3];
+    } else {
+      $name = $macro;
+      $args = $value;
+    }
+
+    // check alias
+    if (!preg_match('/^[A-Za-z0-9]+$/', $name)) {
+      $myname = getPlugin($name);
+      if (empty($myname)) {
+        if ($macro[0] != '"') $macro = '"'.$macro.'"';
+        return $this->word_repl($macro);
+      }
+      $name = $myname;
+    }
+
     // macro ID
     $this->mid=!empty($options['mid']) ? $options['mid']:
       (!empty($this->mid) ? ++$this->mid:1);
 
-    preg_match("/^([A-Za-z0-9]+)(\((.*)\))?$/",$macro,$match);
-    if (empty($match)) {
-      if ($macro[0] != '"')
-        $macro = '"'.$macro.'"';
-      return $this->word_repl($macro);
-    }
     $bra='';$ket='';
     if (!empty($this->wikimarkup) and $macro != 'attachment' and empty($options['nomarkup'])) {
       $markups=str_replace(array('=','-','<'),array('==','-=','&lt;'),$macro);
@@ -2919,13 +2927,6 @@ class Formatter {
       $bra= "<span class='wikiMarkup'><!-- wiki:\n[[$markups]]\n-->";
       $ket= '</span>';
       $options['nomarkup']=1; // for the attachment macro
-    }
-    if (empty($value) and isset($match[2])) { #strpos($macro,'(') !== false)) {
-      $name=$match[1];
-      $args=empty($match[3]) ? true:$match[3];
-
-    } else {
-      $name=$macro; $args=$value;
     }
 
     if (!function_exists ('macro_'.$name)) {
