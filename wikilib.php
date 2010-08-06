@@ -2703,44 +2703,102 @@ function macro_TitleIndex($formatter,$value) {
 
   $group=$formatter->group;
 
-  $all_pages = array();
-  if ($formatter->group) {
-    $group_pages = $DBInfo->getLikePages($formatter->group);
-    foreach ($group_pages as $page)
-      $all_pages[]=str_replace($formatter->group,'',$page);
-  } else
-    $all_pages = $DBInfo->getPageLists();
-
-  #natcasesort($all_pages);
-  #sort($all_pages,SORT_STRING);
-  //usort($all_pages, 'strcasecmp');
-  $pages = array_flip($all_pages);
-  array_walk($pages,'_setpagekey');
-  $all_pages = array_flip($pages);
-  uksort($all_pages, 'strcasecmp');
-
   $key=-1;
-  $out="";
   $keys=array();
 
-  if ($value=='' or $value=='all') $sel='.?';
+  if ($value=='' or $value=='all') $sel='';
   else $sel=$value;
-  if (@preg_match('/'.$sel.'/i','')===false) $sel='.?';
+  if (@preg_match('/'.$sel.'/i','')===false) $sel='';
 
+  $titleindex = array();
+
+  // cache titleindex
+  $kc = new Cache_text('titleindex');
+  // XXX
+  if (filemtime($DBInfo->text_dir) < $kc->mtime('key') and $kc->exists('key')) {
+    if ($formatter->group) {
+      $keys = unserialize($kc->fetch('key.'.$formatter->group));
+      $titleindex = unserialize($kc->fetch('titleindex.'.$formatter->group));
+    } else {
+      $keys = unserialize($kc->fetch('key'));
+      $titleindex = unserialize($kc->fetch('titleindex'));
+    }
+    if (!empty($sel) and isset($titleindex[$sel])) {
+      $all_pages = $titleindex[$sel];
+    }
+  }
+
+  if (empty($all_pages)) {
+    $all_pages = array();
+    if ($formatter->group) {
+      $group_pages = $DBInfo->getLikePages($formatter->group);
+      foreach ($group_pages as $page)
+        $all_pages[]=str_replace($formatter->group,'',$page);
+    } else
+      $all_pages = $DBInfo->getPageLists();
+
+    #natcasesort($all_pages);
+    #sort($all_pages,SORT_STRING);
+    //usort($all_pages, 'strcasecmp');
+    $pages = array_flip($all_pages);
+    array_walk($pages,'_setpagekey');
+    $all_pages = array_flip($pages);
+    uksort($all_pages, 'strcasecmp');
+  }
+
+  if (empty($keys) or empty($titleindex)) {
+    foreach ($all_pages as $page=>$rpage) {
+      $p = ltrim($page);
+      $pkey = get_key("$p");
+      if ($key != $pkey) {
+        $key = $pkey;
+        $keys[] = $pkey;
+        if (!isset($titleindex[$pkey]))
+          $titleindex[$pkey] = array();
+      }
+      $titleindex[$pkey][$page] = $rpage;
+    }
+
+    $keys = array_unique($keys);
+    sort($keys);
+
+    $rkeys = array_flip($keys);
+    if (isset($rkeys['Others'])) {
+      unset($rkeys['Others']);
+      $keys = array_flip($rkeys);
+      $keys[] = 'Others';
+    }
+    if (!empty($tlink))
+      $keys[]='all';
+
+    if ($formatter->group) {
+      $kc->update('key.'.$formatter->group, serialize($keys));
+      $kc->update('titleindex.'.$formatter->group, serialize($titleindex));
+    } else {
+      $kc->update('key', serialize($keys));
+      $kc->update('titleindex', serialize($titleindex));
+    }
+
+    if (!empty($sel) and isset($titleindex[$sel]))
+      $all_pages = $titleindex[$sel];
+  }
+
+  //print count($all_pages);
+  //exit;
+  $out = '';
 #  if ($DBInfo->use_titlecache)
 #    $cache=new Cache_text('title');
   foreach ($all_pages as $page=>$rpage) {
     $p=ltrim($page);
     $pkey=get_key("$p");
     if ($key != $pkey) {
-       $key=$pkey;
-       $keys[]=$pkey;
-       if (!preg_match('/^'.$sel.'/i',$pkey)) continue;
-       if ($out !='') $out.="</ul>";
+       $key = $pkey;
+       if (!empty($sel) and !preg_match('/^'.$sel.'/i',$pkey)) continue;
+       if (!empty($out)) $out.="</ul>";
        $out.= "<a name='$key'></a><h3><a href='#top'>$key</a></h3>\n";
        $out.= "<ul>";
     }
-    if (!preg_match('/^'.$sel.'/i',$pkey)) continue;
+    if (!empty($sel) and !preg_match('/^'.$sel.'/i',$pkey)) continue;
     #
 #    if ($DBInfo->use_titlecache and $cache->exists($page))
 #      $title=$cache->fetch($page);
@@ -2760,20 +2818,9 @@ function macro_TitleIndex($formatter,$value) {
 
   $index='';
   $tlink='';
-  if ($sel != '.?') {
+  if (!empty($sel)) {
     $tlink=$formatter->link_url($formatter->page->name,'?action=titleindex&amp;sec=');
   }
-  $keys = array_unique($keys);
-  sort($keys);
-
-  $rkeys = array_flip($keys);
-  if (isset($rkeys['Others'])) {
-    unset($rkeys['Others']);
-    $keys = array_flip($rkeys);
-    $keys[] = 'Others';
-  }
-  if (!empty($tlink))
-    $keys[]='all';
 
   $index = array();
   foreach ($keys as $key) {
