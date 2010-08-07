@@ -212,6 +212,7 @@ $shared_url_mappings='';
 #$use_textbrowsers=1; # check some textbased browsers
 $use_preview_uploads=1;
 #$use_camelcase=0; # turn off camelcase syntax by default
+#$mediawiki_style=0; # 0: wikiCreole style [[foo bar]]=>[[FooBar]], 1: mediawiki style preserve white spaces
 #$category_regex=urldecode('%EB%B6%84%EB%A5%98$'); # a category example for Korean
 #$use_backlinks=1; # set default fullsearch behavior as backlinks search
 $fullsearch_tooshort=2; # 
