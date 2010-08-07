@@ -2850,15 +2850,12 @@ class Formatter {
     else if (function_exists('iconv'))
       $utfword=iconv($DBInfo->charset,'utf-8',$word);
     if ($utfword) {
-      if (function_exists('mb_encode_numericentity')) {
-        $mbword=mb_encode_numericentity($utfword,$DBInfo->convmap,'utf-8');
-      } else {
-        include_once('lib/compat.php');
-        $mbword=utf8_mb_encode($utfword);
-      }
-      $tag=strtok($mbword,';').';'; $last=strtok('');
-      if ($tag)
+      preg_match('/^(.)(.*)$/u', $utfword, $m);
+      if (!empty($m[1])) {
+        $tag = $m[1];
+        $last = !empty($m[2]) ? $m[2] : '';
         return "<span><a class='nonexistent' rel='nofollow' {$title}href='$url'>$tag</a>".$last.'</span>';
+      }
     }
     return "<a class='nonexistent nomarkup' rel='nofollow' {$title}href='$url'>?</a>$word";
   }
