@@ -1944,7 +1944,8 @@ class Formatter {
       }
     }
 
-    $this->footrule='\[\*?(?'.'>[^\[\]]+|(?R))*\]'; # XXX not exact regex
+    # recursive footnote regex
+    $this->footrule='\[\*[^\[\]]*(?P<foot>(?:[^\[\]]+|\[(?P>foot)\])*)\]';
 
     $this->cache= new Cache_text("pagelinks");
     $this->bcache= new Cache_text("backlinks");
@@ -3638,8 +3639,8 @@ class Formatter {
       $wordrule.="(?<=\s|^|>)\\$(?!(?:Id|Revision))(?:[^\\$]+)\\$(?=\s|\.|\,|$)|".
                  "(?<=\s|^|>)\\$\\$(?:[^\\$]+)\\$\\$(?=\s|$)|";
     #if ($DBInfo->builtin_footnote) # builtin footnote support
-    $wordrule.=$this->footrule.'|';
     $wordrule.=$this->wordrule;
+    $wordrule.='|'.$this->footrule;
 
     $formatter=&$this;
 
