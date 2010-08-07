@@ -70,6 +70,13 @@ function getPlugin($pluginname) {
     }
   }
 
+  // get predefined macros list
+  $tmp = get_defined_functions();
+  foreach ($tmp['user'] as $u) {
+    if (preg_match('/^macro_(.*)$/', $u, $m))
+      $plugins[strtolower($m[1])] = $m[1];
+  }
+
   if (!empty($plugins))
     $cp->update('plugins',serialize($plugins));
   if (!empty($DBInfo->myplugins) and is_array($DBInfo->myplugins))
@@ -1824,6 +1831,7 @@ class Formatter {
     $this->use_metadata=!empty($DBInfo->use_metadata) ? $DBInfo->use_metadata : 0;
     $this->use_smileys=$DBInfo->use_smileys;
     $this->use_namespace=!empty($DBInfo->use_namespace) ? $DBInfo->use_namespace : '';
+    $this->mediawiki_style=!empty($DBInfo->mediawiki_style) ? 1 : '';
     $this->udb=&$DBInfo->udb;
     $this->user=&$DBInfo->user;
     $this->check_openid_url=!empty($DBInfo->check_openid_url) ? $DBInfo->check_openid_url : 0;
@@ -1936,7 +1944,7 @@ class Formatter {
       }
     }
 
-    $this->footrule="\[\*[^\]]*\s[^\]]+\]";
+    $this->footrule='\[\*?(?'.'>[^\[\]]+|(?R))*\]'; # XXX not exact regex
 
     $this->cache= new Cache_text("pagelinks");
     $this->bcache= new Cache_text("backlinks");
@@ -1999,7 +2007,7 @@ class Formatter {
     #  * single bracketted words [Hello World] etc.
     #  * single bracketted words with double quotes ["Hello World"]
     #  * double bracketted words with double quotes [["Hello World"]]
-    "(?<!\[)\!?\[(\[)$single(\")?(?:[^\[\]\",<\s'][^\[\],>]{0,255}[^\"])(?(4)\"(?:[^\"]*))(?(3)\])\](?!\])";
+    "(?<!\[)\!?\[(\[)$single(\")?(?:[^\[\]\",<\s'\*][^\[\],>]{0,255}[^\"])(?(4)\"(?:[^\"]*))(?(3)\])\](?!\])";
 
     if ($camelcase)
       $this->wordrule.='|'.
@@ -2297,6 +2305,7 @@ class Formatter {
   function link_repl($url,$attr='',$opts=array()) {
     $nm = 0;
     $force = 0;
+    $double_bracket = false;
     if (is_array($url)) $url=$url[1];
     #if ($url[0]=='<') { echo $url;return $url;}
     $url=str_replace('\"','"',$url); // XXX
@@ -2341,8 +2350,22 @@ class Formatter {
       return $this->macro_repl($url); # No link
     case '[':
       $url=substr($url,1,-1);
+      $double_bracket = true;
 
-      return $this->macro_repl($url); # No link
+      preg_match("/^([^\(:]+)(\((.*)\))?$/", $url, $match);
+      if (!empty($match)) {
+        if (isset($match[1])) {
+          $name = $match[1];
+        } else {
+          $name = $url;
+        }
+
+        // check alias
+        $myname = getPlugin($name);
+        if (!empty($myname))
+          return $this->macro_repl($url); # No link
+      }
+
       break;
     case '$':
       #return processor_latex($this,"#!latex\n".$url);
@@ -2487,7 +2510,9 @@ class Formatter {
       return "<a class='externalLink' $attr href='$link' $this->external_target>$url</a>";
     } else {
       if ($url{0}=='?') {
-          $url=substr($url,1);
+        $url=substr($url,1);
+      } else if (!empty($this->mediawiki_style) and $double_bracket and $url[0] != '"' and strpos($url, ' ') !== false) {
+        $url = '"'.$url.'"';
       }
       return $this->word_repl($url,'',$attr);
     }
@@ -2918,15 +2943,9 @@ class Formatter {
     }
 
     // check alias
-    if (!preg_match('/^[A-Za-z0-9]+$/', $name)) {
-      $myname = getPlugin($name);
-      if (empty($myname)) {
-        if (($p = strpos('"', $macro)) !== false)
-          $macro = '"'.$macro.'"';
-        return $this->word_repl($macro);
-      }
-      $name = $myname;
-    }
+    $myname = getPlugin($name);
+    if (empty($myname)) return '[['.$macro.']]';
+    $name = $myname;
 
     // macro ID
     $this->mid=!empty($options['mid']) ? $options['mid']:
@@ -2943,7 +2962,7 @@ class Formatter {
 
     if (!function_exists ('macro_'.$name)) {
       $np = getPlugin($name);
-      if (empty($np)) return $this->link_repl($name);
+      if (empty($np)) return '[['.$macro.']]';
       include_once('plugin/'.$np.'.php');
       if (!function_exists ('macro_'.$np)) return '[['.$macro.']]';
       $name = $np;
