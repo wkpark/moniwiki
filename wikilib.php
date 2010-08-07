@@ -2913,7 +2913,7 @@ function macro_FootNote(&$formatter,$value="") {
   $formatter->foots[]="<li><tt class='foot'>".
                       "<a id='$fnidx' href='#r$fnidx'>$text</a></tt> ".
                       "$value</li>";
-  $tval=str_replace("'","&#39;",$value);
+  $tval=strip_tags(str_replace("'","&#39;",$value));
   return "<tt class='foot'>".
     "<a id='r$fnidx' href='#$fnidx' title='$tval'>$text</a></tt>";
 }
