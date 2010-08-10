@@ -66,6 +66,8 @@ class processor_monimarkup
                                     $tmp = explode(' ',$type);
                                     $tag = $tmp[0];
                                     $btype[$j]=substr($tag,2);
+                                    if ($btype[$j] == 'wiki')
+                                        $btype[$j] = 'monimarkup';
                                 } else if ($type{0} == ':') {
                                     # for a quote block
                                     $block[$j]=substr($block[$j],1);
@@ -409,6 +411,7 @@ class processor_monimarkup
         global $Config;
 
         if (trim($body)=='') return '';
+        $this->text = &$body;
         #$body=rtrim($body); # delete last empty line
         $palign=array('&lt;'=>'text-align:left',
                          '='=>'text-align:center',
@@ -419,7 +422,10 @@ class processor_monimarkup
         $btype=array();
         $options['nodiff']=0;
         $options['nomarkup']=0;
+        $options['nowrap'] = 0;
         $formatter=&$this->formatter;
+        $old_text = $formatter->text;
+        $formatter->text = $this->text;
 
         $pi=&$formatter->pi;
         #$formatter->set_wordrule($pi);
@@ -449,8 +455,8 @@ class processor_monimarkup
             $wordrule.="(?<=\s|^|>)\\$(?!(?:Id|Revision|Date))(?:[^\\$]+)\\$(?:\s|$)|".
                  "(?<=\s|^|>)\\$\\$(?:[^\\$]+)\\$\\$(?:\s|$)|";
         #if ($Config['builtin_footnote']) # builtin footnote support
-        $wordrule.=$formatter->footrule.'|';
         $wordrule.=$formatter->wordrule;
+        $wordrule.='|'.$formatter->footrule;
 
         # 1-pass
         list($body,$inline,$block,$btype)=$this->_pass1($body);
@@ -633,7 +639,7 @@ class processor_monimarkup
 
                 if (isset($btype[1]))
                     $c=preg_replace("/\007(\d+)\007/e",
-                        "\$formatter->processor_repl(\$btype[$1],\$block[$1])",$c);
+                        "\$formatter->processor_repl(\$btype[$1],\$block[$1], \$options)",$c);
                 if (isset($inline[1]))
                     $c=preg_replace("/\035(\d+)\035/e", 
                         "\$formatter->link_repl(\$inline[$1])",$c);
@@ -660,11 +666,12 @@ class processor_monimarkup
 
         if (isset($btype[1]))
             $out=preg_replace("/\007(\d+)\007/e",
-                "\$formatter->processor_repl(\$btype[$1],\$block[$1])",$out);
+                "\$formatter->processor_repl(\$btype[$1],\$block[$1], \$options)",$out);
         if (isset($inline[1]))
             $out=preg_replace("/\035(\d+)\035/e", 
                 "\$formatter->link_repl(\$inline[$1])",$out);
 
+        $formatter->text = $old_text;
         return $my_divopen.$out.$my_divclose;
     }
 

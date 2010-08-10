@@ -1,11 +1,12 @@
 // imported from the WikiMedia and modified for the MoniWiki
 //
 
-function showTocToggle(showBtn,hideBtn) {
+function showTocToggle(target, showBtn,hideBtn) {
   if (document.createTextNode) {
     // Uses DOM calls to avoid document.write + XHTML issues
 
-    var linkHolder = document.getElementById('toctitle')
+    var toc = document.getElementById(target);
+    var linkHolder = toc.firstChild;
     if (!linkHolder) return;
 
     var outerSpan = document.createElement('span');
@@ -14,15 +15,15 @@ function showTocToggle(showBtn,hideBtn) {
     var toggleLink = document.createElement('a');
     toggleLink.id = 'togglelink';
     toggleLink.className = 'internal';
-    toggleLink.href = 'javascript:toggleToc()';
+    toggleLink.href = 'javascript:toggleToc("' + target + '")';
 
     var showToc = document.createElement('span');
-    showToc.id = 'showtoc';
+    showToc.id = 'show' + target;
     showToc.style.display = 'none';
     showToc.innerHTML = showBtn;
 
     var hideToc = document.createElement('span');
-    hideToc.id = 'hidetoc';
+    hideToc.id = 'hide' + target;
     hideToc.innerHTML = hideBtn;
 
     toggleLink.appendChild(hideToc);
@@ -35,10 +36,14 @@ function showTocToggle(showBtn,hideBtn) {
   }
 }
 
-function toggleToc() {
-    var toc = document.getElementById('toc').getElementsByTagName('dl')[0];
-    var showtoc=document.getElementById('showtoc');
-    var hidetoc=document.getElementById('hidetoc');
+function toggleToc(el) {
+    var toc = document.getElementById(el);
+    if (!toc) return;
+
+    if (toc)
+    	toc = toc.getElementsByTagName('dl')[0];
+    var showtoc=document.getElementById('show' + el);
+    var hidetoc=document.getElementById('hide' + el);
     var toggleLink = document.getElementById('togglelink')
   
     if(toc && toggleLink && toc.style.display == 'none') {

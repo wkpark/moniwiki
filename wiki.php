@@ -2990,7 +2990,7 @@ class Formatter {
         $markups=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$value);
         $bra= "<span class='wikiMarkup' style='display:inline'><!-- wiki:\n".$markups."\n-->";
       } else {
-        if (!empty($this->pi['#format']) and $processor == $this->pi['#format']) { $btag='';$etag=''; }
+        if (!empty($options['nowrap']) and !empty($this->pi['#format']) and $processor == $this->pi['#format']) { $btag='';$etag=''; }
         else { $btag='{{{';$etag='}}}'; }
         $notag = '';
         if ($value{0}!='#' and $value{1}!='!') $notag="\n";
@@ -3027,7 +3027,7 @@ class Formatter {
     $classname='processor_'.$pf;
     $myclass= & new $classname($this,$options);
     $ret= call_user_func(array($myclass,'process'),$value,$options);
-    if (!empty($myclass->_type) and $myclass->_type=='wikimarkup') return $ret;
+    if (!empty($options['nowrap']) and !empty($myclass->_type) and $myclass->_type=='wikimarkup') return $ret;
     return $bra.$ret.$ket;
   }
 
@@ -3458,7 +3458,8 @@ class Formatter {
 
     if ($this->wikimarkup) $this->nonexists='always';
 
-    if ($body) {
+    if (isset($body[0])) {
+      $this->text = $body;
       $pi=$this->get_instructions($body);
 
       if ($this->wikimarkup and $pi['raw']) {
@@ -3479,8 +3480,10 @@ class Formatter {
         if (!empty($pi['args'])) $pi_line="#!".$pi['#format']." $pi[args]\n";
         $savepi=$this->pi; // hack;;
         $this->pi=$pi;
+        $opts = $options;
+        $opts['nowrap'] = 1;
         $text= $this->processor_repl($pi['#format'],
-          $pi_line.$body,$options);
+          $pi_line.$body,$opts);
         $this->pi=$savepi;
         if ($this->use_smartdiff)
           $text= preg_replace_callback(array("/(\006|\010)(.*)\\1/sU"),
@@ -3517,6 +3520,8 @@ class Formatter {
         $pi=$this->get_instructions($dum);
         $body=$this->page->get_raw_body($options);
       }
+      $this->text = &$body;
+
       $this->set_wordrule($pi);
       if (!empty($this->wikimarkup) and !empty($pi['raw']))
         echo "<span class='wikiMarkup'><!-- wiki:\n$pi[raw]\n--></span>";
@@ -3544,7 +3549,9 @@ class Formatter {
       if (isset($pi['#format']) and $pi['#format'] != 'wiki') {
         $pi_line='';
         if (isset($pi['args'])) $pi_line="#!".$pi['#format']." $pi[args]\n";
-        $text= $this->processor_repl($pi['#format'],$pi_line.$body,$options);
+        $opts = $options;
+        $opts['nowrap'] = 1;
+        $text= $this->processor_repl($pi['#format'],$pi_line.$body,$opts);
 
         $fts=array();
         if (isset($pi['#postfilter'])) $fts=preg_split('/(\||,)/',$pi['#postfilter']);
@@ -3727,13 +3734,7 @@ class Formatter {
             $dummy=explode(" ",substr($line,$p+5),2);
             $tag = $dummy[0];
 
-            if (function_exists("processor_".$tag)) {
-              $processor=$tag;
-            } else if ($pf=getProcessor($tag)) {
-              if (!function_exists("processor_".$pf))
-                include_once("plugin/processor/$pf.php");
-              $processor=$pf;
-            }
+            if (!empty($tag)) $processor = $tag;
          } else if ($t and $line[$p+3] == ":") {
             # new formatting rule for a quote block (pre block + wikilinks)
             $line[$p+3]=" ";
@@ -4044,6 +4045,7 @@ class Formatter {
 
          if ($processor and !$show_raw) {
            $value=&$this->pre_line;
+           if ($processor == 'wiki') $processor = 'monimarkup';
            $out= $this->processor_repl($processor,$value,$options);
            #if ($this->wikimarkup)
            #  $line='<div class="wikiMarkup">'."<!-- wiki:\n{{{".

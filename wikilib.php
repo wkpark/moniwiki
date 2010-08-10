@@ -2920,6 +2920,9 @@ function macro_FootNote(&$formatter,$value="") {
 
 function macro_TableOfContents(&$formatter,$value="") {
  global $DBInfo;
+ static $tocidx = 1; // FIXME
+
+ $tocid = 'toc' . $tocidx;
  $head_num=1;
  $head_dep=0;
  $TOC='';
@@ -2953,22 +2956,19 @@ function macro_TableOfContents(&$formatter,$value="") {
  }
 
  if ($toctoggle) {
-  $TOC.=<<<EOS
-<script type="text/javascript" src="$DBInfo->url_prefix/local/toctoggle.js">
-</script>
-EOS;
+  $formatter->register_javascripts("<script type=\"text/javascript\" src=\"$DBInfo->url_prefix/local/toctoggle.js\"></script>");
   $TOC_close=<<<EOS
 <script type="text/javascript">
 /*<![CDATA[*/
- if (window.showTocToggle) { showTocToggle('<img src="$DBInfo->imgs_dir/plugin/arrdown.png" width="10px" border="0" alt="[+]" title="[+]" />','<img src="$DBInfo->imgs_dir/plugin/arrup.png" width="10px" border="0" alt="[-]" title="[-]" />'); } 
+ if (window.showTocToggle) { showTocToggle('$tocid', '<img src="$DBInfo->imgs_dir/plugin/arrdown.png" width="10px" border="0" alt="[+]" title="[+]" />','<img src="$DBInfo->imgs_dir/plugin/arrup.png" width="10px" border="0" alt="[-]" title="[-]" />'); } 
 /*]]>*/
 </script>
 EOS;
  }
- $TOC.="\n<div id='toc'>";
+ $TOC.="\n<div id='" . $tocid . "'>";
  if (!isset($title)) $title=_("Contents");
  if ($title) {
-  $TOC.="<div id='toctitle'>
+  $TOC.="<div class='toctitle'>
 <h2 style='display:inline'>$title</h2>
 </div>";
  }
@@ -2982,7 +2982,7 @@ EOS;
    $baseurl=$formatter->link_url(_urlencode($value));
    $formatter->page=&$p;
  } else {
-   $body=$formatter->page->get_raw_body();
+   $body=$formatter->text;
  }
  $body=preg_replace("/\{\{\{.+?\}\}\}/s",'',$body);
  $lines=explode("\n",$body);
@@ -3052,6 +3052,7 @@ EOS;
 
   }
 
+  $tocidx ++;
   if ($TOC) {
      $close="";
      $depth=$head_dep;
