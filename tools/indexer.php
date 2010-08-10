@@ -27,15 +27,10 @@ if (!is_resource($handle)) {
     exit;
 }
 
-while (($file = readdir($handle)) !== false) {
-  if (is_dir($DBInfo->text_dir."/".$file)) continue;
-  $pages[] = $DBInfo->keyToPagename($file);
-}
-
-closedir($handle);
-
 $ii = 1;
-foreach ($pages as $pagename) {
+while (($file = readdir($handle)) !== false) {
+    if (is_dir($DBInfo->text_dir."/".$file)) continue;
+    $pagename = $DBInfo->keyToPagename($file);
     $p = $DBInfo->getPage($pagename);
     print "* [$ii] $pagename ";
     $ii++;
@@ -55,5 +50,6 @@ $indexer->flushWordCache();
 $indexer->packWords();
 
 $indexer->close();
+closedir($handle);
 
 // vim:et:sts=4:sw=4:
