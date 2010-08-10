@@ -2524,7 +2524,8 @@ function macro_InterWiki($formatter,$value,$options=array()) {
     $cf=new Cache_text('settings');
 
     $force_init=0;
-    if (!empty($DBInfo->shared_intermap) and $cf->mtime('interwiki') < filemtime($DBInfo->shared_intermap) ) {
+    if (!empty($DBInfo->shared_intermap) and file_exists($DBInfo->shared_intermap)
+        and $cf->mtime('interwiki') < filemtime($DBInfo->shared_intermap) ) {
       $force_init=1;
     }
     if (!empty($formatter->refresh) and $cf->exists('interwiki') and !$force_init) {
