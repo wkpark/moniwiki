@@ -21,7 +21,19 @@ $indexer = new Indexer_DBA('fullsearch', 'w', $DBInfo->dba_type, 'new');
 #$indexer->test();
 #exit;
 
-$pages = $DBInfo->getPageLists();
+$handle = opendir($DBInfo->text_dir);
+if (!is_resource($handle)) {
+    echo "Can't open $DBInfo->text_dir\n";
+    exit;
+}
+
+while (($file = readdir($handle)) !== false) {
+  if (is_dir($DBInfo->text_dir."/".$file)) continue;
+  $pages[] = $DBInfo->keyToPagename($file);
+}
+
+closedir($handle);
+
 $ii = 1;
 foreach ($pages as $pagename) {
     $p = $DBInfo->getPage($pagename);
@@ -40,6 +52,7 @@ foreach ($pages as $pagename) {
     #$indexer->addWords($pagename, $words);
 }
 $indexer->flushWordCache();
+$indexer->packWords();
 
 $indexer->close();
 

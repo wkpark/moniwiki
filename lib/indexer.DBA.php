@@ -45,7 +45,7 @@ class Indexer_dba {
             if (($this->db=@dba_open($this->dbname, 'n',$type)) === false)
                 return false;
             // startkey==256
-            dba_insert('!!', 1,$this->db);
+            dba_insert("\001", 1,$this->db);
             dba_sync($this->db);
         }
         register_shutdown_function(array(&$this,'close'));
@@ -53,10 +53,10 @@ class Indexer_dba {
     }
 
     function getPageID($pagename) {
-        if (!$this->exists('?!'.$pagename))
+        if (!$this->exists("\002".$pagename))
             return $this->_getNewID($pagename);
 
-        $pkey = dba_fetch('?!'.$pagename,$this->db);
+        $pkey = dba_fetch("\002".$pagename,$this->db);
         $pkey = unpack($this->type.'1'.$this->type, $pkey);
         return $pkey[$this->type];
     }
@@ -68,7 +68,7 @@ class Indexer_dba {
 
     function _fetchValues($key) {
         if (is_int($key))
-            $key='!?'.pack($this->type,$key);
+            $key="\003".pack($this->type,$key);
 
         $pkey=dba_fetch($key,$this->db);
         return unpack($this->type.'*',$pkey);
@@ -76,7 +76,7 @@ class Indexer_dba {
 
     function _fetch($key) {
         if (is_int($key))
-            $key='!?'.pack($this->type,$key);
+            $key="\003".pack($this->type,$key);
 
         return dba_fetch($key,$this->db);
     }
@@ -86,18 +86,18 @@ class Indexer_dba {
     }
 
     function _current() {
-        return dba_fetch('!!',$this->db); // currentKey
+        return dba_fetch("\001",$this->db); // currentKey
     }
 
     function _getNewID($pagename) {
         $pkey=$nkey=$this->_current();
         $type=$this->type;
         // Map key to this filename
-        dba_insert('?!' . $pagename, pack($this->type, $pkey), $this->db);
-        dba_insert('!?' . pack($this->type, $pkey), $pagename, $this->db);
+        dba_insert("\002" . $pagename, pack($this->type, $pkey), $this->db);
+        dba_insert("\003" . pack($this->type, $pkey), $pagename, $this->db);
         $nkey++;
         // if ($nkey % 256 == 0) { $nkey++; }
-        dba_replace('!!',$nkey,$this->db);
+        dba_replace("\001",$nkey,$this->db);
         return $pkey;
     }
 
@@ -279,18 +279,18 @@ class Indexer_dba {
     }
 
     function deletePage($pagename) {
-        if (dba_exists('?!'.$pagename, $this->db)) {
-            $key = dba_fetch('?!'.$pagename, $this->db);
+        if (dba_exists("\002".$pagename, $this->db)) {
+            $key = dba_fetch("\002".$pagename, $this->db);
             $keyval = unpack($this->type.'1'.$this->type, $key);
-            dba_delete('!?'.$key, $this->db);
-            dba_delete('?!'.$pagename, $this->db);
+            dba_delete("\003".$key, $this->db);
+            dba_delete("\002".$pagename, $this->db);
             return true;
         }
         return false;
     }
 
     function hasPage($pagename) {
-        if (dba_exists('?!'.$pagename, $this->db))
+        if (dba_exists("\002".$pagename, $this->db))
             return true;
 
         return false;
@@ -312,7 +312,7 @@ class Indexer_dba {
 
     function sort() {
         for ($k = dba_firstkey($this->db); $k !== false; $k = dba_nextkey($this->db)) {
-            if (isset($k[1]) and $k[0] == '!') continue;
+            if (isset($k[0]) and strcmp($k[0], "\010") < 0) continue;
 
             $a = dba_fetch($k, $this->db);
             $aa = array_unique(unpack($this->type.'*', $a)); // FIXME slow
@@ -325,11 +325,11 @@ class Indexer_dba {
 
     function test() {
         for ($k = dba_firstkey($this->db); $k !== false; $k = dba_nextkey($this->db)) {
-            if (isset($k[1]) and $k[0] == '!' and $k[1] == '?' and strlen($k) == 4) {
+            if (isset($k[0]) and $k[0] == "\003" and strlen($k) == 4) { // FIXME
                 #print $k."=>\n";
                 #$kk = unpack($this->type.'1', substr($k,2));
                 #print_r($kk);
-            } else if (isset($k[0]) and $k[0] != '!') {
+            } else if (isset($k[0]) and strcmp($k[0], "\010") > 0) {
                 print $k."=>\n";
             }
         }
@@ -338,9 +338,9 @@ class Indexer_dba {
     function title() {
         $count = 0;
         for ($k = dba_firstkey($this->db); $k !== false; $k = dba_nextkey($this->db)) {
-            if (isset($k[2]) and $k[0] == '?' and $k[1] == '!') {
+            if (isset($k[1]) and $k[0] == "\002") {
                 $count++;
-                print substr($k,2)."\n";
+                print substr($k, 1)."\n";
             }
         }
         #print 'Total '.$count."\n";
@@ -350,9 +350,9 @@ class Indexer_dba {
         $count = 0;
         $pages = array();
         for ($k = dba_firstkey($this->db); $k !== false; $k = dba_nextkey($this->db)) {
-            if (isset($k[2]) and $k[0] == '?' and $k[1] == '!') {
+            if (isset($k[1]) and $k[0] == "\002") {
                 $count++;
-                $pages[] = substr($k,2);
+                $pages[] = substr($k, 1);
             } else if ($count > 0) {
                 break;
             }
@@ -365,7 +365,7 @@ class Indexer_dba {
         $words = array();
         $len = 0;
         for ($k = dba_firstkey($this->db); $k !== false; $k = dba_nextkey($this->db)) {
-            if (isset($k[0]) and $k[0] != '!' and $k[0] != '?') {
+            if (isset($k[0]) and strcmp($k[0], "\010") > 0) {
                 // is it UTF-8 3-bytes ? FIXME
                 //if (preg_match('/^([\xe0-\xef][\x80-\xbf]{2})+$/', $k)) {
                 if (preg_match('/[^a-zA-Z0-9]/u', $k)) {
@@ -380,10 +380,10 @@ class Indexer_dba {
         foreach ($words as $len=>$w) {
             // XXX debug
             // file_put_contents($this->index_dir.'/'.$this->arena.'.w'.$len.'.txt' , $words[$len]);
-            if (dba_exists('??'.$len, $this->db)) {
-                dba_replace('??'.$len, $w, $this->db);
+            if (dba_exists("\004".$len, $this->db)) {
+                dba_replace("\004".$len, $w, $this->db);
             } else {
-                dba_insert('??'.$len, $w, $this->db);
+                dba_insert("\004".$len, $w, $this->db);
             }
         }
     }
@@ -392,7 +392,7 @@ class Indexer_dba {
     function _match($word) {
         $words = array();
         for ($k = dba_firstkey($this->db); $k !== false; $k = dba_nextkey($this->db)) {
-            if (isset($k[0]) and $k[0] != '?' and $k[0] != '!' and preg_match('@'.$word.'@', $k)) {
+            if (isset($k[0]) and strcmp($k[0], "\010") > 0 and preg_match('@'.$word.'@', $k)) {
                 $words[] = $k;
             }
         }
@@ -404,8 +404,8 @@ class Indexer_dba {
         $words = array();
         $len = mb_strlen($word, 'UTF-8'); // FIXME
         for (; $len < 20; $len++) {
-            if (dba_exists('??'.$len, $this->db)) {
-                $content = dba_fetch('??'.$len, $this->db);
+            if (dba_exists("\004".$len, $this->db)) {
+                $content = dba_fetch("\004".$len, $this->db);
                 preg_match_all('@^.*'.$word.'.*$@m', $content, $match);
                 if (isset($match[0])) {
                     foreach ($match[0] as $m) $words[] = $m;
