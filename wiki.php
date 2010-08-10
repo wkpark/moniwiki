@@ -2008,7 +2008,7 @@ class Formatter {
     #  * single bracketted words [Hello World] etc.
     #  * single bracketted words with double quotes ["Hello World"]
     #  * double bracketted words with double quotes [["Hello World"]]
-    "(?<!\[)\!?\[(\[)$single(\")?(?:[^\[\]\",<\s'\*][^\[\],>]{0,255}[^\"])(?(4)\"(?:[^\"]*))(?(3)\])\](?!\])";
+    "(?<!\[)\!?\[(\[)$single(\")?(?:[^\[\]\",<\s'\*][^\[\],>]{0,255}[^\"])(?(-1)\"(?:[^\"]*))(?(-2)\])\](?!\])";
 
     if ($camelcase)
       $this->wordrule.='|'.
@@ -3636,7 +3636,7 @@ class Formatter {
     $_myindlen=array(0);
     $oline='';
 
-    $wordrule="(?:{{{(?U)(?:.+)}}})|".
+    $wordrule="({{{(?:(?:[^{}]+|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!}))|(?-1))+}}})|".
               "\[\[(?:[A-Za-z0-9]+(?:\((?:(?<!\]\]).)*\))?)\]\]|". # macro
               "<<(?:[A-Za-z0-9]+(?:\((?:(?<!\>\>).)*\))?)>>|"; # macro
     if ($DBInfo->inline_latex) # single line latex syntax
@@ -3780,7 +3780,11 @@ class Formatter {
       }
 
       // split into chunks
-      $chunk=preg_split('/({{{.+}}})/U',$line,-1,PREG_SPLIT_DELIM_CAPTURE);
+      $chunk=preg_split("/({{{
+                        (?:(?:[^{}]+|
+                        (?<!{){{1,2}(?!{)|
+                        (?<!})}{1,2}(?!}))|(?-1)
+                          )+}}})/x",$line,-1,PREG_SPLIT_DELIM_CAPTURE);
       $nc='';
       $k=1;
       foreach ($chunk as $c) {
