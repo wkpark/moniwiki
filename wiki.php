@@ -905,7 +905,7 @@ EOS;
       if (is_array($list)) return $list;
     }
 
-    if (!empty($this->use_indexer)) {
+    if (0 and !empty($this->use_indexer)) {
       include_once("lib/indexer.DBA.php");
       $indexer = new Indexer_dba('fullsearch', 'r', $this->dba_type);
       if ($indexer->db) {
@@ -978,9 +978,22 @@ EOS;
 
   function getCounter() {
     $pc = new Cache_text('pagelist');
-    if ($pc->exists('counter'))
+    if (filemtime($this->text_dir) < $pc->mtime('counter') and $pc->exists('counter'))
       return $pc->fetch('counter');
-    return sizeof($this->getPageLists());
+
+    $handle = opendir($this->text_dir);
+    if (!is_resource($handle))
+      return 0;
+
+    $count = 0;
+    while (($file = readdir($handle)) !== false) {
+      if (is_dir($this->text_dir."/".$file)) continue;
+      $count++;
+    }
+    closedir($handle);
+
+    $pc->update('counter', $count);
+    return $count;
   }
 
   function addLogEntry($page_name, $remote_name,$comment,$action="SAVE") {
