@@ -1945,7 +1945,7 @@ class Formatter {
     }
 
     # recursive footnote regex
-    $this->footrule='\[\*[^\[\]]*(?P<foot>(?:[^\[\]]+|\[(?P>foot)\])*)\]';
+    $this->footrule='\[\*[^\[\]]*((?:[^\[\]]+|\[(?-1)\])*)\]';
 
     $this->cache= new Cache_text("pagelinks");
     $this->bcache= new Cache_text("backlinks");
