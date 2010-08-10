@@ -7,8 +7,9 @@ class Security_community extends Security {
 
   function Security_community($DB="") {
     $this->DB=$DB;
-    $this->public_pages=array_merge($DB->public_pages,array(
-      'WikiSandBox','WikiSandbox','GuestBook','SandBox'));
+    $this->public_pages = array('WikiSandBox','WikiSandbox','GuestBook','SandBox');
+    if (!empty($DB->public_pages))
+      $this->public_pages = array_merge($DB->public_pages, $this->public_pages);
   }
 
 # $options[page]: pagename
