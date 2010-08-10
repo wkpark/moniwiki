@@ -11,10 +11,14 @@ function do_print($formatter,$options) {
 
   $formatter->nonexists='always';
 
+  $dum = false;
+  $formatter->pi = $formatter->get_instructions($dum);
+  $title = $formatter->pi['#title'];
+
   $formatter->send_header("",$options);
   kbd_handler();
   print "<div id='printHeader'>";
-  print "<h2>$options[page]</h2>";
+  print "<h2>$title</h2>";
   print "</div>";
   print "<div id='wikiContent'>";
   $formatter->external_on=1;
