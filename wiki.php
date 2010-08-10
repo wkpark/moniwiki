@@ -486,7 +486,7 @@ class MetaDB_text extends MetaDB {
 }
 
 class Counter_dba {
-  var $counter;
+  var $counter = null;
   var $DB;
   function Counter_dba($DB,$dbname='counter') {
     if (!function_exists('dba_open')) return;
@@ -513,7 +513,8 @@ class Counter_dba {
   }
 
   function close() {
-    dba_close($this->counter);
+    if ($this->counter)
+      dba_close($this->counter);
   }
 }
 
@@ -800,8 +801,13 @@ EOS;
 
     $this->interwiki=null;
 
-    if (!empty($this->use_counter))
-      $this->counter=&new Counter_dba($this);
+    if (!empty($this->use_counter)) {
+      $this->counter = new Counter_dba($this);
+      if ($this->counter->counter == null) {
+        $this->use_counter = 0;
+        $this->counter = null;
+      }
+    }
 
     if (!empty($this->security_class)) {
       include_once("plugin/security/$this->security_class.php");
