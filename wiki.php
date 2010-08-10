@@ -905,6 +905,19 @@ EOS;
       if (is_array($list)) return $list;
     }
 
+    if (!empty($this->use_indexer)) {
+      include_once("lib/indexer.DBA.php");
+      $indexer = new Indexer_dba('fullsearch', 'r', $this->dba_type);
+      if ($indexer->db) {
+        $pages = $indexer->getAllPages();
+
+        $pc->update($pcid,serialize($pages));
+        $pc->update('counter', count($pages));
+        $indexer->close();
+        return $pages;
+      }
+    }
+
     $handle = opendir($this->text_dir);
     if (!is_resource($handle))
       return array();
@@ -1156,6 +1169,7 @@ EOS;
       } else {
         $indexer->addWords($page->name, $new_words);
       }
+      $indexer->close();
     }
 
     $log=$REMOTE_ADDR.';;'.$myid.';;'.$comment;
@@ -1200,6 +1214,7 @@ EOS;
         $indexer->delWords($page->name, $old_words);
         $indexer->deletePage($page->name);
       }
+      $indexer->close();
     }
 
     if ($this->version_class) {
@@ -1247,6 +1262,7 @@ EOS;
       $old_words = getTokens($old_body);
       $indexer->delWords($pagename, $old_words);
       $indexer->addWords($new, $old_words);
+      $indexer->close();
     }
 
     $okey=$this->getPageKey($pagename);

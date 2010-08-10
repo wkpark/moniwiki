@@ -346,9 +346,24 @@ class Indexer_dba {
         #print 'Total '.$count."\n";
     }
 
+    function getAllPages() {
+        $count = 0;
+        $pages = array();
+        for ($k = dba_firstkey($this->db); $k !== false; $k = dba_nextkey($this->db)) {
+            if (isset($k[2]) and $k[0] == '?' and $k[1] == '!') {
+                $count++;
+                $pages[] = substr($k,2);
+            } else if ($count > 0) {
+                break;
+            }
+        }
+        return $pages;
+    }
+
     // store same length words to '??<length>' key to search all words.
     function packWords() {
         $words = array();
+        $len = 0;
         for ($k = dba_firstkey($this->db); $k !== false; $k = dba_nextkey($this->db)) {
             if (isset($k[0]) and $k[0] != '!' and $k[0] != '?') {
                 // is it UTF-8 3-bytes ? FIXME
@@ -357,6 +372,8 @@ class Indexer_dba {
                     $len = mb_strlen($k, 'UTF-8'); // FIXME
                     $words[$len] .= $k."\n";
                 }
+            } else if ($len > 1) {
+                break;
             }
         }
 

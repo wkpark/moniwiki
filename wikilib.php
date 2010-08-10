@@ -2112,6 +2112,7 @@ function do_RandomPage($formatter,$options='') {
     $indexer = new Indexer_DBA('fullsearch', 'r', $DBInfo->dba_type);
     $page = $indexer->_fetch($rand);
     $options['value'] = $page;
+    $indexer->close();
   } else {
     $pages = $DBInfo->getPageLists();
     $options['value'] = $pages[$rand - 1];
@@ -2154,6 +2155,7 @@ function macro_RandomPage($formatter,$value='') {
     foreach ($selected as $idx) {
       $sel_pages[] = $indexer->_fetch($idx);
     }
+    $indexer->close();
   } else {
     $all_pages = $DBInfo->getPageLists();
     foreach ($selected as $idx) {
