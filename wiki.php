@@ -856,15 +856,15 @@ EOS;
     }
 
     if (!empty($this->use_alias) and (file_exists($this->aliaspage) or !empty($aliases))) 
-      $this->alias=&new MetaDB_text($this->aliaspage, $aliases);
+      $this->alias= new MetaDB_text($this->aliaspage, $aliases);
     else
-      $this->alias=&new MetaDB();
+      $this->alias= new MetaDB();
 
     if (!empty($this->shared_metadb))
-      $this->metadb=&new MetaDB_dba($this->shared_metadb,$this->dba_type);
+      $this->metadb= new MetaDB_dba($this->shared_metadb,$this->dba_type);
     if (empty($this->metadb->metadb)) {
       if (is_object($this->alias)) $this->metadb=$this->alias;
-      else $this->metadb=&new MetaDB();
+      else $this->metadb= new MetaDB();
     } else {
       $this->metadb->attachDB($this->alias);
     }
@@ -3095,7 +3095,7 @@ class Formatter {
     }
 
     $classname='processor_'.$pf;
-    $myclass= & new $classname($this,$options);
+    $myclass= new $classname($this,$options);
     $ret= call_user_func(array($myclass,'process'),$value,$options);
     if (!empty($options['nowrap']) and !empty($myclass->_type) and $myclass->_type=='wikimarkup') return $ret;
     return $bra.$ret.$ket;
@@ -4514,7 +4514,7 @@ class Formatter {
       }
       # find sub pages
       if (!empty($DBInfo->use_subindex) and empty($options['action'])) {
-        $scache=&new Cache_text('subpages');
+        $scache= new Cache_text('subpages');
         if (!($subs=$scache->exists($this->page->name))) {
           if (($p = strrpos($this->page->name,'/')) !== false)
             $rule=_preg_search_escape(substr($this->page->name,0,$p));
@@ -5593,7 +5593,7 @@ function wiki_main($options) {
       $class='Security_robot';
       include_once('plugin/security/robot.php');
     }
-    $DBInfo->security = &new $class ($DBInfo);
+    $DBInfo->security = new $class ($DBInfo);
     // is it allowed to robot ?
     if (!$DBInfo->security->is_allowed($action,$options))
       $action='show';
@@ -5604,7 +5604,7 @@ function wiki_main($options) {
 
   $page = $DBInfo->getPage($pagename);
 
-  $formatter = &new Formatter($page,$options);
+  $formatter = new Formatter($page,$options);
 
   $formatter->refresh=!empty($refresh) ? $refresh : '';
   $formatter->popup=!empty($popup) ? $popup : '';
@@ -5748,12 +5748,12 @@ function wiki_main($options) {
     }
 
     if (!empty($formatter->pi['#title']) and !empty($DBInfo->use_titlecache)) {
-      $tcache=&new Cache_text('title');
+      $tcache= new Cache_text('title');
       if (!$tcache->exists($pagename) or !empty($_GET['update_title']))
         $tcache->update($pagename,$formatter->pi['#title']);
     }
     if (!empty($DBInfo->use_keywords) or !empty($DBInfo->use_tagging) or !empty($_GET['update_keywords'])) {
-      $tcache=&new Cache_text('keyword');
+      $tcache= new Cache_text('keyword');
       if (empty($formatter->pi['#keywords'])) {
         $tcache->remove($pagename);
       } else if (!$tcache->exists($pagename) or
@@ -5788,8 +5788,8 @@ function wiki_main($options) {
     }
     $options['pagelinks']=1;
     if (!empty($Config['cachetime']) and $Config['cachetime'] > 0 and empty($formatter->pi['#nocache'])) {
-      $cache=&new Cache_text('pages',2,'html');
-      $mcache=&new Cache_text('dynamicmacros',2);
+      $cache= new Cache_text('pages',2,'html');
+      $mcache= new Cache_text('dynamicmacros',2);
       $mtime=$cache->mtime($pagename);
       $dtime=filemtime($DBInfo->editlog_name); // workaround to check the dir mtime of the text_dir
       $now=time();
@@ -5973,7 +5973,7 @@ include_once("wikilib.php");
 include_once("lib/win32fix.php");
 
 $options = array();
-$timing = &new Timer();
+$timing = new Timer();
 $options['timer'] = &$timing;
 
 $DBInfo= new WikiDB($Config);
