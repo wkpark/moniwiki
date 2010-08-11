@@ -417,8 +417,9 @@ class MetaDB {
 
 class MetaDB_text extends MetaDB {
   var $db=array();
-  function MetaDB_text($file) {
-    $lines=file($file);
+  function MetaDB_text($file, $aliases = null) {
+    $lines = array();
+    if (file_exists($file)) $lines = file($file);
     if (!empty($lines))
     foreach ($lines as $line) {
       $line=trim($line);
@@ -444,6 +445,12 @@ class MetaDB_text extends MetaDB {
         foreach ($keys as $k) {
           $this->db[$k]=!empty($this->db[$k]) ? $this->db[$k].','.$val:$val;
         }
+      }
+    }
+    // merge aliases
+    if (!empty($aliases)) {
+      foreach ($aliases as $k=>$a) {
+        $this->db[$k] = !empty($this->db[$k]) ? $this->db[$k].','.$a : $a;
       }
     }
   }
@@ -820,8 +827,36 @@ EOS;
   }
 
   function initMetaDB() {
-    if (!empty($this->use_alias) and file_exists($this->aliaspage))
-      $this->alias=&new MetaDB_text($this->aliaspage);
+    $aliases = array();
+    while (!empty($this->use_alias)) {
+      // read all aliases from aliase caches
+      $apc = new Cache_text('aliases');
+      $ac = new Cache_text('alias');
+      $dir = $ac->cache_dir;
+      if ($apc->exists('aliases') and filemtime($this->text_dir) < $apc->mtime('aliases')) {
+        $aliases = unserialize($apc->fetch('aliases'));
+        break;
+      }
+
+      $dh = opendir($dir);
+      if (is_resource($dh)) {
+        while ( ($file = readdir($dh)) !== false) {
+          if ($file[0] == '.' or is_dir($file)) continue;
+          
+          $pagename = $this->keyToPagename($file);
+          $as = unserialize($ac->fetch($pagename));
+          foreach ($as as $k) {
+            $aliases[$k] = !empty($aliases[$k]) ? $aliases[$k].','.$pagename : $pagename;
+          }
+        }
+        closedir($dh);
+      }
+      $apc->update('aliases', serialize($aliases));
+      break;
+    }
+
+    if (!empty($this->use_alias) and (file_exists($this->aliaspage) or !empty($aliases))) 
+      $this->alias=&new MetaDB_text($this->aliaspage, $aliases);
     else
       $this->alias=&new MetaDB();
 
@@ -906,7 +941,7 @@ EOS;
 
     $pcid=md5(serialize($options));
     $pc=new Cache_text('pagelist');
-    if (filemtime($this->text_dir) < $pc->mtime($pcid) and $pc->exists($pcid)) {
+    if ($pc->exists($pcid) and filemtime($this->text_dir) < $pc->mtime($pcid)) {
       $list=unserialize($pc->fetch($pcid));
       if (is_array($list)) return $list;
     }
@@ -2206,7 +2241,7 @@ class Formatter {
     global $Config;
     $pikeys=array('#redirect','#action','#title','#notitle','#keywords','#noindex',
       '#format','#filter','#postfilter','#twinpages','#notwins','#nocomment','#comment',
-      '#language','#camelcase','#nocamelcase','#cache','#nocache',
+      '#language','#camelcase','#nocamelcase','#cache','#nocache','#alias',
       '#singlebracket','#nosinglebracket','#rating','#norating','#nodtd');
     $pi=array();
 
@@ -5729,6 +5764,21 @@ function wiki_main($options) {
         $tcache->update($pagename,serialize($keys));
       }
     }
+
+    // update aliases
+    if (!empty($formatter->pi['#alias']) and !empty($DBInfo->use_alias)) {
+      $ac = new Cache_text('alias');
+      if (empty($formatter->pi['#alias'])) {
+        $ac->remove($pagename);
+      } else if (!$ac->exists($pagename) or
+          $ac->mtime($pagename) < $formatter->page->mtime() or !empty($_GET['update_alias'])) {
+        $as = get_csv($formatter->pi['#alias']);
+        if (!empty($as)) {
+          $ac->update($pagename, serialize($as));
+        }
+      }
+    }
+
     if (!empty($DBInfo->use_referer) and isset($_SERVER['HTTP_REFERER']))
       log_referer($_SERVER['HTTP_REFERER'],$pagename);
 

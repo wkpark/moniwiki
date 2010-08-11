@@ -186,6 +186,41 @@ function normalize_word($word,$group='',$pagename='',$nogroup=0,$islink=1) {
   return array($page,$text,$main_page);
 }
 
+if (function_exists('str_getcsv')) {
+function get_csv($str) {
+  return str_getcsv($str);
+}
+
+} else {
+function get_csv($str) {
+  // csv_regex from Mastering regular expressions p480, 481
+  $csv_regex = '{
+    \G(?:^|\s*,)\s* # spaces are added
+    (?:
+      # Either a double quoted filed
+      " # field opening quote
+       ( [^"]*+ (?: "" [^"]*+ )*+ )
+      " # closing quote
+    | # .. or ...
+      # ... some non-quote/non-comma text...
+      ( [^",]*+ )
+    )
+  }x';
+
+  preg_match_all($csv_regex, $str, $all_matches);
+
+  $ret = array();
+  for ($i = 0; $i < count($all_matches[0]); $i++) {
+    if (strlen($all_matches[2][$i]) > 0)
+      $ret[] = $all_matches[2][$i];
+    else
+      // a quoted value.
+      $ret[] = preg_replace('/""/', '"', $all_matches[1][$i]);
+  }
+  return $ret;
+}
+}
+
 function get_title($page,$title='') {
   global $DBInfo;
   if (!empty($DBInfo->use_titlecache)) {
