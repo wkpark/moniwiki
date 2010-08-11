@@ -843,7 +843,7 @@ EOS;
         while ( ($file = readdir($dh)) !== false) {
           if ($file[0] == '.' or is_dir($file)) continue;
           
-          $pagename = $this->keyToPagename($file);
+          $pagename = $this->keyToPagename($file); // FIXME
           $as = unserialize($ac->fetch($pagename));
           foreach ($as as $k) {
             $aliases[$k] = !empty($aliases[$k]) ? $aliases[$k].','.$pagename : $pagename;
@@ -5738,6 +5738,28 @@ function wiki_main($options) {
 
 
     $formatter->pi=$formatter->get_instructions($dum);
+    // update aliases
+    if (!empty($DBInfo->use_alias)) {
+      $ac = new Cache_text('alias');
+      // is it removed ?
+      if ($ac->exists($pagename) and
+        empty($formatter->pi['#alias']) and empty($formatter->pi['#title'])) {
+        $ac->remove($pagename);
+      } else if (!$ac->exists($pagename) or
+          $ac->mtime($pagename) < $formatter->page->mtime() or !empty($_GET['update_alias'])) {
+        $as = array();
+        // parse #alias
+        if (!empty($formatter->pi['#alias']))
+          $as = get_csv($formatter->pi['#alias']);
+        // add #title as a alias
+        if (!empty($formatter->pi['#title']))
+          $as[] = $formatter->pi['#title'];
+        if (!empty($as)) {
+          $ac->update($pagename, serialize($as));
+        }
+      }
+    }
+
     if (!empty($DBInfo->body_attr))
       $options['attr']=$DBInfo->body_attr;
 
@@ -5762,20 +5784,6 @@ function wiki_main($options) {
         $keys=explode(',',$formatter->pi['#keywords']);
         $keys=array_map('trim',$keys);
         $tcache->update($pagename,serialize($keys));
-      }
-    }
-
-    // update aliases
-    if (!empty($formatter->pi['#alias']) and !empty($DBInfo->use_alias)) {
-      $ac = new Cache_text('alias');
-      if (empty($formatter->pi['#alias'])) {
-        $ac->remove($pagename);
-      } else if (!$ac->exists($pagename) or
-          $ac->mtime($pagename) < $formatter->page->mtime() or !empty($_GET['update_alias'])) {
-        $as = get_csv($formatter->pi['#alias']);
-        if (!empty($as)) {
-          $ac->update($pagename, serialize($as));
-        }
       }
     }
 
