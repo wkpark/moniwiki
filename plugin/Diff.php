@@ -363,12 +363,12 @@ function macro_diff($formatter,$value,&$options)
       $name='processor_'.$pf;
       if (class_exists($name)) {
         $classname='processor_'.$processor;
-        $myclass= & new $classname($formatter,$options);
+        $myclass= new $classname($formatter,$options);
         $processor_type=$myclass->_type == 'wikimarkup' ? 'wiki':$pi['#format'];
       }
     } else if ($c=class_exists('processor_'.$processor)) {
       $classname='processor_'.$processor;
-      $myclass= & new $classname($formatter,$options);
+      $myclass= new $classname($formatter,$options);
       $processor_type=$myclass->_type == 'wikimarkup' ? 'wiki':$pi['#format'];
     }
     break;
