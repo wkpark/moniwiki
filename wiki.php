@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.1.5-RC1';
+$_release = '1.1.5-RC2';
 
 #ob_start("ob_gzhandler");
 
