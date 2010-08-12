@@ -2924,7 +2924,7 @@ function macro_BR($formatter) {
 
 function macro_FootNote(&$formatter,$value="") {
   if (!$value) {# emit all footnotes
-    if (!$formatter->foots) return '';
+    if (empty($formatter->foots)) return '';
     $foots=join("\n",$formatter->foots);
     $foots=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$foots);
     unset($formatter->foots);

@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.1.5-CVS';
+$_release = '1.1.5-RC1';
 
 #ob_start("ob_gzhandler");
 
@@ -4235,7 +4235,7 @@ class Formatter {
       $this->sister_on=$sister_save;
     }
 
-    if ($this->foots)
+    if (!empty($this->foots))
       echo $this->macro_repl('FootNote','',$options);
 
     if (!empty($this->update_pagelinks) and !empty($options['pagelinks'])) $this->store_pagelinks();

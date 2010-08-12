@@ -265,7 +265,7 @@ define('RC_DEFAULT_DAYS',7);
 
     if (! empty($changed_time_fmt)) {
       $date= gmdate($changed_time_fmt, $ed_time+$tz_offset);
-      if ($timesago) {
+      if (!empty($timesago)) {
         $date = _timesago($ed_time, 'Y-m-d', $tz_offset);
         /*
         $time_diff=(int)($time_current - $ed_time)/60;
