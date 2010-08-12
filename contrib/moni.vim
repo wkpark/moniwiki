@@ -18,30 +18,41 @@ syn sync lines=30
 syn region  moniSettings    start="\%^@ \(WARNING\|Using\)" end="^[^@]"me=e-1 end="^$" 
 syn region  moniItalic      start="''" end="''" oneline
 syn region  moniBold        start="'''" end="'''" oneline
+syn region  moniSub         start=",," end=",," oneline
+syn region  moniSup         start="\^\^" end="\^\^" oneline
+syn region  moniSup1        start="\^" end="\^" oneline
+syn region  moniDel         start="\~\~" end="\~\~" oneline
+syn region  moniDel1        start="\-\-" end="\-\-" oneline
 syn match   moniNull        "''''''"
 syn match   moniBullet      "[[:space:]]\+\(\*\|[[:digit:]]\+\.\)"
 syn region  moniCode        start="{{{" end="}}}"
 syn match   moniComment     "^##.*$"
-syn match   moniPI          "^#.*$"
-syn region  moniMacro       start="\[\[" end="\]\]"
+syn match   moniPI          "^#[^#].*$"
+syn region  moniMacro       start="\[\[" end="\]\]" oneline
+syn region  moniFootNote    start="\[\*" end="\]" oneline
 syn region  moniHeader      start="^\s*\z(=\{1,5}\) " end=" \z1$" oneline
 syn match   moniTableOpt    "||<[^>]*>"hs=s+2 contained
 syn region  moniTable       start="^||" end="||$" oneline contains=moniTableOpt
 syn match   moniRule        "^-\{4,}$"
-syn match   moniSmileys     "\(\s\|\_^\)\(:)\|B:\|:))\|;)\|:D\|<:(\|X-(\|:O\|:(\|/!\\\|<!>\|(!)\|:?\|:\\\|>:>\|%)\|@)\||)\|;))\|(./)\|{OK}\|{X}\|{i}\|{1}\|{2}\|{3}\)\(\s\|\_$\)"
+syn match   moniSmileys     "\(\s\|\_^\)\(:)\|B:\|:))\|;)\|:>\|:D\|<:(\|X-(\|:O\|:(\|/!\\\|<!>\|(!)\|\<!\>\|:?\|:\\\|>:>\|%)\|@)\||)\|;))\|(./)\|{OK}\|{X}\|{i}\|{1}\|{2}\|{3}\)\(\s\|\_$\)"
 syn match   moniLinkMoin    "\(/\?[[:upper:]][[:lower:][:digit:]]\+\)\{2,}"
 syn match   moniLinkEmail   "<\?[[:alnum:]-._+]\+@[[:alnum:]-]\+\.[[:alnum:]-.]\+>\?"
 syn match   moniLinkUrl     "\(http\|https\|ftp\|nntp\|news\|mailto\|telnet\|wiki\|file\|attachment\|inline\|drawing\):\([^][:space:]<"'}|:,.)?!]\|[]"'}|:,.)?!][^][:space:]<"'}|:,.)?!]\)\+"
 syn match   moniBracketed  "\[\([^]]\)\+\]"
 syn match   moniLinkBUrl    "\[\(\(http\|https\|ftp\|nntp\|news\|mailto\|telnet\|wiki\|file\|attachment\|inline\|drawing\):\([^][:space:]<"'}|:,.)?!]\|[]"'}|:,.)?!][^][:space:]<"'}|:,.)?!]\)\+\|#\)[^][:space:]]\+\(\s[^]]\+\)\?\]"
 syn match   moniLinkQUrl    "\[\"[^]]\+\"\]"
-syn match   moniLinkInter   "[A-Z][a-zA-Z]\+:[^[:space:]'\":<]\([^][:space:]<"'}|:,.)?!]\|[]"'}|:,.)?!][^][:space:]<"'}|:,.)?!]\)\+"
+syn match   moniLinkInter   "[A-Z][a-zA-Z0-9]\+:[^[:space:]'\":<]\([^][:space:]<"'}|:,.)?!]\|[]"'}|:,.)?!][^][:space:]<"'}|:,.)?!]\)\+"
 
 if !exists("did_dic_syntax_inits")
   let did_dic_syntax_inits = 1
   hi link moniComment    Comment
   hi def  moniPI         ctermfg=red guifg=red
-  hi def  moniBold       term=bold cterm=bold gui=bold
+  hi def  moniSup        ctermfg=green guifg=green
+  hi link moniSup1       moniSup
+  hi def  moniDel        ctermfg=red guifg=red
+  hi link moniDel1       moniDel
+  hi def  moniSub        ctermfg=green guifg=green
+  hi link moniFootNote   Comment
   hi def  moniItalic     term=italic cterm=italic gui=italic
   hi def  moniSettings   ctermfg=green guifg=green
   hi link moniMacro      Macro
