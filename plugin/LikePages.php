@@ -68,6 +68,11 @@ function macro_LikePages($formatter="",$args="",&$opts) {
 
   if (empty($metawiki)) {
     $pages = $DBInfo->getPageLists();
+    // get aliases
+    if (empty($DBInfo->alias)) $DBInfo->initAlias();
+    $alias = $DBInfo->alias->getAllPages();
+
+    $pages = array_merge($pages, $alias);
   } else {
     if (empty($DBInfo->metadb)) $DBInfo->initMetaDB();
     if (empty($DBInfo->metadb)) {
