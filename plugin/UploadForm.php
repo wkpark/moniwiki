@@ -91,7 +91,13 @@ EOF;
     newInput.className = 'form-file';
     // get basename with replace() for IE
     newInput.onchange = function() {
-        addRow(id, name, size);
+        // add new row if and only if this input element is in the bottom row of upload table
+        this_row = this.parentNode.parentNode.parentNode.parentNode;
+        this_table = this_row.parentNode;
+        if (this_table.lastChild == this_row) {
+                addRow(id, name, size);
+        }
+
         fakeInp.style.display='inline-block';
         fakeInp.value = this.value.replace(/^.*[\\\\]/g, '');
 
@@ -309,7 +315,19 @@ EOF;
     var btn = document.getElementById('button-upload$id');
     if (btn) btn.style.display = 'none';
 })();
-addRow('upload$id','$name');
+
+function init_uploadForm() {
+        addRow('upload$id','$name');
+}
+
+if (window.addEventListener) {
+	window.addEventListener("load", init_uploadForm, false);
+} else if (window.attachEvent) {
+	window.attachEvent("onload", init_uploadForm);
+} else {
+	window.onload = init_uploadForm;
+}
+
 /*]]>*/
 </script>
 EOF;
