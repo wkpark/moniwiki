@@ -1992,7 +1992,7 @@ class Formatter {
     }
 
     # recursive footnote regex
-    $this->footrule='\[\*[^\[\]]*((?:[^\[\]]+|\[(?-1)\])*)\]';
+    $this->footrule='\[\*[^\[\]]*((?:[^\[\]]+|\[(?13)\])*)\]';
 
     $this->cache= new Cache_text("pagelinks");
     $this->bcache= new Cache_text("backlinks");
@@ -2055,7 +2055,7 @@ class Formatter {
     #  * single bracketted words [Hello World] etc.
     #  * single bracketted words with double quotes ["Hello World"]
     #  * double bracketted words with double quotes [["Hello World"]]
-    "(?<!\[)\!?\[(\[)$single(\")?(?:[^\[\]\",<\s'\*][^\[\],>]{0,255}[^\"])(?(-1)\"(?:[^\"]*))(?(-2)\])\](?!\])";
+    "(?<!\[)\!?\[(\[)$single(\")?(?:[^\[\]\",<\s'\*][^\[\],>]{0,255}[^\"])(?(5)\"(?:[^\"]*))(?(4)\])\](?!\])";
 
     if ($camelcase)
       $this->wordrule.='|'.
@@ -3683,7 +3683,7 @@ class Formatter {
     $_myindlen=array(0);
     $oline='';
 
-    $wordrule="({{{(?:(?:[^{}]+|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!}))|(?-1))+}}})|".
+    $wordrule="({{{(?:(?:[^{}]+|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!}))|(?1))+}}})|".
               "\[\[(?:[A-Za-z0-9]+(?:\((?:(?<!\]\]).)*\))?)\]\]|". # macro
               "<<(?:[A-Za-z0-9]+(?:\((?:(?<!\>\>).)*\))?)>>|"; # macro
     if ($DBInfo->inline_latex) # single line latex syntax
@@ -3830,7 +3830,7 @@ class Formatter {
       $chunk=preg_split("/({{{
                         (?:(?:[^{}]+|
                         (?<!{){{1,2}(?!{)|
-                        (?<!})}{1,2}(?!}))|(?-1)
+                        (?<!})}{1,2}(?!}))|(?1)
                           )+}}})/x",$line,-1,PREG_SPLIT_DELIM_CAPTURE);
       $nc='';
       $k=1;
