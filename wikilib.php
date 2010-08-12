@@ -3184,9 +3184,19 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   $pages = array_merge($pages, $alias);
   $hits=array();
   foreach ($pages as $page) {
-     preg_match("/".$needle."/i",$page,$matches);
-     if ($matches)
+     if (preg_match("/".$needle."/i", $page))
         $hits[]=$page;
+  }
+
+  if (empty($hits)) {
+    // simple title search by ignore spaces
+    $needle2 = str_replace(' ', "\\s*", $needle);
+    $ws = preg_split("/([\x{AC00}-\x{D7F7}])/u", $needle2, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+    $needle2 = implode("\\s*", $ws);
+    foreach ($pages as $page) {
+      if (preg_match("/".$needle2."/i", $page))
+        $hits[]=$page;
+    }
   }
 
   sort($hits);
