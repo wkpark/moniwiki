@@ -221,6 +221,49 @@ function get_csv($str) {
 }
 }
 
+/**
+ * get aliases from alias file
+ *
+ * @author	wkpark@kldp.org
+ * @since	2010/08/12
+ *
+ */
+function get_aliases($file) {
+  $lines = array();
+  if (file_exists($file)) $lines = file($file);
+  if (empty($lines))
+    return array();
+
+  $alias = array();
+  foreach ($lines as $line) {
+    $line=trim($line);
+    if (empty($line) or $line[0]=='#') continue;
+    # support three types of aliases
+    #
+    # dest<alias1,alias2,...
+    # dest,alias1,alias2,...
+    # alias>dest1,dest2,dest3,...
+    #
+    if (($p=strpos($line,'>')) !== false) {
+      list($key, $list) = explode('>',$line,2);
+      $alias[$key] = $list;
+    } else {
+      if (($p = strpos($line, '<')) !== false) {
+        list($val, $keys) = explode('<', $line, 2);
+        $keys = explode(',', $keys);
+      } else {
+        $keys = explode(',', $line);
+        $val = array_shift($keys);
+      }
+
+      foreach ($keys as $k) {
+        $alias[$k] = !empty($alias[$k]) ? $alias[$k].','.$val:$val;
+      }
+    }
+  }
+  return $alias;
+}
+
 function get_title($page,$title='') {
   global $DBInfo;
   if (!empty($DBInfo->use_titlecache)) {
@@ -3135,6 +3178,10 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
     return $form;
   }
   $pages= $DBInfo->getPageLists();
+  if (empty($DBInfo->alias)) $DBInfo->initAlias();
+  $alias = $DBInfo->alias->getAllPages();
+
+  $pages = array_merge($pages, $alias);
   $hits=array();
   foreach ($pages as $page) {
      preg_match("/".$needle."/i",$page,$matches);

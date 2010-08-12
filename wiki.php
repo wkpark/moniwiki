@@ -417,36 +417,7 @@ class MetaDB {
 
 class MetaDB_text extends MetaDB {
   var $db=array();
-  function MetaDB_text($file, $aliases = null) {
-    $lines = array();
-    if (file_exists($file)) $lines = file($file);
-    if (!empty($lines))
-    foreach ($lines as $line) {
-      $line=trim($line);
-      if (empty($line) or $line[0]=='#') continue;
-      # support three types of aliases
-      #
-      # dest<alias1,alias2,...
-      # dest,alias1,alias2,...
-      # alias>dest1,dest2,dest3,...
-      #
-      if (($p=strpos($line,'>')) !== false) {
-        list($key,$list)=explode('>',$line,2);
-        $this->db[$key]=$list;
-      } else {
-        if (($p=strpos($line,'<')) !== false) {
-          list($val,$keys)=explode('<',$line,2);
-          $keys=explode(',',$keys);
-        } else {
-          $keys=explode(',',$line);
-          $val=array_shift($keys);
-        }
-
-        foreach ($keys as $k) {
-          $this->db[$k]=!empty($this->db[$k]) ? $this->db[$k].','.$val:$val;
-        }
-      }
-    }
+  function MetaDB_text($aliases = null) {
     // merge aliases
     if (!empty($aliases)) {
       foreach ($aliases as $k=>$a) {
@@ -826,7 +797,7 @@ EOS;
     register_shutdown_function(array(&$this,'Close'));
   }
 
-  function initMetaDB() {
+  function initAlias() {
     $aliases = array();
     while (!empty($this->use_alias)) {
       // read all aliases from aliase caches
@@ -855,10 +826,16 @@ EOS;
       break;
     }
 
-    if (!empty($this->use_alias) and (file_exists($this->aliaspage) or !empty($aliases))) 
-      $this->alias= new MetaDB_text($this->aliaspage, $aliases);
-    else
+    if (!empty($this->use_alias) and (file_exists($this->aliaspage) or !empty($aliases))) {
+      $aliases = array_merge($aliases, get_aliases($this->aliaspage));
+      $this->alias= new MetaDB_text($aliases);
+    } else {
       $this->alias= new MetaDB();
+    }
+  }
+
+  function initMetaDB() {
+    if (empty($this->alias)) $this->initAlias();
 
     if (!empty($this->shared_metadb))
       $this->metadb= new MetaDB_dba($this->shared_metadb,$this->dba_type);
