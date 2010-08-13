@@ -135,7 +135,7 @@ EOF;
           "?action=highlight&amp;value="._urlencode($needle),
           $page_name,"tabindex='$idx'");
     if ($count) {
-      $out.= ' . . . . ' . $count . (($count == 1) ? _(" match") : _(" matches"));
+      $out.= ' . . . . ' . sprintf((($count == 1) ? _("%d match") : _("%d matches")), $count );
       $out.= $contexts[$page_name];
     }
     $out.= "</li>\n";

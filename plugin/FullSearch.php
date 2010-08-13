@@ -260,7 +260,7 @@ EOF;
           '?action=highlight&amp;value='._urlencode($value),
           $page_name,'tabindex="'.$idx.'"');
     if ($count > 0)
-      $out.= ' . . . . ' . $count . (($count == 1) ? _(" match") : _(" matches"));
+      $out.= ' . . . . ' . sprintf((($count == 1) ? _("%d match") : _("%d matches")), $count );
     if (!empty($opts['context']) and $opts['context']>0) {
       # search matching contexts
       $p = new WikiPage($page_name);
