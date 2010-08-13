@@ -801,9 +801,39 @@ function do_highlight($formatter,$options) {
   $formatter->send_footer($args,$options);
 }
 
-function macro_EditHints($formatter) {
+function macro_EditHints($formatter, $value) {
   $hints = "<div class=\"wikiHints\">\n";
+
+  if ($value == 'js') {
+    $wikihints_openbutton_onclick = <<<JS
+$("wikiHints_opened_head").style.display = "block";
+$("wikiHints_closed_head").style.display = "none";
+$("wikiHints_content").style.display = "block"';
+JS;
+
+    $wikihints_closebutton_onclick = <<<JS
+$("wikiHints_opened_head").style.display = "none";
+$("wikiHints_closed_head").style.display = "block";
+$("wikiHints_content").style.display = "none"';
+JS;
+
+    $hints.= "<div id='wikiHints_closed_head' class='head'>";
+    $hints.= "<div class='open-button' onclick='$wikihints_openbutton_onclick'><span class='mark'>?</span><span class='message'> "._("Editing Hints")."</span></div><div class='clear'></div>";
+    $hints.= "</div>";
+
+    /* wikiHints_opened_head is hiding because wikiHints is closed basically. */
+    $hints.= "<div id='wikiHints_opened_head' class='head' style='display: none'>";
+    $hints.= "<div class='tutorial-link'>"._("See more help:").' '.$formatter->link_tag('WikiTutorial')."</div><div class='close-button' onclick='$wikihints_closebutton_onclick'><span class='mark'>x</span><span class='message'> "._("Close Editing Hints")."</span></div><div class='clear'></div>";
+    $hints.= "</div>";
+  
+    $display = 'style="display: none"';
+  } else {
+    $display = '';
+  }
+
+  $hints.= "<p id='wikiHints_content' $display>";
   $hints.= _("<b>Emphasis:</b> ''<i>italics</i>''; '''<b>bold</b>'''; '''''<b><i>bold italics</i></b>''''';\n''<i>mixed '''<b>bold</b>''' and italics</i>''; ---- horizontal rule.<br />\n<b>Headings:</b> = Title 1 =; == Title 2 ==; === Title 3 ===;\n==== Title 4 ====; ===== Title 5 =====.<br />\n<b>Lists:</b> space and one of * bullets; 1., a., A., i., I. numbered items;\n1.#n start numbering at n; space alone indents.<br />\n<b>Links:</b> JoinCapitalizedWords; [\"brackets and double quotes\"];\n[bracketed words];\nurl; [url]; [url label].<br />\n<b>Tables</b>: || cell text |||| cell text spanning two columns ||;\nno trailing white space allowed after tables or titles.<br />\n");
+  $hints.= "</p>";
   $hints.= "</div>\n";
   return $hints;
 }
