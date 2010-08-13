@@ -36,20 +36,16 @@ class MoniConfig {
     print '<div class="check">';
     if (function_exists("dba_open")) {
       print '<h3>'._t("Check a dba configuration").'</h3>';
-      $tempnam=tempnam(".",'dba-'.time());
-      if ($db=@dba_open($tempnam,"n","db4"))
-        $config['dba_type']="db4";
-      else if ($db=@dba_open($tempnam,"n","db3"))
-        $config['dba_type']="db3";
-      else if ($db=@dba_open($tempnam,"n","db2"))
-        $config['dba_type']="db2";
-      else if ($db=@dba_open($tempnam,"n","gdbm"))
-        $config['dba_type']="gdbm";
-      else if ($db=@dba_open($tempnam,"n","flatfile"))
-        $config['dba_type']="flatfile";
+      $dbtypes = dba_handlers(true);
+      $dbtests = array('db4', 'db3', 'db2', 'gdbm', 'flatfile');
+      foreach ($dbtests as $mydb) {
+        if (isset($dbtypes[$mydb])) {
+          $config['dba_type'] = $mydb;
+          break;
+        }
+      }
 
-      if (is_resource($db)) {
-        dba_close($db);
+      if (!empty($config['dba_type'])) {
         print '<ul><li>'.sprintf(_t("%s is selected."),"<b>$config[dba_type]</b>").'</li></ul>';
       } else {
         print '<p>'.sprintf(_t("No \$dba_type selected.")).'</p>';
@@ -57,7 +53,7 @@ class MoniConfig {
     }
     preg_match("/Apache\/2\./",$_SERVER['SERVER_SOFTWARE'],$match);
 
-    if ($match) {
+    if (empty($match)) {
       $config['query_prefix']='?';
       while (ini_get('allow_url_fopen')) {
         print '<h3>'._t("Check a AcceptPathInfo setting for Apache 2.x.xx").'</h3>';
