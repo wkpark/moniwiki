@@ -35,7 +35,7 @@ function macro_DueDate($formatter,$value) {
   $time_val= strtotime($date_val);
   $time_diff= (int) (($time_val - $now_val)/86400);
   
-  $date=strftime("%x",$time_val);
+  $date = gmdate("Y-m-d", $time_val + $formatter->tz_offset);
 
   if  ($time_diff > 0)
      $msg=sprintf(_("%d day(s) left until %s."), $time_diff, $date);
