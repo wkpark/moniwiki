@@ -2016,12 +2016,15 @@ proto.addControlItem = function(text, method,arg) {
     );
 
     var link = Wikiwyg.createElementWithAttrs(
-        'input', {
+        'button', {
             type: 'button',
             value: _(text)
         }
     );
-    //link.appendChild(document.createTextNode(text));
+
+    var btn = document.createElement('span');
+    btn.appendChild(document.createTextNode(_(text)));
+    link.appendChild(btn);
     span.appendChild(link);
 
     var self = this;

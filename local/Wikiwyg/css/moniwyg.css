@@ -35,6 +35,11 @@ span.wikiwyg_control_link a {
     padding:0 2px;
 }
 
+.wikiwyg_control_link button {
+    float:right;
+    margin-right:3px;
+}
+
 .wikiwyg_mode_selector {
     font-family:'Trebuchet MS',sans-serif;
     list-style-image: none;
@@ -42,7 +47,7 @@ span.wikiwyg_control_link a {
     list-style-position: outside;
     margin: 0;
     padding:0;
-    display: inline;
+    display: inline-block;
 }
 
 .wikiwyg_mode_selector li:hover {
@@ -55,8 +60,10 @@ span.wikiwyg_control_link a {
 }
 
 ul.wikiwyg_mode_selector {
-    display: inline;
-    float:left;
+    margin-left:2px;
+    display: inline-block;
+    float:right;
+    margin-bottom:-2px;
 }
 
 .wikiwyg_mode_selector li {
@@ -148,3 +155,4 @@ ul.wikiwyg_mode_selector {
     vertical-align: top;
 }
 
+#wikiwyg_wikitext_textarea { outline:none; }

@@ -281,7 +281,8 @@ proto.add_break = function() {
                 'style': 'clear:both'
             }
         );
-        this.div.appendChild(clear);
+        //this.div.appendChild(clear);
+	// XXX float right !
     }
 }
 
