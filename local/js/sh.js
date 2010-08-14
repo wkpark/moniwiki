@@ -57,10 +57,6 @@ function shOnload() {
             if (this.readyState == 'complete')
                 dp.sh.HighlightAll('code',true,true);
         }
-        js.onload = function() {
-            dp.sh.HighlightAll('code',true,true);
-            return;
-        }
 
         // safari fix.
         if (navigator.userAgent.toLowerCase().indexOf('applewebkit') != -1) {
@@ -72,6 +68,11 @@ function shOnload() {
                     }
                 }, 10);
             })();
+        } else {
+            js.onload = function() {
+                dp.sh.HighlightAll('code',true,true);
+                return;
+            }
         }
     }
     // not work with the flash 10 :(
