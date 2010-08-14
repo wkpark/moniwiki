@@ -45,6 +45,64 @@ function get_scriptname() {
   return $_SERVER['SCRIPT_NAME'];
 }
 
+/**
+ * Extracted from Gallery Plugin
+ *
+ * make pagelist to paginate.
+ *
+ * @author wkpark@kldp.org
+ * @since  2003/08/10
+ * @param  integer  $pages - the number of pages
+ * @param  string   $action - link to page action
+ * @param  integer  $curpage - current page
+ * @param  integer  $listcount - the number of pages to show
+ */
+
+function get_pagelist($formatter,$pages,$action,$curpage=1,$listcount=10,$bra="[",$cat="]",$sep="|",$prev="&#171;",$next="&#187;",$first="",$last="",$ellip="...") {
+
+  if ($curpage >=0)
+    if ($curpage > $pages)
+      $curpage=$pages;
+  if ($curpage <= 0)
+    $curpage=1;
+
+  $startpage=intval(($curpage-1) / $listcount)*$listcount +1;
+
+  $pnut="";
+  if ($startpage > 1) {
+    $prevref=$startpage-1;
+    if (!$first) {
+      $prev_l=$formatter->link_tag('',$action.$prevref,$prev);
+      $prev_1=$formatter->link_tag('',$action."1","1");
+      $pnut="$prev_l".$bra.$prev_1.$cat.$ellip.$bar;
+    }
+  } else {
+    $pnut=$prev.$bra."";
+  }
+
+  for ($i=$startpage;$i < ($startpage + $listcount) && $i <=$pages; $i++) {
+    if ($i != $startpage)
+      $pnut.=$sep;
+    if ($i != $curpage) {
+      $link=$formatter->link_tag('',$action.$i,$i);
+      $pnut.=$link;
+    } else
+      $pnut.="<b>$i</b>";
+  }
+
+  if ($i <= $pages) {
+    if (!$last) {
+      $next_l=$formatter->link_tag('',$action.$pages,$pages);
+      $next_i=$formatter->link_tag('',$action.$i,$next);
+
+      $pnut.=$cat.$ellip.$bra.$next_l.$cat.$next_i;
+    }
+  } else {
+    $pnut.="".$cat.$next;
+  }
+  return $pnut;
+}
+
 function _rawurlencode($url) {
   $name=rawurlencode($url);
   $urlname=preg_replace('/%(2F|7E|3A|2B)/ei',"chr(hexdec('\\1'))",$name);
@@ -1633,7 +1691,7 @@ function do_titleindex($formatter,$options) {
   }
   $formatter->send_header("",$options);
   $formatter->send_title("","",$options);
-  print macro_TitleIndex($formatter,$options['sec']);
+  print macro_TitleIndex($formatter,$options['sec'], $options);
   $formatter->send_footer($args,$options);
 }
 
@@ -2783,8 +2841,14 @@ function _setpagekey(&$page,$k) {
   }
 }
 
-function macro_TitleIndex($formatter,$value) {
+function macro_TitleIndex($formatter, $value, $options = array()) {
   global $DBInfo;
+
+  $pc = !empty($DBInfo->titleindex_pagecount) ? intval($DBInfo->titleindex_pagecount) : 100;
+  if ($pc < 1) $pc = 100;
+
+  $pg = empty($options['p']) ? 1 : intval($options['p']);
+  if ($pg < 1) $pg = 1;
 
   $group=$formatter->group;
 
@@ -2868,12 +2932,26 @@ function macro_TitleIndex($formatter,$value) {
       $all_pages = $titleindex[$sel];
   }
 
+  $pnut = null;
+  if (count($all_pages) > $pc) {
+    $pages_number = intval(count($all_pages) / $pc);
+    if (count($all_pages) % $pc)
+      $pages_number++;
+
+    $pages = array_splice($all_pages, ($pg - 1) * $pc, $pc);
+
+    $pnut = get_pagelist($formatter, $pages_number,
+      '?action=titleindex&amp;sec='.$sel.
+      '&amp;p=', !empty($pg) ? $pg : 1);
+  } else {
+    $pages = &$all_pages;
+  }
   //print count($all_pages);
   //exit;
   $out = '';
 #  if ($DBInfo->use_titlecache)
 #    $cache=new Cache_text('title');
-  foreach ($all_pages as $page=>$rpage) {
+  foreach ($pages as $page=>$rpage) {
     $p=ltrim($page);
     $pkey=get_key("$p");
     if ($key != $pkey) {
@@ -2898,6 +2976,9 @@ function macro_TitleIndex($formatter,$value) {
        $out.=' '.$formatter->link_tag($urlname,"?action=uploadedfiles",
          $formatter->icon['attach']);
     $out.="</li>\n";
+  }
+  if (!empty($pnut)) {
+    $out.='<li style="list-style:none">'. $pnut .'</li>'."\n";
   }
   $out.= "</ul>\n";
 

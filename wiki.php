@@ -3159,6 +3159,7 @@ class Formatter {
 
   function link_tag($pageurl,$query_string="", $text="",$attr="") {
     # Return a link with given query_string.
+    $text = strval($text);
     if (!isset($text[0]))
       $text= $pageurl; # XXX
     if (!isset($pageurl[0]))

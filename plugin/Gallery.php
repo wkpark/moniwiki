@@ -7,51 +7,6 @@
 //
 // $Id$
 
-function get_pagelist($formatter,$pages,$action,$curpage=1,$listcount=10,$bra="[",$cat="]",$sep="|",$prev="&#171;",$next="&#187;",$first="",$last="",$ellip="...") {
-
-  if ($curpage >=0)
-    if ($curpage > $pages)
-      $curpage=$pages;
-  if ($curpage <= 0)
-    $curpage=1;
-
-  $startpage=intval(($curpage-1) / $listcount)*$listcount +1;
-
-  $pnut="";
-  if ($startpage > 1) {
-    $prevref=$startpage-1;
-    if (!$first) {
-      $prev_l=$formatter->link_tag('',$action.$prevref,$prev);
-      $prev_1=$formatter->link_tag('',$action."1","1");
-      $pnut="$prev_l".$bra.$prev_1.$cat.$ellip.$bar;
-    }
-  } else {
-    $pnut=$prev.$bra."";
-  }
-
-  for ($i=$startpage;$i < ($startpage + $listcount) && $i <=$pages; $i++) {
-    if ($i != $startpage)
-      $pnut.=$sep;
-    if ($i != $curpage) {
-      $link=$formatter->link_tag('',$action.$i,$i);
-      $pnut.=$link;
-    } else
-      $pnut.="<b>$i</b>";
-  }
-
-  if ($i <= $pages) {
-    if (!$last) {
-      $next_l=$formatter->link_tag('',$action.$pages,$pages);
-      $next_i=$formatter->link_tag('',$action.$i,$next);
-
-      $pnut.=$cat.$ellip.$bra.$next_l.$cat.$next_i;
-    }
-  } else {
-    $pnut.="".$cat.$next;
-  }
-  return $pnut;
-}
-
 function macro_Gallery($formatter,$value,&$options) {
   global $DBInfo;
 
