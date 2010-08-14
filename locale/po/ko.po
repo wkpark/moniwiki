@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoniWiki 1.1.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-08-14 03:44+0900\n"
+"POT-Creation-Date: 2010-08-14 13:21+0900\n"
 "PO-Revision-Date: 2008-12-11 12:20+0900\n"
 "Last-Translator: Won-Kyu Park <wkpark@kldp.org>\n"
 "Language-Team: Won-Kyu Park <wkpark@kldp.org>\n"
@@ -1075,9 +1075,10 @@ msgstr "&laquo; 첫 페이지"
 msgid "Total %d files"
 msgstr "총 %d 개 파일"
 
-#: ../plugin/UploadedFiles.php:453 ../plugin/rcsimport.php:32
-#: ../plugin/rcsimport.php:88 ../plugin/rename.php:77 ../plugin/revert.php:82
-#: ../plugin/userinfo.php:37 ../wikilib.php:1387 ../wikilib.php:2395
+#: ../plugin/UploadedFiles.php:453 ../plugin/login.php:32
+#: ../plugin/rcsimport.php:32 ../plugin/rcsimport.php:88
+#: ../plugin/rename.php:77 ../plugin/revert.php:82 ../plugin/userinfo.php:37
+#: ../wikilib.php:1387 ../wikilib.php:2395
 msgid "Password"
 msgstr "비밀번호"
 
@@ -1291,23 +1292,23 @@ msgstr ""
 msgid "The TCPDF class not found!"
 msgstr "TCPDF 클래스 찾을 수 없음!"
 
-#: ../plugin/login.php:31
-msgid "Login:"
-msgstr "로그인:"
-
-#: ../plugin/login.php:32
-msgid "Password:"
-msgstr "비밀번호:"
+#: ../plugin/login.php:31 ../wikilib.php:2425 ../wikilib.php:2560
+msgid "ID"
+msgstr "아이디"
 
 #: ../plugin/login.php:33
 msgid "Join"
 msgstr "가입"
 
-#: ../plugin/login.php:51 ../plugin/minilogin.php:25
+#: ../plugin/login.php:34 ../wikilib.php:2411
+msgid "Login"
+msgstr "로그인"
+
+#: ../plugin/login.php:52 ../plugin/minilogin.php:25
 msgid "Logout"
 msgstr "나가기"
 
-#: ../plugin/login.php:52 ../plugin/minilogin.php:24 ../locale/dummy.php:3
+#: ../plugin/login.php:53 ../plugin/minilogin.php:24 ../locale/dummy.php:3
 msgid "UserPreferences"
 msgstr "환경설정"
 
@@ -2491,17 +2492,9 @@ msgstr ""
 msgid "Infinite loop possible!"
 msgstr "무한 루프가 가능함!"
 
-#: ../wikilib.php:2411
-msgid "Login"
-msgstr ""
-
 #: ../wikilib.php:2412
 msgid "OpenID"
 msgstr ""
-
-#: ../wikilib.php:2425 ../wikilib.php:2560
-msgid "ID"
-msgstr "아이디"
 
 #: ../wikilib.php:2463 ../wikilib.php:2553
 msgid "Make profile"
@@ -2861,6 +2854,12 @@ msgstr "이전보기"
 #: ../locale/dummy.php:8
 msgid "view"
 msgstr "보기"
+
+#~ msgid "Login:"
+#~ msgstr "로그인:"
+
+#~ msgid "Password:"
+#~ msgstr "비밀번호:"
 
 #~ msgid "Please check your php.ini setting"
 #~ msgstr "php.ini 세팅을 확인해보시기 바랍니다"

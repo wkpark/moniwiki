@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // Login plugin for the MoniWiki
 //
@@ -28,20 +28,23 @@ function macro_login($formatter,$value="",$options="") {
     $passwd_hidden.="<input type='hidden' name='_chall' />\n";
   }
 
-  $login=_("Login:");
-  $pass=_("Password:");
+  $id=_("ID");
+  $pass=_("Password");
   $join=_("Join");
+  $login=_("Login");
+  if (!empty($formatter->lang))
+    $lang = ' lang="'.substr($formatter->lang, 0, 2).'"';
 
   if ($user->id == 'Anonymous')
   return <<<LOGIN
-<div id='wikiLogin'>$jscript
+<div id='wikiLogin'$lang>$jscript
 <form method='post' action='$urlpage' $onsubmit>
 <div>
 <input type="hidden" name="action" value="userform" />
 <table border='0' cellpadding='2' cellspacing='0'>
-<tr><td align='right'>$login</td><td><input name='login_id' size='10' /></td></tr>
+<tr><td align='right'>$id</td><td><input name='login_id' size='10' /></td></tr>
 <tr><td align='right'>$pass</td><td><input name='password' type='password' size='10' /></td></tr>
-<tr><td align='right'><a href='$url'>$join</a></td><td><input type='submit' value='OK' />$passwd_hidden</td></tr>
+<tr><td align='right'><a href='$url'>$join</a></td><td><span class='button'><input type='submit' class='button' value='$login' /></span>$passwd_hidden</td></tr>
 </table>
 </div>
 </form>

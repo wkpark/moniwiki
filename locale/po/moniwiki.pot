@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-08-14 03:44+0900\n"
+"POT-Creation-Date: 2010-08-14 13:21+0900\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -1064,9 +1064,10 @@ msgstr ""
 msgid "Total %d files"
 msgstr ""
 
-#: ../plugin/UploadedFiles.php:453 ../plugin/rcsimport.php:32
-#: ../plugin/rcsimport.php:88 ../plugin/rename.php:77 ../plugin/revert.php:82
-#: ../plugin/userinfo.php:37 ../wikilib.php:1387 ../wikilib.php:2395
+#: ../plugin/UploadedFiles.php:453 ../plugin/login.php:32
+#: ../plugin/rcsimport.php:32 ../plugin/rcsimport.php:88
+#: ../plugin/rename.php:77 ../plugin/revert.php:82 ../plugin/userinfo.php:37
+#: ../wikilib.php:1387 ../wikilib.php:2395
 msgid "Password"
 msgstr ""
 
@@ -1280,23 +1281,23 @@ msgstr ""
 msgid "The TCPDF class not found!"
 msgstr ""
 
-#: ../plugin/login.php:31
-msgid "Login:"
-msgstr ""
-
-#: ../plugin/login.php:32
-msgid "Password:"
+#: ../plugin/login.php:31 ../wikilib.php:2425 ../wikilib.php:2560
+msgid "ID"
 msgstr ""
 
 #: ../plugin/login.php:33
 msgid "Join"
 msgstr ""
 
-#: ../plugin/login.php:51 ../plugin/minilogin.php:25
+#: ../plugin/login.php:34 ../wikilib.php:2411
+msgid "Login"
+msgstr ""
+
+#: ../plugin/login.php:52 ../plugin/minilogin.php:25
 msgid "Logout"
 msgstr ""
 
-#: ../plugin/login.php:52 ../plugin/minilogin.php:24 ../locale/dummy.php:3
+#: ../plugin/login.php:53 ../plugin/minilogin.php:24 ../locale/dummy.php:3
 msgid "UserPreferences"
 msgstr ""
 
@@ -2474,16 +2475,8 @@ msgstr ""
 msgid "Infinite loop possible!"
 msgstr ""
 
-#: ../wikilib.php:2411
-msgid "Login"
-msgstr ""
-
 #: ../wikilib.php:2412
 msgid "OpenID"
-msgstr ""
-
-#: ../wikilib.php:2425 ../wikilib.php:2560
-msgid "ID"
 msgstr ""
 
 #: ../wikilib.php:2463 ../wikilib.php:2553

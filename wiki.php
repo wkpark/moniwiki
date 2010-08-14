@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.1.5-RC2';
+$_release = '1.1.5-RC3';
 
 #ob_start("ob_gzhandler");
 
@@ -1879,6 +1879,7 @@ class Formatter {
     $this->use_smileys=$DBInfo->use_smileys;
     $this->use_namespace=!empty($DBInfo->use_namespace) ? $DBInfo->use_namespace : '';
     $this->mediawiki_style=!empty($DBInfo->mediawiki_style) ? 1 : '';
+    $this->lang=$DBInfo->lang;
     $this->udb=&$DBInfo->udb;
     $this->user=&$DBInfo->user;
     $this->check_openid_url=!empty($DBInfo->check_openid_url) ? $DBInfo->check_openid_url : 0;
