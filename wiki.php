@@ -940,6 +940,7 @@ EOS;
     if (!is_resource($handle))
       return array();
 
+    set_time_limit(isset($this->time_limit) ? intval($this->time_limit) : 30);
     if (empty($options)) {
       while (($file = readdir($handle)) !== false) {
         if (is_dir($this->text_dir."/".$file)) continue;
@@ -1003,6 +1004,7 @@ EOS;
     if (!is_resource($handle))
       return 0;
 
+    set_time_limit(isset($this->time_limit) ? intval($this->time_limit) : 30);
     $count = 0;
     while (($file = readdir($handle)) !== false) {
       if (is_dir($this->text_dir."/".$file)) continue;
