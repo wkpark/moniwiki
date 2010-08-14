@@ -832,10 +832,11 @@ function macro_EditText($formatter,$value,$options) {
     $form = macro_Edit($formatter,$value,$options);
   }
   $js = '';
+  $css = '';
   if (empty($DBInfo->edit_with_sidebar))
     $sidebar_style="#wikiSideMenu { display: none; }\n";
   if ($has_form and !empty($DBInfo->use_jsbuttons)) {
-    $js=<<<JS
+    $css=<<<CSS
 <style type='text/css'>
 /*<![CDATA[*/
 #mycontent button.save-button { display: none; }
@@ -844,6 +845,8 @@ button.save-button { display: none; }
 $sidebar_style
 /*]]>*/
 </style>
+CSS;
+    $js=<<<JS
 <script type='text/javascript'>
 /*<![CDATA[*/
 function submit_all_forms() {
@@ -894,8 +897,16 @@ function check_uploadform() {
 /*]]>*/
 </script>\n
 JS;
+  } else if (!empty($sidebar_style)) {
+    $css=<<<CSS
+<style type='text/css'>
+/*<![CDATA[*/
+$sidebar_style
+/*]]>*/
+</style>\n
+CSS;
   }
-  return $js.'<div id="all-forms">'.$form.'</div>';
+  return $css.$js.'<div id="all-forms">'.$form.'</div>';
 }
 
 function do_edit($formatter,$options) {
