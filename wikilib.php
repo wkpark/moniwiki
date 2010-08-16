@@ -2284,22 +2284,30 @@ function macro_RandomPage($formatter,$value='') {
   // select pages
   $selected = array();
   for ($i = 0; $i < $number; $i++) {
-    $selected[] = rand(1, $max);   
+    $selected[] = rand(0, $max - 1);   
   }
   $selected = array_unique($selected);
+  
+  sort($selected);
+  $sel_count = count($selected);
 
   $sel_pages = array();
-  if (!empty($DBInfo->use_indexer)) {
+  if (!empty($DBInfo->use_pageindex)) {
+    // fastest method
+    require_once('lib/PageIndex.php');
+    $pgidx = new PageIndex($DBInfo);
+    $sel_pages = $pgidx->getPagesByIds($selected);
+  } else if (!empty($DBInfo->use_indexer)) {
     require_once("lib/indexer.DBA.php");
     $indexer = new Indexer_DBA('fullsearch', 'r', $DBInfo->dba_type);
     foreach ($selected as $idx) {
-      $sel_pages[] = $indexer->_fetch($idx);
+      $sel_pages[] = $indexer->_fetch($idx - 1);
     }
     $indexer->close();
   } else {
     $all_pages = $DBInfo->getPageLists();
     foreach ($selected as $idx) {
-      $sel_pages[] = $all_pages[$idx - 1]; 
+      $sel_pages[] = $all_pages[$idx]; 
     }
   }
 
