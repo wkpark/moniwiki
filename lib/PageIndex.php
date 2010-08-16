@@ -14,8 +14,11 @@ class PageIndex {
     {
         $this->text_dir = $DB->text_dir;
         $this->cache_dir = $DB->cache_dir . '/pageindex';
-        if (!is_dir($this->cache_dir))
+        if (!is_dir($this->cache_dir)) {
+            $om = umask(000);
             _mkdir_p($this->cache_dir, 0777);
+            umask($om);
+        }
         $this->pagelst = $this->cache_dir . '/pageindex.lst';
         $this->pageidx = $this->cache_dir . '/pageindex.idx';
     }
