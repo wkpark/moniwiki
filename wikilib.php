@@ -2941,7 +2941,7 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
   }
 
   $pnut = null;
-  if (count($all_pages) > $pc) {
+  if (!empty($sel) and count($all_pages) > $pc) {
     $pages_number = intval(count($all_pages) / $pc);
     if (count($all_pages) % $pc)
       $pages_number++;
