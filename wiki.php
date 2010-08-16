@@ -960,7 +960,7 @@ EOS;
     } else if (!empty($options['count'])) {
        $count=$options['count'];
        while (($file = readdir($handle)) !== false && $count > 0) {
-          if (is_dir($this->text_dir."/".$file)) continue;
+          if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($file)) continue;
           $pages[] = $this->keyToPagename($file);
           $count--;
        }
@@ -1007,7 +1007,7 @@ EOS;
     set_time_limit(isset($this->time_limit) ? intval($this->time_limit) : 30);
     $count = 0;
     while (($file = readdir($handle)) !== false) {
-      if (is_dir($this->text_dir."/".$file)) continue;
+      if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($file)) continue;
       $count++;
     }
     closedir($handle);
