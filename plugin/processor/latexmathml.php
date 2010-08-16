@@ -25,7 +25,7 @@ function processor_latexmathml($formatter,$value="") {
   if ($value[0]=='#' and $value[1]=='!')
   list($line,$value)=explode("\n",$value,2);
 
-  if ($line and strpos($line, ' ') !== FALSE)
+  if (!empty($line) and strpos($line, ' ') !== FALSE)
     list($tag,$args)=explode(' ',$line,2);
 
   # 1 or 0

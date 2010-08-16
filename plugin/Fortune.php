@@ -18,12 +18,12 @@ define('DEFAULT_FORTUNE','art');
 function macro_Fortune($formatter,$value,$options) {
     $cat=$value;
     $dir='/usr/share/games/fortune';
-    if ($DBInfo->fortune_dir) $dir=$DBInfo->fortune_dir;
+    if (!empty($DBInfo->fortune_dir)) $dir = $DBInfo->fortune_dir;
     if ($cat=='') $cat=DEFAULT_FORTUNE;
 
     $files=array();
     if ($cat == '*' and ($hd=opendir($dir))) {
-        while ($f = readdir($hd)) {
+        while (($f = readdir($hd)) !== false) {
             if (is_dir($dir."/$f")) continue;
             $files[]=$f;
         }
@@ -61,7 +61,7 @@ function macro_Fortune($formatter,$value,$options) {
     }
     fclose($fd);
 
-    if ($options['action_mode']=='macro') {
+    if (!empty($options['action_mode']) and $options['action_mode']=='macro') {
         $formatter->header('Content-Type: text/plain');
         return $out;
     }

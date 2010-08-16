@@ -430,17 +430,18 @@ class processor_monimarkup
         $pi=&$formatter->pi;
         #$formatter->set_wordrule($pi);
 
+        $myarg = '';
         if ($body{0}=='#' and $body{1}=='!') {
             list($line,$body)=explode("\n",$body,2);
             $dum=preg_split('/\s+/',$line);
-            $myarg=$dum[1];
+            if (!empty($dum[1])) $myarg=$dum[1];
         }
 
         $my_divopen='';
         $my_divclose='';
-        if (isset($myarg)) {
-            if ($myarg{0}=='.') $my_type='class';
-            else if ($myarg{0}=='#') $my_type='id';
+        if (!empty($myarg)) {
+            if ($myarg[0]=='.') $my_type='class';
+            else if ($myarg[0]=='#') $my_type='id';
             if (isset($my_type)) {
                 $my_name=substr($myarg,1);
                 $my_divopen="<div $my_type='$my_name'>";
@@ -518,8 +519,7 @@ class processor_monimarkup
                         $anchor_id='sect-'.$sect_num;
                         $anchor="<a id='$anchor_id'></a>";
                     }
-
-                    if (!empty($sect_num) and $sect_num >1) $out.=$this->_div(0);
+                    if (!empty($formatter->sect_num) and $formatter->sect_num >1) $out.=$this->_div(0);
                     $out.=$this->_div(1," class='level$c[depth]'");
                     $out.= $anchor.$ed.$formatter->head_repl($c['depth'],$val,$headinfo);
                     break;
@@ -655,7 +655,7 @@ class processor_monimarkup
             $out.=$this->_list(0,$_lityp[$_li]);
             --$_li;
         }
-        if ($formatter->sect_num >1) $out.=$this->_div(0);
+        if (!empty($formatter->sect_num) and $formatter->sect_num >1) $out.=$this->_div(0);
 
         if (!empty($formatter->use_smileys) and empty($formatter->smiley_rule))
             $formatter->initSmileys();
