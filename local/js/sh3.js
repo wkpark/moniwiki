@@ -53,21 +53,20 @@ function shOnload() {
             if (this.readyState == 'complete')
                 SyntaxHighlighter.highlight();
         }
-        js.onload = function() {
-            SyntaxHighlighter.highlight();
-            return;
-        }
-
         // safari fix.
-        if (navigator.userAgent.toLowerCase().indexOf('applewebkit') != -1) {
+        if ( 0 && navigator.userAgent.toLowerCase().indexOf('applewebkit') != -1) {
             (function() {
                 var timer = setInterval(function() { 
-                    if (/loaded|complete/.test(document.readyState)) {  
+                    if (/loaded|complete/.test(document.readyState)) {
                         clearInterval(timer);  
                         SyntaxHighlighter.highlight();
                     }
                 }, 10);
             })();
+        }
+        js.onload = function() {
+            SyntaxHighlighter.highlight();
+            return;
         }
     }
     return;

@@ -59,7 +59,7 @@ function shOnload() {
         }
 
         // safari fix.
-        if (navigator.userAgent.toLowerCase().indexOf('applewebkit') != -1) {
+        if (0 && navigator.userAgent.toLowerCase().indexOf('applewebkit') != -1) {
             (function() {
                 var timer = setInterval(function() { 
                     if (/loaded|complete/.test(document.readyState)) {  
@@ -68,11 +68,11 @@ function shOnload() {
                     }
                 }, 10);
             })();
-        } else {
-            js.onload = function() {
-                dp.sh.HighlightAll('code',true,true);
-                return;
-            }
+        }
+
+        js.onload = function() {
+            dp.sh.HighlightAll('code',true,true);
+            return;
         }
     }
     // not work with the flash 10 :(
