@@ -61,14 +61,14 @@ class processor_monimarkup
                             list($type,$dum)= explode("\n",$block[$j],2);
                             $tag='';
                             if (!empty($type)) {
-                                if ($type{0}=='#' and $type{1}=='!') {
+                                if ($type[0]=='#' and $type{1}=='!') {
                                     #list($tag,$dummy)= explode(' ',$type);
                                     $tmp = explode(' ',$type);
                                     $tag = $tmp[0];
                                     $btype[$j]=substr($tag,2);
                                     if ($btype[$j] == 'wiki')
                                         $btype[$j] = 'monimarkup';
-                                } else if ($type{0} == ':') {
+                                } else if ($type[0] == ':') {
                                     # for a quote block
                                     $block[$j]=substr($block[$j],1);
                                     $arg= substr($type,1);
@@ -116,15 +116,12 @@ class processor_monimarkup
             $my['value']=$line;
             $my['depth']=$depth;
             return $my;
-        } else {
-            return $line;
         }
+        return $line;
     }
 
-    function _pass2($text)
+    function _pass2($text, &$chunk)
     {
-        $lines=explode("\n",$text);
-        $chunk=array();
         $indlen=0;
         $myindlen=0;
         $_indlen=array(0);
@@ -134,8 +131,14 @@ class processor_monimarkup
         $_in_li=0;
         $_eop=0; // end of paragraph
         $oline=null;
+
+        $lines = explode("\n", $text);
+        $l = end($lines);
+        if (!isset($l[0]))
+            array_pop($lines);
         foreach ($lines as $line) {
             $tr=strlen(trim($line));
+            // concat lines with tailing '&' char
             if (substr($line,-1) == '&') { $oline.="\n".$line; continue; }
             if (empty($oline) and preg_match('/^\s*\|\|/',$line)
                     and !preg_match('/(\|\||\|-+)\s*$/',$line)) {
@@ -144,7 +147,8 @@ class processor_monimarkup
             } else if (!empty($oline) and preg_match('/^\s*\|\|/',$oline)) {
                 if ( !preg_match('/(\|\||\|-+)\s*$/',$oline)
                         and !preg_match('/^(={1,6})\s+.*(\1)\s*$/',$line)) {
-                    $oline.="\n".$line; continue;
+                    $oline.="\n".$line;
+                    continue;
                 } else if (!$tr) {
                     $oline.="\n".$line;
                     if ($_indlen[$_in_li]) {
@@ -165,7 +169,8 @@ class processor_monimarkup
                     $_eop=1;
                 }
                 continue;
-            } else if (preg_match("/^([ ]*(={1,5})\s(.*\s*)\s\\2\s?)$/",$line,$m)) {
+            }
+            if (preg_match("/^([ ]*(={1,5})\s(.*\s*)\s\\2\s?)$/",$line,$m)) {
                 $tag='HEAD';
                 $depth=strlen($m[2]);
                 if ($oline)
@@ -203,8 +208,8 @@ class processor_monimarkup
                     $myindlen=$indlen+strlen($m[1])-(isset($m[4]) ? strlen($m[4]):0);
                     $type=!empty($m[2]) ? 'ul':$m[3];
                     $mytype['type']=$type;
-                    $start=isset($m[4]) ? $m[4]:(isset($m[3]) ? $m[3]:null);
-                    if (isset($start) and is_numeric($start) and $start > 1)
+                    $start=isset($m[4]) ? $m[4]:(isset($m[3]) ? $m[3]:'');
+                    if (!empty($start) and is_numeric($start) and $start > 1)
                         $mytype['attributes']=array('start'=>$start);
                     $cutline=substr($cutline,strlen($m[1]));
                     $indtype='li';
@@ -345,8 +350,8 @@ class processor_monimarkup
                 continue;
             }
             $tr_diff='';
-            if ($line{0}== "\010" or $line{1}=="\006") {
-                $tr_diff=$line{0} == "\010" ? 'diff-added':'diff-removed';
+            if ($line[0]== "\010" or $line{1}=="\006") {
+                $tr_diff=$line[0] == "\010" ? 'diff-added':'diff-removed';
                 $line=substr($line,1,-1);
             }
             $open = '';
@@ -377,7 +382,7 @@ class processor_monimarkup
                     if ($m[3] and $m[5]) $align='center';
                     else if (!$m[3]) $align='';
                     else if (!$m[5]) $align='right';
-                    if (isset($cell{0}) and $cell{strlen($cell)-1} == "\n")
+                    if (isset($cell[0]) and $cell[strlen($cell)-1] == "\n")
                         $cell = substr($cell,0,-1).' '; // XXX
                     #$cell=str_replace("\n","<br />\n",$cell);
                     if (strpos($cell,"\n")) {
@@ -417,6 +422,15 @@ class processor_monimarkup
                          '='=>'text-align:center',
                          '>'=>'text-align:right');
 
+        # for headings
+        if (!empty($options['notoc'])) {
+            $headinfo = null;
+        } else {
+            $headinfo['top'] = 0;
+            $headinfo['num'] = 1;
+            $headinfo['dep'] = 0;
+        }
+
         $inline=array();
         $block=array();
         $btype=array();
@@ -431,7 +445,7 @@ class processor_monimarkup
         #$formatter->set_wordrule($pi);
 
         $myarg = '';
-        if ($body{0}=='#' and $body{1}=='!') {
+        if ($body[0]=='#' and $body[1]=='!') {
             list($line,$body)=explode("\n",$body,2);
             $dum=preg_split('/\s+/',$line);
             if (!empty($dum[1])) $myarg=$dum[1];
@@ -448,8 +462,7 @@ class processor_monimarkup
                 $my_divclose='</div>';
             }
         }
-        $wordrule="({{{(?:(?:[^{}]+|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!}))|(?1))+}}})|".
-              "\[\[(?:[A-Za-z0-9]+(?:\((?:(?<!\]\]).)*\))?)\]\]|". # macro
+        $wordrule = "\[\[(?:[A-Za-z0-9]+(?:\((?:(?<!\]\]).)*\))?)\]\]|". # macro
               "<<(?:[A-Za-z0-9]+(?:\((?:(?<!>>).)*\))?)>>|"; # macro
 
         if ($Config['inline_latex']) # single line latex syntax
@@ -462,19 +475,11 @@ class processor_monimarkup
         # 1-pass
         list($body,$inline,$block,$btype)=$this->_pass1($body);
         # 2-pass
-        $chunk=$this->_pass2($body);
+        $chunk = array();
+        $this->_pass2($body, $chunk);
 
         #print "<pre>";print_r($chunk);print "</pre>";
         $hr_func=$Config['hr_type'].'_hr';
-
-        # heading info
-        if (isset($options['notoc'])) {
-            $headinfo = null;
-        } else {
-            $headinfo['top'] = 0;
-            $headinfo['num'] = 1;
-            $headinfo['dep'] = 0;
-        }
 
         # list info
         $_lidep=array(0);
@@ -532,9 +537,9 @@ class processor_monimarkup
                     $type=$c['type'];
                     $linfo='';
                     $listy='';
-                    if ($type!='ul' and $type{0} !='d')
+                    if ($type!='ul' and $type[0] !='d')
                         $linfo=!empty($c['attributes']['start']) ? $c['attributes']['start']:'';
-                    else if ($type{0}=='d') {
+                    else if ($type[0]=='d') {
                         $linfo=!empty($c['attributes']['class']) ? $c['attributes']['class']:'';
                         if (preg_match('/^((\s*)(&lt;|=|>)?{([^}]+)})/s',$val,
                                 $sty)) {
@@ -679,7 +684,7 @@ class processor_monimarkup
     {
         $close=$on ? '':'/';
         $litype='';
-        if ($type{0}=='d') {
+        if ($type[0]=='d') {
             if ($on) {
                 $attr=$linfo ?  " class='$linfo'":" class='indent'";
                 return "<blockquote$attr>\n";
@@ -705,7 +710,7 @@ class processor_monimarkup
 
     function _li($on,$type='',$start=null,$sty='')
     {
-        if ($type{0}=='d') {
+        if ($type[0]=='d') {
             if ($sty) $sty=' style="'.$sty.'"';
             return $on ? "<div$sty>":"</div>\n";
         }
