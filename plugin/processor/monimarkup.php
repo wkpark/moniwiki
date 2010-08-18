@@ -440,6 +440,8 @@ class processor_monimarkup
         $formatter=&$this->formatter;
         $old_text = $formatter->text;
         $formatter->text = $this->text;
+        $save_sect_num = $formatter->sect_num;
+        $formatter->sect_num = 0;
 
         $pi=&$formatter->pi;
         #$formatter->set_wordrule($pi);
@@ -677,6 +679,7 @@ class processor_monimarkup
                 "\$formatter->link_repl(\$inline[$1])",$out);
 
         $formatter->text = $old_text;
+        $formatter->sect_num = $save_sect_num;
         return $my_divopen.$out.$my_divclose;
     }
 
