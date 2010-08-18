@@ -10,7 +10,7 @@ function do_fullsearch($formatter,$options) {
   $ret=&$options;
 
   $options['value']=_stripslashes($options['value']);
-  if (!$options['value']) $options['value']=$formatter->page->name;
+  if (!isset($options['value'][0])) $options['value']=$formatter->page->name;
   if (!empty($options['backlinks']))
     $title= sprintf(_("BackLinks search for \"%s\""), $options['value']);
   else if (!empty($options['keywords']))
@@ -33,7 +33,7 @@ function do_fullsearch($formatter,$options) {
   else if (!empty($options['keywords']))
     $qext='&amp;keywords=1';
 
-  if (!empty($options['value'])) {
+  if (isset($options['value'][0])) {
     $val=htmlspecialchars($options['value']);
     printf(_("Found %s matching %s out of %s total pages")."<br />",
          $ret['hit'],
@@ -86,7 +86,7 @@ function macro_FullSearch($formatter,$value="", &$opts) {
    </form>
 EOF;
 
-  if (!$needle or !empty($opts['form'])) { # or blah blah
+  if (!isset($needle[0]) or !empty($opts['form'])) { # or blah blah
      $opts['msg'] = _("No search text");
      return $form;
   }
@@ -114,7 +114,7 @@ EOF;
         $len=strlen($word);
 
         if (!$match[1] and $match[2] != '"') {
-          if ($len <= $tooshort or in_array($word,$common_words)) {
+          if ($len < $tooshort or in_array($word,$common_words)) {
             $common[]=$word;
             continue;
           }
@@ -136,7 +136,8 @@ EOF;
   }
 
   $test=@preg_match("/$needle/","",$match);
-  if (!trim($needle)) {
+  $test3 = trim($needle);
+  if (!isset($test3[0])) {
      $opts['msg'] = _("Empty expression");
      return $form;
   }

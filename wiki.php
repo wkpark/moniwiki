@@ -5384,8 +5384,8 @@ function get_pagename() {
     if ($_SERVER['PATH_INFO'][0] == '/')
       $pagename=substr($_SERVER['PATH_INFO'],1);
   } else if (!empty($_SERVER['QUERY_STRING'])) {
-    $goto=!empty($_POST['goto']) ? $_POST['goto']:(!empty($_GET['goto']) ? $_GET['goto'] : '');
-    if (!empty($goto)) $pagename=$goto;
+    $goto=isset($_POST['goto'][0]) ? $_POST['goto']:(isset($_GET['goto'][0]) ? $_GET['goto'] : '');
+    if (isset($goto[0])) $pagename=$goto;
     else {
       $pagename = $_SERVER['QUERY_STRING'];
       $temp = strtok($pagename,"&");
@@ -5579,8 +5579,8 @@ function wiki_main($options) {
     if (isset($_POST['header'])) unset($_POST['header']);
 
     $action=!empty($_GET['action']) ? $_GET['action'] : '';
-    $value=!empty($_GET['value']) ? $_GET['value'] : '';
-    $goto=!empty($_GET['goto']) ? $_GET['goto'] : '';
+    $value=isset($_GET['value'][0]) ? $_GET['value'] : '';
+    $goto=isset($_GET['goto'][0]) ? $_GET['goto'] : '';
     $rev=!empty($_GET['rev']) ? $_GET['rev'] : '';
     if ($options['id'] == 'Anonymous')
       $refresh = 0;
@@ -5648,11 +5648,11 @@ function wiki_main($options) {
   }
 
   while (empty($action) or $action=='show') {
-    if (!empty($value)) { # ?value=Hello
+    if (isset($value[0])) { # ?value=Hello
       $options['value']=$value;
       do_goto($formatter,$options);
       return true;
-    } else if (!empty($goto)) { # ?goto=Hello
+    } else if (isset($goto[0])) { # ?goto=Hello
       $options['value']=$goto;
       do_goto($formatter,$options);
       return true;
@@ -5978,7 +5978,7 @@ function wiki_main($options) {
       if ($_SERVER['REQUEST_METHOD']=="POST")
         $options=array_merge($_POST,$options);
       else { # do_post_* set some primary variables as $options
-        $options['value']=!empty($_GET['value']) ? $_GET['value'] : '';
+        $options['value']=isset($_GET['value'][0]) ? $_GET['value'] : '';
       }
       call_user_func("do_post_$plugin",$formatter,$options);
       return;

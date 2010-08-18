@@ -45,7 +45,7 @@ function macro_FastSearch($formatter,$value="",&$opts) {
    </form>
 EOF;
 
-  if (!$needle) { # or blah blah
+  if (!isset($needle[0])) { # or blah blah
      $opts['msg'] = _("No search text");
      return $form;
   }

@@ -1571,7 +1571,7 @@ function do_goto($formatter,$options) {
       unset($options['value']);
     }
   }
-  if ($options['value']) {
+  if (isset($options['value'][0])) {
      $url=_stripslashes(trim($options['value']));
      $url=_rawurlencode($url);
      if ($options['redirect'])
