@@ -3837,23 +3837,27 @@ class Formatter {
                         (?<!{){{1,2}(?!{)|
                         (?<!})}{1,2}(?!}))|(?1)
                           )+}}})/x",$line,-1,PREG_SPLIT_DELIM_CAPTURE);
-      $nc='';
-      $k=1;
-      $idx=1;
       $inline = array(); // save inline nowikis
-      foreach ($chunk as $c) {
-        if ($k%2) {
-          $nc.= $c;
-        } else if (in_array($c[3],array('#','-','+'))) { # {{{#color text}}}
-          $nc.= $c;
-        } else {
-          $inline[$idx] = $c;
-          $nc.= "\017".$idx."\017";
-          $idx++;
+
+      if (count($chunk) > 1) {
+        // protect inline nowikis
+        $nc = '';
+        $k = 1;
+        $idx = 1;
+        foreach ($chunk as $c) {
+          if ($k % 2) {
+            $nc.= $c;
+          } else if (in_array($c[3],array('#','-','+'))) { # {{{#color text}}}
+            $nc.= $c;
+          } else {
+            $inline[$idx] = $c;
+            $nc.= "\017".$idx."\017";
+            $idx++;
+          }
+          $k++;
         }
-        $k++;
+        $line = $nc;
       }
-      $line = $nc;
       $line = preg_replace($this->baserule,$this->baserepl,$line);
 
       // restore inline nowikis
@@ -4086,8 +4090,25 @@ class Formatter {
       if (!empty($this->use_smileys) and empty($this->smiley_rule))
         $this->initSmileys();
 
-      if (!empty($this->smiley_rule))
-        $line=preg_replace($this->smiley_rule,$this->smiley_repl,$line);
+      if (!empty($this->smiley_rule)) {
+        $chunk = preg_split("@(<tt[^>]*>.*</tt>)@", $line, -1, PREG_SPLIT_DELIM_CAPTURE);
+        if (count($chunk) > 1) {
+          $nline = '';
+          $k = 1;
+          foreach ($chunk as $c) {
+            if ($k % 2) {
+              if (isset($c[0]))
+                $nline.= preg_replace($this->smiley_rule, $this->smiley_repl, $c);
+            } else {
+              $nline.= $c;
+            }
+            $k++;
+          }
+          $line = $nline;
+        } else {
+          $line = preg_replace($this->smiley_rule, $this->smiley_repl, $line);
+        }
+      }
       # NoSmoke's MultiLineCell hack
       #$line=preg_replace(array("/{{\|/","/\|}}/"),
       #      array("</div><table class='closure'><tr class='closure'><td class='closure'><div>","</div></td></tr></table><div>"),$line);
