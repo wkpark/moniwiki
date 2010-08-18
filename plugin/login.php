@@ -53,11 +53,13 @@ LOGIN;
 
   $button=_("Logout");
   $option=_("UserPreferences");
+  $msg = sprintf(_("%s or %s"), "<a href='$url'>$option</a>",
+    "<span class='button'><input type='submit' class='button' name='logout' value='$button' /></span>");
   return <<<LOGOUT
 <div id='wikiLogin'>
 <form method='post' action='$urlpage'>
 <input type="hidden" name="action" value="userform" />
-<a href='$url'>$option</a> or <input type='submit' name="logout" value="$button"/>
+$msg
 </form>
 </div>
 LOGOUT;
