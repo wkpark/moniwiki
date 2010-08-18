@@ -2041,6 +2041,8 @@ class Formatter {
     # solw slow slow
     #(?P<word>(?:/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})
     $this->wordrule=
+    # nowiki
+    "({{{(?:(?:[^{}]+|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!}))|(?1))+}}})|".
     # single bracketed rule [http://blah.blah.com Blah Blah]
     "(?:\[\^?($url):[^\s\]]+(?:\s[^\]]+)?\])|".
     # InterWiki
@@ -3687,8 +3689,7 @@ class Formatter {
     $_myindlen=array(0);
     $oline='';
 
-    $wordrule="({{{(?:(?:[^{}]+|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!}))|(?1))+}}})|".
-              "\[\[(?:[A-Za-z0-9]+(?:\((?:(?<!\]\]).)*\))?)\]\]|". # macro
+    $wordrule="\[\[(?:[A-Za-z0-9]+(?:\((?:(?<!\]\]).)*\))?)\]\]|". # macro
               "<<(?:[A-Za-z0-9]+(?:\((?:(?<!\>\>).)*\))?)>>|"; # macro
     if ($DBInfo->inline_latex) # single line latex syntax
       $wordrule.="(?<=\s|^|>)\\$(?!(?:Id|Revision))(?:[^\\$]+)\\$(?=\s|\.|\,|$)|".
@@ -3838,16 +3839,27 @@ class Formatter {
                           )+}}})/x",$line,-1,PREG_SPLIT_DELIM_CAPTURE);
       $nc='';
       $k=1;
+      $idx=1;
+      $inline = array(); // save inline nowikis
       foreach ($chunk as $c) {
         if ($k%2) {
-          $nc.=preg_replace($this->baserule,$this->baserepl,$c);
+          $nc.= $c;
         } else if (in_array($c[3],array('#','-','+'))) { # {{{#color text}}}
-          $nc.=preg_replace($this->baserule,$this->baserepl,$c);
-        } else $nc.=$c;
+          $nc.= $c;
+        } else {
+          $inline[$idx] = $c;
+          $nc.= "\017".$idx."\017";
+          $idx++;
+        }
         $k++;
       }
-      $line=$nc;
-      #$line=preg_replace($this->baserule,$this->baserepl,$line);
+      $line = $nc;
+      $line = preg_replace($this->baserule,$this->baserepl,$line);
+
+      // restore inline nowikis
+      if (!empty($inline))
+        $line = preg_replace("/\017(\d+)\017/e", "\$inline[\\1]", $line);
+      
       #if ($in_p and ($in_pre==1 or $in_li)) $line=$this->_check_p().$line;
 
       # bullet and indentation
