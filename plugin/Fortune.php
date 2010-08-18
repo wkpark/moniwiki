@@ -16,6 +16,8 @@ function macro_FortuneSystem($formatter,$value) {
 define('DEFAULT_FORTUNE','art');
 
 function macro_Fortune($formatter,$value,$options) {
+    global $DBInfo;
+
     $cat=$value;
     $dir='/usr/share/games/fortune';
     if (!empty($DBInfo->fortune_dir)) $dir = $DBInfo->fortune_dir;
