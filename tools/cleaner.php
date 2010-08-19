@@ -32,11 +32,11 @@ $checktime = time() - $check_date * 60 * 60;
 foreach ($cache_arenas as $arena) {
     echo '** cleanup '.$arena."\n";
     $dir = $DBInfo->cache_dir.'/'.$arena;
-    $count = clean_dir($dir, $cachetime);
+    $count = clean_dir($dir, $checktime);
     echo '** ' . $arena. ': Total ' . $count . " files are deleted! \n";
 }
 
-function clean_dir($dir, $cachetime = 0) {
+function clean_dir($dir, $checktime = 0) {
     $handle = opendir($dir);
     if (!is_resource($handle)) return 0;
 
@@ -45,7 +45,7 @@ function clean_dir($dir, $cachetime = 0) {
     while(($file = readdir($handle)) !== false) {
         if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($dir . '/' . $file)) continue;
         if (is_dir($dir . '/' . $file)) {
-            $count+= clean_dir($dir . '/' . $file, $cachetime);
+            $count+= clean_dir($dir . '/' . $file, $checktime);
             continue;
         }
         $mtime = filemtime($dir . '/' . $file);
