@@ -2042,7 +2042,7 @@ class Formatter {
     #(?P<word>(?:/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})
     $this->wordrule=
     # nowiki
-    "({{{(?:(?:[^{}]+|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!}))|(?1))+}}})|".
+    "({{{(?:(?:[^{}]+|{[^{}]+}(?!})|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!}))|(?1))+}}})|".
     # single bracketed rule [http://blah.blah.com Blah Blah]
     "(?:\[\^?($url):[^\s\]]+(?:\s[^\]]+)?\])|".
     # InterWiki
@@ -3834,6 +3834,7 @@ class Formatter {
       // split into chunks
       $chunk=preg_split("/({{{
                         (?:(?:[^{}]+|
+                        {[^{}]+}(?!})|
                         (?<!{){{1,2}(?!{)|
                         (?<!})}{1,2}(?!}))|(?1)
                           )+}}})/x",$line,-1,PREG_SPLIT_DELIM_CAPTURE);
