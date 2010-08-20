@@ -136,7 +136,8 @@ EOF;
           $page_name,"tabindex='$idx'");
     if ($count) {
       $out.= ' . . . . ' . sprintf((($count == 1) ? _("%d match") : _("%d matches")), $count );
-      $out.= $contexts[$page_name];
+      if (!empty($contexts[$page_name]))
+        $out.= $contexts[$page_name];
     }
     $out.= "</li>\n";
     $out.= '<!-- RESULT ITEM END -->'; // for search plugin
