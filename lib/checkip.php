@@ -1,57 +1,70 @@
 <?php
-// Copyright 2003-2004 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 //
 // See also http://kr.php.net/ip2long/
 // $Id$
 // 
 
-function is_valid_network($network)
+function normalize_network($network)
 {
-    $nums = explode('.', $network);
-    if (sizeof($nums) != 4)
-        return false;
-    if (!preg_match('/^(\d{1,3}\.){3}\d{1,3}$/', $network))
-        return false;
-    foreach ($nums as $num)
-        if ($num > 255)
+    if (($p = strpos($network, '/')) !== false) {
+        $tmp = explode('/', $network);
+        if (count($tmp) > 2)
             return false;
-    return true;
+	$network = $tmp[0];
+	$netmask = $tmp[1];
+    }
+    $network = rtrim($network, '.'); // trim last dot. eg. 1.2.3. => 1.2.3
+
+    $dot = substr_count($network, '.');
+    if ($dot < 3) // 123.123 -> 123.123.0.0
+        $network.= str_repeat('.0', 3 - $dot);
+
+    // validate network
+    if (ip2long($network) === false) return false;
+
+    if (empty($netmask)) {
+        $netmask = 8 * ($dot + 1);
+    } else if (is_int($netmask)) {
+        // validate netmask
+        if ($netmask < 0 or $netmask > 32) return false;
+    } else {
+        if (ip2long($netmask) === false) return false;
+    }
+    #print $network . '/'. $netmask . "\n";
+
+    return array($network, $netmask);
 }
 
-function check_ip($rules,$ip) {
-    if (!$rules or !$ip) return false; // do not ckeck
+function check_ip($rules, $ip) {
+    if (empty($rules) or empty($ip)) return false; // do not ckeck
     $ip = ip2long($ip);
 
-    $rules = explode(':',$rules);
+    if (!$ip) return false;
+
+    if (is_string($rules)) // : separated rules like as '192.168.0.2:192.167.:...'
+    	$rules = explode(':', $rules);
+
+    if (!is_array($rules)) return false;
+
     foreach ($rules as $rule)
     {
-        $netmask = '';
-        if (($pos = strpos($rule, '/')) !== false)
-            list($network,$netmask)=explode('/',$rule);
-        else
-            $network = trim($rule);
+	$ret = normalize_network($rule);
+        if (!$ret) continue; // ignore
 
-        if (!is_valid_network($network)) continue; // ignore error
-
+        $network = $ret[0];
+        $netmask = $ret[1];
+        if (is_int($netmask)) {
+            $netmask = 0xffffffff << (32 - $netmask);
+        } else {
+            $netmask = ip2long($netmask);
+        }
         $network = ip2long($network);
 
-        if ($netmask) {
-            // echo "$ip ;$netmask; $network\n";
-
-            if(is_valid_network($netmask))
-                $netmask = ip2long($netmask);
-            else if ($netmask >= 0 && $netmask <= 32)
-                $netmask = 0xffffffff << (32 - $netmask);
-            else
-                continue; // ignore error
-
-            // echo "$ip ;$netmask; $network\n";
-            // print long2ip($netmask);
-            // echo sprintf("%u", ip2long($ip));
-            if(($ip & $netmask) == ($network & $netmask))
-                return true;
-        } else if ($ip == $network) {
+        if(($ip & $netmask) == ($network & $netmask)) {
+            return true;
+        } else if (empty($netmask) and $ip == $network) {
             return true;
         }
     }
@@ -69,4 +82,6 @@ if ( check_ip("203.252.48.0/24:203.252.57.2/24","203.252.57.2") )
 else
     print "Oh no !\n";
 */
+
+// vim:et:sts=4:sw=4:
 ?>
