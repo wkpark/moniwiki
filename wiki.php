@@ -5626,8 +5626,15 @@ function wiki_main($options) {
   $formatter->macro_repl('InterWiki','',array('init'=>1));
   $formatter->tz_offset=$options['tz_offset'];
 
-  // simple black list check
-  if (!empty($DBInfo->blacklist)) {
+  // simple black/white list of network check
+  $no_checkip = false;
+  if (!empty($DBInfo->whitelist)) {
+    include_once 'lib/checkip.php';
+    if (check_ip($DBInfo->whitelist, $_SERVER['REMOTE_ADDR'])) {
+      $no_checkip = true;
+    }
+  }
+  if (!$no_checkip and !empty($DBInfo->blacklist)) {
     include_once 'lib/checkip.php';
     if (check_ip($DBInfo->blacklist, $_SERVER['REMOTE_ADDR'])) {
       $options['title']=_("You are in the black list");

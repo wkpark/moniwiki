@@ -163,6 +163,7 @@ $myprocessors=array('syntax'=>'vim','sh'=>'vim','csh'=>'vim',
 
 #$url_schemas='mms';
 #$blacklist='127.0.0.0/24:192.168.1.0/24:192.168.1.67'; # block ip
+#$whitelist='127.0.0.0/24:192.168.0'; # always allowed network
 #$kiwirian=array('Kiwirian','Hello'); # block users
 #$kiwirian='Kiwirian:Hello';
 #$delete_history=1;
