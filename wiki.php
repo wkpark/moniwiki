@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.1.5-RC3';
+$_release = '1.1.5-RC4';
 
 #ob_start("ob_gzhandler");
 
@@ -1812,6 +1812,7 @@ class WikiPage {
     if (!empty($DBInfo->version_class)) {
       $class=getModule('Version',$DBInfo->version_class);
       $version=new $class ($DBInfo);
+      $opt = '';
       $out= $version->rlog($this->name,$rev,$opt);
     } else {
       return $info;

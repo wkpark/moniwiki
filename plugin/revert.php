@@ -30,12 +30,22 @@ function do_revert($formatter,$options) {
 
     $formatter->send_header('',$options);
     $force=1;
-    if ($DBInfo->hasPage($_POST['name'])) {
+    if (!empty($_POST['name']) and $DBInfo->hasPage($_POST['name'])) {
         $force=0;
         if ($_POST['force']) $force=1;
     }
-    if ($_POST['rev'] and $_POST['name'] and $force) {
-        if ($DBInfo->version_class) {
+
+    // validate rev
+    if (!empty($options['rev'])) {
+        $info = $formatter->page->get_info($options['rev']);
+        if (empty($info[0])) {
+            unset($options['rev']);
+            if (!empty($_POST['rev']))
+                unset($_POST['rev']);
+        }
+    }
+    if (!empty($_POST['rev']) and !empty($_POST['name']) and $force) {
+        if (!empty($DBInfo->version_class)) {
             $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
 
             $user=&$DBInfo->user;
@@ -62,33 +72,40 @@ function do_revert($formatter,$options) {
         $formatter->send_footer('',$options);
         return;
     } else {
-        if ($DBInfo->hasPage($formatter->page->name)) {
-            $formatter->send_title(_("Are you really want to overwrite this page ?"),"",$options);
-            $extra='<input type="checkbox" name="force" />'._("Force overwrite").'<br />';
-        } else {
-            $formatter->send_title(_("Are you really want to revert this page ?"),"",$options);
+        if (empty($options['rev']))
+            $title = _("Please select old revision to revert.");
+        else {
+            if ($DBInfo->hasPage($formatter->page->name)) {
+                $title = _("Are you really want to overwrite this page ?");
+                $extra='<input type="checkbox" name="force" />'._("Force overwrite").'<br />';
+            } else {
+                $title = _("Are you really want to revert this page ?");
+            }
         }
+        $formatter->send_title($title,"",$options);
     }
 
     $pagename=$formatter->page->name;
     $lab=_("Summary");
-    $rev=$options['rev'];
-    $comment=sprintf(_("Rollback to revision %s"),$rev);
-    print "<form method='post'>
+    $rev=!empty($options['rev']) ? $options['rev'] : '';
+    if (!empty($rev)) {
+        $comment=sprintf(_("Rollback to revision %s"),$rev);
+        print "<form method='post'>
 $lab: <input name='comment' size='80' value='$comment' /><br />\n";
-    $btn=_("Revert page");
-    $msg=sprintf(_("Only WikiMaster can %s this page"),_("revert"));
-    if ($DBInfo->security->is_protected("revert",$options))
-        print _("Password").": <input type='password' name='passwd' size='20' value='' />
+        $btn=_("Revert page");
+        $msg=sprintf(_("Only WikiMaster can %s this page"),_("revert"));
+        if ($DBInfo->security->is_protected("revert",$options))
+            print _("Password").": <input type='password' name='passwd' size='20' value='' />
 $msg<br />\n";
-  print "
+        print "
     <input type='hidden' name='action' value='revert' />
     <input type='hidden' name='rev' value='$rev' />
     <input type='hidden' name='name' value='$pagename' />
     <input type='submit' value='$btn' />$extra
     </form>";
+    }
 
-    print macro_revert($formatter,$options['value']);
+    print macro_revert($formatter,$options['value'], $options);
     $formatter->send_footer('',$options);
     return;
 }

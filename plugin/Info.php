@@ -17,6 +17,9 @@ function _parse_rlog($formatter,$log,$options=array()) {
     $actions=$DBInfo->info_actions;
   else
     $actions=array('recall'=>'view','raw'=>'source','diff'=>'diff');
+  if (!$formatter->page->exists()) {
+    $actions['revert'] = 'revert';
+  }
 
   $diff_action = null;
   if (isset($actions['diff'])) {
@@ -68,7 +71,11 @@ function _parse_rlog($formatter,$log,$options=array()) {
       else {$state=1; continue;}
     }
     if ($state==1 and $ok==1) {
-      $lnk=$formatter->link_to("?action=info&all=1",_("Show all revisions"),' class="button small"');
+      if (!empty($options['action']))
+        $act = $options['action'];
+      else
+        $act = 'info';
+      $lnk=$formatter->link_to('?action='.$act.'&amp;all=1',_("Show all revisions"),' class="button small"');
       $out.='<tr><td colspan="2"></td><td colspan="'.(!empty($admin) ? 5:4).'">'.$lnk.'</td></tr>';
       break;
     }
