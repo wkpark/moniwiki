@@ -2,7 +2,9 @@
 # a ACL security plugin for the MoniWiki (experimental)
 # $Id$
 #
-# Please see also http://www.dokuwiki.org/wiki:discussion:acl2
+# Please see http://moniwiki.kldp.net/wiki/wiki.php/MoniWikiACL
+#
+#        see also http://www.dokuwiki.org/acl
 #
 # ACL file example:
 #
@@ -23,6 +25,8 @@
 # @Kiwirian     foobar,kiwi 100
 # *     @Kiwirian   deny    *
 # *     @Kiwirian   allow   read
+
+require_once('lib/checkip.php');
 
 class Security_ACL extends Security {
     var $DB;
@@ -49,6 +53,25 @@ class Security_ACL extends Security {
         $this->allowed_users=array_merge($wikimasters,$owners);
     }
 
+    function acl_ip_info(&$info) {
+        // get group info.
+        $matches = preg_grep('/^(@[^\s]+)\s+.*$/', $this->AUTH_ACL);
+        foreach ($matches as $line) {
+            $tmp = preg_split('/\s+/', rtrim($line), 2);
+            $group = $tmp[0]; // group name
+
+            $users = get_csv($tmp[1]);
+            foreach ($users as $u) {
+                if (preg_match('/^[0-9]{1,3}(\.(?:[0-9]{1,3})){0,3}
+                    (\/([0-9]{1,3}(?:\.[0-9]{1,3}){3}|[0-9]{2}))?$/x', $u))
+                {
+                    if (!isset($info[$u])) $info[$u] = array(); // init
+                    $info[$u][] = $group;
+                }
+            }
+        }
+    }
+
     function get_acl($action='read',&$options) {
         if (in_array($options['id'],$this->allowed_users)) return 1;
         $pg=$options['page'];
@@ -56,7 +79,45 @@ class Security_ACL extends Security {
 
         $groups=array();
         $groups[]='@ALL';
-        if ($user != 'Anonymous') $groups[]='@User';
+
+        $ip_info = array(); // ip address based info
+        if ($user != 'Anonymous') {
+            $groups[]='@User';
+        } else {
+            $this->acl_ip_info($ip_info);
+        }
+
+        // has acl ip address info ?
+        if (!empty($ip_info)) {
+            $myip = ip2long($_SERVER['REMOTE_ADDR']);
+            $mygrp = array();
+
+            $rules = array_keys($ip_info);
+   
+            foreach ($rules as $rule) {
+	        $ret = normalize_network($rule);
+                if (!$ret) continue; // ignore
+
+                $network = $ret[0];
+                $netmask = $ret[1];
+                #print $network . '/' . $netmask . "\n";
+                if (is_int($netmask)) {
+                    $netmask = 0xffffffff << (32 - $netmask);
+                } else {
+                    $netmask = ip2long($netmask);
+                }
+                $network = ip2long($network);
+
+                if(($myip & $netmask) == ($network & $netmask)) {
+                    $mygrp = array_merge($mygrp, $ip_info[$rule]);
+                } else if ($myip == $network) {
+                    $mygrp = array_merge($mygrp, $ip_info[$rule]);
+                }
+            }
+            // group found ?
+            if (!empty($mygrp))
+                $groups = array_merge($groups, $mygrp);
+        }
         $groups[]=$user;
         $allowed=array();
         $denied=array();
