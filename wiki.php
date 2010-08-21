@@ -809,7 +809,7 @@ EOS;
         break;
       }
 
-      $dh = opendir($dir);
+      $dh = @opendir($dir);
       if (is_resource($dh)) {
         while ( ($file = readdir($dh)) !== false) {
           if ($file[0] == '.' or is_dir($file)) continue;
