@@ -96,6 +96,7 @@ label { padding-right:3px; }
 
 #editor_info ul {list-style:none; margin:2px 0 2px 0; padding:0;}
 #editor_info li {padding:2px;}
+#editor_area { clear:both; }
 
 .resizable-textarea .grippie {
   height: 14px;

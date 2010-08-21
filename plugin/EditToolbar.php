@@ -73,7 +73,7 @@ EOS;
         $script.= $buttons[$btn];
 
     $script.=<<<EOS
-document.writeln("</span></div><span style='clear:both'></span>");
+document.writeln("</span></div>");
 /*]]>*/
 </script>
 EOS;
