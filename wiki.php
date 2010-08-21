@@ -943,7 +943,7 @@ EOS;
     set_time_limit(isset($this->time_limit) ? intval($this->time_limit) : 30);
     if (empty($options)) {
       while (($file = readdir($handle)) !== false) {
-        if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($file)) continue;
+        if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($this->text_dir.'/'.$file)) continue;
         $pages[] = $this->keyToPagename($file);
       }
       closedir($handle);
@@ -952,7 +952,7 @@ EOS;
       return $pages;
     } else if (!empty($options['limit'])) { # XXX
        while (($file = readdir($handle)) !== false) {
-          if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($file)) continue;
+          if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($this->text_dir.'/'.$file)) continue;
           if (filemtime($this->text_dir."/".$file) > $options['limit'])
              $pages[] = $this->keyToPagename($file);
        }
@@ -960,14 +960,14 @@ EOS;
     } else if (!empty($options['count'])) {
        $count=$options['count'];
        while (($file = readdir($handle)) !== false && $count > 0) {
-          if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($file)) continue;
+          if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($this->text_dir.'/'.$file)) continue;
           $pages[] = $this->keyToPagename($file);
           $count--;
        }
        closedir($handle);
     } else if ($options['date']) {
        while (($file = readdir($handle)) !== false) {
-          if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($file)) continue;
+          if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($this->text_dir.'/'.$file)) continue;
           $mtime=filemtime($this->text_dir."/".$file);
           $pagename= $this->keyToPagename($file);
           $pages[$pagename]= $mtime;
@@ -1007,7 +1007,7 @@ EOS;
     set_time_limit(isset($this->time_limit) ? intval($this->time_limit) : 30);
     $count = 0;
     while (($file = readdir($handle)) !== false) {
-      if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($file)) continue;
+      if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($this->text_dir.'/'.$file)) continue;
       $count++;
     }
     closedir($handle);
