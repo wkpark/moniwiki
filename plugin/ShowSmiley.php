@@ -19,7 +19,7 @@ function macro_ShowSmiley($formatter,$value) {
 
   foreach ($formatter->smileys as $key=>$value) {
     $skey=str_replace("\\","\\\\",$key);
-    $out.= '<td>'.$key.'</td><td>'.$formatter->smiley_repl($key)."</td>";
+    $out.= '<td><tt class="unformatted">'.$key.'</tt></td><td>'.$formatter->smiley_repl($key)."</td>";
     $idx++;
     if (!($idx % $col)) $out.='</tr><tr class="wiki">';
     else $out.='<td></td>';
