@@ -3552,7 +3552,8 @@ class Formatter {
         }
 	$this->postambles();
 
-        echo $this->get_javascripts();
+        if (empty($options['nojavascript']))
+          echo $this->get_javascripts();
         echo $text;
 
         return;
@@ -4262,7 +4263,8 @@ class Formatter {
     # postamble
     $this->postambles();
 
-    echo $this->get_javascripts();
+    if (empty($options['nojavascript']))
+      echo $this->get_javascripts();
     echo $text;
     if (!empty($this->sisters) and empty($options['nosisters'])) {
       $sister_save=$this->sister_on;

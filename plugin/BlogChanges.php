@@ -26,7 +26,7 @@ class Blog_cache {
     list($year,$month)=explode('-',$date);
     $mon=intval($month);
     $y=$year;
-    $daterule.='(?='.$y.$month;
+    $daterule = '(?='.$y.$month;
     for ($i=1;$i<3;$i++) {
       if (--$mon <= 0) {
         $mon=12;
@@ -123,7 +123,7 @@ class Blog_cache {
     global $DBInfo;
 
     if (!$blogs) return array();
-    $date=$options['date'];
+    $date = !empty($options['date']) ? $options['date'] : '';
 
     if ($date) {
       // make a date pattern to grep blog entries
@@ -161,9 +161,14 @@ class Blog_cache {
         }
         if (preg_match("/^$endtag$/",$line)) {
           $state=0;
-          list($content,$comments)=explode("----\n",$summary,2);
+          $comments = '';
+          if (preg_match("/----\n/", $summary))
+            list($content,$comments)=explode("----\n",$summary,2);
+          else
+            $content = $summary;
           $entry[]=$content;
-          if ($comments and !$options['noaction'])
+          $commentcount = 0;
+          if ($comments and empty($options['noaction']))
             $commentcount=sizeof(explode("----\n",$comments));
           $entry[]=$commentcount;
           $entries[]=$entry;
@@ -221,10 +226,10 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
   $tz_off=&$formatter->tz_offset;
 
   if (empty($options)) $options=array();
-  if ($_GET['date'])
+  if (!empty($_GET['date']))
     $options['date']=$date=$_GET['date'];
   else
-    $date=$options['date'];
+    $date = !empty($options['date']) ? $options['date'] : '';
 
   // parse args
   preg_match("/^(('|\")([^\\2]+)\\2)?,?(\s*,?\s*.*)?$/",
@@ -319,7 +324,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
     }
   }
 
-  if (!$options['date'] or !preg_match('/^\d{4}-?\d{2}$/',$options['date']))
+  if (empty($options['date']) or !preg_match('/^\d{4}-?\d{2}$/',$options['date']))
     $date=date('Ym');
 
   $year=substr($date,0,4);
@@ -371,6 +376,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
 
   $sendopt['nosisters']=1;
 
+  $save_page = $formatter->page;
   foreach ($logs as $log) {
     list($page, $user,$date,$title,$summary,$commentcount)= $log;
     $tag=md5($user.' '.$date.' '.$title);
@@ -405,19 +411,20 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
         $date_anchor= $anchor;
       }
       $p=new WikiPage($page);
-      $f=new Formatter($p);
+      $formatter->page = $p;
       $summary=str_replace('\}}}','}}}',$summary); # XXX
       ob_start();
-      $f->send_page($summary,$sendopt);
+      $formatter->send_page($summary,$sendopt);
       $summary=ob_get_contents();
       ob_end_clean();
 
       if (empty($options['noaction'])) {
         if ($commentcount) {
-          $add_button=($commentcount == 1) ? _("%d comment"):_("%d comments");
+          $add_button=($commentcount == 1) ? _("%s comment"):_("%s comments");
         } else
           $add_button=_("Add comment");
-        $add_button=sprintf($add_button,$commentcount);
+        $count_tag = '<span class="count">'.$commentcount.'</span>';
+        $add_button=sprintf($add_button, $count_tag);
         $btn= $formatter->link_tag(_urlencode($page),"?action=blog&amp;value=$tag#BlogComment",$add_button);
 
         if ($DBInfo->use_trackback) {
@@ -428,7 +435,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
 
           $btn.= ' | '.$formatter->link_tag(_urlencode($page),"?action=trackback&amp;value=$tag",_("track back").$counter);
         }
-        $btn="<div class='blog-action'>&raquo; ".$btn."</div>\n";
+        $btn="<div class='blog-action'><span class='bullet'>&raquo;</span> ".$btn."</div>\n";
 
       } else
         $btn='';
@@ -438,6 +445,8 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
     $items.=$datetag.$out;
     if (--$limit <= 0) break;
   }
+
+  $formatter->page = $save_page;
   $url=qualifiedUrl($formatter->link_url($DBInfo->frontpage));
 
   # make pnut

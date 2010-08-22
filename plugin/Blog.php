@@ -269,20 +269,28 @@ function do_Blog($formatter,$options) {
     $savetext=$savetext ? $savetext:'Enter blog entry';
     if (!empty($DBInfo->use_wikiwyg)) {
       $wysiwyg_msg=_("GUI");
-      $wysiwyg_btn='&nbsp;<input type="button" tabindex="7" value="'.$wysiwyg_msg.
-        '" onclick="javascript:sectionEdit(null,null,null)" />';
+      $wysiwyg_btn='&nbsp;<span class="button"><input class="button" type="button" tabindex="7" value="'.$wysiwyg_msg.
+        '" onclick="javascript:sectionEdit(null,null,null)" /></span>';
     }
+    if ($DBInfo->use_resizer > 1)
+      echo <<<JS
+<script type="text/javascript" src="$DBInfo->url_prefix/local/textarea.js"></script>
+JS;
     print <<<FORM
-<textarea class="wiki" id="content" wrap="virtual" name="savetext"
- rows="$rows" cols="$cols" class="wiki">$savetext</textarea><br />
+<div class="resizable-textarea" style='position:relative'><!-- IE hack -->
+<textarea class="wiki resizable" id="content" wrap="virtual" name="savetext"
+ rows="$rows" cols="$cols" class="wiki">$savetext</textarea></div>
 FORM;
     if (!empty($options['value']))
       print "<input name='nosig' type='checkbox' />"._("Don't add a signature")."<br />";
+
+    $save_msg = _("Save");
+    $preview_msg = _("Preview");
     print <<<FORM2
 <input type="hidden" name="action" value="Blog" />
 <input type="hidden" name="datestamp" value="$datestamp" />
-<input type="submit" value="Save" />&nbsp;
-<input type="submit" name="button_preview" value="Preview" />
+<span class="button"><input type="submit" class="button" value="$save_msg" /></span>&nbsp;
+<span class="button"><input type="submit" class="button" name="button_preview" value="$preview_msg" /></span>
 $wysiwyg_btn$extra
 </form>
 </div>

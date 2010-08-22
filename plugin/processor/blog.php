@@ -51,7 +51,7 @@ function processor_blog($formatter,$value="",$options) {
     if ($date && $date[10] == 'T') {
       $date[10]=' ';
       $time=strtotime($date." GMT");
-      $date= "@ ".gmdate("m-d [h:i a]",$time+$formatter->tz_offset);
+      $date= gmdate("m-d [h:i a]",$time+$formatter->tz_offset);
       $pagename=$formatter->page->name;
       $p=strrpos($pagename,'/');
       if ($p and preg_match('/(\d{4})(-\d{1,2})?(-\d{1,2})?/',substr($pagename,$p),$match)) {
@@ -73,6 +73,7 @@ function processor_blog($formatter,$value="",$options) {
 
   if (!empty($src)) {
     $options['nosisters']=1;
+    $options['nojavascript']=1;
     $tmp = explode("----\n",$src,2);
     $src = $tmp[0];
     if (!empty($tmp[1])) $comments = $tmp[1];
@@ -85,8 +86,9 @@ function processor_blog($formatter,$value="",$options) {
         $comments=preg_replace("/----\n/","[[HTML(</div></div><div class='separator'><hr /></div><div class='blog-comment'><div>)]]",$comments);
       } else {
         $comments='';
-        $add_button=($count == 1) ? _("%d comment"):_("%d comments");
-        $add_button=sprintf($add_button,$count);
+        $add_button=($count == 1) ? _("%s comment"):_("%s comments");
+        $count_tag = '<span class="count">'.$count.'</span>';
+        $add_button=sprintf($add_button,$count_tag);
       }
     }
 
@@ -132,7 +134,8 @@ function processor_blog($formatter,$value="",$options) {
                         "\$formatter->link_repl('\\1')",$title);
     $out.="<div class='blog-title'><a name='$tag'></a>$title $perma</div>\n";
   }
-  $out.="<div class='blog-user'>Submitted by $user $date</div>\n".
+  $info = sprintf(_("Submitted by %s @ %s"), $user, $date);
+  $out.="<div class='blog-user'>$info</div>\n".
     "<div class='blog-content'>$msg</div>$comments$action\n".
     "</div>\n";
   return $out;

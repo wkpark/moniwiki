@@ -69,21 +69,31 @@ function do_sendping($formatter,$options) {
 
     $formatter->send_header("",$options);
     $formatter->send_title(_("Send TrackBack ping"),"",$options);
+    $msg1 = _("TrackBack Ping URL");
     print "<form method='post' action='$url'>\n";
-    print "<b>TrackBack Ping URL</b>: <input name='trackback_url' size='60' maxlength='256' style='width:200' /><br />\n";
+    print "<b>$msg1</b>: <input name='trackback_url' size='60' maxlength='256' style='width:200' /><br />\n";
     if ($options['value'])
       print "<input type='hidden' name='value' value='$options[value]' />\n";
-    print "<b>Title</b>: <input name='title' value='$title' size='70' maxlength='70' style='width:200' /><br />\n";
+    $msg2 = _("Title");
+    print "<b>$msg2</b>: <input name='title' value='$title' size='70' maxlength='70' style='width:200' /><br />\n";
+    if ($DBInfo->use_resizer > 1)
+      echo <<<JS
+<script type="text/javascript" src="$DBInfo->url_prefix/local/textarea.js"></script>
+JS;
     print <<<FORM
-<textarea class="wiki" id="content" wrap="virtual" name="excerpt"
- rows="$rows" cols="$cols" class="wiki">$excerpt</textarea><br />
+<div class="resizable-textarea" style='position:relative'><!-- IE hack -->
+<textarea class="wiki resizable" id="content" wrap="virtual" name="excerpt"
+ rows="$rows" cols="$cols" class="wiki">$excerpt</textarea></div>
 FORM;
 
+    $mb_msg = _("mb encoded");
+    $send_msg = _("Send ping");
+    $reset = _("Reset");
     print <<<FORM2
-<b>mb encoded:</b> <input type="checkbox" name="mbencode" $checked />&nbsp;
+<b>$mb_msg</b> <input type="checkbox" name="mbencode" $checked />&nbsp;
 <input type="hidden" name="action" value="sendping" />
-<input type="submit" value="Send ping" />&nbsp;
-<input type="reset" value="Reset" />&nbsp;
+<span class="button"><input class="button" type="submit" value="$send_msg" /></span>&nbsp;
+<span class="button"><input class="button" type="reset" value="$reset" /></span>&nbsp;
 </form>
 FORM2;
     $formatter->send_footer("",$options);
