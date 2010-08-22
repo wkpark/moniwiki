@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoniWiki 1.1.3\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-08-21 14:04+0900\n"
+"POT-Creation-Date: 2010-08-22 00:50+0900\n"
 "PO-Revision-Date: 2010-08-21 12:20+0900\n"
 "Last-Translator: Won-Kyu Park <wkpark@kldp.org>\n"
 "Language-Team: Won-Kyu Park <wkpark@kldp.org>\n"
@@ -91,12 +91,12 @@ msgstr "\"%s\"에 댓글 더하기"
 msgid "Add Blog entry to \"%s\""
 msgstr "\"%s\"에 블로그 항목 더하기"
 
-#: ../plugin/Blog.php:263 ../plugin/Blog.php:335 ../plugin/PluginInfo.php:52
+#: ../plugin/Blog.php:263 ../plugin/Blog.php:343 ../plugin/PluginInfo.php:52
 msgid "Name"
 msgstr "이름"
 
-#: ../plugin/Blog.php:265 ../plugin/Blog.php:336
-#: ../plugin/RecentChanges.php:125
+#: ../plugin/Blog.php:265 ../plugin/Blog.php:344
+#: ../plugin/RecentChanges.php:125 ../plugin/sendping.php:77
 msgid "Title"
 msgstr "제목"
 
@@ -104,11 +104,23 @@ msgstr "제목"
 msgid "GUI"
 msgstr ""
 
-#: ../plugin/Blog.php:280 ../plugin/Comment.php:114
+#: ../plugin/Blog.php:285 ../plugin/Comment.php:114
 msgid "Don't add a signature"
 msgstr "서명하지 않기"
 
-#: ../plugin/Blog.php:302
+#: ../plugin/Blog.php:287 ../wikilib.php:1005 ../wikilib.php:1289
+#: ../wikilib.php:1943 ../wikilib.php:2040 ../wikilib.php:2560
+#: ../wikilib.php:2618
+msgid "Save"
+msgstr "저장"
+
+#: ../plugin/Blog.php:288 ../plugin/Comment.php:94 ../wikilib.php:1011
+#: ../wikilib.php:1274 ../wikilib.php:1949 ../wikilib.php:2046
+#: ../monisetup.php:1307
+msgid "Preview"
+msgstr "미리보기"
+
+#: ../plugin/Blog.php:310
 msgid "<b>horizontal rule</b> ---- is not applied on the blog mode."
 msgstr "<b>가로선</b> ----는 블로그일 경우 적용되지 않습니다."
 
@@ -130,12 +142,12 @@ msgstr "잘못된 분류 표현식\"%s\""
 msgid "Anonymous"
 msgstr "아무개"
 
-#: ../plugin/BlogChanges.php:417 ../plugin/processor/blog.php:88
+#: ../plugin/BlogChanges.php:417
 #, c-format
 msgid "%d comment"
 msgstr "댓글 %d개"
 
-#: ../plugin/BlogChanges.php:417 ../plugin/processor/blog.php:88
+#: ../plugin/BlogChanges.php:417
 #, c-format
 msgid "%d comments"
 msgstr "댓글 %d개"
@@ -145,7 +157,7 @@ msgstr "댓글 %d개"
 msgid "Add comment"
 msgstr "댓글 달기"
 
-#: ../plugin/BlogChanges.php:429 ../plugin/processor/blog.php:99
+#: ../plugin/BlogChanges.php:429 ../plugin/processor/blog.php:100
 msgid "track back"
 msgstr "트랙백"
 
@@ -180,11 +192,6 @@ msgstr "클립보드의 이미지를 잘르고 붙이기"
 #: ../plugin/Comment.php:93
 msgid "Comment"
 msgstr "댓글 달기"
-
-#: ../plugin/Comment.php:94 ../wikilib.php:1011 ../wikilib.php:1274
-#: ../wikilib.php:1949 ../wikilib.php:2046 ../monisetup.php:1307
-msgid "Preview"
-msgstr "미리보기"
 
 #: ../plugin/Comment.php:111
 msgid "Username"
@@ -1046,7 +1053,7 @@ msgstr "파일추가"
 msgid "add a file"
 msgstr "파일추가"
 
-#: ../plugin/UploadForm.php:271
+#: ../plugin/UploadForm.php:271 ../plugin/sendping.php:91
 msgid "Reset"
 msgstr ""
 
@@ -1386,9 +1393,24 @@ msgstr ""
 msgid "last modified %s %s"
 msgstr ""
 
-#: ../plugin/processor/blog.php:101
+#: ../plugin/processor/blog.php:88
+#, c-format
+msgid "%s comment"
+msgstr "댓글 %s개"
+
+#: ../plugin/processor/blog.php:88
+#, c-format
+msgid "%s comments"
+msgstr "댓글 %s개"
+
+#: ../plugin/processor/blog.php:102
 msgid "raw"
 msgstr ""
+
+#: ../plugin/processor/blog.php:136
+#, c-format
+msgid "Submitted by %s @ %s"
+msgstr "작성자 %s, 등록일 %s"
 
 #: ../plugin/processor/bts.php:181
 msgid "Save Changes"
@@ -1707,7 +1729,19 @@ msgstr "오류: 엔트리를 찾을 수 없습니다!"
 msgid "Send TrackBack ping"
 msgstr "트랙백 핑 보내기"
 
-#: ../plugin/sendping.php:165
+#: ../plugin/sendping.php:72
+msgid "TrackBack Ping URL"
+msgstr "트랙백 핑 URL"
+
+#: ../plugin/sendping.php:89
+msgid "mb encoded"
+msgstr ""
+
+#: ../plugin/sendping.php:90
+msgid "Send ping"
+msgstr "핑 보내기"
+
+#: ../plugin/sendping.php:175
 msgid "Trackback sent"
 msgstr "트랙백"
 
@@ -1787,11 +1821,11 @@ msgstr ""
 
 #: ../plugin/trackback.php:53
 msgid "TrackBack is not activated !"
-msgstr "TrackBack이 활성화되지 않았습니다 !"
+msgstr "TrackBack이 비활성화 상태입니다 !"
 
 #: ../plugin/trackback.php:54
 msgid "send ping"
-msgstr ""
+msgstr "핑 보내기"
 
 #: ../plugin/trackback.php:57
 #, c-format
@@ -2204,11 +2238,6 @@ msgstr "이 페이지를 고칠 수 있도록 허락되어있지 않습니다 !"
 #, c-format
 msgid "Edit %s"
 msgstr "%s 고치기"
-
-#: ../wikilib.php:1005 ../wikilib.php:1289 ../wikilib.php:1943
-#: ../wikilib.php:2040 ../wikilib.php:2560 ../wikilib.php:2618
-msgid "Save"
-msgstr "저장"
 
 #: ../wikilib.php:1013 ../wikilib.php:1276 ../wikilib.php:1951
 #: ../wikilib.php:2048

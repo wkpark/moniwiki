@@ -4,7 +4,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoniWiki 1.1\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2010-08-21 14:04+0900\n"
+"POT-Creation-Date: 2010-08-22 00:50+0900\n"
 "PO-Revision-Date: 2003-08-17 22:51+0900\n"
 "Last-Translator: Serge Stinckwich <Serge.Stinckwich@info.unicaen.fr>\n"
 "Language-Team: fr <fr@li.org>\n"
@@ -90,12 +90,12 @@ msgstr "Ajouter un commentaire ? \"%s\""
 msgid "Add Blog entry to \"%s\""
 msgstr "Ajouter une entr?e de blog ? \"%s\""
 
-#: ../plugin/Blog.php:263 ../plugin/Blog.php:335 ../plugin/PluginInfo.php:52
+#: ../plugin/Blog.php:263 ../plugin/Blog.php:343 ../plugin/PluginInfo.php:52
 msgid "Name"
 msgstr ""
 
-#: ../plugin/Blog.php:265 ../plugin/Blog.php:336
-#: ../plugin/RecentChanges.php:125
+#: ../plugin/Blog.php:265 ../plugin/Blog.php:344
+#: ../plugin/RecentChanges.php:125 ../plugin/sendping.php:77
 msgid "Title"
 msgstr "titre"
 
@@ -103,11 +103,23 @@ msgstr "titre"
 msgid "GUI"
 msgstr ""
 
-#: ../plugin/Blog.php:280 ../plugin/Comment.php:114
+#: ../plugin/Blog.php:285 ../plugin/Comment.php:114
 msgid "Don't add a signature"
 msgstr "Ne pas ajouter de signature"
 
-#: ../plugin/Blog.php:302
+#: ../plugin/Blog.php:287 ../wikilib.php:1005 ../wikilib.php:1289
+#: ../wikilib.php:1943 ../wikilib.php:2040 ../wikilib.php:2560
+#: ../wikilib.php:2618
+msgid "Save"
+msgstr "Sauvegarder"
+
+#: ../plugin/Blog.php:288 ../plugin/Comment.php:94 ../wikilib.php:1011
+#: ../wikilib.php:1274 ../wikilib.php:1949 ../wikilib.php:2046
+#: ../monisetup.php:1307
+msgid "Preview"
+msgstr "Pr?visualisation"
+
+#: ../plugin/Blog.php:310
 msgid "<b>horizontal rule</b> ---- is not applied on the blog mode."
 msgstr "<b>Une r?gle horizontale</b> ---- ne s'applique pas au mode blog."
 
@@ -129,12 +141,12 @@ msgstr ""
 msgid "Anonymous"
 msgstr "Anonyme"
 
-#: ../plugin/BlogChanges.php:417 ../plugin/processor/blog.php:88
+#: ../plugin/BlogChanges.php:417
 #, c-format
 msgid "%d comment"
 msgstr "%d commentaire"
 
-#: ../plugin/BlogChanges.php:417 ../plugin/processor/blog.php:88
+#: ../plugin/BlogChanges.php:417
 #, c-format
 msgid "%d comments"
 msgstr "%d commentaires"
@@ -144,7 +156,7 @@ msgstr "%d commentaires"
 msgid "Add comment"
 msgstr "Ajouter un commentaire"
 
-#: ../plugin/BlogChanges.php:429 ../plugin/processor/blog.php:99
+#: ../plugin/BlogChanges.php:429 ../plugin/processor/blog.php:100
 msgid "track back"
 msgstr ""
 
@@ -179,11 +191,6 @@ msgstr ""
 #: ../plugin/Comment.php:93
 msgid "Comment"
 msgstr "commentaire"
-
-#: ../plugin/Comment.php:94 ../wikilib.php:1011 ../wikilib.php:1274
-#: ../wikilib.php:1949 ../wikilib.php:2046 ../monisetup.php:1307
-msgid "Preview"
-msgstr "Pr?visualisation"
 
 #: ../plugin/Comment.php:111
 msgid "Username"
@@ -1052,7 +1059,7 @@ msgstr ""
 msgid "add a file"
 msgstr ""
 
-#: ../plugin/UploadForm.php:271
+#: ../plugin/UploadForm.php:271 ../plugin/sendping.php:91
 msgid "Reset"
 msgstr ""
 
@@ -1392,8 +1399,23 @@ msgstr ""
 msgid "last modified %s %s"
 msgstr ""
 
-#: ../plugin/processor/blog.php:101
+#: ../plugin/processor/blog.php:88
+#, c-format
+msgid "%s comment"
+msgstr "%s commentaire"
+
+#: ../plugin/processor/blog.php:88
+#, c-format
+msgid "%s comments"
+msgstr "%s commentaires"
+
+#: ../plugin/processor/blog.php:102
 msgid "raw"
+msgstr ""
+
+#: ../plugin/processor/blog.php:136
+#, c-format
+msgid "Submitted by %s @ %s"
 msgstr ""
 
 #: ../plugin/processor/bts.php:181
@@ -1715,7 +1737,21 @@ msgstr "Erreur : entr?e non trouv? !"
 msgid "Send TrackBack ping"
 msgstr "Envoy? un ping de TrackBack"
 
-#: ../plugin/sendping.php:165
+#: ../plugin/sendping.php:72
+#, fuzzy
+msgid "TrackBack Ping URL"
+msgstr "Envoy? un ping de TrackBack"
+
+#: ../plugin/sendping.php:89
+msgid "mb encoded"
+msgstr ""
+
+#: ../plugin/sendping.php:90
+#, fuzzy
+msgid "Send ping"
+msgstr "envoyer un ping"
+
+#: ../plugin/sendping.php:175
 msgid "Trackback sent"
 msgstr "Trackback envoy?"
 
@@ -2211,11 +2247,6 @@ msgstr ""
 #, c-format
 msgid "Edit %s"
 msgstr ""
-
-#: ../wikilib.php:1005 ../wikilib.php:1289 ../wikilib.php:1943
-#: ../wikilib.php:2040 ../wikilib.php:2560 ../wikilib.php:2618
-msgid "Save"
-msgstr "Sauvegarder"
 
 #: ../wikilib.php:1013 ../wikilib.php:1276 ../wikilib.php:1951
 #: ../wikilib.php:2048
