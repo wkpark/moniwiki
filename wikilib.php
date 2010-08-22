@@ -1723,11 +1723,12 @@ function do_titlesearch($formatter,$options) {
     print sprintf(_(" or click %s to fullsearch this page.\n"),$formatter->link_to("?action=fullsearch&amp;value=$options[page]",_("title")))."</h2>";
   }
 
-  if (!empty($options['value']))
-    print $ret['form'];
-  print $out;
+  print $ret['form'];
+  
+  if (!empty($ret['hits']))
+    print $out;
 
-  if ($options['value'])
+  if ($ret['hits'])
     printf(_("Found %s matching %s out of %s total pages")."<br />",
 	 $ret['hits'],
 	($ret['hits'] == 1) ? _("page") : _("pages"),
@@ -3236,7 +3237,39 @@ EOS;
   else return "";
 }
 
+/**
+ * Validate reqular expression
+ *
+ */
+function validate_needle($needle) {
+  $needle = _preg_search_escape($needle);
+  $test = @preg_match("/($needle)/", 'ThIsIsAtEsT', $match);
+  if ($test === false) return false;
 
+  $test_count = 3;
+  $ok_count = 0;
+  while ($test !== false) {
+    preg_match("/($needle)/", '', $match); // empty string
+    if (!empty($match)) {
+      return false;
+    }
+
+    for ($i = 0; $i < $test_count; $i++) {
+      $str = str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ;:%#@",`abcdefghijklmnopqrstuvwxyz1234567890');
+      // random test needle
+      preg_match("/($needle)/", substr($str, 0, 6), $match);
+      if (!empty($match)) {
+        $ok_count++;
+      }
+    }
+    break;
+  }
+
+  // It is useless needle as it matches all pattern.
+  if ($ok_count == $test_count)
+    return false;
+  return $test;
+}
 
 function macro_TitleSearch($formatter="",$needle="",&$opts) {
   global $DBInfo;
@@ -3262,14 +3295,15 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
 
   $opts['form'] = $form;
   $opts['msg'] = sprintf(_("Title search for \"%s\""), $needle);
-  $needle=_preg_search_escape($needle);
-  $test=@preg_match("/$needle/","",$match);
-  if ($test === false) {
+  if (validate_needle($needle) === false) {
     $opts['msg'] = sprintf(_("Invalid search expression \"%s\""), $needle);
+    $opts['hits'] = 0;
     if ($opts['call'])
       return $opts;
     return $form;
   }
+  $needle=_preg_search_escape($needle);
+  
   $pages= $DBInfo->getPageLists();
   if (empty($DBInfo->alias)) $DBInfo->initAlias();
   $alias = $DBInfo->alias->getAllPages();

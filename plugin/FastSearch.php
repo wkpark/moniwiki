@@ -31,6 +31,7 @@ function macro_FastSearch($formatter,$value="",&$opts) {
 
   $needle=_preg_search_escape($needle);
   $pattern = '/'.$needle.'/i';
+
   $fneedle=str_replace('"',"&#34;",$needle); # XXX
   $url=$formatter->link_url($formatter->page->urlname);
 
@@ -45,8 +46,11 @@ function macro_FastSearch($formatter,$value="",&$opts) {
    </form>
 EOF;
 
-  if (!isset($needle[0])) { # or blah blah
+  if (!isset($needle[0]) or !empty($opts['form'])) { # or blah blah
      $opts['msg'] = _("No search text");
+     return $form;
+  } else if (validate_needle($needle) === false) {
+     $opts['msg'] = sprintf(_("Invalid search expression \"%s\""), $needle);
      return $form;
   }
 
