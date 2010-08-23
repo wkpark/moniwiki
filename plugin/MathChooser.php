@@ -1,5 +1,5 @@
 <?php
-// Copyright 2008 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2008-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a sample plugin for the MoniWiki
 //
@@ -15,9 +15,9 @@
 //
 // $Id$
 
+define('USER_LATEX_MAP','LatexSymbolTable');
 function macro_MathChooser($formatter,$value) {
     global $DBInfo;
-define('USER_LATEX_MAP','LatexSymbolTable');
 
     $js=<<<JS
 <script language="javascript" type="text/javascript">

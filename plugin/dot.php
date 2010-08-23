@@ -26,12 +26,15 @@ class LinkTree {
     foreach ($links as $page) {
       if (empty($color[$page])) $color[$page]=$depth;
       if ($page) {
-        if (!empty($node[$page])) {
+        if (empty($node[$page])) {
           $leafs=$this->cache->fetch($page);
           if ($leafs) {
             $leafs=unserialize($leafs);
             # XXX 
-            $nodelink[$page]=sizeof($leafs);
+            if (!empty($leafs))
+              $nodelink[$page] = sizeof($leafs);
+            else
+              $nodelink[$page] = 1;
           } else
             $nodelink[$page]=-1; // XXX
         } else $nodelink[$page]=1;
@@ -70,15 +73,15 @@ function macro_Dot($formatter,$value='',$options=array()) {
   global $DBInfo;
 
   #getLeafs($options[page],&$node);
-  if ($options['w'] and $options['w'] < 5) $count=$options['w'];
+  if (!empty($options['w']) and $options['w'] < 5) $count=$options['w'];
   else $count=LEAFCOUNT;
-  if ($options['d'] and $options['d'] < 6) $depth=$options['d'];
+  if (!empty($options['d']) and $options['d'] < 6) $depth=$options['d'];
   else $depth=DEPTH;
-  if ($options['f'] and $options['f'] < 12 and $options['f'] > 7 )
+  if (!empty($options['f']) and $options['f'] < 12 and $options['f'] > 7 )
     $fontsize=$options['f'];
   else $fontsize=FONTSIZE;
 
-  if ($value and $DBInfo->hasPage($value)) {
+  if (!empty($value) and $DBInfo->hasPage($value)) {
     $pgname=$value;
   } else if ($DBInfo->hasPage($options['page'])) {
     $pgname=$options['page'];
@@ -86,12 +89,14 @@ function macro_Dot($formatter,$value='',$options=array()) {
     return ''; // XXX
   }
 
-  $fontsize= $DBInfo->dot_fontsize ? $DBInfo->dot_fontsize: $fontsize;
-  $fontname= $DBInfo->dot_fontname ? $DBInfo->dot_fontname: FONTNAME;
-  $dot_options=$DBInfo->dot_options ? $DBInfo->dot_options: '';
+  $fontsize = !empty($DBInfo->dot_fontsize) ? $DBInfo->dot_fontsize: $fontsize;
+  $fontname = !empty($DBInfo->dot_fontname) ? $DBInfo->dot_fontname: FONTNAME;
+  $dot_options = !empty($DBInfo->dot_options) ? $DBInfo->dot_options: '';
+
+  $arena = !empty($options['arena']) ? $options['arena'] : '';
 
   $color=array();
-  $tree=new LinkTree($options['arena']);
+  $tree=new LinkTree($arena);
   $tree->makeTree($pgname,$node,$color,$depth,$count*2);
   if (!$node) $node=array($pgname=>array());
   #print_r($color);
@@ -100,7 +105,7 @@ function macro_Dot($formatter,$value='',$options=array()) {
   $color[$pgname]=10;
 
   $myaction='visualtour';
-  if (in_array($options['t'],array('visualtour','show')))
+  if (!empty($options['t']) and in_array($options['t'],array('visualtour','show')))
     $myaction=$options['t'];
 
   #print_r($color);
@@ -127,8 +132,9 @@ fontcolor=black, fontname=$fontname, fontsize=$fontsize]\n
 HEAD;
 
   $allnode=array_keys($node);
+  $out = '';
   while (list($leafname,$leaf) = @each ($node)) {
-    if (!$leafs[($urlname=_rawurlencode($leafname))]) {
+    if (!empty($leafname) and empty($leafs[($urlname=_rawurlencode($leafname))])) {
       $leafs[$leafname]=$urlname;
 
       $extra='';
@@ -142,7 +148,7 @@ HEAD;
     $selected=array_intersect($node[$leafname],$allnode);
 
     foreach ($selected as $leaf) {
-      if (!$leafs[($urlname=_rawurlencode($leaf))]) {
+      if (!empty($leaf) and empty($leafs[($urlname=_rawurlencode($leaf))])) {
         $leafs[$leaf]=$urlname;
         $extra='';
         if ($fcolref[$color[$leaf]])

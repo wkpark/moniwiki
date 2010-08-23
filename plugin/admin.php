@@ -32,7 +32,7 @@ function get_plugin_info($plugin_file) {
                     $l=substr($l,4);
                     list($k,$v)=split("[[:blank:]]+",rtrim($l),2);
                     $nk=strtolower($k);
-                    $info[$nk]=$info[$nk] ? $info[$nk].','.$v:$v;
+                    $info[$nk]=!empty($info[$nk]) ? $info[$nk].','.$v:$v;
                 }
             } else if ($l{1}=='/' and $l{2}==' ') {
                 $l=substr($l,3);
@@ -40,7 +40,7 @@ function get_plugin_info($plugin_file) {
                     $k=substr($l,0,$p);
                     $v=trim(substr($l,$p+2));
                     $nk=strtolower($k);
-                    $info[$nk]=$info[$nk] ? $info[$nk].','.$v:$v;
+                    $info[$nk]=!empty($info[$nk]) ? $info[$nk].','.$v:$v;
                 }
             }
         }
@@ -49,27 +49,23 @@ function get_plugin_info($plugin_file) {
 
     if (!$info) return array();
 
-    $name = $info['name'];
-    $url = $info['uri'].$info['url'];
-    $author = $info['author'];
-    $author_url = $info['author uri'] or $info['author url'];
-    $description = $info['description'].$desc.$info['desc'];
-    $license = $info['license'];
-    $version = $info['version'];
-    $depend = $info['depend'] or $info['dependency'];
+    $plugin_info = array();
+    $fields = array('name', 'description', 'author', 'license', 'url', 'depend', 'author url');
+    $alias = array('desc'=>'description', 'dependency'=>'depend', 'uri'=>'url', 'author uri'=>'author url');
 
-    if ($version and $version{0}=='$' and substr($version,1,9)=='Revision:')
-        $version=substr($version,10,-1);
+    foreach ($info as $k=>$v) {
+        $kk = $k;
+        if (array_key_exists($k, $alias)) $kk = $alias[$k];
+        if (in_array($kk, $fields)) {
+            $plugin_info[ucfirst($k)] = $v;
+        }
+    }
 
-    return array (
-                'Name' => $name,
-                'Description' => $description,
-                'Author' => $author,
-                'Version' => $version,
-                'License' => $license,
-                'URL' => $url,
-                'Depend' => $depend,
-    );
+    if (!empty($info['version']) and $info['version'][0]=='$' and substr($info['version'], 1, 9)=='Revision:') {
+        $plugin_info['Version'] = substr($info['version'], 10, -1);
+    }
+
+    return $plugin_info;
 }
 
 function macro_admin($formatter,$value='',$options=array()) {

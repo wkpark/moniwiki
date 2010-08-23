@@ -851,7 +851,7 @@ volt
 withdraw
 UWL;
 
-  $url='http://kr.engdic.yahoo.com/search/engdic?p=';
+  $url='http://www.google.co.kr/dictionary?langpair=en|ko&amp;q=';
   $uwls=explode("\n",$UWL_text);
 
   $out="";

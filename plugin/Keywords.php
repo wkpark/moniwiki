@@ -537,10 +537,11 @@ function do_keywords($formatter,$options) {
         return;
     }
 
+    $args = array();
     $formatter->send_header('',$options);
 
     if (empty($options['suggest']) and
-        (is_array($options['key']) or !empty($options['keywords']))) {
+        ((!empty($options['key']) and is_array($options['key'])) or !empty($options['keywords']))) {
         if (!empty($options['keywords'])) {
             // following keyword list are acceptable separated with spaces.
             // Chemistry "Physical Chemistry" "Bio Chemistry" ...

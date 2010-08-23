@@ -99,7 +99,11 @@ function do_rating($formatter,$options) {
         $count=$val[1];
     } else
         $total=$val[0];
-    $count=max(1,$count);
+    if (isset($count)) {
+        $count=max(1,$count);
+    } else {
+        $count = 1;
+    }
     $value=$total/$count; // averaged value
     if ($total==0 and $count==1) $count=0;
     $value=(!empty($value) and 0 < $value and 6 > $value) ? $value:0;
@@ -158,11 +162,11 @@ function do_rating($formatter,$options) {
 
     endif;
 
-    if (!$matched) {
-        if ($DBInfo->use_rating) {
+    if (empty($matched)) {
+        if (!empty($DBInfo->use_rating)) {
             $dum='';
             $pi=$formatter->get_instructions($dum);
-            $old=$pi['#rating'];
+            $old = !empty($pi['#rating']) ? $pi['#rating'] : '';
             $new='#rating '.$total.','.$count;
             if ($old) {
                 list($ts,$cnt)=explode(',',$old);

@@ -9,11 +9,11 @@
 
 function do_post_rcsimport($formatter,$options) {
     global $DBInfo;
-    if (!$DBInfo->version_class) {
+    if (empty($DBInfo->version_class)) {
         $msg= _("Version info is not available in this wiki");
         return "<h2>$msg</h2>";
     }
-    if (!trim($options['rcsfile'])) {
+    if (empty($options['rcsfile']) or !trim($options['rcsfile'])) {
         $formatter->send_header('',$options);
         $formatter->send_title('','',$options);
         $COLS_MSIE= 80;
@@ -93,7 +93,8 @@ FORM;
             $formatter->send_footer('',$options);
             return;
         }
-        $body = base64_decode($body);
+        if (!empty($body))
+            $body = base64_decode($body);
 
         $read = '';
         while(!empty($body)) {
@@ -113,7 +114,8 @@ FORM;
             if (!empty($t))
                 $content = $t;
         }
-        $version->import($options['page'],$content);
+        if (!isset($content[0]))
+            $version->import($options['page'],$content);
 
         $options['value'] = $options['page'];
         do_goto($formatter, $options);

@@ -318,13 +318,14 @@ EOF;
         $depth=2;
     }
 
-    if (!empty($DBInfo->nosession)) { // ip based
-        $myid=md5($_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI'); // FIXME
-    } else {
+    $myid = md5($_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI'); // FIXME
+    if (empty($DBInfo->nosession)) { // ip based
         if (0 and $_SESSION['_swfupload']) // XXX flash bug?
             $myid = $_SESSION['_swfupload'];
-        else {
-            list($dum,$myid,$dum2)=explode('/',$options['value'],3);
+        else if (!empty($options['value']) and ($p = strpos($options['value'], '/')) !== false) {
+            $tmp = explode('/', $options['value']);
+            #list($dum,$myid,$dum2)=explode('/',$options['value'],3);
+            $myid = $tmp[1];
         }
     }
 
@@ -345,7 +346,7 @@ EOF;
     //fwrite($fp,"------------------------\n");
     //fclose($fp);
     // set the personal subdir
-    if ($options['value'] and preg_match('/^[a-z0-9\/]+$/i',$options['value'])) {
+    if (!empty($options['value']) and preg_match('/^[a-z0-9\/]+$/i',$options['value'])) {
         //if ($mysubdir == $options['value']) // XXX check subdir
         //    $mysubdir = $options['value'];
 
@@ -363,7 +364,7 @@ EOF;
             $swfupload_dir.'/'.$mysubdir.$_FILES['Filedata']['name']);
         echo "Success";
         return;
-    } else if (is_array($options['MYFILES'])) {
+    } else if (isset($options['MYFILES']) and is_array($options['MYFILES'])) {
         include_once('plugin/UploadFile.php');
 
         $options['_pds_subdir']=$mysubdir; // a temporary pds dir

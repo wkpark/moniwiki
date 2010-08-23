@@ -50,7 +50,7 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
         list($secthead,$dumm)=explode("\n",$sections[0]);
         preg_match('/^\s*=\s*([^=].*[^=])\s*=\s?$/',$secthead,$match);
         $secthead=rtrim($sections[0]);
-        if ($match[1]) $title=$match[1];
+        if (isset($match[1])) $title=$match[1];
     } else {
         $dep='&amp;d='.$depth;
     }
@@ -113,6 +113,7 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
         $end= 
             '<img src="'.$icon_dir.'end_off.png'.'" style="border:0" alt="|>" /></a>';
     }
+    $np = '';
     if (!empty($n_title) and !empty($options['action'])) {
         $np=$sect+1;
         $nlink= $formatter->link_url($urlname,'?action='.$act.
@@ -123,6 +124,7 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
         $next= 
             '<img src="'.$icon_dir.'next_off.png'.'" style="border:0" alt=">" /></a>';
     }
+    $pp = '';
     if (!empty($p_title)) {
         $pp=$sect-1;
         $plink= $formatter->link_url($urlname,'?action='.$act.
@@ -164,14 +166,14 @@ function do_slideshow($formatter,$options=array()) {
     print $js;
     print '<div class="slideNav">'.$btn.'</div>';
 
-    if ($options['p']) $sect=$options['p'];
+    if (!empty($options['p'])) $sect=$options['p'];
     else $sect=1;
 
 
-    $save=$formatter->preview;
+    if (!empty($formatter->preview)) $save = $formatter->preview;
     $formatter->preview=1;
     // show the head title
-    if ($secthead) $formatter->send_page($secthead);
+    if (!empty($secthead)) $formatter->send_page($secthead);
     // section number ?
     //$formatter->head_num='1.'.$sect;
     //$formatter->head_num=$sect; // XXX
@@ -179,7 +181,10 @@ function do_slideshow($formatter,$options=array()) {
     //$formatter->toc=1;
     // show selected section
     $formatter->send_page($sections[$sect]);
-    $formatter->preview=$save;
+    if (isset($save))
+        $formatter->preview = $save;
+    else
+        unset($formatter->preview);
     print "</div></div>";
 
     print '<div class="slideNav">'.$btn.'</div>';

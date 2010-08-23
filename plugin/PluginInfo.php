@@ -38,17 +38,16 @@ function macro_PluginInfo($formatter='',$value='') {
     }
     $info = get_plugin_info(dirname(__FILE__)."/$file.php");
 
-    $name=!empty($info['Name']) ? $info['Name'].' ('.$value.')':$value;
-    $version=$info['Version'];
-    $author=$info['Author'];
-    $version=$info['Version'];
-    $license=$info['License'];
-    $depend=$info['Depend'];
-    $url=$info['URL'];
-    $desc=$info['Description'] ? $info['Description']:'';
+    $name = !empty($info['Name']) ? $info['Name'].' ('.$value.')':$value;
+    $version = !empty($info['Version']) ? $info['Version'] : '';
+    $author = !empty($info['Author']) ? $info['Author'] : '';
+    $license = !empty($info['License']) ? $info['License'] : '';
+    $depend = !empty($info['Depend']) ? $info['Depend'] : '';
+    $url = !empty($info['URL']) ? $info['URL'] : '';
+    $desc = !empty($info['Description']) ? $info['Description'] : '';
 
     $msg=_("Description");
-    $pl.="<tr><td colspan='3'><fieldset class='collapsible collapsed'><legend>$msg: </legend><div>";
+    $pl="<tr><td colspan='3'><fieldset class='collapsible collapsed'><legend>$msg: </legend><div>";
         $pl.='<strong>'._("Name").': '.$name."</strong><br />\n";
     if ($version)
         $pl.='<strong>'._("Version").': '.$version."</strong><br />\n";
@@ -58,6 +57,9 @@ function macro_PluginInfo($formatter='',$value='') {
         $pl.='<strong>'._("License").': '.$license."</strong><br />\n";
     if ($depend)
         $pl.='<strong>'._("Depend").': '.$depend."</strong><br />\n";
+
+    if (empty($formatter->wordrule)) $formatter->set_wordrule();
+
     if ($url) {
         $url=preg_replace("/(".$formatter->wordrule.")/e",
             "\$formatter->link_repl('\\1')",$url);

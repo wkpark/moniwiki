@@ -48,7 +48,7 @@ function do_uploadfile($formatter,$options) {
       $options['rename']=array($options['rename']);
       $options['replace']=array($options['replace']);
     }
-  } else if (is_array($options['MYFILES'])) { // for SWFUpload action
+  } else if (isset($options['MYFILES']) and is_array($options['MYFILES'])) { // for SWFUpload action
     $count=sizeof($options['MYFILES']);
     $MYFILES=&$options['MYFILES'];
     $mysubdir=$options['mysubdir'];
@@ -206,10 +206,10 @@ EOF;
       $exts=explode('.',$fname[1]);
       $ok=0;
       for ($i=sizeof($exts);$i>0;$i--) {
-        if (in_array(strtolower($exts[$i]),$safe)) {
+        if (in_array(strtolower($exts[$i - 1]),$safe)) {
           $ok=1;
           break;
-        } else if (in_array(strtolower($exts[$i]),$protected)) {
+        } else if (in_array(strtolower($exts[$i - 1]),$protected)) {
           $exts[$i].='.txt'; # extra check for mod_mime: append 'txt' extension: my.pl.hwp => my.pl.txt.hwp
           $ok=1;
           break;
@@ -233,7 +233,7 @@ EOF;
     $exts=explode('.',$tname[1]);
     $ok=0;
     for ($i=sizeof($exts);$i>0;$i--) {
-      if (in_array(strtolower($exts[$i]),$protected)) {
+      if (in_array(strtolower($exts[$i - 1]),$protected)) {
         $exts[$i].='.txt';
         $ok=1;
         break;
@@ -377,7 +377,7 @@ EOF;
   print $js;
   $formatter->send_footer('', $options);
 
-  if (is_array($options['MYFILES']) and empty($DBInfo->nosession))
+  if (isset($options['MYFILES']) and is_array($options['MYFILES']) and empty($DBInfo->nosession))
     session_destroy();
   return true;
 }
@@ -391,7 +391,7 @@ function macro_UploadFile($formatter,$value='',$options='') {
   }
   $use_multi=1;
   $multiform='';
-  if ($options['rename']) {
+  if (!empty($options['rename'])) {
     if (!is_array($options['rename'])) {
       // rename option used by "attachment:" and it does not use multiple form.
       $rename=$options['rename'];
@@ -410,19 +410,20 @@ function macro_UploadFile($formatter,$value='',$options='') {
 
   $url=$formatter->link_url($formatter->page->urlname);
 
-  $count= ($options['multiform'] > 1) ? $options['multiform']:1;
+  $count= (!empty($options['multiform']) and $options['multiform'] > 1) ? $options['multiform']:1;
 
   $mode = '';
-  if ($options['action_mode'] == 'ajax') {
+  if (!empty($options['action_mode']) and $options['action_mode'] == 'ajax') {
     $mode = '/ajax';
   }
   $form="<form enctype='multipart/form-data' method='post' action='$url'>\n";
   $form.="<input type='hidden' name='action' value='UploadFile$mode' />\n";
   $msg1=_("Replace original file");
   $msg2=_("Rename if it already exist");
+  $suffix = '';
   for ($j=0;$j<$count;$j++) {
     if ($count > 1) $suffix="[$j]";
-    if ($options['rename'][$j]) {
+    if (!empty($options['rename'][$j])) {
       $rename=_stripslashes($options['rename'][$j]);
       $extra="<input name='rename$suffix' value='$rename' />: "._("Rename")."<br />";
     } else $extra='';
@@ -454,7 +455,7 @@ EOF;
 
   if (!in_array('UploadedFiles',$formatter->actions))
     $formatter->actions[]='UploadedFiles';
-  if ($formatter->preview and !in_array('UploadFile',$formatter->actions)) {
+  if (!empty($formatter->preview) and !in_array('UploadFile',$formatter->actions)) {
     if (!empty($DBInfo->use_preview_uploads)) {
       $keyname=$DBInfo->pageToKeyname($formatter->page->name);
       if (is_dir($DBInfo->upload_dir.'/'.$keyname))

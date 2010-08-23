@@ -1144,7 +1144,7 @@ EOS;
       umask($om);
     }
 
-    $fp=fopen($filename,"w");
+    $fp=@fopen($filename,"w");
     if (!is_resource($fp))
        return -1;
 
@@ -1153,7 +1153,7 @@ EOS;
     flock($fp,LOCK_UN);
     fclose($fp);
 
-    if ($this->version_class) {
+    if (!empty($this->version_class)) {
       $class=getModule('Version',$this->version_class);
       $version=new $class ($this);
       $om=umask(~$this->umask);
@@ -1489,9 +1489,11 @@ class Version_RCS {
     $keyname=$this->DB->_getPageKey($pagename);
     $fname=$this->DB->text_dir."/RCS/$keyname,v";
     $fp=fopen($fname,'r');
+    $out = '';
     if (is_resource($fp)) {
       $sz=filesize($fname);
-      $out=fread($fp,$sz);
+      if ($sz > 0);
+      	$out=fread($fp,$sz);
       fclose($fp);
     }
     return $out;
@@ -5965,7 +5967,7 @@ function wiki_main($options) {
       $options['action_mode']=$action_mode;
       if ($action_mode=='ajax')
         $formatter->ajax_repl($action,$options);
-      else if ($DBInfo->use_macro_as_action) # XXX
+      else if (!empty($DBInfo->use_macro_as_action)) # XXX
         echo $formatter->macro_repl($action,$options['value'],$options);
       else
         do_invalid($formatter,$options);

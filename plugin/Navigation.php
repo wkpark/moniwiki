@@ -36,13 +36,13 @@ function macro_Navigation($formatter,$value) {
 
 #  print $current;
 
+  if (empty($formatter->wordrule)) $formatter->set_wordrule();
+
   $indices=array();
   $count=0;
   foreach ($lines as $line) {
-    if (preg_match("/^\s+(\*|\d+\.)\s+(?<!\!)($formatter->wordrule)/",$line,$match)) {
-      $word=$match[2];
-      if ($word[0]=='[') $word=substr($word,1,-1);
-      if ($word[0]=='"') $word=substr($word,1,-1);
+    if (preg_match("/^\s+(?:\*|\d+\.)\s*($formatter->wordrule)/",$line,$match)) {
+      $word = trim($match[1], '[]"');
 
       list($index,$text,$dummy)= normalize_word($word,$group,$page);
       if ($group) $indices[]=$index;
@@ -110,14 +110,16 @@ function macro_Navigation($formatter,$value) {
     $pnut.=' &raquo;';
     if ($use_action) $formatter->query_string=$save;
   }
-  return $pnut;
+  if (!empty($pnut))
+    return $pnut;
+  return '';
 }
 
 function do_navigation($formatter,$options) {
-  if (!$formatter->wordrule) $formatter->set_wordrule();
+  if (empty($formatter->wordrule)) $formatter->set_wordrule();
   $pnut=macro_Navigation($formatter,$options['value'].',action');
   $formatter->send_header('',$options);
-  $formatter->send_title($title,$formatter->link_url("FindPage"),$options);
+  $formatter->send_title('', $formatter->link_url("FindPage"),$options);
   print "<div class='wikiNavigation'>\n";
   print $pnut;
   print "<hr /></div>\n";

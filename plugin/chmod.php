@@ -12,8 +12,8 @@ function do_chmod($formatter,$options) {
     if ($DBInfo->hasPage($options['page'])) {
       $perms= $DBInfo->getPerms($options['page']);
       $perms&= 0077; # clear user perms
-      if ($options['read']) $perms|=0400;
-      if ($options['write']) $perms|=0200;
+      if (!empty($options['read'])) $perms|=0400;
+      if (!empty($options['write'])) $perms|=0200;
       $DBInfo->setPerms($options['page'],$perms);
       $title = sprintf(_("Permission of \"%s\" changed !"), $options['page']);
       $formatter->send_header("",$options);

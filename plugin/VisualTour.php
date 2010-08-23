@@ -35,15 +35,15 @@ function macro_VisualTour($formatter,$value,$options=array()) {
     }
   }
 
-  if ($options['w'] and $options['w'] < 6) $w=$options['w'];
-  else $w=$w?$w:2;
-  if ($options['d'] and $options['d'] < 6) $d=$options['d'];
-  else $d=$d?$d:3;
+  if (!empty($options['w']) and $options['w'] < 6) $w=$options['w'];
+  else $w=!empty($w) ? $w:2;
+  if (!empty($options['d']) and $options['d'] < 6) $d=$options['d'];
+  else $d=!empty($d) ? $d:3;
 
-  if ($options['f']) $extra.="&f=".$options['f'];
-  if ($options['arena']) $extra.="&arena=".$options['arena'];
+  if (!empty($options['f'])) $extra.="&f=".$options['f'];
+  if (!empty($options['arena'])) $extra.="&arena=".$options['arena'];
 
-  if ($pgname)
+  if (isset($pgname[0]))
     $urlname=_urlencode($pgname);
   else {
     $urlname=$formatter->page->urlname;
@@ -53,7 +53,7 @@ function macro_VisualTour($formatter,$value,$options=array()) {
   $dot=$formatter->macro_repl('dot',$pgname,$options);
 
   $md5sum=md5($dot);
-  if ($DBInfo->cache_public_dir) {
+  if (!empty($DBInfo->cache_public_dir)) {
     $fc=new Cache_text('visualtour',2,'',$DBInfo->cache_public_dir);
     $fname=$fc->_getKey($md5sum,0);
     $basename= $DBInfo->cache_public_dir.'/'.$fname;
@@ -84,6 +84,7 @@ function macro_VisualTour($formatter,$value,$options=array()) {
     umask($om);
   }
 
+  $err = '';
   if ($formatter->refresh or !file_exists($dotfile)) {
     $fp=fopen($dotfile,"w");
     fwrite($fp,$dot);
@@ -123,9 +124,9 @@ function macro_VisualTour($formatter,$value,$options=array()) {
 function do_VisualTour($formatter,$options) {
   $formatter->send_header();
   $selfurl=$formatter->link_to();
-  if ($options['w'] and $options['w'] < 6) $w=$options['w'];
+  if (!empty($options['w']) and $options['w'] < 6) $w=$options['w'];
   else $w=2;
-  if ($options['d'] and $options['d'] < 6) $d=$options['d'];
+  if (!empty($options['d']) and $options['d'] < 6) $d=$options['d'];
   else $d=3;
 
   print "<h2 style='font-family:Tahoma,Sans-serif;'>VisualTour on $selfurl</h2>";

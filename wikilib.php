@@ -1514,6 +1514,7 @@ Only WikiMaster can delete this page<br />\n";
 }
 
 function form_permission($mode) {
+  $read = $write = '';
   if ($mode & 0400)
      $read="checked='checked'";
   if ($mode & 0200)
@@ -2061,7 +2062,7 @@ function do_post_savepage($formatter,$options) {
     print "</div>\n";
     print $menu;
   } else {
-    if ($options['category'])
+    if (!empty($options['category']))
       $savetext.="----\n$options[category]\n";
 
     $options['minor'] = !empty($DBInfo->use_minoredit) ? $options['minor']:0;
