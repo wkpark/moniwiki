@@ -1,14 +1,14 @@
 <?php
-// Copyright 2003-2006 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // dot action plugin for the MoniWiki
 //
 // $Id$
 
-define(DEPTH,3);
-define(LEAFCOUNT,2);
-define(FONTSIZE,8);
-define(FONTNAME,'WEBDOTFONT');
+define('DEPTH',3);
+define('LEAFCOUNT',2);
+define('FONTSIZE',8);
+define('FONTNAME','WEBDOTFONT');
 
 class LinkTree {
   var $cache=null;
@@ -22,10 +22,11 @@ class LinkTree {
     $links=unserialize($this->cache->fetch($pagename));
     #print_r($links);
     if (!is_array($links)) $links=array();
+    $nodelink = array();
     foreach ($links as $page) {
-      if (!$color[$page]) $color[$page]=$depth;
+      if (empty($color[$page])) $color[$page]=$depth;
       if ($page) {
-        if (!$node[$page]) {
+        if (!empty($node[$page])) {
           $leafs=$this->cache->fetch($page);
           if ($leafs) {
             $leafs=unserialize($leafs);
@@ -45,11 +46,11 @@ class LinkTree {
 
   function makeTree($pagename,&$node,&$color,$depth=DEPTH,$count=LEAFCOUNT) {
     if ($depth > 0) {
-      if (!$color[$pagename]) $color[$pagename]=$depth;
+      if (!isset($color[$pagename])) $color[$pagename]=$depth;
       #print $depth."\n";
       $depth--;
       $this->getLeafs($pagename,$node,$color,$depth,$count);
-      if ($node[$pagename]) {
+      if (!empty($node[$pagename])) {
         # select 25% of links
         $slice= max((int) (sizeof($node[$pagename]) * 0.25),$count);
         #$slice= ($size > $count) ? $size: $count;

@@ -1225,6 +1225,7 @@ function macro_Edit($formatter,$value,$options='') {
   $raw_body = str_replace(array("&","<"),array("&amp;","&lt;"),$raw_body);
 
   # get categories
+  $select_category = '';
   if (!empty($DBInfo->use_category) and empty($options['nocategories'])) {
     $categories=array();
     $categories= $DBInfo->getLikePages($DBInfo->category_regex);
@@ -2328,9 +2329,9 @@ function macro_RandomPage($formatter,$value='') {
   return join("",$selects);
 }
 
+define('DEFAULT_QUOTE_PAGE','FortuneCookies');
 function macro_RandomQuote($formatter,$value="",$options=array()) {
   global $DBInfo;
-  define('QUOTE_PAGE','FortuneCookies');
   #if ($formatter->preview==1) return '';
 
   $re='/^\s*\* (.*)$/';
@@ -2350,10 +2351,10 @@ function macro_RandomQuote($formatter,$value="",$options=array()) {
       $pagename=$arg;
   }
 
-  if ($pagename and $DBInfo->hasPage($pagename))
+  if (!empty($pagename) and $DBInfo->hasPage($pagename))
     $fortune=$pagename;
   else
-    $fortune=QUOTE_PAGE;
+    $fortune=DEFAULT_QUOTE_PAGE;
 
   if (!empty($options['body'])) {
     $raw=$options['body'];
@@ -2375,12 +2376,13 @@ function macro_RandomQuote($formatter,$value="",$options=array()) {
 
   $dumb=explode("\n",$quote);
   if (sizeof($dumb)>1) {
-    $save=$formatter->preview;
+    if (isset($formatter->preview)) $save = $formatter->preview;
     $formatter->preview=1;
     $options['nosisters']=1;
     ob_start();
     $formatter->send_page($quote,$options);
-    $formatter->preview=$save;
+    if (isset($save))
+      $formatter->preview=$save;
     $out= ob_get_contents();
     ob_end_clean();
   } else {

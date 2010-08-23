@@ -64,6 +64,8 @@ function do_vote($formatter,$options) {
   global $DBInfo;
 
   if ($options['id'] == 'Anonymous') {
+    if (!isset($options['msg']))
+      $options['msg'] = '';
     $options['msg'].="\n"._("Please Login or make your ID on this Wiki ;)");
     do_invalid($formatter,$options);
     return;

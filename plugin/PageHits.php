@@ -18,8 +18,9 @@ function macro_PageHits($formatter="",$value) {
     $hits[$page]=$DBInfo->counter->pageCounter($page);
   }
 
-  if ($value=='reverse' or $value[0]=='r') asort($hits);
+  if (!empty($value) and ($value=='reverse' or $value[0]=='r')) asort($hits);
   else arsort($hits);
+  $out = '';
   while(list($name,$hit)=each($hits)) {
     if (!$hit) $hit=0;
     $name=$formatter->link_tag(_rawurlencode($name),"",htmlspecialchars($name));

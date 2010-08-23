@@ -49,12 +49,12 @@ function _timesago($timestamp, $date_fmt='Y-m-d', $tz_offset = 0) {
 	return $ago;
 }
 
-function macro_RecentChanges($formatter,$value='',$options='') {
-  global $DBInfo;
-
 define('RC_MAX_DAYS',30);
 define('RC_MAX_ITEMS',200);
 define('RC_DEFAULT_DAYS',7);
+
+function macro_RecentChanges($formatter,$value='',$options='') {
+  global $DBInfo;
 
   $checknew=1;
 
@@ -373,7 +373,7 @@ define('RC_DEFAULT_DAYS',7);
     $count=""; $extra="";
     if ($editcount[$page_key] > 1)
       $count=sprintf(_("%s changes"), " <span class='num'>".$editcount[$page_key]."</span>");
-    if ($comment && $log)
+    if (!empty($comment) && !empty($log))
       $extra="&nbsp; &nbsp; &nbsp; <small name='word-break'>$log</small>";
 
     $alt = ($ii % 2 == 0) ? ' class="alt"':'';

@@ -20,7 +20,7 @@ class WikiRSSParser {
        } elseif ($tagName == "ITEM") {
            $this->insideitem = true;
        } elseif ($tagName == "IMAGE") {
-           if ($attrs['RDF:RESOURCE'])
+           if (!empty($attrs['RDF:RESOURCE']))
            print "<img src=\"".$attrs['RDF:RESOURCE']."\"><br />";
        }
    }
@@ -130,9 +130,10 @@ function macro_Rss($formatter,$value) {
   xml_parser_free($xml_parser);
 
   #  if (strtolower(str_replace("-","",$options['oe'])) == 'euckr')
-  if (function_exists('iconv') and strtoupper($DBInfo->charset) != $charset)
+  if (function_exists('iconv') and strtoupper($DBInfo->charset) != $charset) {
     $new=iconv($charset,$DBInfo->charset,$out);
-  if ($new) return $new;
+    if ($new !== false) return $new;
+  }
 
   return $out;
 }

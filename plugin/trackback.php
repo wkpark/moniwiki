@@ -42,7 +42,8 @@ function do_trackback($formatter,$options) {
     }
   }
 
-  if (!$options['url']) {
+  if (empty($options['url'])) {
+    $anchor = '';
     if ($options['value']) $anchor='/'.$options['value'];
 
     $formatter->send_header("",$options);
@@ -84,7 +85,7 @@ function do_trackback($formatter,$options) {
   if (!$DBInfo->use_trackback)
     send_error(1,"TrackBack is not enabled"); 
 
-  if (!$options['title'] or !$options['excerpt'] or !$options['blog_name'] or !$options['url']) send_error(1,"Invalid TrackBack Ping");
+  if (empty($options['title']) or empty($options['excerpt']) or empty($options['blog_name']) or empty($options['url'])) send_error(1,"Invalid TrackBack Ping");
   # receivie Trackback ping
 
   # strip \n
@@ -167,6 +168,7 @@ function macro_trackback($formatter,$value) {
   foreach ($lines as $line) $logs[]=explode("\t",$line,8);
   usort($logs,'TrackBackCompare');
 
+  $out = '';
   foreach ($logs as $log) {
     if ($limit <= 0) break;
     list($page, $dum, $entry,$url,$date,$site,$title,$dum2)= $log;
@@ -178,8 +180,12 @@ function macro_trackback($formatter,$value) {
     $date[10]=' ';
     $time=strtotime($date." GMT");
     $date= date($date_fmt,$time);
-    list($wiki,$user)=explode(':',$site);
-    if ($user) $site=$user;
+    $tmp = explode(':',$site);
+    $wiki = $tmp[0];
+    if (!empty($tmp[1])) {
+      $user = $tmp[1];
+      $site = $tmp[1];
+    }
 
     #$out.=$page."<a href='$url'>$title</a> @ $date from $site<br />\n";
     #$out.="<a href='$url'>$title</a> @ $date from $site<br />\n";

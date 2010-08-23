@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.1.5-RC4';
+$_release = '1.1.5-RC5';
 
 #ob_start("ob_gzhandler");
 
@@ -1875,7 +1875,7 @@ class Formatter {
     $this->interwiki_target=!empty($DBInfo->interwiki_target) ?
       ' target="'.$DBInfo->interwiki_target.'"':'';
     $this->filters=!empty($DBInfo->filters) ? $DBInfo->filters : null;
-    $this->postfilters=$DBInfo->postfilters;
+    $this->postfilters=!empty($DBInfo->postfilters) ? $DBInfo->postfilter : null;
     $this->use_rating=!empty($DBInfo->use_rating) ? $DBInfo->use_rating : 0;
     $this->use_etable=!empty($DBInfo->use_etable) ? 1 : 0;
     $this->use_metadata=!empty($DBInfo->use_metadata) ? $DBInfo->use_metadata : 0;
@@ -2628,7 +2628,7 @@ class Formatter {
     $page=$url;
     $url=$DBInfo->interwiki[$wiki];
 
-    if ($page[0]=='"') # "extended wiki name"
+    if (isset($page[0]) and $page[0]=='"') # "extended wiki name"
       $page=substr($page,1,-1);
 
     if ($page=='/') $page='';

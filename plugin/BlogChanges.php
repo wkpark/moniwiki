@@ -55,10 +55,10 @@ class Blog_cache {
     foreach ($temp as $line) {
       if (preg_match('/^ \* ([^:]+)(?=\s|:|$)/',$line,$match)) {
         $category=rtrim($match[1]);
-        if (!$categories[$category])
+        if (!isset($categories[$category]))
           // include category page itself.
           $categories[$category]=array($category);
-      } else if ($category
+      } else if (!empty($category)
         and preg_match('/^\s{2,}\* ([^:]+)(?=\s|:|$)/',$line,$match)) {
         // sub category (or blog pages list)
         $subcategory=rtrim($match[1]);
@@ -257,7 +257,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
     }
     if ($DBInfo->blog_category) {
       $categories=Blog_cache::get_categories();
-      if ($categories[$options['category']])
+      if (isset($categories[$options['category']]))
         $category_pages=$categories[$options['category']];
     }
     if (!$category_pages) {
@@ -312,12 +312,14 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
 
         $trackbacks=explode("\n",$trackback_raw);
         foreach ($trackbacks as $trackback) {
+          if (($p = strpos($trackback, "\t")) !== false) {
           list($dummy,$entry,$extra)=explode("\t",$trackback);
           if ($entry) {
-            if($trackback_list[$blog][$entry])
+            if(isset($trackback_list[$blog][$entry]))
               $trackback_list[$blog][$entry]++;
             else
             $trackback_list[$blog]=array($entry=>1);
+          }
           }
         }
       }
@@ -378,7 +380,14 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
 
   $save_page = $formatter->page;
   foreach ($logs as $log) {
-    list($page, $user,$date,$title,$summary,$commentcount)= $log;
+    #list($page, $user,$date,$title,$summary,$commentcount)= $log;
+    $page = $log[0];
+    $user = $log[1];
+    $date = $log[2];
+    $title = $log[3];
+    $summary = !empty($log[4]) ? $log[4] : '';
+    $commentcount = !empty($log[5]) ? $log[5] : '';
+
     $tag=md5($user.' '.$date.' '.$title);
     $datetag='';
 
@@ -450,6 +459,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
   $url=qualifiedUrl($formatter->link_url($DBInfo->frontpage));
 
   # make pnut
+  $action = '';
   if (!empty($options['action'])) $action='action=blogchanges&amp;';
   if (!empty($options['category'])) $action.='category='.$options['category'].'&amp;';
   if (!empty($options['mode'])) $action.='mode='.$options['mode'].'&amp;';

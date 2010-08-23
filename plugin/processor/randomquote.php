@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2005 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // sample plugin for the MoniWiki
 //
@@ -12,7 +12,8 @@ function processor_randomquote($formatter,$value="",$options=array()) {
     if ($value[0]=='#' and $value[1]=='!')
         list($line,$value)=explode("\n",$value,2);
 
-    if ($line)
+    $args = '';
+    if (!empty($line))
         list($tag,$args)=explode(' ',$line,2);
 
     return $formatter->macro_repl('RandomQuote',$args,array('body'=>$value));

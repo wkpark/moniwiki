@@ -18,7 +18,7 @@ class FoafParser {
    }
 
    function startElement($parser, $tagName, $attrs) {
-       if ($this->return) return;
+       if (!empty($this->return)) return;
        if ($this->insideitem) {
            $this->tag = $tagName;
        } elseif ($tagName == "FOAF:PERSON") {
@@ -67,7 +67,7 @@ class FoafParser {
                break;
            }
        }
-       if ($this->project) {
+       if (!empty($this->project)) {
            switch ($this->tag) {
                case "DC:TITLE":
                $this->title = $data;
@@ -96,14 +96,14 @@ function macro_foaf($formatter,$value) {
     if (in_array ("homepage", $args)) $options['homepage']=1;
     if (in_array ("comment", $args)) $options['comment']=1;
   }
-
+  $info = array(); // XXX
   $rss_parser = new FoafParser($info);
   xml_set_object($xml_parser,$rss_parser);
   xml_set_element_handler($xml_parser, "startElement", "endElement");
   xml_set_character_data_handler($xml_parser, "characterData");
 
   $cache= new Cache_text("foaf");
-  if ($_GET['update'] or !$cache->exists($key)) {
+  if (!empty($_GET['update']) or !$cache->exists($key)) {
     $fp = @fopen("$value","r");
     if (!$fp)
       return ("[[FOAF(ERR: not a valid URL! $value)]]");

@@ -25,6 +25,7 @@ function macro_BlogCategories($formatter,$value='') {
   $odep=-1;
   $dep=0;
   $out='';
+  $rss='';
   foreach ($temp as $line) {
     #$line=str_replace('/','_2f',$line);
     if (preg_match('/^(\s{1'.$depth.'})\* ([^:]+)(?=\s|:|$)/',$line,$match)) {
@@ -32,7 +33,7 @@ function macro_BlogCategories($formatter,$value='') {
       $category=str_replace(array('[',']','"','\''),'',$text);
       $category=_rawurlencode($category);
       $lnk=str_replace('CATEGORY',$category,$link);
-      if (!$no_rss)
+      if (empty($no_rss))
         $rss='&nbsp;<a href="'.str_replace('blogchanges','blogrss',$lnk).'">'.
           '<img src="'.$DBInfo->imgs_dir.'/plugin/tiny-xml.png'.'" border="0" alt="xml" /></a>';
       $dep=strlen($match[1]);

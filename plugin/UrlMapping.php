@@ -12,6 +12,7 @@ function macro_UrlMapping($formatter,$value,$options=array()) {
 
     #$options['load']=1;
 
+    $mapping_rule = '';
     while (!isset($DBInfo->url_mapping_rule) or $options['init']) { #or $options['load']) {
         $mappings=array();
 

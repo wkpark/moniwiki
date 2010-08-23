@@ -16,11 +16,11 @@
 // $Id$
 
 define('LOCAL_KEYWORDS','LocalKeywords');
+define('MAX_FONT_SZ',24);
+define('MIN_FONT_SZ',10);
 
 function macro_Keywords($formatter,$value,$options=array()) {
     global $DBInfo;
-define('MAX_FONT_SZ',24);
-define('MIN_FONT_SZ',10);
     $supported_lang=array('ko');
 
     $limit=isset($options['limit']) ? $options['limit']:40;
@@ -303,7 +303,10 @@ EOF;
     }
     // make criteria list
 
-    if ($use_sty):
+    $fz = 0;
+    $min = 0;
+    $sty = array();
+    if (!empty($use_sty)):
     $fact=array();
     $weight=$max; // $ncount
     #print 'max='.$max.' ratio='.$weight/$ncount.':';
@@ -317,7 +320,6 @@ EOF;
     $min=$limit ? max(1,end($fact))-1:0; // XXX
     // make font-size style
     $fz=max(sizeof($fact),2);
-    $sty=array();
     $fsh=(MAX_FONT_SZ-MIN_FONT_SZ)/($fz-1);
     $fs=MAX_FONT_SZ; // max font-size:24px;
     for ($i=0;$i<$fz;$i++) {
@@ -400,12 +402,15 @@ SWF;
     $out.='<ul>';
     $checkbox = '';
     foreach ($words as $key=>$val) {
+        $style = '';
+        if ($fz > 0) {
         $style=$sty[$fz-1];
         for ($i=0;$i<$fz;$i++) {
             if ($val>$fact[$i]) {
                 $style=$sty[$i];
                 break;
             }
+        }
         }
         if ($val > $min) {
             $checked='';

@@ -253,7 +253,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
 
     if (empty($img_link) && preg_match("/\.(png|gif|jpeg|jpg|bmp)$/i",$upload_file)) {
       // thumbnail
-      if (!empty($DBInfo->use_convert_thumbs) and $use_thumb) {
+      if (!empty($DBInfo->use_convert_thumbs) and !empty($use_thumb)) {
         $thumb_width=$thumb['thumbwidth'] ? $thumb['thumbwidth']:150;
         if (!file_exists($dir."/thumbnails/".$_l_file)) {
           if (!file_exists($dir."/thumbnails")) @mkdir($dir."/thumbnails",0777);

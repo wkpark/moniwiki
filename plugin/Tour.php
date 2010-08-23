@@ -1,5 +1,5 @@
 <?php
-// Copyright 2005 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2005-2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a Tour plugin for the MoniWiki
 //
@@ -19,14 +19,15 @@ function do_tour($formatter,$options) {
     else $value=$options['page'];
     print macro_Tour($formatter,$value,$options);
     //$args['editable']=1;
+    $args = false;
     $formatter->send_footer($args,$options);
 }
 
+define('TOUR_LEAFCOUNT',4);
+define('TOUR_DEPTH',3);
+
 function macro_Tour($formatter,$value,$options=array()) {
     global $DBInfo;
-
-define(TOUR_LEAFCOUNT,4);
-define(TOUR_DEPTH,3);
 
     $args=explode(',',$value);
 
@@ -43,8 +44,8 @@ define(TOUR_DEPTH,3);
         }
     }
     $query='';
-    if ($options['arena'] or $arena) {
-        $options['arena']=$arena ? $arena:$options['arena'];
+    if (!empty($options['arena']) or $arena) {
+        $options['arena']=!empty($arena) ? $arena:$options['arena'];
         $query='&amp;arena='.$options['arena'];
         $arena=$options['arena'];
     }
@@ -53,6 +54,7 @@ define(TOUR_DEPTH,3);
     if (!$value) $value=$formatter->page->name;
     #else if ($value != $formatter->page->name) XXX;
 
+    $query2 = '';
     if ($arena == 'backlinks') {
         $head2=_("BackLinks");
         $link=$formatter->link_tag(htmlspecialchars($value));
@@ -73,9 +75,9 @@ define(TOUR_DEPTH,3);
         $head=sprintf(_("%s Tour %s"),$head2,$head);
     $head='<h2>'.$head.'</h2>';
 
-    if ($options['w'] and $options['w'] < 10) $count=$options['w'];
+    if (!empty($options['w']) and $options['w'] < 10) $count=$options['w'];
     else $count=TOUR_LEAFCOUNT;
-    if ($options['d'] and $options['d'] < 7) $depth=$options['d'];
+    if (!empty($options['d']) and $options['d'] < 7) $depth=$options['d'];
     else $depth=TOUR_DEPTH;
 
     $color=array();
@@ -92,7 +94,7 @@ define(TOUR_DEPTH,3);
     $id=0;
     $outs=array();
     while (list($leafname,$leaf) = @each ($node)) {
-        if (!$leafs[$leafname]) {
+        if (empty($leafs[$leafname])) {
             $urlname=_rawurlencode($leafname);
             $leafs[$leafname]=1;
             $url[$leafname]=$urlname;
@@ -100,21 +102,22 @@ define(TOUR_DEPTH,3);
         $selected=array_intersect($node[$leafname],$allnode);
         asort($selected);
         foreach ($selected as $leaf) {
-            if (!$leafs[$leaf]) {
+            if (empty($leafs[$leaf])) {
                 $urlname=_rawurlencode($leaf);
                 $url[$leaf]=$urlname;
                 $id=$leafs[$leaf]=$leafs[$leafname]+1;
-                if (!$outs[$id]) $outs[$id]=array();
+                if (!empty($outs[$id])) $outs[$id]=array();
                 $outs[$id][]= $leaf;
             }
         }
     }
-    unset($out[0]);
+    if (isset($out[0]))
+        unset($out[0]);
     if ($DBInfo->hasPage($url[$value])) {
         $pg=$url[$value];
         $extra='';
     } else {
-        $pg=$options['page'];
+        $pg=$formatter->page->name;
         $extra='&amp;value='.$url[$value];
     }
     $wide= $formatter->link_tag($pg,
@@ -123,12 +126,13 @@ define(TOUR_DEPTH,3);
        "?action=tour$query$extra&amp;w=$count&amp;d=".($depth+1),_("deeper"));
     $link='<h3>'.sprintf(_("More %s or more %s"),$wide,$deep).'</h3>';
 
+    $pages = '';
     foreach ($allnode as $node) {
         if ($DBInfo->hasPage($url[$node])) {
             $pg=$url[$node];
             $extra='';
         } else {
-            $pg=$options['page'];
+            $pg=$formatter->page->name;
             $extra='&amp;value='.$url[$node];
         }
         $pages.='<li>'.$formatter->link_tag($pg,$query2.$extra,
@@ -151,7 +155,7 @@ define(TOUR_DEPTH,3);
                 $pg=$url[$leaf];
                 $extra='';
             } else {
-                $pg=$options['page'];
+                $pg=$formatter->page->name;
                 $extra='&amp;value='.$url[$leaf];
             }
             $temp.= ' <li>'.$formatter->link_tag($pg,
