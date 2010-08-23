@@ -2063,7 +2063,7 @@ class Formatter {
     #  * single bracketted words [Hello World] etc.
     #  * single bracketted words with double quotes ["Hello World"]
     #  * double bracketted words with double quotes [["Hello World"]]
-    "(?<!\[)\!?\[(\[)$single(\")?(?:[^\[\]\",<\s'\*][^\[\],>]{0,255}[^\"])(?(5)\"(?:[^\"]*))(?(4)\])\](?!\])";
+    "(?<!\[)\!?\[(\[)$single(\")?(?:[^\[\]\",<\s'\*][^\[\]]{0,255}[^\"])(?(5)\"(?:[^\"]*))(?(4)\])\](?!\])";
 
     if ($camelcase)
       $this->wordrule.='|'.
@@ -2570,6 +2570,7 @@ class Formatter {
       } else if (!empty($this->mediawiki_style) and $double_bracket and $url[0] != '"' and strpos($url, ' ') !== false) {
         $url = '"'.$url.'"';
       }
+      $url = preg_replace('/&amp;/i', '&', $url);
       return $this->word_repl($url,'',$attr);
     }
   }
