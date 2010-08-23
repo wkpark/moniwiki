@@ -4723,10 +4723,11 @@ EOS;
         $menu[]= $this->link_to("?action=edit",_("EditText")," rel='nofollow' accesskey='x'");
       else
         $menu[]= _("NotEditable");
-      if (!empty($args['refresh']) and $args['refresh'] ==1)
-        $menu[]= $this->link_to("?refresh=1",_("Refresh")," rel='nofollow' accesskey='n'");
     } else
       $menu[]= $this->link_to('?action=show',_("ShowPage"));
+
+    if (!empty($args['refresh']) and $args['refresh'] ==1)
+      $menu[]= $this->link_to("?refresh=1",_("Refresh")," rel='nofollow' accesskey='n'");
     $menu[]=$this->link_tag("FindPage","",_("FindPage"));
 
     if (empty($args['noaction'])) {
