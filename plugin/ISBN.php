@@ -178,12 +178,12 @@ EOS;
         # some sites such as the IMDB check the referer and
         # do not permit to show any of its images
         # the $isbn_img_download option is needed to show such images
-        preg_match('/^(.*)\.(jpeg|jpg|gif|png)$/',$imglink,$m);
-        if ($m[1] and $m[2]) {
+        preg_match('/^(.*)\.(jpeg|jpg|gif|png)$/i',$imglink,$m);
+        if (!empty($m[1]) and isset($m[2])) {
            $myimglink=md5($m[1]).'.'.$m[2];
         }
 
-        if (!$m[2]) {
+        if (isset($m[2])) {
            # skip XXX
         } else if (file_exists($DBInfo->upload_dir.'/isbn/'.$myimglink)) {
            $mlink=$formatter->macro_repl('attachment','isbn:'.$myimglink,1);
