@@ -464,12 +464,12 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
   if (!empty($options['category'])) $action.='category='.$options['category'].'&amp;';
   if (!empty($options['mode'])) $action.='mode='.$options['mode'].'&amp;';
 
-  $prev=$formatter->link_to('?'.$action.'date='.$prev_date,'&laquo; '.
+  $prev=$formatter->link_to('?'.$action.'date='.$prev_date,"<span class='bullet'>&laquo;</span> ".
     _("Previous"));
   $next = '';
   if (!empty($next_date))
     $next=" | ".$formatter->link_to('?'.$action.'date='.$next_date,
-      _("Next").' &raquo;');
+      _("Next")." <span class='bullet'>&raquo;</span>");
   return $bra.$items.$cat.'<div class="blog-action">'.$prev.$next.'</div>';
 }
 // vim:et:sts=2:
