@@ -17,6 +17,7 @@ function processor_blog($formatter,$value="",$options) {
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
 
+  $datetag = '';
   if ($date_anchor=='' and $DBInfo->use_trackback) {
     #read trackbacks and set entry counter
     $cache= new Cache_text('trackback');
@@ -82,7 +83,7 @@ function processor_blog($formatter,$value="",$options) {
     if (!empty($comments)) {
       $count=sizeof(explode("----\n",$comments));
 
-      if ($options['noaction'] or $DBInfo->blog_comments) {
+      if (!empty($options['noaction']) or !empty($DBInfo->blog_comments)) {
         $comments=preg_replace("/----\n/","[[HTML(</div></div><div class='separator'><hr /></div><div class='blog-comment'><div>)]]",$comments);
       } else {
         $comments='';

@@ -77,6 +77,8 @@ function do_Blog($formatter,$options) {
   $rows=(!empty($options['rows']) and $options['rows'] > 5) ? $options['rows']: 8;
   $cols=(!empty($options['cols']) and $options['cols'] > 60) ? $options['cols']: $cols;
 
+  $name = !empty($options['name']) ? $options['name'] : '';
+
   $url=$formatter->link_url($formatter->page->urlname);
 
   if (!empty($formatter->refresh) or !empty($options['button_refresh'])) {
@@ -250,6 +252,7 @@ function do_Blog($formatter,$options) {
       print $formatter->processor_repl('blog',$quote,$options);
       #print $formatter->send_page($quote,$options);
     }
+    $extra = '';
     if ($options['id'] != 'Anonymous')
       $extra='<div style="text-align:right">'.'
         <input type="submit" name="button_refresh" value="Refresh" /></div>';
@@ -260,7 +263,7 @@ function do_Blog($formatter,$options) {
     print "<form method='post' action='$url'>\n";
     $myinput='';
     if ($options['id'] == 'Anonymous')
-      $myinput.='<b>'._("Name")."</b>: <input name='name' size='15' maxlength='15' value='$options[name]' />\n";
+      $myinput.='<b>'._("Name")."</b>: <input name='name' size='15' maxlength='15' value='$name' />\n";
     if (empty($options['value']))
       $myinput.='<b>'._("Title")."</b>: <input name='title' value='$options[title]' size='70' maxlength='70' style='width:300px' /><br />\n";
     else
@@ -318,7 +321,7 @@ JS;
   return;
 }
 
-function macro_Blog($formatter,$value) {
+function macro_Blog($formatter, $value, $options = array()) {
   global $DBInfo;
   $COLS_MSIE = 80;
   $COLS_OTHER = 85;
@@ -330,6 +333,8 @@ function macro_Blog($formatter,$value) {
   $url=$formatter->link_url($formatter->page->urlname);
   $datestamp= $formatter->page->mtime();
 
+  $name = !empty($options['name']) ? $options['name'] : '';
+
   if (empty($options['id']))
     $options['id']=$DBInfo->user->id;
 
@@ -340,7 +345,7 @@ function macro_Blog($formatter,$value) {
   $form = '<div id="editor_area">';
   $form.= "<form method='post' action='$url'>\n";
   if ($options['id'] == 'Anonymous')
-    $form.='<b>'._("Name")."</b>: <input name='name' size='15' maxlength='15' value='$options[name]' />\n";
+    $form.='<b>'._("Name")."</b>: <input name='name' size='15' maxlength='15' value='$name' />\n";
   $form.= '<b>'._("Title")."</b>: <input name='title' size='70' maxlength='70' style='width:200' /><br />\n";
   $form.= <<<FORM
 <textarea class="wiki" id="content" wrap="virtual" name="savetext"

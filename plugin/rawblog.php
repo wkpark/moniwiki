@@ -22,13 +22,16 @@ function do_rawblog($formatter,$options) {
   $COLS_OTHER = 85;
   $cols = preg_match('/MSIE/', $HTTP_USER_AGENT) ? $COLS_MSIE : $COLS_OTHER;
 
-  $rows=$options['rows'] > 5 ? $options['rows']: 8;
-  $cols=$options['cols'] > 60 ? $options['cols']: $cols;
+  $rows=(!empty($options['rows']) and $options['rows'] > 5) ? $options['rows']: 8;
+  $cols=(!empty($options['cols']) and $options['cols'] > 60) ? $options['cols']: $cols;
 
   $url=$formatter->link_url($formatter->page->urlname);
   $formatter->send_header("",$options);
 
+  $quote = '';
   { #
+    $lines = array();
+    $title = '';
     if ($options['value']) {
       $raw_body=$formatter->page->_get_raw_body();
       $lines=explode("\n",$raw_body);
@@ -59,7 +62,7 @@ function do_rawblog($formatter,$options) {
         $formatter->send_footer("",$options);
         return;
       }
-      if (!$title) $title=$options['page'];
+      if (!isset($title[0])) $title=$options['page'];
       $formatter->send_title(sprintf(_("Delete Blog entry \"%s\""),$title),"",$options);
     }
     $options['noaction']=1;
