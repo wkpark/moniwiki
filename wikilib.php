@@ -308,9 +308,9 @@ function get_aliases($file) {
     } else {
       if (($p = strpos($line, '<')) !== false) {
         list($val, $keys) = explode('<', $line, 2);
-        $keys = explode(',', $keys);
+        $keys = get_csv($keys);
       } else {
-        $keys = explode(',', $line);
+        $keys = get_csv($line);
         $val = array_shift($keys);
       }
 
