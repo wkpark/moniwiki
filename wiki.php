@@ -3385,9 +3385,11 @@ class Formatter {
     }
     else if (preg_match("/^\-(\d+)$/",$para,$match))
       $attr['colspan']=$match[1];
-    else if ($para[0]=='#')
+    else if ($para[0]=='#') {
       $sty['background-color']=strtolower($para);
-    else {
+      $myattr=$this->_attr('',$sty,$myclass,$align);
+      $attr=array_merge($attr,$myattr);
+    } else {
       if (substr($para,0,7)=='rowspan') {
         $attr['rowspan']=substr($para,7);
       } else if (substr($para,0,3)=='row') {
@@ -3428,9 +3430,7 @@ class Formatter {
     foreach ($attrs as $tattr) {
       $tattr=trim($tattr);
       if (empty($tattr)) continue;
-      if ($tattr[0]=='#') {
-        $sty['background-color']=strtolower($tattr);
-      } else if (substr($tattr,0,5)=='table') {
+      if (substr($tattr,0,5)=='table') {
         $tattr=substr($tattr,5);
         $mattr=$this->_attr($tattr,$sty,$myclass);
         $myattr=array_merge($myattr,$mattr);
