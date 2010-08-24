@@ -1969,8 +1969,11 @@ class Formatter {
                      );
 
     # NoSmoke's MultiLineCell hack
-    $this->extrarule=array("/{{\|(.*)\|}}/","/{{\|/","/\|}}/");
-    $this->extrarepl=array("<table class='closure'><tr class='closure'><td class='closure'>\\1</td></tr></table>","</div><table class='closure'><tr class='closure'><td class='closure'><div>","</div></td></tr></table><div>");
+    #$this->extrarule=array("/{{\|(.*)\|}}/","/{{\|/","/\|}}/");
+    #$this->extrarepl=array("<table class='closure'><tr class='closure'><td class='closure'>\\1</td></tr></table>","</div><table class='closure'><tr class='closure'><td class='closure'><div>","</div></td></tr></table><div>");
+    #$this->extrarepl=array("<table class='closure'><tr class='closure'><td class='closure'>\\1</td></tr></table>","</div><table class='closure'><tr class='closure'><td class='closure'><div>","</div></td></tr></table><div>");
+    $this->_pre_rule=array("/{{\|$/", "/{{\|/", "/\|}}/");
+    $this->_pre_repl=array('{{{#!wiki .closure', "{{{#!wiki .closure\n", '}}}');
 
     // set extra baserule
     if (!empty($DBInfo->baserule)) {
@@ -3760,6 +3763,7 @@ class Formatter {
         continue; # comments
       }
 
+      $line = preg_replace($this->_pre_rule, $this->_pre_repl, $line);
       if ($in_pre) {
          if (strpos($line,"}}}")===false) {
            $this->pre_line.=$line."\n";
@@ -4124,7 +4128,7 @@ class Formatter {
 
       if ($this->auto_linebreak and in_array(trim($line),array('{{|','|}}')))
         $this->nobr=1;
-      $line=preg_replace($this->extrarule,$this->extrarepl,$line);
+      #$line=preg_replace($this->extrarule,$this->extrarepl,$line);
       #if ($this->auto_linebreak and preg_match('/<div>$/',$line))
       #  $this->nobr=1;
 
