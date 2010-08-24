@@ -5487,8 +5487,15 @@ if ($theme and ($DBInfo->theme_css or !$options['css_url']))
   $options['css_url']=(!empty($DBInfo->themeurl) ? $DBInfo->themeurl:$DBInfo->url_prefix)."/theme/$theme/css/default.css";
 
   $options['pagename']=get_pagename();
-  if (!empty($DBInfo->robots)) {
-    $options['is_robot']=isRobot($_SERVER['HTTP_USER_AGENT']);
+  // check robot
+  if (!empty($DBInfo->robots) and !isset($_SESSION['is_robot'])) {
+    if (empty($_SERVER['HTTP_USER_AGENT']))
+      $options['is_robot'] = 1;
+    else
+      $options['is_robot'] = isRobot($_SERVER['HTTP_USER_AGENT']);
+  }
+  if (empty($DBInfo->nosession) and isset($_SESSION['is_robot'])) {
+    $_SESSION['is_robot'] = $options['is_robot'];
   }
 
   if ($user->id != 'Anonymous' and !empty($DBInfo->use_scrap)) {
@@ -5641,12 +5648,17 @@ function wiki_main($options) {
 
   // simple black/white list of network check
   $no_checkip = false;
-  if (!empty($DBInfo->whitelist)) {
+  if (empty($_SESSION['access_ok']) and !empty($DBInfo->whitelist)) {
     include_once 'lib/checkip.php';
     if (check_ip($DBInfo->whitelist, $_SERVER['REMOTE_ADDR'])) {
       $no_checkip = true;
+      if (empty($DBInfo->nosession))
+        $_SESSION['access_ok'] = 1;
     }
+  } else if (!empty($_SESSION['access_ok'])) {
+    $no_checkip = true;
   }
+
   if (!$no_checkip and !empty($DBInfo->blacklist)) {
     include_once 'lib/checkip.php';
     if (check_ip($DBInfo->blacklist, $_SERVER['REMOTE_ADDR'])) {
@@ -5655,8 +5667,10 @@ function wiki_main($options) {
       do_invalid($formatter,$options);
       return false;
     }
+    if (empty($DBInfo->nosession))
+      $_SESSION['access_ok'] = 2;
   }
-  if (!empty($DBInfo->kiwirian)) {
+  if (empty($_SESSION['access_ok']) and !empty($DBInfo->kiwirian)) {
     if (!is_array($DBInfo->kiwirian)) {
       $DBInfo->kiwirian=explode(':',$DBInfo->kiwirian);
     }
@@ -5666,6 +5680,8 @@ function wiki_main($options) {
       do_invalid($formatter,$options);
       return false;
     }
+    if (empty($DBInfo->nosession))
+      $_SESSION['access_ok'] = 3;
   }
 
   while (empty($action) or $action=='show') {
@@ -6031,8 +6047,9 @@ init_requests($options);
 if (!isset($options['pagename'][0])) $options['pagename']= get_frontpage($lang);
 $DBInfo->lang=$lang;
 
-if (session_id()== '' && empty($Config['nosession'])){
-  session_name("MONIWIKI");
+if (session_id() == '' and empty($Config['nosession']) and is_writable(ini_get('session.save_path')) ) {
+  $myseed = getTicket(!empty($DBInfo->session_seed) ? $DBInfo->session_seed : time(), $_SERVER['REMOTE_ADDR'], 6);
+  session_name('MONIWIKI_' . $myseed . '_' . $options['id']);
   session_start();
 }
 
