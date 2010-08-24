@@ -2499,7 +2499,7 @@ class Formatter {
         }
         #$link=str_replace('&','&amp;',$url);
         $link=preg_replace('/&(?!#?[a-z0-9]+;)/i','&amp;',$url);
-        if (empty($text)) $text=$url;
+        if (!isset($text[0])) $text=$url;
         else {
           $img_attr='';
           if (preg_match("/^attachment:/",$text)) {
@@ -2516,7 +2516,7 @@ class Formatter {
             $text=qualifiedUrl($this->url_prefix.'/'.$text);
           }
           if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
-            $atext=!empty($atext) ? $atext:$text;
+            $atext=isset($atext[0]) ? $atext:$text;
             $text=str_replace('&','&amp;',$text);
             return "<a class='externalLink named' href='$link' $attr $this->external_target title='$url'><img class='external' style='border:0px' alt='$atext' src='$text' $img_attr/></a>";
           }
@@ -2756,7 +2756,7 @@ class Formatter {
     if (empty($DBInfo->use_twikilink)) $islink=0;
     list($page,$page_text,$gpage)=
       normalize_word($page,$this->group,$this->page->name,$nogroup,$islink);
-    if ($text) {
+    if (isset($text[0])) {
       if (preg_match("/^(http|ftp|attachment).*\.(png|gif|jpeg|jpg)$/i",$text)) {
         if (substr($text,0,11)=='attachment:') {
           $fname=substr($text,11);
