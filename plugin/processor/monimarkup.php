@@ -662,7 +662,7 @@ class processor_monimarkup
             $out.=$this->_list(0,$_lityp[$_li]);
             --$_li;
         }
-        if (!empty($formatter->sect_num) and $formatter->sect_num >1) $out.=$this->_div(0);
+        if (!empty($formatter->sect_num) and $formatter->sect_num >=1) $out.=$this->_div(0);
 
         if (!empty($formatter->use_smileys) and empty($formatter->smiley_rule))
             $formatter->initSmileys();
