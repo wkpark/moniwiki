@@ -1651,10 +1651,13 @@ class Cache_text {
         rewind($fp);
         break;
       }
+      if (!empty($params['print'])) {
+        fclose($fp);
+        return readfile($key);
+      }
       $ret=fread($fp,$size);
     }
     fclose($fp);
-    if (!empty($params['print'])) return print $ret;
     return $ret;
   }
 
@@ -5857,8 +5860,15 @@ function wiki_main($options) {
       $_macros=null;
      
       if (empty($formatter->refresh) and (($mtime > $dtime) and ($check < $Config['cachetime']))) {
-        $_macros= unserialize($mcache->fetch($pagename));
-        $out= $cache->fetch($pagename);
+        if ($mcache->exists($pagename))
+          $_macros= unserialize($mcache->fetch($pagename));
+        if (empty($_macros)) {
+          $out = '';
+          #$out = $cache->fetch($pagename);
+          $cache->fetch($pagename, '', array('print'=>1));
+        } else {
+          $out = $cache->fetch($pagename);
+        }
         $mytime=gmdate("Y-m-d H:i:s",$mtime+$options['tz_offset']);
         $extra_out= "<!-- Cached at $mytime -->";
       } else {
@@ -5884,6 +5894,7 @@ function wiki_main($options) {
           $options['mid']=$v[1];
           $mrepl[]=$formatter->macro_repl($v[0],'',$options); // XXX
         }
+        echo $formatter->get_javascripts();
         $out=str_replace($mrule,$mrepl,$out);
       }
       echo $out,$extra_out;
