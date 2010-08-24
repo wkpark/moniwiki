@@ -2909,17 +2909,25 @@ class Formatter {
     }
     if (strtolower($DBInfo->charset) == 'utf-8')
       $utfword=$word;
-    else if (function_exists('iconv'))
+    else if (function_exists('iconv')) {
       $utfword=iconv($DBInfo->charset,'utf-8',$word);
-    if ($utfword) {
+    }
+    while ($utfword !== false and isset($utfword[0])) {
       preg_match('/^(.)(.*)$/u', $utfword, $m);
       if (!empty($m[1])) {
         $tag = $m[1];
-        $last = !empty($m[2]) ? $m[2] : '';
+        if (strtolower($DBInfo->charset) != 'utf-8' and function_exists('iconv')) {
+          $tag = iconv('utf-8', $DBInfo->charset, $tag);
+          if ($tag === false) break;
+          $last = substr($word, strlen($tag));
+        } else {
+          $last = !empty($m[2]) ? $m[2] : '';
+        }
         return "<span><a class='nonexistent' rel='nofollow' {$title}href='$url'>$tag</a>".$last.'</span>';
       }
+      break;
     }
-    return "<a class='nonexistent nomarkup' rel='nofollow' {$title}href='$url'>?</a>$word";
+    return "<a class='nonexistent' rel='nofollow' {$title}href='$url'>$word</a>";
   }
 
   function head_repl($depth,$head,&$headinfo,$attr='') {
