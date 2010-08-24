@@ -5502,16 +5502,6 @@ if ($theme and ($DBInfo->theme_css or !$options['css_url']))
   $options['css_url']=(!empty($DBInfo->themeurl) ? $DBInfo->themeurl:$DBInfo->url_prefix)."/theme/$theme/css/default.css";
 
   $options['pagename']=get_pagename();
-  // check robot
-  if (!empty($DBInfo->robots) and !isset($_SESSION['is_robot'])) {
-    if (empty($_SERVER['HTTP_USER_AGENT']))
-      $options['is_robot'] = 1;
-    else
-      $options['is_robot'] = isRobot($_SERVER['HTTP_USER_AGENT']);
-  }
-  if (empty($DBInfo->nosession) and isset($_SESSION['is_robot'])) {
-    $_SESSION['is_robot'] = $options['is_robot'];
-  }
 
   if ($user->id != 'Anonymous' and !empty($DBInfo->use_scrap)) {
     $pages = explode("\t",$user->info['scrapped_pages']);
@@ -5635,6 +5625,16 @@ function wiki_main($options) {
   }
 
   // is it robot ?
+  if (!empty($DBInfo->robots) and !isset($_SESSION['is_robot'])) {
+    if (empty($_SERVER['HTTP_USER_AGENT']))
+      $options['is_robot'] = 1;
+    else
+      $options['is_robot'] = isRobot($_SERVER['HTTP_USER_AGENT']);
+    $_SESSION['is_robot'] = $options['is_robot'];
+  } else if (isset($_SESSION['is_robot'])) {
+    $options['is_robot'] = $_SESSION['is_robot'];
+  }
+
   if (!empty($options['is_robot'])) {
     if (!empty($DBInfo->security_class_robot)) {
       $class='Security_'.$DBInfo->security_class_robot;
@@ -5663,40 +5663,53 @@ function wiki_main($options) {
 
   // simple black/white list of network check
   $no_checkip = false;
-  if (empty($_SESSION['access_ok']) and !empty($DBInfo->whitelist)) {
-    include_once 'lib/checkip.php';
-    if (check_ip($DBInfo->whitelist, $_SERVER['REMOTE_ADDR'])) {
+  if (!empty($DBInfo->whitelist)) {
+    if (empty($_SESSION['whitelist'])) {
+      require_once 'lib/checkip.php';
+      if (check_ip($DBInfo->whitelist, $_SERVER['REMOTE_ADDR'])) {
+        $no_checkip = true;
+        $_SESSION['whitelist'] = true;
+      }
+    } else if (!empty($_SESSION['whitelist'])) {
       $no_checkip = true;
-      if (empty($DBInfo->nosession))
-        $_SESSION['access_ok'] = 1;
     }
-  } else if (!empty($_SESSION['access_ok'])) {
-    $no_checkip = true;
   }
 
   if (!$no_checkip and !empty($DBInfo->blacklist)) {
-    include_once 'lib/checkip.php';
-    if (check_ip($DBInfo->blacklist, $_SERVER['REMOTE_ADDR'])) {
+    if (!isset($_SESSION['blacklist'])) {
+      require_once 'lib/checkip.php';
+      if (check_ip($DBInfo->blacklist, $_SERVER['REMOTE_ADDR'])) {
+        $_SESSION['blacklist'] = true;
+      } else {
+        $_SESSION['blacklist'] = false;
+      }
+    }
+
+    if ($_SESSION['blacklist']) {
       $options['title']=_("You are in the black list");
       $options['msg']=_("Please contact WikiMasters");
       do_invalid($formatter,$options);
       return false;
     }
-    if (empty($DBInfo->nosession))
-      $_SESSION['access_ok'] = 2;
   }
-  if (empty($_SESSION['access_ok']) and !empty($DBInfo->kiwirian)) {
-    if (!is_array($DBInfo->kiwirian)) {
-      $DBInfo->kiwirian=explode(':',$DBInfo->kiwirian);
+
+  if (!empty($DBInfo->kiwirian)) {
+    if (!isset($_SESSION['kiwirian'])) {
+      if (!is_array($DBInfo->kiwirian)) {
+        $DBInfo->kiwirian=explode(':',$DBInfo->kiwirian);
+      }
+      if (in_array($options['id'],$DBInfo->kiwirian))
+        $_SESSION['kiwirian'] = true;
+      else
+        $_SESSION['kiwirian'] = false;
     }
-    if (in_array($options['id'],$DBInfo->kiwirian)) {
+
+    if ($_SESSION['kiwirian'] === true) {
       $options['title']=_("You are blocked in this wiki");
       $options['msg']=_("Please contact WikiMasters");
       do_invalid($formatter,$options);
       return false;
     }
-    if (empty($DBInfo->nosession))
-      $_SESSION['access_ok'] = 3;
   }
 
   while (empty($action) or $action=='show') {
@@ -6071,8 +6084,10 @@ if (!isset($options['pagename'][0])) $options['pagename']= get_frontpage($lang);
 $DBInfo->lang=$lang;
 
 if (session_id() == '' and empty($Config['nosession']) and is_writable(ini_get('session.save_path')) ) {
-  $myseed = getTicket(!empty($DBInfo->session_seed) ? $DBInfo->session_seed : time(), $_SERVER['REMOTE_ADDR'], 6);
-  session_name('MONIWIKI_' . $myseed . '_' . $options['id']);
+  $prefix = !empty($DBInfo->session_seed) ? $DBInfo->session_seed : 'MONIWIKI';
+  $myseed = getTicket($prefix, $_SERVER['REMOTE_ADDR']);
+  $myid = $prefix . '-*-' . $myseed . '-*-' . $options['id'];
+  session_name($myid);
   session_start();
 }
 
