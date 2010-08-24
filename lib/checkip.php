@@ -12,8 +12,8 @@ function normalize_network($network)
         $tmp = explode('/', $network);
         if (count($tmp) > 2)
             return false;
-	$network = $tmp[0];
-	$netmask = $tmp[1];
+        $network = $tmp[0];
+        $netmask = $tmp[1];
     }
     $network = rtrim($network, '.'); // trim last dot. eg. 1.2.3. => 1.2.3
 
@@ -26,7 +26,7 @@ function normalize_network($network)
 
     if (empty($netmask)) {
         $netmask = 8 * ($dot + 1);
-    } else if (is_int($netmask)) {
+    } else if (is_numeric($netmask)) {
         // validate netmask
         if ($netmask < 0 or $netmask > 32) return false;
     } else {
@@ -50,12 +50,12 @@ function check_ip($rules, $ip) {
 
     foreach ($rules as $rule)
     {
-	$ret = normalize_network($rule);
+        $ret = normalize_network($rule);
         if (!$ret) continue; // ignore
 
         $network = $ret[0];
         $netmask = $ret[1];
-        if (is_int($netmask)) {
+        if (is_numeric($netmask)) {
             $netmask = 0xffffffff << (32 - $netmask);
         } else {
             $netmask = ip2long($netmask);
