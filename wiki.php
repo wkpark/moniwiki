@@ -4565,9 +4565,10 @@ class Formatter {
       } else {
         $options['title'] = strip_tags($options['title']);
       }
+      $theme_type = !empty($this->_newtheme) ? $this->_newtheme : '';
       if (empty($options['css_url'])) $options['css_url']=$DBInfo->css_url;
-      if (empty($this->pi['#nodtd']) and !isset($options['retstr']) and $this->_newtheme != 2) echo $DBInfo->doctype;
-      if ((isset($this->_newtheme) and $this->_newtheme == 2) or isset($options['retstr']))
+      if (empty($this->pi['#nodtd']) and !isset($options['retstr']) and $theme_type != 2) echo $DBInfo->doctype;
+      if ($theme_type == 2 or isset($options['retstr']))
         ob_start();
       else
         echo "<head>\n";
@@ -4810,6 +4811,7 @@ EOS;
   alt="powered by MoniWiki" /></a>
 FOOT;
 
+    $timer = '';
     if (isset($options['timer']) and is_object($options['timer'])) {
       $options['timer']->Check();
       $timer=$options['timer']->Total();
@@ -5111,7 +5113,7 @@ MSG;
     # print the title
 
     if (empty($this->_newtheme) or $this->_newtheme != 2) {
-      if ($this->_newtheme != 2)
+      if (isset($this->_newtheme) and $this->_newtheme != 2)
         echo '<body'.(!empty($options['attr']) ? ' ' . $options['attr'] : '' ) .">\n";
       echo '<div><a id="top" name="top" accesskey="t"></a></div>'."\n";
     }
@@ -5148,22 +5150,24 @@ MSG;
         echo "<div id='wikiIcon'>".$upper_icon.$icons.$rss_icon.'</div>';
         echo $menu;
       }
-      echo $msg;
+      if (!empty($msg))
+        echo $msg;
       echo "</div>\n";
     }
-    if (empty($this->popup) and (empty($themeurl) or !$this->_newtheme)) {
+    if (empty($this->popup) and (empty($themeurl) or empty($this->_newtheme))) {
       echo $DBInfo->hr;
       if ($options['trail']) {
         echo "<div id='wikiTrailer'><p>\n";
         echo $this->trail;
         echo "</p></div>\n";
       }
-      if ($this->origin) {
+      if (!empty($this->origin)) {
         echo "<div id='wikiOrigin'><p>\n";
         echo $this->origin;
         echo "</p></div>\n";
       }
-      echo $this->subindex;
+      if (!empty($this->subindex))
+        echo $this->subindex;
     }
     echo "<div id='wikiBody'>\n";
     #if ($this->subindex and !$this->popup and (empty($themeurl) or !$this->_newtheme))
@@ -5346,6 +5350,8 @@ function get_locales($mode=1) {
     'fr'=>array('fr_FR','france',''),
     'ko'=>array('ko_KR','korean',''),
   );
+  if (empty($_SERVER['HTTP_ACCEPT_LANGUAGE']))
+    return array($languages['en'][0]);
   $lang= strtolower($_SERVER['HTTP_ACCEPT_LANGUAGE']);
   $lang= strtr($lang,'_','-');
   $langs=explode(',',preg_replace(array("/;[^;,]+/","/\-[a-z]+/"),'',$lang));
@@ -5556,7 +5562,7 @@ function wiki_main($options) {
   $pagename=isset($options['pagename'][0]) ? $options['pagename']: $DBInfo->frontpage;
 
   # get primary variables
-  if ($_SERVER['REQUEST_METHOD']=='POST') {
+  if (isset($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD']=='POST') {
     // reset some reserved variables
     if (isset($_POST['retstr'])) unset($_POST['retstr']);
     if (isset($_POST['header'])) unset($_POST['header']);
@@ -5581,7 +5587,7 @@ function wiki_main($options) {
     }
     $goto=!empty($_POST['goto']) ? $_POST['goto'] : '';
     $popup=!empty($_POST['popup']) ? 1 : 0;
-  } else if ($_SERVER['REQUEST_METHOD']=='GET') {
+  } else if (empty($_SERVER['REQUEST_METHOD']) or $_SERVER['REQUEST_METHOD']=='GET') {
     // reset some reserved variables
     if (isset($_GET['retstr'])) unset($_GET['retstr']);
     if (isset($_POST['header'])) unset($_POST['header']);
@@ -5820,7 +5826,7 @@ function wiki_main($options) {
       log_referer($_SERVER['HTTP_REFERER'],$pagename);
 
     $formatter->write("<div id='wikiContent'>\n");
-    if (is_object($options['timer'])) {
+    if (isset($options['timer']) and is_object($options['timer'])) {
       $options['timer']->Check("init");
     }
     $options['pagelinks']=1;
@@ -5869,7 +5875,7 @@ function wiki_main($options) {
     } else {
       $formatter->send_page('',$options);
     }
-    if (is_object($options['timer'])) {
+    if (isset($options['timer']) and is_object($options['timer'])) {
       $options['timer']->Check("send_page");
     }
     $formatter->write("<!-- wikiContent --></div>\n");
@@ -6015,7 +6021,7 @@ $options['timer'] = &$timing;
 
 $DBInfo= new WikiDB($Config);
 
-if (is_object($options['timer'])) {
+if (isset($options['timer']) and is_object($options['timer'])) {
   $options['timer']->Check("load");
 }
 
