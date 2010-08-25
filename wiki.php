@@ -5595,18 +5595,23 @@ function wiki_main($options) {
   $options['page']=$pagename;
   $page = $DBInfo->getPage($pagename);
 
-  $formatter = new Formatter($page,$options);
-
   // HEAD support for robots
   if (!empty($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD'] == 'HEAD') {
-    $header = array();
     if (!$page->exists()) {
-      $header[] = "HTTP/1.1 404 Not found";
-      $header[] = "Status: 404 Not found";
+      header("HTTP/1.1 404 Not found");
+      header("Status: 404 Not found");
+    } else {
+      #$formatter->get_redirect();
+      $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
+      $etag = '"'.md5($lastmod).'"';
+      header('Last-Modified: '.$lastmod);
+      header('ETag: '.$etag);
     }
-    $ret = $formatter->send_header($header, $options);
-    return $ret;
+    #$ret = $formatter->send_header($header, $options);
+    return;
   }
+
+  $formatter = new Formatter($page,$options);
 
   // is it robot ?
   if (!empty($DBInfo->robots) and !isset($_SESSION['is_robot'])) {
