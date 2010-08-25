@@ -4455,6 +4455,9 @@ class Formatter {
     if (!empty($mtime) and empty($options['nolastmod'])) {
       $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
       $this->header('Last-Modified: '.$lastmod);
+      if (!empty($options['etag']))
+        $this->header('ETag: "'.$options['etag'].'"');
+
       $meta_lastmod = '<meta http-equiv="last-modified" content="'.$lastmod.'" />'."\n";
     }
 
@@ -4469,6 +4472,13 @@ class Formatter {
       $this->header('Content-type: '.$content_type.$force_charset);
 
     if (!empty($options['action_mode']) and $options['action_mode'] =='ajax') return true;
+
+    # disabled
+    #$this->header("Vary: Accept-Encoding, Cookie");
+    #if (strstr($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') and function_exists('ob_gzhandler')) {
+    #  ob_start('ob_gzhandler');
+    #  $etag.= '.gzip';
+    #}
 
     if (isset($this->pi['#noindex'])) {
       $metatags='<meta name="robots" content="noindex,nofollow" />'."\n";

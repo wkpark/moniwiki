@@ -330,14 +330,14 @@ function get_aliases($file) {
  * @param    timestamp $timestamp lastmodified time of the cache file
  * @returns  void or exits with previously header() commands executed
  */
-function http_need_cond_request($timestamp, &$headers) {
+function http_need_cond_request($last_modified, $etag = '', &$headers) {
     // A PHP implementation of conditional get, see
     //   http://fishbowl.pastiche.org/archives/001132.html
-    $last_modified = substr(gmdate('r', $timestamp), 0, -5).'GMT';
-    $etag = '"'.md5($last_modified).'"';
-    // Send the headers
-    $headers[] = "Last-Modified: $last_modified";
-    $headers[] = "ETag: $etag";
+    if (is_numeric($last_modified)) // is it timestamp ?
+        $last_modified = substr(gmdate('r', $last_modified), 0, -5).'GMT';
+    if (empty($etag)) // pseudo etag
+        $etag = md5($last_modified);
+
     // See if the client has provided the required headers
     if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
         $if_modified_since = _stripslashes($_SERVER['HTTP_IF_MODIFIED_SINCE']);
@@ -364,11 +364,7 @@ function http_need_cond_request($timestamp, &$headers) {
         return true; // if-modified-since is there but doesn't match
     }
 
-    // Nothing has changed since their last request - serve a 304 and exit
-    $headers[] = 'HTTP/1.0 304 Not Modified';
-
-    // don't produce output, even if compression is on
-    @ob_end_clean();
+    // Nothing has changed since their last request
     return false;
 }
 
@@ -1584,13 +1580,29 @@ function do_raw($formatter,$options) {
   if (!empty($options['mime']) and in_array($options['mime'],$supported)) {
     $formatter->send_header("Content-Type: $options[mime]",$options);
   } else {
+    $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
+    $etag = md5($lastmod);
+    if (strstr($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') and function_exists('ob_gzhandler')) {
+      $gzip_mode = 1;
+      $etag.= '.gzip';
+    }
+    $options['etag'] = $etag;
+
     $header = array();
     $header[] = 'Content-Type: text/plain'.$force_charset;
-    $header[] = 'Pragma:';
-    $header[] = 'Cache-Control:';
-    $need = http_need_cond_request($formatter->page->mtime(), $header);
+    $header[] = 'Pragma: cache';
+    $maxage = 60*60*24*7;
+    $header[] = 'Cache-Control: private, max-age='.$maxage;
+    $need = http_need_cond_request($lastmod, $etag, $header);
+    if (!$need)
+        $header[] = 'HTTP/1.0 304 Not Modified';
     $formatter->send_header($header, $options);
     if (!$need) return;
+
+    # disabled
+    #if (!empty($gzip_mode)) {
+    #  ob_start('ob_gzhandler');
+    #}
   }
   $raw_body=$formatter->page->get_raw_body($options);
   if (isset($options['section'])) {
