@@ -4451,6 +4451,13 @@ class Formatter {
           $plain=1;
       }
     }
+    $mtime = $this->page->mtime();
+    if (!empty($mtime) and !empty($options['nolastmod'])) {
+      $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
+      $this->header('Last-Modified: '.$lastmod);
+      $meta_lastmod = '<meta http-equiv="last-modified" content="'.$lastmod.'" />'."\n";
+    }
+
     $content_type=
       !empty($DBInfo->content_type) ? $DBInfo->content_type: "text/html";
 
@@ -4472,8 +4479,8 @@ class Formatter {
         $metatags=$DBInfo->metatags;
       }
 
-      $mtime=$this->page->mtime(); // delay indexing from dokuwiki
-      if (!empty($DBInfo->delayindex) and ((time() - $mtime) < $DBInfo->delayindex)) {
+      // delay indexing like as dokuwiki
+      if (!empty($mtime) and !empty($DBInfo->delayindex) and ((time() - $mtime) < $DBInfo->delayindex)) {
         if (preg_match("/<meta\s+name=('|\")?robots\\1[^>]+>/i",
           $metatags)) {
           $metatags=preg_replace("/<meta\s+name=('|\")?robots\\1[^>]+>/i",
@@ -4560,6 +4567,7 @@ JSHEAD;
       echo $metatags,$js,"\n";
       echo $this->get_javascripts();
       echo $keywords;
+      if (!empty($meta_lastmod)) echo $meta_lastmod;
       echo "  <title>$DBInfo->sitename: ",$options['title'],"</title>\n";
       if (!empty($upper))
         echo '  <link rel="Up" href="',$this->link_url($upper),"\" />\n";
@@ -5559,7 +5567,7 @@ function wiki_main($options) {
     }
     $goto=!empty($_POST['goto']) ? $_POST['goto'] : '';
     $popup=!empty($_POST['popup']) ? 1 : 0;
-  } else if (empty($_SERVER['REQUEST_METHOD']) or $_SERVER['REQUEST_METHOD']=='GET') {
+  } else {
     // reset some reserved variables
     if (isset($_GET['retstr'])) unset($_GET['retstr']);
     if (isset($_POST['header'])) unset($_POST['header']);
@@ -5698,6 +5706,9 @@ function wiki_main($options) {
         return true;
       }
       $formatter->send_header($msg_404,$options);
+      if (!empty($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD'] == 'HEAD') {
+        return true;
+      }
 
       if (empty($DBInfo->metadb)) $DBInfo->initMetaDB();
       $twins=$DBInfo->metadb->getTwinPages($page->name,2);
@@ -5803,6 +5814,9 @@ function wiki_main($options) {
       $options['attr']=$DBInfo->body_attr;
 
     $ret = $formatter->send_header('', $options);
+    if (!empty($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD'] == 'HEAD') {
+      return true;
+    }
 
     if (empty($options['is_robot'])) {
       $formatter->send_title("","",$options);
@@ -5951,6 +5965,10 @@ function wiki_main($options) {
       }
       $msg=sprintf(_("You are not allowed to '%s'"),$action);
       $formatter->send_header("Status: 406 Not Acceptable",$options);
+      if (!empty($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD'] == 'HEAD') {
+        return true;
+      }
+
       $formatter->send_title($msg,"", $options);
       if ($options['err'])
         $formatter->send_page($options['err']);
