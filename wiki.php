@@ -1882,7 +1882,6 @@ class Formatter {
     $this->filters=!empty($DBInfo->filters) ? $DBInfo->filters : null;
     $this->postfilters=!empty($DBInfo->postfilters) ? $DBInfo->postfilter : null;
     $this->use_rating=!empty($DBInfo->use_rating) ? $DBInfo->use_rating : 0;
-    $this->use_etable=!empty($DBInfo->use_etable) ? 1 : 0;
     $this->use_metadata=!empty($DBInfo->use_metadata) ? $DBInfo->use_metadata : 0;
     $this->use_smileys=$DBInfo->use_smileys;
     $this->use_namespace=!empty($DBInfo->use_namespace) ? $DBInfo->use_namespace : '';
@@ -1977,7 +1976,6 @@ class Formatter {
 
     // set extra baserule
     if (!empty($DBInfo->baserule)) {
-      $dummy = 'dummy';
       foreach ($DBInfo->baserule as $rule=>$repl) {
         $t = @preg_match($rule,$repl);
         if ($t!==false) {
@@ -3332,19 +3330,24 @@ class Formatter {
     for ($i=1,$s=sizeof($cells);$i<$s;$i+=2) {
       $align='';
       $m=array();
-      preg_match('/^((&lt;[^>]+>)*)(\s?)(.*)(?<!\s)(\s*)?$/s',
+      preg_match('/^((&lt;[^>]+>)*)(\040?)(.*)(?<!\s)(\040*)?$/s',
         $cells[$i+1],$m);
       $cell=$m[3].$m[4].$m[5];
-      if (isset($cell{0}) and $cell{strlen($cell)-1} == "\n")
-        $cell = substr($cell,0,-1).' '; // XXX
 
+      $l = $m[3];
+      $r = $m[5];
       if (strpos($cell,"\n") !== false) {
+        $cell = trim($cell, "\n"); // strip \n XXX FIXME
         $params = array('notoc'=>1);
         $cell=$this->processor_repl('monimarkup',$cell, $params);
+        $cell = str_replace('&lt;', '<', $cell); // revert from baserule
+        // do not align multiline cells
+        $l = '';
+        $r = '';
       }
-      if ($m[3] and $m[5]) $align='center';
-      else if (!$m[3]) $align='';
-      else if (!$m[5]) $align='right';
+      if ($l and $r) $align='center';
+      else if (!$l) $align='';
+      else if (!$r) $align='right';
 
       $attr=$this->_td_attr($m[1],$align);
       if (!$tr_attr) $tr_attr=$m[1]; // XXX
@@ -3991,42 +3994,14 @@ class Formatter {
         if (!empty($match[2])) $open.='<caption>'.$match[2].'</caption>';
         $line='||'.$match[3].$match[5].$match[6];
         $in_table=1;
-        if ($this->use_etable && !preg_match('/\|(\||-+)$/',$match[6])) {
-          $text.=$open;
-          $this->table_line.=substr($line,2)."\n";
-          continue;
-        }
       } elseif ($in_table && ($line[0]!='|' or
               !preg_match("/^\|{2}.*(?:\|(\||-+))$/s",$line))) {
-        if ($this->use_etable && $in_table && preg_match('/^\|\|/',$line)) {
-          $this->table_line.=substr($line,2)."\n";
-          continue;
-        }
         $close=$this->_table(0,$dumm).$close;
         $in_table=0;
       }
       while ($in_table) {
         $line=preg_replace('/(\|\||\|-+)$/','',$line);
-        if ($this->use_etable && $this->table_line) {
-          $nline='||'.$this->table_line;
-          $this->table_line='';
-          if (!preg_match('/^\|+$/',$line)) $nline.=$line;
- 
-          $row=$this->_td($nline,$tr_attr);
-          if (!$this->in_tr) {
-            $this->in_tr=1;
-            $nline="<tr $tr_attr>".$row;
-            $tr_attr='';
-          } else {
-            $nline=$row;
-          }
-          if (preg_match('/^\|{3,}$/',$line)) {
-
-            $nline.='</tr>';
-            $this->in_tr=0;
-          }
-          $line=$nline;
-        } else {
+        {
           $tr_attr='';
           $row=$this->_td($line,$tr_attr);
           $line="<tr $tr_attr>".$row.'</tr>';
@@ -4035,20 +4010,6 @@ class Formatter {
 
         $line=str_replace('\"','"',$line); # revert \\" to \"
         break;
-      }
-      $tline='';
-      if ($this->use_etable && !$in_table && $this->table_line) {
-        $row=$this->_td('||'.$this->table_line,$tr_attr);
-          if (!$this->in_tr) {
-            $tline="<tr $tr_attr>";
-            $tr_attr='';
-          }
-          $tline.=$row.'</tr>';
-          $this->in_tr=0;
-          $this->table_line='';
-          $tline=str_replace('\"','"',$tline); # revert \\" to \"
-          $tline=preg_replace_callback("/(".$wordrule.")/",
-            array(&$this,'link_repl'),$tline);
       }
 
       # InterWiki, WikiName, {{{ }}}, !WikiName, ?single, ["extended wiki name"]
@@ -4140,8 +4101,7 @@ class Formatter {
       #if ($this->auto_linebreak and preg_match('/<div>$/',$line))
       #  $this->nobr=1;
 
-      $line=$tline.$close.$p_closeopen.$open.$line;
-      $tline='';
+      $line=$close.$p_closeopen.$open.$line;
       $open="";$close="";
 
       if ($in_pre==-1) {
