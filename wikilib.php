@@ -322,6 +322,56 @@ function get_aliases($file) {
   return $alias;
 }
 
+/**
+ * Checks and sets HTTP headers for conditional HTTP requests
+ *
+ * @author   Simon Willison <swillison@gmail.com>
+ * @link     http://simon.incutio.com/archive/2003/04/23/conditionalGet
+ * @param    timestamp $timestamp lastmodified time of the cache file
+ * @returns  void or exits with previously header() commands executed
+ */
+function http_need_cond_request($timestamp, &$headers) {
+    // A PHP implementation of conditional get, see
+    //   http://fishbowl.pastiche.org/archives/001132.html
+    $last_modified = substr(gmdate('r', $timestamp), 0, -5).'GMT';
+    $etag = '"'.md5($last_modified).'"';
+    // Send the headers
+    $headers[] = "Last-Modified: $last_modified";
+    $headers[] = "ETag: $etag";
+    // See if the client has provided the required headers
+    if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
+        $if_modified_since = _stripslashes($_SERVER['HTTP_IF_MODIFIED_SINCE']);
+    }else{
+        $if_modified_since = false;
+    }
+
+    if (isset($_SERVER['HTTP_IF_NONE_MATCH'])) {
+        $if_none_match = _stripslashes($_SERVER['HTTP_IF_NONE_MATCH']);
+    }else{
+        $if_none_match = false;
+    }
+
+    if (!$if_modified_since && !$if_none_match) {
+        return true;
+    }
+
+    // At least one of the headers is there - check them
+    if ($if_none_match && $if_none_match != $etag) {
+        return true; // etag is there but doesn't match
+    }
+
+    if ($if_modified_since && $if_modified_since != $last_modified) {
+        return true; // if-modified-since is there but doesn't match
+    }
+
+    // Nothing has changed since their last request - serve a 304 and exit
+    $headers[] = 'HTTP/1.0 304 Not Modified';
+
+    // don't produce output, even if compression is on
+    @ob_end_clean();
+    return false;
+}
+
 function get_title($page,$title='') {
   global $DBInfo;
   if (!empty($DBInfo->use_titlecache)) {
@@ -1533,8 +1583,15 @@ function do_raw($formatter,$options) {
   $supported=array('text/plain','text/css','text/javascript');
   if (!empty($options['mime']) and in_array($options['mime'],$supported)) {
     $formatter->send_header("Content-Type: $options[mime]",$options);
-  } else
-    $formatter->send_header("Content-Type: text/plain".$force_charset,$options);
+  } else {
+    $header = array();
+    $header[] = 'Content-Type: text/plain'.$force_charset;
+    $header[] = 'Pragma:';
+    $header[] = 'Cache-Control:';
+    $need = http_need_cond_request($formatter->page->mtime(), $header);
+    $formatter->send_header($header, $options);
+    if (!$need) return;
+  }
   $raw_body=$formatter->page->get_raw_body($options);
   if (isset($options['section'])) {
     $sections= _get_sections($raw_body);
