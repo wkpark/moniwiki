@@ -267,7 +267,6 @@ $jwmediaplayer_prefix='http://www.jeroenwijering.com/embed';
 $flashupload='swfupload';
 #$icon_list='edit,diff,show,find,print,info,help,pref,rss'; # set the icon list
 #$use_folding=0; # 1:default simple js / 2:with the prototype/mootools
-#$use_etable=0; # use new extended table syntax: deprecated!
 #$use_openid=0; # enable openid login
 #$check_openid_url=0; # selectivly show openid icons: experimental
 #$use_autosave=1; # enable autosave feature.
