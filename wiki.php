@@ -4452,7 +4452,7 @@ class Formatter {
       }
     }
     $mtime = $this->page->mtime();
-    if (!empty($mtime) and !empty($options['nolastmod'])) {
+    if (!empty($mtime) and empty($options['nolastmod'])) {
       $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
       $this->header('Last-Modified: '.$lastmod);
       $meta_lastmod = '<meta http-equiv="last-modified" content="'.$lastmod.'" />'."\n";
@@ -5592,6 +5592,22 @@ function wiki_main($options) {
     $action=substr($action,0,$p);
   }
 
+  $options['page']=$pagename;
+  $page = $DBInfo->getPage($pagename);
+
+  $formatter = new Formatter($page,$options);
+
+  // HEAD support for robots
+  if (!empty($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD'] == 'HEAD') {
+    $header = array();
+    if (!$page->exists()) {
+      $header[] = "HTTP/1.1 404 Not found";
+      $header[] = "Status: 404 Not found";
+    }
+    $ret = $formatter->send_header($header, $options);
+    return $ret;
+  }
+
   // is it robot ?
   if (!empty($DBInfo->robots) and !isset($_SESSION['is_robot'])) {
     if (empty($_SERVER['HTTP_USER_AGENT']))
@@ -5617,12 +5633,6 @@ function wiki_main($options) {
       $action='show';
     $DBInfo->extra_macros='';
   }
-
-  $options['page']=$pagename;
-
-  $page = $DBInfo->getPage($pagename);
-
-  $formatter = new Formatter($page,$options);
 
   $formatter->refresh=!empty($refresh) ? $refresh : '';
   $formatter->popup=!empty($popup) ? $popup : '';
@@ -5706,9 +5716,6 @@ function wiki_main($options) {
         return true;
       }
       $formatter->send_header($msg_404,$options);
-      if (!empty($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD'] == 'HEAD') {
-        return true;
-      }
 
       if (empty($DBInfo->metadb)) $DBInfo->initMetaDB();
       $twins=$DBInfo->metadb->getTwinPages($page->name,2);
@@ -5814,9 +5821,6 @@ function wiki_main($options) {
       $options['attr']=$DBInfo->body_attr;
 
     $ret = $formatter->send_header('', $options);
-    if (!empty($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD'] == 'HEAD') {
-      return true;
-    }
 
     if (empty($options['is_robot'])) {
       $formatter->send_title("","",$options);
@@ -5965,9 +5969,6 @@ function wiki_main($options) {
       }
       $msg=sprintf(_("You are not allowed to '%s'"),$action);
       $formatter->send_header("Status: 406 Not Acceptable",$options);
-      if (!empty($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD'] == 'HEAD') {
-        return true;
-      }
 
       $formatter->send_title($msg,"", $options);
       if ($options['err'])
