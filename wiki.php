@@ -668,6 +668,10 @@ EOS;
       }
     }
 
+    // some alias
+    if (!empty($this->use_captcha))
+      $this->use_ticket=$this->use_captcha;
+
     if (empty($this->purge_passwd))
       $this->purge_passwd=$this->admin_passwd;
 
