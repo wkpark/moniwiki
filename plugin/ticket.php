@@ -175,8 +175,17 @@ function do_ticket($formatter,$options) {
         return;
     }
 
-    if (!empty($DBInfo->gdfontpath))
+    if (!empty($DBInfo->gdfontpath)) {
         putenv('GDFONTPATH='.$DBInfo->gdfontpath);
+    } else {
+        // set default GDFONTPATH
+        $old = getenv('GDFONTPATH');
+        $path = $DBInfo->data_dir;
+        if ($old)
+            $path = $old.':'.$new;
+        putenv('GDFONTPATH='.$path);
+    }
+        
     if (function_exists('ImageTtfText')) {
         if (!empty($DBInfo->ticket_font)) {
             $FONT=$DBInfo->ticket_font;

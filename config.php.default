@@ -188,9 +188,11 @@ $spam_filter='antispam';
 $toc_options='simple,toggle';
 #$toc_options='title=Contents,toggle,simple';
 #$use_ticket=1; # use ticket image to block spam bots.
+#$use_captcha=1; # a alias of the $use_ticket
 #$ticket_gdfont=5; # use a builtin gd bitmap font
 #$gdfontpath='./data';
 #$ticket_font='TTFONT';
+#$ticket_font='PeignotNum';
 #$ticket_font_size='20';
 $local_abbr='LocalDictionary';
 #$postfilters='abbr';
