@@ -1584,7 +1584,7 @@ function do_raw($formatter,$options) {
     $etag = md5($lastmod);
     if (strstr($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') and function_exists('ob_gzhandler')) {
       $gzip_mode = 1;
-      $etag.= '.gzip';
+      $etag.= '.gzip'; // is it correct?
     }
     $options['etag'] = $etag;
 
@@ -1595,9 +1595,12 @@ function do_raw($formatter,$options) {
     $header[] = 'Cache-Control: private, max-age='.$maxage;
     $need = http_need_cond_request($lastmod, $etag, $header);
     if (!$need)
-        $header[] = 'HTTP/1.0 304 Not Modified';
+      $header[] = 'HTTP/1.0 304 Not Modified';
     $formatter->send_header($header, $options);
-    if (!$need) return;
+    if (!$need) {
+      @ob_end_clean();
+      return;
+    }
 
     # disabled
     #if (!empty($gzip_mode)) {
