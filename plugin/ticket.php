@@ -275,7 +275,10 @@ function do_ticket($formatter,$options) {
     }
         
     if (function_exists('ImageTtfText')) {
-        if (!empty($DBInfo->ticket_font)) {
+        while (!empty($DBInfo->ticket_font)) {
+            if (is_numeric($DBInfo->ticket_font)) {
+                break;
+            }
             $FONT=$DBInfo->ticket_font;
             //$FONT="/home/foobar/data/PenguinAttack.ttf";
             if ($FONT{0}=='/' and !file_exists($FONT)) {
@@ -284,6 +287,7 @@ function do_ticket($formatter,$options) {
                 $FONT=$DBInfo->ticket_font;
                 $use_ttf=1;
             }
+            break;
         }
     }
     if (!empty($use_ttf)) {
@@ -304,7 +308,9 @@ function do_ticket($formatter,$options) {
         if (!empty($DBInfo->ticket_gdfont))
             $FONT=$DBInfo->ticket_gdfont;
         $w=imagefontwidth($FONT)*strlen($passwd)+10;
-        $h=imagefontheight($FONT)+10;
+        $h=imagefontheight($FONT);
+        $pointsize = $h;
+        $h+= 10;
     }
 
     $im= ImageCreate($w,$h);
