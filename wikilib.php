@@ -330,13 +330,16 @@ function get_aliases($file) {
  * @param    timestamp $timestamp lastmodified time of the cache file
  * @returns  void or exits with previously header() commands executed
  */
-function http_need_cond_request($last_modified, $etag = '', &$headers) {
+function http_need_cond_request($last_modified, $etag = '') {
     // A PHP implementation of conditional get, see
     //   http://fishbowl.pastiche.org/archives/001132.html
     if (is_numeric($last_modified)) // is it timestamp ?
         $last_modified = substr(gmdate('r', $last_modified), 0, -5).'GMT';
     if (empty($etag)) // pseudo etag
         $etag = md5($last_modified);
+
+    if ($etag[0] != '"')
+        $etag = '"' . $etag . '"';
 
     // See if the client has provided the required headers
     if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
@@ -1580,6 +1583,7 @@ function do_raw($formatter,$options) {
   if (!empty($options['mime']) and in_array($options['mime'],$supported)) {
     $formatter->send_header("Content-Type: $options[mime]",$options);
   } else {
+    $mtime = $formatter->page->mtime();
     $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
     $etag = md5($lastmod);
     if (strstr($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') and function_exists('ob_gzhandler')) {
@@ -1593,7 +1597,7 @@ function do_raw($formatter,$options) {
     $header[] = 'Pragma: cache';
     $maxage = 60*60*24*7;
     $header[] = 'Cache-Control: private, max-age='.$maxage;
-    $need = http_need_cond_request($lastmod, $etag, $header);
+    $need = http_need_cond_request($lastmod, $etag);
     if (!$need)
       $header[] = 'HTTP/1.0 304 Not Modified';
     $formatter->send_header($header, $options);

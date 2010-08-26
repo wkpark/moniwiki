@@ -118,7 +118,7 @@ function do_download($formatter,$options) {
     //$fname='filename="'.$fn.'"';
   }
 
-  if ($DBInfo->use_resume_download) {
+  if (!empty($DBInfo->use_resume_download)) {
     $header=array("Content-Description: MoniWiki PHP Downloader");
     dl_file_resume($mimetype,$dir.'/'. $_l_file,$fname,$down_mode,$header);
     return; 
@@ -128,13 +128,20 @@ function do_download($formatter,$options) {
   header("Content-Length: ".filesize($dir.'/'. $_l_file));
   header("Content-Disposition: $down_mode; ".$fname );
   header("Content-Description: MoniWiki PHP Downloader" );
-  header("Last-Modified: " . gmdate("D, d M Y H:i:s",filemtime($dir.'/'.$_l_file)) . " GMT");
+  $mtime = filemtime($dir.'/'.$_l_file);
+  $lastmod = gmdate("D, d M Y H:i:s", $mtime) . ' GMT';
+  $etag = md5($lastmod);
+  header("Last-Modified: " . $lastmod);
+  header('ETag: "'.$etag.'"');
   header("Pragma:");
-  header("Cache-Control:");
-  if (!preg_match('/^image\//',$mimetype)) {
-    Header("Pragma: no-cache");
-    Header("Cache-Control: no-cache");
-    Header("Expires: 0");
+  $maxage = 60*60*24*7;
+  header('Cache-Control: public, max-age='.$maxage);
+  $need = http_need_cond_request($lastmod, $etag);
+  if (!$need) {
+    header('X-Cache-Debug: Cached OK');
+    header('HTTP/1.0 304 Not Modified');
+    @ob_end_clean();
+    return;
   }
 
   $fp=readfile("$dir/$_l_file");
@@ -154,7 +161,7 @@ function dl_file_resume($ctype,$file,$fname,$mode='inline',$header='') {
    if ($size == 0) return;
   
    //Begin writing headers
-   header("Cache-Control:");
+   //header("Cache-Control:");
    header("Cache-Control: public");
    if (is_array($header)) foreach($header as $h) header($h);
   
@@ -183,14 +190,23 @@ function dl_file_resume($ctype,$file,$fname,$mode='inline',$header='') {
        header("Content-Disposition: $mode; $fname");
    } else {
        $size2=$size-1;
+       header("Pragma:");
+       $maxage = 60*60*24*7;
+       header('Cache-Control: public, max-age='.$maxage);
        header("Content-Range: bytes 0-$size2/$size");
        header("Content-Length: ".$size);
        header("Content-Disposition: $mode; $fname");
-       header("Last-Modified: " . gmdate("D, d M Y H:i:s",filemtime($file)) . " GMT");
-       if (!preg_match('/^image\//',$ctype)) {
-          Header("Pragma: no-cache");
-          Header("Cache-Control: no-cache");
-          Header("Expires: 0");
+       $mtime = filemtime($file);
+       $lastmod = gmdate("D, d M Y H:i:s", $mtime) . " GMT";
+       $etag = md5($lastmod);
+       header("Last-Modified: " . $lastmod);
+       header('ETag: "'.$etag.'"');
+       $need = http_need_cond_request($lastmod, $etag);
+       if (!$need) {
+          header('X-Cache-Debug: Cached OK');
+          header('HTTP/1.0 304 Not Modified');
+          @ob_end_clean();
+          return;
        }
    }
    //open the file
@@ -215,7 +231,7 @@ function dl_file_resume($ctype,$file,$fname,$mode='inline',$header='') {
    }
    fclose($fp);
    //ob_end_flush();
-   exit;
+   return;
 }
 
 // vim:et:sts=4:
