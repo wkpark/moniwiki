@@ -40,7 +40,7 @@ class Security_authbasic extends Security {
         if (isset($_SERVER['PHP_AUTH_USER']) and $_SERVER['PHP_AUTH_PW']) {
             $id=$_SERVER['PHP_AUTH_USER'];
             $userdb=new UserDB($this->DB);
-            $user=new User(); # get from COOKIE VARS
+            $user=new WikiUser(); # get from COOKIE VARS
             if ($user->id == $id) return 1;
 
             if ($userdb->_exists($id)) {
