@@ -3091,12 +3091,18 @@ function macro_BR($formatter) {
   return "<br class='macro' />\n";
 }
 
+/**
+ * FootNote macro
+ * *experimental*
+ *
+ */
 function macro_FootNote(&$formatter,$value="") {
   if (!$value) {# emit all footnotes
     if (empty($formatter->foots)) return '';
     $foots=join("\n",$formatter->foots);
     $foots=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$foots);
     unset($formatter->foots);
+    unset($formatter->rfoots);
     if ($foots)
       return "<div class='foot'><div class='separator'><tt class='wiki'>----</tt></div><ul>\n$foots</ul></div>";
     return '';
@@ -3115,6 +3121,14 @@ function macro_FootNote(&$formatter,$value="") {
       $len=strlen(substr($value,1,$p));
       $text=str_repeat('*',$len);
       $value=substr($value,$p+1);
+
+      if (empty($value) and ($k = array_search($text, $formatter->rfoots)) !== false) {
+        $formatter->foot_idx--; # undo ++.
+
+        $fnidx = $k;
+        $text = $formatter->rfoots[$k];
+        return "<tt class='foot'><a href='#fn$k'>$text</a></tt>";
+      }
     } else if ($value[1] == '+') {
       $dagger=array('','&#x2020;',
                     '&#x2020;&#x2020;',
@@ -3126,6 +3140,13 @@ function macro_FootNote(&$formatter,$value="") {
       $len=strlen(substr($value,0,$p));
       $text=$dagger[$len];
       $value=substr($value,$p+1);
+      if (empty($value) and ($k = array_search($text, $formatter->rfoots)) !== false) {
+        $formatter->foot_idx--; # undo ++.
+
+        $fnidx = $k;
+        $text = $formatter->rfoots[$k];
+        return "<tt class='foot'><a href='#fn$k'>$text</a></tt>";
+      }
     } else if ($value[1] == ' ') {
       # [* http://c2.com] -> [1]
       $value=substr($value,2);
@@ -3137,10 +3158,27 @@ function macro_FootNote(&$formatter,$value="") {
       $text[0]='[';
       $text=$text.'&#093;'; # make a text as [Alex77]
       if ($value) {
-        $formatter->foot_idx--; # undo ++.
-        if (0 === strcmp($fnidx , (int)$fnidx)) $fnidx="fn$fnidx";
+        #$formatter->foot_idx--; # undo ++.
+        if (is_numeric($fnidx)) $fnidx="fn$fnidx";
       } else {
-        if (0 === strcmp($fnidx , (int)$fnidx)) $fnidx="fn$fnidx";
+        // no text given. [*1] => [1], [*-1] => [?] previous refer
+        $formatter->foot_idx--; # undo ++.
+        if (is_numeric($fnidx)) {
+          if ($fnidx < 0) { // relative reference
+            $fnidx = $formatter->foot_idx + $fnidx + 1;
+          }
+          if (!empty($formatter->rfoots[$fnidx])) {
+            $text = $formatter->rfoots[$fnidx];
+            if (preg_match('/\[([^\d\+\*]+)&/', $text, $m)) {
+              $fnidx = $m[1];
+            } else {
+              $fnidx="fn$fnidx";
+            }
+          } else {
+            $text = '['.$fnidx.'&#093';
+            $fnidx="fn$fnidx";
+          }
+        }
         return "<tt class='foot'><a href='#$fnidx'>$text</a></tt>";
       }
     }
@@ -3160,9 +3198,10 @@ function macro_FootNote(&$formatter,$value="") {
        return "<tt class='foot'><a href='#$fnidx'>$text</a></tt>";
     }
   }
-  $formatter->foots[]="<li id='$fnidx'><tt class='foot'>".
+  $formatter->foots[$formatter->foot_idx]="<li id='$fnidx'><tt class='foot'>".
                       "<a href='#r$fnidx'>$text</a></tt> ".
                       "$value</li>";
+  $formatter->rfoots[$formatter->foot_idx] = $text;
   $tval=strip_tags(str_replace("'","&#39;",$value));
   return "<tt class='foot'>".
     "<a id='r$fnidx' href='#$fnidx' title='$tval'>$text</a></tt>";
