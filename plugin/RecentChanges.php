@@ -80,6 +80,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   if (preg_match("/^[\s\/\-:aABdDFgGhHiIjmMOrSTY]+$/",$args[0]))
     $date_fmt=$args[0];
 
+  $strimwidth = isset($DBInfo->rc_strimwidth) ? $DBInfo->rc_strimwidth : 20;
   $bra = '';
   $cat = '';
   $cat0 = '';
@@ -92,6 +93,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       if ($k=='item') $opts['items']=min((int)$v,RC_MAX_ITEMS);
       else if ($k=='days') $days=min(abs($v),RC_MAX_DAYS);
       else if ($k=='ago') $opts['ago']=abs($v);
+      else if ($k=='strimwidth' and is_numeric($k) and (abs($v) > 15 or $v == 0))
+        $strimwidth =abs($v);
     } else {
       if ($arg =="quick") $opts['quick']=1;
       else if ($arg=="nonew") $checknew=0;
@@ -327,8 +330,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $title0= get_title($title).$group;
     $title0=htmlspecialchars($title0);
     $attr = '';
-    if (strlen(get_title($title)) > 20 and function_exists('mb_strimwidth')) {
-      $title0=mb_strimwidth($title0,0,20,'...', $DBInfo->charset);
+    if (!empty($strimwidth) and strlen(get_title($title)) > $strimwidth and function_exists('mb_strimwidth')) {
+      $title0=mb_strimwidth($title0,0, $strimwidth,'...', $DBInfo->charset);
       $attr = ' title="'.$title.'"';
     }
     $title= $formatter->link_tag($pageurl,"",$title0,$target.$attr);

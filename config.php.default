@@ -283,3 +283,4 @@ $robots='googlebot|yahoo'; # set robots
 $use_local_translation=0; # automatic translation
 #$use_jsbutton=0; # use javascript fake buttons.
 #$use_namespace=0; # support dokuwiki like namespace
+#$rc_strimwidth=20; # witdh param of mb_strimwidth() with the RecentChanges macro
