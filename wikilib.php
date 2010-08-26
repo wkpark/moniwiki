@@ -324,17 +324,19 @@ function get_aliases($file) {
 
 /**
  * Checks and sets HTTP headers for conditional HTTP requests
+ * slightly modified to set $etag separatly by wkpark@kldp.org
  *
  * @author   Simon Willison <swillison@gmail.com>
  * @link     http://simon.incutio.com/archive/2003/04/23/conditionalGet
  * @param    timestamp $timestamp lastmodified time of the cache file
  * @returns  void or exits with previously header() commands executed
  */
-function http_need_cond_request($last_modified, $etag = '') {
+function http_need_cond_request($mtime, $last_modified = '', $etag = '') {
     // A PHP implementation of conditional get, see
     //   http://fishbowl.pastiche.org/archives/001132.html
-    if (is_numeric($last_modified)) // is it timestamp ?
-        $last_modified = substr(gmdate('r', $last_modified), 0, -5).'GMT';
+    if (empty($last_modified)) // is it timestamp ?
+        $last_modified = substr(gmdate('r', $mtime), 0, -5).'GMT';
+
     if (empty($etag)) // pseudo etag
         $etag = md5($last_modified);
 
@@ -343,7 +345,8 @@ function http_need_cond_request($last_modified, $etag = '') {
 
     // See if the client has provided the required headers
     if (isset($_SERVER['HTTP_IF_MODIFIED_SINCE'])) {
-        $if_modified_since = _stripslashes($_SERVER['HTTP_IF_MODIFIED_SINCE']);
+        // fix broken IEx
+        $if_modified_since = preg_replace('/;.*$/', '', _stripslashes($_SERVER['HTTP_IF_MODIFIED_SINCE']));
     }else{
         $if_modified_since = false;
     }
@@ -363,8 +366,12 @@ function http_need_cond_request($last_modified, $etag = '') {
         return true; // etag is there but doesn't match
     }
 
-    if ($if_modified_since && $if_modified_since != $last_modified) {
-        return true; // if-modified-since is there but doesn't match
+    if ($if_modified_since) {
+        // calculate time
+        $mytime = @strtotime( $if_modified_since );
+        if ( $mtime <= $mytime) {
+            return true; // if-modified-since is there but doesn't match
+        }
     }
 
     // Nothing has changed since their last request
@@ -1597,7 +1604,7 @@ function do_raw($formatter,$options) {
     $header[] = 'Pragma: cache';
     $maxage = 60*60*24*7;
     $header[] = 'Cache-Control: private, max-age='.$maxage;
-    $need = http_need_cond_request($lastmod, $etag);
+    $need = http_need_cond_request($mtime, $lastmod, $etag);
     if (!$need)
       $header[] = 'HTTP/1.0 304 Not Modified';
     $formatter->send_header($header, $options);
@@ -3541,4 +3548,5 @@ function processor_php($formatter="",$value="") {
   return '<div class="wikiSyntax">'.$highlighted.'</div>';
 }
 
+// vim:et:sts=4:sw=4:
 ?>

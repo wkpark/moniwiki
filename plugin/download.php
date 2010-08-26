@@ -136,7 +136,7 @@ function do_download($formatter,$options) {
   header("Pragma:");
   $maxage = 60*60*24*7;
   header('Cache-Control: public, max-age='.$maxage);
-  $need = http_need_cond_request($lastmod, $etag);
+  $need = http_need_cond_request($mtime, $lastmod, $etag);
   if (!$need) {
     header('X-Cache-Debug: Cached OK');
     header('HTTP/1.0 304 Not Modified');
@@ -201,7 +201,7 @@ function dl_file_resume($ctype,$file,$fname,$mode='inline',$header='') {
        $etag = md5($lastmod);
        header("Last-Modified: " . $lastmod);
        header('ETag: "'.$etag.'"');
-       $need = http_need_cond_request($lastmod, $etag);
+       $need = http_need_cond_request($mtime, $lastmod, $etag);
        if (!$need) {
           header('X-Cache-Debug: Cached OK');
           header('HTTP/1.0 304 Not Modified');
