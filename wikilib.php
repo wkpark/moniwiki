@@ -3124,6 +3124,7 @@ function macro_FootNote(&$formatter,$value="") {
 
   $text="[$idx&#093;";
   $fnidx="fn".$idx;
+  $ididx='';
   if ($value[0] == '*') {
     if (isset($value[1]) and $value[1] == '*') {
       # [** http://foobar.com] -> [*]
@@ -3139,7 +3140,9 @@ function macro_FootNote(&$formatter,$value="") {
           $fnidx = $k;
           $text = $formatter->rfoots[$k];
         } else {
-          $fnidx = !empty($formatter->rfoots) ? count($formatter->rfoots) + 1 : 1;
+          // search empty slot
+          $fnidx = 1;
+          while (isset($formatter->rfoots[$myidx])) $fnidx++;
           $formatter->rfoots[$fnidx] = $text;
         }
         return "<tt class='foot'><a href='#fn$fnidx'>$text</a></tt>";
@@ -3161,7 +3164,9 @@ function macro_FootNote(&$formatter,$value="") {
           $fnidx = $k;
           $text = $formatter->rfoots[$k];
         } else {
-          $fnidx = !empty($formatter->rfoots) ? count($formatter->rfoots) + 1 : 1;
+          // search empty slot
+          $fnidx = 1;
+          while (isset($formatter->rfoots[$myidx])) $fnidx++;
           $formatter->rfoots[$fnidx] = $text;
         }
         return "<tt class='foot'><a href='#fn$fnidx'>$text</a></tt>";
@@ -3176,34 +3181,49 @@ function macro_FootNote(&$formatter,$value="") {
       $fnidx=substr($text,1);
       $text[0]='[';
       $text=$text.'&#093;'; # make a text as [Alex77]
+
       if ($value) {
-        #$formatter->foot_idx--; # undo ++.
-        if (is_numeric($fnidx)) $fnidx="fn$fnidx";
+        if (is_numeric($fnidx)) {
+          $fnidx="fn$fnidx";
+        }
       } else {
         $formatter->foot_idx--; # undo ++.
         $attr = '';
         // no text given. [*1] => [1], [*-1] => [?] previous refer
         if (empty($fnidx)) { // [*]
-          $fnidx = !empty($formatter->rfoots) ? count($formatter->rfoots) + 1 : 1;
-          $text = '['.$fnidx.'&#093';
-          $formatter->rfoots[$fnidx] = $text;
-          $fnidx = 'fn'.$fnidx;
+          // search empty slot
+          $myidx = 1;
+          while (isset($formatter->rfoots[$myidx])) $myidx++;
+
+          $text = '['.$myidx.'&#093';
+          $formatter->rfoots[$myidx] = $text;
+          $fnidx = 'fn'.$myidx;
           // no title attribute given now
           // $attr = " id='r$fnidx'";
-        } else if (is_numeric($fnidx)) {
-          if ($fnidx < 0) { // relative reference
-            $fnidx = $formatter->foot_idx + $fnidx + 1;
+        } else {
+          if (is_numeric($fnidx)) {
+            if ($fnidx < 0) { // relative reference
+              $fnidx = $formatter->foot_idx + $fnidx + 1;
+            }
+          } else {
+            // search empty slot
+            $myidx = 1;
+            while (isset($formatter->rfoots[$myidx])) $myidx++;
+            $formatter->rfoots[$myidx] = $text;
           }
           if (!empty($formatter->rfoots[$fnidx])) {
             $text = $formatter->rfoots[$fnidx];
             if (preg_match('/\[([^\d\+\*]+)&/', $text, $m)) {
               $fnidx = $m[1];
-            } else {
+            } else if (is_numeric($fnidx)) {
               $fnidx="fn$fnidx";
             }
           } else {
             $text = '['.$fnidx.'&#093';
-            $fnidx="fn$fnidx";
+            $formatter->rfoots[$fnidx] = $text;
+            if (is_numeric($fnidx)) {
+              $fnidx="fn$fnidx";
+            }
           }
         }
         return "<tt class='foot'><a$attr href='#$fnidx'>$text</a></tt>";
@@ -3215,21 +3235,29 @@ function macro_FootNote(&$formatter,$value="") {
        $text=$dum[0]."&#093;"; # make a text as [Alex77]
        $fnidx=substr($dum[0],1);
        $formatter->foot_idx--; # undo ++.
-       if (0 === strcmp($fnidx , (int)$fnidx)) $fnidx="fn$fnidx";
+       if (is_numeric($fnidx)) $fnidx="fn$fnidx";
        $value=$dum[1]; 
     } else if ($dum[0]) {
        $text=$dum[0]."]";
        $fnidx=substr($dum[0],1);
        $formatter->foot_idx--; # undo ++.
-       if (0 === strcmp($fnidx , (int)$fnidx)) $fnidx="fn$fnidx";
+       if (is_numeric($fnidx)) $fnidx="fn$fnidx";
        return "<tt class='foot'><a href='#$fnidx'>$text</a></tt>";
     }
   }
-  $formatter->foots[$formatter->foot_idx]="<li id='$fnidx'><tt class='foot'>".
-                      "<a href='#r$fnidx'>$text</a></tt> ".
+
+  if (($myidx = array_search($text, $formatter->rfoots)) === false) {
+    // search empty slot
+    $myidx = 1;
+    while (isset($formatter->foots[$myidx])) $myidx++;
+    $ididx=' id="fn'.$myidx.'"';
+  }
+
+  $formatter->foots[$myidx]="<li id='$fnidx'><tt class='foot'>".
+                      "<a$ididx href='#r$fnidx'>$text</a></tt> ".
                       "$value</li>";
   #if (!empty($formatter->rfoots[$formatter->foot_idx])) return;
-  $formatter->rfoots[$formatter->foot_idx] = $text;
+  $formatter->rfoots[$myidx] = $text;
   $tval=strip_tags(str_replace("'","&#39;",$value));
   return "<tt class='foot'>".
     "<a id='r$fnidx' href='#$fnidx' title='$tval'>$text</a></tt>";
