@@ -1192,11 +1192,11 @@ function macro_Edit($formatter,$value,$options='') {
   $merge_btn3=_("Ignore conflicts");
   $extra = '';
   if (!empty($options['conflict'])) {
-    $extra='<button type="submit" name="button_merge" value="1"><span>'.$merge_btn.'</span></button>';
+    $extra='<span class="button"><input type="submit" class="button" name="button_merge" value="'.$merge_btn.'" /></span>';
     if ($options['conflict']==2) {
-      $extra.=' <button type="submit" name="manual_merge" value="1"><span>'.$merge_btn2.'</span></button>';
+      $extra.=' <span class="button"><input type="submit" class="button" name="manual_merge" value="'.$merge_btn2.'" /></span>';
       if ($DBInfo->use_forcemerge)
-        $extra.=' <button type="submit" name="force_merge" value="1"><span>'.$merge_btn3.'</span></button>';
+        $extra.=' <span class="button"><input type="submit" class="button" name="force_merge" value="'.$merge_btn3.'" /></span>';
     }
   }
 
@@ -1327,8 +1327,8 @@ EXTRA;
   $wysiwyg_btn = '';
   $skip_preview = '';
   if (empty($options['simple'])) {
-    $preview_btn='<button type="submit" tabindex="6" name="button_preview" class="preview-button" value="1"><span>'.
-      _("Preview").'</span></button>';
+    $preview_btn='<span class="button"><input type="submit" class="button" tabindex="6" name="button_preview" class="preview-button" value="'.
+      _("Preview").'" /></span>';
     if ($preview)
       $skip_preview= ' '.$formatter->link_to('#preview',_("Skip to preview"),' class="preview-anchor"');
     if (!empty($DBInfo->use_wikiwyg)) {
@@ -1394,7 +1394,7 @@ $extraform
 <input type="hidden" name="action" value="$saveaction" />
 <input type="hidden" name="datestamp" value="$datestamp" />
 $hidden
-<button type="submit" class='save-button' tabindex="5" accesskey="x" ><span>$save_msg</span></button>
+<span class="button"><input type="submit" class='save-button' tabindex="5" accesskey="x" value="$save_msg" /></span>
 <!-- <input type="reset" value="Reset" />&nbsp; -->
 $preview_btn$wysiwyg_btn$skip_preview
 $extra<span id="save_state"></span>
