@@ -17,159 +17,157 @@
 // $Id$
 
 function macro_FootNote(&$formatter, $value = "", $options= array()) {
-  if (!$value) {# emit all footnotes
-    if (empty($formatter->foots)) return '';
-    $foots=join("\n",$formatter->foots);
-    $foots=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$foots);
-    unset($formatter->foots);
-    unset($formatter->rfoots);
-    if ($foots)
-      return "<div class='foot'><div class='separator'><tt class='wiki'>----</tt></div><ul>\n$foots</ul></div>";
-    return '';
-  }
+    if (empty($value)) {# emit all footnotes
+        if (empty($formatter->foots)) return '';
+        $foots=join("\n",$formatter->foots);
+        $foots=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$foots);
+        unset($formatter->foots);
+        if ($foots)
+            return "<div class='foot'><div class='separator'><tt class='wiki'>----</tt></div><ul>\n$foots</ul></div>";
+        return '';
+    }
 
-  $formatter->foot_idx++;
-  $idx=$formatter->foot_idx;
+    $text = $tag = '';
+    if ($value[0] == '*') {
+        if (!isset($value[1])) {
+            // [*] - auto-numbering
+            $value = '';
+        } else if ($value[1] == ' ') { // FIXME
+            // [* http://c2.com] -> [1] - auto-numbering
+            $value = substr($value, 2);
+        } else if ($value[1] == '*') {
+            // star symbols
+            // [** http://foobar.com] -> [*] // auto-numbering star
+            // [*** http://foobar.com] -> [**] // manual-numbering star
+            $p = strrpos($value,'*');
+            $len = strlen(substr($value, 1, $p));
 
-  $text="[$idx&#093;";
-  $fnidx="fn".$idx;
-  $ididx='';
-  if ($value[0] == '*') {
-    if (isset($value[1]) and $value[1] == '*') {
-      # [** http://foobar.com] -> [*]
-      # [*** http://foobar.com] -> [**]
-      $p=strrpos($value,'*');
-      $len=strlen(substr($value,1,$p));
-      $text=str_repeat('*',$len);
-      $value=substr($value,$p+1);
+            $tag = str_repeat('*', $len);
+            $value = substr($value, $p + 1);
 
-      if (empty($value)) {
-        $formatter->foot_idx--; # undo ++.
-        if (($k = array_search($text, $formatter->rfoots)) !== false) {
-          $fnidx = $k;
-          $text = $formatter->rfoots[$k];
-        } else {
-          // search empty slot
-          $fnidx = 1;
-          while (isset($formatter->rfoots[$myidx])) $fnidx++;
-          $formatter->rfoots[$fnidx] = $text;
-        }
-        return "<tt class='foot'><a href='#fn$fnidx'>$text</a></tt>";
-      }
-    } else if (isset($value[1]) and $value[1] == '+') {
-      $dagger=array('','&#x2020;',
-                    '&#x2020;&#x2020;',
-                    '&#x2020;&#x2020;&#x2020;',
-                    '&#x2021;',
-                    '&#x2021;&#x2021;',
-                    '&#x2021;&#x2021;&#x2021;');
-      $p=strrpos($value,'+');
-      $len=strlen(substr($value,0,$p));
-      $text=$dagger[$len];
-      $value=substr($value,$p+1);
-      if (empty($value)) {
-        $formatter->foot_idx--; # undo ++.
-        if (($k = array_search($text, $formatter->rfoots)) !== false) {
-          $fnidx = $k;
-          $text = $formatter->rfoots[$k];
-        } else {
-          // search empty slot
-          $fnidx = 1;
-          while (isset($formatter->rfoots[$myidx])) $fnidx++;
-          $formatter->rfoots[$fnidx] = $text;
-        }
-        return "<tt class='foot'><a href='#fn$fnidx'>$text</a></tt>";
-      }
-    } else if (isset($value[1]) and $value[1] == ' ') {
-      # [* http://c2.com] -> [1]
-      $value=substr($value,2);
-    } else {
-      # [*ward http://c2.com] -> [ward]
-      $text=strtok($value,' ');
-      $value=strtok('');
-      $fnidx=substr($text,1);
-      $text[0]='[';
-      $text=$text.'&#093;'; # make a text as [Alex77]
+            $fnref = '';
+        } else if ($value[1] == '+') {
+            // dagger symbols
+            // [*+ http://foobar.com] -> [+] // auto-numbering dagger
+            // [*++ http://foobar.com] -> [++] // manual-numbering dagger
+            $dagger = array('&#x2020;', '&#x2021;');
+            $p = strrpos($value, '+');
+            $len = strlen(substr($value, 0, $p));
 
-      if ($value) {
-        if (is_numeric($fnidx)) {
-          $fnidx="fn$fnidx";
-        }
-      } else {
-        $formatter->foot_idx--; # undo ++.
-        $attr = '';
-        // no text given. [*1] => [1], [*-1] => [?] previous refer
-        if (empty($fnidx)) { // [*]
-          // search empty slot
-          $myidx = 1;
-          while (isset($formatter->rfoots[$myidx])) $myidx++;
-
-          $text = '['.$myidx.'&#093';
-          $formatter->rfoots[$myidx] = $text;
-          $fnidx = 'fn'.$myidx;
-          // no title attribute given now
-          // $attr = " id='r$fnidx'";
-        } else {
-          if (is_numeric($fnidx)) {
-            if ($fnidx < 0) { // relative reference
-              $fnidx = $formatter->foot_idx + $fnidx + 1;
+            $dag = $len % 2;
+            if ($len < 4 and $dag != 0) {
+                $tag = str_repeat($dagger[0], $len);
+            } else {
+                $ddag = intval($len / 2);
+                $tag = str_repeat($dagger[1], $ddag);
+                $tag.= str_repeat($dagger[0], $dag);
             }
-          } else {
+
+            $value = substr($value, $p + 1);
+
+            $fnref = '';
+        } else {
+            // [*ward http://c2.com] -> [ward] - labeled
+            // [*3 http://c2.com] -> [3] - manually numbered
+            $text = strtok($value,' ');
+            $tag = substr($text, 1);
+            $value = strtok('');
+            if (!is_numeric($tag)) $fnref = $tag;
+        }
+    } else if ($value[0] == '[' and preg_match('/^\[([^\]]+)\](.*)$/', $value, $m)) {
+        $tag = $m[1];
+        $value = trim($m[2]);
+    }
+
+    if (empty($value)) {
+        // no text given
+        if (empty($tag)) {
+            // [*] - auto-numbering
             // search empty slot
-            $myidx = 1;
-            while (isset($formatter->rfoots[$myidx])) $myidx++;
-            $formatter->rfoots[$myidx] = $text;
-          }
-          if (!empty($formatter->rfoots[$fnidx])) {
-            $text = $formatter->rfoots[$fnidx];
-            if (preg_match('/\[([^\d\+\*]+)&/', $text, $m)) {
-              $fnidx = $m[1];
-            } else if (is_numeric($fnidx)) {
-              $fnidx="fn$fnidx";
+            $tagidx = 1;
+            while (isset($formatter->rfoots[$tagidx])) $tagidx++;
+
+            $tag = $tagidx;
+            $fnref = 'fn'.$tagidx;
+            // no title attribute given now
+            // $attr = " id='r$fnidx'";
+        } else {
+            // manual number/labeling
+            // [*1] => [1], [*label] [*-1] => [?] previous refer
+            if (is_numeric($tag)) {
+                if ($tag < 0) {
+                    // XXX relative to max reference number
+                    if (!empty($formatter->rfoots)) {
+                        $cur = max(array_keys($formatter->rfoots));
+                        $tag = $cur + $tag + 1; // -1 => max ref num
+                    } else { // XXX Error XXX just ignore it
+                        $tag = abs($tag);
+                    }
+                }
+                $tagidx = $tag;
+            } else {
+                // [*label]
+                // is it already defined footnote ?
+                if (!empty($formatter->rfoots) and
+                        ($myidx = array_search($tag, $formatter->rfoots)) !== false)
+                {
+                    $tagidx = $myidx;
+                } else {
+                    // search empty slot
+                    $tagidx = 1;
+                    while (isset($formatter->rfoots[$tagidx])) $tagidx++;
+                }
             }
-          } else {
-            $text = '['.$fnidx.'&#093';
-            $formatter->rfoots[$fnidx] = $text;
-            if (is_numeric($fnidx)) {
-              $fnidx="fn$fnidx";
-            }
-          }
         }
-        return "<tt class='foot'><a$attr href='#$fnidx'>$text</a></tt>";
-      }
-    }
-  } else if ($value[0] == "[") {
-    $dum=explode("]",$value,2);
-    if (trim($dum[1])) {
-       $text=$dum[0]."&#093;"; # make a text as [Alex77]
-       $fnidx=substr($dum[0],1);
-       $formatter->foot_idx--; # undo ++.
-       if (is_numeric($fnidx)) $fnidx="fn$fnidx";
-       $value=$dum[1]; 
-    } else if ($dum[0]) {
-       $text=$dum[0]."]";
-       $fnidx=substr($dum[0],1);
-       $formatter->foot_idx--; # undo ++.
-       if (is_numeric($fnidx)) $fnidx="fn$fnidx";
-       return "<tt class='foot'><a href='#$fnidx'>$text</a></tt>";
-    }
-  }
 
-  if (empty($formatter->rfoots) or ($myidx = array_search($text, $formatter->rfoots)) === false) {
-    // search empty slot
-    $myidx = 1;
-    while (isset($formatter->foots[$myidx])) $myidx++;
-    $ididx=' id="fn'.$myidx.'"';
-  }
+        // already defined ?
+        if (!empty($formatter->rfoots[$tagidx])) {
+            $tag = $formatter->rfoots[$tagidx];
+            $fnref = "fn$tagidx";
+            if (preg_match('/^[a-zA-Z][a-zA-Z0-9-_]+$/', $tag))
+                $fnref = $tag;
+        } else {
+            $formatter->rfoots[$tagidx] = $tag;
+        }
 
-  $formatter->foots[$myidx]="<li id='$fnidx'><tt class='foot'>".
-                      "<a$ididx href='#r$fnidx'>$text</a></tt> ".
+        if (!isset($fnref)) {
+            if (is_numeric($tag)) { // FIXME
+                $fnref = "fn$tagidx";
+            } else {
+                $fnref = $tag;
+            }
+        }
+
+        if (empty($fnref) and !is_numeric($tag))
+            $fnref = "fn$tagidx";
+
+        $text = '['.$tag.'&#093';
+        return "<tt class='foot'><a href='#$fnref'>$text</a></tt>";
+    }
+
+    $ididx = '';
+    if (empty($tag) or empty($formatter->rfoots) or
+            ($myidx = array_search($tag, $formatter->rfoots)) === false)
+    {
+        // search empty slot
+        $myidx = 1;
+        while (isset($formatter->foots[$myidx])) $myidx++;
+        $ididx = ' id="fn'.$myidx.'"';
+    }
+
+    if (empty($tag)) $tag = $myidx;
+    $text = '['.$tag.'&#093';
+    if (empty($fnref)) $fnref = "fn$myidx";
+
+    $formatter->foots[$myidx] = "<li id='$fnref'><tt class='foot'>".
+                      "<a$ididx href='#r$fnref'>$text</a></tt> ".
                       "$value</li>";
-  #if (!empty($formatter->rfoots[$formatter->foot_idx])) return;
-  $formatter->rfoots[$myidx] = $text;
-  $tval=strip_tags(str_replace("'","&#39;",$value));
-  return "<tt class='foot'>".
-    "<a id='r$fnidx' href='#$fnidx' title='$tval'>$text</a></tt>";
+
+    #if (!empty($formatter->rfoots[$myidx])) return '';
+    $formatter->rfoots[$myidx] = $tag;
+    $title = strip_tags(str_replace("'", "&#39;", $value));
+    return "<tt class='foot'>".
+        "<a id='r$fnref' href='#$fnref' title='$title'>$text</a></tt>";
 }
 
 // vim:et:sts=4:sw=4:
