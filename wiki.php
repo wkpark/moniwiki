@@ -658,6 +658,7 @@ EOS;
     $this->version_class='RCS';
     $this->title_rule='((?<=[a-z0-9]|[B-Z]{2})([A-Z][a-z]))';
     $this->login_strict=1;
+    $this->use_fakemtime = 0; // dir mtime emulation for FAT filesytem.
 
     # set user-specified configuration
     if (!empty($config)) {
@@ -808,7 +809,7 @@ EOS;
       $apc = new Cache_text('aliases');
       $ac = new Cache_text('alias');
       $dir = $ac->cache_dir;
-      if ($apc->exists('aliases') and filemtime($this->text_dir) < $apc->mtime('aliases')) {
+      if ($apc->exists('aliases') and $this->mtime() < $apc->mtime('aliases')) {
         $aliases = unserialize($apc->fetch('aliases'));
         break;
       }
@@ -917,12 +918,20 @@ EOS;
     return rawurldecode($pagename);
   }
 
+  function mtime() {
+    // workaround to check the dir mtime of the text_dir
+    if ($this->use_fakemtime)
+      return @filemtime($this->editlog_name);
+
+    return @filemtime($this->text_dir);
+  }
+
   function getPageLists($options=array()) {
     $pages = array();
 
     $pcid=md5(serialize($options));
     $pc=new Cache_text('pagelist');
-    if ($pc->exists($pcid) and filemtime($this->text_dir) < $pc->mtime($pcid)) {
+    if ($pc->exists($pcid) and $this->mtime() < $pc->mtime($pcid)) {
       $list=unserialize($pc->fetch($pcid));
       if (is_array($list)) return $list;
     }
@@ -1001,7 +1010,7 @@ EOS;
 
   function getCounter() {
     $pc = new Cache_text('pagelist');
-    if (filemtime($this->text_dir) < $pc->mtime('counter') and $pc->exists('counter'))
+    if ($this->mtime() < $pc->mtime('counter') and $pc->exists('counter'))
       return $pc->fetch('counter');
 
     $handle = opendir($this->text_dir);
@@ -3586,7 +3595,7 @@ class Formatter {
     } else {
       # XXX need to redesign pagelink method ?
       if (empty($DBInfo->without_pagelinks_cache)) {
-        $dmt=filemtime($DBInfo->editlog_name); // workaround to check the dir mtime of the text_dir
+        $dmt= $DBInfo->mtime();
         $this->update_pagelinks= $dmt > $this->cache->mtime($this->page->name);
         #like as..
         #if (!$this->update_pagelinks) $this->pagelinks=$this->get_pagelinks();
@@ -5875,7 +5884,7 @@ function wiki_main($options) {
       $cache= new Cache_text('pages',2,'html');
       $mcache= new Cache_text('dynamicmacros',2);
       $mtime=$cache->mtime($pagename);
-      $dtime=filemtime($DBInfo->editlog_name); // workaround to check the dir mtime of the text_dir
+      $dtime= $DBInfo->mtime();
       $now=time();
       $check=$now-$mtime;
       $extra_out='';
