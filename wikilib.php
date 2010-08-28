@@ -2333,7 +2333,20 @@ function do_RandomPage($formatter,$options='') {
 
   $max = $DBInfo->getCounter();
   $rand = rand(1,$max);
-  if (!empty($DBInfo->use_indexer)) {
+  if (!empty($DBInfo->use_pageindex)) {
+    // fastest method
+    require_once('lib/PageIndex.php');
+    $pgidx = new PageIndex($DBInfo);
+
+    $delay = !empty($DBInfo->default_delaytime) ? $DBInfo->default_delaytime : 0;
+    if ($DBInfo->mtime() > $pgidx->mtime() + $delay) {
+        // init pagename index db
+        $pgidx->init();
+    }
+
+    $sel_pages = $pgidx->getPagesByIds(array($rand));
+    $options['value'] = $sel_pages[0];
+  } else if (!empty($DBInfo->use_indexer)) {
     require_once("lib/indexer.DBA.php");
     $indexer = new Indexer_DBA('fullsearch', 'r', $DBInfo->dba_type);
     $page = $indexer->_fetch($rand);
