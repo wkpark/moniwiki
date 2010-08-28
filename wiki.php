@@ -2439,6 +2439,8 @@ class Formatter {
       $url=substr($url,2,-2);
       return $this->macro_repl($url); # No link
     case '[':
+      $bra.='[';
+      $ket.=']';
       $url=substr($url,1,-1);
       $double_bracket = true;
 
