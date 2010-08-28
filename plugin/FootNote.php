@@ -17,11 +17,16 @@
 // $Id$
 
 function macro_FootNote(&$formatter, $value = "", $options= array()) {
+    if (empty($formatter->foot_offset))
+        $formatter->foot_offset = 0;
     if (empty($value)) {# emit all footnotes
         if (empty($formatter->foots)) return '';
-        $foots=join("\n",$formatter->foots);
+        $foots = array_slice($formatter->foots, $formatter->foot_offset);
+        //asort($foots);
+        $foots = join("\n", $foots);
+        $formatter->foot_offset = max(array_keys($formatter->foots));
         $foots=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$foots);
-        unset($formatter->foots);
+        //unset($formatter->foots);
         if ($foots)
             return "<div class='foot'><div class='separator'><tt class='wiki'>----</tt></div><ul>\n$foots</ul></div>";
         return '';
@@ -84,7 +89,7 @@ function macro_FootNote(&$formatter, $value = "", $options= array()) {
         if (empty($tag)) {
             // [*] - auto-numbering
             // search empty slot
-            $tagidx = 1;
+            $tagidx = $formatter->tag_offset + 1;
             while (isset($formatter->rfoots[$tagidx])) $tagidx++;
 
             $tag = $tagidx;
@@ -114,8 +119,9 @@ function macro_FootNote(&$formatter, $value = "", $options= array()) {
                     $tagidx = $myidx;
                 } else {
                     // search empty slot
-                    $tagidx = 1;
+                    $tagidx = $formatter->tag_offset + 1;
                     while (isset($formatter->rfoots[$tagidx])) $tagidx++;
+                    //$tagidx = $tag;
                 }
             }
         }
@@ -123,7 +129,8 @@ function macro_FootNote(&$formatter, $value = "", $options= array()) {
         // already defined ?
         if (!empty($formatter->rfoots[$tagidx])) {
             $tag = $formatter->rfoots[$tagidx];
-            $fnref = "fn$tagidx";
+            if (is_numeric($tagidx))
+                $fnref = "fn$tagidx";
             if (preg_match('/^[a-zA-Z][a-zA-Z0-9-_]+$/', $tag))
                 $fnref = $tag;
         } else {
@@ -146,11 +153,15 @@ function macro_FootNote(&$formatter, $value = "", $options= array()) {
     }
 
     $ididx = '';
+    if (!empty($tag) and is_numeric($tag) and isset($formatter->foots[$tag])) {
+        // oops!! it is already defined tag
+        $tag = ''; // reset
+    }
     if (empty($tag) or empty($formatter->rfoots) or
             ($myidx = array_search($tag, $formatter->rfoots)) === false)
     {
         // search empty slot
-        $myidx = 1;
+        $myidx = $formatter->foot_offset + 1;
         while (isset($formatter->foots[$myidx])) $myidx++;
         $ididx = ' id="fn'.$myidx.'"';
     }
