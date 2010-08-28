@@ -1157,13 +1157,14 @@ EOS;
       umask($om);
     }
 
-    $fp=@fopen($filename,"w");
+    $fp=@fopen($filename,"a+b");
     if (!is_resource($fp))
        return -1;
 
-    flock($fp,LOCK_EX);
+    flock($fp, LOCK_EX); // XXX
+    ftruncate($fp, 0);
     fwrite($fp, $body);
-    flock($fp,LOCK_UN);
+    flock($fp, LOCK_UN);
     fclose($fp);
 
     if (!empty($this->version_class)) {
@@ -1584,9 +1585,10 @@ class Cache_text {
       _mkdir_p($dir, 0777);
       umask($om);
     }
-    $fp=fopen($key,"w+");
+    $fp=fopen($key,"a+b");
     if ($fp) {
       flock($fp,LOCK_EX);
+      ftruncate($fp, 0);
       fwrite($fp,$val);
       flock($fp,LOCK_UN);
       fclose($fp);
