@@ -378,6 +378,31 @@ function http_need_cond_request($mtime, $last_modified = '', $etag = '') {
     return false;
 }
 
+function _fake_lock_file($tmp, $arena, $tag = '') {
+    $lock = $tmp . '/' . $arena;
+    if (!empty($tag))
+        $lock.= $tag;
+    return $lock . '.lock';
+}
+
+function _fake_locked($lockfile, $mtime = 0, $delay = 1800) {
+    // prevent not to execute sum job again
+    $locked = file_exists($lockfile);
+    // is this lock file too old ?
+    if ($locked and $mtime > filemtime($lockfile) + $delay) {
+        @unlink($lockfile);
+        $locked = false;
+    }
+    return $locked;
+}
+
+function _fake_lock($lockfile, $lock = LOCK_EX) {
+    if ($lock == LOCK_EX)
+        touch($lockfile);
+    else
+        @unlink($lockfile);
+}
+
 function get_title($page,$title='') {
   global $DBInfo;
   if (!empty($DBInfo->use_titlecache)) {
@@ -2339,9 +2364,13 @@ function do_RandomPage($formatter,$options='') {
     $pgidx = new PageIndex($DBInfo);
 
     $delay = !empty($DBInfo->default_delaytime) ? $DBInfo->default_delaytime : 0;
-    if ($DBInfo->mtime() > $pgidx->mtime() + $delay) {
+    $lock_file = _fake_lock_file($DBInfo->vartmp_dir, 'pageindex');
+    $locked = _fake_locked($lock_file, $DBInfo->mtime());
+    if (!$locked and ($DBInfo->mtime() > $pgidx->mtime() + $delay)) {
         // init pagename index db
+        _fake_lock($lock_file);
         $pgidx->init();
+        _fake_lock($lock_file, LOCK_UN);
     }
 
     $sel_pages = $pgidx->getPagesByIds(array($rand));
@@ -2971,8 +3000,11 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
 
   // cache titleindex
   $kc = new Cache_text('titleindex');
-  // XXX
-  if (filemtime($DBInfo->text_dir) < $kc->mtime('key') and $kc->exists('key')) {
+  $delay = !empty($DBInfo->default_delaytime) ? $DBInfo->default_delaytime : 0;
+
+  $lock_file = _fake_lock_file($DBInfo->vartmp_dir, 'titleindex');
+  $locked = _fake_locked($lock_file, $DBInfo->mtime());
+  if ($locked or ($DBInfo->mtime() < $kc->mtime('key') + $delay and $kc->exists('key'))) {
     if ($formatter->group) {
       $keys = unserialize($kc->fetch('key.'.$formatter->group));
       $titleindex = unserialize($kc->fetch('titleindex.'.$formatter->group));
@@ -2986,6 +3018,7 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
   }
 
   if (empty($all_pages)) {
+    _fake_lock($lock_file);
     $all_pages = array();
     if ($formatter->group) {
       $group_pages = $DBInfo->getLikePages($formatter->group);
@@ -3038,6 +3071,7 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
 
     if (!empty($sel) and isset($titleindex[$sel]))
       $all_pages = $titleindex[$sel];
+    _fake_lock($lock_file, LOCK_UN);
   }
 
   $pnut = null;

@@ -931,7 +931,10 @@ EOS;
 
     $pcid=md5(serialize($options));
     $pc=new Cache_text('pagelist');
-    if ($pc->exists($pcid) and $this->mtime() < $pc->mtime($pcid)) {
+
+    $_lock_file = _fake_lock_file($this->vartmp_dir, 'get_page_list', $pcid);
+    $locked = _fake_locked($_lock_file, $this->mtime());
+    if ($locked or ($pc->exists($pcid) and $this->mtime() < $pc->mtime($pcid))) {
       $list=unserialize($pc->fetch($pcid));
       if (is_array($list)) return $list;
     }
@@ -955,6 +958,7 @@ EOS;
 
     set_time_limit(isset($this->time_limit) ? intval($this->time_limit) : 30);
     if (empty($options)) {
+      _fake_lock($_lock_file);
       while (($file = readdir($handle)) !== false) {
         if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($this->text_dir.'/'.$file)) continue;
         $pages[] = $this->keyToPagename($file);
@@ -962,8 +966,10 @@ EOS;
       closedir($handle);
       $pc->update($pcid,serialize($pages));
       $pc->update('counter', count($pages));
+      _fake_lock($_lock_file, LOCK_UN);
       return $pages;
     } else if (!empty($options['limit'])) { # XXX
+       _fake_lock($_lock_file);
        while (($file = readdir($handle)) !== false) {
           if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($this->text_dir.'/'.$file)) continue;
           if (filemtime($this->text_dir."/".$file) > $options['limit'])
@@ -971,6 +977,7 @@ EOS;
        }
        closedir($handle);
     } else if (!empty($options['count'])) {
+       _fake_lock($_lock_file);
        $count=$options['count'];
        while (($file = readdir($handle)) !== false && $count > 0) {
           if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($this->text_dir.'/'.$file)) continue;
@@ -979,6 +986,7 @@ EOS;
        }
        closedir($handle);
     } else if ($options['date']) {
+       _fake_lock($_lock_file);
        while (($file = readdir($handle)) !== false) {
           if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($this->text_dir.'/'.$file)) continue;
           $mtime=filemtime($this->text_dir."/".$file);
@@ -988,6 +996,7 @@ EOS;
        closedir($handle);
     }
     $pc->update($pcid,serialize($pages));
+    _fake_lock($_lock_file, LOCK_UN);
     return $pages;
   }
 
@@ -1010,9 +1019,13 @@ EOS;
 
   function getCounter() {
     $pc = new Cache_text('pagelist');
-    if ($this->mtime() < $pc->mtime('counter') and $pc->exists('counter'))
+    $_lock_file = _fake_lock_file($this->vartmp_dir, 'get_counter');
+    $locked = _fake_locked($_lock_file, $this->mtime());
+
+    if ($locked or ($this->mtime() < $pc->mtime('counter') and $pc->exists('counter')))
       return $pc->fetch('counter');
 
+    _fake_lock($_lock_file);
     $handle = opendir($this->text_dir);
     if (!is_resource($handle))
       return 0;
@@ -1026,6 +1039,7 @@ EOS;
     closedir($handle);
 
     $pc->update('counter', $count);
+    _fake_lock($_lock_file, LOCK_UN);
     return $count;
   }
 

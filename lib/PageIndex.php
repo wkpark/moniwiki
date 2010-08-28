@@ -23,6 +23,11 @@ class PageIndex {
         $this->pageidx = $this->cache_dir . '/pageindex.idx';
     }
 
+    function mtime()
+    {
+        return @filemtime($this->pageidx);
+    }
+
     function init()
     {
         global $DBInfo;
@@ -30,17 +35,20 @@ class PageIndex {
         $dh = opendir($this->text_dir);
         if (!is_resource($dh)) return false;
 
-        $fidx = fopen($this->pageidx, 'w');
+        $fidx = fopen($this->pageidx.'.tmp', 'a+b');
         if (!is_resource($fidx)) {
             closedir($dh);
             return false;
         }
-        $flst = fopen($this->pagelst, 'w');
+        $flst = fopen($this->pagelst.'.tmp', 'a+b');
         if (!is_resource($flst)) {
             closedir($dh);
             fclose($fidx);
             return false;
         }
+
+        ftruncate($flist, 0);
+        ftruncate($fidx, 0);
 
         $idx_data = '';
         $lst_data = '';
@@ -48,7 +56,7 @@ class PageIndex {
         $fseek = 0;
         $pages = array();
         while(($f = readdir($dh)) !== false) {
-            if ((($p = strpos($f, '.')) !== false or $f == 'RCS' or $f == 'CVS') and is_dir($f)) continue;
+            if ((($p = strpos($f, '.')) !== false or $f == 'RCS' or $f == 'CVS') and is_dir($this->text_dir .'/'. $f)) continue;
             $counter++;
 
             $idx_data.= pack('N', $fseek);
@@ -72,6 +80,8 @@ class PageIndex {
         fclose($fidx);
         fclose($flst);
         closedir($dh);
+        rename($this->pagelst.'.tmp', $this->pagelst);
+        rename($this->pageidx.'.tmp', $this->pageidx);
     }
 
     function getPagesByIds($ids)
