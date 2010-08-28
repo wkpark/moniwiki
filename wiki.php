@@ -2961,7 +2961,7 @@ class Formatter {
   }
 
   function head_repl($depth,$head,&$headinfo,$attr='') {
-    $dep=$depth;
+    $dep=$depth < 6 ? $depth : 5;
     $this->nobr=1;
 
     if ($headinfo == null)
@@ -4052,7 +4052,7 @@ class Formatter {
       #$line=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$line);
 
       # Headings
-      if (preg_match("/(?<!=)(={1,5})\s+(.*)\s+\\1\s?$/",$line,$m)) {
+      if (preg_match("/(?<!=)(={1,})\s+(.*)\s+\\1\s?$/",$line,$m)) {
         $this->sect_num++;
         if ($p_closeopen) { // ignore last open
           $p_closeopen='';
@@ -4146,8 +4146,18 @@ class Formatter {
 
          if ($processor and !$show_raw) {
            $value=&$this->pre_line;
-           if ($processor == 'wiki') $processor = 'monimarkup';
+           if ($processor == 'wiki') {
+             $processor = 'monimarkup';
+             if (isset($options['notoc']))
+               $save_toc = $options['notoc'];
+             $options['notoc'] = 1;
+           }
            $out= $this->processor_repl($processor,$value,$options);
+           if (isset($save_toc)) {
+             // do not shoe edit section link in the processor mode
+             $options['notoc'] = $save_toc;
+             unset($save_toc);
+           }
            #if ($this->wikimarkup)
            #  $line='<div class="wikiMarkup">'."<!-- wiki:\n{{{".
            #    $value."}}}\n-->$out</div>";

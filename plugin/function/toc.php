@@ -16,7 +16,7 @@
 // $Id$
 
 function function_toc($formatter) {
-    $secdep = 6;
+    $secdep = '';
     $simple = 1;
 
     $head_num=1;
@@ -32,6 +32,7 @@ function function_toc($formatter) {
         if (!$match) continue;
 
         $dep=strlen($match[1]);
+        if ($dep > 4) $dep = 5;
         $head=str_replace("<","&lt;",$match[3]);
         # strip some basic wikitags
         # $formatter->baserepl,$head);

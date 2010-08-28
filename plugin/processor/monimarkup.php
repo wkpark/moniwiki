@@ -170,7 +170,7 @@ class processor_monimarkup
                 }
                 continue;
             }
-            if (preg_match("/^([ ]*(={1,5})\s(.*\s*)\s\\2\s?)$/",$line,$m)) {
+            if (preg_match("/^([ ]*(={1,})\s(.*\s*)\s\\2\s?)$/",$line,$m)) {
                 $tag='HEAD';
                 $depth=strlen($m[2]);
                 if ($oline)

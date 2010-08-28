@@ -1139,7 +1139,8 @@ function _get_sections($body,$lim=5) {
 
   $sects=array();
   $sects[]='';
-  if ($lim > 1 and $lim < 6) $lim=','.$lim;
+  if ($lim > 1 and $lim < 5) $lim=','.$lim;
+  else if ($lim == 5) $lim = ',';
   else $lim='';
   for ($jj=0,$ii=0,$ss=count($chunks); $ii<$ss; $ii++) {
     if (($ii%2)) {
@@ -3165,7 +3166,7 @@ function macro_TableOfContents(&$formatter,$value="") {
  if (!empty($DBInfo->toc_options))
    $value=$DBInfo->toc_options.','.$value;
  $toctoggle=!empty($DBInfo->use_toctoggle) ? $DBInfo->use_toctoggle : '';
- $secdep=5;
+ $secdep = '';
  $prefix = '';
 
  while($value) {
@@ -3182,7 +3183,7 @@ function macro_TableOfContents(&$formatter,$value="") {
    } else if ($key=='toggle') {
      $toctoggle=strtok('');
      if ($toctoggle=='') $toctoggle=1;
-   } else if ($arg == (int) $arg and $arg > 0) {
+   } else if (is_numeric($arg) and $arg > 0 and $arg < 5) {
      $secdep=$arg;
    } else if ($arg) {
      $value=$value ? $arg.','.$value:$arg;
@@ -3228,6 +3229,7 @@ EOS;
    if (!$match) continue;
 
    $dep=strlen($match[1]);
+   if ($dep > 4) $dep = 5;
    $head=str_replace("<","&lt;",$match[3]);
    # strip some basic wikitags
    # $formatter->baserepl,$head);
