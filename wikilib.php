@@ -3015,10 +3015,13 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
     if (!empty($sel) and isset($titleindex[$sel])) {
       $all_pages = $titleindex[$sel];
     }
+    if (empty($titleindex) and $locked) {
+      // no cache found
+      return _("Please wait...");
+    }
   }
 
   if (empty($all_pages)) {
-    _fake_lock($lock_file);
     $all_pages = array();
     if ($formatter->group) {
       $group_pages = $DBInfo->getLikePages($formatter->group);
@@ -3037,6 +3040,7 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
   }
 
   if (empty($keys) or empty($titleindex)) {
+    _fake_lock($lock_file);
     foreach ($all_pages as $page=>$rpage) {
       $p = ltrim($page);
       $pkey = get_key("$p");

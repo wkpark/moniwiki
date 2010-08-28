@@ -937,6 +937,7 @@ EOS;
     if ($locked or ($pc->exists($pcid) and $this->mtime() < $pc->mtime($pcid))) {
       $list=unserialize($pc->fetch($pcid));
       if (is_array($list)) return $list;
+      if ($locked) return array();
     }
 
     if (0 and !empty($this->use_indexer)) {
