@@ -165,7 +165,7 @@ EOF;
       $cmt=$fc->mtime($sid);
 
       # check update or not
-      $dmt=filemtime($DBInfo->text_dir.'/.');
+      $dmt= $DBInfo->mtime();
       if ($dmt > $cmt) { # XXX crude method
         $data=array();
       } else { # XXX smart but incomplete method
