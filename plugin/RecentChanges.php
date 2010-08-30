@@ -3,6 +3,13 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a RecentChanges plugin for the MoniWiki
 //
+// Since: 2003-08-09
+// Name: RecentChanges
+// Description: Show RecentChanges of the Wiki
+// URL: MoniWiki:RecentChangesPlugin
+// Version: $Revision$
+// Depend: 1.1.3
+// License: GPL
 // $Id$
 
 function do_RecentChanges($formatter,$options='') {
@@ -21,9 +28,14 @@ function do_RecentChanges($formatter,$options='') {
   } else {
     $arg = 'board,comment,timesago,item=20';
   }
+  if (!empty($options['time']))
+    $formatter->macro_repl('bookmark', '', $options);
+
   $formatter->send_header('',$options);
   $formatter->send_title('', '', $options);
+  $options['myaction'] = 'recentchanges';
   echo macro_RecentChanges($formatter, $arg, $options);
+
   $formatter->send_footer('',$options);
   return;
 }
@@ -67,6 +79,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
   $target = '';
   if (!empty($options['target'])) $target="target='$options[target]'";
+  $bookmark_action = empty($options['action']) ? '?action=bookmark' : '?action=' . $options['action'];
 
   // $date_fmt='D d M Y';
   $date_fmt=$DBInfo->date_fmt_rc;
@@ -292,17 +305,17 @@ function macro_RecentChanges($formatter,$value='',$options='') {
             $br, $rcdate);
         if (empty($nobookmark))
           $out.="<span class='rc-bookmark' style='font-size:small'>[".
-            $formatter->link_tag($formatter->page->urlname,"?action=bookmark&amp;time=$ed_time".$daysago,
+            $formatter->link_tag($formatter->page->urlname, $bookmark_action ."&amp;time=$ed_time".$daysago,
             _("set bookmark"))."]</span>\n";
         $br="<br />";
         $out.='</span>'.$perma.'<br />'.$bra;
         $cat0=$cat;
       } else {
-        $bmark=$formatter->link_to("?action=bookmark&amp;time=$ed_time".$daysago,_("Bookmark"), 'class="button-small"');
+        $bmark=$formatter->link_to($bookmark_action ."&amp;time=$ed_time".$daysago,_("Bookmark"), 'class="button-small"');
       }
     }
     if (empty($use_day)) {
-      $date=$formatter->link_to("?action=bookmark&amp;time=$ed_time".$daysago,$date);
+      $date=$formatter->link_to($bookmark_action ."&amp;time=$ed_time".$daysago,$date);
     }
 
     $pageurl=_rawurlencode($page_name);
