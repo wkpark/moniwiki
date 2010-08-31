@@ -18,28 +18,36 @@ function macro_bookmark($formatter, $value = '', &$options) {
   } else {
      $bookmark = $options['time'];
   }
+  $ret = array();
   if (is_numeric($bookmark)) {
     if ($user->id == "Anonymous") {
       setcookie("MONI_BOOKMARK",$bookmark,time()+60*60*24*30,get_scriptname());
       # set the fake cookie
       $_COOKIE['MONI_BOOKMARK']=$bookmark;
       $user->bookmark=$bookmark;
-      $title = _('Bookmark Changed');
+      $ret['title'] = _('Bookmark Changed');
     } else {
       $user->info['bookmark']=$bookmark;
       $DBInfo->udb->saveUser($user);
-      $title = _('Bookmark Changed');
+      $ret['title'] = _('Bookmark Changed');
     }
   } else
-    $options['msg']=_("Invalid bookmark!");
+    $ret['msg']=_("Invalid bookmark!");
+
+  if (isset($options['ret']))
+    $options['ret'] = $ret;
   
   return '';
 }
 
 function do_bookmark($formatter,$options) {
-  $formatter->macro_repl('BookMark', '', $options);
+  $ret = array();
+  $options['ret'] = &$ret;
+  $formatter->macro_repl('Bookmark', '', $options);
+  if (!empty($ret))
+    $options = array_merge($options, $ret);
   $formatter->send_header("",$options);
-  $formatter->send_title($title,"",$options);
+  $formatter->send_title('', "",$options);
   if (empty($DBInfo->control_read) or $DBInfo->security->is_allowed('read',$options)) {
     $formatter->send_page();
   }

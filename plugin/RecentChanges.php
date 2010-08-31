@@ -28,8 +28,13 @@ function do_RecentChanges($formatter,$options='') {
   } else {
     $arg = 'board,comment,timesago,item=20';
   }
-  if (!empty($options['time']))
+  if (!empty($options['time'])) {
+    $ret = array();
+    $options['ret'] = &$ret;
     $formatter->macro_repl('bookmark', '', $options);
+    if (!empty($ret))
+      $options = array_merge($options, $ret);
+  }
 
   $formatter->send_header('',$options);
   $formatter->send_title('', '', $options);
