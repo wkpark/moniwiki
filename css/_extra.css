@@ -583,10 +583,10 @@ span.button button, del.button span, span.button input {
 
 #editor_area .captcha {
   vertical-align:middle;
-  position:absolute;
+  /* position:absolute; /* */
   right:17px; /* ~ scrollbar width */
-  bottom:14px; /* ~ resizer grip height */
-  opacity:0.7;filter:alpha(opacity=70);
+  /* bottom:14px; /* ~ resizer grip height */
+  /* opacity:0.7;filter:alpha(opacity=70); /* */
   /* IE Fix */
   _float:right;
   _margin-top:-73px;
