@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.1.5-RC5';
+$_release = '1.1.5';
 
 #ob_start("ob_gzhandler");
 
@@ -3727,6 +3727,10 @@ class Formatter {
       $headinfo['dep'] = 0;
     }
 
+    $is_writable = 1;
+    if (!$DBInfo->security->writable($options))
+      $is_writable = 0;
+
     $text='';
     $in_p='';
     $in_div=0;
@@ -4064,7 +4068,7 @@ class Formatter {
         $p_closeopen.=$this->_div(1,$in_div,$div_enclose);
         $in_p='';
         $edit = ''; $anchor = '';
-        if ($this->section_edit && empty($this->preview)) {
+        if ($is_writable && $this->section_edit && empty($this->preview)) {
           $act='edit';
 
           $wikiwyg_mode='';
