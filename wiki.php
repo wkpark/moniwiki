@@ -5872,7 +5872,7 @@ function wiki_main($options) {
         if (!empty($formatter->pi['#title']))
           $as[] = $formatter->pi['#title'];
         if (!empty($as)) {
-          $ac->update($pagename, serialize(array($pagename=>$as)));
+          $ac->update($pagename, serialize($as));
         }
       }
     }
