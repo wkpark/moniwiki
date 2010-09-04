@@ -3849,7 +3849,7 @@ class Formatter {
             # new formatting rule for a quote block (pre block + wikilinks)
             $line[$p+3]=" ";
             $np=1;
-            if ($line[$p+4]=='#' or $line[$p+4]=='.') {
+            if (!empty($line[$p+4]) and ($line[$p+4]=='#' or $line[$p+4]=='.')) {
               $pre_style=strtok(substr($line,$p+4),' ');
               $np++;
               if ($pre_style) $np+=strlen($pre_style);
@@ -5872,7 +5872,7 @@ function wiki_main($options) {
         if (!empty($formatter->pi['#title']))
           $as[] = $formatter->pi['#title'];
         if (!empty($as)) {
-          $ac->update($pagename, serialize($as));
+          $ac->update($pagename, serialize(array($pagename=>$as)));
         }
       }
     }
