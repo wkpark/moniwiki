@@ -47,7 +47,7 @@ class PageIndex {
             return false;
         }
 
-        ftruncate($flist, 0);
+        ftruncate($flst, 0);
         ftruncate($fidx, 0);
 
         $idx_data = '';

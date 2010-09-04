@@ -2425,6 +2425,17 @@ function macro_RandomPage($formatter,$value='') {
     // fastest method
     require_once('lib/PageIndex.php');
     $pgidx = new PageIndex($DBInfo);
+
+    $delay = !empty($DBInfo->default_delaytime) ? $DBInfo->default_delaytime : 0;
+    $lock_file = _fake_lock_file($DBInfo->vartmp_dir, 'pageindex');
+    $locked = _fake_locked($lock_file, $DBInfo->mtime());
+    if (!$locked and ($DBInfo->mtime() > $pgidx->mtime() + $delay)) {
+        // init pagename index db
+        _fake_lock($lock_file);
+        $pgidx->init();
+        _fake_lock($lock_file, LOCK_UN);
+    }
+
     $sel_pages = $pgidx->getPagesByIds($selected);
   } else if (!empty($DBInfo->use_indexer)) {
     require_once("lib/indexer.DBA.php");
