@@ -809,25 +809,26 @@ EOS;
       $apc = new Cache_text('aliases');
       $ac = new Cache_text('alias');
       $dir = $ac->cache_dir;
-      if ($apc->exists('aliases') and $this->mtime() < $apc->mtime('aliases')) {
+      $_lock_file = _fake_lock_file($this->vartmp_dir, 'init_alias');
+      $locked = _fake_locked($_lock_file, $this->mtime());
+      if ($locked or ($apc->exists('aliases') and $this->mtime() < $apc->mtime('aliases'))) {
         $aliases = unserialize($apc->fetch('aliases'));
         break;
       }
 
-      $dh = @opendir($dir);
-      if (is_resource($dh)) {
-        while ( ($file = readdir($dh)) !== false) {
-          if ($file[0] == '.' or is_dir($file)) continue;
-          
-          $pagename = $this->keyToPagename($file); // FIXME
-          $as = unserialize($ac->fetch($pagename));
-          foreach ($as as $k) {
-            $aliases[$k] = !empty($aliases[$k]) ? $aliases[$k].','.$pagename : $pagename;
-          }
+      // get all cache files
+      $files = array();
+      $ac->_caches($files);
+      _fake_lock($_lock_file);
+      foreach ($files as $file) {
+        $as = unserialize($ac->_fetch($file));
+        $pagename = key($as);
+        foreach ($as[$pagename] as $k) {
+          $aliases[$k] = !empty($aliases[$k]) ? $aliases[$k].','.$pagename : $pagename;
         }
-        closedir($dh);
       }
       $apc->update('aliases', serialize($aliases));
+      _fake_lock($_lock_file, LOCK_UN);
       break;
     }
 
@@ -1710,6 +1711,36 @@ class Cache_text {
     $key=$this->getKey($pagename);
     if ($this->_exists($key))
       unlink($key);
+  }
+
+  /**
+   * get all cache files
+   *
+   */
+  function _caches(&$files, $dir = '')
+  {
+    $top = $this->cache_dir;
+    $prefix = '';
+    $_dir = $top;
+    if (!empty($dir)) {
+      $prefix = $dir .'/';
+      $_dir = $top.'/'.$dir;
+    }
+
+    $dh = opendir($_dir);
+    if (!$dh) return; // slightly ignore
+
+    while (($file = readdir($dh)) !== false) {
+      if ($file[0] == '.')
+        continue;
+      if (is_dir($_dir . '/'. $file)) {
+        $this->_caches($files, $file);
+        continue;
+      }
+
+      $files[] = $top . '/'. $prefix . $file;
+    }
+    closedir($dh);
   }
 }
 
@@ -5872,7 +5903,7 @@ function wiki_main($options) {
         if (!empty($formatter->pi['#title']))
           $as[] = $formatter->pi['#title'];
         if (!empty($as)) {
-          $ac->update($pagename, serialize($as));
+          $ac->update($pagename, serialize(array($pagename=>$as)));
         }
       }
     }
