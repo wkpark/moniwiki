@@ -5656,7 +5656,7 @@ function wiki_main($options) {
   } else {
     // reset some reserved variables
     if (isset($_GET['retstr'])) unset($_GET['retstr']);
-    if (isset($_POST['header'])) unset($_POST['header']);
+    if (isset($_GET['header'])) unset($_GET['header']);
 
     $action=!empty($_GET['action']) ? $_GET['action'] : '';
     $value=isset($_GET['value'][0]) ? $_GET['value'] : '';
