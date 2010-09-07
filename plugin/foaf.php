@@ -123,7 +123,7 @@ function macro_foaf($formatter,$value) {
   xml_parser_free($xml_parser);
 
   ##
-  $out="<a href='".$DBInfo->interwiki['FOAF']."$value'><img align='middle' border='0' alt='FOAF:' title='FOAF:' src='$DBInfo->imgs_dir_interwiki"."foaf-16.png'>";
+  $out="<a href='".$DBInfo->interwiki['FOAF']."$value'><img align='middle' border='0' alt='FOAF:' title='FOAF:' src='$DBInfo->imgs_url_interwiki"."foaf-16.png'>";
 
   if ($options['homepage']) $out.="</a><a href='$info[homepage]'>$info[name]</a>";
   else $out.="$info[name]</a>";

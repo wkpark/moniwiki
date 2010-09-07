@@ -65,7 +65,7 @@ EOS;
       else {
         $url=str_replace('$ISBN','0738206679',$href);
       }
-      $icon=$DBInfo->imgs_dir_interwiki.strtolower($interwiki).'-16.png';
+      $icon=$DBInfo->imgs_url_interwiki.strtolower($interwiki).'-16.png';
       $sx=16;$sy=16;
       if ($DBInfo->intericon[$interwiki]) {
         $icon=$DBInfo->intericon[$interwiki][2];
@@ -225,7 +225,7 @@ EOS;
   }
 
   if (!empty($noimg)) {
-    $icon=$DBInfo->imgs_dir_interwiki.strtolower($lang).'-16.png';
+    $icon=$DBInfo->imgs_url_interwiki.strtolower($lang).'-16.png';
     $sx=16;$sy=16;
     if (!empty($DBInfo->intericon[$lang])) {
       $icon=$DBInfo->intericon[$lang][2];
