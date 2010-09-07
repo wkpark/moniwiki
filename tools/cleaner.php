@@ -12,15 +12,20 @@ include_once(dirname(__FILE__) . '/../wiki.php');
 
 // Start Main
 $Config = getConfig("config.php");
-include(dirname(__FILE__) . '/../wikilib.php');
-include(dirname(__FILE__) . '/../lib/win32fix.php');
+require_once('wikilib.php');
+require_once('lib/win32fix.php');
+require_once("lib/wikiconfig.php");
+require_once("lib/timer.php");
 
+$Config = wikiConfig($Config);
 $DBInfo = new WikiDB($Config);
 
 $options = array();
-$timing = new Timer();
-$options['timer'] = &$timing;
-$options['timer']->Check("load");
+if (class_exists('Timer')) {
+    $timing = new Timer();
+    $options['timer'] = &$timing;
+    $options['timer']->Check("load");
+}
 
 //
 $cache_arenas = array('fullsearch', 'macro', 'dynamicmacros');
@@ -43,6 +48,7 @@ function clean_dir($dir, $checktime = 0) {
     echo '*** ' . $dir . "\n";
     $count = 0;
     while(($file = readdir($handle)) !== false) {
+        if ($file[0] == '.') continue; // hidden files
         if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($dir . '/' . $file)) continue;
         if (is_dir($dir . '/' . $file)) {
             $count+= clean_dir($dir . '/' . $file, $checktime);

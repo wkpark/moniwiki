@@ -5,17 +5,22 @@ include_once("wiki.php");
 
 # Start Main
 $Config=getConfig("config.php");
-include("wikilib.php");
-include("lib/win32fix.php");
-#include("lib/tokenizer.php");
-include("lib/indexer.DBA.php");
+require_once("wikilib.php");
+require_once("lib/win32fix.php");
+require_once("lib/wikiconfig.php");
+require_once("lib/cache.text.php");
+require_once("lib/timer.php");
+require_once("lib/indexer.DBA.php");
 
+$Config = wikiConfig($Config);
 $DBInfo= new WikiDB($Config);
 
 $options=array();
-$timing = &new Timer();
-$options['timer']=&$timing;
-$options['timer']->Check("load");
+if (class_exists('Timer')) {
+    $timing = new Timer();
+    $options['timer']=&$timing;
+    $options['timer']->Check("load");
+}
 
 $indexer = new Indexer_DBA('fullsearch', 'w', $DBInfo->dba_type, 'new');
 #$indexer->test();

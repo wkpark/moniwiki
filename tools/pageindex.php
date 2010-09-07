@@ -6,17 +6,22 @@ include_once("wiki.php");
 
 # Start Main
 $Config=getConfig("config.php");
-include("wikilib.php");
-include("lib/win32fix.php");
-#include("lib/tokenizer.php");
-include("lib/PageIndex.php");
+require_once("wikilib.php");
+require_once("lib/win32fix.php");
+require_once("lib/wikiconfig.php");
+require_once("lib/cache.text.php");
+require_once("lib/PageIndex.php");
 
+$Config = wikiConfig($Config);
 $DBInfo= new WikiDB($Config);
 
 $options=array();
-$timing = &new Timer();
-$options['timer']=&$timing;
-$options['timer']->Check("load");
+
+if (class_exists('Timer')) {
+    $timing = new Timer();
+    $options['timer']=&$timing;
+    $options['timer']->Check("load");
+}
 
 $indexer = new PageIndex($DBInfo);
 $indexer->init();

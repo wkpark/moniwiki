@@ -5552,7 +5552,9 @@ function wiki_main($options) {
 
 if (!defined('INC_MONIWIKI')):
 # Start Main
+$Config = getConfig('config.php', array('init'=>1));
 require_once("wikilib.php");
+require_once("lib/win32fix.php");
 require_once("lib/wikiconfig.php");
 require_once("lib/cache.text.php");
 require_once("lib/timer.php");
@@ -5563,9 +5565,6 @@ if (class_exists('Timer')) {
   $options['timer'] = &$timing;
   $options['timer']->Check("load");
 }
-
-$Config = getConfig('config.php', array('init'=>1));
-require_once("lib/win32fix.php");
 
 $ccache = new Cache_text('settings');
 if (!($conf = $ccache->fetch('config'))) {
