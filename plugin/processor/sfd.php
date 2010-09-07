@@ -137,8 +137,8 @@ INFO;
     }
 
     if ($DBInfo->cache_public_dir) {
-        $fc=new Cache_text('sfd',2,'png',$DBInfo->cache_public_dir);
-        $pngname=$fc->_getKey($uniq,0);
+        $fc = new Cache_text('sfd', array('ext'=>'png', 'dir'=>$DBInfo->cache_public_dir));
+        $pngname=$fc->getKey($uniq, false);
         $outpath_png= $DBInfo->cache_public_dir.'/'.$pngname;
 
         $png_url=

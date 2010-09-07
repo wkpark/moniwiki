@@ -22,7 +22,7 @@ include_once (dirname(__FILE__).'/../../lib/Template_.compiler.php');
 function processor_tpl_(&$formatter,$source,$params=array()) {
     global $Config;
     #if (!$Config['use_tpl']) return $source;
-    $cache= new Cache_text("tpl_",'2');
+    $cache = new Cache_text("tpl_");
 
     if (!empty($source)) {
         $id=md5($source); $mtime=$formatter->page->mtime();

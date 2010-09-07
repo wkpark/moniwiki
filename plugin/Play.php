@@ -112,8 +112,8 @@ function macro_Play($formatter,$value) {
     if ($sz > 1) {
       $md5sum=md5(implode(':',$media));
       if ($DBInfo->cache_public_dir) {
-        $fc=new Cache_text('jwmediaplayer',2,'',$DBInfo->cache_public_dir);
-        $fname=$fc->_getKey($md5sum,0);
+        $fc=new Cache_text('jwmediaplayer', array('dir'=>$DBInfo->cache_public_dir));
+        $fname = $fc->getKey($md5sum, false);
         $basename= $DBInfo->cache_public_dir.'/'.$fname;
         $urlbase=
           $DBInfo->cache_public_url ? $DBInfo->cache_public_url.'/'.$fname:

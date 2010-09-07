@@ -23,7 +23,7 @@ function macro_UrlMapping($formatter,$value,$options=array()) {
             $force_init=1;
         }
         if (!empty($formatter->refresh) and $cf->exists('urlmapping') and !$force_init) {
-            $info=unserialize($cf->fetch('urlmapping'));
+            $info=$cf->fetch('urlmapping');
             $DBInfo->url_mappings=$info['urlmapping'];
             $DBInfo->url_mapping_rule=$info['urlmappingrule'];
 
@@ -50,9 +50,10 @@ function macro_UrlMapping($formatter,$value,$options=array()) {
             $DBInfo->url_mapping_rule.=$DBInfo->url_mapping_rule ?
                 '|'.$mapping_rule:$mapping_rule;
         }
-        $mappinginfo=
-            serialize(array('urlmapping'=>$DBInfo->url_mappings,
-                'urlmappingrule'=>$DBInfo->url_mapping_rule));
+        $mappinginfo= array(
+                'urlmapping'=>$DBInfo->url_mappings,
+                'urlmappingrule'=>$DBInfo->url_mapping_rule
+        );
         $cf->update('urlmapping',$mappinginfo);
         break;
     }

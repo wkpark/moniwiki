@@ -159,7 +159,7 @@ EOF;
   # retrieve cache
   $fc=new Cache_text($arena);
   if (!$formatter->refresh and $fc->exists($sid)) {
-    $data=unserialize($fc->fetch($sid));
+    $data=$fc->fetch($sid);
     if (is_array($data)) {
       # check cache mtime
       $cmt=$fc->mtime($sid);
@@ -199,7 +199,7 @@ EOF;
       #$opts['context']=-1; # turn off context-matching
       $cache=new Cache_text("pagelinks");
       foreach ($pages as $page_name) {
-        $links=unserialize($cache->fetch($page_name));
+        $links = $cache->fetch($page_name);
         if (is_array($links)) {
           if (in_array($value,$links))
             $hits[$page_name] = -1;
@@ -211,7 +211,7 @@ EOF;
       $opts['context']=-1; # turn off context-matching
       $cache=new Cache_text("keyword");
       foreach ($pages as $page_name) {
-        $links=unserialize($cache->fetch($page_name));
+        $links=$cache->fetch($page_name);
         // XXX
         if (is_array($links)) {
           if (stristr(implode(' ',$links),$needle))
@@ -240,7 +240,7 @@ EOF;
     $name = array_keys($hits);
     array_multisort($hits, SORT_DESC, $name, SORT_ASC);
 
-    $fc->update($sid,serialize($hits));
+    $fc->update($sid,$hits);
   }
 
   $opts['hits']= $hits;

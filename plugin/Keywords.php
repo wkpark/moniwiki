@@ -83,11 +83,11 @@ function macro_Keywords($formatter,$value,$options=array()) {
     $pmt=$cache->mtime($pkey);
     if ($cmt > $pmt) {
         # check update or not
-        $dmt=filemtime($DBInfo->cache_dir.'/keyword/.');
+        $dmt=$cache->mtime();
         if ($dmt > $cmt) { # XXX crude method
             $mykeys=array();
         } else {
-            $mykeys=unserialize($mc->fetch($mkey));
+            $mykeys = $mc->fetch($mkey);
         }
     } else {
         $mc->remove($mkey);
@@ -98,15 +98,10 @@ function macro_Keywords($formatter,$value,$options=array()) {
     else $pages=array($pagename);
 
     foreach ($pages as $pn) {
-        if ($cache->exists($pn)) {
-            $keys=$cache->fetch($pn);
-            $keys=unserialize($keys);
-        } else {
-            $keys=array();
-        }
-        if ($keys) $mykeys=array_merge($mykeys,$keys);
+        if ($keys = $cache->fetch($pn))
+            $mykeys = array_merge($mykeys,$keys);
     }
-    $mc->update($mkey,serialize($mykeys));
+    $mc->update($mkey, $mykeys);
 
     endif;
 
@@ -508,16 +503,16 @@ function do_keywords($formatter,$options) {
             $all_keys=array_merge($all_keys,$ws);
             foreach ($ws as $k) {
                 $rels=array_diff($ws,array($k));
-                $krels=unserialize($kc->fetch($k));
+                $krels = $kc->fetch($k);
                 if (is_array($krels)) {
                     if (($nrels=array_diff($rels,$krels))) {
                         $rs=array_unique(array_merge($nrels,$krels));
-                        $kc->update($k,serialize($rs));
+                        $kc->update($k, $rs);
                         print "***** updated $k\n";
                     }
                 } else {
                     if (sizeof($rels) > 1 and is_array($rels)) {
-                        $kc->update($k,serialize($rels));
+                        $kc->update($k, $rels);
                         print "***** save $k\n";
                     }
                 }
@@ -607,7 +602,7 @@ function do_keywords($formatter,$options) {
         $keys=$options['key'];
         $keys=array_flip($keys);
         unset($keys['']);
-        $cache->update($page,serialize(array_keys($keys)));
+        $cache->update($page, array_keys($keys));
 
         # update 'keylinks' caches
         #$kc=new Cache_text('keylinks');

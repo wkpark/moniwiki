@@ -233,7 +233,7 @@ EOF;
 
         if (!empty($data['attach'])) {
             $cache=new Cache_Text('attachments');
-            $cache->update($options['pagename'],serialize($data['attach']));
+            $cache->update($options['pagename'], $data['attach']);
         }
 
         return true;
@@ -541,7 +541,7 @@ function macro_BBS($formatter,$value,$options=array()) {
         $img='';
         if ($MyBBS->use_attach) {
             $cache=new Cache_text('attachments');
-            $attachs=unserialize($cache->fetch($MyBBS->bbsname.':'.$nid));
+            $attachs = $cache->fetch($MyBBS->bbsname.':'.$nid);
             if (preg_match('/^attachment:([^\?]+)(\?.*)?$/',$attachs[0],$m)) {
                 $img=$formatter->macro_repl('Attachment',$m[1].'?thumbwidth=100');
             }

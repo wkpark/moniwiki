@@ -19,7 +19,6 @@ function macro_PageLinks($formatter,$options="") {
   foreach ($pages as $page) {
     $lnks=$cache->fetch($page);
     if ($lnks !== false) {
-        $lnks=unserialize($lnks);
         $out.="<li>".$formatter->link_tag($page,'',htmlspecialchars($page)).": ";
         $links=implode(' ',$lnks);
         $links=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$links);

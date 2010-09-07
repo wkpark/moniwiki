@@ -119,8 +119,8 @@ function processor_latex(&$formatter,$value="",$options=array()) {
   }
 
   if (!empty($DBInfo->cache_public_dir)) {
-    $fc=new Cache_text('latex',2,'png',$DBInfo->cache_public_dir);
-    $pngname=$fc->_getKey($uniq,0);
+    $fc = new Cache_text('latex',array('ext'=>'png','dir'=>$DBInfo->cache_public_dir));
+    $pngname=$fc->getKey($uniq, false);
     $png= $DBInfo->cache_public_dir.'/'.$pngname;
     $png_url=
       !empty($DBInfo->cache_public_url) ? $DBInfo->cache_public_url.'/'.$pngname:
@@ -243,7 +243,7 @@ function processor_latex(&$formatter,$value="",$options=array()) {
         for ($i=0;$i<$sz;$i++) {
           $id=$formatter->latex_uniq[$i];
           if ($DBInfo->cache_public_dir) {
-            $pngname=$fc->_getKey($id,0);
+            $pngname=$fc->getKey($id, false);
             $img= $DBInfo->cache_public_dir.'/'.$pngname;
           } else {
             $img=$cache_dir.'/'.$id.'.png';

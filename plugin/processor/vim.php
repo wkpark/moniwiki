@@ -63,8 +63,8 @@ function processor_vim($formatter,$value,$options) {
   $uniq=md5($option.$extra.$type.$src);
 
   if ($DBInfo->cache_public_dir) {
-    $fc=new Cache_text('vim',2,'html',$DBInfo->cache_public_dir);
-    $htmlname=$fc->_getKey($uniq,0);
+    $fc = new Cache_text('vim', array('ext'=>'html', 'dir'=>$DBInfo->cache_public_dir));
+    $htmlname = $fc->getKey($uniq, false);
     $html= $DBInfo->cache_public_dir.'/'.$htmlname;
   } else {
     $cache_dir=$DBInfo->upload_dir."/VimProcessor";

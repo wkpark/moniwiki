@@ -99,8 +99,8 @@ function processor_gnuplot($formatter="",$value="") {
     $plt="\n".$size."\n".$plt;
   $uniq=md5($plt);
   if ($DBInfo->cache_public_dir) {
-    $fc=new Cache_text('gnuplot',2,$ext,$DBInfo->cache_public_dir);
-    $pngname=$fc->_getKey($uniq,0);
+    $fc = new Cache_text('gnuplot',array('ext'=>$ext, 'dir'=>$DBInfo->cache_public_dir));
+    $pngname=$fc->getKey($uniq, false);
     $png= $DBInfo->cache_public_dir.'/'.$pngname;
     $png_url=
       $DBInfo->cache_public_url ? $DBInfo->cache_public_url.'/'.$pngname:

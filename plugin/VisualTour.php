@@ -54,8 +54,8 @@ function macro_VisualTour($formatter,$value,$options=array()) {
 
   $md5sum=md5($dot);
   if (!empty($DBInfo->cache_public_dir)) {
-    $fc=new Cache_text('visualtour',2,'',$DBInfo->cache_public_dir);
-    $fname=$fc->_getKey($md5sum,0);
+    $fc = new Cache_text('visualtour', array('ext'=>$DBInfo->cache_public_dir));
+    $fname = $fc->getKey($md5sum, false);
     $basename= $DBInfo->cache_public_dir.'/'.$fname;
     $dotfile= $basename.'.dot';
     $pngfile= $basename.'.png';

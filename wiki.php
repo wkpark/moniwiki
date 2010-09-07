@@ -14,7 +14,7 @@
 // $Id$
 //
 $_revision = substr('$Revision$',1,-1);
-$_release = '1.1.5';
+$_release = '1.2.0-CVS';
 
 #ob_start("ob_gzhandler");
 
@@ -49,8 +49,7 @@ function getPlugin($pluginname) {
     }
   }
 
-  if ($cp->exists('plugins')) {
-    $plugins=unserialize($cp->fetch('plugins'));
+  if ($plugins = $cp->fetch('plugins')) {
     if (!empty($DBInfo->myplugins) and is_array($DBInfo->myplugins))
       $plugins=array_merge($plugins,$DBInfo->myplugins);
     return isset($plugins[$pname]) ? $plugins[$pname]:'';
@@ -78,7 +77,7 @@ function getPlugin($pluginname) {
   }
 
   if (!empty($plugins))
-    $cp->update('plugins',serialize($plugins));
+    $cp->update('plugins',$plugins);
   if (!empty($DBInfo->myplugins) and is_array($DBInfo->myplugins))
     $plugins=array_merge($plugins,$DBInfo->myplugins);
 
@@ -102,8 +101,7 @@ function getProcessor($pro_name) {
 
   $cp=new Cache_text('settings');
 
-  if ($cp->exists('processors')) {
-    $processors=unserialize($cp->fetch('processors'));
+  if ($processors=$cp->fetch('processors')) {
     if (is_array($DBInfo->myprocessors))
       $processors=array_merge($processors,$DBInfo->myprocessors);
     return isset($processors[$prog]) ? $processors[$prog]:'';
@@ -124,7 +122,7 @@ function getProcessor($pro_name) {
   }
 
   if ($processors)
-    $cp->update('processors',serialize($processors));
+    $cp->update('processors', $processors);
   if (is_array($DBInfo->myprocessors))
     $processors=array_merge($processors,$DBInfo->myprocessors);
 
@@ -255,44 +253,6 @@ FrontPage= "$Config[frontpage]";
 <script type="text/javascript" src="$Config[kbd_script]"></script>\n
 EOS;
 }
-
-class Timer {
-  var $timers=array();
-  var $total=0.0;
-  function Timer() {
-    $mt= explode(" ",microtime());
-    $this->save=$mt[0]+$mt[1];
-  }
-
-  function Check($name="default") {
-    $mt= explode(" ",microtime());
-    $now=$mt[0]+$mt[1];
-    $diff=$now-$this->save;
-    $this->save=$now;
-    if (isset($this->timers[$name]))
-      $this->timers[$name]+=$diff;
-    else
-      $this->timers[$name]=$diff;
-    $this->total+=$diff;
-  }
-
-  function Write() {
-    $out= '';
-    while (list($name,$d) = each($this->timers)) {
-      $out.=sprintf("%10s :%3.4f sec (%3.2f %%)\n",$name,$d,$d/$this->total*100);
-    }
-    return $out;
-  }
-
-  function Total() {
-    return sprintf("%4.4f sec\n",$this->total);
-  }
-
-  function Clean() {
-    $this->timers=array();
-  }
-}
-
 
 class MetaDB_dba extends MetaDB {
   var $metadb;
@@ -574,206 +534,24 @@ function getConfig($configfile, $options=array()) {
 }
 
 class WikiDB {
-  function WikiDB(&$config) {
-    # Default Configuations
-    $this->frontpage='FrontPage';
-    $this->sitename='UnnamedWiki';
-    $this->upload_dir= 'pds';
-    $this->data_dir= './data';
-    $this->query_prefix='/';
-    $this->umask= 0770;
-    $this->charset='utf-8';
-    $this->lang='auto';
-    $this->dba_type="db3";
-    $this->use_counter=0;
-
-    $this->text_dir= $this->data_dir.'/text';
-    $this->cache_dir= $this->data_dir.'/cache';
-    $this->user_dir= $this->data_dir.'/user';
-    $this->vartmp_dir= '/var/tmp';
-    $this->intermap= $this->data_dir.'/intermap.txt';
-    $this->editlog_name= $this->data_dir.'/editlog';
-    $this->shared_intermap=$this->data_dir."/text/InterMap";
-    $this->shared_metadb=$this->data_dir."/metadb";
-    $this->url_prefix= '/moniwiki';
-    $this->imgs_dir= $this->url_prefix.'/imgs';
-    $this->css_dir= 'css';
-    $this->css_url= $this->url_prefix.'/css/default.css';
-
-    $this->kbd_script= $this->url_prefix.'/css/kbd.js';
-    $this->logo_img= $this->imgs_dir.'/moniwiki-logo.gif';
-    $this->logo_page= $this->frontpage;
-    $this->logo_string= '<img src="'.$this->logo_img.'" alt="[logo]" style="vertical-align:middle;border:0px" />';
-    $this->metatags='<meta name="robots" content="noindex,nofollow" />';
-    $this->doctype=<<<EOS
-<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
-<html xmlns="http://www.w3.org/1999/xhtml">
-EOS;
-    $this->use_smileys=1;
-    $this->hr="<hr class='wikiHr' />";
-    $this->date_fmt= 'Y-m-d';
-    $this->date_fmt_rc= 'D d M Y';
-    $this->date_fmt_blog= 'M d, Y';
-    $this->datetime_fmt= 'Y-m-d H:i:s';
-    $this->default_markup= 'wiki';
-    #$this->changed_time_fmt = ' . . . . [h:i a]';
-    $this->changed_time_fmt= ' [h:i a]'; # used by RecentChanges macro
-    $this->admin_passwd= 'daEPulu0FLGhk'; # default value moniwiki
-    $this->purge_passwd= '';
-    $this->rcs_user='root';
-    $this->actions= array('DeletePage','LikePages');
-    $this->show_hosts= TRUE;
-    $this->iconset='moni';
-    $this->css_friendly='0';
-    $this->goto_type='';
-    $this->goto_form='';
-    $this->template_regex='[a-z]Template$';
-    $this->category_regex='^Category[A-Z]';
-    $this->notify=0;
-    $this->trail=0;
-    $this->origin=0;
-    $this->arrow=" &#x203a; ";
-    $this->home='Home';
-    $this->diff_type='fancy';
-    $this->hr_type='simple';
-    $this->nonexists='simple';
-    $this->use_category=1;
-    $this->use_camelcase=1;
-    $this->use_sistersites=1;
-    $this->use_singlebracket=1;
-    $this->use_twinpages=1;
-    $this->use_hostname=1;
-    $this->email_guard='hex';
-    $this->pagetype=array();
-    $this->smiley='wikismiley';
-    $this->convmap=array(0xac00, 0xd7a3, 0x0000, 0xffff); /* for euc-kr */
-    $this->theme='';
-
-    $this->inline_latex=0;
-    $this->processors=array();
-
-    $this->perma_icon='#';
-    $this->purple_icon='#';
-    $this->use_purple=0;
-    $this->version_class='RCS';
-    $this->title_rule='((?<=[a-z0-9]|[B-Z]{2})([A-Z][a-z]))';
-    $this->login_strict=1;
-    $this->use_fakemtime = 0; // dir mtime emulation for FAT filesytem.
-
-    # set user-specified configuration
-    if (!empty($config)) {
-      # read configurations
-      foreach ($config as $key=>$val) {
-        if ($key[0]=='_') continue; // internal variables
-        $this->$key=$val;
-      }
+  function WikiDB($config) {
+    // set configurations
+    if (is_object($config)) {
+      $conf = get_object_vars($config); // merge default settings to $config
+    } else {
+      $conf = &$config;
+    }
+    foreach ($conf as $key=>$val) {
+      if ($key[0]=='_') continue; // internal variables
+      $this->$key=$val;
     }
 
-    // some alias
-    if (!empty($this->use_captcha))
-      $this->use_ticket=$this->use_captcha;
+    $this->initEnv();
+    $this->initModules();
+    register_shutdown_function(array(&$this,'Close'));
+  }
 
-    if (empty($this->purge_passwd))
-      $this->purge_passwd=$this->admin_passwd;
-
-    if (!empty($this->use_wikiwyg) and empty($this->sectionedit_attr))
-      $this->sectionedit_attr=1;
-
-#
-    if (empty($this->menu)) {
-      $this->menu= array($this->frontpage=>"accesskey='1'",'FindPage'=>"accesskey='4'",'TitleIndex'=>"accesskey='3'",'RecentChanges'=>"accesskey='2'");
-      $this->menu_bra="";
-      $this->menu_cat="|";
-      $this->menu_sep="|";
-    }
-
-    // for lower version compatibility
-    $this->imgs_dir_url=$this->imgs_dir.'/';
-    $this->imgs_dir_interwiki=$this->imgs_dir.'/';
-
-    if (empty($this->upload_dir_url))
-      $this->upload_dir_url= $this->url_prefix . '/' . $this->upload_dir;
-
-    // getenv("DOCUMENT_ROOT") != doc_root or not ?
-    if (empty($this->imgs_real_dir)) {
-      if (function_exists('apache_lookup_uri')) {
-        $info = apache_lookup_uri($this->imgs_dir_url);
-        if (isset($info->filename)) {
-          if (is_dir($info->filename))
-            $this->imgs_real_dir = $info->filename;
-          else
-            $this->imgs_real_dir = dirname($info->filename);
-        }
-      } else {
-        $this->imgs_real_dir = basename($this->imgs_dir); // XXX
-      }
-    }
-
-    if (is_dir($this->imgs_real_dir.'/interwiki'))
-      $this->imgs_dir_interwiki=$this->imgs_dir.'/interwiki/';
-
-    if (empty($this->icon)) {
-    $iconset=$this->iconset;
-    $imgdir=$this->imgs_dir;
-
-    // for lower version compatibility
-    $ext='png';
-    if (is_dir($this->imgs_real_dir.'/'.$iconset)) $iconset.='/';
-    else $iconset.='-';
-
-    if (!file_exists($this->imgs_real_dir.'/'.$iconset.'home.png')) $ext = 'gif';
-
-    if (file_exists($this->imgs_real_dir.'/'.$iconset.'http.png'))
-      $this->imgs_dir_url=$this->imgs_dir.'/'.$iconset;
-
-    $this->icon['upper']="<img src='$imgdir/${iconset}upper.$ext' alt='U' style='vertical-align:middle;border:0px' />";
-    $this->icon['edit']="<img src='$imgdir/${iconset}edit.$ext' alt='E' style='vertical-align:middle;border:0px' />";
-    $this->icon['diff']="<img src='$imgdir/${iconset}diff.$ext' alt='D' style='vertical-align:middle;border:0px' />";
-    $this->icon['del']="<img src='$imgdir/${iconset}deleted.$ext' alt='(del)' style='vertical-align:middle;border:0px' />";
-    $this->icon['info']="<img src='$imgdir/${iconset}info.$ext' alt='I' style='vertical-align:middle;border:0px' />";
-    $this->icon['rss']="<img src='$imgdir/${iconset}rss.$ext' alt='RSS' style='vertical-align:middle;border:0px' />";
-    $this->icon['show']="<img src='$imgdir/${iconset}show.$ext' alt='R' style='vertical-align:middle;border:0px' />";
-    $this->icon['find']="<img src='$imgdir/${iconset}search.$ext' alt='S' style='vertical-align:middle;border:0px' />";
-    $this->icon['help']="<img src='$imgdir/${iconset}help.$ext' alt='H' style='vertical-align:middle;border:0px' />";
-    $this->icon['pref']="<img src='$imgdir/${iconset}pref.$ext' alt='C' style='vertical-align:middle;border:0px' />";
-    $this->icon['www']="<img src='$imgdir/${iconset}www.$ext' alt='www' style='vertical-align:middle;border:0px' />";
-    $this->icon['mailto']="<img src='$imgdir/${iconset}email.$ext' alt='M' style='vertical-align:middle;border:0px' />";
-    $this->icon['create']="<img src='$imgdir/${iconset}create.$ext' alt='N' style='vertical-align:middle;border:0px' />";
-    $this->icon['new']="<img src='$imgdir/${iconset}new.$ext' alt='U' style='vertical-align:middle;border:0px' />";
-    $this->icon['updated']="<img src='$imgdir/${iconset}updated.$ext' alt='U' style='vertical-align:middle;border:0px' />";
-    $this->icon['user']="UserPreferences";
-    $this->icon['home']="<img src='$imgdir/${iconset}home.$ext' alt='M' style='vertical-align:middle;border:0px' />";
-    $this->icon['main']="<img src='$imgdir/${iconset}main.$ext' class='icon' alt='^' style='vertical-align:middle;border:0px' />";
-    $this->icon['print']="<img src='$imgdir/${iconset}print.$ext' alt='P' style='vertical-align:middle;border:0px' />";
-    $this->icon['scrap']="<img src='$imgdir/${iconset}scrap.$ext' alt='S' style='vertical-align:middle;border:0px' />";
-    $this->icon['unscrap']="<img src='$imgdir/${iconset}unscrap.$ext' alt='S' style='vertical-align:middle;border:0px' />";
-    $this->icon['attach']="<img src='$imgdir/${iconset}attach.$ext' alt='@' style='vertical-align:middle;border:0px' />";
-    $this->icon['external']="<img class='externalLink' src='$imgdir/${iconset}external.$ext' alt='[]' style='vertical-align:middle;border:0px' />";
-    $this->icon_sep=" ";
-    $this->icon_bra=" ";
-    $this->icon_cat=" ";
-    }
-
-    if (empty($this->icons)) {
-      $this->icons=array(
-              'edit'=>array("","?action=edit",$this->icon['edit'],"accesskey='e'"),
-              'diff'=>array("","?action=diff",$this->icon['diff'],"accesskey='c'"),
-              'show'=>array("","",$this->icon['show']),
-              'find'=>array("FindPage","",$this->icon['find']),
-              'info'=>array("","?action=info",$this->icon['info']));
-      if (!empty($this->notify))
-        $this->icons['subscribe']=array("","?action=subscribe",$this->icon['mailto']);
-      $this->icons['help']=array("HelpContents","",$this->icon['help']);
-      $this->icons['pref']=array("UserPreferences","",$this->icon['pref']);
-    }
-    $config=get_object_vars($this); // merge default settings to $config
-
-    # ??? Number of lines output per each flush() call.
-    // $this->lines_per_flush = 10;
-
-    # ??? Is mod_rewrite being used to translate 'WikiWord' to
-    // $this->rewrite = true;
-
+  function initEnv() {
     if (!empty($this->path))
       putenv("PATH=".$this->path);
 
@@ -781,9 +559,9 @@ EOS;
       putenv('LOGNAME='.$this->rcs_user);
     if (!empty($this->timezone))
       putenv('TZ='.$this->timezone);
+  }
 
-    $this->interwiki=null;
-
+  function initModules() {
     if (!empty($this->use_counter)) {
       $this->counter = new Counter_dba($this);
       if ($this->counter->counter == null) {
@@ -791,6 +569,7 @@ EOS;
         $this->counter = null;
       }
     }
+    #$this->interwiki=null;
 
     if (!empty($this->security_class)) {
       include_once("plugin/security/$this->security_class.php");
@@ -798,8 +577,6 @@ EOS;
       $this->security=new $class ($this);
     } else
       $this->security=new Security($this);
-
-    register_shutdown_function(array(&$this,'Close'));
   }
 
   function initAlias() {
@@ -812,7 +589,7 @@ EOS;
       $_lock_file = _fake_lock_file($this->vartmp_dir, 'init_alias');
       $locked = _fake_locked($_lock_file, $this->mtime());
       if ($locked or ($apc->exists('aliases') and $this->mtime() < $apc->mtime('aliases'))) {
-        $aliases = unserialize($apc->fetch('aliases'));
+        $aliases = $apc->fetch('aliases');
         break;
       }
 
@@ -821,13 +598,13 @@ EOS;
       $ac->_caches($files);
       _fake_lock($_lock_file);
       foreach ($files as $file) {
-        $as = unserialize($ac->_fetch($file));
+        $as = $ac->_fetch($file);
         $pagename = key($as);
         foreach ($as[$pagename] as $k) {
           $aliases[$k] = !empty($aliases[$k]) ? $aliases[$k].','.$pagename : $pagename;
         }
       }
-      $apc->update('aliases', serialize($aliases));
+      $apc->update('aliases', $aliases);
       _fake_lock($_lock_file, LOCK_UN);
       break;
     }
@@ -936,7 +713,7 @@ EOS;
     $_lock_file = _fake_lock_file($this->vartmp_dir, 'get_page_list', $pcid);
     $locked = _fake_locked($_lock_file, $this->mtime());
     if ($locked or ($pc->exists($pcid) and $this->mtime() < $pc->mtime($pcid))) {
-      $list=unserialize($pc->fetch($pcid));
+      $list = $pc->fetch($pcid);
       if (is_array($list)) return $list;
       if ($locked) return array();
     }
@@ -947,7 +724,7 @@ EOS;
       if ($indexer->db) {
         $pages = $indexer->getAllPages();
 
-        $pc->update($pcid,serialize($pages));
+        $pc->update($pcid, $pages);
         $pc->update('counter', count($pages));
         $indexer->close();
         return $pages;
@@ -966,7 +743,7 @@ EOS;
         $pages[] = $this->keyToPagename($file);
       }
       closedir($handle);
-      $pc->update($pcid,serialize($pages));
+      $pc->update($pcid, $pages);
       $pc->update('counter', count($pages));
       _fake_lock($_lock_file, LOCK_UN);
       return $pages;
@@ -997,7 +774,7 @@ EOS;
        }
        closedir($handle);
     }
-    $pc->update($pcid,serialize($pages));
+    $pc->update($pcid, $pages);
     _fake_lock($_lock_file, LOCK_UN);
     return $pages;
   }
@@ -1374,376 +1151,6 @@ EOS;
   }
 }
 
-class Version_RCS {
-  var $DB;
-
-  function Version_RCS($DB) {
-    $this->DB=$DB;
-    $this->NULL='';
-    if(getenv("OS")!="Windows_NT") $this->NULL=' 2>/dev/null';
-    if (!empty($DB->rcs_error_log)) $this->NULL='';
-  }
-
-  function _filename($pagename) {
-    # have to be factored out XXX
-    # Return filename where this word/page should be stored.
-    return $this->DB->getPageKey($pagename);
-  }
-
-  function co($pagename,$rev,$opt=array()) {
-    $filename= $this->_filename($pagename);
-
-    $rev=(is_numeric($rev) and $rev>0) ? "\"".$rev."\" ":'';
-    $ropt='-p';
-    if (!empty($opt['stdout'])) $ropt='-r';
-    $fp=@popen("co -x,v/ -q $ropt$rev ".$filename.$this->NULL,"r");
-    if (!empty($opt['stdout'])) {
-      if (is_resource($fp)) {
-        pclose($fp);
-        return '';
-      }
-    }
-
-    $out='';
-    if (is_resource($fp)) {
-      while (!feof($fp)) {
-        $line=fgets($fp,2048);
-        $out.= $line;
-      }
-      pclose($fp);
-    }
-    return $out;
-  }
-
-  function ci($pagename,$log) {
-    $key=$this->_filename($pagename);
-    $pgname=escapeshellcmd($pagename);
-    $this->_ci($key,$log);
-  }
-
-  function _ci($key,$log) {
-    $dir=dirname($key);
-    if (!is_dir($dir.'/RCS')) {
-      $om=umask(000);
-      _mkdir_p($dir.'/RCS', 2777);
-      umask($om);
-    }
-    $fp=@popen("ci -l -x,v/ -q -t-\"".$key."\" -m\"".$log."\" ".$key.$this->NULL,"r");
-    if (is_resource($fp)) pclose($fp);
-  }
-
-  function rlog($pagename,$rev='',$opt='',$oldopt='') {
-    $rev = (is_numeric($rev) and $rev > 0) ? "-r$rev":'';
-    $filename=$this->_filename($pagename);
-
-    $fp= popen("rlog $opt $oldopt -x,v/ $rev ".$filename.$this->NULL,"r");
-    $out='';
-    if (is_resource($fp)) {
-      while (!feof($fp)) {
-        $line=fgets($fp,1024);
-        $out .= $line;
-      }
-      pclose($fp);
-    }
-    return $out;
-  }
-
-  function diff($pagename,$rev="",$rev2="") {
-    $option = '';
-    if ($rev) $option="-r$rev ";
-    if ($rev2) $option.="-r$rev2 ";
-
-    $filename=$this->_filename($pagename);
-    $fp=popen("rcsdiff -x,v/ --minimal -u $option ".$filename.$this->NULL,'r');
-    if (!is_resource($fp)) return '';
-    while (!feof($fp)) {
-      # trashing first two lines
-      $line=fgets($fp,1024);
-      if (preg_match('/^--- /',$line)) {
-        $line=fgets($fp,1024);
-        break;
-      }
-    }
-    $out = '';
-    while (!feof($fp)) {
-      $line=fgets($fp,1024);
-      $out.= $line;
-    }
-    pclose($fp);
-    return $out;
-  }
-
-  function purge($pagename,$rev) {
-  }
-
-  function delete($pagename) {
-    $keyname=$this->DB->_getPageKey($pagename);
-    @unlink($this->DB->text_dir."/RCS/$keyname,v");
-  }
-
-  function rename($pagename,$new) {
-    $keyname=$this->DB->_getPageKey($new);
-    $oname=$this->DB->_getPageKey($pagename);
-    rename($this->DB->text_dir."/RCS/$oname,v",
-      $this->DB->text_dir."/RCS/$keyname,v");
-  }
-
-  function get_rev($pagename,$mtime='',$last=0) {
-    $opt = '';
-    if ($last==1) {
-      $tag='head:';
-      $opt='-h';
-    } else $tag='revision';
-    if ($mtime) {
-      $date=gmdate('Y/m/d H:i:s',$mtime);
-      if ($date) {
-        $opt="-d\<'$date'";
-        $tag='revision';
-      }
-    }
-
-    $rev = '';
-    $out= $this->rlog($pagename,'',$opt);
-    if ($out) {
-      for ($line=strtok($out,"\n"); $line !== false;$line=strtok("\n")) {
-        preg_match("/^$tag\s+([\d\.]+)$/",$line,$match);
-        if (isset($match[1])) {
-          $rev=$match[1];
-          break;
-        }
-      }
-    }
-    return $rev;
-  }
-  function export($pagename) {
-    $keyname=$this->DB->_getPageKey($pagename);
-    $fname=$this->DB->text_dir."/RCS/$keyname,v";
-    $fp=fopen($fname,'r');
-    $out = '';
-    if (is_resource($fp)) {
-      $sz=filesize($fname);
-      if ($sz > 0);
-      	$out=fread($fp,$sz);
-      fclose($fp);
-    }
-    return $out;
-  }
-
-  function import($pagename,$rcsfile) {
-    $keyname=$this->DB->_getPageKey($pagename);
-    $fname=$this->DB->text_dir."/RCS/$keyname,v";
-    $om=umask(0770);
-    chmod($fname,0664);
-    umask($om);
-    $fp=fopen($fname,'w');
-    if (is_resource($fp)) {
-      fwrite($fp,$rcsfile);
-      fclose($fp);
-      return true;
-    }
-    return false;
-  }
-}
-
-class Cache_text {
-  var $depth=0;
-  var $ext='';
-  var $arena='default';
-  function Cache_text($arena,$depth=0,$ext='',$dir='') {
-    global $Config;
-    $this->depth=$depth;
-    $this->arena=$arena;
-    $this->ext=$ext ? '.'.$ext:'';
-    $this->cache_dir=$dir ? $dir.'/'.$arena: $Config['cache_dir'].'/'.$arena;
-  }
-
-  function _getKey($pagename,$md5=1) {
-    if ($this->depth>0) {
-      $key=$md5 ? md5($pagename):$pagename;
-      $prefix=substr($key,0,$this->depth);
-      return $this->arena.'/'.$prefix.'/'.$key.$this->ext;
-    }
-    return $this->arena.'/'.
-      preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord('\\1')))",
-      $pagename).$this->ext;
-  }
-
-  function getKey($pagename) {
-    if ($this->depth>0) {
-      $key=md5($pagename);
-      $prefix=substr($key,0,$this->depth);
-      $key=$prefix.'/'.$key.$this->ext;
-      return $this->cache_dir . '/' . $key;
-    }
-    return $this->cache_dir .'/'.
-      preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord('\\1')))",
-      $pagename).$this->ext;
-  }
-
-  function update($pagename,$val,$mtime="") {
-    if (!$pagename) return false;
-    $key=$this->getKey($pagename);
-    if (file_exists($key) and !is_writable($key)) return false;
-    if ($mtime and ($mtime <= $this->mtime($key))) return false;
-
-    if (is_array($val))
-      $val=implode("\n",array_keys($val))."\n";
-    else
-      $val=str_replace("\r","",$val);
-    $this->_save($key,$val);
-    return true;
-  }
-
-  function _save($key,$val) {
-    $dir=dirname($key);
-    if (!is_dir($dir)) {
-      $om=umask(000);
-      _mkdir_p($dir, 0777);
-      umask($om);
-    }
-    $fp=fopen($key,"a+b");
-    if ($fp) {
-      flock($fp,LOCK_EX);
-      ftruncate($fp, 0);
-      fwrite($fp,$val);
-      flock($fp,LOCK_UN);
-      fclose($fp);
-    }
-  }
-
-  function _del($key) {
-    unlink($key);
-  }
-
-  function fetch($pagename,$mtime="",$params=array()) {
-    $key=$this->getKey($pagename);
-    if ($this->_exists($key)) {
-       if (!$mtime) {
-          return $this->_fetch($key,$params);
-       }
-       else if ($this->_mtime($key) > $mtime)
-          return $this->_fetch($key,$params);
-    }
-    return false;
-  }
-
-  function exists($pagename) {
-    $key=$this->getKey($pagename);
-    return $this->_exists($key);
-  }
-
-  function _exists($key) {
-    return @file_exists($key);
-  }
-
-  function _fetch($key,$params=array()) {
-    $fp=fopen($key,"r");
-    if (!is_resource($fp)) return '';
-
-    $ret='';
-    
-    if (($size=filesize($key)) >0) {
-      while (!empty($params['uniq']) and empty($params['raw'])) { # include cache if it is a valid php cache
-        # cache header : <,?,php /* Generator Version uniqid tpl_path(optional) */
-        $check=fgets($fp);
-        if ($check{0}=='<' and $check{1}=='?') {
-          @list($tag,$sep,$generator,$ver,$id,$path,$extra)=explode(' ',$check);
-          $ok=1;
-          if (!empty($params['uniq']) and $params['uniq'] != $id) $ok=0;
-          if (!empty($ok) and !empty($params['path']) and $params['path'] != $path) $ok=0;
-          if (!empty($ok)) {
-            fclose($fp);
-            global $Config;
-            $TPL_VAR=&$params['_vars']; # builtin Template_ support
-            if (isset($TPL_VAR['_theme']) and is_array($TPL_VAR['_theme']) and $TPL_VAR['_theme']['compat'])
-              extract($TPL_VAR['_theme']);
-            $ehandle=false;
-            if (!empty($params['formatter'])) {
-              $formatter=&$params['formatter']; # XXX
-              if (method_exists($formatter,'internal_errorhandler')) {
-                set_error_handler(array($formatter,'internal_errorhandler'));
-                $ehandle=true;
-              }
-            }
-            if (!empty($params['print'])) {
-              $ret= include $key; // Do we need more secure method ?
-              if ($ehandle) restore_error_handler();
-              return $ret;
-            } else {
-              ob_start();
-              include $key;
-              if ($ehandle) restore_error_handler();
-              $fetch = ob_get_contents();
-              ob_end_clean();
-              return $fetch;
-            }
-          }
-        }
-        rewind($fp);
-        break;
-      }
-      if (!empty($params['print'])) {
-        fclose($fp);
-        return readfile($key);
-      }
-      $ret=fread($fp,$size);
-    }
-    fclose($fp);
-    return $ret;
-  }
-
-  function _mtime($key) {
-    return filemtime($key);
-  }
-
-  function mtime($pagename) {
-    $key=$this->getKey($pagename);
-    if ($this->_exists($key))
-       return $this->_mtime($key);
-    return 0;
-  }
-
-#  function needsUpdate($pagename) {
-#    $key=$this->getKey($pagename);
-#  }
-
-  function remove($pagename) {
-    $key=$this->getKey($pagename);
-    if ($this->_exists($key))
-      unlink($key);
-  }
-
-  /**
-   * get all cache files
-   *
-   */
-  function _caches(&$files, $dir = '')
-  {
-    $top = $this->cache_dir;
-    $prefix = '';
-    $_dir = $top;
-    if (!empty($dir)) {
-      $prefix = $dir .'/';
-      $_dir = $top.'/'.$dir;
-    }
-
-    $dh = opendir($_dir);
-    if (!$dh) return; // slightly ignore
-
-    while (($file = readdir($dh)) !== false) {
-      if ($file[0] == '.')
-        continue;
-      if (is_dir($_dir . '/'. $file)) {
-        $this->_caches($files, $file);
-        continue;
-      }
-
-      $files[] = $top . '/'. $prefix . $file;
-    }
-    closedir($dh);
-  }
-}
-
 class WikiPage {
   var $fp;
   var $filename;
@@ -1923,7 +1330,7 @@ class Formatter {
     $this->self_query='';
     $this->url_prefix= $DBInfo->url_prefix;
     $this->imgs_dir= $DBInfo->imgs_dir;
-    $this->imgs_dir_interwiki=$DBInfo->imgs_dir_interwiki;
+    $this->imgs_url_interwiki=$DBInfo->imgs_url_interwiki;
     $this->imgs_dir_url=$DBInfo->imgs_dir_url;
     $this->actions= $DBInfo->actions;
     $this->inline_latex=
@@ -2064,9 +1471,6 @@ class Formatter {
     # recursive footnote regex
     $this->footrule='\[\*[^\[\]]*((?:[^\[\]]+|\[(?13)\])*)\]';
 
-    $this->cache= new Cache_text("pagelinks");
-    $this->bcache= new Cache_text("backlinks");
-    # XXX
   }
 
   /**
@@ -2686,7 +2090,7 @@ class Formatter {
       return $this->word_repl("$wiki:$url",$text.$extra,$attr,1);
     }
 
-    $icon=$this->imgs_dir_interwiki.strtolower($wiki).'-16.png';
+    $icon=$this->imgs_url_interwiki.strtolower($wiki).'-16.png';
     $sx=16;$sy=16;
     if (isset($DBInfo->intericon[$wiki])) {
       $icon=$DBInfo->intericon[$wiki][2];
@@ -2750,9 +2154,15 @@ class Formatter {
 
   function store_pagelinks() {
     global $DBInfo;
+
+    if (empty($this->bcache) or !is_object($this->bcache))
+      $this->bcache= new Cache_text('backlinks');
+    if (empty($this->cache) or !is_object($this->cache))
+      $this->cache= new Cache_text('pagelinks');
+
     unset($this->pagelinks['TwinPages']);
     $new=array_keys($this->pagelinks);
-    $cur=unserialize($this->cache->fetch($this->page->name));
+    $cur=$this->cache->fetch($this->page->name);
     if (!is_array($cur)) $cur=array();
 
     $ad=array_diff($new,$cur);
@@ -2760,42 +2170,48 @@ class Formatter {
     // merge new backlinks
     foreach ($ad as $a) {
       if (!$a or !$DBInfo->hasPage($a)) continue;
-      $bl=unserialize($this->bcache->fetch($a));
+      $bl = $this->bcache->fetch($a);
       if (!is_array($bl)) $bl=array();
       array_merge($bl,array($this->page->name));
       $bl=array_unique($bl);
-      $this->bcache->update($a,serialize($bl));
+      $this->bcache->update($a, $bl);
     }
     // remove back links
     foreach ($de as $d) {
       if (!$d or !$DBInfo->hasPage($d)) continue;
-      $bl=unserialize($this->bcache->fetch($d));
+      $bl = $this->bcache->fetch($d);
       if (!is_array($bl)) $bl=array();
       $bl=array_diff($bl,array($this->page->name));
-      $this->bcache->update($d,serialize($bl));
+      $this->bcache->update($d, $bl);
     }
     // XXX
     if ($new)
-      $this->cache->update($this->page->name,serialize($new));
+      $this->cache->update($this->page->name, $new);
     else
       $this->cache->remove($this->page->name);
 #      $this->page->mtime());
   }
 
   function get_pagelinks() {
+    if (!is_object($this->cache))
+      $this->cache= new Cache_text('pagelinks');
+
     if (!$this->wordrule) $this->set_wordrule();
     if ($this->cache->exists($this->page->name)) {
       $links=$this->cache->fetch($this->page->name);
-      if ($links !== false) return unserialize($links);
+      if ($links !== false) return $links;
     }
     // no pagelinks found. XXX
     return array();
   }
 
   function get_backlinks() {
+    if (!is_object($this->bcache))
+      $this->bcache= new Cache_text('backlinks');
+
     if ($this->bcache->exists($this->page->name)) {
       $links=$this->bcache->fetch($this->page->name);
-      if ($links !== false) return unserialize($links);
+      if ($links !== false) return $links;
     }
     // no backlinks found. XXX
     return array();
@@ -3558,7 +2974,7 @@ class Formatter {
     //$this->url_prefix= qualifiedUrl($this->url_prefix);
     $this->prefix= qualifiedUrl($this->prefix);
     $this->imgs_dir= qualifiedUrl($this->imgs_dir);
-    $this->imgs_dir_interwiki=qualifiedUrl($this->imgs_dir_interwiki);
+    $this->imgs_url_interwiki=qualifiedUrl($this->imgs_url_interwiki);
     $this->imgs_dir_url=qualifiedUrl($this->imgs_dir_url);
   }
 
@@ -3644,6 +3060,9 @@ class Formatter {
     } else {
       # XXX need to redesign pagelink method ?
       if (empty($DBInfo->without_pagelinks_cache)) {
+        if (empty($this->cache) or !is_object($this->cache))
+          $this->cache= new Cache_text('pagelinks');
+
         $dmt= $DBInfo->mtime();
         $this->update_pagelinks= $dmt > $this->cache->mtime($this->page->name);
         #like as..
@@ -3733,7 +3152,7 @@ class Formatter {
       $twins=$DBInfo->metadb->getTwinPages($this->page->name,$twin_mode);
 
       if ($twins === true) {
-        if (isset($DBInfo->interwiki['TwinPages'])) {
+        if (!empty($DBInfo->use_twinpages)) {
           if (!empty($lines)) $lines[]="----";
           $lines[]=sprintf(_("See %s"),"[wiki:TwinPages:".$this->page->name." "._("TwinPages")."]");
         }
@@ -4371,7 +3790,7 @@ class Formatter {
 
       if (empty($keys)) return '';
       $uniq = md5(implode(';',$keys));
-      $cache=new Cache_text('js',2,'html');
+      $cache=new Cache_text('js', array('ext'=>'html'));
 
       if ($cache->exists($uniq)) {
         foreach ($keys as $k) $this->java_scripts[$k]='';
@@ -4421,15 +3840,15 @@ class Formatter {
       }
       $suniq = md5(implode(';',$pjs));
 
-      $fc = new Cache_text('js',2,'js',$Config['cache_public_dir']);
-      $jsname = $fc->_getKey($suniq,0);
+      $fc = new Cache_text('js', array('ext'=>'js', 'dir'=>$Config['cache_public_dir']));
+      $jsname = $fc->getKey($suniq,0);
       $out.='<script type="text/javascript" src="'.$Config['cache_public_url'].'/'.$jsname.'"></script>'."\n";
       $cache->update($uniq,$out);
 
       $ver = FCKJavaScriptCompressor::Revision();
       $header='/* '.JS_PACKER.' '.$ver.' '.md5($packed).' '.date('Y-m-d H:i:s').' */'."\n";
       # save real compressed js file.
-      $fc->_save($Config['cache_public_dir'].'/'.$jsname,$header.$packed);
+      $fc->_save($jsname, $header.$packed);
       return $out;
     }
     $out='';
@@ -4504,7 +3923,7 @@ class Formatter {
     $media='media="screen"';
     if (isset($options['action']) and $options['action']=='print') $media='';
 
-    if (isset($this->pi['#redirect']) and $this->pi['#redirect'] != '' && $options['pi']) {
+    if (!empty($this->pi['#redirect']) && !empty($options['pi'])) {
       $options['value']=$this->pi['#redirect'];
       $options['redirect']=1;
       $this->pi['#redirect']='';
@@ -5903,7 +5322,7 @@ function wiki_main($options) {
         if (!empty($formatter->pi['#title']))
           $as[] = $formatter->pi['#title'];
         if (!empty($as)) {
-          $ac->update($pagename, serialize(array($pagename=>$as)));
+          $ac->update($pagename, array($pagename=>$as));
         }
       }
     }
@@ -5931,7 +5350,7 @@ function wiki_main($options) {
         !empty($_GET['update_keywords'])) {
         $keys=explode(',',$formatter->pi['#keywords']);
         $keys=array_map('trim',$keys);
-        $tcache->update($pagename,serialize($keys));
+        $tcache->update($pagename, $keys);
       }
     }
 
@@ -5944,8 +5363,8 @@ function wiki_main($options) {
     }
     $options['pagelinks']=1;
     if (!empty($Config['cachetime']) and $Config['cachetime'] > 0 and empty($formatter->pi['#nocache'])) {
-      $cache= new Cache_text('pages',2,'html');
-      $mcache= new Cache_text('dynamicmacros',2);
+      $cache= new Cache_text('pages', array('ext'=>'html'));
+      $mcache= new Cache_text('dynamicmacros');
       $mtime=$cache->mtime($pagename);
       $dtime= $DBInfo->mtime();
       $now=time();
@@ -5955,7 +5374,7 @@ function wiki_main($options) {
      
       if (empty($formatter->refresh) and (($mtime > $dtime) and ($check < $Config['cachetime']))) {
         if ($mcache->exists($pagename))
-          $_macros= unserialize($mcache->fetch($pagename));
+          $_macros= $mcache->fetch($pagename);
         if (empty($_macros)) {
           $out = '';
           #$out = $cache->fetch($pagename);
@@ -5975,9 +5394,9 @@ function wiki_main($options) {
         $formatter->_macrocache=0;
         $_macros=&$formatter->_macros;
         if (empty($formatter->pi['#nocache'])) {
-          $cache->update($pagename,$out);
+          $cache->update($pagename, $out, $Config['cachetime']);
           if (isset($_macros))
-            $mcache->update($pagename,serialize($_macros));
+            $mcache->update($pagename,$_macros);
         }
       }
       if (!empty($_macros)) {
@@ -6133,13 +5552,28 @@ function wiki_main($options) {
 
 if (!defined('INC_MONIWIKI')):
 # Start Main
-$Config=getConfig("config.php",array('init'=>1));
-include_once("wikilib.php");
-include_once("lib/win32fix.php");
+require_once("wikilib.php");
+require_once("lib/wikiconfig.php");
+require_once("lib/cache.text.php");
+require_once("lib/timer.php");
 
 $options = array();
-$timing = new Timer();
-$options['timer'] = &$timing;
+if (class_exists('Timer')) {
+  $timing = new Timer();
+  $options['timer'] = &$timing;
+  $options['timer']->Check("load");
+}
+
+$Config = getConfig('config.php', array('init'=>1));
+require_once("lib/win32fix.php");
+
+$ccache = new Cache_text('settings');
+if (!($conf = $ccache->fetch('config'))) {
+  $Config = wikiConfig($Config);
+  $ccache->update('config', $Config, 0, array('deps'=>array('config.php', 'lib/wikiconfig.php')));
+} else {
+  $Config = &$conf;
+}
 
 $DBInfo= new WikiDB($Config);
 

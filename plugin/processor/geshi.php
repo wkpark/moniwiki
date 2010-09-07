@@ -69,8 +69,8 @@ function processor_geshi($formatter,$value,$options) {
 
   $uniq=md5($extra.$value);
   if ($DBInfo->cache_public_dir) {
-    $fc=new Cache_text('geshi',2,'html',$DBInfo->cache_public_dir);
-    $htmlname=$fc->_getKey($uniq,0);
+    $fc = new Cache_text('geshi', array('ext'=>'html', 'dir'=>$DBInfo->cache_public_dir));
+    $htmlname=$fc->getKey($uniq, false);
     $html= $DBInfo->cache_public_dir.'/'.$htmlname;
   } else {
     $cache_dir=$DBInfo->upload_dir."/GeshiProcessor";

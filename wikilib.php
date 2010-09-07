@@ -32,7 +32,6 @@ function _mkdir_p($target,$mode=0777) {
 }
 
 function get_scriptname() {
-  global $Config;
   // Return full URL of current page.
   // $_SERVER["SCRIPT_NAME"] has bad value under CGI mode
   // set 'cgi.fix_pathinfo=1' in the php.ini under
@@ -406,9 +405,9 @@ function _fake_lock($lockfile, $lock = LOCK_EX) {
 function get_title($page,$title='') {
   global $DBInfo;
   if (!empty($DBInfo->use_titlecache)) {
-    $cache=new Cache_text('title');
-    if ($cache->exists($page)) $title=$cache->fetch($page);
-    else $title=$title ? $title:$page;
+    $cache = new Cache_text('title');
+    $title = $cache->fetch($page);
+    $title = $title ? $title : $page;
   } else
     $title=$title ? $title: $page;
 
@@ -2818,7 +2817,7 @@ function macro_InterWiki($formatter,$value,$options=array()) {
       $force_init=1;
     }
     if (!empty($formatter->refresh) and $cf->exists('interwiki') and !$force_init) {
-      $info=unserialize($cf->fetch('interwiki'));
+      $info = $cf->fetch('interwiki');
       $DBInfo->interwiki=$info['interwiki'];
       $DBInfo->interwikirule=$info['interwikirule'];
       $DBInfo->intericon=$info['intericon'];
@@ -2891,7 +2890,7 @@ function macro_InterWiki($formatter,$value,$options=array()) {
     $DBInfo->interwikirule=$interwikirule;
     $DBInfo->intericon=$intericon;
     $interinfo=
-      serialize(array('interwiki'=>$interwiki,'interwikirule'=>$interwikirule,'intericon'=>$intericon));
+      array('interwiki'=>$interwiki,'interwikirule'=>$interwikirule,'intericon'=>$intericon);
     $cf->update('interwiki',$interinfo);
     break;
   }
@@ -3018,11 +3017,11 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
   $locked = _fake_locked($lock_file, $DBInfo->mtime());
   if ($locked or ($DBInfo->mtime() < $kc->mtime('key') + $delay and $kc->exists('key'))) {
     if ($formatter->group) {
-      $keys = unserialize($kc->fetch('key.'.$formatter->group));
-      $titleindex = unserialize($kc->fetch('titleindex.'.$formatter->group));
+      $keys = $kc->fetch('key.'.$formatter->group);
+      $titleindex = $kc->fetch('titleindex.'.$formatter->group);
     } else {
-      $keys = unserialize($kc->fetch('key'));
-      $titleindex = unserialize($kc->fetch('titleindex'));
+      $keys = $kc->fetch('key');
+      $titleindex = $kc->fetch('titleindex');
     }
     if (!empty($sel) and isset($titleindex[$sel])) {
       $all_pages = $titleindex[$sel];
@@ -3078,11 +3077,11 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
       $keys[]='all';
 
     if ($formatter->group) {
-      $kc->update('key.'.$formatter->group, serialize($keys));
-      $kc->update('titleindex.'.$formatter->group, serialize($titleindex));
+      $kc->update('key.'.$formatter->group, $keys);
+      $kc->update('titleindex.'.$formatter->group, $titleindex);
     } else {
-      $kc->update('key', serialize($keys));
-      $kc->update('titleindex', serialize($titleindex));
+      $kc->update('key', $keys);
+      $kc->update('titleindex', $titleindex);
     }
 
     if (!empty($sel) and isset($titleindex[$sel]))

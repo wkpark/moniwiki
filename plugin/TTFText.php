@@ -65,8 +65,8 @@ function macro_TTFText($formatter,$value,$params=array()) {
         $DBInfo->url_prefix.'/'.$cache_dir;
 
     if ($DBInfo->cache_public_dir) {
-        $fc=new Cache_text('ttftext',2,'png',$DBInfo->cache_public_dir);
-        $pngname=$fc->_getKey($uniq,0);
+        $fc=new Cache_text('ttftext', array('ext'=>'png','dir'=>$DBInfo->cache_public_dir));
+        $pngname=$fc->getKey($uniq, false);
         $outpath_png= $DBInfo->cache_public_dir.'/'.$pngname;
         
         $png_url=

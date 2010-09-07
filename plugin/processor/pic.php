@@ -34,8 +34,8 @@ function processor_pic($formatter,$value="") {
 
   $uniq=md5($pic_script);
   if ($DBInfo->cache_public_dir) {
-    $fc=new Cache_text('pic',2,'png',$DBInfo->cache_public_dir);
-    $pngname=$fc->_getKey($uniq,0);
+    $fc = new Cache_text('pic',array('ext'=>'png', 'dir'=>$DBInfo->cache_public_dir));
+    $pngname = $fc->getKey($uniq, false);
     $outpath_png= $DBInfo->cache_public_dir.'/'.$pngname;
 
     $png_url=

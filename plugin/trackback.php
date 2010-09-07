@@ -53,7 +53,7 @@ function do_trackback($formatter,$options) {
     else
       $ping_url=_("TrackBack is not activated !");
     $sendping_action= $formatter->link_tag($formatter->page->urlname,"?action=sendping&amp;value=$options[value]",_("send ping"));
-    $tb_cache=new Cache_text('trackback');
+    $tb_cache= new Cache_text('trackback');
     if ($tb_cache->exists($options['page'])) {
       $formatter->send_title(sprintf(_("TrackBack list of %s"),$options['page']),"",$options);
       $trackbacks= explode("\n",$tb_cache->fetch($options['page']));
@@ -99,7 +99,7 @@ function do_trackback($formatter,$options) {
 
   $receive= $timestamp."\t".$entry."\t".$url."\t".$date."\t".$blog_name."\t".$title."\t".$excerpt."\n";
 
-  $tb_cache= new Cache_text('trackback');
+  $tb_cache = new Cache_text('trackback');
 
   $old= $tb_cache->fetch($options['page']);
   $ret= $tb_cache->update($options['page'],$old.$receive,time());

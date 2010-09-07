@@ -19,7 +19,7 @@ class LinkTree {
   }
 
   function getLeafs($pagename,&$node,&$color,$depth,$count=LEAFCOUNT) {
-    $links=unserialize($this->cache->fetch($pagename));
+    $links = $this->cache->fetch($pagename);
     #print_r($links);
     if (!is_array($links)) $links=array();
     $nodelink = array();
@@ -29,7 +29,6 @@ class LinkTree {
         if (empty($node[$page])) {
           $leafs=$this->cache->fetch($page);
           if ($leafs) {
-            $leafs=unserialize($leafs);
             # XXX 
             if (!empty($leafs))
               $nodelink[$page] = sizeof($leafs);

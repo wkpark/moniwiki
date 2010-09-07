@@ -109,7 +109,7 @@ function macro_admin($formatter,$value='',$options=array()) {
 
     // get settings
     $sc=new Cache_text('settings');
-    $pls=unserialize($sc->fetch($arena.'s'));
+    $pls = $sc->fetch($arena.'s');
 
     #$pl="<tr><th colspan='3'>"._($arena)."</th></tr>\n";
     $pl='';
@@ -174,14 +174,14 @@ function do_admin($formatter,$options) {
             (is_array($options['pl']) or is_array($options['pr']))) {
         $formatter->send_header('',$options);
         $cp=new Cache_text('settings');
-        $cpl=unserialize($cp->fetch('plugins'));
-        $cpr=unserialize($cp->fetch('processors'));
+        $cpl = $cp->fetch('plugins');
+        $cpr = $cp->fetch('processors');
 
         $out='';
         if (is_array($options['pl']) and is_array($cpl)) {
             $ad=array_diff($options['pl'],$cpl);
             $de=array_diff($cpl,$options['pl']);
-            $cp->update('plugins',serialize($options['pl']));
+            $cp->update('plugins', $options['pl']);
 
             $out.=!empty($ad) ?
                 '<h2>'._("Enabled plugins").'</h2><ul><li>'.implode("</li>\n<li>",$ad).'</li></ul>':'';
@@ -192,7 +192,7 @@ function do_admin($formatter,$options) {
         if (is_array($options['pr']) and is_array($cpr)) {
             $ad=array_diff($options['pr'],$cpr);
             $de=array_diff($cpr,$options['pr']);
-            $cp->update('processors',serialize($options['pr']));
+            $cp->update('processors', $options['pr']);
             $out.=!empty($ad) ?
                 '<h2>'._("Enabled processors").'</h2><ul><li>'.implode("</li>\n<li>",$ad).'</li></ul>':'';
             $out.=!empty($de) ?
