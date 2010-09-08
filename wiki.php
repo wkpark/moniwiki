@@ -399,11 +399,11 @@ class MetaDB_text extends MetaDB {
     if (empty($mode)) return true;
     $twins=$this->db[$pagename];
 
-    $ret='[wiki:'.str_replace(',',"] [wiki:",$twins).']';
+    $ret='[wiki:'.str_replace(',',"]\n[wiki:",$twins).']';
 
     $pagename=_preg_search_escape($pagename);
     $ret= preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
-    return explode(' ',$ret);
+    return explode("\n", $ret);
   }
   function getSisterSites($pagename,$mode=1) {
     if (empty($this->db[$pagename])) {
@@ -599,8 +599,11 @@ class WikiDB {
       _fake_lock($_lock_file);
       foreach ($files as $file) {
         $as = $ac->_fetch($file);
-        $pagename = key($as);
-        foreach ($as[$pagename] as $k) {
+        $keyname = key($as);
+        $pagename = $keyname;
+        if (strpos($pagename, ' ') !== false)
+          $pagename = '"' . $pagename . '"';
+        foreach ($as[$keyname] as $k) {
           $aliases[$k] = !empty($aliases[$k]) ? $aliases[$k].','.$pagename : $pagename;
         }
       }
@@ -2318,7 +2321,7 @@ class Formatter {
             "<tt class='sister'><a href='$url'>&#x203a;</a></tt>";
         }
         if (!empty($sisters)) {
-          if (!empty($this->use_easyalias) and strpos($sisters,' ') === false) {
+          if (!empty($this->use_easyalias) and !preg_match('/^\[wiki:[A-Z][a-z0-9]+:.*$/', $sisters)) {
             # this is a alias
             $this->use_easyalias=0;
             $url=$this->link_repl(substr($sisters,0,-1).' '.$word.']');
