@@ -69,9 +69,7 @@ EXTRA;
 
   $mid=$mymid;
 
-  $COLS_MSIE = 80;
-  $COLS_OTHER = 85;
-  $cols = preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
+  $cols = get_textarea_cols();
 
   $rows = (!empty($options['rows']) and $options['rows'] > 5) ? $options['rows']: 5;
   $cols = (!empty($options['cols']) and $options['cols'] > 60) ? $options['cols']: $cols;
@@ -142,9 +140,7 @@ function do_comment($formatter,$options=array()) {
 
   if (!empty($options['usemeta'])) $use_meta=1;
 
-  $COLS_MSIE = 80;
-  $COLS_OTHER = 85;
-  $cols = preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
+  $cols = get_textarea_cols();
 
   $rows=(!empty($options['rows']) and $options['rows'] > 5) ? $options['rows']: 8;
   $cols=(!empty($options['cols']) and $options['cols'] > 60) ? $options['cols']: $cols;

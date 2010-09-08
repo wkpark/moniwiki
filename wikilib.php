@@ -377,6 +377,24 @@ function http_need_cond_request($mtime, $last_modified = '', $etag = '') {
     return false;
 }
 
+/**
+ * get default cols of textarea
+ *
+ */
+function get_textarea_cols() {
+  $COLS_MSIE = 80;
+  $COLS_OTHER = 85;
+
+  if (preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT'])) {
+    $cols = $COLS_MSIE;
+  } else if (preg_match('/android|iphone/i', $_SERVER['HTTP_USER_AGENT'])) {
+    $cols = 30;
+  } else {
+    $cols = $COLS_OTHER;
+  }
+  return $cols;
+}
+
 function _fake_lock_file($tmp, $arena, $tag = '') {
     $lock = $tmp . '/' . $arena;
     if (!empty($tag))
@@ -1170,12 +1188,9 @@ function _get_sections($body,$lim=5) {
 function macro_Edit($formatter,$value,$options='') {
   global $DBInfo;
 
-  $COLS_MSIE= 80;
-  $COLS_OTHER= 85;
- 
   $options['mode'] = !empty($options['mode']) ? $options['mode'] : '';
   $edit_rows=$DBInfo->edit_rows ? $DBInfo->edit_rows: 16;
-  $cols= preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;
+  $cols= get_textarea_cols();
 
   $use_js= preg_match('/Lynx|w3m|links/',$_SERVER['HTTP_USER_AGENT']) ? 0:1;
 
