@@ -63,14 +63,14 @@ table.wiki {
 }
 
 table.center {
-  text-align:center;
-  margin-left:auto; /* Moz */
-  margin-right:auto; /* Moz */
+  margin-left:auto;
+  margin-right:auto;
 }
 
 table.right {
-  text-align:right;
   float:right;
+/*  margin-left:auto;
+  margin-right:5px; */
 }
 
 td.center {
@@ -379,6 +379,10 @@ img.icon {
   vertical-align:middle; /* */
 }
 
+div.imgAttach {
+  display:inline;
+}
+
 img.imgLeft {
   margin-right : 15px;
   margin-bottom : 5px;
@@ -387,6 +391,12 @@ img.imgLeft {
 img.imgRight {
   margin-left : 10px;
   margin-bottom : 5px;
+}
+
+img.imgCenter {
+  display:block;
+  margin-left : auto;
+  margin-right : auto;
 }
 
 span.externalLink {
