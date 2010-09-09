@@ -104,6 +104,8 @@ function processor_latex(&$formatter,$value="",$options=array()) {
 \\begin{document}
 @TEX@
 \\end{document}
+%%$dviopt
+%%$latex_convert_options
 ";
   }
 
