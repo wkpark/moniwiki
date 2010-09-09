@@ -2210,7 +2210,7 @@ msgstr "탬플리트를 만드시려면 '%s' 형식의 이름을 가지는 페�
 #: ../wiki.php:5748
 #, c-format
 msgid "Redirected from page \"%s\""
-msgstr "\"%s\"페이지로 부터 리다리렉트됨"
+msgstr "\"%s\"페이지에서 리다이렉트됨"
 
 #: ../wiki.php:5918
 msgid "Invalid macro action."
