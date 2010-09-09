@@ -2021,7 +2021,7 @@ class Formatter {
         if (preg_match("/(^.*\.(png|gif|jpeg|jpg))(\?.*?)?$/i",$url,$match)) {
           $url=preg_replace('/&amp;/','&',$url);
           $url=$match[1];
-          $attrs=!empty($match[3]) ? explode('&',substr($match[3],1)) : array();
+          $attrs=!empty($match[3]) ? explode('&amp',substr($match[3],1)) : array();
           foreach ($attrs as $arg) {
             $name=strtok($arg,'=');
             $val=strtok(' ');
