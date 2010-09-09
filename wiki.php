@@ -654,12 +654,12 @@ class WikiDB {
     $pn= trim($pn,':');
     $pn= preg_replace('#:+#',':',$pn);
 
-    $pn= preg_replace("/([^a-z0-9:]{1})/ie","'_'.strtolower(dechex(ord(substr('\\1',-1))))",$pn);
-    if (!empty($this->use_namespace))
-      $name=preg_replace('#:#','.d/',$pn);
-    else
-      $name = $pn;
-    #$name=preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord('\\1')))",$pagename);
+    // namespace spearator ':' like as 'Foobar:Hello'
+    $separator = ':';
+    if (empty($this->use_namespace)) $separator = '';
+
+    $pn = preg_replace("/([^a-z0-9".$separator."]{1})/ie", "'_'.strtolower(dechex(ord(substr('\\1',-1))))",$pn);
+    $name = preg_replace('#:#','.d/',$pn); // Foobar:Hello page will be stored as text/Foobar.d/Hello
     return $name;
   }
 
@@ -692,8 +692,10 @@ class WikiDB {
   #  $pagename=str_replace("_","%",$key);
 
     $pagename = $key;
-    if (!empty($this->use_namespace))
-      $pagename=preg_replace('%\.d/%',':',$key);
+
+    // for namespace
+    $separator = ':';
+    $pagename=preg_replace('%\.d/%', $separator, $key);
 
     $pagename=strtr($pagename,'_','%');
     return rawurldecode($pagename);
@@ -1946,14 +1948,9 @@ class Formatter {
             preg_replace('/('.$this->url_mapping_rule.')/ie',"\$this->url_mappings['\\1']",$url);
       }
 
-      if (preg_match("/^(:|w|[A-Z])/",$url))
+      if (preg_match("/^(:|w|[A-Z])/",$url)
+          or (!empty($this->urls) and !preg_match('/^('.$this->urls.')/',$url)))
         return $this->interwiki_repl($url,'',$attr,$external_icon);
-      else if (!empty($this->urls) and !preg_match('/^('.$this->urls.')/',$url)) {
-        if ($this->use_namespace)
-          return $this->interwiki_repl($url,'',$attr,$external_icon);
-        else
-          return $bra.$url.$ket;
-      }
 
       if (preg_match("/^mailto:/",$url)) {
         $email=substr($url,7);
