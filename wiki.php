@@ -2016,10 +2016,10 @@ class Formatter {
       } # have no space
       $link = str_replace(array('<','>'),array('&#x3c;','&#x3e;'),$url);
       if (preg_match("/^(http|https|ftp)/",$url)) {
-        if (preg_match("/(^.*\.(png|gif|jpeg|jpg))(\?.*?)?$/i",$url,$match)) {
-          $url=preg_replace('/&amp;/','&',$url);
+        $url1 = preg_replace('/&amp;/','&',$url);
+        if (preg_match("/(^.*\.(png|gif|jpeg|jpg))(?:\?|&(?!>amp;))(.*?)?$/i", $url1, $match)) {
           $url=$match[1];
-          $attrs=!empty($match[3]) ? explode('&amp',substr($match[3],1)) : array();
+          $attrs = !empty($match[3]) ? explode('&', $match[3]) : array();
           foreach ($attrs as $arg) {
             $name=strtok($arg,'=');
             $val=strtok(' ');
