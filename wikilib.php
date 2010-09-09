@@ -368,7 +368,7 @@ function http_need_cond_request($mtime, $last_modified = '', $etag = '') {
     if ($if_modified_since) {
         // calculate time
         $mytime = @strtotime( $if_modified_since );
-        if ( $mtime <= $mytime) {
+        if ( $mtime < $mytime) {
             return true; // if-modified-since is there but doesn't match
         }
     }
