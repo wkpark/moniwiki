@@ -1883,8 +1883,7 @@ class Formatter {
       $url=substr($url,1,-1);
       $double_bracket = true;
 
-      preg_match("/^([^\(:]+)(\((.*)\))?$/", $url, $match);
-      if (!empty($match)) {
+      if (preg_match("/^([^\(:]+)(\((.*)\))?$/", $url, $match)) {
         if (isset($match[1])) {
           $name = $match[1];
         } else {
@@ -1893,8 +1892,10 @@ class Formatter {
 
         // check alias
         $myname = getPlugin($name);
-        if (!empty($myname))
+        if (!empty($myname)) {
+          if (!empty($opts['nomacro'])) return ''; # remove macro
           return $this->macro_repl($url); # No link
+        }
       }
 
       break;
