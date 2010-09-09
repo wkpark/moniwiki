@@ -1700,12 +1700,13 @@ function do_goto($formatter,$options) {
      $url=_stripslashes(trim($options['value']));
      $url=_rawurlencode($url);
      if ($options['redirect'])
-       $url=$formatter->link_url($url,"?action=show&redirect=".
+       $url=$formatter->link_url($url,"?action=show&amp;redirect=".
           $formatter->page->name);
      else
        $url=$formatter->link_url($url,"");
      # FastCGI/PHP does not accept multiple header infos. XXX
      #$formatter->send_header("Location: ".$url,$options);
+     $url = preg_replace('/&amp;/', '&', $url);
      $formatter->send_header(array("Status: 302","Location: ".$url),$options);
   } else if ($options['url']) {
     $url=$options['url'];
