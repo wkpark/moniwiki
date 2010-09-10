@@ -1376,7 +1376,7 @@ EXTRA;
       if (!empty($DBInfo->wikiwyg_confirm)) $confirm = 'null';
       $wysiwyg_msg=_("GUI");
       $wysiwyg_btn.='&nbsp;<button type="button" tabindex="7"'.
-        '" onclick="javascript:sectionEdit(null,'.$confirm .',null)" ><span>'.
+        ' onclick="javascript:sectionEdit(null,'.$confirm .',null)" ><span>'.
 	$wysiwyg_msg.'</span></button>';
     }
     $summary=<<<EOS
