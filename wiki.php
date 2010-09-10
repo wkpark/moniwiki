@@ -1914,6 +1914,7 @@ class Formatter {
                  "<a id='".($temp=substr($anchor,1))."'></a>";
       break;
     case '*':
+        if (!empty($opts['nomacro'])) return ''; # remove macro
       return $this->macro_repl('FootNote',$url);
       break;
     case '!':

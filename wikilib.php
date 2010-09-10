@@ -3248,6 +3248,7 @@ EOS;
  }
  $body=preg_replace("/\{\{\{.+?\}\}\}/s",'',$body);
  $opts = array('nomacro'=>1); // disable macros in headings
+ $wordrule = $formatter->wordrule .= '|'.$formatter->footrule;
  $lines=explode("\n",$body);
  foreach ($lines as $line) {
    $line=preg_replace("/\n$/", "", $line); # strip \n
@@ -3263,7 +3264,7 @@ EOS;
    #$head=preg_replace($formatter->baserule,"\\1",$head);
    # do not strip basic wikitags
    $head=preg_replace($formatter->baserule,$formatter->baserepl,$head);
-   $head=preg_replace("/(".$formatter->wordrule.")/e",
+   $head=preg_replace("/(".$wordrule.")/e",
      "\$formatter->link_repl('\\1', '', \$opts)",$head);
    if ($simple)
      $head=strip_tags($head,'<b><i><img><sub><sup><del><tt><u><strong>');
