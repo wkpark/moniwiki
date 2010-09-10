@@ -1849,9 +1849,9 @@ class Formatter {
     switch ($url[0]) {
     case '{':
       $url=substr($url,3,-3);
-      $url=str_replace("<","&lt;",$url);
       if (preg_match('/^({([^{}]+)})/s',$url,$sty)) { # textile like styling
         $url=substr($url,strlen($sty[1]));
+        $url = preg_replace($this->baserule, $this->baserepl, $url); // apply inline formatting rules
         return "<span style='$sty[2]'>$url</span>";
       }
       if ($url[0]=='#' and ($p=strpos($url,' '))) {
@@ -1862,13 +1862,14 @@ class Formatter {
           return "<span style='color:$col'>$url</span>";
         $url=$col.' '.$url;
       } else if (preg_match('/^((?:\+|\-)([1-6]?))(?=\s)(.*)$/',$url,$m)) {
-        $m[3]=str_replace("&lt;","<",$m[3]);
         if ($m[2]=='') $m[1].='1';
         $fsz=array(
           '-5'=>'10%','-4'=>'20%','-3'=>'40%','-2'=>'60%','-1'=>'80%',
           '+1'=>'140%','+2'=>'180%','+3'=>'220%','+4'=>'260%','+5'=>'200%');
         return "<span style='font-size:".$fsz[$m[1]]."'>$m[3]</span>";
       }
+
+      $url = str_replace("<","&lt;",$url);
       if ($url[0]==' ' and in_array($url[1],array('#','-','+')) !==false)
         $url='<span class="markup invisible"> </span>'.substr($url,1);
       return "<tt class='wiki'>".$url."</tt>"; # No link
