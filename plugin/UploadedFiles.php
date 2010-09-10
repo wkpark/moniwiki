@@ -296,7 +296,7 @@ EOS;
      $out.="<input type='hidden' name='value' value='$value' />\n";
 
 
-   $out.="</p><table style='border:0px' cellpadding='2'>\n";
+   $out.="</p><table style='border:0px' cellpadding='2' class='uploadInfo'>\n";
    $colspan='';
    if ($use_admin) $colspan=" colspan='2'";
    if ($use_fileinfo) {
@@ -363,7 +363,7 @@ EOS;
    $down_mode=(strpos($prefix,';value=') !== false);
    $mywidth=$preview_width;
 
-   $iidx=1;
+   $iidx=0;
    foreach ($upfiles as $file) {
       $_l_file=_l_filename($file);
       // force download with some extensions. XXX
@@ -431,19 +431,20 @@ EOS;
           $link="javascript:$tag";
         }
       }
-      if (($iidx % $col) == 0)
-      $out.="<tr>";
+      if (empty($iidx))
+        $out.="<tr>\n";
+      else if (($iidx % $col) == 0)
+        $out.="</tr>\n<tr>\n";
       if ($use_admin)
         $out.="<td class='wiki'><input type='$checkbox' name='files[$idx]' value='$file' /></td>";
       $out.="<td class='wiki'><a href=\"$link\"$attr>$fname</a></td>";
       if ($use_fileinfo) {
         $out.="<td align='right' class='wiki'>$size</td><td class='wiki'>$date</td>";
       }
-      if (($iidx % $col) == 0)
-      $out.="</tr>\n";
       $idx++;
       $iidx++;
    }
+   $out.="</tr>\n";
    $idx--;
    $msg=sprintf(_("Total %d files"),$idx);
    $out.="<tr><th colspan='2'>$msg</th><th colspan='2'>$plink</th></tr>\n";
