@@ -4008,8 +4008,10 @@ class Formatter {
         $this->set_origin($this->page->name);
 
       # find upper page
+      $up_separator = '/';
+      if (!empty($this->use_namespace)) $up_separator.= '|\:';
       $pos=0;
-      preg_match('/(\:|\/)/',$this->page->name,$sep); # NameSpace/SubPage or NameSpace:SubNameSpacePage
+      preg_match('@(' . $up_separator . ')@',$this->page->name,$sep); # NameSpace/SubPage or NameSpace:SubNameSpacePage
       if (isset($sep[1])) $pos=strrpos($this->page->name,$sep);
       if ($pos > 0) $upper=substr($this->page->urlname,0,$pos);
       else if ($this->group) $upper=_urlencode(substr($this->page->name,strlen($this->group)));
@@ -4333,8 +4335,10 @@ FOOT;
     $saved_pagelinks = $this->pagelinks;
 
     # find upper page
+    $up_separator = '/';
+    if (!empty($this->use_namespace)) $up_separator.= '|\:';
     $pos=0;
-    preg_match('/(\:|\/)/',$name,$sep); # NameSpace/SubPage or NameSpace:SubNameSpacePage
+    preg_match('@(' . $up_separator . ')@',$name,$sep); # NameSpace/SubPage or NameSpace:SubNameSpacePage
     if (isset($sep[1])) $pos=strrpos($name,$sep[1]);
     $mypgname=$this->page->name;
     $upper_icon = '';
