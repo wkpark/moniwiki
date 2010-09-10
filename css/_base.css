@@ -315,6 +315,10 @@ div.closure {
   margin-left: 10px;
 }
 
+img.wikiIcon {
+  border:0px;
+}
+
 #wikiIcon img, #wikiMenu img {
   vertical-align: middle;
 }
