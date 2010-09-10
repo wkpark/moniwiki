@@ -96,18 +96,18 @@ EOS;
     unset($default['conf']);
 
     $config = new StdClass;
-    foreach ($default as $k=>$v) {
-        $config->$k = $v;
-    }
 
     if (is_array($conf)) {
         // override config with user-specified configurations
-        if (!empty($conf)) {
-            // read configurations
-            foreach ($conf as $k=>$v) {
-                if ($k[0] == '_') continue; // ignore internal variables
-                $config->$k = $v;
-            }
+        $conf = array_merge($default, $conf);   
+        // read configurations
+        foreach ($conf as $k=>$v) {
+            if ($k[0] == '_') continue; // ignore internal variables
+            $config->$k = $v;
+        }
+    } else {
+        foreach ($default as $k=>$v) {
+            $config->$k = $v;
         }
     }
 
@@ -129,7 +129,7 @@ EOS;
     $config->imgs_url_interwiki = $config->imgs_dir_url;
 
     if (empty($config->upload_dir_url))
-        $config->upload_dir_url = $config->upload_dir;
+        $config->upload_dir_url = $config->url_prefix . '/' . $config->upload_dir;
 
     if (empty($config->imgs_real_dir)) {
         if (function_exists('apache_lookup_uri')) {
