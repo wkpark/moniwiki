@@ -5,6 +5,8 @@
 //
 // $Id$
 
+require_once(dirname(__FILE__).'/version.RCS.php');
+
 class Version_RcsLite extends Version_RCS {
   var $DB;
 
