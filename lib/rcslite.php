@@ -357,6 +357,7 @@ Class RcsLite {
         } else
             $revs=&$this->_next;
 
+        $rlog = '';
         foreach ($revs as $rev=>$next) {
             $log=$this->_log[$rev];
             if (!preg_match("/\n$/",$log)) $log.="\n";
@@ -365,7 +366,7 @@ Class RcsLite {
             $rlog.= "date: ".gmdate("Y/m/d H:i:s",$this->_date[$rev]).";  author: ". $this->_author[$rev].";  state: Exp;  lines: ".$this->_change[$rev]."\n";
             $rlog.= $log;
         }
-        $rlog.= str_repeat("=",71)."\n";
+        if (!empty($rlog)) $rlog.= str_repeat("=",71)."\n";
         return $rlog;
     }
     
