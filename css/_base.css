@@ -509,6 +509,11 @@ h4:hover a.perma, h5:hover a.perma, h6:hover a.perma {
   display: inline;
 }
 
+.recentChanges .range {
+  font-family: Tahoma, sans-serif;
+  font-size:11px;
+}
+
 .wikiMarkup {
   background-color:#ffff00;
   border-left:2px solid #F5E238;
