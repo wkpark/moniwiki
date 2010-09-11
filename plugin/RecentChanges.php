@@ -99,6 +99,16 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $date_fmt=$args[0];
 
   $strimwidth = isset($DBInfo->rc_strimwidth) ? $DBInfo->rc_strimwidth : 20;
+  // show last edit entry only
+  $last_entry_only = 1;
+  // show last editor only
+  $last_editor_only = 1;
+  // show editrange like as MoinMoin
+  $use_editrange = 0;
+
+  $trash = 0;
+  $rctype = '';
+
   $bra = '';
   $cat = '';
   $cat0 = '';
@@ -126,24 +136,38 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       else if ($arg=="notitle") $rctitle='';
       else if ($arg=="hits") $use_hits=1;
       else if ($arg=="daysago") $use_daysago=1;
-      else if ($arg=="simple") {
+      else if ($arg=="trash") $trash = 1;
+      else if ($arg=="editrange") $use_editrange = 1;
+      else if ($arg=="allauthors") $last_editor_only = 0;
+      else if ($arg=="allusers") $last_editor_only = 0;
+      else if ($arg=="allentries") $last_entry_only = 0;
+      else if (in_array($arg, array('simple', 'moztab', 'board', 'table'))) $rctype = $arg;
+    }
+  }
+
+  if (!empty($rctype)) {
+      if ($rctype=="simple") {
         $use_day=0;
         $template=
   '$out.= "$icon&nbsp;&nbsp;$title @ $day $date by $user $count $extra<br />\n";';
-      } else if ($arg=="moztab") {
+      } else if ($rctype=="moztab") {
         $use_day=1;
         $template= '$out.= "<li>$title $date</li>\n";';
-      } else if ($arg=="table") {
+      } else if ($rctype=="table") {
         $bra="<table border='0' cellpadding='0' cellspacing='0' width='100%'>";
         $template=
   '$out.= "<tr><td style=\'white-space:nowrap;width:2%\'>$icon</td><td style=\'width:40%\'>$title$updated</td><td class=\'date\' style=\'width:15%\'>$date</td><td>$user $count $extra</td></tr>\n";';
         $cat="</table>";
         $cat0="";
-      } else if ($arg=="board") {
+      } else if ($rctype=="board") {
         $changed_time_fmt = 'm-d [H:i]';
         $use_day=0;
         $template_bra="<table border='0' cellpadding='0' cellspacing='0' width='100%'>";
-        $template_bra.="<thead><tr><th colspan='3' class='title'>"._("Title")."</th><th class='date'>".
+
+        if (empty($nobookmark)) $cols = 3;
+        else $cols = 2;
+
+        $template_bra.="<thead><tr><th colspan='$cols' class='title'>"._("Title")."</th><th class='date'>".
           _("Change Date").'</th>';
         if (!empty($DBInfo->show_hosts))
           $template_bra.="<th class='author'>"._("Editor").'</th>';
@@ -152,7 +176,10 @@ function macro_RecentChanges($formatter,$value='',$options='') {
           $template_bra.="<th class='hits'>"._("Hits")."</th>";
         $template_bra.="</tr></thead>\n<tbody>\n";
         $template=
-  '$out.= "<tr$alt><td style=\'white-space:nowrap;width:2%\'>$icon</td><td class=\'title\' style=\'width:40%\'>$title$updated</td><td>$bmark</td><td class=\'date\' style=\'width:15%\'>$date</td>';
+  '$out.= "<tr$alt><td style=\'white-space:nowrap;width:2%\'>$icon</td><td class=\'title\' style=\'width:40%\'>$title$updated</td>';
+        if (empty($nobookmark))
+          $template.= '<td>$bmark</td>';
+        $template.= '<td class=\'date\' style=\'width:15%\'>$date</td>';
         if (!empty($DBInfo->show_hosts))
           $template.='<td class=\'author\'>$user</td>';
         $template.='<td class=\'editinfo\'>$count</td>';
@@ -163,8 +190,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         $template_cat="</tbody></table>";
         $cat0="";
       }
-    }
   }
+
   // override days
   $days=!empty($_GET['days']) ? min(abs($_GET['days']),RC_MAX_DAYS):$days;
 
@@ -187,7 +214,6 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   }
   if (empty($tz_offset)) {
     $tz_offset=date("Z");
-    $tz_offset;
   }
 
   if (!$bookmark) $bookmark=time();
@@ -225,30 +251,37 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   }
 
   $ratchet_day = FALSE;
+  $editors = array();
+  $editcount = array();
   foreach ($lines as $line) {
     $parts= explode("\t", $line,6);
     $page_key= $parts[0];
     $ed_time= $parts[2];
+    $user= $parts[4];
+    $addr= $parts[1];
+    if ($user == 'Anonymous')
+      $user = 'Anonymous-' . $addr;
 
     $day = gmdate('Ymd', $ed_time+$tz_offset);
     if ($day != $ratchet_day) {
       $ratchet_day = $day;
-      unset($logs);
     }
 
-    if (!empty($editcount[$page_key])) {
-      if (!empty($logs[$page_key])) {
-        $editcount[$page_key]++;
-        #$editors[$page_key].=':'.$parts[4];
-        continue;
-      }
+    if (!empty($editcount[$day][$page_key])) {
+      $editors[$day][$page_key][] = $user;
+      $editcount[$day][$page_key]++;
       continue;
     }
-    $editcount[$page_key]= 1;
-    $logs[$page_key]= 1;
-    #$editors[$page_key]= $parts[4];
+    if (empty($editcount[$day])) {
+      $editcount[$day] = array();
+      $editors[$day] = array();
+    }
+
+    $editcount[$day][$page_key]= 1;
+
+    $editors[$day][$page_key] = array();
+    $editors[$day][$page_key][] = $user;
   }
-  unset($logs);
 
   $out="";
   $ratchet_day= FALSE;
@@ -257,12 +290,20 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   foreach ($lines as $line) {
     $parts= explode("\t", $line);
     $page_key=$parts[0];
+    $ed_time = $parts[2];
 
-    if (!empty($logs[$page_key])) continue;
+    $day = gmdate('Ymd', $ed_time+$tz_offset);
+
+    // show last edit only
+    if (!empty($last_entry_only) and !empty($logs[$page_key])) continue;
+    else if (!empty($logs[$page_key][$day])) continue;
 
     $page_name= $DBInfo->keyToPagename($parts[0]);
+
+    // show trashed pages only
+    if ($trash and $DBInfo->hasPage($page_name)) continue;
+
     $addr= $DBInfo->mask_hostname ? _mask_hostname($parts[1]):$parts[1];
-    $ed_time= $parts[2];
     $user= $parts[4];
     $log= _stripslashes($parts[5]);
     $act= rtrim($parts[6]);
@@ -282,18 +323,10 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         $title=$page_name;
     }
 
-    $day = gmdate('Y-m-d', $ed_time+$tz_offset);
-
     if (! empty($changed_time_fmt)) {
       $date= gmdate($changed_time_fmt, $ed_time+$tz_offset);
       if (!empty($timesago)) {
         $date = _timesago($ed_time, 'Y-m-d', $tz_offset);
-        /*
-        $time_diff=(int)($time_current - $ed_time)/60;
-        if ($time_diff < 1440) {
-          $date=sprintf(_("[%sh %sm ago]"),(int)($time_diff/60),$time_diff%60);
-        }
-        */
       }
     }
 
@@ -319,7 +352,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         $bmark=$formatter->link_to($bookmark_action ."&amp;time=$ed_time".$daysago,_("Bookmark"), 'class="button-small"');
       }
     }
-    if (empty($use_day)) {
+    if (empty($use_day) and empty($nobookmark)) {
       $date=$formatter->link_to($bookmark_action ."&amp;time=$ed_time".$daysago,$date);
     }
 
@@ -359,41 +392,99 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     }
 
     if (!empty($DBInfo->show_hosts)) {
-      if (!empty($showhost) && $user == 'Anonymous')
-        $user= $addr;
-      else {
-        $ouser= $user;
-        if (isset($users[$ouser])) $user = $users[$ouser];
-        else if (!empty($DBInfo->use_nick)) {
-          $uid = $user;
-          if (($p = strpos($uid,' '))!==false)
-            $uid= substr($uid, 0, $p);
-          $u = $DBInfo->udb->getUser($uid);
-          if (!empty($u->info)) {
-            if (!empty($DBInfo->interwiki['User'])) {
-              $user = $formatter->link_repl('[wiki:User:'.$uid.' '.$u->info['nick'].']');
-            } else if (!empty($u->info['home'])) {
-              $user = $formatter->link_repl('['.$u->info['home'].' '.$u->info['nick'].']');
-            } else if (!empty($u->info['nick'])) {
-              $user = $formatter->link_repl('[wiki:'.$uid.' '.$u->info['nick'].']');
+      $last_editor = $user;
+
+      if ($last_editor_only) {
+        // show last editor only
+        $editor = array_pop($editors[$day][$page_key]);
+      } else {
+        // all show all authors
+        // count edit number
+        // make range list
+        if ($use_editrange) { // MoinMoin like edit range
+          $editor_list = array();
+          foreach ($editors[$day][$page_key] as $idx=>$name) {
+            if (empty($editor_list[$name])) $editor_list[$name] = array();
+            $editor_list[$name][] = $idx + 1;
+          }
+          $editor_counts = array();
+
+          foreach ($editor_list as $name=>$edits) {
+            $range = ',';
+            if (isset($edits[1])) {
+              $edits[] = 999999; // MoinMoin method
+              for($i = 0, $sz = count($edits)-1; $i < $sz; $i++) {
+                if (substr($range, -1) == ',') {
+                  $range.= $edits[$i];
+                  if ($edits[$i] + 1 == $edits[$i+1])
+                    $range.= '-';
+                  else
+                    $range.= ',';
+                } else {
+                  if ($edits[$i] + 1 != $edits[$i+1])
+                    $range.= $edits[$i].',';
+                }
+              }
+              $range = trim($range, ',-');
+              $editor_counts[$name] = $range;
+            } else {
+              $editor_counts[$name] = 1;
             }
           }
-          $users[$ouser] = $user;
-        } else if (strpos($user,' ')!==false) {
-          $user= $formatter->link_repl($user);
-          $users[$ouser] = $user;
-        } else if ($DBInfo->hasPage($user)) {
-          $user= $formatter->link_tag(_rawurlencode($user),"",$user);
-          $users[$ouser] = $user;
-        } else
-          $user= $user;
+        } else {
+          $editor_counts = array_count_values($editors[$day][$page_key]);
+        }
+        $editor = array_keys($editor_counts);
       }
+
+      $all_user = array();
+      foreach ((array)$editor as $user) {
+        if (!$last_editor_only and isset($editor[1]) and isset($editor_counts[$user]))
+          $count = " <span class='range'>[".$editor_counts[$user]."]</span>";
+        else
+          $count = '';
+
+        if (!empty($showhost) && substr($user, 0, 9) == 'Anonymous')
+          $user= $addr;
+        else {
+          $ouser= $user;
+          if (isset($users[$ouser])) $user = $users[$ouser];
+          else if (!empty($DBInfo->use_nick)) {
+            $uid = $user;
+            if (($p = strpos($uid,' '))!==false)
+              $uid= substr($uid, 0, $p);
+            $u = $DBInfo->udb->getUser($uid);
+            if (!empty($u->info)) {
+              if (!empty($DBInfo->interwiki['User'])) {
+                $user = $formatter->link_repl('[wiki:User:'.$uid.' '.$u->info['nick'].']');
+              } else if (!empty($u->info['home'])) {
+                $user = $formatter->link_repl('['.$u->info['home'].' '.$u->info['nick'].']');
+              } else if (!empty($u->info['nick'])) {
+                $user = $formatter->link_repl('[wiki:'.$uid.' '.$u->info['nick'].']');
+              }
+            }
+            $users[$ouser] = $user;
+          } else if (strpos($user,' ')!==false) {
+            $user= $formatter->link_repl($user);
+            $users[$ouser] = $user;
+          } else if ($DBInfo->hasPage($user)) {
+            $user= $formatter->link_tag(_rawurlencode($user),"",$user);
+            $users[$ouser] = $user;
+          } else
+            $user= $user;
+        }
+        $all_user[] = $user.$count;
+      }
+      if (isset($editor[1]))
+        $user = '<span class="rc-editors"><span>'.implode("</span> <span>", $all_user)."</span></span>\n";
+      else
+        $user = $all_user[0];
     } else {
       $user = '&nbsp;';
     }
     $count=""; $extra="";
-    if ($editcount[$page_key] > 1)
-      $count=sprintf(_("%s changes"), " <span class='num'>".$editcount[$page_key]."</span>");
+    if ($editcount[$day][$page_key] > 1)
+      $count=sprintf(_("%s changes"), " <span class='num'>".$editcount[$day][$page_key]."</span>");
     if (!empty($comment) && !empty($log))
       $extra="&nbsp; &nbsp; &nbsp; <small name='word-break'>$log</small>";
 
@@ -404,10 +495,12 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       eval($template);
     }
 
-    $logs[$page_key]= 1;
+    if (empty($logs[$page_key]))
+      $logs[$page_key] = array();
+    $logs[$page_key][$day] = 1;
     ++$ii;
   }
   return $btnlist.'<div class="recentChanges">'.$rctitle.$template_bra.$out.$template_cat.$cat0.'</div>';
 }
-// vim:et:sts=2:
+// vim:et:sts=2:sw=2:
 ?>
