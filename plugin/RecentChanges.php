@@ -428,7 +428,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
               $range = trim($range, ',-');
               $editor_counts[$name] = $range;
             } else {
-              $editor_counts[$name] = 1;
+              $editor_counts[$name] = $edits[0];
             }
           }
         } else {
