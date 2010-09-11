@@ -5,9 +5,10 @@
 //
 // $Id$
 
+define('RSS_DEFAULT_DAYS',7);
+
 function do_rss_rc($formatter,$options) {
   global $DBInfo;
-define('RSS_DEFAULT_DAYS',7);
 
   $days=!empty($DBInfo->rc_days) ? $DBInfo->rc_days:RSS_DEFAULT_DAYS;
   $options['quick']=1;
@@ -20,6 +21,35 @@ define('RSS_DEFAULT_DAYS',7);
     foreach ($opts as $opt) {
       $options[$opt]=1; // FIXME
     }
+  }
+
+  // HTTP conditional get
+  $mtime = $DBInfo->mtime();
+  $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
+
+  // make etag based on some options and mtime.
+  $check_opts = array('quick', 'items', 'oe', 'diff', 'raw', 'nomsg', 'summary');
+  $check = array();
+  foreach ($check_opts as $c) {
+    if (isset($options[$c])) $check[$c] = $options[$c];
+  }
+
+  $etag = md5($mtime . $DBInfo->logo_img . serialize($check));
+
+  $headers = array();
+  $headers[] = 'Pragma: cache';
+  $maxage = 60*60*24*7;
+  $headers[] = 'Cache-Control: private, max-age='.$maxage;
+  $headers[] = 'Last-Modified: '.$lastmod;
+  $headers[] = 'ETag: "'.$etag.'"';
+  $need = http_need_cond_request($mtime, $lastmod, $etag);
+  if (!$need)
+    $headers[] = 'HTTP/1.0 304 Not Modified';
+  foreach ($headers as $h)
+    header($h);
+  if (!$need) {
+    @ob_end_clean();
+    return;
   }
     
   $time_current= time();
