@@ -105,6 +105,16 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   $last_editor_only = 1;
   // show editrange like as MoinMoin
   $use_editrange = 0;
+  // avatar
+  $use_avatar = 0;
+  $avatar_type = 'identicon';
+  if (!empty($DBInfo->use_avatar)) {
+    $use_avatar = 1;
+    if (is_string($DBInfo->use_avatar))
+      $avatar_type = $DBInfo->use_avatar;
+  }
+
+  $avatarlink = qualifiedUrl($formatter->link_url('', '?action='. $avatar_type .'&amp;seed='));
 
   $trash = 0;
   $rctype = '';
@@ -141,6 +151,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       else if ($arg=="allauthors") $last_editor_only = 0;
       else if ($arg=="allusers") $last_editor_only = 0;
       else if ($arg=="allentries") $last_entry_only = 0;
+      else if ($arg=="avatar") $use_avatar = 1;
       else if (in_array($arg, array('simple', 'moztab', 'board', 'table'))) $rctype = $arg;
     }
   }
@@ -444,9 +455,14 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         else
           $count = '';
 
-        if (!empty($showhost) && substr($user, 0, 9) == 'Anonymous')
+        if (!empty($showhost) && substr($user, 0, 9) == 'Anonymous') {
           $user= $addr;
-        else {
+          if (!empty($use_avatar)) {
+            $crypted = crypt($addr, $addr);
+            $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
+            $user = '<img src="'.$mylnk.'" style="width:16px;height:16px;vertical-align:middle" alt="avatar" />Anonymous';
+          }
+        } else {
           $ouser= $user;
           if (isset($users[$ouser])) $user = $users[$ouser];
           else if (!empty($DBInfo->use_nick)) {
@@ -470,8 +486,17 @@ function macro_RecentChanges($formatter,$value='',$options='') {
           } else if ($DBInfo->hasPage($user)) {
             $user= $formatter->link_tag(_rawurlencode($user),"",$user);
             $users[$ouser] = $user;
-          } else
-            $user= $user;
+          } else {
+            if (substr($user, 0, 9) == 'Anonymous') {
+              $addr = substr($user, 10);
+              $user = 'Anonymous';
+            }
+            if (!empty($use_avatar)) {
+              $crypted = crypt($addr, $addr);
+              $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
+              $user = '<img src="'.$mylnk.'" style="width:16px;height:16px;vertical-align:middle" alt="avatar" />'.$user;
+            }
+          }
         }
         $all_user[] = $user.$count;
       }
