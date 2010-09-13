@@ -2866,6 +2866,7 @@ class Formatter {
       if ($match[1]) {
         if ($match[1] == '^') $attr['valign']='top';
         else $attr['valign']='bottom';
+        $para = '';
       }
     }
     else if (strlen($para)==1) {
@@ -2882,28 +2883,27 @@ class Formatter {
       default:
         break;
       }
-      $myattr=$this->_attr('',$sty,$myclass,$align);
-      $attr=array_merge($attr,$myattr);
     }
-    else if (preg_match("/^\-(\d+)$/",$para,$match))
+    else if (preg_match("/^\-(\d+)$/",$para,$match)) {
       $attr['colspan']=$match[1];
-    else if ($para[0]=='#') {
+      $para = '';
+    } else if ($para[0]=='#') {
       $sty['background-color']=strtolower($para);
-      $myattr=$this->_attr('',$sty,$myclass,$align);
-      $attr=array_merge($attr,$myattr);
+      $para = '';
     } else {
       if (substr($para,0,7)=='rowspan') {
-        $attr['rowspan']=substr($para,7);
+        $attr['rowspan']=substr($para,8);
+        $para = '';
       } else if (substr($para,0,3)=='row') {
         // row properties
         $val=substr($para,3);
         $myattr=$this->_attr($val,$rsty);
         $rattr=array_merge($rattr,$myattr);
-      } else {
-        $myattr=$this->_attr($para,$sty,$myclass,$align);
-        $attr=array_merge($attr,$myattr);
+        continue;
       }
     }
+    $myattr=$this->_attr($para,$sty,$myclass,$align);
+    $attr=array_merge($attr,$myattr);
     }
     $myclass=!empty($attr['class']) ? $attr['class']:'';
     unset($attr['class']);
@@ -2911,10 +2911,10 @@ class Formatter {
       $attr['class']=trim($myclass);
 
     $val='';
-    foreach ($rattr as $k=>$v) $val.=$k.'="'.$v.'" ';
+    foreach ($rattr as $k=>$v) $val.=$k.'="'.trim($v, "'\"").'" ';
 
     $ret='';
-    foreach ($attr as $k=>$v) $ret.=$k.'="'.$v.'" ';
+    foreach ($attr as $k=>$v) $ret.=$k.'="'.trim($v, "'\"").'" ';
     return $ret;
   }
 
