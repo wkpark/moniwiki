@@ -114,8 +114,9 @@ FORM;
             if (!empty($t))
                 $content = $t;
         }
-        if (!isset($content[0]))
-            $version->import($options['page'],$content);
+        if (isset($content[0])) {
+            $test = $version->import($options['page'],$content);
+        }
 
         $options['value'] = $options['page'];
         do_goto($formatter, $options);
