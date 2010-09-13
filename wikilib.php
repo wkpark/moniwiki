@@ -2221,12 +2221,19 @@ function do_post_savepage($formatter,$options) {
     }
 
     $myrefresh='';
-    if ($DBInfo->use_save_refresh) {
-       $sec=$DBInfo->use_save_refresh - 1;
-       $lnk=$formatter->link_url($formatter->page->urlname,"?action=show");
-       $myrefresh='Refresh: '.$sec.'; url='.qualifiedURL($lnk);
+    if (!empty($DBInfo->use_save_refresh)) {
+      $lnk=$formatter->link_url($formatter->page->urlname,"?action=show");
+      if ($DBInfo->use_save_refresh > 0) {
+        $sec=$DBInfo->use_save_refresh - 1;
+        $myrefresh='Refresh: '.$sec.'; url='.qualifiedURL($lnk);
+      } else {
+        $myrefresh = array('Status: 302', 'Location: '. qualifiedURL($lnk));
+      }
     }
     $formatter->send_header($myrefresh,$options);
+    if (is_array($myrefresh))
+      return;
+
     $formatter->send_title("","",$options);
     $opt['pagelinks']=1;
     # re-generates pagelinks
