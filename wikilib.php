@@ -45,6 +45,32 @@ function get_scriptname() {
 }
 
 /**
+ * get the number of lines in a file
+ *
+ * @author wkpark@kldp.org
+ * @since  2010/09/13
+ *
+ */
+
+function get_file_lines($filename) {
+  $fp = fopen($filename, 'r');
+  if (!is_resource($fp)) return 0;
+
+  // test \n or \r or \r\n
+  $i = 0;
+  while(($test = fgets($fp, 4096)) and !preg_match("/(\r|\r\n|\n)$/", $test, $match)) $i++;
+
+  $i = 1;
+  $bsz = 1024 * 8;
+  if (isset($match[1])) {
+    while ($chunk = fread($fp, $bsz))
+      $i += substr_count($chunk, $match[1]);
+  }
+  fclose($fp);
+  return $i;
+}
+
+/**
  * Extracted from Gallery Plugin
  *
  * make pagelist to paginate.

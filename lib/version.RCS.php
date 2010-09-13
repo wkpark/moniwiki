@@ -68,7 +68,24 @@ class Version_RCS {
   }
 
   function rlog($pagename,$rev='',$opt='',$oldopt='') {
-    $rev = (is_numeric($rev) and $rev > 0) ? "-r$rev":'';
+    $dmark = '';
+    if ($rev[0] == '>' or $rev[0] == '<') {
+      $dmark = $rev[0];
+      $rev = substr($rev, 1);
+    }
+    if (is_numeric($rev) and preg_match('@^[0-9]{10}$@', trim($rev))) {
+      // this is mtime
+      $date = gmdate('Y/m/d H:i:s', $rev);
+      $rev = '';
+      if ($date)
+        $rev = "-d\\$dmark'$date'";
+    } else if (is_numeric($rev) and $rev > 0) {
+      // normal revision
+      $rev = "-r$rev";
+    } else {
+      $rev = '';
+    }
+
     $filename=$this->_filename($pagename);
 
     $fp= popen("rlog $opt $oldopt -x,v/ $rev ".$filename.$this->NULL,"r");

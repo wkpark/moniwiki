@@ -1028,8 +1028,8 @@ class WikiDB {
     # check minor edits XXX
     $minor=0;
     if (!empty($this->use_minorcheck) or !empty($options['minorcheck'])) {
-      $info=$page->get_info();
-      if ($info[1]) {
+      $info = $page->get_info();
+      if (!empty($info[0][1])) {
         eval('$check='.$info[1].';');
         if (abs($check) < 3) $minor=1;
       }
@@ -1203,6 +1203,10 @@ class WikiPage {
     return $this->fsize;
   }
 
+  function lines() {
+    return get_file_lines($this->filename);
+  }
+
   function get_raw_body($options='') {
     global $DBInfo;
 
@@ -1282,35 +1286,38 @@ class WikiPage {
   function get_info($rev='') {
     global $DBInfo;
 
-    $info=array('','','','','');
+    $infos = array();
     if (empty($rev))
       $rev=$this->get_rev('',1);
-    if (empty($rev)) return $info;
+    if (empty($rev)) return false;
 
     if (!empty($DBInfo->version_class)) {
       $class=getModule('Version',$DBInfo->version_class);
       $version=new $class ($DBInfo);
       $opt = '';
+
       $out= $version->rlog($this->name,$rev,$opt);
     } else {
-      return $info;
+      return false;
     }
 
     $state=0;
     if (isset($out)) {
       for ($line=strtok($out,"\n"); $line !== false;$line=strtok("\n")) {
         if ($state == 0 and preg_match("/^date:\s.*$/",$line)) {
+          $info = array();
           $tmp=preg_replace("/date:\s(.*);\s+author:.*;\s+state:.*;/","\\1",rtrim($line));
           $tmp=explode('lines:',$tmp);
           $info[0]=$tmp[0];$info[1]=$tmp[1];
           $state=1;
         } else if ($state) {
           list($info[2],$info[3],$info[4])=explode(';;',$line,3);
-          break;
+          $infos[] = $info;
+          $state = 0;
         }
       }
     }
-    return $info;
+    return $infos;
   }
 }
 

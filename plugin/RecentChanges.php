@@ -74,10 +74,11 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   global $DBInfo;
 
   $checknew=1;
+  $checkchange=0;
 
   $template_bra="";
   $template=
-  '$out.= "$icon&nbsp;&nbsp;$title$updated $date . . . . $user $count $extra<br />\n";';
+  '$out.= "$icon&nbsp;&nbsp;$title$updated $date . . . . $user $count$diff $extra<br />\n";';
   $template_cat="";
   $use_day=1;
   $users = array();
@@ -136,6 +137,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     } else {
       if ($arg =="quick") $opts['quick']=1;
       else if ($arg=="nonew") $checknew=0;
+      else if ($arg=="change") $checkchange=1;
       else if ($arg=="showhost") $showhost=1;
       else if ($arg=="comment") $comment=1;
       else if ($arg=="comments") $comment=1;
@@ -156,8 +158,12 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     }
   }
 
+  if (empty($DBInfo->use_counter))
+    $use_hits = 0;
+
   if (!empty($rctype)) {
       if ($rctype=="simple") {
+        $checkchange = 0;
         $use_day=0;
         $template=
   '$out.= "$icon&nbsp;&nbsp;$title @ $day $date by $user $count $extra<br />\n";';
@@ -167,7 +173,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       } else if ($rctype=="table") {
         $bra="<table border='0' cellpadding='0' cellspacing='0' width='100%'>";
         $template=
-  '$out.= "<tr><td style=\'white-space:nowrap;width:2%\'>$icon</td><td style=\'width:40%\'>$title$updated</td><td class=\'date\' style=\'width:15%\'>$date</td><td>$user $count $extra</td></tr>\n";';
+  '$out.= "<tr><td style=\'white-space:nowrap;width:2%\'>$icon</td><td style=\'width:40%\'>$title$updated</td><td class=\'date\' style=\'width:15%\'>$date</td><td>$user $count$diff $extra</td></tr>\n";';
         $cat="</table>";
         $cat0="";
       } else if ($rctype=="board") {
@@ -193,7 +199,9 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         $template.= '<td class=\'date\' style=\'width:15%\'>$date</td>';
         if (!empty($DBInfo->show_hosts))
           $template.='<td class=\'author\'>$user</td>';
-        $template.='<td class=\'editinfo\'>$count</td>';
+        $template.='<td class=\'editinfo\'>$count';
+        if (!empty($checkchange)) $template.=' $diff';
+        $template.='</td>';
         if (!empty($DBInfo->use_counter))
           $template.='<td class=\'hits\'>$hits</td>';
         $template_extra=$template.'</tr>\n<tr><td class=\'log\' colspan=\'6\'>$extra</td></tr>\n";';
@@ -370,21 +378,44 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $pageurl=_rawurlencode($page_name);
 
     #print $ed_time."/".$bookmark."//";
+    $diff = '';
     $updated = '';
     if (!$DBInfo->hasPage($page_name))
       $icon= $formatter->link_tag($pageurl,"?action=info",$formatter->icon['del']);
     else if ($ed_time > $bookmark) {
       $icon= $formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon['diff']);
       $updated= ' '.$formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon['updated']);
-      if ($checknew) {
+
+      if ($checknew or $checkchange)
         $p= new WikiPage($page_name);
+
+      $add = 0;
+      $del = 0;
+      if ($checknew) {
         $v= $p->get_rev($bookmark);
         if (empty($v)) {
           $icon=
             $formatter->link_tag($pageurl,"?action=info",$formatter->icon['show']);
           $updated = ' '.$formatter->link_tag($pageurl,"?action=info",$formatter->icon['new']);
+          $add+= $p->lines();
         }
       }
+      if ($checkchange) {
+        $infos = $p->get_info('>'.$bookmark);
+        foreach ($infos as $inf) {
+          $tmp = explode(' ', trim($inf[1]));
+          if (isset($tmp[1])) {
+            $add+= $tmp[0];
+            $del+= $tmp[1];
+          }
+        }
+
+        if (!empty($add))
+          $diff.= '<span class="diff-added">+'.$add.'</span>';
+        if (!empty($del))
+          $diff.= '<span class="diff-removed">'.$del.'</span>';
+      }
+
     } else
       $icon= $formatter->link_tag($pageurl,"?action=diff",$formatter->icon['diff']);
 
