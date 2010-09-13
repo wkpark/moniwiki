@@ -238,7 +238,7 @@ function fancy_diff($diff,$options=array()) {
   $omarker=0;
   $orig=array();$new=array();
   foreach ($lines as $line) {
-    if (empty($line[0])) continue;
+    if (empty($omarker) and empty($line[0])) continue;
     $marker=$line[0];
     if (in_array($marker,array('-','+','@'))) $line=substr($line,1);
     if ($marker=="@") $line='<div class="diff-sep">@'."$line</div>";
