@@ -2457,13 +2457,21 @@ function do_RandomPage($formatter,$options='') {
 function macro_RandomPage($formatter, $value = '', $params = array()) {
   global $DBInfo;
 
-  $test=preg_match("/^(\d+)\s*,?\s?(simple|nobr|js|json)?$/",$value,$match);
   $count = '';
   $mode = '';
-  if ($test) {
-    $count= intval($match[1]);
-    $mode= !empty($match[2]) ? $match[2] : '';
+  if (!empty($value)) {
+    $vals = get_csv($value);
+    if (!empty($vals)) {
+      foreach ($vals as $v) {
+        if (is_numeric($v)) {
+          $count = $v;
+        } else if (in_array($v, array('simple', 'nobr', 'js'))) {
+          $mode = $v;
+        }
+      }
+    }
   }
+
   if ($count <= 0) $count=1;
   $counter= $count;
 
