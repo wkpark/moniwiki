@@ -2405,6 +2405,22 @@ function wiki_sendmail($body,$options) {
 function do_RandomPage($formatter,$options='') {
   global $DBInfo;
 
+  if (!empty($options['action_mode']) and $options['action_mode'] == 'ajax') {
+    $val = !empty($options['value']) ? intval($options['value']) : '';
+
+    $params = $options;
+    $params['call'] = 1;
+    $ret = macro_RandomPage($formatter, $val, $params);
+    if (function_exists('json_encode')) {
+        echo json_encode($ret);
+    } else {
+        require_once('lib/JSON.php');
+        $json = new Services_JSON();
+        echo $json->encode($ret);
+    }
+    return;
+  }
+
   $max = $DBInfo->getCounter();
   $rand = rand(1,$max);
   if (!empty($DBInfo->use_pageindex)) {
@@ -2438,10 +2454,10 @@ function do_RandomPage($formatter,$options='') {
   return;
 }
 
-function macro_RandomPage($formatter,$value='') {
+function macro_RandomPage($formatter, $value = '', $params = array()) {
   global $DBInfo;
 
-  $test=preg_match("/^(\d+)\s*,?\s?(simple|nobr)?$/",$value,$match);
+  $test=preg_match("/^(\d+)\s*,?\s?(simple|nobr|js|json)?$/",$value,$match);
   $count = '';
   $mode = '';
   if ($test) {
@@ -2457,6 +2473,35 @@ function macro_RandomPage($formatter,$value='') {
     return '';
 
   $number=min($max,$counter);
+
+  if ($mode == 'js' or $mode == 'json') {
+    static $id = 1;
+    $myid = sprintf("randomPage%02d", $id);
+    $id++;
+    $url = $formatter->link_url('', "?action=randompage/ajax&value=".$number);
+    return <<<EOF
+<div id='$myid'>
+</div>
+<script type='text/javascript'>
+/*<![CDATA[*/
+(function () {
+   var msg = HTTPGet("$url");
+   var ret;
+   if (msg != null && (ret = eval(msg))) {
+      var div = document.getElementById("$myid");
+      var ul = document.createElement('UL');
+      for(var i = 0; i < ret.length; i++) {
+        var li = document.createElement('LI');
+        li.innerHTML = ret[i];
+        ul.appendChild(li);
+      }
+      div.appendChild(ul);
+   }
+})();
+/*]]>*/
+</script>
+EOF;
+  }
 
   // select pages
   $selected = array();
@@ -2503,6 +2548,9 @@ function macro_RandomPage($formatter,$value='') {
   foreach ($sel_pages as $item) {
     $selects[]=$formatter->link_tag(_rawurlencode($item),"",htmlspecialchars($item));
   }
+
+  if (isset($params['call']))
+    return $selects;
 
   if ($count > 1) {
     if (!$mode)
