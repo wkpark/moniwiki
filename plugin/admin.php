@@ -25,8 +25,12 @@ function get_plugin_info($plugin_file) {
         while(1) {
             $l=fgets($fp,2048);
             if (!rtrim($l)) break; // XXX
-            if ($l{0}==' ' and $l{1}=='*') {
-                if ($l{2}==' ' and $l{3}!='@') {
+            if ($l[0] == ' ' and $l[1] == '*') {
+                if (preg_match('@^ \* ([A-Z][A-Za-z0-9]+(?:\s?[A-Z][A-Za-z0-9]+)?)\s?\:\s?(.*)@', $l, $m)) {
+                    $k = strtolower($m[1]);
+                    $v = $m[2];
+                    $info[$k] = !empty($info[$k]) ? $info[$k] . ',' . $v : $v;
+                } else if ($l[2] == ' ' and $l[3] != '@') {
                     $desc.=substr($l,3);
                 } else if (substr($l,1,3)=='* @') {
                     $l=substr($l,4);
@@ -34,7 +38,7 @@ function get_plugin_info($plugin_file) {
                     $nk=strtolower($k);
                     $info[$nk]=!empty($info[$nk]) ? $info[$nk].','.$v:$v;
                 }
-            } else if ($l{1}=='/' and $l{2}==' ') {
+            } else if ($l[1]=='/' and $l[2]==' ') {
                 $l=substr($l,3);
                 if (($p=strpos($l,':'))!== false) {
                     $k=substr($l,0,$p);
@@ -46,12 +50,11 @@ function get_plugin_info($plugin_file) {
         }
         fclose($fp);
     }
-
     if (!$info) return array();
 
     $plugin_info = array();
     $fields = array('name', 'description', 'author', 'license', 'url', 'depend', 'author url');
-    $alias = array('desc'=>'description', 'dependency'=>'depend', 'uri'=>'url', 'author uri'=>'author url');
+    $alias = array('desc'=>'description', 'dependency'=>'depend', 'uri'=>'url', 'author uri'=>'author url', 'plugin name'=>'name');
 
     foreach ($info as $k=>$v) {
         $kk = $k;
