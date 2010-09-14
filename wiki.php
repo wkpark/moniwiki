@@ -4736,18 +4736,51 @@ MSG;
     else $trail=$trailer;
     $trails=array_diff(explode("\t",trim($trail)),array($pagename));
 
-    $sister_save=$this->sister_on;
-    $this->sister_on=0;
-    $this->trail="";
-    $save = $this->nonexists;
-    $this->nonexists = 'forcelink';
-    foreach ($trails as $page) {
-      $this->trail.=$this->word_repl('"'.$page.'"','','',1,0).'<span class="separator">'.$DBInfo->arrow.'</span>';
+    if (empty($DBInfo->jstrail)) {
+      $sister_save=$this->sister_on;
+      $this->sister_on=0;
+      $this->trail="";
+      $save = $this->nonexists;
+      $this->nonexists = 'forcelink';
+      foreach ($trails as $page) {
+        $this->trail.=$this->word_repl('"'.$page.'"','','',1,0).'<span class="separator">'.$DBInfo->arrow.'</span>';
+      }
+      $this->nonexists = $save;
+      $this->trail.= ' '.htmlspecialchars($pagename);
+      $this->pagelinks=array(); # reset pagelinks
+      $this->sister_on=$sister_save;
+    } else {
+      $url = get_scriptname();
+      $this->trail = <<<EOF
+<script type='text/javascript'>
+(function() {
+  var url_prefix = "$url";
+  var query_prefix = "$DBInfo->query_prefix";
+
+  // get trails from cookie
+  var cookieName = "MONI_TRAIL=";
+  var pos = document.cookie.indexOf(cookieName);
+  if (pos == -1) return;
+  var end = document.cookie.indexOf(";", pos + cookieName.length);
+  if (end == -1) end = document.cookie.length;
+
+  trails = unescape(document.cookie.substring(pos + cookieName.length, end)).split("\\t");
+  var span = document.createElement("span");
+
+  // render trails
+  var str = [];
+  var trail = document.createElement("span");
+  for (var i = 0; i < trails.length - 1; i++) {
+    var url = escape(trails[i]).replace(/\\+/, "%20");
+    var txt = decodeURIComponent(escape(trails[i])).replace(/\\+/, " ");
+    str[i] = "<a href='" + url_prefix + query_prefix + url + "'>" + txt + "</a>";
+  }
+  str[i] = decodeURIComponent(escape(trails[i])).replace(/\\+/, " ");
+  document.write(str.join("<span class='separator'>$DBInfo->arrow</span>"));
+})();
+</script>
+EOF;
     }
-    $this->nonexists = $save;
-    $this->trail.= ' '.htmlspecialchars($pagename);
-    $this->pagelinks=array(); # reset pagelinks
-    $this->sister_on=$sister_save;
 
     $this->_vars['trail']=&$this->trail;
 
