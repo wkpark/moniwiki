@@ -2482,7 +2482,7 @@ function macro_RandomPage($formatter, $value = '', $params = array()) {
 
   $number=min($max,$counter);
 
-  if ($mode == 'js' or $mode == 'json') {
+  if ($mode == 'js') {
     static $id = 1;
     $myid = sprintf("randomPage%02d", $id);
     $id++;
