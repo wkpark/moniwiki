@@ -5109,12 +5109,14 @@ function wiki_main($options) {
     } else {
       $value=!empty($_POST['value']) ? $_POST['value'] : '';
       $action=!empty($_POST['action']) ? $_POST['action'] : $action;
-      if (empty($action))
+
+      if (empty($action)) {
         $dum=explode('----',$pagename,3);
-      if (isset($dum[0]) && isset($dum[1])) {
-        $pagename=$dum[0];
-        $action=$dum[1];
-        $value=!empty($dum[2]) ? $dum[2] : '';
+        if (isset($dum[0][0]) && isset($dum[1][0])) {
+          $pagename=trim($dum[0]);
+          $action=trim($dum[1]);
+          $value=isset($dum[2][0]) ? $dum[2] : '';
+        }
       }
     }
     $goto=!empty($_POST['goto']) ? $_POST['goto'] : '';
@@ -5154,6 +5156,7 @@ function wiki_main($options) {
       header("Status: 404 Not found");
     } else {
       #$formatter->get_redirect();
+      $mtime = $page->mtime();
       $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
       $etag = '"'.md5($lastmod).'"';
       header('Last-Modified: '.$lastmod);
