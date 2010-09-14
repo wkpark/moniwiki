@@ -4771,8 +4771,8 @@ MSG;
   var str = [];
   var trail = document.createElement("span");
   for (var i = 0; i < trails.length - 1; i++) {
-    var url = escape(trails[i]).replace(/\\+/, "%20");
-    var txt = decodeURIComponent(escape(trails[i])).replace(/\\+/, " ");
+    var url = escape(trails[i]).replace(/\\+/g, "%20");
+    var txt = decodeURIComponent(escape(trails[i])).replace(/\\+/g, " ");
     str[i] = "<a href='" + url_prefix + query_prefix + url + "'>" + txt + "</a>";
   }
   str[i] = decodeURIComponent(escape(trails[i])).replace(/\\+/, " ");
