@@ -4949,24 +4949,18 @@ function get_pagename() {
     $goto=isset($_POST['goto'][0]) ? $_POST['goto']:(isset($_GET['goto'][0]) ? $_GET['goto'] : '');
     if (isset($goto[0])) $pagename=$goto;
     else {
-      $pagename = $_SERVER['QUERY_STRING'];
-      $temp = strtok($pagename,"&");
-      $p=strpos($temp,"=");
-      if (!$temp or $p===false) {
-        if (preg_match('/^([^&=]+)/',$pagename,$matches)) {
-          $pagename = urldecode($matches[1]);
-          $_SERVER['QUERY_STRING']=substr($_SERVER['QUERY_STRING'],strlen($pagename));
+      parse_str($_SERVER['QUERY_STRING'], $arr);
+      $keys = array_keys($arr);
+      if (!empty($arr['action'])) {
+        if ($arr['action'] == 'edit') {
+          if (!empty($arr['value'])) $pagename = $arr['value'];
+        } else if ($arr['action'] == 'login') {
+          $pagename = 'UserPreferences';
         }
-      } else if ($p>0) {
-        $k = substr($temp,0,$p);
-        $v = substr($temp,$p+1);
-        if ($k =='value') {
-          $pagename= substr($temp,$p+1);
-          $_SERVER['QUERY_STRING']=substr($_SERVER['QUERY_STRING'],strlen($temp));
-        } else if ($k =='action' and $v =='login') {
-          $pagename="UserPreferences";
-        }
+        unset($arr['action']);
       }
+      foreach ($arr as $k=>$v)
+        if (empty($v)) $pagename = $k;
     }
   }
   if (isset($pagename[0])) {
