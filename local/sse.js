@@ -25,30 +25,44 @@ function edithandler(ev) {
             node = node.parentNode;
     } else {
         // IE6
-        node = sel.parentElement();
+        try { node = sel.parentElement(); } catch (e) { return; };
     }
 
-    var nc = node;
-    
-    if (!node.id || !node.id.match(/^line-/)) {
-        // try to find line-anchor
-        while(node) {
+    if (!node) return;
+
+    while (!node.id || !node.id.match(/line-\d+/)) {
+        // try to find the line-no of the parent node
+        var np = node;
+        while (np) {
+            if (np.id && np.id.match(/line-\d+/)) break;
+            np = np.parentNode;
+        }
+
+        if (np) {
+            node = np;
+            break;
+        }
+        
+        // try to find the line-no of the childs
+        var nc = node;
+        while (node) {
             nc = node.firstChild;
 
             while (nc) {
-                var name = nc.tagName + '';
-                if (name == 'SPAN' && nc.id.match(/^line-/)) break;
-                if (name.match(/^H/) && nc.id.match(/^line-/)) break;
+                if (nc.id && nc.id.match(/line-\d+/)) break;
                 nc = nc.nextSibling;
             }
-            if (nc)
+            if (nc) {
+                node = nc;
                 break;
+            }
             node = node.nextSibling;
         }
+        break;
     }
 
     // is it found ?
-    if (nc) {
+    if (node) {
         var loc = location + '';
         var p;
         if (p = loc.indexOf('action=')) {
@@ -56,7 +70,9 @@ function edithandler(ev) {
         } else if (p = loc.indexOf('#')) {
             loc = loc.substring(0, p);
         }
-        location = loc + _ap + 'action=edit#' + nc.id;
+        p = 1 + node.id.indexOf('line-');
+        if (p)
+            location = loc + _ap + 'action=edit#' + node.id.substr(p + 4);
     }
 
     // silently ignore.
@@ -101,65 +117,57 @@ function edithandler(ev) {
 
     function focusEditor() {
         var txtarea = document.getElementById('wikicontent');
-        if (txtarea) {
+        if (!txtarea) return;
+        txtarea.focus();
+
+        var loc = location + '';
+        var p = 1 + loc.indexOf('#');
+        var no = 0;
+        if (p > 0)
+            no = loc.substr(p);
+        if (!no.match(/\d+/)) return;
+
+        var txt = txtarea.value.replace(/\r/g, ''); // remove \r for IE
+        var pos = 1; // ViTA trick.
+        var startPos = 0, endPos = 0;
+
+        // find selected line
+        var n = no;
+        while (pos && --n) pos = 1 + txt.indexOf("\n", pos);
+        startPos = (pos) ? pos : 0;
+        // FIXME ? how can I select only selected words ?
+        endPos = txt.indexOf("\n", startPos);
+
+        if (txtarea.selectionStart || txtarea.selectionStart == '0') {
+            // Mozilla
+            // goto
+            txtarea.selectionStart = startPos;
+            txtarea.selectionEnd = endPos;
+
+            var scroll = scrollTo(txtarea, txt.substr(0, startPos), 50);
+            txtarea.scrollTop = scroll;
+        } else if (document.selection && !is_gecko && !is_opera) {
+            // IE
             txtarea.focus();
+            var r = document.selection.createRange();
+            var range = r.duplicate();
 
-            var loc = location + '';
-            var p = loc.indexOf('#line-', 1);
-            var no = 0;
-            if (p > 0)
-                var no = loc.substr(p + 6);
-            if (!no)
-                return;
-
-            var txt = txtarea.value.replace(/\r/g, ''); // remove \r for IE
-            var pos = 1; // ViTA trick.
-            var startPos = 0, endPos = 0;
-
-            // find selected line
-            var n = no;
-            while (pos && --n) pos = 1 + txt.indexOf("\n", pos);
-            startPos = (pos) ? pos : 0;
-            // FIXME ? how can I select only selected words ?
-            endPos = txt.indexOf("\n", startPos);
-
-            if (txtarea.selectionStart || txtarea.selectionStart == '0') {
-                // Mozilla
-                var scrollTop = txtarea.scrollTop; // save
-
-                // goto
-                txtarea.selectionStart = startPos;
-                txtarea.selectionEnd = endPos;
-
-                var scroll = scrollTo(txtarea, txt.substr(0, startPos), 50);
-                txtarea.scrollTop = scroll;
-            } else if (document.selection && !is_gecko && !is_opera) {
-                // IE
-                txtarea.focus();
-                var r = document.selection.createRange();
-                var range = r.duplicate();
-
-                range.moveStart('character', startPos);
-                range.moveEnd('character', endPos - startPos);
-                r.setEndPoint('StartToStart', range);
-                range.select();
-            }
+            range.moveStart('character', startPos);
+            range.moveEnd('character', endPos - startPos);
+            r.setEndPoint('StartToStart', range);
+            range.select();
+        }
 
         // reposition cursor if possible
         if (txtarea.createTextRange)
-                txtarea.caretPos = document.selection.createRange().duplicate();
-        }
+            txtarea.caretPos = document.selection.createRange().duplicate();
     }
 
     // onload
     var oldOnload = window.onload;
-    if (typeof window.onload != 'function') {
-        window.onload = focusEditor;
-    } else {
-        window.onload = function() {
-            oldOnload();
-            focusEditor();
-        }
+    window.onload = function() {
+        try { oldOnload(); } catch(e) {};
+        focusEditor();
     }
 })();
 

@@ -3351,7 +3351,7 @@ class Formatter {
         if ($this->auto_linebreak) $this->nobr=1; // XXX
         if ($in_p) { $p_closeopen=$this->_div(0,$in_div,$div_enclose); $in_p='';}
       } else if ($in_p == '' and $line!=='') {
-        $p_closeopen=$this->_div(1,$in_div,$div_enclose);
+        $p_closeopen=$this->_div(1,$in_div,$div_enclose, ' id="aline-'.$lid.'"');
         $in_p= $line;
       }
 
@@ -3505,8 +3505,10 @@ class Formatter {
         {
           $tr_attr='';
           $row=$this->_td($line,$tr_attr);
+          if ($lid) $tr_attr.= ' id="line-'.$lid.'"';
           $line="<tr $tr_attr>".$row.'</tr>';
           $tr_attr='';
+          $lid = '';
         }
 
         $line=str_replace('\"','"',$line); # revert \\" to \"
@@ -4786,7 +4788,7 @@ MSG;
     var txt = decodeURIComponent(escape(trails[i])).replace(/\\+/g, " ");
     str[i] = "<a href='" + url_prefix + query_prefix + url + "'>" + txt + "</a>";
   }
-  str[i] = decodeURIComponent(escape(trails[i])).replace(/\\+/, " ");
+  str[i] = decodeURIComponent(escape(trails[i])).replace(/\\+/g, " ");
   document.write(str.join("<span class='separator'>$DBInfo->arrow</span>"));
 })();
 </script>
