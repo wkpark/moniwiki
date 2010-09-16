@@ -127,11 +127,12 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   foreach ($args as $arg) {
     $arg=trim($arg);
     if (($p=strpos($arg,'='))!==false) {
-      $k=substr($arg,0,$p);
-      $v=substr($arg,$p+1);
+      $k=trim(substr($arg,0,$p));
+      $v=trim(substr($arg,$p+1));
       if ($k=='item') $opts['items']=min((int)$v,RC_MAX_ITEMS);
       else if ($k=='days') $days=min(abs($v),RC_MAX_DAYS);
       else if ($k=='ago') $opts['ago']=abs($v);
+      else if ($k=="new") $checknew=$v;
       else if ($k=='strimwidth' and is_numeric($k) and (abs($v) > 15 or $v == 0))
         $strimwidth =abs($v);
     } else {
@@ -160,6 +161,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
   if (empty($DBInfo->use_counter))
     $use_hits = 0;
+  if (empty($DBInfo->show_hosts))
+    $showhost = 0;
 
   if (!empty($rctype)) {
       if ($rctype=="simple") {
@@ -186,10 +189,10 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
         $template_bra.="<thead><tr><th colspan='$cols' class='title'>"._("Title")."</th><th class='date'>".
           _("Change Date").'</th>';
-        if (!empty($DBInfo->show_hosts))
+        if (!empty($showhost))
           $template_bra.="<th class='author'>"._("Editor").'</th>';
         $template_bra.="<th class='editinfo'>"._("Changes").'</th>';
-        if (!empty($DBInfo->use_counter))
+        if (!empty($use_hits))
           $template_bra.="<th class='hits'>"._("Hits")."</th>";
         $template_bra.="</tr></thead>\n<tbody>\n";
         $template=
@@ -197,12 +200,12 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         if (empty($nobookmark))
           $template.= '<td>$bmark</td>';
         $template.= '<td class=\'date\' style=\'width:15%\'>$date</td>';
-        if (!empty($DBInfo->show_hosts))
+        if (!empty($showhost))
           $template.='<td class=\'author\'>$user</td>';
         $template.='<td class=\'editinfo\'>$count';
         if (!empty($checkchange)) $template.=' $diff';
         $template.='</td>';
-        if (!empty($DBInfo->use_counter))
+        if (!empty($use_hits))
           $template.='<td class=\'hits\'>$hits</td>';
         $template_extra=$template.'</tr>\n<tr><td class=\'log\' colspan=\'6\'>$extra</td></tr>\n";';
         $template.='</tr>\n";';
@@ -235,7 +238,11 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $tz_offset=date("Z");
   }
 
-  if (!$bookmark) $bookmark=time();
+  if (!$bookmark or !empty($nobookmark)) {
+    if (!empty($checknew) and preg_match('/^\d+(\s*\*\s*\d+)*$/',$checknew))
+      $checknew = eval('return '.$checknew. ';');
+    $bookmark = strtotime(date('Y-m-d', time() - $checknew).' 00:00:00');
+  }
 
   $time_current= time();
   $secs_per_day= 60*60*24;
@@ -282,9 +289,9 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       $user = 'Anonymous-' . $addr;
 
     $day = gmdate('Ymd', $ed_time+$tz_offset);
-    if ($day != $ratchet_day) {
-      $ratchet_day = $day;
-    }
+    //if ($day != $ratchet_day) {
+    //  $ratchet_day = $day;
+    //}
 
     if (!empty($editcount[$day][$page_key])) {
       $editors[$day][$page_key][] = $user;
@@ -343,8 +350,9 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     }
 
     if (! empty($changed_time_fmt)) {
-      $date= gmdate($changed_time_fmt, $ed_time+$tz_offset);
-      if (!empty($timesago)) {
+      if (empty($timesago)) {
+        $date= gmdate($changed_time_fmt, $ed_time+$tz_offset);
+      } else {
         $date = _timesago($ed_time, 'Y-m-d', $tz_offset);
       }
     }
@@ -433,7 +441,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       $hits = $DBInfo->counter->pageCounter($page_name);
     }
 
-    if (!empty($DBInfo->show_hosts)) {
+    if (!empty($showhost)) {
       $last_editor = $user;
 
       if ($last_editor_only) {
