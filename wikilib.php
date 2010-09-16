@@ -3423,7 +3423,7 @@ EOS;
    $head=preg_replace($formatter->baserule,$formatter->baserepl,$head);
    $head=preg_replace("/(".$wordrule.")/e",
      "\$formatter->link_repl('\\1', '', \$opts)",$head);
-   if ($simple)
+   if (!empty($simple))
      $head=strip_tags($head,'<b><i><img><sub><sup><del><tt><u><strong>');
 
    if (empty($depth_top)) { $depth_top=$dep; $depth=1; }
