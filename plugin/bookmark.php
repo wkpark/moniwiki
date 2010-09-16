@@ -19,20 +19,29 @@ function macro_bookmark($formatter, $value = '', &$options) {
      $bookmark = $options['time'];
   }
   $ret = array();
-  if (is_numeric($bookmark)) {
-    if ($user->id == "Anonymous") {
+
+  if ($user->id == "Anonymous") {
+    if (is_numeric($bookmark)) {
       setcookie("MONI_BOOKMARK",$bookmark,time()+60*60*24*30,get_scriptname());
-      # set the fake cookie
-      $_COOKIE['MONI_BOOKMARK']=$bookmark;
-      $user->bookmark=$bookmark;
       $ret['title'] = _('Bookmark Changed');
     } else {
-      $user->info['bookmark']=$bookmark;
-      $DBInfo->udb->saveUser($user);
-      $ret['title'] = _('Bookmark Changed');
+      setcookie("MONI_BOOKMARK", 0, 0, get_scriptname());
+      $ret['title']=_("Bookmark Deleted !");
     }
-  } else
-    $ret['msg']=_("Invalid bookmark!");
+    # set the fake cookie
+    $_COOKIE['MONI_BOOKMARK']=$bookmark;
+    $user->bookmark=$bookmark;
+  } else {
+    if (is_numeric($bookmark)) {
+      $ret['title'] = _('Bookmark Changed');
+      $user->info['bookmark']=$bookmark;
+    } else {
+      $ret['title']=_("Bookmark Deleted !");
+      $user->info['bookmark']=0;
+    }
+    $DBInfo->udb->saveUser($user);
+    $user->bookmark=$bookmark;
+  }
 
   if (isset($options['ret']))
     $options['ret'] = $ret;
