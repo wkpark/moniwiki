@@ -1160,7 +1160,12 @@ function ajax_edit($formatter,$options) {
 }
 
 function _get_sections($body,$lim=5) {
-  $tmp = preg_split("/(\{\{\{.+?\}\}\})/s",$body,-1, PREG_SPLIT_DELIM_CAPTURE);
+  $tmp = preg_split("/({{{
+            (?:(?:[^{}]+|
+            {[^{}]+}(?!})|
+            (?<!{){{1,2}(?!{)|
+            (?<!})}{1,2}(?!}))|(?1)
+            )+}}})/x", $body, -1, PREG_SPLIT_DELIM_CAPTURE);
 
   // fix for inline {{{foobar}}} in the headings.
   $chunks = array();
@@ -3335,7 +3340,26 @@ EOS;
  } else {
    $body=$formatter->text;
  }
- $body=preg_replace("/\{\{\{.+?\}\}\}/s",'',$body);
+
+ // remove processor blocks
+ $chunk = preg_split("/({{{
+            (?:(?:[^{}]+|
+            {[^{}]+}(?!})|
+            (?<!{){{1,2}(?!{)|
+            (?<!})}{1,2}(?!}))|(?1)
+            )+}}})/x", $body, -1, PREG_SPLIT_DELIM_CAPTURE);
+ $sz = count($chunk);
+ $k = 1;
+ $body = '';
+ foreach ($chunk as $c) {
+   if ($k % 2) {
+     $body.= $c;
+   } else if (!strstr($c, "\n")) {
+     $body.= $c;
+   }
+   $k++;
+ }
+
  $opts = array('nomacro'=>1); // disable macros in headings
  $wordrule = $formatter->wordrule .= '|'.$formatter->footrule;
  $lines=explode("\n",$body);
