@@ -1308,7 +1308,8 @@ class WikiPage {
           $info = array();
           $tmp=preg_replace("/date:\s(.*);\s+author:.*;\s+state:.*;/","\\1",rtrim($line));
           $tmp=explode('lines:',$tmp);
-          $info[0]=$tmp[0];$info[1]=$tmp[1];
+          $info[0]=$tmp[0];
+          $info[1]=isset($tmp[1]) ? $tmp[1] : '';
           $state=1;
         } else if ($state) {
           list($info[2],$info[3],$info[4])=explode(';;',$line,3);

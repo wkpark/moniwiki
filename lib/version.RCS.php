@@ -69,7 +69,7 @@ class Version_RCS {
 
   function rlog($pagename,$rev='',$opt='',$oldopt='') {
     $dmark = '';
-    if ($rev[0] == '>' or $rev[0] == '<') {
+    if (isset($rev[0]) and in_array($rev[0], array('>', '<'))) {
       $dmark = $rev[0];
       $rev = substr($rev, 1);
     }
