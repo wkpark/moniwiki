@@ -1307,6 +1307,7 @@ function macro_Edit($formatter,$value,$options='') {
 
   $form.=$menu;
   $ajax = '';
+  $js = '';
   if (!empty($options['action_mode']) and $options['action_mode']=='ajax') {
     $ajax=" onsubmit='savePage(this);return false'";
   }
@@ -1333,10 +1334,53 @@ function macro_Edit($formatter,$value,$options='') {
     }
   } else {
     if (strpos($options['page'],' ') > 0) {
-      $raw_body="#title $options[page]\n";
-      $options['page']='['.$options['page'].']';
+      #$raw_body="#title $options[page]\n";
+      $options['page']='["'.$options['page'].'"]';
     } else $raw_body='';
-    $raw_body.= sprintf(_("Describe %s here"), $options['page']);
+    $guide = sprintf(_("Describe %s here"), $options['page']);
+    $raw_body.= $guide;
+    $guide = str_replace('"', '\\"', $guide);
+    $js=<<<EOF
+<script type="text/javascript">
+/*<![CDATA[*/
+(function() {
+    function selectGuide() {
+        var txtarea = document.getElementById('wikicontent');
+        if (!txtarea) return;
+
+        var guide = "$guide";
+        txtarea.focus();
+        var txt = txtarea.value;
+        var pos = 1 + txt.indexOf(guide);
+        if (!pos) return;
+        pos--;
+        var end = pos + guide.length;
+
+        if (txtarea.selectionStart || txtarea.selectionStart == '0') {
+            // goto
+            txtarea.selectionStart = pos;
+            txtarea.selectionEnd = end;
+        } else if (document.selection && !is_gecko && !is_opera) {
+            // IE
+            var r = document.selection.createRange();
+            var range = r.duplicate();
+
+            range.moveStart('character', pos);
+            range.moveEnd('character', end - pos);
+            r.setEndPoint('StartToStart', range);
+            range.select();
+        }
+    }
+
+    var oldOnLoad = window.onLoad;
+    window.onload = function() {
+        try { oldOnLoad() } catch(e) {};
+        selectGuide();
+    }
+})();
+/*]]>*/
+</script>\n
+EOF;
   }
 
 
@@ -1479,7 +1523,7 @@ EOS;
     $form.= $formatter->macro_repl('EditHints');
   if (empty($options['simple']))
     $form.= "<a id='preview'></a>";
-  return $form.$resizer;
+  return $form.$resizer.$js;
 }
 
 
