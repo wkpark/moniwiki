@@ -2576,9 +2576,9 @@ class Formatter {
 
     if ($f) {
       if (!empty($this->use_smartdiff) and
-        preg_match("/\006|\010/", $value)) $processor='plain';
+        preg_match("/\006|\010/", $value)) $pf='plain';
 
-      $ret= call_user_func_array("processor_$processor",array(&$this,$value,$options));
+      $ret= call_user_func_array("processor_$pf",array(&$this,$value,$options));
       if (!is_string($ret)) return $ret;
       return $bra.$ret.$ket;
     }
