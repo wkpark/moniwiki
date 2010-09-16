@@ -20,6 +20,13 @@ function _parse_rlog($formatter,$log,$options=array()) {
   if (!$formatter->page->exists()) {
     $actions['revert'] = 'revert';
   }
+  if (!empty($DBInfo->use_avatar)) {
+    if (is_string($DBInfo->use_avatar))
+      $type = $DBInfo->use_avatar;
+    else
+      $type = 'identicon';
+    $avatarlink = qualifiedUrl($formatter->link_url('', '?action='. $type .'&amp;seed='));
+  }
 
   $diff_action = null;
   if (isset($actions['diff'])) {
@@ -166,6 +173,10 @@ function _parse_rlog($formatter,$log,$options=array()) {
            } else if (!$DBInfo->mask_hostname and $DBInfo->interwiki['Whois']) {
              $ip="<a href='".$DBInfo->interwiki['Whois']."$ip'>$user</a>";
            }
+         } else if (!empty($DBInfo->use_avatar)) {
+           $crypted = crypt($ip, $ip);
+           $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
+           $ip = '<img src="'.$mylnk.'" style="width:16px;height:16px;vertical-align:middle" alt="avatar" />Anonymous';
          } else if ($DBInfo->mask_hostname) {
            $ip=_mask_hostname($ip);
          } else if ($user and $DBInfo->interwiki['Whois'])
