@@ -33,8 +33,8 @@ function macro_LikePages($formatter="",$args="",&$opts) {
   }
   $opts['extra'] = '';
 
-  $s_re="^[A-Z][a-z0-9]+";
-  $e_re="[A-Z][a-z0-9]+$";
+  $s_re="^[A-Z][A-Za-z0-9]+";
+  $e_re="[A-Z][A-Za-z0-9]+$";
 
   $count=preg_match("/(".$s_re.")/",$pname,$match);
   if ($count) {
@@ -47,15 +47,56 @@ function macro_LikePages($formatter="",$args="",&$opts) {
     $e_len=strlen($end);
   }
 
-  if (empty($start) && empty($end)) {
-    preg_match("/^(.{2,4})/",$args,$match);
+  // for non ASCII codeset
+  if (empty($start) or empty($end)) {
+    if (preg_match('/[^A-Za-z0-9-_]/', $pname)) {
+      $myname = preg_replace('/[\x00-\x2F\x3A-\x40\x5B-\x60\x7B-\x7F]/', ' ', $pname);
+      $words = preg_split('/\s+/', $myname);
+      if (empty($start))
+        $start = $words[0];
+      if (isset($words[1])) {
+        if (empty($end))
+          $end = $words[count($words) - 1];
+      }
+    }
+
+    // try to remove suffix
+    // "위키에서 글쓰기" => start=위키에서|위키에|위키
+    if (preg_match('/[\x{AC00}-\x{D7AF}]/u', $start)) {
+	    $ws = preg_split('//u', $start, -1,  PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+      $nw = array();
+      $nw[] = $start;
+      for ($i = 2;  count($ws) > 2 and $i > 0; $i--) {
+        array_pop($ws);
+        $nw[] = implode('', $ws);
+      }
+      $start = implode('|', $nw);
+    }
+
+    if (preg_match('/[\x{AC00}-\x{D7AF}]/u', $end)) {
+	    $ws = preg_split('//u', $end, -1,  PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
+      $nw = array();
+      $last = array_splice($ws, -2);
+      $last = implode('', $last);
+      $nw[] = $last;
+      $ws = array_reverse($ws);
+      foreach ($ws as $w) {
+        $last = $w.$last;
+        $nw[] = $last;
+      }
+      $end = implode('|', $nw);
+    }
+  }
+
+  if (empty($start)) {
+    preg_match("/^(.{2,4})/u",$args,$match);
     $s_len=strlen($match[1]);
     $start=trim(_preg_escape($match[1]));
   }
 
   if (empty($end)) {
     $end=substr($args,$s_len);
-    preg_match("/(.{2,6})$/",$end,$match);
+    preg_match("/(.{2,6})$/u",$end,$match);
     $end=isset($match[1]) ? $match[1] : '';
     $e_len=strlen($end);
     if ($e_len < 2) $end="";
@@ -103,6 +144,8 @@ function macro_LikePages($formatter="",$args="",&$opts) {
     if ($start and $end) $similar_re="$start|$end";
     else if ($start) $similar_re=$start;
     else $similar_re=$end;
+    if (!empty($words))
+      $similar_re.='|'.implode('|', $words);
 
     foreach ($pages as $page) {
       preg_match("/($similar_re)/i",$page,$matches);
