@@ -1760,7 +1760,9 @@ class Formatter {
 
       $notused=array();
       $pilines=array();
+      $body_start = 0;
       while ($body and $body[0] == '#') {
+        $body_start++;
         # extract first line
         list($line, $body)= explode("\n", $body,2);
         if ($line=='#') break;
@@ -1802,6 +1804,7 @@ class Formatter {
     if (!empty($update_body)) $this->page->write($body." "); # workaround XXX
     #if ($update_body) $this->page->write($body);
     $pi['raw']=!empty($piline) ? $piline : '';
+    $pi['start_line'] = $body_start;
     return $pi;
   }
 
@@ -3217,7 +3220,10 @@ class Formatter {
 
     $formatter=&$this;
 
+    $this->_lidx = isset($this->pi['start_line']) ? $this->pi['start_line'] : 0;
     foreach ($lines as $line) {
+      $this->_lidx++;
+      $lid = $this->_lidx;
       # empty line
       if (!strlen($line) and empty($oline)) {
         if ($in_pre) { $this->pre_line.="\n";continue;}
@@ -3548,14 +3554,15 @@ class Formatter {
           $anchor_id='sect-'.$this->sect_num;
           $anchor="<a id='$anchor_id'></a>";
         }
-        $attr='';
+        $attr=' id="line-'.$lid.'"';
         if (!empty($DBInfo->use_folding)) {
           if ($DBInfo->use_folding == 1) {
-            $attr=" onclick=\"document.getElementById('sc-$this->sect_num').style.display=document.getElementById('sc-$this->sect_num').style.display!='none'? 'none':'block';\"";
+            $attr.=" onclick=\"document.getElementById('sc-$this->sect_num').style.display=document.getElementById('sc-$this->sect_num').style.display!='none'? 'none':'block';\"";
           } else {
-            $attr=" onclick=\"foldingSection(this,'sc-$this->sect_num');\"";
+            $attr.=" onclick=\"foldingSection(this,'sc-$this->sect_num');\"";
           }
         }
+        $lid = '';
 
         $line=$anchor.$edit.$this->head_repl(strlen($m[1]),$m[2],$headinfo,$attr);
         $dummy='';
@@ -3681,10 +3688,14 @@ class Formatter {
          }
          $this->nobr=1;
       }
+
+      $lidx = '';
+      if ($lid) $lidx = "<span class='line-anchor' id='line-".$lid."'></span>";
+
       if ($this->auto_linebreak && !$in_table && !$this->nobr)
-        $text.=$line."<br />\n"; 
+        $text.=$line.$lidx."<br />\n"; 
       else
-        $text.=$line ? $line."\n":'';
+        $text.=$line ? $line.$lidx."\n":'';
       $this->nobr=0;
       # empty line for quoted div
       if (!$this->auto_linebreak and !$in_pre and trim($line) =='')

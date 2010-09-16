@@ -244,8 +244,8 @@ if (document.jsEnabled) {
   }
   else {
     window.onload = function() {
-      oldOnload();
       textAreaAutoAttach();
+      oldOnload();
     }
   }
   /* addLoadEvent(textAreaAutoAttach); */
