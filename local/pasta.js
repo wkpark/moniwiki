@@ -19,15 +19,33 @@
  *
  */
 function get_src_line(e) {
+    var node;
     e = e || window.event;
 
-    var node = e.target || e.srcElement;
-    if (node.nodeType == 3) {
-        alert(node.nodeValue);
-        if (node.nextSibling) {
-            node = node.nextSibling;
-        } else
-            node = node.parentNode;
+    if (e && e != true) {
+        node = e.target || e.srcElement;
+        if (node.nodeType == 3) {
+            if (node.nextSibling) {
+                node = node.nextSibling;
+            } else
+                node = node.parentNode;
+        }
+    } else {
+        var sel = window.getSelection ? window.getSelection():
+            (document.getSelection ? document.getSelection():
+            document.selection.createRange());
+
+        if (sel.focusNode) {
+            node = sel.focusNode;
+            if (node.nodeType == 3) {
+                if (node.nextSibling) {
+                    node = node.nextSibling;
+                } else
+                    node = node.parentNode;
+            }
+        } else {
+            try { node = sel.parentElement(); } catch (x) { return null; };
+        }
     }
 
     if (!node || node.tagName.toLowerCase() == 'textarea') return null;

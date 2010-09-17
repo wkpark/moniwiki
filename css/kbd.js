@@ -268,12 +268,18 @@ function keypresshandler(e) {
 		break;
 	case 'e': case 'r': case 'w':
 		// Edit/write or refresh
+		var no = null;
+		var target = '';
+		if (typeof get_src_line == 'function') {
+			no = get_src_line(true);
+			target = '#' + no;
+		}
 		if ((i=loc.indexOf(_ap)) != -1 && loc.substr(i+1,5) == "goto=") { // deprecated
 			loc=loc.substr(i+6,loc.length-6);
 			if ((i=loc.indexOf('&')) != -1) loc=loc.substring(0,i);
 			if (ch == "e" || ch == "w")
 				self.location=_script_name + _qp + loc + _ap +
-					'action=edit';
+					'action=edit' + target;
 			if (ch == "r") {
 				if ((i=loc.indexOf('#')) != -1)
 					loc=loc.substring(0,i);
@@ -283,7 +289,7 @@ function keypresshandler(e) {
 		} else {
 			if (i != -1) loc=loc.substr(0,i);
 			else if ((i=loc.indexOf('#')) != -1) loc=loc.substring(0,i);
-			if (ch == "e" || ch == "w") self.location = loc + _ap + 'action=edit';
+			if (ch == "e" || ch == "w") self.location = loc + _ap + 'action=edit' + target;
 			if (ch == "r") self.location = loc + _ap + 'action=show';
 		}
 		break;
