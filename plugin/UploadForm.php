@@ -43,10 +43,13 @@ function addRow(id, name, size) {
             iframe.setAttribute('name','upload-iframe');
             iframe.setAttribute('style','display:none;border:0;');
             if (document.all) {
-                var IE6 = false /*@cc_on || @_jscript_version < 5.7 @*/;
                 // magic for IE6
-                if (IE6)
+                /*@cc_on
+                if (@_jscript_version==5.6 ||
+                    (@_jscript_version==5.7 && navigator.userAgent.toLowerCase().indexOf("msie 6.") != -1)) {
                     iframe.src = 'javascript:document.write("' + "<script>document.domain='" + document.domain + "';</" + "script>" + '");';
+                }
+                @*/
             }
             var body = document.getElementsByTagName('body')[0];
             body.appendChild(iframe);
