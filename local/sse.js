@@ -21,8 +21,12 @@ function edithandler(ev) {
     if (sel.focusNode) {
         node = sel.focusNode;
 
-        if (node.nodeType == 3)
-            node = node.parentNode;
+        if (node.nodeType == 3) {
+            if (node.nextSibling)
+                node = node.nextSibling;
+            else
+                node = node.parentNode;
+        }
     } else {
         // IE6
         try { node = sel.parentElement(); } catch (e) { return; };
@@ -30,36 +34,32 @@ function edithandler(ev) {
 
     if (!node) return;
 
-    while (!node.id || !node.id.match(/line-\d+/)) {
-        // try to find the line-no of the parent node
-        var np = node;
-        while (np) {
-            if (np.id && np.id.match(/line-\d+/)) break;
-            np = np.parentNode;
-        }
+    // try to find the line-no of the nextsibling
+    var ns = node;
+    while (ns) {
+        if (ns.id && ns.id.match(/line-\d+/)) break;
 
-        if (np) {
-            node = np;
+        // try to find the line-no of the childs
+        var nc = ns.firstChild;
+        while (nc) {
+            if (nc.id && nc.id.match(/line-\d+/)) break;
+            nc = nc.nextSibling;
+        }
+        if (nc) {
+            node = nc;
             break;
         }
-        
-        // try to find the line-no of the childs
-        var nc = node;
-        while (node) {
-            nc = node.firstChild;
-
-            while (nc) {
-                if (nc.id && nc.id.match(/line-\d+/)) break;
-                nc = nc.nextSibling;
-            }
-            if (nc) {
-                node = nc;
-                break;
-            }
-            node = node.nextSibling;
-        }
-        break;
+        ns = ns.nextSibling;
     }
+    if (ns) node = ns;
+
+    // try to find the line-no of the parent node
+    var np = node;
+    while (np) {
+        if (np.id && np.id.match(/line-\d+/)) break;
+        np = np.parentNode;
+    }
+    if (np) node = np;
 
     // is it found ?
     if (node) {
@@ -168,6 +168,12 @@ function edithandler(ev) {
     window.onload = function() {
         try { oldOnload(); } catch(e) {};
         focusEditor();
+    }
+
+    var old_dblclick = document.ondblclick;
+    document.ondblclick = function() {
+        try { old_dblclick(); } catch(e) {};
+        edithandler();
     }
 })();
 
