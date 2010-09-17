@@ -1,5 +1,12 @@
 /**
- * try to get the line-anchor to select the right position of the wikitext
+ * Postioning and Scrolling in the TextArea for MoniWiki
+ *
+ * Try to get the line-no of the raw wikitext from rendered html and
+ * set the position of the caret and scrollbar in the TextArea
+ *
+ * http://wiki.sheep.art.pl/Textarea%20Scrolling
+ * http://moinmo.in/FeatureRequests/AutoScrollingTheEditorTextArea
+ * http://master19.moinmo.in/HelpOnEditing#Open_Editor_On_Double_Click
  *
  * @author wkpark at kldp.org
  * @since  2010/09/16
@@ -8,7 +15,7 @@
  */
 
 /**
- * try to find line-anchor to get the line number of wikitext
+ * try to find line-anchor to get the line number of wikitext from html
  *
  */
 function edithandler(ev) {
