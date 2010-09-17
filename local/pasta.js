@@ -23,13 +23,14 @@ function get_src_line(e) {
 
     var node = e.target || e.srcElement;
     if (node.nodeType == 3) {
-        if (node.nextSibling)
+        alert(node.nodeValue);
+        if (node.nextSibling) {
             node = node.nextSibling;
-        else
+        } else
             node = node.parentNode;
     }
 
-    if (!node) return null;
+    if (!node || node.tagName.toLowerCase() == 'textarea') return null;
 
     // try to find the line-no of the nextsibling
     var ns = node;
@@ -43,7 +44,7 @@ function get_src_line(e) {
             nc = nc.nextSibling;
         }
         if (nc) {
-            node = nc;
+            ns = nc;
             break;
         }
         ns = ns.nextSibling;
@@ -70,14 +71,12 @@ function get_src_line(e) {
     return no;
 }
 
-function get_selected_text(e) {
-    e = e || window.event;
-
+function get_selected_text() {
     var sel = window.getSelection ? window.getSelection():
         (document.getSelection ? document.getSelection():
         document.selection.createRange().text);
 
-    return sel;
+    return sel.toString();
 }
 
 (function() {
@@ -123,8 +122,12 @@ function get_selected_text(e) {
 
         var txtarea = document.getElementById('editor-textarea');
         if (txtarea) {
-            focusEditor(e, txtarea, no);
-            return;
+            var ret = focusEditor(e, txtarea, no);
+            if (ret && e) {
+                if (e.stopPropagation) e.stopPropagation(); 
+                e.cancelBubble = true;
+            }
+            return ret;
         }
         var loc = location + '';
         if (p = loc.indexOf('action=')) {
@@ -134,14 +137,14 @@ function get_selected_text(e) {
         }
         if (p)
             location = loc + _ap + 'action=edit#' + no;
-        return;
+        return true;
     }
 
     function focusEditor(e, txtarea, lineno) {
         e = e || window.event;
         if (txtarea == undefined) {
             txtarea = document.getElementById('editor-textarea');
-            if (!txtarea) return;
+            if (!txtarea) return false;
             txtarea.focus();
         }
 
@@ -154,12 +157,7 @@ function get_selected_text(e) {
         } else {
             no = lineno;
         }
-        if (!no || !no.match(/\d+/)) return;
-
-        if (e.stopPropagation) e.stopPropagation(); 
-        e.cancelBubble = true;
-
-        window.scroll(0, 0);
+        if (!no || !no.match(/\d+/)) return false;
 
         var txt = txtarea.value.replace(/\r/g, ''); // remove \r for IE
         var pos = 1; // ViTA trick.
@@ -172,21 +170,22 @@ function get_selected_text(e) {
         endPos = txt.indexOf("\n", startPos);
 
         // get selected text
-        var myText = null;
-        myText = get_selected_text(e);
+        var myText = get_selected_text();
 
-        if (myText.toString() != '') {
+        if (myText != '') {
             var str = txt.substring(startPos, endPos);
 
             var p = 1 + str.indexOf(myText);
             if (p) {
                 startPos+= p - 1;
-                endPos = startPos + myText.toString().length;
+                endPos = startPos + myText.length;
             }
         }
 
+        window.scroll(0, 0);
         if (txtarea.selectionStart || txtarea.selectionStart == '0') {
             // Mozilla
+            txtarea.focus();
             txtarea.selectionStart = startPos;
             txtarea.selectionEnd = endPos;
 
@@ -207,19 +206,21 @@ function get_selected_text(e) {
         // reposition cursor if possible
         if (txtarea.createTextRange)
             txtarea.caretPos = document.selection.createRange().duplicate();
+
+        return true;
     }
 
     // onload
     var oldOnload = window.onload;
-    window.onload = function() {
+    window.onload = function(ev) {
         try { oldOnload(); } catch(e) {};
-        focusEditor();
+        focusEditor(ev);
     }
 
     var old_dblclick = document.ondblclick;
-    document.ondblclick = function() {
+    document.ondblclick = function(ev) {
         try { old_dblclick(); } catch(e) {};
-        edithandler();
+        edithandler(ev);
     }
 })();
 
