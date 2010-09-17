@@ -18,10 +18,11 @@
  * try to find line-anchor to get the line number of wikitext from html
  *
  */
-function get_src_line(e) {
+function get_src_line_num(e) {
     var node;
     e = e || window.event;
 
+    // get double clicked target node
     if (e && e != true) {
         node = e.target || e.srcElement;
         if (node.nodeType == 3) {
@@ -31,6 +32,7 @@ function get_src_line(e) {
                 node = node.parentNode;
         }
     } else {
+        // get selected target node
         var sel = window.getSelection ? window.getSelection():
             (document.getSelection ? document.getSelection():
             document.selection.createRange());
@@ -135,7 +137,7 @@ function get_selected_text() {
 
     function edithandler(e) {
         e = e || window.event;
-        var no = get_src_line(e);
+        var no = get_src_line_num(e);
         if (!no) return false;
 
         var txtarea = document.getElementById('editor-textarea');
@@ -177,7 +179,11 @@ function get_selected_text() {
         }
         if (!no || !no.match(/\d+/)) return false;
 
-        var txt = txtarea.value.replace(/\r/g, ''); // remove \r for IE
+        if (!window.opera)
+            var txt = txtarea.value.replace(/\r/g, ''); // remove \r for IE
+        else
+            var txt = txtarea.value;
+
         var pos = 1; // ViTA trick.
         var startPos = 0, endPos = 0;
 
@@ -209,7 +215,7 @@ function get_selected_text() {
 
             var scroll = scrollTo(txtarea, txt.substr(0, startPos), 50);
             txtarea.scrollTop = scroll;
-        } else if (document.selection && !is_gecko && !is_opera) {
+        } else if (document.selection) {
             // IE
             txtarea.focus();
             var r = document.selection.createRange();
