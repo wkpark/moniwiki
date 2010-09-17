@@ -1345,7 +1345,7 @@ function macro_Edit($formatter,$value,$options='') {
 /*<![CDATA[*/
 (function() {
     function selectGuide() {
-        var txtarea = document.getElementById('wikicontent');
+        var txtarea = document.getElementById('editor-textarea');
         if (!txtarea) return;
 
         var guide = "$guide";
@@ -1496,7 +1496,7 @@ EOS;
 <div id="editor_area">
 $formh
 <div class="resizable-textarea" style='position:relative'><!-- IE hack -->
-<textarea id="wikicontent" wrap="virtual" name="savetext" tabindex="1"
+<textarea id="editor-textarea" wrap="virtual" name="savetext" tabindex="1"
  rows="$rows" cols="$cols" class="wiki resizable">$raw_body</textarea>
 $captcha
 </div>
