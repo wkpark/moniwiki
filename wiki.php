@@ -1707,7 +1707,7 @@ class Formatter {
     global $Config;
     $pikeys=array('#redirect','#action','#title','#notitle','#keywords','#noindex',
       '#format','#filter','#postfilter','#twinpages','#notwins','#nocomment','#comment',
-      '#language','#camelcase','#nocamelcase','#cache','#nocache','#alias',
+      '#language','#camelcase','#nocamelcase','#cache','#nocache','#alias', '#linenum', '#nolinenum',
       '#singlebracket','#nosinglebracket','#rating','#norating','#nodtd');
     $pi=array();
 
@@ -1791,6 +1791,7 @@ class Formatter {
       if (isset($pi['#nocache'])) $pi['#cache']=0;
       if (isset($pi['#nofilter'])) unset($pi['#filter']);
       if (isset($pi['#nosinglebracket'])) $pi['#singlebracket']=0;
+      if (isset($pi['#nolinenum'])) $pi['#linenum']=0;
     }
 
     if (empty($pi['#format']) and !empty($format)) $pi['#format']=$format; // override default
@@ -3221,10 +3222,14 @@ class Formatter {
 
     $formatter=&$this;
 
-    $this->_lidx = isset($pi['start_line']) ? $pi['start_line'] : 0;
+    if (isset($formatter->pi['#linenum']) and empty($formatter->pi['#linenum']))
+      $this->linenum = -99999;
+    else
+      $this->linenum = isset($pi['start_line']) ? $pi['start_line'] : 0;
+
     foreach ($lines as $line) {
-      $this->_lidx++;
-      $lid = $this->_lidx;
+      $this->linenum++;
+      $lid = $this->linenum;
       # empty line
       if (!strlen($line) and empty($oline)) {
         if ($in_pre) { $this->pre_line.="\n";continue;}
@@ -3352,7 +3357,7 @@ class Formatter {
         if ($this->auto_linebreak) $this->nobr=1; // XXX
         if ($in_p) { $p_closeopen=$this->_div(0,$in_div,$div_enclose); $in_p='';}
       } else if ($in_p == '' and $line!=='') {
-        $p_closeopen=$this->_div(1,$in_div,$div_enclose, ' id="aline-'.$lid.'"');
+        $p_closeopen=$this->_div(1,$in_div,$div_enclose, $lid > 0 ? ' id="aline-'.$lid.'"' : '');
         $in_p= $line;
       }
 
@@ -3506,7 +3511,7 @@ class Formatter {
         {
           $tr_attr='';
           $row=$this->_td($line,$tr_attr);
-          if ($lid) $tr_attr.= ' id="line-'.$lid.'"';
+          if ($lid > 0) $tr_attr.= ' id="line-'.$lid.'"';
           $line="<tr $tr_attr>".$row.'</tr>';
           $tr_attr='';
           $lid = '';
@@ -3557,7 +3562,7 @@ class Formatter {
           $anchor_id='sect-'.$this->sect_num;
           $anchor="<a id='$anchor_id'></a>";
         }
-        $attr=' id="line-'.$lid.'"';
+        $attr = $lid > 0 ? ' id="line-'.$lid.'"' : '';
         if (!empty($DBInfo->use_folding)) {
           if ($DBInfo->use_folding == 1) {
             $attr.=" onclick=\"document.getElementById('sc-$this->sect_num').style.display=document.getElementById('sc-$this->sect_num').style.display!='none'? 'none':'block';\"";
@@ -3693,7 +3698,7 @@ class Formatter {
       }
 
       $lidx = '';
-      if ($lid) $lidx = "<span class='line-anchor' id='line-".$lid."'></span>";
+      if ($lid > 0) $lidx = "<span class='line-anchor' id='line-".$lid."'></span>";
 
       if ($this->auto_linebreak && !$in_table && !$this->nobr)
         $text.=$line.$lidx."<br />\n"; 
