@@ -18,28 +18,18 @@
  * try to find line-anchor to get the line number of wikitext from html
  *
  */
-function edithandler(ev) {
-    var e = ev ? ev : window.event; // for IE
-    var sel = window.getSelection ? window.getSelection():
-        (document.getSelection ? document.getSelection():
-        document.selection.createRange());
+function get_src_line(e) {
+    e = e || window.event;
 
-    var node;
-    if (sel.focusNode) {
-        node = sel.focusNode;
-
-        if (node.nodeType == 3) {
-            if (node.nextSibling)
-                node = node.nextSibling;
-            else
-                node = node.parentNode;
-        }
-    } else {
-        // IE6
-        try { node = sel.parentElement(); } catch (e) { return; };
+    var node = e.target || e.srcElement;
+    if (node.nodeType == 3) {
+        if (node.nextSibling)
+            node = node.nextSibling;
+        else
+            node = node.parentNode;
     }
 
-    if (!node) return;
+    if (!node) return null;
 
     // try to find the line-no of the nextsibling
     var ns = node;
@@ -69,21 +59,25 @@ function edithandler(ev) {
     if (np) node = np;
 
     // is it found ?
+    var no = null;
     if (node) {
-        var loc = location + '';
-        var p;
-        if (p = loc.indexOf('action=')) {
-            loc = loc.substring(0, p - 1);
-        } else if (p = loc.indexOf('#')) {
-            loc = loc.substring(0, p);
-        }
-        p = 1 + node.id.indexOf('line-');
-        if (p)
-            location = loc + _ap + 'action=edit#' + node.id.substr(p + 4);
+        var p = 1 + node.id.indexOf('line-');
+        if (p) no = node.id.substr(p + 4);
     }
-
     // silently ignore.
-    return false;
+    if (!no || !no.match(/\d+/)) return null;
+
+    return no;
+}
+
+function get_selected_text(e) {
+    e = e || window.event;
+
+    var sel = window.getSelection ? window.getSelection():
+        (document.getSelection ? document.getSelection():
+        document.selection.createRange().text);
+
+    return sel;
 }
 
 (function() {
@@ -122,32 +116,77 @@ function edithandler(ev) {
         return scroll;
     }
 
-    function focusEditor() {
-        var txtarea = document.getElementById('wikicontent');
-        if (!txtarea) return;
-        txtarea.focus();
+    function edithandler(e) {
+        e = e || window.event;
+        var no = get_src_line(e);
+        if (!no) return false;
 
+        var txtarea = document.getElementById('editor-textarea');
+        if (txtarea) {
+            focusEditor(e, txtarea, no);
+            return;
+        }
         var loc = location + '';
-        var p = 1 + loc.indexOf('#');
-        var no = 0;
-        if (p > 0)
-            no = loc.substr(p);
-        if (!no.match(/\d+/)) return;
+        if (p = loc.indexOf('action=')) {
+            loc = loc.substring(0, p - 1);
+        } else if (p = loc.indexOf('#')) {
+            loc = loc.substring(0, p);
+        }
+        if (p)
+            location = loc + _ap + 'action=edit#' + no;
+        return;
+    }
+
+    function focusEditor(e, txtarea, lineno) {
+        e = e || window.event;
+        if (txtarea == undefined) {
+            txtarea = document.getElementById('editor-textarea');
+            if (!txtarea) return;
+            txtarea.focus();
+        }
+
+        var no = null;
+        if (lineno == undefined) {
+            // get lineno from location
+            var loc = location + '';
+            var p = 1 + loc.indexOf('#');
+            if (p) no = loc.substr(p);
+        } else {
+            no = lineno;
+        }
+        if (!no || !no.match(/\d+/)) return;
+
+        if (e.stopPropagation) e.stopPropagation(); 
+        e.cancelBubble = true;
+
+        window.scroll(0, 0);
 
         var txt = txtarea.value.replace(/\r/g, ''); // remove \r for IE
         var pos = 1; // ViTA trick.
         var startPos = 0, endPos = 0;
 
-        // find selected line
+        // find selected line or words
         var n = no;
         while (pos && --n) pos = 1 + txt.indexOf("\n", pos);
         startPos = (pos) ? pos : 0;
-        // FIXME ? how can I select only selected words ?
         endPos = txt.indexOf("\n", startPos);
+
+        // get selected text
+        var myText = null;
+        myText = get_selected_text(e);
+
+        if (myText.toString() != '') {
+            var str = txt.substring(startPos, endPos);
+
+            var p = 1 + str.indexOf(myText);
+            if (p) {
+                startPos+= p - 1;
+                endPos = startPos + myText.toString().length;
+            }
+        }
 
         if (txtarea.selectionStart || txtarea.selectionStart == '0') {
             // Mozilla
-            // goto
             txtarea.selectionStart = startPos;
             txtarea.selectionEnd = endPos;
 
