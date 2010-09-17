@@ -3221,7 +3221,7 @@ class Formatter {
 
     $formatter=&$this;
 
-    $this->_lidx = isset($this->pi['start_line']) ? $this->pi['start_line'] : 0;
+    $this->_lidx = isset($pi['start_line']) ? $pi['start_line'] : 0;
     foreach ($lines as $line) {
       $this->_lidx++;
       $lid = $this->_lidx;
