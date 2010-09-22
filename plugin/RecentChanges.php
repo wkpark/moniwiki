@@ -129,7 +129,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     if (($p=strpos($arg,'='))!==false) {
       $k=trim(substr($arg,0,$p));
       $v=trim(substr($arg,$p+1));
-      if ($k=='item') $opts['items']=min((int)$v,RC_MAX_ITEMS);
+      if ($k=='item' or $k=='items') $opts['items']=min((int)$v,RC_MAX_ITEMS);
       else if ($k=='days') $days=min(abs($v),RC_MAX_DAYS);
       else if ($k=='ago') $opts['ago']=abs($v);
       else if ($k=="new") $checknew=$v;
