@@ -270,9 +270,10 @@ function keypresshandler(e) {
 		// Edit/write or refresh
 		var no = null;
 		var target = '';
-		if (typeof get_src_line == 'function') {
-			no = get_src_line(true);
-			target = '#' + no;
+		if (typeof get_src_line_num == 'function') {
+			no = get_src_line_num(true);
+			if (no != null)
+				target = '#' + no;
 		}
 		if ((i=loc.indexOf(_ap)) != -1 && loc.substr(i+1,5) == "goto=") { // deprecated
 			loc=loc.substr(i+6,loc.length-6);
