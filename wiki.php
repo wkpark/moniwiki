@@ -1526,7 +1526,9 @@ class Formatter {
     #(?P<word>(?:/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})
     $this->wordrule=
     # nowiki
-    "({{{(?:(?:[^{}]+|{[^{}]+}(?!})|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!}))|(?1))+}}})|".
+    "!?({{{(?:(?:[^{}]+|{[^{}]+}(?!})|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!}))|(?2))++}}})|".
+    # {{{{{{}}}, {{{}}}}}}, {{{}}}
+    "(?:(?!<{{{){{{}}}(?!}}})|{{{(?:{{{|}}})}}})|".
     # single bracketed rule [http://blah.blah.com Blah Blah]
     "(?:\[\^?($url):[^\s\]]+(?:\s[^\]]+)?\])|".
     # InterWiki
@@ -1861,6 +1863,8 @@ class Formatter {
     switch ($url[0]) {
     case '{':
       $url=substr($url,3,-3);
+      if (empty($url))
+        return "<tt class='nowiki'></tt>"; # No link
       if (preg_match('/^({([^{}]+)})/s',$url,$sty)) { # textile like styling
         $url=substr($url,strlen($sty[1]));
         $url = preg_replace($this->baserule, $this->baserepl, $url); // apply inline formatting rules
@@ -3367,7 +3371,7 @@ class Formatter {
                         {[^{}]+}(?!})|
                         (?<!{){{1,2}(?!{)|
                         (?<!})}{1,2}(?!}))|(?1)
-                          )+}}})/x",$line,-1,PREG_SPLIT_DELIM_CAPTURE);
+                          )++}}})/x",$line,-1,PREG_SPLIT_DELIM_CAPTURE);
       $inline = array(); // save inline nowikis
 
       if (count($chunk) > 1) {
