@@ -148,12 +148,17 @@ class Security_ACL extends Security {
                 if (!$acl[3]) $acl[3]='*';
                 if ($acl[0] != '*') {
                     $prule=$acl[0];
+                    // a regex or a simplified pattern like as
                     // HelpOn* -> HelpOn.*
                     // MoniWiki/* -> MoniWiki\/.*
-                    $prule=
-                       preg_replace(array('/(?!<\.)\*/',"/(?<!\\\\)\//"),array('.*','\/'),$prule);
-                    if (false === @preg_match("/$prule/",'')) continue;
-                    if (!preg_match("/$prule/",$pg)) continue;
+
+                    if ($prule != $pg) {
+                        // is it a regex or a simplified pattern
+                        $prule=
+                            preg_replace(array('/(?!<\.)\*/',"/(?<!\\\\)\//"),array('.*','\/'),$prule);
+
+                        if (!@preg_match("/$prule/",$pg)) continue;
+                    }
                 }
 
                 if ($acl[2] == 'allow') {
