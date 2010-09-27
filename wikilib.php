@@ -1897,10 +1897,12 @@ function do_titleindex($formatter,$options) {
 }
 
 function do_titlesearch($formatter,$options) {
+  global $DBInfo;
 
+  $ret = array();
   $out= macro_TitleSearch($formatter,$options['value'],$ret);
 
-  if ($ret['hits']==1) {
+  if ($ret['hits']==1 and (empty($DBInfo->titlesearch_noredirect) or !empty($ret['exact']))) {
     $options['value']=$ret['value'];
     $options['redirect']=1;
     do_goto($formatter,$options);
@@ -3556,12 +3558,21 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
 
   $pages = array_merge($pages, $alias);
   $hits=array();
+  $exacts = array();
   foreach ($pages as $page) {
-     if (preg_match("/".$needle."/i", $page))
-        $hits[]=$page;
+    if (empty($DBInfo->titleseach_noexact) and preg_match("/^".$needle."$/i", $page)) {
+      $hits[] = $page;
+      $exacts[] = $page;
+      if (empty($DBInfo->titlesearch_exact_all)) {
+        $hits = $exacts;
+        break;
+      }
+    } else if (preg_match("/".$needle."/i", $page)) {
+      $hits[]=$page;
+    }
   }
 
-  if (empty($hits)) {
+  if (empty($hits) and empty($exacts)) {
     // simple title search by ignore spaces
     $needle2 = str_replace(' ', "\\s*", $needle);
     $ws = preg_split("/([\x{AC00}-\x{D7F7}])/u", $needle2, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
@@ -3590,7 +3601,7 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   $opts['hits']= count($hits);
   if ($opts['hits']==1)
     $opts['value']=array_pop($hits);
-  $opts['all']= count($pages);
+  if (!empty($exacts)) $opts['exact'] = 1;
   if (!empty($opts['call'])) {
     $opts['out']=$out;
     return $opts;
