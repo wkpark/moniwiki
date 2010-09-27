@@ -2337,7 +2337,7 @@ class Formatter {
             "<tt class='sister'><a href='$url'>&#x203a;</a></tt>";
         }
         if (!empty($sisters)) {
-          if (!empty($this->use_easyalias) and !preg_match('/^\[wiki:[A-Z][a-z0-9]+:.*$/', $sisters)) {
+          if (!empty($this->use_easyalias) and !preg_match('/^\[wiki:[A-Z][A-Za-z0-9]+:.*$/', $sisters)) {
             # this is a alias
             $this->use_easyalias=0;
             $url=$this->link_repl(substr($sisters,0,-1).' '.$word.']');
