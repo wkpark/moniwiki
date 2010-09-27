@@ -36,11 +36,15 @@ class Security_ACL extends Security {
     function Security_ACL($DB="") {
         $this->DB=$DB;
         # load ACL
-        define(_CURRENT,dirname(__FILE__));
-        if ($DB->acl_type and file_exists(_CURRENT.'/../../config/acl.'.$DB->acl_type.'.php'))
-            $acl_file=_CURRENT.'/../../config/acl.'.$DB->acl_type.'.php';
+        if (empty($DB->config_dir))
+            $config_dir = './config';
         else
-            $acl_file=_CURRENT.'/../../config/acl.default.php';
+            $config_dir = dirname(__FILE__).'/../../config';
+
+        if (!empty($DB->acl_type) and file_exists($config_dir.'/acl.'.$DB->acl_type.'.php'))
+            $acl_file=$config_dir.'/acl.'.$DB->acl_type.'.php';
+        else
+            $acl_file=$config_dir.'/acl.default.php';
 
         if(is_readable($acl_file)) {
             $this->AUTH_ACL= file($acl_file);
@@ -48,8 +52,8 @@ class Security_ACL extends Security {
             $this->AUTH_ACL= array('*   @ALL    allow   *');
         }
 
-        $wikimasters=$DB->wikimasters ? $DB->wikimasters:array();
-        $owners=$DB->owners ? $DB->owners:array();
+        $wikimasters=isset($DB->wikimasters) ? $DB->wikimasters:array();
+        $owners=isset($DB->owners) ? $DB->owners:array();
         $this->allowed_users=array_merge($wikimasters,$owners);
     }
 
