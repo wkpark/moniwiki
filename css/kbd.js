@@ -275,6 +275,15 @@ function keypresshandler(e) {
 			if (no != null)
 				target = '#' + no;
 		}
+
+		var txtarea = document.getElementById('editor-textarea');
+		if (txtarea) {
+			noBubble(e);
+			pasta = new PaSTA();
+
+			var ret = pasta.focusEditor(e, txtarea, no);
+			return false;
+		}
 		if ((i=loc.indexOf(_ap)) != -1 && loc.substr(i+1,5) == "goto=") { // deprecated
 			loc=loc.substr(i+6,loc.length-6);
 			if ((i=loc.indexOf('&')) != -1) loc=loc.substring(0,i);

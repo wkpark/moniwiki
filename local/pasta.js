@@ -1,5 +1,5 @@
 /**
- * Postioning and Scrolling in the TextArea for MoniWiki
+ * Postioning and Scrolling in the TextArea(PaSTA) for MoniWiki
  *
  * Try to get the line-no of the raw wikitext from rendered html and
  * set the position of the caret and scrollbar in the TextArea
@@ -91,18 +91,12 @@ function get_src_line_num(e) {
     return no;
 }
 
-function get_selected_text() {
-    var sel = window.getSelection ? window.getSelection():
-        (document.getSelection ? document.getSelection():
-        document.selection.createRange().text);
+function PaSTA() {}
 
-    return sel.toString();
-}
-
-(function() {
+PaSTA.prototype = {
     // from http://wiki.sheep.art.pl/Textarea%20Scrolling
     // with some fixes by wkpark at kldp.org
-    function scrollTo(textarea, text, offset) {
+    scrollTo: function(textarea, text, offset) {
         var style;
         try { style = window.getComputedStyle(textarea, ''); }
         catch(e) { return false; };
@@ -133,16 +127,16 @@ function get_selected_text() {
         if (scroll > offset) scroll -= offset;
         textarea.parentNode.removeChild(pre); // remove
         return scroll;
-    }
+    },
 
-    function edithandler(e) {
+    edithandler: function(e) {
         e = e || window.event;
         var no = get_src_line_num(e);
         if (!no) return false;
 
         var txtarea = document.getElementById('editor-textarea');
         if (txtarea) {
-            var ret = focusEditor(e, txtarea, no);
+            var ret = this.focusEditor(e, txtarea, no);
             if (ret && e) {
                 if (e.stopPropagation) e.stopPropagation(); 
                 e.cancelBubble = true;
@@ -158,9 +152,17 @@ function get_selected_text() {
         if (p)
             location = loc + _ap + 'action=edit#' + no;
         return true;
-    }
+    },
 
-    function focusEditor(e, txtarea, lineno) {
+    _get_selected_text: function() {
+        var sel = window.getSelection ? window.getSelection():
+            (document.getSelection ? document.getSelection():
+            document.selection.createRange().text);
+
+        return sel.toString();
+    },
+
+    focusEditor: function(e, txtarea, lineno) {
         e = e || window.event;
         if (txtarea == undefined) {
             txtarea = document.getElementById('editor-textarea');
@@ -194,7 +196,7 @@ function get_selected_text() {
         endPos = txt.indexOf("\n", startPos);
 
         // get selected text
-        var myText = get_selected_text();
+        var myText = this._get_selected_text();
 
         if (myText != '') {
             var str = txt.substring(startPos, endPos);
@@ -213,7 +215,7 @@ function get_selected_text() {
             txtarea.selectionStart = startPos;
             txtarea.selectionEnd = endPos;
 
-            var scroll = scrollTo(txtarea, txt.substr(0, startPos), 50);
+            var scroll = this.scrollTo(txtarea, txt.substr(0, startPos), 50);
             txtarea.scrollTop = scroll;
         } else if (document.selection) {
             // IE
@@ -233,18 +235,23 @@ function get_selected_text() {
 
         return true;
     }
+};
 
+(function() {
     // onload
     var oldOnload = window.onload;
     window.onload = function(ev) {
         try { oldOnload(); } catch(e) {};
-        focusEditor(ev);
+        var pasta = new PaSTA();
+        pasta.focusEditor(ev);
     }
 
+    // double click handler
     var old_dblclick = document.ondblclick;
     document.ondblclick = function(ev) {
         try { old_dblclick(); } catch(e) {};
-        edithandler(ev);
+        var pasta = new PaSTA();
+        pasta.edithandler(ev);
     }
 })();
 
