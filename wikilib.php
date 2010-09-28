@@ -3553,6 +3553,7 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   $needle=_preg_search_escape($needle);
   
   $pages= $DBInfo->getPageLists();
+  $opts['all'] = count($pages);
   if (empty($DBInfo->alias)) $DBInfo->initAlias();
   $alias = $DBInfo->alias->getAllPages();
 
