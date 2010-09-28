@@ -5558,7 +5558,7 @@ function wiki_main($options) {
         echo "</div>\n";
       }
 
-      $formatter->send_footer($args,$options);
+      $formatter->send_footer('',$options);
       return;
     } else if ($_SERVER['REQUEST_METHOD']=="POST" and
       $DBInfo->security->is_protected($action,$options) and
