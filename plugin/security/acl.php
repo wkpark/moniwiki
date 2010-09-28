@@ -206,7 +206,7 @@ class Security_ACL extends Security {
         }
         $protected=array_keys($protected);
 
-        if ($this->DB->acl_debug) {
+        if (!empty($this->DB->acl_debug)) {
             ob_start();
             print "<h4>"._("ACL groups")."</h4>\n";
             print implode(',',$groups);
@@ -238,7 +238,7 @@ class Security_ACL extends Security {
         $allowed=&$this->_allowed;
         $denied=&$this->_denied;
 
-        if ($options['explicit']) {
+        if (!empty($options['explicit'])) {
             if (isset($allowed[$action])) return 1;
             else if (isset($denied[$action])) return 0;
             return false;
