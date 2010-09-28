@@ -161,6 +161,8 @@ $myprocessors=array('syntax'=>'vim','sh'=>'vim','csh'=>'vim',
 #$myprocessors=array('latex'=>'mimetex');
 #$myplugins=array('fullsearch'=>'FastSearch'); # substitute action/macro
 #$myplugins=array('swfupload'=>false); # disable some macro
+#
+#$extra_macros=array('FootNote', 'Comment'); # call some extra macros after send_page()
 
 #$url_schemas='mms';
 #$blacklist='127.0.0.0/24:192.168.1.0/24:192.168.1.67'; # block ip
@@ -290,3 +292,7 @@ $use_local_translation=0; # automatic translation
 #$use_pageindex=0; # pagename indexer for fast RandomPage
 #$use_delaytime = 60*60*24; # set the default delayed time for caching as 24 hours
 #$use_avatar='identicon'; # set avatar imgs based on user IP address for anonymous users. default: identicon
+#$titlesearch_noexact=0; # do not search exact page name and get all titlesearch results
+#$titlesearch_exact_all=0; # get all exact matches
+#$titlesearch_noredirect=0; # do not redirect to the only one founded page except exact match.
+#$use_similar_text=0; # use similar_text() function (in likepages action)
