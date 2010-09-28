@@ -1944,8 +1944,19 @@ class Formatter {
     $url=str_replace('&lt;','<',$url); // revert from baserule
     $url=preg_replace('/&(?!#?[a-z0-9]+;)/i','&amp;',$url);
 
+    if ($url[0] == '"') {
+      // [["Hello World"]], [["Hello World" Page Title]]
+      return $this->word_repl($bra.$url.$ket, '', $attr);
+    } else
     if (($p=strpos($url,':')) !== false and
         (!isset($url{$p+1}) or (isset($url{$p+1}) and $url{$p+1}!=':'))) {
+
+      // namespaced pages
+      // [[한글:페이지]], [[한글:페이지 이름]]
+      // mixed name with non ASCII chars
+      if (preg_match('/^([^a-zA-Z0-9]+.*)\:/', $url))
+        return $this->word_repl($bra.$url.$ket, '', $attr);
+
       if ($url[0]=='a') { # attachment:
         $url=preg_replace('/&amp;/i','&',$url);
         return $this->macro_repl('attachment',substr($url,11));
@@ -1967,6 +1978,7 @@ class Formatter {
             preg_replace('/('.$this->url_mapping_rule.')/ie',"\$this->url_mappings['\\1']",$url);
       }
 
+      // InterWiki Pages
       if (preg_match("/^(:|w|[A-Z])/",$url)
           or (!empty($this->urls) and !preg_match('/^('.$this->urls.')/',$url)))
         return $this->interwiki_repl($url,'',$attr,$external_icon);
