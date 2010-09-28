@@ -2054,13 +2054,11 @@ class Formatter {
       $url=urldecode($url);
       return "<a class='externalLink' $attr href='$link' $this->external_target>$url</a>";
     } else {
-      if ($url{0}=='?') {
+      if ($url{0}=='?')
         $url=substr($url,1);
-      } else if (!empty($this->mediawiki_style) and $double_bracket and $url[0] != '"' and strpos($url, ' ') !== false) {
-        $url = '"'.$url.'"';
-      }
+
       $url = preg_replace('/&amp;/i', '&', $url);
-      return $this->word_repl($url,'',$attr);
+      return $this->word_repl($bra.$url.$ket, '', $attr);
     }
   }
 
@@ -2240,19 +2238,28 @@ class Formatter {
     global $DBInfo;
     $nonexists='nonexists_'.$this->nonexists;
 
+    $word = $page = trim($word, '[]'); // trim out [[Hello World]] => Hello World
+
     $extended = false;
-    if (($word[0] == '"' or $word[0] == 'w') and preg_match('/^(?:wiki\:)?((")?[^"]+\2)((\s+)?(.*))?$/', $word, $m)) {
+    if (($word[0] == '"' or $word[0] == 'w') and preg_match('/^(?:wiki\:)?((")?[^"]+\2)((\s+|\|)?(.*))?$/', $word, $m)) {
       # ["extended wiki name"]
       # ["Hello World" Go to Hello]
       # [wiki:"Hello World" Go to Main]
       $word = substr($m[1], 1, -1);
-      if (isset($m[5])) $text = $m[5]; // text arg ignored
+      if (isset($m[5][0])) $text = $m[5]; // text arg ignored
 
       $extended=true;
       $page=$word;
-    } else
+    } else if (($p = strpos($word, '|')) !== false) {
+      // or MediaWiki/WikiCreole like links
+      $text = substr($word, $p + 1);
+      $word = substr($word, 0, $p);
+      $page = $word;
+    }
+    if (!$extended and empty($DBInfo->mediawiki_style)) {
       #$page=preg_replace("/\s+/","",$word); # concat words
       $page=normalize($word); # concat words
+    }
 
     if (empty($DBInfo->use_twikilink)) $islink=0;
     list($page,$page_text,$gpage)=
