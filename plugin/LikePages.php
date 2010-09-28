@@ -20,10 +20,10 @@ function do_LikePages($formatter,$options) {
   $formatter->send_footer("",$options);
 }
 
-function macro_LikePages($formatter="",$args="",&$opts) {
+function macro_LikePages($formatter="", $value, &$opts) {
   global $DBInfo;
 
-  $pname=_preg_escape($args);
+  $pname=_preg_escape($value);
 
   $metawiki=!empty($opts['metawiki']) ? $opts['metawiki'] : '';
 
@@ -37,6 +37,7 @@ function macro_LikePages($formatter="",$args="",&$opts) {
   $e_re="[A-Z][A-Za-z0-9]+$";
 
   $count=preg_match("/(".$s_re.")/",$pname,$match);
+  $s_len = 0;
   if ($count) {
     $start=trim($match[1]);
     $s_len=strlen($start);
@@ -62,7 +63,7 @@ function macro_LikePages($formatter="",$args="",&$opts) {
 
     // try to remove suffix
     // "위키에서 글쓰기" => start=위키에서|위키에|위키
-    if (preg_match('/[\x{AC00}-\x{D7AF}]/u', $start)) {
+    if (!empty($start) and preg_match('/[\x{AC00}-\x{D7AF}]/u', $start)) {
 	    $ws = preg_split('//u', $start, -1,  PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
       $nw = array();
       $nw[] = $start;
@@ -73,7 +74,7 @@ function macro_LikePages($formatter="",$args="",&$opts) {
       $start = implode('|', $nw);
     }
 
-    if (preg_match('/[\x{AC00}-\x{D7AF}]/u', $end)) {
+    if (!empty($end) and preg_match('/[\x{AC00}-\x{D7AF}]/u', $end)) {
 	    $ws = preg_split('//u', $end, -1,  PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
       $nw = array();
       $last = array_splice($ws, -2);
@@ -89,13 +90,13 @@ function macro_LikePages($formatter="",$args="",&$opts) {
   }
 
   if (empty($start)) {
-    preg_match("/^(.{2,4})/u",$args,$match);
+    preg_match("/^(.{2,4})/u",$value,$match);
     $s_len=strlen($match[1]);
     $start=trim(_preg_escape($match[1]));
   }
 
   if (empty($end)) {
-    $end=substr($args,$s_len);
+    $end=substr($value,$s_len);
     preg_match("/(.{2,6})$/u",$end,$match);
     $end=isset($match[1]) ? $match[1] : '';
     $e_len=strlen($end);
@@ -140,7 +141,16 @@ function macro_LikePages($formatter="",$args="",&$opts) {
     }
   }
 
-  if ($start || $end) {
+  if (!empty($DBInfo->use_similar_text)) {
+    $len = strlen($value);
+    $ii = 0;
+    foreach ($pages as $page) {
+      $ii++;
+      $match = similar_text($value, $page) / min($len, strlen($page));
+      if ($match > 0.9 && empty($starts[$page]) && empty($ends[$page]))
+        $likes[$page] = $match;
+    }
+  } else if ($start || $end) {
     if ($start and $end) $similar_re="$start|$end";
     else if ($start) $similar_re=$start;
     else $similar_re=$end;
@@ -162,7 +172,7 @@ function macro_LikePages($formatter="",$args="",&$opts) {
 
     $out.="<h3>"._("These pages share a similar word...")."</h3>";
     $out.="<ol>\n";
-    while (list($pagename,$i) = each($likes)) {
+    foreach ($likes as $pagename => $i) {
       $pageurl=_rawurlencode($pagename);
       $pagetext=htmlspecialchars(urldecode($pagename));
       $out.= '<li>' . $formatter->link_tag($pageurl,"",$pagetext,"tabindex='$idx'")."</li>\n";
@@ -201,7 +211,7 @@ function macro_LikePages($formatter="",$args="",&$opts) {
     $out.="<h3>"._("No similar pages found")."</h3>";
   }
 
-  $opts['msg'] = sprintf(_("Like \"%s\""),$args);
+  $opts['msg'] = sprintf(_("Like \"%s\""),$value);
 
   while (empty($metawiki)) {
     if (empty($DBInfo->metadb)) $DBInfo->initMetaDB();
