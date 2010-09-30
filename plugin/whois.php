@@ -6,7 +6,7 @@
 
 function do_whois($formatter,$options) {
   $query=$options['q'];
-  $whois_servers=array("whois.nic.or.kr","whois.internic.net");
+  $whois_servers=array("whois.nic.or.kr"=>'euc-kr',"whois.internic.net"=>'iso-8859-1');
 
 #$whois_servers_full = array(
 #"kr" => "whois.nic.or.kr",
@@ -113,7 +113,7 @@ function do_whois($formatter,$options) {
   $arg= rtrim($query)."\n";
 
   $result="";
-  foreach ($whois_servers as $key=>$server) {
+  foreach ($whois_servers as $server=>$charset) {
     $fp= fsockopen($server,43);
     if(!$fp) {
       $error=sprintf(_("Could not connect to %s server"),$key);
@@ -134,16 +134,23 @@ function do_whois($formatter,$options) {
     }
     if (!$notfound) break;
   }
-  $out ="=== ".sprintf(_("Whois search result for %s"),$query)." ===\n";
-  $out.="{{{\n$result\n}}}";
+  if (!empty($result) and function_exists('iconv')) {
+    if (strtolower($DBInfo->charset) != $charset) {
+      $tmp = iconv('EUC-KR', $DBInfo->charset, $result);
+      if (!empty($tmp)) $result = $tmp;
+    }
+  }
+  $out ="=== ".sprintf(_("Whois search result for %s"), $query)." ===\n";
+  $out.="{{{\n$server\n$result\n}}}";
   $out.= "hostname : [http://ws.arin.net/cgi-bin/whois.pl?queryinput=$query ".gethostbyaddr($query)."]";
+  $formatter->get_javascripts();
   $formatter->send_page($out);
   return;
 }
 
 function macro_whois($formatter,$value='') {
   return <<<EOF
-<form method='post'>
+<form method='get'>
 <input type="hidden" name="action" value="whois" />
 <input type="text" name="q" size="15" /><input type="submit" value="Query" />
 </form>
