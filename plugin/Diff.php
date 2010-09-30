@@ -232,6 +232,10 @@ function fancy_diff($diff,$options=array()) {
   include_once("lib/difflib.php");
   $diff=str_replace("<","&lt;",$diff);
   $lines=explode("\n",$diff);
+
+  // trash the last empty line;
+  $end = end($lines);
+  if (!isset($end[0])) array_pop($lines);
   $out="";
   #unset($lines[0]); unset($lines[1]);
 

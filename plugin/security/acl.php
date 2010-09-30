@@ -183,7 +183,7 @@ class Security_ACL extends Security {
                     $tmp=array_flip($tmp);
                     if ($acl[2] == $user) $pri=4;
                     else if ($acl[2] == '@ALL') $pri=1;
-                    else $pri= $gpriority[$acl[2]] ? $gpriority[$acl[2]]:2; # get group prio
+                    else $pri= !empty($gpriority[$acl[2]]) ? $gpriority[$acl[2]]:2; # get group prio
                     $keys=array_keys($tmp);
                     foreach ($keys as $t) {
                         if (isset($allowed[$t]) and $allowed[$t] > $pri)

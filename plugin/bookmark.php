@@ -2,7 +2,6 @@
 // Copyright 2003 2010 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a bookmark action plugin for the MoniWiki
-// vim:et:ts=2:
 //
 // $Id$
 
@@ -13,7 +12,7 @@ function macro_bookmark($formatter, $value = '', &$options) {
 
   $user = &$DBInfo->user; # get cookie
 
-  if (!$options['time']) {
+  if (empty($options['time'])) {
      $bookmark = time();
   } else {
      $bookmark = $options['time'];
@@ -38,8 +37,10 @@ function macro_bookmark($formatter, $value = '', &$options) {
     } else {
       $ret['title']=_("Bookmark Deleted !");
       $user->info['bookmark']=0;
+      $bookmark = 0;
     }
     $DBInfo->udb->saveUser($user);
+    $_COOKIE['MONI_BOOKMARK']=$bookmark;
     $user->bookmark=$bookmark;
   }
 
@@ -63,4 +64,5 @@ function do_bookmark($formatter,$options) {
   $formatter->send_footer("",$options);
 }
 
+// vim:et:sts=2:sw=2:
 ?>
