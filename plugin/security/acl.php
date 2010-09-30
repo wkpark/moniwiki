@@ -148,29 +148,42 @@ class Security_ACL extends Security {
                 #if (in_array($rule[0],array('@','#'))) continue;
                 $rule= preg_replace('/#.*$/','',$rule); # delete comments
                 $rule= rtrim($rule);
-                $acl= preg_split('/\s+/',$rule,4);
-                if (!$acl[3]) $acl[3]='*';
-                if ($acl[0] != '*') {
-                    $prule=$acl[0];
+
+                $tmp = preg_match('/^(.*)\s+('.$gregex.')\s+(allow|protect|deny)\s*(.*)?$/i', $rule, $acl);
+                if (!$tmp) continue;
+
+                if (!$acl[4]) $acl[4]='*';
+                if ($acl[1] != '*' and $acl[1] != $pg) {
+                    $prules = get_csv($acl[1]);
                     // a regex or a simplified pattern like as
                     // HelpOn* -> HelpOn.*
                     // MoniWiki/* -> MoniWiki\/.*
 
-                    if ($prule != $pg) {
-                        // is it a regex or a simplified pattern
-                        $prule=
-                            preg_replace(array('/(?!<\.)\*/',"/(?<!\\\\)\//"),array('.*','\/'),$prule);
+                    $found = false;
+                    foreach ($prules as $prule) {
+                        if ($prule == $pg) {
+                            $found = true;
+                            break;
+                        } else {
+                            // is it a regex or a simplified pattern
+                            $prule=
+                                preg_replace(array('/(?!<\.)\*/',"/(?<!\\\\)\//"),array('.*','\/'),$prule);
 
-                        if (!@preg_match("/$prule/",$pg)) continue;
+                            if (@preg_match("/$prule/", $pg)) {
+                                $found = true;
+                                break;
+                            }
+                        }
                     }
+                    if (!$found) continue;
                 }
 
-                if ($acl[2] == 'allow') {
-                    $tmp=explode(',',$acl[3]);
+                if ($acl[3] == 'allow') {
+                    $tmp=explode(',',$acl[4]);
                     $tmp=array_flip($tmp);
-                    if ($acl[1] == $user) $pri=4;
-                    else if ($acl[1] == '@ALL') $pri=1;
-                    else $pri= $gpriority[$acl[1]] ? $gpriority[$acl[1]]:2; # get group prio
+                    if ($acl[2] == $user) $pri=4;
+                    else if ($acl[2] == '@ALL') $pri=1;
+                    else $pri= $gpriority[$acl[2]] ? $gpriority[$acl[2]]:2; # get group prio
                     $keys=array_keys($tmp);
                     foreach ($keys as $t) {
                         if (isset($allowed[$t]) and $allowed[$t] > $pri)
@@ -181,12 +194,12 @@ class Security_ACL extends Security {
                             unset($denied[$t]);
                     }
                     $allowed=array_merge($allowed,$tmp);
-                } else if ($acl[2] == 'deny') {
-                    $tmp=explode(',',$acl[3]);
+                } else if ($acl[3] == 'deny') {
+                    $tmp=explode(',',$acl[4]);
                     $tmp=array_flip($tmp);
-                    if ($acl[1] == $user) $pri=4;
-                    else if ($acl[1] == '@ALL') $pri=1;
-                    else $pri= $gpriority[$acl[1]] ? $gpriority[$acl[1]]:2; # set group prio
+                    if ($acl[2] == $user) $pri=4;
+                    else if ($acl[2] == '@ALL') $pri=1;
+                    else $pri= $gpriority[$acl[2]] ? $gpriority[$acl[2]]:2; # set group prio
                     $keys=array_keys($tmp);
                     foreach ($keys as $t) {
                         if (isset($denied[$t]) and $denied[$t] > $pri)
@@ -197,8 +210,8 @@ class Security_ACL extends Security {
                             unset($allowed[$t]);
                     }
                     $denied=array_merge($denied,$tmp);
-                } else if ($acl[2] == 'protect') {
-                    $tmp=explode(',',$acl[3]);
+                } else if ($acl[3] == 'protect') {
+                    $tmp=explode(',',$acl[4]);
                     $tmp=array_flip($tmp);
                     $protected=array_merge($protected,$tmp);
                 }
