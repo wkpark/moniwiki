@@ -45,6 +45,89 @@ function do_RecentChanges($formatter,$options='') {
   return;
 }
 
+/**
+ * get updated info
+ *
+ */
+
+function ajax_RecentChanges($formatter, $options = array()) {
+  global $DBInfo;
+
+  if (empty($options['value'])) {
+    echo '[]';
+    return;
+  }
+  $checknew = 0;
+  $checkchange = 0;
+  if (!empty($options['new'])) $checknew = 1;
+  if (!empty($options['change'])) $checkchange = 1;
+
+  require_once('lib/JSON.php');
+  $json = new Services_JSON();
+  $rclist = $json->decode($options['value']);
+  if (!is_array($rclist)) {
+    echo '[]';
+    return;
+  }
+
+  // get bookmark parameter and call bookmark macro
+  if (!empty($options['time'])) {
+    if (is_numeric($options['time']) and $options['time'] > 0) {
+      $formatter->macro_repl('Bookmark', '', $options);
+      //$bookmark = $options['time'];
+    }
+  }
+
+  $u = $DBInfo->user; # retrive user info
+
+  if ($u->id != 'Anonymous') {
+    $bookmark = !empty($u->info['bookmark']) ? $u->info['bookmark'] : '';
+  } else {
+    $bookmark = $u->bookmark;
+  }
+  $tz_offset=$formatter->tz_offset;
+
+  $info = array();
+  foreach ($rclist as $page_name) {
+    $p= new WikiPage($page_name);
+    if (!$p->exists()) continue; // XXX
+
+    $ed_time = $p->mtime();
+    if ($ed_time <= $bookmark) break;
+
+    $info[$page_name]['state'] = 'updated';
+
+    $add = 0;
+    $del = 0;
+
+    if ($checknew) {
+      $v= $p->get_rev($bookmark);
+      if (empty($v)) {
+        $info[$page_name]['state'] = 'new';
+        $add+= $p->lines();
+      }
+    }
+
+    if ($checkchange) {
+      $infos = $p->get_info('>'.$bookmark);
+      foreach ($infos as $inf) {
+        $tmp = explode(' ', trim($inf[1]));
+        if (isset($tmp[1])) {
+          $add+= $tmp[0];
+          $del+= $tmp[1];
+        }
+      }
+
+      $info[$page_name]['add'] = $add;
+      $info[$page_name]['del'] = $del;
+    }
+  }
+  $info['__-_-bookmark-_-__'] = $bookmark;
+
+  echo $json->encode($info);
+  return;
+}
+
 function _timesago($timestamp, $date_fmt='Y-m-d', $tz_offset = 0) {
 	// FIXME use $sys_datafmt ?
 	$time_current = time();
@@ -100,8 +183,11 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $date_fmt=$args[0];
 
   $strimwidth = isset($DBInfo->rc_strimwidth) ? $DBInfo->rc_strimwidth : 20;
+  // use javascript
+  $use_js = 0;
   // show last edit entry only
   $last_entry_only = 1;
+  $last_entry_check = 60*60*24;
   // show last editor only
   $last_editor_only = 1;
   // show editrange like as MoinMoin
@@ -155,10 +241,19 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       else if ($arg=="allusers") $last_editor_only = 0;
       else if ($arg=="allentries") $last_entry_only = 0;
       else if ($arg=="avatar") $use_avatar = 1;
+      else if ($arg=="js") $use_js = 1;
       else if (in_array($arg, array('simple', 'moztab', 'board', 'table'))) $rctype = $arg;
     }
   }
 
+  // set as dynamic macro or not.
+  if (empty($use_js))
+    $formatter->_dynamic_macros['RecentChanges'] = 1;
+  if ($formatter->_macrocache and empty($options['call']) and empty($use_js)) {
+    return $formatter->macro_cache_tag('RecentChanges', $value);
+  }
+
+  // reset some conflict params
   if (empty($DBInfo->use_counter))
     $use_hits = 0;
   if (empty($DBInfo->show_hosts))
@@ -230,13 +325,10 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
   if ($u->id != 'Anonymous') {
     $bookmark= !empty($u->info['bookmark']) ? $u->info['bookmark'] : '';
-    $tz_offset= !empty($u->info['tz_offset']) ? $u->info['tz_offset'] : '';
   } else {
     $bookmark= $u->bookmark;
   }
-  if (empty($tz_offset)) {
-    $tz_offset=date("Z");
-  }
+  $tz_offset=$formatter->tz_offset;
 
   if (!$bookmark or !empty($nobookmark)) {
     if (!empty($checknew) and preg_match('/^\d+(\s*\*\s*\d+)*$/',$checknew))
@@ -293,26 +385,35 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     //  $ratchet_day = $day;
     //}
 
-    if (!empty($editcount[$day][$page_key])) {
-      $editors[$day][$page_key][] = $user;
-      $editcount[$day][$page_key]++;
+    if ($last_entry_only and !empty($last_entry_check)) {
+      if (!empty($lastmod[$page_key]) and $lastmod[$page_key] < $ed_time + $last_entry_check) {
+        $edit_day = gmdate('Ymd', $lastmod[$page_key] + $tz_offset);
+        $editors[$page_key][$edit_day][] = $user;
+        $editcount[$page_key][$edit_day]++;
+        continue;
+      }
+    } else if (!empty($editcount[$page_key][$day])) {
+      $editors[$page_key][$day][] = $user;
+      $editcount[$page_key][$day]++;
       continue;
     }
-    if (empty($editcount[$day])) {
-      $editcount[$day] = array();
-      $editors[$day] = array();
+    if (empty($editcount[$page_key])) {
+      $editcount[$page_key] = array();
+      $editors[$page_key] = array();
     }
 
-    $editcount[$day][$page_key]= 1;
+    $editcount[$page_key][$day]= 1;
 
-    $editors[$day][$page_key] = array();
-    $editors[$day][$page_key][] = $user;
+    $editors[$page_key][$day] = array();
+    $editors[$page_key][$day][] = $user;
+    $lastmod[$page_key] = $ed_time;
   }
 
   $out="";
   $ratchet_day= FALSE;
   $br="";
   $ii = 0;
+  $rc_list = array();
   foreach ($lines as $line) {
     $parts= explode("\t", $line);
     $page_key=$parts[0];
@@ -357,6 +458,9 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       }
     }
 
+    $jsattr = '';
+    if (!empty($use_js))
+      $jsattr = ' onclick="update_bookmark('.$ed_time.');return false;"';
     $bmark = '';
     if ($day != $ratchet_day) {
       $ratchet_day = $day;
@@ -371,70 +475,77 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         if (empty($nobookmark))
           $out.="<span class='rc-bookmark' style='font-size:small'>[".
             $formatter->link_tag($formatter->page->urlname, $bookmark_action ."&amp;time=$ed_time".$daysago,
-            _("set bookmark"))."]</span>\n";
+            _("set bookmark"), $jsattr)."]</span>\n";
         $br="<br />";
         $out.='</span>'.$perma.'<br />'.$bra;
         $cat0=$cat;
       } else {
-        $bmark=$formatter->link_to($bookmark_action ."&amp;time=$ed_time".$daysago,_("Bookmark"), 'class="button-small"');
+        $bmark=$formatter->link_to($bookmark_action ."&amp;time=$ed_time".$daysago,_("Bookmark"),
+          $jsattr.' class="button-small"');
       }
     }
     if (empty($use_day) and empty($nobookmark)) {
-      $date=$formatter->link_to($bookmark_action ."&amp;time=$ed_time".$daysago,$date);
+      $date=$formatter->link_to($bookmark_action ."&amp;time=$ed_time".$daysago,$date, $jsattr);
     }
 
     $pageurl=_rawurlencode($page_name);
 
-    #print $ed_time."/".$bookmark."//";
+    // print $ed_time."/".$bookmark."//";
     $diff = '';
     $updated = '';
-    if (!$DBInfo->hasPage($page_name))
+    if (!$DBInfo->hasPage($page_name)) {
       $icon= $formatter->link_tag($pageurl,"?action=info",$formatter->icon['del']);
-    else if ($ed_time > $bookmark) {
-      $icon= $formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon['diff']);
-      $updated= ' '.$formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon['updated']);
+      if (!empty($use_js))
+        $rc_list[] = $page_name;
+    } else {
+      $icon= $formatter->link_tag($pageurl,"?action=diff",$formatter->icon['diff'], " id='icon-$ii'");
 
-      if ($checknew or $checkchange)
-        $p= new WikiPage($page_name);
+      if (empty($use_js) and $ed_time > $bookmark) {
+        $icon= $formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon['diff']);
+        $updated= ' '.$formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon['updated']);
 
-      $add = 0;
-      $del = 0;
-      if ($checknew) {
-        $v= $p->get_rev($bookmark);
-        if (empty($v)) {
-          $icon=
-            $formatter->link_tag($pageurl,"?action=info",$formatter->icon['show']);
-          $updated = ' '.$formatter->link_tag($pageurl,"?action=info",$formatter->icon['new']);
-          $add+= $p->lines();
-        }
-      }
-      if ($checkchange) {
-        $infos = $p->get_info('>'.$bookmark);
-        foreach ($infos as $inf) {
-          $tmp = explode(' ', trim($inf[1]));
-          if (isset($tmp[1])) {
-            $add+= $tmp[0];
-            $del+= $tmp[1];
+        if ($checknew or $checkchange)
+          $p= new WikiPage($page_name);
+
+        $add = 0;
+        $del = 0;
+        if ($checknew) {
+          $v= $p->get_rev($bookmark);
+          if (empty($v)) {
+            $icon=
+              $formatter->link_tag($pageurl,"?action=info",$formatter->icon['show']);
+            $updated = ' '.$formatter->link_tag($pageurl,"?action=info",$formatter->icon['new']);
+            $add+= $p->lines();
           }
         }
+        if ($checkchange) {
+          $infos = $p->get_info('>'.$bookmark);
+          foreach ($infos as $inf) {
+            $tmp = explode(' ', trim($inf[1]));
+            if (isset($tmp[1])) {
+              $add+= $tmp[0];
+              $del+= $tmp[1];
+            }
+          }
 
-        if (!empty($add))
-          $diff.= '<span class="diff-added">+'.$add.'</span>';
-        if (!empty($del))
-          $diff.= '<span class="diff-removed">'.$del.'</span>';
+          if (!empty($add))
+            $diff.= '<span class="diff-added">+'.$add.'</span>';
+          if (!empty($del))
+            $diff.= '<span class="diff-removed">'.$del.'</span>';
+        }
+      } else if (!empty($use_js)) {
+        $rc_list[] = $page_name;
       }
-
-    } else
-      $icon= $formatter->link_tag($pageurl,"?action=diff",$formatter->icon['diff']);
+    }
 
     #$title= preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$page_name);
     $title0= get_title($title).$group;
     $title0=htmlspecialchars($title0);
-    $attr = '';
+    $attr = " id='title-$ii'";
     if (!empty($strimwidth) and strlen(get_title($title)) > $strimwidth and function_exists('mb_strimwidth')) {
       $title0=mb_strimwidth($title0,0, $strimwidth,'...', $DBInfo->charset);
-      $attr = ' title="'.$title.'"';
     }
+    $attr.= ' title="'.$title.'"';
     $title= $formatter->link_tag($pageurl,"",$title0,$target.$attr);
 
     if (!empty($use_hits)) {
@@ -446,14 +557,14 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
       if ($last_editor_only) {
         // show last editor only
-        $editor = array_pop($editors[$day][$page_key]);
+        $editor = array_pop($editors[$page_key][$day]);
       } else {
         // all show all authors
         // count edit number
         // make range list
         if ($use_editrange) { // MoinMoin like edit range
           $editor_list = array();
-          foreach ($editors[$day][$page_key] as $idx=>$name) {
+          foreach ($editors[$page_key][$day] as $idx=>$name) {
             if (empty($editor_list[$name])) $editor_list[$name] = array();
             $editor_list[$name][] = $idx + 1;
           }
@@ -482,7 +593,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
             }
           }
         } else {
-          $editor_counts = array_count_values($editors[$day][$page_key]);
+          $editor_counts = array_count_values($editors[$page_key][$day]);
         }
         $editor = array_keys($editor_counts);
       }
@@ -547,8 +658,10 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       $user = '&nbsp;';
     }
     $count=""; $extra="";
-    if ($editcount[$day][$page_key] > 1)
-      $count=sprintf(_("%s changes"), " <span class='num'>".$editcount[$day][$page_key]."</span>");
+    if ($editcount[$page_key][$day] > 1)
+      $count = '<span id="change-'.$ii.'">'.sprintf(_("%s changes"), " <span class='num'>".$editcount[$page_key][$day]."</span>").'</span>';
+    else
+      $count = '<span id="change-'.$ii.'"></span>';
     if (!empty($comment) && !empty($log))
       $extra="&nbsp; &nbsp; &nbsp; <small name='word-break'>$log</small>";
 
@@ -564,7 +677,126 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $logs[$page_key][$day] = 1;
     ++$ii;
   }
-  return $btnlist.'<div class="recentChanges">'.$rctitle.$template_bra.$out.$template_cat.$cat0.'</div>';
+
+  $js = '';
+  if (!empty($rc_list)) {
+    require_once('lib/JSON.php');
+    $json = new Services_JSON();
+
+    $icon_new = $formatter->icon['new'];
+    $icon_updated = $formatter->icon['updated'];
+    $icon_show = $formatter->icon['show'];
+    $icon_diff = $formatter->icon['diff'];
+
+    $js = "<script type='text/javascript'>\nvar rclist =";
+    $ext = array();
+    if (!empty($checknew)) $ext[] = 'new=1';
+    if (!empty($checkchange)) $ext[] = 'change=1';
+    $arg = implode('&', $ext);
+    $url = $formatter->link_url('RecentChanges', "?action=recentchanges/ajax" . ($arg ? '&'.$arg : ''). "&value=");
+    $js.= $json->encode($rc_list).";\n";
+    $js.= <<<EOF
+function update_bookmark(time) {
+    var url = "$url";
+    if (rclist.length) {
+      var timetag;
+      if (typeof time == 'undefined') timetag = '';
+      else timetag = 'time=' + time + '&';
+
+      // url = url.replace(/value=/, timetag + 'value=' + encodeURIComponent(JSON.stringify(rclist)));
+      url = url.replace(/value=/, timetag + 'value=' + encodeURIComponent(json_encode(rclist)));
+      var txt = HTTPGet(url);
+      var ret;
+      if (txt == null) return;
+
+      var icon_new = "$icon_new";
+      var icon_updated = "$icon_updated";
+      var icon_show = "$icon_show";
+      var icon_diff = "$icon_diff";
+
+      ret = window["eval"]("(" + txt + ")");
+      var bookmark = ret['__-_-bookmark-_-__'];
+      var jj = 0;
+      for (var ii = 0; ii < rclist.length; ii++) {
+        var item = document.getElementById('title-' + ii);
+        var title = item.getAttribute('title');
+        if (rclist[ii] != title) {
+          var re = new RegExp("^.*" + url_prefix + '/');
+          title = decodeURIComponent(item.href.replace(re, ''));
+        }
+        if (rclist[ii] == title && ret[title]) {
+          var icon = document.getElementById('icon-' + ii);
+          var state = document.createElement('SPAN');
+          if (ret[title]['state'] == 'new') {
+            state.innerHTML = icon_new;
+            icon.href = icon.href.replace(/action=(diff|info)(&bookmark=\d+)?/, 'action=info');
+            icon.innerHTML = icon_show;
+          } else {
+            state.innerHTML = icon_updated;
+            icon.href = icon.href.replace(/action=(diff|info)(&bookmark=\d+)?/, 'action=diff&bookmark=' + bookmark);
+            icon.innerHTML = icon_diff;
+          }
+
+          // remove previous icon
+          if (item.firstChild.nextSibling)
+            item.removeChild(item.firstChild.nextSibling);
+          item.appendChild(state); // add updated / new icon
+
+          var change = document.getElementById('change-' + ii);
+          if (!change) continue;
+
+          // remove previous diff info
+          if (change.lastChild && change.lastChild.tagName == 'SPAN')
+            change.removeChild(change.lastChild);
+
+          // add diff info
+          var diff = document.createElement('SPAN');
+          if (ret[title]['add']) {
+            var add = document.createElement('SPAN');
+            add.setAttribute('class', 'diff-added');
+            var txt = document.createTextNode('+' + ret[title]['add']);
+            add.appendChild(txt);
+            diff.appendChild(add);
+          }
+          if (ret[title]['del']) {
+            var del = document.createElement('SPAN');
+            del.setAttribute('class', 'diff-removed');
+            var txt = document.createTextNode(ret[title]['del']);
+            del.appendChild(txt);
+            diff.appendChild(del);
+          }
+          change.appendChild(diff);  
+        } else {
+          if (item.firstChild.nextSibling)
+            item.removeChild(item.firstChild.nextSibling);
+
+          var change = document.getElementById('change-' + ii);
+          if (!change) continue;
+
+          // remove diff info
+          if (change.lastChild && change.lastChild.tagName == 'SPAN')
+            change.removeChild(change.lastChild);
+
+          // recover diff icon and link
+          var icon = document.getElementById('icon-' + ii);
+          if (icon && icon.firstChild) {
+            if (icon.firstChild.getAttribute('alt') != 'D') {
+              icon.innerHTML = icon_diff;
+            }
+            // recover link
+            icon.href = icon.href.replace(/action=(diff|info)(&bookmark=\d+)?/, 'action=diff');
+          }
+        }
+      }
+    }
+}
+update_bookmark();
+</script>
+EOF;
+
+  }
+
+  return $btnlist.'<div class="recentChanges">'.$rctitle.$template_bra.$out.$template_cat.$cat0.'</div>'.$js;
 }
 // vim:et:sts=2:sw=2:
 ?>
