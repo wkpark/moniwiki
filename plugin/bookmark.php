@@ -12,7 +12,7 @@ function macro_bookmark($formatter, $value = '', &$options) {
 
   $user = &$DBInfo->user; # get cookie
 
-  if (empty($options['time'])) {
+  if (!isset($options['time'][0])) {
      $bookmark = time();
   } else {
      $bookmark = $options['time'];
@@ -20,7 +20,7 @@ function macro_bookmark($formatter, $value = '', &$options) {
   $ret = array();
 
   if ($user->id == "Anonymous") {
-    if (is_numeric($bookmark)) {
+    if (is_numeric($bookmark) and $bookmark > 0) {
       setcookie("MONI_BOOKMARK",$bookmark,time()+60*60*24*30,get_scriptname());
       $ret['title'] = _('Bookmark Changed');
     } else {
@@ -31,17 +31,17 @@ function macro_bookmark($formatter, $value = '', &$options) {
     $_COOKIE['MONI_BOOKMARK']=$bookmark;
     $user->bookmark=$bookmark;
   } else {
-    if (is_numeric($bookmark)) {
+    if (is_numeric($bookmark) and $bookmark > 0) {
       $ret['title'] = _('Bookmark Changed');
       $user->info['bookmark']=$bookmark;
+      $user->bookmark=$bookmark;
     } else {
       $ret['title']=_("Bookmark Deleted !");
-      $user->info['bookmark']=0;
-      $bookmark = 0;
+      $user->info['bookmark']= null;
     }
     $DBInfo->udb->saveUser($user);
-    $_COOKIE['MONI_BOOKMARK']=$bookmark;
-    $user->bookmark=$bookmark;
+    if (empty($user->info['bookmark']))
+      unset($user->bookmark);
   }
 
   if (isset($options['ret']))
