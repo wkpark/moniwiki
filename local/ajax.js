@@ -200,4 +200,24 @@ function removeNode(node) {
   }
 }
 
-// vim:et:sts=2:
+function json_encode(input) {
+  if (!input) return 'null';
+  switch (input.constructor) {
+    case String: return '"' + input + '"';
+    case Number: return input.toString();
+    case Array:
+      var buf = [];
+      for (i in input)
+        buf.push(json_encode(input[i]));
+          return '[' + buf.join(', ') + ']';
+    case Object:
+      var buf = [];
+      for (k in input)
+        buf.push(k + ' : ' + json_encode(input[k]));
+          return '{ ' + buf.join(', ') + '} ';
+    default:
+      return 'null';
+  }
+}
+
+// vim:et:sts=2:sw=2:
