@@ -4812,12 +4812,14 @@ MSG;
   // render trails
   var str = [];
   var trail = document.createElement("span");
-  for (var i = 0; i < trails.length - 1; i++) {
+  for (var i = 0, j = 0; i < trails.length; i++) {
     var url = escape(trails[i]).replace(/\\+/g, "%20");
     var txt = decodeURIComponent(escape(trails[i])).replace(/\\+/g, " ");
-    str[i] = "<a href='" + url_prefix + query_prefix + url + "'>" + txt + "</a>";
+    if (txt == "$pagename") continue;
+    str[j] = "<a href='" + url_prefix + query_prefix + url + "'>" + txt + "</a>";
+    j++;
   }
-  str[i] = decodeURIComponent(escape(trails[i])).replace(/\\+/g, " ");
+  str[j] = decodeURIComponent(escape("$pagename")).replace(/\\+/g, " ");
   document.write(str.join("<span class='separator'>$DBInfo->arrow</span>"));
 })();
 </script>
@@ -5044,7 +5046,7 @@ if (!empty($theme)) $options['theme']=$theme;
 if ($options['id'] != 'Anonymous') {
   $options['css_url']=!empty($user->info['css_url']) ? $user->info['css_url'] : '';
   $options['quicklinks']=!empty($user->info['quicklinks']) ? $user->info['quicklinks'] : '';
-  $options['tz_offset']=!empty($user->info['tz_offset']) ? $user->info['tz_offset'] : '';
+  $options['tz_offset']=!empty($user->info['tz_offset']) ? $user->info['tz_offset'] : date('Z');
   if (empty($theme)) $options['theme']=!empty($user->info['theme']) ? $user->info['theme'] : '';
 } else {
   $options['css_url']=$user->css;
