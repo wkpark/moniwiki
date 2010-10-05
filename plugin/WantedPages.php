@@ -19,7 +19,7 @@ function macro_WantedPages($formatter,$value='') {
     $dum='';
     $p= new WikiPage($page);
     $f= new Formatter($p);
-    $pi=$f->get_instructions($dum);
+    $pi=$f->page->get_instructions($dum);
     if ($pi['#format']!='') continue;
     $links=$f->get_pagelinks();
     if ($links) {

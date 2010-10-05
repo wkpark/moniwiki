@@ -650,7 +650,7 @@ function do_keywords($formatter,$options) {
         if (!empty($DBInfo->use_keywords) or !empty($options['update'])) {
             # auto update the page with selected keywords.
             $body=$formatter->page->get_raw_body();
-            $pi=$formatter->get_instructions($dum);
+            $pi=$formatter->page->get_instructions($dum);
             if (!empty($pi['#keywords'])) {
                 $tag=preg_quote($pi['#keywords']);
                 $nbody= preg_replace('/^#keywords\s+'.$tag.'/',

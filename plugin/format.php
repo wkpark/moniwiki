@@ -11,7 +11,7 @@ function do_format($formatter,$options) {
   $proc=!empty($options['proc']) ? $options['proc']:'';
   if (!$mimetype) $mimetype='text/plain';
 
-  $pi=$formatter->get_instructions($dummy);
+  $pi=$formatter->page->get_instructions($dummy);
   if (!$formatter->wordrule) $formatter->set_wordrule($pi);
   if ($pi['#format']=='xsltproc') {
     $options['title']= _("It is a XML format !");

@@ -1121,7 +1121,7 @@ sectionEdit(null,true,null);
 JS;
     if (!$DBInfo->hasPage($options['page'])) print $js;
     else {
-      $pi=$formatter->get_instructions($dum);
+      $pi=$formatter->page->get_instructions($dum);
       if (in_array($pi['#format'],array('wiki','monimarkup')) )
 	print $js;
     }
@@ -1708,7 +1708,7 @@ function do_raw($formatter,$options) {
   } else {
     $mtime = $formatter->page->mtime();
     $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
-    $etag = md5($lastmod);
+    $etag = $formatter->page->etag();
     if (strstr($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') and function_exists('ob_gzhandler')) {
       $gzip_mode = 1;
       $etag.= '.gzip'; // is it correct?
@@ -2524,6 +2524,10 @@ function macro_RandomPage($formatter, $value = '', $params = array()) {
     }
   }
 
+  if ($mode != 'js') $formatter->_dynamic_macros['RandomPage'] = 1;
+  if ($formatter->_macrocache and empty($options['call']) and $mode != 'js')
+    return $formatter->macro_cache_repl('RandomPage', $value);
+
   if ($count <= 0) $count=1;
   $counter= $count;
 
@@ -2737,6 +2741,10 @@ function macro_DateTime($formatter,$value) {
 
 function macro_UserPreferences($formatter,$value,$options='') {
   global $DBInfo;
+
+  $formatter->_dynamic_macros['UserPreferences'] = 1;
+  if ($formatter->_macrocache and empty($options['call']))
+    return $formatter->macro_cache_repl('UserPreferences', $value);
 
   $use_any=0;
   if (!empty($DBInfo->use_textbrowsers)) {

@@ -353,7 +353,7 @@ function macro_diff($formatter,$value,&$options)
 
   $option='';
 
-  $pi=$formatter->get_instructions($dum);
+  $pi=$formatter->page->get_instructions();
   $formatter->pi=$pi;
 
   $processor_type=$pi['#format'];
@@ -413,7 +413,7 @@ function macro_diff($formatter,$value,&$options)
 
   if (!$rev1 && !$rev2) {
     $msg= _("No older revisions available");
-    if ($options['nomsg']) return '';
+    if (!empty($options['nomsg'])) return '';
     return "<h2>$msg</h2>";
   }
   if (!$DBInfo->version_class) {

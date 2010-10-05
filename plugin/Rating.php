@@ -165,7 +165,7 @@ function do_rating($formatter,$options) {
     if (empty($matched)) {
         if (!empty($DBInfo->use_rating)) {
             $dum='';
-            $pi=$formatter->get_instructions($dum);
+            $pi=$formatter->page->get_instructions($dum);
             $old = !empty($pi['#rating']) ? $pi['#rating'] : '';
             $new='#rating '.$total.','.$count;
             if ($old) {

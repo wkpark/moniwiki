@@ -1159,6 +1159,7 @@ class WikiDB {
 class WikiPage {
   var $fp;
   var $filename;
+  var $pi = null;
   var $rev;
   var $body;
 
@@ -1195,6 +1196,14 @@ class WikiPage {
 
   function mtime () {
     return @filemtime($this->filename);
+  }
+
+  function etag() {
+    global $DBInfo;
+    $seed = '';
+    if (!empty($DBInfo->etag_seed))
+      $seed = $DBInfo->etag_seed;
+    return md5($this->mtime().$DBInfo->mtime().$seed);
   }
 
   function size() {
@@ -1320,6 +1329,147 @@ class WikiPage {
     }
     return $infos;
   }
+
+  function get_redirect() {
+    $body = $this->get_raw_body();
+    if ($body[0] == '#' and ($p = strpos($body, "\n")) !== false) {
+      $line = substr($body, 0, $p);
+      if (preg_match('/#redirect\s/i', $line)) {
+        list($tag, $val) = explode(' ', $line, 2);
+        if (isset($val[0])) return $val;
+      }
+    }
+  }
+
+  function get_instructions($body = '') {
+    global $Config;
+
+    $pikeys=array('#redirect','#action','#title','#notitle','#keywords','#noindex',
+      '#format','#filter','#postfilter','#twinpages','#notwins','#nocomment','#comment',
+      '#language','#camelcase','#nocamelcase','#cache','#nocache','#alias', '#linenum', '#nolinenum',
+      '#singlebracket','#nosinglebracket','#rating','#norating','#nodtd');
+    $pi=array();
+
+    $format='';
+
+    // get page format from $pagetype
+    if ( empty($this->pi['#format']) and !empty($Config['pagetype'])) {
+      preg_match('%(:|/)%',$this->name,$sep);
+      $key=strtok($this->name,':/');
+      if (isset($Config['pagetype'][$key]) and $f=$Config['pagetype'][$key]) {
+        $p=preg_split('%(:|/)%',$f);
+        $p2=strlen($p[0].$p[1])+1;
+        $p[1]=$p[1] ? $f{strlen($p[0])}.$p[1]:'';
+        $p[2]=$p[2] ? $f{$p2}.$p[2]:'';
+        $format=$p[0];
+        if ($sep[1]) { # have : or /
+          $format = ($sep[1]==$p[1]{0}) ? substr($p[1],1):
+                    (($sep[1]==$p[2]{0}) ? substr($p[2],1):'plain');
+        }
+      } else if (isset($Config['pagetype']['*']))
+        $format=$Config['pagetype']['*']; // default page type
+    } else {
+      if (empty($body) and !empty($this->pi['#format']))
+        $format=$this->pi['#format'];
+    }
+
+    $update_pi = false;
+    if (empty($body)) {
+      if (!$this->exists()) return array();
+      if (isset($this->pi)) return $this->pi;
+
+      $pi_cache = new Cache_text('PI');
+      if ($this->mtime() < $pi_cache->mtime($this->name)) {
+        $pi = $pi_cache->fetch($this->name);
+
+        if (empty($pi['#format']) and !empty($format)) {
+          $pi['#format'] = $format; // override default
+        } else if (!isset($pi['#format'])) {
+          $pi['#format'] = $Config['default_markup'];
+        }
+
+        return $pi;
+      }
+
+      $body=$this->get_raw_body();
+      $update_pi = true;
+    }
+
+    if (!empty($Config['use_metadata'])) {
+      // FIXME experimental
+      include_once('lib/metadata.php');
+      list($this->metas,$nbody)=_get_metadata($body);
+      if ($nbody!=null) $body=$nbody;
+    }
+
+    if (!$format and $body[0] == '<') {
+      list($line, $dummy)= explode("\n", $body,2);
+      if (substr($line,0,6) == '<?xml ')
+        #$format='xslt';
+        $format='xsltproc';
+      elseif (preg_match('/^<\?php(\s|\b)/',$line))
+        $format='php'; # builtin php detect
+    } else {
+      if ($body[0] == '#' and $body[1] =='!') {
+        list($line, $body)= explode("\n", $body,2);
+        $format= trim(substr($line,2));
+      }
+
+      // not parsed lines are comments
+      $notparsed=array();
+      $pilines=array();
+      $body_start = 0;
+      while ($body and $body[0] == '#') {
+        $body_start++;
+        # extract first line
+        list($line, $body)= explode("\n", $body,2);
+        if ($line=='#') break;
+        else if ($line[1]=='#') { $notparsed[]=$line; continue;}
+        $pilines[]=$line;
+
+        $val = '';
+        if (($pos = strpos($line, ' ')) !== false) 
+          list($key,$val)= explode(' ',$line,2);
+        else
+          $key = trim($line);
+        $key=strtolower($key);
+        $val=trim($val);
+        if (in_array($key,$pikeys)) { $pi[$key]=$val ? $val:1; }
+        else {
+           $notparsed[]=$line;
+           array_pop($pilines);
+        }
+      }
+      $piline=implode("\n",$pilines);
+      $piline=$piline ? $piline."\n":'';
+      #
+      if (isset($pi['#notwins'])) $pi['#twinpages']=0;
+      if (isset($pi['#nocamelcase'])) $pi['#camelcase']=0;
+      if (isset($pi['#nocache'])) $pi['#cache']=0;
+      if (isset($pi['#nofilter'])) unset($pi['#filter']);
+      if (isset($pi['#nosinglebracket'])) $pi['#singlebracket']=0;
+      if (isset($pi['#nolinenum'])) $pi['#linenum']=0;
+    }
+
+    if (!empty($pi['#format']) and ($p = strpos($pi['#format'],' '))!== false) {
+      $pi['args'] = substr($pi['#format'],$p+1);
+      $pi['#format']= substr($pi['#format'],0,$p);
+    }
+
+    if (!empty($piline)) $pi['raw']= $piline;
+    if (!empty($body_start)) $pi['start_line'] = $body_start;
+
+    if ($update_pi) $pi_cache->update($this->name, $pi);
+
+    if (empty($pi['#format']) and !empty($format)) {
+      $pi['#format']=$format; // override default
+    } else if (!isset($pi['#format'])) {
+      $pi['#format']= $Config['default_markup'];
+    }
+
+    return $pi;
+  }
+
 }
 
 class Formatter {
@@ -1372,7 +1522,6 @@ class Formatter {
     $this->user=&$DBInfo->user;
     $this->check_openid_url=!empty($DBInfo->check_openid_url) ? $DBInfo->check_openid_url : 0;
     $this->register_javascripts($DBInfo->javascripts);
-    $this->dynamic_macros=!empty($DBInfo->dynamic_macros) ? $DBInfo->dynamic_macros : null;
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -1694,122 +1843,6 @@ class Formatter {
       break;
     }
     return $out;
-  }
-
-  function get_redirect() {
-    $body=$this->page->get_raw_body();
-    if ($body[0]=='#' and substr($body,0,10)=='#redirect ') {
-      list($line,$dumm)=explode("\n",$body,2);
-      list($tag,$val)=explode(" ",$line,2);
-      if ($val) $this->pi['#redirect']=$val;
-    }
-  }
-
-  function get_instructions(&$body) {
-    global $Config;
-    $pikeys=array('#redirect','#action','#title','#notitle','#keywords','#noindex',
-      '#format','#filter','#postfilter','#twinpages','#notwins','#nocomment','#comment',
-      '#language','#camelcase','#nocamelcase','#cache','#nocache','#alias', '#linenum', '#nolinenum',
-      '#singlebracket','#nosinglebracket','#rating','#norating','#nodtd');
-    $pi=array();
-
-    $update_body=false;
-    $format='';
-    if ( empty($this->pi['#format'])) {
-      preg_match('%(:|/)%',$this->page->name,$sep);
-      $key=strtok($this->page->name,':/');
-      if (isset($Config['pagetype'][$key]) and $f=$Config['pagetype'][$key]) {
-        $p=preg_split('%(:|/)%',$f);
-        $p2=strlen($p[0].$p[1])+1;
-        $p[1]=$p[1] ? $f{strlen($p[0])}.$p[1]:'';
-        $p[2]=$p[2] ? $f{$p2}.$p[2]:'';
-        $format=$p[0];
-        if ($sep[1]) { # have : or /
-          $format = ($sep[1]==$p[1]{0}) ? substr($p[1],1):
-                    (($sep[1]==$p[2]{0}) ? substr($p[2],1):'plain');
-        }
-      } else if (isset($Config['pagetype']['*']))
-        $format=$Config['pagetype']['*']; // default page type
-    } else {
-      if (empty($body) and !empty($this->pi['#format']))
-        $format=$this->pi['#format'];
-    }
-
-    if (empty($body)) {
-      if (!$this->page->exists()) return array();
-      if ($this->pi) return $this->pi;
-      $body=$this->page->get_raw_body();
-      $update_body=true;
-    }
-
-    if (!empty($this->use_metadata)) {
-      include_once('lib/metadata.php');
-      list($this->metas,$nbody)=_get_metadata($body);
-      if ($nbody!=null) $body=$nbody;
-    }
-
-    if (!$format and $body[0] == '<') {
-      list($line, $dummy)= explode("\n", $body,2);
-      if (substr($line,0,6) == '<?xml ')
-        #$format='xslt';
-        $format='xsltproc';
-      elseif (preg_match('/^<\?php(\s|\b)/',$line))
-        $format='php'; # builtin php detect
-    } else {
-      if ($body[0] == '#' and $body[1] =='!') {
-        list($line, $body)= explode("\n", $body,2);
-        $format= trim(substr($line,2));
-      }
-
-      $notused=array();
-      $pilines=array();
-      $body_start = 0;
-      while ($body and $body[0] == '#') {
-        $body_start++;
-        # extract first line
-        list($line, $body)= explode("\n", $body,2);
-        if ($line=='#') break;
-        else if ($line[1]=='#') { $notused[]=$line; continue;}
-        $pilines[]=$line;
-
-        $val = '';
-        if (($pos = strpos($line, ' ')) !== false) 
-          list($key,$val)= explode(' ',$line,2);
-        else
-          $key = trim($line);
-        $key=strtolower($key);
-        $val=trim($val);
-        if (in_array($key,$pikeys)) { $pi[$key]=$val ? $val:1; }
-        else {
-           $notused[]=$line;
-           array_pop($pilines);
-        }
-      }
-      $piline=implode("\n",$pilines);
-      $piline=$piline ? $piline."\n":'';
-      #
-      if (isset($pi['#notwins'])) $pi['#twinpages']=0;
-      if (isset($pi['#nocamelcase'])) $pi['#camelcase']=0;
-      if (isset($pi['#nocache'])) $pi['#cache']=0;
-      if (isset($pi['#nofilter'])) unset($pi['#filter']);
-      if (isset($pi['#nosinglebracket'])) $pi['#singlebracket']=0;
-      if (isset($pi['#nolinenum'])) $pi['#linenum']=0;
-    }
-
-    if (empty($pi['#format']) and !empty($format)) $pi['#format']=$format; // override default
-    if (!isset($pi['#format'])) $pi['#format']= $Config['default_markup'];
-
-    if (($p = strpos($pi['#format'],' '))!== false) {
-      $pi['args'] = substr($pi['#format'],$p+1);
-      $pi['#format']= substr($pi['#format'],0,$p);
-    }
-
-    if (!empty($notused)) $body=implode("\n",$notused)."\n".$body;
-    if (!empty($update_body)) $this->page->write($body." "); # workaround XXX
-    #if ($update_body) $this->page->write($body);
-    $pi['raw']=!empty($piline) ? $piline : '';
-    $pi['start_line'] = $body_start;
-    return $pi;
   }
 
   function highlight_repl($val,$colref=array()) {
@@ -2550,21 +2583,20 @@ class Formatter {
       $name = $np;
     }
 
-    if ($this->_macrocache and empty($options['call']) and
-      (isset($this->dynamic_macros[strtolower($name)]) or
-      isset($this->dynamic_macros[$name]))) {
-      $arg = '';
-      if ($args === true) $arg = '()';
-      else if (!empty($args)) $arg = '('.$args.')';
-      $macro=$name.$arg;
-      $md5sum= md5($macro);
-      $this->_macros[$md5sum]=array($macro,$this->mid);
-      return '[['.$md5sum.']]';
-    }
-
     $ret=call_user_func_array('macro_'.$name,array(&$this,$args,&$options));
     if (is_array($ret)) return $ret;
     return $bra.$ret.$ket;
+  }
+
+  function macro_cache_repl($name, $args)
+  {
+    $arg = '';
+    if ($args === true) $arg = '()';
+    else if (!empty($args)) $arg = '('.$args.')';
+    $macro = $name.$arg;
+    $md5sum = md5($macro);
+    $this->_dynamic_macros[$macro] = array($md5sum, $this->mid);
+    return '[['.$md5sum.']]';
   }
 
   function processor_repl($processor,$value, $options = false) {
@@ -3050,7 +3082,7 @@ class Formatter {
 
     if (isset($body[0])) {
       $this->text = $body;
-      $pi=$this->get_instructions($body);
+      $pi=$this->page->get_instructions($body);
 
       if ($this->wikimarkup and $pi['raw']) {
         $pi_html=str_replace("\n","<br />\n",$pi['raw']);
@@ -3109,12 +3141,12 @@ class Formatter {
 
       if (isset($options['rev'])) {
         $body=$this->page->get_raw_body($options);
-        $pi=$this->get_instructions($body);
+        $pi=$this->page->get_instructions($body);
       } else {
-        $pi=$this->get_instructions($dum);
+        $pi=$this->page->get_instructions();
         $body=$this->page->get_raw_body($options);
       }
-      $this->text = &$body;
+      $this->text = &$body; // XXX
 
       $this->set_wordrule($pi);
       if (!empty($this->wikimarkup) and !empty($pi['raw']))
@@ -3171,8 +3203,10 @@ class Formatter {
       }
 
       if (!empty($body)) {
-        $body=rtrim($body); # delete last empty line
         $lines=explode("\n",$body);
+        $el = end($lines);
+        // delete last empty line
+        if (!isset($el[0])) array_pop($lines);
       } else
         $lines=array();
 
@@ -3245,12 +3279,15 @@ class Formatter {
 
     $formatter=&$this;
 
+    $ii = isset($pi['start_line']) ? $pi['start_line'] : 0;
     if (isset($formatter->pi['#linenum']) and empty($formatter->pi['#linenum']))
       $this->linenum = -99999;
     else
-      $this->linenum = isset($pi['start_line']) ? $pi['start_line'] : 0;
+      $this->linenum = $ii;
 
-    foreach ($lines as $line) {
+    $lcount = count($lines);
+    for (; $ii < $lcount; $ii++) {
+      $line = $lines[$ii];
       $this->linenum++;
       $lid = $this->linenum;
       # empty line
@@ -3999,11 +4036,17 @@ class Formatter {
       }
     }
     $mtime = $this->page->mtime();
-    if (!empty($mtime) and empty($options['nolastmod'])) {
+    if (!empty($DBInfo->use_conditional_get) and empty($options['action']) and !empty($mtime)
+        and empty($options['nolastmod'])
+        and $this->page->is_static)
+    {
       $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
       $this->header('Last-Modified: '.$lastmod);
+      $etag = $this->page->etag();
       if (!empty($options['etag']))
         $this->header('ETag: "'.$options['etag'].'"');
+      else
+        $this->header('ETag: "'.$etag.'"');
 
       $meta_lastmod = '<meta http-equiv="last-modified" content="'.$lastmod.'" />'."\n";
     }
@@ -5185,7 +5228,21 @@ function wiki_main($options) {
   }
 
   $options['page']=$pagename;
+  $options['action'] = &$action;
   $page = $DBInfo->getPage($pagename);
+
+  $pis = array();
+
+  // get PI cache
+  if ($page->exists()) $page->pi = $pis = $page->get_instructions();
+  $page->is_static = false;
+
+  // set some PIs for robot
+  if (!empty($options['is_robot'])) {
+    $page->is_static = true;
+  } else {
+    $page->is_static = empty($pis['#nocache']) && empty($pis['#dynamic']);
+  }
 
   // HEAD support for robots
   if (!empty($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD'] == 'HEAD') {
@@ -5193,15 +5250,34 @@ function wiki_main($options) {
       header("HTTP/1.1 404 Not found");
       header("Status: 404 Not found");
     } else {
-      #$formatter->get_redirect();
-      $mtime = $page->mtime();
-      $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
-      $etag = '"'.md5($lastmod).'"';
-      header('Last-Modified: '.$lastmod);
-      header('ETag: '.$etag);
+      if ($page->is_static) {
+        $mtime = $page->mtime();
+        $etag = $page->etag();
+        $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
+        header('Last-Modified: '.$lastmod);
+        if (!empty($action)) {
+          $etag = '"'.$etag.'"';
+          header('ETag: '.$etag);
+        }
+      }
     }
-    #$ret = $formatter->send_header($header, $options);
     return;
+  }
+
+  if (!empty($DBInfo->use_conditional_get) and $page->exists() and $page->is_static) {
+    $mtime = $page->mtime();
+    $etag = $page->etag();
+    $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
+    $need = http_need_cond_request($mtime, $lastmod, $etag);
+    if (!$need) {
+      @ob_end_clean();
+      $headers = array();
+      $headers[] = 'HTTP/1.0 304 Not Modified';
+      $headers[] = 'Last-Modified: '.$lastmod;
+
+      foreach ($headers as $header) header($header);
+      return;
+    }
   }
 
   $formatter = new Formatter($page,$options);
@@ -5391,8 +5467,7 @@ function wiki_main($options) {
       return;
     }
 
-
-    $formatter->pi=$formatter->get_instructions($dum);
+    $formatter->pi=$formatter->page->get_instructions();
     // update aliases
     if (!empty($DBInfo->use_alias)) {
       $ac = new Cache_text('alias');
@@ -5452,7 +5527,7 @@ function wiki_main($options) {
     $options['pagelinks']=1;
     if (!empty($Config['cachetime']) and $Config['cachetime'] > 0 and empty($formatter->pi['#nocache'])) {
       $cache= new Cache_text('pages', array('ext'=>'html'));
-      $mcache= new Cache_text('dynamicmacros');
+      $mcache= new Cache_text('dynamic_macros');
       $mtime=$cache->mtime($pagename);
       $dtime= $DBInfo->mtime();
       $now=time();
@@ -5480,20 +5555,18 @@ function wiki_main($options) {
         $out=ob_get_contents();
         ob_end_clean();
         $formatter->_macrocache=0;
-        $_macros=&$formatter->_macros;
-        if (empty($formatter->pi['#nocache'])) {
-          $cache->update($pagename, $out, $Config['cachetime']);
-          if (isset($_macros))
-            $mcache->update($pagename,$_macros);
-        }
+        $_macros=&$formatter->_dynamic_macros;
+        if (!empty($_macros))
+          $mcache->update($pagename,$_macros);
+        $cache->update($pagename, $out, $Config['cachetime']);
       }
       if (!empty($_macros)) {
         $mrule=array();
         $mrepl=array();
-        foreach ($_macros as $k=>$v) {
-          $mrule[]='[['.$k.']]';
+        foreach ($_macros as $m=>$v) {
+          $mrule[]='[['.$v[0].']]';
           $options['mid']=$v[1];
-          $mrepl[]=$formatter->macro_repl($v[0],'',$options); // XXX
+          $mrepl[]=$formatter->macro_repl($m,'',$options); // XXX
         }
         echo $formatter->get_javascripts();
         $out=str_replace($mrule,$mrepl,$out);
@@ -5503,6 +5576,23 @@ function wiki_main($options) {
     } else {
       $formatter->send_page('',$options);
     }
+
+    // automatically set #dynamic PI
+    if (!empty($formatter->_dynamic_macros)) {
+      $pis = $formatter->pi;
+      if (empty($pis['raw'])) {
+        // empty PIs
+        $pis = array();
+      } else if (isset($pis['#format']) and !preg_match('/#format\s/', $pis['raw'])) {
+        // #format not found in PIs
+        unset($pis['#format']);
+      }
+      $pis['#dynamic'] = 1; // internal instruction
+
+      $pi_cache = new Cache_text('PI');
+      $pi_cache->update($formatter->page->name, $pis);
+    }
+
     if (isset($options['timer']) and is_object($options['timer'])) {
       $options['timer']->Check("send_page");
     }
@@ -5678,6 +5768,20 @@ if (session_id() == '' and empty($Config['nosession']) and is_writable(ini_get('
   $prefix = !empty($DBInfo->session_seed) ? $DBInfo->session_seed : 'MONIWIKI';
   $myseed = getTicket($prefix, $_SERVER['REMOTE_ADDR']);
   $myid = $prefix . '-*-' . $myseed . '-*-' . $options['id'];
+
+  session_set_cookie_params (isset($Config['session_lifetime']) ? $Config['session_lifetime'] : 3600, get_scriptname());
+
+  // chceck some action and set expire
+  session_cache_limiter(FALSE);
+  if ($options['id'] == 'Anonymous')
+    $private = 'public';
+  else
+    $private = 'private';
+  if (empty($_GET['action']) or $_GET['action'] == 'show')
+    header('Cache-Control: '.$private.', max-age=0, post-check=0, pre-check=0');
+  //else if (!empty($_GET['action']) and in_array($_GET['action'], array('edit', 'info', 'diff')))
+  //  header('Cache-Control: '.$private.', max-age=600, post-check=0, pre-check=0');
+
   session_name($myid);
   session_start();
 }

@@ -12,7 +12,7 @@ function do_print($formatter,$options) {
   $formatter->nonexists='always';
 
   $dum = false;
-  $formatter->pi = $formatter->get_instructions($dum);
+  $formatter->pi = $formatter->page->get_instructions($dum);
   $title = $formatter->pi['#title'];
 
   $formatter->send_header("",$options);
