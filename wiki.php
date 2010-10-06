@@ -4862,7 +4862,7 @@ MSG;
     str[j] = "<a href='" + url_prefix + query_prefix + url + "'>" + txt + "</a>";
     j++;
   }
-  str[j] = decodeURIComponent(escape("$pagename")).replace(/\\+/g, " ");
+  str[j] = "$pagename";
   document.write(str.join("<span class='separator'>$DBInfo->arrow</span>"));
 })();
 </script>
