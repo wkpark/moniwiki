@@ -1166,7 +1166,7 @@ function _get_sections($body,$lim=5) {
             {[^{}]+}(?!})|
             (?<!{){{1,2}(?!{)|
             (?<!})}{1,2}(?!}))|(?1)
-            )+}}})/x", $body, -1, PREG_SPLIT_DELIM_CAPTURE);
+            )++}}})/x", $body, -1, PREG_SPLIT_DELIM_CAPTURE);
 
   // fix for inline {{{foobar}}} in the headings.
   $chunks = array();
@@ -3402,7 +3402,7 @@ EOS;
             {[^{}]+}(?!})|
             (?<!{){{1,2}(?!{)|
             (?<!})}{1,2}(?!}))|(?1)
-            )+}}})/x", $body, -1, PREG_SPLIT_DELIM_CAPTURE);
+            )++}}})/x", $body, -1, PREG_SPLIT_DELIM_CAPTURE);
  $sz = count($chunk);
  $k = 1;
  $body = '';
