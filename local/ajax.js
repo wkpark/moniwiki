@@ -220,4 +220,26 @@ function json_encode(input) {
   }
 }
 
+function timesago(timestamp, date_fmt, tz_offset) {
+  var now = new Date();
+  var current = now.getTime() + '';
+  time_current = parseInt(current.substr(0, 10));
+
+  var diff = time_current - parseInt(timestamp);
+
+  if (diff < 0) {
+    return null;
+  }
+  if (diff < 60*60 || diff < 0) {
+    ago = _("%d minute ago").replace(/%d/, parseInt(diff / 60 + 0.5));
+  } else if ( diff < 60*60*24) {
+    ago = _("%d hours ago").replace(/%d/, parseInt(diff / 60 / 60 + 0.5));
+  } else if ( diff < 60*60*24*7*2) {
+    ago = _("%d days ago").replace(/%d/, parseInt(diff / 60 / 60 / 24 + 0.5));
+  } else {
+    ago = null;
+  }
+  return ago;
+}
+
 // vim:et:sts=2:sw=2:

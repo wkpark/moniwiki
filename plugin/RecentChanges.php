@@ -484,7 +484,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       }
     }
     if (empty($use_day) and empty($nobookmark)) {
-      $date=$formatter->link_to($bookmark_action ."&amp;time=$ed_time".$daysago,$date, $jsattr);
+      $date=$formatter->link_to($bookmark_action ."&amp;time=$ed_time".$daysago,$date, ' id="time-'.$ii.'" '.$jsattr);
     }
 
     $pageurl=_rawurlencode($page_name);
@@ -492,7 +492,10 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     // print $ed_time."/".$bookmark."//";
     $diff = '';
     $updated = '';
-    if (!$DBInfo->hasPage($page_name)) {
+
+    if ($act == 'UPLOAD') {
+      $icon= $formatter->link_tag($pageurl,"?action=uploadedfiles",$formatter->icon['attach']);
+    } else if (!$DBInfo->hasPage($page_name)) {
       $icon= $formatter->link_tag($pageurl,"?action=info",$formatter->icon['del']);
       if (!empty($use_js))
         $rc_list[] = $page_name;
@@ -717,13 +720,25 @@ function update_bookmark(time) {
       var bookmark = ret['__-_-bookmark-_-__'];
       var jj = 0;
       for (var ii = 0; ii < rclist.length; ii++) {
+        // update time
+        var time = document.getElementById('time-' + ii);
+        var tstr = time.firstChild.innerText;
+        var d0 = Date.parse(tstr); // test
+        if (isNaN(d0)) {
+          // recalc time string
+          var timestamp = time.href.match(/time=(\d+)/);
+          tstr = timesago(timestamp[1], "$date_fmt", $tz_offset);
+          if (tstr != null)
+            time.firstChild.innerText = tstr;
+        }
+
         var item = document.getElementById('title-' + ii);
         var title = item.getAttribute('title');
-        if (rclist[ii] != title) {
+        if (rclist[jj] != title) {
           var re = new RegExp("^.*" + url_prefix + '/');
           title = decodeURIComponent(item.href.replace(re, ''));
         }
-        if (rclist[ii] == title && ret[title]) {
+        if (rclist[jj] == title && ret[title]) {
           var icon = document.getElementById('icon-' + ii);
           var state = document.createElement('SPAN');
           if (ret[title]['state'] == 'new') {
@@ -764,7 +779,8 @@ function update_bookmark(time) {
             del.appendChild(txt);
             diff.appendChild(del);
           }
-          change.appendChild(diff);  
+          change.appendChild(diff);
+          jj++;
         } else {
           if (item.firstChild.nextSibling)
             item.removeChild(item.firstChild.nextSibling);
@@ -779,7 +795,8 @@ function update_bookmark(time) {
           // recover diff icon and link
           var icon = document.getElementById('icon-' + ii);
           if (icon && icon.firstChild) {
-            if (icon.firstChild.getAttribute('alt') != 'D') {
+            var alt = icon.firstChild.getAttribute('alt');
+            if (alt != 'D' && alt != '@') {
               icon.innerHTML = icon_diff;
             }
             // recover link
