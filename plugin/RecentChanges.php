@@ -53,10 +53,21 @@ function do_RecentChanges($formatter,$options='') {
 function ajax_RecentChanges($formatter, $options = array()) {
   global $DBInfo;
 
+  // list style
+  if (!empty($options['type']) and $options['type'] == 'list') {
+    $options['call'] = 1;
+    $opt = 'list';
+    if (!empty($options['item'])) $opt.=',item='.$options['item'];
+    $out = macro_RecentChanges($formatter, $opt, $options);
+    echo $out;
+    return;
+  }
+
   if (empty($options['value'])) {
     echo '[]';
     return;
   }
+
   $checknew = 0;
   $checkchange = 0;
   if (!empty($options['new'])) $checknew = 1;
@@ -179,8 +190,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   $args=explode(',',$value);
 
   // first arg assumed to be a date fmt arg
-  if (preg_match("/^[\s\/\-:aABdDFgGhHiIjmMOrSTY]+$/",$args[0]))
-    $date_fmt=$args[0];
+  if (preg_match("/^[\s\/\-:aABdDFgGhHiIjmMOrSTY\[\]]+$/",$args[0]))
+    $my_date_fmt=$args[0];
 
   $strimwidth = isset($DBInfo->rc_strimwidth) ? $DBInfo->rc_strimwidth : 20;
   // use javascript
@@ -217,6 +228,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       $v=trim(substr($arg,$p+1));
       if ($k=='item' or $k=='items') $opts['items']=min((int)$v,RC_MAX_ITEMS);
       else if ($k=='days') $days=min(abs($v),RC_MAX_DAYS);
+      else if ($k=="datefmt") $my_date_fmt=$v;
       else if ($k=='ago') $opts['ago']=abs($v);
       else if ($k=="new") $checknew=$v;
       else if ($k=='strimwidth' and is_numeric($k) and (abs($v) > 15 or $v == 0))
@@ -242,7 +254,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       else if ($arg=="allentries") $last_entry_only = 0;
       else if ($arg=="avatar") $use_avatar = 1;
       else if ($arg=="js") $use_js = 1;
-      else if (in_array($arg, array('simple', 'moztab', 'board', 'table'))) $rctype = $arg;
+      else if (in_array($arg, array('simple', 'moztab', 'board', 'table', 'list'))) $rctype = $arg;
     }
   }
 
@@ -262,8 +274,18 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       if ($rctype=="simple") {
         $checkchange = 0;
         $use_day=0;
-        $template=
+        if ($showhost)
+          $template=
   '$out.= "$icon&nbsp;&nbsp;$title @ $day $date by $user $count $extra<br />\n";';
+        else
+          $template=
+  '$out.= "$icon&nbsp;&nbsp;$title @ $day $date $count $extra<br />\n";';
+      } else if ($rctype=="list") {
+        $rctitle='';
+        $changed_time_fmt = !empty($my_date_fmt) ? $my_date_fmt : '[H:i]';
+        $checkchange = 0;
+        $use_day=0;
+        $template= '$out.= "$date $title<br />\n";';
       } else if ($rctype=="moztab") {
         $use_day=1;
         $template= '$out.= "<li>$title $date</li>\n";';
@@ -274,7 +296,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         $cat="</table>";
         $cat0="";
       } else if ($rctype=="board") {
-        $changed_time_fmt = 'm-d [H:i]';
+        $changed_time_fmt = !empty($my_date_fmt) ? $my_date_fmt : 'm-d [H:i]';
         $use_day=0;
         $template_bra="<table border='0' cellpadding='0' cellspacing='0' width='100%'>";
 
@@ -413,6 +435,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   $br="";
   $ii = 0;
   $rc_list = array();
+  $list = array();
   foreach ($lines as $line) {
     $parts= explode("\t", $line);
     $page_key=$parts[0];
@@ -457,6 +480,30 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       }
     }
 
+    $pageurl=_rawurlencode($page_name);
+    // get title
+    $title0= get_title($title).$group;
+    $title0=htmlspecialchars($title0);
+
+    if ($list) $attr = '';
+    else $attr = " id='title-$ii'";
+    if (!empty($strimwidth) and strlen(get_title($title)) > $strimwidth and function_exists('mb_strimwidth')) {
+      $title0=mb_strimwidth($title0,0, $strimwidth,'...', $DBInfo->charset);
+    }
+    $attr.= ' title="'.$title.'"';
+    $title= $formatter->link_tag($pageurl,"",$title0,$target.$attr);
+
+    // simple list format
+    if ($rctype == 'list') {
+      if (empty($logs[$page_key]))
+        $logs[$page_key] = array();
+      $logs[$page_key][$day] = 1;
+
+      if (!$DBInfo->hasPage($page_name)) $act = 'DELETE';
+      $list[$page_name] = array($title, $date, $act);
+      continue;
+    }
+
     $jsattr = '';
     if (!empty($use_js))
       $jsattr = ' onclick="update_bookmark('.$ed_time.');return false;"';
@@ -486,8 +533,6 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     if (empty($use_day) and empty($nobookmark)) {
       $date=$formatter->link_to($bookmark_action ."&amp;time=$ed_time".$daysago,$date, ' id="time-'.$ii.'" '.$jsattr);
     }
-
-    $pageurl=_rawurlencode($page_name);
 
     // print $ed_time."/".$bookmark."//";
     $diff = '';
@@ -539,16 +584,6 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         $rc_list[] = $page_name;
       }
     }
-
-    #$title= preg_replace("/((?<=[a-z0-9])[A-Z][a-z0-9])/"," \\1",$page_name);
-    $title0= get_title($title).$group;
-    $title0=htmlspecialchars($title0);
-    $attr = " id='title-$ii'";
-    if (!empty($strimwidth) and strlen(get_title($title)) > $strimwidth and function_exists('mb_strimwidth')) {
-      $title0=mb_strimwidth($title0,0, $strimwidth,'...', $DBInfo->charset);
-    }
-    $attr.= ' title="'.$title.'"';
-    $title= $formatter->link_tag($pageurl,"",$title0,$target.$attr);
 
     if (!empty($use_hits)) {
       $hits = $DBInfo->counter->pageCounter($page_name);
@@ -695,7 +730,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     if (!empty($checknew)) $ext[] = 'new=1';
     if (!empty($checkchange)) $ext[] = 'change=1';
     $arg = implode('&', $ext);
-    $url = $formatter->link_url('RecentChanges', "?action=recentchanges/ajax" . ($arg ? '&'.$arg : ''). "&value=");
+    $url = qualifiedURL($formatter->link_url('RecentChanges')); // FIXME
+    $postdata = "action=recentchanges/ajax" . ($arg ? '&'.$arg : '');
     $js.= $json->encode($rc_list).";\n";
     $js.= <<<EOF
 function update_bookmark(time) {
@@ -703,11 +739,11 @@ function update_bookmark(time) {
     if (rclist.length) {
       var timetag;
       if (typeof time == 'undefined') timetag = '';
-      else timetag = 'time=' + time + '&';
+      else timetag = '&time=' + time;
 
-      // url = url.replace(/value=/, timetag + 'value=' + encodeURIComponent(JSON.stringify(rclist)));
-      url = url.replace(/value=/, timetag + 'value=' + encodeURIComponent(json_encode(rclist)));
-      var txt = HTTPGet(url);
+      var data = "$postdata";
+      data += timetag + '&value=' + encodeURIComponent(json_encode(rclist));
+      var txt = HTTPPost(url, data);
       var ret;
       if (txt == null) return;
 
@@ -810,9 +846,39 @@ update_bookmark();
 </script>
 EOF;
 
+  } else if (!empty($list)) {
+    $out = '';
+    foreach ($list as $k=>$v) {
+      $out.= $v[1].' '.$v[0].'<br />';
+    }
+
+    if (!empty($options['call'])) {
+      return $out;
+    }
   }
 
-  return $btnlist.'<div class="recentChanges">'.$rctitle.$template_bra.$out.$template_cat.$cat0.'</div>'.$js;
+  if (in_array($rctype, array('list', 'simple')) and $use_js) {
+    static $rc_id = 1;
+
+    $rcid = ' id="rc'.$rc_id.'"';
+    $rc_id++;
+
+    $extra = '';
+    if (!empty($opts['items']))
+      $extra.= '&item='.$opts['items'];
+    
+    $url = $formatter->link_url('RecentChanges', "?action=recentchanges/ajax&type=$rctype".$extra);
+    $js = <<<JS
+<script type='text/javascript'>
+  var url = "$url";
+  var txt = HTTPGet(url);
+  var rc = document.getElementById("rc$rc_id");
+  rc.innerHTML = txt;
+</script>
+JS;
+  }
+
+  return $btnlist.'<div class="recentChanges"'. $rcid .'>'.$rctitle.$template_bra.$out.$template_cat.$cat0.'</div>'.$js;
 }
 // vim:et:sts=2:sw=2:
 ?>
