@@ -559,6 +559,10 @@ class WikiDB {
       putenv('LOGNAME='.$this->rcs_user);
     if (!empty($this->timezone))
       putenv('TZ='.$this->timezone);
+    if (function_exists('date_default_timezone_set')) {
+      // suppress date() warnings for PHP5.x
+      date_default_timezone_set(@date_default_timezone_get());
+    }
   }
 
   function initModules() {
