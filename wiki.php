@@ -4109,7 +4109,7 @@ class Formatter {
       if (!empty($this->use_namespace)) $up_separator.= '|\:';
       $pos=0;
       preg_match('@(' . $up_separator . ')@',$this->page->name,$sep); # NameSpace/SubPage or NameSpace:SubNameSpacePage
-      if (isset($sep[1])) $pos=strrpos($this->page->name,$sep);
+      if (isset($sep[1])) $pos=strrpos($this->page->name,$sep[1]);
       if ($pos > 0) $upper=substr($this->page->urlname,0,$pos);
       else if ($this->group) $upper=_urlencode(substr($this->page->name,strlen($this->group)));
       $keywords = '';
