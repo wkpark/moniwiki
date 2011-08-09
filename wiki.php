@@ -1991,7 +1991,7 @@ class Formatter {
       // namespaced pages
       // [[한글:페이지]], [[한글:페이지 이름]]
       // mixed name with non ASCII chars
-      if (preg_match('/^([^a-zA-Z0-9]+.*)\:/', $url))
+      if (preg_match('/^([^\^a-zA-Z0-9]+.*)\:/', $url))
         return $this->word_repl($bra.$url.$ket, '', $attr);
 
       if ($url[0]=='a') { # attachment:
