@@ -231,7 +231,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       else if ($k=="datefmt") $my_date_fmt=$v;
       else if ($k=='ago') $opts['ago']=abs($v);
       else if ($k=="new") $checknew=$v;
-      else if ($k=='strimwidth' and is_numeric($k) and (abs($v) > 15 or $v == 0))
+      else if ($k=='strimwidth' and is_numeric($v) and (abs($v) > 15 or $v == 0))
         $strimwidth =abs($v);
     } else {
       if ($arg =="quick") $opts['quick']=1;
