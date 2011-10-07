@@ -323,7 +323,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         if (!empty($use_hits))
           $template.='<td class=\'hits\'>$hits</td>';
         $template.= '<td class=\'date\'>$date</td>';
-        $template_extra=$template.'</tr>\n<tr class=\'log\'><td colspan=\'6\'><div>$extra</div></td></tr>\n";';
+        $template_extra=$template.'</tr>\n<tr class=\'log\'$style><td colspan=\'6\'><div>$extra</div></td></tr>\n";';
         $template.='</tr>\n";';
         $template_cat="</tbody></table>";
         $cat0="";
@@ -704,6 +704,12 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
     $alt = ($ii % 2 == 0) ? ' class="alt"':'';
     if ($extra and isset($template_extra)) {
+      if ($rctype == 'board' and !empty($use_js))
+        $style = ' style="display:none"';
+      else
+        $style = '';
+
+      $title = '<button onclick="toggle_log(this);return false;"><span>+</span></button>' . $title;
       eval($template_extra);
     } else {
       eval($template);
@@ -880,6 +886,27 @@ EOF;
 </script>
 JS;
     $rc_id++;
+  } else if ($use_js and $rctype == 'board') {
+    $js.= <<<JS
+<script type='text/javascript'>
+function toggle_log(el)
+{
+  var item = el.parentNode.parentNode; // container
+  var log = item.nextSibling;
+  if (log.tagName == undefined)
+    log = log.nextSibling; // for IE6
+
+  if (log.style.display == "none") {
+    el.className = "close";
+    log.style.display = "";
+  } else {
+    el.className = "open";
+    item.className = "";
+    log.style.display = "none";
+  }
+}
+</script>
+JS;
   }
 
   return $btnlist.'<div class="recentChanges"'. $rcid .'>'.$rctitle.$template_bra.$out.$template_cat.$cat0.'</div>'.$js;
