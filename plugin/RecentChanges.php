@@ -303,19 +303,18 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         if (empty($nobookmark)) $cols = 3;
         else $cols = 2;
 
-        $template_bra.="<thead><tr><th colspan='$cols' class='title'>"._("Title")."</th><th class='date'>".
-          _("Change Date").'</th>';
+        $template_bra.="<thead><tr><th colspan='$cols' class='title'>"._("Title")."</th>";
         if (!empty($showhost))
           $template_bra.="<th class='author'>"._("Editor").'</th>';
         $template_bra.="<th class='editinfo'>"._("Changes").'</th>';
         if (!empty($use_hits))
           $template_bra.="<th class='hits'>"._("Hits")."</th>";
+        $template_bra.="<th class='date'>"._("Change Date").'</th>';
         $template_bra.="</tr></thead>\n<tbody>\n";
         $template=
   '$out.= "<tr$alt><td style=\'white-space:nowrap;width:2%\'>$icon</td><td class=\'title\' style=\'width:40%\'>$title$updated</td>';
         if (empty($nobookmark))
           $template.= '<td>$bmark</td>';
-        $template.= '<td class=\'date\' style=\'width:15%\'>$date</td>';
         if (!empty($showhost))
           $template.='<td class=\'author\'>$user</td>';
         $template.='<td class=\'editinfo\'>$count';
@@ -323,7 +322,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         $template.='</td>';
         if (!empty($use_hits))
           $template.='<td class=\'hits\'>$hits</td>';
-        $template_extra=$template.'</tr>\n<tr><td class=\'log\' colspan=\'6\'>$extra</td></tr>\n";';
+        $template.= '<td class=\'date\'>$date</td>';
+        $template_extra=$template.'</tr>\n<tr class=\'log\'><td colspan=\'6\'><div>$extra</div></td></tr>\n";';
         $template.='</tr>\n";';
         $template_cat="</tbody></table>";
         $cat0="";
@@ -576,9 +576,9 @@ function macro_RecentChanges($formatter,$value='',$options='') {
           }
 
           if (!empty($add))
-            $diff.= '<span class="diff-added">+'.$add.'</span>';
+            $diff.= '<span class="diff-added"><span>+'.$add.'</span></span>';
           if (!empty($del))
-            $diff.= '<span class="diff-removed">'.$del.'</span>';
+            $diff.= '<span class="diff-removed"><span>'.$del.'</span></span>';
         }
       } else if (!empty($use_js)) {
         $rc_list[] = $page_name;
@@ -647,7 +647,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
           if (!empty($use_avatar)) {
             $crypted = crypt($addr, $addr);
             $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
-            $user = '<img src="'.$mylnk.'" style="width:16px;height:16px;vertical-align:middle" alt="avatar" />Anonymous';
+            $user = '<img src="'.$mylnk.'" style="width:16px;height:16px;vertical-align:middle" alt="avatar" />'. _('Anonymous');
           }
         } else {
           $ouser= $user;
@@ -676,7 +676,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
           } else {
             if (substr($user, 0, 9) == 'Anonymous') {
               $addr = substr($user, 10);
-              $user = 'Anonymous';
+              $user = _('Anonymous');
             }
             if (!empty($use_avatar)) {
               $crypted = crypt($addr, $addr);
@@ -803,16 +803,20 @@ function update_bookmark(time) {
           var diff = document.createElement('SPAN');
           if (ret[title]['add']) {
             var add = document.createElement('SPAN');
+            var add2 = document.createElement('SPAN');
             add.setAttribute('class', 'diff-added');
             var txt = document.createTextNode('+' + ret[title]['add']);
-            add.appendChild(txt);
+            add2.appendChild(txt);
+            add.appendChild(add2);
             diff.appendChild(add);
           }
           if (ret[title]['del']) {
             var del = document.createElement('SPAN');
+            var del2 = document.createElement('SPAN');
             del.setAttribute('class', 'diff-removed');
             var txt = document.createTextNode(ret[title]['del']);
-            del.appendChild(txt);
+            del2.appendChild(txt);
+            del.appendChild(del2);
             diff.appendChild(del);
           }
           change.appendChild(diff);
@@ -861,7 +865,6 @@ EOF;
     static $rc_id = 1;
 
     $rcid = ' id="rc'.$rc_id.'"';
-    $rc_id++;
 
     $extra = '';
     if (!empty($opts['items']))
@@ -876,6 +879,7 @@ EOF;
   rc.innerHTML = txt;
 </script>
 JS;
+    $rc_id++;
   }
 
   return $btnlist.'<div class="recentChanges"'. $rcid .'>'.$rctitle.$template_bra.$out.$template_cat.$cat0.'</div>'.$js;
