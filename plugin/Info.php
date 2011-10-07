@@ -72,6 +72,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
   $line = '';
   $ok = 0;
   $log.="\n"; // hack
+  $ii = 0;
   for(; !empty($line) or !empty($log); list($line,$log) = explode("\n",$log,2)) {
     if (!$state) {
       if (!preg_match("/^---/",$line)) { continue;}
@@ -140,7 +141,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
          $inf=$formatter->link_to("?action=recall&rev=$rev",$inf);
 
          $change=preg_replace("/\+(\d+)\s\-(\d+)/",
-           "<span class='diff-added'>+\\1</span><span class='diff-removed'>-\\2</span>",$change);
+           "<span class='diff-added'><span>+\\1</span></span><span class='diff-removed'><span>-\\2</span></span>",$change);
          $state=3;
          break;
       case 3:
@@ -176,7 +177,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
          } else if (!empty($DBInfo->use_avatar)) {
            $crypted = crypt($ip, $ip);
            $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
-           $ip = '<img src="'.$mylnk.'" style="width:16px;height:16px;vertical-align:middle" alt="avatar" />Anonymous';
+           $ip = '<img src="'.$mylnk.'" style="width:16px;height:16px;vertical-align:middle" alt="avatar" />'. _('Anonymous');
          } else if ($DBInfo->mask_hostname) {
            $ip=_mask_hostname($ip);
          } else if ($user and $DBInfo->interwiki['Whois'])
@@ -191,7 +192,8 @@ function _parse_rlog($formatter,$log,$options=array()) {
          if (!$simple and $comment) $rowspan=2;
 
          $rrev= !empty($rrev) ? $rrev:$formatter->link_to("?action=recall&rev=$rev",$rev);
-         $out.="<tr>\n";
+         $alt = ($ii++ % 2 == 0) ? ' class="alt"' : '';
+         $out.="<tr$alt>\n";
          $out.="<th class='rev' valign='top' rowspan=$rowspan>$rrev</th><td nowrap='nowrap' class='date'>$inf</td><td class='change'>$change</td><td class='author'>$ip&nbsp;</td>";
          $rrev='';
          $achecked="";
