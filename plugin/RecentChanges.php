@@ -901,7 +901,6 @@ function toggle_log(el)
     log.style.display = "";
   } else {
     el.className = "open";
-    item.className = "";
     log.style.display = "none";
   }
 }
