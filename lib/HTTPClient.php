@@ -221,30 +221,11 @@ class HTTPClient {
         // read headers from socket
         $r_headers = '';
         do{
-            if(time()-$this->start > $this->timeout){
-                $this->status = -100;
-                $this->error = 'Timeout while reading headers';
-                fclose($socket);
+            $r_line = $this->_readLine($socket, 'headers');
+            if ($r_line === false)
                 return false;
-            }
-            if(feof($socket)){
-                $this->error = 'Premature End of File (socket)';
-                fclose($socket);
-                return false;
-            }
-
-            // select parameters
-            $r = array($socket);
-            $w = null;
-            $e = null;
-            // wait for stream ready or timeout (1sec)
-            if (@stream_select($r,$w,$e,1) === false) {
-                usleep(1000);
-                continue;
-            }
-
-            $r_headers .= fgets($socket,1024);
-        }while(!preg_match('/\r?\n\r?\n$/',$r_headers));
+            $r_headers .= $r_line;
+        }while($r_line != "\r\n" && $r_line != "\n");
 
         $this->_debug('response headers',$r_headers);
 
@@ -493,6 +474,45 @@ class HTTPClient {
             $written += $ret;
         }
         return true;
+    }
+
+    /**
+     * Safely read a \n-terminated line from a socket
+     *
+     * Always returns a complete line, including the terminating \n.
+     *
+     * @param  handle $socket     An open socket handle in non-blocking mode
+     * @param  string $message    Description of what is being read
+     * @author Tom N Harris <tnharris@whoopdedo.org>
+     */
+    function _readLine($socket, $message) {
+        $r_data = '';
+        do {
+            $time_used = time()-$this->start;
+            if($time_used > $this->timeout){
+                $this->status = -100;
+                $this->error = sprintf('Timeout while reading %s (%.3fs)', $message, $time_used);
+                fclose($socket);
+                return false;
+            }
+            if(feof($socket)){
+                $this->error = sprintf('Premature End of File (socket) while reading %s', $message);
+                fclose($socket);
+                return false;
+            }
+
+            // select parameters
+            $r = array($socket);
+            $w = null;
+            $e = null;
+            // wait for stream ready or timeout (1sec)
+            if (@stream_select($r,$w,$e,1) === false) {
+                usleep(1000);
+                continue;
+            }
+            $r_data .= fgets($socket, 1024);
+        } while (!preg_match('/\n$/',$r_data));
+        return $r_data;
     }
 
     /**
