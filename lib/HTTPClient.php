@@ -177,7 +177,7 @@ class HTTPClient {
         }
 
         // stop time
-        $start = time();
+        $this->start = time();
 
         // already connected?
         $connectionId = $this->_uniqueConnectionId($server,$port);
@@ -213,45 +213,15 @@ class HTTPClient {
 
         $this->_debug('request',$request);
 
-        // send request
-        $towrite = strlen($request);
-        $written = 0;
-        while($written < $towrite){
-            // check timeout
-            $time_used = time() - $start;
-            if($time_used > $this->timeout) {
-                $this->status = -100;
-                $this->error = sprintf('Timeout while sending request (%.3fs)',$time_used);
-                fclose($socket);
-                return false;
-            }
-
-            // wait for stream ready or timeout (1sec)
-            // select parameters
-            $r = null;
-            $w = array($socket);
-            $e = null;
-            if(@stream_select($r,$w,$e,1) === false){
-                usleep(1000);
-                continue;
-            }
-
-            // write to stream
-            $ret = fwrite($socket, substr($request,$written,4096));
-            if($ret === false) {
-                $this->status = -100;
-                $this->error = 'Failed writing to socket';
-                fclose($socket);
-                return false;
-            }
-            $written += $ret;
-        }
+        $ret = $this->_sendData($socket, $request, 'request');
+        if ($ret === false)
+            return false;
         //fputs($socket, $request);
 
         // read headers from socket
         $r_headers = '';
         do{
-            if(time()-$start > $this->timeout){
+            if(time()-$this->start > $this->timeout){
                 $this->status = -100;
                 $this->error = 'Timeout while reading headers';
                 fclose($socket);
@@ -360,7 +330,7 @@ class HTTPClient {
                         fclose($socket);
                         return false;
                     }
-                    if(time()-$start > $this->timeout){
+                    if(time()-$this->start > $this->timeout){
                         $this->status = -100;
                         $this->error = 'Timeout while reading chunk';
                         fclose($socket);
@@ -406,7 +376,7 @@ class HTTPClient {
         } else if (!$nobody){
             // read entire socket
             while (!feof($socket)) {
-                if(time()-$start > $this->timeout){
+                if(time()-$this->start > $this->timeout){
                     $this->status = -100;
                     $this->error = 'Timeout while reading response';
                     fclose($socket);
@@ -477,6 +447,51 @@ class HTTPClient {
 
         $this->_debug('response body',$this->resp_body);
         $this->redirect_count = 0;
+        return true;
+    }
+
+    /**
+     * Safely write data to a socket
+     *
+     * @param  handle $socket     An open socket handle
+     * @param  string $data       The data to write
+     * @param  string $message    Description of what is being read
+     * @author Tom N Harris <tnharris@whoopdedo.org>
+     */
+    function _sendData($socket, $data, $message) {
+        // send request
+        $towrite = strlen($data);
+        $written = 0;
+        while($written < $towrite){
+            // check timeout
+            $time_used = time() - $this->start;
+            if($time_used > $this->timeout) {
+                $this->status = -100;
+                $this->error = sprintf('Timeout while sending request (%.3fs)',$time_used);
+                fclose($socket);
+                return false;
+            }
+
+            // wait for stream ready or timeout (1sec)
+            // select parameters
+            $r = null;
+            $w = array($socket);
+            $e = null;
+            if(@stream_select($r,$w,$e,1) === false){
+                usleep(1000);
+                continue;
+            }
+
+            // write to stream
+            $ret = fwrite($socket, substr($data,$written,4096));
+            if($ret === false) {
+                $this->status = -100;
+                $this->error = 'Failed writing to socket while sending '.$message;
+                fclose($socket);
+                return false;
+            }
+            $written += $ret;
+        }
         return true;
     }
 
