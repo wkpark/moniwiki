@@ -4,7 +4,7 @@
 // a chmod action plugin for the MoniWiki
 // vim:et:ts=2:
 //
-// $Id$
+// $Id: chmod.php,v 1.5 2010/08/23 15:14:10 wkpark Exp $
 function do_chmod($formatter,$options) {
   global $DBInfo;
   

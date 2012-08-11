@@ -4,7 +4,7 @@
 // a new action plugin for the MoniWiki
 // vim:et:ts=2:
 //
-// $Id$
+// $Id: new.php,v 1.3 2007/10/09 05:17:23 wkpark Exp $
 
 function do_new($formatter,$options) {
   global $DBInfo;

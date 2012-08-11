@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a FreeMind plugin for the MoniWiki
 //
-// $Id$
+// $Id: freemind.php,v 1.4 2010/04/19 11:26:47 wkpark Exp $
 
 function _interwiki_repl($formatter,$url) {
     global $DBInfo;

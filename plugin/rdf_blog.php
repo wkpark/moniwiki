@@ -4,7 +4,7 @@
 // a rdf_blog action plugin for the MoniWiki
 //
 // from Id: rss_blog.php,v 1.11 2003/10/17 03:51:26 wkpark Exp
-// $Id$
+// $Id: rdf_blog.php,v 1.2 2005/10/09 05:52:52 iolo Exp $
 
 include_once("plugin/BlogChanges.php");
 

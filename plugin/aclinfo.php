@@ -5,7 +5,7 @@
 //
 // Usage: ?action=aclinfo
 //
-// $Id$
+// $Id: aclinfo.php,v 1.2 2006/07/08 14:31:28 wkpark Exp $
 
 function do_aclinfo($formatter,$options) {
     global $DBInfo;

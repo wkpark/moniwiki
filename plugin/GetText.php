@@ -6,7 +6,7 @@
 //
 // Usage: [[GetText(string)]]
 //
-// $Id$
+// $Id: GetText.php,v 1.1 2003/07/18 14:09:23 wkpark Exp $
 
 function macro_GetText($formatter,$value) {
   return _($value);

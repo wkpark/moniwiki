@@ -5,7 +5,7 @@
 //
 // Usage: [[Test]]
 //
-// $Id$
+// $Id: MoniCalendar.php,v 1.7 2008/12/10 15:15:55 wkpark Exp $
 
 function _parseDays($formatter,$page,$options=array()) {
     $color_table=

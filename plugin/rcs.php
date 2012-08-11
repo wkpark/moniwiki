@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a rcs action plugin for the MoniWiki
 //
-// $Id$
+// $Id: rcs.php,v 1.6 2006/07/07 12:59:57 wkpark Exp $
 
 function do_post_rcs($formatter,$options) {
   global $DBInfo;

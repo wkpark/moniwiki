@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a notitle action plugin
 //
-// $Id$
+// $Id: notitle.php,v 1.1 2005/04/03 09:15:02 wkpark Exp $
 
 function do_notitle($formatter,$options) {
     global $DBInfo;

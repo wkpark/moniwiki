@@ -5,7 +5,7 @@
 //
 // Usage: DueDate([[YYYY]MM]DD)
 //
-// $Id$
+// $Id: DueDate.php,v 1.4 2010/08/13 16:26:11 wkpark Exp $
 
 function macro_DueDate($formatter,$value) {
   $time= localtime(time(),true);

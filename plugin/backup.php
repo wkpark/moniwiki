@@ -5,7 +5,7 @@
 //
 // Usage: [[Test]]
 //
-// $Id$
+// $Id: backup.php,v 1.3 2006/07/07 12:51:31 wkpark Exp $
 // vim:et:ts=2:
 
 function do_post_backup($formatter,$options) {

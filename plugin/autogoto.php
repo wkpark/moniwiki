@@ -5,7 +5,7 @@
 //
 // Usage: set $auto_search='AutoGoto'; in the config.php
 //
-// $Id$
+// $Id: autogoto.php,v 1.6 2010/06/19 07:03:00 wkpark Exp $
 
 function do_AutoGoto($formatter,$options) {
     global $DBInfo;

@@ -11,9 +11,9 @@
 // * Phiki is a php based wiki clone based on the MoinMoin
 //    by Fred C. Yankowski <fcy at acm.org>
 //
-// $Id$
+// $Id: wiki.php,v 1.639 2011/08/09 13:51:53 wkpark Exp $
 //
-$_revision = substr('$Revision$',1,-1);
+$_revision = substr('$Revision: 1.639 $',1,-1);
 $_release = '1.2.0-CVS';
 
 #ob_start("ob_gzhandler");

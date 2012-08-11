@@ -8,13 +8,13 @@
 // Name: Hello world
 // Description: Hello world Processor
 // URL: to_plugin url/interwiki name etc.
-// Version: $Revision$
+// Version: $Revision: 1.1 $
 // License: GPL
 //
 // Usage: {{{#!folding Name
 // Hello World
 // }}}
-// $Id$
+// $Id: folding.php,v 1.1 2007/05/15 11:18:40 iolo Exp $
 
 function processor_folding($formatter,$value="",$options=array()) {
     if ($value[0]=='#' and $value[1]=='!')

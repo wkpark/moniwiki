@@ -5,7 +5,7 @@
 //
 // Usage: [[moztab]]
 //
-// $Id$
+// $Id: moztab.php,v 1.4 2006/01/05 17:33:43 wkpark Exp $
 // vim:et:sts=2:
 
 function macro_MozTab($formatter,$value) {

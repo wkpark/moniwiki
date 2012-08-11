@@ -7,13 +7,13 @@
 // Name: Attachment
 // Description: Attachment Plugin
 // URL: MoniWiki:AttachmentPlugin
-// Version: $Revision$
+// Version: $Revision: 1.46 $
 // Depend: 1.1.3
 // License: GPL
 //
 // Usage: [[Attachment(filename)]]
 //
-// $Id$
+// $Id: Attachment.php,v 1.46 2010/08/23 09:15:23 wkpark Exp $
 
 function macro_Attachment($formatter,$value,$options=array()) {
   global $DBInfo;

@@ -8,12 +8,12 @@
 // Name: Hello world
 // Description: Hello world function plugin
 // URL: to_plugin url/interwiki name etc.
-// Version: $Revision$
+// Version: $Revision: 1.1 $
 // License: GPL
 //
 // Usage: can be used in template files {=returnHello("foo")}
 //
-// $Id$
+// $Id: returnHello.php,v 1.1 2008/04/07 16:32:13 wkpark Exp $
 
 function function_returnHello($formatter,$user='world')
 {

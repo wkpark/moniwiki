@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a po processor for the MoniWiki
 //
-// $Id$
+// $Id: po.php,v 1.3 2008/05/01 09:27:26 wkpark Exp $
 
 function processor_po($formatter,$value='') {
     if ($value[0]=='#' and $value[1]=='!')

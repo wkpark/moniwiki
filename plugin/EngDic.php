@@ -4,7 +4,7 @@
 //
 // Usage: [[EngDic(hello)]]
 //
-// $Id$
+// $Id: EngDic.php,v 1.3 2010/04/26 07:20:01 wkpark Exp $
 
 function macro_EngDic($formatter,$value) {
   if (!$value) {

@@ -5,7 +5,7 @@
 //
 // Usage: set $auto_search='FixMoin'; in the config.php
 //
-// $Id$
+// $Id: fixmoin.php,v 1.3 2005/09/01 03:45:23 wkpark Exp $
 
 function do_FixMoin($formatter,$options) {
     global $DBInfo;

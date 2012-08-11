@@ -6,7 +6,7 @@
 // Usage: {{{#!xsltproc
 // xml codes
 // }}}
-// $Id$
+// $Id: xsltproc.php,v 1.9 2010/04/19 11:26:47 wkpark Exp $
 
 function processor_xsltproc($formatter,$value) {
   global $DBInfo;

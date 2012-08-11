@@ -10,7 +10,7 @@
 //     blah
 // }}}
 //
-// $Id$
+// $Id: pre.php,v 1.3 2010/04/19 11:26:47 wkpark Exp $
 
 function processor_pre($formatter,$value) {
     if ($value[0]=='#' and $value[1]=='!')

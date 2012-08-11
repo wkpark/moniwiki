@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a simple CAPTCHA ticket plugin for the MoniWiki
 //
-// $Id$
+// $Id: ticket.php,v 1.10 2010/08/26 12:43:21 wkpark Exp $
 
 function _effect_distort($image, $factor=40, $grad=1, $method = 0) {
     // from http://www.codeproject.com/aspnet/CaptchaNET_2.asp Farshid Hosseini

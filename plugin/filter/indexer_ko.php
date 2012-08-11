@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a korean indexer filter plugin for the MoniWiki
 //
-// $Id$
+// $Id: indexer_ko.php,v 1.3 2010/07/29 15:51:13 wkpark Exp $
 //
 
 include_once(dirname(__FILE__).'/../../lib/stemmer.ko.php');

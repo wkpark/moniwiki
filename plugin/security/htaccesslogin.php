@@ -2,7 +2,7 @@
 # a htaccesslogin security plugin for the MoniWiki
 # by Hans-Juergen Tappe <tappe@hek.uni-karlsruhe.de>
 #
-# $Id$
+# $Id: htaccesslogin.php,v 1.2 2010/06/22 08:06:39 wkpark Exp $
 #
 
 class Security_htaccesslogin extends Security {

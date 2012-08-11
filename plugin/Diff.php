@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a diff plugin for the MoniWiki
 //
-// $Id$
+// $Id: Diff.php,v 1.27 2010/10/05 22:28:54 wkpark Exp $
 
 
 function code_diff($diff, $options = array()) {

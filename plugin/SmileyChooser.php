@@ -5,7 +5,7 @@
 //
 // Usage: [[SmileyChooser]]
 //
-// $Id$
+// $Id: SmileyChooser.php,v 1.16 2009/09/26 05:35:48 wkpark Exp $
 
 function do_smileychooser($formatter,$params=array()) {
   $list=macro_SmileyChooser($formatter,$params['page'],$params);

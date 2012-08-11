@@ -5,7 +5,7 @@
 //
 // Usage: [[Test]]
 //
-// $Id$
+// $Id: InputForm.php,v 1.2 2010/04/19 11:26:46 wkpark Exp $
 
 function macro_InputForm($formatter,$value,$options=array()) {
     $out='';

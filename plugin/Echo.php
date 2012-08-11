@@ -5,7 +5,7 @@
 //
 // Usage: [[Echo(variable)]]
 //
-// $Id$
+// $Id: Echo.php,v 1.2 2010/04/26 07:20:01 wkpark Exp $
 // vim:et:ts=2:
 
 function macro_Echo($formatter,$value) {

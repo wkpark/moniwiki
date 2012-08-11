@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // Theme plugin for the MoniWiki
 //
-// $Id$
+// $Id: theme.php,v 1.11 2010/04/17 09:20:24 wkpark Exp $
 //
 
 function do_theme($formatter,$options) {

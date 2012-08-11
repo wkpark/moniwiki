@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // dot action plugin for the MoniWiki
 //
-// $Id$
+// $Id: dot.php,v 1.16 2010/09/07 12:11:49 wkpark Exp $
 
 define('DEPTH',3);
 define('LEAFCOUNT',2);

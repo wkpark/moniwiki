@@ -5,7 +5,7 @@
 //
 // Usage: [[Test]]
 //
-// $Id$
+// $Id: rcsimport.php,v 1.6 2010/09/13 10:30:02 wkpark Exp $
 
 function do_post_rcsimport($formatter,$options) {
     global $DBInfo;

@@ -9,13 +9,13 @@
 // Name: Admin
 // Description: Admin Plugin
 // URL: MoniWiki:AdminPlugin
-// Version: $Revision$
+// Version: $Revision: 1.6 $
 // Depend: 1.1.3
 // License: GPL
 //
 // Usage: ?action=admin
 //
-// $Id$
+// $Id: admin.php,v 1.6 2010/09/14 19:50:11 wkpark Exp $
 
 function get_plugin_info($plugin_file) {
     // wordpress style management

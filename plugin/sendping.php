@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a TrackBack send action plugin for the MoniWiki
 //
-// $Id$
+// $Id: sendping.php,v 1.15 2010/08/22 08:00:21 wkpark Exp $
 
 # trackback ping
 function do_sendping($formatter,$options) {

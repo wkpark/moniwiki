@@ -8,11 +8,11 @@
 // Name: TCPDF plugin
 // Description: a HTML2PDF Plugin using the TCPDF
 // URL: MoniWiki:Html2PdfPlugin
-// Version: $Revision$
+// Version: $Revision: 1.5 $
 // License: GPL
 // Usage: ?action=tcpdf
 //
-// $Id$
+// $Id: html2pdf.php,v 1.5 2010/04/19 11:26:46 wkpark Exp $
 
 function do_html2pdf($formatter,$options) {
     global $DBInfo,$Config;

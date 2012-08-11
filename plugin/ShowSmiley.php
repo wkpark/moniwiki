@@ -5,7 +5,7 @@
 //
 // Usage: [[ShowSmiley]]
 //
-// $Id$
+// $Id: ShowSmiley.php,v 1.3 2010/08/22 08:42:08 wkpark Exp $
 
 function macro_ShowSmiley($formatter,$value) {
   $idx=0;

@@ -10,13 +10,13 @@
 // PluginType: macro,action
 // ActionType: protected
 // URL: to_plugin url/interwiki name etc.
-// Version: $Revision$
+// Version: $Revision: 1.5 $
 // Depend: 1.1.3
 // License: GPL
 //
 // Usage: ?action=revert&rev=1.1
 //
-// $Id$
+// $Id: revert.php,v 1.5 2010/08/20 08:28:53 wkpark Exp $
 
 function macro_Revert($formatter,$value,$options=array()) {
     $options['info_actions']=array('recall'=>'view','revert'=>'revert');

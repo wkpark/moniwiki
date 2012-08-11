@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a moniedit action plugin for the MoniWiki
 //
-// $Id$
+// $Id: moniedit.php,v 1.2 2003/08/15 21:30:36 wkpark Exp $
 
 function do_moniedit($formatter,$options) {
   header("Content-Type: application/x-moniedit");

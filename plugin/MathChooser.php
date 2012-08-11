@@ -8,12 +8,12 @@
 // Name: MathChooser
 // Description: Latex symbol selector
 // URL: MoniWiki/MathChooserPlugin
-// Version: $Revision$
+// Version: $Revision: 1.9 $
 // License: GPL
 //
 // Usage: [[MathChooser]]
 //
-// $Id$
+// $Id: MathChooser.php,v 1.9 2010/08/23 15:14:10 wkpark Exp $
 
 define('USER_LATEX_MAP','LatexSymbolTable');
 function macro_MathChooser($formatter,$value) {

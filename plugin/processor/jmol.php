@@ -5,7 +5,7 @@
 //
 // http://jmol.sf.net
 //
-// $Id$
+// $Id: jmol.php,v 1.7 2010/04/19 11:26:47 wkpark Exp $
 
 function processor_jmol($formatter,$value="") {
     global $DBInfo;

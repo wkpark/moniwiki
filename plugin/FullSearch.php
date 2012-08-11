@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a FullSearch plugin for the MoniWiki
 //
-// $Id$
+// $Id: FullSearch.php,v 1.39 2010/09/07 12:11:49 wkpark Exp $
 
 function do_fullsearch($formatter,$options) {
 

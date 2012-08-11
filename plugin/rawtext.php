@@ -8,12 +8,12 @@
 // Name: Hello world
 // Description: Hello world Plugin
 // URL: to_plugin url/interwiki name etc.
-// Version: $Revision$
+// Version: $Revision: 1.1 $
 // License: GPL
 //
 // Usage: [[Test]]
 //
-// $Id$
+// $Id: rawtext.php,v 1.1 2007/01/09 04:29:02 wkpark Exp $
 
 function do_rawtext($formatter,$options) {
     $COLS_MSIE= 80;

@@ -1,6 +1,6 @@
 <?php
 # a mustlogin security plugin for the MoniWiki
-# $Id$
+# $Id: mustlogin.php,v 1.4 2006/07/07 14:36:02 wkpark Exp $
 
 class Security_mustlogin extends Security {
   var $DB;

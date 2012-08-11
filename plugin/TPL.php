@@ -8,12 +8,12 @@
 // Name: a TPL plugin
 // Description: a TPL plugin wapper for the Templete_ processor
 // URL: MoniWiki:TPLProcessor
-// Version: $Revision$
+// Version: $Revision: 1.1 $
 // License: GPL
 //
 // Usage: [[TPL({=md5(time())})]]
 //
-// $Id$
+// $Id: TPL.php,v 1.1 2008/12/17 06:20:57 wkpark Exp $
 
 function macro_TPL($formatter, $value, $params=array()) {
     return $formatter->processor_repl('tpl_', $value, $params);

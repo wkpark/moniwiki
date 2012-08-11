@@ -6,7 +6,7 @@
 // Usage: set $filters='nforge'; in the config.php
 //   $filters='abbr,nforge';
 //
-// $Id$
+// $Id: nforge.php,v 1.2 2009/01/02 19:50:36 wkpark Exp $
 
 function filter_nforge($formatter,$value,$options) {
     global $Config;

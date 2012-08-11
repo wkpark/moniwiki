@@ -8,7 +8,7 @@
 // Name: a GeSHi syntax colorizer
 // Description: a syntax colorizing processor using the GeSHi
 // URL: MoniWiki:GeshiProcessor
-// Version: $Revision$
+// Version: $Revision: 1.8 $
 // Usage: {{{#!geshi ada|apache|asm|c|css... [number|fancy]
 // some codes
 // }}}
@@ -33,7 +33,7 @@
 //
 // this version was tested with geshi 1.0.6.
 //
-// $Id$
+// $Id: geshi.php,v 1.8 2010/09/07 12:11:49 wkpark Exp $
 
 @include_once(dirname(__FILE__)."/../../lib/geshi/geshi.php");
 

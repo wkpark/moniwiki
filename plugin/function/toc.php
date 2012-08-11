@@ -8,12 +8,12 @@
 // Name: TableOfContent function
 // Description: TableOfContent function
 // URL: MoniWiki:FunctionPlugin
-// Version: $Revision$
+// Version: $Revision: 1.3 $
 // License: GPL
 //
 // Usage: $toc = function_toc($formatter);
 //
-// $Id$
+// $Id: toc.php,v 1.3 2010/08/28 13:05:17 wkpark Exp $
 
 function function_toc($formatter) {
     $secdep = '';

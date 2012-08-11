@@ -8,12 +8,12 @@
 // Name: Orphaned Pages Plugin
 // Description: Show Orphaned Pages of this Wiki
 // URL: MoniWiki:OrphanedPagesPlugin
-// Version: $Revision$
+// Version: $Revision: 1.1 $
 // License: GPL
 //
 // Usage: [[OrphanedPages]]
 //
-// $Id$
+// $Id: OrphanedPages.php,v 1.1 2010/10/12 20:12:07 wkpark Exp $
 
 function macro_OrphanedPages($formatter,$value, $params = array()) {
     global $DBInfo;

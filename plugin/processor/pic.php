@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a PIC plugin for the MoniWiki
 //
-// $Id$
+// $Id: pic.php,v 1.9 2010/09/07 12:11:49 wkpark Exp $
 // Usage: {{{#!pic
 // some codes
 // }}}

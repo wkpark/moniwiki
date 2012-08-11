@@ -8,12 +8,12 @@
 // Name: GoogleTransMacro
 // Description: Google Translation Macro
 // URL: MoniWiki:GoogleTransMacro
-// Version: $Revision$
+// Version: $Revision: 1.1 $
 // License: GPL
 //
 // Usage: [[GoogleTrans(en)]]
 //
-// $Id$
+// $Id: GoogleTrans.php,v 1.1 2008/12/09 14:04:41 wkpark Exp $
 
 function macro_GoogleTrans($formatter,$value) {
     global $DBInfo;

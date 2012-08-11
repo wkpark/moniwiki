@@ -9,12 +9,12 @@
 // Name: nFORGE Unix based User plugin
 // Description: nFORGE Unix user plugin
 // URL: MoniWiki:NForgeUserPlugin
-// Version: $Revision$
+// Version: $Revision: 1.8 $
 // License: GPL
 //
 // Usage: set $user_class = 'nforge'; in the config.php
 //
-// $Id$
+// $Id: nforge.php,v 1.8 2009/09/17 11:24:44 wkpark Exp $
 
 class User_nforge extends WikiUser {
     function User_nforge($id = '') {

@@ -8,12 +8,12 @@
 // Name: AttachmentsPlugin
 // Description: make a list of attachments for a given page.
 // URL: MoniWiki:AttachmentsPlugin
-// Version: $Revision$
+// Version: $Revision: 1.3 $
 // License: GPL
 //
 // Usage: [[Attachments(PageName)]]
 //
-// $Id$
+// $Id: Attachments.php,v 1.3 2010/04/26 07:20:01 wkpark Exp $
 
 function macro_Attachments($formatter,$value,$params=array()) {
     global $DBInfo;

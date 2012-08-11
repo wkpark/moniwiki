@@ -7,10 +7,10 @@
 // Name: Atom feeder
 // Description: Atom Plugin
 // URL: MoniWiki:AtomPlugin
-// Version: $Revision$
+// Version: $Revision: 1.3 $
 // License: GPL
 //
-// $Id$
+// $Id: atom.php,v 1.3 2010/07/09 11:03:27 wkpark Exp $
 // $orig Id: rss_rc.php,v 1.12 2005/09/13 09:10:52 wkpark Exp $
 
 function do_atom($formatter,$options) {

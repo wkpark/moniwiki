@@ -7,7 +7,7 @@
 // - hello world
 // + Hello world
 // }}}
-// $Id$
+// $Id: diff.php,v 1.5 2010/04/19 11:26:47 wkpark Exp $
 
 function processor_diff($formatter,$value="") {
   if ($value[0]=='#' and $value[1]=='!')

@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a BlogChanges action plugin for the MoniWiki
 //
-// $Id$
+// $Id: BlogChanges.php,v 1.40 2010/08/23 09:19:15 wkpark Exp $
 
 class Blog_cache {
   function get_all_blogs() {

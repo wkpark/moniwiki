@@ -5,7 +5,7 @@
 //
 // Usage: [[Navigation(IndexPage)]]
 //
-// $Id$
+// $Id: Navigation.php,v 1.17 2010/08/23 15:14:10 wkpark Exp $
 
 function macro_Navigation($formatter,$value) {
   global $DBInfo;

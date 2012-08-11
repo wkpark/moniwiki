@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a restore action plugin for the MoniWiki
 //
-// $Id$
+// $Id: restore.php,v 1.4 2006/07/07 12:51:31 wkpark Exp $
 // vim:et:ts=2:
 
 function do_post_restore($formatter,$options) {

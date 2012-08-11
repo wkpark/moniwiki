@@ -9,11 +9,11 @@
 // Description: Sitemap action plugin
 // URL: http://computing.lbird.net/2631012
 // Release: 0.1
-// Version: $Revision$
+// Version: $Revision: 1.1 $
 // License: GPL v2
 //
 // Imported and modified from do_rss_rc() and macro_TitleIndex()
-// $Id$
+// $Id: sitemap.php,v 1.1 2008/12/25 05:51:45 wkpark Exp $
 
 function do_sitemap($formatter,$options) {
     global $DBInfo;

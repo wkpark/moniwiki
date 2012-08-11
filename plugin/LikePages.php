@@ -4,7 +4,7 @@
 // a LikePages plugin for the MoniWiki
 // vim:et:ts=2:
 //
-// $Id$
+// $Id: LikePages.php,v 1.11 2010/09/28 04:07:55 wkpark Exp $
 
 function do_LikePages($formatter,$options) {
 
@@ -215,7 +215,7 @@ function macro_LikePages($formatter="", $value, &$opts) {
 
   while (empty($metawiki)) {
     if (empty($DBInfo->metadb)) $DBInfo->initMetaDB();
-    if (empty($DBInfo->metadb)) break;
+    if (empty($DBInfo->metadb) or empty($DBInfo->shared_metadb)) break;
     $opts['extra']=_("If you can't find this page, ");
     if (empty($hits) and empty($metawiki) and !empty($DBInfo->metadb))
       $opts['extra']=_("You are strongly recommened to find it in MetaWikis. ");

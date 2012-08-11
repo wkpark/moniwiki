@@ -2,7 +2,7 @@
 // Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a sample whois plugin for the MoniWiki
-// $Id$
+// $Id: whois.php,v 1.3 2010/09/30 05:57:48 wkpark Exp $
 
 function do_whois($formatter,$options) {
   $query=$options['q'];

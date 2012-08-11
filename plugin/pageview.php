@@ -5,7 +5,7 @@
 //
 // Usage: [[Test]]
 //
-// $Id$
+// $Id: pageview.php,v 1.2 2006/01/03 13:27:57 wkpark Exp $
 
 function do_pageview($formatter,$options) {
     global $DBInfo;

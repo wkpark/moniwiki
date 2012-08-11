@@ -7,7 +7,7 @@
 #-----usage: generate_calendar(2001, 11, $day_func, 2);-------------------------
 #------(last two arguments are optional)----------------------------------------
 #-------------------------------------------------------------------------------
-# $Id$
+# $Id: Calendar.php,v 1.17 2010/04/19 11:26:46 wkpark Exp $
 
 function calendar_get_dates($formatter,$date='',$page='') {
   global $DBInfo;

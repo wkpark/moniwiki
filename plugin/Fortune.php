@@ -5,7 +5,7 @@
 //
 // Usage: [[Fortune(science)]]
 //
-// $Id$
+// $Id: Fortune.php,v 1.5 2010/08/18 16:45:51 wkpark Exp $
 
 function macro_FortuneSystem($formatter,$value) {
     $ret= exec(escapeshellcmd("/usr/bin/fortune $value"),$log);

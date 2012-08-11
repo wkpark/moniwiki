@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a Antispam filter plugin for the MoniWiki
 //
-// $Id$
+// $Id: antispam.php,v 1.5 2010/04/19 11:26:47 wkpark Exp $
 
 function filter_antispam($formatter,$value,$options) {
     $blacklist_pages=array('BadContent','LocalBadContent');

@@ -13,7 +13,7 @@
  * Author: Scott Sherrill-Mix
  * Author URI: http://scott.sherrillmix.com/blog/
  * License: GPLv2 (http://wordpress.org/about/license/)
- * Revision: $Id$
+ * Revision: $Id: identicon.php,v 1.1 2010/09/11 13:19:08 wkpark Exp $
 */
 
 class identicon {

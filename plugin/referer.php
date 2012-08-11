@@ -8,7 +8,7 @@
 // Name: a referer plugin
 // Description: show referer plugin
 // URL: MoniWiki:RefererPlugin
-// Version: $Revision$
+// Version: $Revision: 1.6 $
 // License: GPL
 //
 // Usage: [[Referer]]

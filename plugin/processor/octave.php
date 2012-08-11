@@ -6,7 +6,7 @@
 // Usage: {{{#!octave
 // code..
 // }}}
-// $Id$
+// $Id: octave.php,v 1.5 2010/04/19 11:26:47 wkpark Exp $
 
 function processor_octave($formatter="",$value="") {
   global $DBInfo;

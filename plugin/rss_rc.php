@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // rss_rc action plugin for the MoniWiki
 //
-// $Id$
+// $Id: rss_rc.php,v 1.21 2010/09/11 13:39:22 wkpark Exp $
 
 define('RSS_DEFAULT_DAYS',7);
 

@@ -5,7 +5,7 @@
 //
 // Usage: [[MiniLogin]]
 //
-// $Id$
+// $Id: minilogin.php,v 1.3 2008/12/10 09:59:49 wkpark Exp $
 
 function macro_minilogin($formatter,$value="",$options="") {
   global $DBInfo;

@@ -9,12 +9,12 @@
 // Name: a Enscript syntax colorizer
 // Description: a syntax colorizing processor using the Enscript
 // URL: MoniWiki:VimProcessor
-// Version: $Revision$
+// Version: $Revision: 1.5 $
 // Usage: {{{#!enscript sh|c|sh|..
 // some codes
 // }}}
 //
-// $Id$
+// $Id: enscript.php,v 1.5 2010/04/19 11:26:47 wkpark Exp $
 
 function processor_enscript($formatter,$value) {
   global $DBInfo;

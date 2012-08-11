@@ -5,7 +5,7 @@
 //
 // Usage: [[ABBR(HTTP Hyper Text Transper Protocol)]]
 //
-// $Id$
+// $Id: ABBR.php,v 1.1 2006/01/26 15:55:03 wkpark Exp $
 
 function macro_ABBR($formatter,$value) {
     $sym=strtok($value,' '); $val=strtok('');

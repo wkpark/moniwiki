@@ -7,7 +7,7 @@
 //
 // This feature is imported from the MediaWiki
 //
-// $Id$
+// $Id: EditToolbar.php,v 1.16 2010/08/21 08:34:50 wkpark Exp $
 
 function macro_EditToolbar($formatter,$value, $options=array()) {
     global $DBInfo;

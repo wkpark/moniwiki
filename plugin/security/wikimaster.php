@@ -1,6 +1,6 @@
 <?php
 # a wikimaster security plugin for the MoniWiki
-# $Id$
+# $Id: wikimaster.php,v 1.6 2006/07/07 14:44:16 wkpark Exp $
 
 class Security_wikimaster extends Security {
   var $DB;

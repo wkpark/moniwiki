@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a SystemInfo macro plugin for the MoniWiki
 //
-// $Id$
+// $Id: SystemInfo.php,v 1.3 2005/08/26 09:58:52 wkpark Exp $
 
 function macro_SystemInfo($formatter='',$value='') {
   global $_revision,$_release;

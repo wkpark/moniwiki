@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a print action plugin for the MoniWiki
 //
-// $Id$
+// $Id: print.php,v 1.9 2010/10/05 22:28:54 wkpark Exp $
 
 function do_print($formatter,$options) {
   global $DBInfo;

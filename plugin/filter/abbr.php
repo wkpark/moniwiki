@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a abbr postfilter plugin for the MoniWiki
 //
-// $Id$
+// $Id: abbr.php,v 1.1 2005/08/31 11:34:28 wkpark Exp $
 
 function postfilter_abbr($formatter,$value,$options) {
     global $DBInfo;

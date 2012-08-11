@@ -6,7 +6,7 @@
 // Usage: {{{#!abc
 // blah blah
 // }}}
-// $Id$
+// $Id: abc.php,v 1.8 2010/04/19 11:26:47 wkpark Exp $
 
 function processor_abc($formatter="",$value="") {
   global $DBInfo;

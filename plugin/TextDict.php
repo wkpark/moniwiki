@@ -8,12 +8,12 @@
 // Name: TextDict
 // Description: A Simple Text-Dictionary search plugin
 // URL: MoniWiki:TextDict etc.
-// Version: $Revision$
+// Version: $Revision: 1.3 $
 // License: GPL
 //
 // Usage: [[TextDict(word)]]
 //
-// $Id$
+// $Id: TextDict.php,v 1.3 2008/11/27 08:43:06 wkpark Exp $
 //
 
 include_once(dirname(__FILE__).'/../lib/dict.text.php');

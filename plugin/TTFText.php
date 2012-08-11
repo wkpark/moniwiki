@@ -8,12 +8,12 @@
 // Name: TTFText
 // Description: TTF Text plugin with Background image technic.
 // URL: MoniWiki:TTFTextPlugin
-// Version: $Revision$
+// Version: $Revision: 1.3 $
 // License: GPL
 //
 // Usage: [[TTFText(text,fontname=Eunjin,fontsize=12,float=left)]]
 //
-// $Id$
+// $Id: TTFText.php,v 1.3 2010/09/07 12:11:49 wkpark Exp $
 
 function macro_TTFText($formatter,$value,$params=array()) {
     global $DBInfo;

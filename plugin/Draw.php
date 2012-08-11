@@ -8,11 +8,11 @@
 // Name: Draw Plugin
 // Description: Draw gif drawing using the TWiki Draw plugin 
 // URL: MoniWiki:DrawPlugin
-// Version: $Revision$
+// Version: $Revision: 1.8 $
 // License: GPL
 // Usage: [[Draw(hello)]] without a gif extention.
 //
-// $Id$
+// $Id: Draw.php,v 1.8 2010/07/17 16:17:56 wkpark Exp $
 
 function macro_Draw($formatter,$value) {
   global $DBInfo;

@@ -4,7 +4,7 @@
 // a TwinPages action plugin for the MoniWiki
 // vim:et:ts=2:
 //
-// $Id$
+// $Id: TwinPages.php,v 1.4 2010/08/06 15:34:55 wkpark Exp $
 
 function do_twinpages($formatter,$options) {
   global $DBInfo;

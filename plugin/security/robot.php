@@ -1,6 +1,6 @@
 <?php
 # a robot protection security plugin for the MoniWiki
-# $Id$
+# $Id: robot.php,v 1.1 2008/12/16 13:45:30 wkpark Exp $
 
 class Security_robot extends Security {
   var $DB;

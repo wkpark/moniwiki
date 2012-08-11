@@ -13,7 +13,7 @@
 // and replace the latex processor:
 //  $processors=array('latex'=>'itex',...);
 //
-// $Id$
+// $Id: itex.php,v 1.6 2010/04/19 11:26:47 wkpark Exp $
 
 /*
   itex2MML.l patch to enable $$\alpha$$ syntax

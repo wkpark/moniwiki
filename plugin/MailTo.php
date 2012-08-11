@@ -5,7 +5,7 @@
 //
 // Usage: [[MailTo(Hello I DOT HATE hello DOT SPAM org)]]
 //
-// $Id$
+// $Id: MailTo.php,v 1.2 2004/10/02 02:44:36 wkpark Exp $
 
 function macro_MailTo($formatter,$value) {
   $new=preg_replace(

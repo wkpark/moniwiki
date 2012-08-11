@@ -4,7 +4,7 @@
 // a rcspurge action plugin for the MoniWiki
 // vim:et:ts=2:
 //
-// $Id$
+// $Id: rcspurge.php,v 1.4 2006/07/07 12:59:57 wkpark Exp $
 
 function do_rcspurge($formatter,$options) {
   global $DBInfo;

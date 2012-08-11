@@ -8,12 +8,12 @@
 // Name: SWF Upload
 // Description: SWF Upload Plugin
 // URL: http://labb.dev.mammon.se/swfupload/ MoniWikiDev:SWFUpload
-// Version: $Revision$
+// Version: $Revision: 1.22 $
 // License: GPL
 //
 // Usage: [[SWFUpload]]
 //
-// $Id$
+// $Id: SWFUpload.php,v 1.22 2010/08/23 15:14:10 wkpark Exp $
 
 function macro_SWFUpload($formatter,$value,$opts=array()) {
     global $DBInfo;

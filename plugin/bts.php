@@ -5,7 +5,7 @@
 //
 // Usage: [[Test]]
 //
-// $Id$
+// $Id: bts.php,v 1.1 2008/01/08 15:01:19 wkpark Exp $
 
 include_once("lib/metadata.php");
 

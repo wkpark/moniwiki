@@ -1,7 +1,7 @@
 <?php
 // from http://www.sitepoint.com/examples/phpxml/sitepointcover-oo.php.txt
 // Public Domain ?
-// $Id$
+// $Id: rss.php,v 1.7 2010/08/23 09:15:23 wkpark Exp $
 class WikiRSSParser {
 
    var $insideitem = false;

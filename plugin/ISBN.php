@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a ISBN macro plugin for the MoniWiki
 //
-// $Id$
+// $Id: ISBN.php,v 1.15 2010/09/07 14:03:08 wkpark Exp $
 
 function macro_ISBN($formatter,$value="") {
   global $DBInfo;

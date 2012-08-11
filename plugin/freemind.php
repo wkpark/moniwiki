@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a freemind macro/action plugin for the MoniWiki
 //
-// $Id$
+// $Id: freemind.php,v 1.1 2004/12/01 08:23:37 wkpark Exp $
 
 function macro_FreeMind($formatter,$value) {
     global $DBInfo;

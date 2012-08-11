@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a BlogCategory macro plugin for the MoniWiki
 //
-// $Id$
+// $Id: BlogCategories.php,v 1.9 2010/08/23 09:15:23 wkpark Exp $
 
 function macro_BlogCategories($formatter,$value='') {
   global $DBInfo;

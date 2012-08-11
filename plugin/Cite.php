@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a CITE macro plugin for the MoniWiki
 //
-// $Id$
+// $Id: Cite.php,v 1.4 2010/04/19 11:26:46 wkpark Exp $
 
 function macro_Cite($formatter="",$value="") {
   $CITE_MAP="CiteMap";

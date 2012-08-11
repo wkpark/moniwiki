@@ -4,7 +4,7 @@
 // a userform action plugin for the MoniWiki
 // vim:et:ts=2:
 //
-// $Id$
+// $Id: userform.php,v 1.34 2010/07/13 14:10:44 wkpark Exp $
 
 function do_userform($formatter,$options) {
   global $DBInfo;

@@ -5,7 +5,7 @@
 //
 // Usage: [[BabelFish]]
 //
-// $Id$
+// $Id: BabelFish.php,v 1.8 2010/09/07 14:03:08 wkpark Exp $
 
 #<script language="JavaScript1.2" src="http://www.altavista.com/r?entr"></script>
 function macro_BabelFish($formatter,$value,$ret=array()) {

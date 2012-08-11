@@ -5,7 +5,7 @@
 //
 // Usage: ?action=Blog
 //
-// $Id$
+// $Id: Blog.php,v 1.38 2010/08/23 09:20:34 wkpark Exp $
 
 function updateBlogList($formatter) {
   global $DBInfo;

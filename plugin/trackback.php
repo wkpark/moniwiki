@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a TrackBack receive action plugin for the MoniWiki
 //
-// $Id$
+// $Id: trackback.php,v 1.10 2010/09/07 12:11:49 wkpark Exp $
 
 function send_error($error=0,$error_message='') {
   if ($error) {

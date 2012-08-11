@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a fiximgpath postfilter plugin for the MoniWiki
 //
-// $Id$
+// $Id: fiximgpath.php,v 1.1 2006/12/15 14:42:58 wkpark Exp $
 
 function postfilter_fiximgpath($formatter,$value,$options=array()) {
     global $DBInfo;

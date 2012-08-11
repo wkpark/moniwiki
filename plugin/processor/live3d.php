@@ -5,7 +5,7 @@
 //
 // http://www.vis.uni-stuttgart.de/~kraus/LiveGraphics3D
 //
-// $Id$
+// $Id: live3d.php,v 1.2 2010/04/19 11:26:47 wkpark Exp $
 
 function processor_live3d($formatter,$value="") {
     if ($value[0]=='#' and $value[1]=='!')

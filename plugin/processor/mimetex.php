@@ -6,7 +6,7 @@
 //
 // Support command line mode by JoungKyun Kim 2006/01/13
 //
-// $Id$
+// $Id: mimetex.php,v 1.7 2010/04/19 11:26:47 wkpark Exp $
 
 function processor_mimetex($formatter,$value) {
   global $DBInfo;

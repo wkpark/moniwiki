@@ -4,7 +4,7 @@
 // a Include macro for the MoniWiki
 // vim:et:ts=2:
 //
-// $Id$
+// $Id: Include.php,v 1.3 2010/07/09 14:37:00 wkpark Exp $
 
 function macro_Include($formatter,$value="") {
   global $DBInfo;

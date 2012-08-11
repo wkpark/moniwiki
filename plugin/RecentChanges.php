@@ -7,10 +7,10 @@
 // Name: RecentChanges
 // Description: Show RecentChanges of the Wiki
 // URL: MoniWiki:RecentChangesPlugin
-// Version: $Revision$
+// Version: $Revision: 1.65 $
 // Depend: 1.1.3
 // License: GPL
-// $Id$
+// $Id: RecentChanges.php,v 1.65 2011/10/07 14:10:29 wkpark Exp $
 
 function do_RecentChanges($formatter,$options='') {
   global $DBInfo;

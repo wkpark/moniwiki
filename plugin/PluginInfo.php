@@ -7,13 +7,13 @@
 // Name: PluginInfo
 // Description: Show Plugin/Processor Info
 // URL: MoniWiki:PluginInfoMacro
-// Version: $Revision$
+// Version: $Revision: 1.3 $
 // Depend: 1.1.3
 // License: GPL
 //
 // Usage: [[PluginInfo(name)]]
 //
-// $Id$
+// $Id: PluginInfo.php,v 1.3 2010/08/23 15:14:10 wkpark Exp $
 
 include_once(dirname(__FILE__).'/admin.php');
 

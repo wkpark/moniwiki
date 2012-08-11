@@ -8,12 +8,12 @@
 // Name: a Keywords Plugin
 // Description: a Keywords plugin to generate keywords of a page
 // URL: MoniWiki:KeywordsPlugin
-// Version: $Revision$
+// Version: $Revision: 1.39 $
 // License: GPL
 //
 // Usage: [[Keywords(options)]]
 //
-// $Id$
+// $Id: Keywords.php,v 1.39 2010/10/05 22:28:54 wkpark Exp $
 
 define('LOCAL_KEYWORDS','LocalKeywords');
 define('MAX_FONT_SZ',24);

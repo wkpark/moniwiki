@@ -5,7 +5,7 @@
 //
 // Usage: [[Test]]
 //
-// $Id$
+// $Id: rcsexport.php,v 1.2 2008/12/25 09:14:14 wkpark Exp $
 
 function do_rcsexport($formatter,$options) {
     global $DBInfo;

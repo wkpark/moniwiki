@@ -8,10 +8,10 @@
 // Name: a simple regex filter plugin
 // Description: a simple regex filter plugin
 // URL: MoniWiki:SimpleReFilter
-// Version: $Revision$
+// Version: $Revision: 1.1 $
 // License: GPL
 //
-// $Id$
+// $Id: simplere.php,v 1.1 2008/12/26 05:43:35 wkpark Exp $
 
 function filter_simplere($formatter,$value,$options) {
     global $DBInfo;

@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a Info plugin for the MoniWiki
 //
-// $Id$
+// $Id: Info.php,v 1.34 2011/10/07 00:53:11 wkpark Exp $
 
 function _parse_rlog($formatter,$log,$options=array()) {
   global $DBInfo;

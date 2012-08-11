@@ -5,7 +5,7 @@
 //
 // Usage: [[Test]]
 //
-// $Id$
+// $Id: PageLinks.php,v 1.3 2010/09/07 12:11:49 wkpark Exp $
 
 function macro_PageLinks($formatter,$options="") {
   global $DBInfo;

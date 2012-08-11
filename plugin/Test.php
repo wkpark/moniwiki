@@ -8,12 +8,12 @@
 // Name: Hello world
 // Description: Hello world Plugin
 // URL: to_plugin url/interwiki name etc.
-// Version: $Revision$
+// Version: $Revision: 1.5 $
 // License: GPL
 //
 // Usage: [[Test]]
 //
-// $Id$
+// $Id: Test.php,v 1.5 2006/08/17 08:02:21 wkpark Exp $
 
 function macro_Test($formatter,$value) {
     return "HelloWorld !\n";

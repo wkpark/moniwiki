@@ -5,7 +5,7 @@
 //
 // Usage: [[Bar(10%)]] [[Bar(0.5)]]
 //
-// $Id$
+// $Id: Bar.php,v 1.3 2005/08/08 06:44:42 wkpark Exp $
 
 function macro_Bar($formatter,$value) {
     global $DBInfo;

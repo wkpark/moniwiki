@@ -10,11 +10,11 @@
 // Name: FootNote macro plugin
 // Description: make footnotes
 // URL: MoniWiki:FootNoteMacro
-// Version: $Revision$
+// Version: $Revision: 1.3 $
 // License: GPL
 // Usage: [[FootNote(Hello World)]] or [* Hello World]
 //
-// $Id$
+// $Id: FootNote.php,v 1.3 2010/08/28 17:02:47 wkpark Exp $
 
 function macro_FootNote(&$formatter, $value = "", $options= array()) {
     if (empty($formatter->foot_offset))

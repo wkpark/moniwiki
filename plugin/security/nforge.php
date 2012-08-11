@@ -4,7 +4,7 @@
 #
 # based on needtologin security plugin.
 #
-# $Id$
+# $Id: nforge.php,v 1.6 2010/04/26 07:18:40 wkpark Exp $
 
 class Security_nforge extends Security {
   var $DB;

@@ -5,7 +5,7 @@
 //
 // Usage: [[Gallery]]
 //
-// $Id$
+// $Id: Gallery.php,v 1.39 2010/08/14 15:12:10 wkpark Exp $
 
 function macro_Gallery($formatter,$value,&$options) {
   global $DBInfo;

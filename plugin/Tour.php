@@ -5,7 +5,7 @@
 //
 // Usage: [[Tour]]
 //
-// $Id$
+// $Id: Tour.php,v 1.11 2010/08/23 09:15:23 wkpark Exp $
 
 if (!function_exists('do_dot'))
     if ($pn=getPlugin('dot')) include_once("plugin/$pn.php");

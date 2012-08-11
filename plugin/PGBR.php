@@ -7,7 +7,7 @@
 //  and add a CSS like following in your print.css:
 // div.pagebreak {page-break-before: always}
 //
-// $Id$
+// $Id: PGBR.php,v 1.1 2004/09/23 16:50:19 wkpark Exp $
 
 function macro_PGBR($formatter,$value) {
   return "<div class='pagebreak'><br /></div>\n";

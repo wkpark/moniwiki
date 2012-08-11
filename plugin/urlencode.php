@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // urlencode action plugin for the MoniWiki
 //
-// $Id$
+// $Id: urlencode.php,v 1.2 2006/07/07 12:59:57 wkpark Exp $
 // vim:et:ts=2:
 
 function do_urlencode($formatter,$options) {

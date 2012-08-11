@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a man_get action plugin for the MoniWiki
 //
-// $Id$
+// $Id: man_get.php,v 1.10 2008/12/26 05:43:34 wkpark Exp $
 // vim:et:sts=2:sw=2
 
 function do_man_get($formatter,$options) {

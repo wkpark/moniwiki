@@ -5,7 +5,7 @@
 //
 // Usage: [[Login]]
 //
-// $Id$
+// $Id: login.php,v 1.14 2010/08/18 16:58:10 wkpark Exp $
 
 function macro_login($formatter,$value="",$options="") {
   global $DBInfo;

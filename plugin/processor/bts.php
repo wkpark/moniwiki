@@ -8,10 +8,10 @@
 // Name: BugTrackingSystem
 // Description: a Simpl Bug Track System for MoniWiki
 // URL: MoniWiki:BugTrackingSystem
-// Version: $Revision$
+// Version: $Revision: 1.5 $
 // License: GPL
 //
-// $Id$
+// $Id: bts.php,v 1.5 2010/04/19 11:26:47 wkpark Exp $
 
 include_once("lib/metadata.php");
 

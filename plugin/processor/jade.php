@@ -6,7 +6,7 @@
 // Usage: {{{#!jade
 // docbook code
 // }}}
-// $Id$
+// $Id: jade.php,v 1.9 2006/07/07 12:57:32 wkpark Exp $
 
 function processor_jade($formatter,$value,$options=array()) {
   global $DBInfo;

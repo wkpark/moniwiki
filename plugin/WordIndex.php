@@ -5,7 +5,7 @@
 //
 // Usage: [[WordIndex]]
 //
-// $Id$
+// $Id: WordIndex.php,v 1.9 2010/09/11 03:58:59 wkpark Exp $
 
 function macro_WordIndex($formatter,$value, $params = array()) {
   global $DBInfo;

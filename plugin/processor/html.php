@@ -8,14 +8,14 @@
 // Name: Simple HTML Processor
 // Description: HTML Processor plugin
 // URL: MoniWiki:HTMLProcessor
-// Version: $Revision$
+// Version: $Revision: 1.1 $
 // License: GPL
 //
 // Usage: {{{
 // html code
 // }}}
 //
-// $Id$
+// $Id: html.php,v 1.1 2008/11/27 01:12:24 wkpark Exp $
 
 function processor_html($formatter="",$value="") {
     if ($value[0]=='#' and $value[1]=='!')

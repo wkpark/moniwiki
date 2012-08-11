@@ -5,7 +5,7 @@
 //
 // Usage: [[UrlMapping]]
 //
-// $Id$
+// $Id: UrlMapping.php,v 1.6 2010/09/07 12:11:49 wkpark Exp $
 
 function macro_UrlMapping($formatter,$value,$options=array()) {
     global $DBInfo;

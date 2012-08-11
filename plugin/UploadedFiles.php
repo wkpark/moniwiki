@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a UploadedFiles plugin for the MoniWiki
 //
-// $Id$
+// $Id: UploadedFiles.php,v 1.39 2010/09/10 06:16:30 wkpark Exp $
 
 function do_uploadedfiles($formatter,$options) {
   if (!empty($options['q'])) {

@@ -7,7 +7,7 @@
 // [[BlogArchives("F Y")]]
 // [[BlogArchives("F Y",list)]]
 //
-// $Id$
+// $Id: BlogArchives.php,v 1.3 2005/03/11 09:01:36 iolo Exp $
 
 function macro_BlogArchives($formatter,$value,$options=array()) {
   global $DBInfo;

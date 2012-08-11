@@ -8,7 +8,7 @@
 // Name: a AsciiMathML processor
 // Description: It support AsciiMathML
 // URL: MoniWiki:AsciiMathML
-// Version: $Revision$
+// Version: $Revision: 1.11 $
 // License: GPL
 //
 // please see http://kldp.net/forum/message.php?msg_id=9419
@@ -31,7 +31,7 @@
 // 1. set $inline_latex='asciimathml';
 // 2. replace the latex processor: $processors=array('latex'=>'asciimathml');
 //
-// $Id$
+// $Id: asciimathml.php,v 1.11 2010/08/16 11:07:19 wkpark Exp $
 
 function processor_asciimathml($formatter,$value="") {
   global $DBInfo;

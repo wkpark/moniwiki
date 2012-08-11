@@ -28,7 +28,7 @@
 // but use query string like IE! :@
 // so, i'd append dummy extensions with '.src' and '.png' to deceive mozilla :(
 //
-// $Id$
+// $Id: SearchPlugin.php,v 1.4 2006/01/05 17:33:43 wkpark Exp $
 
 function macro_SearchPlugin($formatter,$value,$options='') {
   global $DBInfo;

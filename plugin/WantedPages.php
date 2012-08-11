@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a WantedPages macro plugin for the MoniWiki
 //
-// $Id$
+// $Id: WantedPages.php,v 1.7 2010/10/05 22:28:54 wkpark Exp $
 
 function macro_WantedPages($formatter,$value='') {
   global $DBInfo;

@@ -4,7 +4,7 @@
 // a PageHits macro plugin for the MoniWiki
 // vim:et:ts=2:
 //
-// $Id$
+// $Id: PageHits.php,v 1.3 2010/08/23 09:15:23 wkpark Exp $
 
 function macro_PageHits($formatter="",$value) {
   global $DBInfo;

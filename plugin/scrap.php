@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a scrap action plugin for the MoniWiki
 //
-// $Id$
+// $Id: scrap.php,v 1.6 2010/04/19 11:26:46 wkpark Exp $
 
 function macro_Scrap($formatter,$value='',$options=array()) {
   global $DBInfo;

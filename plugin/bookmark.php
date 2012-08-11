@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a bookmark action plugin for the MoniWiki
 //
-// $Id$
+// $Id: bookmark.php,v 1.13 2010/10/02 01:48:43 wkpark Exp $
 
 // internal use only
 function macro_bookmark($formatter, $value = '', &$options) {

@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a Icon macro plugin for the MoniWiki
 //
-// $Id$
+// $Id: Icon.php,v 1.7 2006/08/12 07:31:54 wkpark Exp $
 function macro_Icon($formatter,$value='',$extra='') {
   global $DBInfo;
 

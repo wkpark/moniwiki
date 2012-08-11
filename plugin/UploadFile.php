@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a UploadFile plugin for the MoniWiki
 //
-// $Id$
+// $Id: UploadFile.php,v 1.52 2010/08/23 15:14:10 wkpark Exp $
 
 function _upload_err_msg($error_code) {
     switch ($error_code) { 

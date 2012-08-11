@@ -9,7 +9,7 @@
 // Name: a VIM syntax colorizer
 // Description: a Syntax colorizing processor using the VIM
 // URL: MoniWiki:VimProcessor
-// Version: $Revision$
+// Version: $Revision: 1.48 $
 // License: GPL
 // Usage: {{{#!vim sh|c|sh|.. [number]
 // some codes
@@ -18,7 +18,7 @@
 // Win32 note:
 //  add $path="/bin;/Program Files/Vim/VimXX"; in the config.php
 //
-// $Id$
+// $Id: vim.php,v 1.48 2010/09/07 12:11:49 wkpark Exp $
 
 function processor_vim($formatter,$value,$options) {
   global $DBInfo;

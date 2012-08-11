@@ -6,7 +6,7 @@
 // Usage: {{{#!python Name
 // print 'Hello world'
 // }}}
-// $Id$
+// $Id: python.php,v 1.6 2008/12/17 03:40:01 wkpark Exp $
 
 function processor_python($formatter,$value="") {
   //

@@ -8,7 +8,7 @@
 // URL: http://trac.wordpress.org/browser/trunk/wp-includes/functions.php?rev=601
 // License: GPLv2
 // 
-// $Id$
+// $Id: texturize.php,v 1.1 2008/12/30 09:03:02 wkpark Exp $
 
 function postfilter_texturize($formatter, $text, $options) {
     $output = '';

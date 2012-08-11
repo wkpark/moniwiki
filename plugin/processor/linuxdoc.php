@@ -6,7 +6,7 @@
 // Usage: {{{#!linuxdoc
 // linuxdoc code
 // }}}
-// $Id$
+// $Id: linuxdoc.php,v 1.8 2006/07/07 12:59:57 wkpark Exp $
 
 function processor_linuxdoc($formatter,$value) {
   global $DBInfo;

@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a rename action plugin for the MoniWiki
 //
-// $Id$
+// $Id: rename.php,v 1.10 2005/08/30 16:25:30 wkpark Exp $
 
 function do_post_rename($formatter,$options) {
   global $DBInfo;

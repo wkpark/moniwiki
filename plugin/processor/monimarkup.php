@@ -3,12 +3,12 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a moniwiki formatting processor for the MoniWiki
 //
-// $Id$
+// $Id: monimarkup.php,v 1.33 2010/08/28 13:05:17 wkpark Exp $
 /**
  * @date    2006-08-09
  * @name    Moniwiki Processor
  * @desc    Moniwiki default processor
- * @version $Revision$
+ * @version $Revision: 1.33 $
  * @depend  1.1.3
  * @license GPL
  */

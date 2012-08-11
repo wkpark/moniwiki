@@ -6,7 +6,7 @@
 // Usage: [[LineHeight]]
 //   or set $extra_macros=array('LineHeight'); in the config.php
 //
-// $Id$
+// $Id: LineHeight.php,v 1.1 2006/01/10 11:54:55 wkpark Exp $
 
 function macro_LineHeight($formatter,$value) {
     global $DBInfo;

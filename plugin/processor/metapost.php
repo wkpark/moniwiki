@@ -5,7 +5,7 @@
 //
 // Usage: {{{#!metapost
 // }}}
-// $Id$
+// $Id: metapost.php,v 1.4 2006/07/07 12:59:57 wkpark Exp $
 
 function processor_metapost($formatter,$value="") {
   global $DBInfo;

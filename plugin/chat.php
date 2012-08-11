@@ -5,7 +5,7 @@
 //
 // Usage: [[Chat]]
 //
-// $Id$
+// $Id: chat.php,v 1.12 2010/04/19 11:26:46 wkpark Exp $
 // http://cvs.drupal.org/viewcvs/drupal/contributions/modules/chat/
 
 function macro_Chat($formatter,$value,$options=array()) {

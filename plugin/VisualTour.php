@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a VisualTour plugin for the MoniWiki
 //
-// $Id$
+// $Id: VisualTour.php,v 1.11 2010/09/07 12:11:49 wkpark Exp $
 
 function macro_VisualTour($formatter,$value,$options=array()) {
   global $DBInfo;

@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a man processor plugin for the MoniWiki
 //
-// $Id$
+// $Id: man.php,v 1.6 2008/12/26 10:56:35 wkpark Exp $
 
 function processor_man($formatter,$value="") {
   global $DBInfo;

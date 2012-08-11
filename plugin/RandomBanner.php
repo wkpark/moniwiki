@@ -5,7 +5,7 @@
 //
 // Usage: [[RandomBanner(PageName,number)]]
 //
-// $Id$
+// $Id: RandomBanner.php,v 1.6 2010/04/19 11:26:46 wkpark Exp $
 // vim:et:ts=2:
 
 function macro_RandomBanner($formatter,$value="") {

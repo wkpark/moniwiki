@@ -5,7 +5,7 @@
 //
 // Usage: [[BBS(pagename,count,mode)]]
 //
-// $Id$
+// $Id: bbs.php,v 1.14 2010/09/07 12:11:49 wkpark Exp $
 
 function _get_pagelist($formatter,$pages,$action,$curpage=1,$listcount=10,$bra="[",$cat="]",$sep="|",$prev="&#171;",$next="&#187;",$first="",$last="",$ellip="...") {
 

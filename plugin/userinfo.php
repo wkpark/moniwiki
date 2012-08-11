@@ -8,12 +8,12 @@
 // Name: User Info plugin
 // Description: show user list in this wiki
 // URL: MoniWiki:UserInfoPlugin
-// Version: $Revision$
+// Version: $Revision: 1.2 $
 // License: GPL
 //
 // Usage: [[UserInfo]], ?action=userinfo
 //
-// $Id$
+// $Id: userinfo.php,v 1.2 2008/12/22 08:33:13 wkpark Exp $
 
 function macro_UserInfo($formatter,$value,$options=array()) {
     global $DBInfo;

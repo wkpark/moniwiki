@@ -5,15 +5,15 @@
 //
 // Author: Won-Kyu Park <wkpark@kldp.org>
 // Since: 2004-08-16
-// Modified: $Date$
+// Modified: $Date: 2010/09/08 15:46:09 $
 // Name: Comment plugin
 // Description: Comment Plugin
 // URL: MoniWiki:CommentPlugin
-// Version: $Revision$
+// Version: $Revision: 1.41 $
 // License: GPL
 // Usage: [[Comment]], ?action=comment
 //
-// $Id$
+// $Id: Comment.php,v 1.41 2010/09/08 15:46:09 wkpark Exp $
 
 function macro_Comment($formatter,$value,$options=array()) {
   global $DBInfo;

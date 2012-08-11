@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a cite filter plugin for the MoniWiki
 //
-// $Id$
+// $Id: cite.php,v 1.3 2005/12/10 02:46:29 wkpark Exp $
 
 function filter_cite($formatter,$value,$options) {
   $cite_rule=array(

@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a home action plugin for the MoniWiki
 //
-// $Id$
+// $Id: home.php,v 1.1 2004/08/13 15:17:20 wkpark Exp $
 
 function do_home($formatter, $options)
 {

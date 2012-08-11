@@ -6,7 +6,7 @@
 // Usage: {{{#!xslt
 // xml codes
 // }}}
-// $Id$
+// $Id: xslt.php,v 1.3 2004/04/08 18:23:44 wkpark Exp $
 
 function processor_xslt($formatter,$value) {
   global $DBInfo;

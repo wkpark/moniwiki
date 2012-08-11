@@ -5,7 +5,7 @@
 //
 // Usage: [[Anchor]]
 //
-// $Id$
+// $Id: Anchor.php,v 1.2 2006/08/12 07:31:54 wkpark Exp $
 
 function macro_Anchor($formatter,$value) {
   static $id=1;

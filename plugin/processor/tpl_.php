@@ -8,14 +8,14 @@
 // Name: A Template_ processor
 // Description: A Template_ Processor could process Template_ syntaxs
 // URL: MoniWiki:TemplateUnderscore
-// Version: $Revision$
+// Version: $Revision: 1.4 $
 // License: LGPL
 //
 // Usage: {{{#!tpl_
 // {=date("Y-m-d h:i:s",time()) }
 // }}}
 //
-// $Id$
+// $Id: tpl_.php,v 1.4 2010/09/07 12:11:49 wkpark Exp $
 
 include_once (dirname(__FILE__).'/../../lib/Template_.compiler.php');
 

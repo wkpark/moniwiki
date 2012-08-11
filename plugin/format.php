@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a format plugin to connect with processors for the MoniWiki
 //
-// $Id$
+// $Id: format.php,v 1.7 2010/10/05 22:28:54 wkpark Exp $
 
 function do_format($formatter,$options) {
   $mimes=array('text/plain'=>'html','text/xml'=>'text_xml');

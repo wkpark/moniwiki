@@ -5,7 +5,7 @@
 //
 // Usage: [[UploadForm]]
 //
-// $Id$
+// $Id: UploadForm.php,v 1.21 2010/09/17 10:47:00 wkpark Exp $
 
 function macro_UploadForm($formatter,$value) {
     global $DBInfo;

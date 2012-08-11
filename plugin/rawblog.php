@@ -8,12 +8,12 @@
 // Name: Raw blog action plugin
 // Description: Raw blog action Plugin to extract a blog entry from a Blog page.
 // URL: MoniWiki:RawBlogPlugin
-// Version: $Revision$
+// Version: $Revision: 1.3 $
 // License: GPL
 //
 // Usage: ?action=rawblog
 //
-// $Id$
+// $Id: rawblog.php,v 1.3 2010/08/23 09:20:34 wkpark Exp $
 
 function do_rawblog($formatter,$options) {
   global $DBInfo;

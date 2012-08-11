@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a subscribe action plugin for the MoniWiki
 //
-// $Id$
+// $Id: subscribe.php,v 1.6 2008/12/10 09:59:49 wkpark Exp $
 
 
 function macro_Subscribe($formatter,$value,$options=array()) {

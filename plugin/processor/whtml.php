@@ -8,14 +8,14 @@
 // Name: WHTML Processor
 // Description: HTML with WikiLinks Processor
 // URL: MoniWiki:WikiHtmlProcessor
-// Version: $Revision$
+// Version: $Revision: 1.3 $
 // License: GPL
 //
 // Usage: {{{#!whtml
 // <h1>Hello world ! Hello [MoniWiki]</h1>
 // Hello World
 // }}}
-// $Id$
+// $Id: whtml.php,v 1.3 2009/10/09 08:20:54 wkpark Exp $
 
 function processor_whtml($formatter,$value='',$options=array()) {
     if ($value[0]=='#' and $value[1]=='!')

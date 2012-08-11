@@ -8,11 +8,11 @@
 // Name: a autosave action plugin
 // Description: a autosave action plugin
 // URL: MoniWiki:AutoSavePlugin
-// Version: $Revision$
+// Version: $Revision: 1.1 $
 // License: GPL
 // Usage: add the config variable $use_autosave=1; to config.php
 //
-// $Id$
+// $Id: autosave.php,v 1.1 2008/12/29 22:10:29 wkpark Exp $
 
 function do_autosave($formatter,$options) {
     global $DBInfo;

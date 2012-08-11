@@ -6,7 +6,7 @@
 // Usage: {{{#!hello Name
 // Hello World
 // }}}
-// $Id$
+// $Id: randomquote.php,v 1.3 2010/08/23 09:15:23 wkpark Exp $
 
 function processor_randomquote($formatter,$value="",$options=array()) {
     if ($value[0]=='#' and $value[1]=='!')

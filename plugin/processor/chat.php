@@ -8,14 +8,14 @@
 // Name: Hello world2
 // Description: Hello world2 Processor
 // URL: to_plugin url/interwiki name etc.
-// Version: $Revision$
+// Version: $Revision: 1.6 $
 // License: GPL
 //
 // Usage: {{{#!chat ID @date@ title
 // Hello World
 // }}}
 //
-// $Id$
+// $Id: chat.php,v 1.6 2006/08/17 08:01:30 wkpark Exp $
 
 function processor_chat($formatter,$value="") {
     if ($value[0]=='#' and $value[1]=='!')

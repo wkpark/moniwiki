@@ -8,12 +8,12 @@
 // Name: Play macro
 // Description: media Player Plugin
 // URL: MoniWikiDev:PlayMacro
-// Version: $Revision$
+// Version: $Revision: 1.12 $
 // License: GPL
 //
 // Usage: [[Play(http://blah.net/blah.mp3)]]
 //
-// $Id$
+// $Id: Play.php,v 1.12 2010/09/07 12:11:49 wkpark Exp $
 
 function macro_Play($formatter,$value) {
   global $DBInfo;

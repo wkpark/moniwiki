@@ -1,6 +1,6 @@
 <?php
 # a ACL security plugin for the MoniWiki (experimental)
-# $Id$
+# $Id: acl.php,v 1.17 2010/09/30 15:46:59 wkpark Exp $
 #
 # Please see http://moniwiki.kldp.net/wiki/wiki.php/MoniWikiACL
 #

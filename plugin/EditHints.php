@@ -8,11 +8,11 @@
 // Name: Edit Hints macro
 // Description: Show some simple hints of wiki markups
 // URL: MoniWiki:EditHintsMacro
-// Version: $Revision$
+// Version: $Revision: 1.1 $
 // License: GPL
 // Usage: [[EditHints]] or [[EditHints(js)]]
 //
-// $Id$
+// $Id: EditHints.php,v 1.1 2010/08/13 18:55:08 wkpark Exp $
 
 function macro_EditHints($formatter, $value = '') {
   global $DBInfo;

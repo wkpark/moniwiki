@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a dot plugin for the MoniWiki
 //
-// $Id$
+// $Id: dot.php,v 1.6 2006/07/13 14:58:55 wkpark Exp $
 // vim:et:ts=2:
 
 function processor_dot($formatter,$value) {

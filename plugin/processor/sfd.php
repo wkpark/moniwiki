@@ -10,13 +10,13 @@
 // Name: a FontForge sfd renderer
 // Description: a FontForge sfd glyph renderer
 // URL: MoniWiki:FontForgePlugin
-// Version: $Revision$
+// Version: $Revision: 1.5 $
 // License: GPL
 // Usage: {{{#!sfd
 // sfd char file
 // }}}
 //
-// $Id$
+// $Id: sfd.php,v 1.5 2010/09/07 12:11:49 wkpark Exp $
 
 function processor_sfd($formatter,$value="") {
     global $DBInfo;

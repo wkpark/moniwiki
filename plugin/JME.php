@@ -8,11 +8,11 @@
 // Name: a JME molecular editor plugin
 // Description: a JME molecular editor plugin.
 // URL: MoniWiki:JMEProcessor
-// Version: $Revision$
+// Version: $Revision: 1.2 $
 // License: GPL
 // Usage: [[JME(molname)]]
 //
-// $Id$
+// $Id: JME.php,v 1.2 2010/04/19 11:26:46 wkpark Exp $
 
 function _mol2gau($mol) {
     $line=explode("\n",$mol);

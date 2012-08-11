@@ -4,7 +4,7 @@
 //
 // Usage: [[EngDic(hello)]]
 //
-// $Id$
+// $Id: UWL.php,v 1.2 2010/08/23 15:14:10 wkpark Exp $
 // vim:et:ts=2:
 
 function macro_UWL($formatter,$value) {

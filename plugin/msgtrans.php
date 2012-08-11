@@ -8,12 +8,12 @@
 // Name: Message Translation plugin
 // Description: make a Translation *.mo from simple message files.
 // URL: MoniWiki:DynamicMessageTranslation
-// Version: $Revision$
+// Version: $Revision: 1.12 $
 // License: GPL
 //
 // Usage: [[Test]]
 //
-// $Id$
+// $Id: msgtrans.php,v 1.12 2009/09/15 02:01:38 wkpark Exp $
 
 function _msgs_to_php($strs) {
     $smap = array('"', '$', '\\',"\n");

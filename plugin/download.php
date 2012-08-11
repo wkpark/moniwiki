@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // download action plugin for the MoniWiki
 //
-// $Id$
+// $Id: download.php,v 1.28 2010/08/26 18:34:55 wkpark Exp $
 //
 function do_download($formatter,$options) {
   global $DBInfo;

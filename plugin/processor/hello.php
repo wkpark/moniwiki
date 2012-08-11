@@ -11,13 +11,13 @@
 // Name: Processor name
 // Description: this is a sample processor for the MoniWiki
 // URL: to_plugin url/interwiki name etc.
-// Version: $Revision$
+// Version: $Revision: 1.7 $
 // License: GPL
 //
 // Usage: {{{#!hello Name
 // Hello World
 // }}}
-// $Id$
+// $Id: hello.php,v 1.7 2008/12/22 11:03:22 wkpark Exp $
 
 function processor_hello($formatter,$value="",$options=array()) {
     if ($value[0]=='#' and $value[1]=='!')

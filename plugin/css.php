@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // css action plugin for the MoniWiki
 //
-// $Id$
+// $Id: css.php,v 1.10 2010/04/17 12:07:26 wkpark Exp $
 
 function do_css($formatter,$options) {
   global $DBInfo;

@@ -6,7 +6,7 @@
 //
 // Usage: [[Vote(Hello 10, World 20,Wow 1)]]
 //
-// $Id$
+// $Id: Vote.php,v 1.10 2010/08/23 09:15:23 wkpark Exp $
 
 function macro_Vote($formatter,$value) {
   global $DBInfo;

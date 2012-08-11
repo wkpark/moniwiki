@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a markup plugin for the MoniWiki
 //
-// $Id$
+// $Id: markup.php,v 1.10 2010/04/17 12:07:26 wkpark Exp $
 
 function do_markup($formatter,$options) {
     $formatter->section_edit=0;

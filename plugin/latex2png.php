@@ -8,12 +8,12 @@
 // Name: Latex To PNG plugin
 // Description: convert latex syntax to PNGs
 // URL: MoniWiki:Latex2PngPlugin
-// Version: $Revision$
+// Version: $Revision: 1.5 $
 // License: GPL
 //
 // Usage: ?action=latex2png&value=$\alpha$
 //
-// $Id$
+// $Id: latex2png.php,v 1.5 2010/09/09 14:42:06 wkpark Exp $
 
 function macro_latex2png($formatter,$value,$params=array()) {
     $png= $formatter->processor_repl('latex',$value, $params);

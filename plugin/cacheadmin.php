@@ -5,7 +5,7 @@
 //
 // Usage: ?action=cacheadmin
 //
-// $Id$
+// $Id: cacheadmin.php,v 1.3 2008/11/27 10:07:06 wkpark Exp $
 //
 /**
  * @author  Won-Kyu Park <wkpark@kldp.org>
@@ -13,7 +13,7 @@
  * @name    CacheAdmin
  * @desc    CacheAdmin Plugin
  * @url     MoniWiki:CacheAdminPlugin
- * @version $Revision$
+ * @version $Revision: 1.3 $
  * @depend  1.1.1
  * @license GPL
  */

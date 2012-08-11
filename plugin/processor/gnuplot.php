@@ -6,7 +6,7 @@
 // Usage: {{{#!gnuplot
 // plot sin(x)
 // }}}
-// $Id$
+// $Id: gnuplot.php,v 1.18 2010/09/07 12:11:49 wkpark Exp $
 
 function processor_gnuplot($formatter="",$value="") {
   global $DBInfo;

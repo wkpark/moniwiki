@@ -1,6 +1,6 @@
 <?php
 # a community security plugin for the MoniWiki
-# $Id$
+# $Id: community.php,v 1.7 2010/08/10 05:40:47 wkpark Exp $
 
 class Security_community extends Security {
   var $DB;

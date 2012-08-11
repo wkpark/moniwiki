@@ -4,7 +4,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a rss_blog action plugin for the MoniWiki
 //
-// $Id$
+// $Id: rss_blog.php,v 1.23 2006/10/31 01:54:17 pyrasis Exp $
 
 include_once("plugin/BlogChanges.php");
 

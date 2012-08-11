@@ -6,14 +6,14 @@
 // imported from the Soojung project http://soojung.kldp.net
 // - with some modification and simley disabled.
 //
-// $Id$
+// $Id: bbcode.php,v 1.3 2006/08/17 08:01:30 wkpark Exp $
 /**
  * @author  Soojung http://soojung.kldp.net
  * @date    2006-01-09
  * @name    BBCode
  * @desc    BBCode Procssor
  * @url     MoniWiki:BBCodeProcessor
- * @version $Revision$
+ * @version $Revision: 1.3 $
  * @depend  1.1.3
  * @license GPL
  */

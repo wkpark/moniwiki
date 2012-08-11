@@ -3,7 +3,7 @@
 // Public Domain ?
 // and modified for the FOAF.
 // See http://moniwiki.sourceforge.net/wiki.php/FoafOnMoniWiki
-// $Id$
+// $Id: foaf.php,v 1.6 2010/09/07 14:03:08 wkpark Exp $
 //
 class FoafParser {
 

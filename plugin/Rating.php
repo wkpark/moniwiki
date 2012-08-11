@@ -7,12 +7,12 @@
 // Name: Rating
 // Description: Rating Plugin
 // URL: MoniWiki:RatingPlugin
-// Version: $Revision$
+// Version: $Revision: 1.10 $
 // License: GPL
 //
 // Usage: [[Rating(totalscore,count)]] or [[Rating(initial score)]]
 //
-// $Id$
+// $Id: Rating.php,v 1.10 2010/10/05 22:28:54 wkpark Exp $
 
 function macro_Rating($formatter,$value='',$options=array()) {
     global $Config;

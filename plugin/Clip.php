@@ -5,7 +5,7 @@
 //
 // Usage: [[Clip(hello)]]
 //
-// $Id$
+// $Id: Clip.php,v 1.5 2010/07/17 16:17:56 wkpark Exp $
 
 function macro_Clip($formatter,$value) {
   global $DBInfo;

@@ -1,6 +1,6 @@
 <?php
 // slightly modified for MoniWiki by wkpark@kldp.org
-// $Id$
+// $Id: textile.php,v 1.7 2008/12/16 09:38:10 wkpark Exp $
 //
 /**
  * @access		public
@@ -23,7 +23,7 @@
  */
 
 /*
-$Id$
+$Id: textile.php,v 1.7 2008/12/16 09:38:10 wkpark Exp $
 $LastChangedRevision: 216 $
 */
 

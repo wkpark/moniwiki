@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a msgfmt plugin for the MoniWiki
 //
-// $Id$
+// $Id: msgfmt.php,v 1.3 2008/05/01 09:27:26 wkpark Exp $
 
 function _pocheck($po) {
     global $DBInfo;

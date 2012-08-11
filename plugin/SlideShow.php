@@ -5,7 +5,7 @@
 //
 // Usage: [[SlideShow(pagename)]]
 //
-// $Id$
+// $Id: SlideShow.php,v 1.10 2010/08/23 15:14:10 wkpark Exp $
 
 function macro_SlideShow($formatter,$value='',$options=array()) {
     global $DBInfo;

@@ -5,7 +5,7 @@
 //
 // Usage: [[PageList(a needle for list,dir,info,date]]
 //
-// $Id$
+// $Id: pagelist.php,v 1.6 2010/04/19 11:26:46 wkpark Exp $
 
 function macro_PageList($formatter,$arg="",$options=array()) {
   global $DBInfo;

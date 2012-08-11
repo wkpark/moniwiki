@@ -13,7 +13,7 @@
 //
 // Usage: [[FastSearch(string)]]
 //
-// $Id$
+// $Id: FastSearch.php,v 1.22 2010/08/22 08:40:23 wkpark Exp $
 
 include_once('lib/indexer.DBA.php');
 

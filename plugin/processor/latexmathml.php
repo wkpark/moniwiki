@@ -10,14 +10,14 @@
 // Name: a LaTeXMathML processor
 // Description: support LaTeXMathML
 // URL: MoniWiki:LatexMathML
-// Version: $Revision$
+// Version: $Revision: 1.2 $
 // License: GPL
 //
 // to changes this processor as a default inline latex formatter:
 // 1. set $inline_latex='latexmathml';
 // 2. replace the latex processor: $processors=array('latex'=>'latexmathml');
 //
-// $Id$
+// $Id: latexmathml.php,v 1.2 2010/08/16 11:07:19 wkpark Exp $
 
 function processor_latexmathml($formatter,$value="") {
   global $DBInfo;

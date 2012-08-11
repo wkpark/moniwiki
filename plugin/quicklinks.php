@@ -3,7 +3,7 @@
 // All rights reserved. Distributable under GPL see COPYING
 // a quicklinks macro plugin for the MoniWiki
 //
-// $Id$
+// $Id: quicklinks.php,v 1.2 2008/12/10 09:59:49 wkpark Exp $
 
 function do_quicklinks($formatter,$options) {
   global $DBInfo;

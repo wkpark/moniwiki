@@ -5,7 +5,7 @@
 //
 // Usage: ?action=importurl&url=http://foo.bar.com/
 //
-// $Id$
+// $Id: ImportUrl.php,v 1.10 2006/08/15 07:55:25 wkpark Exp $
 
 function macro_ImportUrl($formatter,$value='',$options=array()) {
   $value=$value ? $value:$options['url'];

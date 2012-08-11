@@ -12,7 +12,7 @@
 // $path='./bin;C:/Program Files/MiKTeX 2.5/miktex/bin;C:/Program Files/ImageMagick-6.3.6-Q16';
 // # ImagMagick and MikTeX are used in this setting.
 //
-// $Id$
+// $Id: latex.php,v 1.29 2010/09/09 14:42:06 wkpark Exp $
 
 function _latex_renumber($match,$tag='\\tag') {
   // XXX

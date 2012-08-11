@@ -5,7 +5,7 @@
 //
 // Usage: [[Test]]
 //
-// $Id$
+// $Id: filter.php,v 1.3 2008/05/06 07:06:54 wkpark Exp $
 
 function macro_Filter($formatter,$value) {
     return "HelloWorld !\n";

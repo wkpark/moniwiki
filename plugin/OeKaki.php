@@ -4,7 +4,7 @@
 //
 // Usage: [[OeKaki(hello)]]
 //
-// $Id$
+// $Id: OeKaki.php,v 1.8 2008/03/29 06:36:21 wkpark Exp $
 // vim:et:ts=2:
 
 function macro_OeKaki($formatter,$value) {
