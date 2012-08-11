@@ -32,7 +32,7 @@ function macro_TTFText($formatter,$value,$params=array()) {
     $imagemode=0;
     $args= empty($args) ? array():($args);
     foreach ($args as $arg) {
-        list($k,$v)=split('=',trim($arg),2);
+        list($k,$v)=explode('=',trim($arg),2);
         if ($k == 'font') {
             $font=$v;
             if ($font{0}!='/') {

@@ -34,7 +34,7 @@ function get_plugin_info($plugin_file) {
                     $desc.=substr($l,3);
                 } else if (substr($l,1,3)=='* @') {
                     $l=substr($l,4);
-                    list($k,$v)=split("[[:blank:]]+",rtrim($l),2);
+                    list($k,$v)=preg_split("/\s+/",rtrim($l),2);
                     $nk=strtolower($k);
                     $info[$nk]=!empty($info[$nk]) ? $info[$nk].','.$v:$v;
                 }
