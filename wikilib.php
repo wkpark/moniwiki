@@ -404,6 +404,19 @@ function http_need_cond_request($mtime, $last_modified = '', $etag = '') {
     return false;
 }
 
+function is_mobile() {
+  global $DBInfo;
+
+  if (!empty($DBInfo->mobile_agents)) {
+    $re = '/'.$DBInfo->mobile_agents.'/i';
+  } else {
+    $re = '/android|iphone/i';
+  }
+  if (preg_match($re, $_SERVER['HTTP_USER_AGENT']))
+    return true;
+  return false;
+}
+
 /**
  * get default cols of textarea
  *
@@ -414,7 +427,7 @@ function get_textarea_cols() {
 
   if (preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT'])) {
     $cols = $COLS_MSIE;
-  } else if (preg_match('/android|iphone/i', $_SERVER['HTTP_USER_AGENT'])) {
+  } else if (is_mobile()) {
     $cols = 30;
   } else {
     $cols = $COLS_OTHER;

@@ -279,6 +279,7 @@ $flashupload='swfupload';
 #$delayindex=60*60*24*5 # delayed indexing 
 #$use_bbs=0; # *experimental*
 $robots='googlebot|yahoo'; # set robots
+$mobile_agents='android|iphone'; # mobile agents
 #$security_class_robot='robot';
 #$url_encodings='euc-kr,uhc'; # autogoto option: search invalid urls with different encodings
 #$use_scrap=1; # use scrap
