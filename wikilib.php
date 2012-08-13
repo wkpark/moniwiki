@@ -2791,9 +2791,10 @@ function macro_UserPreferences($formatter,$value,$options='') {
   $url=$formatter->link_url("UserPreferences");
   # setup form
   if ($user->id == 'Anonymous') {
-    if (!empty($options['login_id']))
+    if (!empty($options['login_id'])) {
+      $options['login_id'] = htmlspecialchars($options['login_id']);
       $idform="$options[login_id]<input type='hidden' name='login_id' value=\"$options[login_id]\" />";
-    else
+    } else
       $idform="<input type='text' size='20' name='login_id' value='' />";
   } else {
     $idform=$user->id;
