@@ -282,7 +282,7 @@ class MetaDB_dba extends MetaDB {
 
     $ret = '';
     if ($sisters)
-      $ret='[wiki:'.str_replace(' ',":$pagename] [wiki:",$sisters).":$pagename]";
+      $ret='[wiki:'.str_replace(' ',":$pagename]\n[wiki:",$sisters).":$pagename]";
     $pagename=_preg_search_escape($pagename);
     if ($addons) $ret=rtrim($addons.' '.$ret);
 
@@ -413,7 +413,7 @@ class MetaDB_text extends MetaDB {
     if (empty($mode)) return true;
 
     $twins=$this->db[$pagename];
-    $ret='[wiki:'.str_replace(',',"] [wiki:",$twins).']';
+    $ret='[wiki:'.str_replace(',',"]\n[wiki:",$twins).']';
 
     return $ret;
   }
@@ -2396,7 +2396,8 @@ class Formatter {
           if (!empty($this->use_easyalias) and !preg_match('/^\[wiki:[A-Z][A-Za-z0-9]+:.*$/', $sisters)) {
             # this is a alias
             $this->use_easyalias=0;
-            $url=$this->link_repl(substr($sisters,0,-1).' '.$word.']');
+            $tmp = explode("\n", $sisters);
+            $url=$this->link_repl(substr($tmp[0],0,-1).' '.$word.']');
             $this->use_easyalias=1;
             $this->aliases[$page]=$url;
             return $url;
