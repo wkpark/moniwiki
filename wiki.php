@@ -5086,10 +5086,21 @@ function init_requests(&$options) {
   $options['id']=$user->id;
   $DBInfo->user=$user;
 
-# MoniWiki theme
-if ((empty($DBInfo->theme) or isset($_GET['action'])) and isset($_GET['theme'])) $theme=$_GET['theme'];
-else if ($DBInfo->theme_css) $theme=$DBInfo->theme;
-if (!empty($theme)) $options['theme']=$theme;
+  # MoniWiki theme
+  if ((empty($DBInfo->theme) or isset($_GET['action'])) and isset($_GET['theme'])) {
+    $theme=$_GET['theme'];
+  } else {
+    if ((is_mobile() or !empty($DBInfo->force_mobile)) and !empty($DBInfo->mobile_theme)) {
+      $theme = $DBInfo->mobile_theme;
+      $DBInfo->menu = !empty($DBInfo->mobile_menu) ? $DBInfo->mobile_menu :
+          array('FrontPage'=>1, 'RecentChanges'=>2);
+      $DBInfo->use_wikiwyg = 0; # disable wikiwyg
+      $DBInfo->use_sectionedit = 0; # disable section edit
+    } else if ($DBInfo->theme_css) {
+      $theme=$DBInfo->theme;
+    }
+  }
+  if (!empty($theme)) $options['theme']=$theme;
 
 if ($options['id'] != 'Anonymous') {
   $options['css_url']=!empty($user->info['css_url']) ? $user->info['css_url'] : '';
