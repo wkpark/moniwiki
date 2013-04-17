@@ -1207,7 +1207,7 @@ class WikiPage {
     $seed = '';
     if (!empty($DBInfo->etag_seed))
       $seed = $DBInfo->etag_seed;
-    return md5($this->mtime().$DBInfo->mtime().$seed);
+    return md5($this->mtime().$DBInfo->mtime().$seed.$this->name);
   }
 
   function size() {
@@ -5257,7 +5257,7 @@ function wiki_main($options) {
   if (!empty($options['is_robot'])) {
     $page->is_static = true;
   } else {
-    $page->is_static = empty($pis['#nocache']) && empty($pis['#dynamic']);
+    $page->is_static = $action == 'raw' || empty($pis['#nocache']) && empty($pis['#dynamic']);
   }
 
   // HEAD support for robots
