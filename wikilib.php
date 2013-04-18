@@ -1721,7 +1721,7 @@ function do_raw($formatter,$options) {
   } else {
     $mtime = $formatter->page->mtime();
     $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
-    $etag = $formatter->page->etag();
+    $etag = $formatter->page->etag($options);
     if (strstr($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') and function_exists('ob_gzhandler')) {
       $gzip_mode = 1;
       $etag.= '.gzip'; // is it correct?

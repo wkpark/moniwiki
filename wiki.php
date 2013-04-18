@@ -1202,12 +1202,14 @@ class WikiPage {
     return @filemtime($this->filename);
   }
 
-  function etag() {
+  function etag($params = array()) {
     global $DBInfo;
-    $seed = '';
+    $dep = '';
     if (!empty($DBInfo->etag_seed))
-      $seed = $DBInfo->etag_seed;
-    return md5($this->mtime().$DBInfo->mtime().$seed.$this->name);
+      $tag.= $DBInfo->etag_seed;
+    if ($params['action'] != 'raw' || empty($params['nodep']))
+      $dep = $DBInfo->mtime();
+    return md5($this->mtime().$dep.$tag.$this->name);
   }
 
   function size() {
@@ -4041,13 +4043,13 @@ class Formatter {
       }
     }
     $mtime = $this->page->mtime();
-    if (!empty($DBInfo->use_conditional_get) and empty($options['action']) and !empty($mtime)
+    if (!empty($DBInfo->use_conditional_get) and !empty($mtime)
         and empty($options['nolastmod'])
         and $this->page->is_static)
     {
       $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
       $this->header('Last-Modified: '.$lastmod);
-      $etag = $this->page->etag();
+      $etag = $this->page->etag($options);
       if (!empty($options['etag']))
         $this->header('ETag: "'.$options['etag'].'"');
       else
@@ -5268,7 +5270,7 @@ function wiki_main($options) {
     } else {
       if ($page->is_static) {
         $mtime = $page->mtime();
-        $etag = $page->etag();
+        $etag = $page->etag($options);
         $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
         header('Last-Modified: '.$lastmod);
         if (!empty($action)) {
@@ -5282,7 +5284,7 @@ function wiki_main($options) {
 
   if (!empty($DBInfo->use_conditional_get) and $page->exists() and $page->is_static) {
     $mtime = $page->mtime();
-    $etag = $page->etag();
+    $etag = $page->etag($options);
     $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
     $need = http_need_cond_request($mtime, $lastmod, $etag);
     if (!$need) {
