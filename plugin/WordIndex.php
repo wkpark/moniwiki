@@ -41,7 +41,7 @@ function macro_WordIndex($formatter,$value, $params = array()) {
 
   $lock_file = _fake_lock_file($DBInfo->vartmp_dir, 'wordindex');
   $locked = _fake_locked($lock_file, $DBInfo->mtime());
-  if ($locked or ($DBInfo->mtime() < $wc->mtime('key') + $delay and $wc->exists('key'))) {
+  if ($locked or ($wc->exists('key') and $DBInfo->checkUpdated($wc->mtime('key'), $delay))) {
     if ($formatter->group) {
       $keys = $wc->fetch('key.'.$formatter->group);
       $dict = $wc->fetch('wordindex.'.$formatter->group);

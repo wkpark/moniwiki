@@ -2496,7 +2496,7 @@ function do_RandomPage($formatter,$options='') {
     $delay = !empty($DBInfo->default_delaytime) ? $DBInfo->default_delaytime : 0;
     $lock_file = _fake_lock_file($DBInfo->vartmp_dir, 'pageindex');
     $locked = _fake_locked($lock_file, $DBInfo->mtime());
-    if (!$locked and ($DBInfo->mtime() > $pgidx->mtime() + $delay)) {
+    if (!$locked and !$DBInfo->checkUpdated($pgidx->mtime(), $delay)) {
         // init pagename index db
         _fake_lock($lock_file);
         $pgidx->init();
@@ -2599,7 +2599,7 @@ EOF;
     $delay = !empty($DBInfo->default_delaytime) ? $DBInfo->default_delaytime : 0;
     $lock_file = _fake_lock_file($DBInfo->vartmp_dir, 'pageindex');
     $locked = _fake_locked($lock_file, $DBInfo->mtime());
-    if (!$locked and ($DBInfo->mtime() > $pgidx->mtime() + $delay)) {
+    if (!$locked and !$DBInfo->checkUpdated($pgidx->mtime(), $delay)) {
         // init pagename index db
         _fake_lock($lock_file);
         $pgidx->init();
@@ -3194,7 +3194,7 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
 
   $lock_file = _fake_lock_file($DBInfo->vartmp_dir, 'titleindex');
   $locked = _fake_locked($lock_file, $DBInfo->mtime());
-  if ($locked or ($DBInfo->mtime() < $kc->mtime('key') + $delay and $kc->exists('key'))) {
+  if ($locked or ($kc->exists('key') and $DBInfo->checkUpdated($kc->mtime('key'), $delay))) {
     if ($formatter->group) {
       $keys = $kc->fetch('key.'.$formatter->group);
       $titleindex = $kc->fetch('titleindex.'.$formatter->group);

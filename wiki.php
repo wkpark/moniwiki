@@ -592,7 +592,7 @@ class WikiDB {
       $dir = $ac->cache_dir;
       $_lock_file = _fake_lock_file($this->vartmp_dir, 'init_alias');
       $locked = _fake_locked($_lock_file, $this->mtime());
-      if ($locked or ($apc->exists('aliases') and $this->mtime() < $apc->mtime('aliases'))) {
+      if ($locked or ($apc->exists('aliases') and $this->checkUpdated($apc->mtime('aliases')))) {
         $aliases = $apc->fetch('aliases');
         break;
       }
@@ -713,6 +713,10 @@ class WikiDB {
     return @filemtime($this->text_dir);
   }
 
+  function checkUpdated($time, $delay = 1800) {
+    return $this->mtime() < $time + $delay;
+  }
+
   function getPageLists($options=array()) {
     $pages = array();
 
@@ -721,7 +725,7 @@ class WikiDB {
 
     $_lock_file = _fake_lock_file($this->vartmp_dir, 'get_page_list', $pcid);
     $locked = _fake_locked($_lock_file, $this->mtime());
-    if ($locked or ($pc->exists($pcid) and $this->mtime() < $pc->mtime($pcid))) {
+    if ($locked or ($pc->exists($pcid) and $this->checkUpdated($pc->mtime($pcid)))) {
       $list = $pc->fetch($pcid);
       if (is_array($list)) return $list;
       if ($locked) return array();
@@ -810,7 +814,7 @@ class WikiDB {
     $_lock_file = _fake_lock_file($this->vartmp_dir, 'get_counter');
     $locked = _fake_locked($_lock_file, $this->mtime());
 
-    if ($locked or ($this->mtime() < $pc->mtime('counter') and $pc->exists('counter')))
+    if ($locked or ($pc->exists('counter') and $this->checkUpdated($pc->mtime('counter'))))
       return $pc->fetch('counter');
 
     _fake_lock($_lock_file);
@@ -5547,13 +5551,12 @@ function wiki_main($options) {
       $cache= new Cache_text('pages', array('ext'=>'html'));
       $mcache= new Cache_text('dynamic_macros');
       $mtime=$cache->mtime($pagename);
-      $dtime= $DBInfo->mtime();
       $now=time();
       $check=$now-$mtime;
       $extra_out='';
       $_macros=null;
      
-      if (empty($formatter->refresh) and (($mtime > $dtime) and ($check < $Config['cachetime']))) {
+      if (empty($formatter->refresh) and $DBInfo->checkUpdated($mtime) and ($check < $Config['cachetime'])) {
         if ($mcache->exists($pagename))
           $_macros= $mcache->fetch($pagename);
         if (empty($_macros)) {
