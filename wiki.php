@@ -5594,7 +5594,8 @@ function wiki_main($options) {
         $out=str_replace($mrule,$mrepl,$out);
       }
       echo $out,$extra_out;
-      $args['refresh']=1; // add refresh menu
+      if ($options['id'] != 'Anonymous')
+        $args['refresh']=1; // add refresh menu
     } else {
       $formatter->send_page('',$options);
     }
