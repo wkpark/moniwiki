@@ -261,7 +261,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   // set as dynamic macro or not.
   if (empty($use_js))
     $formatter->_dynamic_macros['RecentChanges'] = 1;
-  if ($formatter->_macrocache and empty($options['call']) and empty($use_js))
+  if ($formatter->_macrocache and empty($options['call'])) // and empty($use_js))
     return $formatter->macro_cache_repl('RecentChanges', $value);
 
   // reset some conflict params
@@ -709,7 +709,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       else
         $style = '';
 
-      $title = '<button onclick="toggle_log(this);return false;"><span>+</span></button>' . $title;
+      if (!empty($use_js))
+        $title = '<button onclick="toggle_log(this);return false;"><span>+</span></button>' . $title;
       eval($template_extra);
     } else {
       eval($template);
