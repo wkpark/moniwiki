@@ -5555,6 +5555,7 @@ function wiki_main($options) {
       $check=$now-$mtime;
       $extra_out='';
       $_macros=null;
+      if ($cache->mtime($pagename) < $formatter->page->mtime()) $formatter->refresh = 1; // force update
      
       if (empty($formatter->refresh) and $DBInfo->checkUpdated($mtime) and ($check < $Config['cachetime'])) {
         if ($mcache->exists($pagename))
