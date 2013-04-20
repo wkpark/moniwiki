@@ -2761,7 +2761,7 @@ class Formatter {
     if (!isset($pageurl[0]))
       $pageurl=$this->page->urlname;
     if (isset($query_string[0]) and $query_string[0]=='?')
-      $attr=empty($attr) ? 'rel="nofollow"':$attr.' rel="nofollow"';
+      $attr=empty($attr) ? 'rel="nofollow"' : $attr;
     $url=$this->link_url($pageurl,$query_string);
     return '<a href="'.$url.'" '. $attr .'><span>'.$text.'</span></a>';
   }

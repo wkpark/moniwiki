@@ -732,7 +732,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $icon_show = $formatter->icon['show'];
     $icon_diff = $formatter->icon['diff'];
 
-    $js = "<script type='text/javascript'>\nvar rclist =";
+    $js = "<script type='text/javascript'>\n/*<![CDATA[*/\nvar rclist =";
     $ext = array();
     if (!empty($checknew)) $ext[] = 'new=1';
     if (!empty($checkchange)) $ext[] = 'change=1';
@@ -854,6 +854,7 @@ function update_bookmark(time) {
     }
 }
 update_bookmark();
+/*]]>*/
 </script>
 EOF;
 
@@ -880,16 +881,19 @@ EOF;
     $url = $formatter->link_url('RecentChanges', "?action=recentchanges/ajax&type=$rctype".$extra);
     $js = <<<JS
 <script type='text/javascript'>
+/*<![CDATA[*/
   var url = "$url";
   var txt = HTTPGet(url);
   var rc = document.getElementById("rc$rc_id");
   rc.innerHTML = txt;
+/*]]>*/
 </script>
 JS;
     $rc_id++;
   } else if ($use_js and $rctype == 'board') {
     $js.= <<<JS
 <script type='text/javascript'>
+/*<![CDATA[*/
 function toggle_log(el)
 {
   var item = el.parentNode.parentNode; // container
@@ -905,6 +909,7 @@ function toggle_log(el)
     log.style.display = "none";
   }
 }
+/*]]>*/
 </script>
 JS;
   }

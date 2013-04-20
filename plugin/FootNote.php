@@ -148,7 +148,7 @@ function macro_FootNote(&$formatter, $value = "", $options= array()) {
         if (empty($fnref) and !is_numeric($tag))
             $fnref = "fn$tagidx";
 
-        $text = '['.$tag.'&#093';
+        $text = '['.$tag.'&#093;';
         return "<tt class='foot'><a href='#$fnref'>$text</a></tt>";
     }
 
@@ -167,7 +167,7 @@ function macro_FootNote(&$formatter, $value = "", $options= array()) {
     }
 
     if (empty($tag)) $tag = $myidx;
-    $text = '['.$tag.'&#093';
+    $text = '['.$tag.'&#093;';
     if (empty($fnref)) $fnref = "fn$myidx";
 
     $formatter->foots[$myidx] = "<li id='$fnref'><tt class='foot'>".
