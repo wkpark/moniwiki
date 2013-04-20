@@ -835,6 +835,19 @@ class WikiDB {
     return $count;
   }
 
+  function incCounter($type = 1) {
+    $pc = new Cache_text('pagelist');
+    $_lock_file = _fake_lock_file($this->vartmp_dir, 'get_counter');
+    $locked = _fake_locked($_lock_file, $this->mtime());
+
+    if ($locked) return -1; // ignore
+    $count = $pc->fetch('counter');
+    if ($type > 0) $count++; // inc
+    else $count--; // dec
+    $pc->update('counter', $count);
+    return $count;
+  }
+
   function addLogEntry($page_name, $remote_name,$comment,$action="SAVE") {
     $user=&$this->user;
   
@@ -963,6 +976,8 @@ class WikiDB {
       umask($om);
     }
 
+    if (!file_exists($filename)) $this->incCounter();
+
     $fp=@fopen($filename,"a+b");
     if (!is_resource($fp))
        return -1;
@@ -1080,6 +1095,8 @@ class WikiDB {
     }
     $delete=@unlink($this->text_dir."/$keyname");
     $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
+
+    if (!file_exists($this->text_dir."/$keyname")) $this->incCounter(-1);
 
     $handle= opendir($this->cache_dir);
     while ($file= readdir($handle)) {

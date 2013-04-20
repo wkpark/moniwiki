@@ -45,6 +45,8 @@ function do_revert($formatter,$options) {
         }
     }
     if (!empty($_POST['rev']) and !empty($_POST['name']) and $force) {
+        if (!$formatter->page->exists()) $DBInfo->incCounter();
+
         if (!empty($DBInfo->version_class)) {
             $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
 
