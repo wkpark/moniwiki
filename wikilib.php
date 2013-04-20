@@ -3153,9 +3153,11 @@ function get_key($name) {
 }
 
 
-function macro_PageCount($formatter="") {
+function macro_PageCount($formatter, $value = '', $options = array()) {
   global $DBInfo;
 
+  if ($formatter->_macrocache and empty($options['call']))
+    return $formatter->macro_cache_repl('PageCount', '');
   return $DBInfo->getCounter();
 }
 
