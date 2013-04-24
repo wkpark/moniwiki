@@ -919,6 +919,7 @@ class WikiUser {
      preg_match("/[$SPECIAL]/",$id,$match);
      if (!$id || $match)
         return false;
+     if (preg_match('/^\d/', $id)) return false;
      return true;
   }
 
