@@ -89,7 +89,10 @@ EOF;
 
   $sc = new Cache_text("searchkey");
 
-  $words = getTokens($value);
+  if ($arena == "pagelinks")
+    $words = array($value);
+  else
+    $words = getTokens($value);
   // $words=explode(' ', strtolower($value));
 
   $idx = array();
