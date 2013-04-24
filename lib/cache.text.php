@@ -304,7 +304,7 @@ class Cache_Text {
 		$len = 0;
 
 		// Is it serialized ?
-		if (isset($header[1]) and $header[1] == ':' and in_array($header[0], array('a','O'))) {
+		if (empty($type) and isset($header[1]) and $header[1] == ':' and in_array($header[0], array('a','O'))) {
 			$len = strlen($header);
 			$ret = $header;
 			if ($size > $len) $ret.= fread($fp, $size - $len);
