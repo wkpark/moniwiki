@@ -13,8 +13,8 @@
 //
 // $Id: wiki.php,v 1.639 2011/08/09 13:51:53 wkpark Exp $
 //
-$_revision = substr('$Revision: 1.639 $',1,-1);
-$_release = '1.2.0-CVS';
+$_revision = substr('$Revision: 1.650 $',1,-1);
+$_release = '1.2.0-GIT';
 
 #ob_start("ob_gzhandler");
 
@@ -1038,6 +1038,17 @@ class WikiDB {
         $indexer->addWords($page->name, $new_words);
       }
       $indexer->close();
+
+      if (!file_exists($key)) {
+        $tdb = new Indexer_dba('titlesearch', 'w', $this->dba_type);
+        if ($tdb->db != null) {
+          $words = getTokens($page->name);
+          $k = get_key($page->name);
+          $words[] = "\010".$k;
+          $tdb->addWords($page->name, $words);
+          $tdb->close();
+        }
+      }
     }
 
     $log=$REMOTE_ADDR.';;'.$myid.';;'.$comment;
@@ -1070,6 +1081,9 @@ class WikiDB {
 
     $keyname=$this->_getPageKey($page->name);
 
+    $pc = new Cache_text('pagelinks');
+    $pc->remove($page->name);
+
     // update fulltext index
     if (!empty($this->use_indexer)) {
       #include_once("lib/tokenizer.php");
@@ -1083,6 +1097,30 @@ class WikiDB {
         $indexer->deletePage($page->name);
       }
       $indexer->close();
+
+      // remove titlesearch
+      $tdb = new Indexer_dba('titlesearch', 'w', $this->dba_type);
+      if ($tdb->db != null) {
+        $words = getTokens($page->name);
+        $k = get_key($page->name);
+        $words[] = "\010".$k;
+        $tdb->delWords($page->name, $words);
+        $tdb->deletePage($page->name);
+        $tdb->close();
+      }
+
+      // remove pagelinks
+      $ldb = new Indexer_dba('pagelinks', 'w', $this->dba_type);
+      if ($ldb->db != null) {
+        $text = $page->_get_raw_body();
+        $formatter = new Formatter($page);
+        $links = _get_links($formatter, $text);
+        if (!empty($links)) {
+          $ldb->delWords($page->name, $links);
+          $ldb->deletePage($page->name);
+        }
+        $ldb->close();
+      }
     }
 
     if ($this->version_class) {
@@ -1133,6 +1171,39 @@ class WikiDB {
       $indexer->delWords($pagename, $old_words);
       $indexer->addWords($new, $old_words);
       $indexer->close();
+
+      // remove titlesearch
+      $tdb = new Indexer_dba('titlesearch', 'w', $this->dba_type);
+      if ($tdb->db != null) {
+        $words = getTokens($page->name);
+        $k = get_key($page->name);
+        $words[] = "\010".$k;
+        $tdb->delWords($page->name, $words);
+        $tdb->deletePage($page->name);
+        $tdb->close();
+      }
+
+      // remove pagelinks
+      $ldb = new Indexer_dba('pagelinks', 'w', $this->dba_type);
+      if ($ldb->db != null) {
+        $text = $page->_get_raw_body();
+        $links = _get_links($text);
+        if (!empty($links)) {
+          $ldb->delWords($page->name, $links);
+          $ldb->deletePage($page->name);
+        }
+        $ldb->close();
+      }
+
+      // add titlesearch
+      $tdb = new Indexer_dba('titlesearch', 'w', $this->dba_type);
+      if ($tdb->db != null) {
+        $words = getTokens($page->name);
+        $k = get_key($page->name);
+        $words[] = "\010".$k;
+        $tdb->addWords($page->name, $words);
+        $tdb->close();
+      }
     }
 
     $okey=$this->getPageKey($pagename);
@@ -2279,6 +2350,19 @@ class Formatter {
     else
       $this->cache->remove($this->page->name);
 #      $this->page->mtime());
+
+    if (!empty($DBInfo->use_indexer)) {
+      include_once("lib/indexer.DBA.php");
+      $ldb = new Indexer_dba('pagelinks', 'w', $DBInfo->dba_type);
+      if ($ldb->db != null) {
+        if (!empty($cur))
+          $ldb->delWords($this->page->name, $cur);
+        if (!empty($new))
+          $ldb->addWords($this->page->name, $new);
+
+        $ldb->close();
+      }
+    }
   }
 
   function get_pagelinks() {
