@@ -348,6 +348,93 @@ function get_aliases($file) {
 }
 
 /**
+ * Get pagelinks from the wiki text
+ *
+ * @author   Won-Kyu Park <wkpark@gmail.com>
+ */
+function get_pagelinks($formatter, $text) {
+    // split into chunks
+    $chunk = preg_split("/({{{
+                        (?:(?:[^{}]+|
+                        {[^{}]+}(?!})|
+                        (?<!{){{1,2}(?!{)|
+                        (?<!})}{1,2}(?!}))|(?1)
+                        )++}}})/x",$text,-1,PREG_SPLIT_DELIM_CAPTURE);
+    $inline = array(); // save inline nowikis
+
+    if (count($chunk) > 1) {
+        // protect inline nowikis
+        $nc = '';
+        $k = 1;
+        $idx = 1;
+        foreach ($chunk as $c) {
+            if ($k % 2) {
+                $nc.= $c.' ';
+            }
+            $k++;
+        }
+        $text = $nc;
+    }
+
+    // check wordrule
+    if (empty($formatter->wordrule)) $formatter->set_wordrule();
+
+    preg_match_all("/(".$formatter->wordrule.")/", $text, $match);
+
+    $words = array();
+    foreach ($match[0] as $k=>$v) {
+        if (preg_match('/^\!/', $v)) continue;
+        if (preg_match('/^\?/', $v)) {
+            $words[] = substr($v, 1);
+        } else if (preg_match('/^\[?wiki:[^`\'\{\]\^\*\(]/', $v) || !preg_match('/^\[?'.$formatter->urls.':/', $v)) {
+            $extended = false;
+            $creole = false;
+            $word = rtrim($v, '`'); // XXX
+            if (preg_match('/^\[\[(.*)\]\]$/', $word, $m)) {
+                // MediaWiki/WikiCreole like links
+                $creole = true;
+                $word = $m[1];
+            } else if (preg_match('/^\[(.*)\]$/', $word, $m)) {
+                $word = $m[1];
+            }
+
+            if (preg_match('/^(wiki:)?/', $word, $m)) {
+                if (!empty($m[1])) $word = substr($word, 5);
+                if (preg_match("/^\"([^\"]*)\"\s?/", $word, $m1)) {
+                    $extended = true;
+                    $word = $m1[1];
+                } else if (!empty($m[1]) and ($p = strpos($word, " ")) !== false) {
+                    $word = substr($word, 0, $p);
+                }
+            } else if ($creole and ($p = strpos($word, '|')) !== false) {
+                $word = substr($word, 0, $p);
+            }
+
+            if (!$extended and empty($formatter->mediawiki_style) and strpos($word, " ") !== false) {
+                $word = normalize($word);
+            }
+
+            if (preg_match("/^([^\(:]+)(\((.*)\))?$/", $word, $m)) {
+                if (isset($m[1])) {
+                    $name = $m[1];
+                } else {
+                    $name = $word;
+                }
+
+                // check macro
+                $myname = getPlugin($name);
+                if (!empty($myname)) {
+                    // this is macro
+                    continue;
+                }
+            }
+            $words[] = $word;
+        }
+    }
+    return array_unique($words);
+}
+
+/**
  * Checks and sets HTTP headers for conditional HTTP requests
  * slightly modified to set $etag separatly by wkpark@kldp.org
  *
