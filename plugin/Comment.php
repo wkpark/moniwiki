@@ -43,7 +43,7 @@ EXTRA;
 
   $hidden = '';
   if (empty($options['page'])) $options['page']=$formatter->page->name;
-  if (empty($options['action'])) $action='comment';
+  if (empty($options['action']) || $options['action'] == 'show') $action='comment';
   else $action=$options['action'];
   if (!empty($options['mode']))
     $hidden.="<input type='hidden' name='mode' value='".$options['mode']."' />\n";
