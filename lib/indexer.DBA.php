@@ -9,7 +9,7 @@
 
 class Indexer_dba {
     var $db = null;
-    var $type = 'n'; // N for 32-bit. n for 16 bit.
+    var $type = 'N'; // N for 32-bit. n for 16 bit.
     var $wordcache = array();
     var $arena = '';
 
@@ -34,7 +34,7 @@ class Indexer_dba {
         // check updated db file.
         if (empty($prefix) and file_exists($this->index_dir.'/'.$arena.'.new.db')) {
             if (!file_exists($this->dbname) or filemtime($this->index_dir.'/'.$arena.'.new.db') > filemtime($this->dbname)) {
-                touch($this->dbname);
+                @touch($this->dbname);
                 $tmpname = '.tmp_'.time();
                 copy($this->index_dir.'/'.$arena.'.new.db', $this->dbname.$tmpname);
                 rename($this->dbname.$tmpname, $this->dbname);
@@ -164,7 +164,7 @@ class Indexer_dba {
         foreach ($words as $k=>$word) {
             if (!isset($word[0])) continue;
 
-            if (preg_match('/[^0-9A-Za-z]/u', $word)) {
+            if ($word[0] == "\010" and preg_match('/[^0-9A-Za-z]/u', $word)) {
                 //$ret = $this->_fakeIndexWords($word, $new_words);
                 $ret = $this->_chunkWords($word, $new_words, true);
                 if ($ret) unset($words[$k]); // XXX
@@ -413,6 +413,34 @@ class Indexer_dba {
             }
         }
         return $words;
+    }
+
+    // search pages with words
+    function searchPages($words) {
+        if (!is_array($words)) $words = array($words);
+
+        $words = array_map('strtolower', $words);
+
+        $idx = array();
+        $new_words = array();
+        foreach ($words as $word) {
+            $new_words = array_merge($idx, $this->_search($word));
+        }
+        $words = array_merge($words, $new_words);
+
+        $word = array_shift($words);
+        $idx = $this->_fetchValues($word);
+        foreach ($words as $word) {
+            $ids = $this->_fetchValues($word); // FIXME
+            foreach ($ids as $id) $idx[] = $id;
+        }
+
+        $pages = array();
+        foreach ($idx as $id) {
+            $key = $this->_fetch($id);
+            $pages[$id] = $key;
+        }
+        return $pages;
     }
 }
 
