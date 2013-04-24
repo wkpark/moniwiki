@@ -1500,8 +1500,7 @@ EOF;
   # get categories
   $select_category = '';
   if (!empty($DBInfo->use_category) and empty($options['nocategories'])) {
-    $categories=array();
-    $categories= $DBInfo->getLikePages($DBInfo->category_regex);
+    $categories = macro_TitleSearch($formatter, $DBInfo->category_regex, $options);
     if ($categories) {
       $select_category="<label for='category-select'>"._("Category")."</label><select id='category-select' name='category' tabindex='4'>\n";
       $mlen = 0;
@@ -3292,13 +3291,72 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
       $keys = $kc->fetch('key');
       $titleindex = $kc->fetch('titleindex');
     }
-    if (!empty($sel) and isset($titleindex[$sel])) {
+    if (isset($sel[0]) and isset($titleindex[$sel])) {
       $all_pages = $titleindex[$sel];
     }
     if (empty($titleindex) and $locked) {
       // no cache found
       return _("Please wait...");
     }
+  }
+
+  while (!empty($DBInfo->use_indexer)) {
+    require_once("lib/indexer.DBA.php");
+
+    $DB = new Indexer_dba('titlesearch', 'r', $DBInfo->dba_type);
+    if ($DB->db==null) {
+      $opts['msg']=_("Couldn't open search database, sorry.");
+      break;
+    }
+
+    if (isset($sel[0])) {
+      $idx = array();
+      $tmp = dba_fetch("\010".$sel, $DB->db);
+      $ids = unpack($DB->type.'*', $tmp);
+      foreach ($ids as $id) $idx[] = $id;
+      $all_pages = array();
+      foreach ($idx as $id) {
+        $k = $DB->_fetch($id);
+        $all_pages[] = $k;
+      }
+      //$all_pages = $DB->searchPages("\010" . $sel);
+
+      $pages = array_flip($all_pages);
+      array_walk($pages,'_setpagekey');
+      $all_pages = array_flip($pages);
+      uksort($all_pages, 'strcasecmp');
+
+      $titleindex[$sel] = &$all_pages;
+    }
+
+    // generate keys
+    // get all keys
+    if (empty($keys)) {
+      $keys = array();
+      for ($k = dba_firstkey($DB->db); $k !== false; $k = dba_nextkey($DB->db)) {
+        if (isset($k[1]) and $k[0] == "\010") {
+          $keys[] = substr($k, 1);
+        }
+      }
+
+      $keys = array_unique($keys);
+      sort($keys);
+
+      // Others key to the last
+      $rkeys = array_flip($keys);
+      if (isset($rkeys['Others'])) {
+        unset($rkeys['Others']);
+        $keys = array_flip($rkeys);
+        $keys[] = 'Others';
+      }
+      $kc->update('key', $keys);
+    }
+
+    if (empty($titleindex))
+      $titleindex[$keys[0]] = &$all_pages; // FIXME
+
+    $DB->close();
+    break;
   }
 
   if (empty($all_pages)) {
@@ -3353,13 +3411,13 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
       $kc->update('titleindex', $titleindex);
     }
 
-    if (!empty($sel) and isset($titleindex[$sel]))
+    if (isset($sel[0]) and isset($titleindex[$sel]))
       $all_pages = $titleindex[$sel];
     _fake_lock($lock_file, LOCK_UN);
   }
 
   $pnut = null;
-  if (!empty($sel) and count($all_pages) > $pc) {
+  if (isset($sel[0]) and count($all_pages) > $pc) {
     $pages_number = intval(count($all_pages) / $pc);
     if (count($all_pages) % $pc)
       $pages_number++;
@@ -3382,12 +3440,12 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
     $pkey=get_key("$p");
     if ($key != $pkey) {
        $key = $pkey;
-       if (!empty($sel) and !preg_match('/^'.$sel.'/i',$pkey)) continue;
+       if (isset($sel[0]) and !preg_match('/^'.$sel.'/i',$pkey)) continue;
        if (!empty($out)) $out.="</ul>";
        $out.= "<a name='$key'></a><h3><a href='#top'>$key</a></h3>\n";
        $out.= "<ul>";
     }
-    if (!empty($sel) and !preg_match('/^'.$sel.'/i',$pkey)) continue;
+    if (isset($sel[0]) and !preg_match('/^'.$sel.'/i',$pkey)) continue;
     #
 #    if ($DBInfo->use_titlecache and $cache->exists($page))
 #      $title=$cache->fetch($page);
@@ -3410,7 +3468,7 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
 
   $index='';
   $tlink='';
-  if (!empty($sel)) {
+  if (isset($sel[0])) {
     $tlink=$formatter->link_url($formatter->page->name,'?action=titleindex&amp;sec=');
   }
 
@@ -3664,8 +3722,29 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
     return $form;
   }
   $needle=_preg_search_escape($needle);
-  
-  $pages= $DBInfo->getPageLists();
+
+  $pages = array();
+  while (!empty($DBInfo->use_indexer)) {
+    require_once("lib/indexer.DBA.php");
+
+    $DB = new Indexer_dba('titlesearch', 'r', $DBInfo->dba_type);
+    if ($DB->db==null) {
+      $opts['msg']=_("Couldn't open search database, sorry.");
+      break;
+    }
+
+    $tmp = preg_replace('/(\[[^\]]+\])/', '', $needle);
+    preg_match_all('/([a-zA-Z0-9]+)/', $tmp, $match);
+
+    $words = array(strtolower($match[0][0]));
+    $pages = $DB->searchPages($words);
+    $DB->close();
+    break;
+  }
+
+  if (empty($pages))
+    $pages = $DBInfo->getPageLists();
+
   $opts['all'] = count($pages);
   if (empty($DBInfo->alias)) $DBInfo->initAlias();
   $alias = $DBInfo->alias->getAllPages();

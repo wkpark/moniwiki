@@ -35,14 +35,37 @@ function macro_FastSearch($formatter,$value="",&$opts) {
   $fneedle=str_replace('"',"&#34;",$needle); # XXX
   $url=$formatter->link_url($formatter->page->urlname);
 
+  $arena = 'fullsearch';
+  $check1 = 'checked="checked"';
+  $check2 = $check3 = '';
+  if (in_array($opts['arena'], array('titlesearch', 'fullsearch', 'pagelinks'))) {
+    $check1 = '';
+    $arena = $opts['arena'];
+    if ($arena == 'fullsearch') $check1 = 'checked="checked"';
+    else if ($arena == 'titlesearch') $check2 = 'checked="checked"';
+    else $check3 = 'checked="checked"';
+  }
+  if (!empty($opts['backlinks'])) {
+    $arena = 'pagelinks';
+    $check1 = '';
+    $check3 = 'checked="checked"';
+  }
+
   $msg = _("Fast search");
   $msg2 = _("Display context of search results");
+  $msg3 = _("Full text search");
+  $msg4 = _("Title search");
+  $msg5 = _("Link search");
+
   $form= <<<EOF
 <form method='get' action='$url'>
    <input type='hidden' name='action' value='fastsearch' />
    <input name='value' size='30' value='$fneedle' />
    <span class='button'><input type='submit' class='button' value='$msg' /></span><br />
    <input type='checkbox' name='context' value='20' />$msg2<br />
+   <input type='radio' name='arena' value='fullsearch' $check1 />$msg3
+   <input type='radio' name='arena' value='titlesearch' $check2 />$msg4
+   <input type='radio' name='arena' value='pagelinks' $check3 />$msg5<br />
    </form>
 EOF;
 
@@ -54,7 +77,7 @@ EOF;
      return $form;
   }
 
-  $DB=new Indexer_dba('fullsearch',"r",$DBInfo->dba_type);
+  $DB=new Indexer_dba($arena,"r",$DBInfo->dba_type);
   if ($DB->db==null) {
     $opts['msg']=_("Couldn't open search database, sorry.");
     $opts['hits']= array();
@@ -64,12 +87,21 @@ EOF;
   }
   $opts['form'] = $form;
 
+  $sc = new Cache_text("searchkey");
+
   $words = getTokens($value);
   // $words=explode(' ', strtolower($value));
 
   $idx = array();
   $new_words = array();
   foreach ($words as $word) {
+    if ($sc->exists($word)) {
+      $searchkeys = $sc->fetch($word);
+    } else {
+      $searchkeys = $DB->_search($word);
+      $sc->update($word, $searchkeys);
+    }
+    $new_words = array_merge($new_words, $searchkeys);
     $new_words = array_merge($idx,$DB->_search($word));
   }
   $words = array_merge($words, $new_words);
@@ -96,26 +128,29 @@ EOF;
     $hits['_'.$key] = $init_hits[$id]; // HACK. prefix '_' to numerical named pages
   }
   $DB->close();
+  if (!empty($_GET['q']) and isset($_GET['q'][0])) return $pages;
 
   $context = !empty($opts['context']) ? $opts['context'] : 0;
   $limit = isset($opts['limit'][0]) ? $opts['limit'] : $default_limit;
   $contexts = array();
 
-  $idx = 1;
-  foreach ($pages as $page_name) {
-    if (!empty($limit) and $idx > $limit) break;
+  if ($arena == 'fullsearch' || $arena == 'pagelinks') {
+    $idx = 1;
+    foreach ($pages as $page_name) {
+      if (!empty($limit) and $idx > $limit) break;
 
-    $p = new WikiPage($page_name);
-    if (!$p->exists()) continue;
-    $body = $p->_get_raw_body();
-    $count = preg_match_all($pattern, $body,$matches); // more precisely count matches
+      $p = new WikiPage($page_name);
+      if (!$p->exists()) continue;
+      $body = $p->_get_raw_body();
+      $count = preg_match_all($pattern, $body,$matches); // more precisely count matches
 
-    if ($context) {
-      # search matching contexts
-      $contexts[$page_name] = find_needle($body,$needle,'',$context);
+      if ($context) {
+        # search matching contexts
+        $contexts[$page_name] = find_needle($body,$needle,'',$context);
+      }
+      $hits['_'.$page_name] = $count; // XXX hack for numerical named pages
+      $idx++;
     }
-    $hits['_'.$page_name] = $count; // XXX hack for numerical named pages
-    $idx++;
   }
 
   //uasort($hits, 'strcasecmp');
@@ -138,7 +173,7 @@ EOF;
     $out.= '<li>'.$formatter->link_tag(_rawurlencode($page_name),
           "?action=highlight&amp;value="._urlencode($needle),
           $page_name,"tabindex='$idx'");
-    if ($count) {
+    if ($count > 1) {
       $out.= ' . . . . ' . sprintf((($count == 1) ? _("%d match") : _("%d matches")), $count );
       if (!empty($contexts[$page_name]))
         $out.= $contexts[$page_name];
@@ -160,10 +195,51 @@ function do_fastsearch($formatter,$options) {
   global $DBInfo;
 
   $default_limit = isset($DBInfo->fastsearch_limit) ? $DBInfo->fastsearch_limit : 30;
+
+  $rule = '';
+  if ($options['action'] == 'titleindex' || isset($_GET['q'][0])) {
+    $options['value'] = $_GET['q'];
+    $options['arena'] = 'titlesearch';
+
+    while (!empty($DBInfo->use_hangul_search)) {
+      include_once("lib/unicode.php");
+      $val= $_GET['q'];
+      if (strtoupper($DBInfo->charset) != 'UTF-8' and function_exists('iconv')) {
+        $val=iconv($DBInfo->charset,'UTF-8',$val);
+      }
+      if (!$val) break;
+
+      $rule=utf8_hangul_getSearchRule($val);
+
+      $test=@preg_match("/^$rule/",'');
+      if ($test === false) $rule = $options['value'];
+      break;
+    }
+    if (!$rule) $rule = trim($options['value']);
+  }
+
   $ret=$options;
 
-  $title= sprintf(_("Full text search for \"%s\""), $options['value']);
-  $out= macro_FastSearch($formatter,$options['value'],$ret);
+  $extra = '';
+  if (!empty($options['backlinks']) || $options['arena'] == 'pagelinks') {
+    $title= sprintf(_("BackLinks search for \"%s\""), $options['value']);
+    $extra = '&amp;arena=pagelinks';
+  } else if (!empty($options['titlesearch']) || $options['arena'] == 'titlesearch') {
+    $title= sprintf(_("Title search for \"%s\""), $options['value']);
+    if (!empty($options['titlesearch'])) $ret['arena'] = 'titlesearch';
+    $extra = '&amp;arena=titlesearch';
+  } else
+    $title= sprintf(_("Full text search for \"%s\""), $options['value']);
+  if ($rule)
+    $out= macro_FastSearch($formatter,$rule,$ret);
+  else
+    $out= macro_FastSearch($formatter,$options['value'],$ret);
+
+  if (isset($_GET['q'][0])) {
+    header("Content-Type: text/plain");
+    print join("\n",$out);
+    return;
+  }
   $options['msg']=!empty($ret['msg']) ? $ret['msg'] : '';
   $formatter->send_header("",$options);
   $formatter->send_title($title,$formatter->link_url("FindPage"),$options);
@@ -174,9 +250,9 @@ function do_fastsearch($formatter,$options) {
 
   $context = !empty($options['context']) ? $options['context'] : 0;
   $limit = isset($options['limit'][0]) ? $options['limit'] : $default_limit;
-  $cont = '';
+
   if ($context)
-    $cont = '&amp;context='.$context;
+    $extra = '&amp;context='.$context;
 
   if ($options['value']) {
     printf(_("Found %s matching %s out of %s total pages")."<br />\n",
@@ -184,8 +260,8 @@ function do_fastsearch($formatter,$options) {
         ($ret['hit'] == 1) ? _("page") : _("pages"),
          $ret['all']);
 
-    if (!empty($limit) and $ret['hits'] > $limit)
-      echo $formatter->link_to("?action=fastsearch&amp;value=$options[value]&amp;limit=0".$cont,
+    if (!empty($limit) and $ret['hit'] > $limit)
+      echo $formatter->link_to("?action=fastsearch&amp;value=$options[value]&amp;limit=0".$extra,
         sprintf(_("Show all %d results"), $ret['hit']))."<br />\n";
   }
   $args['noaction']=1;
