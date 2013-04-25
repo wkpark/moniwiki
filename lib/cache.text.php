@@ -101,10 +101,9 @@ class Cache_Text {
 		isset($cache_info['depth']) ? $this->depth = $cache_info['depth'] : true;
 		isset($cache_info['ext']) ? $this->ext = $cache_info['ext'] : true;
 		isset($cache_info['handler']) ? $this->handler = $cache_info['handler'] : true;
-		isset($cache_info['hash']) ? $this->hash = $cache_info['hash'] : true;
-
+		!empty($cache_info['hash']) ? $this->hash = $cache_info['hash'] : true;
 		// FIXME. How can I direct access with a cache key name ?
-		if (!function_exists($this->hash))
+		if (!in_array($this->hash, array('md5', 'sha1')) and !function_exists($this->hash))
 			$this->hash = 'md5';
 
 		!empty($this->ext) ? $this->_ext = '.' . $this->ext : $this->_ext  = '';
