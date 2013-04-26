@@ -358,6 +358,15 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $bookmark = strtotime(date('Y-m-d', time() - $checknew).' 00:00:00');
   }
 
+  $locals = get_defined_vars();
+  unset($locals['formatter']);
+  unset($locals['options']);
+  unset($locals['DBInfo']);
+  unset($locals['args']);
+  unset($locals['u']);
+  $rckey = md5(serialize($locals));
+  unset($locals);
+
   $time_current= time();
   $secs_per_day= 60*60*24;
   //$time_cutoff= $time_current - ($days * $secs_per_day);
@@ -390,11 +399,32 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $btnlist=$script."<div class='rc-button'>\n".$btnlist."</div>\n";
   }
 
+  $rc = new Cache_text('rclogs');
+
   $ratchet_day = FALSE;
   $editors = array();
   $editcount = array();
+  $rc_delay = 0; //60*2;
+
+  $rctimestamp = 0;
+  $needupdate = false;
+  if ($DBInfo->checkUpdated($rc->mtime($rckey), $rc_delay) and ($val = $rc->fetch($rckey))) {
+    $editors = $val['editors'];
+    $editcount = $val['editcount'];
+    $lastmod = $val['lastmod'];
+    $rclastline = $val['lastline'];
+    $rctimestamp = $val['timestamp'];
+    $users = $val['users'];
+  }
+  $lastline = $lines[0];
+  list($timestamp, $dummy) = explode("\t", $lastline, 2);
+  $updatemod = array();
+
+  $needupdate = $lastline != $rclastline or $rctimestamp < $timestamp;
+  if ($needupdate)
   foreach ($lines as $line) {
     $parts= explode("\t", $line,6);
+    if ($lastline == $rclastline) break;
     $page_key= $parts[0];
     $ed_time= $parts[2];
     $user= $parts[4];
@@ -412,11 +442,13 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         $edit_day = gmdate('Ymd', $lastmod[$page_key] + $tz_offset);
         $editors[$page_key][$edit_day][] = $user;
         $editcount[$page_key][$edit_day]++;
+        if ($needupdate and empty($updatemod[$edit_day])) $updatemod[$edit_day] = $ed_time;
         continue;
       }
     } else if (!empty($editcount[$page_key][$day])) {
       $editors[$page_key][$day][] = $user;
       $editcount[$page_key][$day]++;
+      if ($needupdate and empty($updatemod[$edit_day])) $updatemod[$edit_day] = $ed_time;
       continue;
     }
     if (empty($editcount[$page_key])) {
@@ -429,7 +461,10 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $editors[$page_key][$day] = array();
     $editors[$page_key][$day][] = $user;
     $lastmod[$page_key] = $ed_time;
+    if ($needupdate) $updatemod[$page_key] = $ed_time;
   }
+
+  $lastmod = array_merge($lastmod, $updatemod);
 
   $out="";
   $ratchet_day= FALSE;
@@ -595,7 +630,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
       if ($last_editor_only) {
         // show last editor only
-        $editor = array_pop($editors[$page_key][$day]);
+        $editor = $editors[$page_key][$day];
+        if (is_array($editor)) $editor = $editor[count($editor) - 1];
       } else {
         // all show all authors
         // count edit number
@@ -743,6 +779,15 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $logs[$page_key][$day] = 1;
     ++$ii;
   }
+
+  if ($needupdate)
+    $rc->update($rckey, array(
+          'editors'=>$editors,
+          'editcount'=>$editcount,
+          'lastmod'=>$lastmod,
+          'lastline'=>$lastline,
+          'timestamp'=>$timestamp,
+          'users'=>$users));
 
   $js = '';
   if (!empty($rc_list)) {
