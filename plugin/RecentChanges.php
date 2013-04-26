@@ -464,7 +464,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     if ($needupdate) $updatemod[$page_key] = $ed_time;
   }
 
-  $lastmod = array_merge($lastmod, $updatemod);
+  if (!empty($lastmod))
+    $lastmod = array_merge($lastmod, $updatemod);
 
   $out="";
   $ratchet_day= FALSE;
