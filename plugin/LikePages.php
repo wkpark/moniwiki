@@ -117,10 +117,10 @@ function macro_LikePages($formatter="", $value, &$opts) {
       return '';
     }
 
-    $prep = explode('|', $start);
-    $suff = explode('|', $end);
+    $words = explode('|', $start);
+    if (!empty($end))
+      $words = array_merge($words, explode('|', $end));
 
-    $words = array_merge($prep, $suff);
     $pages = $DB->searchPages($words);
     $DB->close();
   } else {
