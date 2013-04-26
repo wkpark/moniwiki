@@ -453,7 +453,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     // show trashed pages only
     if ($trash and $DBInfo->hasPage($page_name)) continue;
 
-    $addr= $DBInfo->mask_hostname ? _mask_hostname($parts[1]):$parts[1];
+    $addr= !empty($DBInfo->mask_hostname) ? _mask_hostname($parts[1]):$parts[1];
     $user= $parts[4];
     $log= _stripslashes($parts[5]);
     $act= rtrim($parts[6]);
@@ -644,21 +644,24 @@ function macro_RecentChanges($formatter,$value='',$options='') {
           $count = '';
 
         if (!empty($showhost) && substr($user, 0, 9) == 'Anonymous') {
+          $ouser = $user;
+          if (isset($users[$ouser])) $user = $users[$ouser];
+          else {
           $checkaddr = substr($user, 10); // Anonymous-127.0.0.1 or Anonymous-email@foo.bar
-          $user= $addr;
-          if ($user != $checkaddr) {
+          $user = $addr;
+          if (!is_numeric($checkaddr[0]) and preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i', $user)) {
             $user = $checkaddr;
-            if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i', $user)) {
-              if (!empty($DBInfo->hide_emails))
-                $user = substr(md5($user), 0, 8); // FIXME
-              else
-                $user = email_guard($user);
-            }
+            if (!empty($DBInfo->hide_emails))
+              $user = substr(md5($user), 0, 8); // FIXME
+            else
+              $user = email_guard($user);
           }
           if (!empty($use_avatar)) {
             $crypted = crypt($addr, $addr);
             $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
             $user = '<img src="'.$mylnk.'" style="width:16px;height:16px;vertical-align:middle" alt="avatar" />'. _('Anonymous');
+          }
+          $users[$ouser] = $user;
           }
         } else {
           $ouser= $user;
@@ -701,6 +704,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
               $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
               $user = '<img src="'.$mylnk.'" style="width:16px;height:16px;vertical-align:middle" alt="avatar" />'.$user;
             }
+            $users[$ouser] = $user;
           }
         }
         $all_user[] = $user.$count;
