@@ -253,6 +253,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       else if ($arg=="allusers") $last_editor_only = 0;
       else if ($arg=="allentries") $last_entry_only = 0;
       else if ($arg=="avatar") $use_avatar = 1;
+      else if ($arg=="noavatar") $use_avatar = 0;
       else if ($arg=="js") $use_js = 1;
       else if (in_array($arg, array('simple', 'moztab', 'board', 'table', 'list'))) $rctype = $arg;
     }
@@ -643,7 +644,17 @@ function macro_RecentChanges($formatter,$value='',$options='') {
           $count = '';
 
         if (!empty($showhost) && substr($user, 0, 9) == 'Anonymous') {
+          $checkaddr = substr($user, 10); // Anonymous-127.0.0.1 or Anonymous-email@foo.bar
           $user= $addr;
+          if ($user != $checkaddr) {
+            $user = $checkaddr;
+            if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i', $user)) {
+              if (!empty($DBInfo->hide_emails))
+                $user = substr(md5($user), 0, 8); // FIXME
+              else
+                $user = email_guard($user);
+            }
+          }
           if (!empty($use_avatar)) {
             $crypted = crypt($addr, $addr);
             $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
@@ -678,6 +689,13 @@ function macro_RecentChanges($formatter,$value='',$options='') {
               $addr = substr($user, 10);
               $user = _('Anonymous');
             }
+            if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i', $user)) {
+              if (!empty($DBInfo->hide_emails))
+                $user = substr(md5($user), 0, 8); // FIXME
+              else
+                $user = email_guard($user);
+            }
+
             if (!empty($use_avatar)) {
               $crypted = crypt($addr, $addr);
               $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
