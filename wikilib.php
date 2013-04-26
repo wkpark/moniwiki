@@ -491,6 +491,16 @@ function http_need_cond_request($mtime, $last_modified = '', $etag = '') {
     return false;
 }
 
+/**
+ * static content action
+ */
+
+function is_static_action($params) {
+    if (isset($params['action']) and $params['action'] == 'raw')
+        return true;
+    return false;
+}
+
 function is_mobile() {
   global $DBInfo;
 
@@ -1819,11 +1829,15 @@ function do_raw($formatter,$options) {
   if (!empty($Config['force_charset']))
     $force_charset = '; charset='.$Config['charset'];
   $supported=array('text/plain','text/css','text/javascript');
-  if (!empty($options['mime']) and in_array($options['mime'],$supported)) {
-    $formatter->send_header("Content-Type: $options[mime]",$options);
-  } else {
+
+  $header = array();
+  if (!empty($options['mime']) and in_array($options['mime'],$supported))
+    $header[] = "Content-Type: $options[mime]";
+
+  if ($formatter->page->exists()) {
     $mtime = $formatter->page->mtime();
     $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
+    $options['deps'] = array('rev', 'section');
     $etag = $formatter->page->etag($options);
     if (strstr($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') and function_exists('ob_gzhandler')) {
       $gzip_mode = 1;
@@ -1831,7 +1845,6 @@ function do_raw($formatter,$options) {
     }
     $options['etag'] = $etag;
 
-    $header = array();
     $header[] = 'Content-Type: text/plain'.$force_charset;
     $header[] = 'Pragma: cache';
     $maxage = 60*60*24*7;
@@ -1849,17 +1862,19 @@ function do_raw($formatter,$options) {
     #if (!empty($gzip_mode)) {
     #  ob_start('ob_gzhandler');
     #}
+
+    $raw_body=$formatter->page->get_raw_body($options);
+    if (isset($options['section'])) {
+      $sections= _get_sections($raw_body);
+      if ($sections[$options['section']])
+        $raw_body = $sections[$options['section']];
+      else
+        $raw_body = "Fill Me\n";
+    }
+    print $raw_body;
+  } else {
+    header('HTTP/1.0 404 Not found');
   }
-  $raw_body=$formatter->page->get_raw_body($options);
-  if (isset($options['section'])) {
-    $sections= _get_sections($raw_body);
-    if ($sections[$options['section']])
-      $raw_body = $sections[$options['section']];
-     #else ignore
-    else
-      $raw_body = "Fill Me\n";
-  }
-  print $raw_body;
 }
 
 function do_recall($formatter,$options) {

@@ -1301,10 +1301,18 @@ class WikiPage {
   function etag($params = array()) {
     global $DBInfo;
     $dep = '';
+    $tag = '';
     if (!empty($DBInfo->etag_seed))
       $tag.= $DBInfo->etag_seed;
+    if (!empty($params['action']))
+      $tag.= $params['action'];
+    if (!empty($params['deps'])) {
+      foreach ($params['deps'] as $d) {
+        !empty($params[$d]) ? $tag.= $params[$d] : true;
+      }
+    }
     if ($params['action'] != 'raw' || empty($params['nodep']))
-      $dep = $DBInfo->mtime();
+      $dep.= $DBInfo->mtime();
     return md5($this->mtime().$dep.$tag.$this->name);
   }
 
@@ -4152,9 +4160,10 @@ class Formatter {
       }
     }
     $mtime = $this->page->mtime();
-    if (!empty($DBInfo->use_conditional_get) and !empty($mtime)
+    if (is_static_action($options) or
+        (!empty($DBInfo->use_conditional_get) and !empty($mtime)
         and empty($options['nolastmod'])
-        and $this->page->is_static)
+        and $this->page->is_static))
     {
       $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
       $this->header('Last-Modified: '.$lastmod);
@@ -5368,7 +5377,7 @@ function wiki_main($options) {
   if (!empty($options['is_robot'])) {
     $page->is_static = true;
   } else {
-    $page->is_static = $action == 'raw' || empty($pis['#nocache']) && empty($pis['#dynamic']);
+    $page->is_static = empty($pis['#nocache']) && empty($pis['#dynamic']);
   }
 
   // HEAD support for robots
@@ -5377,7 +5386,7 @@ function wiki_main($options) {
       header("HTTP/1.1 404 Not found");
       header("Status: 404 Not found");
     } else {
-      if ($page->is_static) {
+      if ($page->is_static or is_static_action($options)) {
         $mtime = $page->mtime();
         $etag = $page->etag($options);
         $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
@@ -5391,7 +5400,7 @@ function wiki_main($options) {
     return;
   }
 
-  if (!empty($DBInfo->use_conditional_get) and $page->exists() and $page->is_static) {
+  if (is_static_action($action) or (!empty($DBInfo->use_conditional_get) and $page->exists() and $page->is_static)) {
     $mtime = $page->mtime();
     $etag = $page->etag($options);
     $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
