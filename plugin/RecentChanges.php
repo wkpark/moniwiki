@@ -319,7 +319,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         if (!empty($showhost))
           $template.='<td class=\'author\'>$user</td>';
         $template.='<td class=\'editinfo\'>$count';
-        if (!empty($checkchange)) $template.=' $diff';
+        if (!empty($checkchange) or !empty($checknew)) $template.=' $diff';
         $template.='</td>';
         if (!empty($use_hits))
           $template.='<td class=\'hits\'>$hits</td>';
@@ -575,12 +575,12 @@ function macro_RecentChanges($formatter,$value='',$options='') {
               $del+= $tmp[1];
             }
           }
-
-          if (!empty($add))
-            $diff.= '<span class="diff-added"><span>+'.$add.'</span></span>';
-          if (!empty($del))
-            $diff.= '<span class="diff-removed"><span>'.$del.'</span></span>';
         }
+
+        if (!empty($add))
+          $diff.= '<span class="diff-added"><span>+'.$add.'</span></span>';
+        if (!empty($del))
+          $diff.= '<span class="diff-removed"><span>'.$del.'</span></span>';
       } else if (!empty($use_js)) {
         $rc_list[] = $page_name;
       }
