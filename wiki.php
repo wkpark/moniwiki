@@ -5395,6 +5395,10 @@ function wiki_main($options) {
           $etag = '"'.$etag.'"';
           header('ETag: '.$etag);
         }
+
+        // checksum request
+        if (isset($_SERVER['HTTP_X_GET_CHECKSUM']))
+          header('X-Checksum: md5-'. md5($page->get_raw_body()));
       }
     }
     return;
