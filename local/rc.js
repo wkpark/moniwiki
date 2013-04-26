@@ -1,6 +1,6 @@
 // dynamic input form
 function daysago(obj) {
-  var ele=obj.parentNode;
+  var ele=obj;
   if (ele.childNodes[0].innerHTML=='...') {
     //ele.innerHTML="<input type='text' name='daysago'"+
     //  " size='5' onChange='daysago(this)' />";
