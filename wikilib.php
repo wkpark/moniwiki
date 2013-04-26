@@ -816,10 +816,10 @@ class UserDB {
     return $subs;
   }
 
-  function addUser($user) {
+  function addUser($user, $options = array()) {
     if ($this->_exists($user->id))
       return false;
-    $this->saveUser($user);
+    $this->saveUser($user, $options);
     return true;
   }
 
@@ -849,14 +849,15 @@ class UserDB {
     #print $data;
 
     $wu="wu-".$this->_id_to_key($user->id);
-    if (!empty($options['wait'])) $wu='wait-'.$wu;
+    if (!empty($options['suspended'])) $wu='wait-'.$wu;
     $fp=fopen("$this->user_dir/$wu","w+");
     fwrite($fp,$data);
     fclose($fp);
   }
 
-  function _exists($id) {
-    if (file_exists("$this->user_dir/wu-" . $this->_id_to_key($id)))
+  function _exists($id, $suspended = false) {
+    $prefix = $suspended ? 'wait-wu-' : 'wu-';
+    if (file_exists("$this->user_dir/$prefix" . $this->_id_to_key($id)))
       return true;
     return false;
   }
@@ -872,9 +873,10 @@ class UserDB {
     return 0;
   }
 
-  function getUser($id) {
-    if ($this->_exists($id)) {
-       $data=file("$this->user_dir/wu-" . $this->_id_to_key($id));
+  function getUser($id, $suspended = false) {
+    $prefix = $suspended ? 'wait-wu-' : 'wu-';
+    if ($this->_exists($id, $suspended)) {
+       $data=file("$this->user_dir/$prefix" . $this->_id_to_key($id));
     } else {
        $user=new WikiUser('Anonymous');
        return $user;
@@ -938,6 +940,7 @@ class WikiUser {
      $this->trail=isset($_COOKIE['MONI_TRAIL']) ? _stripslashes($_COOKIE['MONI_TRAIL']):'';
      $this->tz_offset=isset($_COOKIE['MONI_TZ']) ?_stripslashes($_COOKIE['MONI_TZ']):'';
      $this->nick=isset($_COOKIE['MONI_NICK']) ?_stripslashes($_COOKIE['MONI_NICK']):'';
+     $this->verified_email = isset($_COOKIE['MONI_VERIFIED_EMAIL']) ? _stripslashes($_COOKIE['MONI_VERIFIED_EMAIL']) : '';
      if ($this->tz_offset =='') $this->tz_offset=date('Z');
   }
 
@@ -1558,6 +1561,19 @@ EXTRA;
     $summary=<<<EOS
 <span id='edit-summary'><label for='input-summary'>$summary_msg</label><input name="comment" id='input-summary' value="$editlog" size="60" maxlength="128" tabindex="2" />$extra_check</span>
 EOS;
+    $emailform = '';
+    if (!empty($DBInfo->anonymous_friendly) and $options['id'] == 'Anonymous') {
+      $useremail = isset($DBInfo->user->verified_email) ? $DBInfo->user->verified_email : '';
+      if ($useremail) {
+        $email_msg = _("E-Mail");
+        $send_msg = sprintf(_("Send mail to %s"), "<span class='email'>".$useremail."</span>");
+        #<label for='input-email'>$email_msg</label>
+        #<span id='edit-email'><label for='input-email'>$email_msg</label><input name="email" id='input-email' value="$useremail" size="40" maxlength="60" tabindex="3" /></span>
+        $emailform = <<<EOS
+        $send_msg <input type='checkbox' tabindex='3' checked='checked' name='cc' />
+EOS;
+      }
+    }
   }
   $save_msg=_("Save");
   if ($use_js and !empty($DBInfo->use_resizer)) {
@@ -1604,7 +1620,7 @@ $captcha
 $extraform
 <div id="editor_info">
 <ul>
-<li>$summary</li>
+<li>$summary $emailform</li>
 <li>$select_category
 <span>
 <input type="hidden" name="action" value="$saveaction" />
@@ -2427,11 +2443,24 @@ function wiki_notify($formatter,$options) {
   global $DBInfo;
 
   $from= $options['id'];
-#  if ($options[id] != 'Anonymous')
-#
 
   $udb=&$DBInfo->udb;
   $subs=$udb->getPageSubscribers($options['page']);
+
+  $reminder = '';
+  if ($from == 'Anonymous') {
+    if (!empty($options['cc']) and !empty($DBInfo->user->verified_email)) {
+      $mail = $DBInfo->user->verified_email;
+      $ticket = base64_encode(getTicket($_SERVER['REMOTE_ADDR'], $mail, 10));
+      $enc = base64_encode($mail);
+      $reminder = _("You have contribute this wiki as an Anonymous donor.")."\n";
+      $reminder.= _("Your IP address and e-mail address are used to verify you.")."\n";
+      $reminder.= qualifiedUrl($formatter->link_url($options['page'], "?action=userform&login=$enc&verify_email=$ticket"));
+      $reminder.= "\n\n";
+      $subs[] = $DBInfo->user->verified_email;
+    }
+  }
+
   if (!$subs) {
     if ($options['noaction']) return 0;
 
@@ -2483,8 +2512,9 @@ function wiki_notify($formatter,$options) {
   $mailheaders.= "Content-Type: text/plain; charset=$DBInfo->charset\n";
   $mailheaders.= "Content-Transfer-Encoding: 8bit\n\n";
 
-  $body=sprintf(_("You have subscribed to this wiki page on \"%s\" for change notification.\n\n"),$DBInfo->sitename);
-  $body.="-------- $options[page] ---------\n";
+  $body = sprintf(_("You have subscribed to this wiki page on \"%s\" for change notification.\n\n"),$DBInfo->sitename);
+  $body.= $reminder;
+  $body.="-------- Page name: $options[page] ---------\n";
   
   $body.=$formatter->page->get_raw_body();
   if (!$options['nodiff']) {
@@ -2510,6 +2540,45 @@ function wiki_notify($formatter,$options) {
   return;
 }
 
+/**
+ * Email validator
+ *
+ * Please see http://www.corecoding.com/php-email-validation_c15.html
+ */
+
+function verify_email($email, $timeout = 5) {
+    list($name, $domain) = explode('@', $email);
+    $result = getmxrr($domain, $mxhosts);
+    if (!$result) $mxhosts[0] = $domain;
+
+    $ret = -1;
+    foreach ($mxhosts as $mxhost) {
+        $sock = @fsockopen($mxhost, 25, $errno, $errstr, $timeout);
+        if (is_resource($sock)) break;
+    }
+    if (!is_resource($sock)) return $ret;
+
+    if (preg_match("/^220/", $out = fgets($sock, 1024))) {
+        fwrite($sock, "HELO 127.0.0.1\r\n");
+        $out = fgets($sock, 1024);
+        fwrite($sock, "MAIL FROM: <apache@localhost.localdomain>\r\n");
+        $from = fgets($sock, 1024);
+        list($code, $msg) = explode(' ', $from, 2);
+        if ($code == '553') {
+            fwrite($sock, "MAIL FROM: <".$email.">\r\n");
+            $from = fgets($sock, 1024);
+            list($code, $msg) = explode(' ', $from, 2);
+        }
+        fwrite($sock, "RCPT TO: <".$email.">\r\n");
+        $to = fgets($sock, 1024);
+        list($code, $msg) = explode(' ', $to, 2);
+        fwrite($sock, "QUIT\r\n");
+        fclose($sock);
+
+        if ($code == '250') $ret = 0;
+    }
+    return $ret;
+}
 
 function wiki_sendmail($body,$options) {
   global $DBInfo;
@@ -2518,7 +2587,7 @@ function wiki_sendmail($body,$options) {
     return array('msg'=>_("This wiki does not support sendmail"));
   }
 
-  if ($DBInfo->replyto) {
+  if (!empty($DBInfo->replyto)) {
     $rmail= $DBInfo->replyto;
   } else {
     // make replyto address
@@ -2549,7 +2618,18 @@ function wiki_sendmail($body,$options) {
   $mailheaders.= "Content-Type: text/plain; charset=$DBInfo->charset\n";
   $mailheaders.= "Content-Transfer-Encoding: 8bit\n\n";
 
-  mail($email,$subject,$body,$mailheaders,'-fnoreply');
+  if (!empty($DBInfo->sendmail_path)) {
+    $header = "To: $email\n".
+              "Subject: $subject\n";
+
+    $handle = popen($DBInfo->sendmail_path, 'w');
+    if (is_resource($handle)) {
+      fwrite($handle, $header.$mailheaders.$body);
+      fclose($handle);
+    }
+  } else {
+    mail($email,$subject,$body,$mailheaders,'-fnoreply');
+  }
   return 0;
 }
 
@@ -3038,6 +3118,24 @@ PASS;
       $button2=_("E-mail new password");
       $emailpasswd=
         "<span class='button'><input type=\"submit\" class='button' name=\"login\" value=\"$button2\" /></span>\n";
+
+      if (!empty($DBInfo->anonymous_friendly)) {
+        $verifiedemail = isset($options['verifyemail']) ? $options['verifyemail'] :
+                        (isset($user->verified_email) ? $user->verified_email : '');
+        $button3 =_("Verify E-mail address");
+        $button4 =_("Remove");
+        $remove = '';
+        if ($verifiedemail)
+            $remove = "<span class='button'><input type='submit' class='button' name='emailreset' value='$button4' /></span>";
+        $emailverify = <<<EOF
+          $sep
+          <tr><th>$mailbtn&nbsp;</th><td><input type='text' size='40' name='verifyemail' value="$verifiedemail" /></td></tr>
+          <tr><td></td><td>
+          <span class='button'><input type="submit" class='button' name="verify" value="$button3" /></span>
+          $remove
+          </td></tr>
+EOF;
+      }
     }
   }
   $id_btn=_("ID");
@@ -3061,6 +3159,7 @@ $sep1
   <tr><td></td><td>
     <span class="button"><input type="submit" class="button" name="login" value="$button" /></span> &nbsp;
     $emailpasswd
+    $emailverify
     $logout
   </td></tr>
 </table>

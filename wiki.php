@@ -852,6 +852,8 @@ class WikiDB {
     $user=&$this->user;
   
     $myid=$user->id;
+    if ($myid == 'Anonymous' and !empty($user->verified_email))
+      $myid.= '-'.$user->verified_email;
 
     $comment=preg_replace("/\r\n|\r/", " ", $comment);
     $comment=strtr($comment,"\t"," ");
@@ -1011,6 +1013,8 @@ class WikiDB {
     if (!empty($user->info['nick'])) {
       $myid.=' '.$user->info['nick'];
       $options['nick']=$user->info['nick'];
+    } else if ($myid == 'Anonymous' and !empty($user->verified_email)) {
+      $myid.= '-'.$user->verified_email;
     }
     $options['myid']=$myid;
 

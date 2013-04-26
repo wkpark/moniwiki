@@ -49,6 +49,10 @@ $trail= 1; # use trailer (navagation list of some recently visited pages)
 #$origin=1; # show upper pages like as Language/Script/Perl => Language > Script > Perl
 #$arrow=' <img src="/wiki/imgs/moni-arrow.gif"/> ';
 $notify= 0; # enable email notification
+#$use_sendmail=0; # use sendmail
+#$sendmail_path='/usr/sbin/sendmail -i -t -fnoreply'; # sendmail binary path
+#$replyto="your@email.address"; # replyto return email address
+#$anonymous_friendly=1; # make anonymous friendly wiki
 $use_referer= 0; # use some basic referer feature.
 $use_sistersites=1; # use sistersites/siterwiki feature.
 #$use_singlebracket=1; #

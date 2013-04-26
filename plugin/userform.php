@@ -26,12 +26,22 @@ function do_userform($formatter,$options) {
   # e-mail conformation
   if (!empty($options['ticket']) and $id and $id!='Anonymous') {
     $userdb=&$DBInfo->udb;
+
+    $suspended = false;
     if ($userdb->_exists($id)) {
-       $user=$userdb->getUser($id);
+      $user=$userdb->getUser($id);
+    } else if ($userdb->_exists($id, 1)) {
+      // suspended user
+      $suspended = true;
+      $user=$userdb->getUser($id, 1);
+    }
+
+    if ($user->id == $id) {
        if ($user->info['eticket']==$options['ticket']) {
          list($dummy,$email)=explode('.',$options['ticket'],2);
          $user->info['email']=$email;
          $user->info['eticket']='';
+         if ($suspended) $userdb->activateUser($id);
          $userdb->saveUser($user);
          $title=_("Successfully confirmed");
          $options['msg']=_("Your e-mail address is confirmed successfully");
@@ -58,6 +68,54 @@ function do_userform($formatter,$options) {
   }
 
   $title='';
+  if ($user->id == "Anonymous" and !empty($options['emailreset'])) {
+    setcookie('MONI_VERIFIED_EMAIL', '', time() - 3600, get_scriptname());
+    $options['msg'].='<br />'._("Verification E-mail removed.");
+    $options['verifyemail'] = '';
+    $user->verified_email = '';
+  } else if ($user->id == "Anonymous" and !empty($options['login']) and
+      !empty($options['verify_email'])) {
+    $email = base64_decode($options['login']);
+    $ticket = base64_encode(getTicket($_SERVER['REMOTE_ADDR'], $email, 10));
+    if ($ticket == $options['verify_email']) {
+      $options['msg'].='<br />'._("Your email address is successfully verified.");
+      $user->verified_email = $email;
+      setcookie('MONI_VERIFIED_EMAIL', $email, time() + 60*60*24*30, get_scriptname());
+    } else {
+      $options['msg'].='<br />'._("Verification missmatched.");
+    }
+  } else
+  if ($user->id == "Anonymous" and empty($options['login_id']) and
+      !empty($DBInfo->anonymous_friendly) and !empty($options['verifyemail'])) {
+    if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['verifyemail'])) {
+      if (verify_email($options['verifyemail']) < 0) {
+        $options['msg'].='<br/>'._("Invalid email address or can't verify it.");
+      } else {
+        if (!empty($DBInfo->verify_email)) {
+          if ($DBInfo->verify_email == 1) {
+            $options['msg'].='<br/>'._("Your email address is successfully verified.");
+            setcookie('MONI_VERIFIED_EMAIL', $options['verifyemail'], time() + 60*60*24*30, get_scriptname());
+          } else {
+            $opts = array();
+            $opts['subject'] = "[$DBInfo->sitename] "._("Verify Email address");
+            $opts['email'] = $options['verifyemail'];
+            $opts['id'] = 'nobody';
+            $ticket = base64_encode(getTicket($_SERVER['REMOTE_ADDR'], $opts['email'], 10));
+            $enc = base64_encode($opts['email']);
+            $body = qualifiedUrl($formatter->link_url('UserPreferences',"?action=userform&login=$enc&verify_email=$ticket"));
+
+            $body = _("Please confirm your e-mail address")."\n".$body."\n";
+
+            $ret = wiki_sendmail($body, $opts);
+            $options['msg'].='<br/>'._("E-mail verification mail sent");
+          }
+        }
+      }
+    } else {
+      $options['msg'].='<br/>'._("Your email address is not valid");
+    }
+
+  } else
   if ($user->id == "Anonymous" and !empty($options['login_id']) and isset($options['password']) and !isset($options['passwordagain'])) {
     # login
     $userdb=$DBInfo->udb;
@@ -212,6 +270,14 @@ function do_userform($formatter,$options) {
       $ok_ticket=1;
     }
     $id=$user->getID($options['login_id']);
+    if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i', $id)) {
+      if (verify_email($id) < 0) {
+        $options['msg'].='<br/>'._("Invalid email address or can't verify it.");
+      } else {
+        $options['email'] = $id;
+        $user->setID($id);
+      }
+    } else
     if (!preg_match("/\//",$id)) $user->setID($id); // protect http:// style id
 
     if ($ok_ticket and $user->id != "Anonymous") {
@@ -257,7 +323,10 @@ function do_userform($formatter,$options) {
                $options['msg'].= '<br />'._("Please check your mailbox");
              } else
                $formatter->header($user->setCookie());
-             $ret=$udb->addUser($user);
+             $args = array();
+             if ($options['email'] == $id or !empty($DBInfo->register_confirm_email))
+               $args = array('suspended'=>1);
+             $ret = $udb->addUser($user, $args);
 
              # XXX
              if (!empty($options['email']) and preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
