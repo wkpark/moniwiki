@@ -148,8 +148,11 @@ function _parse_rlog($formatter,$log,$options=array()) {
          $dummy=explode(';;',$line,3);
          $ip=$dummy[0];
          $user=trim($dummy[1]);
-         if (!empty($DBInfo->use_nick) and ($p = strpos($user,' ')) !== false) // XXX
+         if (!empty($DBInfo->use_nick) and ($p = strpos($user,' ')) !== false) { // XXX
            $user = substr($user, 0, $p);
+         } else if (substr($user, 0, 9) == 'Anonymous') {
+           $user = 'Anonymous';
+         }
 
          if ($user and $user!='Anonymous') {
            if (in_array($user,$users)) $ip=$users[$user];
