@@ -68,6 +68,7 @@ class HTTPClient {
         $this->http         = '1.0';
         $this->debug        = false;
         $this->max_bodysize = 0;
+        $this->nobody       = false;
         if(extension_loaded('zlib')) $this->headers['Accept-encoding'] = 'gzip';
         $this->headers['Accept'] = 'text/xml,application/xml,application/xhtml+xml,'.
                                    'text/html,text/plain,image/png,image/jpeg,image/gif,*/*';
@@ -196,7 +197,7 @@ class HTTPClient {
 
         //read body (with chunked encoding if needed)
         $r_body    = '';
-        if(preg_match('/transfer\-(en)?coding:\s+chunked\r\n/i',$r_header)){
+        if (empty($this->nobody) and preg_match('/transfer\-(en)?coding:\s+chunked\r\n/i',$r_header)) {
             do {
                 unset($chunk_size);
                 do {
@@ -224,7 +225,7 @@ class HTTPClient {
                     return false;
                 }
             } while ($chunk_size);
-        }else{
+        } else if (empty($this->nobody)) {
             // read entire socket
             while (!feof($socket)) {
                 if(time()-$start > $this->timeout){
