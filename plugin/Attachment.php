@@ -20,6 +20,9 @@ function macro_Attachment($formatter,$value,$options=array()) {
 
   if (!is_array($options) and $options==1) $options=array('link'=>1); // compatible
 
+  if ($formatter->_macrocache and empty($options['call']))
+    return $formatter->macro_cache_repl('Attachment', $value);
+
   $attr='';
   if (!empty($DBInfo->force_download)) $force_download=1;
   if (!empty($DBInfo->download_action)) $mydownload=$DBInfo->download_action;
