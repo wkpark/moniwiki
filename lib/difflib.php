@@ -855,13 +855,13 @@ class DiffFormatter
  * 
  */
 
-#define('NBSP', "\xA0");         // iso-8859-x non-breaking space.
-define('NBSP', "");         // iso-8859-x non-breaking space.
+define('NBSP', "\xA0");         // iso-8859-x non-breaking space.
 
 class _HWLDF_WordAccumulator {
-    function _HWLDF_WordAccumulator ($tags=
-        array("<del class='diff-removed'>","</del>",
-            "<ins class='diff-added'>","</ins>")) {
+    function _HWLDF_WordAccumulator ($tags = array(), $nbsp = '&nbsp;') {
+        if (empty($tags))
+            $tags = array("<del class='diff-removed'>", "</del>",
+                        "<ins class='diff-added'>", "</ins>");
         $this->_lines = array();
         $this->_line = '';
         $this->_group = '';
@@ -870,10 +870,19 @@ class _HWLDF_WordAccumulator {
         $this->_tag_close['del']=$tags[1];
         $this->_tag_open['ins']=$tags[2];
         $this->_tag_close['ins']=$tags[3];
+        $this->nbsp = $nbsp;
+        $this->html = true;
+        if (!preg_match('/del/', $tags[1])) $this->html = false;
     }
 
     function _flushGroup ($new_tag) {
         if ($this->_group !== '') {
+	  if ($this->_group == NBSP)
+            $this->_group = ' '; //$this->nbsp; // NBSP only line (blank line).
+            //it is needed to fill it with some tags like as &nbsp; to show blanks in the diff.
+          else
+            // the NBSP charset dependent. it is 0xA0 in iso-8859-x and 0xC20xA0 in UTF-8. So just remove NBSPs.
+            $this->_group = rtrim($this->_group, NBSP);
 	  if ($this->_tag != '') 
             $this->_line .= $this->_tag_open[$this->_tag].$this->_group.$this->_tag_close[$this->_tag];
 	  else
@@ -887,7 +896,7 @@ class _HWLDF_WordAccumulator {
         $this->_flushGroup($new_tag);
         $tag_open = '';
         $tag_close = '';
-        if ($this->_tag and $this->_tag != '~done') {
+        if ($this->_tag and $this->_tag != '~done' and $this->html) {
             $tag_open = str_replace(array('ins','del'),array('div','div'),$this->_tag_open[$this->_tag]);
             $tag_close = str_replace(array('ins','del'),array('div','div'),$this->_tag_close[$this->_tag]);
         }
@@ -930,6 +939,7 @@ class WordLevelDiff extends MappedDiff
           $this->charset_rule='[\xb0-\xfd][\xa1-\xfe]|';
         else if (strtolower($charset) == 'utf-8') # three bytes sequence
           $this->charset_rule='[\xE1-\xEF][\x80-\xBF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF]|';
+          #$this->charset_rule='(?:[\xE1-\xEF][\x80-\xBF][\x80-\xBF]|\xE0[\xA0-\xBF][\x80-\xBF])+|';
         
         list ($orig_words, $orig_stripped) = $this->_split($orig_lines);
         list ($final_words, $final_stripped) = $this->_split($final_lines);
@@ -944,7 +954,7 @@ class WordLevelDiff extends MappedDiff
         //if (!preg_match_all('/ ( [^\S\n]+ | [[:alnum:]]+ | . ) (?: (?!< \n) [^\S\n])? /xs',
         $wiki_markups='\[\[[A-Za-z0-9]+\([^\)]*\)\]\] | \-{4,} |';
         if (!preg_match_all('/ ( [^\S\n]+ | [[:alnum:]]+ | '.$wiki_markups.
-            $this->charset_rule .'. ) (?: (?!< \n) [^\S\n])? /xs',
+            $this->charset_rule .'. ) (?: (?!< \n) [^\s\S\n])? /xs',
                             implode("\n", $lines),
                             $m)) {
             // return array(array(''), array(''));
@@ -979,11 +989,8 @@ class WordLevelDiff extends MappedDiff
         }
         return $_final->getLines();
     }
-    function all ($tags=array()) {
-        if (empty($tags))
-            $text = new _HWLDF_WordAccumulator();
-        else
-            $text = new _HWLDF_WordAccumulator($tags);
+    function all ($tags = array(), $nbsp = '') {
+        $text = new _HWLDF_WordAccumulator($tags, $nbsp);
 
         foreach ($this->edits as $edit) {
             if (is_a($edit, '_DiffOp_Copy'))
