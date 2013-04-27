@@ -235,7 +235,7 @@ function fancy_diff($diff,$options=array()) {
 
   // trash the last empty line;
   $end = end($lines);
-  if (!isset($end[0])) array_pop($lines);
+  //if (!isset($end[0])) array_pop($lines);
   $out="";
   #unset($lines[0]); unset($lines[1]);
 
