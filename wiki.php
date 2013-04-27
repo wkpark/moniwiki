@@ -4216,6 +4216,8 @@ class Formatter {
         }
       }
     }
+    if (isset($DBInfo->metatags_extra))
+      $metatags.= $DBInfo->metatags_extra;
 
     $js=!empty($DBInfo->js) ? $DBInfo->js : '';
 
