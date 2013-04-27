@@ -889,7 +889,7 @@ print <<<HEAD
 <body>
 HEAD;
 
-    $f=&new processor_simple($m);
+    $f=new processor_simple($m);
     print $f->process($text);
     print "<a href='http://validator.w3.org/check/referer'>XHTML</a>";
 print <<<FOOT
