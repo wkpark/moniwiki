@@ -172,7 +172,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
   $template_bra="";
   $template=
-  '$out.= "$icon&nbsp;&nbsp;$title$updated $date . . . . $user $count$diff $extra<br />\n";';
+  '"$icon&nbsp;&nbsp;$title$updated $date . . . . $user $count$diff $extra<br />\n"';
   $template_cat="";
   $use_day=1;
   $users = array();
@@ -277,23 +277,23 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         $use_day=0;
         if ($showhost)
           $template=
-  '$out.= "$icon&nbsp;&nbsp;$title @ $day $date by $user $count $extra<br />\n";';
+  '"$icon&nbsp;&nbsp;$title @ $day $date by $user $count $extra<br />\n"';
         else
           $template=
-  '$out.= "$icon&nbsp;&nbsp;$title @ $day $date $count $extra<br />\n";';
+  '"$icon&nbsp;&nbsp;$title @ $day $date $count $extra<br />\n"';
       } else if ($rctype=="list") {
         $rctitle='';
         $changed_time_fmt = !empty($my_date_fmt) ? $my_date_fmt : '[H:i]';
         $checkchange = 0;
         $use_day=0;
-        $template= '$out.= "$date $title<br />\n";';
+        $template= '"$date $title<br />\n"';
       } else if ($rctype=="moztab") {
         $use_day=1;
-        $template= '$out.= "<li>$title $date</li>\n";';
+        $template= '"<li>$title $date</li>\n"';
       } else if ($rctype=="table") {
         $bra="<table border='0' cellpadding='0' cellspacing='0' width='100%'>";
         $template=
-  '$out.= "<tr><td style=\'white-space:nowrap;width:2%\'>$icon</td><td style=\'width:40%\'>$title$updated</td><td class=\'date\' style=\'width:15%\'>$date</td><td>$user $count$diff $extra</td></tr>\n";';
+  '"<tr><td style=\'white-space:nowrap;width:2%\'>$icon</td><td style=\'width:40%\'>$title$updated</td><td class=\'date\' style=\'width:15%\'>$date</td><td>$user $count$diff $extra</td></tr>\n"';
         $cat="</table>";
         $cat0="";
       } else if ($rctype=="board") {
@@ -313,7 +313,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         $template_bra.="<th class='date'>"._("Change Date").'</th>';
         $template_bra.="</tr></thead>\n<tbody>\n";
         $template=
-  '$out.= "<tr$alt><td style=\'white-space:nowrap;width:2%\'>$icon</td><td class=\'title\' style=\'width:40%\'>$title$updated</td>';
+  '"<tr$alt><td style=\'white-space:nowrap;width:2%\'>$icon</td><td class=\'title\' style=\'width:40%\'>$title$updated</td>';
         if (empty($nobookmark))
           $template.= '<td>$bmark</td>';
         if (!empty($showhost))
@@ -324,8 +324,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         if (!empty($use_hits))
           $template.='<td class=\'hits\'>$hits</td>';
         $template.= '<td class=\'date\'>$date</td>';
-        $template_extra=$template.'</tr>\n<tr class=\'log\'$style><td colspan=\'6\'><div>$extra</div></td></tr>\n";';
-        $template.='</tr>\n";';
+        $template_extra=$template.'</tr>\n<tr class=\'log\'$style><td colspan=\'6\'><div>$extra</div></td></tr>\n"';
+        $template.='</tr>\n"';
         $template_cat="</tbody></table>";
         $cat0="";
       }
@@ -567,7 +567,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
           $jsattr.' class="button-small"');
       }
     }
-    if (empty($use_day) and empty($nobookmark)) {
+    //if (empty($use_day) and empty($nobookmark)) {
+    if (empty($nobookmark)) {
       $date=$formatter->link_to($bookmark_action ."&amp;time=$ed_time".$daysago,$date, ' id="time-'.$ii.'" '.$jsattr);
     }
 
@@ -618,6 +619,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         if (!empty($del))
           $diff.= '<span class="diff-removed"><span>'.$del.'</span></span>';
       } else if (!empty($use_js)) {
+        $diff = '<span id="diff-'.$ii.'"></span>';
         $rc_list[] = $page_name;
       }
     }
@@ -770,9 +772,9 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
       if (!empty($use_js))
         $title = '<button onclick="toggle_log(this);return false;"><span>+</span></button>' . $title;
-      eval($template_extra);
+      $out.= eval('return '.$template_extra.';');
     } else {
-      eval($template);
+      $out.= eval('return '.$template.';');
     }
 
     if (empty($logs[$page_key]))
@@ -809,6 +811,17 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $postdata = "action=recentchanges/ajax" . ($arg ? '&'.$arg : '');
     $js.= $json->encode($rc_list).";\n";
     $js.= <<<EOF
+function diff_width(size) {
+    if (size < 0)
+        size = -size;
+    if (size < 5)
+      return '';
+    else if (size < 10)
+      return 'display:inline-block;width:25px';
+    else
+      return 'display:inline-block;width:' + ~~(25 + 2*Math.sqrt(size)) + 'px';
+}
+
 function update_bookmark(time) {
     var url = "$url";
     if (rclist.length) {
@@ -869,13 +882,17 @@ function update_bookmark(time) {
 
           var change = document.getElementById('change-' + ii);
           if (!change) continue;
+          var diff = document.getElementById('diff-' + ii);
+          var nodiff = !diff;
 
           // remove previous diff info
           if (change.lastChild && change.lastChild.tagName == 'SPAN')
             change.removeChild(change.lastChild);
+          else if (diff && diff.lastChild)
+            diff.removeChild(diff.lastChild);
 
           // add diff info
-          var diff = document.createElement('SPAN');
+          var diff0 = document.createElement('SPAN');
           if (ret[title]['add']) {
             var add = document.createElement('SPAN');
             var add2 = document.createElement('SPAN');
@@ -883,7 +900,8 @@ function update_bookmark(time) {
             var txt = document.createTextNode('+' + ret[title]['add']);
             add2.appendChild(txt);
             add.appendChild(add2);
-            diff.appendChild(add);
+            diff0.appendChild(add);
+            add.style.cssText = diff_width(ret[title]['add']);
           }
           if (ret[title]['del']) {
             var del = document.createElement('SPAN');
@@ -892,9 +910,13 @@ function update_bookmark(time) {
             var txt = document.createTextNode(ret[title]['del']);
             del2.appendChild(txt);
             del.appendChild(del2);
-            diff.appendChild(del);
+            diff0.appendChild(del);
+            del.style.cssText = diff_width(ret[title]['del']);
           }
-          change.appendChild(diff);
+          if (nodiff)
+            change.appendChild(diff0);
+          else
+            diff.appendChild(diff0);
           jj++;
         } else {
           if (item.firstChild.nextSibling)
@@ -902,10 +924,13 @@ function update_bookmark(time) {
 
           var change = document.getElementById('change-' + ii);
           if (!change) continue;
+          var diff = document.getElementById('diff-' + ii);
 
           // remove diff info
           if (change.lastChild && change.lastChild.tagName == 'SPAN')
             change.removeChild(change.lastChild);
+          else if (diff && diff.lastChild)
+            diff.removeChild(diff.lastChild);
 
           // recover diff icon and link
           var icon = document.getElementById('icon-' + ii);
