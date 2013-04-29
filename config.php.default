@@ -289,6 +289,7 @@ $flashupload='swfupload';
 #$use_bbs=0; # *experimental*
 $robots='googlebot|yahoo'; # set robots
 $mobile_agents='android|iphone'; # mobile agents
+#$fetch_imagefilesize=1; # fetch imagefile sizes for mobile wikis
 #$security_class_robot='robot';
 #$url_encodings='euc-kr,uhc'; # autogoto option: search invalid urls with different encodings
 #$use_scrap=1; # use scrap

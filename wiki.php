@@ -1632,6 +1632,7 @@ class Formatter {
     $this->user=&$DBInfo->user;
     $this->check_openid_url=!empty($DBInfo->check_openid_url) ? $DBInfo->check_openid_url : 0;
     $this->register_javascripts($DBInfo->javascripts);
+    $this->fetch_imagesize = !empty($DBInfo->fetch_imagesize) ? $DBInfo->fetch_imagesize : 0;
 
     if (($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -2159,7 +2160,7 @@ class Formatter {
             $text=$this->macro_repl('attachment',substr($text,11),1);
             $text=qualifiedUrl($this->url_prefix.'/'.$text);
           }
-          if (preg_match("/^(http|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
+          if (preg_match("/^(https?|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
             $atext=isset($atext[0]) ? $atext:$text;
             $text=str_replace('&','&amp;',$text);
             return "<a class='externalLink named' href='$link' $attr $this->external_target title='$url'><img class='external' style='border:0px' alt='$atext' src='$text' $img_attr/></a>";
@@ -2192,6 +2193,7 @@ class Formatter {
         $url1 = preg_replace('/&amp;/','&',$url);
         if (preg_match("/(^.*\.(png|gif|jpeg|jpg))(?:\?|&(?!>amp;))?(.*?)?$/i", $url1, $match)) {
           $url=$match[1];
+          $type = strtoupper($match[2]);
           $attrs = !empty($match[3]) ? explode('&', $match[3]) : array();
           foreach ($attrs as $arg) {
             $name=strtok($arg,'=');
@@ -2199,7 +2201,11 @@ class Formatter {
             if ($name and $val) $attr.=' '.$name.'="'.urldecode($val).'"';
             if ($name == 'align') $attr.=' class="img'.ucfirst($val).'"';
           }
-          return "<img alt='$link' $attr src='$url' />";
+          $size = '';
+          if (!empty($this->fetch_imagesize))
+            $size = '('.$this->macro_repl('ImageFileSize', $url).')';
+          return "<div class='externalImage'><img class='external' alt='$link' $attr src='$url' />".
+                "<div><a href='$url'><span>[$type external image$size]</span></a></div></div>";
         }
       }
       if (substr($url,0,7)=='http://' and $url[7]=='?') {
