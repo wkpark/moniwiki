@@ -258,8 +258,11 @@ function normalize_word($word,$group='',$pagename='',$nogroup=0,$islink=1) {
 
   if (preg_match("/^wiki:/", $page)) { # wiki:
     $text=$page=substr($page,5);
- 
-    if (strpos($page,' ')) { # have a space ?
+
+    if (preg_match("/^\"([^\"]+)\"\s?(.*)$/", $page, $m)) {
+      // [[wiki:"Page with space" goto Page]] case
+      list($page, $text) = array($m[1], $m[2]);
+    } else if (strpos($page,' ')) { # have a space ?
       list($page,$text)= explode(' ',$page,2);
     }
  
