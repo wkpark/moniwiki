@@ -1877,6 +1877,7 @@ class Formatter {
       # read configurations
       while (list($key,$val) = each($data)) $this->$key=$val;
     }
+    if (!empty($DBInfo->icon))
     $this->icon=array_merge($DBInfo->icon,$this->icon);
 
     if (!isset($this->icon_bra)) {
@@ -1897,6 +1898,8 @@ class Formatter {
 
     if (!$this->icons)
       $this->icons = array();
+
+    if (!empty($DBInfo->icons))
     $this->icons = array_merge($DBInfo->icons,$this->icons);
 
     if (empty($this->icon_list)) {

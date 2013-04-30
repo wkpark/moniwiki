@@ -757,6 +757,7 @@ function getSmileys() {
   static $smileys = null;
   if ($smileys) return $smileys;
 
+  if (!empty($DBInfo->smiley))
   include_once($DBInfo->smiley.'.php');
   # set smileys
   if (!empty($DBInfo->shared_smileymap) and file_exists($DBInfo->shared_smileymap)) {
