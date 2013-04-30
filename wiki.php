@@ -1678,8 +1678,8 @@ class Formatter {
 
     $this->baserule=array("/(?<!\<)<([^\s<>])/",
                      "/&(?!([^&;]+|#[0-9]+|#x[0-9a-fA-F]+);)/",
-                     "/'''([^']*)'''/","/(?<!')'''(.*)'''(?!')/",
-                     "/''([^']*)''/","/(?<!')''(.*)''(?!')/",
+                     "/'''((?:[^']|'(?!'))*)'''/","/(?<!')'''(.*)'''(?!')/",
+                     "/''((?:[^']|'(?!'))*)''/","/(?<!')''(.*)''(?!')/",
                      "/`(?<!\s)(?!`)([^`']+)(?<!\s)'(?=\s|$)/",
                      "/`(?<!\s)(?U)(.*)(?<!\s)`/",
                      "/^[ ]*(-{4,})$/e",
@@ -3551,13 +3551,14 @@ class Formatter {
         $in_p= $line;
       }
 
-      // split into chunks
+      // split into chunks. nested {{{}}} and [ ] inline elems
       $chunk=preg_split("/({{{
                         (?:(?:[^{}]+|
                         {[^{}]+}(?!})|
                         (?<!{){{1,2}(?!{)|
                         (?<!})}{1,2}(?!}))|(?1)
-                          )++}}})/x",$line,-1,PREG_SPLIT_DELIM_CAPTURE);
+                          )++}}}|
+                        \[ (?: (?>[^\[\]]+) | (?R) )* \])/x",$line,-1,PREG_SPLIT_DELIM_CAPTURE);
       $inline = array(); // save inline nowikis
 
       if (count($chunk) > 1) {
@@ -3571,6 +3572,7 @@ class Formatter {
           } else if (in_array($c[3],array('#','-','+'))) { # {{{#color text}}}
             $nc.= $c;
           } else {
+            if ($c[0] == '[') $c = preg_replace($this->baserule, $this->baserepl, $c);
             $inline[$idx] = $c;
             $nc.= "\017".$idx."\017";
             $idx++;
