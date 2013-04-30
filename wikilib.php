@@ -3357,6 +3357,7 @@ function get_key($name) {
 function macro_PageCount($formatter, $value = '', $options = array()) {
   global $DBInfo;
 
+  $formatter->_dynamic_macros['PageCount'] = 1;
   if ($formatter->_macrocache and empty($options['call']))
     return $formatter->macro_cache_repl('PageCount', '');
   return $DBInfo->getCounter();
