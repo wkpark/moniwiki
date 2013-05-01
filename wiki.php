@@ -1043,13 +1043,18 @@ class WikiDB {
 
         $del_words = array_diff($old_words, $new_words);
         $add_words = array_diff($new_words, $old_words);
-        $indexer->delWords($page->name, $del_words);
-        $indexer->addWords($page->name, $add_words);
+        if ($del_words)
+          $indexer->delWords($page->name, $del_words);
+        if ($add_words)
+          $indexer->addWords($page->name, $add_words);
       } else {
-        $indexer->addWords($page->name, $new_words);
+        if ($new_words)
+          $indexer->addWords($page->name, $new_words);
       }
       $indexer->close();
+    }
 
+    if (!empty($this->use_indexer)) {
       if (!file_exists($key)) {
         $tdb = new Indexer_dba('titlesearch', 'w', $this->dba_type);
         if ($tdb->db != null) {
