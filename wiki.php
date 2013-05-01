@@ -862,8 +862,8 @@ class WikiDB {
     if ($myid == 'Anonymous' and !empty($user->verified_email))
       $myid.= '-'.$user->verified_email;
 
-    $comment=preg_replace("/\r\n|\r/", " ", $comment);
-    $comment=strtr($comment,"\t"," ");
+    $comment=strtr(strip_tags($comment),
+      array("\r\n"=>' ', "\r"=>' ',"\n"=>' ', "\t"=>' '));
     $fp_editlog = fopen($this->editlog_name, 'a+');
     $time= time();
     if ($this->use_hostname) $host= gethostbyaddr($remote_name);
@@ -1010,8 +1010,8 @@ class WikiDB {
 
   function savePage(&$page,$comment="",$options=array()) {
     $user=&$this->user;
-    if ($user->id == 'Anonymous')
-      if (strlen($comment)>80) $comment=''; // restrict comment length for anon.
+    if ($user->id == 'Anonymous' and !empty($this->anonymous_log_maxlen))
+      if (strlen($comment)>$this->anonymous_log_maxlen) $comment=''; // restrict comment length for anon.
 
     $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
     $comment=escapeshellcmd($comment);
@@ -1029,6 +1029,12 @@ class WikiDB {
     $key=$this->text_dir."/$keyname";
 
     $body=$this->_replace_variables($page->body,$options);
+
+    if (file_exists($key)) {
+      $action = 'SAVE';
+    } else {
+      $action = 'CREATE';
+    }
 
     // update fulltext index
     if (!empty($this->use_indexer)) {
@@ -1085,7 +1091,7 @@ class WikiDB {
       }
     }
     if (empty($options['minor']) and !$minor)
-      $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
+      $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,$action);
     return 0;
   }
 
@@ -1148,7 +1154,7 @@ class WikiDB {
         $version->delete($page->name);
     }
     $delete=@unlink($this->text_dir."/$keyname");
-    $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
+    $this->addLogEntry($keyname, $REMOTE_ADDR, $comment, 'DELETE');
 
     if (!file_exists($this->text_dir."/$keyname")) $this->incCounter(-1);
 
@@ -1240,8 +1246,8 @@ class WikiDB {
     }
 
     $comment=sprintf(_("Rename %s to %s"),$pagename,$new);
-    $this->addLogEntry($okeyname, $REMOTE_ADDR,'',"SAVE");
-    $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
+    $this->addLogEntry($okeyname, $REMOTE_ADDR, '', 'DELETE');
+    $this->addLogEntry($keyname, $REMOTE_ADDR, $comment, 'CREATE');
   }
 
   function _isWritable($pagename) {
@@ -5690,6 +5696,13 @@ function wiki_main($options) {
     if (isset($options['timer']) and is_object($options['timer'])) {
       $options['timer']->Check("init");
     }
+
+    if (isset($formatter->pi['#redirect'][0])) {
+      $lnk = $formatter->link_tag($formatter->page->urlname, '?redirect='.$formatter->pi['#redirect'], $formatter->pi['#redirect']);
+      $msg = _("Redirect page");
+      $formatter->write("<div class='wikiRedirect'><span>$msg</span><p>".$lnk."</p></div>");
+    }
+
     $options['pagelinks']=1;
     if (!empty($Config['cachetime']) and $Config['cachetime'] > 0 and empty($formatter->pi['#nocache'])) {
       $cache= new Cache_text('pages', array('ext'=>'html'));
