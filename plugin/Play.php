@@ -48,6 +48,9 @@ function macro_Play($formatter,$value) {
     $media[]=$match[1];
   }
   # set embeded object size
+  $mywidth = !empty($width) ? min($width, $max_width) : null;
+  $myheight = !empty($height) ? min($height, $max_height) : null;
+
   $width=!empty($width) ? min($width,$max_width):$default_width;
   $height=!empty($height) ? min($height,$max_height):$default_height;
 
@@ -201,23 +204,39 @@ EOS;
 EOS;
   } else {
     $out='';
+    $mysize = '';
+    if (!empty($mywidth)) $mysize.= 'width="'.$mywidth.'px" ';
+    if (!empty($myheight)) $mysize.= ' height="'.$myheight.'px" ';
 
     for ($i=0,$sz=count($media);$i<$sz;$i++) {
+      $mediainfo = 'External object';
       $classid = '';
-      if (preg_match("/(wmv|mpeg4|mp4|avi|asf)$/",$media[$i])) {
+      // http://code.google.com/p/google-code-project-hosting-gadgets/source/browse/trunk/video/video.js
+      if (preg_match("@https?://(?:[a-z-]+[.])?(?:youtube(?:[.][a-z-]+)+|youtu\.be)/(?:watch[?].*v=|v/|embed/)?([a-z0-9_-]+)$@i",$media[$i],$m)) {
+        $movie = "http://www.youtube.com/v/".$m[1];
+        $type = 'type="application/x-shockwave-flash"';
+        $attr = $mysize.'allowfullscreen="true" allowScriptAccess="always"';
+        $url[$i] = $movie;
+        $params = "<param name='movie' value='$movie?version=3'>\n".
+          "<param name='allowScriptAccess' value='always'>\n".
+          "<param name='allowFullScreen' value='true'>\n";
+        $mediainfo = 'Youtube movie';
+      } else if (preg_match("/(wmv|mpeg4|mp4|avi|asf)$/",$media[$i], $m)) {
         $classid="classid='clsid:22D6F312-B0F6-11D0-94AB-0080C74C7E95'";
         $type='type="application/x-mplayer2"';
-        $attr='width="320" height="280" autoplay="'.$play.'"';
+        $attr = $mysize.'autoplay="'.$play.'"';
         $params="<param name='FileName' value='".$url[$i]."' />\n".
           "<param name='AutoStart' value='False' />\n".
           "<param name='ShowControls' value='True' />";
-      } else if (preg_match("/(wav|mp3|ogg)$/",$media[$i])) {
+        $mediainfo = strtoupper($m[1]).' movie';
+      } else if (preg_match("/(wav|mp3|ogg)$/",$media[$i], $m)) {
         $classid="classid='clsid:02BF25D5-8C17-4B23-BC80-D3488ABDDC6B'";
         $type='';
         $attr='codebase="http://www.apple.com/qtactivex/qtplugin.cab" height="30"';
         $attr.=' autoplay="'.$play.'"';
         $params="<param name='src' value='".$url[$i]."'>\n".
           "<param name='AutoStart' value='$play' />";
+        $mediainfo = strtoupper($m[1]).' sound';
       } else if (preg_match("/swf$/",$media[$i])) {
         $type='type="application/x-shockwave-flash"';
         $classid="classid='clsid:D27CDB6E-AE6D-11cf-96B8-444553540000'";
@@ -227,20 +246,37 @@ EOS;
           "<param name='AutoStart' value='$play' />";
       } else if (preg_match("/\.xap/",$media[$i])) {
         $type='type="application/x-silverlight-2"';
-        $attr='width="320" height="320" data="data:application/x-silverlight,"';
+        $attr = $mysize.'data="data:application/x-silverlight,"';
         $params="<param name='source' value='".$url[$i]."' />\n";
       }
       $autoplay=0; $play='false';
 
       $myurl=$url[$i];
       $out.=<<<OBJECT
-<object $classid $type $attr>
+<div class='externalObject'>
+<object class='external' $classid $type $attr>
 $params
 <param name="AutoRewind" value="True">
 <embed $type src="$myurl" $attr></embed>
 </object>
+<div><a alt='$myurl' onclick='javascript:openExternal(this, "inline-block"); return false;'><span>[$mediainfo]</span></a></div></div>
 OBJECT;
     }
+  }
+
+  if (!empty($GLOBALS['js_macro_play'])) {
+    $js = <<<JS
+<script type='text/javascript'>
+/*<![CDATA[*/
+function openExternal(obj, display) {
+  var el;
+  (el = obj.parentNode.parentNode.firstElementChild) && (el.style.display = display);
+}
+/*]]>*/
+</script>
+JS;
+    $formatter->register_javascripts($js);
+    $GLOBALS['js_macro_play'] = 1;
   }
 
   return $out;
