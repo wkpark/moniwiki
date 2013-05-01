@@ -32,13 +32,37 @@ function do_AutoGoto($formatter,$options) {
             return true;
         }
     }
-   
-    $npage=str_replace(' ','',$formatter->page->name);
-    if ($DBInfo->hasPage($npage)) {
-        $options['value']=$npage;
-        do_goto($formatter,$options);
-        return true;
-    } else if (function_exists('iconv')) {
+
+    // automatically make a list of pagenames to check.
+    $pages = array();
+    $name = trim($formatter->page->name);
+
+    // is this a CamelCase wikiname?
+    if (strpos($name, ' ') === false and
+            preg_match('/^[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*$/', $name)) {
+        // insert spaces
+        $name = preg_replace('/([a-z0-9])([A-Z])/', '\1 \2', $name);
+    }
+    $w = preg_split('/\s+/', $name);
+
+    $pages[] = implode(' ', $w);
+    $pages[] = ucwords($pages[0]);
+
+    if (count($w) > 1) {
+        $pages[] = ucfirst($pages[0]);
+        $pages[] = str_replace(' ', '', $pages[0]);
+        $pages[] = str_replace(' ', '', $pages[1]);
+    }
+    $pages = array_unique($pages);
+
+    foreach ($pages as $p) {
+        if ($DBInfo->hasPage($p)) {
+            $options['value'] = $p;
+            do_goto($formatter, $options);
+            return true;
+        }
+    }
+    if (function_exists('iconv')) {
         if (strtolower($DBInfo->charset) != 'utf-8' ) {
             $t = @iconv('UTF-8',$DBInfo->charset,$formatter->page->name);
             if ($t and $DBInfo->hasPage($t)) {
