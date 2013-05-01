@@ -654,16 +654,23 @@ class WikiDB {
     #$name=preg_replace(".","_2e",$name);
 
     // clean up ':' like as the dokuwiki
-    $pn= preg_replace('#:+#',':',$pagename);
-    $pn= trim($pn,':');
-    $pn= preg_replace('#:+#',':',$pn);
+    if (!empty($this->use_namespace)) {
+      $pn= preg_replace('#:+#',':',$pagename);
+      $pn= trim($pn,':');
+      $pn= preg_replace('#:+#',':',$pn);
+    } else {
+      $pn = $pagename;
+    }
 
     // namespace spearator ':' like as 'Foobar:Hello'
     $separator = ':';
     if (empty($this->use_namespace)) $separator = '';
 
     $pn = preg_replace("/([^a-z0-9".$separator."]{1})/ie", "'_'.strtolower(dechex(ord(substr('\\1',-1))))",$pn);
-    $name = preg_replace('#:#','.d/',$pn); // Foobar:Hello page will be stored as text/Foobar.d/Hello
+    if (!empty($this->use_namespace))
+      $name = preg_replace('#:#','.d/',$pn); // Foobar:Hello page will be stored as text/Foobar.d/Hello
+    else
+      $name = $pn;
     return $name;
   }
 
@@ -698,8 +705,8 @@ class WikiDB {
     $pagename = $key;
 
     // for namespace
-    $separator = ':';
-    $pagename=preg_replace('%\.d/%', $separator, $key);
+    if (!empty($this->use_namespace))
+      $pagename=preg_replace('%\.d/%', ':', $key);
 
     $pagename=strtr($pagename,'_','%');
     return rawurldecode($pagename);
@@ -1616,6 +1623,7 @@ class Formatter {
     $this->css_friendly=$DBInfo->css_friendly;
     $this->use_smartdiff=!empty($DBInfo->use_smartdiff) ? $DBInfo->use_smartdiff : 0;
     $this->use_easyalias=$DBInfo->use_easyalias;
+    $this->use_group=!empty($DBInfo->use_group) ? $DBInfo->use_group : 0;
     $this->submenu=!empty($DBInfo->submenu) ? $DBInfo->submenu : null;
     $this->email_guard=$DBInfo->email_guard;
     $this->interwiki_target=!empty($DBInfo->interwiki_target) ?
@@ -1634,7 +1642,7 @@ class Formatter {
     $this->register_javascripts($DBInfo->javascripts);
     $this->fetch_imagesize = !empty($DBInfo->fetch_imagesize) ? $DBInfo->fetch_imagesize : 0;
 
-    if (($p=strpos($page->name,"~")))
+    if ($this->use_group and ($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
 
     $this->sister_on=1;
