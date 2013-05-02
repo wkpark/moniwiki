@@ -264,7 +264,7 @@ OBJECT;
     }
   }
 
-  if (!empty($GLOBALS['js_macro_play'])) {
+  if (empty($GLOBALS['js_macro_play'])) {
     $js = <<<JS
 <script type='text/javascript'>
 /*<![CDATA[*/
