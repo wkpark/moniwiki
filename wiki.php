@@ -5308,7 +5308,10 @@ function init_locale($lang, $domain = 'moniwiki', $init = false) {
       if (is_resource($fp)) {
         $tmp = '-'.trim(fgets($fp,1024));
         fclose($fp);
+      } else {
+        $init = 1;
       }
+
       if ($init and !file_exists($ldir.$domain.$tmp.'mo')) {
         include_once(dirname(__FILE__).'/plugin/msgtrans.php');
         macro_msgtrans(null,$lang,array('init'=>1));
