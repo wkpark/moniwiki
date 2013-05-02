@@ -2493,6 +2493,9 @@ class Formatter {
     #check current page
     if ($page == $this->page->name) $attr.=' class="current"';
 
+    if (!empty($this->forcelink))
+      return $this->nonexists_always($word, $url, $page);
+
     //$url=$this->link_url(_rawurlencode($page)); # XXX
     $idx = 0; // XXX
     if (isset($this->pagelinks[$page])) {
@@ -4694,8 +4697,7 @@ MSG;
         unset($quicklinks['UserPreferences']);
     }
 
-    $save = $this->nonexists;
-    $this->nonexists = 'forcelink';
+    $this->forcelink = 1;
     foreach ($quicklinks as $item=>$attr) {
       if (strpos($item,' ') === false) {
         if (strpos($attr,'=') === false) $attr="accesskey='$attr'";
@@ -4720,7 +4722,7 @@ MSG;
         }
       }
     }
-    $this->nonexists = $save;
+    $this->forcelink = 0;
     $this->sister_on=$sister_save;
     if (empty($this->css_friendly)) {
       $menu=$this->menu_bra.implode($this->menu_sep,$menu).$this->menu_cat;
@@ -4923,6 +4925,7 @@ MSG;
     global $DBInfo;
 
     $orig='';
+    $this->forcelink = 1;
     if ($pagename != $DBInfo->frontpage) {
       # save setting
       $sister_save=$this->sister_on;
@@ -4970,6 +4973,7 @@ MSG;
     }
     $this->origin=$origin;
     $this->_vars['origin']=&$this->origin;
+    $this->forcelink = 0;
   }
 
   function set_trailer($trailer="",$pagename,$size=5) {
@@ -4982,12 +4986,11 @@ MSG;
       $sister_save=$this->sister_on;
       $this->sister_on=0;
       $this->trail="";
-      $save = $this->nonexists;
-      $this->nonexists = 'forcelink';
+      $this->forcelink = 1;
       foreach ($trails as $page) {
         $this->trail.=$this->word_repl('"'.$page.'"','','',1,0).'<span class="separator">'.$DBInfo->arrow.'</span>';
       }
-      $this->nonexists = $save;
+      $this->forcelink = 0;
       $this->trail.= ' '.htmlspecialchars($pagename);
       $this->pagelinks=array(); # reset pagelinks
       $this->sister_on=$sister_save;
