@@ -347,6 +347,8 @@ function moin_submit(form) {
 	if (form.elements['action'].value =="goto") {
 		go.elements[_govalue].name='goto';
 		go.elements['action'].name='';
+		form.action = _script_name;
+
 		return true;
 	}
 }
