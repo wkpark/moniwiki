@@ -213,6 +213,7 @@ $css_friendly=1;
 #$css_friendly=1; # for more CSS friendly support
 $use_redirect_msg=0;
 #$use_redirect_msg=1; # for MoinMoin compatible
+#$redirect_urls='moniwiki|google'; # protect #redirect URL method
 #$use_safelogin=0;
 $url_mappings=array('http://faq.ktug.or.kr/mywiki'=>'http://faq.ktug.or.kr/faq');
 $shared_url_mappings='';

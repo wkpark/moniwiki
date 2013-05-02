@@ -1891,7 +1891,10 @@ function do_recall($formatter,$options) {
 
 function do_goto($formatter,$options) {
   global $DBInfo;
-  if (preg_match("/^(http:\/\/|ftp:\/\/)/",$options['value'])) {
+
+  // #redirect URL controlled by the $redirect_urls option
+  if (!empty($DBInfo->redirect_urls) and preg_match("@^(?:https?|ftp)://@", $options['value']) and
+      preg_match('@'.$DBInfo->redirect_urls.'@', $options['value'])) {
      $options['url']=$options['value'];
      unset($options['value']);
   } else if (preg_match("/^(".$DBInfo->interwikirule."):(.*)/",$options['value'],$match)) {
