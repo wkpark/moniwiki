@@ -260,6 +260,7 @@ function keypresshandler(e) {
 		break;
 	case 'a': case 'b': case 'd': case 'h': case 'i': case 'k': case 'l': case 'p':
 		if ((i = loc.indexOf(_ap)) != -1) loc = loc.substr(0,i);
+		if ((i = loc.indexOf('#')) != -1) loc = loc.substr(0,i);
 		self.location=loc + _ap + 'action=' + actions[ch];
 		break;
 	case 'q': ch = 's';
