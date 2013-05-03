@@ -13,16 +13,20 @@ if [ -z $MAIN ]; then
   MAIN=wiki.php
 fi
 
-[ ! -d data ] && cp -a $INSTDIR/data .
-[ ! -d imgs ] && ln -s $INSTDIR/imgs .
-[ ! -d images ] && ln -s $INSTDIR/images .
-[ ! -d theme ] && ln -s $INSTDIR/theme .
-[ ! -d css ] && ln -s $INSTDIR/css .
-[ ! -d local ] && ln -s $INSTDIR/local .
-[ ! -d locale ] && ln -s $INSTDIR/locale .
+DATAFILES="intermap.txt
+mime.types
+PeignotNum.ttf
+"
+
+LINKS="imgs images theme css local locale plugin lib applets"
+
+for x in LINKS; do
+  [ ! -d $x ] && [ -d $INSTDIR/$x ] && ln -s $INSTDIR/$x .
+done
+
+#[ ! -d data ] && cp -a $INSTDIR/data .
+[ ! -d data ] && mkdir data && (cd data; for x in $DATAFILES; do ln -s $INSTDIR/data/$x .; done)
 [ ! -d config ] && mkdir config && cp -a $INSTDIR/config/* config/
-[ ! -d applets ] && ln -s $INSTDIR/applets .
-[ ! -d plugin ] && ln -s $INSTDIR/plugin .
 [ ! -f config.php.default ] && ln -s $INSTDIR/config.php.default .
 [ ! -f monisetup.php ] && ln -s $INSTDIR/monisetup.php .
 conf=`ls $INSTDIR/config.php.*|grep -v config.php.default`
@@ -35,6 +39,5 @@ if [ ! -f index.php ]; then
   cat <<PHP >index.php
 <?php
 include("$INSTDIR/$MAIN");
-?>
 PHP
 fi
