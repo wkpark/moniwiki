@@ -908,6 +908,11 @@ $lang = 'auto';
 $lang = set_locale($lang,$_Config['charset']);
 initlocale($lang,$_Config['charset']);
 
+if (function_exists('date_default_timezone_set')) {
+  // suppress date() warnings for PHP5.x
+  date_default_timezone_set(@date_default_timezone_get());
+}
+
 if (!empty($_GET['action']) and $_GET['action'] =='pathinfo') {
   print $_SERVER['PATH_INFO'].'****';
   return;
