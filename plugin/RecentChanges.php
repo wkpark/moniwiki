@@ -408,7 +408,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
   $rctimestamp = 0;
   $needupdate = false;
-  if ($DBInfo->checkUpdated($rc->mtime($rckey), $rc_delay) and ($val = $rc->fetch($rckey))) {
+  if (empty($formatter->refresh) and $DBInfo->checkUpdated($rc->mtime($rckey), $rc_delay) and ($val = $rc->fetch($rckey))) {
     $editors = $val['editors'];
     $editcount = $val['editcount'];
     $lastmod = $val['lastmod'];
@@ -723,7 +723,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
           } else if (strpos($user,' ')!==false) {
             $user= $formatter->link_repl($user);
             $users[$ouser] = $user;
-          } else if ($DBInfo->hasPage($user)) {
+          } else if (empty($DBInfo->no_wikihomepage) and $DBInfo->hasPage($user)) {
             $user= $formatter->link_tag(_rawurlencode($user),"",$user);
             $users[$ouser] = $user;
           } else {

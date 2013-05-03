@@ -254,6 +254,7 @@ $use_resume_download=1;
 #$isbn_img_download=1; # download isbn images to local cache dir.
 #$use_clipmacro=1; # use clip applet with AttachmentMacro
 #$no_register=1; # do not allow to register anymore
+#$no_wikihomepage=1; # do not use the wiki homepage for users
 #$dot_fontsize=10; # dot font size for the VisualTour
 #$dot_fontname='Eunjin'; # webdot font name for graphviz 2.2.x
 #$dot_fontname='WEBDOTFONT'; # webdot fontname fot graphviz 1.8.x

@@ -4803,7 +4803,7 @@ MSG;
     # UserPreferences
     if ($options['id'] != "Anonymous") {
       $user_link=$this->link_tag("UserPreferences","",$options['id']);
-      if ($DBInfo->hasPage($options['id'])) {
+      if (empty($DBInfo->no_wikihomepage) and $DBInfo->hasPage($options['id'])) {
         $home=$this->link_tag($options['id'],"",$this->icon['home'])." ";
         unset($this->icons['pref']); // insert home icon
         $this->icons['home']=array($options['id'],"",$this->icon['home']);

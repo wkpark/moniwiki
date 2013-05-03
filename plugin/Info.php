@@ -172,7 +172,10 @@ function _parse_rlog($formatter,$log,$options=array()) {
              $ip=$formatter->link_repl($user);
              $users[$user]=$ip;
            } else if (empty($DBInfo->use_hostname) or $DBInfo->hasPage($user)) {
-             $ip=$formatter->link_tag($user);
+             if (empty($DBInfo->no_wikihomepage))
+               $ip = $formatter->link_tag($user);
+             else
+               $ip = $user;
              $users[$user]=$ip;
            } else if (!$DBInfo->mask_hostname and $DBInfo->interwiki['Whois']) {
              $ip="<a href='".$DBInfo->interwiki['Whois']."$ip'>$user</a>";
