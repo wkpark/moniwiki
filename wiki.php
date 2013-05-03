@@ -2574,7 +2574,7 @@ class Formatter {
 
   function nonexists_simple($word, $url, $page) {
     $title = '';
-    if ($page != $word) $title = "title=\"$page\" ";
+    if ($page != $word) $title = 'title="'.str_replace('"', '&#34;', $page).'" ';
     return "<a class='nonexistent nomarkup' {$title}href='$url' rel='nofollow'>?</a>$word";
   }
 
@@ -2584,20 +2584,20 @@ class Formatter {
 
   function nonexists_always($word,$url,$page) {
     $title = '';
-    if ($page != $word) $title = "title=\"$page\" ";
+    if ($page != $word) $title = 'title="'.str_replace('"', '&#34;', $page).'" ';
     return "<a href='$url' {$title}rel='nofollow'>$word</a>";
   }
 
   function nonexists_forcelink($word, $url, $page) {
     $title = '';
-    if ($page != $word) $title = "title=\"$page\" ";
+    if ($page != $word) $title = 'title="'.str_replace('"', '&#34;', $page).'" ';
     return "<a class='nonexistent' rel='nofollow' {$title}href='$url'>$word</a>";
   }
 
   function nonexists_fancy($word, $url, $page) {
     global $DBInfo;
     $title = '';
-    if ($page != $word) $title = "title=\"$page\" ";
+    if ($page != $word) $title = 'title="'.str_replace('"', '&#34;', $page).'" ';
     if ($word[0]=='<' and preg_match('/^<[^>]+>/',$word))
       return "<a class='nonexistent' rel='nofollow' {$title}href='$url'>$word</a>";
     #if (preg_match("/^[a-zA-Z0-9\/~]/",$word))
