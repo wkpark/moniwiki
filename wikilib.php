@@ -3196,7 +3196,7 @@ function macro_InterWiki($formatter,$value,$options=array()) {
   global $DBInfo;
 
   while (!isset($DBInfo->interwiki) or !empty($options['init'])) {
-    $cf=new Cache_text('settings');
+    $cf = new Cache_text('settings', array('depth'=>0));
 
     $force_init=0;
     if (!empty($DBInfo->shared_intermap) and file_exists($DBInfo->shared_intermap)

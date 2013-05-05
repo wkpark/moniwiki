@@ -29,7 +29,7 @@ function getPlugin($pluginname) {
   if (!empty($plugins)) return isset($plugins[$pname]) ? $plugins[$pname]:'';
   global $DBInfo;
 
-  $cp=new Cache_text('settings');
+  $cp = new Cache_text('settings', array('depth'=>0));
   if (empty($DBInfo->manual_plugin_admin)) {
     if (!empty($DBInfo->include_path))
       $dirs=explode(':',$DBInfo->include_path);
@@ -99,7 +99,7 @@ function getProcessor($pro_name) {
   if (!empty($processors)) return isset($processors[$prog]) ? $processors[$prog]:'';
   global $DBInfo;
 
-  $cp=new Cache_text('settings');
+  $cp = new Cache_text('settings', array('depth'=>0));
 
   if ($processors=$cp->fetch('processors')) {
     if (is_array($DBInfo->myprocessors))
@@ -728,7 +728,7 @@ class WikiDB {
     $pages = array();
 
     $pcid=md5(serialize($options));
-    $pc=new Cache_text('pagelist');
+    $pc = new Cache_text('pagelist', array('depth'=>0));
 
     $_lock_file = _fake_lock_file($this->vartmp_dir, 'get_page_list', $pcid);
     $locked = _fake_locked($_lock_file, $this->mtime());
@@ -817,7 +817,7 @@ class WikiDB {
   }
 
   function getCounter() {
-    $pc = new Cache_text('pagelist');
+    $pc = new Cache_text('pagelist', array('depth'=>0));
     $_lock_file = _fake_lock_file($this->vartmp_dir, 'get_counter');
     $locked = _fake_locked($_lock_file, $this->mtime());
 
@@ -843,7 +843,7 @@ class WikiDB {
   }
 
   function incCounter($type = 1) {
-    $pc = new Cache_text('pagelist');
+    $pc = new Cache_text('pagelist', array('depth'=>0));
     $_lock_file = _fake_lock_file($this->vartmp_dir, 'get_counter');
     $locked = _fake_locked($_lock_file, $this->mtime());
 
@@ -5930,7 +5930,7 @@ if (class_exists('Timer')) {
   $options['timer']->Check("load");
 }
 
-$ccache = new Cache_text('settings');
+$ccache = new Cache_text('settings', array('depth'=>0));
 if (!($conf = $ccache->fetch('config'))) {
   $Config = wikiConfig($Config);
   $ccache->update('config', $Config, 0, array('deps'=>array('config.php', 'lib/wikiconfig.php')));
