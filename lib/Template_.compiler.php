@@ -1,5 +1,5 @@
 <?php
-// Copyright 2008 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2008-2013 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // A modified version of the Template_ for MoniWiki
 //
@@ -13,13 +13,12 @@
 //
 // Usage: please see http://www.xtac.net
 //
-// $Id$
 
 /*---------------------------------------------------------------------------
 
   Program  : Template_
-  Version  : 2.2.4
-  Date     : 2008-03-15
+  Version  : 2.2.7
+  Date     : 2012-07-20
   Author   : Hyeong-Gil Park
   Homepage : http://www.xtac.net
   License  : LGPL (Freeware)
@@ -37,7 +36,7 @@
  ----------------------------------------------------------------------------
 
   Template_ : PHP document templating system
-  Copyright (C) 2003-2008 Hyeong-Gil Park
+  Copyright (C) 2003-2012 Hyeong-Gil Park
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Library General Public
@@ -74,11 +73,11 @@
 
   ---------------------------------------------------------------------------*/
 
-define('__TEMPLATE_UNDERSCORE_VER__','2.2.4-mw');
+define('__TEMPLATE_UNDERSCORE_VER__','2.2.7-mw');
 
 class Template_Compiler_
 {
-	function _compile_template(&$tpl, $source, $params=array())
+	function _compile_template($tpl, $source, $params=array())
 	{
 		$this->compile_dir   =$tpl->compile_dir;
 		$this->compile_ext   =$tpl->compile_ext;
@@ -177,9 +176,14 @@ class Template_Compiler_
 
 		$source = preg_replace('/^\xEF\xBB\xBF/', '', $source);
 
+	// find that php version is greater than or equal to 5.4
+
+		$gt_than_or_eq_to_5_4 = defined('PHP_MAJOR_VERSION') and  5.4 <= (float)(PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION);
+
 	// disable php tag
 		if ($this->safe_mode) {
 			if (ini_get('short_open_tag')) $safe_map['/<\?/']='&lt;?';
+			elseif ($gt_than_or_eq_to_5_4) $safe_map['/<\?(php|=)/i']='&lt;?$1';
 			else $safe_map['/<\?(php)/i']='&lt;?$1';
 			$safe_map['/(<script\s+language\s*=\s*)("php"|\'php\'|php)(\s*>)/i']='$1"SERVER-SIDE-SCRIPT-DISABLED"$3';
 			if (ini_get('asp_tags')) $safe_map['/<%/']='&lt;?';
@@ -284,6 +288,7 @@ class Template_Compiler_
 		} else {
 			$php_tag = '<\?php|(?<!`)\?>';
 			if (ini_get('short_open_tag')) $php_tag .= '|<\?(?!`)';
+			elseif ($gt_than_or_eq_to_5_4) $php_tag .= '|<\?=';
 			if (ini_get('asp_tags'))  $php_tag .= '|<%(?!`)|(?<!`)%>';
 			$php_tag .= '|';
 			$php_quote_or_comment = '@"(\\\\.|[^"])*"|\'(\\\\.|[^\'])*\'|//[^\r\n]*[\r\n]|/\*.*?\*/@s';
@@ -296,6 +301,7 @@ class Template_Compiler_
 			}
 			switch (strtolower($this->_split[$this->_index])) {
 			case'<?php':
+			case  '<?=':
 			case   '<?':
 			case   '<%':
 				if (!$this->mark_php) $this->mark_php = $this->_index;
@@ -1022,7 +1028,7 @@ class Template_Compiler_
 					$this->exit_();
 				}
 			}
-			$init_obj .= '$TPL_'.$obj.'_OBJ=&$this->new_("'.$obj_name.'");';
+			$init_obj .= '$TPL_'.$obj.'_OBJ=$this->new_("'.$obj_name.'");';
 		}
 		return $init_obj;
 	}
