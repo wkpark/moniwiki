@@ -23,7 +23,7 @@ class Cache_Text {
 	 *
 	 * @var		string	$revision
 	 */
-	var $revision = '0.5';
+	var $revision = '0.6';
 
 	/**
 	 * default cache arena name
@@ -84,83 +84,127 @@ class Cache_Text {
 		$this->cache_path = $cache_path;
 		$this->cache_dir = $cache_path . '/' . $arena;
 
-		if (empty($cache_info)) {
+		// $cache_info init param is used only once for the first time
+		if ($this->_exists('.info')) {
 			$cache_info = $this->_fetch_serial('.info');
+		} else {
+			// validate cache_info
+			$cache_info = $this->_validate_cache_info($cache_info);
+			// init cache dirs
+			$this->_prepare_cache_dirs($this->cache_dir, $cache_info['depth']);
 
-			if (empty($cache_info)) {
-				$cache_info = $this->_save_cache_info();
-			}
+			$this->_update('.info', $cache_info);
 		}
 
-		$this->initCacheInfo($cache_info);
+		$this->_initCacheInfo($cache_info);
 	}
 
-	function initCacheInfo($cache_info = false)
+	function _initCacheInfo($cache_info = false)
 	{
-		isset($cache_info['ttl']) ? $this->ttl = $cache_info['ttl'] : true;
-		isset($cache_info['depth']) ? $this->depth = $cache_info['depth'] : true;
-		isset($cache_info['ext']) ? $this->ext = $cache_info['ext'] : true;
-		isset($cache_info['handler']) ? $this->handler = $cache_info['handler'] : true;
-		!empty($cache_info['hash']) ? $this->hash = $cache_info['hash'] : true;
-		// FIXME. How can I direct access with a cache key name ?
-		if (!in_array($this->hash, array('md5', 'sha1')) and !function_exists($this->hash))
-			$this->hash = 'md5';
+		$fields = array('ttl', 'depth', 'ext', 'handler', 'hash');
+		foreach ($fields as $f) {
+			if (isset($cache_info[$f])) $this->$f = $cache_info[$f];
+		}
 
 		!empty($this->ext) ? $this->_ext = '.' . $this->ext : $this->_ext  = '';
 	}
 
-	function updateCacheInfo($ttl = 0, $depth = 0, $ext = 0, $handler = '', $hash = 'md5')
+	/**
+	 * Change cacheinfo
+	 *
+	 */
+	function _setCacheInfo($ttl = null, $depth = null, $ext = null, $handler = null, $hash = null)
 	{
-		$info = $this->cache_dir . '/.info';
-		if (file_exists($info)) {
-			$infos = $this->_fetch_serial('.info');
+		$fields = array('ttl', 'depth', 'ext', 'handler', 'hash');
 
-			$infos['ttl'] = ($ttl) ? $ttl : $this->ttl;
-			$infos['depth'] = ($depth) ? $depth : $this->depth;
-			$infos['ext'] = ($ext) ? $ext : $this->ext;
-			$infos['handler'] = ($handler) ? $handler : $this->handler;
-			$infos['hash'] = ($hash) ? $hash : $this->hash;
+		$cache_info = array();
+		foreach ($fields as $f) {
+			if ($$f !== null) $cache_info[$f] = $$f;
+			else $cache_info[$f] = $this->$f;
 		}
-		return $this->_save_cache_info($infos);
+		// validate cache_info
+		$cache_info = $this->_validate_cache_info($cache_info);
+		return $this->_update('.info', $cache_info);
 	}
 
 	function getCacheInfo()
 	{
-		$infos = $this->_fetch_serial('.info');
-		return $infos;
+		return $this->_fetch_serial('.info');
 	}
 
-	function _save_cache_info($cache_info = false)
+	function _validate_cache_info($cache_info = false)
 	{
-		if (!$cache_info) {
-			// set default cache_info
+		$fields = array('ttl', 'depth', 'ext', 'handler', 'hash');
+		if (!is_array($cache_info)) {
+			// set the default cache_info
 			$cache_info = array();
-			$cache_info['ttl'] = $this->ttl;
-			$cache_info['depth'] = $this->depth;
-			!empty($cache_info['ext']) ? $cache_info['ext'] = $cache_info['ext'] : $this->ext;
-			$cache_info['handler'] = $this->handler;
-			$cache_info['hash'] = $this->hash;
-			$this->_update('.info', $cache_info);
-			//$this->_update('.info', $cache_info, 0, array('type'=>'php'));
+			foreach ($fields as $f) $cache_info[$f] = $this->$f;
+		} else {
+			$validated_cache_info = array();
+			foreach ($fields as $f) {
+				isset($cache_info[$f]) ? $validated_cache_info[$f] = $cache_info[$f]:
+					$validated_cache_info[$f] = $this->$f;
+			}
+			$cache_info = $validated_cache_info;
+
+			// validate cache infos
+			// FIXME. How can I direct access with a cache key name ?
+			if (!in_array($cache_info['hash'], array('md5', 'sha1')) and !function_exists($cache_info['hash']))
+				$cache_info['hash'] = 'md5';
+
 		}
+		$cache_info['ext'] = ltrim($cache_info['ext'], '.'); // fix ext: .html => html
 		return $cache_info;
 	}
 
+	/**
+	 * prepare cache dirs
+	 */
+	function _prepare_cache_dirs($top_dir, $depth = 2, $mkdir = true, $mode = 0777) {
+		if ($mkdir) {
+			$om = umask(~0777);
+			if (!is_dir($top_dir)) mkdir($top_dir, $mode, true);
+		}
+
+		$prefix = array('');
+		for ($j = 0; $j < $depth; $j++) {
+			$dirs = array();
+			$rdirs = array();
+			foreach ($prefix as $pre) {
+				$d = '';
+				for ($i = 0; $j > 0 and $i < $j; $i++)
+					$d.= substr($pre, 0, $i + 1) . '/';
+
+				for ($i = 0; $i < 16; $i++) {
+					$dir = $pre.dechex($i);
+					if ($mkdir) mkdir($top_dir.'/'.$d.$dir, $mode);
+
+					$dirs[] = $dir;
+					$rdirs[] = $d.$dir;
+				}
+			}
+			$prefix = $dirs;
+		}
+		if ($mkdir) umask($om);
+
+		return $rdirs;
+	}
 
 	function getKey($id, $hash = true)
 	{
 		if (!empty($this->hash) and $hash) {
 			$func = $this->hash;
-			$key = $func($id);
+			$key = $hashkey = $func($id);
 		} else {
 			$key = $id;
+			$hashkey = ($this->depth > 0) ? md5($id) : '';
 		}
 
-		if (!empty($this->depth)) {
-			$prefix = substr($key, 0, $this->depth);
-			return $prefix . '/' . $key . $this->_ext;
+		$prefix = '';
+		for ($i = 0; $i < $this->depth; $i++) {
+			$prefix.= substr($hashkey, 0, $i + 1) . '/';
 		}
-		return $key . $this->_ext;
+		return $prefix . $key . $this->_ext;
 	}
 
 	function getUniq($id)
@@ -186,12 +230,14 @@ class Cache_Text {
 				$ttl = $ttl_or_mtime;
 			} else {
 				// or mtime.
-				if ($ttl_or_mtime and ($ttl_or_mtime <= $this->mtime($key)))
+				if ($ttl_or_mtime <= $this->mtime($key))
+					// already updated
 					return false;
 			}
 		}
 
-		$this->updateCacheInfo();
+		// update the mtime of the cache info file.
+		@touch($this->cache_dir . '/.info');
 		return $this->_update($key, $val, $ttl, $params);
 	}
 
@@ -227,12 +273,6 @@ class Cache_Text {
 
 	function _save($key, $val)
 	{
-		$dir = dirname($this->cache_dir . '/' . $key);
-		if (!is_dir($dir)) {
-			$om = umask(~0777);
-			mkdir($dir, 0777, true);
-			umask($om);
-		}
 		$fp = fopen($this->cache_dir . '/' .$key, 'a+b');
 		if (is_resource($fp)) {
 			flock($fp, LOCK_EX);
@@ -293,6 +333,10 @@ class Cache_Text {
 		$type = isset($params['type']) ? $params['type'] : $this->ext;
 
 		$fname = $this->cache_dir . '/'. $key;
+
+		if (!empty($params['nosanitycheck']) and !empty($params['print'])) {
+			return readfile($fname);
+		}
 
 		$fp = fopen($fname, 'r');
 		if (!is_resource($fp)) return false;
@@ -388,7 +432,7 @@ class Cache_Text {
 	}
 
 	function mtime($id = null) {
-		if (empty($id))
+		if (!$id === null or !isset($id[0]))
 			return filemtime($this->cache_dir . '/.info');
 
 		$key = $this->getKey($id);
