@@ -15,9 +15,10 @@
 //
 // $Id: TPL.php,v 1.1 2008/12/17 06:20:57 wkpark Exp $
 
-function macro_TPL($formatter, $value, $params=array()) {
+function macro_TPL($formatter, $value = '', $params = array()) {
+    if ($formatter->_macrocache and empty($params['call']))
+        return $formatter->macro_cache_repl('TPL', $value);
     return $formatter->processor_repl('tpl_', $value, $params);
 }
 
 // vim:et:sts=4:sw=4:
-?>

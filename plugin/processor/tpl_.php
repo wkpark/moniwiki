@@ -60,7 +60,7 @@ function processor_tpl_(&$formatter,$source,$params=array()) {
 
     $out=$compiler->_compile_template($formatter, $source, $params);
     if (!$formatter->preview)
-        $cache->update($id,$out);
+        $cache->update($id,$out, 0, array('type'=>'php'));
     if (!empty($params['print'])) return eval('?'.'>'.$out.'<'.'?php ');
     if (!empty($params['raw'])) return $out;
     #print '<pre>'.(preg_replace('/</','&lt;',$out)).'</pre>';
