@@ -85,15 +85,15 @@ class Cache_Text {
 		$this->cache_dir = $cache_path . '/' . $arena;
 
 		// $cache_info init param is used only once for the first time
-		if ($this->_exists('.info')) {
-			$cache_info = $this->_fetch_serial('.info');
+		if ($this->_exists($this->arena.'/.info')) {
+			$cache_info = $this->_fetch_serial($this->arena.'/.info');
 		} else {
 			// validate cache_info
 			$cache_info = $this->_validate_cache_info($cache_info);
 			// init cache dirs
 			$this->_prepare_cache_dirs($this->cache_dir, $cache_info['depth']);
 
-			$this->_update('.info', $cache_info);
+			$this->_update($this->arena.'/.info', $cache_info);
 		}
 
 		$this->_initCacheInfo($cache_info);
@@ -124,12 +124,12 @@ class Cache_Text {
 		}
 		// validate cache_info
 		$cache_info = $this->_validate_cache_info($cache_info);
-		return $this->_update('.info', $cache_info);
+		return $this->_update($this->arena.'/.info', $cache_info);
 	}
 
 	function getCacheInfo()
 	{
-		return $this->_fetch_serial('.info');
+		return $this->_fetch_serial($this->arena.'/.info');
 	}
 
 	function _validate_cache_info($cache_info = false)
@@ -204,7 +204,7 @@ class Cache_Text {
 		for ($i = 0; $i < $this->depth; $i++) {
 			$prefix.= substr($hashkey, 0, $i + 1) . '/';
 		}
-		return $prefix . $key . $this->_ext;
+		return $this->arena.'/'.$prefix . $key . $this->_ext;
 	}
 
 	function getUniq($id)
@@ -273,7 +273,7 @@ class Cache_Text {
 
 	function _save($key, $val)
 	{
-		$fp = fopen($this->cache_dir . '/' .$key, 'a+b');
+		$fp = fopen($this->cache_path . '/' .$key, 'a+b');
 		if (is_resource($fp)) {
 			flock($fp, LOCK_EX);
 			ftruncate($fp, 0);
@@ -304,11 +304,11 @@ class Cache_Text {
 	}
 
 	function _exists($key) {
-		return @file_exists($this->cache_dir . '/' . $key);
+		return @file_exists($this->cache_path . '/' . $key);
 	}
 
 	function _fetch_serial($key) {
-		$fname = $this->cache_dir . '/'. $key;
+		$fname = $this->cache_path . '/'. $key;
 
 		$fp = @fopen($fname, 'r');
 		if (!is_resource($fp)) return false;
@@ -322,7 +322,7 @@ class Cache_Text {
 	}
 
 	function _fetch_php($key) {
-		$fname = $this->cache_dir . '/'. $key;
+		$fname = $this->cache_path . '/'. $key;
 
 		$val = @include $fname;
 		if ($val === false) return false;
@@ -332,7 +332,7 @@ class Cache_Text {
 	function _fetch($key, $mtime = 0, $params = array()) {
 		$type = isset($params['type']) ? $params['type'] : $this->ext;
 
-		$fname = $this->cache_dir . '/'. $key;
+		$fname = $this->cache_path . '/'. $key;
 
 		if (!empty($params['nosanitycheck']) and !empty($params['print'])) {
 			return readfile($fname);
@@ -428,7 +428,7 @@ class Cache_Text {
 	}
 
 	function _mtime($key) {
-		return filemtime($this->cache_dir . '/' . $key);
+		return filemtime($this->cache_path . '/' . $key);
 	}
 
 	function mtime($id = null) {
@@ -444,7 +444,7 @@ class Cache_Text {
 	function remove($id) {
 		$key = $this->getKey($id);
 		if ($this->_exists($key)) {
-			unlink($this->cache_dir.'/'.$key);
+			unlink($this->cache_path.'/'.$key);
 			return true;
 		}
 		return false;
