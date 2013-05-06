@@ -123,9 +123,9 @@ function processor_latex(&$formatter,$value="",$options=array()) {
   if (!empty($DBInfo->cache_public_dir)) {
     $fc = new Cache_text('latex',array('ext'=>'png','dir'=>$DBInfo->cache_public_dir));
     $pngname=$fc->getKey($uniq, false);
-    $png= $DBInfo->cache_public_dir.'/latex/'.$pngname;
+    $png= $DBInfo->cache_public_dir.'/'.$pngname;
     $png_url=
-      !empty($DBInfo->cache_public_url) ? $DBInfo->cache_public_url.'/latex/'.$pngname:
+      !empty($DBInfo->cache_public_url) ? $DBInfo->cache_public_url.'/'.$pngname:
       $DBInfo->url_prefix.'/'.$png;
   } else {
     $png=$cache_dir.'/'.$uniq.'.png';
