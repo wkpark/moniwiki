@@ -212,6 +212,8 @@ EOS;
       $mediainfo = 'External object';
       $classid = '';
       $objclass = '';
+      $iframe = '';
+      $object_prefered = false;
       // http://code.google.com/p/google-code-project-hosting-gadgets/source/browse/trunk/video/video.js
       if (preg_match("@https?://(?:[a-z-]+[.])?(?:youtube(?:[.][a-z-]+)+|youtu\.be)/(?:watch[?].*v=|v/|embed/)?([a-z0-9_-]+)$@i",$media[$i],$m)) {
         $movie = "http://www.youtube.com/v/".$m[1];
@@ -238,6 +240,27 @@ EOS;
           "<param name='allowFullScreen' value='true'>\n";
         $mediainfo = 'Daum movie';
         $objclass = ' daum';
+      } else if (preg_match("@https?://vimeo\.com\/(.*)$@i", $media[$i], $m)) {
+        if ($object_prefered) {
+          $movie = "https://secure-a.vimeocdn.com/p/flash/moogaloop/5.2.55/moogaloop.swf?v=1.0.0";
+          $type = 'type="application/x-shockwave-flash"';
+          $attr = 'allowfullscreen="true" allowScriptAccess="always" flashvars="clip_id='.$m[1].'"';
+          if (empty($mysize))
+            $attr.= ' width="500px" height="281px"';
+
+          $url[$i] = $movie;
+          $params = "<param name='movie' value='$movie'>\n".
+            "<param name='flashvars' value='clip_id=".$m[1]."'>\n".
+            "<param name='allowScriptAccess' value='always'>\n".
+            "<param name='allowFullScreen' value='true'>\n";
+        } else {
+          $iframe = 'http://player.vimeo.com/video/'.$m[1].'?portrait=0&color=333';
+          $attr = 'frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen';
+          if (empty($mysize))
+            $attr.= ' width="500px" height="281px"';
+        }
+        $mediainfo = 'Vimeo movie';
+        $objclass = ' vimeo';
       } else if (preg_match("/(wmv|mpeg4|mp4|avi|asf)$/",$media[$i], $m)) {
         $classid="classid='clsid:22D6F312-B0F6-11D0-94AB-0080C74C7E95'";
         $type='type="application/x-mplayer2"';
@@ -268,8 +291,15 @@ EOS;
       }
       $autoplay=0; $play='false';
 
-      $myurl=$url[$i];
-      $out.=<<<OBJECT
+      if ($iframe) {
+        $out.=<<<IFRAME
+<div class='externalObject$objclass'>
+<iframe src="$iframe" $attr></iframe>
+<div><a alt='$myurl' onclick='javascript:openExternal(this, "inline-block"); return false;'><span>[$mediainfo]</span></a></div></div>
+IFRAME;
+      } else {
+        $myurl=$url[$i];
+        $out.=<<<OBJECT
 <div class='externalObject$objclass'>
 <object class='external' $classid $type $attr>
 $params
@@ -278,6 +308,7 @@ $params
 </object>
 <div><a alt='$myurl' onclick='javascript:openExternal(this, "inline-block"); return false;'><span>[$mediainfo]</span></a></div></div>
 OBJECT;
+      }
     }
   }
 
