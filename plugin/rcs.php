@@ -8,7 +8,7 @@
 function do_post_rcs($formatter,$options) {
   global $DBInfo;
 
-  $supported=array('-kkv','-kk');
+  $supported=array('-kkv','-kk', '-l -M');
   if ($DBInfo->version_class!='RCS') {
     $title = sprintf(_("%s does not support rcs options."), $DBInfo->version_class);
     $formatter->send_header("",$options);
@@ -40,8 +40,9 @@ function do_post_rcs($formatter,$options) {
 <table border='0'>\n";
   print "<tr>";
   print "<td valign='top'><b>rcs</b></td><td><select name='param' />\n";
-  print "<option value='-kk'>-kk</option>\n";
-  print "<option value='-kkv'>-kkv</option>\n</select>\n";
+  foreach ($supported as $opt) {
+    print "<option value='$opt'>$opt</option>\n";
+  }
   if ($DBInfo->security->is_protected("rcs",$options))
     print " <input type='password' name='passwd' /> ".
     _("Only WikiMaster can execute rcs");
