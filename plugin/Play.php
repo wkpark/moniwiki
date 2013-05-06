@@ -211,6 +211,7 @@ EOS;
     for ($i=0,$sz=count($media);$i<$sz;$i++) {
       $mediainfo = 'External object';
       $classid = '';
+      $objclass = '';
       // http://code.google.com/p/google-code-project-hosting-gadgets/source/browse/trunk/video/video.js
       if (preg_match("@https?://(?:[a-z-]+[.])?(?:youtube(?:[.][a-z-]+)+|youtu\.be)/(?:watch[?].*v=|v/|embed/)?([a-z0-9_-]+)$@i",$media[$i],$m)) {
         $movie = "http://www.youtube.com/v/".$m[1];
@@ -221,6 +222,22 @@ EOS;
           "<param name='allowScriptAccess' value='always'>\n".
           "<param name='allowFullScreen' value='true'>\n";
         $mediainfo = 'Youtube movie';
+        $objclass = ' youtube';
+      } else if (preg_match("@https?://tvpot\.daum\.net\/v\/(.*)$@i", $media[$i], $m)) {
+        $classid = "classid='clsid:d27cdb6e-ae6d-11cf-96b8-444553540000'";
+        $movie = "http://videofarm.daum.net/controller/player/VodPlayer.swf";
+        $type = 'type="application/x-shockwave-flash"';
+        $attr = 'allowfullscreen="true" allowScriptAccess="always" flashvars="vid='.$m[1].'&playLoc=undefined"';
+        if (empty($mysize))
+          $attr.= ' width="500px" height="281px"';
+
+        $url[$i] = $movie;
+        $params = "<param name='movie' value='$movie'>\n".
+          "<param name='flashvars' value='vid=".$m[1]."&playLoc=undefined'>\n".
+          "<param name='allowScriptAccess' value='always'>\n".
+          "<param name='allowFullScreen' value='true'>\n";
+        $mediainfo = 'Daum movie';
+        $objclass = ' daum';
       } else if (preg_match("/(wmv|mpeg4|mp4|avi|asf)$/",$media[$i], $m)) {
         $classid="classid='clsid:22D6F312-B0F6-11D0-94AB-0080C74C7E95'";
         $type='type="application/x-mplayer2"';
@@ -253,7 +270,7 @@ EOS;
 
       $myurl=$url[$i];
       $out.=<<<OBJECT
-<div class='externalObject'>
+<div class='externalObject$objclass'>
 <object class='external' $classid $type $attr>
 $params
 <param name="AutoRewind" value="True">
