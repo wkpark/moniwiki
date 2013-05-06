@@ -52,10 +52,9 @@ function macro_VisualTour($formatter,$value,$options=array()) {
 
   $dot=$formatter->macro_repl('dot',$pgname,$options);
 
-  $md5sum=md5($dot);
   if (!empty($DBInfo->cache_public_dir)) {
-    $fc = new Cache_text('visualtour', array('ext'=>$DBInfo->cache_public_dir));
-    $fname = $fc->getKey($md5sum, false);
+    $fc = new Cache_text('visualtour', array('dir'=>$DBInfo->cache_public_dir));
+    $fname = $fc->getKey($dot);
     $basename= $DBInfo->cache_public_dir.'/'.$fname;
     $dotfile= $basename.'.dot';
     $pngfile= $basename.'.png';
@@ -66,6 +65,7 @@ function macro_VisualTour($formatter,$value,$options=array()) {
     $png_url= $urlbase.'.png';
     $map_url= $urlbase.'.map';
   } else {
+    $md5sum=md5($dot);
     $cache_dir= $DBInfo->upload_dir."/VisualTour";
     $cache_url= $DBInfo->upload_url ? $DBInfo->upload_url.'/VisualTour':
       $DBInfo->url_prefix.'/'.$cache_dir;
