@@ -2110,11 +2110,16 @@ class Formatter {
     $url=str_replace('&lt;','<',$url); // revert from baserule
     $url=preg_replace('/&(?!#?[a-z0-9]+;)/i','&amp;',$url);
 
+    // ':' could be used in the title string.
+    $urltest = $url;
+    $tmp = preg_split('/\s|\|/', $url); // [[foobar foo]] or [[foobar|foo]]
+    if (count($tmp) > 1) $urltest = $tmp[0];
+
     if ($url[0] == '"') {
       // [["Hello World"]], [["Hello World" Page Title]]
       return $this->word_repl($bra.$url.$ket, '', $attr);
     } else
-    if (($p=strpos($url,':')) !== false and
+    if (($p = strpos($urltest, ':')) !== false and
         (!isset($url{$p+1}) or (isset($url{$p+1}) and $url{$p+1}!=':'))) {
 
       // namespaced pages
@@ -2159,10 +2164,10 @@ class Formatter {
         return $this->icon['mailto']."<a class='externalLink' href='mailto:$link' $attr>$myname</a>$external_icon";
       }
 
-      if ($force or preg_match('@ @',$url)) { # have a space ?
-        if (($p = strpos($url,' ')) !== false) {
-          $text = substr($url,$p+1);
-          $url = substr($url,0,$p);
+      if ($force or strstr($url, ' ') or strstr($url, '|')) {
+        if (($tok = strtok($url, ' |')) !== false) {
+          $text = strtok('');
+          $url = $tok;
         }
         #$link=str_replace('&','&amp;',$url);
         $link=preg_replace('/&(?!#?[a-z0-9]+;)/i','&amp;',$url);
