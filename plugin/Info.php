@@ -83,7 +83,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
         $act = $options['action'];
       else
         $act = 'info';
-      $lnk=$formatter->link_to('?action='.$act.'&amp;all=1',_("Show all revisions"),' class="button small"');
+      $lnk=$formatter->link_to('?action='.$act.'&amp;rev='.$rev,_("Show next revisions"),' class="button small"');
       $out.='<tr><td colspan="2"></td><td colspan="'.(!empty($admin) ? 5:4).'">'.$lnk.'</td></tr>';
       break;
     }
@@ -271,9 +271,47 @@ function macro_info($formatter,$value,$options=array()) {
     getModule('Version',$DBInfo->version_class);
     $class="Version_".$DBInfo->version_class;
     $version=new $class ($DBInfo);
-    $out= $version->rlog($formatter->page->name,'','','-z');
+    $out= $version->rlog($formatter->page->name,'','-r','-z');
 
-    if (!$out) {
+    // get the number of total revisions and the last revision.
+    $total = 1;
+    if (preg_match('/^total revisions: (\d+);/m', $out, $m))
+      $total = $m[1];
+
+    $rev = array();
+    $rev0 = '';
+    if (preg_match('/^revision 1.(\d+)+\s/m', $out, $m)) {
+      $rev0 = $m[1];
+      $rev[$rev0] = '1.'.$rev0;
+    }
+
+    // parse 'rev' query string
+    $rev1 = '';
+    if (!empty($options['rev']) and preg_match('/^1\.(\d+)$/', $options['rev'], $m)) {
+      if ($m[1] < $rev0)
+        $rev[$m[1]] = '1.'.$m[1];
+    }
+    $r = array_keys($rev);
+
+    // make a range list like as "1.234:1.240\;1.110:1.140"
+    $revstr = '';
+    $count = 10;
+    if (count($r) > 1) {
+      if ($r[0] - $r[1] > 30) {
+        $revstr.= '1.'.max($r[0] - 1, 0).':'.$rev[$r[0]];
+        $revstr.= '\;1.'.max($r[1] - $count, 0).':'.$rev[$r[1]];
+        $options['count'] = $count + 2;
+      } else {
+        $revstr.= '1.'.max($r[1] - $count, 0).':'.$rev[$r[0]];
+        $options['count'] = $r[0] - $r[1] + $count;
+      }
+    } else {
+      $revstr.= '1.'.max($r[0] - $count, 0).':'.$rev[$r[0]];
+    }
+
+    $out= $version->rlog($formatter->page->name,'',"-r$revstr",'-z');
+
+    if (!isset($out[0])) {
       $msg=_("No older revisions available");
       $info= "<h2>$msg</h2>";
     } else {
