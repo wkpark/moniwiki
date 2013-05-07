@@ -32,24 +32,38 @@ function processor_metapost($formatter,$value="") {
     return $out;
   }
 
-  if (!file_exists($cache_dir)) {
-    umask(000);
-    mkdir($cache_dir,0777);
-    umask(022);
-  }
-
   $mp=$value;
 
-  $uniq=md5($mp);
+  $uniq = md5($mp);
+  if (!empty($DBInfo->cache_public_dir)) {
+    $fc = new Cache_text('metapost', array('dir'=>$DBInfo->cache_public_dir));
+    $basename = $fc->getKey($mp);
+    $png = $DBInfo->cache_public_dir.'/'.$basename.'.png';
+    $ps = $DBInfo->cache_public_dir.'/'.$basename.'.ps';
+    $png_url = $DBInfo->cache_public_url.'/'.$basename.'.png';
+    $ps_url = $DBInfo->cache_public_url.'/'.$basename.'.ps';
+  } else {
+    $png = $cache_dir.'/'.$uniq.'.png';
+    $ps = $cache_dir.'/'.$uniq.'.png';
+    $png_url = $DBInfo->url_prefix.'/'.$png;
+    $ps_url = $DBInfo->url_prefix.'/'.$ps;
+
+    if (!file_exists($cache_dir)) {
+      umask(000);
+      mkdir($cache_dir,0777);
+      umask(022);
+    }
+  }
+  $vartmp_basename = $vartmp_dir.'/'.$uniq;
 
   $src="beginfig(1);\n$mp\nendfig;\n";
 
-  if ($formatter->refresh || !file_exists("$cache_dir/$uniq.png")) {
+  if ($formatter->refresh || !file_exists($png)) {
      $fp= fopen($vartmp_dir."/$uniq.mp", "w");
      fwrite($fp, $src);
      fclose($fp);
 
-     $outpath="$cache_dir/$uniq.png";
+     $outpath = $png;
 
      # Unix specific FIXME
      $dir=getcwd();
@@ -59,16 +73,16 @@ function processor_metapost($formatter,$value="") {
      pclose($fp);
      chdir($dir);
 
-     $cmd= "$convert $vartmp_dir/$uniq.1 $outpath";
+     $cmd= "$convert $vartmp_basename.1 $outpath";
      $fp=popen($cmd.$formatter->NULL,'r');
      pclose($fp);
 
-     @copy("$vartmp_dir/$uniq.1","$cache_dir/$uniq.ps");
-     unlink("$vartmp_dir/$uniq.1");
-     unlink("$vartmp_dir/$uniq.mp");
-     unlink("$vartmp_dir/$uniq.log");
+     @copy("$vartmp_basename.1", $ps);
+     unlink("$vartmp_basename.1");
+     unlink("$vartmp_basename.mp");
+     unlink("$vartmp_basename.log");
   }
-  return "<a href='$DBInfo->url_prefix/$cache_dir/$uniq.ps'><img class='tex' border='0' src='$DBInfo->url_prefix/$cache_dir/$uniq.png' alt='mp'".
+  return "<a href='$ps_url'><img class='tex' border='0' src='$png_url' alt='mp'".
          "title=\"$mp\" /></a>";
 }
 
