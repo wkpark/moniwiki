@@ -359,8 +359,11 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   if (!$bookmark or !empty($nobookmark)) {
     if (!empty($checknew) and preg_match('/^\d+(\s*\*\s*\d+)*$/',$checknew))
       $checknew = eval('return '.$checknew. ';');
-    $bookmark = strtotime(date('Y-m-d', time() - $checknew).' 00:00:00');
+
+    if ($checknew > 1)
+      $bookmark = strtotime(date('Y-m-d', time() - $checknew).' 00:00:00');
   }
+  if (!$bookmark) $bookmark = time();
 
   $locals = get_defined_vars();
   unset($locals['formatter']);
