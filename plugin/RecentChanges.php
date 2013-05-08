@@ -260,8 +260,6 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   }
 
   // set as dynamic macro or not.
-  if (empty($use_js))
-    $formatter->_dynamic_macros['RecentChanges'] = 1;
   if ($formatter->_macrocache and empty($options['call'])) // and empty($use_js))
     return $formatter->macro_cache_repl('RecentChanges', $value);
 
