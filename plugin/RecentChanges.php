@@ -96,6 +96,9 @@ function ajax_RecentChanges($formatter, $options = array()) {
   } else {
     $bookmark = $u->bookmark;
   }
+
+  if (!$bookmark) $bookmark = time();
+
   $tz_offset=$formatter->tz_offset;
 
   $info = array();
@@ -111,7 +114,7 @@ function ajax_RecentChanges($formatter, $options = array()) {
     $add = 0;
     $del = 0;
 
-    if ($checknew) {
+    if ($checknew or $checkchange) {
       $v= $p->get_rev($bookmark);
       if (empty($v)) {
         $info[$page_name]['state'] = 'new';
@@ -120,7 +123,10 @@ function ajax_RecentChanges($formatter, $options = array()) {
     }
 
     if ($checkchange) {
-      $infos = $p->get_info('>'.$bookmark);
+      if (empty($v)) // new
+        $infos = array();
+      else
+        $infos = $p->get_info('>'.$bookmark);
       foreach ($infos as $inf) {
         $tmp = explode(' ', trim($inf[1]));
         if (isset($tmp[1])) {
@@ -587,12 +593,10 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         $icon= $formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon['diff']);
         $updated= ' '.$formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon['updated']);
 
-        if ($checknew or $checkchange)
-          $p= new WikiPage($page_name);
-
         $add = 0;
         $del = 0;
-        if ($checknew) {
+        if ($checknew or $checkchange) {
+          $p = new WikiPage($page_name);
           $v= $p->get_rev($bookmark);
           if (empty($v)) {
             $icon=
@@ -602,7 +606,10 @@ function macro_RecentChanges($formatter,$value='',$options='') {
           }
         }
         if ($checkchange) {
-          $infos = $p->get_info('>'.$bookmark);
+          if (empty($v)) // new
+            $infos = array();
+          else
+            $infos = $p->get_info('>'.$bookmark);
           foreach ($infos as $inf) {
             $tmp = explode(' ', trim($inf[1]));
             if (isset($tmp[1])) {
