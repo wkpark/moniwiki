@@ -142,31 +142,68 @@ class Version_RCS {
 
   function get_rev($pagename,$mtime='',$last=0) {
     $opt = '';
+    $tag = 'revision';
+    $end = '$';
     if ($last==1) {
-      $tag='head:';
-      $opt='-h';
-    } else $tag='revision';
+      $tag='revision';
+      $opt='-r';
+      $end = '\s*';
+    }
     if ($mtime) {
       $date=gmdate('Y/m/d H:i:s',$mtime);
-      if ($date) {
-        $opt="-d\<'$date'";
-        $tag='revision';
-      }
+      $opt = "-d'$date'";
+      $tag = 'revision';
+      $end = '\s*';
     }
 
     $rev = '';
+    $total = 0;
+    $selected = 0;
+
+    if (empty($opt)) { $opt = '-r'; $end = '\s*'; }
+
     $out= $this->rlog($pagename,'',$opt);
-    if ($out) {
+
+    $total = 0;
+
+    // get the number of the total revisons and the selected revisions
+    if (isset($out[0])) {
       for ($line=strtok($out,"\n"); $line !== false;$line=strtok("\n")) {
-        preg_match("/^$tag\s+([\d\.]+)$/",$line,$match);
-        if (isset($match[1])) {
-          $rev=$match[1];
+        if (empty($total)) {
+          if (preg_match("/^total revisions:\s+(\d+)(?:;\s+selected revisions:\s+(\d+))?\s*$/", $line, $match)) {
+            $total = $match[1];
+            $selected = $match[2];
+            if ($selected == 0) return '';
+          }
+        } else if (preg_match("/^$tag\s+(\d\.\d+)$end/", $line, $match)) {
+          $rev = $match[1];
+          $line = strtok("\n");
+          preg_match("/^date: ([^;]+);/", $line, $match);
+          $date = $match[1];
           break;
         }
       }
     }
+
+    if ($mtime or $last) return $rev;
+    if (empty($date)) return '';
+
+    // get the previous version number
+    $date = gmdate('"Y/m/d H:i:s"', strtotime($date.' GMT') - 1); // HACK 1-second before
+    $opt = '-d'.$date;
+    $out = $this->rlog($pagename, '', $opt);
+    if (isset($out[0])) {
+      for ($line = strtok($out, "\n"); $line !== false; $line = strtok("\n")) {
+        if (preg_match("/^$tag\s+(\d\.\d+)$end/", $line, $match)) {
+          $rev = $match[1];
+          break;
+        }
+      }
+    }
+
     return $rev;
   }
+
   function export($pagename) {
     $keyname=$this->DB->_getPageKey($pagename);
     $fname=$this->DB->text_dir."/RCS/$keyname,v";
