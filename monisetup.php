@@ -58,7 +58,7 @@ class MoniConfig {
       while (ini_get('allow_url_fopen')) {
         print '<h3>'._t("Check a AcceptPathInfo setting for Apache 2.x.xx").'</h3>';
         print '<ul>';
-        $fp=@fopen('http://'.$_SERVER['HTTP_HOST'].$_SERVER['SCRIPT_NAME'].'/pathinfo?action=pathinfo','r');
+        $fp=@fopen('http://'.$_SERVER['SERVER_ADDR'].':'.$_SERVER['SERVER_PORT'].$_SERVER['SCRIPT_NAME'].'/pathinfo?action=pathinfo','r');
         $out='';
         if ($fp) {
           while (!feof($fp)) $out.=fgets($fp,2048);
@@ -83,7 +83,7 @@ class MoniConfig {
     $config['url_prefix']=$url_prefix;
 
     $user = getenv('LOGNAME');
-    $user = $user ? $user : get_current_user();
+    $user = $user ? $user : 'root';
     $config['rcs_user']=$user;
 
     if(getenv("OS")=="Windows_NT") {
@@ -92,6 +92,7 @@ class MoniConfig {
       // http://bugs.php.net/bug.php?id=22418
       //$config['version_class']="'RcsLite'";
       $config['path']="./bin;c:/program files/vim/vimXX";
+      $config['vartmp_dir']="c:/tmp/";
     } else {
       $config['rcs_user']='root'; // XXX
     }
@@ -493,7 +494,7 @@ FORM;
 
     $port= ($_SERVER['SERVER_PORT'] != 80) ? $_SERVER['SERVER_PORT']:80;
     $path = preg_replace('/monisetup\.php/','',$_SERVER['SCRIPT_NAME']);
-    $host = $_SERVER['HTTP_HOST'];
+    $host = $_SERVER['SERVER_ADDR'];
 
     print '<div class="check">';
     foreach($writables as $file) {
