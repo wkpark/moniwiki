@@ -364,6 +364,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       $bookmark = strtotime(date('Y-m-d', time() - $checknew).' 00:00:00');
   }
   if (!$bookmark) $bookmark = time();
+  if (!empty($nobookmark)) $use_js = 0;
 
   $locals = get_defined_vars();
   unset($locals['formatter']);
