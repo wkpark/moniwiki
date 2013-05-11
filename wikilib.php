@@ -1517,7 +1517,7 @@ EOF;
   # get categories
   $select_category = '';
   if (!empty($DBInfo->use_category) and empty($options['nocategories'])) {
-    $categories = macro_TitleSearch($formatter, $DBInfo->category_regex, $options);
+    $categories = $DBInfo->getLikePages($DBInfo->category_regex);
     if ($categories) {
       $select_category="<label for='category-select'>"._("Category")."</label><select id='category-select' name='category' tabindex='4'>\n";
       $mlen = 0;
