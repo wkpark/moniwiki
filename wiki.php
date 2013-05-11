@@ -3760,7 +3760,7 @@ class Formatter {
 
         while($in_div > 0)
           $p_closeopen.=$this->_div(0,$in_div,$div_enclose);
-        $p_closeopen.=$this->_div(1,$in_div,$div_enclose);
+        $p_closeopen.=$this->_div(1,$in_div,$div_enclose, ' class="section"');
         $in_p='';
         $edit = ''; $anchor = '';
         if ($is_writable && $this->section_edit && empty($this->preview)) {
@@ -3785,13 +3785,6 @@ class Formatter {
           $anchor="<a id='$anchor_id'></a>";
         }
         $attr = $lid > 0 ? ' id="line-'.$lid.'"' : '';
-        if (!empty($DBInfo->use_folding)) {
-          if ($DBInfo->use_folding == 1) {
-            $attr.=" onclick=\"document.getElementById('sc-$this->sect_num').style.display=document.getElementById('sc-$this->sect_num').style.display!='none'? 'none':'block';\"";
-          } else {
-            $attr.=" onclick=\"foldingSection(this,'sc-$this->sect_num');\"";
-          }
-        }
         $lid = '';
 
         $line=$anchor.$edit.$this->head_repl(strlen($m[1]),$m[2],$headinfo,$attr);
