@@ -1215,7 +1215,8 @@ class WikiDB {
       $ldb = new Indexer_dba('pagelinks', 'w', $this->dba_type);
       if ($ldb->db != null) {
         $text = $page->_get_raw_body();
-        $links = get_pagelinks($text);
+        $formatter = new Formatter($page);
+        $links = get_pagelinks($formatter, $text);
         if (!empty($links)) {
           $ldb->delWords($page->name, $links);
           $ldb->deletePage($page->name);
