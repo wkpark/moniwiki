@@ -5750,7 +5750,7 @@ function wiki_main($options) {
         $_macros=&$formatter->_dynamic_macros;
         if (!empty($_macros))
           $mcache->update($pagename,$_macros);
-        $cache->update($pagename, $out, $Config['cachetime']);
+        $cache->update($pagename, $out);
       }
       if (!empty($_macros)) {
         $mrule=array();
