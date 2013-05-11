@@ -204,6 +204,20 @@ class Version_RCS {
     return $rev;
   }
 
+  function is_broken($pagename) {
+    $keyname = $this->DB->_getPageKey($pagename);
+    $fname = $this->DB->text_dir."/RCS/$keyname,v";
+
+    $fp = @fopen($fname, 'r');
+    if (!is_resource($fp)) return 0; // ignore
+
+    fseek($fp, -2, SEEK_END);
+    $end = fread($fp, 2);
+    fclose($fp);
+    if ($end != "@\n") return 1; // broken
+    return 0;
+  }
+
   function export($pagename) {
     $keyname=$this->DB->_getPageKey($pagename);
     $fname=$this->DB->text_dir."/RCS/$keyname,v";

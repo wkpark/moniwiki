@@ -267,6 +267,7 @@ function macro_info($formatter,$value,$options=array()) {
     }
   }
 
+  $warn = '';
   if ($DBInfo->version_class) {
     getModule('Version',$DBInfo->version_class);
     $class="Version_".$DBInfo->version_class;
@@ -283,6 +284,12 @@ function macro_info($formatter,$value,$options=array()) {
     if (preg_match('/^revision 1.(\d+)+\s/m', $out, $m)) {
       $rev0 = $m[1];
       $rev[$rev0] = '1.'.$rev0;
+    }
+
+    if (!empty($DBInfo->rcs_check_broken) and method_exists($version, 'is_broken')) {
+      $is_broken = $version->is_broken($formatter->page->name);
+      if ($is_broken)
+        $warn = '<div class="warn">'._("WARNING: ")._("The history information of this page is broken.")."</div>";
     }
 
     // parse 'rev' query string
@@ -321,7 +328,7 @@ function macro_info($formatter,$value,$options=array()) {
     $msg=_("Version info is not available in this wiki");
     $info= "<h2>$msg</h2>";
   }
-  return $info;
+  return $warn.$info;
 }
 
 

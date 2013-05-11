@@ -177,6 +177,7 @@ $myprocessors=array('syntax'=>'vim','sh'=>'vim','csh'=>'vim',
 #$use_twikilink=1; 
 #$timezone='KST'; // for windows
 #$version_class='RcsLite';
+#$rcs_check_broken=1; // check rcs file is broken or not
 #$use_numbering=1; // for the vim processor
 #$vim_nocheck=0; // do not check vim syntax.
 #$vim_nocheck=1;
