@@ -592,7 +592,10 @@ class WikiDB {
       $dir = $ac->cache_dir;
       $_lock_file = _fake_lock_file($this->vartmp_dir, 'init_alias');
       $locked = _fake_locked($_lock_file, $this->mtime());
-      if ($locked or ($apc->exists('aliases') and $this->checkUpdated($apc->mtime('aliases')))) {
+
+      $delay = !empty($this->default_delaytime) ? $this->default_delaytime : 0;
+
+      if ($locked or ($apc->exists('aliases') and $this->checkUpdated($apc->mtime('aliases'), $delay))) {
         $aliases = $apc->fetch('aliases');
         break;
       }
@@ -729,10 +732,11 @@ class WikiDB {
 
     $pcid=md5(serialize($options));
     $pc = new Cache_text('pagelist', array('depth'=>0));
+    $delay = !empty($this->default_delaytime) ? $this->default_delaytime : 0;
 
     $_lock_file = _fake_lock_file($this->vartmp_dir, 'get_page_list', $pcid);
     $locked = _fake_locked($_lock_file, $this->mtime());
-    if ($locked or ($pc->exists($pcid) and $this->checkUpdated($pc->mtime($pcid)))) {
+    if ($locked or ($pc->exists($pcid) and $this->checkUpdated($pc->mtime($pcid), $delay))) {
       $list = $pc->fetch($pcid);
       if (is_array($list)) return $list;
       if ($locked) return array();
@@ -821,7 +825,9 @@ class WikiDB {
     $_lock_file = _fake_lock_file($this->vartmp_dir, 'get_counter');
     $locked = _fake_locked($_lock_file, $this->mtime());
 
-    if ($locked or ($pc->exists('counter') and $this->checkUpdated($pc->mtime('counter'))))
+    $delay = !empty($this->default_delaytime) ? $this->default_delaytime : 0;
+
+    if ($locked or ($pc->exists('counter') and $this->checkUpdated($pc->mtime('counter'), $delay)))
       return $pc->fetch('counter');
 
     _fake_lock($_lock_file);
@@ -985,8 +991,6 @@ class WikiDB {
       umask($om);
     }
 
-    if (!file_exists($filename)) $this->incCounter();
-
     $fp=@fopen($filename,"a+b");
     if (!is_resource($fp))
        return -1;
@@ -996,6 +1000,8 @@ class WikiDB {
     fwrite($fp, $body);
     flock($fp, LOCK_UN);
     fclose($fp);
+
+    if (!file_exists($filename)) $this->incCounter();
 
     if (!empty($this->version_class)) {
       $class=getModule('Version',$this->version_class);
@@ -5717,8 +5723,10 @@ function wiki_main($options) {
       $extra_out='';
       $_macros=null;
       if ($cache->mtime($pagename) < $formatter->page->mtime()) $formatter->refresh = 1; // force update
-     
-      if (empty($formatter->refresh) and $DBInfo->checkUpdated($mtime) and ($check < $Config['cachetime'])) {
+
+      $delay = !empty($DBInfo->default_delaytime) ? $DBInfo->default_delaytime : 0;
+
+      if (empty($formatter->refresh) and $DBInfo->checkUpdated($mtime, $delay) and ($check < $Config['cachetime'])) {
         if ($mcache->exists($pagename))
           $_macros= $mcache->fetch($pagename);
         if (empty($_macros)) {
