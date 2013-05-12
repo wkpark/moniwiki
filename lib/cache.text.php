@@ -149,7 +149,8 @@ class Cache_Text {
 
 			// validate cache infos
 			// FIXME. How can I direct access with a cache key name ?
-			if (!in_array($cache_info['hash'], array('md5', 'sha1')) and !function_exists($cache_info['hash']))
+			if (isset($cache_info['hash'][0]) and
+					!in_array($cache_info['hash'], array('md5', 'sha1')) and !function_exists($cache_info['hash']))
 				$cache_info['hash'] = 'md5';
 
 		}
@@ -503,30 +504,24 @@ class Cache_Text {
 	 * get all cache files
 	 *
 	 */
-	function _caches(&$files, $dir = '')
+	function _caches(&$files)
 	{
 		$top = $this->cache_dir;
-		$prefix = '';
-		$_dir = $top;
-		if (!empty($dir)) {
-			$prefix = $dir .'/';
-			$_dir = $top.'/'.$dir;
-		}
+		$dirs = $this->_prepare_cache_dirs($this->cache_dir, $this->depth, false);
 
-		$dh = opendir($_dir);
-		if (!$dh) return; // slightly ignore
+		foreach ($dirs as $dir) {
+			$dh = opendir($top.'/'.$dir);
+			$prefix = $this->arena.'/'.$dir .'/';
+			if (!is_resource($dh)) continue; // slightly ignore
 
-		while (($file = readdir($dh)) !== false) {
-			if ($file[0] == '.')
-                		continue;
-			if (is_dir($_dir . '/'. $file)) {
-				$this->_caches($files, $file);
-				continue;
+			while (($file = readdir($dh)) !== false) {
+				if ($file[0] == '.')
+					continue;
+
+				$files[] = $prefix . $file;
 			}
-
-			$files[] = $prefix . $file;
+			closedir($dh);
 		}
-		closedir($dh);
 	}
 }
 
