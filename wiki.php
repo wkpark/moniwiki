@@ -5309,7 +5309,7 @@ function init_locale($lang, $domain = 'moniwiki', $init = false) {
       $ldir=$Config['cache_dir']."/locale/$langdir/LC_MESSAGES/";
 
       $tmp = '';
-      $fp = fopen($ldir.'md5sum', 'r');
+      $fp = @fopen($ldir.'md5sum', 'r');
       if (is_resource($fp)) {
         $tmp = '-'.trim(fgets($fp,1024));
         fclose($fp);
