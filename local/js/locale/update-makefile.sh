@@ -61,7 +61,6 @@ then
 fi
 
 ls ../../*.js | sed 's|^|${POT_FILE}: |;' >> Makefile.new
-ls ../../../plugin/*.php | sed 's|^|${POT_FILE}: |;' >> Makefile.new
 cat >> Makefile.new <<'MAIN'
 ${POT_FILE}: dummy.js
 MAIN
