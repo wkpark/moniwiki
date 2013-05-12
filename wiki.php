@@ -1476,7 +1476,7 @@ class WikiPage {
     }
   }
 
-  function get_instructions($body = '') {
+  function get_instructions($body = '', $params = array()) {
     global $Config;
 
     $pikeys=array('#redirect','#action','#title','#notitle','#keywords','#noindex',
@@ -1514,7 +1514,7 @@ class WikiPage {
       if (isset($this->pi)) return $this->pi;
 
       $pi_cache = new Cache_text('PI');
-      if ($this->mtime() < $pi_cache->mtime($this->name)) {
+      if (empty($params['refresh']) and $this->mtime() < $pi_cache->mtime($this->name)) {
         $pi = $pi_cache->fetch($this->name);
 
         if (empty($pi['#format']) and !empty($format)) {
@@ -5413,7 +5413,7 @@ function wiki_main($options) {
   $pis = array();
 
   // get PI cache
-  if ($page->exists()) $page->pi = $pis = $page->get_instructions();
+  if ($page->exists()) $page->pi = $pis = $page->get_instructions('', array('refresh'=>$refresh));
   $page->is_static = false;
 
   // set some PIs for robot
