@@ -25,7 +25,7 @@ po/%.po : ${POT_FILE}
 	msgmerge -o $@.new $@~ $^ && mv -f $@.new $@
 
 %/LC_MESSAGES/moniwiki.mo : po/%.po
-#	mkdir -p $*/LC_MESSAGES
+	mkdir -p $*/LC_MESSAGES
 	msgfmt -o $@ $<
 
 euckr:
