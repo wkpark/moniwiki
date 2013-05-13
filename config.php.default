@@ -30,6 +30,7 @@ $use_hostname= 1; # use hostname or ip address
 $mask_hostname=1; # hide some part of hostnames or ip addresses
 $show_hosts=0;
 $edit_rows=16; # editer rows
+#$editform=$data_dir.'/editform.txt'; # custom edit form
 $iconset= 'moni2'; # moni, moni2
 $inline_latex=0; # 0/1(on/off), mimetex, itex, etc.
 #$inline_latex='mimetex';
