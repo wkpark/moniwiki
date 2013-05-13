@@ -85,6 +85,7 @@ $menu=array('FrontPage'=>1,'FindPage'=>4,'TitleIndex'=>3,'RecentChanges'=>2,'Use
 # ./bin to use user installed bins.
 $theme='azblue2'; # set the theme
 $theme_css=0; # change css of theme or not
+#$mobile_theme='default'; # set the theme of mobile
 $hr=''; # obsolute
 #$title_rule='((?<=[a-z0-9])[A-Z][a-z0-9])'; #
 #$blog_comments=1; # show all comments of a blog entry
@@ -95,6 +96,7 @@ $hr=''; # obsolute
 
 #$sistermap=$data_dir.'/sistermap.txt';
 $metatags=<<<META
+<meta name='viewport' content='width=device-width' />
 <meta name="robots" content="noindex,nofollow" />
 <link rel="Start" href="FrontPage" />
 <link rel="Index" href="TitleIndex" />
@@ -106,6 +108,8 @@ $metatags=<<<META
 <link rel="Alternate" title="xml" type="application/rss+xml" href="?action=rss_rc" />
 <link rel="Alternate" title="Wiki Markup" type="text/plain" href="?action=raw" />
 META;
+
+$metatags_extra="<meta name='viewport' content='width=device-width' />";
 
 # set global javascripts (lowlevel)
 #$js=<<<EOF
