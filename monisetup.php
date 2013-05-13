@@ -425,8 +425,8 @@ function checkConfig($config) {
   $dir=getcwd();
 
   if (!file_exists("config.php") && !is_writable(".")) {
-     print "<h3><font color='red'>".
-	_t("Please change the permission of some directories writable on your server to initialize your Wiki.")."</font></h3>\n";
+     print "<h3 class='warn'>".
+	_t("Please change the permission of some directories writable on your server to initialize your Wiki.")."</h3>\n";
      print "<pre class='console'>\n<font color='green'>$</font> chmod <b>777</b> $dir/data/ $dir\n</pre>\n";
      print sprintf(_t("If you want a more safe wiki, try to change the permission of directories with %s."),
 		"<font color='red'>2777(setgid).</font>\n");
@@ -442,10 +442,10 @@ function checkConfig($config) {
      print "<pre class='console'>\n<font color='green'>$</font> sh secure.sh\n</pre>\n";
      if (is_writable('config.php')) {
        if (empty($config['admin_passwd'])) {
-         print "<h2><font color='red'>"._t("WARN: You have to enter your Admin Password")."</font></h2>\n";
+         print "<h2 class='warn'>"._t("WARN: You have to enter your Admin Password")."</h2>\n";
        } else {
          $owner = fileowner('.');
-         print "<h2><font color='red'>"._t("WARN: If you have any permission to execute 'secure.sh'. press the following button")."</font></h2>\n";
+         print "<h2 class='warn'>"._t("WARN: If you have any permission to execute 'secure.sh'. press the following button")."</h2>\n";
          
          $msg = _t("Protect my config.php now!");
          echo <<<FORM
@@ -464,7 +464,7 @@ FORM;
       else
         $datadir_perm = 0777;
       $datadir_perm = decoct($datadir_perm);
-      print "<h3><font color=red>".sprintf(_t("FATAL: %s directory is not writable"),$config['data_dir'])."</font></h3>\n";
+      print "<h3 class='error'>".sprintf(_t("FATAL: %s directory is not writable"),$config['data_dir'])."</h3>\n";
       print "<h4>"._t("Please execute the following command.")."</h4>";
       print "<pre class='console'>\n".
             "<font color='green'>$</font> chmod $datadir_perm $config[data_dir]\n</pre>\n";
@@ -484,7 +484,7 @@ FORM;
            if ($dir == 'text')
              mkdir($config['data_dir']."/$dir/RCS",$DPERM);
        } else if (!is_writable("$config[data_dir]/$dir")) {
-           print "<h4><font color=red>".sprintf(_t("%s directory is not writable"),$dir )."</font></h4>\n";
+           print "<h4 class='warn'>".sprintf(_t("%s directory is not writable"),$dir )."</h4>\n";
            print "<pre class='console'>\n".
              "<font color='green'>$</font> chmod a+w $config[$file]\n</pre>\n";
        }
@@ -501,7 +501,7 @@ FORM;
       if (empty($config[$file])) continue;
       if (!is_writable($config[$file])) {
         if (file_exists($config[$file])) {
-          print "<h3><font color=red>".sprintf(_t("%s is not writable"),$config[$file])."</font> :( </h3>\n";
+          print "<h3 class='warn'>".sprintf(_t("%s is not writable"),$config[$file])." :( </h3>\n";
           print "<pre class='console'>\n".
               "<font color='green'>$</font> chmod a+w $config[$file]\n</pre>\n";
         } else {
@@ -926,26 +926,35 @@ print <<<EOF
 <meta http-equiv="Content-Type" content="text/html; charset=$_Config[charset]" /> 
 <style type="text/css">
 <!--
-html { background: #707070; }
+body { background-color: #e6e6e6; }
 .body {
   background:#fff;
-  font-family: "Trebuchet MS", Tahoma,"Times New Roman", Times, serif;
+  font-family: "Trebuchet MS", Tahoma,"Times New Roman", Times, sans-serif;
   margin-left: 10%;
   margin-right: 10%;
+  margin-top: 2em;
+  box-shadow: 0 2px 6px rgba(100, 100, 100, 0.3);
+  border-radius: 3px;
+  padding-bottom: 2em;
+}
+
+.header {
+  border-radius: 1px;
+  font-size: 0.8em;
+  background: #b0b0b0;
+  width: 100%;
+  /* color: #4A6071; /* */
+  color: #505050; /* */
+}
+
+.main {
   padding: 0.1em 1.5em;
 }
-.header {
-  background:#909090 url("imgs/setup-bg.png");
-  margin-left: 10%;
-  margin-right: 10%;
-  color: white;
-  padding-left:1em;
-}
 
-
-h1 { display:inline;
-  font-size:40px;
-  font-family: Tahoma, "Times New Roman", Times, serif;
+h1 {
+  display:inline;
+  font-family: "Trebuchet MS", Tahoma,"Times New Roman", Times, sans-serif;
+  padding-left: 5px;
 }
 
 h2 {
@@ -1015,6 +1024,9 @@ span.warn {
   color:red;
 }
 
+.warn { color:#339966; }
+.error { color:#ff0000; }
+
 .notice {
   font-size:18px;
   color: #4BD548;
@@ -1044,18 +1056,18 @@ span.warn {
 }
 
 .step input {
-  font-size: 2em;
+  font-size: 1.5em;
   font-weight:bold;
-  font-family: Trebuchet MS, "Times New Roman", Times, serif;
+  font-family: Trebuchet MS, "Times New Roman", Times, sans-serif;
 }
 
 .protect {
-  font-size: 30px;
+  font-size: 1.5em;
   font-family: Trebuchet MS, "Times New Roman", Times, serif;
 }
 
 .protect input {
-  font-size: 30px;
+  font-size: 1em;
   font-weight:bold;
   font-family: Trebuchet MS, "Times New Roman", Times, serif;
 }
@@ -1066,10 +1078,10 @@ span.warn {
 <body>
 EOF;
 
-print "<div class='header'><h1><img src='imgs/moniwiki-logo.png' style='vertical-align: middle'/> "._t("MoniWiki")."</h1></div><div class='body'>\n";
+print "<div class='body'><div class='header'><h1><img src='imgs/moniwiki-48.png' style='vertical-align: middle'/> "._t("MoniWiki Setup")."</h1></div><div class='main'>\n";
 
 if (empty($_POST['action']) && file_exists("config.php") && !is_writable("config.php")) {
-  print "<h2><font color='red'>"._t("'config.php' is not writable !")."</font></h2>\n";
+  print "<h2 class='warn'>"._t("'config.php' is not writable !")."</h2>\n";
   print _t("Please execute <tt>'monisetup.sh'</tt> or <tt>chmod a+w config.php</tt> first to change your settings.")."<br />\n";
 
   $msg = _t("Unprotect my config.php");
@@ -1100,18 +1112,18 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && ($config or $action == 'protect')) {
       $old = 0222 & fileperms("config.php"); # check permission
       if ($old) {
         chmod('config.php',0444);
-        print "<h2><font color='red'>"._t("config.php is protected now !")."</font></h2>\n";
+        print "<h2 class='warn'>"._t("config.php is protected now !")."</h2>\n";
       }
     } else if (!empty($Config->config['admin_passwd'])) {
       if (crypt($oldpasswd,$Config->config['admin_passwd']) != 
           $Config->config['admin_passwd']) {
-        print "<h2><font color='red'>"._t("Invalid password error !")."</font></h2>\n";
+        print "<h2 class='error'>"._t("Invalid password error !")."</h2>\n";
         print _t("If you can't remember your admin password, delete password entry in the 'config.php' and restart 'monisetup'")."<br />\n";
         $invalid=1;
         return;
       }
       chmod('config.php',0644);
-      print "<h2><font color='red'>"._t("config.php is unprotected now !")."</font></h2>\n";
+      print "<h2 class='warn'>"._t("config.php is unprotected now !")."</h2>\n";
     }
     return;
   }
@@ -1124,7 +1136,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && ($config or $action == 'protect')) {
     if (crypt($oldpasswd,$Config->config['admin_passwd']) != 
       $Config->config['admin_passwd']) {
         if ($update=='Update') {
-        print "<h2><font color='red'>"._t("Invalid password error !")."</font></h2>\n";
+        print "<h2 class='error'>"._t("Invalid password error !")."</h2>\n";
         print _t("If you can't remember your admin password, delete password entry in the 'config.php' and restart 'monisetup'")."<br />\n";
         }
         $invalid=1;
@@ -1180,7 +1192,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && ($config or $action == 'protect')) {
       print _t("If all is good, change 'config.php' permission as 644.")."<br />\n";
     } else {
       if ($invalid) {
-        print "<h3><font color='red'>You Can't write this settings to 'config.php'</font></h3>\n";
+        print "<h3 class='error'>You Can't write this settings to 'config.php'</h3>\n";
       }
     }
   }
@@ -1208,7 +1220,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && ($config or $action == 'protect')) {
     fclose($fp);
     @chmod("config.php",0666);
     print "<h2><font color='blue'>"._t("Initial configurations are saved successfully.")."</font></h2>\n";
-    print "<h3><font color='red'>"._t("Goto <a href='monisetup.php'>MoniSetup</a> again to configure details")."</font></h3>\n";
+    print "<h3 class='warn'>"._t("Goto <a href='monisetup.php'>MoniSetup</a> again to configure details")."</h3>\n";
     exit;
   } else {
     $config=$Config->config;
@@ -1230,7 +1242,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST") {
       print "<h2>".sprintf(_t("goto %s"),"<a href='".$config[url_prefix]."'>$config[sitename]</a>")."</h2>";
     exit;
   } else if ($action=='sow_seed' && !$seeds) {
-    print "<h2><font color='red'>"._t("No WikiSeeds are selected")."</font></h2>";
+    print "<h2 class='warn'>"._t("No WikiSeeds are selected")."</h2>";
     exit;
   }
 } else {
@@ -1273,9 +1285,9 @@ if ($_SERVER['REQUEST_METHOD']=="POST") {
 if ($_SERVER['REQUEST_METHOD']!="POST") {
   print "<h2>"._t("Change your settings")."</h2>\n";
   if (empty($config['admin_passwd']))
-  print "<h3><font color='red'>"._t("WARN: You have to enter your Admin Password")."</h3>\n";
+  print "<h3 class='warn'>"._t("WARN: You have to enter your Admin Password")."</h3>\n";
   else if (file_exists('config.php') && !file_exists($config['data_dir']."/text/RecentChanges")) {
-    print "<h3><font color='red'>".sprintf(_t("WARN: You have no WikiSeed on your %s"),$config['sitename'])."</font></h3>\n";
+    print "<h3 class='warn'>".sprintf(_t("WARN: You have no WikiSeed on your %s"),$config['sitename'])."</h3>\n";
     print "<h2>".sprintf(_t("If you want to put wikiseeds on your wiki %s now"),
       "<a href='?action=seed'>"._t("Click here")."</a>")."</h2>";
   }
@@ -1318,7 +1330,7 @@ if ($_SERVER['REQUEST_METHOD']!="POST") {
   print "</div></form>\n";
 
   if (file_exists('config.php') && !file_exists($config['data_dir']."/text/RecentChanges")) {
-    print "<h3><font color='red'>".sprintf(_t("WARN: You have no WikiSeed on your %s"),$config['sitename'])."</font></h3>\n";
+    print "<h3 class='warn'>".sprintf(_t("WARN: You have no WikiSeed on your %s"),$config['sitename'])."</h3>\n";
     print "<h2>".sprintf(_t("If you want to put wikiseeds on your wiki %s now"),
       "<a href='?action=seed'>"._t("Click here")."</a>")."</h2>";
   } else {
@@ -1328,7 +1340,7 @@ if ($_SERVER['REQUEST_METHOD']!="POST") {
       print "<h2>".sprintf(_t("goto %s"),"<a href='".$config['url_prefix']."'>$config[sitename]")."</a></h2>";
   }
 }
-  print "</div></body></html>";
+  print "</div></div></body></html>";
 
 // vim:et:sts=2:sw=2:
 ?>
