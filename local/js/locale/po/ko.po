@@ -12,133 +12,152 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: ../../moniwyg.js:9 ../../wikibits.js:21
-msgid "undefined"
-msgstr ""
+#: ../../ajax.js:234
+#, python-format
+msgid "%d minute ago"
+msgstr "%d분 전"
 
-#: ../../moniwyg.js:2057
+#: ../../ajax.js:236
+#, python-format
+msgid "%d hours ago"
+msgstr "%d시간 전"
+
+#: ../../ajax.js:238
+#, python-format
+msgid "%d days ago"
+msgstr "%d일 전"
+
+#: ../../autosave.js:135 dummy.js:7
+msgid "Current text is saved in a temporary file."
+msgstr "텍스트가 보존되었습니다."
+
+#: ../../moniwyg.js:2060
 msgid "Save"
 msgstr "저장"
 
-#: ../../moniwyg.js:2058
+#: ../../moniwyg.js:2061
 msgid "Preview"
 msgstr "미리보기"
 
-#: ../../moniwyg.js:2059
+#: ../../moniwyg.js:2062
 msgid "Cancel"
 msgstr "취소"
 
-#: ../../moniwyg.js:2060
+#: ../../moniwyg.js:2063
 msgid "Bold (Ctrl+b)"
 msgstr "굵게 (Ctrl-b)"
 
-#: ../../moniwyg.js:2061
+#: ../../moniwyg.js:2064
 msgid "Italic (Ctrl+i)"
 msgstr "기울임 (Ctrl+i)"
 
-#: ../../moniwyg.js:2062
+#: ../../moniwyg.js:2065
 msgid "Underline (Ctrl+u)"
 msgstr "밑줄 (Ctrl+u)"
 
-#: ../../moniwyg.js:2063
+#: ../../moniwyg.js:2066
 msgid "Strike Through (Ctrl+d)"
 msgstr "삭제선 (Ctrl+d)"
 
-#: ../../moniwyg.js:2064
+#: ../../moniwyg.js:2067
 msgid "Horizontal Rule"
 msgstr "수평줄"
 
-#: ../../moniwyg.js:2065
+#: ../../moniwyg.js:2068
 msgid "Numbered List"
 msgstr "숫자 리스트"
 
-#: ../../moniwyg.js:2066
+#: ../../moniwyg.js:2069
 msgid "Bulleted List"
 msgstr "총알 리스트"
 
-#: ../../moniwyg.js:2067
+#: ../../moniwyg.js:2070
 msgid "More Indented"
 msgstr "들여쓰기"
 
-#: ../../moniwyg.js:2068
+#: ../../moniwyg.js:2071
 msgid "Less Indented"
 msgstr "내어쓰기"
 
-#: ../../moniwyg.js:2069
+#: ../../moniwyg.js:2072
 msgid "About Wikiwyg"
 msgstr "Wikiwyg는"
 
-#: ../../moniwyg.js:2070
+#: ../../moniwyg.js:2073
 msgid "[Style]"
 msgstr ""
 
-#: ../../moniwyg.js:2071
+#: ../../moniwyg.js:2074
 msgid "Normal Text"
 msgstr "일반 글씨"
 
-#: ../../moniwyg.js:2072
+#: ../../moniwyg.js:2075
 msgid "Preformatted"
 msgstr ""
 
-#: ../../moniwyg.js:2073
+#: ../../moniwyg.js:2076
 msgid "Heading 1"
 msgstr "제목 1"
 
-#: ../../moniwyg.js:2074
+#: ../../moniwyg.js:2077
 msgid "Heading 2"
 msgstr "제목 2"
 
-#: ../../moniwyg.js:2075
+#: ../../moniwyg.js:2078
 msgid "Heading 3"
 msgstr "제목 3"
 
-#: ../../moniwyg.js:2076
+#: ../../moniwyg.js:2079
 msgid "Heading 4"
 msgstr "제목 4"
 
-#: ../../moniwyg.js:2077
+#: ../../moniwyg.js:2080
 msgid "Heading 5"
 msgstr "제목 5"
 
-#: ../../moniwyg.js:2078
+#: ../../moniwyg.js:2081
 msgid "Heading 6"
 msgstr "제목 6"
 
-#: ../../moniwyg.js:2079
+#: ../../moniwyg.js:2082
 msgid "Create Link"
 msgstr "링크 생성"
 
-#: ../../moniwyg.js:2080
+#: ../../moniwyg.js:2083 dummy.js:32
 msgid "Smiley"
 msgstr "스마일리"
 
-#: ../../moniwyg.js:2081
+#: ../../moniwyg.js:2084
 msgid "Remove Linkedness"
 msgstr "링크 제거"
 
-#: ../../moniwyg.js:2082
+#: ../../moniwyg.js:2085
 msgid "Create Table"
 msgstr "테이블"
 
-#: ../../moniwyg.js:2083
+#: ../../moniwyg.js:2086
 msgid "Math"
 msgstr "수식"
 
-#: ../../moniwyg.js:2084
+#: ../../moniwyg.js:2087
 msgid "As Is"
 msgstr "그대로"
 
-#: ../../moniwyg.js:2085
+#: ../../moniwyg.js:2088
 msgid "Image"
 msgstr "이미지"
 
-#: ../../moniwyg.js:2086
+#: ../../moniwyg.js:2089
 msgid "Media"
 msgstr "미디어"
 
-#: ../../moniwyg.js:2087
+#: ../../moniwyg.js:2090
 msgid "Quote"
 msgstr "인용"
+
+#: ../../numbering.js:89 dummy.js:14
+msgid "Toggle line numbers"
+msgstr "줄 번호 토글"
 
 #: dummy.js:1
 msgid "Continue to edit current text ?"
@@ -162,10 +181,6 @@ msgstr ""
 "저장된 것으로 편집하시겠습니까 ?\n"
 "(Ctrl-Z/Ctrl-Shift-Z를 누르시면 undo/redo를 하실 수 있습니다)"
 
-#: dummy.js:7
-msgid "Current text is saved in a temporary file."
-msgstr "텍스트가 보존되었습니다."
-
 #: dummy.js:10
 msgid "The code is in your clipboard now"
 msgstr "코드가 클립보드로 복사되었습니다"
@@ -182,57 +197,108 @@ msgstr "클립보드 복사"
 msgid "view plain"
 msgstr "텍스트 보기"
 
-#: dummy.js:14
-msgid "Toggle line numbers"
-msgstr "줄 번호 토글"
+#: dummy.js:17
+msgid "Bold text"
+msgstr "굵게"
 
-#~ msgid "Bold text"
-#~ msgstr "굵게"
+#: dummy.js:18
+msgid "Italic text"
+msgstr "기울임"
 
-#~ msgid "Italic text"
-#~ msgstr "기울임"
+#: dummy.js:19
+msgid "Internal link"
+msgstr "내부링크"
 
-#~ msgid "Internal link"
-#~ msgstr "내부링크"
+#: dummy.js:20
+msgid "Link title"
+msgstr "링크 제목"
 
-#~ msgid "Link title"
-#~ msgstr "링크 제목"
+#: dummy.js:21
+msgid "External link (remember http:// prefix)"
+msgstr "외부 링크 (http://로 가리키는)"
 
-#~ msgid "External link (remember http:// prefix)"
-#~ msgstr "외부 링크 (http://로 가리키는)"
+#: dummy.js:22
+msgid "http://www.example.com link title"
+msgstr "http://www.example.com 링크 제목"
 
-#~ msgid "http://www.example.com link title"
-#~ msgstr "http://www.example.com 링크 제목"
+#: dummy.js:23
+msgid "Level 2 headline"
+msgstr "제목 2"
 
-#~ msgid "Level 2 headline"
-#~ msgstr "제목 2"
+#: dummy.js:24
+msgid "Headline text"
+msgstr "제목"
 
-#~ msgid "Headline text"
-#~ msgstr "제목"
+#: dummy.js:25
+msgid "Mathematical formula (LaTeX)"
+msgstr "수식 넣기 (LaTeX)"
 
-#~ msgid "Mathematical formula (LaTeX)"
-#~ msgstr "수식 넣기 (LaTeX)"
+#: dummy.js:26
+msgid "Insert latex formula here"
+msgstr "LaTeX 수식을 넣으세요"
 
-#~ msgid "Insert latex formula here"
-#~ msgstr "LaTeX 수식을 넣으세요"
+#: dummy.js:27
+msgid "Ignore wiki formatting"
+msgstr "위키 포맷 무시"
 
-#~ msgid "Ignore wiki formatting"
-#~ msgstr "위키 포맷 무시"
+#: dummy.js:28
+msgid "Insert non-formatted text here"
+msgstr "포맷없는 텍스트를 넣으세요"
 
-#~ msgid "Insert non-formatted text here"
-#~ msgstr "포맷없는 텍스트를 넣으세요"
+#: dummy.js:29
+msgid "Horizontal line (use sparingly)"
+msgstr "수평줄 (조금만 쓰세요)"
 
-#~ msgid "Horizontal line (use sparingly)"
-#~ msgstr "수평줄 (조금만 쓰세요)"
+#: dummy.js:30
+msgid "Embedded image"
+msgstr "이미지 넣기"
 
-#~ msgid "Embedded image"
-#~ msgstr "이미지 넣기"
+#: dummy.js:31
+msgid "Media file link"
+msgstr "미디어 파일 링크"
 
-#~ msgid "Media file link"
-#~ msgstr "미디어 파일 링크"
+#: dummy.js:33
+msgid "Your signature with timestamp"
+msgstr "서명 넣기 (시간과 함께)"
 
-#~ msgid "Your signature with timestamp"
-#~ msgstr "서명 넣기 (시간과 함께)"
+#: dummy.js:34
+msgid "Click a button to get an example text"
+msgstr "버튼을 누르면 예제 텍스트가 들어갑니다"
 
-#~ msgid "Click a button to get an example text"
-#~ msgstr "버튼을 누르면 예제 텍스트가 들어갑니다"
+#: dummy.js:35
+msgid ""
+"Please enter the text you want to be formatted.\\\\n It will be shown in the "
+"infobox for copy and pasting.\\\\nExample:\\\\n\\$1\\\\nwill become:\\\\n\\$2"
+msgstr ""
+
+#, fuzzy
+#~ msgid "Previous"
+#~ msgstr "미리보기"
+
+#, fuzzy
+#~ msgid "Clipboard"
+#~ msgstr "클립보드 복사"
+
+#, fuzzy
+#~ msgid "Preview comment"
+#~ msgstr "미리보기"
+
+#, fuzzy
+#~ msgid "Create a new page"
+#~ msgstr "테이블"
+
+#, fuzzy
+#~ msgid "Edit Image"
+#~ msgstr "이미지"
+
+#, fuzzy
+#~ msgid "Prev:"
+#~ msgstr "미리보기"
+
+#, fuzzy
+#~ msgid "Missing a temporary folder"
+#~ msgstr "텍스트가 보존되었습니다."
+
+#, fuzzy
+#~ msgid "Normal"
+#~ msgstr "일반 글씨"
