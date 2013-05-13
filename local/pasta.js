@@ -246,6 +246,7 @@ PaSTA.prototype = {
         pasta.focusEditor(ev);
     }
 
+/*
     // double click handler
     var old_dblclick = document.ondblclick;
     document.ondblclick = function(ev) {
@@ -253,6 +254,7 @@ PaSTA.prototype = {
         var pasta = new PaSTA();
         pasta.edithandler(ev);
     }
+*/
 })();
 
 // vim:et:sts=4:sw=4:
