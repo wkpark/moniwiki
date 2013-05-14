@@ -91,7 +91,9 @@ class MoniConfig {
       // http://kldp.net/forum/message.php?msg_id=7675
       // http://bugs.php.net/bug.php?id=22418
       //$config['version_class']="'RcsLite'";
-      $config['path']="./bin;c:/program files/vim/vimXX";
+      $config['path'] = './bin;';
+      if (is_dir('../bin')) $config['path'].= '../bin;'; // packaging for win32
+      $config['path'].= 'c:/program files/vim/vimXX';
       $config['vartmp_dir']="c:/tmp/";
     } else {
       $config['rcs_user']='root'; // XXX
