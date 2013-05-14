@@ -1020,7 +1020,6 @@ class WikiDB {
       if (strlen($comment)>$this->anonymous_log_maxlen) $comment=''; // restrict comment length for anon.
 
     $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
-    $comment=escapeshellcmd($comment);
 
     $myid=$user->id;
     if (!empty($user->info['nick'])) {

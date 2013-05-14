@@ -63,7 +63,9 @@ class Version_RCS {
       _mkdir_p($dir.'/RCS', 2777);
       umask($om);
     }
-    $fp=@popen("ci -l -x,v/ -q -t-\"".$key."\" -m\"".$log."\" ".$key.$this->NULL,"r");
+    // $log = escapeshellarg($log); // win32 not work
+    $log = '"'.preg_replace('/([\\\"])/', "\\\\\\1", $log).'"';
+    $fp = @popen("ci -l -x,v/ -q -t-\"".$key."\" -m".$log." ".$key.$this->NULL,"r");
     if (is_resource($fp)) pclose($fp);
   }
 
