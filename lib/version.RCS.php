@@ -63,10 +63,27 @@ class Version_RCS {
       _mkdir_p($dir.'/RCS', 2777);
       umask($om);
     }
-    // $log = escapeshellarg($log); // win32 not work
-    $log = '"'.preg_replace('/([\\\"])/', "\\\\\\1", $log).'"';
-    $fp = @popen("ci -l -x,v/ -q -t-\"".$key."\" -m".$log." ".$key.$this->NULL,"r");
+    $mlog = '';
+    $plog = '';
+    if (getenv('OS') == 'Windows_NT' and isset($log[0])) {
+      // win32 cmd.exe arguments do not accept UTF-8 charset correctly.
+      // just use the stdin commit msg method instead of using -m"log" argument.
+      $logfile = tempnam($this->DB->vartmp_dir, 'COMMIT_LOG');
+      $fp = fopen($logfile, 'w');
+      if (is_resource($fp)) {
+        fwrite($fp, $log);
+        fclose($fp);
+        $plog = ' < '.$logfile;
+      }
+    }
+    if (empty($plog)) {
+      // $log = escapeshellarg($log); // win32 does not work correctly
+      $log = '"'.preg_replace('/([\\\"])/', "\\\\\\1", $log).'"';
+      $mlog = ' -m'.$log;
+    }
+    $fp = @popen("ci -l -x,v/ -q -t-\"".$key."\" ".$mlog." ".$key.$plog.$this->NULL,"r");
     if (is_resource($fp)) pclose($fp);
+    if (isset($plog[0])) unlink($logfile);
   }
 
   function rlog($pagename,$rev='',$opt='',$oldopt='') {
