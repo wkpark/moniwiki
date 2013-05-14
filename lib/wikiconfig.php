@@ -74,6 +74,7 @@ EOS;
     $use_singlebracket = 1;
     $use_twinpages = 1;
     $use_hostname = 1;
+    $use_group = 1;
 
     $email_guard = 'hex';
     $pagetype = array();
