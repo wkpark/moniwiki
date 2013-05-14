@@ -234,7 +234,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
          endif;
          $out.="</tr>\n";
          if (!$simple and $comment)
-            $out.="<tr class='log'><td colspan='".(!empty($admin) ? 6:5). "'><p name='word-break'>$comment</p>&nbsp;</td></tr>\n";
+            $out.="<tr class='log'><td colspan='".(!empty($admin) ? 6:5). "'><p>$comment&nbsp;</p></td></tr>\n";
          $state=1;
          $flag++;
          $count++;
