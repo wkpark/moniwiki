@@ -19,7 +19,6 @@
 //  along with this program; if not, write to the Free Software
 //  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 //
-// $Id$
 
 /*
  *  Implementation of the HTT-protocol (also known as Webserver)
@@ -34,6 +33,11 @@
  *  implemented.
  *
  */
+
+if (!empty($_SERVER['SERVER_SOFTWARE']) || !isset($argv) || $argv[0] != 'wikihttpd.php') {
+  echo '<html><head></head><body><h2>Invalid request</h2></body></html>';
+  exit;
+}
 
 class simple_server {
   var $runing=false;
@@ -203,7 +207,7 @@ h1 {font-family:tahoma,verdana,sans-serif;}
     
     list(, $req['REQUEST_METHOD'], $req['REQUEST_URI'], $req['SERVER_PROTOCOL']) = $matches;
     #print $request[0]."\n";
-    if(($p = $this->parse_path(&$req['REQUEST_URI'])) !== false) {
+    if(($p = $this->parse_path($req['REQUEST_URI'])) !== false) {
       $req['PATH_INFO']       = $p['PATH_INFO'];
       $req['QUERY_STRING']    = $p['QUERY_STRING'];
       $req['PATH_TRANSLATED'] = $this->condense_path($this->document_root . $req['REQUEST_URI']);      
@@ -255,7 +259,7 @@ h1 {font-family:tahoma,verdana,sans-serif;}
     return array($req,$data);
   }
 
-  function parse_path($path) {
+  function parse_path(&$path) {
     if(!preg_match("'([^?]*)(?:\?([^#]*))?(?:#.*)? *'", $path, $matches))
       return false;
 
@@ -655,7 +659,43 @@ h1 {font-family:tahoma,verdana,sans-serif;}
 echo "MoniWiki Web Server !\r\n";
 ob_implicit_flush();
 #$httpd=new simple_server('localhost',8080,"c:\htdocs");
-include("wikiserver.php");
+define('INC_MONIWIKI', 1);
+# Start Main
+require_once("wiki.php");
+$Config = getConfig('config.php', array('init'=>1));
+require_once("wikilib.php");
+require_once("lib/win32fix.php");
+require_once("lib/wikiconfig.php");
+require_once("lib/cache.text.php");
+require_once("lib/timer.php");
+
+$options = array();
+if (class_exists('Timer')) {
+  $timing = new Timer();
+  $options['timer'] = &$timing;
+  $options['timer']->Check("load");
+}
+
+$ccache = new Cache_text('settings', array('depth'=>0));
+if (!($conf = $ccache->fetch('config'))) {
+  $Config = wikiConfig($Config);
+  $ccache->update('config', $Config, 0, array('deps'=>array('config.php', 'lib/wikiconfig.php')));
+} else {
+  $Config = &$conf;
+}
+
+$DBInfo= new WikiDB($Config);
+
+if (isset($options['timer']) and is_object($options['timer'])) {
+  $options['timer']->Check("load");
+}
+
+$lang= set_locale($DBInfo->lang,$DBInfo->charset);
+init_locale($lang);
+init_requests($options);
+if (!isset($options['pagename'][0])) $options['pagename']= get_frontpage($lang);
+$DBInfo->lang=$lang;
+
 $DBInfo->query_prefix='/';
 
 if ($DBInfo->httpd_docs)
@@ -702,9 +742,10 @@ do {
 	  /* We're not yet supporting Keep-Alive connections */ 
     $pagename=urldecode(substr($_SERVER['PATH_INFO'],strlen($wiki_prefix)));
     if (!$pagename) $pagename=$DBInfo->frontpage;
+    $options['pagename'] = $pagename;
 
     ob_start();
-    render($pagename,$options);
+    wiki_main($options);
     $html=ob_get_contents();
     ob_end_clean();
 
