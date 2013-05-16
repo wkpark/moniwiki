@@ -581,6 +581,15 @@ class WikiDB {
       $this->security=new $class ($this);
     } else
       $this->security=new Security($this);
+
+    if (!empty($this->titleindexer_class)) {
+      include_once("lib/$this->titleindexer_class.php");
+      $class = $this->titleindexer_class;
+      $this->titleindexer = new $class();
+    } else {
+      require_once("lib/titleindexer.text.php");
+      $this->titleindexer = new TitleIndexer_Text();
+    }
   }
 
   function initAlias() {
@@ -742,19 +751,6 @@ class WikiDB {
       if ($locked) return array();
     }
 
-    if (0 and !empty($this->use_indexer)) {
-      include_once("lib/indexer.DBA.php");
-      $indexer = new Indexer_dba('fullsearch', 'r', $this->dba_type);
-      if ($indexer->db) {
-        $pages = $indexer->getAllPages();
-
-        $pc->update($pcid, $pages);
-        $pc->update('counter', count($pages));
-        $indexer->close();
-        return $pages;
-      }
-    }
-
     $handle = opendir($this->text_dir);
     if (!is_resource($handle))
       return array();
@@ -821,44 +817,18 @@ class WikiDB {
   }
 
   function getCounter() {
-    $pc = new Cache_text('pagelist', array('depth'=>0));
     $_lock_file = _fake_lock_file($this->vartmp_dir, 'get_counter');
     $locked = _fake_locked($_lock_file, $this->mtime());
 
     $delay = !empty($this->default_delaytime) ? $this->default_delaytime : 0;
 
-    if ($locked or ($pc->exists('counter') and $this->checkUpdated($pc->mtime('counter'), $delay)))
-      return $pc->fetch('counter');
-
-    _fake_lock($_lock_file);
-    $handle = opendir($this->text_dir);
-    if (!is_resource($handle))
-      return 0;
-
-    set_time_limit(isset($this->time_limit) ? intval($this->time_limit) : 30);
-    $count = 0;
-    while (($file = readdir($handle)) !== false) {
-      if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($this->text_dir.'/'.$file)) continue;
-      $count++;
+    if (!$locked and !$this->checkUpdated($this->titleindexer->mtime(), $delay)) {
+      _fake_lock($_lock_file);
+      $this->titleindexer->init();
+      _fake_lock($_lock_file, LOCK_UN);
     }
-    closedir($handle);
 
-    $pc->update('counter', $count);
-    _fake_lock($_lock_file, LOCK_UN);
-    return $count;
-  }
-
-  function incCounter($type = 1) {
-    $pc = new Cache_text('pagelist', array('depth'=>0));
-    $_lock_file = _fake_lock_file($this->vartmp_dir, 'get_counter');
-    $locked = _fake_locked($_lock_file, $this->mtime());
-
-    if ($locked) return -1; // ignore
-    $count = $pc->fetch('counter');
-    if ($type > 0) $count++; // inc
-    else $count--; // dec
-    $pc->update('counter', $count);
-    return $count;
+    return $this->titleindexer->pageCount();
   }
 
   function addLogEntry($page_name, $remote_name,$comment,$action="SAVE") {
@@ -1001,8 +971,6 @@ class WikiDB {
     flock($fp, LOCK_UN);
     fclose($fp);
 
-    if (!file_exists($filename)) $this->incCounter();
-
     if (!empty($this->version_class)) {
       $class=getModule('Version',$this->version_class);
       $version=new $class ($this);
@@ -1081,8 +1049,12 @@ class WikiDB {
     $log=$REMOTE_ADDR.';;'.$myid.';;'.$comment;
     $options['log']=$log;
     $options['pagename']=$page->name;
+
+    $is_new = false;
+    if (!file_exists($key)) $is_new = true;
     $ret=$this->_savePage($key,$body,$options);
     if ($ret == -1) return -1;
+
     #
     $page->write($body);
 
@@ -1097,6 +1069,8 @@ class WikiDB {
     }
     if (empty($options['minor']) and !$minor)
       $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,$action);
+
+    if ($is_new) $this->titleindexer->addPage($page->name);
     return 0;
   }
 
@@ -1161,7 +1135,7 @@ class WikiDB {
     $delete=@unlink($this->text_dir."/$keyname");
     $this->addLogEntry($keyname, $REMOTE_ADDR, $comment, 'DELETE');
 
-    if (!file_exists($this->text_dir."/$keyname")) $this->incCounter(-1);
+    $this->titleindexer->deletePage($page->name);
 
     $handle= opendir($this->cache_dir);
     while ($file= readdir($handle)) {
@@ -1254,6 +1228,8 @@ class WikiDB {
     $comment=sprintf(_("Rename %s to %s"),$pagename,$new);
     $this->addLogEntry($okeyname, $REMOTE_ADDR, '', 'DELETE');
     $this->addLogEntry($keyname, $REMOTE_ADDR, $comment, 'CREATE');
+
+    $this->titleindexer->renamePage($pagename, $new);
   }
 
   function _isWritable($pagename) {

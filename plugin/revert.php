@@ -45,7 +45,8 @@ function do_revert($formatter,$options) {
         }
     }
     if (!empty($_POST['rev']) and !empty($_POST['name']) and $force) {
-        if (!$formatter->page->exists()) $DBInfo->incCounter();
+        $is_new = false;
+        if (!$formatter->page->exists()) $is_new = true;
 
         if (!empty($DBInfo->version_class)) {
             $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
@@ -65,6 +66,7 @@ function do_revert($formatter,$options) {
             $log=$REMOTE_ADDR.';;'.$user->id.';;'.$comment;
             $keyname=$DBInfo->_getPageKey($formatter->page->name);
             $DBInfo->addLogEntry($keyname, $REMOTE_ADDR,$comment,"SAVE");
+            if ($is_new) $DBInfo->titleindexer->addPage($formatter->page->name);
         } else {
             $formatter->send_title(_("No version control available."),"",$options);
             $formatter->send_footer('',$options);
