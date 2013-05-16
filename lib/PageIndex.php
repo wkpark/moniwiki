@@ -406,6 +406,66 @@ class PageIndex {
         $this->deletePage($oldname);
         $this->addPage($newname);
     }
+
+    function getLikePages($needle, $limit = 100)
+    {
+        if (!isset($needle[0])) return false; // null needle
+
+        $total = file_get_contents($this->pagecnt);
+        if ($total === false) return false;
+
+        $flst = fopen($this->pagelst, 'r');
+        if (!is_resource($flst)) {
+            return false;
+        }
+
+        $fidx = fopen($this->pageidx, 'r');
+        if (!is_resource($fidx)) {
+            fclose($flst);
+            return false;
+        }
+
+        $pages = array();
+
+        $pre = '.*';
+        $suf = '.*';
+        if ($needle[0] == '^') {
+            $pre = '';
+            $needle = substr($needle, 1);
+        }
+        if (substr($needle, -1) == '$') {
+            $suf = '';
+            $needle = substr($needle, 0, -1);
+        }
+
+        $chunk = 10000 - 1; // chunk size
+        $is = $ie = 0; // index start/end
+        $ss = $se = 0; // seek start/end
+        fseek($flst, 0, SEEK_SET);
+        while ($ie < $total - 1) {
+            $ie = $is + $chunk;
+            if ($ie >= $total) $ie = $total - 1;
+            fseek($fidx, $ie * 4, SEEK_SET);
+            $dum = unpack('N', fread($fidx, 4));
+            $se = $dum[1];
+
+            $tmp = fread($flst, $se - $ss);
+            $addtmp = fgets($flst, 1024); // include last chunk
+            $tmp.= $addtmp;
+            $se+= strlen($addtmp);
+            if (preg_match_all('/^(?:'.$pre.$needle.$suf.')$/uim', $tmp, $match)) {
+                $pages = array_merge($pages, $match[0]);
+                if (!empty($limit) and count($pages) > $limit) break;
+            }
+            $ss = $se;
+            $is = $ie + 1;
+        }
+
+        fclose($flst);
+        fclose($fidx);
+
+        return $pages;
+    }
 }
 
 

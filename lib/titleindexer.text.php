@@ -259,6 +259,63 @@ class TitleIndexer_Text {
         $this->deletePage($oldname);
         $this->addPage($newname);
     }
+
+    function getLikePages($needle, $limit = 100, $params = array())
+    {
+        if (!isset($needle[0])) return false; // null needle
+
+        $total = file_get_contents($this->pagecnt);
+        if ($total === false) return false;
+
+        $flst = fopen($this->pagelst, 'r');
+        if (!is_resource($flst)) {
+            return false;
+        }
+
+        $pages = array();
+
+        $pre = '.*';
+        $suf = '.*';
+        if ($needle[0] == '^') {
+            $pre = '';
+            $needle = substr($needle, 1);
+        }
+        if (substr($needle, -1) == '$') {
+            $suf = '';
+            $needle = substr($needle, 0, -1);
+        }
+
+        fseek($flst, 0, SEEK_END);
+        $size = ftell($flst);
+        fseek($flst, 0, SEEK_SET);
+        $chunk = min(10240, intval($size / 10));
+        $all = 0;
+        $remain = '';
+        while (!feof($flst)) {
+            $len = $chunk;
+            $all+= $chunk;
+            if ($all > $size) {
+                $diff = $all - $size - 1;
+                $len-= $diff;
+                $all-= $diff;
+            }
+            $tmp = $remain.fread($flst, $len);
+            if (($p = strrpos($tmp, "\n")) === false) {
+                break;
+            }
+            $data = substr($tmp, 0, $p);
+            $remain = substr($tmp, $p+1);
+
+            if (preg_match_all('/^(?:'.$pre.$needle.$suf.')$/uim', $data, $match)) {
+                $pages = array_merge($pages, $match[0]);
+                if (!empty($limit) and count($pages) > $limit) break;
+            }
+        }
+
+        fclose($flst);
+
+        return $pages;
+    }
 }
 
 // vim:et:sts=4:sw=4:

@@ -2000,14 +2000,7 @@ function do_titleindex($formatter,$options) {
     if ($test === false) { print ''; return; }
     #if ($test === false) { print "<ul></ul>"; return; }
 
-    $pages= array();
-
-    $all= $DBInfo->getPageLists();
-
-    foreach ($all as $page) {
-      if (@preg_match("/^".$rule."/i",$page))
-        $pages[] = $page;
-    }
+    $pages = $DBInfo->titleindexer->getLikePages($rule);
 
     sort($pages);
     //array_unshift($pages, $options['q']);
@@ -3337,6 +3330,30 @@ function get_key($name) {
   }
 }
 
+/**
+ * get the list of all keys and its regex
+ * number + alphabet + hangul + others
+ */
+
+function get_keys() {
+  $keys = array();
+  for ($i = 0; $i <= 9; $i++)
+    $keys["$i"] = "$i";
+  for ($i = 65; $i <= 90; $i++) {
+    $k = chr($i);
+    $keys["$k"] = "$k";
+  }
+  for ($i = 0; $i < 19; $i++) {
+    $u1 = 0xac00 + (int)(($i * 588) / 588) * 588;
+    $u2 = 0xac00 + (int)(($i * 588) / 588) * 588 + 20 * 28 + 27;
+    $k1 = toutf8($u1);
+    $k2 = toutf8($u2);
+    $keys["$k1"] = '['.$k1.'-'.$k2.']';
+  }
+  $keys['Others'] = '[^0-9A-Z'.'가-힣'.']';
+
+  return $keys;
+}
 
 function macro_PageCount($formatter, $value = '', $options = array()) {
   global $DBInfo;
@@ -3372,6 +3389,15 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
 
   if ($value=='' or $value=='all') $sel='';
   else $sel=$value;
+
+  // get all keys
+  $all_keys = get_keys();
+
+  if (isset($sel[0])) {
+    if (!isset($all_keys[$sel]))
+      $sel = key($all_keys); // default
+  }
+
   if (@preg_match('/'.$sel.'/i','')===false) $sel='';
 
   $titleindex = array();
@@ -3459,13 +3485,14 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
   }
 
   if (empty($all_pages)) {
+
     $all_pages = array();
     if ($formatter->group) {
-      $group_pages = $DBInfo->getLikePages($formatter->group);
+      $group_pages = $DBInfo->titleindexer->getLikePages('^'.$formatter->group);
       foreach ($group_pages as $page)
         $all_pages[]=str_replace($formatter->group,'',$page);
     } else
-      $all_pages = $DBInfo->getPageLists();
+      $all_pages = $DBInfo->titleindexer->getLikePages('^'.$all_keys[$sel], 0);
 
     #natcasesort($all_pages);
     #sort($all_pages,SORT_STRING);
@@ -3483,22 +3510,14 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
       $pkey = get_key("$p");
       if ($key != $pkey) {
         $key = $pkey;
-        $keys[] = $pkey;
+        //$keys[] = $pkey;
         if (!isset($titleindex[$pkey]))
           $titleindex[$pkey] = array();
       }
       $titleindex[$pkey][$page] = $rpage;
     }
 
-    $keys = array_unique($keys);
-    sort($keys);
-
-    $rkeys = array_flip($keys);
-    if (isset($rkeys['Others'])) {
-      unset($rkeys['Others']);
-      $keys = array_flip($rkeys);
-      $keys[] = 'Others';
-    }
+    $keys = array_keys($all_keys);
     if (!empty($tlink))
       $keys[]='all';
 
@@ -3521,7 +3540,13 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
     if (count($all_pages) % $pc)
       $pages_number++;
 
-    $pages = array_splice($all_pages, ($pg - 1) * $pc, $pc);
+    $pages = array_keys($all_pages);
+    $pages = array_splice($pages, ($pg - 1) * $pc, $pc);
+    $selected = array();
+    foreach ($pages as $p) {
+        $selected[$p] = $all_pages[$p];
+    }
+    $pages = $selected;
 
     $pnut = get_pagelist($formatter, $pages_number,
       '?action=titleindex&amp;sec='.$sel.
@@ -3842,9 +3867,9 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   }
 
   if (empty($pages))
-    $pages = $DBInfo->getPageLists();
+    $pages = $DBInfo->titleindexer->getLikePages($needle);
 
-  $opts['all'] = count($pages);
+  $opts['all'] = $DBInfo->titleindexer->PageCount();
   if (empty($DBInfo->alias)) $DBInfo->initAlias();
   $alias = $DBInfo->alias->getAllPages();
 
@@ -3869,7 +3894,8 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
     $needle2 = str_replace(' ', "\\s*", $needle);
     $ws = preg_split("/([\x{AC00}-\x{D7F7}])/u", $needle2, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
     $needle2 = implode("\\s*", $ws);
-    foreach ($pages as $page) {
+    $hits = $DBInfo->titleindexer->getLikePages($needle2);
+    foreach ($alias as $page) {
       if (preg_match("/".$needle2."/i", $page))
         $hits[]=$page;
     }

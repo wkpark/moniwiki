@@ -803,16 +803,11 @@ class WikiDB {
     $pages= array();
 
     if (!$needle) return false;
-    $all= $this->getPageLists();
 
     $m = @preg_match("/$needle/".$opts,'dummy');
     if ($m===false) return array(); 
-    foreach ($all as $page) {
-      if (preg_match("/$needle/".$opts,$page)) {
-        $pages[] = $page; $count--;
-      }
-      if ($count < 0) break;
-    }
+    $all= $this->titleindexer->getLikePages($needle, $count);
+
     return $pages;
   }
 
