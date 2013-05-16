@@ -733,7 +733,7 @@ class WikiDB {
   }
 
   function checkUpdated($time, $delay = 1800) {
-    return $this->mtime() < $time + $delay;
+    return $this->mtime() <= $time + $delay;
   }
 
   function getPageLists($options=array()) {
