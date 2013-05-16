@@ -23,7 +23,7 @@ if (class_exists('Timer')) {
     $options['timer']->Check("load");
 }
 
-$indexer = new PageIndex($DBInfo);
+$indexer = new PageIndex();
 $indexer->init();
 
 // vim:et:sts=4:sw=4:
