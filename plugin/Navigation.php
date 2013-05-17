@@ -36,6 +36,7 @@ function macro_Navigation($formatter,$value) {
 
 #  print $current;
 
+  $pagelinks = $formatter->pagelinks; // save
   if (empty($formatter->wordrule)) $formatter->set_wordrule();
 
   $indices=array();
@@ -110,6 +111,7 @@ function macro_Navigation($formatter,$value) {
     $pnut.=' &raquo;';
     if ($use_action) $formatter->query_string=$save;
   }
+  $formatter->pagelinks = $pagelinks; // restore
   if (!empty($pnut))
     return $pnut;
   return '';
