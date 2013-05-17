@@ -6,6 +6,7 @@
 // $Id: FullSearch.php,v 1.39 2010/09/07 12:11:49 wkpark Exp $
 
 function do_fullsearch($formatter,$options) {
+  global $Config;
 
   $ret=&$options;
 
@@ -44,8 +45,10 @@ function do_fullsearch($formatter,$options) {
       print $tag.'<br />';
     }
     if ($options['id'] != 'Anonymous') {
-    $tag=$formatter->link_to("?action=fullsearch$qext&amp;value=$val&amp;refresh=1",_("Refresh"));
-    printf(_(" (%s search results)"),$tag);
+      if (empty($options['backlinks']) or !empty($Config['show_refresh'])) {
+        $tag = $formatter->link_to("?action=fullsearch$qext&amp;value=$val&amp;refresh=1", _("Refresh"));
+        printf(_(" (%s search results)"), $tag);
+      }
     }
   }
   print '<h2>'.sprintf(_("You can also click %s to search title.\n"),
