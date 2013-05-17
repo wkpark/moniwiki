@@ -3414,7 +3414,7 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
       $titleindex = $kc->fetch('titleindex.'.$formatter->group);
     } else {
       $keys = $kc->fetch('key');
-      $titleindex = $kc->fetch('titleindex');
+      $titleindex = $kc->fetch('titleindex'.$sel);
     }
     if (isset($sel[0]) and isset($titleindex[$sel])) {
       $all_pages = $titleindex[$sel];
@@ -3467,7 +3467,7 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
       $kc->update('titleindex.'.$formatter->group, $titleindex);
     } else {
       $kc->update('key', $keys);
-      $kc->update('titleindex', $titleindex);
+      $kc->update('titleindex'.$sel, $titleindex);
     }
 
     if (isset($sel[0]) and isset($titleindex[$sel]))
