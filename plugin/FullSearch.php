@@ -191,7 +191,6 @@ EOF;
   }
 
   if ($hits) {
-    $pages = $DBInfo->getPageLists();
     if ($arena == 'backlinks') {
       $hits = array_flip($hits);
       foreach ($hits as $k=>$v) $hits[$k] = -1;
@@ -253,7 +252,7 @@ EOF;
 
   $opts['hits']= $hits;
   $opts['hit']= count($hits);
-  $opts['all']= count($pages);
+  $opts['all']= $DBInfo->titleindexer->PageCount();
 
   if (!empty($opts['call'])) return $hits;
 
