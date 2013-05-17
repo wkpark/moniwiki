@@ -432,10 +432,11 @@ function get_pagelinks($formatter, $text) {
                     continue;
                 }
             }
+            $word = strtok($word, '#?'); // trim anchor tag
             $words[] = $word;
         }
     }
-    return array_unique($words);
+    return array_values(array_unique($words));
 }
 
 /**

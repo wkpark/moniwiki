@@ -1761,7 +1761,7 @@ class Formatter {
 
     if ($camelcase)
       $this->wordrule.='|'.
-      "(?<![a-zA-Z])\!?(?:((\.{1,2})?\/)?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b";
+      "(?<![a-zA-Z0-9#])\!?(?:((\.{1,2})?\/)?[A-Z]([A-Z]+[0-9a-z]|[0-9a-z]+[A-Z])[0-9a-zA-Z]*)+\b";
     else
       # only bangmeta syntax activated
       $this->wordrule.='|'.
