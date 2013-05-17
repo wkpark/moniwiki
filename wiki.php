@@ -2189,6 +2189,7 @@ class Formatter {
       $url=substr($url,5);
     else if ($url[0]==":")
       $url=substr($url,1);
+    $url = ltrim($url); // ltrim wikiwords
 
     $wiki='';
     # wiki:MoinMoin:FrontPage

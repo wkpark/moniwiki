@@ -403,6 +403,7 @@ function get_pagelinks($formatter, $text) {
 
             if (preg_match('/^(wiki:)?/', $word, $m)) {
                 if (!empty($m[1])) $word = substr($word, 5);
+                $word = ltrim($word); // ltrim wikiwords
                 if (preg_match("/^\"([^\"]*)\"\s?/", $word, $m1)) {
                     $extended = true;
                     $word = $m1[1];
