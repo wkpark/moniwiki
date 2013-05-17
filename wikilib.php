@@ -3847,27 +3847,7 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   }
   $needle=_preg_search_escape($needle);
 
-  $pages = array();
-  while (!empty($DBInfo->use_indexer)) {
-    require_once("lib/indexer.DBA.php");
-
-    $DB = new Indexer_dba('titlesearch', 'r', $DBInfo->dba_type);
-    if ($DB->db==null) {
-      $opts['msg']=_("Couldn't open search database, sorry.");
-      break;
-    }
-
-    $tmp = preg_replace('/(\[[^\]]+\])/', '', $needle);
-    preg_match_all('/([a-zA-Z0-9]+)/', $tmp, $match);
-
-    $words = array(strtolower($match[0][0]));
-    $pages = $DB->searchPages($words);
-    $DB->close();
-    break;
-  }
-
-  if (empty($pages))
-    $pages = $DBInfo->titleindexer->getLikePages($needle);
+  $pages = $DBInfo->titleindexer->getLikePages($needle);
 
   $opts['all'] = $DBInfo->titleindexer->PageCount();
   if (empty($DBInfo->alias)) $DBInfo->initAlias();
