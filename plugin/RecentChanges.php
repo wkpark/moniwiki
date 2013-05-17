@@ -505,12 +505,12 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 //    if ($ed_time < $time_cutoff)
 //      break;
 
+    $group = '';
     if ($formatter->group) {
       if (!preg_match("/^($formatter->group)(.*)$/",$page_name,$match)) continue;
       $title=$match[2];
     } else {
-      $group='';
-      if ($p=strpos($page_name,'~')) {
+      if (!empty($formatter->use_group) and ($p = strpos($page_name,'~')) !== false) {
         $title=substr($page_name,$p+1);
         $group=' ('.substr($page_name,0,$p).')';
       } else
