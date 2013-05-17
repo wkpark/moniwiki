@@ -2309,7 +2309,7 @@ class Formatter {
       if (!$a or !$DBInfo->hasPage($a)) continue;
       $bl = $this->bcache->fetch($a);
       if (!is_array($bl)) $bl=array();
-      array_merge($bl,array($this->page->name));
+      $bl = array_merge($bl, array($this->page->name));
       $bl=array_unique($bl);
       $this->bcache->update($a, $bl);
     }
