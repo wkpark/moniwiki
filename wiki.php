@@ -1064,9 +1064,6 @@ class WikiDB {
 
     $keyname=$this->_getPageKey($page->name);
 
-    $pc = new Cache_text('pagelinks');
-    $pc->remove($page->name);
-
     // update fulltext index
     if (!empty($this->use_indexer)) {
       #include_once("lib/tokenizer.php");
@@ -1107,6 +1104,8 @@ class WikiDB {
     $this->addLogEntry($keyname, $REMOTE_ADDR, $comment, 'DELETE');
 
     $this->titleindexer->deletePage($page->name);
+    // remove pagelinks and backlinks
+    store_pagelinks($page->name, array());
 
     $handle= opendir($this->cache_dir);
     while ($file= readdir($handle)) {
@@ -1157,6 +1156,9 @@ class WikiDB {
         $ldb->close();
       }
     }
+
+    // remove pagelinks and backlinks
+    store_pagelinks($pagename, array());
 
     $okey=$this->getPageKey($pagename);
     $nkey=$this->getPageKey($new);
@@ -2290,70 +2292,16 @@ class Formatter {
     return $img. "<a href='".$url."' $attr title='$wiki:$page'>$text</a>$extra$sep";
   }
 
-  function store_pagelinks() {
-    global $DBInfo;
-
-    if (empty($this->bcache) or !is_object($this->bcache))
-      $this->bcache= new Cache_text('backlinks');
-    if (empty($this->cache) or !is_object($this->cache))
-      $this->cache= new Cache_text('pagelinks');
-
-    unset($this->pagelinks['TwinPages']);
-    $new=array_keys($this->pagelinks);
-    $cur=$this->cache->fetch($this->page->name);
-    if (!is_array($cur)) $cur=array();
-
-    $ad=array_diff($new,$cur);
-    $de=array_diff($cur,$new);
-    // merge new backlinks
-    foreach ($ad as $a) {
-      if (!isset($a[0])) continue;
-      $bl = $this->bcache->fetch($a);
-      if (!is_array($bl)) $bl=array();
-      $bl = array_merge($bl, array($this->page->name));
-      $bl=array_unique($bl);
-      $this->bcache->update($a, $bl);
-    }
-    // remove back links
-    foreach ($de as $d) {
-      if (!isset($d[0])) continue;
-      $bl = $this->bcache->fetch($d);
-      if (!is_array($bl)) $bl=array();
-      $bl=array_diff($bl,array($this->page->name));
-      $this->bcache->update($d, $bl);
-    }
-    // XXX
-    if ($new)
-      $this->cache->update($this->page->name, $new);
-    else
-      $this->cache->remove($this->page->name);
-#      $this->page->mtime());
-
-    if (!empty($DBInfo->use_indexer)) {
-      include_once("lib/indexer.DBA.php");
-      $ldb = new Indexer_dba('pagelinks', 'w', $DBInfo->dba_type);
-      if ($ldb->db != null) {
-        if (!empty($cur))
-          $ldb->delWords($this->page->name, $cur);
-        if (!empty($new))
-          $ldb->addWords($this->page->name, $new);
-
-        $ldb->close();
-      }
-    }
-  }
-
   function get_pagelinks() {
     if (!is_object($this->cache))
       $this->cache= new Cache_text('pagelinks');
 
-    if (!$this->wordrule) $this->set_wordrule();
     if ($this->cache->exists($this->page->name)) {
       $links=$this->cache->fetch($this->page->name);
       if ($links !== false) return $links;
     }
-    // no pagelinks found. XXX
-    return array();
+    $links = get_pagelinks($this, $this->page->_get_raw_body());
+    return $links;
   }
 
   function get_backlinks() {
@@ -3929,7 +3877,8 @@ class Formatter {
     if (!empty($this->foots))
       echo $this->macro_repl('FootNote','',$options);
 
-    if (!empty($this->update_pagelinks) and !empty($options['pagelinks'])) $this->store_pagelinks();
+    if (!empty($this->update_pagelinks) and !empty($options['pagelinks']))
+      store_pagelinks($this->page->name, array_keys($this->pagelinks));
   }
 
   function register_javascripts($js) {

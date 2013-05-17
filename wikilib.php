@@ -351,6 +351,61 @@ function get_aliases($file) {
 }
 
 /**
+ * Store pagelinks
+ *
+ * @author   Won-Kyu Park <wkpark@gmail.com>
+ */
+function store_pagelinks($pagename, $pagelinks) {
+  global $DBInfo;
+
+  $bcache = new Cache_Text('backlinks');
+  $cache = new Cache_Text('pagelinks');
+
+  unset($pagelinks['TwinPages']);
+  $cur = $cache->fetch($pagename);
+  if (!is_array($cur)) $cur = array();
+
+  $add = array_diff($pagelinks, $cur);
+  $del = array_diff($cur, $pagelinks);
+
+  // merge new backlinks
+  foreach ($add as $a) {
+    if (!isset($a[0])) continue;
+    $bl = $bcache->fetch($a);
+    if (!is_array($bl)) $bl = array();
+    $bl = array_merge($bl, array($pagename));
+    $bcache->update($a, $bl);
+  }
+
+  // remove deleted backlinks
+  foreach ($del as $d) {
+    if (!isset($d[0])) continue;
+    $bl = $bcache->fetch($d);
+    if (!is_array($bl)) $bl = array();
+    $bl = array_diff($bl, array($pagename));
+    $bcache->update($d, $bl);
+  }
+
+  if (!empty($pagelinks))
+    $cache->update($pagename, $pagelinks);
+  else
+    $cache->remove($pagename);
+
+  if (!empty($DBInfo->use_indexer)) {
+    include_once("lib/indexer.DBA.php");
+    $ldb = new Indexer_dba('pagelinks', 'w', $DBInfo->dba_type);
+    if ($ldb->db != null) {
+      if (!empty($cur))
+        $ldb->delWords($this->page->name, $cur);
+      if (!empty($new))
+        $ldb->addWords($this->page->name, $new);
+
+      $ldb->close();
+    }
+  }
+}
+
+/**
  * Get pagelinks from the wiki text
  *
  * @author   Won-Kyu Park <wkpark@gmail.com>
