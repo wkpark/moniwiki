@@ -3425,65 +3425,6 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
     }
   }
 
-  while (!empty($DBInfo->use_indexer)) {
-    require_once("lib/indexer.DBA.php");
-
-    $DB = new Indexer_dba('titlesearch', 'r', $DBInfo->dba_type);
-    if ($DB->db==null) {
-      $opts['msg']=_("Couldn't open search database, sorry.");
-      break;
-    }
-
-    if (isset($sel[0])) {
-      $idx = array();
-      $tmp = dba_fetch("\010".$sel, $DB->db);
-      $ids = unpack($DB->type.'*', $tmp);
-      foreach ($ids as $id) $idx[] = $id;
-      $all_pages = array();
-      foreach ($idx as $id) {
-        $k = $DB->_fetch($id);
-        $all_pages[] = $k;
-      }
-      //$all_pages = $DB->searchPages("\010" . $sel);
-
-      $pages = array_flip($all_pages);
-      array_walk($pages,'_setpagekey');
-      $all_pages = array_flip($pages);
-      uksort($all_pages, 'strcasecmp');
-
-      $titleindex[$sel] = &$all_pages;
-    }
-
-    // generate keys
-    // get all keys
-    if (empty($keys)) {
-      $keys = array();
-      for ($k = dba_firstkey($DB->db); $k !== false; $k = dba_nextkey($DB->db)) {
-        if (isset($k[1]) and $k[0] == "\010") {
-          $keys[] = substr($k, 1);
-        }
-      }
-
-      $keys = array_unique($keys);
-      sort($keys);
-
-      // Others key to the last
-      $rkeys = array_flip($keys);
-      if (isset($rkeys['Others'])) {
-        unset($rkeys['Others']);
-        $keys = array_flip($rkeys);
-        $keys[] = 'Others';
-      }
-      $kc->update('key', $keys);
-    }
-
-    if (empty($titleindex))
-      $titleindex[$keys[0]] = &$all_pages; // FIXME
-
-    $DB->close();
-    break;
-  }
-
   if (empty($all_pages)) {
 
     $all_pages = array();

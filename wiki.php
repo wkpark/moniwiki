@@ -1028,19 +1028,6 @@ class WikiDB {
       $indexer->close();
     }
 
-    if (!empty($this->use_indexer)) {
-      if (!file_exists($key)) {
-        $tdb = new Indexer_dba('titlesearch', 'w', $this->dba_type);
-        if ($tdb->db != null) {
-          $words = getTokens($page->name);
-          $k = get_key($page->name);
-          $words[] = "\010".$k;
-          $tdb->addWords($page->name, $words);
-          $tdb->close();
-        }
-      }
-    }
-
     $log=$REMOTE_ADDR.';;'.$myid.';;'.$comment;
     $options['log']=$log;
     $options['pagename']=$page->name;
@@ -1093,17 +1080,6 @@ class WikiDB {
         $indexer->deletePage($page->name);
       }
       $indexer->close();
-
-      // remove titlesearch
-      $tdb = new Indexer_dba('titlesearch', 'w', $this->dba_type);
-      if ($tdb->db != null) {
-        $words = getTokens($page->name);
-        $k = get_key($page->name);
-        $words[] = "\010".$k;
-        $tdb->delWords($page->name, $words);
-        $tdb->deletePage($page->name);
-        $tdb->close();
-      }
 
       // remove pagelinks
       $ldb = new Indexer_dba('pagelinks', 'w', $this->dba_type);
@@ -1168,17 +1144,6 @@ class WikiDB {
       $indexer->addWords($new, $old_words);
       $indexer->close();
 
-      // remove titlesearch
-      $tdb = new Indexer_dba('titlesearch', 'w', $this->dba_type);
-      if ($tdb->db != null) {
-        $words = getTokens($page->name);
-        $k = get_key($page->name);
-        $words[] = "\010".$k;
-        $tdb->delWords($page->name, $words);
-        $tdb->deletePage($page->name);
-        $tdb->close();
-      }
-
       // remove pagelinks
       $ldb = new Indexer_dba('pagelinks', 'w', $this->dba_type);
       if ($ldb->db != null) {
@@ -1190,16 +1155,6 @@ class WikiDB {
           $ldb->deletePage($page->name);
         }
         $ldb->close();
-      }
-
-      // add titlesearch
-      $tdb = new Indexer_dba('titlesearch', 'w', $this->dba_type);
-      if ($tdb->db != null) {
-        $words = getTokens($page->name);
-        $k = get_key($page->name);
-        $words[] = "\010".$k;
-        $tdb->addWords($page->name, $words);
-        $tdb->close();
       }
     }
 
