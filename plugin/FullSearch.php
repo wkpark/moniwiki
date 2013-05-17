@@ -191,7 +191,12 @@ EOF;
   }
 
   if ($hits) {
-     $pages = $DBInfo->getPageLists();
+    $pages = $DBInfo->getPageLists();
+    if ($arena == 'backlinks') {
+      $hits = array_flip($hits);
+      foreach ($hits as $k=>$v) $hits[$k] = -1;
+      reset($hits);
+    }
     //continue;
   } else {
     if (!empty($opts['backlinks'])) {
@@ -240,7 +245,10 @@ EOF;
     $name = array_keys($hits);
     array_multisort($hits, SORT_DESC, $name, SORT_ASC);
 
-    $fc->update($sid,$hits);
+    if ($arena == 'backlinks')
+      $fc->update($sid, $name);
+    else
+      $fc->update($sid,$hits);
   }
 
   $opts['hits']= $hits;
