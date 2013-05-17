@@ -2306,7 +2306,7 @@ class Formatter {
     $de=array_diff($cur,$new);
     // merge new backlinks
     foreach ($ad as $a) {
-      if (!$a or !$DBInfo->hasPage($a)) continue;
+      if (!isset($a[0])) continue;
       $bl = $this->bcache->fetch($a);
       if (!is_array($bl)) $bl=array();
       $bl = array_merge($bl, array($this->page->name));
@@ -2315,7 +2315,7 @@ class Formatter {
     }
     // remove back links
     foreach ($de as $d) {
-      if (!$d or !$DBInfo->hasPage($d)) continue;
+      if (!isset($d[0])) continue;
       $bl = $this->bcache->fetch($d);
       if (!is_array($bl)) $bl=array();
       $bl=array_diff($bl,array($this->page->name));
