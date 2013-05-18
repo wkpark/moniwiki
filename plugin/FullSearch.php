@@ -9,6 +9,10 @@ function do_fullsearch($formatter,$options) {
   global $Config;
 
   $ret=&$options;
+  $qnext = '';
+  if (!empty($options['offset']) and is_numeric($options['offset'])) {
+    if ($options['offset'] > 0) $qnext = '&amp;offset='.$options['offset'];
+  }
 
   $options['value']=_stripslashes($options['value']);
   if (!isset($options['value'][0])) $options['value']=$formatter->page->name;
@@ -34,19 +38,37 @@ function do_fullsearch($formatter,$options) {
   else if (!empty($options['keywords']))
     $qext='&amp;keywords=1';
 
+  $offset = '';
+
   if (isset($options['value'][0])) {
     $val=htmlspecialchars($options['value']);
-    printf(_("Found %s matching %s out of %s total pages")."<br />",
+    printf(_("Found %s matching %s out of %s total pages"),
          $ret['hit'],
         ($ret['hit'] == 1) ? _("page") : _("pages"),
          $ret['all']);
+
+    if (!empty($ret['next'])) {
+      $limit = isset($DBInfo->fullsearch_page_limit[0]) ?
+          $DBInfo->fullsearch_page_limit : 5000; // 5000 pages
+      if (isset($ret['searched'])) $limit = $ret['searched'];
+
+      printf(_(" (%s pages are searched)").'<br />', $limit);
+    } else {
+      echo '<br />';
+    }
+
     if (!empty($ret['context']) and $ret['context']==0) {
-      $tag=$formatter->link_to("?action=fullsearch&amp;value=$val&amp;context=20",_("Show Context."));
+      $tag=$formatter->link_to("?action=fullsearch&amp;value=$val$qnext&amp;context=20",_("Show Context."));
       print $tag.'<br />';
     }
     if ($options['id'] != 'Anonymous') {
+      if (!empty($ret['next']) and $ret['next'] < $ret['all']) {
+        $qoff = '&amp;offset='.$ret['next'];
+        $tag = $formatter->link_to("?action=fullsearch$qext&amp;value=$val$qoff", _("Search next results"));
+        echo $tag;
+      }
       if (empty($options['backlinks']) or !empty($Config['show_refresh'])) {
-        $tag = $formatter->link_to("?action=fullsearch$qext&amp;value=$val&amp;refresh=1", _("Refresh"));
+        $tag = $formatter->link_to("?action=fullsearch$qext&amp;value=$val$qnext&amp;refresh=1", _("Refresh"));
         printf(_(" (%s search results)"), $tag);
       }
     }
@@ -68,6 +90,12 @@ function macro_FullSearch($formatter,$value="", &$opts) {
     # for MoinMoin compatibility with [[FullSearch("blah blah")]]
     #$needle = preg_replace("/^('|\")([^\\1]*)\\1/","\\2",$value);
     $needle = $value;
+  }
+
+  // for pagination
+  $offset = '';
+  if (!empty($opts['offset']) and is_numeric($opts['offset'])) {
+    if ($opts['offset'] > 0) $offset = $opts['offset'];
   }
 
   $url=$formatter->link_url($formatter->page->urlname);
@@ -149,15 +177,15 @@ EOF;
      return $form;
   }
 
-  $hits = array();
-
   # set arena and sid
   if (!empty($opts['backlinks'])) $arena='backlinks';
   else if (!empty($opts['keywords'])) $arena='keywords';
   else $arena='fullsearch';
 
-  if ($arena == 'fullsearch') $sid=md5($value);
+  if ($arena == 'fullsearch') $sid = md5($value.'v'.$offset);
   else $sid=$value;
+
+  $delay = !empty($DBInfo->default_delaytime) ? $DBInfo->default_delaytime : 0;
 
   # retrieve cache
   $fc=new Cache_text($arena);
@@ -172,19 +200,23 @@ EOF;
 
       # check update or not
       $dmt= $DBInfo->mtime();
-      if ($dmt > $cmt) { # XXX crude method
+      if ($dmt > $cmt + $delay) { # XXX crude method
         $data=array();
       } else { # XXX smart but incomplete method
-        foreach ($data as $p=>$c) {
+        if (isset($data['hits'])) $hits = &$data['hits'];
+        else $hits = &$data;
+
+        foreach ($hits as $p=>$c) {
           $mp=$DBInfo->getPage($p);
           $mt=$mp->mtime();
-          if ($mt > $cmt) {
+          if ($mt > $cmt + $delay) {
             $data=array();
             break;
           }
         }
       }
-      $hits=$data;
+      if (isset($data['searched'])) extract($data);
+      else $hits = $data;
     }
   }
 
@@ -196,7 +228,7 @@ EOF;
     $excl_pattern.="i";
   }
 
-  if ($hits) {
+  if (isset($hits)) {
     if ($arena == 'backlinks') {
       $hits = array_flip($hits);
       foreach ($hits as $k=>$v) $hits[$k] = -1;
@@ -204,6 +236,8 @@ EOF;
     }
     //continue;
   } else {
+    $hits = array();
+
     set_time_limit(0);
     if (!empty($opts['backlinks']) and empty($DBInfo->use_backlink_search)) {
       $hits = array();
@@ -233,8 +267,30 @@ EOF;
           }
         }
     } else {
-      $pages = $DBInfo->getPageLists();
+      $params = array();
+      $ret = array();
+      $params['ret'] = &$ret;
+      $params['offset'] = $offset;
+      $pages = $DBInfo->getPageLists($params);
+
+      // set time_limit
+      $mt = explode(' ', microtime());
+      $timestamp = $mt[0] + $mt[1];
+      $j = 0;
+
+      $time_limit = isset($DBInfo->process_time_limit) ?
+          $DBInfo->process_time_limit : 3; // default 3-seconds
+
+      $j = 0;
       while (list($_, $page_name) = each($pages)) {
+        // check time_limit
+        if ($time_limit and $j % 30 == 0) {
+          $mt = explode(' ', microtime());
+          $now = $mt[0] + $mt[1];
+          if ($now - $timestamp > $time_limit) break;
+        }
+        $j++;
+
         $p = new WikiPage($page_name);
         if (!$p->exists()) continue;
         $body= $p->_get_raw_body();
@@ -247,6 +303,8 @@ EOF;
           $hits[$page_name] = $count;
         }
       }
+      $searched = $j > 0 ? $j : 0;
+      $offset = !empty($offset) ? $offset + $j: $j;
     }
     #krsort($hits);
     #ksort($hits);
@@ -256,17 +314,21 @@ EOF;
     if ($arena == 'backlinks')
       $fc->update($sid, $name);
     else
-      $fc->update($sid,$hits);
+      $fc->update($sid, array('hits'=>$hits, 'offset'=>$offset, 'searched'=>$searched));
   }
 
   $opts['hits']= $hits;
   $opts['hit']= count($hits);
-  $opts['all']= $DBInfo->titleindexer->PageCount();
+  $opts['all']= $DBInfo->getCounter();
+  if ($opts['all'] > $searched) {
+    $opts['next'] = $offset;
+    $opts['searched'] = $searched;
+  }
 
   if (!empty($opts['call'])) return $hits;
 
   $out= "<!-- RESULT LIST START -->"; // for search plugin
-  $out.= "<ul>";
+  $out.= "<ul class='fullsearchResult'>";
 
   $idx=1;
   $checkbox = '';
