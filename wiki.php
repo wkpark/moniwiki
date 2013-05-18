@@ -583,7 +583,8 @@ class WikiDB {
       $this->security=new Security($this);
 
     if (!empty($this->titleindexer_class)) {
-      include_once("lib/$this->titleindexer_class.php");
+      $file = strtr($this->titleindexer_class, '_', '.');
+      include_once("lib/$file.php");
       $class = $this->titleindexer_class;
       $this->titleindexer = new $class();
     } else {
