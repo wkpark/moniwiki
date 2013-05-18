@@ -3544,6 +3544,7 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
   $out = '';
 #  if ($DBInfo->use_titlecache)
 #    $cache=new Cache_text('title');
+  $key = '';
   foreach ($pages as $page=>$rpage) {
     $p=ltrim($page);
     $pkey=get_key("$p");
