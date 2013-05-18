@@ -1078,19 +1078,6 @@ class WikiDB {
         $indexer->deletePage($page->name);
       }
       $indexer->close();
-
-      // remove pagelinks
-      $ldb = new Indexer_dba('pagelinks', 'w', $this->dba_type);
-      if ($ldb->db != null) {
-        $text = $page->_get_raw_body();
-        $formatter = new Formatter($page);
-        $links = get_pagelinks($formatter, $text);
-        if (!empty($links)) {
-          $ldb->delWords($page->name, $links);
-          $ldb->deletePage($page->name);
-        }
-        $ldb->close();
-      }
     }
 
     if ($this->version_class) {
@@ -1143,19 +1130,6 @@ class WikiDB {
       $indexer->delWords($pagename, $old_words);
       $indexer->addWords($new, $old_words);
       $indexer->close();
-
-      // remove pagelinks
-      $ldb = new Indexer_dba('pagelinks', 'w', $this->dba_type);
-      if ($ldb->db != null) {
-        $text = $page->_get_raw_body();
-        $formatter = new Formatter($page);
-        $links = get_pagelinks($formatter, $text);
-        if (!empty($links)) {
-          $ldb->delWords($page->name, $links);
-          $ldb->deletePage($page->name);
-        }
-        $ldb->close();
-      }
     }
 
     // remove pagelinks and backlinks

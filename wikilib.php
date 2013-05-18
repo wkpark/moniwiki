@@ -390,19 +390,6 @@ function store_pagelinks($pagename, $pagelinks) {
     $cache->update($pagename, $pagelinks);
   else
     $cache->remove($pagename);
-
-  if (!empty($DBInfo->use_indexer)) {
-    include_once("lib/indexer.DBA.php");
-    $ldb = new Indexer_dba('pagelinks', 'w', $DBInfo->dba_type);
-    if ($ldb->db != null) {
-      if (!empty($cur))
-        $ldb->delWords($this->page->name, $cur);
-      if (!empty($new))
-        $ldb->addWords($this->page->name, $new);
-
-      $ldb->close();
-    }
-  }
 }
 
 /**
