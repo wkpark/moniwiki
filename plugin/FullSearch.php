@@ -163,7 +163,10 @@ EOF;
   $fc=new Cache_text($arena);
   if (!$formatter->refresh and $fc->exists($sid)) {
     $data=$fc->fetch($sid);
-    if (is_array($data)) {
+    if (!empty($opts['backlinks'])) {
+      // backlinks are not needed to check it.
+      $hits = $data;
+    } else if (is_array($data)) {
       # check cache mtime
       $cmt=$fc->mtime($sid);
 
@@ -201,7 +204,10 @@ EOF;
     }
     //continue;
   } else {
-    if (!empty($opts['backlinks'])) {
+    set_time_limit(0);
+    if (!empty($opts['backlinks']) and empty($DBInfo->use_backlink_search)) {
+      $hits = array();
+    } else if (!empty($opts['backlinks'])) {
       $pages = $DBInfo->getPageLists();
       #$opts['context']=-1; # turn off context-matching
       $cache=new Cache_text("pagelinks");

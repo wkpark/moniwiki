@@ -234,6 +234,7 @@ $use_preview_uploads=1;
 #$mediawiki_style=0; # 0: wikiCreole style [[foo bar]]=>[[FooBar]], 1: mediawiki style preserve white spaces
 #$category_regex=urldecode('%EB%B6%84%EB%A5%98$'); # a category example for Korean
 #$use_backlinks=1; # set default fullsearch behavior as backlinks search
+$use_backlink_search=1; # use backlink searching
 $fullsearch_tooshort=2; # 
 #$use_smartdiff=1; # use the experimental smart diff XXX
 #$hide_actions=0; # hide actions list for anonymous user
