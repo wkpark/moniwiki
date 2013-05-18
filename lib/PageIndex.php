@@ -32,6 +32,16 @@ class PageIndex {
         return @filemtime($this->pageidx);
     }
 
+    /**
+     * update the lifetime of the index
+     *
+     * @access public
+     */
+    function update()
+    {
+        return touch($this->pageidx);
+    }
+
     function init()
     {
         global $DBInfo;

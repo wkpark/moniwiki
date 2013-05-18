@@ -31,6 +31,16 @@ class TitleIndexer_Text {
         return @filemtime($this->pagelst);
     }
 
+    /**
+     * update the lifetime of the pagelist
+     *
+     * @access public
+     */
+    function update()
+    {
+        return touch($this->pagelst);
+    }
+
     function init()
     {
         global $DBInfo;

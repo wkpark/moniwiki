@@ -1053,6 +1053,7 @@ class WikiDB {
       $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,$action);
 
     if ($is_new) $this->titleindexer->addPage($page->name);
+    else $this->titleindexer->update(); // just update mtime
     return 0;
   }
 
