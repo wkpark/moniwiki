@@ -1532,6 +1532,69 @@ class WikiPage {
     return $pi;
   }
 
+  function cache_instructions($pi) {
+    global $Config;
+
+    $pagename = $this->name;
+
+    // update aliases
+    if (!empty($Config['use_alias'])) {
+      $ac = new Cache_text('alias');
+      // is it removed ?
+      if ($ac->exists($pagename) and
+          empty($pi['#alias']) and empty($pi['#title'])) {
+        $ac->remove($pagename);
+      } else if (!$ac->exists($pagename) or
+          $ac->mtime($pagename) < $this->mtime() or !empty($_GET['update_alias'])) {
+        $as = array();
+        // parse #alias
+        if (!empty($pi['#alias']))
+          $as = get_csv($pi['#alias']);
+        // add #title as a alias
+        if (!empty($pi['#title']))
+          $as[] = $pi['#title'];
+        if (!empty($as)) {
+          $ac->update($pagename, array($pagename=>$as));
+        }
+      }
+    }
+
+    // update #redirect
+    $rc = new Cache_Text('redirect');
+    $old = $rc->fetch($pagename);
+    if ($old or isset($pi['#redirect'][0])) {
+      if (!isset($pi['#redirect'])) {
+        $rc->remove($pagename);
+      } else if ($old != $pi['#redirect']) {
+        $rc->update($pagename, $pi['#redirect']);
+      }
+    }
+
+    if (!empty($Config['use_keywords']) or !empty($Config['use_tagging']) or !empty($_GET['update_keywords'])) {
+      $tcache= new Cache_text('keyword');
+      if (empty($pi['#keywords'])) {
+        $tcache->remove($pagename);
+      } else if (!$tcache->exists($pagename) or
+          $tcache->mtime($pagename) < $page->mtime() or
+          !empty($_GET['update_keywords'])) {
+        $keys=explode(',',$pi['#keywords']);
+        $keys=array_map('trim',$keys);
+        $tcache->update($pagename, $keys);
+      }
+    }
+
+    if (!empty($pi['#title']) and !empty($Config['use_titlecache'])) {
+      $tc = new Cache_text('title');
+      $old = $tc->fetch($pagename);
+      if (!isset($pi['#title']))
+        $tc->remove($pagename);
+      else if ($old != $pi['#title'] or !$tcache->exists($pagename) or !empty($_GET['update_title']))
+        $tc->update($pagename,$pi['#title']);
+    }
+
+    return;
+  }
+
 }
 
 class Formatter {
@@ -5526,27 +5589,6 @@ function wiki_main($options) {
     }
 
     $formatter->pi=$formatter->page->get_instructions();
-    // update aliases
-    if (!empty($DBInfo->use_alias)) {
-      $ac = new Cache_text('alias');
-      // is it removed ?
-      if ($ac->exists($pagename) and
-        empty($formatter->pi['#alias']) and empty($formatter->pi['#title'])) {
-        $ac->remove($pagename);
-      } else if (!$ac->exists($pagename) or
-          $ac->mtime($pagename) < $formatter->page->mtime() or !empty($_GET['update_alias'])) {
-        $as = array();
-        // parse #alias
-        if (!empty($formatter->pi['#alias']))
-          $as = get_csv($formatter->pi['#alias']);
-        // add #title as a alias
-        if (!empty($formatter->pi['#title']))
-          $as[] = $formatter->pi['#title'];
-        if (!empty($as)) {
-          $ac->update($pagename, array($pagename=>$as));
-        }
-      }
-    }
 
     if (!empty($DBInfo->body_attr))
       $options['attr']=$DBInfo->body_attr;
@@ -5555,24 +5597,6 @@ function wiki_main($options) {
 
     if (empty($options['is_robot'])) {
       $formatter->send_title("","",$options);
-    }
-
-    if (!empty($formatter->pi['#title']) and !empty($DBInfo->use_titlecache)) {
-      $tcache= new Cache_text('title');
-      if (!$tcache->exists($pagename) or !empty($_GET['update_title']))
-        $tcache->update($pagename,$formatter->pi['#title']);
-    }
-    if (!empty($DBInfo->use_keywords) or !empty($DBInfo->use_tagging) or !empty($_GET['update_keywords'])) {
-      $tcache= new Cache_text('keyword');
-      if (empty($formatter->pi['#keywords'])) {
-        $tcache->remove($pagename);
-      } else if (!$tcache->exists($pagename) or
-        $tcache->mtime($pagename) < $formatter->page->mtime() or
-        !empty($_GET['update_keywords'])) {
-        $keys=explode(',',$formatter->pi['#keywords']);
-        $keys=array_map('trim',$keys);
-        $tcache->update($pagename, $keys);
-      }
     }
 
     if (!empty($DBInfo->use_referer) and isset($_SERVER['HTTP_REFERER']))
@@ -5643,6 +5667,7 @@ function wiki_main($options) {
         $args['refresh']=1; // add refresh menu
     } else {
       $formatter->send_page('',$options);
+      $formatter->page->cache_instructions($formatter->pi);
     }
 
     // automatically set #dynamic PI
