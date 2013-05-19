@@ -748,9 +748,7 @@ class WikiDB {
 
     $m = @preg_match("/$needle/".$opts,'dummy');
     if ($m===false) return array(); 
-    $all= $this->titleindexer->getLikePages($needle, $count);
-
-    return $pages;
+    return $this->titleindexer->getLikePages($needle, $count);
   }
 
   function getCounter() {
