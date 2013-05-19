@@ -326,6 +326,46 @@ class TitleIndexer_Text {
 
         return $pages;
     }
+
+    function getPages($params) {
+        global $DBInfo;
+
+        //$count = @file_get_contents($this->pagecnt);
+        $lst = file_get_contents($this->pagelst);
+        if ($lst === false)
+            return false;
+
+        $info = array();
+
+        $pages = explode("\n", $lst);
+        array_pop($pages); // trash the last empty name
+
+        if (!empty($params['all'])) return $pages;
+
+        $offset = 0;
+        if (!empty($params['offset']) and
+                is_numeric($params['offset']) and
+                $params['offset'] > 0)
+            $offset = $params['offset'];
+
+        // set page_limit
+        $pages_limit = isset($DBInfo->pages_limit) ?
+                $DBInfo->pages_limit : 5000; // 5000 pages
+
+        $info['count'] = count($pages);
+        if ($pages_limit > 0) {
+            $pages = array_slice($pages, $offset, $pages_limit);
+            $info['offset'] = $offset;
+            $info['count'] = $pages_limit;
+        } else if ($offset > 0) {
+            $pages = array_slice($pages, $offset);
+            $info['offset'] = $offset;
+            $info['count'] = count($pages);
+        }
+        if (isset($params['ret'])) $params['ret'] = $info;
+
+        return $pages;
+    }
 }
 
 // vim:et:sts=4:sw=4:

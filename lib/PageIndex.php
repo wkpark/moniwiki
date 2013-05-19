@@ -7,7 +7,9 @@
  * @license GPLv2
  */
 
-class PageIndex {
+require_once(dirname(__FILE__).'/titleindexer.text.php');
+
+class PageIndex extends TitleIndexer_Text {
     var $text_dir = '';
 
     function PageIndex($name = 'pageindex')
@@ -473,6 +475,80 @@ class PageIndex {
 
         fclose($flst);
         fclose($fidx);
+
+        return $pages;
+    }
+
+    function getPages($params) {
+        global $DBInfo;
+
+        if (!empty($params['all'])) {
+            $lst = file_get_contents($this->pagelst);
+            if ($lst === false)
+                return false;
+
+            $pages = explode("\n", $lst);
+            array_pop($pages); // trash the last empty name
+            return $pages;
+        }
+
+        $info = array();
+
+        $total = @file_get_contents($this->pagecnt);
+        if ($total === false)
+            return false;
+
+        $flst = fopen($this->pagelst, 'r');
+        if (!is_resource($flst)) {
+            return false;
+        }
+
+        $fidx = fopen($this->pageidx, 'r');
+        if (!is_resource($fidx)) {
+            fclose($flst);
+            return false;
+        }
+
+        $offset = 0;
+        if (!empty($params['offset']) and
+                is_numeric($params['offset']) and
+                $params['offset'] > 0)
+            $offset = $params['offset'];
+
+        // set page_limit
+        $pages_limit = isset($DBInfo->pages_limit) ?
+                $DBInfo->pages_limit : 5000; // 5000 pages
+
+        $info['count'] = $total;
+
+        fseek($fidx, $offset * 4, SEEK_SET);
+        $dum = unpack('N', fread($fidx, 4));
+        $start = $dum[1];
+
+        $info['offset'] = $offset;
+        if ($pages_limit > 0) {
+            $limit = $offset + $pages_limit - 1;
+            if ($limit > $total - 1) $limit = $total - 1;
+        } else {
+            $limit = $total - 1;
+        }
+
+        fseek($fidx, $limit * 4, SEEK_SET);
+        $dum = unpack('N', fread($fidx, 4));
+        $end = $dum[1];
+
+        fseek($flst, $start, SEEK_SET);
+        $lst = fread($flst, $end - $start);
+        $lst.= fgets($flst, 1024);
+
+        $pages = explode("\n", $lst);
+        array_pop($pages); // trash the last empty name
+        $info['count'] = count($pages);
+
+        if (isset($params['ret'])) $params['ret'] = $info;
+
+        #print_r($pages);
+        print_r($info);
 
         return $pages;
     }
