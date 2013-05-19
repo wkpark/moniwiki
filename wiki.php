@@ -737,67 +737,8 @@ class WikiDB {
     return $this->mtime() <= $time + $delay;
   }
 
-  function getPageLists($options=array()) {
-    $pages = array();
-
-    $pcid=md5(serialize($options));
-    $pc = new Cache_text('pagelist', array('depth'=>0));
-    $delay = !empty($this->default_delaytime) ? $this->default_delaytime : 0;
-
-    $_lock_file = _fake_lock_file($this->vartmp_dir, 'get_page_list', $pcid);
-    $locked = _fake_locked($_lock_file, $this->mtime());
-    if ($locked or ($pc->exists($pcid) and $this->checkUpdated($pc->mtime($pcid), $delay))) {
-      $list = $pc->fetch($pcid);
-      if (is_array($list)) return $list;
-      if ($locked) return array();
-    }
-
-    $handle = opendir($this->text_dir);
-    if (!is_resource($handle))
-      return array();
-
-    set_time_limit(isset($this->time_limit) ? intval($this->time_limit) : 30);
-    if (empty($options)) {
-      _fake_lock($_lock_file);
-      while (($file = readdir($handle)) !== false) {
-        if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($this->text_dir.'/'.$file)) continue;
-        $pages[] = $this->keyToPagename($file);
-      }
-      closedir($handle);
-      $pc->update($pcid, $pages);
-      $pc->update('counter', count($pages));
-      _fake_lock($_lock_file, LOCK_UN);
-      return $pages;
-    } else if (!empty($options['limit'])) { # XXX
-       _fake_lock($_lock_file);
-       while (($file = readdir($handle)) !== false) {
-          if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($this->text_dir.'/'.$file)) continue;
-          if (filemtime($this->text_dir."/".$file) > $options['limit'])
-             $pages[] = $this->keyToPagename($file);
-       }
-       closedir($handle);
-    } else if (!empty($options['count'])) {
-       _fake_lock($_lock_file);
-       $count=$options['count'];
-       while (($file = readdir($handle)) !== false && $count > 0) {
-          if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($this->text_dir.'/'.$file)) continue;
-          $pages[] = $this->keyToPagename($file);
-          $count--;
-       }
-       closedir($handle);
-    } else if ($options['date']) {
-       _fake_lock($_lock_file);
-       while (($file = readdir($handle)) !== false) {
-          if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($this->text_dir.'/'.$file)) continue;
-          $mtime=filemtime($this->text_dir."/".$file);
-          $pagename= $this->keyToPagename($file);
-          $pages[$pagename]= $mtime;
-       }
-       closedir($handle);
-    }
-    $pc->update($pcid, $pages);
-    _fake_lock($_lock_file, LOCK_UN);
-    return $pages;
+  function getPageLists($options = array()) {
+    return $this->titleindexer->getPages($options);
   }
 
   function getLikePages($needle,$count=100,$opts='') {
