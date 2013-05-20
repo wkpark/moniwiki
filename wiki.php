@@ -4049,9 +4049,9 @@ class Formatter {
     $plain=0;
 
     $media='media="screen"';
-    if (isset($options['action']) and $options['action']=='print') $media='';
+    if (isset($options['action'][0]) and $options['action'] == 'print') $media = '';
 
-    if (!empty($this->pi['#redirect']) && !empty($options['pi'])) {
+    if (isset($this->pi['#redirect'][0]) && !empty($options['pi'])) {
       $options['value']=$this->pi['#redirect'];
       $options['redirect']=1;
       $this->pi['#redirect']='';
@@ -4059,18 +4059,11 @@ class Formatter {
       return true;
     }
     $header = !empty($header) ? $header:(!empty($options['header']) ? $options['header']:null) ;
-    #print_r($header);
-    #$this->header("Expires: Tue, 01 Jan 2002 00:00:00 GMT");
+
     if (!empty($header)) {
-      if (is_array($header))
-        foreach ($header as $head) {
-          $this->header($head);
-          if (preg_match("/^content\-type: text\//i",$head))
-            $plain=1;
-        }
-      else {
-        $this->header($header);
-        if (preg_match("/^content\-type: text\//i",$header))
+      foreach ((array)$header as $head) {
+        $this->header($head);
+        if (preg_match("/^content\-type: text\//i",$head))
           $plain=1;
       }
     }
@@ -4092,7 +4085,7 @@ class Formatter {
     }
 
     $content_type=
-      !empty($DBInfo->content_type) ? $DBInfo->content_type: "text/html";
+      isset($DBInfo->content_type[0]) ? $DBInfo->content_type : 'text/html';
 
     $force_charset = '';
     if (!empty($DBInfo->force_charset))
@@ -4160,7 +4153,7 @@ class Formatter {
         $keywords="<meta name=\"keywords\" content=\"$keywords\" />\n";
       }
       # find sub pages
-      if (!empty($DBInfo->use_subindex) and empty($options['action'])) {
+      if (empty($options['action']) and !empty($DBInfo->use_subindex)) {
         $scache= new Cache_text('subpages');
         if (!($subs=$scache->exists($this->page->name))) {
           if (($p = strrpos($this->page->name,'/')) !== false)
@@ -4172,7 +4165,7 @@ class Formatter {
         }
         if (!empty($subs)) {
           $subindices='';
-          if (!$DBInfo->use_ajax) {
+          if (empty($DBInfo->use_ajax)) {
             $subindices= '<div>'.$this->macro_repl('PageList','',array('subdir'=>1)).'</div>';
             $btncls='class="close"';
           } else
@@ -4227,102 +4220,7 @@ JSHEAD;
         if (file_exists('./css/_user.css')) // FIXME
           echo '  <link rel="stylesheet" media="screen" type="text/css" href="',
             $DBInfo->url_prefix,"/css/_user.css\" />\n";
-# default CSS
-      } else echo <<<EOS
-<style type="text/css">
-<!--
-body {font-family:Georgia,Verdana,Lucida,sans-serif; background-color:#FFF9F9;}
-a:link {color:#993333;}
-a:visited {color:#CE5C00;}
-a:hover {background-color:#E2ECE5;color:#000;}
-.wikiTitle {
-  font-family:palatino, Georgia,Tahoma,Lucida,sans-serif;
-  font-size:28px;
-  font-weight:bold;
-  color:#639ACE;
-  text-decoration: none;
-}
-tt.wiki {font-family:Lucida Typewriter,fixed,lucida,monospace;font-size:12px;}
-tt.foot {font-family:Tahoma,lucida,monospace;font-size:12px;}
-
-pre.wiki {
-  padding-left:6px;
-  padding-top:6px; 
-  font-family:Lucida TypeWriter,monotype,lucida,monospace;font-size:14px;
-  background-color:#000000;
-  color:#FFD700; /* gold */
-}
-
-textarea.wiki { width:100%; }
-
-pre.quote {
-  padding-left:6px;
-  padding-top:6px;
-  white-space:pre-wrap;
-  white-space: -moz-pre-wrap; 
-  font-family:Georgia,monotype,lucida,monospace;font-size:14px;
-  background-color:#F7F8E6;
-}
-
-table.wiki { border: 0px outset #E2ECE5; }
-
-td.wiki {
-  background-color:#E2ECE2;
-  border: 0px inset #E2ECE5;
-}
-
-th.info { background-color:#E2ECE2; }
-
-h1,h2,h3,h4,h5 {
-  font-family:Tahoma,sans-serif;
-  padding-left:6px;
-  border-bottom:1px solid #999;
-}
-
-div.diff-added {
-  font-family:Verdana,Lucida Sans TypeWriter,Lucida Console,monospace;
-  font-size:12px;
-  background-color:#61FF61;
-  color:black;
-}
-
-div.diff-removed {
-  font-family:Verdana,Lucida Sans TypeWriter,Lucida Console,monospace;
-  font-size:12px;
-  background-color:#E9EAB8;
-  color:black;
-}
-
-div.diff-sep {
-  font-family:georgia,Verdana,Lucida Sans TypeWriter,Lucida Console,monospace;
-  font-size:12px;
-  background-color:#000000;
-  color:#FFD700; /* gold */
-}
-
-div.message {
-  margin-top: 6pt;
-  background-color: #E8E8E8;
-  border-style:solid;
-  border-width:1pt;
-  border-color:#990000;
-  color:#440000;
-  padding:0px;
-  width:100%;
-}
-
-#wikiHint {
-  font-family:Georgia,Verdana,Lucida,sans-serif;
-  font-size:10px;
-  background-color:#E2DAE2;
-}
-
-.highlight {
-   background-color:#FFFF40;
-}
-//-->
-</style>
-EOS;
+      }
 
       echo kbd_handler(!empty($options['prefix']) ? $options['prefix'] : '');
 
@@ -5516,9 +5414,6 @@ function wiki_main($options) {
         '<h3>'.sprintf(_("Redirected from page \"%s\""),
           $formatter->link_tag($_GET['redirect'],'?action=show'))."</h3>";
     }
-    # increase counter
-    if (empty($options['is_robot']) and $DBInfo->use_counter)
-      $DBInfo->counter->incCounter($pagename,$options);
 
     if (empty($action)) $options['pi']=1; # protect a recursivly called #redirect
 
@@ -5535,11 +5430,13 @@ function wiki_main($options) {
     $ret = $formatter->send_header('', $options);
 
     if (empty($options['is_robot'])) {
+      if ($DBInfo->use_counter)
+        $DBInfo->counter->incCounter($pagename,$options);
       $formatter->send_title("","",$options);
-    }
 
-    if (!empty($DBInfo->use_referer) and isset($_SERVER['HTTP_REFERER']))
-      log_referer($_SERVER['HTTP_REFERER'],$pagename);
+      if (!empty($DBInfo->use_referer) and isset($_SERVER['HTTP_REFERER']))
+        log_referer($_SERVER['HTTP_REFERER'],$pagename);
+    }
 
     $formatter->write("<div id='wikiContent'>\n");
     if (isset($options['timer']) and is_object($options['timer'])) {
@@ -5765,7 +5662,6 @@ if (!defined('INC_MONIWIKI')):
 $Config = getConfig('config.php', array('init'=>1));
 require_once("wikilib.php");
 require_once("lib/win32fix.php");
-require_once("lib/wikiconfig.php");
 require_once("lib/cache.text.php");
 require_once("lib/timer.php");
 
@@ -5778,6 +5674,7 @@ if (class_exists('Timer')) {
 
 $ccache = new Cache_text('settings', array('depth'=>0));
 if (!($conf = $ccache->fetch('config'))) {
+  require_once("lib/wikiconfig.php");
   $Config = wikiConfig($Config);
   $ccache->update('config', $Config, 0, array('deps'=>array('config.php', 'lib/wikiconfig.php')));
 } else {
