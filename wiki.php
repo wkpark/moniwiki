@@ -5268,7 +5268,6 @@ function wiki_main($options) {
 
   $formatter->refresh=!empty($refresh) ? $refresh : '';
   $formatter->popup=!empty($popup) ? $popup : '';
-  $formatter->macro_repl('InterWiki','',array('init'=>1));
   $formatter->tz_offset=$options['tz_offset'];
 
   // simple black/white list of network check
