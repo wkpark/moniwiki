@@ -2044,7 +2044,7 @@ function do_titleindex($formatter,$options) {
     if ($test === false) { print ''; return; }
     #if ($test === false) { print "<ul></ul>"; return; }
 
-    $pages = $DBInfo->titleindexer->getLikePages($rule);
+    $pages = $DBInfo->lazyLoad('titleindexer')->getLikePages($rule);
 
     sort($pages);
     //array_unshift($pages, $options['q']);
@@ -2722,18 +2722,7 @@ function do_RandomPage($formatter,$options='') {
   $max = $DBInfo->getCounter();
   $rand = rand(1,$max);
 
-  // titleindexer
-  $delay = !empty($DBInfo->default_delaytime) ? $DBInfo->default_delaytime : 0;
-  $lock_file = _fake_lock_file($DBInfo->vartmp_dir, 'pageindex');
-  $locked = _fake_locked($lock_file, $DBInfo->mtime());
-  if (!$locked and !$DBInfo->checkUpdated($DBInfo->titleindexer->mtime(), $delay)) {
-    // init pagename index db
-    _fake_lock($lock_file);
-    $DBInfo->titleindexer->init();
-    _fake_lock($lock_file, LOCK_UN);
-  }
-
-  $sel_pages = $DBInfo->titleindexer->getPagesByIds(array($rand));
+  $sel_pages = $DBInfo->lazyLoad('titleindexer')->getPagesByIds(array($rand));
   $options['value'] = $sel_pages[0];
   do_goto($formatter,$options);
   return;
@@ -2810,19 +2799,7 @@ EOF;
   sort($selected);
   $sel_count = count($selected);
 
-  $sel_pages = array();
-
-  $delay = !empty($DBInfo->default_delaytime) ? $DBInfo->default_delaytime : 0;
-  $lock_file = _fake_lock_file($DBInfo->vartmp_dir, 'pageindex');
-  $locked = _fake_locked($lock_file, $DBInfo->mtime());
-  if (!$locked and !$DBInfo->checkUpdated($DBInfo->titleindexer->mtime(), $delay)) {
-     // init pagename index db
-     _fake_lock($lock_file);
-     $DBInfo->titleindexer->init();
-     _fake_lock($lock_file, LOCK_UN);
-  }
-
-  $sel_pages = $DBInfo->titleindexer->getPagesByIds($selected);
+  $sel_pages = $DBInfo->lazyLoad('titleindexer')->getPagesByIds($selected);
 
   $selects = array();
   foreach ($sel_pages as $item) {
@@ -3473,11 +3450,11 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
 
     $all_pages = array();
     if ($formatter->group) {
-      $group_pages = $DBInfo->titleindexer->getLikePages('^'.$formatter->group);
+      $group_pages = $DBInfo->lazyLoad('titleindexer')->getLikePages('^'.$formatter->group);
       foreach ($group_pages as $page)
         $all_pages[]=str_replace($formatter->group,'',$page);
     } else
-      $all_pages = $DBInfo->titleindexer->getLikePages('^'.$all_keys[$sel], 0);
+      $all_pages = $DBInfo->lazyLoad('titleindexer')->getLikePages('^'.$all_keys[$sel], 0);
 
     #natcasesort($all_pages);
     #sort($all_pages,SORT_STRING);
@@ -3833,9 +3810,9 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   }
   $needle=_preg_search_escape($needle);
 
-  $pages = $DBInfo->titleindexer->getLikePages($needle);
+  $pages = $DBInfo->lazyLoad('titleindexer')->getLikePages($needle);
 
-  $opts['all'] = $DBInfo->titleindexer->PageCount();
+  $opts['all'] = $DBInfo->getCounter();
   if (empty($DBInfo->alias)) $DBInfo->initAlias();
   $alias = $DBInfo->alias->getAllPages();
 
@@ -3860,7 +3837,7 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
     $needle2 = str_replace(' ', "\\s*", $needle);
     $ws = preg_split("/([\x{AC00}-\x{D7F7}])/u", $needle2, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
     $needle2 = implode("\\s*", $ws);
-    $hits = $DBInfo->titleindexer->getLikePages($needle2);
+    $hits = $DBInfo->lazyLoad('titleindexer')->getLikePages($needle2);
     foreach ($alias as $page) {
       if (preg_match("/".$needle2."/i", $page))
         $hits[]=$page;

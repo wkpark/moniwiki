@@ -127,7 +127,7 @@ function macro_LikePages($formatter="", $value, &$opts) {
   if (empty($metawiki)) {
     if (!$end) $needle=$start;
     else $needle="$start|$end";
-    $pages = $DBInfo->titleindexer->getLikePages($needle);
+    $pages = $DBInfo->lazyLoad('titleindexer')->getLikePages($needle);
 
     // get aliases
     if (empty($DBInfo->alias)) $DBInfo->initAlias();

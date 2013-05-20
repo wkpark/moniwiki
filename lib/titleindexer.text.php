@@ -105,6 +105,26 @@ class TitleIndexer_Text {
         rename($this->pagecnt.'.tmp', $this->pagecnt);
     }
 
+    function init_module()
+    {
+        global $DBInfo;
+
+        // check init() is needed
+        if ($this->PageCount() !== false and $DBInfo->checkUpdated($this->mtime(), 60))
+            return;
+
+        // exclusive lock to prevent multiple init() calls
+        $lock = @fopen($this->pagelck, 'x');
+        if (is_resource($lock)) {
+            if (flock($lock, LOCK_EX)) {
+                $this->init();
+                flock($lock, LOCK_UN);
+            }
+            fclose($lock);
+            unlink($this->pagelck);
+        }
+    }
+
     function getPagesByIds($ids)
     {
         $lst = file_get_contents($this->pagelst);

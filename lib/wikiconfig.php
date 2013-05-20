@@ -88,6 +88,7 @@ EOS;
     $purple_icon = '#';
     $use_purple = 0;
     $version_class = 'RCS';
+    $titleindexer_class = 'text';
     $title_rule = '((?<=[a-z0-9]|[B-Z]{2})([A-Z][a-z]))';
     $login_strict = 1;
     $use_fakemtime = 0; // dir mtime emulation for FAT filesytem.

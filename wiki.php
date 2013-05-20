@@ -581,16 +581,6 @@ class WikiDB {
       $this->security=new $class ($this);
     } else
       $this->security=new Security($this);
-
-    if (!empty($this->titleindexer_class)) {
-      $file = strtr($this->titleindexer_class, '_', '.');
-      include_once("lib/$file.php");
-      $class = $this->titleindexer_class;
-      $this->titleindexer = new $class();
-    } else {
-      require_once("lib/titleindexer.text.php");
-      $this->titleindexer = new TitleIndexer_Text();
-    }
   }
 
   function initAlias() {
@@ -737,8 +727,49 @@ class WikiDB {
     return $this->mtime() <= $time + $delay;
   }
 
+  /**
+   * support lazy loading
+   *
+   */
+
+  function &lazyLoad($name) {
+    if (empty($this->$name)) {
+      $classname = $name.'_class';
+      // get $this->foobar_class
+      if (!empty($this->$classname)) {
+        // classname provided like as 'type' and the real classname is 'foobar_type'
+        $file = $name.'.'.$this->$classname; // foobar.type.php
+        $class0 = $name.'_'.$this->$classname; // foobar_type class
+        if (class_exists($class0)) {
+          $class = $class0;
+        } else if (class_exists($this->$classname)) {
+          $class = $this->$classname;
+        } else if ((@include_once('lib/'.$file.'.php')) || (@include_once('lib/'.strtolower($file).'.php'))) {
+          $class = $name.'_'.$this->$classname; // foobar_type class
+        } else {
+          // full classname provided like as Foobar_Type
+          $file1 = strtr($this->$classname, '_', '.');
+          if ((@include_once('lib/'.$file1.'.php')) || (@include_once('lib/'.strtolower($file1).'.php'))) {
+            $class = $this->$classname;
+          } else {
+            trigger_error(sprintf(_("File '%s' or '%s' does not exist."), $file, $file1), E_USER_ERROR);
+            exit;
+          }
+        }
+        // create
+        $this->$name = new $class();
+
+        // init module
+        if (method_exists($this->$name, 'init_module')) {
+          call_user_func(array($this->$name, 'init_module'));
+        }
+      }
+    }
+    return $this->$name;
+  }
+
   function getPageLists($options = array()) {
-    return $this->titleindexer->getPages($options);
+    return $this->lazyLoad('titleindexer')->getPages($options);
   }
 
   function getLikePages($needle,$count=100,$opts='') {
@@ -748,22 +779,11 @@ class WikiDB {
 
     $m = @preg_match("/$needle/".$opts,'dummy');
     if ($m===false) return array(); 
-    return $this->titleindexer->getLikePages($needle, $count);
+    return $this->lazyLoad('titleindexer')->getLikePages($needle, $count);
   }
 
   function getCounter() {
-    $_lock_file = _fake_lock_file($this->vartmp_dir, 'get_counter');
-    $locked = _fake_locked($_lock_file, $this->mtime());
-
-    $delay = !empty($this->default_delaytime) ? $this->default_delaytime : 0;
-
-    if (!$locked and !$this->checkUpdated($this->titleindexer->mtime(), $delay)) {
-      _fake_lock($_lock_file);
-      $this->titleindexer->init();
-      _fake_lock($_lock_file, LOCK_UN);
-    }
-
-    return $this->titleindexer->pageCount();
+    return $this->lazyLoad('titleindexer')->pageCount();
   }
 
   function addLogEntry($page_name, $remote_name,$comment,$action="SAVE") {
@@ -992,8 +1012,8 @@ class WikiDB {
     if (empty($options['minor']) and !$minor)
       $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,$action);
 
-    if ($is_new) $this->titleindexer->addPage($page->name);
-    else $this->titleindexer->update(); // just update mtime
+    if ($is_new) $this->lazyLoad('titleindexer')->addPage($page->name);
+    else $this->lazyLoad('titleindexer')->update($page->name); // just update mtime
     return 0;
   }
 
@@ -1031,7 +1051,7 @@ class WikiDB {
     $delete=@unlink($this->text_dir."/$keyname");
     $this->addLogEntry($keyname, $REMOTE_ADDR, $comment, 'DELETE');
 
-    $this->titleindexer->deletePage($page->name);
+    $this->lazyLoad('titleindexer')->deletePage($page->name);
     // remove pagelinks and backlinks
     store_pagelinks($page->name, array());
 
@@ -1096,7 +1116,7 @@ class WikiDB {
     $this->addLogEntry($okeyname, $REMOTE_ADDR, '', 'DELETE');
     $this->addLogEntry($keyname, $REMOTE_ADDR, $comment, 'CREATE');
 
-    $this->titleindexer->renamePage($pagename, $new);
+    $this->lazyLoad('titleindexer')->renamePage($pagename, $new);
   }
 
   function _isWritable($pagename) {
