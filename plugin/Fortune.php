@@ -7,7 +7,11 @@
 //
 // $Id: Fortune.php,v 1.5 2010/08/18 16:45:51 wkpark Exp $
 
-function macro_FortuneSystem($formatter,$value) {
+function macro_FortuneSystem($formatter, $value, $options) {
+    // dynamic macro
+    if ($formatter->_macrocache and empty($options['call']))
+        return $formatter->macro_cache_repl('Fortune', $value);
+
     $ret= exec(escapeshellcmd("/usr/bin/fortune $value"),$log);
     $out= str_replace("_",'',join("\n",$log));
     return $out;
@@ -17,6 +21,10 @@ define('DEFAULT_FORTUNE','art');
 
 function macro_Fortune($formatter,$value,$options) {
     global $DBInfo;
+
+    // dynamic macro
+    if ($formatter->_macrocache and empty($options['call']))
+        return $formatter->macro_cache_repl('Fortune', $value);
 
     $cat=$value;
     $dir='/usr/share/games/fortune';
