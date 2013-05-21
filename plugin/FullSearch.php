@@ -67,7 +67,7 @@ function do_fullsearch($formatter,$options) {
         $tag = $formatter->link_to("?action=fullsearch$qext&amp;value=$val$qoff", _("Search next results"));
         echo $tag;
       }
-      if (empty($options['backlinks']) or !empty($Config['show_refresh'])) {
+      if ((empty($options['backlinks']) and empty($options['keywords'])) or !empty($Config['show_refresh'])) {
         $tag = $formatter->link_to("?action=fullsearch$qext&amp;value=$val$qnext&amp;refresh=1", _("Refresh"));
         printf(_(" (%s search results)"), $tag);
       }
@@ -229,10 +229,14 @@ EOF;
   }
 
   if (isset($hits)) {
-    if ($arena == 'backlinks') {
-      $hits = array_flip($hits);
-      foreach ($hits as $k=>$v) $hits[$k] = -1;
-      reset($hits);
+    if (in_array($arena, array('backlinks', 'keywords'))) {
+      $test = key($hits);
+      if ($test == 0 and $hits[$test] != -1) {
+        // fix compatible issue for keywords, backlinks
+        $hits = array_flip($hits);
+        foreach ($hits as $k=>$v) $hits[$k] = -1;
+        reset($hits);
+      }
     }
     //continue;
   } else {
@@ -240,6 +244,8 @@ EOF;
 
     set_time_limit(0);
     if (!empty($opts['backlinks']) and empty($DBInfo->use_backlink_search)) {
+      $hits = array();
+    } else if (!empty($opts['keywords']) and empty($DBInfo->use_keyword_search)) {
       $hits = array();
     } else if (!empty($opts['backlinks'])) {
       $pages = $DBInfo->getPageLists();
@@ -311,10 +317,11 @@ EOF;
     $name = array_keys($hits);
     array_multisort($hits, SORT_DESC, $name, SORT_ASC);
 
-    if ($arena == 'backlinks')
+    if (in_array($arena, array('backlinks', 'keywords'))) {
       $fc->update($sid, $name);
-    else
+    } else {
       $fc->update($sid, array('hits'=>$hits, 'offset'=>$offset, 'searched'=>$searched));
+    }
   }
 
   $opts['hits']= $hits;
