@@ -1460,7 +1460,10 @@ class WikiPage {
     if (!empty($piline)) $pi['raw']= $piline;
     if (!empty($body_start)) $pi['start_line'] = $body_start;
 
-    if ($update_pi) $pi_cache->update($this->name, $pi);
+    if ($update_pi) {
+      $pi_cache->update($this->name, $pi);
+      $this->cache_instructions($pi);
+    }
 
     if (empty($pi['#format']) and !empty($format)) {
       $pi['#format']=$format; // override default
@@ -1514,7 +1517,7 @@ class WikiPage {
       if (empty($pi['#keywords'])) {
         $tcache->remove($pagename);
       } else if (!$tcache->exists($pagename) or
-          $tcache->mtime($pagename) < $page->mtime() or
+          $tcache->mtime($pagename) < $this->mtime() or
           !empty($_GET['update_keywords'])) {
         $keys=explode(',',$pi['#keywords']);
         $keys=array_map('trim',$keys);
@@ -5502,7 +5505,6 @@ function wiki_main($options) {
         $args['refresh']=1; // add refresh menu
     } else {
       $formatter->send_page('',$options);
-      $formatter->page->cache_instructions($formatter->pi);
     }
 
     // automatically set #dynamic PI
