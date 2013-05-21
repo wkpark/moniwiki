@@ -257,6 +257,8 @@ function _parse_rlog($formatter,$log,$options=array()) {
 function macro_info($formatter,$value,$options=array()) {
   global $DBInfo;
 
+  if (empty($DBInfo->interwiki)) $formatter->macro_repl('InterWiki','',array('init'=>1));
+
   $value=(empty($value) and !empty($DBInfo->info_options)) ? $DBInfo->info_options : $value;
   $args=explode(',',$value);
   if (is_array($args)) {

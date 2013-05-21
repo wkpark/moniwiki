@@ -269,6 +269,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   if ($formatter->_macrocache and empty($options['call'])) // and empty($use_js))
     return $formatter->macro_cache_repl('RecentChanges', $value);
 
+  if (empty($DBInfo->interwiki)) $formatter->macro_repl('InterWiki','',array('init'=>1));
+
   // reset some conflict params
   if (empty($DBInfo->use_counter))
     $use_hits = 0;
