@@ -1514,14 +1514,42 @@ class WikiPage {
 
     if (!empty($Config['use_keywords']) or !empty($Config['use_tagging']) or !empty($_GET['update_keywords'])) {
       $tcache= new Cache_text('keyword');
+      $cache = new Cache_text('keywords');
+
+      $cur = $tcache->fetch($pagename);
+      if (empty($cur)) $cur = array();
+      $keys = array();
       if (empty($pi['#keywords'])) {
         $tcache->remove($pagename);
-      } else if (!$tcache->exists($pagename) or
+      } else {
+        $keys = explode(',', $pi['#keywords']);
+        $keys = array_map('trim', $keys);
+        if (!$tcache->exists($pagename) or
           $tcache->mtime($pagename) < $this->mtime() or
           !empty($_GET['update_keywords'])) {
-        $keys=explode(',',$pi['#keywords']);
-        $keys=array_map('trim',$keys);
-        $tcache->update($pagename, $keys);
+          $tcache->update($pagename, $keys);
+        }
+      }
+
+      $adds = array_diff($keys, $cur);
+      $dels = array_diff($cur, $keys);
+
+      // merge new keywords
+      foreach ($adds as $a) {
+        if (!isset($a[0])) continue;
+        $l = $cache->fetch($a);
+        if (!is_array($l)) $l = array();
+        $l = array_merge($l, array($pagename));
+        $cache->update($a, $l);
+      }
+
+      // remove deleted keywords
+      foreach ($dels as $d) {
+        if (!isset($d[0])) continue;
+        $l = $cache->fetch($d);
+        if (!is_array($l)) $l = array();
+        $l = array_diff($l, array($pagename));
+        $cache->update($d, $l);
       }
     }
 
