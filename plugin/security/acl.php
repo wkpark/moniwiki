@@ -1,6 +1,5 @@
 <?php
-# a ACL security plugin for the MoniWiki (experimental)
-# $Id: acl.php,v 1.17 2010/09/30 15:46:59 wkpark Exp $
+# a ACL security plugin for the MoniWiki
 #
 # Please see http://moniwiki.kldp.net/wiki/wiki.php/MoniWikiACL
 #
@@ -165,11 +164,16 @@ class Security_ACL extends Security {
                             $found = true;
                             break;
                         } else {
+                            $pre = '^';
+                            $post = '$';
+                            if ($prule[0] == '^') $pre = '';
+                            if (substr($prule, -1) == '$') $post = '';
+
                             // is it a regex or a simplified pattern
                             $prule=
                                 preg_replace(array('/(?!<\.)\*/',"/(?<!\\\\)\//"),array('.*','\/'),$prule);
 
-                            if (@preg_match("/$prule/", $pg)) {
+                            if (@preg_match("/$pre$prule$post/", $pg)) {
                                 $found = true;
                                 break;
                             }
@@ -298,7 +302,7 @@ class Security_ACL extends Security {
             }
             
             $options['err']=sprintf(_("You are not allowed to '%s' on this page"),$action);
-            $options['err'].="\n"._("Please contact WikiMasters :b");
+            $options['err'].="\n"._("Please contact WikiMasters");
         }
         return $ret;
     }

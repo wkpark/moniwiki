@@ -4,7 +4,6 @@
 #
 # A sample Access Control Lists file for Moniwiki
 #
-# $Id$
 @Guest	Anonymous
 *	@ALL		deny	*
 *	@ALL		allow	edit,markup,ticket,savepage,titleindex,bookmark,pagelist,pagelist/ajax
