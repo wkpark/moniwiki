@@ -1,15 +1,16 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2013 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a GetText macro plugin for the MoniWiki
-// vim:et:ts=2:
 //
 // Usage: [[GetText(string)]]
 //
-// $Id: GetText.php,v 1.1 2003/07/18 14:09:23 wkpark Exp $
 
-function macro_GetText($formatter,$value) {
-  return _($value);
+function macro_GetText($formatter, $value, $params = array()) {
+    // make GetText as a dynamic macro.
+    if ($formatter->_macrocache and empty($options['call']))
+        return $formatter->macro_cache_repl('GetText', $value);
+    return _($value);
 }
 
-?>
+// vim:et:sts=4:sw=4:
