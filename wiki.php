@@ -1476,6 +1476,7 @@ class WikiPage {
 
   function cache_instructions($pi) {
     global $Config;
+    global $DBInfo;
 
     $pagename = $this->name;
 
@@ -1505,10 +1506,30 @@ class WikiPage {
     $rc = new Cache_Text('redirect');
     $old = $rc->fetch($pagename);
     if ($old or isset($pi['#redirect'][0])) {
-      if (!isset($pi['#redirect'])) {
-        $rc->remove($pagename);
-      } else if ($old != $pi['#redirect']) {
+      // update invert redirect index
+      $rc2 = new Cache_Text('redirects');
+      if ($old != $pi['#redirect']) {
+        // update direct cache
         $rc->update($pagename, $pi['#redirect']);
+        if (!isset($pi['#redirect'][0])) {
+          $rc->remove($pagename);
+        } else if ($DBInfo->hasPage($pi['#redirect'])) {
+          // add redirect links
+          $redirects = $rc2->fetch($pi['#redirect']);
+          if (empty($redirects)) $redirects = array();
+          $redirects = array_merge($redirects, array($pagename));
+          $rc2->update($pi['#redirect'], $redirects);
+        }
+
+        if ($old != '' and $old != false) {
+          // delete redirect links
+          $l = $rc2->fetch($old);
+          if ($l !== false and is_array($l)) {
+            $redirects = array_diff($l, array($pagename));
+            if (empty($redirects)) $rc2->remove($old);
+            else $rc2->update($old, $redirects);
+          }
+        }
       }
     }
 

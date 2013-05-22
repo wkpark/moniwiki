@@ -194,6 +194,10 @@ EOF;
     if (!empty($opts['backlinks'])) {
       // backlinks are not needed to check it.
       $hits = $data;
+
+      // also fetch redirects
+      $r = new Cache_Text('redirects');
+      $redirects = $r->fetch($sid);
     } else if (is_array($data)) {
       # check cache mtime
       $cmt=$fc->mtime($sid);
@@ -235,6 +239,13 @@ EOF;
         // fix compatible issue for keywords, backlinks
         $hits = array_flip($hits);
         foreach ($hits as $k=>$v) $hits[$k] = -1;
+        reset($hits);
+      }
+
+      // check invert redirect index
+      if (!empty($redirects)) {
+        $redirects = array_flip($redirects);
+        foreach ($redirects as $k=>$v) $hits[$k] = -2;
         reset($hits);
       }
     }
@@ -347,6 +358,8 @@ EOF;
           $page_name,'tabindex="'.$idx.'"');
     if ($count > 0)
       $out.= ' . . . . ' . sprintf((($count == 1) ? _("%d match") : _("%d matches")), $count );
+    else if ($count == -2)
+      $out.= " <span class='redirectIcon'><span>"._("Redirect page")."</span></span>\n";
     if (!empty($opts['context']) and $opts['context']>0) {
       # search matching contexts
       $p = new WikiPage($page_name);
