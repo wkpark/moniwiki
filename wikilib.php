@@ -3626,7 +3626,7 @@ function macro_TableOfContents(&$formatter,$value="") {
 EOS;
  }
  $TOC.="\n<div id='" . $tocid . "'>";
- if (!isset($title)) $title=_("Contents");
+ if (!isset($title)) $title = $formatter->macro_repl('GetText', "Contents");
  if ($title) {
   $TOC.="<div class='toctitle'>
 <h2 style='display:inline'>$title</h2>
