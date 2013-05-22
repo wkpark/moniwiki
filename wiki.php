@@ -3238,7 +3238,7 @@ class Formatter {
         $body=$this->page->get_raw_body($options);
         $pi=$this->page->get_instructions($body);
       } else {
-        $pi=$this->page->get_instructions();
+        $pi=$this->page->get_instructions('', $options);
         $body=$this->page->get_raw_body($options);
       }
       $this->text = &$body; // XXX

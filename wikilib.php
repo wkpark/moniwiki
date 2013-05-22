@@ -2496,6 +2496,8 @@ function do_post_savepage($formatter,$options) {
 
     $formatter->send_title("","",$options);
     $opt['pagelinks']=1;
+    $opt['refresh'] = 1;
+    $formatter->page->pi = null; // call get_instruction() again
     # re-generates pagelinks
     print "<div id='wikiContent'>\n";
     $formatter->send_page("",$opt);
