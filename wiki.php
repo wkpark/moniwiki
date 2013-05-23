@@ -4689,6 +4689,11 @@ MSG;
     } else
       $user_link=$this->link_tag("UserPreferences","",_($this->icon['user']));
 
+    if (!empty($DBInfo->check_editable)) {
+      if (!$DBInfo->security->is_allowed('edit', $options))
+        $this->icons['edit'] = array('', '?action=edit', $this->icon['locked']);
+    }
+
     if (!empty($this->icons)) {
       $icon=array();
       $myicons=array();

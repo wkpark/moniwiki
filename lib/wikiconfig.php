@@ -188,6 +188,7 @@ EOS;
         $config->icon['scrap'] = "<img src='$imgdir/${iconset}scrap.$ext' alt='S' class='wikiIcon' />";
         $config->icon['unscrap'] = "<img src='$imgdir/${iconset}unscrap.$ext' alt='S' class='wikiIcon' />";
         $config->icon['attach'] = "<img src='$imgdir/${iconset}attach.$ext' alt='@' class='wikiIcon' />";
+        $config->icon['locked'] = "<img src='$imgdir/${iconset}locked.$ext' alt='E' class='wikiIcon' />";
         $config->icon['external'] = "<img class='externalLink' src='$imgdir/${iconset}external.$ext' alt='[]' class='wikiIcon' />";
         $config->icon_sep = " ";
         $config->icon_bra = " ";
