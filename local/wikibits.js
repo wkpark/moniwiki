@@ -232,7 +232,7 @@ function insertTags(tagOpen, tagClose, sampleText,replace) {
 			myframe.contentWindow.document.execCommand('inserthtml', false, mnew + ' ');
 		}
 
-		return false;
+		return;
 	}
 
 	// IE
@@ -344,7 +344,7 @@ function insertTags(tagOpen, tagClose, sampleText,replace) {
 	// reposition cursor if possible
 	if (txtarea.createTextRange)
 		txtarea.caretPos = doc.selection.createRange().duplicate();
-	return false;
+	return;
 }
 
 function toggleSameFormat(start, end, sel) {
