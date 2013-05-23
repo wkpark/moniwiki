@@ -1383,11 +1383,8 @@ class WikiPage {
       if (empty($params['refresh']) and $this->mtime() < $pi_cache->mtime($this->name)) {
         $pi = $pi_cache->fetch($this->name);
 
-        if (empty($pi['#format']) and !empty($format)) {
-          $pi['#format'] = $format; // override default
-        } else if (!isset($pi['#format'])) {
+        if (!isset($pi['#format']))
           $pi['#format'] = $Config['default_markup'];
-        }
 
         return $pi;
       }
@@ -1460,16 +1457,16 @@ class WikiPage {
     if (!empty($piline)) $pi['raw']= $piline;
     if (!empty($body_start)) $pi['start_line'] = $body_start;
 
+    if (empty($pi['#format']) and !empty($format))
+      $pi['#format'] = $format; // override default
+
     if ($update_pi) {
       $pi_cache->update($this->name, $pi);
       $this->cache_instructions($pi);
     }
 
-    if (empty($pi['#format']) and !empty($format)) {
-      $pi['#format']=$format; // override default
-    } else if (!isset($pi['#format'])) {
+    if (!isset($pi['#format']))
       $pi['#format']= $Config['default_markup'];
-    }
 
     return $pi;
   }
