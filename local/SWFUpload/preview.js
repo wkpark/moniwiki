@@ -18,6 +18,11 @@ function alignImg(obj,val) {
             dum[1]="'" + '?align='+val+"'";
         }
         tag.href=dum.join(",");
+        if (dum[2] != '') {
+            if (tag.href.substr(0, 10) == 'javascript') {
+                eval(tag.href.substr(11));
+            }
+        }
     }
 }
 
