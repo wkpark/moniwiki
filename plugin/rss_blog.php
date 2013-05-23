@@ -150,7 +150,7 @@ function generate_item($formatter, $log)
       $f=new Formatter($p);
       $summary=str_replace('\}}}','}}}',$summary);
       ob_start();
-      $f->send_page($summary,array('fixpath'=>1));
+      $f->send_page($summary,array('fixpath'=>1, 'nojavascript'=>1));
       $description='<description><![CDATA['.ob_get_contents().']]></description>';
       ob_end_clean();
   }

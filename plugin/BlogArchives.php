@@ -1,5 +1,5 @@
 <?php
-// Copyright 2004 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2004-2013 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a BlogArchives macro plugin for the MoniWiki
 //
@@ -12,8 +12,7 @@
 function macro_BlogArchives($formatter,$value,$options=array()) {
   global $DBInfo;
 
-  $handle = @opendir($DBInfo->cache_dir."/blogchanges");
-  if (!$handle) return '';//array();
+  $cache = new Cache_Text('blogchanges', array('hash'=>''));
 
   preg_match("/^(?(?=')'([^']+)'|\"([^\"]+)\")?(\s*,?.*)$/",$value,$match);
   if ($match[1] or $match[2]) {
@@ -21,6 +20,7 @@ function macro_BlogArchives($formatter,$value,$options=array()) {
   } else
     $date_fmt='Y-m';
   $opts=explode(',',$match[3]);
+  $opts = array_map('trim', $opts);
   if (in_array('list',$opts)) {
     $bra='<li>';
     $ket='</li>';
@@ -33,14 +33,15 @@ function macro_BlogArchives($formatter,$value,$options=array()) {
   // show only recent two years
   $rule="/^(($year|".($year-1).")\d{2})\d{2}/";
   $archives=array();
-  while ($file = readdir($handle)) {
-    $fname=$DBInfo->cache_dir.'/blogchanges/'.$file;
-    if (is_dir($fname)) continue;
+
+  $files = array();
+  $cache->_caches($files);
+  foreach ($files as $file) {
     if (preg_match($rule,$file,$match)) {
       $archives[]=$match[1];
     }
   }
-  closedir($handle);
+
   $archives= array_unique($archives);
   rsort($archives);
 

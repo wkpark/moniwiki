@@ -602,7 +602,7 @@ class WikiDB {
 
       // get all cache files
       $files = array();
-      $ac->_caches($files);
+      $ac->_caches($files, array('prefix'=>1));
       _fake_lock($_lock_file);
       foreach ($files as $file) {
         $as = $ac->_fetch($file);
@@ -1067,11 +1067,12 @@ class WikiDB {
 
         # blog cache
         if ($file == 'blogchanges') {
-          $handle2= opendir("$this->cache_dir/$file");
-          while ($fcache= readdir($handle2)) {
+          $files = array();
+          $cache->_caches($files, array('prefix'=>1));
+          foreach ($files as $file) {
             #echo $keyname.';'.$fcache."\n";
-            if (preg_match("/\d+_2e$keyname$/",$fcache))
-              unlink("$this->cache_dir/$file/$fcache");
+            if (preg_match("/\d+_2e$keyname$/", $file))
+              unlink($this->cache_dir.'/'.$file);
           }
         } # for blog cache
       }

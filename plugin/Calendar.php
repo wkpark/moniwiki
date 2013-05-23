@@ -11,8 +11,8 @@
 
 function calendar_get_dates($formatter,$date='',$page='') {
   global $DBInfo;
-  $handle = @opendir($DBInfo->cache_dir."/blogchanges");
-  if (!$handle) return array();
+
+  $cache = new Cache_Text('blogchanges', array('hash'=>''));
 
   if (!$page) $page='.*';
   else $page=$DBInfo->pageToKeyname('.'.$page);
@@ -21,14 +21,13 @@ function calendar_get_dates($formatter,$date='',$page='') {
   $rule="/^$date(\d{2})".$page."$/";
 
   $archives=array();
-  while ($file = readdir($handle)) {
-    $fname=$DBInfo->cache_dir.'/blogchanges/'.$file;
-    if (is_dir($fname)) continue;
+  $files = array();
+  $cache->_caches($files);
+  foreach ($files as $file) {
     if (preg_match($rule,$file,$match)) {
       $archives[intval($match[1])]=1;
     }
   }
-  closedir($handle);
 
 #  return array_unique($archives);
   return $archives;

@@ -504,7 +504,7 @@ class Cache_Text {
 	 * get all cache files
 	 *
 	 */
-	function _caches(&$files)
+	function _caches(&$files, $params = array())
 	{
 		$top = $this->cache_dir;
 		$dirs = $this->_prepare_cache_dirs($this->cache_dir, $this->depth, false);
@@ -518,7 +518,10 @@ class Cache_Text {
 				if ($file[0] == '.')
 					continue;
 
-				$files[] = $prefix . $file;
+				if (isset($params['prefix']))
+					$files[] = $prefix . $file;
+				else
+					$files[] = $file;
 			}
 			closedir($dh);
 		}

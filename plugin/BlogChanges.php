@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2013 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a BlogChanges action plugin for the MoniWiki
 //
@@ -10,14 +10,9 @@ class Blog_cache {
     global $DBInfo;
 
     $blogs=array();
-    $handle = @opendir($DBInfo->cache_dir."/blog");
-    if (!$handle) return array();
 
-    while ($file = readdir($handle)) {
-      if (is_dir($DBInfo->cache_dir."/blog/".$file)) continue;
-      $blogs[] = $file;
-    }
-    closedir($handle);
+    $cache = new Cache_Text('blog', array('hash'=>''));
+    $cache->_caches($blogs);
     return $blogs;
   }
 
@@ -73,18 +68,20 @@ class Blog_cache {
   function get_simple($blogs,$options) {
     global $DBInfo;
 
+    $cache = new Cache_text('blog', array('hash'=>''));
     $logs=array();
 
     foreach ($blogs as $blog) {
       $pagename=$DBInfo->keyToPagename($blog);
       $pageurl=_urlencode($pagename);
-      $file=$DBInfo->pageToKeyname($blog); // XXX
-      $fname=$DBInfo->cache_dir.'/blog/'.$file;
+      $key = $DBInfo->pageToKeyname($blog);
+      $tmp = $cache->fetch($key);
 
-      $items=file($fname);
+      $items = explode("\n", $tmp);
+      array_pop($items); // trash last empty line
       foreach ($items as $line) {
-        list($author,$datestamp,$dummy)=explode(' ',$line);
-        $logs[]=explode(' ',$pageurl.' '.rtrim($line),4);
+        list($dummy, $dummy2, $tmp) = explode("\t", $line, 3);
+        $logs[]=explode("\t", $pageurl."\t".rtrim($tmp), 4);
       }
     }
     return $logs;
@@ -93,8 +90,9 @@ class Blog_cache {
   function get_rc_blogs($date,$pages=array()) {
     global $DBInfo;
     $blogs=array();
-    $handle = @opendir($DBInfo->cache_dir."/blogchanges");
-    if (!$handle) return array();
+    $changecache = new Cache_text('blogchanges', array('hash'=>''));
+    $files = array();
+    $changecache->_caches($files);
 
     if (!$date)
       $date=Blog_cache::get_daterule();
@@ -105,17 +103,13 @@ class Blog_cache {
       $pages=array_map('_preg_search_escape',$pages);
       $pagerule=implode('|',$pages);
     }
-    $rule="/^($date\d*)\.($pagerule)$/";
+    $rule="@^($date\d*)\.($pagerule)$@";
 
-    while ($file = readdir($handle)) {
-      $fname=$DBInfo->cache_dir."/blogchanges/".$file;
-      if (is_dir($fname)) continue;
-
+    foreach ($files as $file) {
       $pagename=$DBInfo->keyToPagename($file);
       if (preg_match($rule,$pagename,$match))
         $blogs[]=$match[2];
     }
-    #print_r($blogs);
     return array_unique($blogs);
   }
 
@@ -135,6 +129,8 @@ class Blog_cache {
         else if ($check!=4) $date=date('Y\-m');
       }
       #print $date;
+    } else {
+      $date = '\d{4}-\d{2}-\d{2}T';
     }
 
     $entries=array();
@@ -151,8 +147,8 @@ class Blog_cache {
       $summary = '';
       foreach ($temp as $line) {
         if (empty($state)) {
-          if (preg_match("/^({{{)?#!blog\s([^ ]+\s($date"."[^ ]+)\s.*)$/",$line,$match)) {
-            $entry=explode(' ',$pageurl.' '.$match[2],4);
+          if (preg_match("/^({{{)?#!blog\s(.*)\s($date"."[^ ]+)\s?(.*)?$/", $line, $match)) {
+            $entry = array($pageurl, $match[2], $match[3], $match[4]);
             if ($match[1]) $endtag='}}}';
             $state=1;
             $commentcount=0;

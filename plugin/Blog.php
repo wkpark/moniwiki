@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2013 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // Blog action plugin for the MoniWiki
 //
@@ -9,22 +9,20 @@
 
 function updateBlogList($formatter) {
   global $DBInfo;
-  $cache=new Cache_text("blog");
-  $changecache=new Cache_text("blogchanges");
 
-  $rule="/^(\d*)".$DBInfo->pageToKeyname('.'.$formatter->page->name).'$/';
+  $cache = new Cache_Text('blog', array('hash'=>''));
+  $changecache = new Cache_Text('blogchanges', array('hash'=>''));
 
-  $handle = @opendir($DBInfo->cache_dir."/blogchanges");
-  if ($handle) {
-    while (($file = readdir($handle)) !== false) {
-      if (preg_match($rule,$file,$match)) {
-        $fname=$DBInfo->cache_dir."/blogchanges/".$file;
-        if (is_dir($fname)) continue;
-        #print $fname;
-        unlink($fname);
-      }
+  $rule="@/(\d*)".$DBInfo->pageToKeyname('.'.$formatter->page->name).'$@';
+
+  $files = array();
+  $changecache->_caches($files);
+
+  foreach ($files as $file) {
+    if (preg_match($rule, $file, $match)) {
+      print $fname;
+      #unlink($fname);
     }
-    closedir($handle);
   }
 
   $body=$formatter->page->get_raw_body();
@@ -34,37 +32,36 @@ function updateBlogList($formatter) {
   $entries=array();
   $log='';
   $logs='';
+  $key = $DBInfo->pageToKeyname('.'.$formatter->page->name);
   foreach ($lines as $line) {
     if (preg_match("/^##norss/i",$line)) {
       #XXX $changecache->_del($key);
       return;
     }
-    if (preg_match("/^({{{)?#!blog (.*)$/",$line,$match)) {
-      list($dummy,$datestamp,$dummy)=explode(' ',$match[2],3);
+    if (preg_match("/^(?:{{{)?#!blog\s+(.*)\s+(\d{4}-\d{2}-\d{2}T[^ ]+)\s*(.*)?$/", $line, $match)) {
+      list($author, $datestamp, $title) = array($match[1], $match[2], $match[3]);
+      $datestamp[10] = ' ';
+      $time = strtotime($datestamp.' GMT');
+      $stamp = date('Ymd', $time);
 
-      $datestamp[10]=' ';
-      $time= strtotime($datestamp." GMT");
-      $datestamp= date("Ymd",$time);
-      if (!$date) $date=$datestamp;
-      if ($datestamp != $date) {
-        if ($date) {
-          $log=join("\n",$entries)."\n";
-          $logs.=$log;
-          $changecache->update($date.'.'.$formatter->page->name,$log);
-          $entries=array();
-        }
-        $date=$datestamp;
+      if (empty($date)) $date = $stamp;
+      if ($stamp != $date) {
+        $log = join("\n", $entries)."\n";
+        $logs.= $log;
+        $changecache->update($date.$key, $log);
+        $entries=array();
+        $date = $stamp;
       }
 
-      $entries[]=$match[2];
+      $entries[] = $date."\t".$time."\t".$author."\t".$datestamp."\t".$title;
     }
   }
   $log=join("\n",$entries)."\n";
-  if ($datestamp)
-    $changecache->update($datestamp.'.'.$formatter->page->name,$log);
+  if ($stamp)
+    $changecache->update($stamp.$key,$log);
 
   $logs.=$log;
-  $cache->update($formatter->page->name,$logs);
+  $cache->update($DBInfo->pageToKeyname($formatter->page->name), $logs);
   return;
 }
 
@@ -253,9 +250,10 @@ function do_Blog($formatter,$options) {
       #print $formatter->send_page($quote,$options);
     }
     $extra = '';
+    $btn = _("Refresh");
     if ($options['id'] != 'Anonymous')
       $extra='<div style="text-align:right">'.'
-        <input type="submit" name="button_refresh" value="Refresh" /></div>';
+        <span class="button"><input type="submit" class="button" name="button_refresh" value="'.$btn.'" /></span></div>';
 
     if (!empty($options['value']))
       print "<a name='BlogComment'></a>";
@@ -338,9 +336,10 @@ function macro_Blog($formatter, $value, $options = array()) {
   if (empty($options['id']))
     $options['id']=$DBInfo->user->id;
 
+  $btn = _("Refresh");
   if ($options['id'] != 'Anonymous')
     $extra='<div style="text-align:right">'.'
-      <input type="submit" name="button_refresh" value="Refresh" /></div>';
+      <span class="button"><input type="submit" class="button" name="button_refresh" value="'.$btn.'" /></span></div>';
 
   $form = '<div id="editor_area">';
   $form.= "<form method='post' action='$url'>\n";
