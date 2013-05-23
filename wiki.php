@@ -4044,6 +4044,46 @@ class Formatter {
     return $out;
   }
 
+  function get_diff($text, $rev = '') {
+    global $DBInfo;
+
+    if (!isset($text[0])) return '';
+    if (!empty($DBInfo->use_external_diff)) {
+      $tmpf2 = tempnam($DBInfo->vartmp_dir, 'DIFF_NEW');
+      $fp = fopen($tmpf2, 'w');
+      if (!is_resource($fp)) return ''; // ignore
+      fwrite($fp, $text);
+      fclose($fp);
+
+      $fp = popen('diff -u '.$this->page->filename.' '.$tmpf2.$this->NULL, 'r');
+      if (!is_resource($fp)) {
+        unlink($tmpf2);
+        return '';
+      }
+      $out = '';
+      while (!feof($fp)) {
+        $line = fgets($fp, 1024);
+        $out.= $line;
+      }
+      pclose($fp);
+      unlink($tmpf2);
+    } else {
+      require_once('lib/difflib.php');
+      $orig = $this->page->_get_raw_body();
+      $olines = explode("\n", $orig);
+      $tmp = array_pop($olines);
+      if ($tmp != '') $olines[] = $tmp;
+      $nlines = explode("\n", $text);
+      $tmp = array_pop($nlines);
+      if ($tmp != '') $nlines[] = $tmp;
+      $diff = new Diff($olines, $nlines);
+      $unified = new UnifiedDiffFormatter;
+      $unified->trailing_cr = "&nbsp;\n"; // hack to see inserted empty lines
+      $out.= $unified->format($diff);
+    }
+    return $out;
+  }
+
   function get_merge($text,$rev="") {
     global $DBInfo;
 

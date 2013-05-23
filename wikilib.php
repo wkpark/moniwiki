@@ -1223,7 +1223,7 @@ function submit_all_forms() {
   form.submit();
 }
 
-function check_uploadform() {
+function check_uploadform(obj) {
   var form = document.getElementById('editform'); // main edit form
   var all = document.getElementById('all-forms');
   var all_forms = all.getElementsByTagName('form'); // all extra forms
@@ -1237,10 +1237,10 @@ function check_uploadform() {
       }
     }
   }
-  if (form.elements['button_preview']) {
+  if (obj.name != "") {
     var newopt = document.createElement('input');
-    newopt.setAttribute('name','button_preview');
-    newopt.setAttribute('value','preview');
+    newopt.setAttribute('name', obj.name);
+    newopt.setAttribute('value','dummy');
     newopt.setAttribute('type','hidden');
     form.appendChild(newopt);
   }
@@ -1298,11 +1298,14 @@ JS;
   if ($has_form and !empty($DBInfo->use_jsbuttons)) {
     $msg = _("Save");
     $onclick=' onclick="submit_all_forms()"';
-    $onclick1=' onclick="check_uploadform()"';
+    $onclick1=' onclick="check_uploadform(this)"';
     echo "<div id='save-buttons'>\n";
     echo "<button type='button'$onclick tabindex='10'><span>$msg</span></button>\n";
     echo "<button type='button'$onclick1 tabindex='11' name='button_preview' value='1'><span>".
       _("Preview").'</span></button>';
+    if ($formatter->page->exists())
+      echo "\n<button type='button'$onclick1 tabindex='12' name='button_changes' value='1'><span>".
+        _("Show changes").'</span></button>';
     if (!empty($formatter->preview))
       echo ' '.$formatter->link_to('#preview',_("Skip to preview"),' class="preview-anchor"');
     echo "</div>\n";
@@ -1613,6 +1616,10 @@ EXTRA;
   if (empty($options['simple'])) {
     $preview_btn='<span class="button"><input type="submit" class="button" tabindex="6" name="button_preview" class="preview-button" value="'.
       _("Preview").'" /></span>';
+    $changes_btn = '';
+    if ($formatter->page->exists())
+      $changes_btn=' <span class="button"><input type="submit" class="button" tabindex="6" name="button_changes" class="preview-button" value="'.
+        _("Show changes").'" /></span>';
     if ($preview)
       $skip_preview= ' '.$formatter->link_to('#preview',_("Skip to preview"),' class="preview-anchor"');
     if (!empty($DBInfo->use_wikiwyg)) {
@@ -1693,7 +1700,7 @@ $extraform
 $hidden
 <span class="button"><input type="submit" class='save-button' tabindex="5" accesskey="x" value="$save_msg" /></span>
 <!-- <input type="reset" value="Reset" />&nbsp; -->
-$preview_btn$wysiwyg_btn$skip_preview
+$preview_btn$changes_btn$wysiwyg_btn$skip_preview
 $extra<span id="save_state"></span>
 </span>
 </li></ul>
@@ -2251,6 +2258,8 @@ function do_post_savepage($formatter,$options) {
   $button_merge=!empty($options['button_merge']) ? 1:0;
   $button_merge=!empty($options['manual_merge']) ? 2:$button_merge;
   $button_merge=!empty($options['force_merge']) ? 3:$button_merge;
+  $button_diff = !empty($options['button_changes']) ? 1 : 0;
+  if ($button_diff) $button_preview = 1;
 
   $savetext=preg_replace("/\r\n|\r/", "\n", $savetext);
   $savetext=_stripslashes($savetext);
@@ -2329,11 +2338,14 @@ function do_post_savepage($formatter,$options) {
       if ($has_form and !empty($DBInfo->use_jsbuttons)) {
         $msg = _("Save");
         $onclick=' onclick="submit_all_forms()"';
-        $onclick1=' onclick="check_uploadform()"';
+        $onclick1=' onclick="check_uploadform(this)"';
         echo "<div id='save-buttons'>\n";
         echo "<button type='button'$onclick tabindex='10'><span>$msg</span></button>\n";
         echo "<button type='button'$onclick1 tabindex='11' name='button_preview' value='1'><span>".
           _("Preview").'</span></button>';
+        if ($formatter->page->exists())
+          echo "\n<button type='button'$onclick1 tabindex='12' name='button_changes' value='1'><span>".
+            _("Show changes").'</span></button>';
         if ($button_preview)
           echo ' '.$formatter->link_to('#preview',_("Skip to preview"), ' class="preview-anchor"');
 	echo "</div>\n";
@@ -2426,11 +2438,14 @@ function do_post_savepage($formatter,$options) {
     if ($has_form and !empty($DBInfo->use_jsbuttons)) {
       $msg = _("Save");
       $onclick=' onclick="submit_all_forms()"';
-      $onclick1=' onclick="check_uploadform()"';
+      $onclick1=' onclick="check_uploadform(this)"';
       echo "<div id='save-buttons'>\n";
       echo "<button type='button'$onclick tabindex='10'><span>$msg</span></button>\n";
       echo "<button type='button'$onclick1 tabindex='11' name='button_preview' value='1'><span>".
       	_("Preview").'</span></button>';
+      if ($formatter->page->exists())
+        echo "\n<button type='button'$onclick1 tabindex='12' name='button_changes' value='1'><span>".
+          _("Show changes").'</span></button>';
       if ($button_preview)
         echo ' '.$formatter->link_to('#preview',_("Skip to preview"),' class="preview-anchor"');
       echo "</div>\n";
@@ -2438,6 +2453,14 @@ function do_post_savepage($formatter,$options) {
     print '</div>'; # XXX
     print $DBInfo->hr;
     print $menu;
+    if ($button_diff) {
+        echo "<div id='wikiDiffPreview'>\n";
+        $diff = $formatter->get_diff($savetext); // get diff
+        // strip diff header
+        if (($p = strpos($diff, '@@')) !== false) $diff = substr($diff, $p);
+        echo $formatter->processor_repl('diff', $diff, $options);
+        echo "</div>\n";
+    }
     print "<div id='wikiPreview'>\n";
     #$formatter->preview=1;
     $formatter->send_page($savetext);
