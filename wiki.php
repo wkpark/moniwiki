@@ -1058,7 +1058,7 @@ class WikiDB {
     $handle= opendir($this->cache_dir);
     $permanents = array('backlinks', 'keywords', 'alias', 'aliases', 'wordindex', 'redirect');
     while ($file= readdir($handle)) {
-      if ($file[0] != '.' and is_dir("$this->cache_dir/$file") and is_file($this->cache_dir.'/.info')) {
+      if ($file[0] != '.' and is_dir("$this->cache_dir/$file") and is_file($this->cache_dir.'/'.$file.'/.info')) {
         // do not delete permanent caches
         if (in_array($file, $permanents)) continue;
 
