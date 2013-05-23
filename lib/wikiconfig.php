@@ -143,9 +143,10 @@ EOS;
                 else
                     $config->imgs_real_dir = dirname($info->filename);
             }
+        } else {
+            // fix for nginx etc.
+            $config->imgs_real_dir = substr($config->imgs_dir, strlen($config->url_prefix) + 1);
         }
-    } else {
-        $config->imgs_real_dir = basename($config->imgs_dir); // XXX
     }
 
     if (is_dir($config->imgs_real_dir.'/interwiki/'))
