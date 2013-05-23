@@ -171,7 +171,7 @@ class Security_ACL extends Security {
 
                             // is it a regex or a simplified pattern
                             $prule=
-                                preg_replace(array('/(?!<\.)\*/',"/(?<!\\\\)\//"),array('.*','\/'),$prule);
+                                preg_replace(array('/(?:\.)?\*/',"/(?<!\\\\)\//"),array('.*','\/'),$prule);
 
                             if (@preg_match("/$pre$prule$post/", $pg)) {
                                 $found = true;
