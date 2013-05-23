@@ -1162,6 +1162,7 @@ function macro_EditText($formatter,$value,$options) {
     }
   }
 
+  $tmpls = '';
   if (isset($form[0])) {
     $form=preg_replace('/\[\[EditText\]\]/i','#editform',$form);
     ob_start();
@@ -1176,6 +1177,7 @@ function macro_EditText($formatter,$value,$options) {
       $has_form = &$options['has_form'];
     if (isset($m[1])) $has_form = true;
 
+    $options['tmpls'] = &$tmpls;
     $editform= macro_Edit($formatter,'nohints,nomenu',$options);
     $new=str_replace("#editform",$editform,$form); // XXX
     if ($form == $new) $form.=$editform;
@@ -1258,7 +1260,7 @@ $sidebar_style
 </style>\n
 CSS;
   }
-  return $css.$js.'<div id="all-forms">'.$form.'</div>';
+  return $css.$js.'<div id="all-forms">'.$form.'</div>'.$tmpls;
 }
 
 function do_edit($formatter,$options) {
@@ -1425,9 +1427,12 @@ function macro_Edit($formatter,$value,$options='') {
     $options['linkto']="?action=edit&amp;template=";
     $tmpls= macro_TitleSearch($formatter,$DBInfo->template_regex,$options);
     if ($tmpls) {
-      $form = '<br />'._("Use one of the following templates as an initial release :\n");
-      $form.=$tmpls;
-      $form.= sprintf(_("To create your own templates, add a page with '%s' pattern."),$DBInfo->template_regex)."\n<br />\n";
+      $tmpls = '<div>'._("Use one of the following templates as an initial release :\n").$tmpls;
+      $tmpls.= sprintf(_("To create your own templates, add a page with '%s' pattern."),$DBInfo->template_regex)."\n</div>\n";
+    }
+    if (isset($options['tmpls'])) {
+      $options['tmpls'] = $tmpls;
+      $tmpls = '';
     }
   }
 
@@ -1712,7 +1717,7 @@ EOS;
     $form.= $formatter->macro_repl('EditHints');
   if (empty($options['simple']))
     $form.= "<a id='preview'></a>";
-  return $form.$resizer.$js;
+  return $form.$resizer.$js.$tmpls;
 }
 
 
