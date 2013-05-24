@@ -57,7 +57,7 @@ function do_fullsearch($formatter,$options) {
       echo '<br />';
     }
 
-    if (!empty($ret['context']) and $ret['context']==0) {
+    if (empty($ret['context'])) {
       $tag=$formatter->link_to("?action=fullsearch&amp;value=$val$qnext&amp;context=20",_("Show Context."));
       print $tag.'<br />';
     }
