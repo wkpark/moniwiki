@@ -954,7 +954,7 @@ class WordLevelDiff extends MappedDiff
         //if (!preg_match_all('/ ( [^\S\n]+ | [[:alnum:]]+ | . ) (?: (?!< \n) [^\S\n])? /xs',
         $wiki_markups='\[\[[A-Za-z0-9]+\([^\)]*\)\]\] | \-{4,} |';
         if (!preg_match_all('/ ( [^\S\n]+ | [[:alnum:]]+ | '.$wiki_markups.
-            $this->charset_rule .'. ) (?: (?!< \n) [^\s\S\n])? /xs',
+            $this->charset_rule .'. ) (?: (?!< \n) [^\s\S\n])? /uxs',
                             implode("\n", $lines),
                             $m)) {
             // return array(array(''), array(''));
