@@ -1975,10 +1975,15 @@ function do_goto($formatter,$options) {
   }
   if (isset($options['value'][0])) {
      $url=_stripslashes(trim($options['value']));
+     $anchor = '';
+     if (($p = strpos($url, '#')) > 0) {
+       $anchor = substr($url, $p);
+       $url = substr($url, 0, $p);
+     }
      $url=_rawurlencode($url);
      if ($options['redirect'])
        $url=$formatter->link_url($url,"?action=show&amp;redirect=".
-          $formatter->page->name);
+          $formatter->page->name.$anchor);
      else
        $url=$formatter->link_url($url,"");
      # FastCGI/PHP does not accept multiple header infos. XXX
