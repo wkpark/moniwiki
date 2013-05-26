@@ -964,30 +964,6 @@ class WikiDB {
       $action = 'CREATE';
     }
 
-    // update fulltext index
-    if (!empty($this->use_indexer)) {
-      #include_once("lib/tokenizer.php");
-      include_once("lib/indexer.DBA.php");
-      $indexer = new Indexer_dba('fullsearch', 'w', $this->dba_type);
-
-      $new_words = getTokens($body);
-      if ($indexer->hasPage($page->name)) {
-        $old_body = $page->_get_raw_body();
-        $old_words = getTokens($old_body);
-
-        $del_words = array_diff($old_words, $new_words);
-        $add_words = array_diff($new_words, $old_words);
-        if ($del_words)
-          $indexer->delWords($page->name, $del_words);
-        if ($add_words)
-          $indexer->addWords($page->name, $add_words);
-      } else {
-        if ($new_words)
-          $indexer->addWords($page->name, $new_words);
-      }
-      $indexer->close();
-    }
-
     $log=$REMOTE_ADDR.';;'.$myid.';;'.$comment;
     $options['log']=$log;
     $options['pagename']=$page->name;
@@ -1024,21 +1000,6 @@ class WikiDB {
     $user=&$this->user;
 
     $keyname=$this->_getPageKey($page->name);
-
-    // update fulltext index
-    if (!empty($this->use_indexer)) {
-      #include_once("lib/tokenizer.php");
-      include_once("lib/indexer.DBA.php");
-      $indexer = new Indexer_dba('fullsearch', 'w', $this->dba_type);
-
-      if ($indexer->hasPage($page->name)) {
-        $old_body = $page->_get_raw_body();
-        $old_words = getTokens($old_body);
-        $indexer->delWords($page->name, $old_words);
-        $indexer->deletePage($page->name);
-      }
-      $indexer->close();
-    }
 
     if ($this->version_class) {
       $class=getModule('Version',$this->version_class);
@@ -1081,21 +1042,6 @@ class WikiDB {
 
   function renamePage($pagename,$new,$options='') {
     $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
-
-    // update fulltext index
-    if (!empty($this->use_indexer)) {
-      #include_once("lib/tokenizer.php");
-      include_once("lib/indexer.DBA.php");
-      $indexer = new Indexer_dba('fullsearch', 'w', $this->dba_type);
-
-      $page = $this->getPage($pagename);
-
-      $old_body = $page->_get_raw_body();
-      $old_words = getTokens($old_body);
-      $indexer->delWords($pagename, $old_words);
-      $indexer->addWords($new, $old_words);
-      $indexer->close();
-    }
 
     // remove pagelinks and backlinks
     store_pagelinks($pagename, array());

@@ -108,22 +108,6 @@ function macro_LikePages($formatter="", $value, &$opts) {
   $ends=array();
   $likes=array();
 
-  if ($DBInfo->use_indexer) {
-    include_once('lib/indexer.DBA.php');
-
-    $DB = new Indexer_dba('titlesearch', 'r', $DBInfo->dba_type);
-    if ($DB->db==null) {
-      $opts['msg']=_("Couldn't open search database, sorry.");
-      return '';
-    }
-
-    $words = explode('|', $start);
-    if (!empty($end))
-      $words = array_merge($words, explode('|', $end));
-
-    $pages = $DB->searchPages($words);
-    $DB->close();
-  } else {
   if (empty($metawiki)) {
     if (!$end) $needle=$start;
     else $needle="$start|$end";
@@ -143,7 +127,6 @@ function macro_LikePages($formatter="", $value, &$opts) {
     if (!$end) $needle=$start;
     else $needle="$start|$end";
     $pages = $DBInfo->metadb->getLikePages($needle);
-  }
   }
 
   if ($start) {

@@ -309,7 +309,6 @@ $use_local_translation=0; # automatic translation
 #$use_jsbutton=0; # use javascript fake buttons.
 #$use_namespace=0; # support dokuwiki like namespace
 #$rc_strimwidth=20; # witdh param of mb_strimwidth() with the RecentChanges macro
-#$use_indexer=0; # dynamic update the fulltext.db to use FastSearch plugin
 #$titleindexer_class='PageIndex'; # user defined titleindexer class
 #$default_delaytime = 60*60*24; # set the default delayed time for caching as 24 hours
 #$use_avatar='identicon'; # set avatar imgs based on user IP address for anonymous users. default: identicon
