@@ -336,7 +336,7 @@ class TitleIndexer_Text {
             $data = substr($tmp, 0, $p);
             $remain = substr($tmp, $p+1);
 
-            if (preg_match_all('/^(?:'.$pre.$needle.$suf.')$/uim', $data, $match)) {
+            if (preg_match_all('/^'.$pre.'(?:'.$needle.')'.$suf.'$/uim', $data, $match)) {
                 $pages = array_merge($pages, $match[0]);
                 if (!empty($limit) and count($pages) > $limit) break;
             }
