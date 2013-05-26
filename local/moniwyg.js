@@ -1400,7 +1400,11 @@ proto.format_img = function(element) {
         }
 
         this.assert_space_or_newline();
-        this.appendOutput(uri);
+        if (uri.match(/^data:image\//))
+            this.appendOutput('attachment:' + uri);
+        else
+            this.appendOutput(uri);
+
         var attr='';
         if (width) attr+='width='+width;
         if (height) attr+=(attr ? '&':'') + 'height='+height;
