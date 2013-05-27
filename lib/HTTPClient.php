@@ -147,8 +147,11 @@ class HTTPClient {
         $headers['Referer']    = $this->referer;
         $headers['Connection'] = 'Close';
         $post = '';
-        if($method == 'POST'){
-            $post = $this->_postEncode($data);
+        if(in_array($method, array('POST', 'PUT'))){
+            if (is_array($data))
+                $post = $this->_postEncode($data);
+            else
+                $post = $data;
             $headers['Content-Type']   = 'application/x-www-form-urlencoded';
             $headers['Content-Length'] = strlen($post);
         }
