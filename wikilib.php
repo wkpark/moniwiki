@@ -2294,17 +2294,23 @@ function do_post_savepage($formatter,$options) {
 
   $menu = $formatter->link_to("#editor",_("Goto Editor"), ' class="preview-anchor"');
 
+  $diff = '';
   if ($formatter->page->exists()) {
     # check difference
     $body=$formatter->page->get_raw_body();
     $body=preg_replace("/\r\n|\r/", "\n", $body);
     $orig=md5($body);
+
+    if ($orig == $new) {
+      // same text. just update datestamp
+      unset($options['datestamp']);
+      $datestamp= $formatter->page->mtime();
+    }
     # check datestamp
     if ($formatter->page->mtime() > $datestamp) {
       $options['msg']=sprintf(_("Someone else saved the page while you edited %s"),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
       $options['preview']=1; 
       $options['conflict']=1; 
-      $formatter->send_header("",$options);
       if ($button_merge) {
         $options['msg']=sprintf(_("%s is merged with latest contents."),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
         $options['title']=sprintf(_("%s is merged successfully"),htmlspecialchars($options['page']));
@@ -2313,10 +2319,12 @@ function do_post_savepage($formatter,$options) {
           $options['conflict']=2; 
           $options['title']=sprintf(_("Merge conflicts are detected for %s !"),htmlspecialchars($options['page']));
           $options['msg']=sprintf(_("Merge cancelled on %s."),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
-          $merge=preg_replace('/^>>>>>>>$/m',">>>>>>> "._("NEW"),$merge);
-          $merge=preg_replace('/^<<<<<<<$/m',"<<<<<<< "._("OLD"),$merge);
+          $merge = preg_replace('/^>>>>>>>$/m', "=== /!\ >>>>>>> "._("NEW").' ===', $merge);
+          $merge = preg_replace('/^<<<<<<<$/m', "=== /!\ <<<<<<< "._("OLD").' ===', $merge);
+          $merge = preg_replace('/^=======$/m', "=== ======= ===", $merge);
       	  if ($button_merge>1) {
             unset($options['datestamp']);
+            $datestamp= $formatter->page->mtime();
             $options['conflict']=0;
             if ($button_merge==2) {
               $options['title']=sprintf(_("Get merge conflicts for %s"),htmlspecialchars($options['page']));
@@ -2329,46 +2337,22 @@ function do_post_savepage($formatter,$options) {
           }
 	} else {
           $options['conflict']=0; 
-      	  #$options['datestamp']=$datestamp;
           if ($merge) {
+            // successfully merged. reset datestamp
             $savetext=$merge;
             unset($options['datestamp']); 
+            $datestamp= $formatter->page->mtime();
           }
         }
-        $formatter->send_title("","",$options);
-
-      } else
-        $formatter->send_title(_("Conflict error!"),"",$options);
-      $options['savetext']=$savetext;
-      #print '<div id="editor_area">'.macro_EditText($formatter,$value,$options).'</div>'; # XXX
-      $has_form = false;
-      $options['has_form'] = &$has_form;
-      print macro_EditText($formatter,'',$options); # XXX
-
-      if ($has_form and !empty($DBInfo->use_jsbuttons)) {
-        $msg = _("Save");
-        $onclick=' onclick="submit_all_forms()"';
-        $onclick1=' onclick="check_uploadform(this)"';
-        echo "<div id='save-buttons'>\n";
-        echo "<button type='button'$onclick tabindex='10'><span>$msg</span></button>\n";
-        echo "<button type='button'$onclick1 tabindex='11' name='button_preview' value='1'><span>".
-          _("Preview").'</span></button>';
-        if ($formatter->page->exists())
-          echo "\n<button type='button'$onclick1 tabindex='12' name='button_changes' value='1'><span>".
-            _("Show changes").'</span></button>';
-        if ($button_preview)
-          echo ' '.$formatter->link_to('#preview',_("Skip to preview"), ' class="preview-anchor"');
-	echo "</div>\n";
+        $button_preview = 1;
+      } else {
+        $options['title'] = _("Conflict error!");
       }
-      print $menu;
-      print "<div id='wikiPreview'>\n";
+
       if ($options['conflict'] and !empty($merge))
-        print $formatter->macro_repl('Diff','',array('text'=>$merge,'raw'=>1));
+        $diff = $formatter->get_diff($merge); // get diff
       else
-        print $formatter->macro_repl('Diff','',array('text'=>$savetext,'raw'=>1));
-      print "</div>\n";
-      $formatter->send_footer();
-      return;
+        $diff = $formatter->get_diff($savetext); // get diff
     }
   }
 
@@ -2432,7 +2416,8 @@ function do_post_savepage($formatter,$options) {
   $formatter->page->set_raw_body($savetext);
 
   if ($button_preview) {
-    $options['title']=sprintf(_("Preview of %s"),htmlspecialchars($options['page']));
+    if (empty($options['title']))
+      $options['title']=sprintf(_("Preview of %s"),htmlspecialchars($options['page']));
     $formatter->send_header("",$options);
     $formatter->send_title("","",$options);
      
@@ -2464,11 +2449,14 @@ function do_post_savepage($formatter,$options) {
     print $DBInfo->hr;
     print $menu;
     if ($button_diff) {
-        echo "<div id='wikiDiffPreview'>\n";
         $diff = $formatter->get_diff($savetext); // get diff
         // strip diff header
         if (($p = strpos($diff, '@@')) !== false) $diff = substr($diff, $p);
+    }
+    if (isset($diff[0])) {
+        echo "<div id='wikiDiffPreview'>\n";
         echo $formatter->processor_repl('diff', $diff, $options);
+        //echo $formatter->macro_repl('Diff','',array('text'=>$diff,'type'=>'fancy'));
         echo "</div>\n";
     }
     print "<div id='wikiPreview'>\n";
