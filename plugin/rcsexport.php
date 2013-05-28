@@ -14,9 +14,7 @@ function do_rcsexport($formatter,$options) {
         return "<h2>$msg</h2>";
     }
 
-    getModule('Version',$DBInfo->version_class);
-    $class='Version_'.$DBInfo->version_class;
-    $version=new $class ($DBInfo);
+    $version = $DBInfo->lazyLoad('version', $DBInfo);
     header('Content-type:text/plain');
     if (method_exists($version,'export')) {
         echo '#title '.$formatter->page->name."\n";

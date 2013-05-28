@@ -38,9 +38,7 @@ FORM;
         return;
     }
 
-    getModule('Version',$DBInfo->version_class);
-    $class='Version_'.$DBInfo->version_class;
-    $version=new $class ($DBInfo);
+    $version = $DBInfo->lazyLoad('version', $DBInfo);
     header('Content-type:text/plain');
     if (method_exists($version,'import')) {
         $body = $options['rcsfile'];

@@ -57,8 +57,7 @@ function do_revert($formatter,$options) {
 
             $key=$DBInfo->getPageKey($formatter->page->name);
 
-            $class=getModule('Version',$DBInfo->version_class);
-            $version=new $class ($DBInfo);
+            $version = $DBInfo->lazyLoad('version', $DBInfo);
             if ($force) @unlink($key); // try to delete
             $ret=$version->co($formatter->page->name,$_POST['rev'],array('stdout'=>1));
             chmod($key,0666);

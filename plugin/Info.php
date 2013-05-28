@@ -271,10 +271,8 @@ function macro_info($formatter,$value,$options=array()) {
 
   $warn = '';
   if ($DBInfo->version_class) {
-    getModule('Version',$DBInfo->version_class);
-    $class="Version_".$DBInfo->version_class;
-    $version=new $class ($DBInfo);
-    $out= $version->rlog($formatter->page->name,'','-r','-z');
+    $version = $DBInfo->lazyLoad('version', $DBInfo);
+    $out = $version->rlog($formatter->page->name,'','-r','-z');
 
     // get the number of total revisions and the last revision.
     $total = 1;

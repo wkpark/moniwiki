@@ -84,13 +84,6 @@ function getPlugin($pluginname) {
   return isset($plugins[$pname]) ? $plugins[$pname]:'';
 }
 
-function getModule($module,$name) {
-  $mod=$module.'_'.$name;
-  if (!class_exists($mod))
-    include_once('lib/'.strtolower($module).'.'.$name.'.php');
-  return $mod;
-}
-
 function getProcessor($pro_name) {
   static $processors=array();
   if (is_bool($pro_name) and $pro_name)
@@ -734,6 +727,18 @@ class WikiDB {
 
   function &lazyLoad($name) {
     if (empty($this->$name)) {
+      // get extra args
+      $tmp = func_get_args();
+      array_shift($tmp);
+      $params = array();
+      for ($i = 0, $num = count($tmp); $i < $num; $i++) {
+        if (is_array($tmp[$i]))
+          $params = array_merge($params, $tmp[$i]);
+        else
+          $params[] = $tmp[$i];
+      }
+      if (count($params) == 1) $params = $params[0];
+
       $classname = $name.'_class';
       // get $this->foobar_class
       if (!empty($this->$classname)) {
@@ -757,7 +762,7 @@ class WikiDB {
           }
         }
         // create
-        $this->$name = new $class();
+        $this->$name = new $class($params);
 
         // init module
         if (method_exists($this->$name, 'init_module')) {
@@ -927,10 +932,8 @@ class WikiDB {
     fclose($fp);
 
     if (!empty($this->version_class)) {
-      $class=getModule('Version',$this->version_class);
-      $version=new $class ($this);
       $om=umask(~$this->umask);
-      $ret=$version->_ci($filename,$options['log']);
+      $ret = $this->lazyLoad('version', $this)->_ci($filename,$options['log']);
       chmod($filename,0666 & $this->umask);
       umask($om);
     }
@@ -1002,10 +1005,9 @@ class WikiDB {
     $keyname=$this->_getPageKey($page->name);
 
     if ($this->version_class) {
-      $class=getModule('Version',$this->version_class);
-      $version=new $class ($this);
       $log=$REMOTE_ADDR.';;'.$user->id.';;'.$comment;
-      $ret=$version->ci($page->name,$log);
+      $version = $this->lazyLoad('version', $this);
+      $ret = $version->ci($page->name,$log);
       if (!empty($options['history']))
         $version->delete($page->name);
     }
@@ -1058,9 +1060,7 @@ class WikiDB {
       rename($olddir,$newdir);
 
     if ($options['history'] && $this->version_class) {
-      $class=getModule('Version',$this->version_class);
-      $version=new $class ($this);
-      $version->rename($pagename,$new);
+      $this->lazyLoad('version', $this)->rename($pagename,$new);
     }
 
     $comment=sprintf(_("Rename %s to %s"),$pagename,$new);
@@ -1173,9 +1173,7 @@ class WikiPage {
     $rev= !empty($options['rev']) ? $options['rev']:(!empty($this->rev) ? $this->rev:'');
     if (!empty($rev)) {
       if (!empty($DBInfo->version_class)) {
-        $class=getModule('Version',$DBInfo->version_class);
-        $version=new $class ($DBInfo);
-        $out = $version->co($this->name,$rev);
+        $out = $DBInfo->lazyLoad('version', $DBInfo)->co($this->name,$rev);
         return $out;
       } else {
         return _("Version info does not supported in this wiki");
@@ -1231,9 +1229,7 @@ class WikiPage {
     global $DBInfo;
 
     if (!empty($DBInfo->version_class)) {
-      $class=getModule('Version',$DBInfo->version_class);
-      $version=new $class ($DBInfo);
-      $rev= $version->get_rev($this->name,$mtime,$last);
+      $rev= $DBInfo->lazyLoad('version', $DBInfo)->get_rev($this->name,$mtime,$last);
 
       if (!empty($rev)) return $rev;
     }
@@ -1249,11 +1245,9 @@ class WikiPage {
     if (empty($rev)) return false;
 
     if (!empty($DBInfo->version_class)) {
-      $class=getModule('Version',$DBInfo->version_class);
-      $version=new $class ($DBInfo);
       $opt = '';
 
-      $out= $version->rlog($this->name,$rev,$opt);
+      $out = $DBInfo->lazyLoad('version', $DBInfo)->rlog($this->name,$rev,$opt);
     } else {
       return false;
     }
@@ -5400,10 +5394,7 @@ function wiki_main($options) {
       } else {
         $oldver='';
         if ($DBInfo->version_class) {
-          getModule('Version',$DBInfo->version_class);
-          $class="Version_".$DBInfo->version_class;
-          $version=new $class ($DBInfo);
-          $oldver= $version->rlog($formatter->page->name,'','','-z');
+          $oldver = $DBInfo->lazyLoad('version', $DBInfo)->rlog($formatter->page->name,'','','-z');
         }
         $button= $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
         if ($oldver) {

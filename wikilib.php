@@ -2575,10 +2575,8 @@ function wiki_notify($formatter,$options) {
 
   $diff="";
   if ($DBInfo->version_class) {
-    $class=getModule('Version',$DBInfo->version_class);
-    $version=new $class ($DBInfo);
     $rev=$formatter->page->get_rev();
-    $diff=$version->diff($formatter->page->name,$rev);
+    $diff = $DBInfo->lazyLoad('version', $DBInfo)->diff($formatter->page->name,$rev);
   } else {
     $options['nodiff'];
   }
