@@ -3378,12 +3378,31 @@ function get_key($name) {
  */
 
 function get_keys() {
+  global $Config;
+
   $keys = array();
   for ($i = 0; $i <= 9; $i++)
     $keys["$i"] = "$i";
   for ($i = 65; $i <= 90; $i++) {
     $k = chr($i);
     $keys["$k"] = "$k";
+  }
+  if (strtolower($Config['charset']) == 'euc-kr') {
+    $korean = array( // Ga,GGa,Na,Da,DDa,...
+        "\xb0\xa1","\xb1\xee","\xb3\xaa","\xb4\xd9","\xb5\xfb",
+        "\xb6\xf3","\xb8\xb6","\xb9\xd9","\xba\xfc","\xbb\xe7",
+        "\xbd\xce","\xbe\xc6","\xc0\xda","\xc2\xa5","\xc2\xf7",
+        "\xc4\xab","\xc5\xb8","\xc6\xc4","\xc7\xcf","\xc8\xff");
+    for ($i = 0; $i < count($korean) - 1; $i++) {
+      $k1 = $korean[$i];
+      $k2 = $korean[$i + 1];
+      $k2 = $k2[0].chr(ord($k2[1]) - 1);
+      $keys["$k1"] = '['.$k1.'-'.$k2.']';
+    }
+    $k1 = $korean[0];
+    $keys['Others'] = '[^0-9A-Z'.$k1.'-'.$k2.']';
+
+    return $keys;
   }
   for ($i = 0; $i < 19; $i++) {
     $u1 = 0xac00 + (int)(($i * 588) / 588) * 588;
@@ -3392,7 +3411,8 @@ function get_keys() {
     $k2 = toutf8($u2);
     $keys["$k1"] = '['.$k1.'-'.$k2.']';
   }
-  $keys['Others'] = '[^0-9A-Z'.'가-힣'.']';
+  $k1 = toutf8(0xac00);
+  $keys['Others'] = '[^0-9A-Z'.$k1.'-'.$k2.']';
 
   return $keys;
 }
