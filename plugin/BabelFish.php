@@ -1,26 +1,25 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2013 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a BabelFish plugin for the MoniWiki
 //
 // Usage: [[BabelFish]]
 //
-// $Id: BabelFish.php,v 1.8 2010/09/07 14:03:08 wkpark Exp $
 
-#<script language="JavaScript1.2" src="http://www.altavista.com/r?entr"></script>
 function macro_BabelFish($formatter,$value,$ret=array()) {
+  global $Config;
+
   $langs=array('ko','ja','en','de','fr','it','es','pt','zh');
   $supported=array('ko_en','en_ko','en_de','en_fr','en_pt','en_it','en_es',
                    'en_ja','en_zh','fr_en','es_en','pt_en','it_en','zh_en',
                    'fr_de','de_en','de_fr','ja_en','ru_en');
   $msg=_("BabelFish Translation");
 
-  if (!$value)
-    return <<<EOF
-<script language="JavaScript1.2" src="http://www.altavista.com/r?entr"></script>
-EOF;
+  if (empty($value))
+    $value = !empty($Config['default_babelfish_translation']) ?
+        $Config['default_babelfish_translation'] : 'ko,en';
 
-  list($from,$to)=split('[ ,]',preg_replace("/\s+/",' ',strtolower($value)),2);
+  list($from,$to)=preg_split('/,\s*/',preg_replace("/\s+/",' ',strtolower($value)),2);
   if (!in_array($from,$langs))
     $from='en';
   if (!in_array($to,$langs))
@@ -30,22 +29,19 @@ EOF;
 
   $lp=$from."_".$to;
   $URL=qualifiedUrl($formatter->link_url($formatter->page->urlname));
-  #$TR="http://babelfish.altavista.com/babelfish/urlload?tt=url";
-  $TR="http://babelfish.altavista.com/babelfish/tr?doit=done";
-  #$TR="http://babelfish.altavista.com/babelfish/tr?doit=done&urltext=http://chemie.skku.ac.kr/wiki/wiki.php/BabelFishMacro&lp=en_ja
+  $TR="http://translate.google.com/translate?";
   if (in_array($lp,$supported)) {
     $URL=urlencode($URL);
-    $TR.="&amp;lp=$lp";
+    $TR.="sl=$from&amp;tl=$to";
   } else {
-    // XXX not supported by http://babelfish.altavista.com/
-    $lp=$from.'_en';
-    $URL=urlencode($TR."&amp;lp=$lp&amp;url=$URL");
-    $lp='en_'.$to;
-    $TR.="&amp;lp=$lp";
+    // not supported translation case
+    // from => en => to
+    $URL=urlencode($TR."&amp;sl=$from&amp;tl=en&amp;url=$URL");
+    $TR.="&amp;sl=en&amp;tl=$to";
   }
-  $goto=$TR.'&amp;url='.$URL;
+  $goto=$TR.'&amp;u='.$URL;
   return <<<EOF
-<img src='$formatter->imgs_url_interwiki$from-16.png' alt="$from"/> <a href="$goto"><img border='0' src='$formatter->imgs_dir/plugin/babelfish.gif' title='$msg' alt='BabelFish@altavista' /></a><img src='$formatter->imgs_url_interwiki$to-16.png' alt="$to"/>
+<img src='$formatter->imgs_url_interwiki$from-16.png' alt="$from"/> <a href="$goto"><img border='0' src='$formatter->imgs_dir/plugin/babelfish.png' title='$msg' alt='Translation@Google' /></a> <img src='$formatter->imgs_url_interwiki$to-16.png' alt="$to"/>
 EOF;
 
 }
