@@ -5624,7 +5624,7 @@ function wiki_main($options) {
       if ($options['help'] and
           method_exists($DBInfo->security,$options['help'])) {
         echo "<div id='wikiHelper'>";
-        echo call_user_method($options['help'],$DBInfo->security,$formatter,$options);
+        echo call_user_func(array($DBInfo->security, $options['help']),$formatter,$options);
         echo "</div>\n";
       }
 
