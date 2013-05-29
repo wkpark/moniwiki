@@ -42,9 +42,9 @@ function macro_login($formatter,$value="",$options="") {
 <div>
 <input type="hidden" name="action" value="userform" />
 <table border='0' cellpadding='2' cellspacing='0'>
-<tr><td align='right'>$id</td><td><input name='login_id' size='10' /></td></tr>
-<tr><td align='right'>$pass</td><td><input name='password' type='password' size='10' /></td></tr>
-<tr><td align='right'><a href='$url'>$join</a></td><td><span class='button'><input type='submit' class='button' value='$login' /></span>$passwd_hidden</td></tr>
+<tr><td class='label'>$id</td><td><input type='text' name='login_id' size='10' /></td></tr>
+<tr><td class='label'>$pass</td><td><input name='password' type='password' size='10' /></td></tr>
+<tr><td class='label'><a href='$url'>$join</a></td><td class='submit'><span class='button'><input type='submit' class='button' value='$login' /></span>$passwd_hidden</td></tr>
 </table>
 </div>
 </form>
@@ -77,10 +77,9 @@ function do_login($formatter,$options) {
   }
 
   $formatter->send_header("",$options);
-  $formatter->send_title('','',$options);
-
+  echo "<div class='popup'>";
   print macro_Login($formatter,'',$options);
-  $formatter->send_footer($args,$options);
+  echo "</div></body></html>";
 }
 
 // vim:et:sts=2:
