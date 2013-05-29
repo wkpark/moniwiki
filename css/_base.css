@@ -441,8 +441,6 @@ div.wikiSyntax {
 .pagePrev { float: left; }
 
 #wikiHelper {
-  padding: 15px;
-  border: 2px solid red;
   text-align: left;
   margin: 5px auto;
   width:430px;
