@@ -35,8 +35,8 @@ class Security_ACL extends Security {
     function Security_ACL($DB="") {
         $this->DB=$DB;
         # load ACL
-        if (empty($DB->config_dir))
-            $config_dir = './config';
+        if (!empty($DB->config_dir))
+            $config_dir = $DB->config_dir;
         else
             $config_dir = dirname(__FILE__).'/../../config';
 
@@ -300,9 +300,20 @@ class Security_ACL extends Security {
                     $options['value']=$this->DB->default_download_image;
                 return 1;
             }
-            
             $options['err']=sprintf(_("You are not allowed to '%s' on this page"),$action);
-            $options['err'].="\n"._("Please contact WikiMasters");
+
+            if ($options['id'] == 'Anonymous') {
+                $args = array('id'=>'@User', 'page'=>$options['page']);
+                $this->get_acl($action, $args);
+                $ret2 = $this->acl_check($action, $args);
+                if ($ret2 != 0) {
+                    $options['err'].="\n"._("Please Login to this Wiki.");
+                } else {
+                    $options['err'].="\n"._("Please contact WikiMasters");
+                }
+            } else {
+              $options['err'].="\n"._("Please contact WikiMasters");
+            }
         }
         return $ret;
     }
