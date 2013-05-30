@@ -43,11 +43,13 @@ function do_css($formatter,$options) {
   } else {
     $title="";
     $options['css_url']=$options['user_css'];
+    $want = _("Do you want to apply selected CSS ?");
+    $btn = _("OK");
     $msg=<<<FORM
 <form method='post'>
 <input type='hidden' name='action' value='css' />
 <input type='hidden' name='user_css' value='$options[css_url]' />
-Did you want to apply this CSS ? <input type='submit' name='save' value='OK' /> &nbsp;
+$want <span class='button'><input type='submit' class='button' name='save' value='$btn' /></span> &nbsp;
 </form>
 FORM;
     $formatter->send_header("",$options);
@@ -59,17 +61,18 @@ FORM;
   }
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
-  $formatter->send_page("Back to UserPreferences");
+  $formatter->send_page(_("Back to UserPreferences"));
   $formatter->send_footer("",$options);
 }
 
 function macro_Css($formatter="") {
   global $DBInfo;
   if ($DBInfo->theme_css) return _("CSS disabled !");
+  $select = _("Supported CSS styles");
   $out="
 <form method='post'>
 <input type='hidden' name='action' value='css' />
-  <b>Select a CSS</b>&nbsp;
+  <b>$select</b>&nbsp;
 <select name='user_css'>
 ";
   $handle = opendir($DBInfo->css_dir);
@@ -79,15 +82,18 @@ function macro_Css($formatter="") {
         $css[]= $file;
   }
 
+  $out.="<option value=''>"._("-- Select --")."</option>\n";
   foreach ($css as $item)
      $out.="<option value='$DBInfo->url_prefix/$DBInfo->css_dir/$item'>$item</option>\n";
 
+  $btn = _("Show selected style");
+  $btn2 = _("Clear cookie");
   $out.="
     </select>&nbsp; &nbsp; &nbsp;
-    <input type='submit' name='show' value='Change CSS' /> &nbsp;";
+    <span class='button'><input type='submit' class='button' name='show' value='$btn' /></span> &nbsp;";
 
   $out.="
-    <input type='submit' name='clear' value='Clear cookie' /> &nbsp;";
+    <span class='button'><input type='submit' class='button' name='clear' value='$btn2' /></span> &nbsp;";
 
   $out.="</form>\n";
   return $out;
