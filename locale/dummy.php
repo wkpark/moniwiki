@@ -5,7 +5,9 @@ $pagename=array(
   _("DeletePage"), _("LikePages"), _("FindPage"), _("UploadFile"),
   _("UploadedFiles"), _("EditText"), _("ShowPage"), _("InterWiki"),
   _("BlogChanges"),_("VisualTour"),_("TrackBack"),
-  _("source"),_("diff"), _("recall"), _("view")
+  _("source"),_("diff"), _("recall"), _("view"),
 );
+
+_("Contents");
 
 ?>
