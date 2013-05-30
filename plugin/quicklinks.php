@@ -20,7 +20,7 @@ function do_quicklinks($formatter,$options) {
     $formatter->send_header("",$options);
     $formatter->send_title($title,"",$options);
     $formatter->send_page("== "._("Goto UserPreferences")." ==\n".
-    _("If you want to custumize your quicklinks, just make your ID and register your email address in the UserPreferences."));
+    _("If you want to customize your quicklinks, just make your ID and register your email address in the UserPreferences."));
     $formatter->send_footer();
 
     return;
