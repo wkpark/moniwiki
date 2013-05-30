@@ -261,6 +261,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       else if ($arg=="avatar") $use_avatar = 1;
       else if ($arg=="noavatar") $use_avatar = 0;
       else if ($arg=="js") $use_js = 1;
+      else if ($arg=="diffwidth") $use_diffwidth = 1;
       else if (in_array($arg, array('simple', 'moztab', 'board', 'table', 'list'))) $rctype = $arg;
     }
   }
@@ -821,6 +822,10 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $url = qualifiedURL($formatter->link_url('RecentChanges')); // FIXME
     $postdata = "action=recentchanges/ajax" . ($arg ? '&'.$arg : '');
     $js.= $json->encode($rc_list).";\n";
+    if ($use_diffwidth)
+      $js.= "var use_diffwidth = true;\n";
+    else
+      $js.= "var use_diffwidth = false;\n";
     $js.= <<<EOF
 function diff_width(size) {
     if (size < 0)
@@ -912,6 +917,7 @@ function update_bookmark(time) {
             add2.appendChild(txt);
             add.appendChild(add2);
             diff0.appendChild(add);
+            if (use_diffwidth)
             add.style.cssText = diff_width(ret[title]['add']);
           }
           if (ret[title]['del']) {
@@ -922,6 +928,7 @@ function update_bookmark(time) {
             del2.appendChild(txt);
             del.appendChild(del2);
             diff0.appendChild(del);
+            if (use_diffwidth)
             del.style.cssText = diff_width(ret[title]['del']);
           }
           if (nodiff)
