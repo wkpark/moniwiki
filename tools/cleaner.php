@@ -28,7 +28,7 @@ if (class_exists('Timer')) {
 }
 
 //
-$cache_arenas = array('fullsearch', 'macro', 'dynamicmacros');
+$cache_arenas = array('fullsearch', 'macro', 'dynamicmacros', 'dynamic_macros', 'rclogs', 'wordindex');
 $check_date = 30;
 
 //
@@ -42,7 +42,7 @@ foreach ($cache_arenas as $arena) {
 }
 
 function clean_dir($dir, $checktime = 0) {
-    $handle = opendir($dir);
+    $handle = @opendir($dir);
     if (!is_resource($handle)) return 0;
 
     echo '*** ' . $dir . "\n";
