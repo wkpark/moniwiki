@@ -374,6 +374,7 @@ function store_pagelinks($pagename, $pagelinks) {
     $bl = $bcache->fetch($a);
     if (!is_array($bl)) $bl = array();
     $bl = array_merge($bl, array($pagename));
+    $bl = array_unique($bl);
     $bcache->update($a, $bl);
   }
 
