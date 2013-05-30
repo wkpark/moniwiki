@@ -10,6 +10,13 @@
 function macro_PageList($formatter,$arg="",$options=array()) {
   global $DBInfo;
 
+  $offset = '';
+  if (!is_numeric($options['offset']) or $options['offset'] <= 0) {
+    unset($options['offet']);
+  } else {
+    $offset = $options['offset'];
+  }
+
   preg_match("/([^,]*)(\s*,\s*)?(.*)?$/",$arg,$match);
   if ($match[1]=='date') {
     $options['date']=1;
@@ -43,6 +50,9 @@ function macro_PageList($formatter,$arg="",$options=array()) {
     return "[[PageList(<font color='red'>Invalid \"$arg\"</font>)]]";
   }
 
+  $ret = array();
+  $options['ret'] = &$ret;
+  $options['offset'] = $offset;
   if (!empty($options['date'])) {
     $tz_offset=&$formatter->tz_offset;
     $all_pages = $DBInfo->getPageLists($options);
@@ -50,7 +60,7 @@ function macro_PageList($formatter,$arg="",$options=array()) {
     if (!empty($options['metawiki']))
       $all_pages = $DBInfo->metadb->getLikePages($needle);
     else
-      $all_pages = $DBInfo->getPageLists();
+      $all_pages = $DBInfo->getPageLists($options);
   }
 
   $hits=array();
@@ -145,7 +155,24 @@ function macro_PageList($formatter,$arg="",$options=array()) {
       $out.= '<li>' . $formatter->link_tag(_rawurlencode($pagename),"",
 	htmlspecialchars($pagename))."</li>\n";
     }
-    $out="<ul>\n".$out."</ul>\n";
+    $out="<ol>\n".$out."</ol>\n";
+    $count = count($hits);
+    $total = $DBInfo->getCounter();
+
+    // hide the link of next page for anonymous user
+    if (!empty($options['id']) and $options['id'] == 'Anonymous')
+      return $out;
+
+    if ($total > $count or $offset < $total) {
+      if (isset($ret['offset']) and $ret['offset'] < $total and $count < $total) {
+        $extra = '';
+        if ($options['data']) $extra.='&amp;date=1';
+        if ($options['info']) $extra.='&amp;info=1';
+        $qoff = '&amp;offset='.($ret['offset'] + $count);
+        $out.= $formatter->link_to("?action=pagelist$extra$qoff", _("Show next page"));
+      }
+    }
+
     }
   }
 
@@ -153,8 +180,13 @@ function macro_PageList($formatter,$arg="",$options=array()) {
 }
 
 function do_pagelist($formatter,$options=array()) {
-  print macro_PageList($formatter,'',$options);
+  if (!is_numeric($options['offset']) or $options['offset'] <= 0)
+    unset($options['offet']);
+
+  $formatter->send_header('', $options);
+  $formatter->send_title('', '', $options);
+  echo macro_PageList($formatter, '', $options);
+  $formatter->send_footer('', $options);
 }
 
-// vim:et:sts=2:
-?>
+// vim:et:sts=2:sw=2:
