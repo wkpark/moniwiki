@@ -56,7 +56,7 @@ function macro_PageList($formatter,$arg="",$options=array()) {
   $hits=array();
 
   $out = '';
-  if (!empty($options['date'])) {
+  if (!empty($options['date']) and !is_numeric($k = key($all_pages)) and is_numeric($all_pages[$k])) {
     if ($needle) {
       while (list($pagename,$mtime) = @each ($all_pages)) {
         preg_match("/$needle/",$pagename,$matches);
