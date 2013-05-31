@@ -7,6 +7,7 @@ $sitename='UnnamedWiki'; # site name
 $data_dir= './data';
 $upload_dir= 'pds';
 
+$user_dir= $data_dir.'/user';
 $text_dir= $data_dir.'/text';
 $cache_dir= $data_dir.'/cache';
 $intermap= $data_dir.'/intermap.txt';
