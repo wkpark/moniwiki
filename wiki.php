@@ -1687,7 +1687,7 @@ class Formatter {
     }
 
     # recursive footnote regex
-    $this->footrule='\[\*[^\[\]]*((?:[^\[\]]+|\[(?13)\])*)\]';
+    $this->footrule='\[\*[^\[\]]*((?:[^\[\]]++|\[(?13)\])*)\]';
 
   }
 
