@@ -361,7 +361,7 @@ class MetaDB {
   function getAllPages() {
     return array();
   }
-  function getLikePages() {
+  function getLikePages($needle, $count = 1) {
     return array();
   }
   function close() {
@@ -478,7 +478,7 @@ class Security {
     return 1;
   }
 
-  function is_allowed($action="read",$options) {
+  function is_allowed($action="read",&$options) {
     return 1;
   }
 

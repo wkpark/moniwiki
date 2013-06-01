@@ -12,7 +12,7 @@ class Security_desktop extends Security {
     return $this->DB->_isWritable($options['page']);
   }
 
-  function is_allowed($action="read",$options) {
+  function is_allowed($action="read",&$options) {
     return 1;
   }
 
