@@ -49,7 +49,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
     $out.=$options['title'];
   else
     $out.="<h2>"._("Revision History")."</h2>\n";
-  $out.="<form id='infoform' method='post' action='$url'>";
+  $out.="<form id='infoform' method='get' action='$url'>";
   $out.="<div><table class='info'><thead><tr>\n";
   $out.="<th>"._("Ver.")."</th><th>"._("Date")."</th>".
        "<th>"._("Changes")."</th>".
