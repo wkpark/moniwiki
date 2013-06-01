@@ -858,7 +858,7 @@ class DiffFormatter
 define('NBSP', "\r");         // iso-8859-x non-breaking space.
 
 class _HWLDF_WordAccumulator {
-    function _HWLDF_WordAccumulator ($tags = array(), $nbsp = '&nbsp;') {
+    function _HWLDF_WordAccumulator ($tags = array(), $nbsp = '&nbsp;', $html = null) {
         if (empty($tags))
             $tags = array("<del class='diff-removed'>", "</del>",
                         "<ins class='diff-added'>", "</ins>");
@@ -873,6 +873,7 @@ class _HWLDF_WordAccumulator {
         $this->nbsp = $nbsp;
         $this->html = true;
         if (!preg_match('/del/', $tags[1])) $this->html = false;
+        if (isset($html) and !$html) $this->html = false;
     }
 
     function _flushGroup ($new_tag) {
@@ -989,8 +990,8 @@ class WordLevelDiff extends MappedDiff
         }
         return $_final->getLines();
     }
-    function all ($tags = array(), $nbsp = '') {
-        $text = new _HWLDF_WordAccumulator($tags, $nbsp);
+    function all ($tags = array(), $nbsp = '', $html = null) {
+        $text = new _HWLDF_WordAccumulator($tags, $nbsp, $html);
 
         foreach ($this->edits as $edit) {
             if (is_a($edit, '_DiffOp_Copy'))

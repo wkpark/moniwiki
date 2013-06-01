@@ -256,13 +256,13 @@ function fancy_diff($diff,$options=array()) {
       $omarker=0;
       $buf="";
       $result = new WordLevelDiff($orig, $new, $DBInfo->charset);
-      if (empty($options['oldstyle'])) {
+      if (empty($options['inline'])) {
         foreach ($result->orig() as $ll)
           $buf.= "<div class=\"diff-removed\">$ll</div>\n";
         foreach ($result->_final() as $ll)
           $buf.= "<div class=\"diff-added\">$ll</div>\n";
       } else {
-        foreach ($result->all() as $ll)
+        foreach ($result->all(null, '', false) as $ll)
           $buf.= "<div class=\"diff\">$ll</div>\n";
       }
       $orig=array();$new=array();
@@ -393,7 +393,7 @@ function macro_diff($formatter,$value,&$options)
   if (!empty($options['text'])) {
     $out= $options['text'];
     if (empty($options['raw']))
-      $ret=call_user_func($type,$out);
+      $ret=call_user_func($type,$out, $options);
     else
       $ret="<pre>$out</pre>\n";
 
@@ -437,7 +437,7 @@ function macro_diff($formatter,$value,&$options)
       $msg=sprintf(_("Difference between r%s and the current"),$rev1.$rev2);
     }
     if (empty($options['raw'])) {
-      $ret= call_user_func($type,$out);
+      $ret= call_user_func($type,$out, $options);
       if (is_array($ret)) { // for smart_diff
         $dels=$ret[1]; $ret=$ret[0];
         $rev=($rev1 and $rev2) ? $rev2:''; // get newest rev.
