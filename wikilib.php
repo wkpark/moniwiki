@@ -3305,7 +3305,7 @@ function macro_InterWiki($formatter,$value,$options=array()) {
       $url=str_replace('$PAGE','index',$href);
       #$href=$url;
     }
-    $icon=$DBInfo->imgs_dir_interwiki.strtolower($wiki).'-16.png';
+    $icon=$DBInfo->imgs_url_interwiki.strtolower($wiki).'-16.png';
     $sx=16;$sy=16;
     if (!empty($DBInfo->intericon[$wiki])) {
       $icon=$DBInfo->intericon[$wiki][2];
