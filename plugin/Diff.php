@@ -539,6 +539,8 @@ function do_diff($formatter,$options="") {
   if (!empty($options['type']) and
     !in_array($options['type'],array('smart','fancy','simple')))
     $options['type']=$DBInfo->diff_type;
+  else
+    $options['type']=$DBInfo->diff_type;
 
   $formatter->send_header("",$options);
 
@@ -555,12 +557,17 @@ function do_diff($formatter,$options="") {
     $title=$msg;
   }
   $formatter->send_title($title,"",$options);
+
+  $class = 'Diff';
+  if ($options['type'] == 'fancy' and !empty($options['inline'])) $class.= 'Inline';
+  echo '<div class="'.$options['type'].$class.'">';
   if ($date) {
     $options['rev']=$date;
     print macro_diff($formatter,'',$options);
   }
   else
     print macro_diff($formatter,'',$options);
+  echo '</div>';
   if (empty($DBInfo->diffonly) and empty($options['smart'])) {
     print "<br /><hr />\n";
     $formatter->send_page();
