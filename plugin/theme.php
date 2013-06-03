@@ -49,11 +49,13 @@ function do_theme($formatter,$options) {
         $msg="Goto ".$formatter->link_repl("UserPreferences");
       } else {
         $title="";
+        $want = _("Do you want to apply this theme ?");
+        $btn = _("OK");
         $msg=<<<FORM
 <form method='post'>
 <input type='hidden' name='action' value='theme' />
 <input type='hidden' name='theme' value='$options[theme]' />
-Did you want to apply this theme ? <input type='submit' name='save' value='OK' /> &nbsp;
+$want <input type='submit' name='save' value='$btn' /> &nbsp;
 </form>
 
 FORM;
@@ -77,10 +79,11 @@ FORM;
 function macro_theme($formatter,$value) {
   global $DBInfo;
   if ($DBInfo->theme_css) return _("Theme disabled !");
+  $msg = _("Supported themes");
   $out="
 <form method='get'>
 <input type='hidden' name='action' value='theme' />
-  <b>Supported theme lists</b>&nbsp;
+  <b>$msg</b>&nbsp;
 <select name='theme'>
 ";
   $themes=array();
@@ -97,11 +100,12 @@ function macro_theme($formatter,$value) {
   $out.="<option value=''>"._("-- Select --")."</option>\n";
   foreach ($themes as $item)
      $out.="<option value='$item'>$item</option>\n";
-
+  $btn = _("Show selected theme");
+  $btn2 = _("Clear cookie");
   $out.="
     </select>&nbsp; &nbsp; &nbsp;
-    <input type='submit' name='show' value='Show this theme' /> &nbsp;
-    <input type='submit' name='clear' value='Clear cookie' /> &nbsp;
+    <span class='button'><input type='submit' class='button' name='show' value='$btn' /></span> &nbsp;
+    <span class='button'><input type='submit' class='button' name='clear' value='$btn2' /></span> &nbsp;
 </form>
 ";
   return $out;

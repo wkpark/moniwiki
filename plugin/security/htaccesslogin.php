@@ -41,7 +41,7 @@ class Security_htaccesslogin extends Security {
     return $this->DB->_isWritable($options['page']);
   }
 
-  function is_allowed($action="read",$options) {
+  function is_allowed($action="read",&$options) {
     if (getenv('REMOTE_USER') == "" || $user->id == "Anonymous") {
       $options['err'].=sprintf(_("You are not allowed to '%s' on this page."),$action);
       $options['err'].="\n"._("Please contact the system administrator for htaccess based logins.");

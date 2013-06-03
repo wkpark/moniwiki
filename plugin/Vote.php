@@ -51,9 +51,11 @@ function macro_Vote($formatter,$value) {
       $out.="<input type='radio' name='vote' value='$md5' />";
     $out.="</td></tr>\n";
   }
-  $out.="<tr><td colspan='2' align='right'><b>Total votes</b></td><td align='center'>$total";
+  $msg = _("Total votes");
+  $btn = _("Vote");
+  $out.="<tr><td colspan='2' align='right'><b>$msg</b></td><td align='center'>$total";
   if (empty($vote_off))
-    $out.="<input type='submit' value='Vote' /></td></tr>\n</table></form>\n";
+    $out.="<span class='button'><input type='submit' class='button' value='$btn' /></span></td></tr>\n</table></form>\n";
   else
     $out.="</td></tr>\n</table>\n";
 

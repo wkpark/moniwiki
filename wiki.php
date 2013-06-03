@@ -13,8 +13,8 @@
 //
 // $Id: wiki.php,v 1.639 2011/08/09 13:51:53 wkpark Exp $
 //
-$_revision = substr('$Revision: 1.791 $',1,-1);
-$_release = '1.2.0-RC6';
+$_revision = substr('$Revision: 1.812 $',1,-1);
+$_release = '1.2.0-RC7';
 
 #ob_start("ob_gzhandler");
 
@@ -361,7 +361,7 @@ class MetaDB {
   function getAllPages() {
     return array();
   }
-  function getLikePages() {
+  function getLikePages($needle, $count = 1) {
     return array();
   }
   function close() {
@@ -478,7 +478,7 @@ class Security {
     return 1;
   }
 
-  function is_allowed($action="read",$options) {
+  function is_allowed($action="read",&$options) {
     return 1;
   }
 
@@ -3302,7 +3302,7 @@ class Formatter {
     $oline='';
 
     $wordrule="\[\[(?:[A-Za-z0-9]+(?:\((?:(?<!\]\]).)*\))?)\]\]|". # macro
-              "<<(?:[A-Za-z0-9]+(?:\((?:(?<!\>\>).)*\))?)>>|"; # macro
+              "<<(?:[^<>]+(?:\((?:(?<!\>\>).)*\))?)>>|"; # macro
     if ($DBInfo->inline_latex) # single line latex syntax
       $wordrule.="(?<=\s|^|>)\\$(?!(?:Id|Revision))(?:[^\\$]+)\\$(?=\s|\.|\,|$)|".
                  "(?<=\s|^|>)\\$\\$(?:[^\\$]+)\\$\\$(?=\s|$)|";
@@ -5624,7 +5624,7 @@ function wiki_main($options) {
       if ($options['help'] and
           method_exists($DBInfo->security,$options['help'])) {
         echo "<div id='wikiHelper'>";
-        echo call_user_method($options['help'],$DBInfo->security,$formatter,$options);
+        echo call_user_func(array($DBInfo->security, $options['help']),$formatter,$options);
         echo "</div>\n";
       }
 
