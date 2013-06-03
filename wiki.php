@@ -2110,8 +2110,14 @@ class Formatter {
               }
             }
 
-            $text=$this->macro_repl('attachment',substr($text,11),1);
-            $text=qualifiedUrl($this->url_prefix.'/'.$text);
+            $msave = $this->_macrocache;
+            $this->_macrocache = 0;
+            $fname = $this->macro_repl('attachment', substr($text, 11), 1);
+            if (file_exists($fname))
+              $text = qualifiedUrl($this->url_prefix.'/'.$fname);
+            else
+              $text = $this->macro_repl('attachment', substr($text, 11));
+            $this->_macrocache = $msave; // restore _macrocache
           }
           if (preg_match("/^(https?|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
             $atext=isset($atext[0]) ? $atext:$text;
