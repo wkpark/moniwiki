@@ -222,7 +222,7 @@ function keypresshandler(e) {
 	var loc=self.location+'';
 	var pages={'c':RecentChanges,'f':FrontPage,'s':FindPage,'t':TitleIndex,'u':UserPreferences};
 	var actions={'d':'diff', 'i':'info', 'b':'bookmark', 'h':'home', 'l':'likepages',
-		'p':'print', 'a':'randompage', 'k':'keywords'};
+		'p':'print', 'a':'randompage', 'k':'keywords', ',':'backlinks'};
 
 	switch(ch || cc) {
 	case '?':
@@ -258,7 +258,7 @@ function keypresshandler(e) {
 	case 'z':
 		go ? goValue.focus():null;
 		break;
-	case 'a': case 'b': case 'd': case 'h': case 'i': case 'k': case 'l': case 'p':
+	case 'a': case 'b': case 'd': case 'h': case 'i': case 'k': case 'l': case 'p': case ',':
 		if ((i = loc.indexOf(_ap)) != -1) loc = loc.substr(0,i);
 		if ((i = loc.indexOf('#')) != -1) loc = loc.substr(0,i);
 		self.location=loc + _ap + 'action=' + actions[ch];
