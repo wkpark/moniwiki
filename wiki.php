@@ -3607,12 +3607,12 @@ class Formatter {
         $line='||'.$match[3].$match[5].$match[6];
         $in_table=1;
       } elseif ($in_table && ($line[0]!='|' or
-              !preg_match("/^\|{2}.*(?:\|(\||-+))$/s",$line))) {
+              !preg_match("/^\|{2}.*(?:\|(\||-+))$/s",rtrim($line)))) {
         $close=$this->_table(0,$dumm).$close;
         $in_table=0;
       }
       while ($in_table) {
-        $line=preg_replace('/(\|\||\|-+)$/','',$line);
+        $line=preg_replace('/(\|\||\|-+)$/','',rtrim($line));
         {
           $tr_attr='';
           $row=$this->_td($line,$tr_attr);
