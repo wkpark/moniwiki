@@ -2033,7 +2033,7 @@ class Formatter {
       break;
     }
 
-    $url=str_replace('&lt;','<',$url); // revert from baserule
+    //$url=str_replace('&lt;','<',$url); // revert from baserule
     $url=preg_replace('/&(?!#?[a-z0-9]+;)/i','&amp;',$url);
 
     // ':' could be used in the title string.
@@ -2093,6 +2093,8 @@ class Formatter {
       if ($force or strstr($url, ' ') or strstr($url, '|')) {
         if (($tok = strtok($url, ' |')) !== false) {
           $text = strtok('');
+          $text = preg_replace($this->baserule, $this->baserepl, $text);
+          $text = str_replace('&lt;', '<', $text); // revert from baserule
           $url = $tok;
         }
         #$link=str_replace('&','&amp;',$url);
@@ -2359,7 +2361,10 @@ class Formatter {
           $text=str_replace('&','&amp;',$text);
           $word="<img style='border:0' alt='$word' src='$text' /></a>";
         }
-      } else $word=$text;
+      } else {
+        $word = preg_replace($this->baserule, $this->baserepl, $text);
+        $word = str_replace('&lt;', '<', $word); // revert from baserule
+      }
     } else {
       $word=$text=$page_text ? $page_text:$word;
       #echo $text;
@@ -3481,7 +3486,6 @@ class Formatter {
           } else if (in_array($c[3],array('#','-','+'))) { # {{{#color text}}}
             $nc.= $c;
           } else {
-            if ($c[0] == '[') $c = preg_replace($this->baserule, $this->baserepl, $c);
             $inline[$idx] = $c;
             $nc.= "\017".$idx."\017";
             $idx++;
