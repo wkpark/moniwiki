@@ -28,7 +28,11 @@ if (class_exists('Timer')) {
 }
 
 //
+<<<<<<< HEAD
+$cache_arenas = array('fullsearch', 'macro', 'dynamic_macros');
+=======
 $cache_arenas = array('fullsearch', 'macro', 'dynamicmacros', 'dynamic_macros', 'rclogs', 'wordindex');
+>>>>>>> upstream/master
 $check_date = 30;
 
 //
