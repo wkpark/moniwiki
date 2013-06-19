@@ -277,7 +277,7 @@ class MetaDB_dba extends MetaDB {
     if ($sisters)
       $ret='[wiki:'.str_replace(' ',":$pagename]\n[wiki:",$sisters).":$pagename]";
     $pagename=_preg_search_escape($pagename);
-    if ($addons) $ret=rtrim($addons.' '.$ret);
+    if ($addons) $ret=rtrim($addons."\n".$ret);
 
     if ($mode==1 and strlen($ret) > 80) return "[wiki:TwinPages:$pagename]";
     return preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
