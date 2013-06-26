@@ -6,7 +6,7 @@
 #
 @Guest	Anonymous
 *	@ALL		deny	*
-*	@ALL		allow	edit,markup,ticket,savepage,titleindex,bookmark,pagelist,pagelist/ajax
+*	@ALL		allow	edit,markup,ticket,savepage,titleindex,bookmark,pagelist,pagelist/ajax,identicon
 *	@User		allow	*
 # some pages are allowed to edit
 WikiSandBox	@Guest	allow	edit,info,diff
