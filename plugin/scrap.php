@@ -26,7 +26,9 @@ function macro_Scrap($formatter,$value='',$options=array()) {
       	$out.=substr($list,4,-6);
     }
   }
-  return '<ul>'.$out.'</ul>';
+  if (!empty($out))
+    return '<ul>'.$out.'</ul>';
+  return '';
 }
 
 
