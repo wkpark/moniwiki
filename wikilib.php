@@ -3667,7 +3667,7 @@ function macro_TableOfContents(&$formatter,$value="") {
 </script>
 EOS;
  }
- $TOC.="\n<div id='" . $tocid . "'>";
+ $TOC.="\n<div class='wikiToc' id='" . $tocid . "'>";
  if (!isset($title)) $title = $formatter->macro_repl('GetText', "Contents");
  if ($title) {
   $TOC.="<div class='toctitle'>
