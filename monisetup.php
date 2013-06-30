@@ -63,13 +63,13 @@ class MoniConfig {
         if ($fp) {
           while (!feof($fp)) $out.=fgets($fp,2048);
         } else {
-          print "<li><b><a href='http://moniwiki.sf.net/wiki.php/AcceptPathInfo'>AcceptPathInfo</a> <font color='red'>"._t("Off")."</font></b><li>\n";
+          print "<li><b><a href='http://moniwiki.kldp.net/wiki.php/AcceptPathInfo'>AcceptPathInfo</a> <font color='red'>"._t("Off")."</font></b><li>\n";
           print '</ul>';
           break;
         }
         fclose($fp);
         if ($out[0] == '*') {
-          print "<li><b><a href='http://moniwiki.sf.net/wiki.php/AcceptPathInfo'>AcceptPathInfo</a> <font color='red'>"._t("Off")."</font></b></li>\n";
+          print "<li><b><a href='http://moniwiki.kldp.net/wiki.php/AcceptPathInfo'>AcceptPathInfo</a> <font color='red'>"._t("Off")."</font></b></li>\n";
         } else {
           print "<li><b>AcceptPathInfo <font color='blue'>"._t("On")."</font></b></li>\n";
           $config['query_prefix']='/';
@@ -436,7 +436,7 @@ function checkConfig($config) {
      print _t("or use <tt>monisetup.sh</tt> and select 777 or <font color='red'>2777</font>");
      print "<pre class='console'>\n<font color='green'>$</font> sh monisetup.sh</pre>\n";
      print _t("After execute one of above two commands, just <a href='monisetup.php'>reload this <tt>monisetup.php</tt></a> would make a new initial <tt>config.php</tt> with detected parameters for your wiki.")."\n<br/>";
-     print "<h2><a href='monisetup.php'>"._t("Reload")."</a></h2>";
+     print "<h2><a href='monisetup.php?step=agree'>"._t("Reload")."</a></h2>";
      exit;
   } else if (file_exists("config.php")) {
      print "<p class='notice'><span class='warn'>"._t("WARN").":</span> ".
@@ -554,9 +554,11 @@ FORM;
           fclose($fp);
         }
 
+        echo "<div class='log'>";
         $work = check_htaccess($chk, $re, $host, $port,
           $path.'/'.$config['upload_dir'].'/test.php',
           $config['upload_dir']);
+        echo "</div>";
 
         $fp = fopen('pds_htaccess','w');
         if (is_resource($fp)) {
@@ -579,9 +581,11 @@ FORM;
       if (is_dir('imgs') and
           !file_exists($config['upload_dir'].'/.htaccess')) {
         print '<h3>'._t(".htaccess for 'imgs_dir'.").'</h3>';
+        echo "<div class='log'>";
         $work = check_htaccess($chk2, $re, $host, $port,
           $path.'/'.$config['upload_dir'].'/nonexists.png',
           $config['upload_dir']);
+        echo "</div>";
 
         $fp=fopen('imgs_htaccess','w');
         if (is_resource($fp)) {
@@ -926,27 +930,30 @@ print <<<EOF
 <html xmlns="http://www.w3.org/1999/xhtml">
 <head><title>Moni Setup</title>
 <meta http-equiv="Content-Type" content="text/html; charset=$_Config[charset]" /> 
+<meta name='viewport' content='width=device-width' />
 <style type="text/css">
 <!--
-body { background-color: #e6e6e6; }
+body { background-color: #e0e0e0; }
 .body {
   background:#fff;
-  font-family: "Trebuchet MS", Tahoma,"Times New Roman", Times, sans-serif;
+  font-family: Tahoma,"Times New Roman", Times, sans-serif;
   margin-left: 10%;
   margin-right: 10%;
-  margin-top: 2em;
+  margin-top: 1em;
   box-shadow: 0 2px 6px rgba(100, 100, 100, 0.3);
   border-radius: 3px;
   padding-bottom: 2em;
+  font-size: 84%;
 }
 
 .header {
   border-radius: 1px;
   font-size: 0.8em;
-  background: #b0b0b0;
+  background: #3e3e3e;
   width: 100%;
   /* color: #4A6071; /* */
-  color: #505050; /* */
+  color: #e0e0e0; /* */
+  text-shadow: #000000 1px 1px 1px;
 }
 
 .main {
@@ -957,23 +964,52 @@ h1 {
   display:inline;
   font-family: "Trebuchet MS", Tahoma,"Times New Roman", Times, sans-serif;
   padding-left: 5px;
+  font-size: 20px;
 }
 
 h2 {
-  font-size:1.5em;
+  font-size:1.2em;
+}
+
+h3 {
+  font-size:1em;
 }
 
 h2,h3,h4,h5 {
   font-family:"Trebuchet MS",sans-serif;
 /* background-color:#E07B2A; */
   padding-left:6px;
-/*  border-bottom:1px solid #eee; */
+  border-left:4px solid #3366ff;
+  border-bottom: 2px solid #e0e0e0;
 }
+
+.check h2, .check h3, .check h4, .check h5 {
+  border: none;
+}
+
 table.wiki {
 /* border-collapse: collapse; */
   border: 0px outset #E2ECE5;
   font-family:"bitstream vera sans mono",monospace;
 }
+
+div.log {
+  padding: 5px;
+  color: black;
+  background-color: #e0e0e0;
+  border-radius: 3px;
+  box-shadow: 0 -2px -2px rgba(100, 100, 100, 0.4);
+}
+
+pre.license {
+  border-radius: 4px;
+  font-family:"bitstream vera sans mono",monospace;
+  background-color:#eee;
+  border-radius: 4px;
+  padding: 5px;
+  height: 300px;
+  overflow-y: auto;
+  }
 
 pre.console {
   background-color:#000;
@@ -981,6 +1017,9 @@ pre.console {
   border: 1px inset #eeeeee;
   color:white;
   width:80%;
+  font-size: 12px;
+  border-radius: 4px;
+  font-family:"bitstream vera sans mono",monospace;
 }
 
 td.wiki {
@@ -997,41 +1036,43 @@ table.wiki td {
 
 table.wiki td.preview {
   font-size:12px;
-  font-family:"bitstream vera sans mono",monospace;
+  font-family:monospace;
   background-color:#E6E6E6;
   font-weight:bold;
+  text-shadow: #c0c0c0 1px 1px 1px;
 }
 
 td.option {
   font-size:12px;
-  font-family:bitstream vera sans mono,monospace;
+  font-family:monospace;
   background-color:#E6E6E6;
+  text-shadow: #c0c0c0 1px 1px 1px;
   font-weight:bold;
   color:black;
 }
 
 .newset table input {
   background-color:#ffffff;
-  border:1px solid #c0c0c0;
+  border:0px solid #c0c0c0;
 }
 
 td.desc {
   font-family:Trebuchet MS,sans-serif;
-  background-color:#E6E6E6;
   text-align:right;
-  padding:5px;
+  padding:10px;
 }
 
 span.warn {
   color:red;
 }
 
-.warn { color:#339966; }
+.warn { color:#aa0000; }
 .error { color:#ff0000; }
 
 .notice {
   font-size:18px;
-  color: #4BD548;
+  color: #4B0000;
+  font-weight: bold;
 }
 
 .check {
@@ -1039,6 +1080,8 @@ span.warn {
   margin-left:2em;
   margin-right:2em;
   padding:0.5em;
+  border-radius: 3px;
+  box-shadow: 0 2px 6px rgba(100, 100, 100, 0.3);
 }
 
 .oldset {
@@ -1050,7 +1093,7 @@ span.warn {
 .newset {
   height: 300px;
   overflow-y: scroll;
-  background: #f2f2f2;
+  border:0px;
 }
 
 .step {
@@ -1074,6 +1117,14 @@ span.warn {
   font-family: Trebuchet MS, "Times New Roman", Times, serif;
 }
 
+input[type="submit"] {
+  background-image: -webkit-linear-gradient(top, #969696, #444444);
+  border: none;
+  color: #f0f0f0;
+  font-weight: bold;
+  border-radius: 3px;
+  padding: 10px;
+}
 -->
 </style>
 </head>
@@ -1204,6 +1255,19 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && ($config or $action == 'protect')) {
 
   if (!$Config->config) {
     print "<h2>"._t("Welcome to MoniWiki ! This is your first installation")."</h2>\n";
+
+    if (empty($_GET['step'])) {
+      if (file_exists('COPYING')) {
+        echo "<h1>"._("License")."</h1>";
+        echo "<pre class='license'>";
+        echo file_get_contents("COPYING");
+        echo "</pre>";
+        echo "<form method='get'>";
+        echo "<input type='submit' name='step' value='"._t("Agree")."' /> ";
+        echo "</form>";
+      }
+      exit;
+    } else {
     $initconfig = 'config.php.default';
     if (!empty($_GET['init']) and file_exists($_GET['init']))
       $initconfig = $_GET['init'];
@@ -1224,6 +1288,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && ($config or $action == 'protect')) {
     print "<h2><font color='blue'>"._t("Initial configurations are saved successfully.")."</font></h2>\n";
     print "<h3 class='warn'>"._t("Goto <a href='monisetup.php'>MoniSetup</a> again to configure details")."</h3>\n";
     exit;
+    }
   } else {
     $config=$Config->config;
     checkConfig($config);
@@ -1314,8 +1379,8 @@ if ($_SERVER['REQUEST_METHOD']!="POST") {
   }
 
   if (empty($config['admin_passwd'])) {
-    print "<tr><td><b>\$admin_passwd</b></td>";
-    print "<td><input type='password' name='newpasswd' size='60'></td></tr>\n";
+    print "<tr><td class='option'><b>\$admin_passwd</b></td>";
+    print "<td class='option'><input type='password' name='newpasswd' size='60'></td></tr>\n";
   } else  {
     print "<tr><td><b>Old password</b></td>";
     print "<td><input type='password' name='oldpasswd' size='60'></td></tr>\n";
