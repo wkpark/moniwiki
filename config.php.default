@@ -29,7 +29,7 @@ $use_fakemtime=0; # dir mtime emulation for FAT filesytem.
 $use_hostname= 1; # use hostname or ip address
 $use_group=1; # use group namespace
 $mask_hostname=1; # hide some part of hostnames or ip addresses
-$show_hosts=0;
+$show_hosts=1;
 $edit_rows=16; # editer rows
 #$editform=$data_dir.'/editform.txt'; # custom edit form
 $iconset= 'moni2'; # moni, moni2
@@ -143,6 +143,7 @@ $javascripts=array(
 	'Wikiwyg/lib/Wikiwyg/Preview.js',
 	'Wikiwyg/lib/Wikiwyg/HTML.js',
 	'Wikiwyg/lib/Wikiwyg/Wysiwyg.js',
+	'pasta.js',
 	'ajax.js',
 	'moniwyg.js',
 	'ASCIIMathML.js');
@@ -192,7 +193,7 @@ $myprocessors=array('syntax'=>'vim','sh'=>'vim','csh'=>'vim',
 $use_resizer=2;
 #$use_minoredit=1; // only for wiki owners
 #$auto_search='FixMoin'; # for old moinmoin users
-#$auto_search='AutoGoto';
+$auto_search='AutoGoto';
 #$hr_type='fancy';
 $use_wikiwyg=1; # 1 for GUI button/ 2 to set as default behavior/ 3 to set always use GUI.
 #$wikiwyg_confirm=1; # always confirm
@@ -233,7 +234,7 @@ $use_preview_uploads=1;
 #$use_camelcase=0; # turn off camelcase syntax by default
 #$mediawiki_style=0; # 0: wikiCreole style [[foo bar]]=>[[FooBar]], 1: mediawiki style preserve white spaces
 #$category_regex=urldecode('%EB%B6%84%EB%A5%98$'); # a category example for Korean
-#$use_backlinks=1; # set default fullsearch behavior as backlinks search
+$use_backlinks=1; # set default fullsearch behavior as backlinks search
 $use_backlink_search=1; # use backlink searching
 $fullsearch_tooshort=2; # 
 #$use_smartdiff=1; # use the experimental smart diff XXX
