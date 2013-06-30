@@ -52,11 +52,13 @@ pre.quote {
 }
 
 table.wiki {
+  border-collapse: collapse;
   border: 0px outset #E2ECE5;
 }
 
-td.wiki {
-  border: 0px inset #E2ECE5;
+table.wiki td {
+  border: 1px solid #969696;
+  padding: 5px;
 }
 
 tr.wiki {
@@ -189,7 +191,6 @@ table.closure, td.closure{
 */
 
 div.indent {
-  background-color: lightyellow;
   padding-left:2em;
 }
 
