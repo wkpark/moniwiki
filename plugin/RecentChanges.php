@@ -442,6 +442,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $addr= $parts[1];
     if ($user == 'Anonymous')
       $user = 'Anonymous-' . $addr;
+    else
+      $user = $user . "\t" . $addr;
 
     $day = gmdate('Ymd', $ed_time+$tz_offset);
     //if ($day != $ratchet_day) {
@@ -653,6 +655,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         // make range list
         if ($use_editrange) { // MoinMoin like edit range
           $editor_list = array();
+          if ($editors[$page_key][$day])
           foreach ($editors[$page_key][$day] as $idx=>$name) {
             if (empty($editor_list[$name])) $editor_list[$name] = array();
             $editor_list[$name][] = $idx + 1;
@@ -715,6 +718,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
           $users[$ouser] = $user;
           }
         } else {
+          list($user, $addr) = explode("\t", $user);
           $ouser= $user;
           if (isset($users[$ouser])) $user = $users[$ouser];
           else if (!empty($DBInfo->use_nick)) {
