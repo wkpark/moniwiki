@@ -58,7 +58,7 @@ function do_fullsearch($formatter,$options) {
     }
 
     if (empty($ret['context'])) {
-      $tag=$formatter->link_to("?action=fullsearch&amp;value=$val$qnext&amp;context=20",_("Show Context."));
+      $tag=$formatter->link_to("?action=fullsearch&amp;value=$val$qext$qnext&amp;context=20",_("Show Context."));
       print $tag.'<br />';
     }
     if ($options['id'] != 'Anonymous') {
