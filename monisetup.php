@@ -1118,6 +1118,7 @@ span.warn {
 }
 
 input[type="submit"] {
+  background-color: #444444;
   background-image: -webkit-linear-gradient(top, #969696, #444444);
   border: none;
   color: #f0f0f0;
