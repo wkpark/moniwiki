@@ -177,8 +177,18 @@ function _parse_rlog($formatter,$log,$options=array()) {
              else
                $ip = $user;
              $users[$user]=$ip;
+
+           } else if (!empty($DBInfo->use_avatar)) {
+             $crypted = crypt($ip, $ip);
+             $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
+             $ip = '<img src="'.$mylnk.'" style="width:16px;height:16px;vertical-align:middle" alt="avatar" />'. $user;
+             $users[$user] = $ip;
            } else if (!$DBInfo->mask_hostname and $DBInfo->interwiki['Whois']) {
              $ip="<a href='".$DBInfo->interwiki['Whois']."$ip'>$user</a>";
+             $users[$user] = $ip;
+           } else if ($DBInfo->mask_hostname) {
+             $ip=_mask_hostname($ip);
+             $users[$user] = $ip;
            }
          } else if (!empty($DBInfo->use_avatar)) {
            $crypted = crypt($ip, $ip);
