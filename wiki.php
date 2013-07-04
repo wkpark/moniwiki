@@ -774,7 +774,8 @@ class WikiDB {
   }
 
   function getPageLists($options = array()) {
-    return $this->lazyLoad('titleindexer')->getPages($options);
+    $indexer = $this->lazyLoad('titleindexer');
+    return $indexer->getPages($options);
   }
 
   function getLikePages($needle,$count=100,$opts='') {
@@ -784,11 +785,13 @@ class WikiDB {
 
     $m = @preg_match("/$needle/".$opts,'dummy');
     if ($m===false) return array(); 
-    return $this->lazyLoad('titleindexer')->getLikePages($needle, $count);
+    $indexer = $this->lazyLoad('titleindexer');
+    return $indexer->getLikePages($needle, $count);
   }
 
   function getCounter() {
-    return $this->lazyLoad('titleindexer')->pageCount();
+    $indexer = $this->lazyLoad('titleindexer');
+    return $indexer->pageCount();
   }
 
   function addLogEntry($page_name, $remote_name,$comment,$action="SAVE") {
@@ -933,7 +936,8 @@ class WikiDB {
 
     if (!empty($this->version_class)) {
       $om=umask(~$this->umask);
-      $ret = $this->lazyLoad('version', $this)->_ci($filename,$options['log']);
+      $ver = $this->lazyLoad('version', $this);
+      $ret = $ver->_ci($filename,$options['log']);
       chmod($filename,0666 & $this->umask);
       umask($om);
     }
@@ -991,8 +995,9 @@ class WikiDB {
     if (empty($options['minor']) and !$minor)
       $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,$action);
 
-    if ($is_new) $this->lazyLoad('titleindexer')->addPage($page->name);
-    else $this->lazyLoad('titleindexer')->update($page->name); // just update mtime
+    $indexer = $this->lazyLoad('titleindexer');
+    if ($is_new) $indexer->addPage($page->name);
+    else $indexer->update($page->name); // just update mtime
     return 0;
   }
 
@@ -1014,7 +1019,8 @@ class WikiDB {
     $delete=@unlink($this->text_dir."/$keyname");
     $this->addLogEntry($keyname, $REMOTE_ADDR, $comment, 'DELETE');
 
-    $this->lazyLoad('titleindexer')->deletePage($page->name);
+    $indexer = $this->lazyLoad('titleindexer');
+    $indexer->deletePage($page->name);
     // remove pagelinks and backlinks
     store_pagelinks($page->name, array());
 
@@ -1060,14 +1066,16 @@ class WikiDB {
       rename($olddir,$newdir);
 
     if ($options['history'] && $this->version_class) {
-      $this->lazyLoad('version', $this)->rename($pagename,$new);
+      $version = $this->lazyLoad('version', $this);
+      $version->rename($pagename,$new);
     }
 
     $comment=sprintf(_("Rename %s to %s"),$pagename,$new);
     $this->addLogEntry($okeyname, $REMOTE_ADDR, '', 'DELETE');
     $this->addLogEntry($keyname, $REMOTE_ADDR, $comment, 'CREATE');
 
-    $this->lazyLoad('titleindexer')->renamePage($pagename, $new);
+    $indexer = $this->lazyLoad('titleindexer');
+    $indexer->renamePage($pagename, $new);
   }
 
   function _isWritable($pagename) {
@@ -1173,7 +1181,8 @@ class WikiPage {
     $rev= !empty($options['rev']) ? $options['rev']:(!empty($this->rev) ? $this->rev:'');
     if (!empty($rev)) {
       if (!empty($DBInfo->version_class)) {
-        $out = $DBInfo->lazyLoad('version', $DBInfo)->co($this->name,$rev);
+        $version = $DBInfo->lazyLoad('version', $DBInfo);
+        $out = $version->co($this->name,$rev);
         return $out;
       } else {
         return _("Version info does not supported in this wiki");
@@ -1229,7 +1238,8 @@ class WikiPage {
     global $DBInfo;
 
     if (!empty($DBInfo->version_class)) {
-      $rev= $DBInfo->lazyLoad('version', $DBInfo)->get_rev($this->name,$mtime,$last);
+      $version = $DBInfo->lazyLoad('version', $DBInfo);
+      $rev= $version->get_rev($this->name,$mtime,$last);
 
       if (!empty($rev)) return $rev;
     }
@@ -1247,7 +1257,8 @@ class WikiPage {
     if (!empty($DBInfo->version_class)) {
       $opt = '';
 
-      $out = $DBInfo->lazyLoad('version', $DBInfo)->rlog($this->name,$rev,$opt);
+      $version = $DBInfo->lazyLoad('version', $DBInfo);
+      $out = $version->rlog($this->name,$rev,$opt);
     } else {
       return false;
     }
@@ -5404,7 +5415,8 @@ function wiki_main($options) {
       } else {
         $oldver='';
         if ($DBInfo->version_class) {
-          $oldver = $DBInfo->lazyLoad('version', $DBInfo)->rlog($formatter->page->name,'','','-z');
+          $version = $DBInfo->lazyLoad('version', $DBInfo);
+          $oldver = $version->rlog($formatter->page->name,'','','-z');
         }
         $button= $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
         if ($oldver) {

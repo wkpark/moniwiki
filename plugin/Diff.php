@@ -421,7 +421,8 @@ function macro_diff($formatter,$value,&$options)
     return "<h2>$msg</h2>";
   }
   
-  $out = $DBInfo->lazyLoad('version', $DBInfo)->diff($formatter->page->name,$rev1,$rev2);
+  $version = $DBInfo->lazyLoad('version', $DBInfo);
+  $out = $version->diff($formatter->page->name,$rev1,$rev2);
 
   $ret = '';
   if (!$out) {
