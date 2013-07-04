@@ -2813,13 +2813,12 @@ class Formatter {
   function _list($on,$list_type,$numtype="",$closetype="",
     $divtype=' class="indent"') {
     $close='';$open='';
-    if ($list_type=="dd") {
+    $dtype = array('dd'=>'div', 'dq'=>'blockquote');
+    if ($list_type=="dd" or $list_type=="dq") {
       if ($on)
-         #$list_type="dl><dd";
-         $list_type="div$divtype";
+         $list_type=$dtype[$list_type]."$divtype";
       else
-         #$list_type="dd></dl";
-         $list_type="div";
+         $list_type=$dtype[$list_type];
       $numtype='';
     } else if ($list_type=="dl") {
       if ($on)
@@ -2827,7 +2826,7 @@ class Formatter {
       else
          $list_type="dd></dl";
       $numtype='';
-    } if (!$on and $closetype and $closetype !='dd')
+    } if (!$on and $closetype and !in_array($closetype, array('dd', 'dq')))
       $list_type=$list_type.'>'.$this->_purple().'</li';
 
     if ($on) {
@@ -3352,6 +3351,20 @@ class Formatter {
           if ($in_table) {
             $text.=$this->_table(0,$dumm);$in_table=0;$li_empty=1;
           }
+          if ($indent_type[$in_li] == 'dq') {
+            // close all tags for quote blocks '> '
+            while($in_li >= 0 && $indent_list[$in_li] > 0) {
+               if (!in_array($indent_type[$in_li], array('dd', 'dq')) && $li_open == $in_li)
+                 $text.='ppp'.$this->_li(0,$li_empty);
+               $text.=$this->_list(0,$indent_type[$in_li],"",
+                 $indent_type[$in_li-1]);
+               unset($indent_list[$in_li]);
+               unset($indent_type[$in_li]);
+               unset($_myindlen[$in_li]);
+               $in_li--;
+            }
+          }
+
           $text.=$this->_purple()."<br />\n";
           if ($li_empty==0 && !$this->auto_linebreak ) $text.="<br />\n";
           $li_empty=1;
@@ -3530,6 +3543,7 @@ class Formatter {
            # check div type.
            $mydiv=array('indent');
            if ($match[0][$indlen-1]=='>') {
+             $indtype = 'dq';
              # get user defined style
              if (($line[0]=='.' or $line[0]=='#') and ($p=strpos($line,' '))) {
                $divtype='';
@@ -3554,7 +3568,7 @@ class Formatter {
              preg_match("/^(\*\s?)/",$line,$m);
              $liopen='<li>'; // XXX
              $line=substr($line,strlen($m[1]));
-             if ($indent_list[$in_li] == $indlen && $indent_type[$in_li]!='dd'){
+             if ($indent_list[$in_li] == $indlen && !in_array($indent_type[$in_li], array('dd', 'dq'))){
                 $close.=$this->_li(0);
                 $_myindlen[$in_li]=$myindlen;
              }
@@ -3563,7 +3577,7 @@ class Formatter {
            } elseif (preg_match("/^(([1-9]\d*|[aAiI])\.)(#\d+)?\s/",$line,$limatch)){
              $myindlen=$indlen+strlen($limatch[1])+1;
              $line=substr($line,strlen($limatch[0]));
-             if ($indent_list[$in_li] == $indlen) {
+             if ($indent_list[$in_li] == $indlen && !in_array($indent_type[$in_li], array('dd', 'dq'))) {
                 $close.=$this->_li(0);
                 $_myindlen[$in_li]=$myindlen;
              }
@@ -3586,15 +3600,14 @@ class Formatter {
              $indlen=$indent_list[$in_li]; // XXX
            }
          }
-         if ($indent_list[$in_li] < $indlen) {
-            $in_li++;
-            $indent_list[$in_li]=$indlen; # add list depth
-            $_myindlen[$in_li]=$myindlen; # add list depth
-            $indent_type[$in_li]=$indtype; # add list type
-            $open.=$this->_list(1,$indtype,$numtype,'',$divtype);
-         } else if ($indent_list[$in_li] > $indlen) {
-            while($in_li >= 0 && $indent_list[$in_li] > $indlen) {
-               if ($indent_type[$in_li]!='dd' && $li_open == $in_li)
+         if ($indent_list[$in_li] >= $indlen) {
+           $fixlen = $indlen;
+           if ($indent_list[$in_li] == $indlen and
+               $indlen > 0 and $in_li > 0 and $indent_type[$in_li] != $indtype)
+             $fixlen = $indent_type[$in_li - 1]; // close prev tags
+
+            while($in_li >= 0 && $indent_list[$in_li] > $fixlen) {
+               if (!in_array($indent_type[$in_li], array('dd', 'dq')) && $li_open == $in_li)
                  $close.=$this->_li(0,$li_empty);
                $close.=$this->_list(0,$indent_type[$in_li],"",
                  $indent_type[$in_li-1]);
@@ -3604,6 +3617,13 @@ class Formatter {
                $in_li--;
             }
             #$li_empty=0;
+         }
+         if ($indent_list[$in_li] < $indlen) {
+            $in_li++;
+            $indent_list[$in_li]=$indlen; # add list depth
+            $_myindlen[$in_li]=$myindlen; # add list depth
+            $indent_type[$in_li]=$indtype; # add list type
+            $open.=$this->_list(1,$indtype,$numtype,'',$divtype);
          }
          if ($liopen) $open.=$liopen;
          $li_empty=0;
@@ -3851,7 +3871,7 @@ class Formatter {
     if ($in_table) $close.="</table>\n";
     # close indent
     while($in_li >= 0 && $indent_list[$in_li] > 0) {
-      if ($indent_type[$in_li]!='dl' && $li_open == $in_li) // XXX
+      if (!in_array($indent_type[$in_li], array('dd', 'dq')) && $li_open == $in_li) // XXX
         $close.=$this->_li(0);
 #     $close.=$this->_list(0,$indent_type[$in_li]);
       $close.=$this->_list(0,$indent_type[$in_li],"",$indent_type[$in_li-1]);
