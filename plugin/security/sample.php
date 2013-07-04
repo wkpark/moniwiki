@@ -2,7 +2,7 @@
 # a sample security plugin for the MoniWiki
 # $Id: sample.php,v 1.4 2006/01/14 03:25:24 wkpark Exp $
 
-class Security_sample extends Security {
+class Security_sample extends Security_base {
     var $DB;
 
     function Security_sample($DB="") {

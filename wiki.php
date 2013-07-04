@@ -456,10 +456,10 @@ class Counter {
   function close() { }
 }
 
-class Security {
+class Security_base {
   var $DB;
 
-  function Security($DB="") {
+  function Security_base($DB = '') {
     $this->DB=$DB;
   }
 
@@ -573,7 +573,7 @@ class WikiDB {
       $class='Security_'.$this->security_class;
       $this->security=new $class ($this);
     } else
-      $this->security=new Security($this);
+      $this->security=new Security_base($this);
   }
 
   function initAlias() {

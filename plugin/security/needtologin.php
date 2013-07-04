@@ -2,7 +2,7 @@
 # a needtologin security plugin for the MoniWiki
 # $Id: needtologin.php,v 1.7 2006/01/04 16:51:37 wkpark Exp $
 
-class Security_needtologin extends Security {
+class Security_needtologin extends Security_base {
   var $DB;
 
   function Security_needtologin($DB="") {

@@ -2,7 +2,7 @@
 # a auth basic security plugin for the MoniWiki
 # $Id: authbasic.php,v 1.2 2010/08/26 02:56:53 wkpark Exp $
 
-class Security_authbasic extends Security {
+class Security_authbasic extends Security_base {
     var $DB;
 
     function Security_authbasic($DB="") {

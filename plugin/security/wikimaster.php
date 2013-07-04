@@ -2,7 +2,7 @@
 # a wikimaster security plugin for the MoniWiki
 # $Id: wikimaster.php,v 1.6 2006/07/07 14:44:16 wkpark Exp $
 
-class Security_wikimaster extends Security {
+class Security_wikimaster extends Security_base {
   var $DB;
 
   function Security_wikimaster($DB='') {

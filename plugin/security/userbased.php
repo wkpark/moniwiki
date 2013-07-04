@@ -2,7 +2,7 @@
 # a user based security plugin for the MoniWiki
 # $Id: userbased.php,v 1.7 2008/12/22 08:47:40 wkpark Exp $
 
-class Security_userbased extends Security {
+class Security_userbased extends Security_base {
   var $DB;
 
   function Security_userbased($DB='') {

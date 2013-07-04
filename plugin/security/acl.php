@@ -27,7 +27,7 @@
 
 require_once('lib/checkip.php');
 
-class Security_ACL extends Security {
+class Security_ACL extends Security_base {
     var $DB;
 
     var $_acl_ok=0;

@@ -5,7 +5,7 @@
 # $Id: htaccesslogin.php,v 1.2 2010/06/22 08:06:39 wkpark Exp $
 #
 
-class Security_htaccesslogin extends Security {
+class Security_htaccesslogin extends Security_base {
   var $DB;
 
   function Security_htaccesslogin($DB="") {
