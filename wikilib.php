@@ -137,7 +137,7 @@ function _rawurlencode($url) {
 
 function _urlencode($url) {
   $url= preg_replace('#:+#',':',$url);
-  $t= preg_replace("/([^a-z0-9\/\?\.\+~#&:;=%\-_]{1})/ie","'%'.strtoupper(dechex(ord(substr('\\1',-1))))",$url);
+  $t= preg_replace("/([^a-z0-9\/\?\.~#&:;=%\-_]{1})/ie","'%'.strtoupper(dechex(ord(substr('\\1',-1))))",$url);
   return preg_replace("/(%)(?![a-f0-9]{2})/i","%25",$t);
 }
 
@@ -1758,8 +1758,8 @@ function do_post_DeleteFile($formatter,$options) {
   global $DBInfo;
 
   if ($_SERVER['REQUEST_METHOD']=="POST") {
-    if ($options['value']) {
-      $key=$DBInfo->pageToKeyname(urldecode($options['value']));
+    if (!empty($options['value'])) {
+      $key=$DBInfo->pageToKeyname(urldecode(_urlencode($options['value'])));
       $dir=$DBInfo->upload_dir."/$key";
     } else {
       $dir=$DBInfo->upload_dir;
@@ -1839,7 +1839,7 @@ function do_post_DeletePage($formatter,$options) {
   
   $page = $DBInfo->getPage($options['page']);
 
-  if (!empty($options['name'])) $options['name']=urldecode($options['name']);
+  if (!empty($options['name'])) $options['name']=urldecode(_urlencode($options['name']));
   $pagename= $formatter->page->urlname;
   if (!empty($options['name']) and $options['name'] == $options['page']) {
     $DBInfo->deletePage($page,$options);
