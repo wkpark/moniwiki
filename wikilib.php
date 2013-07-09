@@ -130,7 +130,7 @@ function get_pagelist($formatter,$pages,$action,$curpage=1,$listcount=10,$bra="[
 
 function _rawurlencode($url) {
   $name=rawurlencode($url);
-  $urlname=preg_replace('/%(2F|7E|3A|2B)/ei',"chr(hexdec('\\1'))",$name);
+  $urlname=preg_replace('/%(2F|7E|3A)/ei',"chr(hexdec('\\1'))",$name);
   $urlname= preg_replace('#:+#',':',$urlname);
   return $urlname;
 }
@@ -1984,7 +1984,7 @@ function do_goto($formatter,$options) {
      $url=_rawurlencode($url);
      if ($options['redirect'])
        $url=$formatter->link_url($url,"?action=show&amp;redirect=".
-          $formatter->page->name.$anchor);
+          str_replace('+', '%2B', $formatter->page->name).$anchor);
      else
        $url=$formatter->link_url($url,"");
      # FastCGI/PHP does not accept multiple header infos. XXX
