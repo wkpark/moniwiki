@@ -13,8 +13,8 @@
 //
 // $Id: wiki.php,v 1.639 2011/08/09 13:51:53 wkpark Exp $
 //
-$_revision = substr('$Revision: 1.840 $',1,-1);
-$_release = '1.2.0';
+$_revision = substr('$Revision: 1.847 $',1,-1);
+$_release = '1.2.1-GIT';
 
 #ob_start("ob_gzhandler");
 
