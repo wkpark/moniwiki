@@ -1762,7 +1762,7 @@ class Formatter {
     #  * single bracketted words [Hello World] etc.
     #  * single bracketted words with double quotes ["Hello World"]
     #  * double bracketted words with double quotes [["Hello World"]]
-    "(?<!\[)\!?\[(\[)$single(\")?(?:[^\[\]\",<\s'\*][^\[\]]{0,255}[^\"])(?(5)\"(?:[^\"\]]*))(?(4)\])\](?!\])";
+    "(?<!\[)\!?\[(\[)$single(\")?(?:[^\[\]\",<\s'\*]?[^\[\]]{0,255}[^\"])(?(5)\"(?:[^\"\]]*))(?(4)\])\](?!\])";
 
     if ($camelcase)
       $this->wordrule.='|'.
