@@ -519,10 +519,10 @@ Wikiwyg.prototype.saveChanges = function() {
     }
 
     // save section
-    myaction=myaction.replace(/edit\//,'savepage/');
-    var toSend = 'action=' + myaction +
+    var toSend = 'action=' + myaction + '/ajax' +
     '&savetext=' + encodeURIComponent(wikitext) +
     '&datestamp=' + datestamp;
+    myaction=myaction.replace(/=edit\//,'=savepage/');
 
     if (section)
         toSend += '&section=' + section;
