@@ -221,7 +221,7 @@ EOF;
         }
       }
       if (isset($data['searched'])) extract($data);
-      else $hits = $data;
+      else if (!empty($data)) $hits = $data;
     }
   }
 
