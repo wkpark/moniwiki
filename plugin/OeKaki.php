@@ -95,8 +95,10 @@ function do_OeKaki($formatter,$options) {
       print "error\n\n";
     } else {
       $img=fopen($imgpath,'w');
-      fwrite($img,substr($raw,$p+2));
-      fclose($img);
+      if (is_resource($img)) {
+        fwrite($img,substr($raw,$p+2));
+        fclose($img);
+      }
     }
     header("Content-type: text/plain");
     print "ok\n\n";
