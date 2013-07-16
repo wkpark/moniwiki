@@ -387,7 +387,7 @@ msgstr "클립보드"
 
 #: ../plugin/Clip.php:82
 msgid "Cut & Paste a Clipboard Image"
-msgstr "클립보드의 이미지를 잘르고 붙이기"
+msgstr "클립보드의 이미지를 자르고 붙이기"
 
 #: ../plugin/Comment.php:91
 msgid "Comment"
