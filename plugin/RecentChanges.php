@@ -104,7 +104,10 @@ function ajax_RecentChanges($formatter, $options = array()) {
   $info = array();
   foreach ($rclist as $page_name) {
     $p= new WikiPage($page_name);
-    if (!$p->exists()) continue; // XXX
+    if (!$p->exists()) {
+      $info[$page_name]['state'] = 'deleted';
+      continue; // XXX
+    }
 
     $ed_time = $p->mtime();
     if ($ed_time <= $bookmark) break;
@@ -882,6 +885,9 @@ function update_bookmark(time) {
           var re = new RegExp("^.*" + url_prefix + '/');
           title = decodeURIComponent(item.href.replace(re, ''));
         }
+
+        if (ret[title] && ret[title]['state'] == 'deleted') { jj++; continue; }
+
         if (rclist[jj] == title && ret[title]) {
           var icon = document.getElementById('icon-' + ii);
           var state = document.createElement('SPAN');
