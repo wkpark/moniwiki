@@ -560,10 +560,12 @@ FORM;
           $config['upload_dir']);
         echo "</div>";
 
-        $fp = fopen('pds_htaccess','w');
+        $fp = @fopen('pds_htaccess','w');
         if (is_resource($fp)) {
           fwrite($fp,implode('',$work));
           fclose($fp);
+        } else {
+          echo _t("Unable to open .htaccess");
         }
         @unlink('pds/test.php');
       }
@@ -587,10 +589,12 @@ FORM;
           $config['upload_dir']);
         echo "</div>";
 
-        $fp=fopen('imgs_htaccess','w');
+        $fp=@fopen('imgs_htaccess','w');
         if (is_resource($fp)) {
           fwrite($fp,implode('',$work));
           fclose($fp);
+        } else {
+          echo _t("Unable to open .htaccess");
         }
       }
     }
@@ -911,7 +915,11 @@ function initlocale($lang,$charset) {
 $_Config['include_path']='';
 $_Config['charset']='UTF-8';
 
-$lang = 'auto';
+if (empty($_GET['lang']))
+  $lang = 'auto';
+else
+  $lang = $_GET['lang'];
+
 $lang = set_locale($lang,$_Config['charset']);
 initlocale($lang,$_Config['charset']);
 
@@ -1126,13 +1134,38 @@ input[type="submit"] {
   border-radius: 3px;
   padding: 10px;
 }
+
+#lang {
+  float: right;
+  padding-right: 6px;
+}
 -->
 </style>
 </head>
 <body>
 EOF;
 
-print "<div class='body'><div class='header'><h1><img src='imgs/moniwiki-48.png' style='vertical-align: middle'/> "._t("MoniWiki Setup")."</h1></div><div class='main'>\n";
+print "<div class='body'><div class='header'>";
+echo "<div id='lang'>";
+echo "<form action=''>";
+echo "<select name='lang' onchange='submit()'>";
+$ls = array('ko'=>'korean',
+            'en'=>'english',
+            'fr'=>'france');
+
+if (!empty($lang) and $lang != 'auto' and isset($ls[$lang]))
+  $sel = $lang;
+echo "<option value='auto'>--"._t("Select") ."--</option>";
+foreach ($ls as $k=>$l) {
+  if ($sel == $k)
+    $selected = 'selected="selected" ';
+  else
+    $selected = '';
+  echo "<option value='$k' $selected>".ucfirst($l).
+      "</option>\n";
+}
+echo "</select></form></div>";
+echo "<h1><img src='imgs/moniwiki-48.png' style='vertical-align: middle'/> "._t("MoniWiki Setup")."</h1></div><div class='main'>\n";
 
 if (empty($_POST['action']) && file_exists("config.php") && !is_writable("config.php")) {
   print "<h2 class='warn'>"._t("'config.php' is not writable !")."</h2>\n";
