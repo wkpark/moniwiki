@@ -494,6 +494,7 @@ FORM;
 
     $writables=array("upload_dir",'cache_public_dir',"editlog_name");
 
+    $is_apache = preg_match('/apache/i', $_SERVER['SERVER_SOFTWARE']);
     $port= ($_SERVER['SERVER_PORT'] != 80) ? $_SERVER['SERVER_PORT']:80;
     $path = preg_replace('/monisetup\.php/','',$_SERVER['SCRIPT_NAME']);
     $host = $_SERVER['SERVER_ADDR'];
@@ -528,7 +529,8 @@ FORM;
       } else
         print "<h3><font color=blue>".sprintf(_t("%s is writable"),$config[$file])."</font> :)</h3>\n";
     }
-    if (is_dir($config['upload_dir'])) {
+    if ($is_apache && is_dir($config['upload_dir'])) {
+      echo "<div class='helpicon'><a href='http://moniwiki.kldp.net/wiki.php/.htaccess'>?</a></div>";
       $chk=array(
           'AddType'=>"AddType text/plain .sh .cgi .pl .py .php .php3 .php4 .phtml .html\n",
           'ForceType'=>"<Files ~ '\.(php.?|pl|py|cgi)$'>\nForceType text/plain\n</Files>\n",
@@ -1138,6 +1140,17 @@ input[type="submit"] {
 #lang {
   float: right;
   padding-right: 6px;
+}
+.helpicon {
+  display: inline-block;
+  float: right;
+  border-radius: 4px;
+  color: red;
+  border: 1px solid gray;
+  padding: 0 5px 0 5px;
+}
+.helpicon a {
+  text-decoration: none;
 }
 -->
 </style>
