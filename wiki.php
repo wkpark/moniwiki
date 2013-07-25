@@ -3553,8 +3553,10 @@ class Formatter {
                $divtype.=' class="quote '.implode(' ',$mydiv).'"';
                $line=substr($line,$p+1);
              } else {
-               if ($line[0] == ' ')
+               if ($line[0] == ' ') {
                  $line=substr($line,1); // with space
+                 $myindlen = $indlen + 1;
+               }
                $divtype=' class="quote indent '.$this->quote_style.'"';
              }
            } else {
@@ -3600,7 +3602,8 @@ class Formatter {
              $indlen=$indent_list[$in_li]; // XXX
            }
          }
-         if ($indent_list[$in_li] >= $indlen) {
+         if ($indent_list[$in_li] > $indlen ||
+            $indtype != 'dd' && $indent_type[$in_li][1] != $indtype[1]) {
            $fixlen = $indlen;
            if ($indent_list[$in_li] == $indlen and
                $indlen > 0 and $in_li > 0 and $indent_type[$in_li] != $indtype)
