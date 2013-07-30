@@ -30,6 +30,9 @@ function macro_Include($formatter,$value="") {
     $if=new Formatter($ipage);
     $ibody=$ipage->_get_raw_body();
     $opt['nosisters']=1;
+
+    $if->get_javascripts(); // trash default javascripts
+
     ob_start();
     $if->send_page($title.$ibody,$opt);
     $out= ob_get_contents();
