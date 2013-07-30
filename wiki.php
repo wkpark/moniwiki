@@ -5419,6 +5419,7 @@ function wiki_main($options) {
       }
 
       $msg_404='';
+      $formatter->header("HTTP/1.1 404 Not found");
       if (empty($Config['no_404'])) $msg_404="Status: 404 Not found"; # for IE
       if (!empty($options['is_robot']) or !empty($Config['nofancy_404'])) {
         $formatter->header($msg_404);
