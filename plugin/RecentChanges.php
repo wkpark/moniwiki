@@ -893,11 +893,11 @@ function update_bookmark(time) {
           var state = document.createElement('SPAN');
           if (ret[title]['state'] == 'new') {
             state.innerHTML = icon_new;
-            icon.href = icon.href.replace(/action=(diff|info)(&bookmark=\d+)?/, 'action=info');
+            icon.href = icon.href.replace(/action=(diff|info)((?:&|&amp;)bookmark=\d+)?/, 'action=info');
             icon.innerHTML = icon_show;
           } else {
             state.innerHTML = icon_updated;
-            icon.href = icon.href.replace(/action=(diff|info)(&bookmark=\d+)?/, 'action=diff&bookmark=' + bookmark);
+            icon.href = icon.href.replace(/action=(diff|info)((?:&|&amp;)bookmark=\d+)?/, 'action=diff&bookmark=' + bookmark);
             icon.innerHTML = icon_diff;
           }
 
