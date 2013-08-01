@@ -2034,6 +2034,7 @@ class Formatter {
       break;
     case '*':
         if (!empty($opts['nomacro'])) return ''; # remove macro
+      $url = preg_replace($this->baserule, $this->baserepl, $url); // apply inline formatting rules
       return $this->macro_repl('FootNote',$url);
       break;
     case '!':
