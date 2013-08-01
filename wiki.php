@@ -762,7 +762,10 @@ class WikiDB {
           }
         }
         // create
-        $this->$name = new $class($params);
+        if (!empty($params))
+          $this->$name = new $class($params);
+        else
+          $this->$name = new $class();
 
         // init module
         if (method_exists($this->$name, 'init_module')) {
