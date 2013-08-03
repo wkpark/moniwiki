@@ -1626,7 +1626,7 @@ EXTRA;
     if ($formatter->page->exists())
       $changes_btn=' <span class="button"><input type="submit" class="button" tabindex="6" name="button_changes" class="preview-button" value="'.
         _("Show changes").'" /></span>';
-    if ($preview)
+    if ($preview and empty($options['conflict']))
       $skip_preview= ' '.$formatter->link_to('#preview',_("Skip to preview"),' class="preview-anchor"');
     if (!empty($DBInfo->use_wikiwyg)) {
       $confirm = 'false';
@@ -2349,6 +2349,7 @@ function do_post_savepage($formatter,$options) {
         $button_preview = 1;
       } else {
         $options['title'] = _("Conflict error!");
+        $button_preview = 1;
       }
 
       if ($options['conflict'] and !empty($merge))
