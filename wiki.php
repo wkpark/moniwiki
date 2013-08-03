@@ -1980,7 +1980,7 @@ class Formatter {
         $col=strtok($url,' '); $url=strtok('');
         #if (!preg_match('/^#[0-9a-f]{6}$/',$col)) $col=substr($col,1);
         #return "<span style='color:$col'>$url</span>";
-        if (preg_match('/^#[0-9a-f]{6}$/',$col))
+        if (preg_match('/^#[0-9a-f]{6}$/i',$col))
           return "<span style='color:$col'>$url</span>";
         $url=$col.' '.$url;
       } else if (preg_match('/^((?:\+|\-)([1-6]?))(?=\s)(.*)$/',$url,$m)) {
