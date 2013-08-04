@@ -230,10 +230,11 @@ class Version_RCS {
     $fp = @fopen($fname, 'r');
     if (!is_resource($fp)) return 0; // ignore
 
-    fseek($fp, -2, SEEK_END);
-    $end = fread($fp, 2);
+    fseek($fp, -4, SEEK_END);
+    $end = fread($fp, 4);
     fclose($fp);
-    if ($end != "@\n") return 1; // broken
+    //if ($end != "@\n") return 1; // broken
+    if (!preg_match("/@\n\s*$/", $end)) return 1; // broken
     return 0;
   }
 
