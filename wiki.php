@@ -2180,7 +2180,7 @@ class Formatter {
           $size = '';
           if (!empty($this->fetch_imagesize))
             $size = '('.$this->macro_repl('ImageFileSize', $url).')';
-          return "<div class='externalImage'><img class='external' alt='$link' $attr src='$url' />".
+          return "<div class='externalImage' $attr><img class='external' alt='$link' $attr src='$url' />".
                 "<div><a href='$url'><span>[$type external image$size]</span></a></div></div>";
         }
       }
