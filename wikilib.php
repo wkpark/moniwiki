@@ -3456,7 +3456,7 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
   $keys=array();
 
   if ($value=='' or $value=='all') $sel='';
-  else $sel=$value;
+  else $sel = strtoupper($value);
 
   // get all keys
   $all_keys = get_keys();
