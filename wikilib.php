@@ -1466,7 +1466,7 @@ function macro_Edit($formatter,$value,$options='') {
   else
     $preview_anchor = '';
 
-  if (!empty($options['page']))
+  if (isset($options['page'][0]))
     $previewurl=$formatter->link_url(_rawurlencode($options['page']), $preview_anchor);
   else
     $previewurl=$formatter->link_url($formatter->page->urlname, $preview_anchor);
@@ -1839,9 +1839,9 @@ function do_post_DeletePage($formatter,$options) {
   
   $page = $DBInfo->getPage($options['page']);
 
-  if (!empty($options['name'])) $options['name']=urldecode(_urlencode($options['name']));
+  if (isset($options['name'][0])) $options['name']=urldecode(_urlencode($options['name']));
   $pagename= $formatter->page->urlname;
-  if (!empty($options['name']) and $options['name'] == $options['page']) {
+  if (isset($options['name'][0]) and $options['name'] == $options['page']) {
     $DBInfo->deletePage($page,$options);
     $title = sprintf(_("\"%s\" is deleted !"), $page->name);
 
@@ -2995,7 +2995,7 @@ function macro_UserPreferences($formatter,$value,$options='') {
   }
 
   $passwd_btn=_("Password");
-  $url=$formatter->link_url("UserPreferences");
+  $url=$formatter->link_url($formatter->page->name);
   # setup form
   if ($user->id == 'Anonymous') {
     if (!empty($options['login_id'])) {

@@ -4490,7 +4490,7 @@ FOOT;
     #$heading=$this->link_to("?action=fullsearch&amp;value="._urlencode($name),$title);
     $qext = '';
     if (!empty($DBInfo->use_backlinks)) $qext='&amp;backlinks=1';
-    if (!empty($link))
+    if (isset($link[0]))
       $title="<a href=\"$link\">$title</a>";
     else if (empty($options['nolink']))
       $title=$this->link_to("?action=fullsearch$qext&amp;value="._urlencode($mypgname),$title);
