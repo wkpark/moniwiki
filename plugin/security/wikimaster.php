@@ -19,12 +19,12 @@ class Security_wikimaster extends Security_base {
   }
 
   function may_edit($action,$options) {
-    if (!$options['page']) return 0;
+    if (!isset($options['page'][0])) return 0; # XXX
     return 1;
   }
 
   function may_deletepage($action,&$options) {
-    if (!$options['page']) return 0;
+    if (!isset($options['page'][0])) return 0; # XXX
     if (in_array($options['id'],$this->allowed_users)) return 1;
     $options['err']=sprintf(_("You are not allowed to '%s' on this page."),$action);
     $options['err'].=" "._("Please contact to WikiMaster");
@@ -33,7 +33,7 @@ class Security_wikimaster extends Security_base {
   }
 
   function may_deletefile($action,&$options) {
-    if (!$options['page']) return 0;
+    if (!isset($options['page'][0])) return 0; # XXX
     if (in_array($options['id'],$this->allowed_users)) return 1;
     $options['err']=sprintf(_("You are not allowed to '%s' on this page."),$action);
     $options['err'].=" "._("Please contact to WikiMaster");
@@ -42,7 +42,7 @@ class Security_wikimaster extends Security_base {
   }
 
   function may_rename($action,&$options) {
-    if (!$options['page']) return 0;
+    if (!isset($options['page'][0])) return 0; # XXX
     if (in_array($options['id'],$this->allowed_users)) return 1;
     $options['err']=sprintf(_("You are not allowed to '%s' on this page."),$action);
     $options['err'].=" "._("Please contact to WikiMaster");
@@ -51,18 +51,18 @@ class Security_wikimaster extends Security_base {
   }
 
   function may_uploadfile($action,$options) {
-    if (!$options['page']) return 0;
+    if (!isset($options['page'][0])) return 0; # XXX
     return 1;
   }
 
   function may_rcspurge($action,$options) {
-    if (!$options['page']) return 0;
+    if (!isset($options['page'][0])) return 0; # XXX
     if (in_array($options['id'],$this->DB->owners)) return 1;
     return 0;
   }
 
 #  function may_fullsearch($action,&$options) {
-#    if (!$options['page']) return 0; # XXX
+#    if (!isset($options['page'][0])) return 0; # XXX
 #    if ($options['id']=='Anonymous') {
 #      $options['err']=sprintf(_("You are not allowed to '%s' on this page"),$action);
 #      $options['err'].="\n"._("Please Login or make your ID on this Wiki ;)");

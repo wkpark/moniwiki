@@ -19,13 +19,13 @@ class Security_userbased extends Security_base {
   }
 
   function may_edit($action,$options) {
-    if (!$options['page']) return 0;
+    if (!isset($options['page'][0])) return 0; # XXX
     if (in_array($options['page'],$this->public_pages)) return 1;
     return 1;
   }
 
   function may_deletepage($action,&$options) {
-    if (!$options['page']) return 0;
+    if (!isset($options['page'][0])) return 0; # XXX
     if (in_array($options['id'],$this->allowed_users)) return 1;
     $options['err']=sprintf(_("You are not allowed to '%s' on this page."),$action);
     $options['err'].=" "._("Please contact to WikiMaster");
@@ -33,7 +33,7 @@ class Security_userbased extends Security_base {
   }
 
   function may_deletefile($action,&$options) {
-    if (!$options['page']) return 0;
+    if (!isset($options['page'][0])) return 0; # XXX
     if (in_array($options['id'],$this->allowed_users)) return 1;
     $options['err']=sprintf(_("You are not allowed to '%s' on this page."),$action);
     $options['err'].=" "._("Please contact to WikiMaster");
@@ -41,7 +41,7 @@ class Security_userbased extends Security_base {
   }
 
   function may_rename($action,&$options) {
-    if (!$options['page']) return 0;
+    if (!isset($options['page'][0])) return 0; # XXX
     if (in_array($options['id'],$this->allowed_users)) return 1;
     $options['err']=sprintf(_("You are not allowed to '%s' on this page."),$action);
     $options['err'].=" "._("Please contact to WikiMaster");
@@ -49,7 +49,7 @@ class Security_userbased extends Security_base {
   }
 
   function may_uploadfile($action,$options) {
-    if (!$options['page']) return 0;
+    if (!isset($options['page'][0])) return 0; # XXX
     return 1;
   }
 

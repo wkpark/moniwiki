@@ -22,7 +22,7 @@ class Security_mustlogin extends Security_base {
 
   function may_edit($action,&$options) {
     $public_pages=array('WikiSandBox','WikiSandbox','GuestBook','SandBox');
-    if (!$options['page']) return 0; # XXX
+    if (!isset($options['page'][0])) return 0; # XXX
     if (in_array($options['page'],$public_pages)) return 1;
     if ($options['id']=='Anonymous') {
       $options['err']=sprintf(_("You are not allowed to '%s' on this page"),$action);
@@ -34,7 +34,7 @@ class Security_mustlogin extends Security_base {
   }
 
   function may_blog($action,&$options) {
-    if (!$options['page']) return 0; # XXX
+    if (!isset($options['page'][0])) return 0; # XXX
     if ($options['id']=='Anonymous') {
       $options['err']=sprintf(_("You are not allowed to '%s' on this page"),$action);
       $options['err'].="\n"._("Please Login or make your ID on this Wiki ;)");
@@ -45,7 +45,7 @@ class Security_mustlogin extends Security_base {
   }
 
   function may_uploadfile($action,&$options) {
-    if (!$options['page']) return 0;
+    if (!isset($options['page'][0])) return 0; # XXX
     if ($options['id']=='Anonymous') {
       $options['err']=sprintf(_("You are not allowed to '%s' on this page"),$action);
       $options['err'].="\n"._("Please Login or make your ID on this Wiki ;)");
