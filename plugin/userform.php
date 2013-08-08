@@ -528,7 +528,8 @@ function do_userform($formatter,$options) {
   $formatter->send_header($myrefresh,$options);
   $formatter->send_title($title,"",$options);
   if (!$title && (empty($DBInfo->control_read) or $DBInfo->security->is_allowed('read',$options)) ) {
-    $formatter->send_page();
+    $lnk=$formatter->link_to('?action=show');
+    echo sprintf(_("return to %s"), $lnk);
   } else {
     if (!empty($form)) print $form;
 #    else $formatter->send_page("Goto UserPreferences");
