@@ -1856,24 +1856,29 @@ function do_post_DeletePage($formatter,$options) {
     $formatter->send_title($title,"",$options);
     $formatter->send_footer('',$options);
     return;
-  } else if (!empty($options['name'])) {
+  } else if (isset($options['name'][0])) {
     #print $options['name'];
     $options['msg'] = _("Please delete this file manually.");
   }
   $title = sprintf(_("Delete \"%s\" ?"), $page->name);
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
+  $btn = _("Summary");
   print "<form method='post'>
-Comment: <input name='comment' size='80' value='' /><br />\n";
+$btn: <input name='comment' size='80' value='' /><br />\n";
   if (!empty($DBInfo->delete_history))
     print _("with revision history")." <input type='checkbox' name='history' />\n";
+
+  $pwd = _("Password");
+  $btn = _("Delete Page");
+  $msg = _("Only WikiMaster can delete this page");
   if ($DBInfo->security->is_protected("DeletePage",$options))
-    print "Password: <input type='password' name='passwd' size='20' value='' />
-Only WikiMaster can delete this page<br />\n";
+    print "$pwd: <input type='password' name='passwd' size='20' value='' />
+$msg<br />\n";
   print "
     <input type='hidden' name='action' value='DeletePage' />
     <input type='hidden' name='name' value='$pagename' />
-    <input type='submit' value='Delete page' />
+    <span class='button'><input type='submit' class='button' value='$btn' /></span>
     </form>";
 #  $formatter->send_page();
   $formatter->send_footer('',$options);
