@@ -2367,11 +2367,9 @@ function do_post_savepage($formatter,$options) {
     return;
   }
   if ($comment && (function_exists('mb_strlen') and mb_strlen($comment, $DBInfo->charset) > 256) or (strlen($comment) > 256) ) {
-    $options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
-    $formatter->send_header("",$options);
-    $formatter->send_title(_("Too long Comment"),"",$options);
-    $formatter->send_footer();
-    return;
+    //$options['msg']=sprintf(_("Go back or return to %s"),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
+    $options['title']= _("Too long Comment");
+    $button_preview = 1;
   }
 
   // XXX captcha
