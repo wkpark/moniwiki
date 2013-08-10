@@ -825,6 +825,14 @@ class WikiDB {
     if (!empty($opts['ago'])) {
       $date_from= $time_current - ($opts['ago'] * $secs_per_day);
       $date_to= $date_from + ($days * $secs_per_day);
+    } else if (!empty($opts['from'])) {
+      $from = strtotime($opts['from']);
+      if ($time_current > $from)
+        $date_from= $from;
+      else
+        $date_from = $time_current - ($from - $time_current);
+
+      $date_to= $date_from + ($days * $secs_per_day);
     } else {
       if (!empty($opts['items'])) {
         $date_from= $time_current - (365 * $secs_per_day);

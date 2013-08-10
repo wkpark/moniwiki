@@ -238,7 +238,12 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       if ($k=='item' or $k=='items') $opts['items']=min((int)$v,RC_MAX_ITEMS);
       else if ($k=='days') $days=min(abs($v),RC_MAX_DAYS);
       else if ($k=="datefmt") $my_date_fmt=$v;
-      else if ($k=='ago') $opts['ago']=abs($v);
+      else if ($k=='ago') {
+        if (is_numeric($v) and $v == abs($v))
+          $opts['ago'] = abs($v);
+        else
+          $opts['from'] = $v;
+      }
       else if ($k=="new") $checknew=$v;
       else if ($k=='strimwidth' and is_numeric($v) and (abs($v) > 15 or $v == 0))
         $strimwidth =abs($v);
@@ -346,7 +351,17 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
   // override ago
   empty($opts['ago']) ? $opts['ago'] = 0:null;
-  $opts['ago']=!empty($_GET['ago']) ? abs($_GET['ago']):$opts['ago'];
+  if (!empty($_GET['ago']) and is_numeric($_GET['ago']))
+    $opts['ago'] = abs($_GET['ago']);
+  else
+    $opts['from'] = $_GET['ago'];
+
+  // override times
+  // accept both 'item' or 'items'
+  $tmp = isset($_GET['item']) ? $_GET['item'] :
+        (isset($_GET['items']) ? $_GET['items'] : null);
+  !empty($tmp) ? $opts['items'] = min(abs($tmp), RC_MAX_ITEMS):null;
+  unset($tmp);
 
   // daysago
   $daysago='&amp;days='.$days;
