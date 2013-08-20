@@ -3367,7 +3367,7 @@ class Formatter {
             // close all tags for quote blocks '> '
             while($in_li >= 0 && $indent_list[$in_li] > 0) {
                if (!in_array($indent_type[$in_li], array('dd', 'dq')) && $li_open == $in_li)
-                 $text.='ppp'.$this->_li(0,$li_empty);
+                 $text.=$this->_li(0,$li_empty);
                $text.=$this->_list(0,$indent_type[$in_li],"",
                  $indent_type[$in_li-1]);
                unset($indent_list[$in_li]);
