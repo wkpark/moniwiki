@@ -1599,6 +1599,8 @@ class Formatter {
     $this->user=&$DBInfo->user;
     $this->check_openid_url=!empty($DBInfo->check_openid_url) ? $DBInfo->check_openid_url : 0;
     $this->register_javascripts($DBInfo->javascripts);
+    $this->fetch_action = !empty($DBInfo->fetch_action) ? $DBInfo->fetch_action : null;
+    $this->fetch_images = !empty($DBInfo->fetch_images) ? $DBInfo->fetch_images : 0;
     $this->fetch_imagesize = !empty($DBInfo->fetch_imagesize) ? $DBInfo->fetch_imagesize : 0;
 
     if ($this->use_group and ($p=strpos($page->name,"~")))
@@ -2188,7 +2190,17 @@ class Formatter {
           $size = '';
           if (!empty($this->fetch_imagesize))
             $size = '('.$this->macro_repl('ImageFileSize', $url).')';
-          return "<div class='externalImage' $attr><img class='external' alt='$link' $attr src='$url' />".
+
+          // XXX fetch images
+          $fetch_url = $url;
+          if (!empty($this->fetch_images)) {
+            if (empty($this->fetch_action)) {
+              $fetch_url = $this->link_url('', '?action=fetch&amp;url='.$url);
+            } else {
+              $fetch_url = $this->fetch_action.$url;
+            }
+          }
+          return "<div class='externalImage' $attr><img class='external' alt='$link' $attr src='$fetch_url' />".
                 "<div><a href='$url'><span>[$type external image$size]</span></a></div></div>";
         }
       }
