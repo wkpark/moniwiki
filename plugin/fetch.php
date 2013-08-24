@@ -16,6 +16,7 @@
 // Param: fetch_max_size=3*1024*1024
 // Param: fetch_maxage=24*60*60
 // Param: fetch_action=http://foo.bar/wiki.php?action=fetch&url=
+// Param: fetch_use_cache_url=0
 //
 // Usage:[[Fetch(url)]] or ?action=fetch&url=http://...
 //
@@ -124,11 +125,12 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
         return null;
     }
 
-    if (!preg_match('/^image\/(jpe?g|gif|png)$/', $mimetype)) {
+    if (!preg_match('/^image\/(jpe?g|gif|png)$/', $mimetype, $m)) {
         // always check the content-type
         $params['err'] = sprintf(_("Invalid mime-type %s"), $mimetype);
         return null;
     }
+    $ext = isset($m[1]) ? '.'.$m[1] : '';
 
     // cache dir/filename/cache url
     if (!empty($DBInfo->cache_public_dir) and
@@ -137,9 +139,9 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
             array('dir'=>$DBInfo->cache_public_dir));
         $fetchname = $fc->getKey($url);
         $fetchfile = $DBInfo->cache_public_dir.'/'
-            .$fetchname;
+            .$fetchname.$ext;
         $fetch_url =
-            $DBInfo->cache_public_url.'/'.$fetchname;
+            $DBInfo->cache_public_url.'/'.$fetchname.$ext;
     } else {
         $fc = new Cache_text('fetchfile');
         $fetchname = $fc->getKey($url);
@@ -169,6 +171,12 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
     }
 
     if (empty($params['call'])) return null;
+
+    if (!empty($fetch_url) and !empty($DBInfo->fetch_use_cache_url)) {
+        $formatter->send_header(array('Status: 302', 'Location: '.$fetch_url));
+
+        return null;
+    }
 
     $down_mode = 'inline';
 
