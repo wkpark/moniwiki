@@ -26,10 +26,11 @@ function do_fetch($formatter, $params = array()) {
     $value = $params['value'];
     $url = !empty($params['url']) ? $params['url'] : $value;
 
-    if (!empty($Config['fetch_ignore_re']) and preg_match('/'.$Config['fetch_ignore_re'].'/i', $Config['fetch_ignore_re']))
+    if (!empty($Config['fetch_ignore_re']) and preg_match('/'.$Config['fetch_ignore_re'].'/i', $url))
         $redirect_url = true;
-    if (!empty($Config['fetch_url_re']) and !preg_match('/'.$Config['fetch_url_re'].'/i', $Config['fetch_url_re']))
+    if (!empty($Config['fetch_url_re']) and !preg_match('/'.$Config['fetch_url_re'].'/i', $url))
         $redirect_url = true;
+
     if (isset($redirect_url)) {
         $formatter->send_header(array("Status: 302","Location: ".$url));
         return;
