@@ -1930,24 +1930,33 @@ function do_raw($formatter,$options) {
       @ob_end_clean();
       return;
     }
-
-    # disabled
-    #if (!empty($gzip_mode)) {
-    #  ob_start('ob_gzhandler');
-    #}
-
-    $raw_body=$formatter->page->get_raw_body($options);
-    if (isset($options['section'])) {
-      $sections= _get_sections($raw_body);
-      if ($sections[$options['section']])
-        $raw_body = $sections[$options['section']];
-      else
-        $raw_body = "Fill Me\n";
-    }
-    print $raw_body;
   } else {
-    header('HTTP/1.0 404 Not found');
+    if (empty($options['mime']))
+      $header[] = 'Content-Type: text/plain'.$force_charset;
+
+    if (empty($options['rev'])) {
+      header('HTTP/1.0 404 Not found');
+      header("Status: 404 Not found");
+      return;
+    } else {
+      $formatter->send_header($header, $options);
+    }
   }
+
+  # disabled
+  #if (!empty($gzip_mode)) {
+  #  ob_start('ob_gzhandler');
+  #}
+
+  $raw_body=$formatter->page->get_raw_body($options);
+  if (isset($options['section'])) {
+    $sections= _get_sections($raw_body);
+    if ($sections[$options['section']])
+      $raw_body = $sections[$options['section']];
+    else
+      $raw_body = "Fill Me\n";
+  }
+  print $raw_body;
 }
 
 function do_recall($formatter,$options) {
