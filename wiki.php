@@ -2195,9 +2195,11 @@ class Formatter {
           $fetch_url = $url;
           if (!empty($this->fetch_images)) {
             if (empty($this->fetch_action)) {
-              $fetch_url = $this->link_url('', '?action=fetch&amp;url='.$url);
+              $fetch_url = $this->link_url('', '?action=fetch&amp;url='.
+                  str_replace(array('&', '?'), array('%26', '%3f'), $url));
             } else {
-              $fetch_url = $this->fetch_action.$url;
+              $fetch_url = $this->fetch_action.
+                  str_replace(array('&', '?'), array('%26', '%3f'), $url);
             }
           }
           return "<div class='externalImage' $attr><img class='external' alt='$link' $attr src='$fetch_url' />".
