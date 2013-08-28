@@ -3314,6 +3314,25 @@ class Formatter {
       }
     }
 
+    # is it redirect page ?
+    if (isset($pi['#redirect'][0]) and
+        empty($this->wikimarkup))
+    {
+      $url = $pi['#redirect'];
+      $anchor = '';
+      if (($p = strpos($url, '#')) > 0) {
+        $anchor = substr($url, $p);
+        $url = substr($url, 0, $p);
+      }
+      $url=_rawurlencode($url);
+
+      $lnk = $this->link_tag($url,
+        '?action=show'.$anchor,
+        $pi['#redirect']);
+      $msg = _("Redirect page");
+      $this->write("<div class='wikiRedirect'><span>$msg</span><p>".$lnk."</p></div>");
+    }
+
     # have no contents
     if (empty($lines)) return;
 
@@ -5542,12 +5561,6 @@ function wiki_main($options) {
     $formatter->write("<div id='wikiContent'>\n");
     if (isset($options['timer']) and is_object($options['timer'])) {
       $options['timer']->Check("init");
-    }
-
-    if (isset($formatter->pi['#redirect'][0])) {
-      $lnk = $formatter->link_tag($formatter->page->urlname, '?redirect='.$formatter->pi['#redirect'], $formatter->pi['#redirect']);
-      $msg = _("Redirect page");
-      $formatter->write("<div class='wikiRedirect'><span>$msg</span><p>".$lnk."</p></div>");
     }
 
     $options['pagelinks']=1;
