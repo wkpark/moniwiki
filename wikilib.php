@@ -2464,7 +2464,7 @@ function do_post_savepage($formatter,$options) {
     print $DBInfo->hr;
     print $menu;
     if ($button_diff) {
-        $diff = $formatter->get_diff($savetext); // get diff
+        $diff = $formatter->get_diff($options['section'] ? implode('', $sections) : $savetext); // get diff
         // strip diff header
         if (($p = strpos($diff, '@@')) !== false) $diff = substr($diff, $p);
     }
