@@ -5563,6 +5563,10 @@ function wiki_main($options) {
       $options['timer']->Check("init");
     }
 
+    // force #nocache for #redirect pages
+    if (isset($formatter->pi['#redirect'][0]))
+      $formatter->pi['#nocache'] = 1;
+
     $options['pagelinks']=1;
     if (!empty($Config['cachetime']) and $Config['cachetime'] > 0 and empty($formatter->pi['#nocache'])) {
       $cache= new Cache_text('pages', array('ext'=>'html'));
