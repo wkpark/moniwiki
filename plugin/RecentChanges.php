@@ -446,7 +446,9 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $users = $val['users'];
   }
   $lastline = $lines[0];
-  list($timestamp, $dummy) = explode("\t", $lastline, 2);
+  $tmp = explode("\t", $lastline, 6);
+  $timestamp = $tmp[2];
+  unset($tmp);
   $updatemod = array();
 
   $needupdate = $lastline != $rclastline or $rctimestamp < $timestamp;
@@ -473,13 +475,13 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         $edit_day = gmdate('Ymd', $lastmod[$page_key] + $tz_offset);
         $editors[$page_key][$edit_day][] = $user;
         $editcount[$page_key][$edit_day]++;
-        if ($needupdate and empty($updatemod[$edit_day])) $updatemod[$edit_day] = $ed_time;
+        if ($needupdate and empty($updatemod[$page_key])) $updatemod[$page_key] = $ed_time;
         continue;
       }
     } else if (!empty($editcount[$page_key][$day])) {
       $editors[$page_key][$day][] = $user;
       $editcount[$page_key][$day]++;
-      if ($needupdate and empty($updatemod[$edit_day])) $updatemod[$edit_day] = $ed_time;
+      if ($needupdate and empty($updatemod[$page_key])) $updatemod[$page_key] = $ed_time;
       continue;
     }
     if (empty($editcount[$page_key])) {
