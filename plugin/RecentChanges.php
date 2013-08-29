@@ -522,7 +522,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     // show trashed pages only
     if ($trash and $DBInfo->hasPage($page_name)) continue;
 
-    $addr= !empty($DBInfo->mask_hostname) ? _mask_hostname($parts[1]):$parts[1];
+    $addr= $parts[1];
     $user= $parts[4];
     $log= _stripslashes($parts[5]);
     $act= rtrim($parts[6]);
@@ -721,15 +721,23 @@ function macro_RecentChanges($formatter,$value='',$options='') {
           $ouser = $user;
           if (isset($users[$ouser])) $user = $users[$ouser];
           else {
-          $checkaddr = substr($user, 10); // Anonymous-127.0.0.1 or Anonymous-email@foo.bar
-          $user = $addr;
+          $checkaddr = null;
+          $addr = null;
+          $tmp = $user;
+          if (strpos($user, "\t") !== false)
+            list($tmp, $addr) = explode("\t", $user);
+
+          $checkaddr = substr($tmp, 10); // Anonymous-127.0.0.1 or Anonymous-email@foo.bar
+          $user = $addr ? $addr : $checkaddr;
           if (!is_numeric($checkaddr[0]) and preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i', $user)) {
             $user = $checkaddr;
             if (!empty($DBInfo->hide_emails))
               $user = substr(md5($user), 0, 8); // FIXME
             else
               $user = email_guard($user);
-          }
+          } else if (!empty($DBInfo->mask_hostname))
+            $user = _mask_hostname($user);
+
           if (!empty($use_avatar)) {
             $crypted = crypt($addr, $addr);
             $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
