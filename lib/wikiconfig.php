@@ -178,6 +178,7 @@ EOS;
         $config->icon['help'] = "<img src='$imgdir/${iconset}help.$ext' alt='H' class='wikiIcon' />";
         $config->icon['pref'] = "<img src='$imgdir/${iconset}pref.$ext' alt='C' class='wikiIcon' />";
         $config->icon['backlinks'] = "<img src='$imgdir/${iconset}backlinks.$ext' alt=',' class='wikiIcon' />";
+        $config->icon['random'] = "<img src='$imgdir/${iconset}random.$ext' alt='A' class='wikiIcon' />";
         $config->icon['www'] = "<img src='$imgdir/${iconset}www.$ext' alt='www' class='wikiIcon' />";
         $config->icon['mailto'] = "<img src='$imgdir/${iconset}email.$ext' alt='M' class='wikiIcon' />";
         $config->icon['create'] = "<img src='$imgdir/${iconset}create.$ext' alt='N' class='wikiIcon' />";
@@ -202,8 +203,9 @@ EOS;
                 'edit' =>array("","?action=edit",$config->icon['edit'],"accesskey='e'"),
                 'diff' =>array("","?action=diff",$config->icon['diff'],"accesskey='c'"),
                 'show' =>array("","",$config->icon['show']),
-                'find' =>array("FindPage","",$config->icon['find']),
                 'backlinks' =>array("","?action=backlinks", $config->icon['backlinks']),
+                'random' =>array("","?action=randompage", $config->icon['random']),
+                'find' =>array("FindPage","",$config->icon['find']),
                 'info' =>array("","?action=info",$config->icon['info']));
         if (!empty($config->notify))
             $config->icons['subscribe'] = array("","?action=subscribe",$config->icon['mailto']);
