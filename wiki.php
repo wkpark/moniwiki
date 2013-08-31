@@ -2178,6 +2178,7 @@ class Formatter {
       if (preg_match("/^(http|https|ftp)/",$url)) {
         $url1 = preg_replace('/&amp;/','&',$url);
         if (preg_match("/(^.*\.(png|gif|jpeg|jpg))(?:\?|&(?!>amp;))?(.*?)?$/i", $url1, $match)) {
+          $cls = 'externalImage';
           $url=$match[1];
           $type = strtoupper($match[2]);
           $attrs = !empty($match[3]) ? explode('&', $match[3]) : array();
@@ -2185,7 +2186,7 @@ class Formatter {
             $name=strtok($arg,'=');
             $val=strtok(' ');
             if ($name and $val) $attr.=' '.$name.'="'.urldecode($val).'"';
-            if ($name == 'align') $attr.=' class="img'.ucfirst($val).'"';
+            if ($name == 'align') $cls.=' img'.ucfirst($val);
           }
           $size = '';
           if (!empty($this->fetch_imagesize))
@@ -2202,7 +2203,7 @@ class Formatter {
                   str_replace(array('&', '?'), array('%26', '%3f'), $url);
             }
           }
-          return "<div class='externalImage' $attr><img class='external' alt='$link' $attr src='$fetch_url' />".
+          return "<div class=\"$cls\"><img alt='$link' $attr src='$fetch_url' />".
                 "<div><a href='$url'><span>[$type external image$size]</span></a></div></div>";
         }
       }
