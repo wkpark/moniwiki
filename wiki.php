@@ -2154,6 +2154,7 @@ class Formatter {
           if (!empty($this->external_on))
             $external_link='<span class="externalLink">('.$url.')</span>';
         }
+        $icon = '';
         if (substr($url,0,7)=='http://' and $url[7]=='?') {
           $link=substr($url,7);
           return "<a href='$link'>$text</a>";
@@ -2165,7 +2166,7 @@ class Formatter {
             $link=$this->link_url(_rawurlencode($text));
           }
         }
-        if (empty($icon)) {
+        if (empty($this->_no_urlicons) and empty($icon)) {
           $icon= strtok($url,':');
           $icon="<img class='url' alt='[$icon]' src='".$this->imgs_dir_url."$icon.png' />";
         }
