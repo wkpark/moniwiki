@@ -387,12 +387,17 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   if (!$bookmark) $bookmark = time();
   if (!empty($nobookmark)) $use_js = 0;
 
+  // make rclog uniq key
   $locals = get_defined_vars();
+  unset($locals['bookmark']);
   unset($locals['formatter']);
   unset($locals['options']);
   unset($locals['DBInfo']);
   unset($locals['args']);
+  unset($locals['arg']);
   unset($locals['u']);
+  unset($locals['k']);
+  unset($locals['v']);
   $rckey = md5(serialize($locals));
   unset($locals);
 
@@ -451,7 +456,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   unset($tmp);
   $updatemod = array();
 
-  $needupdate = $lastline != $rclastline or $rctimestamp < $timestamp;
+  $needupdate = $rctimestamp < $timestamp or $lastline != $rclastline;
   if ($needupdate)
   foreach ($lines as $line) {
     $parts= explode("\t", $line,6);
