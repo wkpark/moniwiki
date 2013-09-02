@@ -3728,7 +3728,7 @@ EOS;
  $lines=explode("\n",$body);
  foreach ($lines as $line) {
    $line=preg_replace("/\n$/", "", $line); # strip \n
-   preg_match("/(?<!=)(={1,$secdep})\s(#?)(.*)\s+\\1\s?$/",$line,$match);
+   preg_match("/^\s*(?<!=)(={1,$secdep})\s(#?)(.*)\s+\\1\s?$/",$line,$match);
 
    if (!$match) continue;
 
