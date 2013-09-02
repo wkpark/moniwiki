@@ -3676,8 +3676,7 @@ function macro_TableOfContents(&$formatter,$value="") {
  }
 
  if ($toctoggle) {
-  $formatter->register_javascripts("<script type=\"text/javascript\" src=\"$DBInfo->url_prefix/local/toctoggle.js\"></script>");
-  $TOC_close=<<<EOS
+  $js=<<<EOS
 <script type="text/javascript">
 /*<![CDATA[*/
  if (window.showTocToggle) { showTocToggle('$tocid', '<img src="$DBInfo->imgs_dir/plugin/arrdown.png" width="10px" border="0" alt="[+]" title="[+]" />','<img src="$DBInfo->imgs_dir/plugin/arrup.png" width="10px" border="0" alt="[-]" title="[-]" />'); } 
@@ -3685,14 +3684,14 @@ function macro_TableOfContents(&$formatter,$value="") {
 </script>
 EOS;
  }
- $TOC.="\n<div class='wikiToc' id='" . $tocid . "'>";
+ $TOC0="\n<div class='wikiToc' id='" . $tocid . "'>";
  if (!isset($title)) $title = $formatter->macro_repl('GetText', "Contents");
  if ($title) {
-  $TOC.="<div class='toctitle'>
+  $TOC0.="<div class='toctitle'>
 <h2 style='display:inline'>$title</h2>
 </div>";
  }
- $TOC.="<a name='toc' ></a><dl><dd><dl>\n";
+ $TOC0.="<a name='toc' ></a><dl><dd><dl>\n";
 
  $formatter->toc=1;
  $baseurl='';
@@ -3794,11 +3793,13 @@ EOS;
   }
 
   $tocidx ++;
-  if ($TOC) {
+  if (isset($TOC[0])) {
      $close="";
      $depth=$head_dep;
      while ($depth>1) { $depth--;$close.="</dl></dd>\n"; };
-     return $TOC.$close."</dl></dd></dl>\n</div>\n".$TOC_close;
+     if (isset($js))
+        $formatter->register_javascripts("<script type=\"text/javascript\" src=\"$DBInfo->url_prefix/local/toctoggle.js\"></script>");
+     return $TOC0.$TOC.$close."</dl></dd></dl>\n</div>\n".$js;
   }
   else return "";
 }
