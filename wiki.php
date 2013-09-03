@@ -5628,7 +5628,7 @@ function wiki_main($options) {
     }
 
     // automatically set #dynamic PI
-    if (!empty($formatter->_dynamic_macros)) {
+    if (empty($formatter->pi['#dynamic']) and !empty($formatter->_dynamic_macros)) {
       $pis = $formatter->pi;
       if (empty($pis['raw'])) {
         // empty PIs
