@@ -1,7 +1,7 @@
 <?php
 /**
  * Generates persistent specific geometric icons for each user
- * based on the ideas of Don Part's visual-security-9-block-ip-identification.
+ * based on the ideas of Don Park's visual-security-9-block-ip-identification.
  *
  * modified verion for MoniWiki by wkpark at kldp.org
  *
