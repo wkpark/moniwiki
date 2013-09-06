@@ -744,7 +744,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
             $user = _mask_hostname($user);
 
           if (!empty($use_avatar)) {
-            $crypted = crypt($addr, $addr);
+            $crypted = md5($addr . $rckey);
             $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
             $user = '<img src="'.$mylnk.'" style="width:16px;height:16px;vertical-align:middle" alt="avatar" />'. _('Anonymous');
           }
