@@ -625,7 +625,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
       if (empty($use_js) and $ed_time > $bookmark) {
         $icon= $formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon['diff']);
-        $updated= ' '.$formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon['updated']);
+        $updated= ' '.$formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon['updated'], 'class="updated"');
 
         $add = 0;
         $del = 0;
@@ -635,7 +635,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
           if (empty($v)) {
             $icon=
               $formatter->link_tag($pageurl,"?action=info",$formatter->icon['show']);
-            $updated = ' '.$formatter->link_tag($pageurl,"?action=info",$formatter->icon['new']);
+            $updated = ' '.$formatter->link_tag($pageurl,"?action=info",$formatter->icon['new'], 'class="new"');
             $add+= $p->lines();
           }
         }
@@ -923,10 +923,12 @@ function update_bookmark(time) {
           var state = document.createElement('SPAN');
           if (ret[title]['state'] == 'new') {
             state.innerHTML = icon_new;
+            state.setAttribute('class', 'new');
             icon.href = icon.href.replace(/action=(diff|info)((?:&|&amp;)bookmark=\d+)?/, 'action=info');
             icon.innerHTML = icon_show;
           } else {
             state.innerHTML = icon_updated;
+            state.setAttribute('class', 'updated');
             icon.href = icon.href.replace(/action=(diff|info)((?:&|&amp;)bookmark=\d+)?/, 'action=diff&bookmark=' + bookmark);
             icon.innerHTML = icon_diff;
           }
