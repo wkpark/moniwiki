@@ -19,11 +19,68 @@ function macro_FortuneSystem($formatter, $value, $options) {
 
 define('DEFAULT_FORTUNE','art');
 
+function do_fortune($formatter, $options) {
+    $value = $options['value'];
+    $ret = macro_Fortune($formatter, $value, array());
+    echo $ret;
+}
+
 function macro_Fortune($formatter,$value,$options) {
     global $DBInfo;
+    global $_Static;
+
+    if (!isset($_Static['_id_fortune'])) $_Static['_id_fortune'] = 1;
+    $id = &$_Static['_id_fortune'];
+    $ii = $id;
+
+    // check js option
+    $use_js = false;
+    if (!empty($value) and preg_match('/^js\s*(?:,\s*)?/', $value, $m)) {
+        $use_js = true;
+        $value = substr($value, strlen($m[0]));
+    }
+
+    if ($use_js) {
+        if ($id == 1) {
+            $js = <<<JS
+<script type="text/javascript">
+/*<![CDATA[*/
+function wikiFortune(el, cat) {
+    var wrapper = document.getElementById(el);
+    if (wrapper == null) return;
+    if (typeof cat == 'undefined') cat = '';
+
+    // get a FortuneCookie
+    var qp = '?'; // query_prefix
+    var loc = location.protocol + '//' + location.host;
+    if (location.port) loc+= ':' + location.port;
+    loc+= location.pathname + qp + 'action=fortune/ajax&value=' + cat;
+
+    var ret = HTTPGet(loc);
+    if (ret) {
+        wrapper.innerHTML = ret;
+    }
+}
+/*]]>*/
+</script>\n
+JS;
+            $formatter->register_javascripts($js);
+        }
+
+        $js1 = <<<JS
+<script type="text/javascript">
+/*<![CDATA[*/
+addLoadEvent(function() { wikiFortune('fortune-$id', '$value'); });
+/*]]>*/
+</script>\n
+JS;
+        $formatter->register_javascripts($js1);
+        $id++;
+        return "<div id='fortune-$ii'></div>";
+    }
 
     // dynamic macro
-    if ($formatter->_macrocache and empty($options['call']))
+    if (!$use_js and $formatter->_macrocache and empty($options['call']))
         return $formatter->macro_cache_repl('Fortune', $value);
 
     $cat=$value;
@@ -79,4 +136,3 @@ function macro_Fortune($formatter,$value,$options) {
 }
     
 // vim:et:sts=4:
-?>
