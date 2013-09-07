@@ -17,6 +17,55 @@ function macro_Scrap($formatter,$value='',$options=array()) {
     $pages=explode("\t",$userinfo->info['scrapped_pages']);
   if (!empty($options['page']) and !in_array($options['page'],$pages)) $pages[]=$options['page'];
   $out='';
+
+  if ($value == 'js') {
+    // get the scrapped pages dynamically
+    $script = get_scriptname() . $DBInfo->query_prefix;
+    $js = <<<JS
+<script type="text/javascript">
+/*<![CDATA[*/
+(function() {
+var script_name = "$script";
+function get_scrap()
+{
+    var scrap = document.getElementById('scrap');
+    if (scrap == null) {
+        // silently ignore
+        return;
+    }
+
+    // get the scrapped pages
+    var qp = '?'; // query_prefix
+    var loc = location.protocol + '//' + location.host;
+    if (location.port) loc+= ':' + location.port;
+    loc+= location.pathname + qp + 'action=scrap/ajax';
+
+    var ret = HTTPGet(loc);
+    if (ret) {
+        var list = eval(ret);
+        var html = '';
+        for (i = 0; i < list.length; i++) {
+            html+= '<li><a href="' + script_name + list[i] + '">' + list[i] + "</a></li>\\n";
+        }
+        scrap.innerHTML = "<ul>" + html + "</ul>";
+    }
+}
+
+// onload
+var oldOnload = window.onload;
+window.onload = function(ev) {
+    try { oldOnload(); } catch(e) {};
+    get_scrap();
+}
+})();
+/*]]>*/
+</script>\n
+JS;
+    #$formatter->register_javascripts('local/scrap.js');
+    $formatter->register_javascripts($js);
+    return '<i></i>'; // dummy
+  }
+
   foreach ($pages as $p) {
     if ($DBInfo->hasPage($p))
       $out.='<li>'.($formatter->link_tag(_urlencode($p),'',$p)).'</li>';
@@ -29,6 +78,32 @@ function macro_Scrap($formatter,$value='',$options=array()) {
   if (!empty($out))
     return '<ul>'.$out.'</ul>';
   return '';
+}
+
+function ajax_scrap($formatter, $options) {
+  global $DBInfo;
+
+  $user = &$DBInfo->user; # get cookie
+  if ($user->id == 'Anonymous') {
+    echo '[]';
+    return;
+  }
+
+  $userinfo = $DBInfo->udb->getUser($user->id);
+  $pages = array();
+  if (!empty($userinfo->info['scrapped_pages']))
+    $pages = explode("\t", $userinfo->info['scrapped_pages']);
+
+  if (!empty($pages)) {
+    require_once('lib/JSON.php');
+    $json = new Services_JSON();
+    $list = $json->encode($pages);
+    echo $list;
+  } else {
+    echo '[]';
+  }
+
+  return;
 }
 
 
