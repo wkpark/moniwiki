@@ -42,7 +42,7 @@ function get_scrap()
 
     var ret = HTTPGet(loc);
     if (ret) {
-        var list = eval(ret);
+        var list = JSON.parse(ret);
         var html = '';
         for (i = 0; i < list.length; i++) {
             html+= '<li><a href="' + script_name + list[i] + '">' + list[i] + "</a></li>\\n";
