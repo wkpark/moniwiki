@@ -3372,8 +3372,8 @@ class Formatter {
     $wordrule="\[\[(?:[A-Za-z0-9]+(?:\((?:(?<!\]\]).)*\))?)\]\]|". # macro
               "<<(?:[^<>]+(?:\((?:(?<!\>\>).)*\))?)>>|"; # macro
     if ($DBInfo->inline_latex) # single line latex syntax
-      $wordrule.="(?<=\s|^|>)\\$(?!(?:Id|Revision))(?:[^\\$]+)\\$(?=\s|\.|\,|$)|".
-                 "(?<=\s|^|>)\\$\\$(?:[^\\$]+)\\$\\$(?=\s|$)|";
+      $wordrule.="(?<=\s|^|>)\\$(?!(?:Id|Revision))(?:[^\\$]+)\\$(?=\s|\.|,|<|$)|".
+                 "(?<=\s|^|>)\\$\\$(?:[^\\$]+)\\$\\$(?=\s|<|$)|";
     #if ($DBInfo->builtin_footnote) # builtin footnote support
     $wordrule.=$this->wordrule;
     $wordrule.='|'.$this->footrule;
