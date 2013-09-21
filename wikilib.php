@@ -2001,6 +2001,8 @@ function do_goto($formatter,$options) {
           str_replace('+', '%2B', $formatter->page->name).$anchor);
      else
        $url=$formatter->link_url($url,"");
+     $url = preg_replace('/[[:cntrl:]]/', ' ', $url); // tr control chars
+
      # FastCGI/PHP does not accept multiple header infos. XXX
      #$formatter->send_header("Location: ".$url,$options);
      $url = preg_replace('/&amp;/', '&', $url);
