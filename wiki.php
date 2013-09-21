@@ -662,7 +662,7 @@ class WikiDB {
     $separator = ':';
     if (empty($this->use_namespace)) $separator = '';
 
-    $pn = preg_replace("/([^a-z0-9".$separator."]{1})/ie", "'_'.strtolower(dechex(ord(substr('\\1',-1))))",$pn);
+    $pn = preg_replace("/([^a-z0-9".$separator."]{1})/ie", "'_'.sprintf('%02s', strtolower(dechex(ord(substr('\\1',-1)))))",$pn);
     if (!empty($this->use_namespace))
       $name = preg_replace('#:#','.d/',$pn); // Foobar:Hello page will be stored as text/Foobar.d/Hello
     else
