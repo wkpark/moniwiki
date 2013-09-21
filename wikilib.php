@@ -2340,6 +2340,8 @@ function do_post_savepage($formatter,$options) {
           $merge = preg_replace('/^=======$/m', "=== ======= ===", $merge);
       	  if ($button_merge>1) {
             unset($options['datestamp']);
+            unset($options['section']);
+            unset($section_savetext);
             $datestamp= $formatter->page->mtime();
             $options['conflict']=0;
             if ($button_merge==2) {
