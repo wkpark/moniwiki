@@ -70,13 +70,17 @@ function AMisMathMLavailable() {
   if (navigator.appName.slice(0,8)=="Netscape") 
     if (navigator.appVersion.slice(0,1)>="5") return null;
     else return AMnoMathMLNote();
-  else if (navigator.appName.slice(0,9)=="Microsoft")
-    try {
+  else if (navigator.appName.slice(0,9)=="Microsoft") {
+    if (document.createElementNS == null) {
+      try {
         var ActiveX = new ActiveXObject("MathPlayer.Factory.1");
         return null;
-    } catch (e) {
+      } catch (e) {
         return AMnoMathMLNote();
+      }
     }
+    return null;
+  }
   else return AMnoMathMLNote();
 }
 // character lists for Mozilla/Netscape fonts
