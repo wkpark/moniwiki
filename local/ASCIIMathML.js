@@ -42,9 +42,7 @@ var doubleblankmathdelimiter = false; // if true,  x+1  is equal to `x+1`
                                       // for IE this works only in <!--   -->
 //var separatetokens;// has been removed (email me if this is a problem)
 var isIE = document.createElementNS==null;
-if (document.getElementById==null) 
-  alert("This webpage requires a recent browser such as\
-\nMozilla/Netscape 7+ or Internet Explorer 6+MathPlayer");
+
 // all further global variables start with "AM"
 function AMcreateElementXHTML(t) {
   if (isIE) return document.createElement(t);
@@ -802,7 +800,10 @@ function AMprocessNodeR(n, linebreaks) {
             if (alertIfNoMathML)
               alert("To view the ASCIIMathML notation use Internet Explorer 6 +\nMathPlayer (free from www.dessci.com)\n\
                 or Firefox/Mozilla/Netscape");
-            else AMbody.insertBefore(nd,AMbody.childNodes[0]);
+            else {
+              var body = document.getElementsByTagName("body")[0];
+              body.insertBefore(nd,body.childNodes[0]);
+            }
         }
         if (!AMnoMathML) {
           frg = AMstrarr2docFrag(arr,n.nodeType==8);

@@ -72,12 +72,6 @@ function processor_asciimathml($formatter,$value="") {
 
   if ( $flag ) {
     if ($formatter->register_javascripts('ASCIIMathML.js'));
-      if (preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']))
-        $formatter->register_javascripts('<object id="mathplayer"'.
-          ' classid="clsid:32F66A20-7614-11D4-BD11-00104BD3F987" width="1px" height="1px">'.
-          '</object>'.
-          '<?import namespace="mml" implementation="#mathplayer"?>'
-      );
 
     if ($_add_func)
       $js=<<<AJS
