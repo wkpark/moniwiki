@@ -136,16 +136,8 @@ $metatags_extra="<meta name='viewport' content='width=device-width' />";
 # alternatively you can use the $javascripts option (more inteligent method)
 $javascripts=array(
 	'js/i18n.js',
-	'Wikiwyg/lib/Wikiwyg.js',
-	'Wikiwyg/lib/Wikiwyg/Util.js',
-	'Wikiwyg/lib/Wikiwyg/Toolbar.js',
-	'Wikiwyg/lib/Wikiwyg/Wikitext.js',
-	'Wikiwyg/lib/Wikiwyg/Preview.js',
-	'Wikiwyg/lib/Wikiwyg/HTML.js',
-	'Wikiwyg/lib/Wikiwyg/Wysiwyg.js',
 	'pasta.js',
 	'ajax.js',
-	'moniwyg.js',
 	'ASCIIMathML.js');
 
 #$diffonly=1; # show only diff infos (do not show wiki contents)
@@ -195,7 +187,7 @@ $use_resizer=2;
 #$auto_search='FixMoin'; # for old moinmoin users
 $auto_search='AutoGoto';
 #$hr_type='fancy';
-$use_wikiwyg=1; # 1 for GUI button/ 2 to set as default behavior/ 3 to set always use GUI.
+$use_wikiwyg=0; # 1 for GUI button/ 2 to set as default behavior/ 3 to set always use GUI.
 #$wikiwyg_confirm=1; # always confirm
 $use_sectionedit=0;
 #$sectionedit_attr=1; # enable wikiwyg section editing
