@@ -98,6 +98,7 @@ function translateById(objId,flag) {
 }
 
 $bgcolor$fontfamily$fontcolor
+if (window.MathJax) { mathfontfamily = ''; mathcolor = ''; }
 // AMinitSymbols();
 /*]]>*/
 </script>
