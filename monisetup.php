@@ -58,7 +58,7 @@ class MoniConfig {
       while (ini_get('allow_url_fopen')) {
         print '<h3>'._t("Check a AcceptPathInfo setting for Apache 2.x.xx").'</h3>';
         print '<ul>';
-        $fp=@fopen('http://'.$_SERVER['SERVER_ADDR'].':'.$_SERVER['SERVER_PORT'].$_SERVER['SCRIPT_NAME'].'/pathinfo?action=pathinfo','r');
+        $fp=@fopen('http://'.$_SERVER['SERVER_NAME'].':'.$_SERVER['SERVER_PORT'].$_SERVER['SCRIPT_NAME'].'/pathinfo?action=pathinfo','r');
         $out='';
         if ($fp) {
           while (!feof($fp)) $out.=fgets($fp,2048);
@@ -497,7 +497,7 @@ FORM;
     $is_apache = preg_match('/apache/i', $_SERVER['SERVER_SOFTWARE']);
     $port= ($_SERVER['SERVER_PORT'] != 80) ? $_SERVER['SERVER_PORT']:80;
     $path = preg_replace('/monisetup\.php/','',$_SERVER['SCRIPT_NAME']);
-    $host = $_SERVER['SERVER_ADDR'];
+    $host = $_SERVER['SERVER_NAME'];
 
     print '<div class="check">';
     foreach($writables as $file) {
