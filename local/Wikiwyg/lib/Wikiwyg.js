@@ -117,6 +117,21 @@ Wikiwyg.is_gecko = (
 Wikiwyg.is_safari = (
     Wikiwyg.ua.indexOf('safari') != -1
 );
+
+/* Safari 5+ is Gecko-compatible. */
+if ($.browser.safari && parseInt($.browser.version) > 500) {
+    if (Wikiwyg.ua.indexOf('mobile') == -1) {
+        Wikiwyg.is_gecko = true;
+        Wikiwyg.is_safari = false;
+    }
+}
+
+/* make IE9,IE10 work */
+if (Wikiwyg.is_ie && parseInt($.browser.version) >= 9) {
+    Wikiwyg.is_ie = false;
+    Wikiwyg.is_gecko = true;
+}
+
 Wikiwyg.is_opera = (
     Wikiwyg.ua.indexOf('opera') != -1
 );
@@ -125,7 +140,8 @@ Wikiwyg.is_konqueror = (
 );
 Wikiwyg.browserIsSupported = (
     Wikiwyg.is_gecko ||
-    Wikiwyg.is_ie
+    Wikiwyg.is_ie ||
+    Wikiwyg.is_safari
 );
 
 // Wikiwyg environment setup public methods
