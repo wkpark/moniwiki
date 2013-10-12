@@ -26,13 +26,13 @@ function macro_EditHints($formatter, $value = '') {
     $wikihints_openbutton_onclick = <<<JS
 document.getElementById("wikiHints_opened_head").style.display = "block";
 document.getElementById("wikiHints_closed_head").style.display = "none";
-document.getElementById("wikiHints_content").style.display = "block"';
+document.getElementById("wikiHints_content").style.display = "block";
 JS;
 
     $wikihints_closebutton_onclick = <<<JS
 document.getElementById("wikiHints_opened_head").style.display = "none";
 document.getElementById("wikiHints_closed_head").style.display = "block";
-document.getElementById("wikiHints_content").style.display = "none"';
+document.getElementById("wikiHints_content").style.display = "none";
 JS;
 
     $hints.= "<div id='wikiHints_closed_head' class='head'>";
