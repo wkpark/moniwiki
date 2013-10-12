@@ -2,8 +2,8 @@
 /*  background: #EBE8D5; /* */
 /*  border: 1px outset #ACA899; /* */
     letter-spacing: 0; /* */
-    line-height: 210%; /* */
-    padding: 2px;
+    line-height: 190%; /* */
+    padding: 2px 0 2px 0;
 }
 
 .wikiwyg_buttons {
@@ -53,10 +53,12 @@ span.wikiwyg_control_link a {
 .wikiwyg_mode_selector li:hover {
     cursor: pointer;
     background-position: left -65px;
+    border-bottom:1px solid white;
 }
 
 .wikiwyg_mode_selector li:hover span {
     background-position: right -65px;
+    border-bottom:1px solid white;
 }
 
 ul.wikiwyg_mode_selector {
@@ -67,28 +69,30 @@ ul.wikiwyg_mode_selector {
 }
 
 .wikiwyg_mode_selector li {
+    margin-bottom: -2px;
     float:left;
+    position:relative; /* magic */
     padding: 0px 0px;
+    padding-left: 3px;
     margin-right: 5px;
     background: url(../images/modebtn.gif) no-repeat;
-    background-position: left -63px;
+    background-position: left -65px;
     display: inline;
 }
 
 .wikiwyg_mode_selector span {
     float:left;
-    margin-left: 5px;
     background: url(../images/modebtn.gif) no-repeat;
 }
 
 .wikiwyg_mode_selector span {
-    display: inline;
+    display: inline-block;
     padding: 0px 0px;
-    padding-bottom:2px;
     padding-right:5px;
     position:relative;
     left:2px;
-    background-position: right -63px;
+    background-position: right -65px;
+    *height: 26px;
 }
 
 .wikiwyg_toolbar label {
