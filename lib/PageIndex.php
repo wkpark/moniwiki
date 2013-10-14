@@ -350,7 +350,8 @@ class PageIndex extends TitleIndexer_Text {
             $dum = unpack('N', fread($fidx, 4));
             $se = $dum[1];
 
-            $tmp = "\n". fread($flst, $se - $ss);
+            $tmp = "\n";
+            if ($se > $ss) $tmp.= fread($flst, $se - $ss);
             $addtmp = fgets($flst, 1024); // include last chunk
             $tmp.= $addtmp;
             $se+= strlen($addtmp);
@@ -378,7 +379,9 @@ class PageIndex extends TitleIndexer_Text {
         }
 
         // fix list
-        $remain = fread($flst, $endlst - $nseek + 1);
+        $remain = '';
+        if ($endlst + 1 > $nseek)
+            $remain = fread($flst, $endlst - $nseek + 1);
         fseek($flst, $seek, SEEK_SET);
         fwrite($flst, $remain);
         $size = ftell($flst);
@@ -461,7 +464,8 @@ class PageIndex extends TitleIndexer_Text {
             $dum = unpack('N', fread($fidx, 4));
             $se = $dum[1];
 
-            $tmp = fread($flst, $se - $ss);
+            $tmp = '';
+            if ($se > $ss) $tmp = fread($flst, $se - $ss);
             $addtmp = fgets($flst, 1024); // include last chunk
             $tmp.= $addtmp;
             $se+= strlen($addtmp);
@@ -538,7 +542,9 @@ class PageIndex extends TitleIndexer_Text {
         $end = $dum[1];
 
         fseek($flst, $start, SEEK_SET);
-        $lst = fread($flst, $end - $start);
+        $lst = '';
+        if ($end > $start)
+            $lst = fread($flst, $end - $start);
         $lst.= fgets($flst, 1024);
 
         $pages = explode("\n", $lst);

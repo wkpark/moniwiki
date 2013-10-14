@@ -329,7 +329,8 @@ class TitleIndexer_Text {
                 $len-= $diff;
                 $all-= $diff;
             }
-            $tmp = $remain.fread($flst, $len);
+            $tmp = $remain;
+            if ($len > 0) $tmp.= fread($flst, $len);
             if (($p = strrpos($tmp, "\n")) === false) {
                 break;
             }
