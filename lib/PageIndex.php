@@ -357,7 +357,8 @@ class PageIndex extends TitleIndexer_Text {
             $se+= strlen($addtmp);
             if (($p = strpos($tmp, "\n".$pagename."\n")) !== false) {
                 $seek = $ss + $p;
-                $nseek = $seek + strlen($pagename) + 1;
+                $len = strlen($pagename) + 1;
+                $nseek = $seek + $len;
                 fseek($flst, $nseek, SEEK_SET);
 
                 $i = $is;
