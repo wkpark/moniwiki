@@ -14,7 +14,7 @@ function macro_ISBN($formatter,$value="") {
   $ISBN_MAP="IsbnMap";
   $DEFAULT=<<<EOS
 Amazon http://www.amazon.com/exec/obidos/ISBN= http://images.amazon.com/images/P/\$ISBN.01.MZZZZZZZ.gif
-Aladdin http://www.aladdin.co.kr/shop/wproduct.aspx?ISBN= http://image.aladdin.co.kr/cover/cover/\$ISBN_1.gif @/cover/([^\s_/]+\$ISBN_\d\..{3,4})\s@\\\$ISBN_1\.gif
+Aladdin http://www.aladdin.co.kr/shop/wproduct.aspx?ISBN= http://image.aladdin.co.kr/cover/cover/\$ISBN_1.gif @(http://image\..*/cover/(?:[^\s_/]*\$ISBN_\d\.(?:jpe?g|gif)))@
 Gang http://kangcom.com/common/qsearch/search.asp?s_flag=T&s_text= http://kangcom.com/l_pic/\$ISBN.jpg @bookinfo\.asp\?sku=(\d+)"@\n
 EOS;
 
@@ -135,7 +135,7 @@ EOS;
         $booklink=str_replace('$ISBN2',$isbn2,$booklink);
   }
 
-  if ($imgre and get_cfg_var('allow_url_fopen')) {
+  if (empty($noimg) and $imgre and get_cfg_var('allow_url_fopen')) {
      if (($p=strpos(substr($imgre,1),$imgre[0]))!==false) {
         $imgrepl=substr($imgre,$p+2);
         $imgre=substr($imgre,0,$p+2);
@@ -148,10 +148,6 @@ EOS;
      if (empty($formatter->refresh) and $bcache->exists($md5sum)) {
         $imgname=trim($bcache->fetch($md5sum));
 
-        if ($imgrepl)
-           $imglink=preg_replace('@'.$imgrepl.'@',$imgname, $imglink);
-        else
-           $imglink=str_replace('$ISBN', $imgname, $imglink);
         $fetch_ok=1;
      } else {
         // fetch the bookinfo page and grep the imagname of the book.
@@ -162,11 +158,8 @@ EOS;
               preg_match($imgre,$line,$match);
               if (!empty($match[1])) {
                  $bcache->update($md5sum,$match[1]);
-                 if ($imgrepl)
-                    $imglink=preg_replace('@'.$imgrepl.'@',$match[1], $imglink);
-                 else
-                    $imglink=str_replace('$ISBN', $match[1], $imglink);
-                 $imglink = preg_replace('/[\'"]$/','', $imglink);
+                 $imgname = $match[1];
+
                  $fetch_ok=1;
                  break;
               }
@@ -174,6 +167,15 @@ EOS;
            fclose($fd);
         }
      }
+     if ($fetch_ok) {
+        if ($imgrepl)
+           $imglink = preg_replace('@'.$imgrepl.'@', $imgname, $imglink);
+        else if (!preg_match('/^https?:/', $imgname))
+           $imglink = str_replace('$ISBN', $imgname, $imglink);
+        else
+           $imglink = $imgname;
+     }
+
      if (!empty($fetch_ok) and !empty($DBInfo->isbn_img_download)) {
         # some sites such as the IMDB check the referer and
         # do not permit to show any of its images
