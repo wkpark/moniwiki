@@ -164,7 +164,7 @@ class Cache_Text {
 	function _prepare_cache_dirs($top_dir, $depth = 2, $mkdir = true, $mode = 0777) {
 		if ($mkdir) {
 			$om = umask(~0777);
-			if (!is_dir($top_dir)) mkdir($top_dir, $mode, true);
+			if (!is_dir($top_dir)) mkdir($top_dir, $mode);
 		}
 
 		$prefix = array('');
