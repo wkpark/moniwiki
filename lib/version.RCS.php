@@ -81,6 +81,12 @@ class Version_RCS {
       $log = '"'.preg_replace('/([\\\"])/', "\\\\\\1", $log).'"';
       $mlog = ' -m'.$log;
     }
+
+    if (!empty($this->DB->rcs_always_unlock)) {
+      $fp = popen("rcs -l -M $key", 'r');
+      if (is_resource($fp)) pclose($fp);
+    }
+
     $fp = @popen("ci -l -x,v/ -q -t-\"".$key."\" ".$mlog." ".$key.$plog.$this->NULL,"r");
     if (is_resource($fp)) pclose($fp);
     if (isset($plog[0])) unlink($logfile);
