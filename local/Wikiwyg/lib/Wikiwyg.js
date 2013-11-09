@@ -118,18 +118,21 @@ Wikiwyg.is_safari = (
     Wikiwyg.ua.indexOf('safari') != -1
 );
 
-/* Safari 5+ is Gecko-compatible. */
-if ($.browser.safari && parseInt($.browser.version) > 500) {
-    if (Wikiwyg.ua.indexOf('mobile') == -1) {
-        Wikiwyg.is_gecko = true;
-        Wikiwyg.is_safari = false;
+if (Wikiwyg.is_safari || Wikiwyg.is_ie) {
+    /* Safari 5+ is Gecko-compatible. */
+    var version = (Wikiwyg.ua.match( /.+(?:rv|it|ra|ie)[\/: ]([\d.]+)/ ) || [0,'0'])[1];
+    if (Wikiwyg.is_safari && parseInt(version) > 500) {
+        if (Wikiwyg.ua.indexOf('mobile') == -1) {
+            Wikiwyg.is_gecko = true;
+            Wikiwyg.is_safari = false;
+        }
     }
-}
 
-/* make IE9,IE10 work */
-if (Wikiwyg.is_ie && parseInt($.browser.version) >= 9) {
-    Wikiwyg.is_ie = false;
-    Wikiwyg.is_gecko = true;
+    /* make IE9,IE10 work */
+    if (Wikiwyg.is_ie && parseInt(version) >= 9) {
+        Wikiwyg.is_ie = false;
+        Wikiwyg.is_gecko = true;
+    }
 }
 
 Wikiwyg.is_opera = (
