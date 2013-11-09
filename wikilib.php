@@ -615,6 +615,8 @@ function get_title($page,$title='') {
     $title=$title ? $title: $page;
 
   #return preg_replace("/((?<=[a-z0-9]|[B-Z]{2}|A)([A-Z][a-z]|A))/"," \\1",$title);
+  if (empty($DBInfo->use_camelcase)) return $title;
+
   if ($DBInfo->title_rule)
     return preg_replace('/'.$DBInfo->title_rule.'/'," \\1",$title);
   return preg_replace("/((?<=[a-z0-9]|[B-Z]{2})([A-Z][a-z]))/"," \\1",$title);
