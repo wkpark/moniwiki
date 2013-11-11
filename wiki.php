@@ -5814,7 +5814,10 @@ init_requests($options);
 if (!isset($options['pagename'][0])) $options['pagename']= get_frontpage($lang);
 $DBInfo->lang=$lang;
 
-if (session_id() == '' and empty($Config['nosession']) and is_writable(ini_get('session.save_path')) ) {
+if ($options['id'] == 'Anonymous') {
+  $private = 'public';
+} else if (session_id() == '' and empty($Config['nosession']) and is_writable(ini_get('session.save_path')) ) {
+  $private = 'private';
   $prefix = !empty($DBInfo->session_seed) ? $DBInfo->session_seed : 'MONIWIKI';
   $myseed = getTicket($prefix, $_SERVER['REMOTE_ADDR']);
   $myid = $prefix . '-*-' . $myseed . '-*-' . $options['id'];
@@ -5822,19 +5825,14 @@ if (session_id() == '' and empty($Config['nosession']) and is_writable(ini_get('
   session_set_cookie_params (isset($Config['session_lifetime']) ? $Config['session_lifetime'] : 3600, get_scriptname());
 
   // chceck some action and set expire
-  session_cache_limiter(FALSE);
-  if ($options['id'] == 'Anonymous')
-    $private = 'public';
-  else
-    $private = 'private';
-  if (empty($_GET['action']) or $_GET['action'] == 'show')
-    header('Cache-Control: '.$private.', max-age=0, post-check=0, pre-check=0');
-  //else if (!empty($_GET['action']) and in_array($_GET['action'], array('edit', 'info', 'diff')))
-  //  header('Cache-Control: '.$private.', max-age=600, post-check=0, pre-check=0');
+  session_cache_limiter('');
 
   session_name($myid);
   session_start();
 }
+
+if (empty($_GET['action']) or $_GET['action'] == 'show')
+  header('Cache-Control: '.$private.', max-age=0, post-check=0, pre-check=0');
 
 wiki_main($options);
 endif;
