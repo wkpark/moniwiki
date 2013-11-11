@@ -4886,9 +4886,13 @@ MSG;
     global $DBInfo;
     if (empty($trailer)) $trail=$DBInfo->frontpage;
     else $trail=$trailer;
-    $trails=array_diff(explode("\t",trim($trail)),array($pagename));
+
+    if (is_numeric($DBInfo->trail) and $DBInfo->trail > 5)
+      $size = $DBInfo->trail;
 
     if (empty($DBInfo->jstrail)) {
+      $trails=array_diff(explode("\t",trim($trail)),array($pagename));
+
       $sister_save=$this->sister_on;
       $this->sister_on=0;
       $this->trail="";
@@ -4900,6 +4904,14 @@ MSG;
       $this->trail.= ' '.htmlspecialchars($pagename);
       $this->pagelinks=array(); # reset pagelinks
       $this->sister_on=$sister_save;
+
+      if (!in_array($pagename,$trails)) $trails[]=$pagename;
+
+      $idx=count($trails) - $size;
+      if ($idx > 0) $trails=array_slice($trails,$idx);
+      $trail=implode("\t",$trails);
+
+      setcookie('MONI_TRAIL',$trail,time()+60*60*24*30,get_scriptname());
     } else {
       $url = get_scriptname();
       $this->trail = <<<EOF
@@ -4907,46 +4919,55 @@ MSG;
 (function() {
   var url_prefix = "$url";
   var query_prefix = "$DBInfo->query_prefix";
+  var trail_size = $size;
 
   // get trails from cookie
   var cookieName = "MONI_TRAIL=";
   var pos = document.cookie.indexOf(cookieName);
-  if (pos == -1) return;
-  var end = document.cookie.indexOf(";", pos + cookieName.length);
-  if (end == -1) end = document.cookie.length;
+  var trails = [];
+  if (pos != -1) {
+    var end = document.cookie.indexOf(";", pos + cookieName.length);
+    if (end == -1) end = document.cookie.length;
 
-  trails = unescape(document.cookie.substring(pos + cookieName.length, end)).split("\\t");
+    trails = unescape(document.cookie.substring(pos + cookieName.length, end)).split("\\t");
+  } else {
+    trails[0] = encodeURIComponent("$DBInfo->frontpage");
+  }
   var span = document.createElement("span");
 
   // render trails
   var str = [];
+  var ntrails = [];
   var trail = document.createElement("span");
+  var idx = trails.length - trail_size;
+  if (idx > 0) trails = trails.splice(idx, trail_size);
+
   for (var i = 0, j = 0; i < trails.length; i++) {
     var url = escape(trails[i]).replace(/\\+/g, "%20");
     var txt = decodeURIComponent(escape(trails[i])).replace(/\\+/g, " ");
     if (txt == "$pagename") continue;
     str[j] = "<a href='" + url_prefix + query_prefix + url + "'>" + txt + "</a>";
+    ntrails[j] = escape(trails[i]);
     j++;
   }
   str[j] = "$pagename";
+  ntrails[j] = encodeURIComponent("$pagename");
   document.write(str.join("<span class='separator'>$DBInfo->arrow</span>"));
+
+  // set the trailer again
+  var exp = new Date(); // 30-days expires
+  exp.setTime(exp.getTime() + 30*24*60*60*1000);
+  var cookie = cookieName + ntrails.join("\\t") +
+    "; expires=" + exp.toGMTString() +
+    "; path=$url";
+
+  document.cookie = cookie;
 })();
 </script>
 EOF;
     }
 
     $this->_vars['trail']=&$this->trail;
-
-    if (!in_array($pagename,$trails)) $trails[]=$pagename;
-
-    if (!empty($DBInfo->trail) and $DBInfo->trail > 5)
-      $size = $DBInfo->trail;
-
-    $idx=count($trails) - $size;
-    if ($idx > 0) $trails=array_slice($trails,$idx);
-    $trail=implode("\t",$trails);
-
-    setcookie('MONI_TRAIL',$trail,time()+60*60*24*30,get_scriptname());
   }
 
   function errlog($prefix="LoG",$tmpname='') {
