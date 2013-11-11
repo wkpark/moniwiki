@@ -24,7 +24,7 @@
                             ?>
                     </div>
                     <div class="moni">
-                        Theme Publish by <a href="http://kovshenin.com/" rel="designer">Konstantin Kovshenin</a> Convert by <a href="http://haruair.com/" target="_blank">Haruair</a><div><a target="_blank" href="http://moniwiki.sourceforge.net/" rel="generator"><img src="<?php echo $this->themeurl;?>/imgs/moniwiki-powered-thin.png" alt="Powered By MoniWiki" /></a></div>
+                        Theme Publish by <a href="http://kovshenin.com/" rel="designer">Konstantin Kovshenin</a> Converted by <a href="http://haruair.com/" target="_blank">Haruair</a><div><a target="_blank" href="http://moniwiki.sourceforge.net/" rel="generator"><img src="<?php echo $this->themeurl;?>/imgs/moniwiki-powered-thin.png" alt="Powered By MoniWiki" /></a></div>
                         
                     </div>
                 </footer>
