@@ -3888,7 +3888,7 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   $hits=array();
   $exacts = array();
   foreach ($pages as $page) {
-    if (empty($DBInfo->titleseach_noexact) and preg_match("/^".$needle."$/i", $page)) {
+    if (empty($DBInfo->titlesearch_noexact) and preg_match("/^".$needle."$/i", $page)) {
       $hits[] = $page;
       $exacts[] = $page;
       if (empty($DBInfo->titlesearch_exact_all)) {
