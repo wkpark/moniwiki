@@ -1920,10 +1920,10 @@ function do_raw($formatter,$options) {
     }
     $options['etag'] = $etag;
 
+    // set the s-maxage for proxy
+    $proxy_maxage = !empty($Config['proxy_maxage']) ? ', s-maxage='.$Config['proxy_maxage'] : '';
     $header[] = 'Content-Type: text/plain'.$force_charset;
-    $header[] = 'Pragma: cache';
-    $maxage = 60*60*24*7;
-    $header[] = 'Cache-Control: private, max-age='.$maxage;
+    $header[] = 'Cache-Control: public'.$proxy_maxage.', max-age=0, must-revalidate';
     $need = http_need_cond_request($mtime, $lastmod, $etag);
     if (!$need)
       $header[] = 'HTTP/1.0 304 Not Modified';

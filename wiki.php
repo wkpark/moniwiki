@@ -5852,8 +5852,13 @@ if ($options['id'] == 'Anonymous') {
   session_start();
 }
 
+// set the s-maxage for proxy
+$proxy_maxage = !empty($Config['proxy_maxage']) ? ', s-maxage='.$Config['proxy_maxage'] : '';
+
 if (empty($_GET['action']) or $_GET['action'] == 'show')
-  header('Cache-Control: '.$private.', max-age=0, post-check=0, pre-check=0');
+  header('Cache-Control: '.$private.$proxy_maxage.', max-age=0, must-revalidate, post-check=0, pre-check=0');
+else
+  header('Cache-Control: '.$private.', max-age=0, must-revalidate, post-check=0, pre-check=0');
 
 wiki_main($options);
 endif;

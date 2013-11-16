@@ -266,6 +266,7 @@ $use_refresh=2;
 $cachetime=0;
 #$cachetime=60*60*5; # set cachetime for caching
 #$use_conditional_get=1; # use conditional get for static pages
+#$proxy_maxage=1; # maxage in seconds for shared caches
 $dynamic_macros=array('pagecount'=>1, 'recentchanges'=>1,'userpreferences'=>1,
 	'uploadedfiles'=>1,'SWFUpload'=>1,'Vote'=>1,
 	'login'=>1,'minilogin'=>1,'scrap'=>1, 'subscribe'=>1, 'fortune'=>1);
