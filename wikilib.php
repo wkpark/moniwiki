@@ -563,6 +563,28 @@ function is_mobile() {
 }
 
 /**
+ * Get the real IP address for proxy
+ *
+ * @author   Won-Kyu Park <wkpark@gmail.com>
+ */
+function realIP() {
+    if (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
+        $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
+    else if (!empty($_SERVER['HTTP_X_REAL_IP']))
+        $ip = $_SERVER['HTTP_X_REAL_IP'];
+    else
+        return $_SERVER['REMOTE_ADDR'];
+
+    if (strpos($ip, ',') === false)
+        return $ip;
+
+    $ip = explode(',', str_replace(' ', '', $ip));
+    // FIXME
+    $ip = array_reverse($ip);
+    return $ip[0];
+}
+
+/**
  * get default cols of textarea
  *
  */

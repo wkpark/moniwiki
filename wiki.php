@@ -5855,7 +5855,11 @@ if ($options['id'] == 'Anonymous') {
 // set the s-maxage for proxy
 $proxy_maxage = !empty($Config['proxy_maxage']) ? ', s-maxage='.$Config['proxy_maxage'] : '';
 
-if ($_SERVER['REQUEST_METHOD'] != 'GET')
+// set the real IP address for proxy
+$_SERVER['REMOTE_ADDR'] = realIP();
+
+if ($_SERVER['REQUEST_METHOD'] != 'GET' and
+    $_SERVER['REQUEST_METHOD'] != 'HEAD')
   header('Cache-Control: '.$private.', max-age=0, must-revalidate, post-check=0, pre-check=0');
 else if (empty($_GET['action']) or $_GET['action'] == 'show')
   header('Cache-Control: '.$private.$proxy_maxage.', max-age=0, must-revalidate, post-check=0, pre-check=0');
