@@ -4188,7 +4188,7 @@ class Formatter {
           $plain=1;
       }
     }
-    $mtime = $this->page->mtime();
+    $mtime = isset($options['mtime']) ? $options['mtime'] : $this->page->mtime();
     if (is_static_action($options) or
         (!empty($DBInfo->use_conditional_get) and !empty($mtime)
         and empty($options['nolastmod'])

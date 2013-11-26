@@ -546,6 +546,9 @@ function http_need_cond_request($mtime, $last_modified = '', $etag = '') {
 function is_static_action($params) {
     if (isset($params['action']) and $params['action'] == 'raw')
         return true;
+    // pre defined etag found. force static page
+    if (isset($params['etag'][0]))
+        return true;
     return false;
 }
 
@@ -2074,7 +2077,7 @@ HEADER;
 
 
 function do_titleindex($formatter,$options) {
-  global $DBInfo;
+  global $DBInfo, $Config;
 
   if (isset($options['q'])) {
     if (!$options['q']) { print ''; return; }
@@ -2124,11 +2127,30 @@ function do_titleindex($formatter,$options) {
     print $ret;
     return;
   } else if ($options['sec'] =='') {
-    $pages = $DBInfo->getPageLists();
+    // all pages
+    $mtime = $DBInfo->mtime();
+    $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
+    $etag = md5($mtime.$DBInfo->etag_seed);
+    $options['etag'] = $etag;
+    $options['mtime'] = $mtime;
+
+    // set the s-maxage for proxy
+    $proxy_maxage = !empty($Config['proxy_maxage']) ? ', s-maxage='.$Config['proxy_maxage'] : '';
+    $header[] = 'Content-Type: text/plain';
+    $header[] = 'Cache-Control: public'.$proxy_maxage.', max-age=0, must-revalidate';
+    $need = http_need_cond_request($mtime, $lastmod, $etag);
+    if (!$need)
+      $header[] = 'HTTP/1.0 304 Not Modified';
+    $formatter->send_header($header, $options);
+    if (!$need) {
+      @ob_end_clean();
+      return;
+    }
+    $args = array('all'=>1);
+    $pages = $DBInfo->getPageLists($args);
 
     sort($pages);
 
-    header("Content-Type: text/plain");
     print join("\n",$pages);
     return;
   }
