@@ -5861,8 +5861,14 @@ $_SERVER['REMOTE_ADDR'] = realIP();
 if ($_SERVER['REQUEST_METHOD'] != 'GET' and
     $_SERVER['REQUEST_METHOD'] != 'HEAD')
   header('Cache-Control: '.$private.', max-age=0, must-revalidate, post-check=0, pre-check=0');
-else if (empty($_GET['action']) or $_GET['action'] == 'show')
-  header('Cache-Control: '.$private.$proxy_maxage.', max-age=0, must-revalidate, post-check=0, pre-check=0');
+else {
+  if (empty($_GET['action']) or $_GET['action'] == 'show')
+    $tmp = $private.$proxy_maxage;
+  else
+    $tmp = $private;
+
+  header('Cache-Control: '.$tmp.', max-age=0, must-revalidate, post-check=0, pre-check=0');
+}
 
 wiki_main($options);
 endif;
