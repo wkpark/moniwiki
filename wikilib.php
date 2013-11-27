@@ -1938,6 +1938,7 @@ function do_raw($formatter,$options) {
     $mtime = $formatter->page->mtime();
     $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
     $options['deps'] = array('rev', 'section');
+    $options['nodep'] = true;
     $etag = $formatter->page->etag($options);
     if (strstr($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') and function_exists('ob_gzhandler')) {
       $gzip_mode = 1;
