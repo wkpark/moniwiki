@@ -2679,7 +2679,7 @@ class Formatter {
     $macro = $name.$arg;
     $md5sum = md5($macro);
     $this->_dynamic_macros[$macro] = array($md5sum, $this->mid);
-    return '[['.$md5sum.']]';
+    return '@@'.$md5sum.'@@';
   }
 
   function processor_repl($processor,$value, $options = false) {
@@ -5634,7 +5634,7 @@ function wiki_main($options) {
         $mrule=array();
         $mrepl=array();
         foreach ($_macros as $m=>$v) {
-          $mrule[]='[['.$v[0].']]';
+          $mrule[]='@@'.$v[0].'@@';
           $options['mid']=$v[1];
           $mrepl[]=$formatter->macro_repl($m,'',$options); // XXX
         }
