@@ -18,6 +18,8 @@
 // Param: fetch_action=http://foo.bar/wiki.php?action=fetch&url=
 // Param: fetch_timeout=15
 // Param: fetch_use_cache_url=0
+// Param: fetch_referer='http://to_default_referer';
+// Param: fetch_referer_re=array('@pattern@'=>'http://to_default_referer',...);
 //
 // Usage:[[Fetch(url)]] or ?action=fetch&url=http://...
 //
@@ -103,6 +105,20 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
     $maxage = !empty($DBInfo->fetch_maxage) ? (int) $DBInfo->fetch_maxage : 60*60*24*7;
     $timeout = !empty($DBInfo->fetch_timeout) ? (int) $DBInfo->fetch_timeout : 15;
 
+    // set referrer
+    $referer = '';
+    if (!empty($DBInfo->fetch_referer_re)) {
+        foreach ($DBInfo->fetch_referer_re as $re=>$ref) {
+            if (preg_match($re, $url)) {
+                $referer = $ref;
+                break;
+            }
+        }
+    }
+    // default referrer
+    if (empty($referer) and !empty($DBInfo->fetch_referer))
+        $referer = $DBInfo->fetch_referer;
+
     // check connection
     $http = new HTTPClient();
     $sc = new Cache_text('fetchinfo');
@@ -130,6 +146,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
         // get file header
         $http->nobody = true;
 
+        $http->referer = $referer;
         $http->sendRequest($url, array(), 'GET');
         //if ($http->status == 301 || $http->status == 302 ) {
         //
@@ -232,6 +249,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
         $save = ini_get('max_execution_time');
         set_time_limit(0);
         $http->timeout = $timeout;
+        $http->referer = $referer;
         $http->sendRequest($url, array(), 'GET');
         set_time_limit($save);
 
