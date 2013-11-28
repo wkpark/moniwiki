@@ -1602,6 +1602,10 @@ class Formatter {
     $this->fetch_action = !empty($DBInfo->fetch_action) ? $DBInfo->fetch_action : null;
     $this->fetch_images = !empty($DBInfo->fetch_images) ? $DBInfo->fetch_images : 0;
     $this->fetch_imagesize = !empty($DBInfo->fetch_imagesize) ? $DBInfo->fetch_imagesize : 0;
+    if (empty($this->fetch_action))
+      $this->fetch_action = $this->link_url('', '?action=fetch&amp;url=');
+    else
+      $this->fetch_action = $DBInfo->fetch_action;
 
     if ($this->use_group and ($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
@@ -2195,15 +2199,10 @@ class Formatter {
 
           // XXX fetch images
           $fetch_url = $url;
-          if (!empty($this->fetch_images)) {
-            if (empty($this->fetch_action)) {
-              $fetch_url = $this->link_url('', '?action=fetch&amp;url='.
-                  str_replace(array('&', '?'), array('%26', '%3f'), $url));
-            } else {
-              $fetch_url = $this->fetch_action.
-                  str_replace(array('&', '?'), array('%26', '%3f'), $url);
-            }
-          }
+          if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url))
+            $fetch_url = $this->fetch_action.
+                str_replace(array('&', '?'), array('%26', '%3f'), $url);
+
           return "<div class=\"$cls\"><img alt='$link' $attr src='$fetch_url' />".
                 "<div><a href='$url'><span>[$type external image$size]</span></a></div></div>";
         }
