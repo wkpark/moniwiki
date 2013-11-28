@@ -5356,18 +5356,21 @@ function wiki_main($options) {
   $options['page']=$pagename;
   $options['action'] = &$action;
   $page = $DBInfo->getPage($pagename);
+  $page->is_static = false; // FIXME
 
   $pis = array();
 
   // get PI cache
-  if ($page->exists()) $page->pi = $pis = $page->get_instructions('', array('refresh'=>$refresh));
-  $page->is_static = false;
+  if ($page->exists()) {
+    $page->pi = $pis = $page->get_instructions('', array('refresh'=>$refresh));
 
-  // set some PIs for robot
-  if (!empty($options['is_robot'])) {
-    $page->is_static = true;
-  } else {
-    $page->is_static = empty($pis['#nocache']) && empty($pis['#dynamic']);
+    // set some PIs for robot
+    if (!empty($options['is_robot'])) {
+      $page->is_static = true;
+    } else if ($_SERVER['REQUEST_METHOD'] == 'GET' or $_SERVER['REQUEST_METHOD'] == 'HEAD') {
+      if (empty($action) and empty($refresh))
+        $page->is_static = empty($pis['#nocache']) && empty($pis['#dynamic']);
+    }
   }
 
   // HEAD support for robots
@@ -5394,7 +5397,8 @@ function wiki_main($options) {
     return;
   }
 
-  if (is_static_action($action) or (!empty($DBInfo->use_conditional_get) and $page->exists() and $page->is_static)) {
+  if (is_static_action($options) or
+      (!empty($DBInfo->use_conditional_get) and $page->is_static)) {
     $mtime = $page->mtime();
     $etag = $page->etag($options);
     $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
