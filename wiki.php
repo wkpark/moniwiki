@@ -2131,13 +2131,16 @@ class Formatter {
         if (!isset($text[0])) $text=$url;
         else {
           $img_attr='';
+          $img_cls = '';
           if (preg_match("/^attachment:/",$text)) {
             $atext=$text;
             if (($p=strpos($text,'?')) !== false) {
               $atext=substr($text,0,$p);
               parse_str(substr($text,$p+1),$attrs);
               foreach ($attrs as $n=>$v) {
-                $img_attr.="$n=\"$v\" ";
+                if ($n == 'align') $img_cls = ' img'.ucfirst($v);
+                else
+                  $img_attr.="$n=\"$v\" ";
               }
             }
 
@@ -2150,10 +2153,30 @@ class Formatter {
               $text = $this->macro_repl('attachment', substr($text, 11));
             $this->_macrocache = $msave; // restore _macrocache
           }
-          if (preg_match("/^(https?|ftp).*\.(png|gif|jpeg|jpg)$/i",$text)) {
+          if (preg_match("/^((?:https?|ftp).*\.(png|gif|jpeg|jpg))(?:\?|&(?!>amp;))?(.*?)?$/i",$text, $match)) {
+            $cls = 'externalImage';
+            $type = strtoupper($match[2]);
             $atext=isset($atext[0]) ? $atext:$text;
-            $text=str_replace('&','&amp;',$text);
-            return "<a class='externalLink named' href='$link' $attr $this->external_target title='$url'><img class='external' style='border:0px' alt='$atext' src='$text' $img_attr/></a>";
+            $url = str_replace('&','&amp;',$match[1]);
+            $tmp = !empty($match[3]) ? preg_replace('/&amp;/', '&', $match[3]) : '';
+            $attrs = explode('&', $tmp);
+            $eattr = '';
+            foreach ($attrs as $a) {
+              $name = strtok($a, '=');
+              $val = strtok(' ');
+              if ($name == 'align') $cls.=' img'.ucfirst($val);
+              else if ($name and $val) $eattr.=' '.$name.'="'.urldecode($val).'"';
+            }
+
+            $size = '';
+            if (!empty($this->fetch_imagesize))
+              $size = '('.$this->macro_repl('ImageFileSize', $url).')';
+
+            if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url))
+              $url = $this->fetch_action. str_replace(array('&', '?'), array('%26', '%3f'), $url);
+
+            return "<div class='$cls$img_cls'><a class='externalLink named' href='$link' $attr $this->external_target title='$link'><img $eattr alt='$atext' src='$url' $img_attr/></a>".
+                "<div><a href='$url'><span>[$type external image$size]</span></a></div></div>";
           }
           if (!empty($this->external_on))
             $external_link='<span class="externalLink">('.$url.')</span>';
