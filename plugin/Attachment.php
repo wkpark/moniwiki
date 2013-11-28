@@ -24,10 +24,19 @@ function macro_Attachment($formatter,$value,$options=array()) {
     return $formatter->macro_cache_repl('Attachment', $value);
 
   $attr='';
-  if (!empty($DBInfo->force_download)) $force_download=1;
+  if (!empty($DBInfo->force_download) or !empty($DBInfo->mirror_url)) $force_download=1;
   if (!empty($DBInfo->download_action)) $mydownload=$DBInfo->download_action;
   else $mydownload='download';
   $extra_action='';
+
+  $mirror_url = $fetch_url = '';
+  if (!empty($DBInfo->mirror_url)) {
+    $mirror_url = $DBInfo->mirror_url;
+    if (empty($formatter->fetch_action))
+      $fetch_url = $formatter->link_url('', '?action=fetch&url=');
+    else
+      $fetch_url = $formatter->fetch_action;
+  }
 
   $text='';
   $caption='';
@@ -180,6 +189,8 @@ function macro_Attachment($formatter,$value,$options=array()) {
 
   if (file_exists($_l_upload_file)) {
     $file_ok=1;
+  } else if (!empty($mirror_url)) {
+    $file_ok = 2;
   } else if (!empty($formatter->wikimarkup) and empty($options['nomarkup'])) {
     if (!empty($DBInfo->swfupload_depth) and $DBInfo->swfupload_depth > 2) {
       $depth=$DBInfo->swfupload_depth;
@@ -221,7 +232,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
     $imgcls='imgAttach';
 
     if ($imgalign == 'imgCenter' or ($caption && empty($imgalign))) {
-      if (!$attrs['width']) {
+      if ($file_ok == 1 and !$attrs['width']) {
         $size=getimagesize($_l_upload_file); // XXX
         $attrs['width']=$size[0];
       }
@@ -240,16 +251,18 @@ function macro_Attachment($formatter,$value,$options=array()) {
       $imgcls=$imgalign ? 'imgAttach '.$imgalign:'imgAttach';
     }
 
-    $sz=filesize($_l_upload_file);
-    $unit=array('Bytes','KB','MB','GB','TB');
-    for ($i=0;$i<4;$i++) {
-      if ($sz <= 1024) {
-        #$sz= round($sz,2).' '.$unit[$i];
-        break;
+    $info = '';
+    if ($file_ok == 1) {
+      $sz=filesize($_l_upload_file);
+      $unit=array('Bytes','KB','MB','GB','TB');
+      for ($i=0;$i<4;$i++) {
+        if ($sz <= 1024) {
+          break;
+        }
+        $sz=$sz/1024;
       }
-      $sz=$sz/1024;
+      $info=' ('.round($sz,2).' '.$unit[$i].') ';
     }
-    $info=' ('.round($sz,2).' '.$unit[$i].') ';
 
     if (!in_array('UploadedFiles',$formatter->actions))
       $formatter->actions[]='UploadedFiles';
@@ -299,7 +312,12 @@ function macro_Attachment($formatter,$value,$options=array()) {
             $val=substr($val,0,$p).'/thumbnails'.substr($val,$p);
           $extra_action='download';
         }
-        $url=$formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=".$val);
+        if ($file_ok == 2 and !empty($mirror_url)) {
+          $url = $fetch_url.str_replace(array('&', '?'), array('%26', '%3f'),
+                  $mirror_url.urlencode(_urlencode($pagename))."?action=$mydownload&value=".$val);
+        } else {
+          $url = $formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=".$val);
+        }
       } else {
         if (!empty($use_thumb)) {
           $url=$DBInfo->upload_dir_url.'/thumbnails/'._urlencode($_l_file);
@@ -313,6 +331,9 @@ function macro_Attachment($formatter,$value,$options=array()) {
 
       if ($extra_action) {
         $url=$formatter->link_url(_urlencode($pagename),"?action=$extra_action&amp;value=".urlencode($value));
+        if ($file_ok == 2 and !empty($mirror_url))
+          $url = $fetch_url.str_replace(array('&', '?'), array('%26', '%3f'),
+                  $mirror_url.urlencode(_urlencode($pagename))."?action=$mydownload&value=".$val);
         $img="<a href='$url'>$img</a>";
       } else if (preg_match('@^(https?|ftp)://@',$alt))
         $img="<a href='$alt'>$img</a>";
