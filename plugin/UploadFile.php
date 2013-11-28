@@ -377,7 +377,7 @@ EOF;
   print $js;
   $formatter->send_footer('', $options);
 
-  if (isset($options['MYFILES']) and is_array($options['MYFILES']) and empty($DBInfo->nosession))
+  if (isset($options['MYFILES']) and is_array($options['MYFILES']) and session_id() != '')
     session_destroy();
   return true;
 }

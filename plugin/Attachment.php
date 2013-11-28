@@ -187,7 +187,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
       $depth=2;
     }
 
-    if (!empty($DBInfo->nosession)) { // ip based
+    if (session_id() == '') { // ip based
       $myid=md5($_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI'); // FIXME
     } else {
       $myid=session_id();

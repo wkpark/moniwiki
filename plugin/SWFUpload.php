@@ -25,7 +25,7 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
         $depth=2;
     }
 
-    if (!empty($DBInfo->nosession)) { // ip based
+    if (session_id() == '') { // ip based
         $myid=md5($_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI'); // FIXME
     } else {
         if (!empty($_SESSION['_swfupload']))
@@ -319,7 +319,7 @@ EOF;
     }
 
     $myid = md5($_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI'); // FIXME
-    if (empty($DBInfo->nosession)) { // ip based
+    if (session_id() != '') { // ip based
         if (0 and $_SESSION['_swfupload']) // XXX flash bug?
             $myid = $_SESSION['_swfupload'];
         else if (!empty($options['value']) and ($p = strpos($options['value'], '/')) !== false) {

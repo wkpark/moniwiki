@@ -17,7 +17,7 @@
 function do_autosave($formatter,$options) {
     global $DBInfo;
 
-    if ($DBInfo->nosession) { // ip based
+    if (session_id() == '') { // ip based
         if ($DBInfo->user->id == 'Anonymous') {
             $myid = md5($_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI'); // IP based for Anonymous user XXX
         } else {
