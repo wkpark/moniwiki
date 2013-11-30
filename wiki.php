@@ -2071,6 +2071,7 @@ class Formatter {
     if (count($tmp) > 1) $urltest = $tmp[0];
 
     if ($url[0] == '"') {
+      $url = preg_replace('/&amp;/i', '&', $url);
       // [["Hello World"]], [["Hello World" Page Title]]
       return $this->word_repl($bra.$url.$ket, '', $attr);
     } else
@@ -2106,8 +2107,10 @@ class Formatter {
 
       // InterWiki Pages
       if (preg_match("/^(:|w|[A-Z])/",$url)
-          or (!empty($this->urls) and !preg_match('/^('.$this->urls.')/',$url)))
+          or (!empty($this->urls) and !preg_match('/^('.$this->urls.')/',$url))) {
+        $url = preg_replace('/&amp;/i', '&', $url);
         return $this->interwiki_repl($url,'',$attr,$external_icon);
+      }
 
       if (preg_match("/^mailto:/",$url)) {
         $email=substr($url,7);
