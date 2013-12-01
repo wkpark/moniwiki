@@ -60,7 +60,7 @@ function macro_PageList($formatter,$arg="",$options=array()) {
     if (!empty($options['metawiki']))
       $all_pages = $DBInfo->metadb->getLikePages($needle);
     else
-      $all_pages = $DBInfo->getPageLists($options);
+      $all_pages = $DBInfo->getLikePages($needle);
   }
 
   $hits=array();
@@ -166,8 +166,9 @@ function macro_PageList($formatter,$arg="",$options=array()) {
     if ($total > $count or $offset < $total) {
       if (isset($ret['offset']) and $ret['offset'] < $total and $count < $total) {
         $extra = '';
-        if ($options['data']) $extra.='&amp;date=1';
+        if ($options['date']) $extra.='&amp;date=1';
         if ($options['info']) $extra.='&amp;info=1';
+        if (isset($needle[0])) $extra.='&amp;value='.$needle;
         $qoff = '&amp;offset='.($ret['offset'] + $count);
         $out.= $formatter->link_to("?action=pagelist$extra$qoff", _("Show next page"));
       }
@@ -183,9 +184,11 @@ function do_pagelist($formatter,$options=array()) {
   if (!is_numeric($options['offset']) or $options['offset'] <= 0)
     unset($options['offet']);
 
+  $arg = '';
+  if (isset($options['value'][0])) $arg = $options['value'];
   $formatter->send_header('', $options);
   $formatter->send_title('', '', $options);
-  echo macro_PageList($formatter, '', $options);
+  echo macro_PageList($formatter, $arg, $options);
   $formatter->send_footer('', $options);
 }
 
