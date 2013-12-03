@@ -612,8 +612,19 @@ class WikiDB {
       break;
     }
 
-    if (!empty($this->use_alias) and (file_exists($this->aliaspage) or !empty($aliases))) {
-      $aliases = array_merge($aliases, get_aliases($this->aliaspage));
+    // parse the aliaspage
+    if (!empty($this->use_alias) and file_exists($this->aliaspage)) {
+      $ap = new Cache_text('settings');
+      $extra = $ap->fetch('alias');
+      if (empty($extra) or $ap->mtime() < filemtime($this->aliaspage)) {
+        $extra = get_aliases($this->aliaspage);
+        $ap->update('alias', $extra);
+      }
+      if (!empty($extra))
+        $aliases = array_merge($aliases, $extra);
+    }
+
+    if (!empty($aliases)) {
       $this->alias= new MetaDB_text($aliases);
     } else {
       $this->alias= new MetaDB();
