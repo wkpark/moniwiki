@@ -7,10 +7,7 @@
 //
 
 function macro_GetText($formatter, $value, $params = array()) {
-    // make GetText as a dynamic macro.
-    if ($formatter->_macrocache and empty($options['call']))
-        return $formatter->macro_cache_repl('GetText', $value);
-    return _($value);
+    return '<span class="i18n" title="'.str_replace('"', '&#34;', $value).'">'._($value).'</span>';
 }
 
 // vim:et:sts=4:sw=4:
