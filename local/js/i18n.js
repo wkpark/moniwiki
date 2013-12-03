@@ -32,6 +32,19 @@ readLanguage = function(domain) {
     }
 };
 
+loadLanguage = function() {
+    // i18nize elements like as following
+    // <span class="i18n" title="Hello">Hello World</span>
+    if (!document.getElementsByClassName) return;
+
+    var elems = document.getElementsByClassName('i18n');
+
+    for (var i = 0; i < elems.length; i++) {
+        if (elems[i].title != '' && elems[i].childNodes[0] && elems[i].childNodes[0].nodeValue)
+            elems[i].childNodes[0].nodeValue = _(elems[i].title);
+    }
+}
+
 _ = function(msgid) {
     if ( typeof _translations == "undefined") {
         return msgid;
@@ -59,6 +72,14 @@ _ = function(msgid) {
         window.confirm = function(txt) {
             return oldconfirm(_(txt));
         }
+    }
+
+    // onload
+    var oldOnload = window.onload;
+    window.onload = function(ev) {
+        try { oldOnload(); } catch(e) {};
+
+        loadLanguage();
     }
 })();
 

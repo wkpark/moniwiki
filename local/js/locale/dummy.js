@@ -33,3 +33,6 @@ N_('Smiley');
 N_('Your signature with timestamp');
 N_('Click a button to get an example text');
 N_('Please enter the text you want to be formatted.\\\\n It will be shown in the infobox for copy and pasting.\\\\nExample:\\\\n\$1\\\\nwill become:\\\\n\$2');
+
+// etc.
+N_('Contents');

@@ -271,6 +271,10 @@ msgid ""
 "infobox for copy and pasting.\\\\nExample:\\\\n\\$1\\\\nwill become:\\\\n\\$2"
 msgstr ""
 
+#: dummy.js:38
+msgid "Contents"
+msgstr "목차"
+
 #, fuzzy
 #~ msgid "Previous"
 #~ msgstr "미리보기"
