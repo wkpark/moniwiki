@@ -1161,8 +1161,11 @@ class WikiPage {
     $tag = '';
     if (!empty($DBInfo->etag_seed))
       $tag.= $DBInfo->etag_seed;
-    if (!empty($params['action']))
-      $tag.= $params['action'];
+
+    // check some parameters
+    foreach (array('action', 'lang', 'theme') as $k)
+      if (isset($params[$k])) $tag.= $params[$k];
+
     if (!empty($params['deps'])) {
       foreach ($params['deps'] as $d) {
         !empty($params[$d]) ? $tag.= $params[$d] : true;
@@ -5863,6 +5866,7 @@ init_locale($lang);
 init_requests($options);
 if (!isset($options['pagename'][0])) $options['pagename']= get_frontpage($lang);
 $DBInfo->lang=$lang;
+$options['lang'] = $lang;
 
 if ($options['id'] == 'Anonymous') {
   $private = 'public';
