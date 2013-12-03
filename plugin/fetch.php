@@ -92,6 +92,9 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
         $allowed = $DBInfo->fetch_exts;
     }
 
+    // check if it is needed to urlencode()
+    if (strpos($url, ' ') !== false) $url = _urlencode($url);
+
     // check if it is valid or not
     if (!preg_match('/^(?:https?|ftp):\/\/.*\.('.$allowed.')(?:\?|&)?/i', $url, $m)) {
         if (empty($DBInfo->fetch_mime_check)) {
