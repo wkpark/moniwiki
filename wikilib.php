@@ -3700,6 +3700,7 @@ function macro_TableOfContents(&$formatter,$value="") {
  $toctoggle=!empty($DBInfo->use_toctoggle) ? $DBInfo->use_toctoggle : '';
  $secdep = '';
  $prefix = '';
+ $dot = '<span class="dot">.</span>';
 
  while($value) {
    list($arg,$value)=explode(',',$value,2);
@@ -3834,9 +3835,9 @@ EOS;
    $head_num=$num;
 
    if ($baseurl)
-     $TOC.=$close.$open."<dt><a href='$baseurl#s$prefix-$num'>$num$a0 $head $a1</dt>\n";
+     $TOC.=$close.$open."<dt><a href='$baseurl#s$prefix-$num'><span class='num'>$num$dot</span>$a0 $head $a1</dt>\n";
    else
-     $TOC.=$close.$open."<dt><a id='toc$prefix-$num' href='#s$prefix-$num'>$num$a0 $head $a1</dt>\n";
+     $TOC.=$close.$open."<dt><a id='toc$prefix-$num' href='#s$prefix-$num'><span class='num'>$num$dot</span>$a0 $head $a1</dt>\n";
 
   }
 

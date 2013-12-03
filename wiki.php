@@ -2645,7 +2645,7 @@ class Formatter {
 
     $prefix=$this->toc_prefix;
     if ($this->toc)
-      $head="<span class='tocnumber'><a href='#toc'>$num</a> </span>$head";
+      $head="<span class='tocnumber'><a href='#toc'>$num<span class='dot'>.</span></a> </span>$head";
     $perma='';
     if (!empty($this->perma_icon))
     $perma=" <a class='perma' href='#s$prefix-$num'>$this->perma_icon</a>";
