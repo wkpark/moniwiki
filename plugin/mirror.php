@@ -203,8 +203,8 @@ function macro_Mirror($formatter, $pagename = '', $params = array()) {
             fwrite($fp, $http->resp_body);
         }
         fclose($fp);
-        $mtime = @strtotime($lastmod);
-        touch($pagefile, $mtime);
+        //$mtime = @strtotime($lastmod);
+        //touch($pagefile, $mtime);
 
         // remove PI cache to update
         $pi = new Cache_text('PI');
