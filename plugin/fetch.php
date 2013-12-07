@@ -95,15 +95,6 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
     // check if it is needed to urlencode()
     if (strpos($url, ' ') !== false) $url = _urlencode($url);
 
-    // check if it is valid or not
-    if (!preg_match('/^(?:https?|ftp):\/\/.*\.('.$allowed.')(?:\?|&)?/i', $url, $m)) {
-        if (empty($DBInfo->fetch_mime_check)) {
-            $params['retval']['error'] = _("Is it a valid fetch type ?");
-            return false;
-        }
-    }
-    $ext = '.'.$m[1];
-
     // set default params
     $maxage = !empty($DBInfo->fetch_maxage) ? (int) $DBInfo->fetch_maxage : 60*60*24*7;
     $timeout = !empty($DBInfo->fetch_timeout) ? (int) $DBInfo->fetch_timeout : 15;
@@ -197,6 +188,8 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
     if (preg_match('/^image\/(jpe?g|gif|png)$/', $mimetype, $m)) {
         $ext = isset($m[1]) ? '.'.$m[1] : '';
         $is_image = true;
+    } else {
+        $ext = '.'.get_extension('data/mime.types', $mimetype);
     }
 
     if (!empty($DBInfo->fetch_images_only) and !$is_image) {
