@@ -92,8 +92,8 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
         $allowed = $DBInfo->fetch_exts;
     }
 
-    // check if it is needed to urlencode()
-    if (strpos($url, ' ') !== false) $url = _urlencode($url);
+    // urlencode()
+    $url = _urlencode($url);
 
     // set default params
     $maxage = !empty($DBInfo->fetch_maxage) ? (int) $DBInfo->fetch_maxage : 60*60*24*7;
