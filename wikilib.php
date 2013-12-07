@@ -332,7 +332,8 @@ function get_aliases($file) {
     #
     if (($p=strpos($line,'>')) !== false) {
       list($key, $list) = explode('>',$line,2);
-      $alias[$key] = $list;
+      $vals = get_csv($list);
+      $alias[$key] = $vals;
     } else {
       if (($p = strpos($line, '<')) !== false) {
         list($val, $keys) = explode('<', $line, 2);
@@ -343,11 +344,64 @@ function get_aliases($file) {
       }
 
       foreach ($keys as $k) {
-        $alias[$k] = !empty($alias[$k]) ? $alias[$k].','.$val:$val;
+        if (!isset($alias[$k])) $alias[$k] = array();
+        $alias[$k][] = $val;
       }
     }
   }
   return $alias;
+}
+
+/**
+ * Store aliases
+ *
+ * @author   Won-Kyu Park <wkpark@gmail.com>
+ */
+function store_aliases($pagename, $aliases) {
+    $cache = new Cache_Text('alias');
+
+    $cur = $cache->fetch($pagename);
+    if (!is_array($cur)) $cur = array();
+    if (empty($cur) and empty($aliases))
+        return;
+
+    // inverted index
+    $icache = new Cache_Text('aliasname');
+
+    if (key($cur) == $pagename)
+        $cur = $cur[$pagename];
+
+    $add = array_diff($aliases, $cur);
+    $del = array_diff($cur, $aliases);
+
+    // merge new aliases
+    foreach ($add as $a) {
+        if (!isset($a[0])) continue;
+        $i = $icache->fetch($a);
+        if (!is_array($i)) $i = array();
+        $i = array_merge($i, array($pagename));
+        $i = array_unique($i);
+        $icache->update($a, $i);
+    }
+
+    // remove deleted aliases
+    foreach ($del as $d) {
+        if (!isset($d[0])) continue;
+        $i = $icache->fetch($d);
+        if (!is_array($i)) $i = array();
+        $i = array_diff($i, array($pagename));
+
+        if (empty($i))
+            $icache->remove($d);
+        else
+            $icache->update($d, $i);
+    }
+
+    // update pagealiases
+    if (!empty($aliases))
+        $cache->update($pagename, array($pagename => $aliases));
+    else
+        $cache->remove($pagename);
 }
 
 /**

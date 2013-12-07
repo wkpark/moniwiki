@@ -369,50 +369,48 @@ class MetaDB {
 }
 
 class MetaDB_text extends MetaDB {
-  var $db=array();
-  function MetaDB_text($aliases = null) {
-    // merge aliases
-    if (!empty($aliases)) {
-      foreach ($aliases as $k=>$a) {
-        $this->db[$k] = !empty($this->db[$k]) ? $this->db[$k].','.$a : $a;
-      }
-    }
+  var $alias; // alias metadata
+  var $db; // extra aliases from the AliasPageNames
+
+  function MetaDB_text($db = array()) {
+    // open aliasname metadata
+    $this->alias = new Cache_Text('aliasname');
+    $this->db = $db;
   }
 
   function hasPage($pagename) {
-    if (isset($this->db[$pagename])) return true;
+    if ($this->alias->exists($pagename) or
+        !empty($this->db[$pagename])) return true;
     return false;
   }
 
   function getTwinPages($pagename,$mode=1) {
-    if (empty($this->db[$pagename])) {
+    if (!$this->alias->exists($pagename) and
+        empty($this->db[$pagename])) {
       if (!empty($mode)) return array();
       return false;
     }
     if (empty($mode)) return true;
-    $twins=$this->db[$pagename];
+    $twins = $this->alias->fetch($pagename);
+    if (empty($twins))
+      $twins = $this->db[$pagename];
+    else if (!empty($this->db[$pagename]))
+      $twins = array_merge($twins, $this->db[$pagename]);
 
-    $ret='[wiki:'.str_replace(',',"]\n[wiki:",$twins).']';
-
-    $pagename=_preg_search_escape($pagename);
-    $ret= preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
-    return explode("\n", $ret);
+    // wiki:Hello World -> wiki:"Hello World"
+    $twins = preg_replace_callback('@^((?:[^\s]{2,}:)*)(.*)$@',
+      create_function('$m',
+        'return \'[wiki:\'.$m[1].\'"\'.$m[2].\'"]\';'), $twins);
+    return $twins;
   }
-  function getSisterSites($pagename,$mode=1) {
-    if (empty($this->db[$pagename])) {
-      if ($mode) return '';
-      return false;
-    }
-    if (empty($mode)) return true;
 
-    $twins=$this->db[$pagename];
-    $ret='[wiki:'.str_replace(',',"]\n[wiki:",$twins).']';
+  function getSisterSites($pagename,$mode=1) {
+    $ret = $this->getTwinPages($pagename, $mode);
+
+    if (is_array($ret))
+      return implode("\n", $ret);
 
     return $ret;
-  }
-
-  function getAllPages() {
-    return array_keys($this->db);
   }
 }
 
@@ -577,51 +575,14 @@ class WikiDB {
   }
 
   function initAlias() {
-    $aliases = array();
-    while (!empty($this->use_alias)) {
-      // read all aliases from aliase caches
-      $apc = new Cache_text('aliases');
-      $ac = new Cache_text('alias');
-      $dir = $ac->cache_dir;
-      $_lock_file = _fake_lock_file($this->vartmp_dir, 'init_alias');
-      $locked = _fake_locked($_lock_file, $this->mtime());
-
-      $delay = !empty($this->default_delaytime) ? $this->default_delaytime : 0;
-
-      if ($locked or ($apc->exists('aliases') and $this->checkUpdated($apc->mtime('aliases'), $delay))) {
-        $aliases = $apc->fetch('aliases');
-        break;
-      }
-
-      // get all cache files
-      $files = array();
-      $ac->_caches($files, array('prefix'=>1));
-      _fake_lock($_lock_file);
-      foreach ($files as $file) {
-        $as = $ac->_fetch($file);
-        $keyname = key($as);
-        $pagename = $keyname;
-        if (strpos($pagename, ' ') !== false)
-          $pagename = '"' . $pagename . '"';
-        foreach ($as[$keyname] as $k) {
-          $aliases[$k] = !empty($aliases[$k]) ? $aliases[$k].','.$pagename : $pagename;
-        }
-      }
-      $apc->update('aliases', $aliases);
-      _fake_lock($_lock_file, LOCK_UN);
-      break;
-    }
-
     // parse the aliaspage
     if (!empty($this->use_alias) and file_exists($this->aliaspage)) {
       $ap = new Cache_text('settings');
-      $extra = $ap->fetch('alias');
-      if (empty($extra) or $ap->mtime() < filemtime($this->aliaspage)) {
-        $extra = get_aliases($this->aliaspage);
-        $ap->update('alias', $extra);
+      $aliases = $ap->fetch('alias');
+      if (empty($aliases) or $ap->mtime() < filemtime($this->aliaspage)) {
+        $aliases = get_aliases($this->aliaspage);
+        $ap->update('alias', $aliases);
       }
-      if (!empty($extra))
-        $aliases = array_merge($aliases, $extra);
     }
 
     if (!empty($aliases)) {
@@ -1046,6 +1007,10 @@ class WikiDB {
     // remove pagelinks and backlinks
     store_pagelinks($page->name, array());
 
+    // remove aliases
+    if (!empty($this->use_alias))
+      store_aliases($page->name, array());
+
     $handle= opendir($this->cache_dir);
     $permanents = array('backlinks', 'keywords', 'aliases', 'wordindex', 'redirect');
     while ($file= readdir($handle)) {
@@ -1075,6 +1040,9 @@ class WikiDB {
 
     // remove pagelinks and backlinks
     store_pagelinks($pagename, array());
+    // remove aliases
+    if (!empty($this->use_alias))
+      store_aliases($page->name, array());
 
     $okey=$this->getPageKey($pagename);
     $nkey=$this->getPageKey($new);
@@ -1460,7 +1428,8 @@ class WikiPage {
       // is it removed ?
       if ($ac->exists($pagename) and
           empty($pi['#alias']) and empty($pi['#title'])) {
-        $ac->remove($pagename);
+        // remove aliases
+        store_aliases($pagename, array());
       } else if (!$ac->exists($pagename) or
           $ac->mtime($pagename) < $this->mtime() or !empty($_GET['update_alias'])) {
         $as = array();
@@ -1470,9 +1439,9 @@ class WikiPage {
         // add #title as a alias
         if (!empty($pi['#title']))
           $as[] = $pi['#title'];
-        if (!empty($as)) {
-          $ac->update($pagename, array($pagename=>$as));
-        }
+
+        // update aliases
+        store_aliases($pagename, $as);
       }
     }
 
