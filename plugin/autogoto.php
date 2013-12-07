@@ -53,6 +53,10 @@ function do_AutoGoto($formatter,$options) {
         $pages[] = str_replace(' ', '', $pages[0]);
         $pages[] = str_replace(' ', '', $pages[1]);
     }
+    // MediaWiki style naming
+    if (strpos($name, '_') !== false)
+        $pages[] = str_replace('_', ' ', $name);
+
     $pages = array_unique($pages);
 
     foreach ($pages as $p) {
