@@ -313,6 +313,10 @@ function macro_Attachment($formatter,$value,$options=array()) {
           $extra_action='download';
         }
         if ($file_ok == 2 and !empty($mirror_url)) {
+          if (isset($subpage[0])) {
+            $pagename = $subpage;
+            $val = _urlencode($file);
+          }
           $url = $fetch_url.str_replace(array('&', '?'), array('%26', '%3f'),
                   $mirror_url.urlencode(_urlencode($pagename))."?action=$mydownload&value=".$val);
         } else {
@@ -331,9 +335,11 @@ function macro_Attachment($formatter,$value,$options=array()) {
 
       if ($extra_action) {
         $url=$formatter->link_url(_urlencode($pagename),"?action=$extra_action&amp;value=".urlencode($value));
-        if ($file_ok == 2 and !empty($mirror_url))
+        if ($file_ok == 2 and !empty($mirror_url)) {
+          if (isset($subpage[0])) $pagename = $subpage;
           $url = $fetch_url.str_replace(array('&', '?'), array('%26', '%3f'),
                   $mirror_url.urlencode(_urlencode($pagename))."?action=$mydownload&value=".$val);
+        }
         $img="<a href='$url'>$img</a>";
       } else if (preg_match('@^(https?|ftp)://@',$alt))
         $img="<a href='$alt'>$img</a>";
