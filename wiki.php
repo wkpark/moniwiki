@@ -2139,6 +2139,7 @@ class Formatter {
               $text = $this->macro_repl('attachment', substr($text, 11));
             $this->_macrocache = $msave; // restore _macrocache
           }
+          $text = preg_replace('/&amp;/i', '&', $text);
           if (preg_match("/^((?:https?|ftp).*\.(png|gif|jpeg|jpg))(?:\?|&(?!>amp;))?(.*?)?$/i",$text, $match)) {
             $cls = 'externalImage';
             $type = strtoupper($match[2]);
