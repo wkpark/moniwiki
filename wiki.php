@@ -2144,6 +2144,8 @@ class Formatter {
             $type = strtoupper($match[2]);
             $atext=isset($atext[0]) ? $atext:$text;
             $url = str_replace('&','&amp;',$match[1]);
+            // trash dummy query string
+            $url = preg_replace('@(\?|&)\.(png|gif|jpe?g)$@', '', $url);
             $tmp = !empty($match[3]) ? preg_replace('/&amp;/', '&', $match[3]) : '';
             $attrs = explode('&', $tmp);
             $eattr = '';
@@ -2194,6 +2196,8 @@ class Formatter {
         if (preg_match("/(^.*\.(png|gif|jpeg|jpg))(?:\?|&(?!>amp;))?(.*?)?$/i", $url1, $match)) {
           $cls = 'externalImage';
           $url=$match[1];
+          // trash dummy query string
+          $url = preg_replace('@(\?|&)\.(png|gif|jpe?g)$@', '', $url);
           $type = strtoupper($match[2]);
           $attrs = !empty($match[3]) ? explode('&', $match[3]) : array();
           foreach ($attrs as $arg) {
@@ -2406,6 +2410,8 @@ class Formatter {
           }
         } else {
           $text=str_replace('&','&amp;',$text);
+          // trash dummy query string
+          $text = preg_replace('@(\?|&)\.(png|gif|jpe?g)$@', '', $text);
           $word="<img style='border:0' alt='$word' src='$text' /></a>";
         }
       } else {
