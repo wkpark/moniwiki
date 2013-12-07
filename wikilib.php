@@ -594,6 +594,21 @@ function http_need_cond_request($mtime, $last_modified = '', $etag = '') {
 }
 
 /**
+ * find the extension of given mimetype using the mime.types
+ *
+ * @author   Won-Kyu Park <wkpark@gmail.com>
+ */
+function get_extension($mime_types = 'mime.types', $mime) {
+    if (!file_exists($mime_types)) return 'bin';
+    $mimetypes = file_get_contents($mime_types);
+    if (preg_match('@(^'.$mime.'\s+.*$)@m', $mimetypes, $match)) {
+        $tmp = preg_split('/\s+/', $match[1]);
+        return $tmp[1];
+    }
+    return 'bin';
+}
+
+/**
  * static content action
  */
 
