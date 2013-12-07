@@ -15,6 +15,8 @@
 //
 
 function macro_ImageFileSize($formatter, $value = '') {
+    global $Config;
+
     if (empty($value)) return '';
 
     require_once "lib/HTTPClient.php";
@@ -28,8 +30,24 @@ function macro_ImageFileSize($formatter, $value = '') {
             $sz = $sc->fetch($value);
         } else {
             $http = new HTTPClient();
-            $http->nobody = true;
 
+            // set referrer
+            $referer = '';
+            if (!empty($Config['fetch_referer_re'])) {
+                foreach ($Config['fetch_referer_re'] as $re=>$ref) {
+                    if (preg_match($re, $value)) {
+                        $referer = $ref;
+                        break;
+                    }
+                }
+            }
+
+            // default referrer
+            if (empty($referer) and !empty($Config['fetch_referer']))
+                $referer = $Config['fetch_referer'];
+
+            $http->nobody = true;
+            $http->referer = $referer;
             $http->sendRequest($value, array(), 'GET');
             $http->status;
             if (isset($http->resp_headers['content-length']))
