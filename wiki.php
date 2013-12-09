@@ -2413,6 +2413,10 @@ class Formatter {
           $text=str_replace('&','&amp;',$text);
           // trash dummy query string
           $text = preg_replace('@(\?|&)\.(png|gif|jpe?g)$@', '', $text);
+
+          if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $text))
+            $text = $this->fetch_action. str_replace(array('&', '?'), array('%26', '%3f'), $text);
+
           $word="<img style='border:0' alt='$word' src='$text' /></a>";
         }
       } else {
