@@ -1,18 +1,15 @@
 /**
  *
  * @author: Won-Kyu Park <wkpark@kldp.org>
- * @date: 2008-12-29
+ * @since: 2008-12-29
+ * @date: 2013-12-10
  * @name: a autosave javascript module.
  * @Description: a autosave Javascript module.
  * @url: MoniWiki:AutoSave
- * @version: $Revision$
- * @license: GPL
- *
- * $Id$
+ * @version: 0.5
+ * @license: GPLv2
  *
  */
-
-var _cookie_autosave='_MONI_SAVE_';
 
 if ( typeof _ == 'undefined') {
     _ = function(msgid) {
@@ -20,46 +17,34 @@ if ( typeof _ == 'undefined') {
     };
 }
 
-function cookieToVar(cookie) {
-    if (!cookie) return {};
-    var txt=cookie.split(/\0\0/);
-    var txts={};
-    for (var i=0;i<txt.length;i++) {
-        var p=txt[i].indexOf(':');
-        var k='',v='';
-        if (p != -1) {
-            k=txt[i].substring(0,p);
-            v=txt[i].substr(p+1);
-            txts[k]=v;
-        }
-    }
-    return txts;
-}
-
-function varToCookie(val) {
-    var cookie='';
-    for (var k in val) cookie+=k+':'+val[k]+'\0\0';
-    return cookie;
-}
-
 function moni_autosave_reset(form) {
-    setCookie(_cookie_autosave,'');
+    // save or preview reset cookie for the selected page
+
+    var form = document.getElementById('editform');
+    var key = location.host + form.getAttribute('action');
+
+    delete localStorage[key];
+
+    var href = location + '';
+
+    // remove saved page
+    var postdata = 'action=autosave/ajax&remove=1';
+    var ret = '';
+    ret = HTTPPost(href, postdata);
+    return true;
 }
 
-function moni_autosave(form, min, sec) {
-    var val=getCookie(_cookie_autosave);
-
+function moni_autosave(textarea, min, sec) {
     if (typeof min == 'undefined')
         min = 3; // 3-minuite
     if (typeof sec == 'undefined')
-        sec = 10; // 10-second
+        sec = 20; // 20-second
 
     if (!this.timer) {
-        var key = location+'';
+        var form = document.getElementById('editform');
+        var key = location.host + form.getAttribute('action');
         var ret = '';
         var stamp = 0;
-        key = key.replace(/^https?:\/\//,'');
-        txts = cookieToVar(val);
 
         {
             var href = location+'';
@@ -76,54 +61,90 @@ function moni_autosave(form, min, sec) {
                 }
             }
         }
-        if (txts[key]) {
-            if ( confirm("Auto saved text found.\nAre you sure to restore page ?\n(You can undo/redo with Ctrl-Z/Ctrl-Shift-Z)") ) {
-                var p = txts[key].indexOf("\n");
-                var cstamp = 0;
-                var saved = '';
-                if (p > 0) {
-                    cstamp = txts[key].substr(0,p);
-                    saved = txts[key].substr(p+1);
-                }
+        var savetext = textarea.value;
+        if (localStorage[key]) {
+            var p = localStorage[key].indexOf("\n");
+            var cstamp = 0;
+            var saved = '';
 
-                if (stamp > cstamp) saved = ret;
-                form.elements['savetext'].value = saved;
-
-                delete txts[key];
-                var cookie = varToCookie(txts);
-                setCookie(_cookie_autosave, cookie);
+            if (p > 0) {
+                cstamp = localStorage[key].substr(0,p);
+                saved = localStorage[key].substr(p+1);
             }
-        } else if (ret && confirm("Auto saved text found.\nAre you sure to restore page ?\n(You can undo/redo with Ctrl-Z/Ctrl-Shift-Z)") ) {
-            form.elements['savetext'].value = ret;
+
+            if (stamp > cstamp) saved = ret;
+            var s = saved.replace(/\n$/, '');
+            var o = savetext.replace(/\n$/, '');
+
+            if (saved != '' && s != o &&
+                    confirm("Auto saved text found.\nAre you sure to restore page ?\n(You can undo/redo with Ctrl-Z/Ctrl-Shift-Z)") ) {
+                textarea.value = saved;
+
+                delete localStorage[key];
+            }
+        } else if (ret != '' && ret != savetext &&
+                confirm("Auto saved text found.\nAre you sure to restore page ?\n(You can undo/redo with Ctrl-Z/Ctrl-Shift-Z)") ) {
+            textarea.value = ret;
         }
         self = this;
-        self.form = form;
-        this.timer2 = setInterval(function() { ajax_save(self.form); } ,min * 60*1000);
-        this.timer = setInterval(function() {
-            var val=getCookie(_cookie_autosave);
-            var cookie;
-            var txts=cookieToVar(val);
-            var key=location+'';
-            key=key.replace(/^https?:\/\//,'');
-            var time = new Date();
-            var stamp = time.getTime();
+        self.textarea = textarea;
 
-            txts[key] = stamp + "\n" + self.form.elements['savetext'].value;
-            cookie=varToCookie(txts);
+        textarea.onblur = function() {
+                clearInterval(self.timer);
+                clearInterval(self.timer2);
+                self.timer = null;
+                self.timer2 = null;
+                local_save(self.textarea);
+            };
 
-            var exp = new Date(); // 7-days expires
-            exp.setTime(exp.getTime() + 7*24*60*60*1000);
-
-            setCookie(_cookie_autosave, cookie, exp );
-        } , sec * 1000); // cookie save
+        this.timer2 = setInterval(function() { ajax_save(self.textarea); } ,min * 60*1000); // ajax_save
+        this.timer = setInterval(function() { local_save(self.textarea); } , sec * 1000); // local storage save
     }
 }
 
-function ajax_save(form) {
+function local_save(textarea) {
+    var form = document.getElementById('editform');
+    var key = location.host + form.getAttribute('action');
+
+    var time = new Date();
+    var stamp = time.getTime();
+
+    var orig = textarea.value;
+
+    // is it changed ?
+    if (localStorage[key]) {
+        var p = localStorage[key].indexOf("\n");
+        saved = localStorage[key].substr(p+1);
+        var s = saved.replace(/\n$/, '');
+        var o = orig.replace(/\n$/, '');
+        if (s == o) return;
+    }
+    localStorage[key] = stamp + "\n" + orig;
+
+    var exp = new Date(); // 7-days expires
+    exp.setTime(exp.getTime() + 7*24*60*60*1000);
+
+    var state = document.getElementById('save_state');
+    var txt;
+    if (state) {
+        state.innerHTML = '';
+        txt = document.createTextNode(_("Save the current text temporary..."));
+        txt.nodeValue+= ' (' + [time.getHours(), time.getMinutes(), time.getSeconds()].join(':') + ')';
+        state.appendChild(txt);
+        state.style.display = 'block';
+
+        setTimeout(function() {
+            state.innerHTML = '';
+            state.style.display = 'none';
+        }, 5000);
+    }
+}
+
+function ajax_save(textarea) {
     var href = location+'';
     var time = new Date();
     var stamp = time.getTime();
-    var postdata = 'action=autosave/ajax&savetext=' + encodeURIComponent(form.elements['savetext'].value);
+    var postdata = 'action=autosave/ajax&savetext=' + encodeURIComponent(textarea.value);
     postdata += '&datestamp=' + stamp;
 
     var loading = new Image();
@@ -131,37 +152,35 @@ function ajax_save(form) {
     loading.setAttribute('style','vertical-align:middle');
 
     var state = document.getElementById('save_state');
+    var txt;
     if (state) {
-        txt = document.createTextNode(_("Current text is saved in a temporary file."));
+        state.innerHTML = '';
+        txt = document.createTextNode(_("Save the current text temporary..."));
         state.appendChild(loading);
         state.appendChild(txt);
+        state.style.display = 'block';
     }
 
-    setTimeout(function() { state.removeChild(loading); state.removeChild(txt); }, 5000);
-    var ret = HTTPPost(href, postdata);
-}
+    var ret;
+    ret = HTTPPost(href, postdata,
+        function(ret) {
+            state.innerHTML = '';
+            if (ret == 'true') {
+                loading.src = _url_prefix + '/imgs/misc/saved.png';
+                txt = document.createTextNode(_("Successfully saved as a temporary file"));
+            } else {
+                loading.src = _url_prefix + '/imgs/smile/alert.png';
+                txt = document.createTextNode(_("Fail to autosave."));
+            }
+            state.appendChild(loading);
+            state.appendChild(txt);
 
-function setCookie(name, value, expires, path, domain, secure) {
-    var curCookie = name + "=" + escape(value) +
-    ((expires) ? "; expires=" + expires.toGMTString() : "") +
-    ((path) ? "; path=" + path : "") +
-    ((domain) ? "; domain=" + domain : "") +
-    ((secure) ? "; secure" : "")
-    document.cookie = curCookie
-}
-
-function getCookie(name) {
-    var prefix = name + "="
-    var cookieStartIndex = document.cookie.indexOf(prefix)
-    if (cookieStartIndex == -1)
-    return null
-    var cookieEndIndex = document.cookie.indexOf(";", cookieStartIndex +
-    prefix.length)
-    if (cookieEndIndex == -1)
-    cookieEndIndex = document.cookie.length
-    return unescape(document.cookie.substring(cookieStartIndex +
-    prefix.length,
-    cookieEndIndex))
+            setTimeout(function() {
+                state.innerHTML = '';
+                state.style.display = 'none';
+            }, 5000);
+        }
+    );
 }
 
 

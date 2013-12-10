@@ -1587,8 +1587,11 @@ function macro_Edit($formatter,$value,$options='') {
     $ajax=" onsubmit='savePage(this);return false'";
   }
   $form_attr = '';
-  if (!empty($DBInfo->use_autosave))
-    $form_attr='onClick="moni_autosave(this)" onsubmit="moni_autosave_reset()" ';
+  $text_attr = '';
+  if (!empty($DBInfo->use_autosave)) {
+    $form_attr=' onsubmit="return moni_autosave_reset(this)" ';
+    $text_attr=' onclick="return moni_autosave(this)" ';
+  }
   $formh= sprintf('<form id="editform" '.$form_attr.'method="post" action="%s"'.$ajax.'>',
     $previewurl);
   if ($text) {
@@ -1787,7 +1790,8 @@ EOS;
 <div id="editor_area">
 $formh
 <div class="resizable-textarea" style='position:relative'><!-- IE hack -->
-<textarea id="editor-textarea" wrap="virtual" name="savetext" tabindex="1"
+<div id="save_state"></div>
+<textarea$text_attr id="editor-textarea" wrap="virtual" name="savetext" tabindex="1"
  rows="$rows" cols="$cols" class="wiki resizable">$raw_body</textarea>
 $captcha
 </div>
@@ -1803,7 +1807,7 @@ $hidden
 <span class="button"><input type="submit" class='save-button' tabindex="5" accesskey="x" value="$save_msg" /></span>
 <!-- <input type="reset" value="Reset" />&nbsp; -->
 $preview_btn$changes_btn$wysiwyg_btn$skip_preview
-$extra<span id="save_state"></span>
+$extra
 </span>
 </li></ul>
 </div>

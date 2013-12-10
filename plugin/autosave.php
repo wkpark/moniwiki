@@ -4,15 +4,15 @@
 // a savepage action plugin for the MoniWiki
 //
 // Author: Won-Kyu Park <wkpark@kldp.org>
-// Date: 2008-12-29
+// Since: 2008-12-29
+// Date: 2013-05-22
 // Name: a autosave action plugin
 // Description: a autosave action plugin
 // URL: MoniWiki:AutoSavePlugin
-// Version: $Revision: 1.1 $
+// Version: $Revision: 1.2 $
 // License: GPL
 // Usage: add the config variable $use_autosave=1; to config.php
 //
-// $Id: autosave.php,v 1.1 2008/12/29 22:10:29 wkpark Exp $
 
 function do_autosave($formatter,$options) {
     global $DBInfo;
@@ -39,26 +39,31 @@ function do_autosave($formatter,$options) {
             }
         }
     }
-    $savetext = $options['savetext'];
-    $datestamp = substr($options['datestamp'], 0, 10); // only 10-digits used
-
     $myid = md5($myid . $formatter->page->name);
     if (isset($options['section']))
         $myid.= '.'.$options['section']; // XXX section support
 
-    $savetext = preg_replace("/\r\n|\r/", "\n", $savetext);
-    $savetext = _stripslashes($savetext);
-
     $save = new Cache_text('autosave');
 
-    if ($options['retrive']) {
+    if (!empty($options['retrive'])) {
         $saved = $save->fetch($myid);
         $os = rtrim($saved);
 
         $stamp = $save->mtime($myid);
         echo $stamp."\n".$os;
         return true;
+    } else if (!empty($options['remove'])) {
+        $save->remove($myid);
+        echo 'true';
+        return true;
     }
+
+    $savetext = $options['savetext'];
+    $datestamp = substr($options['datestamp'], 0, 10); // only 10-digits used
+
+    $savetext = preg_replace("/\r\n|\r/", "\n", $savetext);
+    $savetext = _stripslashes($savetext);
+
     if ($save->exists($myid) and $save->mtime($myid) > $datestamp) {
         echo 'false';
         return false;
