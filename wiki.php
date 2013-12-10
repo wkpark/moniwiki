@@ -5191,7 +5191,22 @@ function init_requests(&$options) {
   if ((empty($DBInfo->theme) or isset($_GET['action'])) and isset($_GET['theme'])) {
     $theme=$_GET['theme'];
   } else {
-    if ((is_mobile() or !empty($DBInfo->force_mobile)) and !empty($DBInfo->mobile_theme)) {
+    if (is_mobile()) {
+      if (isset($_GET['mobile'])) {
+        if (empty($_GET['mobile'])) {
+          setcookie('desktop', 1, time()+60*60*24*30, get_scriptname());
+          $_COOKIE['desktop'] = 1;
+        } else {
+          setcookie('desktop', 0, time()-60*60*24*30, get_scriptname());
+          unset($_COOKIE['desktop']);
+        }
+      }
+    }
+    if (isset($_COOKIE['desktop'])) {
+      $DBInfo->metatags_extra = '';
+      if (!empty($DBInfo->theme_css))
+        $theme = $DBInfo->theme;
+    } else if ((is_mobile() or !empty($DBInfo->force_mobile)) and !empty($DBInfo->mobile_theme)) {
       $theme = $DBInfo->mobile_theme;
       $DBInfo->menu = !empty($DBInfo->mobile_menu) ? $DBInfo->mobile_menu :
           array('FrontPage'=>1, 'RecentChanges'=>2);
