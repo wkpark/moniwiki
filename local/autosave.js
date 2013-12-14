@@ -17,13 +17,27 @@ if ( typeof _ == 'undefined') {
     };
 }
 
+// encapsulate
+(function() {
+
+function format_time(time) {
+    var hms = [ time.getHours(),
+                time.getMinutes(),
+                time.getSeconds()];
+    for (var i = 0; i < hms.length; i++) {
+        if (hms[i] < 10)
+            hms[i] = "0" + hms[i];
+    }
+    return hms.join(':');
+}
+
 function moni_autosave_reset(form) {
     // save or preview reset cookie for the selected page
 
-    var form = document.getElementById('editform');
     var key = location.host + form.getAttribute('action');
 
-    delete localStorage[key];
+    if (localStorage)
+        delete localStorage[key];
 
     var href = location + '';
 
@@ -62,7 +76,7 @@ function moni_autosave(textarea, min, sec) {
             }
         }
         var savetext = textarea.value;
-        if (localStorage[key]) {
+        if (localStorage && localStorage[key]) {
             var p = localStorage[key].indexOf("\n");
             var cstamp = 0;
             var saved = '';
@@ -98,7 +112,8 @@ function moni_autosave(textarea, min, sec) {
             };
 
         this.timer2 = setInterval(function() { ajax_save(self.textarea); } ,min * 60*1000); // ajax_save
-        this.timer = setInterval(function() { local_save(self.textarea); } , sec * 1000); // local storage save
+        if (localStorage)
+            this.timer = setInterval(function() { local_save(self.textarea); } , sec * 1000); // local storage save
     }
 }
 
@@ -129,7 +144,7 @@ function local_save(textarea) {
     if (state) {
         state.innerHTML = '';
         txt = document.createTextNode(_("Save the current text temporary..."));
-        txt.nodeValue+= ' (' + [time.getHours(), time.getMinutes(), time.getSeconds()].join(':') + ')';
+        txt.nodeValue+= ' (' + format_time(time) + ')';
         state.appendChild(txt);
         state.style.display = 'block';
 
@@ -183,6 +198,27 @@ function ajax_save(textarea) {
     );
 }
 
+function init_autosave() {
+    var form = document.getElementById('editform');
+
+    if (form) {
+        form.onsubmit = function() {
+            return moni_autosave_reset(this);
+        };
+        var txtarea = form.savetext;
+        txtarea.onclick = function() {
+            return moni_autosave(this);
+        };
+    }
+}
+
+// onload
+var oldOnload = window.onload;
+window.onload = function(ev) {
+    try { oldOnload(); } catch(e) {};
+    init_autosave();
+};
+})();
 
 /*
  * vim:et:sts=4:sw=4:
