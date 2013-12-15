@@ -23,7 +23,7 @@ function macro_ImageFileSize($formatter, $value = '') {
 
     $sz = 0;
     // check if it is valid or not
-    if (preg_match('/^(https?|ftp):\/\/.*\.(jpg|jpeg|gif|png)(?:\?|&)?/', $value)) {
+    if (preg_match('/^(https?|ftp):\/\/.*(\.(:jpg|jpeg|gif|png))?(?:\?|&)?/', $value)) {
         $sc = new Cache_text('imagefilesize');
 
         if ($sc->exists($value) and $sc->mtime($value) < time() + 60*60*24*20) {
@@ -49,7 +49,10 @@ function macro_ImageFileSize($formatter, $value = '') {
             $http->nobody = true;
             $http->referer = $referer;
             $http->sendRequest($value, array(), 'GET');
-            $http->status;
+
+            if ($http->status != 200)
+                return _("Unknown");
+
             if (isset($http->resp_headers['content-length']))
                 $sz = $http->resp_headers['content-length'];
             $sc->update($value, $sz);
