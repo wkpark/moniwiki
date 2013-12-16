@@ -5,15 +5,16 @@
 //
 // Author: Won-Kyu Park <wkpark@gmail.com>
 // Since: 2013-08-04
-// Date: 2013-08-24
+// Date: 2013-12-16
 // Name: fetch plugin
 // Description: fetch external images
 // URL: MoniWiki:FetchPlugin
-// Version: $Revision: 1.0 $
+// Version: $Revision: 1.1 $
 // License: GPLv2
 //
 // Param: fetch_exts='png|jpeg|jpg|gif'
 // Param: fetch_max_size=3*1024*1024
+// Param: fetch_buffer_size=1024*2048
 // Param: fetch_maxage=24*60*60
 // Param: fetch_action=http://foo.bar/wiki.php?action=fetch&url=
 // Param: fetch_timeout=15
@@ -99,6 +100,13 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
     $maxage = !empty($DBInfo->fetch_maxage) ? (int) $DBInfo->fetch_maxage : 60*60*24*7;
     $timeout = !empty($DBInfo->fetch_timeout) ? (int) $DBInfo->fetch_timeout : 15;
 
+    $vartmp_dir = $DBInfo->vartmp_dir;
+    $buffer_size = 2048 * 1024; // default buffer size
+    if (!empty($DBInfo->fetch_buffer_size) and
+            $DBInfo->fetch_buffer_size > 2048 * 1024) {
+        $buffer_size = $DBInfo->fetch_buffer_size;
+    }
+
     // set referrer
     $referer = '';
     if (!empty($DBInfo->fetch_referer_re)) {
@@ -173,7 +181,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
         }
         $hsz = round($tmp, 2).' '.$unit[$i];
 
-        if (!empty($DBInfo->fetch_max_size) and $sz > $DBInfo->fetch_max_size) {
+        if (empty($buffer_size) && !empty($DBInfo->fetch_max_size) and $sz > $DBInfo->fetch_max_size) {
             $params['retval']['error'] = sprintf(_("Too big file size (%s). Please contact WikiMasters to increase \$fetch_max_size"), $hsz);
             $params['retval']['mimetype'] = $mimetype;
             return false;
@@ -238,9 +246,9 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
 
         // retry to get all info
         $http = new HTTPClient();
-        //if (!empty($DBInfo->fetch_max_size)) {
-        //    $http->max_bodysize = $DBInfo->fetch_max_size;
-        //}
+        if (!empty($buffer_size))
+            $http->max_buffer_size = $buffer_size;
+        $http->vartmp_dir = $vartmp_dir;
 
         $save = ini_get('max_execution_time');
         set_time_limit(0);
@@ -267,8 +275,16 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
 
         if (!empty($http->resp_body)) {
             fwrite($fp, $http->resp_body);
+            fclose($fp);
+        } else {
+            fclose($fp);
+
+            if (!empty($http->resp_body_file) && file_exists($http->resp_body_file)) {
+                copy($http->resp_body_file,
+                    $fetchfile);
+                unlink($http->resp_body_file);
+            }
         }
-        fclose($fp);
 
         // update error status.
         if (!empty($error))
