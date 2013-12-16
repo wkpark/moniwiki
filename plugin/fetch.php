@@ -21,6 +21,8 @@
 // Param: fetch_use_cache_url=0
 // Param: fetch_referer='http://to_default_referer';
 // Param: fetch_referer_re=array('@pattern@'=>'http://to_default_referer',...);
+// Param: fetch_use_imagemagick=0
+// Param: fetch_thumb_width=320
 //
 // Usage:[[Fetch(url)]] or ?action=fetch&url=http://...
 //
@@ -298,7 +300,76 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
         return null;
     }
 
+    // generate thumb file to support low-bandwidth mobile version
+    $thumbfile = '';
+    $force_thumb = is_mobile() && (!isset($params['mobile']) or $params['mobile'] == 1);
+    while ((!empty($params['thumb']) or $force_thumb) and
+            preg_match('/^image\/(jpe?g|gif|png)$/', $mimetype)) {
+        $thumb_width = 320; // default
+        if (!empty($DBInfo->fetch_thumb_width))
+            $thumb_width = $DBInfo->fetch_thumb_width;
+
+        $thumbfile = preg_replace('@'.$ext.'$@', '.w'.$thumb_width.$ext, $fetchfile);
+        if (file_exists($thumbfile)) break;
+
+        list($w, $h) = getimagesize($fetchfile);
+        if ($w <= $thumb_width) {
+            $thumbfile = $fetchfile;
+            break;
+        }
+
+        // generate thumbnail using the gd func or the ImageMagick(convert)
+        if (empty($DBInfo->fetch_use_imagemagick) and function_exists('gd_info')) {
+            $nh = $thumb_width*$h/$w;
+            $img = imagecreatetruecolor($thumb_width, $nh);
+            if (preg_match("/\.(jpe?g)$/i", $ext))
+                $imgtype = 'jpeg';
+            else if (preg_match("/\.png$/i", $ext))
+                $imgtype = 'png';
+            else
+                $imgtype = 'gif';
+
+            $myfunc = 'imagecreatefrom'.$imgtype;
+            $source = $myfunc($fetchfile);
+
+            // save transparancy
+            // Please see also
+            // http://stackoverflow.com/questions/279236/how-do-i-resize-pngs-with-transparency-in-php
+            if ($imgtype == 'png' || $imgtype == 'gif') {
+                $transparency = imagecolortransparent($source);
+
+                if ($transparency >= 0) {
+                    // guess transparent color
+                    $tidx = imagecolorat($source, 1, 1); // FIXME
+                    $tcol = imagecolorsforindex($source, $tidx);
+                    $transparency = imagecolorallocate($img,
+                        $tcol['red'], $tcol['green'], $tcol['blue']);
+                    imagefill($img, 0, 0, $transparency);
+                    imagecolortransparent($img, $transparency);
+                } elseif ($imgtype == 'png') {
+                    imagealphablending($img, false);
+                    imagesavealpha($img, true);
+                    $tcol = imagecolorallocatealpha($img, 0, 0, 0, 127);
+                    imagefill($img, 0, 0, $tcol);
+                }
+            }
+
+            // resize
+            imagecopyresampled($img, $source, 0, 0, 0, 0, $thumb_width, $nh, $w, $h);
+            $myfunc = 'image'.$imgtype;
+            $myfunc($img, $thumbfile);
+        } else {
+            $fp = popen('convert -scale '.
+                    $thumb_width.' '.$fetchfile.' '.$thumbfile, 'r');
+            @pclose($fp);
+        }
+
+        break;
+    }
+
     $down_mode = 'inline';
+    if (!empty($thumbfile))
+        $fetchfile = $thumbfile;
 
     header("Content-Type: $mimetype\r\n");
     header("Content-Length: ".filesize($fetchfile));
@@ -306,7 +377,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
     header("Content-Description: MoniWiki PHP Fetch Downloader" );
     $mtime = filemtime($fetchfile);
     $lastmod = gmdate("D, d M Y H:i:s", $mtime) . ' GMT';
-    $etag = md5($lastmod.$url);
+    $etag = md5($lastmod.$url.$thumbfile);
     header("Last-Modified: " . $lastmod);
     header('ETag: "'.$etag.'"');
     header("Pragma:");
