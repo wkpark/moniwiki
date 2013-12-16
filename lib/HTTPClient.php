@@ -27,6 +27,7 @@ class HTTPClient {
     var $cookies;
     var $referer;
     var $max_redirect;
+    var $max_buffer_size; // store body as a temp file conditionally
     var $max_bodysize;  // abort if the response body is bigger than this
     var $header_regexp; // if set this RE must match against the headers, else abort
     var $headers;
@@ -39,6 +40,7 @@ class HTTPClient {
     // read these after a successful request
     var $resp_status;
     var $resp_body;
+    var $resp_body_file; // store body as a temp file
     var $resp_headers;
 
     // set these to do basic authentication
@@ -68,6 +70,7 @@ class HTTPClient {
         $this->headers      = array();
         $this->http         = '1.0';
         $this->debug        = false;
+        $this->max_buffer_size = 0;
         $this->max_bodysize = 0;
         $this->header_regexp= '';
         $this->nobody       = false;
@@ -75,6 +78,7 @@ class HTTPClient {
         $this->headers['Accept'] = 'text/xml,application/xml,application/xhtml+xml,'.
                                    'text/html,text/plain,image/png,image/jpeg,image/gif,*/*';
         $this->headers['Accept-Language'] = 'en-us';
+        $this->vartmp_dir = '/tmp';
     }
 
 
@@ -261,6 +265,8 @@ class HTTPClient {
 
         //read body (with chunked encoding if needed)
         $r_body    = '';
+        $tmp_fp = null;
+        $tmp_file = null;
         if (!empty($this->nobody) and preg_match('/transfer\-(en)?coding:\s*chunked\r\n/i',$r_headers)) {
             do {
                 unset($chunk_size);
@@ -284,6 +290,19 @@ class HTTPClient {
                 $r_body    .= $this_chunk;
                 if ($chunk_size) $byte = fread($socket,2); // read trailing \r\n
 
+                if (!empty($this->max_buffer_size) && $r_body > $this->max_buffer_size) {
+                    if (empty($tmp_file)) {
+                        $tmp_file = tempnam($this->vartmp_dir, 'HTTP_TMP');
+                        $tmp_fp = fopen($tmp_file, 'w');
+                        if (!is_resource($tmp_fp)) {
+                            $this->status = -100;
+                            $this->error = 'can not open temp file';
+                            return false;
+                        }
+                    }
+                    fwrite($tmp_fp, $r_body);
+                    $r_body = '';
+                } else
                 if($this->max_bodysize && strlen($r_body) > $this->max_bodysize){
                     $this->error = 'Allowed response size exceeded';
                     return false;
@@ -298,6 +317,19 @@ class HTTPClient {
                     return false;
                 }
                 $r_body .= fread($socket,4096);
+                if (!empty($this->max_buffer_size) && $r_body > $this->max_buffer_size) {
+                    if (empty($tmp_file)) {
+                        $tmp_file = tempnam($this->vartmp_dir, 'HTTP_TMP');
+                        $tmp_fp = fopen($tmp_file, 'w');
+                        if (!is_resource($tmp_fp)) {
+                            $this->status = -100;
+                            $this->error = 'can not open temp file';
+                            return false;
+                        }
+                    }
+                    fwrite($tmp_fp, $r_body);
+                    $r_body = '';
+                } else
                 if($this->max_bodysize && strlen($r_body) > $this->max_bodysize){
                     $this->error = 'Allowed response size exceeded';
                     return false;
@@ -309,6 +341,13 @@ class HTTPClient {
         $status = socket_get_status($socket);
         fclose($socket);
 
+        if (is_resource($tmp_fp)) {
+            if (isset($r_body[0]))
+                fwrite($tmp_fp, $r_body);
+            fclose($tmp_fp);
+            $r_body = '';
+        }
+
         // decode gzip if needed
         if(isset($this->resp_headers['content-encoding']) &&
            $this->resp_headers['content-encoding'] == 'gzip' &&
@@ -319,7 +358,13 @@ class HTTPClient {
                 $this->resp_body = $r_body;
             }
         }else{
-            $this->resp_body = $r_body;
+            if (!empty($tmp_file)) {
+                $this->resp_body = $r_body;
+                $this->resp_body_file =
+                    $tmp_file;
+            } else {
+                $this->resp_body = $r_body;
+            }
         }
 
         $this->_debug('response body',$this->resp_body);
