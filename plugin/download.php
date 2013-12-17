@@ -91,11 +91,54 @@ function do_download($formatter,$options) {
   } else
     $mime=array();
 
+  $realfile = $dir.'/'. $_l_file;
+
   # set filename
   if (preg_match("/\.(.{1,4})$/",$file,$match)) {
     $ext = strtolower($match[1]);
     $mimetype= !empty($mime[$ext]) ? $mime[$ext] : '';
+    $ext = '.'.$ext;
   }
+
+  if (!empty($mimetype) and preg_match('@image/(png|jpe?g)$@', $mimetype)) {
+    $params = $options;
+
+    list($w, $h) = getimagesize($realfile);
+
+    // generate thumb file to support low-bandwidth mobile version
+    $thumbfile = '';
+    if (is_mobile()) {
+        $force_thumb = (!isset($params['m']) or $params['m'] == 1);
+    } else if (!isset($params['thumb']) and
+            !empty($DBInfo->max_image_width) and $w > $DBInfo->max_image_width) {
+        $force_thumb = true;
+        $thumb_width = $DBInfo->max_image_width;
+    }
+
+    while ((!empty($params['thumb']) or $force_thumb)) {
+        if (empty($thumb_width)) {
+            $thumb_width = 320; // default
+            if (!empty($DBInfo->default_thumb_width))
+                $thumb_width = $DBInfo->default_thumb_width;
+        }
+
+        $thumbfile = preg_replace('@'.$ext.'$@', '.w'.$thumb_width.$ext, $realfile);
+        if (file_exists($thumbfile)) break;
+
+        if ($w <= $thumb_width) {
+            $thumbfile = $realfile;
+            break;
+        }
+
+        require_once('lib/mediautils.php');
+        // generate thumbnail using the gd func or the ImageMagick(convert)
+
+        resize_image($ext, $realfile, $thumbfile, $w, $h, $thumb_width);
+        break;
+    }
+    if (!empty($thumbfile)) $realfile = $thumbfile;
+  }
+
   if (empty($mimetype)) $mimetype="application/x-unknown";
 
   if (strstr($_SERVER['HTTP_USER_AGENT'], 'MSIE')) {
@@ -120,17 +163,17 @@ function do_download($formatter,$options) {
 
   if (!empty($DBInfo->use_resume_download)) {
     $header=array("Content-Description: MoniWiki PHP Downloader");
-    dl_file_resume($mimetype,$dir.'/'. $_l_file,$fname,$down_mode,$header);
+    dl_file_resume($mimetype,$realfile,$fname,$down_mode,$header);
     return; 
   }
 
   header("Content-Type: $mimetype\r\n");
-  header("Content-Length: ".filesize($dir.'/'. $_l_file));
+  header("Content-Length: ".filesize($realfile));
   header("Content-Disposition: $down_mode; ".$fname );
   header("Content-Description: MoniWiki PHP Downloader" );
-  $mtime = filemtime($dir.'/'.$_l_file);
+  $mtime = filemtime($realfile);
   $lastmod = gmdate("D, d M Y H:i:s", $mtime) . ' GMT';
-  $etag = md5($lastmod);
+  $etag = md5($lastmod.$thumbfile);
   header("Last-Modified: " . $lastmod);
   header('ETag: "'.$etag.'"');
   header("Pragma:");
@@ -144,7 +187,7 @@ function do_download($formatter,$options) {
     return;
   }
 
-  $fp=readfile("$dir/$_l_file");
+  $fp=readfile($realfile);
   return;
 }
 
