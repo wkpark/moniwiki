@@ -2165,7 +2165,7 @@ class Formatter {
               $url = $this->fetch_action. str_replace(array('&', '?'), array('%26', '%3f'), $url);
 
             return "<div class='$cls$img_cls'><div><a class='externalLink named' href='$link' $attr $this->external_target title='$link'><img $eattr alt='$atext' src='$url' $img_attr/></a>".
-                "<div><a href='$url'><span>[$type external image$size]</span></a></div></div></div>";
+                "<div><a href='$url'><span>[$type "._("external image")."$size]</span></a></div></div></div>";
           }
           if (!empty($this->external_on))
             $external_link='<span class="externalLink">('.$url.')</span>';
@@ -2218,7 +2218,7 @@ class Formatter {
                 str_replace(array('&', '?'), array('%26', '%3f'), $url);
 
           return "<div class=\"$cls\"><div><img alt='$link' $attr src='$fetch_url' />".
-                "<div><a href='$url'><span>[$type external image$size]</span></a></div></div></div>";
+                "<div><a href='$url'><span>[$type "._("external image")."$size]</span></a></div></div></div>";
         }
       }
       if (substr($url,0,7)=='http://' and $url[7]=='?') {
