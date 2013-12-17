@@ -318,52 +318,10 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
             break;
         }
 
+        require_once('lib/mediautils.php');
         // generate thumbnail using the gd func or the ImageMagick(convert)
-        if (empty($DBInfo->fetch_use_imagemagick) and function_exists('gd_info')) {
-            $nh = $thumb_width*$h/$w;
-            $img = imagecreatetruecolor($thumb_width, $nh);
-            if (preg_match("/\.(jpe?g)$/i", $ext))
-                $imgtype = 'jpeg';
-            else if (preg_match("/\.png$/i", $ext))
-                $imgtype = 'png';
-            else
-                $imgtype = 'gif';
 
-            $myfunc = 'imagecreatefrom'.$imgtype;
-            $source = $myfunc($fetchfile);
-
-            // save transparancy
-            // Please see also
-            // http://stackoverflow.com/questions/279236/how-do-i-resize-pngs-with-transparency-in-php
-            if ($imgtype == 'png' || $imgtype == 'gif') {
-                $transparency = imagecolortransparent($source);
-
-                if ($transparency >= 0) {
-                    // guess transparent color
-                    $tidx = imagecolorat($source, 1, 1); // FIXME
-                    $tcol = imagecolorsforindex($source, $tidx);
-                    $transparency = imagecolorallocate($img,
-                        $tcol['red'], $tcol['green'], $tcol['blue']);
-                    imagefill($img, 0, 0, $transparency);
-                    imagecolortransparent($img, $transparency);
-                } elseif ($imgtype == 'png') {
-                    imagealphablending($img, false);
-                    imagesavealpha($img, true);
-                    $tcol = imagecolorallocatealpha($img, 0, 0, 0, 127);
-                    imagefill($img, 0, 0, $tcol);
-                }
-            }
-
-            // resize
-            imagecopyresampled($img, $source, 0, 0, 0, 0, $thumb_width, $nh, $w, $h);
-            $myfunc = 'image'.$imgtype;
-            $myfunc($img, $thumbfile);
-        } else {
-            $fp = popen('convert -scale '.
-                    $thumb_width.' '.$fetchfile.' '.$thumbfile, 'r');
-            @pclose($fp);
-        }
-
+        resize_image($ext, $fetchfile, $thumbfile, $w, $h, $thumb_width);
         break;
     }
 
