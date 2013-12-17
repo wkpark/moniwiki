@@ -99,6 +99,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
   }
 
   $lightbox_attr='';
+  $imgalign = '';
   if (($dummy=strpos($value,'?'))) {
     # for attachment: syntax
     parse_str(substr($value,$dummy+1),$attrs);
@@ -118,7 +119,8 @@ function macro_Attachment($formatter,$value,$options=array()) {
       }
     }
 
-    if ($attrs['align']) $attr.='class="img'.ucfirst($attrs['align']).'" ';
+    if ($attrs['align']) $imgalign = 'img'.ucfirst($attrs['align']);
+    if ($attrs['caption']) $caption = $attrs['caption'];
   }
 
   if (preg_match('/^data:image\/(png|jpg|jpeg);base64,/',$value)) {
@@ -126,7 +128,6 @@ function macro_Attachment($formatter,$value,$options=array()) {
     return "<img src='".$value."' $attr />";
   }
 
-  $imgalign = '';
   if (!$attr and ($dummy=strpos($value,','))) {
     # for Attachment macro
     $args=explode(',',substr($value,$dummy+1));
@@ -142,7 +143,6 @@ function macro_Attachment($formatter,$value,$options=array()) {
           $attr.="$arg ";
         } else if ($k=='align') {
           $imgalign='img'.ucfirst($v);
-          $align='class="'.$imgalign.'" ';
         } else if (in_array($k,array('caption','alt','title'))) {
           // XXX
           $caption=preg_replace("/^([\"'])([^\\1]+)\\1$/","\\2",trim($v));
@@ -244,7 +244,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
     if ($caption) {
       $cls=$imgalign ? 'imgContainer '.$imgalign:'imgContainer'; 
       $caption='<div class="imgCaption">'.$caption.'</div>';
-      $cap_bra='<div class="'.$cls.'"'.$img_width.'>';
+      $cap_bra='<div class="'.$cls.'"'.'>';
       $cap_ket='</div>';
       $img_width='';
     } else {
@@ -344,7 +344,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
       } else if (preg_match('@^(https?|ftp)://@',$alt))
         $img="<a href='$alt'>$img</a>";
 
-      return $bra.$cap_bra."<div class=\"$imgcls\"$img_width>$img$caption</div>".$cap_ket.$ket;
+      return $bra.$cap_bra."<div class=\"$imgcls\"><div>$img$caption</div></div>".$cap_ket.$ket;
       #return $bra.$cap_bra."<span class=\"$cls\">$img$caption</span>".$cap_ket.$ket;
     } else {
       $mydownload= $extra_action ? $extra_action:$mydownload;
