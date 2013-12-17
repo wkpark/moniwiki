@@ -212,10 +212,10 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
     if (empty($params['call'])) {
         if ($is_image) {
             $img_url = $formatter->link_url('', '?action=fetch&amp;url='.$url);
-            return '<div class="externalImage"><img src="'.$img_url.'">'.
-                '<div><a href="'.$url.'"><span>['.strtoupper($m[1]).' external image'.
+            return '<div class="externalImage"><div><img src="'.$img_url.'">'.
+                '<div><a href="'.$url.'"><span>['.strtoupper($m[1]).' '._("external image").
                 ' ('. $hsz.')'.
-                ']</span></a></div>';
+                ']</span></a></div></div>';
         }
 
         return $formatter->link_to('?action=fetch&amp;url='.$url, $mimetype.' ('. $hsz.')');
