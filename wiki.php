@@ -2164,8 +2164,8 @@ class Formatter {
             if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url))
               $url = $this->fetch_action. str_replace(array('&', '?'), array('%26', '%3f'), $url);
 
-            return "<div class='$cls$img_cls'><a class='externalLink named' href='$link' $attr $this->external_target title='$link'><img $eattr alt='$atext' src='$url' $img_attr/></a>".
-                "<div><a href='$url'><span>[$type external image$size]</span></a></div></div>";
+            return "<div class='$cls$img_cls'><div><a class='externalLink named' href='$link' $attr $this->external_target title='$link'><img $eattr alt='$atext' src='$url' $img_attr/></a>".
+                "<div><a href='$url'><span>[$type external image$size]</span></a></div></div></div>";
           }
           if (!empty($this->external_on))
             $external_link='<span class="externalLink">('.$url.')</span>';
@@ -2204,8 +2204,8 @@ class Formatter {
           foreach ($attrs as $arg) {
             $name=strtok($arg,'=');
             $val=strtok(' ');
-            if ($name and $val) $attr.=' '.$name.'="'.urldecode($val).'"';
             if ($name == 'align') $cls.=' img'.ucfirst($val);
+            else if ($name and $val) $attr.=' '.$name.'="'.urldecode($val).'"';
           }
           $size = '';
           if (!empty($this->fetch_imagesize))
@@ -2217,8 +2217,8 @@ class Formatter {
             $fetch_url = $this->fetch_action.
                 str_replace(array('&', '?'), array('%26', '%3f'), $url);
 
-          return "<div class=\"$cls\"><img alt='$link' $attr src='$fetch_url' />".
-                "<div><a href='$url'><span>[$type external image$size]</span></a></div></div>";
+          return "<div class=\"$cls\"><div><img alt='$link' $attr src='$fetch_url' />".
+                "<div><a href='$url'><span>[$type external image$size]</span></a></div></div></div>";
         }
       }
       if (substr($url,0,7)=='http://' and $url[7]=='?') {
