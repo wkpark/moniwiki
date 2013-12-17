@@ -302,7 +302,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
 
     // generate thumb file to support low-bandwidth mobile version
     $thumbfile = '';
-    $force_thumb = is_mobile() && (!isset($params['mobile']) or $params['mobile'] == 1);
+    $force_thumb = is_mobile() && (!isset($params['m']) or $params['m'] == 1);
     while ((!empty($params['thumb']) or $force_thumb) and
             preg_match('/^image\/(jpe?g|gif|png)$/', $mimetype)) {
         $thumb_width = 320; // default
