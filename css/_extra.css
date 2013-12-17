@@ -350,20 +350,6 @@ ul.autocompleter-choices li.autocompleter-selected span.autocompleter-queried
 .imgRight { margin-left:5px;float:right; clear:left;}
 .imgCenter { margin-left: auto; margin-right: auto; }
 
-.imgCaption {
-  font-size:.8em;
-  text-indent:0;
-  margin:0;
-  clear:both;
-}
-
-.imgContainer {
-  padding:5px;
-  border:1px solid silver;
-}
-
-.imgAttach {}
-
 /* Moniwiki BBS plugin */
 table.bbs { width:100%;}
 .bbsSimple .date { font-family: Trebuchet MS,Sans-serif;}
