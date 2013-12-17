@@ -293,20 +293,20 @@ EOS;
 
       if ($iframe) {
         $out.=<<<IFRAME
-<div class='externalObject$objclass'>
+<div class='externalObject$objclass'><div>
 <iframe src="$iframe" $attr></iframe>
-<div><a alt='$myurl' onclick='javascript:openExternal(this, "inline-block"); return false;'><span>[$mediainfo]</span></a></div></div>
+<div><a alt='$myurl' onclick='javascript:openExternal(this, "inline-block"); return false;'><span>[$mediainfo]</span></a></div></div></div>
 IFRAME;
       } else {
         $myurl=$url[$i];
         $out.=<<<OBJECT
-<div class='externalObject$objclass'>
+<div class='externalObject$objclass'><div>
 <object class='external' $classid $type $attr>
 $params
 <param name="AutoRewind" value="True">
 <embed $type src="$myurl" $attr></embed>
 </object>
-<div><a alt='$myurl' onclick='javascript:openExternal(this, "inline-block"); return false;'><span>[$mediainfo]</span></a></div></div>
+<div><a alt='$myurl' onclick='javascript:openExternal(this, "inline-block"); return false;'><span>[$mediainfo]</span></a></div></div></div>
 OBJECT;
       }
     }
