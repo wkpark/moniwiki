@@ -281,43 +281,43 @@ function macro_Attachment($formatter,$value,$options=array()) {
 
     if (empty($img_link) && preg_match("/\.(png|gif|jpeg|jpg|bmp)$/i",$upload_file, $m)) {
       // get the extension of the image
-      $ext = strtoupper($m[1]);
+      $ext = $m[1];
+      $type = strtoupper($m[1]);
       if (!empty($caption))
-        $caption = '<div class="caption">'.$caption.' <span>['.$ext.' '._("image").$info.']</span></div>';
+        $caption = '<div class="caption">'.$caption.' <span>['.$type.' '._("image").$info.']</span></div>';
       else
-        $caption = '<div><span>['.$ext.' '._("image").$info.']</span></div>';
+        $caption = '<div><span>['.$type.' '._("image").$info.']</span></div>';
 
-      // thumbnail
-      if (!empty($DBInfo->use_convert_thumbs) and !empty($use_thumb)) {
-        $thumb_width=$thumb['thumbwidth'] ? $thumb['thumbwidth']:150;
-        if (!file_exists($dir."/thumbnails/".$_l_file)) {
+      if (!empty($use_thumb)) {
+        $thumb_width = !empty($DBInfo->thumb_width) ? $DBInfo->thumb_width : 320;
+        if (!empty($thumb['thumbwidth']))
+          $thumb_width = $thumb['thumbwidth'];
+
+        // guess thumbnails
+        $thumbfiles = array();
+        $thumbfiles[] = $_l_file;
+        $thumbfiles[] = preg_replace('@'.$ext.'$@', 'w'.$thumb_width.'.'.$ext, $_l_file);
+
+        $thumb_ok = false;
+        foreach ($thumbfiles as $thumbfile) {
+          if (file_exists($dir.'/thumbnails/'.$thumbfile)) {
+            $thumb_ok = true;
+            break;
+          }
+        }
+
+        // auto generate thumbnail
+        if (!empty($DBInfo->use_convert_thumbs) and !$thumb_ok) {
           if (!file_exists($dir."/thumbnails")) @mkdir($dir."/thumbnails",0777);
-          if (function_exists('gd_info')) {
-            $fname=$dir.'/'.$_l_file;
-            list($w, $h) = getimagesize($fname);
-            //print $w.'x'.$h;
-            if ($w > $thumb_width) {
-              $nh=intval($thumb_width*$h/$w);
-              $thumb= imagecreatetruecolor($thumb_width,$nh);
-              if (preg_match("/\.(jpg|jpeg)$/i",$file))
-                $imgtype= 'jpeg';
-              else if (preg_match("/\.png$/i",$file))
-                $imgtype= 'png';
-              else if (preg_match("/\.gif$/i",$file))
-                $imgtype= 'gif';
 
-              $myfunc='imagecreatefrom'.$imgtype;
-              $source= $myfunc($fname);
-              //imagecopyresized($thumb, $source, 0,0,0,0, $thumb_width, $nh, $w, $h);
-              imagecopyresampled($thumb, $source, 0,0,0,0, $thumb_width, $nh, $w, $h);
-              $myfunc='image'.$imgtype;
-              $myfunc($thumb, $dir.'/thumbnails/'.$_l_file);
-            }
-          } else {
-            $fp=popen("convert -scale ".$thumb_width." ".$dir."/".$_l_file." ".
-              $dir."/thumbnails/".$_l_file.
-            $formatter->NULL,'r');
-            @pclose($fp);
+          $fname=$dir.'/'.$_l_file;
+          list($w, $h) = getimagesize($fname);
+
+          // generate thumbnail using the gd func or the ImageMagick(convert)
+          if ($w > $thumb_width) {
+            require_once('lib/mediautils.php');
+            resize_image($ext, $fname, $dir.'/thumbnails/'.$thumbfile, $w, $h, $thumb_width);
+            $thumb_ok = true;
           }
         }
       }
@@ -325,10 +325,11 @@ function macro_Attachment($formatter,$value,$options=array()) {
       $alt=!empty($alt) ? $alt:$file;
       if ($key != $pagename || !empty($force_download)) {
         $val=_urlencode($value);
-        if (!empty($use_thumb)) {
-          $thumbdir='thumbnails/';
+        if ($thumb_ok and !empty($use_thumb)) {
           if (($p=strrpos($val,'/')) !== false)
             $val=substr($val,0,$p).'/thumbnails'.substr($val,$p);
+          else
+            $val = 'thumbnails/'.$thumbfile;
           $extra_action='download';
         }
         if ($file_ok == 2 and !empty($mirror_url)) {
@@ -342,8 +343,8 @@ function macro_Attachment($formatter,$value,$options=array()) {
           $url = $formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=".$val);
         }
       } else {
-        if (!empty($use_thumb)) {
-          $url=$DBInfo->upload_dir_url.'/thumbnails/'._urlencode($_l_file);
+        if ($thumb_ok and !empty($use_thumb)) {
+          $url=$DBInfo->upload_dir_url.'/thumbnails/'._urlencode($thumbfile);
         } else {
           $_my_file=str_replace($DBInfo->upload_dir, $DBInfo->upload_dir_url,$dir . '/' . $file);
           $url=_urlencode($_my_file);
