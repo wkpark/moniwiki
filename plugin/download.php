@@ -18,43 +18,38 @@ function do_download($formatter,$options) {
   $down_mode=(!empty($options['mode']) and $options['mode']{0}=='a') ? 'attachment':
     (!empty($DBInfo->download_mode) ? $DBInfo->download_mode:'inline');
 
+  // SubPage:foobar.png == SubPage/foobar.png
+  // SubPage:thumbnails/foobar.png == SubPage/thumbnails/foobar.png
+  // SubPage/FoobarPage:thumbnails/foobar.png == SubPage/FoobarPage/thumbnails/foobar.png
 
   // check acceptable subdirs
-  $acceptable_dirs=array('thumbnails');
+  $acceptable_subdirs = array('thumbnails');
+  $tmp = explode('/', $value);
 
-  $ifile=explode('/',$options['value']);
-
-  $subdir='';
-  if (count($ifile) > 1) {
-    $subdir=in_array($ifile[count($ifile)-2],$acceptable_dirs) ?
-      $ifile[count($ifile)-2].'/':'';
-
-    if ($subdir) {
-      unset($ifile[count($ifile)-2]);
-      $value=implode('/',$ifile);
+  $subdir = '';
+  if (($c = count($tmp)) > 1) {
+    if (in_array($tmp[$c - 2], $acceptable_subdirs)) {
+      $subdir = $tmp[$c - 2] . '/';
+      unset($tmp[$c - 2]);
+      $value = implode('/', $tmp);
     }
   }
 
-  if (($p=strpos($value,':')) !== false or ($p=strpos($value,'/')) !== false) {
+  if (($p=strpos($value,':')) !== false or ($p=strrpos($value,'/')) !== false) {
     $subpage=substr($value,0,$p);
     $file=substr($value,$p+1);
     $value=$subpage.'/'.$file; # normalize page arg
     if ($subpage and $DBInfo->hasPage($subpage)) {
       $pagename=&$subpage;
       $key=$DBInfo->pageToKeyname($subpage);
-    } else {
-      $pagename='';
-      $key='';
     }
-  } else {
+  }
+
+  if (empty($pagename[0])) {
     $pagename=&$formatter->page->name;
     $key=$DBInfo->pageToKeyname($formatter->page->name);
   }
 
-  #if (!$key) {
-  #  // FIXME
-  #  return;
-  #}
   $dir=$DBInfo->upload_dir.($key ? "/$key":"");
 
   if ($key == 'UploadFile')
