@@ -156,6 +156,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
   }
 
   $attr.=$lightbox_attr;
+  $info = '';
 
   if (($p=strpos($value,':')) !== false or ($p=strrpos($value,'/')) !== false) {
     $subpage=substr($value,0,$p);
@@ -190,8 +191,21 @@ function macro_Attachment($formatter,$value,$options=array()) {
   if (file_exists($_l_upload_file)) {
     $file_ok=1;
   } else if (!empty($mirror_url)) {
-    $file_ok = 2;
-  } else if (!empty($formatter->wikimarkup) and empty($options['nomarkup'])) {
+    if (isset($subpage[0])) {
+      $pagename = $subpage;
+      $val = _urlencode($file);
+    }
+    $url = $fetch_url.
+        str_replace(array('&', '?'), array('%26', '%3f'),
+        $mirror_url.urlencode(_urlencode($pagename)).
+        "?action=$mydownload&value=".$val);
+    // check url to retrieve the size of file
+    $info = ' ('.
+        $formatter->macro_repl('ImageFileSize', $url).')';
+    if (floatval($info) !== 0)
+      $file_ok = 2;
+  }
+  if (empty($file_ok) and !empty($formatter->wikimarkup) and empty($options['nomarkup'])) {
     if (!empty($DBInfo->swfupload_depth) and $DBInfo->swfupload_depth > 2) {
       $depth=$DBInfo->swfupload_depth;
     } else {
@@ -243,7 +257,6 @@ function macro_Attachment($formatter,$value,$options=array()) {
 
     if ($caption) {
       $cls=$imgalign ? 'imgContainer '.$imgalign:'imgContainer'; 
-      $caption='<div class="imgCaption">'.$caption.'</div>';
       $cap_bra='<div class="'.$cls.'"'.'>';
       $cap_ket='</div>';
       $img_width='';
@@ -251,7 +264,6 @@ function macro_Attachment($formatter,$value,$options=array()) {
       $imgcls=$imgalign ? 'imgAttach '.$imgalign:'imgAttach';
     }
 
-    $info = '';
     if ($file_ok == 1) {
       $sz=filesize($_l_upload_file);
       $unit=array('Bytes','KB','MB','GB','TB');
@@ -261,13 +273,20 @@ function macro_Attachment($formatter,$value,$options=array()) {
         }
         $sz=$sz/1024;
       }
-      $info=' ('.round($sz,2).' '.$unit[$i].') ';
+      $info=' ('.round($sz,2).' '.$unit[$i].')';
     }
 
     if (!in_array('UploadedFiles',$formatter->actions))
       $formatter->actions[]='UploadedFiles';
 
-    if (empty($img_link) && preg_match("/\.(png|gif|jpeg|jpg|bmp)$/i",$upload_file)) {
+    if (empty($img_link) && preg_match("/\.(png|gif|jpeg|jpg|bmp)$/i",$upload_file, $m)) {
+      // get the extension of the image
+      $ext = strtoupper($m[1]);
+      if (!empty($caption))
+        $caption = '<div class="caption">'.$caption.' <span>['.$ext.' '._("image").$info.']</span></div>';
+      else
+        $caption = '<div><span>['.$ext.' '._("image").$info.']</span></div>';
+
       // thumbnail
       if (!empty($DBInfo->use_convert_thumbs) and !empty($use_thumb)) {
         $thumb_width=$thumb['thumbwidth'] ? $thumb['thumbwidth']:150;
