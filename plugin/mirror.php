@@ -120,6 +120,7 @@ function macro_Mirror($formatter, $pagename = '', $params = array()) {
 
     if ($http->status != 200) {
         $params['retval']['error'] = sprintf(_("Invalid Status %d"), $http->status);
+        $params['retval']['status'] = $http->status;
         return false;
     }
 
@@ -186,8 +187,8 @@ function macro_Mirror($formatter, $pagename = '', $params = array()) {
             unlink($pagefile);
 
             // Error found! save error status to the info cache
-            $params['retval']['status'] = sprintf(_("Invalid Status %d"), $http->status);
-            $params['retval']['error'] = $http->error;
+            $params['retval']['error'] = !empty($http->error) ? $http->error : sprintf(_("Invalid Status %d"), $http->status);
+            $params['retval']['status'] = $http->status;
             $params['retval']['etag'] = $etag;
             $params['retval']['last-modified'] = $lastmod;
             $params['retval']['size'] = $sz;
