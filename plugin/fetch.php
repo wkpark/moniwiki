@@ -50,7 +50,8 @@ function do_fetch($formatter, $params = array()) {
     macro_Fetch($formatter, $url, $params);
 
     if (!empty($ret['error'])) {
-        if (!empty($ret['mimetype']) and preg_match('/^image\//', $ret['mimetype'])) {
+        if ($ret['status'] == 404 ||
+                (!empty($ret['mimetype']) and preg_match('/^image\//', $ret['mimetype']))) {
             $font_size = 2;
             $str = 'ERROR: '.$ret['error'];
             $w = imagefontwidth($font_size) * strlen($str);
@@ -156,7 +157,11 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
         //
         //}
         if ($http->status != 200) {
-            $params['retval']['error'] = sprintf(_("Invalid Status %d"), $http->status);
+            if ($http->status == 404)
+                $params['retval']['error'] = '404 File Not Found';
+            else
+                $params['retval']['error'] = !empty($http->error) ? $http->error : sprintf(_("Invalid Status %d"), $http->status);
+            $params['retval']['status'] = $http->status;
             return false;
         }
 
@@ -264,7 +269,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
             unlink($fetchfile);
 
             // Error found! save error status to the info cache
-            $params['retval']['status'] = sprintf(_("Invalid Status %d"), $http->status);
+            $params['retval']['status'] = $http->status;
             $params['retval']['error'] = $http->error;
             $params['retval']['mimetype'] = $mimetype;
             $params['retval']['size'] = $sz;
