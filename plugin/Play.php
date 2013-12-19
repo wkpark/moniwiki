@@ -35,6 +35,7 @@ function macro_Play($formatter,$value) {
     for ($i=0,$sz=count($my);$i<$sz;$i++) {
       if (strpos($my[$i],'=')) {
         list($key,$val)=explode('=',$my[$i]);
+        $val = trim($val, '"\'');
         if ($key == 'width' and $val > 1) {
           $width=$val;
         } else if ($key == 'height' and $val > 1) {
