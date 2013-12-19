@@ -172,7 +172,7 @@ class HTTPClient {
         // open socket
         $socket = @fsockopen($server,$port,$errno, $errstr, $this->timeout);
         if (!$socket){
-            $this->status = -100;
+            $this->status = -100 - $errno;
             $this->error = "Could not connect to $server:$port\n$errstr ($errno)";
             return false;
         }
