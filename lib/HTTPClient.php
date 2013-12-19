@@ -197,10 +197,12 @@ class HTTPClient {
             if(time()-$start > $this->timeout){
                 $this->status = -100;
                 $this->error = 'Timeout while reading headers';
+                fclose($socket);
                 return false;
             }
             if(feof($socket)){
                 $this->error = 'Premature End of File (socket)';
+                fclose($socket);
                 return false;
             }
             $r_headers .= fgets($socket,1024);
@@ -212,6 +214,7 @@ class HTTPClient {
         if($this->max_bodysize && preg_match('/\r?\nContent-Length:\s*(\d+)\r?\n/i',$r_headers,$match)){
             if($match[1] > $this->max_bodysize){
                 $this->error = 'Reported content length exceeds allowed response size';
+                fclose($socket);
                 return false;
             }
         }
@@ -219,6 +222,7 @@ class HTTPClient {
         // get Status
         if (!preg_match('/^HTTP\/(\d\.\d)\s*(\d+).*?\n/', $r_headers, $m)) {
             $this->error = 'Server returned bad answer';
+            fclose($socket);
             return false;
         }
         $this->status = $m[2];
@@ -241,9 +245,11 @@ class HTTPClient {
         if($this->status == 301 || $this->status == 302 ){
             if (empty($this->resp_headers['location'])){
                 $this->error = 'Redirect but no Location Header found';
+                fclose($socket);
                 return false;
             }elseif($this->redirect_count == $this->max_redirect){
                 $this->error = 'Maximum number of redirects exceeded';
+                fclose($socket);
                 return false;
             }else{
                 $this->redirect_count++;
@@ -253,6 +259,7 @@ class HTTPClient {
                                                       $this->resp_headers['location'];
                 }
                 // perform redirected request, always via GET (required by RFC)
+                fclose($socket);
                 return $this->sendRequest($this->resp_headers['location'],array(),'GET');
             }
         }
@@ -260,6 +267,7 @@ class HTTPClient {
         // check if headers are as expected
         if($this->header_regexp && !preg_match($this->header_regexp,$r_headers)){
             $this->error = 'The received headers did not match the given regexp';
+            fclose($socket);
             return false;
         }
 
@@ -273,11 +281,13 @@ class HTTPClient {
                 do {
                     if(feof($socket)){
                         $this->error = 'Premature End of File (socket)';
+                        fclose($socket);
                         return false;
                     }
                     if(time()-$start > $this->timeout){
                         $this->status = -100;
                         $this->error = 'Timeout while reading chunk';
+                        fclose($socket);
                         return false;
                     }
                     $byte = fread($socket,1);
@@ -297,6 +307,7 @@ class HTTPClient {
                         if (!is_resource($tmp_fp)) {
                             $this->status = -100;
                             $this->error = 'can not open temp file';
+                            fclose($socket);
                             return false;
                         }
                     }
@@ -305,6 +316,7 @@ class HTTPClient {
                 } else
                 if($this->max_bodysize && strlen($r_body) > $this->max_bodysize){
                     $this->error = 'Allowed response size exceeded';
+                    fclose($socket);
                     return false;
                 }
             } while ($chunk_size);
@@ -314,6 +326,7 @@ class HTTPClient {
                 if(time()-$start > $this->timeout){
                     $this->status = -100;
                     $this->error = 'Timeout while reading response';
+                    fclose($socket);
                     return false;
                 }
                 $r_body .= fread($socket,4096);
@@ -324,6 +337,7 @@ class HTTPClient {
                         if (!is_resource($tmp_fp)) {
                             $this->status = -100;
                             $this->error = 'can not open temp file';
+                            fclose($socket);
                             return false;
                         }
                     }
@@ -332,6 +346,7 @@ class HTTPClient {
                 } else
                 if($this->max_bodysize && strlen($r_body) > $this->max_bodysize){
                     $this->error = 'Allowed response size exceeded';
+                    fclose($socket);
                     return false;
                 }
             }
