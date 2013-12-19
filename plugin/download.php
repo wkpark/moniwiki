@@ -100,14 +100,37 @@ function do_download($formatter,$options) {
 
     list($w, $h) = getimagesize($realfile);
 
-    // generate thumb file to support low-bandwidth mobile version
     $thumbfile = '';
-    if (is_mobile()) {
-        $force_thumb = (!isset($params['m']) or $params['m'] == 1);
-    } else if (!isset($params['thumb']) and
-            !empty($DBInfo->max_image_width) and $w > $DBInfo->max_image_width) {
-        $force_thumb = true;
-        $thumb_width = $DBInfo->max_image_width;
+    if (!empty($params['thumbwidth'])) {
+        // check allowed thumb widths.
+        $thumb_widths = isset($DBInfo->thumb_widths) ? $DBInfo->thumb_widths :
+                array('120', '240', '320', '480', '600', '800', '1024');
+
+        $width = 320; // default
+        if (!empty($DBInfo->default_thumb_width))
+            $width = $DBInfo->default_thumb_width;
+
+        if (!empty($thumb_widths)) {
+            if (in_array($params['thumbwidth'], $thumb_widths))
+                $width = $params['thumbwidth'];
+            else
+                unset($params['thumbwidth']);
+        } else {
+            $width = $params['thumbwidth'];
+        }
+        if ($w > $width) {
+            $thumb_width = $width;
+            $force_thumb = true;
+        }
+    } else {
+        // automatically generate thumb images to support low-bandwidth mobile version
+        if (is_mobile()) {
+            $force_thumb = (!isset($params['m']) or $params['m'] == 1);
+        } else if (!isset($params['thumb']) and
+                    !empty($DBInfo->max_image_width) and $w > $DBInfo->max_image_width) {
+            $force_thumb = true;
+            $thumb_width = $DBInfo->max_image_width;
+        }
     }
 
     while ((!empty($params['thumb']) or $force_thumb)) {
@@ -117,8 +140,18 @@ function do_download($formatter,$options) {
                 $thumb_width = $DBInfo->default_thumb_width;
         }
 
-        $thumbfile = preg_replace('@'.$ext.'$@', '.w'.$thumb_width.$ext, $realfile);
-        if (file_exists($thumbfile)) break;
+        $thumbfiles = array();
+        $thumbname = preg_replace('@'.$ext.'$@', '.w'.$thumb_width.$ext, $_l_file);
+        $thumbfiles[] = $thumbname;
+        $thumbfiles[] = 'thumbnails/'.$thumbname;
+        foreach ($thumbfiles as $file) {
+            $thumbfile = $dir.'/'.$file;
+            if (file_exists($thumbfile)) {
+                $thumb_ok = true;
+                break;
+            }
+        }
+        if ($thumb_ok) break;
 
         if ($w <= $thumb_width) {
             $thumbfile = $realfile;
@@ -272,5 +305,5 @@ function dl_file_resume($ctype,$file,$fname,$mode='inline',$header='') {
    return;
 }
 
-// vim:et:sts=4:
+// vim:et:sts=4:sw=4:
 ?>
