@@ -86,6 +86,11 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
         $params['retval']['error'] = _("Empty URL");
         return false;
     }
+    // check valid url
+    if (!preg_match('@^((ftp|https?)://[^/]+)/@', $url, $m))
+        return false;
+
+    $siteurl = $m[1];
 
     require_once "lib/HTTPClient.php";
 
@@ -124,10 +129,17 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
     if (empty($referer) and !empty($DBInfo->fetch_referer))
         $referer = $DBInfo->fetch_referer;
 
-    // check connection
-    $http = new HTTPClient();
-    $sc = new Cache_text('fetchinfo');
+    // check site available
+    $si = new Cache_text('siteinfo');
+    if (empty($params['refresh']) and $si->exists($siteurl) && ($check = $si->fetch($siteurl)) !== false) {
+        $params['retval']['status'] = $check['status'];
+        $params['retval']['error'] = $check['error'];
+        return false;
+    } else {
+        $si->remove($siteurl);
+    }
 
+    $sc = new Cache_text('fetchinfo');
     $error = null;
 
     if ($sc->exists($url) and $sc->mtime($url) < time() + $maxage) {
@@ -148,6 +160,8 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
         // do not refresh for no error cases
         if (empty($error)) unset($params['refresh']);
     } else {
+        // check connection
+        $http = new HTTPClient();
         // get file header
         $http->nobody = true;
 
@@ -162,6 +176,20 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
             else
                 $params['retval']['error'] = !empty($http->error) ? $http->error : sprintf(_("Invalid Status %d"), $http->status);
             $params['retval']['status'] = $http->status;
+
+            // check alive site
+            if ($http->status == -210) {
+                $si->update($siteurl, array('status'=>$http->status,
+                        'error'=>$params['retval']['error']), /* ttl 1-days */ 60*60*24);
+
+                return false;
+            }
+
+            $sc->update($url, array('size'=>-1,
+                        'mimetype'=>'',
+                        'error'=>$params['retval']['error'],
+                        'status'=>$params['retval']['status']), /* ttl 3-days */ 60*60*24*3);
+
             return false;
         }
 
