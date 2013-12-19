@@ -1566,6 +1566,7 @@ class Formatter {
     $this->use_smartdiff=!empty($DBInfo->use_smartdiff) ? $DBInfo->use_smartdiff : 0;
     $this->use_easyalias=$DBInfo->use_easyalias;
     $this->use_group=!empty($DBInfo->use_group) ? $DBInfo->use_group : 0;
+    $this->use_htmlcolor = !empty($DBInfo->use_htmlcolor) ? $DBInfo->use_htmlcolor : 0;
     $this->submenu=!empty($DBInfo->submenu) ? $DBInfo->submenu : null;
     $this->email_guard=$DBInfo->email_guard;
     $this->interwiki_target=!empty($DBInfo->interwiki_target) ?
@@ -1975,8 +1976,10 @@ class Formatter {
       }
       if ($url[0]=='#' and ($p=strpos($url,' '))) {
         $col=strtok($url,' '); $url=strtok('');
-        #if (!preg_match('/^#[0-9a-f]{6}$/',$col)) $col=substr($col,1);
-        #return "<span style='color:$col'>$url</span>";
+        if (!empty($this->use_htmlcolor) and !preg_match('/^#[0-9a-f]{6}$/i', $col)) {
+          $col = substr($col, 1);
+          return "<span style='color:$col'>$url</span>";
+        }
         if (preg_match('/^#[0-9a-f]{6}$/i',$col))
           return "<span style='color:$col'>$url</span>";
         $url=$col.' '.$url;
