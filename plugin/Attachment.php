@@ -11,6 +11,12 @@
 // Depend: 1.1.3
 // License: GPL
 //
+// Param: thumb_width=320; # default thumb width
+// Param: use_convert_thumbs; # automatic generate thumb
+// Param: force_download=0; # always use download action
+// Param: download_action=''; # custom download action
+// Param: thumb_widths=array() or array('320', '480', ... # allowed thumb widths
+//
 // Usage: [[Attachment(filename)]]
 //
 // $Id: Attachment.php,v 1.46 2010/08/23 09:15:23 wkpark Exp $
@@ -100,59 +106,62 @@ function macro_Attachment($formatter,$value,$options=array()) {
 
   $lightbox_attr='';
   $imgalign = '';
+
+  // allowed thumb widths.
+  $thumb_widths = isset($DBInfo->thumb_widths) ? $DBInfo->thumb_widths :
+      array('120', '240', '320', '480', '600', '800', '1024');
+
+  // parse query string of macro arguments
   if (($dummy=strpos($value,'?'))) {
     # for attachment: syntax
     parse_str(substr($value,$dummy+1),$attrs);
     $value=substr($value,0,$dummy);
-    foreach ($attrs as $name=>$val) {
-      if ($name=='action') {
-        if ($val == 'deletefile') $extra_action=$val;
-        else $mydownload=$val;
-      } else {
-        if (in_array($name,array('width','height'))) {
-          $attr.="$name=\"$val\" ";
-          if (!empty($DBInfo->use_lightbox)) $lightbox_attr=' rel="lightbox" ';
-        } else if (in_array($name,array('thumb','thumbwidth','thumbheight'))){
-          $use_thumb=1;
-          $thumb[$name]=$val;
+  } else if (($dummy = strpos($value, ',')) !== false) {
+    # for Attachment macro
+    $tmp = substr($value, $dummy+1);
+    $tmp = preg_replace('/,+\s*/', ',', $tmp);
+    $tmp = preg_replace('/\s*=\s*/', '=', $tmp);
+    $tmp = str_replace(',', '&', $tmp);
+    parse_str($tmp, $attrs);
+    $value=substr($value,0,$dummy);
+  }
+
+  if (!empty($attrs)) {
+    if (!empty($attrs['action'])) {
+      // check extra_action
+      if ($attrs['action'] == 'deletefile') $extra_action = $attrs['action'];
+      else $mydownload = $attrs['action'];
+      unset($attrs['action']);
+    }
+    foreach ($attrs as $k=>$v) {
+      if (in_array($k, array('width', 'height'))) {
+        $attr.= "$k=\"$v\" ";
+        if (!empty($DBInfo->use_lightbox))
+          $lightbox_attr = ' rel="lightbox" ';
+      } else if ($k == 'align') {
+        $imgalign = 'img'.ucfirst($v);
+      } else if (in_array($k, array('caption', 'alt', 'title'))) {
+        $caption = preg_replace("/^([\"'])([^\\1]+)\\1$/", "\\2", $v);
+        $caption = trim($caption);
+      } else if (in_array($k, array('thumb', 'thumbwidth', 'thumbheight'))){
+        if ($k == 'thumbwidth' || $k == 'thumbheight') {
+          if (!empty($thumb_widths)) {
+            if (in_array($v, $thumb_widths))
+              $thumb[$k] = $v;
+          } else {
+            $thumb[$k] = $v;
+          }
+        } else {
+          $thumb[$k] = $v;
         }
       }
     }
-
-    if ($attrs['align']) $imgalign = 'img'.ucfirst($attrs['align']);
-    if ($attrs['caption']) $caption = $attrs['caption'];
+    if (!empty($thumb)) $use_thumb = true;
   }
 
   if (preg_match('/^data:image\/(png|jpg|jpeg);base64,/',$value)) {
     // need to hack for IE ?
     return "<img src='".$value."' $attr />";
-  }
-
-  if (!$attr and ($dummy=strpos($value,','))) {
-    # for Attachment macro
-    $args=explode(',',substr($value,$dummy+1));
-    $value=substr($value,0,$dummy);
-    foreach ($args as $arg) {
-      //list($k,$v)=split('=',trim($arg),2);
-      $tmp = explode('=',trim($arg),2);
-      $k = $tmp[0];
-      $v = !empty($tmp[1]) ? $tmp[1] : '';
-      if ($v) {
-        if (in_array($k,array('width','height'))) {
-          $attrs[trim($k)]=$v;
-          $attr.="$arg ";
-        } else if ($k=='align') {
-          $imgalign='img'.ucfirst($v);
-        } else if (in_array($k,array('caption','alt','title'))) {
-          // XXX
-          $caption=preg_replace("/^([\"'])([^\\1]+)\\1$/","\\2",trim($v));
-          #$caption=preg_replace('/^"([^"]*)"$/',"\\1",trim($v));
-        } else if (in_array($k,array('thumb','thumbwidth','thumbheight'))){
-          $use_thumb=1;
-          $thumb[$k]=$v;
-        }
-      }
-    }
   }
 
   $attr.=$lightbox_attr;
