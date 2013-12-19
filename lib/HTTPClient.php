@@ -38,7 +38,7 @@ class HTTPClient {
     var $redirect_count;
 
     // read these after a successful request
-    var $resp_status;
+    var $status;
     var $resp_body;
     var $resp_body_file; // store body as a temp file
     var $resp_headers;
@@ -172,7 +172,7 @@ class HTTPClient {
         // open socket
         $socket = @fsockopen($server,$port,$errno, $errstr, $this->timeout);
         if (!$socket){
-            $resp->status = '-100';
+            $this->status = -100;
             $this->error = "Could not connect to $server:$port\n$errstr ($errno)";
             return false;
         }
