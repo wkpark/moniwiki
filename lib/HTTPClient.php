@@ -190,7 +190,40 @@ class HTTPClient {
         $this->_debug('request',$request);
 
         // send request
-        fputs($socket, $request);
+        $towrite = strlen($request);
+        $written = 0;
+        while($written < $towrite){
+            // check timeout
+            $time_used = time() - $start;
+            if($time_used > $this->timeout) {
+                $this->status = -100;
+                $this->error = sprintf('Timeout while sending request (%.3fs)',$time_used);
+                fclose($socket);
+                return false;
+            }
+
+            // wait for stream ready or timeout (1sec)
+            // select parameters
+            $r = null;
+            $w = array($socket);
+            $e = null;
+            if(@stream_select($r,$w,$e,1) === false){
+                usleep(1000);
+                continue;
+            }
+
+            // write to stream
+            $ret = fwrite($socket, substr($request,$written,4096));
+            if($ret === false) {
+                $this->status = -100;
+                $this->error = 'Failed writing to socket';
+                fclose($socket);
+                return false;
+            }
+            $written += $ret;
+        }
+        //fputs($socket, $request);
+
         // read headers from socket
         $r_headers = '';
         do{
@@ -205,6 +238,17 @@ class HTTPClient {
                 fclose($socket);
                 return false;
             }
+
+            // select parameters
+            $r = array($socket);
+            $w = null;
+            $e = null;
+            // wait for stream ready or timeout (1sec)
+            if (@stream_select($r,$w,$e,1) === false) {
+                usleep(1000);
+                continue;
+            }
+
             $r_headers .= fgets($socket,1024);
         }while(!preg_match('/\r?\n\r?\n$/',$r_headers));
 
