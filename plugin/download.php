@@ -63,12 +63,57 @@ function do_download($formatter,$options) {
   }
 
   $file=explode('/',$value);
-  $file=$subdir.$file[count($file)-1];
+  $file = $file[count($file) - 1];
 
-  $_l_file=_l_filename($file);
-  if (!file_exists("$dir/$_l_file")) {
-    header("HTTP/1.1 404 Not Found");
-    return;
+  $params = $options; // copy request params
+
+  /**
+   * Thumbnail feature
+   *
+   * foo/bar/foo.png
+   * - pagename = foo/bar
+   * - attached image = foo.png
+   * foo/bar/foo.png?thumb=1
+   * - generate thumbnail with default width
+   * foo/bar/foo.png?thumbwidth=320
+   * - generate thumbnails/foo.w320.png
+   *   if 320 is acceptable width
+   * foo/bar/thumbnails/foo.w320.png
+   * == foo/bar/foo.png?thumbwidth=320
+   * foo/bar/foo.w320.png
+   * == foo/bar/foo.png?thumbwidth=320
+   * you can also upload foo.w320.png manually
+   */
+
+  // check thumbnail width from filename
+  if (preg_match('@(\.w(\d+)\.(png|jpe?g|gif))$@i', $file, $m)) {
+    // drop w320 from given filename
+    $orgfile = substr($file, 0,
+        - strlen($m[1])) .'.'.$m[3];
+    $params['thumbwidth'] = $m[2];
+    unset($params['thumb']);
+  }
+
+  // check file exists
+  $tmp = _l_filename($file);
+  if (file_exists($dir.'/'.$subdir.$tmp)) {
+    $_l_file = $subdir.$tmp;
+    if (!empty($orgfile)) {
+      unset($orgfile);
+      // no need to generate thumbnails
+      unset($params['thumbwidth']);
+      $nothumb = true;
+    }
+  } else {
+    $_l_file = !empty($orgfile) ?
+        _l_filename($orgfile) :
+        _l_filename($file);
+
+    if (!file_exists("$dir/$_l_file")) {
+      header("HTTP/1.1 404 Not Found");
+      echo "File not found";
+      return;
+    }
   }
 
   $lines = @file($DBInfo->data_dir.'/mime.types');
@@ -95,8 +140,9 @@ function do_download($formatter,$options) {
     $ext = '.'.$ext;
   }
 
-  if (!empty($mimetype) and preg_match('@image/(png|jpe?g)$@', $mimetype)) {
-    $params = $options;
+  // auto generate thumbnails
+  if (empty($nothumb) and !empty($mimetype)
+        and preg_match('@image/(png|jpe?g|gif)$@', $mimetype)) {
 
     list($w, $h) = getimagesize($realfile);
 
@@ -113,8 +159,14 @@ function do_download($formatter,$options) {
         if (!empty($thumb_widths)) {
             if (in_array($params['thumbwidth'], $thumb_widths))
                 $width = $params['thumbwidth'];
-            else
-                unset($params['thumbwidth']);
+            else {
+                header("HTTP/1.1 404 Not Found");
+                echo "Invalid thumbnail width",
+                    "<br />",
+                    "valid thumb widths are ",
+                    implode(', ', $thumb_widths);
+                return;
+            }
         } else {
             $width = $params['thumbwidth'];
         }
@@ -154,6 +206,11 @@ function do_download($formatter,$options) {
         if ($thumb_ok) break;
 
         if ($w <= $thumb_width) {
+            if (!empty($orgfile)) {
+                header("HTTP/1.1 404 Not Found");
+                echo "the thumbnail width have to smaller than original";
+                return;
+            }
             $thumbfile = $realfile;
             break;
         }
