@@ -35,9 +35,7 @@ function resize_image($ext, $from, $to, $w = 0, $h = 0, $width, $height = 0) {
             $transparency = imagecolortransparent($source);
 
             if ($transparency >= 0) {
-                // guess transparent color
-                $tidx = imagecolorat($source, 1, 1); // FIXME
-                $tcol = imagecolorsforindex($source, $tidx);
+                $tcol = imagecolorsforindex($source, $transparency);
                 $transparency = imagecolorallocate($img,
                         $tcol['red'], $tcol['green'], $tcol['blue']);
                 imagefill($img, 0, 0, $transparency);
@@ -49,11 +47,20 @@ function resize_image($ext, $from, $to, $w = 0, $h = 0, $width, $height = 0) {
                 imagefill($img, 0, 0, $tcol);
             }
         }
-
         // resize
-        $ret = imagecopyresampled($img, $source, 0, 0, 0, 0, $width, $new_h, $w, $h);
+        // from the comment of mediawiki
+        // found at include/media/Bitmap.php
+        // Don't resample for paletted GIF images.
+        // It may just uglify them, and completely breaks transparency.
+        if ($imgtype == 'gif')
+	    $ret = imagecopyresized($img, $source, 0, 0, 0, 0, $width, $new_h, $w, $h);
+        else
+            $ret = imagecopyresampled($img, $source, 0, 0, 0, 0, $width, $new_h, $w, $h);
         $myfunc = 'image'.$imgtype;
         $ret = $myfunc($img, $to);
+
+        imagedestroy($img);
+        imagedestroy($source);
     } else {
         $fp = popen('convert -scale '.
                 $width.' '.$from.' '.$to, 'r');
