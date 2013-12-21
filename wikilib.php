@@ -1265,7 +1265,10 @@ function macro_EditText($formatter,$value,$options) {
     ob_start();
     $opi=$formatter->pi; // save pi
     $formatter->pi=array('#format'=>'wiki', '#linenum'=>0); // XXX override pi
+    $save = $formatter->auto_linebreak;
+    $formatter->auto_linebreak = 0;
     $formatter->send_page(rtrim($form),$options);
+    $formatter->auto_linebreak = $save;
     $formatter->pi=$opi; // restore pi
     $form= ob_get_contents();
     ob_end_clean();
