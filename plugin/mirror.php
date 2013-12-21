@@ -31,6 +31,10 @@ function do_mirror($formatter, $params = array()) {
     $params['call'] = true;
     if ($formatter->refresh) $params['refresh'] = 1;
     macro_Mirror($formatter, $pagename, $params);
+    if (!empty($params['check'])) {
+        echo $params['retval']['status'];
+        return;
+    }
 
     if (!empty($ret['error'])) {
         if (!empty($Config['mirror_fallback']) && $plugin=getPlugin($Config['mirror_fallback'])) {
@@ -97,7 +101,8 @@ function macro_Mirror($formatter, $pagename = '', $params = array()) {
         // conditional get
         $headers['Cache-Control'] = 'maxage=0';
         $headers['If-Modified-Since'] = $lastmod;
-        $headers['If-None-Match'] = $etag;
+        if (empty($DBInfo->mirror_no_etag))
+            $headers['If-None-Match'] = $etag;
 
         // do not refresh for no error cases
         if (empty($error)) unset($params['refresh']);
@@ -114,7 +119,7 @@ function macro_Mirror($formatter, $pagename = '', $params = array()) {
 
     if ($http->status == 304) {
         // not modified
-        echo '304 Not modified';
+        $params['retval']['status'] = 304;
         return true;
     }
 
@@ -122,6 +127,9 @@ function macro_Mirror($formatter, $pagename = '', $params = array()) {
         $params['retval']['error'] = sprintf(_("Invalid Status %d"), $http->status);
         $params['retval']['status'] = $http->status;
         return false;
+    } else if (!empty($params['check'])) {
+        $params['retval']['status'] = 200;
+        return true;
     }
 
     if (isset($http->resp_headers['content-length']))
