@@ -125,6 +125,7 @@ function local_save(textarea) {
     var stamp = time.getTime();
 
     var orig = textarea.value;
+    var updated = false;
 
     // is it changed ?
     if (localStorage[key]) {
@@ -133,6 +134,7 @@ function local_save(textarea) {
         var s = saved.replace(/\n$/, '');
         var o = orig.replace(/\n$/, '');
         if (s == o) return;
+        updated = true;
     }
     localStorage[key] = stamp + "\n" + orig;
 
@@ -141,7 +143,7 @@ function local_save(textarea) {
 
     var state = document.getElementById('save_state');
     var txt;
-    if (state) {
+    if (updated && state) {
         state.innerHTML = '';
         txt = document.createTextNode(_("Save the current text temporary..."));
         txt.nodeValue+= ' (' + format_time(time) + ')';
