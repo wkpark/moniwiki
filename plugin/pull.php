@@ -6,38 +6,38 @@
 // Author: Won-Kyu Park <wkpark@gmail.com>
 // Since: 2013-11-27
 // Date: 2013-11-27
-// Name: mirror plugin
+// Name: pull plugin
 // Description: fetch raw wiki contents from Wiki site
-// URL: MoniWiki:MirrorPlugin
+// URL: MoniWiki:PullPlugin
 // Version: $Revision: 1.0 $
 // License: GPLv2
 //
-// Param: mirror_url='http://foo.bar/wiki.php/'
-// Param: mirror_fallback='AutoGoto'
+// Param: pull_url='http://foo.bar/wiki.php/'
+// Param: pull_fallback='AutoGoto'
 //
-// Usage: set $mirror_url properly
-//        and $auto_search='Mirror'; $mirror_fallback='AutoGoto';
+// Usage: set $pull_url properly
+//        and $auto_search='pull'; $pull_fallback='AutoGoto';
 
-function do_mirror($formatter, $params = array()) {
+function do_pull($formatter, $params = array()) {
     global $Config;
 
     $pagename = $formatter->page->name;
 
-    if (!empty($Config['mirror_ignore_re']) and preg_match('/'.$Config['mirror_ignore_re'].'/i', $pagename))
+    if (!empty($Config['pull_ignore_re']) and preg_match('/'.$Config['pull_ignore_re'].'/i', $pagename))
         $redirect_url = true;
 
     $ret = array();
     $params['retval'] = &$ret;
     $params['call'] = true;
     if ($formatter->refresh) $params['refresh'] = 1;
-    macro_Mirror($formatter, $pagename, $params);
+    macro_Pull($formatter, $pagename, $params);
     if (!empty($params['check'])) {
         echo $params['retval']['status'];
         return;
     }
 
     if (!empty($ret['error'])) {
-        if (!empty($Config['mirror_fallback']) && $plugin=getPlugin($Config['mirror_fallback'])) {
+        if (!empty($Config['pull_fallback']) && $plugin=getPlugin($Config['pull_fallback'])) {
             // FIXME
             if (!function_exists('do_'.$plugin)) {
                 include_once("plugin/$plugin.php");
@@ -50,22 +50,22 @@ function do_mirror($formatter, $params = array()) {
     }
 }
 
-function macro_Mirror($formatter, $pagename = '', $params = array()) {
+function macro_Pull($formatter, $pagename = '', $params = array()) {
     global $DBInfo;
 
     if (empty($pagename)) {
         $params['retval']['error'] = _("Empty PageName");
         return false;
     }
-    if (empty($DBInfo->mirror_url)) {
-        $params['retval']['error'] = _("Empty \$mirror_url");
+    if (empty($DBInfo->pull_url)) {
+        $params['retval']['error'] = _("Empty \$pull_url");
         return false;
     }
 
-    if (strpos($DBInfo->mirror_url, '$PAGE') === false)
-        $url = $DBInfo->mirror_url._rawurlencode($pagename);
+    if (strpos($DBInfo->pull_url, '$PAGE') === false)
+        $url = $DBInfo->pull_url._rawurlencode($pagename);
     else
-        $url = preg_replace('/\$PAGE/', _rawurlencode($pagename), $DBInfo->mirror_url);
+        $url = preg_replace('/\$PAGE/', _rawurlencode($pagename), $DBInfo->pull_url);
     $url.= '?action=raw';
 
     require_once "lib/HTTPClient.php";
@@ -73,8 +73,8 @@ function macro_Mirror($formatter, $pagename = '', $params = array()) {
     $sz = 0;
 
     // set default params
-    $maxage = !empty($DBInfo->mirror_maxage) ? (int) $DBInfo->mirror_maxage : 60*60*24*7;
-    $timeout = !empty($DBInfo->mirror_timeout) ? (int) $DBInfo->mirror_timeout : 15;
+    $maxage = !empty($DBInfo->pull_maxage) ? (int) $DBInfo->pull_maxage : 60*60*24*7;
+    $timeout = !empty($DBInfo->pull_timeout) ? (int) $DBInfo->pull_timeout : 15;
     $maxage = (int) $maxage;
 
     // check connection
@@ -101,7 +101,7 @@ function macro_Mirror($formatter, $pagename = '', $params = array()) {
         // conditional get
         $headers['Cache-Control'] = 'maxage=0';
         $headers['If-Modified-Since'] = $lastmod;
-        if (empty($DBInfo->mirror_no_etag))
+        if (empty($DBInfo->pull_no_etag))
             $headers['If-None-Match'] = $etag;
 
         // do not refresh for no error cases
