@@ -30,14 +30,14 @@ function macro_Attachment($formatter,$value,$options=array()) {
     return $formatter->macro_cache_repl('Attachment', $value);
 
   $attr='';
-  if (!empty($DBInfo->force_download) or !empty($DBInfo->mirror_url)) $force_download=1;
+  if (!empty($DBInfo->force_download) or !empty($DBInfo->pull_url)) $force_download=1;
   if (!empty($DBInfo->download_action)) $mydownload=$DBInfo->download_action;
   else $mydownload='download';
   $extra_action='';
 
-  $mirror_url = $fetch_url = '';
-  if (!empty($DBInfo->mirror_url)) {
-    $mirror_url = $DBInfo->mirror_url;
+  $pull_url = $fetch_url = '';
+  if (!empty($DBInfo->pull_url)) {
+    $pull_url = $DBInfo->pull_url;
     if (empty($formatter->fetch_action))
       $fetch_url = $formatter->link_url('', '?action=fetch&url=');
     else
@@ -199,14 +199,14 @@ function macro_Attachment($formatter,$value,$options=array()) {
 
   if (file_exists($_l_upload_file)) {
     $file_ok=1;
-  } else if (!empty($mirror_url)) {
+  } else if (!empty($pull_url)) {
     if (isset($subpage[0])) {
       $pagename = $subpage;
       $val = _urlencode($file);
     }
     $url = $fetch_url.
         str_replace(array('&', '?'), array('%26', '%3f'),
-        $mirror_url.urlencode(_urlencode($pagename)).
+        $pull_url.urlencode(_urlencode($pagename)).
         "?action=$mydownload&value=".$val);
     // check url to retrieve the size of file
     $info = ' ('.
@@ -341,13 +341,13 @@ function macro_Attachment($formatter,$value,$options=array()) {
             $val = 'thumbnails/'.$thumbfile;
           $extra_action='download';
         }
-        if ($file_ok == 2 and !empty($mirror_url)) {
+        if ($file_ok == 2 and !empty($pull_url)) {
           if (isset($subpage[0])) {
             $pagename = $subpage;
             $val = _urlencode($file);
           }
           $url = $fetch_url.str_replace(array('&', '?'), array('%26', '%3f'),
-                  $mirror_url.urlencode(_urlencode($pagename))."?action=$mydownload&value=".$val);
+                  $pull_url.urlencode(_urlencode($pagename))."?action=$mydownload&value=".$val);
         } else {
           $url = $formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=".$val);
         }
@@ -364,10 +364,10 @@ function macro_Attachment($formatter,$value,$options=array()) {
 
       if ($extra_action) {
         $url=$formatter->link_url(_urlencode($pagename),"?action=$extra_action&amp;value=".urlencode($value));
-        if ($file_ok == 2 and !empty($mirror_url)) {
+        if ($file_ok == 2 and !empty($pull_url)) {
           if (isset($subpage[0])) $pagename = $subpage;
           $url = $fetch_url.str_replace(array('&', '?'), array('%26', '%3f'),
-                  $mirror_url.urlencode(_urlencode($pagename))."?action=$mydownload&value=".$val);
+                  $pull_url.urlencode(_urlencode($pagename))."?action=$mydownload&value=".$val);
         }
         $img="<a href='$url'>$img</a>";
       } else if (preg_match('@^(https?|ftp)://@',$alt))
