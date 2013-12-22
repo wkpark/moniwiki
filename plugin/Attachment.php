@@ -353,7 +353,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
         }
       } else {
         if ($thumb_ok and !empty($use_thumb)) {
-          $url=$DBInfo->upload_dir_url.'/thumbnails/'._urlencode($thumbfile);
+          $url=$DBInfo->upload_dir_url.$dir.'/thumbnails/'._urlencode($thumbfile);
         } else {
           $_my_file=str_replace($DBInfo->upload_dir, $DBInfo->upload_dir_url,$dir . '/' . $file);
           $url=_urlencode($_my_file);
