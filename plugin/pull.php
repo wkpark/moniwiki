@@ -22,15 +22,18 @@ function do_pull($formatter, $params = array()) {
     global $Config;
 
     $pagename = $formatter->page->name;
-
-    if (!empty($Config['pull_ignore_re']) and preg_match('/'.$Config['pull_ignore_re'].'/i', $pagename))
-        $redirect_url = true;
+    if ($formatter->refresh) $params['refresh'] = 1;
 
     $ret = array();
     $params['retval'] = &$ret;
     $params['call'] = true;
-    if ($formatter->refresh) $params['refresh'] = 1;
-    macro_Pull($formatter, $pagename, $params);
+
+    if (!empty($Config['pull_ignore_re']) and preg_match('/'.$Config['pull_ignore_re'].'/i', $pagename)) {
+        $ret['error'] = 'protected from pull';
+        $ret['status'] = 404; // fake
+    } else {
+        macro_Pull($formatter, $pagename, $params);
+    }
     if (!empty($params['check'])) {
         echo $params['retval']['status'];
         return;
