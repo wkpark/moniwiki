@@ -1589,13 +1589,7 @@ function macro_Edit($formatter,$value,$options='') {
   if (!empty($options['action_mode']) and $options['action_mode']=='ajax') {
     $ajax=" onsubmit='savePage(this);return false'";
   }
-  $form_attr = '';
-  $text_attr = '';
-  if (!empty($DBInfo->use_autosave)) {
-    $form_attr=' onsubmit="return moni_autosave_reset(this)" ';
-    $text_attr=' onclick="return moni_autosave(this)" ';
-  }
-  $formh= sprintf('<form id="editform" '.$form_attr.'method="post" action="%s"'.$ajax.'>',
+  $formh= sprintf('<form id="editform" method="post" action="%s"'.$ajax.'>',
     $previewurl);
   if ($text) {
     $raw_body = preg_replace("/\r\n|\r/", "\n", $text);
@@ -1794,7 +1788,7 @@ EOS;
 $formh
 <div class="resizable-textarea" style='position:relative'><!-- IE hack -->
 <div id="save_state"></div>
-<textarea$text_attr id="editor-textarea" wrap="virtual" name="savetext" tabindex="1"
+<textarea id="editor-textarea" wrap="virtual" name="savetext" tabindex="1"
  rows="$rows" cols="$cols" class="wiki resizable">$raw_body</textarea>
 $captcha
 </div>
