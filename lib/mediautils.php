@@ -71,4 +71,30 @@ function resize_image($ext, $from, $to, $w = 0, $h = 0, $width, $height = 0) {
     return $ret;
 }
 
+/**
+ * create image and draw string using GD
+ *
+ * @author  Won-Kyu Park <wkpark@gmail.com>
+ * @since   2013/12/24
+ * @license GPLv2
+ */
+function image_msg($font_size, $font_face, $text, $width = 40) {
+    $wrap = wordwrap($text, $width, "\n", true);
+    $wrap = rtrim($wrap);
+    $w = imagefontwidth($font_size) * $width;
+    $strs = explode("\n", $wrap);
+    $h = imagefontheight($font_size) * count($strs);
+    $im = ImageCreate($w, $h);
+    ImageColorAllocate($im, 255, 255, 255); // white background
+    ImageColorAllocate($im, 0, 0, 0); // black
+    $y = 0;
+    $dy = imagefontheight($font_size);
+    foreach ($strs as $str) {
+        ImageString($im, $font_size, 0, $y, $str, 1);
+        $y+= $dy;
+    }
+
+    return $im;
+}
+
 // vim:et:sts=4:sw=4:

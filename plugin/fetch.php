@@ -52,14 +52,15 @@ function do_fetch($formatter, $params = array()) {
     if (!empty($ret['error'])) {
         if ($ret['status'] == 404 ||
                 (!empty($ret['mimetype']) and preg_match('/^image\//', $ret['mimetype']))) {
-            $font_size = 2;
+            require_once(dirname(__FILE__).'/../lib/mediautils.php');
+
+            $font_face = !empty($Config['fetch_font']) ? $Config['fetch_font'] : '';
+            $font_size = !empty($Config['fetch_font_size']) ? $Config['fetch_font_size'] : 2;
+
             $str = 'ERROR: '.$ret['error'];
-            $w = imagefontwidth($font_size) * strlen($str);
-            $h = imagefontheight($font_size);
-            $im = ImageCreate($w, $h);
-            ImageColorAllocate($im, 255, 255, 255); // white background
-            ImageColorAllocate($im, 0, 0, 0); // black
-            ImageString($im, $font_size, 0, 0, $str, 1);
+
+            $im = image_msg($font_size,
+                $font_face, $str);
 
             if (function_exists("imagepng")) {
                 header("Content-Type: image/png");
