@@ -81,16 +81,38 @@ function resize_image($ext, $from, $to, $w = 0, $h = 0, $width, $height = 0) {
 function image_msg($font_size, $font_face, $text, $width = 40) {
     $wrap = wordwrap($text, $width, "\n", true);
     $wrap = rtrim($wrap);
-    $w = imagefontwidth($font_size) * $width;
     $strs = explode("\n", $wrap);
-    $h = imagefontheight($font_size) * count($strs);
-    $im = ImageCreate($w, $h);
-    ImageColorAllocate($im, 255, 255, 255); // white background
-    ImageColorAllocate($im, 0, 0, 0); // black
-    $y = 0;
-    $dy = imagefontheight($font_size);
+    if (empty($font_face)) {
+        $w = imagefontwidth($font_size) * $width;
+        $dy = imagefontheight($font_size);
+        $h = $dy * count($strs);
+        $im = ImageCreate($w, $h);
+        $y = 0;
+    } else {
+        putenv('GDFONTPATH='.getcwd().'/data');
+        $w = 0;
+        $h = 0;
+        foreach ($strs as $str) {
+            $bbox = imagettfbbox($font_size,
+                0, $font_face, $str);
+            if ($bbox[2] > $w)
+                $w = $bbox[2];
+            $h+= $bbox[3] - $bbox[5];
+        }
+        $dy = $bbox[3] - $bbox[5];
+        $h = $dy * count($strs);
+        $im = ImageCreateTruecolor($w, $h);
+        $y = $dy;
+    }
+    $bg = ImageColorAllocate($im, 255, 255, 255); // white background
+    $pen = ImageColorAllocate($im, 0, 0, 0); // black
+    imagefill($im, 0, 0, $bg);
+
     foreach ($strs as $str) {
-        ImageString($im, $font_size, 0, $y, $str, 1);
+        if (empty($font_face))
+            ImageString($im, $font_size, 0, $y, $str, 1);
+        else
+            ImageTtfText($im, $font_size, 0, 0, $y, $pen, $font_face, $str);
         $y+= $dy;
     }
 
