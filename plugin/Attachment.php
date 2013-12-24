@@ -297,7 +297,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
       else
         $caption = '<div><span>['.$type.' '._("image").$info.']</span></div>';
 
-      if (!empty($use_thumb)) {
+      if ($file_ok == 1 and !empty($use_thumb)) {
         $thumb_width = !empty($DBInfo->thumb_width) ? $DBInfo->thumb_width : 320;
         if (!empty($thumb['thumbwidth']))
           $thumb_width = $thumb['thumbwidth'];
@@ -348,6 +348,8 @@ function macro_Attachment($formatter,$value,$options=array()) {
           }
           $url = $fetch_url.str_replace(array('&', '?'), array('%26', '%3f'),
                   $pull_url.urlencode(_urlencode($pagename))."?action=$mydownload&value=".$val);
+          if ($use_thumb and isset($thumb['thumb']))
+            $url.='&thumb='.$thumb['thumb'];
         } else {
           $url = $formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=".$val);
         }
