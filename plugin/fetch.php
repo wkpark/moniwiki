@@ -50,8 +50,14 @@ function do_fetch($formatter, $params = array()) {
     macro_Fetch($formatter, $url, $params);
 
     if (!empty($ret['error'])) {
-        if ($ret['status'] == 404 ||
-                (!empty($ret['mimetype']) and preg_match('/^image\//', $ret['mimetype']))) {
+        if (!empty($ret['mimetype']) and
+                preg_match('/^image\//', $ret['mimetype'])) {
+            $is_image = true;
+        } else {
+            $is_image = preg_match('/\.(png|jpe?g|gif)(&|\?)?/i', $url);
+        }
+
+        if ($is_image) {
             require_once(dirname(__FILE__).'/../lib/mediautils.php');
 
             $font_face = !empty($Config['fetch_font']) ? $Config['fetch_font'] : '';
