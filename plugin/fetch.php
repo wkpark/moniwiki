@@ -149,7 +149,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
     $sc = new Cache_text('fetchinfo');
     $error = null;
 
-    if ($sc->exists($url) and $sc->mtime($url) < time() + $maxage) {
+    if (empty($params['refresh']) and $sc->exists($url) and $sc->mtime($url) < time() + $maxage) {
         $info = $sc->fetch($url);
         $sz = $info['size'];
         $mimetype = $info['mimetype'];
@@ -163,9 +163,6 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
             $params['retval']['size'] = $sz;
             return false;
         }
-
-        // do not refresh for no error cases
-        if (empty($error)) unset($params['refresh']);
     } else {
         // check connection
         $http = new HTTPClient();
@@ -350,7 +347,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
             $thumb_width = $DBInfo->fetch_thumb_width;
 
         $thumbfile = preg_replace('@'.$ext.'$@', '.w'.$thumb_width.$ext, $fetchfile);
-        if (file_exists($thumbfile)) break;
+        if (empty($params['refresh']) && file_exists($thumbfile)) break;
 
         list($w, $h) = getimagesize($fetchfile);
         if ($w <= $thumb_width) {
