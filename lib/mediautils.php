@@ -1,6 +1,36 @@
 <?php
 
 /**
+ * auto detect image mimetype
+ *
+ * @author  Won-Kyu Park <wkpark@gmail.com>
+ * @since   2013/12/26
+ * @license GPLv2
+ */
+function detect_image($filename) {
+    $fp = @fopen($filename, 'rb');
+    if (!is_resource($fp)) return false;
+    $dat = fread($fp, 4);
+    $tmp = unpack('a4', $dat);
+    if ($tmp[1] == 'GIF8') {
+        fclose($fp);
+        return 'gif';
+    }
+    $tmp = unpack('C1h/a3a', $dat);
+    if ($tmp['h'] == 0x89 && $tmp['a'] == 'PNG') {
+        fclose($fp);
+        return 'png';
+    }
+    $tmp = unpack('n1', $dat);
+    if ($tmp[1] == 0xffd8) {
+        fclose($fp);
+        return 'jpeg';
+    }
+    fclose($fp);
+    return false;
+}
+
+/**
  * resize images using GD func or ImageMagick convert
  *
  * @author  Won-Kyu Park <wkpark@gmail.com>
@@ -26,7 +56,18 @@ function resize_image($ext, $from, $to, $w = 0, $h = 0, $width, $height = 0) {
             $imgtype = 'gif';
 
         $myfunc = 'imagecreatefrom'.$imgtype;
-        $source = $myfunc($from);
+        $source = @call_user_func($myfunc, $from);
+
+        // is it valid resource ?
+        if (!is_resource($source)) {
+            // try to autodetect image
+            $type = detect_image($from);
+            if ($type === false) return false;
+
+            $imgtype = $type;
+            $myfunc = 'imagecreatefrom'.$imgtype;
+            $source = call_user_func($myfunc, $from);
+        }
 
         // save transparancy
         // Please see also
