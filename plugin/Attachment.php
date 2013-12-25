@@ -203,14 +203,19 @@ function macro_Attachment($formatter,$value,$options=array()) {
     if (isset($subpage[0])) {
       $pagename = $subpage;
       $val = _urlencode($file);
+    } else {
+      $val = _urlencode($value);
     }
-    $url = $fetch_url.
-        str_replace(array('&', '?'), array('%26', '%3f'),
-        $pull_url.urlencode(_urlencode($pagename)).
-        "?action=$mydownload&value=".$val);
-    // check url to retrieve the size of file
+
+    $url = $pull_url._urlencode($pagename).
+        "?action=$mydownload&value=".$val;
+
     $info = ' ('.
         $formatter->macro_repl('ImageFileSize', $url).')';
+
+    $url = $fetch_url.
+        str_replace(array('&', '?'), array('%26', '%3f'), $url);
+    // check url to retrieve the size of file
     if (floatval($info) !== 0)
       $file_ok = 2;
   }
