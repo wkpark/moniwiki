@@ -387,6 +387,9 @@ function macro_Attachment($formatter,$value,$options=array()) {
     }
   }
 
+  // no attached file found.
+  $formatter->_dynamic_macros['@Attachment'] = 1;
+
   $paste='';
   if (!empty($DBInfo->use_clipmacro) and preg_match('/^(.*)\.png$/i',$file,$m)) {
     $now=time();

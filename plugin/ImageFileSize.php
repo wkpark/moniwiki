@@ -40,6 +40,7 @@ function macro_ImageFileSize($formatter, $value = '', $params = array()) {
             // dynamic macro
             if ($formatter->_macrocache and empty($params['call']))
                 return $formatter->macro_cache_repl('ImageFileSize', $value);
+            $formatter->_dynamic_macros['@ImageFileSize'] = 1;
 
             require_once dirname(__FILE__).'/../lib/HTTPClient.php';
 

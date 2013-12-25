@@ -5685,6 +5685,7 @@ function wiki_main($options) {
         $mrule=array();
         $mrepl=array();
         foreach ($_macros as $m=>$v) {
+          if (!is_array($v)) continue;
           $mrule[]='@@'.$v[0].'@@';
           $options['mid']=$v[1];
           $mrepl[]=$formatter->macro_repl($m,'',$options); // XXX
@@ -5713,6 +5714,11 @@ function wiki_main($options) {
 
       $pi_cache = new Cache_text('PI');
       $pi_cache->update($formatter->page->name, $pis);
+    } else if (empty($formatter->_dynamic_macros) and !empty($formatter->pi['#dynamic'])) {
+      $pi_cache = new Cache_text('PI');
+      $pi_cache->remove($formatter->page->name); // reset PI
+      $mcache->remove($pagename); // remove macro cache
+      $cache->update($pagename, $out); // update cache content
     }
 
     if (isset($options['timer']) and is_object($options['timer'])) {

@@ -2907,6 +2907,7 @@ function macro_RandomPage($formatter, $value = '', $params = array()) {
 
   if ($formatter->_macrocache and empty($options['call']) and $mode != 'js')
     return $formatter->macro_cache_repl('RandomPage', $value);
+  $formatter->_dynamic_macros['@RandomPage'] = 1;
 
   if ($count <= 0) $count=1;
   $counter= $count;
@@ -3096,6 +3097,7 @@ function macro_UserPreferences($formatter,$value,$options='') {
 
   if ($formatter->_macrocache and empty($options['call']))
     return $formatter->macro_cache_repl('UserPreferences', $value);
+  $formatter->_dynamic_macros['@UserPreferences'] = 1;
 
   $use_any=0;
   if (!empty($DBInfo->use_textbrowsers)) {
@@ -3559,6 +3561,7 @@ function macro_PageCount($formatter, $value = '', $options = array()) {
 
   if ($formatter->_macrocache and empty($options['call']))
     return $formatter->macro_cache_repl('PageCount', '');
+  $formatter->_dynamic_macros['@PageCount'] = 1;
   return $DBInfo->getCounter();
 }
 

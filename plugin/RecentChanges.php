@@ -277,6 +277,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   // set as dynamic macro or not.
   if ($formatter->_macrocache and empty($options['call'])) // and empty($use_js))
     return $formatter->macro_cache_repl('RecentChanges', $value);
+  $formatter->_dynamic_macros['@RecentChanges'] = 1;
 
   if (empty($DBInfo->interwiki)) $formatter->macro_repl('InterWiki','',array('init'=>1));
 

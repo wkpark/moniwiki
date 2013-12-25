@@ -11,6 +11,7 @@ function macro_FortuneSystem($formatter, $value, $options) {
     // dynamic macro
     if ($formatter->_macrocache and empty($options['call']))
         return $formatter->macro_cache_repl('Fortune', $value);
+    $formatter->_dynamic_macros['@Fortune'] = 1;
 
     $ret= exec(escapeshellcmd("/usr/bin/fortune $value"),$log);
     $out= str_replace("_",'',join("\n",$log));
@@ -80,8 +81,11 @@ JS;
     }
 
     // dynamic macro
-    if (!$use_js and $formatter->_macrocache and empty($options['call']))
-        return $formatter->macro_cache_repl('Fortune', $value);
+    if (!$use_js) {
+        if ($formatter->_macrocache and empty($options['call']))
+            return $formatter->macro_cache_repl('Fortune', $value);
+        $formatter->_dynamic_macros['@Fortune'] = 1;
+    }
 
     $cat=$value;
     $dir='/usr/share/games/fortune';
