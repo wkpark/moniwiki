@@ -21,8 +21,8 @@ function macro_ImageFileSize($formatter, $value = '', $params = array()) {
 
     $sz = 0;
     // check if it is valid or not
-    while (preg_match('/^(https?|ftp):\/\/.*(\.(:jpg|jpeg|gif|png))?(?:\?|&)?/', $value)) {
-        $value = _urlencode($value);
+    while (preg_match('/^((?:https?|ftp):\/\/.*(\.(?:jpg|jpeg|gif|png)))(?:\?|&)?/i', $value, $m)) {
+        $value = $m[1];
 
         // check the file size saved by the fetch plugin
         $si = new Cache_text('fetchinfo');
@@ -41,6 +41,10 @@ function macro_ImageFileSize($formatter, $value = '', $params = array()) {
             if ($formatter->_macrocache and empty($params['call']))
                 return $formatter->macro_cache_repl('ImageFileSize', $value);
             $formatter->_dynamic_macros['@ImageFileSize'] = 1;
+
+            // do not fetch the size of image right now. just fetch the cached info by the fetch plugin
+            if (empty($params['call']) and !empty($Config['fetch_imagesize']) and $Config['fetch_imagesize'] == 2)
+                return _("Unknown");
 
             require_once dirname(__FILE__).'/../lib/HTTPClient.php';
 
