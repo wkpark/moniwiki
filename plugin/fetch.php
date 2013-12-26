@@ -138,12 +138,14 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
 
     // check site available
     $si = new Cache_text('siteinfo');
-    if (empty($params['refresh']) and $si->exists($siteurl) && ($check = $si->fetch($siteurl)) !== false) {
-        $params['retval']['status'] = $check['status'];
-        $params['retval']['error'] = $check['error'];
-        return false;
-    } else {
-        $si->remove($siteurl);
+    if ($si->exists($siteurl)) {
+        if (!empty($params['refresh'])) {
+            $si->remove($siteurl);
+        } else if (empty($params['refresh']) && ($check = $si->fetch($siteurl)) !== false) {
+            $params['retval']['status'] = $check['status'];
+            $params['retval']['error'] = $check['error'];
+            return false;
+        }
     }
 
     $sc = new Cache_text('fetchinfo');
