@@ -369,7 +369,7 @@ function hangul_choseong_to_jongseong($ch)
 }
 
 // make a UTF-8 regular expression for Hangul
-function utf8_hangul_getSearchRule($str,$lastchar=1) {
+function utf8_hangul_getSearchRule($str,$lastchar=1, $use_unicode = true) {
     $rule='';
 
     $val=utf8_to_unicode($str);
@@ -395,10 +395,27 @@ function utf8_hangul_getSearchRule($str,$lastchar=1) {
         }
 
         $wlen=sizeof($wch);
+        $ket = '';
         if ($wlen>=3) {
-            $rule.=unicode_to_utf8(array($ch));
-            continue;
-        } else if ($wlen==1) {
+            // 종각 => 종(각|가[가-깋])
+            $mrule = array();
+            $mrule[] = unicode_to_utf8(array($ch));
+
+            $save = $wch[2];
+            unset($wch[2]);
+            $tmp = jamo_to_syllable($wch);
+            $mrule[] = unicode_to_utf8($tmp);
+            $save = hangul_jongseong_to_cjamo($save);
+            $wch = hangul_to_jamo($save);
+            $wlen = sizeof($wch);
+            $rule.= '('.implode('|', $mrule);
+            $ket = ')';
+            if ($wlen > 1) {
+                $rule.= ')';
+                continue;
+            }
+        }
+        if ($wlen==1) {
             if ($wch[0] >=0x1100 and $wch[0] <=0x1112) {
                 $wch[1]=0x1161;
                 $start=jamo_to_syllable($wch);
@@ -409,7 +426,7 @@ function utf8_hangul_getSearchRule($str,$lastchar=1) {
                 $end=jamo_to_syllable($wch);
                 $uend=unicode_to_utf8($end);
             } else {
-                $rule.=unicode_to_utf8($wch);
+                $rule.=unicode_to_utf8($wch).$ket;
                 continue;
             }
         } else if ($wlen==2) {
@@ -426,6 +443,9 @@ function utf8_hangul_getSearchRule($str,$lastchar=1) {
             }
         }
 
+        if ($use_unicode) {
+            $crule = '['.$ustart.'-'.$uend.']';
+        } else {
         $rule.= sprintf("\x%02X",ord($ustart[0]));
         $crule='';
         if ($ustart[1]==$uend[1]) {
@@ -445,8 +465,9 @@ function utf8_hangul_getSearchRule($str,$lastchar=1) {
             $subrule[]=sprintf("\x%02X[\\x80-\\x%02X]",ord($uend[1]),ord($uend[2]));
             $crule.='('.implode('|',$subrule).')';
         }
+        }
 
-        $rule.=$crule;
+        $rule.=$crule.$ket;
     }
     return $rule;
 }
