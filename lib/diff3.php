@@ -155,6 +155,8 @@ class Diff3 {
                         $orig = array_splice($e1->orig, 0, $norig);
                         array_splice($e2->orig, 0, $norig);
                         $bb->input($orig);
+                    }else{
+                    	$norig = 0;
                     }
                     
                     if ($e1->type == 'copy')
