@@ -2030,11 +2030,6 @@ class Formatter {
       $opt=array('type'=>'inline');
       return $this->processor_repl($this->inline_latex,$url,$opt);
       break;
-    case '#': # Anchor syntax in the MoinMoin 1.1
-      $anchor=strtok($url,' ');
-      return ($word=strtok('')) ? $this->link_to($anchor,$word):
-                 "<a id='".($temp=substr($anchor,1))."'></a>";
-      break;
     case '*':
         if (!empty($opts['nomacro'])) return ''; # remove macro
       $url = preg_replace($this->baserule, $this->baserepl, $url); // apply inline formatting rules
@@ -2046,6 +2041,13 @@ class Formatter {
       break;
     default:
       break;
+    }
+
+    if ($url[0] == '#') {
+      // Anchor syntax in the MoinMoin 1.1
+      $anchor = strtok($url,' |');
+      return ($word = strtok('')) ? $this->link_to($anchor, $word):
+                 "<a id='".substr($anchor, 1)."'></a>";
     }
 
     //$url=str_replace('&lt;','<',$url); // revert from baserule
