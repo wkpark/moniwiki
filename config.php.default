@@ -26,6 +26,7 @@ $use_smileys= 1;
 #$smiley='wikismiley'; # you can also use SmileyMap too.
 $use_counter= 0; # counter
 $use_fakemtime=0; # dir mtime emulation for FAT filesytem.
+$use_hashed_upload_dir=0; # use hashed upload dir to upload files into many subdirs
 $use_hostname= 1; # use hostname or ip address
 $use_htmlcolor=0; # use html color scheme
 $use_group=1; # use group namespace

@@ -171,7 +171,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
     $subpage=substr($value,0,$p);
     $file=substr($value,$p+1);
     $value=$subpage.'/'.$file; # normalize page arg
-    if ($subpage and is_dir($DBInfo->upload_dir.'/'.$DBInfo->pageToKeyname($subpage))) {
+    if (isset($subpage[0])) {
       $pagename=$subpage;
       $key=$DBInfo->pageToKeyname($subpage);
       $value=$file;
@@ -179,13 +179,25 @@ function macro_Attachment($formatter,$value,$options=array()) {
       $pagename='';
       $key='';
     }
-    $dir=$key ? $DBInfo->upload_dir.'/'.$key:$DBInfo->upload_dir;
   } else {
     $pagename=$formatter->page->name;
     $key=$DBInfo->pageToKeyname($formatter->page->name);
-    $dir=$DBInfo->upload_dir.'/'.$key;
     $file=$value;
   }
+
+  if (isset($key[0])) {
+    $dir = $DBInfo->upload_dir.'/'.$key;
+    // support hashed upload_dir
+    if (!is_dir($dir) and !empty($DBInfo->use_hashed_upload_dir)) {
+      $pre = get_hashed_prefix($key);
+      $dir = $DBInfo->upload_dir.'/'.$pre.$key;
+      if (!is_dir($dir))
+        $dir = $DBInfo->upload_dir;
+    }
+  } else {
+    $dir = $DBInfo->upload_dir;
+  }
+
   // check file name XXX
   if (!$file) return $bra.'attachment:/'.$ket;
 

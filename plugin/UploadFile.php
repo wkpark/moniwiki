@@ -119,13 +119,20 @@ EOF;
   }
 
   $key=$DBInfo->pageToKeyname($formatter->page->name);
-  if ($key != 'UploadFile')
-    $dir= $DBInfo->upload_dir."/$key";
-  else
+
+  if ($key != 'UploadFile') {
+    $dir= $DBInfo->upload_dir.'/'.$key;
+    // support hashed upload_dir
+    if (!is_dir($dir) and !empty($DBInfo->use_hashed_upload_dir)) {
+      $prefix = get_hashed_prefix($key);
+      $dir = $DBInfo->upload_dir.'/'.$prefix.$key;
+    }
+  } else {
     $dir= $DBInfo->upload_dir;
+  }
   if (!file_exists($dir)) {
     umask(000);
-    mkdir($dir,0777);
+    _mkdir_p($dir,0777);
     umask(02);
   }
   $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];

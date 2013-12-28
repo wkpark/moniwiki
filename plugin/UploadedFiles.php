@@ -236,6 +236,12 @@ EOS;
         $down_prefix=$formatter->link_url($formatter->page->urlname,"?action=$mydownload&amp;value=");
       $dir=$DBInfo->upload_dir."/$key";
    }
+
+   // support hashed upload_dir
+   if (!is_dir($dir) and !empty($DBInfo->use_hashed_upload_dir)) {
+      $dir = $DBInfo->upload_dir.'/'.get_hashed_prefix($key).$key;
+   }
+
    if (!empty($force_download) or $key != $value)
       $prefix = $down_prefix;
 
@@ -269,7 +275,7 @@ EOS;
    $pfrom=($p-1)*$per;
    $pto=$pfrom+$per;
    $count=0;
-   while ($file= readdir($handle)) {
+   while (($file = readdir($handle)) !== false) {
       if ($file[0]=='.') continue;
       if ($count >= $pfrom) {
         if (is_dir($dir."/".$file)) {
@@ -314,9 +320,54 @@ EOS;
      $attr='';
      $extra='';
    }
+
+   // support hashed upload_dir
+   if (!empty($DBInfo->use_hashed_upload_dir)) {
+     $ndirs = array();
+     foreach ($dirs as $d0) {
+       if (strlen($d0) != 1) {
+         $ndirs[] = $d0;
+         continue;
+       }
+       $handle = opendir($DBInfo->upload_dir.'/'.$d0);
+       if (!is_resource($handle)) continue;
+       $pre = $DBInfo->upload_dir.'/'.$d0;
+       while (($d = readdir($handle)) !== false) {
+         if (!is_dir($pre.'/'.$d)) {
+           $ndirs[] = $d0;
+           break;
+         }
+         if ($d[0] == $d0[0]) {
+           $hd = opendir($pre.'/'.$d);
+           if (!is_resource($hd)) continue;
+           $pre1 = $pre.'/'.$d;
+           while (($d1 = readdir($hd)) !== false) {
+             if ($d1[0] == '.') continue;
+             if (is_dir($pre1.'/'.$d1)) $ndirs[] = $d1;
+           }
+           closedir($hd);
+         }
+       }
+       closedir($handle);
+     }
+     $dirs = $ndirs;
+     sort($dirs);
+   }
+
    foreach ($dirs as $file) {
       $link=$formatter->link_url($file,"?action=uploadedfiles$extra",$file,$attr);
-      $date=date("Y-m-d",filemtime($dir."/".$DBInfo->pageToKeyname($file)));
+      $key = $DBInfo->pageToKeyname($file);
+
+      // support hashed upload_dir
+      $pre = '';
+      if (!empty($DBInfo->use_hashed_upload_dir)) {
+        $pre = get_hashed_prefix($key);
+        if (!is_dir($dir.'/'.$pre.$key))
+          $pre = '';
+      }
+      $dirname = $dir.'/'.$pre.$key;
+      $date=date("Y-m-d",filemtime($dirname));
+
       $out.="<tr>";
       if ($use_admin)
         $out.="<td class='wiki'><input type='$checkbox' name='files[$idx]' value='$file' /></td>";
@@ -328,7 +379,7 @@ EOS;
       $idx++;
    }
 
-   if (!empty($value) and $value!='UploadFile') {
+   if (isset($value[0]) and $value!='UploadFile') {
       if ($js_tag) {
         #$attr=' target="_blank"';
         $extra='&amp;popup=1&amp;tag=1';

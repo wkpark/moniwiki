@@ -88,7 +88,13 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
     if (1) {
         $value=$formatter->page->urlname;
         $key=$DBInfo->pageToKeyname($formatter->page->name);
-        $mydir=$DBInfo->upload_dir."/$key/";
+        $mydir=$DBInfo->upload_dir."/$key";
+
+        // support hashed upload dir
+        if (!is_dir($mydir) and !empty($DBInfo->use_hashed_upload_dir)) {
+            $prefix = get_hashed_prefix($key);
+            $mydir = $DBInfo->upload_dir.'/'.$prefix.$key;
+        }
 
         $handle = @opendir($mydir);
         if ($handle) {

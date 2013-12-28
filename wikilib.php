@@ -609,6 +609,21 @@ function get_extension($mime_types = 'mime.types', $mime) {
 }
 
 /**
+ * get hased prefix for given name
+ *
+ * @author   Won-Kyu Park <wkpark@gmail.com>
+ */
+function get_hashed_prefix($key, $level = 2) {
+    $hash = md5($key);
+    $prefix = '';
+    for ($i = 0; $i < $level; $i++) {
+        $prefix.= substr($hash, 0, $i + 1) . '/';
+    }
+
+    return $prefix;
+}
+
+/**
  * static content action
  */
 
@@ -3724,7 +3739,9 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
     $urlname=_urlencode($group.$rpage);
     $out.= '<li>' . $formatter->link_tag($urlname,'',htmlspecialchars($title));
     $keyname=$DBInfo->pageToKeyname(urldecode($rpage));
-    if (is_dir($DBInfo->upload_dir."/$keyname"))
+    if (is_dir($DBInfo->upload_dir."/$keyname") or
+        (!empty($DBInfo->use_hashed_upload_dir) and
+        is_dir($DBInfo->upload_dir.'/'.get_hashed_prefix($keyname).$keyname)))
        $out.=' '.$formatter->link_tag($urlname,"?action=uploadedfiles",
          $formatter->icon['attach']);
     $out.="</li>\n";

@@ -45,12 +45,22 @@ function do_download($formatter,$options) {
     }
   }
 
-  if (empty($pagename[0])) {
+  if (!isset($pagename[0])) {
     $pagename=&$formatter->page->name;
     $key=$DBInfo->pageToKeyname($formatter->page->name);
   }
 
-  $dir=$DBInfo->upload_dir.($key ? "/$key":"");
+  $prefix = '';
+  if (isset($key[0])) {
+    // for compatibility
+    $dir = $DBInfo->upload_dir.'/'.$key;
+
+    if (!is_dir($dir) and !empty($DBInfo->use_hashed_upload_dir)) {
+      // support hashed upload_dir
+      $prefix = get_hashed_prefix($key);
+      $dir = $DBInfo->upload_dir.'/'.$prefix.$key;
+    }
+  }
 
   if ($key == 'UploadFile')
     $dir=$DBInfo->upload_dir;
