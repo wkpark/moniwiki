@@ -215,6 +215,7 @@ function do_download($formatter,$options) {
             break;
         }
 
+        if (!file_exists($dir."/thumbnails")) @mkdir($dir."/thumbnails",0777);
         require_once('lib/mediautils.php');
         // generate thumbnail using the gd func or the ImageMagick(convert)
 
