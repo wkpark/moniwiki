@@ -210,13 +210,13 @@ function macro_Attachment($formatter,$value,$options=array()) {
     $url = $pull_url._urlencode($pagename).
         "?action=$mydownload&value=".$val;
 
-    $info = ' ('.
-        $formatter->macro_repl('ImageFileSize', $url).')';
+    $hsz = $formatter->macro_repl('ImageFileSize', $url);
+    $info = ' ('.$hsz.')';
 
     $url = $fetch_url.
         str_replace(array('&', '?'), array('%26', '%3f'), $url);
     // check url to retrieve the size of file
-    if (floatval($info) !== 0)
+    if (empty($formatter->preview) or floatval($sz) != 0)
       $file_ok = 2;
   }
   if (empty($file_ok) and !empty($formatter->wikimarkup) and empty($options['nomarkup'])) {
