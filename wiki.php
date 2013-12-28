@@ -3092,7 +3092,7 @@ class Formatter {
     $mattr=array();
     $attrs=str_replace(array('&lt;','&gt'),array('<','>'),$attr);
     $attrs= explode('><',substr($attrs,1,-1));
-    $myclass=array('wiki');
+    $myclass=array();
     $rattr=array();
     $attr='';
     foreach ($attrs as $tattr) {
@@ -3108,11 +3108,12 @@ class Formatter {
       }
     }
     if (!empty($rattr)) $attr='&lt;'.implode('>&lt;',$rattr).'>';
-    if (!empty($myattr)) {
-      $my='';
-      foreach ($myattr as $k=>$v) $my.=$k.'="'.$v.'" ';
-    }
-    else $my='class="wiki"';
+    if (!empty($myattr['class']))
+      $myattr['class'] = 'wiki '.$myattr['class'];
+    else
+      $myattr['class'] = 'wiki';
+    $my = '';
+    foreach ($myattr as $k=>$v) $my.=$k.'="'.$v.'" ';
     return "<table cellspacing='0' $my>\n";
   }
 
