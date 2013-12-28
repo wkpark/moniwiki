@@ -339,14 +339,47 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
         return null;
     }
 
+    if (!empty($params['thumbwidth'])) {
+        // check allowed thumb widths.
+        $thumb_widths = isset($DBInfo->thumb_widths) ? $DBInfo->thumb_widths :
+                array('120', '240', '320', '480', '600', '800', '1024');
+
+        $width = 320; // default
+        if (!empty($DBInfo->default_thumb_width))
+            $width = $DBInfo->default_thumb_width;
+
+        if (!empty($thumb_widths)) {
+            if (in_array($params['thumbwidth'], $thumb_widths))
+                $width = $params['thumbwidth'];
+            else {
+                header("HTTP/1.1 404 Not Found");
+                echo "Invalid thumbnail width",
+                    "<br />",
+                    "valid thumb widths are ",
+                    implode(', ', $thumb_widths);
+                return;
+            }
+        } else {
+            $width = $params['thumbwidth'];
+        }
+        $thumb_width = $width;
+        $force_thumb = true;
+    } else {
+        // automatically generate thumb images to support low-bandwidth mobile version
+        if (is_mobile()) {
+            $force_thumb = (!isset($params['m']) or $params['m'] == 1);
+        }
+    }
+
     // generate thumb file to support low-bandwidth mobile version
     $thumbfile = '';
-    $force_thumb = is_mobile() && (!isset($params['m']) or $params['m'] == 1);
     while ((!empty($params['thumb']) or $force_thumb) and
             preg_match('/^image\/(jpe?g|gif|png)$/', $mimetype)) {
-        $thumb_width = 320; // default
-        if (!empty($DBInfo->fetch_thumb_width))
-            $thumb_width = $DBInfo->fetch_thumb_width;
+        if (empty($thumb_width)) {
+            $thumb_width = 320; // default
+            if (!empty($DBInfo->fetch_thumb_width))
+                $thumb_width = $DBInfo->fetch_thumb_width;
+        }
 
         $thumbfile = preg_replace('@'.$ext.'$@', '.w'.$thumb_width.$ext, $fetchfile);
         if (empty($params['refresh']) && file_exists($thumbfile)) break;
