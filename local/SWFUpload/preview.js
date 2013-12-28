@@ -69,7 +69,9 @@ function showImgPreview(filename,temp) {
         if (temp) {
             var postdata = 'action=markup/ajax&value=' + encodeURIComponent("attachment:" + filename);
             var myhtml='';
-            myhtml= HTTPPost(self.location, postdata);
+            var href = self.location + '';
+            href = href.replace(/\?action=edit/, '');
+            myhtml= HTTPPost(href, postdata);
 
             var m = myhtml.match(/<img src=(\'|\")([^\'\"]+)\1/i); // strip div tag
             path = m[2];

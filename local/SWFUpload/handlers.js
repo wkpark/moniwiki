@@ -198,6 +198,9 @@ function fileSubmit(obj) {
             inp.setAttribute("type",'hidden');
             inp.setAttribute("value",elem[i].id);
             form.appendChild(inp);
+
+            var a = elem[i].getElementsByTagName("a")[0];
+            a.href = "javascript:showImgPreview('" + elem[i].id + "',true)";
         }
     }
 }
