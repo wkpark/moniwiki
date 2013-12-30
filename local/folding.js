@@ -4,6 +4,39 @@
  */
 
 (function() {
+
+// Add a getElementsByClassName function if the browser doesn't have one
+// Limitation: only works with one class name
+// Copyright: Eike Send http://eike.se/nd
+// License: MIT License
+
+if (!document.getElementsByClassName) {
+    getElementsByClassName = function(search) {
+        var d = document, elements, pattern, i, results = [];
+        if (d.querySelectorAll) { // IE8
+            return d.querySelectorAll("." + search);
+        }
+        if (d.evaluate) { // IE6, IE7
+            pattern = ".//*[contains(concat(' ', @class, ' '), ' " + search + " ')]";
+            elements = d.evaluate(pattern, d, null, 0, null);
+            while ((i = elements.iterateNext())) {
+                results.push(i);
+            }
+        } else {
+            elements = d.getElementsByTagName("*");
+            pattern = new RegExp("(^|\\s)" + search + "(\\s|$)");
+            for (i = 0; i < elements.length; i++) {
+                if ( pattern.test(elements[i].className) ) {
+                    results.push(elements[i]);
+                }
+            }
+        }
+        return results;
+    }
+} else {
+    getElementsByClassName = function(q) { return document.getElementsByClassName(q) };
+}
+
 function foldingSection(btn, id)
 {
     var sect;
@@ -17,10 +50,9 @@ function foldingSection(btn, id)
 
     var icon=null;
     if (btn) {
-        icon=btn.getElementsByTagName('img')[0];
+        icon=btn.getElementsByTagName('i')[0];
         if (!icon) {
-            icon = new Image();
-            icon.src = _url_prefix + '/imgs/misc/open.png';
+            icon = document.createElement('i');
             btn.insertBefore(icon, btn.firstChild);
             //btn.appendChild(icon);
         }
@@ -33,26 +65,22 @@ function foldingSection(btn, id)
     }
     if (icon) {
         var name=icon.getAttribute('class');
-        if (name == 'close') {
-            icon.src = _url_prefix + '/imgs/misc/close.png';
-            icon.setAttribute('class','');
+        if (name == 'icon-close') {
+            icon.setAttribute('class','icon-open');
         } else {
-            icon.src = _url_prefix + '/imgs/misc/open.png';
-            icon.setAttribute('class','close');
+            icon.setAttribute('class','icon-close');
         }
     }
 }
 
-function hideSections(hide) {
+function hideSections() {
     var content = document.getElementById('wikiContent');
     if (!content) return;
-    var sects = content.getElementsByClassName('section');
+    var sects = getElementsByClassName('section');
     var is_mobile = /iphone|android/i.test(navigator.userAgent);
 
-    if (typeof hide == 'undefined') {
-        if (is_mobile) hide = 'none';
-        else hide = '';
-    }
+    if (is_mobile) hide = 'none';
+    else hide = '';
 
     for (var i = 0; i < sects.length; i++) {
         var head;
@@ -71,12 +99,11 @@ function hideSections(hide) {
             continue;
 
         head.onclick = (function(obj, id) { return function() { foldingSection(obj, id); }; })(head, div);
-        var icon = new Image();
+        var icon = document.createElement('i');
         if (hide != '') {
-            icon.src = _url_prefix + '/imgs/misc/open.png';
-            icon.setAttribute('class', 'close');
+            icon.setAttribute('class', 'icon-open');
         } else {
-            icon.src = _url_prefix + '/imgs/misc/close.png';
+            icon.setAttribute('class', 'icon-close');
         }
         if (is_mobile)
             head.appendChild(icon);
@@ -88,10 +115,7 @@ function hideSections(hide) {
 }
 
 // onload
-var oldOnload = window.onload;
-window.onload = function(ev) {
-    try { oldOnload(); } catch(e) {};
-    hideSections();
-}
+if (window.addEventListener) window.addEventListener("load",hideSections,false);
+else if (window.attachEvent) window.attachEvent("onload",hideSections);
 })();
 // vim:et:sts=4:sw=4:
