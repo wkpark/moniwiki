@@ -388,6 +388,13 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   if (!$bookmark) $bookmark = time();
   if (!empty($nobookmark)) $use_js = 0;
 
+  // set search query
+  if (isset($_GET['q'][0])) {
+    $query = _preg_search_escape(trim($_GET['q']));
+    if (@preg_match('/'.$query.'/', '') === false)
+      unset($query);
+  }
+
   // make rclog uniq key
   $locals = get_defined_vars();
   unset($locals['bookmark']);
@@ -505,6 +512,11 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
   if (!empty($lastmod))
     $lastmod = array_merge($lastmod, $updatemod);
+
+  // search query
+  if (isset($query[0])) {
+    $lines = preg_grep("/$query/i", $lines);
+  }
 
   $out="";
   $ratchet_day= FALSE;
