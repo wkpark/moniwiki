@@ -3717,9 +3717,11 @@ class Formatter {
         $close=$this->_table(0,$dumm).$close;
         $in_table=0;
       }
+      $skip_link = false;
       while ($in_table) {
         $line=preg_replace('/(\|\||\|-+)$/','',rtrim($line));
         {
+          $skip_link = strpos($line, "\n") !== false;
           $tr_attr='';
           $row=$this->_td($line,$tr_attr);
           if ($lid > 0) $tr_attr.= ' id="line-'.$lid.'"';
@@ -3735,6 +3737,7 @@ class Formatter {
       # InterWiki, WikiName, {{{ }}}, !WikiName, ?single, ["extended wiki name"]
       # urls, [single bracket name], [urls text], [[macro]]
 
+      if (!$skip_link)
       $line=preg_replace_callback("/(".$wordrule.")/",
         array(&$this,'link_repl'),$line);
       #$line=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$line);
