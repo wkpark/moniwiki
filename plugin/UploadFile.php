@@ -80,7 +80,7 @@ function delAllForm(id) {
   if (id == '') return;
   var fform = opener.document.getElementById(id);
 
-  if (fform && fform.rows.length) { // for UploadForm
+  if (fform && fform.rows && fform.rows.length) { // for UploadForm
     for (var i=fform.rows.length;i>0;i--) {
       fform.deleteRow(i-1);
     }
@@ -89,6 +89,8 @@ function delAllForm(id) {
     if (listing) {
       var elem = listing.getElementsByTagName("li");
       listing.innerHTML='';
+    } else if (fform) {
+      fform.reset();
     }
   }
 }
