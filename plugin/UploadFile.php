@@ -32,6 +32,46 @@ function do_uploadfile($formatter,$options) {
   $files=array();
   $title = '';
 
+  if (isset($options['data'])) {
+    if (substr($options['data'], 0, 5) == 'data:') {
+      $data = substr($options['data'], 5);
+    } else {
+      $data = $options['data'];
+    }
+    $err = _("Fail to parse data string");
+    while (preg_match('@^(image/(gif|jpe?g|png));base64,(.*)$@', $data, $match)) {
+      $ret = base64_decode($match[3]);
+      if ($ret === false) {
+        $err = _("Fail to decode base64 data string.");
+        break;
+      } else {
+        $name = isset($options['name'][0]) ? $options['name'] : 'unnamed';
+        $name.= '.'.$match[2];
+
+        $tmpfile = tempnam($DBInfo->vartmp_dir, 'DATA');
+        $fp = fopen($tmpfile, 'wb');
+        if (!is_resource($fp)) {
+          $err = _("Fail to open file.\n");
+          break;
+        }
+        fwrite($fp, $ret);
+        fclose($fp);
+
+        $count = 1;
+        $files['upfile']['name'][] = $name;
+        $files['upfile']['tmp_name'][] = $tmpfile;
+        $files['upfile']['error'][] = '';
+        $files['upfile']['type'][] = $match[1];
+        $err = '';
+        break;
+      }
+    }
+  }
+  if (!empty($err)) {
+    echo $err;
+    return;
+  }
+
   if (isset($_FILES['upfile']) and is_array($_FILES)) {
     if ((!empty($options['multiform']) and $options['multiform'] > 1) or is_array($_FILES['upfile']['name'])) {
       $options['multiform']=!empty($options['multiform']) ?
