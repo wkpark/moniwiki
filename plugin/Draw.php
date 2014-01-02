@@ -20,11 +20,17 @@ function macro_Draw($formatter,$value) {
   $_dir=str_replace("./",'',$DBInfo->upload_dir.'/'.$keyname);
   $name=_rawurlencode($value);
 
+  // support hashed upload dir
+  if (!is_dir($_dir) and !empty($DBInfo->use_hashed_upload_dir)) {
+    $prefix = get_hashed_prefix($keyname);
+    $_dir = str_replace('./','',$DBInfo->upload_dir.'/'.$prefix.$keyname);
+  }
+
   $enable_edit=1;
 
   umask(000);
   if (!file_exists($_dir))
-    mkdir($_dir, 0777);
+    _mkdir_p($_dir, 0777);
 
   $gifname='Draw_'.$name.".gif";
   $mapname='Draw_'.$name.".map";
@@ -60,9 +66,15 @@ function do_post_Draw($formatter,$options=array()) {
   $_dir=str_replace("./",'',$DBInfo->upload_dir.'/'.$keyname);
   $pagename=$options['page'];
 
+  // support hashed upload dir
+  if (!is_dir($_dir) and !empty($DBInfo->use_hashed_upload_dir)) {
+    $prefix = get_hashed_prefix($keyname);
+    $_dir = str_replace('./','',$DBInfo->upload_dir.'/'.$prefix.$keyname);
+  }
+
   umask(000);
   if (!file_exists($_dir))
-    mkdir($_dir, 0777);
+    _mkdir_p($_dir, 0777);
 
   $name=$options['value'];
 

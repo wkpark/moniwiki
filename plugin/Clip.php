@@ -11,13 +11,19 @@ function macro_Clip($formatter,$value) {
   global $DBInfo;
   $keyname=$DBInfo->_getPageKey($formatter->page->name);
   $_dir=str_replace("./",'',$DBInfo->upload_dir.'/'.$keyname);
+
+  // support hashed upload dir
+  if (!is_dir($_dir) and !empty($DBInfo->use_hashed_upload_dir)) {
+    $prefix = get_hashed_prefix($keyname);
+    $_dir = str_replace('./','',$DBInfo->upload_dir.'/'.$prefix.$keyname);
+  }
   $name=_rawurlencode($value);
 
   $enable_edit=0;
 
   umask(000);
   if (!file_exists($_dir))
-    mkdir($_dir, 0777);
+    _mkdir_p($_dir, 0777);
 
   $pngname=$name.'.png';
   $now=time();
@@ -43,6 +49,12 @@ function do_Clip($formatter,$options) {
 
   $keyname=$DBInfo->_getPageKey($options['page']);
   $_dir=str_replace("./",'',$DBInfo->upload_dir.'/'.$keyname);
+
+  // support hashed upload dir
+  if (!is_dir($_dir) and !empty($DBInfo->use_hashed_upload_dir)) {
+    $prefix = get_hashed_prefix($keyname);
+    $_dir = str_replace('./','',$DBInfo->upload_dir.'/'.$prefix.$keyname);
+  }
   $pagename=_urlencode($options['page']);
 
   $name=$options['value'];
