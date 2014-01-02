@@ -1873,6 +1873,9 @@ function do_post_DeleteFile($formatter,$options) {
     if (!empty($options['value'])) {
       $key=$DBInfo->pageToKeyname(urldecode(_urlencode($options['value'])));
       $dir=$DBInfo->upload_dir."/$key";
+      if (!is_dir($dir) and !empty($DBInfo->use_hashed_upload_dir)) {
+        $dir = $DBInfo->upload_dir.'/'.get_hashed_prefix($key).$key;
+      }
     } else {
       $dir=$DBInfo->upload_dir;
     }
