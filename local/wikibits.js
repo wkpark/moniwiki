@@ -238,7 +238,7 @@ function insertTags(tagOpen, tagClose, sampleText,replace) {
 	// IE
 	// http://www.bazon.net/mishoo/articles.epl?art_id=1292 (used by this script)
 	// http://the-stickman.com/web-development/javascript/finding-selection-cursor-position-in-a-textarea-in-internet-explorer/
-	if(doc.selection  && !is_gecko && !is_opera) {
+	if(doc.selection  && !is_gecko && !is_opera && !is_safari) {
 		txtarea.focus();
 		var r = doc.selection.createRange();
 		var range = r.duplicate();
