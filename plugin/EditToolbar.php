@@ -33,9 +33,9 @@ function macro_EditToolbar($formatter,$value, $options=array()) {
         'italic'=>
             "addButton('$imgdir/button_italic.png',N_('Italic text'),'\'\'','\'\'',N_('Italic text'));\n",
         'link'=>
-            "addButton('$imgdir/button_link.png',N_('Internal link'),'[',']',N_('Link title'));\n",
+            "addButton('$imgdir/button_link.png',N_('Internal link'),'[[',']]',N_('Link title'));\n",
         'extlink'=>
-            "addButton('$imgdir/button_extlink.png',N_('External link (remember http:// prefix)'),'[',']',N_('http://www.example.com link title'));\n",
+            "addButton('$imgdir/button_extlink.png',N_('External link (remember http:// prefix)'),'[[',']]',N_('http://www.example.com link title'));\n",
         'headline'=>
             "addButton('$imgdir/button_headline.png',N_('Level 2 headline'),'\\n== ',' ==\\n',N_('Headline text'));\n",
         'math'=>
