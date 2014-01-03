@@ -102,7 +102,30 @@ function do_Blog($formatter,$options) {
     $options['title']=_stripslashes($options['title']);
   else
     $options['title'] = '';
-  if (empty($options['button_preview']) && !empty($savetext)) {
+
+  $button_preview = $options['button_preview'];
+  if (!empty($savetext)) {
+    $ok_ticket=0;
+    if (empty($use_any) and !empty($DBInfo->use_ticket) and $options['id'] == 'Anonymous') {
+      if ($options['__seed'] and $options['check']) {
+        $mycheck=getTicket($options['__seed'],$_SERVER['REMOTE_ADDR'],4);
+        if ($mycheck==$options['check'])
+          $ok_ticket=1;
+        else {
+          $options['msg']= _("Invalid ticket !");
+          $button_preview=1;
+        }
+      } else {
+        if (!$button_preview)
+          $options['msg']= _("You need a ticket !");
+        $button_preview=1;
+      }
+    } else {
+      $ok_ticket=1;
+    }
+  }
+
+  if (empty($button_preview) && !empty($savetext)) {
     $savetext=preg_replace("/(?<!\\\\)}}}/","\}}}",$savetext);
 
     $url=$formatter->link_tag($formatter->page->urlname,"",$options['page']);
@@ -287,7 +310,16 @@ FORM;
 
     $save_msg = _("Save");
     $preview_msg = _("Preview");
+    if (empty($use_any) and !empty($DBInfo->use_ticket) and $options['id'] == 'Anonymous') {
+      $seed=md5(base64_encode(time()));
+      $ticketimg=$formatter->link_url($formatter->page->urlname,'?action=ticket&amp;__seed='.$seed);
+      $captcha=<<<EXTRA
+  <div class='captcha'><span class='captchaImg'><img src="$ticketimg" alt="captcha" /></span><input type="text" size="10" name="check" />
+<input type="hidden" name="__seed" value="$seed" /></div>
+EXTRA;
+    }
     print <<<FORM2
+$captcha
 <input type="hidden" name="action" value="Blog" />
 <input type="hidden" name="datestamp" value="$datestamp" />
 <span class="button"><input type="submit" class="button" value="$save_msg" /></span>&nbsp;
