@@ -4262,25 +4262,20 @@ class Formatter {
     #  $etag.= '.gzip';
     #}
 
-    if (isset($this->pi['#noindex'])) {
-      $metatags='<meta name="robots" content="noindex,nofollow" />'."\n";
-    } else {
-      if (!empty($options['metatags']))
-        $metatags=$options['metatags'];
-      else {
-        $metatags=$DBInfo->metatags;
-      }
+    if (!empty($options['metatags']))
+      $metatags = $options['metatags'];
+    else
+      $metatags = $DBInfo->metatags;
 
+    if (!empty($options['noindex']) || !empty($this->pi['#noindex']) ||
+        (!empty($mtime) and !empty($DBInfo->delayindex) and ((time() - $mtime) < $DBInfo->delayindex))) {
       // delay indexing like as dokuwiki
-      if (!empty($mtime) and !empty($DBInfo->delayindex) and ((time() - $mtime) < $DBInfo->delayindex)) {
-        if (preg_match("/<meta\s+name=('|\")?robots\\1[^>]+>/i",
-          $metatags)) {
-          $metatags=preg_replace("/<meta\s+name=('|\")?robots\\1[^>]+>/i",
-            '<meta name="Robots" content="noindex,nofollow" />',
+      if (preg_match("/<meta\s+name=('|\")?robots\\1[^>]+>/i", $metatags)) {
+        $metatags = preg_replace("/<meta\s+name=('|\")?robots\\1[^>]+>/i",
+            '<meta name="robots" content="noindex,nofollow" />',
             $metatags);
-        } else {
-          $metatags.='<meta name="robots" content="noindex,nofollow" />'."\n";
-        }
+      } else {
+        $metatags.= '<meta name="robots" content="noindex,nofollow" />'."\n";
       }
     }
     if (isset($DBInfo->metatags_extra))
@@ -5762,7 +5757,7 @@ function wiki_main($options) {
   }
 
   if ($action) {
-    $options['metatags']='<meta name="robots" content="noindex,nofollow" />';
+    $options['noindex'] = true;
     $options['custom']='';
     $options['help']='';
     $options['value']=$value;
