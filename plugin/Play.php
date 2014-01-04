@@ -220,6 +220,7 @@ EOS;
         $movie = "http://www.youtube.com/v/".$m[1];
         $type = 'type="application/x-shockwave-flash"';
         $attr = $mysize.'allowfullscreen="true" allowScriptAccess="always"';
+        $attr.= ' data="'.$movie.'?version=3'.'"';
         $url[$i] = $movie;
         $params = "<param name='movie' value='$movie?version=3'>\n".
           "<param name='allowScriptAccess' value='always'>\n".
