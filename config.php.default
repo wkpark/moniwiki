@@ -263,6 +263,7 @@ $use_resume_download=1;
 #$dot_fontname='Eunjin'; # webdot font name for graphviz 2.2.x
 #$dot_fontname='WEBDOTFONT'; # webdot fontname fot graphviz 1.8.x
 #$dot_options="size \"6,6\"\n"; # extra webdot options
+$preview_no_xss_protection=0; # enable X-XSS-Protection: 0
 $use_save_refresh=2;
 $use_refresh=2;
 $cachetime=0;

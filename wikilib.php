@@ -2572,7 +2572,12 @@ function do_post_savepage($formatter,$options) {
   if ($button_preview) {
     if (empty($options['title']))
       $options['title']=sprintf(_("Preview of %s"),htmlspecialchars($options['page']));
-    $formatter->send_header("",$options);
+
+    // http://stackoverflow.com/questions/1547884
+    $header = '';
+    if (!empty($DBInfo->preview_no_xss_protection))
+      $header = 'X-XSS-Protection: 0';
+    $formatter->send_header($header, $options);
     $formatter->send_title("","",$options);
      
     $options['preview']=1; 
