@@ -1,12 +1,12 @@
 #Wiki http://c2.com/cgi/wiki? Wiki
-GnomeKorea http://gnome.or.kr/wiki/
+#GnomeKorea http://gnome.or.kr/wiki/
 #LovolNet http://lovol.net/
 #KTUG http://faq.ktug.or.kr/mywiki/
-KLE http://chem.skku.ac.kr/~kle/moin/
+KLE http://kle.kldp.net/main/
 NoSmoke http://no-smok.net/nsmk/
 Foldoc http://foldoc.doc.ic.ac.uk/foldoc/foldoc.cgi?$PAGE foldoc
 ##MoinMoin http://purl.net/wiki/moin/
-Jangnan http://www.jangnan.org/wiki/moin.cgi/
+#Jangnan http://www.jangnan.org/wiki/moin.cgi/
 Freefeel http://freefeel.org/wiki/
 #SFReaders http://www.sfreaders.org/moin.cgi/
 #WIM http://linux.mizi.com/wim/
@@ -14,8 +14,8 @@ Freefeel http://freefeel.org/wiki/
 #ChemistryWorld http://Scienceworld.wolfram.com/chemistry/$PAGE.html Wolfram
 #PhysicsWorld http://scienceworld.wolfram.com/physics/$PAGE.html Wolfram
 #BiographyWorld http://scienceworld.wolfram.com/Biography/$PAGE.html Wolfram
-MoniWiki http://moniwiki.sf.net/wiki.php/
+MoniWiki http://moniwiki.kldp.net/wiki.php/
 #MoniWikiNet http://www.moniwiki.net/wiki.php/
 #MoniWikiDev http://chemie.skku.ac.kr/wiki/wiki.php/
-WikiPedia http://www.wikipedia.org/wiki/ PediaWiki
-#WikiPedia http://ko.wikipedia.org/wiki/ PediaWiki
+WikiPedia http://en.wikipedia.org/wiki/ MediaWiki
+#WikiPediaKo http://ko.wikipedia.org/wiki/ PediaWiki
