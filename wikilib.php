@@ -429,6 +429,7 @@ function store_pagelinks($pagename, $pagelinks) {
     if (!is_array($bl)) $bl = array();
     $bl = array_merge($bl, array($pagename));
     $bl = array_unique($bl);
+    sort($bl);
     $bcache->update($a, $bl);
   }
 
@@ -438,6 +439,7 @@ function store_pagelinks($pagename, $pagelinks) {
     $bl = $bcache->fetch($d);
     if (!is_array($bl)) $bl = array();
     $bl = array_diff($bl, array($pagename));
+    sort($bl);
     $bcache->update($d, $bl);
   }
 
