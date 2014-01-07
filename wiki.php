@@ -1033,6 +1033,7 @@ class WikiDB {
         } # for blog cache
       }
     }
+    return 0;
   }
 
   function renamePage($pagename,$new,$options='') {

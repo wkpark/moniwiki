@@ -1957,8 +1957,17 @@ function do_post_DeletePage($formatter,$options) {
   if (isset($options['name'][0])) $options['name']=urldecode(_urlencode($options['name']));
   $pagename= $formatter->page->urlname;
   if (isset($options['name'][0]) and $options['name'] == $options['page']) {
-    $DBInfo->deletePage($page,$options);
-    $title = sprintf(_("\"%s\" is deleted !"), $page->name);
+    $retval = array();
+    $options['retval'] = &$retval;
+    $ret = $DBInfo->deletePage($page,$options);
+    if ($ret == -1) {
+      if (!empty($options['retval']['msg']))
+        $title = $options['retval']['msg'];
+      else
+        $title = sprintf(_("Fail to delete \"%s\""), htmlspecialchars($page->name));
+    } else {
+      $title = sprintf(_("\"%s\" is deleted !"), htmlspecialchars($page->name));
+    }
 
     $myrefresh='';
     if (!empty($DBInfo->use_save_refresh)) {
@@ -2373,6 +2382,8 @@ function ajax_savepage($formatter,$options) {
 
   $comment=_stripslashes($options['comment']);
   $formatter->page->write($savetext);
+  $retval = array();
+  $options['retval'] = &$retval;
   $ret=$DBInfo->savePage($formatter->page,$comment,$options);
 
   if (($ret != -1) and $DBInfo->notify and ($options['minor'] != 1)) {
@@ -2640,6 +2651,8 @@ function do_post_savepage($formatter,$options) {
     }
 
     $formatter->page->write($savetext);
+    $retval = array();
+    $options['retval'] = &$retval;
     $ret=$DBInfo->savePage($formatter->page,$comment,$options);
     if (($ret != -1) and $DBInfo->notify and ($options['minor'] != 1)) {
       $options['noaction']=1;
@@ -2655,7 +2668,11 @@ function do_post_savepage($formatter,$options) {
     }
       
     if ($ret == -1) {
-      $options['title'] = sprintf(_("%s is not editable"),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
+      if (!empty($options['retval']['msg']))
+        $msg = $options['retval']['msg'];
+      else
+        $msg = sprintf(_("%s is not editable"),$formatter->link_tag($formatter->page->urlname,"",htmlspecialchars($options['page'])));
+      $options['title'] = $msg;
     } else {
       $options['title'] = sprintf(_("%s is saved"),$formatter->link_tag($formatter->page->urlname,"?action=show",htmlspecialchars($options['page'])));
     }
