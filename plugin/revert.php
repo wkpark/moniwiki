@@ -30,7 +30,7 @@ function do_revert($formatter,$options) {
 
     $formatter->send_header('',$options);
     $force=1;
-    if (!empty($_POST['name']) and $DBInfo->hasPage($_POST['name'])) {
+    if (isset($_POST['name'][0]) and $DBInfo->hasPage($_POST['name'])) {
         $force=0;
         if ($_POST['force']) $force=1;
     }
@@ -44,7 +44,7 @@ function do_revert($formatter,$options) {
                 unset($_POST['rev']);
         }
     }
-    if (!empty($_POST['rev']) and !empty($_POST['name']) and $force) {
+    if (!empty($_POST['rev']) and isset($_POST['name'][0]) and $force) {
         $is_new = false;
         if (!$formatter->page->exists()) $is_new = true;
 
