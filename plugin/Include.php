@@ -1,46 +1,118 @@
 <?php
-// Copyright 2003 by Won-Kyu Park <wkpark at kldp.org>
-// All rights reserved. Distributable under GPL see COPYING
+// Copyright 2003-2014 Won-Kyu Park <wkpark at gmail.com>
+// All rights reserved. Distributable under GPLv2 see COPYING
 // a Include macro for the MoniWiki
 //
-// $Id: Include.php,v 1.3 2010/07/09 14:37:00 wkpark Exp $
+// Usage: [[Include(Page Name,title,...)]]
+//  * the first arg is the pagename.
+//  * the second optional arg is title.
+//  * the third optional arg is the level of title.
+//  * args can be name='foobar'
+//    then @name@ is replaced by "foobar"
+//  * style or class are built-in params
+//    you can change the style/class of the included contents
 
-function macro_Include($formatter,$value="") {
-  global $DBInfo;
-  static $included=array();
+function macro_Include($formatter, $value = '') {
+    global $DBInfo;
 
-#  $savelinks=$formatter->pagelinks; # don't update pagelinks with Included files
+    // <<Include("Page Name", arg="1", arg2="2", ...)>>
+    // parse variables
+    preg_match("/^(['\"])?(?(1)(?:[^'\"]|\\\\['\"])*(?1)|[^,]*)/", $value, $m);
+    $vars = array();
+    $pagename = '';
+    $class = '';
+    $style = '';
+    $styles = array();
+    $title = '';
+    if ($m) {
+        $pagename = $m[0]; // first arg is page name
+        $last = substr($value, strlen($m[0]));
+        $i = 1;
+        while (isset($last[0])) {
+            if (preg_match("/^(?:(?:\s*,\s*)(?:([a-zA-Z0-9]+)\s*=\s*)?(['\"])?((?(2)(?:[^'\"]|\\\\['\"])*(?2)|[^,]*)))/", $last, $m)) {
+                $last = substr($last, strlen($m[0]));
+                $key = $m[1];
+                $val = !empty($m[2]) ? substr($m[3], 0, -1) : $m[3];
 
-  preg_match("/([^'\",]+)(?:\s*,\s*)?(\"[^\"]*\"|'[^']*')?(?:\s*,\s*)?([0-9]+)?$/",$value,$match);
-  $title = '';
-  if ($match) {
-    $value=trim($match[1]);
-    if (isset($match[2])) {
-      if ($match[3])
-        $level = $match[3];
-      else
-        $level = 3;
-      $title=str_repeat("=", $level)." ".substr($match[2],1,-1)." ".str_repeat("=", $level)."\n";
+                // check some built-in vars
+                // set style or class
+                if (in_array($key, array('style', 'class'))) {
+                    if (empty($val))
+                        continue;
+                    if ($key == 'style')
+                        $styles[] = $val;
+                    else if ($key == 'class')
+                        $class.= ' '.$val;
+                    continue;
+                }
+                if (empty($key) and $i < 3) {
+                    if ($i == 1) {
+                        $title = $val;
+                    } else {
+                        $level = intval($val);
+                    }
+                    $i++;
+
+                    continue;
+                }
+
+                if (!empty($key))
+                    $vars[$key] = $val;
+                else
+                    $vars[$i] = $val;
+                $i++;
+            } else {
+                break;
+            }
+        }
     }
-  }
 
-  if ($value and !in_array($value, $included) and $DBInfo->hasPage($value)) {
-    $ipage=$DBInfo->getPage($value);
-    $if=new Formatter($ipage);
-    $ibody=$ipage->_get_raw_body();
-    $opt['nosisters']=1;
+    if (!isset($pagename[0]))
+        return ''; // empty page
 
-    $if->get_javascripts(); // trash default javascripts
+    // set title
+    if (isset($title[0]) && $title[0] != '=') {
+        if (empty($level) || $level > 5)
+            $level = 3;
+        $tag = str_repeat('=', $level);
+        $title = $tag.' '.$title.' '.$tag;
+    }
 
-    ob_start();
-    $if->send_page($title.$ibody,$opt);
-    $out= ob_get_contents();
-    ob_end_clean();
-#    $formatter->pagelinks=$savelinks;
-    return $out;
-  } else {
-    return $formatter->link_repl($value);
-  }
+    if ($formatter->page->name != $pagename && $DBInfo->hasPage($pagename)) {
+
+        // make replace regex
+        if (!empty($vars)) {
+            $class.= ' template';
+            $repl = array_map(create_function('$a', 'return "/@".$a."@/i";'), array_keys($vars));
+        }
+
+        $page = $DBInfo->getPage($pagename);
+        $f = new Formatter($page);
+        $body = $page->_get_raw_body(); // get raw body
+        if (!empty($vars))
+            $body = preg_replace($repl, $vars, $body); // replace variables
+        if (isset($title[0]))
+            $body = $title."\n".$body;
+
+        $params['nosisters'] = 1;
+
+        $f->get_javascripts(); // trash default javascripts
+
+        ob_start();
+        $f->pi['#linenum'] = 0; // FIXME
+        $f->send_page($body, $params);
+        $out = ob_get_contents();
+        ob_end_clean();
+
+        if (!empty($class))
+            $class = ' class="'.$class.'"';
+        if (!empty($styles))
+            $style = ' style="'.
+                implode(';', $styles).'"';
+        return '<div'.$class.$style.'>'.$out.'</div>';
+    } else {
+        return $formatter->link_repl($pagename);
+    }
 }
 
-// vim:et:sts=2:sw=2:
+// vim:et:sts=4:sw=4:
