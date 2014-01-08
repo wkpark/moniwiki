@@ -12,6 +12,29 @@
 //  * style or class are built-in params
 //    you can change the style/class of the included contents
 
+/**
+ * simple Dictionary class with dictionary
+ */
+class _localDict {
+    var $vars = array();
+
+    function _localDict($vars) {
+        $this->vars = $vars;
+    }
+
+    function callback($match) {
+        if (isset($match[1][0]) and isset($this->vars[$match[1]]))
+            return $this->vars[$match[1]];
+        if (isset($match[2][0]))
+            return $match[2];
+        return $match[0];
+    }
+
+    function replace($regex, $text) {
+        return preg_replace_callback($regex, 'self::callback', $text);
+    }
+}
+
 function macro_Include($formatter, $value = '') {
     global $DBInfo;
 
@@ -24,25 +47,28 @@ function macro_Include($formatter, $value = '') {
     $style = '';
     $styles = array();
     $title = '';
+    $debug = false;
     if ($m) {
         $pagename = $m[0]; // first arg is page name
         $last = substr($value, strlen($m[0]));
         $i = 1;
         while (isset($last[0])) {
-            if (preg_match("/^(?:(?:\s*,\s*)(?:([a-zA-Z0-9]+)\s*=\s*)?(['\"])?((?(2)(?:[^'\"]|\\\\['\"])*(?2)|[^,]*)))/", $last, $m)) {
+            if (preg_match("/^(?:(?:\s*,\s*)(?:([a-zA-Z0-9_-]+)\s*=\s*)?(['\"])?((?(2)(?:[^'\"]|\\\\['\"])*(?2)|[^,]*)))/", $last, $m)) {
                 $last = substr($last, strlen($m[0]));
                 $key = $m[1];
                 $val = !empty($m[2]) ? substr($m[3], 0, -1) : $m[3];
 
                 // check some built-in vars
                 // set style or class
-                if (in_array($key, array('style', 'class'))) {
+                if (in_array($key, array('style', 'class', 'debug'))) {
                     if (empty($val))
                         continue;
                     if ($key == 'style')
                         $styles[] = $val;
                     else if ($key == 'class')
                         $class.= ' '.$val;
+                    else
+                        $debug = true;
                     continue;
                 }
                 if (empty($key) and $i < 3) {
@@ -70,6 +96,15 @@ function macro_Include($formatter, $value = '') {
     if (!isset($pagename[0]))
         return ''; // empty page
 
+    // out debug msg;
+    $msg = '';
+    if ($debug) {
+        ob_start();
+        var_dump($vars);
+        $msg = ob_get_contents();
+        ob_end_clean();
+    }
+
     // set title
     if (isset($title[0]) && $title[0] != '=') {
         if (empty($level) || $level > 5)
@@ -80,17 +115,22 @@ function macro_Include($formatter, $value = '') {
 
     if ($formatter->page->name != $pagename && $DBInfo->hasPage($pagename)) {
 
-        // make replace regex
+        // default class for template
         if (!empty($vars)) {
             $class.= ' template';
-            $repl = array_map(create_function('$a', 'return "/@".$a."@/i";'), array_keys($vars));
         }
+        $repl = new _localDict($vars);
 
         $page = $DBInfo->getPage($pagename);
         $f = new Formatter($page);
         $body = $page->_get_raw_body(); // get raw body
-        if (!empty($vars))
-            $body = preg_replace($repl, $vars, $body); // replace variables
+
+        // mediawiki like replace variables
+        // @foo@ or @foo[separator]default value@ are accepted
+        // the separator can be space , and |
+        $body = $repl->replace(
+            '/@([a-z0-9_-]+)(?:(?:,|\|)((?!\s)(?:[^@]|@@)*(?!\s)))?@/',
+            $body);
         if (isset($title[0]))
             $body = $title."\n".$body;
 
@@ -109,7 +149,7 @@ function macro_Include($formatter, $value = '') {
         if (!empty($styles))
             $style = ' style="'.
                 implode(';', $styles).'"';
-        return '<div'.$class.$style.'>'.$out.'</div>';
+        return '<div'.$class.$style.'>'.$msg.$out.'</div>';
     } else {
         return $formatter->link_repl($pagename);
     }
