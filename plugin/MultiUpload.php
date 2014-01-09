@@ -47,12 +47,12 @@ EOF;
 
             $key = $DBInfo->pageToKeyname($formatter->page->name);
             $dir = $Config['upload_dir'].'/'.$key;
-            if (!is_dir($dir) and !empty($Confog['use_hashed_upload_dir'])) {
+            if (!is_dir($dir) and !empty($Config['use_hashed_upload_dir'])) {
                 // support hashed upload_dir
                 $prefix = get_hashed_prefix($key);
                 $dir = $DBInfo->upload_dir.'/'.$prefix.$key;
-                if (!is_dir($dir)) break;
             }
+            if (!is_dir($dir)) break;
             $form = $formatter->macro_repl('UploadedFiles(tag=1)').$form;
         }
         break;
