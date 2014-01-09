@@ -3235,6 +3235,9 @@ class Formatter {
         return;
       }
       $lines=explode("\n",$body);
+      $el = end($lines);
+      // delete last empty line
+      if (!isset($el[0])) array_pop($lines);
     } else {
       # XXX need to redesign pagelink method ?
       if (empty($DBInfo->without_pagelinks_cache)) {
