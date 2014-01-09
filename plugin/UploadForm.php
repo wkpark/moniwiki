@@ -341,7 +341,13 @@ EOF;
     if (!empty($formatter->preview) and !in_array('UploadFile',$formatter->actions)) {
         if (!empty($DBInfo->use_preview_uploads)) {
             $keyname=$DBInfo->pageToKeyname($formatter->page->name);
-            if (is_dir($DBInfo->upload_dir.'/'.$keyname))
+            $dir = $DBInfo->upload_dir.'/'.$keyname;
+            if (!is_dir($dir) and !empty($DBInfo->use_hashed_upload_dir)) {
+                // support hashed upload_dir
+                $prefix = get_hashed_prefix($keyname);
+                $dir = $DBInfo->upload_dir.'/'.$prefix.$keyname;
+            }
+            if (is_dir($dir))
             $form=$formatter->macro_repl('UploadedFiles(tag=1)').$form;
         }
     }
