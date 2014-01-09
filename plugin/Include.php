@@ -23,8 +23,9 @@ class _localDict {
     }
 
     function callback($match) {
-        if (isset($match[1][0]) and isset($this->vars[$match[1]]))
-            return $this->vars[$match[1]];
+        $val = strtolower($match[1]);
+        if (isset($val[0]) and isset($this->vars[$val]))
+            return $this->vars[$val];
         if (isset($match[2][0]))
             return $match[2];
         return $match[0];
@@ -38,6 +39,13 @@ class _localDict {
 function macro_Include($formatter, $value = '') {
     global $DBInfo;
 
+    if (!isset($GLOBALS['_included_']))
+        $GLOBALS['_included_'] = array();
+
+    $max_recursion = isset($DBInfo->include_max_recursion) ? $DBinfo->include_max_recursion : 2;
+
+    $included = &$GLOBALS['_included_'];
+
     // <<Include("Page Name", arg="1", arg2="2", ...)>>
     // parse variables
     preg_match("/^(['\"])?(?(1)(?:[^'\"]|\\\\['\"])*(?1)|[^,]*)/", $value, $m);
@@ -50,12 +58,22 @@ function macro_Include($formatter, $value = '') {
     $debug = false;
     if ($m) {
         $pagename = $m[0]; // first arg is page name
+
+        // detect recursive include
+        if (in_array($pagename, $included)) {
+
+            if (isset($formatter->recursion) and $formatter->recursion > $max_recursion)
+                return '';
+        } else {
+            $included[] = $pagename;
+        }
+
         $last = substr($value, strlen($m[0]));
         $i = 1;
         while (isset($last[0])) {
             if (preg_match("/^(?:(?:\s*,\s*)(?:([a-zA-Z0-9_-]+)\s*=\s*)?(['\"])?((?(2)(?:[^'\"]|\\\\['\"])*(?2)|[^,]*)))/", $last, $m)) {
                 $last = substr($last, strlen($m[0]));
-                $key = $m[1];
+                $key = strtolower($m[1]);
                 $val = !empty($m[2]) ? substr($m[3], 0, -1) : $m[3];
 
                 // check some built-in vars
@@ -113,16 +131,24 @@ function macro_Include($formatter, $value = '') {
         $title = $tag.' '.$title.' '.$tag;
     }
 
-    if ($formatter->page->name != $pagename && $DBInfo->hasPage($pagename)) {
+    if ($DBInfo->hasPage($pagename)) {
 
         // default class for template
         if (!empty($vars)) {
             $class.= ' template';
         }
+
+        // add some default variables
+        if (!isset($vars['pagename']))
+            $vars['pagename'] = $formatter->page->name;
+
         $repl = new _localDict($vars);
 
         $page = $DBInfo->getPage($pagename);
         $f = new Formatter($page);
+
+        // for recursion detect
+        $f->recursion = isset($formatter->recursion) ? $formatter->recursion + 1 : 1;
         $body = $page->_get_raw_body(); // get raw body
 
         // mediawiki like replace variables
