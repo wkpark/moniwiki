@@ -162,7 +162,7 @@ function textArea(element,wrapper) {
     // Safari / chrome
     var offset = this.wrapper.offsetWidth - this.element.offsetWidth;
     var test = this.wrapper.offsetWidth + offset;
-    this.element.style.width = test + 'px';
+    this.element.style.width = '100%';
   } else if (document.all && !window.opera) {
     // IE
     this.grippie.style.width = '100%';
@@ -181,6 +181,7 @@ function textArea(element,wrapper) {
   }
   // Mozilla
   this.element.style.MozBoxSizing = 'border-box';
+  this.element.style.boxSizing = 'border-box';
 
   this.heightOffset = absolutePosition(this.grippie).y - absolutePosition(this.element).y - this.dimensions.height;
 }
