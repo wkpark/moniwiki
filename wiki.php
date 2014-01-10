@@ -2000,7 +2000,16 @@ class Formatter {
     case '<':
       $nm = 1; // XXX <<MacroName>> support
       $url=substr($url,2,-2);
-      return $this->macro_repl($url); # No link
+      preg_match("/^([^\(]+)(\((.*)\))?$/", $url, $match);
+      if (isset($match[1])) {
+        $myname = getPlugin($match[1]);
+        if (!empty($myname)) {
+          if (!empty($opts['nomacro'])) return ''; # remove macro
+          return $this->macro_repl($url); # valid macro
+        }
+      }
+      return '<<'.$url.'>>';
+      break;
     case '[':
       $bra.='[';
       $ket.=']';
