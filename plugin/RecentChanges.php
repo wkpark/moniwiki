@@ -937,12 +937,12 @@ function update_bookmark(time) {
           if (ret[title]['state'] == 'new') {
             state.innerHTML = icon_new;
             state.setAttribute('class', 'new');
-            icon.href = icon.href.replace(/action=(diff|info)((?:&|&amp;)bookmark=\d+)?/, 'action=info');
+            icon.href = icon.href.replace(/action=(diff|info)((?:&|&amp;)date=\d+)?/, 'action=info');
             icon.innerHTML = icon_show;
           } else {
             state.innerHTML = icon_updated;
             state.setAttribute('class', 'updated');
-            icon.href = icon.href.replace(/action=(diff|info)((?:&|&amp;)bookmark=\d+)?/, 'action=diff&bookmark=' + bookmark);
+            icon.href = icon.href.replace(/action=(diff|info)((?:&|&amp;)date=\d+)?/, 'action=diff&date=' + bookmark);
             icon.innerHTML = icon_diff;
           }
 
@@ -1013,7 +1013,7 @@ function update_bookmark(time) {
               icon.innerHTML = icon_diff;
             }
             // recover link
-            icon.href = icon.href.replace(/action=(diff|info)(&bookmark=\d+)?/, 'action=diff');
+            icon.href = icon.href.replace(/action=(diff|info)(&date=\d+)?/, 'action=diff');
           }
         }
       }
