@@ -32,7 +32,7 @@ class _localDict {
     }
 
     function replace($regex, $text) {
-        return preg_replace_callback($regex, 'self::callback', $text);
+        return preg_replace_callback($regex, array($this, 'callback'), $text);
     }
 }
 
