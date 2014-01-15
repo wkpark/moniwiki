@@ -97,8 +97,12 @@ function macro_PageList($formatter,$arg="",$options=array()) {
                 $name=substr($pagename,$plen);
                 $dum=explode('/',$name);
                 if (sizeof($dum) > 1) {
-                    $dirname=substr($pagename,0,$rp);
-                    $dirs[$dirname]=substr($dirname,$p+1);
+                    $dirname = array_shift($dum);
+                    $orgname = substr($pagename, 0, $p).'/'.$dirname;
+                    if (empty($dirs[$orgname]))
+                      $dirs[$orgname] = array();
+                    $dirs[$orgname][] = implode('/', $dum);
+                    $files[$orgname] = $dirname;
                 } else {
                     $files[$pagename]=$name;
                 }
@@ -119,7 +123,7 @@ function macro_PageList($formatter,$arg="",$options=array()) {
         foreach ($dirs as $pg=>$name) {
             $out.= '<tr><td>'.$dicon.'</td><td>'.
                 $formatter->link_tag(_rawurlencode($pg),"",
-	    htmlspecialchars($name)).'</td>';
+	    htmlspecialchars($files[$pg])).'</td>';
             if ($options['info']) {
                 $p=new WikiPage($pg);
                 $mtime=$p->mtime();
