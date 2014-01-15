@@ -2989,7 +2989,7 @@ class Formatter {
     return $myattr;
   }
 
-  function _td($line,&$tr_attr) {
+  function _td($line,&$tr_attr, $wordrule = '') {
     $cells=preg_split('/((?:\|\|)+)/',$line,-1,
       PREG_SPLIT_DELIM_CAPTURE);
     $row='';
@@ -3010,6 +3010,9 @@ class Formatter {
         // do not align multiline cells
         $l = '';
         $r = '';
+      } else if (isset($wordrule[0])) {
+        $cell = preg_replace_callback("/(".$wordrule.")/",
+          array(&$this, 'link_repl'), $cell);
       }
       if ($l and $r) $align='center';
       else if (!$l) $align='';
@@ -3738,7 +3741,7 @@ class Formatter {
         {
           $skip_link = strpos($line, "\n") !== false;
           $tr_attr='';
-          $row=$this->_td($line,$tr_attr);
+          $row=$this->_td($line, $tr_attr, $skip_link ? $wordrule : '');
           if ($lid > 0) $tr_attr.= ' id="line-'.$lid.'"';
           $line="<tr $tr_attr>".$row.'</tr>';
           $tr_attr='';
