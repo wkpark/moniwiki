@@ -3652,7 +3652,7 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
   $lock_file = _fake_lock_file($DBInfo->vartmp_dir, 'titleindex');
   $locked = _fake_locked($lock_file, $DBInfo->mtime());
   if ($locked or ($kc->exists('key') and $DBInfo->checkUpdated($kc->mtime('key'), $delay))) {
-    if ($formatter->group) {
+    if (!empty($formatter->use_group) and $formatter->group) {
       $keys = $kc->fetch('key.'.$formatter->group);
       $titleindex = $kc->fetch('titleindex.'.$formatter->group);
     } else {
@@ -3672,7 +3672,7 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
 
     $all_pages = array();
     $indexer = $DBInfo->lazyLoad('titleindexer');
-    if ($formatter->group) {
+    if (!empty($formatter->use_group) and $formatter->group) {
       $group_pages = $indexer->getLikePages('^'.$formatter->group);
       foreach ($group_pages as $page)
         $all_pages[]=str_replace($formatter->group,'',$page);
@@ -3683,7 +3683,11 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
     #sort($all_pages,SORT_STRING);
     //usort($all_pages, 'strcasecmp');
     $pages = array_flip($all_pages);
-    array_walk($pages,'_setpagekey');
+    if (!empty($formatter->use_group)) {
+        array_walk($pages,'_setpagekey');
+    } else {
+        array_walk($pages, create_function('&$p, $k', '$p = $k;'));
+    }
     $all_pages = array_flip($pages);
     uksort($all_pages, 'strcasecmp');
   }
@@ -3706,7 +3710,7 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
     if (!empty($tlink))
       $keys[]='all';
 
-    if ($formatter->group) {
+    if (!empty($formatter->use_group) and $formatter->group) {
       $kc->update('key.'.$formatter->group, $keys);
       $kc->update('titleindex.'.$formatter->group, $titleindex);
     } else {
