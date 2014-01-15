@@ -3005,8 +3005,8 @@ class Formatter {
       if (strpos($cell,"\n") !== false) {
         $cell = trim($cell, "\n"); // strip \n XXX FIXME
         $params = array('notoc'=>1);
-        $cell=$this->processor_repl('monimarkup',$cell, $params);
         $cell = str_replace('&lt;', '<', $cell); // revert from baserule
+        $cell=$this->processor_repl('monimarkup',$cell, $params);
         // do not align multiline cells
         $l = '';
         $r = '';
@@ -3500,6 +3500,7 @@ class Formatter {
       }
 
       #$line = preg_replace($this->_pre_rule, $this->_pre_repl, $line);
+      $is_table = $in_table || (!empty($oline) and preg_match('/^\s*\|\|/', $oline));
       if ($in_pre) {
          if (strpos($line,"}}}")===false) {
            $this->pre_line.=$line."\n";
@@ -3517,7 +3518,7 @@ class Formatter {
          }
       #} else if ($in_pre == 0 && preg_match("/{{{[^}]*$/",$line)) {
       #} else if (preg_match("/(\{{2,3})[^{}]*$/",$line,$m)) {
-      } else if (!(strpos($line,"{{{")===false) and 
+      } else if (!$is_table and !(strpos($line,"{{{")===false) and
                  preg_match("/{{{[^{}]*$/",$line)) {
 
          #$p=strrpos($line,"{{{")-2;
