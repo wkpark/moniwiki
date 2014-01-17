@@ -287,6 +287,10 @@ msgstr ""
 msgid "Contents"
 msgstr "목차"
 
+#: dummy.js:39
+msgid "last modified:"
+msgstr "최종 수정 시간:"
+
 #, fuzzy
 #~ msgid "Previous"
 #~ msgstr "미리보기"

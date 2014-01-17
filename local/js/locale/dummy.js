@@ -36,3 +36,4 @@ N_('Please enter the text you want to be formatted.\\\\n It will be shown in the
 
 // etc.
 N_('Contents');
+N_('last modified:');
