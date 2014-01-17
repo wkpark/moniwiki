@@ -612,6 +612,11 @@ class WikiDB {
       $this->counter->close();
   }
 
+  // moinmoin 1.0.x style internal encoding
+  function _pgencode($m) {
+    return '_'.sprintf("%02s", strtolower(dechex(ord(substr($m[1],-1)))));
+  }
+
   function _getPageKey($pagename) {
     # normalize a pagename to uniq key
 
@@ -634,7 +639,8 @@ class WikiDB {
     $separator = ':';
     if (empty($this->use_namespace)) $separator = '';
 
-    $pn = preg_replace("/([^a-z0-9".$separator."]{1})/ie", "'_'.sprintf('%02s', strtolower(dechex(ord(substr('\\1',-1)))))",$pn);
+    $pn = preg_replace_callback("/([^a-z0-9".$separator."]{1})/i",
+            array($this, '_pgencode'), $pn);
     if (!empty($this->use_namespace))
       $name = preg_replace('#:#','.d/',$pn); // Foobar:Hello page will be stored as text/Foobar.d/Hello
     else
@@ -1641,7 +1647,6 @@ class Formatter {
                      "/(?<!')''((?:[^']|[^']'(?!'))*)''(?!')/",
                      "/`(?<!\s)(?!`)([^`']+)(?<!\s)'(?=\s|$)/",
                      "/`(?<!\s)(?U)(.*)(?<!\s)`/",
-                     "/^[ ]*(-{4,})$/e",
                      "/^(={4,})$/",
                      "/,,([^,]{1,40}),,/",
                      "/\^([^ \^]+)\^(?=\s|$)/",
@@ -1657,7 +1662,6 @@ class Formatter {
                      "<strong></strong>",
                      "<em>\\1</em>",
                      "&#96;\\1'","<tt>\\1</tt>",
-                     "\$formatter->$DBInfo->hr_type"."_hr('\\1')",
                      "<br clear='all' />",
                      "<sub>\\1</sub>",
                      "<sup>\\1</sup>",
@@ -1717,8 +1721,7 @@ class Formatter {
     $tmp = array_map('_preg_escape', $tmp);
     $rule = implode('|', $tmp);
 
-    $this->smiley_rule = '/(?<=\s|^|>)('.$rule.')(?=\s|<|$)/e';
-    $this->smiley_repl = "\$formatter->smiley_repl('\\1')";
+    $this->smiley_rule = '/(?<=\s|^|>)('.$rule.')(?=\s|<|$)/';
   }
 
   function set_wordrule($pis=array()) {
@@ -1952,6 +1955,10 @@ class Formatter {
     echo $raw;
   }
 
+  function _url_mappings_callback($m) {
+    return $this->url_mappings[$m[1]];
+  }
+
   function link_repl($url,$attr='',$opts=array()) {
     $nm = 0;
     $force = 0;
@@ -1967,6 +1974,9 @@ class Formatter {
       $url=substr($url,1,-1);
       $force=1;
     }
+    // set nomacro option for callback
+    if (!empty($this->nomacro)) $opts['nomacro'] = 1;
+
     switch ($url[0]) {
     case '{':
       $url=substr($url,3,-3);
@@ -2102,7 +2112,8 @@ class Formatter {
           $this->macro_repl('UrlMapping', '', array('init'=>1));
         if (!empty($this->url_mapping_rule))
           $url=
-            preg_replace('/('.$this->url_mapping_rule.')/ie',"\$this->url_mappings['\\1']",$url);
+            preg_replace_callback('/('.$this->url_mapping_rule.')/i',
+              array($this, '_url_mappings_callback'), $url);
       }
 
       // InterWiki Pages
@@ -2812,6 +2823,8 @@ class Formatter {
   }
 
   function smiley_repl($smiley) {
+    // check callback style
+    if (is_array($smiley)) $smiley = $smiley[1];
     $img=$this->smileys[$smiley][3];
 
     $alt=str_replace("<","&lt;",$smiley);
@@ -2819,6 +2832,20 @@ class Formatter {
     if (preg_match('/^(https?|ftp):/',$img))
       return "<img src='$img' style='border:0' class='smiley' alt='$alt' title='$alt' />";
     return "<img src='$this->imgs_dir/$img' style='border:0' class='smiley' alt='$alt' title='$alt' />";
+  }
+
+  /**
+   * temporary callback hack example to support extra params with callback
+   */
+  function _array_callback($match, $init = false) {
+    static $array;
+
+    if ($init) {
+      // XXX hack to store extra params with callback
+      $array = $match;
+      return;
+    }
+    return $array[$match[1]];
   }
 
   function link_url($pageurl, $query_string='') {
@@ -3572,49 +3599,57 @@ class Formatter {
       }
 
       $p_closeopen='';
-      if (preg_match('/^[ ]*-{4,}$/',$line)) {
+      if (preg_match('/^[ ]*(-{4,})$/',$line, $m)) {
+        $func = $DBInfo->hr_type.'_hr';
+        $line = $formatter->$func($m[1]);
         if ($this->auto_linebreak) $this->nobr=1; // XXX
         if ($in_p) { $p_closeopen=$this->_div(0,$in_div,$div_enclose); $in_p='';}
-      } else if ($in_p == '' and $line!=='') {
-        $p_closeopen=$this->_div(1,$in_div,$div_enclose, $lid > 0 ? ' id="aline-'.$lid.'"' : '');
-        $in_p= $line;
-      }
+      } else {
+        if ($in_p == '' and $line!=='') {
+          $p_closeopen=$this->_div(1,$in_div,$div_enclose, $lid > 0 ? ' id="aline-'.$lid.'"' : '');
+          $in_p= $line;
+        }
 
-      // split into chunks. nested {{{}}} and [ ] inline elems
-      $chunk=preg_split("/({{{
+        // split into chunks. nested {{{}}} and [ ] inline elems
+        $chunk=preg_split("/({{{
                         (?:(?:[^{}]+|
                         {[^{}]+}(?!})|
                         (?<!{){{1,2}(?!{)|
                         (?<!})}{1,2}(?!}))|(?1)
                           )++}}}|
                         \[ (?: (?>[^\[\]]+) | (?R) )* \])/x",$line,-1,PREG_SPLIT_DELIM_CAPTURE);
-      $inline = array(); // save inline nowikis
+        $inline = array(); // save inline nowikis
 
-      if (count($chunk) > 1) {
-        // protect inline nowikis
-        $nc = '';
-        $k = 1;
-        $idx = 1;
-        foreach ($chunk as $c) {
-          if ($k % 2) {
-            $nc.= $c;
-          } else if (in_array($c[3],array('#','-','+'))) { # {{{#color text}}}
-            $nc.= $c;
-          } else {
-            $inline[$idx] = $c;
-            $nc.= "\017".$idx."\017";
-            $idx++;
+        if (count($chunk) > 1) {
+          // protect inline nowikis
+          $nc = '';
+          $k = 1;
+          $idx = 1;
+          foreach ($chunk as $c) {
+            if ($k % 2) {
+              $nc.= $c;
+            } else if (in_array($c[3],array('#','-','+'))) { # {{{#color text}}}
+              $nc.= $c;
+            } else {
+              $inline[$idx] = $c;
+              $nc.= "\017".$idx."\017";
+              $idx++;
+            }
+            $k++;
           }
-          $k++;
+          $line = $nc;
         }
-        $line = $nc;
-      }
-      $line = preg_replace($this->baserule,$this->baserepl,$line);
 
-      // restore inline nowikis
-      if (!empty($inline))
-        $line = preg_replace("/\017(\d+)\017/e", "\$inline[\\1]", $line);
-      
+        $line = preg_replace($this->baserule,$this->baserepl,$line);
+
+        // restore inline nowikis
+        if (!empty($inline)) {
+          $this->_array_callback($inline, true);
+          $line = preg_replace_callback("/\017(\d+)\017/",
+            array(&$this, '_array_callback'), $line);
+        }
+      }
+
       #if ($in_p and ($in_pre==1 or $in_li)) $line=$this->_check_p().$line;
 
       # bullet and indentation
@@ -3816,7 +3851,8 @@ class Formatter {
           foreach ($chunk as $c) {
             if ($k % 2) {
               if (isset($c[0]))
-                $nline.= preg_replace($this->smiley_rule, $this->smiley_repl, $c);
+                $nline.= preg_replace_callback($this->smiley_rule,
+                            array(&$this, 'smiley_repl'), $c);
             } else {
               $nline.= $c;
             }
@@ -3824,7 +3860,8 @@ class Formatter {
           }
           $line = $nline;
         } else {
-          $line = preg_replace($this->smiley_rule, $this->smiley_repl, $line);
+          $line = preg_replace_callback($this->smiley_rule,
+                      array(&$this, 'smiley_repl'), $line);
         }
       }
       # NoSmoke's MultiLineCell hack
@@ -3998,7 +4035,8 @@ class Formatter {
       $sister_save=$this->sister_on;
       $this->sister_on=0;
       $sisters=implode("\n",$this->sisters);
-      $sisters=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$sisters);
+      $sisters = preg_replace_callback("/(".$wordrule.")/",
+              array(&$this, 'link_repl'), $sisters);
       $msg=_("Sister Sites Index");
       echo "<div id='wikiSister'>\n<div class='separator'><tt class='foot'>----</tt></div>\n$msg<br />\n<ul>$sisters</ul></div>\n";
       $this->sister_on=$sister_save;

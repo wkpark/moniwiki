@@ -130,15 +130,15 @@ function get_pagelist($formatter,$pages,$action,$curpage=1,$listcount=10,$bra="[
 
 function _rawurlencode($url) {
   $name=rawurlencode($url);
-  $urlname=preg_replace('/%(2F|7E|3A)/ei',"chr(hexdec('\\1'))",$name);
+  $urlname = str_replace(array('%2F', '%7E', '%3A'), array('/', '~', ':'), $name);
   $urlname= preg_replace('#:+#',':',$urlname);
   return $urlname;
 }
 
 function _urlencode($url) {
   $url= preg_replace('#:+#',':',$url);
-  $t= preg_replace("/([^a-z0-9\/\?\.~#&:;=%\-_]{1})/ie","'%'.strtoupper(dechex(ord(substr('\\1',-1))))",$url);
-  return preg_replace("/(%)(?![a-f0-9]{2})/i","%25",$t);
+  return str_replace(array('%23', '%26', '%2F', '%3A', '%3B', '%3D', '%3F'),
+            array('#', '&', '/', ':', ';', '=', '?'), rawurlencode($url));
 }
 
 if (!function_exists('_stripslashes')) {
@@ -950,8 +950,14 @@ class UserDB {
     $this->strict = $WikiDB->login_strict;
   }
 
+  function _pgencode($m) {
+    // moinmoin 1.0.x style internal encoding
+    return '_'.sprintf("%02s", strtolower(dechex(ord(substr($m[1],-1)))));
+  }
+
   function _id_to_key($id) {
-    return preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord(substr('\\1',-1))))",$id);
+    return preg_replace_callback("/([^a-z0-9]{1})/i",
+      array($this, '_pgencode'), $id);
   }
 
   function _key_to_id($key) {
@@ -3082,8 +3088,8 @@ function macro_RandomQuote($formatter,$value="",$options=array()) {
     $formatter->set_wordrule();
     $quote=str_replace("<","&lt;",$quote);
     $quote=preg_replace($formatter->baserule,$formatter->baserepl,$quote);
-    $out=preg_replace("/(".$formatter->wordrule.")/e",
-      "\$formatter->link_repl('\\1')", $quote);
+    $out = preg_replace_callback("/(".$wordrule.")/",
+        array(&$this, 'link_repl'), $quote);
   }
 #  ob_start();
 #  $options['nosisters']=1;
@@ -3893,7 +3899,7 @@ EOS;
    $k++;
  }
 
- $opts = array('nomacro'=>1); // disable macros in headings
+ $formatter->nomacro = 1; // disable macros in headings
  $wordrule = $formatter->wordrule .= '|'.$formatter->footrule;
  $lines=explode("\n",$body);
  foreach ($lines as $line) {
@@ -3910,8 +3916,8 @@ EOS;
    #$head=preg_replace($formatter->baserule,"\\1",$head);
    # do not strip basic wikitags
    $head=preg_replace($formatter->baserule,$formatter->baserepl,$head);
-   $head=preg_replace("/(".$wordrule.")/e",
-     "\$formatter->link_repl('\\1', '', \$opts)",$head);
+   $head = preg_replace_callback("/(".$wordrule.")/",
+        array(&$formatter, 'link_repl'), $head);
    if (!empty($simple))
      $head=strip_tags($head,'<b><i><img><sub><sup><del><tt><u><strong>');
 
@@ -3961,6 +3967,7 @@ EOS;
      $TOC.=$close.$open."<dt><a id='toc$prefix-$num' href='#s$prefix-$num'><span class='num'>$num$dot</span>$a0 $head $a1</dt>\n";
 
   }
+  $formatter->nomacro = 0; // restore
 
   $tocidx ++;
   if (isset($TOC[0])) {
