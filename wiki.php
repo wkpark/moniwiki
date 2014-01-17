@@ -4814,6 +4814,14 @@ MSG;
     else if (isset($this->_newtheme) and $this->_newtheme == 2 and !empty($this->header_html))
       $this->_vars['header'] = $header = $this->header_html;
 
+    if ($mtime = $this->page->mtime()) {
+      $tz_offset = $this->tz_offset;
+      $lastedit = gmdate("Y-m-d", $mtime + $tz_offset);
+      $lasttime = gmdate("H:i:s", $mtime + $tz_offset);
+      $this->_vars['lastedit'] = $lastedit;
+      $this->_vars['lasttime'] = $lasttime;
+    }
+
     # print the title
 
     if (empty($this->_newtheme) or $this->_newtheme != 2) {
