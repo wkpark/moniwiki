@@ -623,8 +623,7 @@ function check_htaccess($chk, $re, $host, $port, $path, $dir) {
       fwrite($fp,preg_replace('/^#/','',$v));
       fclose($fp);
 
-      $fp=@fopen($url,'r');
-      $fp = fsockopen($host, $port, $errno, $errstr, 30);
+      $fp = fsockopen($host, $port, $errno, $errstr, 10);
 
       if (is_resource($fp)) {
         $send = "GET $path HTTP/1.1\r\n";
@@ -1180,6 +1179,7 @@ $ls = array('ko'=>'korean',
             'en'=>'english',
             'fr'=>'france');
 
+$sel = '';
 if (!empty($lang) and $lang != 'auto' and isset($ls[$lang]))
   $sel = $lang;
 echo "<option value='auto'>--"._t("Select") ."--</option>";
