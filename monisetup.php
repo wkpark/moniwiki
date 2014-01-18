@@ -1319,7 +1319,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && ($config or $action == 'protect')) {
 
     if (empty($_GET['step'])) {
       if (file_exists('COPYING')) {
-        echo "<h1>"._("License")."</h1>";
+        echo "<h1>"._t("License")."</h1>";
         echo "<pre class='license'>";
         echo file_get_contents("COPYING");
         echo "</pre>";
