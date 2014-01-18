@@ -3009,6 +3009,7 @@ class Formatter {
       $r = $m[5];
       if (strpos($cell,"\n") !== false) {
         $cell = trim($cell, "\n"); // strip \n XXX FIXME
+        $cell = str_replace("\002\003", '||', $cell); // revert table separator ||
         $params = array('notoc'=>1);
         $cell = str_replace('&lt;', '<', $cell); // revert from baserule
         $cell=$this->processor_repl('monimarkup',$cell, $params);
@@ -3504,63 +3505,68 @@ class Formatter {
         continue; # comments
       }
 
-      #$line = preg_replace($this->_pre_rule, $this->_pre_repl, $line);
-      $is_table = $in_table || (!empty($oline) and preg_match('/^\s*\|\|/', $oline));
       if ($in_pre) {
-         if (strpos($line,"}}}")===false) {
-           $pre_line.=$line."\n";
-           continue;
-         } else {
-           #$p=strrpos($line,"}}}");
-           $p= strlen($line) - strpos(strrev($line),'}}}') - 1;
-           if ($p>2 and $line[$p-3]=='\\') {
-             $pre_line.=substr($line,0,$p-3).substr($line,$p-2)."\n";
-             continue;
-           }
-           $pre_line.=substr($line,0,$p-2);
-           $line=substr($line,$p+1);
-           $in_pre=-1;
-         }
-      #} else if ($in_pre == 0 && preg_match("/{{{[^}]*$/",$line)) {
-      #} else if (preg_match("/(\{{2,3})[^{}]*$/",$line,$m)) {
-      } else if (!$is_table and !(strpos($line,"{{{")===false) and
-                 preg_match("/{{{[^{}]*$/",$line)) {
+        $pre_line.= "\n".$line;
+        if (preg_match("/^({{{(?:(?:[^{}]+|{[^{}]+}(?!})|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!}))|(?1))*+}}})/x",
+          $pre_line, $match)) {
 
-         #$p=strrpos($line,"{{{")-2;
-         #$p= strlen($line) - strpos(strrev($line),$m[1]) - strlen($m[1]);
-         $p= strlen($line) - strpos(strrev($line),'{{{') - 3;
+          $p = strlen($match[1]);
+          $line = substr($pre_line, $p);
+          $pre_line = $match[1];
 
-         $processor="";
-         $in_pre=1;
+          if ($in_table || (!empty($oline) and preg_match('/^\s*\|\|/', $oline))) {
+            $pre_line = str_replace('||', "\002\003", $pre_line); // escape || chars
+            $line = $pre_line.$line;
+            $in_pre = 0;
+          } else {
+            $pre_line = substr($pre_line, 3, -3); // strip {{{, }}}
+            $in_pre = -1;
+          }
+        } else {
+          continue;
+        }
+      } else {
+        $chunk = preg_replace_callback(
+                    "/(({{{(?:(?:[^{}]+|{[^{}]+}(?!})|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!}))|(?2))*+}}})|".
+                    // unclosed inline pre tags
+                    "(?:(?!<{{{){{{}}}(?!}}})|{{{(?:{{{|}}})}}}))/x",
+                    create_function('$m', 'return str_repeat("_", strlen($m[1]));'), $line);
+        if (($p = strpos($chunk, '{{{')) !== false) {
+          $processor = '';
+          $in_pre = 1;
 
-         # check processor
-         $t = isset($line{$p+3});
-         if ($t and $line[$p+3] == "#" and $line[$p+4] == "!") {
-            $dummy=explode(" ",substr($line,$p+5),2);
+          $pre_line = substr($line, $p);
+
+          if (!isset($line[0]) and !empty($this->auto_linebreak)) $this->nobr = 1;
+
+          // check processor
+          $t = isset($line[$p+3]);
+          if ($t and $line[$p+3] == '#' and $line[$p+4] == '!') {
+            $dummy = explode(' ', substr($line, $p+5), 2);
             $tag = $dummy[0];
 
             if (!empty($tag)) $processor = $tag;
-         }
-
-         $pre_line=substr($line,$p+3);
-         if (trim($pre_line))
-           $pre_line.="\n";
-         $line=substr($line,0,$p);
-         if (!$line and $this->auto_linebreak) $this->nobr=1;
+          }
+          $line = substr($line, 0, $p);
+        }
       }
 
       $ll=strlen($line);
       if ($ll and $line[$ll-1]=='&') {
-        $oline.=substr($line,0,-1)."\n";
+        $oline.=substr($line,0,-1);
         continue;
-      } else if (empty($oline) and preg_match('/^\s*\|\|/',$line) and !preg_match('/\|(\||-+)\s*$/',$line)) {
-        $oline.=$line."\n";
+      } else if (preg_match('/^\s*\|\|/',$line) and $in_pre) {
+        // "||{{{foobar..." case
+        $oline.= isset($oline[0]) ? "\n".$line : $line;
+        continue;
+      } else if (!isset($oline[0]) and preg_match('/^\s*\|\|/',$line) and !preg_match('/\|(\||-+)\s*$/',$line)) {
+        $oline.= $line;
         continue;
       } else if (!empty($oline) and ($in_table or preg_match('/^\s*\|\|/',$oline)) and !preg_match('/\|(\||-+)\s*$/',$line)) {
-        $oline.=$line."\n";
+        $oline.= "\n".$line;
         continue;
       } else {
-        $line=$oline.$line;
+        $line = isset($oline[0]) ? $oline."\n".$line : $line;
         $oline='';
       }
 
@@ -3926,7 +3932,10 @@ class Formatter {
     # close all tags
     $close="";
     # close pre,table
-    if ($in_pre) $close.="</pre>\n";
+    if ($in_pre) {
+      // fail to close pre tag
+      $text.= $this->processor_repl($processor, $pre_line, $options);
+    }
     if ($in_table) $close.="</table>\n";
     # close indent
     while($in_li >= 0 && $indent_list[$in_li] > 0) {
