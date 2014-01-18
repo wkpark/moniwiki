@@ -1251,21 +1251,6 @@ class WikiUser {
   }
 }
 
-
-function do_highlight($formatter,$options) {
-
-  $formatter->send_header("",$options);
-  $formatter->send_title("","",$options);
-
-  $expr= _stripslashes($options['value']);
-#  $expr= implode('|',preg_split('/\s+/',$expr));
-
-  $formatter->highlight=$expr;
-  $formatter->send_page();
-  $args['editable']=1;
-  $formatter->send_footer($args,$options);
-}
-
 function macro_EditText($formatter,$value,$options) {
   global $DBInfo;
 

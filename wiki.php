@@ -1554,7 +1554,6 @@ class Formatter {
     $this->sect_num=0;
     $this->toc=0;
     $this->toc_prefix='';
-    $this->highlight="";
     $this->prefix= (isset($options['prefix'])) ? $options['prefix']:get_scriptname();
     $this->self_query='';
     $this->url_prefix= $DBInfo->url_prefix;
@@ -1920,27 +1919,6 @@ class Formatter {
       break;
     }
     return $out;
-  }
-
-  function highlight_repl($val,$colref=array()) {
-    static $color=array("style='background-color:#ffff99;'",
-                        "style='background-color:#99ffff;'",
-                        "style='background-color:#99ff99;'",
-                        "style='background-color:#ff9999;'",
-                        "style='background-color:#ff99ff;'",
-                        "style='background-color:#9999ff;'",
-                        "style='background-color:#999999;'",
-                        "style='background-color:#886800;'",
-                        "style='background-color:#004699;'",
-                        "style='background-color:#990099;'");
-    $val=str_replace("\\\"",'"',$val);
-    if ($val[0]=="<") return $val;
-
-    $key=strtolower($val);
-
-    if (isset($colref[$key]))
-      return "<strong ".($color[$colref[$key] % 10]).">$val</strong>";
-    return "<strong class='highlight'>$val</strong>";
   }
 
   function _diff_repl($arr) {
@@ -3978,18 +3956,6 @@ class Formatter {
       $text= preg_replace_callback(array("/(\006|\010)(.*)\\1/sU"),
           array(&$this,'_diff_repl'),$text);
 
-    # highlight text
-    if ($this->highlight) {
-      $highlight=_preg_search_escape($this->highlight);
-
-      $colref=preg_split("/\|/",$highlight);
-      #$colref=preg_split("/\s+/",$highlight);
-      $highlight=implode('|', $colref);
-      $colref=array_flip(array_map("strtolower",$colref));
-
-      $text=preg_replace('/((<[^>]*>)|('.$highlight.'))/ie',
-                         "\$this->highlight_repl('\\1',\$colref)",$text);
-    }
     $fts=array();
     if (!empty($pi['#postfilter'])) $fts=preg_split('/(\||,)/',$pi['#postfilter']);
     if (!empty($this->postfilters)) $fts=array_merge($fts,$this->postfilters);
