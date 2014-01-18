@@ -47,8 +47,8 @@ function processor_chat($formatter,$value="") {
 
     $out="<table align='center' width='90%' border='0' class='wiki' cellpadding='4' cellspacing='0'>";
     if ($title) {
-        $title=preg_replace("/(".$formatter->wordrule.")/e",
-                        "\$formatter->link_repl('\\1')",$title);
+        $title = preg_replace_callback("/(".$formatter->wordrule.")/",
+            array(&$formatter, 'link_repl'), $title);
         $out.="<tr><td><b>$title</b></td></tr>\n";
     }
     $out.="<tr><td><font size='-1'>Submitted by $user $date</font></td></tr>\n".

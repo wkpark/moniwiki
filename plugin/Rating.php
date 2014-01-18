@@ -156,8 +156,9 @@ function do_rating($formatter,$options) {
         }
     }
     if (!empty($blocks)) {
-        $nnc=preg_replace("/\7(\d+)\7/e",
-            "\$blocks[$1]",$nnc);
+        $formatter->_array_callback($blocks, true);
+        $nnc=preg_replace_callback("/\7(\d+)\7/",
+            array(&$formatter, '_array_callback'), $nnc);
     }
 
     endif;

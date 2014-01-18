@@ -186,9 +186,10 @@ function ajax_chat($formatter,$options) {
             gmdate("H:i:s",$time+$options['tz_offset']).'</span>'.
             '<span class="user">&lt;'.$user.'></span>'.$msg;
         if (!empty($formatter->smiley_rule))
-            $line=preg_replace($formatter->smiley_rule,$formatter->smiley_repl,$line);
-        $out.='<li>'.preg_replace("/(".$formatter->wordrule.")/e",
-           "\$formatter->link_repl('\\1')",$line).'</li>';
+            $line=preg_replace_callback($formatter->smiley_rule,
+                array(&$formatter, 'smiley_repl'), $line);
+        $out = '<li>'.preg_replace_callback("/(".$formatter->wordrule.")/",
+            array(&$formatter, 'link_repl'), $line).'</li>';
         #$out.='<li>'.$line.'</li>';
     }
     $formatter->sister_on=$save;

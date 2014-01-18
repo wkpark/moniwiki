@@ -25,11 +25,10 @@ function postfilter_abbr($formatter,$value,$options) {
     $chunks=preg_split('/(<[^>]*>)/',$value,-1, PREG_SPLIT_DELIM_CAPTURE);
     for ($i=0,$sz=count($chunks); $i<$sz; $i++) {
         if ($chunks[$i][0]=='<') continue;
-        $dumm=preg_replace('/\b('.$rule.')\b/e','\$dict->get("\\1")',$chunks[$i]);
-        #$dumm=preg_replace('/\b([A-Z][a-zA-Z]+)\b/e', '_abbr_repl(\$abbrs,"\\1")',$chunks[$i]);
+        $dumm=preg_replace_callback('/\b('.$rule.')\b/',
+            array($dict, 'get'), $chunks[$i]);
         $chunks[$i]=$dumm;
     }
-    //return preg_replace('/((<[^>]*>)|\b('.$rule.')\b)/e', "\$dict->get('\\1')",$value);
 
     return implode('',$chunks);
 }
@@ -40,6 +39,8 @@ class SimpleDict {
         $this->dicts=$dicts;
     }
     function get($word) {
+        if (is_array($word))
+            $word = $word[1];
         #if ($word[0]=='<') return $word;
         if (isset($this->dicts[$word]))
             return '<abbr title="'.$this->dicts[$word].'">'.$word.'</abbr>';

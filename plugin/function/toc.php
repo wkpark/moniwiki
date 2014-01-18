@@ -40,8 +40,8 @@ function function_toc($formatter) {
         # do not strip basic wikitags
         $head=preg_replace($formatter->baserule,$formatter->baserepl,$head);
         $head=preg_replace("/\[\[.*\]\]/","",$head);
-        $head=preg_replace("/(".$formatter->wordrule.")/e",
-            "\$formatter->link_repl('\\1')",$head);
+        $head=preg_replace_callback("/(".$formatter->wordrule.")/",
+            array(&$formatter, 'link_repl'), $head);
 
         if ($simple)
             $head=strip_tags($head);

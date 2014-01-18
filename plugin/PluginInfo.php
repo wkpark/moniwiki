@@ -61,13 +61,13 @@ function macro_PluginInfo($formatter='',$value='') {
     if (empty($formatter->wordrule)) $formatter->set_wordrule();
 
     if ($url) {
-        $url=preg_replace("/(".$formatter->wordrule.")/e",
-            "\$formatter->link_repl('\\1')",$url);
+        $url = preg_replace_callback("/(".$formatter->wordrule.")/",
+            array(&$formatter, 'link_repl'), $url);
         $pl.='<strong>'._("URL").': '.$url."</strong><br />\n";
     }
     if ($desc) {
-        $desc=preg_replace("/(".$formatter->wordrule.")/e",
-            "\$formatter->link_repl('\\1')",$desc);
+        $desc = preg_replace_callback("/(".$formatter->wordrule.")/",
+            array(&$formatter, 'link_repl'), $desc);
         $pl.="<p><pre>$desc</pre></p>\n";
     }
     $pl.="</div></fieldset></td></tr>\n";

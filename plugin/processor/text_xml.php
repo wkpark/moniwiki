@@ -23,12 +23,9 @@ class Formatter_xml extends Formatter {
     $this->extrarule=array();
     $this->extrarepl=array();
     # set smily_rule,_repl
-    if ($DBInfo->smileys) {
-      $smiley_rule='/(?<=\s|^)('.$DBInfo->smiley_rule.')(?=\s|$)/e';
-      $smiley_repl="\$xml->smiley_repl('\\1')";
-
-      $this->extrarule[]=$smiley_rule;
-      $this->extrarepl[]=$smiley_repl;
+    if (!empty($DBInfo->use_smileys) and empty($this->smiley_rule)) {
+      $this->initSmileys();
+      $smiley_rule='/(?<=\s|^)('.$DBInfo->smiley_rule.')(?=\s|$)/';
     }
 
     #$punct="<\"\'}\]\|;,\.\!";
@@ -92,6 +89,7 @@ class Formatter_xml extends Formatter {
   function smiley_repl($smiley) {
     global $DBInfo;
 
+    if (is_array($smiley)) $smiley = $smiley[1]; // for callback
     $img=$DBInfo->smileys[$smiley][3];
 
     $alt=str_replace("<","&lt;",$smiley);
@@ -102,6 +100,7 @@ class Formatter_xml extends Formatter {
   function link_repl($url,$attr='') {
     global $DBInfo;
 
+    if (is_array($url)) $url=$url[1];
     $url=str_replace('\"','"',$url);
     if ($url[0]=="[") {
       $url=substr($url,1,-1);
@@ -349,6 +348,7 @@ class Formatter_xml extends Formatter {
     $indent_list[0]=0;
     $indent_type[0]="";
 
+    $formatter->set_wordrule();
     $wordrule="({{{([^}]+)}}})|".
               "\[\[([A-Za-z0-9]+(\(((?<!\]\]).)*\))?)\]\]|"; # macro
     if ($DBInfo->enable_latex) # single line latex syntax
@@ -490,23 +490,35 @@ class Formatter_xml extends Formatter {
          $in_table=0;
       }
       if ($in_table) {
-         $line=preg_replace('/^((?:\|\|)+)(.*)\|\|$/e',"'<row><entry '.\$xml->_table_span('\\1').'>\\2</entry></row>\n'",$line);
-         $line=preg_replace('/((\|\|)+)/e',"'</entry><entry '.\$xml->_table_span('\\1').'>'",$line);
-         $line=str_replace('\"','"',$line); # revert \\" to \"
+         $cells = preg_split('/((?:\|\|)+)/', $line, -1,
+            PREG_SPLIT_DELIM_CAPTURE);
+         $row = '';
+         for ($i = 1, $sz = sizeof($cells); $i < $sz; $i+= 2) {
+            $cell = $cells[$i + 1];
+            $row.= '<row><entry '.$xml->_table_span($cells[$i]).'>'.$cell.'</entry></row>'."\n";
+         }
+         if (isset($row[0])) $line = $row;
       }
       $line=$close.$open.$line;
       $open="";$close="";
 
       # Headings
-      $line=preg_replace("/(?<!=)(={1,5})\s+(.*)\s+(={1,5})\s?$/e",
-                         "\$xml->head_repl('\\1','\\2','\\3')",$line);
+      if (preg_match("/(?<!=)(={1,5})\s+(.*)\s+(={1,5})\s?$/", $line, $m)) {
+         $line = $xml->head_repl($m[1], $m[2], $m[3]);
+      }
 
       # InterWiki, WikiName, {{{ }}}, !WikiName, ?single, ["extended wiki name"]
       # urls, [single bracket name], [urls text], [[macro]]
-      $line=preg_replace("/(".$wordrule.")/e","\$xml->link_repl('\\1')",$line);
+      $line=preg_replace_callback("/(".$wordrule.")/",
+          array(&$xml, 'link_repl'), $line);
 
 
-      $line=preg_replace($xml->extrarule,$xml->extrarepl,$line);
+      if (!empty($xml->extrarule))
+         $line=preg_replace($xml->extrarule,$xml->extrarepl,$line);
+
+      if (!empty($xml->smiley_rule))
+         $line = preg_replace_callback($xml->smiley_rule,
+               array(&$xml, 'smiley_repl'), $line);
 
       $line=preg_replace("/&(?:\s)/","&amp;",$line);
 
@@ -537,7 +549,8 @@ class Formatter_xml extends Formatter {
               $pre=str_replace("&","&amp;",$xml->pre_line);
               $pre=str_replace("<","&lt;",$pre);
               $pre=preg_replace($xml->baserule,$xml->baserepl,$pre);
-              $pre=preg_replace("/(".$wordrule.")/e","\$xml->link_repl('\\1')",$pre);
+              $pre = preg_replace_callback("/(".$wordrule.")/",
+                array(&$xml, 'link_repl'), $pre);
               $line="<blockquote>\n".$pre."</blockquote>\n".$line;
             }
             $in_quote=0;

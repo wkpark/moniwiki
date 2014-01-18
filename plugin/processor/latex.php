@@ -85,9 +85,17 @@ function processor_latex(&$formatter,$value="",$options=array()) {
     if ($tex != $ntex) { $tex=$ntex; }
     $formatter->latex_num=$GLOBALS['_latex_eq_num']; // save
   } else if (!$raw_mode and !empty($DBInfo->latex_allinone)) {
-    $ntex=preg_replace('/\\\\begin\{\s*(equation)\s*\}((.|\n)+)\\\\end\{\s*\1\s*\}/e',
-      "_latex_renumber(array('','\\1','\\2'),\"\n%%\")",$tex);
-    if ($tex != $ntex) { $tex=$ntex; }
+    $chunks = preg_split('/(\\\\begin\{\s*(?:equation)\s*\}(?:(?:.|\n)+)\\\\end\{\s*\1\s*\})/',
+        $tex, -1, PREG_SPLIT_DELIM_CAPTURE);
+    if (($sz = count($chunks)) > 0) {
+      $ntex = '';
+      for ($i = 1; $i < $sz; $i+= 2) {
+        $ntex.= $chunks[$i - 1];
+        preg_match('/\\\\begin\{\s*(equation)\s*\}((.|\n)+)\\\\end\{\s*\1\s*\}/', $chunks[$i], $m);
+        $ntex.= _latex_renumber(array('', $m[1], $m[2]), "\n%%");
+      }
+      $tex = $ntex;
+    }
     #print '<pre>'.$ntex.'</pre>';
   }
 

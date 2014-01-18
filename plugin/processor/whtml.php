@@ -37,8 +37,10 @@ function processor_whtml($formatter,$value='',$options=array()) {
         if ($chunks[$i][0] != '<') {
             $out=$chunks[$i];
             if (!empty($formatter->smiley_rule))
-                $out=preg_replace($formatter->smiley_rule,$formatter->smiley_repl,$out);
-            $out=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$out);
+                $out=preg_replace_callback($formatter->smiley_rule,
+                    array(&$formatter, 'smiley_repl'),$out);
+            $out=preg_replace_callback("/(".$formatter->wordrule.")/",
+                    array(&$formatter, 'link_repl'), $out);
             $chunks[$i]=$out;
         }
     }

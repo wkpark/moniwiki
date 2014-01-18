@@ -25,7 +25,8 @@ function macro_FootNote(&$formatter, $value = "", $options= array()) {
         //asort($foots);
         $foots = join("\n", $foots);
         $formatter->foot_offset = max(array_keys($formatter->foots));
-        $foots=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$foots);
+        $foots = preg_replace_callback("/(".$formatter->wordrule.")/",
+            array(&$formatter, 'link_repl'), $foots);
         //unset($formatter->foots);
         if ($foots)
             return "<div class='foot'><div class='separator'><tt class='wiki'>----</tt></div><ul>\n$foots</ul></div>";

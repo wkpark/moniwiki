@@ -131,8 +131,8 @@ function processor_blog($formatter,$value="",$options) {
     $tag=$md5sum;
     if ($tag[0]=='%') $tag="n".$tag;
     $perma="<a class='perma' href='#$tag'>$formatter->perma_icon</a>";
-    $title=preg_replace("/(".$formatter->wordrule.")/e",
-                        "\$formatter->link_repl('\\1')",$title);
+    $title=preg_replace_callback("/(".$formatter->wordrule.")/",
+            array(&$formatter, 'link_repl'),$title);
     $out.="<div class='blog-title'><a name='$tag'></a>$title $perma</div>\n";
   }
   $info = sprintf(_("Submitted by %s @ %s"), $user, $date);

@@ -682,6 +682,11 @@ function check_htaccess($chk, $re, $host, $port, $path, $dir) {
   return $work;
 }
 
+// moinmoin 1.0.x style internal encoding
+function _pgencode($m) {
+  return '_'.sprintf("%02s", strtolower(dechex(ord(substr($m[1],-1)))));
+}
+
 function keyToPagename($key) {
 #  return preg_replace("/_([a-f0-9]{2})/e","chr(hexdec('\\1'))",$key);
   $pagename=preg_replace("/_([a-f0-9]{2})/","%\\1",$key);
@@ -691,7 +696,7 @@ function keyToPagename($key) {
 }
 
 function pagenameToKey($pagename) {
-  return preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord('\\1')))",$pagename);
+  return preg_replace_callback("/([^a-z0-9]{1})/i",'_pgencode', $pagename);
 }
 
 function show_wikiseed($config,$seeddir='wikiseed') {

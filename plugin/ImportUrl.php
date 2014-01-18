@@ -56,6 +56,14 @@ EOF;
     -1, PREG_SPLIT_DELIM_CAPTURE);
 
   $wiki='';
+
+  $base_url = $value;
+  if (($p = strrpos($value, '/')) !== false) {
+    $base_url = substr($value, 0, $p);
+  }
+
+  _fix_url_callback($base_url, true);
+  _fix_url_callback2($base_url, true);
   foreach ($splits as $split) {
     if (preg_match('/^<pre\s/i',$split)) {
       $state='p';
@@ -84,8 +92,8 @@ EOF;
     $out= preg_replace("/\r/","",$out);
     #$out= preg_replace("/<img\s*[^>]*src=(['\"])?((http|ftp)[^'\"]+)\\1[^>]*>/i",
     #  "\\2",$out);
-    $out = preg_replace("/<img\s*[^>]*src=(['\"])?([^'\"]+)\\1[^>]*>/ie",
-     "fix_url('$value','\\2')",$out);
+    $out = preg_replace_callback("/<img\s*[^>]*src=(['\"])?([^'\"]+)\\1[^>]*>/i",
+     '_fix_url_callback', $out);
     $out= preg_replace("/<li[^>]*>/i"," * ",$out);
     $out= preg_replace("/<\/li>\n*/i","\n",$out);
     $out= preg_replace("/<td\s*[^>]*>/i","||",$out);
@@ -109,11 +117,11 @@ EOF;
     # remove hrefs with a blank link
     $out= preg_replace("/<a\s*[^>]*href=['\"][^>]+><\/a>/i","",$out);
     # url
-    $out= preg_replace("/<a\s*[^>]*href=['\"]([^'\"]+)['\"][^>]*>([^<]+)<\/a>/ie",
-      "'['.fix_url('$value','\\1','\\2').trim('\\2').']'",$out);
+    $out= preg_replace_callback("/<a\s*[^>]*href=['\"]([^'\"]+)['\"][^>]*>([^<]+)<\/a>/i",
+      '_fix_url_callback2', $out);
     # heading
-    $out= preg_replace("/<h(\d)[^>]*>(?:\d+\.?\d*)*([^<]+)<\/h\d>/ie",
-      "str_repeat('=', \\1).' \\2 '.str_repeat('=', \\1)",$out);
+    $out= preg_replace_callback("/<h(\d)[^>]*>(?:\d+\.?\d*)*([^<]+)<\/h\d>/i",
+      '_heading_callback', $out);
     # paragraph
     $out= preg_replace("/\n{3,}/","\n\n",$out);
     $out= preg_replace("/<b>([^<]+)<\/b>/i","'''\\1'''",$out);
@@ -155,8 +163,43 @@ function prep_url($base_url) {
   return $path;
 }
 
+function _heading_callback($m) {
+  $tag = str_repeat('=', $m[1]);
+  return $tag.' '.$m[2].' '.$tag;
+}
+
+function _fix_url_callback($m, $init = false) {
+  static $base_url;
+  if ($init) {
+    $base_url = $m;
+    return;
+  }
+  fix_url($base_url, $m);
+}
+
+function _fix_url_callback2($m, $init = false) {
+  static $base_url;
+  if ($init) {
+    $base_url = $m;
+    return;
+  }
+  return '[['.fix_url($base_url, $m).trim($m[2]).']]';
+}
+
 function fix_url($base_url,$url,$text='') {
   static $path=array();
+
+  if (is_array($url)) {
+    // for callback function
+    $m = $url;
+    $url = array_pop($m);
+    if ($tmp == '"' || $tmp == "'") {
+      $url = array_pop($m);
+    }
+    if (count($m)) {
+      $text = array_pop($m);
+    }
+  }
 
   if ($url== $text) return '';
   if (!$base_url) $path=array(); // reset

@@ -21,7 +21,8 @@ function macro_PageLinks($formatter,$options="") {
     if ($lnks !== false) {
         $out.="<li>".$formatter->link_tag($page,'',htmlspecialchars($page)).": ";
         $links=implode(' ',$lnks);
-        $links=preg_replace("/(".$formatter->wordrule.")/e","\$formatter->link_repl('\\1')",$links);
+        $links = preg_replace_callback("/(".$formatter->wordrule.")/",
+            array(&$formatter, 'link_repl'), $links);
         $out.=$links."</li>\n";
     }
   }

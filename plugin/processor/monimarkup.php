@@ -668,8 +668,8 @@ class processor_monimarkup
             $formatter->initSmileys();
  
         if (!empty($formatter->smiley_rule))
-            $out=preg_replace($formatter->smiley_rule,
-                 $formatter->smiley_repl,$out);
+            $out=preg_replace_callback($formatter->smiley_rule,
+                 array(&$formatter, 'smiley_repl'), $out);
 
         if (isset($btype[1]))
             $out=preg_replace("/\007(\d+)\007/e",
