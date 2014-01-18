@@ -3406,7 +3406,6 @@ class Formatter {
     $in_div=0;
     $in_li=0;
     $in_pre=0;
-    $in_quote=0;
     $in_table=0;
     $li_open=0;
     $li_empty=0;
@@ -3533,7 +3532,6 @@ class Formatter {
 
          $processor="";
          $in_pre=1;
-         $np=0;
 
          # check processor
          $t = isset($line{$p+3});
@@ -3542,20 +3540,9 @@ class Formatter {
             $tag = $dummy[0];
 
             if (!empty($tag)) $processor = $tag;
-         } else if ($t and $line[$p+3] == ":") {
-            # new formatting rule for a quote block (pre block + wikilinks)
-            $line[$p+3]=" ";
-            $np=1;
-            if (!empty($line[$p+4]) and ($line[$p+4]=='#' or $line[$p+4]=='.')) {
-              $pre_style=strtok(substr($line,$p+4),' ');
-              $np++;
-              if ($pre_style) $np+=strlen($pre_style);
-            } else
-              $pre_style='';
-            $in_quote=1;
          }
 
-         $pre_line=substr($line,$p+$np+3);
+         $pre_line=substr($line,$p+3);
          if (trim($pre_line))
            $pre_line.="\n";
          $line=substr($line,0,$p);
@@ -3885,35 +3872,6 @@ class Formatter {
            #  $line=$out.$line;
            $line=$out.$line;
            unset($out);
-         } else if ($in_quote) {
-            # htmlfy '<'
-            $pre=str_replace("<","&lt;",$pre_line);
-            $pre=preg_replace($this->baserule,$this->baserepl,$pre);
-            $pre=preg_replace_callback("/(".$wordrule.")/",
-              array(&$this,'link_repl'),$pre);
-            #$pre=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$pre);
-            $attr='class="quote"';
-            if ($pre_style) {
-              $tag=$pre_style[0];
-              $style=substr($pre_style,1);
-              switch($tag) {
-              case '#':
-                $attr="id='$style'";
-                break;
-              case '.':
-                $attr="class='$style'";
-                break;
-              }
-            }
-            $out="<pre $attr>\n".$pre."</pre>\n";
-            if ($this->wikimarkup) {
-              $nline=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$pre_line);
-              $out='<span class="wikiMarkup">'."<!-- wiki:\n{{{:$pre_style\n".
-                str_replace('}}}','\}}}',$nline).
-                "}}}\n-->".$out."</span>";
-            }
-            $line=$out.$line;
-            $in_quote=0;
          } else {
             # htmlfy '<', '&'
             if (!empty($DBInfo->default_pre)) {
