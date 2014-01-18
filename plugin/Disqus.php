@@ -35,6 +35,7 @@ EOF;
 
     // set disqus_identifier
     $id = $Config['disqus_shortname'].':';
+    $shortname = $Config['disqus_shortname'];
     if (isset($Config['disqus_id'][0]))
         $id.= $Config['disqus_id'].':';
     $id.= addslashes($formatter->page->name);
