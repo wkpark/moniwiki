@@ -3416,6 +3416,7 @@ class Formatter {
     $indent_type[0]="";
     $_myindlen=array(0);
     $oline='';
+    $pre_line = '';
 
     $wordrule="\[\[(?:[A-Za-z0-9]+(?:\((?:(?<!\]\]).)*\))?)\]\]|". # macro
               "<<(?:[^<>]+(?:\((?:(?<!\>\>).)*\))?)>>|"; # macro
@@ -3441,7 +3442,7 @@ class Formatter {
       $lid = $this->linenum;
       # empty line
       if (!strlen($line) and empty($oline)) {
-        if ($in_pre) { $this->pre_line.="\n";continue;}
+        if ($in_pre) { $pre_line.="\n";continue;}
         if ($in_li) {
           if ($in_table) {
             $text.=$this->_table(0,$dumm);$in_table=0;$li_empty=1;
@@ -3508,16 +3509,16 @@ class Formatter {
       $is_table = $in_table || (!empty($oline) and preg_match('/^\s*\|\|/', $oline));
       if ($in_pre) {
          if (strpos($line,"}}}")===false) {
-           $this->pre_line.=$line."\n";
+           $pre_line.=$line."\n";
            continue;
          } else {
            #$p=strrpos($line,"}}}");
            $p= strlen($line) - strpos(strrev($line),'}}}') - 1;
            if ($p>2 and $line[$p-3]=='\\') {
-             $this->pre_line.=substr($line,0,$p-3).substr($line,$p-2)."\n";
+             $pre_line.=substr($line,0,$p-3).substr($line,$p-2)."\n";
              continue;
            }
-           $this->pre_line.=substr($line,0,$p-2);
+           $pre_line.=substr($line,0,$p-2);
            $line=substr($line,$p+1);
            $in_pre=-1;
          }
@@ -3554,9 +3555,9 @@ class Formatter {
             $in_quote=1;
          }
 
-         $this->pre_line=substr($line,$p+$np+3);
-         if (trim($this->pre_line))
-           $this->pre_line.="\n";
+         $pre_line=substr($line,$p+$np+3);
+         if (trim($pre_line))
+           $pre_line.="\n";
          $line=substr($line,0,$p);
          if (!$line and $this->auto_linebreak) $this->nobr=1;
       }
@@ -3861,10 +3862,10 @@ class Formatter {
          # for smart diff
          $show_raw=0;
          if ($this->use_smartdiff and
-           preg_match("/\006|\010/", $this->pre_line)) $show_raw=1;
+           preg_match("/\006|\010/", $pre_line)) $show_raw=1;
 
          if ($processor and !$show_raw) {
-           $value=&$this->pre_line;
+           $value=&$pre_line;
            if ($processor == 'wiki') {
              $processor = 'monimarkup';
              if (isset($options['notoc']))
@@ -3886,7 +3887,7 @@ class Formatter {
            unset($out);
          } else if ($in_quote) {
             # htmlfy '<'
-            $pre=str_replace("<","&lt;",$this->pre_line);
+            $pre=str_replace("<","&lt;",$pre_line);
             $pre=preg_replace($this->baserule,$this->baserepl,$pre);
             $pre=preg_replace_callback("/(".$wordrule.")/",
               array(&$this,'link_repl'),$pre);
@@ -3906,7 +3907,7 @@ class Formatter {
             }
             $out="<pre $attr>\n".$pre."</pre>\n";
             if ($this->wikimarkup) {
-              $nline=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$this->pre_line);
+              $nline=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$pre_line);
               $out='<span class="wikiMarkup">'."<!-- wiki:\n{{{:$pre_style\n".
                 str_replace('}}}','\}}}',$nline).
                 "}}}\n-->".$out."</span>";
@@ -3916,17 +3917,17 @@ class Formatter {
          } else {
             # htmlfy '<', '&'
             if (!empty($DBInfo->default_pre)) {
-              $out=$this->processor_repl($DBInfo->default_pre,$this->pre_line,$options);
+              $out=$this->processor_repl($DBInfo->default_pre,$pre_line,$options);
             } else {
               $pre=str_replace(array('&','<'),
                                array("&amp;","&lt;"),
-                               $this->pre_line);
+                               $pre_line);
               $pre=preg_replace("/&lt;(\/?)(ins|del)/","<\\1\\2",$pre);
               # FIXME Check open/close tags in $pre
               #$out="<pre class='wiki'>\n".$pre."</pre>";
               $out="<pre class='wiki'>".$pre."</pre>";
               if ($this->wikimarkup) {
-                $nline=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$this->pre_line);
+                $nline=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$pre_line);
                 $out='<span class="wikiMarkup">'."<!-- wiki:\n{{{\n".
                   str_replace('}}}','\}}}',$nline).
                   "}}}\n-->".$out."</span>";
