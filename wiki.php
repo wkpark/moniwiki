@@ -3013,6 +3013,7 @@ class Formatter {
         $params = array('notoc'=>1);
         $cell = str_replace('&lt;', '<', $cell); // revert from baserule
         $cell=$this->processor_repl('monimarkup',$cell, $params);
+        $cell = str_replace('&lt;', '<', $cell); // revert from baserule
         // do not align multiline cells
         $l = '';
         $r = '';
