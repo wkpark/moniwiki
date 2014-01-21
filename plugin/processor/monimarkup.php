@@ -393,10 +393,19 @@ class processor_monimarkup
                         $align='';
                     }
 
-                    $attr=$formatter->_td_attr($m[1],$align);
+                    $tag = 'td';
+                    $attrs = $formatter->_td_attr($m[1], $align);
                     if (!$tr_attr) $tr_attr=$m[1]; // XXX
+
+                    // check TD is header or not
+                    if (isset($attrs['heading'])) {
+                        $tag = 'th';
+                        unset($attrs['heading']);
+                    }
+                    $attr = '';
+                    foreach ($attrs as $k=>$v) $attr.= $k.'="'.trim($v, "'\"").'" ';
                     $attr.=$formatter->_td_span($cells[$i]);
-                    $row.="<td $attr>".$cell.'</td>';
+                    $row.="<$tag $attr>".$cell.'</'.$tag.'>';
                 }
                 $line='<tr '.$tr_attr.'>'.$row.'</tr>';
                 $line=str_replace('\"','"',$line); # revert \\" to \"
