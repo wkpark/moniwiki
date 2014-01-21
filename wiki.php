@@ -3025,18 +3025,27 @@ class Formatter {
       else if (!$l) $align='';
       else if (!$r) $align='right';
 
-      $attr=$this->_td_attr($m[1],$align);
+      $tag = 'td';
+      $attrs = $this->_td_attr($m[1], $align);
       if (!$tr_attr) $tr_attr=$m[1]; // XXX
-      $attr.=$this->_td_span($cells[$i]);
-      $row.="<td $attr>".$cell.'</td>';
+
+      // check TD is header or not
+      if (isset($attrs['heading'])) {
+        $tag = 'th';
+        unset($attrs['heading']);
+      }
+      $attr = '';
+      foreach ($attrs as $k=>$v) $attr.= $k.'="'.trim($v, "'\"").'" ';
+      $attr.= $this->_td_span($cells[$i]);
+      $row.= "<$tag $attr>".$cell.'</'.$tag.'>';
     }
     return $row;
   }
 
   function _td_attr(&$val,$align='') {
     if (!$val) {
-      if ($align) return 'class="'.$align.'"';
-      return '';
+      if ($align) return array('class'=>$align);
+      return array();
     }
     $para=str_replace(array('&lt;','&gt'),array('<','>'),$val);
     // split attributes <:><|3> => ':', '|3'
@@ -3044,7 +3053,7 @@ class Formatter {
     $paras = array();
     foreach ($tmp as $p) {
       // split attributes <(-2> => '(', '-2'
-      if (preg_match_all('/([\^v\(:\)]|[-\|]\d+|\d+%|#[0-9a-f]{6}|(?:colspan|rowspan)\s*=\s*\d+)/', $p, $m))
+      if (preg_match_all('/([\^v\(:\)\!]|[-\|]\d+|\d+%|#[0-9a-f]{6}|(?:colspan|rowspan)\s*=\s*\d+)/', $p, $m))
         $paras = array_merge($paras, $m[1]);
       else
         $paras[] = $p;
@@ -3082,6 +3091,9 @@ class Formatter {
       case ':':
         $align='center';
         break;
+      case '!':
+        $attr['heading'] = true; // hack to support table header
+        break;
       default:
         break;
       }
@@ -3117,9 +3129,7 @@ class Formatter {
     $val='';
     foreach ($rattr as $k=>$v) $val.=$k.'="'.trim($v, "'\"").'" ';
 
-    $ret='';
-    foreach ($attr as $k=>$v) $ret.=$k.'="'.trim($v, "'\"").'" ';
-    return $ret;
+    return $attr;
   }
 
   function _table($on,&$attr) {
