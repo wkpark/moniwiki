@@ -3001,7 +3001,7 @@ class Formatter {
     for ($i=1,$s=sizeof($cells);$i<$s;$i+=2) {
       $align='';
       $m=array();
-      preg_match('/^((&lt;[^>]+>)*)(\040?)(.*)(?<!\s)(\040*)?$/s',
+      preg_match('/^((&lt;[^>]+>)*)(\040?)(.*)(?<!\s)(\040*)?(\s*)$/s',
         $cells[$i+1],$m);
       $cell=$m[3].$m[4].$m[5];
 
