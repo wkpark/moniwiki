@@ -1390,6 +1390,7 @@ function do_edit($formatter,$options) {
   $options['has_form'] = &$has_form;
   $value = '';
   echo macro_EditText($formatter,$value,$options);
+  echo $formatter->get_javascripts();
   if ($DBInfo->use_wikiwyg>=2) {
     $js=<<<JS
 <script type='text/javascript'>
@@ -1786,9 +1787,7 @@ if (toolbar) {
 </script>
 EOS;
     } else {
-      $resizer=<<<EOS
-<script type="text/javascript" src="$DBInfo->url_prefix/local/textarea.js"></script>
-EOS;
+      $formatter->register_javascripts('textarea.js');
     }
   }
   $form.=<<<EOS
@@ -2593,6 +2592,7 @@ function do_post_savepage($formatter,$options) {
     $has_form = false;
     $options['has_form'] = &$has_form;
     print '<div id="editor_area_wrap">'.macro_EditText($formatter,'',$options);
+    echo $formatter->get_javascripts();
     if ($has_form and !empty($DBInfo->use_jsbuttons)) {
       $msg = _("Save");
       $onclick=' onclick="submit_all_forms()"';
