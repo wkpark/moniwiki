@@ -3934,7 +3934,7 @@ class Formatter {
       $lidx = '';
       if ($lid > 0) $lidx = "<span class='line-anchor' id='line-".$lid."'></span>";
 
-      if ($this->auto_linebreak && !$in_table && !$this->nobr)
+      if (isset($line[0]) and $this->auto_linebreak && !$in_table && !$this->nobr)
         $text.=$line.$lidx."<br />\n"; 
       else
         $text.=$line ? $line.$lidx."\n":'';
