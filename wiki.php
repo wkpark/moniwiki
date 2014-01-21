@@ -3044,7 +3044,7 @@ class Formatter {
     $paras = array();
     foreach ($tmp as $p) {
       // split attributes <(-2> => '(', '-2'
-      if (preg_match_all('/([\^v\(:\)]|[-\|]\d+|#[0-9a-f]{6}|(?:colspan|rowspan)\s*=\s*\d+)/', $p, $m))
+      if (preg_match_all('/([\^v\(:\)]|[-\|]\d+|\d+%|#[0-9a-f]{6}|(?:colspan|rowspan)\s*=\s*\d+)/', $p, $m))
         $paras = array_merge($paras, $m[1]);
       else
         $paras[] = $p;
@@ -3087,6 +3087,9 @@ class Formatter {
       }
     } else if ($para[0]=='#') {
       $sty['background-color']=strtolower($para);
+      $para = '';
+    } else if (is_numeric($para[0])) {
+      $attr['width'] = $para;
       $para = '';
     } else {
       if (substr($para,0,7)=='colspan') {
