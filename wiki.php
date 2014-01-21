@@ -3039,7 +3039,16 @@ class Formatter {
       return '';
     }
     $para=str_replace(array('&lt;','&gt'),array('<','>'),$val);
-    $paras= explode('><',substr($para,1,-1));
+    // split attributes <:><|3> => ':', '|3'
+    $tmp = explode('><',substr($para,1,-1));
+    $paras = array();
+    foreach ($tmp as $p) {
+      // split attributes <(-2> => '(', '-2'
+      if (preg_match_all('/([\^v\(:\)]|[-\|]\d+|#[0-9a-f]{6}|(?:colspan|rowspan)\s*=\s*\d+)/', $p, $m))
+        $paras = array_merge($paras, $m[1]);
+      else
+        $paras[] = $p;
+    }
     # rowspan
     $sty=array();
     $rsty=array();
@@ -3049,16 +3058,21 @@ class Formatter {
     $myclass=array();
 
     foreach ($paras as $para) {
-    if (preg_match("/^(\^|v)?\|(\d+)$/",$para,$match)) {
-      $attr['rowspan']=$match[2];
-      if ($match[1]) {
-        if ($match[1] == '^') $attr['valign']='top';
-        else $attr['valign']='bottom';
-        $para = '';
-      }
+    if (preg_match("/^(\-|\|)(\d+)$/",$para,$match)) {
+      if ($match[1] == '-')
+        $attr['colspan'] = $match[2];
+      else
+        $attr['rowspan'] = $match[2];
+      $para = '';
     }
     else if (strlen($para)==1) {
       switch ($para) {
+      case '^':
+        $attr['valign']='top';
+        break;
+      case 'v':
+        $attr['valign']='bottom';
+        break;
       case '(':
         $align='left';
         break;
@@ -3071,16 +3085,15 @@ class Formatter {
       default:
         break;
       }
-    }
-    else if (preg_match("/^\-(\d+)$/",$para,$match)) {
-      $attr['colspan']=$match[1];
-      $para = '';
     } else if ($para[0]=='#') {
       $sty['background-color']=strtolower($para);
       $para = '';
     } else {
-      if (substr($para,0,7)=='rowspan') {
-        $attr['rowspan']=substr($para,8);
+      if (substr($para,0,7)=='colspan') {
+        $attr['colspan'] = trim(substr($para, 8), ' =');
+        $para = '';
+      } else if (substr($para,0,7)=='rowspan') {
+        $attr['rowspan'] = trim(substr($para, 8), ' =');
         $para = '';
       } else if (substr($para,0,3)=='row') {
         // row properties
