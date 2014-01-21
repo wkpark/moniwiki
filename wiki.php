@@ -1,6 +1,6 @@
 <?php
-// Copyright 2003-2013 Won-Kyu Park <wkpark at kldp.org> all rights reserved.
-// distributable under GPL see COPYING
+// Copyright 2003-2014 Won-Kyu Park <wkpark at kldp.org> all rights reserved.
+// distributable under GPLv2 see COPYING
 //
 // many codes are imported from the MoinMoin
 // some codes are reused from the Phiki
@@ -13,8 +13,8 @@
 //
 // $Id: wiki.php,v 1.639 2011/08/09 13:51:53 wkpark Exp $
 //
-$_revision = substr('$Revision: 1.1077 $',1,-1);
-$_release = '1.2.3-GIT';
+$_revision = substr('$Revision: 1.1097 $',1,-1);
+$_release = '1.2.3-RC1';
 
 #ob_start("ob_gzhandler");
 
