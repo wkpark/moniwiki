@@ -3433,6 +3433,7 @@ class Formatter {
     $text='';
     $in_p='';
     $in_div=0;
+    $in_bq=0;
     $in_li=0;
     $in_pre=0;
     $in_table=0;
@@ -3498,6 +3499,7 @@ class Formatter {
           $text.=$this->_table(0,$dumm)."<br />\n";$in_table=0; continue;
         } else {
           #if ($in_p) { $text.="</div><br />\n"; $in_p='';}
+          if ($in_bq) { $text.= str_repeat("</blockquote>\n", $in_bq); $in_bq = 0; }
           if ($in_p) { $text.=$this->_div(0,$in_div,$div_enclose)."<br />\n"; $in_p='';}
           else if ($in_p=='') { $text.="<br />\n";}
           continue;
@@ -3548,6 +3550,10 @@ class Formatter {
             $in_pre = 0;
           } else {
             $pre_line = substr($pre_line, 3, -3); // strip {{{, }}}
+
+            // strip the blockquote markers '> ' from the pre block
+            if ($in_bq > 0 and preg_match("/\n((?:\>\s)*\>\s?)/s", $pre_line, $match))
+              $pre_line = str_replace("\n".$match[1], "\n", $pre_line);
             $in_pre = -1;
           }
         } else {
@@ -3603,7 +3609,8 @@ class Formatter {
         $func = $DBInfo->hr_type.'_hr';
         $line = $formatter->$func($m[1]);
         if ($this->auto_linebreak) $this->nobr=1; // XXX
-        if ($in_p) { $p_closeopen=$this->_div(0,$in_div,$div_enclose); $in_p='';}
+        if ($in_bq) { $p_closeopen.= str_repeat("</blockquote>\n", $in_bq); $in_bq = 0; }
+        if ($in_p) { $p_closeopen.=$this->_div(0,$in_div,$div_enclose); $in_p='';}
       } else {
         if ($in_p == '' and $line!=='') {
           $p_closeopen=$this->_div(1,$in_div,$div_enclose, $lid > 0 ? ' id="aline-'.$lid.'"' : '');
@@ -3650,6 +3657,25 @@ class Formatter {
         }
       }
 
+      // blockquote
+      if ($in_pre != -1 and (!$in_table or !isset($oline[0])) and $line[0] == '>' and preg_match('/^((?:>\s)*>\s?(?!>))/', $line, $match)) {
+        $tmp = strlen($match[1]);
+        $tmp+= ($tmp % 2 != 0) ? 1 : 0;
+        $line = substr($line, $tmp); // strip markers
+        $depth = $tmp / 2;
+        if ($depth == $in_bq) {
+          // continue
+        } if ($depth > $in_bq) {
+          $p_closeopen.= str_repeat("<blockquote class='quote'>", $depth - $in_bq);
+          $in_bq = $depth;
+        } else {
+          $p_closeopen.= str_repeat("</blockquote>\n", $in_bq - $depth);
+          $in_bq = $depth;
+        }
+      } else if (!$in_pre and $in_bq > 0) {
+        $p_closeopen.= str_repeat("</blockquote>\n", $in_bq);
+        $in_bq = 0;
+      }
       #if ($in_p and ($in_pre==1 or $in_li)) $line=$this->_check_p().$line;
 
       # bullet and indentation
@@ -3797,12 +3823,17 @@ class Formatter {
       #$line=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$line);
 
       # Headings
-      if (preg_match("/(?<!=)(={1,})\s+(.*)\s+\\1\s?$/",$line,$m)) {
-        $this->sect_num++;
-        if ($p_closeopen) { // ignore last open
-          $p_closeopen='';
-          $this->_div(0,$in_div,$div_enclose);
+      while (preg_match("/(?<!=)(={1,})\s+(.*)\s+\\1\s?$/",$line,$m)) {
+        if ($in_bq) {
+          $dummy = null;
+          $line = $this->head_repl(strlen($m[1]), $m[2], $dummy);
+          break;
         }
+        $this->sect_num++;
+        #if ($p_closeopen) { // ignore last open
+        #  #$p_closeopen='';
+        #  $p_closeopen.= '}}'.$this->_div(0,$in_div,$div_enclose);
+        #}
 
         while($in_div > 0)
           $p_closeopen.=$this->_div(0,$in_div,$div_enclose);
@@ -3837,6 +3868,7 @@ class Formatter {
         $dummy='';
         $line.=$this->_div(1,$in_div,$dummy,' id="sc-'.$this->sect_num.'"'); // for folding
         $edit='';$anchor='';
+        break;
       }
 
       # Smiley
@@ -3977,6 +4009,7 @@ class Formatter {
     }
     # close div
     #if ($in_p) $close.="</div>\n"; # </para>
+    if ($in_bq) { $close.= str_repeat("</blockquote>\n", $in_bq); $in_bq = 0; }
     if ($in_p) $close.=$this->_div(0,$in_div,$div_enclose); # </para>
     #if ($div_enclose) $close.=$this->_div(0,$in_div,$div_enclose);
     while ($my_div>0) { $close.="</div>\n"; $my_div--;}
