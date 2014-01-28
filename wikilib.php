@@ -3226,17 +3226,22 @@ FORM;
   }
 
   $logout = '';
+  $joinagree = empty($DBInfo->use_agreement) || !empty($options['joinagreement']);
+
   if ($user->id == 'Anonymous') {
     if (isset($options['login_id']) or !empty($_GET['join']) or $value!="simple") {
       $passwd=!empty($options['password']) ? $options['password'] : '';
       $button=_("Make profile");
-      if (empty($DBInfo->use_safelogin)) {
+      if ($joinagree and empty($DBInfo->use_safelogin)) {
         $again="<b>"._("password again")."</b>&nbsp;<input type='password' size='15' maxlength='$pw_length' name='passwordagain' value='' /></td></tr>";
       }
       $mailbtn=_("Mail");
+      if (empty($options['agreement']) or !empty($options['joinagreement']))
       $extra=<<<EXTRA
   <tr><th>$mailbtn&nbsp;</th><td><input type="text" size="40" name="email" value="" /></td></tr>
 EXTRA;
+      if (!empty($DBInfo->use_agreement) and !empty($options['joinagreement']))
+        $extra.= '<input type="hidden" name="joinagreement" value="1" />';
       if (!$use_any and !empty($DBInfo->use_ticket)) {
         $seed=md5(base64_encode(time()));
         $ticketimg=$formatter->link_url($formatter->page->name,'?action=ticket&amp;__seed='.$seed);
@@ -3307,7 +3312,7 @@ EOF;
 
   $passwd = !empty($passwd) ? $passwd : '';
   $passwd_inp = '';
-  if (empty($DBInfo->use_safelogin) or $button==_("Save")) {
+  if (($joinagree and empty($DBInfo->use_safelogin)) or $button==_("Save")) {
     if ($user->id == 'Anonymous' or !empty($user->info['password']))
     $passwd_inp=<<<PASS
   <tr>
@@ -3320,7 +3325,7 @@ PASS;
   }
   $emailpasswd = '';
   if ($button==_("Make profile")) {
-    if (!empty($DBInfo->use_sendmail)) {
+    if (empty($options['agreement']) and !empty($DBInfo->use_sendmail)) {
       $button2=_("E-mail new password");
       $emailpasswd=
         "<span class='button'><input type=\"submit\" class='button' name=\"login\" value=\"$button2\" /></span>\n";
@@ -3342,6 +3347,43 @@ PASS;
           </td></tr>
 EOF;
       }
+    } else if (!empty($DBInfo->use_agreement) and empty($options['joinagreement'])) {
+      $form = <<<FORM
+<div>
+<form method="post" action="$url">
+<div>
+<input type="hidden" name="action" value="userform" />
+
+FORM;
+      $form.= "<input type='hidden' name='login_id' ";
+      if (isset($options['login_id'][0])) {
+        $login_id = htmlspecialchars($options['login_id']);
+        $form.= "value=\"$login_id\"";
+      }
+      $form.= " />";
+      if (!empty($DBInfo->agreement_comment)) {
+        // show join agreement confirm message
+        $form.= '<div class="join-agreement">';
+        $form.= str_replace("\n", "<br />", $DBInfo->agreement_comment);
+        $form.= "</div>\n";
+      } else if (!empty($DBInfo->agreement_page) and file_exists($DBInfo->agreement_page)) {
+        // show join agreement confirm message from a external text file
+        $form.= '<div class="join-agreement">';
+        $tmp = file_get_contents($DBInfo->agreement_page);
+        $form.= str_replace("\n", "<br />", $tmp);
+        $form.= "</div>\n";
+      }
+      $accept = _("Accept agreement");
+      $form.= <<<FORM
+<div class='check-agreement'><p><input type='checkbox' name='joinagreement' />$accept</p>
+<span class="button"><input type="submit" class="button" name="login" value="$button" /></span>
+</div>
+</div>
+</form>
+</div>
+
+FORM;
+      return $form;
     }
   }
   $id_btn=_("ID");

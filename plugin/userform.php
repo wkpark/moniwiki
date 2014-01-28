@@ -280,6 +280,9 @@ function do_userform($formatter,$options) {
     } else
     if (!preg_match("/\//",$id)) $user->setID($id); // protect http:// style id
 
+    if (!empty($DBInfo->use_agreement) and empty($options['joinagreement'])) {
+      $title= _("Please check join agreement.");
+    } else
     if ($ok_ticket and $user->id != "Anonymous") {
        if (!empty($DBInfo->use_safelogin)) {
           $mypass=base64_encode(getTicket(time(),$_SERVER['REMOTE_ADDR'],10));
@@ -516,6 +519,9 @@ function do_userform($formatter,$options) {
       $options["msg"] = _("Invalid OpenID Authentication request");
 		  echo "INVALID AUTHORIZATION";
 	  }
+  } else if (!empty($DBInfo->use_agreement) and $options['login'] == _("Make profile")) {
+    $options['agreement'] = 1;
+    $form = macro_UserPreferences($formatter, '', $options);
   } else {
     $options["msg"] = _("Invalid request");
   }
@@ -531,7 +537,10 @@ function do_userform($formatter,$options) {
   $formatter->send_title($title,"",$options);
   if (!$title && (empty($DBInfo->control_read) or $DBInfo->security->is_allowed('read',$options)) ) {
     $lnk=$formatter->link_to('?action=show');
-    echo sprintf(_("return to %s"), $lnk);
+    if (empty($form))
+      echo sprintf(_("return to %s"), $lnk);
+    else
+      echo $form;
   } else {
     if (!empty($form)) print $form;
 #    else $formatter->send_page("Goto UserPreferences");
