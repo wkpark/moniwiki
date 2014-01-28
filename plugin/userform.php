@@ -85,7 +85,7 @@ function do_userform($formatter,$options) {
       $options['msg'].='<br />'._("Verification missmatched.");
     }
   } else
-  if ($user->id == "Anonymous" and empty($options['login_id']) and
+  if ($user->id == "Anonymous" and $options['verify'] == _("Verify E-mail address") and
       !empty($DBInfo->anonymous_friendly) and !empty($options['verifyemail'])) {
     if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['verifyemail'])) {
       if (verify_email($options['verifyemail']) < 0) {
@@ -356,7 +356,7 @@ function do_userform($formatter,$options) {
              }
            }
        }
-    } else if (!empty($title))
+    } else if (empty($title))
        $title= _("Invalid username !");
   } else if ($user->id != "Anonymous") {
     # save profile
@@ -516,6 +516,8 @@ function do_userform($formatter,$options) {
       $options["msg"] = _("Invalid OpenID Authentication request");
 		  echo "INVALID AUTHORIZATION";
 	  }
+  } else {
+    $options["msg"] = _("Invalid request");
   }
 
   $myrefresh='';
