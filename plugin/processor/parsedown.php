@@ -769,10 +769,12 @@ class processor_parsedown
                             'a' => $matches[1],
                         );
 
+                        $link = $matches[0]; // save matches
                         $offset = strlen($matches[0]);
 
                         if ($element['!'])
                         {
+                            $link = '!'.$link;
                             $offset++;
                         }
 
@@ -853,6 +855,11 @@ class processor_parsedown
                         }
 
                         unset($element);
+                    }
+                    else if (preg_match('/^!?\[\[(.*)\]\]$/', $link, $matches))
+                    {
+                        // Wiki Links
+                        $markup .= $this->formatter->link_repl($matches[0]);
                     }
                     else
                     {
