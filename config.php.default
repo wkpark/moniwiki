@@ -284,6 +284,7 @@ $cache_public_url=$url_prefix.'/_cache';
 #$use_subindex=1; # use subpage indices 
 #$nosession=1; # do not use session
 #$default_pre='pre'; # set the default pre processor
+#$default_markup='monimarkup'; # set the default markup processor
 #$use_rating=1; # builtin Rating support
 $use_jwmediaplayer=1;
 $jwmediaplayer_prefix='http://www.jeroenwijering.com/embed';
