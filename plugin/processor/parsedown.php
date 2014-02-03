@@ -892,33 +892,17 @@ class processor_parsedown
 
                     if ($text[1] === $closest_marker and preg_match($this->strong_regex[$closest_marker], $text, $matches))
                     {
+                        $markers[] = $closest_marker;
                         $matches[1] = $this->parse_span_elements($matches[1], $markers);
 
                         $markup .= '<strong>'.$matches[1].'</strong>';
                     }
                     elseif (preg_match($this->em_regex[$closest_marker], $text, $matches))
                     {
+                        $markers[] = $closest_marker;
                         $matches[1] = $this->parse_span_elements($matches[1], $markers);
 
                         $markup .= '<em>'.$matches[1].'</em>';
-                    }
-                    elseif ($text[1] === $closest_marker and preg_match($this->strong_em_regex[$closest_marker], $text, $matches))
-                    {
-                        $matches[2] = $this->parse_span_elements($matches[2], $markers);
-
-                        $matches[1] and $matches[1] = $this->parse_span_elements($matches[1], $markers);
-                        $matches[3] and $matches[3] = $this->parse_span_elements($matches[3], $markers);
-
-                        $markup .= '<strong>'.$matches[1].'<em>'.$matches[2].'</em>'.$matches[3].'</strong>';
-                    }
-                    elseif (preg_match($this->em_strong_regex[$closest_marker], $text, $matches))
-                    {
-                        $matches[2] = $this->parse_span_elements($matches[2], $markers);
-
-                        $matches[1] and $matches[1] = $this->parse_span_elements($matches[1], $markers);
-                        $matches[3] and $matches[3] = $this->parse_span_elements($matches[3], $markers);
-
-                        $markup .= '<em>'.$matches[1].'<strong>'.$matches[2].'</strong>'.$matches[3].'</em>';
                     }
 
                     if (isset($matches) and $matches)
@@ -1075,23 +1059,13 @@ class processor_parsedown
     # Read-only
 
     var $strong_regex = array(
-        '*' => '/^[*]{2}([^*]+?)[*]{2}(?![*])/s',
-        '_' => '/^__([^_]+?)__(?!_)/us',
+        '*' => '/^[*]{2}((?:[^*]|[*][^*]*[*])+?)[*]{2}(?![*])/s',
+        '_' => '/^__((?:[^_]|_[^_]*_)+?)__(?!_)/us',
     );
 
     var $em_regex = array(
-        '*' => '/^[*]([^*]+?)[*](?![*])/s',
-        '_' => '/^_([^_]+?)[_](?![_])\b/us',
-    );
-
-    var $strong_em_regex = array(
-        '*' => '/^[*]{2}(.*?)[*](.+?)[*](.*?)[*]{2}/s',
-        '_' => '/^__(.*?)_(.+?)_(.*?)__/us',
-    );
-
-    var $em_strong_regex = array(
-        '*' => '/^[*](.*?)[*]{2}(.+?)[*]{2}(.*?)[*]/s',
-        '_' => '/^_(.*?)__(.+?)__(.*?)_/us',
+        '*' => '/^[*]((?:[^*]|[*][*][^*]+?[*][*])+?)[*](?![*])/s',
+        '_' => '/^_((?:[^_]|__[^_]*__)+?)_(?!_)\b/us',
     );
 
     var $special_characters = array(
@@ -1110,3 +1084,5 @@ class processor_parsedown
                           'time',
     );
 }
+
+// vim:et:sts=4:sw=4:
