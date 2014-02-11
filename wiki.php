@@ -3001,14 +3001,21 @@ class Formatter {
     for ($i=1,$s=sizeof($cells);$i<$s;$i+=2) {
       $align='';
       $m=array();
-      preg_match('/^((&lt;[^>]+>)*)(\040?)(.*)(?<!\s)(\040*)?(\s*)$/s',
+      preg_match('/^((&lt;[^>]+>)*)([ ]*)(.+?)(?<!\s)([ ]*)?(\s*)$/s',
         $cells[$i+1],$m);
       $cell=$m[3].$m[4].$m[5];
 
-      $l = $m[3];
-      $r = $m[5];
+      // count left, right spaces to align
+      $l = strlen($m[3]);
+      $r = strlen($m[5]);
+
+      // strip last "\n"
+      if (substr($cell, -1) == '\n')
+        $cell = substr($cell, 0, -1);
       if (strpos($cell,"\n") !== false) {
-        $cell = trim($cell, "\n"); // strip \n XXX FIXME
+        // strip first space.
+        if ($cell[0] == ' ' and !preg_match('/^[ ](?:(\d+|i|a|A)\.|[*])[ ]/', $cell))
+          $cell = substr($cell, 1);
         $cell = str_replace("\002\003", '||', $cell); // revert table separator ||
         $params = array('notoc'=>1);
         $cell = str_replace('&lt;', '<', $cell); // revert from baserule
@@ -3021,7 +3028,12 @@ class Formatter {
         $cell = preg_replace_callback("/(".$wordrule.")/",
           array(&$this, 'link_repl'), $cell);
       }
-      if ($l and $r) $align='center';
+      if ($l and $r) {
+        if ($l > 1 and $r > 1)
+          $align = 'center';
+        else if ($l > 1)
+          $align = 'right';
+      }
       else if (!$l) $align='';
       else if (!$r) $align='right';
 
