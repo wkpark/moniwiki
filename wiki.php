@@ -3453,7 +3453,6 @@ class Formatter {
     $li_open=0;
     $li_empty=0;
     $div_enclose='';
-    $my_div=0;
     $indent_list[0]=0;
     $indent_type[0]="";
     $_myindlen=array(0);
@@ -3519,33 +3518,15 @@ class Formatter {
         }
       }
 
+      // comments
       if (!$in_pre and isset($line[1]) and $line[0]=='#' and $line[1]=='#') {
-        $out='';
-        $ll = isset($line[2]) ? $line[2] : '';
-        if ($ll=='[') {
-          $macro=substr($line,4,-2);
-          $out= $this->macro_repl($macro,'',array('nomarkup'=>1));
-          # XXX deprecated css id syntax.
-        } else if ($ll=='#' and preg_match('/^###[a-z][a-z0-9_-]*$/', $line)) {
-          $div_enclose.='<div id="'.substr($line,3).'">';
-          $my_div++;
-          # XXX deprecated css class syntax.
-        } else if ($ll=='.' and preg_match('/^##\.[a-z][a-z0-9_-]*$/', $line)) {
-          $div_enclose.='<div class="'.substr($line,3).'">';
-          $my_div++;
-        } else if ($my_div>0) {
-          $div_enclose.='</div>';
-          $my_div--;
-        }
 
         if ($this->wikimarkup) {
-          $out=$out ? $out:$line.'<br />';
+          $out = $line.'<br />';
           $nline=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$line);
           $text=$text."<span class='wikiMarkup'><!-- wiki:\n$nline\n\n-->$out</span>";
         }
-        else $text.=$out;
-        unset($out);
-        continue; # comments
+        continue;
       }
 
       if ($in_pre) {
@@ -4025,7 +4006,6 @@ class Formatter {
     if ($in_bq) { $close.= str_repeat("</blockquote>\n", $in_bq); $in_bq = 0; }
     if ($in_p) $close.=$this->_div(0,$in_div,$div_enclose); # </para>
     #if ($div_enclose) $close.=$this->_div(0,$in_div,$div_enclose);
-    while ($my_div>0) { $close.="</div>\n"; $my_div--;}
     while($in_div > 0)
       $close.=$this->_div(0,$in_div,$div_enclose);
 
