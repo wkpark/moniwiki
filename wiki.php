@@ -1573,6 +1573,9 @@ class Formatter {
     $this->use_easyalias=$DBInfo->use_easyalias;
     $this->use_group=!empty($DBInfo->use_group) ? $DBInfo->use_group : 0;
     $this->use_htmlcolor = !empty($DBInfo->use_htmlcolor) ? $DBInfo->use_htmlcolor : 0;
+
+    // strtr() old wiki markups
+    $this->trtags = !empty($DBInfo->trtags) ? $DBInfo->trtags : null;
     $this->submenu=!empty($DBInfo->submenu) ? $DBInfo->submenu : null;
     $this->email_guard=$DBInfo->email_guard;
     $this->interwiki_target=!empty($DBInfo->interwiki_target) ?
@@ -1670,12 +1673,6 @@ class Formatter {
                      "<del>\\1</del>",
                      #"<br />\n",
                      );
-
-    # NoSmoke's MultiLineCell hack
-    $this->extrarule=array("/{{\|(.*)\|}}/","/{{\|/","/\|}}/");
-    $this->extrarepl=array("<table class='closure'><tr class='closure'><td class='closure'>\\1</td></tr></table>","</div><table class='closure'><tr class='closure'><td class='closure'><div>","</div></td></tr></table><div>");
-    #$this->_pre_rule=array("/{{\|$/", "/{{\|/", "/\|}}/");
-    #$this->_pre_repl=array('{{{#!wiki .closure', "{{{#!wiki .closure\n", '}}}');
 
     // set extra baserule
     if (!empty($DBInfo->baserule)) {
@@ -3295,6 +3292,9 @@ class Formatter {
 
         return;
       }
+      // strtr old wiki markups
+      if (!empty($this->trtags))
+        $body = strtr($body, $this->trtags);
       $lines=explode("\n",$body);
       $el = end($lines);
       // delete last empty line
@@ -3375,6 +3375,10 @@ class Formatter {
       }
 
       if (!empty($body)) {
+        // strtr old wiki markups
+        if (!empty($this->trtags))
+          $body = strtr($body, $this->trtags);
+
         $lines=explode("\n",$body);
         $el = end($lines);
         // delete last empty line
@@ -3890,12 +3894,8 @@ class Formatter {
                       array(&$this, 'smiley_repl'), $line);
         }
       }
-      # NoSmoke's MultiLineCell hack
-      #$line=preg_replace(array("/{{\|/","/\|}}/"),
-      #      array("</div><table class='closure'><tr class='closure'><td class='closure'><div>","</div></td></tr></table><div>"),$line);
 
-      if ($this->auto_linebreak and in_array(trim($line),array('{{|','|}}')))
-        $this->nobr=1;
+      if (!empty($this->extrarule))
       $line=preg_replace($this->extrarule,$this->extrarepl,$line);
       #if ($this->auto_linebreak and preg_match('/<div>$/',$line))
       #  $this->nobr=1;
