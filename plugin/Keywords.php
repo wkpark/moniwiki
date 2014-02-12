@@ -518,16 +518,8 @@ function do_keywords($formatter,$options) {
                 }
             }
         }
-        #print_r(array_unique($all_keys));
-        $handle= opendir("$DBInfo->cache_dir/keylinks");
-        while ($fcache= readdir($handle)) {
-            if ($fcache[0] == '.') continue;
-            $pgname=$DBInfo->keyToPagename($fcache);
-            if (!in_array($fcache,$all_keys))
-                print 'X "'.$pgname."\"\n";
-            else
-                print 'O "'.$pgname."\"\n";
-        }
+
+        print_r($all_keys);
         print "OK";
         return;
     }
