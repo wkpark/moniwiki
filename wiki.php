@@ -1361,8 +1361,8 @@ class WikiPage {
         $format='php'; # builtin php detect
     } else {
       if ($body[0] == '#' and $body[1] =='!') {
-        list($line, $body)= explode("\n", $body,2);
-        $format= trim(substr($line,2));
+        list($format, $body) = explode("\n", $body, 2);
+        $format = rtrim(substr($format, 2));
       }
 
       // not parsed lines are comments
@@ -1401,6 +1401,9 @@ class WikiPage {
       if (isset($pi['#nolinenum'])) $pi['#linenum']=0;
     }
 
+    if (empty($pi['#format']) and !empty($format))
+      $pi['#format'] = $format; // override default
+
     if (!empty($pi['#format']) and ($p = strpos($pi['#format'],' '))!== false) {
       $pi['args'] = substr($pi['#format'],$p+1);
       $pi['#format']= substr($pi['#format'],0,$p);
@@ -1408,9 +1411,6 @@ class WikiPage {
 
     if (!empty($piline)) $pi['raw']= $piline;
     if (!empty($body_start)) $pi['start_line'] = $body_start;
-
-    if (empty($pi['#format']) and !empty($format))
-      $pi['#format'] = $format; // override default
 
     if ($update_pi) {
       $pi_cache->update($this->name, $pi);
@@ -3349,6 +3349,20 @@ class Formatter {
         if (isset($pi['args'])) $pi_line="#!".$pi['#format']." $pi[args]\n";
         $opts = $options;
         $opts['nowrap'] = 1;
+        if (!empty($pi['start_line'])) {
+          // trash PI instructions
+          $i = $pi['start_line'];
+          // set $start param
+          $opts['start'] = $i;
+          $pos = 0;
+          while (($p = strpos($body, "\n", $pos)) !== false and $i > 0) {
+            $pos = $p + 1;
+            $i --;
+          }
+          if ($pos > 0) {
+            $body = substr($body, $pos);
+          }
+        }
         $text= $this->processor_repl($pi['#format'],$pi_line.$body,$opts);
 
         $fts=array();
