@@ -327,18 +327,8 @@ function moin_init() {
 }
 
 (function () {
-	// onload
-	var oldOnload = window.onload;
-	if (typeof window.onload != 'function') {
-		window.onload = function() {
-			moin_init();
-		}
-	} else {
-        	window.onload = function() {
-			oldOnload();
-			moin_init();
-		}
-        }
+if (window.addEventListener) window.addEventListener("load", moin_init, false);
+else if (window.attachEvent) window.attachEvent("onload", moin_init);
 })();
 
 function moin_submit(form) {
