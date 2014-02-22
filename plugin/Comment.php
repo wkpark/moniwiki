@@ -1,11 +1,11 @@
 <?php
-// Copyright 2004-2010 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2004-2014 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a Wiki comment plugin for the MoniWiki
 //
 // Author: Won-Kyu Park <wkpark@kldp.org>
 // Since: 2004-08-16
-// Modified: $Date: 2010/09/08 15:46:09 $
+// Modified: 2014/02/22 19:33:00 $
 // Name: Comment plugin
 // Description: Comment Plugin
 // URL: MoniWiki:CommentPlugin
@@ -19,6 +19,11 @@ function macro_Comment($formatter,$value,$options=array()) {
   global $DBInfo;
 
   if (!empty($options['nocomment'])) return '';
+
+  // set as dynamic macro or not.
+  if ($formatter->_macrocache and empty($options['call']))
+    return $formatter->macro_cache_repl('Comment', $value);
+
   $user=$DBInfo->user; # get from COOKIE VARS
   $options['id']=$user->id;
 
