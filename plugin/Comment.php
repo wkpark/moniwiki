@@ -267,16 +267,18 @@ META;
       $savetext="----\n$savetext @SIG@\n";
   }
 
-  if ($options['comment_id']) {
+  while ($options['comment_id']) {
     list($nth,$dum,$v)=explode(',', base64_decode($options['comment_id']),3);
 
     if ($v) $check='[['.$dum.'('.$v.')]]';
     else $check='[['.$dum.']]';
+    if ($v) $check2='<<'.$dum.'('.$v.')>>';
+    else $check2='<<'.$dum.'>>';
 
     if (is_numeric($nth)):
 
     $raw=str_replace("\n","\1",$body);
-    $chunk=preg_split("/({{{.+}}})/U",$raw,-1,PREG_SPLIT_DELIM_CAPTURE);
+    $chunk=preg_split("/({{{.+}}})/U",$raw,-1,PREG_SPLIT_DELIM_CAPTURE); // FIXME
 
     $nc='';
     $k=1;
@@ -292,7 +294,12 @@ META;
         $k++;
     }
     $nc=str_replace("\1","\n",$nc);
-    $chunk=preg_split('/((?!\!)\[\[.+\]\])/U',$nc,-1,PREG_SPLIT_DELIM_CAPTURE);
+    if (preg_match_all('/(?!\!)(?:\<\<|\[\[)Comment(?:.*?)(?:\]\]|>>)/', $nc, $m)) {
+        if (count($m[0]) == 1) break;
+    }
+    $chunk=preg_split('/((?!\!)(?:\<\<|\[\[).+(?:\]\]|>>))/U',$nc,-1,PREG_SPLIT_DELIM_CAPTURE);
+
+
     $nnc='';
     $ii=1;
     $matched=0;
@@ -302,7 +309,7 @@ META;
         } else {
             if ($nth==$ii) {
                 $new=$savetext.$chunk[$j];
-                if ($check != $chunk[$j]) break;
+                if ($check != $chunk[$j] and $check2 != $chunk[$j]) break;
                 $nnc.=$new;
                 $matched=1;
             }
@@ -320,15 +327,16 @@ META;
     endif;
 
     if (!empty($matched)) $body=$nnc;
+    break;
   }
   if (empty($matched)):
-  if ($options['comment_id'] and preg_match("/^\[\[Comment\(".$options['comment_id']."\)\]\]/m",$body)) {
-    $str="[[Comment($options[comment_id])]]";
+  if ($options['comment_id'] and preg_match("/^((?:\[\[|\<\<)Comment\(".$options['comment_id']."\)(?:\]\]|>>))/m",$body, $m)) {
+    $str = $m[1];
     $body= preg_replace('/'.preg_quote($str).'/',$savetext.$str,$body,1);
   } else if (preg_match("/\n##Comment\n/i",$body)) {
     $body= preg_replace("/\n##Comment\n/i","\n##Comment\n$savetext",$body,1);
-  } else if (preg_match("/^\[\[Comment(\([^\)]*\))?\]\]/m",$body)) {
-    $body= preg_replace("/^(\[\[Comment(\([^\)]*\))?\]\])/m",$savetext."\\1",$body,1);
+  } else if (preg_match("/^((\[\[|\<\<)Comment(\([^\)]*\))?(\]\]|>>)/m",$body)) {
+    $body= preg_replace("/^((\[\[|\<\<)Comment(\([^\)]*\))?(\]\]|>>))/m",$savetext."\\1",$body,1);
   } else
     $body.=$savetext;
   endif;
