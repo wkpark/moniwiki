@@ -137,6 +137,7 @@ function _rawurlencode($url) {
 
 function _urlencode($url) {
   $url= preg_replace('#:+#',':',$url);
+  $url = str_replace('%20', ' ', $url);
   return str_replace(array('%23', '%26', '%2F', '%3A', '%3B', '%3D', '%3F'),
             array('#', '&', '/', ':', ';', '=', '?'), rawurlencode($url));
 }
