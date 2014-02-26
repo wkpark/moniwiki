@@ -1947,7 +1947,7 @@ function do_post_DeletePage($formatter,$options) {
   
   $page = $DBInfo->getPage($options['page']);
 
-  if (isset($options['name'][0])) $options['name']=urldecode(_urlencode($options['name']));
+  if (isset($options['name'][0])) $options['name']=urldecode($options['name']);
   $pagename= $formatter->page->urlname;
   if (isset($options['name'][0]) and $options['name'] == $options['page']) {
     $retval = array();
