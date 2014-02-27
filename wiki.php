@@ -626,6 +626,7 @@ class WikiDB {
     #$name=preg_replace("/%([a-f0-9]{2})/ie","'_'.strtolower('\\1')",$name);
     #$name=preg_replace(".","_2e",$name);
 
+    $pagename = strtr($pagename, "\x1a", "\x0a"); # HACK "%0a" char bug
     // clean up ':' like as the dokuwiki
     if (!empty($this->use_namespace)) {
       $pn= preg_replace('#:+#',':',$pagename);
@@ -683,6 +684,7 @@ class WikiDB {
       $pagename=preg_replace('%\.d/%', ':', $key);
 
     $pagename=strtr($pagename,'_','%');
+    $pagename = strtr($pagename, '%0a', "%1a"); // HACK "%0a" char bug
     return rawurldecode($pagename);
   }
 
