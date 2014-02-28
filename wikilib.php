@@ -1947,6 +1947,14 @@ function do_post_DeletePage($formatter,$options) {
   
   $page = $DBInfo->getPage($options['page']);
 
+  if (!$page->exists()) {
+    $formatter->send_header('', $options);
+    $title = _("Page not found.");
+    $formatter->send_title($title, '',$options);
+    $formatter->send_footer('', $options);
+    return;
+  }
+
   if (isset($options['name'][0])) $options['name']=urldecode($options['name']);
   $pagename= $formatter->page->urlname;
   if (isset($options['name'][0]) and $options['name'] == $options['page']) {
