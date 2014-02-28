@@ -501,7 +501,12 @@ class Security_base {
 function getConfig($configfile, $options=array()) {
   extract($options);
   unset($key,$val,$options);
+
+  // ignore BOM and garbage characters
+  ob_start();
   $myret = @include($configfile);
+  ob_get_contents();
+  ob_end_clean();
 
   if ($myret === false) {
     if (!empty($init)) {
