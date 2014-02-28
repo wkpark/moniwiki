@@ -1,7 +1,5 @@
 <?php
-# This is a default 
-#
-# $Id$
+# @desc Default config file
 #
 $sitename='UnnamedWiki'; # site name
 $data_dir= './data';
