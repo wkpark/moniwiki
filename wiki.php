@@ -1752,7 +1752,7 @@ class Formatter {
     #(?P<word>(?:/?[A-Z]([a-z0-9]+|[A-Z]*(?=[A-Z][a-z0-9]|\b))){2,})
     $this->wordrule=
     # nowiki
-    "!?({{{(?:(?:[^{}]+|{[^{}]+}(?!})|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!}))|(?2))++}}})|".
+    "!?({{{(?:(?:[^{}]+|{[^{}]+}(?!})|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!})|(?<=\\\\)[{}]{3}(?!}))|(?2))++}}})|".
     # {{{{{{}}}, {{{}}}}}}, {{{}}}
     "(?:(?!<{{{){{{}}}(?!}}})|{{{(?:{{{|}}})}}})|".
     # single bracketed rule [http://blah.blah.com Blah Blah]
@@ -3023,6 +3023,7 @@ class Formatter {
         $cell = str_replace("\002\003", '||', $cell); // revert table separator ||
         $params = array('notoc'=>1);
         $cell = str_replace('&lt;', '<', $cell); // revert from baserule
+        $cell = strtr($cell, array('\\}}}'=>'}}}', '\\{{{'=>'{{{')); // FIXME
         $cell=$this->processor_repl('monimarkup',$cell, $params);
         $cell = str_replace('&lt;', '<', $cell); // revert from baserule
         // do not align multiline cells
@@ -3556,7 +3557,7 @@ class Formatter {
 
       if ($in_pre) {
         $pre_line.= "\n".$line;
-        if (preg_match("/^({{{(?:(?:[^{}]+|{[^{}]+}(?!})|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!}))|(?1))*+}}})/x",
+        if (preg_match("/^({{{(?:(?:[^{}]+|{[^{}]+}(?!})|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!})|(?<=\\\\)[{}]{3}(?!}))|(?1))*+}}})/x",
           $pre_line, $match)) {
 
           $p = strlen($match[1]);
@@ -3580,7 +3581,7 @@ class Formatter {
         }
       } else {
         $chunk = preg_replace_callback(
-                    "/(({{{(?:(?:[^{}]+|{[^{}]+}(?!})|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!}))|(?2))*+}}})|".
+                    "/(({{{(?:(?:[^{}]+|{[^{}]+}(?!})|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!})|(?<=\\\\)[{}]{3}(?!}))|(?2))*+}}})|".
                     // unclosed inline pre tags
                     "(?:(?!<{{{){{{}}}(?!}}})|{{{(?:{{{|}}})}}}))/x",
                     create_function('$m', 'return str_repeat("_", strlen($m[1]));'), $line);
@@ -3641,7 +3642,8 @@ class Formatter {
                         (?:(?:[^{}]+|
                         {[^{}]+}(?!})|
                         (?<!{){{1,2}(?!{)|
-                        (?<!})}{1,2}(?!}))|(?1)
+                        (?<!})}{1,2}(?!})|
+                        (?<=\\\\)[{}]{3}(?!}))|(?1)
                           )++}}}|
                         \[ (?: (?>[^\[\]]+) | (?R) )* \])/x",$line,-1,PREG_SPLIT_DELIM_CAPTURE);
         $inline = array(); // save inline nowikis
@@ -3931,6 +3933,9 @@ class Formatter {
          $show_raw=0;
          if ($this->use_smartdiff and
            preg_match("/\006|\010/", $pre_line)) $show_raw=1;
+
+         // revert escaped {{{, }}}
+         $pre_line = strtr($pre_line, array('\\}}}'=>'}}}', '\\{{{'=>'{{{')); // FIXME
 
          if ($processor and !$show_raw) {
            $value=&$pre_line;
