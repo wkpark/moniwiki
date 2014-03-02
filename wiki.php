@@ -3679,8 +3679,8 @@ class Formatter {
       // blockquote
       if ($in_pre != -1 and (!$in_table or !isset($oline[0])) and $line[0] == '>' and preg_match('/^((?:>\s)*>\s?(?!>))/', $line, $match)) {
         $tmp = strlen($match[1]);
-        $tmp+= ($tmp % 2 != 0) ? 1 : 0;
         $line = substr($line, $tmp); // strip markers
+        $tmp+= ($tmp % 2 != 0) ? 1 : 0;
         $depth = $tmp / 2;
         if ($depth == $in_bq) {
           // continue
