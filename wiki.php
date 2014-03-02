@@ -3005,7 +3005,7 @@ class Formatter {
     for ($i=1,$s=sizeof($cells);$i<$s;$i+=2) {
       $align='';
       $m=array();
-      preg_match('/^((&lt;[^>]+>)*)([ ]*)(.+?)(?<!\s)([ ]*)?(\s*)$/s',
+      preg_match('/^((&lt;[^>]+>)*)([ ]*)(.*?)([ ]*)?(\s*)$/s',
         $cells[$i+1],$m);
       $cell=$m[3].$m[4].$m[5];
 
@@ -3069,7 +3069,7 @@ class Formatter {
     $paras = array();
     foreach ($tmp as $p) {
       // split attributes <(-2> => '(', '-2'
-      if (preg_match_all('/([\^_v\(:\)\!=]|[-\|]\d+|\d+%|#[0-9a-f]{6}|(?:colspan|rowspan|[a-z]+)\s*=\s*.+)/', $p, $m))
+      if (preg_match_all('/([\^_v\(:\)\!=]|[-\|]\d+|\d+%|#[0-9a-fA-F]{6}|(?:colspan|rowspan|[a-z]+)\s*=\s*.+)/', $p, $m))
         $paras = array_merge($paras, $m[1]);
       else
         $paras[] = $p;
