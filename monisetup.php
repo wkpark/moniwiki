@@ -292,13 +292,13 @@ HEADER;
 
       if ($key) {
         $val.=$line;
-        if (!preg_match("/$tag\s*;(\s*#.*)?\s*$/",$line,$m)) continue;
+        if (!preg_match("/$tag\s*;(\s*(?:#|\/\/).*)?\s*$/",$line,$m)) continue;
         $mre = '';
         $desc[$key] = isset($m[1]) ? rtrim($m[1]) : '';
       } else {
         list($key,$val)=explode('=',substr($line,$mlen),2);
         $key = trim($key);
-        if (!preg_match('/(\s*;(\s*#.*)?)$/',$val,$match)) {
+        if (!preg_match('/(\s*;(\s*(?:#|\/\/).*)?)$/',$val,$match)) {
           if (substr($val,0,3)== '<<<') {
             $tag='^'.$mre.substr(rtrim($val),3);
           } else {
@@ -330,7 +330,7 @@ HEADER;
           #print $key.'|=='.preg_quote($val);
           $val=rtrim($val);
           if (empty($marker))
-            $val=preg_replace('/\s*;(\s*#.*)?$/','',$val);
+            $val=preg_replace('/\s*;(\s*(?:#|\/\/).*)?$/','',$val);
         }
         $val = str_replace(array('&lt;','&gt;'),array('<','>'),$val);
         if (isset($config[$key])) {
