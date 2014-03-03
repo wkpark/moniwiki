@@ -163,6 +163,7 @@ $myprocessors=array('syntax'=>'vim','sh'=>'vim','csh'=>'vim',
 );
 #$myprocessors=array('latex'=>'mimetex');
 #$myplugins=array('fullsearch'=>'FastSearch'); # substitute action/macro
+#$myplugins=array('TOC'=>'TableOfContents'); # alias action/macro
 #$myplugins=array('swfupload'=>false); # disable some macro
 #
 #$extra_macros=array('FootNote', 'Comment'); # call some extra macros after send_page()
@@ -173,7 +174,7 @@ $myprocessors=array('syntax'=>'vim','sh'=>'vim','csh'=>'vim',
 #$kiwirian=array('Kiwirian','Hello'); # block users
 #$kiwirian='Kiwirian:Hello';
 #$delete_history=1;
-#$use_twikilink=1; 
+#$use_twikilink=1;
 #$timezone='KST'; // for windows
 #$version_class='RcsLite';
 #$rcs_check_broken=1; // check rcs file is broken or not
@@ -181,12 +182,9 @@ $myprocessors=array('syntax'=>'vim','sh'=>'vim','csh'=>'vim',
 #$use_numbering=1; // for the vim processor
 #$vim_nocheck=0; // do not check vim syntax.
 #$vim_nocheck=1;
-#$use_resizer=1; // javascript resizer
-# drupal style resizer 
-$use_resizer=2;
+$use_resizer=2; # 1:javascript resizer, 2: drupal style resizer
 #$use_minoredit=1; // only for wiki owners
-#$auto_search='FixMoin'; # for old moinmoin users
-$auto_search='AutoGoto';
+$auto_search='AutoGoto'; # FixMoin: for old moinmoin users, AutoGoto: default.
 #$hr_type='fancy';
 $use_wikiwyg=0; # 1 for GUI button/ 2 to set as default behavior/ 3 to set always use GUI.
 #$wikiwyg_confirm=1; # always confirm
@@ -203,8 +201,7 @@ $toc_options='simple,toggle';
 #$ticket_font='PeignotNum';
 #$ticket_font_size='20';
 $local_abbr='LocalDictionary';
-#$postfilters='abbr';
-$postfilters='';
+#$postfilters='abbr'; # abbr: abbrevation filter.
 $use_forcemerge=1;
 $default_language='ko';
 $use_alias=1;
@@ -230,14 +227,14 @@ $use_preview_uploads=1;
 #$category_regex=urldecode('%EB%B6%84%EB%A5%98$'); # a category example for Korean
 $use_backlinks=1; # set default fullsearch behavior as backlinks search
 $use_backlink_search=1; # use backlink searching
-$fullsearch_tooshort=2; # 
+$fullsearch_tooshort=2; #
 #$use_smartdiff=1; # use the experimental smart diff XXX
 #$hide_actions=0; # hide actions list for anonymous user
 #$actions= array('DeletePage','LikePages','?action=Keywords Add keywords'); # customized act list
 #$info_options='ago,simple'; # default Info macro options
 #$info_actions=array('raw'=>'source');
 #$info_actions=array('raw'=>'source','diff'=>'diff');
-#$force_charset=1; # overriding default charset 
+#$force_charset=1; # overriding default charset
 #$use_titlemenu=1; # add the current pagename to the menu list
 #$submenu='SubMenu'; # dynamic submenu
 #$submenu_showmain=1;
@@ -276,11 +273,11 @@ $cache_public_dir='./_cache'; # enhanced caching
 $cache_public_url=$url_prefix.'/_cache';
 #$no_404=1; # for IIS
 #$nofancy_404=1; # simplified 404 msg for robots etc.
-#$toolbar_iconset='mediawiki'; # change the toolbar iconset 
+#$toolbar_iconset='mediawiki'; # change the toolbar iconset
 #$use_lightbox=1;
 #$gallery_use_lightbox=1;
 #$use_hangul_search=1; # use hangul search for auto-completer
-#$use_subindex=1; # use subpage indices 
+#$use_subindex=1; # use subpage indices
 #$nosession=1; # do not use session
 #$default_pre='pre'; # set the default pre processor
 #$default_markup='monimarkup'; # set the default markup processor
@@ -293,8 +290,7 @@ $flashupload='swfupload';
 #$use_openid=0; # enable openid login
 #$check_openid_url=0; # selectivly show openid icons: experimental
 #$use_autosave=1; # enable autosave feature.
-#$delayindex=60*60*24*5 # delayed indexing 
-#$use_bbs=0; # *experimental*
+#$delayindex=60*60*24*5 # delayed indexing
 $robots='googlebot|yahoo'; # set robots
 $mobile_agents='android|iphone'; # mobile agents
 #$fetch_imagefilesize=1; # fetch imagefile sizes for mobile wikis
@@ -309,7 +305,7 @@ $use_local_translation=0; # automatic translation
 #$rc_strimwidth=20; # witdh param of mb_strimwidth() with the RecentChanges macro
 #$titleindexer_class='PageIndex'; # user defined titleindexer class
 #$pages_limit=5000; # maximum number of pages to retrieve by default to reduce server load.
-#$default_delaytime = 60*60*24; # set the default delayed time for caching as 24 hours
+#$default_delaytime= 60*60*24; # set the default delayed time for caching as 24 hours
 #$use_avatar='identicon'; # set avatar imgs based on user IP address for anonymous users. default: identicon
 #$titlesearch_noexact=0; # do not search exact page name and get all titlesearch results
 #$titlesearch_exact_all=0; # get all exact matches
