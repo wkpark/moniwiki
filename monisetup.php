@@ -7,6 +7,18 @@ function _stripslashes($str) {
   return get_magic_quotes_gpc() ? stripslashes($str):$str;
 }
 
+// from gforge perl snippet
+function randstr($num) {
+    for ($i = 0, $bit = "!", $key = ""; $i < $num; $i++) {
+        while (!preg_match('/^[0-9A-Za-z]$/', $bit)) {
+            $bit = chr(rand(0, 90) + 32);
+        }
+        $key .= $bit;
+        $bit = "!";
+    }
+    return $key;
+}
+
 class MoniConfig {
   function MoniConfig($configfile="config.php") {
     if (file_exists($configfile)) {
@@ -51,6 +63,9 @@ class MoniConfig {
         print '<p>'.sprintf(_t("No \$dba_type selected.")).'</p>';
       }
     }
+    // set random seed for security
+    $config['seed'] = randstr(64);
+
     preg_match("/Apache\/2\./",$_SERVER['SERVER_SOFTWARE'],$match);
     if (preg_match('/^\d+\.\d+\.\d+\.\d+$/', $_SERVER['SERVER_ADDR'])) {
       $host = $_SERVER['SERVER_ADDR'];
