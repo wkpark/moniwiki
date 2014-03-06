@@ -94,8 +94,9 @@ class Blog_cache {
     $files = array();
     $changecache->_caches($files);
 
+    $bc = new Blog_cache;
     if (!$date)
-      $date=Blog_cache::get_daterule();
+      $date = $bc->get_daterule();
 
     if (!$pages) {
       $pagerule='.*';
@@ -241,6 +242,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
 
   $options['category']=!empty($options['category']) ? $options['category']:$match[3];
 
+  $bc = new Blog_cache;
 
   if (!empty($options['category'])) {
     $options['category']=
@@ -252,7 +254,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
         sprintf(_("Invalid category expr \"%s\""),$options['category']).')]]';
     }
     if ($DBInfo->blog_category) {
-      $categories=Blog_cache::get_categories();
+      $categories = $bc->get_categories();
       if (isset($categories[$options['category']]))
         $category_pages=$categories[$options['category']];
     }
@@ -280,7 +282,7 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
 
   #print_r($category_pages);
   if (in_array('all',$opts) or $category_pages) {
-    $blogs=Blog_cache::get_rc_blogs($date,$category_pages);
+    $blogs = $bc->get_rc_blogs($date,$category_pages);
   } else if ($blog_page)
     //$blogs=array($DBInfo->pageToKeyname($blog_page));
     $blogs=array($blog_page);
@@ -292,9 +294,9 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
 #  print_r($blogs);
 
   if (in_array('summary',$opts))
-    $logs=Blog_cache::get_summary($blogs,$options);
+    $logs = $bc->get_summary($blogs,$options);
   else
-    $logs=Blog_cache::get_simple($blogs,$options);
+    $logs = $bc->get_simple($blogs,$options);
   usort($logs,'BlogCompare');
 
   // get the number of trackbacks
