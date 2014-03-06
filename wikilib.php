@@ -3083,7 +3083,7 @@ function macro_RandomQuote($formatter,$value="",$options=array()) {
     $quote=str_replace("<","&lt;",$quote);
     $quote=preg_replace($formatter->baserule,$formatter->baserepl,$quote);
     $out = preg_replace_callback("/(".$wordrule.")/",
-        array(&$this, 'link_repl'), $quote);
+        array(&$formatter, 'link_repl'), $quote);
   }
 #  ob_start();
 #  $options['nosisters']=1;
