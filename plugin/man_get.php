@@ -23,7 +23,7 @@ function do_man_get($formatter,$options) {
   if ($options['lang'] and in_array($options['lang'],$supported))
     $LANG='LANG='.$options['lang'];
   if ($options['sec']!=intval($options['sec'])) unset($options['sec']);
-  $cmd=$LANG." man $options[sec] -a -w $options[man]";
+  $cmd=$LANG." man -a -w $options[sec] $options[man]";
   $formatter->errlog();
   $fp=popen(escapeshellcmd($cmd).$formatter->LOG,'r');
   if (is_resource($fp)) {
@@ -72,7 +72,7 @@ function do_man_get($formatter,$options) {
   if ($sz>1) {
     $lnk=array();
     foreach ($fnames as $f) {
-      $tmp=preg_match("@/([^/]+)?/man./([^/]+).(.)\.gz$@",$f,$m);
+      $tmp=preg_match("@/([^/]+)?/man[0-9nl].?/([^/]+)\.(\d[^.]*)(?:\.gz)?$@",$f,$m);
       $lang='en';
       if ($m) {
         if ($m[1] != 'man') $lang=$m[1];
@@ -104,6 +104,7 @@ function do_man_get($formatter,$options) {
   if ($options['edit']) {
     $formatter->send_header("",$options);
     $formatter->send_title("","",$options);
+    $options['action'] = 'savepage';
 
     print macro_EditText($formatter,$raw,$options);
   } else if ($options['raw']) {
