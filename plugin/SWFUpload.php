@@ -26,7 +26,10 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
     }
 
     if (session_id() == '') { // ip based
-        $myid=md5($_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI'); // FIXME
+        $seed = $_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI';
+        if ($DBInfo->seed)
+            $seed .= $DBInfo->seed;
+        $myid = md5($seed); // FIXME
     } else {
         if (!empty($_SESSION['_swfupload']))
             $myid = $_SESSION['_swfupload'];
@@ -56,8 +59,10 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
 
     $default_allowed='*.gif;*.jpg;*.png;*.psd';
     $allowed=$default_allowed;
+    $allowed_re = '.*';
     if (!empty($DBInfo->pds_allowed)) {
         $allowed='*.'.str_replace('|',';*.',$DBInfo->pds_allowed);
+        $allowed_re = $DBInfo->pds_allowed;
     }
 
     $swfupload_num=!empty($GLOBALS['swfupload_num']) ? $GLOBALS['swfupload_num']:0;
@@ -71,7 +76,11 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
             $files=array();
             while ($file = readdir($handle)) {
                 if (is_dir($mydir.$file) or $file[0]=='.') continue;
-                $files[] = $file;
+                if (preg_match('/\.('.$allowed_re.')$/i', $file)) {
+                    $files[] = $file;
+                } else {
+                    @unlink($mydir.$file); // force remove
+                }
             }
             closedir($handle);
 
@@ -299,6 +308,12 @@ EOF;
 function do_SWFUpload($formatter,$options=array()) {
     global $DBInfo;
 
+    // check allowed file extensions
+    $allowed_re = '.*';
+    if (!empty($DBInfo->pds_allowed)) {
+        $allowed_re = $DBInfo->pds_allowed;
+    }
+
     $swfupload_dir=$DBInfo->upload_dir.'/.swfupload';
     $mysubdir='';
     if(!is_dir($swfupload_dir)) {
@@ -310,7 +325,8 @@ function do_SWFUpload($formatter,$options=array()) {
         if ($fp) {
             $htaccess=<<<EOF
 Options -Indexes
-Order deny,allow\n
+Order deny,allow
+deny from all\n
 EOF;
             fwrite($fp,$htaccess);
             fclose($fp);
@@ -324,7 +340,10 @@ EOF;
         $depth=2;
     }
 
-    $myid = md5($_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI'); // FIXME
+    $seed = $_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI';
+    if ($DBInfo->seed)
+        $seed .= $DBInfo->seed;
+    $myid = md5($seed); // FIXME
     if (session_id() != '') { // ip based
         if (0 and $_SESSION['_swfupload']) // XXX flash bug?
             $myid = $_SESSION['_swfupload'];
@@ -366,8 +385,10 @@ EOF;
 
     //move the uploaded file
     if (isset($_FILES['Filedata']['tmp_name'])) {
-        move_uploaded_file($_FILES['Filedata']['tmp_name'],
-            $swfupload_dir.'/'.$mysubdir.$_FILES['Filedata']['name']);
+        if (preg_match('/\.('.$allowed_re.')$/i', $_FILES['Filedata']['name'])) {
+            move_uploaded_file($_FILES['Filedata']['tmp_name'],
+                $swfupload_dir.'/'.$mysubdir.$_FILES['Filedata']['name']);
+        }
         echo "Success";
         return;
     } else if (isset($options['MYFILES']) and is_array($options['MYFILES'])) {
