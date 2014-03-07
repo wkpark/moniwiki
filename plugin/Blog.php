@@ -126,7 +126,7 @@ function do_Blog($formatter,$options) {
   }
 
   if (empty($button_preview) && !empty($savetext)) {
-    $savetext=preg_replace("/(?<!\\\\)}}}/","\}}}",$savetext);
+    //$savetext=preg_replace("/(?<!\\\\)}}}/","\}}}",$savetext);
 
     $url=$formatter->link_tag($formatter->page->urlname,"",$options['page']);
     $options['msg']=sprintf(_("\"%s\" is updated"),$url);
