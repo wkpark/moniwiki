@@ -243,6 +243,10 @@ class PageIndex extends TitleIndexer_Text {
     {
         $lock = fopen($this->pagelck, 'w');
         if (!is_resource($lock)) return false;
+
+        // protect \n char
+        $pagename = str_replace("\x0a", "\x1a", $pagename);
+
         flock($lock, LOCK_EX);
 
         $fidx = fopen($this->pageidx, 'a+b');
@@ -291,6 +295,9 @@ class PageIndex extends TitleIndexer_Text {
     {
         $lock = fopen($this->pagelck, 'w');
         if (!is_resource($lock)) return false;
+        // protect \n char
+        $pagename = str_replace("\x0a", "\x1a", $pagename);
+
         flock($lock, LOCK_EX);
 
         $fidx = fopen($this->pageidx, 'r+');
@@ -426,6 +433,9 @@ class PageIndex extends TitleIndexer_Text {
     function getLikePages($needle, $limit = 100)
     {
         if (!isset($needle[0])) return false; // null needle
+
+        // protect \n char
+        $needle = str_replace("\x0a", "\x1a", $needle);
 
         $total = file_get_contents($this->pagecnt);
         if ($total === false) return false;

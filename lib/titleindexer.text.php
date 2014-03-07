@@ -196,6 +196,9 @@ class TitleIndexer_Text {
 
     function addPage($pagename)
     {
+        // protect \n char
+        $pagename = str_replace("\x0a", "\x1a", $pagename);
+
         $lock = fopen($this->pagelck, 'w');
         if (!is_resource($lock)) return false;
         flock($lock, LOCK_EX);
@@ -234,6 +237,9 @@ class TitleIndexer_Text {
 
     function deletePage($pagename)
     {
+        // protect \n char
+        $pagename = str_replace("\x0a", "\x1a", $pagename);
+
         $lock = fopen($this->pagelck, 'w');
         if (!is_resource($lock)) return false;
         flock($lock, LOCK_EX);
@@ -293,6 +299,9 @@ class TitleIndexer_Text {
     function getLikePages($needle, $limit = 100, $params = array())
     {
         if (!isset($needle[0])) return false; // null needle
+
+        // escape \n char
+        $needle = str_replace("\x0a", "\x1a", $needle);
 
         $total = file_get_contents($this->pagecnt);
         if ($total === false) return false;
