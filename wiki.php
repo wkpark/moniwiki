@@ -3255,6 +3255,7 @@ class Formatter {
     if ($this->wikimarkup) $this->nonexists='always';
 
     if (isset($body[0])) {
+      unset($this->page->pi['#format']); // reset page->pi to get_instructions() again
       $this->text = $body;
       $pi=$this->page->get_instructions($body);
 
