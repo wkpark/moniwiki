@@ -2263,6 +2263,7 @@ function do_titlesearch($formatter,$options) {
   global $DBInfo;
 
   $ret = array();
+  if (isset($options['noexact'])) $ret['noexact'] = $options['noexact'];
   $out= macro_TitleSearch($formatter,$options['value'],$ret);
 
   if ($ret['hits']==1 and (empty($DBInfo->titlesearch_noredirect) or !empty($ret['exact']))) {
@@ -4085,6 +4086,11 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   }
   $needle=_preg_search_escape($needle);
 
+  // return the exact page or all similar pages
+  $noexact = true;
+  if (isset($opts['noexact']))
+    $noexact = $opts['noexact'];
+
   $indexer = $DBInfo->lazyLoad('titleindexer');
   $pages = $indexer->getLikePages($needle);
 
@@ -4095,16 +4101,25 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   $pages = array_merge($pages, $alias);
   $hits=array();
   $exacts = array();
-  foreach ($pages as $page) {
-    if (empty($DBInfo->titlesearch_noexact) and preg_match("/^".$needle."$/i", $page)) {
-      $hits[] = $page;
-      $exacts[] = $page;
-      if (empty($DBInfo->titlesearch_exact_all)) {
-        $hits = $exacts;
-        break;
+
+  if ($noexact) {
+    // return all search results
+    foreach ($pages as $page) {
+      if (preg_match("/".$needle."/i", $page)) {
+        $hits[]=$page;
       }
-    } else if (preg_match("/".$needle."/i", $page)) {
-      $hits[]=$page;
+    }
+  } else {
+    // return exact pages
+    foreach ($pages as $page) {
+      if (preg_match("/^".$needle."$/i", $page)) {
+        $hits[] = $page;
+        $exacts[] = $page;
+        if (empty($DBInfo->titlesearch_exact_all)) {
+          $hits = $exacts;
+          break;
+        }
+      }
     }
   }
 
