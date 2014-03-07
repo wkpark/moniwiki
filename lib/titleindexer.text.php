@@ -319,23 +319,10 @@ class TitleIndexer_Text {
         $size = ftell($flst);
         fseek($flst, 0, SEEK_SET);
         $chunk = min(10240, intval($size / 10));
-        $all = 0;
-        $remain = '';
+        $chunk = max($chunk, 8192);
         while (!feof($flst)) {
-            $len = $chunk;
-            $all+= $chunk;
-            if ($all > $size) {
-                $diff = $all - $size - 1;
-                $len-= $diff;
-                $all-= $diff;
-            }
-            $tmp = $remain;
-            if ($len > 0) $tmp.= fread($flst, $len);
-            if (($p = strrpos($tmp, "\n")) === false) {
-                break;
-            }
-            $data = substr($tmp, 0, $p);
-            $remain = substr($tmp, $p+1);
+            $data = fread($flst, $chunk);
+            $data .= fgets($flst, 2048);
 
             if (preg_match_all('/^'.$pre.'(?:'.$needle.')'.$suf.'$/uim', $data, $match)) {
                 $pages = array_merge($pages, $match[0]);
