@@ -12,12 +12,21 @@ require_once(dirname(__FILE__).'/titleindexer.text.php');
 class PageIndex extends TitleIndexer_Text {
     var $text_dir = '';
 
+    /**
+     * the size of chunk to read indexer at once
+     */
+    var $chunksize = 2000;
+
     function PageIndex($name = 'pageindex')
     {
         global $Config;
 
         $this->text_dir = $Config['text_dir'];
         $this->cache_dir = $Config['cache_dir'] . '/'.$name;
+
+        if (!empty($Config['pageindex_chunksize']))
+            $this->chunksize = $Config['pageindex_chunksize'];
+
         if (!is_dir($this->cache_dir)) {
             $om = umask(000);
             _mkdir_p($this->cache_dir, 0777);
@@ -346,7 +355,7 @@ class PageIndex extends TitleIndexer_Text {
         /* */
 
         /* fast method */
-        $chunk = 10000 - 1; // chunk size
+        $chunk = $this->chunksize - 1; // chunk size
         $is = $ie = 0; // index start/end
         $ss = $se = 0; // seek start/end
         fseek($flst, 0, SEEK_SET);
@@ -464,7 +473,7 @@ class PageIndex extends TitleIndexer_Text {
             $needle = substr($needle, 0, -1);
         }
 
-        $chunk = 10000 - 1; // chunk size
+        $chunk = $this->chunksize - 1; // chunk size
         $is = $ie = 0; // index start/end
         $ss = $se = 0; // seek start/end
         fseek($flst, 0, SEEK_SET);
