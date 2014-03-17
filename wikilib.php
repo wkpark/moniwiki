@@ -2683,6 +2683,9 @@ function do_post_savepage($formatter,$options) {
     $myrefresh='';
     if (!empty($DBInfo->use_save_refresh)) {
       $lnk=$formatter->link_url($formatter->page->urlname,"?action=show");
+      if (!empty($options['section']))
+        $lnk .= '#sect-'.$options['section'];
+
       if ($DBInfo->use_save_refresh > 0) {
         $sec=$DBInfo->use_save_refresh - 1;
         $myrefresh='Refresh: '.$sec.'; url='.qualifiedURL($lnk);
