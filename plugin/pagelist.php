@@ -76,7 +76,7 @@ function macro_PageList($formatter,$arg="",$options=array()) {
     arsort($hits);
     while (list($pagename,$mtime) = @each ($hits)) {
       $out.= '<li>'.$formatter->link_tag(_rawurlencode($pagename),"",
-	htmlspecialchars($pagename)).
+	_html_escape($pagename)).
 	". . . . [".gmdate("Y-m-d",$mtime+$tz_offset)."]</li>\n";
     }
     $out="<ol>\n".$out."</ol>\n";
@@ -123,7 +123,7 @@ function macro_PageList($formatter,$arg="",$options=array()) {
         foreach ($dirs as $pg=>$name) {
             $out.= '<tr><td>'.$dicon.'</td><td>'.
                 $formatter->link_tag(_rawurlencode($pg),"",
-	    htmlspecialchars($files[$pg])).'</td>';
+	    _html_escape($files[$pg])).'</td>';
             if ($options['info']) {
                 $p=new WikiPage($pg);
                 $mtime=$p->mtime();
@@ -140,7 +140,7 @@ function macro_PageList($formatter,$arg="",$options=array()) {
         foreach ($files as $pg=>$name) {
             $out.= '<tr><td>'.$ficon.'</td><td>'.
                 $formatter->link_tag(_rawurlencode($pg),"",
-	    htmlspecialchars($name)).'</td>';
+	    _html_escape($name)).'</td>';
             if (!empty($options['info'])) {
                 $p=new WikiPage($pg);
                 $mtime=$p->mtime();
@@ -157,7 +157,7 @@ function macro_PageList($formatter,$arg="",$options=array()) {
     } else {
     foreach ($hits as $pagename) {
       $out.= '<li>' . $formatter->link_tag(_rawurlencode($pagename),"",
-	htmlspecialchars($pagename))."</li>\n";
+	_html_escape($pagename))."</li>\n";
     }
     $out="<ol>\n".$out."</ol>\n";
     $count = count($hits);

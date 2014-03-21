@@ -19,7 +19,7 @@ function macro_PageLinks($formatter,$options="") {
   foreach ($pages as $page) {
     $lnks=$cache->fetch($page);
     if ($lnks !== false) {
-        $out.="<li>".$formatter->link_tag($page,'',htmlspecialchars($page)).": ";
+        $out.="<li>".$formatter->link_tag($page,'',_html_escape($page)).": ";
         $links=implode(' ',$lnks);
         $links = preg_replace_callback("/(".$formatter->wordrule.")/",
             array(&$formatter, 'link_repl'), $links);

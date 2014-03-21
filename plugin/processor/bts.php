@@ -204,7 +204,7 @@ TAIL;
             $copy = isset($tmp[1]) ? $tmp[1] : '';
             if (preg_match('/^Comment-Id:\s*(\d+)/i',$comment,$m)) {
                 list($myhead,$my)=explode("\n\n",$comment,2);
-                $hidden.='<pre style="display:none;" id="comment_text_'.$m[1].'">'.htmlspecialchars($my).'</pre>';
+                $hidden.='<pre style="display:none;" id="comment_text_'.$m[1].'">'._html_escape($my).'</pre>';
             }
         }
 

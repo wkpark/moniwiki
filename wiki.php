@@ -2436,8 +2436,7 @@ class Formatter {
     } else {
       $word=$text=$page_text ? $page_text:$word;
       #echo $text;
-      $word=htmlspecialchars($word);
-      $word=str_replace('&amp;#','&#',$word); # hack
+      $word=_html_escape($word);
     }
 
     $url=_urlencode($page);
@@ -2868,7 +2867,7 @@ class Formatter {
 
   function link_to($query_string="",$text="",$attr="") {
     if (empty($text))
-      $text=htmlspecialchars($this->page->name);
+      $text=_html_escape($this->page->name);
 
     return $this->link_tag($this->page->urlname,$query_string,$text,$attr);
   }
@@ -4375,7 +4374,7 @@ class Formatter {
       else if (!empty($DBInfo->use_keywords)) {
         $keywords=strip_tags($this->page->title);
         $keywords=str_replace(" ",", ",$keywords); # XXX
-        $keywords=htmlspecialchars($keywords);
+        $keywords=_html_escape($keywords);
         $keywords="<meta name=\"keywords\" content=\"$keywords\" />\n";
       }
       # find sub pages
@@ -4406,7 +4405,7 @@ class Formatter {
         $options['title']=!empty($this->pi['#title']) ? $this->pi['#title']:
           $this->page->title;
         $options['title']=
-          htmlspecialchars($options['title']);
+          _html_escape($options['title']);
       } else {
         $options['title'] = strip_tags($options['title']);
       }
@@ -4613,9 +4612,9 @@ FOOT;
 
     $title = '';
     if (isset($this->pi['#title']))
-      $title=htmlspecialchars($this->pi['#title']);
+      $title=_html_escape($this->pi['#title']);
     if (!empty($msgtitle)) {
-      $msgtitle = htmlspecialchars($msgtitle);
+      $msgtitle = _html_escape($msgtitle);
     } else if (isset($options['msgtitle'])) {
       $msgtitle = $options['msgtitle'];
     }
@@ -4632,7 +4631,7 @@ FOOT;
         $groupt = '';
         $title=$this->page->title;
       }
-      $title=htmlspecialchars($title);
+      $title=_html_escape($title);
     }
     # setup title variables
     #$heading=$this->link_to("?action=fullsearch&amp;value="._urlencode($name),$title);
@@ -4718,13 +4717,13 @@ MSG;
     if (!empty($DBInfo->use_titlemenu) and $titlemnu == 0 ) {
       $len = $DBInfo->use_titlemenu > 15 ? $DBInfo->use_titlemenu:15;
       #$attr="class='current'";
-      $mnuname=htmlspecialchars($this->page->name);
+      $mnuname=_html_escape($this->page->name);
       if ($DBInfo->hasPage($this->page->name)) {
         if (strlen($mnuname) < $len) {
           $menu[$this->page->name]=$this->word_repl($mypgname,$mnuname,$attr);
         } else if (function_exists('mb_strimwidth')) {
           $my=mb_strimwidth($mypgname,0,$len,'...', $DBInfo->charset);
-          $menu[$this->page->name]=$this->word_repl($mypgname,htmlspecialchars($my),$attr);
+          $menu[$this->page->name]=$this->word_repl($mypgname,_html_escape($my),$attr);
         }
       }
     }
@@ -5014,7 +5013,7 @@ MSG;
         $this->trail.=$this->word_repl('"'.$page.'"','','',1,0).'<span class="separator">'.$DBInfo->arrow.'</span>';
       }
       $this->forcelink = 0;
-      $this->trail.= ' '.htmlspecialchars($pagename);
+      $this->trail.= ' '._html_escape($pagename);
       $this->pagelinks=array(); # reset pagelinks
       $this->sister_on=$sister_save;
 
@@ -5645,15 +5644,15 @@ function wiki_main($options) {
         $button= $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
         if ($oldver) {
           $formatter->send_title(sprintf(_("%s has saved revisions"),$page->name),"",$options);
-          $searchval=htmlspecialchars($options['page']);
+          $searchval=_html_escape($options['page']);
           echo '<h2>'.sprintf(_("%s or click %s to fulltext search.\n"),$button,$formatter->link_to("?action=fullsearch&amp;value=$searchval",_("here"))).'</h2>';
           $options['info_actions']=array('recall'=>'view','revert'=>'revert');
-          $options['title']='<h3>'.sprintf(_("Old Revisions of the %s"),htmlspecialchars($page->name)).'</h3>';
+          $options['title']='<h3>'.sprintf(_("Old Revisions of the %s"),_html_escape($page->name)).'</h3>';
           #if (empty($formatter->wordrule)) $formatter->set_wordrule();
           echo $formatter->macro_repl('Info','',$options);
         } else {
           $formatter->send_title(sprintf(_("%s is not found in this Wiki"),$page->name),"",$options);
-          $searchval=htmlspecialchars($options['page']);
+          $searchval=_html_escape($options['page']);
           echo '<h2>'.sprintf(_("%s or click %s to fulltext search.\n"),$button,$formatter->link_to("?action=fullsearch&amp;value=$searchval",_("here"))).'</h2>';
           $err = array();
           echo $formatter->macro_repl('LikePages',$page->name,$err);

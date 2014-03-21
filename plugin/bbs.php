@@ -580,7 +580,7 @@ function macro_BBS($formatter,$value,$options=array()) {
                 list($comment,$copy)=explode("----".$boundary."\n",$copy,2);
                 if (preg_match('/^Comment-Id:\s*(\d+)/i',$comment,$m)) {
                     list($myhead,$my)=explode("\n\n",$comment,2);
-                    $hidden.='<pre style="display:none;" id="comment_text_'.$m[1].'">'.htmlspecialchars($my).'</pre>';
+                    $hidden.='<pre style="display:none;" id="comment_text_'.$m[1].'">'._html_escape($my).'</pre>';
                 }
             }
             ob_start();

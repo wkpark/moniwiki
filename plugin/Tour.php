@@ -57,14 +57,14 @@ function macro_Tour($formatter,$value,$options=array()) {
     $query2 = '';
     if ($arena == 'backlinks') {
         $head2=_("BackLinks");
-        $link=$formatter->link_tag(htmlspecialchars($value));
+        $link=$formatter->link_tag(_html_escape($value));
     } else if ($arena == 'keylinks' or $arena == 'keywords') {
         $query2='?action=fullsearch&amp;keywords=1';
         $head2=_("Keywords");
         if ($DBInfo->hasPage($value)) {
             $link=$value;
         } else {
-            $link=$formatter->link_to('?action=fullsearch&amp;value='.$value,htmlspecialchars($value));
+            $link=$formatter->link_to('?action=fullsearch&amp;value='.$value,_html_escape($value));
         }
     }
 
@@ -136,7 +136,7 @@ function macro_Tour($formatter,$value,$options=array()) {
             $extra='&amp;value='.$url[$node];
         }
         $pages.='<li>'.$formatter->link_tag($pg,$query2.$extra,
-            htmlspecialchars($node))."</li>\n";
+            _html_escape($node))."</li>\n";
     }
     if ($arena == 'keywords' or $arena == 'keylinks')
         $title=

@@ -571,7 +571,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $pageurl=_rawurlencode($page_name);
     // get title
     $title0= get_title($title).$group;
-    $title0=htmlspecialchars($title0);
+    $title0=_html_escape($title0);
 
     if ($list) $attr = '';
     else $attr = " id='title-$ii'";

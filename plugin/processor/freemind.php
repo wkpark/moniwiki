@@ -130,9 +130,9 @@ function processor_freemind($formatter,$value) {
                     $link=$link ? 'LINK="'.addslashes($link).'" ':'';
                     if ($img) $extra='<html><img src="'.$img.'">';
                 }
-                if (!empty($extra)) $extra=htmlspecialchars($extra);
+                if (!empty($extra)) $extra=_html_escape($extra);
             }
-            $text=addslashes(htmlspecialchars($text));
+            $text=addslashes(_html_escape($text));
     
             $out.='<node '.$link.$folded.$align.'COLOR="'.$COLOR.'" TEXT="'.$extra.$text.'">'."\n";
             $out.="<font NAME=\"$FONT\" SIZE=\"$SIZE\"/>\n";

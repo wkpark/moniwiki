@@ -44,7 +44,7 @@ function macro_WantedPages($formatter,$value='') {
     $owns=str_replace('<','&lt;',$owns);
     $nowns = preg_replace_callback("/(".$formatter->wordrule.")/",
       array(&$formatter, 'link_repl'), $owns);
-    $out.="<li>".$formatter->link_repl($name,htmlspecialchars($name)). ": $nowns</li>";
+    $out.="<li>".$formatter->link_repl($name,_html_escape($name)). ": $nowns</li>";
   }
   $out.="</ul>\n";
   $formatter->sister_on=$save;

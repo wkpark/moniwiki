@@ -30,9 +30,9 @@ class WikiRSSParser {
            if ($this->status) print "[$this->status] ";
            printf("<a href='%s' target='_content'>%s</a>",
              trim($this->link),
-             htmlspecialchars(trim($this->title)));
+             _html_escape(trim($this->title)));
            #printf("<p>%s</p>",
-           #  htmlspecialchars(trim($this->description)));
+           #  _html_escape(trim($this->description)));
            if ($this->date) {
              $date=trim($this->date);
              $date[10]=" ";
@@ -41,7 +41,7 @@ class WikiRSSParser {
              $zone=str_replace(":","",substr($date,19));
              $time=strtotime(substr($date,0,19).$zone);
              $date=date("@ m-d [h:i a]",$time);
-             printf(" %s<br />\n", htmlspecialchars(trim($date)));
+             printf(" %s<br />\n", _html_escape(trim($date)));
            } else
              printf("<br />\n");
            $this->title = "";

@@ -78,7 +78,7 @@ function macro_OrphanedPages($formatter,$value, $params = array()) {
     $orphaned = array_flip($orphaned);
     $out = "<ol$start>\n";
     foreach ($orphaned as $page) {
-        $out.= "<li>" . $formatter->link_tag($page, '', htmlspecialchars($page)) . "</li>\n";
+        $out.= "<li>" . $formatter->link_tag($page, '', _html_escape($page)) . "</li>\n";
     }
     $out.= "</ol>\n";
     $out.= $formatter->link_to("?action=orphanedpages&amp;offset=$j&amp;start=$i", _("Show next page"));

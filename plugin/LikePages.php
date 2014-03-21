@@ -179,7 +179,7 @@ function macro_LikePages($formatter="", $value, &$opts) {
     $out.="<ol>\n";
     foreach ($likes as $pagename => $i) {
       $pageurl=_rawurlencode($pagename);
-      $pagetext=htmlspecialchars(urldecode($pagename));
+      $pagetext=_html_escape(urldecode($pagename));
       $out.= '<li>' . $formatter->link_tag($pageurl,"",$pagetext,"tabindex='$idx'")."</li>\n";
       $idx++;
     }
@@ -193,7 +193,7 @@ function macro_LikePages($formatter="", $value, &$opts) {
     $out.="<table border='0' width='100%'><tr><td width='50%' valign='top'>\n<ol>\n";
     while (list($pagename,$i) = each($starts)) {
       $pageurl=_rawurlencode($pagename);
-      $pagetext=htmlspecialchars(urldecode($pagename));
+      $pagetext=_html_escape(urldecode($pagename));
       $out.= '<li>' . $formatter->link_tag($pageurl,"",$pagetext,"tabindex='$idx'")."</li>\n";
       $idx++;
     }
@@ -204,7 +204,7 @@ function macro_LikePages($formatter="", $value, &$opts) {
     $out.="<td width='50%' valign='top'><ol>\n";
     while (list($pagename,$i) = each($ends)) {
       $pageurl=_rawurlencode($pagename);
-      $pagetext=htmlspecialchars(urldecode($pagename));
+      $pagetext=_html_escape(urldecode($pagename));
       $out.= '<li>' . $formatter->link_tag($pageurl,"",$pagetext,"tabindex='$idx'")."</li>\n";
       $idx++;
     }

@@ -80,7 +80,7 @@ CHANNEL;
       ob_start();
       #$f->send_page($summary);
       $f->send_page($summary,array('fixpath'=>1));
-      #$summary=htmlspecialchars(ob_get_contents());
+      #$summary=_html_escape(ob_get_contents());
       $summary='<![CDATA['.ob_get_contents().']]>';
       ob_end_clean();
       $items.="     <description>$summary</description>\n";

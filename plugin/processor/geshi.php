@@ -92,7 +92,7 @@ function processor_geshi($formatter,$value,$options) {
 
   # comment out the following two lines to freely use any syntaxes.
   if (!in_array($type,$syntax)) 
-    return "<pre class='code'>\n$line\n".htmlspecialchars($src)."\n</pre>\n";
+    return "<pre class='code'>\n$line\n"._html_escape($src)."\n</pre>\n";
 
   $geshi = new GeSHi($src, $type, dirname(__FILE__)."/../../lib/geshi/geshi");
   if ($extra == "number") {

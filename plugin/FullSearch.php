@@ -41,7 +41,7 @@ function do_fullsearch($formatter,$options) {
   $offset = '';
 
   if (isset($options['value'][0])) {
-    $val=htmlspecialchars($options['value']);
+    $val=_html_escape($options['value']);
     printf(_("Found %s matching %s out of %s total pages"),
          $ret['hit'],
         ($ret['hit'] == 1) ? _("page") : _("pages"),

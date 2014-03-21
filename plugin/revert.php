@@ -20,7 +20,7 @@
 
 function macro_Revert($formatter,$value,$options=array()) {
     $options['info_actions']=array('recall'=>'view','revert'=>'revert');
-    $options['title']='<h3>'.sprintf(_("Old Revisions of the %s"),htmlspecialchars($formatter->page->name)).'</h3>';
+    $options['title']='<h3>'.sprintf(_("Old Revisions of the %s"),_html_escape($formatter->page->name)).'</h3>';
     $out= $formatter->macro_repl('Info','',$options);
     return $out;
 }

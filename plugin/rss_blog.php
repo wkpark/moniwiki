@@ -156,7 +156,7 @@ function generate_item($formatter, $log)
   }
 
   /* convert special characters into HTML entities */
-  $title = htmlspecialchars($title);
+  $title = _html_escape($title);
 
   return <<<ITEM
 <item>
