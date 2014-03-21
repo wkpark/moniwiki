@@ -30,10 +30,14 @@ class processor_parsedown
 
     var $breaks_enabled = false;
     var $formatter;
+    var $charset = 'UTF-8';
 
     function processor_parsedown($formatter, $params = array())
     {
+        global $DBInfo;
+
         $this->formatter = &$formatter;
+        $this->charset = $DBInfo->charset;
     }
 
     function set_breaks_enabled($breaks_enabled)
@@ -615,7 +619,7 @@ class processor_parsedown
 
                 case 'code':
 
-                    $text = htmlspecialchars($block['text'], ENT_NOQUOTES, 'UTF-8');
+                    $text = htmlspecialchars($block['text'], ENT_NOQUOTES, $this->charset);
 
                     $markup .= '<pre><code>'.$text.'</code></pre>'."\n";
 
@@ -623,7 +627,7 @@ class processor_parsedown
 
                 case 'fenced':
 
-                    $text = htmlspecialchars($block['text'], ENT_NOQUOTES, 'UTF-8');
+                    $text = htmlspecialchars($block['text'], ENT_NOQUOTES, $this->charset);
 
                     $markup .= '<pre><code';
 
@@ -982,7 +986,7 @@ class processor_parsedown
                     if (preg_match('/^(`+)(.+?)\1(?!`)/', $text, $matches))
                     {
                         $element_text = $matches[2];
-                        $element_text = htmlspecialchars($element_text, ENT_NOQUOTES, 'UTF-8');
+                        $element_text = htmlspecialchars($element_text, ENT_NOQUOTES, $this->charset);
 
                         $markup .= '<code>'.$element_text.'</code>';
 

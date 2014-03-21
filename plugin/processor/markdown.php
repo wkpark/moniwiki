@@ -71,6 +71,7 @@ class Markdown_Parser {
 	# Change to `true` to disallow markup or entities.
 	var $no_markup = false;
 	var $no_entities = false;
+	var $charset = 'UTF-8';
 
 
 	function Markdown_Parser() {
@@ -909,7 +910,7 @@ class Markdown_Parser {
 		$codeblock = $matches[1];
 
 		$codeblock = $this->outdent($codeblock);
-		$codeblock = htmlspecialchars($codeblock, ENT_NOQUOTES);
+		$codeblock = htmlspecialchars($codeblock, ENT_NOQUOTES, $this->charset);
 
 		# trim leading newlines and trailing newlines
 		$codeblock = preg_replace('/\A\n+|\n+\z/', '', $codeblock);
@@ -923,7 +924,7 @@ class Markdown_Parser {
 	#
 	# Create a code span markup for $code. Called from handleSpanToken.
 	#
-		$code = htmlspecialchars(trim($code), ENT_NOQUOTES);
+		$code = htmlspecialchars(trim($code), ENT_NOQUOTES, $this->charset);
 		return $this->hashPart("<code>$code</code>");
 	}
 
@@ -1337,6 +1338,7 @@ class Processor_Markdown extends Markdown_Parser {
 
 
 	function Processor_Markdown() {
+                global $DBInfo;
 	#
 	# Constructor function. Initialize the parser object.
 	#
@@ -1359,7 +1361,8 @@ class Processor_Markdown extends Markdown_Parser {
 			"doFootnotes"        => 5,
 			"doAbbreviations"    => 70,
 			);
-		
+		$this->charset = $DBInfo->charset;
+
 		parent::Markdown_Parser();
 	}
 	
@@ -2398,7 +2401,7 @@ class Processor_Markdown extends Markdown_Parser {
 			if (empty($desc)) {
 				return $this->hashPart("<abbr>$abbr</abbr>");
 			} else {
-				$desc = htmlspecialchars($desc, ENT_NOQUOTES);
+				$desc = htmlspecialchars($desc, ENT_NOQUOTES, $this->charset);
 				return $this->hashPart("<abbr title=\"$desc\">$abbr</abbr>");
 			}
 		} else {
