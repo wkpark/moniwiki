@@ -236,7 +236,7 @@ EOF;
   if (isset($hits)) {
     if (in_array($arena, array('backlinks', 'keywords'))) {
       $test = key($hits);
-      if ($test === 0 and $hits[$test] != -1) {
+      if (is_int($test) and $hits[$test] != -1) {
         // fix compatible issue for keywords, backlinks
         $hits = array_flip($hits);
         foreach ($hits as $k=>$v) $hits[$k] = -1;
