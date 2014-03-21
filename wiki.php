@@ -2236,6 +2236,11 @@ class Formatter {
         return "<a class='internalLink' href='$link'>$link</a>";
       }
       $url=urldecode($url);
+
+      // auto detect the encoding of a given URL
+      if (function_exists('mb_detect_encoding'))
+        $url = _autofixencode($url);
+
       return "<a class='externalLink' $attr href='$link' $this->external_target>$url</a>";
     } else {
       if ($url{0}=='?')

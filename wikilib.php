@@ -146,6 +146,25 @@ function _urlencode($url) {
             array('#', '&', '/', ':', ';', '=', '?'), rawurlencode($url));
 }
 
+/**
+ * auto detect the encoding of a given URL and fix it
+ *
+ * @since  2014/03/21
+ */
+
+function _autofixencode($str) {
+  global $DBInfo;
+
+  if (isset($DBInfo->url_encodings)) {
+    $charset = mb_detect_encoding($str, $DBInfo->url_encodings);
+    if ($encode !== false) {
+      $tmp = iconv($charset, $DBInfo->charset, $str);
+      if ($tmp !== false) return $tmp;
+    }
+  }
+  return $str;
+}
+
 if (!function_exists('_stripslashes')) {
 function _stripslashes($str) {
   return get_magic_quotes_gpc() ? stripslashes($str):$str;
