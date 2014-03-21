@@ -143,7 +143,7 @@ CHANNEL;
 
     $channel.="<rdf:li rdf:resource=\"$url\"></rdf:li>\n";
 
-    $valid_page_name=str_replace('&','&amp;',$page_name);
+    $valid_page_name=preg_replace('/&(?!#?\w+;)/', '&amp;', _html_escape($page_name));
     $items.="<item rdf:about=\"$url\">\n";
     $items.="  <title>$valid_page_name</title>\n";
     $items.="  <link>$url</link>\n";
