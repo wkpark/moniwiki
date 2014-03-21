@@ -9,10 +9,14 @@
 
 class TitleIndexer_Text {
     var $text_dir = '';
+    var $_match_flags = 'uim';
 
     function TitleIndexer_Text($name = 'titleindexer')
     {
         global $Config;
+
+        if (strtolower($Config['charset']) != 'utf-8')
+            $this->_match_flags = 'im';
 
         $this->text_dir = $Config['text_dir'];
         $this->cache_dir = $Config['cache_dir'] . '/'.$name;
@@ -333,7 +337,7 @@ class TitleIndexer_Text {
             $data = fread($flst, $chunk);
             $data .= fgets($flst, 2048);
 
-            if (preg_match_all('/^'.$pre.'(?:'.$needle.')'.$suf.'$/uim', $data, $match)) {
+            if (preg_match_all('/^'.$pre.'(?:'.$needle.')'.$suf.'$/'.$this->_match_flags, $data, $match)) {
                 $pages = array_merge($pages, $match[0]);
                 if (!empty($limit) and count($pages) > $limit) break;
             }

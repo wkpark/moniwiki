@@ -11,6 +11,7 @@ require_once(dirname(__FILE__).'/titleindexer.text.php');
 
 class PageIndex extends TitleIndexer_Text {
     var $text_dir = '';
+    var $_match_flags = 'uim';
 
     /**
      * the size of chunk to read indexer at once
@@ -20,6 +21,9 @@ class PageIndex extends TitleIndexer_Text {
     function PageIndex($name = 'pageindex')
     {
         global $Config;
+
+        if (strtolower($Config['charset']) != 'utf-8')
+            $this->_match_flags = 'im';
 
         $this->text_dir = $Config['text_dir'];
         $this->cache_dir = $Config['cache_dir'] . '/'.$name;
@@ -489,7 +493,7 @@ class PageIndex extends TitleIndexer_Text {
             $addtmp = fgets($flst, 1024); // include last chunk
             $tmp.= $addtmp;
             $se+= strlen($addtmp);
-            if (preg_match_all('/^'.$pre.'(?:'.$needle.')'.$suf.'$/uim', $tmp, $match)) {
+            if (preg_match_all('/^'.$pre.'(?:'.$needle.')'.$suf.'$/'.$this->_match_flags, $tmp, $match)) {
                 $pages = array_merge($pages, $match[0]);
                 if (!empty($limit) and count($pages) > $limit) break;
             }
