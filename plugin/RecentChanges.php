@@ -578,7 +578,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     if (!empty($strimwidth) and strlen(get_title($title)) > $strimwidth and function_exists('mb_strimwidth')) {
       $title0=mb_strimwidth($title0,0, $strimwidth,'...', $DBInfo->charset);
     }
-    $attr.= ' title="'.$title.'"';
+    $attr.= ' title="'.$title0.'"';
     $title= $formatter->link_tag($pageurl,"",$title0,$target.$attr);
 
     // simple list format
