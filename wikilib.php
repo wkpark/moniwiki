@@ -3107,7 +3107,7 @@ function macro_RandomQuote($formatter,$value="",$options=array()) {
     $formatter->set_wordrule();
     $quote=str_replace("<","&lt;",$quote);
     $quote=preg_replace($formatter->baserule,$formatter->baserepl,$quote);
-    $out = preg_replace_callback("/(".$wordrule.")/",
+    $out = preg_replace_callback("/(".$formatter->wordrule.")/",
         array(&$formatter, 'link_repl'), $quote);
   }
 #  ob_start();
