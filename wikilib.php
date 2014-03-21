@@ -1628,7 +1628,6 @@ function macro_Edit($formatter,$value,$options='') {
     } else $raw_body='';
     $guide = sprintf(_("Describe %s here"), $options['page']);
     $raw_body.= $guide;
-    $guide = str_replace('"', '\\"', $guide);
     $js=<<<EOF
 <script type="text/javascript">
 /*<![CDATA[*/
@@ -1637,13 +1636,12 @@ function macro_Edit($formatter,$value,$options='') {
         var txtarea = document.getElementById('editor-textarea');
         if (!txtarea) return;
 
-        var guide = "$guide";
         txtarea.focus();
         var txt = txtarea.value;
-        var pos = 1 + txt.indexOf(guide);
+        var pos = 1;
         if (!pos) return;
         pos--;
-        var end = pos + guide.length;
+        var end = pos + txt.length;
 
         if (txtarea.selectionStart || txtarea.selectionStart == '0') {
             // goto
