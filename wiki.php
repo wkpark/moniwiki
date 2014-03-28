@@ -1649,7 +1649,7 @@ class Formatter {
       $this->postfilters = '';
     }
 
-    $this->baserule=array("/<([^<>]*>)/",
+    $this->baserule=array("/(?<!\<)<(?:[^<>]*>)/",
                      "/&(?!([^&;]+|#[0-9]+|#x[0-9a-fA-F]+);)/",
                      "/(?<!')'''((?U)(?:[^']|(?<!')'(?!')|'')*)?'''(?!')/",
                      "/''''''/", // SixSingleQuote
@@ -1665,7 +1665,7 @@ class Formatter {
                      "/~~(?<!\s)(?!~)(?U)(.+)(?<!\s)~~/",
                      #"/(\\\\\\\\)/", # tex, pmWiki
                      );
-    $this->baserepl=array("&lt;\\1",
+    $this->baserepl=array("&lt;",
                      "&amp;",
                      "<strong>\\1</strong>",
                      "<strong></strong>",
@@ -1971,6 +1971,7 @@ class Formatter {
       }
       if ($url[0]=='#' and ($p=strpos($url,' '))) {
         $col=strtok($url,' '); $url=strtok('');
+        $url = str_replace('<', '&lt;', $url);
         if (!empty($this->use_htmlcolor) and !preg_match('/^#[0-9a-f]{6}$/i', $col)) {
           $col = substr($col, 1);
           return "<span style='color:$col'>$url</span>";
