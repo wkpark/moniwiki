@@ -1649,7 +1649,7 @@ class Formatter {
       $this->postfilters = '';
     }
 
-    $this->baserule=array("/(?<!\<)<(?:[^<>]*>)/",
+    $this->baserule=array("/(?<!\<)<(?=[^<>]*>)/",
                      "/&(?!([^&;]+|#[0-9]+|#x[0-9a-fA-F]+);)/",
                      "/(?<!')'''((?U)(?:[^']|(?<!')'(?!')|'')*)?'''(?!')/",
                      "/''''''/", // SixSingleQuote
