@@ -131,10 +131,15 @@ class Security_ACL extends Security_base {
         #get group info.
         $matches= preg_grep('/^(@[^\s]+)\s+(.*,?'.$user.',?.*)/', $this->AUTH_ACL);
         foreach ($matches as $line) {
-            $grp=preg_split('/\s+/',$line);
-            $groups[]=$grp[0];
-            if ($grp[2]) $gpriority[$grp[0]]=$grp[2]; # set group priorities
-            else $gpriority[$grp[0]]=2; # default group priority
+            list($grp, $tmp) = preg_split('/\s+/', $line, 2);
+            $tmp = preg_replace("/\s*,\s*/", ",", $tmp); // trim spaces: ' , ' => ','
+            list($users, $priority) = preg_split("/\s+/", $tmp, 2);
+            if (!preg_match("/(^|.*,)$user(,.*|$)/", $users))
+                continue;
+
+            $groups[] = $grp;
+            if (!empty($priority) and is_numeric($priority)) $gpriority[$grp] = $priority; # set group priorities
+            else $gpriority[$grp] = 2; # default group priority
         }
 
         $gregex=implode('|',$groups);
