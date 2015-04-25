@@ -77,8 +77,7 @@ class Version_RCS {
       }
     }
     if (empty($plog)) {
-      // $log = escapeshellarg($log); // win32 does not work correctly
-      $log = '"'.preg_replace('/([\\\"])/', "\\\\\\1", $log).'"';
+      $log = escapeshellarg($log);
       $mlog = ' -m'.$log;
     }
 
