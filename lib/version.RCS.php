@@ -126,6 +126,8 @@ class Version_RCS {
 
   function diff($pagename,$rev="",$rev2="") {
     $option = '';
+    $rev = escapeshellcmd($rev);
+    $rev2 = escapeshellcmd($rev2);
     if ($rev) $option="-r$rev ";
     if ($rev2) $option.="-r$rev2 ";
 
