@@ -402,6 +402,13 @@ function macro_diff($formatter,$value,&$options)
 
   $rev1=!empty($options['rev']) ? $options['rev'] : ''; // old
   $rev2=!empty($options['rev2']) ? $options['rev2'] : ''; // new
+
+  // check revision number
+  if (!empty($rev1) && !preg_match("/^[0-9a-f.]+$/", $rev1)
+      || !empty($rev2) && !preg_match("/^[0-9a-f.]+$/", $rev2)) {
+    return _("Invalid revision numbers");
+  }
+
   if (!$rev1 and !$rev2) {
     $rev1=$formatter->page->get_rev();
   } else if (0 === strcmp($rev1 , (int)$rev1)) {
@@ -519,6 +526,15 @@ function do_diff($formatter,$options="") {
   $date=!empty($options['date']) ? $options['date'] : '';
   $rev=!empty($options['rev']) ? $options['rev'] : '';
   $rev2=!empty($options['rev2']) ? $options['rev2'] : '';
+
+  // check revision number
+  if (!empty($rev) && !preg_match("/^[0-9a-f.]+$/", $rev) || !empty($rev2) && !preg_match("/^[0-9a-f.]+$/", $rev2)) {
+    $options['title']=_("Invalid revision numbers");
+    $options['msg']=_("Please set correct revision numbers");
+    do_invalid($formatter, $options);
+    return;
+  }
+
   if (!empty($options['rcspurge'])) {
     if (!$range) $range=array();
     $rr='';
