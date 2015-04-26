@@ -25,8 +25,8 @@ function do_post_restore($formatter,$options) {
       $options['msg'].= '<br />'._("e.g. \$ mv data/text data/text_old");
       $formatter->send_header("",$options);
       $formatter->send_title($title,"",$options);
-    } else if (file_exists($tar)) {
-      $title = _("Error: tarball does not exists");
+    } else if (!file_exists($tar)) {
+      $title = _("Error: tarball does not exist");
       $formatter->send_header("",$options);
       $formatter->send_title($title,"",$options);
 
