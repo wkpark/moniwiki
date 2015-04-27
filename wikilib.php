@@ -2375,6 +2375,10 @@ function ajax_savepage($formatter,$options) {
       print "false\n";
       print $options['msg'];
       return;
+    } else if ($datestamp > time()) {
+      print _("Invalid access");
+      print "false\n";
+      return;
     }
   } else {
     $options['msg']=_("Section edit is not valid for non-exists page.");
@@ -2543,6 +2547,13 @@ function do_post_savepage($formatter,$options) {
         $diff = $formatter->get_diff($merge); // get diff
       else
         $diff = $formatter->get_diff($savetext); // get diff
+    } else if ($datestamp > time()) {
+      $options['msg'] = sprintf(_("Go back or return to %s"),
+            $formatter->link_tag($formatter->page->urlname, "", _html_escape($options['page'])));
+      $formatter->send_header("", $options);
+      $formatter->send_title(_("Invalid access"),"",$options);
+      $formatter->send_footer();
+      return;
     }
   }
 
