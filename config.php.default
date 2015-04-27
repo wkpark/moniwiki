@@ -160,6 +160,8 @@ $myprocessors=array('syntax'=>'vim','sh'=>'vim','csh'=>'vim',
 	'asm'=>'vim','masm'=>'vim','make'=>'vim',
 	'java'=>'vim','ruby'=>'vim','haskell'=>'vim',
 	'awk'=>'vim','nosyntax'=>'vim','make'=>'vim',
+	'jade'=>false, 'linuxdoc'=>false, 'gnuplot'=>false, 'octave'=>false,
+	'latex'=>false,
 );
 #$myprocessors=array('latex'=>'mimetex');
 #$myplugins=array('fullsearch'=>'FastSearch'); # substitute action/macro
