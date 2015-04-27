@@ -78,8 +78,9 @@ function processor_gnuplot($formatter="",$value="") {
   $plt=preg_replace("/[ ]+/"," ",$plt);
   preg_match("/\nset?\s+(t|te|ter|term)\s(.*)\n/", $plt,$tmatch);
   $plt=preg_replace("/\nset?\s+(t|o|si).*\n/", "\n",$plt);
+  $plt=preg_replace("/system/", "", $plt); # strip system() function
   #
-  $plt=preg_replace("/\n\s*(s?plot)\s+('|\")<(\s*)/", "\n\\1 \\2\\3",$plt);
+  $plt=preg_replace("/('|\")<(\s*)/", "\\1\\2", $plt); # strip all redirection mark
   
   #print "<pre>$plt</pre>";
 
