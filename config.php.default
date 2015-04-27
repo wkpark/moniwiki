@@ -261,6 +261,7 @@ $use_resume_download=1;
 #$dot_options="size \"6,6\"\n"; # extra webdot options
 $preview_no_xss_protection=0; # enable X-XSS-Protection: 0
 $use_save_refresh=2;
+#$use_savapage_hash=1; # use savepage hash to check valid action
 $use_refresh=2;
 $cachetime=0;
 #$cachetime=60*60*5; # set cachetime for caching

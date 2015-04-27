@@ -1699,6 +1699,14 @@ EOF;
   else
      $datestamp= $formatter->page->mtime();
 
+  if (!empty($DBInfo->use_savapage_hash)) {
+    // generate hash
+    $ticket = getTicket($datestamp.$DBInfo->user->id, $_SERVER['REMOTE_ADDR']);
+    $hash = md5($ticket);
+    $hidden .=
+        "\n<input type=\"hidden\" name=\"hash\" value=\"".$hash."\" />\n";
+  }
+
   $raw_body = str_replace(array("&","<"),array("&amp;","&lt;"),$raw_body);
 
   # get categories
@@ -2343,6 +2351,7 @@ function ajax_savepage($formatter,$options) {
   }
   $savetext=$options['savetext'];
   $datestamp=$options['datestamp'];
+  $hash = $options['hash'];
 
   $savetext=preg_replace("/\r\n|\r/", "\n", $savetext);
   $savetext=_stripslashes($savetext);
@@ -2379,6 +2388,16 @@ function ajax_savepage($formatter,$options) {
       print _("Invalid access");
       print "false\n";
       return;
+    }
+
+    // check hash
+    if (!empty($DBInfo->use_savapage_hash)) {
+      $ticket = getTicket($datestamp.$DBInfo->user->id, $_SERVER['REMOTE_ADDR']);
+      if ($hash != md5($ticket)) {
+        print _("Invalid access");
+        print "false\n";
+        return;
+      }
     }
   } else {
     $options['msg']=_("Section edit is not valid for non-exists page.");
@@ -2452,6 +2471,7 @@ function do_post_savepage($formatter,$options) {
 
   $savetext=$options['savetext'];
   $datestamp=$options['datestamp'];
+  $hash = $options['hash'];
   $button_preview = !empty($options['button_preview']) ? 1 : 0;
 
   if ($button_preview)
@@ -2554,6 +2574,15 @@ function do_post_savepage($formatter,$options) {
       $formatter->send_title(_("Invalid access"),"",$options);
       $formatter->send_footer();
       return;
+    } else if (!empty($DBInfo->use_savapage_hash)) {
+      // check hash
+      $ticket = getTicket($datestamp.$DBInfo->user->id, $_SERVER['REMOTE_ADDR']);
+      if ($hash != md5($ticket)) {
+        $formatter->send_header("", $options);
+        $formatter->send_title(_("Invalid access"),"",$options);
+        $formatter->send_footer();
+        return;
+      }
     }
   }
 
