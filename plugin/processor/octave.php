@@ -41,7 +41,9 @@ function processor_octave($formatter="",$value="") {
   $plt=preg_replace("/\n\s*![^\n]+\n/","\n",$plt); # strip shell commands
   $plt=preg_replace("/[ ]+/"," ",$plt);
   $plt=preg_replace("/\ngset?\s+(t|o|si).*\n/", "\n",$plt);
-  
+  // strip system functions
+  $plt = preg_replace("/(system|unix|dos|perl|python|popen|pclose|fork|exec|waitpid|kill|nthargout)/", "", $plt);
+
   #print "<pre>$plt</pre>";
 
   $uniq=md5($plt);
