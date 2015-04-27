@@ -52,7 +52,6 @@ class Version_RCS {
 
   function ci($pagename,$log) {
     $key=$this->_filename($pagename);
-    $pgname=escapeshellcmd($pagename);
     $this->_ci($key,$log);
   }
 
