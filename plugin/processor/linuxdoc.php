@@ -33,7 +33,7 @@ function processor_linuxdoc($formatter,$value) {
   if ($value[0]=='#' and $value[1]=='!') {
     list($line,$value)=explode("\n",$value,2);
     # get parameters
-    list($tag,$args)=explode(" ",$line,2);
+    list($tag,$dummy)=explode(" ",$line,2);
   }
 
   $converted=0;
