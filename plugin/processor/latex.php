@@ -52,6 +52,7 @@ function processor_latex(&$formatter,$value="",$options=array()) {
   $option='-interaction=batchmode ';
   $mask='';
 
+  $options['dpi'] = intval($options['dpi']);
   if (preg_match('/ps$/',$dvicmd)) {
     $tmpext='ps';
     $dviopt='-D 300';
