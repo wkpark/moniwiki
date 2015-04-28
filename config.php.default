@@ -167,6 +167,7 @@ $myprocessors=array('syntax'=>'vim','sh'=>'vim','csh'=>'vim',
 #$myplugins=array('fullsearch'=>'FastSearch'); # substitute action/macro
 #$myplugins=array('TOC'=>'TableOfContents'); # alias action/macro
 #$myplugins=array('swfupload'=>false); # disable some macro
+$myplugins=array('rcsexport'=>false); # disable rcsexport
 #
 #$extra_macros=array('FootNote', 'Comment'); # call some extra macros after send_page()
 
