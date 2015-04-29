@@ -5994,6 +5994,8 @@ if ($options['id'] == 'Anonymous') {
 
   session_name($myid);
   session_start();
+} else {
+  $private = 'private';
 }
 
 // set the s-maxage for proxy
