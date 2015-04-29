@@ -272,6 +272,8 @@ $cachetime=0;
 #$cachetime=60*60*5; # set cachetime for caching
 #$use_conditional_get=1; # use conditional get for static pages
 #$proxy_maxage=1; # maxage in seconds for shared caches
+#$nosession=1; # do not use session
+#$cookie_expires=60*60*24*30; // default 30 days
 $dynamic_macros=array('pagecount'=>1, 'recentchanges'=>1,'userpreferences'=>1,
 	'uploadedfiles'=>1,'SWFUpload'=>1,'Vote'=>1,
 	'login'=>1,'minilogin'=>1,'scrap'=>1, 'subscribe'=>1, 'fortune'=>1);
@@ -284,7 +286,6 @@ $cache_public_url=$url_prefix.'/_cache';
 #$gallery_use_lightbox=1;
 #$use_hangul_search=1; # use hangul search for auto-completer
 #$use_subindex=1; # use subpage indices
-#$nosession=1; # do not use session
 #$default_pre='pre'; # set the default pre processor
 #$default_markup='monimarkup'; # set the default markup processor
 #$use_rating=1; # builtin Rating support

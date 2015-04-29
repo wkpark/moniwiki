@@ -1124,7 +1124,14 @@ class UserDB {
 }
 
 class WikiUser {
+  var $cookie_expires = 2592000; // 60 * 60 * 24 * 30; // default 30 days
+
   function WikiUser($id="") {
+     global $Config;
+
+     if (!empty($Config['cookie_expires']))
+        $this->cookie_expires = $Config['cookie_expires'];
+
      if ($id) {
         $this->setID($id);
         return;
@@ -1177,7 +1184,8 @@ class WikiUser {
      #  get_scriptname():'/';
      $path = get_scriptname();
      #$path = preg_replace('@(?<=/)[^/]+$@','',$path);
-     return "Set-Cookie: MONI_ID=".$ticket.'.'.urlencode($this->id).'; expires='.gmdate('l, d-M-Y H:i:s',time()+60*60*24*30).' GMT; Path='.$path;
+     return "Set-Cookie: MONI_ID=".$ticket.'.'.urlencode($this->id).
+            '; expires='.gmdate('l, d-M-Y H:i:s', time() + $this->cookie_expires).' GMT; Path='.$path;
   }
 
   function unsetCookie() {
