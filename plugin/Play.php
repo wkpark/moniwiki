@@ -218,6 +218,7 @@ EOS;
       $object_prefered = false;
       // http://code.google.com/p/google-code-project-hosting-gadgets/source/browse/trunk/video/video.js
       if (preg_match("@https?://(?:[a-z-]+[.])?(?:youtube(?:[.][a-z-]+)+|youtu\.be)/(?:watch[?].*v=|v/|embed/)?([a-z0-9_-]+)$@i",$media[$i],$m)) {
+        if ($object_prefered) {
         $movie = "http://www.youtube.com/v/".$m[1];
         $type = 'type="application/x-shockwave-flash"';
         $attr = $mysize.'allowfullscreen="true" allowScriptAccess="always"';
@@ -226,6 +227,12 @@ EOS;
         $params = "<param name='movie' value='$movie?version=3'>\n".
           "<param name='allowScriptAccess' value='always'>\n".
           "<param name='allowFullScreen' value='true'>\n";
+        } else {
+          $iframe = 'https://www.youtube.com/embed/'.$m[1];
+          $attr = 'frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen';
+          if (empty($mysize))
+            $attr.= ' width="500px" height="281px"';
+        }
         $mediainfo = 'Youtube movie';
         $objclass = ' youtube';
       } else if (preg_match("@https?://tvpot\.daum\.net\/v\/(.*)$@i", $media[$i], $m)) {
