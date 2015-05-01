@@ -3680,7 +3680,21 @@ class Formatter {
           $line = $nc;
         }
 
-        $line = preg_replace($this->baserule,$this->baserepl,$line);
+        if (($len = strlen($line)) > 10000) {
+          // XXX too long string will crash at preg_replace() with PHP 5.3.8
+          $new = '';
+          $start = 0;
+          while (($start + 10000) < $len && ($pos = strpos($line, "\n", $start + 10000)) > 0) {
+            $chunk = substr($line, $start, $pos - $start + 1);#.'<font color="#ff0000">xxxxxx</font>';
+            $new.= preg_replace($this->baserule, $this->baserepl, $chunk);
+            $start = $pos + 2;
+          }
+          $new.= preg_replace($this->baserule,$this->baserepl, substr($line, $start));
+          $line = $new;
+          //$line = preg_replace($this->baserule,$this->baserepl,$line);
+        } else {
+          $line = preg_replace($this->baserule,$this->baserepl,$line);
+        }
 
         // restore inline nowikis
         if (!empty($inline)) {
