@@ -80,6 +80,27 @@ class Version_RCS {
       $mlog = ' -m'.$log;
     }
 
+    // setup lockfile
+    $lockfile = $key.'.##';
+    touch($lockfile);
+    $fl = fopen($key.'.##', 'w');
+    $counter = 0;
+    $locked = true;
+
+    // lock timeout
+    $timeout = isset($this->DB->savepage_timeout) && $this->DB->savepage_timeout > 5 ?
+        $this->DB->savepage_timeout : 5;
+
+    while(!flock($fl, LOCK_EX | LOCK_NB)) {
+      if ($counter ++ < $timeout) {
+        sleep(1);
+      } else {
+        $locked = false;
+        break;
+      }
+    }
+
+    if ($locked):
     if (!empty($this->DB->rcs_always_unlock)) {
       $fp = popen("rcs -l -M $key", 'r');
       if (is_resource($fp)) pclose($fp);
@@ -88,6 +109,18 @@ class Version_RCS {
     $fp = @popen("ci -l -x,v/ -q -t-\"".$key."\" ".$mlog." ".$key.$plog.$this->NULL,"r");
     if (is_resource($fp)) pclose($fp);
     if (isset($plog[0])) unlink($logfile);
+
+    flock($fl, LOCK_UN);
+    fclose($fl);
+
+    // remove lockfile
+    unlink($lockfile);
+
+    return 0;
+    endif;
+
+    // fail to get flock
+    return -1;
   }
 
   function rlog($pagename,$rev='',$opt='',$oldopt='') {
