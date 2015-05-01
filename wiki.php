@@ -930,14 +930,17 @@ class WikiDB {
     flock($fp, LOCK_UN);
     fclose($fp);
 
+    $ret = 0;
     if (!empty($this->version_class)) {
       $om=umask(~$this->umask);
       $ver = $this->lazyLoad('version', $this);
       $ret = $ver->_ci($filename,$options['log']);
+      if ($ret == -1)
+        $options['retval']['msg'] = _("Fail to save version information");
       chmod($filename,0666 & $this->umask);
       umask($om);
     }
-    return 0;
+    return $ret;
   }
 
   function savePage(&$page,$comment="",$options=array()) {
