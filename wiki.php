@@ -3625,7 +3625,10 @@ class Formatter {
       } else if (!isset($oline[0]) and preg_match('/^\s*\|\|/',$line) and !preg_match('/\|(\||-+)\s*$/',$line)) {
         $oline.= $line;
         continue;
-      } else if (!empty($oline) and ($in_table or preg_match('/^\s*\|\|/',$oline)) and !preg_match('/\|(\||-+)\s*$/',$line)) {
+      } else if (!empty($oline)
+          and ($in_table or preg_match('/^\s*\|\|/',$oline))
+          and !preg_match('/\|(\||-+)\s*$/',$line) and isset($lines[$ii + 1])) {
+          // not closed table and not reached at the end line
         $oline.= "\n".$line;
         continue;
       } else {
