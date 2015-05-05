@@ -2,3 +2,6 @@
 #SetHandler application/x-httpd-php
 ForceType application/x-httpd-php
 </Files>
+php_flag register_globals off
+php_flag short_open_tag off
+php_flag asp_tags = off
