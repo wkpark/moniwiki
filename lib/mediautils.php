@@ -41,6 +41,9 @@ function resize_image($ext, $from, $to, $w = 0, $h = 0, $width, $height = 0) {
     global $Config;
 
     if (empty($w) or empty($h)) list($w, $h) = getimagesize($from);
+    $width = intval($width);
+    if (!file_exists($from))
+        return false; // silently ignore
 
     // generate thumbnail using the gd func or the ImageMagick(convert)
     if (empty($Config['fetch_use_imagemagick']) and function_exists('gd_info')) {
