@@ -42,6 +42,7 @@ function processor_mimetex($formatter,$value) {
     $mimetex = str_replace ('shell:', '', $mimetex);
 
     $uniq = md5($tex);
+    $tex = escapeshellarg($tex);
 
     if ( ! file_exists ($cache_dir) ) {
       umask (000);
@@ -49,7 +50,7 @@ function processor_mimetex($formatter,$value) {
     }
 
     if ( $formatter->preview || $formatter->refresh || ! file_exists ("$cache_dir/$uniq.$ext")) {
-      $cmd = "$mimetex -e $cache_dir/$uniq.$ext \"$tex\"";
+      $cmd = "$mimetex -e $cache_dir/$uniq.$ext $tex";
       $fp = @popen ($cmd.$formatter->NULL, 'r');
       if ( ! is_resource ($fp) ) return $tex;
       pclose ($fp);
