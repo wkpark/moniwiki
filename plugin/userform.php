@@ -151,10 +151,12 @@ function do_userform($formatter,$options) {
         $user->setID('Anonymous');
       }
     } else {
-      if ($options['login_id'])
+      if (isset($options['login_id'][0])) {
         $title= sprintf(_("\"%s\" does not exists on this wiki !"),$options['login_id']);
-      else
+        $options['login_id'] = '';
+      } else {
         $title= _("Make new ID on this wiki");
+      }
      $form=macro_UserPreferences($formatter,'',$options);
     }
   } else if (!empty($options['logout'])) {
