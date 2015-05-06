@@ -1707,7 +1707,7 @@ EOF;
   else
      $datestamp= $formatter->page->mtime();
 
-  if (!empty($DBInfo->use_savapage_hash)) {
+  if (!empty($DBInfo->use_savepage_hash)) {
     // generate hash
     $ticket = getTicket($datestamp.$DBInfo->user->id, $_SERVER['REMOTE_ADDR']);
     $hash = md5($ticket);
@@ -2399,7 +2399,7 @@ function ajax_savepage($formatter,$options) {
     }
 
     // check hash
-    if (!empty($DBInfo->use_savapage_hash)) {
+    if (!empty($DBInfo->use_savepage_hash)) {
       $ticket = getTicket($datestamp.$DBInfo->user->id, $_SERVER['REMOTE_ADDR']);
       if ($hash != md5($ticket)) {
         print _("Invalid access");
@@ -2582,7 +2582,7 @@ function do_post_savepage($formatter,$options) {
       $formatter->send_title(_("Invalid access"),"",$options);
       $formatter->send_footer();
       return;
-    } else if (!empty($DBInfo->use_savapage_hash)) {
+    } else if (!empty($DBInfo->use_savepage_hash)) {
       // check hash
       $ticket = getTicket($datestamp.$DBInfo->user->id, $_SERVER['REMOTE_ADDR']);
       if ($hash != md5($ticket)) {
