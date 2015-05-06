@@ -2,7 +2,7 @@
 ISBN http://www.amazon.com/exec/obidos/ISBN=
 Wiki http://c2.com/cgi/wiki?
 MeatBall http://www.usemod.com/cgi-bin/mb.pl?
-MoinMoin http://purl.net/wiki/moin/
+MoinMoin https://moinmo.in/
 UseMod http://www.usemod.com/cgi-bin/wiki.pl?
 TWiki http://twiki.org/cgi-bin/view/
 WikiPedia http://en.wikipedia.org/wiki/
@@ -22,19 +22,14 @@ JargonFile http://sunir.org/apps/meta.pl?wiki=JargonFile&amp;redirect=
 Acronym http://www.acronymfinder.com/af-query.asp?String=exact&amp;Acronym=
 Advogato http://www.advogato.org/
 SourceForge http://www.sourceforge.net/
+GitHub https://github.com/
 
 # Korean Wikis
 NoSmoke http://no-smok.net/nsmk/
-#GnomeKorea http://www.gnome.or.kr/wiki/
 KLE http://kle.kldp.net/main/
-#GentooKorea http://gentoo.or.kr/wiki/moin.cgi/
-#DebianKorea http://debianusers.org/DebianWiki/
-#BSDKorea http://wiki.bsdforum.or.kr/wiki.php/
-Freefeel http://freefeel.org/wiki/
-#SFReaders http://wiki.sfreaders.org/
+#Freefeel http://freefeel.org/wiki/
 Xper http://xper.org/wiki/xp/
-#PyKug http://www.python.or.kr/pykug/
-KTUG http://faq.ktug.or.kr/faq/
+KTUG http://faq.ktug.org/faq/
 MoniWiki http://moniwiki.kldp.net/wiki.php/
 MoniWikiDev http://moniwiki.kldp.net/dev/wiki.php/
 KLDPWiki http://wiki.kldp.org/wiki.php/
