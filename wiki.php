@@ -1974,7 +1974,7 @@ class Formatter {
       }
       if ($url[0]=='#' and ($p=strpos($url,' '))) {
         $col=strtok($url,' '); $url=strtok('');
-        $url = str_replace('<', '&lt;', $url);
+        #$url = str_replace('<', '&lt;', $url);
         if (!empty($this->use_htmlcolor) and !preg_match('/^#[0-9a-f]{6}$/i', $col)) {
           $col = substr($col, 1);
           return "<span style='color:$col'>$url</span>";
