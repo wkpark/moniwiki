@@ -37,9 +37,9 @@ function macro_Play($formatter,$value) {
         list($key,$val)=explode('=',$my[$i]);
         $val = trim($val, '"\'');
         if ($key == 'width' and $val > 1) {
-          $width=$val;
+          $width = intval($val);
         } else if ($key == 'height' and $val > 1) {
-          $height=$val;
+          $height = intval($val);
         }
       } else { // multiple files
         $media[]=$my[$i];
@@ -231,6 +231,8 @@ EOS;
           $attr = 'frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen';
           if (empty($mysize))
             $attr.= ' width="500px" height="281px"';
+          else
+            $attr.= ' '.$mysize;
         }
         $mediainfo = 'Youtube movie';
         $objclass = ' youtube';
@@ -267,6 +269,8 @@ EOS;
           $attr = 'frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen';
           if (empty($mysize))
             $attr.= ' width="500px" height="281px"';
+          else
+            $attr.= ' '.$mysize;
         }
         $mediainfo = 'Vimeo movie';
         $objclass = ' vimeo';
