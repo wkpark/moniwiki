@@ -1,15 +1,16 @@
 <?php
-// Copyright 2007 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2007-2015 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // sample plugin for the MoniWiki
 //
 // Author: Won-Kyu Park <wkpark@kldp.org>
-// Date: 2007-01-09
+// Since: 2007-01-09
+// Date: 2015-05-06
 // Name: WHTML Processor
 // Description: HTML with WikiLinks Processor
 // URL: MoniWiki:WikiHtmlProcessor
-// Version: $Revision: 1.3 $
-// License: GPL
+// Version: $Revision: 1.4 $
+// License: GPLv2
 //
 // Usage: {{{#!whtml
 // <h1>Hello world ! Hello [MoniWiki]</h1>
@@ -17,7 +18,9 @@
 // }}}
 // $Id: whtml.php,v 1.3 2009/10/09 08:20:54 wkpark Exp $
 
-function processor_whtml($formatter,$value='',$options=array()) {
+function processor_whtml($formatter, $value, $options = array()) {
+    global $Config;
+
     if ($value[0]=='#' and $value[1]=='!')
         list($line,$value)=explode("\n",$value,2);
 
@@ -47,8 +50,13 @@ function processor_whtml($formatter,$value='',$options=array()) {
 
     $formatter=$save;
 
-    return implode('',$chunks);
+    $data = implode('', $chunks);
+
+    // XSS filtering
+    if (!empty($Config['no_xss_filter']))
+        return $data;
+
+    return $formatter->filter_repl('xss', $data);
 }
 
 // vim:et:sts=4:sw=4:
-?>

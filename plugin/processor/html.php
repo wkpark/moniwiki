@@ -18,6 +18,8 @@
 // $Id: html.php,v 1.1 2008/11/27 01:12:24 wkpark Exp $
 
 function processor_html($formatter, $value = '') {
+    global $Config;
+
     if ($value[0]=='#' and $value[1]=='!')
         list($line,$value)=explode("\n",$value,2);
 
@@ -37,8 +39,12 @@ function processor_html($formatter, $value = '') {
             return $formatter->macro_repl('Play', $val);
         }
     }
-    return $value;
+
+    // XSS filtering
+    if (!empty($Config['no_xss_filter']))
+        return $value;
+
+    return $formatter->filter_repl('xss', $value);
 }
 
 // vim:et:sts=4:sw=4:
-?>
