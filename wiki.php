@@ -21,6 +21,12 @@ $_release = '1.2.4p5';
 error_reporting(E_ALL ^ E_NOTICE);
 #error_reporting(E_ALL);
 
+/**
+ * get macro/action plugins
+ *
+ * @param macro/action name
+ * @return a basename of the plugin or null or false(disabled)
+ */
 function getPlugin($pluginname) {
   static $plugins=array();
   if (is_bool($pluginname) and $pluginname)
@@ -5934,7 +5940,10 @@ function wiki_main($options) {
       return;
     }
 
-    $plugin=($pn=getPlugin($action)) ? $pn:$action;
+    // is it valid action ?
+    $plugin = $pn = getPlugin($action);
+    if ($plugin === '') // action not found
+      $plugin = $action;
     if (!function_exists("do_post_".$plugin) and
       !function_exists("do_".$plugin) and $pn){
         include_once("plugin/$pn.php");
