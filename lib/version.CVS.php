@@ -99,24 +99,31 @@ class Version_CVS extends Version_RCS {
     $key=basename($filename); // XXX
     chdir($this->DB->text_dir);
     //$ret=system("cvs commit -q -t-\"".$pagename."\" -m\"".$log."\" ".$key);
+    // only *NIX work
+    $log = escapeshellarg($log);
     if (!file_exists($this->cvs_root."/".$this->modname."/".$key.",v"))
-       $ret=system("cvs add -m\"".$log."\" ".$key." >/dev/null");
-    $ret=system("cvs commit -m\"".$log."\" ".$key." >/dev/null");
+       $ret=system("cvs add -m".$log." ".$key." >/dev/null");
+    $ret=system("cvs commit -m".$log." ".$key." >/dev/null");
     chdir($this->cwd);
   }
 
   function _add($pagename,$log) {
     $key=$this->_filename($pagename);
     chdir($this->DB->text_dir);
-    $ret=system("cvs add -m\"".$log."\" ".$key);
+    $log = escapeshellarg($log);
+    $ret=system("cvs add -m".$log." ".$key);
     #$ret=system("cvs add -q -t-\"".$pagename."\" -m\"".$log."\" ".$key);
     chdir($this->cwd);
   }
 
   function rlog($pagename,$rev='',$opt='',$oldopt='') {
     // oldopts are incompatible options only supported by the rlog in the rcs
-    if ($rev)
+    // opt is low level arg
+    if ($rev and preg_match('/^[0-9\.]+$/', $rev)) {
       $rev = "-r$rev";
+    } else {
+      return;
+    }
     $filename=$this->_filename($pagename);
 
     chdir($this->DB->text_dir);
