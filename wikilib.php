@@ -3723,13 +3723,40 @@ function get_keys() {
   return $keys;
 }
 
+/**
+ * Count pages and redirect pages
+ */
 function macro_PageCount($formatter, $value = '', $options = array()) {
   global $DBInfo;
 
   if ($formatter->_macrocache and empty($options['call']))
     return $formatter->macro_cache_repl('PageCount', '');
   $formatter->_dynamic_macros['@PageCount'] = 1;
-  return $DBInfo->getCounter();
+
+  $mode = '';
+  if (!empty($value)) {
+    $vals = get_csv($value);
+    if (!empty($vals)) {
+      foreach ($vals as $v) {
+        if (in_array($v, array('noredirect', 'redirect'))) {
+          $mode = $v;
+        }
+      }
+    }
+  }
+
+  $redirects = 0;
+  if (!empty($mode)) {
+    $rc = new Cache_Text('redirect');
+    $redirects = 0;
+    if (method_exists($rc, 'count'))
+      $redirects = $rc->count();
+
+    if ($mode == 'redirect')
+      return $redirects;
+  }
+  $count = $DBInfo->getCounter();
+  return $count - $redirects;
 }
 
 function _setpagekey(&$page,$k) {
