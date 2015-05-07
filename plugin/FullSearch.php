@@ -73,8 +73,9 @@ function do_fullsearch($formatter,$options) {
       }
     }
   }
+  $value = _urlencode($options['value']);
   print '<h2>'.sprintf(_("You can also click %s to search title.\n"),
-    $formatter->link_to("?action=titlesearch&amp;value=$options[value]",_("here")))."</h2>\n";
+    $formatter->link_to("?action=titlesearch&amp;value=$value",_("here")))."</h2>\n";
 
   $args['noaction']=1;
   $formatter->send_footer($args,$options);
@@ -99,7 +100,7 @@ function macro_FullSearch($formatter,$value="", &$opts) {
   }
 
   $url=$formatter->link_url($formatter->page->urlname);
-  $fneedle=str_replace('"',"&#34;",$needle); # XXX
+  $fneedle = _html_escape($needle);
   $tooshort=!empty($DBInfo->fullsearch_tooshort) ? $DBInfo->fullsearch_tooshort:2;
 
   $m1=_("Display context of search results");
@@ -110,7 +111,7 @@ function macro_FullSearch($formatter,$value="", &$opts) {
   $form= <<<EOF
 <form method='get' action='$url'>
    <input type='hidden' name='action' value='fullsearch' />
-   <input name='value' size='30' value='$fneedle' />
+   <input name='value' size='30' value="$fneedle" />
    <span class='button'><input type='submit' class='button' value='$msg' /></span><br />
    <input type='checkbox' name='backlinks' value='1' $bchecked />$m2<br />
    <input type='checkbox' name='context' value='20' />$m1<br />

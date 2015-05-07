@@ -96,6 +96,7 @@ EXTRA;
   $comment=_("Comment");
   $preview_btn=_("Preview");
   $preview = '';
+  $savetext = _html_escape($savetext);
   if (!empty($oneliner)) {
     $form.=<<<FORM
 <input class='wiki' size='$cols' name="savetext" value="$savetext" />&nbsp;
@@ -111,7 +112,8 @@ FORM;
   $sig = '';
   if ($options['id'] == 'Anonymous') {
     $name = !empty($options['name']) ? $options['name'] : '';
-    $sig=_("Username").": <input name='name' value='$name' size='10' />";
+    $name = _html_escape($name);
+    $sig=_("Username").": <input name='name' value=\"$name\" size='10' />";
   }
   else if (empty($use_meta))
     $sig="<input name='nosig' type='checkbox' />"._("Don't add a signature");

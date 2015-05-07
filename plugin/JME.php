@@ -74,6 +74,7 @@ function macro_JME($formatter,$value) {
         $mol=str_replace("\r\n","|\n",$mol);
     }
     $pubpath=$DBInfo->url_prefix."/applets/JMEPlugin";
+    $mol = _html_escape($mol);
     return <<<APPLET
 <applet code="JME.class" name="JME" codebase="$pubpath" archive="$jar">
 <param name="options" value="depict" />
@@ -139,6 +140,7 @@ function getGauFile(obj) {
 SCRIPT;
     $pubpath=$DBInfo->url_prefix."/applets/JMEPlugin";
     print "<h2>"._("Edit new molecule")."</h2>\n";
+    $name = _html_escape($name);
     print <<<FORM
 $script
 <form method="POST" action="">

@@ -129,7 +129,7 @@ function get_pagelist($formatter,$pages,$action,$curpage=1,$listcount=10,$bra="[
 }
 
 function _html_escape($string) {
-  return preg_replace(array("@<(?=/?\s*\w+[^<>]*>)@", '@"@'), array("&lt;", '&quot;'), $string);
+  return preg_replace(array("@<(?=/?\s*\w+[^<>]*)@", '@"@'), array("&lt;", '&quot;'), $string);
 }
 
 function _rawurlencode($url) {
@@ -1047,7 +1047,6 @@ class UserDB {
       if (isset($user->info[$key][0]))
         $data.="$key=".$user->info[$key]."\n";
     }
-
     #print $data;
 
     $wu="wu-".$this->_id_to_key($user->id);
@@ -1420,6 +1419,7 @@ function do_edit($formatter,$options) {
   $has_form = false;
 
   $options['has_form'] = &$has_form;
+  $options['comment'] = ''; // do not accept comment from _GET[] ?action=edit&comment=blahblah
   $value = '';
   echo macro_EditText($formatter,$value,$options);
   echo $formatter->get_javascripts();
@@ -1549,6 +1549,7 @@ function macro_Edit($formatter,$value,$options='') {
   $editlog= !empty($options['editlog']) ? $options['editlog'] : "";
   if (empty($editlog) and !empty($options['comment']))
       $editlog=_stripslashes($options['comment']);
+  $editlog = _html_escape($editlog);
 
   $args= explode(',',$value);
   if (in_array('nohints',$args)) $options['nohints']=1;
@@ -1727,8 +1728,9 @@ EOF;
       $opts = '';
       foreach ($categories as $category) {
         $len = mb_strwidth($category);
+        $category = _html_escape($category);
         if ($len > $mlen) $mlen = $len;
-        $opts .= "<option value='$category'>$category</option>\n";
+        $opts .= "<option value=\"$category\">$category</option>\n";
       }
       $lab = _(" Select ");
       $len = intval(($mlen - mb_strwidth($lab)) / 2);
@@ -1929,7 +1931,7 @@ function do_post_DeleteFile($formatter,$options) {
         $key=$DBInfo->pageToKeyname($file);
 
         if (!is_dir($dir."/".$file) && !is_dir($dir."/".$key)) {
-          $fdir=$options['value'] ? $options['value'].':':'';
+          $fdir=$options['value'] ? _html_escape($options['value']).':':'';
           if (@unlink($dir."/".$file))
             $log.=sprintf(_("File '%s' is deleted")."<br />",$fdir.$file);
           else
@@ -1957,12 +1959,15 @@ function do_post_DeleteFile($formatter,$options) {
       $file=$page;
       $page=$formatter->page->name;
     }
+    $page = _html_escape($page);
+    $file = _html_escape($file);
+
     $link=$formatter->link_url($formatter->page->urlname);
     $out="<form method='post' action='$link'>";
     $out.="<input type='hidden' name='action' value='DeleteFile' />\n";
     if ($page)
-      $out.="<input type='hidden' name='value' value='$page' />\n";
-    $out.="<input type='hidden' name='file' value='$file' />\n<h2>";
+      $out.="<input type='hidden' name='value' value=\"$page\" />\n";
+    $out.="<input type='hidden' name='file' value=\"$file\" />\n<h2>";
     $out.=sprintf(_("Did you really want to delete '%s' ?"),$file).'</h2>';
     if ($DBInfo->security->is_protected("deletefile",$options))
       $out.=_("Password").": <input type='password' name='passwd' size='10' />\n";
@@ -2161,7 +2166,7 @@ function do_goto($formatter,$options) {
      $url=_rawurlencode($url);
      if ($options['redirect'])
        $url=$formatter->link_url($url,"?action=show&amp;redirect=".
-          str_replace('+', '%2B', $formatter->page->name).$anchor);
+          str_replace('+', '%2B', $formatter->page->urlname).$anchor);
      else
        $url=$formatter->link_url($url,"");
      $url = preg_replace('/[[:cntrl:]]/', ' ', $url); // tr control chars
@@ -2321,10 +2326,11 @@ function do_titlesearch($formatter,$options) {
   $formatter->send_title($ret['msg'],$formatter->link_url("FindPage"),$options);
 
   if (!empty($options['check'])) {
+    $page = $formatter->page->urlname;
     $button= $formatter->link_to("?action=edit",$formatter->icon['create']._
 ("Create this page"));
     print "<h2>".$button;
-    print sprintf(_(" or click %s to fullsearch this page.\n"),$formatter->link_to("?action=fullsearch&amp;value=$options[page]",_("title")))."</h2>";
+    print sprintf(_(" or click %s to fullsearch this page.\n"),$formatter->link_to("?action=fullsearch&amp;value=$page",_("title")))."</h2>";
   }
 
   print $ret['form'];
@@ -2342,8 +2348,9 @@ function do_titlesearch($formatter,$options) {
     print '<h2>'._("Please try to fulltext search")."</h2>\n";
     print $out2;
   } else {
+    $value = _urlencode($options['value']);
     print '<h2>'.sprintf(_("You can also click %s to fulltext search.\n"),
-      $formatter->link_to("?action=fullsearch&amp;value=$options[value]",_("here")))."</h2>\n";
+      $formatter->link_to("?action=fullsearch&amp;value=$value",_("here")))."</h2>\n";
   }
 
   $args['noaction']=1;
@@ -2795,7 +2802,7 @@ function wiki_notify($formatter,$options) {
       $enc = base64_encode($mail);
       $reminder = _("You have contribute this wiki as an Anonymous donor.")."\n";
       $reminder.= _("Your IP address and e-mail address are used to verify you.")."\n";
-      $reminder.= qualifiedUrl($formatter->link_url($options['page'], "?action=userform&login=$enc&verify_email=$ticket"));
+      $reminder.= qualifiedUrl($formatter->link_url($formatter->page->urlname, "?action=userform&login=$enc&verify_email=$ticket"));
       $reminder.= "\n\n";
       $subs[] = $DBInfo->user->verified_email;
     }
@@ -3243,12 +3250,12 @@ function macro_UserPreferences($formatter,$value,$options='') {
   }
 
   $passwd_btn=_("Password");
-  $url=$formatter->link_url($formatter->page->name);
+  $url=$formatter->link_url($formatter->page->urlname);
   # setup form
   if ($user->id == 'Anonymous') {
     if (!empty($options['login_id'])) {
-      $options['login_id'] = _html_escape($options['login_id']);
-      $idform="$options[login_id]<input type='hidden' name='login_id' value=\"$options[login_id]\" />";
+      $login_id = _html_escape($options['login_id']);
+      $idform = $login_id."<input type='hidden' name='login_id' value=\"$login_id\" />";
     } else
       $idform="<input type='text' size='20' name='login_id' value='' />";
   } else {
@@ -3326,7 +3333,7 @@ EXTRA;
         $extra.= '<input type="hidden" name="joinagreement" value="1" />';
       if (!$use_any and !empty($DBInfo->use_ticket)) {
         $seed=md5(base64_encode(time()));
-        $ticketimg=$formatter->link_url($formatter->page->name,'?action=ticket&amp;__seed='.$seed);
+        $ticketimg=$formatter->link_url($formatter->page->urlname,'?action=ticket&amp;__seed='.$seed);
         $extra.=<<<EXTRA
   <tr><td><img src="$ticketimg" alt="captcha" />&nbsp;</td><td><input type="text" size="10" name="check" />
 <input type="hidden" name="__seed" value="$seed" /></td></tr>
@@ -3338,8 +3345,11 @@ EXTRA;
   } else {
     $button=_("Save");
     $css=!empty($user->info['css_url']) ? $user->info['css_url'] : '';
+    $css = _html_escape($css);
     $email=!empty($user->info['email']) ? $user->info['email'] : '';
+    $email = _html_escape($email);
     $nick=!empty($user->info['nick']) ? $user->info['nick'] : '';
+    $nick = _html_escape($nick);
     $tz_offset=!empty($user->info['tz_offset']) ? $user->info['tz_offset'] : 0;
     if (!empty($user->info['password']))
       $again="<b>"._("New password")."</b>&nbsp;<input type='password' size='15' maxlength='$pw_length' name='passwordagain' value='' /></td></tr>";
@@ -3900,7 +3910,7 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
   $index='';
   $tlink='';
   if (isset($sel[0])) {
-    $tlink=$formatter->link_url($formatter->page->name,'?action=titleindex&amp;sec=');
+    $tlink=$formatter->link_url($formatter->page->urlname,'?action=titleindex&amp;sec=');
   }
 
   $index = array();
@@ -4130,11 +4140,12 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   $type='o';
 
   $url=$formatter->link_url($formatter->page->urlname);
+  $needle = _html_escape($needle);
 
   $msg = _("Go");
   $form="<form method='get' action='$url'>
       <input type='hidden' name='action' value='titlesearch' />
-      <input name='value' size='30' value='$needle' />
+      <input name='value' size='30' value=\"$needle\" />
       <span class='button'><input type='submit' class='button' value='$msg' /></span>
       </form>";
 
@@ -4235,10 +4246,11 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
 
 function macro_GoTo($formatter="",$value="") {
   $url=$formatter->link_url($formatter->page->urlname);
+  $value = _html_escape($value);
   $msg = _("Go");
   return "<form method='get' action='$url'>
     <input type='hidden' name='action' value='goto' />
-    <input name='value' size='30' value='$value' />
+    <input name='value' size='30' value=\"$value\" />
     <span class='button'><input type='submit' class='button' value='$msg' /></span>
     </form>";
 }

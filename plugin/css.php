@@ -45,10 +45,11 @@ function do_css($formatter,$options) {
     $options['css_url']=$options['user_css'];
     $want = _("Do you want to apply selected CSS ?");
     $btn = _("OK");
+    $css_url = _html_escape($options['css_url']);
     $msg=<<<FORM
 <form method='post'>
 <input type='hidden' name='action' value='css' />
-<input type='hidden' name='user_css' value='$options[css_url]' />
+<input type='hidden' name='user_css' value="$css_url" />
 $want <span class='button'><input type='submit' class='button' name='save' value='$btn' /></span> &nbsp;
 </form>
 FORM;

@@ -487,6 +487,7 @@ function macro_BBS($formatter,$value,$options=array()) {
 
     $options['p']= ($_GET['p'] > 0) ? $_GET['p']:1;
     $options['c']= ($ncount != 20) ? $ncount:'';
+    $options['p'] = intval($options['p']);
 
     # is it exists ?
     if (!$DBInfo->hasPage($bname)) {
