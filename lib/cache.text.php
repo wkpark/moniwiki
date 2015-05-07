@@ -526,6 +526,30 @@ class Cache_Text {
 			closedir($dh);
 		}
 	}
+
+	/**
+	 * count cache files
+	 *
+	 */
+	function count()
+	{
+		$top = $this->cache_dir;
+		$dirs = $this->_prepare_cache_dirs($this->cache_dir, $this->depth, false);
+
+		$count = 0;
+		foreach ($dirs as $dir) {
+			$dh = opendir($top.'/'.$dir);
+			$prefix = $this->arena.'/'.$dir .'/';
+			if (!is_resource($dh)) continue; // can't open. silently ignore
+
+			while (($file = readdir($dh)) !== false) {
+				if ($file[0] == '.')
+					continue;
+				$count++;
+			}
+		}
+		return $count;
+	}
 }
 
 	/**
