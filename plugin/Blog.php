@@ -77,10 +77,11 @@ function do_Blog($formatter,$options) {
   $name = !empty($options['name']) ? $options['name'] : '';
 
   $url=$formatter->link_url($formatter->page->urlname);
+  $pagename = _html_escape($formatter->page->name);
 
   if (!empty($formatter->refresh) or !empty($options['button_refresh'])) {
     updateBlogList($formatter);
-    $options['msg']=sprintf(_("Blog cache of \"%s\" is refreshed"),$formatter->page->name);
+    $options['msg']=sprintf(_("Blog cache of \"%s\" is refreshed"),$pagename);
   }
 
   $savetext="";
@@ -102,6 +103,8 @@ function do_Blog($formatter,$options) {
     $options['title']=_stripslashes($options['title']);
   else
     $options['title'] = '';
+
+  $options['title'] = _html_escape($options['title']);
 
   $button_preview = $options['button_preview'];
   if (!empty($savetext)) {
@@ -128,7 +131,7 @@ function do_Blog($formatter,$options) {
   if (empty($button_preview) && !empty($savetext)) {
     //$savetext=preg_replace("/(?<!\\\\)}}}/","\}}}",$savetext);
 
-    $url=$formatter->link_tag($formatter->page->urlname,"",$options['page']);
+    $url=$formatter->link_tag($formatter->page->urlname, '', $pagename);
     $options['msg']=sprintf(_("\"%s\" is updated"),$url);
 
     if ($formatter->page->exists())
@@ -216,7 +219,7 @@ function do_Blog($formatter,$options) {
       $formatter->send_title(sprintf(_("Comment added to \"%s\""),$title),"",$options);
       $log="Add Comment to \"$title\"";
     } else {
-      $formatter->send_title(sprintf(_("Blog entry added to \"%s\""),$options['page']),"",$options);
+      $formatter->send_title(sprintf(_("Blog entry added to \"%s\""),$pagename),"",$options);
       if (!empty($options['title']))
         $log=sprintf(_("Blog entry \"%s\" added"),$options['title']);
       else
@@ -256,7 +259,7 @@ function do_Blog($formatter,$options) {
           $quote.=$lines[$i]."\n";
         }
       }
-      if (empty($title)) $title=$options['page'];
+      if (empty($title)) $title = $pagename;
       if (empty($found)) {
         $formatter->send_title("Error: No entry found!","",$options);
         $formatter->send_footer("",$options);
@@ -264,7 +267,7 @@ function do_Blog($formatter,$options) {
       }
       $formatter->send_title(sprintf(_("Add Comment to \"%s\""),$title),"",$options);
     } else {
-      $formatter->send_title(sprintf(_("Add Blog entry to \"%s\""),$options['page']),"",$options);
+      $formatter->send_title(sprintf(_("Add Blog entry to \"%s\""),$pagename),"",$options);
     }
     $options['noaction']=1;
     if (!empty($quote)) {
@@ -284,9 +287,9 @@ function do_Blog($formatter,$options) {
     print "<form method='post' action='$url'>\n";
     $myinput='';
     if ($options['id'] == 'Anonymous')
-      $myinput.='<b>'._("Name")."</b>: <input name='name' size='15' maxlength='15' value='$name' />\n";
+      $myinput.='<b>'._("Name")."</b>: <input name='name' size='15' maxlength='15' value=\"$name\" />\n";
     if (empty($options['value']))
-      $myinput.='<b>'._("Title")."</b>: <input name='title' value='$options[title]' size='70' maxlength='70' style='width:300px' /><br />\n";
+      $myinput.='<b>'._("Title")."</b>: <input name='title' value=\"$options[title]\" size='70' maxlength='70' style='width:300px' /><br />\n";
     else
       print "<input type='hidden' name='value' value='$options[value]' />\n";
     print '<div class="editor_area_extra">'.$myinput."</div>\n";

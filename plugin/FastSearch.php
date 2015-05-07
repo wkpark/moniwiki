@@ -32,7 +32,7 @@ function macro_FastSearch($formatter,$value="",&$opts) {
   $needle=_preg_search_escape($needle);
   $pattern = '/'.$needle.'/i';
 
-  $fneedle=str_replace('"',"&#34;",$needle); # XXX
+  $fneedle = _html_escape($needle);
   $url=$formatter->link_url($formatter->page->urlname);
 
   $arena = 'fullsearch';
@@ -60,7 +60,7 @@ function macro_FastSearch($formatter,$value="",&$opts) {
   $form= <<<EOF
 <form method='get' action='$url'>
    <input type='hidden' name='action' value='fastsearch' />
-   <input name='value' size='30' value='$fneedle' />
+   <input name='value' size='30' value="$fneedle" />
    <span class='button'><input type='submit' class='button' value='$msg' /></span><br />
    <input type='checkbox' name='context' value='20' />$msg2<br />
    <input type='radio' name='arena' value='fullsearch' $check1 />$msg3
@@ -263,9 +263,11 @@ function do_fastsearch($formatter,$options) {
         ($ret['hit'] == 1) ? _("page") : _("pages"),
          $ret['all']);
 
-    if (!empty($limit) and $ret['hit'] > $limit)
-      echo $formatter->link_to("?action=fastsearch&amp;value=$options[value]&amp;limit=0".$extra,
+    if (!empty($limit) and $ret['hit'] > $limit) {
+      $page = _urlencode($options['value']);
+      echo $formatter->link_to("?action=fastsearch&amp;value=$page&amp;limit=0".$extra,
         sprintf(_("Show all %d results"), $ret['hit']))."<br />\n";
+    }
   }
   $args['noaction']=1;
   $formatter->send_footer($args,$options);

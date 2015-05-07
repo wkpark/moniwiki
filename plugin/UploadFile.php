@@ -353,7 +353,7 @@ EOF;
   $title.=(!empty($title) ? "\\n":'').
     sprintf(_("File \"%s\" is uploaded successfully"),$upfilename);
 
-  $fullname=$formatter->page->name."/$upfilename";
+  $fullname=_html_escape($formatter->page->name)."/$upfilename";
   $upname=$upfilename;
   if (strpos($fullname,' ')!==false)
     $fullname='"'.$fullname.'"';
@@ -474,7 +474,8 @@ function macro_UploadFile($formatter,$value='',$options='') {
     if ($count > 1) $suffix="[$j]";
     if (!empty($options['rename'][$j])) {
       $rename=_stripslashes($options['rename'][$j]);
-      $extra="<input name='rename$suffix' value='$rename' />: "._("Rename")."<br />";
+      $rename = _html_escape($rename);
+      $extra="<input name='rename$suffix' value=\"$rename\" />: "._("Rename")."<br />";
     } else $extra='';
     $form.= <<<EOF
    <input type='file' name='upfile$suffix' size='30' />

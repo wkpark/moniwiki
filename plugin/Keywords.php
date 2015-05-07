@@ -408,11 +408,12 @@ SWF;
         }
         }
         if ($val > $min) {
+            $key = _html_escape($key);
             $checked='';
             if ($val >= $max) {$checked='checked="checked"'; $ok=1;}
             if (!empty($options['add']))
                 $checkbox="<input type='checkbox' $checked name='key[]' ".
-                    "value='$key' />";
+                    "value=\"$key\" />";
             $out.=" <li class=\"tag-item\"";
             if (!empty($use_sty)) {
                 $out.=" $style title=\"$val "._("hits").'"';

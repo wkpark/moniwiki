@@ -4472,8 +4472,9 @@ JSHEAD;
       echo '  <link rel="Alternate" media="print" title="Print View" href="',
         $print_url,"\" />\n";
       if ($options['css_url']) {
+        $css_url = _html_escape($options['css_url']);
         echo '  <link rel="stylesheet" type="text/css" ',$media,' href="',
-          $options['css_url']."\" />\n";
+          $css_url."\" />\n";
         if (file_exists('./css/_user.css')) // FIXME
           echo '  <link rel="stylesheet" media="screen" type="text/css" href="',
             $DBInfo->url_prefix,"/css/_user.css\" />\n";
@@ -5057,6 +5058,7 @@ MSG;
 
       setcookie('MONI_TRAIL',$trail,time()+60*60*24*30,get_scriptname());
     } else {
+      $pagename = _html_escape($pagename);
       $url = get_scriptname();
       $this->trail = <<<EOF
 <script type='text/javascript'>
@@ -5314,7 +5316,9 @@ function init_requests(&$options) {
 
   # MoniWiki theme
   if ((empty($DBInfo->theme) or isset($_GET['action'])) and isset($_GET['theme'])) {
-    $theme=$_GET['theme'];
+    // check theme
+    if (preg_match('@^[a-zA-Z0-9_-]+$@', $_GET['theme']))
+      $theme = $_GET['theme'];
   } else {
     if (is_mobile()) {
       if (isset($_GET['mobile'])) {

@@ -179,7 +179,7 @@ POHEAD;
         print $diffs;
         print "</textarea>\n";
     }
-    $po=str_replace('"',"&#34;",$po);
+    $po = _html_escape($po);
     print "<input type='hidden' name='po' value=\"$po\" />\n";
     print "</form>";
 
