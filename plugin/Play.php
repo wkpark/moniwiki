@@ -214,6 +214,7 @@ EOS;
       $classid = '';
       $objclass = '';
       $iframe = '';
+      $custom = '';
       $object_prefered = false;
       // http://code.google.com/p/google-code-project-hosting-gadgets/source/browse/trunk/video/video.js
       if (preg_match("@https?://(?:[a-z-]+[.])?(?:youtube(?:[.][a-z-]+)+|youtu\.be)/(?:watch[?].*v=|v/|embed/)?([a-z0-9_-]+)$@i",$media[$i],$m)) {
@@ -274,6 +275,24 @@ EOS;
         }
         $mediainfo = 'Vimeo movie';
         $objclass = ' vimeo';
+      } else if (preg_match("@https?://(?:www|dic)\.(?:nicovideo|nicozon)\.(?:jp|net)/(?:v|watch)/(sm\d+)$@i",
+          $media[$i], $m)) {
+
+        $custom = '<script type="text/javascript" src="http://ext.nicovideo.jp/thumb_watch/'.$m[1];
+        $size = '';
+        $qprefix = '?';
+        if ($mywidth > 0) {
+          $size.= '?w='.intval($mywidth);
+          $qprefix = '&amp;';
+        }
+        if ($myheight > 0)
+          $size.= $qprefix.'h='.intval($myheight);
+        $custom.= $size;
+        $custom.= '"></script>';
+
+        $attr = 'frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen';
+        $mediainfo = 'Niconico';
+        $objclass = ' niconico';
       } else if (preg_match("/(wmv|mpeg4|mp4|avi|asf)$/",$media[$i], $m)) {
         $classid="classid='clsid:22D6F312-B0F6-11D0-94AB-0080C74C7E95'";
         $type='type="application/x-mplayer2"';
@@ -310,6 +329,12 @@ EOS;
 <iframe src="$iframe" $attr></iframe>
 <div><a alt='$myurl' onclick='javascript:openExternal(this, "inline-block"); return false;'><span>[$mediainfo]</span></a></div></div></div>
 IFRAME;
+      } else if (isset($custom[0])) {
+        $out.= <<<OBJECT
+<div class='externalObject$objclass'><div>
+$custom
+<div><a alt='$myurl' onclick='javascript:openExternal(this, "inline-block"); return false;'><span>[$mediainfo]</span></a></div></div></div>
+OBJECT;
       } else {
         $myurl=$url[$i];
         $out.=<<<OBJECT
