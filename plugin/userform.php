@@ -413,6 +413,9 @@ function do_userform($formatter,$options) {
       $tz_offset=$hour*3600 + $min;
       $userinfo->info['tz_offset']=$tz_offset;
     }
+    if (!empty($DBInfo->use_agreement) and !empty($options['joinagreement']))
+      $userinfo->info['join_agreement'] = 'agree';
+
     if (!empty($options['email']) and ($options['email'] != $userinfo->info['email'])) {
       if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
         $ticket=md5(time().$userinfo->info['id'].$options['email']);

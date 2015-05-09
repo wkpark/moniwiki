@@ -1035,7 +1035,7 @@ class UserDB {
     $config=array("css_url","datatime_fmt","email","bookmark","language","home",
                   "name","nick","password","wikiname_add_spaces","subscribed_pages",
                   "scrapped_pages","quicklinks","theme","ticket","eticket",
-	  	  "tz_offset","npassword","nticket","idtype");
+                  "tz_offset","npassword","nticket","idtype", "join_agreement");
 
     $date=gmdate('Y/m/d H:i:s', time());
     $data="# Data saved $date\n";
@@ -3219,6 +3219,25 @@ function macro_DateTime($formatter,$value) {
   return gmdate("Y/m/d H:i:s",time()+$tz_offset).' GMT';
 }
 
+function _joinagreement_form() {
+  global $Config;
+
+  $form = '';
+  if (!empty($Config['agreement_comment'])) {
+    // show join agreement confirm message
+    $form.= '<div class="join-agreement">';
+    $form.= str_replace("\n", "<br />", $Config['agreement_comment']);
+    $form.= "</div>\n";
+  } else if (!empty($Config['agreement_page']) and file_exists($Config['agreement_page'])) {
+    // show join agreement confirm message from a external text file
+    $form.= '<div class="join-agreement">';
+    $tmp = file_get_contents($Config['agreement_page']);
+    $form.= str_replace("\n", "<br />", $tmp);
+    $form.= "</div>\n";
+  }
+  return $form;
+}
+
 function macro_UserPreferences($formatter,$value,$options='') {
   global $DBInfo;
 
@@ -3396,6 +3415,15 @@ $nick
   <tr><td><b>CSS URL </b>&nbsp;</td><td><input type="text" size="40" name="user_css" value="$css" /><br />("None" for disabling CSS)</td></tr>
 EXTRA;
     $logout="<span class='button'><input type='submit' class='button' name='logout' value='"._("logout")."' /></span> &nbsp;";
+
+    if (!empty($DBInfo->use_agreement) and $user->info['join_agreement'] != 'agree') {
+      $extra.= _joinagreement_form();
+      $accept = _("Accept agreement");
+      $extra.= <<<FORM
+<div class='check-agreement'><p><input type='checkbox' name='joinagreement' />$accept</p>
+FORM;
+    }
+
   }
   $script = '';
   if (empty($tz_offset) and $jscript)
@@ -3458,18 +3486,8 @@ FORM;
         $form.= "value=\"$login_id\"";
       }
       $form.= " />";
-      if (!empty($DBInfo->agreement_comment)) {
-        // show join agreement confirm message
-        $form.= '<div class="join-agreement">';
-        $form.= str_replace("\n", "<br />", $DBInfo->agreement_comment);
-        $form.= "</div>\n";
-      } else if (!empty($DBInfo->agreement_page) and file_exists($DBInfo->agreement_page)) {
-        // show join agreement confirm message from a external text file
-        $form.= '<div class="join-agreement">';
-        $tmp = file_get_contents($DBInfo->agreement_page);
-        $form.= str_replace("\n", "<br />", $tmp);
-        $form.= "</div>\n";
-      }
+
+      $form.= _joinagreement_form();
       $accept = _("Accept agreement");
       $form.= <<<FORM
 <div class='check-agreement'><p><input type='checkbox' name='joinagreement' />$accept</p>
