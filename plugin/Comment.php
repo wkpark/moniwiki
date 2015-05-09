@@ -64,7 +64,7 @@ EXTRA;
   }
 
   if (!empty($options['usemeta']) or !empty($use_meta)) {
-    $hidden.="<input type='hidden' name='usemeta' value=1 />\n";
+    $hidden.="<input type='hidden' name='usemeta' value='1' />\n";
   }
   if (!$DBInfo->security->writable($options)) return '';
 

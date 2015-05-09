@@ -175,7 +175,7 @@ EOF;
      return $form;
   }
   if ($test === false or $test2 === false) {
-     $opts['msg'] = sprintf(_("Invalid search expression \"%s\""), $needle);
+     $opts['msg'] = sprintf(_("Invalid search expression \"%s\""), _html_escape($needle));
      return $form;
   }
 
@@ -353,11 +353,12 @@ EOF;
   $idx=1;
   $checkbox = '';
   while (list($page_name, $count) = each($hits)) {
-    if (!empty($opts['checkbox'])) $checkbox="<input type='checkbox' name='pagenames[]' value='$page_name' />";
+    $pgname = _html_escape($page_name);
+    if (!empty($opts['checkbox'])) $checkbox="<input type='checkbox' name='pagenames[]' value=\"$pgname\" />";
     $out.= '<!-- RESULT ITEM START -->'; // for search plugin
     $out.= '<li>'.$checkbox.$formatter->link_tag(_rawurlencode($page_name),
           '?action=highlight&amp;value='._urlencode($value),
-          $page_name,'tabindex="'.$idx.'"');
+          $pgname,'tabindex="'.$idx.'"');
     if ($count > 0)
       $out.= ' . . . . ' . sprintf((($count == 1) ? _("%d match") : _("%d matches")), $count );
     else if ($count == -2)

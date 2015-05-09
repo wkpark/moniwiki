@@ -72,10 +72,13 @@ function do_sendping($formatter,$options) {
     $msg1 = _("TrackBack Ping URL");
     print "<form method='post' action='$url'>\n";
     print "<b>$msg1</b>: <input name='trackback_url' size='60' maxlength='256' style='width:200' /><br />\n";
-    if ($options['value'])
-      print "<input type='hidden' name='value' value='$options[value]' />\n";
+    if ($options['value']) {
+      $options['value'] = _html_escape($options['value']);
+      print "<input type='hidden' name='value' value=\"$options[value]\" />\n";
+    }
     $msg2 = _("Title");
-    print "<b>$msg2</b>: <input name='title' value='$title' size='70' maxlength='70' style='width:200' /><br />\n";
+    $title = _html_escape($title);
+    print "<b>$msg2</b>: <input name='title' value=\"$title\" size='70' maxlength='70' style='width:200' /><br />\n";
     if ($DBInfo->use_resizer > 1)
       echo <<<JS
 <script type="text/javascript" src="$DBInfo->url_prefix/local/textarea.js"></script>

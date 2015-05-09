@@ -673,11 +673,12 @@ function do_keywords($formatter,$options) {
                 }
                 $ret.=$key.' ';
             }
+            $ret = _html_escape($ret);
             $btn=_("Update with these Keywords"); 
             $form="<form method='post' action='$link'>";
             $form.='<input type="hidden" name="action" value="keywords" />';
             $form.='<input type="hidden" name="update" value="1" />';
-            $form.='<input type="hidden" name="keywords" value=\''.$ret.'\' />';
+            $form.='<input type="hidden" name="keywords" value="'.$ret.'" />';
             $form.="<input type='submit' value='$btn' />\n";
             $form.="</form>";
             print $form;
