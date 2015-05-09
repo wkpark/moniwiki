@@ -1650,10 +1650,14 @@ function macro_Edit($formatter,$value,$options='') {
       #else ignore
     }
   } else {
+    $raw_body = '';
+    if (!empty($options['orig_pagename'])) {
+      $raw_body="#title $options[orig_pagename]\n";
+    }
     if (strpos($options['page'],' ') > 0) {
       #$raw_body="#title $options[page]\n";
       $options['page']='["'.$options['page'].'"]';
-    } else $raw_body='';
+    }
     $guide = sprintf(_("Describe %s here"), $options['page']);
     $raw_body.= $guide;
     $js=<<<EOF
@@ -1666,10 +1670,11 @@ function macro_Edit($formatter,$value,$options='') {
 
         txtarea.focus();
         var txt = txtarea.value;
-        var pos = 1;
-        if (!pos) return;
-        pos--;
-        var end = pos + txt.length;
+        var pos = 0;
+        if (txt.indexOf('#title ') == 0) {
+            pos = txt.indexOf("\\n") + 1;
+        }
+        var end = txt.length;
 
         if (txtarea.selectionStart || txtarea.selectionStart == '0') {
             // goto
