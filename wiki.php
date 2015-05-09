@@ -2446,7 +2446,7 @@ class Formatter {
         }
       } else {
         $word = preg_replace($this->baserule, $this->baserepl, $text);
-        $word = str_replace('&lt;', '<', $word); // revert from baserule
+        //$word = str_replace('&lt;', '<', $word); // revert from baserule
       }
     } else {
       $word=$text=$page_text ? $page_text:$word;
