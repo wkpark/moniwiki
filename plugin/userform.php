@@ -162,6 +162,14 @@ function do_userform($formatter,$options) {
   } else if (!empty($options['logout'])) {
     # logout
     $formatter->header($user->unsetCookie());
+    if (session_name() != '') {
+      $path = get_scriptname();
+      // for moniwiki internal
+      $formatter->header('Set-Cookie: '. session_name() .'='.$user->id.'; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path='.$path);
+      // for some user plugins
+      $params = session_get_cookie_params();
+      $formatter->header('Set-Cookie: '. session_name() .'='.$user->id.'; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path='.$params['path']);
+    }
     $options['msg']= _("Cookie deleted !");
     $user->id = 'Anonymous';
     $DBInfo->user=$user;
