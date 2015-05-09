@@ -131,6 +131,8 @@ class User_g4 extends WikiUser {
                         $this->info['nick'] = $member['nick'];
                         $this->nick = $member['nick'];
                     }
+                    if ($this->info['email'] == '')
+                        $this->info['email'] = $member['mb_email'];
                     $this->info['tz_offset'] = $this->tz_offset;
                 }
             }

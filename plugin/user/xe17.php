@@ -142,6 +142,8 @@ class User_xe17 extends WikiUser {
                     $this->nick = $xeinfo->nick_name;
                     $this->info['nick'] = $xeinfo->nick_name;
                 }
+                if ($this->info['email'] == '')
+                    $this->info['email'] = $xeinfo->email_address;
                 $this->info['tz_offset'] = $this->tz_offset;
             }
         } else {
