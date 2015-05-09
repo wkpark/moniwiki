@@ -151,11 +151,16 @@ class User_xe17 extends WikiUser {
         if ($update || !empty($id) and $id != 'Anonymous') {
             if ($cookie_id != $id)
                 header($this->setCookie());
+        }
 
-            if ($update || !$udb->_exists($id)) {
-                // automatically save/register user
-                $dummy = $udb->saveUser($this);
+        if ($update || !$udb->_exists($id)) {
+            if (!$udb->_exists($id)) {
+                if (!empty($DBInfo->use_agreement) && empty($this->info['join_agreement'])) {
+                    $this->info['join_agreement'] = 'disagree';
+                }
             }
+            // automatically save/register user
+            $dummy = $udb->saveUser($this);
         }
     }
 }
