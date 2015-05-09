@@ -3395,7 +3395,7 @@ NICK;
       $hour=sprintf("%02d",abs((int)($val / 3600)));
       $z=$hour . (($val % 3600) ? ":30":":00");
       if ($val < 0) $z="-".$z;
-      if ($tz_offset != '' and $val== $tz_offset)
+      if ($tz_offset !== '' and $val== $tz_offset)
         $selected=" selected='selected'";
       else
         $selected="";
@@ -3426,7 +3426,7 @@ FORM;
 
   }
   $script = '';
-  if (empty($tz_offset) and $jscript)
+  if ($tz_offset === '' and $jscript)
     $script=<<<EOF
 <script type="text/javascript">
 /*<![CDATA[*/
