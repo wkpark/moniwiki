@@ -171,6 +171,52 @@ class User_xe17 extends WikiUser {
             $dummy = $udb->saveUser($this);
         }
     }
+
+    function login($formatter, $params) {
+        global $DBInfo;
+
+        @session_start(); // confirm session start
+
+        // set xe_root_dir config option
+        $xe_root_dir = !empty($DBInfo->xe_root_dir) ?
+                $DBInfo->xe_root_dir : dirname(__FILE__).'/../../../xe';
+        $xe_root_url = !empty($DBInfo->xe_root_url) ?
+                $DBInfo->xe_root_url : '/xe';
+        // default xe_root_dir is 'xe' subdirectory of the parent dir of the moniwiki
+
+        // init XE17, XE18
+        define('__XE__', true);
+
+        require_once($xe_root_dir."/config/config.inc.php");
+
+        // setup post params
+        $post_params = array();
+        $login_path = $xe_root_url.'/index.php';
+        $post_params['user_id'] = $params['login_id'];
+        $post_params['password'] = $params['password'];
+        $post_params['act'] = 'procMemberLogin';
+
+        // setup post url
+        $port = $_SERVER['SERVER_PORT'] != 80 ? ':'.$_SERVER['SERVER_PORT'] : '';
+        $http = 'http' . ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on') ? 's' : '') . '://';
+        $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'];
+        if(isset($_SERVER['HTTP_HOST']) && preg_match('/:[0-9]+$/', $host))
+            $host = preg_replace('/:[0-9]+$/', '', $host);
+        $login_path = $http.$host.$port.$login_path;
+
+        $_SERVER['SCRIPT_NAME'] = $xe_root_url.'/index.php';
+        require_once dirname(__FILE__)."/../../lib/HTTPClient.php";
+        $http = new HTTPClient();
+        $http->cookie = $_COOKIE; // set current cookies
+
+        $http->max_redirect = 0; // do not redirect
+        $http->post($login_path, $post_params);
+        if(isset($http->resp_headers['set-cookie'])){
+            foreach ((array) $http->resp_headers['set-cookie'] as $c){
+                header('Set-Cookie: '.$c, false);
+            }
+        }
+    }
 }
 
 // vim:et:sts=4:sw=4:
