@@ -534,6 +534,9 @@ function do_keywords($formatter,$options) {
             // following keyword list are acceptable separated with spaces.
             // Chemistry "Physical Chemistry" "Bio Chemistry" ...
             $keywords=_stripslashes($options['keywords']);
+            // strip some special chars
+            $keywords = preg_replace('/[^a-zA-Z0-9_-\s]/', ' ', $keywords);
+            $keywords = preg_replace('/\s+/', ' ', $keywords);
             $ws=preg_split('/((?<!\S)(["\'])[^\2]+?\2(?!\S)|\S+)/',
                 $keywords,-1,
                 PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_NO_EMPTY);
@@ -639,16 +642,20 @@ function do_keywords($formatter,$options) {
             $ret.=$key.',';
         }
         $ret=substr($ret,0,strlen($ret)-1);
-        print "<tt>#keywords $ret</tt>\n";
+        $rethtml = _html_escape($ret);
+        print "<tt>#keywords $rethtml</tt>\n";
         if (!empty($DBInfo->use_keywords) or !empty($options['update'])) {
             # auto update the page with selected keywords.
             $body=$formatter->page->get_raw_body();
             $pi=$formatter->page->get_instructions($dum);
             if (!empty($pi['#keywords'])) {
                 $tag=preg_quote($pi['#keywords']);
-                $nbody= preg_replace('/^#keywords\s+'.$tag.'/',
+                $test = @preg_replace('/^#keywords\s+'.$tag.'/',
                     '#keywords '.$ret,$body,1);
-                if ($nbody!=$body) $ok=1;
+                if ($test !== NULL && $test != $body) {
+                    $nbody = $test;
+                    $ok = 1;
+                }
             } else {
                 $nbody='#keywords '.$ret."\n".$body;
                 $ok=2;
