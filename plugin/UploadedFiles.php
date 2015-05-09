@@ -299,7 +299,7 @@ EOS;
    $out="<form method='post' action='$link'>";
    $out.="<p><input type='hidden' name='action' value='DeleteFile' />\n";
    if ($key)
-     $out.="<input type='hidden' name='value' value='$value' />\n";
+     $out.="<input type='hidden' name='value' value=\"$value\" />\n";
 
 
    $out.="</p><table style='border:0px' cellpadding='2' class='uploadInfo'>\n";
@@ -369,9 +369,9 @@ EOS;
       $date=date("Y-m-d",filemtime($dirname));
 
       $out.="<tr>";
+        $file = _html_escape($file);
       if ($use_admin)
-        $out.="<td class='wiki'><input type='$checkbox' name='files[$idx]' value='$file' /></td>";
-
+        $out.="<td class='wiki'><input type='$checkbox' name='files[$idx]' value=\"$file\" /></td>";
       $out.="<td class='wiki'><a href='$link'>$file/</a></td>";
       if ($use_fileinfo)
         $out.="<td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td>";
@@ -486,8 +486,10 @@ EOS;
         $out.="<tr>\n";
       else if (($iidx % $col) == 0)
         $out.="</tr>\n<tr>\n";
+      $file = _html_escape($file);
+      $fname = _html_escape($fname);
       if ($use_admin)
-        $out.="<td class='wiki'><input type='$checkbox' name='files[$idx]' value='$file' /></td>";
+        $out.="<td class='wiki'><input type='$checkbox' name='files[$idx]' value=\"$file\" /></td>";
       $out.="<td class='wiki'><a href=\"$link\"$attr>$fname</a></td>";
       if ($use_fileinfo) {
         $out.="<td align='right' class='wiki'>$size</td><td class='wiki'>$date</td>";

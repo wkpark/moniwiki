@@ -9,6 +9,10 @@
 function do_theme($formatter,$options) {
   global $DBInfo;
 
+  $theme = '';
+  if (preg_match('/^[a-zA-Z0-9_-$/', $options['theme']))
+        $theme = $options['theme'];
+
   if ($options['clear']) {
     if ($options['id']=='Anonymous') {
       #header("Set-Cookie: MONI_THEME=dummy; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".get_scriptname());
@@ -28,12 +32,12 @@ function do_theme($formatter,$options) {
     }
     $msg="== "._("Theme cleared. Goto UserPreferences.")." ==";
   }
-  else if ($options['theme']) {
+  else if (!empty($theme)) {
     $themedir=$formatter->themedir;
     if (file_exists($themedir."/header.php")) { # check
       $options['css_url']=$formatter->themeurl."/css/default.css";
       if ($options['save'] and $options['id']=='Anonymous') {
-        setcookie("MONI_THEME",$options['theme'],time()+60*60*24*30,
+        setcookie("MONI_THEME",$theme,time()+60*60*24*30,
                                get_scriptname());
         setcookie("MONI_CSS",$options['css_url'],time()+60*60*24*30,
                                get_scriptname());
@@ -43,7 +47,7 @@ function do_theme($formatter,$options) {
         # save profile
         $udb=$DBInfo->udb;
         $userinfo=$udb->getUser($options['id']);
-        $userinfo->info['theme']=$options['theme'];
+        $userinfo->info['theme'] = $theme;
         $userinfo->info['css_url']=$options['css_url'];
         $udb->saveUser($userinfo);
         $msg="Goto ".$formatter->link_repl("UserPreferences");
@@ -54,7 +58,7 @@ function do_theme($formatter,$options) {
         $msg=<<<FORM
 <form method='post'>
 <input type='hidden' name='action' value='theme' />
-<input type='hidden' name='theme' value='$options[theme]' />
+<input type='hidden' name='theme' value="$theme" />
 $want <input type='submit' name='save' value='$btn' /> &nbsp;
 </form>
 

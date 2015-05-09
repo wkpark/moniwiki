@@ -146,7 +146,7 @@ function do_scrap($formatter,$options) {
         }
         $pages = array_unique ($pages);
     }
-    $page_list = join("\t",$pages);
+    $page_list = _html_escape(join("\t",$pages));
     $userinfo->info['scrapped_pages'] = $page_list;
     $udb->saveUser($userinfo);
 

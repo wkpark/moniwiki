@@ -20,6 +20,7 @@ function macro_InputForm($formatter,$value,$options=array()) {
         $type='select';
 
     $myname=$name;
+    $val = _html_escale($value);
     switch($type) {
     case 'form':
         #list($method,$action,$dum)=explode(':',$value);
@@ -31,12 +32,12 @@ function macro_InputForm($formatter,$value,$options=array()) {
             "<input type='hidden' name='action' value='$action' />\n";
         break;
     case 'submit':
-        $out.="<input type='$type' name='$name' value='$value' />\n";
+        $out.="<input type='$type' name='$name' value=\"$val\" />\n";
         break;
     case 'input':
         list($myname,$size,$value)=explode(':',$value,3);
         $size=$size ? "size='$size'":'';
-        $out.="<input type='$type' {$size}name='$myname' value='$value' />\n";
+        $out.="<input type='$type' {$size}name='$myname' value=\"$val\" />\n";
         break;
     case 'select':
     default:
@@ -45,12 +46,12 @@ function macro_InputForm($formatter,$value,$options=array()) {
 
         $out.='<option>----</option>'."\n";
         foreach ($list as $l) {
-            $l=trim($l);
+            $l = _html_escape(trim($l));
             if (($p=strrpos($l,' ')) !== false and substr($l,$p+1) == 1) {
                 $check=' selected="selected"';
                 $l=substr($l,0,-1);
             } else $check='';
-            $out.="<option value='".$l."'$check>"._($l)."</option>\n";
+            $out.="<option value=\"".$l."\"$check>"._($l)."</option>\n";
         }
         $out="<select name='$myname'>".$out."</select>\n";
         break;
