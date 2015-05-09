@@ -117,6 +117,14 @@ function do_userform($formatter,$options) {
 
   } else
   if ($user->id == "Anonymous" and !empty($options['login_id']) and isset($options['password']) and !isset($options['passwordagain'])) {
+
+    if (method_exists($user, 'login')) {
+      $user->login($formatter, $options);
+      $params = array();
+      $params['value'] = $options['page'];
+      do_goto($formatter, $params);
+      return;
+    }
     # login
     $userdb=$DBInfo->udb;
     if ($userdb->_exists($id)) {

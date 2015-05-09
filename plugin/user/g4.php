@@ -33,9 +33,12 @@ class User_g4 extends WikiUser {
 
         $g4_root_dir = !empty($DBInfo->g4_root_dir) ?
                 $DBInfo->g4_root_dir : __DIR__.'/../../../gb4';
+        $g4_root_url = !empty($DBInfo->g4_root_url) ?
+                $DBInfo->g4_root_url : '/gb4';
 
         $g5_path = array();
         $g5_path['path'] = realpath($g4_root_dir);
+        $g5_path['url'] = $g4_root_url;
         include_once("$g4_root_dir/config.php"); // g4 config file
 
         ini_set("url_rewriter.tags", "");
@@ -165,6 +168,53 @@ class User_g4 extends WikiUser {
             }
             // automatically save/register user
             $dummy = $udb->saveUser($this);
+        }
+    }
+
+    function login($formatter, $params) {
+        global $DBInfo;
+        global $g4, $g4_root_dir;
+
+        $g4_root_dir = !empty($DBInfo->g4_root_dir) ?
+                $DBInfo->g4_root_dir : __DIR__.'/../../../gb4';
+        $g4_root_url = !empty($DBInfo->g4_root_url) ?
+                $DBInfo->g4_root_url : '/gb4';
+
+        include_once("$g4_root_dir/config.php"); // g4 config file
+
+        if (!defined('G5_VERSION')) {
+            include_once("$g4_root_dir/lib/constant.php");  // constants
+        }
+        //include_once("$g4_root_dir/lib/common.lib.php"); // common library
+
+        $post_params = array();
+        if (defined('G5_VERSION')) {
+            $login_path = G5_BBS_URL.'/login_check.php';
+        } else {
+            $login_path = $g4_root_url.$g4['bbs_path'].'/login_check.php';
+        }
+
+        // set post parameters
+        $post_params['mb_id'] = $params['login_id'];
+        $post_params['mb_password'] = $params['password'];
+
+        // setup post url
+        $port = $_SERVER['SERVER_PORT'] != 80 ? ':'.$_SERVER['SERVER_PORT'] : '';
+        $http = 'http' . ((isset($_SERVER['HTTPS']) && $_SERVER['HTTPS']=='on') ? 's' : '') . '://';
+        $host = isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : $_SERVER['SERVER_NAME'];
+        if(isset($_SERVER['HTTP_HOST']) && preg_match('/:[0-9]+$/', $host))
+            $host = preg_replace('/:[0-9]+$/', '', $host);
+        $login_path = $http.$host.$port.$login_path;
+
+        require_once dirname(__FILE__)."/../../lib/HTTPClient.php";
+        $http = new HTTPClient();
+        $http->cookie = $_COOKIE; // set current cookies
+        $http->max_redirect = 0; // do not redirect
+        $http->post($login_path, $post_params);
+        if(isset($http->resp_headers['set-cookie'])){
+            foreach ((array) $http->resp_headers['set-cookie'] as $c){
+                header('Set-Cookie: '.$c, false);
+            }
         }
     }
 }
