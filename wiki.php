@@ -5493,6 +5493,27 @@ function wiki_main($options) {
 
   $options['page']=$pagename;
   $options['action'] = &$action;
+
+  // check pagename length
+  $key = $DBInfo->pageToKeyname($pagename);
+  if (!empty($options['action']) && strlen($key) > 255) {
+    $i = 252; // 252 + reserved 3 (.??) = 255
+
+    $newname = $DBInfo->keyToPagename(substr($key, 0, 252));
+    $j = mb_strlen($newname, $Config['charset']);
+    $j--;
+    do {
+      $newname = mb_substr($pagename, 0, $j, $Config['charset']);
+      $key = $DBInfo->pageToKeyname($newname);
+    } while (strlen($key) > 248 && --$j > 0);
+
+    $options['page'] = $newname;
+    $options['orig_pagename'] = $pagename; // original page name
+    $pagename = $newname;
+  } else {
+    $options['orig_pagename'] = '';
+  }
+
   $page = $DBInfo->getPage($pagename);
   $page->is_static = false; // FIXME
 
