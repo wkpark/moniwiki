@@ -47,6 +47,23 @@ class User_xe17 extends WikiUser {
     function User_xe17($id = '') {
         global $DBInfo;
 
+        // set xe_root_dir config option
+        $xe_root_dir = !empty($DBInfo->xe_root_dir) ?
+                $DBInfo->xe_root_dir : dirname(__FILE__).'/../../../xe';
+        // default xe_root_dir is 'xe' subdirectory of the parent dir of the moniwiki
+
+        $sessid = session_name(); // PHPSESSID
+        // set the session_id() using saved cookie
+        if (isset($_COOKIE[$sessid])) {
+            session_id($_COOKIE[$sessid]);
+        }
+
+        // do not use cookies for varnish cache server
+        ini_set("session.use_cookies", 0);
+        session_cache_limiter(''); // Cache-Control manually for varnish cache
+        session_start();
+
+        // for Anonymous users
         $this->css = isset($_COOKIE['MONI_CSS']) ? $_COOKIE['MONI_CSS'] : '';
         $this->theme = isset($_COOKIE['MONI_THEME']) ? $_COOKIE['MONI_THEME'] : '';
         $this->bookmark = isset($_COOKIE['MONI_BOOKMARK']) ? $_COOKIE['MONI_BOOKMARK'] : '';
@@ -64,18 +81,18 @@ class User_xe17 extends WikiUser {
 
         // is it a valid user ?
         $udb = new UserDB($DBInfo);
+        $user = $udb->getUser(!empty($cookie_id) ? $cookie_id : 'Anonymous');
 
         $update = false;
         if (!empty($cookie_id)) {
-            $tmp = $udb->getUser($cookie_id);
-
             // not found
-            if ($tmp->id == 'Anonymous') {
+            if ($user->id == 'Anonymous') {
+                $this->setID('Anonymous');
                 $update = true;
                 $cookie_id = '';
             } else {
                 // check ticket
-                $ticket = getTicket($tmp->id, $_SERVER['REMOTE_ADDR']);
+                $ticket = getTicket($user->id, $_SERVER['REMOTE_ADDR']);
                 if ($this->ticket != $ticket) {
                     // not a valid user
                     $this->ticket = '';
@@ -86,6 +103,9 @@ class User_xe17 extends WikiUser {
                     // OK good user
                     $this->setID($cookie_id);
                     $id = $cookie_id;
+                    $this->nick = $user->info['nick'];
+                    $this->tz_offset = $user->info['tz_offset'];
+                    $this->info = $user->info;
                 }
             }
         } else {
@@ -93,23 +113,8 @@ class User_xe17 extends WikiUser {
             $update = true;
         }
 
-        $sessid = session_name(); // PHPSESSID
-        // set the session_id() using saved cookie
-        if (isset($_COOKIE[$sessid])) {
-            session_id($_COOKIE[$sessid]);
-        }
-
-        // do not use cookies for varnish cache server
-        ini_set("session.use_cookies", 0);
-        session_cache_limiter('');
-        session_start();
-
-        // set xe_root_dir config option
-        $xe_root_dir = !empty($DBInfo->xe_root_dir) ?
-                $DBInfo->xe_root_dir : dirname(__FILE__).'/../../../xe';
-        // default xe_root_dir is 'xe' subdirectory of the parent dir of the moniwiki
-
         if ($update && !empty($_SESSION['is_logged'])) {
+            // init XE17, XE18
             define('__XE__', true);
 
             require_once($xe_root_dir."/config/config.inc.php");
@@ -123,20 +128,21 @@ class User_xe17 extends WikiUser {
 
             $oMemberController->setSessionInfo();
             $member = new memberModel();
-            $info = $member->getLoggedInfo();
+            $xeinfo = $member->getLoggedInfo();
 
-            $id = $info->user_id;
-
-            $this->setID($id);
-            $udb = new UserDB($DBInfo);
-            $tmp = $udb->getUser($id);
+            $id = $xeinfo->user_id;
+            $user = $udb->getUser($id); // get user info again
 
             // not a registered user ?
-            if ($tmp->id == 'Anonymous' || $update || empty($tmp->info['nick'])) {
-                $this->setID($id);
-                $this->tz_offset = $tz_offset;
-                $this->info['nick'] = $info->nick_name;
-                $this->info['tz_offset'] = $tz_offset;
+            if ($user->id == 'Anonymous' || $update || empty($user->info['nick'])) {
+                $this->setID($id); // not found case
+                $this->info = $user->info; // already registered case
+
+                if ($this->nick != $xeinfo->nick_name) {
+                    $this->nick = $xeinfo->nick_name;
+                    $this->info['nick'] = $xeinfo->nick_name;
+                }
+                $this->info['tz_offset'] = $this->tz_offset;
             }
         } else {
             // not logged in
