@@ -152,6 +152,11 @@ class User_g4 extends WikiUser {
         }
 
         if ($update || !$udb->_exists($id)) {
+            if (!$udb->_exists($id)) {
+                if (!empty($DBInfo->use_agreement) && empty($this->info['join_agreement'])) {
+                    $this->info['join_agreement'] = 'disagree';
+                }
+            }
             // automatically save/register user
             $dummy = $udb->saveUser($this);
         }
