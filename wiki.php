@@ -4402,7 +4402,7 @@ class Formatter {
       else if ($this->group) $upper=_urlencode(substr($this->page->name,strlen($this->group)));
       $keywords = '';
       if (!empty($this->pi['#keywords']))
-        $keywords='<meta name="keywords" content="'.$this->pi['#keywords'].'" />'."\n";
+        $keywords='<meta name="keywords" content="'._html_escape($this->pi['#keywords']).'" />'."\n";
       else if (!empty($DBInfo->use_keywords)) {
         $keywords=strip_tags($this->page->title);
         $keywords=str_replace(" ",", ",$keywords); # XXX
