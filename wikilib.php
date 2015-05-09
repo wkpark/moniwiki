@@ -3257,6 +3257,11 @@ function macro_UserPreferences($formatter,$value,$options='') {
 
   $user=$DBInfo->user; # get from COOKIE VARS
 
+  // User class support login method
+  $login_only = false;
+  if (method_exists($user, 'login'))
+    $login_only = true;
+
   $jscript='';
   if (!empty($DBInfo->use_safelogin)) {
     $onsubmit=' onsubmit="javascript:_chall.value=challenge.value;password.value=hex_hmac_md5(challenge.value, hex_md5(password.value))"';
@@ -3337,11 +3342,13 @@ $default_form
 FORM;
     $openid_form='';
   }
+  if ($user->id == 'Anonymous' && $login_only)
+    return $login;
 
   $logout = '';
   $joinagree = empty($DBInfo->use_agreement) || !empty($options['joinagreement']);
 
-  if ($user->id == 'Anonymous') {
+  if (!$login_only and $user->id == 'Anonymous') {
     if (isset($options['login_id']) or !empty($_GET['join']) or $value!="simple") {
       $passwd=!empty($options['password']) ? $options['password'] : '';
       $button=_("Make profile");
@@ -3366,7 +3373,7 @@ EXTRA;
     } else {
       $button=_("Login or Join");
     }
-  } else {
+  } else if ($uder->id != 'Anonymous') {
     $button=_("Save");
     $css=!empty($user->info['css_url']) ? $user->info['css_url'] : '';
     $css = _html_escape($css);
