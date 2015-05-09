@@ -84,6 +84,7 @@ class User_g4 extends WikiUser {
         if (!empty($cookie_id)) {
             // not found
             if ($user->id == 'Anonymous') {
+                $this->setID('Anonymous');
                 $update = true;
                 $cookie_id = '';
             } else {
@@ -101,6 +102,7 @@ class User_g4 extends WikiUser {
                     $id = $cookie_id;
                     $this->nick = $user->info['nick'];
                     $this->tz_offset = $user->info['tz_offset'];
+                    $this->info = $user->info;
                 }
             }
         } else {
@@ -113,10 +115,12 @@ class User_g4 extends WikiUser {
 
             if (!empty($member['mb_id'])) {
                 $id = $member['mb_id'];
+                $user = $udb->getUser($id); // get user info again
 
                 // not a registered user ?
                 if ($user->id == 'Anonymous' || $update || empty($user->info['nick'])) {
-                    $this->setID($id);
+                    $this->setID($id); // not found case
+                    $this->info = $user->info; // already registered case
 
                     if (isset($member['mb_nick']) and $this->nick != $member['mb_nick']) {
                         // G4
