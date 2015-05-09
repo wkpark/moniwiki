@@ -1044,7 +1044,7 @@ class UserDB {
       $user->info['ticket']=$user->ticket;
 
     foreach ($config as $key) {
-      if (isset($user->info[$key][0]))
+      if (isset($user->info[$key]))
         $data.="$key=".$user->info[$key]."\n";
     }
     #print $data;
