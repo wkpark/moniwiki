@@ -71,6 +71,8 @@ class User_g4 extends WikiUser {
         $this->trail = isset($_COOKIE['MONI_TRAIL']) ? _stripslashes($_COOKIE['MONI_TRAIL']) : '';
         $this->tz_offset = isset($_COOKIE['MONI_TZ']) ?_stripslashes($_COOKIE['MONI_TZ']) : '';
         $this->nick = isset($_COOKIE['MONI_NICK']) ?_stripslashes($_COOKIE['MONI_NICK']) : '';
+        $this->verified_email = isset($_COOKIE['MONI_VERIFIED_EMAIL']) ?
+                _stripslashes($_COOKIE['MONI_VERIFIED_EMAIL']) : '';
         if ($this->tz_offset == '') $this->tz_offset = date('Z');
 
         $cookie_id = '';
