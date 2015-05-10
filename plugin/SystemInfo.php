@@ -8,8 +8,9 @@
 function macro_SystemInfo($formatter='',$value='') {
   global $_revision,$_release;
 
-  $version=phpversion();
-  $uname=php_uname();
+  $version = preg_replace('/(\.\d+)$/', '.x', phpversion());
+  $tmp = explode(' ', php_uname());
+  $uname = ' ('.$tmp[0].' '.$tmp[2].' '.$tmp[4].')';
   list($aversion,$dummy)=explode(" ",$_SERVER['SERVER_SOFTWARE'],2);
 
   $pages=macro_PageCount($formatter);
@@ -20,7 +21,7 @@ function macro_SystemInfo($formatter='',$value='') {
 
   return <<<EOF
 <table border='0' cellpadding='5'>
-<tr><th width='200'>$ver_php</th> <td>$version ($uname)</td></tr>
+<tr><th width='200'>$ver_php</th> <td>$version$uname</td></tr>
 <tr><th>$ver_moni</th> <td>Release $_release [$_revision]</td></tr>
 <tr><th>$ver_serv</th> <td>$aversion</td></tr>
 <tr><th>$npage</th> <td>$pages</td></tr>
