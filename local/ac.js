@@ -34,7 +34,10 @@ function titleindex(request, response) {
         url: '?action=titleindex',
         data: { q: q, limit: num },
         success: function(data) {
-            response(data.split(/\n/).slice(0, num));
+            if (data.length > 0)
+                response(data.split(/\n/).slice(0, num));
+            else
+                response([]);
         },
         error: function() {
             response([]);
