@@ -36,6 +36,12 @@ function do_highlight($formatter, $params = array()) {
         highlight_repl(null, true);
         $highlight = _preg_search_escape($expr);
 
+        $test = validate_needle($highlight);
+        if ($test === false) {
+            // invalid regex. quote all regexp specials
+            $highlight = preg_quote($expr);
+        }
+
         $out = preg_replace_callback('/((<[^>]*>)|('.$highlight.'))/i',
                 'highlight_repl', $out);
         echo $out;
