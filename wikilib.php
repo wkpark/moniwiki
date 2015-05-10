@@ -2260,9 +2260,9 @@ function do_titleindex($formatter,$options) {
     }
     if (!$rule) $rule=trim($options['q']);
 
-    $test=@preg_match("/^$rule/",'');
-    if ($test === false) { print ''; return; }
-    #if ($test === false) { print "<ul></ul>"; return; }
+    $test = validate_needle('^'.$rule);
+    if (!$test)
+      $rule = preg_quote($rule);
 
     $indexer = $DBInfo->lazyLoad('titleindexer');
     $pages = $indexer->getLikePages($rule);
@@ -2324,6 +2324,7 @@ function do_titlesearch($formatter,$options) {
 
   $ret = array();
   if (isset($options['noexact'])) $ret['noexact'] = $options['noexact'];
+  if (isset($options['noexpr'])) $ret['noexpr'] = $options['noexpr'];
   $out= macro_TitleSearch($formatter,$options['value'],$ret);
 
   if ($ret['hits']==1 and (empty($DBInfo->titlesearch_noredirect) or !empty($ret['exact']))) {
@@ -4185,12 +4186,12 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   $type='o';
 
   $url=$formatter->link_url($formatter->page->urlname);
-  $needle = _html_escape($needle);
+  $hneedle = _html_escape($needle);
 
   $msg = _("Go");
   $form="<form method='get' action='$url'>
       <input type='hidden' name='action' value='titlesearch' />
-      <input name='value' size='30' value=\"$needle\" />
+      <input name='value' size='30' value=\"$hneedle\" />
       <span class='button'><input type='submit' class='button' value='$msg' /></span>
       </form>";
 
@@ -4204,15 +4205,17 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   }
 
   $opts['form'] = $form;
-  $opts['msg'] = sprintf(_("Title search for \"%s\""), $needle);
-  if (validate_needle($needle) === false) {
-    $opts['msg'] = sprintf(_("Invalid search expression \"%s\""), $needle);
-    $opts['hits'] = 0;
-    if ($opts['call'])
-      return $opts;
-    return $form;
+  $opts['msg'] = sprintf(_("Title search for \"%s\""), $hneedle);
+  $cneedle=_preg_search_escape($needle);
+
+  if ($opts['noexpr'])
+    $needle = preg_quote($needle);
+  else if (validate_needle($cneedle) === false) {
+    $needle = preg_quote($needle);
+  } else {
+    // good expr
+    $needle = $cneedle;
   }
-  $needle=_preg_search_escape($needle);
 
   // return the exact page or all similar pages
   $noexact = true;
