@@ -3311,7 +3311,7 @@ function macro_UserPreferences($formatter,$value,$options='') {
   } else {
     $idform=$user->id;
     if (!empty($user->info['idtype']) and $user->info['idtype']=='openid') {
-      $idform='<img src="http://www.myopenid.com/static/openid-icon-small.gif" alt="OpenID:" style="vertical-align:middle" />'.
+      $idform='<img src="'.$DBInfo->imgs_dir_url.'/openid.png" alt="OpenID:" style="vertical-align:middle" />'.
       '<a href="'.$idform.'">'.$idform.'</a>';
     }
   }
@@ -3324,7 +3324,7 @@ function macro_UserPreferences($formatter,$value,$options='') {
   <tr>
     <th>OpenID</th>
     <td>
-      <input type="text" name="openid_url" value="" style="background:url(http://www.myopenid.com/static/openid-icon-small.gif) no-repeat; padding:2px;padding-left:24px; border-width:1px" />
+      <input type="text" name="openid_url" value="" style="background:url($DBInfo->imgs_dir_url/openid.png) no-repeat; padding:2px;padding-left:24px; border-width:1px" />
 	    <span class="button"><input type="submit" class="button" name="login" value="$button" /></span> &nbsp;
     </td>
   </tr>
