@@ -3363,8 +3363,6 @@ $default_form
 FORM;
     $openid_form='';
   }
-  if ($user->id == 'Anonymous' && $login_only)
-    return $login;
 
   $logout = '';
   $joinagree = empty($DBInfo->use_agreement) || !empty($options['joinagreement']);
@@ -3376,10 +3374,10 @@ FORM;
       if ($joinagree and empty($DBInfo->use_safelogin)) {
         $again="<b>"._("password again")."</b>&nbsp;<input type='password' size='15' maxlength='$pw_length' name='passwordagain' value='' /></td></tr>";
       }
-      $mailbtn=_("Mail");
+      $email_btn=_("Mail");
       if (empty($options['agreement']) or !empty($options['joinagreement']))
       $extra=<<<EXTRA
-  <tr><th>$mailbtn&nbsp;</th><td><input type="text" size="40" name="email" value="" /></td></tr>
+  <tr><th>$email_btn&nbsp;</th><td><input type="text" size="40" name="email" value="" /></td></tr>
 EXTRA;
       if (!empty($DBInfo->use_agreement) and !empty($options['joinagreement']))
         $extra.= '<input type="hidden" name="joinagreement" value="1" />';
@@ -3394,7 +3392,7 @@ EXTRA;
     } else {
       $button=_("Login or Join");
     }
-  } else if ($uder->id != 'Anonymous') {
+  } else if ($user->id != 'Anonymous') {
     $button=_("Save");
     $css=!empty($user->info['css_url']) ? $user->info['css_url'] : '';
     $css = _html_escape($css);
@@ -3452,6 +3450,9 @@ EXTRA;
 FORM;
     }
 
+  } else if ($user->id == 'Anonymous') {
+    $button=_("Make profile");
+    $email_btn=_("Mail");
   }
   $script = '';
   if ($tz_offset === '' and $jscript)
@@ -3477,29 +3478,12 @@ PASS;
     $passwd_hidden='';
   }
   $emailpasswd = '';
-  if ($button==_("Make profile")) {
+  if (!$login_only && $button==_("Make profile")) {
     if (empty($options['agreement']) and !empty($DBInfo->use_sendmail)) {
       $button2=_("E-mail new password");
       $emailpasswd=
         "<span class='button'><input type=\"submit\" class='button' name=\"login\" value=\"$button2\" /></span>\n";
 
-      if (!empty($DBInfo->anonymous_friendly)) {
-        $verifiedemail = isset($options['verifyemail']) ? $options['verifyemail'] :
-                        (isset($user->verified_email) ? $user->verified_email : '');
-        $button3 =_("Verify E-mail address");
-        $button4 =_("Remove");
-        $remove = '';
-        if ($verifiedemail)
-            $remove = "<span class='button'><input type='submit' class='button' name='emailreset' value='$button4' /></span>";
-        $emailverify = <<<EOF
-          $sep
-          <tr><th>$mailbtn&nbsp;</th><td><input type='text' size='40' name='verifyemail' value="$verifiedemail" /></td></tr>
-          <tr><td></td><td>
-          <span class='button'><input type="submit" class='button' name="verify" value="$button3" /></span>
-          $remove
-          </td></tr>
-EOF;
-      }
     } else if (!empty($DBInfo->use_agreement) and empty($options['joinagreement'])) {
       $form = <<<FORM
 <div>
@@ -3529,12 +3513,33 @@ FORM;
       return $form;
     }
   }
+  if ($user->id == 'Anonymous' && !empty($DBInfo->anonymous_friendly)) {
+    $verifiedemail = isset($options['verifyemail']) ? $options['verifyemail'] :
+                    (isset($user->verified_email) ? $user->verified_email : '');
+    $button3 =_("Verify E-mail address");
+    $button4 =_("Remove");
+    $remove = '';
+    if ($verifiedemail)
+      $remove = "<span class='button'><input type='submit' class='button' name='emailreset' value='$button4' /></span>";
+    $emailverify = <<<EOF
+          $sep
+          <tr><th>$email_btn&nbsp;</th><td><input type='text' size='40' name='verifyemail' value="$verifiedemail" /></td></tr>
+          <tr><td></td><td>
+          <span class='button'><input type="submit" class='button' name="verify" value="$button3" /></span>
+          $remove
+          </td></tr>
+EOF;
+  }
   $id_btn=_("ID");
   $sep1 = '';
   if (!empty($openid_form) or !empty($login)) $sep1=$sep;
-  return <<<EOF
+  $all = <<<EOF
 $login
 $jscript
+EOF;
+
+  if (!$login_only)
+    $all.= <<<EOF
 <div>
 <form method="post" action="$url"$onsubmit>
 <div>
@@ -3559,6 +3564,23 @@ $sep1
 </div>
 $script
 EOF;
+  else
+    $all.= <<<EOF
+<div>
+<form method="post" action="$url"$onsubmit>
+<div>
+<input type="hidden" name="action" value="userform" />
+<table border="0">
+  <tr><td></td><td>
+    $emailverify
+  </td></tr>
+</table>
+</div>
+</form>
+</div>
+EOF;
+
+  return $all;
 }
 
 function macro_InterWiki($formatter,$value,$options=array()) {
