@@ -26,14 +26,15 @@ function init_inputform(formid, id) {
 
 function titleindex(request, response) {
     var q = request['term'];
+    var num = 30;
 
     //if (q.substring(0,1) != '^') q = '^' + q;
 
     $.ajax({
         url: '?action=titleindex',
-        data: { q: q },
+        data: { q: q, limit: num },
         success: function(data) {
-            response(data.split(/\n/));
+            response(data.split(/\n/).slice(0, num));
         },
         error: function() {
             response([]);

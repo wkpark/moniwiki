@@ -443,7 +443,7 @@ class PageIndex extends TitleIndexer_Text {
         $this->addPage($newname);
     }
 
-    function getLikePages($needle, $limit = 100)
+    function getLikePages($needle, $limit = 100, $params = array())
     {
         if (!isset($needle[0])) return false; // null needle
 
@@ -495,7 +495,11 @@ class PageIndex extends TitleIndexer_Text {
             $se+= strlen($addtmp);
             if (preg_match_all('/^'.$pre.'(?:'.$needle.')'.$suf.'$/'.$this->_match_flags, $tmp, $match)) {
                 $pages = array_merge($pages, $match[0]);
-                if (!empty($limit) and count($pages) > $limit) break;
+                if (!empty($limit) and count($pages) > $limit) {
+                    if (empty($params['nocut']))
+                        $pages = array_slice($pages, 0, $limit);
+                    break;
+                }
             }
             $ss = $se;
             $is = $ie + 1;

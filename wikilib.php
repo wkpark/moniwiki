@@ -2241,6 +2241,8 @@ function do_titleindex($formatter,$options) {
   if (isset($options['q'])) {
     if (!$options['q']) { print ''; return; }
     #if (!$options['q']) { print "<ul></ul>"; return; }
+    $limit = isset($options['limit']) ? intval($options['limit']) : 100;
+    $limit = min(100, $limit);
 
     $val='';
     $rule='';
@@ -2265,7 +2267,7 @@ function do_titleindex($formatter,$options) {
       $rule = preg_quote($rule);
 
     $indexer = $DBInfo->lazyLoad('titleindexer');
-    $pages = $indexer->getLikePages($rule);
+    $pages = $indexer->getLikePages($rule, $limit);
 
     sort($pages);
     //array_unshift($pages, $options['q']);

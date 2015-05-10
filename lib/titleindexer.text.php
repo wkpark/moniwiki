@@ -339,7 +339,11 @@ class TitleIndexer_Text {
 
             if (preg_match_all('/^'.$pre.'(?:'.$needle.')'.$suf.'$/'.$this->_match_flags, $data, $match)) {
                 $pages = array_merge($pages, $match[0]);
-                if (!empty($limit) and count($pages) > $limit) break;
+                if (!empty($limit) and count($pages) > $limit) {
+                    if (empty($params['nocut']))
+                        $pages = array_slice($pages, 0, $limit);
+                    break;
+                }
             }
         }
 
