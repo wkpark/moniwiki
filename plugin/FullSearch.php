@@ -128,12 +128,11 @@ EOF;
   $excl = array();
   $incl = array();
 
-  $test1 = $test2 = true;
   if (!empty($opts['noexpr'])) {
     $tmp=preg_split("/\s+/",$needle);
     $needle=$value=join('|',$tmp);
     $raw_needle=implode(' ',$tmp);
-    $needle=_preg_search_escape($needle);
+    $needle = preg_quote($needle);
   } else if (empty($opts['backlinks'])) {
     $terms = preg_split('/((?<!\S)[-+]?"[^"]+?"(?!\S)|\S+)/s',$needle,-1,
       PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_NO_EMPTY);
@@ -161,21 +160,34 @@ EOF;
     $needle=_preg_search_escape($needle);
 
     $raw_needle=implode(' ',$incl);
+    $test = validate_needle($needle);
+    if ($test === false) {
+      // invalid regex
+      $tmp = array_map('preg_quote', $incl);
+      $needle = implode('|', $tmp);
+    }
+
     $excl_needle=implode('|',$excl);
 
-    $test2=@preg_match("/$excl_needle/","",$match);
+    $test = validate_needle($excl_needle);
+    if ($test2 === false) {
+      // invalid regex
+      $tmp = array_map('preg_quote', $excl);
+      $excl_needle = implode('|', $tmp);
+    }
   } else {
-    $needle=_preg_search_escape($needle);
+    $cneedle = _preg_search_escape($needle);
+    $test = validate_needle($cneedle);
+    if ($test === false) {
+      $needle = preg_quote($needle);
+    } else {
+      $needle = $cneedle;
+    }
   }
 
-  $test=@preg_match("/$needle/","",$match);
   $test3 = trim($needle);
   if (!isset($test3[0])) {
      $opts['msg'] = _("Empty expression");
-     return $form;
-  }
-  if ($test === false or $test2 === false) {
-     $opts['msg'] = sprintf(_("Invalid search expression \"%s\""), _html_escape($needle));
      return $form;
   }
 

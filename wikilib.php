@@ -171,6 +171,19 @@ function _stripslashes($str) {
 }
 }
 
+/**
+ * get random string to test regex
+ * from http://stackoverflow.com/questions/4356289/php-random-string-generator
+ */
+function _str_random($len, $chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ;:%#@",`abcdefghijklmnopqrstuvwxyz1234567890') {
+  $clen = strlen($chars);
+  $str = '';
+  for ($i = 0; $i < $len; $i++) {
+    $str.= $chars[rand(0, $clen - 1)];
+  }
+  return $str;
+}
+
 function qualifiedUrl($url) {
   if (substr($url,0,7)=='http://' or substr($url,0,8) == 'https://')
     return $url;
@@ -4176,7 +4189,7 @@ function validate_needle($needle) {
     }
 
     for ($i = 0; $i < $test_count; $i++) {
-      $str = str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ;:%#@",`abcdefghijklmnopqrstuvwxyz1234567890');
+      $str = _str_random(40);
       // random test needle
       preg_match("/($needle)/", substr($str, 0, 6), $match);
       if (!empty($match)) {
@@ -4189,7 +4202,7 @@ function validate_needle($needle) {
   // It is useless needle as it matches all pattern.
   if ($ok_count == $test_count)
     return false;
-  return $test;
+  return true;
 }
 
 function macro_TitleSearch($formatter="",$needle="",&$opts) {
