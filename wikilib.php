@@ -2271,7 +2271,10 @@ function do_titleindex($formatter,$options) {
 
     sort($pages);
     //array_unshift($pages, $options['q']);
-    header("Content-Type: text/plain");
+    $ct = "Content-Type: text/plain";
+    $ct.= '; charset='.$DBInfo->charset;
+
+    header($ct);
     if ($pages) {
     	$ret= implode("\n",$pages);
     	#$ret= "<ul>\n<li>".implode("</li>\n<li>",$pages)."</li>\n</ul>\n";
