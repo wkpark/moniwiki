@@ -2275,6 +2275,8 @@ function do_titleindex($formatter,$options) {
     $ct.= '; charset='.$DBInfo->charset;
 
     header($ct);
+    $maxage = 60 * 10;
+    header('Cache-Control: public, max-age='.$maxage.',s-maxage='.$maxage.', post-check=0, pre-check=0');
     if ($pages) {
     	$ret= implode("\n",$pages);
     	#$ret= "<ul>\n<li>".implode("</li>\n<li>",$pages)."</li>\n</ul>\n";
