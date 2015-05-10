@@ -6054,20 +6054,22 @@ if ($options['id'] == 'Anonymous') {
 
 // set the s-maxage for proxy
 $proxy_maxage = !empty($Config['proxy_maxage']) ? ', s-maxage='.$Config['proxy_maxage'] : '';
+// set maxage
+$user_maxage = !empty($Config['user_maxage']) ? ', max-age='.$Config['user_maxage'] : ', max-age=0';
 
 // set the real IP address for proxy
 $_SERVER['REMOTE_ADDR'] = realIP();
 
 if ($_SERVER['REQUEST_METHOD'] != 'GET' and
     $_SERVER['REQUEST_METHOD'] != 'HEAD')
-  header('Cache-Control: '.$private.', max-age=0, must-revalidate, post-check=0, pre-check=0');
+  header('Cache-Control: '.$private.$user_maxage.', must-revalidate, post-check=0, pre-check=0');
 else {
   if (empty($_GET['action']) or $_GET['action'] == 'show')
     $tmp = $private.$proxy_maxage;
   else
     $tmp = $private;
 
-  header('Cache-Control: '.$tmp.', max-age=0, must-revalidate, post-check=0, pre-check=0');
+  header('Cache-Control: '.$tmp.$user_maxage.', must-revalidate, post-check=0, pre-check=0');
 }
 
 wiki_main($options);
