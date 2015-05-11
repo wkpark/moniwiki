@@ -79,8 +79,10 @@ function get_src_line_num(e) {
 
             // find selected line
             var pos = 0;
-            var n = 0;
-            while (++pos && start > pos && ++n) pos = 1 + txt.indexOf("\n", pos - 1);
+            var n = 1;
+            do {
+                pos = 1 + txt.indexOf("\n", pos);
+            } while (pos && start > pos && ++n);
             return n + '';
         }
         return null;
