@@ -7,8 +7,8 @@
 //
 // $Id: Media.php,v 1.1 2005/03/15 05:33:47 wkpark Exp $
 
-function macro_Media($formatter,$value) {
-  return $formatter->macro_repl('Play',$value);
+function macro_Media($formatter, $value, $params = array()) {
+  return $formatter->macro_repl('Play', $value, $params);
 }
 
 // vim:et:sts=2:

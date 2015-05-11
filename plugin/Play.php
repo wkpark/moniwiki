@@ -1,21 +1,21 @@
 <?php
-// Copyright 2004-2010 by Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2004-2015 by Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a media Play macro plugin for the MoniWiki
 //
 // Author: Won-Kyu Park <wkpark@kldp.org>
-// Date: 2004-08-02
+// Since: 2004-08-02
 // Name: Play macro
 // Description: media Player Plugin
 // URL: MoniWikiDev:PlayMacro
-// Version: $Revision: 1.12 $
+// Version: $Revision: 1.15 $
 // License: GPL
 //
 // Usage: [[Play(http://blah.net/blah.mp3)]]
 //
 // $Id: Play.php,v 1.12 2010/09/07 12:11:49 wkpark Exp $
 
-function macro_Play($formatter,$value) {
+function macro_Play($formatter, $value, $params = array()) {
   global $DBInfo;
   static $autoplay=1;
   $max_width=600;
@@ -24,6 +24,11 @@ function macro_Play($formatter,$value) {
   $default_width=320;
   $default_height=240;
 
+  // get the macro alias name
+  $macro = 'play';
+  if (!empty($params['macro_name']) and $params['macro_name'] != 'play')
+    $macro = $params['macro_name'];
+  // use alias macro name as [[Youtube()]], [[Vimeo()]]
   #
   $media=array();
   #
@@ -59,6 +64,12 @@ function macro_Play($formatter,$value) {
   $my_check=1;
   for ($i=0,$sz=count($media);$i<$sz;$i++) {
     if (!preg_match("/^(http|ftp|mms|rtsp):\/\//",$media[$i])) {
+      if ($macro != 'play') {
+        // will be parsed later
+        $url[] = $media[$i];
+        continue;
+      }
+
       $fname=$formatter->macro_repl('Attachment',$media[$i],array('link'=>1));
       if ($my_check and !file_exists($fname)) {
         return $formatter->macro_repl('Attachment',$value);
@@ -217,7 +228,9 @@ EOS;
       $custom = '';
       $object_prefered = false;
       // http://code.google.com/p/google-code-project-hosting-gadgets/source/browse/trunk/video/video.js
-      if (preg_match("@https?://(?:[a-z-]+[.])?(?:youtube(?:[.][a-z-]+)+|youtu\.be)/(?:watch[?].*v=|v/|embed/)?([a-z0-9_-]+)$@i",$media[$i],$m)) {
+      if ($macro == 'youtube' && preg_match("@^([a-zA-Z0-9_-]+)$@", $media[$i], $m) ||
+          preg_match("@https?://(?:[a-z-]+[.])?(?:youtube(?:[.][a-z-]+)+|youtu\.be)/(?:watch[?].*v=|v/|embed/)?([a-z0-9_-]+)$@i",$media[$i],$m)) {
+
         if ($object_prefered) {
         $movie = "http://www.youtube.com/v/".$m[1];
         $type = 'type="application/x-shockwave-flash"';
@@ -252,7 +265,7 @@ EOS;
           "<param name='allowFullScreen' value='true'>\n";
         $mediainfo = 'Daum movie';
         $objclass = ' daum';
-      } else if (preg_match("@https?://vimeo\.com\/(.*)$@i", $media[$i], $m)) {
+      } else if ($macro == 'vimeo' && preg_match("@^(\d+)$@", $media[$i], $m) || preg_match("@https?://vimeo\.com\/(.*)$@i", $media[$i], $m)) {
         if ($object_prefered) {
           $movie = "https://secure-a.vimeocdn.com/p/flash/moogaloop/5.2.55/moogaloop.swf?v=1.0.0";
           $type = 'type="application/x-shockwave-flash"';
@@ -275,7 +288,7 @@ EOS;
         }
         $mediainfo = 'Vimeo movie';
         $objclass = ' vimeo';
-      } else if (preg_match("@https?://(?:www|dic)\.(?:nicovideo|nicozon)\.(?:jp|net)/(?:v|watch)/(sm\d+)$@i",
+      } else if (preg_match("@(?:https?://(?:www|dic)\.(?:nicovideo|nicozon)\.(?:jp|net)/(?:v|watch)/)?(sm\d+)$@i",
           $media[$i], $m)) {
 
         $custom = '<script type="text/javascript" src="http://ext.nicovideo.jp/thumb_watch/'.$m[1];
