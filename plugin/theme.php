@@ -10,7 +10,7 @@ function do_theme($formatter,$options) {
   global $DBInfo;
 
   $theme = '';
-  if (preg_match('/^[a-zA-Z0-9_-$/', $options['theme']))
+  if (preg_match('/^[a-zA-Z0-9_-]+$/', $options['theme']))
         $theme = $options['theme'];
 
   if ($options['clear']) {
