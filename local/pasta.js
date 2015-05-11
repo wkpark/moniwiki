@@ -297,7 +297,7 @@ PaSTA.prototype = {
         }
 
         // reposition cursor if possible
-        if (txtarea.createTextRange)
+        if (txtarea.createTextRange && document.selection)
             txtarea.caretPos = document.selection.createRange().duplicate();
 
         return true;
