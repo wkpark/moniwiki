@@ -10,8 +10,7 @@
  *
  * @author wkpark at kldp.org
  * @since  2010/09/16
- *
- * $Id$
+ * @modified 2015/05/11
  */
 
 /**
@@ -50,6 +49,8 @@ function get_src_line_num(e) {
         }
     }
 
+    if (node.nodeType == node.DOCUMENT_NODE)
+        return null
     if (!node || node.tagName.toLowerCase() == 'textarea') return null;
 
     // try to find the line-no of the nextsibling
@@ -96,6 +97,7 @@ function PaSTA() {}
 PaSTA.prototype = {
     // from http://wiki.sheep.art.pl/Textarea%20Scrolling
     // with some fixes by wkpark at kldp.org
+    self: this,
     scrollTo: function(textarea, text, offset) {
         var style;
         try { style = window.getComputedStyle(textarea, ''); }
@@ -132,7 +134,22 @@ PaSTA.prototype = {
     edithandler: function(e) {
         e = e || window.event;
         var no = get_src_line_num(e);
-        if (!no) return false;
+        if (!no) {
+            // get already selected line number
+            if (self.no)
+                no = self.no;
+            else
+                return true;
+
+            // fixup href
+            var node = e.target || e.srcElement;
+            // webkit bug ?
+            while (node.tagName != 'A') node = node.parentNode;
+
+            var href = node.getAttribute('href');
+            node.setAttribute('href', href + '#' + no);
+            return true;
+        }
 
         var txtarea = document.getElementById('editor-textarea');
         if (txtarea) {
@@ -152,6 +169,14 @@ PaSTA.prototype = {
         if (p)
             location = loc + _ap + 'action=edit#' + no;
         return true;
+    },
+
+    // save selected line number
+    mousehandler: function(e) {
+        e = e || window.event;
+        var no = get_src_line_num(e);
+        if (no)
+            self.no = no;
     },
 
     _get_selected_text: function() {
@@ -240,12 +265,26 @@ PaSTA.prototype = {
 (function() {
     // onload
     var oldOnload = window.onload;
+    var pasta = new PaSTA();
     window.onload = function(ev) {
         try { oldOnload(); } catch(e) {};
-        var pasta = new PaSTA();
         pasta.focusEditor(ev);
+
+        var icons = document.getElementById('wikiIcon');
+        var els = icons.getElementsByTagName('a');
+        for (var i = 0; i < els.length; i++) {
+            if (els[i].getAttribute('href').indexOf('action=edit') > 0) {
+                els[i].onclick = pasta.edithandler;
+                break;
+            }
+        }
     }
 
+    // set selected line number
+    if (window.addEventListener) window.addEventListener("mouseup",pasta.mousehandler,false);
+    else if (window.attachEvent) window.attachEvent("onmouseup",pasta.mousehandler);
+    // for mobile devices
+    document.onselectionchange = pasta.mousehandler;
 /*
     // double click handler
     var old_dblclick = document.ondblclick;
