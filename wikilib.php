@@ -1815,6 +1815,35 @@ EOS;
 EOS;
       }
     }
+
+    // show contributor license agreement form
+    $ok_agreement = true;
+    if (!empty($DBInfo->use_agreement)) {
+      if ($options['id'] != 'Anonymous')
+        $ok_agreement = !empty($DBInfo->user->info['join_agreement']) && $DBInfo->user->info['join_agreement'] == 'agree';
+      else
+        $ok_agreement = false;
+    }
+
+    if (!$ok_agreement) {
+      if ($options['id'] != 'Anonymous') {
+        if (!empty($DBInfo->contributor_license_agreement))
+          $agree_msg = $DBInfo->contribution_license_agreement;
+        else
+          $agree_msg = _("Agree to the contributor license agreement on this wiki");
+      } else {
+        if (!empty($DBInfo->irrevocable_contribution_agreement))
+          $agree_msg = $DBInfo->irrevocable_contribution_agreement;
+        else
+          $agree_msg = _("Agree to the contribution agreement for Anonymous doner");
+      }
+
+      $emailform.= <<<EOS
+      $agree_msg <input type='checkbox' tabindex='3' checked='checked' name='license_agree' />
+EOS;
+    }
+    if (isset($emailform[0]))
+      $emailform = '<div id="contribution_agreement">'.$emailform.'</div>';
   }
   $save_msg=_("Save");
   if ($use_js and !empty($DBInfo->use_resizer)) {
@@ -2683,6 +2712,23 @@ function do_post_savepage($formatter,$options) {
     }
   }
   $formatter->page->set_raw_body($savetext);
+
+  // check license agreement
+  $ok_agreement = true;
+  if (!empty($DBInfo->use_agreement)) {
+    if ($options['id'] != 'Anonymous')
+      $ok_agreement = !empty($DBInfo->user->info['join_agreement']) && $DBInfo->user->info['join_agreement'] == 'agree';
+    else
+      $ok_agreement = false;
+  }
+
+  if (empty($button_preview) && !$ok_agreement && empty($options['license_agree'])) {
+    $button_preview = 1;
+    if ($options['id'] == 'Anonymous')
+      $options['msg'] = _("Anonymous user have to agree the contribution agreement for this wiki.");
+    else
+      $options['msg'] = _("Sorry, you have to agree the contribution agreement or the join agreement of this wiki.");
+  }
 
   if ($button_preview) {
     if (empty($options['title']))
