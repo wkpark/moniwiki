@@ -97,7 +97,6 @@ function PaSTA() {}
 PaSTA.prototype = {
     // from http://wiki.sheep.art.pl/Textarea%20Scrolling
     // with some fixes by wkpark at kldp.org
-    self: this,
     scrollTo: function(textarea, text, offset) {
         var style;
         try { style = window.getComputedStyle(textarea, ''); }
@@ -134,31 +133,40 @@ PaSTA.prototype = {
     edithandler: function(e) {
         e = e || window.event;
         var no = get_src_line_num(e);
+        var txtarea = document.getElementById('editor-textarea');
         if (!no) {
             // get already selected line number
-            if (self.no)
-                no = self.no;
+            if (this.no)
+                no = this.no;
             else
                 return true;
+        }
 
+        if (!txtarea && no) {
             // fixup href
             var node = e.target || e.srcElement;
             // webkit bug ?
-            while (node.tagName != 'A') node = node.parentNode;
+            while (node.tagName != 'A' && node.nodeType != node.DOCUMENT_NODE)
+                node = node.parentNode;
 
             var href = node.getAttribute('href');
-            node.setAttribute('href', href + '#' + no);
-            return true;
+            if (href) {
+                var pos = href.lastIndexOf('#');
+                if (pos > 0)
+                    href = href.substring(0, pos);
+                node.setAttribute('href', href + '#' + no);
+            }
         }
 
-        var txtarea = document.getElementById('editor-textarea');
-        if (txtarea) {
+        if (txtarea && no) {
             var ret = this.focusEditor(e, txtarea, no);
             if (ret && e) {
                 if (e.stopPropagation) e.stopPropagation(); 
                 e.cancelBubble = true;
+                // reset this.no
+                this.no = null;
             }
-            return ret;
+            return false;
         }
         var loc = location + '';
         if (p = loc.indexOf('action=')) {
@@ -176,7 +184,8 @@ PaSTA.prototype = {
         e = e || window.event;
         var no = get_src_line_num(e);
         if (no)
-            self.no = no;
+            this.no = no;
+        return true;
     },
 
     _get_selected_text: function() {
@@ -266,25 +275,56 @@ PaSTA.prototype = {
     // onload
     var oldOnload = window.onload;
     var pasta = new PaSTA();
+    window.pasta = pasta;
     window.onload = function(ev) {
         try { oldOnload(); } catch(e) {};
         pasta.focusEditor(ev);
 
         var icons = document.getElementById('wikiIcon');
-        var els = icons.getElementsByTagName('a');
-        for (var i = 0; i < els.length; i++) {
-            if (els[i].getAttribute('href').indexOf('action=edit') > 0) {
-                els[i].onclick = pasta.edithandler;
-                break;
+        if (icons) {
+            var els = icons.getElementsByTagName('a');
+            for (var i = 0; i < els.length; i++) {
+                if (els[i].getAttribute('href').indexOf('action=edit') > 0) {
+                    els[i].onclick = function(e) { return pasta.edithandler(e); };
+                    break;
+                }
+            }
+        }
+
+        var editform = document.getElementById('editform');
+        if (editform) {
+            var els = editform.getElementsByTagName('input');
+            for (var i = 0; i < els.length; i++) {
+                if (els[i].getAttribute('name') == 'button_preview') {
+                    els[i].onclick = function(e) {
+                        var no = get_src_line_num(e);
+                        if (!no)
+                            no = pasta.no;
+
+                        if (no) {
+                            var action = editform.getAttribute('action');
+                            var pos = action.lastIndexOf('#');
+                            if (pos > 0)
+                                action = action.substring(0, pos);
+                            editform.setAttribute('action', action + '#' + no);
+                        }
+                    };
+                    break;
+                }
             }
         }
     }
 
+    var set_lineno = function(e) {
+        return window.pasta.mousehandler(e);
+    };
+
     // set selected line number
-    if (window.addEventListener) window.addEventListener("mouseup",pasta.mousehandler,false);
-    else if (window.attachEvent) window.attachEvent("onmouseup",pasta.mousehandler);
+    if (window.addEventListener) window.addEventListener("mouseup", set_lineno, false);
+    else if (window.attachEvent) window.attachEvent("onmouseup", set_lineno);
     // for mobile devices
-    document.onselectionchange = pasta.mousehandler;
+    document.onselectionchange = set_lineno;
+
 /*
     // double click handler
     var old_dblclick = document.ondblclick;
