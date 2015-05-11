@@ -487,7 +487,6 @@ EOS;
       else if (($iidx % $col) == 0)
         $out.="</tr>\n<tr>\n";
       $file = _html_escape($file);
-      $fname = _html_escape($fname);
       if ($use_admin)
         $out.="<td class='wiki'><input type='$checkbox' name='files[$idx]' value=\"$file\" /></td>";
       $out.="<td class='wiki'><a href=\"$link\"$attr>$fname</a></td>";
