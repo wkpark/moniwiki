@@ -44,14 +44,47 @@ function get_src_line_num(e) {
                 } else
                     node = node.parentNode;
             }
-        } else {
-            try { node = sel.parentElement(); } catch (x) { return null; };
         }
     }
 
-    if (node.nodeType == node.DOCUMENT_NODE)
-        return null
-    if (!node || node.tagName.toLowerCase() == 'textarea') return null;
+    if (!node || node.nodeType == node.DOCUMENT_NODE) {
+        // no node found
+        // check editor-textarea
+        node = document.getElementById('editor-textarea');
+    }
+
+    if (!node)
+        return null;
+
+    if (node.tagName == 'TEXTAREA') {
+        // check textarea
+        var start = -1;
+        if (node.selectionStart || node.selectionStart == '0') {
+            start = node.selectionStart;
+        } else if (document.selection) {
+            var range = document.selection.createRange();
+            if (range != null) {
+                var dup = range.duplicate();
+                dup.moveToElementText(node);
+                dup.setEndPoint('EndToStart', range);
+                start = dup.text.length;
+            }
+        }
+
+        if (start >= 0) {
+            if (!window.opera)
+                var txt = node.value.replace(/\r/g, ''); // remove \r for IE
+            else
+                var txt = node.value;
+
+            // find selected line
+            var pos = 0;
+            var n = 0;
+            while (++pos && start > pos && ++n) pos = 1 + txt.indexOf("\n", pos - 1);
+            return n + '';
+        }
+        return null;
+    }
 
     // try to find the line-no of the nextsibling
     var ns = node;
@@ -308,6 +341,8 @@ PaSTA.prototype = {
                                 action = action.substring(0, pos);
                             editform.setAttribute('action', action + '#' + no);
                         }
+
+                        return true;
                     };
                     break;
                 }
