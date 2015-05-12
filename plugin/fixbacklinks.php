@@ -23,46 +23,59 @@ function do_post_fixbacklinks($formatter, $options = array()) {
         $dummy2 = substr($new, $p + 1);
         $options['name'] = $dummy.'~'.$dummy2;
     } 
-    if (isset($options['name']) and trim($options['name'])) {
-        if ($DBInfo->hasPage($options['page']) && !$DBInfo->hasPage($options['name'])) {
-            $title = sprintf(_("backlinks of \"%s\" page are fixed !"), $options['page']);
+    if (isset($options['name'][0]) and $options['name']) {
+        if ($DBInfo->hasPage($options['name'])) {
             $formatter->send_header('', $options);
-            $formatter->send_title($title, '', $options);
             $new_encodedname = _rawurlencode($options['name']);
+            $fixed = 0;
+            $msg = '';
+            $title = sprintf(_("backlinks of \"%s\" page are fixed !"), $options['page']);
+            $comment = sprintf(_("Fixed \"%s\" to \"%s\""), $options['page'], $options['name']);
             if ($options['pagenames'] and is_array($options['pagenames'])) {
                 $regex = preg_quote($options['page']);
-                $options['minor']=1;
+                //$options['minor'] = 1; # disable log
                 foreach ($options['pagenames'] as $page) {
                     $p = new WikiPage($page);
                     if (!$p->exists()) continue;
                     $f = new Formatter($p);
                     $body = $p->_get_raw_body();
-                    $body = preg_replace("/$regex/m", $options['name'], $body);
-                    $f->page->write($body);
-                    if (!$options['show_only'])
-                        $DBInfo->savePage($f->page, '', $options);
-                    $msg.=sprintf(_("'%s' is changed"),
-                            $f->link_tag(_rawurlencode($page),
-                                "?action=highlight&amp;value=".$new_encodedname))."<br />";
+                    $nbody = preg_replace("/$regex/m", $options['name'], $body); // FIXME
+                    if ($nbody !== false && $body != $nbody) {
+                        $f->page->write($nbody);
+                        if (!$options['show_only'])
+                            $DBInfo->savePage($f->page, $comment, $options);
+                        $msg.= sprintf(_("'%s' is changed"),
+                                $f->link_tag(_rawurlencode($page),
+                                "?action=highlight&amp;value=".$new_encodedname, _html_escape($page)))."<br />";
+                        $fixed++;
+                    }
                 }
             }
-            print $msg;
-            print sprintf(_("'%s' links are successfully fixed as '%s'."),
-                    $options['page'],
-                    $formatter->link_tag($options['name'],
-                        "?action=highlight&amp;value=".$new_encodedname));
+
+            if ($fixed == 0)
+                $title = _("No pages are fixed!");
+            $formatter->send_title($title, '', $options);
+
+            if ($fixed > 0) {
+                print $msg;
+                print sprintf(_("'%s' links are successfully fixed as '%s'."),
+                    _html_escape($options['page']),
+                    $formatter->link_tag($new_encodedname,
+                        "?action=highlight&amp;value=".$new_encodedname, _html_escape($options['name'])));
+            }
 
             $formatter->send_footer('', $options);
             return;
         } else {
             $title = sprintf(_("Fail to fix backlinks of \"%s\" !"), $options['page']);
+            $options['msg'] = sprintf(_("New pagename \"%s\" is not exists!"), $options['name']);
             $formatter->send_header('', $options);
             $formatter->send_title($title, '', $options);
             $formatter->send_footer('', $options);
             return;
         }
     }
-    $title = sprintf(_("fix backlinks of \"%s\" ?"), $options['page']);
+    $title = sprintf(_("Fix backlinks of \"%s\" ?"), $options['page']);
     $formatter->send_header('', $options);
     $formatter->send_title($title, '', $options);
 
@@ -73,19 +86,23 @@ function do_post_fixbacklinks($formatter, $options = array()) {
         <table border='0'>
         <tr><td align='right'>$obtn </td><td><b>$pgname</b></td></tr>
         <tr><td align='right'>$nbtn </td><td><input name='name' /></td></tr>\n";
-    $button = _("Fix backlinks");
-    if ($options['value'] == 'check_backlinks') {
+
+    if (!empty($options['value']) and $options['value'] == 'check_backlinks') {
+        $button = _("Fix backlinks");
         print "<tr><td colspan='2'>\n";
         print check_backlinks($formatter, $options);   
         print "</td></tr>\n";
+    } else {
+        $button = _("Check backlinks");
     }
+
     if ($DBInfo->security->is_protected("fixbacklinks", $options))
         print "<tr><td align='right'>"._("Password").": </td><td><input type='password' name='passwd' /> ".
             _("Only WikiMaster can fix backlinks of this page")."</td></tr>\n";
-    print "<tr><td colspan='2'><input type='checkbox' name='show_only' checked='checked' />"._("show only")."</td></tr>\n";
+    if (!empty($options['value']) and $options['value'] == 'check_backlinks')
+        print "<tr><td colspan='2'><input type='checkbox' name='show_only' checked='checked' />"._("show only")."</td></tr>\n";
     print "<tr><td></td><td><input type='submit' name='button_fixbacklinks' value='$button' />";
-    print " <a href='?action=fixbacklinks&value=check_backlinks'>"._("Check backlinks").
-        "</a>";
+    print "<input type='hidden' name='value' value='check_backlinks' />";
     print "</td></tr>\n";
     print "
         </table>
