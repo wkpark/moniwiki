@@ -1065,7 +1065,7 @@ class WikiDB {
     store_pagelinks($pagename, array());
     // remove aliases
     if (!empty($this->use_alias))
-      store_aliases($page->name, array());
+      store_aliases($pagename, array());
 
     $okey=$this->getPageKey($pagename);
     $nkey=$this->getPageKey($new);
