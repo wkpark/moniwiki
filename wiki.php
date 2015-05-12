@@ -2568,7 +2568,7 @@ class Formatter {
   function nonexists_fancy($word, $url, $page) {
     global $DBInfo;
     $title = '';
-    if ($page != $word) $title = 'title="'._html_escpe($page).'" ';
+    if ($page != $word) $title = 'title="'._html_escape($page).'" ';
     if ($word[0]=='<' and preg_match('/^<[^>]+>/',$word))
       return "<a class='nonexistent' rel='nofollow' {$title}href='$url'>$word</a>";
     #if (preg_match("/^[a-zA-Z0-9\/~]/",$word))
