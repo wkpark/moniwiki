@@ -82,7 +82,7 @@ function get_src_line_num(e) {
             var n = 1;
             do {
                 pos = 1 + txt.indexOf("\n", pos);
-            } while (pos && start > pos && ++n);
+            } while (pos && start >= pos && ++n);
             return n + '';
         }
         return null;
