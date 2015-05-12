@@ -8,9 +8,10 @@
 function do_post_rename($formatter,$options) {
   global $DBInfo;
 
-  $new=$options['name'];
-  if ($new[0] == '~' and ($p=strpos($new,'/'))!==false) {
-    // Namespace renaming
+  $options['name'] = trim($options['name']);
+  $new = $options['name'];
+  if (!empty($DBInfo->use_namespace) and $new[0] == '~' and ($p = strpos($new, '/')) !== false) {
+    // Namespace renaming ~foo/bar -> foo~bar
     $dummy=substr($new,1,$p-1);$dummy2=substr($new,$p+1);
     $options['name']=$dummy.'~'.$dummy2;
   } 
@@ -24,9 +25,9 @@ function do_post_rename($formatter,$options) {
       if (!$options['show_only'])
         $DBInfo->renamePage($options['page'],$options['name'],$options);
       print sprintf(_("'%s' is renamed as '%s' successfully."),
-        $options['page'],
-        $formatter->link_tag($options['name'],
-          "?action=highlight&amp;value=".$new_encodedname));
+        _html_escape($options['page']),
+        $formatter->link_tag($new_encodedname,
+          "?action=highlight&amp;value=".$new_encodedname, _html_escape($options['name'])));
 
       $formatter->send_footer("",$options);
       return;
@@ -45,9 +46,10 @@ function do_post_rename($formatter,$options) {
 
   $obtn=_("Old name:");
   $nbtn=_("New name:");
+  $pgname = _html_escape($options['page']);
   print "<form method='post'>
 <table border='0'>
-<tr><td align='right'>$obtn </td><td><b>$options[page]</b></td></tr>
+<tr><td align='right'>$obtn </td><td><b>$pgname</b></td></tr>
 <tr><td align='right'>$nbtn </td><td><input name='name' /></td></tr>\n";
   $rename_button=_("Rename");
   if ($DBInfo->security->is_protected("rename",$options))

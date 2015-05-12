@@ -15,9 +15,10 @@
 function do_post_fixbacklinks($formatter, $options = array()) {
     global $DBInfo;
 
+    $options['name'] = trim($options['name']);
     $new = $options['name'];
-    if ($new[0] == '~' and ($p=strpos($new,'/')) !== false) {
-        // Namespace renaming
+    if (!empty($DBInfo->use_namespace) and $new[0] == '~' and ($p = strpos($new, '/')) !== false) {
+        // Namespace renaming ~foo/bar -> foo~bar
         $dummy = substr($new, 1, $p - 1);
         $dummy2 = substr($new, $p + 1);
         $options['name'] = $dummy.'~'.$dummy2;
@@ -67,9 +68,10 @@ function do_post_fixbacklinks($formatter, $options = array()) {
 
     $obtn = _("Old name:");
     $nbtn = _("New name:");
+    $pgname = _html_escape($options['page']);
     print "<form method='post'>
         <table border='0'>
-        <tr><td align='right'>$obtn </td><td><b>$options[page]</b></td></tr>
+        <tr><td align='right'>$obtn </td><td><b>$pgname</b></td></tr>
         <tr><td align='right'>$nbtn </td><td><input name='name' /></td></tr>\n";
     $button = _("Fix backlinks");
     if ($options['value'] == 'check_backlinks') {
@@ -94,6 +96,7 @@ function do_post_fixbacklinks($formatter, $options = array()) {
 
 function check_backlinks($formatter, $options) {
     $options['checkbox'] = 1;
+    $options['backlinks'] = 1;
 
     return $formatter->macro_repl('FullSearch', $options['page'], $options);
 }
