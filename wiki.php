@@ -2686,10 +2686,13 @@ class Formatter {
     // check alias
     $myname = getPlugin($name);
     if (empty($myname)) return '[['.$macro.']]';
-    $options['macro_name'] = '';
+    $macro_name = '';
     if (strtolower($name) != strtolower($myname))
-      $options['macro_name'] = strtolower($name);
+      $macro_name = strtolower($name);
     $name = $myname;
+
+    if (isset($macro_name[0]) and is_array($options))
+      $options['macro_name'] = $macro_name;
 
     // macro ID
     $this->mid=!empty($options['mid']) ? $options['mid']:
