@@ -5235,7 +5235,7 @@ function set_locale($lang,$charset='') {
     $server_charset= nl_langinfo(CODESET);
 
   if ($charset == 'UTF-8') {
-    if ($charset != $server_charset) $lang.=".".$charset;
+    $lang.= '.'.$charset;
   } else {
     if ($supported[$lang] && in_array($charset,$supported[$lang])) {
       return $lang.'.'.$charset;
