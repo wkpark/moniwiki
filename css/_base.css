@@ -13,7 +13,7 @@ ul li p {
   clear:both;
 }
 
-tt.wiki {font-family:monospace;}
+tt.wiki, code.wiki {font-family:monospace;}
 tt.foot {
   font-family:sans-serif;
   vertical-align: super;

@@ -1679,7 +1679,7 @@ class Formatter {
                      "<strong>\\1</strong>",
                      "<strong></strong>",
                      "<em>\\1</em>",
-                     "&#96;\\1'","<tt>\\1</tt>",
+                     "&#96;\\1'","<code>\\1</code>",
                      "<br clear='all' />",
                      "<sub>\\1</sub>",
                      "<sup>\\1</sup>",
@@ -1972,7 +1972,7 @@ class Formatter {
     case '{':
       $url=substr($url,3,-3);
       if (empty($url))
-        return "<tt class='nowiki'></tt>"; # No link
+        return "<code class='nowiki'></code>"; # No link
       if (preg_match('/^({([^{}]+)})/s',$url,$sty)) { # textile like styling
         $url=substr($url,strlen($sty[1]));
         $url = preg_replace($this->baserule, $this->baserepl, $url); // apply inline formatting rules
@@ -1999,7 +1999,7 @@ class Formatter {
       $url = str_replace("<","&lt;",$url);
       if ($url[0]==' ' and in_array($url[1],array('#','-','+')) !==false)
         $url='<span class="markup invisible"> </span>'.substr($url,1);
-      return "<tt class='wiki'>".$url."</tt>"; # No link
+      return "<code class='wiki'>".$url."</code>"; # No link
       break;
     case '<':
       $nm = 1; // XXX <<MacroName>> support
