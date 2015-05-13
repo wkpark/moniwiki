@@ -2414,7 +2414,17 @@ class Formatter {
       $text = substr($word, $p + 1);
       $word = substr($word, 0, $p);
       $page = $word;
+    } else {
+      // check for [[Hello attachment:foo.png]] case
+      $tmp = strtok($word, ' |');
+      $last = strtok('');
+      if (($p = strpos($last, ' ')) === false && substr($last, 0, 11) == 'attachment:') {
+        $text = $last;
+        $word = $tmp;
+        $page = $word;
+      }
     }
+
     if (!$extended and empty($DBInfo->mediawiki_style)) {
       #$page=preg_replace("/\s+/","",$word); # concat words
       $page=normalize($word); # concat words
