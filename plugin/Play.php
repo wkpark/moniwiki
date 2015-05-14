@@ -288,7 +288,8 @@ EOS;
         }
         $mediainfo = 'Vimeo movie';
         $objclass = ' vimeo';
-      } else if (preg_match("@(?:https?://(?:www|dic)\.(?:nicovideo|nicozon)\.(?:jp|net)/(?:v|watch)/)?(sm\d+)$@i",
+      } else if (($macro == 'niconico' || $macro == 'nicovideo') && preg_match("@((?:sm|nm)?\d+)$@i", $media[$i], $m) ||
+          preg_match("@(?:https?://(?:www|dic)\.(?:nicovideo|nicozon)\.(?:jp|net)/(?:v|watch)/)?((?:sm|nm)?\d+)$@i",
           $media[$i], $m)) {
 
         $custom = '<script type="text/javascript" src="http://ext.nicovideo.jp/thumb_watch/'.$m[1];
