@@ -23,7 +23,12 @@ function processor_html($formatter, $value = '') {
     if ($value[0]=='#' and $value[1]=='!')
         list($line,$value)=explode("\n",$value,2);
 
-    // check some iframes
+    // check some iframes, embed
+    if (preg_match("/^\s*<(?:embed)/", $value)) {
+        if (preg_match("@\ssrc=(?:'|\")https?://(?:[a-z-]+[.])?nicovideo(?:[.][a-z-]+)+/[^=]+(ts=[0-9]+)(?:'|\")\s@i", $value)) {
+            return $value;
+        }
+    }
     if (preg_match("/^\s*<(?:iframe|object)/", $value) and preg_match("@</(?:iframe|object)>\s*$@", $value)) {
         if (preg_match("@https?://(?:[a-z-]+[.])?youtube(?:[.][a-z-]+)+/(?:watch[?].*v=|v/|embed/)([a-z0-9_-]+)@i", $value, $m)) {
             $val = $value;
