@@ -76,7 +76,11 @@ CHANNEL;
   if (!$lines) $lines=array();
   foreach ($lines as $line) {
     $parts= explode("\t", $line);
-    $page_name= $DBInfo->keyToPagename($parts[0]);
+    if (empty($DBInfo->new_editlog)) {
+      $page_name = $DBInfo->keyToPagename($parts[0]);
+    } else {
+      $page_name = $parts[0];
+    }
     $addr= $parts[1];
     $ed_time= $parts[2];
     $user= $parts[4];
