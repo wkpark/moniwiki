@@ -461,6 +461,7 @@ div.wikiSyntax {
   border-bottom: 1px solid #808080;
   border-right: 1px solid #bebebe;
   border-left: 1px solid #bebebe;
+  word-wrap: break-word; /* IE */
 }
 
 #smileyChooser img {
