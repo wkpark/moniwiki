@@ -2941,7 +2941,7 @@ class Formatter {
 
   function _attr($attr,&$sty,$myclass=array(),$align='') {
     $aligns=array('center'=>1,'left'=>1,'right'=>1);
-    $attrs=preg_split('@(\w+\=(?:"[^"]*"|\'[^\']*\')\s*|\w+\=[^"\']+\s*)@',
+    $attrs=preg_split('@(\w+\=(?:"[^"]*"|\'[^\']*\')\s*|\w+\=[^"\'=\s]+\s*)@',
       $attr,-1, PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_NO_EMPTY);
 
     $myattr=array();
@@ -2971,10 +2971,17 @@ class Formatter {
             $sty['background-color']=strtolower($v);
             break;
           case 'border':
+            if (intval($v) == $v and isset($v)) {
+              $myattr[$k] = $v;
+              break;
+            }
           case 'width':
           case 'height':
           case 'color':
             $sty[$k]=strtolower($v);
+            break;
+          case 'bordercolor':
+            $sty['border'] = 'solid '.strtolower($v);
             break;
           default:
             if ($v) $myattr[$k]=$v;
