@@ -1,9 +1,8 @@
 <?php
-// Copyright 2008 Won-Kyu Park <wkpark at kldp.org>
-// All rights reserved. Distributable under GPL see COPYING
+// Copyright 2008-2015 Won-Kyu Park <wkpark at kldp.org>
+// All rights reserved. Distributable under GPLv2 see COPYING
 // a Git versioning plugin for the MoniWiki
 //
-// $Id$
 // WARNING: experimental
 //
 
@@ -32,7 +31,7 @@ class Version_Git extends Version_RCS {
 
   function _init() {
     chdir($this->DB->text_dir);
-    $fp=popen("git-init",'r');
+    $fp=popen('git init','r');
 
     $out='';
     if ($fp) {
@@ -56,9 +55,13 @@ class Version_Git extends Version_RCS {
     $filename= $this->_filename($pagename);
 
     #if ($rev) $rev=':'.$rev;
+    if (preg_match('/^[a-zA-Z0-9]+$/', $rev))
+      $rev = "$rev:";
+    else
+      $rev = '';
 
     chdir($this->DB->text_dir);
-    $fp=@popen("git-show $rev:".$filename,"r");
+    $fp=@popen('git show '.$rev.$filename,"r");
     chdir($this->cwd);
     $out='';
     if ($fp) {
@@ -73,18 +76,16 @@ class Version_Git extends Version_RCS {
 
   function ci($pagename,$log) {
     $key=$this->_filename($pagename);
-    chdir($this->DB->text_dir);
-    $ret=system("git-add ".$key." ".$this->NULL);
-    $ret=system("git-commit -m\"".$log."\" ".$key.$this->NULL);
-    chdir($this->cwd);
+    $this->_ci($key, $log);
   }
 
   function _ci($filename,$log) {
+    $log = escapeshellarg($log);
     $key=basename($filename); # XXX
     chdir($this->DB->text_dir);
-    $fp=popen("git-add ".$key.$this->NULL,"r");
+    $fp=popen('git add '.$key.$this->NULL,"r");
     if ($fp) pclose($fp);
-    $fp=popen("git-commit -m\"".$log."\" ".$key.$this->NULL,"r");
+    $fp=popen('git commit -m'.$log.' '.$key.$this->NULL,"r");
     if ($fp) pclose($fp);
 
     chdir($this->cwd);
@@ -93,14 +94,16 @@ class Version_Git extends Version_RCS {
   function _add($pagename,$log) {
     $key=$this->_filename($pagename);
     chdir($this->DB->text_dir);
-    $ret=system("git-add ".$key.$this->NULL);
+    $ret=system('git add '.$key.$this->NULL);
     chdir($this->cwd);
   }
 
   function rlog($pagename,$rev='',$opt='',$oldopt='') {
     // oldopts are incompatible options only supported by the rlog in the rcs
-    if ($rev)
+    if (preg_match('/^[a-zA-Z0-9]+$/', $rev))
       $rev = ":$rev";
+    else
+      $rev = '';
     $filename=$this->_filename($pagename);
 
     $sep=str_repeat('-',28);
@@ -108,7 +111,7 @@ class Version_Git extends Version_RCS {
     $rlog_format="--pretty=format:\"$sep%nrevision %H%ndate: %at%n%s%b\"";
 
     chdir($this->DB->text_dir);
-    $fp= popen("git-log $rlog_format $opt $rev ".$filename.$this->NULL,"r");
+    $fp= popen('git log '."$rlog_format $rev ".$filename.$this->NULL,"r");
     chdir($this->cwd);
     $out='';
     if (is_resource($fp)) {
@@ -124,16 +127,20 @@ class Version_Git extends Version_RCS {
   }
 
   function diff($pagename,$rev='',$rev2='') {
-    # XXX
     $filename=$this->_filename($pagename);
     chdir($this->DB->text_dir);
+
+    if (!preg_match('/^[a-zA-Z0-9]+$/', $rev))
+      $rev = '';
+    if (!preg_match('/^[a-zA-Z0-9]+$/', $rev2))
+      $rev2 = '';
 
     if ($rev and $rev2)
       $revs="$rev $rev2 ";
     else if ($rev or $rev2)
       $revs="$rev$rev2 HEAD ";
 
-    $fp= popen("git-diff --no-color ".$revs.$filename,'r');
+    $fp= popen('git diff --no-color '.$revs.$filename,'r');
 
     chdir($this->cwd);
 
@@ -168,7 +175,7 @@ class Version_Git extends Version_RCS {
         $filename=$this->_filename($pagename);
 
         $opt="--reverse --all --since=\"$date\" ";
-        $fp= popen("git-rev-list ".$opt.$filename,'r');
+        $fp= popen('git rev-list '.$opt.$filename,'r');
 
         chdir($this->cwd);
         if (!$fp) return '';
@@ -190,19 +197,20 @@ class Version_Git extends Version_RCS {
   }
 
   function delete($pagename) {
+    // FIXME
     $filename=$this->_filename($pagename);
     chdir($this->DB->text_dir);
-    system("git rm ".$filename);
+    system('git rm '.$filename);
     chdir($this->cwd);
   }
 
   function rename($pagename,$new) {
+    // FIXME
     $keyname=$this->DB->_getPageKey($new);
     chdir($this->DB->text_dir);
-    system("git mv ".$filename);
+    system('git mv '.$filename.' '.$keyname);
     chdir($this->cwd);
   }
 }
 
-// vim:et:ts=8:sts=2:sw=2
-?>
+// vim:et:sts=2:sw=2
