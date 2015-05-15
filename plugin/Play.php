@@ -340,7 +340,7 @@ EOS;
       if ($iframe) {
         $out.=<<<IFRAME
 <div class='externalObject$objclass'><div>
-<iframe src="$iframe" $attr></iframe>
+<iframe class='external' src="$iframe" $attr></iframe>
 <div><a alt='$myurl' onclick='javascript:openExternal(this, "inline-block"); return false;'><span>[$mediainfo]</span></a></div></div></div>
 IFRAME;
       } else if (isset($custom[0])) {
