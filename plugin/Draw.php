@@ -122,7 +122,7 @@ function do_post_Draw($formatter,$options=array()) {
     if ($fname[2] == 'draw') {
       $comment=sprintf("Drawing '%s' uploaded",$upfilename);
       $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
-      $DBInfo->addLogEntry($keyname, $REMOTE_ADDR,$comment,"ATTDRW");
+      $DBInfo->addLogEntry($formatter->page->name, $REMOTE_ADDR,$comment,"ATTDRW");
     }
     return;
   }

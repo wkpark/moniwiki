@@ -162,7 +162,7 @@ EOF;
 
   $key=$DBInfo->pageToKeyname($formatter->page->name);
 
-  if ($key != 'UploadFile') {
+  if ($formatter->page->name != 'UploadFile') {
     $dir= $DBInfo->upload_dir.'/'.$key;
     // support hashed upload_dir
     if (!is_dir($dir) and !empty($DBInfo->use_hashed_upload_dir)) {
@@ -360,7 +360,7 @@ EOF;
   if (strpos($upname,' ')!==false)
     $upname='"'.$upname.'"';
 
-  if ($key == 'UploadFile') {
+  if ($formatter->page->name == 'UploadFile') {
     $msg[]= "<ins>attachment:/$upname</ins>";
     $upload_ok[] = '/'.$upname;
     $log_entry.=" * attachment:/$upname?action=deletefile . . . @USERNAME@ @DATE@\n";
@@ -383,7 +383,7 @@ EOF;
     $p->write($raw_body);
     $DBInfo->savePage($p,$comment,$options);
   } else
-    $DBInfo->addLogEntry($key, $REMOTE_ADDR,$comment,"UPLOAD");
+    $DBInfo->addLogEntry($formatter->page->name, $REMOTE_ADDR,$comment,"UPLOAD");
 
   if (!empty($options['action_mode']) and $options['action_mode'] == 'ajax') {
     $err = implode("\\n", $err_msg);
