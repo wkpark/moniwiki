@@ -1,6 +1,9 @@
 .wikiSyntax, .wikiSyntax code{
   font-family:Bitstream Vera Sans Mono, Courier New, GulimChe, monospace;
-  padding:0.5em;
+}
+
+.wikiSyntax {
+  padding:0.8em;
 }
 
 div.sectionEdit {
