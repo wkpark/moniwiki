@@ -456,6 +456,11 @@ EOF;
 function do_keywords($formatter,$options) {
     global $DBInfo;
 
+    if ($_SERVER['REQUEST_METHOD'] == 'GET') {
+        unset($options['key']);
+        unset($options['keywords']);
+    }
+
     if ($_SERVER['REQUEST_METHOD'] == 'POST' &&
             !$DBInfo->security->writable($options)) {
         $options['title'] = _("Page is not writable");
