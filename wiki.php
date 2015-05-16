@@ -915,6 +915,10 @@ class WikiDB {
   }
 
   function savePage(&$page,$comment="",$options=array()) {
+    if (!$this->_isWritable($page->name)) {
+      return -1;
+    }
+
     $user=&$this->user;
     if ($user->id == 'Anonymous' and !empty($this->anonymous_log_maxlen))
       if (strlen($comment)>$this->anonymous_log_maxlen) $comment=''; // restrict comment length for anon.
@@ -972,6 +976,10 @@ class WikiDB {
   }
 
   function deletePage($page,$options='') {
+    if (!$this->_isWritable($page->name)) {
+      return -1;
+    }
+
     $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
 
     $comment=$options['comment'];
@@ -1024,6 +1032,10 @@ class WikiDB {
   }
 
   function renamePage($pagename,$new,$options='') {
+    if (!$this->_isWritable($pagename)) {
+      return -1;
+    }
+
     $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
 
     // remove pagelinks and backlinks
@@ -1060,6 +1072,7 @@ class WikiDB {
     $key=$this->getPageKey($pagename);
     $dir=dirname($key);
     # global lock
+    if (@file_exists($this->text_dir.'/.lock')) return false;
     if (@file_exists($dir.'/.lock')) return false;
     # True if page can be changed
     return @is_writable($key) or !@file_exists($key);
