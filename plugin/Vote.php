@@ -64,6 +64,10 @@ function macro_Vote($formatter,$value) {
 
 function do_vote($formatter,$options) {
   global $DBInfo;
+  if (!$DBInfo->security->writable($options)) {
+    $options['title'] = _("Page is not writable");
+    return do_invalid($formatter,$options);
+  }
 
   if ($options['id'] == 'Anonymous') {
     if (!isset($options['msg']))

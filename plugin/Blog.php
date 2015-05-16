@@ -67,6 +67,12 @@ function updateBlogList($formatter) {
 
 function do_Blog($formatter,$options) {
   global $DBInfo;
+  if ($_SERVER['REQUEST_METHOD'] == 'POST' &&
+      !$DBInfo->security->writable($options)) {
+    $options['title'] = _("Page is not writable");
+    return do_invalid($formatter,$options);
+  }
+
   $COLS_MSIE = 80;
   $COLS_OTHER = 85;
   $cols = preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT']) ? $COLS_MSIE : $COLS_OTHER;

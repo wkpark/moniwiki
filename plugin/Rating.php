@@ -82,6 +82,12 @@ EOF;
 
 function do_rating($formatter,$options) {
     global $DBInfo;
+
+    if (!$DBInfo->security->writable($options)) {
+        $options['title'] = _("Page is not writable");
+        return do_invalid($formatter,$options);
+    }
+
     if ($options['id'] == 'Anonymous') {
         $options['msg'].="\n"._("Please Login or make your ID on this Wiki ;)");
         do_invalid($formatter,$options);

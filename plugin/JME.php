@@ -86,6 +86,11 @@ APPLET;
 
 function do_post_jme($formatter,$options) {
     global $DBInfo;
+    if ($_SERVER['REQUEST_METHOD'] == 'POST' &&
+            !$DBInfo->security->writable($options)) {
+        $options['title'] = _("Page is not writable");
+        return do_invalid($formatter,$options);
+    }
 
     $draw_dir=str_replace("./",'',$DBInfo->upload_dir.'/JME');
     $pagename=$options['page'];

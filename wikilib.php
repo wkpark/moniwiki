@@ -1947,6 +1947,11 @@ function ajax_invalid($formatter,$options) {
 
 function do_post_DeleteFile($formatter,$options) {
   global $DBInfo;
+  if ($_SERVER['REQUEST_METHOD'] == 'POST' &&
+      !$DBInfo->security->writable($options)) {
+    $options['title'] = _("Page is not writable");
+    return do_invalid($formatter,$options);
+  }
 
   if ($_SERVER['REQUEST_METHOD']=="POST") {
     if (!empty($options['value'])) {
@@ -2033,7 +2038,12 @@ function do_post_DeleteFile($formatter,$options) {
 
 function do_post_DeletePage($formatter,$options) {
   global $DBInfo;
-  
+  if ($_SERVER['REQUEST_METHOD'] == 'POST' &&
+      !$DBInfo->security->writable($options)) {
+    $options['title'] = _("Page is not writable");
+    return do_invalid($formatter,$options);
+  }
+
   $page = $DBInfo->getPage($options['page']);
 
   if (!$page->exists()) {
@@ -2527,7 +2537,9 @@ function ajax_savepage($formatter,$options) {
 
 function do_post_savepage($formatter,$options) {
   global $DBInfo;
-  if (!$DBInfo->security->writable($options)) {
+  if ($_SERVER['REQUEST_METHOD'] != 'POST' ||
+      !$DBInfo->security->writable($options)) {
+    $options['title'] = _("Page is not writable");
     return do_invalid($formatter,$options);
   }
 

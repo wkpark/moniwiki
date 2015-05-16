@@ -27,6 +27,11 @@ function macro_Revert($formatter,$value,$options=array()) {
 
 function do_revert($formatter,$options) {
     global $DBInfo;
+    if ($_SERVER['REQUEST_METHOD'] == 'POST' &&
+            !$DBInfo->security->writable($options)) {
+        $options['title'] = _("Page is not writable");
+        return do_invalid($formatter,$options);
+    }
 
     $formatter->send_header('',$options);
     $force=1;

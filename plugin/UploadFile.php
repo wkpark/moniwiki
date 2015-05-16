@@ -28,6 +28,11 @@ function _upload_err_msg($error_code) {
 
 function do_uploadfile($formatter,$options) {
   global $DBInfo;
+  if ($_SERVER['REQUEST_METHOD'] == 'POST' &&
+      !$DBInfo->security->writable($options)) {
+    $options['title'] = _("Page is not writable");
+    return do_invalid($formatter,$options);
+  }
 
   $files=array();
   $title = '';

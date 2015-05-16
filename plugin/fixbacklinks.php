@@ -14,6 +14,11 @@
 
 function do_post_fixbacklinks($formatter, $options = array()) {
     global $DBInfo;
+    if ($_SERVER['REQUEST_METHOD'] == 'POST' &&
+            !$DBInfo->security->writable($options)) {
+        $options['title'] = _("Page is not writable");
+        return do_invalid($formatter,$options);
+    }
 
     $options['name'] = trim($options['name']);
     $new = $options['name'];

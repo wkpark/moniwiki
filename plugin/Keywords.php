@@ -455,6 +455,13 @@ EOF;
 
 function do_keywords($formatter,$options) {
     global $DBInfo;
+
+    if ($_SERVER['REQUEST_METHOD'] == 'POST' &&
+            !$DBInfo->security->writable($options)) {
+        $options['title'] = _("Page is not writable");
+        return do_invalid($formatter,$options);
+    }
+
     $supported_lang=array('ko');
 
     $page = $formatter->page->name;

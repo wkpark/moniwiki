@@ -40,6 +40,11 @@ function macro_OeKaki($formatter,$value) {
 
 function do_OeKaki($formatter,$options) {
   global $DBInfo;
+  if ($_SERVER['REQUEST_METHOD'] == 'POST' &&
+      !$DBInfo->security->writable($options)) {
+    $options['title'] = _("Page is not writable");
+    return do_invalid($formatter, $options);
+  }
 
   $oekaki_dir=$DBInfo->upload_dir.'/OeKaki';
   $pagename=$options['page'];

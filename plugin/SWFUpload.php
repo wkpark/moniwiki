@@ -307,6 +307,11 @@ EOF;
 // do_UploadFile wrapper
 function do_SWFUpload($formatter,$options=array()) {
     global $DBInfo;
+    if ($_SERVER['REQUEST_METHOD'] == 'POST' &&
+            !$DBInfo->security->writable($options)) {
+        $options['title'] = _("Page is not writable");
+        return do_invalid($formatter, $options);
+    }
 
     // check allowed file extensions
     $allowed_re = '.*';

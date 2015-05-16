@@ -34,6 +34,11 @@ function _pocheck($po) {
 
 function do_msgfmt($formatter,$options) {
     global $DBInfo;
+    if ($_SERVER['REQUEST_METHOD'] == 'POST' &&
+            !$DBInfo->security->writable($options)) {
+        $options['title'] = _("Page is not writable");
+        return do_invalid($formatter,$options);
+    }
 
     $po='';
     $domain='PoHello';
