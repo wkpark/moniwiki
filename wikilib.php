@@ -705,8 +705,6 @@ function realIP() {
         return $ip;
 
     $ip = explode(',', str_replace(' ', '', $ip));
-    // FIXME
-    $ip = array_reverse($ip);
     return $ip[0];
 }
 
