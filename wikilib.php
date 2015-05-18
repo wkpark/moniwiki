@@ -3365,7 +3365,11 @@ function _joinagreement_form() {
     // show join agreement confirm message from a external text file
     $form.= '<div class="join-agreement">';
     $tmp = file_get_contents($Config['agreement_page']);
-    $form.= str_replace("\n", "<br />", $tmp);
+    if (preg_match('/\.txt$/', $Config['agreement_page']))
+      $form.= nl2br($tmp);
+    else
+      $form.= $tmp;
+    $form.= '<div>'.sprintf(_("Last modified at %s"), substr(gmdate('r', filemtime($Config['agreement_page'])), 0, -5).'GMT').'</div>';
     $form.= "</div>\n";
   }
   return $form;
