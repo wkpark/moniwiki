@@ -1,0 +1,20 @@
+# ruleset.default.php
+# <?php exit()?>
+# default ruleset file
+#
+# IP white list example
+WhiteList 127.0.0.1
+
+# IP black list example
+#BlackList 192.168.10.1
+#BlackListFile blahblah.lst.php
+#BlackListFile /where/to/blahblah.lst
+
+# Robot
+AllowedRobotOptions raw
+AllowedRobot google
+AllowedRobot yahoo
+
+# kiwirian
+#Kiwirian foobar
+#KiwirianFile blahblah.lst.php

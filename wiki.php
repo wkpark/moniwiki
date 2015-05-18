@@ -5515,6 +5515,22 @@ function wiki_main($options) {
     $options['orig_pagename'] = '';
   }
 
+  // load ruleset
+  if (!empty($Config['config_ruleset'])) {
+    $ruleset_file = 'config/ruleset.'.$Config['config_ruleset'].'.php';
+    if (file_exists($ruleset_file))
+      $ruleset = load_ruleset($ruleset_file);
+
+    // is it robot ?
+    if (!empty($ruleset['allowedrobot'])) {
+      if (empty($_SERVER['HTTP_USER_AGENT'])) {
+        $options['is_robot'] = 1;
+      } else {
+        $options['is_robot'] = is_allowed_robot($ruleset['allowedrobot'], $_SERVER['HTTP_USER_AGENT']);
+      }
+    }
+  }
+
   $page = $DBInfo->getPage($pagename);
   $page->is_static = false; // FIXME
 
@@ -5576,17 +5592,38 @@ function wiki_main($options) {
 
   $formatter = new Formatter($page,$options);
 
-  // is it robot ?
-  if (!empty($DBInfo->robots) and !isset($_SESSION['is_robot'])) {
-    if (empty($_SERVER['HTTP_USER_AGENT']))
-      $options['is_robot'] = 1;
-    else
-      $options['is_robot'] = isRobot($_SERVER['HTTP_USER_AGENT']);
-    $_SESSION['is_robot'] = $options['is_robot'];
-  } else if (isset($_SESSION['is_robot'])) {
-    $options['is_robot'] = $_SESSION['is_robot'];
+  $formatter->refresh=!empty($refresh) ? $refresh : '';
+  $formatter->popup=!empty($popup) ? $popup : '';
+  $formatter->tz_offset=$options['tz_offset'];
+
+  while (!empty($ruleset)) {
+    require_once 'lib/checkip.php';
+
+    // check whitelist
+    if (isset($ruleset['whitelist']) && check_ip($ruleset['whitelist'], $_SERVER['REMOTE_ADDR'])) {
+      break;
+    }
+
+    // check blacklist
+    if (isset($ruleset['blacklist']) && check_ip($ruleset['blacklist'], $_SERVER['REMOTE_ADDR'])) {
+      $options['title']=_("Your IP is in the black list");
+      $options['msg']=_("Please contact WikiMasters");
+      do_invalid($formatter,$options);
+      return false;
+    }
+
+    // check kiwirian
+    if (isset($ruleset['kiwirian']) && in_array($options['id'], $ruleset['kiwirian'])) {
+      $options['title']=_("You are blocked in this wiki");
+      $options['msg']=_("Please contact WikiMasters");
+      do_invalid($formatter,$options);
+      return false;
+    }
+
+    break;
   }
 
+  // set robot class
   if (!empty($options['is_robot'])) {
     if (!empty($DBInfo->security_class_robot)) {
       $class='Security_'.$DBInfo->security_class_robot;
@@ -5600,61 +5637,6 @@ function wiki_main($options) {
     if (!$DBInfo->security->is_allowed($action,$options))
       $action='show';
     $DBInfo->extra_macros='';
-  }
-
-  $formatter->refresh=!empty($refresh) ? $refresh : '';
-  $formatter->popup=!empty($popup) ? $popup : '';
-  $formatter->tz_offset=$options['tz_offset'];
-
-  // simple black/white list of network check
-  $no_checkip = false;
-  if (!empty($DBInfo->whitelist)) {
-    if (empty($_SESSION['whitelist'])) {
-      require_once 'lib/checkip.php';
-      if (check_ip($DBInfo->whitelist, $_SERVER['REMOTE_ADDR'])) {
-        $no_checkip = true;
-        $_SESSION['whitelist'] = true;
-      }
-    } else if (!empty($_SESSION['whitelist'])) {
-      $no_checkip = true;
-    }
-  }
-
-  if (!$no_checkip and !empty($DBInfo->blacklist)) {
-    if (!isset($_SESSION['blacklist'])) {
-      require_once 'lib/checkip.php';
-      if (check_ip($DBInfo->blacklist, $_SERVER['REMOTE_ADDR'])) {
-        $_SESSION['blacklist'] = true;
-      } else {
-        $_SESSION['blacklist'] = false;
-      }
-    }
-
-    if ($_SESSION['blacklist']) {
-      $options['title']=_("You are in the black list");
-      $options['msg']=_("Please contact WikiMasters");
-      do_invalid($formatter,$options);
-      return false;
-    }
-  }
-
-  if (!empty($DBInfo->kiwirian)) {
-    if (!isset($_SESSION['kiwirian'])) {
-      if (!is_array($DBInfo->kiwirian)) {
-        $DBInfo->kiwirian=explode(':',$DBInfo->kiwirian);
-      }
-      if (in_array($options['id'],$DBInfo->kiwirian))
-        $_SESSION['kiwirian'] = true;
-      else
-        $_SESSION['kiwirian'] = false;
-    }
-
-    if ($_SESSION['kiwirian'] === true) {
-      $options['title']=_("You are blocked in this wiki");
-      $options['msg']=_("Please contact WikiMasters");
-      do_invalid($formatter,$options);
-      return false;
-    }
   }
 
   while (empty($action) or $action=='show') {

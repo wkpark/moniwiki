@@ -943,10 +943,41 @@ function toutf8($uni) {
   return chr($utf[0]).chr($utf[1]).chr($utf[2]);
 }
 
-function isRobot($name) {
+function load_ruleset($ruleset_file) {
+  require_once 'lib/ruleset.php';
+
+  // cache settings
+  $settings = new Cache_text('settings', array('depth'=>0));
+
+  // get cached ruleset
+  if (!($ruleset = $settings->fetch('ruleset'))) {
+    $deps = array();
+    $deps['deps'] = array($ruleset_file);
+
+    $validator = array(
+        'blacklist'=>'ip_ruleset',
+        'whitelist'=>'ip_ruleset',
+        'trustedproxy'=>'ip_ruleset',
+        'internalproxy'=>'ip_ruleset',
+    );
+
+    $ruleset = parse_ruleset($ruleset_file, $validator, $deps);
+    $settings->update('ruleset', $ruleset, 0, $deps);
+  }
+
+  return $ruleset;
+}
+
+function is_allowed_robot($rules, $name) {
   global $Config;
-  if (preg_match('/'.$Config['robots'].'/i',$name))
+
+  if (in_array($name, $rules))
     return true;
+
+  $rule = implode('|', array_map('preg_quote', $rules));
+  if (preg_match('!'.$rule.'!i', $name))
+    return true;
+
   return false;
 }
 

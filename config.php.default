@@ -172,10 +172,6 @@ $myplugins=array('rcsexport'=>false); # disable rcsexport
 #$extra_macros=array('FootNote', 'Comment'); # call some extra macros after send_page()
 
 #$url_schemas='mms';
-#$blacklist='127.0.0.0/24:192.168.1.0/24:192.168.1.67'; # block ip
-#$whitelist='127.0.0.0/24:192.168.0'; # always allowed network
-#$kiwirian=array('Kiwirian','Hello'); # block users
-#$kiwirian='Kiwirian:Hello';
 #$delete_history=1;
 #$use_twikilink=1;
 #$timezone='KST'; // for windows
@@ -303,7 +299,6 @@ $flashupload='swfupload';
 #$check_openid_url=0; # selectivly show openid icons: experimental
 #$use_autosave=1; # enable autosave feature.
 #$delayindex=60*60*24*5 # delayed indexing
-$robots='googlebot|yahoo'; # set robots
 $mobile_agents='android|iphone'; # mobile agents
 #$fetch_imagefilesize=1; # fetch imagefile sizes for mobile wikis
 #$security_class_robot='robot';
