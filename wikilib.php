@@ -723,6 +723,11 @@ function get_log_addr() {
         // XFF contains the REMOTE_ADDR ?
         $xff = str_replace(' ', '', $_SERVER['HTTP_X_FORWARDED_FOR']);
         $tmp = explode(',', $xff);
+
+        // Real IP == REMOTE_ADDR case. (mod_remoteip etc.)
+        if ($tmp[0] == $REMOTE_ADDR)
+            return $REMOTE_ADDR;
+
         $last = array_pop($tmp);
         if ($last == $REMOTE_ADDR)
             $REMOTE_ADDR = $xff;
