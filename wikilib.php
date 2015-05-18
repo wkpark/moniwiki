@@ -1885,7 +1885,7 @@ EOS;
     if (!$ok_agreement) {
       if ($options['id'] != 'Anonymous') {
         if (!empty($DBInfo->contributor_license_agreement))
-          $agree_msg = $DBInfo->contribution_license_agreement;
+          $agree_msg = $DBInfo->contributor_license_agreement;
         else
           $agree_msg = _("Agree to the contributor license agreement on this wiki");
       } else {
