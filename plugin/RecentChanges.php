@@ -549,6 +549,18 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $log= _stripslashes($parts[5]);
     $act= rtrim($parts[6]);
 
+    $via_proxy = false;
+    if (($p = strpos($addr, ',')) !== false) {
+      // user via Proxy
+      $via_proxy = true;
+      $real_ip = substr($addr, 0, $p);
+      $log_proxy = '<span class="via-proxy">'.$real_ip.'</span>';
+
+      $log = isset($log[0]) ? $log_proxy.' '.$log : $log_proxy;
+      $dum = explode(',', $addr);
+      $addr = array_pop($dum);
+    }
+
 //    if ($ed_time < $time_cutoff)
 //      break;
 
@@ -750,6 +762,12 @@ function macro_RecentChanges($formatter,$value='',$options='') {
             list($tmp, $addr) = explode("\t", $user);
 
           $checkaddr = substr($tmp, 10); // Anonymous-127.0.0.1 or Anonymous-email@foo.bar
+          if (($p = strpos($checkaddr, ',')) !== false) {
+            $dum = explode(',', $checkaddr);
+            $checkaddr = array_pop($dum);
+            // last address is the REMOTE_ADDR
+          }
+
           $user = $addr ? $addr : $checkaddr;
           if (!is_numeric($checkaddr[0]) and preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i', $user)) {
             $user = $checkaddr;

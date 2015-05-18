@@ -923,7 +923,10 @@ class WikiDB {
     if ($user->id == 'Anonymous' and !empty($this->anonymous_log_maxlen))
       if (strlen($comment)>$this->anonymous_log_maxlen) $comment=''; // restrict comment length for anon.
 
-    $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
+    if (!empty($this->use_x_forwarded_for))
+      $REMOTE_ADDR = get_log_addr();
+    else
+      $REMOTE_ADDR = $_SERVER['REMOTE_ADDR'];
 
     $myid=$user->id;
     if (!empty($user->info['nick'])) {
@@ -980,7 +983,10 @@ class WikiDB {
       return -1;
     }
 
-    $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
+    if (!empty($this->use_x_forwarded_for))
+      $REMOTE_ADDR = get_log_addr();
+    else
+      $REMOTE_ADDR = $_SERVER['REMOTE_ADDR'];
 
     $comment=$options['comment'];
     $user=&$this->user;
@@ -1036,7 +1042,10 @@ class WikiDB {
       return -1;
     }
 
-    $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];
+    if (!empty($this->use_x_forwarded_for))
+      $REMOTE_ADDR = get_log_addr();
+    else
+      $REMOTE_ADDR = $_SERVER['REMOTE_ADDR'];
 
     // remove pagelinks and backlinks
     store_pagelinks($pagename, array());

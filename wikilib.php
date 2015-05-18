@@ -711,6 +711,29 @@ function realIP() {
 }
 
 /**
+ * check X-Forwarded-For and get the pass-by IP addresses to log
+ *
+ * @author  wkpark at kldp.org
+ *
+ * @return  X-Forwarded-For address list + Remote Address if it needed
+ */
+function get_log_addr() {
+    $REMOTE_ADDR = $_SERVER['REMOTE_ADDR'];
+    if (isset($_SERVER['HTTP_X_FORWARDED_FOR']) and $REMOTE_ADDR != $_SERVER['HTTP_X_FORWARDED_FOR']) {
+        // XFF contains the REMOTE_ADDR ?
+        $xff = str_replace(' ', '', $_SERVER['HTTP_X_FORWARDED_FOR']);
+        $tmp = explode(',', $xff);
+        $last = array_pop($tmp);
+        if ($last == $REMOTE_ADDR)
+            $REMOTE_ADDR = $xff;
+        else
+            // append REMOTE_ADDR
+            $REMOTE_ADDR = $xff.','.$REMOTE_ADDR;
+    }
+    return $REMOTE_ADDR;
+}
+
+/**
  * get default cols of textarea
  *
  */

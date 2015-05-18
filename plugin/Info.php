@@ -147,6 +147,13 @@ function _parse_rlog($formatter,$log,$options=array()) {
       case 3:
          $dummy=explode(';;',$line,3);
          $ip=$dummy[0];
+         $realip = $lastip = $ip;
+         if (($p = strpos($ip, ',')) !== false) {
+           // IP addresses via proxies
+           $realip = substr($ip, 0, $p);
+           $tmp = explode(',', $ip);
+           $lastip = $ip = array_pop($tmp);
+         }
          $user=trim($dummy[1]);
          if (!empty($DBInfo->use_nick) and ($p = strpos($user,' ')) !== false) { // XXX
            $user = substr($user, 0, $p);
@@ -200,6 +207,10 @@ function _parse_rlog($formatter,$log,$options=array()) {
            $ip="<a href='".$DBInfo->interwiki['Whois']."$ip'>$ip</a>";
 
          $comment=!empty($dummy[2]) ? _stripslashes($dummy[2]) : '';
+         if ($realip != $lastip) {
+           $via = '<span class="via-proxy">'.$realip.'</span>';
+           $comment = isset($comment[0]) ? $via.' '.$comment : $via;
+         }
          $state=4;
          break;
       case 4:
