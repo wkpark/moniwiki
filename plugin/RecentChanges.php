@@ -56,7 +56,10 @@ function ajax_RecentChanges($formatter, $options = array()) {
   // list style
   if (!empty($options['type']) and $options['type'] == 'list') {
     $options['call'] = 1;
-    $opt = 'list';
+    $opt = '';
+    if (isset($options['datefmt']))
+        $opt.= $options['datefmt'].',';
+    $opt.= 'list';
     if (!empty($options['item'])) $opt.=',item='.$options['item'];
     $out = macro_RecentChanges($formatter, $opt, $options);
     echo $out;
@@ -589,7 +592,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $title0= get_title($title).$group;
     $title0=_html_escape($title0);
 
-    if ($list) $attr = '';
+    if ($rctype == 'list') $attr = '';
     else $attr = " id='title-$ii'";
     if (!empty($strimwidth) and strlen(get_title($title)) > $strimwidth and function_exists('mb_strimwidth')) {
       $title0=mb_strimwidth($title0,0, $strimwidth,'...', $DBInfo->charset);
@@ -603,7 +606,10 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         $logs[$page_key] = array();
       $logs[$page_key][$day] = 1;
 
-      if (!$DBInfo->hasPage($page_name)) $act = 'DELETE';
+      if (!$DBInfo->hasPage($page_name)) {
+        $act = 'DELETE';
+        $title = '<strike>'.$title.'</strike>';
+      }
       $list[$page_name] = array($title, $date, $act);
       continue;
     }
@@ -1065,6 +1071,8 @@ EOF;
     $extra = '';
     if (!empty($opts['items']))
       $extra.= '&item='.$opts['items'];
+    if (!empty($my_date_fmt))
+      $extra.= '&datefmt='.$my_date_fmt;
     
     $url = $formatter->link_url('RecentChanges', "?action=recentchanges/ajax&type=$rctype".$extra);
     $js = <<<JS
