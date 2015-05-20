@@ -188,7 +188,11 @@ class Version_RCS {
 
   function delete($pagename) {
     $keyname=$this->DB->_getPageKey($pagename);
-    @unlink($this->DB->text_dir."/RCS/$keyname,v");
+    // do not delete history at all.
+    // just rename it.
+    // unlink($this->DB->text_dir."/RCS/$keyname,v");
+    rename($this->DB->text_dir."/RCS/$keyname,v",
+      $this->DB->text_dir."/RCS/$keyname,,");
   }
 
   function rename($pagename,$new) {
