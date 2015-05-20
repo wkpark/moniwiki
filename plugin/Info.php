@@ -17,7 +17,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
     $actions=$DBInfo->info_actions;
   else
     $actions=array('recall'=>'view','raw'=>'source','diff'=>'diff');
-  if (!$formatter->page->exists()) {
+  if (!$formatter->page->exists() && !in_array('revert', $actions)) {
     $actions['revert'] = 'revert';
   }
   if (!empty($DBInfo->use_avatar)) {
