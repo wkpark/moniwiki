@@ -993,14 +993,26 @@ class WikiDB {
 
     $keyname=$this->_getPageKey($page->name);
 
-    if ($this->version_class) {
+    $deleted = @unlink($this->text_dir.'/'.$keyname);
+    if ($deleted && !empty($this->version_class)) {
+      // make a empty file
+      if (!empty($this->log_deletion))
+        touch($this->text_dir.'/'.$keyname);
+
       $log=$REMOTE_ADDR.';;'.$user->id.';;'.$comment;
       $version = $this->lazyLoad('version', $this);
       $ret = $version->ci($page->name,$log);
       if (!empty($options['history']))
         $version->delete($page->name);
+
+      // delete the empty file again
+      @unlink($this->text_dir.'/'.$keyname);
     }
-    $delete=@unlink($this->text_dir."/$keyname");
+
+    // fail to delete
+    if (!$deleted)
+      return -1;
+
     $this->addLogEntry($page->name, $REMOTE_ADDR, $comment, 'DELETE');
 
     $indexer = $this->lazyLoad('titleindexer');

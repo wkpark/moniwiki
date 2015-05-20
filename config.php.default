@@ -269,6 +269,7 @@ $use_save_refresh=2;
 #$use_savepage_hash=1; # use savepage hash to check valid action
 $use_refresh=2;
 #$savepage_timeout=10; # savepage timeout
+#$log_deletion=0; # log deleted info to the history
 $cachetime=0;
 #$cachetime=60*60*5; # set cachetime for caching
 #$use_conditional_get=1; # use conditional get for static pages
