@@ -75,6 +75,7 @@ $nonexists='fancy';
 #$security_class="community";
 #$wikimasters=array('CsKim','SjPark');
 #$owners=array('moniwiki','Hong');
+#$members=array('tester0','tester1'); # internal staff,member, etc.
 
 $menu=array('FrontPage'=>1,'FindPage'=>4,'TitleIndex'=>3,'RecentChanges'=>2,'UserPreferences'=>'');
 #$menu=array('MoniWiki'=>1,'FindPage'=>4,'TitleIndex'=>3,'BlogChanges'=>'','RecentChanges'=>2,'http://kldp.org KLDP'=>9);

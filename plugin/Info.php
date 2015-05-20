@@ -28,6 +28,12 @@ function _parse_rlog($formatter,$log,$options=array()) {
     $avatarlink = qualifiedUrl($formatter->link_url('', '?action='. $type .'&amp;seed='));
   }
 
+  $members = array();
+  if (!empty($DBInfo->owners))
+    $members = $DBInfo->owners;
+  if (!empty($DBInfo->members))
+    $members = array_merge($members, (array) $DBInfo->members);
+
   $diff_action = null;
   if (isset($actions['diff'])) {
     $diff_action = _($actions['diff']);
@@ -161,6 +167,14 @@ function _parse_rlog($formatter,$log,$options=array()) {
            $user = 'Anonymous';
          }
 
+         if (!empty($DBInfo->use_avatar)) {
+           $crypted = crypt($ip, $ip);
+           $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
+           $avatar = '<img src="'.$mylnk.'" style="width:16px;height:16px;vertical-align:middle" alt="avatar" />';
+         } else {
+           $avatar = '';
+         }
+
          if ($user and $user!='Anonymous') {
            if (in_array($user,$users)) $ip=$users[$user];
            else if (!empty($DBInfo->use_nick)) {
@@ -174,37 +188,46 @@ function _parse_rlog($formatter,$log,$options=array()) {
                  $ip=$formatter->link_repl('[wiki:'.$user.' '.$u->info['nick'].']');
                }
              }
+             $ip = $avatar.$ip;
              $users[$user]=$ip;
            } else if (strpos($user,' ') !== false) {
-             $ip=$formatter->link_repl($user);
-             $users[$user]=$ip;
-           } else if (empty($DBInfo->use_hostname) or $DBInfo->hasPage($user)) {
-             if (empty($DBInfo->no_wikihomepage))
-               $ip = $formatter->link_tag($user);
+             $ip = $avatar. $formatter->link_repl($user);
+             $users[$user] = $ip;
+           } else if (empty($DBInfo->no_wikihomepage)) {
+             if (empty($DBInfo->use_hostname) or $DBInfo->hasPage($user))
+               $ip = $avatar.$formatter->link_tag($user);
+             else
+               $ip = $avatar.$user;
+             $users[$user] = $ip;
+
+           } else if (empty($DBInfo->mask_hostname) and isset($DBInfo->interwiki['Whois'])) {
+             if (in_array($options['id'], $DBInfo->owners) || !in_array($user, $members))
+               $ip = "<a href='".$DBInfo->interwiki['Whois']."$ip' target='_blank'>$user</a>";
              else
                $ip = $user;
-             $users[$user]=$ip;
-
-           } else if (!empty($DBInfo->use_avatar)) {
-             $crypted = crypt($ip, $ip);
-             $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
-             $ip = '<img src="'.$mylnk.'" style="width:16px;height:16px;vertical-align:middle" alt="avatar" />'. $user;
+             $ip = $avatar.$ip;
              $users[$user] = $ip;
-           } else if (!$DBInfo->mask_hostname and $DBInfo->interwiki['Whois']) {
-             $ip="<a href='".$DBInfo->interwiki['Whois']."$ip'>$user</a>";
+           } else if (!empty($DBInfo->mask_hostname)) {
+             $ip = $avatar. _mask_hostname($ip);
              $users[$user] = $ip;
-           } else if ($DBInfo->mask_hostname) {
-             $ip=_mask_hostname($ip);
+           } else {
+             $ip = $avatar.$ip;
              $users[$user] = $ip;
            }
-         } else if (!empty($DBInfo->use_avatar)) {
-           $crypted = crypt($ip, $ip);
-           $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
-           $ip = '<img src="'.$mylnk.'" style="width:16px;height:16px;vertical-align:middle" alt="avatar" />'. _('Anonymous');
-         } else if ($DBInfo->mask_hostname) {
-           $ip=_mask_hostname($ip);
-         } else if ($user and $DBInfo->interwiki['Whois'])
-           $ip="<a href='".$DBInfo->interwiki['Whois']."$ip'>$ip</a>";
+         } else {
+           if (in_array($user, $members)) {
+             $ip = $avatar.$user;
+           } else if (!empty($DBInfo->mask_hostname)) {
+             $ip = $avatar._mask_hostname($ip);
+           } else if ($DBInfo->interwiki['Whois']) {
+             if (in_array($options['id'], $members))
+               $ip = $avatar."<a href='".$DBInfo->interwiki['Whois']."$ip'>$ip</a>";
+             else
+               $ip = $avatar._('Anonymous');
+           } else {
+             $ip = $avatar._('Anonymous');
+           }
+         }
 
          $comment=!empty($dummy[2]) ? _stripslashes($dummy[2]) : '';
          if ($realip != $lastip) {
