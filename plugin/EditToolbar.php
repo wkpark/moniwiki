@@ -20,8 +20,13 @@ function macro_EditToolbar($formatter,$value, $options=array()) {
         'math','nowiki','image','media','smiley','sig','infobox');
 
     $btnset = 'default';
-    if ($value == 'simple')
+    if (in_array($value, array('default', 'simple')))
         $btnset = $value;
+    else if (isset($value[0])) {
+        $value = str_replace(' ', '', $value);
+        $custom = explode(',', $value);
+        $btnset = 'custom';
+    }
 
     $iconset=!empty($DBInfo->toolbar_iconset) ? $DBInfo->toolbar_iconset:
         'moniwiki';
@@ -55,6 +60,9 @@ function macro_EditToolbar($formatter,$value, $options=array()) {
         'infobox'=>
             "addInfobox(N_('Click a button to get an example text'),N_('Please enter the text you want to be formatted.\\\\n It will be shown in the infobox for copy and pasting.\\\\nExample:\\\\n\$1\\\\nwill become:\\\\n\$2'));\n",
     );
+
+    if (!empty($DBInfo->custom_toobar_buttons))
+        $buttons = array_merge($buttons, $DBInfo->custom_toobar_buttons);
     $formatter->register_javascripts("wikibits.js");
     $fcss= $DBInfo->imgs_real_dir.'/plugin/EditToolbar/'.$iconset.'/toolbar.css';
     $css='';
@@ -69,8 +77,10 @@ $css
 document.writeln("<div id='toolbar'><span>");
 
 EOS;
-    foreach (${$btnset} as $btn)
-        $script.= $buttons[$btn];
+    foreach (${$btnset} as $btn) {
+        if (isset($buttons[$btn]))
+            $script.= $buttons[$btn];
+    }
 
     $script.=<<<EOS
 document.writeln("</span></div>");
