@@ -1002,7 +1002,10 @@ class WikiDB {
       $log=$REMOTE_ADDR.';;'.$user->id.';;'.$comment;
       $version = $this->lazyLoad('version', $this);
       $ret = $version->ci($page->name,$log);
-      if (!empty($options['history']))
+
+      // delete history
+      if (!empty($this->delete_history) && in_array($options['id'], $this->owners)
+          && !empty($options['history']))
         $version->delete($page->name);
 
       // delete the empty file again
