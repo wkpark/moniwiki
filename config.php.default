@@ -29,6 +29,7 @@ $use_hostname=0; # use hostname or ip address. SLOW SLOW
 $use_htmlcolor=0; # use html color scheme
 $use_group=1; # use group namespace
 $mask_hostname=1; # hide some part of hostnames or ip addresses
+#$site_local_php='config/local.php'; # site specific include file
 $show_hosts=1;
 $edit_rows=16; # editer rows
 #$editform=$data_dir.'/editform.txt'; # custom edit form

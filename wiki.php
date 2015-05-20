@@ -5539,6 +5539,9 @@ function wiki_main($options) {
     $options['orig_pagename'] = '';
   }
 
+  if (function_exists('local_pre_check'))
+    local_pre_check($action, $options);
+
   // load ruleset
   if (!empty($Config['config_ruleset'])) {
     $ruleset_file = 'config/ruleset.'.$Config['config_ruleset'].'.php';
@@ -6010,6 +6013,11 @@ require_once("wikilib.php");
 require_once("lib/win32fix.php");
 require_once("lib/cache.text.php");
 require_once("lib/timer.php");
+
+if (file_exists('config/site.local.php'))
+  require_once('config/site.local.php');
+else if (isset($Config['site_local_php']) and file_exists($Config['site_local_php']))
+  require_once($Config['site_local_php']);
 
 $options = array();
 if (class_exists('Timer')) {
