@@ -73,7 +73,7 @@ EOS;
     $use_sistersites = 1;
     $use_singlebracket = 1;
     $use_twinpages = 1;
-    $use_hostname = 1;
+    $use_hostname = 0;
     $use_group = 1;
 
     $email_guard = 'hex';
