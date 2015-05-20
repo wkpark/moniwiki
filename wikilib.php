@@ -2111,17 +2111,34 @@ function do_post_DeletePage($formatter,$options) {
     return;
   }
 
+  // get the site specific hash code
+  $ticket = $page->mtime().getTicket($DBInfo->user->id, $_SERVER['REMOTE_ADDR']);
+  $hash = md5($ticket);
+
   if (isset($options['name'][0])) $options['name']=urldecode($options['name']);
   $pagename= $formatter->page->urlname;
   if (isset($options['name'][0]) and $options['name'] == $options['page']) {
     $retval = array();
     $options['retval'] = &$retval;
-    $ret = $DBInfo->deletePage($page,$options);
+
+    $ret = -1;
+    // check hash
+    if (empty($options['hash']))
+      $ret = -2;
+    else if ($hash == $options['hash'])
+      $ret = $DBInfo->deletePage($page, $options);
+    else
+      $ret = -3;
+
     if ($ret == -1) {
       if (!empty($options['retval']['msg']))
         $title = $options['retval']['msg'];
       else
         $title = sprintf(_("Fail to delete \"%s\""), _html_escape($page->name));
+    } else if ($ret == -2) {
+      $title = _("Empty hash code !");
+    } else if ($ret == -3) {
+      $title = _("Incorrect hash code !");
     } else {
       $title = sprintf(_("\"%s\" is deleted !"), _html_escape($page->name));
     }
@@ -2149,6 +2166,7 @@ function do_post_DeletePage($formatter,$options) {
 $btn: <input name='comment' size='80' value='' /><br />\n";
   if (!empty($DBInfo->delete_history))
     print _("with revision history")." <input type='checkbox' name='history' />\n";
+  print "\n<input type=\"hidden\" name=\"hash\" value=\"".$hash."\" />\n";
 
   $pwd = _("Password");
   $btn = _("Delete Page");
