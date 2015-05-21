@@ -768,6 +768,16 @@ class WikiDB {
     $msg="$key_name\t$remote_name\t$time\t$host\t$myid\t$comment\t$action\n";
     fwrite($fp_editlog, $msg);
     fclose($fp_editlog);
+
+    $params = array('pagename'=>$page_name,
+        'remote_addr'=>$remote_name,
+        'timestamp'=>$time,
+        'hostname'=>$host,
+        'id'=>$user->id,
+        'comment'=>$comment,
+    );
+
+    if (function_exists('local_logger')) local_logger($action, $params);
   }
 
   function editlog_raw_lines($days,$opts=array()) {
