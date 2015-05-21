@@ -751,6 +751,8 @@ class WikiDB {
 
   function addLogEntry($page_name, $remote_name,$comment,$action="SAVE") {
     $user=&$this->user;
+
+    $key_name = $this->_getPageKey($page_name);
   
     $myid=$user->id;
     if ($myid == 'Anonymous' and !empty($user->verified_email))
@@ -762,8 +764,8 @@ class WikiDB {
     $time= time();
     if ($this->use_hostname) $host= gethostbyaddr($remote_name);
     else $host= $remote_name;
-    $page_name=trim($page_name);
-    $msg="$page_name\t$remote_name\t$time\t$host\t$myid\t$comment\t$action\n";
+    $key_name=trim($key_name);
+    $msg="$key_name\t$remote_name\t$time\t$host\t$myid\t$comment\t$action\n";
     fwrite($fp_editlog, $msg);
     fclose($fp_editlog);
   }
@@ -966,7 +968,7 @@ class WikiDB {
       }
     }
     if (empty($options['minor']) and !$minor)
-      $this->addLogEntry($keyname, $REMOTE_ADDR,$comment,$action);
+      $this->addLogEntry($page->name, $REMOTE_ADDR,$comment,$action);
 
     $indexer = $this->lazyLoad('titleindexer');
     if ($is_new) $indexer->addPage($page->name);
@@ -1081,8 +1083,8 @@ class WikiDB {
     }
 
     $comment=sprintf(_("Rename %s to %s"),$pagename,$new);
-    $this->addLogEntry($okeyname, $REMOTE_ADDR, '', 'DELETE');
-    $this->addLogEntry($keyname, $REMOTE_ADDR, $comment, 'CREATE');
+    $this->addLogEntry($pagename, $REMOTE_ADDR, '', 'DELETE');
+    $this->addLogEntry($new, $REMOTE_ADDR, $comment, 'CREATE');
 
     $indexer = $this->lazyLoad('titleindexer');
     $indexer->renamePage($pagename, $new);
