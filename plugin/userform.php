@@ -149,11 +149,16 @@ function do_userform($formatter,$options) {
       if ($login_ok or $user->checkPasswd($options['password'])=== true) {
         $options['msg'] = sprintf(_("Successfully login as '%s'"),$id);
         $options['id']=$user->id;
-        $formatter->header($user->setCookie());
+        // special case
+        if ($user->id == 'Anonymous') {
+          $options['msg'] = _("Invalid user ID. Please register again");
+        } else {
+          $formatter->header($user->setCookie());
+          $userdb->saveUser($user);
+          $use_refresh=1;
+        }
 
         $DBInfo->user=$user;
-        $userdb->saveUser($user); # XXX
-        $use_refresh=1;
       } else {
         $title = sprintf(_("Invalid password !"));
         $user->setID('Anonymous');
