@@ -315,7 +315,6 @@ $use_local_translation=0; # automatic translation
 #$rc_strimwidth=20; # witdh param of mb_strimwidth() with the RecentChanges macro
 #$titleindexer_class='PageIndex'; # user defined titleindexer class
 #$pagekey_class='base64url'; # use base64url pagekey class
-#$new_editlog=0; # use new editlog
 #$use_x_forwarded_for=0; # use X-Forwarded-For header information to log all pass-by addresses
 #$pages_limit=5000; # maximum number of pages to retrieve by default to reduce server load.
 #$default_delaytime= 60*60*24; # set the default delayed time for caching as 24 hours

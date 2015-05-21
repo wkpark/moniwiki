@@ -538,11 +538,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     if (!empty($last_entry_only) and !empty($logs[$page_key])) continue;
     else if (!empty($logs[$page_key][$day])) continue;
 
-    if (empty($DBInfo->new_editlog)) {
-      $page_name = $DBInfo->keyToPagename($parts[0]);
-    } else {
-      $page_name = $parts[0];
-    }
+    $page_name= $DBInfo->keyToPagename($parts[0]);
 
     // show trashed pages only
     if ($trash and $DBInfo->hasPage($page_name)) continue;
