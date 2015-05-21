@@ -2404,6 +2404,8 @@ class Formatter {
   }
 
   function word_repl($word,$text='',$attr='',$nogroup=0,$islink=1) {
+    require_once(dirname(__FILE__).'/lib/xss.php');
+
     global $DBInfo;
     $nonexists='nonexists_'.$this->nonexists;
 
@@ -2466,7 +2468,8 @@ class Formatter {
         }
       } else {
         $word = preg_replace($this->baserule, $this->baserepl, $text);
-        //$word = str_replace('&lt;', '<', $word); // revert from baserule
+        $word = str_replace('&lt;', '<', $word); // revert from baserule
+        $word = _xss_filter($word);
       }
     } else {
       $word=$text=$page_text ? $page_text:$word;
