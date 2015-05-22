@@ -52,7 +52,10 @@ function processor_folding($formatter,$value="",$options=array()) {
     ob_start();
     $params = array('notoc'=>1);
     $params['nosisters'] = 1;
-    $formatter->send_page($value, $params);
+    $f = new Formatter($formatter->page, $params);
+    $f->get_javascripts(); // trash default javascripts
+    $f->pi['#linenum'] = 0; // do not use linenum
+    $f->send_page($value, $params);
     $out = ob_get_contents();
     ob_end_clean();
 
