@@ -199,34 +199,38 @@ function _parse_rlog($formatter,$log,$options=array()) {
              else
                $ip = $avatar.$user;
              $users[$user] = $ip;
+           }
+         }
 
-           } else if (empty($DBInfo->mask_hostname) and isset($DBInfo->interwiki['Whois'])) {
-             if (in_array($options['id'], $DBInfo->owners) || !in_array($user, $members))
-               $ip = "<a href='".$DBInfo->interwiki['Whois']."$ip' target='_blank'>$user</a>";
-             else
-               $ip = $user;
-             $ip = $avatar.$ip;
-             $users[$user] = $ip;
-           } else if (!empty($DBInfo->mask_hostname)) {
-             $ip = $avatar. _mask_hostname($ip);
-             $users[$user] = $ip;
+         if (empty($users[$user])) {
+           $rip = $ip;
+           $u = $user;
+           if ($u == 'Anonymous')
+             $u = $ip;
+           $wip = $u;
+           if (isset($DBInfo->interwiki['Whois']))
+             $wip = "<a href='".$DBInfo->interwiki['Whois']."$ip' target='_blank'>$u</a>";
+
+           if (in_array($options['id'], $members)) {
+             $ip = $wip;
+           } else if (empty($DBInfo->show_hosts)) {
+             $ip = $user;
            } else {
-             $ip = $avatar.$ip;
+             if (!empty($DBInfo->mask_hostname)) {
+               if ($user == 'Anonymous')
+                 $ip = _mask_hostname($ip);
+               else
+                 $ip = $user;
+             } else {
+               $ip = $wip;
+             }
+           }
+           $ip = $avatar.$ip;
+
+           if ($user != 'Anonymous')
              $users[$user] = $ip;
-           }
-         } else {
-           if (in_array($user, $members)) {
-             $ip = $avatar.$user;
-           } else if (!empty($DBInfo->mask_hostname)) {
-             $ip = $avatar._mask_hostname($ip);
-           } else if ($DBInfo->interwiki['Whois']) {
-             if (in_array($options['id'], $members))
-               $ip = $avatar."<a href='".$DBInfo->interwiki['Whois']."$ip'>$ip</a>";
-             else
-               $ip = $avatar._('Anonymous');
-           } else {
-             $ip = $avatar._('Anonymous');
-           }
+           else
+             $users[$rip] = $ip;
          }
 
          $comment=!empty($dummy[2]) ? _stripslashes($dummy[2]) : '';
