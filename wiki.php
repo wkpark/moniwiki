@@ -6060,10 +6060,7 @@ if (!isset($options['pagename'][0])) $options['pagename']= get_frontpage($lang);
 $DBInfo->lang=$lang;
 $options['lang'] = $lang;
 
-if ($options['id'] == 'Anonymous') {
-  $private = 'public';
-} else if (session_id() == '' and empty($Config['nosession']) and is_writable(ini_get('session.save_path')) ) {
-  $private = 'private';
+if (session_id() == '' and empty($Config['nosession']) and is_writable(ini_get('session.save_path')) ) {
   $prefix = !empty($DBInfo->session_seed) ? $DBInfo->session_seed : 'MONIWIKI';
   $myseed = getTicket($prefix, $_SERVER['REMOTE_ADDR']);
   $myid = $prefix . '-*-' . $myseed . '-*-' . $options['id'];
@@ -6075,8 +6072,6 @@ if ($options['id'] == 'Anonymous') {
 
   session_name($myid);
   session_start();
-} else {
-  $private = 'private';
 }
 
 // set the s-maxage for proxy
@@ -6089,14 +6084,19 @@ $_SERVER['REMOTE_ADDR'] = realIP();
 
 if ($_SERVER['REQUEST_METHOD'] != 'GET' and
     $_SERVER['REQUEST_METHOD'] != 'HEAD')
-  header('Cache-Control: '.$private.$user_maxage.', must-revalidate, post-check=0, pre-check=0');
+  // always set private for POST
+  // basic cache-control
+  header('Cache-Control: private,'.$user_maxage.', must-revalidate, post-check=0, pre-check=0');
 else {
+  // set maxage for show action
   if (empty($_GET['action']) or $_GET['action'] == 'show')
-    $tmp = $private.$proxy_maxage;
+    $maxage = $proxy_maxage.$user_maxage;
   else
-    $tmp = $private;
+    $maxage = $user_maxage.', must-revalidate';
 
-  header('Cache-Control: '.$tmp.$user_maxage.', must-revalidate, post-check=0, pre-check=0');
+  // always set public for GET, HEAD
+  // basic cache-control
+  header('Cache-Control: public'.$maxage.', post-check=0, pre-check=0');
 }
 
 wiki_main($options);
