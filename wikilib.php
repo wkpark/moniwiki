@@ -3939,20 +3939,49 @@ function get_keys() {
 function macro_PageCount($formatter, $value = '', $options = array()) {
   global $DBInfo;
 
-  if ($formatter->_macrocache and empty($options['call']))
-    return $formatter->macro_cache_repl('PageCount', '');
-  $formatter->_dynamic_macros['@PageCount'] = 1;
-
   $mode = '';
+  $use_js = false;
   if (!empty($value)) {
     $vals = get_csv($value);
     if (!empty($vals)) {
       foreach ($vals as $v) {
         if (in_array($v, array('noredirect', 'redirect'))) {
           $mode = $v;
+        } else if ($v == 'js') {
+          $use_js = true;
         }
       }
     }
+  }
+
+  if ($formatter->_macrocache and empty($options['call']) and !$use_js)
+    return $formatter->macro_cache_repl('PageCount', $value);
+  if (empty($options['call']) and !$use_js)
+  $formatter->_dynamic_macros['@PageCount'] = 1;
+
+  $js = '';
+  $mid = $formatter->mid;
+  if ($use_js) {
+    $url = $formatter->link_url('', '?action=pagecount/ajax');
+    $js = <<<JS
+<script type='text/javascript'>
+/*<![CDATA[*/
+(function() {
+var url = "$url";
+var mode = "$mode";
+var txt = HTTPGet(url);
+var ret = window["eval"]("(" + txt + ")");
+var rc = document.getElementById("macro-$mid");
+var out = ret['pagecount'];
+if (mode == 'noredirect')
+    out -= ret['redirect'];
+else if (mode == 'redirect')
+    out = ret['redirect'];
+rc.innerHTML = out;
+})();
+/*]]>*/
+</script>
+JS;
   }
 
   $redirects = 0;
@@ -3963,10 +3992,22 @@ function macro_PageCount($formatter, $value = '', $options = array()) {
       $redirects = $rc->count();
 
     if ($mode == 'redirect')
-      return $redirects;
+      return '<span class="macro" id="macro-'.$mid.'">'.$redirects.'<span>'.$js;
   }
   $count = $DBInfo->getCounter();
-  return $count - $redirects;
+  return '<span class="macro" id="macro-'.$mid.'">'.($count - $redirects).'</span>'.$js;
+}
+
+function ajax_pagecount($formater, $params) {
+    global $DBInfo;
+
+    $rc = new Cache_Text('redirect');
+    $redirects = 0;
+    if (method_exists($rc, 'count'))
+        $redirects = $rc->count();
+
+    $count = $DBInfo->getCounter();
+    echo '{pagecount:'.$count.',redirect:'.$redirects.'}';
 }
 
 function _setpagekey(&$page,$k) {
