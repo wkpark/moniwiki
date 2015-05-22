@@ -5529,6 +5529,7 @@ function wiki_main($options) {
 
   $options['page']=$pagename;
   $options['action'] = &$action;
+  unset($options['call']); // reserved FIXME
 
   // check pagename length
   $key = $DBInfo->pageToKeyname($pagename);
