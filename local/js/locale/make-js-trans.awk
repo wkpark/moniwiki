@@ -12,7 +12,7 @@ BEGIN {
 /^msgid "/ { #"{
   if (msgid && str) {
     gsub(/\$/, "\\$", str);
-    out = sprintf ("%s%s\n", out, ("\"" msgid "\":\n   \"" str "\","));
+    print ("\"" msgid "\":\n   \"" str "\",");
   }
   str = substr ($0, 8, length ($0) - 8);
   msgstr="";
@@ -32,10 +32,8 @@ BEGIN {
 END {
   if (msgid && str) {
     gsub(/\$/, "\\$", str);
-    out = sprintf ("%s%s", out, ("\"" msgid "\":\n   \"" str "\""));
+    print ("\"" msgid "\":\n   \"" str "\"");
   }
-  gsub(/\,\n?$/, "", out);
-  print out;
-  print ("}\n");
+  print ("}");
 }
 
