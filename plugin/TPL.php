@@ -18,7 +18,8 @@
 function macro_TPL($formatter, $value = '', $params = array()) {
     if ($formatter->_macrocache and empty($params['call']))
         return $formatter->macro_cache_repl('TPL', $value);
-    $formatter->_dynamic_macros['@TPL'] = 1;
+    if (empty($params['call']))
+        $formatter->_dynamic_macros['@TPL'] = 1;
     return $formatter->processor_repl('tpl_', $value, $params);
 }
 

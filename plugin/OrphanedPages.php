@@ -21,7 +21,8 @@ function macro_OrphanedPages($formatter,$value, $params = array()) {
     // set as dynamic macro
     if ($formatter->_macrocache and empty($params['call']))
         return $formatter->macro_cache_repl('OrphanedPages', $value);
-    $formatter->_dynamic_macros['@OrphanedPages'] = 1;
+    if (empty($options['call']))
+        $formatter->_dynamic_macros['@OrphanedPages'] = 1;
 
     $pagelinks = $formatter->pagelinks; // save
     $save = $formatter->sister_on;

@@ -81,11 +81,10 @@ JS;
     }
 
     // dynamic macro
-    if (!$use_js) {
-        if ($formatter->_macrocache and empty($options['call']))
-            return $formatter->macro_cache_repl('Fortune', $value);
+    if ($formatter->_macrocache and empty($options['call']) and !$use_js)
+        return $formatter->macro_cache_repl('Fortune', $value);
+    if (empty($options['call']))
         $formatter->_dynamic_macros['@Fortune'] = 1;
-    }
 
     $cat=$value;
     $dir='/usr/share/games/fortune';

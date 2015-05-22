@@ -23,6 +23,8 @@ function macro_Comment($formatter,$value,$options=array()) {
   // set as dynamic macro or not.
   if ($formatter->_macrocache and empty($options['call']))
     return $formatter->macro_cache_repl('Comment', $value);
+  if (empty($options['call']))
+    $formatter->_dynamic_macros['@Comment'] = 1;
 
   $user=$DBInfo->user; # get from COOKIE VARS
   $options['id']=$user->id;

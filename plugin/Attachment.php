@@ -28,6 +28,8 @@ function macro_Attachment($formatter,$value,$options=array()) {
 
   if ($formatter->_macrocache and empty($options['call']))
     return $formatter->macro_cache_repl('Attachment', $value);
+  if (empty($options['call']))
+    $formatter->_dynamic_macros['@Attachment'] = 1;
 
   $attr='';
   if (!empty($DBInfo->force_download) or !empty($DBInfo->pull_url)) $force_download=1;

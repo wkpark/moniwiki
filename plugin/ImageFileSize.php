@@ -40,7 +40,8 @@ function macro_ImageFileSize($formatter, $value = '', $params = array()) {
             // dynamic macro
             if ($formatter->_macrocache and empty($params['call']))
                 return $formatter->macro_cache_repl('ImageFileSize', $value);
-            $formatter->_dynamic_macros['@ImageFileSize'] = 1;
+            if (empty($params['call']))
+                $formatter->_dynamic_macros['@ImageFileSize'] = 1;
 
             // do not fetch the size of image right now. just fetch the cached info by the fetch plugin
             if (empty($params['call']) and !empty($Config['fetch_imagesize']) and $Config['fetch_imagesize'] == 2)
