@@ -13,13 +13,23 @@
  * @param  boolean $single If set only a single IP is returned
  * @return string
  */
-function clientIP($single = false) {
+function clientIP($single = true) {
     $ip   = array();
-    $ip[] = $_SERVER['REMOTE_ADDR'];
     if(!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
-        $ip = array_merge($ip, explode(',', str_replace(' ', '', $_SERVER['HTTP_X_FORWARDED_FOR'])));
+        $ip = explode(',', str_replace(' ', '', $_SERVER['HTTP_X_FORWARDED_FOR']));
     if(!empty($_SERVER['HTTP_X_REAL_IP']))
-        $ip = array_merge($ip, explode(',', str_replace(' ', '', $_SERVER['HTTP_X_REAL_IP'])));
+        $ip = explode(',', str_replace(' ', '', $_SERVER['HTTP_X_REAL_IP']));
+
+    // mod remoteip case
+    if ($ip[0] == $_SERVER['REMOTE_ADDR'])
+        return $ip[0];
+
+    // append remote ip
+    $addr = array_pop($ip);
+    $ip[] = $addr;
+    if ($addr != $_SERVER['REMOTE_ADDR']) {
+        $ip[] = $_SERVER['REMOTE_ADDR'];
+    }
 
     // some IPv4/v6 regexps borrowed from Feyd
     // see: http://forums.devnetwork.net/viewtopic.php?f=38&t=53479
