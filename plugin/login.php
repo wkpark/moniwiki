@@ -10,6 +10,14 @@
 function macro_login($formatter,$value="",$options="") {
   global $DBInfo;
 
+  $value = trim($value);
+  $use_js = $value == 'js';
+  if ($formatter->_macrocache and empty($options['call']) and !$use_js)
+    return $formatter->macro_cache_repl('Login', $value);
+
+  if (empty($options['call']) and !$use_js)
+    $formatter->_dynamic_macros['@Login'] = 1;
+
   $url=$formatter->link_url('UserPreferences');
   $urlpage=$formatter->link_url($formatter->page->urlname);
 
@@ -18,7 +26,7 @@ function macro_login($formatter,$value="",$options="") {
   $jscript='';
   $onsubmit = '';
   $passwd_hidden = '';
-  if ($user->id == 'Anonymous' and !empty($DBInfo->use_safelogin)) {
+  if (!empty($DBInfo->use_safelogin)) {
     $onsubmit=' onsubmit="javascript:_chall.value=challenge.value;password.value=hex_hmac_md5(challenge.value, hex_md5(password.value))"';
     $jscript.="<script src='$DBInfo->url_prefix/local/md5.js'></script>";
     $time_seed=time();
@@ -35,8 +43,7 @@ function macro_login($formatter,$value="",$options="") {
   if (!empty($formatter->lang))
     $lang = ' lang="'.substr($formatter->lang, 0, 2).'"';
 
-  if ($user->id == 'Anonymous')
-  return <<<LOGIN
+  $form = <<<LOGIN
 <div id='wikiLogin'$lang>$jscript
 <form method='post' action='$urlpage' $onsubmit>
 <div>
@@ -55,7 +62,7 @@ LOGIN;
   $option=_("UserPreferences");
   $msg = sprintf(_("%s or %s"), "<a href='$url'>$option</a>",
     "<span class='button'><input type='submit' class='button' name='logout' value='$button' /></span>");
-  return <<<LOGOUT
+  $logout = <<<LOGOUT
 <div id='wikiLogin'>
 <form method='post' action='$urlpage'>
 <input type="hidden" name="action" value="userform" />
@@ -63,6 +70,43 @@ $msg
 </form>
 </div>
 LOGOUT;
+
+  if ($value == 'js') {
+    $mid = $formatter->mid;
+    $url = $formatter->link_url('', '?action=login/ajax');
+    $js = <<<JS
+<script type='text/javascript'>
+/*<![CDATA[*/
+(function() {
+var url = "$url";
+var txt = HTTPGet(url);
+var macro = document.getElementById("macro-$mid");
+if (txt.substring(0, 5) != 'false')
+  macro.innerHTML = txt;
+})();
+/*]]>*/
+</script>
+JS;
+    return <<<FORM
+<div class="macro" id="macro-$mid">
+$form
+</div>\n$js
+FORM;
+  }
+
+  if ($user->id == 'Anonymous')
+    return $form;
+
+  return $logout;
+}
+
+function ajax_login($formatter, $options) {
+  $options['call'] = 1;
+  if ($options['id'] == 'Anonymous')
+    echo 'false';
+  else
+    echo macro_Login($formatter, '', $options);
+  return;
 }
 
 function do_login($formatter,$options) {
