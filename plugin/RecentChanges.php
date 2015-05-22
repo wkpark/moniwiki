@@ -894,6 +894,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     if (!empty($checkchange)) $ext[] = 'change=1';
     $arg = implode('&', $ext);
     $url = qualifiedURL($formatter->link_url('RecentChanges')); // FIXME
+    $url = preg_replace('/^https?:/', '', $url);
     $postdata = "action=recentchanges/ajax" . ($arg ? '&'.$arg : '');
     $js.= $json->encode($rc_list).";\n";
     if ($use_diffwidth)
@@ -1077,7 +1078,8 @@ EOF;
   var url = "$url";
   var txt = HTTPGet(url);
   var rc = document.getElementById("rc$rc_id");
-  rc.innerHTML = txt;
+  if (txt.substring(0,5) != 'false')
+    rc.innerHTML = txt;
 /*]]>*/
 </script>
 JS;
