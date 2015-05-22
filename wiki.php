@@ -6092,7 +6092,10 @@ else {
   if (empty($_GET['action']) or $_GET['action'] == 'show')
     $maxage = $proxy_maxage.$user_maxage;
   else
-    $maxage = $user_maxage.', must-revalidate';
+    $maxage = $user_maxage;
+
+  if (empty($Config['no_must_revalidate']))
+    $maxage.= ', must-revalidate';
 
   // always set public for GET, HEAD
   // basic cache-control

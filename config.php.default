@@ -274,6 +274,7 @@ $use_refresh=2;
 $cachetime=0;
 #$cachetime=60*60*5; # set cachetime for caching
 #$use_conditional_get=1; # use conditional get for static pages
+#$no_must_revalidate=1; # do not use must-revalidate cache control
 #$proxy_maxage=1; # maxage in seconds for shared caches
 #$user_maxage=5; # maxage in seconds
 #$nosession=1; # do not use session
