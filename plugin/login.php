@@ -72,7 +72,7 @@ $msg
 LOGOUT;
 
   if ($value == 'js') {
-    $mid = $formatter->mid;
+    $mid = $formatter->mid++;
     $url = $formatter->link_url('', '?action=login/ajax');
     $js = <<<JS
 <script type='text/javascript'>

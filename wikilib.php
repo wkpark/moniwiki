@@ -3960,7 +3960,7 @@ function macro_PageCount($formatter, $value = '', $options = array()) {
   $formatter->_dynamic_macros['@PageCount'] = 1;
 
   $js = '';
-  $mid = $formatter->mid;
+  $mid = $formatter->mid++;
   if ($use_js) {
     $url = $formatter->link_url('', '?action=pagecount/ajax');
     $js = <<<JS
