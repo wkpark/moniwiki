@@ -19,6 +19,8 @@ function clientIP($single = true) {
         $ip = explode(',', str_replace(' ', '', $_SERVER['HTTP_X_FORWARDED_FOR']));
     if(!empty($_SERVER['HTTP_X_REAL_IP']))
         $ip = explode(',', str_replace(' ', '', $_SERVER['HTTP_X_REAL_IP']));
+    if (!sizeof($ip))
+        return $_SERVER['REMOTE_ADDR'];
 
     // mod remoteip case
     if ($ip[0] == $_SERVER['REMOTE_ADDR'])
