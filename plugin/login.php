@@ -89,7 +89,6 @@ if (txt.substring(0, 5) != 'false')
 JS;
     return <<<FORM
 <div class="macro" id="macro-$mid">
-$form
 </div>\n$js
 FORM;
   }
@@ -102,10 +101,9 @@ FORM;
 
 function ajax_login($formatter, $options) {
   $options['call'] = 1;
-  if ($options['id'] == 'Anonymous')
-    echo 'false';
-  else
-    echo macro_Login($formatter, '', $options);
+  if ($options['id'] != 'Anonymous')
+    header('Cache-Control: private, max-age=5, must-revalidate, post-check=0, pre-check=0');
+  echo macro_Login($formatter, '', $options);
   return;
 }
 
