@@ -277,10 +277,14 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     }
   }
 
+  if (!empty($nobookmark)) $use_js = 0;
+
   // set as dynamic macro or not.
-  if ($formatter->_macrocache and empty($options['call'])) // and empty($use_js))
+  if ($formatter->_macrocache and empty($options['call'])
+      and (empty($use_js) || $rctype != 'list'))
     return $formatter->macro_cache_repl('RecentChanges', $value);
-  $formatter->_dynamic_macros['@RecentChanges'] = 1;
+  if (empty($options['call']))
+    $formatter->_dynamic_macros['@RecentChanges'] = 1;
 
   if (empty($DBInfo->interwiki)) $formatter->macro_repl('InterWiki','',array('init'=>1));
 
@@ -389,7 +393,6 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       $bookmark = strtotime(date('Y-m-d', time() - $checknew).' 00:00:00');
   }
   if (!$bookmark) $bookmark = time();
-  if (!empty($nobookmark)) $use_js = 0;
 
   // set search query
   if (isset($_GET['q'][0])) {
