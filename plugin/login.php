@@ -44,7 +44,7 @@ function macro_login($formatter,$value="",$options="") {
     $lang = ' lang="'.substr($formatter->lang, 0, 2).'"';
 
   $form = <<<LOGIN
-<div id='wikiLogin'$lang>$jscript
+<div class='wikiLogin'$lang>$jscript
 <form method='post' action='$urlpage' $onsubmit>
 <div>
 <input type="hidden" name="action" value="userform" />
@@ -67,7 +67,7 @@ LOGIN;
   if ($use_js)
     $attr = ' style="display:none"';
   $logout = <<<LOGOUT
-<div id='wikiLogout'$attr>
+<div class='wikiLogout'$attr>
 <form method='post' action='$urlpage'>
 <input type="hidden" name="action" value="userform" />
 $msg
@@ -88,17 +88,18 @@ try { oldOnload(); } catch(e) {};
 var url = "$url";
 var status = HTTPGet(url);
 if (status.substring(0, 4) == 'true') {
-  var logout = document.getElementById("wikiLogout");
-  var login = document.getElementById("wikiLogin");
-  login.style.display = 'none';
-  logout.style.display = 'block';
+  var macro = document.getElementById("macro-$mid");
+  var login = macro.getElementsByClassName("wikiLogin")[0];
+  var logout = macro.getElementsByClassName("wikiLogout")[0];
+  if (login) login.style.display = 'none';
+  if (logout) logout.style.display = 'block';
 }
 };
 })();
 /*]]>*/
 </script>
 JS;
-    return $form.$logout.$js;
+    return "<div id='macro-$mid'>".$form.$logout.'</div>'.$js;
   }
 
   if ($options['id'] != 'Anonymous')
