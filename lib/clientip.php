@@ -81,7 +81,3 @@ function clientIP($single = true) {
     // still here? just use the first (last) address
     return $ip[0];
 }
-
-header('Content-type: application/x-javascript');
-header('Cache-control: private, max-age=60');
-echo 'var myip = "'.clientIP()."\";\n\n";
