@@ -62,8 +62,12 @@ LOGIN;
   $option=_("UserPreferences");
   $msg = sprintf(_("%s or %s"), "<a href='$url'>$option</a>",
     "<span class='button'><input type='submit' class='button' name='logout' value='$button' /></span>");
+
+  $attr = '';
+  if ($use_js)
+    $attr = ' style="display:none"';
   $logout = <<<LOGOUT
-<div id='wikiLogin'>
+<div id='wikiLogout'$attr>
 <form method='post' action='$urlpage'>
 <input type="hidden" name="action" value="userform" />
 $msg
@@ -71,39 +75,46 @@ $msg
 </div>
 LOGOUT;
 
-  if ($value == 'js') {
+  if ($use_js) {
     $mid = $formatter->mid++;
     $url = $formatter->link_url('', '?action=login/ajax');
     $js = <<<JS
 <script type='text/javascript'>
 /*<![CDATA[*/
 (function() {
+var oldOnload = window.onload;
+window.onload = function(e) {
+try { oldOnload(); } catch(e) {};
 var url = "$url";
-var txt = HTTPGet(url);
-var macro = document.getElementById("macro-$mid");
-if (txt.substring(0, 5) != 'false')
-  macro.innerHTML = txt;
+var status = HTTPGet(url);
+if (status.substring(0, 4) == 'true') {
+  var logout = document.getElementById("wikiLogout");
+  var login = document.getElementById("wikiLogin");
+  login.style.display = 'none';
+  logout.style.display = 'block';
+}
+};
 })();
 /*]]>*/
 </script>
 JS;
-    return <<<FORM
-<div class="macro" id="macro-$mid">
-</div>\n$js
-FORM;
+    return $form.$logout.$js;
   }
 
-  if ($user->id == 'Anonymous')
-    return $form;
+  if ($options['id'] != 'Anonymous')
+    return $logout;
 
-  return $logout;
+  return $form;
 }
 
 function ajax_login($formatter, $options) {
   $options['call'] = 1;
-  if ($options['id'] != 'Anonymous')
-    header('Cache-Control: private, max-age=5, must-revalidate, post-check=0, pre-check=0');
-  echo macro_Login($formatter, '', $options);
+  if ($options['id'] != 'Anonymous') {
+    header('Cache-Control: private, max-age=0, must-revalidate, post-check=0, pre-check=0');
+    echo 'true';
+    return;
+  }
+  echo 'false';
   return;
 }
 

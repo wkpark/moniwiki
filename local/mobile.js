@@ -129,7 +129,7 @@ function init_images() {
                 el = img[i];
             else
                 el = node;
-                
+
             el.onclick = (function(o) {
                 return function() {
                     toggle(o);
