@@ -45,7 +45,21 @@ function titleindex(request, response) {
     });
 }
 
-$().ready(function() { if (init_inputform('go','ac_goto')) $('#ac_goto').autocomplete( { source: titleindex } );});
+function search(e, ui) {
+    if (ui.item.value)
+        location.href = url_prefix + _qp + encodeURIComponent(ui.item.value).replace(/%2F/g,'/');
+}
+
+$().ready(function() {
+    if (init_inputform('go','ac_goto'))
+    $('#ac_goto').autocomplete({
+        source: titleindex, delay: 100,
+        select: function(e,ui) {
+            if (ui.item.value)
+                location.href = url_prefix + _qp + encodeURIComponent(ui.item.value).replace(/%2F/g,'/');
+        }
+    });
+});
 })();
 
 // vim:et:sts=4:sw=4:
