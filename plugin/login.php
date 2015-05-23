@@ -109,8 +109,8 @@ JS;
 
 function ajax_login($formatter, $options) {
   $options['call'] = 1;
+  header('Cache-Control: private, max-age=0, must-revalidate, post-check=0, pre-check=0');
   if ($options['id'] != 'Anonymous') {
-    header('Cache-Control: private, max-age=0, must-revalidate, post-check=0, pre-check=0');
     echo 'true';
     return;
   }
