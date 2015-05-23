@@ -6086,10 +6086,11 @@ if ($_SERVER['REQUEST_METHOD'] != 'GET' and
     $_SERVER['REQUEST_METHOD'] != 'HEAD')
   // always set private for POST
   // basic cache-control
-  header('Cache-Control: private,'.$user_maxage.', must-revalidate, post-check=0, pre-check=0');
+  header('Cache-Control: private, max-age=0, s-maxage=0, must-revalidate, post-check=0, pre-check=0');
 else {
   // set maxage for show action
-  if (empty($_GET['action']) or $_GET['action'] == 'show')
+  $act = isset($_GET['action']) ? strtolower($_GET['action']) : '';
+  if (empty($act) or $act == 'show')
     $maxage = $proxy_maxage.$user_maxage;
   else
     $maxage = $user_maxage;
