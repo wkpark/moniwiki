@@ -66,6 +66,8 @@ function do_reverse($formatter, $options = array()) {
 
         if ($body == $current_body) {
             $title = sprintf(_("No change found."));
+        } else if ($body == '') {
+            $title = sprintf(_("Empty Page!"));
         } else {
             $options['.reverted'] = 1;
             $formatter->page->write($body);
