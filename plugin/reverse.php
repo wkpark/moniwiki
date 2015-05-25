@@ -21,7 +21,8 @@ function do_reverse($formatter, $options = array()) {
         return do_invalid($formatter,$options);
     }
 
-    $page = $DBInfo->getPage($options['page']);
+    $is_new = false;
+    if (!$formatter->page->exists()) $is_new = true;
 
     $pagename = $formatter->page->urlname;
 
@@ -70,6 +71,8 @@ function do_reverse($formatter, $options = array()) {
             $ret = $DBInfo->savePage($formatter->page, $comment, $options);
             if ($ret != -1) {
                 $title = sprintf(_("%s is successfully rollbacked."), _html_escape($page->name));
+                $indexer = $DBInfo->lazyLoad('titleindexer');
+                if ($is_new) $indexer->addPage($formatter->page->name);
             } else {
                 $title = sprintf(_("Failed to rollback %s page"), _html_escape($page->name));
             }
