@@ -67,6 +67,7 @@ function do_reverse($formatter, $options = array()) {
         if ($body == $current_body) {
             $title = sprintf(_("No change found."));
         } else {
+            $options['.reverted'] = 1;
             $formatter->page->write($body);
             $ret = $DBInfo->savePage($formatter->page, $comment, $options);
             if ($ret != -1) {

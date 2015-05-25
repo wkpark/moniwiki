@@ -70,7 +70,7 @@ function do_revert($formatter,$options) {
             $log=$REMOTE_ADDR.';;'.$user->id.';;'.$comment;
             $keyname=$DBInfo->_getPageKey($formatter->page->name);
             $DBInfo->addLogEntry($formatter->page->name,
-                $REMOTE_ADDR,$comment,"SAVE");
+                $REMOTE_ADDR,$comment, 'REVERT');
             $indexer = $DBInfo->lazyLoad('titleindexer');
             if ($is_new) $indexer->addPage($formatter->page->name);
             else $indexer->update($formatter->page->name);

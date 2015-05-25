@@ -955,6 +955,8 @@ class WikiDB {
     } else {
       $action = 'CREATE';
     }
+    if (!empty($options['.reverted']))
+      $action = 'REVERT';
 
     $log=$REMOTE_ADDR.';;'.$myid.';;'.$comment;
     $options['log']=$log;
