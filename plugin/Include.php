@@ -170,6 +170,9 @@ function macro_Include($formatter, $value = '') {
         $out = ob_get_contents();
         ob_end_clean();
 
+        // to add backlink
+        $tmp = $formatter->link_repl($pagename);
+
         if (!empty($class))
             $class = ' class="'.$class.'"';
         if (!empty($styles))
