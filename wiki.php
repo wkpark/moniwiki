@@ -1092,9 +1092,10 @@ class WikiDB {
       $version->rename($pagename,$new);
     }
 
-    $comment=sprintf(_("Rename %s to %s"),$pagename,$new);
-    $this->addLogEntry($pagename, $REMOTE_ADDR, '', 'DELETE');
-    $this->addLogEntry($new, $REMOTE_ADDR, $comment, 'CREATE');
+    $renameas = sprintf(_("Renamed as %s"), $new);
+    $renamefrom = sprintf(_("Renamed from %s"), $pagename);
+    $this->addLogEntry($pagename, $REMOTE_ADDR, $renameas, 'RENAME');
+    $this->addLogEntry($new, $REMOTE_ADDR, $renamefrom, 'RENAME');
 
     $indexer = $this->lazyLoad('titleindexer');
     $indexer->renamePage($pagename, $new);
