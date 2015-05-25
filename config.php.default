@@ -175,6 +175,7 @@ $myplugins=array('rcsexport'=>false); # disable rcsexport
 
 #$url_schemas='mms';
 #$delete_history=1;
+#$rename_with_history=1; # rename with history
 #$use_twikilink=1;
 #$timezone='KST'; // for windows
 #$version_class='RcsLite';

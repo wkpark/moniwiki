@@ -1072,6 +1072,19 @@ class WikiDB {
     else
       $REMOTE_ADDR = $_SERVER['REMOTE_ADDR'];
 
+    $with_history = false;
+    $ret = 0;
+    if (!empty($this->rename_with_history) || !empty($options['history']))
+      $with_history = true;
+    if ($with_history && $this->version_class) {
+      $version = $this->lazyLoad('version', $this);
+      $ret = $version->rename($pagename,$new);
+
+      // fail to rename
+      if ($ret < 0 || $ret === false)
+        return -1;
+    }
+
     // remove pagelinks and backlinks
     store_pagelinks($pagename, array());
     // remove aliases
@@ -1088,11 +1101,6 @@ class WikiDB {
     $olddir=$this->upload_dir.'/'.$this->_getPageKey($pagename);
     if (!file_exists($newdir) and file_exists($olddir))
       rename($olddir,$newdir);
-
-    if ($options['history'] && $this->version_class) {
-      $version = $this->lazyLoad('version', $this);
-      $version->rename($pagename,$new);
-    }
 
     $renameas = sprintf(_("Renamed as %s"), $new);
     $renamefrom = sprintf(_("Renamed from %s"), $pagename);
