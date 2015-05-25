@@ -2407,6 +2407,11 @@ function do_titleindex($formatter,$options) {
     print $ret;
     return;
   } else if ($options['sec'] =='') {
+    if (!empty($DBInfo->no_all_titleindex))
+      return;
+
+    $tc = new Cache_text('persist', array('depth'=>0));
+
     // all pages
     $mtime = $DBInfo->mtime();
     $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
@@ -2415,23 +2420,33 @@ function do_titleindex($formatter,$options) {
     $options['mtime'] = $mtime;
 
     // set the s-maxage for proxy
+    $date = gmdate('Y-m-d-H-i-s', $mtime);
     $proxy_maxage = !empty($Config['proxy_maxage']) ? ', s-maxage='.$Config['proxy_maxage'] : '';
     $header[] = 'Content-Type: text/plain';
     $header[] = 'Cache-Control: public'.$proxy_maxage.', max-age=0, must-revalidate';
     $need = http_need_cond_request($mtime, $lastmod, $etag);
     if (!$need)
       $header[] = 'HTTP/1.0 304 Not Modified';
+    else
+      $header[] = 'Content-Disposition: attachment; filename="titleindex-'.$date.'.txt"';
     $formatter->send_header($header, $options);
     if (!$need) {
       @ob_end_clean();
       return;
     }
-    $args = array('all'=>1);
-    $pages = $DBInfo->getPageLists($args);
 
-    sort($pages);
+    if (($out = $tc->fetch('titleindex', array('print'=>1))) === false) {
+      $args = array('all'=>1);
+      $pages = $DBInfo->getPageLists($args);
 
-    print join("\n",$pages);
+      sort($pages);
+
+      $out = join("\n", $pages);
+      $ttl = !empty($DBInfo->titleindex_ttl) ? $DBInfo->titleindex_ttl : 60*60*24;
+      $tc->update('titleindex', $out, $ttl);
+      echo $out;
+    }
+
     return;
   }
   $formatter->send_header("",$options);

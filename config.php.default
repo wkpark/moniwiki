@@ -324,3 +324,5 @@ $use_local_translation=0; # automatic translation
 #$titlesearch_exact_all=0; # get all exact matches
 #$titlesearch_noredirect=0; # do not redirect to the only one founded page except exact match.
 #$use_similar_text=0; # use similar_text() function (in likepages action)
+#$no_all_titleindex = 1; # do not support action=titleindex to reduce traffic
+#$titleindex_ttl=60*60*24; # titleindex ttl
