@@ -198,8 +198,12 @@ class Version_RCS {
   function rename($pagename,$new) {
     $keyname=$this->DB->_getPageKey($new);
     $oname=$this->DB->_getPageKey($pagename);
-    rename($this->DB->text_dir."/RCS/$oname,v",
+
+    if (file_exists($this->DB->text_dir."/RCS/$oname,v") and
+        !file_exists($this->DB->text_dir."/RCS/$keyname,v"))
+      return rename($this->DB->text_dir."/RCS/$oname,v",
       $this->DB->text_dir."/RCS/$keyname,v");
+    return -1;
   }
 
   function get_rev($pagename,$mtime='',$last=0) {
