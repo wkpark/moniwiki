@@ -5582,6 +5582,11 @@ function wiki_main($options) {
         $options['is_robot'] = is_allowed_robot($ruleset['allowedrobot'], $_SERVER['HTTP_USER_AGENT']);
       }
     }
+
+    // setup staff members
+    if (!empty($ruleset['staff'])) {
+      $DBInfo->members = array_merge($DBInfo->members, $ruleset['staff']);
+    }
   }
 
   $page = $DBInfo->getPage($pagename);

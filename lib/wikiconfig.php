@@ -217,6 +217,19 @@ EOS;
     if (!empty($config->use_captcha))
       $config->use_ticket = $config->use_captcha;
 
+    // setup some variables
+    if (empty($config->owners))
+      $config->owners = array();
+    if (empty($config->wikimasters))
+      $config->wikimasters = array();
+    if (empty($config->members))
+      $config->members = array();
+
+    if (!empty($config->owners))
+      $config->members = array_merge($config->members, $config->owners);
+    if (!empty($config->wikimasters))
+      $config->members = array_merge($config->members, $config->wikimasters);
+
     return get_object_vars($config);
 }
 
