@@ -12,7 +12,7 @@ class TitleIndexer_mysql {
     var $conn = NULL;
     var $host = 'localhost';
     var $db = 'moniwiki';
-    var $pass = '';
+    var $passwd = '';
     var $charset = 'utf-8';
 
     function TitleIndexer_mysql($name = 'titleindex')
@@ -20,12 +20,22 @@ class TitleIndexer_mysql {
         global $Config;
 
         $this->text_dir = $Config['text_dir'];
-        // make elastic search query string
-        $host = !empty($Config['mysql_host']) ? $Config['mysql_host'] : 'localhost';
-        $this->host = $host;
-        $this->db = !empty($Config['mysql_dbname']) ? $Config['mysql_dbname'] : 'moniwiki';
-        $this->user = !empty($Config['mysql_user']) ? $Config['mysql_user'] : 'moniwiki';
-        $this->pass = !empty($Config['mysql_pass']) ? $Config['mysql_pass'] : '';
+        // setup mysql config
+        if (!empty($Config['config_mysql']) and
+                file_exists('config/mysql.'.$Config['config_mysql'].'.php')) {
+
+            $conf = _load_php_vars('config/mysql.'.$Config['config_mysql'].'.php');
+            $this->host = !empty($conf['host']) ? $conf['host'] : 'localhost';
+            $this->db = !empty($conf['dbname']) ? $conf['dbname'] : 'moniwiki';
+            $this->user = !empty($conf['user']) ? $conf['user'] : 'moniwiki';
+            $this->passwd = !empty($conf['passwd']) ? $conf['passwd'] : '';
+        } else {
+            $host = !empty($Config['mysql_host']) ? $Config['mysql_host'] : 'localhost';
+            $this->host = $host;
+            $this->db = !empty($Config['mysql_dbname']) ? $Config['mysql_dbname'] : 'moniwiki';
+            $this->user = !empty($Config['mysql_user']) ? $Config['mysql_user'] : 'moniwiki';
+            $this->passwd = !empty($Config['mysql_passwd']) ? $Config['mysql_passwd'] : '';
+        }
 
         $this->charset = strtolower($Config['charset']);
         register_shutdown_function(array(&$this,'close'));
@@ -37,7 +47,7 @@ class TitleIndexer_mysql {
             return;
 
         $charset = str_replace('-', '', $this->charset);
-        $conn = @mysql_connect($this->host, $this->user, $this->pass);
+        $conn = @mysql_connect($this->host, $this->user, $this->passwd);
         if (!is_resource($conn)) {
             trigger_error("Fail to connect DB");
             return;
