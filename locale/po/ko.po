@@ -1167,7 +1167,7 @@ msgid ""
 "If you want to customize your quicklinks, just make your ID and register "
 "your email address in the UserPreferences."
 msgstr ""
-"quicklinks를 바꾸려면 UserPrefercences에서 ID를 만들고 이메일 주소를 등록해"
+"quicklinks를 바꾸려면 UserPreferences에서 ID를 만들고 이메일 주소를 등록해"
 "야 합니다."
 
 #: ../plugin/quicklinks.php:38
