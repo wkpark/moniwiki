@@ -4241,11 +4241,16 @@ function macro_TableOfContents(&$formatter,$value="") {
  $prefix = '';
  $dot = '<span class="dot">.</span>';
 
+ $attr = '';
  while($value) {
    list($arg,$value)=explode(',',$value,2);
    $key=strtok($arg,'=');
    if ($key=='title') {
      $title=strtok('');
+   } else if ($key == 'align') {
+     $val = strtok('');
+     if (in_array($val, array('right', 'left')))
+       $attr = ' '.$val;
    } else if ($key=='simple') {
      $simple=strtok('');
      if ($simple=='') $simple=1;
@@ -4272,7 +4277,7 @@ function macro_TableOfContents(&$formatter,$value="") {
 </script>
 EOS;
  }
- $TOC0="\n<div class='wikiToc' id='" . $tocid . "'>";
+ $TOC0="\n<div class='wikiToc$attr' id='" . $tocid . "'>";
  if (!isset($title)) $title = $formatter->macro_repl('GetText', "Contents");
  if ($title) {
   $TOC0.="<div class='toctitle'>
