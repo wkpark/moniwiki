@@ -1729,7 +1729,12 @@ function macro_Edit($formatter,$value,$options='') {
       $options['page']='["'.$options['page'].'"]';
     }
     $guide = sprintf(_("Describe %s here"), $options['page']);
-    $raw_body.= $guide;
+    if (empty($DBInfo->use_edit_placeholder)) {
+      $raw_body.= $guide;
+      $guide = '';
+    } else {
+      $guide = ' placeholder="'._html_escape($guide).'"';
+    }
     $js=<<<EOF
 <script type="text/javascript">
 /*<![CDATA[*/
@@ -1940,7 +1945,7 @@ $formh
 <div class="resizable-textarea" style='position:relative'><!-- IE hack -->
 <div id="save_state"></div>
 <textarea id="editor-textarea" wrap="virtual" name="savetext" tabindex="1"
- rows="$rows" cols="$cols" class="wiki resizable">$raw_body</textarea>
+ rows="$rows" cols="$cols" class="wiki resizable"$guide>$raw_body</textarea>
 $captcha
 </div>
 $extraform
