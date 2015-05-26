@@ -89,8 +89,8 @@ var url = "$url";
 var status = HTTPGet(url);
 if (status.substring(0, 4) == 'true') {
   var macro = document.getElementById("macro-$mid");
-  var login = macro.getElementsByClassName("wikiLogin")[0];
-  var logout = macro.getElementsByClassName("wikiLogout")[0];
+  var login = getElementsByClassName(macro, "wikiLogin")[0];
+  var logout = getElementsByClassName(macro, "wikiLogout")[0];
   if (login) login.style.display = 'none';
   if (logout) logout.style.display = 'block';
 }
