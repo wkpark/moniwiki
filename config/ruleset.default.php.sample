@@ -18,3 +18,13 @@ AllowedRobot yahoo
 # kiwirian
 #Kiwirian foobar
 #KiwirianFile blahblah.lst.php
+
+# Staff
+Staff foobar
+Staff foobar2
+Staff alpha
+Staff beta
+
+# Hide Log
+#HideLogOptions raw
+#HideLog FrontPage
