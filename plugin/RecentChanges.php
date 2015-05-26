@@ -177,7 +177,10 @@ define('RC_MAX_ITEMS',200);
 define('RC_DEFAULT_DAYS',7);
 
 function macro_RecentChanges($formatter,$value='',$options='') {
-  global $DBInfo;
+  global $DBInfo, $Config;
+
+  // get members to hide log
+  $members = $DBInfo->members;
 
   $checknew=1;
   $checkchange=0;
@@ -542,6 +545,12 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     else if (!empty($logs[$page_key][$day])) continue;
 
     $page_name= $DBInfo->keyToPagename($parts[0]);
+
+    if (!empty($members) && !in_array($options['id'], $members)
+        && !empty($Config['ruleset']['hidelog'])) {
+      if (in_array($page_name, $Config['ruleset']['hidelog']))
+        continue;
+    }
 
     // show trashed pages only
     if ($trash and $DBInfo->hasPage($page_name)) continue;
