@@ -26,11 +26,6 @@ function macro_Attachment($formatter,$value,$options=array()) {
 
   if (!is_array($options) and $options==1) $options=array('link'=>1); // compatible
 
-  if ($formatter->_macrocache and empty($options['call']))
-    return $formatter->macro_cache_repl('Attachment', $value);
-  if (empty($options['call']))
-    $formatter->_dynamic_macros['@Attachment'] = 1;
-
   $attr='';
   if (!empty($DBInfo->force_download) or !empty($DBInfo->pull_url)) $force_download=1;
   if (!empty($DBInfo->download_action)) $mydownload=$DBInfo->download_action;
@@ -407,7 +402,10 @@ function macro_Attachment($formatter,$value,$options=array()) {
   }
 
   // no attached file found.
-  $formatter->_dynamic_macros['@Attachment'] = 1;
+  if ($formatter->_macrocache and empty($options['call']))
+    return $formatter->macro_cache_repl('Attachment', $value);
+  if (empty($options['call']))
+    $formatter->_dynamic_macros['@Attachment'] = 1;
 
   $paste='';
   if (!empty($DBInfo->use_clipmacro) and preg_match('/^(.*)\.png$/i',$file,$m)) {
