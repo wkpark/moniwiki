@@ -28,11 +28,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
     $avatarlink = qualifiedUrl($formatter->link_url('', '?action='. $type .'&amp;seed='));
   }
 
-  $members = array();
-  if (!empty($DBInfo->owners))
-    $members = $DBInfo->owners;
-  if (!empty($DBInfo->members))
-    $members = array_merge($members, (array) $DBInfo->members);
+  $members = $DBInfo->members;
 
   $diff_action = null;
   if (isset($actions['diff'])) {
@@ -211,7 +207,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
            if (isset($DBInfo->interwiki['Whois']))
              $wip = "<a href='".$DBInfo->interwiki['Whois']."$ip' target='_blank'>$u</a>";
 
-           if (in_array($options['id'], $members)) {
+           if (!empty($members) and in_array($options['id'], $members)) {
              $ip = $wip;
            } else if (empty($DBInfo->show_hosts)) {
              $ip = $user;
