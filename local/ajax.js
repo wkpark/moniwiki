@@ -242,4 +242,57 @@ function timesago(timestamp, date_fmt, tz_offset) {
   return ago;
 }
 
+// Add a getElementsByClassName function if the browser doesn't have one
+// Limitation: only works with one class name
+// Copyright: Eike Send http://eike.se/nd
+// License: MIT License
+//
+// Changes
+// * optional elem argument added by wkpark 2015/05/26
+
+if (!document.getElementsByClassName) {
+    getElementsByClassName = function(elem, search) {
+        var d;
+        if (typeof elem == "string") {
+            d = document;
+            search = elem;
+        } else {
+            d = elem;
+        }
+
+        var elements, pattern, i, results = [];
+        if (d.querySelectorAll) { // IE8
+            return d.querySelectorAll("." + search);
+        }
+        if (d.evaluate) { // IE6, IE7
+            pattern = ".//*[contains(concat(' ', @class, ' '), ' " + search + " ')]";
+            elements = d.evaluate(pattern, d, null, 0, null);
+            while ((i = elements.iterateNext())) {
+                results.push(i);
+            }
+        } else {
+            elements = d.getElementsByTagName("*");
+            pattern = new RegExp("(^|\\s)" + search + "(\\s|$)");
+            for (i = 0; i < elements.length; i++) {
+                if ( pattern.test(elements[i].className) ) {
+                    results.push(elements[i]);
+                }
+            }
+        }
+        return results;
+    }
+} else {
+    getElementsByClassName = function(elem, q) {
+        var d;
+        if (typeof elem == "string") {
+            d = document;
+            q = elem;
+        } else {
+            d = elem;
+        }
+
+        return d.getElementsByClassName(q)
+    };
+}
+
 // vim:et:sts=2:sw=2:
