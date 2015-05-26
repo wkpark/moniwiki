@@ -89,6 +89,11 @@ function macro_ImageFileSize($formatter, $value = '', $params = array()) {
         }
         return round($sz, 2).' '.$unit[$i];
     }
+    // set as dynamic macro or not.
+    if ($formatter->_macrocache and empty($options['call']))
+        return $formatter->macro_cache_repl('ImageFileSize', $value);
+    if (empty($options['call']))
+        $formatter->_dynamic_macros['@ImageFileSize'] = 1;
     return _("Unknown");
 }
 
