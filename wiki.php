@@ -5568,8 +5568,11 @@ function wiki_main($options) {
   // load ruleset
   if (!empty($Config['config_ruleset'])) {
     $ruleset_file = 'config/ruleset.'.$Config['config_ruleset'].'.php';
-    if (file_exists($ruleset_file))
+    if (file_exists($ruleset_file)) {
       $ruleset = load_ruleset($ruleset_file);
+
+      $Config['ruleset'] = $ruleset;
+    }
 
     // is it robot ?
     if (!empty($ruleset['allowedrobot'])) {

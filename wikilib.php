@@ -978,7 +978,8 @@ function load_ruleset($ruleset_file) {
   // get cached ruleset
   if (!($ruleset = $settings->fetch('ruleset'))) {
     $deps = array();
-    $deps['deps'] = array($ruleset_file);
+    $rdeps = array($ruleset_file);
+    $deps['deps'] = &$rdeps;
 
     $validator = array(
         'blacklist'=>'ip_ruleset',
