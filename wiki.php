@@ -5846,7 +5846,7 @@ function wiki_main($options) {
         $out=ob_get_contents();
         ob_end_clean();
         $formatter->_macrocache=0;
-        $_macros=&$formatter->_dynamic_macros;
+        $_macros = $formatter->_dynamic_macros;
         if (!empty($_macros))
           $mcache->update($pagename,$_macros);
         $cache->update($pagename, $out);
@@ -5862,6 +5862,14 @@ function wiki_main($options) {
         }
         echo $formatter->get_javascripts();
         $out=str_replace($mrule,$mrepl,$out);
+
+        // no more dynamic macros found
+        if (empty($formatter->_dynamic_macros)) {
+          // update contents
+          $cache->update($pagename, $out);
+          // remove dynamic macros cache
+          $mcache->remove($pagename);
+        }
       }
       echo $out,$extra_out;
       if ($options['id'] != 'Anonymous')
