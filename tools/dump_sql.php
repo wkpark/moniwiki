@@ -31,7 +31,10 @@ if (class_exists('Timer')) {
     $params['timer']->Check("load");
 }
 
-$text_dir = $topdir.'/'.$DBInfo->text_dir;
+if ($DBInfo->text_dir[0] != '/')
+    $text_dir = $topdir.'/'.$DBInfo->text_dir;
+else
+    $text_dir = $DBInfo->text_dir;
 
 // get args
 

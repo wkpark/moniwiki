@@ -29,12 +29,16 @@ if (class_exists('Timer')) {
     $params['timer']->Check("load");
 }
 
-$text_dir = $topdir.'/'.$DBInfo->text_dir;
+if ($DBInfo->text_dir[0] != '/')
+    $text_dir = $topdir.'/'.$DBInfo->text_dir;
+else
+    $text_dir = $DBInfo->text_dir;
 
 // get args
 
 $options = array();
 $options[] = array("t", "type", "sql type\n\t\t\t(support 'mysql', 'sqlite')");
+$options[] = array("d", "", "dump mode");
 $short_opts = ''; // list of short options.
 foreach ($options as $item) {
     $opt = $item[0];
@@ -66,7 +70,13 @@ if (empty($args['t'])) {
     $type = $args['t'];
 }
 
-echo 'Selected type : '.$type."\n";
+$dumpmode = false;
+if (isset($args['d'])) {
+    $dumpmode = true;
+}
+
+echo ' * Selected type : '.$type."\n";
+echo ' * Dump mode : '.$dumpmode."\n";
 
 $ans = ask('Are you sure ? [y/N]', 'n');
 if ($ans == 'n') {
@@ -98,31 +108,52 @@ $schema = make_sql(dirname(__FILE__).'/../lib/schemas/titleindex.sql', '', $type
 dump($schema);
 dump("\n");
 
+$progress = array('\\','|','/','-');
+
 $idx = 0;
 $buffer = array();
 
 $tablename = 'titleindex';
+
+if ($dumpmode)
+    $fields = array('title', 'body', '`mtime`');
+else
+    $fields = array('title', '`mtime`');
+
+$vals = implode(',', $fields);
+
+echo '  ';
+$j = 0;
 while (($file = readdir($handle)) !== false) {
+    print "".($progress[$j++ % 4]);
+
     if ($file[0] == '.' || in_array($file, array('RCS', 'CVS')))
         continue;
     $pagefile = $text_dir.'/'.$file;
     if (is_dir($pagefile))
         continue;
     $mtime = filemtime($pagefile);
+    if ($dumpmode)
+        $body = file_get_contents($pagefile);
 
     $pagename = $DBInfo->keyToPagename($file);
     $idx++;
 
-    $buffer[] = "('"._escape_string($type, $pagename)."',".$mtime.")";
+    $tmp = "('"._escape_string($type, $pagename)."',";
+    if ($dumpmode)
+        $tmp.= "'"._escape_string($type, $body)."',";
+    $tmp.= $mtime.")";
+
+    $buffer[] = $tmp;
     if ($idx > 100) {
-        dump('INSERT INTO '.$tablename.' (title, `mtime`) VALUES '.implode(",\n", $buffer).";\n");
+        dump('INSERT INTO '.$tablename.' ('.$vals.') VALUES '.implode(",\n", $buffer).";\n");
         $idx = 0;
         $buffer = array();
     }
 }
 
 if (sizeof($buffer) > 0) {
-    dump('INSERT INTO '.$tablename.' (title, `mtime`) VALUES '.implode(",\n", $buffer).";\n");
+    dump('INSERT INTO '.$tablename.' ('.$vals.') VALUES '.implode(",\n", $buffer).";\n");
 }
 
 fclose($fp);
