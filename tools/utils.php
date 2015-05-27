@@ -94,8 +94,16 @@ function normSQL($sql, $cr = 0) {
  * @return string
  */
 function make_sql($sqlfile, $sql = '', $type = 'mysql') {
+    $sql_type = 'PGSQL'; // default SQL
+
     if (empty($sql) and file_exists($sqlfile))
         $sql = file_get_contents($sqlfile);
+    if ($sql[0] == '-' && $sql[1] == '-' && $sql[2] == ' ') {
+        $mytype = substr($sql, 3, strlen($type));
+        if (strtoupper($type) == $mytype) {
+            return normSQL($sql);
+        }
+    }
 
     switch ($type) {
     case 'sqlite':

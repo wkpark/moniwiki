@@ -1,11 +1,11 @@
---
--- titleindex structure
+-- MYSQL
+-- MYSQL titleindex structure
 --
 
 DROP TABLE IF EXISTS titleindex;
 
 CREATE TABLE titleindex (
-	_id		INTEGER PRIMARY KEY AUTO_INCREMENT, 
+	_id		INT(11) PRIMARY KEY AUTO_INCREMENT,
 	title		VARCHAR(255) BINARY NOT NULL,
 	body		MEDIUMTEXT DEFAULT '',
 	`mtime`		INT(11) NOT NULL,

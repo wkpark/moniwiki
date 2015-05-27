@@ -1,4 +1,4 @@
---
+-- MYSQL
 -- a simple wiki schema for MySQL
 --
 
