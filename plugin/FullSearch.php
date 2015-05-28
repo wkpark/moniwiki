@@ -302,6 +302,10 @@ EOF;
       $ret = array();
       $params['ret'] = &$ret;
       $params['offset'] = $offset;
+
+      $params['search'] = 1;
+      $params['incl'] = $incl;
+      $params['excl'] = $excl;
       $pages = $DBInfo->getPageLists($params);
 
       // set time_limit

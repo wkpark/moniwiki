@@ -64,8 +64,8 @@ class TitleIndexer_mysql {
      */
     function update($pagename)
     {
-        // NOOP
-        return true;
+        $ret = $this->addPage($pagename);
+        return $ret;
     }
 
     function init()
@@ -141,22 +141,26 @@ class TitleIndexer_mysql {
         if (!isset($pagename[0])) return false;
 
         $page = $DBInfo->getPage($pagename);
+        $body = $page->_get_raw_body();
         $mtime = $page->mtime();
         $pgname = mysql_escape_string($pagename);
+        $body = mysql_escape_string($body);
         $this->_connect();
         $res = mysql_query('SELECT `title`,_id from `titleindex` where `title` = \''.$pgname.'\'');
         $row = mysql_fetch_array($res);
         if ($row) {
+            // update
             $id = $row['_id'];
             // already exists
             // change deleted status
-            $res = mysql_query('UPDATE `titleindex` SET `is_deleted` = 0, mtime = '.time().' WHERE '.
+            $res = mysql_query('UPDATE `titleindex` SET `is_deleted` = 0,'.
+                    '`body` = \''.$body.'\', mtime = '.$mtime.' WHERE '.
                     '`_id` = '.$id);
             return $res;
         }
 
-        $res = mysql_query('INSERT into `titleindex` (`title`, `created`, `mtime`) values (\''.
-                $pgname.'\', '.$mtime.','.$mtime.')');
+        $res = mysql_query('INSERT into `titleindex` (`title`, `body`, `created`, `mtime`) values ('.
+                '\''.$pgname.'\','.'\''.$body.'\','.$mtime.','.$mtime.')');
         return $res;
     }
 
@@ -261,8 +265,32 @@ class TitleIndexer_mysql {
         $size = $pages_limit;
         if (!empty($params['all'])) $size = $total;
 
-        // FIXME
-        $query = 'SELECT `title` FROM `titleindex` ORDER BY `title` DESC ';
+        // make query string
+        $against = '';
+        $mode = '';
+        if (!empty($params['search'])) {
+            foreach ($params['excl'] as $excl) {
+                if (strpos($excl, ' ') !== false)
+                    $against.= ' -('.$excl.')';
+                else
+                    $against.= ' -'.$excl;
+            }
+
+            foreach ($params['incl'] as $incl) {
+                if (strpos($incl, ' ') !== false)
+                    $against.= ' +('.$incl.')';
+                else
+                    $against.= ' +'.$incl;
+            }
+
+            $against = mysql_escape_string($against);
+            $query = 'SELECT `title` FROM `titleindex` WHERE MATCH(`body`) '.
+                'AGAINST(\''.$against.'\' IN BOOLEAN MODE)';
+
+        } else {
+            // FIXME
+            $query = 'SELECT `title` FROM `titleindex` ORDER BY `title` DESC ';
+        }
         if ($pages_limit > 0)
                 ' LIMIT '.intval($pages_limit);
 
