@@ -6137,9 +6137,13 @@ else {
   if (empty($Config['no_must_revalidate']))
     $maxage.= ', must-revalidate';
 
-  // always set public for GET, HEAD
-  // basic cache-control
-  header('Cache-Control: public'.$maxage.', post-check=0, pre-check=0');
+  // set public or private for GET, HEAD
+  // basic cache-control. will be overrided later
+  if ($options['id'] == 'Anonymous')
+    $public = 'public';
+  else
+    $public = 'private';
+  header('Cache-Control: '.$public.$maxage.', post-check=0, pre-check=0');
 }
 
 wiki_main($options);
