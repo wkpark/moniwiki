@@ -546,11 +546,10 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
     $page_name= $DBInfo->keyToPagename($parts[0]);
 
-    $hide_me = false;
     if (!empty($members) && !in_array($options['id'], $members)
         && !empty($Config['ruleset']['hidelog'])) {
       if (in_array($page_name, $Config['ruleset']['hidelog']))
-        $hide_me = true;
+        continue;
     }
 
     // show trashed pages only
@@ -611,9 +610,6 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
     // simple list format
     if ($rctype == 'list') {
-      // hide log entry
-      if ($hide_me) continue;
-
       if (empty($logs[$page_key]))
         $logs[$page_key] = array();
       $logs[$page_key][$day] = 1;
@@ -827,8 +823,6 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       $user = '&nbsp;';
     }
 
-    // hide log entry
-    if ($hide_me) continue;
 
     $jsattr = '';
     if (!empty($use_js))
