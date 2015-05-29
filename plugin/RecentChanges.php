@@ -546,10 +546,11 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
     $page_name= $DBInfo->keyToPagename($parts[0]);
 
+    $hide_me = false;
     if (!empty($members) && !in_array($options['id'], $members)
         && !empty($Config['ruleset']['hidelog'])) {
       if (in_array($page_name, $Config['ruleset']['hidelog']))
-        continue;
+        $hide_me = true;
     }
 
     // show trashed pages only
@@ -610,6 +611,9 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
     // simple list format
     if ($rctype == 'list') {
+      // hide log entry
+      if ($hide_me) continue;
+
       if (empty($logs[$page_key]))
         $logs[$page_key] = array();
       $logs[$page_key][$day] = 1;
@@ -620,37 +624,6 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       }
       $list[$page_name] = array($title, $date, $act);
       continue;
-    }
-
-    $jsattr = '';
-    if (!empty($use_js))
-      $jsattr = ' onclick="update_bookmark('.$ed_time.');return false;"';
-    $bmark = '';
-    if ($day != $ratchet_day) {
-      $ratchet_day = $day;
-      if (!empty($use_day)) {
-        $tag=str_replace('-','',$day);
-        $perma="<a name='$tag'></a><a class='perma' href='#$tag'>$perma_icon</a>";
-        $out.=$cat0;
-        $rcdate=gmdate($date_fmt,$ed_time+$tz_offset);
-
-        $out.=sprintf("%s<span class='rc-date' style='font-size:large'>%s ",
-            $br, $rcdate);
-        if (empty($nobookmark))
-          $out.="<span class='rc-bookmark' style='font-size:small'>[".
-            $formatter->link_tag($formatter->page->urlname, $bookmark_action ."&amp;time=$ed_time".$daysago,
-            _("set bookmark"), $jsattr)."]</span>\n";
-        $br="<br />";
-        $out.='</span>'.$perma.'<br />'.$bra;
-        $cat0=$cat;
-      } else {
-        $bmark=$formatter->link_to($bookmark_action ."&amp;time=$ed_time".$daysago,_("Bookmark"),
-          $jsattr.' class="button-small"');
-      }
-    }
-    //if (empty($use_day) and empty($nobookmark)) {
-    if (empty($nobookmark)) {
-      $date=$formatter->link_to($bookmark_action ."&amp;time=$ed_time".$daysago,$date, ' id="time-'.$ii.'" '.$jsattr);
     }
 
     // print $ed_time."/".$bookmark."//";
@@ -853,6 +826,41 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     } else {
       $user = '&nbsp;';
     }
+
+    // hide log entry
+    if ($hide_me) continue;
+
+    $jsattr = '';
+    if (!empty($use_js))
+      $jsattr = ' onclick="update_bookmark('.$ed_time.');return false;"';
+    $bmark = '';
+    if ($day != $ratchet_day) {
+      $ratchet_day = $day;
+      if (!empty($use_day)) {
+        $tag=str_replace('-','',$day);
+        $perma="<a name='$tag'></a><a class='perma' href='#$tag'>$perma_icon</a>";
+        $out.=$cat0;
+        $rcdate=gmdate($date_fmt,$ed_time+$tz_offset);
+
+        $out.=sprintf("%s<span class='rc-date' style='font-size:large'>%s ",
+            $br, $rcdate);
+        if (empty($nobookmark))
+          $out.="<span class='rc-bookmark' style='font-size:small'>[".
+            $formatter->link_tag($formatter->page->urlname, $bookmark_action ."&amp;time=$ed_time".$daysago,
+            _("set bookmark"), $jsattr)."]</span>\n";
+        $br="<br />";
+        $out.='</span>'.$perma.'<br />'.$bra;
+        $cat0=$cat;
+      } else {
+        $bmark=$formatter->link_to($bookmark_action ."&amp;time=$ed_time".$daysago,_("Bookmark"),
+          $jsattr.' class="button-small"');
+      }
+    }
+    //if (empty($use_day) and empty($nobookmark)) {
+    if (empty($nobookmark)) {
+      $date=$formatter->link_to($bookmark_action ."&amp;time=$ed_time".$daysago,$date, ' id="time-'.$ii.'" '.$jsattr);
+    }
+
     $count=""; $extra="";
     if ($editcount[$page_key][$day] > 1)
       $count = '<span id="change-'.$ii.'">'.sprintf(_("%s changes"), " <span class='num'>".$editcount[$page_key][$day]."</span>").'</span>';
