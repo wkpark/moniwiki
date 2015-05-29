@@ -8,7 +8,10 @@
 define('RSS_DEFAULT_DAYS',7);
 
 function do_rss_rc($formatter,$options) {
-  global $DBInfo;
+  global $DBInfo, $Config;
+
+  // get members to hide log
+  $members = $DBInfo->members;
 
   $days=!empty($DBInfo->rc_days) ? $DBInfo->rc_days:RSS_DEFAULT_DAYS;
   $options['quick']=1;
@@ -77,6 +80,13 @@ CHANNEL;
   foreach ($lines as $line) {
     $parts= explode("\t", $line);
     $page_name= $DBInfo->keyToPagename($parts[0]);
+    // hide log
+    if (!empty($members) && !in_array($options['id'], $members)
+        && !empty($Config['ruleset']['hidelog'])) {
+      if (in_array($page_name, $Config['ruleset']['hidelog']))
+        continue;
+    }
+
     $addr= $parts[1];
     $ed_time= $parts[2];
     $user= $parts[4];
