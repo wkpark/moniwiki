@@ -64,6 +64,8 @@ function parse_ruleset($filename, $validator = null, $params = array()) {
                 if ($line[0] == '#')
                     continue;
                 $line = preg_replace('@\s*#.*$@', '', $line); // trim out # comment
+                if (!isset($line[0]))
+                    continue;
                 $vals[] = $line;
             }
         }
