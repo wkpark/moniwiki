@@ -145,7 +145,7 @@ while (($file = readdir($handle)) !== false) {
     $tmp.= $mtime.")";
 
     $buffer[] = $tmp;
-    if ($idx > 100) {
+    if ($idx > 50) {
         dump('INSERT INTO '.$tablename.' ('.$vals.') VALUES '.implode(",\n", $buffer).";\n");
         $idx = 0;
         $buffer = array();
