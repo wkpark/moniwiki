@@ -218,7 +218,15 @@ function _parse_rlog($formatter,$log,$options=array()) {
                else
                  $ip = $user;
              } else {
-               $ip = $wip;
+               if (!empty($members) and in_array($u, $members)) {
+                 $ip = $user;
+               } else if (!empty($avatar)) {
+                 if ($user == 'Anonymous')
+                   $u = _($user);
+                 $ip = $u;
+               } else {
+                 $ip = $wip;
+               }
              }
            }
            $ip = $avatar.$ip;
