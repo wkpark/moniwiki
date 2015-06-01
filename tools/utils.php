@@ -100,7 +100,9 @@ function make_sql($sqlfile, $sql = '', $type = 'mysql') {
         $sql = file_get_contents($sqlfile);
     if ($sql[0] == '-' && $sql[1] == '-' && $sql[2] == ' ') {
         $mytype = substr($sql, 3, strlen($type));
-        if (strtoupper($type) == $mytype) {
+        $sqltype = strtoupper($type);
+        if ($sqltype == $mytype) {
+            $sql = preg_replace("/^-- ([^ ]+)?,?".$sqltype.",?([^ ]+)? -- /m", '', $sql);
             return normSQL($sql);
         }
     }
