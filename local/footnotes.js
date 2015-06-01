@@ -23,7 +23,7 @@ function init_footnotes()
     for (var i = 0; i < foots.length; i++) {
         var foot = foots[i];
         var tag = foot.firstChild;
-        if (tag && tag.tagName == 'A' && tag.id && tag.id.match(/^rfn(\d+)/)) {
+        if (tag && tag.tagName == 'A' && tag.id && tag.id.match(/^rfn([a-z0-9]+)/)) {
             var footnote = document.getElementById(tag.id.substring(1));
             if (footnote) {
                 tag.onclick = (function(obj) {

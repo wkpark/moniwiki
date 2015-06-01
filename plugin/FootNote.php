@@ -28,9 +28,26 @@ function macro_FootNote(&$formatter, $value = "", $options= array()) {
         $foots = preg_replace_callback("/(".$formatter->wordrule.")/",
             array(&$formatter, 'link_repl'), $foots);
         //unset($formatter->foots);
+
+        // set foot_prefix
+        if (empty($formatter->foot_prefix))
+            $formatter->foot_prefix = 1;
+        else if (is_numeric($formatter->foot_prefix))
+            $formatter->foot_prefix++;
+
         if ($foots)
             return "<div class='foot'><div class='separator'><tt class='wiki'>----</tt></div><ul>\n$foots</ul></div>";
         return '';
+    }
+
+    if (!empty($formatter->foot_prefix)) {
+        if (is_string($formatter->foot_prefix)) {
+            $prefix = $formatter->foot_prefix;
+        } else {
+            $prefix = 'fn'.$formatter->foot_prefix.'-';
+        }
+    } else {
+        $prefix = 'fn';
     }
 
     $text = $tag = '';
@@ -94,7 +111,7 @@ function macro_FootNote(&$formatter, $value = "", $options= array()) {
             while (isset($formatter->rfoots[$tagidx])) $tagidx++;
 
             $tag = $tagidx;
-            $fnref = 'fn'.$tagidx;
+            $fnref = $prefix.$tagidx;
             // no title attribute given now
             // $attr = " id='r$fnidx'";
         } else {
@@ -131,7 +148,7 @@ function macro_FootNote(&$formatter, $value = "", $options= array()) {
         if (!empty($formatter->rfoots[$tagidx])) {
             $tag = $formatter->rfoots[$tagidx];
             if (is_numeric($tagidx))
-                $fnref = "fn$tagidx";
+                $fnref = $prefix.$tagidx;
             if (preg_match('/^[a-zA-Z][a-zA-Z0-9-_]+$/', $tag))
                 $fnref = $tag;
         } else {
@@ -140,14 +157,14 @@ function macro_FootNote(&$formatter, $value = "", $options= array()) {
 
         if (!isset($fnref)) {
             if (is_numeric($tag)) { // FIXME
-                $fnref = "fn$tagidx";
+                $fnref = $prefix.$tagidx;
             } else {
                 $fnref = $tag;
             }
         }
 
         if (empty($fnref) and !is_numeric($tag))
-            $fnref = "fn$tagidx";
+            $fnref = $prefix.$tagidx;
 
         $text = '['.$tag.'&#093;';
         return "<tt class='foot'><a href='#$fnref'>$text</a></tt>";
@@ -164,12 +181,12 @@ function macro_FootNote(&$formatter, $value = "", $options= array()) {
         // search empty slot
         $myidx = $formatter->foot_offset + 1;
         while (isset($formatter->foots[$myidx])) $myidx++;
-        $ididx = ' id="fn'.$myidx.'"';
+        $ididx = ' id="'.$prefix.$myidx.'"';
     }
 
     if (empty($tag)) $tag = $myidx;
     $text = '['.$tag.'&#093;';
-    if (empty($fnref)) $fnref = "fn$myidx";
+    if (empty($fnref)) $fnref = $prefix.$myidx;
 
     $formatter->foots[$myidx] = "<li id='$fnref'><tt class='foot'>".
                       "<a$ididx href='#r$fnref'>$text</a></tt> ".

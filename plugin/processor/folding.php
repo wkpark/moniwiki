@@ -48,11 +48,15 @@ function processor_folding($formatter,$value="",$options=array()) {
         }
     }
 
+    // FIXME footnote prefix
+    $fn_prefix = 'fn'.substr(md5(substr($value, 0, 32)), 0, 3);
+
     // allow wiki syntax in folding content
     ob_start();
     $params = array('notoc'=>1);
     $params['nosisters'] = 1;
     $f = new Formatter($formatter->page, $params);
+    $f->foot_prefix = $fn_prefix;
     $f->get_javascripts(); // trash default javascripts
     $f->pi['#linenum'] = 0; // do not use linenum
     $f->send_page($value, $params);
