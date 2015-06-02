@@ -4,6 +4,7 @@
 
 DROP TABLE IF EXISTS documents;
 
+-- MYSQL -- set names utf8;
 CREATE TABLE documents (
 	_id	INT(11) PRIMARY KEY AUTO_INCREMENT, 
 	title	VARCHAR(255) BINARY NOT NULL,

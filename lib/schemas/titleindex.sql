@@ -4,6 +4,7 @@
 
 DROP TABLE IF EXISTS titleindex;
 
+-- MYSQL -- set names utf8;
 CREATE TABLE titleindex (
 	_id		INT(11) PRIMARY KEY AUTO_INCREMENT,
 	title		VARCHAR(255) BINARY NOT NULL,
