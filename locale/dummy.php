@@ -9,5 +9,5 @@ $pagename=array(
 );
 
 _("Contents");
-
+_("last modified:");
 ?>

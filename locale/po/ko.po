@@ -3347,6 +3347,10 @@ msgstr "보기"
 msgid "Contents"
 msgstr "목차"
 
+#: ../locale/dummy.php:12
+msgid "last modified:"
+msgstr "최종 변경일자:"
+
 #~ msgid "Rename and fix Backlinks"
 #~ msgstr "이름 바꾸고 그 역링크 수정"
 
