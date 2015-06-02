@@ -310,6 +310,7 @@ $mobile_agents='android|iphone'; # mobile agents
 #$security_class_robot='robot';
 #$url_encodings='euc-kr,uhc'; # autogoto option: search invalid urls with different encodings
 #$use_scrap=1; # use scrap
+#$use_scrap='js'; # use scrap with javascript
 #$login_strict=0; # strict check
 #$use_userlink=0; # replace the UserPreference link to the UserHomePage
 $use_local_translation=0; # automatic translation

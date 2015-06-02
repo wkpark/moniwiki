@@ -4908,7 +4908,7 @@ MSG;
       } else
         $this->icons['pref']=array("UserPreferences","",$this->icon['pref']);
       if (isset($options['scrapped'])) {
-        if ($options['scrapped'])
+        if (!empty($DBInfo->use_scrap) && $DBInfo->use_scrap != 'js' && $options['scrapped'])
           $this->icons['scrap']=array('','?action=scrap&amp;unscrap=1',$this->icon['unscrap']);
         else
           $this->icons['scrap']=array('','?action=scrap',$this->icon['scrap']);

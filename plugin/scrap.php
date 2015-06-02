@@ -15,17 +15,29 @@ function macro_Scrap($formatter,$value='',$options=array()) {
   $pages = array();
   if (!empty($userinfo->info['scrapped_pages']))
     $pages=explode("\t",$userinfo->info['scrapped_pages']);
-  if (!empty($options['page']) and !in_array($options['page'],$pages)) $pages[]=$options['page'];
+
+  $scrapped = 0;
+  $pgname = '';
+  if (!empty($formatter->page->name)) {
+    $pgname = $formatter->page->name;
+    if (!in_array($formatter->page->name,$pages))
+      $pages[]=$options['page'];
+    else
+      $scrapped = 1;
+  }
+
   $out='';
 
   if ($value == 'js') {
     // get the scrapped pages dynamically
     $script = get_scriptname() . $DBInfo->query_prefix;
+    $pgname = _rawurlencode($pgname);
     $js = <<<JS
 <script type="text/javascript">
 /*<![CDATA[*/
 (function() {
 var script_name = "$script";
+var page_name = "$pgname";
 function get_scrap()
 {
     var scrap = document.getElementById('scrap');
@@ -33,10 +45,12 @@ function get_scrap()
         // silently ignore
         return;
     }
+    var pgname = decodeURIComponent(page_name);
+    var scrapped = false;
 
     // get the scrapped pages
     var qp = '?'; // query_prefix
-    var loc = location.protocol + '//' + location.host;
+    var loc = '//' + location.host;
     if (location.port) loc+= ':' + location.port;
     loc+= location.pathname + qp + 'action=scrap/ajax';
 
@@ -45,9 +59,25 @@ function get_scrap()
         var list = JSON.parse(ret);
         var html = '';
         for (i = 0; i < list.length; i++) {
+            if (list[i] == pgname) scrapped = true;
             html+= '<li><a href="' + script_name + list[i] + '">' + list[i] + "</a></li>\\n";
         }
-        scrap.innerHTML = "<ul>" + html + "</ul>";
+        if (html != '')
+            scrap.innerHTML = "<ul>" + html + "</ul>";
+
+        if (scrapped) {
+            // change scrap icon
+            var iconmenu = document.getElementById("wikiIcon");
+            var icons = iconmenu.getElementsByTagName("A");
+            for (i = 0; i < icons.length; i++) {
+                if (icons[i].href.match(/action=scrap/)) {
+                    icons[i].href = icons[i].href.replace(/=scrap/, '=scrap&unscrap=1');
+                    icons[i].firstChild.firstChild.src =
+                        icons[i].firstChild.firstChild.src.replace('scrap', 'unscrap');
+                    break;
+                }
+            }
+        }
     }
 }
 
@@ -120,6 +150,8 @@ function do_scrap($formatter,$options) {
     return;
   }
 
+  $scrap_max = !empty($DBInfo->scrap_max) ? $DBInfo->scrap_max : 20;
+
   $udb=&$DBInfo->udb;
   $userinfo=$udb->getUser($options['id']);
   if (isset($options['scrapped_pages']) or (empty($DBInfo->scrap_manual) and empty($options['manual']))) {
@@ -143,6 +175,10 @@ function do_scrap($formatter,$options) {
         } else {
             $pages[] = $formatter->page->name;
             $title = sprintf(_("\"%s\" is scrapped."), $formatter->page->name);
+
+            // trash old
+            if (sizeof($pages) > $scrap_max)
+                array_shift($pages);
         }
         $pages = array_unique ($pages);
     }
