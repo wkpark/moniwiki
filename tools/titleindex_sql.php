@@ -88,6 +88,20 @@ function dump($str) {
     fwrite($fp, $str);
 }
 
+function beginTransaction($type) {
+    if ($type == 'mysql')
+        dump("START TRANSACTION;\n");
+    else
+        dump("BEGIN TRANSACTION;\n");
+}
+
+function endTransaction($type) {
+    if ($type == 'mysql')
+        dump("COMMIT;\n");
+    else
+        dump("END TRANSACTION;\n");
+}
+
 set_time_limit(0);
 
 $handle = opendir($text_dir);
@@ -122,13 +136,16 @@ else
 
 $vals = implode(',', $fields);
 
+beginTransaction($type);
+
 echo '  ';
 $j = 0;
 while (($file = readdir($handle)) !== false) {
-    print "".($progress[$j++ % 4]);
-
     if ($file[0] == '.' || in_array($file, array('RCS', 'CVS')))
         continue;
+
+    print "".($progress[$j++ % 4]);
+
     $pagefile = $text_dir.'/'.$file;
     if (is_dir($pagefile))
         continue;
@@ -150,11 +167,17 @@ while (($file = readdir($handle)) !== false) {
         $idx = 0;
         $buffer = array();
     }
+    if ($j % 10000 == 0) {
+        endTransaction($type);
+        beginTransaction($type);
+    }
 }
 
 if (sizeof($buffer) > 0) {
     dump('INSERT INTO '.$tablename.' ('.$vals.') VALUES '.implode(",\n", $buffer).";\n");
 }
+
+endTransaction($type);
 
 fclose($fp);
 
