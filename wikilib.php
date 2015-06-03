@@ -1059,20 +1059,48 @@ class UserDB {
     return rawurldecode(strtr($key,'_','%'));
   }
 
-  function getUserList($option='') {
+  function getUserList($options = array()) {
     if ($this->users) return $this->users;
 
     $type='';
-    if ($option=='del') $type='del-';
-    elseif ($options=='wait') $type='wait-';
+    if ($options['type'] == 'del') $type = 'del-';
+    elseif ($options['type'] == 'wait') $type = 'wait-';
+
+    // count users
+    $handle = opendir($this->user_dir);
+    $j = 0;
+    while ($file = readdir($handle)) {
+      if (is_dir($this->user_dir."/".$file)) continue;
+      if (preg_match('/^'.$type.'wu\-([^\.]+)$/', $file,$match)) {
+        $j++;
+      }
+    }
+    closedir($handle);
+
+    if (is_array($options['retval']))
+      $options['retval']['count'] = $j;
+
+    $offset = !empty($options['offset']) ? $options['offset'] : 0;
+    $limit = !empty($options['limit']) ? $options['limit'] : 1000;
+    $q = !empty($options['q']) ? $options['q'] : '[^\.]+';
 
     $users = array();
     $handle = opendir($this->user_dir);
+    $j = 0;
     while ($file = readdir($handle)) {
       if (is_dir($this->user_dir."/".$file)) continue;
-      if (preg_match('/^'.$type.'wu\-([^\.]+)$/', $file,$match))
-        #$users[$match[1]] = 1;
-        $users[] = $this->_key_to_id($match[1]);
+      if (preg_match('/^'.$type.'wu\-('.$q.')$/', $file,$match)) {
+        if ($offset > 0) {
+          $offset--;
+          continue;
+        }
+
+        $id = $this->_key_to_id($match[1]);
+        $users[$id] = filemtime($this->user_dir.'/'.$file);
+        $j++;
+        if ($j >= $limit)
+          break;
+      }
     }
     closedir($handle);
     $this->users=$users;
