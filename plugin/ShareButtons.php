@@ -30,6 +30,10 @@ function macro_ShareButtons($formatter, $value = '', $params) {
         $twitter_attr = ' data-count="vertical"';
         $gplus_attr =' data-size="tall"';
         $facebook_attr = 'data-layout="box_count"';
+    } else if ($value == 'icon') {
+        $twitter_attr = ' data-count="none"';
+        $gplus_attr =' data-annotation="none" data-size="tall"';
+        $facebook_attr = 'data-layout="button"';
     }
 
     $twitter = <<<EOF
