@@ -327,6 +327,12 @@ class TitleIndexer_Text {
             $suf = '';
             $needle = substr($needle, 0, -1);
         }
+        // check regex
+        $test = validate_needle($needle);
+        if (!$test)
+            $needle = preg_quote($needle);
+        else
+            $needle = _preg_search_escape($needle);
 
         fseek($flst, 0, SEEK_END);
         $size = ftell($flst);

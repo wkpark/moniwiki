@@ -477,6 +477,13 @@ class PageIndex extends TitleIndexer_Text {
             $needle = substr($needle, 0, -1);
         }
 
+        // check regex
+        $test = validate_needle($needle);
+        if (!$test)
+            $needle = preg_quote($needle);
+        else
+            $needle = _preg_search_escape($needle);
+
         $chunk = $this->chunksize - 1; // chunk size
         $is = $ie = 0; // index start/end
         $ss = $se = 0; // seek start/end
