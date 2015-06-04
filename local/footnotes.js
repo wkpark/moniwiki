@@ -30,6 +30,18 @@ function init_footnotes()
                     return function() {
                         note.style.display = 'block';
                         note.firstChild.nextSibling.innerHTML = obj.innerHTML;
+
+                        // for jQuery
+                        if (typeof $ == 'function') {
+                            var device_width = (screen.width > window.innerWidth) ?
+                                window.innerWidth : screen.width;
+                            if (device_width > 600) {
+                                var off = $(this).offset();
+                                $(note).css({position: "absolute", bottom: "auto", top: off.top + 30 });
+                            } else {
+                                $(note).css({position: "fixed", bottom: 0, top: "auto" });
+                            }
+                        }
                         return false;
                     };
                 })(footnote);
