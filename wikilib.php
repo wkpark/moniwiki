@@ -1080,22 +1080,23 @@ class UserDB {
     if (is_array($options['retval']))
       $options['retval']['count'] = $j;
 
-    $offset = !empty($options['offset']) ? $options['offset'] : 0;
-    $limit = !empty($options['limit']) ? $options['limit'] : 1000;
-    $q = !empty($options['q']) ? $options['q'] : '[^\.]+';
+    $offset = !empty($options['offset']) ? intval($options['offset']) : 0;
+    $limit = !empty($options['limit']) ? intval($options['limit']) : 1000;
+    $q = !empty($options['q']) ? trim($options['q']) : '[^\.]+';
 
     $users = array();
     $handle = opendir($this->user_dir);
     $j = 0;
     while ($file = readdir($handle)) {
       if (is_dir($this->user_dir."/".$file)) continue;
-      if (preg_match('/^'.$type.'wu\-('.$q.')$/', $file,$match)) {
+      if (preg_match('/^'.$type.'wu\-(.*)$/', $file, $match)) {
         if ($offset > 0) {
           $offset--;
           continue;
         }
 
         $id = $this->_key_to_id($match[1]);
+        if (!empty($q) and !preg_match('/'.$q.'/', $id)) continue;
         $users[$id] = filemtime($this->user_dir.'/'.$file);
         $j++;
         if ($j >= $limit)
@@ -1197,26 +1198,41 @@ class UserDB {
   }
 
   function delUser($id) {
+    $key = $this->_id_to_key($id);
+    $u = 'wu-'. $key;
+    $du = 'del-'.$u;
     if ($this->_exists($id)) {
-      $u='wu-'. $this->_id_to_key($id);
-      $du='del-'.$u;
-      rename($this->user_dir.'/'.$u,$this->user_dir.'/'.$du);
+      return rename($this->user_dir.'/'.$u,$this->user_dir.'/'.$du);
+    } else if ($this->_exists($id, true)) {
+      // delete suspended user
+      $u = 'wait-'. $u;
+      return rename($this->user_dir.'/'.$u, $this->user_dir.'/'.$du);
+    } if (file_exists($this->user_dir.'/'.$du)) {
+      // already deleted
+      return true;
     }
+    return false;
   }
 
-  function activateUser($id) {
-    $wu='wu-'. $this->_id_to_key($id);
+  function activateUser($id, $suspended = false) {
+    $u = $wu = 'wu-'. $this->_id_to_key($id);
+    $states = array('wait', 'del');
+    if ($suspended) {
+      $wu = 'wait-'.$u;
+      $states = array('del', '');
+    }
+
     if (file_exists($this->user_dir.'/'.$wu)) return true;
-    if (file_exists($this->user_dir.'/wait-'.$wu)) {
-      $u='wait-'.$wu;
-      rename($this->user_dir.'/'.$u,$this->user_dir.'/'.$wu);
-      return true;
+
+    foreach ($states as $state) {
+      if (!empty($state))
+        $uu = $state.'-'.$u;
+      else
+        $uu = $u;
+      if (file_exists($this->user_dir.'/'.$uu))
+        return rename($this->user_dir.'/'.$uu, $this->user_dir.'/'.$wu);
     }
-    if (file_exists($this->user_dir.'/del-'.$wu)) {
-      $u='del-'.$wu;
-      rename($this->user_dir.'/'.$u,$this->user_dir.'/'.$wu);
-      return true;
-    }
+
     return false;
   }
 }

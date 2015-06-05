@@ -20,29 +20,89 @@ function macro_UserInfo($formatter,$value,$options=array()) {
     if ($options['id'] == 'Anonymous')
         return sprintf(_("You are not allowed to use the \"%s\" macro."),"UserInfo");
 
-    $off = !empty($options['offset']) ? $options['offset'] : 0;
+    $offset = $off = !empty($options['offset']) ? $options['offset'] : 0;
     $limit = !empty($options['limit']) ? $options['limit'] : 100;
-    $q = !empty($options['q']) ? $options['q'] : '';
+    // page
+    $pg = !empty($options['p']) ? $options['p'] : 1;
+    $q = !empty($options['q']) ? trim($options['q']) : '';
+    $type = !empty($options['type']) ? $options['type'] : '';
+
+    $strs = array(''=>_("Total %d users found."),
+        'wait'=>_("Total %d Suspended users found."),
+        'del'=>_("Total %d Deleted users found."));
+    if (!in_array($type, array('wait', 'del'))) {
+        $type = '';
+    }
+    $title = $strs[$type];
+
     if ($limit > 100) $limit = 100;
-    if ($off > sizeof($users)) $off = 0;
+    if ($pg > 1) $off+= ($pg - 1) * $limit;
 
     $params = array('offset' => $off, 'limit'=>$limit);
     $retval = array();
     $params['retval'] = &$retval;
     if (!empty($q))
         $params['q'] = $q;
+    if (!empty($type))
+        $params['type'] = $type;
 
     $udb=&$DBInfo->udb;
     $user=&$DBInfo->user;
     $users=$udb->getUserList($params);
-    $title=sprintf(_("Total %d users"), $retval['count']);
+    $title = sprintf($title, $retval['count']);
+    $sz = sizeof($users);
 
     $list='';
     $cur = time();
-    if (in_array($user->id,$DBInfo->owners)) {
-        $sz = sizeof($users);
+
+    if ($sz == 1 && in_array($user->id,$DBInfo->owners)) {
+        $keys = array_keys($users);
+
+        $u = $udb->getUser($keys[0], $type != '');
+        $list = '<table>';
+        $list.= '<tr><th>'._("ID").'</th></th><td>'.$keys[0].'</td></tr>';
+        if (isset($u->email))
+            $list.= '<tr><th>'._("E-mail").'</th><td>'.$u->email.'</td></tr>';
+        if (isset($u->info)) {
+            foreach ($u->info as $k => $v) {
+                $list.= '<tr><th>'.$k.'</th><td>'.$v.'</td></tr>';
+            }
+        }
+        $list.= '</table>';
+
+        if (empty($type) or $type == 'wait')
+            $btn = _("Delete Users");
+        else if ($type == 'del')
+            $btn = _("Activate Users");
+
+        $formhead="<form method='POST' action=''>";
+        $formtail='';
+        if ($DBInfo->security->is_protected('userinfo',$options))
+            $formtail= _("Password").
+                ": <input type='password' name='passwd' /> ";
+        $formtail.="<input type='hidden' name='action' value='userinfo' />";
+        $formtail.="<input type='hidden' name='type' value='$type' />";
+        $formtail.="<input type='hidden' name='uid[]' value='$keys[0]' />".
+            "<input type='submit' value='$btn' />";
+
+        $formtail.= "</form>";
+
+    } else if (in_array($user->id,$DBInfo->owners)) {
         $names = array_keys($users);
-        for ($i = $off; $i < $off + $limit && $i < $sz; $i++) {
+        $pages = intval($retval['count'] / $limit);
+        $query = '?action=userinfo';
+        if ($limit != 100)
+            $query.= '&amp;limit='.$limit;
+        if (!empty($offset))
+            $query.= '&amp;offset='.$offset;
+
+        // paginate
+        $pnut = '';
+        if ($pages > 0)
+            $pnut = get_pagelist($formatter, $pages,
+                $query.'&amp;p=', $pg);
+
+        for ($i = 0; $i < $limit && $i < $sz; $i++) {
             $u = $names[$i];
 
             $mtime = $users[$u];
@@ -62,20 +122,41 @@ function macro_UserInfo($formatter,$value,$options=array()) {
             $list.='<li><input type="checkbox" name="uid[]" value="'.$u.'"/>'.
                 $u." (<span style='color:".$color."'>".$date."</span>)</li>\n";
         }
+        $list = "<ul>\n".$list."</ul>\n";
         $formhead="<form method='POST' action=''>";
         $formtail='';
+
+        if (empty($type) or $type == 'wait')
+            $btn = _("Delete Users");
+        else if ($type == 'del')
+            $btn = _("Activate Users");
+        $btn2 = _("Suspend Users");
+
         if ($DBInfo->security->is_protected('userinfo',$options))
             $formtail= _("Password").
                 ": <input type='password' name='passwd' /> ";
         $formtail.="<input type='hidden' name='action' value='userinfo' />".
-            "<input type='submit' value='Delete Users' />";
+            "<input type='hidden' name='type' value='$type' />".
+            "<input type='submit' value='$btn' /> ".
+            "<input type='submit' name='suspend' value='$btn2' />";
 
         $formtail.= "</form>";
 
-        $formtail.= "<form method='GET'>".
+        $select = "<select name='type'>\n";
+        foreach (array('ALL'=>'', 'WAIT'=>'wait', 'DELETED'=>'del') as $k=>$v) {
+            if ($type == $v)
+                $checked = ' selected="selected"';
+            else
+                $checked = '';
+            $select.= "<option value='$v'$checked>$k</option>";
+        }
+        $select.= "</select>";
+
+        $formtail.= "<form method='GET'>".$select.
             "<input type='hidden' name='action' value='userinfo' />".
             "<input type='text' name='q' value='' placeholder='Search' />";
         $formtail.= "</form>";
+        $formtail.= $pnut;
     } else {
         if (!empty($DBInfo->use_userinfo)) {
         foreach ($users as $u => $v) {
@@ -84,8 +165,9 @@ function macro_UserInfo($formatter,$value,$options=array()) {
         } else {
             $list.='<li>'._("User infomation is restricted by wikimaster")."</li>\n";
         }
+        $list = '<ul>'."\n".$list.'</ul>'."\n";
     }
-    return "<h2>".$title."</h2>\n".$formhead."<ul>\n".$list."</ul>\n".$formtail;
+    return "<h2>".$title."</h2>\n".$formhead.$list.$formtail;
 }
 
 function do_userinfo($formatter,$options) {
@@ -95,26 +177,32 @@ function do_userinfo($formatter,$options) {
 
     $formatter->send_header('',$options);
     if (is_array($DBInfo->owners) and in_array($user->id,$DBInfo->owners)) {
-        if (isset($_POST) and $options['uid'] and is_array($options['uid'])) {
+        if (isset($_POST) and isset($options['uid']) and is_array($options['uid'])) {
             $udb=&$DBInfo->udb;
-            $users=$udb->getUserList();
+            $type = !empty($options['type']) ? $options['type'] : '';
+            if (!in_array($type, array('wait', 'del'))) {
+                $type = '';
+            }
+            $suspend = !empty($options['suspend']) ? true : false;
 
-            $del=array();
+            $change = array();
             foreach ($options['uid'] as $uid) {
                 $uid=_stripslashes($uid);
-                if (in_array($uid,$users)) {
-                    $udb->delUser($uid);
-                    $del[]=$uid;
-                    
-                }
+                if ($type == 'del' || $suspend)
+                    $ret = $udb->activateUser($uid, $suspend);
+                else
+                    $ret = $udb->delUser($uid);
+                if ($ret)
+                    $change[] = $uid;
             }
-            if (!empty($del)) {
-                foreach ($del as $d) {
-                    $k = array_search($d,$udb->users);
-                    unset($udb->users[$k]);
-                }
-                $deleted = implode(',',$del);
-                $options['msg']= sprintf(_("User \"%s\" are deleted !"),$deleted);
+            if (!empty($change)) {
+                $changed = implode(',',$change);
+                if ($suspend)
+                    $options['msg']= sprintf(_("User \"%s\" are suspended !"),_html_escape($changed));
+                else if ($type == 'del')
+                    $options['msg']= sprintf(_("User \"%s\" are activated !"),_html_escape($changed));
+                else
+                    $options['msg']= sprintf(_("User \"%s\" are deleted !"),_html_escape($changed));
             }
         }
         $list= macro_UserInfo($formatter,'',$options);
