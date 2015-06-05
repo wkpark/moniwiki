@@ -41,10 +41,19 @@ function do_userform($formatter,$options) {
          list($dummy,$email)=explode('.',$options['ticket'],2);
          $user->info['email']=$email;
          $user->info['eticket']='';
-         if ($suspended) $userdb->activateUser($id);
-         $userdb->saveUser($user);
+         if ($suspended) {
+           if (empty($DBInfo->register_confirm_admin)) {
+             $userdb->activateUser($id);
+             $userdb->saveUser($user);
+           } else {
+             $userdb->saveUser($user, array('suspended'=>1));
+           }
+         }
          $title=_("Successfully confirmed");
          $options['msg']=_("Your e-mail address is confirmed successfully");
+         if (!empty($DBInfo->register_confirm_admin)) {
+           $options['msg'].= "<br />"._("Your need to wait until your ID activated by admin");
+         }
        } else if ($user->info['nticket']==$options['ticket']) {
          $title=_("Successfully confirmed");
          $user->info['nticket']='';
@@ -57,7 +66,10 @@ function do_userform($formatter,$options) {
          $options['msg']=_("Please try again to register your e-mail address");
        }
     } else {
-      $title=_("ID does not exists !");
+      if ($suspended)
+        $title=_("Please wait until your ID is confirmed by admin!");
+      else
+        $title=_("ID does not exist !");
       $options['msg']=_("Please try again to register your e-mail address");
     }
     $formatter->send_header("",$options);
@@ -165,7 +177,12 @@ function do_userform($formatter,$options) {
       }
     } else {
       if (isset($options['login_id'][0])) {
-        $title= sprintf(_("\"%s\" does not exists on this wiki !"),$options['login_id']);
+        if ($userdb->_exists($id, 1)) {
+          // suspended user
+          $title = sprintf(_("\"%s\" is waiting for activated by admin !"), $options['login_id']);
+        } else {
+          $title = sprintf(_("\"%s\" does not exist on this wiki !"),$options['login_id']);
+        }
         $options['login_id'] = '';
       } else {
         $title= _("Make new ID on this wiki");
