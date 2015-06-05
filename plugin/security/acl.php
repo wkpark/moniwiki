@@ -335,7 +335,11 @@ class Security_ACL extends Security_base {
         if ($orig) { // check explicitly
             $options['explicit'] = 1;
             $ret=$this->acl_check($action,$options);
-            if ($ret === false) return 1;
+            if ($ret === false) {
+                // no explicitly protected action found. check again
+                $options['explicit'] = 0;
+                $ret = $this->acl_check($action,$options);
+            }
             // allow => not protected, deny => protected
             return !$ret;
         }
