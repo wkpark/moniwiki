@@ -55,7 +55,12 @@ function macro_UserInfo($formatter,$value,$options=array()) {
     $list='';
     $cur = time();
 
-    if ($sz == 1 && in_array($user->id,$DBInfo->owners)) {
+    $allowed = $DBInfo->security_class == 'acl' &&
+            $DBInfo->security->is_allowed($options['action'], $options);
+    if (!$allowed)
+        $allowed = in_array($user->id,$DBInfo->owners);
+
+    if ($sz == 1 && $allowed) {
         $keys = array_keys($users);
 
         $u = $udb->getUser($keys[0], $type != '');
@@ -87,7 +92,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
 
         $formtail.= "</form>";
 
-    } else if (in_array($user->id,$DBInfo->owners)) {
+    } else if ($allowed) {
         $names = array_keys($users);
         $pages = intval($retval['count'] / $limit);
         $query = '?action=userinfo';
@@ -176,7 +181,9 @@ function do_userinfo($formatter,$options) {
     $user=&$DBInfo->user;
 
     $formatter->send_header('',$options);
-    if (is_array($DBInfo->owners) and in_array($user->id,$DBInfo->owners)) {
+    $allowed = $DBInfo->security_class == 'acl' &&
+            $DBInfo->security->is_allowed($options['action'], $options);
+    if ($allowed || in_array($user->id, (array) $DBInfo->owners)) {
         if (isset($_POST) and isset($options['uid']) and is_array($options['uid'])) {
             $udb=&$DBInfo->udb;
             $type = !empty($options['type']) ? $options['type'] : '';
