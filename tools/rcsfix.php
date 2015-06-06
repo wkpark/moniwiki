@@ -1,71 +1,134 @@
 <?php
 /**
- * a simple broken RCS fixer by wkpark at gmail.com (2013/05/08)
+ * a broken RCS fixer by wkpark at gmail.com (2013/05/08)
  *
  * License: GPLv2
  */
 
-function fixrcs($rcsfile) {
+set_time_limit(0); // no time limit
+
+$rcsdir = isset($argv[1]) ? $argv[1] : '';
+
+if (empty($rcsdir[0]) or !file_exists($rcsdir)) {
+    echo "Usage: php $argv[0] <RCS path or RCS filename>\n";
+} else if (is_dir($rcsdir)) {
+    checkRCSdir($rcsdir, 1000);
+} else {
+    $ret = fixrcs($rcsdir);
+    if ($ret < 0) {
+        echo "Error !!\n";
+    }
+}
+
+function fixrcs($rcsfile, $force = true) {
     $fp = fopen($rcsfile, 'rw');
     if (!is_resource($fp)) return -1;
 
-    fseek($fp, -2, SEEK_END);
-    $end = fread($fp, 2);
+    $mtime = filemtime($rcsfile);
+    $filesize = filesize($rcsfile);
 
-    if ($end == "@\n") {
+    fseek($fp, -20, SEEK_END);
+    $end = fread($fp, 20);
+
+    $looks_ok = false;
+    if (preg_match("!@\n\s*$!", $end))
+        $looks_ok = true;
+
+    if (!$force and $looks_ok) {
         fclose($fp);
+        echo "Looks OK\n";
         return 0; // no need to fix RCS file
     }
 
-    $bs = 1024;
+    $pagename = preg_replace("/,v$/", '', basename($rcsfile));
+    $pagename = pagename($pagename);
+
+    $bs = 512;
     $pos = 0;
     $state = 'unknown';
     $buf = '';
 
-    while(1) {
+    while (true) {
         echo '.';
+
+        if ($filesize + $pos - $bs < 0)
+            $bs = $filesize + $pos;
+        //echo "\n".$filesize,' - ',$pos,' - ',$bs."\n";
         fseek($fp, $pos - $bs, SEEK_END);
-        $buf = fread($fp, 1024);
-        if ($buf[0] == '@') { $bs+= 512; continue; }
+        $buf = fread($fp, $bs);
+	if (!isset($buf[0])) {
+	    fclose($fp);
+            echo "Empty!!\n";
+	    return -1;
+	}
+        //echo $buf."\n";
+        if ($buf[0] == '@') { $bs+= 512; $state = 'unknown'; continue; }
 
         if (($p = strrpos($buf, '@')) !== false and $buf[$p - 1] != '@') {
             $buf = substr($buf, 0, $p - 1);
-            $state = 'found';
+            $state = $state != 'text' ? 'text' : 'log';
+            //echo "===".$state."\n";
         }
-        if ($state != 'found' or $p == false or strlen($buf) < 3) {
+        if ($p === false or $state == 'unknown' or strlen($buf) < strlen($state)) {
             $pos-= $bs;
-            $bs+= 1024;
+            $bs+= 512;
+            //echo "inc block size\n";
+            $state = 'unknown';
             continue;
         }
 
-        if (substr($buf, -4) == 'text') {
-            if (($p = strrpos($buf, '@')) !== false) {
-                $buf = substr($buf, 0, $p - 1);
+        while ($state == 'text' || $state == 'log') {
+            if (strlen($buf) > strlen($state) and substr($buf, -strlen($state)) == $state) {
+                if ($state == 'log') {
+                    break;
+                }
+                // broken delta cases, state == 'text' or 'log'
+                if (($p = strrpos($buf, '@')) !== false) {
+                    $buf = substr($buf, 0, $p - 1);
+                    if ($state == 'text')
+                        $state = 'log';
+                    else
+                        break;
+                }
+                //echo "******".$buf."*******\n";
             }
-            if (($p = strrpos($buf, '@')) !== false and $buf[$p - 1] != '@') {
-                $buf = substr($buf, 0, $p - 1);
-                $state = 'next';
-            } else {
-                $state = 'fail';
+
+            while (($p = strrpos($buf, '@')) !== false) {
+                if ($buf[$p - 1] == '@') {
+                    $buf = substr($buf, 0, $p - 2);
+                } else {
+                    $buf = substr($buf, 0, $p - 1);
+                    if ($state != 'text') {
+                        break 2;
+                    } else {
+                        break;
+                    }
+                }
+                //echo "^^^***".$buf."*******\n";
             }
+            if ($p === false)
+                break;
         }
-        if ($state != 'found' and $state != 'next' or $p == false or strlen($buf) < 3) {
+
+        if (($state != 'text' and $state != 'log') or strlen($buf) < strlen($state)) {
             $pos-= $bs;
-            $bs+= 1024;
+            $bs+= 512;
+            $state = 'unknown';
             continue;
         }
 
         if (strlen($buf) > 3 and substr($buf, -3) == 'log') {
             if (($p = strrpos($buf, '@')) !== false) {
-                $last = substr($buf, $p+1);
-                $buf = substr($buf, 0, $p+1);
+                $last = substr($buf, $p + 1);
+                $buf = substr($buf, 0, $p + 1);
                 $buf.= "\n"; // OK
                 $state = 'OK';
             }
         }
         if ($state != 'OK' or $p == false) {
             $pos-= $bs;
-            $bs+= 1024;
+            $bs+= 512;
+            $state = 'unknown';
             continue;
         }
 
@@ -75,54 +138,95 @@ function fixrcs($rcsfile) {
     echo "Done\n";
     preg_match('/^(\d.\d+)$/m', $last, $match);
     $last = $match[1];
-    echo "broken revision is $last\n";
-    echo "\tsearched position $pos, block size = $bs\n";
+    if (!$looks_ok) {
+        echo "Broken revision is $last\n";
+    } else {
+        echo "Last revision is $last\n";
+    }
+    //echo "\tsearched position $pos, block size = $bs\n";
 
-    fseek($fp, $pos - $bs, SEEK_END);
-    $sz = ftell($fp);
-    fseek($fp, 0, SEEK_SET);
-    $fixed = fread($fp, $sz + strlen($buf));
-    file_put_contents('tmp,v', $fixed);
+    $tmpname = tempnam('.', 'RCS');
+    if (!$looks_ok) {
+        fseek($fp, $pos - $bs, SEEK_END);
+        $sz = ftell($fp);
+        fseek($fp, 0, SEEK_SET);
+        $fixed = fread($fp, $sz + strlen($buf));
+        file_put_contents($tmpname, $fixed);
+    } else {
+        fseek($fp, 0, SEEK_SET);
+        $all = fread($fp, $filesize);
+        file_put_contents($tmpname, $all);
+    }
     fclose($fp);
 
     // fix revision info
-    $fp = fopen('tmp,v', 'r');
-    if (!is_resource($fp)) return false;
+    $fp = fopen($tmpname, 'r');
+    if (!is_resource($fp)) {
+        echo "Can't open $tmpname\n";
+        return false;
+    }
 
     $fixed = '';
     $state = '';
-    while (!feof($fp)) {
-        $line = fgets($fp, 1024);
+
+    // search empty string
+    while (($line = fgets($fp, 1024)) !== false) {
         $fixed.= $line;
-        if (preg_match('/^\d\.\d+$/', $line)) {
-            $fixed.= fgets($fp, 1024);
-            $fixed.= fgets($fp, 1024);
-            $fixed.= fgets($fp, 1024);
-            $fixed.= fgets($fp, 1024);
+        $l = trim($line);
+        if (preg_match('/^\s*$/', $l)) {
             $state = 'found';
+            // empty string found
             break;
         }
     }
+
     if ($state != 'found') {
+        // empty string not found!
+        echo "empty string not found\n";
         fclose($fp);
         return -2;
     }
 
+    // search version string
     while (!feof($fp)) {
         $line = fgets($fp, 1024);
-        if (!preg_match('/^(\d\.\d+)$/', $line, $match)) {
-            break;
+        // version string
+        while (!preg_match('/^(\d\.\d+)$/', $line, $match)) {
+            if (preg_match('/^desc\s$/', $line))
+                break;
+            $fixed.= $line;
+            $line = fgets($fp, 1024);
         }
+
         $fixed.= $line;
         $fixed.= fgets($fp, 1024);
         $fixed.= fgets($fp, 1024);
         $line = fgets($fp, 1024);
-        if (preg_match('/^next\s(\d\.\d+)?;/', $line, $match)) {
-            if ($match[1] == $last) {
+        if (preg_match('/^next\s+(\d\.\d+)?;/', $line, $match)) {
+            // is it the last version string ?
+            if (!empty($match[1]) && $match[1] == $last) {
+                // include last revision info.
+                if ($looks_ok) {
+                    //echo 'last ver',"\n";
+                    $fixed.= $line;
+                    $fixed.= fgets($fp, 1024); // empty line
+                    while (($line = fgets($fp, 1024)) !== false) {
+                        if (preg_match('/^(\d\.\d+)$/', $line, $match)) {
+                            $fixed.= $line;
+                            break;
+                        }
+                        $fixed.= $line;
+                    }
+
+                    $fixed.= fgets($fp, 1024);
+                    $fixed.= fgets($fp, 1024);
+                    $line = fgets($fp, 1024);
+                }
                 $line = "next\t;\n";
                 $fixed.= $line;
                 $fixed.= fgets($fp, 1024);
                 $state = 'fixed';
+
                 break;
             }
         } else {
@@ -133,15 +237,19 @@ function fixrcs($rcsfile) {
     }
 
     if ($state != 'fixed') {
+        // the last version string not found
+        echo "The last version not found\n";
         fclose($fp);
         return -2;
     }
 
+    // trash the last remaing version info
     while (!feof($fp)) {
         $line = fgets($fp, 1024);
         if (!preg_match('/^\d\.\d+$/', $line)) {
-            fclose($fp);
-            return -2;
+            // broken case. simply ignore
+            $fixed.= $line;
+            break;
         }
         fgets($fp, 1024);
         fgets($fp, 1024);
@@ -153,36 +261,93 @@ function fixrcs($rcsfile) {
         fgets($fp, 1024);
     }
 
+    while (!feof($fp)) {
+        $line = fgets($fp, 1024);
+        if (preg_match("/^desc\n$/", $line)) {
+            $fixed.= $line;
+            $line = fgets($fp, 8192);
+            if ($line[0] == '@') {
+                $fixed.= '@'.str_replace('@', '@@', $pagename)."\n@\n";
+                if ($line[1] == '@' && $line[2] == "\n")
+                    break;
+                // trash remaining desc info.
+                while (!feof($fp)) {
+                    $line = fgets($fp, 8192);
+                    if ($line == "@\n")
+                        break;
+                }
+            }
+            break;
+        }
+        $fixed.= $line;
+    }
+
+    // read the remaining version
     while (!feof($fp))
-        $fixed.= fgets($fp, 1024);
+        $fixed.= fread($fp, 4096);
     fclose($fp);
 
     echo "Fixed!!\n";
-    file_put_contents('fixed,v', $fixed);
+    file_put_contents($rcsfile, $fixed);
+    touch($rcsfile, $mtime);
+    unlink($tmpname);
     return 0;
 }
 
-//require_once("config.php");
-//$rcsfile = './data/text/RCS/_ec_97_84_ec_83_81_ed_98_84,v';
-//$rcsfile = './data/text/RCS/_ed_8b_b0_ec_95_84_eb_9d_bc_28_ec_95_84_ec_9d_b4_eb_8f_8c_29,v';
-//echo $rcsfile."\n";
-array_shift($argv);
+function checkRCSdir($dir, $usleep = 0) {
+    $dir = rtrim($dir, '/');
+    $handle = opendir($dir);
+    if (!is_resource($handle))
+      return false;
 
-if (count($argv) == 0) {
-    echo "Usage: php $argv[0] <broken rcs file path>...\n";
-    exit;
+    set_time_limit(0);
+    $count = 0;
+    while (($file = readdir($handle)) !== false) {
+        if ((($p = strpos($file, '.')) !== false or $file == 'RCS' or $file == 'CVS') and is_dir($dir.'/'.$file)) continue;
+        if (substr($file, -2) != ',v') continue; // ignore non rcs files
+        $fp = fopen($dir.'/'.$file, 'r');
+        if (!is_resource($fp)) continue; // just ignore
+
+        $mtime = filemtime($dir.'/'.$file);
+
+        fseek($fp, -20, SEEK_END);
+        $end = fread($fp, 20);
+        fclose($fp);
+        if (true) {
+            if (!preg_match("!@\n\s*$!", $end)) {
+                echo "Looks good, anyway try to check/fix... $dir/$file...\n";
+            }
+            //echo "RCS file for page ".pagename($file).": $dir/$file is broken.\n";
+            echo "FIX $dir/$file ... ";
+
+            $ret = fixrcs($dir.'/'.$file, true);
+            switch($ret) {
+            case 0:
+                //
+                break;
+            case -1:
+                @mkdir('bad1');
+                echo "ERROR: Buffer not found\n";
+                rename($dir.'/'.$file, 'bad1/'.$file);
+                touch('bad1/'.$file, $mtime);
+                break;
+            case -2:
+                @mkdir($dir.'/bad2');
+                echo "ERROR: Invalid header\n";
+                rename($dir.'/'.$file, 'bad2/'.$file);
+                touch('bad2/'.$file, $mtime);
+                break;
+            }
+        }
+        if ($usleep > 0) usleep($usleep);
+    }
+    closedir($handle);
 }
 
-foreach ($argv as $file) {
-    if (empty($file[0]) or !file_exists($file)) {
-        echo "ERROR: file $file does not found !\n";
-        continue;
-    }
-
-    $ret = fixrcs($file);
-    if ($ret == -2) {
-        echo "ERROR: Invalid header\n";
-    }
+// FIXME
+function pagename($key) {
+    $key = strtr($key, '_', '%');
+    return rawurldecode($key);
 }
 
 // vim:et:sts=4:sw=4:
