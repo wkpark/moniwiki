@@ -263,6 +263,14 @@ function do_userform($formatter,$options) {
         #make ticket
         $ticket=md5(time().$user->id.$options['email']);
         $user->info['nticket']=$ticket.".".$options['email'];
+
+        // save join agreement
+        if (!empty($DBInfo->use_agreement) and !empty($options['joinagreement'])) {
+          $user->info['join_agreement'] = 'agree';
+          if (!empty($DBInfo->agreement_version))
+            $user->info['join_agreement_version'] = $DBInfo->agreement_version;
+        }
+
         $userdb->saveUser($user); # XXX
 
         $opts['subject']="[$DBInfo->sitename] "._("New password confirmation");
@@ -384,6 +392,14 @@ function do_userform($formatter,$options) {
              $args = array();
              if ($options['email'] == $id or !empty($DBInfo->register_confirm_email))
                $args = array('suspended'=>1);
+
+             // save join agreement
+             if (!empty($DBInfo->use_agreement) and !empty($options['joinagreement'])) {
+               $user->info['join_agreement'] = 'agree';
+               if (!empty($DBInfo->agreement_version))
+                 $user->info['join_agreement_version'] = $DBInfo->agreement_version;
+             }
+
              $ret = $udb->addUser($user, $args);
 
              # XXX
@@ -466,8 +482,11 @@ function do_userform($formatter,$options) {
       $tz_offset=$hour*3600 + $min;
       $userinfo->info['tz_offset']=$tz_offset;
     }
-    if (!empty($DBInfo->use_agreement) and !empty($options['joinagreement']))
+    if (!empty($DBInfo->use_agreement) and !empty($options['joinagreement'])) {
       $userinfo->info['join_agreement'] = 'agree';
+      if (!empty($DBInfo->agreement_version))
+        $userinfo->info['join_agreement_version'] = $DBInfo->agreement_version;
+    }
 
     if (!empty($options['email']) and ($options['email'] != $userinfo->info['email'])) {
       if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {

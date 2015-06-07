@@ -1149,6 +1149,7 @@ class UserDB {
                   "npassword",
                   "nticket",
                   "join_agreement",
+                  "join_agreement_version",
                   "tz_offset",
                   "theme",
                   "css_url",
@@ -3689,7 +3690,17 @@ $nick
 EXTRA;
     $logout="<span class='button'><input type='submit' class='button' name='logout' value='"._("logout")."' /></span> &nbsp;";
 
-    if (!empty($DBInfo->use_agreement) and $user->info['join_agreement'] != 'agree') {
+    $show_join_agreement = false;
+    if (!empty($DBInfo->use_agreement)) {
+      if ($user->info['join_agreement'] != 'agree')
+        $show_join_agreement = true;
+      if (!empty($DBInfo->agreement_version)) {
+        if ($user->info['join_agreement_version'] != $DBInfo->agreement_version)
+          $show_join_agreement = true;
+      }
+    }
+
+    if ($show_join_agreement) {
       $extra.= _joinagreement_form();
       $accept = _("Accept agreement");
       $extra.= <<<FORM

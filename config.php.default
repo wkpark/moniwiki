@@ -263,6 +263,7 @@ $use_resume_download=1;
 #$contributor_license_agreement='Agree to contributor license agreement'; # short contributor license agreement msgs
 #$irrevocable_contribution_agreement='Irrevocable contribution agreement'; # irrevocable contribution agreement for anonymous doner
 #$agreement_page='data/agreement.txt';
+#$agreement_version=1; # join agreement version
 #$no_wikihomepage=1; # do not use the wiki homepage for users
 #$dot_fontsize=10; # dot font size for the VisualTour
 #$dot_fontname='Eunjin'; # webdot font name for graphviz 2.2.x
