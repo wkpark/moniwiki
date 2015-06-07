@@ -1232,6 +1232,13 @@ class UserDB {
     }
     $user=new WikiUser($id);
     $user->info=$info;
+
+    // set default timezone
+    if (isset($info['tz_offset']))
+      $user->tz_offset = $info['tz_offset'];
+    else
+      $user->info['tz_offset'] = date('Z');
+
     return $user;
   }
 
