@@ -163,11 +163,19 @@ function do_userform($formatter,$options) {
       if ($login_ok or $user->checkPasswd($options['password'])=== true) {
         $options['msg'] = sprintf(_("Successfully login as '%s'"),$id);
         $options['id']=$user->id;
-        // special case
         if ($user->id == 'Anonymous') {
+          // special case. login success but ID is not acceptable
           $options['msg'] = _("Invalid user ID. Please register again");
         } else {
           $formatter->header($user->setCookie());
+          if (!isset($user->info['login_success']))
+            $user->info['login_success'] = 0;
+          if (!isset($user->info['login_fail']))
+            $user->info['login_fail'] = 0;
+          $user->info['login_success']++;
+          $user->info['last_login'] = gmdate("Y/m/d H:i:s", time());
+          $user->info['login_fail'] = 0; // reset login
+          $user->info['remote'] = $_SERVER['REMOTE_ADDR'];
           $userdb->saveUser($user);
           $use_refresh=1;
         }
@@ -175,6 +183,11 @@ function do_userform($formatter,$options) {
         $DBInfo->user=$user;
       } else {
         $title = sprintf(_("Invalid password !"));
+        if (!isset($user->info['login_fail']))
+          $user->info['login_fail'] = 0;
+        $user->info['login_fail']++;
+        $user->info['remote'] = $_SERVER['REMOTE_ADDR'];
+        $userdb->saveUser($user);
         $user->setID('Anonymous');
       }
     } else {

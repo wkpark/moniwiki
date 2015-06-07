@@ -1132,25 +1132,63 @@ class UserDB {
   }
 
   function saveUser($user,$options=array()) {
-    $config=array("css_url","datatime_fmt","email","bookmark","language","home",
-                  "name","nick","password","wikiname_add_spaces","subscribed_pages",
-                  "scrapped_pages","quicklinks","theme","ticket","eticket",
-                  "tz_offset","npassword","nticket","idtype", "join_agreement");
+    $config = array("regdate",
+                  "email",
+                  "name",
+                  "nick",
+                  "home",
+                  "password",
+                  "last_login",
+                  "last_updated",
+                  "login_fail",
+                  "remote",
+                  "login_success",
+                  "ticket",
+                  "eticket",
+                  "idtype",
+                  "npassword",
+                  "nticket",
+                  "join_agreement",
+                  "tz_offset",
+                  "theme",
+                  "css_url",
+                  "bookmark",
+                  "scrapped_pages",
+                  "subscribed_pages",
+                  "quicklinks",
+                  "language", // not used
+                  "datetime_fmt", // not used
+                  "wikiname_add_spaces", // not used
+    );
 
     $date=gmdate('Y/m/d H:i:s', time());
     $data="# Data saved $date\n";
 
+    $wu = 'wu-'.$this->_id_to_key($user->id);
+    if (!empty($options['suspended'])) $wu = 'wait-'.$wu;
+
+    // new user ?
+    if (!file_exists("$this->user_dir/$wu") && empty($user->info['regdate'])) {
+      $user->info['regdate'] = $date;
+    }
+    $user->info['last_updated'] = $date;
+
     if (!empty($user->ticket))
       $user->info['ticket']=$user->ticket;
 
-    foreach ($config as $key) {
-      if (isset($user->info[$key]))
-        $data.="$key=".$user->info[$key]."\n";
-    }
-    #print $data;
+    ksort($user->info);
 
-    $wu="wu-".$this->_id_to_key($user->id);
-    if (!empty($options['suspended'])) $wu='wait-'.$wu;
+    foreach ($user->info as $k=>$v) {
+      if (in_array($k, $config)) {
+        $data.= $k.'='.$v."\n";
+      } else {
+        // undefined local config
+        if ($k[0] != '_')
+          $k = '_'.$k;
+        $data.= $k.'='.$v."\n";
+      }
+    }
+
     $fp=fopen("$this->user_dir/$wu","w+");
     fwrite($fp,$data);
     fclose($fp);
