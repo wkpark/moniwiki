@@ -48,6 +48,8 @@ function do_userform($formatter,$options) {
            } else {
              $userdb->saveUser($user, array('suspended'=>1));
            }
+         } else {
+           $userdb->saveUser($user);
          }
          $title=_("Successfully confirmed");
          $options['msg']=_("Your e-mail address is confirmed successfully");
