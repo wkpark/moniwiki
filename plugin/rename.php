@@ -8,6 +8,23 @@
 function do_post_rename($formatter,$options) {
   global $DBInfo;
 
+  // check full permission to edit
+  if (!empty($DBInfo->no_full_edit_permission) or
+      ($options['id'] == 'Anonymous' && !empty($DBInfo->anonymous_no_full_edit_permission)))
+    $full_permission = false;
+
+  // members always have full permission to edit
+  if (in_array($options['id'], $DBInfo->members))
+    $full_permission = true;
+
+  if (!$full_permission) {
+    $formatter->send_header('', $options);
+    $title = _("You do not have full permission to rename this page on this wiki.");
+    $formatter->send_title($title, '',$options);
+    $formatter->send_footer('', $options);
+    return;
+  }
+
   $options['name'] = trim($options['name']);
   $new = $options['name'];
   if (!empty($DBInfo->use_namespace) and $new[0] == '~' and ($p = strpos($new, '/')) !== false) {

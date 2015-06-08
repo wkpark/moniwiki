@@ -33,6 +33,26 @@ function do_revert($formatter,$options) {
         return do_invalid($formatter,$options);
     }
 
+    // check full permission to edit
+    if (!empty($DBInfo->no_full_edit_permission) or
+            ($options['id'] == 'Anonymous' && !empty($DBInfo->anonymous_no_full_edit_permission)))
+        $full_permission = false;
+
+    // members always have full permission to edit
+    if (in_array($options['id'], $DBInfo->members))
+        $full_permission = true;
+
+    $is_new = false;
+    if (!$formatter->page->exists()) $is_new = true;
+
+    if (!$is_new and !$full_permission) {
+        $formatter->send_header('', $options);
+        $title = _("You do not have full permission to rollback this page on this wiki.");
+        $formatter->send_title($title, '',$options);
+        $formatter->send_footer('', $options);
+        return;
+    }
+
     $formatter->send_header('',$options);
     $force=1;
     if (isset($_POST['name'][0]) and $DBInfo->hasPage($_POST['name'])) {
@@ -50,8 +70,6 @@ function do_revert($formatter,$options) {
         }
     }
     if (!empty($_POST['rev']) and isset($_POST['name'][0]) and $force) {
-        $is_new = false;
-        if (!$formatter->page->exists()) $is_new = true;
 
         if (!empty($DBInfo->version_class)) {
             $REMOTE_ADDR=$_SERVER['REMOTE_ADDR'];

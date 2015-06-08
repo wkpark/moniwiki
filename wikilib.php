@@ -2350,6 +2350,23 @@ function do_post_DeletePage($formatter,$options) {
     return;
   }
 
+  // check full permission to edit
+  if (!empty($DBInfo->no_full_edit_permission) or
+      ($options['id'] == 'Anonymous' && !empty($DBInfo->anonymous_no_full_edit_permission)))
+    $full_permission = false;
+
+  // members always have full permission to edit
+  if (in_array($options['id'], $DBInfo->members))
+    $full_permission = true;
+
+  if (!$full_permission) {
+    $formatter->send_header('', $options);
+    $title = _("You do not have full permission to delete this page on this wiki.");
+    $formatter->send_title($title, '',$options);
+    $formatter->send_footer('', $options);
+    return;
+  }
+
   // get the site specific hash code
   $ticket = $page->mtime().getTicket($DBInfo->user->id, $_SERVER['REMOTE_ADDR']);
   $hash = md5($ticket);
@@ -3074,6 +3091,56 @@ function do_post_savepage($formatter,$options) {
       $options['msg'] = _("Sorry, you have to agree the contribution agreement or the join agreement of this wiki.");
   }
 
+  // check full permission to edit
+  if (!empty($DBInfo->no_full_edit_permission) or
+      ($options['id'] == 'Anonymous' && !empty($DBInfo->anonymous_no_full_edit_permission)))
+    $full_permission = false;
+
+  // members always have full permission to edit
+  if (in_array($options['id'], $DBInfo->members))
+    $full_permission = true;
+
+  if (!$full_permission) {
+    // get diff
+    if (!isset($diff[0]))
+      $diff = $formatter->get_diff($savetext);
+
+    // get total line numbers
+    // test \n or \r or \r\n
+    $crlf = "\n";
+    if (preg_match("/(\r|\r\n|\n)$/", $body, $match))
+      $crlf = $match[1];
+    // count crlf
+    $nline = substr_count($body, $crlf);
+
+    // count diff lines, chars
+    $changes = diffcount_lines($diff, $DBInfo->charset);
+    // set return values
+    $added = $changes[0];
+    $deleted = $changes[1];
+    $added_chars = $changes[2];
+    $deleted_chars = $changes[3];
+
+    $restricted = false;
+    $delete_lines_restricted_ratio = 0.5;
+
+    if ($deleted > 0 && ($deleted / $nline) > $delete_lines_restricted_ratio) {
+      $restricted = true;
+    }
+
+    if (!$restricted && ($added_chars > 300 || $deleted_chars > 180))
+      $restricted = true;
+
+    if ($restricted) {
+      $options['title'] = _("You do not have full permission to edit this page on this wiki.");
+      $options['msg'] = _("Anonymous user is restricted to delete a lot amount of page on this wiki.");
+      $button_preview = true;
+    } else {
+      if (!$button_diff)
+        $diff = '';
+    }
+  }
+
   if ($button_preview) {
     if (empty($options['title']))
       $options['title']=sprintf(_("Preview of %s"),_html_escape($options['page']));
@@ -3113,7 +3180,7 @@ function do_post_savepage($formatter,$options) {
     print '</div>'; # XXX
     print $DBInfo->hr;
     print $menu;
-    if ($button_diff) {
+    if ($button_diff and !isset($diff[0])) {
         $diff = $formatter->get_diff($options['section'] ? implode('', $sections) : $savetext); // get diff
         // strip diff header
         if (($p = strpos($diff, '@@')) !== false) $diff = substr($diff, $p);
