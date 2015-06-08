@@ -1177,6 +1177,10 @@ class UserDB {
   function UserDB($WikiDB) {
     $this->user_dir=$WikiDB->user_dir;
     $this->strict = $WikiDB->login_strict;
+    if (!empty($WikiDB->user_class))
+      $this->user_class = 'User_'.$WikiDB->user_class;
+    else
+      $this->user_class = 'WikiUser';
   }
 
   function _pgencode($m) {
@@ -1371,7 +1375,10 @@ class UserDB {
        $val=substr($line,$p+1,-1);
        $info[$key]=$val;
     }
-    $user=new WikiUser($id);
+
+    $class = $this->user_class;
+    $user = new $class($id);
+
     $user->info=$info;
 
     // set default timezone
