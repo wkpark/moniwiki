@@ -3,10 +3,10 @@
 #
 msgid ""
 msgstr ""
-"Project-Id-Version: MoniWiki 1.2.2\n"
+"Project-Id-Version: MoniWiki 1.2.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-05-27 02:59+0900\n"
-"PO-Revision-Date: 2013-12-21 11:59+0900\n"
+"POT-Creation-Date: 2015-06-09 05:23+0900\n"
+"PO-Revision-Date: 2015-06-09 05:01+0900\n"
 "Last-Translator: Won-Kyu Park <wkpark@kldp.org>\n"
 "Language-Team: Won-Kyu Park <wkpark@kldp.org>\n"
 "Language: \n"
@@ -86,7 +86,7 @@ msgstr "플러그인/프로세서 세팅이 갱신됨"
 msgid "Enable/disable plugins and processors"
 msgstr "플러그인과 프로세서 활성화/비활성화"
 
-#: ../plugin/atom.php:64 ../plugin/rss_rc.php:92
+#: ../plugin/atom.php:75 ../plugin/rss_rc.php:102
 msgid "show changes"
 msgstr "바뀐점 보기"
 
@@ -141,11 +141,11 @@ msgstr "현 BBS가 존재하지 않습ㄴ디ㅏ. 먼저 페이지를 저장하�
 msgid "No"
 msgstr ""
 
-#: ../plugin/bbs.php:627
+#: ../plugin/bbs.php:627 ../plugin/Stat.php:164
 msgid "Edit"
 msgstr "고치기"
 
-#: ../plugin/bbs.php:629 ../plugin/bbs.php:787 ../wikilib.php:2088
+#: ../plugin/bbs.php:629 ../plugin/bbs.php:787 ../wikilib.php:2322
 msgid "Delete"
 msgstr "지우기"
 
@@ -201,7 +201,7 @@ msgid "No Subject error."
 msgstr "제목이 없습니다."
 
 #: ../plugin/bbs.php:1010 ../plugin/Comment.php:206 ../plugin/Gallery.php:137
-#: ../wikilib.php:2597 ../wikilib.php:2818
+#: ../wikilib.php:2848 ../wikilib.php:3069
 msgid ""
 "Sorry, can not save page because some messages are blocked in this wiki."
 msgstr "죄송합니다. 특정 메시지가 금지되어 페이지를 저장할 수 없습니다."
@@ -260,8 +260,8 @@ msgstr "다음"
 #: ../plugin/Keywords.php:466 ../plugin/msgfmt.php:39 ../plugin/OeKaki.php:45
 #: ../plugin/Rating.php:87 ../plugin/reverse.php:20 ../plugin/revert.php:32
 #: ../plugin/SWFUpload.php:312 ../plugin/UploadFile.php:33
-#: ../plugin/Vote.php:68 ../wikilib.php:2014 ../wikilib.php:2105
-#: ../wikilib.php:2637
+#: ../plugin/Vote.php:68 ../wikilib.php:2248 ../wikilib.php:2339
+#: ../wikilib.php:2888
 msgid "Page is not writable"
 msgstr "쓰기가능하지 않음"
 
@@ -270,13 +270,13 @@ msgstr "쓰기가능하지 않음"
 msgid "Blog cache of \"%s\" is refreshed"
 msgstr "\"%s\"에 대한 블로그 캐쉬가 갱신됨"
 
-#: ../plugin/Blog.php:124 ../plugin/Comment.php:179 ../plugin/userform.php:202
-#: ../plugin/userform.php:265 ../plugin/userform.php:288 ../wikilib.php:2797
+#: ../plugin/Blog.php:124 ../plugin/Comment.php:179 ../plugin/userform.php:234
+#: ../plugin/userform.php:305 ../plugin/userform.php:328 ../wikilib.php:3048
 msgid "Invalid ticket !"
 msgstr "잘못된 티켓 !"
 
-#: ../plugin/Blog.php:129 ../plugin/Comment.php:184 ../plugin/userform.php:204
-#: ../plugin/userform.php:290 ../wikilib.php:2802
+#: ../plugin/Blog.php:129 ../plugin/Comment.php:184 ../plugin/userform.php:236
+#: ../plugin/userform.php:330 ../wikilib.php:3053
 msgid "You need a ticket !"
 msgstr "티켓이 필요합니다 !"
 
@@ -327,7 +327,7 @@ msgid "Add Blog entry to \"%s\""
 msgstr "\"%s\"에 블로그 항목 더하기"
 
 #: ../plugin/Blog.php:285 ../plugin/Blog.php:380 ../plugin/FullSearch.php:71
-#: ../plugin/VisualTour.php:140 ../wiki.php:4564 ../wikilib.php:1833
+#: ../plugin/VisualTour.php:140 ../wiki.php:4624 ../wikilib.php:2064
 msgid "Refresh"
 msgstr "갱신"
 
@@ -336,11 +336,11 @@ msgid "Name"
 msgstr "이름"
 
 #: ../plugin/Blog.php:298 ../plugin/Blog.php:389
-#: ../plugin/RecentChanges.php:330 ../plugin/sendping.php:79
+#: ../plugin/RecentChanges.php:333 ../plugin/sendping.php:79
 msgid "Title"
 msgstr "제목"
 
-#: ../plugin/Blog.php:304 ../wikilib.php:1859
+#: ../plugin/Blog.php:304 ../wikilib.php:2090
 msgid "GUI"
 msgstr ""
 
@@ -348,15 +348,14 @@ msgstr ""
 msgid "Don't add a signature"
 msgstr "서명하지 않기"
 
-#: ../plugin/Blog.php:320 ../wikilib.php:1512 ../wikilib.php:1910
-#: ../wikilib.php:2862 ../wikilib.php:3553 ../wikilib.php:3626
+#: ../plugin/Blog.php:320 ../wikilib.php:1743 ../wikilib.php:2144
+#: ../wikilib.php:3166 ../wikilib.php:3857 ../wikilib.php:3940
 msgid "Save"
 msgstr "저장"
 
 #: ../plugin/Blog.php:321 ../plugin/Comment.php:99
-#: ../plugin/ImportMarkdown.php:85 ../plugin/ImportTable.php:216
-#: ../wikilib.php:1518 ../wikilib.php:1849 ../wikilib.php:2868
-#: ../monisetup.php:1468
+#: ../plugin/ImportTable.php:216 ../wikilib.php:1749 ../wikilib.php:2080
+#: ../wikilib.php:3172 ../monisetup.php:1468
 msgid "Preview"
 msgstr "미리보기"
 
@@ -480,16 +479,16 @@ msgstr "쿠키 지우기"
 msgid "Invalid revision numbers"
 msgstr "잘못된 버전 번호"
 
-#: ../plugin/Diff.php:422 ../plugin/Info.php:370 ../plugin/Stat.php:175
+#: ../plugin/Diff.php:422 ../plugin/Info.php:374 ../plugin/Stat.php:299
 msgid "No older revisions available"
 msgstr "옛 버전이 없습니다"
 
-#: ../plugin/Diff.php:427 ../plugin/Info.php:376 ../plugin/rcsexport.php:13
-#: ../plugin/Stat.php:182
+#: ../plugin/Diff.php:427 ../plugin/Info.php:380 ../plugin/rcsexport.php:13
+#: ../plugin/Stat.php:316
 msgid "Version info is not available in this wiki"
 msgstr "버전 정보는 현 위키에서 사용할 수 없습니다"
 
-#: ../plugin/Diff.php:436 ../wikilib.php:2769
+#: ../plugin/Diff.php:436 ../wikilib.php:3020
 msgid "No difference found"
 msgstr "변화가 없습니다"
 
@@ -515,38 +514,9 @@ msgstr "올바른 버전 번호를 넣어주세요"
 msgid "latest changes"
 msgstr "최근 바뀐점"
 
-#: ../plugin/discuss.php:149 ../plugin/quicklinks.php:16
-#: ../plugin/scrap.php:114 ../plugin/subscribe.php:19
-#: ../plugin/subscribe.php:55
-msgid "Please login or make your ID."
-msgstr "로그인하거나 ID를 만드세요"
-
-#: ../plugin/discuss.php:152 ../plugin/quicklinks.php:22
-#: ../plugin/scrap.php:117 ../plugin/subscribe.php:61
-msgid "Goto UserPreferences"
-msgstr "UserPreferences로 가기"
-
-#: ../plugin/discuss.php:167
-msgid "Discuss lists updated."
-msgstr "토론 리스트가 갱신됨."
-
-#: ../plugin/discuss.php:199
-#, c-format
-msgid "Links discuss on %s"
-msgstr ""
-
-#: ../plugin/discuss.php:220
-#, c-format
-msgid "Do you want to discuss on \"%s\" ?"
-msgstr "\"%s\"에 대해 토론하시겠습니까 ?"
-
-#: ../plugin/discuss.php:223
-msgid "Under discussion links"
-msgstr ""
-
 #: ../plugin/Disqus.php:26
 msgid "You need to register your forum at DISQUS."
-msgstr ""
+msgstr "DISQUS에 등록하셔야 합니다."
 
 #: ../plugin/Disqus.php:68
 msgid "Comments"
@@ -554,7 +524,7 @@ msgstr "댓글"
 
 #: ../plugin/Disqus.php:71
 msgid "View the discussion thread."
-msgstr ""
+msgstr "토론 글타래 보기."
 
 #: ../plugin/Draw.php:42
 msgid "Draw new picture"
@@ -662,12 +632,12 @@ msgstr "잘못된 찾기 표현식 \"%s\""
 msgid "Couldn't open search database, sorry."
 msgstr "데이타베이스 파일을 열 수 없습니다."
 
-#: ../plugin/FastSearch.php:180 ../plugin/FullSearch.php:375
+#: ../plugin/FastSearch.php:180 ../plugin/FullSearch.php:379
 #, c-format
 msgid "%d match"
 msgstr "%d회 일치"
 
-#: ../plugin/FastSearch.php:180 ../plugin/FullSearch.php:375
+#: ../plugin/FastSearch.php:180 ../plugin/FullSearch.php:379
 #, c-format
 msgid "%d matches"
 msgstr "%d회 일치"
@@ -677,7 +647,7 @@ msgstr "%d회 일치"
 msgid "BackLinks search for \"%s\""
 msgstr "\"%s\"에 대한 역링크 찾기"
 
-#: ../plugin/FastSearch.php:231 ../wikilib.php:4465
+#: ../plugin/FastSearch.php:231 ../wikilib.php:4779
 #, c-format
 msgid "Title search for \"%s\""
 msgstr "\"%s\"에 대한 제목 찾기"
@@ -688,18 +658,18 @@ msgid "Full text search for \"%s\""
 msgstr "\"%s\"을(를) 전체 찾아보기"
 
 #: ../plugin/FastSearch.php:261 ../plugin/FullSearch.php:45
-#: ../wikilib.php:2502
+#: ../wikilib.php:2753
 #, c-format
 msgid "Found %s matching %s out of %s total pages"
 msgstr "%3$s의 페이지중에 %1$s개가 발견되었습니다"
 
 #: ../plugin/FastSearch.php:263 ../plugin/FullSearch.php:47
-#: ../wikilib.php:2504
+#: ../wikilib.php:2755
 msgid "page"
 msgstr "페이지"
 
 #: ../plugin/FastSearch.php:263 ../plugin/FullSearch.php:47
-#: ../wikilib.php:2504
+#: ../wikilib.php:2755
 msgid "pages"
 msgstr "페이지"
 
@@ -733,7 +703,7 @@ msgstr ""
 msgid "Invalid mime-type %s"
 msgstr "잘못된 마임타입 %s"
 
-#: ../plugin/fetch.php:255 ../wiki.php:2209 ../wiki.php:2262
+#: ../plugin/fetch.php:255 ../wiki.php:2269 ../wiki.php:2322
 msgid "external image"
 msgstr "외부 이미지"
 
@@ -745,7 +715,7 @@ msgstr "파일 %s 열기 실패"
 #: ../plugin/fixbacklinks.php:37
 #, c-format
 msgid "backlinks of \"%s\" page are fixed !"
-msgstr ""
+msgstr "\"%s\" 문서의 역링크가 수정됨 !"
 
 #: ../plugin/fixbacklinks.php:38
 #, c-format
@@ -779,13 +749,13 @@ msgstr "새 페이지 \"%s\"(이)가 없습니다!"
 #: ../plugin/fixbacklinks.php:83
 #, c-format
 msgid "Fix backlinks of \"%s\" ?"
-msgstr ""
+msgstr "\"%s\" 문서의 역링크를 수정하시겠습니까 ? "
 
-#: ../plugin/fixbacklinks.php:87 ../plugin/rename.php:47
+#: ../plugin/fixbacklinks.php:87 ../plugin/rename.php:64
 msgid "Old name:"
 msgstr "옛이름:"
 
-#: ../plugin/fixbacklinks.php:88 ../plugin/rename.php:48
+#: ../plugin/fixbacklinks.php:88 ../plugin/rename.php:65
 msgid "New name:"
 msgstr "새이름:"
 
@@ -799,9 +769,10 @@ msgstr "역링크 검사"
 
 #: ../plugin/fixbacklinks.php:105 ../plugin/login.php:40
 #: ../plugin/rcsexport.php:58 ../plugin/rcsexport.php:113
-#: ../plugin/rename.php:56 ../plugin/revert.php:109
-#: ../plugin/UploadedFiles.php:506 ../plugin/userinfo.php:37
-#: ../wikilib.php:2087 ../wikilib.php:2176 ../wikilib.php:3459
+#: ../plugin/rename.php:73 ../plugin/revert.php:127
+#: ../plugin/UploadedFiles.php:506 ../plugin/userinfo.php:86
+#: ../plugin/userinfo.php:141 ../wikilib.php:2321 ../wikilib.php:2427
+#: ../wikilib.php:3763
 msgid "Password"
 msgstr "비밀번호"
 
@@ -809,8 +780,8 @@ msgstr "비밀번호"
 msgid "Only WikiMaster can fix backlinks of this page"
 msgstr "위키 관리자만 역링크를 수정할 수 있습니다"
 
-#: ../plugin/fixbacklinks.php:108 ../plugin/Info.php:294
-#: ../plugin/rename.php:60
+#: ../plugin/fixbacklinks.php:108 ../plugin/Info.php:298
+#: ../plugin/rename.php:77
 msgid "show only"
 msgstr "보기만 하기"
 
@@ -846,8 +817,8 @@ msgstr " (검색 결과를 %s)"
 msgid "You can also click %s to search title.\n"
 msgstr "%s을 눌러 제목 찾기를 할 수 있습니다.\n"
 
-#: ../plugin/FullSearch.php:78 ../wiki.php:5738 ../wiki.php:5746
-#: ../wikilib.php:2513
+#: ../plugin/FullSearch.php:78 ../wiki.php:5806 ../wiki.php:5814
+#: ../wikilib.php:2764
 msgid "here"
 msgstr "여기"
 
@@ -859,7 +830,7 @@ msgstr "역링크만 찾기"
 msgid "Case-sensitive searching"
 msgstr "대소문자 구별"
 
-#: ../plugin/FullSearch.php:109 ../wikilib.php:4448 ../wikilib.php:4555
+#: ../plugin/FullSearch.php:109 ../wikilib.php:4762 ../wikilib.php:4869
 msgid "Go"
 msgstr "찾기"
 
@@ -867,7 +838,7 @@ msgstr "찾기"
 msgid "Empty expression"
 msgstr "비어있는 표현식"
 
-#: ../plugin/FullSearch.php:377 ../wiki.php:3514
+#: ../plugin/FullSearch.php:381 ../wiki.php:3574
 msgid "Redirect page"
 msgstr "넘겨주기 문서"
 
@@ -883,8 +854,8 @@ msgstr "댓글 달기"
 msgid "show comments"
 msgstr "댓글 보기"
 
-#: ../plugin/Gallery.php:364 ../plugin/Gallery.php:368 ../wikilib.php:2584
-#: ../wikilib.php:2748 ../wikilib.php:2767
+#: ../plugin/Gallery.php:364 ../plugin/Gallery.php:368 ../wikilib.php:2835
+#: ../wikilib.php:2999 ../wikilib.php:3018
 #, c-format
 msgid "Go back or return to %s"
 msgstr "뒤로 혹은 %s(으)로 가기"
@@ -906,13 +877,9 @@ msgstr "TCPDF 클래스 찾을 수 없음!"
 msgid "Unknown"
 msgstr ""
 
-#: ../plugin/ImportMarkdown.php:38 ../plugin/ImportTable.php:38
+#: ../plugin/ImportTable.php:38
 msgid "Convert"
 msgstr "변환"
-
-#: ../plugin/ImportMarkdown.php:92
-msgid "Import Markdown"
-msgstr ""
 
 #: ../plugin/ImportTable.php:223
 msgid "Import Tables"
@@ -922,70 +889,70 @@ msgstr "테이블 가져오기"
 msgid "Import URL"
 msgstr "URL 가져오기"
 
-#: ../plugin/Info.php:52
+#: ../plugin/Info.php:48
 msgid "Compare"
 msgstr "선택비교"
 
-#: ../plugin/Info.php:57
+#: ../plugin/Info.php:53
 msgid "Revision History"
 msgstr "버전 히스토리"
 
-#: ../plugin/Info.php:60
+#: ../plugin/Info.php:56
 msgid "Ver."
 msgstr "버전."
 
-#: ../plugin/Info.php:60 ../plugin/UploadedFiles.php:311
+#: ../plugin/Info.php:56 ../plugin/UploadedFiles.php:311
 msgid "Date"
 msgstr "날짜"
 
-#: ../plugin/Info.php:61 ../plugin/RecentChanges.php:333
+#: ../plugin/Info.php:57 ../plugin/RecentChanges.php:336
 msgid "Changes"
 msgstr "변경점"
 
-#: ../plugin/Info.php:62 ../plugin/RecentChanges.php:332
+#: ../plugin/Info.php:58 ../plugin/RecentChanges.php:335
 msgid "Editor"
-msgstr "고친이"
+msgstr "기여자"
 
-#: ../plugin/Info.php:66
+#: ../plugin/Info.php:62
 msgid "View"
 msgstr "보기"
 
-#: ../plugin/Info.php:67
+#: ../plugin/Info.php:63
 msgid "admin."
 msgstr "관리"
 
-#: ../plugin/Info.php:92
+#: ../plugin/Info.php:88
 msgid "Show next revisions"
 msgstr "다음 버전 보기"
 
-#: ../plugin/Info.php:127
+#: ../plugin/Info.php:123
 msgid "Yesterday"
 msgstr "어제"
 
-#: ../plugin/Info.php:128
+#: ../plugin/Info.php:124
 #, c-format
 msgid "%s days ago"
 msgstr "%s일 전"
 
-#: ../plugin/Info.php:130
+#: ../plugin/Info.php:126
 #, c-format
 msgid "%s hours ago"
 msgstr "%s시간 전"
 
-#: ../plugin/Info.php:132
+#: ../plugin/Info.php:128
 #, c-format
 msgid "%s min ago"
 msgstr "%s분 전"
 
-#: ../plugin/Info.php:298
+#: ../plugin/Info.php:302
 msgid "purge"
 msgstr "삭제"
 
-#: ../plugin/Info.php:340
+#: ../plugin/Info.php:344
 msgid "WARNING: "
 msgstr "경고: "
 
-#: ../plugin/Info.php:340
+#: ../plugin/Info.php:344
 msgid "The history information of this page is broken."
 msgstr "이 문서의 변경 이력이 손상되었습니다."
 
@@ -1094,25 +1061,7 @@ msgstr "%s순 키워드 목록 (혹은 %s순)"
 msgid "Select keywords for %s"
 msgstr "%s에 대해 키워드를 고르세요"
 
-#: ../plugin/LastChange.php:95
-msgid "Total 1 revision found."
-msgstr "전체 1개의 버전이 있습니다."
-
-#: ../plugin/LastChange.php:96
-#, c-format
-msgid "Total %d revisions found."
-msgstr "전체 %d개의 버전이 있습니다."
-
-#: ../plugin/LastChange.php:100
-#, c-format
-msgid "Last modified r%s on %s by %s"
-msgstr "r%s버전의 최종 변경일자는 %s, 고친이: %s"
-
-#: ../plugin/LastChange.php:107
-msgid "Version info is not available"
-msgstr "버전 정보가 없습니다"
-
-#: ../plugin/LikePages.php:31 ../wikilib.php:2348 ../wikilib.php:4456
+#: ../plugin/LikePages.php:31 ../wikilib.php:2599 ../wikilib.php:4770
 msgid "Use more specific text"
 msgstr "좀 더 자세히 입력하세요"
 
@@ -1153,7 +1102,8 @@ msgstr "모든 메타위키 검색"
 msgid "Slow Slow"
 msgstr "매우 느림"
 
-#: ../plugin/login.php:39 ../wikilib.php:3490 ../wikilib.php:3690
+#: ../plugin/login.php:39 ../plugin/userinfo.php:68 ../wikilib.php:3794
+#: ../wikilib.php:4004
 msgid "ID"
 msgstr "아이디"
 
@@ -1161,7 +1111,7 @@ msgstr "아이디"
 msgid "Join"
 msgstr "가입"
 
-#: ../plugin/login.php:42 ../wikilib.php:3476
+#: ../plugin/login.php:42 ../wikilib.php:3780
 msgid "Login"
 msgstr "로그인"
 
@@ -1190,7 +1140,7 @@ msgstr "Manpage가 없습니다"
 msgid "Edit man page"
 msgstr "man 페이지 고치기"
 
-#: ../plugin/minilogin.php:18 ../wikilib.php:3550
+#: ../plugin/minilogin.php:18 ../wikilib.php:3854
 msgid "Login or Join"
 msgstr "로그인 혹은 가입"
 
@@ -1207,7 +1157,7 @@ msgstr "번역이 성공적으로 저장되었습니다"
 msgid "Fail to save translations."
 msgstr "번역 저장을 실패했습니다"
 
-#: ../plugin/msgtrans.php:39 ../plugin/userinfo.php:86
+#: ../plugin/msgtrans.php:39 ../plugin/userinfo.php:217
 #, c-format
 msgid "You are not allowed to \"%s\" !"
 msgstr "'%s'은(는) 허락되지 않았습니다"
@@ -1320,7 +1270,7 @@ msgstr "작성자 %s, 등록일 %s"
 msgid "Save Changes"
 msgstr "변경 저장"
 
-#: ../plugin/processor/monimarkup.php:532 ../wiki.php:3959
+#: ../plugin/processor/monimarkup.php:532 ../wiki.php:4019
 msgid "edit"
 msgstr "편집"
 
@@ -1331,6 +1281,16 @@ msgstr "빈 페이지 이름"
 #: ../plugin/pull.php:64
 msgid "Empty \\$pull_url"
 msgstr ""
+
+#: ../plugin/quicklinks.php:16 ../plugin/scrap.php:144
+#: ../plugin/subscribe.php:19 ../plugin/subscribe.php:55
+msgid "Please login or make your ID."
+msgstr "로그인하거나 ID를 만드세요"
+
+#: ../plugin/quicklinks.php:22 ../plugin/scrap.php:147
+#: ../plugin/subscribe.php:61
+msgid "Goto UserPreferences"
+msgstr "UserPreferences로 가기"
 
 #: ../plugin/quicklinks.php:23
 msgid ""
@@ -1454,35 +1414,35 @@ msgstr "%s시간 전"
 msgid "%d days ago"
 msgstr "%s일 전"
 
-#: ../plugin/RecentChanges.php:235
+#: ../plugin/RecentChanges.php:238
 msgid "Recent Changes"
 msgstr "최근 변경내역"
 
-#: ../plugin/RecentChanges.php:335
+#: ../plugin/RecentChanges.php:338
 msgid "Hits"
 msgstr "조회수"
 
-#: ../plugin/RecentChanges.php:336
+#: ../plugin/RecentChanges.php:339
 msgid "Change Date"
 msgstr "변경일"
 
-#: ../plugin/RecentChanges.php:426
+#: ../plugin/RecentChanges.php:429
 msgid "Show changes for "
 msgstr ""
 
-#: ../plugin/RecentChanges.php:431
+#: ../plugin/RecentChanges.php:434
 msgid "days ago"
 msgstr "몇일 전"
 
-#: ../plugin/RecentChanges.php:633
+#: ../plugin/RecentChanges.php:847
 msgid "set bookmark"
 msgstr "북마크"
 
-#: ../plugin/RecentChanges.php:638
+#: ../plugin/RecentChanges.php:852
 msgid "Bookmark"
 msgstr "북마크"
 
-#: ../plugin/RecentChanges.php:849
+#: ../plugin/RecentChanges.php:863
 #, c-format
 msgid "%s changes"
 msgstr "%s회 고침"
@@ -1491,35 +1451,39 @@ msgstr "%s회 고침"
 msgid "Referer history"
 msgstr ""
 
-#: ../plugin/rename.php:20
+#: ../plugin/rename.php:22
+msgid "You do not have permission to rename this page on this wiki."
+msgstr "문서 이름을 바꿀 수 있는 권한이 없습니다."
+
+#: ../plugin/rename.php:37
 #, c-format
 msgid "\"%s\" is renamed !"
 msgstr "%s(이)가 이름이 바뀌었음 !"
 
-#: ../plugin/rename.php:27
+#: ../plugin/rename.php:44
 #, c-format
 msgid "'%s' is renamed as '%s' successfully."
 msgstr "'%s'(이)가 '%s'(으)로 이름이 바뀌었습니다"
 
-#: ../plugin/rename.php:35
+#: ../plugin/rename.php:52
 #, c-format
 msgid "Fail to rename \"%s\" !"
 msgstr "\"%s\" 이름바꾸기 실패 !"
 
-#: ../plugin/rename.php:42
+#: ../plugin/rename.php:59
 #, c-format
 msgid "Rename \"%s\" ?"
 msgstr "\"%s\"의 이름을 바꿀까요 ?"
 
-#: ../plugin/rename.php:54 ../plugin/UploadFile.php:483
+#: ../plugin/rename.php:71 ../plugin/UploadFile.php:483
 msgid "Rename"
 msgstr "이름바꾸기"
 
-#: ../plugin/rename.php:57
+#: ../plugin/rename.php:74
 msgid "Only WikiMaster can rename this page"
 msgstr "위키관리자만이 페이지 이름을 바꿀 수 있습니다"
 
-#: ../plugin/rename.php:59 ../wikilib.php:2173
+#: ../plugin/rename.php:76 ../wikilib.php:2424
 msgid "with revision history"
 msgstr "버전 히스토리와 함께"
 
@@ -1557,113 +1521,117 @@ msgstr "백업된 데이타를 restore하기"
 msgid "Select a tarball file to restore"
 msgstr "Restore하기 위한 tarball 파일을 고르세요"
 
-#: ../plugin/reverse.php:54 ../plugin/reverse.php:113 ../plugin/revert.php:103
+#: ../plugin/reverse.php:38 ../plugin/revert.php:50
+msgid "You do not have full permission to rollback this page on this wiki."
+msgstr "문서를 되돌릴 수 있는 충분한 권한이 없습니다."
+
+#: ../plugin/reverse.php:71 ../plugin/reverse.php:130 ../plugin/revert.php:121
 #, c-format
 msgid "Rollback to revision %s"
 msgstr "%s 버전으로 돌리기"
 
-#: ../plugin/reverse.php:68
+#: ../plugin/reverse.php:85
 msgid "No change found."
 msgstr "변화가 없습니다"
 
-#: ../plugin/reverse.php:70
+#: ../plugin/reverse.php:87
 msgid "Empty Page!"
-msgstr ""
+msgstr "빈 문서!"
 
-#: ../plugin/reverse.php:76
+#: ../plugin/reverse.php:93
 #, c-format
 msgid "%s is successfully rollbacked."
 msgstr "%s(이)가 성공적으로 되돌려졌습니다."
 
-#: ../plugin/reverse.php:80
+#: ../plugin/reverse.php:97
 #, c-format
 msgid "Failed to rollback %s page"
 msgstr "%s 롤백을 실패했습니다"
 
-#: ../plugin/reverse.php:91 ../plugin/revert.php:87
+#: ../plugin/reverse.php:108 ../plugin/revert.php:105
 msgid "Please select old revision to revert."
 msgstr "복구할 이전 버전을 선택하세요."
 
-#: ../plugin/reverse.php:95
+#: ../plugin/reverse.php:112
 #, c-format
 msgid "Please check force overwrite to revert %s revision."
-msgstr ""
+msgstr "%s 버전으로 돌리기 위해서 덮어쓰기를 체크해야 합니다."
 
-#: ../plugin/reverse.php:98
+#: ../plugin/reverse.php:115
 #, c-format
 msgid "Are you really want to overwrite %s page to %s revision ?"
 msgstr "정말로 덮어쓰기를 원하십니까 ?"
 
-#: ../plugin/reverse.php:100 ../plugin/revert.php:91
+#: ../plugin/reverse.php:117 ../plugin/revert.php:109
 msgid "Force overwrite"
 msgstr "덮어쓰기"
 
-#: ../plugin/reverse.php:102
+#: ../plugin/reverse.php:119
 #, c-format
 msgid "Are you really want to revert %s page to %s revision ?"
 msgstr "정말로 %s(을)를 %s 버전으로 되돌리시겠습니까 ?"
 
-#: ../plugin/reverse.php:111 ../plugin/revert.php:100 ../wikilib.php:1844
-#: ../wikilib.php:2169
+#: ../plugin/reverse.php:128 ../plugin/revert.php:118 ../wikilib.php:2075
+#: ../wikilib.php:2420
 msgid "Summary"
 msgstr "요약"
 
-#: ../plugin/reverse.php:112 ../plugin/revert.php:106
+#: ../plugin/reverse.php:129 ../plugin/revert.php:124
 msgid "Revert page"
 msgstr "페이지 되돌리기"
 
-#: ../plugin/reverse.php:128 ../plugin/revert.php:23 ../wiki.php:5740
+#: ../plugin/reverse.php:145 ../plugin/revert.php:23 ../wiki.php:5808
 #, c-format
 msgid "Old Revisions of the %s"
 msgstr "%s의 옛날 버전"
 
-#: ../plugin/revert.php:78
+#: ../plugin/revert.php:96
 msgid "No version control available."
 msgstr "버전 관리를 쓸 수 없습니다"
 
-#: ../plugin/revert.php:82
+#: ../plugin/revert.php:100
 #, c-format
 msgid "%s is successfully rollback."
 msgstr "%s(이)가 성공적으로 되돌려졌습니다."
 
-#: ../plugin/revert.php:90
+#: ../plugin/revert.php:108
 msgid "Are you really want to overwrite this page ?"
 msgstr "정말로 덮어쓰기를 원하십니까 ?"
 
-#: ../plugin/revert.php:93
+#: ../plugin/revert.php:111
 msgid "Are you really want to revert this page ?"
 msgstr "정말로 되돌리시겠습니까 ?"
 
-#: ../plugin/revert.php:107
+#: ../plugin/revert.php:125
 #, c-format
 msgid "Only WikiMaster can %s this page"
 msgstr "위키 관리자만 이 페이지를 %s 할 수 있습니다"
 
-#: ../plugin/revert.php:107
+#: ../plugin/revert.php:125
 #, c-format
 msgid "revert"
 msgstr "되돌리기"
 
-#: ../plugin/scrap.php:132
+#: ../plugin/scrap.php:164
 msgid "Scrap lists updated."
 msgstr "스크랩 목록이 갱신되었습니다"
 
-#: ../plugin/scrap.php:142
+#: ../plugin/scrap.php:174
 #, c-format
 msgid "\"%s\" is unscrapped."
 msgstr "\"%s\" 스크랩이 취소 되었습니다."
 
-#: ../plugin/scrap.php:145
+#: ../plugin/scrap.php:177
 #, c-format
 msgid "\"%s\" is scrapped."
 msgstr "%s(이)가 스크랩되었습니다."
 
-#: ../plugin/scrap.php:171
+#: ../plugin/scrap.php:207
 #, c-format
 msgid "Do you want to scrap \"%s\" ?"
 msgstr "\"%s\"을(를) 스크랩하시겠습니까 ?"
 
-#: ../plugin/scrap.php:174
+#: ../plugin/scrap.php:210
 msgid "Scrapped pages"
 msgstr "스크랩 목록"
 
@@ -1699,8 +1667,8 @@ msgid "Please Login to this Wiki."
 msgstr "위키에 로그인해주세요."
 
 #: ../plugin/security/acl.php:317 ../plugin/security/acl.php:320
-#: ../plugin/userform.php:338 ../plugin/userform.php:523 ../wiki.php:5660
-#: ../wiki.php:5668
+#: ../plugin/userform.php:378 ../plugin/userform.php:574 ../wiki.php:5728
+#: ../wiki.php:5736
 msgid "Please contact WikiMasters"
 msgstr "위키관리자에게 문의하세요"
 
@@ -1765,7 +1733,15 @@ msgid "Trackback sent"
 msgstr "트랙백"
 
 #: ../plugin/ShareButtons.php:21
-msgid "Tweet"
+msgid "tweet"
+msgstr ""
+
+#: ../plugin/ShareButtons.php:28
+msgid "fb"
+msgstr ""
+
+#: ../plugin/ShareButtons.php:30
+msgid "g+"
 msgstr ""
 
 #: ../plugin/SlideShow.php:28
@@ -1788,8 +1764,37 @@ msgstr "이전:"
 msgid "Return"
 msgstr "돌아가기"
 
-#: ../plugin/Stat.php:35
+#: ../plugin/Stat.php:157
 msgid "Revision Statistics"
+msgstr "버전 통계"
+
+#: ../plugin/Stat.php:161
+msgid "Original Author"
+msgstr "최초 기여자"
+
+#: ../plugin/Stat.php:161
+msgid "initial revision"
+msgstr "최초 버전"
+
+#: ../plugin/Stat.php:162
+#, c-format
+msgid "Total %d editors"
+msgstr "총 %d명의 기여자"
+
+#: ../plugin/Stat.php:163
+msgid "User"
+msgstr "기여자"
+
+#: ../plugin/Stat.php:163
+msgid "Add"
+msgstr "추가"
+
+#: ../plugin/Stat.php:164
+msgid "Del"
+msgstr "삭제"
+
+#: ../plugin/Stat.php:164
+msgid "IP"
 msgstr ""
 
 #: ../plugin/subscribe.php:24 ../plugin/subscribe.php:28
@@ -1970,7 +1975,7 @@ msgstr "%s에 대한 트랙백 항목을 찾을 수 없음"
 msgid "TwinPages of %s"
 msgstr "%s의 쌍둥이 페이지"
 
-#: ../plugin/TwinPages.php:20 ../wiki.php:5725
+#: ../plugin/TwinPages.php:20 ../wiki.php:5793
 msgid "See [TwinPages]: "
 msgstr ""
 
@@ -1999,7 +2004,7 @@ msgstr "&laquo; 첫 페이지"
 msgid "Total %d files"
 msgstr "총 %d 개 파일"
 
-#: ../plugin/UploadedFiles.php:507 ../wikilib.php:2062
+#: ../plugin/UploadedFiles.php:507 ../wikilib.php:2296
 msgid "Delete selected files"
 msgstr "선택된 파일 지우기"
 
@@ -2118,267 +2123,280 @@ msgstr "파일추가"
 msgid "Attachments"
 msgstr "첨부"
 
-#: ../plugin/userform.php:46 ../plugin/userform.php:49
+#: ../plugin/userform.php:54 ../plugin/userform.php:60
 msgid "Successfully confirmed"
 msgstr "성공적으로 확인됨"
 
-#: ../plugin/userform.php:47
+#: ../plugin/userform.php:55
 msgid "Your e-mail address is confirmed successfully"
 msgstr "이메일 주소 확인이 성공되었습니다"
 
-#: ../plugin/userform.php:54
+#: ../plugin/userform.php:57
+msgid "Your need to wait until your ID activated by admin"
+msgstr "ID가 관리자에 의해 활성화되기 전까지 기다려야 합니다."
+
+#: ../plugin/userform.php:65
 msgid "Your new password is confirmed successfully"
 msgstr "새로운 비밀번호가 성공적으로 확인되었습니다"
 
-#: ../plugin/userform.php:56
+#: ../plugin/userform.php:67
 msgid "Confirmation missmatched !"
 msgstr "확인이 맞지 않습니다 !"
 
-#: ../plugin/userform.php:57 ../plugin/userform.php:61
+#: ../plugin/userform.php:68 ../plugin/userform.php:75
 msgid "Please try again to register your e-mail address"
 msgstr "이메일 주소 등록을 다시 하세요"
 
-#: ../plugin/userform.php:60
-msgid "ID does not exists !"
+#: ../plugin/userform.php:72
+msgid "Please wait until your ID is confirmed by admin!"
+msgstr "ID가 확인되기 전까지 기다려야 합니다!"
+
+#: ../plugin/userform.php:74
+msgid "ID does not exist !"
 msgstr "아이디가 존재하지 않습니다 !"
 
-#: ../plugin/userform.php:73
+#: ../plugin/userform.php:87
 msgid "Verification E-mail removed."
 msgstr "확인용 메일주소가 삭제되었습니다."
 
-#: ../plugin/userform.php:81 ../plugin/userform.php:96
+#: ../plugin/userform.php:95 ../plugin/userform.php:110
 msgid "Your email address is successfully verified."
 msgstr "이메일 주소 확인이 성공되었습니다"
 
-#: ../plugin/userform.php:85
+#: ../plugin/userform.php:99
 msgid "Verification missmatched."
 msgstr "확인이 맞지 않습니다."
 
-#: ../plugin/userform.php:88 ../wikilib.php:3676
+#: ../plugin/userform.php:102 ../wikilib.php:3990
 msgid "Verify E-mail address"
 msgstr "이메일 주소 확인"
 
-#: ../plugin/userform.php:92 ../plugin/userform.php:298
+#: ../plugin/userform.php:106 ../plugin/userform.php:338
 msgid "Invalid email address or can't verify it."
 msgstr "이메일 주소가 맞지 않거나 확인할 수 없읍니다."
 
-#: ../plugin/userform.php:100
+#: ../plugin/userform.php:114
 msgid "Verify Email address"
 msgstr "확인용 이메일 주소"
 
-#: ../plugin/userform.php:107
+#: ../plugin/userform.php:121
 msgid "Please confirm your e-mail address"
 msgstr "이메일 주소를 확인해 주세요"
 
-#: ../plugin/userform.php:110
+#: ../plugin/userform.php:124
 msgid "E-mail verification mail sent"
 msgstr "이메일 주소 확인메일이 보내졌습니다"
 
-#: ../plugin/userform.php:115 ../plugin/userform.php:331
-#: ../plugin/userform.php:454
+#: ../plugin/userform.php:129 ../plugin/userform.php:371
+#: ../plugin/userform.php:505
 msgid "Your email address is not valid"
 msgstr "이메일 주소가 잘못 되었습니다"
 
-#: ../plugin/userform.php:150 ../plugin/userform.php:376
+#: ../plugin/userform.php:164 ../plugin/userform.php:424
 #, c-format
 msgid "Successfully login as '%s'"
 msgstr "성공적으로 '%s'(으)로 로그인되었습니다"
 
-#: ../plugin/userform.php:154
+#: ../plugin/userform.php:168
 msgid "Invalid user ID. Please register again"
-msgstr ""
+msgstr "잘못된 사용자 ID. 다시 등록하세요"
 
-#: ../plugin/userform.php:163 ../plugin/userform.php:381
-#: ../plugin/userform.php:424
+#: ../plugin/userform.php:185 ../plugin/userform.php:429
+#: ../plugin/userform.php:472
 msgid "Invalid password !"
 msgstr "잘못된 비밀번호 !"
 
-#: ../plugin/userform.php:168
+#: ../plugin/userform.php:197
 #, c-format
-msgid "\"%s\" does not exists on this wiki !"
+msgid "\"%s\" is waiting for activated by admin !"
+msgstr "\"%s\" ID는 관리자에게 활성화되기 전까지 기다리고 있습니다!"
+
+#: ../plugin/userform.php:199
+#, c-format
+msgid "\"%s\" does not exist on this wiki !"
 msgstr "\"%s\"은 이 위키에 없습니다 !"
 
-#: ../plugin/userform.php:171
+#: ../plugin/userform.php:203
 msgid "Make new ID on this wiki"
 msgstr "새로운 ID 만들기"
 
-#: ../plugin/userform.php:186
+#: ../plugin/userform.php:218
 msgid "Cookie deleted !"
 msgstr "쿠키가 지워졌습니다 !"
 
-#: ../plugin/userform.php:191 ../wikilib.php:3640
+#: ../plugin/userform.php:223 ../wikilib.php:3954
 msgid "E-mail new password"
 msgstr "새 비밀번호 받기"
 
-#: ../plugin/userform.php:236
+#: ../plugin/userform.php:276
 msgid "New password confirmation"
 msgstr "새 비밀번호 확인"
 
-#: ../plugin/userform.php:241
+#: ../plugin/userform.php:281
 msgid "Please confirm your new password"
 msgstr "새 비밀번호를 확인해 주세요"
 
-#: ../plugin/userform.php:243
+#: ../plugin/userform.php:283
 #, c-format
 msgid "Your new password is %s"
 msgstr "새 비밀번호는 %s"
 
-#: ../plugin/userform.php:244 ../plugin/userform.php:364
+#: ../plugin/userform.php:284 ../plugin/userform.php:412
 msgid "Please change your password later"
 msgstr "비밀번호를 바꿔주세요"
 
-#: ../plugin/userform.php:248 ../plugin/userform.php:256
+#: ../plugin/userform.php:288 ../plugin/userform.php:296
 msgid "Fail to e-mail notification !"
 msgstr "이메일 알림 실패 !"
 
-#: ../plugin/userform.php:251
+#: ../plugin/userform.php:291
 msgid "New password is sent to your e-mail !"
 msgstr "새 비밀번호가 이메일로 전송되었습니다 !"
 
-#: ../plugin/userform.php:252
+#: ../plugin/userform.php:292
 msgid "Please check your e-mail"
 msgstr "이메일을 확인해 주세요"
 
-#: ../plugin/userform.php:257
+#: ../plugin/userform.php:297
 msgid "E-mail mismatch !"
 msgstr "이메일이 맞지 않습니다 !"
 
-#: ../plugin/userform.php:259 ../plugin/userform.php:552
+#: ../plugin/userform.php:299 ../plugin/userform.php:603
 msgid "Invalid request"
 msgstr "잘못된 요청 !"
 
-#: ../plugin/userform.php:260
+#: ../plugin/userform.php:300
 msgid "Please confirm your e-mail address first !"
 msgstr "이메일 주소를 먼저 확인해 주세요 !"
 
-#: ../plugin/userform.php:267
+#: ../plugin/userform.php:307
 msgid "ID and e-mail mismatch !"
 msgstr "아이디와 이메일 주소가 맞지 않습니다 !"
 
-#: ../plugin/userform.php:269
+#: ../plugin/userform.php:309
 msgid "Please try again or make a new profile"
 msgstr "이메일 주소 등록을 다시 하세요"
 
-#: ../plugin/userform.php:307
+#: ../plugin/userform.php:347
 msgid "Please check join agreement."
 msgstr "약관 동의를 확인을 해주세요."
 
-#: ../plugin/userform.php:320 ../plugin/userform.php:412
+#: ../plugin/userform.php:360 ../plugin/userform.php:460
 msgid "too short password!"
 msgstr "비밀번호가 짧습니다"
 
-#: ../plugin/userform.php:321
+#: ../plugin/userform.php:361
 msgid "mismatch password!"
 msgstr "비밀번호가 맞지 않습니다!"
 
-#: ../plugin/userform.php:322 ../plugin/userform.php:416
+#: ../plugin/userform.php:362 ../plugin/userform.php:464
 msgid "not acceptable character found in the password!"
-msgstr ""
+msgstr "비밀번호에 쓰일 수 없는 문자가 있습니다!"
 
-#: ../plugin/userform.php:325
+#: ../plugin/userform.php:365
 msgid "Your password is too simple to use as a password !"
-msgstr ""
+msgstr "비밀번호로 사용하기에 너무 짧습니다!"
 
-#: ../plugin/userform.php:336 ../plugin/userform.php:521
+#: ../plugin/userform.php:376 ../plugin/userform.php:572
 msgid "Fail to register"
 msgstr "등록을 실패했습니다"
 
-#: ../plugin/userform.php:337 ../plugin/userform.php:522
+#: ../plugin/userform.php:377 ../plugin/userform.php:573
 msgid "You are not allowed to register on this wiki"
 msgstr "위키 등록이 허락되지 않았습니다"
 
-#: ../plugin/userform.php:342
+#: ../plugin/userform.php:382
 msgid "Successfully added!"
 msgstr "성공적으로 추가됨!"
 
-#: ../plugin/userform.php:348
+#: ../plugin/userform.php:388
 #, c-format
 msgid "Successfully added as '%s'"
 msgstr "성공적으로 '%s'(으)로 추가됨"
 
-#: ../plugin/userform.php:349
+#: ../plugin/userform.php:389
 msgid "Please check your mailbox"
 msgstr "이메일을 확인해 주세요"
 
-#: ../plugin/userform.php:359 ../plugin/userform.php:444
+#: ../plugin/userform.php:407 ../plugin/userform.php:495
 msgid "E-mail confirmation"
 msgstr "이메일 확인"
 
-#: ../plugin/userform.php:361 ../plugin/userform.php:446
+#: ../plugin/userform.php:409 ../plugin/userform.php:497
 msgid "Please confirm your email address"
 msgstr "이메일 주소를 확인해 주세요"
 
-#: ../plugin/userform.php:363
+#: ../plugin/userform.php:411
 #, c-format
 msgid "Your initial password is %s"
 msgstr "초기 비밀번호는 %s"
 
-#: ../plugin/userform.php:370
+#: ../plugin/userform.php:418
 msgid "Confirmation E-mail sent"
 msgstr "확인 이메일이 보내졌습니다"
 
-#: ../plugin/userform.php:386
+#: ../plugin/userform.php:434
 msgid "Invalid username !"
 msgstr "잘못된 사용자명 !"
 
-#: ../plugin/userform.php:414
+#: ../plugin/userform.php:462
 msgid "mismatch password !"
 msgstr "맞지 않는 비밀번호 !"
 
-#: ../plugin/userform.php:417 ../plugin/userform.php:425
+#: ../plugin/userform.php:465 ../plugin/userform.php:473
 msgid "Password is not changed !"
 msgstr "비밀번호가 바뀌지 않았습니다 !"
 
-#: ../plugin/userform.php:419
+#: ../plugin/userform.php:467
 msgid "Password is changed !"
 msgstr "비밀번호가 바뀌었습니다 !"
 
-#: ../plugin/userform.php:421
+#: ../plugin/userform.php:469
 msgid "Password is too simple to use as a password !"
 msgstr "비밀번호로 쓰기에는 너무 짧은 비밀번호입니다 !"
 
-#: ../plugin/userform.php:451
+#: ../plugin/userform.php:502
 msgid "E-mail confirmation mail sent"
 msgstr "이메일 확인 메일 보냄"
 
-#: ../plugin/userform.php:463
+#: ../plugin/userform.php:514
 msgid "Your Nickname already used as ID in this wiki"
 msgstr "닉네임이 ID로 사용중입니다"
 
-#: ../plugin/userform.php:468
+#: ../plugin/userform.php:519
 msgid "Profiles are saved successfully !"
 msgstr "설정이 성공적으로 저장되었습니다 !"
 
-#: ../plugin/userform.php:491 ../plugin/userform.php:543
+#: ../plugin/userform.php:542 ../plugin/userform.php:594
 #, c-format
 msgid "Authentication request was failed: %s"
 msgstr ""
 
-#: ../plugin/userform.php:516
+#: ../plugin/userform.php:567
 #, c-format
 msgid "Successfully login as '%s' via OpenID."
 msgstr "성공적으로 오픈ID '%s'(으)로 로그인되었습니다"
 
-#: ../plugin/userform.php:530
+#: ../plugin/userform.php:581
 #, c-format
 msgid "Your Nickname %s already used as ID in this Wiki."
 msgstr "별명 %s(이)가 이미 ID로 사용중입니다."
 
-#: ../plugin/userform.php:538
+#: ../plugin/userform.php:589
 #, c-format
 msgid "OpenID Authentication successful and saved as %s."
 msgstr ""
 
-#: ../plugin/userform.php:545
+#: ../plugin/userform.php:596
 msgid "Invalid OpenID Authentication request"
 msgstr ""
 
-#: ../plugin/userform.php:548 ../wikilib.php:3530 ../wikilib.php:3611
-#: ../wikilib.php:3638
+#: ../plugin/userform.php:599 ../wikilib.php:3834 ../wikilib.php:3925
+#: ../wikilib.php:3952
 msgid "Make profile"
 msgstr "사용자 등록"
 
-#: ../plugin/userform.php:567
+#: ../plugin/userform.php:618
 #, c-format
 msgid "return to %s"
 msgstr "%s(으)로 돌아가기"
@@ -2388,16 +2406,52 @@ msgstr "%s(으)로 돌아가기"
 msgid "You are not allowed to use the \"%s\" macro."
 msgstr "\"%s\"매크로를 쓸 수 없습니다."
 
-#: ../plugin/userinfo.php:26
+#: ../plugin/userinfo.php:30
 #, c-format
-msgid "Total %d users"
+msgid "Total %d users found."
 msgstr "총 %d명의 사용자"
 
-#: ../plugin/userinfo.php:49
+#: ../plugin/userinfo.php:31
+#, c-format
+msgid "Total %d Suspended users found."
+msgstr "전체 %d명의 정지된 사용자."
+
+#: ../plugin/userinfo.php:32
+#, c-format
+msgid "Total %d Deleted users found."
+msgstr "전체 %d명의 삭제된 사용자."
+
+#: ../plugin/userinfo.php:70
+msgid "E-mail"
+msgstr ""
+
+#: ../plugin/userinfo.php:79 ../plugin/userinfo.php:135
+msgid "Delete Users"
+msgstr "사용자 지우기"
+
+#: ../plugin/userinfo.php:81 ../plugin/userinfo.php:137
+msgid "Activate Users"
+msgstr "사용자 활성화"
+
+#: ../plugin/userinfo.php:138
+msgid "Suspend Users"
+msgstr "사용자 정지"
+
+#: ../plugin/userinfo.php:171
 msgid "User infomation is restricted by wikimaster"
 msgstr "사용자 정보는 위키관리자만 볼 수 있습니다"
 
-#: ../plugin/userinfo.php:81
+#: ../plugin/userinfo.php:208
+#, c-format
+msgid "User \"%s\" are suspended !"
+msgstr "사용자 \"%s\"(이)가 정지됨 !"
+
+#: ../plugin/userinfo.php:210
+#, c-format
+msgid "User \"%s\" are activated !"
+msgstr "사용자 \"%s\"(이)가 활성화됨 !"
+
+#: ../plugin/userinfo.php:212
 #, c-format
 msgid "User \"%s\" are deleted !"
 msgstr "사용자 \"%s\"(이)가 지워짐 !"
@@ -2436,19 +2490,19 @@ msgstr "%s 서버에 연결할 수 없습니다"
 msgid "Whois search result for %s"
 msgstr "%s에 대한 Whois 검색 결과"
 
-#: ../plugin/WordIndex.php:55 ../wikilib.php:4090
+#: ../plugin/WordIndex.php:55 ../wikilib.php:4404
 msgid "Please wait..."
 msgstr ""
 
 #: ../plugin/WordIndex.php:160
 msgid "&#171; Prev"
-msgstr ""
+msgstr "&#171; 이전"
 
 #: ../plugin/WordIndex.php:164
 msgid "Next &#187;"
-msgstr ""
+msgstr "다음 &#187;"
 
-#: ../plugin/WordIndex.php:179 ../wikilib.php:4219
+#: ../plugin/WordIndex.php:179 ../wikilib.php:4533
 msgid "Others"
 msgstr "기타"
 
@@ -2457,475 +2511,489 @@ msgstr "기타"
 msgid "File '%s' or '%s' does not exist."
 msgstr "파일 '%s' 혹은 '%s'이(가) 없습니다"
 
-#: ../wiki.php:918
+#: ../wiki.php:945
 msgid "Fail to save version information"
 msgstr "버전 정보 저장을 실패했습니다"
 
-#: ../wiki.php:1105
+#: ../wiki.php:1165
 #, c-format
 msgid "Renamed as %s"
 msgstr "%s로 이름이 바꿈"
 
-#: ../wiki.php:1106
+#: ../wiki.php:1166
 #, c-format
 msgid "Renamed from %s"
 msgstr "%s에서 이름이 바뀜"
 
-#: ../wiki.php:1225
+#: ../wiki.php:1285
 msgid "Version info does not supported in this wiki"
 msgstr "버전 정보가 이 위키에서 지원되지 않습니다"
 
-#: ../wiki.php:1235
+#: ../wiki.php:1295
 msgid "File does not exist"
 msgstr "페이지가 없습니다"
 
-#: ../wiki.php:1929
+#: ../wiki.php:1989
 #, c-format
 msgid "File '%s' does not exist."
 msgstr "파일 '%s'이(가) 없습니다"
 
-#: ../wiki.php:2844 ../wiki.php:2855 ../wiki.php:5952
+#: ../wiki.php:2904 ../wiki.php:2915 ../wiki.php:6020
 msgid "Invalid ajax action."
 msgstr "잘못된 ajax 액션."
 
-#: ../wiki.php:3454
+#: ../wiki.php:3514
 msgid "Tags:"
 msgstr "태그:"
 
-#: ../wiki.php:3489
+#: ../wiki.php:3549
 #, c-format
 msgid "See %s"
 msgstr ""
 
-#: ../wiki.php:3489
+#: ../wiki.php:3549
 #, c-format
 msgid "TwinPages"
 msgstr "TwinPages"
 
-#: ../wiki.php:3494
+#: ../wiki.php:3554
 msgid "See [TwinPages]:"
 msgstr ""
 
-#: ../wiki.php:4133
+#: ../wiki.php:4193
 msgid "Sister Sites Index"
 msgstr "자매 위키 목록"
 
-#: ../wiki.php:4557 ../locale/dummy.php:6
+#: ../wiki.php:4617 ../locale/dummy.php:6
 msgid "EditText"
 msgstr "고치기"
 
-#: ../wiki.php:4559
+#: ../wiki.php:4619
 msgid "NotEditable"
 msgstr "고칠수 없음"
 
-#: ../wiki.php:4561 ../locale/dummy.php:6
+#: ../wiki.php:4621 ../locale/dummy.php:6
 msgid "ShowPage"
 msgstr "보기"
 
-#: ../wiki.php:4565 ../locale/dummy.php:3 ../locale/dummy.php:5
+#: ../wiki.php:4625 ../locale/dummy.php:3 ../locale/dummy.php:5
 msgid "FindPage"
 msgstr "찾기"
 
-#: ../wiki.php:5044
+#: ../wiki.php:5104
 msgid "Main"
 msgstr ""
 
-#: ../wiki.php:5357
+#: ../wiki.php:5417
 msgid "Someone logged in at another place !"
 msgstr "누군가가 다른 곳에서 로그인하였습니다 !"
 
-#: ../wiki.php:5659
+#: ../wiki.php:5727
 msgid "Your IP is in the black list"
 msgstr "IP가 블랙리스트에 있습니다"
 
-#: ../wiki.php:5667
+#: ../wiki.php:5735
 msgid "You are blocked in this wiki"
 msgstr "위키에서 접근금지처리 되어있습니다"
 
-#: ../wiki.php:5727 ../wiki.php:5734 ../wikilib.php:2491
+#: ../wiki.php:5795 ../wiki.php:5802 ../wikilib.php:2742
 msgid "Create this page"
 msgstr "페이지 만들기"
 
-#: ../wiki.php:5736
+#: ../wiki.php:5804
 #, c-format
 msgid "%s has saved revisions"
 msgstr "%s이(가) 저장된 옛버전이 있습니다"
 
-#: ../wiki.php:5738 ../wiki.php:5746
+#: ../wiki.php:5806 ../wiki.php:5814
 #, c-format
 msgid "%s or click %s to fulltext search.\n"
 msgstr "%s 혹은 %s를 눌러 전체 찾기를 할 수 있습니다.\n"
 
-#: ../wiki.php:5744
+#: ../wiki.php:5812
 #, c-format
 msgid "%s is not found in this Wiki"
 msgstr "%s 페이지를 이곳 위키에서 찾을 수 없습니다"
 
-#: ../wiki.php:5752
+#: ../wiki.php:5820
 msgid "Please try to search with another word"
 msgstr "다른 단어로 찾아보세요."
 
-#: ../wiki.php:5764
+#: ../wiki.php:5832
 #, c-format
 msgid "%s or alternativly, use one of these templates:\n"
 msgstr ""
 "%s 아이콘을 누르거나 아래의 탬플리트 목록을 이용해 새 페이지를 만드세요:\n"
 
-#: ../wiki.php:5767
+#: ../wiki.php:5835
 msgid "You have no templates"
 msgstr "템플리트가 없습니다"
 
-#: ../wiki.php:5769
+#: ../wiki.php:5837
 #, c-format
 msgid "To create your own templates, add a page with '%s' pattern.\n"
 msgstr "탬플리트를 만드시려면 '%s' 형식의 이름을 가지는 페이지를 만드세요.\n"
 
-#: ../wiki.php:5780
+#: ../wiki.php:5848
 #, c-format
 msgid "Redirected from page \"%s\""
 msgstr "\"%s\" 문서에서 넘어옴"
 
-#: ../wiki.php:5954
+#: ../wiki.php:6022
 msgid "Invalid macro action."
 msgstr "잘못된 매크로 액션."
 
-#: ../wiki.php:5964
+#: ../wiki.php:6032
 #, c-format
 msgid "You are not allowed to '%s'"
 msgstr "'%s'은(는) 허락되지 않았습니다"
 
-#: ../wiki.php:5985
+#: ../wiki.php:6053
 #, c-format
 msgid "Fail to \"%s\" !"
 msgstr "\"%s\"을(를) 실패했습니다 !"
 
-#: ../wiki.php:5988
+#: ../wiki.php:6056
 msgid "Please enter the valid password"
 msgstr "정확한 비밀번호를 넣어주세요"
 
-#: ../wikilib.php:1479
+#: ../wikilib.php:1710
 msgid "You are not allowed to edit this page !"
 msgstr "이 페이지를 고칠 수 있도록 허락되어있지 않습니다 !"
 
-#: ../wikilib.php:1487
+#: ../wikilib.php:1718
 #, c-format
 msgid "Edit %s"
 msgstr "%s 고치기"
 
-#: ../wikilib.php:1521 ../wikilib.php:1853 ../wikilib.php:2871
+#: ../wikilib.php:1752 ../wikilib.php:2084 ../wikilib.php:3175
 msgid "Show changes"
 msgstr "변경점 보기"
 
-#: ../wikilib.php:1523 ../wikilib.php:1855 ../wikilib.php:2873
+#: ../wikilib.php:1754 ../wikilib.php:2086 ../wikilib.php:3177
 msgid "Skip to preview"
 msgstr "미리보기로"
 
-#: ../wikilib.php:1642
+#: ../wikilib.php:1873
 msgid "Use one of the following templates as an initial release :\n"
 msgstr "최초 버전으로 다음의 탬플리트를 활용하실 수 있습니다 :\n"
 
-#: ../wikilib.php:1643
+#: ../wikilib.php:1874
 #, c-format
 msgid "To create your own templates, add a page with '%s' pattern."
 msgstr "탬플리트를 만드시려면 '%s' 형식의 이름으로 페이지를 만드세요."
 
-#: ../wikilib.php:1651
+#: ../wikilib.php:1882
 msgid "Merge"
 msgstr "병합"
 
-#: ../wikilib.php:1652
+#: ../wikilib.php:1883
 msgid "Merge manually"
 msgstr "수동 병합"
 
-#: ../wikilib.php:1653
+#: ../wikilib.php:1884
 msgid "Ignore conflicts"
 msgstr "충돌 무시"
 
-#: ../wikilib.php:1688
+#: ../wikilib.php:1919
 msgid "ReduceEditor"
 msgstr "편집창 줄이기"
 
-#: ../wikilib.php:1689
+#: ../wikilib.php:1920
 msgid "EnlargeEditor"
 msgstr "편집창 늘이기"
 
-#: ../wikilib.php:1693 ../locale/dummy.php:6
+#: ../wikilib.php:1924 ../locale/dummy.php:6
 msgid "InterWiki"
 msgstr "인터위키"
 
-#: ../wikilib.php:1695
+#: ../wikilib.php:1926
 msgid "HelpOnEditing"
 msgstr "고치기 도움말"
 
-#: ../wikilib.php:1731
+#: ../wikilib.php:1962
 #, c-format
 msgid "Describe %s here"
 msgstr "%s의 내용을 써주세요"
 
-#: ../wikilib.php:1806
+#: ../wikilib.php:2037
 msgid "Category"
 msgstr "분류"
 
-#: ../wikilib.php:1815
+#: ../wikilib.php:2046
 msgid " Select "
 msgstr " 선택 "
 
-#: ../wikilib.php:1827
+#: ../wikilib.php:2058
 msgid "Minor edit"
 msgstr ""
 
-#: ../wikilib.php:1871
+#: ../wikilib.php:2102
 msgid "E-Mail"
 msgstr "이메일"
 
-#: ../wikilib.php:1872
+#: ../wikilib.php:2103
 #, c-format
 msgid "Send mail to %s"
 msgstr "%s에게 메일 보내기"
 
-#: ../wikilib.php:1895
+#: ../wikilib.php:2129
 msgid "Agree to the contributor license agreement on this wiki"
 msgstr "이 위키의 기여자의 저작권 정책에 동의합니다"
 
-#: ../wikilib.php:1900
+#: ../wikilib.php:2134
 msgid "Agree to the contribution agreement for Anonymous doner"
 msgstr "익명의 기여자에 대한 기여 정책에 동의합니다."
 
-#: ../wikilib.php:1988
+#: ../wikilib.php:2222
 msgid "406 Not Acceptable"
 msgstr ""
 
-#: ../wikilib.php:1993
+#: ../wikilib.php:2227
 #, c-format
 msgid "%s is not valid action"
 msgstr "%s은(는) 잘못된 액션"
 
-#: ../wikilib.php:1995
+#: ../wikilib.php:2229
 msgid "Is it valid action ?"
 msgstr "올바른 액션입니까 ?"
 
-#: ../wikilib.php:2050
+#: ../wikilib.php:2284
 #, c-format
 msgid "File '%s' is deleted"
 msgstr "'%s' 파일이 지워졌습니다"
 
-#: ../wikilib.php:2052
+#: ../wikilib.php:2286
 #, c-format
 msgid "Fail to delete '%s'"
 msgstr "'%s' 지우기를 실패했습니다"
 
-#: ../wikilib.php:2057
+#: ../wikilib.php:2291
 #, c-format
 msgid "Directory '%s' is deleted"
 msgstr "'%s' 디렉토리가 지우졌습니다"
 
-#: ../wikilib.php:2059
+#: ../wikilib.php:2293
 #, c-format
 msgid "Fail to rmdir '%s'"
 msgstr "'%s' 지우기를 실패했습니다"
 
-#: ../wikilib.php:2069 ../wikilib.php:2092
+#: ../wikilib.php:2303 ../wikilib.php:2326
 msgid "No files are selected !"
 msgstr "파일을 선택하지 않았습니다"
 
-#: ../wikilib.php:2085
+#: ../wikilib.php:2319
 #, c-format
 msgid "Did you really want to delete '%s' ?"
 msgstr "정말로 '%s'(을)를 지우시겠습니까 ?"
 
-#: ../wikilib.php:2089
+#: ../wikilib.php:2323
 msgid "Delete selected file"
 msgstr "선택된 파일 지우기"
 
-#: ../wikilib.php:2113
+#: ../wikilib.php:2347
 msgid "Page not found."
 msgstr "페이지를 찾을 수 없습니다"
 
-#: ../wikilib.php:2142
+#: ../wikilib.php:2364
+msgid "You do not have full permission to delete this page on this wiki."
+msgstr "페이지를 지울 수 있는 충분한 권한이 없습니다."
+
+#: ../wikilib.php:2393
 #, c-format
 msgid "Fail to delete \"%s\""
 msgstr "\"%s\" 지우기를 실패했습니다"
 
-#: ../wikilib.php:2144
+#: ../wikilib.php:2395
 msgid "Empty hash code !"
-msgstr ""
+msgstr "빈 해시 코드 !"
 
-#: ../wikilib.php:2146
+#: ../wikilib.php:2397
 msgid "Incorrect hash code !"
-msgstr ""
+msgstr "잘못된 해시 코드 !"
 
-#: ../wikilib.php:2148
+#: ../wikilib.php:2399
 #, c-format
 msgid "\"%s\" is deleted !"
 msgstr "%s(이)가 지워짐 !"
 
-#: ../wikilib.php:2164
+#: ../wikilib.php:2415
 msgid "Please delete this file manually."
 msgstr "파일을 직접 지워주세요."
 
-#: ../wikilib.php:2166
+#: ../wikilib.php:2417
 #, c-format
 msgid "Delete \"%s\" ?"
 msgstr "\"%s\"을(를) 지울까요 ?"
 
-#: ../wikilib.php:2177
+#: ../wikilib.php:2428
 msgid "Delete Page"
 msgstr "쪽 지우기"
 
-#: ../wikilib.php:2178
+#: ../wikilib.php:2429
 msgid "Only WikiMaster can delete this page"
 msgstr "위키관리자만이 페이지를 지울 수 있습니다"
 
-#: ../wikilib.php:2269
+#: ../wikilib.php:2520
 #, c-format
 msgid "%s (rev. %s)"
-msgstr ""
+msgstr "%s (버전. %s)"
 
-#: ../wikilib.php:2493
+#: ../wikilib.php:2744
 #, c-format
 msgid " or click %s to fullsearch this page.\n"
 msgstr " 혹은 %s를 눌러 전체찾기를 합니다.\n"
 
-#: ../wikilib.php:2493
+#: ../wikilib.php:2744
 msgid "title"
 msgstr "제목"
 
-#: ../wikilib.php:2508
+#: ../wikilib.php:2759
 msgid "Please try to fulltext search"
 msgstr "전체 찾기를 해보시기 바랍니다"
 
-#: ../wikilib.php:2512
+#: ../wikilib.php:2763
 #, c-format
 msgid "You can also click %s to fulltext search.\n"
 msgstr "%s 아이콘을 눌러 전체 찾기를 하실 수 있습니다.\n"
 
-#: ../wikilib.php:2558 ../wikilib.php:2699
+#: ../wikilib.php:2809 ../wikilib.php:2950
 #, c-format
 msgid "Someone else saved the page while you edited %s"
 msgstr "%s을(를) 고치는 동안 다른 사람이 이 페이지를 저장했습니다"
 
-#: ../wikilib.php:2563 ../wikilib.php:2572 ../wikilib.php:2751
-#: ../wikilib.php:2759
+#: ../wikilib.php:2814 ../wikilib.php:2823 ../wikilib.php:3002
+#: ../wikilib.php:3010
 msgid "Invalid access"
 msgstr "잘못된 요청"
 
-#: ../wikilib.php:2578
+#: ../wikilib.php:2829
 msgid "Section edit is not valid for non-exists page."
 msgstr "없는 페이지에 대한 섹션 편집은 가능하지 않습니다"
 
-#: ../wikilib.php:2613 ../wikilib.php:2918
+#: ../wikilib.php:2864 ../wikilib.php:3222
 msgid "mail does not supported by default."
 msgstr "메일이 지원되지 않습니다"
 
-#: ../wikilib.php:2617 ../wikilib.php:2922
+#: ../wikilib.php:2868 ../wikilib.php:3226
 msgid "Sent notification mail."
 msgstr "메일을 보냈습니다"
 
-#: ../wikilib.php:2619 ../wikilib.php:2924
+#: ../wikilib.php:2870 ../wikilib.php:3228
 msgid "No subscribers found."
 msgstr "구독자가 없습니다"
 
-#: ../wikilib.php:2624 ../wikilib.php:2932
+#: ../wikilib.php:2875 ../wikilib.php:3236
 #, c-format
 msgid "%s is not editable"
 msgstr "%s(이)가 쓰기가능하지 않음"
 
-#: ../wikilib.php:2626 ../wikilib.php:2935
+#: ../wikilib.php:2877 ../wikilib.php:3239
 #, c-format
 msgid "%s is saved"
 msgstr "%s(이)가 저장됨"
 
-#: ../wikilib.php:2683
+#: ../wikilib.php:2934
 msgid "Goto Editor"
 msgstr "편집기로 가기"
 
-#: ../wikilib.php:2703
+#: ../wikilib.php:2954
 #, c-format
 msgid "%s is merged with latest contents."
 msgstr "%s 문서 최근 내용이 병합되었습니다."
 
-#: ../wikilib.php:2704
+#: ../wikilib.php:2955
 #, c-format
 msgid "%s is merged successfully"
 msgstr "%s 문서가 성공적으로 병합되었습니다"
 
-#: ../wikilib.php:2708
+#: ../wikilib.php:2959
 #, c-format
 msgid "Merge conflicts are detected for %s !"
 msgstr "%s에 대하여 병합 충돌이 발견되었습니다 !"
 
-#: ../wikilib.php:2709
+#: ../wikilib.php:2960
 #, c-format
 msgid "Merge cancelled on %s."
 msgstr "%s에 대해 병합이 취소되었습니다."
 
-#: ../wikilib.php:2710
+#: ../wikilib.php:2961
 msgid "NEW"
 msgstr ""
 
-#: ../wikilib.php:2711
+#: ../wikilib.php:2962
 msgid "OLD"
 msgstr ""
 
-#: ../wikilib.php:2720
+#: ../wikilib.php:2971
 #, c-format
 msgid "Get merge conflicts for %s"
 msgstr "%s에 대해 병합을 합니다"
 
-#: ../wikilib.php:2721
+#: ../wikilib.php:2972
 msgid "Please resolve conflicts manually."
 msgstr "충돌을 직접 해결하시기 바랍니다."
 
-#: ../wikilib.php:2724
+#: ../wikilib.php:2975
 #, c-format
 msgid "Force merging for %s !"
 msgstr "%s에 대해 병합이 강제로 되었습니다 !"
 
-#: ../wikilib.php:2725
+#: ../wikilib.php:2976
 msgid "Please be careful, you could damage useful information."
 msgstr "주의하시기 바랍니다. 중요한 정보를 잃어버릴 수도 있습니다."
 
-#: ../wikilib.php:2739
+#: ../wikilib.php:2990
 msgid "Conflict error!"
 msgstr "충돌 오류!"
 
-#: ../wikilib.php:2775
+#: ../wikilib.php:3026
 msgid "Too long Comment"
 msgstr "요약이 너무 깁니다"
 
-#: ../wikilib.php:2835
+#: ../wikilib.php:3089
 msgid "Anonymous user have to agree the contribution agreement for this wiki."
 msgstr ""
 
-#: ../wikilib.php:2837
+#: ../wikilib.php:3091
 msgid ""
 "Sorry, you have to agree the contribution agreement or the join agreement of "
 "this wiki."
 msgstr ""
+"죄송합니다. 기여자 동의를 확인하시거나 가입 동의서에 동의하셔야 합니다."
 
-#: ../wikilib.php:2842
+#: ../wikilib.php:3135
+msgid "You do not have full permission to edit this page on this wiki."
+msgstr "문서를 완전히 편집할 충분한 권한이 없습니다."
+
+#: ../wikilib.php:3136
+msgid ""
+"Anonymous user is restricted to delete a lot amount of page on this wiki."
+msgstr "익명 사용자는 상당량의 문서 내용을 지우는 것이 제한됩니다."
+
+#: ../wikilib.php:3146
 #, c-format
 msgid "Preview of %s"
 msgstr "%s 미리보기"
 
-#: ../wikilib.php:2982
+#: ../wikilib.php:3286
 msgid "You have contribute this wiki as an Anonymous donor."
 msgstr "귀하는 익명으로 이 위키에 기여하셨습니다."
 
-#: ../wikilib.php:2983
+#: ../wikilib.php:3287
 msgid "Your IP address and e-mail address are used to verify you."
 msgstr "IP 주소와 이메일 주소로 귀하를 판별하게 됩니다."
 
-#: ../wikilib.php:2993
+#: ../wikilib.php:3297
 msgid "Nobody subscribed to this page."
 msgstr "아무도 페이지를 구독하지 않고있습니다."
 
-#: ../wikilib.php:3011
+#: ../wikilib.php:3315
 #, c-format
 msgid "%s page is modified"
 msgstr "%s 페이지가 변경되었습니다"
 
-#: ../wikilib.php:3040
+#: ../wikilib.php:3344
 #, c-format
 msgid ""
 "You have subscribed to this wiki page on \"%s\" for change notification.\n"
@@ -2934,81 +3002,81 @@ msgstr ""
 "\"%s\" 문서의 변경에 대해서 구독 신청을 하셨습니다.\n"
 "\n"
 
-#: ../wikilib.php:3054
+#: ../wikilib.php:3358
 msgid "Send notification mails to all subscribers"
 msgstr "모든 구독자에게 메일을 보냅니다"
 
-#: ../wikilib.php:3059
+#: ../wikilib.php:3363
 msgid "Mails are sent successfully"
 msgstr "메일이 성공적으로 보내졌습니다"
 
-#: ../wikilib.php:3060
+#: ../wikilib.php:3364
 #, c-format
 msgid "mails are sent to '%s'"
 msgstr "'%s'에게 메일을 보냈습니다"
 
-#: ../wikilib.php:3062
+#: ../wikilib.php:3366
 msgid "Fail to send mail"
 msgstr "메일 보내기 실패했습니다"
 
-#: ../wikilib.php:3112
+#: ../wikilib.php:3416
 msgid "This wiki does not support sendmail"
 msgstr "위키에서 sendmail을 지원받지 못합니다"
 
-#: ../wikilib.php:3298
+#: ../wikilib.php:3602
 msgid "Invalid regular expression !"
 msgstr "잘못된 정규 표현식 !"
 
-#: ../wikilib.php:3322
+#: ../wikilib.php:3626
 msgid "No match!"
 msgstr ""
 
-#: ../wikilib.php:3325
+#: ../wikilib.php:3629
 msgid "Infinite loop possible!"
 msgstr "무한 루프가 가능함!"
 
-#: ../wikilib.php:3413
+#: ../wikilib.php:3717
 #, c-format
 msgid "Last modified at %s"
 msgstr "최종 변경일자 %s"
 
-#: ../wikilib.php:3477
+#: ../wikilib.php:3781
 msgid "OpenID"
 msgstr ""
 
-#: ../wikilib.php:3532
+#: ../wikilib.php:3836
 msgid "password again"
 msgstr "비밀번호 재입력"
 
-#: ../wikilib.php:3534 ../wikilib.php:3590 ../wikilib.php:3612
+#: ../wikilib.php:3838 ../wikilib.php:3894 ../wikilib.php:3926
 msgid "Mail"
 msgstr "메일"
 
-#: ../wikilib.php:3562
+#: ../wikilib.php:3866
 msgid "New password"
 msgstr "새 비밀번호"
 
-#: ../wikilib.php:3567
+#: ../wikilib.php:3871
 msgid "Nickname"
 msgstr "별명"
 
-#: ../wikilib.php:3591
+#: ../wikilib.php:3895
 msgid "Time Zone"
 msgstr "시간대"
 
-#: ../wikilib.php:3600
+#: ../wikilib.php:3904
 msgid "logout"
 msgstr "로그아웃"
 
-#: ../wikilib.php:3604 ../wikilib.php:3660
+#: ../wikilib.php:3918 ../wikilib.php:3974
 msgid "Accept agreement"
 msgstr "약관 동의"
 
-#: ../wikilib.php:3677
+#: ../wikilib.php:3991
 msgid "Remove"
 msgstr "제거"
 
-#: ../wikilib.php:4220
+#: ../wikilib.php:4534
 msgid "Show all"
 msgstr "모두 보기"
 
@@ -3350,6 +3418,24 @@ msgstr "목차"
 #: ../locale/dummy.php:12
 msgid "last modified:"
 msgstr "최종 변경일자:"
+
+#~ msgid "Discuss lists updated."
+#~ msgstr "토론 리스트가 갱신됨."
+
+#~ msgid "Do you want to discuss on \"%s\" ?"
+#~ msgstr "\"%s\"에 대해 토론하시겠습니까 ?"
+
+#~ msgid "Total 1 revision found."
+#~ msgstr "전체 1개의 버전이 있습니다."
+
+#~ msgid "Total %d revisions found."
+#~ msgstr "전체 %d개의 버전이 있습니다."
+
+#~ msgid "Last modified r%s on %s by %s"
+#~ msgstr "r%s버전의 최종 변경일자는 %s, 고친이: %s"
+
+#~ msgid "Version info is not available"
+#~ msgstr "버전 정보가 없습니다"
 
 #~ msgid "Rename and fix Backlinks"
 #~ msgstr "이름 바꾸고 그 역링크 수정"
