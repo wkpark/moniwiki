@@ -1151,6 +1151,7 @@ class UserDB {
                   "join_agreement",
                   "join_agreement_version",
                   "tz_offset",
+                  "avatar",
                   "theme",
                   "css_url",
                   "bookmark",
