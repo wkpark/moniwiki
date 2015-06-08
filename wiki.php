@@ -903,7 +903,10 @@ class WikiDB {
     return $body;
   }
 
-  function _savePage($filename,$body,$options=array()) {
+  function _savePage($pagename,$body,$options=array()) {
+    $keyname = $this->_getPageKey($pagename);
+    $filename = $this->text_dir.'/'.$keyname;
+
     $dir=dirname($filename);
     if (!is_dir($dir)) {
       $om=umask(~$this->umask);
@@ -925,6 +928,18 @@ class WikiDB {
     if (!empty($this->version_class)) {
       $om=umask(~$this->umask);
       $ver = $this->lazyLoad('version', $this);
+
+      // get diff
+      $diff = $ver->diff($pagename);
+      // count diff lines, chars
+      $changes = diffcount_lines($diff, $this->charset);
+      // set return values
+      $retval = &$options['retval'];
+      $retval['add'] = $changes[0];
+      $retval['del'] = $changes[1];
+      $retval['add_chars'] = $changes[2];
+      $retval['del_chars'] = $changes[3];
+
       $ret = $ver->_ci($filename,$options['log']);
       if ($ret == -1)
         $options['retval']['msg'] = _("Fail to save version information");
@@ -976,7 +991,11 @@ class WikiDB {
 
     $is_new = false;
     if (!file_exists($key)) $is_new = true;
-    $ret=$this->_savePage($key,$body,$options);
+
+    // get some edit info;
+    $retval = array();
+    $options['retval'] = &$retval;
+    $ret = $this->_savePage($page->name, $body, $options);
     if ($ret == -1) return -1;
 
     #
@@ -993,6 +1012,35 @@ class WikiDB {
     }
     if (empty($options['minor']) and !$minor)
       $this->addLogEntry($page->name, $REMOTE_ADDR,$comment,$action);
+
+    if ($user->id != 'Anonymous') {
+      // save editing information
+      if (!isset($user->info['edit_count']))
+        $user->info['edit_count'] = 0;
+
+      $user->info['edit_count']++;
+
+      // added/deleted lines
+      if (!isset($user->info['edit_add_lines']))
+        $user->info['edit_add_lines'] = 0;
+      if (!isset($user->info['edit_del_lines']))
+        $user->info['edit_del_lines'] = 0;
+
+      if (!isset($user->info['edit_add_chars']))
+        $user->info['edit_add_chars'] = 0;
+      if (!isset($user->info['edit_del_chars']))
+        $user->info['edit_del_chars'] = 0;
+
+      // added/deleted lines
+      $user->info['edit_add_lines']+= $retval['add'];
+      $user->info['edit_del_lines']+= $retval['del'];
+
+      // added/deleted chars
+      $user->info['edit_add_chars']+= $retval['add_chars'];
+      $user->info['edit_del_chars']+= $retval['del_chars'];
+      // save user
+      $this->udb->saveUser($user);
+    }
 
     $indexer = $this->lazyLoad('titleindexer');
     if ($is_new) $indexer->addPage($page->name);

@@ -71,6 +71,140 @@ function get_file_lines($filename) {
 }
 
 /**
+ * counting add/del lines of a given diff
+ *
+ * @author wkpark@kldp.org
+ * @since  2015/06/08
+ * @param  string   $diff   - diff -u output
+ * @return array            - return added/deleted lines
+ */
+
+function diffcount_simple($diff) {
+    $retval = &$params['retval'];
+    $lines = explode("\n", $diff);
+    $lsz = sizeof($lines);
+    $add = 0;
+    $del = 0;
+    for ($i = 0; $i < $lsz; $i++) {
+        $marker = $lines[$i][0];
+        if (!in_array($marker, array('-','+'))) {
+            continue;
+        }
+        if ($marker == '-')
+            $del++;
+        else
+            $add++;
+    }
+
+    return array($add, $del, 0, 0);
+}
+
+/**
+ * counting add/del lines and chars of a given diff
+ *
+ * @author wkpark@kldp.org
+ * @since  2015/06/08
+ * @param  string   $diff   - diff -u output
+ * @return array            - return added/deleted chars and lines
+ */
+function diffcount_lines($diff, $charset) {
+    $lines = explode("\n", $diff);
+    $lsz = sizeof($lines);
+    if ($lines[$lsz - 1] == '') {
+        // trash last empty line
+        array_pop($lines);
+        $lsz--;
+    }
+
+    $add = 0;
+    $del = 0;
+    $add_chars = 0;
+    $del_chars = 0;
+
+    $orig = array();
+    $new = array();
+    $om = false;
+
+    for ($i = 0; $i < $lsz; $i++) {
+        $line = &$lines[$i];
+        if (!isset($line[0])) break;
+
+        $mark = $line[0];
+        if (!$om && $mark == '-' && isset($line[3]) && substr($line, 0, 4) == '--- ') {
+            // trash first --- blah\n+++ blah\n lines
+            $i++;
+            continue;
+        }
+
+        $line = substr($line, 1);
+        if ($mark == '@') {
+            continue;
+        } else if ($mark == '-') {
+            $om = true;
+            $orig[] = $line;
+            $del++;
+            continue;
+        } else if ($mark == '+') {
+            $om = true;
+            $new[] = $line;
+            $add++;
+            continue;
+        } else if ($om) {
+            $om = false;
+
+            $diffchars = diffcount_chars($orig, $new, $charset);
+
+            $add_chars+= $diffchars[0];
+            $del_chars+= $diffchars[1];
+
+            $orig = array();
+            $new = array();
+        }
+    }
+
+    if (!empty($orig)) {
+        $diffchars = diffcount_chars($orig, $new, $charset);
+
+        $add_chars+= $diffchars[0];
+        $del_chars+= $diffchars[1];
+    }
+
+    return array($add, $del, $add_chars, $del_chars);
+}
+
+/**
+ * counting add/del chars of a given array
+ *
+ * @author wkpark@kldp.org
+ * @since  2015/06/08
+ * @param  array    $orig   - original lines
+ * @param  array    $new    - modified lines
+ * @param  string   $charet - character set
+ * @return array    added,deleted chars
+ */
+function diffcount_chars($orig, $new, $charset) {
+    include_once('lib/difflib.php');
+
+    $add_chars = 0;
+    $del_chars = 0;
+
+    $result = new WordLevelDiff($orig, $new, $charset);
+    foreach ($result->edits as $edit) {
+        if (is_a($edit, '_DiffOp_Copy')) {
+            continue;
+        } elseif (is_a($edit, '_DiffOp_Add')) {
+            $add_chars+= mb_strlen(implode('', $edit->_final), $charset);
+        } elseif (is_a($edit, '_DiffOp_Delete')) {
+            $del_chars+= mb_strlen(implode('', $edit->orig), $charset);
+        } elseif (is_a($edit, '_DiffOp_Change')) {
+            $del_chars+= mb_strlen(implode('', $edit->orig), $charset);
+            $add_chars+= mb_strlen(implode('', $edit->_final), $charset);
+        }
+    }
+    return array($add_chars, $del_chars);
+}
+
+/**
  * Extracted from Gallery Plugin
  *
  * make pagelist to paginate.
@@ -1148,6 +1282,11 @@ class UserDB {
                   "idtype",
                   "npassword",
                   "nticket",
+                  "edit_count",
+                  "edit_add_lines",
+                  "edit_del_lines",
+                  "edit_add_chars",
+                  "edit_del_chars",
                   "join_agreement",
                   "join_agreement_version",
                   "tz_offset",
