@@ -241,7 +241,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
         $ext = '.'.get_extension('data/mime.types', $mimetype);
     }
 
-    if (!empty($DBInfo->fetch_images_only) and !$is_image) {
+    if ((!empty($params['images_only']) || !empty($DBInfo->fetch_images_only)) and !$is_image) {
         // always check the content-type
         $params['retval']['error'] = sprintf(_("Invalid mime-type %s"), $mimetype);
         $params['retval']['mimetype'] = $mimetype;
