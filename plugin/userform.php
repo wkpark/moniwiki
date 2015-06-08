@@ -379,7 +379,7 @@ function do_userform($formatter,$options) {
                do_invalid($formatter,$options);
                return;
              }
-             $title= _("Successfully added!");
+             $title= sprintf(_("Successfully added as '%s'"), _html_escape($user->id));
              $options['id']=$user->id;
              $ticket=md5(time().$user->id.$options['email']);
              $user->info['eticket']=$ticket.".".$options['email'];
@@ -387,11 +387,17 @@ function do_userform($formatter,$options) {
                $options['msg'] =
                  sprintf(_("Successfully added as '%s'"),$user->id);
                $options['msg'].= '<br />'._("Please check your mailbox");
-             } else
-               $formatter->header($user->setCookie());
+             }
              $args = array();
              if ($options['email'] == $id or !empty($DBInfo->register_confirm_email))
                $args = array('suspended'=>1);
+             if (!empty($DBInfo->register_confirm_admin))
+               $args = array('suspended'=>1);
+             if (!empty($DBInfo->register_confirm_admin)) {
+               if (!empty($options['msg']))
+                 $options['msg'].= '<br />';
+               $options['msg'].= _("Your need to wait until your ID activated by admin");
+             }
 
              // save join agreement
              if (!empty($DBInfo->use_agreement) and !empty($options['joinagreement'])) {
@@ -399,6 +405,9 @@ function do_userform($formatter,$options) {
                if (!empty($DBInfo->agreement_version))
                  $user->info['join_agreement_version'] = $DBInfo->agreement_version;
              }
+
+             if (empty($DBInfo->use_safelogin) && empty($args['suspended']))
+               $formatter->header($user->setCookie());
 
              $ret = $udb->addUser($user, $args);
 
