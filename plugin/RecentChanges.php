@@ -798,6 +798,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
               $addr = substr($user, 10);
               $user = _('Anonymous');
             }
+            $uid = $user;
             if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i', $user)) {
               if (!empty($DBInfo->hide_emails))
                 $user = substr(md5($user), 0, 8); // FIXME
@@ -808,7 +809,9 @@ function macro_RecentChanges($formatter,$value='',$options='') {
             if (!empty($use_avatar)) {
               $crypted = crypt($addr, $addr);
               $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
-              $user = '<img src="'.$mylnk.'" style="width:16px;height:16px;vertical-align:middle" alt="avatar" />'.$user;
+              if ($uid != 'Anonymous')
+                $mylnk.= '&amp;user='.$uid;
+              $user = '<img src="'.$mylnk.'" class="avatar" alt="avatar" />'.$user;
             }
             $users[$ouser] = $user;
           }
