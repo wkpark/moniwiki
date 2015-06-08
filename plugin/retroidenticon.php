@@ -44,7 +44,7 @@ function do_retroidenticon($formatter, $params = array())
 
     header('Last-Modified: '.$lastmod);
     header('ETag: "' .$etag. '"');
-    header('Cache-Control: private, max-age='.$maxage);
+    header('Cache-Control: public, max-age='.$maxage);
     header('Pragma: cache');
     if (!$need) {
         header('HTTP/1.0 304 Not Modified');
