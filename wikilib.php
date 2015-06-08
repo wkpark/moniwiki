@@ -2112,10 +2112,13 @@ EOS;
     // show contributor license agreement form
     $ok_agreement = true;
     if (!empty($DBInfo->use_agreement)) {
-      if ($options['id'] != 'Anonymous')
+      if ($options['id'] != 'Anonymous') {
         $ok_agreement = !empty($DBInfo->user->info['join_agreement']) && $DBInfo->user->info['join_agreement'] == 'agree';
-      else
+        if ($ok_agreement && !empty($DBInfo->agreement_version))
+          $ok_agreement = $DBInfo->user->info['join_agreement_version'] == $DBInfo->agreement_version;
+      } else {
         $ok_agreement = false;
+      }
     }
 
     if (!$ok_agreement) {
@@ -3054,10 +3057,13 @@ function do_post_savepage($formatter,$options) {
   // check license agreement
   $ok_agreement = true;
   if (!empty($DBInfo->use_agreement)) {
-    if ($options['id'] != 'Anonymous')
+    if ($options['id'] != 'Anonymous') {
       $ok_agreement = !empty($DBInfo->user->info['join_agreement']) && $DBInfo->user->info['join_agreement'] == 'agree';
-    else
+      if ($ok_agreement && !empty($DBInfo->agreement_version))
+        $ok_agreement = $DBInfo->user->info['join_agreement_version'] == $DBInfo->agreement_version;
+    } else {
       $ok_agreement = false;
+    }
   }
 
   if (empty($button_preview) && !$ok_agreement && empty($options['license_agree'])) {
