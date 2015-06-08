@@ -19,7 +19,7 @@ function do_post_rename($formatter,$options) {
 
   if (!$full_permission) {
     $formatter->send_header('', $options);
-    $title = _("You do not have full permission to rename this page on this wiki.");
+    $title = _("You do not have permission to rename this page on this wiki.");
     $formatter->send_title($title, '',$options);
     $formatter->send_footer('', $options);
     return;
