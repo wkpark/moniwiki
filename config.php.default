@@ -57,6 +57,7 @@ $notify= 0; # enable email notification
 #$replyto="your@email.address"; # replyto return email address
 #$anonymous_friendly=1; # make anonymous friendly wiki
 #$anonymous_no_full_edit_permission=1; # restrict edit actions (rename,revert,save,delete) against anonymous
+#$use_anonymous_editcount=0; # use anonymous editcount to save IP information for anonymous users
 #$no_full_edit_permission=1; # restrict edit actions against all users
 $use_referer= 0; # use some basic referer feature.
 $use_sistersites=1; # use sistersites/siterwiki feature.

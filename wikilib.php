@@ -1309,14 +1309,22 @@ class UserDB {
     $date=gmdate('Y/m/d H:i:s', time());
     $data="# Data saved $date\n";
 
-    $wu = 'wu-'.$this->_id_to_key($user->id);
-    if (!empty($options['suspended'])) $wu = 'wait-'.$wu;
+    if ($user->id == 'Anonymous') {
+      if (!empty($user->info['remote']))
+        $wu = 'ip-'.$user->info['remote'];
+      else
+        $wu = 'ip-'.$_SERVER['REMOTE_ADDR'];
+    } else {
+      $wu = 'wu-'.$this->_id_to_key($user->id);
+      if (!empty($options['suspended'])) $wu = 'wait-'.$wu;
+    }
 
     // new user ?
     if (!file_exists("$this->user_dir/$wu") && empty($user->info['regdate'])) {
       $user->info['regdate'] = $date;
     }
-    $user->info['last_updated'] = $date;
+    if (empty($user->info['last_updated']))
+      $user->info['last_updated'] = $date;
 
     if (!empty($user->ticket))
       $user->info['ticket']=$user->ticket;
@@ -1340,8 +1348,15 @@ class UserDB {
   }
 
   function _exists($id, $suspended = false) {
-    $prefix = $suspended ? 'wait-wu-' : 'wu-';
-    if (file_exists("$this->user_dir/$prefix" . $this->_id_to_key($id)))
+    if (empty($id) || $id == 'Anonymous') {
+      $wu = 'ip-'.$_SERVER['REMOTE_ADDR'];
+    } else if (preg_match('/^(\d{1,3}\.){3}\d{1,3}$/', $id)) {
+      $wu = 'ip-'.$id;
+    } else {
+      $prefix = $suspended ? 'wait-wu-' : 'wu-';
+      $wu = $prefix . $this->_id_to_key($id);
+    }
+    if (file_exists($this->user_dir.'/'.$wu))
       return true;
     return false;
   }
@@ -1358,9 +1373,16 @@ class UserDB {
   }
 
   function getUser($id, $suspended = false) {
-    $prefix = $suspended ? 'wait-wu-' : 'wu-';
-    if ($this->_exists($id, $suspended)) {
-       $data=file("$this->user_dir/$prefix" . $this->_id_to_key($id));
+    if (empty($id) || $id == 'Anonymous') {
+      $wu = 'ip-'.$_SERVER['REMOTE_ADDR'];
+    } else if (preg_match('/^(\d{1,3}\.){3}\d{1,3}$/', $id)) {
+      $wu = 'ip-'.$id;
+    } else {
+      $prefix = $suspended ? 'wait-wu-' : 'wu-';
+      $wu = $prefix . $this->_id_to_key($id);
+    }
+    if (file_exists($this->user_dir.'/'.$wu)) {
+       $data = file($this->user_dir.'/'.$wu);
     } else {
        $user=new WikiUser('Anonymous');
        return $user;
@@ -1376,8 +1398,12 @@ class UserDB {
        $info[$key]=$val;
     }
 
-    $class = $this->user_class;
-    $user = new $class($id);
+    if (substr($wu, 0, 3) == 'ip-') {
+      $user = new WikiUser('Anonymous');
+    } else {
+      $class = $this->user_class;
+      $user = new $class($id);
+    }
 
     $user->info=$info;
 
@@ -1391,6 +1417,10 @@ class UserDB {
   }
 
   function delUser($id) {
+    $id = trim($id);
+    if (empty($id) || $id == 'Anonymous')
+      return false;
+
     $key = $this->_id_to_key($id);
     $u = 'wu-'. $key;
     $du = 'del-'.$u;
@@ -1408,6 +1438,10 @@ class UserDB {
   }
 
   function activateUser($id, $suspended = false) {
+    $id = trim($id);
+    if (empty($id) || $id == 'Anonymous')
+      return false;
+
     $u = $wu = 'wu-'. $this->_id_to_key($id);
     $states = array('wait', 'del');
     if ($suspended) {

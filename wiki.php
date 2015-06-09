@@ -1026,7 +1026,7 @@ class WikiDB {
     if (empty($options['minor']) and !$minor)
       $this->addLogEntry($page->name, $REMOTE_ADDR,$comment,$action);
 
-    if ($user->id != 'Anonymous') {
+    if ($user->id != 'Anonymous' || !empty($this->use_anonymous_editcount)) {
       // save editing information
       if (!isset($user->info['edit_count']))
         $user->info['edit_count'] = 0;
@@ -5430,7 +5430,10 @@ function init_requests(&$options) {
         $options['msg'] = _("Someone logged in at another place !");
       }
     }
-  }
+  } else
+    // read anonymous user IP info.
+    $user = $udb->getUser('Anonymous');
+
   $options['id']=$user->id;
   $DBInfo->user=$user;
 
