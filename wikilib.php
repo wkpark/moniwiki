@@ -797,6 +797,16 @@ function get_hashed_prefix($key, $level = 2) {
 }
 
 /**
+ * abuse filter wrapper
+ */
+function call_abusefilter($filter, $action, $params = array()) {
+    require_once(dirname(__FILE__).'/plugin/abuse/'.$filter.'.php');
+    $filtername = 'abusefilter_'.$filter;
+
+    return $filtername($action, $params);
+}
+
+/**
  * static content action
  */
 
@@ -1291,6 +1301,10 @@ class UserDB {
                   "edit_del_lines",
                   "edit_add_chars",
                   "edit_del_chars",
+                  "strike",
+                  "strike_total",
+                  "strikeout",
+                  "strikeout_total",
                   "join_agreement",
                   "join_agreement_version",
                   "tz_offset",

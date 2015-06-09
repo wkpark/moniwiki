@@ -998,6 +998,21 @@ class WikiDB {
     if (!empty($options['.reverted']))
       $action = 'REVERT';
 
+    // check abusing FIXME
+    if (!empty($this->use_abusefilter)) {
+      $params = array();
+      $params['retval'] = &$options['retval'];
+      $params['id'] = ($user->id == 'Anonymous') ? $REMOTE_ADDR : $user->id;
+
+      if (is_string($this->use_abusefilter))
+        $filtername = $this->use_abusefilter;
+      else
+        $filtername = 'default';
+
+      $ret = call_abusefilter($filtername, $action, $params);
+      if ($ret === false) return -1;
+    }
+
     $log=$REMOTE_ADDR.';;'.$myid.';;'.$comment;
     $options['log']=$log;
     $options['pagename']=$page->name;
@@ -1073,6 +1088,21 @@ class WikiDB {
 
     $comment=$options['comment'];
     $user=&$this->user;
+
+    // check abusing FIXME
+    if (!empty($this->use_abusefilter)) {
+      $params = array();
+      $params['retval'] = &$options['retval'];
+      $params['id'] = ($user->id == 'Anonymous') ? $REMOTE_ADDR : $user->id;
+
+      if (is_string($this->use_abusefilter))
+        $filtername = $this->use_abusefilter;
+      else
+        $filtername = 'default';
+
+      $ret = call_abusefilter($filtername, 'delete', $params);
+      if ($ret === false) return -1;
+    }
 
     $keyname=$this->_getPageKey($page->name);
 
