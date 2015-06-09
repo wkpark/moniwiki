@@ -5673,6 +5673,7 @@ function wiki_main($options) {
 
     // set some PIs for robot
     if (!empty($options['is_robot'])) {
+      $DBInfo->use_sectionedit = 0; # disable section edit
       $page->is_static = true;
     } else if ($_SERVER['REQUEST_METHOD'] == 'GET' or $_SERVER['REQUEST_METHOD'] == 'HEAD') {
       if (empty($action) and empty($refresh))
