@@ -162,7 +162,7 @@ function diffcount_lines($diff, $charset) {
         }
     }
 
-    if (!empty($orig)) {
+    if (!empty($orig) or !empty($new)) {
         $diffchars = diffcount_chars($orig, $new, $charset);
 
         $add_chars+= $diffchars[0];

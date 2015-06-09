@@ -914,6 +914,9 @@ class WikiDB {
       umask($om);
     }
 
+    $is_new = false;
+    if (!file_exists($filename)) $is_new = true;
+
     $fp=@fopen($filename,"a+b");
     if (!is_resource($fp))
        return -1;
@@ -930,15 +933,25 @@ class WikiDB {
       $ver = $this->lazyLoad('version', $this);
 
       // get diff
-      $diff = $ver->diff($pagename);
-      // count diff lines, chars
-      $changes = diffcount_lines($diff, $this->charset);
-      // set return values
-      $retval = &$options['retval'];
-      $retval['add'] = $changes[0];
-      $retval['del'] = $changes[1];
-      $retval['add_chars'] = $changes[2];
-      $retval['del_chars'] = $changes[3];
+      if (!$is_new) {
+        $diff = $ver->diff($pagename);
+        // count diff lines, chars
+        $changes = diffcount_lines($diff, $this->charset);
+        // set return values
+        $retval = &$options['retval'];
+        $retval['add'] = $changes[0];
+        $retval['del'] = $changes[1];
+        $retval['add_chars'] = $changes[2];
+        $retval['del_chars'] = $changes[3];
+      } else {
+        // new file.
+        // set return values
+        $retval = &$options['retval'];
+        $retval['add'] = get_file_lines($filename);
+        $retval['del'] = 0;
+        $retval['add_chars'] = mb_strlen($body, $this->charset);
+        $retval['del_chars'] = 0;
+      }
 
       $ret = $ver->_ci($filename,$options['log']);
       if ($ret == -1)
