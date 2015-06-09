@@ -3207,7 +3207,7 @@ function do_post_savepage($formatter,$options) {
     print $menu;
   } else {
     if (!empty($options['category']))
-      $savetext.="----\n$options[category]\n";
+      $savetext.="----\n[[".$options['category']."]]\n";
 
     $options['minor'] = !empty($DBInfo->use_minoredit) ? $options['minor']:0;
     if ($options['minor']) {
