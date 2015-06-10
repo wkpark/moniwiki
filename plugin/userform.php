@@ -102,7 +102,9 @@ function do_userform($formatter,$options) {
   if ($user->id == "Anonymous" and $options['verify'] == _("Verify E-mail address") and
       !empty($DBInfo->anonymous_friendly) and !empty($options['verifyemail'])) {
     if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['verifyemail'])) {
-      if (verify_email($options['verifyemail']) < 0) {
+      if (($ret = verify_email($options['verifyemail'])) < 0) {
+        $ret = -$ret;
+        $options['msg'].='<br />'.'ERROR Code: '.$ret;
         $options['msg'].='<br/>'._("Invalid email address or can't verify it.");
       } else {
         if (!empty($DBInfo->verify_email)) {
@@ -334,7 +336,9 @@ function do_userform($formatter,$options) {
     }
     $id=$user->getID($options['login_id']);
     if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i', $id)) {
-      if (verify_email($id) < 0) {
+      if (($ret = verify_email($id)) < 0) {
+        $ret = -$ret;
+        $options['msg'].='<br />'.'ERROR Code: '.$ret;
         $options['msg'].='<br/>'._("Invalid email address or can't verify it.");
       } else {
         $options['email'] = $id;
@@ -366,7 +370,12 @@ function do_userform($formatter,$options) {
            $udb=$DBInfo->udb;
            if ($options['email']) {
              if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
-               #$user->info['email']=$options['email'];
+               if (($ret = verify_email($options['email'])) < 0) {
+                 $options['email'] = ''; // reset email address
+                 $ret = -$ret;
+                 $options['msg'].='<br />'.'ERROR Code: '.$ret;
+                 $options['msg'].='<br/>'._("Can't verify E-mail address! Please check your email address.");
+               }
              } else
                $options['msg'].='<br/>'._("Your email address is not valid");
            }

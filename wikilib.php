@@ -3445,17 +3445,17 @@ function verify_email($email, $timeout = 5, $debug = false) {
             echo '['.$i.'] '.$mx."\n";
     }
 
-    $ret = -1;
+    $ret = 1;
     if ($debug) echo 'Try to connect ';
     foreach ($mxhosts as $mxhost) {
         if ($debug) echo $mxhost.", ... ";
         $sock = @fsockopen($mxhost, 25, $errno, $errstr, $timeout);
         if (is_resource($sock)) break;
     }
-    if (!is_resource($sock)) return $ret;
+    if (!is_resource($sock)) return -$ret;
     if ($debug) echo 'connected!'."\n";
 
-    $code = -1;
+    $code = 1;
     while (preg_match('/^220/', $out = fgets($sock, 2048))) {
         if ($debug) echo $out;
 
@@ -3531,7 +3531,7 @@ function verify_email($email, $timeout = 5, $debug = false) {
         break;
     }
 
-    if ($code == -1) {
+    if ($code == 1) {
         $code = substr($out, 0, 3);
         $continue = substr($out, 3, 1);
         if ($debug) echo $out;
@@ -3555,9 +3555,7 @@ function verify_email($email, $timeout = 5, $debug = false) {
 
     fclose($sock);
 
-    if ($code == '250')
-        $ret = 0;
-    return $ret;
+    return $code == '250' ? '250' : -$code;
 }
 
 function wiki_sendmail($body,$options) {
