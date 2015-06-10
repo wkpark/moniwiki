@@ -39,7 +39,12 @@ function get_scriptname() {
   // check mod_rewrite
   if (isset($_SERVER['REDIRECT_URL']) and
       strpos($_SERVER['REQUEST_URI'],$_SERVER['SCRIPT_NAME'])===false) {
-    return preg_replace('@/[^/]+\.php@','',$_SERVER['SCRIPT_NAME']);
+    if ($_SERVER['REQUEST_URI'][0] == '/' and ($p = strpos($_SERVER['REQUEST_URI'], '/', 1)) !== false) {
+      $prefix = substr($_SERVER['REQUEST_URI'], 0, $p);
+      if (($p = strpos($_SERVER['SCRIPT_NAME'], $prefix)) === 0)
+        return $prefix;
+    }
+    return '';
   }
   return $_SERVER['SCRIPT_NAME'];
 }
