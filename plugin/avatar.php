@@ -111,4 +111,8 @@ function do_avatar($formatter, $params = array())
     return;
 }
 
+function macro_Avatar($formatter, $value, $params = array()) {
+    return "<img src='?action=avatar&amp;user=".$value."' />";
+}
+
 // vim:et:sts=4:sw=4:
