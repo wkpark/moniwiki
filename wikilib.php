@@ -1524,10 +1524,11 @@ class WikiUser {
   }
 
   function getID($name) {
-     if (strpos($name," ")) {
+     $name = trim($name);
+     if (strpos($name, ' ') !== false) {
         $dum=explode(" ",$name);
         $new=array_map("ucfirst",$dum);
-        return join($new,"");
+        return implode('', $new);
      }
      return $name;
   }
