@@ -3430,37 +3430,128 @@ function wiki_notify($formatter,$options) {
  * Please see http://www.corecoding.com/php-email-validation_c15.html
  */
 
-function verify_email($email, $timeout = 5) {
-    list($name, $domain) = explode('@', $email);
+function verify_email($email, $timeout = 5, $debug = false) {
+    list($name, $domain) = explode('@', $email, 2);
+    $mxhosts = array();
     $result = getmxrr($domain, $mxhosts);
     if (!$result) $mxhosts[0] = $domain;
+    if ($debug) {
+        foreach ($mxhosts as $i=>$mx)
+            echo '['.$i.'] '.$mx."\n";
+    }
 
     $ret = -1;
+    if ($debug) echo 'Try to connect ';
     foreach ($mxhosts as $mxhost) {
+        if ($debug) echo $mxhost.", ... ";
         $sock = @fsockopen($mxhost, 25, $errno, $errstr, $timeout);
         if (is_resource($sock)) break;
     }
     if (!is_resource($sock)) return $ret;
+    if ($debug) echo 'connected!'."\n";
 
-    if (preg_match("/^220/", $out = fgets($sock, 1024))) {
-        fwrite($sock, "HELO 127.0.0.1\r\n");
-        $out = fgets($sock, 1024);
-        fwrite($sock, "MAIL FROM: <apache@localhost.localdomain>\r\n");
-        $from = fgets($sock, 1024);
-        list($code, $msg) = explode(' ', $from, 2);
+    $code = -1;
+    while (preg_match('/^220/', $out = fgets($sock, 2048))) {
+        if ($debug) echo $out;
+
+        fwrite($sock, "HELO ".$domain."\r\n");
+        $out = fgets($sock, 2048);
+        if ($debug) echo 'HELO => '."\n\t".$out;
+        $code = substr($out, 0, 3);
+        $continue = $out[3];
+        if ($code != '250')
+            break;
+
+        // trash buffer
+        if ($continue == '-')
+            while(($out = fgets($sock, 2048)) !== false) {
+                if ($debug) echo "\t".$out;
+                $code = substr($out, 0, 3);
+                $continue = $out[3];
+                if ($continue == ' ')
+                    break;
+            }
+
+        fwrite($sock, "MAIL FROM: <nobody@localhost.localdomain>\r\n");
+        $from = fgets($sock, 2048);
+        if ($debug) echo 'MAIL FROM: => '."\n\t".$from;
+        $code = substr($from, 0, 3);
+        $continue = $out[3];
+
+        // trash buffer
+        if ($continue == '-')
+            while(($out = fgets($sock, 2048)) !== false) {
+                if ($debug) echo "\t".$out;
+                $code = substr($out, 0, 3);
+                $continue = $out[3];
+                if ($continue == ' ')
+                    break;
+            }
+
         if ($code == '553') {
-            fwrite($sock, "MAIL FROM: <".$email.">\r\n");
-            $from = fgets($sock, 1024);
-            list($code, $msg) = explode(' ', $from, 2);
+            // some cases like as hanmail
+            fwrite($sock, 'MAIL FROM: <'.$email.">\r\n");
+            $from = fgets($sock, 2048);
+            if ($debug) echo 'MAIL FROM: <'.$email.'> => '."\n\t".$from;
+            $code = substr($from, 0, 3);
+            $continue = $from[3];
         }
-        fwrite($sock, "RCPT TO: <".$email.">\r\n");
-        $to = fgets($sock, 1024);
-        list($code, $msg) = explode(' ', $to, 2);
-        fwrite($sock, "QUIT\r\n");
-        fclose($sock);
 
-        if ($code == '250') $ret = 0;
+        // trash buffer again
+        if ($continue == '-')
+            while(($out = fgets($sock, 2048)) !== false) {
+                if ($debug) echo "\t".$out;
+                $code = substr($out, 0, 3);
+                $continue = $out[3];
+                if ($continue == ' ')
+                    break;
+            }
+
+        fwrite($sock, 'RCPT TO: <'.$email.">\r\n");
+        $to = fgets($sock, 2048);
+        if ($debug) echo 'RCPT TO: => '."\n\t".$to;
+        $code = substr($to, 0, 3);
+        $continue = $to[3];
+
+        // trash buffer
+        if ($continue == '-')
+            while(($out = fgets($sock, 2048)) !== false) {
+                if ($debug) echo "\t".$out;
+                $code = substr($out, 0, 3);
+                $continue = $out[3];
+                if ($continue == ' ')
+                    break;
+            }
+
+        break;
     }
+
+    if ($code == -1) {
+        $code = substr($out, 0, 3);
+        $continue = substr($out, 3, 1);
+        if ($debug) echo $out;
+
+        if ($continue == '-')
+            while(($out = fgets($sock, 2048)) !== false) {
+                if ($debug) echo "\t".$out;
+                $code = substr($out, 0, 3);
+                $continue = $out[3];
+                if ($continue == ' ')
+                    break;
+            }
+    } else {
+        fwrite($sock, "RSET\r\n");
+        $out = fgets($sock, 2048);
+        if ($debug) echo 'RSET => '."\n\t".$out;
+        fwrite($sock, "QUIT\r\n");
+        $out = fgets($sock, 2048);
+        if ($debug) echo 'QUIT => '."\n\t".$out;
+    }
+
+    fclose($sock);
+
+    if ($code == '250')
+        $ret = 0;
     return $ret;
 }
 
