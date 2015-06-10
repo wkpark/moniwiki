@@ -10,6 +10,8 @@
 function macro_Navigation($formatter,$value) {
   global $DBInfo;
 
+  $use_action = 0;
+  $links = array();
   preg_match('/([^,]+),?\s*(.*)/',$value,$match);
   if ($match) {
     $opts=explode(',',$match[2]);
@@ -17,9 +19,6 @@ function macro_Navigation($formatter,$value) {
   }
   if (!$value or !$DBInfo->hasPage($value))
     return '[[Navigation('._("No Index page found").')]]';
-
-  $use_action=0;
-  if (in_array('action',$opts)) $use_action=1;
 
   $pg=$DBInfo->getPage($value);
   $lines=explode("\n",$pg->get_raw_body());
@@ -34,10 +33,21 @@ function macro_Navigation($formatter,$value) {
   } else
     $page=$value;
 
-#  print $current;
-
   $pagelinks = $formatter->pagelinks; // save
   if (empty($formatter->wordrule)) $formatter->set_wordrule();
+
+  foreach ($opts as $opt) {
+    if ($opt == 'action') $use_action = 1;
+    else {
+      if (preg_match('/^('.$formatter->wordrule.')$/', $opt)) {
+        $links[] = $formatter->link_repl($opt);
+      }
+    }
+  }
+
+  $extra_links = '';
+  if (!empty($links))
+    $extra_links = implode(' <span class="sep">|</span> ', $links).' <span class="sep">|</span> ';
 
   $indices=array();
   $count=0;
@@ -83,7 +93,7 @@ function macro_Navigation($formatter,$value) {
       $query='?action=navigation&amp;value='.$value;
       $formatter->query_string=$query;
     }
-    $pnut='&laquo; ';
+    $pnut='<span class="open">&laquo;</span> ';
     if ($prev >= 0) {
       $prev_text=!empty($texts[$prev]) ? $texts[$prev] : '';
       $prev=!empty($indices[$prev]) ? $indices[$prev] : '';
@@ -96,7 +106,7 @@ function macro_Navigation($formatter,$value) {
       }
     }
     if ($use_action) $formatter->query_string=$save;
-    $pnut.=" | ".$formatter->link_repl("[wiki:$index $index_text]")." | ";
+    $pnut.=" <span class='sep'>|</span> ".$formatter->link_repl("[wiki:$index $index_text]")." <span class='sep'>|</span> ".$extra_links;
     if ($use_action) $formatter->query_string=$query;
     if ($next >=0) {
       $next_text=$texts[$next];
@@ -108,12 +118,12 @@ function macro_Navigation($formatter,$value) {
       #$pnut.=$formatter->link_tag($next, "", $next_text, " accesskey=\".\" ");
       $pnut.=$formatter->link_repl("[wiki:$next $next_text]"," accesskey=\".\" ");
     }
-    $pnut.=' &raquo;';
+    $pnut.=' <span class="close">&raquo;</span>';
     if ($use_action) $formatter->query_string=$save;
   }
   $formatter->pagelinks = $pagelinks; // restore
   if (!empty($pnut))
-    return $pnut;
+    return '<div class="navigation">'.$pnut.'</div>';
   return '';
 }
 
