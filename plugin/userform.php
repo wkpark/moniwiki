@@ -615,7 +615,10 @@ function do_userform($formatter,$options) {
   $myrefresh='';
   if (!empty($DBInfo->use_refresh) and !empty($use_refresh)) {
     $sec=$DBInfo->use_refresh - 1;
-    $lnk=$formatter->link_url($formatter->page->urlname,'?action=show');
+    if (!empty($options['return_url']))
+      $lnk = $options['return_url'];
+    else
+      $lnk = $formatter->link_url($formatter->page->urlname,'?action=show');
     $myrefresh='Refresh: '.$sec.'; url='.qualifiedURL($lnk);
   }
 

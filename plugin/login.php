@@ -19,7 +19,12 @@ function macro_login($formatter,$value="",$options="") {
     $formatter->_dynamic_macros['@Login'] = 1;
 
   $url=$formatter->link_url('UserPreferences');
-  $urlpage=$formatter->link_url($formatter->page->urlname);
+  $urlpage = qualifiedUrl($formatter->link_url($formatter->page->urlname));
+  $return_url = $urlpage;
+
+  if (!empty($DBInfo->use_ssl_login)) {
+    $urlpage = preg_replace('@^http://@', 'https://', $urlpage);
+  }
 
   $user=&$DBInfo->user; # get from COOKIE VARS
 
@@ -48,6 +53,7 @@ function macro_login($formatter,$value="",$options="") {
 <form method='post' action='$urlpage' $onsubmit>
 <div>
 <input type="hidden" name="action" value="userform" />
+<input type="hidden" name="return_url" value="$return_url" />
 <table border='0' cellpadding='2' cellspacing='0'>
 <tr><td class='label'>$id</td><td><input type='text' name='login_id' size='10' /></td></tr>
 <tr><td class='label'>$pass</td><td><input name='password' type='password' size='10' /></td></tr>

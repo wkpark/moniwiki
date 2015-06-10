@@ -3912,7 +3912,12 @@ function macro_UserPreferences($formatter,$value,$options='') {
   }
 
   $passwd_btn=_("Password");
-  $url=$formatter->link_url($formatter->page->urlname);
+  $url = qualifiedUrl($formatter->link_url($formatter->page->urlname));
+  $return_url = $url;
+
+  if (!empty($DBInfo->use_ssl_login))
+    $url = preg_replace('@^http://@', 'https://', $url);
+
   # setup form
   if ($user->id == 'Anonymous') {
     if (!empty($options['login_id'])) {
@@ -3964,6 +3969,7 @@ MYFORM;
 <form method="post" action="$url"$onsubmit>
 <div>
 <input type="hidden" name="action" value="userform" />
+<input type="hidden" name="return_url" value="$return_url" />
 <table border="0">
 $openid_form
 $sep0
