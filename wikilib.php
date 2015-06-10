@@ -1492,7 +1492,7 @@ class WikiUser {
      if (!empty($Config['cookie_expires']))
         $this->cookie_expires = $Config['cookie_expires'];
 
-     if ($id) {
+     if ($id && $id != 'Anonymous') {
         $this->setID($id);
         return;
      }
