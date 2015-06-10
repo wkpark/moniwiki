@@ -2,6 +2,8 @@
 # @desc Default config file
 #
 $sitename='UnnamedWiki'; # site name
+#$title_sitename='UnnamedWiki'; # site name in the title
+#$title_msgstr="%2\$s - %1\$s"; # msgstr for the title
 $data_dir= './data';
 $upload_dir= 'pds';
 

@@ -4612,7 +4612,12 @@ JSHEAD;
       echo $this->get_javascripts();
       echo $keywords;
       if (!empty($meta_lastmod)) echo $meta_lastmod;
-      echo "  <title>$DBInfo->sitename: ",$options['title'],"</title>\n";
+
+      $sitename = !empty($DBInfo->title_sitename) ? $DBInfo->title_sitename : $DBInfo->sitename;
+      if (!empty($DBInfo->title_msgstr))
+        echo '  <title>',sprintf($DBInfo->title_msgstr, $sitename, $options['title']),"</title>\n";
+      else
+        echo "  <title>$sitename: ",$options['title'],"</title>\n";
       if (!empty($upper))
         echo '  <link rel="Up" href="',$this->link_url($upper),"\" />\n";
       $raw_url=$this->link_url($this->page->urlname,"?action=raw");
