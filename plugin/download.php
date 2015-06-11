@@ -62,7 +62,7 @@ function do_download($formatter,$options) {
     }
   }
 
-  if ($key == 'UploadFile')
+  if ($value[0] == '/' or $key == 'UploadFile')
     $dir=$DBInfo->upload_dir;
 
   if (file_exists($dir))
