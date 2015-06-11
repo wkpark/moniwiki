@@ -6053,13 +6053,16 @@ function wiki_main($options) {
     return;
   }
 
-  if ($action) {
+  $act = $action;
+  if (!empty($DBInfo->myplugins) and array_key_exists($action, $DBInfo->myplugins))
+    $act = $DBInfo->myplugins[$action];
+  if ($act) {
     $options['noindex'] = true;
     $options['custom']='';
     $options['help']='';
     $options['value']=$value;
 
-    $a_allow=$DBInfo->security->is_allowed($action,$options);
+    $a_allow=$DBInfo->security->is_allowed($act,$options);
     if (!empty($action_mode)) {
       $myopt=$options;
       $myopt['explicit']=1;
@@ -6098,7 +6101,7 @@ function wiki_main($options) {
       $formatter->send_footer('',$options);
       return;
     } else if ($_SERVER['REQUEST_METHOD']=="POST" and
-      $DBInfo->security->is_protected($action,$options) and
+      $DBInfo->security->is_protected($act,$options) and
       !$DBInfo->security->is_valid_password($_POST['passwd'],$options)) {
       # protect some POST actions and check a password
 
