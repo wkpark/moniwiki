@@ -1440,6 +1440,7 @@ class WikiPage {
     $pikeys=array('#redirect','#action','#title','#notitle','#keywords','#noindex',
       '#format','#filter','#postfilter','#twinpages','#notwins','#nocomment','#comment',
       '#language','#camelcase','#nocamelcase','#cache','#nocache','#alias', '#linenum', '#nolinenum',
+      '#description', '#image',
       '#singlebracket','#nosinglebracket','#rating','#norating','#nodtd');
     $pi=array();
 
@@ -4615,9 +4616,32 @@ JSHEAD;
 
       $sitename = !empty($DBInfo->title_sitename) ? $DBInfo->title_sitename : $DBInfo->sitename;
       if (!empty($DBInfo->title_msgstr))
-        echo '  <title>',sprintf($DBInfo->title_msgstr, $sitename, $options['title']),"</title>\n";
+        $site_title = sprintf($DBInfo->title_msgstr, $sitename, $options['title']);
       else
-        echo "  <title>$sitename: ",$options['title'],"</title>\n";
+        $site_title = $options['title'].' - '.$sitename;
+
+      if (empty($DBInfo->no_ogp)) {
+        echo '<meta property="og:url" content="',
+          qualifiedUrl($this->link_url($this->page->urlname)).'" />',"\n";
+        echo '<meta property="og:site_name" content="'.$sitename.'" />',"\n";
+        echo '<meta property="og:title" content="'.$site_title.'" />',"\n";
+        if (!empty($DBInfo->use_ogp_image_logo)) {
+          echo '<meta property="og:image" content="'.qualifiedUrl($DBInfo->logo_img).'" />',"\n";
+        } else if (!empty($this->pi['#image'])) {
+          $image = '';
+          if (preg_match('@^https?://@', $this->pi['#image'])) {
+            $image = $this->pi['#image'];
+          } else if (preg_match('/^attachment:([^\s]+)/', $this->pi['#image'], $m)) {
+            $image = $this->macro_repl('attachment', $m[1], array('link_url'=>1));
+          }
+          if (!empty($image))
+            echo '<meta property="og:image" content="',_rawurlencode($image),'" />',"\n";
+        }
+        if (!empty($this->pi['#description']))
+          echo '<meta property="og:description" content="'._html_escape($this->pi['#description']).'" />',"\n";
+      }
+      echo '  <title>',$site_title,"</title>\n";
+      # echo '<meta property="og:title" content="'.$options['title'].'" />',"\n";
       if (!empty($upper))
         echo '  <link rel="Up" href="',$this->link_url($upper),"\" />\n";
       $raw_url=$this->link_url($this->page->urlname,"?action=raw");

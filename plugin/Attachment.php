@@ -375,6 +375,8 @@ function macro_Attachment($formatter,$value,$options=array()) {
           $url=_urlencode($_my_file);
         }
       }
+      if (!empty($options['link_url']))
+        return qualifiedUrl($url);
 
       $img="<img src='$url' title='$alt' alt='$alt' style='border:0' $attr/>";
 
@@ -394,6 +396,9 @@ function macro_Attachment($formatter,$value,$options=array()) {
     } else {
       $mydownload= $extra_action ? $extra_action:$mydownload;
       $link=$formatter->link_url(_urlencode($pagename),"?action=$mydownload&amp;value=".urlencode($value),$text);
+      if (!empty($options['link_url']))
+        return qualifiedUrl($link);
+
       if (!empty($img_link))
         return $bra."<span class=\"attach\"><a href='$link'>$img_link</a></span>".$ket;
 
