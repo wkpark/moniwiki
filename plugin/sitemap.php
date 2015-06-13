@@ -4,27 +4,63 @@
 // a sitemap plugin for MoniWiki
 //
 // Author: Yeon-Hyeong Yang <lbird94@gmail.com>
-// Date: 2008-12-25
+// Since: 2008-12-25
+// Modified: 2015-06-13
 // Name: Sitemap plugin
 // Description: Sitemap action plugin
 // URL: http://computing.lbird.net/2631012
-// Release: 0.1
-// Version: $Revision: 1.1 $
+// Release: 0.2
+// Version: $Revision: 1.2 $
 // License: GPL v2
 //
 // Imported and modified from do_rss_rc() and macro_TitleIndex()
 // $Id: sitemap.php,v 1.1 2008/12/25 05:51:45 wkpark Exp $
 
 function do_sitemap($formatter,$options) {
-    global $DBInfo;
+    global $DBInfo, $Config;
+
+    $tc = new Cache_text('persist', array('depth'=>0));
+
+    $extra = '';
+    if (!empty($formater->group))
+        $extra = '.'.$formatter->group;
+    // all pages
+    $mtime = $DBInfo->mtime();
+    $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
+    $etag = md5($mtime.$DBInfo->etag_seed.$extra);
+    $options['etag'] = $etag;
+    $options['mtime'] = $mtime;
+
+    // set the s-maxage for proxy
+    $date = gmdate('Y-m-d-H-i-s', $mtime);
+    $proxy_maxage = !empty($Config['proxy_maxage']) ? ', s-maxage='.$Config['proxy_maxage'] : '';
+    $header[] = 'Content-Type: text/xml';
+    $header[] = 'Cache-Control: public'.$proxy_maxage.', max-age=0, must-revalidate';
+    $need = http_need_cond_request($mtime, $lastmod, $etag);
+    if (!$need)
+        $header[] = 'HTTP/1.0 304 Not Modified';
+    else
+        $header[] = 'Content-Disposition: attachment; filename="sitemap-'.$date.'.xml"';
+    $formatter->send_header($header, $options);
+    if (!$need) {
+        @ob_end_clean();
+        return;
+    }
+
+    if (($ret = $tc->fetch('sitemap'.$extra, array('print'=>1))) !== false)
+        return;
 
     # get page list 
+    set_time_limit(0);
+
     if ($formater->group) {
 	$group_pages = $DBInfo->getLikePages($formater->group);
 	foreach ($group_pages as $page)
 	    $all_pages[] = str_replace($formatter->group,'',$page);
-    } else
-	$all_pages = $DBInfo->getPageLists();
+    } else {
+        $args = array('all'=>1);
+        $all_pages = $DBInfo->getPageLists($args);
+    }
     usort($all_pages, 'strcasecmp');
     $items = ''; // empty string
 
@@ -67,8 +103,9 @@ HEAD;
 FOOT;
 
     # output
-    header("Content-Type: text/xml");
-    print $head.$out.$foot;
+    $ttl = !empty($DBInfo->titleindex_ttl) ? $DBInfo->titleindex_ttl : 60*60*24;
+    $tc->update('sitemap'.$extra, $head.$out.$foot, $ttl);
+    echo $head.$out.$foot;
 }
 
 // vim:et:sts=4:sw=4:
