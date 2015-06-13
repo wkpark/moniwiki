@@ -33,7 +33,9 @@ function abusefilter_default($action, $params = array()) {
     $ec = new Cache_text('abusefilter');
 
     $info = array('create'=>0, 'delete'=>0, 'revert'=>0, 'save'=>0, 'edit'=>0);
+    $info['id'] = $id;
     if ($ec->exists($id) and ($info = $ec->fetch($id)) !== false) {
+        $info['id'] = $id;
         // check edit count
         if ($info['edit'] > $edit['edit'] || $info[$act] > $edit[$act]) {
             if ($info[$act] > $edit[$act])
