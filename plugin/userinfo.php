@@ -75,10 +75,12 @@ function macro_UserInfo($formatter,$value,$options=array()) {
         }
         $list.= '</table>';
 
-        if (empty($type) or $type == 'wait')
+        if (empty($type))
             $btn = _("Delete Users");
-        else if ($type == 'del')
+        else if ($type == 'del' or $type == 'wait')
             $btn = _("Activate Users");
+        if ($type != 'wait')
+            $btn2 = _("Suspend Users");
 
         $formhead="<form method='POST' action=''>";
         $formtail='';
@@ -88,7 +90,10 @@ function macro_UserInfo($formatter,$value,$options=array()) {
         $formtail.="<input type='hidden' name='action' value='userinfo' />";
         $formtail.="<input type='hidden' name='type' value='$type' />";
         $formtail.="<input type='hidden' name='uid[]' value='$keys[0]' />".
-            "<input type='submit' value='$btn' />";
+            "<input type='submit' value='$btn' /> ";
+        if ($type != 'wait')
+            $formtail.=
+                "<input type='submit' name='suspend' value='$btn2' />";
 
         $formtail.= "</form>";
 
@@ -131,19 +136,23 @@ function macro_UserInfo($formatter,$value,$options=array()) {
         $formhead="<form method='POST' action=''>";
         $formtail='';
 
-        if (empty($type) or $type == 'wait')
+        if (empty($type))
             $btn = _("Delete Users");
-        else if ($type == 'del')
+        else if ($type == 'del' or $type == 'wait')
             $btn = _("Activate Users");
-        $btn2 = _("Suspend Users");
+        if ($type != 'wait')
+            $btn2 = _("Suspend Users");
 
         if ($DBInfo->security->is_protected('userinfo',$options))
             $formtail= _("Password").
                 ": <input type='password' name='passwd' /> ";
         $formtail.="<input type='hidden' name='action' value='userinfo' />".
             "<input type='hidden' name='type' value='$type' />".
-            "<input type='submit' value='$btn' /> ".
-            "<input type='submit' name='suspend' value='$btn2' />";
+            "<input type='submit' value='$btn' /> ";
+
+        if ($type != 'wait')
+            $formtail.=
+                "<input type='submit' name='suspend' value='$btn2' />";
 
         $formtail.= "</form>";
 
@@ -195,7 +204,7 @@ function do_userinfo($formatter,$options) {
             $change = array();
             foreach ($options['uid'] as $uid) {
                 $uid=_stripslashes($uid);
-                if ($type == 'del' || $suspend)
+                if ($type == 'del' || $type == 'wait' || $suspend)
                     $ret = $udb->activateUser($uid, $suspend);
                 else
                     $ret = $udb->delUser($uid);
