@@ -53,7 +53,7 @@ function do_sitemap($formatter,$options) {
         return;
     }
 
-    if (($ret = $tc->fetch('sitemap'.$extra, array('print'=>1))) !== false)
+    if (($ret = $tc->fetch('sitemap'.$extra, 0, array('print'=>1))) !== false)
         return;
 
     // set sitemap public cache

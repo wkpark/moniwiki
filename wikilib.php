@@ -2753,7 +2753,7 @@ function do_titleindex($formatter,$options) {
       return;
     }
 
-    if (($out = $tc->fetch('titleindex', array('print'=>1))) === false) {
+    if (($out = $tc->fetch('titleindex', 0, array('print'=>1))) === false) {
       $args = array('all'=>1);
       $pages = $DBInfo->getPageLists($args);
 
