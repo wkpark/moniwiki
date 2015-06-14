@@ -34,7 +34,13 @@ function do_sitemap($formatter,$options) {
     // set the s-maxage for proxy
     $date = gmdate('Y-m-d-H-i-s', $mtime);
     $proxy_maxage = !empty($Config['proxy_maxage']) ? ', s-maxage='.$Config['proxy_maxage'] : '';
-    $header[] = 'Content-Type: text/xml';
+
+    // only xml format supported
+    $format = 'text/xml';
+    if (isset($options['format']) and in_array($options['format'], array('text/xml')))
+        $format = $options['format'];
+
+    $header[] = 'Content-Type: '.$format;
     $header[] = 'Cache-Control: public'.$proxy_maxage.', max-age=0, must-revalidate';
     $need = http_need_cond_request($mtime, $lastmod, $etag);
     if (!$need)
@@ -50,6 +56,11 @@ function do_sitemap($formatter,$options) {
     if (($ret = $tc->fetch('sitemap'.$extra, array('print'=>1))) !== false)
         return;
 
+    // set sitemap public cache
+    $ext = $format == 'text/xml' ? 'xml' : 'txt';
+    $sc = new Cache_text('sitemap',
+        array('dir'=>$DBInfo->cache_public_dir, 'ext'=>$ext, 'depth'=>0));
+
     # get page list 
     set_time_limit(0);
 
@@ -62,33 +73,31 @@ function do_sitemap($formatter,$options) {
         $all_pages = $DBInfo->getPageLists($args);
     }
     usort($all_pages, 'strcasecmp');
-    $items = ''; // empty string
 
-    # process page list
+    $count = sizeof($all_pages);
+
+    $map = '';
     $zone = '+00:00';
-    foreach ($all_pages as $page) {
-	$url = qualifiedUrl($formatter->link_url(_rawurlencode($page)));
-        $p = new WikiPage($page);
-        $t = $p->mtime();
-        $date = gmdate("Y-m-d\TH:i:s",$t).$zone; // W3C datetime format
+    $ttl = !empty($DBInfo->sitemap_ttl) ? $DBInfo->sitemap_ttl : 60*60*24*7;
 
-	$item = "<url>\n";
-	$item.= "  <loc>".$url."</loc>\n";
-	$item.= "  <lastmod>".$date."</lastmod>\n";
-	$item.= "</url>\n";
-	$items.= $item;
+    if ($count > 50000) {
+        $map = <<<HEAD
+<?xml version="1.0" encoding="UTF-8"?>
+<sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n
+HEAD;
+        $date = gmdate("Y-m-d\TH:i:s", time()).$zone; // W3C datetime format
+        $total = intval($count / 50000) + (($count % 50000 > 0) ? 1 : 0);
+
+        for ($i = 0; $i < $total; $i++) {
+            $mapname = $sc->getKey(sprintf('sitemap'.$extra.'%03d', $i));
+
+            $map.= "<sitemap>\n<loc>\n".qualifiedUrl($DBInfo->cache_public_url.'/'.$mapname).'</loc>'."\n";
+            $map.= '<lastmod>'.$date."</lastmod>\n</sitemap>\n";
+        }
+        $map.= "</sitemapindex>\n";
+
+        $tc->update('sitemap'.$extra, $map, $ttl);
     }
-
-    # process output
-    $out = $items;
-    if ($options['oe'] and (strtolower($options['oe']) != $DBInfo->charset)) {
-	$charset = $options['oe'];
-	if (function_exists('iconv')) {
-	    $new=iconv($DBInfo->charset,$charset,$items);
-	    if (!$new) $charset = $DBInfo->charset;
-	    if ($new) $out = $new;
-	}
-    } else $charset = $DBInfo->charset;
 
     $head=<<<HEAD
 <?xml version="1.0" encoding="$charset"?>
@@ -101,11 +110,78 @@ HEAD;
     $foot=<<<FOOT
 </urlset>
 FOOT;
+    # charset
+    if ($options['oe'] and (strtolower($options['oe']) != $DBInfo->charset))
+	$charset = $options['oe'];
+    else $charset = $DBInfo->charset;
 
-    # output
-    $ttl = !empty($DBInfo->titleindex_ttl) ? $DBInfo->titleindex_ttl : 60*60*24;
-    $tc->update('sitemap'.$extra, $head.$out.$foot, $ttl);
-    echo $head.$out.$foot;
+    # process page list
+    $i = 0;
+    $ii = 0;
+    $items = array();
+    foreach ($all_pages as $page) {
+        $ii++;
+        $url = qualifiedUrl($formatter->link_url(_rawurlencode($page)));
+
+        $p = new WikiPage($page);
+        $t = $p->mtime();
+        $date = gmdate("Y-m-d\TH:i:s",$t).$zone; // W3C datetime format
+
+        $item = "<url>\n";
+        $item.= "  <loc>".$url."</loc>\n";
+        $item.= "  <lastmod>".$date."</lastmod>\n";
+        $item.= "</url>";
+        $items[] = $item;
+        if ($ii >= 50000) {
+            $ii = 0;
+            // process output
+            $out = implode("\n", $items);
+            if ($options['oe'] and (strtolower($options['oe']) != $DBInfo->charset)) {
+                $charset = $options['oe'];
+                if (function_exists('iconv')) {
+                    $new=iconv($DBInfo->charset,$charset,$items);
+                    if (!$new) $charset = $DBInfo->charset;
+                    if ($new) $out = $new;
+                }
+            }
+
+            $sc->update(sprintf('sitemap'.$extra.'%03d', $i), $head.$out.$foot, $ttl);
+            $i++;
+            $items = array();
+        }
+    }
+
+    // process output
+    if ($count > 50000) {
+        if (count($items)) {
+            $out = implode("\n", $items);
+
+            if ($options['oe'] and (strtolower($options['oe']) != $DBInfo->charset)) {
+                $charset = $options['oe'];
+                if (function_exists('iconv')) {
+                    $new=iconv($DBInfo->charset,$charset,$items);
+                    if (!$new) $charset = $DBInfo->charset;
+                    if ($new) $out = $new;
+                }
+            }
+            $sc->update(sprintf('sitemap'.$extra.'%03d', $i), $head.$out.$foot, $ttl);
+        }
+    } else {
+        $out = implode("\n", $items);
+
+        if ($options['oe'] and (strtolower($options['oe']) != $DBInfo->charset)) {
+            $charset = $options['oe'];
+            if (function_exists('iconv')) {
+                $new=iconv($DBInfo->charset,$charset,$items);
+                if (!$new) $charset = $DBInfo->charset;
+                if ($new) $out = $new;
+            }
+        }
+        $map = $head.$out.$foot;
+        $tc->update('sitemap'.$extra, $map, $ttl);
+    }
+
+    echo $map;
 }
 
 // vim:et:sts=4:sw=4:
