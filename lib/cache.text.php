@@ -267,7 +267,8 @@ class Cache_Text {
 			!empty($params['deps']) ? $vals['deps'] = $params['deps'] : null;
 			$header = $this->header($type, $vals);
 
-			$save = $header."\n".$val;
+			if (!empty($header))
+				$save = $header."\n".$val;
 		}
 		return $this->_save($key, $save);
 	}
