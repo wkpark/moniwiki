@@ -486,7 +486,7 @@ class Cache_Text {
 	 */
 	function sanity($header, $type, $fp, $params = false)
 	{
-		if ($type == 'raw') return true; // XXX binary or raw caches
+		if ($type == 'raw' || !in_array($type, array('php', 'html'))) return true; // XXX binary or raw caches
 
 		$ret = fgets($fp, 1024);
 		while (!feof($fp) and strrpos($ret, "\n") === false)
