@@ -99,6 +99,11 @@ HEAD;
         $tc->update('sitemap'.$extra, $map, $ttl);
     }
 
+    # charset
+    if ($options['oe'] and (strtolower($options['oe']) != $DBInfo->charset))
+       $charset = $options['oe'];
+    else $charset = $DBInfo->charset;
+
     $head=<<<HEAD
 <?xml version="1.0" encoding="$charset"?>
 <urlset xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
@@ -110,10 +115,6 @@ HEAD;
     $foot=<<<FOOT
 </urlset>
 FOOT;
-    # charset
-    if ($options['oe'] and (strtolower($options['oe']) != $DBInfo->charset))
-	$charset = $options['oe'];
-    else $charset = $DBInfo->charset;
 
     # process page list
     $i = 0;
