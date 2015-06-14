@@ -62,7 +62,7 @@
 //_script_name="/mywiki";
 //_qp="/"; // query_prefix
 //FrontPage= "FrontPage";
-_script_name=url_prefix || _script_name; // url_prefix is depricated
+_script_name=url_prefix; // || _script_name; // url_prefix is depricated
 
 RecentChanges= "RecentChanges"; 
 FindPage= "FindPage"; 
