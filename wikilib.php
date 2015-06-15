@@ -3154,6 +3154,7 @@ function do_post_savepage($formatter,$options) {
   }
 
   // check full permission to edit
+  $full_permission = true;
   if (!empty($DBInfo->no_full_edit_permission) or
       ($options['id'] == 'Anonymous' && !empty($DBInfo->anonymous_no_full_edit_permission)))
     $full_permission = false;
@@ -3195,7 +3196,10 @@ function do_post_savepage($formatter,$options) {
 
     if ($restricted) {
       $options['title'] = _("You do not have full permission to edit this page on this wiki.");
-      $options['msg'] = _("Anonymous user is restricted to delete a lot amount of page on this wiki.");
+      if ($options['id'] == 'Anonymous')
+        $options['msg'] = _("Anonymous user is restricted to delete a lot amount of page on this wiki.");
+      else
+        $options['msg'] = _("You are restricted to delete a lot amount of page on this wiki.");
       $button_preview = true;
     } else {
       if (!$button_diff)
