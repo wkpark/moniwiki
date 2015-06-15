@@ -4464,7 +4464,7 @@ class Formatter {
     $media='media="screen"';
     if (isset($options['action'][0]) and $options['action'] == 'print') $media = '';
 
-    if (isset($this->pi['#redirect'][0]) && !empty($options['pi'])) {
+    if (empty($options['is_robot']) && isset($this->pi['#redirect'][0]) && !empty($options['pi'])) {
       $options['value']=$this->pi['#redirect'];
       $options['redirect']=1;
       $this->pi['#redirect']='';
