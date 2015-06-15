@@ -1089,6 +1089,10 @@ class WikiDB {
     $comment=$options['comment'];
     $user=&$this->user;
 
+    $action = 'DELETE';
+    if (!empty($options['.revoke']))
+      $action = 'REVOKE';
+
     // check abusing FIXME
     if (!empty($this->use_abusefilter)) {
       $params = array();
@@ -1129,7 +1133,7 @@ class WikiDB {
     if (!$deleted)
       return -1;
 
-    $this->addLogEntry($page->name, $REMOTE_ADDR, $comment, 'DELETE');
+    $this->addLogEntry($page->name, $REMOTE_ADDR, $comment, $action);
 
     $indexer = $this->lazyLoad('titleindexer');
     $indexer->deletePage($page->name);
