@@ -84,14 +84,17 @@ function do_revoke($formatter, $options) {
     $pagename = $formatter->page->name;
     $lab = _("Summary");
 
-    if ($retval['first_author'] != $options['id']) {
+    if (!$is_ok) {
         $title = _("You are not the first author of this page or do not have enough revoke permission");
         $formatter->send_title($title, '', $options);
 
         $formatter->send_footer('',$options);
         return;
     }
-    $title = _("You are the first author of this page");
+    if ($retval['first_author'] == $options['id'])
+        $title = _("You are the first author of this page");
+    else
+        $title = _("Do you want to revoke this page?");
     $formatter->send_title($title, '', $options);
 
     $comment = _("Revoke");
