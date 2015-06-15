@@ -151,31 +151,146 @@ function _stat_rlog($formatter, $log, $options = array()) {
     return true;
 }
 
-function _render_stat($formatter, $retval) {
+function _calc_contrib_points($edits, $total_edits, $max_edits, $mean_edits, $adds, $dels, $total_lines, $mean_adds, $mean_dels) {
+    $denorm = 1 + $mean_adds / $total_lines * 0.5 + $mean_dels / $total_lines * 0.2;
+    $norm = $edits / $total_edits + $adds / $total_lines * 0.5 + $dels / $total_lines * 0.2;
+    return $norm / $denorm;
+}
+
+function _render_stat($formatter, $retval, $params = array()) {
+    global $DBInfo;
+
+    $show_table = false;
+    if (empty($DBInfo->no_stat_show_all) || in_array($params['id'], $DBInfo->members))
+        $show_table = true;
+
     extract($retval);
+
+    // basic information
+    $total_lines = $formatter->page->lines();
+    $orig_author = $author;
+    $count_revs = count($revs);
+    $count_users = count($users);
+
+    // parameters
+    $first_contribution_author_ratio = 85;
+
+    //echo '<pre>';
+    //print_r($users);
+
+    $authors = array_keys($users);
+    $edits = array();
+    $user_adds = array();
+    $user_dels = array();
+
+    $orig_lines = $total_lines;
+    $total_adds = 0;
+    $total_dels = 0;
+    foreach ($authors as $n) {
+        $edits[$n] = $users[$n]['edit'];
+        $user_adds[$n] = $users[$n]['add'];
+        $user_dels[$n] = $users[$n]['del'];
+        $total_adds+= $users[$n]['add'];
+        $total_dels+= $users[$n]['del'];
+    }
+    $orig_lines-= $total_adds - $total_dels;
+
+    // fix original author info.
+    if ($rev == '1.1') {
+        $users[$orig_author]['add'] += $orig_lines;
+        $user_adds[$orig_author] += $orig_lines;
+    }
+    $adds[$count_revs - 1] = $orig_lines;
+    $total_adds += $orig_lines;
+
+    //echo "<pre>";
+    //print_r($adds);
+    //print_r($dels);
+    //print_r($edits);
+    //echo '</pre>';
+
+    // sort by edits
+    arsort($edits);
+
+    $contribs = array();
+    $total_edits = $count_revs;
+    $mean_edits = $count_revs / $count_users;
+    $max_edits = $users[$authors[0]]['edit'];
+    $mean_adds = $total_adds / $count_users;
+    $mean_dels = $total_dels / $count_users;
+    foreach ($edits as $u=>$c) {
+        $point = _calc_contrib_points($c, $total_edits, $max_edits, $mean_edits,
+                $user_adds[$u], $user_dels[$u], $total_lines, $mean_adds, $mean_dels);
+        $count = sprintf("%4.1f %%", round($point * 100, 1));
+        $contribs[$u] = $count;
+    }
+
+    $authors = $others = array_keys($edits);
+    array_shift($others);
+
+    if (isset($params['retval'])) {
+        $ret = array(
+            'total_revs'=>$count_revs,
+            'initial_rev'=>$rev,
+            'original_author'=>$orig_author,
+            'total_editors'=>$count_users,
+            'contributions'=>$contribs
+        );
+
+        if ($count_users == 1)
+            $ret['first_author'] = $orig_author;
+        else if ($contribs[$authors[0]] > $first_contribution_author_ratio)
+            $ret['first_author'] = $authors[0];
+
+        $params['retval'] = $ret;
+        return 0;
+    }
+
+    foreach ($others as $u) {
+        $contribs[$u].= ' (<span class="diff-added">'.sprintf("%4.1f", round(($user_adds[$u] / $user_adds[$authors[0]] * 100), 2));
+        $contribs[$u].= '</span>/';
+        $contribs[$u].= '<span class="diff-removed">'.sprintf("%4.1f", round(($user_dels[$u] / $user_dels[$authors[0]] * 100), 2));
+        $contribs[$u].= '</span>)';
+    }
+
+    $u = preg_match('/^([0-9]+\.){3}[0-9]+$/', $orig_author) ? _mask_hostname($orig_author) : $orig_author;
+
+    $ou = $count_users == 1 ? $orig_author : $authors[0];
+    $ou = preg_match('/^([0-9]+\.){3}[0-9]+$/', $ou) ? _mask_hostname($ou) : $ou;
 
     $out = "<div class='wikiInfo'><h2>"._("Revision Statistics")."</h2>\n";
 
-    $orig_author = $author;
+    $out.= '<h3>'.sprintf(_("Total %d revisions"), $count_revs).', ';
+    $out.= sprintf(_("Total %d editors"), sizeof($users)).'</h3>'."\n";
+    $out.= '<table class="wiki center">';
+    $out.= '<tr><th>'._("Initial revision").'</th><td>'.$rev.'</td></tr>'."\n";
+    $out.= '<tr><th>'._("Original Author").'</th><td>'.$u.'</td></tr>'."\n";
+    if ($count_users == 1)
+        $out.= '<tr><th>'._("First Contribution Author").'</th><td>'.$ou.'</td></tr>'."\n";
+    else if ($contribs[$authors[0]] > $first_contribution_author_ratio)
+        $out.= '<tr><th>'._("First Contribution Author").'</th><td>'.$ou.'</td></tr>'."\n";
+    $out.= '</table> <br />'."\n";
 
-    $out.= _("Original Author").': '.$orig_author.' '._("initial revision").':'.$rev.'<br />';
-    $out.= sprintf(_("Total %d editors"), sizeof($users)).'<br />';
+    if ($show_table):
     $out.= '<table class="wiki center"><tr><th>'._("User").'</th><th>'._("Add").
-        '</th><th>'._("Del").'</th><th>'._("Edit").'</th><th>'._("IP").'</th></tr>';
-    foreach ($users as $u=>$v) {
+        '</th><th>'._("Del").'</th><th>'._("Edit").'</th><th>'._("Contributions").'</th><th>'._("IP").'</th></tr>';
+    foreach ($edits as $u=>$c) {
+        $v = $users[$u];
         $ips = array_map('_mask_hostname', array_keys($v['ip']));
-        $u = preg_match('/^([0-9]+\.){3}[0-9]+$/', $u) ? _mask_hostname($u) : $u;
-        $out.= '<tr><td>'.$u.'</td><td><span class="diff-added">+'.$v['add'].'</span></td><td>'.
+        $uu = preg_match('/^([0-9]+\.){3}[0-9]+$/', $u) ? _mask_hostname($u) : $u;
+        $out.= '<tr><td>'.$uu.'</td><td><span class="diff-added">+'.$v['add'].'</span></td><td>'.
             '<span class="diff-removed"> -'.$v['del'].'</span></td><td> '.
             $v['edit']."</td>";
+        $out.= '<td>'.$contribs[$u].'</td>';
         $out.= '<td>'.implode(', ', $ips)."</td></tr>\n";
     }
     $out.= '</table>';
+    endif;
 
     // binning
     $c = sizeof($times);
-    $min = $times[$c - 1];
-    $max = $times[0];
+    $min = intval($times[$c - 1] / 3600) * 3600;
+    $max = intval($times[0] / 3600) * 3600;
 
     $range = $max - $min;
 
@@ -188,7 +303,7 @@ function _render_stat($formatter, $retval) {
     } else if ($c > 5) {
         $bin = $range / 5;
         $szbin = 5;
-    } else if ($c > 2) {
+    } else {
         $bin = $range / $c;
         $szbin = $c;
     }
@@ -202,15 +317,14 @@ function _render_stat($formatter, $retval) {
         $sum[$i] = 0;
     }
 
-    $line = $formatter->page->lines();
-    for ($i = $c - 1; $i > 0; $i--) {
+    for ($i = $c - 1; $i >= 0; $i--) {
         $j = intval(($times[$i] - $min) / $bin);
         $add_bins[$j]+= $adds[$i];
         $del_bins[$j]-= $dels[$i];
         $sum[$j]+= - $adds[$i] + $dels[$i];
     }
 
-    $sum[$szbin] = $line;
+    $sum[$szbin] = $total_lines;
     for ($i = $szbin - 1; $i >= 0; $i--) {
         $sum[$i] += $sum[$i + 1];
     }
@@ -309,13 +423,23 @@ function macro_Stat($formatter, $value, $options = array()) {
         }
 
         if (!empty($retval)) {
-            $info = _render_stat($formatter, $retval);
+            if (isset($options['retval'])) {
+                $info = _render_stat($formatter, $retval, $options);
+                return $info;
+            } else {
+                $info = _render_stat($formatter, $retval, $options);
+            }
             $formatter->register_javascripts('js/chart/Chart.min.js');
         }
+
+        if (isset($options['retval']))
+            return -1;
     } else {
         $msg = _("Version info is not available in this wiki");
         $info = "<h2>$msg</h2>";
     }
+    if (isset($options['retval']))
+        return -1;
     return $info;
 }
 

@@ -183,6 +183,7 @@ $myplugins=array('rcsexport'=>false); # disable rcsexport
 
 #$url_schemas='mms';
 #$delete_history=1;
+#$no_stat_show_all=0; # do not show all users statistics info.
 #$rename_with_history=1; # rename with history
 #$use_twikilink=1;
 #$timezone='KST'; // for windows
