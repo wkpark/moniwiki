@@ -22,6 +22,7 @@ function do_reverse($formatter, $options = array()) {
     }
 
     // check full permission to edit
+    $full_permission = true;
     if (!empty($DBInfo->no_full_edit_permission) or
             ($options['id'] == 'Anonymous' && !empty($DBInfo->anonymous_no_full_edit_permission)))
         $full_permission = false;
