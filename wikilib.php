@@ -757,7 +757,7 @@ function http_need_cond_request($mtime, $last_modified = '', $etag = '') {
     while ($if_none_match && $if_none_match != $etag) {
         // it is weak ETag ?
         if (preg_match('@^W/(.*)@', $if_none_match, $m)) {
-            if ($m[1] == $etag || $if_modified_since)
+            if ($m[1] == $etag)
                 break;
         }
         return true; // etag is there but doesn't match
