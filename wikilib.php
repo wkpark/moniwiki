@@ -3417,7 +3417,7 @@ function wiki_notify($formatter,$options) {
     $body.=$diff;
   }
 
-  $ret=mail($mailto,$subject,$body,$mailheaders,'-fnoreply');
+  $ret=mail($mailto,$subject,$body,$mailheaders,'-f'.$rmail);
 
   if ($options['noaction']) return 1;
 
@@ -3612,7 +3612,7 @@ function wiki_sendmail($body,$options) {
       fclose($handle);
     }
   } else {
-    mail($email,$subject,$body,$mailheaders,'-fnoreply');
+    mail($email,$subject,$body,$mailheaders,'-f'.$rmail);
   }
   return 0;
 }
