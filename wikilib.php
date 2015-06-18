@@ -4022,6 +4022,13 @@ EXTRA;
     $email = _html_escape($email);
     $nick=!empty($user->info['nick']) ? $user->info['nick'] : '';
     $nick = _html_escape($nick);
+    $check_email_again = '';
+    if (!empty($user->info['eticket'])) {
+      list($dummy, $em) = explode('.', $user->info['eticket'], 2);
+      if (!empty($em))
+        $check_email_again = ' <input type="submit" name="button_check_email_again" value="'._("Resend confirmation mail").'" />';
+    }
+
     $tz_offset=!empty($user->info['tz_offset']) ? $user->info['tz_offset'] : 0;
     if (!empty($user->info['password']))
       $again="<b>"._("New password")."</b>&nbsp;<input type='password' size='15' maxlength='$pw_length' name='passwordagain' value='' /></td></tr>";
@@ -4056,7 +4063,7 @@ NICK;
     $tz_btn=_("Time Zone");
     $extra=<<<EXTRA
 $nick
-  <tr><th>$email_btn&nbsp;</th><td><input type="text" size="40" name="email" value="$email" /></td></tr>
+  <tr><th>$email_btn&nbsp;</th><td><input type="text" size="40" name="email" value="$email" />$check_email_again</td></tr>
   <tr><th>$tz_btn&nbsp;</th><td><select name="timezone">
   $opts
   </select> <span class='button'><input type='button' class='button' value='Local timezone' onclick='javascript:setTimezone()' /></span></td></tr>
@@ -4170,7 +4177,7 @@ $login
 $jscript
 EOF;
 
-  if (!$login_only)
+  if ($login_only)
     $all.= <<<EOF
 <div>
 <form method="post" action="$url"$onsubmit>

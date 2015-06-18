@@ -506,18 +506,32 @@ function do_userform($formatter,$options) {
         $userinfo->info['join_agreement_version'] = $DBInfo->agreement_version;
     }
 
+    $button_check_email_again = !empty($options['button_check_email_again']) ? 1 : 0;
+    if ($button_check_email_again and !empty($userinfo->info['eticket'])) {
+      list($dummy, $email) = explode('.', $userinfo->info['eticket'], 2);
+      if (!empty($email))
+        $options['email'] = $email;
+    }
+
     if (!empty($options['email']) and ($options['email'] != $userinfo->info['email'])) {
       if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
-        $ticket=md5(time().$userinfo->info['id'].$options['email']);
-        $userinfo->info['eticket']=$ticket.".".$options['email'];
-        $options['subject']="[$DBInfo->sitename] "._("E-mail confirmation");
-        $body=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
-        $body=_("Please confirm your email address")."\n".$body;
-        $ret = wiki_sendmail($body,$options);
-        if (is_array($ret)) {
-          $options['msg']=$ret['msg'];
+        if (($ret = verify_email($options['email'])) < 0) {
+          $ret = -$ret;
+          $options['msg'].='<br />'.'ERROR Code: '.$ret;
+          $options['msg'].='<br />'._("Invalid email address or can't verify it.");
         } else {
-          $options['msg']=_("E-mail confirmation mail sent");
+          $ticket=md5(time().$userinfo->info['id'].$options['email']);
+          $userinfo->info['eticket']=$ticket.".".$options['email'];
+          $options['subject']="[$DBInfo->sitename] "._("E-mail confirmation");
+          $body=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
+          $body=_("Please confirm your email address")."\n".$body;
+          $ret = wiki_sendmail($body,$options);
+
+          if (is_array($ret)) {
+            $options['msg']=$ret['msg'];
+          } else {
+            $options['msg']=_("E-mail confirmation mail sent");
+          }
         }
       } else {
         $options['msg']=_("Your email address is not valid");
