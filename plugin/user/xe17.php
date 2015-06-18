@@ -47,6 +47,14 @@ class User_xe17 extends WikiUser {
     function User_xe17($id = '') {
         global $DBInfo;
 
+        if (!empty($Config['cookie_expires']))
+            $this->cookie_expires = $Config['cookie_expires'];
+
+        if ($id && $id != 'Anonymous') {
+            $this->setID($id);
+            return;
+        }
+
         // set xe_root_dir config option
         $xe_root_dir = !empty($DBInfo->xe_root_dir) ?
                 $DBInfo->xe_root_dir : dirname(__FILE__).'/../../../xe';

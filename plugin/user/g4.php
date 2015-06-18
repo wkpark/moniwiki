@@ -31,6 +31,14 @@ class User_g4 extends WikiUser {
         global $DBInfo;
         global $g4, $member, $g4_root_dir;
 
+        if (!empty($Config['cookie_expires']))
+            $this->cookie_expires = $Config['cookie_expires'];
+
+        if ($id && $id != 'Anonymous') {
+            $this->setID($id);
+            return;
+        }
+
         $g4_root_dir = !empty($DBInfo->g4_root_dir) ?
                 $DBInfo->g4_root_dir : __DIR__.'/../../../gb4';
         $g4_root_url = !empty($DBInfo->g4_root_url) ?
