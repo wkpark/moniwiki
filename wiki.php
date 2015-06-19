@@ -5489,7 +5489,7 @@ function init_requests(&$options) {
   if ($user->id != 'Anonymous') {
     $test = $udb->checkUser($user); # is it valid user ?
     if ($user->id != 'Anonymous')
-      $user=$udb->getUser($user->id); // read user info
+      $user->info = $udb->getInfo($user->id); // read user info
     else
       $user->setID('Anonymous');
     if ($test == 1) {
@@ -5502,7 +5502,7 @@ function init_requests(&$options) {
     }
   } else
     // read anonymous user IP info.
-    $user = $udb->getUser('Anonymous');
+    $user->info = $udb->getInfo('Anonymous');
 
   $options['id']=$user->id;
   $DBInfo->user=$user;

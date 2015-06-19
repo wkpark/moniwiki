@@ -1386,17 +1386,16 @@ class UserDB {
   }
 
   function checkUser(&$user) {
-    $tmp=$this->getUser($user->id);
-    if (!empty($tmp->info['ticket']) and $tmp->info['ticket'] != $user->ticket) {
+    $tmp=$this->getInfo($user->id);
+    if (!empty($tmp['ticket']) and $tmp['ticket'] != $user->ticket) {
       if ($this->strict > 0)
         $user->id='Anonymous';
       return 1;
     }
-    $user=$tmp;
     return 0;
   }
 
-  function getUser($id, $suspended = false) {
+  function getInfo($id, $suspended = false) {
     if (empty($id) || $id == 'Anonymous') {
       $wu = 'ip-'.$_SERVER['REMOTE_ADDR'];
     } else if (preg_match('/^(\d{1,3}\.){3}\d{1,3}$/', $id)) {
@@ -1408,8 +1407,7 @@ class UserDB {
     if (file_exists($this->user_dir.'/'.$wu)) {
        $data = file($this->user_dir.'/'.$wu);
     } else {
-       $user=new WikiUser('Anonymous');
-       return $user;
+       return array();
     }
     $info=array();
     foreach ($data as $line) {
@@ -1422,14 +1420,13 @@ class UserDB {
        $info[$key]=$val;
     }
 
-    if (substr($wu, 0, 3) == 'ip-') {
-      $user = new WikiUser('Anonymous');
-    } else {
-      $class = $this->user_class;
-      $user = new $class($id);
-    }
+    return $info;
+  }
 
-    $user->info=$info;
+  function getUser($id, $suspended = false) {
+    $user = new WikiUser($id);
+    $info = $this->getInfo($id, $suspended);
+    $user->info = $info;
 
     // set default timezone
     if (isset($info['tz_offset']))
