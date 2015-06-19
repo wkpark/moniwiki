@@ -4645,6 +4645,13 @@ JSHEAD;
           echo '<meta property="og:description" content="'._html_escape($this->pi['#description']).'" />',"\n";
       }
       echo '  <title>',$site_title,"</title>\n";
+      if (!empty($DBInfo->canonical_url)) {
+        if (($p = strpos($DBInfo->canonical_url, '%s')) !== false)
+          echo '  <link rel="canonical" href="',sprintf($DBInfo->canonical_url, $this->page->urlname),'" />',"\n";
+        else
+          echo '  <link rel="canonical" href="',$DBInfo->canonical_url, $this->page->urlname,'" />',"\n";
+      }
+
       # echo '<meta property="og:title" content="'.$options['title'].'" />',"\n";
       if (!empty($upper))
         echo '  <link rel="Up" href="',$this->link_url($upper),"\" />\n";
