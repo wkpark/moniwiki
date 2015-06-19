@@ -321,6 +321,14 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
         $fetch_url = null;
     }
 
+    if (!empty($mimetype) and isset($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD'] == 'HEAD') {
+        header('Content-Type: '.$mimetype);
+        header('Content-Length: '.$sz);
+        header('Last-Modified: '.substr(gmdate('r', filemtime($fetchfile)), 0, -5).'GMT');
+
+        return null;
+    }
+
     // real fetch job.
     if (!empty($params['refresh']) or !file_exists($fetchfile)) {
         $fp = fopen($fetchfile, 'w');
