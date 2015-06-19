@@ -20,10 +20,12 @@ function showTocToggle(target, showBtn,hideBtn) {
     var showToc = document.createElement('span');
     showToc.id = 'show' + target;
     showToc.style.display = 'none';
+    showToc.className = 'showtoc';
     showToc.innerHTML = showBtn;
 
     var hideToc = document.createElement('span');
     hideToc.id = 'hide' + target;
+    hideToc.className = 'hidetoc';
     hideToc.innerHTML = hideBtn;
 
     toggleLink.appendChild(hideToc);

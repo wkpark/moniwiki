@@ -4761,7 +4761,7 @@ function macro_TableOfContents(&$formatter,$value="") {
   $js=<<<EOS
 <script type="text/javascript">
 /*<![CDATA[*/
- if (window.showTocToggle) { showTocToggle('$tocid', '<img src="$DBInfo->imgs_dir/plugin/arrdown.png" width="10px" border="0" alt="[+]" title="[+]" />','<img src="$DBInfo->imgs_dir/plugin/arrup.png" width="10px" border="0" alt="[-]" title="[-]" />'); } 
+ if (window.showTocToggle) { showTocToggle('$tocid', '<span>[+]</span>','<span>[-]</span>'); }
 /*]]>*/
 </script>
 EOS;
