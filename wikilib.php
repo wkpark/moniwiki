@@ -4179,7 +4179,7 @@ $login
 $jscript
 EOF;
 
-  if ($login_only)
+  if (!$login_only || $user->id != 'Anonymous')
     $all.= <<<EOF
 <div>
 <form method="post" action="$url"$onsubmit>
@@ -4205,7 +4205,7 @@ $sep1
 </div>
 $script
 EOF;
-  else
+  else if ($login_only)
     $all.= <<<EOF
 <div>
 <form method="post" action="$url"$onsubmit>
