@@ -1,21 +1,22 @@
 <?php
-// Copyright 2013 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2013-2015 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a external images fetcher for the MoniWiki
 //
 // Author: Won-Kyu Park <wkpark@gmail.com>
 // Since: 2013-08-04
-// Date: 2013-12-16
+// Date: 2015-06-19
 // Name: fetch plugin
 // Description: fetch external images
 // URL: MoniWiki:FetchPlugin
-// Version: $Revision: 1.1 $
+// Version: $Revision: 1.2 $
 // License: GPLv2
 //
 // Param: fetch_exts='png|jpeg|jpg|gif'
 // Param: fetch_max_size=3*1024*1024
 // Param: fetch_buffer_size=1024*2048
-// Param: fetch_maxage=24*60*60
+// Param: fetch_maxage=60*60*7
+// Param: fetch_maxages=array('site_alive'=>60*60, 'site_status'=>60*60*2, 'size_error'=>60);
 // Param: fetch_action=http://foo.bar/wiki.php?action=fetch&url=
 // Param: fetch_timeout=15
 // Param: fetch_use_cache_url=0
@@ -23,12 +24,15 @@
 // Param: fetch_referer_re=array('@pattern@'=>'http://to_default_referer',...);
 // Param: fetch_use_imagemagick=0
 // Param: fetch_thumb_width=320
+// Param: fetch_show_information=0; // to show image information
+// Param: fetch_apikey=blahblahblah; // to refresh fetch file
 //
 // Usage:[[Fetch(url)]] or ?action=fetch&url=http://...
 //
 
 function do_fetch($formatter, $params = array()) {
     global $Config;
+    // $formatter->refresh = 1;
 
     $value = $params['value'];
     $url = !empty($params['url']) ? $params['url'] : $value;
@@ -39,7 +43,7 @@ function do_fetch($formatter, $params = array()) {
         $redirect_url = true;
 
     if (isset($redirect_url)) {
-        $formatter->send_header(array("Status: 302","Location: ".$url));
+        $formatter->send_header(array("Status: 301","Location: ".$url));
         return;
     }
 
@@ -47,6 +51,15 @@ function do_fetch($formatter, $params = array()) {
     $params['retval'] = &$ret;
     $params['call'] = true;
     if ($formatter->refresh) $params['refresh'] = 1;
+    else if (!empty($params['apikey']) and !empty($Config['apikey']) and $Config['apikey'] == $params['apikey'])
+        $params['refresh'] = 1;
+    if (!empty($params['refresh'])) {
+        if (empty($_SERVER['HTTP_REFERER']) and !empty($params['refresh']))
+            $params['.localrefresh'] = 1;
+        else if (strpos($_SERVER['HTTP_REFERER'], $_SERVER['HTTP_HOST']) !== false)
+            $params['.localrefresh'] = 1;
+    }
+
     macro_Fetch($formatter, $url, $params);
 
     if (!empty($ret['error'])) {
@@ -57,7 +70,7 @@ function do_fetch($formatter, $params = array()) {
             $is_image = preg_match('/\.(png|jpe?g|gif)(&|\?)?/i', $url);
         }
 
-        if ($is_image) {
+        if ($is_image and !empty($_SERVER['HTTP_REFERER'])) {
             require_once(dirname(__FILE__).'/../lib/mediautils.php');
 
             $font_face = !empty($Config['fetch_font']) ? $Config['fetch_font'] : '';
@@ -82,8 +95,21 @@ function do_fetch($formatter, $params = array()) {
             ImageDestroy($im);
             return;
         }
+        $formatter->header('Status: 500');
+        echo '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">';
+        echo '<html><head><title>'.$Config['sitename'].'</title></head><body>';
+        echo '<h1>500 Internal Server Error</h1>';
+        echo '<div><a href="'.$url.'">Original source</a> : ';
+        echo $url,'</div>';
+        echo '<h2>Error Message</h2>';
+        echo '<pre>', $ret['error'].'</pre>';
+        echo '<hr>';
+        echo '<div>', 'You can <a href="?action=fetch&amp;refresh=1&amp;url='.$url.'">refresh</a>';
+        echo ' this URL manually</div>';
+        echo '</body></html>';
+
+        return;
     }
-    echo $ret['error'];
 }
 
 function macro_Fetch($formatter, $url = '', $params = array()) {
@@ -115,6 +141,15 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
     $maxage = !empty($DBInfo->fetch_maxage) ? (int) $DBInfo->fetch_maxage : 60*60*24*7;
     $timeout = !empty($DBInfo->fetch_timeout) ? (int) $DBInfo->fetch_timeout : 15;
 
+    $maxages = array(
+        'site_alive'=>60*60, /* retry after one hour */
+        'site_status'=>60*60*2, /* retry after two hours */
+        'size_error'=>60, /* retry after 60 sec */
+    );
+
+    if (is_array($DBInfo->fetch_maxages))
+        $maxages = array_merge($maxages, $DBInfo->fetch_maxages);
+
     $vartmp_dir = $DBInfo->vartmp_dir;
     $buffer_size = 2048 * 1024; // default buffer size
     if (!empty($DBInfo->fetch_buffer_size) and
@@ -139,7 +174,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
     // check site available
     $si = new Cache_text('siteinfo');
     if ($si->exists($siteurl)) {
-        if (!empty($params['refresh'])) {
+        if (!empty($params['refresh']) || !empty($params['.localrefresh'])) {
             $si->remove($siteurl);
         } else if (empty($params['refresh']) && ($check = $si->fetch($siteurl)) !== false) {
             $params['retval']['status'] = $check['status'];
@@ -186,7 +221,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
             // check alive site
             if ($http->status == -210) {
                 $si->update($siteurl, array('status'=>$http->status,
-                        'error'=>$params['retval']['error']), /* ttl 1-days */ 60*60*24);
+                        'error'=>$params['retval']['error']), $maxages['site_alive']);
 
                 return false;
             }
@@ -194,7 +229,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
             $sc->update($url, array('size'=>-1,
                         'mimetype'=>'',
                         'error'=>$params['retval']['error'],
-                        'status'=>$params['retval']['status']), /* ttl 3-days */ 60*60*24*3);
+                        'status'=>$params['retval']['status']), $maxages['site_status']);
 
             return false;
         }
@@ -206,8 +241,17 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
             $mimetype = $http->resp_headers['content-type'];
         else
             $mimetype = 'application/octet-stream';
-        $sc->update($url, array('size'=>$sz,
-                        'mimetype'=>$mimetype));
+
+        $info = array('size'=>$sz, 'mimetype'=>$mimetype);
+        if (isset($http->resp_headers['last-modified']))
+            $info['last-modified'] = $http->resp_headers['last-modified'];
+        if (isset($http->resp_headers['etag']))
+            $info['etag'] = $http->resp_headers['etag'];
+
+        if (is_numeric($sz))
+            $sc->update($url, $info);
+        else
+            $sc->update($url, $info, $maxages['size_error']);
     }
 
     // size info
@@ -310,7 +354,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
             $sc->update($url, array('size'=>$sz,
                         'mimetype'=>$mimetype,
                         'error'=>$http->error,
-                        'status'=>$params['retval']['status']));
+                        'status'=>$params['retval']['status']), $maxages['site_status']);
             return false;
         }
 
@@ -327,13 +371,45 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
             }
         }
 
+        $info = array('size'=>$sz, 'mimetype'=>$mimetype);
+        if (isset($http->resp_headers['last-modified']))
+            $info['last-modified'] = $http->resp_headers['last-modified'];
+        if (isset($http->resp_headers['etag']))
+            $info['etag'] = $http->resp_headers['etag'];
+
         // update error status.
         if (!empty($error))
-            $sc->update($url, array('size'=>$sz,
-                        'mimetype'=>$mimetype));
+            $sc->update($url, $info);
     }
 
-    if (!empty($fetch_url) and !empty($DBInfo->fetch_use_cache_url)) {
+    if (!empty($mimetype) and preg_match('/^image\//', $mimetype)) {
+        $is_image = true;
+    } else {
+        $is_image = preg_match('/\.(png|jpe?g|gif)(&|\?)?/i', $url);
+    }
+
+    if (!empty($DBInfo->fetch_show_information) and $is_image and empty($_SERVER['HTTP_REFERER'])) {
+        $img_url = $formatter->link_url('', '?action=fetch&amp;url='.$url);
+        echo '<!DOCTYPE html>',"\n";
+        echo "<html>\n<head>\n<title>".$DBInfo->sitename."</title>\n</head>\n<body>\n";
+        echo '<h1>'._("Fetch File Information").'</h1>',"\n";
+        echo '<h2>'._("Details").'</h2>',"\n";
+        echo '<table>',"\n";
+        echo '<tr><th>'._("Source URL").'</th><td><a href="'.$url.'">'.$url.'</a></td></tr>',"\n";
+        echo '<tr><th>'._("Mime Type").'</th><td>'.$mimetype.'</td></tr>',"\n";
+        echo '<tr><th>'._("File Size").'</th><td>'.$hsz.'</td></tr>',"\n";
+        if (!empty($info['last-modified']))
+            echo '<tr><th>'._("Last Modified").'</th><td>'.$info['last-modified'].'</td></tr>',"\n";
+        echo '</table>',"\n";
+        echo '<hr>',"\n";
+        echo '<div>', 'You can <a href="?action=fetch&amp;refresh=1&amp;url='.$url.'">refresh</a>';
+        echo ' this URL manually</div>',"\n";
+        echo '<div class="externalImage"><div><img src="'.$img_url.'"></div>',"\n";
+        echo '</body>',"\n",'</html>',"\n";
+        return null;
+    }
+
+    if (empty($params['thumbwidth']) and !empty($fetch_url) and !empty($DBInfo->fetch_use_cache_url)) {
         $formatter->send_header(array('Status: 302', 'Location: '.$fetch_url));
 
         return null;
@@ -373,6 +449,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
 
     // generate thumb file to support low-bandwidth mobile version
     $thumbfile = '';
+    $thumb_url = '';
     while ((!empty($params['thumb']) or $force_thumb) and
             preg_match('/^image\/(jpe?g|gif|png)$/', $mimetype)) {
         if (empty($thumb_width)) {
@@ -382,6 +459,8 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
         }
 
         $thumbfile = preg_replace('@'.$ext.'$@', '.w'.$thumb_width.$ext, $fetchfile);
+        if (!$fetch_url)
+            $thumb_url = preg_replace('@'.$ext.'$@', '.w'.$thumb_width.$ext, $fetch_url);
         if (empty($params['refresh']) && file_exists($thumbfile)) break;
 
         list($w, $h) = getimagesize($fetchfile);
@@ -397,10 +476,18 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
         break;
     }
 
-    $down_mode = 'inline';
     if (!empty($thumbfile))
         $fetchfile = $thumbfile;
+    if (!empty($thumb_url))
+        $fetch_url = $thumb_url;
 
+    if (!empty($fetch_url) and !empty($DBInfo->fetch_use_cache_url)) {
+        $formatter->send_header(array('Status: 302', 'Location: '.$fetch_url));
+
+        return null;
+    }
+
+    $down_mode = 'inline';
     header("Content-Type: $mimetype\r\n");
     header("Content-Length: ".filesize($fetchfile));
     //header("Content-Disposition: $down_mode; ".$fname );
