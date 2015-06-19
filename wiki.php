@@ -5748,7 +5748,7 @@ function wiki_main($options) {
   }
 
   // HEAD support for robots
-  if (!empty($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD'] == 'HEAD') {
+  if (empty($action) and !empty($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD'] == 'HEAD') {
     if (!$page->exists()) {
       header("HTTP/1.1 404 Not found");
       header("Status: 404 Not found");
