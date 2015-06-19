@@ -47,13 +47,11 @@ class User_xe17 extends WikiUser {
     function User_xe17($id = '') {
         global $DBInfo;
 
-        if (!empty($Config['cookie_expires']))
-            $this->cookie_expires = $Config['cookie_expires'];
-
-        if ($id && $id != 'Anonymous') {
-            $this->setID($id);
+        parent::WikiUser($id);
+        if ($this->id == 'Anonymous')
             return;
-        }
+
+        $cookie_id = $this->id;
 
         // set xe_root_dir config option
         $xe_root_dir = !empty($DBInfo->xe_root_dir) ?
@@ -71,27 +69,9 @@ class User_xe17 extends WikiUser {
         session_cache_limiter(''); // Cache-Control manually for varnish cache
         session_start();
 
-        // for Anonymous users
-        $this->css = isset($_COOKIE['MONI_CSS']) ? $_COOKIE['MONI_CSS'] : '';
-        $this->theme = isset($_COOKIE['MONI_THEME']) ? $_COOKIE['MONI_THEME'] : '';
-        $this->bookmark = isset($_COOKIE['MONI_BOOKMARK']) ? $_COOKIE['MONI_BOOKMARK'] : '';
-        $this->trail = isset($_COOKIE['MONI_TRAIL']) ? _stripslashes($_COOKIE['MONI_TRAIL']) : '';
-        $this->tz_offset = isset($_COOKIE['MONI_TZ']) ?_stripslashes($_COOKIE['MONI_TZ']) : '';
-        $this->nick = isset($_COOKIE['MONI_NICK']) ?_stripslashes($_COOKIE['MONI_NICK']) : '';
-        $this->verified_email = isset($_COOKIE['MONI_VERIFIED_EMAIL']) ?
-                _stripslashes($_COOKIE['MONI_VERIFIED_EMAIL']) : '';
-        if ($this->tz_offset == '') $this->tz_offset = date('Z');
-
-        $cookie_id = '';
-        // get the current Cookie vals
-        if (isset($_COOKIE['MONI_ID'])) {
-            $this->ticket = substr($_COOKIE['MONI_ID'], 0, 32);
-            $cookie_id = urldecode(substr($_COOKIE['MONI_ID'], 33));
-        }
-
         // is it a valid user ?
         $udb = new UserDB($DBInfo);
-        $user = $udb->getUser(!empty($cookie_id) ? $cookie_id : 'Anonymous');
+        $user = $udb->getUser($cookie_id);
 
         $update = false;
         if (!empty($cookie_id)) {
