@@ -36,12 +36,18 @@ loadLanguage = function() {
     // i18nize elements like as following
     // <span class="i18n" title="Hello">Hello World</span>
     if (!document.getElementsByClassName) return;
+    var supported = { 'ko': 1 };
+    var lang = navigator.language || navigator.userLanguage;
+    lang = lang.substr(0,2);
+    if (!supported[lang]) return;
 
     var elems = document.getElementsByClassName('i18n');
 
     for (var i = 0; i < elems.length; i++) {
-        if (elems[i].title != '' && elems[i].childNodes[0] && elems[i].childNodes[0].nodeValue)
+        if (elems[i].title != '' && elems[i].lang != lang && elems[i].childNodes[0] && elems[i].childNodes[0].nodeValue) {
             elems[i].childNodes[0].nodeValue = _(elems[i].title);
+            elems[i].lang = lang;
+        }
     }
 }
 

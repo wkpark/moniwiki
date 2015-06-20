@@ -7,7 +7,9 @@
 //
 
 function macro_GetText($formatter, $value, $params = array()) {
-    return '<span class="i18n" title="'.str_replace('"', '&#34;', $value).'">'._($value).'</span>';
+    if (!empty($formatter->lang))
+        $lang = ' lang="'.substr($formatter->lang, 0, 2).'"';
+    return '<span class="i18n"'.$lang.' title="'.str_replace('"', '&#34;', $value).'">'._($value).'</span>';
 }
 
 // vim:et:sts=4:sw=4:
