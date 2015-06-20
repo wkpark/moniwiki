@@ -349,3 +349,7 @@ $use_local_translation=0; # automatic translation
 #$no_all_titleindex = 1; # do not support action=titleindex to reduce traffic
 #$titleindex_ttl=60*60*24; # titleindex ttl
 #$sitemap_ttl=60*60*24*7; # sitemap ttl
+#$use_google_ads=0; // support google ads macro in the middle of content
+#$google_ads_random=1; // randomly show ads
+#$google_ads[0]=array('ad_client'=>'ca-pub-0000000000000000', 'ad_slot'=>'0000000000', 'width'=>320, 'height'=>100);
+#$google_ads[1]=array('ad_client'=>'ca-pub-0000000000000000', 'ad_slot'=>'0000000000');

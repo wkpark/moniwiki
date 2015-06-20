@@ -1445,6 +1445,7 @@ class WikiPage {
       '#format','#filter','#postfilter','#twinpages','#notwins','#nocomment','#comment',
       '#language','#camelcase','#nocamelcase','#cache','#nocache','#alias', '#linenum', '#nolinenum',
       '#description', '#image',
+      '#noads', // hide google ads
       '#singlebracket','#nosinglebracket','#rating','#norating','#nodtd');
     $pi=array();
 
@@ -3666,6 +3667,10 @@ class Formatter {
 
     $formatter=&$this;
 
+    # google ads
+    $this->noads = !empty($DBInfo->use_google_ads) ? false : true;
+    $this->noads = !empty($this->pi['#noads']) ? $this->pi['#noads'] : $this->noads;
+
     $ii = isset($pi['start_line']) ? $pi['start_line'] : 0;
     if (isset($formatter->pi['#linenum']) and empty($formatter->pi['#linenum']))
       $this->linenum = -99999;
@@ -4045,6 +4050,22 @@ class Formatter {
 
         while($in_div > 0)
           $p_closeopen.=$this->_div(0,$in_div,$div_enclose);
+
+        // show google ads
+        while (!$this->noads && empty($this->preview)) {
+          if ($this->sect_num < 3)
+            break;
+          if ($DBInfo->use_google_ads > 1)
+            $select_sect = $DBInfo->use_google_ads;
+          else
+            $select_sect = 3;
+          if ($select_sect == $this->sect_num) {
+            $p_closeopen.= $this->macro_repl('GoogleAds', '', $options);
+            $this->noads = true;
+          }
+          break;
+        }
+
         $p_closeopen.=$this->_div(1,$in_div,$div_enclose, ' class="section"');
         $in_p='';
         $edit = ''; $anchor = '';
