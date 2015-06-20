@@ -312,7 +312,9 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         $changed_time_fmt = !empty($my_date_fmt) ? $my_date_fmt : '[H:i]';
         $checkchange = 0;
         $use_day=0;
-        $template= '"$date $title<br />\n"';
+        $template= '"<li>$date $title</li>\n"';
+        $template_bra = "<ul>\n";
+        $template_cat = "</ul>\n";
       } else if ($rctype=="moztab") {
         $use_day=1;
         $template= '"<li>$title $date</li>\n"';
@@ -1069,11 +1071,11 @@ EOF;
   } else if (!empty($list)) {
     $out = '';
     foreach ($list as $k=>$v) {
-      $out.= $v[1].' '.$v[0].'<br />';
+      $out.= '<li>'.$v[1].' '.$v[0].'</li>';
     }
 
     if (!empty($options['call'])) {
-      return $out;
+      return '<ul>'.$out.'</ul>';
     }
   }
 
