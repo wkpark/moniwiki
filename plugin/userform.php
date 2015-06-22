@@ -423,8 +423,14 @@ function do_userform($formatter,$options) {
              # XXX
              if (!empty($options['email']) and preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['email'])) {
                $options['subject']="[$DBInfo->sitename] "._("E-mail confirmation");
-               $body=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
-               $body=_("Please confirm your email address")."\n".$body;
+               $body = '';
+               if (!empty($DBInfo->email_register_header) and file_exists($DBInfo->email_register_header)) {
+                 $body = file_get_contents($DBInfo->email_register_header);
+                 $body = str_replace(array('@sitename@'), array($DBInfo->sitename), $body);
+               }
+               $body.=_("Please confirm your email address")."\n\n";
+               $body.=qualifiedUrl($formatter->link_url('',"?action=userform&login_id=$user->id&ticket=$ticket.$options[email]"));
+               $body.= "\n";
                if (!empty($DBInfo->use_safelogin)) {
                  $body.="\n".sprintf(_("Your initial password is %s"),$mypass)."\n\n";
                  $body.=_("Please change your password later")."\n";

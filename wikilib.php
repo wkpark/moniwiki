@@ -3604,6 +3604,16 @@ function wiki_sendmail($body,$options) {
   $mailheaders.= "Content-Type: text/plain; charset=$DBInfo->charset\n";
   $mailheaders.= "Content-Transfer-Encoding: 8bit\n\n";
 
+  if (!empty($DBInfo->email_header) and file_exists($DBInfo->email_header)) {
+    $header = file_get_contents($DBInfo->email_header);
+    $body = $header.$body;
+  }
+
+  if (!empty($DBInfo->email_footer) and file_exists($DBInfo->email_footer)) {
+    $footer = file_get_contents($DBInfo->email_footer);
+    $body.= "\n".$footer;
+  }
+
   if (!empty($DBInfo->sendmail_path)) {
     $header = "To: $email\n".
               "Subject: $subject\n";
