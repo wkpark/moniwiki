@@ -1277,14 +1277,14 @@ class UserDB {
   }
 
   function addUser($user, $options = array()) {
-    if ($this->_exists($user->id))
+    if ($this->_exists($user->id) || $this->_exists($user->id, true))
       return false;
     $this->saveUser($user, $options);
     return true;
   }
 
   function isNotUser($user) {
-    if ($this->_exists($user->id))
+    if ($this->_exists($user->id) || $this->_exists($user->id, true))
       return false;
     return true;
   }
@@ -1382,6 +1382,14 @@ class UserDB {
     }
     if (file_exists($this->user_dir.'/'.$wu))
       return true;
+
+    if ($suspended) {
+      // deletede user ?
+      $prefix = 'del-wu-';
+      $wu = $prefix . $this->_id_to_key($id);
+      if (file_exists($this->user_dir.'/'.$wu))
+        return true;
+    }
     return false;
   }
 
