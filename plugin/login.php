@@ -43,7 +43,9 @@ function macro_login($formatter,$value="",$options="") {
 
   $id=_("ID");
   $pass=_("Password");
-  $join=_("Join");
+  $join = '';
+  if (empty($DBInfo->no_register))
+    $join=_("Join");
   $login=_("Login");
   if (!empty($formatter->lang))
     $lang = ' lang="'.substr($formatter->lang, 0, 2).'"';
