@@ -4566,7 +4566,10 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
   $kc = new Cache_text('titleindex');
   $delay = !empty($DBInfo->default_delaytime) ? $DBInfo->default_delaytime : 0;
 
-  $lock_file = _fake_lock_file($DBInfo->vartmp_dir, 'titleindex');
+  $uid = '';
+  if (function_exists('posix_getuid'))
+    $uid = '.'.posix_getuid();
+  $lock_file = _fake_lock_file($DBInfo->vartmp_dir, 'titleindex'.$uid);
   $locked = _fake_locked($lock_file, $DBInfo->mtime());
   if ($locked or ($kc->exists('key') and $DBInfo->checkUpdated($kc->mtime('key'), $delay))) {
     if (!empty($formatter->use_group) and $formatter->group) {
