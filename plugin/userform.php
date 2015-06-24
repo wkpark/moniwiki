@@ -217,7 +217,13 @@ function do_userform($formatter,$options) {
       $params = session_get_cookie_params();
       header('Set-Cookie: '. session_name() .'='.$user->id.'; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path='.$params['path'], false);
     }
-    $options['msg']= _("Cookie deleted !");
+
+    // call logout method
+    if (method_exists($user, 'logout')) {
+      $user->logout($formatter, $options);
+    } else {
+      $options['msg']= _("Cookie deleted !");
+    }
     $user->id = 'Anonymous';
     $DBInfo->user=$user;
     $use_refresh=1;
