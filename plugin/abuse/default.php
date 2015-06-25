@@ -17,8 +17,10 @@ function abusefilter_default($action, $params = array()) {
 
     // do not use abuse filter for members
     if (!empty($members) and in_array($id, $members)) return true;
+
+    // do not check admin level users
     $pass = $DBInfo->security_class == 'acl' &&
-            $DBInfo->security->is_allowed($params['action'], $params);
+            $DBInfo->security->is_allowed('userinfo', $params);
     if ($pass) return true;
 
     // default abusing check paramters
@@ -43,7 +45,12 @@ function abusefilter_default($action, $params = array()) {
         'add_lines'=>0, 'del_lines'=>0, 'add_chars'=>0, 'del_chars'=>0);
     $info['id'] = $id;
     $info['ip'] = $params['ip'];
-    if ($ec->exists($id) and ($info = $ec->fetch($id)) !== false) {
+
+    // prepare to return
+    $ret = array();
+    $retval = array();
+    $ret['retval'] = &$retval;
+    if ($ec->exists($id) and ($info = $ec->fetch($id, 0, $ret)) !== false) {
         $info['id'] = $id;
         $info['ip'] = $params['ip'];
         if ($act == 'save') {
@@ -114,6 +121,9 @@ function abusefilter_default($action, $params = array()) {
             $params['retval']['msg'] = sprintf(_("Abusing detected! You are blocked to edit pages until %s."), implode(' ', $str));
             return false;
         }
+
+        $left_ttl = $retval['ttl'] - (time() - $retval['mtime']);
+        $edit['ttl'] = $left_ttl;
 
         $info[$act]++;
         $info['edit']++;
