@@ -17,6 +17,9 @@ function abusefilter_default($action, $params = array()) {
 
     // do not use abuse filter for members
     if (!empty($members) and in_array($id, $members)) return true;
+    $pass = $DBInfo->security_class == 'acl' &&
+            $DBInfo->security->is_allowed($params['action'], $params);
+    if ($pass) return true;
 
     // default abusing check paramters
     // users can edit 10 times within 5-minutes etc.
@@ -32,10 +35,23 @@ function abusefilter_default($action, $params = array()) {
     $act = strtolower($action);
     $ec = new Cache_text('abusefilter');
 
-    $info = array('create'=>0, 'delete'=>0, 'revert'=>0, 'save'=>0, 'edit'=>0);
+    // get editinfo
+    $editinfo = array('add_lines'=>0, 'del_lines'=>0, 'add_chars'=>0, 'del_chars'=>0);
+    if (is_array($params['editinfo']))
+        $editinfo = $params['editinfo'];
+    $info = array('create'=>0, 'delete'=>0, 'revert'=>0, 'save'=>0, 'edit'=>0,
+        'add_lines'=>0, 'del_lines'=>0, 'add_chars'=>0, 'del_chars'=>0);
     $info['id'] = $id;
+    $info['ip'] = $params['ip'];
     if ($ec->exists($id) and ($info = $ec->fetch($id)) !== false) {
         $info['id'] = $id;
+        $info['ip'] = $params['ip'];
+        if ($act == 'save') {
+            $info['add_lines']+= $editinfo['add_lines'];
+            $info['del_lines']+= $editinfo['del_lines'];
+            $info['add_chars']+= $editinfo['add_chars'];
+            $info['del_chars']+= $editinfo['del_chars'];
+        }
         // check edit count
         if ($info['edit'] > $edit['edit'] || $info[$act] > $edit[$act]) {
             if ($info[$act] > $edit[$act])
@@ -102,6 +118,12 @@ function abusefilter_default($action, $params = array()) {
         $info[$act]++;
         $info['edit']++;
     } else {
+        if ($act == 'save') {
+            $info['add_lines']+= $editinfo['add_lines'];
+            $info['del_lines']+= $editinfo['del_lines'];
+            $info['add_chars']+= $editinfo['add_chars'];
+            $info['del_chars']+= $editinfo['del_chars'];
+        }
         $info[$act]++;
         $info['edit']++;
     }

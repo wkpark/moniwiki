@@ -3173,7 +3173,8 @@ function do_post_savepage($formatter,$options) {
   if (in_array($options['id'], $DBInfo->members))
     $full_permission = true;
 
-  if (!$full_permission) {
+  $options['editinfo'] = array();
+  if (!$full_permission || !empty($DBInfo->use_abusefilter)) {
     // get diff
     if (!isset($diff[0]))
       $diff = $formatter->get_diff($savetext);
@@ -3194,6 +3195,17 @@ function do_post_savepage($formatter,$options) {
     $added_chars = $changes[2];
     $deleted_chars = $changes[3];
 
+    $editinfo = array(
+      'add_lines'=>$added,
+      'del_lines'=>$deleted,
+      'add_chars'=>$added_chars,
+      'del_chars'=>$deleted_chars,
+    );
+
+    $options['editinfo'] = $editinfo;
+  }
+
+  if (!$full_permission) {
     $restricted = false;
     $delete_lines_restricted_ratio = 0.5;
 

@@ -1003,6 +1003,9 @@ class WikiDB {
       $params = array();
       $params['retval'] = &$options['retval'];
       $params['id'] = ($user->id == 'Anonymous') ? $REMOTE_ADDR : $user->id;
+      $params['ip'] = $REMOTE_ADDR;
+      $params['action'] = $options['action'];
+      $params['editinfo'] = !empty($options['editinfo']) ? $options['editinfo'] : false;
 
       if (is_string($this->use_abusefilter))
         $filtername = $this->use_abusefilter;
