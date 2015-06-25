@@ -5,7 +5,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: MoniWiki 1.2.5\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2015-06-23 05:16+0900\n"
+"POT-Creation-Date: 2015-06-26 05:11+0900\n"
 "PO-Revision-Date: 2015-06-09 05:01+0900\n"
 "Last-Translator: Won-Kyu Park <wkpark@kldp.org>\n"
 "Language-Team: Won-Kyu Park <wkpark@kldp.org>\n"
@@ -1750,7 +1750,7 @@ msgstr "핑 보내기"
 
 #: ../plugin/sendping.php:94 ../plugin/UploadForm.php:274
 msgid "Reset"
-msgstr ""
+msgstr "리셋"
 
 #: ../plugin/sendping.php:178
 msgid "Trackback sent"
@@ -2459,11 +2459,39 @@ msgstr "전체 %d명의 정지된 사용자."
 msgid "Total %d Deleted users found."
 msgstr "전체 %d명의 삭제된 사용자."
 
-#: ../plugin/userinfo.php:70
-msgid "E-mail"
+#: ../plugin/userinfo.php:63 ../plugin/userinfo.php:297
+msgid "Contributors Monitor"
+msgstr "기여자 모니터링"
+
+#: ../plugin/userinfo.php:86
+msgid "Reset monitoring state"
+msgstr "모니터링 상태 리셋"
+
+#: ../plugin/userinfo.php:92
+msgid "Suspend more 30 minutes"
+msgstr "30분 더 차단"
+
+#: ../plugin/userinfo.php:104
+msgid "mtime"
 msgstr ""
 
-#: ../plugin/userinfo.php:79 ../plugin/userinfo.php:140
+#: ../plugin/userinfo.php:105
+msgid "Suspended or TTL"
+msgstr "차단시간 혹은 TTL"
+
+#: ../plugin/userinfo.php:105
+msgid "Edits"
+msgstr "편집"
+
+#: ../plugin/userinfo.php:105
+msgid "actions"
+msgstr "액션"
+
+#: ../plugin/userinfo.php:170
+msgid "Suspend more"
+msgstr "더 차단"
+
+#: ../plugin/userinfo.php:187 ../plugin/userinfo.php:249
 msgid "Delete Users"
 msgstr "사용자 지우기"
 
@@ -2479,7 +2507,11 @@ msgstr "사용자 정지"
 msgid "User infomation is restricted by wikimaster"
 msgstr "사용자 정보는 위키관리자만 볼 수 있습니다"
 
-#: ../plugin/userinfo.php:217
+#: ../plugin/userinfo.php:299
+msgid "Suspended Users"
+msgstr "정지된 사용자"
+
+#: ../plugin/userinfo.php:336
 #, c-format
 msgid "User \"%s\" are suspended !"
 msgstr "사용자 \"%s\"(이)가 정지됨 !"
@@ -3553,9 +3585,6 @@ msgstr "최종 변경일자:"
 
 #~ msgid "Date and Changes"
 #~ msgstr "날짜와 바뀐점"
-
-#~ msgid "actions"
-#~ msgstr "액션"
 
 #~ msgid "--Select Category--"
 #~ msgstr "--카테고리 선택--"
