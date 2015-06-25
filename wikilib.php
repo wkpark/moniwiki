@@ -1242,7 +1242,20 @@ class UserDB {
     $limit = !empty($options['limit']) ? intval($options['limit']) : 1000;
     $q = !empty($options['q']) ? trim($options['q']) : '[^\.]+';
 
+    // Anonymous user with editing information
+    $rawid = false;
+    if (preg_match('/^(\d{1,3}\.){3}\d{1,3}$/', $q))
+      $rawid = true;
+
     $users = array();
+    if (!empty($options['q'])) {
+      // search exact matched user
+      if (($mtime = $this->_exists($q, $type != '')) !== false) {
+        $users[$q] = $mtime;
+        return $users;
+      }
+    }
+
     $handle = opendir($this->user_dir);
     $j = 0;
     while ($file = readdir($handle)) {
@@ -1253,8 +1266,11 @@ class UserDB {
           continue;
         }
 
-        $id = $this->_key_to_id($match[1]);
-        if (!empty($q) and !preg_match('/'.$q.'/', $id)) continue;
+        if (!$rawid)
+          $id = $this->_key_to_id($match[1]);
+        else
+          $id = $match[1];
+        if (!empty($q) and !preg_match('/'.$q.'/i', $id)) continue;
         $users[$id] = filemtime($this->user_dir.'/'.$file);
         $j++;
         if ($j >= $limit)
@@ -1328,6 +1344,7 @@ class UserDB {
                   "language", // not used
                   "datetime_fmt", // not used
                   "wikiname_add_spaces", // not used
+                  "status", // user status for IP user
     );
 
     $date=gmdate('Y/m/d H:i:s', time());
@@ -1335,9 +1352,9 @@ class UserDB {
 
     if ($user->id == 'Anonymous') {
       if (!empty($user->info['remote']))
-        $wu = 'ip-'.$user->info['remote'];
+        $wu = 'wu-'.$user->info['remote'];
       else
-        $wu = 'ip-'.$_SERVER['REMOTE_ADDR'];
+        $wu = 'wu-'.$_SERVER['REMOTE_ADDR'];
     } else {
       $wu = 'wu-'.$this->_id_to_key($user->id);
       if (!empty($options['suspended'])) $wu = 'wait-'.$wu;
@@ -1373,22 +1390,22 @@ class UserDB {
 
   function _exists($id, $suspended = false) {
     if (empty($id) || $id == 'Anonymous') {
-      $wu = 'ip-'.$_SERVER['REMOTE_ADDR'];
+      $wu = 'wu-'.$_SERVER['REMOTE_ADDR'];
     } else if (preg_match('/^(\d{1,3}\.){3}\d{1,3}$/', $id)) {
-      $wu = 'ip-'.$id;
+      $wu = 'wu-'.$id;
     } else {
       $prefix = $suspended ? 'wait-wu-' : 'wu-';
       $wu = $prefix . $this->_id_to_key($id);
     }
     if (file_exists($this->user_dir.'/'.$wu))
-      return true;
+      return filemtime($this->user_dir.'/'.$wu);
 
     if ($suspended) {
       // deletede user ?
       $prefix = 'del-wu-';
       $wu = $prefix . $this->_id_to_key($id);
       if (file_exists($this->user_dir.'/'.$wu))
-        return true;
+        return filemtime($this->user_dir.'/'.$wu);
     }
     return false;
   }
@@ -1405,9 +1422,9 @@ class UserDB {
 
   function getInfo($id, $suspended = false) {
     if (empty($id) || $id == 'Anonymous') {
-      $wu = 'ip-'.$_SERVER['REMOTE_ADDR'];
+      $wu = 'wu-'.$_SERVER['REMOTE_ADDR'];
     } else if (preg_match('/^(\d{1,3}\.){3}\d{1,3}$/', $id)) {
-      $wu = 'ip-'.$id;
+      $wu = 'wu-'.$id;
     } else {
       $prefix = $suspended ? 'wait-wu-' : 'wu-';
       $wu = $prefix . $this->_id_to_key($id);
@@ -1450,8 +1467,20 @@ class UserDB {
     if (empty($id) || $id == 'Anonymous')
       return false;
 
-    $key = $this->_id_to_key($id);
-    $u = 'wu-'. $key;
+    if (preg_match('/^(\d{1,3}\.){3}\d{1,3}$/', $id)) {
+      // change user status
+      $info = $this->getInfo($id);
+      $user = new WikiUser($id);
+      $info['status'] = 'deleted';
+      $info['remote'] = $id;
+      $user->info = $info;
+      $this->saveUser($user);
+      return true;
+    } else {
+      $key = $this->_id_to_key($id);
+      $u = 'wu-'. $key;
+    }
+
     $du = 'del-'.$u;
     if ($this->_exists($id)) {
       return rename($this->user_dir.'/'.$u,$this->user_dir.'/'.$du);
@@ -1471,7 +1500,21 @@ class UserDB {
     if (empty($id) || $id == 'Anonymous')
       return false;
 
-    $u = $wu = 'wu-'. $this->_id_to_key($id);
+    if (preg_match('/^(\d{1,3}\.){3}\d{1,3}$/', $id)) {
+      // activate or suspend IP user
+      $info = $this->getInfo($id);
+      $user = new WikiUser($id);
+      if ($suspended)
+        $info['status'] = 'suspended';
+      else
+        unset($info['status']);
+      $info['remote'] = $id;
+      $user->info = $info;
+      $this->saveUser($user);
+      return true;
+    } else {
+      $u = $wu = 'wu-'. $this->_id_to_key($id);
+    }
     $states = array('wait', 'del');
     if ($suspended) {
       $wu = 'wait-'.$u;
