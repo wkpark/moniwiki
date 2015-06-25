@@ -101,7 +101,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
         $ac->_caches($files, array('prefix'=>1));
 
         $list = '<table class="wiki editinfo">';
-        $list.= '<tr><th>'._("ID").'</th></th><th>'._("IP").'</th><th>'._("mtime").
+        $list.= '<tr><th>'._("ID").'</th></th><th>'._("IP").'</th><th>'._("Last updated").
                 '</th><th>'._("Suspended or TTL").'</th><th>'._("Edits").'</th><th>'._("actions").'</th></tr>';
         foreach ($files as $f) {
             // low level _fetch(), _remove()
@@ -113,7 +113,18 @@ function macro_UserInfo($formatter,$value,$options=array()) {
             if (!isset($info['id']))
                 continue;
 
-            $ttl = $retval['ttl'];
+            $ttl = $retval['ttl'] - (time() - $retval['mtime']);
+
+            $d = intval($ttl / 60 / 60 / 24);
+            $h = intval($ttl / 60 / 60);
+            $m = intval($ttl / 60);
+            $s = $ttl % 60;
+            $ttl_time = '';
+            if (!empty($d))
+                $ttl_time = $d.' '._("days").' ';
+
+            $ttl_time.= sprintf("%02d:%02d:%02d", $h, $m, $s);
+
             $check = array(
                 'create'=>'C',
                 'edit'=>'E',
@@ -159,7 +170,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
             else
                 $list.= '<td>&nbsp;</td>';
             $list.= '<td>'.date('Y-m-d H:i:s', $retval['mtime']).'</td>';
-            $list.= '<th>'.$ttl.'</th>';
+            $list.= '<th>'.$ttl_time.'</th>';
             $list.= '<td><span class="editinfo">'.$out.'</span></td>';
             $list.= '<td>';
             $list.= '<a class="button-small" href="?action=userinfo&amp;type=monitor'.
@@ -294,7 +305,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
     $extra = '';
     if ($allowed) {
         if ($type != 'monitor')
-            $extra = '<a href="?action=userinfo&amp;&type=monitor" class="button"><span>'._("Contributors Monitor")."</span></a>";
+            $extra = '<a href="?action=userinfo&amp;type=monitor" class="button"><span>'._("Contributors Monitor")."</span></a>";
         else
             $extra = '<a href="?action=userinfo" class="button"><span>'._("Suspended Users")."</span></a> ".
                     '<a href="?action=userinfo&amp;type=monitor" class="button"><span>'._("Refresh")."</span></a>";
