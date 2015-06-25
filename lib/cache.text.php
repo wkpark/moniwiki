@@ -426,6 +426,8 @@ class Cache_Text {
 			// or return
 			return $ret;
 		}
+		if (isset($params['retval']))
+			$params['retval'] = $val;
 		return $val['val'];
 	}
 
@@ -445,6 +447,14 @@ class Cache_Text {
 
 	function remove($id) {
 		$key = $this->getKey($id);
+		if ($this->_exists($key)) {
+			unlink($this->cache_path.'/'.$key);
+			return true;
+		}
+		return false;
+	}
+
+	function _remove($key) {
 		if ($this->_exists($key)) {
 			unlink($this->cache_path.'/'.$key);
 			return true;
