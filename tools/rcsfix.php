@@ -199,12 +199,19 @@ function fixrcs($rcsfile, $force = true) {
         }
 
         $fixed.= $line;
-        $fixed.= fgets($fp, 1024);
+        $line = fgets($fp, 1024);
+        if (preg_match('@^date\s+([^;]+);(.*)$@', $line, $m)) {
+            $t = explode('.', $m[1]);
+            $str = $t[0].'/'.$t[1].'/'.$t[2].' '.$t[3].':'.$t[4].':'.$t[5];
+            $atime = strtotime($str);
+            $remain = $m[2];
+        }
+        $fixed.= $line;
         $fixed.= fgets($fp, 1024);
         $line = fgets($fp, 1024);
         if (preg_match('/^next\s+(\d\.\d+)?;/', $line, $match)) {
             // is it the last version string ?
-            if (!empty($match[1]) && $match[1] == $last) {
+            if (!empty($match[1]) && $match[1] === $last) {
                 // include last revision info.
                 if ($looks_ok) {
                     //echo 'last ver',"\n";
@@ -228,6 +235,31 @@ function fixrcs($rcsfile, $force = true) {
                 $state = 'fixed';
 
                 break;
+            } else {
+                if (!empty($match[1])) {
+                    $tmp = explode('.', $match[1]);
+                    $next = $tmp[0].'.'.($tmp[1] - 1);
+                } else {
+                    echo "Broken RCS header. try to fill up\n";
+
+                    while ($next !== $last) {
+                        $fixed.= "next\t$next;\n\n$next\n";
+                        $tmp = explode('.', $next);
+                        $next = $tmp[0].'.'.($tmp[1] - 1);
+                        $atime-= 60*60*2;
+                        $fixed.= "date\t".date("Y.m.d.H.i.s", $atime).';'.$remain."\n";
+                        $fixed.= "branches;\n";
+                    }
+                    if ($next === $last) {
+                        $fixed.= "next\t$next;\n\n$next\n";
+                        $atime-= 60*60*2;
+                        $fixed.= "date\t".date("Y.m.d.H.i.s", $atime).';'.$remain."\n";
+                        $fixed.= "branches;\n";
+                        $fixed.= "next\t;\n";
+                        $state = "fixed";
+                    }
+                    break;
+                }
             }
         } else {
             break;
@@ -288,6 +320,7 @@ function fixrcs($rcsfile, $force = true) {
     fclose($fp);
 
     echo "Fixed!!\n";
+    //file_put_contents('tmp,v', $fixed);
     file_put_contents($rcsfile, $fixed);
     touch($rcsfile, $mtime);
     unlink($tmpname);
