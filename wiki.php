@@ -2310,15 +2310,18 @@ class Formatter {
               else if ($name and $val) $eattr.=' '.$name.'="'.urldecode($val).'"';
             }
 
-            $size = '';
-            if (!empty($this->fetch_imagesize))
-              $size = '('.$this->macro_repl('ImageFileSize', $url).')';
-
-            if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url))
+            $info = '';
+            // check internal links and fetch image
+            if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url)) {
               $url = $this->fetch_action. str_replace(array('&', '?'), array('%26', '%3f'), $url);
 
-            return "<div class='$cls$img_cls'><div><a class='externalLink named' href='$link' $attr $this->external_target title='$link'><img $eattr alt='$atext' src='$url' $img_attr/></a>".
-                "<div><a href='$url'><span>[$type "._("external image")."$size]</span></a></div></div></div>";
+              $size = '';
+              if (!empty($this->fetch_imagesize))
+                $size = '('.$this->macro_repl('ImageFileSize', $url).')';
+              $info = "<div><a href='$url'><span>[$type "._("external image")."$size]</span></a></div>";
+            }
+
+            return "<div class='$cls$img_cls'><div><a class='externalLink named' href='$link' $attr $this->external_target title='$link'><img $eattr alt='$atext' src='$url' $img_attr/></a>".$info.'</div></div>';
           }
           if (!empty($this->external_on))
             $external_link='<span class="externalLink">('.$url.')</span>';
@@ -2360,18 +2363,23 @@ class Formatter {
             if ($name == 'align') $cls.=' img'.ucfirst($val);
             else if ($name and $val) $attr.=' '.$name.'="'.urldecode($val).'"';
           }
-          $size = '';
-          if (!empty($this->fetch_imagesize))
-            $size = '('.$this->macro_repl('ImageFileSize', $url).')';
 
           // XXX fetch images
           $fetch_url = $url;
-          if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url))
+          $info = '';
+          // check internal images
+          if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url)) {
             $fetch_url = $this->fetch_action.
                 str_replace(array('&', '?'), array('%26', '%3f'), $url);
 
-          return "<div class=\"$cls\"><div><img alt='$link' $attr src='$fetch_url' />".
-                "<div><a href='$url'><span>[$type "._("external image")."$size]</span></a></div></div></div>";
+            $size = '';
+            if (!empty($this->fetch_imagesize))
+              $size = '('.$this->macro_repl('ImageFileSize', $fetch_url).')';
+
+            $info = "<div><a href='$url'><span>[$type "._("external image")."$size]</span></a></div>";
+          }
+
+          return "<div class=\"$cls\"><div><img alt='$link' $attr src='$fetch_url' />".$info.'</div></div>';
         }
       }
       if (substr($url,0,7)=='http://' and $url[7]=='?') {
