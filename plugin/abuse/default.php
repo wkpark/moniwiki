@@ -43,8 +43,6 @@ function abusefilter_default($action, $params = array()) {
         $editinfo = $params['editinfo'];
     $info = array('create'=>0, 'delete'=>0, 'revert'=>0, 'save'=>0, 'edit'=>0,
         'add_lines'=>0, 'del_lines'=>0, 'add_chars'=>0, 'del_chars'=>0);
-    $info['id'] = $id;
-    $info['ip'] = $params['ip'];
 
     // prepare to return
     $ret = array();
@@ -128,6 +126,9 @@ function abusefilter_default($action, $params = array()) {
         $info[$act]++;
         $info['edit']++;
     } else {
+        $info['id'] = $id;
+        $info['ip'] = $params['ip'];
+
         if ($act == 'save') {
             $info['add_lines']+= $editinfo['add_lines'];
             $info['del_lines']+= $editinfo['del_lines'];
