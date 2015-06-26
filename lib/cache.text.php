@@ -239,6 +239,10 @@ class Cache_Text {
 
 		// update the mtime of the cache info file.
 		@touch($this->cache_dir . '/.info');
+		if (!isset($params))
+			$params = array('id'=>$id);
+		else
+			$params['id'] = $id;
 		return $this->_update($key, $val, $ttl, $params);
 	}
 
@@ -253,12 +257,14 @@ class Cache_Text {
 			if ($type == 'php') {
 				$header = '';
 				($ttl) ? $vals['ttl'] = $ttl : null;
+				$vals['id'] = isset($params['id']) ? $params['id'] : null;
 				$header = $this->header($type, $vals);
 				$save = $header."\n".'<'.'?php return '.var_export($val, true).';';
 			} else {
 				$vals['ttl'] = $ttl;
 				$vals['mtime'] = time();
 				$vals['val'] = $val;
+				$vals['id'] = isset($params['id']) ? $params['id'] : null;
 				$save = serialize($vals);
 			}
 		} else if (!empty($type)) {
