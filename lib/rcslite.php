@@ -124,7 +124,7 @@ Class RcsLite {
     # Called by routines that must make sure RCS file has been read in
     function _ensureProcessed()
     {
-        if( ! $this->_where ) {
+        if( empty($this->_where) ) {
             $this->_process();
         }
     }
@@ -137,7 +137,7 @@ Class RcsLite {
     # Read in the whole RCS file
     function _process($file='', $quick=0,$force=0)
     {
-        if( $this->_where && !$force) return;
+        if( !empty($this->_where) && !$force) return;
 
         if ($file) {
             $this->filename=$file;
@@ -199,15 +199,24 @@ Class RcsLite {
                     break;
                 }
             } else if( $where == 'admin.locks' ) {
-                if( preg_match('/^locks.*;$/', $line) ) {
-                    $where = 'admin.postLocks';
+                if( preg_match('/^locks.*;$/', $line, $match) ) {
+                    list($line, $string) = $this->_readTo( $fh, $term );
+                    if(is_null($line)) break;
+                    if(preg_match('/^strict\s*;/', $line) ) {
+                        $where = 'admin.postStrict';
+                        $this->_strict = true;
+                    } else if (preg_match('/^comment\s.*$/', $line) ) {
+                        $where = 'admin.postComment';
+                        $this->_comment = $string;
+                    } else {
+                        $where = 'admin.postLocks';
+                    }
                 } else {
                     break;
                 }
-            } else if( $where == 'admin.postLocks' ) {
-                if( preg_match('/^strict\s*;/', $line) ) {
-                    $where = 'admin.postStrict';
-                }
+            } else if( $where == 'admin.postLocks' && preg_match('/^strict\s*;/', $line) ) {
+                $this->_strict = true;
+                $where = 'admin.postStrict';
             } else if( $where == 'admin.postStrict' &&
                     preg_match('/^comment\s.*$/', $line) ) {
                 $where = 'admin.postComment';
@@ -216,7 +225,8 @@ Class RcsLite {
                     preg_match('/^expand\s/', $line) ) {
                 $where = 'admin.postExpand';
                 $this->_expand = $string;         
-            } else if( $where == 'admin.postStrict' || $where == 'admin.postComment' || 
+            } else if( $where == 'admin.postStrict' || $where == 'admin.postComment' ||
+                $where == 'admin.postLocks' ||
                 $where == 'admin.postExpand' || $where == 'delta.date') {
                 if( preg_match('/^([0-9]+\.[0-9]+)\s+date\s+(\d\d(\d\d)?(\.\d\d){5}?);$/', $line,$match) ) {
                     $where = 'delta.author';
@@ -314,9 +324,11 @@ Class RcsLite {
         $out = "head\t" . $headnum . ";\n";
         $out.= "access" . $this->access() . ";\n";
         $out.= "symbols" . $this->_symbols . ";\n";
-        $out.= "locks\n\t$this->rcs_user:$headnum; strict;\n";
-        $out.=sprintf("comment\t%s;\n", $this->_formatString($this->comment()));
-        if ( $this->_expand ) {
+        $out.= "locks\n\t$this->rcs_user:$headnum;";
+        $out.= !empty($this->_strict) ? "strict;\n" : "\n";
+        if (!empty($this->_comment))
+            $out.=sprintf("comment\t%s;\n", $this->_formatString($this->comment()));
+        if ( isset($this->_expand) ) {
            $out.=sprintf("expand\t@%s@;\n", $this->_expand );
         }
         
@@ -393,7 +405,7 @@ Class RcsLite {
     function comment()
     {
         $this->_ensureProcessed();
-        return $this->_comment;
+        return isset($this->_comment[0]) ? $this->_comment : '';
     }
     
     function date($version)
