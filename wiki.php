@@ -6036,7 +6036,8 @@ function wiki_main($options) {
         $_macros = $formatter->_dynamic_macros;
         if (!empty($_macros))
           $mcache->update($pagename,$_macros);
-        $cache->update($pagename, $out);
+        if (isset($out[0]))
+          $cache->update($pagename, $out);
       }
       if (!empty($_macros)) {
         $mrule=array();
@@ -6079,7 +6080,7 @@ function wiki_main($options) {
 
       $pi_cache = new Cache_text('PI');
       $pi_cache->update($formatter->page->name, $pis);
-    } else if (empty($formatter->_dynamic_macros) and !empty($formatter->pi['#dynamic'])) {
+    } else if (isset($out[0]) and empty($formatter->_dynamic_macros) and !empty($formatter->pi['#dynamic'])) {
       $pi_cache = new Cache_text('PI');
       $pi_cache->remove($formatter->page->name); // reset PI
       $mcache->remove($pagename); // remove macro cache
