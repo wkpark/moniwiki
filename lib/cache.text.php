@@ -281,16 +281,20 @@ class Cache_Text {
 
 	function _save($key, $val)
 	{
-		$fp = fopen($this->cache_path . '/' .$key, 'a+b');
+		$tmp = tempnam(getcwd().'/'.$this->cache_path, 'CACHE'.rand());
+		chmod($tmp, 0644);
+		$fp = fopen($tmp, 'wb');
 		if (is_resource($fp)) {
-			flock($fp, LOCK_EX);
-			ftruncate($fp, 0);
 			fwrite($fp, $val);
-			flock($fp, LOCK_UN);
 			fclose($fp);
+			if (!@rename($tmp, $this->cache_path.'/'.$key)) {
+				@unlink($this->cache_path.'/'.$key);
+				@rename($tmp, $this->cache_path.'/'.$key);
+			}
 
 			return true;
 		}
+		@unlink($tmp);
 		return false;
 	}
 
