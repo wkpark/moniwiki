@@ -116,8 +116,8 @@ function macro_UserInfo($formatter,$value,$options=array()) {
             $ttl = $retval['ttl'] - (time() - $retval['mtime']);
 
             $d = intval($ttl / 60 / 60 / 24);
-            $h = intval($ttl / 60 / 60);
-            $m = intval($ttl / 60);
+            $h = intval($ttl / 60 / 60 - $d*24);
+            $m = intval($ttl / 60 - $h * 60);
             $s = $ttl % 60;
             $ttl_time = '';
             if (!empty($d))
