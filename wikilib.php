@@ -3246,6 +3246,9 @@ function do_post_savepage($formatter,$options) {
     );
 
     $options['editinfo'] = $editinfo;
+
+    if (!$button_diff)
+      $diff = '';
   }
 
   if (!$full_permission) {
@@ -3266,9 +3269,6 @@ function do_post_savepage($formatter,$options) {
       else
         $options['msg'] = _("You are restricted to delete a lot amount of page on this wiki.");
       $button_preview = true;
-    } else {
-      if (!$button_diff)
-        $diff = '';
     }
   }
 
