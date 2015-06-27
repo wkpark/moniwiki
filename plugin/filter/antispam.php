@@ -6,12 +6,16 @@
 // $Id: antispam.php,v 1.5 2010/04/19 11:26:47 wkpark Exp $
 
 function filter_antispam($formatter,$value,$options) {
+    global $Config;
+
     $blacklist_pages=array('BadContent','LocalBadContent');
     $whitelist_pages=array('GoodContent','LocalGoodContent');
     if (! in_array($formatter->page->name,$blacklist_pages) and
         ! in_array($formatter->page->name,$whitelist_pages)) {
 
-        $badcontent = '';
+        if (!file_exists($Config['badcontents'])) return $value;
+
+        $badcontent = file_get_contents($Config['badcontents']);
         foreach ($blacklist_pages as $list) {
             $p=new WikiPage($list);
             if ($p->exists()) $badcontent.=$p->get_raw_body();
