@@ -51,6 +51,7 @@ $inline_latex=0; # 0/1(on/off), mimetex, itex, etc.
 $lang='auto'; # check language automatically.
 $charset='utf-8'; # default character set. euc-kr etc.
 $auto_linebreak= 0; # NoSmoke style insert <br> automatically.
+#$html_nl2br=0; # use nl2br() in plugin/processor/html.php
 $trail= 1; # use trailer (navagation list of some recently visited pages)
 #$origin=1; # show upper pages like as Language/Script/Perl => Language > Script > Perl
 #$arrow=' <img src="/wiki/imgs/moni-arrow.gif"/> ';

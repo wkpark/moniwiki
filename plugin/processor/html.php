@@ -44,6 +44,8 @@ function processor_html($formatter, $value = '') {
             return $formatter->macro_repl('Play', $val);
         }
     }
+    if (isset($Config['html_nl2br']))
+        $value = nl2br($value);
 
     // XSS filtering
     if (!empty($Config['no_xss_filter']))
