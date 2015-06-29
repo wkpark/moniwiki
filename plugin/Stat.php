@@ -265,9 +265,9 @@ function _render_stat($formatter, $retval, $params = array()) {
     $out.= '<table class="wiki center">';
     $out.= '<tr><th>'._("Initial revision").'</th><td>'.$rev.'</td></tr>'."\n";
     $out.= '<tr><th>'._("Original Author").'</th><td>'.$u.'</td></tr>'."\n";
-    if ($count_users == 1)
+    if ($count_users == 1 && $show_table)
         $out.= '<tr><th>'._("First Contribution Author").'</th><td>'.$ou.'</td></tr>'."\n";
-    else if ($contribs[$authors[0]] > $first_contribution_author_ratio)
+    else if ($show_table && $contribs[$authors[0]] > $first_contribution_author_ratio)
         $out.= '<tr><th>'._("First Contribution Author").'</th><td>'.$ou.'</td></tr>'."\n";
     $out.= '</table> <br />'."\n";
 
@@ -404,7 +404,7 @@ function macro_Stat($formatter, $value, $options = array()) {
             $retval = $cache->fetch($formatter->page->name);
         }
 
-        if (!$retval) {
+        if (empty($retval)) {
             $version = $DBInfo->lazyLoad('version', $DBInfo);
             $out = $version->rlog($formatter->page->name, '', '', '-z');
 
@@ -413,9 +413,11 @@ function macro_Stat($formatter, $value, $options = array()) {
                 $msg = _("No older revisions available");
                 $info = "<h2>$msg</h2>";
             } else {
-                $options['all'] = 1;
-                $options['retval'] = &$retval;
-                $ret = _stat_rlog($formatter, $out, $options);
+                $params = array();
+                $params['all'] = 1;
+                $params['id'] = $options['id'];
+                $params['retval'] = &$retval;
+                $ret = _stat_rlog($formatter, $out, $params);
             }
 
             if (!empty($retval))
