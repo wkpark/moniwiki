@@ -21,6 +21,7 @@ if (empty($rcsdir[0]) or !file_exists($rcsdir)) {
 }
 
 function fixrcs($rcsfile, $force = true) {
+    chmod($rcsfile, 0666);
     $fp = fopen($rcsfile, 'rw');
     if (!is_resource($fp)) return -1;
 
@@ -51,8 +52,12 @@ function fixrcs($rcsfile, $force = true) {
     while (true) {
         echo '.';
 
-        if ($filesize + $pos - $bs < 0)
-            $bs = $filesize + $pos;
+        if ($filesize < $bs) {
+            echo "No version info!!\n";
+            return -1;
+        }
+        //if ($filesize + $pos - $bs < 0)
+        //    $bs = $filesize + $pos;
         //echo "\n".$filesize,' - ',$pos,' - ',$bs."\n";
         fseek($fp, $pos - $bs, SEEK_END);
         $buf = fread($fp, $bs);
@@ -64,13 +69,30 @@ function fixrcs($rcsfile, $force = true) {
         //echo $buf."\n";
         if ($buf[0] == '@') { $bs+= 512; $state = 'unknown'; continue; }
 
-        if (($p = strrpos($buf, '@')) !== false and $buf[$p - 1] != '@') {
-            $buf = substr($buf, 0, $p - 1);
-            $state = $state != 'text' ? 'text' : 'log';
+        if (($p = strrpos($buf, '@')) !== false) {
+            if ($buf[$p - 1] == '@') {
+                if (($p >= 6 && substr($buf, $p - 6, 4) == 'text')) {
+                    // empty text case. \ntext\n@@
+                    $state = 'text';
+                    $buf = substr($buf, 0, $p - 2);
+                } else if (($p >= 5 && substr($buf, $p - 5, 3) == 'log')) {
+                    // invalid case
+                    $state = 'unknown';
+                    break;
+                } else if (($p >= 6 && substr($buf, $p - 6, 4) == 'desc')) {
+                    return -3;
+                    break;
+                } else {
+                    $buf = substr($buf, 0, $p - 2);
+                    $state = 'text';
+                }
+            } else if ($buf[$p - 1] != '@') {
+                $buf = substr($buf, 0, $p - 1);
+                $state = $state != 'text' ? 'text' : 'log';
+            }
             //echo "===".$state."\n";
         }
         if ($p === false or $state == 'unknown' or strlen($buf) < strlen($state)) {
-            $pos-= $bs;
             $bs+= 512;
             //echo "inc block size\n";
             $state = 'unknown';
@@ -89,6 +111,9 @@ function fixrcs($rcsfile, $force = true) {
                         $state = 'log';
                     else
                         break;
+                    if ($state == 'log' and strlen($buf) < strlen($state)) {
+                        break;
+                    }
                 }
                 //echo "******".$buf."*******\n";
             }
@@ -111,7 +136,6 @@ function fixrcs($rcsfile, $force = true) {
         }
 
         if (($state != 'text' and $state != 'log') or strlen($buf) < strlen($state)) {
-            $pos-= $bs;
             $bs+= 512;
             $state = 'unknown';
             continue;
@@ -126,7 +150,6 @@ function fixrcs($rcsfile, $force = true) {
             }
         }
         if ($state != 'OK' or $p == false) {
-            $pos-= $bs;
             $bs+= 512;
             $state = 'unknown';
             continue;
@@ -197,6 +220,8 @@ function fixrcs($rcsfile, $force = true) {
             $fixed.= $line;
             $line = fgets($fp, 1024);
         }
+        $tmp = explode('.', $match[1]);
+        $next = $tmp[0].'.'.($tmp[1] - 1);
 
         $fixed.= $line;
         $line = fgets($fp, 1024);
@@ -241,10 +266,11 @@ function fixrcs($rcsfile, $force = true) {
                     $next = $tmp[0].'.'.($tmp[1] - 1);
                 } else {
                     echo "Broken RCS header. try to fill up\n";
-
+                    if (empty($next)) break;
                     while ($next !== $last) {
                         $fixed.= "next\t$next;\n\n$next\n";
                         $tmp = explode('.', $next);
+                        if ($tmp[1] == 1) break;
                         $next = $tmp[0].'.'.($tmp[1] - 1);
                         $atime-= 60*60*2;
                         $fixed.= "date\t".date("Y.m.d.H.i.s", $atime).';'.$remain."\n";
@@ -365,10 +391,16 @@ function checkRCSdir($dir, $usleep = 0) {
                 touch('bad1/'.$file, $mtime);
                 break;
             case -2:
-                @mkdir($dir.'/bad2');
+                @mkdir('bad2');
                 echo "ERROR: Invalid header\n";
                 rename($dir.'/'.$file, 'bad2/'.$file);
                 touch('bad2/'.$file, $mtime);
+                break;
+            case -3:
+                @mkdir('empty');
+                echo "ERROR: empty\n";
+                rename($dir.'/'.$file, 'empty/'.$file);
+                touch('empty/'.$file, $mtime);
                 break;
             }
         }
