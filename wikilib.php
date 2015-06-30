@@ -2677,6 +2677,11 @@ function do_goto($formatter,$options) {
      # FastCGI/PHP does not accept multiple header infos. XXX
      #$formatter->send_header("Location: ".$url,$options);
      $url = preg_replace('/&amp;/', '&', $url);
+     $formatter->header('Cache-Control: private, s-maxage=0, max-age=0');
+     $formatter->header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+     $formatter->header('Cache-Control: no-store, no-cache, must-revalidate', false);
+     $formatter->header('Pragma: no-cache');
+
      $formatter->send_header(array("Status: 302","Location: ".$url),$options);
   } else if ($options['url']) {
     $url=$options['url'];
