@@ -16,8 +16,15 @@
 // $Id: HTML.php,v 1.1 2009/04/18 06:28:29 wkpark Exp $
 
 function macro_HTML($formatter,$value) {
-  return str_replace("&lt;","<",$value);
+    global $Config;
+
+    $value = str_replace("&lt;", "<", $value);
+
+    // XSS filtering
+    if (!empty($Config['no_xss_filter']))
+        return $value;
+
+    return $formatter->filter_repl('xss', $value);
 }
 
 // vim:et:sts=4:sw=4:
-?>
