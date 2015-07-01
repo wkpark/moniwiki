@@ -1587,6 +1587,8 @@ class WikiUser {
   }
 
   function setCookie() {
+     global $Config;
+
      if ($this->id == "Anonymous") return false;
      $ticket=getTicket($this->id,$_SERVER['REMOTE_ADDR']);
      $this->ticket=$ticket;
@@ -1594,24 +1596,26 @@ class WikiUser {
      $_COOKIE['MONI_ID']=$ticket.'.'.urlencode($this->id);
      if (!empty($this->info['nick'])) $_COOKIE['MONI_NICK']=$this->info['nick'];
 
-     #$path=strpos($_SERVER['HTTP_USER_AGENT'],'Safari')===false ?
-     #  get_scriptname():'/';
-     $path = get_scriptname();
-     #$path = preg_replace('@(?<=/)[^/]+$@','',$path);
+     $domain = '';
+     if (!empty($Config['cookie_domain']))
+        $domain = '; Domain='.$Config['cookie_domain'];
+
+     $path = dirname(get_scriptname());
      return "Set-Cookie: MONI_ID=".$ticket.'.'.urlencode($this->id).
-            '; expires='.gmdate('l, d-M-Y H:i:s', time() + $this->cookie_expires).' GMT; Path='.$path;
+            '; expires='.gmdate('l, d-M-Y H:i:s', time() + $this->cookie_expires).' GMT; Path='.$path.$domain;
   }
 
   function unsetCookie() {
+     global $Config;
+
      # set the fake cookie
      $_COOKIE['MONI_ID']="Anonymous";
 
-     # check safari
-     #$path=strpos($_SERVER['HTTP_USER_AGENT'],'Safari')===false ?
-     #  get_scriptname():'/';
-     $path = get_scriptname();
-     #$path = preg_replace('@(?<=/)[^/]+$@','',$path);
-     return "Set-Cookie: MONI_ID=".$this->id."; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".$path;
+     $domain = '';
+     if (!empty($Config['cookie_domain']))
+        $domain = '; Domain='.$Config['cookie_domain'];
+     $path = dirname(get_scriptname());
+     return "Set-Cookie: MONI_ID=".$this->id."; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".$path.$domain;
   }
 
   function setPasswd($passwd,$passwd2="",$rawmode=0) {
