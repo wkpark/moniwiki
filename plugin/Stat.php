@@ -13,6 +13,10 @@
 //
 // Usage: ?action=stat
 //
+// Param: stat_no_merge_ip_users = 0; // do not merge ip users contributions
+// Param: stat_no_show_all=0; // do not show all users statistics info.
+// Query: merge_ip_users=1 // merge ip users contributions
+//
 
 function _stat_rlog($formatter, $log, $options = array()) {
     global $DBInfo;
@@ -127,17 +131,11 @@ function _stat_rlog($formatter, $log, $options = array()) {
     }
 
     foreach ($users as $k=>$v) {
-        foreach ($v['ip'] as $ip=>$dummy) {
-            $users[$k]['add']+= $users[$ip]['add'];
-            $users[$k]['del']+= $users[$ip]['del'];
-            $users[$k]['edit']+= $users[$ip]['edit'];
-            $users[$k]['rev'] = array_merge($users[$k]['rev'], $users[$ip]['rev']);
-            unset($users[$ip]);
-        }
-
         // last user and last revision
-        if (is_array($users[$k]['rev']) and in_array($rev, $users[$k]['rev']))
+        if (is_array($users[$k]['rev']) and in_array($rev, $users[$k]['rev'])) {
             $author = $k;
+            break;
+        }
     }
 
     $options['retval'] = array('author'=>$author,
@@ -161,7 +159,7 @@ function _render_stat($formatter, $retval, $params = array()) {
     global $DBInfo;
 
     $show_table = false;
-    if (empty($DBInfo->no_stat_show_all) || in_array($params['id'], $DBInfo->members))
+    if (empty($DBInfo->stat_no_show_all) || in_array($params['id'], $DBInfo->members))
         $show_table = true;
 
     extract($retval);
@@ -422,6 +420,23 @@ function macro_Stat($formatter, $value, $options = array()) {
 
             if (!empty($retval))
                 $cache->update($formatter->page->name, $retval);
+        }
+
+        $merge_ip = true;
+        if (!empty($DBInfo->stat_no_merge_ip_users) && empty($options['merge_ip_users']))
+            $merge_ip = false;
+
+        if ($merge_ip) {
+            $users = &$retval['users'];
+            foreach ($users as $k=>$v) {
+                foreach ($v['ip'] as $ip=>$dummy) {
+                    $users[$k]['add']+= $users[$ip]['add'];
+                    $users[$k]['del']+= $users[$ip]['del'];
+                    $users[$k]['edit']+= $users[$ip]['edit'];
+                    $users[$k]['rev'] = array_merge($users[$k]['rev'], $users[$ip]['rev']);
+                    unset($users[$ip]);
+                }
+            }
         }
 
         if (!empty($retval)) {
