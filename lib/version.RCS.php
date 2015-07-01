@@ -195,10 +195,29 @@ class Version_RCS {
       $this->DB->text_dir."/RCS/$keyname,,");
   }
 
-  function rename($pagename,$new) {
+  // store pagename
+  function _atticpage($pagename) {
+    $keyname = $this->DB->_getPageKey($pagename);
+    $oname = $this->DB->text_dir."/RCS/$keyname".',v';
+
+    $ext = ',v';
+    $i = 0;
+    while (file_exists($this->DB->text_dir."/RCS/$keyname".$ext)) {
+      $i++;
+      $ext = ','.$i;
+    }
+
+    $atticname = $this->DB->text_dir."/RCS/$keyname".$ext;
+    return rename($oname, $atticname);
+  }
+
+  function rename($pagename,$new, $params = array()) {
     $keyname=$this->DB->_getPageKey($new);
     $oname=$this->DB->_getPageKey($pagename);
 
+    $ret = $this->_atticpage($new);
+
+    // check again and rename
     if (file_exists($this->DB->text_dir."/RCS/$oname,v") and
         !file_exists($this->DB->text_dir."/RCS/$keyname,v"))
       return rename($this->DB->text_dir."/RCS/$oname,v",

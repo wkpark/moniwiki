@@ -35,14 +35,23 @@ function do_post_rename($formatter,$options) {
   } 
   if (isset($options['name']) and trim($options['name'])) {
     if ($DBInfo->hasPage($options['page']) && !$DBInfo->hasPage($options['name'])) {
-      $title = sprintf(_("\"%s\" is renamed !"), $options['page']);
       $formatter->send_header("",$options);
+
+      $ret = 0;
+      if (!$options['show_only'])
+        $ret = $DBInfo->renamePage($options['page'],$options['name'],$options);
+
+      if ($ret == 0) {
+        $title = sprintf(_("\"%s\" is renamed !"), _html_escape($options['page']));
+        $msgid = _("'%s' is renamed as '%s' successfully.");
+      } else {
+        $title = sprintf(_("Failed to rename \"%s\" !"), _html_escape($options['page']));
+        $msgid = _("Failed to rename '%s' as '%s'.");
+      }
+
       $formatter->send_title($title,"",$options);
       $new_encodedname=_rawurlencode($options['name']);
-      print $msg;
-      if (!$options['show_only'])
-        $DBInfo->renamePage($options['page'],$options['name'],$options);
-      print sprintf(_("'%s' is renamed as '%s' successfully."),
+      print sprintf($msgid,
         _html_escape($options['page']),
         $formatter->link_tag($new_encodedname,
           "?action=highlight&amp;value=".$new_encodedname, _html_escape($options['name'])));
