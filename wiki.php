@@ -6080,10 +6080,11 @@ function wiki_main($options) {
 
       $pi_cache = new Cache_text('PI');
       $pi_cache->update($formatter->page->name, $pis);
-    } else if (isset($out[0]) and empty($formatter->_dynamic_macros) and !empty($formatter->pi['#dynamic'])) {
+    } else if (empty($formatter->_dynamic_macros) and !empty($formatter->pi['#dynamic'])) {
       $pi_cache = new Cache_text('PI');
       $pi_cache->remove($formatter->page->name); // reset PI
       $mcache->remove($pagename); // remove macro cache
+      if (isset($out[0]))
       $cache->update($pagename, $out); // update cache content
     }
 
