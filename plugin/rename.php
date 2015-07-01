@@ -84,8 +84,9 @@ function do_post_rename($formatter,$options) {
     _("Only WikiMaster can rename this page")."</td></tr>\n";
   if (empty($DBInfo->rename_with_history))
     print "<tr><td colspan='2'><input type='checkbox' name='history' />"._("with revision history")."</td></tr>\n";
-  print "<tr><td colspan='2'><input type='checkbox' name='show_only' checked='checked' />"._("show only")."</td></tr>\n";
-  print "<tr><td></td><td><input type='submit' name='button_rename' value='$rename_button' />";
+  print "<tr><td align='right'>"._("Summary").": </td><td><input name='comment' value='' size='80' /></div></td></tr>\n";
+  print "<tr><td></td><td><span class='button'><input type='submit' class='button' name='button_rename' value='$rename_button' /></span>".
+    " <input type='checkbox' name='show_only' checked='checked' />"._("show only");
   print "</td></tr>\n";
   print "
 </table>

@@ -1172,7 +1172,7 @@ class WikiDB {
     return 0;
   }
 
-  function renamePage($pagename,$new,$options='') {
+  function renamePage($pagename, $new, $options = array()) {
     if (!$this->_isWritable($pagename)) {
       return -1;
     }
@@ -1182,13 +1182,40 @@ class WikiDB {
     else
       $REMOTE_ADDR = $_SERVER['REMOTE_ADDR'];
 
+    // setup log
+    $user = &$this->user;
+    $myid = $user->id;
+    if ($myid == 'Anonymous' and !empty($user->verified_email))
+      $myid.= '-'.$user->verified_email;
+
+    $renamed = sprintf("Rename [[%s]] to [[%s]]", $pagename, $new);
+    $comment = strtr(strip_tags($options['comment']),
+      array("\r\n"=>' ', "\r"=>' ',"\n"=>' ', "\t"=>' '));
+
+    if (isset($comment[0]))
+      $renamed.= ': '.$comment;
+    else
+      $renamed.= '.';
+
+    $log = $REMOTE_ADDR.';;'.$myid.';;'.$renamed;
+    $options['log'] = $log;
+    $options['pagename'] = $pagename;
+
     $with_history = false;
     $ret = 0;
     if (!empty($this->rename_with_history) || !empty($options['history']))
       $with_history = true;
-    if ($with_history && $this->version_class) {
+
+    $okey = $this->getPageKey($pagename);
+    $nkey = $this->getPageKey($new);
+    $ret = rename($okey, $nkey);
+
+    if (!$ret)
+      return -1;
+
+    if ($ret && $with_history && $this->version_class) {
       $version = $this->lazyLoad('version', $this);
-      $ret = $version->rename($pagename,$new);
+      $ret = $version->rename($pagename, $new, $options);
 
       // fail to rename
       if ($ret < 0 || $ret === false)
@@ -1201,19 +1228,16 @@ class WikiDB {
     if (!empty($this->use_alias))
       store_aliases($pagename, array());
 
-    $okey=$this->getPageKey($pagename);
-    $nkey=$this->getPageKey($new);
     $okeyname=$this->_getPageKey($pagename);
     $keyname=$this->_getPageKey($new);
 
-    rename($okey,$nkey);
     $newdir=$this->upload_dir.'/'.$keyname;
     $olddir=$this->upload_dir.'/'.$this->_getPageKey($pagename);
     if (!file_exists($newdir) and file_exists($olddir))
       rename($olddir,$newdir);
 
-    $renameas = sprintf(_("Renamed as %s"), $new);
-    $renamefrom = sprintf(_("Renamed from %s"), $pagename);
+    $renameas = sprintf(_("Renamed as [[%s]]"), $new);
+    $renamefrom = sprintf(_("Renamed from [[%s]]"), $pagename);
     $this->addLogEntry($pagename, $REMOTE_ADDR, $renameas, 'RENAME');
     $this->addLogEntry($new, $REMOTE_ADDR, $renamefrom, 'RENAME');
 

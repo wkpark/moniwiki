@@ -50,12 +50,12 @@ class Version_RCS {
     return $out;
   }
 
-  function ci($pagename,$log) {
+  function ci($pagename, $log, $force = false) {
     $key=$this->_filename($pagename);
-    $this->_ci($key,$log);
+    return $this->_ci($key, $log, $force);
   }
 
-  function _ci($key,$log) {
+  function _ci($key, $log, $force = false) {
     $dir=dirname($key);
     if (!is_dir($dir.'/RCS')) {
       $om=umask(000);
@@ -106,7 +106,12 @@ class Version_RCS {
       if (is_resource($fp)) pclose($fp);
     }
 
-    $fp = @popen("ci -l -x,v/ -q -t-\"".$key."\" ".$mlog." ".$key.$plog.$this->NULL,"r");
+    // force option
+    $f = '';
+    if ($force)
+      $f = '-f ';
+
+    $fp = @popen("ci ".$f."-l -x,v/ -q -t-\"".$key."\" ".$mlog." ".$key.$plog.$this->NULL,"r");
     if (is_resource($fp)) pclose($fp);
     if (isset($plog[0])) unlink($logfile);
 
@@ -219,9 +224,17 @@ class Version_RCS {
 
     // check again and rename
     if (file_exists($this->DB->text_dir."/RCS/$oname,v") and
-        !file_exists($this->DB->text_dir."/RCS/$keyname,v"))
-      return rename($this->DB->text_dir."/RCS/$oname,v",
+        !file_exists($this->DB->text_dir."/RCS/$keyname,v")) {
+      $ret = rename($this->DB->text_dir."/RCS/$oname,v",
       $this->DB->text_dir."/RCS/$keyname,v");
+
+      if ($ret === false)
+        return -1;
+
+      $ret = $this->ci($new, $params['log'], true);
+      if ($ret == 0)
+        return 0;
+    }
     return -1;
   }
 
