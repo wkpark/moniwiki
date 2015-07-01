@@ -6,12 +6,23 @@
 // $Id: UploadedFiles.php,v 1.39 2010/09/10 06:16:30 wkpark Exp $
 
 function do_uploadedfiles($formatter,$options) {
-  if (!empty($options['q'])) {
+  global $DBInfo;
+
+  while (!empty($options['q'])) {
+    // check staff members
+    if (isset($DBInfo->members) and !in_array($options['id'], $DBInfo->members)) {
+      if (strlen($options['q']) < 2) {
+        $options['msg'] = _("Too short query string");
+        break;
+      }
+    }
+
     $q = $options['q'];
     $t = @preg_match('@'.$q.'@','');
     if ($t !== false) {
       $options['needle']=$q;
     }
+    break;
   }
   $list=macro_UploadedFiles($formatter,$options['page'],$options);
 
@@ -39,6 +50,9 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    $js_tag=0;
    $js_script='';
    $uploader='';
+
+   if (isset($DBInfo->members) and !in_array($options['id'], $DBInfo->members))
+     $use_admin = 0;
 
    $iconset='gnome';
    $icon_dir=$DBInfo->imgs_dir.'/plugin/UploadedFiles/'.$iconset;
@@ -218,7 +232,7 @@ EOS;
      if (!empty($options['download']))
        $mydownload=$options['download'];
    }
-   if (!empty($options['needle'])) $needle='@'.$options['needle'].'@';
+   if (!empty($options['needle'])) $needle='@'.$options['needle'].'@i';
    if (!empty($options['checkbox'])) $checkbox=$options['checkbox'];
 
    if (!in_array('UploadFile',$formatter->actions))
@@ -267,6 +281,35 @@ EOS;
    $dirs=array();
 
    $per=!empty($DBInfo->uploadedfiles_per_page) ? $DBInfo->uploadedfiles_per_page:100;
+   // set nodir option to show only files
+   if (!empty($options['needle']) && !isset($options['nodir']))
+      $options['nodir'] = true;
+   else if (!isset($options['nodir']))
+      $options['nodir'] = false;
+
+   // count files/dirs
+   $count_files = 0;
+   $count_dirs = 0;
+
+   $uf = new Cache_text('settings');
+   if (($info = $uf->fetch('uploadedfiles')) !== false) {
+       $count_files = $info['files'];
+       $count_dirs = $info['dirs'];
+   } else {
+       while (($file = readdir($handle)) !== false) {
+           if ($file[0]=='.') continue;
+           if (is_dir($dir."/".$file)) {
+               $count_dirs++;
+           } else {
+               $count_files++;
+           }
+       }
+       rewinddir($handle);
+
+       // TTL = 1 day
+       $uf->update('uploadedfiles', array('files'=>$count_files, 'dirs'=>$count_dirs), 60*60*24);
+   }
+
    // XXX
    $plink='';
    if (!empty($options['p']))
@@ -493,12 +536,19 @@ EOS;
       if ($use_fileinfo) {
         $out.="<td align='right' class='wiki'>$size</td><td class='wiki'>$date</td>";
       }
+      $out.="</tr><tr><td>&nbsp;</td><td$colspan>";
+      if ($use_admin)
+        $out.= $dir.'/';
+      $out.="$file</td>\n";
       $idx++;
       $iidx++;
    }
    $out.="</tr>\n";
    $idx--;
-   $msg=sprintf(_("Total %d files"),$idx);
+   $msg = sprintf(_("%d files"), $idx);
+   $msg.= ' / '.sprintf(_("Total %d files"), $count_files);
+   $msg.= ' / '.sprintf(_("%d dirs"), $count_dirs);
+
    $out.="<tr><th colspan='2'>$msg</th><th colspan='2'>$plink</th></tr>\n";
    $out.="</table>\n";
    if ($use_admin) {
