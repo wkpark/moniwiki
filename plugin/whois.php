@@ -6,7 +6,7 @@
 
 function do_whois($formatter,$options) {
   $query=$options['q'];
-  $whois_servers=array("whois.nic.or.kr"=>'euc-kr',"whois.internic.net"=>'iso-8859-1');
+  $whois_servers=array("whois.nic.or.kr"=>'utf-8',"whois.internic.net"=>'iso-8859-1');
 
 #$whois_servers_full = array(
 #"kr" => "whois.nic.or.kr",
