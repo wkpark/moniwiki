@@ -63,7 +63,7 @@ function macro_Play($formatter, $value, $params = array()) {
   $url=array();
   $my_check=1;
   for ($i=0,$sz=count($media);$i<$sz;$i++) {
-    if (!preg_match("/^(http|ftp|mms|rtsp):\/\//",$media[$i])) {
+    if (!preg_match("/^((https?|ftp|mms|rtsp):)?\/\//",$media[$i])) {
       if ($macro != 'play') {
         // will be parsed later
         $url[] = $media[$i];
@@ -147,7 +147,7 @@ function macro_Play($formatter, $value, $params = array()) {
       
       $list=array();
       for ($i=0;$i<$sz;$i++) {
-        if (!preg_match("/^(http|ftp):\/\//",$url[$i])) {
+        if (!preg_match("/^((https?|ftp):)?\/\//",$url[$i])) {
           $url=qualifiedUrl($url);
         }
 
@@ -229,7 +229,7 @@ EOS;
       $object_prefered = false;
       // http://code.google.com/p/google-code-project-hosting-gadgets/source/browse/trunk/video/video.js
       if ($macro == 'youtube' && preg_match("@^([a-zA-Z0-9_-]+)$@", $media[$i], $m) ||
-          preg_match("@https?://(?:[a-z-]+[.])?(?:youtube(?:[.][a-z-]+)+|youtu\.be)/(?:watch[?].*v=|v/|embed/)?([a-z0-9_-]+)$@i",$media[$i],$m)) {
+          preg_match("@(?:https?:)?//(?:[a-z-]+[.])?(?:youtube(?:[.][a-z-]+)+|youtu\.be)/(?:watch[?].*v=|v/|embed/)?([a-z0-9_-]+)$@i",$media[$i],$m)) {
 
         if ($object_prefered) {
         $movie = "http://www.youtube.com/v/".$m[1];
@@ -241,7 +241,7 @@ EOS;
           "<param name='allowScriptAccess' value='always'>\n".
           "<param name='allowFullScreen' value='true'>\n";
         } else {
-          $iframe = 'https://www.youtube.com/embed/'.$m[1];
+          $iframe = '//www.youtube.com/embed/'.$m[1];
           $attr = 'frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen';
           if (empty($mysize))
             $attr.= ' width="500px" height="281px"';
@@ -265,7 +265,7 @@ EOS;
           "<param name='allowFullScreen' value='true'>\n";
         $mediainfo = 'Daum movie';
         $objclass = ' daum';
-      } else if ($macro == 'vimeo' && preg_match("@^(\d+)$@", $media[$i], $m) || preg_match("@https?://vimeo\.com\/(.*)$@i", $media[$i], $m)) {
+      } else if ($macro == 'vimeo' && preg_match("@^(\d+)$@", $media[$i], $m) || preg_match("@(?:https?:)?//vimeo\.com\/(.*)$@i", $media[$i], $m)) {
         if ($object_prefered) {
           $movie = "https://secure-a.vimeocdn.com/p/flash/moogaloop/5.2.55/moogaloop.swf?v=1.0.0";
           $type = 'type="application/x-shockwave-flash"';
@@ -279,7 +279,7 @@ EOS;
             "<param name='allowScriptAccess' value='always'>\n".
             "<param name='allowFullScreen' value='true'>\n";
         } else {
-          $iframe = 'http://player.vimeo.com/video/'.$m[1].'?portrait=0&color=333';
+          $iframe = '//player.vimeo.com/video/'.$m[1].'?portrait=0&color=333';
           $attr = 'frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen';
           if (empty($mysize))
             $attr.= ' width="500px" height="281px"';
