@@ -3920,11 +3920,9 @@ class Formatter {
       }
 
       // blockquote
-      if ($in_pre != -1 and (!$in_table or !isset($oline[0])) and $line[0] == '>' and preg_match('/^((?:>\s)*>\s?(?!>))/', $line, $match)) {
-        $tmp = strlen($match[1]);
-        $line = substr($line, $tmp); // strip markers
-        $tmp+= ($tmp % 2 != 0) ? 1 : 0;
-        $depth = $tmp / 2;
+      if ($in_pre != -1 and (!$in_table or !isset($oline[0])) and $line[0] == '>' and preg_match('/^((?:>\s?)*>\s?(?!>))/', $line, $match)) {
+        $line = substr($line, strlen($match[1])); // strip markers
+        $depth = substr_count($match[1], '>'); // count '>'
         if ($depth == $in_bq) {
           // continue
         } if ($depth > $in_bq) {
@@ -3943,7 +3941,7 @@ class Formatter {
       # bullet and indentation
       # and quote begin with ">"
       if ($in_pre != -1 &&
-        preg_match("/^(((>\s)*>(?!>))|(\s*>*))/",$line,$match)) {
+        preg_match("/^(((>\s?)*>\s?(?!>))|(\s*>*))/",$line,$match)) {
       #if (preg_match("/^(\s*)/",$line,$match)) {
          #echo "{".$match[1].'}';
          $open="";
