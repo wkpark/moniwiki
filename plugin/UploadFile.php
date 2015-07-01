@@ -34,6 +34,11 @@ function do_uploadfile($formatter,$options) {
     return do_invalid($formatter,$options);
   }
 
+  // check staff members
+  $can_replace = false;
+  if (isset($DBInfo->members) and in_array($options['id'], $DBInfo->members))
+    $can_replace = true;
+
   $files=array();
   $title = '';
 
@@ -333,7 +338,8 @@ EOF;
   $_l_path=_l_filename($file_path);
   $new_l_path=_l_filename($newfile_path);
 
-  if (!empty($options['replace'][$j])) {
+  if ($can_replace and !empty($options['replace'][$j])) {
+    // only staff can replace
     // backup
     if ($newfile_path != $file_path)
       $test=@copy($_l_path, $new_l_path);
@@ -443,6 +449,12 @@ function macro_UploadFile($formatter,$value='',$options='') {
   } else if ($value=='swf') {
     return $formatter->macro_repl('SWFUpload');
   }
+
+  // only staff can replace exist files
+  $can_replace = false;
+  if (isset($DBInfo->members) and in_array($options['id'], $DBInfo->members))
+    $can_replace = true;
+
   $use_multi=1;
   $multiform='';
   if (!empty($options['rename'])) {
@@ -474,6 +486,15 @@ function macro_UploadFile($formatter,$value='',$options='') {
   $form.="<input type='hidden' name='action' value='UploadFile$mode' />\n";
   $msg1=_("Replace original file");
   $msg2=_("Rename if it already exist");
+
+  $replace = '';
+  if ($can_replace)
+    $replace = <<<EOF
+   <input type='radio' name='replace@SUF@' value='1' />$msg1<br />
+   <input type='radio' name='replace@SUF@' value='0' checked='checked' />$msg2<br />\n
+EOF;
+  else
+    $replace = "<input type='hidden' name='replace@SUFFIX@' value='0' />\n";
   $suffix = '';
   for ($j=0;$j<$count;$j++) {
     if ($count > 1) $suffix="[$j]";
@@ -486,14 +507,16 @@ function macro_UploadFile($formatter,$value='',$options='') {
    <input type='file' name='upfile$suffix' size='30' />
 EOF;
     if ($count == 1) $form.="<button type='submit'><span>"._("Upload") ."</span></button>";
+    $extra2 = '';
+    if (isset($replace[0]))
+      $extra2 = str_replace('@SUF@', $suffix, $replace);
 
-    if ($DBInfo->flashupload)
+    if ($DBInfo->flashupload && $j == 0)
       $form.=' '.sprintf(_("or %s."),$formatter->link_to('?action='.$DBInfo->flashupload,_("Multiple Upload files")));
     $form.= <<<EOF
 <br/>
    $extra
-   <input type='radio' name='replace$suffix' value='1' />$msg1<br />
-   <input type='radio' name='replace$suffix' value='0' checked='checked' />$msg2<br />\n
+   $extra2
 EOF;
   }
   if ($count > 1) $form.="<button type='submit'><span>"._("Upload files")."</span></button>";
