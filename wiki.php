@@ -1760,6 +1760,7 @@ class Formatter {
     $this->use_smileys=$DBInfo->use_smileys;
     $this->use_namespace=!empty($DBInfo->use_namespace) ? $DBInfo->use_namespace : '';
     $this->mediawiki_style=!empty($DBInfo->mediawiki_style) ? 1 : '';
+    $this->markdown_style = !empty($DBInfo->markdown_style) ? 1 : 0;
     $this->lang=$DBInfo->lang;
     $this->udb=&$DBInfo->udb;
     $this->user=&$DBInfo->user;
@@ -3238,9 +3239,22 @@ class Formatter {
         $cell = preg_replace_callback("/(".$wordrule.")/",
           array(&$this, 'link_repl'), $cell);
       }
+
+      // set table alignment
       if ($l and $r) {
-        if ($l > 1 and $r > 1)
-          $align = 'center';
+        if ($l > 0 and $r > 0) {
+          if ($l == $r) {
+            if ($l == 1 and $this->markdown_style)
+              $align = '';
+            else
+              $align = 'center';
+          } else if ($this->markdown_style) {
+            if ($l > 1 and $r > 1)
+              $align = 'center';
+            else if ($l > 1)
+              $align = 'right';
+          }
+        }
         else if ($l > 1)
           $align = 'right';
       }
