@@ -685,12 +685,10 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     }
 
     if (!empty($showhost)) {
-      $last_editor = $user;
-
       if ($last_editor_only) {
         // show last editor only
         $editor = $editors[$page_key][$day];
-        if (is_array($editor)) $editor = $editor[count($editor) - 1];
+        if (is_array($editor)) $editor = $editor[0];
       } else {
         // all show all authors
         // count edit number
