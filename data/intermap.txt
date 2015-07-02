@@ -42,3 +42,4 @@ NamuWiki https://namu.wiki/w/
 Namu https://namu.wiki/w/
 LibreWiki https://librewiki.net/wiki/
 Libre https://librewiki.net/wiki/
+DcWiki https://wiki.dcinside.com/wiki/
