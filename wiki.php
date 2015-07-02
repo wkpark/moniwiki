@@ -2430,29 +2430,28 @@ class Formatter {
   function interwiki_repl($url,$text='',$attr='',$extra='') {
     global $DBInfo;
 
-    if ($url[0]=="w")
-      $url=substr($url,5);
-    else if ($url[0]==":")
-      $url=substr($url,1);
-    $url = ltrim($url); // ltrim wikiwords
-
-    $wiki='';
-    # wiki:MoinMoin:FrontPage
-    # wiki:MoinMoin/FrontPage for MoinMoin compatibility.
-    if (preg_match('/^([A-Z][a-zA-Z0-9]+):(.*)$/',$url,$m)) {
-      $wiki=$m[1]; $url=$m[2];
-    }
-
-    # wiki:"Hello World" wiki:MoinMoin:"Hello World"
-    # [wiki:"Hello World" hello world]
-    if (isset($url{0}) and $url[0]=='"') {
-      if (preg_match('/^((")?[^"]+\2)((\s+)?(.*))?$/',$url,$m)) {
-        #$url=$m[1];
-        #if (isset($m[5])) $text=$m[5];
-      }
-    } else if (($p=strpos($url,' '))!==false) {
-      $text=substr($url,$p+1);
-      if (isset($text[0])) $url=substr($url,0,$p);
+    /**
+     * wiki: FrontPage => wiki:FrontPage (Rigveda fix) FIXME
+     * wiki:MoinMoin:FrontPage
+     * wiki:MoinMoin/FrontPage is not supported.
+     * wiki:"Hello World" or wiki:Hello_World, wiki:Hello%20World work
+     *
+     * wiki:MoinMoin:"Hello World"
+     * [wiki:"Hello World" hello world] - spaced
+     * [wiki:"Hello World"|hello world] - | separator
+     * [wiki:"Hello World"hello world] - no separator but separable
+     * [wiki:Hello|World hello world] == [wiki:Hello World hello world]
+     * [wiki:Hello World|hello world] == [wiki:"Hello" World|hello world] - be careful!!
+     */
+    $wiki = '';
+    if (isset($url[0]) &&
+        /* unified interwiki regex */
+        preg_match('@^(wiki:\s*)?(?:([A-Z][a-zA-Z0-9]+):)?
+                (")?([^"|]+?)(?(3)")
+                (?(3)(?:\s+|\\|)?(.*)|(?:\s+|\\|)(.*))?$@x', $url, $m)) {
+      $wiki = $m[2];
+      $url = $m[4];
+      $text = isset($m[5][0]) ? $m[5] : $m[6];
     }
 
     if (empty($wiki)) {
