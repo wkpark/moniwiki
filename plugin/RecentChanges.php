@@ -228,6 +228,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   }
 
   $avatarlink = qualifiedUrl($formatter->link_url('', '?action='. $avatar_type .'&amp;seed='));
+  $ipicon = '<img src="'.$DBInfo->imgs_dir.'/misc/ip.png" />';
 
   $trash = 0;
   $rctype = '';
@@ -382,6 +383,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       
 
   $u=$DBInfo->user; # retrive user info
+  // check member
+  $ismember = !empty($members) && in_array($u->id, $members);
 
   if ($u->id != 'Anonymous') {
     $bookmark= !empty($u->info['bookmark']) ? $u->info['bookmark'] : '';
@@ -418,6 +421,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   unset($locals['k']);
   unset($locals['v']);
   $rckey = md5(serialize($locals));
+  echo '<!-- rckey = '.$rckey.' -->';
   unset($locals);
 
   $time_current= time();
@@ -548,8 +552,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
     $page_name= $DBInfo->keyToPagename($parts[0]);
 
-    if (!empty($members) && !in_array($options['id'], $members)
-        && !empty($Config['ruleset']['hidelog'])) {
+    if (!$ismember && !empty($Config['ruleset']['hidelog'])) {
       if (in_array($page_name, $Config['ruleset']['hidelog']))
         continue;
     }
@@ -753,28 +756,60 @@ function macro_RecentChanges($formatter,$value='',$options='') {
             // last address is the REMOTE_ADDR
           }
 
-          $user = $addr ? $addr : $checkaddr;
+          $user = $addr = $addr ? $addr : $checkaddr;
           if (!is_numeric($checkaddr[0]) and preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i', $user)) {
             $user = $checkaddr;
             if (!empty($DBInfo->hide_emails))
               $user = substr(md5($user), 0, 8); // FIXME
             else
               $user = email_guard($user);
-          } else if (!empty($DBInfo->mask_hostname))
-            $user = _mask_hostname($user);
+          } else {
+            if (isset($DBInfo->interwiki['Whois']))
+              $wip = "<a href='".$DBInfo->interwiki['Whois']."$addr' target='_blank'>$ipicon</a>";
+            else
+              $wip = "<a href='?action=whois&q=".$addr."' target='_blank'>$ipicon</a>";
 
+            if ($ismember)
+              $user = $user.$wip;
+            else if (!empty($DBInfo->mask_hostname)) {
+              $user = _mask_hostname($addr, intval($DBInfo->mask_hostname));
+            }
+          }
+
+          $avatar = '';
           if (!empty($use_avatar)) {
             $crypted = md5($addr . $rckey);
             $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
-            $user = '<img src="'.$mylnk.'" style="width:16px;height:16px;vertical-align:middle" alt="avatar" />'. _('Anonymous');
+            $avatar = '<img src="'.$mylnk.'" class="avatar" alt="avatar" />';
           }
+          $user = $avatar.$user;
           $users[$ouser] = $user;
           }
         } else {
           list($user, $addr) = explode("\t", $user);
           $ouser= $user;
-          if (isset($users[$ouser])) $user = $users[$ouser];
-          else if (!empty($DBInfo->use_nick)) {
+          if (!isset($users[$ouser])) {
+            if (isset($DBInfo->interwiki['Whois']))
+              $wip = "<a href='".$DBInfo->interwiki['Whois']."$addr' target='_blank'>$ipicon</a>";
+            else
+              $wip = "<a href='?action=whois&q=".$addr."' target='_blank'>$ipicon</a>";
+
+            $avatar = '';
+            if (!empty($use_avatar)) {
+              $crypted = crypt($addr, $addr);
+              $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
+              if ($uid != 'Anonymous')
+                $mylnk.= '&amp;user='.$uid;
+              $avatar = '<img src="'.$mylnk.'" class="avatar" alt="avatar" />';
+            }
+          }
+
+          if (isset($users[$ouser])) {
+            $user = $users[$ouser];
+          } else if ($ismember) {
+            $user = $avatar.$user.$wip;
+            $users[$ouser] = $user;
+          } else if (!empty($DBInfo->use_nick)) {
             $uid = $user;
             if (($p = strpos($uid,' '))!==false)
               $uid= substr($uid, 0, $p);
@@ -788,12 +823,15 @@ function macro_RecentChanges($formatter,$value='',$options='') {
                 $user = $formatter->link_repl('[wiki:'.$uid.' '.$u->info['nick'].']');
               }
             }
+            $user = $avatar.$user;
             $users[$ouser] = $user;
           } else if (strpos($user,' ')!==false) {
-            $user= $formatter->link_repl($user);
+            $user = $avatar.$formatter->link_repl($user);
             $users[$ouser] = $user;
           } else if (empty($DBInfo->no_wikihomepage) and $DBInfo->hasPage($user)) {
             $user= $formatter->link_tag(_rawurlencode($user),"",$user);
+
+            $user = $avatar.$user;
             $users[$ouser] = $user;
           } else {
             if (substr($user, 0, 9) == 'Anonymous') {
@@ -808,13 +846,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
                 $user = email_guard($user);
             }
 
-            if (!empty($use_avatar)) {
-              $crypted = crypt($addr, $addr);
-              $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
-              if ($uid != 'Anonymous')
-                $mylnk.= '&amp;user='.$uid;
-              $user = '<img src="'.$mylnk.'" class="avatar" alt="avatar" />'.$user;
-            }
+            $user = $avatar.$user;
             $users[$ouser] = $user;
           }
         }
