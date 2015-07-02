@@ -568,6 +568,7 @@ class Cache_Text {
 					continue;
 				$count++;
 			}
+                        closedir($dh);
 		}
 		return $count;
 	}
