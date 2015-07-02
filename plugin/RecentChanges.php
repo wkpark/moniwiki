@@ -386,6 +386,13 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   // check member
   $ismember = !empty($members) && in_array($u->id, $members);
 
+  // use uniq avatar ?
+  $uniq_avatar = 0;
+  if (!empty($DBInfo->use_uniq_avatar))
+    $uniq_avatar = $DBInfo->use_uniq_avatar;
+  if ($ismember)
+    $uniq_avatar = 'Y'; // change avatar after year :>
+
   if ($u->id != 'Anonymous') {
     $bookmark= !empty($u->info['bookmark']) ? $u->info['bookmark'] : '';
   } else {
@@ -423,6 +430,13 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   $rckey = md5(serialize($locals));
   echo '<!-- rckey = '.$rckey.' -->';
   unset($locals);
+
+  // $uniq_avatar is numeric case: change avatar icon after 24 hours
+  if (is_numeric($uniq_avatar))
+    $uniq_avatar = $rckey . date('mdH', time());
+  else if (is_string($uniq_avatar) and preg_match('/^[YmdHi]+$/', $uniq_avatar))
+    // date format string case: change avatar icon after 'Ymd' etc period
+    $uniq_avatar = $rckey . date($uniq_avatar, time());
 
   $time_current= time();
   $secs_per_day= 60*60*24;
@@ -776,7 +790,11 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
           $avatar = '';
           if (!empty($use_avatar)) {
-            $crypted = md5($addr . $rckey);
+            if (!empty($uniq_avatar))
+              $key = $addr . $uniq_avatar;
+            else
+              $key = $addr . $rckey;
+            $crypted = md5($key);
             $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
             $avatar = '<img src="'.$mylnk.'" class="avatar" alt="avatar" />';
           }
@@ -794,7 +812,12 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
             $avatar = '';
             if (!empty($use_avatar)) {
-              $crypted = crypt($addr, $addr);
+              if (!empty($uniq_avatar))
+                $key = $addr . $uniq_avatar;
+              else
+                $key = $addr . $rckey;
+              if (!$ismember) $key.= $user; // not a member: show different avatar for login user
+              $crypted = md5($key);
               $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
               if ($uid != 'Anonymous')
                 $mylnk.= '&amp;user='.$uid;
