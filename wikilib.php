@@ -4572,10 +4572,14 @@ JS;
 
   $redirects = 0;
   if (!empty($mode)) {
-    $rc = new Cache_Text('redirect');
-    $redirects = 0;
-    if (method_exists($rc, 'count'))
-      $redirects = $rc->count();
+    $sc = new Cache_Text('settings');
+    if (($redirects = $sc->fetch('redirect')) === false) {
+      $rc = new Cache_Text('redirect');
+      $redirects = 0;
+      if (method_exists($rc, 'count'))
+        $redirects = $rc->count();
+      $sc->update('redirect', $redirects, 60*60*24);
+    }
 
     if ($mode == 'redirect')
       return '<span class="macro" id="macro-'.$mid.'">'.$redirects.'<span>'.$js;
@@ -4589,8 +4593,14 @@ function ajax_pagecount($formater, $params) {
 
     $rc = new Cache_Text('redirect');
     $redirects = 0;
-    if (method_exists($rc, 'count'))
+    $sc = new Cache_Text('settings');
+    if (($redirects = $sc->fetch('redirect')) === false) {
+      $rc = new Cache_Text('redirect');
+      $redirects = 0;
+      if (method_exists($rc, 'count'))
         $redirects = $rc->count();
+      $sc->update('redirect', $redirects, 60*60*24);
+    }
 
     $count = $DBInfo->getCounter();
     echo '{pagecount:'.$count.',redirect:'.$redirects.'}';
