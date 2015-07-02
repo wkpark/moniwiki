@@ -876,7 +876,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       if (isset($editor[1]))
         $user = '<span class="rc-editors"><span class="editor">'.implode("</span> <span class='editor'>", $all_user)."</span></span>\n";
       else
-        $user = $all_user[0];
+        $user = '<span class="editor">'.$all_user[0]."</span>\n";
     } else {
       $user = '&nbsp;';
     }
