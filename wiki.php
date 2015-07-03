@@ -4903,6 +4903,9 @@ FOOT;
     $title = '';
     if (isset($this->pi['#title']))
       $title=_html_escape($this->pi['#title']);
+
+    // change main title
+    if (!empty($options['.title'])) $title = _html_escape($options['.title']);
     if (!empty($msgtitle)) {
       $msgtitle = _html_escape($msgtitle);
     } else if (isset($options['msgtitle'])) {
@@ -4929,7 +4932,7 @@ FOOT;
     if (!empty($DBInfo->use_backlinks)) $qext='&amp;backlinks=1';
     if (isset($link[0]))
       $title="<a href=\"$link\">$title</a>";
-    else if (empty($options['nolink']))
+    else if (empty($options['.title']) and empty($options['nolink']))
       $title=$this->link_to("?action=fullsearch$qext&amp;value="._urlencode($mypgname),$title);
 
     if (isset($this->pi['#notitle']))
