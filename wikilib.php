@@ -278,11 +278,31 @@ function _rawurlencode($url) {
   return $urlname;
 }
 
+/**
+ * do not encode already urlencoded chars.
+ *
+ * @author wkpark at gmail.com
+ * @since  2015/07/03
+ */
 function _urlencode($url) {
-  $url= preg_replace('#:+#',':',$url);
-  $url = str_replace('%20', ' ', $url);
-  return str_replace(array('%23', '%26', '%2F', '%3A', '%3B', '%3D', '%3F'),
-            array('#', '&', '/', ':', ';', '=', '?'), rawurlencode($url));
+    $url = preg_replace('#:+#', ':', $url);
+
+    $chunks = preg_split("@([a-zA-Z0-9/?.~#&:;=%-_]+)@", $url, -1, PREG_SPLIT_DELIM_CAPTURE);
+    for ($i = 0, $sz = count($chunks); $i < $sz; $i++) {
+        if ($i % 2 == 0) {
+            $chunks[$i] = strtr(rawurlencode($chunks[$i]), array(
+                    '%23'=>'#',
+                    '%26'=>'&',
+                    '%2F'=>'/',
+                    '%3A'=>':',
+                    '%3B'=>';',
+                    '%3D'=>'=',
+                    '%3F'=>'?',
+                )
+            );
+        }
+    }
+    return preg_replace("/%(?![a-fA-Z0-9]{2})/", '%25', implode('', $chunks));
 }
 
 /**
