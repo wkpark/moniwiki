@@ -75,6 +75,35 @@ class Security_ACL extends Security_base {
         }
     }
 
+    function get_acl_group($user, $group = '') {
+        $groups = array();
+        if (!empty($user)) {
+            $groups[] = '@ALL';
+            if ($user != 'Anonymous')
+                $groups[] = '@User';
+        }
+
+        if (empty($group))
+            $group = '@[^\s]+';
+
+        $gpriority = array(); // group priorities
+
+        $matches = preg_grep('/^('.$group.')\s+(.*,?'.$user.',?.*)/', $this->AUTH_ACL);
+        foreach ($matches as $line) {
+            list($grp, $tmp) = preg_split('/\s+/', $line, 2);
+            $tmp = preg_replace("/\s*,\s*/", ",", $tmp); // trim spaces: ' , ' => ','
+            list($users, $priority) = preg_split("/\s+/", $tmp, 2);
+            if (!preg_match("/(^|.*,)$user(,.*|$)/", $users))
+                continue;
+
+            $groups[] = $grp;
+            if (!empty($priority) and is_numeric($priority)) $gpriority[$grp] = $priority; # set group priorities
+            else $gpriority[$grp] = 2; # default group priority
+        }
+
+        return $groups;
+    }
+
     function get_acl($action='read',&$options) {
         if (in_array($options['id'],$this->allowed_users)) return 1;
         $pg=$options['page'];
