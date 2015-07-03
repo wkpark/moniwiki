@@ -1384,8 +1384,7 @@ class UserDB {
     if (!file_exists("$this->user_dir/$wu") && empty($user->info['regdate'])) {
       $user->info['regdate'] = $date;
     }
-    if (empty($user->info['last_updated']))
-      $user->info['last_updated'] = $date;
+    $user->info['last_updated'] = $date;
 
     if (!empty($user->ticket))
       $user->info['ticket']=$user->ticket;
