@@ -781,8 +781,12 @@ function macro_RecentChanges($formatter,$value='',$options='') {
             else
               $wip = "<a href='?action=whois&q=".$addr."' target='_blank'>$ipicon</a>";
 
-            if ($ismember)
-              $user = $user.$wip;
+            if ($ismember) {
+              if (!empty($DBInfo->use_admin_user_url))
+                $user = '<a href="'.$DBInfo->use_admin_user_url.$ouser.'">'.$user.'</a>'.$wip;
+              else
+                $user = $user.$wip;
+            }
             else if (!empty($DBInfo->mask_hostname)) {
               $user = _mask_hostname($addr, intval($DBInfo->mask_hostname));
             }
@@ -828,7 +832,10 @@ function macro_RecentChanges($formatter,$value='',$options='') {
           if (isset($users[$ouser])) {
             $user = $users[$ouser];
           } else if ($ismember) {
-            $user = $avatar.$user.$wip;
+            if (!empty($DBInfo->use_admin_user_url))
+              $user = $avatar.'<a href="'.$DBInfo->use_admin_user_url.$ouser.'">'.$user.'</a>'.$wip;
+            else
+              $user = $avatar.$user.$wip;
             $users[$ouser] = $user;
           } else if (!empty($DBInfo->use_nick)) {
             $uid = $user;
