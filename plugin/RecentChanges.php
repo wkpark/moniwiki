@@ -823,8 +823,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
               if (!$ismember) $key.= $user; // not a member: show different avatar for login user
               $crypted = md5($key);
               $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
-              if ($uid != 'Anonymous')
-                $mylnk.= '&amp;user='.$uid;
+              if ($ouser != 'Anonymous')
+                $mylnk.= '&amp;user='.$ouser;
               $avatar = '<img src="'.$mylnk.'" class="avatar" alt="avatar" />';
             }
           }
