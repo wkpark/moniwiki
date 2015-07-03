@@ -49,6 +49,9 @@ function abusefilter_default($action, $params = array()) {
     $retval = array();
     $ret['retval'] = &$retval;
     if ($ec->exists($id) and ($info = $ec->fetch($id, 0, $ret)) !== false) {
+        if (isset($info['suspended']) and $info['suspended'])
+            return false;
+
         $info['id'] = $id;
         $info['ip'] = $params['ip'];
         if ($act == 'save') {
@@ -59,6 +62,8 @@ function abusefilter_default($action, $params = array()) {
         }
         // check edit count
         if ($info['edit'] > $edit['edit'] || $info[$act] > $edit[$act]) {
+            $info['suspended'] = true;
+
             if ($info[$act] > $edit[$act])
                 $myact = $act;
             else
