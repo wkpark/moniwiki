@@ -101,6 +101,18 @@ function macro_UserInfo($formatter,$value,$options=array()) {
 
     $ismember = in_array($user->id, $DBInfo->members);
 
+    // check ACL admin groups
+    if ($DBInfo->security_class == 'acl' && !empty($DBInfo->acl_admin_groups) &&
+            method_exists($DBInfo->security, 'get_acl_group')) {
+        $groups = $DBInfo->security->get_acl_group($user->id);
+        foreach ($groups as $g) {
+            if (in_array($g, $DBInfo->acl_admin_groups)) {
+                $ismember = true;
+                break;
+            }
+        }
+    }
+
     if ($allowed && $type == 'monitor' && $ismember) {
         $suspend_btn = _("Temporary Suspend User");
 

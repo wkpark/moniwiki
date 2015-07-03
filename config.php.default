@@ -265,6 +265,7 @@ $use_errlog=1;
 #$raw_errlog=0; # do not hide some dir. infos.
 #$acl_type='default'; # XXX
 #$acl_debug=1;
+#$acl_admin_groups=array('@staff', '@admin'); # ACL admin groups
 #$default_download_image='/block.jpg';
 #$force_download=1;
 #$download_action='download';
