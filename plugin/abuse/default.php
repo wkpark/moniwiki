@@ -16,12 +16,22 @@ function abusefilter_default($action, $params = array()) {
     $id = $params['id'];
 
     // do not use abuse filter for members
-    if (!empty($members) and in_array($id, $members)) return true;
+    $ismember = !empty($members) and in_array($id, $members);
 
-    // do not check admin level users
-    $pass = $DBInfo->security_class == 'acl' &&
-            $DBInfo->security->is_allowed('userinfo', $params);
-    if ($pass) return true;
+    // do not check admin member users
+    // check ACL admin groups
+    if (!$ismember && $DBInfo->security_class == 'acl' && !empty($DBInfo->acl_admin_groups) &&
+            method_exists($DBInfo->security, 'get_acl_group')) {
+        $groups = $DBInfo->security->get_acl_group($user->id);
+        foreach ($groups as $g) {
+            if (in_array($g, $DBInfo->acl_admin_groups)) {
+                $ismember = true;
+                break;
+            }
+        }
+    }
+
+    if ($ismember) return true;
 
     // default abusing check paramters
     // users can edit 10 times within 5-minutes etc.
