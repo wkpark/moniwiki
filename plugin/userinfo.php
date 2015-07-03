@@ -99,7 +99,9 @@ function macro_UserInfo($formatter,$value,$options=array()) {
     if (!$allowed)
         $allowed = in_array($user->id,$DBInfo->owners);
 
-    if ($allowed && $type == 'monitor') {
+    $ismember = in_array($user->id, $DBInfo->members);
+
+    if ($allowed && $type == 'monitor' && $ismember) {
         $suspend_btn = _("Temporary Suspend User");
 
         $formhead = "<form method='POST' action=''>";
@@ -372,11 +374,39 @@ function macro_UserInfo($formatter,$value,$options=array()) {
         $hide_infos = array('bookmark', 'password', 'scrapped_pages', 'quicklinks', 'ticket', 'tz_offset');
 
         $inf = $udb->getInfo($keys[0], $type != 'all');
+        if ($ismember)
+            $allowed_infos = array_keys($inf);
+        else
+            $allowed_infos = array('nick', 'home',
+                'edit_count', 'edit_add_lines', 'edit_add_chars', 'edit_del_lines', 'edit_del_chars',
+                'strike_total', 'strikeout_total');
+
+        $addr = !empty($inf['remote']) ? $inf['remote'] : '';
+
         $list = '<table>';
         $list.= '<tr><th>'._("ID").'/'._("IP").'</th></th><td>'.$keys[0].'</td></tr>';
-        foreach ($inf as $k => $v) {
-            if (!in_array($k, $hide_infos))
-                $list.= '<tr><th>'.$k.'</th><td>'.$v.'</td></tr>';
+        if (!empty($DBInfo->use_avatar) && !empty($addr) && !empty($DBInfo->use_uniq_avatar)) {
+            $avatar_type = 'identicon';
+            if (is_string($DBInfo->use_avatar))
+                $avatar_type = $DBInfo->use_avatar;
+            $avatarlink = qualifiedUrl($formatter->link_url('', '?action='. $avatar_type .'&amp;seed='));
+
+            $uniq_avatar = $DBInfo->use_uniq_avatar;
+            if ($ismember)
+                $uniq_avatar = 'Y'; // change avatar after year :>
+
+            $key = $addr . $uniq_avatar;
+            if (!$ismember) $key.= $q; // not a member: show different avatar for login user
+            $crypted = md5($key);
+            $mylnk = preg_replace('/seed=/', 'seed='.$crypted, $avatarlink);
+
+            // for user defined avatar
+            $mylnk.= '&amp;user='.$q;
+            $list.= '<tr><th>'._("Avatar").'</th></th><td><img src="'.$mylnk.'" /></td></tr>';
+        }
+        foreach ($allowed_infos as $k) {
+            if (!in_array($k, $hide_infos) and !empty($inf[$k]))
+                $list.= '<tr><th>'.$k.'</th><td>'.$inf[$k].'</td></tr>';
         }
         $list.= '</table>';
 
@@ -408,7 +438,11 @@ function macro_UserInfo($formatter,$value,$options=array()) {
 
         $formtail.= "</form>";
 
-    } else if ($allowed) {
+        // do not show form for non members
+        if (!$ismember)
+            $formtail = $formhead = '';
+
+    } else if ($allowed && $ismember) {
         $names = array_keys($users);
         $pages = intval($retval['count'] / $limit);
         $query = '?action=userinfo';
@@ -494,7 +528,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
         $list = '<ul>'."\n".$list.'</ul>'."\n";
     }
 
-    if ($allowed) {
+    if ($allowed && $ismember) {
         if ($type != 'monitor')
             $extra.= '<a href="?action=userinfo&amp;type=monitor" class="button"><span>'._("Contributors Monitor")."</span></a>";
         else
