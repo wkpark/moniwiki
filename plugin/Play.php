@@ -250,7 +250,7 @@ EOS;
         }
         $mediainfo = 'Youtube movie';
         $objclass = ' youtube';
-      } else if (preg_match('@^https?://(?:videofarm|tvpot)\.daum\.net/(?:.*?clipid=|vid=|v/)?([a-zA-Z0-9%$]+)@i', $media[$i], $m)) {
+      } else if (preg_match('@^https?://(?:videofarm|tvpot)\.daum\.net/(?:.*?(?:clipid=|vid=|v/))?([a-zA-Z0-9%$]+)@i', $media[$i], $m)) {
         // like as http://tvpot.daum.net/v/GCpMeZtuBnk%24
         if (preg_match('@[0-9]+$@', $m[1])) {
           // clipid case
@@ -311,8 +311,8 @@ EOS;
           "<param name='allowFullScreen' value='true'>\n";
         } else {
           $iframe = '//videofarm.daum.net/controller/video/viewer/Video.html?play_loc=tvpot'.
-                    '&amp;jsCallback=true&amp;wmode=transparent&amp;vid='.$m[1].
-                    '&amp;autoplay=true&amp;startNotReport=&amp;permitWideScreen=true';
+                    '&amp;jsCallback=false&amp;wmode=transparent&amp;vid='.$m[1].
+                    '&amp;autoplay=false&amp;permitWideScreen=true';
           $attr = 'frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen';
           if (empty($mysize))
             $attr.= ' width="500px" height="281px"';
