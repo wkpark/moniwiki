@@ -261,12 +261,12 @@ function identicon_get_options() {
 	//Set Default Values Here
 	$default_array = array(
 		'size'=>35,
-		'backr'=>array(255,255),
-		'backg'=>array(255,255),
-		'backb'=>array(255,255),
-		'forer'=>array(1,255),
-		'foreg'=>array(1,255),
-		'foreb'=>array(1,255),
+		'backr'=>array(0,0),
+		'backg'=>array(0,0),
+		'backb'=>array(0,0),
+		'forer'=>array(70,255),
+		'foreg'=>array(70,255),
+		'foreb'=>array(70,255),
 		'squares'=>3,
 		'autoadd'=>1,
 		'grey'=>0,
