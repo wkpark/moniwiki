@@ -372,7 +372,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
                     $comment.= '<li>'.$date.' '.$log.' --'.$by.'</li>'."\n";
                 }
                 $comment.= '</ul>';
-                $list.= '<tr><td colspan="7">'.$comment.'</td></tr>';
+                $list.= '<tr><td>&nbsp;</td><td colspan="7">'.$comment.'</td></tr>';
             }
         }
         $list.= '</table>';
