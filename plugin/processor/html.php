@@ -25,12 +25,12 @@ function processor_html($formatter, $value = '') {
 
     // check some iframes, embed
     if (preg_match("/^\s*<(?:embed)/", $value)) {
-        if (preg_match("@\ssrc=(?:'|\")https?://(?:[a-z-]+[.])?nicovideo(?:[.][a-z-]+)+/[^=]+(ts=[0-9]+)(?:'|\")\s@i", $value)) {
+        if (preg_match("@\ssrc=(?:'|\")(?:https?:)//(?:[a-z-]+[.])?nicovideo(?:[.][a-z-]+)+/[^=]+(ts=[0-9]+)(?:'|\")\s@i", $value)) {
             return $value;
         }
     }
     if (preg_match("/^\s*<(?:iframe|object)/", $value) and preg_match("@</(?:iframe|object)>\s*$@", $value)) {
-        if (preg_match("@https?://(?:[a-z-]+[.])?(?:youtu\.?be|vimeo)(?:[.][a-z-]+)+/(?:watch[?].*v=|v/|embed/|video/)?([a-z0-9_-]+)@i", $value, $m)) {
+        if (preg_match("@(?:https?:)?//(?:[a-z-]+[.])?(?:youtu(?:be)?|vimeo)(?:[.][a-z-]+)+/(?:watch[?].*v=|v/|embed/|video/)?([a-z0-9_-]+)@i", $value, $m)) {
             $val = $value;
             // parse width,height
             if (preg_match_all("/(?:width|height)=(['\"])?\d+(?:px)?\\1/", $value, $match)) {
