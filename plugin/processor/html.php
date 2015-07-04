@@ -30,7 +30,7 @@ function processor_html($formatter, $value = '') {
         }
     }
     if (preg_match("/^\s*<(?:iframe|object)/", $value) and preg_match("@</(?:iframe|object)>\s*$@", $value)) {
-        if (preg_match("@https?://(?:[a-z-]+[.])?youtube(?:[.][a-z-]+)+/(?:watch[?].*v=|v/|embed/)([a-z0-9_-]+)@i", $value, $m)) {
+        if (preg_match("@https?://(?:[a-z-]+[.])?(?:youtu\.?be|vimeo)(?:[.][a-z-]+)+/(?:watch[?].*v=|v/|embed/|video/)?([a-z0-9_-]+)@i", $value, $m)) {
             $val = $value;
             // parse width,height
             if (preg_match_all("/(?:width|height)=(['\"])?\d+(?:px)?\\1/", $value, $match)) {

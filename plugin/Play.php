@@ -250,11 +250,57 @@ EOS;
         }
         $mediainfo = 'Youtube movie';
         $objclass = ' youtube';
-      } else if (preg_match("@https?://tvpot\.daum\.net\/v\/(.*)$@i", $media[$i], $m)) {
+      } else if (preg_match('@^https?://(?:videofarm|tvpot)\.daum\.net/(?:.*?clipid=|vid=|v/)?([a-zA-Z0-9%$]+)@i', $media[$i], $m)) {
+        // like as http://tvpot.daum.net/v/GCpMeZtuBnk%24
+        if (preg_match('@[0-9]+$@', $m[1])) {
+          // clipid case
+          $aurl = $media[$i];
+          $clipid = $m[1];
+          require_once "lib/HTTPClient.php";
+
+          // fetch tvpot.daum.net
+          $sc = new Cache_text('daumtvpot');
+          $maxage = 60*60;
+          if (empty($params['refresh']) and $sc->exists($aurl) and $sc->mtime($aurl) < time() + $maxage) {
+            $info = $sc->fetch($aurl);
+          } else {
+            // no cached info found.
+            if ($formatter->_macrocache and empty($params['call']))
+              return $formatter->macro_cache_repl('Play', $value);
+            if (empty($params['call']))
+              $formatter->_dynamic_macros['@Play'] = 1;
+
+            // try to fetch tvpot.daum.net
+            $http = new HTTPClient();
+
+            $save = ini_get('max_execution_time');
+            set_time_limit(0);
+            $http->timeout = 15;
+            $http->sendRequest($aurl, array(), 'GET');
+            set_time_limit($save);
+
+            if ($http->status != 200) {
+              return '[[Media('.$aurl.')]]';
+            }
+
+            if (!empty($http->resp_body)) {
+              // search Open Graph url info
+              if (preg_match('@og:url"\s+content="http://tvpot\.daum\.net/v/([^"]+)"@', $http->resp_body, $match)) {
+                $info = array('vid'=>$match[1], 'clipid'=>$clipid);
+                $sc->update($aurl, $info);
+              }
+            } else {
+              return '[[Media('.$aurl.')]]';
+            }
+          }
+
+          $m[1] = $info['vid'];
+        }
+        if ($object_prefered) {
         $classid = "classid='clsid:d27cdb6e-ae6d-11cf-96b8-444553540000'";
         $movie = "http://videofarm.daum.net/controller/player/VodPlayer.swf";
         $type = 'type="application/x-shockwave-flash"';
-        $attr = 'allowfullscreen="true" allowScriptAccess="always" flashvars="vid='.$m[1].'&playLoc=undefined"';
+        $attr = 'allowfullscreen="true" allowScriptAccess="always" flashvars="vid='.$m[2].'&playLoc=undefined"';
         if (empty($mysize))
           $attr.= ' width="500px" height="281px"';
 
@@ -263,9 +309,19 @@ EOS;
           "<param name='flashvars' value='vid=".$m[1]."&playLoc=undefined'>\n".
           "<param name='allowScriptAccess' value='always'>\n".
           "<param name='allowFullScreen' value='true'>\n";
+        } else {
+          $iframe = '//videofarm.daum.net/controller/video/viewer/Video.html?play_loc=tvpot'.
+                    '&amp;jsCallback=true&amp;wmode=transparent&amp;vid='.$m[1].
+                    '&amp;autoplay=true&amp;startNotReport=&amp;permitWideScreen=true';
+          $attr = 'frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen';
+          if (empty($mysize))
+            $attr.= ' width="500px" height="281px"';
+          else
+            $attr.= ' '.$mysize;
+        }
         $mediainfo = 'Daum movie';
         $objclass = ' daum';
-      } else if ($macro == 'vimeo' && preg_match("@^(\d+)$@", $media[$i], $m) || preg_match("@(?:https?:)?//vimeo\.com\/(.*)$@i", $media[$i], $m)) {
+      } else if ($macro == 'vimeo' && preg_match("@^(\d+)$@", $media[$i], $m) || preg_match("@(?:https?:)?//(?:player\.)?vimeo\.com\/(?:video/)?(.*)$@i", $media[$i], $m)) {
         if ($object_prefered) {
           $movie = "https://secure-a.vimeocdn.com/p/flash/moogaloop/5.2.55/moogaloop.swf?v=1.0.0";
           $type = 'type="application/x-shockwave-flash"';
