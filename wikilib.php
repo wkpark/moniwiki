@@ -37,8 +37,7 @@ function get_scriptname() {
   // set 'cgi.fix_pathinfo=1' in the php.ini under
   // apache 2.0.x + php4.2.x Win32
   // check mod_rewrite
-  if (isset($_SERVER['REDIRECT_URL']) and
-      strpos($_SERVER['REQUEST_URI'],$_SERVER['SCRIPT_NAME'])===false) {
+  if (strpos($_SERVER['REQUEST_URI'],$_SERVER['SCRIPT_NAME'])===false) {
     if ($_SERVER['REQUEST_URI'][0] == '/' and ($p = strpos($_SERVER['REQUEST_URI'], '/', 1)) !== false) {
       $prefix = substr($_SERVER['REQUEST_URI'], 0, $p);
       if (($p = strpos($_SERVER['SCRIPT_NAME'], $prefix)) === 0)
