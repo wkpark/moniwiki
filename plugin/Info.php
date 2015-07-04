@@ -27,8 +27,25 @@ function _parse_rlog($formatter,$log,$options=array()) {
       $type = 'identicon';
     $avatarlink = qualifiedUrl($formatter->link_url('', '?action='. $type .'&amp;seed='));
   }
+  $ipicon = '<img src="'.$DBInfo->imgs_dir.'/misc/ip.png" />';
 
   $members = $DBInfo->members;
+  // do not check admin member users
+  // check ACL admin groups
+
+  $ismember = !empty($members) && in_array($options['id'], $members);
+
+  if (!$ismember && $DBInfo->security_class == 'acl' && !empty($DBInfo->acl_admin_groups) &&
+          method_exists($DBInfo->security, 'get_acl_group')) {
+      $groups = $DBInfo->security->get_acl_group($options['id']);
+      foreach ($groups as $g) {
+          if (in_array($g, $DBInfo->acl_admin_groups)) {
+              $ismember = true;
+              $members[] = $options['id'];
+              break;
+          }
+      }
+  }
 
   $diff_action = null;
   if (isset($actions['diff'])) {
@@ -203,12 +220,15 @@ function _parse_rlog($formatter,$log,$options=array()) {
            $u = $user;
            if ($u == 'Anonymous')
              $u = $ip;
-           $wip = $u;
            if (isset($DBInfo->interwiki['Whois']))
-             $wip = "<a href='".$DBInfo->interwiki['Whois']."$ip' target='_blank'>$u</a>";
+             $wip = "<a href='".$DBInfo->interwiki['Whois']."$ip' target='_blank'>$ipicon</a>";
+           else
+             $wip = "<a href='?action=whois&amp;q=".$ip."' target='_blank'>$ipicon</a>";
 
-           if (!empty($members) and in_array($options['id'], $members)) {
-             $ip = $wip;
+           if ($ismember) {
+             if (!empty($DBInfo->use_admin_user_url))
+               $u = '<a href="'.$DBInfo->use_admin_user_url.$u.'">'.$u.'</a>';
+             $ip = $u.$wip;
            } else if (empty($DBInfo->show_hosts)) {
              $ip = $user;
            } else {
@@ -225,7 +245,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
                    $u = _($user);
                  $ip = $u;
                } else {
-                 $ip = $wip;
+                 $ip = $u.$wip;
                }
              }
            }
