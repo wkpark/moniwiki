@@ -200,17 +200,7 @@ Class RcsLite {
                 }
             } else if( $where == 'admin.locks' ) {
                 if( preg_match('/^locks.*;$/', $line, $match) ) {
-                    list($line, $string) = $this->_readTo( $fh, $term );
-                    if(is_null($line)) break;
-                    if(preg_match('/^strict\s*;/', $line) ) {
-                        $where = 'admin.postStrict';
-                        $this->_strict = true;
-                    } else if (preg_match('/^comment\s.*$/', $line) ) {
-                        $where = 'admin.postComment';
-                        $this->_comment = $string;
-                    } else {
-                        $where = 'admin.postLocks';
-                    }
+                    $where = 'admin.postLocks';
                 } else {
                     break;
                 }
@@ -325,7 +315,7 @@ Class RcsLite {
         $out.= "access" . $this->access() . ";\n";
         $out.= "symbols" . $this->_symbols . ";\n";
         $out.= "locks\n\t$this->rcs_user:$headnum;";
-        $out.= !empty($this->_strict) ? "strict;\n" : "\n";
+        $out.= !empty($this->_strict) ? " strict;\n" : "\n";
         if (!empty($this->_comment))
             $out.=sprintf("comment\t%s;\n", $this->_formatString($this->comment()));
         if ( isset($this->_expand) ) {
