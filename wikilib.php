@@ -1346,6 +1346,7 @@ class UserDB {
                   "edit_del_lines",
                   "edit_add_chars",
                   "edit_del_chars",
+                  "groups", // user groups
                   "strike",
                   "strike_total",
                   "strikeout",
@@ -1470,6 +1471,16 @@ class UserDB {
     $user = new WikiUser($id);
     $info = $this->getInfo($id, $suspended);
     $user->info = $info;
+
+    // read group infomation
+    if (!empty($info['groups'])) {
+        $groups = explode(',', $info['groups']);
+        // already has group information ?
+        if (!empty($user->groups))
+            $user->groups = array_merge($user->groups, $groups);
+        else
+            $user->groups = $groups;
+    }
 
     // set default timezone
     if (isset($info['tz_offset']))
