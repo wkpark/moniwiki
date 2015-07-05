@@ -76,16 +76,10 @@ class Security_ACL extends Security_base {
     }
 
     function get_acl_group($user, $group = '') {
-        $groups = array();
-        if (!empty($user)) {
-            $groups[] = '@ALL';
-            if ($user != 'Anonymous')
-                $groups[] = '@User';
-        }
-
         if (empty($group))
             $group = '@[^\s]+';
 
+        $groups = array();
         $gpriority = array(); // group priorities
 
         $matches = preg_grep('/^('.$group.')\s+(.*,?'.$user.',?.*)/', $this->AUTH_ACL);
