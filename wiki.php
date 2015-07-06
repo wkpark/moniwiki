@@ -1774,6 +1774,10 @@ class Formatter {
     else
       $this->fetch_action = $DBInfo->fetch_action;
 
+    // use thumbnail by default
+    $this->use_thumb_by_default = !empty($DBInfo->use_thumb_by_default) ? $DBInfo->use_thumb_by_default : 0;
+    $this->thumb_width = !empty($DBInfo->thumb_width) ? $DBInfo->thumb_width : 320;
+
     if ($this->use_group and ($p=strpos($page->name,"~")))
       $this->group=substr($page->name,0,$p+1);
 
@@ -2339,6 +2343,9 @@ class Formatter {
             // check internal links and fetch image
             if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url)) {
               $url = $this->fetch_action. str_replace(array('&', '?'), array('%26', '%3f'), $url);
+              // use thumbnails ?
+              if (!empty($this->use_thumb_by_default))
+                $url.= '&amp;thumbwidth='.$this->thumb_width;
 
               $size = '';
               if (!empty($this->fetch_imagesize))
@@ -2396,6 +2403,9 @@ class Formatter {
           if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url)) {
             $fetch_url = $this->fetch_action.
                 str_replace(array('&', '?'), array('%26', '%3f'), $url);
+            // use thumbnails ?
+            if (!empty($this->use_thumb_by_default))
+              $fetch_url.= '&amp;thumbwidth='.$this->thumb_width;
 
             $size = '';
             if (!empty($this->fetch_imagesize))
