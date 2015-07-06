@@ -123,7 +123,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
     $value=substr($value,0,$dummy);
   }
 
-  $use_thumb = !empty($DBInfo->attachment_thumb_default) ? true: false;
+  $use_thumb = !empty($DBInfo->use_thumb_by_default) ? true: false;
   if (!empty($attrs)) {
     if (!empty($attrs['action'])) {
       // check extra_action
@@ -354,6 +354,8 @@ function macro_Attachment($formatter,$value,$options=array()) {
             $val=substr($val,0,$p).'/thumbnails'.substr($val,$p);
           else
             $val = 'thumbnails/'.$thumbfile;
+          // use download link ?
+          if (!empty($DBInfo->use_thumb_with_download_link))
           $extra_action='download';
         }
         if ($file_ok == 2 and !empty($pull_url)) {

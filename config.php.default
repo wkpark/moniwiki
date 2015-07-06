@@ -170,7 +170,8 @@ $perma_icon='&#xB6;';
 
 #$password_length=6;
 #$use_convert_thumbs=0; # for GalleryMacro
-#$attachment_thumb_default=0; # show thumbnails by default
+#$use_thumb_by_default=0; # show thumbnails by default
+#$use_thumb_with_download_link=0; # use download link
 
 $myprocessors=array('syntax'=>'vim','sh'=>'vim','csh'=>'vim',
 	'c'=>'vim','cpp'=>'vim','perl'=>'vim','lisp'=>'vim',
