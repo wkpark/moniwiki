@@ -31,21 +31,8 @@ function _parse_rlog($formatter,$log,$options=array()) {
 
   $members = $DBInfo->members;
   // do not check admin member users
-  // check ACL admin groups
-
-  $ismember = !empty($members) && in_array($options['id'], $members);
-
-  if (!$ismember && $DBInfo->security_class == 'acl' && !empty($DBInfo->acl_admin_groups) &&
-          method_exists($DBInfo->security, 'get_acl_group')) {
-      $groups = $DBInfo->security->get_acl_group($options['id']);
-      foreach ($groups as $g) {
-          if (in_array($g, $DBInfo->acl_admin_groups)) {
-              $ismember = true;
-              $members[] = $options['id'];
-              break;
-          }
-      }
-  }
+  $user = $DBInfo->user;
+  $ismember = $user->is_member;
 
   $diff_action = null;
   if (isset($actions['diff'])) {

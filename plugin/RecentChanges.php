@@ -384,20 +384,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
   $u=$DBInfo->user; # retrive user info
   // check member
-  $ismember = !empty($members) && in_array($u->id, $members);
-
-  // do not check admin member users
-  // check ACL admin groups
-  if (!$ismember && $DBInfo->security_class == 'acl' && !empty($DBInfo->acl_admin_groups) &&
-          method_exists($DBInfo->security, 'get_acl_group')) {
-      $groups = $DBInfo->security->get_acl_group($u->id);
-      foreach ($groups as $g) {
-          if (in_array($g, $DBInfo->acl_admin_groups)) {
-              $ismember = true;
-              break;
-          }
-      }
-  }
+  $ismember = $u->is_member;
 
   // use uniq avatar ?
   $uniq_avatar = 0;

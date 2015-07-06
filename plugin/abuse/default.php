@@ -16,21 +16,7 @@ function abusefilter_default($action, $params = array()) {
     $id = $params['id'];
 
     // do not use abuse filter for members
-    $ismember = !empty($members) and in_array($id, $members);
-
-    // do not check admin member users
-    // check ACL admin groups
-    if (!$ismember && $DBInfo->security_class == 'acl' && !empty($DBInfo->acl_admin_groups) &&
-            method_exists($DBInfo->security, 'get_acl_group')) {
-        $groups = $DBInfo->security->get_acl_group($user->id);
-        foreach ($groups as $g) {
-            if (in_array($g, $DBInfo->acl_admin_groups)) {
-                $ismember = true;
-                break;
-            }
-        }
-    }
-
+    $ismember = $user->is_member;
     if ($ismember) return true;
 
     // default abusing check paramters
