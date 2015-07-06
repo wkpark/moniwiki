@@ -171,8 +171,13 @@ class identicon {
 		}
 		$forecolors=array(mt_rand($this->identicon_options['forer'][0],$this->identicon_options['forer'][1]), mt_rand($this->identicon_options['foreg'][0],$this->identicon_options['foreg'][1]), mt_rand($this->identicon_options['foreb'][0],$this->identicon_options['foreb'][1]));
 		$this->colors[1]=imagecolorallocate($this->im, $forecolors[0],$forecolors[1],$forecolors[2]);
-		if (array_sum($this->identicon_options['backr']) + array_sum($this->identicon_options['backg']) + array_sum($this->identicon_options['backb'])==0) {
-			$this->colors[0]=imagecolorallocatealpha($this->im,0,0,0,127);
+		if ($this->identicon_options['backr'][0] == $this->identicon_options['backr'][1] and
+				$this->identicon_options['backr'][0] == $this->identicon_options['backg'][0] and
+				$this->identicon_options['backg'][0] == $this->identicon_options['backb'][0]) {
+			$this->colors[0]=imagecolorallocatealpha($this->im,
+				$this->identicon_options['backr'][0],
+				$this->identicon_options['backg'][0],
+				$this->identicon_options['backb'][0], 127);
 			$this->transparent=true;
 			imagealphablending ($this->im,false);
 			imagesavealpha($this->im,true);
@@ -261,9 +266,9 @@ function identicon_get_options() {
 	//Set Default Values Here
 	$default_array = array(
 		'size'=>35,
-		'backr'=>array(0,0),
-		'backg'=>array(0,0),
-		'backb'=>array(0,0),
+		'backr'=>array(255,255),
+		'backg'=>array(255,255),
+		'backb'=>array(255,255),
 		'forer'=>array(70,255),
 		'foreg'=>array(70,255),
 		'foreb'=>array(70,255),
