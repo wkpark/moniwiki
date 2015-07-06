@@ -1430,8 +1430,7 @@ class UserDB {
   }
 
   function checkUser(&$user) {
-    $tmp=$this->getInfo($user->id);
-    if (!empty($tmp['ticket']) and $tmp['ticket'] != $user->ticket) {
+    if (!empty($user->info['ticket']) and $user->info['ticket'] != $user->ticket) {
       if ($this->strict > 0)
         $user->id='Anonymous';
       return 1;
@@ -1583,7 +1582,8 @@ class WikiUser {
      	$this->ticket=substr($_COOKIE['MONI_ID'],0,32);
      	$id=urldecode(substr($_COOKIE['MONI_ID'],33));
      }
-     $this->setID($id);
+     $ret = $this->setID($id);
+     if ($ret) $this->getGroup();
 
      $this->css=isset($_COOKIE['MONI_CSS']) ? $_COOKIE['MONI_CSS']:'';
      $this->theme=isset($_COOKIE['MONI_THEME']) ? $_COOKIE['MONI_THEME']:'';
@@ -1593,6 +1593,37 @@ class WikiUser {
      $this->nick=isset($_COOKIE['MONI_NICK']) ?_stripslashes($_COOKIE['MONI_NICK']):'';
      $this->verified_email = isset($_COOKIE['MONI_VERIFIED_EMAIL']) ? _stripslashes($_COOKIE['MONI_VERIFIED_EMAIL']) : '';
      if ($this->tz_offset =='') $this->tz_offset=date('Z');
+  }
+
+  // get ACL group
+  function getGroup() {
+      global $DBInfo;
+
+      if ($this->id == 'Anonymous') return;
+
+      // get groups
+      if (method_exists($DBInfo->security, 'get_acl_group'))
+          $this->groups = $DBInfo->security->get_acl_group($this->id);
+  }
+
+  // check group Information
+  function checkGroup() {
+      global $DBInfo;
+
+      if ($this->id == 'Anonymous') return;
+
+      // a user of members
+      $this->is_member = in_array($this->id, $DBInfo->members);
+
+      // check ACL admin groups
+      if (!empty($DBInfo->acl_admin_groups)) {
+          foreach ($this->groups as $g) {
+              if (in_array($g, $DBInfo->acl_admin_groups)) {
+                  $this->is_member = true;
+                  break;
+              }
+          }
+      }
   }
 
   function setID($id) {

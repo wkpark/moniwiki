@@ -5557,18 +5557,20 @@ function init_requests(&$options) {
     $options['trail']=trim($user->trail) ? $user->trail:'';
 
   if ($user->id != 'Anonymous') {
+    $user->info = $udb->getInfo($user->id); // read user info
     $test = $udb->checkUser($user); # is it valid user ?
-    if ($user->id != 'Anonymous')
-      $user->info = $udb->getInfo($user->id); // read user info
-    else
-      $user->setID('Anonymous');
     if ($test == 1) {
+      // fail to check ticket
+      // check user group
       if ($DBInfo->login_strict > 0 ) {
         # auto logout
         $options['header'] = $user->unsetCookie();
       } else if ($DBInfo->login_strict < 0 ) {
         $options['msg'] = _("Someone logged in at another place !");
       }
+    } else {
+      // check group
+      $user->checkGroup();
     }
   } else
     // read anonymous user IP info.
