@@ -1650,7 +1650,14 @@ class WikiUser {
      global $Config;
 
      if ($this->id == "Anonymous") return false;
-     $ticket=getTicket($this->id,$_SERVER['REMOTE_ADDR']);
+
+     if (($sessid = session_id()) == '') {
+       // no session used. IP dependent.
+       $ticket = getTicket($this->id, $_SERVER['REMOTE_ADDR']);
+     } else {
+       // session enabled case. use session.
+       $ticket = md5($this->id.$sessid);
+     }
      $this->ticket=$ticket;
      # set the fake cookie
      $_COOKIE['MONI_ID']=$ticket.'.'.urlencode($this->id);
