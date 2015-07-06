@@ -123,6 +123,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
     $value=substr($value,0,$dummy);
   }
 
+  $use_thumb = !empty($DBInfo->attachment_thumb_default) ? true: false;
   if (!empty($attrs)) {
     if (!empty($attrs['action'])) {
       // check extra_action
