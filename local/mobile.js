@@ -16,7 +16,10 @@ function is_mobile() {
         ua.match(/Windows Phone/i)
        ) {
         return true;
-    }
+    } else if (location.host.match(/^m\./))
+        // force mobile mode with m.foobar.com hostname
+        return true;
+
     return false;
 }
 
@@ -34,6 +37,10 @@ if (device_width >= 800) {
     device_width = w;
 }
 
+/* thumb width defined ? */
+if (thumb_width < device_width)
+    device_width = thumb_width;
+
 function toggle(o) {
     var node = o.parentNode;
     if (node.nodeName != 'A' && typeof o._wrapper == 'undefined') {
@@ -44,7 +51,7 @@ function toggle(o) {
         o._wrapper.appendChild(o);
     }
     var src;
-    if (node.nodeName == 'A' && node.href.match(/(\.png|jpe?g|gif)$/i)) {
+    if (node.nodeName == 'A' && node.href.match(/\.(png|jpe?g|gif)$/i)) {
         if (typeof o._src == 'undefined') o._src = '';
         if (o._src == '') {
             o._src = String(o.src);
@@ -54,19 +61,31 @@ function toggle(o) {
             o._src = '';
         }
     } else {
+        if (typeof o._src == 'undefined') o._src = '';
         src = String(o.src);
-        // toggle m=0 query string property
         var query;
-        if (is_m)
-            query = '&thumbwidth=' + device_width;
-        else
-            query = '&thumb=0';
-        var re = new RegExp(query);
+        var m = false;
 
-        if (src.match(re)) {
-            src = src.replace(re, '');
-        } else {
-            src+= query;
+        // toggle thumbnails
+        if (o._src != '') {
+            src = o._src; // restore
+            o._src = '';
+        } else if ((m = src.match(/thumbnails\/(.*)\.w\d+\.(png|jpe?g|gif)$/i))) {
+            o._src = src; // save
+            src = src.substring(0, m.index);
+            src+= m[1] + "." + m[2];
+        } else if (src.match(/action=(download|fetch)/)) {
+            // toggle m=0 query string
+            if (is_m)
+                query = '&thumbwidth=' + device_width;
+            else
+                query = '&thumb=0';
+
+            if (src.match(/&thumb(width)?=\d+/)) {
+                src = src.replace(/&thumb(width)?=\d+/, '');
+            } else {
+                src+= query;
+            }
         }
     }
     var img = new Image();
@@ -76,20 +95,20 @@ function toggle(o) {
         if (typeof o._zoom == 'undefined') o._zoom = 0;
 
         if (o._zoom == 0) {
-            if (o.getAttribute('width') > 0) {
-                o._width = o.width;
+            if (o.getAttribute('width')) {
+                o._width = o.getAttribute('width');
 		o.removeAttribute('width');
             }
-            if (o.getAttribute('height') > 0) {
-                o._height = o.height;
+            if (o.getAttribute('height')) {
+                o._height = o.getAttribute('height');
 		o.removeAttribute('height');
             }
             o._zoom = 1;
         } else {
             if (typeof o._width != 'undefined')
-                o.width = o._width;
+                o.setAttribute('width', o._width);
             if (typeof o._height != 'undefined')
-                o.height = o._height;
+                o.setAttribute('height', o._height);
             o._zoom = 0;
         }
         o.src = img.src;
@@ -111,18 +130,20 @@ function toggle(o) {
 
 function init_images() {
     var img = document.getElementsByTagName('img');
+    var query = '&thumbwidth=[0-9]+';
+    var re = new RegExp(query);
 
     for (var i = 0; i < img.length; i++) {
-        if (img[i].src.match(/action=fetch|download/)) {
+        var m = null;
+        if ((m = img[i].src.match(/thumbnails\/(.*)\.w\d+\.(png|jpe?g|gif)$/i)) ||
+                img[i].src.match(/action=fetch|download/)) {
             var node = img[i].parentNode;
             if (is_m) {
-                if (img[i].getAttribute('width') > 0)
+                if (img[i].getAttribute('width'))
 		    img[i].removeAttribute('width');
-                if (img[i].getAttribute('height') > 0)
+                if (img[i].getAttribute('height'))
 		    img[i].removeAttribute('height');
             }
-            if (img[i].naturalWidth < 64)
-                continue;
 
             var el;
             if (node.nodeName == 'A')
@@ -142,10 +163,17 @@ function init_images() {
             var a = document.createElement('a');
             var expand = document.createTextNode('+');
             a.className = 'zoom';
-            if (is_m)
+
+            if (m) {
+                var src = String(img[i].src);
+                src = src.substring(0, m.index);
+                src+= m[1] + "." + m[2];
+                a.href = src;
+            } else if (is_m)
                 a.href = img[i].src + '&m=0';
             else
                 a.href = img[i].src + '&thumb=0';
+
             a.setAttribute('target', '_blank');
             a.onclick = function(e) {
 	        if (e.stopPropagation)
@@ -155,16 +183,31 @@ function init_images() {
 		e.cancelBubble = true;
             };
             img[i].style.display = 'inline';
+            if (m == null && is_m) {
+                var src = String(img[i].src);
+                if (!src.match(re))
+                    src+= '&thumbwidth=' + device_width;
+                img[i].src = src;
+            }
 
             a.appendChild(expand);
             img[i].parentNode.insertBefore(a, img[i].nextSibling);
+            img[i].onload = function() {
+                if (this.naturalWidth && this.naturalWidth > 64) return;
+                var anchor = this.nextSibling;
+                if (anchor && anchor.className.match(/zoom/))
+                    this.parentNode.removeChild(anchor);
+            };
         }
     }
 }
 
 // onload
+if (jQuery)
+    $(document).ready(function() { init_images(); });
+else
 if (window.addEventListener)
-    window.addEventListener("load",init_images,false);
+    window.addEventListener("DOMContentLoaded",init_images,false);
 else if (window.attachEvent)
     window.attachEvent("onload",init_images);
 })();
