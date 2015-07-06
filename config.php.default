@@ -67,6 +67,7 @@ $notify= 0; # enable email notification
 #$use_anonymous_editcount=0; # use anonymous editcount to save IP information for anonymous users
 #$no_full_edit_permission=1; # restrict edit actions against all users
 #$use_abusefilter=1; # use abusefilter
+#$no_abusefilter_groups=array('@staff','@gardener','@tester'); # do not use abusefilter for this groups
 $use_referer= 0; # use some basic referer feature.
 $use_sistersites=1; # use sistersites/siterwiki feature.
 #$use_singlebracket=1; #

@@ -17,6 +17,17 @@ function abusefilter_default($action, $params = array()) {
 
     // do not use abuse filter for members
     $ismember = $user->is_member;
+
+    // do not use abuse filter check for $no_abusefilter_groups groups
+    if (!$ismember && !empty($user->groups)
+            && !empty($DBInfo->no_abusefilter_groups)) {
+        foreach ($user->groups as $g) {
+            if (in_array($g, $DBInfo->no_abusefilter_groups)) {
+                return true;
+            }
+        }
+    }
+
     if ($ismember) return true;
 
     // default abusing check paramters
