@@ -30,6 +30,34 @@ function macro_UserInfo($formatter,$value,$options=array()) {
     $act = !empty($options['act']) ? trim($options['act']) : '';
     $comment = !empty($options['comment']) ? trim($options['comment']) : '';
 
+    if (empty($uid) and !empty($q))
+        $uids = (array)$q;
+    else
+        $uids = $uid;
+
+    if (empty($q) and !empty($uid) and sizeof($uid) == 1) {
+        $q = $uid;
+    }
+
+    if ($limit > 100) $limit = 100;
+    if ($pg > 1) $off+= ($pg - 1) * $limit;
+
+    $params = array('offset' => $off, 'limit'=>$limit);
+    $retval = array();
+    $params['retval'] = &$retval;
+
+    $udb=&$DBInfo->udb;
+    $user=&$DBInfo->user;
+
+    $ismember = $user->is_member;
+
+    // set default query string
+    if (!$ismember and empty($q)) {
+        $q = $user->id;
+        if ($q == 'Anonymous')
+            $q = $_SERVER['REMOTE_ADDR'];
+    }
+
     if (!empty($q) and empty($options['type'])) $type = 'all';
 
     $act = strtolower($act);
@@ -42,19 +70,10 @@ function macro_UserInfo($formatter,$value,$options=array()) {
         $type = 'all';
     }
 
-    if ($limit > 100) $limit = 100;
-    if ($pg > 1) $off+= ($pg - 1) * $limit;
-
-    $params = array('offset' => $off, 'limit'=>$limit);
-    $retval = array();
-    $params['retval'] = &$retval;
     if (!empty($q))
         $params['q'] = $q;
     if (!empty($type))
         $params['type'] = $type;
-
-    $udb=&$DBInfo->udb;
-    $user=&$DBInfo->user;
 
     if (empty($act) and !empty($q)) {
         if ($udb->_exists($q)) {
@@ -99,20 +118,6 @@ function macro_UserInfo($formatter,$value,$options=array()) {
     if (!$allowed)
         $allowed = in_array($user->id,$DBInfo->owners);
 
-    $ismember = in_array($user->id, $DBInfo->members);
-
-    // check ACL admin groups
-    if ($DBInfo->security_class == 'acl' && !empty($DBInfo->acl_admin_groups) &&
-            method_exists($DBInfo->security, 'get_acl_group')) {
-        $groups = $DBInfo->security->get_acl_group($user->id);
-        foreach ($groups as $g) {
-            if (in_array($g, $DBInfo->acl_admin_groups)) {
-                $ismember = true;
-                break;
-            }
-        }
-    }
-
     if ($allowed && $type == 'monitor' && $ismember) {
         $suspend_btn = _("Temporary Suspend User");
 
@@ -136,11 +141,6 @@ function macro_UserInfo($formatter,$value,$options=array()) {
         $ret = array();
         $retval = array();
         $ret['retval'] = &$retval;
-
-        if (empty($uid) and !empty($q))
-            $uids = (array)$q;
-        else
-            $uids = $uid;
 
         if (!empty($uids) && in_array($act, array('inc', 'dec', 'reset', 'suspend', 'block', 'pause', 'clear'))) {
             if ($act == 'reset') {
@@ -369,10 +369,10 @@ function macro_UserInfo($formatter,$value,$options=array()) {
                 $comment = '<ul>';
                 foreach ($comments as $c) {
                     list($date, $by, $log) = explode("\t", $c);
-                    $comment.= '<li>'.$date.' '.$log.' --'.$by.'</li>'."\n";
+                    $comment.= '<li>['.$date.'] '.$log.' --'.$by.'</li>'."\n";
                 }
                 $comment.= '</ul>';
-                $list.= '<tr><td>&nbsp;</td><td colspan="7">'.$comment.'</td></tr>';
+                $list.= '<tr><td>&nbsp;</td><td colspan="7"><div class="msgboard">'.$comment.'</div></td></tr>';
             }
         }
         $list.= '</table>';
@@ -428,7 +428,12 @@ function macro_UserInfo($formatter,$value,$options=array()) {
             $btn = _("Activate User");
 
         $suspend_btn = _("Permanently Suspend User");
-        $pause_btn = _("Temporary Suspend User");
+        if (!$ismember && $q == $user->id)
+            $pause_btn = _("Temporary Suspend Me!");
+        else if ($ismember)
+            $pause_btn = _("Temporary Suspend User");
+
+        $comment_btn = _("Comment");
 
         $formhead="<form method='POST' action=''>";
         $formtail='';
@@ -438,21 +443,46 @@ function macro_UserInfo($formatter,$value,$options=array()) {
         $formtail.="<input type='hidden' name='action' value='userinfo' />";
         $formtail.="<input type='hidden' name='type' value='$type' />";
         $formtail.="<input type='hidden' name='uid' value='$keys[0]' />";
-        if ($type == 'all')
+
+        // comments
+
+        $mb = new Cache_Text('msgboard');
+
+        if (($info = $mb->fetch($q, 0, $ret)) !== false) {
+            if (!empty($info['comment'])) {
+                $comments = explode("\n", $info['comment']);
+                $comment = '<ul>';
+                foreach ($comments as $c) {
+                    list($date, $by, $log) = explode("\t", $c);
+                    $comment.= '<li>['.$date.'] '.$log.' --'.$by.'</li>'."\n";
+                }
+                $comment.= '</ul>';
+
+                $formtail.= '<div class="msgboard">'.$comment.'</div>';
+            }
+        }
+
+        // send comment
+        $formtail.=
+            "<div>"._("Message").": <input class='button' type='text' name='comment' size='80' /> </div>";
+        if (($ismember or $q == $user->id) && $type == 'all')
             $formtail.=
-                '<a href="?action=userinfo&amp;type=monitor&amp;act=pause&amp;q='.
-                    $keys[0].'" class="button"><span>'.$pause_btn."</span></a> ";
-        if ($type != 'wait')
+                "<span class='button'><input class='button' type='submit' name='pause' value='$pause_btn' /></span> ";
+        if ($ismember && $type != 'wait')
             $formtail.=
                 "<span class='button'><input class='button' type='submit' name='suspend' value='$suspend_btn' /></span> ";
+        if ($ismember)
+            $formtail.=
+                "<span class='button'><input class='button' type='submit' value='$btn' /></span> ";
+
         $formtail.=
-            "<span class='button'><input class='button' type='submit' value='$btn' /></span> ";
+            "<span class='button'><input class='button' type='submit' name='comment_btn' value='$comment_btn' /></span> ";
 
         $formtail.= "</form>";
 
         // do not show form for non members
-        if (!$ismember)
-            $formtail = $formhead = '';
+        //if (!$ismember)
+        //    $formtail = $formhead = '';
 
     } else if ($allowed && $ismember) {
         $names = array_keys($users);
@@ -559,7 +589,10 @@ function do_userinfo($formatter,$options) {
     $formatter->send_header('',$options);
     $allowed = $DBInfo->security_class == 'acl' &&
             $DBInfo->security->is_allowed($options['action'], $options);
-    if ($allowed || in_array($user->id, (array) $DBInfo->owners)) {
+
+    $ismember = $user->is_member;
+
+    if ($allowed || $ismember) {
         if (isset($_POST) and empty($options['act']) and isset($options['uid'])) {
             $uids = (array)$options['uid'];
 
@@ -570,17 +603,63 @@ function do_userinfo($formatter,$options) {
             }
             $suspend = !empty($options['suspend']) ? true : false;
             $pause = !empty($options['pause']) ? true : false;
+            $comment_btn = !empty($options['comment_btn']) ? true : false;
+            $comment = !empty($options['comment']) ? trim($options['comment']) : '';
+
+            // normal user not allowed suspend, delete user
+            if (!$ismember) {
+                $suspend = false;
+                $type = '';
+            }
 
             $change = array();
-            foreach ($uids as $uid) {
-                $uid=_stripslashes($uid);
-                if ($type == 'del' || $type == 'wait' || $suspend)
-                    $ret = $udb->activateUser($uid, $suspend);
-                else
-                    $ret = $udb->delUser($uid);
-                if ($ret)
+
+            if ($ismember and !$pause and !$comment_btn) {
+                foreach ($uids as $uid) {
+                    $uid=_stripslashes($uid);
+                    if ($type == 'del' || $type == 'wait' || $suspend)
+                        $ret = $udb->activateUser($uid, $suspend);
+                    else
+                        $ret = $udb->delUser($uid);
+                    if ($ret)
+                        $change[] = $uid;
+                }
+            } else if ($comment_btn) {
+                $mb = new Cache_Text('msgboard');
+
+                foreach ($uids as $uid) {
+                    $info = $mb->fetch($uid, 0);
+
+                    $ttl = 0;
+                    if ($info === false) {
+                        $info = array();
+                        $info['comment'] = '';
+                    }
+
+                    // add comment
+                    if (!empty($comment)) {
+                        // upate comments
+                        $comments = array();
+                        if (!empty($info['comment']))
+                            $comments = explode("\n", $info['comment']);
+
+                        $comments[] = date('Y-m-d H:i', time())."\t".$user->id."\t".$comment;
+                        if ($uid == '127.0.0.1' and sizeof($comments) > 500)
+                            array_shift($comments);
+                        else if (sizeof($comments) > 1000)
+                            array_shift($comments);
+
+                        $info['comment'] = implode("\n", $comments);
+                    }
+                    $mb->update($uid, $info);
                     $change[] = $uid;
+                }
+            } else if (!empty($uids)) {
+                // your can suspend himself
+                if ($ismember || (sizeof($uids) == 1) && $uid == $user->id)
+                    $change = $uids;
             }
+
             if (!empty($change)) {
                 $changed = implode(',',$change);
                 if ($suspend)
@@ -589,12 +668,15 @@ function do_userinfo($formatter,$options) {
                     $options['msg']= sprintf(_("User \"%s\" are temporary suspended !"),_html_escape($changed));
                 else if ($type == 'del' || $type == 'wait')
                     $options['msg']= sprintf(_("User \"%s\" are activated !"),_html_escape($changed));
+                else if ($comment_btn)
+                    $options['msg']= sprintf(_("Message added to \"%s\"."),_html_escape($changed));
                 else
                     $options['msg']= sprintf(_("User \"%s\" are deleted !"),_html_escape($changed));
             }
 
-            if (!$suspend and !empty($change) and ($type == 'del' || $type == 'wait')) {
+            if (((!$suspend and ($type == 'del' || $type == 'wait')) or $pause) and !empty($change)) {
                 // make users temporary suspdended 5-minutes
+                // or temporary suspdended 30 minutes for newly suspended user
                 // abusefilter cache
                 $ac = new Cache_Text('abusefilter');
 
@@ -612,15 +694,40 @@ function do_userinfo($formatter,$options) {
                                 'add_lines'=>0, 'del_lines'=>0, 'add_chars'=>0, 'del_chars'=>0);
                         $new_info['id'] = $q;
 
-                        $ttl = 60*5;
+                        if ($pause)
+                            $ttl = 60*30;
+                        else
+                            $ttl = 60*5;
                     } else {
                         $new_info = $info;
                         $ttl = $retval['ttl'] - (time() - $retval['mtime']);
                         $new_info['id'] = $q;
-                        if ($ttl < 60*5)
-                            $ttl = 60*5;
+
+                        if ($pause)
+                            $addttl = 60*30;
+                        else
+                            $addttl = 60*5;
+
+                        if ($ttl < $addttl)
+                            $ttl = $addttl;
                     }
                     $new_info['suspended'] = true;
+
+                    // add comment
+                    if (!empty($comment)) {
+                        // add comment
+                        $comments = array();
+                        if (!empty($new_info['comment']))
+                            $comments = explode("\n", $new_info['comment']);
+
+                        $comments[] = date('Y-m-d H:i', time())."\t".$user->id."\t".$comment;
+                        if ($q == '127.0.0.1' and sizeof($comments) > 10)
+                            array_shift($comments);
+                        else if (sizeof($comments) > 5)
+                            array_shift($comments);
+
+                        $new_info['comment'] = implode("\n", $comments);
+                    }
                     $ac->update($q, $new_info, $ttl);
                 }
             }
