@@ -1058,9 +1058,12 @@ function pw_encode($password) {
 }
 
 function getTicket($seed,$extra='',$size=0,$flag=0) {
-  global $DBInfo;
+  global $DBInfo, $Config;
   # make the site specific ticket based on the variables in the config.php
-  $configs=getConfig("config.php");
+  if (empty($Config))
+    $configs = getConfig("config.php");
+  else
+    $configs = $Config;
   $siteticket = '';
   foreach ($configs as $config) {
     if (is_array($config)) $siteticket.=md5(base64_encode(serialize($config)));
