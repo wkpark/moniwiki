@@ -6344,11 +6344,19 @@ $user_maxage = !empty($Config['user_maxage']) ? ', max-age='.$Config['user_maxag
 $_SERVER['REMOTE_ADDR'] = realIP();
 
 if ($_SERVER['REQUEST_METHOD'] != 'GET' and
-    $_SERVER['REQUEST_METHOD'] != 'HEAD')
+    $_SERVER['REQUEST_METHOD'] != 'HEAD') {
   // always set private for POST
   // basic cache-control
   header('Cache-Control: private, max-age=0, s-maxage=0, must-revalidate, post-check=0, pre-check=0');
-else {
+  if (!empty($_SERVER['HTTP_ORIGIN'])) {
+    if (!empty($DBInfo->access_control_allowed_re)) {
+      if (preg_match($DBInfo->access_control_allowed_re, $_SERVER['HTTP_ORIGIN']))
+        header('Access-Control-Allow-Origin: '.$_SERVER['HTTP_ORIGIN']);
+    } else {
+      header('Access-Control-Allow-Origin: *');
+    }
+  }
+} else {
   // set maxage for show action
   $act = isset($_GET['action']) ? strtolower($_GET['action']) : '';
   if (empty($act) or $act == 'show')

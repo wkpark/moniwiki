@@ -306,6 +306,7 @@ $cachetime=0;
 #$nosession=1; # do not use session
 #$cookie_expires=60*60*24*30; // default 30 days
 #$cookie_domain='.foobar.com'; // set cookie domain
+#$access_control_allowed_re='@foobar.com@'; // control Access-Control-Allow-Origin header
 $dynamic_macros=array('pagecount'=>1, 'recentchanges'=>1,'userpreferences'=>1,
 	'uploadedfiles'=>1,'SWFUpload'=>1,'Vote'=>1,
 	'login'=>1,'minilogin'=>1,'scrap'=>1, 'subscribe'=>1, 'fortune'=>1);
