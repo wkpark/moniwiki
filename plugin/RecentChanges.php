@@ -56,6 +56,7 @@ function ajax_RecentChanges($formatter, $options = array()) {
   // list style
   if (!empty($options['type']) and $options['type'] == 'list') {
     $options['call'] = 1;
+    $options['ajax'] = 1;
     $opt = '';
     if (isset($options['datefmt']))
         $opt.= $options['datefmt'].',';
@@ -194,7 +195,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
   $target = '';
   if (!empty($options['target'])) $target="target='$options[target]'";
-  $bookmark_action = empty($options['action']) ? '?action=bookmark' : '?action=' . $options['action'];
+  $bookmark_action = empty($options['bookmark_action']) ? '?action=bookmark' : '?action=' . $options['bookmark_action'];
 
   // $date_fmt='D d M Y';
   $date_fmt=$DBInfo->date_fmt_rc;
@@ -226,8 +227,11 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     if (is_string($DBInfo->use_avatar))
       $avatar_type = $DBInfo->use_avatar;
   }
+  // RC cache delay
+  // $rc_cache_delay <= $rc_delay
+  $cache_delay = isset($DBInfo->rc_cache_delay) ? $DBInfo->rc_cache_delay : 0;
 
-  $avatarlink = qualifiedUrl($formatter->link_url('', '?action='. $avatar_type .'&amp;seed='));
+  $avatarlink = $formatter->link_url('', '?action='. $avatar_type .'&amp;seed=');
   $ipicon = '<img src="'.$DBInfo->imgs_dir.'/misc/ip.png" />';
 
   $trash = 0;
@@ -252,6 +256,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
           $opts['from'] = $v;
       }
       else if ($k=="new") $checknew=$v;
+      else if ($k=="delay") $cache_delay = intval($v);
       else if ($k=='strimwidth' and is_numeric($v) and (abs($v) > 15 or $v == 0))
         $strimwidth =abs($v);
     } else {
@@ -280,6 +285,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
       else if (in_array($arg, array('simple', 'moztab', 'board', 'table', 'list'))) $rctype = $arg;
     }
   }
+  ksort($opts);
 
   if (!empty($nobookmark)) $use_js = 0;
 
@@ -422,14 +428,46 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   unset($locals['formatter']);
   unset($locals['options']);
   unset($locals['DBInfo']);
+  unset($locals['Config']);
   unset($locals['args']);
   unset($locals['arg']);
   unset($locals['u']);
   unset($locals['k']);
   unset($locals['v']);
+  unset($locals['p']);
+  unset($locals['value']);
+  unset($locals['tz_offset']);
+  unset($locals['members']);
   $rckey = md5(serialize($locals));
-  echo '<!-- rckey = '.$rckey.' -->';
+  $rckey2 = $rckey;
+  $rclog = '<!-- rckey = '.$rckey.', cache delay = '.$cache_delay.' -->';
+  if ($use_js) {
+    unset($locals['use_js']);
+    $rckey2 = md5(serialize($locals)); // rckey without js option
+  }
   unset($locals);
+
+  // check RC cache
+  $lc = new Cache_text('rccache');
+  $mtime = $lc->mtime($rckey);
+  if (empty($formatter->refresh)) {
+    if (($val = $lc->fetch($rckey)) !== false and $DBInfo->checkUpdated($mtime, $cache_delay)) {
+      return $val.'<!-- cached at '.date('Y-m-d H:i:s', $mtime).' -->';
+    } else if (!empty($options['ajax']) && $rctype == 'list' && $rckey != $rckey2) {
+      // rctype == list with ajax option does not depend on "use_js" option.
+      $mtime = $lc->mtime($rckey2);
+      if (($val = $lc->fetch($rckey2)) !== false and $DBInfo->checkUpdated($mtime, $cache_delay)) {
+        return $val.'<!-- cached at '.date('Y-m-d H:i:s', $mtime).' -->';
+      }
+    }
+    // need to update cache
+    if ($val !== false and $lc->exists($rckey.'.lock')) {
+      return $val.'<!-- cached at '.date('Y-m-d H:i:s', $mtime).' -->';
+    }
+    $lc->update($rckey.'.lock', array('lock'), 5); // 5s lock
+  } else {
+    $lc->update($rckey.'.lock', array('lock'), 5); // 5s lock
+  }
 
   // $uniq_avatar is numeric case: change avatar icon after 24 hours
   if (is_numeric($uniq_avatar))
@@ -475,18 +513,32 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   $ratchet_day = FALSE;
   $editors = array();
   $editcount = array();
-  $rc_delay = 0; //60*2;
+  $rc_delay = isset($DBInfo->rc_delay) ? $DBInfo->rc_delay : $rc_cache_delay;
 
   $rctimestamp = 0;
   $needupdate = false;
-  if (empty($formatter->refresh) and $DBInfo->checkUpdated($rc->mtime($rckey), $rc_delay) and ($val = $rc->fetch($rckey))) {
+
+  $use_val = false;
+  while (($val = $rc->fetch($rckey)) !== false) {
+    $use_val = true;
+    if (!empty($formatter->refresh) or !$DBInfo->checkUpdated($rc->mtime($rckey), $rc_delay)) {
+      $use_val = $rc->exists($rckey.'.lock');
+    }
+    if (!$use_val) break;
+
     $editors = $val['editors'];
     $editcount = $val['editcount'];
     $lastmod = $val['lastmod'];
     $rclastline = $val['lastline'];
     $rctimestamp = $val['timestamp'];
     $users = $val['users'];
+    break;
   }
+
+  // no cache available
+  if (!$use_val)
+    $rc->update($rckey.'.lock', array('lock'), 5); // 5s lock
+
   $lastline = $lines[0];
   $tmp = explode("\t", $lastline, 6);
   $timestamp = $tmp[2];
@@ -1131,12 +1183,12 @@ EOF;
   } else if (!empty($list)) {
     $out = '';
     foreach ($list as $k=>$v) {
-      $out.= '<li>'.$v[1].' '.$v[0].'</li>';
+      $out.= '<li>'.$v[1].' '.$v[0].'</li>'."\n";
     }
 
-    if (!empty($options['call'])) {
-      return '<ul>'.$out.'</ul>';
-    }
+    //if (!empty($options['ajax'])) {
+    //  return '<ul>'.$out.'</ul>';
+    //}
   }
 
   if (in_array($rctype, array('list', 'simple')) and $use_js) {
@@ -1154,11 +1206,17 @@ EOF;
     $js = <<<JS
 <script type='text/javascript'>
 /*<![CDATA[*/
+(function() {
   var url = "$url";
   var txt = HTTPGet(url);
   var rc = document.getElementById("rc$rc_id");
-  if (txt.substring(0,5) != 'false')
-    rc.innerHTML = txt;
+  if (txt.substring(0,5) != 'false') {
+    var m = null;
+    if (m = txt.match(/<ul>[\s\S]*<\/ul>/)) {
+      rc.innerHTML = m[0];
+    }
+  }
+})();
 /*]]>*/
 </script>
 JS;
@@ -1187,7 +1245,11 @@ function toggle_log(el)
 JS;
   }
 
-  return $btnlist.'<div class="recentChanges"'. $rcid .'>'.$rctitle.$template_bra.$out.$template_cat.$cat0.'</div>'.$js;
+  $out = $btnlist.'<div class="recentChanges"'. $rcid .'>'.$rctitle.$template_bra.$out.$template_cat.$cat0.'</div>'.$js.$rclog;
+  $lc->update($rckey, $out);
+  $lc->remove($rckey.'.lock'); // unlock
+  $rc->remove($rckey.'.lock'); // unlock
+  return $out;
 }
 // vim:et:sts=2:sw=2:
 ?>
