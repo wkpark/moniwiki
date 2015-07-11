@@ -132,11 +132,16 @@ function init_images() {
     var img = document.getElementsByTagName('img');
     var query = '&thumbwidth=[0-9]+';
     var re = new RegExp(query);
+    var no_gif_thumbnails = typeof no_gif_thumbnails !== 'undefined' ? no_gif_thumbnails : false;
 
     for (var i = 0; i < img.length; i++) {
         var m = null;
         if ((m = img[i].src.match(/thumbnails\/(.*)\.w\d+\.(png|jpe?g|gif)$/i)) ||
                 img[i].src.match(/action=fetch|download/)) {
+
+            // do not use thumbnail for gif
+            if (no_gif_thumbnails && img[i].src.match(/gif$/i)) continue;
+
             var node = img[i].parentNode;
             if (is_m) {
                 if (img[i].getAttribute('width'))
@@ -169,10 +174,16 @@ function init_images() {
                 src = src.substring(0, m.index);
                 src+= m[1] + "." + m[2];
                 a.href = src;
-            } else if (is_m)
-                a.href = img[i].src + '&m=0';
-            else
-                a.href = img[i].src + '&thumb=0';
+            } else {
+                var src = String(img[i].src);
+                if (src.match(/&thumb(width)?=\d+/)) {
+                    src = src.replace(/&thumb(width)?=\d+/, '');
+                }
+                if (is_m)
+                    a.href = src + '&m=0';
+                else
+                    a.href = src + '&thumb=0';
+            }
 
             a.setAttribute('target', '_blank');
             a.onclick = function(e) {
