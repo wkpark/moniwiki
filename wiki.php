@@ -4962,8 +4962,10 @@ FOOT;
 
     if (!empty($options['msg']) or !empty($msgtitle)) {
       $msgtype = isset($options['msgtype']) ? ' '.$options['msgtype']:' warn';
-      
-      $mtitle0=!empty($options['msg']) ? $options['msg'] : '';
+      $msgs = array();
+      if (!empty($options['msg'])) $msgs[] = $options['msg'];
+      if (!empty($options['notice'])) $msgs[] = $options['notice'];
+      $mtitle0 = implode("<br />", $msgs);
       $mtitle=!empty($msgtitle) ? "<h3>".$msgtitle."</h3>\n":"";
       $msg=<<<MSG
 <div class="message" id="wiki-message"><span class='$msgtype'>
@@ -4972,15 +4974,10 @@ $mtitle$mtitle0</span>
 MSG;
       if (isset($DBInfo->hide_log) and $DBInfo->hide_log > 0 and preg_match('/timer/', $msgtype)) {
         $time = intval($DBInfo->hide_log * 1000); // sec to ms
-        $js = array('js/scriptaculous.js', 'js/effects.js');
-        $this->register_javascripts(array($js));
-        $msg .= $this->get_javascripts();
-          $msg .=<<<MSG
+        $msg.=<<<MSG
 <script type="text/javascript">
 /*<![CDATA[*/
-Event.observe(window, 'load', function() {
-    setTimeout("$('wiki-message').fade()", $time);
-});
+setTimeout(function() {\$('#wiki-message').fadeOut('fast');}, $time);
 /*]]>*/
 </script>
 MSG;
