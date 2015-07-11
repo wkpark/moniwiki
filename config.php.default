@@ -293,6 +293,7 @@ $use_resume_download=1;
 #$dot_options="size \"6,6\"\n"; # extra webdot options
 $preview_no_xss_protection=0; # enable X-XSS-Protection: 0
 #$no_xss_filter=0; # do not filter XSS
+#$xss_allowed_embed_urls='niconico'; # some allowed embeded urls
 $use_save_refresh=2;
 #$use_savepage_hash=1; # use savepage hash to check valid action
 $use_refresh=2;

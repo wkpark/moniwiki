@@ -24,10 +24,17 @@ function processor_html($formatter, $value = '') {
         list($line,$value)=explode("\n",$value,2);
 
     // check some iframes, embed
-    if (preg_match("/^\s*<(?:embed)/", $value)) {
-        if (preg_match("@\ssrc=(?:'|\")(?:https?:)//(?:[a-z-]+[.])?nicovideo(?:[.][a-z-]+)+/[^=]+(ts=[0-9]+)(?:'|\")\s@i", $value)) {
-            return $value;
+    while (preg_match('@^\s*(<embed\s+(?:[^>]+)>)(.*)(</embed>)?(.*)\s*$@i', $value, $matches)) {
+        $allowed = !empty($Config['xss_allowed_embed_urls']) ? $Config['xss_allowed_embed_urls'] : '.*';
+        $matches[2] = $formatter->filter_repl('xss', $matches[2]);
+        $matches[4] = $formatter->filter_repl('xss', $matches[4]);
+        if (preg_match("@\ssrc=(?:'|\")(?:https?:)?//(?:[a-z-]+[.])?".
+            $allowed."(?:[.][a-z-]+)*/(.*)(?:'|\")\s@i", $matches[1])) {
+            array_shift($matches);
+            return implode('', $matches);
         }
+        array_shift($matches);
+        return implode('', $matches);
     }
     if (preg_match("/^\s*<(?:iframe|object)/", $value) and preg_match("@</(?:iframe|object)>\s*$@", $value)) {
         if (preg_match("@(?:https?:)?//(?:[a-z-]+[.])?(?:youtu(?:be)?|vimeo)(?:[.][a-z-]+)+/(?:watch[?].*v=|v/|embed/|video/)?([a-z0-9_-]+)@i", $value, $m)) {
