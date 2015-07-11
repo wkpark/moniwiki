@@ -2404,8 +2404,14 @@ class Formatter {
             $fetch_url = $this->fetch_action.
                 str_replace(array('&', '?'), array('%26', '%3f'), $url);
             // use thumbnails ?
-            if (!empty($this->use_thumb_by_default))
-              $fetch_url.= '&amp;thumbwidth='.$this->thumb_width;
+            if (!empty($this->use_thumb_by_default)) {
+              if (!empty($this->no_gif_thumbnails)) {
+                if ($type != 'GIF')
+                  $fetch_url.= '&amp;thumbwidth='.$this->thumb_width;
+              } else {
+                $fetch_url.= '&amp;thumbwidth='.$this->thumb_width;
+              }
+            }
 
             $size = '';
             if (!empty($this->fetch_imagesize))
