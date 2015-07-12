@@ -1216,13 +1216,22 @@ function getSmileys() {
 
 class UserDB {
   var $users=array();
-  function UserDB($WikiDB) {
-    $this->user_dir=$WikiDB->user_dir;
-    $this->strict = $WikiDB->login_strict;
-    if (!empty($WikiDB->user_class))
-      $this->user_class = 'User_'.$WikiDB->user_class;
-    else
-      $this->user_class = 'WikiUser';
+  function UserDB($conf) {
+    if (is_array($conf)) {
+      $this->user_dir = $conf['user_dir'];
+      $this->strict = $conf['login_strict'];
+      if (!empty($conf['user_class']))
+        $this->user_class = 'User_'.$conf['user_class'];
+      else
+        $this->user_class = 'WikiUser';
+    } else {
+      $this->user_dir=$conf->user_dir;
+      $this->strict = $conf->login_strict;
+      if (!empty($conf->user_class))
+        $this->user_class = 'User_'.$conf->user_class;
+      else
+        $this->user_class = 'WikiUser';
+    }
   }
 
   function _pgencode($m) {
@@ -1490,6 +1499,8 @@ class UserDB {
     else
       $user->info['tz_offset'] = date('Z');
 
+    $user->ticket = $info['ticket'];
+
     return $user;
   }
 
@@ -1670,9 +1681,12 @@ class WikiUser {
      if (!empty($Config['cookie_domain']))
         $domain = '; Domain='.$Config['cookie_domain'];
 
-     $path = dirname(get_scriptname());
+     if (!empty($Config['cookie_path']))
+        $path = '; Path='.$Config['cookie_path'];
+     else
+        $path = '; Path='.dirname(get_scriptname());
      return "Set-Cookie: MONI_ID=".$ticket.'.'.urlencode($this->id).
-            '; expires='.gmdate('l, d-M-Y H:i:s', time() + $this->cookie_expires).' GMT; Path='.$path.$domain;
+            '; expires='.gmdate('l, d-M-Y H:i:s', time() + $this->cookie_expires).' GMT '.$path.$domain;
   }
 
   function unsetCookie() {
@@ -1684,7 +1698,10 @@ class WikiUser {
      $domain = '';
      if (!empty($Config['cookie_domain']))
         $domain = '; Domain='.$Config['cookie_domain'];
-     $path = dirname(get_scriptname());
+     if (!empty($Config['cookie_path']))
+        $path = '; Path='.$Config['cookie_path'];
+     else
+        $path = '; Path='.dirname(get_scriptname());
      return "Set-Cookie: MONI_ID=".$this->id."; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".$path.$domain;
   }
 
