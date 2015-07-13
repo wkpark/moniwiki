@@ -1024,8 +1024,9 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     if (!empty($checknew)) $ext[] = 'new=1';
     if (!empty($checkchange)) $ext[] = 'change=1';
     $arg = implode('&', $ext);
-    $url = qualifiedURL($formatter->link_url('RecentChanges')); // FIXME
-    $url = preg_replace('/^https?:/', '', $url);
+    //$url = qualifiedURL($formatter->link_url('RecentChanges')); // FIXME
+    //$url = preg_replace('/^https?:/', '', $url);
+    $url = $formatter->link_url('RecentChanges');
     $postdata = "action=recentchanges/ajax" . ($arg ? '&'.$arg : '');
     $js.= $json->encode($rc_list).";\n";
     if ($use_diffwidth)
