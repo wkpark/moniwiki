@@ -31,7 +31,7 @@ function do_rss_rc($formatter,$options) {
   $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
 
   // make etag based on some options and mtime.
-  $check_opts = array('quick', 'items', 'oe', 'diff', 'raw', 'nomsg', 'summary');
+  $check_opts = array('quick', 'items', 'oe', 'diffs', 'raw', 'nomsg', 'summary');
   $check = array();
   foreach ($check_opts as $c) {
     if (isset($options[$c])) $check[$c] = $options[$c];
@@ -54,6 +54,32 @@ function do_rss_rc($formatter,$options) {
     @ob_end_clean();
     return;
   }
+
+  $cache = new Cache_Text('rss_rc');
+  $cache_ttl = !empty($DBInfo->rss_rc_ttl) ? $DBInfo->rss_rc_ttl : 60; /* 60 seconds */
+  $cache_delay = min($cache_ttl, 30);
+  $mtime = $cache->mtime($etag);
+
+  $val = false;
+  if (empty($formatter->refresh)) {
+    if (($val = $cache->fetch($etag)) !== false and $DBInfo->checkUpdated($mtime, $cache_delay)) {
+      header("Content-Type: text/xml");
+      echo $val;
+      return;
+    }
+  }
+  // need to update cache
+  if ($val !== false and $cache->exists($etag.'.lock')) {
+    header("Content-Type: text/xml");
+    echo $val.'<!-- cached at '.date('Y-m-d H:i:s', $mtime).' -->';
+    return;
+  }
+  if ($cache->exists($etag.'.lock')) {
+    header("Content-Type: text/xml");
+    echo '';
+    return;
+  }
+  $cache->update($etag.'.lock', array('lock'), 5); // 5s lock
     
   $time_current= time();
 #  $secs_per_day= 60*60*24;
@@ -214,9 +240,12 @@ FORM;
 -->\n
 HEAD;
   header("Content-Type: text/xml");
-  if ($new) print $head.$new;
-  else print $head.$channel.$items.$form;
-  print "</rdf:RDF>\n";
+  if ($new) $out = $head.$new;
+  else $out = $head.$channel.$items.$form;
+  $out.= "</rdf:RDF>\n";
+  echo $out;
+  $cache->update($etag, $out);
+  $cache->remove($etag.'.lock');
 }
 
 // vim:et:sts=2:sw=2
