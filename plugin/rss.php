@@ -14,7 +14,6 @@ class WikiRSSParser {
    var $title_width = 0; // do not cut title
 
    function WikiRSSParser($charset = 'UTF-8') {
-       $this->tz_offset = date('Z');
        $this->charset = $charset;
    }
 
@@ -91,7 +90,7 @@ class WikiRSSParser {
                if (empty($data))
                    break;
                $time = strtotime($data);
-               $date = gmdate("Y-m-d\TH:i:s", $time + $this->tz_offset).'+00:00';
+               $date = gmdate("Y-m-d\TH:i:s", $time).'+00:00';
                $this->date = $date;
                break;
                case "WIKI:STATUS":
