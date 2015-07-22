@@ -73,8 +73,22 @@ class PageKey_compat extends PageKey_base {
         $separator = ':';
         if (empty($this->DB->use_namespace)) $separator = '';
 
-        $pn = preg_replace_callback("/([^a-z0-9".$separator."]{1})/i",
-                array($this, '_pgencode'), $pn);
+        $tr = array(
+                '#'=>'_23', ';'=>'_3b', '/'=>'_2f', '?'=>'_3f',
+                '='=>'_3d', '&'=>'_26', '-'=>'_2d', '.'=>'_2e',
+                '~'=>'_7e', '_'=>'_5f', ':'=>'_3a', '%'=>'_',
+                );
+
+        // split into chunks
+        $chunks = preg_split('@([a-zA-Z0-9'.$separator.']+)@',
+                $pn, -1, PREG_SPLIT_DELIM_CAPTURE);
+        for ($i = 0, $sz = count($chunks); $i < $sz; $i+= 2) {
+            $chunks[$i] = strtr(strtolower(rawurlencode($chunks[$i])), $tr);
+        }
+        $pn = implode('', $chunks);
+        //$pn = preg_replace_callback("/([^a-z0-9".$separator."]{1})/i",
+        //        array($this, '_pgencode'), $pn);
+
         if (!empty($this->DB->use_namespace))
             $name = preg_replace('#:#','.d/',$pn); // Foobar:Hello page will be stored as text/Foobar.d/Hello
         else
