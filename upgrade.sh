@@ -1,22 +1,27 @@
 #!/bin/sh
-# $Id$
+# Generic upgrade script by wkpark at gmail.com
+# Since 2006/01/03
+# LGPL/GPL dual license
+#
+# Currently support tar/7z/zip formats
+#
 
 CHECKSUM=
 PACKAGE=moniwiki
 
 if [ -z "$1" ]; then
 	cat <<HELP
-Usage: $0 $PACKAGE-<ver>.tgz
+Usage: $0 ${PACKAGE}.zip
 HELP
 	exit 0
 fi
 
-SUCCESS="echo -en \\033[1;32m"
-FAILURE="echo -en \\033[1;31m"
-WARNING="echo -en \\033[1;33m"
-MESSAGE="echo -en \\033[1;34m"
-NORMAL="echo -en \\033[0;39m"
-MAGENTA="echo -en \\033[1;35m"
+SUCCESS="printf \033[1;32m"
+FAILURE="printf \033[1;31m"
+WARNING="printf \033[1;33m"
+MESSAGE="printf \033[1;34m"
+NORMAL="printf \033[0;39m"
+MAGENTA="printf \033[1;35m"
 
 NAME="MoniWiki"
 
@@ -26,10 +31,10 @@ echo "+-------------------------------+"
 echo "|    $NAME upgrade script    |"
 echo "+-------------------------------+"
 echo "| This script compare all files |"
-echo "|  between current and new.     |"
+echo "| between the current & the new |"
 echo "|     All different files are   |"
 echo "|  backuped in the backup       |"
-echo "|  directory. And so you can    |"
+echo "|  directory and so you can     |"
 echo "|  restore old one by manually. |"
 echo "+-------------------------------+"
 echo
@@ -44,7 +49,7 @@ echo -n Control-C
 $WARNING
 echo -n " to exit "
 $NORMAL
-read
+read dummy
 
 for arg; do
 
@@ -62,18 +67,52 @@ for arg; do
 		show=1
                 ;;
 	*)
-		TAR=$option
+		if [ -z "$TAR" ]; then
+			TAR=$option
+		else
+			TAR1=$option
+		fi
 	esac
 done
 
+for T in $TAR $TAR1; do
 #
 TMP=.tmp$$
+# get file extension
+ext=${T#*.}
 $MESSAGE
-echo "*** Extract tarball ***"
+[ "$ext" != "zip" ] && [ "$ext" != "tgz" ] && [ "$ext" != "tar.gz" ] && [ "$ext" != "7z" ] && echo "*** FATAL: unrecognized extension ***" && exit
+[ "$ext" = "zip" ] && echo "*** Extract Zip ***"
+[ "$ext" = "tgz" -o "$ext" = "tar.gz" ] && echo "*** Extract tarball ***"
+[ "$ext" = "7z" ] && echo "*** Extract 7z ***"
 $NORMAL
-mkdir -p $TMP/$PACKAGE
-echo tar xzf $TAR --strip-components=1 -C$TMP/$PACKAGE
-tar xzf $TAR --strip-components=1 -C$TMP/$PACKAGE
+
+if [ ! -d $TMP/$PACKAGE ]; then
+	mkdir -p $TMP/$PACKAGE
+else
+	mv $TMP/$PACKAGE $TMP/$PACKAGE.orig
+	mkdir -p $TMP/$PACKAGE
+fi
+
+if [ $ext = "tgz" -o "$ext" = "tar.gz" ]; then
+echo tar xzf $T --strip-components=1 -C$TMP/$PACKAGE
+tar xzf $T --strip-components=1 -C$TMP/$PACKAGE
+fi
+
+if [ $ext = "zip" ]; then
+[ $(which unzip) = "" ] && echo "*** FATAL: unzip command not found ***" && exit
+echo unzip -d $TMP $T
+unzip -d $TMP $T
+fi
+
+if [ $ext = "7z" ]; then
+[ $(which 7zr) = "" ] && echo "*** FATAL: 7zr command not found ***" && exit
+echo 7zr x $T -o$TMP
+7zr x $T -o$TMP
+fi
+
+done
+
 $MESSAGE
 
 echo "*** Check new upgrade.sh script ***"
@@ -107,15 +146,19 @@ $NORMAL
 
 FILELIST=$(find $TMP/$PACKAGE -type f | sort | sed "s@^$TMP/$PACKAGE/@@")
 
-rm -f checksum-new
-(cd $TMP/$PACKAGE; for x in $FILELIST; do test -f $x && md5sum $x;done >> ../../checksum-new)
+if [ -d $TMP/$PACKAGE.orig ]; then
+	SRC=$TMP/$PACKAGE.orig
+else
+	SRC=.
+fi
+
+(cd $TMP/$PACKAGE; for x in $FILELIST; do test -f $x && md5sum $x;done) > checksum-new
 
 if [ ! -f "$CHECKSUM" ];then
-	rm -rf checksum-current
 	$MESSAGE
 	echo "*** Make the checksum for current version ***"
 	$NORMAL
-	for x in $FILELIST; do test -f $x && md5sum $x;done >> checksum-current
+	(cd $SRC; for x in $FILELIST; do test -f $x && md5sum $x;done) > checksum-current
 	CHECKSUM=checksum-current
 fi
 
@@ -125,14 +168,39 @@ NEW=`diff checksum-current checksum-new |grep '^\(<\|>\)' | cut -d' ' -f4|sort |
 if [ -z "$UPGRADE" ] && [ -z "$NEW" ] ; then
 	rm -r $TMP
 	$FAILURE
-	echo "You have already installed the latest version"
+	echo "No difference found!! You have already installed the latest version"
 	$NORMAL
 	exit
 fi
+
+
+if [ $SRC != '.' ]; then
+	$MESSAGE
+	echo "*** Make $PACKAGE-changes.tgz file... ***"
+	CHANGES=$(diff checksum-current checksum-new |grep '^\(<\|>\)' | cut -d' ' -f4| sed "s@^@$PACKAGE/@" | sort |uniq)
+	if [ -z "$CHANGES" ]; then
+		$FAILURE
+		echo "No difference found!!"
+		$NORMAL
+
+		exit
+	fi
+	(cd $TMP;tar czf ../$PACKAGE-changes.tgz $CHANGES)
+	$SUCCESS
+	echo
+	echo "$PACKAGE-changes.tgz is made successfully"
+	echo
+
+	rm -r $TMP
+	$NORMAL
+	exit
+fi
+
 $MESSAGE
 echo "*** Backup the old files ***"
 $NORMAL
 
+TYPES=B/t
 $WARNING
 echo -n " What type of backup do you want to ? ("
 $MAGENTA
@@ -143,17 +211,32 @@ $MAGENTA
 echo -n t
 $WARNING
 echo -n "ar/"
+if [ $(which zip) != "" ]; then
+$MAGENTA
+echo -n z
+$WARNING
+echo -n "ip/"
+TYPES=$TYPES/z
+fi
+if [ $(which 7zr) != "" ]; then
+$MAGENTA
+echo -n 7
+$WARNING
+echo -n "z/"
+TYPES=$TYPES/7
+fi
 $MAGENTA
 echo -n p
 $WARNING
 echo "atch) "
+TYPES=$TYPES/p
 $NORMAL
 
-echo "   (Type 'B/t/p')"
+echo "   (Type '$TYPES')"
 read TYPE
 
 DATE=`date +%Y%m%d-%s`
-if [ x$TYPE != xt ] && [ x$TYPE != xp ] ; then
+if [ x$TYPE != xt ] && [ x$TYPE != xp ] && [ x$TYPE != x7 ]; then
         BACKUP=backup/$DATE
 else
         BACKUP=$TMP/$PACKAGE-$DATE
@@ -173,6 +256,18 @@ if [ ! -z "$UPGRADE" ]; then
         	$MESSAGE
         	echo "   Old files are backuped as a backup/$DATE.tar.gz"
         	$NORMAL
+	elif [ x$TYPE = xz ]; then
+		SAVED="backup/$DATE.zip"
+		(cd $TMP; zip -r ../backup/$DATE.zip $PACKAGE-$DATE)
+		$MESSAGE
+		echo "   Old files are backuped as a backup/$DATE.zip"
+		$NORMAL
+	elif [ x$TYPE = x7 ]; then
+		SAVED="backup/$DATE.7z"
+		(cd $TMP; 7zr a ../backup/$DATE.7z $PACKAGE-$DATE)
+		$MESSAGE
+		echo "   Old files are backuped as a backup/$DATE.7z"
+		$NORMAL
 	elif [ x$TYPE = xp ]; then
 		SAVED="backup/$PACKAGE-$DATE.diff"
         	(cd $TMP; diff -ruN $PACKAGE-$DATE $PACKAGE > ../backup/$PACKAGE-$DATE.diff )
@@ -192,7 +287,7 @@ else
 fi
 
 $WARNING
-echo " Are your really want to upgrade $PACKAGE ?"
+echo " Are you really want to upgrade $PACKAGE ?"
 $NORMAL
 echo -n "   (Type '"
 $MAGENTA
@@ -207,7 +302,7 @@ if [ x$YES != xyes ]; then
 	echo -n yes
 	$NORMAL
 	echo "' to real upgrade"
-	exit -1
+	exit 1
 fi
 (cd $TMP/$PACKAGE;tar cf - $NEW|(cd ../..;tar xvf -))
 rm -r $TMP
