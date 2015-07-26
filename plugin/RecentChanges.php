@@ -154,7 +154,7 @@ function ajax_RecentChanges($formatter, $options = array()) {
 
 function _timesago($timestamp, $date_fmt='Y-m-d', $tz_offset = 0) {
 	// FIXME use $sys_datafmt ?
-	$time_current = time();
+	$time_current = isset($_SERVER['REQUEST_TIME']) ? $_SERVER['REQUEST_TIME'] : time();
 	$diff=(int)($time_current - $timestamp);
 
 	if ($diff < 0) {
@@ -476,7 +476,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     // date format string case: change avatar icon after 'Ymd' etc period
     $uniq_avatar = $rckey . date($uniq_avatar, time());
 
-  $time_current= time();
+  $time_current= isset($_SERVER['REQUEST_TIME']) ? $_SERVER['REQUEST_TIME'] : time();
   $secs_per_day= 60*60*24;
   //$time_cutoff= $time_current - ($days * $secs_per_day);
   $lines= $DBInfo->editlog_raw_lines($days,$opts);

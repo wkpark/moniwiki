@@ -222,8 +222,13 @@ function json_encode(input) {
 
 function timesago(timestamp, date_fmt, tz_offset) {
   var now = new Date();
-  var current = now.getTime() + '';
-  time_current = parseInt(current.substr(0, 10));
+  var time_current;
+  if (typeof _REQUEST_TIME != 'undefined') {
+    time_current = _REQUEST_TIME;
+  } else {
+    var current = now.getTime() + '';
+    time_current = parseInt(current.substr(0, 10));
+  }
 
   var diff = time_current - parseInt(timestamp);
 
