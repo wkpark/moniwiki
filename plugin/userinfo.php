@@ -113,6 +113,8 @@ function macro_UserInfo($formatter,$value,$options=array()) {
     $extra = '';
     $cur = time();
 
+    $min_ttl = !empty($DBInfo->user_suspend_time_default) ? intval($DBInfo->user_suspend_time_default) : 60*30;
+
     $allowed = $DBInfo->security_class == 'acl' &&
             $DBInfo->security->is_allowed($options['action'], $options);
     if (!$allowed)
@@ -182,7 +184,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
                     if (isset($uinfo['remote']))
                         $new_info['ip'] = $uinfo['remote'];
 
-                    $ttl = 60*30;
+                    $ttl = $min_ttl;
                 } else {
                     $new_info = $info;
                     $ttl = $retval['ttl'] - (time() - $retval['mtime']);
@@ -198,9 +200,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
                     $new_info['suspended'] = false;
                     $new_info['comment'] = '';
                 } else if ($act == 'inc' || $act == 'dec') {
-                    if ($ttl < 60*10) {
-                        $inc = 60*30;
-                    } else if ($ttl < 60*30) {
+                    if ($ttl < 60*30) {
                         $inc = 60*30;
                     } else if ($ttl < 60*60) {
                         $inc = 60*60;
@@ -221,6 +221,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
                     } else {
                         $inc = 60*60*24*30*6;
                     }
+                    $inc = max($min_ttl, $inc);
 
                     $ttl+= $act == 'inc' ? $inc : -intval($inc / 2);
 
@@ -229,7 +230,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
                     else if ($ttl > 60*60*24*364)
                         $ttl = 60*60*24*364;
                 } else if ($act == 'pause' || $act == 'block') {
-                    $ttl+= 60*30; // pause and add 30 minutes
+                    $ttl+= $min_ttl; // pause and add minimum suspend time (default: 60*30)
                     $new_info['suspended'] = true;
                     if (!empty($comment)) {
                         // add comment
@@ -586,6 +587,8 @@ function do_userinfo($formatter,$options) {
 
     $user=&$DBInfo->user;
 
+    $min_ttl = !empty($DBInfo->user_suspend_time_default) ? intval($DBInfo->user_suspend_time_default) : 60*30;
+
     $formatter->send_header('',$options);
     $allowed = $DBInfo->security_class == 'acl' &&
             $DBInfo->security->is_allowed($options['action'], $options);
@@ -695,7 +698,7 @@ function do_userinfo($formatter,$options) {
                         $new_info['id'] = $q;
 
                         if ($pause)
-                            $ttl = 60*30;
+                            $ttl = $min_ttl;
                         else
                             $ttl = 60*5;
                     } else {
@@ -704,7 +707,7 @@ function do_userinfo($formatter,$options) {
                         $new_info['id'] = $q;
 
                         if ($pause)
-                            $addttl = 60*30;
+                            $addttl = $min_ttl;
                         else
                             $addttl = 60*5;
 
