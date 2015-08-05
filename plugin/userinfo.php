@@ -595,6 +595,9 @@ function do_userinfo($formatter,$options) {
 
     $ismember = $user->is_member;
 
+    // FIXME only owners can delete/suspend users
+    $can_delete_user = in_array($user->id, $DBInfo->owners);
+
     if ($allowed || $ismember) {
         if (isset($_POST) and empty($options['act']) and isset($options['uid'])) {
             $uids = (array)$options['uid'];
@@ -609,15 +612,15 @@ function do_userinfo($formatter,$options) {
             $comment_btn = !empty($options['comment_btn']) ? true : false;
             $comment = !empty($options['comment']) ? trim($options['comment']) : '';
 
-            // normal user not allowed suspend, delete user
-            if (!$ismember) {
+            // normal user not allowed to suspend, delete user
+            if (!$can_delete_user) {
                 $suspend = false;
                 $type = '';
             }
 
             $change = array();
 
-            if ($ismember and !$pause and !$comment_btn) {
+            if ($can_delete_user and !$pause and !$comment_btn) {
                 foreach ($uids as $uid) {
                     $uid=_stripslashes($uid);
                     if ($type == 'del' || $type == 'wait' || $suspend)
@@ -657,8 +660,8 @@ function do_userinfo($formatter,$options) {
                     $mb->update($uid, $info);
                     $change[] = $uid;
                 }
-            } else if (!empty($uids)) {
-                // your can suspend himself
+            } else if (!empty($uids) && $pause) {
+                // user can suspend temporary himself
                 if ($ismember || (sizeof($uids) == 1) && $uid == $user->id)
                     $change = $uids;
             }
