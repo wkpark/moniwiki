@@ -3349,13 +3349,21 @@ function do_post_savepage($formatter,$options) {
 
   if (!$full_permission) {
     $restricted = false;
-    $delete_lines_restricted_ratio = 0.5;
+    $delete_lines_restricted_ratio = !empty($DBInfo->allowed_max_lines_delete_ratio) ?
+        $DBInfo->allowed_max_lines_delete_ratio : 0.5;
 
     if ($deleted > 0 && ($deleted / $nline) > $delete_lines_restricted_ratio) {
       $restricted = true;
     }
 
-    if (!$restricted && ($added_chars > 300 || $deleted_chars > 180))
+    // check the maximum number of characters allowed to add/delete
+    $max_chars_add = !empty($DBInfo->allowed_max_chars_add) ?
+        $DBInfo->allowed_max_chars_add : 300;
+    $max_chars_del = !empty($DBInfo->allowed_max_chars_delete) ?
+        $DBInfo->allowed_max_chars_delete : 180;
+
+    if (!$restricted && ($added_chars > $max_chars_add ||
+        $deleted_chars > $max_chars_del))
       $restricted = true;
 
     if ($restricted) {
