@@ -391,6 +391,10 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   $u=$DBInfo->user; # retrive user info
   // check member
   $ismember = $u->is_member;
+  if (!$ismember) {
+    $ismember = $DBInfo->security_class == 'acl' &&
+            $DBInfo->security->is_allowed('userinfo', $options);
+  }
 
   // use uniq avatar ?
   $uniq_avatar = 0;
