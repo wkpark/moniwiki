@@ -100,10 +100,18 @@ class Security_ACL extends Security_base {
 
     function get_acl($action='read',&$options) {
         if (in_array($options['id'],$this->allowed_users)) return 1;
+        global $DBInfo;
+
         $pg=$options['page'];
         $user=$options['id'];
 
         $groups=array();
+
+        // check groups in the user information.
+        $u = &$DBInfo->user;
+        if (!empty($u->groups)) {
+            $groups = $u->groups;
+        }
         $groups[]='@ALL';
 
         $ip_info = array(); // ip address based info
