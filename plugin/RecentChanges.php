@@ -835,7 +835,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
             if ($ismember) {
               if (!empty($DBInfo->use_admin_user_url))
-                $user = '<a href="'.$DBInfo->use_admin_user_url.$ouser.'">'.$user.'</a>'.$wip;
+                $user = '<a href="'.$DBInfo->use_admin_user_url.$user.'">'.$user.'</a>'.$wip;
               else
                 $user = $user.$wip;
             }
@@ -885,7 +885,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
             $user = $users[$ouser];
           } else if ($ismember) {
             if (!empty($DBInfo->use_admin_user_url))
-              $user = $avatar.'<a href="'.$DBInfo->use_admin_user_url.$ouser.'">'.$user.'</a>'.$wip;
+              $user = $avatar.'<a href="'.$DBInfo->use_admin_user_url.$user.'">'.$user.'</a>'.$wip;
             else
               $user = $avatar.$user.$wip;
             $users[$ouser] = $user;
