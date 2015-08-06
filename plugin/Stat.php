@@ -101,9 +101,9 @@ function _stat_rlog($formatter, $log, $options = array()) {
                             'ip'=>array());
                 $users[$user]['add']+= $add;
                 $users[$user]['del']+= $del;
-                $users[$user]['rev'][] = $rev;
+                $users[$user]['rev'][] = 'r'.$rev;
                 $users[$user]['edit']++;
-                $revs[] = $rev;
+                $revs[] = 'r'.$rev;
 
                 if ($user != $ip && !isset($users[$ip]))
                     $users[$ip] = array('add'=>0,
@@ -132,7 +132,7 @@ function _stat_rlog($formatter, $log, $options = array()) {
 
     foreach ($users as $k=>$v) {
         // last user and last revision
-        if (is_array($users[$k]['rev']) and in_array($rev, $users[$k]['rev'])) {
+        if (is_array($users[$k]['rev']) and in_array('r'.$rev, $users[$k]['rev'])) {
             $author = $k;
             break;
         }
@@ -194,7 +194,7 @@ function _render_stat($formatter, $retval, $params = array()) {
     $orig_lines-= $total_adds - $total_dels;
 
     // fix original author info.
-    if ($rev == '1.1') {
+    if ($rev === '1.1') {
         $users[$orig_author]['add'] += $orig_lines;
         $user_adds[$orig_author] += $orig_lines;
     }
