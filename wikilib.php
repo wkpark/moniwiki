@@ -1421,8 +1421,10 @@ class UserDB {
 
   function _exists($id, $suspended = false) {
     if (empty($id) || $id == 'Anonymous') {
+      if ($suspended) return false;
       $wu = 'wu-'.$_SERVER['REMOTE_ADDR'];
     } else if (preg_match('/^(\d{1,3}\.){3}\d{1,3}$/', $id)) {
+      if ($suspended) return false;
       $wu = 'wu-'.$id;
     } else {
       $prefix = $suspended ? 'wait-wu-' : 'wu-';
