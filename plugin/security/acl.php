@@ -187,7 +187,6 @@ class Security_ACL extends Security_base {
                 $tmp = preg_match('/^(.*)\s+('.$gregex.')\s+(allow|protect|deny)\s*(.*)?$/i', $rule, $acl);
                 if (!$tmp) continue;
 
-                $found = 0;
                 if (!$acl[4]) $acl[4]='*';
                 if ($acl[1] != '*' and $acl[1] != $pg) {
                     $prules = get_csv($acl[1]);
@@ -195,9 +194,10 @@ class Security_ACL extends Security_base {
                     // HelpOn* -> HelpOn.*
                     // MoniWiki/* -> MoniWiki\/.*
 
+                    $found = false;
                     foreach ($prules as $prule) {
                         if ($prule == $pg) {
-                            $found = 10;
+                            $found = true;
                             break;
                         } else {
                             $pre = '^';
@@ -210,14 +210,12 @@ class Security_ACL extends Security_base {
                                 preg_replace(array('/(?:\.)?\*/',"/(?<!\\\\)\//"),array('.*','\/'),$prule);
 
                             if (@preg_match("/$pre$prule$post/", $pg)) {
-                                $found = 5;
+                                $found = true;
                                 break;
                             }
                         }
                     }
                     if (!$found) continue;
-                } else if ($acl[1] == $pg) {
-                    $found = 10;
                 }
 
                 if ($acl[3] == 'allow') {
@@ -226,7 +224,6 @@ class Security_ACL extends Security_base {
                     if ($acl[2] == $user) $pri=4;
                     else if ($acl[2] == '@ALL') $pri=1;
                     else $pri= !empty($gpriority[$acl[2]]) ? $gpriority[$acl[2]]:2; # get group prio
-                    $pri+= $found; // set explicitly
                     $keys=array_keys($tmp);
                     foreach ($keys as $t) {
                         if (isset($allowed[$t]) and $allowed[$t] > $pri)
@@ -243,7 +240,6 @@ class Security_ACL extends Security_base {
                     if ($acl[2] == $user) $pri=4;
                     else if ($acl[2] == '@ALL') $pri=1;
                     else $pri= $gpriority[$acl[2]] ? $gpriority[$acl[2]]:2; # set group prio
-                    $pri+= $found; // set explicitly
                     $keys=array_keys($tmp);
                     foreach ($keys as $t) {
                         if (isset($denied[$t]) and $denied[$t] > $pri)
