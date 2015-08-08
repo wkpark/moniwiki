@@ -164,6 +164,7 @@ class Security_ACL extends Security_base {
         foreach ($matches as $line) {
             list($grp, $tmp) = preg_split('/\s+/', $line, 2);
             $tmp = preg_replace("/\s*,\s*/", ",", $tmp); // trim spaces: ' , ' => ','
+            $tmp = rtrim($tmp);
             list($users, $priority) = preg_split("/\s+/", $tmp, 2);
             if (!preg_match("/(^|.*,)$user(,.*|$)/", $users))
                 continue;
