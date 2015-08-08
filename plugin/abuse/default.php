@@ -56,8 +56,10 @@ function abusefilter_default($action, $params = array()) {
     $retval = array();
     $ret['retval'] = &$retval;
     if ($ec->exists($id) and ($info = $ec->fetch($id, 0, $ret)) !== false) {
-        if (isset($info['suspended']) and $info['suspended'])
+        if (isset($info['suspended']) and $info['suspended']) {
+            $params['retval']['msg'] = sprintf(_("Abusing detected! You are suspended or blocked."));
             return false;
+        }
 
         $info['id'] = $id;
         $info['ip'] = $params['ip'];
