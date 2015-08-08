@@ -3482,8 +3482,9 @@ function do_post_savepage($formatter,$options) {
       if (!empty($options['section']))
         $lnk .= '#sect-'.$options['section'];
 
-      if ($DBInfo->use_save_refresh > 0) {
+      if ($DBInfo->use_save_refresh > 0 || $ret == -1) {
         $sec=$DBInfo->use_save_refresh - 1;
+        if ($sec < 0) $sec = 3;
         $myrefresh='Refresh: '.$sec.'; url='.qualifiedURL($lnk);
       } else {
         $myrefresh = array('Status: 302', 'Location: '. qualifiedURL($lnk));
