@@ -383,6 +383,9 @@ function macro_UserInfo($formatter,$value,$options=array()) {
         $extra.= '<li>'.'<strong style="color:red">S</strong>'.':'._("Temporary Suspended").'</li>';
         $extra.= '</ul>';
     } else if ($sz == 1 && $allowed) {
+        // abusefilter cache
+        $ac = new Cache_Text('abusefilter');
+
         $keys = array_keys($users);
         $hide_infos = array('bookmark', 'password', 'scrapped_pages', 'quicklinks', 'ticket', 'tz_offset');
 
@@ -420,6 +423,10 @@ function macro_UserInfo($formatter,$value,$options=array()) {
         foreach ($allowed_infos as $k) {
             if (!in_array($k, $hide_infos) and !empty($inf[$k]))
                 $list.= '<tr><th>'.$k.'</th><td>'.$inf[$k].'</td></tr>';
+        }
+        $info = $ac->fetch($keys[0]);
+        if ($info !== false && isset($info['suspended']) and $info['suspended'] == 'true') {
+            $list.= '<tr><th>'._("Status").'</th><th style="color:red">'._("Temporary Suspended").'</th></tr>';
         }
         $list.= '</table>';
 
