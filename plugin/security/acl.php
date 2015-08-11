@@ -82,38 +82,6 @@ class Security_ACL extends Security_base {
         $groups = array();
         $gpriority = array(); // group priorities
 
-        $matches = preg_grep('/^('.$group.')\s+(.*,?'.$user.',?.*)/', $this->AUTH_ACL);
-        foreach ($matches as $line) {
-            list($grp, $tmp) = preg_split('/\s+/', $line, 2);
-            $tmp = preg_replace("/\s*,\s*/", ",", $tmp); // trim spaces: ' , ' => ','
-            list($users, $priority) = preg_split("/\s+/", $tmp, 2);
-            if (!preg_match("/(^|.*,)$user(,.*|$)/", $users))
-                continue;
-
-            $groups[] = $grp;
-            if (!empty($priority) and is_numeric($priority)) $gpriority[$grp] = $priority; # set group priorities
-            else $gpriority[$grp] = 2; # default group priority
-        }
-
-        return $groups;
-    }
-
-    function get_acl($action='read',&$options) {
-        if (in_array($options['id'],$this->allowed_users)) return 1;
-        global $DBInfo;
-
-        $pg=$options['page'];
-        $user=$options['id'];
-
-        $groups=array();
-
-        // check groups in the user information.
-        $u = &$DBInfo->user;
-        if (!empty($u->groups)) {
-            $groups = $u->groups;
-        }
-        $groups[]='@ALL';
-
         $ip_info = array(); // ip address based info
         if ($user != 'Anonymous') {
             $groups[]='@User';
@@ -152,15 +120,8 @@ class Security_ACL extends Security_base {
             if (!empty($mygrp))
                 $groups = array_merge($groups, $mygrp);
         }
-        $groups[]=$user;
-        $allowed=array();
-        $denied=array();
-        $protected=array();
 
-        $gpriority=array(); # group priorities
-
-        #get group info.
-        $matches= preg_grep('/^(@[^\s]+)\s+(.*,?'.$user.',?.*)/', $this->AUTH_ACL);
+        $matches = preg_grep('/^('.$group.')\s+(.*,?'.$user.',?.*)/', $this->AUTH_ACL);
         foreach ($matches as $line) {
             list($grp, $tmp) = preg_split('/\s+/', $line, 2);
             $tmp = preg_replace("/\s*,\s*/", ",", $tmp); // trim spaces: ' , ' => ','
@@ -174,6 +135,31 @@ class Security_ACL extends Security_base {
             else $gpriority[$grp] = 2; # default group priority
         }
 
+        $this->gpriority = $gpriority;
+        return $groups;
+    }
+
+
+    function get_acl($action='read',&$options) {
+        if (in_array($options['id'],$this->allowed_users)) return 1;
+        global $DBInfo;
+
+        $pg=$options['page'];
+        $user=$options['id'];
+
+        $groups = $this->get_acl_group($user);
+        // check groups in the user information.
+        $u = &$DBInfo->user;
+        if (!empty($u->groups)) {
+            $groups = array_merge($groups, $u->groups);
+        }
+        $groups[]='@ALL';
+        $groups[]=$user;
+        $allowed=array();
+        $denied=array();
+        $protected=array();
+
+        $gpriority = $this->gpriority;
         $gregex=implode('|',$groups);
 
         #get ACL info.
