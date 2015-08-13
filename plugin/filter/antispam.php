@@ -13,9 +13,12 @@ function filter_antispam($formatter,$value,$options) {
     if (! in_array($formatter->page->name,$blacklist_pages) and
         ! in_array($formatter->page->name,$whitelist_pages)) {
 
-        if (!file_exists($Config['badcontents'])) return $value;
+        $badcontents_file = !empty($options['.badcontents']) ? $options['.badcontents'] :
+                $Config['badcontents'];
 
-        $badcontent = file_get_contents($Config['badcontents']);
+        if (!file_exists($badcontents_file)) return $value;
+
+        $badcontent = file_get_contents($badcontents_file);
         foreach ($blacklist_pages as $list) {
             $p=new WikiPage($list);
             if ($p->exists()) $badcontent.=$p->get_raw_body();

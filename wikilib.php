@@ -3126,6 +3126,7 @@ function do_post_savepage($formatter,$options) {
   $savetext=preg_replace("/\r\n|\r/", "\n", $savetext);
   $savetext=_stripslashes($savetext);
   $comment=_stripslashes($options['comment']);
+  $comment = trim($comment);
   $section_savetext='';
   if (isset($options['section'])) {
     if ($formatter->page->exists()) {
@@ -3280,6 +3281,21 @@ function do_post_savepage($formatter,$options) {
     if ($text != $savetext) {
       $button_preview=1;
       $options['msg'] = _("Sorry, can not save page because some messages are blocked in this wiki.");
+    } else if ($options['id'] == 'Anonymous' and
+        !empty($comment) and !empty($DBInfo->spam_comment_filter)) {
+      // comment filter for anonymous users
+      $cmt = $comment;
+      $fts = preg_split('/(\||,)/',$DBInfo->spam_comment_filter);
+      // bad comments file
+      $options['.badcontents'] = !empty($DBInfo->comments_badcontents) ?
+        $DBInfo->comments_badcontents : null;
+      foreach ($fts as $ft) {
+        $cmt = $formatter->filter_repl($ft, $cmt, $options);
+      }
+      if ($cmt != $comment) {
+        $button_preview = 1;
+        $options['msg'] = _("Sorry, can not save page because some messages are blocked in this wiki.");
+      }
     }
   }
   $formatter->page->set_raw_body($savetext);

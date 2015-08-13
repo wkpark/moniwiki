@@ -217,6 +217,9 @@ $use_wikiwyg=0; # 1 for GUI button/ 2 to set as default behavior/ 3 to set alway
 $use_sectionedit=0;
 #$sectionedit_attr=1; # enable wikiwyg section editing
 $spam_filter='antispam';
+#$badcontents='config/badcontents.txt.php';
+#$spam_comment_filter='antispam'; # spam filter for comments
+#$comment_badcontents='config/badcomments.txt.php'; # badcontents for comments
 $toc_options='simple,toggle';
 #$toc_options='title=Contents,toggle,simple';
 #$use_ticket=1; # use ticket image to block spam bots.
