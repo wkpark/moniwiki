@@ -4458,7 +4458,8 @@ class Formatter {
   function get_diff($text, $rev = '') {
     global $DBInfo;
 
-    if (!isset($text[0])) return '';
+    if (!isset($text[0]))
+      $text = "\n";
     if (!empty($DBInfo->use_external_diff)) {
       $tmpf2 = tempnam($DBInfo->vartmp_dir, 'DIFF_NEW');
       $fp = fopen($tmpf2, 'w');
