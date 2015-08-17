@@ -29,6 +29,7 @@ function do_rss_rc($formatter,$options) {
   // HTTP conditional get
   $mtime = $DBInfo->mtime();
   $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
+  $cache_ttl = !empty($DBInfo->rss_rc_ttl) ? $DBInfo->rss_rc_ttl : 60; /* 60 seconds */
 
   // make etag based on some options and mtime.
   $check_opts = array('quick', 'items', 'oe', 'diffs', 'raw', 'nomsg', 'summary');
@@ -37,12 +38,17 @@ function do_rss_rc($formatter,$options) {
     if (isset($options[$c])) $check[$c] = $options[$c];
   }
 
-  $etag = md5($mtime . $DBInfo->logo_img . serialize($check));
+  $etag = md5($mtime . $DBInfo->logo_img . serialize($check) . $cache_ttl . $options['id']);
 
   $headers = array();
   $headers[] = 'Pragma: cache';
-  $maxage = 60*60*24*7;
-  $headers[] = 'Cache-Control: private, max-age='.$maxage;
+  $maxage = $cache_ttl;
+
+  $public = 'public';
+  if ($options['id'] != 'Anonymous')
+    $public = 'private';
+
+  $headers[] = 'Cache-Control: '.$public.', max-age='.$maxage;
   $headers[] = 'Last-Modified: '.$lastmod;
   $headers[] = 'ETag: "'.$etag.'"';
   $need = http_need_cond_request($mtime, $lastmod, $etag);
@@ -56,7 +62,6 @@ function do_rss_rc($formatter,$options) {
   }
 
   $cache = new Cache_Text('rss_rc');
-  $cache_ttl = !empty($DBInfo->rss_rc_ttl) ? $DBInfo->rss_rc_ttl : 60; /* 60 seconds */
   $cache_delay = min($cache_ttl, 30);
   $mtime = $cache->mtime($etag);
 
