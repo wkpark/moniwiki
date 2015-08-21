@@ -19,16 +19,16 @@ function macro_ShareButtons($formatter, $value = '', $params) {
 
     $lang = $DBInfo->lang;
     $btn = _("tweet");
-    $link = $formatter->link_url($formatter->page->name);
+    $link = $formatter->link_url($formatter->page->urlname);
     $href = qualifiedURL($link);
-    $encoded_href = $href;
+    $ehref = urlencode($href); // fix for twitter
 
     if ($value == 'nojs') {
         $fb = '<li><a class="facebook" href="https://www.facebook.com/sharer/sharer.php?u='.$href.'" target="_blank"><span>'.
             _("fb").'</span></a></li>';
         $gplus = '<li><a class="gplus" href="https://plus.google.com/share?url='.$href.'" target="_blank"><span>'.
             _("g+").'</span></a></li>';
-        $twitter = '<li><a class="twitter" href="https://twitter.com/share?url='.$href.'" target="_blank"><span>'.$btn.'</span></a></li>';
+        $twitter = '<li><a class="twitter" href="https://twitter.com/share?url='.$ehref.'" target="_blank"><span>'.$btn.'</span></a></li>';
         return '<div class="share-buttons"><ul>'.$fb.' '.$twitter.' '.$gplus.'</ul></div>';
     }
 
