@@ -38,7 +38,7 @@ if (device_width >= 800) {
 }
 
 /* thumb width defined ? */
-if (thumb_width < device_width)
+if (typeof thumb_width != 'undefined' && thumb_width < device_width)
     device_width = thumb_width;
 
 function toggle(o) {
