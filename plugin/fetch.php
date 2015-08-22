@@ -398,6 +398,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
 
     if (!empty($DBInfo->fetch_show_information) and $is_image and empty($_SERVER['HTTP_REFERER'])) {
         $img_url = $formatter->link_url('', '?action=fetch&amp;url='.$url);
+        header('Pragma: no-cache');
         echo '<!DOCTYPE html>',"\n";
         echo "<html>\n<head>\n<title>".$DBInfo->sitename."</title>\n</head>\n<body>\n";
         echo '<h1>'._("Fetch File Information").'</h1>',"\n";
@@ -414,12 +415,6 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
         echo ' this URL manually</div>',"\n";
         echo '<div class="externalImage"><div><img src="'.$img_url.'"></div>',"\n";
         echo '</body>',"\n",'</html>',"\n";
-        return null;
-    }
-
-    if (empty($params['thumbwidth']) and !empty($fetch_url) and !empty($DBInfo->fetch_use_cache_url)) {
-        $formatter->send_header(array('Status: 302', 'Location: '.$fetch_url));
-
         return null;
     }
 
@@ -467,13 +462,14 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
         }
 
         $thumbfile = preg_replace('@'.$ext.'$@', '.w'.$thumb_width.$ext, $fetchfile);
-        if (!$fetch_url)
+        if (!empty($fetch_url))
             $thumb_url = preg_replace('@'.$ext.'$@', '.w'.$thumb_width.$ext, $fetch_url);
         if (empty($params['refresh']) && file_exists($thumbfile)) break;
 
         list($w, $h) = getimagesize($fetchfile);
         if ($w <= $thumb_width) {
             $thumbfile = $fetchfile;
+            $thumb_url = $fetch_url;
             break;
         }
 
@@ -490,6 +486,11 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
         $fetch_url = $thumb_url;
 
     if (!empty($fetch_url) and !empty($DBInfo->fetch_use_cache_url)) {
+        if (!empty($thumb_width)) header('X-Thumb-Width:'.$thumb_width);
+        header("Pragma: no-cache");
+        header('Cache-Control: public, max-age=0, s-maxage=0');
+        header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        header('Cache-Control: no-store, no-cache, must-revalidate', false);
         $formatter->send_header(array('Status: 302', 'Location: '.$fetch_url));
 
         return null;
