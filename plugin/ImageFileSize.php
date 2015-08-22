@@ -34,7 +34,7 @@ function macro_ImageFileSize($formatter, $value = '', $params = array()) {
 
         $sc = new Cache_text('imagefilesize');
 
-        if ($sc->exists($value) and $sc->mtime($value) < time() + 60*60*24*20) {
+        if (empty($params['.refresh']) and $sc->exists($value) and $sc->mtime($value) < time() + 60*60*24*20) {
             $sz = $sc->fetch($value);
         } else {
             // dynamic macro
@@ -65,10 +65,18 @@ function macro_ImageFileSize($formatter, $value = '', $params = array()) {
             // default referrer
             if (empty($referer) and !empty($Config['fetch_referer']))
                 $referer = $Config['fetch_referer'];
+            if (empty($referer))
+                $referer = qualifiedUrl($formatter->link_url($formatter->page->urlname));
 
             $http->nobody = true;
             $http->referer = $referer;
-            $http->sendRequest($value, array(), 'GET');
+
+            // check HEAD support for the internal fetch plugin
+            $method = 'GET';
+            if (!empty($Config['fetch_imagesize_head']) && strstr($value, $Config['fetch_action']))
+                $method = 'HEAD';
+
+            $http->sendRequest($value, array(), $method);
 
             if ($http->status != 200)
                 return _("Unknown");
@@ -97,4 +105,12 @@ function macro_ImageFileSize($formatter, $value = '', $params = array()) {
     return _("Unknown");
 }
 
+// for debug purpose
+function do_imagefilesize($formatter, $params = array()) {
+    if (!empty($formatter->refresh))
+        $params['.refresh'] = true;
+    $params['call'] = true;
+    if (preg_match('@^(?:https?|ftp)://@', $params['url']))
+        echo macro_ImageFileSize($formatter, $params['url'], $params);
+}
 // vim:et:sts=4:sw=4:
