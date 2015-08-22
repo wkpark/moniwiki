@@ -2343,13 +2343,14 @@ class Formatter {
             // check internal links and fetch image
             if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url)) {
               $url = $this->fetch_action. str_replace(array('&', '?'), array('%26', '%3f'), $url);
+              $size = '';
+              if (!empty($this->fetch_imagesize))
+                $size = '('.$this->macro_repl('ImageFileSize', $url).')';
+
               // use thumbnails ?
               if (!empty($this->use_thumb_by_default))
                 $url.= '&amp;thumbwidth='.$this->thumb_width;
 
-              $size = '';
-              if (!empty($this->fetch_imagesize))
-                $size = '('.$this->macro_repl('ImageFileSize', $url).')';
               $info = "<div><a href='$url'><span>[$type "._("external image")."$size]</span></a></div>";
             }
 
@@ -2403,6 +2404,11 @@ class Formatter {
           if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url)) {
             $fetch_url = $this->fetch_action.
                 str_replace(array('&', '?'), array('%26', '%3f'), $url);
+
+            $size = '';
+            if (!empty($this->fetch_imagesize))
+              $size = '('.$this->macro_repl('ImageFileSize', $fetch_url).')';
+
             // use thumbnails ?
             if (!empty($this->use_thumb_by_default)) {
               if (!empty($this->no_gif_thumbnails)) {
@@ -2412,10 +2418,6 @@ class Formatter {
                 $fetch_url.= '&amp;thumbwidth='.$this->thumb_width;
               }
             }
-
-            $size = '';
-            if (!empty($this->fetch_imagesize))
-              $size = '('.$this->macro_repl('ImageFileSize', $fetch_url).')';
 
             $info = "<div><a href='$url'><span>[$type "._("external image")."$size]</span></a></div>";
           }
