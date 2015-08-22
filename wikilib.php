@@ -858,6 +858,8 @@ function is_mobile() {
   }
   if (preg_match($re, $_SERVER['HTTP_USER_AGENT']))
     return true;
+  if (!empty($DBInfo->mobile_referer_re) and preg_match($DBInfo->mobile_referer_re, $_SERVER['HTTP_REFERER']))
+    return true;
   return false;
 }
 
