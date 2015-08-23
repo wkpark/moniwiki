@@ -6041,11 +6041,11 @@ function wiki_main($options) {
     if (empty($options['is_robot'])) {
       if ($DBInfo->use_counter)
         $DBInfo->counter->incCounter($pagename,$options);
-      $formatter->send_title("","",$options);
 
       if (!empty($DBInfo->use_referer) and isset($_SERVER['HTTP_REFERER']))
         log_referer($_SERVER['HTTP_REFERER'],$pagename);
     }
+    $formatter->send_title("","",$options);
 
     $formatter->write("<div id='wikiContent'>\n");
     if (isset($options['timer']) and is_object($options['timer'])) {
@@ -6173,8 +6173,7 @@ function wiki_main($options) {
     }
 
     $args['editable']=1;
-    if (empty($options['is_robot']))
-      $formatter->send_footer($args,$options);
+    $formatter->send_footer($args,$options);
     return;
   }
 
