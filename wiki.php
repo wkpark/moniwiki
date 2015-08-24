@@ -4957,7 +4957,7 @@ FOOT;
     if (isset($this->pi['#notitle']))
       $title = '';
     else
-      $title=$groupt."<span class='wikiTitle'>$title</span>";
+      $title=$groupt."<h1 class='wikiTitle'>$title</h1>";
 
     $logo=$this->link_tag($DBInfo->logo_page,'',$DBInfo->logo_string);
     $goto_form=$DBInfo->goto_form ?
