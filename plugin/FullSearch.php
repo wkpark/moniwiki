@@ -259,6 +259,7 @@ EOF;
       // check invert redirect index
       if (!empty($redirects)) {
         $redirects = array_flip($redirects);
+        ksort($redirects);
         foreach ($redirects as $k=>$v) $hits[$k] = -2;
         reset($hits);
       }
