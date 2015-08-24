@@ -4947,12 +4947,19 @@ FOOT;
     }
     # setup title variables
     #$heading=$this->link_to("?action=fullsearch&amp;value="._urlencode($name),$title);
+
+    // follow backlinks ?
+    if (!empty($DBInfo->backlinks_follow))
+      $attr = 'rel="follow"';
+    else
+      $attr = '';
+
     $qext = '';
     if (!empty($DBInfo->use_backlinks)) $qext='&amp;backlinks=1';
     if (isset($link[0]))
       $title="<a href=\"$link\">$title</a>";
     else if (empty($options['.title']) and empty($options['nolink']))
-      $title=$this->link_to("?action=fullsearch$qext&amp;value="._urlencode($mypgname),$title);
+      $title=$this->link_to("?action=fullsearch$qext&amp;value="._urlencode($mypgname),$title, $attr);
 
     if (isset($this->pi['#notitle']))
       $title = '';
@@ -5986,7 +5993,17 @@ function wiki_main($options) {
         } else {
           $formatter->send_title(sprintf(_("%s is not found in this Wiki"),$page->name),"",$options);
           $searchval=_html_escape($options['page']);
-          echo '<h2>'.sprintf(_("%s or click %s to fulltext search.\n"),$button,$formatter->link_to("?action=fullsearch&amp;value=$searchval",_("here"))).'</h2>';
+          if (!empty($DBInfo->default_fullsearch)) {
+            $fullsearch = $DBInfo->default_fullsearch;
+            if (strpos($fullsearch, '%s') !== false)
+              $fullsearch = sprintf($fullsearch, $searchval);
+            else
+              $fullsearch.= $searchval;
+            $fullsearch = '<a href="'.$fullsearch.'">'._("here").'</a>';
+          } else {
+            $fullsearch = $formatter->link_to("?action=fullsearch&amp;value=".$searchval, _("here"));
+          }
+          echo '<h2>'.sprintf(_("%s or click %s to fulltext search.\n"),$button, $fullsearch).'</h2>';
           $err = array();
           echo $formatter->macro_repl('LikePages',$page->name,$err);
           if (!empty($err['extra']))

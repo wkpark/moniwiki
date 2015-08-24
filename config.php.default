@@ -256,6 +256,8 @@ $use_preview_uploads=1;
 #$mediawiki_style=0; # 0: wikiCreole style [[foo bar]]=>[[FooBar]], 1: mediawiki style preserve white spaces
 #$markdown_style=0; # markdown friendly table align etc.
 #$category_regex=urldecode('%EB%B6%84%EB%A5%98$'); # a category example for Korean
+#$default_fullsearch='?action=myfullsearch&value='; # fullsearch action for the title link
+#$backlinks_follow=0; # set rel="follow" for the title link
 $use_backlinks=1; # set default fullsearch behavior as backlinks search
 $use_backlink_search=1; # use backlink searching
 $fullsearch_tooshort=2; #
