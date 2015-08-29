@@ -599,6 +599,14 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $lines = preg_grep("/$query/i", $lines);
   }
 
+  // setup hidelog rule
+  $hiderule = null;
+  if (!$ismember && !empty($Config['ruleset']['hiderule'])) {
+    $rule = implode('|', $Config['ruleset']['hiderule']);
+    if (preg_match('@'.$rule.'@', null) !== false)
+      $hiderule = '@'. $rule . '@';
+  }
+
   $out="";
   $ratchet_day= FALSE;
   $br="";
@@ -618,8 +626,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
     $page_name= $DBInfo->keyToPagename($parts[0]);
 
-    if (!$ismember && !empty($Config['ruleset']['hidelog'])) {
-      if (in_array($page_name, $Config['ruleset']['hidelog']))
+    if (!empty($hiderule)) {
+      if (preg_match($hiderule, $page_name))
         continue;
     }
 
