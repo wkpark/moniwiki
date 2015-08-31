@@ -195,9 +195,7 @@ class Version_RCS {
     $keyname=$this->DB->_getPageKey($pagename);
     // do not delete history at all.
     // just rename it.
-    // unlink($this->DB->text_dir."/RCS/$keyname,v");
-    rename($this->DB->text_dir."/RCS/$keyname,v",
-      $this->DB->text_dir."/RCS/$keyname,,");
+    $this->_atticpage($pagename);
   }
 
   // store pagename
