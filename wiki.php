@@ -844,12 +844,12 @@ class WikiDB {
           $check=$dumm[2];
           if ($date_from>$check) break;
           if ($date_to>$check) {
-            $lines[]=$line;
             if (!empty($ruleset)) {
               $page_name = $this->keyToPagename($dumm[0]);
               if (in_array($page_name, $ruleset))
                 continue;
             }
+            $lines[]=$line;
             $pages[$dumm[0]]=1;
             if (sizeof($pages) >= $itemnum) { $check=0; break; }
           }
