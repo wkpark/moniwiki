@@ -998,6 +998,15 @@ class WikiDB {
     if (!empty($options['.reverted']))
       $action = 'REVERT';
 
+    if ($user->id == 'Anonymous' && $action == 'CREATE' &&
+        empty($this->anomymous_allow_create_without_backlink)) {
+      $bc = new Cache_Text('backlinks');
+      if (!$bc->exists($page->name)) {
+        $options['retval']['msg'] = _("Anonymous users can not create new pages.");
+        return -1;
+      }
+    }
+
     // check abusing FIXME
     if (!empty($this->use_abusefilter)) {
       $params = array();

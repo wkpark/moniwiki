@@ -64,6 +64,7 @@ $notify= 0; # enable email notification
 #$email_register_header=$data_dir.'/email-register.txt'; # email header for new registered user
 #$anonymous_friendly=1; # make anonymous friendly wiki
 #$anonymous_no_full_edit_permission=1; # restrict edit actions (rename,revert,save,delete) against anonymous
+#$anomymous_allow_create_without_backlink=0; # allow anonymous users to create pages without any backlinks
 #$allowed_max_lines_delete_ratio=0.5; # the maximum ratio of lines allowed to delete
 #$allowed_max_chars_delete=180; # the maximum number of chars allowed to delete
 #$allowed_max_chars_add=300; # the maximum number of chars allowed to add
