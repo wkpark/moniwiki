@@ -1192,7 +1192,7 @@ EOF;
   } else if (!empty($list)) {
     $out = '';
     foreach ($list as $k=>$v) {
-      $out.= '<li>'.$v[1].' '.$v[0].'</li>'."\n";
+      $out.= '<li><span class="date">'.$v[1].'</span> '.$v[0].'</li>'."\n";
     }
 
     //if (!empty($options['ajax'])) {
