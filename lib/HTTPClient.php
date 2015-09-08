@@ -315,11 +315,14 @@ class HTTPClient {
             return false;
         }
 
+        $nobody = isset($http->resp_headers['content-length']) && $this->nobody;
+
         //read body (with chunked encoding if needed)
         $r_body    = '';
         $tmp_fp = null;
         $tmp_file = null;
-        if (!empty($this->nobody) and preg_match('/transfer\-(en)?coding:\s*chunked\r\n/i',$r_headers)) {
+        $length = 0;
+        if (!$nobody && preg_match('/transfer\-(en)?coding:\s*chunked\r\n/i',$r_headers)) {
             do {
                 $chunk_size = '';
                 do {
@@ -340,7 +343,8 @@ class HTTPClient {
 
                 $byte = fread($socket,1);     // readtrailing \n
                 $chunk_size = hexdec($chunk_size);
-                if ($chunk_size) {
+                if ($chunk_size > 0) {
+                    $length+= $chunk_size;
                     $read_size = $chunk_size;
                     while ($read_size > 0) {
                         $this_chunk = fread($socket,$read_size);
@@ -370,7 +374,7 @@ class HTTPClient {
                     return false;
                 }
             } while ($chunk_size);
-        } else if (empty($this->nobody)) {
+        } else if (!$nobody){
             // read entire socket
             while (!feof($socket)) {
                 if(time()-$start > $this->timeout){
@@ -379,7 +383,9 @@ class HTTPClient {
                     fclose($socket);
                     return false;
                 }
-                $r_body .= fread($socket,4096);
+                $tmp = fread($socket,4096);
+                $length+= strlen($tmp);
+                $r_body .= $tmp;
                 if (!empty($this->max_buffer_size) && $r_body > $this->max_buffer_size) {
                     if (empty($tmp_file)) {
                         $tmp_file = tempnam($this->vartmp_dir, 'HTTP_TMP');
@@ -411,6 +417,10 @@ class HTTPClient {
                 fwrite($tmp_fp, $r_body);
             fclose($tmp_fp);
             $r_body = '';
+        }
+
+        if (!isset($this->resp_headers['content-length'])) {
+            $this->resp_headers['content-length'] = $length;
         }
 
         // decode gzip if needed
