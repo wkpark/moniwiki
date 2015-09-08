@@ -446,6 +446,8 @@ class PageIndex extends TitleIndexer_Text {
     function getLikePages($needle, $limit = 100, $params = array())
     {
         if (!isset($needle[0])) return false; // null needle
+        if ($limit <= 0)
+            $limit = 0; // no limit
 
         // protect \n char
         $needle = str_replace("\x0a", "\x1a", $needle);

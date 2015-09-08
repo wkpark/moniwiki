@@ -2077,6 +2077,7 @@ function macro_Edit($formatter,$value,$options='') {
 
   if (!$options['notmpl'] and (!empty($options['template']) or !$formatter->page->exists()) and !$preview) {
     $options['linkto']="?action=edit&amp;template=";
+    $options['limit'] = -1;
     $tmpls= macro_TitleSearch($formatter,$DBInfo->template_regex,$options);
     if ($tmpls) {
       $tmpls = '<div>'._("Use one of the following templates as an initial release :\n").$tmpls;
@@ -2241,7 +2242,7 @@ EOF;
   # get categories
   $select_category = '';
   if (!empty($DBInfo->use_category) and empty($options['nocategories'])) {
-    $categories = $DBInfo->getLikePages($DBInfo->category_regex);
+    $categories = $DBInfo->getLikePages($DBInfo->category_regex, -1);
     if ($categories) {
       $select_category="<label for='category-select'>"._("Category")."</label><select id='category-select' name='category' tabindex='4'>\n";
       $mlen = 0;
@@ -5174,8 +5175,12 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   if (isset($opts['noexact']))
     $noexact = $opts['noexact'];
 
+  $limit = !empty($DBInfo->titlesearch_page_limit) ? $DBInfo->titlesearch_page_limit : 100;
+  if (isset($opts['limit']))
+    $limit = $opts['limit'];
+
   $indexer = $DBInfo->lazyLoad('titleindexer');
-  $pages = $indexer->getLikePages($needle);
+  $pages = $indexer->getLikePages($needle, $limit);
 
   $opts['all'] = $DBInfo->getCounter();
   if (empty($DBInfo->alias)) $DBInfo->initAlias();
