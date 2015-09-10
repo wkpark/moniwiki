@@ -123,7 +123,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
     $value=substr($value,0,$dummy);
   }
 
-  $use_thumb = !empty($DBInfo->use_thumb_by_default) ? true: false;
+  $use_thumb = !empty($DBInfo->use_thumb_by_default) && empty($options['link_url']) ? true: false;
   if (!empty($attrs)) {
     if (!empty($attrs['action'])) {
       // check extra_action
@@ -197,7 +197,10 @@ function macro_Attachment($formatter,$value,$options=array()) {
   }
 
   // check file name XXX
-  if (!$file) return $bra.'attachment:/'.$ket;
+  if (!$file) {
+    if (!empty($options['link']) and $options['link'] == 1) return 'attachment:'.$value;
+    return $bra.'attachment:/'.$ket;
+  }
 
   $upload_file=$dir.'/'.$file;
   if (!empty($options['link']) and $options['link'] == 1) return $upload_file;
@@ -412,6 +415,9 @@ function macro_Attachment($formatter,$value,$options=array()) {
   }
 
   // no attached file found.
+  if (!empty($options['link_url']))
+    return 'attachment:'.$value;
+
   if ($formatter->_macrocache and empty($options['call']))
     return $formatter->macro_cache_repl('Attachment', $value);
   if (empty($options['call']))
