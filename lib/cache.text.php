@@ -281,7 +281,7 @@ class Cache_Text {
 
 	function _save($key, $val)
 	{
-		$tmp = tempnam(getcwd().'/'.$this->cache_path, 'CACHE'.rand());
+		$tmp = tempnam($this->cache_path.'/'.$this->arena, 'CACHE'.rand());
 		chmod($tmp, 0644);
 		$fp = fopen($tmp, 'wb');
 		if (is_resource($fp)) {
