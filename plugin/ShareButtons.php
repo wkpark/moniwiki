@@ -23,13 +23,27 @@ function macro_ShareButtons($formatter, $value = '', $params) {
     $href = qualifiedURL($link);
     $ehref = urlencode($href); // fix for twitter
 
+    if (!$formatter->page->exists()) {
+        return '';
+    }
+
     if ($value == 'nojs') {
         $fb = '<li><a class="facebook" href="https://www.facebook.com/sharer/sharer.php?u='.$href.'" target="_blank"><span>'.
             _("fb").'</span></a></li>';
         $gplus = '<li><a class="gplus" href="https://plus.google.com/share?url='.$href.'" target="_blank"><span>'.
             _("g+").'</span></a></li>';
         $twitter = '<li><a class="twitter" href="https://twitter.com/share?url='.$ehref.'" target="_blank"><span>'.$btn.'</span></a></li>';
-        return '<div class="share-buttons"><ul>'.$fb.' '.$twitter.' '.$gplus.'</ul></div>';
+
+        $oc = new Cache_text('opengraph');
+        $pin = '';
+        if (($val = $oc->fetch($formatter->page->name)) !== false) {
+            if (!empty($val['image'])) {
+                $image = $val['image'];
+                $image_href = urlencode(str_replace('&amp;', '&', $image)); // fix
+                $pin = '<li><a class="pinterest" href="https://pinterest.com/pin/create/button/?url='.$ehref.'&amp;description='._urlencode($val['description']).'&amp;media='.$image_href.'" target="_blank"><span>'._("pin").'</span></a></li>';
+            }
+        }
+        return '<div class="share-buttons"><ul>'.$pin.' '.$fb.' '.$twitter.' '.$gplus.'</ul></div>';
     }
 
     $twitter_attr = '';
