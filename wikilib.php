@@ -4492,7 +4492,7 @@ function macro_InterWiki($formatter,$value,$options=array()) {
         and $cf->mtime('interwiki') < filemtime($DBInfo->shared_intermap) ) {
       $force_init=1;
     }
-    if (!empty($formatter->refresh) and $cf->exists('interwiki') and !$force_init) {
+    if (empty($formatter->refresh) and $cf->exists('interwiki') and !$force_init) {
       $info = $cf->fetch('interwiki');
       $DBInfo->interwiki=$info['interwiki'];
       $DBInfo->interwikirule=$info['interwikirule'];
