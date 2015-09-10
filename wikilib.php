@@ -929,6 +929,64 @@ function get_textarea_cols() {
   return $cols;
 }
 
+/**
+ * get description of content.
+ * strip wikitags etc.
+ *
+ * @author  wkpark at gmail.com
+ *
+ */
+
+function get_description($raw) {
+    $baserule = array(
+            "/(?<!')'''((?U)(?:[^']|(?<!')'(?!')|'')*)?'''(?!')/",
+            "/(?<!')''((?:[^']|[^']'(?!'))*)''(?!')/",
+            "/`(?<!\s)(?!`)([^`']+)(?<!\s)'(?=\s|$)/",
+            "/`(?<!\s)(?U)(.*)(?<!\s)`/",
+            "/^(={4,})$/",
+            "/,,([^,]{1,40}),,/",
+            "/\^([^ \^]+)\^(?=\s|$)/",
+            "/\^\^(?<!\s)(?!\^)(?U)(.+)(?<!\s)\^\^/",
+            "/__(?<!\s)(?!_)(?U)(.+)(?<!\s)__/",
+            "/--(?<!\s)(?!-)(?U)(.+)(?<!\s)--/",
+            "/~~(?<!\s)(?!~)(?U)(.+)(?<!\s)~~/",
+    );
+
+    // check summary
+    $chunks = preg_split('@^((?:={1,2})\s+.*\s+(?:={1,2}))\s*$@m', $raw, -1,
+            PREG_SPLIT_OFFSET_CAPTURE | PREG_SPLIT_DELIM_CAPTURE);
+
+    if (sizeof($chunks) > 2) {
+        // get the first == blah blah == section
+        $raw = $chunks[2][0];
+    }
+
+    $lines = explode("\n", $raw);
+
+    // trash PIs
+    for ($i = 0; $i < sizeof($lines); $i++) {
+        if ($lines[$i][0] == '#')
+            continue;
+        break;
+    }
+
+    $out = '';
+    for (;$i < sizeof($lines); $i++) {
+        // FIXME
+        $line = preg_replace('@^(={1,6})\s+(.*)\s+(?1)\s*$@', '\\2', $lines[$i]);
+        $line = preg_replace('@</?[^>]+>@', '', $line); // strip HTML like tags
+        $line = preg_replace('@^((?:>\s*)+)@', '', $line); // strip quotes
+        $line = preg_replace('@(\|{2})+@', '', $line); // strip table tags
+        $line = preg_replace($baserule, '\\1', $line); // strip all base tags
+        $out.= trim($line).' ';
+    }
+    $out = trim($out);
+    if (empty($out))
+        return false;
+
+    return $out;
+}
+
 function _fake_lock_file($tmp, $arena, $tag = '') {
     $lock = $tmp . '/' . $arena;
     if (!empty($tag))

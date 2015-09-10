@@ -4719,25 +4719,80 @@ JSHEAD;
       else
         $site_title = $options['title'].' - '.$sitename;
 
-      if (empty($DBInfo->no_ogp)) {
-        echo '<meta property="og:url" content="',
-          qualifiedUrl($this->link_url($this->page->urlname)).'" />',"\n";
-        echo '<meta property="og:site_name" content="'.$sitename.'" />',"\n";
-        echo '<meta property="og:title" content="'.$site_title.'" />',"\n";
-        if (!empty($DBInfo->use_ogp_image_logo)) {
-          echo '<meta property="og:image" content="'.qualifiedUrl($DBInfo->logo_img).'" />',"\n";
-        } else if (!empty($this->pi['#image'])) {
-          $image = '';
-          if (preg_match('@^https?://@', $this->pi['#image'])) {
-            $image = $this->pi['#image'];
-          } else if (preg_match('/^attachment:([^\s]+)/', $this->pi['#image'], $m)) {
-            $image = $this->macro_repl('attachment', $m[1], array('link_url'=>1));
+      // set OpenGraph information
+      if (empty($DBInfo->no_ogp) && $this->page->exists()) {
+        $page_url = qualifiedUrl($this->link_url($this->page->urlname));
+        $oc = new Cache_text('opengraph');
+        if (($val = $oc->fetch($this->page->name, $this->page->mtime())) === false) {
+          $val = array('description'=> '', 'image'=> '');
+
+          if (!empty($this->pi['#redirect'])) {
+            $desc = '#redirect '.$this->pi['#redirect'];
+          } else {
+            $raw = $this->page->_get_raw_body();
+            if (!empty($this->pi['#description'])) {
+              $desc = $this->pi['#description'];
+            } else {
+              $cut = mb_strcut($raw, 0, 1000, $DBInfo->charset);
+              $desc = get_description($cut);
+              if ($desc !== false)
+                $desc = mb_strcut($desc, 0, 200, $DBInfo->charset).'...';
+              else
+                $desc = $this->page->name;
+            }
           }
-          if (!empty($image))
-            echo '<meta property="og:image" content="',_rawurlencode($image),'" />',"\n";
+
+          $val['description'] = _html_escape($desc);
+
+          if (!empty($this->pi['#image'])) {
+            if (preg_match('@^(ftp|https?)://@', $this->pi['#image'])) {
+              $page_image = $this->pi['#image'];
+            } else if (preg_match('@^attachment:("[^"]+"|[^\s]+)@/', $this->pi['#image'], $m)) {
+              $image = $this->macro_repl('attachment', $m[1], array('link_url'=>1));
+              if ($image[0] != 'a') $page_image = $image;
+            }
+          }
+          if (empty($page_image)) {
+            if (preg_match('@attachment:("[^"]+"|[^\s]+)@', $raw, $m)) {
+              $image = $this->macro_repl('attachment', $m[1], array('link_url'=>1));
+              if ($image[0] != 'a') $page_image = $image;
+            }
+            if (empty($page_image) && preg_match('@((?:https?|ftp)://(?:[^\s]+)\.(?:png|jpe?g|gif))@i', $raw, $m)) {
+              //if (!empty($DBInfo->fetch_action))
+              //  $page_image = $DBInfo->fetch_action.urlencode($m[1]);
+              //else
+                $page_image = $m[1];
+            }
+          }
+          if (empty($page_image) && !empty($DBInfo->use_ogp_image_logo)) {
+            $val['image'] = qualifiedUrl($DBInfo->logo_img);
+          } else if (!empty($page_image)) {
+            $val['image'] = $page_image;
+          }
+
+          $oc->update($this->page->name, $val, time());
         }
-        if (!empty($this->pi['#description']))
-          echo '<meta property="og:description" content="'._html_escape($this->pi['#description']).'" />',"\n";
+
+        // for OpenGraph
+        echo '<meta property="og:url" content="'. $page_url.'" />',"\n";
+        echo '<meta property="og:site_name" content="'.$sitename.'" />',"\n";
+        echo '<meta property="og:title" content="'.$this->page->name.'" />',"\n";
+        if (!empty($val['image']))
+          echo '<meta property="og:image" content="',$val['image'],'" />',"\n";
+        if (!empty($val['description']))
+          echo '<meta property="og:description" content="'.$val['description'].'" />',"\n";
+
+        // twitter card
+        echo '<meta name="twitter:card" content="summary" />',"\n";
+        if (!empty($DBInfo->twitter_id))
+          echo '<meta name="twitter:site" content="',$DBInfo->twitter_id,'">',"\n";
+        echo '<meta name="twitter:domain" content="',$sitename,'" />',"\n";
+        echo '<meta name="twitter:title" content="',$this->page->name,'">',"\n";
+        echo '<meta name="twitter:url" content="',$page_url,'">',"\n";
+        if (!empty($val['description']))
+          echo '<meta name="twitter:description" content="'.$val['description'].'" />',"\n";
+        if (!empty($val['image']))
+          echo '<meta name="twitter:image:src" content="',$val['image'],'" />',"\n";
       }
       echo '  <title>',$site_title,"</title>\n";
       if (!empty($DBInfo->canonical_url)) {
