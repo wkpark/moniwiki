@@ -1596,7 +1596,7 @@ class WikiPage {
 
     if ($update_pi) {
       $pi_cache->update($this->name, $pi);
-      $this->cache_instructions($pi);
+      $this->cache_instructions($pi, $params);
     }
 
     if (!isset($pi['#format']))
@@ -1605,7 +1605,7 @@ class WikiPage {
     return $pi;
   }
 
-  function cache_instructions($pi) {
+  function cache_instructions($pi, $params = array()) {
     global $Config;
     global $DBInfo;
 
@@ -1640,20 +1640,32 @@ class WikiPage {
     if ($old or isset($pi['#redirect'][0])) {
       // update invert redirect index
       $rc2 = new Cache_Text('redirects');
-      if ($old != $pi['#redirect']) {
+      if (!empty($params['refresh']) or $old != $pi['#redirect']) {
         // update direct cache
         $rc->update($pagename, $pi['#redirect']);
-        if (!isset($pi['#redirect'][0])) {
+        $nr = $pi['#redirect'];
+        if (($p = strpos($nr, '#')) > 0) {
+          // get pagename only
+          //$anchor = substr($nr, $p);
+          $nr = substr($nr, 0, $p);
+        }
+        if (!isset($nr[0])) {
           $rc->remove($pagename);
-        } else if ($DBInfo->hasPage($pi['#redirect'])) {
+        } else if (!preg_match('@^https?://@', $nr)) { // not a URL redirect
           // add redirect links
-          $redirects = $rc2->fetch($pi['#redirect']);
+          $redirects = $rc2->fetch($nr);
           if (empty($redirects)) $redirects = array();
           $redirects = array_merge($redirects, array($pagename));
-          $rc2->update($pi['#redirect'], $redirects);
+          $rc2->update($nr, $redirects);
         }
 
-        if ($old != '' and $old != false) {
+        while ($old != '' and $old != false) {
+          // get pagename only
+          if (($p = strpos($old, '#')) > 0) {
+            //$anchor = substr($old, $p);
+            $old = substr($old, 0, $p);
+          }
+          if ($nr == $old) break; // check A#s-1 ~ A#s-2 redirects
           // delete redirect links
           $l = $rc2->fetch($old);
           if ($l !== false and is_array($l)) {
@@ -1661,6 +1673,7 @@ class WikiPage {
             if (empty($redirects)) $rc2->remove($old);
             else $rc2->update($old, $redirects);
           }
+          break;
         }
       }
     }
