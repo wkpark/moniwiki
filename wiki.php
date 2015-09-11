@@ -4775,7 +4775,7 @@ JSHEAD;
                 if ($img[0] == 'a') {
                   $img = substr($img, 11); // strip attachment:
                   $image = $this->macro_repl('attachment', $img, array('link_url'=>1));
-                  if ($image[0] != 'a') {
+                  if ($image[0] != 'a' && preg_match('@\.(png|jpe?g|gif)$@i', $image)) {
                     $page_image = $image;
                     break;
                   }
