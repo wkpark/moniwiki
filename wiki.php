@@ -4746,7 +4746,10 @@ JSHEAD;
             if (!empty($this->pi['#description'])) {
               $desc = $this->pi['#description'];
             } else {
-              $cut = mb_strcut($raw, 0, 1000, $DBInfo->charset);
+              $cut_size = 2000;
+              if (!empty($DBInfo->get_description_cut_size))
+                $cut_size = $DBInfo->get_description_cut_size;
+              $cut = mb_strcut($raw, 0, $cut_size, $DBInfo->charset);
               $desc = get_description($cut);
               if ($desc !== false)
                 $desc = mb_strcut($desc, 0, 200, $DBInfo->charset).'...';
@@ -4800,6 +4803,7 @@ JSHEAD;
         echo '<meta property="og:url" content="'. $page_url.'" />',"\n";
         echo '<meta property="og:site_name" content="'.$sitename.'" />',"\n";
         echo '<meta property="og:title" content="'.$this->page->name.'" />',"\n";
+        echo '<meta property="og:type" content="article" />',"\n";
         if (!empty($val['image']))
           echo '<meta property="og:image" content="',$val['image'],'" />',"\n";
         if (!empty($val['description']))
