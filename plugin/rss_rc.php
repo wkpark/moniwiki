@@ -133,7 +133,7 @@ CHANNEL;
     $extra="<br /><a href='$diff_url'>"._("show changes")."</a>\n";
     if (!$DBInfo->hasPage($page_name)) {
       $status='deleted';
-      $html="<a href='$url'>$page_name</a> is deleted\n";
+      $html='<![CDATA['."<a href='$url'>".$page_name."</a> is deleted".']]>'."\n";
     } else {
       $status='updated';
       if (!empty($options['diffs'])) {
