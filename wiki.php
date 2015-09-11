@@ -4765,18 +4765,28 @@ JSHEAD;
               if ($image[0] != 'a') $page_image = $image;
             }
           }
+
           if (empty($page_image)) {
-            if (preg_match('@attachment:("[^"]+"|[^\s]+)@', $raw, $m)) {
-              $image = $this->macro_repl('attachment', $m[1], array('link_url'=>1));
-              if ($image[0] != 'a') $page_image = $image;
-            }
-            if (empty($page_image) && preg_match('@((?:https?|ftp)://(?:[^\s]+)\.(?:png|jpe?g|gif))@i', $raw, $m)) {
-              //if (!empty($DBInfo->fetch_action))
-              //  $page_image = $DBInfo->fetch_action.urlencode($m[1]);
-              //else
-                $page_image = $m[1];
+            // extract the first image
+            $punct = '<>"\'}\]\|\!';
+            if (preg_match_all('@(?<=\b)((?:attachment:(?:"[^'.$punct.']+"|[^\s'.$punct.'?]+)|'.
+                      '(?:https?|ftp)://(?:[^\s'.$punct.']+)\.(?:png|jpe?g|gif)))@', $cut, $m)) {
+              foreach ($m[1] as $img) {
+                if ($img[0] == 'a') {
+                  $img = substr($img, 11); // strip attachment:
+                  $image = $this->macro_repl('attachment', $img, array('link_url'=>1));
+                  if ($image[0] != 'a') {
+                    $page_image = $image;
+                    break;
+                  }
+                } else {
+                  $page_image = $img;
+                  break;
+                }
+              }
             }
           }
+
           if (empty($page_image) && !empty($DBInfo->use_ogp_image_logo)) {
             $val['image'] = qualifiedUrl($DBInfo->logo_img);
           } else if (!empty($page_image)) {
