@@ -6113,10 +6113,10 @@ function wiki_main($options) {
     # display this page
 
     if (isset($_GET['redirect']) and !empty($DBInfo->use_redirect_msg) and $action=='show'){
-      $redirect = _rawurlencode($_GET['redirect']);
+      $redirect = $_GET['redirect'];
       $options['msg']=
         '<h3>'.sprintf(_("Redirected from page \"%s\""),
-          $formatter->link_tag($redirect,'?action=show'))."</h3>";
+          $formatter->link_tag(_rawurlencode($redirect), '?action=show', $redirect))."</h3>";
     }
 
     if (empty($action)) $options['pi']=1; # protect a recursivly called #redirect
