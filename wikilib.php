@@ -267,7 +267,7 @@ function get_pagelist($formatter,$pages,$action,$curpage=1,$listcount=10,$bra="[
 }
 
 function _html_escape($string) {
-  return preg_replace(array("@<(?=/?\s*\w+[^<>]*)@", '@"@'), array("&lt;", '&quot;'), $string);
+  return preg_replace(array("@<(?=/?\s*\w+[^<>]*)@", '@"@', '@&(?!#?[a-zA-Z0-9]+;)@'), array("&lt;", '&quot;', '&amp;'), $string);
 }
 
 function _rawurlencode($url) {
