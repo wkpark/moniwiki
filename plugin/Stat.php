@@ -93,6 +93,9 @@ function _stat_rlog($formatter, $log, $options = array()) {
                 $ip = $dummy[0];
                 if (substr($user, 0, 9) == 'Anonymous')
                     $user = $ip;
+                else if (($p = strpos($user,' ')) !== false)
+                    $user = substr($user, 0, $p);
+
                 if (!isset($users[$user]))
                     $users[$user] = array('add'=>0,
                             'del'=>0,
