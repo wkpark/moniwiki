@@ -78,8 +78,10 @@ function getPlugin($pluginname) {
   // get predefined macros list
   $tmp = get_defined_functions();
   foreach ($tmp['user'] as $u) {
-    if (preg_match('/^macro_(.*)$/', $u, $m))
-      $plugins[strtolower($m[1])] = $m[1];
+    if (preg_match('/^macro_(.*)$/', $u, $m)) {
+      $n = strtolower($m[1]);
+      if (!isset($plugins[$n])) $plugins[$n] = $m[1];
+    }
   }
 
   if (!empty($plugins))
