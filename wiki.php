@@ -4775,7 +4775,7 @@ JSHEAD;
             // extract the first image
             $punct = '<>"\'}\]\|\!';
             if (preg_match_all('@(?<=\b)((?:attachment:(?:"[^'.$punct.']+"|[^\s'.$punct.'?]+)|'.
-                      '(?:https?|ftp)://(?:[^\s'.$punct.']+)\.(?:png|jpe?g|gif)))@', $cut, $m)) {
+                      '(?:https?|ftp)://(?:[^\s'.$punct.']+)\.(?:png|jpe?g|gif)))@', $raw, $m)) {
               foreach ($m[1] as $img) {
                 if ($img[0] == 'a') {
                   $img = substr($img, 11); // strip attachment:
