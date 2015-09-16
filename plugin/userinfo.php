@@ -109,7 +109,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
         $title = _("Contributors Monitor");
     }
 
-    $list='';
+    $userinfo = '';
     $extra = '';
     $cur = time();
 
@@ -386,7 +386,25 @@ function macro_UserInfo($formatter,$value,$options=array()) {
         // abusefilter cache
         $ac = new Cache_Text('abusefilter');
 
+        $actions = array();
+        if (!empty($DBInfo->userinfo_actions) and is_array($DBInfo->userinfo_actions)) {
+            $actions = $DBInfo->userinfo_actions;
+        }
+
         $keys = array_keys($users);
+        $action_form = '';
+        if (!empty($actions)) {
+            $url = qualifiedUrl($formatter->link_url($formatter->page->urlname));
+            $action_form = ' <form style="display:inline;margin:0" method="get" action="'.$url.'">';
+            $action_form.= '<input type="hidden" name="q" value="'._html_escape($keys[0]).'">';
+            $action_form.= '<select name="action" onchange="if (this.selectedIndex != 0) this.form.submit();">';
+            $action_form.= '<option value="">----</option>';
+            foreach ($actions as $a) {
+                $action_form.= '<option value="'.$a.'">'._($a)."</option>\n";
+            }
+            $action_form.= "</select></form>\n";
+        }
+
         $hide_infos = array('bookmark', 'password', 'scrapped_pages', 'quicklinks', 'ticket', 'tz_offset');
 
         $inf = $udb->getInfo($keys[0], $type != 'all');
@@ -400,7 +418,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
         $addr = !empty($inf['remote']) ? $inf['remote'] : '';
 
         $list = '<table>';
-        $list.= '<tr><th>'._("ID").'/'._("IP").'</th></th><td>'.$keys[0].'</td></tr>';
+        $list.= '<tr><th>'._("ID").'/'._("IP").'</th></th><td>'.$keys[0].$action_form.'</td></tr>';
         if (!empty($DBInfo->use_avatar) && !empty($addr) && !empty($DBInfo->use_uniq_avatar)) {
             $avatar_type = 'identicon';
             if (is_string($DBInfo->use_avatar))
@@ -429,6 +447,8 @@ function macro_UserInfo($formatter,$value,$options=array()) {
             $list.= '<tr><th>'._("Status").'</th><th style="color:red">'._("Temporary Suspended").'</th></tr>';
         }
         $list.= '</table>';
+        $userinfo = $list;
+        $list = '';
 
         if ($type == 'all')
             $btn = _("Delete User");
@@ -586,7 +606,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
                     '<a href="?action=userinfo&amp;type=monitor" class="button"><span>'._("Refresh")."</span></a>";
     }
 
-    return "<h2>".$title."</h2>\n".$formhead.$list.$formtail.$extra;
+    return "<h2>".$title."</h2>\n".$userinfo.$formhead.$list.$formtail.$extra;
 }
 
 function do_userinfo($formatter,$options) {
