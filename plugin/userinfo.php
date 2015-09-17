@@ -392,18 +392,6 @@ function macro_UserInfo($formatter,$value,$options=array()) {
         }
 
         $keys = array_keys($users);
-        $action_form = '';
-        if (!empty($actions)) {
-            $url = qualifiedUrl($formatter->link_url($formatter->page->urlname));
-            $action_form = ' <form style="display:inline;margin:0" method="get" action="'.$url.'">';
-            $action_form.= '<input type="hidden" name="q" value="'._html_escape($keys[0]).'">';
-            $action_form.= '<select name="action" onchange="if (this.selectedIndex != 0) this.form.submit();">';
-            $action_form.= '<option value="">----</option>';
-            foreach ($actions as $a) {
-                $action_form.= '<option value="'.$a.'">'._($a)."</option>\n";
-            }
-            $action_form.= "</select></form>\n";
-        }
 
         $hide_infos = array('bookmark', 'password', 'scrapped_pages', 'quicklinks', 'ticket', 'tz_offset');
 
@@ -416,9 +404,29 @@ function macro_UserInfo($formatter,$value,$options=array()) {
                 'strike_total', 'strikeout_total');
 
         $addr = !empty($inf['remote']) ? $inf['remote'] : '';
+        unset($inf['remote']);
+
+        $id_form = '';
+        $ip_form = '';
+        if (!empty($actions)) {
+            $url = qualifiedUrl($formatter->link_url($formatter->page->urlname));
+            $action_form = ' <form style="display:inline;margin:0" method="get" action="'.$url.'">';
+            $action_form.= '<select name="action" onchange="if (this.selectedIndex != 0) this.form.submit();">';
+            $action_form.= '<option value="">----</option>';
+            foreach ($actions as $a) {
+                $action_form.= '<option value="'.$a.'">'._($a)."</option>\n";
+            }
+            $id_form = $action_form.'<input type="hidden" name="q" value="'._html_escape($keys[0]).'">'.
+                 "</select></form>\n";
+            $ip_form = $action_form.'<input type="hidden" name="q" value="'.$addr.'">'.
+                 "</select></form>\n";
+        }
 
         $list = '<table>';
-        $list.= '<tr><th>'._("ID").'/'._("IP").'</th></th><td>'.$keys[0].$action_form.'</td></tr>';
+        $list.= '<tr><th>'._("ID").'/'._("IP").'</th></th><td>'.$keys[0].$id_form.'</td></tr>';
+        if (!empty($addr) and $keys[0] != $addr)
+            $list.= '<tr><th>'._("IP").'</th></th><td>'.$addr.$ip_form.'</td></tr>';
+
         if (!empty($DBInfo->use_avatar) && !empty($addr) && !empty($DBInfo->use_uniq_avatar)) {
             $avatar_type = 'identicon';
             if (is_string($DBInfo->use_avatar))
