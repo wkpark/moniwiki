@@ -954,7 +954,7 @@ class WordLevelDiff extends MappedDiff
         // FIXME: fix POSIX char class.
         //if (!preg_match_all('/ ( [^\S\n]+ | [[:alnum:]]+ | . ) (?: (?!< \n) [^\S\n])? /xs',
         $wiki_markups='\[\[[A-Za-z0-9]+\([^\)]*\)\]\] | \-{4,} |';
-        if (!preg_match_all('/ ( [^\S\n]+ | [[:alnum:]]+ | '.$wiki_markups.
+        if (!preg_match_all('/ ( [^\S\n]+ | &nbsp; | [[:alnum:]]+ | '.$wiki_markups.
             $this->charset_rule .'. ) (?: (?!< \n) [^\s\S\n])? /uxs',
                             implode("\n", $lines),
                             $m)) {
