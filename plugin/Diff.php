@@ -511,8 +511,7 @@ function macro_diff($formatter,$value,&$options)
       }
     }
     else {
-      $out=str_replace('<','&lt;',$out);
-      $ret="<pre>$out</pre>\n";
+      return $out;
     }
   }
   if (!empty($options['nomsg'])) return $ret;
@@ -559,8 +558,6 @@ function do_diff($formatter,$options="") {
   else
     $options['type']=$DBInfo->diff_type;
 
-  $formatter->send_header("",$options);
-
   $title='';
   if (!empty($DBInfo->use_smartdiff)) {
     $rev=substr($rev,0,5);
@@ -573,17 +570,24 @@ function do_diff($formatter,$options="") {
       $msg=_("latest changes");
     $title=$msg;
   }
+
+  if ($date)
+    $options['rev']=$date;
+  $diff = macro_diff($formatter,'',$options);
+
+  if (!empty($options['raw'])) {
+    header('Content-Type: text/plain');
+    echo $diff;
+    return;
+  }
+
+  $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
 
   $class = 'Diff';
   if ($options['type'] == 'fancy' and !empty($options['inline'])) $class.= 'Inline';
   echo '<div class="'.$options['type'].$class.'">';
-  if ($date) {
-    $options['rev']=$date;
-    print macro_diff($formatter,'',$options);
-  }
-  else
-    print macro_diff($formatter,'',$options);
+  echo $diff;
   echo '</div>';
   if (empty($DBInfo->diffonly) and empty($options['smart'])) {
     print "<br /><hr />\n";
