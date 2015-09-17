@@ -17,7 +17,7 @@
 
 function macro_UserInfo($formatter,$value,$options=array()) {
     global $DBInfo;
-    if ($options['id'] == 'Anonymous')
+    if ($options['id'] == 'Anonymous' && !empty($options['q']) && empty($DBInfo->use_anonymous_editcount))
         return sprintf(_("You are not allowed to use the \"%s\" macro."),"UserInfo");
 
     $offset = $off = !empty($options['offset']) ? $options['offset'] : 0;
@@ -622,22 +622,48 @@ function do_userinfo($formatter,$options) {
 
     $ismember = $user->is_member;
 
+    $suspend = !empty($options['suspend']) ? true : false;
+    $pause = !empty($options['pause']) ? true : false;
+    $comment_btn = !empty($options['comment_btn']) ? true : false;
+    $comment = !empty($options['comment']) ? trim($options['comment']) : '';
+
+    $uids = (array)$options['uid'];
+
+    if ($user->id == 'Anonymous')
+        $myid = $_SERVER['REMOTE_ADDR'];
+    else
+        $myid = $user->id;
+
+    if (!$ismember && $allowed) {
+        // not a member users
+        $suspend = false;
+        if (empty($comment))
+            $comment_btn = false;
+        else
+            $comment_btn = true;
+
+        // a normal user can pause himself
+        if ((sizeof($uids) > 1) || $uids[0] != $myid)
+            $pause = false;
+        // reset type
+        $options['type'] = '';
+    }
+
+    // cleanup comment
+    $comment = strtr($comment, array("\n"=>' ', "\t"=>' '));
+    $comment = _html_escape($comment);
+
     // FIXME only owners can delete/suspend users
     $can_delete_user = in_array($user->id, $DBInfo->owners);
 
     if ($allowed || $ismember) {
         if (isset($_POST) and empty($options['act']) and isset($options['uid'])) {
-            $uids = (array)$options['uid'];
 
             $udb=&$DBInfo->udb;
             $type = !empty($options['type']) ? $options['type'] : '';
             if (!in_array($type, array('wait', 'del'))) {
                 $type = '';
             }
-            $suspend = !empty($options['suspend']) ? true : false;
-            $pause = !empty($options['pause']) ? true : false;
-            $comment_btn = !empty($options['comment_btn']) ? true : false;
-            $comment = !empty($options['comment']) ? trim($options['comment']) : '';
 
             // normal user not allowed to suspend, delete user
             if (!$can_delete_user) {
@@ -657,7 +683,7 @@ function do_userinfo($formatter,$options) {
                     if ($ret)
                         $change[] = $uid;
                 }
-            } else if ($comment_btn) {
+            } else if ($comment_btn and !empty($comment)) {
                 $mb = new Cache_Text('msgboard');
 
                 foreach ($uids as $uid) {
@@ -676,7 +702,7 @@ function do_userinfo($formatter,$options) {
                         if (!empty($info['comment']))
                             $comments = explode("\n", $info['comment']);
 
-                        $comments[] = date('Y-m-d H:i', time())."\t".$user->id."\t".$comment;
+                        $comments[] = date('Y-m-d H:i', time())."\t".$myid."\t".$comment;
                         if ($uid == '127.0.0.1' and sizeof($comments) > 500)
                             array_shift($comments);
                         else if (sizeof($comments) > 1000)
