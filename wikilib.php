@@ -207,7 +207,9 @@ function diffcount_chars($orig, $new, $charset) {
         if (is_a($edit, '_DiffOp_Copy')) {
             continue;
         } elseif (is_a($edit, '_DiffOp_Add')) {
-            $add = mb_strlen(implode('', strtr($edit->_final, '&nbsp;', "\n")), $charset);
+            $chunk = implode('', str_replace('&nbsp;', "\n", $edit->_final));
+            $chunk = preg_replace('@(\n|\s)+@m', '', $chunk);
+            $add = mb_strlen($chunk, $charset);
             if ($add > 3) $minorfix = false;
             $add_chars+= $add;
         } elseif (is_a($edit, '_DiffOp_Delete')) {
