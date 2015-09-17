@@ -110,6 +110,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
     }
 
     $userinfo = '';
+    $anchor = '';
     $extra = '';
     $cur = time();
 
@@ -330,8 +331,9 @@ function macro_UserInfo($formatter,$value,$options=array()) {
             if ($permanently_suspended)
                 $tag = '<span style="color:magenta">P</span>';
 
+            $anchor = 'a-'.substr(md5($info['id']), 0, 7);
             $list.= '<tr><td>';
-            $list.= '<input type="checkbox" name="uid[]" value="'.$info['id'].'" />';
+            $list.= '<a name="'.$anchor.'"></a><input type="checkbox" name="uid[]" value="'.$info['id'].'" />';
             $list.= '<a href="?action=userinfo&amp;type=all&q='.$info['id'].
                 '"><span>'.$info['id'].'</span></a></td>';
             if (isset($info['ip']) and $info['id'] != $info['ip'])
@@ -405,6 +407,8 @@ function macro_UserInfo($formatter,$value,$options=array()) {
 
         $addr = !empty($inf['remote']) ? $inf['remote'] : '';
         unset($inf['remote']);
+
+        $anchor = '#a-'.substr(md5($keys[0]), 0, 7);
 
         $id_form = '';
         $ip_form = '';
@@ -608,7 +612,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
 
     if ($allowed && $ismember) {
         if ($type != 'monitor')
-            $extra.= '<a href="?action=userinfo&amp;type=monitor" class="button"><span>'._("Contributors Monitor")."</span></a>";
+            $extra.= '<a href="?action=userinfo&amp;type=monitor'.$anchor.'" class="button"><span>'._("Contributors Monitor")."</span></a>";
         else
             $extra.= '<a href="?action=userinfo" class="button"><span>'._("Permanently Suspended Users")."</span></a> ".
                     '<a href="?action=userinfo&amp;type=monitor" class="button"><span>'._("Refresh")."</span></a>";
