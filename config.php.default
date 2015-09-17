@@ -211,6 +211,7 @@ $myplugins=array('rcsexport'=>false); # disable rcsexport
 #$vim_nocheck=1;
 $use_resizer=2; # 1:javascript resizer, 2: drupal style resizer
 #$use_minoredit=1; // only for wiki owners
+#$use_autodetect_minoredit=0; // auto detect minoredit
 $use_edit_placeholder=1; # use placeholder in the main edit form
 $auto_search='AutoGoto'; # FixMoin: for old moinmoin users, AutoGoto: default.
 #$hr_type='fancy';

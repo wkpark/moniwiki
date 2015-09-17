@@ -760,6 +760,7 @@ class WikiDB {
     if ($myid == 'Anonymous' and !empty($user->verified_email))
       $myid.= '-'.$user->verified_email;
 
+    $comment = trim($comment);
     $comment=strtr(strip_tags($comment),
       array("\r\n"=>' ', "\r"=>' ',"\n"=>' ', "\t"=>' '));
     $fp_editlog = fopen($this->editlog_name, 'a+');
@@ -1027,6 +1028,24 @@ class WikiDB {
       if ($ret === false) return -1;
     }
 
+    if ($action == 'SAVE' && !empty($options['.minorfix'])) {
+      $action = 'MINOR';
+    }
+
+    $comment = trim($comment);
+    $comment = strtr(strip_tags($options['comment']),
+      array("\r\n"=>' ', "\r"=>' ',"\n"=>' ', "\t"=>' '));
+    // strip out all action flags FIXME
+    $comment = preg_replace('@^{(SAVE|CREATE|DELETE|RENAME|REVERT|UPLOAD|ATTDRW|FORK|REVOKE|MINOR|BOTFIX)}:?@', '', $comment);
+
+    if ($action != 'SAVE') {
+      $tag = '{'.$action.'}';
+      if (!empty($comment))
+        $comment = $tag.': '.$comment;
+      else
+        $comment = $tag;
+    }
+
     $log=$REMOTE_ADDR.';;'.$myid.';;'.$comment;
     $options['log']=$log;
     $options['pagename']=$page->name;
@@ -1122,6 +1141,18 @@ class WikiDB {
       if ($ret === false) return -1;
     }
 
+    $comment = trim($comment);
+    $comment = strtr(strip_tags($options['comment']),
+      array("\r\n"=>' ', "\r"=>' ',"\n"=>' ', "\t"=>' '));
+    // strip out all action flags FIXME
+    $comment = preg_replace('@^{(SAVE|CREATE|DELETE|RENAME|REVERT|UPLOAD|ATTDRW|FORK|REVOKE|MINOR|BOTFIX)}:?@', '', $comment);
+
+    $tag = '{'.$action.'}';
+    if (!empty($comment))
+      $comment = $tag.': '.$comment;
+    else
+      $comment = $tag;
+
     $keyname=$this->_getPageKey($page->name);
 
     $deleted = @unlink($this->text_dir.'/'.$keyname);
@@ -1200,15 +1231,18 @@ class WikiDB {
       $myid.= '-'.$user->verified_email;
 
     $renamed = sprintf("Rename [[%s]] to [[%s]]", $pagename, $new);
+    $comment = trim($comment);
     $comment = strtr(strip_tags($options['comment']),
       array("\r\n"=>' ', "\r"=>' ',"\n"=>' ', "\t"=>' '));
+    // strip out all action flags FIXME
+    $comment = preg_replace('@^{(SAVE|CREATE|DELETE|RENAME|REVERT|UPLOAD|ATTDRW|FORK|REVOKE|MINOR|BOTFIX)}:?@', '', $comment);
 
     if (isset($comment[0]))
       $renamed.= ': '.$comment;
     else
       $renamed.= '.';
 
-    $log = $REMOTE_ADDR.';;'.$myid.';;'.$renamed;
+    $log = $REMOTE_ADDR.';;'.$myid.';;{RENAME}: '.$renamed;
     $options['log'] = $log;
     $options['pagename'] = $pagename;
 

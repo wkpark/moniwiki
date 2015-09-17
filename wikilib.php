@@ -125,6 +125,8 @@ function diffcount_lines($diff, $charset) {
     $add_chars = 0;
     $del_chars = 0;
 
+    $minorfix = false;
+
     $orig = array();
     $new = array();
     $om = false;
@@ -161,6 +163,9 @@ function diffcount_lines($diff, $charset) {
             $add_chars+= $diffchars[0];
             $del_chars+= $diffchars[1];
 
+            // is it minorfix ?
+            if ($diffchars[2]) $minorfix = true;
+
             $orig = array();
             $new = array();
         }
@@ -171,9 +176,12 @@ function diffcount_lines($diff, $charset) {
 
         $add_chars+= $diffchars[0];
         $del_chars+= $diffchars[1];
+
+        // is it minorfix ?
+        if ($diffchars[2]) $minorfix = true;
     }
 
-    return array($add, $del, $add_chars, $del_chars);
+    return array($add, $del, $add_chars, $del_chars, $minorfix);
 }
 
 /**
@@ -192,20 +200,29 @@ function diffcount_chars($orig, $new, $charset) {
     $add_chars = 0;
     $del_chars = 0;
 
+    $minorfix = true;
+
     $result = new WordLevelDiff($orig, $new, $charset);
     foreach ($result->edits as $edit) {
         if (is_a($edit, '_DiffOp_Copy')) {
             continue;
         } elseif (is_a($edit, '_DiffOp_Add')) {
-            $add_chars+= mb_strlen(implode('', $edit->_final), $charset);
+            $add = mb_strlen(implode('', strtr($edit->_final, '&nbsp;', "\n")), $charset);
+            if ($add > 3) $minorfix = false;
+            $add_chars+= $add;
         } elseif (is_a($edit, '_DiffOp_Delete')) {
-            $del_chars+= mb_strlen(implode('', $edit->orig), $charset);
+            $del = mb_strlen(implode('', $edit->orig), $charset);
+            if ($del > 3) $minorfix = false;
+            $del_chars+= $del;
         } elseif (is_a($edit, '_DiffOp_Change')) {
-            $del_chars+= mb_strlen(implode('', $edit->orig), $charset);
-            $add_chars+= mb_strlen(implode('', $edit->_final), $charset);
+            $del_change = mb_strlen(implode('', $edit->orig), $charset);
+            $add_change = mb_strlen(implode('', $edit->_final), $charset);
+            if (abs($add_change - $del_change) > 5) $minorfix = false;
+            $del_chars+= $del_change;
+            $add_chars+= $add_change;
         }
     }
-    return array($add_chars, $del_chars);
+    return array($add_chars, $del_chars, $minorfix);
 }
 
 /**
@@ -2277,6 +2294,14 @@ function macro_Edit($formatter,$value,$options='') {
 EOF;
   }
 
+  $summary_guide = '';
+  if (!empty($options['.minorfix']))
+    $summary_guide = _("This is minor changes.");
+  if (empty($DBInfo->use_edit_placeholder)) {
+    $summary_guide = '';
+  } else {
+    $summary_guide = ' placeholder="'._html_escape($summary_guide).'"';
+  }
 
   # for conflict check
   if (!empty($options['datestamp']))
@@ -2361,7 +2386,7 @@ EXTRA;
 	$wysiwyg_msg.'</span></button>';
     }
     $summary=<<<EOS
-<span id='edit-summary'><label for='input-summary'>$summary_msg</label><input name="comment" id='input-summary' value="$editlog" size="60" maxlength="128" tabindex="2" />$extra_check</span>
+<span id='edit-summary'><label for='input-summary'>$summary_msg</label><input name="comment" id='input-summary' value="$editlog" size="60" maxlength="128" tabindex="2" $summary_guide />$extra_check</span>
 EOS;
     $emailform = '';
     if (!empty($DBInfo->anonymous_friendly) and $options['id'] == 'Anonymous') {
@@ -3391,6 +3416,7 @@ function do_post_savepage($formatter,$options) {
   if (in_array($options['id'], $DBInfo->members))
     $full_permission = true;
 
+  $minorfix = false;
   $options['editinfo'] = array();
   if (!$full_permission || !empty($DBInfo->use_abusefilter)) {
     // get diff
@@ -3412,6 +3438,9 @@ function do_post_savepage($formatter,$options) {
     $deleted = $changes[1];
     $added_chars = $changes[2];
     $deleted_chars = $changes[3];
+
+    // check minorfix
+    $minorfix = $changes[4];
 
     $editinfo = array(
       'add_lines'=>$added,
@@ -3474,6 +3503,7 @@ function do_post_savepage($formatter,$options) {
     $formatter->preview=1;
     $has_form = false;
     $options['has_form'] = &$has_form;
+    $options['.minorfix'] = $minorfix;
     print '<div id="editor_area_wrap">'.macro_EditText($formatter,'',$options);
     echo $formatter->get_javascripts();
     if ($has_form and !empty($DBInfo->use_jsbuttons)) {
@@ -3513,6 +3543,11 @@ function do_post_savepage($formatter,$options) {
     print "</div>\n";
     print $menu;
   } else {
+    // check minorfix
+    $options['.minorfix'] = $minorfix;
+    if (empty($DBInfo->use_autodetect_minoredit))
+      unset($options['.minorfix']);
+
     if (!empty($options['category']))
       $savetext.="----\n[[".$options['category']."]]\n";
 
