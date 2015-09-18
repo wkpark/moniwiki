@@ -125,7 +125,7 @@ function diffcount_lines($diff, $charset) {
     $add_chars = 0;
     $del_chars = 0;
 
-    $minorfix = false;
+    $minorfix = true;
 
     $orig = array();
     $new = array();
@@ -164,7 +164,7 @@ function diffcount_lines($diff, $charset) {
             $del_chars+= $diffchars[1];
 
             // is it minorfix ?
-            if ($diffchars[2]) $minorfix = true;
+            if (!$diffchars[2]) $minorfix = false;
 
             $orig = array();
             $new = array();
@@ -178,7 +178,7 @@ function diffcount_lines($diff, $charset) {
         $del_chars+= $diffchars[1];
 
         // is it minorfix ?
-        if ($diffchars[2]) $minorfix = true;
+        if (!$diffchars[2]) $minorfix = false;
     }
 
     return array($add, $del, $add_chars, $del_chars, $minorfix);
@@ -207,7 +207,7 @@ function diffcount_chars($orig, $new, $charset) {
         if (is_a($edit, '_DiffOp_Copy')) {
             continue;
         } elseif (is_a($edit, '_DiffOp_Add')) {
-            $chunk = implode('', str_replace('&nbsp;', "\n", $edit->_final));
+            $chunk = str_replace('&nbsp;', "\n", implode('', $edit->_final));
             $chunk = preg_replace('@(\n|\s)+@m', '', $chunk);
             $add = mb_strlen($chunk, $charset);
             if ($add > 3) $minorfix = false;
