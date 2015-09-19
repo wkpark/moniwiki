@@ -4801,7 +4801,7 @@ JS;
 }
 
 function ajax_pagecount($formater, $params) {
-    global $DBInfo;
+    global $DBInfo, $Config;
 
     $rc = new Cache_Text('redirect');
     $redirects = 0;
@@ -4814,6 +4814,9 @@ function ajax_pagecount($formater, $params) {
       $sc->update('redirect', $redirects, 60*60*24);
     }
 
+    $maxage = !empty($Config['proxy_maxage']) ? ', s-maxage='.$Config['proxy_maxage'] : '';
+    header('Content-Type: text/plain');
+    header('Cache-Control: public'.$maxage.',must-revalidate,post-check=0, pre-check=0');
     $count = $DBInfo->getCounter();
     echo '{pagecount:'.$count.',redirect:'.$redirects.'}';
 }
