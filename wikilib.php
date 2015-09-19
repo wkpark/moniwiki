@@ -2297,7 +2297,7 @@ EOF;
 
   $summary_guide = '';
   if (!empty($options['.minorfix']))
-    $summary_guide = _("This is minor changes.");
+    $summary_guide = _("This ia a minor edit.");
   if (empty($DBInfo->use_edit_placeholder)) {
     $summary_guide = '';
   } else {
