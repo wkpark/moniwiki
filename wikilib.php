@@ -1992,9 +1992,8 @@ CSS;
 function do_edit($formatter,$options) {
   global $DBInfo;
   if (!$DBInfo->security->writable($options)) {
-    $formatter->preview=0;
-    $options['err']="#format wiki\n== "._("You are not allowed to edit this page !").' =='; # XXX
-    return do_invalid($formatter,$options);
+    $formatter->preview=1;
+    $options['msg'] = _("You are not allowed to edit this page !");
   }
   $formatter->send_header("",$options);
   $sec = '';
@@ -3187,7 +3186,7 @@ function do_post_savepage($formatter,$options) {
   if ($_SERVER['REQUEST_METHOD'] != 'POST' ||
       !$DBInfo->security->writable($options)) {
     $options['title'] = _("Page is not writable");
-    return do_invalid($formatter,$options);
+    $options['button_preview'] = 1; // force preview
   }
 
   if ((isset($_FILES['upfile']) and is_array($_FILES)) or
