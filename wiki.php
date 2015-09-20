@@ -2262,6 +2262,8 @@ class Formatter {
       //if ($url[1] != '$') $opt=array('type'=>'inline');
       //else $opt=array('type'=>'block');
       $opt=array('type'=>'inline');
+      // revert &amp;
+      $url = preg_replace('/&amp;/i', '&', $url);
       return $this->processor_repl($this->inline_latex,$url,$opt);
       break;
     case '*':
