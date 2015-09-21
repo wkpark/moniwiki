@@ -273,12 +273,20 @@ class MetaDB_dba extends MetaDB {
   }
 
   function getSisterSites($pagename,$mode=1) {
-    if (!$this->aux->hasPage($pagename) and !dba_exists($pagename,$this->metadb)) {
+    $norm = preg_replace('/\s+/', '', $pagename);
+    if ($norm == $pagename) {
+      $nodb = !dba_exists($pagename, $this->metadb);
+    } else {
+      $nodb = !dba_exists($pagename, $this->metadb) && !dba_exists($norm, $this->metadb);
+    }
+    if (!$this->aux->hasPage($pagename) and $nodb) {
       if ($mode) return '';
       return false;
     }
     if (!$mode) return true;
     $sisters=dba_fetch($pagename,$this->metadb);
+    if ($sisters == null)
+      $sisters = dba_fetch($norm, $this->metadb);
     $addons=$this->aux->getSisterSites($pagename,$mode);
 
     $ret = '';
@@ -292,13 +300,21 @@ class MetaDB_dba extends MetaDB {
   }
 
   function getTwinPages($pagename,$mode=1) {
-    if (!$this->aux->hasPage($pagename) and !dba_exists($pagename,$this->metadb)) {
+    $norm = preg_replace('/\s+/', '', $pagename);
+    if ($norm == $pagename) {
+      $nodb = !dba_exists($pagename, $this->metadb);
+    } else {
+      $nodb = !dba_exists($pagename, $this->metadb) && !dba_exists($norm, $this->metadb);
+    }
+    if (!$this->aux->hasPage($pagename) and $nodb) {
       if ($mode) return array();
       return false;
     }
     if (!$mode) return true;
 
     $twins=dba_fetch($pagename,$this->metadb);
+    if ($twins == null)
+      $twins = dba_fetch($norm, $this->metadb);
     $addons=$this->aux->getTwinPages($pagename,$mode);
     $ret=array();
     if ($twins) {
@@ -3726,7 +3742,7 @@ class Formatter {
       } else if (!empty($twins)) {
         if (!empty($lines)) $lines[]="----";
         if (sizeof($twins)>8) $twins[0]="\n".$twins[0]; // XXX
-        $twins[0]=_("See [TwinPages]:").$twins[0];
+        $twins[0]=_("See TwinPages : ").$twins[0];
         $lines=array_merge($lines,$twins);
       }
     }
@@ -6101,7 +6117,7 @@ function wiki_main($options) {
       if ($twins) {
         $formatter->send_title('','',$options);
         $twins="\n".implode("\n",$twins);
-        $formatter->send_page(_("See [TwinPages]: ").$twins);
+        $formatter->send_page(_("See TwinPages : ").$twins);
         echo "<br />".
           $formatter->link_to("?action=edit",$formatter->icon['create']._("Create this page"));
       } else {
