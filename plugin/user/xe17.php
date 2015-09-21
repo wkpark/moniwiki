@@ -48,7 +48,7 @@ class User_xe17 extends WikiUser {
         global $DBInfo;
 
         parent::WikiUser($id);
-        if ($this->id == 'Anonymous')
+        if ($this->id != 'Anonymous')
             return;
 
         $cookie_id = $this->id;
