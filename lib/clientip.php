@@ -26,10 +26,8 @@ function clientIP($single = true) {
     if ($ip[0] == $_SERVER['REMOTE_ADDR'])
         return $ip[0];
 
-    // append remote ip
-    $addr = array_pop($ip);
-    $ip[] = $addr;
-    if ($addr != $_SERVER['REMOTE_ADDR']) {
+    // check the remote ip is already exists in the IPs
+    if (!in_array($_SERVER['REMOTE_ADDR'], $ip)) {
         $ip[] = $_SERVER['REMOTE_ADDR'];
     }
 
@@ -70,7 +68,6 @@ function clientIP($single = true) {
     if(!$single) return join(',', $ip);
 
     // decide which IP to use, trying to avoid local addresses
-    $ip = array_reverse($ip);
     foreach($ip as $i) {
         if(preg_match('/^(::1|[fF][eE]80:|127\.|10\.|192\.168\.|172\.((1[6-9])|(2[0-9])|(3[0-1]))\.)/', $i)) {
             continue;
@@ -78,6 +75,6 @@ function clientIP($single = true) {
             return $i;
         }
     }
-    // still here? just use the first (last) address
+    // still here? just use the first address
     return $ip[0];
 }
