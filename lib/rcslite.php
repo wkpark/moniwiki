@@ -499,7 +499,11 @@ Class RcsLite {
     function _writeMe()
     {
         $dataError = '';
-        
+
+        // ignore
+        if (empty($this->rcsFile))
+            return $dataError;
+
         # FIXME move permission to config or similar
         @chmod($this->rcsFile,0644 );
         $fp=fopen($this->rcsFile, 'w'); 
