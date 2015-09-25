@@ -383,6 +383,11 @@ class TitleIndexer_Text {
         $pages_limit = isset($DBInfo->pages_limit) ?
                 $DBInfo->pages_limit : 5000; // 5000 pages
 
+        if (!empty($params['limit'])) {
+            $limit = abs(intval($params['limit']));
+            $pages_limit = min($pages_limit, $limit);
+        }
+
         $info['count'] = count($pages);
         if ($pages_limit > 0) {
             $pages = array_slice($pages, $offset, $pages_limit);

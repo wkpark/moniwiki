@@ -559,6 +559,10 @@ class PageIndex extends TitleIndexer_Text {
         // set page_limit
         $pages_limit = isset($DBInfo->pages_limit) ?
                 $DBInfo->pages_limit : 5000; // 5000 pages
+        if (!empty($params['limit'])) {
+            $limit = abs(intval($params['limit']));
+            $pages_limit = min($pages_limit, $limit);
+        }
 
         $info['count'] = $total;
 
