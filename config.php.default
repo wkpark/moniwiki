@@ -200,6 +200,8 @@ $myplugins=array('rcsexport'=>false); # disable rcsexport
 #$delete_history=1;
 #$stat_no_show_all=0; # do not show all users statistics info.
 #$stat_no_merge_ip_users=0; # do not merge ip users contributions.
+#$editlogbin_datetime_oldest='-1 year'; # oldest datetime
+#$editlogbin_datetime_max_range='1 year'; # max time range
 #$rename_with_history=1; # rename with history
 #$use_twikilink=1;
 #$timezone='KST'; // for windows
