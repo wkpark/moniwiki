@@ -1,17 +1,52 @@
 <?php
-// Copyright 2003-2006 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2015 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
-// Theme plugin for the MoniWiki
+// a Theme plugin for the MoniWiki
+//
+// Author: Won-Kyu Park <wkpark at kldp.org>
+// Since: 2003-06-16
+// Date: 2015-09-26
+// Name: Theme
+// Description: Theme Plugin
+// URL: MoniWiki:ThemePlugin
+// Version: $Revision: 1.0 $
+// License: GPLv2
+//
+// Usage: ?action=theme
 //
 // $Id: theme.php,v 1.11 2010/04/17 09:20:24 wkpark Exp $
 //
 
-function do_theme($formatter,$options) {
+function do_theme($formatter, $options = array()) {
   global $DBInfo;
 
+  if (!empty($DBInfo->theme_css)) {
+    $options['title'] = _("Theme disabled !");
+    $options['msg'] = _("Please contact WikiMasters");
+    do_invalid($formatter, $options);
+    return _("Theme disabled !");
+  }
+
   $theme = '';
-  if (preg_match('/^[a-zA-Z0-9_-]+$/', $options['theme']))
-        $theme = $options['theme'];
+  if (preg_match('/^[a-zA-Z0-9_-]+$/', $options['value'])) {
+    $theme = $options['value'];
+  } else if (preg_match('/^[a-zA-Z0-9_-]+$/', $options['theme'])) {
+    $theme = $options['theme'];
+  }
+
+  $themes = macro_Theme($formatter, '', array('call'=>1));
+  if (!in_array($theme, $themes)) {
+    $title = _("Invalid Theme");
+    $theme = null;
+  } else {
+    if ($options['id'] == 'Anonymous') {
+      if ($theme == $_COOKIE['MONI_THEME'])
+        $theme = null;
+    } else {
+      if ($theme == $DBInfo->user->info['theme'])
+        $theme = null;
+    }
+  }
 
   if ($options['clear']) {
     if ($options['id']=='Anonymous') {
@@ -72,16 +107,33 @@ FORM;
       return;
     }
   } else
-    $msg="== "._("Please select a theme properly.")." ==";
+    $title = _("Please select a theme");
   $formatter->send_header("",$options);
-  $formatter->send_title("","",$options);
-  $formatter->send_page($msg);
+  $formatter->send_title($title, '', $options);
+  echo macro_Theme($formatter);
   $formatter->send_footer("",$options);
   return;
 }
 
-function macro_theme($formatter,$value) {
+function macro_Theme($formatter, $value = '', $params = array()) {
   global $DBInfo;
+
+  $themes=array();
+  $path=!empty($DBInfo->themedir) ? $DBInfo->themedir: '.';
+  $handle = @opendir("$path/theme");
+  if (is_resource($handle)) {
+    while ($file = readdir($handle)) {
+      if (!in_array($file,array('.','..','RCS','CVS')) and is_dir("$path/theme/".$file) and
+          file_exists($path.'/theme/'.$file.'/header.php')) {
+        if (!file_exists($path.'/theme/'.$file.'/.lock'))
+          $themes[] = $file;
+      }
+    }
+  }
+
+  if (!empty($params['call']))
+    return $themes;
+
   if ($DBInfo->theme_css) return _("Theme disabled !");
   $msg = _("Supported themes");
   $out="
@@ -90,16 +142,6 @@ function macro_theme($formatter,$value) {
   <b>$msg</b>&nbsp;
 <select name='theme'>
 ";
-  $themes=array();
-  $path=!empty($DBInfo->themedir) ? $DBInfo->themedir: '.';
-  $handle = @opendir("$path/theme");
-  if (is_resource($handle)) {
-    while ($file = readdir($handle)) {
-      if (!in_array($file,array('.','..','RCS','CVS')) and is_dir("$path/theme/".$file) and
-        file_exists($path.'/theme/'.$file.'/header.php'))
-          $themes[]= $file;
-    }
-  }
 
   $out.="<option value=''>"._("-- Select --")."</option>\n";
   foreach ($themes as $item)
