@@ -35,16 +35,24 @@ function macro_Play($formatter, $value, $params = array()) {
   preg_match("/^(([^,]+\s*,?\s*)+)$/",$value,$match);
   if (!$match) return '[[Play(error!! '.$value.')]]';
 
+  $align = '';
+  // parse arguments height, width, align
   if (($p=strpos($match[1],','))!==false) {
     $my=explode(',',$match[1]);
     for ($i=0,$sz=count($my);$i<$sz;$i++) {
       if (strpos($my[$i],'=')) {
-        list($key,$val)=explode('=',$my[$i]);
+        list($key,$val)=explode('=',$my[$i], 2);
         $val = trim($val, '"\'');
         if ($key == 'width' and $val > 1) {
           $width = intval($val);
         } else if ($key == 'height' and $val > 1) {
           $height = intval($val);
+        } else if ($key == 'align') {
+          if (in_array($val, array('left', 'center', 'right'))) {
+            $align = ' obj'.ucfirst($val);
+          }
+        } else {
+          $media[] = $my[$i];
         }
       } else { // multiple files
         $media[]=$my[$i];
@@ -228,7 +236,7 @@ EOS;
       $custom = '';
       $object_prefered = false;
       // http://code.google.com/p/google-code-project-hosting-gadgets/source/browse/trunk/video/video.js
-      if ($macro == 'youtube' && preg_match("@^([a-zA-Z0-9_-]+)$@", $media[$i], $m) ||
+      if ($macro == 'youtube' && preg_match("@^([a-zA-Z0-9_-]+)(?:\?.*)$@", $media[$i], $m) ||
           preg_match("@(?:https?:)?//(?:[a-z-]+[.])?(?:youtube(?:[.][a-z-]+)+|youtu\.be)/(?:watch[?].*v=|v/|embed/)?([a-z0-9_-]+)$@i",$media[$i],$m)) {
 
         if ($object_prefered) {
@@ -395,7 +403,7 @@ EOS;
 
       if ($iframe) {
         $out.=<<<IFRAME
-<div class='externalObject$objclass'><div>
+<div class='externalObject$objclass$align'><div>
 <iframe class='external' src="$iframe" $attr></iframe>
 <div><a alt='$myurl' onclick='javascript:openExternal(this, "inline-block"); return false;'><span>[$mediainfo]</span></a></div></div></div>
 IFRAME;
