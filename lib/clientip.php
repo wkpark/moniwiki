@@ -34,9 +34,10 @@ function clientIP($single = true) {
     // some IPv4/v6 regexps borrowed from Feyd
     // see: http://forums.devnetwork.net/viewtopic.php?f=38&t=53479
     $dec_octet   = '(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|[0-9])';
+    $dec_octet0  = '(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|[1-9])';
     $hex_digit   = '[A-Fa-f0-9]';
     $h16         = "{$hex_digit}{1,4}";
-    $IPv4Address = "$dec_octet\\.$dec_octet\\.$dec_octet\\.$dec_octet";
+    $IPv4Address = "$dec_octet\\.$dec_octet\\.$dec_octet\\.$dec_octet0";
     $ls32        = "(?:$h16:$h16|$IPv4Address)";
     $IPv6Address =
         "(?:(?:{$IPv4Address})|(?:".
