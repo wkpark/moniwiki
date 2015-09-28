@@ -39,10 +39,12 @@ function macro_Play($formatter, $value, $params = array()) {
   // parse arguments height, width, align
   if (($p=strpos($match[1],','))!==false) {
     $my=explode(',',$match[1]);
+    $my = array_map('trim', $my);
     for ($i=0,$sz=count($my);$i<$sz;$i++) {
       if (strpos($my[$i],'=')) {
         list($key,$val)=explode('=',$my[$i], 2);
         $val = trim($val, '"\'');
+        $val = trim($val);
         if ($key == 'width' and $val > 1) {
           $width = intval($val);
         } else if ($key == 'height' and $val > 1) {
@@ -59,7 +61,7 @@ function macro_Play($formatter, $value, $params = array()) {
       }
     }
   } else {
-    $media[]=$match[1];
+    $media[] = trim($match[1]);
   }
   # set embeded object size
   $mywidth = !empty($width) ? min($width, $max_width) : null;
@@ -236,7 +238,7 @@ EOS;
       $custom = '';
       $object_prefered = false;
       // http://code.google.com/p/google-code-project-hosting-gadgets/source/browse/trunk/video/video.js
-      if ($macro == 'youtube' && preg_match("@^([a-zA-Z0-9_-]+)(?:\?.*)$@", $media[$i], $m) ||
+      if ($macro == 'youtube' && preg_match("@^([a-zA-Z0-9_-]+)(?:\?.*)?$@", $media[$i], $m) ||
           preg_match("@(?:https?:)?//(?:[a-z-]+[.])?(?:youtube(?:[.][a-z-]+)+|youtu\.be)/(?:watch[?].*v=|v/|embed/)?([a-z0-9_-]+)$@i",$media[$i],$m)) {
 
         if ($object_prefered) {
