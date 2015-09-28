@@ -215,7 +215,10 @@ function _parse_rlog($formatter,$log,$options=array()) {
            if ($ismember) {
              if (!empty($DBInfo->use_admin_user_url))
                $u = '<a href="'.$DBInfo->use_admin_user_url.$u.'">'.$u.'</a>';
-             $ip = $u.$wip;
+             if (!in_array($user, $members))
+               $ip = $u.$wip;
+             else
+               $ip = $u;
            } else if (empty($DBInfo->show_hosts)) {
              $ip = $user;
            } else {

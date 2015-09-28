@@ -49,6 +49,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
     $udb=&$DBInfo->udb;
     $user=&$DBInfo->user;
 
+    $members = $DBInfo->members;
     $ismember = $user->is_member;
 
     // set default query string
@@ -398,6 +399,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
         $hide_infos = array('bookmark', 'password', 'scrapped_pages', 'quicklinks', 'ticket', 'tz_offset');
 
         $inf = $udb->getInfo($keys[0], $type != 'all');
+        unset($inf['eticket']); // hide eticket
         if ($ismember)
             $allowed_infos = array_keys($inf);
         else
@@ -428,7 +430,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
 
         $list = '<table>';
         $list.= '<tr><th>'._("ID").'/'._("IP").'</th></th><td>'.$keys[0].$id_form.'</td></tr>';
-        if (!empty($addr) and $keys[0] != $addr)
+        if (!empty($addr) and $keys[0] != $addr && !in_array($keys[0], $members))
             $list.= '<tr><th>'._("IP").'</th></th><td>'.$addr.$ip_form.'</td></tr>';
 
         if (!empty($DBInfo->use_avatar) && !empty($addr) && !empty($DBInfo->use_uniq_avatar)) {

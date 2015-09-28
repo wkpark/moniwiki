@@ -842,6 +842,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
               $wip = "<a href='?action=whois&q=".$addr."' target='_blank'>$ipicon</a>";
 
             if ($ismember) {
+              if (in_array($user, $members))
+                $wip = '';
               if (!empty($DBInfo->use_admin_user_url))
                 $user = '<a href="'.$DBInfo->use_admin_user_url.$user.'">'.$user.'</a>'.$wip;
               else
@@ -892,6 +894,9 @@ function macro_RecentChanges($formatter,$value='',$options='') {
           if (isset($users[$ouser])) {
             $user = $users[$ouser];
           } else if ($ismember) {
+            if (in_array($user, $members))
+              $wip = '';
+
             if (!empty($DBInfo->use_admin_user_url))
               $user = $avatar.'<a href="'.$DBInfo->use_admin_user_url.$user.'">'.$user.'</a>'.$wip;
             else
