@@ -305,7 +305,7 @@ function _rawurlencode($url) {
 function _urlencode($url) {
     $url = preg_replace('#:+#', ':', $url);
 
-    $chunks = preg_split("@([a-zA-Z0-9/?.~#&:;=%-_]+)@", $url, -1, PREG_SPLIT_DELIM_CAPTURE);
+    $chunks = preg_split("@([a-zA-Z0-9/?.~#&:;=%_-]+)@", $url, -1, PREG_SPLIT_DELIM_CAPTURE);
     for ($i = 0, $sz = count($chunks); $i < $sz; $i++) {
         if ($i % 2 == 0) {
             $chunks[$i] = strtr(rawurlencode($chunks[$i]), array(
