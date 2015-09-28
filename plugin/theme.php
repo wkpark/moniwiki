@@ -45,6 +45,8 @@ function do_theme($formatter, $options = array()) {
     } else {
       if ($theme == $DBInfo->user->info['theme'])
         $theme = null;
+      else if (empty($DBInfo->user->info['theme']) && $theme == $DBInfo->theme)
+        $theme = null;
     }
   }
 
@@ -65,7 +67,7 @@ function do_theme($formatter, $options = array()) {
       $userinfo->info['css_url']="";
       $udb->saveUser($userinfo);
     }
-    $msg="== "._("Theme cleared. Goto UserPreferences.")." ==";
+    $msg = '<h2>'._("Theme cleared.").' '.sprintf(_("Goto %s"), $formatter->link_repl("UserPreferences")).'</h2>';
   }
   else if (!empty($theme)) {
     $themedir=$formatter->themedir;
@@ -110,7 +112,10 @@ FORM;
     $title = _("Please select a theme");
   $formatter->send_header("",$options);
   $formatter->send_title($title, '', $options);
-  echo macro_Theme($formatter);
+  if (empty($msg))
+    echo macro_Theme($formatter);
+  else
+    echo $msg;
   $formatter->send_footer("",$options);
   return;
 }
