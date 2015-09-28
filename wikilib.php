@@ -888,6 +888,13 @@ function is_mobile() {
  * @author   Won-Kyu Park <wkpark@gmail.com>
  */
 function realIP() {
+    global $Config;
+
+    if (!empty($Config['use_cloudflare']) && !empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+        return $_SERVER['HTTP_CF_CONNECTING_IP'];
+    }
+
+    $REMOTE_ADDR = $_SERVER['REMOTE_ADDR'];
     if (!empty($_SERVER['HTTP_X_FORWARDED_FOR']))
         $ip = $_SERVER['HTTP_X_FORWARDED_FOR'];
     else if (!empty($_SERVER['HTTP_X_REAL_IP']))
@@ -895,11 +902,14 @@ function realIP() {
     else
         return $_SERVER['REMOTE_ADDR'];
 
-    if (strpos($ip, ',') === false)
+    if (strpos($ip, ',') === false && $ip == $REMOTE_ADDR)
         return $ip;
 
-    $ip = explode(',', str_replace(' ', '', $ip));
-    return $ip[0];
+    if (!empty($Config['use_x_forwarded_for'])) {
+        require_once('lib/clientip.php');
+        return clientIP();
+    }
+    return $_SERVER['REMOTE_ADDR'];
 }
 
 /**
@@ -911,6 +921,11 @@ function realIP() {
  */
 function get_log_addr() {
     $REMOTE_ADDR = $_SERVER['REMOTE_ADDR'];
+
+    if (!empty($Config['use_cloudflare']) && !empty($_SERVER['HTTP_CF_CONNECTING_IP'])) {
+        return $_SERVER['HTTP_CF_CONNECTING_IP'];
+    }
+
     if (isset($_SERVER['HTTP_X_FORWARDED_FOR']) and $REMOTE_ADDR != $_SERVER['HTTP_X_FORWARDED_FOR']) {
         // XFF contains the REMOTE_ADDR ?
         $xff = str_replace(' ', '', $_SERVER['HTTP_X_FORWARDED_FOR']);
@@ -920,12 +935,16 @@ function get_log_addr() {
         if ($tmp[0] == $REMOTE_ADDR)
             return $REMOTE_ADDR;
 
+        require_once('lib/clientip.php');
+
+        $filtered = clientIP(false);
+        $tmp = explode(',', $filtered);
         $last = array_pop($tmp);
         if ($last == $REMOTE_ADDR)
-            $REMOTE_ADDR = $xff;
+            $REMOTE_ADDR = $filtered;
         else
             // append REMOTE_ADDR
-            $REMOTE_ADDR = $xff.','.$REMOTE_ADDR;
+            $REMOTE_ADDR = $filtered.','.$REMOTE_ADDR;
     }
     return $REMOTE_ADDR;
 }

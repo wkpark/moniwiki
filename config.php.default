@@ -368,6 +368,7 @@ $use_local_translation=0; # automatic translation
 #$config_mysql='default'; # or use mysql config separatly. config/mysql.default.php used
 #$pagekey_class='base64url'; # use base64url pagekey class
 #$use_x_forwarded_for=0; # use X-Forwarded-For header information to log all pass-by addresses
+#$use_cloudeflare=0; # use CF_CONNECTION_IP to set the real remote IP address
 #$pages_limit=5000; # maximum number of pages to retrieve by default to reduce server load.
 #$titlesearch_page_limit=100; # maximum number of pages to search titleindex
 #$default_delaytime= 60*60*24; # set the default delayed time for caching as 24 hours

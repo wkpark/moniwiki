@@ -6510,7 +6510,12 @@ $proxy_maxage = !empty($Config['proxy_maxage']) ? ', s-maxage='.$Config['proxy_m
 $user_maxage = !empty($Config['user_maxage']) ? ', max-age='.$Config['user_maxage'] : ', max-age=0';
 
 // set the real IP address for proxy
-$_SERVER['REMOTE_ADDR'] = realIP();
+$remote = $_SERVER['REMOTE_ADDR'];
+$real = realIP();
+if ($remote != $real) {
+  $_SERVER['OLD_REMOTE_ADDR'] = $remote;
+  $_SERVER['REMOTE_ADDR'] = $real;
+}
 
 if ($_SERVER['REQUEST_METHOD'] != 'GET' and
     $_SERVER['REQUEST_METHOD'] != 'HEAD') {
