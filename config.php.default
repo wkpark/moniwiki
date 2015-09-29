@@ -272,6 +272,8 @@ $fullsearch_tooshort=2; #
 #$info_options='ago,simple'; # default Info macro options
 #$info_actions=array('raw'=>'source');
 #$info_actions=array('raw'=>'source','diff'=>'diff');
+#$info_anonymous_range_limit=20; # restrict version range for anonymous users
+#$info_range_max=30; # maximun version range in one page
 #$force_charset=1; # overriding default charset
 #$use_titlemenu=1; # add the current pagename to the menu list
 #$submenu='SubMenu'; # dynamic submenu

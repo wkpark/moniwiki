@@ -361,12 +361,20 @@ function macro_info($formatter,$value,$options=array()) {
         $rev[$m[1]] = '1.'.$m[1];
     }
     $r = array_keys($rev);
+    $range_max = !empty($DBInfo->info_range_max) ? $DBInfo->info_range_max : 30;
+    $anon_range_limit = !empty($DBInfo->info_anonymous_range_limit) ? $DBInfo->info_anonymous_range_limit : $range_max;
+
+    if ($options['id'] == 'Anonymous' && $r[0] - $r[1] > $anon_range_limit) {
+      unset($rev[$r[1]]);
+      unset($r[1]);
+      $warn = '<div class="warn">'._("WARNING: ")._("Anonymous user is not allowed to see older versions.")."</div>";
+    }
 
     // make a range list like as "1.234:1.240\;1.110:1.140"
     $revstr = '';
     $count = 10;
     if (count($r) > 1) {
-      if ($r[0] - $r[1] > 30) {
+      if ($r[0] - $r[1] > $range_max) {
         $revstr.= '1.'.max($r[0] - 1, 0).':'.$rev[$r[0]];
         $revstr.= '\;1.'.max($r[1] - $count, 0).':'.$rev[$r[1]];
         $options['count'] = $count + 2;
