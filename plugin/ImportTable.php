@@ -25,12 +25,16 @@ function macro_ImportTable($formatter, $value, $params = array()) {
     $cols = $params['cols'] > 60 ? $params['cols']: $cols;
 
     $tabletext = $params['tablecontent'];
+    $editor = $params['editor'];
 
     $url = $formatter->link_url($formatter->page->urlname);
 
+    $formatter->register_javascripts('<script src="//cdn.ckeditor.com/4.5.3/standard/ckeditor.js"></script>');
+    $formatter->register_javascripts('<script>CKEDITOR.replace("editor")</script>');
     $formatter->register_javascripts('textarea.js');
     $form = "<form method='post' action='$url'>\n";
     $form.= <<<FORM
+    <textarea id="editor" name="editor" rows="$rows" cols="$cols">$editor</textarea>
     <div class="resizable-textarea">
         <textarea class="wiki resizable" name="tablecontent"
         rows="$rows" cols="$cols">$tabletext</textarea></div>
@@ -41,6 +45,7 @@ FORM;
         <span class='button'><input type="submit" name="button_preview" class="button" value="$preview" /></span>
 FORM;
     $form.= "</form>\n";
+    $form.= $formatter->get_javascripts();
 
     return '<div>'.$form.'</div>';
 }
@@ -87,12 +92,13 @@ function _td_callback($matches) {
     $attr = trim(str_replace("\n", ' ', $matches[2]));
     $chunks = preg_split('/((?:colspan|bgcolor|rowspan|class|width|border|align|style)\s*=\s*)/i', $attr, -1, PREG_SPLIT_DELIM_CAPTURE);
     $attr = '';
+    $colspan = '';
     for ($i = 1, $sz = count($chunks); $i < $sz; $i+= 2) {
         $key = strtolower(trim($chunks[$i], ' ='));
         $val = trim($chunks[$i + 1], ' \'"');
         if ($key == 'colspan') {
             if ($val != 1)
-                $attr.= '<-'. $val.'>';
+                $colspan = intval($val);
         } else if ($key == 'rowspan') {
             if ($val != 1)
                 $attr.= '<|'. $val.'>';
@@ -124,6 +130,15 @@ function _td_callback($matches) {
         }
     }
 
+    if ($colspan > 1) {
+        if ($colspan > 1 && $colspan < 5) {
+            $tab = str_repeat('||', $colspan - 1);
+            $attr = $tab.$attr;
+        } else {
+            $attr = '<-'.$colspan.'>'.$attr;
+        }
+    }
+
     return '||'.$attr;
 }
 
@@ -140,14 +155,20 @@ function do_ImportTable($formatter, $params = array()) {
 
     $url = $formatter->link_url($formatter->page->urlname);
 
-    if (!empty($params['tablecontent'])) {
-        $tabletext = _stripslashes($params['tablecontent']);
+    if (!empty($params['tablecontent']) || $params['editor']) {
+        $tabletext = trim(_stripslashes($params['tablecontent']));
+        $editor = trim(_stripslashes($params['editor']));
+        $tabletext = !empty($tabletext) ? $tabletext : $editor;
         $tabletext = str_replace("\r", '', $tabletext);
 
         $lines = explode("\n", $tabletext);
 
         // check tab mode
         $tabmode = false;
+        if (strpos($tabletext, '<table ') !== false) {
+            $tabmode = false;
+            $tabletext = strtr($tabletext, "\t", ' ');
+        }
         if (strpos($tabletext, "\t") !== false) {
             $tabmode = true;
         } else {
@@ -191,21 +212,18 @@ function do_ImportTable($formatter, $params = array()) {
         if (!isset($end[0])) array_pop($lines);
 
         // count maximum tabs
-        $maxtab = 1;
-        for ($i = 0, $sz = count($lines); $i < $sz; $i++) {
-            $line = $lines[$i];
-            if ($tabmode) {
+        if ($tabmode) {
+            $maxtab = 1;
+            for ($i = 0, $sz = count($lines); $i < $sz; $i++) {
+                $line = $lines[$i];
                 // from excel or tab separated table contents
                 $tabs[$i] = substr_count($line, "\t");
                 $line = preg_replace("/\t(?=\t)/", ' || ', $line);
                 $line = str_replace("\t", '||', $line);
                 $lines[$i] = '||'.$line.'||';
                 if ($tabs[$i] > $maxtab) $maxtab = $tabs[$i];
-            } else {
-
             }
-        }
-        if ($tabmode) {
+
             for ($i = 0, $sz = count($tabs); $i < $sz; $i++) {
                 if ($tabs[$i] < $maxtab) {
                     $tab = str_repeat('||', $maxtab - $tabs[$i]);
@@ -221,6 +239,7 @@ function do_ImportTable($formatter, $params = array()) {
         $formatter->send_title(_("Preview"), '', $params);
         $formatter->send_page($tabletext."\n----");
         $params['tablecontent'] = $tabletext;
+        $params['editor'] = $editor;
         echo macro_ImportTable($formatter, '', $params);
         $formatter->send_footer('', $params);
     } else if (!$tabletext) {
