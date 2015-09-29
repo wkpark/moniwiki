@@ -85,7 +85,7 @@ function _table_callback($matches) {
 
 function _td_callback($matches) {
     $attr = trim(str_replace("\n", ' ', $matches[2]));
-    $chunks = preg_split('/((?:colspan|rowspan|class|width|border|align|style)\s*=\s*)/i', $attr, -1, PREG_SPLIT_DELIM_CAPTURE);
+    $chunks = preg_split('/((?:colspan|bgcolor|rowspan|class|width|border|align|style)\s*=\s*)/i', $attr, -1, PREG_SPLIT_DELIM_CAPTURE);
     $attr = '';
     for ($i = 1, $sz = count($chunks); $i < $sz; $i+= 2) {
         $key = strtolower(trim($chunks[$i], ' ='));
@@ -116,6 +116,11 @@ function _td_callback($matches) {
             $attr.= '<width="'.$val.'">';
         } else if ($key == 'style') {
             $attr.= '<style="'.$val.'">';
+        } else if ($key == 'bgcolor') {
+            if ($val[0] == '#')
+                $attr.= '<'.$val.'>';
+            else
+                $attr.= '<style="background-color:'.$val.'">';
         }
     }
 
@@ -163,7 +168,7 @@ function do_ImportTable($formatter, $params = array()) {
             // BR macro
             $tabletext = preg_replace('@<br\s*[^>]*>\n?@is', '[[BR]]', $tabletext);
             // images
-            $tabletext = preg_replace('@<img\s[^>]*src=(\'|")?([^\'"]+)(?1)[^>]*>@is', '\\2', $tabletext);
+            $tabletext = preg_replace('@<img\s[^>]*src=(\'|")?(?:https?)?//([^\'"]+)(?1)[^>]*>@is', 'http://\\2', $tabletext);
             // href
             $tabletext = preg_replace_callback('@<a\s([^>]*)>([^<]*)</a>@is', '_a_callback', $tabletext);
 
