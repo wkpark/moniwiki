@@ -286,6 +286,7 @@ $use_errlog=1;
 #$acl_type='default'; # XXX
 #$acl_debug=1;
 #$acl_admin_groups=array('@staff', '@admin'); # ACL admin groups
+#$aclinfo_actions = array('edit', 'savepage', 'deletepage', 'info', 'diff', 'revert', 'recall'); # editable actions
 #$default_download_image='/block.jpg';
 #$force_download=1;
 #$download_action='download';
