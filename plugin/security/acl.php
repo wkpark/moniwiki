@@ -45,10 +45,53 @@ class Security_ACL extends Security_base {
         else
             $acl_file=$config_dir.'/acl.default.php';
 
-        if(is_readable($acl_file)) {
-            $this->AUTH_ACL= file($acl_file);
+        if (is_readable($acl_file)) {
+            $this->cache = new Cache_text('acl');
+            $this->aux_cache = new Cache_text('aux_acl');
+            // merge all acl files
+            $cache = new Cache_text('settings', array('depth'=>0));
+            $acl_lines = $cache->fetch('acl');
+            if ($acl_lines === false) {
+                $params = array();
+                // save dependencies
+                $deps = array($acl_file);
+                $params['deps'] = &$deps;
+                // read ACL files
+                $acl_lines = $this->read_acl($acl_file, $params);
+                $cache->update('acl', $acl_lines, 0, $params);
+
+                // parse ACL file
+                list($pages, $rules, $group) = $this->parse_acl($acl_lines);
+                // save group definitions
+                $cache->update('acl_group', $group);
+
+                // save individual acl of all pages
+                foreach ($pages as $pagename=>$acl) {
+                    $this->cache->update($pagename, $acl, 0, $params);
+                }
+                // save default ACL
+                $cache->update('acl_default', $rules['*']);
+                unset($rules['*']);
+                // make all in one regex for all patthern
+                $tmp = array_keys($rules);
+                $rule = '('.implode(')|(', $tmp).')';
+
+                $vals = array_values($rules);
+                $vals['*'] = $rule;
+                $cache->update('acl_rules', $vals);
+            }
+
+            $this->AUTH_ACL = $acl_lines;
+            $this->default = $cache->fetch('acl_default');
+            $this->rules = $cache->fetch('acl_rules');
+            $this->rule = $this->rules['*'];
+            $this->group = $cache->fetch('acl_group');
         } else{
             $this->AUTH_ACL= array('*   @ALL    allow   *');
+            $this->default = array('@ALL'=>array('allow'=>array('*')));
+            $this->rules = null;
+            $this->rule = null;
+            $this->group = null;
         }
 
         $wikimasters=isset($DB->wikimasters) ? $DB->wikimasters:array();
@@ -139,9 +182,405 @@ class Security_ACL extends Security_base {
         return $groups;
     }
 
+    // prepare and read all ACL files
+    function read_acl($filename, $params = array()) {
+        $fp = fopen($filename, 'r');
+        if (!is_resource($fp)) return false;
+
+        $rules = array();
+        $acls = array();
+
+        $group = '@ALL'; // default group
+        while (($line = fgets($fp, 8192)) != false) {
+            $line = rtrim($line);
+            if (!isset($line[0])) continue;
+            if ($line[0] == '#') continue;
+            $line = preg_replace('@\s*#.*$@', '', $line); // trim out # comment
+
+            if ($line[0] == '@') {
+                // group
+                $acls[] = $line;
+                continue;
+            } else if (preg_match('/^((?:Access|Include)File)\s+(.*)$/', $line, $m)) {
+                // include file
+                if (!file_exists($m[2]))
+                    $m[2] = dirname($filename).'/'.$m[2];
+                if (!file_exists($m[2])) {
+                    trigger_error(sprintf(_("File not found %s"), $m[2]));
+                    continue;
+                }
+                $readed = $this->read_acl($m[2], $params);
+                if ($readed !== false) {
+                    $deps = array($m[2]);
+                    $params['deps'] = array_merge($params['deps'], $deps);
+                    $acls[] = '# '.$m[2].' readed';
+                    array_splice($acls, count($acls), 0, $readed);
+                }
+                continue;
+            } else if (preg_match('/^(?:Access)(Rule|Group|List|ListFile)\s+(.*)$/', $line, $m)) {
+                $type = strtolower($m[1]);
+
+                $lists = array();
+                if ($type == 'rule' && preg_match('@^(allow|deny|protect)\s+(.*)$@', $m[2], $mm)) {
+                    $mm[2] = preg_replace('@\s*,\s*@', ',', $mm[2]);
+                    if (empty($mm[2]))
+                        $mm[2] = '*';
+
+                    if (empty($rules[$mm[1]]))
+                        $rules[$mm[1]] = array();
+
+                    $tmp = explode(',' , $mm[2]);
+                    $tmp = array_flip($tmp);
+                    if (count($tmp) > 1)
+                        unset($tmp['*']);
+                    $acts = array_keys($tmp);
+                    $merged = array_merge($rules[$mm[1]], $acts);
+                    $merged = array_unique($merged);
+                    sort($merged);
+                    $rules[$mm[1]] = $merged;
+                    continue;
+                } else if ($type == 'group') {
+                    $m[2] = preg_replace('@\s*,\s*@', ',', $m[2]);
+                    if ($m[2] == '*' || empty($m[2]))
+                        $m[2] = '@ALL';
+                    $group = $m[2];
+                    continue;
+                } else if ($type == 'list') {
+                    $m[2] = preg_replace('@\s*,\s*@', ',', $m[2]);
+                    if (empty($m[2]))
+                        $m[2] = '*';
+                    $lists = array($m[2]);
+                } else if ($type == 'listfile') {
+                    // include file
+                    if (!file_exists($m[2]))
+                        $m[2] = dirname($filename).'/'.$m[2];
+                    if (!file_exists($m[2])) {
+                        trigger_error(sprintf(_("File not found %s"), $m[2]));
+                        continue;
+                    }
+
+                    $lst = fopen($m[2], 'r');
+                    if (!is_resource($lst))
+                        continue;
+                    $lists = array();
+                    while (($l = fgets($lst, 1024)) !== false) {
+                        $l = rtrim($l);
+                        if (!isset($l[0])) continue;
+                        if ($l[0] == '#') continue;
+                        $l = preg_replace('@\s*#.*$@', '', $l); // trim out # comment
+                        $lists[] = $l;
+                    }
+                    fclose($lst);
+
+                    $deps = array($m[2]);
+                    $params['deps'] = array_merge($params['deps'], $deps);
+                }
+                if (empty($lists))
+                    continue;
+
+                if (!empty($rules)) {
+                    // save and reset $rules
+                    $denied = $rules['deny'];
+                    $allowed = $rules['allow'];
+                    $protected = $rules['protect'];
+                    $rules = array();
+                }
+
+                foreach ($lists as $item) {
+                    $prefix = $item."\t".$group."\t";
+                    if ($denied[0] == '*') {
+                        $acls[] = $prefix.'deny'."\t*";
+                        if (isset($allowed))
+                            $acls[] = $prefix.'allow'."\t".implode(',', $allowed);
+
+                        if (count($denied) > 1) {
+                            // already allowed but denied again
+                            $tmp = $denied;
+                            array_shift($tmp);
+                            $acls[] = $prefix.'deny'."\t".implode(',', $tmp);
+                        }
+                    } else if ($allowed[0] == '*') {
+                        $acls[] = $prefix.'allow'."\t*";
+                        if (isset($denied))
+                            $acls[] = $prefix.'deny'."\t".implode(',', $denied);
+
+                        if (count($allowed) > 1) {
+                            // already denied but allowed again
+                            $tmp = $allowed;
+                            array_shift($tmp);
+                            $acls[] = $prefix.'allow'."\t".implode(',', $tmp);
+                        }
+                    } else {
+                        if (isset($allowed))
+                            $acls[] = $prefix.'allow'."\t".implode(',', $allowed);
+                    }
+                    if (isset($protected))
+                        $acls[] = $prefix.'protect'."\t".implode(',', $protected);
+                }
+            } else {
+                $acls[] = $line;
+            }
+        }
+        fclose($fp);
+        return $acls;
+    }
+
+
+    function parse_acl($acl_lines) {
+        $pages = array();
+        $rules = array();
+        $group = array();
+        foreach ($acl_lines as $line) {
+            $line = preg_replace('/\s*#.*$/', '', $line); # delete comments
+            $line = rtrim($line);
+            if (!isset($line[0]))
+                continue;
+            if (in_array($line[0], array('@', '#'))) {
+                if ($line[0] == '@') {
+                    $group[] = $line;
+                }
+                continue;
+            }
+            $line = preg_replace('@\s+(allow|protect|deny)\s+@', "\t$1\t", $line);
+            if (!preg_match('/^(.+)\s+(.+)\s+(allow|protect|deny)\s+(.*)?$/', $line, $m))
+                continue;
+            // $m[1] : page name or page rule
+            // $m[2] : groups
+            // $m[3] : access type
+            // $m[4] : actions
+
+            if (empty($m[4]))
+                $m[4] = '*';
+            // make ACL info
+            // array('@ALL'=>array('deny'=>array('deletepage',...)));
+            $acl = array();
+            $acl[$m[2]] = array();
+            $acl[$m[2]][$m[3]] = explode(',', $m[4]);
+
+            $prules = get_csv(trim($m[1]));
+            // a regex or a simplified pattern like as
+            // HelpOn* -> HelpOn.*
+            // MoniWiki/* -> MoniWiki\/.*
+
+            foreach ($prules as $prule) {
+                $pre = '^';
+                $post = '$';
+                if ($prule[0] == '^' || substr($prule, -1) == '$' ||
+                        strpos($prule, '*') !== false) {
+                    // is it a regex or a simplified pattern ?
+                    if ($prule != '*') {
+                        // convert simple pattern to regex
+                        // Hello* => ^Hell.*$
+                        // *Hello* => ^.*Hell.*$
+                        // *Hello$ => ^.*Hello$
+                        $pre = '^';
+                        $post = '$';
+                        if ($prule[0] == '^') $pre = '';
+                        if (substr($prule, -1) == '$') $post = '';
+                        $tmp =
+                            preg_replace(array('@(?:\.)?\*@', "@(?<!\\\\)/@"), array('.*', '\/'), $prule);
+                        $prule = $pre.$tmp.$post;
+                    }
+                    // page rule
+                    $entry = &$rules[$prule];
+                    $this->merge_acl($entry, $acl);
+                } else {
+                    // normal page names
+                    $entry = &$pages[$prule];
+                    $this->merge_acl($entry, $acl);
+                }
+            }
+        }
+        return array($pages, $rules, $group);
+    }
+
+    function merge_acl(&$acls, $acl) {
+        if (empty($acls)) {
+            $acls = $acl;
+            return;
+        }
+
+        // merge ACL array
+        foreach ($acl as $g=>$entry) {
+            // check ttl
+            if (isset($entry['ttl'])) {
+                $ttl = $entry['ttl'];
+                $mtime = $entry['mtime'];
+                $ttl = $ttl - (time() - $mtime);
+                // expired entry. ignore
+                if ($ttl <= 0)
+                    continue;
+            }
+            foreach ($entry as $k=>$v) {
+                if (!is_array($v)) {
+                    // ttl, mtime etc.
+                    $acls[$g][$k] = $v;
+                    continue;
+                }
+
+                // check '*' available
+                $a = $acls[$g][$k][0];
+                if ($a == '*') {
+                    // fix for the following cases
+                    // deny *
+                    // allow a,b,c
+                    // deny a
+                    if ($k == 'deny') {
+                        $acls[$g]['allow'] = array_diff($acls[$g]['allow'], $v);
+                    } else if ($k == 'allow') {
+                        $acls[$g]['deny'] = array_diff($acls[$g]['deny'], $v);
+                    } else {
+                        trigger_error(_("Parse error"));
+                    }
+                } else {
+                    $tmp = array_merge((array)$acls[$g][$k], $v);
+                    $acls[$g][$k] = array_unique($tmp);
+                }
+            }
+        }
+    }
+
+    function get_page_acl($pagename, $params = array()) {
+        $acl = $this->cache->fetch($pagename);
+        $aux_acl = $this->aux_cache->fetch($pagename, 0, $params);
+        if ($aux_acl === false) {
+            return $acl;
+        }
+        $this->merge_acl($acl, $aux_acl);
+
+        return $acl;
+    }
+
+    function add_page_acl($pagename, $acl, $params = array()) {
+        // set TTL
+        $ttl = 0;
+        if (!empty($params['ttl'])) {
+            $ttl = $params['ttl'];
+        }
+        if ($acl == null) {
+            // delete all aux acls
+            $this->aux_cache->remove($pagename);
+        } else {
+            $retval = array();
+            $ret = array('retval'=>&$retval);
+            // get current acl
+            $acls = $this->aux_cache->fetch($pagename, 0, $ret);
+            if ($acls !== false && $ttl == 0) {
+                // update TTL
+                $ttl = $retval['ttl'] - (time() - $retval['mtime']);
+            }
+
+            if (is_array($acl)) {
+                // remove ACL entry selectively
+                foreach ($acl as $g=>$v) {
+                    if (isset($acls[$g]) && $v == null) {
+                        unset($acls[$g]);
+                        unset($acl[$g]);
+                    }
+                }
+            }
+            // merge acl
+            if (!empty($acl))
+                $this->merge_acl($acls, $acl);
+            if (!empty($acls))
+                $this->aux_cache->update($pagename, $acls, $ttl);
+            else
+                $this->aux_cache->remove($pagename);
+        }
+    }
 
     function get_acl($action='read',&$options) {
-        if (in_array($options['id'],$this->allowed_users)) return 1;
+        if (in_array($options['id'],$this->allowed_users)) return true;
+        global $DBInfo;
+
+        $pagename = $options['page'];
+        $user= $options['id'];
+
+        $groups = $this->get_acl_group($user);
+        // check groups in the user information.
+        $u = &$DBInfo->user;
+        if (!empty($u->groups)) {
+            $groups = array_merge($groups, $u->groups);
+        }
+        $groups[] = '@ALL';
+        $groups[] = $user;
+        $allow = array();
+        $deny = array();
+        $protect = array();
+
+        $gpriority = $this->gpriority;
+
+        // init acl
+        $acls = array();
+        // get default acl
+        $acls['*'] = $this->default;
+
+        // get page acl
+        if (($acl = $this->get_page_acl($pagename)) !== false) {
+            $acls[$pagename] = $acl;
+        } else if (preg_match('/'.$this->rule.'/', $pagename, $m)) {
+            for ($i = 1; $i < sizeof($m); $i++) {
+                if (!empty($this->rules[$i])) {
+                    $acls[''] = $this->rules[$i]; // regex pattern
+                    break;
+                }
+            }
+        }
+
+        foreach ($acls as $key=>$acl) {
+            $found = 0; // default ACL
+            if ($key == '') // regex pattern
+                $found = 5;
+            else if ($key != '*') // exact matched page
+                $found = 10;
+
+            foreach ($groups as $group) {
+                if (!isset($acl[$group]))
+                    continue;
+
+                $pri = 0;
+                if ($group == $user) $pri = 4;
+                else if ($group == '@ALL') $pri = 1;
+                else $pri = !empty($gpriority[$group]) ? $gpriority[$group] : 2;
+                $pri+= $found;
+
+                $entry = $acl[$group];
+                $types = array_keys($entry);
+
+                foreach ($types as $type) {
+                    $acts = $entry[$type];
+                    $tmp = array_flip($acts);
+                    foreach ($acts as $act) {
+                        if ($type == 'allow') {
+                            if (isset($allow[$act]) and $allow[$act] > $pri)
+                                unset($tmp[$act]);
+                            else
+                                $tmp[$act] = $pri;
+                            if (isset($deny[$act]) and $deny[$act] <= $pri)
+                                unset($deny[$act]);
+                        } else if ($type == 'deny') {
+                            if (isset($deny[$act]) and $deny[$act] > $pri)
+                                unset($tmp[$act]);
+                            else
+                                $tmp[$act] = $pri;
+                            if (isset($allow[$act]) and $allow[$act] <= $pri)
+                                unset($allow[$act]);
+                        }
+                    }
+                    ${$type} = array_merge(${$type}, $tmp);
+                }
+            }
+        }
+        $protect = array_keys($protect);
+        $this->_acl_ok = 1;
+        $this->_allowed = $allow;
+        $this->_denied = $deny;
+        $this->_protected = $protect;
+        return array($allow, $deny, $protect);
+    }
+
+    function get_acl_raw($action='read',&$options) {
+        if (in_array($options['id'],$this->allowed_users)) return true;
         global $DBInfo;
 
         $pg=$options['page'];
