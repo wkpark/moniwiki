@@ -6165,6 +6165,7 @@ function wiki_main($options) {
 
         echo "<hr />\n";
         $options['linkto']="?action=edit&amp;template=";
+        $options['limit'] = -1;
         $tmpls= macro_TitleSearch($formatter,$DBInfo->template_regex,$options);
         if ($tmpls) {
           echo sprintf(_("%s or alternativly, use one of these templates:\n"),$button);
