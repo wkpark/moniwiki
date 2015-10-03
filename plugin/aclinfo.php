@@ -50,14 +50,19 @@ function do_aclinfo($formatter,$options) {
                 foreach ($types as $type=>$v) {
                     if (!is_array($v))
                         continue;
+                    if (!isset($acls[$g]))
+                        $acls[$g] = array();
 
-                    $acls[$retval['id']] = $g."\t".$type."\t".implode(',', $v);
+                    $acls[$g][$retval['id']] = $g."\t".$type."\t".implode(',', $v);
                 }
             }
         }
-        ksort($acls);
-        foreach ($acls as $id=>$acl) {
-            echo $id,"\t",$acl,"\n";
+
+        foreach ($acls as $g=>$acl) {
+            ksort($acl);
+            foreach ($acl as $id=>$entry) {
+                echo $id,"\t",$entry,"\n";
+            }
         }
 
         return;
