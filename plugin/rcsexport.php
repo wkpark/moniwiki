@@ -26,6 +26,15 @@ function do_rcsexport($formatter,$options) {
         header("Status: 404 Not found");
         echo "Page not found";
     } else if (method_exists($version,'export')) {
+        if (!empty($options['raw']) &&
+                !empty($DBInfo->owners) && in_array($options['id'], $DBInfo->owners)) {
+
+            $fn = preg_replace('/[:\\x5c\\/{?]/', '_', $options['page']);
+            $fname = 'filename*='.$DBInfo->charset."''".rawurlencode($fn).'';
+            header('Content-Disposition: attachment; '.$fname);
+            echo $version->export($options['page']);
+            return;
+        }
         echo '#title '.$formatter->page->name."\n";
         echo '#charset '.strtoupper($DBInfo->charset)."\n";
         echo '#encrypt base64'."\n";
