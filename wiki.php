@@ -5771,8 +5771,8 @@ function init_requests(&$options) {
     } else if ((is_mobile() or !empty($DBInfo->force_mobile))) {
       if (!empty($DBInfo->mobile_theme))
         $theme = $DBInfo->mobile_theme;
-      $DBInfo->menu = !empty($DBInfo->mobile_menu) ? $DBInfo->mobile_menu :
-          array('FrontPage'=>1, 'RecentChanges'=>2);
+      if (!empty($DBInfo->mobile_menu))
+        $DBInfo->menu = $DBInfo->mobile_menu;
       $DBInfo->use_wikiwyg = 0; # disable wikiwyg
       $DBInfo->use_sectionedit = 0; # disable section edit
     } else if ($DBInfo->theme_css) {
