@@ -1847,6 +1847,8 @@ class Formatter {
       $this->fetch_action = $this->link_url('', '?action=fetch&amp;url=');
     else
       $this->fetch_action = $DBInfo->fetch_action;
+    // call externalimage macro for these external images
+    $this->external_image_regex = !empty($DBInfo->external_image_regex) ? $DBInfo->external_image_regex : 0;
 
     // use thumbnail by default
     $this->use_thumb_by_default = !empty($DBInfo->use_thumb_by_default) ? $DBInfo->use_thumb_by_default : 0;
@@ -2418,6 +2420,11 @@ class Formatter {
             $info = '';
             // check internal links and fetch image
             if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url)) {
+              // FIXME call externalimage macro for these external images
+              if (!empty($this->external_image_regex) and preg_match('@'.$this->external_image_regex.'@', $url)) {
+                return $this->macro_repl('ExternalImage', $url, array('class'=>$cls, 'attr'=>$eattr));
+              }
+
               $url = $this->fetch_action. str_replace(array('&', '?'), array('%26', '%3f'), $url);
               $size = '';
               if (!empty($this->fetch_imagesize))
@@ -2478,6 +2485,11 @@ class Formatter {
           $info = '';
           // check internal images
           if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url)) {
+            // FIXME call externalimage macro for these external images
+            if (!empty($this->external_image_regex) and preg_match('@'.$this->external_image_regex.'@', $url)) {
+              return $this->macro_repl('ExternalImage', $url, array('class'=>$cls, 'attr'=>$attr));
+            }
+
             $fetch_url = $this->fetch_action.
                 str_replace(array('&', '?'), array('%26', '%3f'), $url);
 

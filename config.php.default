@@ -354,6 +354,7 @@ $flashupload='swfupload';
 #$delayindex=60*60*24*5 # delayed indexing
 $mobile_agents='android|iphone'; # mobile agents
 #$fetch_imagefilesize=1; # fetch imagefile sizes for mobile wikis
+#$external_image_regex='(https?://upload\.wikimedia\.org/wikipedia/commons/.*\.(?:jpe?g|png|gif)$)'; # call ExternalImage macro for these sites
 #$security_class_robot='robot';
 #$url_encodings='euc-kr,uhc'; # autogoto option: search invalid urls with different encodings
 #$use_scrap=1; # use scrap
