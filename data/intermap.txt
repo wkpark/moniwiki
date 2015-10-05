@@ -5,7 +5,7 @@ MeatBall http://www.usemod.com/cgi-bin/mb.pl?
 MoinMoin https://moinmo.in/
 UseMod http://www.usemod.com/cgi-bin/wiki.pl?
 TWiki http://twiki.org/cgi-bin/view/
-WikiPedia http://en.wikipedia.org/wiki/
+WikiPedia https://en.wikipedia.org/wiki/
 ZWiki http://www.zwiki.org/
 FoxWiki http://fox.wikis.com/wc.dll?Wiki~
 AndStuff http://andstuff.org/wiki.php?
@@ -14,7 +14,6 @@ Unreal http://wiki.beyondunreal.com/wiki/
 # MetaWikis
 Google http://www.google.com/search?q=
 GoogleGroups http://groups.google.com/groups?q=
-KnowHow http://www2.iro.umontreal.ca/~paquetse/cgi-bin/wiki.cgi?
 Bzla http://bugzilla.gnome.org/show_bug.cgi?id=
 BugZilla http://bugzilla.gnome.org/show_bug.cgi?id=
 Foldoc http://www.foldoc.org/foldoc/foldoc.cgi?
