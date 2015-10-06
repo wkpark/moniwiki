@@ -6054,7 +6054,9 @@ function wiki_main($options) {
   $formatter->popup=!empty($popup) ? $popup : '';
   $formatter->tz_offset=$options['tz_offset'];
 
-  while (!empty($ruleset)) {
+  // check blocklist/whitelist for block_actions
+  $act = strtolower($action);
+  while (!empty($DBInfo->block_actions) && !empty($ruleset) && in_array($act, $DBInfo->block_actions)) {
     require_once 'lib/checkip.php';
 
     // check whitelist
@@ -6063,11 +6065,20 @@ function wiki_main($options) {
     }
 
     // check blacklist
-    if (isset($ruleset['blacklist']) && check_ip($ruleset['blacklist'], $_SERVER['REMOTE_ADDR'])) {
-      $options['title']=_("Your IP is in the black list");
+    if ((isset($ruleset['blacklist']) &&
+        check_ip($ruleset['blacklist'], $_SERVER['REMOTE_ADDR'])) ||
+        (isset($ruleset['blacklist.ranges']) &&
+        search_network($ruleset['blacklist.ranges'], $_SERVER['REMOTE_ADDR'])))
+    {
+      $options['notice']=_("Your IP is in the black list");
       $options['msg']=_("Please contact WikiMasters");
-      do_invalid($formatter,$options);
-      return false;
+      $options['msgtype'] = 'warn';
+
+      if (!empty($DBInfo->edit_actions) and in_array($act, $DBInfo->edit_actions))
+        $options['action'] = $action = 'edit';
+      else if ($act != 'edit')
+        $options['action'] = $action = 'show';
+      break;
     }
 
     // check kiwirian

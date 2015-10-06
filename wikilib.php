@@ -1263,6 +1263,18 @@ function load_ruleset($ruleset_file) {
     );
 
     $ruleset = parse_ruleset($ruleset_file, $validator, $deps);
+
+    // somewhat bigger blacklist ?
+    if (isset($ruleset['blacklist']) && count($ruleset['blacklist']) > 50) {
+        require_once (dirname(__FILE__).'/lib/checkip.php');
+
+        $ranges = make_ip_ranges($ruleset['blacklist']);
+        // unset blacklist array
+        unset($ruleset['blacklist']);
+        // set blacklist.ranges array
+        $ruleset['blacklist.ranges'] = $ranges;
+    }
+
     $settings->update('ruleset', $ruleset, 0, $deps);
   }
 
