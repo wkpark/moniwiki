@@ -403,7 +403,7 @@ class Security_ACL extends Security_base {
         // merge ACL array
         foreach ($acl as $g=>$entry) {
             // check ttl
-            if (isset($entry['ttl'])) {
+            if (!empty($entry['ttl'])) {
                 $ttl = $entry['ttl'];
                 $mtime = $entry['mtime'];
                 $ttl = $ttl - (time() - $mtime);
@@ -465,7 +465,7 @@ class Security_ACL extends Security_base {
             $ret = array('retval'=>&$retval);
             // get current acl
             $acls = $this->aux_cache->fetch($pagename, 0, $ret);
-            if ($acls !== false && $ttl == 0) {
+            if ($acls !== false && $ttl == 0 && !empty($retval['ttl'])) {
                 // update TTL
                 $ttl = $retval['ttl'] - (time() - $retval['mtime']);
             }
@@ -499,7 +499,7 @@ class Security_ACL extends Security_base {
         $groups = $this->get_acl_group($user);
         // check groups in the user information.
         $u = &$DBInfo->user;
-        if (!empty($u->groups)) {
+        if ($u->id == $options['id'] && !empty($u->groups)) {
             $groups = array_merge($groups, $u->groups);
         }
         $groups[] = '@ALL';
@@ -589,7 +589,7 @@ class Security_ACL extends Security_base {
         $groups = $this->get_acl_group($user);
         // check groups in the user information.
         $u = &$DBInfo->user;
-        if (!empty($u->groups)) {
+        if ($u->id == $options['id'] && !empty($u->groups)) {
             $groups = array_merge($groups, $u->groups);
         }
         $groups[]='@ALL';
