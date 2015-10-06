@@ -468,6 +468,13 @@ class Security_ACL extends Security_base {
                     if (isset($acls[$g]) && $v == null) {
                         unset($acls[$g]);
                         unset($acl[$g]);
+                    } else if ($acl[$g]['allow'] && $acls[$g]['deny']) {
+                        // acl entry found conflict each other.
+                        // just reset aux ACL
+                        unset($acls[$g]['deny']);
+                    } else if ($acl[$g]['deny'] && $acls[$g]['allow']) {
+                        // reset aux ACL
+                        unset($acls[$g]['allow']);
                     }
                 }
             }
