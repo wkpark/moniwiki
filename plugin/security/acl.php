@@ -140,18 +140,11 @@ class Security_ACL extends Security_base {
             $rules = array_keys($ip_info);
    
             foreach ($rules as $rule) {
-	        $ret = normalize_network($rule);
+	        $ret = normalize_network($rule, true);
                 if (!$ret) continue; // ignore
 
                 $network = $ret[0];
                 $netmask = $ret[1];
-                #print $network . '/' . $netmask . "\n";
-                if (is_int($netmask)) {
-                    $netmask = 0xffffffff << (32 - $netmask);
-                } else {
-                    $netmask = ip2long($netmask);
-                }
-                $network = ip2long($network);
 
                 if(($myip & $netmask) == ($network & $netmask)) {
                     $mygrp = array_merge($mygrp, $ip_info[$rule]);
