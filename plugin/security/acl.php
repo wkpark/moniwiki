@@ -157,16 +157,15 @@ class Security_ACL extends Security_base {
                 $groups = array_merge($groups, $mygrp);
         }
 
-        $matches = preg_grep('/^('.$group.')\s+(.*,?'.$user.',?.*)/', $this->AUTH_ACL);
+        $matches = preg_grep('/^('.$group.')\s+/', $this->AUTH_ACL);
         foreach ($matches as $line) {
             list($grp, $tmp) = preg_split('/\s+/', $line, 2);
             $tmp = preg_replace("/\s*,\s*/", ",", $tmp); // trim spaces: ' , ' => ','
             $tmp = rtrim($tmp);
             list($users, $priority) = preg_split("/\s+/", $tmp, 2);
-            if (!preg_match("/(^|.*,)$user(,.*|$)/", $users))
-                continue;
+            if (preg_match("/(^|.*,)$user(,.*|$)/", $users))
+                $groups[] = $grp;
 
-            $groups[] = $grp;
             if (!empty($priority) and is_numeric($priority)) $gpriority[$grp] = $priority; # set group priorities
             else $gpriority[$grp] = 2; # default group priority
         }
@@ -532,9 +531,10 @@ class Security_ACL extends Security_base {
                     continue;
 
                 $pri = 0;
-                if ($group == $user) $pri = 4;
-                else if ($group == '@ALL') $pri = 1;
-                else $pri = !empty($gpriority[$group]) ? $gpriority[$group] : 2;
+                if ($group == '@ALL') $pri = 1;
+                else if (!empty($gpriority[$group])) $pri = $gpriority[$group];
+                else if ($group == $user) $pri = 4;
+                else $pri = 2;
                 $pri+= $found;
 
                 $entry = $acl[$group];
