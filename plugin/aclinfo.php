@@ -273,7 +273,7 @@ function do_aclinfo($formatter,$options) {
         $ret = $DBInfo->security->get_acl('aclinfo', $params);
         if (is_array($ret)) {
             list($allowed, $denied, $protected) = $ret;
-            $title = '<h2>'._("ACL Information of a Anonymous user.").'</h2>';
+            $title = '<h2>'._("ACL Information of an Anonymous user.").'</h2>';
             show_acl_table($title, $allowed, $denied, $protected);
         }
     } else {
