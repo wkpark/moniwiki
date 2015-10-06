@@ -38,7 +38,7 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
 
         $value = $m[2];
         if (!empty($m[3]))
-            $width = $m[3];
+            $width = intval($m[3]);
     }
 
     $styles = array();
@@ -50,7 +50,8 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
         } else {
             continue;
         }
-        switch(strtolower($k)) {
+        $k = strtolower($k);
+        switch($k) {
             case 'width':
             case 'height':
                 if (preg_match('@^(\d+)(px|%)?$@', $v, $m)) {
@@ -71,7 +72,9 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
     }
 
     $common = new Cache_Text('wikicommons');
-    $key = $value.$width.$height;
+    $key = $value;
+    if (isset($width)) $key.= $width;
+    if (isset($height)) $key.= '.h'.$height;
     if (!empty($formatter->refresh) || ($images = $common->fetch($key)) === false) {
         $api_url = 'https://commons.wikimedia.org/w/api.php';
 
