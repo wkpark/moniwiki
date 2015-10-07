@@ -972,7 +972,14 @@ class WikiDB {
         $retval['del_chars'] = 0;
       }
 
-      $ret = $ver->_ci($filename,$options['log']);
+      $force = $is_new || $options['.force'];
+      // FIXME fix for revert+create cases for clear
+      if ($is_new && preg_match('@;;{REVERT}@', $options['log'])) {
+        $tmp = preg_replace('@;;{REVERT}:@', ';;{CREATE}{REVERT}:', $options['log']);
+        if ($tmp !== null)
+          $options['log'] = $tmp;
+      }
+      $ret = $ver->_ci($filename,$options['log'], $force);
       if ($ret == -1)
         $options['retval']['msg'] = _("Fail to save version information");
       chmod($filename,0666 & $this->umask);
