@@ -7,6 +7,68 @@
 //
 // $Id: aclinfo.php,v 1.2 2006/07/08 14:31:28 wkpark Exp $
 
+function macro_AclInfo($formatter, $value, $params = array()) {
+    global $DBInfo;
+
+    if (method_exists($DBInfo->security, 'get_page_acl')) {
+        $form = array();
+
+        $opts = array('page'=>$formatter->page->name, 'id'=>'im_not_anonymous');
+        $ret = $DBInfo->security->get_acl('savepage', $opts);
+        $user_allowed = false;
+        if (is_array($ret)) {
+            list($allowed, $denied, $protected) = $ret;
+            $user_allowed = $DBInfo->security->acl_check('savepage', $opts);
+        }
+        $form['@ALL'] = $user_allowed ? " checked='checked'" : '';
+
+        $opts = array('page'=>$formatter->page->name, 'id'=>'Anonymous');
+        $ret = $DBInfo->security->get_acl('savepage', $opts);
+        $anonymous_allowed = false;
+        if (is_array($ret)) {
+            list($allowed, $denied, $protected) = $ret;
+            $anonymous_allowed = $DBInfo->security->acl_check('savepage', $opts);
+        }
+        $form['Anonymous'] = $anonymous_allowed ? " checked='checked'" : '';
+
+        $u = $DBInfo->user;
+        if (!empty($DBInfo->aclinfo_member_group)) {
+            $g = $DBInfo->aclinfo_member_group;
+            $opts = array('page'=>$formatter->page->name, 'id'=>$g);
+            $ret = $DBInfo->security->get_acl('savepage', $opts);
+            $member_allowed = false;
+            if (is_array($ret)) {
+                list($allowed, $denied, $protected) = $ret;
+                $member_allowed = $DBInfo->security->acl_check('savepage', $opts);
+            } else if ($ret === true) {
+                $member_allowed = true;
+            }
+            $form['@Member'] = $member_allowed ? " checked='checked'" : '';
+            if (!in_array($u->id, $DBInfo->owners))
+                $form['@Member'].= ' disabled="disabled"';
+        }
+
+        if (isset($params['.call']))
+            return $form;
+
+        $str = array('Anonymous'=>'Anonymous User', '@ALL'=>'@ALL', '@Member'=>'Member User');
+
+        $out = '';
+        $out.= '<form method="POST" action="">';
+        $out.= '<table class="wiki"><tr>';
+        $btn = _("Change ACL Info.");
+
+        foreach ($form as $k=>$v) {
+            $out.= '<th><label><input type="checkbox"'.$v.' name="group[]" value="'.$k.'">'._($str[$k]).'</label></th>'."\n";
+        }
+        $out.= '<th><input type="submit" name="control" value="'.$btn.'" /></th></tr></table>';
+        $out.= '<input type="hidden" name="action" value="aclinfo"></form>'."\n";
+
+        return $out;
+    }
+    return '[[AclInfo]]';
+}
+
 function do_aclinfo($formatter,$options) {
     global $DBInfo;
 
@@ -22,7 +84,10 @@ function do_aclinfo($formatter,$options) {
     }
 
     $u = $DBInfo->user;
-    if ($options['get'] > 0 && in_array($u->id, $DBInfo->owners)) {
+    if (isset($options['get']) && $options['get'] > 0) {
+        if (!in_array($u->id, $DBInfo->owners))
+            $options['get'] = 1;
+
         header('Content-Type: text/plain');
         if ($options['get'] == 1)
             $ac = new Cache_Text('aux_acl');
@@ -38,6 +103,7 @@ function do_aclinfo($formatter,$options) {
 
         $acls = array();
 
+        $cur = time();
         foreach ($files as $f) {
             // low level _fetch(), _remove()
             $info = $ac->_fetch($f, 0, $ret);
@@ -46,6 +112,11 @@ function do_aclinfo($formatter,$options) {
                 continue;
             }
 
+            $ttl = '';
+            if (!empty($retval['ttl'])) {
+                $ttl = $retval['ttl'] - ($cur - $retval['mtime']);
+                $ttl = "\t".$ttl;
+            }
             foreach ($info as $g=>$types) {
                 foreach ($types as $type=>$v) {
                     if (!is_array($v))
@@ -53,7 +124,7 @@ function do_aclinfo($formatter,$options) {
                     if (!isset($acls[$g]))
                         $acls[$g] = array();
 
-                    $acls[$g][$retval['id']] = $g."\t".$type."\t".implode(',', $v);
+                    $acls[$g][$retval['id']] = $g."\t".$type."\t".implode(',', $v).$ttl;
                 }
             }
         }
@@ -81,6 +152,10 @@ function do_aclinfo($formatter,$options) {
                     $groups[] = $m[1];
                 }
             }
+            if (!empty($u->groups)) {
+                $groups = array_merge($groups, $u->groups);
+                $groups = array_unique($groups);
+            }
 
             // editable actions
             $actions = array('savepage', 'deletepage', 'info', 'diff', 'recall', 'revert');
@@ -103,55 +178,143 @@ function do_aclinfo($formatter,$options) {
                 }
             } else if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST)) {
                 $msgs = array();
-                $page = $options['value'];
+                $page = !empty($options['value']) ? $options['value'] : $formatter->page->name;
+
                 $group = $options['group'];
                 $type = $options['type'];
                 $acts = (array)$options['act'];
                 $ttl = (int)$options['ttl'];
-                // check
-                if (!in_array($group, $groups)) {
-                    $msgs[] = _("Invalid ACL group name");
+
+                // Simple ACL mode.
+                if (isset($options['control'])) {
+                    if (empty($group))
+                        $group = array();
+
+                    $options['.call'] = 1;
+                    $cur = macro_AclInfo($formatter, '', $options);
+
+                    $changed_groups = array_flip($group);
+                    // only owners can change member's permissions
+                    if (!in_array($u->id, $DBInfo->owners)) {
+                        unset($cur['@Member']);
+                        unset($changed_groups['@Member']);
+                    }
+
+                    foreach ($cur as $g=>$v) {
+                        if (isset($changed_groups[$g])) {
+                            if ($v)
+                                // already enabled. no need to allow again
+                                unset($changed_groups[$g]);
+                            else
+                                $changed_groups[$g] = 'allow';
+                        } else {
+                            // denied
+                            if ($v)
+                                $changed_groups[$g] = 'deny';
+                        }
+                    }
                 }
 
-                if (empty($type)) {
-                    $type = 'deny';
-                }
-                if (!in_array($u->id, $DBInfo->owners)) {
-                    $type = 'deny';
-                    if (in_array($group, array('@ALL', '@Guest', '@User')))
-                        $group = null;
-                }
+                if (!empty($changed_groups)) {
+                    $selected_groups = array();
+                    foreach ($changed_groups as $g=>$v) {
+                        if ($g == '@Member') {
+                            if (!empty($DBInfo->aclinfo_member_group))
+                                $g = $DBInfo->aclinfo_member_group;
+                            else
+                                continue;
 
-                if (!in_array($type, array('deny', 'allow'))) {
-                    $msgs[] = _("Invalid ACL type");
-                }
-                if (empty($group)) {
-                    $msgs[] = _("Empty ACL group");
-                }
-                if (empty($ttl)) {
-                    $msgs[] = _("Empty TTL");
-                }
+                            // only owners can change permissions
+                            if (in_array($u->id, $DBInfo->owners))
+                                $selected_groups[$g] = $v;
+                        } else if ($g == 'Anonymous') {
+                            $selected_groups['@Guest'] = $v;
+                        } else if ($g == '@ALL') {
+                            $selected_groups[$g] = $v;
+                        } else if (in_array($g, $groups)) {
+                            if (in_array($g, $u->groups))
+                                $selected_groups[$g] = $v;
+                        }
+                    }
 
-                $acts = array_map('strtolower', $acts);
-                $acl_actions = array_map('strtolower', $actions);
-                // check actions
-                $tmp = array();
-                foreach ($acts as $act) {
-                    if (in_array($act, $acl_actions))
-                        $tmp[] = $act;
-                }
-                $acts = $tmp;
-
-                if (!empty($msgs)) {
-                    $options['title'] = implode(', ', $msgs);
-                } else if (!empty($page) && !empty($group) && !empty($type) && !empty($acts) && !empty($ttl)) {
-                    if ($ttl <= 365)
-                        $ttl = $ttl * 60 * 60 * 24;
-                    $param = array('ttl'=>$ttl);
-                    $acl = array($group=>array($type=>$acts, 'ttl'=>$ttl, 'mtime'=>time()));
-                    $DBInfo->security->add_page_acl($page, $acl, $param);
+                    $post_data = array();
+                    foreach ($selected_groups as $g=>$v) {
+                        $d = array();
+                        $d['group'] = $g;
+                        $d['type'] = $v;
+                        $d['act'] = $actions; // default actions
+                        $d['ttl'] = in_array($u->id, $DBInfo->owners) ? 0 : 3600; // default TTL
+                        $post_data[] = $d;
+                    }
                 } else {
-                    $options['title'] = _("Fail to add ACL");
+                    $post_data = array();
+                    $d = array();
+                    $d['group'] = $group;
+                    $d['type'] = $type;
+                    $d['act'] = $acts;
+                    $d['ttl'] = $ttl;
+                    $post_data[] = $d;
+                }
+
+                foreach ($post_data as $d) {
+                    $group = $d['group'];
+                    $type = $d['type'];
+                    $acts = $d['act'];
+                    $ttl = $d['ttl'];
+
+                    // check
+                    if (!in_array($group, $groups)) {
+                        $msgs[] = _("Invalid ACL group name");
+                    }
+
+                    if (empty($type)) {
+                        $type = 'deny';
+                    }
+                    if (!in_array($u->id, $DBInfo->owners)) {
+                        if (!in_array($type, array('deny', 'allow')))
+                            $type = 'deny';
+                        if (!in_array($group, array('@ALL', '@Guest', '@User')))
+                            $group = null;
+                    }
+
+                    if (!in_array($type, array('deny', 'allow'))) {
+                        $msgs[] = _("Invalid ACL type");
+                    }
+                    if (empty($group)) {
+                        $msgs[] = _("Empty ACL group");
+                    }
+
+                    $acts = array_map('strtolower', $acts);
+                    $acl_actions = array_map('strtolower', $actions);
+                    // check actions
+                    $tmp = array();
+                    foreach ($acts as $act) {
+                        if (in_array($act, $acl_actions))
+                            $tmp[] = $act;
+                    }
+                    $acts = $tmp;
+
+                    if (!empty($msgs)) {
+                        break;
+                    } else if (!empty($page) && !empty($group) && !empty($type) && !empty($acts)) {
+                        if ($ttl <= 365)
+                            $ttl = $ttl * 60 * 60 * 24;
+                        $param = array('ttl'=>$ttl);
+                        $acl = array($group=>array($type=>$acts,
+                            'ttl'=>$ttl, 'mtime'=>time(), '.editor'=>$u->id));
+                        $DBInfo->security->add_page_acl($page, $acl, $param);
+                    } else {
+                        $options['title'] = _("Fail to add ACL");
+                    }
+                }
+                if (!empty($msgs)) {
+                    $all_msg = implode(', ', $msgs);
+                    if ($options['title'])
+                        $options['title'].= ': '.$all_msg;
+                    else
+                        $options['title'] = $all_msg;
+                } else {
+                    $options['title'] = _("ACL entries added!");
                 }
             }
 
@@ -163,16 +326,17 @@ function do_aclinfo($formatter,$options) {
             if ($acl !== false) {
                 $form_header = $form_footer = '';
                 $form_th = '';
-                if (!empty($retval['ttl'])) {
+                if (isset($retval['ttl'])) {
                     $form_header = '<form method="POST"><input type="hidden" name="action" value="aclinfo" />';
                     $form_header.= '<input type="hidden" name="value" value="'._html_escape($options['page']).'">';
                     $form_footer = '</form>';
-                    $form_th = '<th>'._("Control").'</th>';
+                    $form_th = '<th>'._("Control").'</th><th>'._("Last-modified By").'</th>';
                 }
                 echo $form_header;
                 echo '<table class="wiki"><tr><th style="white-space:nowrap">',_("ACL Group"),"</th><th>",
                      _("Type"),"</th><th>",_("Actions"),"</th>",$form_th,"</tr>\n";
                 foreach ($acl as $group=>$entry) {
+                    $editor = $entry['.editor'];
                     $ttl_time = '';
                     if (!empty($entry['ttl'])) {
                         $ttl = $entry['ttl'];
@@ -192,6 +356,8 @@ function do_aclinfo($formatter,$options) {
                             $ttl_time = $d.' '._("days").' ';
                         else
                             $ttl_time = sprintf("%02d:%02d:%02d", $h, $m, $s);
+                    } else if (isset($entry['ttl'])) {
+                        $ttl_time = '<span></span>';
                     }
 
                     foreach ($entry as $type=>$v) {
@@ -203,6 +369,7 @@ function do_aclinfo($formatter,$options) {
                                 echo '<td>',$ttl_time,' <input type="submit" name="remove['.$group.']" value="Delete" /></td>';
                             else
                                 echo '<td></td>';
+                            echo '<td>'.sprintf(_("%s"), $editor).'</td>';
                         }
                         echo "</tr>\n";
                     }
@@ -237,14 +404,11 @@ function do_aclinfo($formatter,$options) {
             }
             $ttl_select.= '</select>'."\n";
 
-            if (in_array($u->id, $DBInfo->owners)) {
-                $type_select = '<select name="type"><option>-- '._("Type").' --</option>';
-                $type_select.= '<option value="allow">allow</option>';
-                $type_select.= '<option value="deny" selected="selected">deny</option>';
-                $type_select.= '</select>';
-            } else {
-                $type_select = '<input type="hidden" name="type" value="deny" />deny';
-            }
+            $type_select = '<select name="type"><option>-- '._("Type").' --</option>';
+            $type_select.= '<option value="allow">allow</option>';
+            $type_select.= '<option value="deny" selected="selected">deny</option>';
+            $type_select.= '</select>';
+            // $type_select = '<input type="hidden" name="type" value="deny" />deny';
 
             $action_list = '';
             foreach ($actions as $act) {
