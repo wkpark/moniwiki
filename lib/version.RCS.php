@@ -315,9 +315,20 @@ class Version_RCS {
     return 0;
   }
 
-  function export($pagename) {
+  function export($pagename, $limit = 0) {
     $keyname=$this->DB->_getPageKey($pagename);
     $fname=$this->DB->text_dir."/RCS/$keyname,v";
+    if ($limit > 0) {
+      require_once('rcslite.php');
+      $a = new RcsLite('RCS', $DB->rcs_user);
+      $a->_process($fname, $limit);
+      end($a->_log);
+      $rev = key($a->_log);
+      // confirm next version is empty
+      $a->_next[$rev] = '';
+      return $a->_make_rcs();
+    }
+
     $fp=fopen($fname,'r');
     $out = '';
     if (is_resource($fp)) {

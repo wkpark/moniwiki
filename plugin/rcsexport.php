@@ -26,19 +26,33 @@ function do_rcsexport($formatter,$options) {
         header("Status: 404 Not found");
         echo "Page not found";
     } else if (method_exists($version,'export')) {
+        $limit = 0;
+        if (!empty($DBInfo->rcsexport_limit &&
+                !empty($DBInfo->owners) &&
+                !in_array($options['id'], $DBInfo->owners))) {
+            $limit = $DBInfo->rcsexport_limit;
+        }
+        if (isset($options['limit'])) {
+            $lim = intval($options['limit']);
+            if ($lim < $limit)
+                $limit = $lim;
+            else if ($limit == 0)
+                $limit = $lim;
+        }
+
         if (!empty($options['raw']) &&
                 !empty($DBInfo->owners) && in_array($options['id'], $DBInfo->owners)) {
 
             $fn = preg_replace('/[:\\x5c\\/{?]/', '_', $options['page']);
             $fname = 'filename*='.$DBInfo->charset."''".rawurlencode($fn).'';
             header('Content-Disposition: attachment; '.$fname);
-            echo $version->export($options['page']);
+            echo $version->export($options['page'], $limit);
             return;
         }
         echo '#title '.$formatter->page->name."\n";
         echo '#charset '.strtoupper($DBInfo->charset)."\n";
         echo '#encrypt base64'."\n";
-        echo chunk_split(base64_encode($version->export($options['page'])));
+        echo chunk_split(base64_encode($version->export($options['page'], $limit)));
     } else {
         echo 'Not supported';
     }

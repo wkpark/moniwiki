@@ -377,6 +377,7 @@ $use_local_translation=0; # automatic translation
 #$use_x_forwarded_for=0; # use X-Forwarded-For header information to log all pass-by addresses
 #$use_cloudeflare=0; # use CF_CONNECTION_IP to set the real remote IP address
 #$pages_limit=5000; # maximum number of pages to retrieve by default to reduce server load.
+#$rcsexport_limit=100; # limit maximum number of rcs revisions to rcsexport
 #$titlesearch_page_limit=100; # maximum number of pages to search titleindex
 #$default_delaytime= 60*60*24; # set the default delayed time for caching as 24 hours
 #$use_avatar='identicon'; # set avatar imgs based on user IP address for anonymous users. default: identicon
