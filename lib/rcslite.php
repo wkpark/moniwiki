@@ -41,6 +41,8 @@
 #    this needs fixing
 #  - cleaner dealing with errors/warnings
 
+define('RCSLITE_FORCE', 1);
+define('RCSLITE_QUICK', 2);
 Class RcsLite {
     var $rcs_dir='RCS';
     var $rcs_user='root';
@@ -135,9 +137,9 @@ Class RcsLite {
     }
     
     # Read in the whole RCS file
-    function _process($file='', $quick=0,$force=0)
+    function _process($file='', $limit = 0, $flag = 0)
     {
-        if( !empty($this->_where) && !$force) return;
+        if( !empty($this->_where) && !($flag & RCSLITE_FORCE)) return;
 
         if ($file) {
             $this->filename=$file;
@@ -171,6 +173,7 @@ Class RcsLite {
         $text = array();
         $next = array();
         $dnum = '';
+        $count = 0;
         while( $going ) {
             list($line, $string) = $this->_readTo( $fh, $term );
             if( is_null($line) ) break;
@@ -230,7 +233,7 @@ Class RcsLite {
                     if ($next[$num] == "") {
                         $where = 'desc';
                         $term = '@';
-                        if ($quick) {
+                        if (($flag & RCSLITE_QUICK)) {
                             break;
                         }
                     }
@@ -255,7 +258,8 @@ Class RcsLite {
                 if( preg_match('/text\s*$/', $line) ) {
                     $where = 'deltatext.log';
                     $text[$dnum] = $string;
-                    if( $dnum == 1 ) {
+                    $count++;
+                    if( $dnum == 1 || $limit > 0 && $count >= $limit) {
                         $where = 'done';
                         break;
                     }
