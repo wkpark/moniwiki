@@ -6492,6 +6492,14 @@ if (file_exists('config/site.local.php'))
 else if (isset($Config['site_local_php']) and file_exists($Config['site_local_php']))
   require_once($Config['site_local_php']);
 
+// override some $Config vars to control site specific options
+if (file_exists('config/config.'.$_SERVER['SERVER_NAME'].'.php')) {
+  $config_extra = _load_php_vars('config/config.'.$_SERVER['SERVER_NAME'].'.php');
+  foreach ($config_extra as $k=>$v) {
+    $Config[$k] = $v;
+  }
+}
+
 $options = array();
 if (class_exists('Timer')) {
   $timing = new Timer();
