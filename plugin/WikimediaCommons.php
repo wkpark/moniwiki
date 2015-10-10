@@ -118,7 +118,6 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
 
     if (empty($styles['width'])) {
         $styles['width'] = $image->imageinfo[0]->thumbwidth.'px';
-        $styles['height'] = $image->imageinfo[0]->thumbheight.'px';
     }
 
     $style = '';
