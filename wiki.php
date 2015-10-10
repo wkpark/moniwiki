@@ -6251,6 +6251,7 @@ function wiki_main($options) {
     if (isset($formatter->pi['#redirect'][0]))
       $formatter->pi['#nocache'] = 1;
 
+    $extra_out='';
     $options['pagelinks']=1;
     if (!empty($Config['cachetime']) and $Config['cachetime'] > 0 and empty($formatter->pi['#nocache'])) {
       $cache= new Cache_text('pages', array('ext'=>'html'));
@@ -6258,7 +6259,6 @@ function wiki_main($options) {
       $mtime=$cache->mtime($pagename);
       $now=time();
       $check=$now-$mtime;
-      $extra_out='';
       $_macros=null;
       if ($cache->mtime($pagename) < $formatter->page->mtime()) $formatter->refresh = 1; // force update
 
@@ -6310,12 +6310,23 @@ function wiki_main($options) {
           $mcache->remove($pagename);
         }
       }
-      echo $out,$extra_out;
       if ($options['id'] != 'Anonymous')
         $args['refresh']=1; // add refresh menu
     } else {
-      $formatter->send_page('',$options);
+      ob_start();
+      $formatter->send_page('', $options);
+      flush();
+      $out = ob_get_contents();
+      ob_end_clean();
     }
+
+    // fixup to use site specific thumbwidth
+    if (!empty($Config['site_thumb_width']) and
+        $Config['site_thumb_width'] != $DBInfo->thumb_width) {
+      $opts = array('thumb_width'=>$Config['site_thumb_width']);
+      $out = $formatter->postfilter_repl('imgs_for_mobile', $out, $opts);
+    }
+    echo $out,$extra_out;
 
     // automatically set #dynamic PI
     if (empty($formatter->pi['#dynamic']) and !empty($formatter->_dynamic_macros)) {
@@ -6492,12 +6503,10 @@ if (file_exists('config/site.local.php'))
 else if (isset($Config['site_local_php']) and file_exists($Config['site_local_php']))
   require_once($Config['site_local_php']);
 
+$config_extra = array();
 // override some $Config vars to control site specific options
 if (file_exists('config/config.'.$_SERVER['SERVER_NAME'].'.php')) {
   $config_extra = _load_php_vars('config/config.'.$_SERVER['SERVER_NAME'].'.php');
-  foreach ($config_extra as $k=>$v) {
-    $Config[$k] = $v;
-  }
 }
 
 $options = array();
@@ -6514,6 +6523,11 @@ if (!($conf = $ccache->fetch('config'))) {
   $ccache->update('config', $Config, 0, array('deps'=>array('config.php', 'lib/wikiconfig.php')));
 } else {
   $Config = &$conf;
+}
+
+// update $Config
+foreach ($config_extra as $k=>$v) {
+  $Config[$k] = $v;
 }
 
 $DBInfo= new WikiDB($Config);
