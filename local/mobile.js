@@ -204,10 +204,19 @@ function init_images() {
             a.appendChild(expand);
             img[i].parentNode.insertBefore(a, img[i].nextSibling);
             img[i].onload = function() {
-                if (this.naturalWidth && this.naturalWidth > 64) return;
+                /*
+                if (this.naturalWidth && this.naturalWidth > 128) return;
+                */
                 var anchor = this.nextSibling;
-                if (anchor && anchor.className.match(/zoom/))
-                    this.parentNode.removeChild(anchor);
+                if (anchor)
+                    var info = anchor.nextSibling;
+                if (this.height && this.height < 128) {
+                    if (anchor && anchor.className.match(/zoom/))
+                        this.parentNode.removeChild(anchor);
+                }
+                if (info && info.className.match(/info/) && info.offsetHeight > this.height / 2) {
+                    info.style.position = 'relative';
+                }
             };
         }
     }
