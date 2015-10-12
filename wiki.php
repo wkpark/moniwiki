@@ -6502,10 +6502,16 @@ if (file_exists('config/site.local.php'))
 else if (isset($Config['site_local_php']) and file_exists($Config['site_local_php']))
   require_once($Config['site_local_php']);
 
+$config_deps = array('config.php', 'lib/wikiconfig.php');
 $config_extra = array();
 // override some $Config vars to control site specific options
 if (file_exists('config/config.'.$_SERVER['SERVER_NAME'].'.php')) {
+  $config_deps[] = 'config/config.'.$_SERVER['SERVER_NAME'].'.php';
   $config_extra = _load_php_vars('config/config.'.$_SERVER['SERVER_NAME'].'.php');
+  // update $Config
+  foreach ($config_extra as $k=>$v) {
+    $Config[$k] = $v;
+  }
 }
 
 $options = array();
@@ -6516,17 +6522,13 @@ if (class_exists('Timer')) {
 }
 
 $ccache = new Cache_text('settings', array('depth'=>0));
-if (!($conf = $ccache->fetch('config'))) {
+$configkey = 'config.'.$_SERVER['SERVER_NAME'];
+if (!($conf = $ccache->fetch($configkey))) {
   require_once("lib/wikiconfig.php");
   $Config = wikiConfig($Config);
-  $ccache->update('config', $Config, 0, array('deps'=>array('config.php', 'lib/wikiconfig.php')));
+  $ccache->update($configkey, $Config, 0, array('deps'=>$config_deps));
 } else {
   $Config = &$conf;
-}
-
-// update $Config
-foreach ($config_extra as $k=>$v) {
-  $Config[$k] = $v;
 }
 
 $DBInfo= new WikiDB($Config);
