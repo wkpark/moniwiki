@@ -137,14 +137,17 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
         if (!empty($formatter->use_thumb_by_default))
             $image_url.= '&amp;thumbwidth='.$formatter->thumb_width;
     }
-    $description = _html_escape($description);
     $info = ($copyright == 'True' ? '&copy;' : '(&#596;) ').$author.($copyright == 'True' ? " ($license)" : '');
 
     $out = '<div class="externalImage">';
-    // FIXME image_wikimediacommons class name will be removed soon.
-    $out.= "<div class='image_wikimediacommons".$addClass."'><img src='$image_url'$style alt=\"$description\">";
-    $out.= "<span class='info'>".$info.' from '."<a href='$desc_url' target='_blank'>WikiMedia Commons</a></span>";
-    $out.= "</div></div>\n";
+    if (empty($addClass))
+        $cls = ' class="'.$addClass.'"';
+    $out.= "<div".$cls."><img src='$image_url'$style>";
+    $out.= "<div class='info'>".$info.' from '."<a href='$desc_url' target='_blank'>WikiMedia Commons</a></div>";
+    $out.= "</div>";
+    if (!empty($description))
+        $out.= '<div>'.$description.'</div>';
+    $out.= "</div>\n";
 
     return $out;
 }
