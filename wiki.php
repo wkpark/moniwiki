@@ -1377,7 +1377,12 @@ class WikiPage {
 #  }
 
   function mtime () {
-    return @filemtime($this->filename);
+    global $DBInfo;
+    $mtime = @filemtime($this->filename);
+    // HACK mtime to fake robot to recrawl and index again
+    if (!empty($DBInfo->force_site_recrawl))
+      $mtime+= $DBInfo->force_site_recrawl;
+    return $mtime;
   }
 
   function etag($params = array()) {
