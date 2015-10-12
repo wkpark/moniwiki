@@ -147,8 +147,8 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
     $out.= "<div".$cls."><img src='$image_url'$style>";
     $out.= "<div class='info'>".$info.' from '."<a href='$desc_url' target='_blank'>WikiMedia Commons</a></div>";
     $out.= "</div>";
-    if (!empty($description))
-        $out.= '<div>'.$description.'</div>';
+    if (!empty($DBInfo->wikimediacommons_use_description) && !empty($description))
+        $out.= '<div class="desc">'.$description.'</div>';
     $out.= "</div>\n";
 
     return $out;
