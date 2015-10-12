@@ -2443,8 +2443,14 @@ class Formatter {
                 $size = '('.$this->macro_repl('ImageFileSize', $url).')';
 
               // use thumbnails ?
-              if (!empty($this->use_thumb_by_default))
-                $url.= '&amp;thumbwidth='.$this->thumb_width;
+              if (!empty($this->use_thumb_by_default)) {
+                if (!empty($this->no_gif_thumbnails)) {
+                  if ($type != 'GIF')
+                    $url.= '&amp;thumbwidth='.$this->thumb_width;
+                } else {
+                  $url.= '&amp;thumbwidth='.$this->thumb_width;
+                }
+              }
 
               $info = "<div class='info'><a href='$url'><span>[$type "._("external image")."$size]</span></a></div>";
             }
