@@ -5,10 +5,14 @@
 //
 // $Id: SystemInfo.php,v 1.3 2005/08/26 09:58:52 wkpark Exp $
 
-function macro_SystemInfo($formatter='',$value='') {
+function macro_SystemInfo($formatter,$value = '') {
   global $_revision,$_release;
 
-  $version = preg_replace('/(\.\d+)$/', '.x', phpversion());
+  // hide some system information from version string
+  $version = phpversion();
+  if (empty($DBInfo->showall_systeminfo))
+  $version = preg_replace('@^([0-9.]+).*$@', '$1', $version);
+  $version = preg_replace('/(\.\d+)$/', '.x', $version);
   $tmp = explode(' ', php_uname());
   $uname = ' ('.$tmp[0].' '.$tmp[2].' '.$tmp[4].')';
   list($aversion,$dummy)=explode(" ",$_SERVER['SERVER_SOFTWARE'],2);
