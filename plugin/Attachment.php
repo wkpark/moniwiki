@@ -313,7 +313,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
       if (!empty($caption))
         $caption = '<div class="caption">'.$caption.' <span>['.$type.' '._("image").$info.']</span></div>';
       else
-        $caption = '<div><span>['.$type.' '._("image").$info.']</span></div>';
+        $caption = '<div class="info"><span>['.$type.' '._("image").$info.']</span></div>';
 
       if ($file_ok == 1 and !empty($use_thumb)) {
         $thumb_width = !empty($DBInfo->thumb_width) ? $DBInfo->thumb_width : 320;

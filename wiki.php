@@ -2441,7 +2441,7 @@ class Formatter {
               if (!empty($this->use_thumb_by_default))
                 $url.= '&amp;thumbwidth='.$this->thumb_width;
 
-              $info = "<div><a href='$url'><span>[$type "._("external image")."$size]</span></a></div>";
+              $info = "<div class='info'><a href='$url'><span>[$type "._("external image")."$size]</span></a></div>";
             }
 
             return "<div class='$cls$img_cls'><div><a class='externalLink named' href='$link' $attr $this->external_target title='$link'><img $eattr alt='$atext' src='$url' $img_attr/></a>".$info.'</div></div>';
@@ -2514,7 +2514,7 @@ class Formatter {
               }
             }
 
-            $info = "<div><a href='$url'><span>[$type "._("external image")."$size]</span></a></div>";
+            $info = "<div class='info'><a href='$url'><span>[$type "._("external image")."$size]</span></a></div>";
           }
 
           return "<div class=\"$cls\"><div><img alt='$link' $attr src='$fetch_url' />".$info.'</div></div>';
