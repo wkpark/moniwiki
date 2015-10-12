@@ -24,6 +24,8 @@ function do_wikimediacommons($formatter, $params = array()) {
 function macro_WikimediaCommons($formatter, $value, $params = array()) {
     global $DBInfo, $Config;
 
+    // FIXME urldecode for some cases
+    $value = urldecode($value);
     if (($p = strpos($value, ',')) !== false) {
         $arg = substr($value, $p + 1);
         $value = substr($value, 0, $p);
