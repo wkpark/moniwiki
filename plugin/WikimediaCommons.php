@@ -131,13 +131,15 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
     $author = $image->imageinfo[0]->extmetadata->Artist->value;
     $license = $image->imageinfo[0]->extmetadata->License->value;
 
-    if (!empty($formatter->fetch_images)) {
+    if (!empty($formatter->fetch_images) && !empty($image_url)) {
         $image_url = $formatter->fetch_action. str_replace(array('&', '?'), array('%26', '%3f'), $image_url);
         // use thumbnails ?
         if (!empty($formatter->use_thumb_by_default))
             $image_url.= '&amp;thumbwidth='.$formatter->thumb_width;
     }
-    $info = ($copyright == 'True' ? '&copy;' : '(&#596;) ').$author.($copyright == 'True' ? " ($license)" : '');
+    $copyrighted = $copyright == 'True';
+    $info = ($copyrighted ? '&copy;' : '(&#596;) ').$author;
+    if ($copyrighted) $info.= " ($license)";
 
     $out = '<div class="externalImage">';
     if (empty($addClass))
