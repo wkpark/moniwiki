@@ -5793,7 +5793,6 @@ function init_requests(&$options) {
       if (!empty($DBInfo->mobile_menu))
         $DBInfo->menu = $DBInfo->mobile_menu;
       $DBInfo->use_wikiwyg = 0; # disable wikiwyg
-      $DBInfo->use_sectionedit = 0; # disable section edit
     } else if ($DBInfo->theme_css) {
       $theme=$DBInfo->theme;
     }
