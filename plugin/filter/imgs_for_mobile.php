@@ -21,10 +21,15 @@ function postfilter_imgs_for_mobile($formatter, $value, $options = array()) {
 
     $chunks = preg_split('/(<[^>]+>)/', $value, -1, PREG_SPLIT_DELIM_CAPTURE);
     for ($i = 0, $sz = count($chunks); $i < $sz; $i++) {
-        if (substr($chunks[$i], 0, 5) == '<img ') {
-            $dumm = preg_replace_callback('@(<img .*)src=(\'|\")\/([^\\2]+)\.w(\d+)\.(png|jpe?g|gif)\\2@i',
-                    '_fix_thumbnails', $chunks[$i]);
-            $chunks[$i] = $dumm;
+        if (substr($chunks[$i], 0, 5) == '<img ' &&
+                preg_match('@action=(fetch|download)@', $chunks[$i])) {
+            if (strpos($chunks[$i], 'action=download') !== false) {
+                $dumm = preg_replace_callback('@(<img .*)src=(\'|\")\/([^\\2]+)\.w(\d+)\.(png|jpe?g|gif)\\2@i', '_fix_thumbnails', $chunks[$i]);
+                $chunks[$i] = $dumm;
+            } else {
+                $dumm = preg_replace('@thumbwidth=(\d+)@', 'thumbwidth='.$_img_thumb_width, $chunks[$i]);
+                $chunks[$i] = $dumm;
+            }
         }
     }
 
