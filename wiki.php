@@ -4754,12 +4754,19 @@ class Formatter {
       if ($pos > 0) $upper=substr($this->page->urlname,0,$pos);
       else if ($this->group) $upper=_urlencode(substr($this->page->name,strlen($this->group)));
       $keywords = '';
-      if (!empty($this->pi['#keywords']))
-        $keywords='<meta name="keywords" content="'._html_escape($this->pi['#keywords']).'" />'."\n";
-      else if (!empty($DBInfo->use_keywords)) {
-        $keywords=strip_tags($this->page->title);
-        $keywords=str_replace(" ",", ",$keywords); # XXX
-        $keywords=_html_escape($keywords);
+      if (!empty($this->pi['#keywords'])) {
+        $keywords = _html_escape($this->pi['#keywords']);
+        if (!empty($DBInfo->site_keywords))
+          $keywords.= ', '.$DBInfo->site_keywords;
+        $keywords='<meta name="keywords" content="'.$keywords.'" />'."\n";
+      } else if (!empty($DBInfo->use_keywords)) {
+        $keys = array();
+        $dummy = strip_tags($this->page->title);
+        $keys = explode(' ', $dummy);
+        $keys[] = $dummy;
+        $keywords = implode(', ', $keys);
+        if (!empty($DBInfo->site_keywords))
+          $keywords.= ', '.$DBInfo->site_keywords;
         $keywords="<meta name=\"keywords\" content=\"$keywords\" />\n";
       }
       # find sub pages
