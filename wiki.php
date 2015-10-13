@@ -5847,6 +5847,11 @@ if ($theme and ($DBInfo->theme_css or !$options['css_url']))
   $options['css_url']=(!empty($DBInfo->themeurl) ? $DBInfo->themeurl:$DBInfo->url_prefix)."/theme/$theme/css/default.css";
 
   $options['pagename']=get_pagename();
+  // check the validity of a given page name for UTF-8 case
+  if (strtolower($DBInfo->charset) == 'utf-8') {
+    if (!preg_match('//u', $options['pagename']))
+      $options['pagename'] = ''; // invalid pagename
+  }
 
   if ($user->id != 'Anonymous' and !empty($DBInfo->use_scrap)) {
     $pages = explode("\t",$user->info['scrapped_pages']);
