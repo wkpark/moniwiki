@@ -59,7 +59,7 @@ class WikiRSSParser {
              $time=strtotime(substr($date,0,19).$zone);
              $date = date($this->date_fmt, $time);
            }
-           echo '<li><span class="date">', $date, '</span> ', $title, '</li>',"\n";
+           echo '<li><span data-timestamp="'.$time.'" class="date">', $date, '</span> ', $title, '</li>',"\n";
 
            $this->title = "";
            $this->description = "";

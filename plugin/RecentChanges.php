@@ -697,7 +697,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
         $act = 'DELETE';
         $title = '<strike>'.$title.'</strike>';
       }
-      $list[$page_name] = array($title, $date, $act);
+      $list[$page_name] = array($title, $date, $ed_time, $act);
       continue;
     }
 
@@ -1197,7 +1197,7 @@ EOF;
   } else if (!empty($list)) {
     $out = '';
     foreach ($list as $k=>$v) {
-      $out.= '<li><span class="date">'.$v[1].'</span> '.$v[0].'</li>'."\n";
+      $out.= '<li><span data-timestamp="'.$v[2].'" class="date">'.$v[1].'</span> '.$v[0].'</li>'."\n";
     }
 
     //if (!empty($options['ajax'])) {
