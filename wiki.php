@@ -4786,7 +4786,9 @@ class Formatter {
         }
       }
 
-      if (empty($options['title'])) {
+      if (!empty($options['.title'])) {
+        $options['title'] = $options['.title'];
+      } else if (empty($options['title'])) {
         $options['title']=!empty($this->pi['#title']) ? $this->pi['#title']:
           $this->page->title;
         $options['title']=
@@ -4823,7 +4825,9 @@ JSHEAD;
         $site_title = $options['title'].' - '.$sitename;
 
       // set OpenGraph information
-      if (empty($DBInfo->no_ogp) && $this->page->exists()) {
+      $act = !empty($options['action']) ? strtolower($options['action']) : 'show';
+      $is_show = $act == 'show';
+      if ($is_show && empty($DBInfo->no_ogp) && $this->page->exists()) {
         $page_url = qualifiedUrl($this->link_url($this->page->urlname));
         $oc = new Cache_text('opengraph');
         if (($val = $oc->fetch($this->page->name, $this->page->mtime())) === false) {
@@ -4892,7 +4896,7 @@ JSHEAD;
         // for OpenGraph
         echo '<meta property="og:url" content="'. $page_url.'" />',"\n";
         echo '<meta property="og:site_name" content="'.$sitename.'" />',"\n";
-        echo '<meta property="og:title" content="'.$this->page->name.'" />',"\n";
+        echo '<meta property="og:title" content="'.$options['title'].'" />',"\n";
         echo '<meta property="og:type" content="article" />',"\n";
         if (!empty($val['image']))
           echo '<meta property="og:image" content="',$val['image'],'" />',"\n";
@@ -4904,7 +4908,7 @@ JSHEAD;
         if (!empty($DBInfo->twitter_id))
           echo '<meta name="twitter:site" content="',$DBInfo->twitter_id,'">',"\n";
         echo '<meta name="twitter:domain" content="',$sitename,'" />',"\n";
-        echo '<meta name="twitter:title" content="',$this->page->name,'">',"\n";
+        echo '<meta name="twitter:title" content="',$options['title'],'">',"\n";
         echo '<meta name="twitter:url" content="',$page_url,'">',"\n";
         if (!empty($val['description']))
           echo '<meta name="twitter:description" content="'.$val['description'].'" />',"\n";
@@ -4912,7 +4916,7 @@ JSHEAD;
           echo '<meta name="twitter:image:src" content="',$val['image'],'" />',"\n";
       }
       echo '  <title>',$site_title,"</title>\n";
-      if (!empty($DBInfo->canonical_url)) {
+      if ($is_show && !empty($DBInfo->canonical_url)) {
         if (($p = strpos($DBInfo->canonical_url, '%s')) !== false)
           echo '  <link rel="canonical" href="',sprintf($DBInfo->canonical_url, $this->page->urlname),'" />',"\n";
         else
