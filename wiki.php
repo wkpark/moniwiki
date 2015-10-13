@@ -6129,8 +6129,11 @@ function wiki_main($options) {
     }
     $DBInfo->security = new $class ($DBInfo);
     // is it allowed to robot ?
-    if (!$DBInfo->security->is_allowed($action,$options))
+    if (!$DBInfo->security->is_allowed($action,$options)) {
       $action='show';
+      if (!empty($action_mode))
+        return '[]';
+    }
     $DBInfo->extra_macros='';
   }
 
