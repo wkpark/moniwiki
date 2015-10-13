@@ -4932,7 +4932,10 @@ JSHEAD;
         $css_url = _html_escape($options['css_url']);
         echo '  <link rel="stylesheet" type="text/css" ',$media,' href="',
           $css_url."\" />\n";
-        if (file_exists('./css/_user.css')) // FIXME
+        if (!empty($DBInfo->custom_css) && file_exists($DBInfo->custom_css))
+          echo '  <link rel="stylesheet" media="screen" type="text/css" href="',
+            $DBInfo->url_prefix,'/',$DBInfo->custom_css,"\" />\n";
+        else if (file_exists('./css/_user.css'))
           echo '  <link rel="stylesheet" media="screen" type="text/css" href="',
             $DBInfo->url_prefix,"/css/_user.css\" />\n";
       }

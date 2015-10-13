@@ -109,6 +109,7 @@ $menu=array('FrontPage'=>1,'FindPage'=>4,'TitleIndex'=>3,'RecentChanges'=>2,'Use
 # ./bin to use user installed bins.
 $theme='paper'; # set the theme
 $theme_css=0; # change css of theme or not
+#$custom_css='local/custom.css.php'; # custom css
 #$mobile_theme='default'; # set the theme of mobile
 #$mobile_menu=array('MoniWiki'=>1,'RecentChanges'=>2); # shorter menu for mobile
 $hr=''; # obsolute
