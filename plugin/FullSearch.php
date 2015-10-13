@@ -22,6 +22,9 @@ function do_fullsearch($formatter,$options) {
     $title= sprintf(_("KeyWords search for \"%s\""), $options['value']);
   else
     $title= sprintf(_("Full text search for \"%s\""), $options['value']);
+
+  if (!empty($options['backlinks']))
+    $options['.title'] = sprintf(_("BackLinks of %s"), _html_escape($options['value']));
   $out= macro_FullSearch($formatter,$options['value'],$ret);
   $options['msg']=!empty($ret['msg']) ? $ret['msg'] : '';
   $options['msgtype']='search';
