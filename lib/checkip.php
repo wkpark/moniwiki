@@ -149,8 +149,7 @@ function search_network($ranges, $ip, $params = array()) {
             $ret = true;
             // return the found range.
             if (isset($params['retval'])) {
-                $params['retval'] =
-                    array(long2ip($from), long2ip($to));
+                $params['retval'] = simple_range_to_network($from, $to);
             }
             break;
         } else if ($from < $val) {
@@ -158,8 +157,7 @@ function search_network($ranges, $ip, $params = array()) {
                 $ret = true;
                 // return the found range.
                 if (isset($params['retval'])) {
-                    $params['retval'] =
-                        array(long2ip($from), long2ip($to));
+                    $params['retval'] = simple_range_to_network($from, $to);
                 }
                 break;
             }
@@ -170,13 +168,19 @@ function search_network($ranges, $ip, $params = array()) {
             $ret = false;
             // return the last found range.
             if (isset($params['retval'])) {
-                $params['retval'] =
-                    array(long2ip($from), long2ip($to));
+                $params['retval'] = simple_range_to_network($from, $to);
             }
             break;
         }
     }
     return $ret;
+}
+
+function simple_range_to_network($from, $to) {
+    $count = $to - $from;
+    $netmask = 32 - substr_count(decbin($count), '1');
+    $ip = long2ip($from);
+    return $ip.'/'.$netmask;
 }
 
 /*
