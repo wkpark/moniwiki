@@ -147,6 +147,11 @@ function search_network($ranges, $ip, $params = array()) {
         } else if ($from == $val) {
             // exact match
             $ret = true;
+            // return the found range.
+            if (isset($params['retval'])) {
+                $params['retval'] =
+                    array(long2ip($from), long2ip($to));
+            }
             break;
         } else if ($from < $val) {
             if ($val <= $to) {
