@@ -178,7 +178,7 @@ function macro_IpInfo($formatter, $value = '', $params = array()) {
 
         $list = '<table class="wiki editinfo">';
         $list.= '<tr><th>'._("IP or IP range").'</th><th>'._("Last updated").'</th>'.
-                '<th>'._("Status").'</th><th>'._("TTL or Elapsed").'</th><th>'._("actions").'</th></tr>';
+                '<th>'._("Status").'</th><th>'._("Expire or Elapsed").'</th><th>'._("actions").'</th></tr>';
 
         foreach ($infos as $info) {
             $ttl = $info['ttl'] - (time() - $info['mtime']);
@@ -552,7 +552,7 @@ FORM;
     }
     $mask_select.= '</select>'."\n";
 
-    $ttl_select = '<select name="ttl"><option value="0">-- '._("TTL").' --</option>'."\n";
+    $ttl_select = '<select name="ttl"><option value="0">-- '._("Expire").' --</option>'."\n";
     foreach ($ttls as $time=>$str) {
         $ttl_select.= '<option value="'.$time.'">'.$str.'</option>'."\n";
     }
@@ -566,7 +566,7 @@ FORM;
 
     $ip_lab = _("IP Address");
     $net_lab = _("Netmask (i.e. 24)");
-    $ttl_lab = _("TTL");
+    $ttl_lab = _("Expire");
     $block_btn = _("Block IP");
     echo <<<FORM
 <form method='post' action=''>
