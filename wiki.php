@@ -6106,13 +6106,39 @@ function wiki_main($options) {
       break;
     }
 
+    $res = null;
     // check blacklist
     if ((isset($ruleset['blacklist']) &&
         check_ip($ruleset['blacklist'], $_SERVER['REMOTE_ADDR'])) ||
         (isset($ruleset['blacklist.ranges']) &&
         search_network($ruleset['blacklist.ranges'], $_SERVER['REMOTE_ADDR'])))
     {
-      $options['notice']=_("Your IP is in the black list");
+      $res = true;
+    } else if (!empty($DBInfo->use_dynamic_blacklist)) {
+      require_once('plugin/ipinfo.php');
+      $blacklist = get_cached_temporary_blacklist();
+      $retval = array();
+      $ret = array('retval'=>&$retval);
+      $res = search_network($blacklist, $_SERVER['REMOTE_ADDR'], $ret);
+
+      if ($res !== false) {
+        // retrieve found
+        $ac = new Cache_Text('ipblock');
+        $info = $ac->fetch($retval, 0, $ret);
+        if ($info !== false) {
+          if (!$info['suspended']) // whitelist IP
+            break;
+          $res = true;
+        } else {
+          $ac->remove($retval); // expired IP entry.
+          $res = false;
+        }
+      }
+    }
+
+    // show warning message
+    if ($res) {
+      $options['notice']=_("Your IP is in the blacklist");
       $options['msg']=_("Please contact WikiMasters");
       $options['msgtype'] = 'warn';
 

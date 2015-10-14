@@ -77,6 +77,7 @@ $notify= 0; # enable email notification
 #$no_abusefilter_groups=array('@staff','@gardener','@tester'); # do not use abusefilter for this groups
 #$block_actions = array('savepage', 'deletepage', 'reverse', 'revert', 'info', 'diff', 'recall'); # check for blacklist
 #$edit_actions = array('savepage', 'deletepage', 'reverse', 'revert'); # for blacklist filtering
+#$use_dynamic_blacklist=0; # use dynamic blacklist feature
 $use_referer= 0; # use some basic referer feature.
 $use_sistersites=1; # use sistersites/siterwiki feature.
 #$use_singlebracket=1; #
