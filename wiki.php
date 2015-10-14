@@ -2439,7 +2439,7 @@ class Formatter {
             // check internal links and fetch image
             if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url)) {
               // FIXME call externalimage macro for these external images
-              if (!empty($this->external_image_regex) and preg_match('@'.$this->external_image_regex.'@', $url)) {
+              if (!empty($this->external_image_regex) and preg_match('@'.$this->external_image_regex.'@x', $url)) {
                 return $this->macro_repl('ExternalImage', $url, array('class'=>$cls, 'attr'=>$eattr));
               }
 
@@ -2510,7 +2510,7 @@ class Formatter {
           // check internal images
           if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url)) {
             // FIXME call externalimage macro for these external images
-            if (!empty($this->external_image_regex) and preg_match('@'.$this->external_image_regex.'@', $url)) {
+            if (!empty($this->external_image_regex) and preg_match('@'.$this->external_image_regex.'@x', $url)) {
               return $this->macro_repl('ExternalImage', $url, array('class'=>$cls, 'attr'=>$attr));
             }
 
