@@ -2427,12 +2427,12 @@ class Formatter {
             $url = preg_replace('@(\?|&)\.(png|gif|jpe?g)$@', '', $url);
             $tmp = !empty($match[3]) ? preg_replace('/&amp;/', '&', $match[3]) : '';
             $attrs = explode('&', $tmp);
-            $eattr = '';
+            $eattr = array();
             foreach ($attrs as $a) {
               $name = strtok($a, '=');
               $val = strtok(' ');
               if ($name == 'align') $cls.=' img'.ucfirst($val);
-              else if ($name and $val) $eattr.=' '.$name.'="'.urldecode($val).'"';
+              else if ($name and $val) $eattr[] = $name.'="'.urldecode($val).'"';
             }
 
             $info = '';
@@ -2460,8 +2460,11 @@ class Formatter {
 
               $info = "<div class='info'><a href='$url'><span>[$type "._("external image")."$size]</span></a></div>";
             }
+            $iattr = '';
+            if (isset($eattr[0]))
+              $iattr = implode(' ', $eattr);
 
-            return "<div class='$cls$img_cls'><div><a class='externalLink named' href='$link' $attr $this->external_target title='$link'><img $eattr alt='$atext' src='$url' $img_attr/></a>".$info.'</div></div>';
+            return "<div class='$cls$img_cls'><div><a class='externalLink named' href='$link' $attr $this->external_target title='$link'><img $iattr alt='$atext' src='$url' $img_attr/></a>".$info.'</div></div>';
           }
           if (!empty($this->external_on))
             $external_link='<span class="externalLink">('.$url.')</span>';
@@ -2497,12 +2500,16 @@ class Formatter {
           $url = preg_replace('@(\?|&)\.(png|gif|jpe?g)$@', '', $url);
           $type = strtoupper($match[2]);
           $attrs = !empty($match[3]) ? explode('&', $match[3]) : array();
+          $eattr = array();
           foreach ($attrs as $arg) {
             $name=strtok($arg,'=');
             $val=strtok(' ');
             if ($name == 'align') $cls.=' img'.ucfirst($val);
-            else if ($name and $val) $attr.=' '.$name.'="'.urldecode($val).'"';
+            else if ($name and $val) $eattr[] = $name.'="'.urldecode($val).'"';
           }
+          $attr = '';
+          if (isset($eattr[0]))
+            $attr = implode(' ', $eattr);
 
           // XXX fetch images
           $fetch_url = $url;
@@ -2511,7 +2518,7 @@ class Formatter {
           if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url)) {
             // FIXME call externalimage macro for these external images
             if (!empty($this->external_image_regex) and preg_match('@'.$this->external_image_regex.'@x', $url)) {
-              return $this->macro_repl('ExternalImage', $url, array('class'=>$cls, 'attr'=>$attr));
+              return $this->macro_repl('ExternalImage', $url, array('class'=>$cls, 'attr'=>$eattr));
             }
 
             $fetch_url = $this->fetch_action.
