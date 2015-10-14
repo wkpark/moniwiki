@@ -17,7 +17,7 @@ class Security_robot extends Security_base {
   }
 
   function is_allowed($action="read",&$options) {
-    $allowed=array('read','show','ticket','titleindex','rss_rc');
+    $allowed=array('read','show','ticket','titleindex','rss_rc', 'atom');
     if (in_array($action, $allowed)) {
       return 1;
     }
