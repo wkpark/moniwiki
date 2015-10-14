@@ -55,7 +55,7 @@ function _ip_table($ips) {
     return $out;
 }
 
-function get_temporary_blocked_info() {
+function get_temporary_blocked_info($all = true) {
     $dec_octet   = '(?:25[0-5]|2[0-4]\d|1\d\d|[1-9]\d|[0-9])';
     $IPv4Address = "$dec_octet\\.$dec_octet\\.$dec_octet\\.$dec_octet";
 
@@ -63,7 +63,10 @@ function get_temporary_blocked_info() {
     $ret = array('retval'=>&$retval);
 
     $infos = array();
-    $caches = array('abusefilter', 'ipblock');
+    if ($all)
+        $caches = array('abusefilter', 'ipblock');
+    else
+        $caches = array('ipblock');
     foreach ($caches as $cache) {
         // ip block cache
         $ac = new Cache_Text($cache);
@@ -153,7 +156,7 @@ function macro_IpInfo($formatter, $value = '', $params = array()) {
     global $Config;
 
     $list = '';
-    if ($value == 'all') {
+    if ($value == 'static') {
         $cache = new Cache_text('settings', array('depth'=>0));
         if (($ips = $cache->fetch('blacklist')) !== false) {
             $list = _ip_table($ips);
@@ -163,10 +166,15 @@ function macro_IpInfo($formatter, $value = '', $params = array()) {
         $ret = array('retval'=>&$retval);
 
         $infos = array();
-        if (!empty($params['info']))
+        if (!empty($params['info'])) {
             $infos[] = $params['info'];
-        else
-            $infos = get_temporary_blocked_info();
+        } else {
+            if ($value == 'range')
+                $range = true;
+            else
+                $range = false;
+            $infos = get_temporary_blocked_info(!$range);
+        }
 
         $list = '<table class="wiki editinfo">';
         $list.= '<tr><th>'._("IP or IP range").'</th><th>'._("Last updated").'</th>'.
@@ -495,10 +503,13 @@ function do_ipinfo($formatter, $params = array()) {
             $list = macro_IpInfo($formatter, '', array('info'=>$info));
             $title = _("Temporary blocked IP found").' : '.$params['q'];
         }
-    } else if ($u->is_member && !empty($params['all'])) {
-        $list = macro_IpInfo($formatter, 'all');
     } else if ($u->is_member) {
-        $list = macro_IpInfo($formatter);
+        $opt = 'range';
+        if (!empty($params['static']))
+            $opt = 'static';
+        if (!empty($params['all']))
+            $opt = '';
+        $list = macro_IpInfo($formatter, $opt);
     } else if (!$u->is_member) {
         $myip = $params['q'] = $_SERVER['REMOTE_ADDR'];
     }
