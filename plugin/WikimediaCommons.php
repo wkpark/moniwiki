@@ -26,6 +26,7 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
 
     // FIXME urldecode for some cases
     $value = urldecode($value);
+    $args = array();
     if (($p = strpos($value, ',')) !== false) {
         $arg = substr($value, $p + 1);
         $value = substr($value, 0, $p);
@@ -33,14 +34,57 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
         $arg = preg_replace('@\s*=\s*@', '=', $arg);
         $args = explode(',', $arg);
     }
+    if (!empty($params['attr'])) {
+        $args = array_merge($args, (array) $params['attr']);
+    }
 
+    $data = array(
+        'action' => 'query',
+        'prop' => 'imageinfo',
+        'iiprop' => 'extmetadata|url',
+        'format' => 'json',
+        'rawcontinue' => '1',
+    );
+
+    // default API url
+    $api_url = 'https://commons.wikimedia.org/w/api.php';
     // check full url
-    if (preg_match('@^https?://upload\.wikimedia\.org/wikipedia/commons/(thumb/)?./../([^/]+\.(?:gif|jpe?g|png|svg))(?(1)/(\d+px)-\2)@', $value, $m)) {
+    if (preg_match('@^https?://upload\.wikimedia\.org/wikipedia/.*/(thumb/)?./../([^/]+\.(?:gif|jpe?g|png|svg))(?(1)/(\d+px)-\2)@', $value, $m)) {
+        // WikiMedia
         $remain = substr($value, strlen($m[0]));
 
         $value = $m[2];
         if (!empty($m[3]))
             $width = intval($m[3]);
+        $data['titles'] = 'Image:'.$value;
+        $data['iiprop'] = 'extmetadata|url';
+    } else if (preg_match('@^https?://((?:[^.]+)\.(?:wikimedia|wikipedia)\.org)/wiki/(?:Image|File):([^/]+\.(?:gif|jpe?g|png|svg))$@', $value, $m)) {
+        // WikiMedia or WikiPedia
+        $api_url = 'https://'.$m[1].'/w/api.php';
+        $data['titles'] = 'Image:'.$m[2];
+        $data['iiprop'] = 'extmetadata|url';
+        $source = _("WikiMedia Commons");
+    } else if (preg_match('@^https?://([^.]+)\.wikia\.com/wiki/(?:Image|File):(.*\.(?:gif|jpe?g|png|svg))@', $value, $m)) {
+        $src = 'wikia.';
+        // Wikia
+        $api_url = 'https://'.$m[1].'.wikia.com/api.php';
+        $value = $m[2];
+        $data['titles'] = 'Image:'.$m[2];
+        $data['iiprop'] = 'url|user|size|comment';
+        $source = _("Wikia");
+    } else if (preg_match('@^https?://.*\.wikia\..*/([^/]+)/images/./../([^/]+\.(?:gif|jpe?g|png|svg))@', $value, $m)) {
+        $src = 'wikia.';
+        // Wikia
+        $api_url = 'https://'.$m[1].'.wikia.com/api.php';
+        $value = $m[2];
+        $data['titles'] = 'Image:'.$value;
+        $data['iiprop'] = 'url|user|size|comment';
+        $source = _("Wikia");
+    } else {
+        $data['titles'] = 'Image:'.$value;
+        $data['iiprop'] = 'extmetadata|url';
+
+        $source = _("WikiMedia Commons");
     }
 
     $styles = array();
@@ -48,7 +92,9 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
         $k = $v = '';
         if (($p = strpos($arg, '=')) !== false) {
             $k = substr($arg, 0, $p);
+            $k = trim($k);
             $v = substr($arg, $p + 1);
+            $v = trim($v, '"\'');
         } else {
             continue;
         }
@@ -74,20 +120,10 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
     }
 
     $common = new Cache_Text('wikicommons');
-    $key = $value;
+    $key = $value.$src;
     if (isset($width)) $key.= $width;
     if (isset($height)) $key.= '.h'.$height;
     if (!empty($formatter->refresh) || ($images = $common->fetch($key)) === false) {
-        $api_url = 'https://commons.wikimedia.org/w/api.php';
-
-        $data = array(
-            'action' => 'query',
-            'titles' => 'Image:'.$value,
-            'prop' => 'imageinfo',
-            'iiprop' => 'extmetadata|url',
-            'format' => 'json',
-            'rawcontinue' => '1',
-        );
         if (!empty($width)) {
             $data['iiurlwidth'] = min(1280, $width);
         } else if (!empty($height)) {
@@ -118,7 +154,7 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
     $image_url = $image->imageinfo[0]->thumburl;
     $desc_url = $image->imageinfo[0]->descriptionurl;
 
-    if (empty($styles['width'])) {
+    if (empty($styles['width']) && !empty($image->imageinfo[0]->thumbwidth)) {
         $styles['width'] = $image->imageinfo[0]->thumbwidth.'px';
     }
 
@@ -128,10 +164,19 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
     if (!empty($style))
         $style = ' style="'.$style.'"';
 
-    $copyright = $image->imageinfo[0]->extmetadata->Copyrighted->value;
-    $description = $image->imageinfo[0]->extmetadata->ImageDescription->value;
-    $author = $image->imageinfo[0]->extmetadata->Artist->value;
-    $license = $image->imageinfo[0]->extmetadata->License->value;
+    if (!empty($image->imageinfo[0]->extmetadata)) {
+        $copyright = $image->imageinfo[0]->extmetadata->Copyrighted->value;
+        $description = $image->imageinfo[0]->extmetadata->ImageDescription->value;
+        $author = $image->imageinfo[0]->extmetadata->Artist->value;
+        $license = $image->imageinfo[0]->extmetadata->License->value;
+        $comment = '';
+    } else {
+        // Wikia case
+        $copyright = 'True';
+        $author = sprintf(_("Uploaded by %s"), $image->imageinfo[0]->user);
+        $license = '';
+        $description = $image->imageinfo[0]->comment;
+    }
 
     if (!empty($formatter->fetch_images) && !empty($image_url)) {
         $image_url = $formatter->fetch_action. str_replace(array('&', '?'), array('%26', '%3f'), $image_url);
@@ -140,14 +185,14 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
             $image_url.= '&amp;thumbwidth='.$formatter->thumb_width;
     }
     $copyrighted = $copyright == 'True';
-    $info = ($copyrighted ? '&copy;' : '(&#596;) ').$author;
-    if ($copyrighted) $info.= " ($license)";
+    $info = ($copyrighted ? '&copy; ' : '(&#596;) ').$author;
+    if ($copyrighted && isset($license[0])) $info.= " ($license)";
 
     $out = '<div class="externalImage">';
     if (empty($addClass))
         $cls = ' class="'.$addClass.'"';
     $out.= "<div".$cls."><img src='$image_url'$style>";
-    $out.= "<div class='info'>".$info.' from '."<a href='$desc_url' target='_blank'>WikiMedia Commons</a></div>";
+    $out.= "<div class='info'>".$info.$comment.' from '."<a href='$desc_url' target='_blank'>$source</a></div>";
     $out.= "</div>";
     if (!empty($DBInfo->wikimediacommons_use_description) && !empty($description))
         $out.= '<div class="desc">'.$description.'</div>';

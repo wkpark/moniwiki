@@ -20,13 +20,18 @@ function macro_ExternalImage($formatter, $value, $params = array()) {
     // http://upload.wikimedia.org/wikipedia/commons/e/e6/Aps_protei_ida71_00.jpg
     // http://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/3-Tastenmaus_Microsoft.jpg/250px-3-Tastenmaus_Microsoft.jpg
 
-    if (preg_match('@^https?://upload\.wikimedia\.org/wikipedia/commons/(thumb/)?./../([^/]+\.(?:gif|jpe?g|png|svg))(?(1)/(\d+px)-\2)@', $value, $m)) {
+    if (preg_match('@^https?://upload\.wikimedia\.org/wikipedia/.*/(thumb/)?./../([^/]+\.(?:gif|jpe?g|png|svg))(?(1)/(\d+px)-\2)@', $value, $m)) {
         $args = '';
         if (!empty($m[3]))
             $args.= ',width='.$m[3];
         return $formatter->macro_repl('WikimediaCommons', $m[2].$args, $params);
+    } else if (preg_match('@^https?://(?:[^.]+)\.(?:wikimedia|wikipedia)\.org/wiki/(?:Image|File):([^/]+\.(?:gif|jpe?g|png|svg))$@', $value, $m)) {
+        return $formatter->macro_repl('WikimediaCommons', $value, $params);
+    } else if (preg_match('@^https?://([^.]+)\.wikia\.com/wiki/(?:Image|File):(.*\.(?:gif|jpe?g|png|svg))@', $value, $m)) {
+        return $formatter->macro_repl('WikimediaCommons', $value, $params);
+    } else if (preg_match('@^https?://.*\.wikia\..*/([^/]+)/images/./../([^/]+\.(?:gif|jpe?g|png|svg))@', $value, $m)) {
+        return $formatter->macro_repl('WikimediaCommons', $value, $params);
     }
-
 
     return $value;
 }
