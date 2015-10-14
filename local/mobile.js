@@ -214,8 +214,12 @@ function init_images() {
                     if (anchor && anchor.className.match(/zoom/))
                         this.parentNode.removeChild(anchor);
                 }
-                if (info && info.className.match(/info/) && info.offsetHeight > this.height / 2) {
-                    info.style.position = 'relative';
+                var test = this.height / 3;
+                if (test < 20)
+                    test = 20;
+                if (info && info.className.match(/info/) && info.offsetHeight > test) {
+                    this.style.marginBottom = info.offsetHeight + 'px';
+                    info.style.margin = '0';
                 }
             };
         }
