@@ -1269,6 +1269,8 @@ function load_ruleset($ruleset_file) {
         require_once (dirname(__FILE__).'/lib/checkip.php');
 
         $ranges = make_ip_ranges($ruleset['blacklist']);
+        // save blacklist separately
+        $settings->update('blacklist', $ruleset['blacklist']);
         // unset blacklist array
         unset($ruleset['blacklist']);
         // set blacklist.ranges array
