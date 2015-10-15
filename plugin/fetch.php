@@ -72,6 +72,7 @@ function do_fetch($formatter, $params = array()) {
 
         if ($is_image and !empty($_SERVER['HTTP_REFERER'])) {
             require_once(dirname(__FILE__).'/../lib/mediautils.php');
+            $formatter->header('Status: 500');
 
             $font_face = !empty($Config['fetch_font']) ? $Config['fetch_font'] : '';
             $font_size = !empty($Config['fetch_font_size']) ? $Config['fetch_font_size'] : 2;
