@@ -24,8 +24,6 @@ function do_wikimediacommons($formatter, $params = array()) {
 function macro_WikimediaCommons($formatter, $value, $params = array()) {
     global $DBInfo, $Config;
 
-    // FIXME urldecode for some cases
-    $value = urldecode($value);
     $args = array();
     if (($p = strpos($value, ',')) !== false) {
         $arg = substr($value, $p + 1);
@@ -53,7 +51,7 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
         // WikiMedia
         $remain = substr($value, strlen($m[0]));
 
-        $value = $m[2];
+        $value = urldecode($m[2]);
         if (!empty($m[3]))
             $width = intval($m[3]);
         $data['titles'] = 'Image:'.$value;
@@ -61,26 +59,29 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
     } else if (preg_match('@^https?://((?:[^.]+)\.(?:wikimedia|wikipedia)\.org)/wiki/(?:Image|File):([^/]+\.(?:gif|jpe?g|png|svg))$@', $value, $m)) {
         // WikiMedia or WikiPedia
         $api_url = 'https://'.$m[1].'/w/api.php';
-        $data['titles'] = 'Image:'.$m[2];
+
+        $value = urldecode($m[2]);
+        $data['titles'] = 'Image:'.$value;
         $data['iiprop'] = 'extmetadata|url';
         $source = _("WikiMedia Commons");
     } else if (preg_match('@^https?://([^.]+)\.wikia\.com/wiki/(?:Image|File):(.*\.(?:gif|jpe?g|png|svg))@', $value, $m)) {
         $src = 'wikia.';
         // Wikia
         $api_url = 'https://'.$m[1].'.wikia.com/api.php';
-        $value = $m[2];
-        $data['titles'] = 'Image:'.$m[2];
+        $value = urldecode($m[2]);
+        $data['titles'] = 'Image:'.$value;
         $data['iiprop'] = 'url|user|size|comment';
         $source = _("Wikia");
     } else if (preg_match('@^https?://.*\.wikia\..*/([^/]+)/images/./../([^/]+\.(?:gif|jpe?g|png|svg))@', $value, $m)) {
         $src = 'wikia.';
         // Wikia
         $api_url = 'https://'.$m[1].'.wikia.com/api.php';
-        $value = $m[2];
+        $value = urldecode($m[2]);
         $data['titles'] = 'Image:'.$value;
         $data['iiprop'] = 'url|user|size|comment';
         $source = _("Wikia");
     } else {
+        $value = urldecode($value);
         $data['titles'] = 'Image:'.$value;
         $data['iiprop'] = 'extmetadata|url';
 
@@ -170,12 +171,15 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
         $author = $image->imageinfo[0]->extmetadata->Artist->value;
         $license = $image->imageinfo[0]->extmetadata->License->value;
         $comment = '';
-    } else {
+    } else if (!empty($image->imageinfo[0]->user)) {
         // Wikia case
         $copyright = 'True';
         $author = sprintf(_("Uploaded by %s"), $image->imageinfo[0]->user);
         $license = '';
         $description = $image->imageinfo[0]->comment;
+    } else {
+        // not found
+        return false;
     }
 
     if (!empty($formatter->fetch_images) && !empty($image_url)) {
