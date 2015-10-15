@@ -97,7 +97,9 @@ function do_fetch($formatter, $params = array()) {
         }
         $formatter->header('Status: 500');
         echo '<!DOCTYPE HTML PUBLIC "-//IETF//DTD HTML 2.0//EN">';
-        echo '<html><head><title>'.$Config['sitename'].'</title></head><body>';
+        echo '<html><head><title>'.$Config['sitename'].'</title>';
+        echo "<meta name='viewport' content='width=device-width' />";
+        echo '</head><body>';
         echo '<h1>500 Internal Server Error</h1>';
         echo '<div><a href="'.$url.'">Original source</a> : ';
         echo $url,'</div>';
