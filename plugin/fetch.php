@@ -188,8 +188,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
     $sc = new Cache_text('fetchinfo');
     $error = null;
 
-    if (empty($params['refresh']) and $sc->exists($url) and $sc->mtime($url) < time() + $maxage) {
-        $info = $sc->fetch($url);
+    if (empty($params['refresh']) and $sc->exists($url) and ($info = $sc->fetch($url)) !== false) {
         $sz = $info['size'];
         $mimetype = $info['mimetype'];
         $error = !empty($info['error']) ? $info['error'] : null;
