@@ -203,7 +203,7 @@ function do_download($formatter,$options) {
         }
 
         $thumbfiles = array();
-        $thumbname = preg_replace('@'.$ext.'$@', '.w'.$thumb_width.$ext, $_l_file);
+        $thumbname = preg_replace('@'.$ext.'$@i', '.w'.$thumb_width.$ext, $_l_file);
         $thumbfiles[] = $thumbname;
         $thumbfiles[] = 'thumbnails/'.$thumbname;
         foreach ($thumbfiles as $file) {
