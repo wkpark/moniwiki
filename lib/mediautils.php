@@ -126,12 +126,25 @@ function image_msg($font_size, $font_face, $text, $width = 40) {
     $wrap = wordwrap($text, $width, "\n", true);
     $wrap = rtrim($wrap);
     $strs = explode("\n", $wrap);
+
+    $min_height = 200;
+    $margin = 40;
+    $padding = $margin >> 1;
     if (empty($font_face)) {
-        $w = imagefontwidth($font_size) * $width;
+        $max = 10;
+        foreach ($strs as $s) {
+            $l = strlen($s);
+            $max = strlen($s) > $max ? $l : $max;
+        }
+        $w = imagefontwidth($font_size) * $max + $margin;
         $dy = imagefontheight($font_size);
         $h = $dy * count($strs);
-        $im = ImageCreate($w, $h);
         $y = 0;
+        if ($min_height > $h) {
+            $y = ($min_height - $h) >> 1;
+            $h = $min_height;
+        }
+        $im = ImageCreate($w, $h);
     } else {
         putenv('GDFONTPATH='.getcwd().'/data');
         $w = 0;
@@ -143,10 +156,16 @@ function image_msg($font_size, $font_face, $text, $width = 40) {
                 $w = $bbox[2];
             $h+= $bbox[3] - $bbox[5];
         }
+        $w+= $margin;
         $dy = $bbox[3] - $bbox[5];
         $h = $dy * count($strs);
-        $im = ImageCreateTruecolor($w, $h);
         $y = $dy;
+        if ($min_height > $h) {
+            $y = ($min_height - $h) >> 1;
+            $h = $min_height;
+            $y+= $dy >> 1;
+        }
+        $im = ImageCreateTruecolor($w, $h);
     }
     $bg = ImageColorAllocate($im, 255, 255, 255); // white background
     $pen = ImageColorAllocate($im, 0, 0, 0); // black
@@ -154,9 +173,9 @@ function image_msg($font_size, $font_face, $text, $width = 40) {
 
     foreach ($strs as $str) {
         if (empty($font_face))
-            ImageString($im, $font_size, 0, $y, $str, 1);
+            ImageString($im, $font_size, $padding, $y, $str, 1);
         else
-            ImageTtfText($im, $font_size, 0, 0, $y, $pen, $font_face, $str);
+            ImageTtfText($im, $font_size, 0, $padding, $y, $pen, $font_face, $str);
         $y+= $dy;
     }
 
