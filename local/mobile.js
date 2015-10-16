@@ -136,7 +136,9 @@ function init_images() {
 
     for (var i = 0; i < img.length; i++) {
         var m = null;
-        if ((m = img[i].src.match(/thumbnails\/(.*)\.w\d+\.(png|jpe?g|gif)$/i)) ||
+        var dataSrc = img[i].getAttribute('data-src');
+
+        if (dataSrc || (m = img[i].src.match(/thumbnails\/(.*)\.w\d+\.(png|jpe?g|gif)$/i)) ||
                 img[i].src.match(/action=fetch|download/)) {
 
             // do not use thumbnail for gif
@@ -156,6 +158,7 @@ function init_images() {
             else
                 el = node;
 
+            if (!dataSrc)
             el.onclick = (function(o) {
                 return function() {
                     toggle(o);
@@ -166,16 +169,30 @@ function init_images() {
             if (node.nodeName == 'A') continue;
 
             var a = document.createElement('a');
-            var expand = document.createTextNode('+');
-            a.className = 'zoom';
+            var expand;
+            if (dataSrc) {
+                expand = document.createTextNode('Open');
+                a.className = 'new-window';
+            } else {
+                expand = document.createTextNode('+');
+                a.className = 'zoom';
+            }
 
             if (m) {
-                var src = String(img[i].src);
+                var src;
+                if (dataSrc)
+                    src = dataSrc;
+                else
+                    src = String(img[i].src);
                 src = src.substring(0, m.index);
                 src+= m[1] + "." + m[2];
                 a.href = src;
             } else {
-                var src = String(img[i].src);
+                var src;
+                if (dataSrc)
+                    src = dataSrc;
+                else
+                    src = String(img[i].src);
                 if (src.match(/&thumb(width)?=\d+/)) {
                     src = src.replace(/&thumb(width)?=\d+/, '');
                 }
@@ -203,6 +220,18 @@ function init_images() {
 
             a.appendChild(expand);
             img[i].parentNode.insertBefore(a, img[i].nextSibling);
+
+            if (dataSrc) {
+                var anchor = img[i].nextSibling;
+                var info = null;
+                if (anchor)
+                    info = anchor.nextSibling;
+
+                if (info && info.className.match(/info/)) {
+                    info.style.display = 'block';
+                    info.style.position = 'relative';
+                }
+            }
             img[i].onload = function() {
                 /*
                 if (this.naturalWidth && this.naturalWidth > 128) return;
