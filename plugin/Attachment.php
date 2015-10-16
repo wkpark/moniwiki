@@ -353,7 +353,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
       if ($key != $pagename || !empty($force_download)) {
         $val=_urlencode($value);
         if ($thumb_ok and !empty($use_thumb)) {
-          if (($p=strrpos($val,'/')) > 0)
+          if (($p=strrpos($val,'/')) !== false)
             $val=substr($val,0,$p).'/thumbnails/'.$thumbfile;
           else
             $val = 'thumbnails/'.$thumbfile;
