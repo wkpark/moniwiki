@@ -165,7 +165,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
   $attr.=$lightbox_attr;
   $info = '';
 
-  if (($p=strpos($value,':')) !== false or ($p=strrpos($value,'/')) !== false) {
+  if (($p=strrpos($value,':')) !== false or ($p=strrpos($value,'/')) !== false) {
     $subpage=substr($value,0,$p);
     $file=substr($value,$p+1);
     $value=$subpage.'/'.$file; # normalize page arg
@@ -323,7 +323,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
         // guess thumbnails
         $thumbfiles = array();
         $thumbfiles[] = $_l_file;
-        $thumbfiles[] = preg_replace('@'.$ext.'$@', 'w'.$thumb_width.'.'.$ext, $_l_file);
+        $thumbfiles[] = preg_replace('@'.$ext.'$@i', 'w'.$thumb_width.'.'.$ext, $_l_file);
 
         $thumb_ok = false;
         foreach ($thumbfiles as $thumbfile) {
@@ -353,8 +353,8 @@ function macro_Attachment($formatter,$value,$options=array()) {
       if ($key != $pagename || !empty($force_download)) {
         $val=_urlencode($value);
         if ($thumb_ok and !empty($use_thumb)) {
-          if (($p=strrpos($val,'/')) !== false)
-            $val=substr($val,0,$p).'/thumbnails'.substr($val,$p);
+          if (($p=strrpos($val,'/')) > 0)
+            $val=substr($val,0,$p).'/thumbnails/'.$thumbfile;
           else
             $val = 'thumbnails/'.$thumbfile;
           // use download link ?
