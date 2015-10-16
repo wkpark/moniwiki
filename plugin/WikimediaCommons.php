@@ -159,6 +159,18 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
         $styles['width'] = $image->imageinfo[0]->thumbwidth.'px';
     }
 
+    $attrs = array();
+    $keys = array('width', 'height');
+    foreach ($keys as $key) {
+        if (isset($styles[$key])) {
+            $attrs[] = $key.'="'.$styles[$key].'"';
+            unset($styles[$key]);
+        }
+    }
+    $attr = '';
+    if (count($attrs))
+        $attr = ' '.implode(' ', $attrs);
+
     $style = '';
     foreach ($styles as $k=>$v)
         $style.= $k.':'.$v.';';
@@ -195,7 +207,7 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
     $out = '<div class="externalImage">';
     if (empty($addClass))
         $cls = ' class="'.$addClass.'"';
-    $out.= "<div".$cls."><img src='$image_url'$style>";
+    $out.= "<div".$cls."><img src='$image_url'$style$attr>";
     $out.= "<div class='info'>".$info.$comment.' from '."<a href='$desc_url' target='_blank'>$source</a></div>";
     $out.= "</div>";
     if (!empty($DBInfo->wikimediacommons_use_description) && !empty($description))
