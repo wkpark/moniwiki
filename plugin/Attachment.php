@@ -157,7 +157,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
     if (!empty($thumb)) $use_thumb = true;
   }
 
-  if (preg_match('/^data:image\/(png|jpg|jpeg);base64,/',$value)) {
+  if (preg_match('/^data:image\/(gif|jpe?g|png);base64,/',$value)) {
     // need to hack for IE ?
     return "<img src='".$value."' $attr />";
   }
