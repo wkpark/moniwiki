@@ -379,6 +379,42 @@ function utf8_hangul_getSearchRule($str,$lastchar=1, $use_unicode = true) {
         $rule=unicode_to_utf8($val);
         $val=array($last);
         $len=sizeof($val);
+    } else {
+        // make regex for consonant only letters
+        // ㄱㅎ => (ㄱ|[가-깋])(ㅎ|[하-힣])
+
+        // save the last char
+        $last = array_pop($val);
+        $len = sizeof($val);
+        for ($i = 0; $i < $len; $i++) {
+            $ch = $val[$i];
+            if (($ch >=0x3130 and $ch <=0x318f)) {
+                $wch = hangul_to_jamo(array($ch));
+                if ($wch[0] >= 0x1100 and $wch[0] <= 0x1112) {
+                    $wch[1] = 0x1161;
+                    $start = jamo_to_syllable($wch);
+                    $ustart = unicode_to_utf8($start);
+
+                    $wch[1] = 0x1175;
+                    $wch[2] = 0x11c2;
+                    $end = jamo_to_syllable($wch);
+                    $uend = unicode_to_utf8($end);
+                } else {
+                    $rule.= unicode_to_utf8($wch);
+                    continue;
+                }
+                $crule = '('.unicode_to_utf8(array($ch)).'|';
+                $crule.= hangul_regex_range($ustart, $uend, $use_unicode);
+                $crule.= ')';
+            } else {
+                $crule = unicode_to_utf8(array($ch));
+            }
+            $rule.= $crule;
+        }
+
+        // lastchar
+        $val = array($last);
+        $len = sizeof($val);
     }
 
     for ($i=0;$i<$len;$i++) {
@@ -443,10 +479,18 @@ function utf8_hangul_getSearchRule($str,$lastchar=1, $use_unicode = true) {
             }
         }
 
-        if ($use_unicode) {
-            $crule = '['.$ustart.'-'.$uend.']';
-        } else {
-        $rule.= sprintf("\x%02X",ord($ustart[0]));
+        $crule = hangul_regex_range($ustart, $uend, $use_unicode);
+
+        $rule.=$crule.$ket;
+    }
+    return $rule;
+}
+
+function hangul_regex_range($ustart, $uend, $use_unicode = true) {
+    if ($use_unicode) {
+        return '['.$ustart.'-'.$uend.']';
+    } else {
+        $rule = sprintf("\x%02X",ord($ustart[0]));
         $crule='';
         if ($ustart[1]==$uend[1]) {
             $crule.=sprintf("\x%02X",ord($ustart[1]));
@@ -465,12 +509,9 @@ function utf8_hangul_getSearchRule($str,$lastchar=1, $use_unicode = true) {
             $subrule[]=sprintf("\x%02X[\\x80-\\x%02X]",ord($uend[1]),ord($uend[2]));
             $crule.='('.implode('|',$subrule).')';
         }
-        }
-
-        $rule.=$crule.$ket;
+        return $rule.$crule;
     }
-    return $rule;
 }
 
-// vim:et:sw:sts=4:
+// vim:et:sw=4:sts=4:
 ?>
