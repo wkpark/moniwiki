@@ -2957,7 +2957,7 @@ function do_titleindex($formatter,$options) {
       }
       if (!$val) break;
         
-      $rule=utf8_hangul_getSearchRule($val);
+      $rule=utf8_hangul_getSearchRule($val, !empty($DBInfo->use_hangul_lastchar_search));
 
       $test=@preg_match("/^$rule/",'');
       if ($test === false) $rule=$options['q'];
