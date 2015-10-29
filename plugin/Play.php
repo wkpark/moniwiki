@@ -286,6 +286,14 @@ EOS;
             $save = ini_get('max_execution_time');
             set_time_limit(0);
             $http->timeout = 15;
+
+            // support proxy
+            if (!empty($DBInfo->proxy_host)) {
+              $http->proxy_host = $DBInfo->proxy_host;
+              if (!empty($DBInfo->proxy_port))
+                $http->proxy_port = $DBInfo->proxy_port;
+            }
+
             $http->sendRequest($aurl, array(), 'GET');
             set_time_limit($save);
 
