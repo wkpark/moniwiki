@@ -80,10 +80,10 @@ class Version_RcsLite extends Version_RCS {
       return $this->rcs->_head;
     if ($mtime) {
       #print gmdate('Y/m/d H:i:s',$mtime);
-      if ($mtime > $this->rcs->_date[$this->rcs->_head])
-         return $this->_head;
+      if ($mtime >= $this->rcs->_date[$this->rcs->_head])
+         return $this->rcs->_head;
       foreach ($this->rcs->_date as $rev=>$date) {
-         if ($mtime > $date) {
+         if ($mtime >= $date) {
             return $rev;
          }
       }
