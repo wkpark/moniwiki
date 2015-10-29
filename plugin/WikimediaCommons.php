@@ -138,6 +138,14 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
         $http = new HTTPClient();
         $save = ini_get('max_execution_time');
         set_time_limit(0);
+
+        // support proxy
+        if (!empty($DBInfo->proxy_host)) {
+            $http->proxy_host = $DBInfo->proxy_host;
+            if (!empty($DBInfo->proxy_port))
+                $http->proxy_port = $DBInfo->proxy_port;
+        }
+
         $http->sendRequest($api_url, $data, 'POST');
         set_time_limit($save);
 
