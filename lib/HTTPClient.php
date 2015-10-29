@@ -34,7 +34,7 @@ class HTTPClient {
     var $headers;
     var $debug;
 
-    var $keep_alive = true; // keep alive rocks
+    var $keep_alive = false; // keep alive rocks
 
     // don't set these, read on error
     var $error;
