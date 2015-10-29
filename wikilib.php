@@ -3231,7 +3231,7 @@ function do_post_savepage($formatter,$options) {
   }
 
   $savetext=$options['savetext'];
-  $datestamp=$options['datestamp'];
+  $datestamp = intval($options['datestamp']);
   $hash = $options['hash'];
   $button_preview = !empty($options['button_preview']) ? 1 : 0;
 
@@ -3250,7 +3250,18 @@ function do_post_savepage($formatter,$options) {
   $section_savetext='';
   if (isset($options['section'])) {
     if ($formatter->page->exists()) {
-      $sections= _get_sections($formatter->page->get_raw_body());
+      if (!empty($datestamp)) {
+        // get revision number by the datestamp
+        $rev = $formatter->page->get_rev($datestamp);
+        $opts = array();
+        if (!empty($rev))
+            $opts['rev'] = $rev;
+        // get raw text by selected revision
+        $rawbody = $formatter->page->get_raw_body($opts);
+      } else {
+        $rawbody = $formatter->page->get_raw_body();
+      }
+      $sections= _get_sections($rawbody);
       if ($sections[$options['section']]) {
         if (substr($savetext,-1)!="\n") $savetext.="\n";
         $sections[$options['section']]=$savetext;
