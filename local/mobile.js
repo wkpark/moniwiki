@@ -211,7 +211,7 @@ function init_images() {
 		e.cancelBubble = true;
             };
             img[i].style.display = 'inline';
-            if (m == null && is_m) {
+            if (!dataSrc && m == null && is_m) {
                 var src = String(img[i].src);
                 if (!src.match(re))
                     src+= '&thumbwidth=' + device_width;
