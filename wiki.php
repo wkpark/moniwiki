@@ -5845,7 +5845,7 @@ if ($options['id'] != 'Anonymous') {
   $options['css_url']=!empty($user->info['css_url']) ? $user->info['css_url'] : '';
   $options['quicklinks']=!empty($user->info['quicklinks']) ? $user->info['quicklinks'] : '';
   $options['tz_offset']=!empty($user->info['tz_offset']) ? $user->info['tz_offset'] : date('Z');
-  if (empty($theme)) $options['theme']=!empty($user->info['theme']) ? $user->info['theme'] : '';
+  if (empty($theme)) $options['theme'] = $theme = !empty($user->info['theme']) ? $user->info['theme'] : '';
 } else {
   $options['css_url']=$user->css;
   $options['tz_offset']=$user->tz_offset;
