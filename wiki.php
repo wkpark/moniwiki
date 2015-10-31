@@ -595,13 +595,6 @@ class WikiDB {
     }
     #$this->interwiki=null;
 
-    if (!empty($this->security_class)) {
-      include_once("plugin/security/$this->security_class.php");
-      $class='Security_'.$this->security_class;
-      $this->security=new $class ($this);
-    } else
-      $this->security=new Security_base($this);
-
     // pagekey class
     if (!empty($this->pagekey_class)) {
       include_once('lib/pagekey.'.$this->pagekey_class.'.php');
@@ -612,6 +605,13 @@ class WikiDB {
     }
 
     $this->pagekey = new $pagekey_class($this);
+
+    if (!empty($this->security_class)) {
+      include_once("plugin/security/$this->security_class.php");
+      $class='Security_'.$this->security_class;
+      $this->security=new $class ($this);
+    } else
+      $this->security=new Security_base($this);
   }
 
   function initAlias() {
