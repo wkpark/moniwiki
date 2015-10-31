@@ -713,7 +713,7 @@ function pagenameToKey($pagename) {
   return preg_replace_callback("/([^a-z0-9]{1})/i",'_pgencode', $pagename);
 }
 
-function show_wikiseed($config,$seeddir='wikiseed') {
+function get_seeddir($seeddir = 'wikiseed') {
   if (!empty($config['include_path']))
     $path = $config['include_path'];
   else
@@ -721,13 +721,25 @@ function show_wikiseed($config,$seeddir='wikiseed') {
   $pages= array();
   foreach (explode(':',$path) as $dir) {
     if (is_dir($dir.'/'.$seeddir)) {
-      $seeddir=$dir.'/'.$seeddir;
+      $tdir = $dir.'/'.$seeddir;
+      if (file_exists($tdir.'/FrontPage'))
+        $seeddir=$tdir;
+      else if (file_exists($tdir.'/ko/FrontPage'))
+        $seeddir=$tdir.'/ko';
+      else if (file_exists($tdir.'/en/FrontPage'))
+        $seeddir=$tdir.'/en';
+
       break;
     } else if (is_dir($dir.'/data/text') and file_exists($dir.'/data/text/FrontPage')) {
       $seeddir=$dir.'/data/text';
       break;
     }
   }
+  return $seeddir;
+}
+
+function show_wikiseed($config,$seeddir='wikiseed') {
+  $seeddir = get_seeddir($seeddir);
   $handle= @opendir($seeddir);
   if (is_resource($handle)) {
     while ($file = readdir($handle)) {
@@ -829,20 +841,7 @@ JS;
 }
 
 function sow_wikiseed($config,$seeddir='wikiseed',$seeds) {
-  if (!empty($config['include_path']))
-    $path = $config['include_path'];
-  else
-    $path='.:/usr/share/moniwiki:/usr/local/share/moniwiki';
-  $pages= array();
-  foreach (explode(':',$path) as $dir) {
-    if (is_dir($dir.'/'.$seeddir)) {
-      $seeddir=$dir.'/'.$seeddir;
-      break;
-    } else if (is_dir($dir.'/data/text') and file_exists($dir.'/data/text/FrontPage')) {
-      $seeddir=$dir.'/data/text';
-      break;
-    }
-  }
+  $seeddir = get_seeddir($seeddir);
   umask(0133);
   print "<pre class='console'>\n";
   foreach($seeds as $seed) {
