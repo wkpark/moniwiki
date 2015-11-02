@@ -1186,7 +1186,7 @@ class WikiDB {
 
       $log=$REMOTE_ADDR.';;'.$user->id.';;'.$comment;
       $version = $this->lazyLoad('version', $this);
-      $ret = $version->ci($page->name,$log);
+      $ret = $version->ci($page->name,$log, true); // force
 
       // delete history
       if (!empty($this->delete_history) && in_array($options['id'], $this->owners)
