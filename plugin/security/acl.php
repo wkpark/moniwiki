@@ -26,6 +26,7 @@
 # *     @Kiwirian   allow   read
 
 require_once(dirname(__FILE__).'/../../lib/checkip.php');
+require_once(dirname(__FILE__).'/../../lib/cache.text.php');
 
 class Security_ACL extends Security_base {
     var $DB;
