@@ -1527,6 +1527,8 @@ class UserDB {
     }
 
     $fp=fopen("$this->user_dir/$wu","w+");
+    if (!is_resource($fp))
+      return;
     fwrite($fp,$data);
     fclose($fp);
   }
@@ -1613,7 +1615,7 @@ class UserDB {
     else
       $user->info['tz_offset'] = date('Z');
 
-    $user->ticket = $info['ticket'];
+    $user->ticket = !empty($info['ticket']) ? $info['ticket'] : null;
 
     return $user;
   }
@@ -1730,7 +1732,7 @@ class WikiUser {
       if ($this->id == 'Anonymous') return;
 
       // get groups
-      if (method_exists($DBInfo->security, 'get_acl_group'))
+      if (isset($DBInfo->security) && method_exists($DBInfo->security, 'get_acl_group'))
           $this->groups = $DBInfo->security->get_acl_group($this->id);
   }
 
