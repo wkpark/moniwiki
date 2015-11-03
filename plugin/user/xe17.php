@@ -1,18 +1,19 @@
 <?php
 // Copyright 2013-2015 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
-// a sample plugin for the MoniWiki
+// a xe user plugin for the MoniWiki
 //
 // Author: Won-Kyu Park <wkpark@kldp.org>
 // Since: 2013-07-04
-// Modified: 2015-04-30
-// Name: XE 1.7 User plugin
+// Modified: 2015-11-04
+// Name: XE 1.7,1.8 User plugin
 // Description: XE 1.7 user plugin
 // URL: MoniWiki:XeUserPlugin
 // Version: $Revision: 1.5 $
 // License: GPL
 //
 // Param: xe_root_dir='/home/path_to_the_root_of_installed_xe/'; # default xe root path
+// Param: xe_allowed_groups=array(1=>'@staff',...); # allowed xe groups
 // Usage: set $user_class = 'xe17'; in the config.php
 //
 
@@ -45,7 +46,7 @@ class User_xe17 extends WikiUser {
     }
 
     function User_xe17($id = '') {
-        global $DBInfo;
+        global $Config;
 
         parent::WikiUser($id);
         if ($this->id != 'Anonymous')
@@ -54,8 +55,8 @@ class User_xe17 extends WikiUser {
         $cookie_id = $this->id;
 
         // set xe_root_dir config option
-        $xe_root_dir = !empty($DBInfo->xe_root_dir) ?
-                $DBInfo->xe_root_dir : dirname(__FILE__).'/../../../xe';
+        $xe_root_dir = !empty($Config['xe_root_dir']) ?
+                $Config['xe_root_dir'] : dirname(__FILE__).'/../../../xe';
         // default xe_root_dir is 'xe' subdirectory of the parent dir of the moniwiki
 
         $sessid = session_name(); // PHPSESSID
@@ -70,7 +71,7 @@ class User_xe17 extends WikiUser {
         session_start();
 
         // is it a valid user ?
-        $udb = new UserDB($DBInfo);
+        $udb = new UserDB($Config);
         $user = $udb->getUser($cookie_id);
 
         $update = false;
@@ -125,16 +126,51 @@ class User_xe17 extends WikiUser {
 
             // not a registered user ?
             if ($user->id == 'Anonymous' || $update || empty($user->info['nick'])) {
-                $this->setID($id); // not found case
-                $this->info = $user->info; // already registered case
-
-                if ($this->nick != $xeinfo->nick_name) {
-                    $this->nick = $xeinfo->nick_name;
-                    $this->info['nick'] = $xeinfo->nick_name;
+                // check groups
+                $groups = array_keys($xeinfo->group_list);
+                $wikigroups = array();
+                $group_ok = $xeinfo->is_admin == 'Y' ? true : false;
+                if (!empty($Config['xe_allowed_groups'])) {
+                    $allowed_groups = $Config['xe_allowed_groups'];
+                    for ($i = 0; $i < sizeof($groups); $i++) {
+                        if (isset($allowed_groups[$groups[$i]])) {
+                            $group_ok = true;
+                            $groupname = $allowed_groups[$groups[$i]];
+                            if (!empty($groupname)) {
+                                $wikigroups[] = $groupname;
+                            }
+                        }
+                    }
+                } else {
+                    $group_ok = true;
                 }
-                if ($this->info['email'] == '')
-                    $this->info['email'] = $xeinfo->email_address;
-                $this->info['tz_offset'] = $this->tz_offset;
+
+                if ($group_ok) {
+                    if (!empty($wikigroups)) {
+                        $this->groups = $wikigroups;
+                        $user->info['groups'] = implode(',', $wikigroups);
+                        $this->info['groups'] = $user->info['groups'];
+                    } else if (!empty($this->info['groups'])) {
+                        $user->info['groups'] = '@User';
+                        $this->info['groups'] = $user->info['groups'];
+                    }
+
+                    $this->setID($id); // not found case
+                    $this->info = $user->info; // already registered case
+
+                    if ($this->nick != $xeinfo->nick_name) {
+                        $this->nick = $xeinfo->nick_name;
+                        $this->info['nick'] = $xeinfo->nick_name;
+                    }
+                    if ($this->info['email'] == '')
+                        $this->info['email'] = $xeinfo->email_address;
+                    $this->info['tz_offset'] = $this->tz_offset;
+                } else {
+                    if (!empty($cookie_id))
+                        header($this->unsetCookie());
+                    $this->setID('Anonymous');
+                    $id = 'Anonymous';
+                }
             }
         } else {
             // not logged in
@@ -153,7 +189,7 @@ class User_xe17 extends WikiUser {
 
         if ($update || !$udb->_exists($id)) {
             if (!$udb->_exists($id)) {
-                if (!empty($DBInfo->use_agreement) && empty($this->info['join_agreement'])) {
+                if (!empty($Config['use_agreement']) && empty($this->info['join_agreement'])) {
                     $this->info['join_agreement'] = 'disagree';
                 }
             }
@@ -163,15 +199,15 @@ class User_xe17 extends WikiUser {
     }
 
     function login($formatter, $params) {
-        global $DBInfo;
+        global $Config;
 
         @session_start(); // confirm session start
 
         // set xe_root_dir config option
-        $xe_root_dir = !empty($DBInfo->xe_root_dir) ?
-                $DBInfo->xe_root_dir : dirname(__FILE__).'/../../../xe';
-        $xe_root_url = !empty($DBInfo->xe_root_url) ?
-                $DBInfo->xe_root_url : '/xe';
+        $xe_root_dir = !empty($Config['xe_root_dir']) ?
+                $Config['xe_root_dir'] : dirname(__FILE__).'/../../../xe';
+        $xe_root_url = !empty($Config['xe_root_url']) ?
+                $Config['xe_root_url'] : '/xe';
         // default xe_root_dir is 'xe' subdirectory of the parent dir of the moniwiki
 
         // init XE17, XE18
