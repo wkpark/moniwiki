@@ -5084,6 +5084,8 @@ FOOT;
 
     if (file_exists($this->themedir."/footer.php")) {
       $themeurl=$this->themeurl;
+      // extract variables
+      extract($this->_vars);
       include($this->themedir."/footer.php");
     } else {
       echo "<div id='wikiFooter'>";
