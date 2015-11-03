@@ -1794,8 +1794,16 @@ class WikiUser {
      if (!empty($this->info['nick'])) $_COOKIE['MONI_NICK']=$this->info['nick'];
 
      $domain = '';
-     if (!empty($Config['cookie_domain']))
+     if (!empty($Config['cookie_domain'])) {
         $domain = '; Domain='.$Config['cookie_domain'];
+     } else {
+        $dummy = explode('.', $_SERVER['SERVER_NAME']);
+        if (count($dummy) > 2) {
+           // make subdomain to set the cookie domain
+           array_shift($dummy);
+           $domain = '; Domain=.'.implode('.', $dummy);
+        }
+     }
 
      if (!empty($Config['cookie_path']))
         $path = '; Path='.$Config['cookie_path'];
