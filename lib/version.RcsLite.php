@@ -60,7 +60,27 @@ class Version_RcsLite extends Version_RCS {
 
   function delete($pagename) {
     $keyname=$this->DB->_getPageKey($pagename);
-    @unlink($this->DB->text_dir.'/'.$this->rcs_dir."/$keyname,v");
+    // do not delete history at all.
+    // just rename it.
+    $this->_atticpage($pagename);
+  }
+
+  // store pagename
+  function _atticpage($pagename) {
+    $keyname = $this->DB->_getPageKey($pagename);
+    $oname = $this->DB->text_dir.'/'.$this->rcs_dir.'/'.$keyname.',v';
+
+    $ext = ',v';
+    $i = 0;
+    while (file_exists($this->DB->text_dir.'/'.$this->rcs_dir.'/'.$keyname.$ext)) {
+      $i++;
+      $ext = ','.$i;
+    }
+
+    $atticname = $this->DB->text_dir.'/'.$this->rcs_dir.'/'.$keyname.$ext;
+    if ($i != 0)
+      return rename($oname, $atticname);
+    return false;
   }
 
   function rename($pagename,$new) {
