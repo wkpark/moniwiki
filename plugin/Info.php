@@ -335,7 +335,26 @@ function macro_info($formatter,$value,$options=array()) {
   if ($DBInfo->version_class) {
     $version = $DBInfo->lazyLoad('version', $DBInfo);
     $out = $version->rlog($formatter->page->name,'','-r','-z');
+  } else {
+    $msg=_("Version info is not available in this wiki");
+    return "<h2>$msg</h2>";
+  }
 
+  if (!isset($out[0])) {
+    $msg = _("No older revisions available");
+    $info = "<h2>$msg</h2>";
+    if (method_exists($version, 'attics')) {
+      $ret = $version->attics($formatter->page->name);
+      if ($ret !== false) {
+        $count = count($ret);
+        if ($count > 1)
+          $msg = sprintf(_("%s archived log files available."), $count);
+        else
+          $msg = sprintf(_("%s archived log file available."), $count);
+        $info = "<h2>$msg</h2>";
+      }
+    }
+  } else if (isset($out[0])) {
     // get the number of total revisions and the last revision.
     $total = 1;
     if (preg_match('/^total revisions: (\d+);/m', $out, $m))
@@ -387,16 +406,7 @@ function macro_info($formatter,$value,$options=array()) {
     }
 
     $out= $version->rlog($formatter->page->name,'',"-r$revstr",'-z');
-
-    if (!isset($out[0])) {
-      $msg=_("No older revisions available");
-      $info= "<h2>$msg</h2>";
-    } else {
-      $info= _parse_rlog($formatter,$out,$options);
-    }
-  } else {
-    $msg=_("Version info is not available in this wiki");
-    $info= "<h2>$msg</h2>";
+    $info= _parse_rlog($formatter,$out,$options);
   }
   return $warn.$info;
 }
