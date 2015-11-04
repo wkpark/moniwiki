@@ -216,6 +216,23 @@ class Version_RCS {
     return false;
   }
 
+  // get all archived pages
+  function attics($pagename) {
+    $keyname = $this->DB->_getPageKey($pagename);
+
+    $ext = ',1';
+    $i = 1;
+    $archive = array();
+    while (file_exists($this->DB->text_dir."/RCS/$keyname".$ext)) {
+      $archive[] = $i;
+      $i++;
+      $ext = ','.$i;
+    }
+    if (empty($archive))
+      return false;
+    return $archive;
+  }
+
   function rename($pagename,$new, $params = array()) {
     $keyname=$this->DB->_getPageKey($new);
     $oname=$this->DB->_getPageKey($pagename);
