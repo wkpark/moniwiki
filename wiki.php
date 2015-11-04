@@ -1178,15 +1178,25 @@ class WikiDB {
 
     $keyname=$this->_getPageKey($page->name);
 
-    $deleted = @unlink($this->text_dir.'/'.$keyname);
-    if ($deleted && !empty($this->version_class)) {
-      // make a empty file
-      if (!empty($this->log_deletion))
+    $deleted = false;
+    if (file_exists($this->text_dir.'/'.$keyname)) {
+      $deleted = @unlink($this->text_dir.'/'.$keyname);
+
+      // fail to delete
+      if (!$deleted)
+        return -1;
+    }
+
+    if (!empty($this->version_class)) {
+      $version = $this->lazyLoad('version', $this);
+
+      if ($deleted && !empty($this->log_deletion)) {
+        // make a empty file to log deletion
         touch($this->text_dir.'/'.$keyname);
 
-      $log=$REMOTE_ADDR.';;'.$user->id.';;'.$comment;
-      $version = $this->lazyLoad('version', $this);
-      $ret = $version->ci($page->name,$log, true); // force
+        $log = $REMOTE_ADDR.';;'.$user->id.';;'.$comment;
+        $ret = $version->ci($page->name,$log, true); // force
+      }
 
       // delete history
       if (!empty($this->delete_history) && in_array($options['id'], $this->owners)
@@ -1194,12 +1204,12 @@ class WikiDB {
         $version->delete($page->name);
 
       // delete the empty file again
-      @unlink($this->text_dir.'/'.$keyname);
+      if ($deleted)
+        @unlink($this->text_dir.'/'.$keyname);
     }
 
-    // fail to delete
-    if (!$deleted)
-      return -1;
+    // history deletion case by owners
+    if (!$deleted) return 0;
 
     $this->addLogEntry($page->name, $REMOTE_ADDR, $comment, $action);
 

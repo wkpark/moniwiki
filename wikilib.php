@@ -2679,7 +2679,9 @@ function do_post_DeletePage($formatter,$options) {
 
   $page = $DBInfo->getPage($options['page']);
 
-  if (!$page->exists()) {
+  $not_found = !$page->exists();
+
+  if ($not_found && !in_array($options['id'], $DBInfo->owners)) {
     $formatter->send_header('', $options);
     $title = _("Page not found.");
     $formatter->send_title($title, '',$options);
@@ -2756,9 +2758,12 @@ function do_post_DeletePage($formatter,$options) {
   $formatter->send_header("",$options);
   $formatter->send_title($title,"",$options);
   $btn = _("Summary");
-  print "<form method='post'>
-$btn: <input name='comment' size='80' value='' /><br />\n";
-  if (!empty($DBInfo->delete_history))
+  echo "<form method='post'>\n";
+  if ($not_found)
+    echo _("Page already deleted.").'<br />';
+  else
+    echo "$btn: <input name='comment' size='80' value='' /><br />\n";
+  if (!empty($DBInfo->delete_history) && in_array($options['id'], $DBInfo->owners))
     print _("with revision history")." <input type='checkbox' name='history' />\n";
   print "\n<input type=\"hidden\" name=\"hash\" value=\"".$hash."\" />\n";
 
