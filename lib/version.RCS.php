@@ -211,7 +211,9 @@ class Version_RCS {
     }
 
     $atticname = $this->DB->text_dir."/RCS/$keyname".$ext;
-    return rename($oname, $atticname);
+    if ($i != 0)
+      return rename($oname, $atticname);
+    return false;
   }
 
   function rename($pagename,$new, $params = array()) {
