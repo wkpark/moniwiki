@@ -5369,9 +5369,9 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
 
   if (empty($hits) and empty($exacts)) {
     // simple title search by ignore spaces
-    $needle2 = str_replace(' ', "\\s*", $needle);
+    $needle2 = str_replace(' ', "[ ]*", $needle);
     $ws = preg_split("/([\x{AC00}-\x{D7F7}])/u", $needle2, -1, PREG_SPLIT_DELIM_CAPTURE | PREG_SPLIT_NO_EMPTY);
-    $needle2 = implode("\\s*", $ws);
+    $needle2 = implode("[ ]*", $ws);
     $hits = $indexer->getLikePages($needle2);
     foreach ($alias as $page) {
       if (preg_match("/".$needle2."/i", $page))
