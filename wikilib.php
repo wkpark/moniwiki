@@ -2033,18 +2033,19 @@ CSS;
     $js.= <<<JS
 <script data-cfasync="false" type='text/javascript'>
 /*<![CDATA[*/
-function init_previewbutton() {
+function init_editor() {
   var form = document.getElementById('editform'); // main edit form
   if (form.elements['button_preview']) {
     var save_onclick = form.elements['button_preview'].onclick;
     form.elements['button_preview'].onclick = function(ev) {
       try { save_onclick(ev); } catch(e) {};
       return submit_preview(ev);
-    }
+    };
 
-    form.elements['button_changes'].onclick = function(ev) {
-      return submit_preview(ev);
-    }
+    if (form.elements['button_changes'])
+      form.elements['button_changes'].onclick = function(ev) {
+        return submit_preview(ev);
+      };
   }
 }
 
@@ -2106,8 +2107,8 @@ function submit_preview(e) {
 var oldOnload = window.onload;
 window.onload = function() {
   try { oldOnload(); } catch(e) {};
-  init_previewbutton();
-}
+  init_editor();
+};
 })();
 /*]]>*/
 </script>\n
