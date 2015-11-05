@@ -2029,6 +2029,90 @@ $sidebar_style
 </style>\n
 CSS;
   }
+  if (!empty($DBInfo->use_jsbuttons)) {
+    $js.= <<<JS
+<script data-cfasync="false" type='text/javascript'>
+/*<![CDATA[*/
+function init_previewbutton() {
+  var form = document.getElementById('editform'); // main edit form
+  if (form.elements['button_preview']) {
+    var save_onclick = form.elements['button_preview'].onclick;
+    form.elements['button_preview'].onclick = function(ev) {
+      try { save_onclick(ev); } catch(e) {};
+      return submit_preview(ev);
+    }
+
+    form.elements['button_changes'].onclick = function(ev) {
+      return submit_preview(ev);
+    }
+  }
+}
+
+function submit_preview(e) {
+  e = e || window.event;
+
+  var form = document.getElementById('editform'); // main edit form
+  var textarea = form.getElementsByTagName('textarea')[0];
+  var wikitext = textarea.value;
+
+  var action = 'markup';
+  var datestamp = form.elements['datestamp'].value;
+  var section = form.elements['section'] ? form.elements['section'].value : null;
+
+  // preview
+  var toSend = 'action=markup/ajax' +
+    '&value=' + encodeURIComponent(wikitext);
+
+  var location = self.location + '';
+  var markup = HTTPPost(location, toSend);
+
+  // set preview
+  var preview = document.getElementById('wikiPreview');
+  preview.style.display = 'block';
+  preview.innerHTML = markup;
+
+  // get diffpreview
+  var diffview = document.getElementById('wikiDiffPreview');
+  var node = e.target || e.srcElement;
+
+  if (node.name == "button_changes") {
+    var toSend = 'action=diff/ajax' +
+      '&value=' + encodeURIComponent(wikitext) + '&rev=' + datestamp;
+    if (section)
+      '&section=' + section;
+
+    var diff = HTTPPost(location, toSend);
+    if (!diffview) {
+      diffview = document.createElement('div');
+      diffview.setAttribute('id', 'wikiDiffPreview');
+      preview.parentNode.insertBefore(diffview, preview);
+    }
+    if (diffview) {
+      diffview.style.display = 'block';
+      diffview.innerHTML = diff;
+    }
+  } else {
+    if (diffview) {
+      diffview.style.display = 'none';
+      diffview.innerHTML = '';
+    }
+  }
+
+  return false;
+}
+
+(function(){
+// onload
+var oldOnload = window.onload;
+window.onload = function() {
+  try { oldOnload(); } catch(e) {};
+  init_previewbutton();
+}
+})();
+/*]]>*/
+</script>\n
+JS;
+  }
   return $css.$js.'<div id="all-forms">'.$form.'</div>'.$tmpls;
 }
 
@@ -2082,6 +2166,9 @@ JS;
       echo ' '.$formatter->link_to('#preview',_("Skip to preview"),' class="preview-anchor"');
     echo "</div>\n";
   }
+
+  echo "<div id='wikiDiffPreview' style='display:none;'>\n</div>\n";
+  echo "<div id='wikiPreview' style='display:none;'>\n</div>\n";
 
   $formatter->send_footer('',$options);
 }
