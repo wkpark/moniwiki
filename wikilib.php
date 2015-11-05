@@ -2079,7 +2079,7 @@ function submit_preview(e) {
     var toSend = 'action=diff/ajax' +
       '&value=' + encodeURIComponent(wikitext) + '&rev=' + datestamp;
     if (section)
-      '&section=' + section;
+      toSend+= '&section=' + section;
 
     var diff = HTTPPost(location, toSend);
     if (!diffview) {
