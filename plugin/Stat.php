@@ -285,7 +285,7 @@ function _render_stat($formatter, $retval, $params = array()) {
         $out.= '<td>'.$contribs[$u].'</td>';
         $out.= '<td>'.implode(', ', $ips)."</td></tr>\n";
     }
-    $out.= '</table>';
+    $out.= '</table></div>';
     endif;
 
     // binning
@@ -391,7 +391,7 @@ EOS;
     for ($j = 0; $j < $szbin; $j++) {
         $dump.= 'add= '.$add_bins[$j].', del= '.$del_bins[$j].', sum= '.$sum[$j]."\n";
     }
-    return $out."<div class='info-stat'><canvas id='info-stat'></canvas>".$barchart;
+    return $out."<div class='info-stat'><canvas id='info-stat'></canvas>".$barchart.'</div>';
 }
 
 function macro_Stat($formatter, $value, $options = array()) {
