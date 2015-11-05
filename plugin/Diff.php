@@ -429,7 +429,36 @@ function macro_diff($formatter,$value,&$options)
   }
   
   $version = $DBInfo->lazyLoad('version', $DBInfo);
-  $out = $version->diff($formatter->page->name,$rev1,$rev2);
+
+  if (isset($options['value'][0])) {
+    $rev = trim($options['rev']);
+    if (!preg_match('/^[0-9a-f.]+$/i', $rev))
+      $rev = '';
+
+    $savetext = $options['value'];
+    if (!empty($options['section'])) {
+      if (!empty($rev)) {
+        // get revision number
+        $r = $formatter->page->get_rev($rev);
+        $opts = array();
+        if (!empty($r))
+            $opts['rev'] = $r;
+        // get raw text by selected revision
+        $rawbody = $formatter->page->get_raw_body($opts);
+      } else {
+        $rawbody = $formatter->page->get_raw_body();
+      }
+      $sections = _get_sections($rawbody);
+      if (isset($sections[$options['section']])) {
+        if (substr($savetext, -1) != "\n") $savetext.= "\n";
+        $sections[$options['section']] = $savetext;
+      }
+    }
+    // make a diff formatted text from given text
+    $out = $formatter->get_diff(!empty($options['section']) ? implode('', $sections) : $savetext); // get diff
+  } else {
+    $out = $version->diff($formatter->page->name,$rev1,$rev2);
+  }
 
   $ret = '';
   if (!$out) {
@@ -575,7 +604,7 @@ function do_diff($formatter,$options="") {
     $options['rev']=$date;
   $diff = macro_diff($formatter,'',$options);
 
-  if (!empty($options['raw'])) {
+  if (!empty($options['raw']) || $options['action_mode'] == 'ajax') {
     header('Content-Type: text/plain');
     echo $diff;
     return;
