@@ -1962,9 +1962,9 @@ function macro_EditText($formatter,$value,$options) {
     $css=<<<CSS
 <style type='text/css'>
 /*<![CDATA[*/
-#mycontent button.save-button { display: none; }
-#mycontent button.preview-button { display: none; }
-button.save-button { display: none; }
+#mycontent input.save-button { display: none; }
+#mycontent input.preview-button { display: none; }
+input.save-button { display: none; }
 $sidebar_style
 /*]]>*/
 </style>
@@ -2413,11 +2413,11 @@ EXTRA;
   $wysiwyg_btn = '';
   $skip_preview = '';
   if (empty($options['simple'])) {
-    $preview_btn='<span class="button"><input type="submit" class="button" tabindex="6" name="button_preview" class="preview-button" value="'.
+    $preview_btn='<span class="button"><input type="submit" tabindex="6" name="button_preview" class="button preview-button" value="'.
       _("Preview").'" /></span>';
     $changes_btn = '';
     if ($formatter->page->exists())
-      $changes_btn=' <span class="button"><input type="submit" class="button" tabindex="6" name="button_changes" class="preview-button" value="'.
+      $changes_btn=' <span class="button"><input type="submit" tabindex="6" name="button_changes" class="button preview-button" value="'.
         _("Show changes").'" /></span>';
     if ($preview and empty($options['conflict']))
       $skip_preview= ' '.$formatter->link_to('#preview',_("Skip to preview"),' class="preview-anchor"');
