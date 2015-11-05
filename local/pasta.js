@@ -331,6 +331,7 @@ PaSTA.prototype = {
             var els = editform.getElementsByTagName('input');
             for (var i = 0; i < els.length; i++) {
                 if (els[i].getAttribute('name') == 'button_preview') {
+                    var save_onclick = els[i].onclick;
                     els[i].onclick = function(e) {
                         var no = get_src_line_num(e);
                         if (!no)
@@ -344,6 +345,7 @@ PaSTA.prototype = {
                             editform.setAttribute('action', action + '#' + no);
                         }
 
+                        try { return save_onclick(e); } catch(ex) {};
                         return true;
                     };
                     break;
