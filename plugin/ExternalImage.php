@@ -21,10 +21,10 @@ function macro_ExternalImage($formatter, $value, $params = array()) {
     // http://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/3-Tastenmaus_Microsoft.jpg/250px-3-Tastenmaus_Microsoft.jpg
 
     if (preg_match('@^https?://upload\.wikimedia\.org/wikipedia/(?:(en|commons)/)?(thumb/)?./../([^/]+\.(?:gif|jpe?g|png|svg))(?(2)/(\d+px)-\3)@', $value, $m)) {
-        $args = '';
-        if (!empty($m[4]))
-            $args.= ',width='.$m[4];
-        return $formatter->macro_repl('WikimediaCommons', $m[3].$args, $params);
+        //$args = '';
+        //if (!empty($m[4]))
+        //    $args.= ',width='.$m[4];
+        return $formatter->macro_repl('WikimediaCommons', $value, $params);
     } else if (preg_match('@^https?://(?:[^.]+)\.(?:wikimedia|wikipedia)\.org/wiki/(?:Image|File):([^/]+\.(?:gif|jpe?g|png|svg))$@', $value, $m)) {
         return $formatter->macro_repl('WikimediaCommons', $value, $params);
     } else if (preg_match('@^https?://([^.]+)\.wikia\.com/wiki/(?:Image|File):(.*\.(?:gif|jpe?g|png|svg))@', $value, $m)) {
