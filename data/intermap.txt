@@ -42,3 +42,5 @@ Namu https://namu.wiki/w/
 LibreWiki https://librewiki.net/wiki/
 Libre https://librewiki.net/wiki/
 DcWiki https://wiki.dcinside.com/wiki/
+ZetaWiki http://zetawiki.com/wiki/
+Zeta http://zetawiki.com/wiki/
