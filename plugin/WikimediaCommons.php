@@ -47,13 +47,15 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
     // default API url
     $api_url = 'https://commons.wikimedia.org/w/api.php';
     // check full url
-    if (preg_match('@^https?://upload\.wikimedia\.org/wikipedia/.*/(thumb/)?./../([^/]+\.(?:gif|jpe?g|png|svg))(?(1)/(\d+px)-\2)@', $value, $m)) {
+    if (preg_match('@^https?://upload\.wikimedia\.org/wikipedia/(?:(en|commons)/)?(thumb/)?./../([^/]+\.(?:gif|jpe?g|png|svg))(?(2)/(\d+px)-\3)@', $value, $m)) {
         // WikiMedia
         $remain = substr($value, strlen($m[0]));
+        if (!empty($m[1]) && in_array($m[1], array('en')))
+            $api_url = 'https://'.$m[1].'.wikipedia.org/w/api.php';
 
-        $value = urldecode($m[2]);
-        if (!empty($m[3]))
-            $width = intval($m[3]);
+        $value = urldecode($m[3]);
+        if (!empty($m[4]))
+            $width = intval($m[4]);
         $data['titles'] = 'Image:'.$value;
         $data['iiprop'] = 'extmetadata|url';
     } else if (preg_match('@^https?://((?:[^.]+)\.(?:wikimedia|wikipedia)\.org)/wiki/(?:Image|File):([^/]+\.(?:gif|jpe?g|png|svg))$@', $value, $m)) {
