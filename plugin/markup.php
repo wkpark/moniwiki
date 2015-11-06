@@ -15,7 +15,8 @@ function do_markup($formatter,$options) {
     //$options['fixpath']=1;
     $formatter->send_header("",$options);
     $formatter->postfilters=array('fiximgpath');
-    if (empty($options['all'])) $formatter->wikimarkup=1;
+    if (!empty($options['preview'])) $formatter->wikimarkup = 2;
+    else if (empty($options['all'])) $formatter->wikimarkup = 1;
     if (!empty($options['value'])) {
         $val=_stripslashes($options['value']);
         $val= preg_replace('/(\r\n|\n|\r)/',"\n",$val); // Win32 fix

@@ -3621,7 +3621,7 @@ class Formatter {
     // reset macro ID
     $this->mid=0;
 
-    if ($this->wikimarkup) $this->nonexists='always';
+    if ($this->wikimarkup == 1) $this->nonexists='always';
 
     if (isset($body[0])) {
       unset($this->page->pi['#format']); // reset page->pi to get_instructions() again
@@ -3806,7 +3806,7 @@ class Formatter {
 
     # is it redirect page ?
     if (isset($pi['#redirect'][0]) and
-        empty($this->wikimarkup))
+        $this->wikimarkup != 1)
     {
       $url = $pi['#redirect'];
       $anchor = '';

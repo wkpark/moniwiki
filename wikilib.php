@@ -2061,7 +2061,7 @@ function submit_preview(e) {
   var section = form.elements['section'] ? form.elements['section'].value : null;
 
   // preview
-  var toSend = 'action=markup/ajax' +
+  var toSend = 'action=markup/ajax&preview=1' +
     '&value=' + encodeURIComponent(wikitext);
 
   var location = self.location + '';
