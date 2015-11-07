@@ -4670,12 +4670,9 @@ function macro_InterWiki($formatter,$value,$options=array()) {
   while (!isset($DBInfo->interwiki) or !empty($options['init'])) {
     $cf = new Cache_text('settings', array('depth'=>0));
 
-    $force_init=0;
-    if (!empty($DBInfo->shared_intermap) and file_exists($DBInfo->shared_intermap)
-        and $cf->mtime('interwiki') < filemtime($DBInfo->shared_intermap) ) {
-      $force_init=1;
-    }
-    if (empty($formatter->refresh) and $cf->exists('interwiki') and !$force_init) {
+    // check intermap and shared_intermap
+    // you can update interwiki maps by touch $intermap or edit $shared_intermap
+    if (empty($formatter->refresh) and ($info = $cf->fetch('interwiki')) !== false) {
       $info = $cf->fetch('interwiki');
       $DBInfo->interwiki=$info['interwiki'];
       $DBInfo->interwikirule=$info['interwikirule'];
@@ -4683,15 +4680,22 @@ function macro_InterWiki($formatter,$value,$options=array()) {
       break;
     }
 
+    $deps = array();
     $interwiki=array();
     # intitialize interwiki map
-    $map=file($DBInfo->intermap);
+    $map = array();
+    if (isset($DBInfo->intermap[0]) && file_exists($DBInfo->intermap)) {
+      $map = file($DBInfo->intermap);
+      $deps[] = $DBInfo->intermap;
+    }
     if (!empty($DBInfo->sistermap) and file_exists($DBInfo->sistermap))
       $map=array_merge($map,file($DBInfo->sistermap));
 
     # read shared intermap
-    if (file_exists($DBInfo->shared_intermap))
+    if (file_exists($DBInfo->shared_intermap)) {
       $map=array_merge($map,file($DBInfo->shared_intermap));
+      $deps[] = $DBInfo->shared_intermap;
+    }
 
     $interwikirule = '';
     for ($i=0,$sz=sizeof($map);$i<$sz;$i++) {
@@ -4750,7 +4754,7 @@ function macro_InterWiki($formatter,$value,$options=array()) {
     $DBInfo->intericon=$intericon;
     $interinfo=
       array('interwiki'=>$interwiki,'interwikirule'=>$interwikirule,'intericon'=>$intericon);
-    $cf->update('interwiki',$interinfo);
+    $cf->update('interwiki', $interinfo, 0, array('deps'=>$deps));
     break;
   }
   if (!empty($options['init'])) return;
