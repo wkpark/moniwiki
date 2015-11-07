@@ -40,6 +40,7 @@ function _editlog_binning($fp, $seek = null, $start, $bin = 0, $params = array()
 
     $j = 0;
     $data = array();
+    $users = array();
     $stamp = -1;
     $has_query = !empty($q);
     do {
@@ -51,18 +52,35 @@ function _editlog_binning($fp, $seek = null, $start, $bin = 0, $params = array()
         $tmp = explode("\t", $line);
         if (!isset($tmp[2])) continue;
         $stamp = $tmp[2];
-        if ($has_query && $tmp[$iq] != $q) continue;
+        if ($has_query && $tmp[$iq] != $q) {
+            continue;
+        } else {
+            $id = $tmp[4];
+            if ($id == 'Anonymous')
+                $id = $tmp[1];
+        }
 
         $idx = (int)(($stamp - $start) / $bin)*$bin + $start;
-        if (!isset($data[$idx]))
+        if (!isset($data[$idx])) {
             $data[$idx] = 1;
-        else
+            $users[$idx] = array();
+        } else {
             $data[$idx]++;
+            if (isset($users[$idx][$id]))
+                $users[$idx][$id]++;
+            else
+                $users[$idx][$id] = 1;
+        }
 
         $j++;
     } while (!feof($fp) && $stamp < $until);
 
-    return array('total'=>$j, 'data'=>$data);
+    $user_count = array();
+    foreach ($users as $idx=>$u) {
+        $user_count[$idx] = count($u);
+    }
+
+    return array('total'=>$j, 'data'=>$data, 'user'=>$users, 'user_count'=>$user_count);
 }
 
 function _editlog_seek($editlog, $timestamp = null) {
@@ -143,7 +161,7 @@ function _editlog_seek($editlog, $timestamp = null) {
     return $myseek;
 }
 
-function do_editlogbin($formatter, $params = array()) {
+function cached_editlogbin($formatter, $params = array()) {
     global $Config, $DBInfo;
 
     $cache = new Cache_Text('editlogbin');
@@ -160,13 +178,13 @@ function do_editlogbin($formatter, $params = array()) {
     $title = !empty($params['title']) ? $params['title'] : '';
 
     // get timestamp
-    $oldest_stamp = !empty($Config['editlogbin_datetime_oldest']) ?
-            strtotime($Config['editlogbin_datetime_oldest']) : strtotime('-1 year');
+    $oldest_stamp = !empty($params['.oldest']) ?
+            strtotime($params['.oldest']) : strtotime('-1 year');
 
-    if ($oldest_stamp < strtotime('-10 years')) {
-        // too old
-        $oldest_stamp = strtotime('-1 year');
-    }
+    // round timestamp
+    $tmp = $oldest_stamp % (60*60*24); // FIXME
+    if ($tmp > 0)
+        $oldest_stamp-= $tmp - 60*60*24;
 
     if (!empty($start)) {
         if (is_numeric($start)) // timestamp
@@ -174,25 +192,29 @@ function do_editlogbin($formatter, $params = array()) {
         else
             $from = strtotime($start); // convert to timestamp
     } else {
-        $from = $oldest_stamp;
+        $from = !empty($params['.max_range']) ?
+            strtotime('-'.$params['.max_range']) : strtotime('-1 year');
+        // restrict range
+        $params['until'] = null; // reset
     }
+    // round timestamp
+    $tmp = $from % (60*60*24); // FIXME
+    if ($tmp > 0)
+        $from-= $tmp - 60*60*24;
 
-    // restrict range
-    $params['until'] = null; // reset
-    if ($from < $oldest_stamp) {
-        $max_range = !empty($Config['editlogbin_datetime_max_range']) ?
-            strtotime($Config['editlogbin_datetime_max_range'], $from) : strtotime('1 year', $from);
-        $params['until'] = $max_range;
-    }
+    $max_range = !empty($params['.max_range']) ?
+        strtotime($params['.max_range'], $from) : strtotime('1 year', $from);
+    $params['until'] = $max_range;
+    if ($params['until'] > time())
+        $params['until'] = null;
+
     //echo date('Y.m.d H.i.s', $params['until']);
 
     $mtime = $DBInfo->mtime();
     $key = $user.'.'.$from.'.'.$domain.'.'.$title.$mtime;
 
-    if (empty($formatter->refresh) && ($val = $cache->fetch($key)) !== false) {
-        header('Content-Type: text/plain');
-        echo json_encode($val['data']);
-        return;
+    if (empty($formatter->refresh) && ($data = $cache->fetch($key)) !== false) {
+        return $data;
     }
 
     $fp = fopen($Config['editlog_name'], 'r');
@@ -200,9 +222,25 @@ function do_editlogbin($formatter, $params = array()) {
     $data = _editlog_binning($fp, $seek, $from, 60*60*24, $params);
     fclose($fp);
 
-    header('Content-Type: text/plain');
     $cache->update($key, $data, 60*60*24); // TTL to 24 hour
-    echo json_encode($data['data']);
+    return $data;
+}
+
+function do_editlogbin($formatter, $params = array()) {
+    global $Config;
+
+    $params['.oldest'] = !empty($Config['editlogbin_datetime_oldest']) ?
+        $Config['editlogbin_datetime_oldest'] : '-1 year';
+    $params['.max_range'] = !empty($Config['editlogbin_datetime_max_range']) ?
+        $Config['editlogbin_datetime_max_range'] : '1 year';
+    $data = cached_editlogbin($formatter, $params);
+
+    header('Content-Type: text/plain');
+    if ($params['user_count'])
+        echo json_encode($data['user_count']);
+    else
+        echo json_encode($data['data']);
+    return;
 }
 
 // vim:et:sts=4:sw=4:
