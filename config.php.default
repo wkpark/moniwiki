@@ -122,7 +122,6 @@ $hr=''; # obsolute
 #$date_fmt_rc='Y-m-d';
 #$date_fmt_blog='Y-m-d';
 
-#$use_ogp_image_logo=1; # always use logo image for og:image
 #$no_ogp=1; # do not use ogp metadata
 #$sistermap=$data_dir.'/sistermap.txt';
 $metatags=<<<META

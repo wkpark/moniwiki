@@ -4855,10 +4855,22 @@ JSHEAD;
       // set OpenGraph information
       $act = !empty($options['action']) ? strtolower($options['action']) : 'show';
       $is_show = $act == 'show';
-      if ($is_show && empty($DBInfo->no_ogp) && $this->page->exists()) {
+      $is_frontpage = $this->page->name == get_frontpage($DBInfo->lang);
+      if (!$is_frontpage && in_array($this->page->name, $DBInfo->frontpages))
+        $is_frontpage = true;
+
+      if (!empty($DBInfo->canonical_url)) {
+        if (($p = strpos($DBInfo->canonical_url, '%s')) !== false)
+          $page_url = sprintf($DBInfo->canonical_url, $this->page->urlname);
+        else
+          $page_url = $DBInfo->canonical_url . $this->page->urlname;
+      } else {
         $page_url = qualifiedUrl($this->link_url($this->page->urlname));
+      }
+
+      if ($is_show && empty($DBInfo->no_ogp) && $this->page->exists()) {
         $oc = new Cache_text('opengraph');
-        if (($val = $oc->fetch($this->page->name, $this->page->mtime())) === false) {
+        if ($this->refresh || ($val = $oc->fetch($this->page->name, $this->page->mtime())) === false) {
           $val = array('description'=> '', 'image'=> '');
 
           if (!empty($this->pi['#redirect'])) {
@@ -4912,7 +4924,7 @@ JSHEAD;
             }
           }
 
-          if (empty($page_image) && !empty($DBInfo->use_ogp_image_logo)) {
+          if (empty($page_image) && $is_frontpage) {
             $val['image'] = qualifiedUrl($DBInfo->logo_img);
           } else if (!empty($page_image)) {
             $val['image'] = $page_image;
@@ -4925,7 +4937,10 @@ JSHEAD;
         echo '<meta property="og:url" content="'. $page_url.'" />',"\n";
         echo '<meta property="og:site_name" content="'.$sitename.'" />',"\n";
         echo '<meta property="og:title" content="'.$options['title'].'" />',"\n";
-        echo '<meta property="og:type" content="article" />',"\n";
+        if ($is_frontpage)
+          echo '<meta property="og:type" content="website" />',"\n";
+        else
+          echo '<meta property="og:type" content="article" />',"\n";
         if (!empty($val['image']))
           echo '<meta property="og:image" content="',$val['image'],'" />',"\n";
         if (!empty($val['description']))
@@ -4944,12 +4959,7 @@ JSHEAD;
           echo '<meta name="twitter:image:src" content="',$val['image'],'" />',"\n";
       }
       echo '  <title>',$site_title,"</title>\n";
-      if ($is_show && !empty($DBInfo->canonical_url)) {
-        if (($p = strpos($DBInfo->canonical_url, '%s')) !== false)
-          echo '  <link rel="canonical" href="',sprintf($DBInfo->canonical_url, $this->page->urlname),'" />',"\n";
-        else
-          echo '  <link rel="canonical" href="',$DBInfo->canonical_url, $this->page->urlname,'" />',"\n";
-      }
+      echo '  <link rel="canonical" href="',$page_url,'" />',"\n";
 
       # echo '<meta property="og:title" content="'.$options['title'].'" />',"\n";
       if (!empty($upper))
