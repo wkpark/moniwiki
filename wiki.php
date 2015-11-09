@@ -4785,6 +4785,7 @@ class Formatter {
         $dummy = strip_tags($this->page->title);
         $keys = explode(' ', $dummy);
         $keys[] = $dummy;
+        $keys = array_unique($keys);
         $keywords = implode(', ', $keys);
         if (!empty($DBInfo->site_keywords))
           $keywords.= ', '.$DBInfo->site_keywords;
