@@ -5289,6 +5289,26 @@ MSG;
         $mnu.='<li'.(!empty($cls) ? ' class="'. $cls .'"' : '').'>'.$menu[$k]."</li>\n";
         $cls = '';
       }
+
+      // action menus
+      if (!empty($DBInfo->menu_actions)) {
+        $actions = array();
+        foreach ($DBInfo->menu_actions as $action) {
+          if (strpos($action, ' ') !== false) {
+            list($act, $text) = explode(' ', $action, 2);
+            if ($options['page'] == $this->page->name) {
+              $actions[] = $this->link_to($act, _($text));
+            } else {
+              $actions[] = $this->link_tag($options['page'], $act, _($text));
+            }
+          } else {
+            $actions[] = $this->link_to("?action=$action", _($action), " rel='nofollow'");
+          }
+        }
+        $mnu.= '<li><a href="#"><span class="more">'._("More&#187;").'</span></a>'."\n";
+        $mnu.= '<ul><li>'.implode("</li>\n<li>", $actions).'</li></ul></li>'."\n";
+      }
+
       $menu='<div id="wikiMenu"><ul>'.$mnu."</ul></div>\n";
     }
     $this->topmenu=$menu;
