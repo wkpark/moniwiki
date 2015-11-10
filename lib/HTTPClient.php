@@ -58,7 +58,7 @@ class HTTPClient {
     var $proxy_ssl; //boolean set to true if your proxy needs SSL
 
     // list of kept alive connections
-    static $connections = array();
+    var $connections = array();
 
     /**
      * Constructor.
