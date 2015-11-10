@@ -237,6 +237,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   $trash = 0;
   $rctype = '';
 
+  $opts = array();
   $bra = '';
   $cat = '';
   $cat0 = '';
