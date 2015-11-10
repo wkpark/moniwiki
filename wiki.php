@@ -4857,7 +4857,7 @@ JSHEAD;
       $act = !empty($options['action']) ? strtolower($options['action']) : 'show';
       $is_show = $act == 'show';
       $is_frontpage = $this->page->name == get_frontpage($DBInfo->lang);
-      if (!$is_frontpage && in_array($this->page->name, $DBInfo->frontpages))
+      if (!$is_frontpage && !empty($DBInfo->frontpages) && in_array($this->page->name, $DBInfo->frontpages))
         $is_frontpage = true;
 
       if (!empty($DBInfo->canonical_url)) {
