@@ -280,11 +280,9 @@ class HTTPClient {
 
             if (empty($this->resp_headers['location'])){
                 $this->error = 'Redirect but no Location Header found';
-                fclose($socket);
                 return false;
             }elseif($this->redirect_count == $this->max_redirect){
                 $this->error = 'Maximum number of redirects exceeded';
-                fclose($socket);
                 return false;
             }else{
                 $this->redirect_count++;
@@ -294,7 +292,6 @@ class HTTPClient {
                                                       $this->resp_headers['location'];
                 }
                 // perform redirected request, always via GET (required by RFC)
-                fclose($socket);
                 return $this->sendRequest($this->resp_headers['location'],array(),'GET');
             }
         }
