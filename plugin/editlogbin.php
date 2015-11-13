@@ -182,9 +182,8 @@ function cached_editlogbin($formatter, $params = array()) {
             strtotime($params['.oldest']) : strtotime('-1 year');
 
     // round timestamp
-    $tmp = $oldest_stamp % (60*60*24); // FIXME
-    if ($tmp > 0)
-        $oldest_stamp-= $tmp - 60*60*24;
+    $tmp = date('Y-m-d 00:00:00', $oldest_stamp);
+    $oldest_stamp = strtotime($tmp);
 
     if (!empty($start)) {
         if (is_numeric($start)) // timestamp
@@ -198,9 +197,8 @@ function cached_editlogbin($formatter, $params = array()) {
         $params['until'] = null; // reset
     }
     // round timestamp
-    $tmp = $from % (60*60*24); // FIXME
-    if ($tmp > 0)
-        $from-= $tmp - 60*60*24;
+    $tmp = date('Y-m-d 00:00:00', $from);
+    $from = strtotime($tmp);
 
     $max_range = !empty($params['.max_range']) ?
         strtotime($params['.max_range'], $from) : strtotime('1 year', $from);

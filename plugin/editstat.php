@@ -64,10 +64,9 @@ function do_editstat($formatter, $params = array()) {
         $type = 'data';
 
     // round timestamp
-    $time = time();
-    $tmp = $time % (60*60*24); // FIXME
-    if ($tmp > 0)
-        $time-= $tmp - 60*60*24;
+    $tmp = time();
+    $tmp = date('Y-m-d 00:00:00', $tmp);
+    $time = strtotime($tmp);
 
     // setup headers
     $lastmod = substr(gmdate('r', $time), 0, -5).'GMT';
@@ -94,7 +93,8 @@ function do_editstat($formatter, $params = array()) {
     // graph parameters
     $wpen = 3; // pen width
     $gap = 1; // margin
-    $width = $days * ($wpen + $gap) + $gap;
+    // $days + today
+    $width = ($days + 1) * ($wpen + $gap) + $gap;
     $nolab = false;
 
     // make transparent image
@@ -118,10 +118,12 @@ function do_editstat($formatter, $params = array()) {
     }
 
     $x = $gap;
-    $n = date('w', strtotime('-'.$days.' days')); // week
+    $tmp = strtotime('-'.$days.' days'); // week
+    $time = strtotime(date('Y-m-d 00:00:00', $tmp));
+    $n = date('w', $time) - 1;
     $pen = 0;
     foreach ($data[$type] as $idx=>$c) {
-        $h = $c/$max * $height;
+        $h = (int)($c/$max * $height + 0.5);
         if ($n >= 7) {
             // change pen color for each weeks
             $pen++;
@@ -132,10 +134,17 @@ function do_editstat($formatter, $params = array()) {
         $x+= $wpen + $gap;
         $n++;
     }
+
+    // setup expires
+    $time = strtotime('+1 day');
+    $tmp = strtotime(date('Y-m-d 00:00:00', $time));
+    $expires = gmdate("D, d M Y H:i:s", $tmp).' GMT';
+
     header('Content-Type: image/png');
     $maxage = 60*60*24;
     header('Cache-Control: public, s-maxage='.$maxage.', max-age='.$maxage);
     header('Last-Modified: '.$lastmod);
+    header('Expires: '.$expires);
     header('ETag:"'.$etag.'"');
     imagepng($canvas);
     imagedestroy($canvas);
