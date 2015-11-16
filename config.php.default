@@ -396,7 +396,6 @@ $use_local_translation=0; # automatic translation
 #$no_all_titleindex = 1; # do not support action=titleindex to reduce traffic
 #$titleindex_ttl=60*60*24; # titleindex ttl
 #$sitemap_ttl=60*60*24*7; # sitemap ttl
-#$force_site_recrawl=30; # fake robot to recrawl site again
 #$rss_rc_ttl=60; # rss_rc ttl
 #$use_google_ads=0; // support google ads macro in the middle of content
 #$google_ads_random=1; // randomly show ads
