@@ -1390,14 +1390,8 @@ class WikiPage {
     global $DBInfo;
     $mtime = @filemtime($this->filename);
     // HACK mtime to fake robot to recrawl and index again
-    if (!empty($DBInfo->force_site_recrawl)) {
-      if (is_string($DBInfo->force_site_recrawl))
-        $timestamp = strtotime($DBInfo->force_site_recrawl);
-      else
-        $timestamp = intval($DBInfo->force_site_recrawl);
-      if ($timestamp > $mtime)
-        $mtime+= 30;
-    }
+    if (!empty($DBInfo->force_site_recrawl))
+      $mtime+= $DBInfo->force_site_recrawl;
     return $mtime;
   }
 
