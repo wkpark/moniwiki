@@ -1875,6 +1875,9 @@ class Formatter {
       $this->fetch_action = $this->link_url('', '?action=fetch&amp;url=');
     else
       $this->fetch_action = $DBInfo->fetch_action;
+    // the original source site for mirror sites
+    $this->source_site = !empty($DBInfo->source_site) ? $DBInfo->source_site : null;
+
     // call externalimage macro for these external images
     $this->external_image_regex = !empty($DBInfo->external_image_regex) ? $DBInfo->external_image_regex : 0;
 
@@ -3838,6 +3841,8 @@ class Formatter {
     $is_writable = 1;
     if (!$DBInfo->security->writable($options))
       $is_writable = 0;
+    if ($this->source_site)
+      $is_writable = 1;
 
     $text='';
     $in_p='';
@@ -4282,6 +4287,10 @@ class Formatter {
           }
           $url=$this->link_url($this->page->urlname,
             '?action='.$act.'&amp;section='.$this->sect_num);
+          if ($this->source_site) {
+            $url = $this->source_site.$url;
+            $sect_attr = ' class="externalLink"';
+          }
           $lab=_("edit");
           $edit="<div class='sectionEdit' style='float:right;'><span class='sep'>[</span><span><a href='$url'$sect_attr><span>$lab</span></a></span><span class='sep'>]</span></div>\n";
           $anchor_id='sect-'.$this->sect_num;
@@ -5011,8 +5020,16 @@ JSHEAD;
     } else if (!empty($args['editable'])) {
       if ($args['editable']==1)
         $menu[]= $this->link_to("?action=edit",_("EditText")," rel='nofollow' accesskey='x'");
-      else
-        $menu[]= _("NotEditable");
+      else {
+        if ($this->source_site) {
+          $url = $this->link_url($this->page->urlname, '?action=edit');
+            $url = $this->source_site.$url;
+          $url = "<a href='$url' class='externalLink'><span>"._("EditText").'</span></a>';
+        } else {
+          $url = _("NotEditable");
+        }
+        $menu[] = $url;
+      }
     } else
       $menu[]= $this->link_to('?action=show',_("ShowPage"));
 
