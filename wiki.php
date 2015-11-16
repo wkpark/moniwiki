@@ -6451,15 +6451,25 @@ function wiki_main($options) {
       $myopt['explicit']=1;
       $f_allow=$DBInfo->security->is_allowed($full_action,$myopt);
       # check if hello/ajax is defined or not
-      if ($f_allow === false)
+      if ($f_allow === false && $a_allow)
         $f_allow=$a_allow; # follow action permission if it is not defined explicitly.
       if (!$f_allow) {
+        $args = array('action'=>$action);
+        $args['allowed'] = $options['allowed'] = $f_allow;
+
+        if ($f_allow === false)
+          $title = sprintf(_("%s action is not found."), $action);
+        else
+          $title = sprintf(_("Invalid %s action."), $action_mode);
         if ($action_mode=='ajax') {
-          return ajax_invalid($formatter,array('title'=>_("Invalid ajax action.")));
+          $args['title'] = $title;
+          return ajax_invalid($formatter, $args);
         }
-        return do_invalid($formatter,array('title'=>_("Invalid macro action.")));
+        $options['title'] = $title;
+        return do_invalid($formatter, $options);
       }
     } else if (!$a_allow) {
+      $options['allowed'] = $a_allow;
       if ($options['custom']!='' and
           method_exists($DBInfo->security,$options['custom'])) {
         $options['action']=$action;
@@ -6467,22 +6477,8 @@ function wiki_main($options) {
         call_user_func(array(&$DBInfo->security,$options['custom']),$formatter,$options);
         return;
       }
-      $msg=sprintf(_("You are not allowed to '%s'"),$action);
-      $formatter->send_header("Status: 406 Not Acceptable",$options);
 
-      $formatter->send_title($msg,"", $options);
-      if ($options['err'])
-        $formatter->send_page($options['err']);
-
-      if ($options['help'] and
-          method_exists($DBInfo->security,$options['help'])) {
-        echo "<div id='wikiHelper'>";
-        echo call_user_func(array($DBInfo->security, $options['help']),$formatter,$options);
-        echo "</div>\n";
-      }
-
-      $formatter->send_footer('',$options);
-      return;
+      return do_invalid($formatter, $options);
     } else if ($_SERVER['REQUEST_METHOD']=="POST" and
       $DBInfo->security->is_protected($act,$options) and
       !$DBInfo->security->is_valid_password($_POST['passwd'],$options)) {

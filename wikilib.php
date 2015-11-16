@@ -2635,23 +2635,42 @@ EOS;
 
 
 function do_invalid($formatter,$options) {
+  global $DBInfo;
 
   if ($options['action_mode'] == 'ajax') {
     return ajax_invalid($formatter,$options);
   }
 
-  $formatter->send_header("Status: 406 Not Acceptable",$options);
-  if (!empty($options['title']))
-    $formatter->send_title('',"",$options);
-  else
-    $formatter->send_title(_("406 Not Acceptable"),"",$options);
-  if (!empty($options['err'])) {
-    $formatter->send_page($options['err']);
+  if ($options['action'] == 'notfound' && !$formatter->page->exists()) {
+    $header = 'Status: 404 Not found';
+    $msg = _("404 Not found");
   } else {
-    if (!empty($options['action']))
-      $formatter->send_page("== ".sprintf(_("%s is not valid action"),$options['action'])." ==\n");
+    $header = 'Status: 406 Not Acceptable';
+    $msg = sprintf(_("You are not allowed to '%s'"), $options['action']);
+    if ($options['allowed'] === false)
+      $msg = sprintf(_("%s action is not found."), $options['action']);
     else
-      $formatter->send_page("== "._("Is it valid action ?")." ==\n");
+      $msg = sprintf(_("You are not allowed to '%s'"), $options['action']);
+  }
+
+  $formatter->send_header($header, $options);
+  $formatter->send_title($msg, '', $options);
+  if ($options['action'] != 'notfound') {
+    if (!empty($options['err'])) {
+      $formatter->send_page($options['err']);
+    } else {
+      if (!empty($options['action']))
+        $formatter->send_page("== ".sprintf(_("%s is not valid action"),$options['action'])." ==\n");
+      else
+        $formatter->send_page("== "._("Is it valid action ?")." ==\n");
+    }
+  }
+
+  if ($options['help'] and
+      method_exists($DBInfo->security,$options['help'])) {
+    echo "<div id='wikiHelper'>";
+    echo call_user_func(array($DBInfo->security, $options['help']),$formatter,$options);
+      echo "</div>\n";
   }
 
   $formatter->send_footer("",$options);
@@ -2659,9 +2678,15 @@ function do_invalid($formatter,$options) {
 }
 
 function ajax_invalid($formatter,$options) {
+  if ($options['action'] == 'notfound' && !$formatter->page->exists()) {
+    $header = 'Status: 404 Not found';
+  } else {
+    $header = 'Status: 406 Not Acceptable';
+  }
+
   if (!empty($options['call'])) return false;
   $formatter->send_header(array("Content-Type: text/plain",
-			"Status: 406 Not Acceptable"),$options);
+			$header),$options);
   print "false\n";
   return false;
 }
