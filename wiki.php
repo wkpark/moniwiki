@@ -6016,6 +6016,12 @@ function wiki_main($options) {
     }
     $goto=!empty($_POST['goto']) ? $_POST['goto'] : '';
     $popup=!empty($_POST['popup']) ? 1 : 0;
+
+    // ignore invalid POST actions
+    if (empty($goto) and empty($action)) {
+      header('Status: 405 Not allowed');
+      return;
+    }
   } else {
     // reset some reserved variables
     if (isset($_GET['retstr'])) unset($_GET['retstr']);
