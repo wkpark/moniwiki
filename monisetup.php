@@ -998,7 +998,6 @@ body { background-color: #e0e0e0; }
 }
 
 h1 {
-  display:inline;
   font-family: "Trebuchet MS", Tahoma,"Times New Roman", Times, sans-serif;
   padding-left: 5px;
   font-size: 20px;
@@ -1016,7 +1015,6 @@ h2,h3,h4,h5 {
   font-family:"Trebuchet MS",sans-serif;
 /* background-color:#E07B2A; */
   padding-left:6px;
-  border-left:4px solid #3366ff;
   border-bottom: 2px solid #e0e0e0;
 }
 
@@ -1156,7 +1154,7 @@ span.warn {
 
 input[type="submit"] {
   background-color: #444444;
-  background-image: -webkit-linear-gradient(top, #969696, #444444);
+  background-image: -webkit-linear-gradient(top, #3E93BB, #317998);
   border: none;
   color: #f0f0f0;
   font-weight: bold;
@@ -1329,11 +1327,11 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && ($config or $action == 'protect')) {
   # read settings
 
   if (!$Config->config) {
-    print "<h2>"._t("Welcome to MoniWiki ! This is your first installation")."</h2>\n";
+    print "<h1>"._t("Welcome to MoniWiki ! This is your first installation")."</h2>\n";
 
     if (empty($_GET['step'])) {
       if (file_exists('COPYING')) {
-        echo "<h1>"._t("License")."</h1>";
+        echo "<h2>"._t("License")."</h1>";
         echo "<pre class='license'>";
         echo file_get_contents("COPYING");
         echo "</pre>";
