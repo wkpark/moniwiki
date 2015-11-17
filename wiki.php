@@ -4956,6 +4956,40 @@ JSHEAD;
           echo '<meta name="twitter:description" content="'.$val['description'].'" />',"\n";
         if (!empty($val['image']))
           echo '<meta name="twitter:image:src" content="',$val['image'],'" />',"\n";
+
+        // support google sitelinks serachbox
+        if (!empty($DBInfo->use_google_sitelinks)) {
+          if ($is_frontpage) {
+            if (!empty($DBInfo->canonical_url))
+              $site_url = $DBInfo->canonical_url;
+            else
+              $site_url = qualifiedUrl($this->link_url(''));
+
+            echo <<<SITELINK
+<script type='application/ld+json'>
+{"@context":"http://schema.org",
+ "@type":"WebSite",
+ "url":"$site_url",
+ "name":"$sitename",
+ "potentialAction":{
+  "@type":"SearchAction",
+  "target":"$site_url?goto={search_term}",
+  "query-input":"required name=search_term"
+ }
+}
+</script>\n
+SITELINK;
+          }
+          echo <<<WEBPAGE
+<script type='application/ld+json'>
+{"@context":"http://schema.org",
+ "@type":"WebPage",
+ "url":"$page_url",
+ "name":"{$options['title']}"
+}
+</script>\n
+WEBPAGE;
+        }
       }
       echo '  <title>',$site_title,"</title>\n";
       echo '  <link rel="canonical" href="',$page_url,'" />',"\n";
