@@ -49,10 +49,8 @@ class User_xe17 extends WikiUser {
         global $Config;
 
         parent::WikiUser($id);
-        if ($this->id == 'Anonymous')
-            return;
 
-        $cookie_id = $this->id;
+        $cookie_id = $this->id != 'Anonymous' ? $this->id : '';
 
         // set xe_root_dir config option
         $xe_root_dir = !empty($Config['xe_root_dir']) ?
@@ -89,7 +87,7 @@ class User_xe17 extends WikiUser {
                     $this->ticket = '';
                     $this->setID('Anonymous');
                     $update = true;
-                    $cookie_id = '';
+                    //$cookie_id = '';
                 } else {
                     // OK good user
                     $this->setID($cookie_id);
@@ -97,6 +95,7 @@ class User_xe17 extends WikiUser {
                     $this->nick = $user->info['nick'];
                     $this->tz_offset = $user->info['tz_offset'];
                     $this->info = $user->info;
+                    $this->ticket = $ticket;
                 }
             }
         } else {
@@ -157,6 +156,7 @@ class User_xe17 extends WikiUser {
 
                     $this->setID($id); // not found case
                     $this->info = $user->info; // already registered case
+                    $ticket = getTicket($id, $_SERVER['REMOTE_ADDR']); // get ticket
 
                     if ($this->nick != $xeinfo->nick_name) {
                         $this->nick = $xeinfo->nick_name;
@@ -165,6 +165,7 @@ class User_xe17 extends WikiUser {
                     if ($this->info['email'] == '')
                         $this->info['email'] = $xeinfo->email_address;
                     $this->info['tz_offset'] = $this->tz_offset;
+                    $this->ticket = $ticket;
                 } else {
                     if (!empty($cookie_id))
                         header($this->unsetCookie());
