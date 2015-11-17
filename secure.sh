@@ -1,11 +1,10 @@
-#!/bin/bash
-# $Id$
-SUCCESS="echo -en \\033[1;32m"
-FAILURE="echo -en \\033[1;31m"
-WARNING="echo -en \\033[1;33m"
-MESSAGE="echo -en \\033[1;34m"
-NORMAL="echo -en \\033[0;39m"
-MAGENTA="echo -en \\033[1;35m"
+#!/bin/sh
+SUCCESS="printf \033[1;32m"
+FAILURE="printf \033[1;31m"
+WARNING="printf \033[1;33m"
+MESSAGE="printf \033[1;34m"
+NORMAL="printf \033[0;39m"
+MAGENTA="printf \033[1;35m"
 
 $WARNING
 echo
