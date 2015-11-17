@@ -1818,7 +1818,15 @@ class Formatter {
     $this->sect_num=0;
     $this->toc=0;
     $this->toc_prefix='';
-    $this->prefix= (isset($options['prefix'])) ? $options['prefix']:get_scriptname();
+    if (!empty($options['prefix'])) {
+      $this->prefix = $options['prefix'];
+    } else if (!empty($DBInfo->base_url_prefix)) {
+      // force the base url prefix
+      $this->prefix = $DBInfo->base_url_prefix;
+    } else {
+      // call get_scriptname() to get the base url prefix
+      $this->prefix = get_scriptname();
+    }
     $this->self_query='';
     $this->url_prefix= $DBInfo->url_prefix;
     $this->imgs_dir= $DBInfo->imgs_dir;
@@ -6083,7 +6091,9 @@ function wiki_main($options) {
 
   $options['page']=$pagename;
   $options['action'] = &$action;
-  unset($options['call']); // reserved FIXME
+  $reserved = array('call', 'prefix');
+  foreach ($reserved as $k)
+    unset($options[$k]); // unset all reserved
 
   // check pagename length
   $key = $DBInfo->pageToKeyname($pagename);

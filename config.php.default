@@ -19,6 +19,7 @@ $shared_metadb= $data_dir."/metadb";
 $shared_intermap= $data_dir."/text/InterMap";
 
 $url_prefix= '/moniwiki';
+#$base_url_prefix='/w'; # force the base url
 $imgs_dir= $url_prefix.'/imgs';
 $logo_img= $imgs_dir.'/moniwiki-logo.png';
 $query_prefix= '/';
