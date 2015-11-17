@@ -53,8 +53,10 @@ function do_sitemap($formatter,$options) {
         return;
     }
 
-    if (($ret = $tc->fetch('sitemap'.$extra, 0, array('print'=>1))) !== false)
-        return;
+    if (($ret = $tc->fetch('sitemap'.$extra.'.mtime')) !== false) {
+        if (($ret = $tc->fetch('sitemap'.$extra, 0, array('print'=>1))) !== false)
+            return;
+    }
 
     // set sitemap public cache
     $ext = $format == 'text/xml' ? 'xml' : 'txt';
@@ -96,7 +98,8 @@ HEAD;
         }
         $map.= "</sitemapindex>\n";
 
-        $tc->update('sitemap'.$extra, $map, $ttl);
+        $tc->update('sitemap'.$extra, $map);
+        $tc->update('sitemap'.$extra.'.mtime', array('dummy'=>1), $ttl);
     }
 
     # charset
@@ -146,11 +149,12 @@ FOOT;
                 }
             }
 
-            $sc->update(sprintf('sitemap'.$extra.'%03d', $i), $head.$out.$foot, $ttl);
+            $sc->update(sprintf('sitemap'.$extra.'%03d', $i), $head.$out.$foot);
             $i++;
             $items = array();
         }
     }
+    $sc->update('sitemap'.$extra.'.mtime', array('dummy'=>1), $ttl);
 
     // process output
     if ($count > 50000) {
@@ -165,7 +169,7 @@ FOOT;
                     if ($new) $out = $new;
                 }
             }
-            $sc->update(sprintf('sitemap'.$extra.'%03d', $i), $head.$out.$foot, $ttl);
+            $sc->update(sprintf('sitemap'.$extra.'%03d', $i), $head.$out.$foot);
         }
     } else {
         $out = implode("\n", $items);
@@ -179,7 +183,8 @@ FOOT;
             }
         }
         $map = $head.$out.$foot;
-        $tc->update('sitemap'.$extra, $map, $ttl);
+        $tc->update('sitemap'.$extra, $map);
+        $tc->update('sitemap'.$extra, array('dummy'=>1), $ttl);
     }
 
     echo $map;
