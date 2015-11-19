@@ -6325,6 +6325,7 @@ function wiki_main($options) {
     if (empty($action)) $options['pi']=1; # protect a recursivly called #redirect
 
     if (!empty($DBInfo->control_read) and !$DBInfo->security->is_allowed('read',$options)) {
+      $options['action'] = 'read';
       do_invalid($formatter,$options);
       return;
     }
