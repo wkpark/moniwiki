@@ -146,6 +146,8 @@ function macro_Include($formatter, $value = '') {
 
         $page = $DBInfo->getPage($pagename);
         $f = new Formatter($page);
+        // fix for optional changed prefix
+        $f->prefix = $formatter->prefix;
 
         // for recursion detect
         $f->recursion = isset($formatter->recursion) ? $formatter->recursion + 1 : 1;
