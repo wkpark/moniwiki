@@ -1,0 +1,76 @@
+                   Virtual MoniWiki HOWTO
+                                    Sung Kim (hunkim@cs.ucsc.edu)
+                                    12/26/2003 
+
+
+This is a quick and dirty patch to support virtual Moni wiki.
+
+1. Motivation
+  We want to have a separated Wiki space for each project (virtual host) 
+  even though there are many projects in a box.
+
+  It is possible to have an http://wiki.kldp.org/<projectname> space for project, 
+  but still macros such as RecentChanges or TitleIndex shows all Wiki pages in the http://wiki.kldp.org/.
+
+  We want to see only changes in our wiki space. 
+  Why we care about other wiki pages created by other projects or hosts?
+
+2. How it works
+   It is vary similar to the virtual host setting in Apache. 
+   Define a virtual host name with virtual part (*). 
+   And define wiki text directory name with virtual part (%0, %1, ... %n).
+   See more apache virtual host setting at http://httpd.apache.org/docs-2.0/mod/mod_vhost_alias.html
+
+3. config.php
+  Those configuration are required to support virtual Wiki
+
+  - virtual_host: define virtual host name. You can put * for the virtual part
+    Ex: $virtual_host='wiki.*.kldp.org';
+
+  - virtual_sitename: define the virtual site name for the virtual host.
+    We can use %0, %2, ....
+    Ex: $virtual_sitename="MoniWIki for %1 project";
+
+  - virtual_text_dir: define text directory for virtual host wiki pages. 
+     %0, %1, ... will be replaced real host name.
+     Note that the host name starts %0.       
+    Ex: $virtual_text_dir=$data_dir.'/virtual_text/%1/';
+
+  - virtual_text_dir_auto_create: indicate weather create virtual text directory automatically.
+    Ex: $virtual_text_dir_auto_create=1;
+        $virtual_text_dir_auto_create=0;
+
+  - virtual_text_dir_auto_seed: indicate weather copy seed Wikipages automatically. 
+    It works only if virtual_text_dir_aito_create is set to 1.
+    Ex: $virtual_text_dir_auto_seed=1;
+        $virtual_text_dir_auto_seed=0;
+
+  - Virtual_text_dir_auto_create_ref: To avid creating unnecessarily virtual text directories
+    By typo, this option limits auto creation only from the defined http referrer. 
+
+    For example to create a virtual host text directory, the Wiki page must be connected from the http referrer page. 
+    Note that text directory creation is the only one time event.
+    After that, the virtual part doesn't check the http referrer.
+ 
+    You can use wild card (*, ?) like file match. We use fnmatch to check the referrers.
+
+    If it is not defined and virtual_text_dir_auto_create is set, 
+    there is no limit to create virtual text directory.
+
+    Ex: $virtual_text_dir_auto_create_ref="*://kachi.org/projects/*"; 
+
+  For example with those setting, if a user connect to http://wiki.moni.kldp.org 
+  the virtual_text_dir would be "$data_dir/virtual_text/moni/", 
+  and sitename would be "MoniWiki for moni project". 
+
+4. Directories and permission
+  The virtual_text directory should be created by user to use virtual Wiki 
+  unless virtual_text_dir_auto_create is set. 
+  
+  Note that you also need to create RCS directory in the virtual_text_dir to keep RCS files.
+  Otherwise you will see many *,v files in your wiki pages.  
+  
+  Make sure the httpd user can create files or directories in the virtual_text directory. 
+ 
+5. Questions
+  http://moniwiki.kldp.net
