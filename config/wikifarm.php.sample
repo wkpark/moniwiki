@@ -1,0 +1,15 @@
+<?php
+#
+# wikifarm config
+#
+# hostname rule
+$wikifarm_hostrule='*.yourdomain.net';
+# sitename string format
+$wikifarm_sitename="\$sitename:%1";
+# farm_dir string format
+$wikifarm_farm_dir=$data_dir.'/wikifarm/%0';
+$wikifarm_autocreate=1;
+# automatic copy wikiseed
+$wikifarm_autoseed=0;
+# wikiseed dir
+$wikifarm_seed_dir='wikiseed';

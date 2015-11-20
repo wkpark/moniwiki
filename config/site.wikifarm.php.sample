@@ -1,0 +1,16 @@
+<?php
+//
+// a simple wikifarm site.local.php
+//
+require_once(dirname(__FILE__)."/../lib/wikifarm.base.php");
+$opts = array('data_dir'=>$Config['data_dir'], 'sitename'=>$Config['sitename']);
+$conf = _load_php_vars(dirname(__FILE__).'/wikifarm.php', $opts);
+$conf = WikiFarm_base::setup(null, $conf);
+if ($conf === false)
+    ;
+else if (is_array($conf))
+    $Config = array_merge($Config, $conf);
+else
+    echo $conf;
+
+// vim:et:sts=4:sw=4:
