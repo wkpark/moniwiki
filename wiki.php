@@ -4726,6 +4726,13 @@ class Formatter {
       $meta_lastmod = '<meta http-equiv="last-modified" content="'.$lastmod.'" />'."\n";
     }
 
+    // custom headers
+    if (!empty($DBInfo->site_headers)) {
+      foreach ((array)$DBInfo->site_headers as $head) {
+        $this->header($head);
+      }
+    }
+
     $content_type=
       isset($DBInfo->content_type[0]) ? $DBInfo->content_type : 'text/html';
 

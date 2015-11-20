@@ -10,6 +10,7 @@ $sitename='UnnamedWiki'; # site name
 #$base_keywords='Wiki, YourWikiName'; # base keywords for all wiki contents
 $data_dir= './data';
 $upload_dir= 'pds';
+#$site_headers = array('Status: 503 Service unavailable'); # site specific headers for maintainance etc.
 
 $text_dir= $data_dir.'/text';
 $cache_dir= $data_dir.'/cache';
