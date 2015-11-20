@@ -5947,8 +5947,10 @@ if ($options['id'] != 'Anonymous') {
 
 if (!$options['theme']) $options['theme']=$theme=$DBInfo->theme;
 
-if ($theme and ($DBInfo->theme_css or !$options['css_url']))
-  $options['css_url']=(!empty($DBInfo->themeurl) ? $DBInfo->themeurl:$DBInfo->url_prefix)."/theme/$theme/css/default.css";
+  if ($theme and ($DBInfo->theme_css or !$options['css_url'])) {
+    $css = is_string($DBInfo->theme_css) ? $DBInfo->theme_css : 'default.css';
+    $options['css_url']=(!empty($DBInfo->themeurl) ? $DBInfo->themeurl:$DBInfo->url_prefix)."/theme/$theme/css/$css";
+  }
 
   $options['pagename']=get_pagename();
   // check the validity of a given page name for UTF-8 case
