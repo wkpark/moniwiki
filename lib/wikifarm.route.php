@@ -208,7 +208,8 @@ class WikiFarm_route {
             $vars['cache_dir'] = $cache_dir;
             $vars['sitename'] = $sitename;
             $vars['editlog_name'] = $editlog_name;
-            $vars['base_url_prefix'] = '$url_prefix/'.$trans['%0'];
+            // FIXME
+            $vars['base_url_prefix'] = $conf['url_prefix'].'/'.$trans['%0'];
 
             $date = date('Y-m-d h:i:s');
             $lines = array();
