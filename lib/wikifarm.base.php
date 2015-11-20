@@ -23,30 +23,14 @@ class WikiFarm_base {
      * @param String str (/var/%1/data)
      * @return String replaced string
      */
-    static function format_string($hostrule, $hostname, $str) {
+    static function format_string($trans, $str) {
         // No sutable arguments
-        if (empty($hostrule) || empty($str)) {
+        if (empty($trans) || empty($str)) {
             return false;
-        }
-
-        // Check if it is my host
-        if (empty($hostname)) {
-            $hostname = $_SERVER['HTTP_HOST'];
-        }
-
-        if (!self::is_valid_hostname($hostrule, $hostname)) {
-            return false;
-        }
-
-        // Let's make a translate table
-        $chunks = explode('.', $hostname);
-        $trs = array('%0'=>$hostname);
-        for ($i = 1; $i <= count($chunks); $i++) {
-            $trs['%'.$i] = $chunks[$i - 1];
         }
 
         // Replace %0, %1, %2, %3 to real name
-        return strtr($str, $trs);
+        return strtr($str, $trans);
     }
 
     /**
@@ -151,11 +135,16 @@ class WikiFarm_base {
      * @param String hostname
      * @return true if it is valid host. Otherwise false.
      */
-    static function is_valid_hostname($hostrule, $hostname) {
+    static function is_valid_farmname($hostrule, $hostname) {
+        // Check if it is my host
+        if (empty($hostname)) {
+            $hostname = $_SERVER['HTTP_HOST'];
+        }
+
         $test = @preg_match($hostrule, 'TeSt');
         if ($test !== false) {
             if (preg_match($hostrule, $hostname))
-                return true;
+                return self::_get_translate_table($hostname);
             return false;
         }
 
@@ -184,13 +173,26 @@ class WikiFarm_base {
         }
 
         // Passed all match tests
-        return true;
+        return self::_get_translate_table($hostname);
+    }
+
+    static function _get_translate_table($hostname) {
+        // Let's make a translate table
+        $chunks = explode('.', $hostname);
+        $trs = array('%0'=>$hostname);
+        for ($i = 1; $i <= count($chunks); $i++) {
+            $trs['%'.$i] = $chunks[$i - 1];
+        }
+
+        return $trs;
     }
 
     static function setup($host, $conf = array()) {
         // setup Virtual directory and name
         if ($conf['wikifarm_hostrule'] && $conf['wikifarm_farm_dir'] &&
-                $farm_dir = self::format_string($conf['wikifarm_hostrule'], $host, $conf['wikifarm_farm_dir'])) {
+                false !== ($trans = self::is_valid_farmname($conf['wikifarm_hostrule'], $host))) {
+            $farm_dir = self::format_string($trans, $conf['wikifarm_farm_dir']);
+
             // check already saved config file
             if (file_exists($farm_dir.'/config.php')) {
                 $vars = _load_php_vars($farm_dir.'/config.php', $conf);
@@ -214,7 +216,7 @@ class WikiFarm_base {
 
         // Fill wikifarm sitename if it is defined.
         if (!empty($conf['wikifarm_sitename'])) {
-            $sitename = self::format_string($conf['wikifarm_hostrule'], $host, $conf['wikifarm_sitename']);
+            $sitename = self::format_string($trans, $conf['wikifarm_sitename']);
         }
 
         // Set the editlog file
