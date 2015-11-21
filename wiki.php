@@ -4740,20 +4740,22 @@ class Formatter {
       }
     }
     $mtime = isset($options['mtime']) ? $options['mtime'] : $this->page->mtime();
+    if ($mtime > 0) {
+      $modified = $mtime > 0 ? gmdate('Y-m-d\TH:i:s', $mtime).'+00:00' : null;
+      $lastmod = gmdate('D, d M Y H:i:s', $mtime).' GMT';
+      $meta_lastmod = '<meta http-equiv="last-modified" content="'.$lastmod.'" />'."\n";
+    }
     if (is_static_action($options) or
         (!empty($DBInfo->use_conditional_get) and !empty($mtime)
         and empty($options['nolastmod'])
         and $this->page->is_static))
     {
-      $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
       $this->header('Last-Modified: '.$lastmod);
       $etag = $this->page->etag($options);
       if (!empty($options['etag']))
         $this->header('ETag: "'.$options['etag'].'"');
       else
         $this->header('ETag: "'.$etag.'"');
-
-      $meta_lastmod = '<meta http-equiv="last-modified" content="'.$lastmod.'" />'."\n";
     }
 
     // custom headers
@@ -5025,15 +5027,17 @@ JSHEAD;
 </script>\n
 SITELINK;
           }
-          echo <<<WEBPAGE
+          if ($modified)
+            echo <<<ARTICLE
 <script type='application/ld+json'>
 {"@context":"http://schema.org",
- "@type":"WebPage",
+ "@type":"Article",
  "url":"$page_url",
+ "dateModified":"$modified",
  "name":"{$options['title']}"
 }
 </script>\n
-WEBPAGE;
+ARTICLE;
         }
       }
       echo '  <title>',$site_title,"</title>\n";
