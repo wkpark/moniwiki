@@ -127,6 +127,21 @@ function macro_Pull($formatter, $pagename = '', $params = array()) {
     }
 
     if ($http->status != 200) {
+        if ($http->status == 404 && $DBInfo->pull_404_delete) {
+            $pagefile = $DBInfo->getPageKey($pagename);
+            if (!empty($params['refresh']) or file_exists($pagefile)) {
+                $options['.nolog'] = 1;
+                $options['.force'] = 1;
+                $ret = $DBInfo->deletePage($formatter->page, $options);
+                if ($ret == -1)
+                    $params['retval']['error'] = 'Fail to delete file';
+                else
+                    $params['retval']['error'] = 'Page deleted';
+                $params['retval']['status'] = $http->status;
+                return false;
+            }
+            return true;
+        }
         $params['retval']['error'] = sprintf(_("Invalid Status %d"), $http->status);
         $params['retval']['status'] = $http->status;
         return false;
@@ -213,6 +228,11 @@ function macro_Pull($formatter, $pagename = '', $params = array()) {
 
         if (!empty($http->resp_body)) {
             fwrite($fp, $http->resp_body);
+
+            $options['.nolog'] = 1;
+            $options['.force'] = 1;
+            $formatter->page->body = $http->resp_body;
+            $DBInfo->savePage($formatter->page, '', $options);
         }
         fclose($fp);
         //$mtime = @strtotime($lastmod);

@@ -989,7 +989,7 @@ class WikiDB {
   }
 
   function savePage(&$page,$comment="",$options=array()) {
-    if (!$this->_isWritable($page->name)) {
+    if (empty($options['.force']) && !$this->_isWritable($page->name)) {
       return -1;
     }
 
@@ -1094,7 +1094,7 @@ class WikiDB {
         if (abs($check) < 3) $minor=1;
       }
     }
-    if (empty($options['minor']) and !$minor)
+    if (empty($options['.nolog']) && empty($options['minor']) && !$minor)
       $this->addLogEntry($page->name, $REMOTE_ADDR,$comment,$action);
 
     if ($user->id != 'Anonymous' || !empty($this->use_anonymous_editcount)) {
@@ -1133,7 +1133,7 @@ class WikiDB {
   }
 
   function deletePage($page,$options='') {
-    if (!$this->_isWritable($page->name)) {
+    if (empty($options['.force']) && !$this->_isWritable($page->name)) {
       return -1;
     }
 
@@ -1211,6 +1211,7 @@ class WikiDB {
     // history deletion case by owners
     if (!$deleted) return 0;
 
+    if (empty($options['.nolog']))
     $this->addLogEntry($page->name, $REMOTE_ADDR, $comment, $action);
 
     $indexer = $this->lazyLoad('titleindexer');
