@@ -4914,7 +4914,7 @@ JSHEAD;
         $page_url = qualifiedUrl($this->link_url($this->page->urlname));
       }
 
-      if ($is_show && empty($DBInfo->no_ogp) && $this->page->exists()) {
+      if ($is_show && $this->page->exists()) {
         $oc = new Cache_text('opengraph');
         if ($this->refresh || ($val = $oc->fetch($this->page->name, $this->page->mtime())) === false) {
           $val = array('description'=> '', 'image'=> '');
@@ -4979,6 +4979,7 @@ JSHEAD;
           $oc->update($this->page->name, $val, time());
         }
 
+        if (empty($this->no_ogp)) {
         // for OpenGraph
         echo '<meta property="og:url" content="'. $page_url.'" />',"\n";
         echo '<meta property="og:site_name" content="'.$sitename.'" />',"\n";
@@ -4991,6 +4992,7 @@ JSHEAD;
           echo '<meta property="og:image" content="',$val['image'],'" />',"\n";
         if (!empty($val['description']))
           echo '<meta property="og:description" content="'.$val['description'].'" />',"\n";
+        }
 
         // twitter card
         echo '<meta name="twitter:card" content="summary" />',"\n";
@@ -5027,18 +5029,20 @@ JSHEAD;
 </script>\n
 SITELINK;
           }
-          if ($modified)
-            echo <<<ARTICLE
+        }
+
+        echo <<<SCHEMA
 <script type='application/ld+json'>
 {"@context":"http://schema.org",
- "@type":"Article",
+ "@type":"WebPage",
  "url":"$page_url",
  "dateModified":"$modified",
  "name":"{$options['title']}"
 }
 </script>\n
-ARTICLE;
-        }
+SCHEMA;
+        if (!empty($val['description']))
+          echo '<meta name="description" content="'.$val['description'].'" />',"\n";
       }
       echo '  <title>',$site_title,"</title>\n";
       echo '  <link rel="canonical" href="',$page_url,'" />',"\n";
