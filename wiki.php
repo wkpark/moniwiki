@@ -440,23 +440,33 @@ class MetaDB_text extends MetaDB {
 
 class Counter_dba {
   var $counter = null;
-  var $DB;
-  function Counter_dba($DB,$dbname='counter') {
+  var $dba_type;
+  var $owners;
+
+  function Counter_dba($DB, $dbname='counter') {
     if (!function_exists('dba_open')) return;
-    if (!file_exists($DB->data_dir.'/'.$dbname.'.db'))
-      $this->counter=dba_open($DB->data_dir.'/'.$dbname.'.db',"n",$DB->dba_type);
-    else
-      $this->counter=@dba_open($DB->data_dir.'/'.$dbname.'.db',"w",$DB->dba_type);
-    $this->DB=&$DB;
+    $this->dba_type = $DB->dba_type;
+    $this->owners = $DB->owners;
+
+    if (!file_exists($this->data_dir.'/'.$dbname.'.db')) {
+      // create
+      $db = dba_open($this->data_dir.'/'.$dbname.'.db', 'n', $this->dba_type);
+      dba_close($db);
+    }
+    $this->counter = @dba_open($DB->data_dir.'/'.$dbname.'.db', 'r', $this->dba_type);
   }
 
   function incCounter($pagename,$options="") {
-    if ($this->DB->owners and in_array($options['id'],$this->DB->owners))
+    if ($this->owners and in_array($options['id'],$this->owners))
       return;
     $count=dba_fetch($pagename,$this->counter);
     if (!$count) $count=0;
     $count++;
-    dba_replace($pagename,$count,$this->counter);
+
+    // increase counter
+    $db = dba_open($this->data_dir.'/'.$dbname.'.db', 'w', $this->dba_type);
+    dba_replace($pagename, $count, $db);
+    dba_close($db);
     return $count;
   }
 
