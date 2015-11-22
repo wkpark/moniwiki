@@ -465,6 +465,25 @@ class Counter_dba {
     return $count ? $count: 0;
   }
 
+  function getPageHits($perpage = 200, $page = 0) {
+    $k = dba_firstkey($this->counter);
+    if ($k !== false && $page > 0) {
+      $i = $perpage * $page;
+      while ($i > 0 && $k !== false) {
+        $i--;
+        $k = dba_nextkey($this->counter);
+      }
+    }
+    $hits = array();
+    $i = $perpage;
+    for (; $k !== false && $i > 0; $k = dba_nextkey($this->counter)) {
+      $v = dba_fetch($k, $this->counter);
+      $hits[$k] = $v;
+      $i--;
+    }
+    return $hits;
+  }
+
   function close() {
     if ($this->counter)
       dba_close($this->counter);
