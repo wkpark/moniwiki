@@ -4265,7 +4265,7 @@ class Formatter {
       #$line=preg_replace("/(".$wordrule.")/e","\$this->link_repl('\\1')",$line);
 
       # Headings
-      while (preg_match("/(?<!=)(={1,})\s+(.*)\s+\\1\s?$/",$line,$m)) {
+      while (preg_match("/(?<!=)(={1,})\s+(.*)\s+\\1\s?$/sm",$line,$m)) {
         if ($in_bq) {
           $dummy = null;
           $line = $this->head_repl(strlen($m[1]), $m[2], $dummy);
