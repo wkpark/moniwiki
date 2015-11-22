@@ -35,7 +35,19 @@ function do_pull($formatter, $params = array()) {
         macro_Pull($formatter, $pagename, $params);
     }
     if (!empty($params['check'])) {
-        echo $params['retval']['status'];
+        $status = $params['retval']['status'];
+        if (isset($status) && $status != 304) {
+            header('Cache-Control: public, max-age=5, s-maxage=5');
+            #header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+            #header("Pragma: no-cache");
+            #header('Cache-Control: no-store, no-cache, must-revalidate', false);
+        } else {
+            header('Cache-Control: public, max-age=60, s-maxage=60');
+        }
+        header('Content-Type: text/plain');
+        if (in_array($status, array(200, 404, 304)))
+            header('Status: '.$status);
+        echo $status;
         return;
     }
 
@@ -49,6 +61,16 @@ function do_pull($formatter, $params = array()) {
                 call_user_func('do_'.$plugin, $formatter, $params);
             return;
         }
+        $status = $ret['status'];
+        if (isset($status) && $status != 304) {
+            header('Cache-Control: public, max-age=5, s-maxage=5');
+            #header("Pragma: no-cache");
+            #header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+            #header('Cache-Control: no-store, no-cache, must-revalidate', false);
+        } else {
+            header('Cache-Control: public, max-age=60, s-maxage=60');
+        }
+        header('Content-Type: text/plain');
         echo $ret['error'];
     }
 }
@@ -71,23 +93,27 @@ function macro_Pull($formatter, $pagename = '', $params = array()) {
         $url = preg_replace('/\$PAGE/', _rawurlencode($pagename), $DBInfo->pull_url);
     $url.= '?action=raw';
 
-    require_once "lib/HTTPClient.php";
-
     $sz = 0;
 
     // set default params
-    $maxage = !empty($DBInfo->pull_maxage) ? (int) $DBInfo->pull_maxage : 60*60*24*7;
+    $maxage = !empty($DBInfo->pull_maxage) ? (int) $DBInfo->pull_maxage : 60*60*24;
     $timeout = !empty($DBInfo->pull_timeout) ? (int) $DBInfo->pull_timeout : 15;
     $maxage = (int) $maxage;
-
-    // check connection
-    $http = new HTTPClient();
-    $sc = new Cache_text('mirrorinfo');
 
     $error = null;
     $headers = array();
 
-    while ($sc->exists($pagename) and time() < $sc->mtime($pagename) + $maxage) {
+    $sc = new Cache_text('mirrorinfo');
+
+    while ($sc->exists($pagename)) {
+        $del = $sc->mtime($pagename) + $maxage - time();
+        if ($del > 0) {
+            // do not pull
+            header('Cache-Control: public, max-age='.$del.', s-maxage='.$del);
+            header('Status: 304 Not modified');
+            echo 304;
+            return false;
+        }
         $info = $sc->fetch($pagename);
         if ($info == false) break;
 
@@ -117,6 +143,10 @@ function macro_Pull($formatter, $pagename = '', $params = array()) {
         $headers['If-Modified-Since'] = $lastmod;
     }
 
+    require_once "lib/HTTPClient.php";
+    // check connection
+    $http = new HTTPClient();
+
     // get file header
     $http->nobody = true;
 
@@ -126,6 +156,10 @@ function macro_Pull($formatter, $pagename = '', $params = array()) {
     $http->sendRequest($url, array(), 'GET');
 
     if ($http->status == 304) {
+        $val = array('etag'=>$etag, 'last-modified'=>$lastmod);
+        if ($sz > 0) $val['size'] = $sz;
+        $sc->update($pagename, $val); // just update
+
         // not modified
         $params['retval']['status'] = 304;
         return true;
