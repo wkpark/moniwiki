@@ -111,6 +111,11 @@ function macro_Pull($formatter, $pagename = '', $params = array()) {
         if (empty($error)) unset($params['refresh']);
         break;
     }
+    if (empty($headers)) {
+        $mtime = $formatter->page->mtime();
+        $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
+        $headers['If-Modified-Since'] = $lastmod;
+    }
 
     // get file header
     $http->nobody = true;
@@ -226,7 +231,7 @@ function macro_Pull($formatter, $pagename = '', $params = array()) {
             return false;
         }
 
-        if (!empty($http->resp_body)) {
+        if (isset($http->resp_body[0])) {
             fwrite($fp, $http->resp_body);
 
             $options['.nolog'] = 1;
@@ -235,8 +240,9 @@ function macro_Pull($formatter, $pagename = '', $params = array()) {
             $DBInfo->savePage($formatter->page, '', $options);
         }
         fclose($fp);
-        //$mtime = @strtotime($lastmod);
-        //touch($pagefile, $mtime);
+        if (isset($http->resp_body[0]) && $mtime > 0) {
+            @touch($pagefile, $mtime);
+        }
 
         // remove PI cache to update
         $pi = new Cache_text('PI');
