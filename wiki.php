@@ -5593,7 +5593,7 @@ MSG;
       if (!empty($this->subindex))
         echo $this->subindex;
     }
-    echo "<div id='wikiBody'>\n";
+    echo "<div id='wikiBody' class='entry-content'>\n";
     #if ($this->subindex and !$this->popup and (empty($themeurl) or !$this->_newtheme))
     #  echo $this->subindex;
     $this->pagelinks=$saved_pagelinks;
