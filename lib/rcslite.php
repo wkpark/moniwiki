@@ -456,7 +456,7 @@ Class RcsLite {
         return $dum[0].'.'.sprintf("%s",$dum[1]+1);
     }
     
-    function addRevisionText($text,$log, $date=0)
+    function addRevisionText($text, $log, $date = null, $write = true)
     {
         $this->_ensureProcessed();
         
@@ -483,7 +483,9 @@ Class RcsLite {
            $date = time();
         $this->_date[$nhead] = $date;
 
-        return $this->_writeMe();
+        if ($write)
+            return $this->_writeMe();
+        return true;
     }
 
     function addRevisionPage($log, $date=0)
