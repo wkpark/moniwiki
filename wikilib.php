@@ -160,8 +160,20 @@ function diffcount_lines($diff, $charset) {
 
             $diffchars = diffcount_chars($orig, $new, $charset);
 
-            $add_chars+= $diffchars[0];
-            $del_chars+= $diffchars[1];
+            if ($diffchars === false) {
+                // simply check the difference of strlen
+                $nc = mb_strlen(implode("\n", $new), $charset);
+                $oc = mb_strlen(implode("\n", $orig), $charset);
+                $added = $nc - $oc;
+
+                if ($added > 0)
+                    $add_chars+= $added;
+                else
+                    $del_chars+= -$added;
+            } else {
+                $add_chars+= $diffchars[0];
+                $del_chars+= $diffchars[1];
+            }
 
             // is it minorfix ?
             if (!$diffchars[2]) $minorfix = false;
@@ -174,8 +186,20 @@ function diffcount_lines($diff, $charset) {
     if (!empty($orig) or !empty($new)) {
         $diffchars = diffcount_chars($orig, $new, $charset);
 
-        $add_chars+= $diffchars[0];
-        $del_chars+= $diffchars[1];
+        if ($diffchars === false) {
+            // simply check the difference of strlen
+            $nc = mb_strlen(implode("\n", $new), $charset);
+            $oc = mb_strlen(implode("\n", $orig), $charset);
+            $added = $nc - $oc;
+
+            if ($added > 0)
+                $add_chars+= $added;
+            else
+                $del_chars+= -$added;
+        } else {
+            $add_chars+= $diffchars[0];
+            $del_chars+= $diffchars[1];
+        }
 
         // is it minorfix ?
         if (!$diffchars[2]) $minorfix = false;
@@ -195,6 +219,12 @@ function diffcount_lines($diff, $charset) {
  * @return array    added,deleted chars
  */
 function diffcount_chars($orig, $new, $charset) {
+    $oc = count($orig);
+    $nc = count($new);
+    if ($oc > 200 or $nc > 200) {
+        // too big to call WordLevelDiff.
+        return false;
+    }
     include_once('lib/difflib.php');
 
     $add_chars = 0;
