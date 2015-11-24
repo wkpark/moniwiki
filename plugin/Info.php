@@ -59,8 +59,10 @@ function _parse_rlog($formatter,$log,$options=array()) {
   $out.="<div><table class='info'><thead><tr>\n";
   $out.="<th>"._("Ver.")."</th><th>"._("Date")."</th>".
        "<th>"._("Changes")."</th>".
-       "<th>"._("Editor")."</th>".
-       "<th><button type='submit'><span>$diff_btn</span></button></th>\n";
+       "<th>"._("Editor")."</th>";
+  if (!$simple)
+    $out.= "<th><button type='submit'><span>$diff_btn</span></button></th>";
+  $out.= "\n";
   if (!$simple) {
     if (!empty($actions))
       $out.="<th>"._("View")."</th>";
@@ -89,8 +91,10 @@ function _parse_rlog($formatter,$log,$options=array()) {
         $act = $options['action'];
       else
         $act = 'info';
-      $lnk=$formatter->link_to('?action='.$act.'&amp;rev='.$rev,_("Show next revisions"),' class="button small"');
-      $out.='<tr><td colspan="2"></td><td colspan="'.(!empty($admin) ? 5:4).'">'.$lnk.'</td></tr>';
+      if (empty($options['logonly'])) {
+        $lnk=$formatter->link_to('?action='.$act.'&amp;rev='.$rev,_("Show next revisions"),' class="button small"');
+        $out.='<tr><td colspan="2"></td><td colspan="'.(!empty($admin) ? 5:4).'">'.$lnk.'</td></tr>';
+      }
       break;
     }
     
@@ -144,6 +148,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
                $inf=date("Y-m-d H:i:s",strtotime($inf)); // localtime
            }
          }
+         if (!$simple)
          $inf=$formatter->link_to("?action=recall&rev=$rev",$inf);
 
          $change=preg_replace("/\+(\d+)\s\-(\d+)/",
@@ -264,6 +269,8 @@ function _parse_rlog($formatter,$log,$options=array()) {
          $out.="<tr$alt>\n";
          $out.="<th class='rev' valign='top' rowspan=$rowspan>$rrev</th><td nowrap='nowrap' class='date'>$inf</td><td class='change'>$change</td><td class='author'>$ip&nbsp;</td>";
          $rrev='';
+
+         if (!$simple):
          $achecked="";
          $bchecked="";
          if ($flag==1)
@@ -274,7 +281,6 @@ function _parse_rlog($formatter,$log,$options=array()) {
          $out.="<th nowrap='nowrap' class='check'><input type='radio' name='rev' value='$rev' $achecked $onclick />\n";
          $out.="<input type='radio' name='rev2' value='$rev' $bchecked $onclick /></th>";
 
-         if (!$simple):
          $out.="<td nowrap='nowrap' class='view'>";
          foreach ($actions as $k=>$v) {
            $k=is_numeric($k) ? $v:$k;
@@ -295,7 +301,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
          }
          endif;
          $out.="</tr>\n";
-         if (!$simple and $comment)
+         if (isset($comment[0]))
             $out.="<tr class='log'><td colspan='".(!empty($admin) ? 6:5). "'><p>$comment&nbsp;</p></td></tr>\n";
          $state=1;
          $flag++;
@@ -316,7 +322,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
   return $out; 
 }
 
-function macro_info($formatter,$value,$options=array()) {
+function macro_Info($formatter, $value = '', $options=array()) {
   global $DBInfo;
 
   if (empty($DBInfo->interwiki)) $formatter->macro_repl('InterWiki','',array('init'=>1));
@@ -324,17 +330,22 @@ function macro_info($formatter,$value,$options=array()) {
   $value=(empty($value) and !empty($DBInfo->info_options)) ? $DBInfo->info_options : $value;
   $args=explode(',',$value);
   if (is_array($args)) {
+    if (isset($args[0][0]) && $DBInfo->hasPage($args[0])) {
+      $pagename = $args[0];
+      array_shift($args);
+    }
     foreach ($args as $arg) {
       $arg=trim($arg);
       if ($arg=='simple') $options['simple']=1;
       else if ($arg=='ago') $options['ago']=1;
     }
   }
+  $pagename = isset($pagename) ? $pagename : $formatter->page->name;
 
   $warn = '';
   if ($DBInfo->version_class) {
     $version = $DBInfo->lazyLoad('version', $DBInfo);
-    $out = $version->rlog($formatter->page->name,'','-r','-z');
+    $out = $version->rlog($pagename, '', '-r', '-z');
   } else {
     $msg=_("Version info is not available in this wiki");
     return "<h2>$msg</h2>";
@@ -344,7 +355,7 @@ function macro_info($formatter,$value,$options=array()) {
     $msg = _("No older revisions available");
     $info = "<h2>$msg</h2>";
     if (method_exists($version, 'attics')) {
-      $ret = $version->attics($formatter->page->name);
+      $ret = $version->attics($pagename);
       if ($ret !== false) {
         $count = count($ret);
         if ($count > 1)
@@ -368,7 +379,7 @@ function macro_info($formatter,$value,$options=array()) {
     }
 
     if (!empty($DBInfo->rcs_check_broken) and method_exists($version, 'is_broken')) {
-      $is_broken = $version->is_broken($formatter->page->name);
+      $is_broken = $version->is_broken($pagename);
       if ($is_broken)
         $warn = '<div class="warn">'._("WARNING: ")._("The history information of this page is broken.")."</div>";
     }
@@ -405,8 +416,14 @@ function macro_info($formatter,$value,$options=array()) {
       $revstr.= '1.'.max($r[0] - $count, 0).':'.$rev[$r[0]];
     }
 
-    $out= $version->rlog($formatter->page->name,'',"-r$revstr",'-z');
-    $info= _parse_rlog($formatter,$out,$options);
+    $out= $version->rlog($pagename,'',"-r$revstr",'-z');
+    if ($pagename != $formatter->page->name) {
+      $p = $DBInfo->getPage($pagename);
+      $f = new Formatter($p, $options);
+    } else {
+      $f = &$formatter;
+    }
+    $info= _parse_rlog($f, $out, $options);
   }
   return $warn.$info;
 }
