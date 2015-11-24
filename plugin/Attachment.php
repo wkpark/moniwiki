@@ -223,8 +223,10 @@ function macro_Attachment($formatter,$value,$options=array()) {
     $url = $pull_url._rawurlencode($pagename).
         "?action=$mydownload&value=".$val;
 
-    $hsz = $formatter->macro_repl('ImageFileSize', $url);
-    $info = ' ('.$hsz.')';
+    if (!empty($formatter->fetch_imagesize)) {
+      $hsz = $formatter->macro_repl('ImageFileSize', $url);
+      $info = ' ('.$hsz.')';
+    }
 
     $url = $fetch_url.
         str_replace(array('&', '?'), array('%26', '%3f'), $url);
