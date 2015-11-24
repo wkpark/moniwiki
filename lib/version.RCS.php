@@ -147,7 +147,10 @@ class Version_RCS {
       $rev = '';
     }
 
-    $filename=$this->_filename($pagename);
+    if ($pagename[0] == '/' && file_exists($pagename))
+      $filename = $pagename;
+    else
+      $filename=$this->_filename($pagename);
 
     $fp= popen("rlog $opt $oldopt -x,v/ $rev ".$filename.$this->NULL,"r");
     $out='';
@@ -375,6 +378,83 @@ class Version_RCS {
       return true;
     }
     return false;
+  }
+
+  // merge $old and $add RCS files
+  function merge($old, $add, $params = array()) {
+    $rcs_user = $this->DB->rcs_user;
+
+    // old RCS file
+    require_once(dirname(__FILE__).'/rcslite.php');
+    $a = new RcsLite('RCS', $rcs_user);
+    $key = $this->DB->_getPageKey($old);
+    $oldfile = $this->DB->text_dir."/RCS/$key,v";
+    $a->_process($oldfile);
+
+    // RCS file to append
+    $b = new RcsLite('RCS', $rcs_user);
+    $key = $this->DB->_getPageKey($add);
+    $addfile = $this->DB->text_dir."/RCS/$key,v";
+    $b->_process($addfile);
+
+    // get all revision numbers
+    $revs = array_keys($b->_next);
+
+    $rev = !empty($params['rev']) ? $params['rev'] : null;
+    if (in_array($rev, $revs))
+      // $rev is found ?
+      $start = $rev;
+    else
+      // merge all
+      $start = end($revs);
+
+    // upto the last revision
+    $end = $b->_head;
+
+    // from
+    $from = $a->_head;
+    $tmp = explode('.', $from);
+    $from = $tmp[0].'.'.($tmp[1] + 1);
+
+    // merge RCS files
+    for ($r = $start; !empty($b->_log[$r]);) {
+      $text = $b->getRevision($r);
+      $log = $b->_log[$r];
+      $a->addRevisionText($text, $log, $b->_date[$r], false);
+      $tmp = explode('.', $r);
+      $r = $tmp[0].'.'.($tmp[1] + 1);
+    }
+    $log = $params['log'];
+    if ($start == $end)
+      $comment = sprintf("Merged [[%s]] r%s as r%s", $add, $start, $a->_head);
+    else
+      $comment = sprintf("Merged [[%s]] r%s ~ r%s as r%s ~ r%s", $add, $start, $end, $from, $a->_head);
+
+    // return comment
+    if (isset($params['retval'])) {
+      $params['retval']['comment'] = $comment;
+      $params['retval']['text'] = $text;
+    }
+
+    $log.= $comment;
+    $a->addRevisionText($text, $log, time(), false);
+
+    $merged = $a->_make_rcs();
+    if (!empty($params['force'])) {
+      $this->import($old, $merged);
+      $keyname = $this->DB->_getPageKey($old);
+      $oldfile = $this->DB->text_dir.'/'.$keyname;
+      $fp = fopen($oldfile, 'w');
+      if (is_resource($fp)) {
+        fwrite($fp, $text);
+        fclose($fp);
+        // change mode
+        $om = umask(0770);
+        chmod($oldfile, 0664);
+        umask($om);
+      }
+    }
+    return $merged;
   }
 }
 
