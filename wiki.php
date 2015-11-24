@@ -442,18 +442,22 @@ class Counter_dba {
   var $counter = null;
   var $dba_type;
   var $owners;
+  var $data_dir;
+  var $dbname = 'counter';
 
   function Counter_dba($DB, $dbname='counter') {
     if (!function_exists('dba_open')) return;
     $this->dba_type = $DB->dba_type;
     $this->owners = $DB->owners;
+    $this->data_dir = $DB->data_dir;
+    $this->dbname = $dbname;
 
     if (!file_exists($this->data_dir.'/'.$dbname.'.db')) {
       // create
       $db = dba_open($this->data_dir.'/'.$dbname.'.db', 'n', $this->dba_type);
       dba_close($db);
     }
-    $this->counter = @dba_open($DB->data_dir.'/'.$dbname.'.db', 'r', $this->dba_type);
+    $this->counter = @dba_open($this->data_dir.'/'.$dbname.'.db', 'r', $this->dba_type);
   }
 
   function incCounter($pagename,$options="") {
@@ -463,8 +467,8 @@ class Counter_dba {
     if (!$count) $count=0;
     $count++;
 
-    // increase counter
-    $db = dba_open($this->data_dir.'/'.$dbname.'.db', 'w', $this->dba_type);
+    // increase counter without locking
+    $db = dba_open($this->data_dir.'/'.$this->dbname.'.db', 'w-', $this->dba_type);
     dba_replace($pagename, $count, $db);
     dba_close($db);
     return $count;
