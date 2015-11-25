@@ -274,6 +274,7 @@ $use_preview_uploads=1;
 #$backlinks_follow=0; # set rel="follow" for the title link
 $use_backlinks=1; # set default fullsearch behavior as backlinks search
 $use_backlink_search=1; # use backlink searching
+#$use_redirects_as_keywords=1; # use redirects as keywords
 $fullsearch_tooshort=2; #
 #$use_smartdiff=1; # use the experimental smart diff XXX
 #$hide_actions=0; # hide actions list for anonymous user

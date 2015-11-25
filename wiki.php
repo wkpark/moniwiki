@@ -4823,23 +4823,35 @@ class Formatter {
       if (isset($sep[1])) $pos=strrpos($this->page->name,$sep[1]);
       if ($pos > 0) $upper=substr($this->page->urlname,0,$pos);
       else if ($this->group) $upper=_urlencode(substr($this->page->name,strlen($this->group)));
+
+      // setup keywords
       $keywords = '';
       if (!empty($this->pi['#keywords'])) {
         $keywords = _html_escape($this->pi['#keywords']);
-        if (!empty($DBInfo->site_keywords))
-          $keywords.= ', '.$DBInfo->site_keywords;
-        $keywords='<meta name="keywords" content="'.$keywords.'" />'."\n";
-      } else if (!empty($DBInfo->use_keywords)) {
+      } else {
         $keys = array();
         $dummy = strip_tags($this->page->title);
         $keys = explode(' ', $dummy);
         $keys[] = $dummy;
         $keys = array_unique($keys);
         $keywords = implode(', ', $keys);
-        if (!empty($DBInfo->site_keywords))
-          $keywords.= ', '.$DBInfo->site_keywords;
-        $keywords="<meta name=\"keywords\" content=\"$keywords\" />\n";
       }
+
+      // add redirects as keywords
+      if (!empty($DBInfo->use_redirects_as_keywords)) {
+        $r = new Cache_Text('redirects');
+        $redirects = $r->fetch($this->page->name);
+        if ($redirects !== false) {
+          sort($redirects);
+          $keywords.= ', '._html_escape(implode(', ', $redirects));
+        }
+      }
+
+      // add site specific keywords
+      if (!empty($DBInfo->site_keywords))
+        $keywords.= ', '.$DBInfo->site_keywords;
+      $keywords = "<meta name=\"keywords\" content=\"$keywords\" />\n";
+
       # find sub pages
       if (empty($options['action']) and !empty($DBInfo->use_subindex)) {
         $scache= new Cache_text('subpages');
