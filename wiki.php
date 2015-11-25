@@ -5147,6 +5147,7 @@ SCHEMA;
     if ($mtime=$this->page->mtime()) {
       $lastedit=gmdate("Y-m-d",$mtime+$options['tz_offset']);
       $lasttime=gmdate("H:i:s",$mtime+$options['tz_offset']);
+      $datetime = gmdate('Y-m-d\TH:i:s', $mtime).'+00:00';
     }
 
     $validator_xhtml=!empty($DBInfo->validator_xhtml) ? $DBInfo->validator_xhtml:'http://validator.w3.org/check/referer';
@@ -5509,8 +5510,10 @@ MSG;
       $tz_offset = $this->tz_offset;
       $lastedit = gmdate("Y-m-d", $mtime + $tz_offset);
       $lasttime = gmdate("H:i:s", $mtime + $tz_offset);
+      $datetime = gmdate('Y-m-d\TH:i:s', $mtime).'+00:00';
       $this->_vars['lastedit'] = $lastedit;
       $this->_vars['lasttime'] = $lasttime;
+      $this->_vars['datetime'] = $datetime;
     }
 
     # print the title
