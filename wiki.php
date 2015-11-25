@@ -1740,12 +1740,14 @@ class WikiPage {
     // update #redirect
     $rc = new Cache_Text('redirect');
     $old = $rc->fetch($pagename);
+    // FIXME for legacy case
+    if (is_array($old)) $old = $old[0];
     if ($old or isset($pi['#redirect'][0])) {
       // update invert redirect index
       $rc2 = new Cache_Text('redirects');
       if (!empty($params['refresh']) or $old != $pi['#redirect']) {
         // update direct cache
-        $rc->update($pagename, $pi['#redirect']);
+        $rc->update($pagename, array($pi['#redirect']));
         $nr = $pi['#redirect'];
         if (($p = strpos($nr, '#')) > 0) {
           // get pagename only
