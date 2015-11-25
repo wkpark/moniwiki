@@ -28,13 +28,19 @@ readLanguage = function(domain) {
         var js = document.createElement('script');
         js.type = 'text/javascript';
         js.src = _url_prefix + '/local/js/locale/' + lang.substr(0,2) + '/' + domain + '.js';
+        js.onreadystatechange = function () {
+            if (this.readyState == 'complete') {
+                loadLanguage();
+            }
+        };
+        js.onload = loadLanguage;
         head.appendChild(js);
     }
 };
 
 loadLanguage = function() {
     // i18nize elements like as following
-    // <span class="i18n" title="Hello">Hello World</span>
+    // <span class="i18n" lang="en" title="Hello">Hello World</span>
     if (!document.getElementsByClassName) return;
     var supported = { 'ko': 1 };
     var lang = navigator.language || navigator.userLanguage;
@@ -78,14 +84,6 @@ _ = function(msgid) {
         window.confirm = function(txt) {
             return oldconfirm(_(txt));
         }
-    }
-
-    // onload
-    var oldOnload = window.onload;
-    window.onload = function(ev) {
-        try { oldOnload(); } catch(e) {};
-
-        loadLanguage();
     }
 })();
 

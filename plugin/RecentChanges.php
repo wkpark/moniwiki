@@ -1190,7 +1190,8 @@ function update_bookmark(time) {
       }
     }
 }
-update_bookmark();
+if(window.addEventListener)window.addEventListener("load",update_bookmark,false);
+else if(window.attachEvent)window.attachEvent("onload",update_bookmark);
 /*]]>*/
 </script>
 EOF;
