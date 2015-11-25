@@ -783,6 +783,63 @@ function get_pagelinks($formatter, $text) {
 }
 
 /**
+ * Update redirect cache and it's index
+ *
+ * @author   Won-Kyu Park <wkpark at gmail.com>
+ * @param    timestamp $timestamp lastmodified time of the cache file
+ * @return   void
+ */
+function update_redirects($pagename, $redirect, $refresh = false) {
+    // update #redirect cache
+    $rd = new Cache_Text('redirect');
+    $old = $rd->fetch($pagename);
+    // FIXME for legacy case
+    if (is_array($old)) $old = $old[0];
+
+    if ($old === false && !isset($redirect[0]))
+        return;
+
+    // update invert redirect index
+    $rds = new Cache_Text('redirects');
+    if (!$refresh || $old != $redirect) {
+        // update direct cache
+        $rd->update($pagename, array($redirect));
+        $nr = $redirect;
+        if (($p = strpos($nr, '#')) > 0) {
+            // get pagename only
+            //$anchor = substr($nr, $p);
+            $nr = substr($nr, 0, $p);
+        }
+        if (!isset($nr[0])) {
+            $rd->remove($pagename);
+        } else if (!preg_match('@^https?://@', $nr)) { // not a URL redirect
+            // add redirect links
+            $redirects = $rds->fetch($nr);
+            if (empty($redirects)) $redirects = array();
+            $redirects = array_merge($redirects, array($pagename));
+            $rds->update($nr, $redirects);
+        }
+
+        while ($old != '' and $old != false) {
+            // get pagename only
+            if (($p = strpos($old, '#')) > 0) {
+                //$anchor = substr($old, $p);
+                $old = substr($old, 0, $p);
+            }
+            if ($nr == $old) break; // same redirect check A#s-1 ~ A#s-2 redirects
+            // delete redirect links
+            $l = $rds->fetch($old);
+            if ($l !== false and is_array($l)) {
+                $redirects = array_diff($l, array($pagename));
+                if (empty($redirects)) $rds->remove($old);
+                else $rds->update($old, $redirects);
+            }
+            break;
+        }
+    }
+}
+
+/**
  * Checks and sets HTTP headers for conditional HTTP requests
  * slightly modified to set $etag separatly by wkpark@kldp.org
  *

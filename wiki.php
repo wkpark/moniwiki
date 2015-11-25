@@ -1256,6 +1256,9 @@ class WikiDB {
     if (!empty($this->use_alias))
       store_aliases($page->name, array());
 
+    // remove redirects
+    update_redirects($page->name, null);
+
     $handle= opendir($this->cache_dir);
     $permanents = array('backlinks', 'keywords', 'aliases', 'wordindex', 'redirect');
     while ($file= readdir($handle)) {
@@ -1737,51 +1740,9 @@ class WikiPage {
       }
     }
 
-    // update #redirect
-    $rc = new Cache_Text('redirect');
-    $old = $rc->fetch($pagename);
-    // FIXME for legacy case
-    if (is_array($old)) $old = $old[0];
-    if ($old or isset($pi['#redirect'][0])) {
-      // update invert redirect index
-      $rc2 = new Cache_Text('redirects');
-      if (!empty($params['refresh']) or $old != $pi['#redirect']) {
-        // update direct cache
-        $rc->update($pagename, array($pi['#redirect']));
-        $nr = $pi['#redirect'];
-        if (($p = strpos($nr, '#')) > 0) {
-          // get pagename only
-          //$anchor = substr($nr, $p);
-          $nr = substr($nr, 0, $p);
-        }
-        if (!isset($nr[0])) {
-          $rc->remove($pagename);
-        } else if (!preg_match('@^https?://@', $nr)) { // not a URL redirect
-          // add redirect links
-          $redirects = $rc2->fetch($nr);
-          if (empty($redirects)) $redirects = array();
-          $redirects = array_merge($redirects, array($pagename));
-          $rc2->update($nr, $redirects);
-        }
-
-        while ($old != '' and $old != false) {
-          // get pagename only
-          if (($p = strpos($old, '#')) > 0) {
-            //$anchor = substr($old, $p);
-            $old = substr($old, 0, $p);
-          }
-          if ($nr == $old) break; // check A#s-1 ~ A#s-2 redirects
-          // delete redirect links
-          $l = $rc2->fetch($old);
-          if ($l !== false and is_array($l)) {
-            $redirects = array_diff($l, array($pagename));
-            if (empty($redirects)) $rc2->remove($old);
-            else $rc2->update($old, $redirects);
-          }
-          break;
-        }
-      }
-    }
+    // update redirects cache
+    $redirect = isset($pi['#redirect'][0]) ? $pi['#redirect'] : null;
+    update_redirects($pagename, $redirect, $params['refresh']);
 
     if (!empty($Config['use_keywords']) or !empty($Config['use_tagging']) or !empty($_GET['update_keywords'])) {
       $tcache= new Cache_text('keyword');
