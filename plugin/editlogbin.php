@@ -197,7 +197,7 @@ function cached_editlogbin($formatter, $params = array()) {
         $params['until'] = null; // reset
     }
     // round timestamp
-    $tmp = date('Y-m-d 00:00:00', $from);
+    $tmp = date('Y-m-d 23:59:59', $from);
     $from = strtotime($tmp);
 
     $max_range = !empty($params['.max_range']) ?
