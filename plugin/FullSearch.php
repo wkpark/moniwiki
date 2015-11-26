@@ -253,17 +253,23 @@ EOF;
     if (in_array($arena, array('backlinks', 'keywords'))) {
       $test = key($hits);
       if (is_int($test) and $hits[$test] != -1) {
-        // fix compatible issue for keywords, backlinks
-        $hits = array_flip($hits);
-        foreach ($hits as $k=>$v) $hits[$k] = -1;
-        reset($hits);
-      }
+        // hits already sorted
+        //sort($hits);
+        // check invert redirect index
+        if (!empty($redirects)) {
+          // sort
+          sort($redirects);
+          // prepend redirects
+          array_splice($hits, 0, 0, $redirects);
+        }
 
-      // check invert redirect index
-      if (!empty($redirects)) {
-        $redirects = array_flip($redirects);
-        ksort($redirects);
-        foreach ($redirects as $k=>$v) $hits[$k] = -2;
+        $hits = array_flip($hits);
+        // fix compatible issue for keywords, backlinks
+        foreach ($hits as $k=>$v) $hits[$k] = -1;
+        if (!empty($redirects)) {
+          $redirects = array_flip($redirects);
+          foreach ($redirects as $k=>$v) $hits[$k] = -2;
+        }
         reset($hits);
       }
     }
