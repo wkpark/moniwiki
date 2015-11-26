@@ -3042,6 +3042,7 @@ class Formatter {
     }
 
     $ret=call_user_func_array('macro_'.$name,array(&$this,$args,&$options));
+    if ($ret === false) return false;
     if (is_array($ret)) return $ret;
     return $bra.$ret.$ket;
   }

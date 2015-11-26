@@ -33,7 +33,7 @@ function macro_ExternalImage($formatter, $value, $params = array()) {
         return $formatter->macro_repl('WikimediaCommons', $value, $params);
     }
 
-    return $value;
+    return false;
 }
 
 // vim:et:sts=4:sw=4:
