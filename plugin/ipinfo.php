@@ -332,7 +332,7 @@ function do_ipinfo($formatter, $params = array()) {
             }
         }
 
-        $netmask = !empty($params['netmask']) ? (int) $params['netmask'] : '';
+        $netmask = !empty($params['netmask']) ? (int) $params['netmask'] : $netmask;
         if ($netmask >= 32) {
             $netmask = '';
         }
