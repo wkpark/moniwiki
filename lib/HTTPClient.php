@@ -263,6 +263,8 @@ class HTTPClient {
             foreach ((array) $this->resp_headers['set-cookie'] as $c){
                 $cs=explode(';',$c);
                 foreach ($cs as $c) {
+                    if (($p = strpos($c, '=')) === false)
+                        continue;
                     list($key, $value) = explode('=', $c, 2);
                     $this->cookies[trim($key)] = $value;
                 }
@@ -539,10 +541,11 @@ class HTTPClient {
         if(empty($requestinfo['port'])) $requestinfo['port'] = 443;
 
         // build request
-        $request  = "CONNECT {$requestinfo['host']}:{$requestinfo['port']} HTTP/1.0".HTTP_NL;
-        $request .= "Host: {$requestinfo['host']}".HTTP_NL;
+        $request  = "CONNECT {$requestinfo['host']}:{$requestinfo['port']} HTTP/".$this->http.HTTP_NL;
+        $request .= "Host: {$requestinfo['host']}:{$requestinfo['port']}".HTTP_NL;
+        $request .= "User-Agent: ".$this->agent.HTTP_NL;
         if($this->proxy_user) {
-                'Proxy-Authorization Basic '.base64_encode($this->proxy_user.':'.$this->proxy_pass).HTTP_NL;
+            $request .= 'Proxy-Authorization Basic '.base64_encode($this->proxy_user.':'.$this->proxy_pass).HTTP_NL;
         }
         $request .= HTTP_NL;
 
@@ -562,12 +565,18 @@ class HTTPClient {
         if(preg_match('/^HTTP\/1\.[01] 200/i',$r_headers)){
             // Try a TLS connection first
             if (@stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+                $this->_debug('STREAM_CRYPTO_METHOD_TLS_CLIENT', '');
                 $requesturl = $requestinfo['path'];
+                if ($requestinfo['query'])
+                    $requesturl .= '?'.$requestinfo['query'];
                 return true;
             }
             // Fall back to SSLv3
             if (@stream_socket_enable_crypto($socket, true, STREAM_CRYPTO_METHOD_SSLv3_CLIENT)) {
+                $this->_debug('STREAM_CRYPTO_METHOD_SSLv3_CLIENT', '');
                 $requesturl = $requestinfo['path'];
+                if ($requestinfo['query'])
+                    $requesturl .= '?'.$requestinfo['query'];
                 return true;
             }
         }
