@@ -4284,7 +4284,7 @@ class Formatter {
             '?action='.$act.'&amp;section='.$this->sect_num);
           if ($this->source_site) {
             $url = $this->source_site.$url;
-            $sect_attr = ' class="externalLink"';
+            $sect_attr = ' class="externalLink source"';
           }
           $lab=_("edit");
           $edit="<div class='sectionEdit' style='float:right;'><span class='sep'>[</span><span><a href='$url'$sect_attr><span>$lab</span></a></span><span class='sep'>]</span></div>\n";
@@ -5080,7 +5080,7 @@ SCHEMA;
         if ($this->source_site) {
           $url = $this->link_url($this->page->urlname, '?action=edit');
             $url = $this->source_site.$url;
-          $url = "<a href='$url' class='externalLink'><span>"._("EditText").'</span></a>';
+          $url = "<a href='$url' class='externalLink source'><span>"._("EditText").'</span></a>';
         } else {
           $url = _("NotEditable");
         }
