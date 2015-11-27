@@ -8,7 +8,6 @@
 
 div.sectionEdit {
   margin-right:5px; margin-top:3px;
-  visibility:hidden;
 }
 
 #wikiContent div:hover .sectionEdit {
