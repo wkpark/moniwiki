@@ -3812,11 +3812,16 @@ class Formatter {
         $anchor = substr($url, $p);
         $url = substr($url, 0, $p);
       }
-      $url=_rawurlencode($url);
-
-      $lnk = $this->link_tag($url,
-        '?action=show'.$anchor,
-        $pi['#redirect']);
+      if (preg_match('@^https?://@', $url)) {
+        $text = rawurldecode($url);
+        $lnk = '<a href="'.$url.$anchor.'">'.$text.$anchor.'</a>';
+      } else {
+        $text = $url;
+        $url = _urlencode($url);
+        $lnk = $this->link_tag($url,
+          '?action=show'.$anchor,
+          $text).$anchor;
+      }
       $msg = _("Redirect page");
       $this->write("<div class='wikiRedirect'><span>$msg</span><p>".$lnk."</p></div>");
     }
