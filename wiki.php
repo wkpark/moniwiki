@@ -1872,6 +1872,22 @@ class Formatter {
     // the original source site for mirror sites
     $this->source_site = !empty($DBInfo->source_site) ? $DBInfo->source_site : null;
 
+    // setup for html5
+    $this->tags = array();
+    if (!empty($DBInfo->html5)) {
+      $this->html5 = $DBInfo->html5;
+      $this->tags['article'] = 'article';
+      $this->tags['header'] = 'header';
+      $this->tags['footer'] = 'footer';
+      $this->tags['nav'] = 'nav';
+    } else {
+      $this->html5 = null;
+      $this->tags['article'] = 'div';
+      $this->tags['header'] = 'div';
+      $this->tags['footer'] = 'div';
+      $this->tags['nav'] = 'div';
+    }
+
     // call externalimage macro for these external images
     $this->external_image_regex = !empty($DBInfo->external_image_regex) ? $DBInfo->external_image_regex : 0;
 
@@ -4857,7 +4873,17 @@ class Formatter {
       }
       $theme_type = !empty($this->_newtheme) ? $this->_newtheme : '';
       if (empty($options['css_url'])) $options['css_url']=$DBInfo->css_url;
-      if (empty($this->pi['#nodtd']) and !isset($options['retstr']) and $theme_type != 2) echo $DBInfo->doctype;
+      if (empty($this->pi['#nodtd']) and !isset($options['retstr']) and $theme_type != 2) {
+        if (!empty($this->html5)) {
+          if (is_string($this->html5))
+            echo $this->html5;
+          else
+            echo '<!DOCTYPE html>',"\n",
+              '<html xmlns="http://www.w3.org/1999/xhtml">',"\n";
+        } else {
+          echo $DBInfo->doctype;
+        }
+      }
       if ($theme_type == 2 or isset($options['retstr']))
         ob_start();
       else
@@ -5125,7 +5151,7 @@ SCHEMA;
 
     if (!empty($options['action_mode']) and $options['action_mode'] =='ajax') return;
 
-    echo "<!-- wikiBody --></div>\n";
+    echo "<!-- wikiBody --></".$this->tags['article'].">\n";
     echo $DBInfo->hr;
     if (!empty($args['editable']) and !$DBInfo->security->writable($options))
       $args['editable']=-1;
@@ -5553,7 +5579,7 @@ MSG;
       $header.="</td></tr></table>\n";
 
       # menu
-      echo "<div id='wikiHeader'>\n";
+      echo "<".$this->tags['header']." id='wikiHeader'>\n";
       echo $header;
       if (!$this->css_friendly)
         echo $menu." ".$user_link." ".$upper_icon.$icons.$rss_icon;
@@ -5564,7 +5590,7 @@ MSG;
       }
       if (!empty($msg))
         echo $msg;
-      echo "</div>\n";
+      echo "</".$this->tags['header']."\n";
     }
     if (empty($this->popup) and (empty($themeurl) or empty($this->_newtheme))) {
       echo $DBInfo->hr;
@@ -5581,7 +5607,7 @@ MSG;
       if (!empty($this->subindex))
         echo $this->subindex;
     }
-    echo "<div id='wikiBody' class='entry-content'>\n";
+    echo "\n<".$this->tags['article']." id='wikiBody' class='entry-content'>\n";
     #if ($this->subindex and !$this->popup and (empty($themeurl) or !$this->_newtheme))
     #  echo $this->subindex;
     $this->pagelinks=$saved_pagelinks;
