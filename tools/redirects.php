@@ -66,7 +66,7 @@ if (isset($args['f']))
     $force_update = true;
 
 $debug = false;
-if (isset($args['f']))
+if (isset($args['d']))
     $debug = true;
 
 if ($DBInfo->text_dir[0] != '/')
@@ -175,6 +175,11 @@ while (($file = readdir($handle)) !== false) {
         $redirect = substr($pi, 10);
         $redirect = rtrim($redirect, "\n");
 
+        if (($pos = strpos($redirect, 'http://')) === 0) {
+            $fixed = rawurldecode($fixed);
+            echo "\r",$pagename.' : '.$fixed.' - '.$redirect,"\n";
+            continue;
+        }
         if (($pos = strpos($redirect, '#')) > 0) {
             $redirect = substr($redirect, 0, $pos);
         }
