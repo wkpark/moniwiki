@@ -15,6 +15,7 @@
 
 define('PAGESIZE_SORTBY_SIZE', 0);
 define('PAGESIZE_SORTBY_DATE', 1);
+define('PAGESIZE_SORTBY_HITS', 2);
 
 function macro_PageSort($formatter, $value = '', $params = array()) {
     global $DBInfo;
@@ -24,9 +25,14 @@ function macro_PageSort($formatter, $value = '', $params = array()) {
     $ismember = $DBInfo->user->is_member;
     $refresh = $formatter->refresh && $ismember;
 
-    if (!empty($params['sortby']) && in_array($params['sortby'], array('date'))) {
-        $sortby = PAGESIZE_SORTBY_DATE;
-        $cachekey = 'pagedate';
+    if (!empty($params['sortby']) && in_array($params['sortby'], array('date', 'hits'))) {
+        if ($params['sortby'] == 'date') {
+            $sortby = PAGESIZE_SORTBY_DATE;
+            $cachekey = 'pagedate';
+        } else {
+            $sortby = PAGESIZE_SORTBY_HITS;
+            $cachekey = 'pagehits';
+        }
     } else {
         $sortby = PAGESIZE_SORTBY_SIZE;
         $cachekey = 'pagesize';
@@ -35,6 +41,14 @@ function macro_PageSort($formatter, $value = '', $params = array()) {
     if ($refresh || ($info = $cache->fetch($cachekey)) === false) {
         set_time_limit(0);
 
+        if ($sortby == PAGESIZE_SORTBY_HITS) {
+            $cutoff = !empty($DBInfo->counter_cutoff) ? $DBInfo->counter_cutoff : 50;
+            $hits = $DBInfo->counter->getPageHits(-1, 0, $cutoff);
+            $pages = array();
+            foreach ($hits as $k=>$v) {
+                $pages[$k."\t".$v] = $v;
+            }
+        } else {
         $handle = opendir($DBInfo->text_dir);
         if (!is_resource($handle)) {
             return sprintf(_("Can't open %s\n"), $DBInfo->text_dir);
@@ -72,9 +86,14 @@ function macro_PageSort($formatter, $value = '', $params = array()) {
             $cnt++;
         }
         closedir($handle);
+        }
 
         // sort
-        asort($pages);
+        if ($sortby != PAGESIZE_SORTBY_SIZE) {
+            arsort($pages);
+        } else {
+            asort($pages);
+        }
         $keys = array_keys($pages);
         $raw = implode("\n", $keys);
         // save sorted page list
@@ -137,12 +156,15 @@ function macro_PageSort($formatter, $value = '', $params = array()) {
     $lst = array();
     for ($j = 0; $j < $limit; $j++) {
         $raw = fgets($fp, 2048);
+        if ($raw === false) break;
         list($page, $val) = explode("\t", $raw, 2);
         $item = '<li>'.$formatter->link_tag($page);
         if ($sortby == PAGESIZE_SORTBY_DATE)
             $item.= ' ('.date('Y-m-d H:i', $val).')</li>'."\n";
-        else
+        else if ($sortby == PAGESIZE_SORTBY_SIZE)
             $item.= ' ('.$val.' Bytes)</li>'."\n";
+        else
+            $item.= ' ('.$val.' Hits)</li>'."\n";
         $lst[] = $item;
     }
     fclose($fp);
@@ -155,6 +177,8 @@ function macro_PageSort($formatter, $value = '', $params = array()) {
     }
     if ($sortby == PAGESIZE_SORTBY_DATE)
         $q.= '&amp;sortby=date';
+    else if ($sortby == PAGESIZE_SORTBY_HITS)
+        $q.= '&amp;sortby=hits';
 
     $out = '<ul>';
     $out.= implode($lst);
@@ -171,8 +195,8 @@ function do_pagesort($formatter, $params = array()) {
     $args = array();
     $sortby = 'size';
     if (isset($params['value'][0])) $args[] = $params['value'];
-    if (isset($params['sortby'][0]) && in_array($params['sortby'], array('date'))) {
-        $args[] = $sortby = 'date';
+    if (isset($params['sortby'][0]) && in_array($params['sortby'], array('date', 'hits'))) {
+        $args[] = $sortby = $params['sortby'];
     }
     $arg = implode(',', $args);
     $params['.title'] = sprintf(_("List of pages sorted by %s."), $sortby);

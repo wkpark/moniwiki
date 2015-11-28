@@ -479,7 +479,7 @@ class Counter_dba {
     return $count ? $count: 0;
   }
 
-  function getPageHits($perpage = 200, $page = 0) {
+  function getPageHits($perpage = 200, $page = 0, $cutoff = 0) {
     $k = dba_firstkey($this->counter);
     if ($k !== false && $page > 0) {
       $i = $perpage * $page;
@@ -490,9 +490,12 @@ class Counter_dba {
     }
     $hits = array();
     $i = $perpage;
+    if ($perpage == -1)
+      $i = 2147483647; // PHP_INT_MAX
     for (; $k !== false && $i > 0; $k = dba_nextkey($this->counter)) {
       $v = dba_fetch($k, $this->counter);
-      $hits[$k] = $v;
+      if ($v > $cutoff)
+        $hits[$k] = $v;
       $i--;
     }
     return $hits;
