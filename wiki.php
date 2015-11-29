@@ -4287,7 +4287,11 @@ class Formatter {
           break;
         }
 
-        $p_closeopen.=$this->_div(1,$in_div,$div_enclose, ' class="section"');
+        // check section styling
+        $cls = '';
+        if (!empty($this->section_style))
+          $cls = ' styling';
+        $p_closeopen.=$this->_div(1,$in_div,$div_enclose, ' class="section'.$cls.'"');
         $in_p='';
         $edit = ''; $anchor = '';
         if ($is_writable && $this->section_edit && empty($this->preview)) {
@@ -4318,9 +4322,17 @@ class Formatter {
         $attr = $lid > 0 ? ' id="line-'.$lid.'"' : '';
         $lid = '';
 
-        $line=$anchor.$edit.$this->head_repl(strlen($m[1]),$m[2],$headinfo,$attr);
+        // section heading style etc.
+        $hcls = '';
+        $cls = '';
+        if (!empty($this->section_style)) {
+          $hcls = ' class="heading '.$this->section_style['heading'].'"';
+          $cls = ' class="'.$this->section_style['section'].'"';
+        }
+
+        $line=$anchor.$edit.$this->head_repl(strlen($m[1]),$m[2],$headinfo,$attr.$hcls);
         $dummy='';
-        $line.=$this->_div(1,$in_div,$dummy,' id="sc-'.$this->sect_num.'"'); // for folding
+        $line.=$this->_div(1,$in_div,$dummy,$cls.' id="sc-'.$this->sect_num.'"'); // for folding
         $edit='';$anchor='';
         break;
       }
