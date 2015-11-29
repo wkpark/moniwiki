@@ -317,14 +317,14 @@ ul.autocompleter-choices li.autocompleter-selected span.autocompleter-queried
 }
 
 /* Styles for folding processor */
-.folding {
+dl.folding {
 	background:#eee;
 	border-color:#ccc;
 	margin:10px;
 	padding:0;
 }
 
-.folding dt {
+dl.folding dt {
 	background-color:#bdc2bd;
 	height:20px;
 	font-weight:bold;
@@ -333,7 +333,7 @@ ul.autocompleter-choices li.autocompleter-selected span.autocompleter-queried
 	cursor:pointer;
 }
 
-.folding dd {
+dl.folding dd {
 	display:none;
 	padding:10px;
 	margin:0;
