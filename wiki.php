@@ -255,116 +255,6 @@ FrontPage= "$Config[frontpage]";
 EOS;
 }
 
-class MetaDB_dba extends MetaDB {
-  var $metadb;
-  var $aux=array();
-
-  function MetaDB_dba($file,$type="db3") {
-    if (function_exists('dba_open'))
-      $this->metadb=@dba_open($file.".cache","r",$type);
-  }
-
-  function close() {
-    dba_close($this->metadb);
-  }
-
-  function attachDB($db) {
-    $this->aux=$db;
-  }
-
-  function getSisterSites($pagename,$mode=1) {
-    $norm = preg_replace('/\s+/', '', $pagename);
-    if ($norm == $pagename) {
-      $nodb = !dba_exists($pagename, $this->metadb);
-    } else {
-      $nodb = !dba_exists($pagename, $this->metadb) && !dba_exists($norm, $this->metadb);
-    }
-    if (!$this->aux->hasPage($pagename) and $nodb) {
-      if ($mode) return '';
-      return false;
-    }
-    if (!$mode) return true;
-    $sisters=dba_fetch($pagename,$this->metadb);
-    if ($sisters == null)
-      $sisters = dba_fetch($norm, $this->metadb);
-    $addons=$this->aux->getSisterSites($pagename,$mode);
-
-    $ret = '';
-    if ($sisters)
-      $ret='[wiki:'.str_replace(' ',":$pagename]\n[wiki:",$sisters).":$pagename]";
-    $pagename=_preg_search_escape($pagename);
-    if ($addons) $ret=rtrim($addons."\n".$ret);
-
-    if ($mode==1 and strlen($ret) > 80) return "[wiki:TwinPages:$pagename]";
-    return preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
-  }
-
-  function getTwinPages($pagename,$mode=1) {
-    $norm = preg_replace('/\s+/', '', $pagename);
-    if ($norm == $pagename) {
-      $nodb = !dba_exists($pagename, $this->metadb);
-    } else {
-      $nodb = !dba_exists($pagename, $this->metadb) && !dba_exists($norm, $this->metadb);
-    }
-    if (!$this->aux->hasPage($pagename) and $nodb) {
-      if ($mode) return array();
-      return false;
-    }
-    if (!$mode) return true;
-
-    $twins=dba_fetch($pagename,$this->metadb);
-    if ($twins == null)
-      $twins = dba_fetch($norm, $this->metadb);
-    $addons=$this->aux->getTwinPages($pagename,$mode);
-    $ret=array();
-    if ($twins) {
-      $ret="[wiki:".str_replace(" ",":$pagename] [wiki:",$twins). ":$pagename]";
-
-      $pagename=_preg_search_escape($pagename);
-      $ret= preg_replace("/((:[^\s]+){2})(\:$pagename)/","\\1",$ret);
-      $ret= explode(' ',$ret);
-    }
-
-    if ($addons) $ret=array_merge($addons,$ret);
-    if (sizeof($ret) > 8) {
-      if ($mode==1) return array("TwinPages:$pagename");
-      $ret=array_map(create_function('$a','return " * $a";'),$ret);
-    }
-
-    return $ret;
-  }
-
-  function hasPage($pagename) {
-    if (dba_exists($pagename,$this->metadb)) return true;
-    return false;
-  }
-
-  function getAllPages() {
-    if ($this->keys) return $this->keys;
-    for ($key= dba_firstkey($this->metadb);
-      $key !== false;
-      $key= dba_nextkey($this->metadb)) {
-      $keys[] = $key;
-    }
-    $this->keys=$keys;
-    return $keys;
-  }
-
-  function getLikePages($needle,$count=500) {
-    $keys=array();
-    if (!$needle) return $keys;
-    for ($key= dba_firstkey($this->metadb);
-      $key !== false;
-      $key= dba_nextkey($this->metadb)) {
-      if (preg_match("/($needle)/i",$key)) {
-        $keys[] = $key; $count--;
-      }
-      if ($count < 0) break;
-    }
-    return $keys;
-  }
-}
-
 class MetaDB {
   function MetaDB() {
     return;
@@ -389,52 +279,6 @@ class MetaDB {
     return array();
   }
   function close() {
-  }
-}
-
-class MetaDB_text extends MetaDB {
-  var $alias; // alias metadata
-  var $db; // extra aliases from the AliasPageNames
-
-  function MetaDB_text($db = array()) {
-    // open aliasname metadata
-    $this->alias = new Cache_Text('aliasname');
-    $this->db = $db;
-  }
-
-  function hasPage($pagename) {
-    if ($this->alias->exists($pagename) or
-        !empty($this->db[$pagename])) return true;
-    return false;
-  }
-
-  function getTwinPages($pagename,$mode=1) {
-    if (!$this->alias->exists($pagename) and
-        empty($this->db[$pagename])) {
-      if (!empty($mode)) return array();
-      return false;
-    }
-    if (empty($mode)) return true;
-    $twins = $this->alias->fetch($pagename);
-    if (empty($twins))
-      $twins = $this->db[$pagename];
-    else if (!empty($this->db[$pagename]))
-      $twins = array_merge($twins, $this->db[$pagename]);
-
-    // wiki:Hello World -> wiki:"Hello World"
-    $twins = preg_replace_callback('@^((?:[^\s]{2,}:)*)(.*)$@',
-      create_function('$m',
-        'return \'[wiki:\'.$m[1].\'"\'.$m[2].\'"]\';'), $twins);
-    return $twins;
-  }
-
-  function getSisterSites($pagename,$mode=1) {
-    $ret = $this->getTwinPages($pagename, $mode);
-
-    if (is_array($ret))
-      return implode("\n", $ret);
-
-    return $ret;
   }
 }
 
@@ -662,6 +506,7 @@ class WikiDB {
     }
 
     if (!empty($aliases)) {
+      require_once(dirname(__FILE__).'/lib/metadb.text.php');
       $this->alias= new MetaDB_text($aliases);
     } else {
       $this->alias= new MetaDB();
@@ -671,8 +516,10 @@ class WikiDB {
   function initMetaDB() {
     if (empty($this->alias)) $this->initAlias();
 
-    if (!empty($this->shared_metadb))
+    if (!empty($this->shared_metadb)) {
+      require_once(dirname(__FILE__).'/lib/metadb.dba.php');
       $this->metadb= new MetaDB_dba($this->shared_metadb,$this->dba_type);
+    }
     if (empty($this->metadb->metadb)) {
       if (is_object($this->alias)) $this->metadb=$this->alias;
       else $this->metadb= new MetaDB();
