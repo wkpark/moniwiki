@@ -50,7 +50,7 @@ function do_merge($formatter, $params = array()) {
     if (in_array($params['id'], $DBInfo->members))
         $full_permission = true;
 
-    $is_new = $formatter->page->exists();
+    $is_new = !$formatter->page->exists();
     if (!$is_new and !$full_permission) {
         $formatter->send_header('', $params);
         $title = _("You do not have full permission to merge this page.");
@@ -144,16 +144,16 @@ function do_merge($formatter, $params = array()) {
         $formatter->send_title(sprintf(_("%s is successfully merged."),
                 $formatter->page->name), '', $params);
         if (!$force)
-            echo '<h3>'._("This is a testing. Please confirm force option to merge it.").'</h3>';
+            echo '<h3>'._("This is a testing merge. Please confirm force option to merge it.").'</h3>';
 
         echo $info;
         $formatter->send_footer('', $params);
         return;
     } else {
         if (!isset($params['name'][0]))
-            $title = _("Please select Page to merge.");
+            $title = _("Please select the original page to merge.");
         else if (empty($params['rev']))
-            $title = _("Please select revision to merge.");
+            $title = _("Please select the revision to merge from.");
         else {
             if ($DBInfo->hasPage($formatter->page->name)) {
                 $title = _("Are you really want to merge this page ?");
@@ -171,7 +171,7 @@ function do_merge($formatter, $params = array()) {
         $placeholder = sprintf(_("Merge [[%s]] with [[%s]] from r%s: "), $pname, _html_escape($formatter->page->name), $rev);
         echo "<form method='post'>
 $lab: <input name='comment' size='80' value='$comment' placeholder='$placeholder' /><br />\n";
-        $btn = _("Merge page");
+        $btn = sprintf(_("Merge [[%s]] to [[%s]]:"), _html_escape($formatter->page->name), $pname);
         $msg = sprintf(_("Only WikiMaster can %s this page"),_("merge"));
         if ($DBInfo->security->is_protected("merge", $params))
             echo _("Password").": <input type='password' name='passwd' size='20' value='' />
