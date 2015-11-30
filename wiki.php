@@ -1837,6 +1837,9 @@ class Formatter {
       $DBInfo->inline_latex == 1 ? 'latex':$DBInfo->inline_latex;
     $this->use_purple=$DBInfo->use_purple;
     $this->section_edit=$DBInfo->use_sectionedit;
+    // check folding option
+    $this->use_folding = !empty($DBInfo->use_folding) ? $DBInfo->use_folding : 0;
+
     $this->auto_linebreak=!empty($DBInfo->auto_linebreak) ? 1 : 0;
     $this->nonexists=$DBInfo->nonexists;
     $this->url_mappings=&$DBInfo->url_mappings;
@@ -4027,8 +4030,16 @@ class Formatter {
 
       $p_closeopen='';
       if (preg_match('/^[ ]*(-{4,})$/',$line, $m)) {
-        $func = $DBInfo->hr_type.'_hr';
-        $line = $formatter->$func($m[1]);
+        if ($this->use_folding && strlen($m[1]) > 10) {
+          if (empty($this->section_style)) {
+            $line = '[[Section(close)]]';
+          } else {
+            $line = '[[Section(off)]]';
+          }
+        } else {
+          $func = $DBInfo->hr_type.'_hr';
+          $line = $formatter->$func($m[1]);
+        }
         if ($this->auto_linebreak) $this->nobr=1; // XXX
         if ($in_bq) { $p_closeopen.= str_repeat("</blockquote>\n", $in_bq); $in_bq = 0; }
         if ($in_p) { $p_closeopen.=$this->_div(0,$in_div,$div_enclose); $in_p='';}
