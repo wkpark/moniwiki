@@ -1,36 +1,86 @@
 <?php
-// Copyright 2003-2006 Won-Kyu Park <wkpark at kldp.org>
-// All rights reserved. Distributable under GPL see COPYING
-// a sample plugin for the MoniWiki
+// Copyright 2003-2015 Won-Kyu Park <wkpark at kldp.org>
+// All rights reserved. Distributable under GPLv2 see COPYING
+// a PageLinks plugin for the MoniWiki
 //
-// Usage: [[Test]]
+// Author: Won-Kyu Park <wkpark at gmail.com>
+// Since: 2003/04/25
+// Modified: 2015/12/02
+// Name: PageLinksPlugin
+// Description: PageLinks Plugin
+// URL: MoniWiki:PageLinksPlugin
+// Version: $Revision: 1.0 $
+// License: GPLv2
+// PluginType: macro, action
+// Usage: [[PageLinks]] or ?action=pagelinks
 //
 // $Id: PageLinks.php,v 1.3 2010/09/07 12:11:49 wkpark Exp $
 
-function macro_PageLinks($formatter,$options="") {
-  global $DBInfo;
-  $pages = $DBInfo->getPageLists();
-  $pagelinks=$formatter->pagelinks; // save
-  $save=$formatter->sister_on;
-  $formatter->sister_on=0;
+function macro_PageLinks($formatter, $value, $params = array()) {
+    global $DBInfo;
 
-  $out="<ul>\n";
-  $cache=new Cache_text("pagelinks");
-  foreach ($pages as $page) {
-    $lnks=$cache->fetch($page);
-    if ($lnks !== false) {
-        $out.="<li>".$formatter->link_tag($page,'',_html_escape($page)).": ";
-        $links=implode(' ',$lnks);
-        $links = preg_replace_callback("/(".$formatter->wordrule.")/",
-            array(&$formatter, 'link_repl'), $links);
-        $out.=$links."</li>\n";
+    $offset = 0;
+    if (!empty($params['offset'])) {
+        if (is_numeric($params['offset']) and $params['offset'] > 0)
+            $offset = $params['offset'];
     }
-  }
-  $out.="</ul>\n";
-  $formatter->pagelinks = $pagelinks; // restore
-  $formatter->sister_on=$save;
-  return $out;
+    $param = array();
+    if (!empty($offset)) $param['offset'] = $offset;
+
+    $limit = 200;
+    if (!empty($params['limit'])) {
+        $tmp = max(100, intval($params['limit']));
+        $limit = min($limit, $tmp);
+    }
+    $param['limit'] = $limit;
+
+    $pages = $DBInfo->getPageLists($param);
+
+    $start = '';
+    if (!empty($params['start']) and is_numeric($params['start'])) {
+        if ($params['start'] > 0) $start = $params['start'];
+    }
+
+    $pagelinks = $formatter->pagelinks; // save
+    $save = $formatter->sister_on;
+    $formatter->sister_on = 0;
+    if (empty($formatter->wordrule)) $formatter->set_wordrule();
+
+    $ol = '';
+    if ($start > 0)
+        $ol = ' start="'.$start.'"';
+    else
+        $start = 1;
+    $out = "<ol$ol>\n";
+    $cache = new Cache_text("pagelinks");
+    $i = 0;
+    foreach ($pages as $page) {
+        $lnks = $cache->fetch($page);
+        if ($lnks !== false) {
+            $out .= "<li>".$formatter->link_tag($page, '', _html_escape($page)).': ';
+            $links = '[['.implode(']], [[', $lnks).']]';
+            $links = preg_replace_callback("/(".$formatter->wordrule.")/",
+                    array(&$formatter, 'link_repl'), $links);
+            $out .= $links."</li>\n";
+            $i++;
+        }
+    }
+    $out .= "</ol>\n";
+
+    $j = $offset + $limit;
+    $i+= $start;
+
+    $out .= $formatter->link_to("?action=pagelinks&amp;offset=$j&amp;start=$i", _("Show next page"));
+    $formatter->pagelinks = $pagelinks; // restore
+    $formatter->sister_on = $save;
+    return $out;
 }
 
-// vim:et:sts=4:
-?>
+function do_pagelinks($formatter, $params = '') {
+    $formatter->send_header('', $params);
+    $formatter->send_title('', '', $params);
+    echo macro_PageLinks($formatter, '', $params);
+    $formatter->send_footer('', $params);
+}
+
+// vim:et:sts=4:sw=4:
