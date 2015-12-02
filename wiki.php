@@ -5713,22 +5713,22 @@ EOF;
 } # end-of-Formatter
 
 # setup the locale like as the phpwiki style
-function get_locales($mode=1) {
+function get_locales($default = 'en') {
   $languages=array(
     'en'=>array('en_US','english',''),
     'fr'=>array('fr_FR','france',''),
     'ko'=>array('ko_KR','korean',''),
   );
   if (empty($_SERVER['HTTP_ACCEPT_LANGUAGE']))
-    return array($languages['en'][0]);
+    return array($languages[$default][0]);
   $lang= strtolower($_SERVER['HTTP_ACCEPT_LANGUAGE']);
   $lang= strtr($lang,'_','-');
   $langs=explode(',',preg_replace(array("/;[^;,]+/","/\-[a-z]+/"),'',$lang));
   if ($languages[$langs[0]]) return array($languages[$langs[0]][0]);
-  return array($languages['en'][0]);
+  return array($languages[$default][0]);
 }
 
-function set_locale($lang,$charset='') {
+function set_locale($lang, $charset = '', $default = 'en') {
   $supported=array(
     'en_US'=>array('ISO-8859-1'),
     'fr_FR'=>array('ISO-8859-1'),
@@ -5737,8 +5737,8 @@ function set_locale($lang,$charset='') {
   $charset= strtoupper($charset);
   if ($lang == 'auto') {
     # get broswer's settings
-    $langs=get_locales();
-    $lang= $langs[0]; // XXX
+    $langs = get_locales($default);
+    $lang = $langs[0];
   }
   // check server charset
   $server_charset = '';
@@ -5751,7 +5751,7 @@ function set_locale($lang,$charset='') {
     if ($supported[$lang] && in_array($charset,$supported[$lang])) {
       return $lang.'.'.$charset;
     } else {
-      return 'en_US'; // default
+      return $default;
     }
   }
   return $lang;
@@ -6572,7 +6572,7 @@ if (isset($options['timer']) and is_object($options['timer'])) {
   $options['timer']->Check("load");
 }
 
-$lang= set_locale($DBInfo->lang,$DBInfo->charset);
+$lang = set_locale($Config['lang'], $Config['charset'], $Config['default_lang']);
 init_locale($lang);
 init_requests($options);
 if (!isset($options['pagename'][0])) $options['pagename']= get_frontpage($lang);

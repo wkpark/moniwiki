@@ -54,6 +54,7 @@ $inline_latex=0; # 0/1(on/off), mimetex, itex, etc.
 #$latex_renumbering=1; # renumbering tex equations
 #$latex_allinone=1; # experimental feature. make a temporary latex file into all in one text.
 $lang='auto'; # check language automatically.
+#$default_lang='ko'; # default language
 $charset='utf-8'; # default character set. euc-kr etc.
 $auto_linebreak= 0; # NoSmoke style insert <br> automatically.
 #$html_nl2br=0; # use nl2br() in plugin/processor/html.php
