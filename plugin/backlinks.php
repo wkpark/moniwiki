@@ -19,6 +19,14 @@
 require_once(dirname(__FILE__).'/FullSearch.php');
 
 function macro_BackLinks($formatter, $value = '', $params = array()) {
+    global $Config;
+
+    // setup dynamic macro
+    if ($formatter->_macrocache and empty($params['call']))
+        return $formatter->macro_cache_repl('BackLinks', $value);
+    if (empty($params['call']))
+        $formatter->_dynamic_macros['@BackLinks'] = 1;
+
     if (!isset($value[0]) || $value === true)
         $value = $formatter->page->name;
 
@@ -28,37 +36,98 @@ function macro_BackLinks($formatter, $value = '', $params = array()) {
     $hits = macro_FullSearch($formatter, $value, $params);
     // $hits is sorted array
 
+    $out = '';
+    $title = '';
+    // check the internal category parameter
+    if (!isset($params['.category'])) {
+        if (isset($Config['category_regex'][0]) &&
+                preg_match('@'.$Config['category_regex'].'@', $value, $m, PREG_OFFSET_CAPTURE)) {
+            if (isset($m[1]))
+                $params['.category'] = $m[1];
+            else
+                $params['.category'] = substr($value, strlen($m[0][0])); // FIXME
+        }
+    }
+    if (isset($params['.category'][0])) {
+        // check subcategories
+        $category = $params['.category'];
+        $title = '<h2>'.sprintf(_("Pages in category \"%s\"."), _html_escape($category)).'</h2>';
+
+        $cats = array();
+        foreach ($hits as $p=>$c) {
+            if (preg_match('@'.$Config['category_regex'].'@', $p, $m, PREG_OFFSET_CAPTURE)) {
+	        if (isset($m[1]))
+                    $cats[$p] = $m[1];
+                else
+                    $cats[$p] = substr($p, strlen($m[0][0])); // FIXME
+                unset($hits[$p]);
+            }
+        }
+        if (count($cats) > 0) {
+            $out = '<h2>'. _("Subcategories") .'</h2>';
+            $out .= _index($formatter, $cats, $params);
+        }
+    } else if (empty($params['.notitle'])) {
+        $title = '<h2>'.sprintf(_("BackLinks of \"%s\"."), _html_escape($value)).'</h2>'."\n";
+    }
+    $index = _index($formatter, $hits, $params);
+    if ($index !== false)
+        return $out.$title.$index;
+
+    if (empty($out)) {
+        if (isset($params['.category'][0]))
+            return '<h2>'.sprintf(_("No pages found in category \"%s\"."),
+                _html_escape($params['.category'])) .'</h2>';
+        else
+            return '<h2>'._("No backlinks found.") .'</h2>';
+    }
+    return $out;
+}
+
+function _index($formatter, $pages, $params = array()) {
+    if (isset($GLOBALS['.index_id'])) {
+        $GLOBALS['.index_id']++;
+        $index_id = $GLOBALS['.index_id'];
+    } else {
+        $index_id = $GLOBALS['.index_id'] = 0;
+    }
+    $anchor = 'index-anchor'.$index_id;
+
     $keys = array();
     $key = '';
     $out = '';
     $redirect = '';
-    foreach ($hits as $page=>$count) {
+    $n = 0;
+    foreach ($pages as $page=>$info) {
         // redirect case
-        if ($count == -2) {
+        if ($info == -2) {
             $urlname = _urlencode($page);
             $redirect .= '<li>' . $formatter->link_tag($urlname, '', _html_escape($page));
             $redirect .= " <span class='redirectIcon'><span>"._("Redirect page")."</span></span>\n";
             $redirect .= "</li>\n";
+            $n++;
             continue;
+        } else if (is_int($info)) {
+            $title = $page;
+        } else {
+            $title = $info;
         }
-
-        $p = ltrim($page);
-        $pkey = get_key("$p");
+        $pkey = get_key("$title");
         if ($key != $pkey) {
             if (isset($key[0]))
                 $keys[] = $key;
             $key = $pkey;
             if (!empty($out)) $out .= "</ul></div>";
-            $out .= "<div><a name='$key'></a><h2><a href='#backlinks-top'>$key</a></h2>\n";
+            $out .= "<div><a name='$key'></a><h2><a href='#$anchor'>$key</a></h2>\n";
             $out .= "<ul>";
         }
-        $title = $page;
-        $urlname = _urlencode($title);
+        $urlname = _urlencode($page);
 
         $out .= '<li>' . $formatter->link_tag($urlname, '', _html_escape($title));
         if ($count == -2)
             $out.= " <span class='redirectIcon'><span>"._("Redirect page")."</span></span>\n";
         $out .= "</li>\n";
+        $n++;
     }
     $out .= "</ul></div>\n";
 
@@ -79,14 +148,41 @@ function macro_BackLinks($formatter, $value = '', $params = array()) {
     if (isset($redirect[0]))
         $redirect = '<div><h2>'._("Redirects").'</h2><ul>'.$redirect.'</ul></div>';
 
-    return "<div style='text-align:center'><a name='backlinks-top'></a>$str</div>\n<div class='index-group'>$redirect$out</div>";
+    if ($n > 10)
+        $attr = " class='index-group'";
+    else
+        $attr = '';
+
+    if ($n > 0)
+        return "<div style='text-align:center'><a name='$anchor'></a>$str</div>\n<div$attr>$redirect$out</div>";
+    else
+        return false;
 }
 
 function do_backlinks($formatter, $params = array()) {
-    $params['.title'] = sprintf(_("BackLinks of %s."), _html_escape($formatter->page->name));
+    global $Config;
+
+    if (isset($params['value'][0])) {
+        $value = _stripslashes($params['value']);
+    } else {
+        $value = $params['value'] = $formatter->page->name;
+    }
+
+    if (isset($Config['category_regex'][0]) &&
+            preg_match('@'.$Config['category_regex'].'@', $value, $m, PREG_OFFSET_CAPTURE)) {
+	if (isset($m[1]))
+            $category = $m[1];
+        else
+            $category = substr($value, strlen($m[0][0])); // FIXME
+        $params['.category'] = $category;
+    } else {
+        $params['.title'] = sprintf(_("BackLinks of \"%s\"."), _html_escape($value));
+        $params['.category'] = false;
+    }
     $formatter->send_header('', $params);
     $formatter->send_title('', '', $params);
-    echo macro_BackLinks($formatter, '', $params);
+    $params['.notitle'] = 1;
+    echo macro_BackLinks($formatter, $value, $params);
     $formatter->send_footer('', $params);
     return true;
 }
