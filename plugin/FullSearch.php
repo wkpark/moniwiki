@@ -206,7 +206,7 @@ EOF;
 
   # retrieve cache
   $fc=new Cache_text($arena);
-  if (!$formatter->refresh and $fc->exists($sid)) {
+  if ($fc->exists($sid)) {
     $data=$fc->fetch($sid);
     if (!empty($opts['backlinks'])) {
       // backlinks are not needed to check it.
@@ -215,7 +215,7 @@ EOF;
       // also fetch redirects
       $r = new Cache_Text('redirects');
       $redirects = $r->fetch($sid);
-    } else if (is_array($data)) {
+    } else if (!$formatter->refresh && is_array($data)) {
       # check cache mtime
       $cmt=$fc->mtime($sid);
 
