@@ -64,8 +64,10 @@ function macro_BackLinks($formatter, $value = '', $params = array()) {
             }
         }
         if (count($cats) > 0) {
+            $params['.count'] = true;
             $out = '<h2>'. _("Subcategories") .'</h2>';
             $out .= _index($formatter, $cats, $params);
+            $params['.count'] = false;
         }
     } else if (empty($params['.notitle'])) {
         $title = '<h2>'.sprintf(_("BackLinks of \"%s\"."), _html_escape($value)).'</h2>'."\n";
@@ -85,6 +87,8 @@ function macro_BackLinks($formatter, $value = '', $params = array()) {
 }
 
 function _index($formatter, $pages, $params = array()) {
+    global $Config;
+
     if (isset($GLOBALS['.index_id'])) {
         $GLOBALS['.index_id']++;
         $index_id = $GLOBALS['.index_id'];
@@ -93,6 +97,11 @@ function _index($formatter, $pages, $params = array()) {
     }
     $anchor = 'index-anchor'.$index_id;
 
+    $count = !empty($params['.count']) ? true : false;
+    if ($count) {
+        $cc = new Cache_Text('category');
+        $bc = new Cache_Text('backlinks');
+    }
     $keys = array();
     $key = '';
     $out = '';
@@ -123,8 +132,44 @@ function _index($formatter, $pages, $params = array()) {
         }
         $urlname = _urlencode($page);
 
+        $extra = '';
+        // count subpages
+        if ($count) {
+            // get backlinks mtime
+            $mtime = $bc->mtime($page);
+            // get category counter info
+            $cci = $cc->fetch($page, $mtime);
+            if ($formatter->refresh || $cci === false) {
+                // count backlinks
+                $links = $bc->fetch($page);
+                $c = 0;
+                $p = 0;
+                foreach ($links as $link) {
+                    if (preg_match('@'.$Config['category_regex'].'@', $link)) {
+                        $c++;
+                    } else {
+                        $p++;
+                    }
+                }
+                // update cotegory counter info
+                $cci = array('C'=>$c, 'P'=>$p);
+                $cc->update($page, $cci);
+            }
+
+            // mediawiki like category status: Category (XX C, YY P)
+            $tmp = array();
+            if (!empty($cci['C']))
+                $tmp[] = $cci['C'].' C';
+            if (!empty($cci['P']))
+                $tmp[] = $cci['P'].' P';
+            if (isset($tmp[0])) {
+                $extra = ' ('.implode(', ', $tmp).')';
+            }
+        }
+
         $out .= '<li>' . $formatter->link_tag($urlname, '', _html_escape($title));
-        if ($count == -2)
+        $out .= $extra;
+        if ($info == -2)
             $out.= " <span class='redirectIcon'><span>"._("Redirect page")."</span></span>\n";
         $out .= "</li>\n";
         $n++;
