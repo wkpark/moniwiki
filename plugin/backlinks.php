@@ -114,10 +114,10 @@ function _index($formatter, $pages, $params = array()) {
         }
         $pkey = get_key("$title");
         if ($key != $pkey) {
-            if (isset($key[0]))
-                $keys[] = $key;
+            if (isset($pkey[0]))
+                $keys[] = $pkey;
             $key = $pkey;
-            if (!empty($out)) $out .= "</ul></div>";
+            if (isset($out[0])) $out .= "</ul></div>";
             $out .= "<div><a name='$key'></a><h2><a href='#$anchor'>$key</a></h2>\n";
             $out .= "<ul>";
         }
@@ -130,10 +130,6 @@ function _index($formatter, $pages, $params = array()) {
         $n++;
     }
     $out .= "</ul></div>\n";
-
-    // add last key
-    if (!isset($pkey[0]) && !in_array($pkey, $keys))
-        $keys[] = $pkey;
 
     $keys = array_unique($keys);
     $index = array();
