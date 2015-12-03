@@ -126,7 +126,7 @@ function abusefilter_default($action, $params = array()) {
             if (!empty($d))
                 $str[] = sprintf(_("%s days"), $d);
             if (!empty($h))
-                $str[] = sprintf(_("%s houers"), $h);
+                $str[] = sprintf(_("%s hours"), $h);
             if (!empty($m))
                 $str[] = sprintf(_("%s minutes"), $m);
 
