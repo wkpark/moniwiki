@@ -1708,6 +1708,14 @@ class Formatter {
     $this->use_metadata=!empty($DBInfo->use_metadata) ? $DBInfo->use_metadata : 0;
     $this->use_smileys=$DBInfo->use_smileys;
     $this->use_namespace=!empty($DBInfo->use_namespace) ? $DBInfo->use_namespace : '';
+
+    // use mediawiki like built-in category support
+    if (!empty($DBInfo->use_builtin_category) && !empty($DBInfo->category_regex)) {
+      $this->use_builtin_category = true;
+      $this->category_regex = $DBInfo->category_regex;
+    } else {
+      $this->use_builtin_category = false;
+    }
     $this->mediawiki_style=!empty($DBInfo->mediawiki_style) ? 1 : '';
     $this->markdown_style = !empty($DBInfo->markdown_style) ? 1 : 0;
     $this->lang=$DBInfo->lang;
@@ -2152,7 +2160,10 @@ class Formatter {
       $url=substr($url,1,-1);
       $double_bracket = true;
 
-      if (preg_match("/^([^\(:]+)(\((.*)\))?$/", $url, $match)) {
+      // mediawiki like built-in category support
+      if ($this->use_builtin_category && preg_match('@'.$this->category_regex.'@', $url)) {
+        return $this->macro_repl('Category', $url); # call category macro
+      } else if (preg_match("/^([^\(:]+)(\((.*)\))?$/", $url, $match)) {
         if (isset($match[1])) {
           $name = $match[1];
         } else {
@@ -4361,6 +4372,10 @@ class Formatter {
 
     if (!empty($this->foots))
       echo $this->macro_repl('FootNote','',$options);
+
+    // mediawiki like built-in category support
+    if (!empty($this->categories))
+      echo $this->macro_repl('Category', '', $options);
 
     if (!empty($this->update_pagelinks) and !empty($options['pagelinks']))
       store_pagelinks($this->page->name, array_keys($this->pagelinks));
