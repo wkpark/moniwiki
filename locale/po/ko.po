@@ -3094,7 +3094,7 @@ msgstr "기여자 모니터링"
 
 #: ../plugin/userinfo.php:126 ../plugin/userinfo.php:476
 msgid "Temporary Suspend User"
-msgstr "일시정지된 사용자"
+msgstr "사용자 일시 정지"
 
 #: ../plugin/userinfo.php:152
 #, c-format
