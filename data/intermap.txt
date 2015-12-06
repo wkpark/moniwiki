@@ -36,11 +36,11 @@ KLDPWiki http://wiki.kldp.org/wiki.php/
 RigvedaWiki http://rigvedawiki.net/r1/wiki.php/
 Rigveda http://rigvedawiki.net/r1/wiki.php/
 EnhaWiki http://rigvedawiki.net/r1/wiki.php/
-Enha http://rigvedawiki.net/r1/wiki.php/
+#Enha http://rigvedawiki.net/r1/wiki.php/
 NamuWiki https://namu.wiki/w/
-Namu https://namu.wiki/w/
+#Namu https://namu.wiki/w/
 LibreWiki https://librewiki.net/wiki/
-Libre https://librewiki.net/wiki/
+#Libre https://librewiki.net/wiki/
 DcWiki https://wiki.dcinside.com/wiki/
 ZetaWiki http://zetawiki.com/wiki/
-Zeta http://zetawiki.com/wiki/
+#Zeta http://zetawiki.com/wiki/
