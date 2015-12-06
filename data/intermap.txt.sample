@@ -33,9 +33,9 @@ MoniWiki http://moniwiki.kldp.net/wiki.php/
 MoniWikiDev http://moniwiki.kldp.net/dev/wiki.php/
 KLDPWiki http://wiki.kldp.org/wiki.php/
 # Korean Big Wikis
-RigvedaWiki http://rigvedawiki.net/r1/wiki.php/
-Rigveda http://rigvedawiki.net/r1/wiki.php/
-EnhaWiki http://rigvedawiki.net/r1/wiki.php/
+RigvedaWiki http://rigvedawiki.net/w/
+#Rigveda http://rigvedawiki.net/r1/wiki.php/
+EnhaWiki http://rigvedawiki.net/w/
 #Enha http://rigvedawiki.net/r1/wiki.php/
 NamuWiki https://namu.wiki/w/
 #Namu https://namu.wiki/w/
