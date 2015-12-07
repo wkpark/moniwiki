@@ -62,7 +62,6 @@ if (!empty($argv) && in_array('--help', $argv)) {
     exit;
 }
 
-$feedback = ''; // global error messege
 $args = getopt($short_opts);
 
 if (empty($args['t'])) {
@@ -78,6 +77,18 @@ if ($ans == 'n') {
     exit;
 }
 
+// get remain $argv array
+foreach($args as $k=>$v) {
+    while($i = array_search('-'.$k, $argv)) {
+        if ($i)
+            unset($argv[$i]);
+        if (preg_match("/^.*".$k.":.*$/i", $short_opts))
+            unset($argv[$i + 1]);
+    }
+}
+
+$argv = array_merge($argv);
+
 $progress = array('\\','|','/','-');
 
 function dump($str) {
@@ -86,12 +97,6 @@ function dump($str) {
 }
 
 set_time_limit(0);
-
-$handle = opendir($text_dir);
-if (!is_resource($handle)) {
-    echo "Can't open $DBInfo->text_dir\n";
-    exit;
-}
 
 $date = gmdate("Y-m-d-His", time());
 $dumpfile = 'dump-'.$date.'.sql';
@@ -108,12 +113,48 @@ dump($schema);
 
 dump("\n");
 
+$files = array();
+// check dump file list
+if (is_file($argv[1])) {
+    $handle = fopen($argv[1], 'r');
+    if (!is_resource($handle)) {
+        echo "Can't open $argv[1]\n";
+        exit;
+    }
+    while (($name = fgets($handle, 2048)) !== false) {
+        if ($name[0] == '#') continue;
+        $name = rtrim($name, "\n");
+        $key = $DBInfo->pageToKeyname($name);
+        $pagefile = $text_dir.'/'.$key;
+        if (file_exists(!$pagefile))
+            continue;
+        $files[] = $key;
+    }
+    fclose($handle);
+} else {
+    $handle = opendir($text_dir);
+    if (!is_resource($handle)) {
+        echo "Can't open $DBInfo->text_dir\n";
+        exit;
+    }
+    while (($file = readdir($handle)) !== false) {
+        if ($file[0] == '.' || in_array($file, array('RCS', 'CVS')))
+            continue;
+        $pagefile = $text_dir.'/'.$file;
+        if (is_dir($pagefile))
+            continue;
+        $files[] = $file;
+    }
+    closedir($handle);
+}
+
 $idx = 0;
 $buffer = array();
 
 $j = 0;
 echo ' ';
-while (($file = readdir($handle)) !== false) {
+foreach ($files as $file) {
+    $j++;
     print "".($progress[$j % 4]);
     $j++;
     if ($file[0] == '.' || in_array($file, array('RCS', 'CVS')))
@@ -141,8 +182,6 @@ if (sizeof($buffer) > 0) {
 }
 
 fclose($fp);
-
-closedir($handle);
 
 echo "\t",$dumpfile,' generated',"\n";
 
