@@ -26,6 +26,18 @@ function postfilter_mdict($formatter, $value, $params = array()) {
         } else if (preg_match('/^<a\s*/i', $chunks[$i])) {
             // urldecode entries
             $chunks[$i] = preg_replace_callback('@href=(["\'])entry://(.*)\1@', '_fix_entry', $chunks[$i]);
+        } else if (preg_match('/^<img /', $chunks[$i])) {
+            // images
+            $chunk = $chunks[$i];
+            // remove fetch_action
+            $chunk = preg_replace('@'.$formatter->fetch_action.'@', '', $chunk);
+            $chunk = preg_replace('@%3faction=download%26@', '?action=download&amp;', $chunk);
+            // remove internal imgs
+            $chunk = preg_replace('@^<img .+/imgs/.*\s*/?>@', '', $chunk);
+            // replace with anchor
+            $chunk = preg_replace('@^<img[^>]+src=("|\')(https?://[^>]+?)\1[^>]+/?>@',
+                '<a href=\1\2\1>\2</a>', $chunk);
+            $chunks[$i] = $chunk;
         }
     }
 
