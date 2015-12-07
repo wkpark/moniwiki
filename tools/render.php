@@ -20,9 +20,18 @@ else
 require_once($topdir.'/wikilib.php');
 require_once($topdir.'/lib/wikiconfig.php');
 require_once($topdir.'/lib/timer.php');
+require_once($topdir.'/lib/win32fix.php');
 require_once($topdir.'/lib/cache.text.php');
 
 include_once(dirname(__FILE__).'/utils.php');
+
+// setup some variables
+$Config['fetch_imagesize'] = 0;
+$Config['fetch_images'] = 0;
+$Config['nonexists'] = 'nolink';
+$Config['fetch_action'] = 'http://fetch_action/';
+$Config['pull_url'] = 'http://rigvedawiki.net/w/';
+$Config['media_url_mode'] = 1;
 
 $Config = wikiConfig($Config);
 $DBInfo = new WikiDB($Config);
@@ -39,6 +48,7 @@ $options = array();
 $options[] = array("t", "type", "render type\n\t\t\t(support 'mdict', 'html')");
 $options[] = array("d", "dir", "directory of text data");
 $options[] = array("n", '', "namu markup");
+$options[] = array("o", "out", "output directory");
 $short_opts = ''; // list of short options.
 foreach ($options as $item) {
     $opt = $item[0];
@@ -70,6 +80,12 @@ if (empty($args['t'])) {
     $type = $args['t'];
 }
 
+if (empty($args['o'])) {
+    $output_dir = 'temp_dir';
+} else {
+    $output_dir = $args['o'];
+}
+
 if (empty($args['d'])) {
     if ($Config['text_dir'][0] != '/')
         $text_dir = $topdir.'/'.$Config['text_dir'];
@@ -79,6 +95,7 @@ if (empty($args['d'])) {
     $text_dir = $args['d'];
 }
 
+// Formatter options
 $opts = array();
 if (isset($args['n']))
     $opts = array('filters'=>array('namumarkup'));
@@ -103,9 +120,6 @@ foreach($args as $k=>$v) {
     }
 }
 $argv = array_merge($argv);
-
-// get pagename
-$pagename = $argv[1];
 
 function render($pagename, $type, $params = array()) {
     global $DBInfo;
@@ -142,7 +156,75 @@ function render($pagename, $type, $params = array()) {
 
 // render
 set_time_limit(0);
-echo render($pagename, $type, $opts);
+
+$progress = array('\\','|','/','-');
+
+// get pagename
+$source = $argv[1];
+if (is_dir($source)) {
+    $DBInfo->text_dir = $text_dir = $argv[1];
+    $handle = opendir($text_dir);
+    if (!is_resource($handle)) {
+        echo "Can't open $source\n";
+        exit;
+    }
+
+    $files = array();
+    while (($file = readdir($handle)) !== false) {
+        if ($file[0] == '.' || in_array($file, array('RCS', 'CVS')))
+            continue;
+        $pagefile = $text_dir.'/'.$file;
+        if (is_dir($pagefile))
+            continue;
+        $files[] = $file;
+    }
+    closedir($handle);
+} else if (is_file($source)) {
+    $fp = fopen($source, 'r');
+    if (!is_resource($fp)) {
+        echo "Can't open $source\n";
+        exit;
+    }
+
+    echo "Get file list...\n";
+
+    $files = array();
+    while (($name = fgets($fp, 2048)) !== false) {
+        if ($name[0] == '#')
+            continue;
+
+        $name = rtrim($name, "\n");
+        $file = $DBInfo->pageToKeyname($name);
+        $files[] = $file;
+    }
+    fclose($fp);
+    echo "Done...\n";
+}
+
+if (count($files) > 0) {
+    // mkdir output dir
+    if (is_dir($output_dir)) {
+        echo "ERROR: Output dir '$output_dir' already exists\nPlease rename it and try again\n";
+        exit;
+    }
+    @mkdir($output_dir);
+
+    $j = 0;
+    foreach ($files as $file) {
+        $j++;
+        echo "\r".($progress[$j % 4]);
+        $pagefile = $text_dir.'/'.$file;
+        if (!file_exists($pagefile))
+            continue;
+
+        $pagename = $DBInfo->keyToPagename($file);
+        echo "\r",$pagename,"\n";
+        $html = render($pagename, $type, $opts);
+        file_put_contents($output_dir.'/'.$file, $html);
+    }
+} else {
+    echo render($source, $type, $opts);
+}
 
 $params['timer']->Check('done');
 #echo $params['timer']->Write();
