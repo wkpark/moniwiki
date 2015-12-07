@@ -151,13 +151,31 @@ function make_sql($sqlfile, $sql = '', $type = 'mysql') {
     return normSQL($sql);
 }
 
+// http://php.net/manual/kr/function.mysql-real-escape-string.php#101248 by feedr
+function mysql_escape_mimic($inp) {
+    if(is_array($inp))
+        return array_map(__METHOD__, $inp);
+
+    if(!empty($inp) && is_string($inp)) {
+        return str_replace(array('\\', "\0", "\n", "\r", "'", '"', "\x1a"),
+                array('\\\\', '\\0', '\\n', '\\r', "\\'", '\\"', '\\Z'), $inp);
+    }
+
+    return $inp;
+}
+
 function _escape_string($type, $str) {
     switch($type) {
     case 'sqlite':
         return str_replace(array("'", "\r", "\n"), array("''", "\\r", "\\n"), $str);
-    default:
     case 'mysql':
-        return mysql_escape_string($str);
+        if (!isset($GLOBALS['_dummy_connect_'])) {
+            mysql_connect(); // FIXME deprecated
+            $GLOBALS['_dummy_connect_'] = 1;
+        }
+        return mysql_real_escape_string($str); // FIXME deprecated
+    default:
+        return mysql_escape_mimic($str); // alternative
     }
 }
 
