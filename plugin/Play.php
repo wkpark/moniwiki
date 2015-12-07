@@ -24,6 +24,10 @@ function macro_Play($formatter, $value, $params = array()) {
   $default_width=320;
   $default_height=240;
 
+  // media_url_mode for mdict etc.
+  if (!empty($DBInfo->media_url_mode))
+    $text_mode = 1;
+
   // get the macro alias name
   $macro = 'play';
   if (!empty($params['macro_name']) and $params['macro_name'] != 'play')
@@ -235,6 +239,7 @@ EOS;
       $classid = '';
       $objclass = '';
       $iframe = '';
+      $mediaurl = '';
       $custom = '';
       $object_prefered = false;
       // http://code.google.com/p/google-code-project-hosting-gadgets/source/browse/trunk/video/video.js
@@ -243,6 +248,7 @@ EOS;
 
         if ($object_prefered) {
         $movie = "http://www.youtube.com/v/".$m[1];
+        $mediaurl = 'https:'.$movie;
         $type = 'type="application/x-shockwave-flash"';
         $attr = $mysize.'allowfullscreen="true" allowScriptAccess="always"';
         $attr.= ' data="'.$movie.'?version=3'.'"';
@@ -252,6 +258,7 @@ EOS;
           "<param name='allowFullScreen' value='true'>\n";
         } else {
           $iframe = '//www.youtube.com/embed/'.$m[1];
+          $mediaurl = 'https:'.$iframe;
           $attr = 'frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen';
           if (empty($mysize))
             $attr.= ' width="500px" height="281px"';
@@ -314,6 +321,8 @@ EOS;
 
           $m[1] = $info['vid'];
         }
+        $mediaurl = 'http://tvpot.daum.net/v/'.$m[1];
+
         if ($object_prefered) {
         $classid = "classid='clsid:d27cdb6e-ae6d-11cf-96b8-444553540000'";
         $movie = "http://videofarm.daum.net/controller/player/VodPlayer.swf";
@@ -340,6 +349,7 @@ EOS;
         $mediainfo = 'Daum movie';
         $objclass = ' daum';
       } else if ($macro == 'vimeo' && preg_match("@^(\d+)$@", $media[$i], $m) || preg_match("@(?:https?:)?//(?:player\.)?vimeo\.com\/(?:video/)?(.*)$@i", $media[$i], $m)) {
+        $mediaurl = 'https://player.vimeo.com/v/'.$m[1];
         if ($object_prefered) {
           $movie = "https://secure-a.vimeocdn.com/p/flash/moogaloop/5.2.55/moogaloop.swf?v=1.0.0";
           $type = 'type="application/x-shockwave-flash"';
@@ -378,6 +388,8 @@ EOS;
         $custom.= $size;
         $custom.= '"></script>';
 
+        $mediaurl = 'http://ext.nicovideo.jp/thumb_watch/'.$m[1];
+
         $attr = 'frameborder="0" webkitAllowFullScreen mozallowfullscreen allowFullScreen';
         $mediainfo = 'Niconico';
         $objclass = ' niconico';
@@ -411,6 +423,9 @@ EOS;
       }
       $autoplay=0; $play='false';
 
+      if ($text_mode) {
+        $out.= '<a href="'.$mediaurl.'">'.$mediaurl.'</a>';
+      } else
       if ($iframe) {
         $out.=<<<IFRAME
 <div class='externalObject$objclass$align'><div>

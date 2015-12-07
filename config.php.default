@@ -358,6 +358,7 @@ $cache_public_url=$url_prefix.'/_cache';
 $use_jwmediaplayer=1;
 $jwmediaplayer_prefix='http://www.jeroenwijering.com/embed';
 $flashupload='swfupload';
+#$media_url_mode=1; # media url mode for Play/Media macro
 #$icon_list='edit,diff,show,find,print,info,help,pref,rss'; # set the icon list
 #$use_folding=0; # 1:default simple js / 2:with the prototype/mootools
 #$use_openid=0; # enable openid login
