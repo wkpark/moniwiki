@@ -422,19 +422,20 @@ class processor_monimarkup
     }
 
     function _block($m) {
-        global $formatter, $btype, $block, $options;
+        global $btype, $block, $options;
 
-        return $formatter->processor_repl($btype[$m[1]], $block[$m[1]], $options);
+        return $this->formatter->processor_repl($btype[$m[1]], $block[$m[1]], $options);
     }
 
     function _inline($m) {
-        global $formatter, $inline;
+        global $inline;
 
-        return $formatter->link_repl($inline[$m[1]]);
+        return $this->formatter->link_repl($inline[$m[1]]);
     }
 
     function process($body='',$options=array()) {
         global $Config;
+        global $inline, $block, $btype, $options;
 
         if (trim($body)=='') return '';
         $this->text = &$body;
@@ -666,9 +667,9 @@ class processor_monimarkup
                 }
 
                 if (isset($btype[1]))
-                    $c = preg_replace_callback("/\007(\d+)\007/", array(&$formatter, '_block'), $c);
+                    $c = preg_replace_callback("/\007(\d+)\007/", array(&$this, '_block'), $c);
                 if (isset($inline[1]))
-                    $c = preg_replace_callback("/\035(\d+)\035/", array(&$formatter, '_inline'), $c);
+                    $c = preg_replace_callback("/\035(\d+)\035/", array(&$this, '_inline'), $c);
 
                 if (preg_match('/<(div|ul|ol|pre|table|blockquote)[^>]*>/',$c))
                     $out.= $this->_div(1,' class="para"',$style).$c.$this->_div(0);
@@ -691,9 +692,9 @@ class processor_monimarkup
                  array(&$formatter, 'smiley_repl'), $out);
 
         if (isset($btype[1]))
-            $out = preg_replace_callback("/\007(\d+)\007/", array(&$formatter, '_block'), $out);
+            $out = preg_replace_callback("/\007(\d+)\007/", array(&$this, '_block'), $out);
         if (isset($inline[1]))
-            $out = preg_replace_callback("/\035(\d+)\035/", array(&$formatter, '_inline'), $out);
+            $out = preg_replace_callback("/\035(\d+)\035/", array(&$this, '_inline'), $out);
 
         $formatter->text = $old_text;
         $formatter->sect_num = $save_sect_num;
