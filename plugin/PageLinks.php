@@ -16,7 +16,7 @@
 //
 // $Id: PageLinks.php,v 1.3 2010/09/07 12:11:49 wkpark Exp $
 
-function macro_PageLinks($formatter, $value, $params = array()) {
+function macro_PageLinks($formatter, $value = '', $params = array()) {
     global $DBInfo;
 
     $offset = 0;
@@ -27,14 +27,17 @@ function macro_PageLinks($formatter, $value, $params = array()) {
     $param = array();
     if (!empty($offset)) $param['offset'] = $offset;
 
-    $limit = 200;
+    $limit = 50;
     if (!empty($params['limit'])) {
-        $tmp = max(100, intval($params['limit']));
+        $tmp = max(10, intval($params['limit']));
         $limit = min($limit, $tmp);
     }
     $param['limit'] = $limit;
 
-    $pages = $DBInfo->getPageLists($param);
+    if (!empty($params['all']))
+        $pages = $DBInfo->getPageLists($param);
+    else
+        $pages = array($formatter->page->name);
 
     $start = '';
     if (!empty($params['start']) and is_numeric($params['start'])) {
@@ -54,23 +57,35 @@ function macro_PageLinks($formatter, $value, $params = array()) {
     $out = "<ol$ol>\n";
     $cache = new Cache_text("pagelinks");
     $i = 0;
+    $j = 0;
     foreach ($pages as $page) {
         $lnks = $cache->fetch($page);
+        sort($lnks);
         if ($lnks !== false) {
-            $out .= "<li>".$formatter->link_tag($page, '', _html_escape($page)).': ';
-            $links = '[['.implode(']], [[', $lnks).']]';
+            if (!empty($params['all'])) {
+                $out .= "<li>";
+                $out .= $formatter->link_tag($page, '', _html_escape($page)).': ';
+            }
+            $out .= '<ul>';
+            $links = '<li> [['.implode(']]</li><li> [[', $lnks).']]</li>';
             $links = preg_replace_callback("/(".$formatter->wordrule.")/",
                     array(&$formatter, 'link_repl'), $links);
-            $out .= $links."</li>\n";
+            $out .= $links."</ul>\n";
+            if (!empty($params['all'])) {
+                $out .= "</li>\n";
+            }
             $i++;
         }
+        $j++;
     }
     $out .= "</ol>\n";
 
-    $j = $offset + $limit;
-    $i+= $start;
-
-    $out .= $formatter->link_to("?action=pagelinks&amp;offset=$j&amp;start=$i", _("Show next page"));
+    if ($j >= $limit) {
+        $j = $offset + $limit;
+        $i+= $start;
+        $out .= $formatter->link_to("?action=pagelinks&amp;all=1&amp;offset=$j&amp;start=$i",
+                _("Show next page"));
+    }
     $formatter->pagelinks = $pagelinks; // restore
     $formatter->sister_on = $save;
     return $out;
