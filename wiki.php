@@ -6320,7 +6320,9 @@ function wiki_main($options) {
       if (empty($formatter->refresh) and $DBInfo->checkUpdated($mtime, $delay) and ($check < $Config['cachetime'])) {
         if ($mcache->exists($pagename))
           $_macros= $mcache->fetch($pagename);
-        if (empty($_macros)) {
+
+        // FIXME TODO: check postfilters
+        if (0 && empty($_macros)) {
           $out = '';
           #$out = $cache->fetch($pagename);
           $cache->fetch($pagename, '', array('print'=>1));
