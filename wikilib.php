@@ -4996,6 +4996,35 @@ function get_keys() {
   return $keys;
 }
 
+function cached_pagecount($formatter, $params) {
+    global $DBInfo, $Config;
+
+    $sc = new Cache_Text('settings');
+    $counter = $sc->fetch('counter');
+    if ($counter === false) {
+      // update counter
+      if (!$sc->exists('counter.lock')) {
+        $sc->update('counter.lock', array('lock'), 20); // 20sec lock
+      } else {
+        $counter = $sc->_fetch('counter');
+        if ($counter === false) $counter = array('redirects'=>0);
+      }
+      if ($counter === false) {
+        $counter = array('redirects'=>0);
+        $rc = new Cache_Text('redirect');
+        if (method_exists($rc, 'count'))
+          $redirects = $rc->count();
+        else
+          $redirects = 0;
+
+        $counter = array('redirects'=>$redirects);
+      }
+      $sc->update('counter', $counter, 60*60*24);
+      $sc->remove('counter.lock');
+    }
+    return $counter;
+}
+
 /**
  * Count pages and redirect pages
  */
@@ -5049,14 +5078,8 @@ JS;
 
   $redirects = 0;
   if (!empty($mode)) {
-    $sc = new Cache_Text('settings');
-    if (($redirects = $sc->fetch('redirect')) === false) {
-      $rc = new Cache_Text('redirect');
-      $redirects = 0;
-      if (method_exists($rc, 'count'))
-        $redirects = $rc->count();
-      $sc->update('redirect', $redirects, 60*60*24);
-    }
+    $counter = cached_pagecount($formatter, $options);
+    $redirects = $counter['redirects'];
 
     if ($mode == 'redirect')
       return '<span class="macro" id="macro-'.$mid.'">'.$redirects.'<span>'.$js;
@@ -5065,19 +5088,11 @@ JS;
   return '<span class="macro" id="macro-'.$mid.'">'.($count - $redirects).'</span>'.$js;
 }
 
-function ajax_pagecount($formater, $params) {
+function ajax_pagecount($formatter, $params) {
     global $DBInfo, $Config;
 
-    $rc = new Cache_Text('redirect');
-    $redirects = 0;
-    $sc = new Cache_Text('settings');
-    if (($redirects = $sc->fetch('redirect')) === false) {
-      $rc = new Cache_Text('redirect');
-      $redirects = 0;
-      if (method_exists($rc, 'count'))
-        $redirects = $rc->count();
-      $sc->update('redirect', $redirects, 60*60*24);
-    }
+    $counter = cached_pagecount($formatter, $params);
+    $redirects = $counter['redirects'];
 
     $maxage = !empty($Config['proxy_maxage']) ? ', s-maxage='.$Config['proxy_maxage'] : '';
     header('Content-Type: text/plain');
