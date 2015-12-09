@@ -49,6 +49,7 @@ $options[] = array("t", "type", "render type\n\t\t\t(support 'mdict', 'html')");
 $options[] = array("d", "dir", "directory of text data");
 $options[] = array("n", '', "namu markup");
 $options[] = array("o", "out", "output directory");
+$options[] = array("w", '', "overwrite");
 $short_opts = ''; // list of short options.
 foreach ($options as $item) {
     $opt = $item[0];
@@ -84,6 +85,11 @@ if (empty($args['o'])) {
     $output_dir = 'temp_dir';
 } else {
     $output_dir = $args['o'];
+}
+
+$overwrite = false;
+if (isset($args['w'])) {
+    $overwrite = true;
 }
 
 if (empty($args['d'])) {
@@ -203,7 +209,7 @@ if (is_dir($source)) {
 
 if (count($files) > 0) {
     // mkdir output dir
-    if (is_dir($output_dir)) {
+    if (!$overwrite && is_dir($output_dir)) {
         echo "ERROR: Output dir '$output_dir' already exists\nPlease rename it and try again\n";
         exit;
     }
@@ -217,13 +223,22 @@ if (count($files) > 0) {
         if (!file_exists($pagefile))
             continue;
 
+        if (file_exists($output_dir.'/'.$file))
+            continue;
         $pagename = $DBInfo->keyToPagename($file);
         echo "\r",$pagename,"\n";
         $html = render($pagename, $type, $opts);
         file_put_contents($output_dir.'/'.$file, $html);
     }
 } else {
-    echo render($source, $type, $opts);
+    $html = render($source, $type, $opts);
+    // overwrite output file
+    if ($overwrite) {
+        $file = $DBInfo->pageToKeyname($source);
+        file_put_contents($output_dir.'/'.$file, $html);
+    } else {
+        echo $html;
+    }
 }
 
 $params['timer']->Check('done');
