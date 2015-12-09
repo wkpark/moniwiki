@@ -33,10 +33,11 @@ MoniWiki http://moniwiki.kldp.net/wiki.php/
 MoniWikiDev http://moniwiki.kldp.net/dev/wiki.php/
 KLDPWiki http://wiki.kldp.org/wiki.php/
 # Korean Big Wikis
+KoWikiPedia https://ko.wikipedia.org/wiki/
 RigvedaWiki http://rigvedawiki.net/w/
-#Rigveda http://rigvedawiki.net/r1/wiki.php/
+#Rigveda http://rigvedawiki.net/w/
 EnhaWiki http://rigvedawiki.net/w/
-#Enha http://rigvedawiki.net/r1/wiki.php/
+#Enha http://rigvedawiki.net/w/
 NamuWiki https://namu.wiki/w/
 #Namu https://namu.wiki/w/
 LibreWiki https://librewiki.net/wiki/
