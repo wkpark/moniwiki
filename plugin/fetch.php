@@ -447,7 +447,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
         $force_thumb = true;
     } else {
         // automatically generate thumb images to support low-bandwidth mobile version
-        if (is_mobile()) {
+        if ($params['is_mobile']) {
             $force_thumb = (!isset($params['m']) or $params['m'] == 1);
         }
     }

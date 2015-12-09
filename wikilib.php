@@ -954,6 +954,9 @@ function is_static_action($params) {
     return false;
 }
 
+/**
+ * Deprecated
+ */
 function is_mobile() {
   global $DBInfo;
 
@@ -1040,13 +1043,13 @@ function get_log_addr() {
  * get default cols of textarea
  *
  */
-function get_textarea_cols() {
+function get_textarea_cols($is_mobile = false) {
   $COLS_MSIE = 80;
   $COLS_OTHER = 85;
 
   if (preg_match('/MSIE/', $_SERVER['HTTP_USER_AGENT'])) {
     $cols = $COLS_MSIE;
-  } else if (is_mobile()) {
+  } else if ($is_mobile) {
     $cols = 30;
   } else {
     $cols = $COLS_OTHER;
@@ -2341,7 +2344,7 @@ function macro_Edit($formatter,$value,$options='') {
 
   $options['mode'] = !empty($options['mode']) ? $options['mode'] : '';
   $edit_rows=$DBInfo->edit_rows ? $DBInfo->edit_rows: 16;
-  $cols= get_textarea_cols();
+  $cols= get_textarea_cols($options['is_mobile']);
 
   $use_js= preg_match('/Lynx|w3m|links/',$_SERVER['HTTP_USER_AGENT']) ? 0:1;
 

@@ -5848,13 +5848,19 @@ function init_requests(&$options) {
   $options['id']=$user->id;
   $DBInfo->user=$user;
 
+  // check is_mobile_func
+  $is_mobile_func = !empty($DBInfo->is_mobile_func) ? $DBInfo->is_mobile_func : 'is_mobile';
+  if (!function_exists($is_mobile_func))
+    $is_mobile_func = 'is_mobile';
+  $options['is_mobile'] = $is_mobile = $is_mobile_func();
+
   # MoniWiki theme
   if ((empty($DBInfo->theme) or isset($_GET['action'])) and isset($_GET['theme'])) {
     // check theme
     if (preg_match('@^[a-zA-Z0-9_-]+$@', $_GET['theme']))
       $theme = $_GET['theme'];
   } else {
-    if (is_mobile()) {
+    if ($is_mobile) {
       if (isset($_GET['mobile'])) {
         if (empty($_GET['mobile'])) {
           setcookie('desktop', 1, time()+60*60*24*30, get_scriptname());
@@ -5869,7 +5875,7 @@ function init_requests(&$options) {
       $DBInfo->metatags_extra = '';
       if (!empty($DBInfo->theme_css))
         $theme = $DBInfo->theme;
-    } else if ((is_mobile() or !empty($DBInfo->force_mobile))) {
+    } else if ($is_mobile or !empty($DBInfo->force_mobile)) {
       if (!empty($DBInfo->mobile_theme))
         $theme = $DBInfo->mobile_theme;
       if (!empty($DBInfo->mobile_menu))

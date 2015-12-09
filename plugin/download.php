@@ -186,7 +186,7 @@ function do_download($formatter,$options) {
         }
     } else {
         // automatically generate thumb images to support low-bandwidth mobile version
-        if (is_mobile()) {
+        if ($params['is_mobile']) {
             $force_thumb = (!isset($params['m']) or $params['m'] == 1);
         } else if (!isset($params['thumb']) and
                     !empty($DBInfo->max_image_width) and $w > $DBInfo->max_image_width) {
