@@ -50,6 +50,12 @@ function macro_ImageFileSize($formatter, $value = '', $params = array()) {
             require_once dirname(__FILE__).'/../lib/HTTPClient.php';
 
             $http = new HTTPClient();
+            // support proxy
+            if (!empty($Config['proxy_host'])) {
+                $http->proxy_host = $Config['proxy_host'];
+                if (!empty($Config['proxy_port']))
+                    $http->proxy_port = $Config['proxy_port'];
+            }
 
             // set referrer
             $referer = '';
