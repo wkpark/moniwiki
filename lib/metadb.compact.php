@@ -118,7 +118,7 @@ class MetaDB_compact extends MetaDB {
         $addons = $this->aux->getSisterSites($pagename, $mode);
 
         // escape " chars
-        $name = strtr($pagename, '"', '%22');
+        $name = strtr($pagename, array('"'=>'%22'));
         if (($pos = strpos($pagename, ' ')) !== false)
             // interwiki links with spaces like as InterWiki:"Foo bar"
             $name = '"'.$name.'"';
@@ -198,7 +198,7 @@ class MetaDB_compact extends MetaDB {
 
     function _getTwins($pagename)
     {
-        $name = strtr($pagename, '"', '%22');
+        $name = strtr($pagename, array('"'=>'%22'));
         if (($pos = strpos($pagename, ' ')) !== false)
             $name = '"'.$name.'"';
 
