@@ -19,7 +19,7 @@ tt.foot {
   vertical-align: super;
 }
 
-div.foot ul{
+#wikiSister ul, div.foot ul{
   list-style:none;
   padding-left:10px;
 }
