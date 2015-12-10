@@ -517,8 +517,19 @@ class WikiDB {
     if (empty($this->alias)) $this->initAlias();
 
     if (!empty($this->shared_metadb)) {
-      require_once(dirname(__FILE__).'/lib/metadb.dba.php');
-      $this->metadb= new MetaDB_dba($this->shared_metadb,$this->dba_type);
+      if (!empty($this->shared_metadb_type) &&
+          in_array($this->shared_metadb_type, array('dba', 'compact'))) {
+        // new
+        $type = $this->shared_metadb_type;
+        $dbname = $this->shared_metadb_dbname;
+      } else {
+        // old
+        $type = 'dba';
+        $dbname = $this->shared_metadb;
+      }
+      $class = 'MetaDB_'.$type;
+      require_once(dirname(__FILE__).'/lib/metadb.'.$type.'.php');
+      $this->metadb = new $class($dbname, $this->dba_type);
     }
     if (empty($this->metadb->metadb)) {
       if (is_object($this->alias)) $this->metadb=$this->alias;

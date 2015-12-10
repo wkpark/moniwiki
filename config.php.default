@@ -17,6 +17,8 @@ $cache_dir= $data_dir.'/cache';
 $intermap= $data_dir.'/intermap.txt';
 $editlog_name= $data_dir.'/editlog';
 $shared_metadb= $data_dir."/metadb";
+#$shared_metadb_type='compact'; # compact metadb type
+#$shared_metadb_dbname=$data_dir."/title.db"; # metadb dbname
 $shared_intermap= $data_dir."/text/InterMap";
 
 $url_prefix= '/moniwiki';
