@@ -30,7 +30,6 @@ function macro_BackLinks($formatter, $value = '', $params = array()) {
     if (!isset($value[0]) || $value === true)
         $value = $formatter->page->name;
 
-    $params['action'] = 'fullsearch';
     $params['backlinks'] = 1;
     $params['call'] = 1;
     $hits = macro_FullSearch($formatter, $value, $params);
