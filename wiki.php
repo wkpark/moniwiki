@@ -4381,6 +4381,11 @@ class Formatter {
       $this->sister_on=$sister_save;
     }
 
+    // call BackLinks for Category pages
+    if (!empty($this->categories) && $this->use_builtin_category &&
+        preg_match('@'.$this->category_regex.'@', $this->page->name))
+      echo $this->macro_repl('BackLinks', '', $options);
+
     if (!empty($this->foots))
       echo $this->macro_repl('FootNote','',$options);
 
