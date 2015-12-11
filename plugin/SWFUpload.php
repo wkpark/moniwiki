@@ -329,7 +329,13 @@ function do_SWFUpload($formatter,$options=array()) {
         $fp=fopen($swfupload_dir.'/.htaccess','w');
         if ($fp) {
             $htaccess=<<<EOF
+# FCGI or CGI user can use .user.ini
 Options -Indexes
+AddType text/plain .php5 .php4 .php3 .phtml .php .html .map .mm
+<Files ~ "\.php">
+#ForceType text/plain
+SetHandler text/plain
+</Files>
 Order deny,allow
 deny from all\n
 EOF;
