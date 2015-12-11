@@ -117,6 +117,28 @@ class MoniConfig {
       $config['vartmp_dir']="c:/tmp/";
     } else {
       $config['rcs_user']='root'; // XXX
+
+      // check RCS version control program.
+      if (isset($config['path']))
+        $dirs = explode(':', $config['path']);
+      else
+        $dirs = explode(':', './bin:./usr/bin:/usr/bin:/bin:/usr/local/bin');
+
+      $rcs_ok = false;
+      foreach ($dirs as $d) {
+        if ($d[0] == '.')
+          $dir = dirname(__FILE__).substr($d, 1);
+        else
+          $dir = $d;
+        if (file_exists($dir.'/ci')) {
+          $rcs_ok = true;
+          break;
+        }
+      }
+
+      // RCS found
+      if ($rcs_ok && $d[0] == '.')
+        $config['path'] = implode(PATH_SEPARATOR, $dirs);
     }
 
     if (!file_exists('wikilib.php')) {
@@ -536,8 +558,11 @@ FORM;
     else
       echo "<h2>"._t("All PHP extensions are OK.")."</h2>\n";
 
-    // check RCS version control program.
-    $dirs = explode(':', $config['path']);
+    // re-check RCS version control program.
+    if (isset($config['path']))
+      $dirs = explode(':', $config['path']);
+    else
+      $dirs = explode(':', './bin:./usr/bin:/usr/bin:/bin:/usr/local/bin');
     $rcs_ok = false;
     foreach ($dirs as $d) {
       if ($d[0] == '.')
@@ -550,6 +575,12 @@ FORM;
 
     if ($rcs_ok) {
       echo "<h2>".sprintf(_t("RCS program \"%s/ci\" found."), $d) ."</h2>\n";
+      if (empty($config['path'])) {
+        echo '<div class="check">'._t("Please check your \$path option in the config.php.").'</div>';
+        echo '<pre class="console">';
+        echo '$path="'.implode(PATH_SEPARATOR, $dirs).'";';
+        echo '</pre>';
+      }
     } else {
       echo "<h2>"._t("RCS program is not found.")."</h2>\n";
       echo '<div class="check">'._t("Please check your \$path option in the config.php.").'<br />';
