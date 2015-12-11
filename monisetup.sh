@@ -72,7 +72,7 @@ else
     if [ x$say = x'n' ]; then
       $WARNING
       echo ""
-      echo "Please open monisetup.php again"
+      echo "Please open monisetup.php again."
       echo ""
       $NORMAL
       exit
@@ -83,7 +83,9 @@ fi
 
 if [ ! -d $DATA_DIR/text ]; then
   echo " *** mkdir $DATA_DIR/{text,text/RCS,user,cache}"
-  mkdir $DATA_DIR/{text,text/RCS,user,cache}
+  for x in text text/RCS user cache; do
+    mkdir $DATA_DIR/$x
+  done
 fi
 
 if [ ! -d pds ]; then
@@ -92,7 +94,9 @@ if [ ! -d pds ]; then
 fi
 
 echo "*** chmod $PERM $DATA_DIR/{text,text/RCS,user,cache}"
-chmod $PERM $DATA_DIR/{text,text/RCS,user,cache}
+for x in text text/RCS user cache; do
+  chmod $PERM $DATA_DIR/$x
+done
 chmod $PERM pds
 RETVAL=$?
 if [ ! $RETVAL -eq 0 ]; then
@@ -121,8 +125,10 @@ if [ $ID -eq 0 ]; then
     if [ x$owner = x ]; then
       owner=nobody
     fi
-    chown $owner $DATA_DIR/{text,text/RCS,cache,user} &&
-    chown $owner {$DATA_DIR,pds}
+    for x in text text/RCS cache user; do
+      chown $owner $DATA_DIR/$x
+    done
+    chown $owner $DATA_DIR pds
     RETVAL=$?
   done
 
@@ -134,17 +140,19 @@ if [ $ID -eq 0 ]; then
     if [ x$group = x ]; then
       group=nobody
     fi
-    chgrp $group $DATA_DIR/{text,text/RCS,cache,user} &&
-    chgrp $group {$DATA_DIR,pds}
+    for x in text text/RCS cache user; do
+      chgrp $group $DATA_DIR/$x
+    done
+    chgrp $group $DATA_DIR pds
     RETVAL=$?
   done
 fi
 
 $SUCCESS
 echo
-echo 'Your wiki is cofiguared now.'
+echo 'Your wiki is configured now.'
 echo 'Please open monisetup.php in a browser'
-echo ' to change some basic options for your wiki'
+echo ' to change some basic options for your wiki.'
 echo
 echo
 $NORMAL
