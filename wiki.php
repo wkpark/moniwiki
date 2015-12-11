@@ -387,7 +387,7 @@ class Security_base {
   function is_protected($action="read",$options) {
     # password protected POST actions
     $protected_actions=array(
-      "deletepage","deletefile","rename","rcspurge","rcs","chmod","backup","restore","rcsimport","revert","userinfo");
+      "deletepage","deletefile","rename","rcspurge","rcs","chmod","backup","restore","rcsimport","revert","userinfo", 'merge');
     $action=strtolower($action);
 
     if (in_array($action,$protected_actions)) {

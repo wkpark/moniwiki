@@ -71,7 +71,8 @@ class Security_community extends Security_base {
 
   function is_protected($action="read",&$options) {
     # password protected POST actions
-    $protected_actions=array("rcs","rcspurge","chmod","backup","restore","deletefile");
+    $protected_actions=array("rcs","rcspurge","chmod","backup",
+      "restore","deletefile",'userinfo', 'rename', 'merge', 'rcsexport');
     $notprotected_actions=array("userform");
     $action=strtolower($action);
 

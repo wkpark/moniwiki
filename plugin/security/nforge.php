@@ -88,7 +88,8 @@ class Security_nforge extends Security_base {
     }
 
     # password protected POST actions
-    $protected_actions=array("rcs","rename", "revert", "rcspurge","chmod","backup","restore","deletefile","deletepage");
+    $protected_actions=array("rcs","rename", "revert", "rcspurge","chmod","backup",
+      "restore","deletefile","deletepage", 'userinfo', 'merge', 'rcsexport');
     $notprotected_actions=array("userform");
     $action=strtolower($action);
 

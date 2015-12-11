@@ -71,7 +71,8 @@ class Security_userbased extends Security_base {
 
   function is_protected($action="read",&$options) {
     # password protected POST actions
-    $protected_actions=array("rcs","rcspurge","chmod","backup","restore");
+    $protected_actions=array("rcs","rcspurge","chmod","backup","restore",
+        "userinfo", "rename", "rcsexport", "merge");
     $action=strtolower($action);
 
     if (in_array($action,$protected_actions)) {
