@@ -28,6 +28,12 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
     if (($p = strpos($value, ',')) !== false) {
         $arg = substr($value, $p + 1);
         $value = substr($value, 0, $p);
+    } else if (($p = strpos($value, '?')) !== false) {
+        $arg = substr($value, $p + 1);
+        $value = substr($value, 0, $p);
+        $arg = preg_replace('@&(amp;)?@', ',', $arg);
+    }
+    if (isset($arg[0])) {
         $arg = preg_replace('@\s*,\s*@', ',', $arg);
         $arg = preg_replace('@\s*=\s*@', '=', $arg);
         $args = explode(',', $arg);
@@ -121,6 +127,8 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
                 break;
         }
     }
+    if (empty($addClass) && !empty($params['class']))
+        $addClass = $params['class'];
 
     $common = new Cache_Text('wikicommons');
     $key = $value.$src;
@@ -214,10 +222,15 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
     $info = ($copyrighted ? '&copy; ' : '(&#596;) ').$author;
     if ($copyrighted && isset($license[0])) $info.= " ($license)";
 
-    $out = '<div class="externalImage">';
-    if (empty($addClass))
-        $cls = ' class="'.$addClass.'"';
-    $out.= "<div".$cls."><img src='$image_url'$style$attr>";
+    // setup externamImage's class name
+    $class = 'externalImage'.' '.$addClass;
+    $class = preg_replace('@\s+@', ' ', $class);
+    $cls = explode(' ', $class);
+    $cls = array_flip(array_flip($cls));
+    $class = implode(' ', $cls);
+
+    $out = '<div class="'.$class.'">';
+    $out.= "<div><img src='$image_url'$style$attr>";
     $out.= "<div class='info'>".$info.$comment.' from '."<a href='$desc_url' target='_blank'>$source</a></div>";
     $out.= "</div>";
     if (!empty($DBInfo->wikimediacommons_use_description) && !empty($description))
