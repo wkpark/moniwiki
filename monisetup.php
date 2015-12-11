@@ -508,7 +508,7 @@ FORM;
        } else if (!is_writable("$config[data_dir]/$dir")) {
            print "<h4 class='warn'>".sprintf(_t("%s directory is not writable"),$dir )."</h4>\n";
            print "<pre class='console'>\n".
-             "<font color='green'>$</font> chmod a+w $config[$file]\n</pre>\n";
+             "<font color='green'>$</font> chmod a+w $dir\n</pre>\n";
        }
     }
 
@@ -523,6 +523,40 @@ FORM;
       $host = $_SERVER['SERVER_NAME'];
     }
 
+    // check PHP functions
+    $funcs = array('php-mbstring'=>'mb_strlen', 'php-dba'=>'dba_open',
+      'php-iconv'=>'iconv', 'php-curl'=>'curl_init', 'php-gd'=>'gd_info', 'php-json'=>'json_encode');
+    $missing = array();
+    foreach ($funcs as $package=>$func) {
+      if (!function_exists($func))
+        $missing[] = $package;
+    }
+    if (count($missing) > 0)
+      echo "<h2>".sprintf(_t("%s packages are missing."), implode(',', $missing)) ."</h2>\n";
+    else
+      echo "<h2>"._t("All PHP extensions are OK.")."</h2>\n";
+
+    // check RCS version control program.
+    $dirs = explode(':', $config['path']);
+    $rcs_ok = false;
+    foreach ($dirs as $d) {
+      if ($d[0] == '.')
+        $d = dirname(__FILE__).substr($d, 1);
+      if (file_exists($d.'/ci')) {
+        $rcs_ok = true;
+        break;
+      }
+    }
+
+    if ($rcs_ok) {
+      echo "<h2>".sprintf(_t("RCS program \"%s/ci\" found."), $d) ."</h2>\n";
+    } else {
+      echo "<h2>"._t("RCS program is not found.")."</h2>\n";
+      echo '<div class="check">'._t("Please check your \$path option in the config.php.").'<br />';
+      echo _t("You can't use version control without the RCS version control program.") .'</div>';
+    }
+
+    echo "<h2>"._t("Check other environments...")."</h2>\n";
     print '<div class="check">';
     foreach($writables as $file) {
       if (empty($config[$file])) continue;
@@ -556,7 +590,7 @@ FORM;
     if ($is_apache && is_dir($config['upload_dir'])) {
       echo "<div class='helpicon'><a href='http://moniwiki.kldp.net/wiki.php/.htaccess'>?</a></div>";
       $chk=array(
-          'AddType'=>"AddType text/plain .sh .cgi .pl .py .php .php3 .php4 .phtml .html\n",
+          'AddType'=>"AddType text/plain .sh .cgi .pl .py .php .php3 .php4 .php5 .phtml .html\n",
           'ForceType'=>"<Files ~ '\.(php.?|pl|py|cgi)$'>\nForceType text/plain\n</Files>\n",
           'php_value'=>"AddType text/plain .php\nphp_value engine off\n",
           'NoExecCGI'=>"#Options NoExecCGI\n",
