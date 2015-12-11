@@ -176,10 +176,10 @@ function macro_IpInfo($formatter, $value = '', $params = array()) {
             $infos = get_temporary_blocked_info(!$range);
         }
 
-        $list = '<table class="wiki editinfo">';
-        $list.= '<tr><th>'._("IP or IP range").'</th><th>'._("Last updated").'</th>'.
+        $listhead = '<table class="wiki editinfo">';
+        $listhead .= '<tr><th>'._("IP or IP range").'</th><th>'._("Last updated").'</th>'.
                 '<th>'._("Status").'</th><th>'._("Expire or Elapsed").'</th><th>'._("actions").'</th></tr>';
-
+        $list = '';
         foreach ($infos as $info) {
             $ttl = $info['ttl'] - (time() - $info['mtime']);
             $tmp = $ttl;
@@ -228,7 +228,8 @@ function macro_IpInfo($formatter, $value = '', $params = array()) {
                 $list.= '<tr><td>&nbsp;</td><td colspan="7"><div class="msgboard">'.$comment.'</div></td></tr>';
             }
         }
-        $list.= '</table>';
+        if (isset($list[0]))
+            $list = $listhead.$list. '</table>';
     }
     return $list;
 }
@@ -534,8 +535,16 @@ FORM;
 
     echo '<h2>'._("Temporary blocked IPs").'</h2>',"\n";
     echo $searchform;
-    echo $list;
-    echo $searchform;
+    if (isset($list[0])) {
+        echo $list;
+        echo $searchform;
+    }
+
+    // do not show control form
+    if (!$u->is_member && !in_array($u->id, $DBInfo->owners)) {
+        $formatter->send_footer('', $params);
+        return;
+    }
 
     echo '<h2>'._("Input IP or IP range").'</h2>',"\n";
     $mask_select = '<select name="netmask"><option value="">-- '._("Netmask").' --</option>'."\n";
