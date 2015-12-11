@@ -4005,11 +4005,11 @@ msgstr "모두 마음에 드시면 'config.php'파일의 퍼미션을 644로 바
 
 #: ../monisetup.php:1330
 msgid "Welcome to MoniWiki ! This is your first installation"
-msgstr "모니위키로 오신 것을  환영합니다 ! 처음 설치 하셨군요"
+msgstr "모니위키로 오신 것을 환영합니다 ! 처음 설치 하시는군요"
 
 #: ../monisetup.php:1339
 msgid "Agree"
-msgstr ""
+msgstr "동의"
 
 #: ../monisetup.php:1353
 msgid "Default settings are loaded..."
