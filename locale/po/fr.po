@@ -3891,7 +3891,37 @@ msgstr ""
 msgid "%s directory is not writable"
 msgstr ""
 
-#: ../monisetup.php:531
+#: ../monisetup.php:535
+#, c-format
+msgid "%s packages are missing."
+msgstr ""
+
+#: ../monisetup.php:537
+msgid "All PHP extensions are OK."
+msgstr ""
+
+#: ../monisetup.php:552
+#, c-format
+msgid "RCS program \"%s/ci\" found."
+msgstr ""
+
+#: ../monisetup.php:554
+msgid "RCS program is not found."
+msgstr ""
+
+#: ../monisetup.php:555
+msgid "Please check your \\$path option in the config.php."
+msgstr ""
+
+#: ../monisetup.php:556
+msgid "You can't use version control without the RCS version control program."
+msgstr ""
+
+#: ../monisetup.php:559
+msgid "Check other environments..."
+msgstr ""
+
+#: ../monisetup.php:565
 #, c-format
 msgid "%s is not writable"
 msgstr ""
