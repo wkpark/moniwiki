@@ -208,8 +208,8 @@ SWFUpload.onload = function () {
 
         // Button Settings
         button_image_url : "$DBInfo->url_prefix/local/SWFUpload/images/btn0.png",
-        button_text : '<span class="button" style="text-align:center">$btn</span>',
-        button_text_style : '.button {font-family:Gulim,Sans-serif;text-align:center;}',
+        button_text : '$btn',
+        button_text_style : '.button-text{font-family:Gulim,Sans-serif;text-align:center;}',
         button_text_top_padding : 3,
         button_placeholder_id : "spanButtonPlaceHolder",
         button_width: 61,
