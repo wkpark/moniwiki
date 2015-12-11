@@ -141,6 +141,10 @@ class MoniConfig {
         $config['path'] = implode(PATH_SEPARATOR, $dirs);
     }
 
+    // copy intermap.txt
+    if (!file_exists(dirname(__FILE__).'/data/intermap.txt'))
+      copy(dirname(__FILE__).'/data/intermap.txt.sample', dirname(__FILE__).'/data/intermap.txt');
+
     if (!file_exists('wikilib.php')) {
       $checkfile = array('plugin','locale');
       $dir='';
