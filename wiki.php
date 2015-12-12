@@ -5236,7 +5236,9 @@ function load_cached_site_config($topdir, $site, &$conf, $params = array()) {
 
 // include classes
 require_once('lib/WikiDB.php');
+require_once('lib/UserDB.php');
 require_once('lib/WikiPage.php');
+require_once('lib/WikiUser.php');
 
 // include base classes
 require_once('lib/metadb.base.php');
