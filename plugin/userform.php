@@ -207,7 +207,7 @@ function do_userform($formatter,$options) {
       } else {
         $title= _("Make new ID on this wiki");
       }
-     $form=macro_UserPreferences($formatter,'',$options);
+     $form = $formatter->macro_repl('UserPreferences', '', $options);
     }
   } else if (!empty($options['logout'])) {
     # logout
@@ -648,7 +648,7 @@ function do_userform($formatter,$options) {
 	  }
   } else if (!empty($DBInfo->use_agreement) and $options['login'] == _("Make profile")) {
     $options['agreement'] = 1;
-    $form = macro_UserPreferences($formatter, '', $options);
+    $form = $formatter->macro_repl('UserPreferences', '', $options);
   } else {
     $options["msg"] = _("Invalid request");
   }

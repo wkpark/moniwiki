@@ -98,6 +98,7 @@ function do_AutoGoto($formatter,$options) {
     $options['value']=$formatter->page->name;
     $options['check']=1;
     $options['noexact'] = !empty($DBInfo->titlesearch_noexact) ? true : false;
+    require_once(dirname(__FILE__).'/TitleSearch.php');
     if (do_titlesearch($formatter,$options))
         return true;
 
