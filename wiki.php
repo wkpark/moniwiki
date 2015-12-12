@@ -6563,6 +6563,50 @@ function wiki_main($options) {
   }
 }
 
+// load site specific config variables.
+function load_site_config($topdir, $site, &$conf, &$deps) {
+    // dependency
+    $deps = array($topdir.'/config.php', dirname(__FILE__).'/lib/wikiconfig.php');
+
+    // override some $conf vars to control site specific options
+    if (!empty($site)) {
+        $configfile = $topdir.'/config/config.'.$site.'.php';
+        if (file_exists($configfile)) {
+            $deps[] = $configfile;
+            $local = _load_php_vars($configfile);
+            // update $conf
+            foreach ($local as $k=>$v) {
+                $conf[$k] = $v;
+            }
+        }
+    }
+
+    require_once(dirname(__FILE__).'/lib/wikiconfig.php');
+    $conf = wikiConfig($conf);
+}
+
+// load cached site specific config variables.
+function load_cached_site_config($topdir, $site, &$conf, $params = array()) {
+    $cache = new Cache_text('config', array('depth'=>0, 'ext'=>'php'));
+    //$cache = new Cache_text('settings', array('depth'=>0));
+
+    // cached config key
+    $key = 'config';
+    if (!empty($site))
+        $key .= '.'.$site;
+
+    if (!($cached_config = $cache->fetch($key, 0, $params))) {
+        // update site specific config
+        $deps = array();
+        load_site_config($topdir, $site, $conf, $deps);
+
+        // update config cache
+        $cache->update($key, $conf, 0, array('deps'=>$deps));
+    } else {
+        $conf = $cached_config;
+    }
+}
+
 if (!defined('INC_MONIWIKI')):
 # Start Main
 $Config = getConfig('config.php', array('init'=>1));
@@ -6571,23 +6615,6 @@ require_once("lib/win32fix.php");
 require_once("lib/cache.text.php");
 require_once("lib/timer.php");
 
-if (file_exists('config/site.local.php'))
-  require_once('config/site.local.php');
-else if (isset($Config['site_local_php']) and file_exists($Config['site_local_php']))
-  require_once($Config['site_local_php']);
-
-$config_deps = array('config.php', 'lib/wikiconfig.php');
-$config_extra = array();
-// override some $Config vars to control site specific options
-if (file_exists('config/config.'.$_SERVER['HTTP_HOST'].'.php')) {
-  $config_deps[] = 'config/config.'.$_SERVER['HTTP_HOST'].'.php';
-  $config_extra = _load_php_vars('config/config.'.$_SERVER['HTTP_HOST'].'.php');
-  // update $Config
-  foreach ($config_extra as $k=>$v) {
-    $Config[$k] = $v;
-  }
-}
-
 $options = array();
 if (class_exists('Timer')) {
   $timing = new Timer();
@@ -6595,15 +6622,16 @@ if (class_exists('Timer')) {
   $options['timer']->Check("load");
 }
 
-$ccache = new Cache_text('settings', array('depth'=>0));
-$configkey = 'config.'.$_SERVER['HTTP_HOST'];
-if (!($conf = $ccache->fetch($configkey))) {
-  require_once("lib/wikiconfig.php");
-  $Config = wikiConfig($Config);
-  $ccache->update($configkey, $Config, 0, array('deps'=>$config_deps));
-} else {
-  $Config = &$conf;
-}
+// always load the global local config
+if (file_exists($topdir.'/config/site.local.php'))
+    require_once($topdir.'/config/site.local.php');
+else if (isset($conf['site_local_php']) and file_exists($conf['site_local_php']))
+    require_once($conf['site_local_php']);
+
+// load site specific config with default config variables.
+//$deps = array();
+//load_site_config(dirname(__FILE__), $_SERVER['HTTP_HOST'], $Config, $deps);
+load_cached_site_config(dirname(__FILE__), $_SERVER['HTTP_HOST'], $Config);
 
 $DBInfo= new WikiDB($Config);
 
