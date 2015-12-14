@@ -5793,10 +5793,11 @@ function get_pagename() {
   // $_SERVER["PATH_INFO"] has bad value under CGI mode
   // set 'cgi.fix_pathinfo=1' in the php.ini under
   // apache 2.0.x + php4.2.x Win32
-  $pagename = '';
-  if (isset($_SERVER['PATH_INFO'])) {
-    if ($_SERVER['PATH_INFO'][0] == '/')
-      $pagename=substr($_SERVER['PATH_INFO'],1);
+  $path_info = get_pathinfo();
+
+  if (isset($path_info[0])) {
+    // e.g.) /FrontPage => FrontPage
+    $pagename = substr($path_info, 1);
   } else if (!empty($_SERVER['QUERY_STRING'])) {
     $goto=isset($_POST['goto'][0]) ? $_POST['goto']:(isset($_GET['goto'][0]) ? $_GET['goto'] : '');
     if (isset($goto[0])) $pagename=$goto;

@@ -31,6 +31,110 @@ function _mkdir_p($target,$mode=0777) {
   return (_mkdir_p(dirname($target),$mode) and mkdir($target,$mode));
 }
 
+/**
+ * Check double slashes in the REQUEST_URI
+ * and try to get the PATH_INFO or parse the PHP_SELF.
+ *
+ * @author Won-Kyu Park <wkpark@gmail.com>
+ * @since  2015/12/14
+ * @since  1.2.5
+ *
+ * @return string
+ */
+function get_pathinfo() {
+    if (!isset($_SERVER['PATH_INFO'])) {
+        // the PATH_INFO not available.
+        // try to get the PATH_INFO from the PHP_SELF.
+        $path_parts = explode('/', $_SERVER['PHP_SELF']);
+
+        // remove all real path parts from PHP_SELF
+        $root = $_SERVER['DOCUMENT_ROOT'];
+        $path = $root;
+        foreach ($path_parts as $k=>$part) {
+            if ($part === '')
+                continue;
+            $path .= '/'.$part;
+            if (file_exists($path))
+                unset($path_parts[$k]);
+            else
+                break;
+        }
+        // combine remaining parts
+        $_SERVER['PATH_INFO'] = implode('/', $path_parts);
+    }
+
+    // check double slashes in the REQUEST_URI
+    //
+    // from MediaWikiSrc:WebRequest.php source code
+    // by Apache 2.x, double slashes are converted to single slashes.
+    // and PATH_INFO is mangled due to https://bugs.php.net/bug.php?id=31892
+    // rawurldecode REQUEST_URI
+    $decoded_uri = rawurldecode($_SERVER['REQUEST_URI']);
+    if (strpos($decoded_uri, '//') === false)
+        return $_SERVER['PATH_INFO'];
+    return guess_pathinfo($decoded_uri);
+}
+
+/**
+ * Try to get PATH_INFO from the REQUEST_URI
+ *
+ * @author Won-Kyu Park <wkpark@gmail.com>
+ * @since  2015/12/14
+ * @since  1.2.5
+ *
+ * @return string
+ */
+
+function guess_pathinfo($decoded_uri) {
+    // try to get PATH_INFO from the REQUEST_URI
+    // $uri = rawurldecode($_SERVER['REQUEST_URI']);
+    // split all parts of REQUEST_URI.
+
+    // remove the query string part.
+    if (isset($_SERVER['QUERY_STRING'])) {
+        $q = strlen(rawurldecode($_SERVER['QUERY_STRING']));
+        if ($q > 0)
+            // remove '?' prepended query string.
+            $decoded_uri = substr($decoded_uri, 0, -1 - $q);
+    }
+
+    $parts = preg_split('@(/)@', $decoded_uri, -1, PREG_SPLIT_DELIM_CAPTURE);
+    // /foo//bar/foo => '','/','foo','/','','/','bar','/','foo'
+
+    // try to get the PATH_INFO path parts
+    if ($_SERVER['PATH_INFO'] == '/') {
+        $pos = count($parts) - 1;
+    } else {
+        $path = explode('/', $_SERVER['PATH_INFO']);
+
+        // search unmatch REQUEST_URI part
+        $pos = count($parts) - 1;
+        for (; $pos > 0; $pos--) {
+            if ($parts[$pos] == '' || $parts[$pos] == '/')
+                continue;
+            $part = end($path);
+            if ($parts[$pos] != $part)
+                break;
+            array_pop($path);
+        }
+    }
+
+    // skip all path components
+    for (; $pos > 0; $pos--) {
+        if ($parts[$pos] == '' || $parts[$pos] == '/')
+            continue;
+        else
+            break;
+    }
+
+    // remove non path components.
+    for (; $pos > 0; $pos--)
+        unset($parts[$pos]);
+
+    // merge all path components.
+    return implode('', $parts);
+}
+
 function get_scriptname() {
   // Return full URL of current page.
   // $_SERVER["SCRIPT_NAME"] has bad value under CGI mode
