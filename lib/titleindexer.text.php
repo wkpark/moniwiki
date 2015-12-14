@@ -330,9 +330,7 @@ class TitleIndexer_Text {
         // check regex
         $test = validate_needle($needle);
         if (!$test)
-            $needle = preg_quote($needle);
-        else
-            $needle = _preg_search_escape($needle);
+            $needle = preg_quote($needle, '/');
 
         fseek($flst, 0, SEEK_END);
         $size = ftell($flst);

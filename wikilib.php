@@ -5587,7 +5587,6 @@ EOS;
  *
  */
 function validate_needle($needle) {
-  $needle = _preg_search_escape($needle);
   $test = @preg_match("/($needle)/", 'ThIsIsAtEsT', $match);
   if ($test === false) return false;
 
