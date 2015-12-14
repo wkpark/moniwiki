@@ -23,7 +23,7 @@ class Cache_Text {
 	 *
 	 * @var		string	$revision
 	 */
-	var $revision = '0.6';
+	var $revision = '0.7';
 
 	/**
 	 * default cache arena name
@@ -259,7 +259,8 @@ class Cache_Text {
 				($ttl) ? $vals['ttl'] = $ttl : null;
 				$vals['id'] = isset($params['id']) ? $params['id'] : null;
 				$header = $this->header($type, $vals);
-				$save = $header."\n".'<'.'?php return '.var_export($val, true).';';
+				$vals['val'] = $val;
+				$save = $header."\n".'<'.'?php return '.var_export($vals, true).';';
 			} else {
 				$vals['ttl'] = $ttl;
 				$vals['mtime'] = time();
@@ -346,8 +347,11 @@ class Cache_Text {
 
 		$fname = $this->cache_path . '/'. $key;
 
-		if (!empty($params['nosanitycheck']) and !empty($params['print'])) {
-			return readfile($fname);
+		if (!empty($params['nosanitycheck'])) {
+			if ($type == 'php')
+				return $this->_fetch_php($key);
+			if (!empty($params['print']))
+				return readfile($fname);
 		}
 
 		$fp = fopen($fname, 'r');
@@ -396,7 +400,7 @@ class Cache_Text {
 		}
 
 		// check mtime of dependencies
-		if (!empty($val['deps'])) {
+		if (empty($params['nodeps']) && !empty($val['deps'])) {
 			$deps = &$val['deps'];
 			if (!is_array($deps)) {
 				$deps = array($deps);
@@ -413,6 +417,11 @@ class Cache_Text {
 		// flat files. html, php, etc.
 		if (is_resource($fp) and $size > $len) {
 			// include ?
+			if ($type == 'php') {
+				fclose($fp);
+				return $this->_fetch_php($key);
+			}
+
 			if (!empty($params['include'])) {
 				fclose($fp);
 				return include $fname;
@@ -507,6 +516,10 @@ class Cache_Text {
 	function sanity($header, $type, $fp, $params = false)
 	{
 		if ($type == 'raw' || !in_array($type, array('php', 'html'))) return true; // XXX binary or raw caches
+		$tmp = explode(' ', $header);
+		// check revision
+		if ($tmp[3] != $this->revision)
+			return false;
 
 		$ret = fgets($fp, 1024);
 		while (!feof($fp) and strrpos($ret, "\n") === false)
