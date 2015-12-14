@@ -147,9 +147,23 @@ class Version_RCS {
       $rev = '';
     }
 
-    if ($pagename[0] == '/' && file_exists($pagename))
-      $filename = $pagename;
-    else
+    // absolute path ?
+    if ($pagename[0] == '/' && strlen($pagename) > 1 && file_exists($pagename)) {
+      // Is it a valid foobar,v RCS file?
+      $fp = fopen($pagename, 'r');
+      if (is_resource($fp)) {
+        $header = fread($fp, 5);
+        fclose($fp);
+        if ($header != "head\t")
+          // not a valid RCS file.
+          $filename = $this->_filename($pagename);
+        else
+          // OK. a RCS file.
+          $filename = $pagename;
+      } else {
+        $filename=$this->_filename($pagename);
+      }
+    } else
       $filename=$this->_filename($pagename);
 
     $fp= popen("rlog $opt $oldopt -x,v/ $rev ".$filename.$this->NULL,"r");
