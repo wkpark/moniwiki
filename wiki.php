@@ -6623,11 +6623,12 @@ if (class_exists('Timer')) {
   $options['timer']->Check("load");
 }
 
+$topdir = dirname(__FILE__);
 // always load the global local config
 if (file_exists($topdir.'/config/site.local.php'))
     require_once($topdir.'/config/site.local.php');
-else if (isset($conf['site_local_php']) and file_exists($conf['site_local_php']))
-    require_once($conf['site_local_php']);
+else if (isset($Config['site_local_php']) and file_exists($Config['site_local_php']))
+    require_once($Config['site_local_php']);
 
 // load site specific config with default config variables.
 //$deps = array();
