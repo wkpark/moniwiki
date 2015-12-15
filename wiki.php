@@ -608,22 +608,20 @@ class WikiDB {
       if (!empty($this->$classname)) {
         // classname provided like as 'type' and the real classname is 'foobar_type'
         $file = $name.'.'.$this->$classname; // foobar.type.php
+        // full classname provided like as Foobar_Type
+        $file1 = strtr($this->$classname, '_', '.');
         $class0 = $name.'_'.$this->$classname; // foobar_type class
         if (class_exists($class0)) {
           $class = $class0;
-        } else if (class_exists($this->$classname)) {
-          $class = $this->$classname;
         } else if ((@include_once('lib/'.$file.'.php')) || (@include_once('lib/'.strtolower($file).'.php'))) {
           $class = $name.'_'.$this->$classname; // foobar_type class
+        } else if ((@include_once('lib/'.$file1.'.php')) || (@include_once('lib/'.strtolower($file1).'.php'))) {
+          $class = $this->$classname;
+        } else if (class_exists($this->$classname)) {
+          $class = $this->$classname;
         } else {
-          // full classname provided like as Foobar_Type
-          $file1 = strtr($this->$classname, '_', '.');
-          if ((@include_once('lib/'.$file1.'.php')) || (@include_once('lib/'.strtolower($file1).'.php'))) {
-            $class = $this->$classname;
-          } else {
-            trigger_error(sprintf(_("File '%s' or '%s' does not exist."), $file, $file1), E_USER_ERROR);
-            exit;
-          }
+          trigger_error(sprintf(_("File '%s' or '%s' does not exist."), $file, $file1), E_USER_ERROR);
+          exit;
         }
         // create
         if (!empty($params))
