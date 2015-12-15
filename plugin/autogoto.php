@@ -57,6 +57,15 @@ function do_AutoGoto($formatter,$options) {
     if (strpos($name, '_') !== false)
         $pages[] = str_replace('_', ' ', $name);
 
+    // normalize slashes
+    if (($p = strpos($name, '/')) !== false) {
+        $fixed = preg_replace('@/+@', '/', $name);
+        if ($fixed != $name)
+            $pages[] = $fixed;
+        if ($fixed[0] == '/')
+            $pages[] = substr($fixed, 1);
+    }
+
     $pages = array_unique($pages);
 
     foreach ($pages as $p) {
@@ -91,7 +100,11 @@ function do_AutoGoto($formatter,$options) {
     $options['noexact'] = !empty($DBInfo->titlesearch_noexact) ? true : false;
     if (do_titlesearch($formatter,$options))
         return true;
-    $options['value']=$formatter->page->name;
+
+    // normalize slashes
+    $fixed = preg_replace('@/+@', '/', $formatter->page->name);
+    $options['value'] = $fixed;
+
     # do not call AutoGoto recursively
     $options['redirect']=1;
     do_goto($formatter,$options);
