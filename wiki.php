@@ -5790,12 +5790,10 @@ function set_locale($lang, $charset = '', $default = 'en') {
 
 # get the pagename
 function get_pagename() {
-  // $_SERVER["PATH_INFO"] has bad value under CGI mode
-  // set 'cgi.fix_pathinfo=1' in the php.ini under
-  // apache 2.0.x + php4.2.x Win32
+  // get PATH_INFO or parse REQUEST_URI
   $path_info = get_pathinfo();
 
-  if (isset($path_info[0])) {
+  if (isset($path_info[1]) && $path_info[0] == '/') {
     // e.g.) /FrontPage => FrontPage
     $pagename = substr($path_info, 1);
   } else if (!empty($_SERVER['QUERY_STRING'])) {

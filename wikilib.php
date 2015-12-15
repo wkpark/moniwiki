@@ -63,13 +63,22 @@ function get_pathinfo() {
         $_SERVER['PATH_INFO'] = implode('/', $path_parts);
     }
 
-    // check double slashes in the REQUEST_URI
+    // if REQUEST_URI is not available.
+    if (!isset($_SERVER['REQUEST_URI']))
+        return $_SERVER['PATH_INFO'];
+
+    // check double slashes in the REQUEST_URI if it available
     //
     // from MediaWikiSrc:WebRequest.php source code
     // by Apache 2.x, double slashes are converted to single slashes.
     // and PATH_INFO is mangled due to https://bugs.php.net/bug.php?id=31892
+    $uri = $_SERVER['REQUEST_URI'];
+    if (($p = strpos($uri, '?')) !== false) {
+        // remove the query string part.
+        $uri = substr($uri, 0, $p);
+    }
     // rawurldecode REQUEST_URI
-    $decoded_uri = rawurldecode($_SERVER['REQUEST_URI']);
+    $decoded_uri = rawurldecode($uri);
     if (strpos($decoded_uri, '//') === false)
         return $_SERVER['PATH_INFO'];
     return guess_pathinfo($decoded_uri);
@@ -89,14 +98,6 @@ function guess_pathinfo($decoded_uri) {
     // try to get PATH_INFO from the REQUEST_URI
     // $uri = rawurldecode($_SERVER['REQUEST_URI']);
     // split all parts of REQUEST_URI.
-
-    // remove the query string part.
-    if (isset($_SERVER['QUERY_STRING'])) {
-        $q = strlen(rawurldecode($_SERVER['QUERY_STRING']));
-        if ($q > 0)
-            // remove '?' prepended query string.
-            $decoded_uri = substr($decoded_uri, 0, -1 - $q);
-    }
 
     $parts = preg_split('@(/)@', $decoded_uri, -1, PREG_SPLIT_DELIM_CAPTURE);
     // /foo//bar/foo => '','/','foo','/','','/','bar','/','foo'
