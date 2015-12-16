@@ -78,7 +78,8 @@ function do_merge($formatter, $params = array()) {
         }
     }
 
-    if (!empty($_POST['rev']) and isset($_POST['name'][0]) and $pagename !== $formatter->page->name) {
+    if (!empty($_POST['rev']) and isset($_POST['name'][0]) and $pagename !== $formatter->page->name and
+            $DBInfo->hasPage($pagename)) {
         if (!empty($DBInfo->version_class)) {
             $REMOTE_ADDR = $_SERVER['REMOTE_ADDR'];
 
@@ -150,7 +151,7 @@ function do_merge($formatter, $params = array()) {
         $formatter->send_footer('', $params);
         return;
     } else {
-        if (!isset($params['name'][0]))
+        if (!isset($params['name'][0]) || !$DBInfo->hasPage($params['name']))
             $title = _("Please select the original page to merge.");
         else if (empty($params['rev']))
             $title = _("Please select the revision to merge from.");
@@ -166,7 +167,7 @@ function do_merge($formatter, $params = array()) {
     $pname = _html_escape($pagename);
     $lab = _("Summary");
     $rev = !empty($params['rev']) ? _html_escape($params['rev']) : '';
-    if (!empty($rev) && isset($pagename[0])) {
+    if (!empty($rev) && isset($pagename[0]) && $DBInfo->hasPage($pagename)) {
         $extra = '<input type="checkbox" name="force" />'._("Force overwrite").'<br />';
         $placeholder = sprintf(_("Merge [[%s]] with [[%s]] from r%s: "), $pname, _html_escape($formatter->page->name), $rev);
         echo "<form method='post'>
@@ -194,7 +195,7 @@ FORM;
 FORM;
     }
 
-    if (isset($pagename[0]) && $pagename !== $formatter->page->name)
+    if (isset($pagename[0]) && $pagename !== $formatter->page->name && $DBInfo->hasPage($pagename))
         echo macro_Merge($formatter, $pagename, $params);
     $formatter->send_footer('', $params);
     return;
