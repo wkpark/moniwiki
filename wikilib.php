@@ -1220,31 +1220,6 @@ function get_description($raw) {
     return $out;
 }
 
-function _fake_lock_file($tmp, $arena, $tag = '') {
-    $lock = $tmp . '/' . $arena;
-    if (!empty($tag))
-        $lock.= $tag;
-    return $lock . '.lock';
-}
-
-function _fake_locked($lockfile, $mtime = 0, $delay = 1800) {
-    // prevent not to execute sum job again
-    $locked = file_exists($lockfile);
-    // is this lock file too old ?
-    if ($locked and $mtime > filemtime($lockfile) + $delay) {
-        @unlink($lockfile);
-        $locked = false;
-    }
-    return $locked;
-}
-
-function _fake_lock($lockfile, $lock = LOCK_EX) {
-    if ($lock == LOCK_EX)
-        touch($lockfile);
-    else
-        @unlink($lockfile);
-}
-
 function get_title($page,$title='') {
   global $DBInfo;
   if (!empty($DBInfo->use_titlecache)) {
@@ -5251,8 +5226,10 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
   $uid = '';
   if (function_exists('posix_getuid'))
     $uid = '.'.posix_getuid();
-  $lock_file = _fake_lock_file($DBInfo->vartmp_dir, 'titleindex'.$uid);
-  $locked = _fake_locked($lock_file, $DBInfo->mtime());
+
+  $index_lock = 'titleindex'.$uid;
+  $locked = $kc->exists($index_lock);
+
   if ($locked or ($kc->exists('key') and $DBInfo->checkUpdated($kc->mtime('key'), $delay))) {
     if (!empty($formatter->use_group) and $formatter->group) {
       $keys = $kc->fetch('key.'.$formatter->group);
@@ -5270,16 +5247,28 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
     }
   }
 
+  if (!isset($sel[0])) {
+    $indexer = $DBInfo->lazyLoad('titleindexer');
+    $total = $indexer->pageCount();
+
+    // too many pages. check $sel
+    if ($total > 10000) {
+      $sel = ''.key($all_keys); // select default key
+    }
+  }
+
   if (empty($all_pages)) {
 
     $all_pages = array();
-    $indexer = $DBInfo->lazyLoad('titleindexer');
+    if (empty($indexer))
+      $indexer = $DBInfo->lazyLoad('titleindexer');
     if (!empty($formatter->use_group) and $formatter->group) {
       $group_pages = $indexer->getLikePages('^'.$formatter->group);
       foreach ($group_pages as $page)
         $all_pages[]=str_replace($formatter->group,'',$page);
-    } else
+    } else {
       $all_pages = $indexer->getLikePages('^'.$all_keys[$sel], 0);
+    }
 
     #natcasesort($all_pages);
     #sort($all_pages,SORT_STRING);
@@ -5295,7 +5284,7 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
   }
 
   if (empty($keys) or empty($titleindex)) {
-    _fake_lock($lock_file);
+    $kc->update($index_lock, array('dummy'), 30); // 30 sec lock
     foreach ($all_pages as $page=>$rpage) {
       $p = ltrim($page);
       $pkey = get_key("$p");
@@ -5322,7 +5311,7 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
 
     if (isset($sel[0]) and isset($titleindex[$sel]))
       $all_pages = $titleindex[$sel];
-    _fake_lock($lock_file, LOCK_UN);
+    $kc->remove($index_lock);
   }
 
   $pnut = null;
@@ -5357,8 +5346,9 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
     if ($key != $pkey) {
        $key = $pkey;
        if (isset($sel[0]) and !preg_match('/^'.$sel.'/i',$pkey)) continue;
-       if (!empty($out)) $out.="</ul>";
+       if (!empty($out)) $out.="</ul></div>";
        $out.= "<a name='$key'></a><h3><a href='#top'>$key</a></h3>\n";
+       $out.= '<div class="index-group">';
        $out.= "<ul>";
     }
     if (isset($sel[0]) and !preg_match('/^'.$sel.'/i',$pkey)) continue;
@@ -5379,10 +5369,10 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
          $formatter->icon['attach']);
     $out.="</li>\n";
   }
+  $out.= "</ul></div>\n";
   if (!empty($pnut)) {
-    $out.='<li style="list-style:none">'. $pnut .'</li>'."\n";
+    $out.='<div>'. $pnut .'</div>'."\n";
   }
-  $out.= "</ul>\n";
 
   $index='';
   $tlink='';

@@ -39,8 +39,8 @@ function macro_WordIndex($formatter,$value, $params = array()) {
   $wc = new Cache_text('wordindex');
   $delay = !empty($DBInfo->default_delaytime) ? $DBInfo->default_delaytime : 0;
 
-  $lock_file = _fake_lock_file($DBInfo->vartmp_dir, 'wordindex');
-  $locked = _fake_locked($lock_file, $DBInfo->mtime());
+  $index_lock = 'wordindex.lock';
+  $locked = $wc->exists($index_lock);
   if ($locked or ($wc->exists('key') and $DBInfo->checkUpdated($wc->mtime('key'), $delay))) {
     if ($formatter->group) {
       $keys = $wc->fetch('key.'.$formatter->group);
@@ -57,7 +57,7 @@ function macro_WordIndex($formatter,$value, $params = array()) {
   }
 
   if (empty($keys) or empty($dict)) {
-    _fake_lock($lock_file);
+    $wc->update($index_lock, array('dummy'), 30); // 30 sec
 
     $all_pages = array();
     if ($formatter->group) {
@@ -106,7 +106,7 @@ function macro_WordIndex($formatter,$value, $params = array()) {
       $wc->update('wordindex', $dict);
     }
 
-    _fake_lock($lock_file, LOCK_UN);
+    $wc->remove($index_lock);
   }
 
   if (isset($sel[0]) and isset($dict[$sel])) {
