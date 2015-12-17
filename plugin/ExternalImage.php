@@ -25,7 +25,7 @@ function macro_ExternalImage($formatter, $value, $params = array()) {
         //if (!empty($m[4]))
         //    $args.= ',width='.$m[4];
         return $formatter->macro_repl('WikimediaCommons', $value, $params);
-    } else if (preg_match('@^https?://(?:[^.]+)\.(?:wikimedia|wikipedia)\.org/wiki/(?:Image|File):([^/]+\.(?:gif|jpe?g|png|svg))$@', $value, $m)) {
+    } else if (preg_match('@^https?://(?:[^.]+)\.(?:wikimedia|wikipedia)\.org/wiki/(?:Image|File):([^/]+\.(?:gif|jpe?g|png|svg))@', $value, $m)) {
         return $formatter->macro_repl('WikimediaCommons', $value, $params);
     } else if (preg_match('@^https?://([^.]+)\.wikia\.com/wiki/(?:Image|File):(.*\.(?:gif|jpe?g|png|svg))@', $value, $m)) {
         return $formatter->macro_repl('WikimediaCommons', $value, $params);

@@ -17,12 +17,30 @@
 function do_wikimediacommons($formatter, $params = array()) {
     global $DBInfo;
 
-    $ret = macro_WikimediaCommons($formatter, $params['value']);
-    echo $ret;
+    $retval = array();
+    $params['call'] = 1;
+    $params['retval'] = &$retval;
+    $ret = macro_WikimediaCommons($formatter, $params['url'], $params);
+
+    if (preg_match('@text/@', $_SERVER['HTTP_ACCEPT'])) {
+        echo $ret;
+    } elseif (preg_match('@image/@', $_SERVER['HTTP_ACCEPT'])) {
+        header('Pragma: no-cache');
+        header('Cache-Control: public, max-age=0, s-maxage=0');
+        header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
+        header('Cache-Control: no-store, no-cache, must-revalidate', false);
+        $formatter->send_header(array('Status: 302', 'Location: '.$retval['url']));
+    } else {
+        // json
+        echo json_encode($retval);
+    }
 }
 
 function macro_WikimediaCommons($formatter, $value, $params = array()) {
     global $DBInfo, $Config;
+
+    $orig_value = $value;
+    $lazyload = !empty($Config['external_image_lazyload']) ? $Config['external_image_lazyload'] : false;
 
     $args = array();
     if (($p = strpos($value, ',')) !== false) {
@@ -134,7 +152,17 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
     $key = $value.$src;
     if (isset($width)) $key.= $width;
     if (isset($height)) $key.= '.h'.$height;
-    if (!empty($formatter->refresh) || ($images = $common->fetch($key)) === false) {
+    while (!empty($formatter->refresh) || ($images = $common->fetch($key)) === false) {
+        // dynamic macro
+        if ($formatter->_macrocache and empty($params['call']))
+            return $formatter->macro_cache_repl('WikimediaCommons', $orig_value);
+        if (empty($params['call']))
+            $formatter->_dynamic_macros['@WikimediaCommons'] = 1;
+
+        if (empty($params['call']) && $lazyload) {
+            break;
+        }
+
         if (!empty($width)) {
             $data['iiurlwidth'] = min(1280, $width);
         } else if (!empty($height)) {
@@ -167,14 +195,17 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
         $images = $res->query->pages;
 
         $common->update($key, $images);
+        break;
     }
 
-    $image = current($images);
-    $image_url = $image->imageinfo[0]->thumburl;
-    $desc_url = $image->imageinfo[0]->descriptionurl;
+    if (!empty($images)) {
+        $image = current($images);
+        $image_url = $image->imageinfo[0]->thumburl;
+        $desc_url = $image->imageinfo[0]->descriptionurl;
 
-    if (empty($styles['width']) && !empty($image->imageinfo[0]->thumbwidth)) {
-        $styles['width'] = $image->imageinfo[0]->thumbwidth.'px';
+        if (empty($styles['width']) && !empty($image->imageinfo[0]->thumbwidth)) {
+            $styles['width'] = $image->imageinfo[0]->thumbwidth.'px';
+        }
     }
 
     $attrs = array();
@@ -195,33 +226,6 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
     if (!empty($style))
         $style = ' style="'.$style.'"';
 
-    if (!empty($image->imageinfo[0]->extmetadata)) {
-        $copyright = $image->imageinfo[0]->extmetadata->Copyrighted->value;
-        $description = $image->imageinfo[0]->extmetadata->ImageDescription->value;
-        $author = $image->imageinfo[0]->extmetadata->Artist->value;
-        $license = $image->imageinfo[0]->extmetadata->License->value;
-        $comment = '';
-    } else if (!empty($image->imageinfo[0]->user)) {
-        // Wikia case
-        $copyright = 'True';
-        $author = sprintf(_("Uploaded by %s"), $image->imageinfo[0]->user);
-        $license = '';
-        $description = $image->imageinfo[0]->comment;
-    } else {
-        // not found
-        return false;
-    }
-
-    if (!empty($formatter->fetch_images) && !empty($image_url)) {
-        $image_url = $formatter->fetch_action. str_replace(array('&', '?'), array('%26', '%3f'), $image_url);
-        // use thumbnails ?
-        if (!empty($formatter->use_thumb_by_default))
-            $image_url.= '&amp;thumbwidth='.$formatter->thumb_width;
-    }
-    $copyrighted = $copyright == 'True';
-    $info = ($copyrighted ? '&copy; ' : '(&#596;) ').$author;
-    if ($copyrighted && isset($license[0])) $info.= " ($license)";
-
     // setup externamImage's class name
     $class = 'externalImage'.' '.$addClass;
     $class = preg_replace('@\s+@', ' ', $class);
@@ -229,13 +233,67 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
     $cls = array_flip(array_flip($cls));
     $class = implode(' ', $cls);
 
-    $out = '<div class="'.$class.'">';
-    $out.= "<div><img src='$image_url'$style$attr>";
-    $out.= "<div class='info'>".$info.$comment.' from '."<a href='$desc_url' target='_blank'>$source</a></div>";
-    $out.= "</div>";
-    if (!empty($DBInfo->wikimediacommons_use_description) && !empty($description))
-        $out.= '<div class="desc">'.$description.'</div>';
-    $out.= "</div>\n";
+    if (!empty($image)) {
+        if (!empty($image->imageinfo[0]->extmetadata)) {
+            $copyright = $image->imageinfo[0]->extmetadata->Copyrighted->value;
+            $description = $image->imageinfo[0]->extmetadata->ImageDescription->value;
+            $author = $image->imageinfo[0]->extmetadata->Artist->value;
+            $license = $image->imageinfo[0]->extmetadata->License->value;
+            $comment = '';
+        } else if (!empty($image->imageinfo[0]->user)) {
+            // Wikia case
+            $copyright = 'True';
+            $author = sprintf(_("Uploaded by %s"), $image->imageinfo[0]->user);
+            $license = '';
+            $description = $image->imageinfo[0]->comment;
+        } else {
+            // not found
+            return false;
+        }
+
+        if (!empty($formatter->fetch_images) && !empty($image_url)) {
+            $image_url = $formatter->fetch_action. str_replace(array('&', '?'), array('%26', '%3f'), $image_url);
+            // use thumbnails ?
+            if (!empty($formatter->use_thumb_by_default))
+                $image_url.= '&amp;thumbwidth='.$formatter->thumb_width;
+        }
+
+        $copyrighted = $copyright == 'True';
+        $info = ($copyrighted ? '&copy; ' : '(&#596;) ').$author;
+        if ($copyrighted && isset($license[0])) $info.= " ($license)";
+
+        if (isset($params['retval'])) {
+            $retval = &$params['retval'];
+            $retval['url'] = $image_url;
+            $retval['info'] = $info.$comment.' from '."<a href='$desc_url' target='_blank'>$source</a>";
+            if (!empty($description))
+                $retval['description'] = $description;
+        }
+
+        $out = '<div class="'.$class.'">';
+        $out.= "<div><img src='$image_url'$style$attr>";
+        $out.= "<div class='info'>".$info.$comment.' from '."<a href='$desc_url' target='_blank'>$source</a></div>";
+        $out.= "</div>";
+        if (!empty($DBInfo->wikimediacommons_use_description) && !empty($description))
+            $out.= '<div class="desc">'.$description.'</div>';
+        $out.= "</div>\n";
+    } else {
+        // not yet
+
+        $out = '<div class="'.$class.'">';
+        if ($lazyload == 1)
+            $out.= "<div><img class='loading' src='?action=wikimediacommons&amp;url=$orig_value'$style$attr>";
+        else
+            $out.= "<div><img class='loading' ".
+            "src='data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEAAAAALAAAAAABAAEAAAIBRAA7' ".
+            "data-src='?action=wikimediacommons&amp;url=$orig_value'$style$attr>";
+
+        $out.= "<div class='info'></div>";
+        $out.= "</div>";
+        if (!empty($DBInfo->wikimediacommons_use_description))
+            $out.= '<div class="desc"></div>';
+        $out.= "</div>\n";
+    }
 
     return $out;
 }
