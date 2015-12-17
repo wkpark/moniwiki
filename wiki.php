@@ -2315,6 +2315,13 @@ class Formatter {
           }
           $text = preg_replace('/&amp;/i', '&', $text);
           if (preg_match("/^((?:https?|ftp).*\.(png|gif|jpeg|jpg))(?:\?|&(?!>amp;))?(.*?)?$/i",$text, $match)) {
+            // FIXME call externalimage macro for these external images
+            if (!empty($this->external_image_regex) and preg_match('@'.$this->external_image_regex.'@x', $match[0])) {
+              $res = $this->macro_repl('ExternalImage', $natch[0]);
+              if ($res !== false)
+                return $res;
+            }
+
             $cls = 'externalImage';
             $type = strtoupper($match[2]);
             $atext=isset($atext[0]) ? $atext:$text;
@@ -2334,13 +2341,6 @@ class Formatter {
             $info = '';
             // check internal links and fetch image
             if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url)) {
-              // FIXME call externalimage macro for these external images
-              if (!empty($this->external_image_regex) and preg_match('@'.$this->external_image_regex.'@x', $url)) {
-                $res = $this->macro_repl('ExternalImage', $url, array('class'=>$cls, 'attr'=>$eattr));
-                if ($res !== false)
-                  return $res;
-              }
-
               $url = $this->fetch_action. str_replace(array('&', '?'), array('%26', '%3f'), $url);
               $size = '';
               if (!empty($this->fetch_imagesize))
@@ -2392,6 +2392,13 @@ class Formatter {
       if (preg_match("/^(http|https|ftp)/",$url)) {
         $url1 = preg_replace('/&amp;/','&',$url);
         if (preg_match("/(^.*\.(png|gif|jpeg|jpg))(?:\?|&(?!>amp;))?(.*?)?$/i", $url1, $match)) {
+          // FIXME call externalimage macro for these external images
+          if (!empty($this->external_image_regex) and preg_match('@'.$this->external_image_regex.'@x', $url1)) {
+            $res = $this->macro_repl('ExternalImage', $url1);
+            if ($res !== false)
+              return $res;
+          }
+
           $cls = 'externalImage';
           $url=$match[1];
           // trash dummy query string
@@ -2414,13 +2421,6 @@ class Formatter {
           $info = '';
           // check internal images
           if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url)) {
-            // FIXME call externalimage macro for these external images
-            if (!empty($this->external_image_regex) and preg_match('@'.$this->external_image_regex.'@x', $url)) {
-              $res = $this->macro_repl('ExternalImage', $url, array('class'=>$cls, 'attr'=>$eattr));
-              if ($res !== false)
-                return $res;
-            }
-
             $fetch_url = $this->fetch_action.
                 str_replace(array('&', '?'), array('%26', '%3f'), $url);
 
