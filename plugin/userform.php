@@ -180,6 +180,9 @@ function do_userform($formatter,$options) {
           $user->info['remote'] = $_SERVER['REMOTE_ADDR'];
           $userdb->saveUser($user);
           $use_refresh=1;
+
+          if (function_exists('_session_start'))
+            _session_start(null, $user->id);
         }
 
         $DBInfo->user=$user;
@@ -210,12 +213,10 @@ function do_userform($formatter,$options) {
     # logout
     header($user->unsetCookie(), false);
     if (session_name() != '') {
-      $path = get_scriptname();
-      // for moniwiki internal
-      header('Set-Cookie: '. session_name() .'='.$user->id.'; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path='.$path, false);
       // for some user plugins
       $params = session_get_cookie_params();
-      header('Set-Cookie: '. session_name() .'='.$user->id.'; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path='.$params['path'], false);
+      header('Set-Cookie: '. session_name() .'=dummy; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path='.
+        $params['path'].'; Domain='.$params['domain'], false);
     }
 
     // call logout method
@@ -455,6 +456,9 @@ function do_userform($formatter,$options) {
                $options['id']=$user->id;
                $formatter->header($user->setCookie());
                $udb->saveUser($user); # XXX
+
+               if (function_exists('_session_start'))
+                 _session_start(null, $user->id);
              } else {
                $title = _("Invalid password !");
              }
@@ -564,7 +568,6 @@ function do_userform($formatter,$options) {
   } else if ($user->id == "Anonymous" and isset($options['openid_url'])) {
     # login with openid
     include_once('lib/openid.php');      
-    session_start();
 
     $process_url = qualifiedUrl($formatter->link_url("UserPreferences", "?action=userform"));
     $trust_root = qualifiedUrl($formatter->link_url(""));
@@ -611,6 +614,9 @@ function do_userform($formatter,$options) {
         $options['msg'].= sprintf(_("Successfully login as '%s' via OpenID."),$options['openid_identity']);
         $formatter->header($user->setCookie());
         $userdb->saveUser($user); // always save
+
+        if (function_exists('_session_start'))
+          _session_start(null, $user->id);
       } else {
         if (!empty($DBInfo->no_register) and $DBInfo->no_register == 1) {
           $options['msg']=_("Fail to register");

@@ -6646,25 +6646,6 @@ if (!isset($options['pagename'][0])) $options['pagename']= get_frontpage($lang);
 $DBInfo->lang=$lang;
 $options['lang'] = $lang;
 
-if (session_id() == '' and empty($Config['nosession']) and is_writable(ini_get('session.save_path')) ) {
-  $prefix = !empty($DBInfo->session_seed) ? $DBInfo->session_seed : 'MONIWIKI';
-  $myseed = getTicket($prefix, $_SERVER['REMOTE_ADDR']);
-  $myid = $prefix . '-*-' . $myseed . '-*-' . $options['id'];
-
-  session_set_cookie_params (isset($Config['session_lifetime']) ? $Config['session_lifetime'] : 3600, get_scriptname());
-
-  // chceck some action and set expire
-  session_cache_limiter('');
-
-  session_name($myid);
-  session_start();
-}
-
-// set the s-maxage for proxy
-$proxy_maxage = !empty($Config['proxy_maxage']) ? ', s-maxage='.$Config['proxy_maxage'] : '';
-// set maxage
-$user_maxage = !empty($Config['user_maxage']) ? ', max-age='.$Config['user_maxage'] : ', max-age=0';
-
 // set the real IP address for proxy
 $remote = $_SERVER['REMOTE_ADDR'];
 $real = realIP();
@@ -6672,6 +6653,100 @@ if ($remote != $real) {
   $_SERVER['OLD_REMOTE_ADDR'] = $remote;
   $_SERVER['REMOTE_ADDR'] = $real;
 }
+
+function _session_start($session_id = null, $id = null) {
+    global $DBInfo, $Config;
+
+    // FIXME
+    if ($id == null || $id == 'Anonymous')
+        return;
+
+    // chceck some action and set expire
+    session_cache_limiter('');
+
+    // cookie parameters
+    if (!empty($Config['cookie_path']))
+        $path = $Config['cookie_path'];
+    else
+        $path = dirname(get_scriptname());
+
+    if (!empty($Config['cookie_domain']))
+        $domain = $Config['cookie_domain'];
+    else
+        $domain = $_SERVER['HTTP_HOST'];
+
+    $expire = isset($Config['session_lifetime']) ? $Config['session_lifetime'] : 3600;
+
+    if ($session_id == null) {
+        // New session
+        session_set_cookie_params($expire, $path, $domain);
+
+        session_start();
+        $sess_id = session_id();
+    } else {
+        $sess_id = $session_id;
+    }
+
+    // setup the session cookie
+    $site_seed = !empty($DBInfo->session_seed) ? $DBInfo->session_seed : 'MONIWIKI';
+    $site_hash = md5($site_seed.$sess_id);
+    $addr_hash = md5($_SERVER['REMOTE_ADDR'].$sess_id);
+    $session_cookie = $site_hash . '-*-' . $addr_hash . '-*-' . time();
+
+    if ($session_id == null) {
+        // set session cookie.
+        setCookie('MONIWIKI', $session_cookie, time() + $expire, $path, $domain);
+    } else {
+        $cleanup_session_cookie = false;
+        if (empty($_COOKIE['MONIWIKI'])) {
+            $cleanup_session_cookie = true;
+        } else {
+            // check session cookie
+            list($site, $addr, $dummy) = explode('-*-', $_COOKIE['MONIWIKI']);
+            if ($site != $site_hash || $addr != $addr_hash) {
+                $cleanup_session_cookie = true;
+            }
+        }
+
+        if ($cleanup_session_cookie) {
+            // invalid session cookie.
+            // remove MONI_ID, MONIWIKI and session cookie
+            if (isset($_COOKIE['MONI_ID']))
+                setCookie('MONI_ID', null, -1, $path, $domain);
+            if (isset($_COOKIE['MONIWIKI']))
+                setCookie('MONIWIKI', null, -1, $path, $domain);
+            if (isset($_COOKIE[session_name()]))
+                setCookie(session_name(), null, -1, $path, $domain);
+
+            // reset some variables
+            $DBInfo->user->id = 'Anonymous';
+            $options['id'] = 'Anonymous';
+        } else {
+            session_set_cookie_params($expire, $path, $domain);
+
+            session_start();
+        }
+    }
+}
+
+if (empty($Config['nosession']) and is_writable(ini_get('session.save_path')) ) {
+    $session_name = session_name();
+    if (!empty($_COOKIE[$session_name])) {
+        $session_id = $_COOKIE[$session_name];
+    } else {
+        $session_id = session_id();
+    }
+    if (!empty($session_id)) {
+        _session_start($session_id, $options['id']);
+    } elseif (!empty($options['id']) !== 'Anonymous') {
+        _session_start('dummy', $options['id']);
+    }
+}
+
+// set the s-maxage for proxy
+$proxy_maxage = !empty($Config['proxy_maxage']) ? ', s-maxage='.$Config['proxy_maxage'] : '';
+// set maxage
+$user_maxage = !empty($Config['user_maxage']) ? ', max-age='.$Config['user_maxage'] : ', max-age=0';
 
 if ($_SERVER['REQUEST_METHOD'] != 'GET' and
     $_SERVER['REQUEST_METHOD'] != 'HEAD') {
