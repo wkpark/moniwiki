@@ -339,7 +339,7 @@ class Cache_Text {
 
 		$val = @include $fname;
 		if ($val === false) return false;
-		return $val['val'];
+		return $val;
 	}
 
 	function _fetch($key, $mtime = 0, $params = array()) {
@@ -348,8 +348,12 @@ class Cache_Text {
 		$fname = $this->cache_path . '/'. $key;
 
 		if (!empty($params['nosanitycheck'])) {
-			if ($type == 'php')
-				return $this->_fetch_php($key);
+			if ($type == 'php') {
+				$ret = $this->_fetch_php($key);
+				if (isset($ret['val']))
+					return $ret['val'];
+				return $ret;
+			}
 			if (!empty($params['print']))
 				return readfile($fname);
 		}
@@ -419,7 +423,12 @@ class Cache_Text {
 			// include ?
 			if ($type == 'php') {
 				fclose($fp);
-				return $this->_fetch_php($key);
+				$ret = $this->_fetch_php($key);
+				if (isset($params['retval']))
+					$params['retval'] = $val;
+				if (isset($ret['val']))
+					return $ret['val'];
+				return $ret;
 			}
 
 			if (!empty($params['include'])) {
