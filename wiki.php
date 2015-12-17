@@ -6334,6 +6334,7 @@ function wiki_main($options) {
       $_macros=null;
       if ($cache->mtime($pagename) < $formatter->page->mtime()) $formatter->refresh = 1; // force update
 
+      $valid = false;
       $delay = !empty($DBInfo->default_delaytime) ? $DBInfo->default_delaytime : 0;
 
       if (empty($formatter->refresh) and $DBInfo->checkUpdated($mtime, $delay) and ($check < $Config['cachetime'])) {
@@ -6342,15 +6343,16 @@ function wiki_main($options) {
 
         // FIXME TODO: check postfilters
         if (0 && empty($_macros)) {
-          $out = '';
           #$out = $cache->fetch($pagename);
-          $cache->fetch($pagename, '', array('print'=>1));
+          $valid = $cache->fetch($pagename, '', array('print'=>1));
         } else {
           $out = $cache->fetch($pagename);
+          $valid = $out !== false;
         }
         $mytime=gmdate("Y-m-d H:i:s",$mtime+$options['tz_offset']);
         $extra_out= "<!-- Cached at $mytime -->";
-      } else {
+      }
+      if (!$valid) {
         $formatter->_macrocache=1;
         ob_start();
         $formatter->send_page('',$options);
