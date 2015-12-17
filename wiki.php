@@ -6586,8 +6586,8 @@ function load_site_config($topdir, $site, &$conf, &$deps) {
 
 // load cached site specific config variables.
 function load_cached_site_config($topdir, $site, &$conf, $params = array()) {
-    $cache = new Cache_text('config', array('depth'=>0, 'ext'=>'php'));
-    //$cache = new Cache_text('settings', array('depth'=>0));
+    //$cache = new Cache_text('config', array('depth'=>0, 'ext'=>'php'));
+    $cache = new Cache_text('settings', array('depth'=>0));
 
     // cached config key
     $key = 'config';
