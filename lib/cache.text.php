@@ -237,6 +237,12 @@ class Cache_Text {
 			}
 		}
 
+		// touch cachefile immediately for fack locking purpose etc.
+		$touched = @touch($this->cache_path.'/'.$key);
+		// update('foobar', true) to touch any raw caches.
+		if ($val === true)
+			return $touched;
+
 		// update the mtime of the cache info file.
 		@touch($this->cache_dir . '/.info');
 		if (!isset($params))
@@ -362,7 +368,11 @@ class Cache_Text {
 		if (!is_resource($fp)) return false;
 
 		$size = filesize($fname);
-		if ($size == 0) return false;
+		if ($size == 0) {
+			fclose($fp);
+			return false;
+		}
+
 		$header = fgets($fp, 256);
 		$len = 0;
 
