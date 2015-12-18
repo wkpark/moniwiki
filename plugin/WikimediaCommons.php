@@ -22,9 +22,9 @@ function do_wikimediacommons($formatter, $params = array()) {
     $params['retval'] = &$retval;
     $ret = macro_WikimediaCommons($formatter, $params['url'], $params);
 
-    if (preg_match('@text/@', $_SERVER['HTTP_ACCEPT'])) {
+    if (empty($params['image']) && preg_match('@text/@', $_SERVER['HTTP_ACCEPT'])) {
         echo $ret;
-    } elseif (preg_match('@image/@', $_SERVER['HTTP_ACCEPT'])) {
+    } elseif (!empty($params['image']) || preg_match('@image/@', $_SERVER['HTTP_ACCEPT'])) {
         header('Pragma: no-cache');
         header('Cache-Control: public, max-age=0, s-maxage=0');
         header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');
@@ -194,6 +194,13 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
         $res = json_decode($http->resp_body);
         $images = $res->query->pages;
 
+        // fail to get image information.
+        if (empty($images)) {
+            // is it right URL?
+            if (isset($params['retval']))
+                $params['retval']['url'] = $orig_value;
+            return '<a href="'.$orig_value.'">'.$orig_value.'</a>';
+        }
         $common->update($key, $images);
         break;
     }
@@ -280,13 +287,20 @@ function macro_WikimediaCommons($formatter, $value, $params = array()) {
     } else {
         // not yet
 
+        $image_url = str_replace(array('&', '?'), array('%26', '%3f'), $orig_value);
+        if (isset($params['retval'])) {
+            $retval = &$params['retval'];
+            $url = $formatter->link_url('', '?action=wikimediacommons&url='.$image_url);
+            $retval['url'] = qualifiedUrl($url);
+        }
+
         $out = '<div class="'.$class.'">';
-        if ($lazyload == 1)
-            $out.= "<div><img class='loading' src='?action=wikimediacommons&amp;url=$orig_value'$style$attr>";
+        if ($lazyload == 1 || !empty($params['call']) || !empty($formatter->wikimarkup))
+            $out.= "<div><img class='loading' src='?action=wikimediacommons&amp;url=$image_url'$style$attr>";
         else
             $out.= "<div><img class='loading' ".
             "src='data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEAAAAALAAAAAABAAEAAAIBRAA7' ".
-            "data-src='?action=wikimediacommons&amp;url=$orig_value'$style$attr>";
+            "data-src='?action=wikimediacommons&amp;url=$image_url'$style$attr>";
 
         $out.= "<div class='info'></div>";
         $out.= "</div>";
