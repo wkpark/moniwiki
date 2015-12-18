@@ -28,156 +28,156 @@ error_reporting(E_ALL ^ E_NOTICE);
  * @return a basename of the plugin or null or false(disabled)
  */
 function getPlugin($pluginname) {
-  static $plugins=array();
-  if (is_bool($pluginname) and $pluginname)
-    return sizeof($plugins);
-  $pname = strtolower($pluginname);
-  if (!empty($plugins)) return isset($plugins[$pname]) ? $plugins[$pname]:'';
-  global $DBInfo;
+    static $plugins=array();
+    if (is_bool($pluginname) and $pluginname)
+        return sizeof($plugins);
+    $pname = strtolower($pluginname);
+    if (!empty($plugins)) return isset($plugins[$pname]) ? $plugins[$pname]:'';
+    global $DBInfo;
 
-  $cp = new Cache_text('settings', array('depth'=>0));
-  if (empty($DBInfo->manual_plugin_admin)) {
+    $cp = new Cache_text('settings', array('depth'=>0));
+    if (empty($DBInfo->manual_plugin_admin)) {
+        if (!empty($DBInfo->include_path))
+            $dirs=explode(':',$DBInfo->include_path);
+        else
+            $dirs=array('.');
+        $updated=false;
+        $mt=$cp->mtime('plugins');
+        foreach ($dirs as $d) {
+            if (is_dir($d.'/plugin/')) {
+                $ct=filemtime($d.'/plugin/.'); // XXX mtime fix
+                $updated=$ct > $mt ? true:$updated;
+            }
+        }
+        if ($updated) {
+            $cp->remove('plugins');
+            $cp->remove('processors');
+        }
+    }
+
+    if ($plugins = $cp->fetch('plugins')) {
+        if (!empty($DBInfo->myplugins) and is_array($DBInfo->myplugins))
+            $plugins=array_merge($plugins,$DBInfo->myplugins);
+        return isset($plugins[$pname]) ? $plugins[$pname]:'';
+    }
     if (!empty($DBInfo->include_path))
-      $dirs=explode(':',$DBInfo->include_path);
+        $dirs=explode(':',$DBInfo->include_path);
     else
-      $dirs=array('.');
-    $updated=false;
-    $mt=$cp->mtime('plugins');
-    foreach ($dirs as $d) {
-      if (is_dir($d.'/plugin/')) {
-        $ct=filemtime($d.'/plugin/.'); // XXX mtime fix
-        $updated=$ct > $mt ? true:$updated;
-      }
-    }
-    if ($updated) {
-      $cp->remove('plugins');
-      $cp->remove('processors');
-    }
-  }
+        $dirs=array('.');
 
-  if ($plugins = $cp->fetch('plugins')) {
+    foreach ($dirs as $dir) {
+        $handle= @opendir($dir.'/plugin');
+        if (!$handle) continue;
+        while ($file= readdir($handle)) {
+            if (is_dir($dir."/plugin/$file")) continue;
+            $name= substr($file,0,-4);
+            $plugins[strtolower($name)]= $name;
+        }
+    }
+
+    // get predefined macros list
+    $tmp = get_defined_functions();
+    foreach ($tmp['user'] as $u) {
+        if (preg_match('/^macro_(.*)$/', $u, $m)) {
+            $n = strtolower($m[1]);
+            if (!isset($plugins[$n])) $plugins[$n] = $m[1];
+        }
+    }
+
+    if (!empty($plugins))
+        $cp->update('plugins',$plugins);
     if (!empty($DBInfo->myplugins) and is_array($DBInfo->myplugins))
-      $plugins=array_merge($plugins,$DBInfo->myplugins);
+        $plugins=array_merge($plugins,$DBInfo->myplugins);
+
     return isset($plugins[$pname]) ? $plugins[$pname]:'';
-  }
-  if (!empty($DBInfo->include_path))
-    $dirs=explode(':',$DBInfo->include_path);
-  else
-    $dirs=array('.');
- 
-  foreach ($dirs as $dir) {
-    $handle= @opendir($dir.'/plugin');
-    if (!$handle) continue;
-    while ($file= readdir($handle)) {
-      if (is_dir($dir."/plugin/$file")) continue;
-      $name= substr($file,0,-4);
-      $plugins[strtolower($name)]= $name;
-    }
-  }
-
-  // get predefined macros list
-  $tmp = get_defined_functions();
-  foreach ($tmp['user'] as $u) {
-    if (preg_match('/^macro_(.*)$/', $u, $m)) {
-      $n = strtolower($m[1]);
-      if (!isset($plugins[$n])) $plugins[$n] = $m[1];
-    }
-  }
-
-  if (!empty($plugins))
-    $cp->update('plugins',$plugins);
-  if (!empty($DBInfo->myplugins) and is_array($DBInfo->myplugins))
-    $plugins=array_merge($plugins,$DBInfo->myplugins);
-
-  return isset($plugins[$pname]) ? $plugins[$pname]:'';
 }
 
 function getProcessor($pro_name) {
-  static $processors=array();
-  if (is_bool($pro_name) and $pro_name)
-    return sizeof($processors);
-  $prog = strtolower($pro_name);
-  if (!empty($processors)) return isset($processors[$prog]) ? $processors[$prog]:'';
-  global $DBInfo;
+    static $processors=array();
+    if (is_bool($pro_name) and $pro_name)
+        return sizeof($processors);
+    $prog = strtolower($pro_name);
+    if (!empty($processors)) return isset($processors[$prog]) ? $processors[$prog]:'';
+    global $DBInfo;
 
-  $cp = new Cache_text('settings', array('depth'=>0));
+    $cp = new Cache_text('settings', array('depth'=>0));
 
-  if ($processors=$cp->fetch('processors')) {
-    if (is_array($DBInfo->myprocessors))
-      $processors=array_merge($processors,$DBInfo->myprocessors);
-    return isset($processors[$prog]) ? $processors[$prog]:'';
-  }
-  if (!empty($DBInfo->include_path))
-    $dirs=explode(':',$DBInfo->include_path);
-  else
-    $dirs=array('.');
-
-  foreach ($dirs as $dir) {
-    $handle= @opendir($dir.'/plugin/processor');
-    if (!$handle) continue;
-    while ($file= readdir($handle)) {
-      if (is_dir($dir."/plugin/processor/$file")) continue;
-      $name= substr($file,0,-4);
-      $processors[strtolower($name)]= $name;
+    if ($processors=$cp->fetch('processors')) {
+        if (is_array($DBInfo->myprocessors))
+            $processors=array_merge($processors,$DBInfo->myprocessors);
+        return isset($processors[$prog]) ? $processors[$prog]:'';
     }
-  }
+    if (!empty($DBInfo->include_path))
+        $dirs=explode(':',$DBInfo->include_path);
+    else
+        $dirs=array('.');
 
-  if ($processors)
-    $cp->update('processors', $processors);
-  if (is_array($DBInfo->myprocessors))
-    $processors=array_merge($processors,$DBInfo->myprocessors);
+    foreach ($dirs as $dir) {
+        $handle= @opendir($dir.'/plugin/processor');
+        if (!$handle) continue;
+        while ($file= readdir($handle)) {
+            if (is_dir($dir."/plugin/processor/$file")) continue;
+            $name= substr($file,0,-4);
+            $processors[strtolower($name)]= $name;
+        }
+    }
 
-  return isset($processors[$prog]) ? $processors[$prog]:'';
+    if ($processors)
+        $cp->update('processors', $processors);
+    if (is_array($DBInfo->myprocessors))
+        $processors=array_merge($processors,$DBInfo->myprocessors);
+
+    return isset($processors[$prog]) ? $processors[$prog]:'';
 }
 
 function getFilter($filtername) {
-  static $filters=array();
-  if ($filters) return $filters[strtolower($filtername)];
-  global $DBInfo;
-  if (!empty($DBInfo->include_path))
-    $dirs=explode(':',$DBInfo->include_path);
-  else
-    $dirs=array('.');
+    static $filters=array();
+    if ($filters) return $filters[strtolower($filtername)];
+    global $DBInfo;
+    if (!empty($DBInfo->include_path))
+        $dirs=explode(':',$DBInfo->include_path);
+    else
+        $dirs=array('.');
 
-  foreach ($dirs as $dir) {
-    $handle= @opendir($dir.'/plugin/filter');
-    if (!$handle) continue;
-    while ($file= readdir($handle)) {
-      if (is_dir($dir."/plugin/filter/$file")) continue;
-      $name= substr($file,0,-4);
-      $filters[strtolower($name)]= $name;
+    foreach ($dirs as $dir) {
+        $handle= @opendir($dir.'/plugin/filter');
+        if (!$handle) continue;
+        while ($file= readdir($handle)) {
+            if (is_dir($dir."/plugin/filter/$file")) continue;
+            $name= substr($file,0,-4);
+            $filters[strtolower($name)]= $name;
+        }
     }
-  }
 
-  if (!empty($DBInfo->myfilters) and is_array($DBInfo->myfilters))
-    $filters=array_merge($filters,$DBInfo->myfilters);
+    if (!empty($DBInfo->myfilters) and is_array($DBInfo->myfilters))
+        $filters=array_merge($filters,$DBInfo->myfilters);
 
-  return $filters[strtolower($filtername)];
+    return $filters[strtolower($filtername)];
 }
 
 if (!function_exists ('bindtextdomain')) {
-  $_locale = array();
+    $_locale = array();
 
-  function gettext ($text) {
-    global $_locale,$locale;
-    if (sizeof($_locale) == 0) $_locale=&$locale;
-    if (!empty ($_locale[$text]))
-      return $_locale[$text];
-    return $text;
-  }
+    function gettext ($text) {
+        global $_locale,$locale;
+        if (sizeof($_locale) == 0) $_locale=&$locale;
+        if (!empty ($_locale[$text]))
+            return $_locale[$text];
+        return $text;
+    }
 
-  function _ ($text) {
-    return gettext($text);
-  }
+    function _ ($text) {
+        return gettext($text);
+    }
 }
 
 function _t ($text) {
-  return gettext($text);
+    return gettext($text);
 }
 
 function goto_form($action,$type="",$form="") {
-  if ($type==1) {
-    return "
+    if ($type==1) {
+        return "
 <form id='go' method='get' action='$action'>
 <div>
 <span title='TitleSearch'>
@@ -191,8 +191,8 @@ Contents</span>&nbsp;
 </div>
 </form>
 ";
-  } else if ($type==2) {
-    return "
+    } else if ($type==2) {
+        return "
 <form id='go' method='get' action='$action'>
 <div>
 <select name='action' style='width:60px'>
@@ -205,8 +205,8 @@ Contents</span>&nbsp;
 </div>
 </form>
 ";
-  } else if ($type==3) {
-    return "
+    } else if ($type==3) {
+        return "
 <form id='go' method='get' action='$action'>
 <table class='goto'>
 <tr><td nowrap='nowrap' style='width:220px'>
@@ -224,8 +224,8 @@ Contents(/)</span>&nbsp;
 </table>
 </form>
 ";
-  } else {
-    return <<<FORM
+    } else {
+        return <<<FORM
 <form id='go' method='get' action='$action' onsubmit="moin_submit(this);">
 <div>
 <input type='text' name='value' size='20' accesskey='s' class='goto' style='width:100px' />
@@ -234,16 +234,16 @@ Contents(/)</span>&nbsp;
 </div>
 </form>
 FORM;
-  }
+    }
 }
 
 function kbd_handler($prefix = '') {
-  global $Config;
+    global $Config;
 
-  if (!$Config['kbd_script']) return '';
-  $prefix ? null : $prefix = get_scriptname();
-  $sep= $Config['query_prefix'];
-  return <<<EOS
+    if (!$Config['kbd_script']) return '';
+    $prefix ? null : $prefix = get_scriptname();
+    $sep = $Config['query_prefix'];
+    return <<<EOS
 <script type="text/javascript">
 /*<![CDATA[*/
 url_prefix="$prefix";
@@ -256,34 +256,34 @@ EOS;
 }
 
 function getConfig($configfile, $options=array()) {
-  extract($options);
-  unset($key,$val,$options);
+    extract($options);
+    unset($key,$val,$options);
 
-  // ignore BOM and garbage characters
-  ob_start();
-  $myret = @include($configfile);
-  ob_get_contents();
-  ob_end_clean();
+    // ignore BOM and garbage characters
+    ob_start();
+    $myret = @include($configfile);
+    ob_get_contents();
+    ob_end_clean();
 
-  if ($myret === false) {
-    if (!empty($init)) {
-      $script= preg_replace("/\/([^\/]+)\.php$/",'/monisetup.php',
-               $_SERVER['SCRIPT_NAME']);
-      if (is_string($init)) $script .= '?init='.$init;
-      header("Location: $script");
-      exit;
-    }
-    return array();
-  } 
-  unset($configfile);
-  unset($myret);
+    if ($myret === false) {
+        if (!empty($init)) {
+            $script= preg_replace("/\/([^\/]+)\.php$/",'/monisetup.php',
+                    $_SERVER['SCRIPT_NAME']);
+            if (is_string($init)) $script .= '?init='.$init;
+            header("Location: $script");
+            exit;
+        }
+        return array();
+    } 
+    unset($configfile);
+    unset($myret);
 
-  $config=get_defined_vars();
+    $config=get_defined_vars();
 
-  if (isset($config['include_path']))
-    ini_set('include_path',ini_get('include_path').PATH_SEPARATOR.$config['include_path']);
+    if (isset($config['include_path']))
+        ini_set('include_path',ini_get('include_path').PATH_SEPARATOR.$config['include_path']);
 
-  return $config;
+    return $config;
 }
 
 class Formatter {
@@ -4367,823 +4367,823 @@ EOF;
 
 # setup the locale like as the phpwiki style
 function get_locales($default = 'en') {
-  $languages=array(
-    'en'=>array('en_US','english',''),
-    'fr'=>array('fr_FR','france',''),
-    'ko'=>array('ko_KR','korean',''),
-  );
-  if (empty($_SERVER['HTTP_ACCEPT_LANGUAGE']))
+    $languages=array(
+            'en'=>array('en_US','english',''),
+            'fr'=>array('fr_FR','france',''),
+            'ko'=>array('ko_KR','korean',''),
+            );
+    if (empty($_SERVER['HTTP_ACCEPT_LANGUAGE']))
+        return array($languages[$default][0]);
+    $lang= strtolower($_SERVER['HTTP_ACCEPT_LANGUAGE']);
+    $lang= strtr($lang,'_','-');
+    $langs=explode(',',preg_replace(array("/;[^;,]+/","/\-[a-z]+/"),'',$lang));
+    if ($languages[$langs[0]]) return array($languages[$langs[0]][0]);
     return array($languages[$default][0]);
-  $lang= strtolower($_SERVER['HTTP_ACCEPT_LANGUAGE']);
-  $lang= strtr($lang,'_','-');
-  $langs=explode(',',preg_replace(array("/;[^;,]+/","/\-[a-z]+/"),'',$lang));
-  if ($languages[$langs[0]]) return array($languages[$langs[0]][0]);
-  return array($languages[$default][0]);
 }
 
 function set_locale($lang, $charset = '', $default = 'en') {
-  $supported=array(
-    'en_US'=>array('ISO-8859-1'),
-    'fr_FR'=>array('ISO-8859-1'),
-    'ko_KR'=>array('EUC-KR','UHC'),
-  );
-  $charset= strtoupper($charset);
-  if ($lang == 'auto') {
-    # get broswer's settings
-    $langs = get_locales($default);
-    $lang = $langs[0];
-  }
-  // check server charset
-  $server_charset = '';
-  if (function_exists('nl_langinfo'))
-    $server_charset= nl_langinfo(CODESET);
-
-  if ($charset == 'UTF-8') {
-    $lang.= '.'.$charset;
-  } else {
-    if ($supported[$lang] && in_array($charset,$supported[$lang])) {
-      return $lang.'.'.$charset;
-    } else {
-      return $default;
+    $supported=array(
+            'en_US'=>array('ISO-8859-1'),
+            'fr_FR'=>array('ISO-8859-1'),
+            'ko_KR'=>array('EUC-KR','UHC'),
+            );
+    $charset= strtoupper($charset);
+    if ($lang == 'auto') {
+        # get broswer's settings
+        $langs = get_locales($default);
+        $lang = $langs[0];
     }
-  }
-  return $lang;
+    // check server charset
+    $server_charset = '';
+    if (function_exists('nl_langinfo'))
+        $server_charset= nl_langinfo(CODESET);
+
+    if ($charset == 'UTF-8') {
+        $lang.= '.'.$charset;
+    } else {
+        if ($supported[$lang] && in_array($charset,$supported[$lang])) {
+            return $lang.'.'.$charset;
+        } else {
+            return $default;
+        }
+    }
+    return $lang;
 }
 
 # get the pagename
 function get_pagename() {
-  // get PATH_INFO or parse REQUEST_URI
-  $path_info = get_pathinfo();
+    // get PATH_INFO or parse REQUEST_URI
+    $path_info = get_pathinfo();
 
-  if (isset($path_info[1]) && $path_info[0] == '/') {
-    // e.g.) /FrontPage => FrontPage
-    $pagename = substr($path_info, 1);
-  } else if (!empty($_SERVER['QUERY_STRING'])) {
-    $goto=isset($_POST['goto'][0]) ? $_POST['goto']:(isset($_GET['goto'][0]) ? $_GET['goto'] : '');
-    if (isset($goto[0])) $pagename=$goto;
-    else {
-      parse_str($_SERVER['QUERY_STRING'], $arr);
-      $keys = array_keys($arr);
-      if (!empty($arr['action'])) {
-        if ($arr['action'] == 'edit') {
-          if (!empty($arr['value'])) $pagename = $arr['value'];
-        } else if ($arr['action'] == 'login') {
-          $pagename = 'UserPreferences';
+    if (isset($path_info[1]) && $path_info[0] == '/') {
+        // e.g.) /FrontPage => FrontPage
+        $pagename = substr($path_info, 1);
+    } else if (!empty($_SERVER['QUERY_STRING'])) {
+        $goto=isset($_POST['goto'][0]) ? $_POST['goto']:(isset($_GET['goto'][0]) ? $_GET['goto'] : '');
+        if (isset($goto[0])) $pagename=$goto;
+        else {
+            parse_str($_SERVER['QUERY_STRING'], $arr);
+            $keys = array_keys($arr);
+            if (!empty($arr['action'])) {
+                if ($arr['action'] == 'edit') {
+                    if (!empty($arr['value'])) $pagename = $arr['value'];
+                } else if ($arr['action'] == 'login') {
+                    $pagename = 'UserPreferences';
+                }
+                unset($arr['action']);
+            }
+            foreach ($arr as $k=>$v)
+                if (empty($v)) $pagename = $k;
         }
-        unset($arr['action']);
-      }
-      foreach ($arr as $k=>$v)
-        if (empty($v)) $pagename = $k;
     }
-  }
-  if (isset($pagename[0])) {
-    $pagename=_stripslashes($pagename);
+    if (isset($pagename[0])) {
+        $pagename=_stripslashes($pagename);
 
-    if ($pagename[0]=='~' and ($p=strpos($pagename,"/")))
-      $pagename=substr($pagename,1,$p-1)."~".substr($pagename,$p+1);
-  }
-  return $pagename;
+        if ($pagename[0]=='~' and ($p=strpos($pagename,"/")))
+            $pagename=substr($pagename,1,$p-1)."~".substr($pagename,$p+1);
+    }
+    return $pagename;
 }
 
 function init_requests(&$options) {
-  global $DBInfo;
+    global $DBInfo;
 
-  if (!empty($DBInfo->user_class)) {
-    include_once('plugin/user/'.$DBInfo->user_class.'.php');
-    $class = 'User_'.$DBInfo->user_class;
-    $user = new $class();
-  } else {
-    $user = new WikiUser();
-  }
-
-  $udb=new UserDB($DBInfo);
-  $DBInfo->udb=$udb;
-
-  if (!empty($DBInfo->trail)) // read COOKIE trailer
-    $options['trail']=trim($user->trail) ? $user->trail:'';
-
-  if ($user->id != 'Anonymous') {
-    $user->info = $udb->getInfo($user->id); // read user info
-    $test = $udb->checkUser($user); # is it valid user ?
-    if ($test == 1) {
-      // fail to check ticket
-      // check user group
-      if ($DBInfo->login_strict > 0 ) {
-        # auto logout
-        $options['header'] = $user->unsetCookie();
-      } else if ($DBInfo->login_strict < 0 ) {
-        $options['msg'] = _("Someone logged in at another place !");
-      }
+    if (!empty($DBInfo->user_class)) {
+        include_once('plugin/user/'.$DBInfo->user_class.'.php');
+        $class = 'User_'.$DBInfo->user_class;
+        $user = new $class();
     } else {
-      // check group
-      $user->checkGroup();
+        $user = new WikiUser();
     }
-  } else
-    // read anonymous user IP info.
-    $user->info = $udb->getInfo('Anonymous');
 
-  $options['id']=$user->id;
-  $DBInfo->user=$user;
+    $udb=new UserDB($DBInfo);
+    $DBInfo->udb=$udb;
 
-  // check is_mobile_func
-  $is_mobile_func = !empty($DBInfo->is_mobile_func) ? $DBInfo->is_mobile_func : 'is_mobile';
-  if (!function_exists($is_mobile_func))
-    $is_mobile_func = 'is_mobile';
-  $options['is_mobile'] = $is_mobile = $is_mobile_func();
+    if (!empty($DBInfo->trail)) // read COOKIE trailer
+        $options['trail']=trim($user->trail) ? $user->trail:'';
 
-  # MoniWiki theme
-  if ((empty($DBInfo->theme) or isset($_GET['action'])) and isset($_GET['theme'])) {
-    // check theme
-    if (preg_match('@^[a-zA-Z0-9_-]+$@', $_GET['theme']))
-      $theme = $_GET['theme'];
-  } else {
-    if ($is_mobile) {
-      if (isset($_GET['mobile'])) {
-        if (empty($_GET['mobile'])) {
-          setcookie('desktop', 1, time()+60*60*24*30, get_scriptname());
-          $_COOKIE['desktop'] = 1;
+    if ($user->id != 'Anonymous') {
+        $user->info = $udb->getInfo($user->id); // read user info
+        $test = $udb->checkUser($user); # is it valid user ?
+        if ($test == 1) {
+            // fail to check ticket
+            // check user group
+            if ($DBInfo->login_strict > 0 ) {
+                # auto logout
+                $options['header'] = $user->unsetCookie();
+            } else if ($DBInfo->login_strict < 0 ) {
+                $options['msg'] = _("Someone logged in at another place !");
+            }
         } else {
-          setcookie('desktop', 0, time()-60*60*24*30, get_scriptname());
-          unset($_COOKIE['desktop']);
+            // check group
+            $user->checkGroup();
         }
-      }
+    } else
+        // read anonymous user IP info.
+        $user->info = $udb->getInfo('Anonymous');
+
+    $options['id']=$user->id;
+    $DBInfo->user=$user;
+
+    // check is_mobile_func
+    $is_mobile_func = !empty($DBInfo->is_mobile_func) ? $DBInfo->is_mobile_func : 'is_mobile';
+    if (!function_exists($is_mobile_func))
+        $is_mobile_func = 'is_mobile';
+    $options['is_mobile'] = $is_mobile = $is_mobile_func();
+
+    # MoniWiki theme
+    if ((empty($DBInfo->theme) or isset($_GET['action'])) and isset($_GET['theme'])) {
+        // check theme
+        if (preg_match('@^[a-zA-Z0-9_-]+$@', $_GET['theme']))
+            $theme = $_GET['theme'];
+    } else {
+        if ($is_mobile) {
+            if (isset($_GET['mobile'])) {
+                if (empty($_GET['mobile'])) {
+                    setcookie('desktop', 1, time()+60*60*24*30, get_scriptname());
+                    $_COOKIE['desktop'] = 1;
+                } else {
+                    setcookie('desktop', 0, time()-60*60*24*30, get_scriptname());
+                    unset($_COOKIE['desktop']);
+                }
+            }
+        }
+        if (isset($_COOKIE['desktop'])) {
+            $DBInfo->metatags_extra = '';
+            if (!empty($DBInfo->theme_css))
+                $theme = $DBInfo->theme;
+        } else if ($is_mobile or !empty($DBInfo->force_mobile)) {
+            if (!empty($DBInfo->mobile_theme))
+                $theme = $DBInfo->mobile_theme;
+            if (!empty($DBInfo->mobile_menu))
+                $DBInfo->menu = $DBInfo->mobile_menu;
+            $DBInfo->use_wikiwyg = 0; # disable wikiwyg
+        } else if ($DBInfo->theme_css) {
+            $theme=$DBInfo->theme;
+        }
     }
-    if (isset($_COOKIE['desktop'])) {
-      $DBInfo->metatags_extra = '';
-      if (!empty($DBInfo->theme_css))
-        $theme = $DBInfo->theme;
-    } else if ($is_mobile or !empty($DBInfo->force_mobile)) {
-      if (!empty($DBInfo->mobile_theme))
-        $theme = $DBInfo->mobile_theme;
-      if (!empty($DBInfo->mobile_menu))
-        $DBInfo->menu = $DBInfo->mobile_menu;
-      $DBInfo->use_wikiwyg = 0; # disable wikiwyg
-    } else if ($DBInfo->theme_css) {
-      $theme=$DBInfo->theme;
+    if (!empty($theme)) $options['theme']=$theme;
+
+    if ($options['id'] != 'Anonymous') {
+        $options['css_url']=!empty($user->info['css_url']) ? $user->info['css_url'] : '';
+        $options['quicklinks']=!empty($user->info['quicklinks']) ? $user->info['quicklinks'] : '';
+        $options['tz_offset']=!empty($user->info['tz_offset']) ? $user->info['tz_offset'] : date('Z');
+        if (empty($theme)) $options['theme'] = $theme = !empty($user->info['theme']) ? $user->info['theme'] : '';
+    } else {
+        $options['css_url']=$user->css;
+        $options['tz_offset']=$user->tz_offset;
+        if (empty($theme)) $options['theme']=$theme=$user->theme;
     }
-  }
-  if (!empty($theme)) $options['theme']=$theme;
 
-if ($options['id'] != 'Anonymous') {
-  $options['css_url']=!empty($user->info['css_url']) ? $user->info['css_url'] : '';
-  $options['quicklinks']=!empty($user->info['quicklinks']) ? $user->info['quicklinks'] : '';
-  $options['tz_offset']=!empty($user->info['tz_offset']) ? $user->info['tz_offset'] : date('Z');
-  if (empty($theme)) $options['theme'] = $theme = !empty($user->info['theme']) ? $user->info['theme'] : '';
-} else {
-  $options['css_url']=$user->css;
-  $options['tz_offset']=$user->tz_offset;
-  if (empty($theme)) $options['theme']=$theme=$user->theme;
-}
+    if (!$options['theme']) $options['theme']=$theme=$DBInfo->theme;
 
-if (!$options['theme']) $options['theme']=$theme=$DBInfo->theme;
+    if ($theme and ($DBInfo->theme_css or !$options['css_url'])) {
+        $css = is_string($DBInfo->theme_css) ? $DBInfo->theme_css : 'default.css';
+        $options['css_url']=(!empty($DBInfo->themeurl) ? $DBInfo->themeurl:$DBInfo->url_prefix)."/theme/$theme/css/$css";
+    }
 
-  if ($theme and ($DBInfo->theme_css or !$options['css_url'])) {
-    $css = is_string($DBInfo->theme_css) ? $DBInfo->theme_css : 'default.css';
-    $options['css_url']=(!empty($DBInfo->themeurl) ? $DBInfo->themeurl:$DBInfo->url_prefix)."/theme/$theme/css/$css";
-  }
+    $options['pagename']=get_pagename();
+    // check the validity of a given page name for UTF-8 case
+    if (strtolower($DBInfo->charset) == 'utf-8') {
+        if (!preg_match('//u', $options['pagename']))
+            $options['pagename'] = ''; // invalid pagename
+    }
 
-  $options['pagename']=get_pagename();
-  // check the validity of a given page name for UTF-8 case
-  if (strtolower($DBInfo->charset) == 'utf-8') {
-    if (!preg_match('//u', $options['pagename']))
-      $options['pagename'] = ''; // invalid pagename
-  }
-
-  if ($user->id != 'Anonymous' and !empty($DBInfo->use_scrap)) {
-    $pages = explode("\t",$user->info['scrapped_pages']);
-    $tmp = array_flip($pages);
-    if (isset($tmp[$options['pagename']]))
-      $options['scrapped']=1;
-    else
-      $options['scrapped']=0;
-  }
+    if ($user->id != 'Anonymous' and !empty($DBInfo->use_scrap)) {
+        $pages = explode("\t",$user->info['scrapped_pages']);
+        $tmp = array_flip($pages);
+        if (isset($tmp[$options['pagename']]))
+            $options['scrapped']=1;
+        else
+            $options['scrapped']=0;
+    }
 }
 
 function init_locale($lang, $domain = 'moniwiki', $init = false) {
-  global $Config,$_locale;
-  if (isset($_locale)) {
-    if (!@include_once('locale/'.$lang.'/LC_MESSAGES/'.$domain.'.php'))
-      @include_once('locale/'.substr($lang,0,2).'/LC_MESSAGES/'.$domain.'.php');
-  } else if (substr($lang,0,2) == 'en') {
-    $test=setlocale(LC_ALL, $lang);
-  } else {
-    if (!empty($Config['include_path'])) $dirs=explode(':',$Config['include_path']);
-    else $dirs=array('.');
+    global $Config,$_locale;
+    if (isset($_locale)) {
+        if (!@include_once('locale/'.$lang.'/LC_MESSAGES/'.$domain.'.php'))
+            @include_once('locale/'.substr($lang,0,2).'/LC_MESSAGES/'.$domain.'.php');
+    } else if (substr($lang,0,2) == 'en') {
+        $test=setlocale(LC_ALL, $lang);
+    } else {
+        if (!empty($Config['include_path'])) $dirs=explode(':',$Config['include_path']);
+        else $dirs=array('.');
 
-    while ($Config['use_local_translation']) {
-      $langdir=$lang;
-      if(getenv("OS")=="Windows_NT") $langdir=substr($lang,0,2);
-      # gettext cache workaround
-      # http://kr2.php.net/manual/en/function.gettext.php#58310
-      $ldir=$Config['cache_dir']."/locale/$langdir/LC_MESSAGES/";
+        while ($Config['use_local_translation']) {
+            $langdir=$lang;
+            if(getenv("OS")=="Windows_NT") $langdir=substr($lang,0,2);
+            # gettext cache workaround
+            # http://kr2.php.net/manual/en/function.gettext.php#58310
+            $ldir=$Config['cache_dir']."/locale/$langdir/LC_MESSAGES/";
 
-      $tmp = '';
-      $fp = @fopen($ldir.'md5sum', 'r');
-      if (is_resource($fp)) {
-        $tmp = '-'.trim(fgets($fp,1024));
-        fclose($fp);
-      } else {
-        $init = 1;
-      }
+            $tmp = '';
+            $fp = @fopen($ldir.'md5sum', 'r');
+            if (is_resource($fp)) {
+                $tmp = '-'.trim(fgets($fp,1024));
+                fclose($fp);
+            } else {
+                $init = 1;
+            }
 
-      if ($init and !file_exists($ldir.$domain.$tmp.'mo')) {
-        include_once(dirname(__FILE__).'/plugin/msgtrans.php');
-        macro_msgtrans(null,$lang,array('init'=>1));
-      } else {
-        $domain=$domain.$tmp;
-        array_unshift($dirs,$Config['cache_dir']);
-      }
-      break;
+            if ($init and !file_exists($ldir.$domain.$tmp.'mo')) {
+                include_once(dirname(__FILE__).'/plugin/msgtrans.php');
+                macro_msgtrans(null,$lang,array('init'=>1));
+            } else {
+                $domain=$domain.$tmp;
+                array_unshift($dirs,$Config['cache_dir']);
+            }
+            break;
+        }
+
+        $test=setlocale(LC_ALL, $lang);
+        foreach ($dirs as $dir) {
+            $ldir=$dir.'/locale';
+            if (is_dir($ldir)) {
+                bindtextdomain($domain, $ldir);
+                textdomain($domain);
+                break;
+            }
+        }
+        if (!empty($Config['set_lang'])) putenv("LANG=".$lang);
+        if (function_exists('bind_textdomain_codeset'))
+            bind_textdomain_codeset ($domain, $Config['charset']);
     }
-
-    $test=setlocale(LC_ALL, $lang);
-    foreach ($dirs as $dir) {
-      $ldir=$dir.'/locale';
-      if (is_dir($ldir)) {
-        bindtextdomain($domain, $ldir);
-        textdomain($domain);
-        break;
-      }
-    }
-    if (!empty($Config['set_lang'])) putenv("LANG=".$lang);
-    if (function_exists('bind_textdomain_codeset'))
-      bind_textdomain_codeset ($domain, $Config['charset']);
-  }
 }
 
 function get_frontpage($lang) {
-  global $Config;
+    global $Config;
 
-  $lcid=substr(strtok($lang,'_'),0,2);
-  return !empty($Config['frontpages'][$lcid]) ? $Config['frontpages'][$lcid]:$Config['frontpage'];
+    $lcid=substr(strtok($lang,'_'),0,2);
+    return !empty($Config['frontpages'][$lcid]) ? $Config['frontpages'][$lcid]:$Config['frontpage'];
 }
 
 function wiki_main($options) {
-  global $DBInfo,$Config;
-  $pagename=isset($options['pagename'][0]) ? $options['pagename']: $DBInfo->frontpage;
+    global $DBInfo,$Config;
+    $pagename=isset($options['pagename'][0]) ? $options['pagename']: $DBInfo->frontpage;
 
-  # get primary variables
-  if (isset($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD']=='POST') {
-    // reset some reserved variables
-    if (isset($_POST['retstr'])) unset($_POST['retstr']);
-    if (isset($_POST['header'])) unset($_POST['header']);
+    # get primary variables
+    if (isset($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD']=='POST') {
+        // reset some reserved variables
+        if (isset($_POST['retstr'])) unset($_POST['retstr']);
+        if (isset($_POST['header'])) unset($_POST['header']);
 
-    # hack for TWiki plugin
-    $action = '';
-    if (!empty($_FILES['filepath']['name'])) $action='draw';
-    if (isset($GLOBALS['HTTP_RAW_POST_DATA'])) {
-      # hack for Oekaki: PageName----action----filename
-      list($pagename,$action,$value)=explode('----',$pagename,3);
-      $options['value']=$value;
-    } else {
-      $value=!empty($_POST['value']) ? $_POST['value'] : '';
-      $action=!empty($_POST['action']) ? $_POST['action'] : $action;
+        # hack for TWiki plugin
+        $action = '';
+        if (!empty($_FILES['filepath']['name'])) $action='draw';
+        if (isset($GLOBALS['HTTP_RAW_POST_DATA'])) {
+            # hack for Oekaki: PageName----action----filename
+            list($pagename,$action,$value)=explode('----',$pagename,3);
+            $options['value']=$value;
+        } else {
+            $value=!empty($_POST['value']) ? $_POST['value'] : '';
+            $action=!empty($_POST['action']) ? $_POST['action'] : $action;
 
-      if (empty($action)) {
-        $dum=explode('----',$pagename,3);
-        if (isset($dum[0][0]) && isset($dum[1][0])) {
-          $pagename=trim($dum[0]);
-          $action=trim($dum[1]);
-          $value=isset($dum[2][0]) ? $dum[2] : '';
+            if (empty($action)) {
+                $dum=explode('----',$pagename,3);
+                if (isset($dum[0][0]) && isset($dum[1][0])) {
+                    $pagename=trim($dum[0]);
+                    $action=trim($dum[1]);
+                    $value=isset($dum[2][0]) ? $dum[2] : '';
+                }
+            }
         }
-      }
-    }
-    $goto=!empty($_POST['goto']) ? $_POST['goto'] : '';
-    $popup=!empty($_POST['popup']) ? 1 : 0;
+        $goto=!empty($_POST['goto']) ? $_POST['goto'] : '';
+        $popup=!empty($_POST['popup']) ? 1 : 0;
 
-    // ignore invalid POST actions
-    if (empty($goto) and empty($action)) {
-      header('Status: 405 Not allowed');
-      return;
-    }
-  } else {
-    // reset some reserved variables
-    if (isset($_GET['retstr'])) unset($_GET['retstr']);
-    if (isset($_GET['header'])) unset($_GET['header']);
-
-    $action=!empty($_GET['action']) ? $_GET['action'] : '';
-    $value=isset($_GET['value'][0]) ? $_GET['value'] : '';
-    $goto=isset($_GET['goto'][0]) ? $_GET['goto'] : '';
-    $rev=!empty($_GET['rev']) ? $_GET['rev'] : '';
-    if ($options['id'] == 'Anonymous')
-      $refresh = 0;
-    else
-      $refresh = !empty($_GET['refresh']) ? $_GET['refresh'] : '';
-    $popup=!empty($_GET['popup']) ? 1 : 0;
-  }
-  // parse action
-  // action=foobar, action=foobar/macro, action=foobar/json etc.
-  $full_action=$action;
-  $action_mode='';
-  if (($p=strpos($action,'/'))!==false) {
-    $full_action=strtr($action,'/','-');
-    $action_mode=substr($action,$p+1);
-    $action=substr($action,0,$p);
-  }
-
-  $options['page']=$pagename;
-  $options['action'] = &$action;
-  $reserved = array('call', 'prefix');
-  foreach ($reserved as $k)
-    unset($options[$k]); // unset all reserved
-
-  // check pagename length
-  $key = $DBInfo->pageToKeyname($pagename);
-  if (!empty($options['action']) && strlen($key) > 255) {
-    $i = 252; // 252 + reserved 3 (.??) = 255
-
-    $newname = $DBInfo->keyToPagename(substr($key, 0, 252));
-    $j = mb_strlen($newname, $Config['charset']);
-    $j--;
-    do {
-      $newname = mb_substr($pagename, 0, $j, $Config['charset']);
-      $key = $DBInfo->pageToKeyname($newname);
-    } while (strlen($key) > 248 && --$j > 0);
-
-    $options['page'] = $newname;
-    $options['orig_pagename'] = $pagename; // original page name
-    $pagename = $newname;
-  } else {
-    $options['orig_pagename'] = '';
-  }
-
-  if (function_exists('local_pre_check'))
-    local_pre_check($action, $options);
-
-  // load ruleset
-  if (!empty($Config['config_ruleset'])) {
-    $ruleset_file = 'config/ruleset.'.$Config['config_ruleset'].'.php';
-    if (file_exists($ruleset_file)) {
-      $ruleset = load_ruleset($ruleset_file);
-
-      $Config['ruleset'] = $ruleset;
-    }
-
-    // is it robot ?
-    if (!empty($ruleset['allowedrobot'])) {
-      if (empty($_SERVER['HTTP_USER_AGENT'])) {
-        $options['is_robot'] = 1;
-      } else {
-        $options['is_robot'] = is_allowed_robot($ruleset['allowedrobot'], $_SERVER['HTTP_USER_AGENT']);
-      }
-    }
-
-    // setup staff members
-    if (!empty($ruleset['staff'])) {
-      $DBInfo->members = array_merge($DBInfo->members, $ruleset['staff']);
-    }
-  }
-
-  $page = $DBInfo->getPage($pagename);
-  $page->is_static = false; // FIXME
-
-  $pis = array();
-
-  // get PI cache
-  if ($page->exists()) {
-    $page->pi = $pis = $page->get_instructions('', array('refresh'=>$refresh));
-
-    // set some PIs for robot
-    if (!empty($options['is_robot'])) {
-      $DBInfo->use_sectionedit = 0; # disable section edit
-      $page->is_static = true;
-    } else if ($_SERVER['REQUEST_METHOD'] == 'GET' or $_SERVER['REQUEST_METHOD'] == 'HEAD') {
-      if (empty($action) and empty($refresh))
-        $page->is_static = empty($pis['#nocache']) && empty($pis['#dynamic']);
-    }
-  }
-
-  // HEAD support for robots
-  if (empty($action) and !empty($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD'] == 'HEAD') {
-    if (!$page->exists()) {
-      header("HTTP/1.1 404 Not found");
-      header("Status: 404 Not found");
+        // ignore invalid POST actions
+        if (empty($goto) and empty($action)) {
+            header('Status: 405 Not allowed');
+            return;
+        }
     } else {
-      if ($page->is_static or is_static_action($options)) {
+        // reset some reserved variables
+        if (isset($_GET['retstr'])) unset($_GET['retstr']);
+        if (isset($_GET['header'])) unset($_GET['header']);
+
+        $action=!empty($_GET['action']) ? $_GET['action'] : '';
+        $value=isset($_GET['value'][0]) ? $_GET['value'] : '';
+        $goto=isset($_GET['goto'][0]) ? $_GET['goto'] : '';
+        $rev=!empty($_GET['rev']) ? $_GET['rev'] : '';
+        if ($options['id'] == 'Anonymous')
+            $refresh = 0;
+        else
+            $refresh = !empty($_GET['refresh']) ? $_GET['refresh'] : '';
+        $popup=!empty($_GET['popup']) ? 1 : 0;
+    }
+    // parse action
+    // action=foobar, action=foobar/macro, action=foobar/json etc.
+    $full_action=$action;
+    $action_mode='';
+    if (($p=strpos($action,'/'))!==false) {
+        $full_action=strtr($action,'/','-');
+        $action_mode=substr($action,$p+1);
+        $action=substr($action,0,$p);
+    }
+
+    $options['page']=$pagename;
+    $options['action'] = &$action;
+    $reserved = array('call', 'prefix');
+    foreach ($reserved as $k)
+        unset($options[$k]); // unset all reserved
+
+    // check pagename length
+    $key = $DBInfo->pageToKeyname($pagename);
+    if (!empty($options['action']) && strlen($key) > 255) {
+        $i = 252; // 252 + reserved 3 (.??) = 255
+
+        $newname = $DBInfo->keyToPagename(substr($key, 0, 252));
+        $j = mb_strlen($newname, $Config['charset']);
+        $j--;
+        do {
+            $newname = mb_substr($pagename, 0, $j, $Config['charset']);
+            $key = $DBInfo->pageToKeyname($newname);
+        } while (strlen($key) > 248 && --$j > 0);
+
+        $options['page'] = $newname;
+        $options['orig_pagename'] = $pagename; // original page name
+        $pagename = $newname;
+    } else {
+        $options['orig_pagename'] = '';
+    }
+
+    if (function_exists('local_pre_check'))
+        local_pre_check($action, $options);
+
+    // load ruleset
+    if (!empty($Config['config_ruleset'])) {
+        $ruleset_file = 'config/ruleset.'.$Config['config_ruleset'].'.php';
+        if (file_exists($ruleset_file)) {
+            $ruleset = load_ruleset($ruleset_file);
+
+            $Config['ruleset'] = $ruleset;
+        }
+
+        // is it robot ?
+        if (!empty($ruleset['allowedrobot'])) {
+            if (empty($_SERVER['HTTP_USER_AGENT'])) {
+                $options['is_robot'] = 1;
+            } else {
+                $options['is_robot'] = is_allowed_robot($ruleset['allowedrobot'], $_SERVER['HTTP_USER_AGENT']);
+            }
+        }
+
+        // setup staff members
+        if (!empty($ruleset['staff'])) {
+            $DBInfo->members = array_merge($DBInfo->members, $ruleset['staff']);
+        }
+    }
+
+    $page = $DBInfo->getPage($pagename);
+    $page->is_static = false; // FIXME
+
+    $pis = array();
+
+    // get PI cache
+    if ($page->exists()) {
+        $page->pi = $pis = $page->get_instructions('', array('refresh'=>$refresh));
+
+        // set some PIs for robot
+        if (!empty($options['is_robot'])) {
+            $DBInfo->use_sectionedit = 0; # disable section edit
+                $page->is_static = true;
+        } else if ($_SERVER['REQUEST_METHOD'] == 'GET' or $_SERVER['REQUEST_METHOD'] == 'HEAD') {
+            if (empty($action) and empty($refresh))
+                $page->is_static = empty($pis['#nocache']) && empty($pis['#dynamic']);
+        }
+    }
+
+    // HEAD support for robots
+    if (empty($action) and !empty($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD'] == 'HEAD') {
+        if (!$page->exists()) {
+            header("HTTP/1.1 404 Not found");
+            header("Status: 404 Not found");
+        } else {
+            if ($page->is_static or is_static_action($options)) {
+                $mtime = $page->mtime();
+                $etag = $page->etag($options);
+                $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
+                header('Last-Modified: '.$lastmod);
+                if (!empty($action)) {
+                    $etag = '"'.$etag.'"';
+                    header('ETag: '.$etag);
+                }
+
+                // checksum request
+                if (isset($_SERVER['HTTP_X_GET_CHECKSUM']))
+                    header('X-Checksum: md5-'. md5($page->get_raw_body()));
+            }
+        }
+        return;
+    }
+
+    if (is_static_action($options) or
+            (!empty($DBInfo->use_conditional_get) and $page->is_static)) {
         $mtime = $page->mtime();
         $etag = $page->etag($options);
         $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
-        header('Last-Modified: '.$lastmod);
-        if (!empty($action)) {
-          $etag = '"'.$etag.'"';
-          header('ETag: '.$etag);
+        $need = http_need_cond_request($mtime, $lastmod, $etag);
+        if (!$need) {
+            @ob_end_clean();
+            $headers = array();
+            $headers[] = 'HTTP/1.0 304 Not Modified';
+            $headers[] = 'Last-Modified: '.$lastmod;
+
+            foreach ($headers as $header) header($header);
+            return;
         }
-
-        // checksum request
-        if (isset($_SERVER['HTTP_X_GET_CHECKSUM']))
-          header('X-Checksum: md5-'. md5($page->get_raw_body()));
-      }
-    }
-    return;
-  }
-
-  if (is_static_action($options) or
-      (!empty($DBInfo->use_conditional_get) and $page->is_static)) {
-    $mtime = $page->mtime();
-    $etag = $page->etag($options);
-    $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
-    $need = http_need_cond_request($mtime, $lastmod, $etag);
-    if (!$need) {
-      @ob_end_clean();
-      $headers = array();
-      $headers[] = 'HTTP/1.0 304 Not Modified';
-      $headers[] = 'Last-Modified: '.$lastmod;
-
-      foreach ($headers as $header) header($header);
-      return;
-    }
-  }
-
-  $formatter = new Formatter($page,$options);
-
-  $formatter->refresh=!empty($refresh) ? $refresh : '';
-  $formatter->popup=!empty($popup) ? $popup : '';
-  $formatter->tz_offset=$options['tz_offset'];
-
-  // check blocklist/whitelist for block_actions
-  $act = strtolower($action);
-  while (!empty($DBInfo->block_actions) && !empty($ruleset) && in_array($act, $DBInfo->block_actions)) {
-    require_once 'lib/checkip.php';
-
-    // check whitelist
-    if (isset($ruleset['whitelist']) && check_ip($ruleset['whitelist'], $_SERVER['REMOTE_ADDR'])) {
-      break;
     }
 
-    $res = null;
-    // check blacklist
-    if ((isset($ruleset['blacklist']) &&
-        check_ip($ruleset['blacklist'], $_SERVER['REMOTE_ADDR'])) ||
-        (isset($ruleset['blacklist.ranges']) &&
-        search_network($ruleset['blacklist.ranges'], $_SERVER['REMOTE_ADDR'])))
-    {
-      $res = true;
-    } else if (!empty($DBInfo->use_dynamic_blacklist)) {
-      require_once('plugin/ipinfo.php');
-      $blacklist = get_cached_temporary_blacklist();
-      $retval = array();
-      $ret = array('retval'=>&$retval);
-      $res = search_network($blacklist, $_SERVER['REMOTE_ADDR'], $ret);
+    $formatter = new Formatter($page,$options);
 
-      if ($res !== false) {
-        // retrieve found
-        $ac = new Cache_Text('ipblock');
-        $info = $ac->fetch($retval, 0, $ret);
-        if ($info !== false) {
-          if (!$info['suspended']) // whitelist IP
+    $formatter->refresh=!empty($refresh) ? $refresh : '';
+    $formatter->popup=!empty($popup) ? $popup : '';
+    $formatter->tz_offset=$options['tz_offset'];
+
+    // check blocklist/whitelist for block_actions
+    $act = strtolower($action);
+    while (!empty($DBInfo->block_actions) && !empty($ruleset) && in_array($act, $DBInfo->block_actions)) {
+        require_once 'lib/checkip.php';
+
+        // check whitelist
+        if (isset($ruleset['whitelist']) && check_ip($ruleset['whitelist'], $_SERVER['REMOTE_ADDR'])) {
             break;
-          $res = true;
-        } else {
-          $ac->remove($retval); // expired IP entry.
-          $res = false;
         }
-      }
-    }
 
-    // show warning message
-    if ($res) {
-      $options['notice']=_("Your IP is in the blacklist");
-      $options['msg']=_("Please contact WikiMasters");
-      $options['msgtype'] = 'warn';
+        $res = null;
+        // check blacklist
+        if ((isset($ruleset['blacklist']) &&
+                    check_ip($ruleset['blacklist'], $_SERVER['REMOTE_ADDR'])) ||
+                (isset($ruleset['blacklist.ranges']) &&
+                 search_network($ruleset['blacklist.ranges'], $_SERVER['REMOTE_ADDR'])))
+        {
+            $res = true;
+        } else if (!empty($DBInfo->use_dynamic_blacklist)) {
+            require_once('plugin/ipinfo.php');
+            $blacklist = get_cached_temporary_blacklist();
+            $retval = array();
+            $ret = array('retval'=>&$retval);
+            $res = search_network($blacklist, $_SERVER['REMOTE_ADDR'], $ret);
 
-      if (!empty($DBInfo->edit_actions) and in_array($act, $DBInfo->edit_actions))
-        $options['action'] = $action = 'edit';
-      else if ($act != 'edit')
-        $options['action'] = $action = 'show';
-      break;
-    }
+            if ($res !== false) {
+                // retrieve found
+                $ac = new Cache_Text('ipblock');
+                $info = $ac->fetch($retval, 0, $ret);
+                if ($info !== false) {
+                    if (!$info['suspended']) // whitelist IP
+                        break;
+                    $res = true;
+                } else {
+                    $ac->remove($retval); // expired IP entry.
+                    $res = false;
+                }
+            }
+        }
 
-    // check kiwirian
-    if (isset($ruleset['kiwirian']) && in_array($options['id'], $ruleset['kiwirian'])) {
-      $options['title']=_("You are blocked in this wiki");
-      $options['msg']=_("Please contact WikiMasters");
-      do_invalid($formatter,$options);
-      return false;
-    }
+        // show warning message
+        if ($res) {
+            $options['notice']=_("Your IP is in the blacklist");
+            $options['msg']=_("Please contact WikiMasters");
+            $options['msgtype'] = 'warn';
 
-    break;
-  }
+            if (!empty($DBInfo->edit_actions) and in_array($act, $DBInfo->edit_actions))
+                $options['action'] = $action = 'edit';
+            else if ($act != 'edit')
+                $options['action'] = $action = 'show';
+            break;
+        }
 
-  // set robot class
-  if (!empty($options['is_robot'])) {
-    if (!empty($DBInfo->security_class_robot)) {
-      $class='Security_'.$DBInfo->security_class_robot;
-      include_once('plugin/security/'.$DBInfo->security_class_robot.'.php');
-    } else {
-      $class='Security_robot';
-      include_once('plugin/security/robot.php');
-    }
-    $DBInfo->security = new $class ($DBInfo);
-    // is it allowed to robot ?
-    if (!$DBInfo->security->is_allowed($action,$options)) {
-      $action='show';
-      if (!empty($action_mode))
-        return '[]';
-    }
-    $DBInfo->extra_macros='';
-  }
+        // check kiwirian
+        if (isset($ruleset['kiwirian']) && in_array($options['id'], $ruleset['kiwirian'])) {
+            $options['title']=_("You are blocked in this wiki");
+            $options['msg']=_("Please contact WikiMasters");
+            do_invalid($formatter,$options);
+            return false;
+        }
 
-  while (empty($action) or $action=='show') {
-    if (isset($value[0])) { # ?value=Hello
-      $options['value']=$value;
-      do_goto($formatter,$options);
-      return true;
-    } else if (isset($goto[0])) { # ?goto=Hello
-      $options['value']=$goto;
-      do_goto($formatter,$options);
-      return true;
-    }
-    if (!$page->exists()) {
-      if (isset($options['retstr']))
-        return false;
-      if (!empty($DBInfo->auto_search) && $action!='show' && $p=getPlugin($DBInfo->auto_search)) {
-        $action=$DBInfo->auto_search;
         break;
-      }
-
-      // call notfound action
-      $action = 'notfound';
-      break;
-    }
-    # render this page
-
-    if (isset($_GET['redirect']) and !empty($DBInfo->use_redirect_msg) and $action=='show'){
-      $redirect = $_GET['redirect'];
-      $options['msg']=
-        '<h3>'.sprintf(_("Redirected from page \"%s\""),
-          $formatter->link_tag(_rawurlencode($redirect), '?action=show', $redirect))."</h3>";
     }
 
-    if (empty($action)) $options['pi']=1; # protect a recursivly called #redirect
-
-    if (!empty($DBInfo->control_read) and !$DBInfo->security->is_allowed('read',$options)) {
-      $options['action'] = 'read';
-      do_invalid($formatter,$options);
-      return;
-    }
-
-    $formatter->pi=$formatter->page->get_instructions();
-
-    if (!empty($DBInfo->body_attr))
-      $options['attr']=$DBInfo->body_attr;
-
-    $ret = $formatter->send_header('', $options);
-
-    if (empty($options['is_robot'])) {
-      if ($DBInfo->use_counter)
-        $DBInfo->counter->incCounter($pagename,$options);
-
-      if (!empty($DBInfo->use_referer) and isset($_SERVER['HTTP_REFERER']))
-        log_referer($_SERVER['HTTP_REFERER'],$pagename);
-    }
-    $formatter->send_title("","",$options);
-
-    $formatter->write("<div id='wikiContent'>\n");
-    if (isset($options['timer']) and is_object($options['timer'])) {
-      $options['timer']->Check("init");
-    }
-
-    // force #nocache for #redirect pages
-    if (isset($formatter->pi['#redirect'][0]))
-      $formatter->pi['#nocache'] = 1;
-
-    $extra_out='';
-    $options['pagelinks']=1;
-    if (!empty($Config['cachetime']) and $Config['cachetime'] > 0 and empty($formatter->pi['#nocache'])) {
-      $cache= new Cache_text('pages', array('ext'=>'html'));
-      $mcache= new Cache_text('dynamic_macros');
-      $mtime=$cache->mtime($pagename);
-      $now=time();
-      $check=$now-$mtime;
-      $_macros=null;
-      if ($cache->mtime($pagename) < $formatter->page->mtime()) $formatter->refresh = 1; // force update
-
-      $valid = false;
-      $delay = !empty($DBInfo->default_delaytime) ? $DBInfo->default_delaytime : 0;
-
-      if (empty($formatter->refresh) and $DBInfo->checkUpdated($mtime, $delay) and ($check < $Config['cachetime'])) {
-        if ($mcache->exists($pagename))
-          $_macros= $mcache->fetch($pagename);
-
-        // FIXME TODO: check postfilters
-        if (0 && empty($_macros)) {
-          #$out = $cache->fetch($pagename);
-          $valid = $cache->fetch($pagename, '', array('print'=>1));
+    // set robot class
+    if (!empty($options['is_robot'])) {
+        if (!empty($DBInfo->security_class_robot)) {
+            $class='Security_'.$DBInfo->security_class_robot;
+            include_once('plugin/security/'.$DBInfo->security_class_robot.'.php');
         } else {
-          $out = $cache->fetch($pagename);
-          $valid = $out !== false;
+            $class='Security_robot';
+            include_once('plugin/security/robot.php');
         }
-        $mytime=gmdate("Y-m-d H:i:s",$mtime+$options['tz_offset']);
-        $extra_out= "<!-- Cached at $mytime -->";
-      }
-      if (!$valid) {
-        $formatter->_macrocache=1;
-        ob_start();
-        $formatter->send_page('',$options);
-        flush();
-        $out=ob_get_contents();
-        ob_end_clean();
-        $formatter->_macrocache=0;
-        $_macros = $formatter->_dynamic_macros;
-        if (!empty($_macros))
-          $mcache->update($pagename,$_macros);
-        if (isset($out[0]))
-          $cache->update($pagename, $out);
-      }
-      if (!empty($_macros)) {
-        $mrule=array();
-        $mrepl=array();
-        foreach ($_macros as $m=>$v) {
-          if (!is_array($v)) continue;
-          $mrule[]='@@'.$v[0].'@@';
-          $options['mid']=$v[1];
-          $mrepl[]=$formatter->macro_repl($m,'',$options); // XXX
+        $DBInfo->security = new $class ($DBInfo);
+        // is it allowed to robot ?
+        if (!$DBInfo->security->is_allowed($action,$options)) {
+            $action='show';
+            if (!empty($action_mode))
+                return '[]';
         }
-        echo $formatter->get_javascripts();
-        $out=str_replace($mrule,$mrepl,$out);
+        $DBInfo->extra_macros='';
+    }
 
-        // no more dynamic macros found
-        if (empty($formatter->_dynamic_macros)) {
-          // update contents
-          $cache->update($pagename, $out);
-          // remove dynamic macros cache
-          $mcache->remove($pagename);
+    while (empty($action) or $action=='show') {
+        if (isset($value[0])) { # ?value=Hello
+            $options['value']=$value;
+            do_goto($formatter,$options);
+            return true;
+        } else if (isset($goto[0])) { # ?goto=Hello
+            $options['value']=$goto;
+            do_goto($formatter,$options);
+            return true;
         }
-      }
-      if ($options['id'] != 'Anonymous')
-        $args['refresh']=1; // add refresh menu
-    } else {
-      ob_start();
-      $formatter->send_page('', $options);
-      flush();
-      $out = ob_get_contents();
-      ob_end_clean();
-    }
+        if (!$page->exists()) {
+            if (isset($options['retstr']))
+                return false;
+            if (!empty($DBInfo->auto_search) && $action!='show' && $p=getPlugin($DBInfo->auto_search)) {
+                $action=$DBInfo->auto_search;
+                break;
+            }
 
-    // fixup to use site specific thumbwidth
-    if (!empty($Config['site_thumb_width']) and
-        $Config['site_thumb_width'] != $DBInfo->thumb_width) {
-      $opts = array('thumb_width'=>$Config['site_thumb_width']);
-      $out = $formatter->postfilter_repl('imgs_for_mobile', $out, $opts);
-    }
-    echo $out,$extra_out;
-
-    // automatically set #dynamic PI
-    if (empty($formatter->pi['#dynamic']) and !empty($formatter->_dynamic_macros)) {
-      $pis = $formatter->pi;
-      if (empty($pis['raw'])) {
-        // empty PIs
-        $pis = array();
-      } else if (isset($pis['#format']) and !preg_match('/#format\s/', $pis['raw'])) {
-        // #format not found in PIs
-        unset($pis['#format']);
-      }
-      $pis['#dynamic'] = 1; // internal instruction
-
-      $pi_cache = new Cache_text('PI');
-      $pi_cache->update($formatter->page->name, $pis);
-    } else if (empty($formatter->_dynamic_macros) and !empty($formatter->pi['#dynamic'])) {
-      $pi_cache = new Cache_text('PI');
-      $pi_cache->remove($formatter->page->name); // reset PI
-      $mcache->remove($pagename); // remove macro cache
-      if (isset($out[0]))
-      $cache->update($pagename, $out); // update cache content
-    }
-
-    if (isset($options['timer']) and is_object($options['timer'])) {
-      $options['timer']->Check("send_page");
-    }
-    $formatter->write("<!-- wikiContent --></div>\n");
-
-    if (!empty($DBInfo->extra_macros) and
-        $formatter->pi['#format'] == $DBInfo->default_markup) {
-      if (!empty($formatter->pi['#nocomment'])) {
-        $options['nocomment']=1;
-        $options['notoolbar']=1;
-      }
-      $options['mid']='dummy';
-      echo '<div id="wikiExtra">'."\n";
-      $mout = '';
-      $extra = array();
-      if (is_array($DBInfo->extra_macros))
-        $extra = $DBInfo->extra_macros;
-      else
-        $extra[] = $DBInfo->extra_macros; // XXX
-      if (!empty($formatter->pi['#comment'])) array_unshift($extra,'Comment');
-
-      foreach ($extra as $macro)
-        $mout.= $formatter->macro_repl($macro,'',$options);
-      echo $formatter->get_javascripts();
-      echo $mout;
-      echo '</div>'."\n";
-    }
-
-    $args['editable']=1;
-    $formatter->send_footer($args,$options);
-    return;
-  }
-
-  $act = $action;
-  if (!empty($DBInfo->myplugins) and array_key_exists($action, $DBInfo->myplugins))
-    $act = $DBInfo->myplugins[$action];
-  if ($act) {
-    $options['noindex'] = true;
-    $options['custom']='';
-    $options['help']='';
-    $options['value']=$value;
-
-    $a_allow=$DBInfo->security->is_allowed($act,$options);
-    if (!empty($action_mode)) {
-      $myopt=$options;
-      $myopt['explicit']=1;
-      $f_allow=$DBInfo->security->is_allowed($full_action,$myopt);
-      # check if hello/ajax is defined or not
-      if ($f_allow === false && $a_allow)
-        $f_allow=$a_allow; # follow action permission if it is not defined explicitly.
-      if (!$f_allow) {
-        $args = array('action'=>$action);
-        $args['allowed'] = $options['allowed'] = $f_allow;
-
-        if ($f_allow === false)
-          $title = sprintf(_("%s action is not found."), $action);
-        else
-          $title = sprintf(_("Invalid %s action."), $action_mode);
-        if ($action_mode=='ajax') {
-          $args['title'] = $title;
-          return ajax_invalid($formatter, $args);
+            // call notfound action
+            $action = 'notfound';
+            break;
         }
-        $options['title'] = $title;
-        return do_invalid($formatter, $options);
-      }
-    } else if (!$a_allow) {
-      $options['allowed'] = $a_allow;
-      if ($options['custom']!='' and
-          method_exists($DBInfo->security,$options['custom'])) {
-        $options['action']=$action;
-        if ($action)
-        call_user_func(array(&$DBInfo->security,$options['custom']),$formatter,$options);
+        # render this page
+
+        if (isset($_GET['redirect']) and !empty($DBInfo->use_redirect_msg) and $action=='show'){
+            $redirect = $_GET['redirect'];
+            $options['msg']=
+                '<h3>'.sprintf(_("Redirected from page \"%s\""),
+                        $formatter->link_tag(_rawurlencode($redirect), '?action=show', $redirect))."</h3>";
+        }
+
+        if (empty($action)) $options['pi']=1; # protect a recursivly called #redirect
+
+        if (!empty($DBInfo->control_read) and !$DBInfo->security->is_allowed('read',$options)) {
+            $options['action'] = 'read';
+            do_invalid($formatter,$options);
+            return;
+        }
+
+        $formatter->pi=$formatter->page->get_instructions();
+
+        if (!empty($DBInfo->body_attr))
+            $options['attr']=$DBInfo->body_attr;
+
+        $ret = $formatter->send_header('', $options);
+
+        if (empty($options['is_robot'])) {
+            if ($DBInfo->use_counter)
+                $DBInfo->counter->incCounter($pagename,$options);
+
+            if (!empty($DBInfo->use_referer) and isset($_SERVER['HTTP_REFERER']))
+                log_referer($_SERVER['HTTP_REFERER'],$pagename);
+        }
+        $formatter->send_title("","",$options);
+
+        $formatter->write("<div id='wikiContent'>\n");
+        if (isset($options['timer']) and is_object($options['timer'])) {
+            $options['timer']->Check("init");
+        }
+
+        // force #nocache for #redirect pages
+        if (isset($formatter->pi['#redirect'][0]))
+            $formatter->pi['#nocache'] = 1;
+
+        $extra_out='';
+        $options['pagelinks']=1;
+        if (!empty($Config['cachetime']) and $Config['cachetime'] > 0 and empty($formatter->pi['#nocache'])) {
+            $cache= new Cache_text('pages', array('ext'=>'html'));
+            $mcache= new Cache_text('dynamic_macros');
+            $mtime=$cache->mtime($pagename);
+            $now=time();
+            $check=$now-$mtime;
+            $_macros=null;
+            if ($cache->mtime($pagename) < $formatter->page->mtime()) $formatter->refresh = 1; // force update
+
+            $valid = false;
+            $delay = !empty($DBInfo->default_delaytime) ? $DBInfo->default_delaytime : 0;
+
+            if (empty($formatter->refresh) and $DBInfo->checkUpdated($mtime, $delay) and ($check < $Config['cachetime'])) {
+                if ($mcache->exists($pagename))
+                    $_macros= $mcache->fetch($pagename);
+
+                // FIXME TODO: check postfilters
+                if (0 && empty($_macros)) {
+                    #$out = $cache->fetch($pagename);
+                    $valid = $cache->fetch($pagename, '', array('print'=>1));
+                } else {
+                    $out = $cache->fetch($pagename);
+                    $valid = $out !== false;
+                }
+                $mytime=gmdate("Y-m-d H:i:s",$mtime+$options['tz_offset']);
+                $extra_out= "<!-- Cached at $mytime -->";
+            }
+            if (!$valid) {
+                $formatter->_macrocache=1;
+                ob_start();
+                $formatter->send_page('',$options);
+                flush();
+                $out=ob_get_contents();
+                ob_end_clean();
+                $formatter->_macrocache=0;
+                $_macros = $formatter->_dynamic_macros;
+                if (!empty($_macros))
+                    $mcache->update($pagename,$_macros);
+                if (isset($out[0]))
+                    $cache->update($pagename, $out);
+            }
+            if (!empty($_macros)) {
+                $mrule=array();
+                $mrepl=array();
+                foreach ($_macros as $m=>$v) {
+                    if (!is_array($v)) continue;
+                    $mrule[]='@@'.$v[0].'@@';
+                    $options['mid']=$v[1];
+                    $mrepl[]=$formatter->macro_repl($m,'',$options); // XXX
+                }
+                echo $formatter->get_javascripts();
+                $out=str_replace($mrule,$mrepl,$out);
+
+                // no more dynamic macros found
+                if (empty($formatter->_dynamic_macros)) {
+                    // update contents
+                    $cache->update($pagename, $out);
+                    // remove dynamic macros cache
+                    $mcache->remove($pagename);
+                }
+            }
+            if ($options['id'] != 'Anonymous')
+                $args['refresh']=1; // add refresh menu
+        } else {
+            ob_start();
+            $formatter->send_page('', $options);
+            flush();
+            $out = ob_get_contents();
+            ob_end_clean();
+        }
+
+        // fixup to use site specific thumbwidth
+        if (!empty($Config['site_thumb_width']) and
+                $Config['site_thumb_width'] != $DBInfo->thumb_width) {
+            $opts = array('thumb_width'=>$Config['site_thumb_width']);
+            $out = $formatter->postfilter_repl('imgs_for_mobile', $out, $opts);
+        }
+        echo $out,$extra_out;
+
+        // automatically set #dynamic PI
+        if (empty($formatter->pi['#dynamic']) and !empty($formatter->_dynamic_macros)) {
+            $pis = $formatter->pi;
+            if (empty($pis['raw'])) {
+                // empty PIs
+                $pis = array();
+            } else if (isset($pis['#format']) and !preg_match('/#format\s/', $pis['raw'])) {
+                // #format not found in PIs
+                unset($pis['#format']);
+            }
+            $pis['#dynamic'] = 1; // internal instruction
+
+            $pi_cache = new Cache_text('PI');
+            $pi_cache->update($formatter->page->name, $pis);
+        } else if (empty($formatter->_dynamic_macros) and !empty($formatter->pi['#dynamic'])) {
+            $pi_cache = new Cache_text('PI');
+            $pi_cache->remove($formatter->page->name); // reset PI
+            $mcache->remove($pagename); // remove macro cache
+            if (isset($out[0]))
+                $cache->update($pagename, $out); // update cache content
+        }
+
+        if (isset($options['timer']) and is_object($options['timer'])) {
+            $options['timer']->Check("send_page");
+        }
+        $formatter->write("<!-- wikiContent --></div>\n");
+
+        if (!empty($DBInfo->extra_macros) and
+                $formatter->pi['#format'] == $DBInfo->default_markup) {
+            if (!empty($formatter->pi['#nocomment'])) {
+                $options['nocomment']=1;
+                $options['notoolbar']=1;
+            }
+            $options['mid']='dummy';
+            echo '<div id="wikiExtra">'."\n";
+            $mout = '';
+            $extra = array();
+            if (is_array($DBInfo->extra_macros))
+                $extra = $DBInfo->extra_macros;
+            else
+                $extra[] = $DBInfo->extra_macros; // XXX
+            if (!empty($formatter->pi['#comment'])) array_unshift($extra,'Comment');
+
+            foreach ($extra as $macro)
+                $mout.= $formatter->macro_repl($macro,'',$options);
+            echo $formatter->get_javascripts();
+            echo $mout;
+            echo '</div>'."\n";
+        }
+
+        $args['editable']=1;
+        $formatter->send_footer($args,$options);
         return;
-      }
-
-      return do_invalid($formatter, $options);
-    } else if ($_SERVER['REQUEST_METHOD']=="POST" and
-      $DBInfo->security->is_protected($act,$options) and
-      !$DBInfo->security->is_valid_password($_POST['passwd'],$options)) {
-      # protect some POST actions and check a password
-
-      $title = sprintf(_("Fail to \"%s\" !"), $action);
-      $formatter->send_header("",$options);
-      $formatter->send_title($title,"",$options);
-      $formatter->send_page("== "._("Please enter the valid password")." ==");
-      $formatter->send_footer("",$options);
-      return;
     }
 
-    $options['action_mode']='';
-    if (!empty($action_mode) and in_array($action_mode,array('ajax','macro'))) {
-      if ($_SERVER['REQUEST_METHOD']=="POST")
-        $options=array_merge($_POST,$options);
-      else
-        $options=array_merge($_GET,$options);
-      $options['action_mode']=$action_mode;
-      if ($action_mode=='ajax')
-        $formatter->ajax_repl($action,$options);
-      else if (!empty($DBInfo->use_macro_as_action)) # XXX
-        echo $formatter->macro_repl($action,$options['value'],$options);
-      else
+    $act = $action;
+    if (!empty($DBInfo->myplugins) and array_key_exists($action, $DBInfo->myplugins))
+        $act = $DBInfo->myplugins[$action];
+    if ($act) {
+        $options['noindex'] = true;
+        $options['custom']='';
+        $options['help']='';
+        $options['value']=$value;
+
+        $a_allow=$DBInfo->security->is_allowed($act,$options);
+        if (!empty($action_mode)) {
+            $myopt=$options;
+            $myopt['explicit']=1;
+            $f_allow=$DBInfo->security->is_allowed($full_action,$myopt);
+            # check if hello/ajax is defined or not
+            if ($f_allow === false && $a_allow)
+                $f_allow=$a_allow; # follow action permission if it is not defined explicitly.
+                    if (!$f_allow) {
+                        $args = array('action'=>$action);
+                        $args['allowed'] = $options['allowed'] = $f_allow;
+
+                        if ($f_allow === false)
+                            $title = sprintf(_("%s action is not found."), $action);
+                        else
+                            $title = sprintf(_("Invalid %s action."), $action_mode);
+                        if ($action_mode=='ajax') {
+                            $args['title'] = $title;
+                            return ajax_invalid($formatter, $args);
+                        }
+                        $options['title'] = $title;
+                        return do_invalid($formatter, $options);
+                    }
+        } else if (!$a_allow) {
+            $options['allowed'] = $a_allow;
+            if ($options['custom']!='' and
+                    method_exists($DBInfo->security,$options['custom'])) {
+                $options['action']=$action;
+                if ($action)
+                    call_user_func(array(&$DBInfo->security,$options['custom']),$formatter,$options);
+                return;
+            }
+
+            return do_invalid($formatter, $options);
+        } else if ($_SERVER['REQUEST_METHOD']=="POST" and
+                $DBInfo->security->is_protected($act,$options) and
+                !$DBInfo->security->is_valid_password($_POST['passwd'],$options)) {
+            # protect some POST actions and check a password
+
+            $title = sprintf(_("Fail to \"%s\" !"), $action);
+            $formatter->send_header("",$options);
+            $formatter->send_title($title,"",$options);
+            $formatter->send_page("== "._("Please enter the valid password")." ==");
+            $formatter->send_footer("",$options);
+            return;
+        }
+
+        $options['action_mode']='';
+        if (!empty($action_mode) and in_array($action_mode,array('ajax','macro'))) {
+            if ($_SERVER['REQUEST_METHOD']=="POST")
+                $options=array_merge($_POST,$options);
+            else
+                $options=array_merge($_GET,$options);
+            $options['action_mode']=$action_mode;
+            if ($action_mode=='ajax')
+                $formatter->ajax_repl($action,$options);
+            else if (!empty($DBInfo->use_macro_as_action)) # XXX
+                echo $formatter->macro_repl($action,$options['value'],$options);
+            else
+                do_invalid($formatter,$options);
+            return;
+        }
+
+        // is it valid action ?
+        $plugin = $pn = getPlugin($action);
+        if ($plugin === '') // action not found
+            $plugin = $action;
+        if (!function_exists("do_post_".$plugin) and
+                !function_exists("do_".$plugin) and $pn){
+            include_once("plugin/$pn.php");
+        }
+
+        if (function_exists("do_".$plugin)) {
+            if ($_SERVER['REQUEST_METHOD']=="POST")
+                $options=array_merge($_POST,$options);
+            else
+                $options=array_merge($_GET,$options);
+
+            call_user_func("do_$plugin",$formatter,$options);
+            return;
+        } else if (function_exists("do_post_".$plugin)) {
+            if ($_SERVER['REQUEST_METHOD']=="POST")
+                $options=array_merge($_POST,$options);
+            else { # do_post_* set some primary variables as $options
+                $options['value']=isset($_GET['value'][0]) ? $_GET['value'] : '';
+            }
+            call_user_func("do_post_$plugin",$formatter,$options);
+            return;
+        }
         do_invalid($formatter,$options);
-      return;
+        return;
     }
-
-    // is it valid action ?
-    $plugin = $pn = getPlugin($action);
-    if ($plugin === '') // action not found
-      $plugin = $action;
-    if (!function_exists("do_post_".$plugin) and
-      !function_exists("do_".$plugin) and $pn){
-        include_once("plugin/$pn.php");
-    }
-
-    if (function_exists("do_".$plugin)) {
-      if ($_SERVER['REQUEST_METHOD']=="POST")
-        $options=array_merge($_POST,$options);
-      else
-        $options=array_merge($_GET,$options);
-
-      call_user_func("do_$plugin",$formatter,$options);
-      return;
-    } else if (function_exists("do_post_".$plugin)) {
-      if ($_SERVER['REQUEST_METHOD']=="POST")
-        $options=array_merge($_POST,$options);
-      else { # do_post_* set some primary variables as $options
-        $options['value']=isset($_GET['value'][0]) ? $_GET['value'] : '';
-      }
-      call_user_func("do_post_$plugin",$formatter,$options);
-      return;
-    }
-    do_invalid($formatter,$options);
-    return;
-  }
 }
 
 // load site specific config variables.
@@ -5387,39 +5387,39 @@ $proxy_maxage = !empty($Config['proxy_maxage']) ? ', s-maxage='.$Config['proxy_m
 $user_maxage = !empty($Config['user_maxage']) ? ', max-age='.$Config['user_maxage'] : ', max-age=0';
 
 if ($_SERVER['REQUEST_METHOD'] != 'GET' and
-    $_SERVER['REQUEST_METHOD'] != 'HEAD') {
-  // always set private for POST
-  // basic cache-control
-  header('Cache-Control: private, max-age=0, s-maxage=0, must-revalidate, post-check=0, pre-check=0');
-  if (!empty($_SERVER['HTTP_ORIGIN'])) {
-    if (!empty($DBInfo->access_control_allowed_re)) {
-      if (preg_match($DBInfo->access_control_allowed_re, $_SERVER['HTTP_ORIGIN']))
-        header('Access-Control-Allow-Origin: '.$_SERVER['HTTP_ORIGIN']);
-    } else {
-      header('Access-Control-Allow-Origin: *');
+        $_SERVER['REQUEST_METHOD'] != 'HEAD') {
+    // always set private for POST
+    // basic cache-control
+    header('Cache-Control: private, max-age=0, s-maxage=0, must-revalidate, post-check=0, pre-check=0');
+    if (!empty($_SERVER['HTTP_ORIGIN'])) {
+        if (!empty($DBInfo->access_control_allowed_re)) {
+            if (preg_match($DBInfo->access_control_allowed_re, $_SERVER['HTTP_ORIGIN']))
+                header('Access-Control-Allow-Origin: '.$_SERVER['HTTP_ORIGIN']);
+        } else {
+            header('Access-Control-Allow-Origin: *');
+        }
     }
-  }
 } else {
-  // set maxage for show action
-  $act = isset($_GET['action']) ? strtolower($_GET['action']) : '';
-  if (empty($act) or $act == 'show')
-    $maxage = $proxy_maxage.$user_maxage;
-  else
-    $maxage = $user_maxage;
+    // set maxage for show action
+    $act = isset($_GET['action']) ? strtolower($_GET['action']) : '';
+    if (empty($act) or $act == 'show')
+        $maxage = $proxy_maxage.$user_maxage;
+    else
+        $maxage = $user_maxage;
 
-  if (empty($Config['no_must_revalidate']))
-    $maxage.= ', must-revalidate';
+    if (empty($Config['no_must_revalidate']))
+        $maxage.= ', must-revalidate';
 
-  // set public or private for GET, HEAD
-  // basic cache-control. will be overrided later
-  if ($options['id'] == 'Anonymous')
-    $public = 'public';
-  else
-    $public = 'private';
-  header('Cache-Control: '.$public.$maxage.', post-check=0, pre-check=0');
+    // set public or private for GET, HEAD
+    // basic cache-control. will be overrided later
+    if ($options['id'] == 'Anonymous')
+        $public = 'public';
+    else
+        $public = 'private';
+    header('Cache-Control: '.$public.$maxage.', post-check=0, pre-check=0');
 }
 
 wiki_main($options);
 endif;
-// vim:et:sts=2:sw=2
+// vim:et:sts=4:sw=4
 ?>
