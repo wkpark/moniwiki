@@ -4760,7 +4760,7 @@ PASS;
       $emailpasswd=
         "<span class='button'><input type=\"submit\" class='button' name=\"login\" value=\"$button2\" /></span>\n";
 
-    } else if (!empty($DBInfo->use_agreement) and empty($options['joinagreement'])) {
+    } else if (isset($options['login_id']) and !empty($DBInfo->use_agreement) and empty($options['joinagreement'])) {
       $form = <<<FORM
 <div>
 <form method="post" action="$url">
