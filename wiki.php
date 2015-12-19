@@ -162,12 +162,61 @@ class Formatter {
     function Formatter($page="",$options=array()) {
         global $DBInfo;
 
-        $this->page=$page;
-        $this->head_num=1;
-        $this->head_dep=0;
-        $this->sect_num=0;
-        $this->toc=0;
-        $this->toc_prefix='';
+        // string properties
+        $this->url_prefix = $DBInfo->url_prefix;
+        $this->imgs_dir = $DBInfo->imgs_dir;
+        $this->imgs_url_interwiki = !empty($DBInfo->imgs_url_interwiki) ? $DBInfo->imgs_url_interwiki : '';
+        $this->imgs_dir_url = !empty($DBInfo->imgs_dir_url) ? $DBInfo->imgs_dir_url : '';
+        $this->external_image_regex = !empty($DBInfo->external_image_regex) ? $DBInfo->external_image_regex : '';
+        $this->nonexists = $DBInfo->nonexists;
+
+        // boolean properties
+        $this->auto_linebreak = !empty($DBInfo->auto_linebreak) ? $DBInfo->auto_linebreak : 0;
+        $this->css_friendly = $DBInfo->css_friendly;
+        $this->use_smartdiff = !empty($DBInfo->use_smartdiff) ? $DBInfo->use_smartdiff : 0;
+        $this->use_easyalias = $DBInfo->use_easyalias;
+        $this->use_folding = !empty($DBInfo->use_folding) ? $DBInfo->use_folding : 0;
+        $this->use_group = !empty($DBInfo->use_group) ? $DBInfo->use_group : 0;
+        $this->use_htmlcolor = !empty($DBInfo->use_htmlcolor) ? $DBInfo->use_htmlcolor : 0;
+        $this->use_metadata = !empty($DBInfo->use_metadata) ? $DBInfo->use_metadata : 0;
+        $this->use_namespace = !empty($DBInfo->use_namespace) ? $DBInfo->use_namespace : 0;
+        $this->use_purple = !empty($DBInfo->use_purple) ? $DBInfo->use_purple : 0;
+        $this->use_rating = !empty($DBInfo->use_rating) ? $DBInfo->use_rating : 0;
+        $this->use_smileys = $DBInfo->use_smileys;
+        // use thumbnail by default
+        $this->use_thumb_by_default = !empty($DBInfo->use_thumb_by_default) ? $DBInfo->use_thumb_by_default : 0;
+        $this->markdown_style = !empty($DBInfo->markdown_style) ? $DBInfo->markdown_style : 0;
+        $this->mediawiki_style=!empty($DBInfo->mediawiki_style) ? $DBInfo->mediawiki_style : 0;
+        $this->check_openid_url=!empty($DBInfo->check_openid_url) ? $DBInfo->check_openid_url : 0;
+        $this->fetch_action = !empty($DBInfo->fetch_action) ? $DBInfo->fetch_action : 0;
+        $this->fetch_images = !empty($DBInfo->fetch_images) ? $DBInfo->fetch_images : 0;
+        $this->fetch_imagesize = !empty($DBInfo->fetch_imagesize) ? $DBInfo->fetch_imagesize : 0;
+        // the original source site for mirror sites
+        $this->source_site = !empty($DBInfo->source_site) ? $DBInfo->source_site : 0;
+
+        $this->actions = !empty($DBInfo->actions) ? $DBInfo->actions : array();
+        $this->submenu = !empty($DBInfo->submenu) ? $DBInfo->submenu : null;
+        $this->email_guard = !empty($DBInfo->email_guard) ? $DBInfo->email_guard : null;
+        $this->filters = !empty($DBInfo->filters) ? $DBInfo->filters : null;
+        $this->postfilters = !empty($DBInfo->postfilters) ? $DBInfo->postfilter : null;
+        $this->url_mappings = $DBInfo->url_mappings;
+
+        // use mediawiki like built-in category support
+        if (!empty($DBInfo->use_builtin_category) && !empty($DBInfo->category_regex)) {
+            $this->use_builtin_category = true;
+            $this->category_regex = $DBInfo->category_regex;
+        } else {
+            $this->use_builtin_category = false;
+        }
+
+        // call externalimage macro for these external images
+
+        // strtr() old wiki markups
+        $this->trtags = !empty($DBInfo->trtags) ? $DBInfo->trtags : null;
+
+        // initialize
+        $this->page = $page;
+        $this->self_query = '';
         if (!empty($options['prefix'])) {
             $this->prefix = $options['prefix'];
         } else if (!empty($DBInfo->base_url_prefix)) {
@@ -177,64 +226,51 @@ class Formatter {
             // call get_scriptname() to get the base url prefix
             $this->prefix = get_scriptname();
         }
-        $this->self_query='';
-        $this->url_prefix= $DBInfo->url_prefix;
-        $this->imgs_dir= $DBInfo->imgs_dir;
-        $this->imgs_url_interwiki=$DBInfo->imgs_url_interwiki;
-        $this->imgs_dir_url=$DBInfo->imgs_dir_url;
-        $this->actions= $DBInfo->actions;
-        $this->inline_latex=
-            $DBInfo->inline_latex == 1 ? 'latex':$DBInfo->inline_latex;
-        $this->use_purple=$DBInfo->use_purple;
-        $this->section_edit=$DBInfo->use_sectionedit;
-        // check folding option
-        $this->use_folding = !empty($DBInfo->use_folding) ? $DBInfo->use_folding : 0;
 
-        $this->auto_linebreak=!empty($DBInfo->auto_linebreak) ? 1 : 0;
-        $this->nonexists=$DBInfo->nonexists;
-        $this->url_mappings=&$DBInfo->url_mappings;
-        $this->css_friendly=$DBInfo->css_friendly;
-        $this->use_smartdiff=!empty($DBInfo->use_smartdiff) ? $DBInfo->use_smartdiff : 0;
-        $this->use_easyalias=$DBInfo->use_easyalias;
-        $this->use_group=!empty($DBInfo->use_group) ? $DBInfo->use_group : 0;
-        $this->use_htmlcolor = !empty($DBInfo->use_htmlcolor) ? $DBInfo->use_htmlcolor : 0;
+        if (is_object($page)) {
+            if ($this->use_group and ($p=strpos($page->name, '~')))
+                $this->group = substr($page->name, 0, $p + 1);
+        }
 
-        // strtr() old wiki markups
-        $this->trtags = !empty($DBInfo->trtags) ? $DBInfo->trtags : null;
-        $this->submenu=!empty($DBInfo->submenu) ? $DBInfo->submenu : null;
-        $this->email_guard=$DBInfo->email_guard;
+        // for TOC
+        $this->head_num = 1;
+        $this->head_dep = 0;
+        $this->sect_num = 0;
+        $this->toc = 0;
+        $this->toc_prefix = '';
+
+        $this->sister_on = 1;
+        $this->sisters = array();
+        $this->foots = array();
+        $this->pagelinks = array();
+        $this->aliases = array();
+        $this->icons = '';
+
+        $this->themedir = !empty($DBInfo->themedir) ? $DBInfo->themedir : dirname(__FILE__);
+        $this->themeurl = !empty($DBInfo->themeurl) ? $DBInfo->themeurl : $DBInfo->url_prefix;
+
+        $this->set_theme(!empty($options['theme']) ? $options['theme'] : '', $options);
+        $this->register_javascripts($DBInfo->javascripts);
+
+        // some initialize
+        $this->section_edit = $DBInfo->use_sectionedit;
+        if (!empty($DBInfo->external_target))
+            $this->external_target = 'target="'.$DBInfo->external_target.'"';
+        $this->inline_latex = $DBInfo->inline_latex == 1 ? 'latex':$DBInfo->inline_latex;
         $this->interwiki_target=!empty($DBInfo->interwiki_target) ?
             ' target="'.$DBInfo->interwiki_target.'"':'';
-        $this->filters=!empty($DBInfo->filters) ? $DBInfo->filters : null;
-        $this->postfilters=!empty($DBInfo->postfilters) ? $DBInfo->postfilter : null;
-        $this->use_rating=!empty($DBInfo->use_rating) ? $DBInfo->use_rating : 0;
-        $this->use_metadata=!empty($DBInfo->use_metadata) ? $DBInfo->use_metadata : 0;
-        $this->use_smileys=$DBInfo->use_smileys;
-        $this->use_namespace=!empty($DBInfo->use_namespace) ? $DBInfo->use_namespace : '';
 
-        // use mediawiki like built-in category support
-        if (!empty($DBInfo->use_builtin_category) && !empty($DBInfo->category_regex)) {
-            $this->use_builtin_category = true;
-            $this->category_regex = $DBInfo->category_regex;
-        } else {
-            $this->use_builtin_category = false;
-        }
-        $this->mediawiki_style=!empty($DBInfo->mediawiki_style) ? 1 : '';
-        $this->markdown_style = !empty($DBInfo->markdown_style) ? 1 : 0;
-        $this->lang=$DBInfo->lang;
-        $this->udb=&$DBInfo->udb;
-        $this->user=&$DBInfo->user;
-        $this->check_openid_url=!empty($DBInfo->check_openid_url) ? $DBInfo->check_openid_url : 0;
-        $this->register_javascripts($DBInfo->javascripts);
-        $this->fetch_action = !empty($DBInfo->fetch_action) ? $DBInfo->fetch_action : null;
-        $this->fetch_images = !empty($DBInfo->fetch_images) ? $DBInfo->fetch_images : 0;
-        $this->fetch_imagesize = !empty($DBInfo->fetch_imagesize) ? $DBInfo->fetch_imagesize : 0;
+        // init
         if (empty($this->fetch_action))
             $this->fetch_action = $this->link_url('', '?action=fetch&amp;url=');
         else
             $this->fetch_action = $DBInfo->fetch_action;
-        // the original source site for mirror sites
-        $this->source_site = !empty($DBInfo->source_site) ? $DBInfo->source_site : null;
+
+        // copy directly
+        $this->lang = $DBInfo->lang;
+        // copy reference
+        $this->udb = &$DBInfo->udb;
+        $this->user = &$DBInfo->user;
 
         // setup for html5
         $this->tags = array();
@@ -252,38 +288,18 @@ class Formatter {
             $this->tags['nav'] = 'div';
         }
 
-        // call externalimage macro for these external images
-        $this->external_image_regex = !empty($DBInfo->external_image_regex) ? $DBInfo->external_image_regex : 0;
-
-        // use thumbnail by default
-        $this->use_thumb_by_default = !empty($DBInfo->use_thumb_by_default) ? $DBInfo->use_thumb_by_default : 0;
+        // goto wikiconfig
+        $this->quote_style = !empty($DBInfo->quote_style) ? $DBInfo->quote_style : 'quote';
+        $this->NULL = '';
+        if(getenv("OS") != "Windows_NT") $this->NULL = ' 2>/dev/null';
         $this->thumb_width = !empty($DBInfo->thumb_width) ? $DBInfo->thumb_width : 320;
 
-        if ($this->use_group and ($p=strpos($page->name,"~")))
-            $this->group=substr($page->name,0,$p+1);
+        $this->_macrocache = 0;
+        $this->wikimarkup = 0;
+        $this->pi = array();
+        $this->external_on = 0;
+        $this->external_target = '';
 
-        $this->sister_on=1;
-        $this->sisters=array();
-        $this->foots=array();
-        $this->pagelinks=array();
-        $this->aliases=array();
-        $this->icons="";
-        $this->quote_style= !empty($DBInfo->quote_style) ? $DBInfo->quote_style:'quote';
-
-        $this->themedir= !empty($DBInfo->themedir) ? $DBInfo->themedir:dirname(__FILE__);
-        $this->themeurl= !empty($DBInfo->themeurl) ? $DBInfo->themeurl:$DBInfo->url_prefix;
-        $this->set_theme(!empty($options['theme']) ? $options['theme'] : '', $options);
-
-        $this->NULL='';
-        if(getenv("OS")!="Windows_NT") $this->NULL=' 2>/dev/null';
-
-        $this->_macrocache=0;
-        $this->wikimarkup=0;
-        $this->pi=array();
-        $this->external_on=0;
-        $this->external_target='';
-        if (!empty($DBInfo->external_target))
-            $this->external_target='target="'.$DBInfo->external_target.'"';
 
         // set filter
         if (!empty($this->filters)) {
