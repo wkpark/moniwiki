@@ -13,147 +13,13 @@
 //
 // $Id: wiki.php,v 1.639 2011/08/09 13:51:53 wkpark Exp $
 //
-$_revision = substr('$Revision: 1.1940 $',1,-1);
-$_release = '1.2.5';
+$_revision = substr('$Revision: 1.1950 $',1,-1);
+$_release = '1.3.0-GIT';
 
 #ob_start("ob_gzhandler");
 
 error_reporting(E_ALL ^ E_NOTICE);
 #error_reporting(E_ALL);
-
-/**
- * get macro/action plugins
- *
- * @param macro/action name
- * @return a basename of the plugin or null or false(disabled)
- */
-function getPlugin($pluginname) {
-    static $plugins=array();
-    if (is_bool($pluginname) and $pluginname)
-        return sizeof($plugins);
-    $pname = strtolower($pluginname);
-    if (!empty($plugins)) return isset($plugins[$pname]) ? $plugins[$pname]:'';
-    global $DBInfo;
-
-    $cp = new Cache_text('settings', array('depth'=>0));
-    if (empty($DBInfo->manual_plugin_admin)) {
-        if (!empty($DBInfo->include_path))
-            $dirs=explode(':',$DBInfo->include_path);
-        else
-            $dirs=array('.');
-        $updated=false;
-        $mt=$cp->mtime('plugins');
-        foreach ($dirs as $d) {
-            if (is_dir($d.'/plugin/')) {
-                $ct=filemtime($d.'/plugin/.'); // XXX mtime fix
-                $updated=$ct > $mt ? true:$updated;
-            }
-        }
-        if ($updated) {
-            $cp->remove('plugins');
-            $cp->remove('processors');
-        }
-    }
-
-    if ($plugins = $cp->fetch('plugins')) {
-        if (!empty($DBInfo->myplugins) and is_array($DBInfo->myplugins))
-            $plugins=array_merge($plugins,$DBInfo->myplugins);
-        return isset($plugins[$pname]) ? $plugins[$pname]:'';
-    }
-    if (!empty($DBInfo->include_path))
-        $dirs=explode(':',$DBInfo->include_path);
-    else
-        $dirs=array('.');
-
-    foreach ($dirs as $dir) {
-        $handle= @opendir($dir.'/plugin');
-        if (!$handle) continue;
-        while ($file= readdir($handle)) {
-            if (is_dir($dir."/plugin/$file")) continue;
-            $name= substr($file,0,-4);
-            $plugins[strtolower($name)]= $name;
-        }
-    }
-
-    // get predefined macros list
-    $tmp = get_defined_functions();
-    foreach ($tmp['user'] as $u) {
-        if (preg_match('/^macro_(.*)$/', $u, $m)) {
-            $n = strtolower($m[1]);
-            if (!isset($plugins[$n])) $plugins[$n] = $m[1];
-        }
-    }
-
-    if (!empty($plugins))
-        $cp->update('plugins',$plugins);
-    if (!empty($DBInfo->myplugins) and is_array($DBInfo->myplugins))
-        $plugins=array_merge($plugins,$DBInfo->myplugins);
-
-    return isset($plugins[$pname]) ? $plugins[$pname]:'';
-}
-
-function getProcessor($pro_name) {
-    static $processors=array();
-    if (is_bool($pro_name) and $pro_name)
-        return sizeof($processors);
-    $prog = strtolower($pro_name);
-    if (!empty($processors)) return isset($processors[$prog]) ? $processors[$prog]:'';
-    global $DBInfo;
-
-    $cp = new Cache_text('settings', array('depth'=>0));
-
-    if ($processors=$cp->fetch('processors')) {
-        if (is_array($DBInfo->myprocessors))
-            $processors=array_merge($processors,$DBInfo->myprocessors);
-        return isset($processors[$prog]) ? $processors[$prog]:'';
-    }
-    if (!empty($DBInfo->include_path))
-        $dirs=explode(':',$DBInfo->include_path);
-    else
-        $dirs=array('.');
-
-    foreach ($dirs as $dir) {
-        $handle= @opendir($dir.'/plugin/processor');
-        if (!$handle) continue;
-        while ($file= readdir($handle)) {
-            if (is_dir($dir."/plugin/processor/$file")) continue;
-            $name= substr($file,0,-4);
-            $processors[strtolower($name)]= $name;
-        }
-    }
-
-    if ($processors)
-        $cp->update('processors', $processors);
-    if (is_array($DBInfo->myprocessors))
-        $processors=array_merge($processors,$DBInfo->myprocessors);
-
-    return isset($processors[$prog]) ? $processors[$prog]:'';
-}
-
-function getFilter($filtername) {
-    static $filters=array();
-    if ($filters) return $filters[strtolower($filtername)];
-    global $DBInfo;
-    if (!empty($DBInfo->include_path))
-        $dirs=explode(':',$DBInfo->include_path);
-    else
-        $dirs=array('.');
-
-    foreach ($dirs as $dir) {
-        $handle= @opendir($dir.'/plugin/filter');
-        if (!$handle) continue;
-        while ($file= readdir($handle)) {
-            if (is_dir($dir."/plugin/filter/$file")) continue;
-            $name= substr($file,0,-4);
-            $filters[strtolower($name)]= $name;
-        }
-    }
-
-    if (!empty($DBInfo->myfilters) and is_array($DBInfo->myfilters))
-        $filters=array_merge($filters,$DBInfo->myfilters);
-
-    return $filters[strtolower($filtername)];
-}
 
 if (!function_exists ('bindtextdomain')) {
     $_locale = array();
@@ -406,7 +272,7 @@ class Formatter {
 
         $this->themedir= !empty($DBInfo->themedir) ? $DBInfo->themedir:dirname(__FILE__);
         $this->themeurl= !empty($DBInfo->themeurl) ? $DBInfo->themeurl:$DBInfo->url_prefix;
-        $this->set_theme(!empty($options['theme']) ? $options['theme'] : '');
+        $this->set_theme(!empty($options['theme']) ? $options['theme'] : '', $options);
 
         $this->NULL='';
         if(getenv("OS")!="Windows_NT") $this->NULL=' 2>/dev/null';
@@ -596,118 +462,12 @@ class Formatter {
         header($args);
     }
 
-    function set_theme($theme="") {
-        global $DBInfo;
-        if (!empty($theme)) {
-            $this->themedir.="/theme/$theme";
-            $this->themeurl.="/theme/$theme";
-        }
-
-        $data=array();
-        if (file_exists(dirname(__FILE__).'/theme.php')) {
-            $used=array('icons','icon');
-            $options['themedir']='.';
-            $options['themeurl']=$DBInfo->url_prefix;
-            $options['frontpage']=$DBInfo->frontpage;
-            $data=getConfig(dirname(__FILE__).'/theme.php',$options);
-
-            foreach ($data as $k=>$v)
-                if (!in_array($k, $used)) unset($data[$k]);
-        }
-        $options['themedir']=$this->themedir;
-        $options['themeurl']=$this->themeurl;
-        $options['frontpage']=$DBInfo->frontpage;
-
-        $this->icon=array();
-        if (file_exists($this->themedir."/theme.php")) {
-            $data0=getConfig($this->themedir."/theme.php",$options);
-            if (!empty($data0))
-                $data=array_merge($data0,$data);
-        }
-        if (!empty($data)) {
-            # read configurations
-            while (list($key,$val) = each($data)) $this->$key=$val;
-        }
-        if (!empty($DBInfo->icon))
-            $this->icon=array_merge($DBInfo->icon,$this->icon);
-
-        if (!isset($this->icon_bra)) {
-            $this->icon_bra=$DBInfo->icon_bra;
-            $this->icon_cat=$DBInfo->icon_cat;
-            $this->icon_sep=$DBInfo->icon_sep;
-        }
-
-        if (empty($this->menu)) {
-            $this->menu=&$DBInfo->menu;
-        }
-
-        if (!isset($this->menu_bra)) {
-            $this->menu_bra=!empty($DBInfo->menu_bra) ? $DBInfo->menu_bra : '';
-            $this->menu_cat=!empty($DBInfo->menu_cat) ? $DBInfo->menu_cat : '';
-            $this->menu_sep=!empty($DBInfo->menu_sep) ? $DBInfo->menu_sep : '';
-        }
-
-        if (!$this->icons)
-            $this->icons = array();
-
-        if (!empty($DBInfo->icons))
-            $this->icons = array_merge($DBInfo->icons,$this->icons);
-
-        if (empty($this->icon_list)) {
-            $this->icon_list=!empty($DBInfo->icon_list) ? $DBInfo->icon_list:null;
-        }
-        if (empty($this->purple_icon)) {
-            $this->purple_icon=$DBInfo->purple_icon;
-        }
-        if (empty($this->perma_icon)) {
-            $this->perma_icon=$DBInfo->perma_icon;
-        }
+    function set_theme($theme = '', $params = array()) {
+        set_theme($this, $theme, $params);
     }
 
-    function include_theme($theme,$file='default',$params=array()) {
-        $theme=trim($theme,'.-_');
-        $theme=preg_replace(array('/\/+/','/\.+/'),array('/',''),$theme);
-        if (preg_match('/_tpl$/',$theme)) {
-            $type='tpl';
-        } else {
-            $type='php';
-        }
-
-        $theme_dir='theme/'.$theme;
-
-        if (file_exists($theme_dir."/theme.php")) {
-            $this->_vars['_theme']=_load_php_vars($theme_dir."/theme.php",$params);
-        }
-
-        $theme_path=$theme_dir.'/'.$file.'.'.$type;
-        if (!file_exists($theme_path)) {
-            trigger_error(sprintf(_("File '%s' does not exist."),$file),E_USER_NOTICE);
-            return '';
-        }
-        switch($type) {
-            case 'tpl':
-                $params['path']=$theme_path;
-                $out= $this->processor_repl('tpl_','',$params);
-                break;
-            case 'php':
-                global $Config;
-                $TPL_VAR=&$this->_vars;
-                if (isset($TPL_VAR['_theme']) and is_array($TPL_VAR['_theme']) and $TPL_VAR['_theme']['compat'])
-                    extract($TPL_VAR);
-                if ($params['print']) {
-                    $out=include $theme_path;
-                } else {
-                    ob_start();
-                    include $theme_path;
-                    $out=ob_get_contents();
-                    ob_end_clean();
-                }
-                break;
-
-            default:
-                break;
-        }
-        return $out;
+    function include_theme($themepath, $file = 'default', $params = array()) {
+        include_theme($this, $themepath, $file, $params);
     }
 
     function _diff_repl($arr) {
@@ -1515,52 +1275,10 @@ class Formatter {
         foreach (func_get_args() as $f) function_exists($f) or include_once 'plugin/function/'.$f.'.php';
     }
 
-    function macro_repl($macro,$value='',$options=array()) {
-        preg_match("/^([^\(]+)(\((.*)\))?$/", $macro, $match);
-        if (empty($value) and isset($match[2])) { #strpos($macro,'(') !== false)) {
-            $name = $match[1];
-            $args = empty($match[3]) ? true : $match[3];
-        } else {
-            $name = $macro;
-            $args = $value;
-        }
-
-        // check alias
-        $myname = getPlugin($name);
-        if (empty($myname)) return '[['.$macro.']]';
-        $macro_name = '';
-        if (strtolower($name) != strtolower($myname))
-            $macro_name = strtolower($name);
-        $name = $myname;
-
-        if (isset($macro_name[0]) and is_array($options))
-            $options['macro_name'] = $macro_name;
-
-        // macro ID
-        $this->mid=!empty($options['mid']) ? $options['mid']:
-            (!empty($this->mid) ? ++$this->mid:1);
-
-        $bra='';$ket='';
-        if (!empty($this->wikimarkup) and $macro != 'attachment' and empty($options['nomarkup'])) {
-            $markups=str_replace(array('=','-','<'),array('==','-=','&lt;'),$macro);
-            $markups=preg_replace('/&(?!#?[a-z0-9]+;)/i','&amp;',$markups);
-            $bra= "<span class='wikiMarkup'><!-- wiki:\n[[$markups]]\n-->";
-            $ket= '</span>';
-            $options['nomarkup']=1; // for the attachment macro
-        }
-
-        if (!function_exists ('macro_'.$name)) {
-            $np = getPlugin($name);
-            if (empty($np)) return '[['.$macro.']]';
-            include_once('plugin/'.$np.'.php');
-            if (!function_exists ('macro_'.$np)) return '[['.$macro.']]';
-            $name = $np;
-        }
-
-        $ret=call_user_func_array('macro_'.$name,array(&$this,$args,&$options));
-        if ($ret === false) return false;
-        if (is_array($ret)) return $ret;
-        return $bra.$ret.$ket;
+    function macro_repl($macro, $value = '', $params = array()) {
+        // FIXME
+        //return call_macro($this, $macro, $value, $params);
+        return call_user_func_array('call_macro', array(&$this, $macro, $value, &$params));
     }
 
     function macro_cache_repl($name, $args)
@@ -1574,97 +1292,20 @@ class Formatter {
         return '@@'.$md5sum.'@@';
     }
 
-    function processor_repl($processor,$value, $options = false) {
-        $bra='';$ket='';
-        if (!empty($this->wikimarkup) and empty($options['nomarkup'])) {
-            if (!empty($options['type']) and $options['type'] == 'inline') {
-                $markups=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$value);
-                $bra= "<span class='wikiMarkup' style='display:inline'><!-- wiki:\n".$markups."\n-->";
-            } else {
-                if (!empty($options['nowrap']) and !empty($this->pi['#format']) and $processor == $this->pi['#format']) { $btag='';$etag=''; }
-                else { $btag='{{{';$etag='}}}'; }
-                $notag = '';
-                if ($value{0}!='#' and $value{1}!='!') $notag="\n";
-                $markups=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$value);
-                $bra= "<span class='wikiMarkup'><!-- wiki:\n".$btag.$notag.$markups.$etag."\n-->";
-            }
-            $ket= '</span>';
-        }
-        $pf = $processor;
-        if (!($f = function_exists('processor_'.$processor)))
-            $pf = getProcessor($processor);
-        if (empty($pf)) {
-            $ret= call_user_func('processor_plain',$this,$value,$options);
-            return $bra.$ret.$ket;
-        }
-        if (!$f and !($c=class_exists('processor_'.$pf))) {
-            include_once("plugin/processor/$pf.php");
-            $name='processor_'.$pf;
-            if (!($f=function_exists($name)) and !($c=class_exists($name))) {
-                $processor='plain';
-                $f=true;
-            }
-        }
-
-        if ($f) {
-            if (!empty($this->use_smartdiff) and
-                    preg_match("/\006|\010/", $value)) $pf='plain';
-
-            $ret= call_user_func_array("processor_$pf",array(&$this,$value,$options));
-            if (!is_string($ret)) return $ret;
-            return $bra.$ret.$ket;
-        }
-
-        $classname='processor_'.$pf;
-        $myclass= new $classname($this,$options);
-        $ret= call_user_func(array($myclass,'process'),$value,$options);
-        if (!empty($options['nowrap']) and !empty($myclass->_type) and $myclass->_type=='wikimarkup') return $ret;
-        return $bra.$ret.$ket;
+    function processor_repl($processor, $value, $params = array()) {
+        return call_processor($this, $processor, $value, $params);
     }
 
-    function filter_repl($filter,$value,$options='') {
-        if (!function_exists('filter_'.$filter)) {
-            $ff=getFilter($filter);
-            if (!$ff) return $value;
-            include_once("plugin/filter/$ff.php");
-            #$filter=$ff;
-        }
-        if (!function_exists ("filter_".$filter)) return $value;
-
-        return call_user_func("filter_$filter",$this,$value,$options);
+    function filter_repl($filter, $value, $params = array()) {
+        return call_filter($this, $filter, $value, $params);
     }
 
-    function postfilter_repl($filter,$value,$options='') {
-        if (!function_exists('postfilter_'.$filter) and !function_exists('filter_'.$filter)) {
-            $ff=getFilter($filter);
-            if (!$ff) return $value;
-            include_once("plugin/filter/$ff.php");
-            #$filter=$ff;
-        }
-        if (!function_exists ("postfilter_".$filter)) return $value;
-
-        return call_user_func("postfilter_$filter",$this,$value,$options);
+    function postfilter_repl($filter, $value, $params = array()) {
+        return call_postfilter($this, $filter, $value, $params);
     }
 
-    function ajax_repl($plugin,$options='') {
-        if (!function_exists('ajax_'.$plugin) and !function_exists('do_'.$plugin)) {
-            $ff=getPlugin($plugin);
-            if (!$ff)
-                return ajax_invalid($this,array('title'=>_("Invalid ajax action.")));
-            include_once("plugin/$ff.php");
-        }
-        if (!function_exists ('ajax_'.$plugin)) {
-            if (function_exists('do_'.$plugin)) {
-                call_user_func('do_'.$plugin,$this,$options);
-                return;
-            } else if (function_exists('macro_'.$plugin)) {
-                echo call_user_func_array('macro_'.$plugin,array(&$this,'',$options));
-                return;
-            }
-            return ajax_invalid($this,array('title'=>_("Invalid ajax action.")));
-        }
-
-        return call_user_func('ajax_'.$plugin,$this,$options);
+    function ajax_repl($plugin, $params = array()) {
+        return call_action($this, 'ajax', $plugin, $params);
     }
 
     function smiley_repl($smiley) {
@@ -3233,393 +2874,8 @@ class Formatter {
         return $out;
     }
 
-    function send_header($header="",$options=array()) {
-        global $DBInfo;
-        $plain=0;
-
-        $media='media="screen"';
-        if (isset($options['action'][0]) and $options['action'] == 'print') $media = '';
-
-        if (empty($options['is_robot']) && isset($this->pi['#redirect'][0]) && !empty($options['pi'])) {
-            $options['value']=$this->pi['#redirect'];
-            $options['redirect']=1;
-            $this->pi['#redirect']='';
-            do_goto($this,$options);
-            return true;
-        }
-        $header = !empty($header) ? $header:(!empty($options['header']) ? $options['header']:null) ;
-
-        if (!empty($header)) {
-            foreach ((array)$header as $head) {
-                $this->header($head);
-                if (preg_match("/^content\-type: text\//i",$head))
-                    $plain=1;
-            }
-        }
-        $mtime = isset($options['mtime']) ? $options['mtime'] : $this->page->mtime();
-        if ($mtime > 0) {
-            $modified = $mtime > 0 ? gmdate('Y-m-d\TH:i:s', $mtime).'+00:00' : null;
-            $lastmod = gmdate('D, d M Y H:i:s', $mtime).' GMT';
-            $meta_lastmod = '<meta http-equiv="last-modified" content="'.$lastmod.'" />'."\n";
-        }
-        if (is_static_action($options) or
-            (!empty($DBInfo->use_conditional_get) and !empty($mtime)
-            and empty($options['nolastmod'])
-            and $this->page->is_static))
-        {
-            $this->header('Last-Modified: '.$lastmod);
-            $etag = $this->page->etag($options);
-            if (!empty($options['etag']))
-                $this->header('ETag: "'.$options['etag'].'"');
-            else
-                $this->header('ETag: "'.$etag.'"');
-        }
-
-        // custom headers
-        if (!empty($DBInfo->site_headers)) {
-            foreach ((array)$DBInfo->site_headers as $head) {
-                $this->header($head);
-            }
-        }
-
-        $content_type=
-            isset($DBInfo->content_type[0]) ? $DBInfo->content_type : 'text/html';
-
-        $force_charset = '';
-        if (!empty($DBInfo->force_charset))
-            $force_charset = '; charset='.$DBInfo->charset;
-
-        if (!$plain)
-            $this->header('Content-type: '.$content_type.$force_charset);
-
-        if (!empty($options['action_mode']) and $options['action_mode'] =='ajax') return true;
-
-        # disabled
-        #$this->header("Vary: Accept-Encoding, Cookie");
-        #if (strstr($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') and function_exists('ob_gzhandler')) {
-        #  ob_start('ob_gzhandler');
-        #  $etag.= '.gzip';
-        #}
-
-        if (!empty($options['metatags']))
-            $metatags = $options['metatags'];
-        else
-            $metatags = $DBInfo->metatags;
-
-        if (!empty($options['noindex']) || !empty($this->pi['#noindex']) ||
-                (!empty($mtime) and !empty($DBInfo->delayindex) and ((time() - $mtime) < $DBInfo->delayindex))) {
-            // delay indexing like as dokuwiki
-            if (preg_match("/<meta\s+name=('|\")?robots\\1[^>]+>/i", $metatags)) {
-                $metatags = preg_replace("/<meta\s+name=('|\")?robots\\1[^>]+>/i",
-                        '<meta name="robots" content="noindex,nofollow" />',
-                        $metatags);
-            } else {
-                $metatags.= '<meta name="robots" content="noindex,nofollow" />'."\n";
-            }
-        }
-        if (isset($DBInfo->metatags_extra))
-            $metatags.= $DBInfo->metatags_extra;
-
-        $js=!empty($DBInfo->js) ? $DBInfo->js : '';
-
-        if (!$plain) {
-            if (isset($options['trail']))
-                $this->set_trailer($options['trail'],$this->page->name);
-            else if ($DBInfo->origin)
-                $this->set_origin($this->page->name);
-
-            # find upper page
-            $up_separator = '/';
-            if (!empty($this->use_namespace)) $up_separator.= '|\:';
-            $pos=0;
-            preg_match('@(' . $up_separator . ')@',$this->page->name,$sep); # NameSpace/SubPage or NameSpace:SubNameSpacePage
-            if (isset($sep[1])) $pos=strrpos($this->page->name,$sep[1]);
-            if ($pos > 0) $upper=substr($this->page->urlname,0,$pos);
-            else if ($this->group) $upper=_urlencode(substr($this->page->name,strlen($this->group)));
-
-            // setup keywords
-            $keywords = '';
-            if (!empty($this->pi['#keywords'])) {
-                $keywords = _html_escape($this->pi['#keywords']);
-            } else {
-                $keys = array();
-                $dummy = strip_tags($this->page->title);
-                $keys = explode(' ', $dummy);
-                $keys[] = $dummy;
-                $keys = array_unique($keys);
-                $keywords = implode(', ', $keys);
-            }
-
-            // add redirects as keywords
-            if (!empty($DBInfo->use_redirects_as_keywords)) {
-                $r = new Cache_Text('redirects');
-                $redirects = $r->fetch($this->page->name);
-                if ($redirects !== false) {
-                    sort($redirects);
-                    $keywords.= ', '._html_escape(implode(', ', $redirects));
-                }
-            }
-
-            // add site specific keywords
-            if (!empty($DBInfo->site_keywords))
-                $keywords.= ', '.$DBInfo->site_keywords;
-            $keywords = "<meta name=\"keywords\" content=\"$keywords\" />\n";
-
-            # find sub pages
-            if (empty($options['action']) and !empty($DBInfo->use_subindex)) {
-                $scache= new Cache_text('subpages');
-                if (!($subs=$scache->exists($this->page->name))) {
-                    if (($p = strrpos($this->page->name,'/')) !== false)
-                        $rule=_preg_search_escape(substr($this->page->name,0,$p));
-                    else
-                        $rule=_preg_search_escape($this->page->name);
-                    $subs=$DBInfo->getLikePages('^'.$rule.'\/',1);
-                    if ($subs) $scache->update($this->page->name,1);
-                }
-                if (!empty($subs)) {
-                    $subindices='';
-                    if (empty($DBInfo->use_ajax)) {
-                        $subindices= '<div>'.$this->macro_repl('PageList','',array('subdir'=>1)).'</div>';
-                        $btncls='class="close"';
-                    } else
-                        $btncls='';
-                    $this->subindex="<fieldset id='wikiSubIndex'>".
-                    "<legend title='[+]' $btncls onclick='javascript:toggleSubIndex(\"wikiSubIndex\")'></legend>".
-                    $subindices."</fieldset>\n";
-                }
-            }
-
-            if (!empty($options['.title'])) {
-                $options['title'] = $options['.title'];
-            } else if (empty($options['title'])) {
-                $options['title']=!empty($this->pi['#title']) ? $this->pi['#title']:
-                    $this->page->title;
-                $options['title']=
-                    _html_escape($options['title']);
-            } else {
-                $options['title'] = strip_tags($options['title']);
-            }
-            $theme_type = !empty($this->_newtheme) ? $this->_newtheme : '';
-            if (empty($options['css_url'])) $options['css_url']=$DBInfo->css_url;
-            if (empty($this->pi['#nodtd']) and !isset($options['retstr']) and $theme_type != 2) {
-                if (!empty($this->html5)) {
-                    if (is_string($this->html5))
-                        echo $this->html5;
-                    else
-                        echo '<!DOCTYPE html>',"\n",
-                             '<html xmlns="http://www.w3.org/1999/xhtml">',"\n";
-                } else {
-                    echo $DBInfo->doctype;
-                }
-            }
-            if ($theme_type == 2 or isset($options['retstr']))
-                ob_start();
-            else
-                echo "<head>\n";
-
-            echo '<meta http-equiv="Content-Type" content="'.$content_type.
-                ';charset='.$DBInfo->charset."\" />\n";
-            echo <<<JSHEAD
-<script type="text/javascript">
-/*<![CDATA[*/
-_url_prefix="$DBInfo->url_prefix";
-/*]]>*/
-</script>
-JSHEAD;
-            echo $metatags,$js,"\n";
-            echo $this->get_javascripts();
-            echo $keywords;
-            if (!empty($meta_lastmod)) echo $meta_lastmod;
-
-            $sitename = !empty($DBInfo->title_sitename) ? $DBInfo->title_sitename : $DBInfo->sitename;
-            if (!empty($DBInfo->title_msgstr))
-                $site_title = sprintf($DBInfo->title_msgstr, $sitename, $options['title']);
-            else
-                $site_title = $options['title'].' - '.$sitename;
-
-            // set OpenGraph information
-            $act = !empty($options['action']) ? strtolower($options['action']) : 'show';
-            $is_show = $act == 'show';
-            $is_frontpage = $this->page->name == get_frontpage($DBInfo->lang);
-            if (!$is_frontpage && !empty($DBInfo->frontpages) && in_array($this->page->name, $DBInfo->frontpages))
-                $is_frontpage = true;
-
-            if (!empty($DBInfo->canonical_url)) {
-                if (($p = strpos($DBInfo->canonical_url, '%s')) !== false)
-                    $page_url = sprintf($DBInfo->canonical_url, $this->page->urlname);
-                else
-                    $page_url = $DBInfo->canonical_url . $this->page->urlname;
-            } else {
-                $page_url = qualifiedUrl($this->link_url($this->page->urlname));
-            }
-
-            if ($is_show && $this->page->exists()) {
-                $oc = new Cache_text('opengraph');
-                if ($this->refresh || ($val = $oc->fetch($this->page->name, $this->page->mtime())) === false) {
-                    $val = array('description'=> '', 'image'=> '');
-
-                    if (!empty($this->pi['#redirect'])) {
-                        $desc = '#redirect '.$this->pi['#redirect'];
-                    } else {
-                        $raw = $this->page->_get_raw_body();
-                        if (!empty($this->pi['#description'])) {
-                            $desc = $this->pi['#description'];
-                        } else {
-                            $cut_size = 2000;
-                            if (!empty($DBInfo->get_description_cut_size))
-                                $cut_size = $DBInfo->get_description_cut_size;
-                            $cut = mb_strcut($raw, 0, $cut_size, $DBInfo->charset);
-                            $desc = get_description($cut);
-                            if ($desc !== false)
-                                $desc = mb_strcut($desc, 0, 200, $DBInfo->charset).'...';
-                            else
-                                $desc = $this->page->name;
-                        }
-                    }
-
-                    $val['description'] = _html_escape($desc);
-
-                    if (!empty($this->pi['#image'])) {
-                        if (preg_match('@^(ftp|https?)://@', $this->pi['#image'])) {
-                            $page_image = $this->pi['#image'];
-                        } else if (preg_match('@^attachment:("[^"]+"|[^\s]+)@/', $this->pi['#image'], $m)) {
-                            $image = $this->macro_repl('attachment', $m[1], array('link_url'=>1));
-                            if ($image[0] != 'a') $page_image = $image;
-                        }
-                    }
-
-                    if (empty($page_image)) {
-                        // extract the first image
-                        $punct = '<>"\'}\]\|\!';
-                        if (preg_match_all('@(?<=\b)((?:attachment:(?:"[^'.$punct.']+"|[^\s'.$punct.'?]+)|'.
-                                        '(?:https?|ftp)://(?:[^\s'.$punct.']+)\.(?:png|jpe?g|gif)))@', $raw, $m)) {
-                            foreach ($m[1] as $img) {
-                                if ($img[0] == 'a') {
-                                    $img = substr($img, 11); // strip attachment:
-                                    $image = $this->macro_repl('attachment', $img, array('link_url'=>1));
-                                    if ($image[0] != 'a' && preg_match('@\.(png|jpe?g|gif)$@i', $image)) {
-                                        $page_image = $image;
-                                        break;
-                                    }
-                                } else {
-                                    $page_image = $img;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-
-                    if (empty($page_image) && $is_frontpage) {
-                        $val['image'] = qualifiedUrl($DBInfo->logo_img);
-                    } else if (!empty($page_image)) {
-                        $val['image'] = $page_image;
-                    }
-
-                    $oc->update($this->page->name, $val, time());
-                }
-
-                if (empty($this->no_ogp)) {
-                    // for OpenGraph
-                    echo '<meta property="og:url" content="'. $page_url.'" />',"\n";
-                    echo '<meta property="og:site_name" content="'.$sitename.'" />',"\n";
-                    echo '<meta property="og:title" content="'.$options['title'].'" />',"\n";
-                    if ($is_frontpage)
-                        echo '<meta property="og:type" content="website" />',"\n";
-                    else
-                        echo '<meta property="og:type" content="article" />',"\n";
-                    if (!empty($val['image']))
-                        echo '<meta property="og:image" content="',$val['image'],'" />',"\n";
-                    if (!empty($val['description']))
-                        echo '<meta property="og:description" content="'.$val['description'].'" />',"\n";
-                }
-
-                // twitter card
-                echo '<meta name="twitter:card" content="summary" />',"\n";
-                if (!empty($DBInfo->twitter_id))
-                    echo '<meta name="twitter:site" content="',$DBInfo->twitter_id,'">',"\n";
-                echo '<meta name="twitter:domain" content="',$sitename,'" />',"\n";
-                echo '<meta name="twitter:title" content="',$options['title'],'">',"\n";
-                echo '<meta name="twitter:url" content="',$page_url,'">',"\n";
-                if (!empty($val['description']))
-                    echo '<meta name="twitter:description" content="'.$val['description'].'" />',"\n";
-                if (!empty($val['image']))
-                    echo '<meta name="twitter:image:src" content="',$val['image'],'" />',"\n";
-
-                // support google sitelinks serachbox
-                if (!empty($DBInfo->use_google_sitelinks)) {
-                    if ($is_frontpage) {
-                        if (!empty($DBInfo->canonical_url))
-                            $site_url = $DBInfo->canonical_url;
-                        else
-                            $site_url = qualifiedUrl($this->link_url(''));
-
-                        echo <<<SITELINK
-<script type='application/ld+json'>
-{"@context":"http://schema.org",
- "@type":"WebSite",
- "url":"$site_url",
- "name":"$sitename",
- "potentialAction":{
-  "@type":"SearchAction",
-  "target":"$site_url?goto={search_term}",
-  "query-input":"required name=search_term"
- }
-}
-</script>\n
-SITELINK;
-                    }
-                }
-
-                echo <<<SCHEMA
-<script type='application/ld+json'>
-{"@context":"http://schema.org",
- "@type":"WebPage",
- "url":"$page_url",
- "dateModified":"$modified",
- "name":"{$options['title']}"
-}
-</script>\n
-SCHEMA;
-                if (!empty($val['description']))
-                    echo '<meta name="description" content="'.$val['description'].'" />',"\n";
-            }
-            echo '  <title>',$site_title,"</title>\n";
-            echo '  <link rel="canonical" href="',$page_url,'" />',"\n";
-
-            # echo '<meta property="og:title" content="'.$options['title'].'" />',"\n";
-            if (!empty($upper))
-                echo '  <link rel="Up" href="',$this->link_url($upper),"\" />\n";
-            $raw_url=$this->link_url($this->page->urlname,"?action=raw");
-            $print_url=$this->link_url($this->page->urlname,"?action=print");
-            echo '  <link rel="Alternate" title="Wiki Markup" href="',
-                $raw_url,"\" />\n";
-            echo '  <link rel="Alternate" media="print" title="Print View" href="',
-                $print_url,"\" />\n";
-            if ($options['css_url']) {
-                $css_url = _html_escape($options['css_url']);
-                echo '  <link rel="stylesheet" type="text/css" ',$media,' href="',
-                    $css_url."\" />\n";
-                if (!empty($DBInfo->custom_css) && file_exists($DBInfo->custom_css))
-                    echo '  <link rel="stylesheet" media="screen" type="text/css" href="',
-                        $DBInfo->url_prefix,'/',$DBInfo->custom_css,"\" />\n";
-                else if (file_exists('./css/_user.css'))
-                echo '  <link rel="stylesheet" media="screen" type="text/css" href="',
-                    $DBInfo->url_prefix,"/css/_user.css\" />\n";
-            }
-
-            echo kbd_handler(!empty($options['prefix']) ? $options['prefix'] : '');
-
-            if ((isset($this->_newtheme) and $this->_newtheme == 2) or isset($options['retstr'])) {
-                $ret = ob_get_contents();
-                ob_end_clean();
-                if (isset($options['retstr']))
-                    $options['retstr'] = $ret;
-                $this->header_html = $ret;
-            } else {
-                echo "</head>\n";
-            }
-        }
-        return true;
+    function send_header($header = '', $params = array()) {
+        send_header($this, $header, $params);
     }
 
     function get_actions($args='',$options) {
@@ -3669,619 +2925,29 @@ SCHEMA;
         return $menu;
     }
 
-    function send_footer($args='',$options=array()) {
-        global $DBInfo;
-
-        empty($options) ? $options = array('id'=>'Anonymous',
-                                  'tz_offset'=>$this->tz_offset,
-                                  'page'=>$this->page->name) : null;
-
-
-        if (!empty($options['action_mode']) and $options['action_mode'] =='ajax') return;
-
-        echo "<!-- wikiBody --></".$this->tags['article'].">\n";
-        echo $DBInfo->hr;
-        if (!empty($args['editable']) and !$DBInfo->security->writable($options))
-            $args['editable']=-1;
-
-        $key=$DBInfo->pageToKeyname($options['page']);
-        if (!in_array('UploadedFiles',$this->actions) and is_dir($DBInfo->upload_dir."/$key"))
-            $this->actions[]='UploadedFiles';
-
-        $menus=$this->get_actions($args,$options);
-
-        $hide_actions=!empty($DBInfo->hide_actions) ? $DBInfo->hide_actions : 0;
-        $hide_actions+= $this->popup;
-        $menu = '';
-        if (!$hide_actions or
-                ($hide_actions and $options['id']!='Anonymous')) {
-            if (!$this->css_friendly) {
-                $menu=$this->menu_bra.implode($this->menu_sep,$menus).$this->menu_cat;
-            } else {
-                $menu="<div id='wikiAction'>";
-                $menu.='<ul><li class="first">'.implode("</li>\n<li>\n",$menus)."</li></ul>";
-                $menu.="</div>";
-            }
-        }
-
-        if ($mtime=$this->page->mtime()) {
-            $lastedit=gmdate("Y-m-d",$mtime+$options['tz_offset']);
-            $lasttime=gmdate("H:i:s",$mtime+$options['tz_offset']);
-            $datetime = gmdate('Y-m-d\TH:i:s', $mtime).'+00:00';
-        }
-
-        $validator_xhtml=!empty($DBInfo->validator_xhtml) ? $DBInfo->validator_xhtml:'http://validator.w3.org/check/referer';
-        $validator_css=!empty($DBInfo->validator_css) ? $DBInfo->validator_xhtml:'http://jigsaw.w3.org/css-validator';
-
-        $banner= <<<FOOT
- <a href="$validator_xhtml"><img
-  src="$this->imgs_dir/valid-xhtml10.png"
-  style="border:0;vertical-align:middle" width="88" height="31"
-  alt="Valid XHTML 1.0!" /></a>
-
- <a href="$validator_css"><img
-  src="$this->imgs_dir/vcss.png"
-  style="border:0;vertical-align:middle" width="88" height="31"
-  alt="Valid CSS!" /></a>
-
- <a href="http://moniwiki.sourceforge.net/"><img
-  src="$this->imgs_dir/moniwiki-powered.png"
-  style="border:0;vertical-align:middle" width="88" height="31"
-  alt="powered by MoniWiki" /></a>
-FOOT;
-
-        $timer = '';
-        if (isset($options['timer']) and is_object($options['timer'])) {
-            $options['timer']->Check();
-            $timer=$options['timer']->Total();
-        }
-
-        if (file_exists($this->themedir."/footer.php")) {
-            $themeurl=$this->themeurl;
-            $this->_vars['mainmenu'] = $this->_vars['menu'];
-            unset($this->_vars['menu']);
-            // extract variables
-            extract($this->_vars);
-            include($this->themedir."/footer.php");
-        } else {
-            echo "<div id='wikiFooter'>";
-            echo $menu;
-            if (!$this->css_friendly) echo $banner;
-            else echo "<div id='wikiBanner'>$banner</div>\n";
-            echo "\n</div>\n";
-        }
-        if (empty($this->_newtheme) or $this->_newtheme != 2)
-            echo "</body>\n</html>\n";
-        #include "prof_results.php";
+    function send_footer($args = '', $params = array()) {
+        send_footer($this, $args, $params);
     }
 
-    function send_title($msgtitle="", $link="", $options="") {
-        // Generate and output the top part of the HTML page.
-        global $DBInfo;
-
-        if (!empty($options['action_mode']) and $options['action_mode']=='ajax') return;
-
-        $name=$this->page->urlname;
-        $action=$this->link_url($name);
-        $saved_pagelinks = $this->pagelinks;
-
-        # find upper page
-        $up_separator = '/';
-        if (!empty($this->use_namespace)) $up_separator.= '|\:';
-        $pos=0;
-        preg_match('@(' . $up_separator . ')@',$name,$sep); # NameSpace/SubPage or NameSpace:SubNameSpacePage
-            if (isset($sep[1])) $pos=strrpos($name,$sep[1]);
-        $mypgname=$this->page->name;
-        $upper_icon = '';
-        if ($pos > 0) {
-            $upper=substr($name,0,$pos);
-            $upper_icon=$this->link_tag($upper,'',$this->icon['upper'])." ";
-        } else if (!empty($this->group)) {
-            $group=$this->group;
-            $mypgname=substr($this->page->name,strlen($group));
-            $upper=_urlencode($mypgname);
-            $upper_icon=$this->link_tag($upper,'',$this->icon['main'])." ";
-        }
-
-        $title = '';
-        if (isset($this->pi['#title']))
-            $title=_html_escape($this->pi['#title']);
-
-        // change main title
-        if (!empty($options['.title'])) $title = _html_escape($options['.title']);
-        if (!empty($msgtitle)) {
-            $msgtitle = _html_escape($msgtitle);
-        } else if (isset($options['msgtitle'])) {
-            $msgtitle = $options['msgtitle'];
-        }
-
-        if (empty($msgtitle) and !empty($options['title'])) $msgtitle=$options['title'];
-        $groupt = '';
-        if (empty($title)) {
-            if (!empty($group)) { # for UserNameSpace
-                $title=$mypgname;
-                $groupt=substr($group,0,-1).' &raquo;'; // XXX
-                $groupt=
-                    "<span class='wikiGroup'>$groupt</span>";
-            } else {
-                $groupt = '';
-                $title=$this->page->title;
-            }
-            $title=_html_escape($title);
-        }
-        # setup title variables
-        #$heading=$this->link_to("?action=fullsearch&amp;value="._urlencode($name),$title);
-
-        // follow backlinks ?
-        if (!empty($DBInfo->backlinks_follow))
-            $attr = 'rel="follow"';
-        else
-            $attr = '';
-
-        $qext = '';
-        if (!empty($DBInfo->use_backlinks)) $qext='&amp;backlinks=1';
-        if (isset($link[0]))
-            $title="<a href=\"$link\">$title</a>";
-        else if (empty($options['.title']) and empty($options['nolink']))
-            $title=$this->link_to("?action=fullsearch$qext&amp;value="._urlencode($mypgname),$title, $attr);
-
-        if (isset($this->pi['#notitle']))
-            $title = '';
-        else
-            $title=$groupt."<h1 class='wikiTitle'>$title</h1>";
-
-        $logo=$this->link_tag($DBInfo->logo_page,'',$DBInfo->logo_string);
-        $goto_form=$DBInfo->goto_form ?
-            $DBInfo->goto_form : goto_form($action,$DBInfo->goto_type);
-
-        if (!empty($options['msg']) or !empty($msgtitle)) {
-            $msgtype = isset($options['msgtype']) ? ' '.$options['msgtype']:' warn';
-            $msgs = array();
-            if (!empty($options['msg'])) $msgs[] = $options['msg'];
-            if (!empty($options['notice'])) $msgs[] = $options['notice'];
-            $mtitle0 = implode("<br />", $msgs);
-            $mtitle=!empty($msgtitle) ? "<h3>".$msgtitle."</h3>\n":"";
-            $msg=<<<MSG
-<div class="message" id="wiki-message"><span class='$msgtype'>
-$mtitle$mtitle0</span>
-</div>
-MSG;
-            if (isset($DBInfo->hide_log) and $DBInfo->hide_log > 0 and preg_match('/timer/', $msgtype)) {
-                $time = intval($DBInfo->hide_log * 1000); // sec to ms
-                $msg.=<<<MSG
-<script type="text/javascript">
-/*<![CDATA[*/
-setTimeout(function() {\$('#wiki-message').fadeOut('fast');}, $time);
-/*]]>*/
-</script>
-MSG;
-            }
-        }
-
-        # navi bar
-        $menu=array();
-        if (!empty($options['quicklinks'])) {
-            # get from the user setting
-            $quicklinks=array_flip(explode("\t",$options['quicklinks']));
-        } else {
-            # get from the config.php
-            $quicklinks=$this->menu;
-        }
-
-        $sister_save=$this->sister_on;
-        $this->sister_on=0;
-        $titlemnu=0;
-        if (isset($quicklinks[$this->page->name])) {
-            #$attr.=" class='current'";
-            $titlemnu=1;
-        }
-
-        if (!empty($DBInfo->use_userlink) and isset($quicklinks['UserPreferences']) and $options['id'] != 'Anonymous') {
-            $tmpid= 'wiki:UserPreferences '.$options['id'];
-            $quicklinks[$tmpid]= $quicklinks['UserPreferences'];
-            unset($quicklinks['UserPreferences']);
-        }
-
-        $this->forcelink = 1;
-        foreach ($quicklinks as $item=>$attr) {
-            if (strpos($item,' ') === false) {
-                if (strpos($attr,'=') === false) $attr="accesskey='$attr'";
-                # like 'MoniWiki'=>'accesskey="1"'
-                $menu[$item]=$this->word_repl($item,_($item),$attr);
-                # $menu[]=$this->link_tag($item,"",_($item),$attr);
-            } else {
-                # like a 'http://moniwiki.sf.net MoniWiki'
-                $menu[$item]=$this->link_repl($item,$attr);
-            }
-        }
-        if (!empty($DBInfo->use_titlemenu) and $titlemnu == 0 ) {
-            $len = $DBInfo->use_titlemenu > 15 ? $DBInfo->use_titlemenu:15;
-            #$attr="class='current'";
-            $mnuname=_html_escape($this->page->name);
-            if ($DBInfo->hasPage($this->page->name)) {
-                if (strlen($mnuname) < $len) {
-                    $menu[$this->page->name]=$this->word_repl($mypgname,$mnuname,$attr);
-                } else if (function_exists('mb_strimwidth')) {
-                    $my=mb_strimwidth($mypgname,0,$len,'...', $DBInfo->charset);
-                    $menu[$this->page->name]=$this->word_repl($mypgname,_html_escape($my),$attr);
-                }
-            }
-        }
-        $this->forcelink = 0;
-        $this->sister_on=$sister_save;
-        if (empty($this->css_friendly)) {
-            $menu=$this->menu_bra.implode($this->menu_sep,$menu).$this->menu_cat;
-        } else {
-            $cls = 'first';
-            $mnu = '';
-            foreach ($menu as $k=>$v) {
-                if (preg_match('/current/', $v)) {
-                    $cls .=' current';
-                }
-                # set current page attribute.
-                $mnu.='<li'.(!empty($cls) ? ' class="'. $cls .'"' : '').'>'.$menu[$k]."</li>\n";
-                $cls = '';
-            }
-
-            // action menus
-            if (!empty($DBInfo->menu_actions)) {
-                $actions = array();
-                foreach ($DBInfo->menu_actions as $action) {
-                    if (strpos($action, ' ') !== false) {
-                        list($act, $text) = explode(' ', $action, 2);
-                        if ($options['page'] == $this->page->name) {
-                            $actions[] = $this->link_to($act, _($text));
-                        } else {
-                            $actions[] = $this->link_tag($options['page'], $act, _($text));
-                        }
-                    } else {
-                        $actions[] = $this->link_to("?action=$action", _($action), " rel='nofollow'");
-                    }
-                }
-                $mnu.= '<li><a href="#"><span class="more">'._("More&#187;").'</span></a>'."\n";
-                $mnu.= '<ul><li>'.implode("</li>\n<li>", $actions).'</li></ul></li>'."\n";
-            }
-
-            $menu='<div id="wikiMenu"><ul>'.$mnu."</ul></div>\n";
-        }
-        $this->topmenu=$menu;
-
-        # submenu XXX
-        if (!empty($this->submenu)) {
-            $smenu=array();
-            $mnu_pgname=(!empty($group) ? $group.'~':'').$this->submenu;
-            if ($DBInfo->hasPage($mnu_pgname)) {
-                $pg=$DBInfo->getPage($mnu_pgname);
-                $mnu_raw=$pg->get_raw_body();
-                $mlines=explode("\n",$mnu_raw);
-                foreach ($mlines as $l) {
-                    if (!empty($mk) and preg_match('/^\s{2,}\*\s*(.*)$/',$l,$m)) {
-                        if (isset($smenu[$mk]) and !is_array($smenu[$mk])) $smenu[$mk]=array();
-                        $smenu[$mk][]=$m[1];
-                        if (isset($smenu[$m[1]])) $smenu[$m[1]]=$mk;
-                    } else if (preg_match('/^ \*\s*(.*)$/',$l,$m)) {
-                        $mk=$m[1];
-                    }
-                }
-
-                # make $submenu, $submain
-                $cmenu=null;
-                if (isset($smenu[$this->page->name])) {
-                    $cmenu=&$smenu[$this->page->name];
-                }
-
-                $submain='';
-                if (isset($smenu['Main'])) {
-                    $submenus=array();
-                    foreach ($smenu['Main'] as $item) {
-                        $submenus[]=$this->link_repl($item);
-                    }
-                    $submain='<ul><li>'.implode("</li><li>",$submenus)."</li></ul>\n";
-                }
-
-                $submenu='';
-                if ($cmenu and ($cmenu != 'Main' or !empty($DBInfo->submenu_showmain))) {
-                    if (is_array($cmenu)) {
-                        $smenua=$cmenu;
-                    } else {
-                        $smenua=$smenu[$cmenu];
-                    }
-
-                    $submenus=array();
-                    foreach ($smenua as $item) {
-                        $submenus[]=$this->link_repl($item);
-                    }
-                    #print_r($submenus);
-                    $submenu='<ul><li>'.implode("</li><li>",$submenus)."</li></ul>\n";
-                    # set current attribute.
-                    $submenu=preg_replace("/(li)>(<a\s[^>]+current[^>]+)/",
-                            "$1 class='current'>$2",$submenu);
-                }
-            }
-        }
-
-        # icons
-        #if ($upper)
-        #  $upper_icon=$this->link_tag($upper,'',$this->icon['upper'])." ";
-
-        # UserPreferences
-        if ($options['id'] != "Anonymous") {
-            $user_link=$this->link_tag("UserPreferences","",$options['id']);
-            if (empty($DBInfo->no_wikihomepage) and $DBInfo->hasPage($options['id'])) {
-                $home=$this->link_tag($options['id'],"",$this->icon['home'])." ";
-                unset($this->icons['pref']); // insert home icon
-                $this->icons['home']=array($options['id'],"",$this->icon['home']);
-                $this->icons['pref']=array("UserPreferences","",$this->icon['pref']);
-            } else
-                $this->icons['pref']=array("UserPreferences","",$this->icon['pref']);
-            if (isset($options['scrapped'])) {
-                if (!empty($DBInfo->use_scrap) && $DBInfo->use_scrap != 'js' && $options['scrapped'])
-                    $this->icons['scrap']=array('','?action=scrap&amp;unscrap=1',$this->icon['unscrap']);
-                else
-                    $this->icons['scrap']=array('','?action=scrap',$this->icon['scrap']);
-            }
-
-        } else
-            $user_link=$this->link_tag("UserPreferences","",_($this->icon['user']));
-
-        if (!empty($DBInfo->check_editable)) {
-            if (!$DBInfo->security->is_allowed('edit', $options))
-                $this->icons['edit'] = array('', '?action=edit', $this->icon['locked']);
-        }
-
-        if (!empty($this->icons)) {
-            $icon=array();
-            $myicons=array();
-
-            if (!empty($this->icon_list)) {
-                $inames=explode(',',$this->icon_list);
-                foreach ($inames as $item) {
-                    if (isset($this->icons[$item])) {
-                        $myicons[$item]=$this->icons[$item];
-                    } else if (isset($this->icon[$item])) {
-                        $myicons[$item]= array("",'?action='.$item,$this->icon[$item]);
-                    }
-                }
-            } else {
-                $myicons=&$this->icons;
-            }
-            foreach ($myicons as $item) {
-                if (!empty($item[3])) $attr=$item[3];
-                else $attr='';
-                $icon[]=$this->link_tag($item[0],$item[1],$item[2],$attr);
-            }
-            $icons=$this->icon_bra.implode($this->icon_sep,$icon).$this->icon_cat;
-        }
-
-        $rss_icon=$this->link_tag("RecentChanges","?action=rss_rc",$this->icon['rss'])." ";
-        $this->_vars['rss_icon']=&$rss_icon;
-        $this->_vars['icons']=&$icons;
-        $this->_vars['title']=$title;
-        $this->_vars['menu']=$menu;
-        isset($upper_icon) ? $this->_vars['upper_icon']=$upper_icon : null;
-        isset($home) ? $this->_vars['home']=$home : null;
-        if (!empty($options['header']))
-            $this->_vars['header'] = $header = $options['header'];
-        else if (isset($this->_newtheme) and $this->_newtheme == 2 and !empty($this->header_html))
-            $this->_vars['header'] = $header = $this->header_html;
-
-        if ($mtime = $this->page->mtime()) {
-            $tz_offset = $this->tz_offset;
-            $lastedit = gmdate("Y-m-d", $mtime + $tz_offset);
-            $lasttime = gmdate("H:i:s", $mtime + $tz_offset);
-            $datetime = gmdate('Y-m-d\TH:i:s', $mtime).'+00:00';
-            $this->_vars['lastedit'] = $lastedit;
-            $this->_vars['lasttime'] = $lasttime;
-            $this->_vars['datetime'] = $datetime;
-        }
-
-        # print the title
-
-        if (empty($this->_newtheme) or $this->_newtheme != 2) {
-            if (isset($this->_newtheme) and $this->_newtheme != 2)
-                echo '<body'.(!empty($options['attr']) ? ' ' . $options['attr'] : '' ) .">\n";
-            echo '<div><a id="top" name="top" accesskey="t"></a></div>'."\n";
-        }
-        #
-        if (file_exists($this->themedir."/header.php")) {
-            if (!empty($this->trail))
-                $trail=&$this->trail;
-            if (!empty($this->origin))
-                $origin=&$this->origin;
-
-            $subindex=!empty($this->subindex) ? $this->subindex : '';
-            $themeurl=$this->themeurl;
-            include($this->themedir."/header.php");
-        } else { #default header
-            $header="<table width='100%' border='0' cellpadding='3' cellspacing='0'>";
-            $header.="<tr>";
-            if ($DBInfo->logo_string) {
-                $header.="<td rowspan='2' style='width:10%' valign='top'>";
-                $header.=$logo;
-                $header.="</td>";
-            }
-            $header.="<td>$title</td>";
-            $header.="</tr><tr><td>\n";
-            $header.=$goto_form;
-            $header.="</td></tr></table>\n";
-
-            # menu
-            echo "<".$this->tags['header']." id='wikiHeader'>\n";
-            echo $header;
-            if (!$this->css_friendly)
-                echo $menu." ".$user_link." ".$upper_icon.$icons.$rss_icon;
-            else {
-                echo "<div id='wikiLogin'>".$user_link."</div>";
-                echo "<div id='wikiIcon'>".$upper_icon.$icons.$rss_icon.'</div>';
-                echo $menu;
-            }
-            if (!empty($msg))
-                echo $msg;
-            echo "</".$this->tags['header']."\n";
-        }
-        if (empty($this->popup) and (empty($themeurl) or empty($this->_newtheme))) {
-            echo $DBInfo->hr;
-            if ($options['trail']) {
-                echo "<div id='wikiTrailer'><p>\n";
-                echo $this->trail;
-                echo "</p></div>\n";
-            }
-            if (!empty($this->origin)) {
-                echo "<div id='wikiOrigin'><p>\n";
-                echo $this->origin;
-                echo "</p></div>\n";
-            }
-            if (!empty($this->subindex))
-                echo $this->subindex;
-        }
-        echo "\n<".$this->tags['article']." id='wikiBody' class='entry-content'>\n";
-        #if ($this->subindex and !$this->popup and (empty($themeurl) or !$this->_newtheme))
-        #  echo $this->subindex;
-        $this->pagelinks=$saved_pagelinks;
+    function send_title($msgtitle = '', $link = '', $params = array()) {
+        send_title($this, $msgtitle, $link, $params);
     }
 
+    /**
+     * @deprecated
+     */
     function set_origin($pagename) {
-        global $DBInfo;
-
-        $orig='';
-        $this->forcelink = 1;
-        if ($pagename != $DBInfo->frontpage) {
-            # save setting
-            $sister_save=$this->sister_on;
-            $this->sister_on=0;
-
-            $parent=_($DBInfo->home);
-            $text='';
-            if ($this->group) {
-                $group=strtok($pagename,'~');
-                $text=strtok('');
-                #$pagename=$group.'.'.$text;
-                #$pagename='[wiki:'.$pagename.' '.$text.']';
-                $main=strtok($text,'/');
-            }
-            if ($group)
-                # represent: Main     > MoniWiki    > WikiName
-                # real link: MoniWiki > Ko~MoniWiki > Ko~MoniWiki/WikiName
-                $origin=$this->word_repl('"'.$main.'"',_("Main"),'',1,0);
-            else
-                # represent: Home       > WikiName > SubPage
-                # real link: $frontpage > WikiName > WikiName/SubPage
-                $origin=$this->word_repl('"'.$DBInfo->frontpage.'"',$parent,'',1,0);
-            $parent='';
-
-            $text=strtok($text,'/');
-            $key=strtok($pagename,'/');
-            while($key !== false) {
-                if ($parent) $parent.='/'.$key;
-                else {
-                    $parent.=$key;
-                    $key=$text;
-                }
-                $okey=$key;
-                $key=strtok('/');
-                if ($key)
-                    $origin.=$DBInfo->arrow.$this->word_repl('"'.$parent.'"',$okey,'',1,0);
-                else
-                    $origin.=$DBInfo->arrow.$this->word_repl('"'.$parent.'"',$okey,'',1,0);
-            }
-            # reset pagelinks
-            $this->pagelinks=array();
-            $this->sister_on=$sister_save;
-        } else {
-            $origin=$DBInfo->home;
-        }
-        $this->origin=$origin;
-        $this->_vars['origin']=&$this->origin;
-        $this->forcelink = 0;
+        call_macro($this, $pagename);
     }
 
-    function set_trailer($trailer="",$pagename,$size=5) {
-        global $DBInfo;
-        if (empty($trailer)) $trail=$DBInfo->frontpage;
-        else $trail=$trailer;
-
-        if (is_numeric($DBInfo->trail) and $DBInfo->trail > 5)
-            $size = $DBInfo->trail;
-
-        if (empty($DBInfo->jstrail)) {
-            $trails=array_diff(explode("\t",trim($trail)),array($pagename));
-
-            $sister_save=$this->sister_on;
-            $this->sister_on=0;
-            $this->trail="";
-            $this->forcelink = 1;
-            foreach ($trails as $page) {
-                $this->trail.=$this->word_repl('"'.$page.'"','','',1,0).'<span class="separator">'.$DBInfo->arrow.'</span>';
-            }
-            $this->forcelink = 0;
-            $this->trail.= ' '._html_escape($pagename);
-            $this->pagelinks=array(); # reset pagelinks
-            $this->sister_on=$sister_save;
-
-            if (!in_array($pagename,$trails)) $trails[]=$pagename;
-
-            $idx=count($trails) - $size;
-            if ($idx > 0) $trails=array_slice($trails,$idx);
-            $trail=implode("\t",$trails);
-
-            setcookie('MONI_TRAIL',$trail,time()+60*60*24*30,get_scriptname());
-        } else {
-            $pagename = _html_escape($pagename);
-            $url = get_scriptname();
-            $this->trail = <<<EOF
-<script type='text/javascript'>
-(function() {
-  var url_prefix = "$url";
-  var query_prefix = "$DBInfo->query_prefix";
-  var trail_size = $size;
-
-  // get trails from cookie
-  var cookieName = "MONI_TRAIL=";
-  var pos = document.cookie.indexOf(cookieName);
-  var trails = [];
-  if (pos != -1) {
-    var end = document.cookie.indexOf(";", pos + cookieName.length);
-    if (end == -1) end = document.cookie.length;
-
-    trails = unescape(document.cookie.substring(pos + cookieName.length, end)).split("\\t");
-  } else {
-    trails[0] = encodeURIComponent("$DBInfo->frontpage");
-  }
-  var span = document.createElement("span");
-
-  // render trails
-  var str = [];
-  var ntrails = [];
-  var trail = document.createElement("span");
-  var idx = trails.length - trail_size;
-  if (idx > 0) trails = trails.splice(idx, trail_size);
-
-  for (var i = 0, j = 0; i < trails.length; i++) {
-    var url = escape(trails[i]).replace(/\\+/g, "%20");
-    var txt = decodeURIComponent(escape(trails[i])).replace(/\\+/g, " ");
-    if (txt == "$pagename") continue;
-    str[j] = "<a href='" + url_prefix + query_prefix + url + "'>" + txt + "</a>";
-    ntrails[j] = escape(trails[i]);
-    j++;
-  }
-  str[j] = "$pagename";
-  ntrails[j] = encodeURIComponent("$pagename");
-  document.write(str.join("<span class='separator'>$DBInfo->arrow</span>"));
-
-  // set the trailer again
-  var exp = new Date(); // 30-days expires
-  exp.setTime(exp.getTime() + 30*24*60*60*1000);
-  var cookie = cookieName + ntrails.join("\\t") +
-    "; expires=" + exp.toGMTString() +
-    "; path=$url";
-
-  document.cookie = cookie;
-})();
-</script>
-EOF;
-        }
-
-        $this->_vars['trail']=&$this->trail;
+    /**
+     * @deprecated
+     */
+    function set_trailer($trailer = '', $pagename, $size = 5) {
+        $params = array();
+        $params['trail'] = $trailer;
+        $params['size'] = $size;
+        call_macro($this, $pagename, $params);
     }
 
     function errlog($prefix="LoG",$tmpname='') {
@@ -4673,23 +3339,42 @@ function wiki_main($options) {
     }
     // parse action
     // action=foobar, action=foobar/macro, action=foobar/json etc.
-    $full_action=$action;
-    $action_mode='';
-    if (($p=strpos($action,'/'))!==false) {
-        $full_action=strtr($action,'/','-');
-        $action_mode=substr($action,$p+1);
+    $options['action_mode'] = $action_mode = '';
+    $options['full_action'] = $full_action = $action;
+    if (($p=strpos($action, '/'))!==false) {
+        $full_action = strtr($action, '/', '-');
+        $action_mode = substr($action, $p + 1);
         $action=substr($action,0,$p);
     }
 
     $options['page']=$pagename;
-    $options['action'] = &$action;
+    $options['action'] = $action;
     $reserved = array('call', 'prefix');
     foreach ($reserved as $k)
         unset($options[$k]); // unset all reserved
 
+    // check action
+    if (isset($action[0])) {
+        // save the action name
+        $action_name = $action;
+        // is it valid action ?
+        $action = getPlugin($action);
+        // $act == 'false'; // disabled action
+        // $act == null; // not found
+
+        if (empty($action)) {
+            if ($action === false)
+                $title = sprintf(_("%s action is disabled."), $action_name);
+            else
+                $title = sprintf(_("%s action is not found."), $action_name);
+            $params['title'] = $title;
+            return do_invalid($formatter, $params);
+        }
+    }
+
     // check pagename length
     $key = $DBInfo->pageToKeyname($pagename);
-    if (!empty($options['action']) && strlen($key) > 255) {
+    if (!empty($action) && strlen($key) > 255) {
         $i = 252; // 252 + reserved 3 (.??) = 255
 
         $newname = $DBInfo->keyToPagename(substr($key, 0, 252));
@@ -4877,8 +3562,10 @@ function wiki_main($options) {
         // is it allowed to robot ?
         if (!$DBInfo->security->is_allowed($action,$options)) {
             $action='show';
-            if (!empty($action_mode))
-                return '[]';
+            if (!empty($action_mode)) {
+                echo '[]'; // FIXME
+                return;
+            }
         }
         $DBInfo->extra_macros='';
     }
@@ -4925,7 +3612,7 @@ function wiki_main($options) {
         $formatter->pi=$formatter->page->get_instructions();
 
         if (!empty($DBInfo->body_attr))
-            $options['attr']=$DBInfo->body_attr;
+            $options['attr'] = $DBInfo->body_attr;
 
         $ret = $formatter->send_header('', $options);
 
@@ -4934,9 +3621,9 @@ function wiki_main($options) {
                 $DBInfo->counter->incCounter($pagename,$options);
 
             if (!empty($DBInfo->use_referer) and isset($_SERVER['HTTP_REFERER']))
-                log_referer($_SERVER['HTTP_REFERER'],$pagename);
+                log_referer($_SERVER['HTTP_REFERER'], $pagename);
         }
-        $formatter->send_title("","",$options);
+        $formatter->send_title('', '', $options);
 
         $formatter->write("<div id='wikiContent'>\n");
         if (isset($options['timer']) and is_object($options['timer'])) {
@@ -5083,107 +3770,10 @@ function wiki_main($options) {
         return;
     }
 
-    $act = $action;
-    if (!empty($DBInfo->myplugins) and array_key_exists($action, $DBInfo->myplugins))
-        $act = $DBInfo->myplugins[$action];
-    if ($act) {
-        $options['noindex'] = true;
-        $options['custom']='';
-        $options['help']='';
-        $options['value']=$value;
-
-        $a_allow=$DBInfo->security->is_allowed($act,$options);
-        if (!empty($action_mode)) {
-            $myopt=$options;
-            $myopt['explicit']=1;
-            $f_allow=$DBInfo->security->is_allowed($full_action,$myopt);
-            # check if hello/ajax is defined or not
-            if ($f_allow === false && $a_allow)
-                $f_allow=$a_allow; # follow action permission if it is not defined explicitly.
-                    if (!$f_allow) {
-                        $args = array('action'=>$action);
-                        $args['allowed'] = $options['allowed'] = $f_allow;
-
-                        if ($f_allow === false)
-                            $title = sprintf(_("%s action is not found."), $action);
-                        else
-                            $title = sprintf(_("Invalid %s action."), $action_mode);
-                        if ($action_mode=='ajax') {
-                            $args['title'] = $title;
-                            return ajax_invalid($formatter, $args);
-                        }
-                        $options['title'] = $title;
-                        return do_invalid($formatter, $options);
-                    }
-        } else if (!$a_allow) {
-            $options['allowed'] = $a_allow;
-            if ($options['custom']!='' and
-                    method_exists($DBInfo->security,$options['custom'])) {
-                $options['action']=$action;
-                if ($action)
-                    call_user_func(array(&$DBInfo->security,$options['custom']),$formatter,$options);
-                return;
-            }
-
-            return do_invalid($formatter, $options);
-        } else if ($_SERVER['REQUEST_METHOD']=="POST" and
-                $DBInfo->security->is_protected($act,$options) and
-                !$DBInfo->security->is_valid_password($_POST['passwd'],$options)) {
-            # protect some POST actions and check a password
-
-            $title = sprintf(_("Fail to \"%s\" !"), $action);
-            $formatter->send_header("",$options);
-            $formatter->send_title($title,"",$options);
-            $formatter->send_page("== "._("Please enter the valid password")." ==");
-            $formatter->send_footer("",$options);
-            return;
-        }
-
-        $options['action_mode']='';
-        if (!empty($action_mode) and in_array($action_mode,array('ajax','macro'))) {
-            if ($_SERVER['REQUEST_METHOD']=="POST")
-                $options=array_merge($_POST,$options);
-            else
-                $options=array_merge($_GET,$options);
-            $options['action_mode']=$action_mode;
-            if ($action_mode=='ajax')
-                $formatter->ajax_repl($action,$options);
-            else if (!empty($DBInfo->use_macro_as_action)) # XXX
-                echo $formatter->macro_repl($action,$options['value'],$options);
-            else
-                do_invalid($formatter,$options);
-            return;
-        }
-
-        // is it valid action ?
-        $plugin = $pn = getPlugin($action);
-        if ($plugin === '') // action not found
-            $plugin = $action;
-        if (!function_exists("do_post_".$plugin) and
-                !function_exists("do_".$plugin) and $pn){
-            include_once("plugin/$pn.php");
-        }
-
-        if (function_exists("do_".$plugin)) {
-            if ($_SERVER['REQUEST_METHOD']=="POST")
-                $options=array_merge($_POST,$options);
-            else
-                $options=array_merge($_GET,$options);
-
-            call_user_func("do_$plugin",$formatter,$options);
-            return;
-        } else if (function_exists("do_post_".$plugin)) {
-            if ($_SERVER['REQUEST_METHOD']=="POST")
-                $options=array_merge($_POST,$options);
-            else { # do_post_* set some primary variables as $options
-                $options['value']=isset($_GET['value'][0]) ? $_GET['value'] : '';
-            }
-            call_user_func("do_post_$plugin",$formatter,$options);
-            return;
-        }
-        do_invalid($formatter,$options);
-        return;
-    }
+    $options['value'] = $value;
+    $options['action_mode'] = $action_mode;
+    $options['full_action'] = $full_action;
+    call_action($formatter, $action, $options);
 }
 
 // load site specific config variables.
@@ -5244,13 +3834,17 @@ require_once('lib/security.base.php');
 // FIXME
 require_once('lib/counter.dba.php');
 
+// common
+require_once('lib/pluginlib.php');
+
 if (!defined('INC_MONIWIKI')):
 # Start Main
 $Config = getConfig('config.php', array('init'=>1));
-require_once("wikilib.php");
-require_once("lib/win32fix.php");
-require_once("lib/cache.text.php");
-require_once("lib/timer.php");
+require_once('wikilib.php');
+require_once('lib/win32fix.php');
+require_once('lib/cache.text.php');
+require_once('lib/timer.php');
+require_once('lib/output.php');
 
 $options = array();
 if (class_exists('Timer')) {
