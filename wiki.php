@@ -3353,24 +3353,9 @@ function wiki_main($options) {
     foreach ($reserved as $k)
         unset($options[$k]); // unset all reserved
 
-    // check action
-    if (isset($action[0])) {
-        // save the action name
-        $action_name = $action;
-        // is it valid action ?
-        $action = getPlugin($action);
-        // $act == 'false'; // disabled action
-        // $act == null; // not found
-
-        if (empty($action)) {
-            if ($action === false)
-                $title = sprintf(_("%s action is disabled."), $action_name);
-            else
-                $title = sprintf(_("%s action is not found."), $action_name);
-            $params['title'] = $title;
-            return do_invalid($formatter, $params);
-        }
-    }
+    // call local_pre_check
+    if (function_exists('local_pre_check'))
+        local_pre_check($action, $options);
 
     // check pagename length
     $key = $DBInfo->pageToKeyname($pagename);
@@ -3392,8 +3377,25 @@ function wiki_main($options) {
         $options['orig_pagename'] = '';
     }
 
-    if (function_exists('local_pre_check'))
-        local_pre_check($action, $options);
+    // check action
+    if (isset($action[0]) && $action !== 'show') {
+        // save the action name
+        $action_name = $action;
+        // is it valid action ?
+        $plugin = getPlugin($action);
+        // $act == 'false'; // disabled action
+        // $act == null; // not found
+
+        if (empty($plugin)) {
+            $options['action'] = $action;
+            if ($plugin === false)
+                $title = sprintf(_("%s action is disabled."), _html_escape($action));
+            else
+                $title = sprintf(_("%s action is not found."), _html_escape($action));
+            $options['title'] = $title;
+            return do_invalid(null, $options);
+        }
+    }
 
     // load ruleset
     if (!empty($Config['config_ruleset'])) {

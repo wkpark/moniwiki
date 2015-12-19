@@ -510,7 +510,12 @@ function call_action($formatter, $action, $params = array()) {
     $args['custom'] = '';
     $args['help'] = '';
 
-    $a_allow = $DBInfo->security->is_allowed($action, $args);
+    // get plugin again
+    $plugin = getPlugin($action);
+    // $act name might be replaced by the $myplugins config option.
+    $act = strtolower($plugin);
+
+    $a_allow = $DBInfo->security->is_allowed($act, $args);
     if (!empty($action_mode)) {
         // full action case
         // check full_action 'hello/ajax' is allowed explicitly.
@@ -578,7 +583,6 @@ function call_action($formatter, $action, $params = array()) {
 
     // normal action.
     // is it valid action ?
-    $plugin = $action;
     if (!function_exists('do_post_'.$plugin) and
             !function_exists('do_'.$plugin)) {
         include_once(dirname(__FILE__).'/../plugin/'.$plugin.'.php');
@@ -589,7 +593,6 @@ function call_action($formatter, $action, $params = array()) {
             $params = array_merge($_POST, $params);
         else
             $params = array_merge($_GET, $params);
-
         return call_user_func('do_'.$plugin, $formatter, $params);
     } else if (function_exists('do_post_'.$plugin)) {
         if ($_SERVER['REQUEST_METHOD'] == 'POST') {
