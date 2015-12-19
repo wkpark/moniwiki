@@ -23,10 +23,6 @@ function send_header($formatter, $header = '', $params = array()) {
 
     $plain = 0;
 
-    $media = 'media="screen"';
-    if (isset($params['action'][0]) and $params['action'] == 'print')
-        $media = '';
-
     if (empty($params['is_robot']) && isset($formatter->pi['#redirect'][0]) && !empty($params['pi'])) {
         $params['value'] = $formatter->pi['#redirect'];
         $params['redirect'] = 1;
@@ -43,18 +39,30 @@ function send_header($formatter, $header = '', $params = array()) {
                 $plain = 1;
         }
     }
-    $mtime = isset($params['mtime']) ? $params['mtime'] : $formatter->page->mtime();
+
+    $is_page = is_object($formatter->page) && $formatter->page->exists();
+    $is_show = empty($params['action']) || strtolower($params['action']) == 'show';
+
+    // use conditional get
+    $use_conditional_get = true;
+    if (isset($params['mtime'])) {
+        // force mtime
+        $mtime = $params['mtime'];
+    } else if ($is_page) {
+        $mtime = $formatter->page->mtime();
+        if (!empty($Config['use_conditional_get']) and
+                empty($params['nolastmod']) and $formatter->page->is_static)
+            $use_conditional_get = true;
+    }
+
     if ($mtime > 0) {
         $modified = $mtime > 0 ? gmdate('Y-m-d\TH:i:s', $mtime).'+00:00' : null;
         $lastmod = gmdate('D, d M Y H:i:s', $mtime).' GMT';
         $meta_lastmod = '<meta http-equiv="last-modified" content="'.$lastmod.'" />'."\n";
     }
-    if (is_static_action($params) or
-        (!empty($Config['use_conditional_get']) and !empty($mtime)
-        and empty($params['nolastmod'])
-        and $formatter->page->is_static))
-    {
-        $formatter->header('Last-Modified: '.$lastmod);
+
+    if (is_static_action($params) or $use_conditional_get) {
+        header('Last-Modified: '.$lastmod);
         $etag = $formatter->page->etag($params);
         if (!empty($params['etag']))
             $formatter->header('ETag: "'.$params['etag'].'"');
@@ -85,6 +93,10 @@ function send_header($formatter, $header = '', $params = array()) {
     if ($plain)
         return;
 
+    $media = 'media="screen"';
+    if (isset($params['action'][0]) and $params['action'] == 'print')
+        $media = '';
+
     # disabled
     #$formatter->header("Vary: Accept-Encoding, Cookie");
     #if (strstr($_SERVER['HTTP_ACCEPT_ENCODING'], 'gzip') and function_exists('ob_gzhandler')) {
@@ -97,15 +109,18 @@ function send_header($formatter, $header = '', $params = array()) {
     else
         $metatags = $Config['metatags'];
 
-    if (!empty($params['noindex']) || !empty($formatter->pi['#noindex']) ||
-            (!empty($mtime) and !empty($Config['delayindex']) and ((time() - $mtime) < $Config['delayindex']))) {
-        // delay indexing like as dokuwiki
-        if (preg_match("/<meta\s+name=('|\")?robots\\1[^>]+>/i", $metatags)) {
-            $metatags = preg_replace("/<meta\s+name=('|\")?robots\\1[^>]+>/i",
-                    '<meta name="robots" content="noindex,nofollow" />',
-                    $metatags);
-        } else {
-            $metatags.= '<meta name="robots" content="noindex,nofollow" />'."\n";
+    if ($is_page) {
+        if (!empty($params['noindex']) || !empty($formatter->pi['#noindex']) ||
+                (!empty($mtime) and !empty($Config['delayindex']) and ((time() - $mtime) < $Config['delayindex'])))
+        {
+            // delay indexing like as dokuwiki
+            if (preg_match("/<meta\s+name=('|\")?robots\\1[^>]+>/i", $metatags)) {
+                $metatags = preg_replace("/<meta\s+name=('|\")?robots\\1[^>]+>/i",
+                        '<meta name="robots" content="noindex,nofollow" />',
+                        $metatags);
+            } else {
+                $metatags.= '<meta name="robots" content="noindex,nofollow" />'."\n";
+            }
         }
     }
     if (isset($Config['metatags_extra']))
@@ -113,13 +128,15 @@ function send_header($formatter, $header = '', $params = array()) {
 
     $js = !empty($Config['js']) ? $Config['js'] : '';
 
-    $is_show = empty($params['action']) || strtolower($params['action']) == 'show';
-    if (!$plain) {
+    $keywords = '';
+    if ($is_page) {
         if (isset($params['trail']))
             call_macro($formatter, 'Trailer', $formatter->page->name, $params);
         else if ($Config['origin'])
             call_macro($formatter, 'Origin', $formatter->page->name);
+    }
 
+    if ($is_page && $is_show) {
         # find upper page
         $up_separator = '/';
         if (!empty($formatter->use_namespace))
@@ -135,7 +152,6 @@ function send_header($formatter, $header = '', $params = array()) {
             $upper = _urlencode(substr($formatter->page->name, strlen($formatter->group)));
 
         // setup keywords
-        $keywords = '';
         if (!empty($formatter->pi['#keywords'])) {
             $keywords = _html_escape($formatter->pi['#keywords']);
         } else {
@@ -163,7 +179,7 @@ function send_header($formatter, $header = '', $params = array()) {
         $keywords = "<meta name=\"keywords\" content=\"$keywords\" />\n";
 
         # find sub pages
-        if (empty($params['action']) and !empty($Config['use_subindex'])) {
+        if ($is_show and !empty($Config['use_subindex'])) {
             $scache = new Cache_text('subpages');
             if (!($subs = $scache->exists($formatter->page->name))) {
                 if (($p = strrpos($formatter->page->name, '/')) !== false)
@@ -185,54 +201,58 @@ function send_header($formatter, $header = '', $params = array()) {
                 $subindices."</fieldset>\n";
             }
         }
+    }
 
-        if (!empty($params['.title'])) {
-            $params['title'] = $params['.title'];
-        } else if (empty($params['title'])) {
-            $params['title'] = !empty($formatter->pi['#title']) ? $formatter->pi['#title']:
-                $formatter->page->title;
-            $params['title'] = _html_escape($params['title']);
+    if (!empty($params['.title'])) {
+        // low level title. not escaped.
+        $params['title'] = $params['.title'];
+    } else if ($is_page && empty($params['title'])) {
+        $params['title'] = !empty($formatter->pi['#title']) ? $formatter->pi['#title']:
+            $formatter->page->title;
+        $params['title'] = _html_escape($params['title']);
+    } else {
+        // strip tags.
+        $params['title'] = strip_tags($params['title']);
+    }
+    $theme_type = !empty($formatter->_newtheme) ? $formatter->_newtheme : '';
+    if (empty($params['css_url'])) $params['css_url'] = $Config['css_url'];
+    if (empty($formatter->pi['#nodtd']) and !isset($params['retstr']) and $theme_type != 2) {
+        if (!empty($formatter->html5)) {
+            if (is_string($formatter->html5))
+                echo $formatter->html5;
+            else
+                echo '<!DOCTYPE html>',"\n",
+                     '<html xmlns="http://www.w3.org/1999/xhtml">',"\n";
         } else {
-            $params['title'] = strip_tags($params['title']);
+            echo $Config['doctype'];
         }
-        $theme_type = !empty($formatter->_newtheme) ? $formatter->_newtheme : '';
-        if (empty($params['css_url'])) $params['css_url'] = $Config['css_url'];
-        if (empty($formatter->pi['#nodtd']) and !isset($params['retstr']) and $theme_type != 2) {
-            if (!empty($formatter->html5)) {
-                if (is_string($formatter->html5))
-                    echo $formatter->html5;
-                else
-                    echo '<!DOCTYPE html>',"\n",
-                         '<html xmlns="http://www.w3.org/1999/xhtml">',"\n";
-            } else {
-                echo $Config['doctype'];
-            }
-        }
-        if ($theme_type == 2 or isset($params['retstr']))
-            ob_start();
-        else
-            echo "<head>\n";
+    }
+    if ($theme_type == 2 or isset($params['retstr']))
+        ob_start();
+    else
+        echo "<head>\n";
 
-        echo '<meta http-equiv="Content-Type" content="'.$content_type.
-            ';charset='.$Config['charset']."\" />\n";
-        echo <<<JSHEAD
+    echo '<meta http-equiv="Content-Type" content="'.$content_type.
+        ';charset='.$Config['charset']."\" />\n";
+    echo <<<JSHEAD
 <script type="text/javascript">
 /*<![CDATA[*/
 _url_prefix="$Config[url_prefix]";
 /*]]>*/
 </script>
 JSHEAD;
-        echo $metatags,$js,"\n";
-        echo $formatter->get_javascripts();
-        echo $keywords;
-        if (!empty($meta_lastmod)) echo $meta_lastmod;
+    echo $metatags,$js,"\n";
+    echo $formatter->get_javascripts();
+    echo $keywords;
+    if (!empty($meta_lastmod)) echo $meta_lastmod;
 
-        $sitename = !empty($Config['title_sitename']) ? $Config['title_sitename'] : $Config['sitename'];
-        if (!empty($Config['title_msgstr']))
-            $site_title = sprintf($Config['title_msgstr'], $sitename, $params['title']);
-        else
-            $site_title = $params['title'].' - '.$sitename;
+    $sitename = !empty($Config['title_sitename']) ? $Config['title_sitename'] : $Config['sitename'];
+    if (!empty($Config['title_msgstr']))
+        $site_title = sprintf($Config['title_msgstr'], $sitename, $params['title']);
+    else
+        $site_title = $params['title'].' - '.$sitename;
 
+    if ($is_page && $is_show) {
         // set OpenGraph information
         $is_frontpage = $formatter->page->name == get_frontpage($Config['lang']);
         if (!$is_frontpage && !empty($Config['frontpages']) && in_array($formatter->page->name, $Config['frontpages']))
@@ -247,107 +267,106 @@ JSHEAD;
             $page_url = qualifiedUrl($formatter->link_url($formatter->page->urlname));
         }
 
-        if ($is_show && $formatter->page->exists()) {
-            $oc = new Cache_text('opengraph');
-            if ($formatter->refresh || ($val = $oc->fetch($formatter->page->name, $formatter->page->mtime())) === false) {
-                $val = array('description'=> '', 'image'=> '');
+        $oc = new Cache_text('opengraph');
+        if ($formatter->refresh || ($val = $oc->fetch($formatter->page->name, $formatter->page->mtime())) === false) {
+            $val = array('description'=> '', 'image'=> '');
 
-                if (!empty($formatter->pi['#redirect'])) {
-                    $desc = '#redirect '.$formatter->pi['#redirect'];
+            if (!empty($formatter->pi['#redirect'])) {
+                $desc = '#redirect '.$formatter->pi['#redirect'];
+            } else {
+                $raw = $formatter->page->_get_raw_body();
+                if (!empty($formatter->pi['#description'])) {
+                    $desc = $formatter->pi['#description'];
                 } else {
-                    $raw = $formatter->page->_get_raw_body();
-                    if (!empty($formatter->pi['#description'])) {
-                        $desc = $formatter->pi['#description'];
-                    } else {
-                        $cut_size = 2000;
-                        if (!empty($Config['get_description_cut_size']))
-                            $cut_size = $Config['get_description_cut_size'];
-                        $cut = mb_strcut($raw, 0, $cut_size, $Config['charset']);
-                        $desc = get_description($cut);
-                        if ($desc !== false)
-                            $desc = mb_strcut($desc, 0, 200, $Config['charset']).'...';
-                        else
-                            $desc = $formatter->page->name;
-                    }
+                    $cut_size = 2000;
+                    if (!empty($Config['get_description_cut_size']))
+                        $cut_size = $Config['get_description_cut_size'];
+                    $cut = mb_strcut($raw, 0, $cut_size, $Config['charset']);
+                    $desc = get_description($cut);
+                    if ($desc !== false)
+                        $desc = mb_strcut($desc, 0, 200, $Config['charset']).'...';
+                    else
+                        $desc = $formatter->page->name;
                 }
+            }
 
-                $val['description'] = _html_escape($desc);
+            $val['description'] = _html_escape($desc);
 
-                if (!empty($formatter->pi['#image'])) {
-                    if (preg_match('@^(ftp|https?)://@', $formatter->pi['#image'])) {
-                        $page_image = $formatter->pi['#image'];
-                    } else if (preg_match('@^attachment:("[^"]+"|[^\s]+)@/', $formatter->pi['#image'], $m)) {
-                        $image = call_macro($formatter, 'attachment', $m[1], array('link_url'=>1));
-                        if ($image[0] != 'a') $page_image = $image;
-                    }
+            if (!empty($formatter->pi['#image'])) {
+                if (preg_match('@^(ftp|https?)://@', $formatter->pi['#image'])) {
+                    $page_image = $formatter->pi['#image'];
+                } else if (preg_match('@^attachment:("[^"]+"|[^\s]+)@/', $formatter->pi['#image'], $m)) {
+                    $image = call_macro($formatter, 'attachment', $m[1], array('link_url'=>1));
+                    if ($image[0] != 'a') $page_image = $image;
                 }
+            }
 
-                if (empty($page_image)) {
-                    // extract the first image
-                    $punct = '<>"\'}\]\|\!';
-                    if (preg_match_all('@(?<=\b)((?:attachment:(?:"[^'.$punct.']+"|[^\s'.$punct.'?]+)|'.
-                                    '(?:https?|ftp)://(?:[^\s'.$punct.']+)\.(?:png|jpe?g|gif)))@', $raw, $m)) {
-                        foreach ($m[1] as $img) {
-                            if ($img[0] == 'a') {
-                                $img = substr($img, 11); // strip attachment:
-                                $image = call_macro($formatter, 'attachment', $img, array('link_url'=>1));
-                                if ($image[0] != 'a' && preg_match('@\.(png|jpe?g|gif)$@i', $image)) {
-                                    $page_image = $image;
-                                    break;
-                                }
-                            } else {
-                                $page_image = $img;
+            if (empty($page_image)) {
+                // extract the first image
+                $punct = '<>"\'}\]\|\!';
+                if (preg_match_all('@(?<=\b)((?:attachment:(?:"[^'.$punct.']+"|[^\s'.$punct.'?]+)|'.
+                                '(?:https?|ftp)://(?:[^\s'.$punct.']+)\.(?:png|jpe?g|gif)))@', $raw, $m)) {
+                    foreach ($m[1] as $img) {
+                        if ($img[0] == 'a') {
+                            $img = substr($img, 11); // strip attachment:
+                            $image = call_macro($formatter, 'attachment', $img, array('link_url'=>1));
+                            if ($image[0] != 'a' && preg_match('@\.(png|jpe?g|gif)$@i', $image)) {
+                                $page_image = $image;
                                 break;
                             }
+                        } else {
+                            $page_image = $img;
+                            break;
                         }
                     }
                 }
-
-                if (empty($page_image) && $is_frontpage) {
-                    $val['image'] = qualifiedUrl($Config['logo_img']);
-                } else if (!empty($page_image)) {
-                    $val['image'] = $page_image;
-                }
-
-                $oc->update($formatter->page->name, $val, time());
             }
 
-            if (empty($formatter->no_ogp)) {
-                // for OpenGraph
-                echo '<meta property="og:url" content="'. $page_url.'" />',"\n";
-                echo '<meta property="og:site_name" content="'.$sitename.'" />',"\n";
-                echo '<meta property="og:title" content="'.$params['title'].'" />',"\n";
-                if ($is_frontpage)
-                    echo '<meta property="og:type" content="website" />',"\n";
-                else
-                    echo '<meta property="og:type" content="article" />',"\n";
-                if (!empty($val['image']))
-                    echo '<meta property="og:image" content="',$val['image'],'" />',"\n";
-                if (!empty($val['description']))
-                    echo '<meta property="og:description" content="'.$val['description'].'" />',"\n";
+            if (empty($page_image) && $is_frontpage) {
+                $val['image'] = qualifiedUrl($Config['logo_img']);
+            } else if (!empty($page_image)) {
+                $val['image'] = $page_image;
             }
 
-            // twitter card
-            echo '<meta name="twitter:card" content="summary" />',"\n";
-            if (!empty($Config['twitter_id']))
-                echo '<meta name="twitter:site" content="',$Config['twitter_id'],'">',"\n";
-            echo '<meta name="twitter:domain" content="',$sitename,'" />',"\n";
-            echo '<meta name="twitter:title" content="',$params['title'],'">',"\n";
-            echo '<meta name="twitter:url" content="',$page_url,'">',"\n";
-            if (!empty($val['description']))
-                echo '<meta name="twitter:description" content="'.$val['description'].'" />',"\n";
+            $oc->update($formatter->page->name, $val, time());
+        }
+
+        if (empty($formatter->no_ogp)) {
+            // for OpenGraph
+            echo '<meta property="og:url" content="'. $page_url.'" />',"\n";
+            echo '<meta property="og:site_name" content="'.$sitename.'" />',"\n";
+            echo '<meta property="og:title" content="'.$params['title'].'" />',"\n";
+            if ($is_frontpage)
+                echo '<meta property="og:type" content="website" />',"\n";
+            else
+                echo '<meta property="og:type" content="article" />',"\n";
             if (!empty($val['image']))
-                echo '<meta name="twitter:image:src" content="',$val['image'],'" />',"\n";
+                echo '<meta property="og:image" content="',$val['image'],'" />',"\n";
+            if (!empty($val['description']))
+                echo '<meta property="og:description" content="'.$val['description'].'" />',"\n";
+        }
 
-            // support google sitelinks serachbox
-            if (!empty($Config['use_google_sitelinks'])) {
-                if ($is_frontpage) {
-                    if (!empty($Config['canonical_url']))
-                        $site_url = $Config['canonical_url'];
-                    else
-                        $site_url = qualifiedUrl($formatter->link_url(''));
+        // twitter card
+        echo '<meta name="twitter:card" content="summary" />',"\n";
+        if (!empty($Config['twitter_id']))
+            echo '<meta name="twitter:site" content="',$Config['twitter_id'],'">',"\n";
+        echo '<meta name="twitter:domain" content="',$sitename,'" />',"\n";
+        echo '<meta name="twitter:title" content="',$params['title'],'">',"\n";
+        echo '<meta name="twitter:url" content="',$page_url,'">',"\n";
+        if (!empty($val['description']))
+            echo '<meta name="twitter:description" content="'.$val['description'].'" />',"\n";
+        if (!empty($val['image']))
+            echo '<meta name="twitter:image:src" content="',$val['image'],'" />',"\n";
 
-                    echo <<<SITELINK
+        // support google sitelinks serachbox
+        if (!empty($Config['use_google_sitelinks'])) {
+            if ($is_frontpage) {
+                if (!empty($Config['canonical_url']))
+                    $site_url = $Config['canonical_url'];
+                else
+                    $site_url = qualifiedUrl($formatter->link_url(''));
+
+                echo <<<SITELINK
 <script type='application/ld+json'>
 {"@context":"http://schema.org",
  "@type":"WebSite",
@@ -361,10 +380,10 @@ JSHEAD;
 }
 </script>\n
 SITELINK;
-                }
             }
+        }
 
-            echo <<<SCHEMA
+        echo <<<SCHEMA
 <script type='application/ld+json'>
 {"@context":"http://schema.org",
  "@type":"WebPage",
@@ -374,12 +393,15 @@ SITELINK;
 }
 </script>\n
 SCHEMA;
-            if (!empty($val['description']))
-                echo '<meta name="description" content="'.$val['description'].'" />',"\n";
-        }
-        echo '  <title>',$site_title,"</title>\n";
+        if (!empty($val['description']))
+            echo '<meta name="description" content="'.$val['description'].'" />',"\n";
+    }
+    echo '  <title>',$site_title,"</title>\n";
+
+    if ($is_show)
         echo '  <link rel="canonical" href="',$page_url,'" />',"\n";
 
+    if ($is_page) {
         # echo '<meta property="og:title" content="'.$params['title'].'" />',"\n";
         if (!empty($upper))
             echo '  <link rel="Up" href="',$formatter->link_url($upper),"\" />\n";
@@ -389,29 +411,30 @@ SCHEMA;
             $raw_url,"\" />\n";
         echo '  <link rel="Alternate" media="print" title="Print View" href="',
             $print_url,"\" />\n";
-        if ($params['css_url']) {
-            $css_url = _html_escape($params['css_url']);
-            echo '  <link rel="stylesheet" type="text/css" ',$media,' href="',
-                $css_url."\" />\n";
-            if (!empty($Config['custom_css']) && file_exists($Config['custom_css']))
-                echo '  <link rel="stylesheet" media="screen" type="text/css" href="',
-                    $Config['url_prefix'],'/',$Config['custom_css'],"\" />\n";
-            else if (file_exists('./css/_user.css'))
+    }
+
+    if (!empty($params['css_url'])) {
+        $css_url = _html_escape($params['css_url']);
+        echo '  <link rel="stylesheet" type="text/css" ',$media,' href="',
+            $css_url."\" />\n";
+        if (!empty($Config['custom_css']) && file_exists($Config['custom_css']))
             echo '  <link rel="stylesheet" media="screen" type="text/css" href="',
-                $Config['url_prefix'],"/css/_user.css\" />\n";
-        }
+                $Config['url_prefix'],'/',$Config['custom_css'],"\" />\n";
+        else if (file_exists('./css/_user.css'))
+        echo '  <link rel="stylesheet" media="screen" type="text/css" href="',
+            $Config['url_prefix'],"/css/_user.css\" />\n";
+    }
 
-        echo kbd_handler(!empty($params['prefix']) ? $params['prefix'] : '');
+    echo kbd_handler(!empty($params['prefix']) ? $params['prefix'] : '');
 
-        if ((isset($formatter->_newtheme) and $formatter->_newtheme == 2) or isset($params['retstr'])) {
-            $ret = ob_get_contents();
-            ob_end_clean();
-            if (isset($params['retstr']))
-                $params['retstr'] = $ret;
-            $formatter->header_html = $ret;
-        } else {
-            echo "</head>\n";
-        }
+    if ((isset($formatter->_newtheme) and $formatter->_newtheme == 2) or isset($params['retstr'])) {
+        $ret = ob_get_contents();
+        ob_end_clean();
+        if (isset($params['retstr']))
+            $params['retstr'] = $ret;
+        $formatter->header_html = $ret;
+    } else {
+        echo "</head>\n";
     }
     return true;
 }
