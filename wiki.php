@@ -3619,9 +3619,6 @@ function wiki_main($options) {
         $ret = $formatter->send_header('', $options);
 
         if (empty($options['is_robot'])) {
-            if ($DBInfo->use_counter)
-                $DBInfo->counter->incCounter($pagename,$options);
-
             if (!empty($DBInfo->use_referer) and isset($_SERVER['HTTP_REFERER']))
                 log_referer($_SERVER['HTTP_REFERER'], $pagename);
         }
@@ -3830,11 +3827,7 @@ require_once('lib/WikiUser.php');
 
 // include base classes
 require_once('lib/metadb.base.php');
-require_once('lib/counter.base.php');
 require_once('lib/security.base.php');
-
-// FIXME
-require_once('lib/counter.dba.php');
 
 // common
 require_once('lib/pluginlib.php');

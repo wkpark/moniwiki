@@ -48,15 +48,6 @@ class WikiDB
 
     function initModules()
     {
-        if (!empty($this->use_counter)) {
-            $this->counter = new Counter_dba($this);
-            if ($this->counter->counter == null) {
-                $this->use_counter = 0;
-                $this->counter = null;
-            }
-        }
-        //$this->interwiki=null;
-
         // pagekey class
         if (!empty($this->pagekey_class)) {
             require_once(dirname(__FILE__).'/pagekey.'.$this->pagekey_class.'.php');
@@ -127,8 +118,6 @@ class WikiDB
     {
         if (!empty($this->metadb) and is_object($this->metadb))
             $this->metadb->close();
-        if (!empty($this->counter) and is_object($this->counter))
-            $this->counter->close();
     }
 
     function _getPageKey($pagename)
