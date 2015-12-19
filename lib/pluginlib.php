@@ -302,7 +302,7 @@ function call_macro($formatter, $macro, $value = '', $params = array()) {
         $np = getPlugin($name);
         if (empty($np))
             return '[['.$macro.']]';
-        include_once('plugin/'.$np.'.php');
+        include_once(dirname(__FILE__).'/../plugin/'.$np.'.php');
         if (!function_exists('macro_'.$np))
             return '[['.$macro.']]';
         $name = $np;
@@ -357,7 +357,7 @@ function call_processor($formatter, $processor, $value, $params = array()) {
         return $bra.$ret.$ket;
     }
     if (!$f and !($c = class_exists('processor_'.$pf))) {
-        include_once("plugin/processor/$pf.php");
+        include_once(dirname(__FILE__)."/../plugin/processor/$pf.php");
         $name = 'processor_'.$pf;
         if (!($f = function_exists($name)) and !($c = class_exists($name))) {
             $processor = 'plain';
@@ -395,7 +395,7 @@ function call_filter($formatter, $filter, $value, $params = array()) {
         $ff = getFilter($filter);
         if (!$ff)
             return $value;
-        include_once("plugin/filter/$ff.php");
+        include_once(dirname(__FILE__)."/../plugin/filter/$ff.php");
     }
     if (!function_exists('filter_'.$filter))
         return $value;
@@ -413,7 +413,7 @@ function call_postfilter($formatter, $filter, $value, $params = array()) {
         $ff = getFilter($filter);
         if (!$ff)
             return $value;
-        include_once("plugin/filter/$ff.php");
+        include_once(dirname(__FILE__)."/../plugin/filter/$ff.php");
     }
     if (!function_exists('postfilter_'.$filter))
         return $value;
@@ -453,7 +453,7 @@ function call_plugin($formatter, $plugin, $params = array()) {
             return $func($formatter, array('title'=>sprintf(_("Invalid %s plugin."), $mode)));
         }
 
-        include_once("plugin/$ff.php");
+        include_once(dirname(__FILE__)."/../plugin/$ff.php");
     }
 
     if (!function_exists($mode.'_'.$plugin)) {
@@ -581,7 +581,7 @@ function call_action($formatter, $action, $params = array()) {
     $plugin = $action;
     if (!function_exists('do_post_'.$plugin) and
             !function_exists('do_'.$plugin)) {
-        include_once('plugin/'.$plugin.'.php');
+        include_once(dirname(__FILE__).'/../plugin/'.$plugin.'.php');
     }
 
     if (function_exists('do_'.$plugin)) {
