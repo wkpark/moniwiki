@@ -468,22 +468,53 @@ class processor_monimarkup
         $pi=&$formatter->pi;
         #$formatter->set_wordrule($pi);
 
-        $myarg = '';
+        $args = '';
         if ($body[0]=='#' and $body[1]=='!') {
             list($line,$body)=explode("\n",$body,2);
-            $dum=preg_split('/\s+/',$line);
-            if (!empty($dum[1])) $myarg=$dum[1];
+            $dum = preg_split('/\s+/', $line, 2);
+            if (!empty($dum[1])) $args = $dum[1];
         }
 
         $my_divopen='';
         $my_divclose='';
-        if (!empty($myarg)) {
-            if ($myarg[0]=='.') $my_type='class';
-            else if ($myarg[0]=='#') $my_type='id';
-            if (isset($my_type)) {
-                $my_name=substr($myarg,1);
-                $my_divopen="<div $my_type='$my_name'>";
-                $my_divclose='</div>';
+        if (!empty($args)) {
+            // TODO refactoring
+            if (preg_match_all('@((?:[#.])?\w+)(?:\s*=\s*(["\'])?(.+?)(?(2)\2|\b))?@', $args, $matches, PREG_SET_ORDER)) {
+                // parse attributes class="foo" id=bar style="border:1px sold red;"
+                $attrs = array();
+                foreach ($matches as $match) {
+                    $tag = $match[1];
+                    if (isset($match[3])) {
+                        $val = trim($match[3], '; ');
+                        $val = strtr($val, array('"'=>'&quot;'));
+                        $val = strip_tags($val);
+                        switch ($tag) {
+                            case 'style':
+                            case 'class':
+                            case 'id':
+                                $attrs[$tag] = $val;
+                                break;
+                            default:
+                                // ignore
+                                default;
+
+                        }
+                    } else {
+                        if ($tag[0] == '.')
+                            $attrs['class'] = substr($tag, 1);
+                        else if ($tag[0] == '#')
+                            $attrs['id'] = substr($tag, 1);
+                        else
+                            $attrs['class'] = substr($tag, 1);
+                    }
+                }
+                $attr = '';
+                foreach ($attrs as $k=>$v) {
+                    $attr .= ' '.$k.'="'.$v.'"';
+                }
+
+                $my_divopen = '<div '.$attr.'>';
+                $my_divclose = '</div>';
             }
         }
         $wordrule = "\[\[(?:[A-Za-z0-9]+(?:\((?:(?<!\]\]).)*\))?)\]\]|". # macro
