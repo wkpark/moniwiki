@@ -22,8 +22,7 @@ function getPlugin($pluginname, $property = false) {
     static $plugins;
     static $properties;
 
-    if ($pluginname === true)
-        return sizeof($plugins);
+    $name = strtolower($pluginname);
 
     if (empty($plugins)) {
         global $Config;
@@ -37,6 +36,8 @@ function getPlugin($pluginname, $property = false) {
             $plugins = $cp->fetch('plugins');
             $properties = $cp->fetch('properties');
         }
+        // set the number of plugins
+        $plugins['.size'] = count($plugins);
 
         if (!empty($Config['myplugins']) and is_array($Config['myplugins']))
             $plugins = array_merge($plugins, $Config['myplugins']);
@@ -48,7 +49,9 @@ function getPlugin($pluginname, $property = false) {
         }
     }
 
-    $name = strtolower($pluginname);
+    if ($pluginname === true)
+        return $plugins['.size'];
+
     if ($property)
         return isset($properties[$name]) ? $properties[$name] : null;
     return isset($plugins[$name]) ? $plugins[$name] : null;
