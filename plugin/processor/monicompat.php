@@ -403,13 +403,66 @@ class processor_monicompat
     {
         global $Config;
 
+        $args = null;
+        $start_offset = 0;
         if (is_string($body)) {
+            if ($body[0] == '#' and $body[1] == '!') {
+                list($line, $body) = explode("\n", $body, 2);
+                $dum = preg_split('/\s+/', $line, 2);
+                if (!empty($dum[1])) $args = $dum[1];
+                $start_offset = 1;
+            }
+
             $lines = explode("\n", $body);
+            $el = end($lines);
+            // delete last empty line
+            if (!isset($el[0]))
+                array_pop($lines);
         } else {
             $lines = &$body;
         }
 
         $is_writable = !empty($params['is_writable']) ? $params['is_writable'] : 0;
+
+        if (!empty($args)) {
+            if (preg_match_all('@((?:[#.])?\w+)(?:\s*=\s*(["\'])?(.+?)(?(2)\2|\b))?@', $args, $matches, PREG_SET_ORDER)) {
+                // parse attributes class="foo" id=bar style="border:1px sold red;"
+                $attrs = array();
+                foreach ($matches as $match) {
+                    $tag = $match[1];
+                    if (isset($match[3])) {
+                        $val = trim($match[3], '; ');
+                        $val = strtr($val, array('"'=>'&quot;'));
+                        $val = strip_tags($val);
+                        switch ($tag) {
+                            case 'style':
+                            case 'class':
+                            case 'id':
+                                $attrs[$tag] = $val;
+                                break;
+                            default:
+                                // ignore
+                                default;
+
+                        }
+                    } else {
+                        if ($tag[0] == '.')
+                            $attrs['class'] = substr($tag, 1);
+                        else if ($tag[0] == '#')
+                            $attrs['id'] = substr($tag, 1);
+                        else
+                            $attrs['class'] = substr($tag, 1);
+                    }
+                }
+                $attr = '';
+                foreach ($attrs as $k=>$v) {
+                    $attr .= ' '.$k.'="'.$v.'"';
+                }
+
+                $my_divopen = '<div '.$attr.'>';
+                $my_divclose = '</div>';
+            }
+        }
 
         # for headings
         if (isset($params['notoc'])) {
@@ -452,6 +505,9 @@ class processor_monicompat
         $formatter->noads = !empty($Config['use_google_ads']) ? false : true;
         $formatter->noads = !empty($formatter->pi['#noads']) ? $formatter->pi['#noads'] : $formatter->noads;
 
+        // override start_offset
+        if (isset($params['.start_offset']))
+            $start_offset = $params['.start_offset'];
         $ii = isset($formatter->pi['start_line']) ? $formatter->pi['start_line'] : 0;
         $ii = isset($params['.start_line']) ? $params['.start_line'] : $ii;
         if (isset($formatter->pi['#linenum']) and empty($formatter->pi['#linenum']))
@@ -463,7 +519,7 @@ class processor_monicompat
         for (; $ii < $lcount; $ii++) {
             $line = $lines[$ii];
             $this->linenum++;
-            $lid = $this->linenum;
+            $lid = $this->linenum + $start_offset;
             # empty line
             if (!strlen($line) and empty($oline)) {
                 if ($in_pre) { $pre_line .= "\n"; continue;}
@@ -1056,7 +1112,7 @@ class processor_monicompat
         #$text=preg_replace("/(&lt;)(\/?del>)/i","<\\2",$text);
         $text .= $close;
 
-        return $text;
+        return $my_divopen.$text.$my_divclose;
     }
 }
 

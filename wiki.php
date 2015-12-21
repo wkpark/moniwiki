@@ -1454,6 +1454,10 @@ class Formatter {
                 $this->pi=$pi;
                 $opts = $options;
                 $opts['nowrap'] = 1;
+                if (isset($pi['start_line'])) {
+                    $opts['.start_line'] = $pi['start_line'];
+                    $pi_line = ''; // do not append $pi_line for this case.
+                }
                 $text= $this->processor_repl($pi['#format'],
                         $pi_line.$body,$opts);
                 $this->pi=$savepi;
@@ -1546,6 +1550,7 @@ class Formatter {
                     if ($pos > 0) {
                         $body = substr($body, $pos);
                     }
+                    $opts['.start_offset'] = $pi['start_line'];
                 }
                 $text= $this->processor_repl($pi['#format'],$pi_line.$body,$opts);
 
@@ -1643,6 +1648,8 @@ class Formatter {
         if ($this->source_site)
             $is_writable = 1;
         $options['.is_writable'] = $is_writable;
+        if (isset($pi['start_line']))
+            $options['.start_line'] = $pi['start_line'];
 
         $text = $this->processor_repl('monicompat', $lines, $options);
 
