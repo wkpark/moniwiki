@@ -3093,7 +3093,7 @@ function set_locale($lang, $charset = '', $default = 'en') {
 }
 
 # get the pagename
-function get_pagename() {
+function get_pagename($charset = 'utf-8') {
     // get PATH_INFO or parse REQUEST_URI
     $path_info = get_pathinfo();
 
@@ -3118,6 +3118,13 @@ function get_pagename() {
                 if (empty($v)) $pagename = $k;
         }
     }
+
+    // check the validity of a given page name for UTF-8 case
+    if (strtolower($charset) == 'utf-8') {
+        if (!preg_match('//u', $options['pagename']))
+            $options['pagename'] = ''; // invalid pagename
+    }
+
     if (isset($pagename[0])) {
         $pagename=_stripslashes($pagename);
 
@@ -3224,13 +3231,6 @@ function init_requests(&$options) {
         $options['css_url']=(!empty($DBInfo->themeurl) ? $DBInfo->themeurl:$DBInfo->url_prefix)."/theme/$theme/css/$css";
     }
 
-    $options['pagename']=get_pagename();
-    // check the validity of a given page name for UTF-8 case
-    if (strtolower($DBInfo->charset) == 'utf-8') {
-        if (!preg_match('//u', $options['pagename']))
-            $options['pagename'] = ''; // invalid pagename
-    }
-
     if ($user->id != 'Anonymous' and !empty($DBInfo->use_scrap)) {
         $pages = explode("\t",$user->info['scrapped_pages']);
         $tmp = array_flip($pages);
@@ -3302,7 +3302,15 @@ function get_frontpage($lang) {
 
 function wiki_main($options) {
     global $DBInfo,$Config;
-    $pagename=isset($options['pagename'][0]) ? $options['pagename']: $DBInfo->frontpage;
+
+    // get pagename
+    $options['pagename'] = get_pagename($Config['charset']);
+
+    // get default pagename
+    if (!isset($options['pagename'][0]))
+        $options['pagename'] = get_frontpage($options['lang']);
+
+    $pagename = $options['pagename'];
 
     # get primary variables
     if (isset($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD']=='POST') {
@@ -3413,6 +3421,40 @@ function wiki_main($options) {
         }
     }
 
+    // create WikiPage object
+    $page = $DBInfo->getPage($pagename);
+
+    // setup some default variable $options depend on the current user.
+    // WikiUser initialized in it.
+    init_requests($options);
+
+    // set the real IP address for proxy
+    $remote = $_SERVER['REMOTE_ADDR'];
+    $real = realIP();
+    if ($remote != $real) {
+        $_SERVER['OLD_REMOTE_ADDR'] = $remote;
+        $_SERVER['REMOTE_ADDR'] = $real;
+    }
+
+    // start session
+    if (empty($Config['nosession']) and is_writable(ini_get('session.save_path')) ) {
+        $session_name = session_name();
+        if (!empty($_COOKIE[$session_name])) {
+            $session_id = $_COOKIE[$session_name];
+        } else {
+            $session_id = session_id();
+        }
+        if (!empty($session_id)) {
+            _session_start($session_id, $options['id']);
+        } elseif (!empty($options['id']) !== 'Anonymous') {
+            _session_start('dummy', $options['id']);
+        }
+    }
+
+    // setup cache headers.
+    // it depends on user id
+    default_cache_control($options);
+
     // load ruleset
     if (!empty($Config['config_ruleset'])) {
         $ruleset_file = 'config/ruleset.'.$Config['config_ruleset'].'.php';
@@ -3437,9 +3479,9 @@ function wiki_main($options) {
         }
     }
 
-    $page = $DBInfo->getPage($pagename);
-    $page->is_static = false; // FIXME
+    $page->is_static = false;
 
+    // setup Page instructions.
     $pis = array();
 
     // get PI cache
@@ -3457,7 +3499,7 @@ function wiki_main($options) {
     }
 
     // HEAD support for robots
-    if (empty($action) and !empty($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD'] == 'HEAD') {
+    if (!empty($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD'] == 'HEAD') {
         if (!$page->exists()) {
             header("HTTP/1.1 404 Not found");
             header("Status: 404 Not found");
@@ -3480,6 +3522,7 @@ function wiki_main($options) {
         return;
     }
 
+    // conditional get support.
     if (is_static_action($options) or
             (!empty($DBInfo->use_conditional_get) and $page->is_static)) {
         $mtime = $page->mtime();
@@ -3497,6 +3540,7 @@ function wiki_main($options) {
         }
     }
 
+    // create formatter.
     $formatter = new Formatter($page,$options);
 
     $formatter->refresh=!empty($refresh) ? $refresh : '';
@@ -3884,18 +3928,8 @@ if (isset($options['timer']) and is_object($options['timer'])) {
 
 $lang = set_locale($Config['lang'], $Config['charset'], $Config['default_lang']);
 init_locale($lang);
-init_requests($options);
-if (!isset($options['pagename'][0])) $options['pagename']= get_frontpage($lang);
-$DBInfo->lang=$lang;
+$DBInfo->lang = $lang;
 $options['lang'] = $lang;
-
-// set the real IP address for proxy
-$remote = $_SERVER['REMOTE_ADDR'];
-$real = realIP();
-if ($remote != $real) {
-  $_SERVER['OLD_REMOTE_ADDR'] = $remote;
-  $_SERVER['REMOTE_ADDR'] = $real;
-}
 
 function _session_start($session_id = null, $id = null) {
     global $DBInfo, $Config;
@@ -3972,56 +4006,45 @@ function _session_start($session_id = null, $id = null) {
     }
 }
 
-if (empty($Config['nosession']) and is_writable(ini_get('session.save_path')) ) {
-    $session_name = session_name();
-    if (!empty($_COOKIE[$session_name])) {
-        $session_id = $_COOKIE[$session_name];
-    } else {
-        $session_id = session_id();
-    }
-    if (!empty($session_id)) {
-        _session_start($session_id, $options['id']);
-    } elseif (!empty($options['id']) !== 'Anonymous') {
-        _session_start('dummy', $options['id']);
-    }
-}
+function default_cache_control($options = array()) {
+    global $Config;
+    // set the s-maxage for proxy
+    $proxy_maxage = !empty($Config['proxy_maxage']) ? ', s-maxage='.$Config['proxy_maxage'] : '';
+    // set maxage
+    $user_maxage = !empty($Config['user_maxage']) ? ', max-age='.$Config['user_maxage'] : ', max-age=0';
 
-// set the s-maxage for proxy
-$proxy_maxage = !empty($Config['proxy_maxage']) ? ', s-maxage='.$Config['proxy_maxage'] : '';
-// set maxage
-$user_maxage = !empty($Config['user_maxage']) ? ', max-age='.$Config['user_maxage'] : ', max-age=0';
-
-if ($_SERVER['REQUEST_METHOD'] != 'GET' and
-        $_SERVER['REQUEST_METHOD'] != 'HEAD') {
-    // always set private for POST
-    // basic cache-control
-    header('Cache-Control: private, max-age=0, s-maxage=0, must-revalidate, post-check=0, pre-check=0');
-    if (!empty($_SERVER['HTTP_ORIGIN'])) {
-        if (!empty($DBInfo->access_control_allowed_re)) {
-            if (preg_match($DBInfo->access_control_allowed_re, $_SERVER['HTTP_ORIGIN']))
-                header('Access-Control-Allow-Origin: '.$_SERVER['HTTP_ORIGIN']);
-        } else {
-            header('Access-Control-Allow-Origin: *');
+    if ($_SERVER['REQUEST_METHOD'] != 'GET' and
+            $_SERVER['REQUEST_METHOD'] != 'HEAD') {
+        // always set private for POST
+        // basic cache-control
+        header('Cache-Control: private, max-age=0, s-maxage=0, must-revalidate, post-check=0, pre-check=0');
+        if (!empty($_SERVER['HTTP_ORIGIN'])) {
+            if (!empty($Config['access_control_allowed_re'])) {
+                if (preg_match($Config['access_control_allowed_re'], $_SERVER['HTTP_ORIGIN']))
+                    header('Access-Control-Allow-Origin: '.$_SERVER['HTTP_ORIGIN']);
+            } else {
+                header('Access-Control-Allow-Origin: *');
+            }
         }
+    } else {
+        // set maxage for show action
+        $act = isset($_GET['action']) ? strtolower($_GET['action']) : '';
+        if (empty($act) or $act == 'show')
+            $maxage = $proxy_maxage.$user_maxage;
+        else
+            $maxage = $user_maxage;
+
+        if (empty($Config['no_must_revalidate']))
+            $maxage.= ', must-revalidate';
+
+        // set public or private for GET, HEAD
+        // basic cache-control. will be overrided later
+        if (isset($options['id']) && $options['id'] == 'Anonymous')
+            $public = 'public';
+        else
+            $public = 'private';
+        header('Cache-Control: '.$public.$maxage.', post-check=0, pre-check=0');
     }
-} else {
-    // set maxage for show action
-    $act = isset($_GET['action']) ? strtolower($_GET['action']) : '';
-    if (empty($act) or $act == 'show')
-        $maxage = $proxy_maxage.$user_maxage;
-    else
-        $maxage = $user_maxage;
-
-    if (empty($Config['no_must_revalidate']))
-        $maxage.= ', must-revalidate';
-
-    // set public or private for GET, HEAD
-    // basic cache-control. will be overrided later
-    if ($options['id'] == 'Anonymous')
-        $public = 'public';
-    else
-        $public = 'private';
-    header('Cache-Control: '.$public.$maxage.', post-check=0, pre-check=0');
 }
 
 wiki_main($options);
