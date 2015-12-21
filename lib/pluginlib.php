@@ -133,7 +133,7 @@ function initPlugin() {
                 $line = fgets($fp, 1024);
                 if (!($type & 1) and preg_match('/^\s*function\smacro_'.$name.'\s*\(/i', $line)) {
                     $type |= 1; // macro
-                } else if (!($type & 2) and preg_match('/^\s*function\sdo_'.$name.'\s*\(/i', $line)) {
+                } else if (!($type & 2) and preg_match('/^\s*function\sdo_(?:post_)?'.$name.'\s*\(/i', $line)) {
                     $type |= 2; // plugin
                 } else if (!($type & 4) and preg_match('/^\s*function\shook_'.$name.'\s*\(/i', $line)) {
                     $type |= 4; // hook since 1.2.6
@@ -163,7 +163,7 @@ function initPlugin() {
     // get predefined or already included macros
     $tmp = get_defined_functions();
     foreach ($tmp['user'] as $u) {
-        if (preg_match('@^(macro|do|hook)_(.*)$@', $u, $m)) {
+        if (preg_match('@^(macro|do(?:_post)?|hook)_(.*)$@', $u, $m)) {
             if (!isset($properties[strtolower($m[2])])) {
                 $properties[strtolower($m[2])] = array('name'=>$m[2], 'type'=>0);
             }
