@@ -2446,6 +2446,7 @@ function wiki_main($options) {
 
     // start session
     if (empty($Config['nosession']) and is_writable(ini_get('session.save_path')) ) {
+        require_once('lib/session.php');
         $session_name = session_name();
         if (!empty($_COOKIE[$session_name])) {
             $session_id = $_COOKIE[$session_name];
@@ -2461,7 +2462,7 @@ function wiki_main($options) {
 
     // setup cache headers.
     // it depends on user id
-    default_cache_control($options);
+    http_default_cache_control($options);
 
     // load ruleset
     if (!empty($Config['config_ruleset'])) {
@@ -2938,122 +2939,6 @@ $lang = set_locale($Config['lang'], $Config['charset'], $Config['default_lang'])
 init_locale($lang);
 $DBInfo->lang = $lang;
 $options['lang'] = $lang;
-
-function _session_start($session_id = null, $id = null) {
-    global $DBInfo, $Config;
-
-    // FIXME
-    if ($id == null || $id == 'Anonymous')
-        return;
-
-    // chceck some action and set expire
-    session_cache_limiter('');
-
-    // cookie parameters
-    if (!empty($Config['cookie_path']))
-        $path = $Config['cookie_path'];
-    else
-        $path = dirname(get_scriptname());
-
-    if (!empty($Config['cookie_domain']))
-        $domain = $Config['cookie_domain'];
-    else
-        $domain = $_SERVER['HTTP_HOST'];
-
-    $expire = isset($Config['session_lifetime']) ? $Config['session_lifetime'] : 3600;
-
-    if ($session_id == null) {
-        // New session
-        session_set_cookie_params($expire, $path, $domain);
-
-        session_start();
-        $sess_id = session_id();
-    } else {
-        $sess_id = $session_id;
-    }
-
-    // setup the session cookie
-    $site_seed = !empty($DBInfo->session_seed) ? $DBInfo->session_seed : 'MONIWIKI';
-    $site_hash = md5($site_seed.$sess_id);
-    $addr_hash = md5($_SERVER['REMOTE_ADDR'].$sess_id);
-    $session_cookie = $site_hash . '-*-' . $addr_hash . '-*-' . time();
-
-    if ($session_id == null) {
-        // set session cookie.
-        setCookie('MONIWIKI', $session_cookie, time() + $expire, $path, $domain);
-    } else {
-        $cleanup_session_cookie = false;
-        if (empty($_COOKIE['MONIWIKI'])) {
-            $cleanup_session_cookie = true;
-        } else {
-            // check session cookie
-            list($site, $addr, $dummy) = explode('-*-', $_COOKIE['MONIWIKI']);
-            if ($site != $site_hash || $addr != $addr_hash) {
-                $cleanup_session_cookie = true;
-            }
-        }
-
-        if ($cleanup_session_cookie) {
-            // invalid session cookie.
-            // remove MONI_ID, MONIWIKI and session cookie
-            if (isset($_COOKIE['MONI_ID']))
-                setCookie('MONI_ID', null, -1, $path, $domain);
-            if (isset($_COOKIE['MONIWIKI']))
-                setCookie('MONIWIKI', null, -1, $path, $domain);
-            if (isset($_COOKIE[session_name()]))
-                setCookie(session_name(), null, -1, $path, $domain);
-
-            // reset some variables
-            $DBInfo->user->id = 'Anonymous';
-            $options['id'] = 'Anonymous';
-        } else {
-            session_set_cookie_params($expire, $path, $domain);
-
-            session_start();
-        }
-    }
-}
-
-function default_cache_control($options = array()) {
-    global $Config;
-    // set the s-maxage for proxy
-    $proxy_maxage = !empty($Config['proxy_maxage']) ? ', s-maxage='.$Config['proxy_maxage'] : '';
-    // set maxage
-    $user_maxage = !empty($Config['user_maxage']) ? ', max-age='.$Config['user_maxage'] : ', max-age=0';
-
-    if ($_SERVER['REQUEST_METHOD'] != 'GET' and
-            $_SERVER['REQUEST_METHOD'] != 'HEAD') {
-        // always set private for POST
-        // basic cache-control
-        header('Cache-Control: private, max-age=0, s-maxage=0, must-revalidate, post-check=0, pre-check=0');
-        if (!empty($_SERVER['HTTP_ORIGIN'])) {
-            if (!empty($Config['access_control_allowed_re'])) {
-                if (preg_match($Config['access_control_allowed_re'], $_SERVER['HTTP_ORIGIN']))
-                    header('Access-Control-Allow-Origin: '.$_SERVER['HTTP_ORIGIN']);
-            } else {
-                header('Access-Control-Allow-Origin: *');
-            }
-        }
-    } else {
-        // set maxage for show action
-        $act = isset($_GET['action']) ? strtolower($_GET['action']) : '';
-        if (empty($act) or $act == 'show')
-            $maxage = $proxy_maxage.$user_maxage;
-        else
-            $maxage = $user_maxage;
-
-        if (empty($Config['no_must_revalidate']))
-            $maxage.= ', must-revalidate';
-
-        // set public or private for GET, HEAD
-        // basic cache-control. will be overrided later
-        if (isset($options['id']) && $options['id'] == 'Anonymous')
-            $public = 'public';
-        else
-            $public = 'private';
-        header('Cache-Control: '.$public.$maxage.', post-check=0, pre-check=0');
-    }
-}
 
 wiki_main($options);
 endif;

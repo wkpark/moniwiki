@@ -1007,6 +1007,55 @@ function http_need_cond_request($mtime, $last_modified = '', $etag = '') {
 }
 
 /**
+ * Setup default Cache-Control headers.
+ *
+ * @since   2015-12-22
+ * @since   1.3.0
+ * @return  void
+ */
+function http_default_cache_control($options = array()) {
+    global $Config;
+
+    // set the s-maxage for proxy
+    $proxy_maxage = !empty($Config['proxy_maxage']) ? ', s-maxage='.$Config['proxy_maxage'] : '';
+    // set maxage
+    $user_maxage = !empty($Config['user_maxage']) ? ', max-age='.$Config['user_maxage'] : ', max-age=0';
+
+    if ($_SERVER['REQUEST_METHOD'] != 'GET' and
+            $_SERVER['REQUEST_METHOD'] != 'HEAD') {
+        // always set private for POST
+        // basic cache-control
+        header('Cache-Control: private, max-age=0, s-maxage=0, must-revalidate, post-check=0, pre-check=0');
+        if (!empty($_SERVER['HTTP_ORIGIN'])) {
+            if (!empty($Config['access_control_allowed_re'])) {
+                if (preg_match($Config['access_control_allowed_re'], $_SERVER['HTTP_ORIGIN']))
+                    header('Access-Control-Allow-Origin: '.$_SERVER['HTTP_ORIGIN']);
+            } else {
+                header('Access-Control-Allow-Origin: *');
+            }
+        }
+    } else {
+        // set maxage for show action
+        $act = isset($_GET['action']) ? strtolower($_GET['action']) : '';
+        if (empty($act) or $act == 'show')
+            $maxage = $proxy_maxage.$user_maxage;
+        else
+            $maxage = $user_maxage;
+
+        if (empty($Config['no_must_revalidate']))
+            $maxage.= ', must-revalidate';
+
+        // set public or private for GET, HEAD
+        // basic cache-control. will be overrided later
+        if (isset($options['id']) && $options['id'] == 'Anonymous')
+            $public = 'public';
+        else
+            $public = 'private';
+        header('Cache-Control: '.$public.$maxage.', post-check=0, pre-check=0');
+    }
+}
+
+/**
  * find the extension of given mimetype using the mime.types
  *
  * @author   Won-Kyu Park <wkpark@gmail.com>
