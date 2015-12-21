@@ -5046,6 +5046,8 @@ SCHEMA;
   function send_footer($args='',$options=array()) {
     global $DBInfo;
 
+    $self = &$this;
+
     empty($options) ? $options = array('id'=>'Anonymous',
                                   'tz_offset'=>$this->tz_offset,
                                   'page'=>$this->page->name) : null;
@@ -5132,6 +5134,8 @@ FOOT;
   function send_title($msgtitle="", $link="", $options="") {
     // Generate and output the top part of the HTML page.
     global $DBInfo;
+
+    $self = &$this;
 
     if (!empty($options['action_mode']) and $options['action_mode']=='ajax') return;
 
