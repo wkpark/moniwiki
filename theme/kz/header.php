@@ -1,13 +1,13 @@
 <div id="wikiMenu">
 <div id="gotoForm"><?php echo $goto_form?></div>
 <?php echo
-$this->link_tag($this->frontpage,"",$this->sitename,"\n").
-$this->link_tag("TitleIndex","",$this->icon['list']._("TitleIndex"),"\n").
-$this->link_tag("FindPage","",$this->icon['find']._("FindPage"),"\n").
-$this->link_tag("RecentChanges","",$this->icon['diff']._("RecentChanges"),"\n");
+$self->link_tag($self->frontpage,"",$self->sitename,"\n").
+$self->link_tag("TitleIndex","",$self->icon['list']._("TitleIndex"),"\n").
+$self->link_tag("FindPage","",$self->icon['find']._("FindPage"),"\n").
+$self->link_tag("RecentChanges","",$self->icon['diff']._("RecentChanges"),"\n");
 ?>
 <div align="right" style="border-top: 1px solid cornflowerblue">
-<?php echo $this->link_tag("PageHits","","Total ".macro_PageCount()." pages");?>
+<?php echo $self->link_tag("PageHits","","Total ".macro_PageCount()." pages");?>
 </div>
 <div id="currentPage">
 <h4>Current Page</h4>
@@ -17,22 +17,22 @@ $this->link_tag("RecentChanges","",$this->icon['diff']._("RecentChanges"),"\n");
 <div id="wikiMap">
 <h4>Central Pages</h4>
 <?php echo
-$this->link_tag("%B9%E6%B8%ED%B7%CF","",_("GuestBook"),"").
-$this->link_tag("UploadedFiles","",_("UploadedFiles"),"");
+$self->link_tag("%B9%E6%B8%ED%B7%CF","",_("GuestBook"),"").
+$self->link_tag("UploadedFiles","",_("UploadedFiles"),"");
 /*
-$this->link_tag("CategoryGybe","","gybe","title='GNOME Yare Browser Engine project'").
-$this->link_tag("CategorySpeech","","TTS","title='Text To Speech'").
-$this->link_tag("CategoryMusic","","³ë·¡","title='Music'").
-$this->link_tag("CategoryMovie","","¿µÈ­","title='Movie'").
-$this->link_tag("CategoryBook","","Ã¥","title='Book óü'").
-$this->link_tag("CategoryPoetry","","½Ã","title='Poetry'").
+$self->link_tag("CategoryGybe","","gybe","title='GNOME Yare Browser Engine project'").
+$self->link_tag("CategorySpeech","","TTS","title='Text To Speech'").
+$self->link_tag("CategoryMusic","","ë…¸ëž˜","title='Music'").
+$self->link_tag("CategoryMovie","","ì˜í™”","title='Movie'").
+$self->link_tag("CategoryBook","","ì±…","title='Book å†Š'").
+$self->link_tag("CategoryPoetry","","ì‹œ","title='Poetry'").
 "";
 */
 ?>
 </div>
 <div id="loginForm"><?php
 include ("plugin/login.php");
-echo macro_login($this);
+echo macro_login($self);
 ?></div>
 </div>
 <?php if ($msg) echo "<div id='wikiMsg'>".$msg."</div>"; ?>

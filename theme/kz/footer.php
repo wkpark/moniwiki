@@ -6,21 +6,21 @@
 	text-align: right;
 ">
 <div align="left">
-<?php echo $DBInfo->counter->pageCounter($this->page->name)?>
+<?php echo $DBInfo->counter->pageCounter($self->page->name)?>
 </div>
 <?php
-# Processing InstructionÀÇ #action Á¤ÀÇ°¡ ÀÖÀ¸¸é,
-# $this->actions¿¡ Æ÷ÇÔµÇ¾îÀÖ´ÂÁö È®ÀÎÇØº¸°í,
-# ÀÖÀ¸¸é ±×°ÍÀ» ÇÁ¸°Æ®ÇÑ´Ù.
-    if ($this->pi['#action'] && !in_array($this->pi['#action'],$this->actions)){
-      list($act,$txt)=explode(" ",$this->pi['#action'],2);
-      print $this->link_to("?action=$act",$txt);
+# Processing Instructionì˜ #action ì •ì˜ê°€ ìžˆìœ¼ë©´,
+# $self->actionsì— í¬í•¨ë˜ì–´ìžˆëŠ”ì§€ í™•ì¸í•´ë³´ê³ ,
+# ìžˆìœ¼ë©´ ê·¸ê²ƒì„ í”„ë¦°íŠ¸í•œë‹¤.
+    if ($self->pi['#action'] && !in_array($self->pi['#action'],$self->actions)){
+      list($act,$txt)=explode(" ",$self->pi['#action'],2);
+      print $self->link_to("?action=$act",$txt);
     }
-# txt ´ë½Å¿¡ ÀûÀýÇÑ ¾ÆÀÌÄÜÀ» ³Ö´øÁö ÇÕ´Ï´Ù.
+# txt ëŒ€ì‹ ì— ì ì ˆí•œ ì•„ì´ì½˜ì„ ë„£ë˜ì§€ í•©ë‹ˆë‹¤.
 ?>
 Best viewed with 
-<?php echo $this->link_tag("Mozilla","","Mozilla","")?>
+<?php echo $self->link_tag("Mozilla","","Mozilla","")?>
  latest.
 Powered by 
-<?php echo $this->link_tag("MoniWiki","","MoniWiki","title='MoniWiki'")?>.
+<?php echo $self->link_tag("MoniWiki","","MoniWiki","title='MoniWiki'")?>.
 </div>

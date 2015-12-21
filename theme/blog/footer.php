@@ -3,17 +3,17 @@
 <?php
 print '<div style="font-size:10px">';
 if ($options['id']=='Anonymous')
-  print macro_calendar($this,"'Blog',blog,noweek,archive",'Blog');
+  print macro_calendar($self,"'Blog',blog,noweek,archive",'Blog');
 else
-  print macro_calendar($this,"'$options[id]',blog,noweek",$options['id']);
+  print macro_calendar($self,"'$options[id]',blog,noweek",$options['id']);
 print '</div>';
 print "<br />\n";
 print '<font style="font-size:12px;"><b>';
-print macro_RandomQuote($this);
+print macro_RandomQuote($self);
 print '</b></font>';
 print "<br /><br />\n";
 print '<font style="font-size:11px">';
-print macro_RandomPage($this,"4,simple");
+print macro_RandomPage($self,"4,simple");
 print '</font>';
 
 ?>
