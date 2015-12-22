@@ -2,11 +2,11 @@
 # MoniWiki Theme by wkpark at kldp.org
 # $Id$
 #
-if ($this->_sidebar) {
+if ($self->_sidebar) {
   include_once("plugin/login.php");
   include_once("plugin/RandomBanner.php");
   include_once("plugin/Calendar.php");
-  $login=macro_login($this);
+  $login=macro_login($self);
 }
 if ($DBInfo->use_tagging) {
   include_once("plugin/Keywords.php");
@@ -14,10 +14,10 @@ if ($DBInfo->use_tagging) {
 # theme options
 #$_theme['sidebar']=1;
 
-if ($this->_width) {
+if ($self->_width) {
   print <<<EOF
 <style type='text/css'>
-#mainBody { width:$this->_width;}
+#mainBody { width:$self->_width;}
 </style>
 EOF;
 }
@@ -34,15 +34,15 @@ EOF;
 <div id='mainBody'>
 <!--
 <div id='topBanner'>
-<img src="<?php echo $this->themeurl?>/imgs/kldpwikilogo.png"/>
+<img src="<?php echo $self->themeurl?>/imgs/kldpwikilogo.png"/>
 </div>
 -->
-<?php if ($this->_topicon): ?>
+<?php if ($self->_topicon): ?>
 <div id='topIcon'>
-<a href='?action=edit'><img src='<?php echo $this->themeurl?>/imgs/record.png' alt='*' style='border:0' /></a>
-<a href='?action=new'><img src='<?php echo $this->themeurl?>/imgs/add.png' alt='+' style='border:0' /></a>
-<a href='?action=subscribe'><img src='<?php echo $this->themeurl?>/imgs/favorite.png' alt='#' style='border:0' /></a>
-<a href='?action=rss_rc'><img src='<?php echo $this->themeurl?>/imgs/rss.png' alt='.)' style='border:0' /></a>
+<a href='?action=edit'><img src='<?php echo $self->themeurl?>/imgs/record.png' alt='*' style='border:0' /></a>
+<a href='?action=new'><img src='<?php echo $self->themeurl?>/imgs/add.png' alt='+' style='border:0' /></a>
+<a href='?action=subscribe'><img src='<?php echo $self->themeurl?>/imgs/favorite.png' alt='#' style='border:0' /></a>
+<a href='?action=rss_rc'><img src='<?php echo $self->themeurl?>/imgs/rss.png' alt='.)' style='border:0' /></a>
 -->
 </div>
 <?php endif;?>
@@ -51,9 +51,9 @@ EOF;
 <div id='pBanSpace'></div>
 <div id='wikiHeadPage'>
 <?php
-if ($this->popup!=1) :
+if ($self->popup!=1) :
 ?>
-<?php if ($this->_topbanner): ?>
+<?php if ($self->_topbanner): ?>
 <div id='pBanRight'><div id='pBanLeft'>
  <div id='pBanner'>
 <img src='<?php echo $DBInfo->logo_img?>' /><?php
@@ -72,11 +72,11 @@ if ($this->popup!=1) :
 </form>
 </div>
 <div id='pTitle'>
-<?php if (!$this->_topbanner and $this->_logo): ?>
+<?php if (!$self->_topbanner and $self->_logo): ?>
 <img src='<?php echo $DBInfo->logo_img?>' style='text-align:left;' alt='moniwiki' />
 <?php endif; /* topbanner */?>
 <?php echo $title?></div>
-<?php if ($this->_topbanner): ?>
+<?php if ($self->_topbanner): ?>
  </div>
 </div>
 <?php endif; /* topbanner */?>
@@ -84,7 +84,7 @@ if ($this->popup!=1) :
 </div>
 </div></div>
 </div></div>
-<?php if ($this->_splash):?>
+<?php if ($self->_splash):?>
 <div class='pBodyRight'><div class='pBodyLeft'>
  <div id='wikiSplash'>
  </div>
@@ -95,7 +95,7 @@ if ($this->popup!=1) :
 <div id='pBottomRight'><div id='pBottomLeft'>
 <div id='wikiPage'>
 <span class='clear'></span>
-<?php if ($this->popup) :?>
+<?php if ($self->popup) :?>
 &nbsp;<!-- oops!! firefox bug workaround :( -->
 <?php else:?>
 <div id='wikiHeader'>
@@ -112,26 +112,26 @@ if ($this->popup!=1) :
 <div id='container'>
 <?php
 # enable/disable sidebar
-if ($this->_sidebar==1) :
+if ($self->_sidebar==1) :
 ?>
 <div id='wikiSideMenu'>
 <?php
-if ($this->_login) print macro_login($this);
+if ($self->_login) print macro_login($self);
 print '<div class="calendar">';
 if ($options['id']=='Anonymous')
-  print macro_calendar($this,"'Blog',blog,noweek,archive,center",'Blog');
+  print macro_calendar($self,"'Blog',blog,noweek,archive,center",'Blog');
 else
-  print macro_calendar($this,"'$options[id]',blog,noweek,archive,center",$options['id']);
+  print macro_calendar($self,"'$options[id]',blog,noweek,archive,center",$options['id']);
 print '</div>';
 print '<div class="randomQuote">';
-print macro_RandomQuote($this);
+print macro_RandomQuote($self);
 print '</div>';
 print '<div class="randomPage">';
-print macro_RandomPage($this,"4,simple");
+print macro_RandomPage($self,"4,simple");
 print '</div>';
 if ($DBInfo->use_tagging) {
   print "<div>";
-  print macro_Keywords($this,"all,tour,limit=15");
+  print macro_Keywords($self,"all,tour,limit=15");
   print "</div>";
 }
 ?>

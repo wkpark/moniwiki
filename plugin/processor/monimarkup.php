@@ -145,8 +145,7 @@ class processor_monimarkup
                 $oline.=$line;
                 continue;
             } else if (!empty($oline) and preg_match('/^\s*\|\|/',$oline)) {
-                if ( !preg_match('/(\|\||\|-+)\s*$/',$oline)
-                        and !preg_match('/^(={1,6})\s+.*(\1)\s*$/',$line)) {
+                if (!preg_match('/(\|\||\|-+)\s*$/', $oline)) {
                     $oline.="\n".$line;
                     continue;
                 } else if (!$tr) {
@@ -697,6 +696,8 @@ class processor_monimarkup
 
                         }
                     } else {
+                        // .foo #bar => id="foo", class="bar" (MoniWiki)
+                        // foobar => class="foobar" (MoinMoin 1.9)
                         if ($tag[0] == '.')
                             $attrs['class'] = substr($tag, 1);
                         else if ($tag[0] == '#')
@@ -709,7 +710,6 @@ class processor_monimarkup
                 foreach ($attrs as $k=>$v) {
                     $attr .= ' '.$k.'="'.$v.'"';
                 }
-
                 $my_divopen = '<div '.$attr.'>';
                 $my_divclose = '</div>';
             }
