@@ -145,8 +145,7 @@ class processor_monimarkup
                 $oline.=$line;
                 continue;
             } else if (!empty($oline) and preg_match('/^\s*\|\|/',$oline)) {
-                if ( !preg_match('/(\|\||\|-+)\s*$/',$oline)
-                        and !preg_match('/^(={1,6})\s+.*(\1)\s*$/',$line)) {
+                if (!preg_match('/(\|\||\|-+)\s*$/', $oline)) {
                     $oline.="\n".$line;
                     continue;
                 } else if (!$tr) {
