@@ -501,10 +501,6 @@ class processor_monicompat
         $wordrule .= $formatter->wordrule;
         $wordrule .= '|'.$formatter->footrule;
 
-        # google ads
-        $formatter->noads = !empty($Config['use_google_ads']) ? false : true;
-        $formatter->noads = !empty($formatter->pi['#noads']) ? $formatter->pi['#noads'] : $formatter->noads;
-
         // override start_offset
         if (isset($params['.start_offset']))
             $start_offset = $params['.start_offset'];
@@ -899,21 +895,6 @@ class processor_monicompat
 
                 while($in_div > 0)
                     $p_closeopen .= $this->_div(0, $in_div, $div_enclose);
-
-                // show google ads
-                while (!$formatter->noads && empty($formatter->preview)) {
-                    if ($this->sect_num < 3)
-                        break;
-                    if ($Config['use_google_ads'] > 1)
-                        $select_sect = $Config['use_google_ads'];
-                    else
-                        $select_sect = 3;
-                    if ($select_sect == $this->sect_num) {
-                        $p_closeopen .= $formatter->macro_repl('GoogleAds', '', $params);
-                        $formatter->noads = true;
-                    }
-                    break;
-                }
 
                 // check section styling
                 $cls = '';
