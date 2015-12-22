@@ -5733,6 +5733,10 @@ function macro_GoTo($formatter="",$value="") {
 }
 
 function processor_plain($formatter,$value, $options=array()) {
+    // fix for compatible issue with 1.3.0
+    if (is_array($value))
+        $value = implode("\n", $value);
+
     if ($value[0]=='#' and $value[1]=='!')
         list($line,$value)=explode("\n",$value,2);
 
