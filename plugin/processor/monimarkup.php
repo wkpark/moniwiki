@@ -313,6 +313,203 @@ class processor_monimarkup
         return $chunk;
     }
 
+    function _td_span($str, $align = '')
+    {
+        $len = strlen($str)/2;
+        if ($len == 1) return '';
+        $attr[] = "colspan='$len'"; #$attr[]="align='center' colspan='$len'";
+        return ' '.implode(' ', $attr);
+    }
+
+    function _attr($attr, &$sty, $myclass = array(), $align = '')
+    {
+        $aligns = array('center'=>1,'left'=>1,'right'=>1);
+        $attrs = preg_split('@(\w+\=(?:"[^"]*"|\'[^\']*\')\s*|\w+\=[^"\'=\s]+\s*)@',
+            $attr, -1, PREG_SPLIT_DELIM_CAPTURE|PREG_SPLIT_NO_EMPTY);
+
+        $myattr = array();
+        foreach ($attrs as $at) {
+            $at = str_replace(array("'", '"'), '', rtrim($at));
+            $k = strtok($at,'=');
+            $v = strtok('');
+            $k = strtolower($k);
+            if ($k == 'style') {
+                $stys = preg_split('@;\s*@', $v, -1, PREG_SPLIT_NO_EMPTY);
+                foreach ($stys as $my) {
+                    $nk = strtok($my, ':');
+                    $nv = strtok('');
+                    $sty[$nk] = $nv;
+                }
+            } else {
+                switch($k) {
+                    case 'class':
+                        if (isset($aligns[$v]))
+                            $align = $v;
+                        else $myclass[] = $v;
+                        break;
+                    case 'align':
+                        $align=$v;
+                        break;
+                    case 'bgcolor':
+                        $sty['background-color'] = strtolower($v);
+                        break;
+                    case 'border':
+                        if (intval($v) == $v and isset($v)) {
+                            $myattr[$k] = $v;
+                            break;
+                        }
+                    case 'width':
+                    case 'height':
+                    case 'color':
+                        $sty[$k]=strtolower($v);
+                        break;
+                    case 'bordercolor':
+                        $sty['border'] = 'solid '.strtolower($v);
+                        break;
+                    default:
+                        if ($v) $myattr[$k] = $v;
+                        break;
+                }
+            }
+        }
+
+        if ($align) $myclass[] = $align;
+        if ($myclass) $myattr['class'] = implode(' ', array_unique($myclass));
+        if ($sty) {
+            $mysty='';
+            foreach ($sty as $k=>$v) $mysty .= "$k:$v;";
+            $myattr['style'] = $mysty;
+        }
+        return $myattr;
+    }
+
+    function _td_attr(&$val, $align = '')
+    {
+        if (!$val) {
+            if ($align) return array('class'=>$align);
+            return array();
+        }
+        $para=str_replace(array('&lt;', '&gt'), array('<', '>'), $val);
+        // split attributes <:><|3> => ':', '|3'
+        $tmp = explode('><', substr($para, 1, -1));
+        $paras = array();
+        foreach ($tmp as $p) {
+            // split attributes <(-2> => '(', '-2'
+            if (preg_match_all('/([\^_v\(:\)\!=]|[-\|]\d+|\d+%|#[0-9a-fA-F]{6}|(?:colspan|rowspan|[a-z]+)\s*=\s*.+)/i', $p, $m))
+                $paras = array_merge($paras, $m[1]);
+            else
+                $paras[] = $p;
+        }
+        # rowspan
+        $sty = array();
+        $rsty = array();
+        $attr = array();
+        $rattr = array();
+        $myattr = array();
+        $myclass = array();
+
+        foreach ($paras as $para) {
+            if (preg_match("/^(\-|\|)(\d+)$/", $para, $match)) {
+                if ($match[1] == '-')
+                    $attr['colspan'] = $match[2];
+                else
+                    $attr['rowspan'] = $match[2];
+                $para = '';
+            }
+            else if (strlen($para) == 1) {
+                switch ($para) {
+                    case '^':
+                        $attr['valign'] = 'top';
+                        break;
+                    case 'v':
+                    case '_':
+                        $attr['valign'] = 'bottom';
+                        break;
+                    case '(':
+                        $align = 'left';
+                        break;
+                    case ')':
+                        $align = 'right';
+                        break;
+                    case ':':
+                        $align = 'center';
+                        break;
+                    case '!':
+                    case '=':
+                        $attr['heading'] = true; // hack to support table header
+                        break;
+                    default:
+                        break;
+                }
+            } else if ($para[0] == '#') {
+                $sty['background-color'] = strtolower($para);
+                $para = '';
+            } else if (is_numeric($para[0])) {
+                $attr['width'] = $para;
+                $para = '';
+            } else {
+                if (substr($para, 0, 7) == 'colspan') {
+                    $attr['colspan'] = trim(substr($para, 8), ' =');
+                    $para = '';
+                } else if (substr($para, 0, 7)=='rowspan') {
+                    $attr['rowspan'] = trim(substr($para, 8), ' =');
+                    $para = '';
+                } else if (substr($para, 0, 3) == 'row') {
+                    // row properties
+                    $val = substr($para, 3);
+                    $myattr = $this->_attr($val, $rsty);
+                    $rattr = array_merge($rattr, $myattr);
+                    continue;
+                }
+            }
+            $myattr = $this->_attr($para, $sty, $myclass, $align);
+            $attr = array_merge($attr, $myattr);
+        }
+        $myclass = !empty($attr['class']) ? $attr['class'] : '';
+        unset($attr['class']);
+        if (!empty($myclass))
+            $attr['class'] = trim($myclass);
+
+        $val = '';
+        foreach ($rattr as $k=>$v) $val .= $k.'="'.trim($v, "'\"").'" ';
+
+        return $attr;
+    }
+
+    function _table($on, &$attr)
+    {
+        if (!$on) return "</table>\n";
+
+        $sty = array();
+        $myattr = array();
+        $mattr = array();
+        $attrs = str_replace(array('&lt;', '&gt'), array('<', '>'), $attr);
+        $attrs = explode('><', substr($attrs, 1, -1));
+        $myclass = array();
+        $rattr = array();
+        $attr = '';
+        foreach ($attrs as $tattr) {
+            $tattr = trim($tattr);
+            if (empty($tattr)) continue;
+            if (substr($tattr, 0, 5) == 'table') {
+                $tattr = substr($tattr, 5);
+                $mattr = $this->_attr($tattr, $sty, $myclass);
+                $myattr = array_merge($myattr, $mattr);
+            } else { // not table attribute
+                $rattr[] = $tattr;
+                #else $myattr=$this->_attr($tattr,$sty,$myclass);
+            }
+        }
+        if (!empty($rattr)) $attr = '&lt;'.implode('>&lt;', $rattr).'>';
+        if (!empty($myattr['class']))
+            $myattr['class'] = 'wiki '.$myattr['class'];
+        else
+            $myattr['class'] = 'wiki';
+        $my = '';
+        foreach ($myattr as $k=>$v) $my .= $k.'="'.$v.'" ';
+        return "<table cellspacing='0' $my>\n";
+    }
+
     function _parseTable($text) {
         if (substr($text,-1,1)=="\n") {
             $_del_cr=1;
@@ -342,7 +539,7 @@ class processor_monimarkup
             }
             if (!trim($line)) {
                 if ($_in_table) {
-                    $tout.=$formatter->_table(0,$dumm);
+                    $tout.=$this->_table(0,$dumm);
                     $_in_table=0;
                 }
                 $tout.=$line."\n";
@@ -359,12 +556,12 @@ class processor_monimarkup
                 preg_match("/^(\|([^\|]+)?\|((\|\|)*))((?:&lt;[^>\|]*>)*)(.*)(\|\||\|-+)?$/s",$line,$m)) {
                 $m[7] = isset($m[7]) ? $m[7]:'';
                 #print "<pre>"; print_r($m); print "</pre>";
-                $open.=$formatter->_table(1,$m[5]);
+                $open.=$this->_table(1,$m[5]);
                 if ($m[2]) $open.='<caption>'.$m[2].'</caption>';
                 $line='||'.$m[3].$m[5].$m[6].$m[7];
                 $_in_table=1;
             } elseif ($_in_table and $line[0]!='|') {
-                $close=$formatter->_table(0,$dumm).$close;
+                $close=$this->_table(0,$dumm).$close;
                 $_in_table=0;
             }
             if ($_in_table) {
@@ -394,7 +591,7 @@ class processor_monimarkup
                     }
 
                     $tag = 'td';
-                    $attrs = $formatter->_td_attr($m[1], $align);
+                    $attrs = $this->_td_attr($m[1], $align);
                     if (!$tr_attr) $tr_attr=$m[1]; // XXX
 
                     // check TD is header or not
@@ -404,7 +601,7 @@ class processor_monimarkup
                     }
                     $attr = '';
                     foreach ($attrs as $k=>$v) $attr.= $k.'="'.trim($v, "'\"").'" ';
-                    $attr.=$formatter->_td_span($cells[$i]);
+                    $attr.=$this->_td_span($cells[$i]);
                     $row.="<$tag $attr>".$cell.'</'.$tag.'>';
                 }
                 $line='<tr '.$tr_attr.'>'.$row.'</tr>';
@@ -414,7 +611,7 @@ class processor_monimarkup
             $close='';$open='';
         }
         if (isset($_del_cr) and substr($tout,-1,1)!="\n") $tout.="\n";
-        if ($_in_table) $tout.=$formatter->_table(0,$dumm);
+        if ($_in_table) $tout.=$this->_table(0,$dumm);
         $tout=substr($tout,0,-1); // trash last "\n"; // XXX
 
         if ($_diff) $tout=$_diff.$tout.$_diff;
