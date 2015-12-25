@@ -1327,7 +1327,7 @@ class WikiPage {
     if (!empty($rev)) {
       if (!empty($DBInfo->version_class)) {
         $version = $DBInfo->lazyLoad('version', $DBInfo);
-        $out = $version->co($this->name,$rev);
+        $out = $version->co($this->name,$rev, $options);
         return $out;
       } else {
         return _("Version info does not supported in this wiki");
