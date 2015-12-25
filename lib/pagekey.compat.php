@@ -11,10 +11,17 @@
 require_once(dirname(__FILE__).'/pagekey.base.php');
 
 class PageKey_compat extends PageKey_base {
-    var $DB;
+    var $text_dir;
+    var $use_namespace = false;
 
-    function PageKey_compat($DB) {
-        $this->DB = &$DB;
+    function PageKey_compat($conf) {
+        if (is_object($conf)) {
+            $this->text_dir = $conf->text_dir;
+            $this->use_namespace = $conf->use_namespace;
+        } else {
+            $this->text_dir = $conf['text_dir'];
+            $this->use_namespace = $conf['use_namespace'];
+        }
     }
 
     // moinmoin 1.0.x style internal encoding
@@ -26,7 +33,7 @@ class PageKey_compat extends PageKey_base {
         #$name=preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord('\\1')))",$pagename);
         $name = $this->_getPageKey($pagename);
         #$name=preg_replace("/([^a-z0-9]{1})/ie","'_'.strtolower(dechex(ord(substr('\\1',-1))))",$pagename);
-        return $this->DB->text_dir . '/' . $name;
+        return $this->text_dir . '/' . $name;
     }
 
     function pageToKeyname($pagename) {
@@ -43,7 +50,7 @@ class PageKey_compat extends PageKey_base {
         $pagename = $key;
 
         // for namespace
-        if (!empty($this->DB->use_namespace))
+        if (!empty($this->use_namespace))
             $pagename = preg_replace('%\.d/%', ':', $key);
 
         $pagename = strtr($pagename, '_', '%');
@@ -61,7 +68,7 @@ class PageKey_compat extends PageKey_base {
 
         $pagename = strtr($pagename, array("\x1a" => "\x0a")); # HACK "%0a" char bug
             // clean up ':' like as the dokuwiki
-            if (!empty($this->DB->use_namespace)) {
+            if (!empty($this->use_namespace)) {
                 $pn= preg_replace('#:+#',':',$pagename);
                 $pn= trim($pn,':');
                 $pn= preg_replace('#:+#',':',$pn);
@@ -71,7 +78,7 @@ class PageKey_compat extends PageKey_base {
 
         // namespace spearator ':' like as 'Foobar:Hello'
         $separator = ':';
-        if (empty($this->DB->use_namespace)) $separator = '';
+        if (empty($this->use_namespace)) $separator = '';
 
         $tr = array(
                 '#'=>'_23', ';'=>'_3b', '/'=>'_2f', '?'=>'_3f',
@@ -89,7 +96,7 @@ class PageKey_compat extends PageKey_base {
         //$pn = preg_replace_callback("/([^a-z0-9".$separator."]{1})/i",
         //        array($this, '_pgencode'), $pn);
 
-        if (!empty($this->DB->use_namespace))
+        if (!empty($this->use_namespace))
             $name = preg_replace('#:#','.d/',$pn); // Foobar:Hello page will be stored as text/Foobar.d/Hello
         else
             $name = $pn;

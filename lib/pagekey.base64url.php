@@ -9,15 +9,19 @@
 require_once(dirname(__FILE__).'/pagekey.base.php');
 
 class PageKey_base64url extends PageKey_base {
-    var $DB;
+    var $text_dir;
 
-    function PageKey_base64url($DB) {
-        $this->DB = &$DB;
+    function PageKey_base64url($conf) {
+        if (is_object($conf)) {
+            $this->text_dir = $conf->text_dir;
+        } else {
+            $this->text_dir = $conf['text_dir'];
+        }
     }
 
     function getPageKey($pagename) {
         $name = $this->_getPageKey($pagename);
-        return $this->DB->text_dir . '/' . $name;
+        return $this->text_dir . '/' . $name;
     }
 
     function pageToKeyname($pagename) {
