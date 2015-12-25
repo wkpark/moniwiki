@@ -54,10 +54,19 @@ class Version_RCS
     {
         $filename = $this->_filename($pagename);
 
+        $suffix = ',v';
+
+        // support archive
+        if (!empty($opt['archive'])) {
+            $archive = intval($opt['archive']);
+            if ($archive >= 0)
+                $suffix = ','.$archive;
+        }
+
         $rev = (is_numeric($rev) and $rev>0) ? "\"".$rev."\" ":'';
         $ropt = '-p';
         if (!empty($opt['stdout'])) $ropt = '-r';
-        $fp = @popen("co -x,v/ -q $ropt$rev ".$filename.$this->NULL,"r");
+        $fp = @popen('co -x'.$suffix."/ -q $ropt$rev ".$filename.$this->NULL,"r");
         if (!empty($opt['stdout'])) {
             if (is_resource($fp)) {
                 pclose($fp);
@@ -156,7 +165,7 @@ class Version_RCS
         return -1;
     }
 
-    function rlog($pagename, $rev = '', $opt = '', $oldopt = '')
+    function rlog($pagename, $rev = '', $opt = '', $params = array())
     {
         $dmark = '';
         if (isset($rev[0]) and in_array($rev[0], array('>', '<'))) {
@@ -174,6 +183,22 @@ class Version_RCS
             $rev = "-r$rev";
         } else {
             $rev = '';
+        }
+
+        $suffix = ',v';
+
+        $args = '';
+        if (is_array($params)) {
+            // support archive
+            if (isset($params['archive'])) {
+                $archive = intval($params['archive']);
+                if ($archive >= 0)
+                    $suffix = ','.$archive;
+                unset($params['archive']);
+            }
+            $args = implode(' ', $params);
+        } else if (is_string($params)) {
+            $args = $params;
         }
 
         // absolute path ?
@@ -195,7 +220,7 @@ class Version_RCS
         } else
             $filename = $this->_filename($pagename);
 
-        $fp = popen("rlog $opt $oldopt -x,v/ $rev ".$filename.$this->NULL,"r");
+        $fp = popen("rlog $opt $args -x".$suffix."/ $rev ".$filename.$this->NULL, 'r');
         $out = '';
         if (is_resource($fp)) {
             while (!feof($fp)) {
@@ -207,7 +232,7 @@ class Version_RCS
         return $out;
     }
 
-    function diff($pagename, $rev = "", $rev2 = "")
+    function diff($pagename, $rev = "", $rev2 = "", $params = array())
     {
         $option = '';
         $rev = escapeshellcmd($rev);
@@ -215,8 +240,16 @@ class Version_RCS
         if ($rev) $option = "-r$rev ";
         if ($rev2) $option .= "-r$rev2 ";
 
+        $suffix = ',v';
+        if (isset($params['archive'])) {
+            // support archive
+            $archive = intval($params['archive']);
+            if ($archive >= 0)
+                $suffix = ','.$archive;
+        }
+
         $filename = $this->_filename($pagename);
-        $fp = popen("rcsdiff -x,v/ --minimal -u $option ".$filename.$this->NULL,'r');
+        $fp = popen("rcsdiff -x".$suffix."/ --minimal -u $option ".$filename.$this->NULL,'r');
         if (!is_resource($fp)) return '';
         while (!feof($fp)) {
             # trashing first two lines

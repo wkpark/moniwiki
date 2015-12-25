@@ -40,6 +40,13 @@ function _parse_rlog($formatter,$log,$options=array()) {
     unset($actions['diff']);
   }
 
+  // extra query string
+  $extra = '';
+  if (!empty($options['archive'])) {
+    $archive = intval($options['archive']);
+    $extra = '&amp;archive='.$archive;
+  }
+
   $state=0;
   $flag=0;
 
@@ -92,7 +99,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
       else
         $act = 'info';
       if (empty($options['logonly'])) {
-        $lnk=$formatter->link_to('?action='.$act.'&amp;rev='.$rev,_("Show next revisions"),' class="button small"');
+        $lnk=$formatter->link_to('?action='.$act.$extra.'&amp;rev='.$rev,_("Show next revisions"),' class="button small"');
         $out.='<tr><td colspan="2"></td><td colspan="'.(!empty($admin) ? 5:4).'">'.$lnk.'</td></tr>';
       }
       break;
@@ -149,7 +156,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
            }
          }
          if (!$simple)
-         $inf=$formatter->link_to("?action=recall&rev=$rev",$inf);
+         $inf=$formatter->link_to("?action=recall&amp;rev=$rev".$extra,$inf);
 
          $change=preg_replace("/\+(\d+)\s\-(\d+)/",
            "<span class='diff-added'><span>+\\1</span></span><span class='diff-removed'><span>-\\2</span></span>",$change);
@@ -264,7 +271,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
          $rowspan=1;
          if (!$simple and $comment) $rowspan=2;
 
-         $rrev= !empty($rrev) ? $rrev:$formatter->link_to("?action=recall&rev=$rev",$rev);
+         $rrev= !empty($rrev) ? $rrev:$formatter->link_to("?action=recall&amp;rev=$rev".$extra,$rev);
          $alt = ($ii++ % 2 == 0) ? ' class="alt"' : '';
          $out.="<tr$alt>\n";
          $out.="<th class='rev' valign='top' rowspan=$rowspan>$rrev</th><td nowrap='nowrap' class='date'>$inf</td><td class='change'>$change</td><td class='author'>$ip&nbsp;</td>";
@@ -284,11 +291,11 @@ function _parse_rlog($formatter,$log,$options=array()) {
          $out.="<td nowrap='nowrap' class='view'>";
          foreach ($actions as $k=>$v) {
            $k=is_numeric($k) ? $v:$k;
-           $out.=$formatter->link_to("?action=$k&amp;rev=$rev",_($v), ' class="button-small"').' ';
+           $out.=$formatter->link_to("?action=$k&amp;rev=$rev".$extra,_($v), ' class="button-small"').' ';
          }
          if ($flag) {
             if ($diff_action)
-              $out.= " ".$formatter->link_to("?action=diff&amp;rev=$rev",$diff_action, ' class="button-small"');
+              $out.= " ".$formatter->link_to("?action=diff&amp;rev=$rev".$extra,$diff_action, ' class="button-small"');
             $out.="</td>";
             if (isset($admin))
               $out.=
@@ -317,7 +324,11 @@ function _parse_rlog($formatter,$log,$options=array()) {
   }
   $out.="<input type='submit' name='rcspurge' value='"._("purge")."'></td></tr>";
   endif;
-  $out.="<input type='hidden' name='action' value='diff'/>\n</tbody></table></div></form>\n";
+  $out.="<input type='hidden' name='action' value='diff'/>\n</tbody></table></div>";
+  if ($archive) {
+    $out.= "<input type='hidden' name='archive' value='".$archive."' />";
+  }
+  $out.="</form>\n";
   $out.="<script type='text/javascript' src='$DBInfo->url_prefix/local/checkbox.js'></script></div>\n";
   return $out; 
 }
@@ -343,27 +354,43 @@ function macro_Info($formatter, $value = '', $options=array()) {
   $pagename = isset($pagename) ? $pagename : $formatter->page->name;
 
   $warn = '';
+  $archived = null;
   if ($DBInfo->version_class) {
     $version = $DBInfo->lazyLoad('version', $DBInfo);
-    $out = $version->rlog($pagename, '', '-r', '-z');
+
+    // setup suffix, rlog extra argments
+    $args = array('-z');
+    if (!empty($options['archive'])) {
+      $archive = intval($options['archive']);
+      $args['archive'] = $archive;
+      $archived = $archive;
+    }
+
+    $out = $version->rlog($pagename, '', '-r', $args);
   } else {
     $msg=_("Version info is not available in this wiki");
     return "<h2>$msg</h2>";
   }
 
+  if ($archived) {
+    $options['title'] = '<h2>'.sprintf(_("Revision History. (archive number %d)"), $archived).'</h2>'."\n";
+  } else if (method_exists($version, 'attics')) {
+    $ret = $version->attics($pagename);
+    if ($ret !== false) {
+      $count = count($ret);
+      if ($count > 1)
+        $msg = sprintf(_("%s archived log files available."), $count);
+      else
+        $msg = sprintf(_("%s archived log file available."), $count);
+      $info = "<h2>$msg</h2>";
+      $warn .= '<div class="warn">'.$info."</div>";
+    }
+  }
+
   if (!isset($out[0])) {
-    $msg = _("No older revisions available");
-    $info = "<h2>$msg</h2>";
-    if (method_exists($version, 'attics')) {
-      $ret = $version->attics($pagename);
-      if ($ret !== false) {
-        $count = count($ret);
-        if ($count > 1)
-          $msg = sprintf(_("%s archived log files available."), $count);
-        else
-          $msg = sprintf(_("%s archived log file available."), $count);
-        $info = "<h2>$msg</h2>";
-      }
+    if (empty($msg)) {
+      $msg = _("No older revisions available");
+      $info = "<h2>$msg</h2>";
     }
   } else if (isset($out[0])) {
     // get the number of total revisions and the last revision.
@@ -381,7 +408,7 @@ function macro_Info($formatter, $value = '', $options=array()) {
     if (!empty($DBInfo->rcs_check_broken) and method_exists($version, 'is_broken')) {
       $is_broken = $version->is_broken($pagename);
       if ($is_broken)
-        $warn = '<div class="warn">'._("WARNING: ")._("The history information of this page is broken.")."</div>";
+        $warn .= '<div class="warn">'._("WARNING: ")._("The history information of this page is broken.")."</div>";
     }
 
     // parse 'rev' query string
@@ -397,7 +424,7 @@ function macro_Info($formatter, $value = '', $options=array()) {
     if ($options['id'] == 'Anonymous' && $r[0] - $r[1] > $anon_range_limit) {
       unset($rev[$r[1]]);
       unset($r[1]);
-      $warn = '<div class="warn">'._("WARNING: ")._("Anonymous user is not allowed to see older versions.")."</div>";
+      $warn .= '<div class="warn">'._("WARNING: ")._("Anonymous user is not allowed to see older versions.")."</div>";
     }
 
     // make a range list like as "1.234:1.240\;1.110:1.140"
@@ -416,7 +443,7 @@ function macro_Info($formatter, $value = '', $options=array()) {
       $revstr.= '1.'.max($r[0] - $count, 0).':'.$rev[$r[0]];
     }
 
-    $out= $version->rlog($pagename,'',"-r$revstr",'-z');
+    $out= $version->rlog($pagename,'',"-r$revstr", $args);
     if ($pagename != $formatter->page->name) {
       $p = $DBInfo->getPage($pagename);
       $f = new Formatter($p, $options);
