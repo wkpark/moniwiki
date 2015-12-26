@@ -457,7 +457,7 @@ function macro_diff($formatter,$value,&$options)
     // make a diff formatted text from given text
     $out = $formatter->get_diff(!empty($options['section']) ? implode('', $sections) : $savetext); // get diff
   } else {
-    $out = $version->diff($formatter->page->name,$rev1,$rev2);
+    $out = $version->diff($formatter->page->name,$rev1,$rev2, $options);
   }
 
   $ret = '';
