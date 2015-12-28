@@ -913,8 +913,6 @@ class WikiDB {
     } else {
       $action = 'CREATE';
     }
-    if (!empty($options['.reverted']))
-      $action = 'REVERT';
 
     if ($user->id == 'Anonymous' && $action == 'CREATE' &&
         empty($this->anomymous_allow_create_without_backlink)) {
@@ -924,6 +922,9 @@ class WikiDB {
         return -1;
       }
     }
+
+    if (!empty($options['.reverted']))
+      $action = 'REVERT';
 
     // check abusing FIXME
     if (!empty($this->use_abusefilter)) {
