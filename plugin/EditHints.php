@@ -14,13 +14,15 @@
 //
 // $Id: EditHints.php,v 1.1 2010/08/13 18:55:08 wkpark Exp $
 
-function macro_EditHints($formatter, $value = '') {
-  global $DBInfo;
+function macro_EditHints($formatter, $value = '', $params = array()) {
+    global $Config;
 
   $hints = "<div class=\"wikiHints\">\n";
 
-  $opt = (empty($value) and !empty($DBInfo->wikihints_option)) ? $DBInfo->wikihints_option : $value;
-  $help_page = 'WikiTutorial';
+  $opt = (empty($value) and !empty($Config['wikihints_option'])) ? $Config['wikihints_option'] : $value;
+    $help_page = 'WikiTutorial';
+    if (!empty($Config['wikihints_page']))
+        $help_page = $Config['wikihints_page'];
 
   if ($opt == 'js') {
     $wikihints_openbutton_onclick = <<<JS
@@ -49,10 +51,24 @@ JS;
     $display = '';
   }
 
-  $hints.= "<p id='wikiHints_content' $display>";
-  $hints.= _("<b>Emphasis:</b> '''<strong>bold</strong>''', ''<i>italics</i>''<br />\n<b>Headings:</b> ==<span class='space'> </span>Title 2<span class='space'> </span>==; ===<span class='space'> </span>Title 3<span class='space'> </span>===; ...<br />\n<b>Lists:</b> <span class='space'> </span>*<span class='space'> </span> space and one of * bullets; <span class='space'> </span>1.<span class='space'> </span>numbered items; <span class='space'> </span> space alone indents.<br />\n<b>Links:</b> [[double bracketed words]]; [bracketed words]; JoinCapitalizedWords; [\"brackets and double quotes\"];\nurl; [url]; [url label].<br />\n<b>Tables</b>: || cell text |||| cell text spanning two columns ||;\nno trailing white space allowed after tables or titles.<br />\n");
-  $hints.= "</p>";
-  $hints.= "</div>\n";
+    $hints .= "<p id='wikiHints_content' $display>";
+    $hints .= _("<strong>Emphasis:</strong>");
+    $hints .= _("'''<strong>bold</strong>''', ''<em>italics</em>''<br>\n<strong>Headings:</strong> ==<span class='space'> </span>Title 2<span class='space'> </span>==; ===<span class='space'> </span>Title 3<span class='space'> </span>===; ...<br />\n<strong>Lists:</strong> <span class='space'> </span>*<span class='space'> </span> space and one of * bullets; <span class='space'> </span>1.<span class='space'> </span>numbered items; <span class='space'> </span> space alone indents.")."<br />\n";
+    $hints .= _("<strong>Links:</strong> [[Page Title]]; [[Page Title|label]]");
+    $hints .= '; '._("[bracketed words]");
+    if (!empty($Config['use_camelcase']))
+        $hints .= '; '._("JoinCapitalizedWords");
+    $hints .= '; '._("[\"brackets and double quotes\"]");
+    $hints .= "<br />\n";
+    $hints .= _("<strong>URLs:</strong> http://url");
+    $hints .= '; '._("[http://url]; [http://url<span class='space'> </span>label]");
+    $hints .= '; '._("[[http://url]]; [[http://url|label]]");
+    $hints .= "<br />\n";
+    $hints .= _("<strong>Tables:</strong> || cell text |||| cell text spanning two columns ||")."<br />\n";
+    $hints .= _("<strong>No WikiTag:</strong> <code>{{{no wiki}}}</code>")."<br />\n";
+    $hints .= _("no trailing white space allowed after tables or titles.");
+    $hints .= "</p>";
+    $hints .= "</div>\n";
   return $hints;
 }
 

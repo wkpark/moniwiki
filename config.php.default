@@ -231,6 +231,7 @@ $auto_search='AutoGoto'; # FixMoin: for old moinmoin users, AutoGoto: default.
 $use_wikiwyg=0; # 1 for GUI button/ 2 to set as default behavior/ 3 to set always use GUI.
 #$wikiwyg_confirm=1; # always confirm
 $use_sectionedit=0;
+#$wikihints_page= 'HelpContents'; # default help page.
 #$source_site='http://the.original.net/'; # the original source site to support mirror.
 #$sectionedit_attr=1; # enable wikiwyg section editing
 $spam_filter='antispam';
