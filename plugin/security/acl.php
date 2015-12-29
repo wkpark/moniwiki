@@ -573,6 +573,26 @@ class Security_ACL extends Security_base {
             }
         }
         $protect = array_keys($protect);
+
+        if (!empty($this->DB->acl_debug)) {
+            ob_start();
+            print "<h4>"._("ACL groups")."</h4>\n";
+            print implode(',',$groups);
+            print "\n";
+            print "<h4>"._("Allowed ACL actions")."</h4>\n";
+            foreach ($allow as $k=>$v)
+                print $k." ($v),";
+            print "\n";
+            print "<h4>"._("Denied ACL actions")."</h4>\n";
+            foreach ($deny as $k=>$v)
+                print $k." ($v),";
+            print "\n";
+            print "<h4>"._("Protected ACL actions")."</h4>\n";
+            print implode(',',$protect);
+            $options['msg'].=ob_get_contents();
+            ob_end_clean();
+        }
+
         $this->_acl_ok = 1;
         $this->_allowed = $allow;
         $this->_denied = $deny;
