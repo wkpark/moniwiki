@@ -4952,16 +4952,18 @@ SCHEMA;
         $raw_url,"\" />\n";
       echo '  <link rel="Alternate" media="print" title="Print View" href="',
         $print_url,"\" />\n";
+
+      $css_html = '';
       if ($options['css_url']) {
         $css_url = _html_escape($options['css_url']);
-        echo '  <link rel="stylesheet" type="text/css" ',$media,' href="',
+        $css_html = '  <link rel="stylesheet" type="text/css" '.$media.' href="'.
           $css_url."\" />\n";
         if (!empty($DBInfo->custom_css) && file_exists($DBInfo->custom_css))
-          echo '  <link rel="stylesheet" media="screen" type="text/css" href="',
-            $DBInfo->url_prefix,'/',$DBInfo->custom_css,"\" />\n";
+          $css_html .= '  <link rel="stylesheet" media="screen" type="text/css" href="'.
+            $DBInfo->url_prefix.'/'.$DBInfo->custom_css."\" />\n";
         else if (file_exists('./css/_user.css'))
-          echo '  <link rel="stylesheet" media="screen" type="text/css" href="',
-            $DBInfo->url_prefix,"/css/_user.css\" />\n";
+          $css_html .= '  <link rel="stylesheet" media="screen" type="text/css" href="'.
+            $DBInfo->url_prefix."/css/_user.css\" />\n";
       }
 
       echo kbd_handler(!empty($options['prefix']) ? $options['prefix'] : '');
@@ -4972,7 +4974,9 @@ SCHEMA;
         if (isset($options['retstr']))
           $options['retstr'] = $ret;
         $this->header_html = $ret;
+        $this->css_html = $css_html;
       } else {
+        echo $css_html;
         echo "</head>\n";
       }
     }
