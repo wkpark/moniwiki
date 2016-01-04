@@ -927,6 +927,7 @@ FOOT;
     if (file_exists($formatter->themedir."/footer.php")) {
         $themeurl = $formatter->themeurl;
         $formatter->_vars['mainmenu'] = $formatter->_vars['menu'];
+        $formatter->_vars['menus'] = $menus;
         unset($formatter->_vars['menu']);
         // extract variables
         extract($formatter->_vars);
