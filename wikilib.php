@@ -1967,12 +1967,7 @@ class WikiUser {
      if (!empty($Config['cookie_domain'])) {
         $domain = '; Domain='.$Config['cookie_domain'];
      } else {
-        $dummy = explode('.', $_SERVER['SERVER_NAME']);
-        if (count($dummy) > 2) {
-           // make subdomain to set the cookie domain
-           array_shift($dummy);
-           $domain = '; Domain=.'.implode('.', $dummy);
-        }
+        $domain = '; Domain='.$_SERVER['SERVER_NAME'];
      }
 
      if (!empty($Config['cookie_path']))
@@ -1990,8 +1985,11 @@ class WikiUser {
      $_COOKIE['MONI_ID']="Anonymous";
 
      $domain = '';
-     if (!empty($Config['cookie_domain']))
+     if (!empty($Config['cookie_domain'])) {
         $domain = '; Domain='.$Config['cookie_domain'];
+     } else {
+        $domain = '; Domain='.$_SERVER['SERVER_NAME'];
+     }
      if (!empty($Config['cookie_path']))
         $path = '; Path='.$Config['cookie_path'];
      else
