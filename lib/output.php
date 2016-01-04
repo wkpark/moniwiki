@@ -618,6 +618,7 @@ MSG;
         }
 
         // action menus
+        $action_menu = '';
         if (!empty($Config['menu_actions'])) {
             $actions = array();
             foreach ($Config['menu_actions'] as $action) {
@@ -632,10 +633,8 @@ MSG;
                     $actions[] = $formatter->link_to("?action=$action", _($action), " rel='nofollow'");
                 }
             }
-            $mnu.= '<li><a href="#"><span class="more">'._("More&#187;").'</span></a>'."\n";
-            $mnu.= '<ul><li>'.implode("</li>\n<li>", $actions).'</li></ul></li>'."\n";
+            $action_menu = '<ul class="dropdown-menu"><li>'.implode("</li>\n<li>", $actions).'</li></ul>'."\n";
         }
-
         $menu = '<div id="wikiMenu"><ul>'.$mnu."</ul></div>\n";
     }
     $formatter->topmenu = $menu;
@@ -767,6 +766,7 @@ MSG;
     $formatter->_vars['icons'] = &$icons;
     $formatter->_vars['title'] = $title;
     $formatter->_vars['menu'] = $menu;
+    $formatter->_vars['action_menu'] = $action_menu;
     isset($upper_icon) ? $formatter->_vars['upper_icon'] = $upper_icon : null;
     isset($home) ? $formatter->_vars['home'] = $home : null;
     if (!empty($params['header']))
