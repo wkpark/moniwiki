@@ -695,6 +695,21 @@ MSG;
     #if ($upper)
     #  $upper_icon=$formatter->link_tag($upper,'',$formatter->icon['upper'])." ";
 
+    if (empty($formatter->icons)) {
+        $formatter->icons = array(
+                'edit' =>array('', '?action=edit', $formatter->icon['edit'], 'accesskey="e"'),
+                'diff' =>array('', '?action=diff', $formatter->icon['diff'], 'accesskey="c"'),
+                'show' =>array('', '', $formatter->icon['show']),
+                'backlinks' =>array('', '?action=backlinks', $formatter->icon['backlinks']),
+                'random' =>array('', '?action=randompage', $formatter->icon['random']),
+                'find' =>array('FindPage', '', $formatter->icon['find']),
+                'info' =>array('','?action=info', $formatter->icon['info']));
+        if (!empty($formatter->notify))
+            $formatter->icons['subscribe'] = array('', '?action=subscribe', $formatter->icon['mailto']);
+        $formatter->icons['help'] = array('HelpContents', '', $formatter->icon['help']);
+        $formatter->icons['pref'] = array('UserPreferences', '', $formatter->icon['pref']);
+    }
+
     # UserPreferences
     if ($params['id'] != "Anonymous") {
         $user_link=$formatter->link_tag("UserPreferences","",$params['id']);
