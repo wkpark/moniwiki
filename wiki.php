@@ -274,7 +274,7 @@ class Formatter {
 
         // setup for html5
         $this->tags = array();
-        if (!empty($DBInfo->html5)) {
+        if (!empty($DBInfo->html5) || !empty($this->html5)) {
             $this->html5 = $DBInfo->html5;
             $this->tags['article'] = 'article';
             $this->tags['header'] = 'header';
