@@ -1743,22 +1743,6 @@ class Formatter {
     // the original source site for mirror sites
     $this->source_site = !empty($DBInfo->source_site) ? $DBInfo->source_site : null;
 
-    // setup for html5
-    $this->tags = array();
-    if (!empty($DBInfo->html5)) {
-      $this->html5 = $DBInfo->html5;
-      $this->tags['article'] = 'article';
-      $this->tags['header'] = 'header';
-      $this->tags['footer'] = 'footer';
-      $this->tags['nav'] = 'nav';
-    } else {
-      $this->html5 = null;
-      $this->tags['article'] = 'div';
-      $this->tags['header'] = 'div';
-      $this->tags['footer'] = 'div';
-      $this->tags['nav'] = 'div';
-    }
-
     // call externalimage macro for these external images
     $this->external_image_regex = !empty($DBInfo->external_image_regex) ? $DBInfo->external_image_regex : 0;
 
@@ -1780,6 +1764,23 @@ class Formatter {
     $this->themedir= !empty($DBInfo->themedir) ? $DBInfo->themedir:dirname(__FILE__);
     $this->themeurl= !empty($DBInfo->themeurl) ? $DBInfo->themeurl:$DBInfo->url_prefix;
     $this->set_theme(!empty($options['theme']) ? $options['theme'] : '');
+
+    // setup for html5
+    $this->tags = array();
+    if (!empty($DBInfo->html5) || !empty($this->html5)) {
+      $this->html5 = !empty($DBInfo->html5) ? $DBInfo->html5 : $this->html5;
+      $this->tags['article'] = 'article';
+      $this->tags['header'] = 'header';
+      $this->tags['footer'] = 'footer';
+      $this->tags['nav'] = 'nav';
+    } else {
+      $this->html5 = null;
+      $this->tags['article'] = 'div';
+      $this->tags['header'] = 'div';
+      $this->tags['footer'] = 'div';
+      $this->tags['nav'] = 'div';
+    }
+
 
     $this->NULL='';
     if(getenv("OS")!="Windows_NT") $this->NULL=' 2>/dev/null';
