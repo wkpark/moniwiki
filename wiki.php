@@ -1663,7 +1663,7 @@ class Formatter {
             $sister_save=$this->sister_on;
             $this->sister_on=0;
             $sisters=implode("\n",$this->sisters);
-            $sisters = preg_replace_callback("/(".$wordrule.")/",
+            $sisters = preg_replace_callback("/(".$this->wordrule.")/",
                     array(&$this, 'link_repl'), $sisters);
             $msg=_("Sister Sites Index");
             echo "<div id='wikiSister'>\n<div class='separator'><tt class='foot'>----</tt></div>\n$msg<br />\n<ul>$sisters</ul></div>\n";
