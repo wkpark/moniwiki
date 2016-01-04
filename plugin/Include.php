@@ -148,6 +148,7 @@ function macro_Include($formatter, $value = '') {
         $f = new Formatter($page);
         // fix for optional changed prefix
         $f->prefix = $formatter->prefix;
+        $f->section_edit = 0;
 
         // for recursion detect
         $f->recursion = isset($formatter->recursion) ? $formatter->recursion + 1 : 1;

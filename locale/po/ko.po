@@ -349,35 +349,70 @@ msgstr "자세한 사용법 안내:"
 msgid "Close Editing Hints"
 msgstr "위키 도움말 닫기"
 
-#: ../plugin/EditHints.php:53
+#: ../plugin/EditHints.php:55
+msgid "<strong>Emphasis:</strong>"
+msgstr "<strong>강조:</strong>"
+
+#: ../plugin/EditHints.php:56
 msgid ""
-"<b>Emphasis:</b> '''<strong>bold</strong>''', ''<i>italics</i>''<br />\n"
-"<b>Headings:</b> ==<span class='space'> </span>Title 2<span class='space'> </"
-"span>==; ===<span class='space'> </span>Title 3<span class='space'> </"
-"span>===; ...<br />\n"
-"<b>Lists:</b> <span class='space'> </span>*<span class='space'> </span> "
-"space and one of * bullets; <span class='space'> </span>1.<span "
+"'''<strong>bold</strong>''', ''<em>italics</em>''<br>\n"
+"<strong>Headings:</strong> ==<span class='space'> </span>Title 2<span "
+"class='space'> </span>==; ===<span class='space'> </span>Title 3<span "
+"class='space'> </span>===; ...<br />\n"
+"<strong>Lists:</strong> <span class='space'> </span>*<span class='space'> </"
+"span> space and one of * bullets; <span class='space'> </span>1.<span "
 "class='space'> </span>numbered items; <span class='space'> </span> space "
-"alone indents.<br />\n"
-"<b>Links:</b> [[double bracketed words]]; [bracketed words]; "
-"JoinCapitalizedWords; [\"brackets and double quotes\"];\n"
-"url; [url]; [url label].<br />\n"
-"<b>Tables</b>: || cell text |||| cell text spanning two columns ||;\n"
-"no trailing white space allowed after tables or titles.<br />\n"
+"alone indents."
 msgstr ""
-"<b>강조:</b> '''<b>굵게</b>''', ''<i>기울임</i>''<br />\n"
-"<b>제목:</b> ==<span class='space'> </span>제목 2<span class='space'> </"
-"span>==; ===<span class='space'> </span>제목 3<span class='space'> </"
-"span>===; ...<br />\n"
-"<b>목록:</b> <span class='space'> </span>*<span class='space'> </span> 공백"
-"과 * 총알 한개; <span class='space'> </span>1.<span class='space'> </span> 번"
-"호달린 목록;\n"
-" <span class='space'> </span> 공백만 있으면 들여쓰기.<br />\n"
-"<b>연결:</b> [[두개의 대괄호로 연결]]; [대괄호로 연결]; "
-"JoinCapitalizedWords; [\"대괄호와 큰따옴표로 감싸서 연결\"];\n"
-"url; [url]; [url 표시될 이름].<br />\n"
-"<b>테이블</b>: || 셀 내용 |||| 두칸에 걸친 내용 ||;<br />\n"
-"테이블이나 제목 끝에 공백이 오면 안됩니다.<br />\n"
+"'''<strong>굵게</strong>''', ''<em>기울임</em>''<br />\n"
+"<strong>제목:</strong> ==<span class='space'> </span>제목 2<span "
+"class='space'> </span>==; ===<span class='space'> </span>제목 3<span "
+"class='space'> </span>===; ...<br />\n"
+"<strong>목록:</strong> <span class='space'> </span>*<span class='space'> </"
+"span> 공백과 * 총알 한개; <span class='space'> </span>1.<span class='space'> "
+"</span> 번호달린 목록;\n"
+" <span class='space'> </span> 공백만 있으면 들여쓰기."
+
+#: ../plugin/EditHints.php:57
+msgid "<strong>Links:</strong> [[Page Title]]; [[Page Title|label]]"
+msgstr "<strong>연결:</strong> [[페이지 이름]]; [[페이지 이름|대괄호로 연결]"
+
+#: ../plugin/EditHints.php:58
+msgid "[bracketed words]"
+msgstr "[괄호로 연결]"
+
+#: ../plugin/EditHints.php:60
+msgid "JoinCapitalizedWords"
+msgstr ""
+
+#: ../plugin/EditHints.php:61
+msgid "[\"brackets and double quotes\"]"
+msgstr "[\"대괄호와 큰따옴표로 감싸서 연결\"]"
+
+#: ../plugin/EditHints.php:63
+msgid "<strong>URLs:</strong> http://url"
+msgstr "<strong>주소:</strong> http://주소"
+
+#: ../plugin/EditHints.php:64
+msgid "[http://url]; [http://url<span class='space'> </span>label]"
+msgstr "[http://url]; [http://url<span class='space'> </span>표시될 이름]"
+
+#: ../plugin/EditHints.php:65
+msgid "[[http://url]]; [[http://url|label]]"
+msgstr "[[http://url]]; [[http://url|표시될 이름]]"
+
+#: ../plugin/EditHints.php:67
+msgid ""
+"<strong>Tables:</strong> || cell text |||| cell text spanning two columns ||"
+msgstr "<strong>테이블</strong>: || 셀 내용 |||| 두칸에 걸친 내용 ||"
+
+#: ../plugin/EditHints.php:68
+msgid "<strong>No WikiTag:</strong> <code>{{{no wiki}}}</code>"
+msgstr "<strong>문법 미적용:</strong> <code>{{{있는 그대로}}}</code>"
+
+#: ../plugin/EditHints.php:69
+msgid "no trailing white space allowed after tables or titles."
+msgstr "테이블이나 제목 끝에 공백이 오면 안됩니다."
 
 #: ../plugin/FastSearch.php:54
 msgid "Fast search"

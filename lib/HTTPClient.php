@@ -183,7 +183,21 @@ class HTTPClient {
         } else {
             $this->_debug('opening connection', $connectionId);
             // open socket
-            $socket = @fsockopen($server,$port,$errno, $errstr, $this->timeout);
+
+            if ($uri['scheme'] == 'https' and $this->proxy_host) {
+                $context = stream_context_create(array(
+                        'ssl' => array(
+                            'SNI_server_name'=>$uri['host'],
+                            'SNI_enable'=>'true',
+                            // (enabled since PHP 5.6)
+                            'peer_name'=>$uri['host'],
+                        )
+                    ));
+                $socket = stream_socket_client('tcp://'.$server.':'.$port, $errno, $errstr,
+                    $this->timeout, STREAM_CLIENT_CONNECT, $context);
+            } else {
+                $socket = @fsockopen($server,$port,$errno, $errstr, $this->timeout);
+            }
             if (!$socket){
                 $this->status = -100 - $errno;
                 $this->error = "Could not connect to $server:$port\n$errstr ($errno)";
