@@ -5102,6 +5102,7 @@ FOOT;
     if (file_exists($this->themedir."/footer.php")) {
       $themeurl=$this->themeurl;
       $this->_vars['mainmenu'] = $this->_vars['menu'];
+      $this->_vars['menus'] = $menus;
       unset($this->_vars['menu']);
       // extract variables
       extract($this->_vars);
