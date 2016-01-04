@@ -198,21 +198,6 @@ EOS;
         $config->icon_cat = " ";
     }
 
-    if (empty($config->icons)) {
-        $config->icons = array(
-                'edit' =>array("","?action=edit",$config->icon['edit'],"accesskey='e'"),
-                'diff' =>array("","?action=diff",$config->icon['diff'],"accesskey='c'"),
-                'show' =>array("","",$config->icon['show']),
-                'backlinks' =>array("","?action=backlinks", $config->icon['backlinks']),
-                'random' =>array("","?action=randompage", $config->icon['random']),
-                'find' =>array("FindPage","",$config->icon['find']),
-                'info' =>array("","?action=info",$config->icon['info']));
-        if (!empty($config->notify))
-            $config->icons['subscribe'] = array("","?action=subscribe",$config->icon['mailto']);
-        $config->icons['help'] = array("HelpContents","",$config->icon['help']);
-        $config->icons['pref'] = array("UserPreferences","",$config->icon['pref']);
-    }
-
     // some alias
     if (!empty($config->use_captcha))
       $config->use_ticket = $config->use_captcha;
