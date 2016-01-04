@@ -413,16 +413,17 @@ SCHEMA;
             $print_url,"\" />\n";
     }
 
+    $css_html = '';
     if (!empty($params['css_url'])) {
         $css_url = _html_escape($params['css_url']);
-        echo '  <link rel="stylesheet" type="text/css" ',$media,' href="',
+        $css_html = '  <link rel="stylesheet" type="text/css" '.$media.' href="'.
             $css_url."\" />\n";
         if (!empty($Config['custom_css']) && file_exists($Config['custom_css']))
-            echo '  <link rel="stylesheet" media="screen" type="text/css" href="',
-                $Config['url_prefix'],'/',$Config['custom_css'],"\" />\n";
+            $css_html .= '  <link rel="stylesheet" media="screen" type="text/css" href="'.
+                $Config['url_prefix'].'/'.$Config['custom_css']."\" />\n";
         else if (file_exists('./css/_user.css'))
-        echo '  <link rel="stylesheet" media="screen" type="text/css" href="',
-            $Config['url_prefix'],"/css/_user.css\" />\n";
+            $css_html .= '  <link rel="stylesheet" media="screen" type="text/css" href="'.
+                $Config['url_prefix']."/css/_user.css\" />\n";
     }
 
     echo kbd_handler(!empty($params['prefix']) ? $params['prefix'] : '');
@@ -433,7 +434,9 @@ SCHEMA;
         if (isset($params['retstr']))
             $params['retstr'] = $ret;
         $formatter->header_html = $ret;
+        $formatter->css_html = $css_html;
     } else {
+        echo $css_html;
         echo "</head>\n";
     }
     return true;
