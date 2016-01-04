@@ -5370,6 +5370,21 @@ MSG;
     #if ($upper)
     #  $upper_icon=$this->link_tag($upper,'',$this->icon['upper'])." ";
 
+    if (empty($this->icons)) {
+        $this->icons = array(
+                'edit' =>array('', '?action=edit', $this->icon['edit'], 'accesskey="e"'),
+                'diff' =>array('', '?action=diff', $this->icon['diff'], 'accesskey="c"'),
+                'show' =>array('', '', $this->icon['show']),
+                'backlinks' =>array('', '?action=backlinks', $this->icon['backlinks']),
+                'random' =>array('', '?action=randompage', $this->icon['random']),
+                'find' =>array('FindPage', '', $this->icon['find']),
+                'info' =>array('','?action=info', $this->icon['info']));
+        if (!empty($this->notify))
+            $this->icons['subscribe'] = array('', '?action=subscribe', $this->icon['mailto']);
+        $this->icons['help'] = array('HelpContents', '', $this->icon['help']);
+        $this->icons['pref'] = array('UserPreferences', '', $this->icon['pref']);
+    }
+
     # UserPreferences
     if ($options['id'] != "Anonymous") {
       $user_link=$this->link_tag("UserPreferences","",$options['id']);
