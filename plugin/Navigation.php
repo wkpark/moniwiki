@@ -93,7 +93,7 @@ function macro_Navigation($formatter,$value) {
       $query='?action=navigation&amp;value='.$value;
       $formatter->query_string=$query;
     }
-    $pnut='<span class="open">&laquo;</span> ';
+    $pnut='<span class="nav-open">&laquo;</span> ';
     if ($prev >= 0) {
       $prev_text=!empty($texts[$prev]) ? $texts[$prev] : '';
       $prev=!empty($indices[$prev]) ? $indices[$prev] : '';
@@ -118,7 +118,7 @@ function macro_Navigation($formatter,$value) {
       #$pnut.=$formatter->link_tag($next, "", $next_text, " accesskey=\".\" ");
       $pnut.=$formatter->link_repl("[wiki:$next $next_text]"," accesskey=\".\" ");
     }
-    $pnut.=' <span class="close">&raquo;</span>';
+    $pnut.=' <span class="nav-close">&raquo;</span>';
     if ($use_action) $formatter->query_string=$save;
   }
   $formatter->pagelinks = $pagelinks; // restore
