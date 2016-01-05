@@ -370,7 +370,9 @@ $flashupload='swfupload';
 #$use_autosave=1; # enable autosave feature.
 #$delayindex=60*60*24*5 # delayed indexing
 $mobile_agents='android|iphone'; # mobile agents
-#$fetch_imagefilesize=1; # fetch imagefile sizes for mobile wikis
+#$fetch_imagesize=; # fetch imagefile sizes for mobile wikis etc.
+#$fetch_images=0; # fetch images using the fetch_action
+#$fetch_action=''; # fetch images with a specific url (default: ?action=fetch&amp;url=)
 #$external_image_lazyload=1; # lazyload external images
 #$external_image_regex='(https?://upload\.wikimedia\.org/wikipedia/commons/.*\.(?:jpe?g|png|gif)$)'; # call ExternalImage macro for these sites
 #$proxy_host='proxy.foobar.com'; # proxy host
