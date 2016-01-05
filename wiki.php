@@ -741,31 +741,33 @@ class Formatter {
                             else if ($name and $val) $eattr[] = $name.'="'.urldecode($val).'"';
                         }
 
+                        $fetch_url = $url;
                         $info = '';
                         // check internal links and fetch image
                         if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url)) {
-                            $url = $this->fetch_action. str_replace(array('&', '?'), array('%26', '%3f'), $url);
+                            $fetch_url = $this->fetch_action. str_replace(array('&', '?'), array('%26', '%3f'), $url);
                             $size = '';
                             if (!empty($this->fetch_imagesize))
-                                $size = '('.$this->macro_repl('ImageFileSize', $url).')';
+                                $size = '('.$this->macro_repl('ImageFileSize', $fetch_url).')';
 
                             // use thumbnails ?
                             if (!empty($this->use_thumb_by_default)) {
                                 if (!empty($this->no_gif_thumbnails)) {
                                     if ($type != 'GIF')
-                                        $url.= '&amp;thumbwidth='.$this->thumb_width;
+                                    $fetch_url.= '&amp;thumbwidth='.$this->thumb_width;
                                 } else {
-                                    $url.= '&amp;thumbwidth='.$this->thumb_width;
+                                    $fetch_url.= '&amp;thumbwidth='.$this->thumb_width;
                                 }
                             }
-
-                            $info = "<div class='info'><a href='$url'><span>[$type "._("external image")."$size]</span></a></div>";
+                        } else if (!empty($this->fetch_imagesize)) {
+                            $size = '('.$this->macro_repl('ImageFileSize', $url).')';
                         }
+                        $info = "<div class='info'><a href='$url'><span>[$type "._("external image")."$size]</span></a></div>";
                         $iattr = '';
                         if (isset($eattr[0]))
                             $iattr = implode(' ', $eattr);
 
-                        return "<div class='$cls$img_cls'><div><a class='externalLink named' href='$link' $attr $this->external_target title='$link'><img $iattr alt='$atext' src='$url' $img_attr/></a>".$info.'</div></div>';
+                        return "<div class='$cls$img_cls'><div><a class='externalLink named' href='$link' $attr $this->external_target title='$link'><img $iattr alt='$atext' src='$fetch_url' $img_attr/></a>".$info.'</div></div>';
                     }
                     if (!empty($this->external_on))
                         $external_link='<span class="externalLink">('.$url.')</span>';
@@ -840,9 +842,10 @@ class Formatter {
                                 $fetch_url.= '&amp;thumbwidth='.$this->thumb_width;
                             }
                         }
-
-                        $info = "<div class='info'><a href='$url'><span>[$type "._("external image")."$size]</span></a></div>";
+                    } else if (!empty($this->fetch_imagesize)) {
+                        $size = '('.$this->macro_repl('ImageFileSize', $url).')';
                     }
+                    $info = "<div class='info'><a href='$url'><span>[$type "._("external image")."$size]</span></a></div>";
 
                     return "<div class=\"$cls\"><div><img alt='$link' $attr src='$fetch_url' />".$info.'</div></div>';
                 }
