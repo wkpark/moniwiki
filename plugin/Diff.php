@@ -216,6 +216,8 @@ function simple_diff($diff) {
   for ($line=strtok($diff,"\n"); $line !== false;$line=strtok("\n")) {
     $marker=$line[0];
     $line=substr($line,1);
+    if (in_array($marker, array('-', '+')))
+      $line = "&nbsp;".$line;
     if ($marker=="@") $line='<div class="diff-sep">@'."$line</div>";
     else if ($marker=="-") $line='<div class="diff-removed">'."$line</div>";
     else if ($marker=="+") $line='<div class="diff-added">'."$line</div>";
