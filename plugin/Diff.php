@@ -628,7 +628,15 @@ function do_diff($formatter,$options="") {
 
   if (!empty($options['raw']) || $options['action_mode'] == 'ajax') {
     header('Content-Type: text/plain');
-    echo $diff;
+    if ($retval['msg'])
+      echo '<h2>'.$retval['msg'].'</h2>';
+    $class = 'Diff';
+    if ($options['type'] == 'fancy' and !empty($options['inline'])) $class.= 'Inline';
+    if (isset($diff[0])) {
+      echo '<div class="'.$options['type'].$class.'">';
+      echo $diff;
+      echo '</div>';
+    }
     return;
   }
 
