@@ -245,7 +245,12 @@ function fancy_diff($diff,$options=array()) {
     if (empty($omarker) and empty($line[0])) continue;
     $marker=$line[0];
     if (in_array($marker,array('-','+','@'))) $line=substr($line,1);
-    if ($marker=="@") $line='<div class="diff-sep">@'."$line</div>";
+    if ($marker=="@") {
+      if (isset($out[0]))
+        $out .= '</div>';
+      $out .= '<div class="diff-sep">@'."$line</div><div class='diff-highlight'>";
+      continue;
+    }
     else if ($marker=="-") {
       $omarker=1; $orig[]=$line; continue;
     } else if ($marker=="+") {
@@ -273,6 +278,7 @@ function fancy_diff($diff,$options=array()) {
     else $line.="<br />";
     $out.=$line."\n";
   }
+  $out .= '</div>';
   return $out;
 }
 
@@ -347,7 +353,7 @@ function smart_diff($diff) {
 }
 
 
-function macro_diff($formatter,$value,&$options)
+function macro_diff($formatter, $value, &$options = array())
 {
   global $DBInfo;
 
@@ -420,11 +426,16 @@ function macro_diff($formatter,$value,&$options)
 
   if (!$rev1 && !$rev2) {
     $msg= _("No older revisions available");
+    if (isset($options['retval']))
+      $options['retval']['msg'] = $msg;
     if (!empty($options['nomsg'])) return '';
     return "<h2>$msg</h2>";
   }
   if (!$DBInfo->version_class) {
     $msg= _("Version info is not available in this wiki");
+    if (isset($options['retval']))
+      $options['retval']['msg'] = $msg;
+    if (!empty($options['nomsg'])) return '';
     return "<h2>$msg</h2>";
   }
   
@@ -466,7 +477,7 @@ function macro_diff($formatter,$value,&$options)
   } else {
     #$rev1=substr($rev1,0,5);
     #$rev2=substr($rev2,0,5);
-    if ($rev1==$rev2) $ret.= "<h2>"._("Difference between versions")."</h2>";
+    if ($rev1 == $rev2) $msg = _("Difference between versions");
     else if ($rev1 and $rev2) {
       $msg= sprintf(_("Difference between r%s and r%s"),$rev1,$rev2);
     }
@@ -528,23 +539,29 @@ function macro_diff($formatter,$value,&$options)
         $options['nomsg']=0;
         $options['msg']=$msg;
         $options['smart']=1;
+        if (isset($options['retval']))
+          $options['retval']['msg'] = $msg;
 
         #if (!in_array($pi['#format'],array('wiki','moni')))
         if ($processor_type != 'wiki')
-          print '<pre class="code">'.$diffed.'</pre>';
-        else
-          $formatter->send_page($diffed,$options);
+          return '<pre class="code">'.$diffed.'</pre>';
+
+        ob_start();
+        $formatter->send_page($diffed,$options);
+        $out = ob_get_contents();
+        ob_end_clean();
         #print "<pre>".str_replace(array("\010","\006"),array("+++","---"),$diffed)."</pre>";
         #print "<pre>".$diffed."</pre>";
-        return;
+        return $out;
       }
     }
     else {
       return $out;
     }
   }
-  if (!empty($options['nomsg'])) return $ret;
-  return "<h2>$msg</h2>\n$ret";
+  if (!empty($msg) && isset($options['retval']))
+    $options['retval']['msg'] = $msg;
+  return $ret;
 }
 
 function do_diff($formatter,$options="") {
@@ -600,6 +617,9 @@ function do_diff($formatter,$options="") {
     $title=$msg;
   }
 
+  $retval = array();
+  $options['retval'] = &$retval;
+
   if ($date)
     $options['rev']=$date;
   $diff = macro_diff($formatter,'',$options);
@@ -615,6 +635,10 @@ function do_diff($formatter,$options="") {
 
   $class = 'Diff';
   if ($options['type'] == 'fancy' and !empty($options['inline'])) $class.= 'Inline';
+
+  if (!empty($retval['msg']))
+    echo '<h2>',$retval['msg'].'</h2>';
+
   echo '<div class="'.$options['type'].$class.'">';
   echo $diff;
   echo '</div>';
