@@ -139,6 +139,11 @@ function do_login($formatter,$options) {
   }
 
   $formatter->send_header("",$options);
+  if (isset($formatter->header_html)) {
+    $options['.header'] = true;
+    $formatter->send_title('', '', $options);
+  }
+
   echo "<div class='popup'>";
   print macro_Login($formatter,'',$options);
   echo "</div></body></html>";
