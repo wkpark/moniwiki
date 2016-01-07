@@ -29,6 +29,8 @@ function macro_Scrap($formatter,$value='',$options=array()) {
   $out='';
 
   if ($value == 'js') {
+    // escape unscrap icon
+    $unscrap_icon = str_replace("'", "\\'", $formatter->icon['unscrap']);
     // get the scrapped pages dynamically
     $script = get_scriptname() . $DBInfo->query_prefix;
     $pgname = _rawurlencode($pgname);
@@ -72,8 +74,14 @@ function get_scrap()
             for (i = 0; i < icons.length; i++) {
                 if (icons[i].href.match(/action=scrap/)) {
                     icons[i].href = icons[i].href.replace(/=scrap/, '=scrap&unscrap=1');
-                    icons[i].firstChild.firstChild.src =
-                        icons[i].firstChild.firstChild.src.replace('scrap', 'unscrap');
+                    if (icons[i].firstChild.firstChild.src) {
+                        // image case
+                        icons[i].firstChild.firstChild.src =
+                            icons[i].firstChild.firstChild.src.replace('scrap', 'unscrap');
+                    } else {
+                        // non image case like as bootstrap etc.
+                        icons[i].firstChild.innerHTML = '$unscrap_icon';
+                    }
                     break;
                 }
             }

@@ -878,9 +878,13 @@ class _HWLDF_WordAccumulator {
 
     function _flushGroup ($new_tag) {
         if ($this->_group !== '') {
-	  if ($this->_group == NBSP)
-            $this->_group = ' '; //$this->nbsp; // NBSP only line (blank line).
-            //it is needed to fill it with some tags like as &nbsp; to show blanks in the diff.
+	  if ($this->_group == NBSP) {
+            if ($this->_tag)
+              $this->_group = $this->nbsp; // NBSP only line (blank line).
+              //it is needed to fill it with some tags like as &nbsp; to show blanks in the diff.
+            else
+              $this->_group = ' ';
+          }
           else
             // the NBSP charset dependent. it is 0xA0 in iso-8859-x and 0xC20xA0 in UTF-8. So just remove NBSPs.
             $this->_group = rtrim($this->_group, NBSP);

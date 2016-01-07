@@ -51,6 +51,12 @@ function macro_UploadedFiles($formatter,$value="",$options="") {
    $js_script='';
    $uploader='';
 
+   // get user id
+   if (empty($formatter->preview) && empty($options)) {
+     $options = array();
+     $options['id'] = $DBInfo->user->id;
+   }
+
    if (isset($DBInfo->members) and !in_array($options['id'], $DBInfo->members))
      $use_admin = 0;
 
@@ -345,15 +351,21 @@ EOS;
      $out.="<input type='hidden' name='value' value=\"$value\" />\n";
 
 
-   $out.="</p><table style='border:0px' cellpadding='2' class='uploadInfo'>\n";
-   $colspan='';
-   if ($use_admin) $colspan=" colspan='2'";
+   $out.="</p><table style='border:0px' cellpadding='2' class='info'>\n";
+
+   // set colspan to show file informations
+   $c = 1;
+   if ($use_admin) $c = 2;
+   if ($c) $colspan = ' colspan="'.$c.'"';
    if ($use_fileinfo) {
      $mname=_("File name");
      $msize=_("Size");
      $mdate=_("Date");
      $out.="<tr><th$colspan>$mname</th><th>$msize</th><th>$mdate</th></tr>\n";
+     $c += 2;
    }
+   // set colspan again
+   if ($c > 1) $colspan = ' colspan="'.$c.'"';
    $idx=1;
 
    if ($js_tag) {
@@ -397,6 +409,13 @@ EOS;
      sort($dirs);
    }
 
+   // count dirs
+   $didx = 0;
+   if (count($dirs)) {
+     $out .= "<tr>";
+     $didx ++;
+   }
+
    foreach ($dirs as $file) {
       $link=$formatter->link_url($file,"?action=uploadedfiles$extra",$file,$attr);
       $key = $DBInfo->pageToKeyname($file);
@@ -411,15 +430,18 @@ EOS;
       $dirname = $dir.'/'.$pre.$key;
       $date=date("Y-m-d",filemtime($dirname));
 
-      $out.="<tr>";
         $file = _html_escape($file);
       if ($use_admin)
         $out.="<td class='wiki'><input type='$checkbox' name='files[$idx]' value=\"$file\" /></td>";
       $out.="<td class='wiki'><a href='$link'>$file/</a></td>";
       if ($use_fileinfo)
         $out.="<td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td>";
-      $out.="</tr>\n";
+
+      if (($didx % $col) == 0)
+        $out.="</tr>\n<tr>\n";
+
       $idx++;
+      $didx++;
    }
 
    if (isset($value[0]) and $value!='UploadFile') {
@@ -439,7 +461,10 @@ EOS;
         $date=date("Y-m-d",filemtime($dir."/.."));
         $out.="<td align='right' class='wiki'>&nbsp;</td><td class='wiki'>$date</td>";
       }
-      $out.="</tr>\n";
+      if (($didx % $col) == 0)
+        $out.="</tr>\n<tr>\n";
+
+      $didx ++;
    }
    if (!empty($options['needle']))
       $extra.='&amp;q='.$options['needle'];
@@ -457,7 +482,11 @@ EOS;
    $down_mode=(strpos($prefix,';value=') !== false);
    $mywidth=$preview_width;
 
-   $iidx=0;
+   if (empty($didx)) {
+     // no dirs found.
+     $out .= '<tr>';
+   }
+   $iidx = $didx; // file index
    foreach ($upfiles as $file) {
       $_l_file=_l_filename($file);
       // force download with some extensions. XXX
@@ -525,10 +554,7 @@ EOS;
           $link="javascript:$tag";
         }
       }
-      if (empty($iidx))
-        $out.="<tr>\n";
-      else if (($iidx % $col) == 0)
-        $out.="</tr>\n<tr>\n";
+
       $file = _html_escape($file);
       if ($use_admin)
         $out.="<td class='wiki'><input type='$checkbox' name='files[$idx]' value=\"$file\" /></td>";
@@ -536,20 +562,56 @@ EOS;
       if ($use_fileinfo) {
         $out.="<td align='right' class='wiki'>$size</td><td class='wiki'>$date</td>";
       }
-      $out.="</tr><tr><td>&nbsp;</td><td$colspan>";
-      if ($use_admin)
-        $out.= $dir.'/';
-      $out.="$file</td>\n";
+      if (($iidx % $col) == 0)
+        $out.="</tr>\n<tr>\n";
+      if ($use_admin && $use_fileinfo) {
+        $out.="<td>&nbsp;</td><td$colspan>";
+        if ($use_admin)
+          $out.= $dir.'/';
+        $out.="$file</td>\n";
+        $out .= "</tr>\n<tr>";
+      }
       $idx++;
       $iidx++;
    }
-   $out.="</tr>\n";
+
+   $kidx = $iidx - 1;
+   $k = 0;
+
+   // setup colspan to fill up <tr> with colspaned <td>
+   while (($kidx % $col) != 0) {
+      $k += $c;
+      $kidx++;
+   }
+
+   if ($k > 0) {
+     // fill tr
+     $out .= '<td colspan="'.$k.'">&nbsp;</td>';
+   }
+
+   if (substr($out, -4) == '<tr>')
+     $out = substr($out, 0, -4); // simply trim out <tr> tag
+   else
+     $out .= "</tr>\n";
+
    $idx--;
    $msg = sprintf(_("%d files"), $idx);
-   $msg.= ' / '.sprintf(_("Total %d files"), $count_files);
-   $msg.= ' / '.sprintf(_("%d dirs"), $count_dirs);
+   if (count($dirs)) {
+     $msg.= ' / '.sprintf(_("Total %d files"), $count_files);
+     $msg.= ' / '.sprintf(_("%d dirs"), $count_dirs);
+   }
 
-   $out.="<tr><th colspan='2'>$msg</th><th colspan='2'>$plink</th></tr>\n";
+   // colspan for multi column case.
+   if ($col > 1) {
+     $colspan = ' colspan="'.($col * $c).'"';
+   }
+
+   $out.="<tr>";
+   if ($use_admin && $c > 1)
+     $out .= "<td>&nbsp;</td>"; // fill checkbox column
+   $out .= "<th $colspan>$msg</th></tr>\n";
+   if ($plink)
+     $out .= "<tr><th $colspan>$plink</th></tr>\n";
    $out.="</table>\n";
    if ($use_admin) {
      if ($DBInfo->security->is_protected("deletefile",$options))

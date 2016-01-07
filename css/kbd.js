@@ -335,6 +335,14 @@ function moin_submit(form) {
 	if (form == null) form=document.getElementById(_go);
 	if (form == null) return true;
 	if (form.elements[_govalue].value.replace(/\s+/,'') == "") return false;
+
+	if (document.activeElement && document.activeElement.name == 'search') {
+		if (document.activeElement.value != 'titlesearch')
+			go.elements['action'].value = document.activeElement.value;
+		else
+			go.elements['action'].value = 'titlesearch';
+        }
+
 	if (form.elements['action'].value =="goto") {
 		go.elements[_govalue].name='goto';
 		go.elements['action'].name='';
