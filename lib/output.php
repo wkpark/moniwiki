@@ -827,6 +827,11 @@ MSG;
             echo $msg;
         echo "</".$formatter->tags['header']."\n";
     }
+
+    // send header only
+    if ($options['.header'])
+        return;
+
     if (empty($formatter->popup) and (empty($themeurl) or empty($formatter->_newtheme))) {
         echo $Config['hr'];
         if ($params['trail']) {
