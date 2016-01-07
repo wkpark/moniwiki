@@ -5504,6 +5504,11 @@ MSG;
         echo $msg;
       echo "</".$this->tags['header']."\n";
     }
+
+    // send header only
+    if ($options['.header'])
+      return;
+
     if (empty($this->popup) and (empty($themeurl) or empty($this->_newtheme))) {
       echo $DBInfo->hr;
       if ($options['trail']) {
