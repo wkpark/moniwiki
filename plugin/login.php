@@ -57,9 +57,9 @@ function macro_login($formatter,$value="",$options="") {
 <input type="hidden" name="action" value="userform" />
 <input type="hidden" name="return_url" value="$return_url" />
 <table border='0' cellpadding='2' cellspacing='0'>
-<tr><td class='label'>$id</td><td><input type='text' name='login_id' size='10' /></td></tr>
-<tr><td class='label'>$pass</td><td><input name='password' type='password' size='10' /></td></tr>
-<tr><td class='label'><a href='$url'>$join</a></td><td class='submit'><span class='button'><input type='submit' class='button' value='$login' /></span>$passwd_hidden</td></tr>
+<tr><td class='login-label'>$id</td><td><input type='text' name='login_id' size='10' /></td></tr>
+<tr><td class='login-label'>$pass</td><td><input name='password' type='password' size='10' /></td></tr>
+<tr><td class='login-label'><a href='$url'>$join</a></td><td class='submit'><span class='button'><input type='submit' class='button' value='$login' /></span>$passwd_hidden</td></tr>
 </table>
 </div>
 </form>
