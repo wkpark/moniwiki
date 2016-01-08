@@ -506,7 +506,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
 
         // send comment
         $formtail.=
-            "<div>"._("Message").": <input class='button' type='text' name='comment' size='80' /> </div>";
+            "<div>"._("Message").": <input type='text' name='comment' size='80' /> </div>";
         if (($ismember or $q == $user->id) && $type == 'all')
             $formtail.=
                 "<span class='button'><input class='button' type='submit' name='pause' value='$pause_btn' /></span> ";
