@@ -1,4 +1,4 @@
-<?
+<?php
 $pagename=array(
   _("FrontPage"), _("RecentChanges"), _("FindPage"), _("UserPreferences"),
   _("TitleIndex"), _("HelpContents"),
