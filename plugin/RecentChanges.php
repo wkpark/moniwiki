@@ -898,10 +898,15 @@ function macro_RecentChanges($formatter,$value='',$options='') {
             if (in_array($user, $members))
               $wip = '';
 
+            $userlink = '';
+            $uid = $user;
+            if (!empty($DBInfo->use_userpage))
+              $userlink = ' '.$formatter->link_tag('User:'.$uid, '', $formatter->icon['home']).' ';
+
             if (!empty($DBInfo->use_admin_user_url))
-              $user = $avatar.'<a href="'.$DBInfo->use_admin_user_url.$user.'">'.$user.'</a>'.$wip;
+              $user = $avatar.'<a href="'.$DBInfo->use_admin_user_url.$user.'">'.$user.'</a>'.$userlink.$wip;
             else
-              $user = $avatar.$user.$wip;
+              $user = $avatar.$user.$userlink.$wip;
             $users[$ouser] = $user;
           } else if (!empty($DBInfo->use_nick)) {
             $uid = $user;
@@ -933,14 +938,17 @@ function macro_RecentChanges($formatter,$value='',$options='') {
               $user = _('Anonymous');
             }
             $uid = $user;
+            $userlink = '';
             if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i', $user)) {
               if (!empty($DBInfo->hide_emails))
                 $user = substr(md5($user), 0, 8); // FIXME
               else
                 $user = email_guard($user);
+            } else if (!empty($DBInfo->use_userpage)) {
+              $userlink = ' '.$formatter->link_tag('User:'.$uid, '', $formatter->icon['home']).' ';
             }
 
-            $user = $avatar.$user;
+            $user = $avatar.$user.$userlink;
             $users[$ouser] = $user;
           }
         }

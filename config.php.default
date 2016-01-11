@@ -384,6 +384,7 @@ $mobile_agents='android|iphone'; # mobile agents
 #$use_scrap='js'; # use scrap with javascript
 #$login_strict=0; # strict check
 #$use_userlink=0; # replace the UserPreference link to the UserHomePage
+#$use_userpage=1; # link user's page to the 'User:foobar' interwiki in the RecentChanges
 $use_local_translation=0; # automatic translation
 #$use_jsbuttons=0; # use javascript fake buttons.
 #$use_namespace=0; # support dokuwiki like namespace
