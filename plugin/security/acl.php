@@ -503,6 +503,7 @@ class Security_ACL extends Security_base {
             $groups = array_merge($groups, $u->groups);
         }
         $groups[] = '@ALL';
+        $groups[] = '@Editor'; // current editor
         $groups[] = $user;
         $allow = array();
         $deny = array();
@@ -516,7 +517,23 @@ class Security_ACL extends Security_base {
         $acls['*'] = $this->default;
 
         // get page acl
-        if (($acl = $this->get_page_acl($pagename)) !== false) {
+        $acl = $this->get_page_acl($pagename);
+
+        // check special pages
+        // $special_pages = array('User:%ID%', 'SandBox:%ID%', ...);
+        if ($acl === false && !empty($DBInfo->acl_specialpages)) {
+            $trans = array('%ID%'=>$user); // translation table: %ID% - user ID
+            foreach ($DBInfo->acl_specialpages as $special) {
+                $specialtr = strtr($special, $trans);
+                if ($pagename == $specialtr) {
+                    $acl = $this->cache->fetch($special);
+                    break;
+                }
+            }
+        }
+
+        // get page acl
+        if ($acl !== false) {
             $acls[$pagename] = $acl;
         } else if (preg_match('/'.$this->rule.'/', $pagename, $m)) {
             for ($i = 1; $i < sizeof($m); $i++) {

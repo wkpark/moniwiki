@@ -302,6 +302,7 @@ $use_errlog=1;
 #$acl_type='default'; # XXX
 #$acl_debug=1;
 #$acl_admin_groups=array('@staff', '@admin'); # ACL admin groups
+#$acl_specialpages=array('User:%ID%'); # special pages used by acl security plugin
 #$aclinfo_actions = array('edit', 'savepage', 'deletepage', 'info', 'diff', 'revert', 'recall'); # editable actions
 #$check_editable=0; # check editable pages and show lock icon.
 #$default_download_image='/block.jpg';
