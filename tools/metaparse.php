@@ -39,6 +39,8 @@ if (class_exists('Timer')) {
 // get args
 $options = array();
 $options[] = array("i", "interwiki", "interwiki name");
+$options[] = array('t', 'type', "metadb type (compat)");
+$options[] = array('d', 'dbname', "metadb file name");
 $options[] = array("w", '', "overwrite");
 $short_opts = ''; // list of short options.
 foreach ($options as $item) {
@@ -72,7 +74,22 @@ if (isset($args['w'])) {
 
 if (empty($args['i'])) {
     $interwiki = 'KoWikiPedia';
+} else {
+    $interwiki = $args['i'];
 }
+
+if (!empty($args['t'])) {
+    $type = $args['t'];
+} else {
+    $type = 'compact';
+}
+
+if (!empty($args['d'])) {
+    $dbname = $args['d'];
+} else {
+    $dbname = null;
+}
+
 
 // get remain $argv array
 foreach($args as $k=>$v) {
@@ -94,13 +111,21 @@ if (!is_file($titleindex)) {
     exit;
 }
 
-if (empty($DBInfo->metadb)) $DBInfo->initMetaDB();
-if (!method_exists($DBInfo->metadb, 'parse')) {
+if (empty($dbname)) {
+    if (empty($DBInfo->metadb)) $DBInfo->initMetaDB();
+    $metadb = $DBInfo->metadb;
+} else {
+    require_once(dirname(__FILE__).'/../lib/metadb.'.$type.'.php');
+    $class = 'MetaDB_'.$type;
+    $metadb = new $class($dbname, $Config['dba_type']);
+}
+
+if (!method_exists($metadb, 'parse')) {
     echo "ERROR: 'parse' method is not found\n";
     exit;
 }
 
-$ret = $DBInfo->metadb->parse($titleindex, $interwiki);
+$ret = $metadb->parse($titleindex, $interwiki);
 if ($ret === false) {
     echo "ERROR: parse error\n";
     echo "$titleindex, $interwiki\n";

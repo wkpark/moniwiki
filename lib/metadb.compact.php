@@ -183,7 +183,7 @@ class MetaDB_compact extends MetaDB {
             $j = 1;
             $wikis = array();
             while ($val >= $j) {
-                if ($j | $val == $j) {
+                if (($j & $val) == $j) {
                     $wikis[] = $this->intermap[$j];
                 }
                 $j = $j << 1;
