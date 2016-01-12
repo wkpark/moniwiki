@@ -173,12 +173,20 @@ function _timesago($timestamp, $date_fmt='Y-m-d', $tz_offset = 0) {
 	return $ago;
 }
 
+function _rc_fix_icon($m) {
+    global $icons;
+    return $icons[strtolower($m[1])];
+}
+
 define('RC_MAX_DAYS',30);
 define('RC_MAX_ITEMS',200);
 define('RC_DEFAULT_DAYS',7);
 
 function macro_RecentChanges($formatter,$value='',$options='') {
   global $DBInfo, $Config;
+  global $icons;
+
+  $icons = $formatter->icon;
 
   // get members to hide log
   $members = $DBInfo->members;
@@ -453,16 +461,23 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   $mtime = $lc->mtime($rckey);
   if (empty($formatter->refresh)) {
     if (($val = $lc->fetch($rckey)) !== false and $DBInfo->checkUpdated($mtime, $cache_delay)) {
+      $val = preg_replace_callback('@{_(NEW|UPDATED|DEL|DIFF|SHOW|ATTACH)_}@',
+        '_rc_fix_icon', $val);
       return $val.'<!-- cached at '.date('Y-m-d H:i:s', $mtime).' -->';
     } else if (!empty($options['ajax']) && $rctype == 'list' && $rckey != $rckey2) {
       // rctype == list with ajax option does not depend on "use_js" option.
       $mtime = $lc->mtime($rckey2);
       if (($val = $lc->fetch($rckey2)) !== false and $DBInfo->checkUpdated($mtime, $cache_delay)) {
+        $val = preg_replace_callback('@{_(NEW|UPDATED|DEL|DIFF|SHOW|ATTACH)_}@',
+          '_rc_fix_icon', $val);
         return $val.'<!-- cached at '.date('Y-m-d H:i:s', $mtime).' -->';
       }
     }
     // need to update cache
     if ($val !== false and $lc->exists($rckey.'.lock')) {
+      $val = preg_replace_callback('@{_(NEW|UPDATED|DEL|DIFF|SHOW|ATTACH)_}@',
+        '_rc_fix_icon', $val);
+
       return $val.'<!-- cached at '.date('Y-m-d H:i:s', $mtime).' -->';
     }
     $lc->update($rckey.'.lock', array('lock'), 5); // 5s lock
@@ -707,17 +722,17 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $updated = '';
 
     if ($act == 'UPLOAD') {
-      $icon= $formatter->link_tag($pageurl,"?action=uploadedfiles",$formatter->icon['attach']);
+      $icon= $formatter->link_tag($pageurl,"?action=uploadedfiles", '{_ATTACH_}');
     } else if (!$DBInfo->hasPage($page_name)) {
-      $icon= $formatter->link_tag($pageurl,"?action=info",$formatter->icon['del']);
+      $icon= $formatter->link_tag($pageurl,"?action=info", '{_DEL_}');
       if (!empty($use_js))
         $rc_list[] = $page_name;
     } else {
-      $icon= $formatter->link_tag($pageurl,"?action=diff",$formatter->icon['diff'], " id='icon-$ii'");
+      $icon= $formatter->link_tag($pageurl,"?action=diff", '{_DIFF_}', " id='icon-$ii'");
 
       if (empty($use_js) and $ed_time > $bookmark) {
-        $icon= $formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon['diff']);
-        $updated= ' '.$formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark",$formatter->icon['updated'], 'class="updated"');
+        $icon= $formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark", '{_DIFF_}');
+        $updated= ' '.$formatter->link_tag($pageurl,"?action=diff&amp;date=$bookmark", '{_UPDATED_}', 'class="updated"');
 
         $add = 0;
         $del = 0;
@@ -726,8 +741,8 @@ function macro_RecentChanges($formatter,$value='',$options='') {
           $v= $p->get_rev($bookmark);
           if (empty($v)) {
             $icon=
-              $formatter->link_tag($pageurl,"?action=info",$formatter->icon['show']);
-            $updated = ' '.$formatter->link_tag($pageurl,"?action=info",$formatter->icon['new'], 'class="new"');
+              $formatter->link_tag($pageurl,"?action=info", '{_SHOW_}');
+            $updated = ' '.$formatter->link_tag($pageurl,"?action=info", '{_NEW_}', 'class="new"');
             $add+= $p->lines();
           }
         }
@@ -1273,6 +1288,10 @@ JS;
   $lc->update($rckey, $out);
   $lc->remove($rckey.'.lock'); // unlock
   $rc->remove($rckey.'.lock'); // unlock
+
+  $out = preg_replace_callback('@{_(NEW|UPDATED|DEL|DIFF|SHOW|ATTACH)_}@',
+    '_rc_fix_icon', $out);
+
   return $out;
 }
 // vim:et:sts=2:sw=2:
