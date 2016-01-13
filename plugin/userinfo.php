@@ -428,7 +428,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
                  "</select></form>\n";
         }
 
-        $list = '<table>';
+        $list = '<table class="info">';
         $list.= '<tr><th>'._("ID").'/'._("IP").'</th></th><td>'.$keys[0].$id_form.'</td></tr>';
         if (!empty($addr) and $keys[0] != $addr && !in_array($keys[0], $members))
             $list.= '<tr><th>'._("IP").'</th></th><td>'.$addr.$ip_form.'</td></tr>';
