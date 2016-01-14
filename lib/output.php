@@ -799,6 +799,8 @@ MSG;
 
         $subindex = !empty($formatter->subindex) ? $formatter->subindex : '';
         $themeurl = $formatter->themeurl;
+
+        $options = &$params; // compatible issue
         include($formatter->themedir."/header.php");
     } else { #default header
         $header = "<table width='100%' border='0' cellpadding='3' cellspacing='0'>";
@@ -936,6 +938,7 @@ FOOT;
         unset($formatter->_vars['menu']);
         // extract variables
         extract($formatter->_vars);
+        $options = &$params; // compatible issue
         include($formatter->themedir."/footer.php");
     } else {
         echo "<div id='wikiFooter'>";
