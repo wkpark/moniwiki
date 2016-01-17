@@ -5051,6 +5051,8 @@ SCHEMA;
     if (!empty($args['editable']) and !$DBInfo->security->writable($options))
       $args['editable']=-1;
 
+    $this->_editable = isset($args['editable']) ? $args['editable'] : 0;
+
     $key=$DBInfo->pageToKeyname($options['page']);
     if (!in_array('UploadedFiles',$this->actions) and is_dir($DBInfo->upload_dir."/$key"))
       $this->actions[]='UploadedFiles';
