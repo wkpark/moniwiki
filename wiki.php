@@ -4958,15 +4958,16 @@ SCHEMA;
 
       $css_html = '';
       if ($options['css_url']) {
+        $stamp = '?'.filemtime(__FILE__);
         $css_url = _html_escape($options['css_url']);
         $css_html = '  <link rel="stylesheet" type="text/css" '.$media.' href="'.
           $css_url."\" />\n";
         if (!empty($DBInfo->custom_css) && file_exists($DBInfo->custom_css))
           $css_html .= '  <link rel="stylesheet" media="screen" type="text/css" href="'.
-            $DBInfo->url_prefix.'/'.$DBInfo->custom_css."\" />\n";
+            $DBInfo->url_prefix.'/'.$DBInfo->custom_css."$stamp\" />\n";
         else if (file_exists('./css/_user.css'))
           $css_html .= '  <link rel="stylesheet" media="screen" type="text/css" href="'.
-            $DBInfo->url_prefix."/css/_user.css\" />\n";
+            $DBInfo->url_prefix."/css/_user.css$stamp\" />\n";
       }
 
       echo kbd_handler(!empty($options['prefix']) ? $options['prefix'] : '');
@@ -5930,7 +5931,8 @@ if (!$options['theme']) $options['theme']=$theme=$DBInfo->theme;
 
   if ($theme and ($DBInfo->theme_css or !$options['css_url'])) {
     $css = is_string($DBInfo->theme_css) ? $DBInfo->theme_css : 'default.css';
-    $options['css_url']=(!empty($DBInfo->themeurl) ? $DBInfo->themeurl:$DBInfo->url_prefix)."/theme/$theme/css/$css";
+    $timestamp = '?'.filemtime(__FILE__);
+    $options['css_url']=(!empty($DBInfo->themeurl) ? $DBInfo->themeurl:$DBInfo->url_prefix)."/theme/$theme/css/$css$timestamp";
   }
 
   $options['pagename']=get_pagename();
