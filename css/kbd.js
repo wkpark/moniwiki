@@ -102,15 +102,19 @@ function keydownhandler(e) {
 			noBubble(e);
 			return false;
 		}
-		if (e.altKey && e.keyCode == 90) { // Z
-			if (nn != 'INPUT') {
+		if (e.keyCode == 90) { // Z
+			if (nn != 'INPUT' && nn != 'TEXTAREA') {
 				go ? goValue.focus():null;
 				noBubble(e);
-			} else {
+				return true;
+			} else if (e.altKey || nn == 'INPUT') {
 				var bot=document.getElementById('bottom');
-				if (bot) bot.focus(), noBubble(e);
+				if (bot) {
+					bot.focus(), noBubble(e);
+					return true;
+				}
 			}
-			return;
+			return false;
 		}
 	}
 
