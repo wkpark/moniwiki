@@ -385,6 +385,13 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   else
     $opts['from'] = $_GET['ago'];
 
+  // check $start
+  if (!empty($_GET['start']) and is_numeric($_GET['start'])) {
+    $opts['start'] = $_GET['start'];
+  } else {
+    $opts['start'] = strtotime($_GET['start']);
+  }
+
   // override times
   // accept both 'item' or 'items'
   $tmp = isset($_GET['item']) ? $_GET['item'] :
