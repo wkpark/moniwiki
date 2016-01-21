@@ -699,6 +699,8 @@ class WikiDB {
     if (!empty($this->members) && !in_array($this->user->id, $this->members))
       $ruleset = $Config['ruleset']['hidelog'];
 
+    $fz = filesize($this->editlog_name);
+
     $lines=array();
 
     $time_current= time();
@@ -707,6 +709,7 @@ class WikiDB {
     if (!empty($opts['ago'])) {
       $date_from= $time_current - ($opts['ago'] * $secs_per_day);
       $date_to= $date_from + ($days * $secs_per_day);
+      $seek_start = null;
     } else if (!empty($opts['from'])) {
       $from = strtotime($opts['from']);
       if ($time_current > $from)
@@ -715,6 +718,7 @@ class WikiDB {
         $date_from = $time_current - ($from - $time_current);
 
       $date_to= $date_from + ($days * $secs_per_day);
+      $seek_start = null;
     } else {
       if (!empty($opts['items'])) {
         $date_from= $time_current - (365 * $secs_per_day);
@@ -722,23 +726,50 @@ class WikiDB {
         $date_from= $time_current - ($days * $secs_per_day);
       }
       $date_to= $time_current;
+      $seek_start = 0;
+    }
+
+    // check start timestamp
+    if (!empty($opts['start']) && is_numeric($opts['start'])) {
+      $time_seek = $opts['start'];
+      if ($time_seek < $time_current && $time_seek > $date_from) {
+        $date_to = $time_seek;
+        $seek_start = null;
+      }
+    }
+
+    if ($date_to > $time_current) {
+      $seek_start = 0;
+      $date_to = $time_current;
     }
     $check=$date_to;
+
+    // seek $date_to
+    if ($seek_start === null) {
+      require_once(dirname(__FILE__).'/plugin/editlogbin.php');
+
+      $seek = _editlog_seek($this->editlog_name, $date_to);
+      if ($seek < 0) {
+        // fail to seek
+        return array();
+      }
+
+      $seek_start = $fz - $seek;
+    }
 
     $itemnum=!empty($opts['items']) ? $opts['items']:200;
 
     $fp= fopen($this->editlog_name, 'r');
-    while (is_resource($fp) and ($fz=filesize($this->editlog_name))>0){
-      fseek($fp,0,SEEK_END);
+    while (is_resource($fp) && $fz > 0){
       if ($fz <= 1024) {
         fseek($fp,0);
         $ll=rtrim(fread($fp,1024));
         $lines=array_reverse(explode("\n",$ll));
         break;   
       }
-      $a=-1; // hack, don't read last \n char.
+      $a = $seek_start - 1; // hack, don't read last \n char.
       $last='';
-      fseek($fp,0,SEEK_END);
+      fseek($fp, $seek_start, SEEK_END);
       while($date_from < $check and !feof($fp)){
         $rlen=$fz + $a;
         if ($rlen > 1024) { $rlen=1024;}
