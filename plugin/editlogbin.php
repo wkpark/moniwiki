@@ -83,7 +83,15 @@ function _editlog_binning($fp, $seek = null, $start, $bin = 0, $params = array()
     return array('total'=>$j, 'data'=>$data, 'user'=>$users, 'user_count'=>$user_count);
 }
 
-function _editlog_seek($editlog, $timestamp = null) {
+/**
+ * seek timestamp
+ *
+ * @param string/resource editlog file
+ * @param integer   timestamp
+ * @param integer   timestamp column
+ * @return integer  -1(FAIL) or seek position.
+ */
+function _editlog_seek($editlog, $timestamp = null, $column = 2) {
     $_chunk_size = 512; // average length of lines.
     $_maxtry = 25; // maximum seek tries
     $_debug = false;
@@ -93,15 +101,20 @@ function _editlog_seek($editlog, $timestamp = null) {
         $t = strtotime( '-1 month', time());
         $date = date('Y-m-d 00:00:00', $t);
         $timestamp = strtotime($date);
+    } else if (is_string($timestamp)) {
+        $timestamp = strtotime($date);
     }
 
     $fp = null;
     if (is_string($editlog) && file_exists($editlog)) {
         $fp = fopen($editlog, 'r');
+        if (!is_resource($fp))
+            return -1; // not found
     } else if (is_resource($editlog)) {
         $fp = &$editlog;
+    } else {
+        return -1; // error
     }
-    if (!is_resource($fp)) return -1; // not found
 
     // get filesize
     fseek($fp, 0, SEEK_END);
@@ -133,23 +146,33 @@ function _editlog_seek($editlog, $timestamp = null) {
         if (isset($oline[0])) $line.= $oline;
 
         $tmp = explode("\t", $line);
-        if (!isset($tmp[2])) break;
-        $laststamp = $tmp[2];
+        if (!isset($tmp[$column])) break;
+        $laststamp = $tmp[$column];
         if ($timestamp > $laststamp) {
             $sign = 1;
-            $lower = $myseek;
+            $gap = $upper - $myseek;
         } else {
+            if ($timestamp === $laststamp) break;
             $sign = -1;
-            $upper = $myseek;
+            $gap = $myseek - $lower;
         }
 
-        $guess = intval(($upper - $lower) * 0.5);
+        $guess = intval($gap * 0.5);
 
         $min_offset = min($min_offset, $guess);
         if ($guess < $_chunk_size) $guess = $_chunk_size;
 
         $offset = $sign * $guess;
-        if (($upper - $lower) < $guess) break;
+        if ($gap < $guess) {
+            //$myseek = $upper;
+            //if ($_debug)
+            //    echo $try,"\t", "upper=", $upper, " lower=", $lower, " seek=", $myseek, " guess=", $guess,"\n";
+            break;
+        }
+        if ($sign > 0)
+            $lower = $myseek;
+        else
+            $upper = $myseek;
 
         if ($_debug)
             echo $try,"\t", $sign,"\t", $myseek,"\t", strlen($line),"\t",'guess=',$guess,"\t", 'offset=', $offset,"\n";
@@ -158,6 +181,8 @@ function _editlog_seek($editlog, $timestamp = null) {
 
     if ($_debug)
         echo $try,"\t",$myseek,"\t",date('Y-m-d H:i:s', $timestamp),"\t", date('Y-m-d H:i:s', $laststamp),"\n";
+    if (is_string($editlog))
+        fclose($fp);
     return $myseek;
 }
 
