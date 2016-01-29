@@ -24,6 +24,8 @@ function do_sitemap($formatter,$options) {
     $extra = '';
     if (!empty($formater->group))
         $extra = '.'.$formatter->group;
+    if (!empty($formatter->prefix))
+        $extra .= qualifiedUrl($formatter->prefix);
     // all pages
     $mtime = $DBInfo->mtime();
     $lastmod = gmdate('D, d M Y H:i:s \G\M\T', $mtime);
@@ -53,7 +55,7 @@ function do_sitemap($formatter,$options) {
         return;
     }
 
-    if (($ret = $tc->fetch('sitemap'.$extra.'.mtime')) !== false) {
+    if (!$formatter->refresh && ($ret = $tc->fetch('sitemap'.$extra.'.mtime')) !== false) {
         if (($ret = $tc->fetch('sitemap'.$extra, 0, array('print'=>1))) !== false)
             return;
     }
@@ -70,11 +72,34 @@ function do_sitemap($formatter,$options) {
 	$group_pages = $DBInfo->getLikePages($formater->group);
 	foreach ($group_pages as $page)
 	    $all_pages[] = str_replace($formatter->group,'',$page);
+
+        usort($all_pages, 'strcasecmp');
+    } else if (!empty($Config['sitemap_sortby'])) {
+        // call PageSort macro.
+        $opts = array();
+        $opts['sortby'] = $Config['sitemap_sortby']; // date or size
+        $opts['.call'] = 1;
+        $ret = $formatter->macro_repl('PageSort', '', $opts);
+
+        $all_pages = array();
+        if (!empty($ret['count'])) {
+            $tc->fetch('pagedate.raw');
+            $rawfile = $tc->cache_path.'/'.$tc->getKey('pagedate.raw');
+            $fp = fopen($rawfile, 'r');
+            if (is_resource($fp)) {
+                while (($line = fgets($fp, 1024)) != false) {
+                    $tmp = explode("\t", $line);
+                    $all_pages[] = $tmp[0];
+                }
+                fclose($fp);
+            }
+        }
     } else {
         $args = array('all'=>1);
         $all_pages = $DBInfo->getPageLists($args);
+
+        usort($all_pages, 'strcasecmp');
     }
-    usort($all_pages, 'strcasecmp');
 
     $count = sizeof($all_pages);
 
