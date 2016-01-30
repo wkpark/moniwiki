@@ -113,8 +113,11 @@ class MoniConfig {
       //$config['version_class']="'RcsLite'";
       $config['path'] = './bin;';
       if (is_dir('../bin')) $config['path'].= '../bin;'; // packaging for win32
-      $config['path'].= 'c:/program files/vim/vimXX';
+      $config['path'].= 'c:/windows;c:/windows/system;c:/program files/vim/vimXX';
       $config['vartmp_dir']="c:/tmp/";
+
+      $dirs = explode(';', $config['path']);
+      $exe = '.exe';
     } else {
       $config['rcs_user']='root'; // XXX
 
@@ -124,22 +127,24 @@ class MoniConfig {
       else
         $dirs = explode(':', './bin:./usr/bin:/usr/bin:/bin:/usr/local/bin');
 
-      $rcs_ok = false;
-      foreach ($dirs as $d) {
-        if ($d[0] == '.')
-          $dir = dirname(__FILE__).substr($d, 1);
-        else
-          $dir = $d;
-        if (file_exists($dir.'/ci')) {
-          $rcs_ok = true;
-          break;
-        }
-      }
-
-      // RCS found
-      if ($rcs_ok && $d[0] == '.')
-        $config['path'] = implode(PATH_SEPARATOR, $dirs);
+      $exe = '';
     }
+
+    $rcs_ok = false;
+    foreach ($dirs as $d) {
+      if ($d[0] == '.')
+        $dir = dirname(__FILE__).substr($d, 1);
+      else
+        $dir = $d;
+      if (file_exists($dir.'/ci'.$exe)) {
+        $rcs_ok = true;
+        break;
+      }
+    }
+
+    // RCS found
+    if ($rcs_ok && $d[0] == '.')
+      $config['path'] = implode(PATH_SEPARATOR, $dirs);
 
     // copy intermap.txt
     if (!file_exists(dirname(__FILE__).'/data/intermap.txt'))
@@ -562,16 +567,21 @@ FORM;
     else
       echo "<h2>"._t("All PHP extensions are OK.")."</h2>\n";
 
+    $exe = '';
+    if(getenv('OS') == 'Windows_NT') {
+      $exe = '.exe';
+    }
     // re-check RCS version control program.
     if (isset($config['path']))
-      $dirs = explode(':', $config['path']);
+      $dirs = explode(PATH_SEPARATOR, $config['path']);
     else
       $dirs = explode(':', './bin:./usr/bin:/usr/bin:/bin:/usr/local/bin');
+
     $rcs_ok = false;
     foreach ($dirs as $d) {
       if ($d[0] == '.')
-        $d = dirname(__FILE__).substr($d, 1);
-      if (file_exists($d.'/ci')) {
+        $d = dirname(__FILE__).'/'.$d;
+      if (file_exists($d.'/ci'.$exe)) {
         $rcs_ok = true;
         break;
       }
