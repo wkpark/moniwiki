@@ -124,6 +124,8 @@ function macro_PageSort($formatter, $value = '', $params = array()) {
         $info = array('count'=>$cnt); // save some info.
         $cache->update($cachekey, $info, 60*60*12); // set TTL
     }
+    if (!empty($params['.call']))
+        return $info;
 
     $offset = 0;
     $limit = 200;

@@ -3188,7 +3188,9 @@ function wiki_notify($formatter,$options) {
 function verify_email($email, $timeout = 5, $debug = false) {
     list($name, $domain) = explode('@', $email, 2);
     $mxhosts = array();
-    $result = getmxrr($domain, $mxhosts);
+    $result = false;
+    if (function_exists('getmxrr'))
+        $result = getmxrr($domain, $mxhosts);
     if (!$result) $mxhosts[0] = $domain;
     if ($debug) {
         foreach ($mxhosts as $i=>$mx)
