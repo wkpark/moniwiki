@@ -284,7 +284,7 @@ class WikiDB
 
         $ruleset = array();
 
-        if (!empty($this->members) && !in_array($this->user->id, $this->members))
+        if (isset($Config['ruleset']['hidelog']) && !empty($this->members) && !in_array($this->user->id, $this->members))
             $ruleset = $Config['ruleset']['hidelog'];
 
         $fz = filesize($this->editlog_name);

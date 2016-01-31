@@ -831,7 +831,7 @@ MSG;
     }
 
     // send header only
-    if ($options['.header'])
+    if (!empty($options['.header']))
         return;
 
     if (empty($formatter->popup) and (empty($themeurl) or empty($formatter->_newtheme))) {
