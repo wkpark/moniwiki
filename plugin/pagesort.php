@@ -22,7 +22,7 @@ function macro_PageSort($formatter, $value = '', $params = array()) {
 
     $cache = new Cache_Text('persist', array('depth'=>0));
 
-    $ismember = $DBInfo->user->is_member;
+    $ismember = !empty($DBInfo->user->is_member);
     $refresh = $formatter->refresh && $ismember;
 
     if (!empty($params['sortby']) && in_array($params['sortby'], array('date', 'hits'))) {
@@ -191,7 +191,7 @@ function macro_PageSort($formatter, $value = '', $params = array()) {
 }
 
 function do_pagesort($formatter, $params = array()) {
-    if (!is_numeric($params['offset']) or $params['offset'] <= 0)
+    if (isset($params['offset']) && (!is_numeric($params['offset']) or $params['offset'] <= 0))
         unset($params['offet']);
 
     $args = array();

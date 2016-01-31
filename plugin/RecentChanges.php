@@ -380,16 +380,20 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
   // override ago
   empty($opts['ago']) ? $opts['ago'] = 0:null;
-  if (!empty($_GET['ago']) and is_numeric($_GET['ago']))
-    $opts['ago'] = abs($_GET['ago']);
-  else
-    $opts['from'] = $_GET['ago'];
+  if (!empty($_GET['ago'])) {
+    if (is_numeric($_GET['ago']))
+      $opts['ago'] = abs($_GET['ago']);
+    else
+      $opts['from'] = $_GET['ago'];
+  }
 
   // check $start
-  if (!empty($_GET['start']) and is_numeric($_GET['start'])) {
-    $opts['start'] = $_GET['start'];
-  } else {
-    $opts['start'] = strtotime($_GET['start']);
+  if (!empty($_GET['start'])) {
+    if (is_numeric($_GET['start'])) {
+      $opts['start'] = $_GET['start'];
+    } else {
+      $opts['start'] = strtotime($_GET['start']);
+    }
   }
 
   // override times
@@ -406,7 +410,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
   $u=$DBInfo->user; # retrive user info
   // check member
-  $ismember = $u->is_member;
+  $ismember = !empty($u->is_member);
 
   // use uniq avatar ?
   $uniq_avatar = 0;
@@ -536,12 +540,13 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   $ratchet_day = FALSE;
   $editors = array();
   $editcount = array();
-  $rc_delay = isset($DBInfo->rc_delay) ? $DBInfo->rc_delay : $rc_cache_delay;
+  $rc_delay = isset($DBInfo->rc_delay) ? $DBInfo->rc_delay : $cache_delay;
 
   $rctimestamp = 0;
   $needupdate = false;
 
   $use_val = false;
+  $rclastline = null;
   while (($val = $rc->fetch($rckey)) !== false) {
     $use_val = true;
     if (!empty($formatter->refresh) or !$DBInfo->checkUpdated($rc->mtime($rckey), $rc_delay)) {
@@ -1073,7 +1078,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
     $url = $formatter->link_url('RecentChanges');
     $postdata = "action=recentchanges/ajax" . ($arg ? '&'.$arg : '');
     $js.= $json->encode($rc_list).";\n";
-    if ($use_diffwidth)
+    if (!empty($use_diffwidth))
       $js.= "var use_diffwidth = true;\n";
     else
       $js.= "var use_diffwidth = false;\n";
@@ -1237,6 +1242,7 @@ EOF;
     //}
   }
 
+  $rcid = '';
   if (in_array($rctype, array('list', 'simple')) and $use_js) {
     static $rc_id = 1;
 

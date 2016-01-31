@@ -234,6 +234,9 @@ function fancy_diff($diff,$options=array()) {
   include_once("lib/difflib.php");
   $diff=str_replace("<","&lt;",$diff);
   $lines=explode("\n",$diff);
+  $end = end($lines);
+  if (!isset($end[0]))
+    $lines[count($lines) - 1] = "\n"; // fill the last empty line with "\n"
 
   // trash the last empty line;
   $end = end($lines);

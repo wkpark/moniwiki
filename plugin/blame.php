@@ -54,14 +54,14 @@ function do_blame($formatter, $params) {
         pclose($fp);
     }
 
-    $formatter->send_title($title, '', $params);
+    $formatter->send_title('', '', $params);
 
     $lines = explode("\n", $out);
     $end = array_pop($lines);
     if ($end != '') array_push($lines, $end);
 
-    $u = &$DBInfo->user;
-    $is_member = $u->is_member;
+    $u = $DBInfo->user;
+    $is_member = !empty($u->is_member);
     // members
     $members = $DBInfo->members;
     // check modified blame or not
@@ -138,7 +138,8 @@ function do_blame($formatter, $params) {
                     $u = $avatar.$u;
                 }
             }
-            $t = date('y-m-d', $t);
+            if (is_numeric($t))
+                $t = date('y-m-d', $t);
         }
         if ($ov != $v)
             $alt = $alts[++$j % 2];

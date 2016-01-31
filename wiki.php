@@ -696,7 +696,7 @@ class WikiDB {
 
     $ruleset = array();
 
-    if (!empty($this->members) && !in_array($this->user->id, $this->members))
+    if (isset($Config['ruleset']['hidelog']) && !empty($this->members) && !in_array($this->user->id, $this->members))
       $ruleset = $Config['ruleset']['hidelog'];
 
     $fz = filesize($this->editlog_name);
@@ -5540,7 +5540,7 @@ MSG;
     }
 
     // send header only
-    if ($options['.header'])
+    if (!empty($options['.header']))
       return;
 
     if (empty($this->popup) and (empty($themeurl) or empty($this->_newtheme))) {
@@ -6689,7 +6689,7 @@ if (isset($options['timer']) and is_object($options['timer'])) {
   $options['timer']->Check("load");
 }
 
-$lang = set_locale($Config['lang'], $Config['charset'], $Config['default_lang']);
+$lang = set_locale($Config['lang'], $Config['charset'], isset($Config['default_lang']) ? $Config['default_lang'] : 'en');
 init_locale($lang);
 init_requests($options);
 if (!isset($options['pagename'][0])) $options['pagename']= get_frontpage($lang);
