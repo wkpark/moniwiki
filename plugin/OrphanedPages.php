@@ -90,8 +90,9 @@ function macro_OrphanedPages($formatter,$value, $params = array()) {
 function do_orphanedpages($formatter, $options) {
     $formatter->send_header('', $options);
     $formatter->send_title('', '', $options);
-    echo macro_OrphanedPages($formatter, $options['sec'], $options);
-    $formatter->send_footer($args, $options);
+    $sec = !empty($options['sec']) ? $options['sec'] : '';
+    echo macro_OrphanedPages($formatter, $sec, $options);
+    $formatter->send_footer('', $options);
 }
 
 // vim:et:sts=4:sw=4:

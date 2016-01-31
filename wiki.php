@@ -2938,7 +2938,7 @@ if (isset($options['timer']) and is_object($options['timer'])) {
   $options['timer']->Check("load");
 }
 
-$lang = set_locale($Config['lang'], $Config['charset'], $Config['default_lang']);
+$lang = set_locale($Config['lang'], $Config['charset'], isset($Config['default_lang']) ? $Config['default_lang'] : 'en');
 init_locale($lang);
 $DBInfo->lang = $lang;
 $options['lang'] = $lang;

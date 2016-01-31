@@ -32,7 +32,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
   $members = $DBInfo->members;
   // do not check admin member users
   $user = $DBInfo->user;
-  $ismember = $user->is_member;
+  $ismember = !empty($user->is_member);
 
   $diff_action = null;
   if (isset($actions['diff'])) {
@@ -325,7 +325,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
   $out.="<input type='submit' name='rcspurge' value='"._("purge")."'></td></tr>";
   endif;
   $out.="<input type='hidden' name='action' value='diff'/>\n</tbody></table></div>";
-  if ($archive) {
+  if (!empty($archive)) {
     $out.= "<input type='hidden' name='archive' value='".$archive."' />";
   }
   $out.="</form>\n";
@@ -421,7 +421,7 @@ function macro_Info($formatter, $value = '', $options=array()) {
     $range_max = !empty($DBInfo->info_range_max) ? $DBInfo->info_range_max : 30;
     $anon_range_limit = !empty($DBInfo->info_anonymous_range_limit) ? $DBInfo->info_anonymous_range_limit : $range_max;
 
-    if ($options['id'] == 'Anonymous' && $r[0] - $r[1] > $anon_range_limit) {
+    if (isset($r[1]) && $options['id'] == 'Anonymous' && $r[0] - $r[1] > $anon_range_limit) {
       unset($rev[$r[1]]);
       unset($r[1]);
       $warn .= '<div class="warn">'._("WARNING: ")._("Anonymous user is not allowed to see older versions.")."</div>";

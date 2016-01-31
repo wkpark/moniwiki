@@ -249,6 +249,7 @@ EOF;
     $excl_pattern.="i";
   }
 
+  $searched = 0;
   if (isset($hits)) {
     if (in_array($arena, array('backlinks', 'keywords'))) {
       $test = key($hits);

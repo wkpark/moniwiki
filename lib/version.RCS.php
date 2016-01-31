@@ -22,8 +22,8 @@ class Version_RCS
         if (is_object($conf)) {
             $this->text_dir = $conf->text_dir;
             $this->vartmp_dir = $conf->vartmp_dir;
-            $this->savepage_timeout = $conf->savepage_timeout;
-            $this->rcs_always_unlock = $conf->rcs_always_unlock;
+            $this->savepage_timeout = !empty($conf->savepage_timeout) ? $conf->savepage_timeout : 0;
+            $this->rcs_always_unlock = !empty($conf->rcs_always_unlock) ? $conf->rcs_always_unlock : 0;
 
             $this->rcs_error_log = !empty($conf->rcs_error_log) ? $conf->rcs_error_log : false;
         } else {
