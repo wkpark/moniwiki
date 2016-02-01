@@ -1189,7 +1189,7 @@ function get_description($raw) {
     $chunks = preg_split('@^((?:={1,2})\s+.*\s+(?:={1,2}))\s*$@m', $raw, -1,
             PREG_SPLIT_OFFSET_CAPTURE | PREG_SPLIT_DELIM_CAPTURE);
 
-    if (sizeof($chunks) > 2) {
+    if (sizeof($chunks) > 2 && strlen($chunks[2][0]) > 20) {
         // get the first == blah blah == section
         $raw = $chunks[2][0];
     }
