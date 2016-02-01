@@ -4971,7 +4971,7 @@ SITELINK;
 }
 </script>\n
 SCHEMA;
-        if (!empty($val['description']))
+        if (!empty($DBInfo->use_description) && !empty($val['description']))
           echo '<meta name="description" content="'.$val['description'].'" />',"\n";
       }
       echo '  <title>',$site_title,"</title>\n";

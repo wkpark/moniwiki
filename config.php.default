@@ -6,6 +6,7 @@ $sitename='UnnamedWiki'; # site name
 #$title_msgstr="%2\$s - %1\$s"; # msgstr for the title
 #$canonical_url='http://foo.bar.com/wiki.php/';
 #$use_google_sitelinks=0; # use google sitelinks
+#$use_description=0; # use auto generated description.
 #$twitter_id='@foobar'; # your twitter id
 #$base_keywords='Wiki, YourWikiName'; # base keywords for all wiki contents
 $data_dir= './data';
