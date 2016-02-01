@@ -353,7 +353,7 @@ JSHEAD;
         echo '<meta name="twitter:domain" content="',$sitename,'" />',"\n";
         echo '<meta name="twitter:title" content="',$params['title'],'">',"\n";
         echo '<meta name="twitter:url" content="',$page_url,'">',"\n";
-        if (!empty($val['description']))
+        if (!empty($Config['use_description']) && !empty($val['description']))
             echo '<meta name="twitter:description" content="'.$val['description'].'" />',"\n";
         if (!empty($val['image']))
             echo '<meta name="twitter:image:src" content="',$val['image'],'" />',"\n";
