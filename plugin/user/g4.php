@@ -13,7 +13,7 @@
 // License: GPL
 //
 // Param: g4_root_dir = '/home/path_to_g4_installed_dir/';
-// Usage: set $user_class = 'g4'; in the config.php
+// Usage: set $user_class = 'g4'; and $nosession=1; in the config.php
 //
 
 class User_g4 extends WikiUser {
