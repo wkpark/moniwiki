@@ -19,7 +19,9 @@ function randstr($num) {
     return $key;
 }
 
-class MoniConfig {
+require_once(dirname(__FILE__).'/lib/confutils.php');
+
+class MoniConfig extends Config_base {
   function MoniConfig($configfile="config.php") {
     if (file_exists($configfile)) {
       $url_prefix= preg_replace("/\/([^\/]+)\.php$/","",$_SERVER['SCRIPT_NAME']);
@@ -37,7 +39,7 @@ class MoniConfig {
     $hostconfig=$this->_getHostConfig();
     $this->config=$this->_getConfig($configfile,$hostconfig);
 
-    $hostconf = $this->_quote_config($hostconfig);
+    $hostconf = $this->_quoteConfig($hostconfig);
     $this->rawconfig=array_merge($this->_rawConfig($configfile),$hostconf);
     while (list($key,$val)=each($hostconf)) {
       eval("\$$key=$val;");
@@ -172,84 +174,6 @@ class MoniConfig {
     $this->rawconfig=$config;
   }
 
-  function _getConfig($configfile, $options = array()) {
-    $myconfig = basename($configfile);
-    if (!file_exists($myconfig))
-      return array();
-
-    extract($options);
-    unset($options);
-    include($myconfig);
-    unset($configfile);
-    unset($myconfig);
-    $config=get_defined_vars();
-
-    return $config;
-  }
-
-  function _rawConfig($configfile, $options = array()) {
-    $lines=file($configfile);
-    $key='';
-    foreach ($lines as $line) {
-      $line=rtrim($line)."\n"; // for Win32
-
-      if (!$key and $line[0] != '$') continue;
-      if ($key) {
-        $val.=$line;
-        if (!preg_match("/$tag\s*;(\s*#.*)?\s*$/",$line)) continue;
-      } else {
-        list($key,$val)=explode('=',substr($line,1),2);
-        if (!preg_match('/\s*;(\s*#.*)?$/',$val)) {
-          if (substr($val,0,3)== '<<<') $tag='^'.substr(rtrim($val),3);
-          else {
-            $val = ltrim($val);
-            $tag = '';
-          }
-          continue;
-        }
-      }
-
-      if ($key) {
-      	$val=preg_replace(array('@<@','@>@'),array('&lt;','&gt;'),$val);
-        #print $key.'|=='.preg_quote($val);
-	$val=rtrim($val);
-        $val=preg_replace('/\s*;(\s*#.*)?$/','',$val);
-        $config[$key]=$val;
-      	$key='';
-      	$tag='';
-      }
-    }
-    return $config;
-  }
-
-  function _getConfigDesc($configfile) {
-    $lines=file($configfile);
-    $key='';
-    $desc=array();
-    foreach ($lines as $line) {
-      $line=rtrim($line)."\n"; // for Win32
-      if (!$key and $line[0] != '$') continue;
-      if ($key) {
-        $val.=$line;
-        if (!preg_match('/\s*;\s*(#.*)?$/',$line)) continue;
-      } else {
-        list($key,$val)=explode('=',substr($line,1),2);
-        if (!preg_match('/\s*;\s*(#.*)?$/',$val)) {
-          if (substr($val,0,3)== '<<<') $tag=substr($val,3);
-          continue;
-        }
-      }
-
-      if ($key) {
-        preg_match('/\s*;\s*#(.*)?$/',rtrim($val),$match);
-        if (!empty($match[1])) $desc[$key]=$match[1];
-      }
-      $key='';
-      $tag='';
-    }
-    return $desc;
-  }
-
   function _getFormConfig($config,$mode=0) {
     $conf=array();
     while (list($key,$val) = each($config)) {
@@ -266,210 +190,6 @@ class MoniConfig {
       #print("$mode:\$$key=$val;<br/>");
     }
     return $conf;
-  }
-
-  function _quote_config($config) {
-    foreach ($config as $k=>$v) {
-      if (is_string($v)) {
-        $v='"'.$v.'"'; // XXX need to check quotes
-      } else if (is_bool($v)) {
-        if ($v) $nline="true";
-        else $v="false";
-      }
-      $config[$k] = $v;
-    }
-    return $config;
-  }
-
-  function _genRawConfig($newconfig, $mode = 0, $configfile='config.php', $default='config.php.default') {
-    if (!empty($newconfig['admin_passwd']))
-      $newconfig['admin_passwd']=crypt($newconfig['admin_passwd'],md5(time()));
-    if (!empty($newconfig['purge_passwd']))
-      $newconfig['purge_passwd']=crypt($newconfig['purge_passwd'],md5(time()));
-
-    if ($mode == 1) {
-      $newconfig = $this->_quote_config($newconfig);
-    } else {
-      if (isset($newconfig['admin_passwd']))
-        $newconfig['admin_passwd']="'".$newconfig['admin_passwd']."'";
-      if (isset($newconfig['purge_passwd']))
-        $newconfig['purge_passwd']="'".$newconfig['purge_passwd']."'";
-    }
-
-    if (file_exists($configfile))
-      $conf_file = $configfile;
-    else if (file_exists($default))
-      $conf_file = $default;
-    else
-      return $this->_genRawConfigSimple($newconfig);
-  
-    $lines = file($conf_file);
-
-    $config = array();
-    $nlines='';
-    $key='';
-    $tag='';
-    foreach ($lines as $line) {
-      $line=rtrim($line)."\n"; // for Win32
-
-      if (!$key) {
-        // first line
-        if ($line{0} == '<' and $line{1} == '?') {
-          $date = date('Y-m-d h:i:s');
-          $nlines[]='<'.'?php'."\n";
-          $nlines[]=<<<HEADER
-# This is a config.php file for the MoniWiki
-# automatically detect your environment and set some default variables.
-# $date by monisetup.php\n
-HEADER;
-          continue;
-        } else if (preg_match('/^(#{1,}\s*)?\$[a-zA-Z][a-zA-Z0-9_]*\s*=/', $line, $m)) {
-          $marker = isset($m[1]) ? $m[1] : '';
-          if ($marker != '')
-            $mre = '#{1,}';
-          else
-            $mre = '';
-          $mlen = strlen($marker.'$');
-        } else {
-          $nlines[]=$line;
-          continue;
-        }
-      }
-
-      if ($key) {
-        $val.=$line;
-        if (!preg_match("/$tag\s*;(\s*(?:#|\/\/).*)?\s*$/",$line,$m)) continue;
-        $mre = '';
-        $desc[$key] = isset($m[1]) ? rtrim($m[1]) : '';
-      } else {
-        list($key,$val)=explode('=',substr($line,$mlen),2);
-        $key = trim($key);
-        if (!preg_match('/(\s*;(\s*(?:#|\/\/).*)?)$/',$val,$match)) {
-          if (substr($val,0,3)== '<<<') {
-            $tag='^'.$mre.substr(rtrim($val),3);
-          } else {
-            $val = ltrim($val);
-            $tag = '';
-          }
-          continue;
-        } else {
-          $val = substr($val,0,-strlen($match[1])-1);
-          #$val .= '##########X'.$val.'==='.$match[1].'XX####';
-          if (isset($match[2])) {
-            $desc[$key] = rtrim($match[2]);
-          } else {
-            $desc[$key] = '';
-          }
-        }
-      }
-
-      if (trim($key)) {
-        $t = true;
-        if (isset($newconfig[$key])) {
-          if (!isset($config[$key])) {
-            $val=$newconfig[$key];
-            $newconfig[$key] = NULL;
-            $marker = ''; # uncomment marker
-          }
-        } else {
-          $val=preg_replace(array('@<@','@>@'),array('&lt;','&gt;'),$val);
-          #print $key.'|=='.preg_quote($val);
-          $val=rtrim($val);
-          if (empty($marker))
-            $val=preg_replace('/\s*;(\s*(?:#|\/\/).*)?$/','',$val);
-        }
-        $val = str_replace(array('&lt;','&gt;'),array('<','>'),$val);
-        if (isset($config[$key])) {
-          $val = rtrim($val);
-          $val = str_replace("\n", "\n#", $val);
-          if (!$marker) $marker = '#';
-          $nline=$marker."\$$key=$val;"; # XXX
-          if ($desc[$key]) $nline .= $desc[$key];
-          $nline .= "\n";
-          $t=NULL;
-        } else if (empty($marker) and preg_match("/^<{3}([A-Za-z0-9]+)\s.*\\1\s*$/s",$val,$m)) {
-          $config[$key] = $val;
-          $save_val=$val;
-          $val=str_replace("$m[1]",'',substr($val,3));
-          $val=str_replace('"','\"',$val);
-          $t=eval("\$$key=\"$val\";");
-          $val=$save_val;
-          $nline="\$$key=$val;\n";
-        } else if ($marker) {
-          $val = str_replace('&gt;','>',$val);
-          $nline=$marker."\$$key=$val";
-          if (empty($tag)) $nline .=';';
-          if ($desc[$key]) $nline .= $desc[$key];
-          $nline .= "\n";
-          $config[$key] = $val;
-          $t=NULL;
-        } else if (is_string($val)) {
-          $val = str_replace('&gt;','>',$val);
-          if (strpos($val,"\n")===false) {
-            $t=eval("\$$key=$val;");
-          } else {
-            $t=@eval("\$$key=$val;");
-          }
-          $nline="\$$key=$val;";
-          if ($desc[$key]) $nline .= $desc[$key];
-          $nline .= "\n";
-        } else {
-          $t=@eval("\$$key=$val;");
-        }
-        if ($t === NULL) {
-          $nlines[]=$nline;
-          $config[$key] = $val;
-        }
-        else
-          print "ERROR: \$$key =$val;\n";
-        $key = '';
-        $tag = '';
-      }
-    }
-    if (!empty($newconfig)) {
-      foreach ($newconfig as $k=>$v) {
-        if ($v != NULL)
-        $nlines[] = '$'.$k.'='.$v.";\n";
-      }
-    }
-
-    return join('',$nlines);
-  }
-
-  function _genRawConfigSimple($config) {
-    $lines=array("<?php\n","# automatically generated by monisetup\n");
-    while (list($key,$val) = each($config)) {
-      if ($key=='admin_passwd' or $key=='purge_passwd')
-         $val="'".crypt($val,md5(time()))."'";
-      $val = str_replace('&lt;','<',$val);
-      if (preg_match("/^<{3}([A-Za-z0-9]+)\s.*\\1\s*$/s",$val,$m)) {
-         $save_val=$val;
-         $val=str_replace("$m[1]",'',substr($val,3));
-         $val=preg_quote($val,'"');
-         $t=@eval("\$$key=\"$val\";");
-         $val=$save_val;
-      } else if (is_string($val)) {
-         $val = str_replace('&gt;','>',$val);
-         if (strpos($val,"\n")===false) {
-           $t=eval("\$$key=$val;");
-         } else {
-           $t=@eval("\$$key=$val;");
-         }
-      } else {
-         $t=@eval("\$$key=$val;");
-      }
-      if ($t === NULL)
-        $lines[]="\$$key=$val;\n";
-      else
-        print "<font color='red'>ERROR:</font> <tt>\$$key=$val;</tt><br/>";
-    }
-    $lines[]="?>\n";
-    if (!empty($config['dba_type'])) {
-      if (!file_exists('data/counter.db'))
-        $db=dba_open('data/counter.db','n',substr($config['dba_type'],1,-1));
-      if ($db) dba_close($db);
-    }
-    return implode('',$lines);
   }
 }
 
