@@ -24,6 +24,7 @@ class Config_base {
     {
         $lines = file($configfile);
         $key = '';
+        $tag = '';
         foreach ($lines as $line) {
             $line = rtrim($line)."\n"; // for Win32
 
@@ -76,30 +77,46 @@ class Config_base {
         $lines = file($configfile);
         $key = '';
         $desc = array();
+        $multi = array();
         foreach ($lines as $line) {
             $line = rtrim($line)."\n"; // for Win32
-            if (!$key and $line[0] != '$')
-                continue;
+            if (!$key && $line[0] != '$') {
+                if (!isset($line[1]) || $line[1] != '$')
+                    continue;
+            }
             if ($key) {
                 $val .= $line;
-                if (!preg_match('/\s*;\s*(#.*)?$/', $line))
+                if (!preg_match("/$tag\s*;(\s*#.*)?\s*$/", $line))
                     continue;
             } else {
                 list($key, $val) =explode('=', substr($line, 1), 2);
+                $key = trim($key);
+                if ($key[0] == '$')
+                    $key = substr($key, 1);
+
                 if (!preg_match('/\s*;\s*(#.*)?$/', $val)) {
                     if (substr($val, 0, 3) == '<<<')
-                        $tag = substr($val, 3);
+                        $tag = '^'.substr(rtrim($val), 3);
+                    else
+                        $tag = '';
                     continue;
                 }
             }
 
             if ($key) {
                 preg_match('/\s*;\s*#(.*)?$/', rtrim($val), $match);
-                if (!empty($match[1]))
-                    $desc[$key] = $match[1];
+                if (!empty($match[1])) {
+                    if (!isset($multi[$key])) {
+                        $multi[$key] = 0;
+                    } else {
+                        $multi[$key]++;
+                        $key .= $multi[$key];
+                    }
+                    $desc[$key] = '#'.$match[1];
+                }
+                $key = '';
+                $tag = '';
             }
-            $key = '';
-            $tag = '';
         }
         return $desc;
     }
@@ -143,6 +160,8 @@ class Config_base {
         $lines = file($conf_file);
 
         $config = array();
+        $multi = array();
+        $desc = array();
         $nlines = '';
         $key = '';
         $tag = '';
@@ -176,7 +195,15 @@ HEADER;
                 $val .= $line;
                 if (!preg_match("/$tag\s*;(\s*(?:#|\/\/).*)?\s*$/", $line, $m)) continue;
                 $mre = '';
-                $desc[$key] = isset($m[1]) ? rtrim($m[1]) : '';
+                if (!isset($multi[$key])) {
+                    $multi[$key] = 0;
+                    $keyid = $key;
+                } else {
+                    $multi[$key]++;
+                    $keyid = $key.$multi[$key];
+                }
+
+                $desc[$keyid] = isset($m[1]) ? rtrim($m[1]) : '';
             } else {
                 list($key, $val) = explode('=', substr($line, $mlen), 2);
                 $key = trim($key);
@@ -191,9 +218,17 @@ HEADER;
                 } else {
                     $val = substr($val, 0, -strlen($match[1]) - 1);
                     if (isset($match[2])) {
-                        $desc[$key] = rtrim($match[2]);
+                        if (!isset($multi[$key])) {
+                            $multi[$key] = 0;
+                            $keyid = $key;
+                        } else {
+                            $multi[$key]++;
+                            $keyid = $key.$multi[$key];
+                        }
+                        $desc[$keyid] = rtrim($match[2]);
                     } else {
-                        $desc[$key] = '';
+                        $multi[$key] = 0;
+                        $keyid = $key;
                     }
                 }
             }
@@ -218,7 +253,10 @@ HEADER;
                     $val = str_replace("\n", "\n#", $val);
                     if (!$marker) $marker = '#';
                     $nline = $marker."\$$key=$val;"; # XXX
-                    if ($desc[$key]) $nline .= $desc[$key];
+                    if (isset($this->configdesc[$keyid]))
+                        $nline .= ' '.$this->configdesc[$keyid];
+                    else if (isset($desc[$keyid]))
+                        $nline .= $desc[$keyid];
                     $nline .= "\n";
                     $t = NULL;
                 } else if (empty($marker) and preg_match("/^<{3}([A-Za-z0-9]+)\s.*\\1\s*$/s", $val, $m)) {
@@ -233,7 +271,10 @@ HEADER;
                     $val = str_replace('&gt;','>',$val);
                     $nline = $marker."\$$key=$val";
                     if (empty($tag)) $nline .=';';
-                    if ($desc[$key]) $nline .= $desc[$key];
+                    if (isset($this->configdesc[$keyid]))
+                        $nline .= ' '.$this->configdesc[$keyid];
+                    else if (isset($desc[$keyid]))
+                        $nline .= $desc[$keyid];
                     $nline .= "\n";
                     $config[$key] = $val;
                     $t = NULL;
@@ -245,7 +286,10 @@ HEADER;
                         $t = @eval("\$$key=$val;");
                     }
                     $nline = "\$$key=$val;";
-                    if ($desc[$key]) $nline .= $desc[$key];
+                    if (isset($this->configdesc[$keyid]))
+                        $nline .= ' '.$this->configdesc[$keyid];
+                    else if (isset($desc[$keyid]))
+                        $nline .= $desc[$keyid];
                     $nline .= "\n";
                 } else {
                     $t = @eval("\$$key=$val;");
