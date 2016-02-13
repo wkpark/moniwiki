@@ -278,6 +278,9 @@ $use_preview_uploads=1;
 #$category_regex=urldecode('%EB%B6%84%EB%A5%98$'); # a category example for Korean
 #$default_fullsearch='?action=myfullsearch&value='; # fullsearch action for the title link
 #$backlinks_follow=0; # set rel="follow" for the title link
+#$use_keywords=0; # use keywords feature
+#$use_tagging=0; # use tagging feature
+#$use_tagging='[http://?action=keywords&all=1 Tags]: [[Keywords]]'; # use tagging with Keywords macro
 $use_backlinks=1; # set default fullsearch behavior as backlinks search
 $use_backlink_search=1; # use backlink searching
 #$use_redirects_as_keywords=1; # use redirects as keywords
