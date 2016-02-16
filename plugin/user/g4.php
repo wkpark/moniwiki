@@ -32,10 +32,8 @@ class User_g4 extends WikiUser {
         global $g4, $member, $g4_root_dir;
 
         parent::WikiUser($id);
-        if ($this->id == 'Anonymous')
-            return;
 
-        $cookie_id = $this->id;
+        $cookie_id = $this->id != 'Anonymous' ? $this->id : '';
 
         // setup GnuBoard
         $g4_root_dir = !empty($DBInfo->g4_root_dir) ?

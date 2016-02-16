@@ -208,7 +208,10 @@ EOF;
   $fc=new Cache_text($arena);
   if ($fc->exists($sid)) {
     $data=$fc->fetch($sid);
-    if (!empty($opts['backlinks'])) {
+    if (!empty($opts['keywords'])) {
+      // keywords
+      $hits = $data;
+    } else if (!empty($opts['backlinks'])) {
       // backlinks are not needed to check it.
       $hits = $data;
 

@@ -1,66 +1,66 @@
 <?php
 # @desc Default config file
 #
-$sitename='UnnamedWiki'; # site name
-#$title_sitename='UnnamedWiki'; # site name in the title
-#$title_msgstr="%2\$s - %1\$s"; # msgstr for the title
+$sitename='UnnamedWiki'; # 위키 사이트 이름
+#$title_sitename='UnnamedWiki'; # 타이틀 태그의 사이트 이름
+#$title_msgstr="%2\$s - %1\$s"; # 타이틀 지정에 사용될 msgstr
 #$canonical_url='http://foo.bar.com/wiki.php/';
-#$use_google_sitelinks=0; # use google sitelinks
-#$use_description=0; # use auto generated description.
-#$twitter_id='@foobar'; # your twitter id
-#$base_keywords='Wiki, YourWikiName'; # base keywords for all wiki contents
-$data_dir= './data';
-$upload_dir= 'pds';
-#$site_headers = array('Status: 503 Service unavailable'); # site specific headers for maintainance etc.
+#$use_google_sitelinks=0; # google sitelinks 사용
+#$use_description=0; # 자동 생성된 description 사용
+#$twitter_id='@foobar'; # 트위터 ID 지정
+#$base_keywords='Wiki, YourWikiName'; # 모든 위키 문서에 대한 기본 키워드 지정
+$data_dir= './data'; # data 디렉토리
+$upload_dir= 'pds'; # 업로드 디렉토리
+#$site_headers= array('Status: 503 Service unavailable'); # 사이트 정비 등등의 이유로 사용할 헤더 지정
 
-$text_dir= $data_dir.'/text'; # text dir
-$cache_dir= $data_dir.'/cache'; # cache files saved
-#$user_dir= $data_dir.'/user'; # user info saved directory
-$intermap= $data_dir.'/intermap.txt'; # default interwiki map
-$editlog_name= $data_dir.'/editlog'; # editlog filename
-$shared_metadb= $data_dir."/metadb"; # shared metadb saved as data/metadb.cache
+$text_dir= $data_dir.'/text'; # 페이지가 저장되는 디렉토리
+$cache_dir= $data_dir.'/cache'; # 캐시가 저장되는 디렉토리
+#$user_dir= $data_dir.'/user'; # 사용자가 저장되는 디렉토리
+$intermap= $data_dir.'/intermap.txt'; # 기본 interwiki 맵이 정의된 파일
+$editlog_name= $data_dir.'/editlog'; # 편집 로그가 기록될 파일
+$shared_metadb= $data_dir."/metadb"; # metawiki DB가 저장될 파일
 #$shared_metadb_type='compact'; # compact metadb type
 #$shared_metadb_dbname=$data_dir."/title.db"; # metadb dbname
-$shared_intermap= $data_dir."/text/InterMap"; # shared interwiki map
+$shared_intermap= $data_dir."/text/InterMap"; # 공개적으로 편집 가능한 인터위키 맵
 
 $url_prefix= '/moniwiki';
-#$base_url_prefix='/w'; # force the base url
+#$base_url_prefix='/w'; # base url 지정.
 $imgs_dir= $url_prefix.'/imgs';
-$logo_img= $imgs_dir.'/moniwiki-logo.png'; # site logo
+$logo_img= $imgs_dir.'/moniwiki-logo.png'; # 사이트 로고
 $query_prefix= '/';
 
-$css_url= $url_prefix.'/css/nlog.css'; # default CSS (ignored if $theme is available)
-$kbd_script= $url_prefix.'/css/kbd.js'; # keyboard script
+$css_url= $url_prefix.'/css/nlog.css'; # 기본 CSS (theme 설정시 무시됨)
+$kbd_script= $url_prefix.'/css/kbd.js'; # 키보드 스크립트
 $logo_string= '<img src="'.$logo_img.'" alt="" border="0" align="middle" />';
-$use_smileys= 1; # use smiley
-#$smiley='wikismiley'; # you can also use SmileyMap too.
-$use_counter= 0; # counter
+$use_smileys= 1; # 스마일리 사용여부
+#$smiley='wikismiley'; # 스마일리 정의 파일. SmileyMap을 사용할 수도 있음
+$use_counter= 0; # 페이지 카운터 사용여부
 $use_fakemtime=0; # dir mtime emulation for FAT filesytem.
 $use_hashed_upload_dir=0; # use hashed upload dir to upload files into many subdirs
-$use_hostname=0; # use hostname or ip address by gethostbyaddr(). SLOW SLOW
-$use_htmlcolor=0; # use html color scheme like as {{{#ffcc33 blah blah}}}
-$use_group=1; # use group namespace
-$mask_hostname=1; # hide some part of hostnames or ip addresses
-#$site_local_php='config/local.php'; # site specific include file
-$show_hosts=1;
-$edit_rows=16; # editer rows
-#$editform=$data_dir.'/editform.txt'; # custom edit form
-$iconset= 'moni2'; # moni, moni2
-$inline_latex=0; # 0/1(on/off), mimetex, itex, etc.
-#$inline_latex='mimetex';
-#$mimetex_path='/cgi-bin/mimetex.cgi'; # cgi mode
-#$mimetex_path='shell:mimetex'; # command line mode
-#$mimetex_path='shell:/usr/bin/mimetex';
-#$inline_latex='latex';
-#$inline_latex='itex'; # use alternative inline latex (experimental)
-#$inline_latex='1'; # use inline latex (default)
+$use_hostname=0; # 호스트이름 혹은 IP 사용 gethostbyaddr() 사용. 매우 느림
+$use_htmlcolor=0; # html 컬러 문법 사용 {{{#ffcc33 blah blah}}}
+$use_group=1; # 그룹 네임스페이스(~) 사용 여부
+$mask_hostname=1; # IP주소의 일부 영역 가리기
+#$site_local_php='config/local.php'; # 사이트의 로컬 php 파일 사용
+$show_hosts=0; # 익명 사용자에 대해서 IP주소 혹은 호스트 이름 보이기
+$edit_rows=16; # 편집창 줄 수 크기
+#$editform=$data_dir.'/editform.txt'; # 사용자 지정 편집 폼
+$iconset= 'moni2'; # 아이콘 세트 moni, moni2
+$inline_latex=0; # 인라인 latex 사용 (기본값)
+#$inline_latex='mimetex'; # 인라인 latex 사용 (기본값)
+#$mimetex_path='/cgi-bin/mimetex.cgi'; # 명령행 라인 모드의 경우
+#$mimetex_path='shell:mimetex'; # 명령행 라인 모드의 경우
+#$mimetex_path='shell:/usr/bin/mimetex'; # 명령행 라인 모드의 경우
+#$inline_latex='latex'; # 인라인 latex 사용 (기본값)
+#$inline_latex='itex'; # 인라인 latex 사용 (기본값)
+#$inline_latex='1'; # 인라인 latex 사용 (기본값)
 #$latex_convert_options='-crop 0x0 -density 120x120'; # change convert options for the latex processor
-#$latex_renumbering=1; # renumbering tex equations
-#$latex_allinone=1; # experimental feature. make a temporary latex file into all in one text.
-$lang='auto'; # check language automatically.
+#$latex_renumbering=1; # tex 수식 번호 재지정
+#$latex_allinone=1; # experimental. 텍을 하나의 파일로 만들어 한번에 랜더링함
+$lang='auto'; # 기본 언어 (자동) 혹은 ko, ko_KR, en, en_US 등등
 #$default_lang='ko'; # default language
-$charset='utf-8'; # default character set. euc-kr etc.
-$auto_linebreak= 0; # NoSmoke style insert <br> automatically.
+$charset='utf-8'; # 기본 문자셋. euc-kr etc.
+$auto_linebreak= 0; # 노스모크식 자동 강제 개행
 #$html_nl2br=0; # use nl2br() in plugin/processor/html.php
 $trail= 1; # use trailer (navagation list of some recently visited pages)
 #$origin=1; # show upper pages like as Language/Script/Perl => Language > Script > Perl
@@ -278,9 +278,9 @@ $use_preview_uploads=1;
 #$category_regex=urldecode('%EB%B6%84%EB%A5%98$'); # a category example for Korean
 #$default_fullsearch='?action=myfullsearch&value='; # fullsearch action for the title link
 #$backlinks_follow=0; # set rel="follow" for the title link
-#$use_keywords=0; # use keywords feature
-#$use_tagging=0; # use tagging feature
-#$use_tagging='[http://?action=keywords&all=1 Tags]: [[Keywords]]'; # use tagging with Keywords macro
+#$use_keywords=0; # 키워드 사용
+#$use_tagging=0; # 키워드 태깅기능 사용
+#$use_tagging='[http://?action=keywords&all=1 Tags]: [[Keywords]]'; # 페이지 하단에 키워드 리스트 보여주기
 $use_backlinks=1; # set default fullsearch behavior as backlinks search
 $use_backlink_search=1; # use backlink searching
 #$use_redirects_as_keywords=1; # use redirects as keywords

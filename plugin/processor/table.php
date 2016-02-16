@@ -154,7 +154,7 @@ class tableParser {
         $paras = array();
         foreach ($tmp as $p) {
             // split attributes <(-2> => '(', '-2'
-            if (preg_match_all('/([\^_v\(:\)\!]|[-\|]\d+|\d+%|#[0-9a-f]{6}|(?:colspan|rowspan)\s*=\s*\d+)/', $p, $m))
+            if (preg_match_all('/([\^_v\(:\)\!]|[-\|]\d+|\d+%|#[0-9a-f]{6}|(?:colspan|rowspan|[a-z]+)\s*=\s*.+)/i', $p, $m))
                 $paras = array_merge($paras, $m[1]);
             else
                 $paras[] = $p;
