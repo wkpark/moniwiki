@@ -868,7 +868,7 @@ function send_footer($formatter, $args = array(), $params = array()) {
 
     $params = empty($params) ? array('id'=>'Anonymous',
                               'tz_offset'=>$formatter->tz_offset,
-                              'page'=>$formatter->page->name) : null;
+                              'page'=>$formatter->page->name) : $params;
 
     if (!empty($params['action_mode']) and $params['action_mode'] =='ajax') return;
 
