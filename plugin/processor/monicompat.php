@@ -424,6 +424,8 @@ class processor_monicompat
 
         $is_writable = !empty($params['is_writable']) ? $params['is_writable'] : 0;
 
+        $my_divopen = '';
+        $my_divclose = '';
         if (!empty($args)) {
             if (preg_match_all('@((?:[#.])?\w+)(?:\s*=\s*(["\'])?(.+?)(?(2)\2|\b))?@', $args, $matches, PREG_SET_ORDER)) {
                 // parse attributes class="foo" id=bar style="border:1px sold red;"
