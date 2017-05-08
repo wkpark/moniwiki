@@ -494,8 +494,8 @@ class processor_monimarkup
                                 break;
                             default:
                                 // ignore
-                                default;
-
+                                //default;
+                                ;
                         }
                     } else {
                         // .foo #bar => id="foo", class="bar" (MoniWiki)
