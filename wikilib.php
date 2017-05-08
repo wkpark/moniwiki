@@ -4994,11 +4994,9 @@ function get_key($name) {
 
   if ($utf or $use_utf) {
     if ((ord($name[0]) & 0xF0) == 0xE0) { # Now only 3-byte UTF-8 supported
-       #$uni1=((ord($name[0]) & 0x0f) <<4) | ((ord($name[1]) & 0x7f) >>2);
-       $uni1=((ord($name[0]) & 0x0f) <<4) | (($name[1] & 0x7f) >>2);
-       $uni2=((ord($name[1]) & 0x7f) <<6) | (ord($name[2]) & 0x7f);
+       $uni=((ord($name[0]) & 0x0f) << 12) |
+            ((ord($name[1]) & 0x7f) << 6) | (ord($name[2]) & 0x7f);
 
-       $uni=($uni1<<8)+$uni2;
        # Hangul Syllables
        if ($uni>=0xac00 && $uni<=0xd7a3) {
          $ukey=0xac00 + (int)(($uni - 0xac00) / 588) * 588;
