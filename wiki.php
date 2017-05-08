@@ -6222,7 +6222,7 @@ function wiki_main($options) {
   $formatter = new Formatter($page,$options);
 
   $formatter->refresh=!empty($refresh) ? $refresh : '';
-  $formatter->popup=!empty($popup) ? $popup : '';
+  $formatter->popup=!empty($popup) ? $popup : 0;
   $formatter->tz_offset=$options['tz_offset'];
 
   // check blocklist/whitelist for block_actions
