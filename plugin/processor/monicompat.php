@@ -444,8 +444,8 @@ class processor_monicompat
                                 break;
                             default:
                                 // ignore
-                                default;
-
+                                //default;
+                                ;
                         }
                     } else {
                         if ($tag[0] == '.')
