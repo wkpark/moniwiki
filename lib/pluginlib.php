@@ -484,7 +484,7 @@ function call_plugin($formatter, $plugin, $params = array()) {
         return $func($formatter, array('title'=>sprintf(_("Invalid %s action."), $mode)));
     }
 
-    if ($mode == 'do')
+    if ($mode == 'do' || $mode == 'ajax')
         return call_user_func($mode.'_'.$plugin, $formatter, $params);
     $ret = call_user_func($mode.'_'.$plugin, $formatter, '', $params);
     echo $ret;
