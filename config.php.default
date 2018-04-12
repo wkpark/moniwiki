@@ -37,8 +37,8 @@ $use_smileys= 1; # use smiley
 $use_counter= 0; # counter
 $use_fakemtime=0; # dir mtime emulation for FAT filesytem.
 $use_hashed_upload_dir=0; # use hashed upload dir to upload files into many subdirs
-$use_hostname=0; # use hostname or ip address by gethostbyaddr(). SLOW SLOW
-$use_htmlcolor=0; # use html color scheme like as {{{#ffcc33 blah blah}}}
+$use_hostname=1; # use hostname or ip address by gethostbyaddr(). SLOW SLOW
+$use_htmlcolor=1; # use html color scheme like as {{{#ffcc33 blah blah}}}
 $use_group=1; # use group namespace
 $mask_hostname=1; # hide some part of hostnames or ip addresses
 #$site_local_php='config/local.php'; # site specific include file
@@ -271,11 +271,11 @@ $trtags=array("{{|\n"=>"{{{#!wiki .closure\n",'{{|'=>"{{{#!wiki .closure\n", '|}
 #$use_textbrowsers=1; # check some textbased browsers
 $use_preview_uploads=1;
 #$use_camelcase=0; # turn off camelcase syntax by default
-#$mediawiki_style=0; # 0: wikiCreole style [[foo bar]]=>[[FooBar]], 1: mediawiki style preserve white spaces
+$mediawiki_style=1; # 0: wikiCreole style [[foo bar]]=>[[FooBar]], 1: mediawiki style preserve white spaces
 #$markdown_style=0; # markdown friendly table align etc.
-#$use_category=0; # on/off categories list in the edit mode
+#$use_category=1; # on/off categories list in the edit mode
 #$use_builtin_category=1; # on/off builtin category support
-#$category_regex=urldecode('%EB%B6%84%EB%A5%98$'); # a category example for Korean
+$category_regex=urldecode('분류:'); # a category example for Korean
 #$default_fullsearch='?action=myfullsearch&value='; # fullsearch action for the title link
 #$backlinks_follow=0; # set rel="follow" for the title link
 #$use_keywords=0; # use keywords feature
