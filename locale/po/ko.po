@@ -1572,7 +1572,7 @@ msgstr "위키를 백업하시겠습니까 ?"
 
 #: ../plugin/bbs.php:494
 msgid "This bbs does not exists yet. Please save this page first"
-msgstr "현 BBS가 존재하지 않습ㄴ디ㅏ. 먼저 페이지를 저장하세요"
+msgstr "현 BBS가 존재하지 않습니다. 먼저 페이지를 저장하세요"
 
 #: ../plugin/bbs.php:618
 msgid "No"
