@@ -865,5 +865,3 @@ UWL;
   }
   return "<ol>\n$out</ol>\ntotal $count words\n";
 }
-
-?>

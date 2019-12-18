@@ -173,4 +173,3 @@ function macro_Tour($formatter,$value,$options=array()) {
 }
 
 // vim:et:sts=4:
-?>

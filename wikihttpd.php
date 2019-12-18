@@ -46,7 +46,7 @@ class simple_server {
   var $servername = "MoniWiki/1.1 Server";
   var $wiki_prefix = "/wiki/";
 
-  function simple_server($address=0,$port=8080,$root='htdocs') {
+  function __construct($address=0,$port=8080,$root='htdocs') {
     @set_time_limit(0);
     $this->document_root=$root;
 
@@ -770,4 +770,3 @@ do {
   socket_close($httpd->child);
   #socket_shutdown($httpd->child);
 } while(true);
-?> 

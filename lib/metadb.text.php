@@ -12,7 +12,7 @@ class MetaDB_text extends MetaDB {
     var $alias; // alias metadata
     var $db; // extra aliases from the AliasPageNames
 
-    function MetaDB_text($db = array()) {
+    function __construct($db = array()) {
         // open aliasname metadata
         $this->alias = new Cache_Text('aliasname');
         $this->db = $db;

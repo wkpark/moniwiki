@@ -368,4 +368,3 @@ function do_ticket($formatter,$options) {
 }
 
 // vim:et:sts=4:sw=4:
-?>

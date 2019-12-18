@@ -63,4 +63,3 @@ function processor_mimetex($formatter,$value) {
   }
 }
 // vim:et:sts=2:sw=2:
-?>

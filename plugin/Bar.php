@@ -67,5 +67,3 @@ function macro_Bar($formatter,$value) {
 }
 
 // vim:et:sts=4:sw=4:
-
-?>

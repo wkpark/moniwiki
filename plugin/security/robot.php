@@ -5,7 +5,7 @@
 class Security_robot extends Security_base {
   var $DB;
 
-  function Security_robot($DB="") {
+  function __construct($DB="") {
     $this->DB=$DB;
   }
 
@@ -24,5 +24,3 @@ class Security_robot extends Security_base {
     return 0;
   }
 }
-
-?>

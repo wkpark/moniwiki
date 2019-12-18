@@ -81,4 +81,3 @@ function processor_linuxdoc($formatter,$value) {
 }
 
 // vim:et:sts=2:
-?>

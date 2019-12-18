@@ -196,4 +196,3 @@ function macro_trackback($formatter,$value) {
 }
 
 // vim:et:sts=2:
-?>

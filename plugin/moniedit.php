@@ -12,5 +12,3 @@ function do_moniedit($formatter,$options) {
   print $options['page']." ".qualifiedUrl($formatter->prefix);
   return;
 }
-
-?>

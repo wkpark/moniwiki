@@ -664,4 +664,3 @@ function do_diff($formatter,$options="") {
 }
 
 // vim:et:sts=2:sw=2:
-?>

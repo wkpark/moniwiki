@@ -45,5 +45,3 @@ function processor_dot($formatter,$value) {
 
   return $err."<a href='$DBInfo->url_prefix/$webdot_dir/$md5sum.map'><img border='0' src='$DBInfo->url_prefix/$webdot_dir/$md5sum.png' ismap /></a>\n";
 }
-
-?>

@@ -186,5 +186,3 @@ APPLET;
   $formatter->send_footer("",$options);
   return;
 }
-
-?>

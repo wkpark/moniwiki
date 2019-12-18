@@ -34,4 +34,3 @@ function filter_cite($formatter,$value,$options) {
   return preg_replace($cite_rule,$cite_repl,$value);
 }
 // vim:et:sts=4:
-?>

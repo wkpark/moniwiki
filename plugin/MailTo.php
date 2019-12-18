@@ -20,4 +20,3 @@ function macro_MailTo($formatter,$value) {
 }
 
 // vim:et:sts=2:
-?>

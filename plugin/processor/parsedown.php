@@ -32,7 +32,7 @@ class processor_parsedown
     var $formatter;
     var $charset = 'UTF-8';
 
-    function processor_parsedown($formatter, $params = array())
+    function __construct($formatter, $params = array())
     {
         global $DBInfo;
 

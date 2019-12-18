@@ -9,7 +9,7 @@
 class Security_nforge extends Security_base {
   var $DB;
 
-  function Security_nforge(&$DB) {
+  function __construct(&$DB) {
     $this->DB=$DB;
     $u = session_get_user();
     $group =& group_get_object($DB->group_id);
@@ -101,5 +101,3 @@ class Security_nforge extends Security_base {
   }
 
 }
-
-?>

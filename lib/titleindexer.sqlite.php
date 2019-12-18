@@ -14,7 +14,7 @@ class TitleIndexer_sqlite {
     var $use_regexp = null;
     var $pages_limit = 5000;
 
-    function TitleIndexer_sqlite($name = 'titleindex_sqlite')
+    function __construct($name = 'titleindex_sqlite')
     {
         global $Config;
 

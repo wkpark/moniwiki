@@ -174,4 +174,3 @@ function _rmdir_r($target,$verbose=false,$dry=false) {
 }
 
 // vim:et:sts=4:
-?>

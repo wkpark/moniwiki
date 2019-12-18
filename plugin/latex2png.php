@@ -69,4 +69,3 @@ function do_latex2png($formatter,$options) {
 }
 
 // vim:et:sts=4:
-?>

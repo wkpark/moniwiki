@@ -62,4 +62,3 @@ function do_blogcategories($formatter,$options) {
   $formatter->send_footer($args,$options);
 }
 // vim:et:sts=2:
-?>

@@ -231,5 +231,3 @@ function macro_LikePages($formatter="", $value, &$opts) {
 
   return $out;
 }
-
-?>

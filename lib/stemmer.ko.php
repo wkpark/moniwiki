@@ -11,7 +11,7 @@ class TagOp {
     var $value;
     var $type;
 
-    function TagOp($value,$type) {
+    function __construct($value,$type) {
         $this->value=$value;
         $this->type=$type;
     }
@@ -26,7 +26,7 @@ class TagSet extends TagOp {
     var $type;
     var $tags;
 
-    function TagSet($value,$type) {
+    function __construct($value,$type) {
         $this->value=$value;
         $this->type=$type;
         $this->tags=array();
@@ -46,7 +46,7 @@ class TagSet extends TagOp {
 }
 
 class KoreanStemmer {
-    function KoreanStemmer() {
+    function __construct() {
         include_once(dirname(__FILE__).'/compat.php');
         include_once(dirname(__FILE__).'/unicode.php');
         $this->_eomiRule();

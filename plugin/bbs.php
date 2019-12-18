@@ -53,7 +53,7 @@ function _get_pagelist($formatter,$pages,$action,$curpage=1,$listcount=10,$bra="
 }
 
 class BBS_text {
-    function BBS_text($name,$conf) {
+    function __construct($name,$conf) {
         # $conf['data_dir'] from DBInfo.
         $this->bbsname=$name;
 
@@ -1129,4 +1129,3 @@ EOF;
 }
 
 // vim:et:sts=4:sw=4:
-?>

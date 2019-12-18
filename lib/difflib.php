@@ -35,7 +35,7 @@ class _DiffOp {
 class _DiffOp_Copy extends _DiffOp {
     var $type = 'copy';
     
-    function _DiffOp_Copy ($orig, $_final = false) {
+    function __construct ($orig, $_final = false) {
         if (!is_array($_final))
             $_final = $orig;
         $this->orig = $orig;
@@ -51,7 +51,7 @@ class _DiffOp_Copy extends _DiffOp {
 class _DiffOp_Delete extends _DiffOp {
     var $type = 'delete';
     
-    function _DiffOp_Delete ($lines) {
+    function __construct ($lines) {
         $this->orig = $lines;
         $this->_final = false;
     }
@@ -65,7 +65,7 @@ class _DiffOp_Delete extends _DiffOp {
 class _DiffOp_Add extends _DiffOp {
     var $type = 'add';
     
-    function _DiffOp_Add ($lines) {
+    function __construct ($lines) {
         $this->_final = $lines;
         $this->orig = false;
     }
@@ -79,7 +79,7 @@ class _DiffOp_Add extends _DiffOp {
 class _DiffOp_Change extends _DiffOp {
     var $type = 'change';
     
-    function _DiffOp_Change ($orig, $_final) {
+    function __construct ($orig, $_final) {
         $this->orig = $orig;
         $this->_final = $_final;
     }
@@ -510,7 +510,7 @@ class Diff
      *        (Typically these are lines from a file.)
      * @param $to_lines array An array of strings.
      */
-    function Diff($from_lines, $to_lines) {
+    function __construct($from_lines, $to_lines) {
         $eng = new _DiffEngine;
         $this->edits = $eng->diff($from_lines, $to_lines);
         //$this->_check($from_lines, $to_lines);
@@ -663,7 +663,7 @@ extends Diff
      * @param $mapped_to_lines array This array should
      *  have the same number of elements as $to_lines.
      */
-    function MappedDiff($from_lines, $to_lines,
+    function __construct($from_lines, $to_lines,
                         $mapped_from_lines, $mapped_to_lines) {
 
         USE_ASSERTS && assert(sizeof($from_lines) == sizeof($mapped_from_lines));
@@ -858,7 +858,7 @@ class DiffFormatter
 define('NBSP', "\r");         // iso-8859-x non-breaking space.
 
 class _HWLDF_WordAccumulator {
-    function _HWLDF_WordAccumulator ($tags = array(), $nbsp = '&nbsp;', $html = null) {
+    function __construct ($tags = array(), $nbsp = '&nbsp;', $html = null) {
         if (empty($tags))
             $tags = array("<del class='diff-removed'>", "</del>",
                         "<ins class='diff-added'>", "</ins>");
@@ -938,7 +938,7 @@ class _HWLDF_WordAccumulator {
 
 class WordLevelDiff extends MappedDiff
 {
-    function WordLevelDiff ($orig_lines, $final_lines,
+    function __construct ($orig_lines, $final_lines,
             $charset="euc-kr",$tags=array()) {
         if (strtolower($charset) == 'euc-kr') # two bytes sequence rule
           $this->charset_rule='[\xb0-\xfd][\xa1-\xfe]|';
@@ -1018,7 +1018,7 @@ class WordLevelDiff extends MappedDiff
  */
 class UnifiedDiffFormatter extends DiffFormatter
 {
-    function UnifiedDiffFormatter($context_lines = 3) {
+    function __construct($context_lines = 3) {
         $this->leading_context_lines = $context_lines;
         $this->trailing_context_lines = $context_lines;
     }
@@ -1050,7 +1050,7 @@ class UnifiedDiffFormatter extends DiffFormatter
  */
 class InlineDiffFormatter extends DiffFormatter
 {
-    function InlineDiffFormatter($context_lines = 10000) {
+    function __construct($context_lines = 10000) {
         $this->leading_context_lines = $context_lines;
         $this->trailing_context_lines = $context_lines;
     }
@@ -1104,7 +1104,7 @@ class PlainDiffFormatter
 {
     var $trailing_cr = "\n";
 
-    function PlainDiffFormatter() {
+    function __construct() {
     }
 
     function _lines($lines, $prefix = '') {
@@ -1143,4 +1143,3 @@ class PlainDiffFormatter
     }   
 }
 // vim:et:sts=4:
-?>

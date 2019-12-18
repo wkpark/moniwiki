@@ -239,5 +239,3 @@ EOS;
      return "<a href='$booklink'><img src='$imglink' border='1' title='$lang".
        ":ISBN-$isbn' alt='[ISBN-$isbn2]' class='isbn' $attr /></a>";
 }
-
-?>

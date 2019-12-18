@@ -5,7 +5,7 @@
 class Security_community extends Security_base {
   var $DB;
 
-  function Security_community($DB="") {
+  function __construct($DB="") {
     $this->DB=$DB;
     $this->public_pages = array('WikiSandBox','WikiSandbox','GuestBook','SandBox');
     if (!empty($DB->public_pages))
@@ -82,7 +82,6 @@ class Security_community extends Security_base {
 
     return 0;
   }
-// vim:et:sts=2:
 }
 
-?>
+// vim:et:sts=2:

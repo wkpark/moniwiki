@@ -739,4 +739,3 @@ function do_keywords($formatter,$options) {
     $formatter->send_footer($args,$options);
 }
 // vim:et:sts=4:sw=4:
-?>

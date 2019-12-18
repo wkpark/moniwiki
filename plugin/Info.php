@@ -466,4 +466,3 @@ function do_info($formatter,$options) {
 }
 
 // vim:et:sts=2:
-?>

@@ -20,4 +20,3 @@ function processor_randomquote($formatter,$value="",$options=array()) {
 }
 
 // vim:et:ts=4:
-?>

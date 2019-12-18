@@ -27,7 +27,7 @@ class User_g4 extends WikiUser {
         $member = g4_get_member();
     }
 
-    function User_g4($id = '') {
+    function __construct($id = '') {
         global $DBInfo;
         global $g4, $member, $g4_root_dir;
 

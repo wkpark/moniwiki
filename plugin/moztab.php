@@ -31,5 +31,3 @@ function macro_MozTab($formatter,$value) {
 TAB;
   return $tab;
 }
-
-?>

@@ -24,5 +24,3 @@ function processor_diff($formatter,$value="") {
   $options['text']=$value;
   return $formatter->macro_repl('Diff','',$options);
 }
-
-?>

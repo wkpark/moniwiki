@@ -5,7 +5,7 @@
 class Security_wikimaster extends Security_base {
   var $DB;
 
-  function Security_wikimaster($DB='') {
+  function __construct($DB='') {
     $this->DB=$DB;
     $this->allowed_users=array_merge($DB->wikimasters,$DB->owners);
   }
@@ -95,5 +95,3 @@ class Security_wikimaster extends Security_base {
     return 0;
   }
 }
-
-?>

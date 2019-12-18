@@ -101,4 +101,3 @@ function processor_jade($formatter,$value,$options=array()) {
 }
 
 // vim:et:sts=2:
-?>

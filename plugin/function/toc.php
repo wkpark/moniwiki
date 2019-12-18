@@ -92,4 +92,3 @@ function function_toc($formatter) {
 }
 
 // vim:et:sts=4:sw=4:
-?>

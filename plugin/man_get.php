@@ -126,5 +126,3 @@ function do_man_get($formatter,$options) {
   return;
 // vim:et:sts=4:
 }
-
-?>

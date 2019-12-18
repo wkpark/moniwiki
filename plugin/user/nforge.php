@@ -17,7 +17,7 @@
 // $Id: nforge.php,v 1.8 2009/09/17 11:24:44 wkpark Exp $
 
 class User_nforge extends WikiUser {
-    function User_nforge($id = '') {
+    function __construct($id = '') {
         if ($id) {
             $this->setID($id);
             $u =& user_get_object_by_name($id);

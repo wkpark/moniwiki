@@ -29,4 +29,3 @@ function do_test($formatter,$options) {
 }
 
 // vim:et:sts=4:
-?>

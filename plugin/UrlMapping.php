@@ -71,4 +71,3 @@ function macro_UrlMapping($formatter,$value,$options=array()) {
 }
 
 // vim:et:sts=4:
-?>

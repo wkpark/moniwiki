@@ -12,7 +12,7 @@ require_once(dirname(__FILE__).'/pagekey.base.php');
 class PageKey_utf8fs extends PageKey_base {
     var $text_dir;
 
-    function PageKey_utf8fs($conf) {
+    function __construct($conf) {
         if (is_object($conf)) {
             $this->text_dir = $conf->text_dir;
         } else {

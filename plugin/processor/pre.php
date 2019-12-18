@@ -42,4 +42,3 @@ function processor_pre($formatter,$value) {
 }
 
 // vim:et:sts=4
-?>

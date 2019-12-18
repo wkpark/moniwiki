@@ -277,4 +277,3 @@ class File_Gettext
         return exit($code);
     }
 }
-?>

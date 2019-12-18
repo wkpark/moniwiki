@@ -13,7 +13,7 @@ require_once "lib/JSON.php";
 class TitleIndexer_ES {
     var $text_dir = '';
 
-    function TitleIndexer_ES($name = 'elasticsearch')
+    function __construct($name = 'elasticsearch')
     {
         global $Config;
 

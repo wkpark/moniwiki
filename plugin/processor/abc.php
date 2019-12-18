@@ -77,5 +77,3 @@ function processor_abc($formatter="",$value="") {
   }
   return $log."<embed src='$DBInfo->url_prefix/$cache_dir/$uniq.midi' height='20' />";
 }
-
-?>

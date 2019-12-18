@@ -37,4 +37,3 @@ function do_filter($formatter,$options) {
 }
 
 // vim:et:sts=4:sw=4:
-?>

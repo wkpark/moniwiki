@@ -101,4 +101,3 @@ function do_pageview($formatter,$options) {
 }
 
 // vim:et:sts=4:
-?>

@@ -35,7 +35,7 @@ function postfilter_abbr($formatter,$value,$options) {
 
 class SimpleDict {
     var $dicts=array();
-    function SimpleDict($dicts) {
+    function __construct($dicts) {
         $this->dicts=$dicts;
     }
     function get($word) {
@@ -54,4 +54,3 @@ class SimpleDict {
 #    return $word;
 #}
 // vim:et:sts=4:
-?>

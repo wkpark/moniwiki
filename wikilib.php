@@ -1498,7 +1498,7 @@ function getSmileys() {
 
 class UserDB {
   var $users=array();
-  function UserDB($conf) {
+  function __construct($conf) {
     if (is_array($conf)) {
       $this->user_dir = $conf['user_dir'];
       $this->strict = $conf['login_strict'];
@@ -1867,7 +1867,7 @@ class UserDB {
 class WikiUser {
   var $cookie_expires = 2592000; // 60 * 60 * 24 * 30; // default 30 days
 
-  function WikiUser($id="") {
+  function __construct($id="") {
      global $Config;
 
      if (!empty($Config['cookie_expires']))
@@ -5779,4 +5779,3 @@ function processor_php($formatter="",$value="") {
 }
 
 // vim:et:sts=4:sw=4:
-?>

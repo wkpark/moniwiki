@@ -150,4 +150,3 @@ function do_login($formatter,$options) {
 }
 
 // vim:et:sts=2:
-?>

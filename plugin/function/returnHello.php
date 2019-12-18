@@ -21,4 +21,3 @@ function function_returnHello($formatter,$user='world')
 }
 
 // vim:et:sts=4:sw=4:
-?>

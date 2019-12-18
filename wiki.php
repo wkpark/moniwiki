@@ -256,7 +256,7 @@ EOS;
 }
 
 class MetaDB {
-  function MetaDB() {
+  function __construct() {
     return;
   }
   function getSisterSites($pagename,$mode=1) {
@@ -289,7 +289,7 @@ class Counter_dba {
   var $data_dir;
   var $dbname = 'counter';
 
-  function Counter_dba($DB, $dbname='counter') {
+  function __construct($DB, $dbname='counter') {
     if (!function_exists('dba_open')) return;
     $this->dba_type = $DB->dba_type;
     $this->owners = $DB->owners;
@@ -352,7 +352,7 @@ class Counter_dba {
 }
 
 class Counter {
-  function Counter($DB="") { }
+  function __construct($DB="") { }
   function incCounter($page,$options="") { }
   function pageCounter($page) { return 1; }
   function close() { }
@@ -361,7 +361,7 @@ class Counter {
 class Security_base {
   var $DB;
 
-  function Security_base($DB = '') {
+  function __construct($DB = '') {
     $this->DB=$DB;
   }
 
@@ -434,7 +434,7 @@ function getConfig($configfile, $options=array()) {
 }
 
 class WikiDB {
-  function WikiDB($config) {
+  function __construct($config) {
     // set configurations
     if (is_object($config)) {
       $conf = get_object_vars($config); // merge default settings to $config
@@ -1283,7 +1283,7 @@ class WikiPage {
   var $rev;
   var $body;
 
-  function WikiPage($name,$options="") {
+  function __construct($name,$options="") {
     if (!empty($options['rev']))
       $this->rev=$options['rev'];
     else
@@ -1697,7 +1697,7 @@ class Formatter {
   var $purple_number=0;
   var $java_scripts=array();
 
-  function Formatter($page="",$options=array()) {
+  function __construct($page="",$options=array()) {
     global $DBInfo;
 
     $this->page=$page;
@@ -6834,4 +6834,3 @@ if ($_SERVER['REQUEST_METHOD'] != 'GET' and
 wiki_main($options);
 endif;
 // vim:et:sts=2:sw=2
-?>

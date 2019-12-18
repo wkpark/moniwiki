@@ -5,7 +5,7 @@
 class Security_mustlogin extends Security_base {
   var $DB;
 
-  function Security_mustlogin($DB="") {
+  function __construct($DB="") {
     $this->DB=$DB;
   }
 
@@ -71,5 +71,3 @@ class Security_mustlogin extends Security_base {
     return 1;
   }
 }
-
-?>

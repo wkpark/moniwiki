@@ -73,5 +73,3 @@ function do_post_backup($formatter,$options) {
 function macro_backup($formatter,$value) {
   
 }
-
-?>

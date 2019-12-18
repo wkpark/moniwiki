@@ -8,7 +8,7 @@
 class Security_htaccesslogin extends Security_base {
   var $DB;
 
-  function Security_htaccesslogin($DB="") {
+  function __construct($DB="") {
     $this->DB=$DB;
 
     # BEGIN LOGIN
@@ -50,5 +50,3 @@ class Security_htaccesslogin extends Security_base {
     return 1;
   }
 }
-
-?>

@@ -46,7 +46,7 @@ define('RCSLITE_QUICK', 2);
 Class RcsLite {
     var $rcs_dir='RCS';
     var $rcs_user='root';
-    function RcsLite($rcs_dir='RCS',$rcs_user='root')
+    function __construct($rcs_dir='RCS',$rcs_user='root')
     {
         #$class = ref($proto) || $proto;
         #bless( $this, $class );
@@ -704,4 +704,3 @@ Class RcsLite {
 }
 
 // vim:et:sts=4
-?>

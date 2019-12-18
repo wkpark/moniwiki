@@ -191,4 +191,3 @@ function do_msgtrans($formatter,$options) {
 }
 
 // vim:et:sts=4:
-?>

@@ -43,4 +43,3 @@ if (getenv('OS')=='Windows_NT' and strtolower($Config['charset']) == 'utf-8') {
 }
 
 // vim:et:sts=4:sw=4:
-?>

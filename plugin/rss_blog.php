@@ -203,4 +203,3 @@ function generate_textInput($formatter)
 
 FORM;
 }
-?>

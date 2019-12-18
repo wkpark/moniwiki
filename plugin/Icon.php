@@ -27,4 +27,3 @@ function macro_Icon($formatter,$value='',$extra='') {
 }
 
 // vim:et:sts=2:
-?>

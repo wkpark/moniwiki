@@ -87,4 +87,3 @@ function processor_enscript($formatter,$value) {
 }
 
 // vim:et:sts=2:
-?>

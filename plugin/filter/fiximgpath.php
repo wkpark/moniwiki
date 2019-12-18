@@ -21,4 +21,3 @@ function postfilter_fiximgpath($formatter,$value,$options=array()) {
 }
 
 // vim:et:sts=4:
-?>

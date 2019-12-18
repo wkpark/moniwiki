@@ -42,4 +42,3 @@ function macro_GoogleTrans($formatter,$value) {
 }
 
 // vim:et:sts=4:
-?>

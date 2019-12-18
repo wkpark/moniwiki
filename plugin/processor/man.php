@@ -43,4 +43,3 @@ function processor_man($formatter,$value="") {
 }
 
 // vim:et:ts=2:
-?>

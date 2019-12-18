@@ -21,7 +21,7 @@
 
 class tableParser {
 
-    function tableParser()
+    function __construct()
     {
     }
 

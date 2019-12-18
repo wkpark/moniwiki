@@ -17,7 +17,7 @@ class processor_monimarkup
 {
     var $_type='wikimarkup';
 
-    function processor_monimarkup(&$formatter,$options=array())
+    function __construct(&$formatter,$options=array())
     {
         $this->formatter=&$formatter;
     }
@@ -948,4 +948,3 @@ FOOT;
 }
 
 // vim:et:sts=4:sw=4:
-?>

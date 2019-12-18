@@ -32,4 +32,3 @@ function macro_SystemInfo($formatter,$value = '') {
 </table>
 EOF;
 }
-?>

@@ -61,5 +61,3 @@ function do_quicklinks($formatter,$options) {
     </form>";
   $formatter->send_footer("",$options);
 }
-
-?>

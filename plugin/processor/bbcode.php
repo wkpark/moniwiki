@@ -155,4 +155,3 @@ class processor_bbcode {
 #  print $f->process($text);
 #}
 // vim:et:sts=2:
-?>

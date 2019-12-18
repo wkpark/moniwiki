@@ -57,4 +57,3 @@ function macro_BlogArchives($formatter,$value,$options=array()) {
   if ($bra) return '<ul>'.$out.'</ul>';
   return $out;
 }
-?>

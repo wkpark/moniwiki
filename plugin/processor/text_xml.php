@@ -2,7 +2,7 @@
 
 class Formatter_xml extends Formatter {
 
-  function Formatter_xml() {
+  function __construct() {
     global $DBInfo;
 
     $this->in_p='';
@@ -668,4 +668,3 @@ function get_authorinfo($body) {
 
   return $authorinfo.$history;
 }
-?>

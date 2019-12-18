@@ -229,4 +229,3 @@ function do_scrap($formatter,$options) {
 }
 
 // vim:et:sts=4
-?>

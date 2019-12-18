@@ -27,4 +27,3 @@ function macro_minilogin($formatter,$value="",$options="") {
 }
 
 // vim:et:ts=2:
-?>

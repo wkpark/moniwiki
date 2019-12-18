@@ -37,4 +37,3 @@ function macro_ShowSmiley($formatter,$value) {
 }
 
 // vim:et:sts=2:
-?>

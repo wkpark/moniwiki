@@ -49,5 +49,3 @@ function do_rcspurge($formatter,$options) {
   $args['noaction']=1;
   $formatter->send_footer($args,$options);
 }
-
-?>

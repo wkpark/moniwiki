@@ -74,7 +74,7 @@ class Cache_Text {
 	 */
 	var $hash = 'md5';
 
-	function Cache_Text($arena = 'default', $cache_info = false)
+	function __construct($arena = 'default', $cache_info = false)
 	{
 		global $Config;
 

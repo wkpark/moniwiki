@@ -128,4 +128,3 @@ function processor_itex($formatter="",$value="",$options='') {
 }
 
 // vim:et:sts=4:
-?>

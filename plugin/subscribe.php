@@ -116,5 +116,3 @@ function do_subscribe($formatter,$options) {
 #  $formatter->send_page();
   $formatter->send_footer("",$options);
 }
-
-?>
