@@ -181,8 +181,8 @@ class MoniConfig extends Config_base {
       $val=str_replace(array("\r\n","\r"),array("\n","\n"),$val);
       if (!isset($val)) $val="''";
       if (!$mode) {
-        @eval("\$dum=$val;");
-        @eval("\$$key=$val;");
+        @eval("\$dum=$val;\n");
+        @eval("\$$key=$val;\n");
         $conf[$key]=$dum;
       } else {
         $conf[$key]=$val;
