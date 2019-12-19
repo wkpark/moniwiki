@@ -162,7 +162,7 @@ class Config_base {
         $config = array();
         $multi = array();
         $desc = array();
-        $nlines = '';
+        $nlines = array();
         $key = '';
         $tag = '';
         foreach ($lines as $line) {
