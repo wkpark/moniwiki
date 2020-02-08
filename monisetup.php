@@ -619,6 +619,7 @@ JS;
     	print "<h4>$filter_name <a href='#' onclick='Toggle(\"set$ii\")' >(toggle)</a></h4>\n";
     	print "<div id='set$ii'>\n";
     }
+if(!empty($pages)){
     foreach ($pages as $pagename) {
       if (preg_match($filter[0],$pagename)) {
         print "<input type='checkbox' name='seeds[$idx]' value='$pagename'";
@@ -631,6 +632,7 @@ JS;
         unset($pages[$pagename]);
       }
     }
+}
     print "</div>\n";
     $ii++;
     $wrap=1;
