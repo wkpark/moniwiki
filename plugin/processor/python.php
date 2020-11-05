@@ -19,5 +19,3 @@ function processor_python($formatter,$value="") {
   # get parameters
   return $formatter->processor_repl('vim',$value);
 }
-
-?>

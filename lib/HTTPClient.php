@@ -65,7 +65,7 @@ class HTTPClient {
      *
      * @author Andreas Gohr <andi@splitbrain.org>
      */
-    function HTTPClient(){
+    function __construct(){
         $this->agent        = 'Mozilla/4.0 (compatible; HTTP Client; '.PHP_OS.')';
         $this->timeout      = 15;
         $this->cookies      = array();

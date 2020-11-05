@@ -5,7 +5,7 @@
 class Security_userbased extends Security_base {
   var $DB;
 
-  function Security_userbased($DB='') {
+  function __construct($DB='') {
     $this->DB=$DB;
     $this->allowed_users=array_merge($DB->wikimasters,$DB->owners);
 
@@ -81,5 +81,3 @@ class Security_userbased extends Security_base {
     return 0;
   }
 }
-
-?>

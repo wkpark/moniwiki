@@ -4,7 +4,7 @@
 class Security_desktop extends Security_base {
   var $DB;
 
-  function Security_desktop($DB="") {
+  function __construct($DB="") {
     $this->DB=$DB;
   }
 
@@ -20,5 +20,3 @@ class Security_desktop extends Security_base {
     return 0;
   }
 }
-
-?>

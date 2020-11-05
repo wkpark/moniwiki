@@ -65,4 +65,3 @@ function do_bookmark($formatter,$options) {
 }
 
 // vim:et:sts=2:sw=2:
-?>

@@ -41,7 +41,7 @@ class FCKConstantProcessor
     var $_Constants ;
     var $_ConstantsRegexPart ;
 
-    function FCKConstantProcessor()
+    function __construct()
     {
         $this->RemoveDeclaration = TRUE ;
         $this->HasConstants = FALSE ;
@@ -109,7 +109,7 @@ class FCKFunctionProcessor
 
     var $_IsGlobal ;
 
-    function FCKFunctionProcessor( $function, $parameters, $isGlobal )
+    function __construct( $function, $parameters, $isGlobal )
     {
         $this->_Function        = $function ;
         $this->_Parameters      = $isGlobal ? NULL : $parameters ;
@@ -209,7 +209,7 @@ class FCKFunctionProcessor
 
 class FCKJavaScriptCompressor
 {
-    function FCKJavaScriptCompressor()
+    function __construct()
     {}
 
     function Revision()
@@ -378,7 +378,7 @@ class FCKStringsProcessor
 {
     var $_ProtectedStrings ;
 
-    function FCKStringsProcessor()
+    function __construct()
     {
         $_ProtectedStrings = array() ;
     }
@@ -463,4 +463,3 @@ class FCKStringsProcessor
 }
 
 // vim:et:sts=4:sw=4:
-?>

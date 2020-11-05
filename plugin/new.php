@@ -48,5 +48,3 @@ FORM;
     return true;
   }
 }
-
-?>

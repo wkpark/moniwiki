@@ -13,7 +13,7 @@ class FoafParser {
    var $depict = "";
    var $name = "";
 
-   function FoafParser($info) {
+   function __construct($info) {
      $this->info=$info;
    }
 
@@ -140,5 +140,3 @@ function macro_foaf($formatter,$value) {
 
   return $out;
 }
-
-?>

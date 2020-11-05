@@ -17,7 +17,7 @@ class TitleIndexer_mysqli {
     var $use_regexp = false;
     var $pages_limit = 5000;
 
-    function TitleIndexer_mysqli($name = 'titleindex')
+    function __construct($name = 'titleindex')
     {
         global $Config;
 

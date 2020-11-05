@@ -205,4 +205,3 @@ HEAD;
   $cache->update($etag, $out);
   $cache->remove($etag.'.lock');
 }
-?>

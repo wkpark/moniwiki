@@ -18,4 +18,3 @@ function do_home($formatter, $options)
     do_goto($formatter, $options);
     return;
 }
-?>

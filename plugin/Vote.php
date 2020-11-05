@@ -128,5 +128,3 @@ function do_vote($formatter,$options) {
   $formatter->send_footer("",$options);
   return;
 }
-
-?>

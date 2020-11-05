@@ -268,4 +268,3 @@ $php_calendar_day_func = '
 #	}else{
 #		return false;
 #	}';
-?>

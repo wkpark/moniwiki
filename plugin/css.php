@@ -101,4 +101,3 @@ function macro_Css($formatter="") {
 }
 
 // vim:et:sts=2:
-?>

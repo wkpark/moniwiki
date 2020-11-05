@@ -80,5 +80,3 @@ function do_post_restore($formatter,$options) {
   }
   return;
 }
-
-?>

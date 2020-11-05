@@ -58,4 +58,3 @@ function postfilter_nforge($formatter,$value,$options) {
     return implode('',$chunks);
 }
 // vim:et:sts=4:sw=4:
-?>

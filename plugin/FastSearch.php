@@ -272,5 +272,3 @@ function do_fastsearch($formatter,$options) {
   $args['noaction']=1;
   $formatter->send_footer($args,$options);
 }
-
-?>

@@ -22,7 +22,7 @@ function randstr($num) {
 require_once(dirname(__FILE__).'/lib/confutils.php');
 
 class MoniConfig extends Config_base {
-  function MoniConfig($configfile="config.php") {
+  function __construct($configfile="config.php") {
     if (file_exists($configfile)) {
       $url_prefix= preg_replace("/\/([^\/]+)\.php$/","",$_SERVER['SCRIPT_NAME']);
       $config['url_prefix']=$url_prefix;

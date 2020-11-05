@@ -22,7 +22,7 @@ class processor_mixdown
     var $breaks_enabled = false;
     var $table_parser = null;
 
-    function processor_mixdown(&$formatter, $params = array())
+    function __construct(&$formatter, $params = array())
     {
         $this->formatter = &$formatter;
 

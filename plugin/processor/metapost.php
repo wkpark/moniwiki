@@ -85,5 +85,3 @@ function processor_metapost($formatter,$value="") {
   return "<a href='$ps_url'><img class='tex' border='0' src='$png_url' alt='mp'".
          "title=\"$mp\" /></a>";
 }
-
-?>

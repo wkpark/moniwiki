@@ -178,4 +178,3 @@ function do_SearchPlugin($formatter,$options) {
 
 EOS;
 }
-?>

@@ -51,5 +51,3 @@ Only WikiMaster can change the permission of this page\n";
 #  $formatter->send_page();
   $formatter->send_footer('',$options);
 }
-
-?>

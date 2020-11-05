@@ -45,7 +45,7 @@ class User_xe17 extends WikiUser {
         }
     }
 
-    function User_xe17($id = '') {
+    function __construct($id = '') {
         global $Config;
 
         parent::WikiUser($id);

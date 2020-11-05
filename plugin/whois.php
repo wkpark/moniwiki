@@ -156,4 +156,3 @@ function macro_whois($formatter,$value='') {
 </form>
 EOF;
 }
-?>

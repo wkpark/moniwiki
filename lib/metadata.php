@@ -83,4 +83,3 @@ function _get_metadata($body) {
 }
 
 // vim:et:sts=4:sw=4:
-?>

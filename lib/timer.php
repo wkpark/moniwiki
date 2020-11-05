@@ -13,7 +13,7 @@ class Timer {
     var $timers = array();
     var $total = 0.0;
 
-    function Timer() {
+    function __construct() {
         $mt = explode(' ',microtime());
         $this->save = $mt[0] + $mt[1];
     }

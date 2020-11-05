@@ -215,5 +215,3 @@ $plt
   if ($rext == 'txt')
     return $log.'<pre class="gnuplot">'.(implode('',file("$cache_dir/$pngname"))).'</pre>';
 }
-
-?>

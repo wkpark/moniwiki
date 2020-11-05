@@ -245,7 +245,7 @@ class processor_textile
     var $rev = '$Rev: 216 $';
 
 // -------------------------------------------------------------
-    function processor_textile($formatter,$options=array())
+    function __construct($formatter,$options=array())
     {
         global $Config;
  	$this->charset=$Config['charset'] ? $Config['charset']:'UTF-8';
@@ -1237,5 +1237,3 @@ class processor_textile
 
 
 } // end class
-
-?>

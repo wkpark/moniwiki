@@ -125,4 +125,3 @@ function macro_TTFText($formatter,$value,$params=array()) {
 }
 
 // vim:et:sts=4:sw=4
-?>

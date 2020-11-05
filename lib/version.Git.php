@@ -11,7 +11,7 @@ require_once(dirname(__FILE__).'/version.RCS.php');
 class Version_Git extends Version_RCS {
   var $DB;
 
-  function Version_Git($DB) {
+  function __construct($DB) {
     $this->DB=$DB;
 
     $this->cwd=getcwd();

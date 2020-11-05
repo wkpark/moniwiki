@@ -13,4 +13,3 @@ function macro_PGBR($formatter,$value) {
   return "<div class='pagebreak'><br /></div>\n";
 }
 // vim:et:sts=2:
-?>

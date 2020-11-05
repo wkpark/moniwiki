@@ -21,7 +21,7 @@ class SimpleOpenID{
 	var $_user_agent_ = "Simple OpenID PHP Class";
 	var $_request = 'CURL_Request';
 	
-	function SimpleOpenID() {
+	function __construct() {
 		if (!function_exists('curl_exec')) {
 			require_once('HTTPClient.php');
 			$this->_request='HTTP_Request';
@@ -296,5 +296,3 @@ class SimpleOpenID{
 		}
 	}
 }
-
-?>

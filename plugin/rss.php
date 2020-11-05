@@ -13,7 +13,7 @@ class WikiRSSParser {
    var $date_fmt = '[m-d h:i a]';
    var $title_width = 0; // do not cut title
 
-   function WikiRSSParser($charset = 'UTF-8') {
+   function __construct($charset = 'UTF-8') {
        $this->charset = $charset;
    }
 
@@ -201,5 +201,3 @@ function macro_Rss($formatter,$value) {
 
   return $out;
 }
-
-?>

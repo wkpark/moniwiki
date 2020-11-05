@@ -5,7 +5,7 @@
 class Security_sample extends Security_base {
     var $DB;
 
-    function Security_sample($DB="") {
+    function __construct($DB="") {
         $this->DB=$DB;
     }
 
@@ -27,4 +27,3 @@ class Security_sample extends Security_base {
 }
 
 // vim:et:sts=4:
-?>

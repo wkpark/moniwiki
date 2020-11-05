@@ -9,4 +9,3 @@ function filter_sample($formatter,$value,$options) {
   return preg_replace($value);
 }
 // vim:et:sts=4:
-?>

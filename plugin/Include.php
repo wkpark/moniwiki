@@ -18,7 +18,7 @@
 class _localDict {
     var $vars = array();
 
-    function _localDict($vars) {
+    function __construct($vars) {
         $this->vars = $vars;
     }
 

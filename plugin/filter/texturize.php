@@ -57,4 +57,3 @@ function postfilter_texturize($formatter, $text, $options) {
     return $output;
 }
 // vim:et:sts=4:
-?>

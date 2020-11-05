@@ -18,7 +18,7 @@ class PageIndex extends TitleIndexer_Text {
      */
     var $chunksize = 2000;
 
-    function PageIndex($name = 'pageindex')
+    function __construct($name = 'pageindex')
     {
         global $Config;
 

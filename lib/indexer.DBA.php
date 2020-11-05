@@ -17,7 +17,7 @@ class Indexer_dba {
     var $prefix = '';
     var $use_stemming = 0; // 0: noop / 1: fake stemming / 2: using KoreanStemmer 
 
-    function Indexer_dba($arena,$mode='r',$type, $prefix = '') {
+    function __construct($arena,$mode='r',$type, $prefix = '') {
         global $DBInfo;
 
         $this->index_dir=$DBInfo->cache_dir.'/index';
@@ -445,4 +445,3 @@ class Indexer_dba {
 }
 
 // vim:et:sts=4:sw=4:
-?>

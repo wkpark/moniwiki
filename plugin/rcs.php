@@ -56,4 +56,3 @@ function do_post_rcs($formatter,$options) {
 #  $formatter->send_page();
   $formatter->send_footer("",$options);
 }
-?>

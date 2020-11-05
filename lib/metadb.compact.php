@@ -28,7 +28,7 @@ class MetaDB_compact extends MetaDB {
     var $storage;
     var $aux = array();
 
-    function MetaDB_compact()
+    function __construct()
     {
         $args = func_get_args();
         $num = func_num_args();
@@ -267,7 +267,7 @@ class Storage_dba {
     var $db = null;
 
     // init class
-    function Storage_dba($dbname, $dba_type)
+    function __construct($dbname, $dba_type)
     {
         $this->dbname = !empty($dbname) ? $dbname : 'temp.db';
         $this->dba_type = !empty($dba_type) ? $dba_type : 'db4';

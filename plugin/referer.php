@@ -146,4 +146,3 @@ function macro_Referer($formatter, $value, &$options) {
 }
 
 // vim:et:sts=4:sw=4:
-?>

@@ -37,4 +37,3 @@ function do_print($formatter,$options) {
 }
 
 // vim:et:sts=2:
-?>

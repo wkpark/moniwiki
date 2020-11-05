@@ -38,7 +38,7 @@ class File_Gettext_PO extends File_Gettext
      * @return  object      File_Gettext_PO
      * @param   string      path to GNU PO file
      */
-    function File_Gettext_PO($file = '')
+    function __construct($file = '')
     {
         $this->file = $file;
     }
@@ -139,4 +139,3 @@ class File_Gettext_PO extends File_Gettext
         return true;
     }
 }
-?>

@@ -10,7 +10,7 @@ require_once(dirname(__FILE__).'/version.RCS.php');
 class Version_RcsLite extends Version_RCS {
   var $DB;
 
-  function Version_RcsLite($DB) {
+  function __construct($DB) {
     include_once('rcslite.php');
 
     $this->rcs=new RcsLite($DB->rcs_dir,$DB->rcs_user);
@@ -129,5 +129,3 @@ class Version_RcsLite extends Version_RCS {
     return $this->rcs->_head;
   }
 }
-
-?>

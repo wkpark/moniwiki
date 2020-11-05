@@ -189,4 +189,3 @@ function do_html2pdf($formatter,$options) {
 }
 
 // vim:et:sts=4:
-?>

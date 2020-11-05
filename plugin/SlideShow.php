@@ -209,4 +209,3 @@ function do_slideshow($formatter,$options=array()) {
 }
 
 // vim:et:sts=4:
-?>

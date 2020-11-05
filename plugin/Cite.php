@@ -81,5 +81,3 @@ EOS;
   return $formatter->icon['www'].'<a href='."'$citelink'>".
      $cite.' <strong>'.$vol.'</strong>, '.$page.'</a> ';
 }
-
-?>

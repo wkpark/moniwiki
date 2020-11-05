@@ -444,4 +444,3 @@ function macro_Attachment($formatter,$value,$options=array()) {
 }
 
 // vim:et:sts=2:
-?>

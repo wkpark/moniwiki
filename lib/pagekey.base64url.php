@@ -11,7 +11,7 @@ require_once(dirname(__FILE__).'/pagekey.base.php');
 class PageKey_base64url extends PageKey_base {
     var $text_dir;
 
-    function PageKey_base64url($conf) {
+    function __construct($conf) {
         if (is_object($conf)) {
             $this->text_dir = $conf->text_dir;
         } else {

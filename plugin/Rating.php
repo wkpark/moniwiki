@@ -221,4 +221,3 @@ function do_rating($formatter,$options) {
 }
 
 // vim:et:sts=4:
-?>

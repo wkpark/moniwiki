@@ -25,5 +25,3 @@ function do_urlencode($formatter,$options) {
   }
   return;
 }
-
-?>

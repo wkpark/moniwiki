@@ -73,5 +73,3 @@ function processor_pic($formatter,$value="") {
   }
   return "<img class='tex' src='$png_url' alt='pic' />";
 }
-
-?>

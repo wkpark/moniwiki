@@ -471,4 +471,3 @@ function macro_BlogChanges($formatter,$value,$options=array()) {
   return $bra.$items.$cat.'<div class="blog-action">'.$prev.$next.'</div>';
 }
 // vim:et:sts=2:
-?>

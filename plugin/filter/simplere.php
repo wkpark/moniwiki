@@ -41,7 +41,7 @@ class SimpleReFilter {
     var $rule = array();
     var $repl = array();
 
-    function SimpleReFilter($rule, $repl) {
+    function __construct($rule, $repl) {
         $this->rule = $rule;
         $this->repl = $repl;
     }
@@ -52,4 +52,3 @@ class SimpleReFilter {
 }
 
 // vim:et:sts=4:sw=4:
-?>

@@ -299,4 +299,3 @@ function processor_latex(&$formatter,$value="",$options=array()) {
 }
 
 // vim:et:sts=2:sw=2
-?>

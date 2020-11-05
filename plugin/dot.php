@@ -12,7 +12,7 @@ define('FONTNAME','WEBDOTFONT');
 
 class LinkTree {
   var $cache=null;
-  function LinkTree($arena='pagelinks') {
+  function __construct($arena='pagelinks') {
     if (!in_array($arena,array('pagelinks','backlinks','keywords','keylinks')))
       $arena = 'pagelinks';
     $this->cache=new Cache_text($arena);
@@ -175,4 +175,3 @@ function do_dot($formatter,$options=array()) {
 }
 
 // vim:et:sts=2
-?>

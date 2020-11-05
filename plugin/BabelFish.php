@@ -56,5 +56,3 @@ function do_babelfish($formatter,$options) {
   $formatter->send_footer("",$options);
   return;
 }
-
-?>

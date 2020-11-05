@@ -74,4 +74,3 @@ function processor_xsltproc($formatter,$value) {
 }
 
 // vim:et:sts=2:sw=2
-?>

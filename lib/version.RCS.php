@@ -17,7 +17,7 @@ class Version_RCS
     var $rcs_error_log = false;
     var $pagekey;
 
-    function Version_RCS($conf)
+    function __construct($conf)
     {
         if (is_object($conf)) {
             $this->text_dir = $conf->text_dir;

@@ -52,4 +52,3 @@ function filter_antispam($formatter,$value,$options) {
     return $value;
 }
 // vim:et:sts=4:
-?>

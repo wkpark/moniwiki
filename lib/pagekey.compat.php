@@ -14,7 +14,7 @@ class PageKey_compat extends PageKey_base {
     var $text_dir;
     var $use_namespace = false;
 
-    function PageKey_compat($conf) {
+    function __construct($conf) {
         if (is_object($conf)) {
             $this->text_dir = $conf->text_dir;
             $this->use_namespace = $conf->use_namespace;

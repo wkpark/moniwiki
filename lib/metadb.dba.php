@@ -12,7 +12,7 @@ class MetaDB_dba extends MetaDB {
     var $metadb;
     var $aux = array();
 
-    function MetaDB_dba($file, $type = 'db4') {
+    function __construct($file, $type = 'db4') {
         if (function_exists('dba_open'))
             $this->metadb = @dba_open($file.".cache", 'r', $type);
     }

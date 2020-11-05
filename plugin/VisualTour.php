@@ -146,4 +146,3 @@ function do_VisualTour($formatter,$options) {
 }
 
 // vim:et:sts=2:
-?>

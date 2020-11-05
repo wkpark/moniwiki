@@ -74,7 +74,7 @@ class Markdown_Parser {
 	var $charset = 'UTF-8';
 
 
-	function Markdown_Parser() {
+	function __construct() {
 	#
 	# Constructor function. Initialize appropriate member variables.
 	#
@@ -1337,7 +1337,7 @@ class Processor_Markdown extends Markdown_Parser {
 	var $fn_backlink_class = MARKDOWN_FN_BACKLINK_CLASS;
 
 
-	function Processor_Markdown() {
+	function __construct() {
                 global $DBInfo;
 	#
 	# Constructor function. Initialize the parser object.
@@ -2498,4 +2498,3 @@ negligence or otherwise) arising in any way out of the use of this
 software, even if advised of the possibility of such damage.
 
 */
-?>

@@ -47,4 +47,3 @@ function do_EngDic($formatter,$options) {
 }
 
 // vim:et:sts=4:sw=4:
-?>

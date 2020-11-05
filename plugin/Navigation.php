@@ -143,4 +143,3 @@ function do_navigation($formatter,$options) {
 }
 
 // vim:et:sts=2:
-?>

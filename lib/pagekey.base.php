@@ -7,7 +7,7 @@
 //
 
 class PageKey_base {
-    function getPageKey($pagename) {
+    function __construct($pagename) {
     }
 
     function pageToKeyname($pagename) {

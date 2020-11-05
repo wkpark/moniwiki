@@ -52,4 +52,3 @@ function processor_xslt($formatter,$value) {
 }
 
 // vim:et:ts=2:
-?>

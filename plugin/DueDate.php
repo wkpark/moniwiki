@@ -45,7 +45,6 @@ function macro_DueDate($formatter,$value) {
      $msg=sprintf(_("%d day(s) passed from %s."), abs($time_diff), $date);
 
   return $msg;
-// vim:et:sts=4:
 }
 
-?>
+// vim:et:sts=4:

@@ -13,5 +13,3 @@ function macro_Echo($formatter,$value) {
   if (!empty($_ENV[$value])) return $_ENV[$value];
   return '';
 }
-
-?>

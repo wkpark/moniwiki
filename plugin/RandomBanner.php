@@ -63,5 +63,3 @@ function macro_RandomBanner($formatter,$value="") {
 
   return $banners;
 }
-
-?>

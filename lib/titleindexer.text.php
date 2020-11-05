@@ -11,7 +11,7 @@ class TitleIndexer_Text {
     var $text_dir = '';
     var $_match_flags = 'uim';
 
-    function TitleIndexer_Text($name = 'titleindexer')
+    function __construct($name = 'titleindexer')
     {
         global $Config;
 

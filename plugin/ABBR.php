@@ -12,4 +12,3 @@ function macro_ABBR($formatter,$value) {
     return '<abbr title="'.$val.'">'.$sym.'</abbr>';
 }
 // vim:et:sts=4:
-?>

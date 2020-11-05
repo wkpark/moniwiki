@@ -72,5 +72,3 @@ function processor_tpl_(&$formatter,$source,$params=array()) {
 }
 
 // vim:et:sts=4:sw=4:
-
-?>

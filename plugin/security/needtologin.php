@@ -5,7 +5,7 @@
 class Security_needtologin extends Security_base {
   var $DB;
 
-  function Security_needtologin($DB="") {
+  function __construct($DB="") {
     $this->DB=$DB;
   }
 
@@ -67,5 +67,3 @@ class Security_needtologin extends Security_base {
     return 1;
   }
 }
-
-?>

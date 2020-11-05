@@ -8,7 +8,7 @@
  */
 
 class Config_base {
-    function Config_base($configfile = 'config.php', $vars = array())
+    function __construct($configfile = 'config.php', $vars = array())
     {
         if (file_exists($configfile)) {
             $this->config = $this->_getConfig($configfile, $vars);

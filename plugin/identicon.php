@@ -39,7 +39,7 @@ class identicon {
 	var $rotations;
 
 	//constructor
-	function identicon($blocks='') {
+	function __construct($blocks='') {
 		$this->identicon_options=identicon_get_options();
 		if ($blocks) $this->blocks=$blocks; 
 		else $this->blocks=$this->identicon_options['squares'];

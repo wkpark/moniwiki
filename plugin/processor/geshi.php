@@ -118,4 +118,3 @@ function processor_geshi($formatter,$value,$options) {
 }
 
 // vim:et:sts=2:
-?>

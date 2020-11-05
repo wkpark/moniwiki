@@ -58,4 +58,3 @@ function processor_chat($formatter,$value="") {
 }
 
 // vim:et:sts=4:
-?>

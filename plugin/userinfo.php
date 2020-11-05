@@ -820,4 +820,3 @@ function do_userinfo($formatter,$options) {
 }
 
 // vim:et:sts=4:
-?>

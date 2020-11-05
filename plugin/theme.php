@@ -163,4 +163,3 @@ function macro_Theme($formatter, $value = '', $params = array()) {
 }
 
 // vim:et:sts=2:
-?>

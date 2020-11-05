@@ -12,7 +12,7 @@ require_once(dirname(__FILE__).'/version.RCS.php');
 class Version_CVS extends Version_RCS {
   var $DB;
 
-  function Version_CVS($DB) {
+  function __construct($DB) {
     $this->DB=$DB;
 
     $this->cwd=getcwd();
@@ -182,4 +182,3 @@ class Version_CVS extends Version_RCS {
 }
 
 // vim:et:ts=8:sts=2:sw=2
-?>

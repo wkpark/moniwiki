@@ -5,7 +5,7 @@
 class Security_authbasic extends Security_base {
     var $DB;
 
-    function Security_authbasic($DB="") {
+    function __construct($DB="") {
         $this->DB=$DB;
     }
 
@@ -76,4 +76,3 @@ class Security_authbasic extends Security_base {
 }
 
 // vim:et:sts=4:
-?>

@@ -204,4 +204,3 @@ function ajax_chat($formatter,$options) {
 }
 
 // vim:et:sts=4:
-?>

@@ -12,4 +12,3 @@ function macro_Media($formatter, $value, $params = array()) {
 }
 
 // vim:et:sts=2:
-?>

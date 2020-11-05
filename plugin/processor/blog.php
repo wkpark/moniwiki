@@ -143,4 +143,3 @@ function processor_blog($formatter,$value="",$options) {
 }
 
 // vim:et:sts=2:
-?>

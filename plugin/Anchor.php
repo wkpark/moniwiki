@@ -20,4 +20,3 @@ function macro_Anchor($formatter,$value) {
 }
 
 // vim:et:ts=2:
-?>

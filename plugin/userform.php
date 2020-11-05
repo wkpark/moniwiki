@@ -677,5 +677,3 @@ function do_userform($formatter,$options) {
   }
   $formatter->send_footer("",$options);
 }
-
-?>

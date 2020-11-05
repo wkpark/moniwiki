@@ -514,4 +514,3 @@ function hangul_regex_range($ustart, $uend, $use_unicode = true) {
 }
 
 // vim:et:sw=4:sts=4:
-?>

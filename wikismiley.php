@@ -115,5 +115,3 @@ $smileys=array(
     "{us}"=>array(16, 16, 0, "interwiki/us-16.png"),
     "{zh}"=>array(16, 16, 0, "interwiki/zh-16.png"),
 );
-
-?>

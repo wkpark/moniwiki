@@ -24,4 +24,3 @@ function do_notitle($formatter,$options) {
 }
 
 // vim:et:sts=4:
-?>

@@ -33,7 +33,7 @@ class Security_ACL extends Security_base {
 
     var $_acl_ok=0;
     var $_protected=array();
-    function Security_ACL($DB="") {
+    function __construct($DB="") {
         $this->DB=$DB;
         # load ACL
         if (!empty($DB->config_dir))
@@ -847,4 +847,3 @@ class Security_ACL extends Security_base {
 }
 
 // vim:et:sts=4:sw=4:
-?>

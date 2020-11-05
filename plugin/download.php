@@ -374,4 +374,3 @@ function dl_file_resume($ctype,$file,$fname,$mode='inline',$header='') {
 }
 
 // vim:et:sts=4:sw=4:
-?>

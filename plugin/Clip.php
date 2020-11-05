@@ -110,4 +110,3 @@ APPLET;
 }
 
 // vim:et:sts=2:
-?>

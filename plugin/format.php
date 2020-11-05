@@ -48,5 +48,3 @@ function do_format($formatter,$options) {
   return;
 }
 // vim:et:sts=2:sw=2:
-
-?>

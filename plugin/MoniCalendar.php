@@ -345,4 +345,3 @@ function macro_MoniCalendar($formatter,$value) {
 }
 
 // vim:et:sts=4:
-?>
