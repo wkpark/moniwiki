@@ -422,7 +422,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   if ($u->id != 'Anonymous') {
     $bookmark= !empty($u->info['bookmark']) ? $u->info['bookmark'] : '';
   } else {
-    $bookmark= $u->bookmark;
+    $bookmark= isset($u->bookmark) ? $u->bookmark : '';
   }
   $tz_offset=$formatter->tz_offset;
 

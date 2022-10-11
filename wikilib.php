@@ -469,7 +469,7 @@ function _autofixencode($str) {
 
   if (isset($DBInfo->url_encodings)) {
     $charset = mb_detect_encoding($str, $DBInfo->url_encodings);
-    if ($encode !== false) {
+    if ($charset !== false) {
       $tmp = iconv($charset, $DBInfo->charset, $str);
       if ($tmp !== false) return $tmp;
     }
@@ -1198,7 +1198,7 @@ function get_description($raw) {
 
     // trash PIs
     for ($i = 0; $i < sizeof($lines); $i++) {
-        if ($lines[$i][0] == '#')
+        if (isset($lines[$i][0]) and $lines[$i][0] == '#')
             continue;
         break;
     }
@@ -2305,7 +2305,7 @@ function do_edit($formatter,$options) {
   $value = '';
   echo macro_EditText($formatter,$value,$options);
   echo $formatter->get_javascripts();
-  if ($DBInfo->use_wikiwyg>=2) {
+  if (isset($DBInfo->use_wikiwyg) and $DBInfo->use_wikiwyg>=2) {
     $js=<<<JS
 <script type='text/javascript'>
 /*<![CDATA[*/
@@ -2450,6 +2450,7 @@ function macro_Edit($formatter,$value,$options='') {
   $options['notmpl']=isset($options['notmpl']) ? $options['notmpl']:0;
   $form = '';
 
+  $tmpls = '';
   if (!$options['notmpl'] and (!empty($options['template']) or !$formatter->page->exists()) and !$preview) {
     $options['linkto']="?action=edit&amp;template=";
     $options['limit'] = -1;
@@ -2514,6 +2515,7 @@ function macro_Edit($formatter,$value,$options='') {
   $form.=$menu;
   $ajax = '';
   $js = '';
+  $guide = '';
   if (!empty($options['action_mode']) and $options['action_mode']=='ajax') {
     $ajax=" onsubmit='savePage(this);return false'";
   }
@@ -2735,6 +2737,7 @@ EOS;
       $emailform = '<div id="contribution_agreement">'.$emailform.'</div>';
   }
   $save_msg=_("Save");
+  $resizer = '';
   if ($use_js and !empty($DBInfo->use_resizer)) {
     if ($DBInfo->use_resizer==1) {
       $resizer=<<<EOS
@@ -4214,7 +4217,7 @@ function wiki_sendmail($body,$options) {
     $return=$DBInfo->sitename.' <'.$rmail.'>';
   }
 
-  $from = $options['from'] ? $options['from']:$return;
+  $from = !empty($options['from']) ? $options['from']:$return;
 
   $email=$options['email'];
   $subject=$options['subject'];
@@ -4630,6 +4633,7 @@ FORM;
     if (isset($options['login_id']) or !empty($_GET['join']) or $value!="simple") {
       $passwd=!empty($options['password']) ? $options['password'] : '';
       $button=_("Make profile");
+      $again = '';
       if ($joinagree and empty($DBInfo->use_safelogin)) {
         $again="<b>"._("password again")."</b>&nbsp;<input type='password' size='15' maxlength='$pw_length' name='passwordagain' value='' /></td></tr>";
       }
@@ -4648,6 +4652,7 @@ EXTRA;
 <input type="hidden" name="__seed" value="$seed" /></td></tr>
 EXTRA;
       }
+      $tz_offset = date('Z');
     } else {
       $button=_("Login or Join");
     }
@@ -4666,7 +4671,7 @@ EXTRA;
         $check_email_again = ' <input type="submit" name="button_check_email_again" value="'._("Resend confirmation mail").'" />';
     }
 
-    $tz_offset=!empty($user->info['tz_offset']) ? $user->info['tz_offset'] : 0;
+    $tz_offset=!empty($user->info['tz_offset']) ? $user->info['tz_offset'] : date('Z');
     if (!empty($user->info['password']))
       $again="<b>"._("New password")."</b>&nbsp;<input type='password' size='15' maxlength='$pw_length' name='passwordagain' value='' /></td></tr>";
     else
@@ -4729,6 +4734,7 @@ FORM;
   } else if ($user->id == 'Anonymous') {
     $button=_("Make profile");
     $email_btn=_("Mail");
+    $tz_offset = date('Z');
   }
   $script = '';
   if ($tz_offset === '' and $jscript)
@@ -5265,7 +5271,9 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
       foreach ($group_pages as $page)
         $all_pages[]=str_replace($formatter->group,'',$page);
     } else {
-      $all_pages = $indexer->getLikePages('^'.$all_keys[$sel], 0);
+      $selected = '';
+      if (!empty($sel)) $selected = $all_keys[$sel];
+      $all_pages = $indexer->getLikePages('^'.$selected, 0);
     }
 
     #natcasesort($all_pages);
@@ -5635,7 +5643,7 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
   $opts['msg'] = sprintf(_("Title search for \"%s\""), $hneedle);
   $cneedle=_preg_search_escape($needle);
 
-  if ($opts['noexpr'])
+  if (isset($opts['noexpr']))
     $needle = preg_quote($needle);
   else if (validate_needle($cneedle) === false) {
     $needle = preg_quote($needle);

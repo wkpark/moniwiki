@@ -17,10 +17,10 @@ class PageKey_compat extends PageKey_base {
     function __construct($conf) {
         if (is_object($conf)) {
             $this->text_dir = $conf->text_dir;
-            $this->use_namespace = $conf->use_namespace;
+            $this->use_namespace = isset($conf->use_namespace) ? $conf->use_namespace : 0;
         } else {
             $this->text_dir = $conf['text_dir'];
-            $this->use_namespace = $conf['use_namespace'];
+            $this->use_namespace = isset($conf['use_namespace']) ? $conf['use_namespace'] : 0;
         }
     }
 

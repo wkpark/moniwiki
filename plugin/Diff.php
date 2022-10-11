@@ -367,7 +367,7 @@ function macro_diff($formatter, $value, &$options = array())
   $pi=$formatter->page->get_instructions();
   $formatter->pi=$pi;
 
-  $processor_type=$pi['#format'];
+  $processor_type = isset($pi['#format']) ? $pi['#format'] : '';
   while ($DBInfo->default_markup != 'wiki') { // XXX
     $processor=$pi['#format'];
     if (!($f=function_exists("processor_".$processor)) and !($c=class_exists('processor_'.$processor))) {

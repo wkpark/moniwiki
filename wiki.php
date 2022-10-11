@@ -2529,7 +2529,7 @@ class Formatter {
                 (?(3)(?:\s+|\\|)?(.*)|(?:\s+|\\|)(.*))?$@x', $url, $m)) {
       $wiki = $m[2];
       $url = $m[4];
-      $text = isset($m[5][0]) ? $m[5] : $m[6];
+      $text = isset($m[5][0]) ? $m[5] : (isset($m[6]) ? $m[6] : '');
     }
 
     if (empty($wiki)) {
@@ -4017,7 +4017,7 @@ class Formatter {
       }
 
       // blockquote
-      if ($in_pre != -1 and (!$in_table or !isset($oline[0])) and $line[0] == '>' and preg_match('/^((?:>\s?)*>\s?(?!>))/', $line, $match)) {
+      if ($in_pre != -1 and (!$in_table or !isset($oline[0])) and isset($line[0]) and $line[0] == '>' and preg_match('/^((?:>\s?)*>\s?(?!>))/', $line, $match)) {
         $line = substr($line, strlen($match[1])); // strip markers
         $depth = substr_count($match[1], '>'); // count '>'
         if ($depth == $in_bq) {
@@ -4073,7 +4073,7 @@ class Formatter {
            }
 
            $numtype = '';
-           if ($line[0]=='*') {
+           if (isset($line[0]) and $line[0]=='*') {
              $limatch[1]='*';
              $myindlen=(isset($line[1]) and $line[1]==' ') ? $indlen+2:$indlen+1;
              preg_match("/^(\*\s?)/",$line,$m);
@@ -4112,7 +4112,7 @@ class Formatter {
            }
          }
          if ($indent_list[$in_li] > $indlen ||
-            $indtype != 'dd' && $indent_type[$in_li][1] != $indtype[1]) {
+            $indtype != 'dd' && isset($indent_type[$in_li][1]) && $indent_type[$in_li][1] != $indtype[1]) {
            $fixlen = $indlen;
            if ($indent_list[$in_li] == $indlen and
                $indlen > 0 and $in_li > 0 and $indent_type[$in_li] != $indtype)
@@ -4144,7 +4144,7 @@ class Formatter {
       }
 
       #if (!$in_pre && !$in_table && preg_match("/^\|\|.*\|\|$/",$line)) {
-      if (!$in_pre && $line[0]=='|' && !$in_table && preg_match("/^(\|([^\|]+)?\|((\|\|)*))((?:&lt;[^>\|]*>)*)(.*)$/s",$line,$match)) {
+      if (!$in_pre && isset($line[0]) && $line[0]=='|' && !$in_table && preg_match("/^(\|([^\|]+)?\|((\|\|)*))((?:&lt;[^>\|]*>)*)(.*)$/s",$line,$match)) {
         $open.=$this->_table(1,$match[5]);
         if (!empty($match[2])) $open.='<caption>'.$match[2].'</caption>';
         $line='||'.$match[3].$match[5].$match[6];
@@ -4206,15 +4206,17 @@ class Formatter {
           $act='edit';
 
           $wikiwyg_mode='';
-          if ($DBInfo->use_wikiwyg ==1) {
+          if (!empty($DBInfo->use_wikiwyg)) {
             $wikiwyg_mode=',true';
           }
-          if ($DBInfo->sectionedit_attr) {
+          if (!empty($DBInfo->sectionedit_attr)) {
             if (!is_string($DBInfo->sectionedit_attr))
               $sect_attr=' onclick="javascript:sectionEdit(null,this,'.
                 $this->sect_num.$wikiwyg_mode.');return false;"';
             else
               $sect_attr=$DBInfo->sectionedit_attr;
+          } else {
+            $sect_attr = '';
           }
           $url=$this->link_url($this->page->urlname,
             '?action='.$act.'&amp;section='.$this->sect_num);
@@ -4339,7 +4341,7 @@ class Formatter {
       $lidx = '';
       if ($lid > 0) $lidx = "<span class='line-anchor' id='line-".$lid."'></span>";
 
-      if (isset($line[0]) and $this->auto_linebreak && !$in_table && !$this->nobr)
+      if (isset($line[0]) and $this->auto_linebreak && !$in_table && empty($this->nobr))
         $text.=$line.$lidx."<br />\n"; 
       else
         $text.=$line ? $line.$lidx."\n":'';
@@ -4583,7 +4585,7 @@ class Formatter {
       $diff = new Diff($olines, $nlines);
       $unified = new UnifiedDiffFormatter;
       $unified->trailing_cr = "&nbsp;\n"; // hack to see inserted empty lines
-      $out.= $unified->format($diff);
+      $out = $unified->format($diff);
     }
     return $out;
   }
@@ -6061,6 +6063,8 @@ function wiki_main($options) {
   global $DBInfo,$Config;
   $pagename=isset($options['pagename'][0]) ? $options['pagename']: $DBInfo->frontpage;
 
+  $refresh = 0;
+
   # get primary variables
   if (isset($_SERVER['REQUEST_METHOD']) and $_SERVER['REQUEST_METHOD']=='POST') {
     // reset some reserved variables
@@ -6423,7 +6427,7 @@ function wiki_main($options) {
         $out=ob_get_contents();
         ob_end_clean();
         $formatter->_macrocache=0;
-        $_macros = $formatter->_dynamic_macros;
+        $_macros = isset($formatter->_dynamic_macros) ? $formatter->_dynamic_macros : null;
         if (!empty($_macros))
           $mcache->update($pagename,$_macros);
         if (isset($out[0]))

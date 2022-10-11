@@ -35,7 +35,7 @@ function do_pull($formatter, $params = array()) {
         macro_Pull($formatter, $pagename, $params);
     }
     if (!empty($params['check'])) {
-        $status = $params['retval']['status'];
+        $status = isset($params['retval']['status']) ? $params['retval']['status'] : null;
         if (isset($status) && $status != 304) {
             header('Cache-Control: public, max-age=5, s-maxage=5');
             #header('Expires: Mon, 26 Jul 1997 05:00:00 GMT');

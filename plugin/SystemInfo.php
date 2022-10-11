@@ -15,7 +15,11 @@ function macro_SystemInfo($formatter,$value = '') {
   $version = preg_replace('/(\.\d+)$/', '.x', $version);
   $tmp = explode(' ', php_uname());
   $uname = ' ('.$tmp[0].' '.$tmp[2].' '.$tmp[4].')';
-  list($aversion,$dummy)=explode(" ",$_SERVER['SERVER_SOFTWARE'],2);
+  if (strpos($_SERVER['SERVER_SOFTWARE'], " ") !== false) {
+    list($aversion,$dummy)=explode(" ",$_SERVER['SERVER_SOFTWARE'],2);
+  } else {
+    $aversion = $_SERVER['SERVER_SOFTWARE'];
+  }
 
   $pages=macro_PageCount($formatter);
   $npage=_("Number of Pages");

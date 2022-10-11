@@ -99,7 +99,7 @@ function do_userform($formatter,$options) {
       $options['msg'].='<br />'._("Verification missmatched.");
     }
   } else
-  if ($user->id == "Anonymous" and $options['verify'] == _("Verify E-mail address") and
+  if ($user->id == "Anonymous" and !empty($options['verify']) and $options['verify'] == _("Verify E-mail address") and
       !empty($DBInfo->anonymous_friendly) and !empty($options['verifyemail'])) {
     if (preg_match('/^[a-z][a-z0-9_\-\.]+@[a-z][a-z0-9_\-]+(\.[a-z0-9_]+)+$/i',$options['verifyemail'])) {
       if (($ret = verify_email($options['verifyemail'])) < 0) {
@@ -323,8 +323,8 @@ function do_userform($formatter,$options) {
     $formatter->send_footer("",$options);
     return;
   } else if ($user->id=="Anonymous" and !empty($options['login_id']) and
-    (($options['password'] and $options['passwordagain']) or
-     ($DBInfo->use_safelogin and $options['email'])) ) {
+    ((!empty($options['password']) and !empty($options['passwordagain'])) or
+     (!empty($DBInfo->use_safelogin) and !empty($options['email']))) ) {
     # create profile
 
     $title='';

@@ -10,11 +10,13 @@
 // $Id: diff.php,v 1.5 2010/04/19 11:26:47 wkpark Exp $
 
 function processor_diff($formatter,$value="") {
-  if ($value[0]=='#' and $value[1]=='!')
+  if ($value[0]=='#' and $value[1]=='!') {
     list($line,$value)=explode("\n",$value,2);
-  #list($dummy, $type)=explode(' ',$line);
-  $tmp = explode(' ',$line);
-  $type = isset($tmp[1]) ? $tmp[1] : '';
+    $tmp = explode(' ',$line);
+    $type = isset($tmp[1]) ? $tmp[1] : '';
+  } else {
+    $type = '';
+  }
   if (in_array($type,array('fancy','simple')))
     $options['type']=$type;
   else
