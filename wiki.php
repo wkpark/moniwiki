@@ -3118,10 +3118,10 @@ class Formatter {
         # Did you have a problem with &amp;dummy=1 ?
         # then, please replace above line with next line.
         #$query_string= '&amp;'.substr($query_string,1);
-      $query_string= $pageurl.$query_string;
+      $query_string= $sep . $pageurl.$query_string;
     } else
-      $query_string= $pageurl.$query_string;
-    return $this->prefix . $sep . $query_string;
+      $query_string= (!empty($pageurl) ? $sep : '') . $pageurl.$query_string;
+    return $this->prefix . $query_string;
   }
 
   function link_tag($pageurl,$query_string="", $text="",$attr="") {
