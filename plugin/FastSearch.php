@@ -170,7 +170,7 @@ EOF;
   $out = "<!-- RESULT LIST START -->"; // for search plugin
   $out.= "<ul>";
   $idx=1;
-  while (list($page_name, $count) = each($hits)) {
+  foreach ($hits as $page_name => $count) {
     $page_name = substr($page_name, 1);
     $out.= '<!-- RESULT ITEM START -->'; // for search plugin
     $out.= '<li>'.$formatter->link_tag(_rawurlencode($page_name),

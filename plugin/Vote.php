@@ -37,7 +37,7 @@ function macro_Vote($formatter,$value) {
 <input type='hidden' name='ticket' value='$md5' />
 <input type='hidden' name='action' value='vote' />";
   $out.="<table class='vote'>\n";
-  while (list($item,$count)= each($votes)) {
+  foreach ($votes as $item => $count) {
     if ($total > 0) $ratio= 100 * $count/$total;
     $bar_width=intval($ratio);
 
@@ -102,7 +102,7 @@ function do_vote($formatter,$options) {
           }
 
           if ($voted) {
-            while (list($item,$count)=each($votes))
+            foreach ($votes as $item => $count)
               $args.="$item $count,";
 
             $args=substr($args,0,-1);

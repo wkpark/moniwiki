@@ -37,7 +37,7 @@ function macro_PageHits($formatter, $value = '', $params = array()) {
   if (!empty($value) and ($value=='reverse' or $value[0]=='r')) asort($hits);
   else arsort($hits);
   $out = '';
-  while(list($name,$hit)=each($hits)) {
+  foreach ($hits as $name => $hit) {
     if (!$hit) $hit=0;
     $name=$formatter->link_tag(_rawurlencode($name),"",_html_escape($name));
     $out.="<li>$name . . . . [$hit]</li>\n";

@@ -331,7 +331,7 @@ EOF;
           $DBInfo->process_time_limit : 3; // default 3-seconds
 
       $j = 0;
-      while (list($_, $page_name) = each($pages)) {
+      foreach ($pages as $page_name) {
         // check time_limit
         if ($time_limit and $j % 30 == 0) {
           $mt = explode(' ', microtime());
@@ -382,7 +382,7 @@ EOF;
 
   $idx=1;
   $checkbox = '';
-  while (list($page_name, $count) = each($hits)) {
+  foreach ($hits as $page_name => $count) {
     $pgname = _html_escape($page_name);
     if (!empty($opts['checkbox'])) $checkbox="<input type='checkbox' name='pagenames[]' value=\"$pgname\" />";
     $out.= '<!-- RESULT ITEM START -->'; // for search plugin

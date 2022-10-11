@@ -2032,7 +2032,7 @@ class Formatter {
     }
     if (!empty($data)) {
       # read configurations
-      while (list($key,$val) = each($data)) $this->$key=$val;
+      foreach($data as $key => $val) $this->$key=$val;
     }
     if (!empty($DBInfo->icon))
     $this->icon=array_merge($DBInfo->icon,$this->icon);

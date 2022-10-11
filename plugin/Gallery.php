@@ -229,7 +229,7 @@ function macro_Gallery($formatter,$value,&$options) {
 
   if (!file_exists($dir."/thumbnails")) @mkdir($dir."/thumbnails",0777);
 
-  while (list($file,$mtime) = each ($upfiles)) {
+  foreach ($upfiles as $file => $mtime) {
     $size=filesize($dir."/".$file);
     $id=rawurlencode($file);
     $linksrc=($key == $value) ? $prefix.$id:

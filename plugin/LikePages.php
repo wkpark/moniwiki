@@ -191,7 +191,7 @@ function macro_LikePages($formatter="", $value, &$opts) {
 
     $out.="<h3>"._("These pages share an initial or final title word...")."</h3>";
     $out.="<table border='0' width='100%'><tr><td width='50%' valign='top'>\n<ol>\n";
-    while (list($pagename,$i) = each($starts)) {
+    foreach ($starts as $pagename => $i) {
       $pageurl=_rawurlencode($pagename);
       $pagetext=_html_escape(urldecode($pagename));
       $out.= '<li>' . $formatter->link_tag($pageurl,"",$pagetext,"tabindex='$idx'")."</li>\n";
@@ -202,7 +202,7 @@ function macro_LikePages($formatter="", $value, &$opts) {
     ksort($ends);
 
     $out.="<td width='50%' valign='top'><ol>\n";
-    while (list($pagename,$i) = each($ends)) {
+    foreach ($ends as $pagename => $i) {
       $pageurl=_rawurlencode($pagename);
       $pagetext=_html_escape(urldecode($pagename));
       $out.= '<li>' . $formatter->link_tag($pageurl,"",$pagetext,"tabindex='$idx'")."</li>\n";

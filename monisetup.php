@@ -41,7 +41,7 @@ class MoniConfig extends Config_base {
 
     $hostconf = $this->_quoteConfig($hostconfig);
     $this->rawconfig=array_merge($this->_rawConfig($configfile),$hostconf);
-    while (list($key,$val)=each($hostconf)) {
+    foreach ($hostconf as $key => $val) {
       eval("\$$key=$val;");
       eval("\$this->config[\$key]=$val;");
     }
@@ -176,7 +176,7 @@ class MoniConfig extends Config_base {
 
   function _getFormConfig($config,$mode=0) {
     $conf=array();
-    while (list($key,$val) = each($config)) {
+    foreach ($config as $key => $val) {
       $val=_stripslashes($val);
       $val=str_replace(array("\r\n","\r"),array("\n","\n"),$val);
       if (!isset($val)) $val="''";
@@ -611,7 +611,7 @@ JS;
   print "<a href='#' onclick='deselect(\"seedall\")' >"._t("Deselect all")."</a></h4>\n";
   print "<form id='seedall' method='post' action=''>\n";
   $ii=1;
-  while (list($filter_name,$filter) = each($seed_filters)) {
+  foreach ($seed_filters as $filter_name => $filter) {
     if ($filter_name == 'SystemPages') {
     	print "<h4>$filter_name ("._t("Please be careful to deselect these pages").")</h4>\n";
     	print "<div id='systemseed'>\n";
@@ -1198,7 +1198,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST") {
   print "<div class='oldset'>";
   print"<table class='wiki' align='center' border='1' cellpadding='2' cellspacing='2'>";
   print "\n";
-  while (list($key,$val) = each($config)) {
+  foreach ($config as $key => $val) {
     if ($key != "admin_passwd" && $key != "purge_passwd")
     if (is_string($val) and !preg_match('/<img /',$val))
       $val=str_replace(array('<',"\n"),array('&lt;',"<br />\n"),$val);
@@ -1233,7 +1233,7 @@ if ($_SERVER['REQUEST_METHOD']!="POST") {
   print "<form method='post' action=''>\n";
   print "<div class='newset'>\n";
   print "<table align='center' border='0' cellpadding='2' cellspacing='2'>\n";
-  while (list($key,$val) = each($rawconfig)) {
+  foreach ($rawconfig as $key => $val) {
     if ($key != "admin_passwd") {
       print "<tr><td class='option'>$$key</td>";
       if (strpos($val,"\n")) $type="textarea";

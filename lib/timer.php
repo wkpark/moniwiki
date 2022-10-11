@@ -32,7 +32,7 @@ class Timer {
 
     function Write() {
         $out = '';
-        while (list($name,$d) = each($this->timers)) {
+        foreach ($this->timers as $name => $d) {
             $out.= sprintf("%10s :%3.4f sec (%3.2f %%)\n", $name, $d, $d/$this->total*100);
         }
         return $out;

@@ -317,7 +317,7 @@ HEADER;
     function _genRawConfigSimple($config)
     {
         $lines = array("<?php\n", "# automatically generated\n");
-        while (list($key, $val) = each($config)) {
+        foreach ($config as $key => $val) {
             if ($key == 'admin_passwd' or $key == 'purge_passwd')
                 $val = "'".crypt($val,md5(time()))."'";
             $val = str_replace('&lt;', '<', $val);
