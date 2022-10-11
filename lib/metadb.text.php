@@ -38,9 +38,15 @@ class MetaDB_text extends MetaDB {
             $twins = array_merge($twins, $this->db[$pagename]);
 
         // wiki:Hello World -> wiki:"Hello World"
+        if (PHP_VERSION_ID >= 50300) {
+        $twins = preg_replace_callback('@^((?:[^\s]{2,}:)*)(.*)$@',
+                function($m) {
+                    return '[wiki:'.$m[1].'"'.$m[2].'"]'; }, $twins);
+        } else {
         $twins = preg_replace_callback('@^((?:[^\s]{2,}:)*)(.*)$@',
                 create_function('$m',
                     'return \'[wiki:\'.$m[1].\'"\'.$m[2].\'"]\';'), $twins);
+        }
         return $twins;
     }
 

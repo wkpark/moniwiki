@@ -81,7 +81,11 @@ class MetaDB_dba extends MetaDB {
         if ($addons) $ret = array_merge($addons, $ret);
         if (sizeof($ret) > 8) {
             if ($mode == 1) return array("TwinPages:$pagename");
+            if (PHP_VERSION_ID >= 50300) {
+            $ret = array_map(function($a) { return " * $a"; }, $ret);
+            } else {
             $ret = array_map(create_function('$a', 'return " * $a";'), $ret);
+            }
         }
 
         return $ret;

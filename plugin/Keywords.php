@@ -263,7 +263,11 @@ EOF;
 */
     if ($bigwords) {
         // 
-        $bigwords=array_filter($bigwords,create_function('$a','return ($a != 1);'));
+        if (PHP_VERSION_ID >= 50300) {
+          $bigwords=array_filter($bigwords, function($a) { return ($a != 1); });
+        } else {
+          $bigwords=array_filter($bigwords,create_function('$a','return ($a != 1);'));
+        }
         foreach ($bigwords as $k=>$v) $words["$k"] = $v;
     }
 
@@ -509,9 +513,15 @@ function do_keywords($formatter,$options) {
             unset($ws["'"]);
             unset($ws[' ']);
             $ws=array_flip($ws);
-            $ws= array_map(create_function('$a',
+            if (PHP_VERSION_ID >= 50300) {
+                $ws= array_map(function($a) {
+                    return preg_replace("/^([\"'])(.*)\\1$/","\\2",$a);
+                }, $ws); // delete ",'
+            } else {
+                $ws= array_map(create_function('$a',
                 'return preg_replace("/^([\"\'])(.*)\\\\1$/","\\\\2",$a);'),
                 $ws); // delete ",'
+            }
             $ws=array_unique($ws);
             $all_keys=array_merge($all_keys,$ws);
             foreach ($ws as $k) {

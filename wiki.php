@@ -21,6 +21,12 @@ $_release = '1.2.6-GIT';
 error_reporting(E_ALL ^ E_NOTICE);
 #error_reporting(E_ALL);
 
+// PHP_VERSION_ID is available as of PHP 5.2.7
+if (!defined('PHP_VERSION_ID')) {
+  $version = explode('.', PHP_VERSION);
+  define('PHP_VERSION_ID', ($version[0] * 10000 + $version[1] * 100 + $version[2]));
+}
+
 /**
  * get macro/action plugins
  *
@@ -3879,11 +3885,19 @@ class Formatter {
           continue;
         }
       } else {
-        $chunk = preg_replace_callback(
+        if (PHP_VERSION_ID >= 50300) {
+          $chunk = preg_replace_callback(
+                    "/(({{{(?:(?:[^{}]+|{[^{}]+}(?!})|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!})|(?<=\\\\)[{}]{3}(?!}))|(?2))*+}}})|".
+                    // unclosed inline pre tags
+                    "(?:(?!<{{{){{{}}}(?!}}})|{{{(?:{{{|}}})}}}))/x",
+                    function($m) { return str_repeat("_", strlen($m[1])); }, $line);
+        } else {
+          $chunk = preg_replace_callback(
                     "/(({{{(?:(?:[^{}]+|{[^{}]+}(?!})|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!})|(?<=\\\\)[{}]{3}(?!}))|(?2))*+}}})|".
                     // unclosed inline pre tags
                     "(?:(?!<{{{){{{}}}(?!}}})|{{{(?:{{{|}}})}}}))/x",
                     create_function('$m', 'return str_repeat("_", strlen($m[1]));'), $line);
+        }
         if (($p = strpos($chunk, '{{{')) !== false) {
           $processor = '';
           $in_pre = 1;

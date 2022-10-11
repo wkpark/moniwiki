@@ -5275,7 +5275,11 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
     if (!empty($formatter->use_group)) {
         array_walk($pages,'_setpagekey');
     } else {
+      if (PHP_VERSION_ID >= 50300) {
+        array_walk($pages, function(&$p, $k) { $p = $k;});
+      } else {
         array_walk($pages, create_function('&$p, $k', '$p = $k;'));
+      }
     }
     $all_pages = array_flip($pages);
     uksort($all_pages, 'strcasecmp');

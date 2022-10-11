@@ -170,10 +170,17 @@ POHEAD;
         "<br />\n";
     if ($options['patch']) {
         include_once('lib/difflib.php');
-        $rawpo=array_map(create_function('$a', 'return $a."\n";'),
+        if (PHP_VERSION_ID >= 50300) {
+            $rawpo=array_map(function($a) { return $a."\n"; }),
             explode("\n",$rawpo));
-        $newpo=array_map(create_function('$a', 'return $a."\n";'),
+            $newpo=array_map(function($a) { return $a."\n"; }),
             explode("\n",$po));
+        } else {
+            $rawpo=array_map(create_function('$a', 'return $a."\n";'),
+            explode("\n",$rawpo));
+            $newpo=array_map(create_function('$a', 'return $a."\n";'),
+            explode("\n",$po));
+        }
         $diff = new Diff($rawpo, $newpo);
 
         $f = new UnifiedDiffFormatter;
