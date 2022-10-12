@@ -172,7 +172,7 @@ EOF;
 
     $excl_needle=implode('|',$excl);
 
-    $test = validate_needle($excl_needle);
+    $test2 = validate_needle($excl_needle);
     if ($test2 === false) {
       // invalid regex
       $tmp = array_map('preg_quote', $excl);

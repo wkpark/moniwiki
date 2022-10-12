@@ -132,14 +132,21 @@ function search_network($ranges, $ip, $params = array()) {
     if ($val === false)
         return false;
 
+    if (!isset($ranges[0]) or !isset($ranges[0][0]))
+        return false;
+
     $low = 0;
     $high = count($ranges[0]);
     while(true) {
         $mid = ($high + $low) >> 1;
         $from = $ranges[0][$mid];
-        $to = $ranges[1][$mid];
-        if ($to == 0)
+        if (is_array($ranges[1]) and sizeof($ranges[1]) > 0) {
+            $to = $ranges[1][$mid];
+            if ($to == 0)
+                $to = $from;
+        } else {
             $to = $from;
+        }
         //echo long2ip($from),"\n";
 
         if ($from > $val) {

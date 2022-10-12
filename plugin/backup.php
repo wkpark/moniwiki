@@ -13,7 +13,7 @@ function do_post_backup($formatter,$options) {
   $date=date("Ymd");
   umask(02);
 
-  if ($options['ticket']) {
+  if (!empty($options['ticket'])) {
     $tar=$DBInfo->upload_dir."/backup_$date.tgz";
     $dummy=0;
     while (file_exists($tar)) {

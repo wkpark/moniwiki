@@ -264,6 +264,8 @@ EOS;
 
    if (!empty($force_download) or $key != $value)
       $prefix = $down_prefix;
+   else
+      $prefix = '';
 
    if (!empty($formatter->preview) and $formatter->page->name == $value) { 
      $opener='';
@@ -276,8 +278,8 @@ EOS;
    else {
       $key='';
       $value='UploadFile';
-      if (!$force_download)
-         $prefix.= ($prefix ? '/':'');
+      if (empty($force_download))
+         $prefix.= (!empty($prefix) ? '/':'');
       $dir=$DBInfo->upload_dir;
       $handle= opendir($dir);
       $opener='/';

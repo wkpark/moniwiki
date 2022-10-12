@@ -1534,8 +1534,10 @@ class UserDB {
     if ($this->users) return $this->users;
 
     $type='';
-    if ($options['type'] == 'del') $type = 'del-';
-    elseif ($options['type'] == 'wait') $type = 'wait-';
+    if (!empty($options['type'])) {
+      if ($options['type'] == 'del') $type = 'del-';
+      elseif ($options['type'] == 'wait') $type = 'wait-';
+    }
 
     // count users
     $handle = opendir($this->user_dir);
@@ -1548,7 +1550,7 @@ class UserDB {
     }
     closedir($handle);
 
-    if (is_array($options['retval']))
+    if (!empty($options['retval']) and is_array($options['retval']))
       $options['retval']['count'] = $j;
 
     $offset = !empty($options['offset']) ? intval($options['offset']) : 0;
@@ -2078,7 +2080,7 @@ class WikiUser {
   }
 
   function hasSubscribePage($pagename) {
-    if (!$this->info['email'] or !$this->info['subscribed_pages']) return false;
+    if (empty($this->info['email']) or empty($this->info['subscribed_pages'])) return false;
     $page_list=_preg_search_escape($this->info['subscribed_pages']);
     if (!trim($page_list)) return false;
     $page_lists=explode("\t",$page_list);
@@ -2827,7 +2829,7 @@ function do_invalid($formatter,$options) {
   } else {
     $header = 'Status: 406 Not Acceptable';
     $msg = sprintf(_("You are not allowed to '%s'"), $options['action']);
-    if ($options['allowed'] === false)
+    if (isset($options['allowed']) && $options['allowed'] === false)
       $msg = sprintf(_("%s action is not found."), $options['action']);
     else
       $msg = sprintf(_("You are not allowed to '%s'"), $options['action']);

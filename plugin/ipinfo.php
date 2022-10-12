@@ -333,9 +333,11 @@ function do_ipinfo($formatter, $params = array()) {
             }
         }
 
-        $netmask = !empty($params['netmask']) ? (int) $params['netmask'] : $netmask;
-        if ($netmask >= 32) {
-            $netmask = '';
+        if (!empty($params['netmask'])) {
+            $netmask = !empty($params['netmask']) ? (int) $params['netmask'] : $netmask;
+            if ($netmask >= 32) {
+                $netmask = '';
+            }
         }
 
         $try = $ip;
@@ -462,7 +464,7 @@ function do_ipinfo($formatter, $params = array()) {
             $res = search_network($blocked, $params['q'], $ret);
 
             $permenant = false;
-            if ($res === false) {
+            if ($res === false && isset($Config['ruleset']['blacklist.ranges'])) {
                 // search blacklist ranges
                 $res = search_network($Config['ruleset']['blacklist.ranges'],
                     $params['q'], $ret);
@@ -523,7 +525,7 @@ function do_ipinfo($formatter, $params = array()) {
     }
 
     $formatter->send_header('', $params);
-    $formatter->send_title($title,'', $params);
+    $formatter->send_title('','', $params);
 
     $searchform = <<<FORM
 <form method='post' action=''>
@@ -550,7 +552,7 @@ FORM;
     $mask_select = '<select name="netmask"><option value="">-- '._("Netmask").' --</option>'."\n";
     foreach ($masks as $m) {
         $selected = '';
-        if ($m == $netmask)
+        if (!empty($netmask) && $m == $netmask)
             $selected = ' selected="selected"';
         $mask_select.= '<option value="'.$m.'"'.$selected.'>'."\n";
         $mask_select.= $m.' : ';

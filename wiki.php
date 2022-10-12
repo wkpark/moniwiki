@@ -901,7 +901,10 @@ class WikiDB {
         $retval['del_chars'] = 0;
       }
 
-      $force = $is_new || $options['.force'];
+      if (!empty($options['.force']))
+        $force = $options['.force'];
+      else
+        $force = $is_new;
       // FIXME fix for revert+create cases for clear
       if ($is_new && preg_match('@;;{REVERT}@', $options['log'])) {
         $tmp = preg_replace('@;;{REVERT}:@', ';;{CREATE}{REVERT}:', $options['log']);
@@ -5876,6 +5879,8 @@ function get_pagename() {
       foreach ($arr as $k=>$v)
         if (empty($v)) $pagename = $k;
     }
+  } else {
+    $pagename = '';
   }
   if (isset($pagename[0])) {
     $pagename=_stripslashes($pagename);
