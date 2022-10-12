@@ -121,9 +121,13 @@ function macro_Dot($formatter,$value='',$options=array()) {
                 '"#A4DDF4"','"#83D0ED"','"#63C0E3"',
                 'gray53', 'gray40','white','black');
   $colidx=0;
+
+  $charset = '';
+  if (!empty($DBInfo->charset))
+    $charset = 'charset="'.$DBInfo->charset.'"'."\n";
   $dot_head=<<<HEAD
 digraph G {
-  $dot_options
+  $charset$dot_options
   ratio="compress"
   URL="$visualtour"
   node [URL="$pageurl", 
@@ -133,32 +137,43 @@ HEAD;
   $allnode=array_keys($node);
   $out = '';
   while (list($leafname,$leaf) = @each ($node)) {
-    if (!empty($leafname) and empty($leafs[($urlname=_rawurlencode($leafname))])) {
-      $leafs[$leafname]=$urlname;
+    while (!empty($leafname)) {
+      //$leafkey = _rawurlencode($leafname); // for old graphviz
+      $leafkey = $leafname;
+      if (!empty($leafs[$leafkey]))
+        break;
+      $leafs[$leafname]=$leafkey;
 
       $extra='';
       if ($fcolref[$color[$leafname]])
         $extra=',fontcolor='.$fcolref[$color[$leafname]];
-      $out.= '"'.$urlname."\" [label=\"$leafname\",".
+      $out.= '"'.$leafkey."\" [label=\"$leafname\",".
              "style=filled,fillcolor=".$colref[$color[$leafname]]."$extra];\n";
+      break;
     }
     #print $leafname."\n";
     #print_r($node[$leafname]);
     $selected=array_intersect($node[$leafname],$allnode);
 
     foreach ($selected as $leaf) {
-      if (!empty($leaf) and empty($leafs[($urlname=_rawurlencode($leaf))])) {
-        $leafs[$leaf]=$urlname;
+      //$urlname = _rawurlencode($leaf); // for old graphviz
+      $urlname = $leaf;
+      $urlkey = $urlname;
+      while (!empty($leaf)) {
+        if (!empty($leafs[$urlkey]))
+          break;
+        $leafs[$leaf]=$urlkey;
         $extra='';
         if ($fcolref[$color[$leaf]])
           $extra=',fontcolor='.$fcolref[$color[$leaf]];
-        $out.= '"'.$urlname."\" [label=\"$leaf\",".
+        $out.= '"'.$urlkey."\" [label=\"$leaf\",".
                "style=filled,fillcolor=".$colref[$color[$leaf]]."$extra];\n";
+        break;
       }
       $out.= "\"".$leafs[$leafname]."\" ->\"".$leafs[$leaf]."\";\n";
     }
   }
-  $out.= "};\n";
+  $out.= "}\n";
 
   $out=$dot_head.$out;
 

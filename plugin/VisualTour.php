@@ -13,7 +13,7 @@ function macro_VisualTour($formatter,$value,$options=array()) {
   #$dotcmd="twopi";
   #$dotcmd="neato";
   $maptype = 'imap';
-  $maptype = 'cmap';
+  $maptype = 'cmapx';
 
   if (!$formatter->page->exists())
     return "";
