@@ -3129,7 +3129,7 @@ class Formatter {
         #$query_string= '&amp;'.substr($query_string,1);
       $query_string= $sep . $pageurl.$query_string;
     } else
-      $query_string= (!empty($pageurl) ? $sep : '') . $pageurl.$query_string;
+      $query_string= (isset($pageurl[0]) ? $sep : '') . $pageurl.$query_string;
     return $this->prefix . $query_string;
   }
 
