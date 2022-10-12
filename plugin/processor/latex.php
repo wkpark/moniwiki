@@ -52,7 +52,8 @@ function processor_latex(&$formatter,$value="",$options=array()) {
   $option='-interaction=batchmode ';
   $mask='';
 
-  $options['dpi'] = intval($options['dpi']);
+  if (!empty($options['dpi']))
+    $options['dpi'] = intval($options['dpi']);
   if (preg_match('/ps$/',$dvicmd)) {
     $tmpext='ps';
     $dviopt='-D 300';
@@ -67,7 +68,7 @@ function processor_latex(&$formatter,$value="",$options=array()) {
     }
   }
 
-  if ($value[0]=='#' and $value[1]=='!')
+  if (isset($value[1]) and $value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
 
   if (!$value) {

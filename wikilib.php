@@ -3179,7 +3179,7 @@ function do_goto($formatter,$options) {
        $url = substr($url, 0, $p);
      }
      $url=_rawurlencode($url);
-     if ($options['redirect'])
+     if (!empty($options['redirect']))
        $url=$formatter->link_url($url,"?action=show&amp;redirect=".
           str_replace('+', '%2B', $formatter->page->urlname).$anchor);
      else
@@ -3248,7 +3248,7 @@ function do_titleindex($formatter,$options) {
 
     $val='';
     $rule='';
-    while ($DBInfo->use_hangul_search) {
+    while (!empty($DBInfo->use_hangul_search)) {
       include_once("lib/unicode.php");
       $val=$options['q'];
       if (strtoupper($DBInfo->charset) != 'UTF-8' and function_exists('iconv')) {
@@ -4795,6 +4795,9 @@ FORM;
       return $form;
     }
   }
+
+  $emailverify = '';
+
   if ($user->id == 'Anonymous' && !empty($DBInfo->anonymous_friendly)) {
     $verifiedemail = isset($options['verifyemail']) ? $options['verifyemail'] :
                     (isset($user->verified_email) ? $user->verified_email : '');

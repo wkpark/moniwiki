@@ -567,6 +567,9 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   if (!$use_val)
     $rc->update($rckey.'.lock', array('lock'), 5); // 5s lock
 
+  if (count($lines) == 0)
+    return '';
+
   $lastline = $lines[0];
   $tmp = explode("\t", $lastline, 6);
   $timestamp = $tmp[2];

@@ -4149,7 +4149,7 @@ class Formatter {
         if (!empty($match[2])) $open.='<caption>'.$match[2].'</caption>';
         $line='||'.$match[3].$match[5].$match[6];
         $in_table=1;
-      } elseif ($in_table && ($line[0]!='|' or
+      } elseif ($in_table && ((isset($line[0]) && $line[0]!='|') or
               !preg_match("/^\|{2}.*(?:\|(\||-+))$/s",rtrim($line)))) {
         $close=$this->_table(0,$dumm).$close;
         $in_table=0;
@@ -5859,6 +5859,7 @@ function get_pagename() {
     // e.g.) /FrontPage => FrontPage
     $pagename = substr($path_info, 1);
   } else if (!empty($_SERVER['QUERY_STRING'])) {
+    $pagename = '';
     $goto=isset($_POST['goto'][0]) ? $_POST['goto']:(isset($_GET['goto'][0]) ? $_GET['goto'] : '');
     if (isset($goto[0])) $pagename=$goto;
     else {
@@ -5990,7 +5991,7 @@ if (!$options['theme']) $options['theme']=$theme=$DBInfo->theme;
       $options['pagename'] = ''; // invalid pagename
   }
 
-  if ($user->id != 'Anonymous' and !empty($DBInfo->use_scrap)) {
+  if ($user->id != 'Anonymous' and !empty($DBInfo->use_scrap) and !empty($user->info['scrapped_pages'])) {
     $pages = explode("\t",$user->info['scrapped_pages']);
     $tmp = array_flip($pages);
     if (isset($tmp[$options['pagename']]))

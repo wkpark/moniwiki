@@ -20,9 +20,10 @@ function macro_Scrap($formatter,$value='',$options=array()) {
   $pgname = '';
   if (!empty($formatter->page->name)) {
     $pgname = $formatter->page->name;
-    if (!in_array($formatter->page->name,$pages))
-      $pages[]=$options['page'];
-    else
+    if (!in_array($formatter->page->name,$pages)) {
+      if (!empty($options['page']))
+        $pages[]=$options['page'];
+    } else
       $scrapped = 1;
   }
 
