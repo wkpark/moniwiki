@@ -4330,7 +4330,7 @@ function macro_RandomPage($formatter, $value = '', $params = array()) {
 <script type='text/javascript'>
 /*<![CDATA[*/
 (function () {
-   var msg = HTTPGet("$url");
+  HTTPGet("$url", function(msg) {
    var ret;
    if (msg != null && (ret = eval(msg))) {
       var div = document.getElementById("$myid");
@@ -4342,6 +4342,7 @@ function macro_RandomPage($formatter, $value = '', $params = array()) {
       }
       div.appendChild(ul);
    }
+ });
 })();
 /*]]>*/
 </script>
@@ -5148,7 +5149,7 @@ function macro_PageCount($formatter, $value = '', $options = array()) {
 (function() {
 var url = "$url";
 var mode = "$mode";
-var txt = HTTPGet(url);
+HTTPGet(url, function(txt) {
 var ret = window["eval"]("(" + txt + ")");
 var rc = document.getElementById("macro-$mid");
 var out = ret['pagecount'];
@@ -5157,6 +5158,7 @@ if (mode == 'noredirect')
 else if (mode == 'redirect')
     out = ret['redirect'];
 rc.innerHTML = out;
+});
 })();
 /*]]>*/
 </script>

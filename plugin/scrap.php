@@ -57,8 +57,8 @@ function get_scrap()
     if (location.port) loc+= ':' + location.port;
     loc+= location.pathname + qp + 'action=scrap/ajax';
 
-    var ret = HTTPGet(loc);
-    if (ret) {
+    HTTPGet(loc, function(ret) {
+        if (!ret) return;
         var list = JSON.parse(ret);
         var html = '';
         for (i = 0; i < list.length; i++) {
@@ -87,7 +87,7 @@ function get_scrap()
                 }
             }
         }
-    }
+    });
 }
 
 // onload

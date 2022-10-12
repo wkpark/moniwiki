@@ -46,7 +46,7 @@ function toggleSubIndex(id)
             var qp=href.indexOf("?") != -1 ? '&':'?';
             href=self.location + qp + 'action=pagelist/ajax&subdir=1';
 
-            var form=HTTPGet(href);
+            HTTPGet(href, function(form) {
             sub.innerHTML=form;
             subindex.appendChild(sub);
 
@@ -65,6 +65,7 @@ function toggleSubIndex(id)
                 mySlide.slideIn();
             }
             toggle=true;
+            });
         }
         if (icon) {
             var name=icon.getAttribute('class');

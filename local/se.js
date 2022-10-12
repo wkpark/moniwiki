@@ -12,8 +12,8 @@ function sectionEdit(ev,obj,sect) {
       return;
     }
     var href=obj.href.replace(/=edit/,'=edit/ajax');
-    var form=HTTPGet(href);
-    if (form.substring(0,5) != 'false') {
+    HTTPGet(href, function(form) {
+      if (form.substring(0,5) == 'false') return;
       //var node=document.createElement('li');
       //node.innerHTML=msg;
       //chat.appendChild(node);
@@ -21,7 +21,7 @@ function sectionEdit(ev,obj,sect) {
       f.setAttribute('id','editSect-'+sect);
       f.innerHTML=form;
       sec.parentNode.appendChild(f);
-    }
+    });
   }
 }
 

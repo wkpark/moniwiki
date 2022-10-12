@@ -1263,7 +1263,7 @@ EOF;
 /*<![CDATA[*/
 (function() {
   var url = "$url";
-  var txt = HTTPGet(url);
+  HTTPGet(url, function(txt) {
   var rc = document.getElementById("rc$rc_id");
   if (txt.substring(0,5) != 'false') {
     var m = null;
@@ -1271,6 +1271,7 @@ EOF;
       rc.innerHTML = m[0];
     }
   }
+ });
 })();
 /*]]>*/
 </script>

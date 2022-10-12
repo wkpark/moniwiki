@@ -57,10 +57,10 @@ function wikiFortune(el, cat) {
     if (location.port) loc+= ':' + location.port;
     loc+= location.pathname + qp + 'action=fortune/ajax&value=' + cat;
 
-    var ret = HTTPGet(loc);
-    if (ret) {
+    HTTPGet(loc, function(ret) {
+        if (!ret) return;
         wrapper.innerHTML = ret;
-    }
+    });
 }
 /*]]>*/
 </script>\n
