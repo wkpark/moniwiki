@@ -3770,10 +3770,10 @@ function do_post_savepage($formatter,$options) {
     // get total line numbers
     // test \n or \r or \r\n
     $crlf = "\n";
-    if (preg_match("/(\r|\r\n|\n)$/", $body, $match))
+    if (preg_match("/(\r|\r\n|\n)$/", $savetext, $match))
       $crlf = $match[1];
     // count crlf
-    $nline = substr_count($body, $crlf);
+    $nline = substr_count($savetext, $crlf);
 
     // count diff lines, chars
     $changes = diffcount_lines($diff, $DBInfo->charset);
