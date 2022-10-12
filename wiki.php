@@ -6741,7 +6741,12 @@ function _session_start($session_id = null, $id = null) {
 
     if (!empty($Config['cookie_domain']))
         $domain = $Config['cookie_domain'];
-    else
+    else if (strpos($_SERVER['SERVER_NAME'], '.') !== false) {
+        $tmp = explode('.', $_SERVER['SERVER_NAME']);
+        if (count($tmp) >= 3)
+            $domain = $_SERVER['SERVER_NAME'];
+    }
+    if (empty($domain))
         $domain = $_SERVER['HTTP_HOST'];
 
     $expire = isset($Config['session_lifetime']) ? $Config['session_lifetime'] : 3600;

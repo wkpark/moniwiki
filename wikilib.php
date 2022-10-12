@@ -1966,9 +1966,13 @@ class WikiUser {
      $domain = '';
      if (!empty($Config['cookie_domain'])) {
         $domain = '; Domain='.$Config['cookie_domain'];
-     } else {
-        $domain = '; Domain='.$_SERVER['SERVER_NAME'];
+     } else if (strpos($_SERVER['SERVER_NAME'], '.') !== false) {
+        $tmp = explode('.', $_SERVER['SERVER_NAME']);
+        if (count($tmp) >= 3)
+          $domain = '; Domain='.$_SERVER['SERVER_NAME'];
      }
+     if (empty($domain))
+        $domain = '; Domain='.$_SERVER['HTTP_HOST'];
 
      if (!empty($Config['cookie_path']))
         $path = '; Path='.$Config['cookie_path'];
@@ -1987,9 +1991,14 @@ class WikiUser {
      $domain = '';
      if (!empty($Config['cookie_domain'])) {
         $domain = '; Domain='.$Config['cookie_domain'];
-     } else {
-        $domain = '; Domain='.$_SERVER['SERVER_NAME'];
+     } else if (strpos($_SERVER['SERVER_NAME'], '.') !== false) {
+        $tmp = explode('.', $_SERVER['SERVER_NAME']);
+        if (count($tmp) >= 3)
+          $domain = '; Domain='.$_SERVER['SERVER_NAME'];
      }
+     if (empty($domain))
+        $domain = '; Domain='.$_SERVER['HTTP_HOST'];
+
      if (!empty($Config['cookie_path']))
         $path = '; Path='.$Config['cookie_path'];
      else
