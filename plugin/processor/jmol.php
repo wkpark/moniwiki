@@ -123,11 +123,29 @@ IEJS;
 $base64js
 <script type='text/javascript'>
 /*<![CDATA[*/
-        function open_image(base64) {
+        function decode_image(base64) {
             base64=base64.replace(/\ \|\ /g, "").replace(/\s/g, "");
             var img = eval("("+base64+")").image;
-            var imgsrc = "data:image/jpeg;base64,"+img;
+            return "data:image/jpeg;base64,"+img;
+        }
 
+        function open_image(base64) {
+            if (base64 && typeof base64.then === 'function') {
+                // XXX // Is it a Promise? Cheerpj applet runner case.
+                base64.then(function(v) {
+                    var r = new TextDecoder("unicode").decode(v.value0);
+                    // strip first char.
+                    var s = r.substring(1);
+                    var imgsrc = decode_image(s);
+                    open_image_window(imgsrc);
+                });
+                return;
+            }
+            var imgsrc = decode_image(base64);
+            open_image_window(imgsrc);
+        }
+
+        function open_image_window(imgsrc) {
             var open=window.open('','_blank',"$jsize,menubar=1,toolbar=1,scrollbars=1,status=1,resizable=1");
             //var open=window.open('','_blank',"$jsize,menubar=0,toolbar=0,scrollbars=0,status=0");
             //var open=window.open(imgsrc,'_blank',"$jsize,menubar=0,toolbar=0,scrollbars=0,status=0");
@@ -141,12 +159,8 @@ $base64js
             open.focus();
         }
 
-        function addJmolBtns(applet,btns) {
-            this.applet=applet;
-            var self=this;
-            var s=this.applet.getPropertyAsJSON('atomInfo') + "";
-            var A = eval("("+s+")");
-            if (A && A.atomInfo[0] != undefined && A.atomInfo[0].partialCharge) {
+        function addMEPButton(atomInfo, btns) {
+            if (atomInfo && atomInfo != undefined && atomInfo.partialCharge) {
                 var btn = document.createElement('button');
                 var text = document.createTextNode('MEP');
                 btn.appendChild(text);
@@ -155,12 +169,49 @@ $base64js
                 };
                 btns.appendChild(btn);
             }
+        }
 
-            s=this.applet.getPropertyAsJSON('auxiliaryInfo') + "";
-            A = eval("("+s+")");
-            if (A != undefined && A.auxiliaryInfo.models && A.auxiliaryInfo.models[0].moData) {
+        function addJmolBtns(applet,btns) {
+            this.applet=applet;
+            var self=this;
+            var s=this.applet.getPropertyAsJSON('atomInfo');
+            var A;
+            if (s && typeof s.then === 'function') {
+                // XXX Is it a Promise? Cheerpj applet runner.
+                s.then(function(v) {
+                    var r = new TextDecoder("unicode").decode(v.value0);
+                    // strip first char.
+                    var A = eval("("+r.substring(1)+")");
+                    addMEPButton(A.atomInfo[0], btns);
+                });
+            } else {
+                A = eval("("+s+")");
+                addMEPButton(A.atomInfo[0], btns);
+            }
+
+            s=this.applet.getPropertyAsJSON('auxiliaryInfo');
+            if (s && typeof s.then === 'function') {
+                // XXX Is it a Promise? Cheerpj applet runner.
+                s.then(function(v) {
+                    var r = new TextDecoder("unicode").decode(v.value0);
+                    // strip first char.
+                    var A = eval("("+r.substring(1)+")");
+                    if (A != undefined && A.auxiliaryInfo.models && A.auxiliaryInfo.models[0].moData != undefined) {
+                        addMOInfo(A.auxiliaryInfo, btns);
+                    }
+                });
+            } else {
+                A = eval("("+s+")");
+                if (A != undefined && A.auxiliaryInfo.models && A.auxiliaryInfo.models[0].moData != undefined) {
+                    addMOInfo(A.auxiliaryInfo, btns);
+                }
+            }
+        }
+
+        function addMOInfo(auxiliaryInfo, btns) {
+            if (auxiliaryInfo.models && auxiliaryInfo.models[0].moData != undefined) {
                 this.applet.script("mo fill nomesh;mo TITLEFORMAT \"Model %M, MO %I/%N |E = %E %U |?Symm = %S |?Occ = %O\"");
-                var mos=A.auxiliaryInfo.models[0].moData.mos
+                var mos=auxiliaryInfo.models[0].moData.mos
                 var len=mos.length;
                 var sel = document.createElement('select');
                 var opt = document.createElement('option');
@@ -224,7 +275,8 @@ JS;
 <div>
 <applet name='jmolApplet$id' id='jmolApplet$id' code='JmolApplet.class' $size archive='$pubpath/JmolApplet.jar' codebase='$pubpath' mayscript='mayscript'>
         $args
-    Loading a JmolApplet object.
+    Loading a JmolApplet object.<br />
+<b>NOTE:</b> You need a Java enabled browser or use the <a href="https://chrome.google.com/webstore/detail/cheerpj-applet-runner/bbmolahhldcbngedljfadjlognfaaein">CheerpJ chrome extension</a>.
 </applet>
 $js
 <div>
