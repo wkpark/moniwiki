@@ -44,8 +44,6 @@ HEADER;
 
 function macro_JME($formatter,$value) {
     global $DBInfo;
-    $jar = 'JME.zip'; // XXX
-    $jar = 'JME.jar';
 
     $draw_dir=str_replace('./','',$DBInfo->upload_dir.'/JME');
     if (!file_exists($draw_dir)) {
@@ -54,6 +52,8 @@ function macro_JME($formatter,$value) {
     }
     $name=$value;
     $urlname=_rawurlencode($value);
+    $dummy = explode('/', $name);
+    $name = $dummy[count($dummy) - 1];
     $molname=$name.".mol";
     $now=time();
 
@@ -71,16 +71,33 @@ function macro_JME($formatter,$value) {
         $mol = '';
         while(!feof($fp)) $mol.=fgets($fp,2048);
         fclose($fp);
-        $mol=str_replace("\r\n","|\n",$mol);
+        $mol=str_replace("\r\n","|",$mol);
     }
     $pubpath=$DBInfo->url_prefix."/applets/JMEPlugin";
     $mol = _html_escape($mol);
+
+    $cid = &$GLOBALS['_transient']['jsme'];
+    $id = $cid + 0;
+
     return <<<APPLET
-<applet code="JME.class" name="JME" codebase="$pubpath" archive="$jar">
-<param name="options" value="depict" />
-<param name="mol" value="$mol" />
-You have to enable Java and JavaScript on your machine !
-</applet>
+<script type="text/javascript" language="javascript" src="$pubpath/jsme/jsme.nocache.js"></script>
+<script type='text/javascript'>
+/*<![CDATA[*/
+var jsmeApplet$id = null;
+function jsmeOnLoad() {
+            jsmeApplet$id = new JSApplet.JSME("jsme_applet$id", "600px", "440px", {
+                // optional parameters
+                "options": "depict,marker,markermenu,",
+                //"options": "query,hydrogens,fullScreenIcon",
+                //"smiles" : glutathione_smiles
+                //"jme" : glutathione_JME
+                "mol" : "$mol",
+                //"chem" : glutathione_mol3 // use generic input file format with automatic chemical format detection
+            });
+}
+/*>*/
+</script>
+        <div id="jsme_applet$id"></div>
 APPLET;
 }
 
@@ -95,12 +112,14 @@ function do_post_jme($formatter,$options) {
     $draw_dir=str_replace("./",'',$DBInfo->upload_dir.'/JME');
     $pagename=$options['page'];
 
-    !empty($options['value']) ? $name = $options['value']: !empty($options['name']) ? $name = $options['name'] : null;
+    $name = !empty($options['value']) ? $options['value']: (!empty($options['name']) ? $options['name'] : null);
     if (empty($name)) $name=time();
+    else {
+        $dummy = explode('/', $name);
+        $name = $dummy[count($dummy) - 1];
+    }
 
     if ($_SERVER['REQUEST_METHOD']=='POST' and $options['mol']) {
-        $dummy=explode('/',$name);
-        $name=$dummy[count($dummy)-1];
         $molname=$name.'.mol';
         $fp=fopen($draw_dir.'/'.$molname,'w');
         if ($fp) {
@@ -113,18 +132,31 @@ function do_post_jme($formatter,$options) {
         return;
     }
 
+    $mol = '';
+    $fp = fopen($draw_dir.'/'.$name.".mol", 'r');
+    if ($fp) {
+        $mol = '';
+        while(!feof($fp)) $mol.= fgets($fp, 2048);
+        fclose($fp);
+        $mol = str_replace("\r\n","|",$mol);
+        $mol = _html_escape($mol);
+    }
+
+    $pubpath=$DBInfo->url_prefix."/applets/JMEPlugin";
+    $formatter->register_javascripts('<script type="text/javascript" src="'.$pubpath.'/jsme/jsme.nocache.js"></script>');
+
     $formatter->send_header('',$options);
     $formatter->send_title(_("Edit Molecule"),'',$options);
     $script=<<<SCRIPT
 <script type="text/javascript">
 /*<![CDATA[*/
 function setMolFile(obj) {
-    var mol = document.JME.molFile();
+    var mol = jsmeApplet.molFile();
     obj.mol.value = mol;
 }
 
 function getGauFile(obj) {
-    var mol = document.JME.molFile();
+    var mol = jsmeApplet.molFile();
     var lines = mol.split("\\n");
     var i=0;
     var gau="%chk=\\n# ub3lyp/6-311g(d,p) OPT FREQ POP=full\\n\\n";
@@ -148,12 +180,25 @@ SCRIPT;
     $name = _html_escape($name);
     print <<<FORM
 $script
+<script type='text/javascript'>
+/*<![CDATA[*/
+var jsmeApplet = null;
+function jsmeOnLoad() {
+    jsmeApplet = new JSApplet.JSME("jsme_applet", "600px", "440px", {
+        // optional parameters
+        "options": "multipart; autoez",
+        //"options": "query,hydrogens,fullScreenIcon",
+        //"smiles" : glutathione_smiles
+        //"jme" : glutathione_JME
+        "mol" : "$mol",
+        //"chem" : glutathione_mol3 // use generic input file format with automatic chemical format detection
+    });
+}
+/*>*/
+</script>
+<div id="jsme_applet"></div>
+</div>
 <form method="POST" action="">
-<applet code="JME.class" name="JME" codebase="$pubpath" archive="JME.zip"
-width="360" height="315">
-<param name=" options"  value="multipart; autoez";>
-You have to enable Java and JavaScritpt on your machine !
-</applet><br />
 <input type="hidden" name="action" value="jme" />
 <input type="hidden" name="name" value="$name" />
 <input type="submit" name="submit_button" value="Submit" onclick="setMolFile(this.form)" />
