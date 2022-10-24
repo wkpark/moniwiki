@@ -42,8 +42,14 @@ function macro_Clip($formatter,$value) {
   return "$edit<img src='$DBInfo->url_prefix/$_dir/$pngname' border='0' alt='image' />$end_tag\n";
 }
 
-function do_Clip($formatter,$options) {
+function do_post_Clip($formatter,$options) {
   global $DBInfo;
+
+  if ($_SERVER['REQUEST_METHOD'] == 'POST' &&
+        !$DBInfo->security->writable($options)) {
+    $options['title'] = _("Page is not writable");
+    return do_invalid($formatter, $options);
+  }
 
   $enable_replace=1;
 
@@ -55,11 +61,64 @@ function do_Clip($formatter,$options) {
     $prefix = get_hashed_prefix($keyname);
     $_dir = str_replace('./','',$DBInfo->upload_dir.'/'.$prefix.$keyname);
   }
+
+  umask(000);
+  if (!file_exists($_dir))
+    _mkdir_p($_dir, 0777);
+
   $pagename=_urlencode($options['page']);
 
-  $name=$options['value'];
+  if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    if (empty($options['value']) || empty($options['name'])) {
+      echo "false\n"._("No data posted");
+      return;
+    }
 
-  if (!$name) {
+    $name = trim($options['name']);
+    // simple name checker.
+    $dummy = explode('/', $name);
+    $name = trim($dummy[count($dummy) - 1]);
+    if (empty($name)) {
+      echo "false\n";
+      echo _("No filename given");
+      return;
+    }
+
+    // decode base64
+    if (substr($options['value'], 0, 5) == "data:" and preg_match("/^data:image\/(png|jpe?g|gif);base64,/", $options['value'])) {
+      $tmp = explode(";", substr($options['value'], 11));
+      $type = $tmp[0];
+      $base64 = substr($tmp[1], 7);
+      $raw = base64_decode($base64);
+      if ($raw === false) {
+        $err = _("Fail to decode base64 data string.");
+        echo "false\n".$err;
+        return;
+      }
+    } else {
+      echo "false\n"._("Fail to parse given base64 string");
+      return;
+    }
+    $imgname = $name.'.'.$type;
+    $fp = fopen($_dir.'/'.$imgname, 'wb');
+    if (is_resource($fp)) {
+      fwrite($fp, $raw);
+      fclose($fp);
+    } else {
+      echo "false\n"._("Fail to write a image file");
+      return;
+    }
+
+    echo "true\n";
+    return;
+  }
+
+  $name = trim($options['value']);
+  // simple name checker.
+  $dummy = explode('/', $name);
+  $name = trim($dummy[count($dummy) - 1]);
+
+  if (empty($name)) {
     $title=_("Fatal error !");
     $formatter->send_header("Status: 406 Not Acceptable",$options);
     $formatter->send_title($title,"",$options);
@@ -73,11 +132,71 @@ function do_Clip($formatter,$options) {
 
   //$imgpath="$_dir/$pngname";
   $imgpath="$pngname";
-  $imgparam = '';
+  $js = '';
+  $url = null;
   if (file_exists($_dir.'/'.$imgpath.'.png')) {
     $url=qualifiedUrl($DBInfo->url_prefix.'/'.$_dir.'/'.$imgpath.'.png');
-    $imgparam="<param name='image' value='$url' />";
   }
+
+  $url_save = $formatter->link_url($pagename,"");
+
+  $js = <<<JS
+<script type="text/javascript">
+/*<![CDATA[*/
+(function(){
+var name = "$pngname";
+
+var url = "$url";
+function showImage(url) {
+  var c = $("#clipMacro")[0].getContext("2d");
+  var img = new Image();
+  img.src = "$url";
+  img.onload = function() {
+    c.drawImage(img, 0, 0, img.width, img.height);
+  };
+}
+
+if (url) {
+  showImage(url);
+}
+
+function postBase64(base64, name) {
+    var postdata = 'action=clip&name=' + name + '&value=' + encodeURIComponent(base64);
+    HTTPPost("$url_save", postdata, function(ret) {
+        console.log(ret);
+        showImage(url);
+    });
+}
+
+$(document).ready(function() {
+$("#clipPlugin").on('paste', function(e) {
+  var clipData = (e.clipboardData || e.originalEvent.clipboardData)
+  if (!clipData)
+    return;
+  var items = clipData.items;
+
+  for (index in items) {
+    var item = items[index];
+    if (item.kind === 'file' && item.type.match('^image/')) {
+      console.log(item.kind);
+      var blob = item.getAsFile();
+      var reader = new FileReader();
+      reader.onload = function(e){
+        console.log(e.target.result);
+        postBase64(e.target.result, name);
+      };
+      reader.readAsDataURL(blob);
+    } else if (item.kind === 'string' && item.type.match('^text/html')) {
+      console.log(item.kind);
+      console.log(item.getAsString(function(d){console.log(d)}));
+    }
+  }
+});
+});
+})();
+/*]]>*/
+</script>\n
+JS;
 
   $png_url="$imgpath.png";
 
@@ -87,22 +206,14 @@ function do_Clip($formatter,$options) {
   $now=time();
 
   $url_exit= $formatter->link_url($pagename,"?ts=$now");
-  $url_save= $formatter->link_url($pagename,"?action=draw");
   $url_help= $formatter->link_url("ClipMacro");
 
-  $pubpath=$DBInfo->url_prefix."/applets/ClipPlugin";
-  print "<h2>"._("Cut & Paste a Clipboard Image")."</h2>\n";
+  print "<h2>"._("Paste a Clipboard Image")."</h2>\n";
+  $placeholder = _("Paste your image...");
   print <<<APPLET
-<applet code="clip"
- archive="clip.jar" codebase="$pubpath"
- width='200' height='200' align="center">
-        <param name="pngpath"  value="$png_url" />
-        <param name="savepath" value="$url_save" />
-        <param name="viewpath" value="$url_exit" />
-        <param name="compress" value="5" />
-$imgparam
-<b>NOTE:</b> You need a Java enabled browser to edit the drawing example.
-</applet><br />
+<input id="clipPlugin" size="40" placeholder="$placeholder"></input><br />
+<canvas width="200" height="200" id='clipMacro' tabindex="-1" data-pngpath="$png_url" data-savepath="$url_save" data-viewpath="$url_exit" style="border:1px solid black"></canvas>
+$js
 APPLET;
 
   $formatter->send_footer("",$options);
