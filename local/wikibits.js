@@ -175,6 +175,10 @@ function insertTags(tagOpen, tagClose, sampleText,replace) {
 	var ef = document.getElementById('editform');
 	var doc = document;
 	var txtarea;
+	// XXX HACK to fix a strange behavior. After '?' char found at a url, all characters will be urlecnoded.
+	if (tagClose.substr(0, 1) == '.')
+		tagClose = '?' + tagClose.substr(1);
+
 	if (ef)
 		txtarea = ef.savetext;
 	else {

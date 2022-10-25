@@ -235,8 +235,8 @@ function macro_Attachment($formatter,$value,$options=array()) {
       $file_ok = 2;
   }
   if (empty($file_ok) and !empty($formatter->wikimarkup) and empty($options['nomarkup'])) {
-    if (!empty($DBInfo->swfupload_depth) and $DBInfo->swfupload_depth > 2) {
-      $depth=$DBInfo->swfupload_depth;
+    if (!empty($DBInfo->myupload_depth) and $DBInfo->myupload_depth > 2) {
+      $depth=$DBInfo->myupload_depth;
     } else {
       $depth=2;
     }
@@ -247,7 +247,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
       $myid=session_id();
     }
     $prefix=substr($myid,0,$depth);
-    $mydir=$DBInfo->upload_dir.'/.swfupload/'.$prefix.'/'.$myid;
+    $mydir=$DBInfo->upload_dir.'/.myupload/'.$prefix.'/'.$myid;
     if (file_exists($mydir.'/'.$_l_file)) {
       if (!$img_link && preg_match("/\.(png|gif|jpeg|jpg|bmp)$/i",$upload_file)) {
         $ntext=qualifiedUrl($DBInfo->url_prefix.'/'.$mydir.'/'.$text);

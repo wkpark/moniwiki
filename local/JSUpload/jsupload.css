@@ -1,4 +1,4 @@
-/* SWFUpload CSS */
+/* JSUpload CSS */
     
 #filesDisplay {
   padding: 5px 10px 5px 10px;
@@ -48,13 +48,13 @@
   letter-spacing:-1px;
 }
     
-#SWFUpload {
+#JSUpload {
   margin:0px;
   padding:0px;
   height:1px;
 }
 
-#SWFUpload a {
+#JSUpload a {
   height:1px;
 }
     
@@ -97,7 +97,7 @@ span.progressBar {
   font-weight:bold;
 }
 
-a.SWFUploadLink {
+a.JSUploadLink {
   /*
   width: 300px;
   height: 100px;
@@ -109,7 +109,7 @@ a.SWFUploadLink {
   display: none;
 }
     
-a.SWFUploadLink:hover {
+a.JSUploadLink:hover {
   background: url(images/custom_button_over.png) no-repeat;
 }
 

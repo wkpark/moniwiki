@@ -10,14 +10,17 @@ function alignImg(obj,val) {
 
     var tag = document.getElementById("insertTag");
     if (tag) {
-        var href= tag.href;
-        var dum=href.split(/,/);
+        var href = tag.href + "";
+        var dum=href.split(",");
         if (val == 'normal') {
             dum[1]="''";
         } else {
-            dum[1]="'" + '?align='+val+"'";
+            dum[1]="'" + '.align='+val+"'";
         }
-        tag.href=dum.join(",");
+        // revert encoded filename
+        dum[2] = decodeURIComponent(dum[2]);
+        href = dum.join(",");
+        tag.href = href;
         if (dum[2] != '') {
             if (tag.href.substr(0, 10) == 'javascript') {
                 eval(tag.href.substr(11));
@@ -33,7 +36,7 @@ function showImgPreview(filename,temp) {
     var href_open='',href_close='';
     var jspreview=0;
     var icon_dir = _url_prefix + '/imgs/plugin/UploadedFiles/gnome';
-    var img_dir = _url_prefix + '/local/SWFUpload/images';
+    var img_dir = _url_prefix + '/local/JSUpload/images';
     var preview_width='100px';
     var alt='';
     var fname='';
@@ -47,13 +50,13 @@ function showImgPreview(filename,temp) {
 
     var ef = document.getElementById('editform');
     if (ef) {
-        jspreview=1;
+        jspreview=true;
     }
 
     //var loc = location.protocol + '//' + location.host;
     //if (location.port) loc += ':' + location.port;
-    //path = loc + _url_prefix + '/pds/.swfupload/' + mydir + filename;
-    path = _url_prefix + '/pds/.swfupload/' + mydir + filename;
+    //path = loc + _url_prefix + '/pds/.myupload/' + mydir + filename;
+    path = _url_prefix + '/pds/.myupload/' + mydir + filename;
 
     if (jspreview) {
         tag_open="attachment:"; tag_close="";
@@ -66,26 +69,34 @@ function showImgPreview(filename,temp) {
     var isImg=0;
     var myAlign='';
     if (ext && ext.match(/gif|png|jpeg|jpg|bmp/)) {
-        if (temp) {
-            var postdata = 'action=markup/ajax&value=' + encodeURIComponent("attachment:" + filename);
-            var myhtml='';
-            var href = self.location + '';
-            href = href.replace(/\?action=edit/, '');
-            myhtml= HTTPPost(href, postdata);
-
-            var m = myhtml.match(/<img src=(\'|\")([^\'\"]+)\1/i); // strip div tag
-            path = m[2];
-        }
-        fname="<img src='" + path + "' width='" + preview_width + ' ' + alt + " />";
-        isImg=1;
-
+        // preview FIXME
         if (jspreview) {
             myAlign =" <img src='" + img_dir + "/normal.png' class='alignImg' onclick='javascript:alignImg(this,\"normal\")' />";
             myAlign+=" <img src='" + img_dir + "/left.png'  class='alignImg' onclick='javascript:alignImg(this,\"left\")' />";
             myAlign+=" <img src='" + img_dir + "/right.png'  class='alignImg' onclick='javascript:alignImg(this,\"right\")' />";
         }
+
+        if (temp) {
+            var postdata = 'action=markup/ajax&value=' + encodeURIComponent("attachment:" + filename);
+            var href = self.location + '';
+            href = href.replace(/\?action=edit/, '');
+
+            HTTPPost(href, postdata, function(r){
+                var m = r.match(/<img src=(\'|\")([^\'\"]+)\1/i); // strip div tag
+                path = m[2];
+                fname="<img src='" + path + "' width='" + preview_width + '" ' + alt + " />";
+
+                var align = document.getElementById("previewAlign");
+                align.innerHTML=myAlign;
+                setPreviewTag();
+            });
+            return;
+        }
+        fname="<img src='" + path + "' width='" + preview_width + '" ' + alt + " />";
+        isImg=1;
+
     } else {
-        if (ext.match(/^(wmv|avi|mpeg|mpg|swf|wav|mp3|ogg|midi|mid|mov)$/)) {
+        if (ext.match(/^(wmv|avi|mpeg|mpg|swf|wav|mp3|mp4|flac|ogg|midi|mid|mov)$/)) {
             tag_open='[[Media('; tag_close=')]]';
             alt=tag_open + filename + tag_close;
         } else if (!ext.match(/^(bmp|c|h|java|py|bak|diff|doc|css|php|xml|html|mod|rpm|deb|pdf|ppt|xls|tgz|gz|bz2|zip)$/)) {
@@ -93,8 +104,11 @@ function showImgPreview(filename,temp) {
         }
         fname="<img src='" + icon_dir + "/" + ext + ".png' " +  alt + " />";
     }
+
+    setPreviewTag();
+
+  function setPreviewTag() {
     if (jspreview) {
-        //if (strpos($file,' '))
         link="javascript:insertTags('" + tag_open + "','" +  tag_close + "','" + filename + "',true)";
         href_open="<a id='insertTag' href=\""+ link + "\">";href_close="</a>";
     } else if (isImg && form.use_lightbox.value) {
@@ -108,5 +122,5 @@ function showImgPreview(filename,temp) {
     var align = document.getElementById("previewAlign");
     align.innerHTML=myAlign;
     preview.innerHTML=href_open + fname + href_close;
+  }
 }
-

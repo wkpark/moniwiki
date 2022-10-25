@@ -98,14 +98,14 @@ function do_uploadfile($formatter,$options) {
       $options['rename']=array($options['rename']);
       $options['replace']=array($options['replace']);
     }
-  } else if (isset($options['MYFILES']) and is_array($options['MYFILES'])) { // for SWFUpload action
+  } else if (isset($options['MYFILES']) and is_array($options['MYFILES'])) { // for user Upload action
     $count=sizeof($options['MYFILES']);
     $MYFILES=&$options['MYFILES'];
     $mysubdir=$options['mysubdir'];
     for ($i=0;$i<$count;$i++) {
       $myname=$MYFILES[$i];
       $files['upfile']['name'][]=$myname;
-      $files['upfile']['tmp_name'][]=$DBInfo->upload_dir.'/.swfupload/'.$mysubdir.$myname; // XXX
+      $files['upfile']['tmp_name'][]=$DBInfo->upload_dir.'/.myupload/'.$mysubdir.$myname; // XXX
       $files['rename'][]='';
       $files['replace'][]='';
     }
@@ -133,14 +133,6 @@ function delAllForm(id) {
   if (fform && fform.rows && fform.rows.length) { // for UploadForm
     for (var i=fform.rows.length;i>0;i--) {
       fform.deleteRow(i-1);
-    }
-  } else { // for SWFUpload
-    var listing = opener.document.getElementById('mmUploadFileListing');
-    if (listing) {
-      var elem = listing.getElementsByTagName("li");
-      listing.innerHTML='';
-    } else if (fform) {
-      fform.reset();
     }
   }
 }
@@ -446,8 +438,6 @@ function macro_UploadFile($formatter,$value='',$options='') {
   global $DBInfo;
   if ($value=='js') {
     return $formatter->macro_repl('UploadForm');
-  } else if ($value=='swf') {
-    return $formatter->macro_repl('SWFUpload');
   }
 
   // only staff can replace exist files

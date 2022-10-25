@@ -1,26 +1,23 @@
 <?php
-// Copyright 2006-2010 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2022 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
-// SWFUpload plugin for the MoniWiki
+// JSUpload plugin for the MoniWiki
 //
 // Author: Won-Kyu Park <wkpark@kldp.org>
-// Date: 2006-12-06
-// Name: SWF Upload
-// Description: SWF Upload Plugin
-// URL: http://labb.dev.mammon.se/swfupload/ MoniWikiDev:SWFUpload
-// Version: $Revision: 1.22 $
+// Date: 2022-10-27
+// Name: JS Upload
+// Description: JS Upload Plugin
+// Version: $Revision: 1.0 $
 // License: GPL
 //
-// Usage: [[SWFUpload]]
+// Usage: [[JSUpload]]
 //
-// $Id: SWFUpload.php,v 1.22 2010/08/23 15:14:10 wkpark Exp $
 
-function macro_SWFUpload($formatter,$value,$opts=array()) {
+function macro_JSUpload($formatter,$value,$opts=array()) {
     global $DBInfo;
 
-    $swf_ver = 10;
-    if (!empty($DBInfo->swfupload_depth) and $DBInfo->swfupload_depth > 2) {
-        $depth=$DBInfo->swfupload_depth;
+    if (!empty($DBInfo->jsupload_depth) and $DBInfo->jsupload_depth > 2) {
+        $depth=$DBInfo->jsupload_depth;
     } else {
         $depth=2;
     }
@@ -31,11 +28,11 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
             $seed .= $DBInfo->seed;
         $myid = md5($seed); // FIXME
     } else {
-        if (!empty($_SESSION['_swfupload']))
-            $myid = $_SESSION['_swfupload'];
+        if (!empty($_SESSION['.jsupload']))
+            $myid = $_SESSION['.jsupload'];
         else {
             $myid=session_id();
-            $_SESSION['_swfupload'] = $myid;
+            $_SESSION['.jsupload'] = $myid;
         }
     }
 
@@ -57,7 +54,7 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
         $jsPreview=' class="previewTag"';
     }
 
-    $default_allowed='*.gif;*.jpg;*.png;*.psd';
+    $default_allowed='*.gif;*.jpg;*.jpeg;*.png;*.psd';
     $allowed=$default_allowed;
     $allowed_re = '.*';
     if (!empty($DBInfo->pds_allowed)) {
@@ -65,12 +62,12 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
         $allowed_re = $DBInfo->pds_allowed;
     }
 
-    $swfupload_num=!empty($GLOBALS['swfupload_num']) ? $GLOBALS['swfupload_num']:0;
+    $jsupload_num=!empty($GLOBALS['jsupload_num']) ? $GLOBALS['jsupload_num']:0;
 
     // get already uploaded files list
     $uploaded='';
-    if (is_dir($DBInfo->upload_dir.'/.swfupload/'.$mysubdir)) {
-        $mydir=$DBInfo->upload_dir.'/.swfupload/'.$mysubdir.'/';
+    if (is_dir($DBInfo->upload_dir.'/.myupload/'.$mysubdir)) {
+        $mydir=$DBInfo->upload_dir.'/.myupload/'.$mysubdir.'/';
         $handle = @opendir($mydir);
         if ($handle) {
             $files=array();
@@ -86,7 +83,7 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
 
             foreach ($files as $f) {
                 $uploaded.="<li id='$f'><input checked=\"checked\" type=\"checkbox\">".
-                    "<a href='javascript:showImgPreview(\"$f\")'>$f</a></li>";
+                    "<a href=\"javascript:showImgPreview('$f')\">$f</a></li>";
             }
         }
     }
@@ -116,36 +113,20 @@ function macro_SWFUpload($formatter,$value,$opts=array()) {
 
             foreach ($files as $f) {
                 $uploaded.="<li><input checked=\"checked\" disabled=\"disabled\" type=\"checkbox\">".
-                    "<a href='javascript:showImgPreview(\"$f\",true)'>$f</a></li>";
+                    "<a href=\"javascript:showImgPreview('$f',true)\">$f</a></li>";
             }
         }
 
     }
 
-    if (empty($swfupload_num)) {
-        if ($swf_ver == 9) {
-            $formatter->register_javascripts(array(
-                'js/swfobject.js',
-                'SWFUpload/mmSWFUpload.js',
-                'SWFUpload/preview.js',
-                'SWFUpload/moni.js',
-            ));
-        } else {
-            $formatter->register_javascripts(array(
-                'js/swfobject.js',
-                'SWFUpload/swfupload.js',
-                'SWFUpload/swfupload.swfobject.js',
-                'SWFUpload/swfupload.queue.js',
-                'SWFUpload/preview.js',
-                'SWFUpload/handlers.js',
-                #'SWFUpload/fileprogress.js',
-            ));
-        }
-    }
+    $formatter->register_javascripts(array(
+        'JSUpload/preview.js',
+        'JSUpload/handlers.js',
+    ));
 
-    $swf_css=<<<CSS
+    $upload_css=<<<CSS
 <style type="text/css">
-@import url("$DBInfo->url_prefix/local/SWFUpload/swfupload.css");
+@import url("$DBInfo->url_prefix/local/JSUpload/jsupload.css");
 </style>
 CSS;
 
@@ -154,103 +135,82 @@ CSS;
     $btn3=_("Cancel All files");
     $prefix=qualifiedUrl($DBInfo->url_prefix.'/local');
     $action=$formatter->link_url($formatter->page->urlname);
-    $action2=$action.'----swfupload';
+    $action2=$action.'----jsupload';
     if ($mysubdir) $action2.='----'.$mysubdir;
     $action2=qualifiedUrl($action2);
     $myprefix=qualifiedUrl($DBInfo->url_prefix);
-    $swfupload_script = '';
+    $jsupload_script = '';
 
-    if ($swf_ver == 9) {
-        $swf_js=<<<EOF
-        <script type="text/javascript">
-        /*<![CDATA[*/
-		mmSWFUpload.init({
-			//debug : true,
-			upload_backend : "$action2",
-			target : "SWFUpload",
-			// cssClass : "myCustomClass",
-			_prefix : "$myprefix",
-			allowed_filesize : "40000",
-			allowed_filetypes : "$allowed",
-			upload_start_callback : 'uploadStart',
-			upload_progress_callback : 'uploadProgress',
-			upload_complete_callback : 'uploadComplete',
-			// upload_error_callback : 'uploadError',
-                        upload_cancel_callback : 'uploadCancel'
-                });
-        /*]]>*/
-	</script>
-EOF;
-        $submit_btn="<input type='button' value='$btn' onclick='javascript:mmSWFUpload.callSWF();' />\n";
-        $cancel_btn='';
-    } else {
-        $submit_btn='<span id="spanButtonPlaceHolder"><input type="file" name="upload" /></span>';
-        $cancel_btn="<button id='btnCancel' onclick='swfu.cancelQueue();' disabled='disabled' ><span>".$btn3."</span></button>\n";
-        $swf_js=<<<EOF
+    $upload_js=<<<EOF
 <script type="text/javascript">
 /*<![CDATA[*/
-var swfu;
+(function(){
 
-SWFUpload.onload = function () {
-    var settings = {
-        flash_url : "$DBInfo->url_prefix/local/SWFUpload/swfupload.swf",
-        upload_url: "$action2", // Relative to the SWF file
-        file_size_limit : "10 MB",
-        file_types : "$allowed",
-        file_types_description : "Files",
-        file_upload_limit : 100,
-        file_queue_limit : 0,
-        custom_settings : {
-            progressTarget : "fsUploadProgress",
-            cancelButtonId : "btnCancel"
-        },
-        debug: false, // true
-
-        // Button Settings
-        button_image_url : "$DBInfo->url_prefix/local/SWFUpload/images/btn0.png",
-        button_text : '$btn',
-        button_text_style : '.button-text{font-family:Gulim,Sans-serif;text-align:center;}',
-        button_text_top_padding : 3,
-        button_placeholder_id : "spanButtonPlaceHolder",
-        button_width: 61,
-        button_height: 22,
-        button_window_mode: SWFUpload.WINDOW_MODE.TRANSPARENT,
-        button_cursor: SWFUpload.CURSOR.HAND,
-
-        // The event handler functions are defined in handlers.js
-        swfupload_loaded_handler : swfUploadLoaded,
-        file_queued_handler : fileQueued,
-        file_queue_error_handler : fileQueueError,
-        file_dialog_complete_handler : fileDialogComplete,
-        upload_start_handler : uploadStart,
-        upload_progress_handler : uploadProgress,
-        upload_error_handler : uploadError,
-        upload_success_handler : uploadSuccess,
-        upload_complete_handler : uploadComplete,
-        queue_complete_handler : queueComplete, // Queue plugin event
-        
-        // SWFObject settings
-        minimum_flash_version : "9.0.28",
-        swfupload_pre_load_handler : swfUploadPreLoad,
-        swfupload_load_failed_handler : swfUploadLoadFailed
-    };
-
-    swfu = new SWFUpload(settings);
+function byId(el) {
+  return document.getElementById(el);
 }
+
+function uploadFile(file) {
+    //console.log(file.name+" | "+file.size+" | "+file.type);
+    fileQueued(file);
+
+    var ajax = new XMLHttpRequest();
+    ajax.upload.addEventListener("progress", function(e) {
+        var pie = document.getElementById("fileProgressInfo");
+        var proc = Math.ceil((event.loaded / event.total) * 100);
+
+        pie.style.background = "url(" + _url_prefix + "/local/JSUpload/images/progressbar.png) repeat-y -" + (100 - proc) + "px 0";
+        pie.innerHTML = proc + " %";
+
+        var progress = byId(file.name + "progress");
+        progress.style.background = pie.style.background;
+    });
+    ajax.upload.addEventListener("load", function(e){
+        uploadSuccess(file);
+    });
+    ajax.upload.addEventListener("error", errorHandler);
+    ajax.upload.addEventListener("abort", abortHandler);
+
+    var formdata = new FormData();
+    formdata.append('action', 'jsupload');
+    formdata.append('Filedata', file);
+
+    ajax.open("POST", "$action");
+    ajax.send(formdata);
+}
+
+function errorHandler(event) {
+    console.log("Upload Failed");
+}
+
+function abortHandler(event) {
+    console.log("Upload Aborted");
+}
+
+$(document).ready(function() {
+$('#jsuploadform :file').on('change', function(){
+    for (i=0; i<this.files.length; i++) {
+        uploadFile(this.files[i]);
+    }
+    $('#jsuploadform')[0].reset();
+});
+});
+
+})();
 /*]]>*/
 </script>
-
 EOF;
+    $submit_btn='<span id="spanButtonPlaceHolder"><input type="file" name="upload[]" multiple /></span>';
+    $cancel_btn='';
 
-    }
-    $form=<<<EOF
-	<div id="SWFUpload" style='display:none'>
+    $form = <<<EOF
+	<div id="JSUpload" style='display:none'>
 		<form action="" onsubmit="return false;">
 			<input type="file" name="upload" />
 			<input type="submit" value="Upload" onclick="javascript:alert('disabled...'); return false;" />
 		</form>
 	</div>
-$swf_js
+$upload_js
 	<div class="fileList">
 	<table border='0' cellpadding='0'>
 	<tr>
@@ -263,10 +223,10 @@ $swf_js
 	<td>
 
 	<div id="filesDisplay">
-            <form id="form1" target='_blanl' action="$action" method="POST" enctype="multipart/form-data">
+            <form id="jsuploadform" target='_blank' action="$action" method="POST" enctype="multipart/form-data">
 	        <ul id="mmUploadFileListing">$uploaded</ul>
 		<span id="fileButton">
-                <input type='hidden' name='action' value='swfupload' />
+                <input type='hidden' name='action' value='jsupload' />
                 <input type='hidden' name='value' value='$mysubdir' />
                 <input type='hidden' name='popup' value='1' />
                 $myoptions
@@ -277,18 +237,13 @@ $swf_js
             </form>
         </div>
         <noscript style="background-color: #FFFF66; border-top: solid 4px #FF9966; border-bottom: solid 4px #FF9966; margin: 10px 25px; padding: 10px 15px;">
-            We're sorry.  SWFUpload could not load.  You must have JavaScript enabled to enjoy SWFUpload.
+            We're sorry.  JSUpload could not load.  You must have JavaScript enabled to enjoy JSUpload.
         </noscript>
         <div id="divLoadingContent" class="content" style="background-color: #FFFF66; border-top: solid 4px #FF9966; border-bottom: solid 4px #FF9966; margin: 10px 25px; padding: 10px 15px; display: none;">
-            SWFUpload is loading. Please wait a moment...
+            JSUpload is loading. Please wait a moment...
         </div>
         <div id="divLongLoading" class="content" style="background-color: #FFFF66; border-top: solid 4px #FF9966; border-bottom: solid 4px #FF9966; margin: 10px 25px; padding: 10px 15px; display: none;">
-            SWFUpload is taking a long time to load or the load has failed.  Please make sure that the Flash Plugin is enabled and that a working version of the Adobe Flash Player is installed.
-        </div>
-        <div id="divAlternateContent" class="content" style="background-color: #FFFF66; border-top: solid 4px #FF9966; border-bottom: solid 4px #FF9966; margin: 10px 25px; padding: 10px 15px; display: none;">
-
-            We're sorry.  SWFUpload could not load.  You may need to install or upgrade Flash Player.
-            Visit the <a href="http://www.adobe.com/shockwave/download/download.cgi?P1_Prod_Version=ShockwaveFlash">Adobe website</a> to get the Flash Player.
+            JSUpload is taking a long time to load or the load has failed.  Please make sure that the Flash Plugin is enabled and that a working version of the Adobe Flash Player is installed.
         </div>
 
 	</td>
@@ -301,11 +256,11 @@ $swf_js
 	</table>
 	</div>
 EOF;
-    return $swfupload_script.$swf_css.$form;
+    return $jsupload_script.$upload_css.$form;
 }
 
 // do_UploadFile wrapper
-function do_SWFUpload($formatter,$options=array()) {
+function do_post_JSUpload($formatter,$options=array()) {
     global $DBInfo;
     if ($_SERVER['REQUEST_METHOD'] == 'POST' &&
             !$DBInfo->security->writable($options)) {
@@ -319,14 +274,14 @@ function do_SWFUpload($formatter,$options=array()) {
         $allowed_re = $DBInfo->pds_allowed;
     }
 
-    $swfupload_dir=$DBInfo->upload_dir.'/.swfupload';
+    $jsupload_dir=$DBInfo->upload_dir.'/.myupload';
     $mysubdir='';
-    if(!is_dir($swfupload_dir)) {
+    if(!is_dir($jsupload_dir)) {
         $om=umask(000);
-        mkdir($swfupload_dir, 0777);
+        mkdir($jsupload_dir, 0777);
         umask($om);
 
-        $fp=fopen($swfupload_dir.'/.htaccess','w');
+        $fp=fopen($jsupload_dir.'/.htaccess','w');
         if ($fp) {
             $htaccess=<<<EOF
 # FCGI or CGI user can use .user.ini
@@ -345,8 +300,8 @@ EOF;
     }
 
     // check subdir
-    if (!empty($DBInfo->swfupload_depth) and $DBInfo->swfupload_depth > 2) {
-        $depth=$DBInfo->swfupload_depth;
+    if (!empty($DBInfo->jsupload_depth) and $DBInfo->jsupload_depth > 2) {
+        $depth=$DBInfo->jsupload_depth;
     } else {
         $depth=2;
     }
@@ -356,8 +311,8 @@ EOF;
         $seed .= $DBInfo->seed;
     $myid = md5($seed); // FIXME
     if (session_id() != '') { // ip based
-        if (0 and $_SESSION['_swfupload']) // XXX flash bug?
-            $myid = $_SESSION['_swfupload'];
+        if (0 and $_SESSION['.jsupload']) // XXX flash bug?
+            $myid = $_SESSION['.jsupload'];
         else if (!empty($options['value']) and ($p = strpos($options['value'], '/')) !== false) {
             $tmp = explode('/', $options['value']);
             #list($dum,$myid,$dum2)=explode('/',$options['value'],3);
@@ -370,7 +325,7 @@ EOF;
 
     // debug
     //$options['_mysubdir']=$mysubdir;
-    //$fp=fopen($swfupload_dir.'/swflog.txt','a+');
+    //$fp=fopen($jsupload_dir.'/swflog.txt','a+');
     //foreach ($options as $k=>$v) {
     //    if (is_string($v))
     //         fwrite($fp,sprintf("%s=>%s\n",$k,$v));
@@ -387,9 +342,9 @@ EOF;
         //    $mysubdir = $options['value'];
 
         list($dum,$myval,$dum2)=explode('/',$options['value'],3); // XXX
-        if(!is_dir($swfupload_dir.'/'.$mysubdir)) {
+        if(!is_dir($jsupload_dir.'/'.$mysubdir)) {
             $om=umask(000);
-            _mkdir_p($swfupload_dir.'/'.$mysubdir, 0777);
+            _mkdir_p($jsupload_dir.'/'.$mysubdir, 0777);
             umask($om);
         }
     }
@@ -398,7 +353,7 @@ EOF;
     if (isset($_FILES['Filedata']['tmp_name'])) {
         if (preg_match('/\.('.$allowed_re.')$/i', $_FILES['Filedata']['name'])) {
             move_uploaded_file($_FILES['Filedata']['tmp_name'],
-                $swfupload_dir.'/'.$mysubdir.$_FILES['Filedata']['name']);
+                $jsupload_dir.'/'.$mysubdir.$_FILES['Filedata']['name']);
         }
         echo "Success";
         return;
@@ -411,7 +366,7 @@ EOF;
     } else {
         $formatter->send_header("",$options);
         $formatter->send_title("","",$options);
-        $out= macro_SWFUpload($formatter,'');
+        $out= macro_JSUpload($formatter,'');
         print $formatter->get_javascripts();
         print $out;
         if (!in_array('UploadedFiles',$formatter->actions))
