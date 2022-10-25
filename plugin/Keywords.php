@@ -347,8 +347,8 @@ EOF;
     }
 
     if (isset($options['cloud'])) {
-        $out = '';
-        
+        $out = '<ul>'."\n";
+
         foreach ($words as $key=>$val) {
             $style=$sty[$fz-1];
             for ($i=0;$i<$fz;$i++) {
@@ -358,45 +358,76 @@ EOF;
                 }
             }
             if ($val > $min) {
-                $out .= "<a href='" . qualifiedUrl(str_replace('$TAG',$key,$tag_link))."'";
+                $out .= "<li><a href='" . qualifiedUrl(str_replace('$TAG',$key,$tag_link))."'";
                 if ($use_sty)
                     $out .= ' ' . $style;
                 else
                     $out .= " style='12'";
-                $out .= ">".$key."</a>";
+                $out .= ">".$key."</a></li>\n";
             }
         }
-        $out = preg_replace('/&amp;/',urlencode('&'),$out);
+        $out = preg_replace('/&amp;/',urlencode('&'),$out)."</ul>";
 
-        $tout = "<a href='http://www.roytanck.com/tag1' style='font-size:20px'>Tag name</a><a href='http://www.roytanck.com/tag2' style='font-size:10px'>Tag two</a>";
-
-        $formatter->register_javascripts(array('js/swfobject.js'));
-        $_swf_prefix=qualifiedUrl("$DBInfo->url_prefix/local/wp-cumulus"); // FIXME
-        return <<<SWF
+        $_prefix=qualifiedUrl("$DBInfo->url_prefix/applets/TagCloud");
+        $formatter->register_javascripts(array("$_prefix/jquery.tagcanvas.js"));
+        return <<<JS
 <script type="text/javascript">
-var flashvars = {
-   mode : "tags",
-   distr : "true",
-   tcolor : "0xffffff",
-   tcolor2 : "0x86B9F2",
-   hicolor : "0xBAD8F8",
-   tagcloud : "<tags>$out</tags>"
-};
+/*<![CDATA[*/
+(function(){
+var oopts = {
+   textFont: 'Impact,Arial Black,sans-serif',
+   textHeight: 20,
+   maxSpeed: 0.1,
+   decel: 0.9,
+   depth: 0.99,
+   outlineColour: '#f6f',
+   outlineThickness: 3,
+   pulsateTo: 0.2,
+   pulsateTime: 0.5,
+   wheelZoom: false
+},
+ttags = 'taglist',
+lock,
+shape = 'sphere';
 
-var params = {
-   wmode: "opaque",
-   bgcolor: "#333333"
-};
+$(document).ready(function(){
+   TagCanvas.textFont = 'Trebuchet MS, Helvetica, sans-serif';
+   TagCanvas.textColour = '#4800ff';
+   TagCanvas.textHeight = 25;
+   //TagCanvas.outlineMethod = 'block';
+   TagCanvas.outlineColour = '#f600ff';
+   TagCanvas.maxSpeed = 0.03;
+   TagCanvas.minBrightness = 0.2;
+   TagCanvas.depth = 0.92;
+   TagCanvas.pulsateTo = 0.6;
+   TagCanvas.initial = [0.1,-0.1];
+   TagCanvas.decel = 0.98;
+   TagCanvas.reverse = true;
+   TagCanvas.hideTags = false;
+   TagCanvas.shadow = '#ccf';
+   TagCanvas.shadowBlur = 3;
+   TagCanvas.weight = false;
+   TagCanvas.imageScale = null;
+   TagCanvas.fadeIn = 1000;
+   TagCanvas.clickToFront = 600;
+   try {
+      TagCanvas.Start('tagcloud','taglist');
+   } catch(e) {
+      document.getElementsByTagName('canvas')[0].style.border='0';
+   }
+});
 
-var attrs = {
-   id: "myCloudContent"
-};
-
-swfobject.embedSWF("$_swf_prefix/tagcloud.swf", "myCloud", "200", "200", "9.0.0","expressInstall.swf", flashvars, params, attrs);
+})();
+/*]]>*/
 </script>
-<div id="myCloud">
-</div>
-SWF;
+<canvas id="tagcloud" width="560" height="400" style="max-width: 560px; width: 100%; background-image: none;">
+<img src="$_prefix/tagcanvas.png" width="200" height="150">
+<p>If this looks like a small static image, your browser does not support the
+canvas tag. Please try again using a different browser, or try to imagine text
+swirling around in response to the mouse position.</p>
+$out
+</canvas>
+JS;
     }
     $out.='<ul>';
     $checkbox = '';
@@ -454,7 +485,7 @@ SWF;
 </script>
 EOF;
     }
-    return "<div class='cloudView'>".$out."$inp</ul></div>$form_close";
+    return "<div class='cloudView' id='taglist'>".$out."$inp</ul></div>$form_close";
 }
 
 function do_keywords($formatter,$options) {
