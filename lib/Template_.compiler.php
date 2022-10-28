@@ -1,9 +1,10 @@
 <?php
-// Copyright 2008-2013 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2008-2022 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // A modified version of the Template_ for MoniWiki
 //
 // Date: 2008-03-28
+// LastModified: 2022-10-29
 // Name: A modified Template_ for MoniWiki
 // Description: Template_ module (division syntax is disabled)
 // URL: MoniWiki:Template_
@@ -17,26 +18,22 @@
 /*---------------------------------------------------------------------------
 
   Program  : Template_
-  Version  : 2.2.7
-  Date     : 2012-07-20
+  Version  : 2.2.8
+  Date     : 2015-12-07
   Author   : Hyeong-Gil Park
   Homepage : http://www.xtac.net
   License  : LGPL (Freeware)
 
-  Idea of "PHP document templating system" is from "FastTemplate".
-  Idea of "compiling PHP template and template plugin" is from "Smarty".
-  Idea of "caching" is from "Smarty, PEAR Cache, and CachedFastTemplate".
-
-  Special thanks to Seung-Min Kwon, Jun-Sung Lee, Jin-Wook Cho,
-  Soo-Kyeong Hong, Yo-Han Kim, Weon-Soon Lee, Jae-Gyun Yu, Sang-Wook Kang,
-  Jae-Sik Kim, Myung-Soo Kim, Jang-Sik Kim, Sam-Goo Lee, Yo-Han Yang,
-  Yeong-Gyu Jeon, Byeong-Hoon Kang, and Neotec(Ltd)
+  Special thanks to Kwon Seounmin, Lee Junseong, Cho Jinwook,
+  Hong Sookyeong, King Yohan, Lee Weonsoon, Yu Jaegyun, Kang Sangwook,
+  Kim Jaesik, Kim Myeongsu, Kim Jangsik, Lee Samgoo, Yang yohan,
+  Jeon yeonggyu, Kang Byeonghun, Lee Jaehwan and Neotec Ltd.
   for good suggestion and feedback.
 
  ----------------------------------------------------------------------------
 
   Template_ : PHP document templating system
-  Copyright (C) 2003-2012 Hyeong-Gil Park
+  Copyright (C) 2003-2015 Hyeong-Gil Park
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Library General Public
@@ -50,30 +47,9 @@
 
   - http://www.gnu.org/copyleft/lgpl.html
 
-  ---------------------------------------------------------------------------
-
-  FastTemplate
-    - http://www.thewebmasters.net/
-  Smarty
-    - http://smarty.php.net/
-  Beyond Template Engine (using PHP as template language)
-    - http://www.sitepoint.com/article/1218/
-  BearTemplate
-    - http://template.ze.to/
-  Phemplate
-    - http://pukomuko.esu.lt/phemplate/
-  ASP.NET
-    - http://www.asp.net/Tutorials/quickstart.aspx
-  JSTL
-    - http://java.sun.com/developer/technicalArticles/javaserverpages/faster/
-  XSLT
-    - http://www.w3.org/TR/xslt
-  Velocity
-    - http://jakarta.apache.org/velocity/user-guide.html
-
   ---------------------------------------------------------------------------*/
 
-define('__TEMPLATE_UNDERSCORE_VER__','2.2.7-mw');
+define('__TEMPLATE_UNDERSCORE_VER__','2.2.8-mw');
 
 class Template_Compiler_
 {
@@ -89,7 +65,7 @@ class Template_Compiler_
 		$this->safe_mode     =$tpl->safe_mode;
 		$this->safe_mode_ini ='config/safe_mode.php';
 		$this->auto_constant =empty($tpl->auto_constant) ? false : $tpl->auto_constant;
-		$this->tpl_path      =$tpl_path;
+		//$this->tpl_path      =$template_path; /* unused */
 		$this->params        =$params;
 		$this->data_dir      =$tpl->data_dir;
 		$this->plugin_dir    =$tpl->plugin_dir;
@@ -116,15 +92,15 @@ class Template_Compiler_
 	// make compile directory
 
 		if ($this->on_ms) {
-			$cpl_base =  preg_replace('@\\\\+@', '/', $cpl_base);
+			$compile_base =  preg_replace('@\\\\+@', '/', $compile_base);
 			$this->compile_dir =  preg_replace('@\\\\+@', '/', $this->compile_dir);
 		}
 
-		$cpl_path	= $cpl_base.'.'.$this->compile_ext;	// absolute or relative path
+		$compile_path	= $compile_base.'.'.$this->compile_ext;	// absolute or relative path
 
-		if (!@is_file($cpl_path)) {
+		if (!@is_file($compile_path)) {
 
-			$cpl_rel_path	= substr($cpl_path, strlen($this->compile_dir)+1);
+			$cpl_rel_path	= substr($compile_path, strlen($this->compile_dir)+1);
 			$dirs = explode('/', $cpl_rel_path);
 			
 			$path = $this->compile_dir;
@@ -178,15 +154,31 @@ class Template_Compiler_
 
 	// find that php version is greater than or equal to 5.4
 
-		$gt_than_or_eq_to_5_4 = defined('PHP_MAJOR_VERSION') and  5.4 <= (float)(PHP_MAJOR_VERSION.'.'.PHP_MINOR_VERSION);
+		$gt_than_or_eq_to_5_4 = defined('PHP_VERSION')  and  version_compare(PHP_VERSION, '5.4.0', '>=');
 
 	// disable php tag
-		if ($this->safe_mode) {
-			if (ini_get('short_open_tag')) $safe_map['/<\?/']='&lt;?';
-			elseif ($gt_than_or_eq_to_5_4) $safe_map['/<\?(php|=)/i']='&lt;?$1';
-			else $safe_map['/<\?(php)/i']='&lt;?$1';
+		if ($this->safe_mode)
+		{
+			if (ini_get('short_open_tag'))
+			{
+				$safe_map['/<\?/']='&lt;?';
+			}
+			elseif ($gt_than_or_eq_to_5_4)
+			{
+				$safe_map['/<\?(php|=)/i']='&lt;?$1';
+			}
+			else
+			{
+				$safe_map['/<\?(php)/i']='&lt;?$1';
+			}
+
 			$safe_map['/(<script\s+language\s*=\s*)("php"|\'php\'|php)(\s*>)/i']='$1"SERVER-SIDE-SCRIPT-DISABLED"$3';
-			if (ini_get('asp_tags')) $safe_map['/<%/']='&lt;?';
+			
+			if (ini_get('asp_tags'))
+			{
+				$safe_map['/<%/']='&lt;?';
+			}
+			
 			$source=preg_replace(array_keys($safe_map),array_values($safe_map),$source);
 		}
 
@@ -195,41 +187,88 @@ class Template_Compiler_
 		$nl_del_sum=0;
 		$this->nl_del[0]=0;
 		$nl=preg_match('/\r\n|\n|\r/', $source, $match) ? $match[0] : "\r\n";
+
 		$escape_map=array('\\\\'=>'\\', "\\'"=>"'", '\\"'=>'"', '\\n'=>$nl, '\\t'=>"\t", '\\>'=>'>', '\\g'=>'>');
+
 		$split=preg_split('/(<!--{\*|\*}-->|{\*|\*})/', $source, -1, PREG_SPLIT_DELIM_CAPTURE);
-		for ($j=0,$i=0,$s=count($split); $i<$s; $i++) {
-			if (!($i%2)) {
+
+		for ($j=0,$i=0,$s=count($split); $i<$s; $i++)
+		{
+			if (!($i%2))	// $i = 0, 2, 4... text except comment tag
+			{
 				$nl_cnt+=substr_count($split[$i], $nl);
 				continue;
 			}
 			switch ($split[$i]) {
 			case'<!--{*':
 			case    '{*':
-				if (substr($split[$i+1],0,1)=='\\') $split[$i+1]=substr($split[$i+1],1);
-				elseif (!$j) $j=$i;
+				if (substr($split[$i+1],0,1)=='\\')		// escaped comment open tag
+				{
+					$split[$i+1]=substr($split[$i+1],1);
+				}
+				elseif (!$j)	// $j : offset of comment open tag
+				{
+					$j=$i;		
+				}
 				break;
 			case '*}-->':
 			case '*}'   :
-				if (substr($split[$i-1],-1)==='\\')
+				if (substr($split[$i-1],-1)==='\\')		// escaped comment close tag
+				{
 					$split[$i-1]=substr($split[$i-1],0,-1);
-				elseif ($j) {
-					if ($j===1) {
-						for ($def_area='',$k=2; $k<$i; $k++) $def_area.=$split[$k];
+				}
+				elseif ($j)
+				{
+					if ($j===1)	// 
+					{
+						for ($def_area='',$k=2; $k<$i; $k++)  // comment content can contain comment tag.  http://xtac.net/reference/?item=comment
+						{
+							$def_area.=$split[$k];
+						}
 						preg_match_all('@(?:(?:^|\r\n|\n|\r)[ \t]*)\#(prefilter|postfilter)[ \t]+
 							('.$this->quoted_str.'|(?:[^ \t\r\n]+))
 						@ix', $def_area, $match, PREG_PATTERN_ORDER);
-						for ($k=0,$t=count($match[0]); $k<$t; $k++) {
-							if ($this->safe_mode) $match[2][$k]=preg_replace('/<\?(php)/i', '&lt;?$1', $match[2][$k]);
-							if ($match[2][$k][0]==="'") $f_string=strtr(substr($match[2][$k],1,-1), $escape_map);
-							elseif ($match[2][$k][0]==='"') $f_string=strtr(substr($match[2][$k],1,-1), $escape_map);
-							else $f_string=$match[2][$k];
-							if (!trim($f_string)) {
-								$this->$match[1][$k]='';
-							} else {
+						for ($k=0,$t=count($match[0]); $k<$t; $k++)
+						{
+							if ($this->safe_mode)
+							{
+								$match[2][$k]=preg_replace('/<\?(php)/i', '&lt;?$1', $match[2][$k]);
+							}
+
+							if ($match[2][$k][0]==="'") 
+							{
+								$f_string=strtr(substr($match[2][$k],1,-1), $escape_map);	// $f_string -- prefilter/postfilter definition string
+							}
+							elseif ($match[2][$k][0]==='"')
+							{
+								$f_string=strtr(substr($match[2][$k],1,-1), $escape_map);
+							}
+							else
+							{
+								$f_string=$match[2][$k];
+							}
+							
+							if (!trim($f_string))		// e.g) #prefilter ""	
+							{
+								$this->{$match[1][$k]} = '';	// $this->prefilter = ""; or $this->postfilter = "";
+							}
+							else
+							{
 								$f_split=preg_split('@(?<!\\\\)\|@', $f_string);
-								if (!trim($f_split[0])) $this->$match[1][$k].=$f_string;
-								elseif (!trim($f_split[count($f_split)-1])) $this->$match[1][$k]=$f_string.$this->$match[1][$k];
-								else $this->$match[1][$k]=$f_string;
+
+
+								if (!trim($f_split[0]))  //  filter definition string starts with "|".
+								{
+									$this->{$match[1][$k]} .=$f_string;		
+								}
+								elseif (!trim($f_split[count($f_split)-1]))   //  filter definition string ends with "|".
+								{
+									$this->{$match[1][$k]} = $f_string . $this->{$match[1][$k]};
+								}
+								else
+								{
+									$this->{$match[1][$k]} = $f_string;
+								}
 							}
 						}
 						preg_match_all('@(?:(?:^|\r\n|\n|\r)[ \t]*)\#define[ \t]+
@@ -1083,4 +1122,3 @@ class Template_Compiler_
 		exit;
 	}
 }
-?>
