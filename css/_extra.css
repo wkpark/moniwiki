@@ -160,12 +160,14 @@ ul.depth-5 {
   background:url(../imgs/plugin/Chat/sound_off.png) no-repeat;
   width:16px;
   border:0;
+  vertical-align: middle;
 }
 
 .soundOn {
   background:url(../imgs/plugin/Chat/sound_on.png) no-repeat;
   width:16px;
   border:0;
+  vertical-align: middle;
 }
 
 /* for po processor */

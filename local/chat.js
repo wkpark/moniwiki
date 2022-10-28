@@ -23,7 +23,7 @@ function sendMsg(ev,obj,url,id,num) {
    var last=document.getElementById('laststamp');
    var nic='';
    if (last) last='&laststamp='+last.innerHTML;
-   else last='';
+   else last='&laststamp='+((d.getTime() + '').substr(0, 10));
 
    if (obj!=null) {
       value=escape(obj.value);
@@ -54,18 +54,15 @@ function sendMsg(ev,obj,url,id,num) {
 
 function Sound(sndobj) {
   var sound=document.getElementById(sndobj);
-  if (sound) { try { sound.Play(); } catch (e) { sound.DoPlay(); } }
+  if (sound) { try { sound.play(); } catch (e) { } }
 }
 
 function setSound(id,surl) {
-    var sound=document.getElementById('effect');
-    var node=document.createElement('embed');
+    var sound=document.getElementById('chat-effect');
+    var node=document.createElement('audio');
+    node.autoplay = false;
     node.setAttribute('src',surl);
     node.setAttribute('id',id);
-    node.setAttribute('autostart','false');
-    if (navigator.appVersion.indexOf("MSIE")!=-1)
-    	node.setAttribute('hidden','true');
-    node.setAttribute('loop','false');
     node.setAttribute('height','0px');
     node.setAttribute('width','0px');
     sound.appendChild(node);

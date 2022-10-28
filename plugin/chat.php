@@ -10,8 +10,6 @@
 
 function macro_Chat($formatter,$value,$options=array()) {
     global $DBInfo;
-    $chat_script=&$GLOBALS['chat_script'];
-    $ajax_script=&$GLOBALS['ajax_script'];
 
     $args=explode(',',$value);
     $itemnum=20; // default
@@ -30,27 +28,22 @@ function macro_Chat($formatter,$value,$options=array()) {
     ob_start();
     $formatter->ajax_repl('chat',
         array('value'=>'','room'=>'chat'.$tag,'item'=>$itemnum,
-        'tz_offset'=>$formatter->tz_offset));
+        'tz_offset'=>$formatter->tz_offset, 'laststamp'=>time()-24*60*60));
     //ob_end_flush();
     $msg=ob_get_contents();
     ob_end_clean();
     if ($msg=='false') $msg=_("No messages");
-    $script = '';
-    if (empty($chat_script))
-        $script=<<<EOF
-<script type='text/javascript' src='$DBInfo->url_prefix/local/ajax.js'></script>
-<script type='text/javascript' src='$DBInfo->url_prefix/local/chat.js'></script>
-EOF;
-    $ajax_script=1;
-    $chat_script=1;
+    $formatter->register_javascripts(array(
+        "ajax.js",
+        "chat.js",
+    ));
     return <<<EOF
-$script
-<span id="effect"></span>
+<span id="chat-effect"></span>
 <div class="wikiChat">
 <script language='javascript'>
 /*<![CDATA[*/
 setInterval('sendMsg("poll",null,"$url","chat$tag",$itemnum)',10000);
-setSound('pass','$DBInfo->url_prefix/local/pass.au');
+setSound('pass','$DBInfo->url_prefix/local/pass.mp3');
 /*]]>*/
 </script>
 <div id="chat$tag">$msg</div>
@@ -61,13 +54,15 @@ setSound('pass','$DBInfo->url_prefix/local/pass.au');
 </div>
 </form>
 </div>
+$stamp
 EOF;
 }
 
 function do_chat($formatter,$options) {
-    $formatter->send_header();
-    $formatter->send_title();
-    print macro_Chat($formatter,$options[value]);
+    $chat = macro_Chat($formatter,$options['value']);
+    $formatter->send_header("",$options);
+    $formatter->send_title("","",$options);
+    echo $chat;
     $formatter->send_footer("",$options);
     return;
 }
@@ -105,7 +100,7 @@ function ajax_chat($formatter,$options) {
         $room=substr($room,4);
         $log=$DBInfo->upload_dir.'/Chat/'.$room.'.log';
     }
-    if (!$value) {
+    if (empty($value)) {
         if (!file_exists($log)) {
             print 'false';
             return;
@@ -188,7 +183,7 @@ function ajax_chat($formatter,$options) {
         if (!empty($formatter->smiley_rule))
             $line=preg_replace_callback($formatter->smiley_rule,
                 array(&$formatter, 'smiley_repl'), $line);
-        $out = '<li>'.preg_replace_callback("/(".$formatter->wordrule.")/",
+        $out.= '<li>'.preg_replace_callback("/(".$formatter->wordrule.")/",
             array(&$formatter, 'link_repl'), $line).'</li>';
         #$out.='<li>'.$line.'</li>';
     }
