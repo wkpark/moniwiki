@@ -89,40 +89,6 @@ class Template_Compiler_
 		);
 
 
-	// make compile directory
-
-		if ($this->on_ms) {
-			$compile_base =  preg_replace('@\\\\+@', '/', $compile_base);
-			$this->compile_dir =  preg_replace('@\\\\+@', '/', $this->compile_dir);
-		}
-
-		$compile_path	= $compile_base.'.'.$this->compile_ext;	// absolute or relative path
-
-		if (!@is_file($compile_path)) {
-
-			$cpl_rel_path	= substr($compile_path, strlen($this->compile_dir)+1);
-			$dirs = explode('/', $cpl_rel_path);
-			
-			$path = $this->compile_dir;
-			$once_checked = false;
-			
-			for ($i=0, $s = count($dirs)-1; $i<$s; $i++) {
-				
-				$path .= '/'.$dirs[$i];
-				
-				if ($once_checked or !is_dir($path) and $once_checked=true) {
-
-					if (false === mkdir($path, $this->permission)) {
-						$this->report('Error #1', 'cannot create compile directory <b>'.$path.'</b>');
-						$this->exit_();
-					}
-					if (!$this->on_ms) {
-						@chmod($path, $this->permission);
-					}
-				}
-			}
-		}
-
 		$this->register_plugins_all();
 
 	// get safe mode functions
