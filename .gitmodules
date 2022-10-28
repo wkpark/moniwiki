@@ -1,0 +1,3 @@
+[submodule "theme/paper"]
+	path = theme/paper
+	url = https://github.com/wkpark/moniwiki-theme-paper
