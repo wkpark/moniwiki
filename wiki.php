@@ -4480,7 +4480,7 @@ class Formatter {
               $async = ' async';
               $js = substr($js, 6);
             }
-            if (preg_match('@^(http://|/)@',$js)) {
+            if (preg_match('@^(https?://|/)@',$js)) {
               $out.="<script$async type='text/javascript' src='$js'></script>\n";
             } else {
               if (file_exists('local/'.$js)) {
@@ -4540,7 +4540,7 @@ class Formatter {
             $async = ' async';
             $js = substr($js, 6);
           }
-          if (!preg_match('@^(http://|/)@',$js))
+          if (!preg_match('@^(https?://|/)@',$js))
             $js=$this->url_prefix.'/local/'.$js;
           $out.="<script$async type='text/javascript' src='$js'></script>\n";
         } else {
