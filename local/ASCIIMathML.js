@@ -25,6 +25,8 @@ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
 General Public License (at http://www.gnu.org/copyleft/gpl.html) 
 for more details.
 */
+var asciimath = {};
+
 var checkForMathML = true;   // check if browser can display MathML
 var notifyIfNoMathML = true; // display note if no MathML capability
 var alertIfNoMathML = false;  // show alert box if no MathML capability
@@ -923,3 +925,10 @@ else
 }
 
 */
+//expose some functions to outside
+asciimath.newcommand = newcommand;
+//asciimath.newsymbol = newsymbol;
+asciimath.AMprocessNode = AMprocessNode;
+asciimath.processNodeR = AMprocessNodeR;
+asciimath.parseMath = AMparseMath;
+asciimath.translate = translate;

@@ -71,16 +71,17 @@ function processor_asciimathml($formatter,$value="") {
   $fontfamily="mathfontfamily='$myfontfamily';\n";
 
   if ( $flag ) {
-    if ($formatter->register_javascripts('ASCIIMathML.js'));
+    $formatter->register_javascripts('ASCIIMathML.js');
 
     if ($_add_func)
       $js=<<<AJS
 <script type="text/javascript">
 /*<![CDATA[*/
 function translateById(objId,flag) {
+  var isIE = (navigator.appName.slice(0,9)=="Microsoft");
   var AMbody = document.getElementById(objId);
   // for WikiWyg mode switching
-  if (typeof math2ascii != "undefined") math2ascii(AMbody);
+
   if (isIE) { // for WikiWyg in the iframe
     var nd = AMisMathMLavailable();
     AMnoMathML = nd != null;
@@ -88,12 +89,13 @@ function translateById(objId,flag) {
     if (AMnoMathML) {
       AMbody.insertBefore(nd,AMbody.childNodes[0]);
     } else {
-      AMbody.innerHTML=AMparseMath(AMbody.innerHTML.replace(/\\$/g,'')).innerHTML;
+      AMbody.innerHTML=asciimath.parseMath(AMbody.innerHTML.replace(/\\$/g,''), true).innerHTML;
       //needed to match size and font of formula to surrounding text
       AMbody.getElementsByTagName('math')[0].update();
     }
   } else {
-    AMprocessNode(AMbody, false);
+    //asciimath.processNodeR(AMbody, false, false);
+    asciimath.AMprocessNode(AMbody, false, false);
   }
 }
 
@@ -103,7 +105,7 @@ if (window.MathJax) { mathfontfamily = ''; mathcolor = ''; }
 /*]]>*/
 </script>
 AJS;
-    if ($js) $formatter->register_javascripts($js);
+    $formatter->register_javascripts($js);
   }
 
   $out = "<span><span class=\"AM\" id=\"AM-$id\">$value</span>" .
