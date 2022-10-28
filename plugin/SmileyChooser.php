@@ -56,12 +56,11 @@ function mySmiley(myText)
     if (myframe.style.display == 'none' || myframe.parentNode.style.display == 'none') break;
 
     var postdata = 'action=markup/ajax&value=' + encodeURIComponent(myText);
-    var myhtml='';
-    myhtml= HTTPPost(self.location, postdata);
+    HTTPPost(self.location, postdata, function(myhtml){
+      // check the old wiki-engine or the new monimarkup
+      var m = myhtml.match(/<div>(.*)\\n<\/div>/i) || myhtml.match(/<p class="[^"]+">(.*)<\/p>/i); // strip div tag
+      if (!m) return;
 
-    // check the old wiki-engine or the new monimarkup
-    var m = myhtml.match(/<div>(.*)\\n<\/div>/i) || myhtml.match(/<p class="[^"]+">(.*)<\/p>/i); // strip div tag
-    if (m) {
       var html = m[1] + ' ';
       if (is_ie) {
         var range = myframe.contentWindow.document.selection.createRange();
@@ -73,7 +72,7 @@ function mySmiley(myText)
       } else {
         myframe.contentWindow.document.execCommand('inserthtml', false, html);
       }
-    }
+    });
 
     return;
   }

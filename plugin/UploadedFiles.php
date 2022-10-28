@@ -157,11 +157,9 @@ function insertTags(tagOpen,tagClose,myText,replaced)
             if (myframe.style.display == 'none' || myframe.parentNode.style.display == 'none') break;
 
             var postdata = 'action=markup/ajax&value=' + encodeURIComponent(tagOpen + myText + tagClose);
-            var myhtml='';
-            myhtml= HTTPPost(self.location, postdata);
-
-            var mnew = myhtml.replace(/^<div>/i,''); // strip div tag
-            mnew = mnew.replace(/<\/div>\s*$/i,''); // strip div tag
+            HTTPPost(self.location, postdata, function(ret){
+                var html = ret.replace(/^<div>/i,''); // strip div tag
+                html = html.replace(/<\/div>\s*$/i,''); // strip div tag
 
             if (is_ie) {
                 var range = myframe.contentWindow.document.selection.createRange();
@@ -171,8 +169,10 @@ function insertTags(tagOpen,tagClose,myText,replaced)
                 range.collapse(false);
                 range.select();
             } else {
-                myframe.contentWindow.document.execCommand('inserthtml', false, mnew + ' ');
+                myframe.contentWindow.document.execCommand('inserthtml', false, html + ' ');
             }
+
+            });
 
             return;
         }

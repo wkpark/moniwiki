@@ -2243,25 +2243,32 @@ function submit_preview(e) {
   var toSend = 'action=markup/ajax&preview=1' +
     '&value=' + encodeURIComponent(wikitext);
 
-  var location = self.location + '';
-  var markup = HTTPPost(location, toSend);
-
-  // set preview
   var preview = document.getElementById('wikiPreview');
-  preview.style.display = 'block';
-  preview.innerHTML = markup;
+  var location = self.location + '';
+  HTTPPost(location, toSend, function(markup){
+    // set preview
+    preview.style.display = 'block';
+    preview.innerHTML = markup;
+  });
 
   // get diffpreview
   var diffview = document.getElementById('wikiDiffPreview');
   var node = e.target || e.srcElement;
 
-  if (node.name == "button_changes") {
+  if (node.name != "button_changes") {
+    if (diffview) {
+      diffview.style.display = 'none';
+      diffview.innerHTML = '';
+    }
+    return false;
+  }
+
     var toSend = 'action=diff/ajax' +
       '&value=' + encodeURIComponent(wikitext) + '&rev=' + datestamp;
     if (section)
       toSend+= '&section=' + section;
 
-    var diff = HTTPPost(location, toSend);
+  HTTPPost(location, toSend, function(diff){
     if (!diffview) {
       diffview = document.createElement('div');
       diffview.setAttribute('id', 'wikiDiffPreview');
@@ -2271,12 +2278,7 @@ function submit_preview(e) {
       diffview.style.display = 'block';
       diffview.innerHTML = diff;
     }
-  } else {
-    if (diffview) {
-      diffview.style.display = 'none';
-      diffview.innerHTML = '';
-    }
-  }
+  });
 
   return false;
 }

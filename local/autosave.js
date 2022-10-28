@@ -43,8 +43,9 @@ function moni_autosave_reset(form) {
 
     // remove saved page
     var postdata = 'action=autosave/ajax&remove=1';
-    var ret = '';
-    ret = HTTPPost(href, postdata);
+    HTTPPost(href, postdata, function(ret){
+       // nop
+    });
     return true;
 }
 
@@ -54,27 +55,27 @@ function moni_autosave(textarea, min, sec) {
     if (typeof sec == 'undefined')
         sec = 20; // 20-second
 
-    if (!this.timer) {
-        var form = document.getElementById('editform');
-        var key = location.host + form.getAttribute('action');
-        var ret = '';
-        var stamp = 0;
+    if (this.timer)
+        return;
 
-        {
-            var href = location+'';
-            var postdata = 'action=autosave/ajax&retrive=1';
-            ret = HTTPPost(href, postdata);
-            if (ret.match(/^false/)) {
-                ret = null;
-            } else {
-                var p = ret.indexOf("\n");
-                // 1230555376142
-                if (p > 0) {
-                    stamp = ret.substr(0, p) + '000'; // 10-digits
-                    ret = ret.substr(p+1);
-                }
+    var form = document.getElementById('editform');
+    var key = location.host + form.getAttribute('action');
+
+    var href = location+'';
+    var postdata = 'action=autosave/ajax&retrive=1';
+    HTTPPost(href, postdata, function(ret){
+        var stamp = 0;
+        if (ret.match(/^false/)) {
+            ret = null;
+        } else {
+            var p = ret.indexOf("\n");
+            // 1230555376142
+            if (p > 0) {
+                stamp = ret.substr(0, p) + '000'; // 10-digits
+                ret = ret.substr(p+1);
             }
         }
+
         var savetext = textarea.value;
         if (localStorage && localStorage[key]) {
             var p = localStorage[key].indexOf("\n");
@@ -114,7 +115,7 @@ function moni_autosave(textarea, min, sec) {
         this.timer2 = setInterval(function() { ajax_save(self.textarea); } ,min * 60*1000); // ajax_save
         if (localStorage)
             this.timer = setInterval(function() { local_save(self.textarea); } , sec * 1000); // local storage save
-    }
+    });
 }
 
 function local_save(textarea) {
@@ -178,8 +179,7 @@ function ajax_save(textarea) {
         state.style.display = 'block';
     }
 
-    var ret;
-    ret = HTTPPost(href, postdata,
+    HTTPPost(href, postdata,
         function(ret) {
             state.innerHTML = '';
             if (ret == 'true') {

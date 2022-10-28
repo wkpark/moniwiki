@@ -1099,15 +1099,17 @@ function diff_width(size) {
 
 function update_bookmark(time) {
     var url = "$url";
-    if (rclist.length) {
+    if (rclist.length == 0)
+      return;
+
       var timetag;
       if (typeof time == 'undefined') timetag = '';
       else timetag = '&time=' + time;
 
       var data = "$postdata";
       data += timetag + '&value=' + encodeURIComponent(json_encode(rclist));
-      var txt = HTTPPost(url, data);
-      var ret;
+
+    HTTPPost(url, data, function(txt) {
       if (txt == null) return;
 
       var icon_new = "$icon_new";
@@ -1115,7 +1117,7 @@ function update_bookmark(time) {
       var icon_show = "$icon_show";
       var icon_diff = "$icon_diff";
 
-      ret = window["eval"]("(" + txt + ")");
+      var ret = window["eval"]("(" + txt + ")");
       var bookmark = ret['__-_-bookmark-_-__'];
       var jj = 0;
       for (var ii = 0; ii < rclist.length; ii++) {
@@ -1226,7 +1228,7 @@ function update_bookmark(time) {
           }
         }
       }
-    }
+    });
 }
 if(window.addEventListener)window.addEventListener("load",update_bookmark,false);
 else if(window.attachEvent)window.attachEvent("onload",update_bookmark);

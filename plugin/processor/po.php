@@ -31,10 +31,11 @@ function checkmsg(obj) {
     var postdata = 'action=msgfmt/ajax&msgid=' +
         encodeURIComponent(msgid.value) + '&msgstr=' + encodeURIComponent(msgstr.value);
 
-    var msg= HTTPPost(self.location, postdata);
-    if (msg.substr(0,4) == 'true') {
-        alert('OK\\n' + msg);
-    } else {
+    HTTPPost(self.location, postdata, function(msg){
+        if (msg.substr(0,4) == 'true') {
+            alert('OK\\n' + msg);
+            return;
+        }
         alert ('*** Error: AJAX msgfmt checker ***\\n' + msg);
     }
 }

@@ -37,7 +37,8 @@ function savePage(obj) {
       //alert(obj.elements[i].name+'='+obj.elements[i].value);
     }
   }
-  var form=HTTPPost(self.location,toSend);
+  HTTPPost(self.location,toSend,function(form){
+
   if (form.substring(0,4) == 'true') {
     var ed=document.getElementById('editSect-'+obj.section.value);
     if (ed) { // toogle
@@ -45,9 +46,9 @@ function savePage(obj) {
     }
 
     toSend = 'action=markup&all=1&section=' + obj.section.value;
-    form=HTTPPost(self.location,toSend);
-    //
-    sec.parentNode.innerHTML=form;
+    HTTPPost(self.location,toSend,function(form){
+      sec.parentNode.innerHTML=form;
+    });
     return false;
   } else {
     var f=document.createElement('div');
@@ -56,6 +57,8 @@ function savePage(obj) {
     f.innerHTML=form;
     sec.parentNode.appendChild(f);
   }
+
+  });
   return false;
 }
 

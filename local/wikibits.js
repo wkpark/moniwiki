@@ -218,22 +218,21 @@ function insertTags(tagOpen, tagClose, sampleText,replace) {
 			return false;
 		} else {
 			var postdata = 'action=markup/ajax&value=' + encodeURIComponent(tagOpen + sampleText + tagClose);
-			var myhtml='';
-			myhtml= HTTPPost(self.location, postdata);
+			HTTPPost(self.location, postdata, function(myhtml){
+				mnew = myhtml.replace(/^<div>/i,''); // strip div tag
+				mnew = mnew.replace(/<\/div>\s*$/i,''); // strip div tag
 
-			mnew = myhtml.replace(/^<div>/i,''); // strip div tag
-			mnew = mnew.replace(/<\/div>\s*$/i,''); // strip div tag
-		}
-
-		if (is_ie) {
-			var range = myframe.contentWindow.document.selection.createRange();
-			if (range.boundingTop == 2 && range.boundingLeft == 2)
-				return false;
-			range.pasteHTML(mnew);
-			range.collapse(false);
-			range.select();
-		} else {
-			myframe.contentWindow.document.execCommand('inserthtml', false, mnew + ' ');
+				if (is_ie) {
+					var range = myframe.contentWindow.document.selection.createRange();
+					if (range.boundingTop == 2 && range.boundingLeft == 2)
+						return false;
+					range.pasteHTML(mnew);
+					range.collapse(false);
+					range.select();
+				} else {
+					myframe.contentWindow.document.execCommand('inserthtml', false, mnew + ' ');
+				}
+			});
 		}
 
 		return;

@@ -40,15 +40,15 @@ function sendMsg(ev,obj,url,id,num) {
      '\/ajax&value='+value+'&room='+id+nic+'&item='+num+
      '&stamp='+d.getTime()+last);
 
-   var msg=HTTPGet(nurl);
-   if (msg != 'false') {
+   HTTPGet(nurl,function(msg){
+      if (msg=='false') return;
       var chat=document.getElementById(id);
       //var node=document.createElement('li');
       //node.innerHTML=msg;
       //chat.appendChild(node);
       chat.innerHTML=msg;
       if (soundon == 'soundOn') Sound('pass');
-   }
+   });
    return;
 }
 
