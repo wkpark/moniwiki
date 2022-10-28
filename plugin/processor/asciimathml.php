@@ -1,31 +1,20 @@
 <?php
-// Copyright 2005-2010 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2005-2022 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a asciimathml processor plugin by AnonymousDoner
 //
 // Author: Won-Kyu Park <wkpark@kldp.org> and AnonymousDoner
-// Date: 2007-11-02
+// Since: 2007-11-02
+// LastModified: 2022-10-29
 // Name: a AsciiMathML processor
 // Description: It support AsciiMathML
 // URL: MoniWiki:AsciiMathML
-// Version: $Revision: 1.11 $
+// Version: $Revision: 1.12 $
 // License: GPL
 //
-// please see http://kldp.net/forum/message.php?msg_id=9419
-//
-// download the following javascript in the local/ dir to enable this processor:
-//  http://www1.chapman.edu/~jipsen/mathml/ASCIIMathML.js
-//  and add small code or set $_add_func=1;
-//-----x8-----
-// function translateById(objId) {
-//   AMbody = document.getElementById(objId);
-//   AMprocessNode(AMbody, false);
-//   if (isIE) { //needed to match size and font of formula to surrounding text
-//     var frag = document.getElementsByTagName('math');
-//     for (var i=0;i<frag.length;i++) frag[i].update()
-//   }
-// }
-//   AMinitSymbols();
+// Firefox and Safari support mathML but Chrome does not.
+// to use AsciiMathML with Chrome add the following javascript:
+// https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML
 //-----x8-----
 // to changes this processor as a default inline latex formatter:
 // 1. set $inline_latex='asciimathml';
