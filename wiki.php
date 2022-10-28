@@ -5128,8 +5128,8 @@ SCHEMA;
       $datetime = gmdate('Y-m-d\TH:i:s', $mtime).'+00:00';
     }
 
-    $validator_xhtml=!empty($DBInfo->validator_xhtml) ? $DBInfo->validator_xhtml:'http://validator.w3.org/check/referer';
-    $validator_css=!empty($DBInfo->validator_css) ? $DBInfo->validator_xhtml:'http://jigsaw.w3.org/css-validator';
+    $validator_xhtml=!empty($DBInfo->validator_xhtml) ? $DBInfo->validator_xhtml:'https://validator.w3.org/check/referer';
+    $validator_css=!empty($DBInfo->validator_css) ? $DBInfo->validator_xhtml:'https://jigsaw.w3.org/css-validator';
 
     $banner= <<<FOOT
  <a href="$validator_xhtml"><img

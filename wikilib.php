@@ -3227,7 +3227,7 @@ function do_goto($formatter,$options) {
       }
     }
     $url=str_replace("&amp;","&",$url);
-    if (!preg_match("/^(http:\/\/|ftp:\/\/)/",$options['url'])) {
+    if (!preg_match("/^(https?:\/\/|ftp:\/\/)/",$options['url'])) {
        print <<<HEADER
 <html>
   <head>
