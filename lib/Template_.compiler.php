@@ -948,7 +948,11 @@ class Template_Compiler_
 			}
 			if (empty($depth)) { // not loop
 				if ($id[0]==='_') {
-					if ($id=='_config') return '$Config'.$el;
+					if ($id=='_config') {
+						if (preg_match('/seed|password|passwd/', $el))
+							return "'".$subject."'";
+						return '$Config'.$el;
+					}
 					if ($this->safe_mode) {
 						$this->exp_error[]=array(4, $subject);
 						return 0;
