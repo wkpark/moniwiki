@@ -161,8 +161,6 @@ $metatags_extra="<meta name='viewport' content='width=device-width' />";
 #<script type="text/javascript" src="$url_prefix/local/Wikiwyg/lib/Wikiwyg/Wysiwyg.js"></script>
 #<script type="text/javascript" src="$url_prefix/local/moniwyg.js"></script>
 #
-#<script type="text/javascript" src="$url_prefix/local/js/prototype.js"></script>
-#<script type="text/javascript" src="$url_prefix/local/js/scriptaculous.js?load=effects,controls"></script>
 #<script type="text/javascript" src="$url_prefix/local/lightbox2/js/lightbox.js"></script>
 #<link rel="stylesheet" href="$url_prefix/local/lightbox2/css/lightbox.css" type="text/css" media="screen" />
 #<script type="text/javascript" src="$url_prefix/local/autocomplete.js"></script>
@@ -170,10 +168,19 @@ $metatags_extra="<meta name='viewport' content='width=device-width' />";
 #EOF;
 # alternatively you can use the $javascripts option (more inteligent method)
 $javascripts=array(
+	'<script src="//ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>',
+	'<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>',
 	'js/i18n.js',
 	'pasta.js',
 	'ajax.js',
-	'ASCIIMathML.js');
+	'async,ac.js',
+	'async,footnotes.js',
+	#'async,mobile.js',
+	#'async,folding.js',
+	#'async,googlehi.js',
+	'ASCIIMathML.js',
+	#'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML', # for ASCIIMathML.js + MathJax
+);
 
 #$diffonly=1; # show only diff infos (do not show wiki contents)
 #$goto_type=1;
