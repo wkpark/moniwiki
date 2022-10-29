@@ -825,7 +825,7 @@ msgstr ""
 "url; [url]; [url label].<br />\n"
 "<b>Tableaux</b> : || cellule de texte |||| cellule de texte s'?tendant sur "
 "deux colonnes ||;\n"
-"Les espaces apr?s un tableau ou un titre ne sont pas autoris?s.<br />\n"
+"Les espaces apr?s un tableau ou un titre ne sont pas autoris?s.<br />"
 
 #: ../plugin/EditHints.php:57
 msgid "<strong>Links:</strong> [[Page Title]]; [[Page Title|label]]"
