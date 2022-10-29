@@ -40,7 +40,7 @@ po_files () {
 # by xgettext() for localizeable strings.
 # find ../lib fails on cygwin
 pot_file_deps () {
-    (cd ..; find ../SWFUpload ../Wikiwyg \( -name "*.js" \)) |
+    (cd ..; find ../JSUpload ../Wikiwyg \( -name "*.js" \)) |
 	sed 's|^|${POT_FILE}: ../|;' |
 	sort
 }
