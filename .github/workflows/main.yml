@@ -41,6 +41,7 @@ jobs:
 
       - name: Build Tarball
         run: |
+          sudo apt-get install -y gettext
           git clone https://github.com/wkpark/moniwiki-wikiseed wikiseed
           echo "Update language files..."
           (cd locale; sh update-makefile.sh ; make)
