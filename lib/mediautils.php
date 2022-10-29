@@ -39,6 +39,7 @@ function detect_image($filename) {
  * from http://php.net/manual/kr/function.imagecreatefromwbmp.php#86214
  * by AeroX and alexander 2008
  */
+if (!function_exists('imagecreatefrombmp')):
 function imagecreatefrombmp($bmpfile) {
     // Load the image into a string
     $file = fopen($bmpfile, 'rb');
@@ -128,6 +129,7 @@ function imagecreatefrombmp($bmpfile) {
     // Return image-object
     return $image;
 }
+endif;
 
 /**
  * resize images using GD func or ImageMagick convert
