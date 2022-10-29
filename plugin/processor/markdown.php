@@ -1302,7 +1302,7 @@ class Markdown_Parser {
 		if (PHP_VERSION_ID >= 50300) {
 			$this->utf8_strlen = function($text) { return preg_match_all(
 			"/[\\x00-\\xBF]|[\\xC0-\\xFF][\\x80-\\xBF]*/",
-			$text, $m); } );
+			$text, $m); };
 		} else {
 			$this->utf8_strlen = create_function('$text', 'return preg_match_all(
 			"/[\\\\x00-\\\\xBF]|[\\\\xC0-\\\\xFF][\\\\x80-\\\\xBF]*/", 

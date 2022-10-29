@@ -158,7 +158,7 @@ class MetaDB_compact extends MetaDB {
         if (sizeof($twins) > 8) {
             if ($mode == 1) return array("TwinPages:$pagename");
             if (PHP_VERSION_ID >= 50300) {
-            $twins = array_map(function($a) { return " * $a"; }), $twins);
+            $twins = array_map(function($a) { return " * $a"; }, $twins);
             } else {
             $twins = array_map(create_function('$a', 'return " * $a";'), $twins);
             }

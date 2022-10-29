@@ -171,9 +171,9 @@ POHEAD;
     if ($options['patch']) {
         include_once('lib/difflib.php');
         if (PHP_VERSION_ID >= 50300) {
-            $rawpo=array_map(function($a) { return $a."\n"; }),
+            $rawpo=array_map(function($a) { return $a."\n"; },
             explode("\n",$rawpo));
-            $newpo=array_map(function($a) { return $a."\n"; }),
+            $newpo=array_map(function($a) { return $a."\n"; },
             explode("\n",$po));
         } else {
             $rawpo=array_map(create_function('$a', 'return $a."\n";'),
