@@ -6017,9 +6017,10 @@ function init_locale($lang, $domain = 'moniwiki', $init = false) {
     if (!empty($Config['include_path'])) $dirs=explode(':',$Config['include_path']);
     else $dirs=array('.');
 
+    $is_windows = getenv("OS")=="Windows_NT";
     while ($Config['use_local_translation']) {
       $langdir=$lang;
-      if(getenv("OS")=="Windows_NT") $langdir=substr($lang,0,2);
+      if($is_windows) $langdir=substr($lang,0,2);
       # gettext cache workaround
       # http://kr2.php.net/manual/en/function.gettext.php#58310
       $ldir=$Config['cache_dir']."/locale/$langdir/LC_MESSAGES/";
@@ -6043,7 +6044,11 @@ function init_locale($lang, $domain = 'moniwiki', $init = false) {
       break;
     }
 
-    $test=setlocale(LC_ALL, $lang);
+    if (!$is_windows) {
+      $test=setlocale(LC_ALL, $lang);
+    }
+    // for windows case. call setlocale(LC_ALL, $lang, "korean") like method or putenv("LANG=".$lang) works.
+
     foreach ($dirs as $dir) {
       $ldir=$dir.'/locale';
       if (is_dir($ldir)) {
@@ -6052,7 +6057,7 @@ function init_locale($lang, $domain = 'moniwiki', $init = false) {
         break;
       }
     }
-    if (!empty($Config['set_lang'])) putenv("LANG=".$lang);
+    if ($is_windows || !empty($Config['set_lang'])) putenv("LANG=".$lang);
     if (function_exists('bind_textdomain_codeset'))
       bind_textdomain_codeset ($domain, $Config['charset']);
   }
