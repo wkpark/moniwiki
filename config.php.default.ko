@@ -144,6 +144,7 @@ $metatags=<<<META
 <link rel="Alternate History" title="Page History" href="?action=info" />
 <link rel="Alternate" title="xml" type="application/rss+xml" href="?action=rss_rc" />
 <link rel="Alternate" title="Wiki Markup" type="text/plain" href="?action=raw" />
+<link rel="stylesheet" href="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/themes/smoothness/jquery-ui.css">
 META;
 
 $metatags_extra="<meta name='viewport' content='width=device-width' />";
