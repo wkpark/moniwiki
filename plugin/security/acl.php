@@ -65,16 +65,15 @@ class Security_ACL extends Security_base {
                 list($pages, $rules, $group) = $this->parse_acl($acl_lines);
                 // save group definitions
                 $cache->update('acl_group', $group);
-
                 // save individual acl of all pages
                 foreach ($pages as $pagename=>$acl) {
                     $this->cache->update($pagename, $acl, 0, $params);
                 }
                 // save default ACL
                 $cache->update('acl_default', $rules['*']);
-                unset($rules['*']);
                 // make all in one regex for all patthern
                 $tmp = array_keys($rules);
+                unset($tmp[0]);
                 $rule = '('.implode(')|(', $tmp).')';
 
                 $vals = array_values($rules);

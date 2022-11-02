@@ -6,7 +6,7 @@
 #
 @Guest	Anonymous
 *	@ALL		deny	*
-*	@ALL		allow	edit,markup,ticket,savepage,titleindex,bookmark,pagelist,pagelist/ajax,identicon,oekaki
+*	@ALL		allow	notfound,edit,markup,recall,likepages,login,ticket,savepage,titleindex,bookmark,pagelist,pagelist/ajax,identicon,autogoto,retroidenticon,pagecount,scrap,recentchanges
 *	@ALL		allow	randompage,identicon,retroidenticon,pagesort
 *	@ALL		allow	autogoto,goto,notfound,likepages,titlesearch,backlinks
 *	@User		allow	*
