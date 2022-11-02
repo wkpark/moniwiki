@@ -3322,7 +3322,11 @@ EOJS;
     $cells=preg_split('/((?:\|\|)+)/',$line,-1,
       PREG_SPLIT_DELIM_CAPTURE);
     $row='';
+    $col = 0;
+    $cols = array();
+    $has_colstyle = false;
     for ($i=1,$s=sizeof($cells);$i<$s;$i+=2) {
+      $col++;
       $align='';
       $m=array();
       preg_match('/^((&lt;[^>]+>)*)([ ]*)(.*?)([ ]*)?(\s*)$/s',
@@ -3384,10 +3388,33 @@ EOJS;
         $tag = 'th';
         unset($attrs['heading']);
       }
+      # column style
+      $colstyle = '';
+      if (isset($attrs['colstyle'])) {
+        $colstyle = "style='".$attrs['colstyle']."'";
+        unset($attrs['colstyle']);
+        $has_colstyle = true;
+      }
       $attr = '';
       foreach ($attrs as $k=>$v) $attr.= $k.'="'.trim($v, "'\"").'" ';
       $attr.= $this->_td_span($cells[$i]);
       $row.= "<$tag $attr>".$cell.'</'.$tag.'>';
+
+      # check column number
+      $colspan = strlen($cells[$i])/2;
+      if (!empty($attrs['colspan']) && $colspan < $attrs['colspan']) $colspan = $attrs['colspan'];
+      if ($colspan > 1) $col += $colspan - 1;
+      if ($colspan > 1) {
+        $cattr = array();
+        $cattr[] = "span='".$colspan."'";
+        if (!empty($colstyle))
+          $cattr[] = $colstyle;
+        $colstyle = implode(' ', $cattr);
+      }
+      $cols[] = $colstyle;
+    }
+    if ($has_colstyle) {
+      $row = '<colgroup><col '.implode(' /><col ', $cols).' /></colgroup>'.$row;
     }
     return $row;
   }
@@ -3468,6 +3495,11 @@ EOJS;
         $myattr=$this->_attr($val,$rsty);
         $rattr=array_merge($rattr,$myattr);
         continue;
+      } else if (substr($para,0,10)=='colbgcolor') {
+        $val = substr($para,3);
+        $colattr = $this->_attr($val,$rsty);
+        $attr['colstyle'] = $colattr['style'];
+        $para = '';
       }
     }
     $myattr=$this->_attr($para,$sty,$myclass,$align);
