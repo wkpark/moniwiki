@@ -5009,7 +5009,8 @@ SCHEMA;
       if ($options['css_url']) {
         $stamp = '?'.filemtime(__FILE__);
         $css_url = _html_escape($options['css_url']);
-        $css_html = '  <link rel="stylesheet" type="text/css" '.$media.' href="'.
+        $css_html = '  <link rel="preload" href="'.$css_url.'" as="style" />'."\n";
+        $css_html.= '  <link rel="stylesheet" type="text/css" '.$media.' href="'.
           $css_url."\" />\n";
         if (!empty($DBInfo->custom_css) && file_exists($DBInfo->custom_css))
           $css_html .= '  <link rel="stylesheet" media="screen" type="text/css" href="'.
