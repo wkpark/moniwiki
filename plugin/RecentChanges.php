@@ -529,7 +529,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
 
     $btn[]=$formatter->link_tag($formatter->page_urlname,"?$arg=...",'...',
       'onClick="return daysago(this)"');
-    $script="<script type='text/javascript' src='$DBInfo->url_prefix/local/rc.js' ></script>";
+    $script="<script defer type='text/javascript' src='$DBInfo->url_prefix/local/rc.js' ></script>";
     $btnlist=$msg[0].' <ul><li>'.implode("</li>\n<li>",$btn).
       '</li></ul> '.$msg[1];
     $btnlist=$script."<div class='rc-button'>\n".$btnlist."</div>\n";
@@ -1263,7 +1263,7 @@ EOF;
     $js = <<<JS
 <script type='text/javascript'>
 /*<![CDATA[*/
-(function() {
+$(function() {
   var url = "$url";
   HTTPGet(url, function(txt) {
   var rc = document.getElementById("rc$rc_id");
@@ -1278,6 +1278,7 @@ EOF;
 /*]]>*/
 </script>
 JS;
+    $formatter->jqReady = true;
     $rc_id++;
   } else if ($use_js and $rctype == 'board') {
     $js.= <<<JS

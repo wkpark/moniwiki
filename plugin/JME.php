@@ -80,7 +80,7 @@ function macro_JME($formatter,$value) {
     $id = $cid + 0;
 
     return <<<APPLET
-<script type="text/javascript" language="javascript" src="$pubpath/jsme/jsme.nocache.js"></script>
+<script defer type="text/javascript" language="javascript" src="$pubpath/jsme/jsme.nocache.js"></script>
 <script type='text/javascript'>
 /*<![CDATA[*/
 var jsmeApplet$id = null;

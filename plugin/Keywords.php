@@ -369,7 +369,8 @@ EOF;
         $out = preg_replace('/&amp;/',urlencode('&'),$out)."</ul>";
 
         $_prefix=qualifiedUrl("$DBInfo->url_prefix/applets/TagCloud");
-        $formatter->register_javascripts(array("$_prefix/jquery.tagcanvas.js"));
+        $formatter->register_javascripts("<script type='text/javascript' defer src='$_prefix/jquery.tagcanvas.js'></script>");
+        $formatter->jqReady = true;
         return <<<JS
 <script type="text/javascript">
 /*<![CDATA[*/
@@ -390,7 +391,7 @@ ttags = 'taglist',
 lock,
 shape = 'sphere';
 
-$(document).ready(function(){
+$(function(){
    TagCanvas.textFont = 'Trebuchet MS, Helvetica, sans-serif';
    TagCanvas.textColour = '#4800ff';
    TagCanvas.textHeight = 25;

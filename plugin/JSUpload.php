@@ -187,7 +187,7 @@ function abortHandler(event) {
     console.log("Upload Aborted");
 }
 
-$(document).ready(function() {
+$(function() {
 $('#jsuploadform :file').on('change', function(){
     for (i=0; i<this.files.length; i++) {
         uploadFile(this.files[i]);
@@ -200,6 +200,8 @@ $('#jsuploadform :file').on('change', function(){
 /*]]>*/
 </script>
 EOF;
+    $formatter->jqReady = true;
+
     $submit_btn='<span id="spanButtonPlaceHolder"><input type="file" name="upload[]" multiple /></span>';
     $cancel_btn='';
 

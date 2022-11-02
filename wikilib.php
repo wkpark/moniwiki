@@ -4337,12 +4337,13 @@ function macro_RandomPage($formatter, $value = '', $params = array()) {
     $myid = sprintf("randomPage%02d", $id);
     $id++;
     $url = $formatter->link_url('', "?action=randompage/ajax&value=".$number);
+    $formatter->jqReady = true;
     return <<<EOF
 <div id='$myid'>
 </div>
 <script type='text/javascript'>
 /*<![CDATA[*/
-(function () {
+$(function () {
   HTTPGet("$url", function(msg) {
    var ret;
    if (msg != null && (ret = eval(msg))) {
@@ -4356,7 +4357,7 @@ function macro_RandomPage($formatter, $value = '', $params = array()) {
       div.appendChild(ul);
    }
  });
-})();
+});
 /*]]>*/
 </script>
 EOF;
@@ -5159,7 +5160,7 @@ function macro_PageCount($formatter, $value = '', $options = array()) {
     $js = <<<JS
 <script type='text/javascript'>
 /*<![CDATA[*/
-(function() {
+$(function() {
 var url = "$url";
 var mode = "$mode";
 HTTPGet(url, function(txt) {
@@ -5172,10 +5173,11 @@ else if (mode == 'redirect')
     out = ret['redirect'];
 rc.innerHTML = out;
 });
-})();
+});
 /*]]>*/
 </script>
 JS;
+    $formatter->jqReady = true;
   }
 
   $redirects = 0;

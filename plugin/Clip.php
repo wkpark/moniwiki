@@ -156,10 +156,6 @@ function showImage(url) {
   };
 }
 
-if (url) {
-  showImage(url);
-}
-
 function postBase64(base64, name) {
     var postdata = 'action=clip&name=' + name + '&value=' + encodeURIComponent(base64);
     HTTPPost("$url_save", postdata, function(ret) {
@@ -168,7 +164,12 @@ function postBase64(base64, name) {
     });
 }
 
-$(document).ready(function() {
+$(function() {
+
+if (url) {
+  showImage(url);
+}
+
 $("#clipPlugin").on('paste', function(e) {
   var clipData = (e.clipboardData || e.originalEvent.clipboardData)
   if (!clipData)
@@ -197,6 +198,7 @@ $("#clipPlugin").on('paste', function(e) {
 /*]]>*/
 </script>\n
 JS;
+  $formatter->jqReady = true;
 
   $png_url="$imgpath.png";
 

@@ -243,7 +243,7 @@ var Info = {
     //console: "none", // default will be jmolApplet0_infodiv, but you can designate another div here or "none"
 }
 
-$(document).ready(function() {
+$(function() {
     initJmol();
     $("#appdiv").html(Jmol.getAppletHtml("jmolApplet$id", Info))
 })
@@ -253,8 +253,8 @@ var lastPrompt=0;
 /*>*/
 </script>\n
 JS;
-
-    $formatter->register_javascripts('<script type="text/javascript" src="'.$pubpath.'/jsmol/JSmol.min.nojq.js"></script>');
+    $formatter->jqReady = true;
+    $formatter->register_javascripts('<script defer type="text/javascript" src="'.$pubpath.'/jsmol/JSmol.min.nojq.js"></script>');
 
     return <<<APP
 <div class="jmolControl">

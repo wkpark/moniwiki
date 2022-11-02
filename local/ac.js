@@ -50,7 +50,7 @@ function search(e, ui) {
         location.href = url_prefix + _qp + encodeURIComponent(ui.item.value).replace(/%2F/g,'/');
 }
 
-$().ready(function() {
+function attachAutocomplete() {
     if (init_inputform('go','ac_goto'))
     $('#ac_goto').autocomplete({
         source: titleindex, delay: 100,
@@ -59,7 +59,10 @@ $().ready(function() {
                 location.href = url_prefix + _qp + encodeURIComponent(ui.item.value).replace(/%2F/g,'/');
         }
     });
-});
+}
+
+if (window.addEventListener) window.addEventListener("load",attachAutocomplete,false);
+else if (window.attachEvent) window.attachEvent("onload",attachAutocomplete);
 })();
 
 // vim:et:sts=4:sw=4:

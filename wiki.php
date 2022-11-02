@@ -257,7 +257,7 @@ _qp="$sep";
 FrontPage= "$Config[frontpage]";
 /*]]>*/
 </script>
-<script type="text/javascript" src="$Config[kbd_script]"></script>\n
+<script defer type="text/javascript" src="$Config[kbd_script]"></script>\n
 EOS;
 }
 
@@ -1911,6 +1911,34 @@ class Formatter {
     # recursive footnote regex
     $this->footrule='\[\*[^\[\]]*((?:[^\[\]]++|\[(?13)\])*)\]';
 
+    register_shutdown_function(array(&$this,'close_javascripts'));
+  }
+
+  function close_javascripts() {
+    if (!empty($this->jqReady))
+      echo <<<EOJS
+<script type="text/javascript">
+/*<![CDATA[*/
+(function(){
+var i = 0;
+function _jqFinalize() {
+  if (typeof(jQuery) != 'undefined') {
+    $(function() {
+      $.each(___MWJQQ___, function(i, fn) { fn(); });
+   });
+  } else {
+    if (++i < 3) {
+      console.log("jq retry.. #" + i);
+      setTimeout(_jqFinalize, 100);
+    }
+  }
+}
+_jqFinalize();
+})();
+/*]]>*/
+</script>\n
+EOJS;
+    $this->jqReady = false;
   }
 
   /**
@@ -4832,6 +4860,10 @@ class Formatter {
 <script type="text/javascript">
 /*<![CDATA[*/
 _url_prefix="$DBInfo->url_prefix";
+
+/* https://stackoverflow.com/a/21013975/1696120 */
+___MWJQQ___ = [];
+$ = function(fn) { ___MWJQQ___.push(fn); };
 /*]]>*/
 </script>
 JSHEAD;

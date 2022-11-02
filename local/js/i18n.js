@@ -28,6 +28,7 @@ readLanguage = function(domain) {
         var js = document.createElement('script');
         js.type = 'text/javascript';
         js.src = _url_prefix + '/local/js/locale/' + lang.substr(0,2) + '/' + domain + '.js';
+        js.defer = true;
         js.onreadystatechange = function () {
             if (this.readyState == 'complete') {
                 loadLanguage();

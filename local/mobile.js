@@ -256,7 +256,7 @@ function init_images() {
 }
 
 // onload
-if (jQuery)
+if (typeof jQuery != 'undefined')
     $(document).ready(function() { init_images(); });
 else
 if (window.addEventListener)
