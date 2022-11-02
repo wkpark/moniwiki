@@ -13,8 +13,8 @@ function do_man_get($formatter,$options) {
     'cs','de_DE', 'es','fr_FR','id','ko','nl','pt_BR','sk','sv',
     'da','el','fi','hr','it','pl','ro','sl');
 
-  if (!$options['man']) {
-    $options['title']=_("No manpage selected");
+  if (empty($options['man'])) {
+    $options['.title']=_("No manpage selected");
     do_invalid($formatter,$options);
     return;
   }
@@ -40,7 +40,7 @@ function do_man_get($formatter,$options) {
   }
 
   if (!$fnames) {
-    $options['title']=_("No manpage found");
+    $options['.title']=_("No manpage found");
     $options['msg']=$err; // XXX
     do_invalid($formatter,$options);
     return;
