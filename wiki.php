@@ -4503,13 +4503,16 @@ EOJS;
       foreach ($this->java_scripts as $k=>$js) {
         if ($js) {
           if ($js{0} != '<') {
-            $async = '';
-            if (strpos($js, ',') !== false && substr($js, 0, 5) == 'async') {
-              $async = ' async';
-              $js = substr($js, 6);
+            $asyncOrDefer = '';
+            if (strpos($js, ',') !== false) {
+              $check = substr($js, 0, 5);
+              if (in_array($check, array('async', 'defer'))) {
+                $asyncOrDefer = ' '.$check;
+                $js = substr($js, 6);
+              }
             }
             if (preg_match('@^(https?://|/)@',$js)) {
-              $out.="<script$async type='text/javascript' src='$js'></script>\n";
+              $out.="<script$asyncOrDefer type='text/javascript' src='$js'></script>\n";
             } else {
               if (file_exists('local/'.$js)) {
                 $fp = fopen('local/'.$js,'r');
@@ -4524,7 +4527,7 @@ EOJS;
                 }
               } else { // is it exist ?
                 $js=$this->url_prefix.'/local/'.$js;
-                $out.="<script$async type='text/javascript' src='$js'></script>\n";
+                $out.="<script$asyncOrDefer type='text/javascript' src='$js'></script>\n";
               }
             }
           } else { //
@@ -4563,14 +4566,17 @@ EOJS;
     foreach ($this->java_scripts as $k=>$js) {
       if ($js) {
         if ($js{0} != '<') {
-          $async = '';
-          if (strpos($js, ',') !== false && substr($js, 0, 5) == 'async') {
-            $async = ' async';
-            $js = substr($js, 6);
+          $asyncOrDefer = '';
+          if (strpos($js, ',') !== false) {
+            $check = substr($js, 0, 5);
+            if (in_array($check, array('async', 'defer'))) {
+              $asyncOrDefer = ' '.$check;
+              $js = substr($js, 6);
+            }
           }
           if (!preg_match('@^(https?://|/)@',$js))
             $js=$this->url_prefix.'/local/'.$js;
-          $out.="<script$async type='text/javascript' src='$js'></script>\n";
+          $out.="<script$asyncOrDefer type='text/javascript' src='$js'></script>\n";
         } else {
           $out.=$js;
         }

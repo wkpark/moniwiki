@@ -169,16 +169,17 @@ $metatags_extra="<meta name='viewport' content='width=device-width' />";
 #EOF;
 # alternatively you can use the $javascripts option (more inteligent method)
 $javascripts=array(
-	'<script src="//ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>',
-	'<script src="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>',
-	'js/i18n.js',
-	'pasta.js',
-	'ajax.js',
-	'async,ac.js',
-	'async,footnotes.js',
-	#'async,mobile.js',
-	#'async,folding.js',
-	#'async,googlehi.js',
+	'<script defer src="//ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>',
+	'<script defer src="//ajax.googleapis.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.js"></script>',
+	'defer,js/i18n.js',
+	'defer,pasta.js',
+	'async,ajax.js',
+	'defer,ac.js',
+	'defer,footnotes.js',
+	#'defer,autosave.js',
+	#'defer,mobile.js',
+	#'defer,folding.js',
+	#'defer,googlehi.js',
 	'ASCIIMathML.js',
 	#'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML', # for ASCIIMathML.js + MathJax
 );
