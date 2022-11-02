@@ -82,6 +82,7 @@ function ajax_chat($formatter,$options) {
     }
     // %uD55C%uD558
     $value=_stripslashes($options['value']);
+    $value = _xss_filter($value);
     $value=preg_replace('/%u([a-f0-9]{4})/i','&#x\\1;',$value);
     $nic=preg_replace('/%u([a-f0-9]{4})/i','&#x\\1;',$nic);
     $itemnum=_stripslashes($options['item']);
