@@ -1500,10 +1500,10 @@ class WikiPage {
       if (isset($Config['pagetype'][$key]) and $f=$Config['pagetype'][$key]) {
         $p=preg_split('%(:|/)%',$f);
         $p2=strlen($p[0].$p[1])+1;
-        $p[1]=$p[1] ? $f{strlen($p[0])}.$p[1]:'';
-        $p[2]=$p[2] ? $f{$p2}.$p[2]:'';
+        $p[1]=isset($p[1]) ? $f{strlen($p[0])}.$p[1]:'';
+        $p[2]=isset($p[2]) ? $f{$p2}.$p[2]:'';
         $format=$p[0];
-        if ($sep[1]) { # have : or /
+        if (!empty($sep[1])) { # have : or /
           $format = ($sep[1]==$p[1]{0}) ? substr($p[1],1):
                     (($sep[1]==$p[2]{0}) ? substr($p[2],1):'plain');
         }
@@ -1560,7 +1560,12 @@ class WikiPage {
       while ($body and $body[0] == '#') {
         $body_start++;
         # extract first line
-        list($line, $body)= explode("\n", $body,2);
+        if (($pos = strpos($body, "\n")) !== false) {
+          list($line, $body)= explode("\n", $body,2);
+        } else {
+          $line = $body;
+          $body = '';
+        }
         if ($line=='#') break;
         else if ($line[1]=='#') { $notparsed[]=$line; continue;}
         $pilines[]=$line;

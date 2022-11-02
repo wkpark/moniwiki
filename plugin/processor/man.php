@@ -11,7 +11,7 @@ function processor_man($formatter,$value="") {
   if ($value[0]=='#' and $value[1]=='!')
     list($line,$value)=explode("\n",$value,2);
 
-  if ($line)
+  if (!empty($line))
     list($tag,$args)=explode(' ',$line,2);
   $vartmp_dir=&$DBInfo->vartmp_dir;
 

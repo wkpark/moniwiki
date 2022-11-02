@@ -14,7 +14,7 @@ function filter_antispam($formatter,$value,$options) {
         ! in_array($formatter->page->name,$whitelist_pages)) {
 
         $badcontents_file = !empty($options['.badcontents']) ? $options['.badcontents'] :
-                $Config['badcontents'];
+                (isset($Config['badcontents'])? $Config['badcontents'] : '');
 
         if (!file_exists($badcontents_file)) return $value;
 

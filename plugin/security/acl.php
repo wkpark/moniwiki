@@ -163,7 +163,11 @@ class Security_ACL extends Security_base {
             list($grp, $tmp) = preg_split('/\s+/', $line, 2);
             $tmp = preg_replace("/\s*,\s*/", ",", $tmp); // trim spaces: ' , ' => ','
             $tmp = rtrim($tmp);
-            list($users, $priority) = preg_split("/\s+/", $tmp, 2);
+            $priority = '';
+            if (preg_match("/\s+/", $tmp))
+                list($users, $priority) = preg_split("/\s+/", $tmp, 2);
+            else
+                $users = $tmp;
             if (preg_match("/(^|.*,)$user(,.*|$)/", $users))
                 $groups[] = $grp;
 
@@ -412,7 +416,7 @@ class Security_ACL extends Security_base {
                 }
 
                 // check '*' available
-                $a = $acls[$g][$k][0];
+                $a = isset($acls[$g][$k][0]) ? $acls[$g][$k][0] : '';
                 if ($a == '*') {
                     // fix for the following cases
                     // deny *
@@ -426,7 +430,7 @@ class Security_ACL extends Security_base {
                         trigger_error(_("Parse error"));
                     }
                 } else {
-                    $tmp = array_merge((array)$acls[$g][$k], $v);
+                    $tmp = isset($acls[$g][$k]) ? array_merge((array)$acls[$g][$k], $v) : $v;
                     $acls[$g][$k] = array_unique($tmp);
                 }
             }

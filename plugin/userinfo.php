@@ -105,7 +105,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
 
     if ($type != 'monitor') {
         $title = $strs[$type];
-        $title = sprintf($title, $retval['count']);
+        $title = sprintf($title, $retval['count'] + 0);
     } else {
         $title = _("Contributors Monitor");
     }
@@ -117,7 +117,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
 
     $min_ttl = !empty($DBInfo->user_suspend_time_default) ? intval($DBInfo->user_suspend_time_default) : 60*30;
 
-    $allowed = $DBInfo->security_class == 'acl' &&
+    $allowed = !empty($DBInfo->security_class) && $DBInfo->security_class == 'acl' &&
             $DBInfo->security->is_allowed($options['action'], $options);
     if (!$allowed)
         $allowed = in_array($user->id,$DBInfo->owners);
@@ -489,6 +489,7 @@ function macro_UserInfo($formatter,$value,$options=array()) {
         // comments
 
         $mb = new Cache_Text('msgboard');
+        $ret = array();
 
         if (($info = $mb->fetch($q, 0, $ret)) !== false) {
             if (!empty($info['comment'])) {
@@ -631,7 +632,7 @@ function do_userinfo($formatter,$options) {
     $min_ttl = !empty($DBInfo->user_suspend_time_default) ? intval($DBInfo->user_suspend_time_default) : 60*30;
 
     $formatter->send_header('',$options);
-    $allowed = $DBInfo->security_class == 'acl' &&
+    $allowed = !empty($DBInfo->security_class) && $DBInfo->security_class == 'acl' &&
             $DBInfo->security->is_allowed($options['action'], $options);
 
     $ismember = $user->is_member;
@@ -641,7 +642,7 @@ function do_userinfo($formatter,$options) {
     $comment_btn = !empty($options['comment_btn']) ? true : false;
     $comment = !empty($options['comment']) ? trim($options['comment']) : '';
 
-    $uids = (array)$options['uid'];
+    $uids = !empty($options['uid']) ? (array)$options['uid'] : array();
 
     if ($user->id == 'Anonymous')
         $myid = $_SERVER['REMOTE_ADDR'];
@@ -657,7 +658,7 @@ function do_userinfo($formatter,$options) {
             $comment_btn = true;
 
         // a normal user can pause himself
-        if ((sizeof($uids) > 1) || $uids[0] != $myid)
+        if ((sizeof($uids) > 1) || (!empty($uids[0]) && $uids[0] != $myid))
             $pause = false;
         // reset type
         $options['type'] = '';

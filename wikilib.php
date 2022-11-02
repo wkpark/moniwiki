@@ -1550,7 +1550,7 @@ class UserDB {
     }
     closedir($handle);
 
-    if (!empty($options['retval']) and is_array($options['retval']))
+    if (isset($options['retval']) and is_array($options['retval']))
       $options['retval']['count'] = $j;
 
     $offset = !empty($options['offset']) ? intval($options['offset']) : 0;
@@ -2821,7 +2821,7 @@ EOS;
 function do_invalid($formatter,$options) {
   global $DBInfo;
 
-  if ($options['action_mode'] == 'ajax') {
+  if (!empty($options['action_mode']) and $options['action_mode'] == 'ajax') {
     return ajax_invalid($formatter,$options);
   }
 

@@ -22,8 +22,13 @@ function do_man_get($formatter,$options) {
   $LANG='';
   if ($options['lang'] and in_array($options['lang'],$supported))
     $LANG='LANG='.$options['lang'];
-  if ($options['sec']!=intval($options['sec'])) unset($options['sec']);
-  $cmd=$LANG." man -a -w $options[sec] $options[man]";
+
+  $sec = !empty($options['sec']) ? intval($options['sec']) : 0;
+  if (!empty($sec))
+    $sec = '';
+  $man = escapeshellcmd(trim($options['man']));
+
+  $cmd=$LANG." man -a -w $sec $man";
   $formatter->errlog();
   $fp=popen(escapeshellcmd($cmd).$formatter->LOG,'r');
   if (is_resource($fp)) {
@@ -90,24 +95,24 @@ function do_man_get($formatter,$options) {
     if (sizeof($lnk) > 0)
         $options['msgtitle'] = implode(', ',$lnk);
   }
-  if ($DBInfo->man_charset and
+  if (!empty($DBInfo->man_charset) and
     $DBInfo->man_charset != $DBInfo->charset) {
     if (function_exists('iconv')) {
       $ignore='//IGNORE'; // XXX
       $raw=iconv($DBInfo->man_charset,$DBInfo->charset.$ignore,$raw);
     }
   }
-  if ($DBInfo->man_filter)
+  if (!empty($DBInfo->man_filter))
     $raw = $formatter->filter_repl('simplere',$raw,array('page'=>$DBInfo->man_filter) );
   $options['savetext']=$raw;
 
-  if ($options['edit']) {
+  if (!empty($options['edit'])) {
     $formatter->send_header("",$options);
     $formatter->send_title("","",$options);
     $options['action'] = 'savepage';
 
     print macro_EditText($formatter,$raw,$options);
-  } else if ($options['raw']) {
+  } else if (!empty($options['raw'])) {
     $formatter->send_header("content-type: text/plain",$options);
     print $raw;
     return;
@@ -117,8 +122,8 @@ function do_man_get($formatter,$options) {
 
     print $formatter->processor_repl('man',$raw,$options);
     $extra='';
-    if ($options['sec']) $extra='&amp;sec='.$options['sec'];
-    if ($options['lang']) $extra='&amp;lang='.$options['lang'];
+    if (!empty($options['sec']) && is_integer($options['sec'])) $extra='&amp;sec='.$options['sec'];
+    if (!empty($options['lang'])) $extra='&amp;lang='.$options['lang'];
     $formatter->actions[]='?action=man_get&man='.$options['man'].
         $extra.'&amp;edit=1 '._("Edit man page");
   }

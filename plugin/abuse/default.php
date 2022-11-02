@@ -34,9 +34,9 @@ function abusefilter_default($action, $params = array()) {
     // users can edit 10 times within 5-minutes etc.
     $edit = array('ttl'=>60*5, 'create'=>2, 'delete'=>1, 'revert'=>2, 'save'=>10, 'edit'=>10);
 
-    if (is_array($Config['abusefilter_settings'])) {
+    if (!empty($Config['abusefilter_settings']) && is_array($Config['abusefilter_settings'])) {
         $edit = array_merge($edit, $Config['abusefilter_settings']);
-    } if (is_integer($Config['abusefilter_settings'])) {
+    } if (!empty($Config['abusefilter_settings']) && is_integer($Config['abusefilter_settings'])) {
         // TTL minutes
         $edit['ttl'] = $Config['abusefilter_settings'] * 60;
     }
