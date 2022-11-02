@@ -274,7 +274,7 @@ $use_redirect_msg=0;
 $url_mappings=array('http://faq.ktug.or.kr/mywiki'=>'http://faq.ktug.or.kr/faq');
 $shared_url_mappings='';
 #$shared_url_mappings=$data_dir.'/text/UrlMap'; # enable builtin fix url
-$trtags=array("{{|\n"=>"{{{#!wiki .closure\n",'{{|'=>"{{{#!wiki .closure\n", '|}}'=>'}}}'); # translate old wiki markups
+#$trtags=array("{{|\n"=>"{{{#!wiki .closure\n",'{{|'=>"{{{#!wiki .closure\n", '|}}'=>'}}}'); # translate old wiki markups
 #$external_target='_blank'; # always open new windows with external URLs
 
 #$use_textbrowsers=1; # check some textbased browsers
