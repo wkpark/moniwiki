@@ -240,7 +240,7 @@ JS;
     $js.=<<<JS
 <script type='text/javascript'>
 /*<![CDATA[*/
-addLoadEvent(function() {
+$(function() {
     _jmolTimer[$id]=setInterval(function() {
         var model="$molstring";
         var script="$molscript";

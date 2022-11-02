@@ -71,7 +71,7 @@ JS;
         $js1 = <<<JS
 <script type="text/javascript">
 /*<![CDATA[*/
-addLoadEvent(function() { wikiFortune('fortune-$id', '$value'); });
+$(function(){ wikiFortune('fortune-$id', '$value'); });
 /*]]>*/
 </script>\n
 JS;
