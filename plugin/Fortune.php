@@ -14,7 +14,8 @@ function macro_FortuneSystem($formatter, $value, $options) {
     $formatter->_dynamic_macros['@Fortune'] = 1;
 
     $ret= exec(escapeshellcmd("/usr/bin/fortune $value"),$log);
-    $out= str_replace("_",'',join("\n",$log));
+    $out = join("\n", $log);
+    $out = _fortune_fix_backspaces($out);
     return $out;
 }
 
@@ -24,6 +25,30 @@ function do_fortune($formatter, $options) {
     $value = $options['value'];
     $ret = macro_Fortune($formatter, $value, array());
     echo $ret;
+}
+
+function _fortune_fix_backspaces($txt) {
+    // try to find _^H
+    if (($pos = strpos($txt, '_'.chr(8))) === false)
+        return $txt;
+    // is it sequential ^H^H..?
+    if (substr($txt, $pos + 2, 1) != chr(8))
+        return preg_replace("/_\b(.)/","$1&#818;", $txt);
+
+    $rpos = strrpos($txt, chr(8), $pos);
+    $b = substr($txt, $pos + 1, $rpos - $pos);
+    $l = strlen($b);
+    $a = substr($txt, $pos - $l + 1, $l);
+    $pre = substr($txt, 0, $pos - $l);
+    $c = substr($txt, $rpos + 1, $l);
+    $post = substr($txt, $rpos + $l + 1);
+
+    $out = $pre;
+    for ($i = 0; $i < $l; $i++) {
+        $out.= $c[$i].'&#818;';
+    }
+    $out.= $post;
+    return $out;
 }
 
 function macro_Fortune($formatter,$value,$options) {
@@ -86,7 +111,10 @@ JS;
     if (empty($options['call']))
         $formatter->_dynamic_macros['@Fortune'] = 1;
 
-    $cat=$value;
+    if (!empty($value) && $value != '*')
+        $cat = escapeshellcmd($value);
+    else
+        $cat = '*';
     $dir='/usr/share/games/fortune';
     if (!empty($DBInfo->fortune_dir)) $dir = $DBInfo->fortune_dir;
     if ($cat=='') $cat=DEFAULT_FORTUNE;
@@ -130,6 +158,8 @@ JS;
         $out.=$line;
     }
     fclose($fd);
+
+    $out = _fortune_fix_backspaces($out);
 
     if (!empty($options['action_mode']) and $options['action_mode']=='macro') {
         $formatter->header('Content-Type: text/plain');
