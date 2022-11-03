@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org>
+// Copyright 2003-2022 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPL see COPYING
 // a ISBN macro plugin for the MoniWiki
 //
@@ -9,12 +9,13 @@ function macro_ISBN($formatter,$value="") {
   global $DBInfo;
 
   // http://www.isbn-international.org/en/identifiers/allidentifiers.html
-  $default_map=array('89'=>'Aladdin');
+  $default_map=array('89'=>'Aladin');
 
   $ISBN_MAP="IsbnMap";
   $DEFAULT=<<<EOS
 Amazon http://www.amazon.com/exec/obidos/ISBN= http://images.amazon.com/images/P/\$ISBN.01.MZZZZZZZ.gif
-Aladdin http://www.aladdin.co.kr/shop/wproduct.aspx?ISBN= http://image.aladdin.co.kr/cover/cover/\$ISBN_1.gif @(http://image\..*/cover/(?:[^\s_/]*\$ISBN_\d\.(?:jpe?g|gif)))@
+Aladdin https://www.aladin.co.kr/shop/wproduct.aspx?ISBN= https://image.aladin.co.kr/cover/cover/\$ISBN_1.gif @(https?://image\..*/cover.*/(?:[^\s_/]*\$ISBN_\d\.(?:jpe?g|gif)))@
+Aladin https://www.aladin.co.kr/shop/wproduct.aspx?ISBN= https://image.aladin.co.kr/cover/cover/\$ISBN_1.gif @(https?://image\..*/cover.*/(?:[^\s_/]*\$ISBN_\d\.(?:jpe?g|gif)))@
 Gang http://kangcom.com/common/qsearch/search.asp?s_flag=T&s_text= http://kangcom.com/l_pic/\$ISBN.jpg @bookinfo\.asp\?sku=(\d+)"@\n
 EOS;
 
@@ -85,7 +86,7 @@ EOS;
 
   #print_r($match);
   if ($match[3]) {
-    if (strtolower($match[2][0])=='k') $lang='Aladdin';
+    if (strtolower($match[2][0])=='k') $lang='Aladin';
     else $lang=$match[3];
   } else {
     $cl = strlen($isbn);
@@ -106,7 +107,7 @@ EOS;
     foreach ($args as $arg) {
       $arg=trim($arg);
       if ($arg == 'noimg') $noimg=1;
-      else if (strtolower($arg)=='k') $lang='Aladdin';
+      else if (strtolower($arg)=='k') $lang='Aladin';
       else {
         $name=strtok($arg,'=');
         $val=strtok(' ');
