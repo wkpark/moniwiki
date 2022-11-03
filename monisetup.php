@@ -1143,6 +1143,12 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && ($config or $action == 'protect')) {
     $initconfig = 'config.php.default';
     if (!empty($_GET['init']) and file_exists($_GET['init']))
       $initconfig = $_GET['init'];
+    else if (!empty($lang)) {
+      $short = substr($lang, 0, 2);
+      if ($short != 'en' and file_exists($initconfig.'.'.$short))
+        $initconfig = $initconfig.'.'.$short;
+    }
+
     $Config->getDefaultConfig($initconfig);
     $config=$Config->config;
 
