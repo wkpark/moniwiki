@@ -14,7 +14,7 @@ function _parseDays($formatter,$page,$options=array()) {
             'red'=>'red','blue'=>'blue','green'=>'green','purple'=>'purple',
             'yellow'=>'yellow','gray'=>'gray');
     $color_rule=implode('|',array_map('preg_quote',array_keys($color_table)));
-    $month=$options['month'] ? $options['month']:
+    $month=!empty($options['month']) ? $options['month']:
         gmdate('m',time()+$formatter->tz_offset);
 
     $week_table=array('sun'=>0,'mon'=>1,'tue'=>2,'wed'=>3,'thu'=>4,'fri'=>5,
@@ -22,6 +22,9 @@ function _parseDays($formatter,$page,$options=array()) {
 
     $colorbar_id=1;
 
+    $info = array();
+    $infocolor = array();
+    $coloring = array();
     $lines=explode("\n",$page);
     foreach ($lines as $line) {
         if ($line=='' or $line[0]!=' ') continue;
@@ -92,7 +95,7 @@ function _parseDays($formatter,$page,$options=array()) {
     return array($info,$infocolor,$coloring);
 }
 
-function macro_MoniCalendar($formatter,$value) {
+function macro_MoniCalendar($formatter, $value = '') {
     global $DBInfo;
     $color_table=
         array('{*}'=>'red','/!\\'=>'blue','(!)'=>'green',
@@ -100,7 +103,7 @@ function macro_MoniCalendar($formatter,$value) {
     static $day_headings= array('Sunday','Monday','Tuesday','Wednesday',
         'Thursday','Friday','Saturday');
 
-    $date=$_GET['date'];
+    $date=!empty($_GET['date']) ? $_GET['date'] : '';
     $tz_offset=&$formatter->tz_offset;
 
     $prev_tag='&laquo;';
@@ -111,12 +114,14 @@ function macro_MoniCalendar($formatter,$value) {
 
     #print_r($match);
     // GET argument has priority
-    if ($date) {
+    $month = 0;
+    $year = '';
+    if (!empty($date)) {
         preg_match("/^((\d{4})-?(\d{2})-?(\d{2})?)$/i",$date,$match2);
         $year= $match2[2];
-        $month= $match2[3];
-        $day= $match2[4];
-    } else if ($match[4]) {
+        $month= !empty($match2[3]) ? $match2[3] : '';
+        $day= !empty($match2[4]) ? $match2[4] : '';
+    } else if (!empty($match[4])) {
         $year= $match[5];
         $month= $match[6];
     }
@@ -129,11 +134,11 @@ function macro_MoniCalendar($formatter,$value) {
     $month=intval($month);
     $year=intval($year);
 
-    if ($match[3])
+    if (!empty($match[3]))
         $pagename=$match[3];
     else
         $pagename=$formatter->page->name;
-    if ($match[7]) {
+    if (!empty($match[7])) {
         $args=explode(',',$match[7]);
 
         if (in_array ("blog", $args)) $mode='blog';
@@ -162,7 +167,7 @@ function macro_MoniCalendar($formatter,$value) {
 
     $prev_month=gmdate('Ym',mktime(0,0,0,$month - 1,1,$year)+$tz_offset);
     $next_month=gmdate('Ym',mktime(0,0,0,$month + 1,1,$year)+$tz_offset);
-    if ($yearlink) {
+    if (!empty($yearlink)) {
         $prev_year=gmdate('Ym',mktime(0,0,0,$month,1,$year - 1)+$tz_offset);
         $next_year=gmdate('Ym',mktime(0,0,0,$month,1,$year + 1)+$tz_offset);
 
@@ -173,10 +178,10 @@ function macro_MoniCalendar($formatter,$value) {
     }
 
     list($today,$weektoday)= explode(';',gmdate('d;w',$now+$tz_offset));
-    $day = $day ? $day:$today;
-    $day = $oneweek ? $day:1;
+    $day = !empty($day) ? $day:$today;
+    $day = !empty($oneweek) ? $day:1;
 
-    if ($oneweek) {
+    if (!empty($oneweek)) {
         $prev_week=gmdate('Ymd',mktime(0,0,0,$month,$day-7,$year)+$tz_offset);
         $next_week=gmdate('Ymd',mktime(0,0,0,$month,$day+7,$year)+$tz_offset);
     }
@@ -184,8 +189,9 @@ function macro_MoniCalendar($formatter,$value) {
     $start_day = mktime (0,0,0, $month, $day, $year);
     // get info about the first day of the month or first day of the week
     $date_info= explode(';',gmdate('Y;m;w;F',$start_day+$tz_offset));
-    $weekday= $oneweek ? 0:$date_info[2];
-    if ($oneweek) {
+    $weekday= !empty($oneweek) ? 0:$date_info[2];
+    $maxcheckday = 0;
+    if (!empty($oneweek)) {
         $day=$day-$date_info[2]; // adjust to start day of the week
         if ($day < 0) {
             $day=gmdate('d',mktime(0,0,0,$month,$day,$year)+$tz_offset);
@@ -193,23 +199,25 @@ function macro_MoniCalendar($formatter,$value) {
         $maxcheckday=gmdate('t', $start_day + $tz_offset);
     }
     // number of days in the month
-    $maxdays= $oneweek ? $day+6:gmdate('t', $start_day + $tz_offset);
+    $maxdays= !empty($oneweek) ? $day+6:gmdate('t', $start_day + $tz_offset);
     // weekday (zero based) of the first day of the month
 
     $month= $date_info[1];
     $year= $date_info[0];
+    $cal = '';
 
     list($dayinfo,$infocolor,$coloring)=
         _parseDays($formatter,$body);
     $cal.= "<caption class=\"month\">";
 
     // Adding previous month and year
-    if ($yearlink)
+    $link = '';
+    if (!empty($yearlink))
         $cal.= $formatter->link_tag($link,"?date=$prev_year",$year_prev_tag).
             '&nbsp;&nbsp;';
     $cal.= $formatter->link_tag($link,"?date=$prev_month",$prev_tag).
         '&nbsp;&nbsp;';
-    if ($oneweek)
+    if (!empty($oneweek))
         $cal.= $formatter->link_tag($link,"?date=$prev_week",$prev_tag).
             '&nbsp;&nbsp;';
 
@@ -218,16 +226,16 @@ function macro_MoniCalendar($formatter,$value) {
 
     // Adding next month and year
     $cal.= '&nbsp;&nbsp;';
-    if ($oneweek)
+    if (!empty($oneweek))
     $cal.= $formatter->link_tag($link,"?date=$next_week",$next_tag).
         '&nbsp;&nbsp;';
     $cal.=$formatter->link_tag($link,"?date=$next_month",$next_tag);
-    if ($yearlink)
+    if (!empty($yearlink))
         $cal.= '&nbsp;&nbsp;'.
             $formatter->link_tag($link,"?date=$next_year",$year_next_tag);
     $cal.= "</caption>\n";
 
-    if (!$column) {
+    if (empty($column)) {
         $cal.="<tr class='weekhead'>\n";
         foreach ($day_headings as $d) {
             $cal.="<th>".substr($d,0,3)."</th>\n";
@@ -241,14 +249,14 @@ function macro_MoniCalendar($formatter,$value) {
     while ($wd > 0){
         $wd--;
         $cal .= "<td class='day'>&nbsp;</td>\n";
-        if($column) $cal.="</tr>\n</tr>";
+        if(!empty($column)) $cal.="</tr>\n</tr>";
     }
  
     $save=$formatter->sister_on;
     $formatter->sister_on=0;
     $colorkeys=array();
     while ($day <= $maxdays){
-        if($column or $weekday == 7){ #start a new week
+        if(!empty($column) or $weekday == 7){ #start a new week
             $cal .= "</tr><tr class='week'>";
             if ($weekday==7) {
                 $weekday = 0;
@@ -256,7 +264,7 @@ function macro_MoniCalendar($formatter,$value) {
             }
         }
         for ($j=0;$j<7-$weekday;$j++) {
-            if (is_array($coloring[$month][$day+$j])) {
+            if (!empty($coloring[$month]) && is_array($coloring[$month][$day+$j])) {
                 $keys=array_keys($coloring[$month][$day+$j]);
                 $colorkeys=array_merge($colorkeys,$keys);
             }
@@ -269,7 +277,7 @@ function macro_MoniCalendar($formatter,$value) {
             $colkeys[$k]=' colorbar blank">';
 
         $daytext=($day > $maxcheckday) ? $day-$maxcheckday:$day;
-        if ($column)
+        if (!empty($column))
             $daytext.='</h6><br /><h6 class="week">'.substr($day_headings[$weekday],0,3);
         if ($day==$today and $month == date('m')) {
             $exists='today';
@@ -280,7 +288,7 @@ function macro_MoniCalendar($formatter,$value) {
             $nonexists='day';
             $classes=$nonexists;
         }
-        if ($coloring[$month][$day]) {
+        if (!empty($coloring[$month]) && !empty($coloring[$month][$day])) {
             #print_r($coloring[$month][$day]);
             $colorings=array_merge($colkeys,$coloring[$month][$day]);
             #print_r($colorings);
@@ -292,7 +300,7 @@ function macro_MoniCalendar($formatter,$value) {
             $colorbar='';
         }
         $todo='';
-        $info=$dayinfo[$month][$day];
+        $info=!empty($dayinfo[$month]) && !empty($dayinfo[$month][$day]) ? $dayinfo[$month][$day] : '';
         if (is_array($info) and isset($dayinfo['week'][$weekday]))
             $info = array_merge($info,$dayinfo['week'][$weekday]);
         if (is_array($info)) {
@@ -316,12 +324,12 @@ function macro_MoniCalendar($formatter,$value) {
             $todo=preg_replace($formatter->baserule,$formatter->baserepl,$todo);
             $todo=preg_replace('/&lt;([^>]+)>/','<\\1>',$todo);
         }
-        $dayclasses=$column ? "dayhead":$classes;
+        $dayclasses=!empty($column) ? "dayhead":$classes;
 
         $cal.= '<td'.($dayclasses ? " class=\"$dayclasses\">" : '>').'<h6>'.
             ($link ? $formatter->link_tag($link,$action,$daytext):
                  $daytext)."</h6>";
-        if ($column) {
+        if (!empty($column)) {
             $classes.=' fullday';
             $cal.="</td><td ".($classes ? " class=\"$classes\">":'>');
         }
@@ -336,7 +344,7 @@ function macro_MoniCalendar($formatter,$value) {
 
     while ($weekday < 7){
         $cal .= "<td class='day'>&nbsp;</td>";
-        if ($column) $cal.="</tr>\n<tr>\n";
+        if (!empty($column)) $cal.="</tr>\n<tr>\n";
         $weekday++;
     }
     $cal.='</tr>';
