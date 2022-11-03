@@ -5775,9 +5775,9 @@ EOF;
 
     $this->mylog='';
     $this->LOG='';
-    if ($DBInfo->use_errlog) {
+    if (!empty($DBInfo->use_errlog)) {
       if(getenv("OS")!="Windows_NT") {
-        $this->mylog=$tmpname ? $DBInfo->vartmp_dir.'/'.$tmpname:
+        $this->mylog= !empty($tmpname) ? $DBInfo->vartmp_dir.'/'.$tmpname:
           tempnam($DBInfo->vartmp_dir,$prefix);
         $this->LOG=' 2>'.$this->mylog;
       }
@@ -5790,7 +5790,12 @@ EOF;
     global $DBInfo;
 
     $log=&$this->mylog;
-    if ($log and file_exists($log) and ($sz=filesize($log))) {
+    while (!empty($log) and file_exists($log)) {
+      $sz = filesize($log);
+      if ($sz == 0) {
+        unlink($log);
+        break;
+      }
       $fd=fopen($log,'r');
       if (is_resource($fd)) {
         $maxl=!empty($DBInfo->errlog_maxline) ? min($DBInfo->errlog_maxline,200):20;
@@ -5811,6 +5816,7 @@ EOF;
         }
         return $out;
       }
+      break;
     }
     return '';
   }
