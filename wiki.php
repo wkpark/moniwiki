@@ -6806,8 +6806,13 @@ function _session_start($session_id = null, $id = null) {
         if (count($tmp) >= 3)
             $domain = $_SERVER['SERVER_NAME'];
     }
-    if (empty($domain))
-        $domain = $_SERVER['HTTP_HOST'];
+    if (empty($domain)) {
+        if (!empty($_SERVER['HTTP_HOST']) && ($pos = strpos($_SERVER['HTTP_HOST'], ':')) !== false) {
+            $domain = substr($_SERVER['HTTP_HOST'], 0, $pos);
+        } else {
+            $domain = 'localhost';
+        }
+    }
 
     $expire = isset($Config['session_lifetime']) ? $Config['session_lifetime'] : 3600;
 

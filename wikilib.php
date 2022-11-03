@@ -1973,8 +1973,14 @@ class WikiUser {
         if (count($tmp) >= 3)
           $domain = '; Domain='.$_SERVER['SERVER_NAME'];
      }
-     if (empty($domain))
-        $domain = '; Domain='.$_SERVER['HTTP_HOST'];
+     if (empty($domain)) {
+        if (!empty($_SERVER['HTTP_HOST']) && ($pos = strpos($_SERVER['HTTP_HOST'], ':')) !== false) {
+            $domain = substr($_SERVER['HTTP_HOST'], 0, $pos);
+        } else {
+            $domain = 'localhost';
+        }
+        $domain = '; Domain='.$domain;
+     }
 
      if (!empty($Config['cookie_path']))
         $path = '; Path='.$Config['cookie_path'];
@@ -1998,8 +2004,14 @@ class WikiUser {
         if (count($tmp) >= 3)
           $domain = '; Domain='.$_SERVER['SERVER_NAME'];
      }
-     if (empty($domain))
-        $domain = '; Domain='.$_SERVER['HTTP_HOST'];
+     if (empty($domain)) {
+        if (!empty($_SERVER['HTTP_HOST']) && ($pos = strpos($_SERVER['HTTP_HOST'], ':')) !== false) {
+            $domain = substr($_SERVER['HTTP_HOST'], 0, $pos);
+        } else {
+            $domain = 'localhost';
+        }
+        $domain = '; Domain='.$domain;
+     }
 
      if (!empty($Config['cookie_path']))
         $path = '; Path='.$Config['cookie_path'];
