@@ -1,37 +1,37 @@
 # see http://usemod.com/intermap.txt 
 ISBN http://www.amazon.com/exec/obidos/ISBN=
-Wiki http://c2.com/cgi/wiki?
-MeatBall http://www.usemod.com/cgi-bin/mb.pl?
+Wiki http://wiki.c2.com/?
+MeatBall http://meatballwiki.org/wiki/
 MoinMoin https://moinmo.in/
 UseMod http://www.usemod.com/cgi-bin/wiki.pl?
-TWiki http://twiki.org/cgi-bin/view/
+TWiki https://twiki.org/cgi-bin/view/
 WikiPedia https://en.wikipedia.org/wiki/
-ZWiki http://www.zwiki.org/
+#ZWiki http://www.zwiki.org/
 FoxWiki http://fox.wikis.com/wc.dll?Wiki~
-AndStuff http://andstuff.org/wiki.php?
-Unreal http://wiki.beyondunreal.com/wiki/
+#AndStuff http://andstuff.org/wiki.php?
+Unreal https://wiki.beyondunreal.com/wiki/
 
 # MetaWikis
-Google http://www.google.com/search?q=
-GoogleGroups http://groups.google.com/groups?q=
-Bzla http://bugzilla.gnome.org/show_bug.cgi?id=
-BugZilla http://bugzilla.gnome.org/show_bug.cgi?id=
-Foldoc http://www.foldoc.org/foldoc/foldoc.cgi?
-JargonFile http://sunir.org/apps/meta.pl?wiki=JargonFile&amp;redirect=
+Google https://www.google.com/search?q=
+GoogleGroups https://groups.google.com/groups?q=
+#Bzla http://bugzilla.gnome.org/show_bug.cgi?id=
+#BugZilla http://bugzilla.gnome.org/show_bug.cgi?id=
+Foldoc https://foldoc.org/
+#JargonFile http://sunir.org/apps/meta.pl?wiki=JargonFile&amp;redirect=
 Acronym http://www.acronymfinder.com/af-query.asp?String=exact&amp;Acronym=
-Advogato http://www.advogato.org/
-SourceForge http://www.sourceforge.net/
+#Advogato http://www.advogato.org/
+SourceForge https://www.sourceforge.net/
 GitHub https://github.com/
 
 # Korean Wikis
 NoSmoke http://no-smok.net/nsmk/
-KLE http://kle.kldp.net/main/
+#KLE http://kle.kldp.net/main/
 #Freefeel http://freefeel.org/wiki/
-Xper http://xper.org/wiki/xp/
+#Xper http://xper.org/wiki/xp/
 KTUG http://faq.ktug.org/faq/
-MoniWiki http://moniwiki.kldp.net/wiki.php/
-MoniWikiDev http://moniwiki.kldp.net/dev/wiki.php/
-KLDPWiki http://wiki.kldp.org/wiki.php/
+#MoniWiki http://moniwiki.kldp.net/wiki.php/
+#MoniWikiDev http://moniwiki.kldp.net/dev/wiki.php/
+KLDPWiki https://wiki.kldp.org/wiki.php/
 # Korean Big Wikis
 KoWikiPedia https://ko.wikipedia.org/wiki/
 RigvedaWiki http://rigvedawiki.net/w/
@@ -43,5 +43,5 @@ NamuWiki https://namu.wiki/w/
 LibreWiki https://librewiki.net/wiki/
 #Libre https://librewiki.net/wiki/
 DcWiki https://wiki.dcinside.com/wiki/
-ZetaWiki http://zetawiki.com/wiki/
-#Zeta http://zetawiki.com/wiki/
+ZetaWiki https://zetawiki.com/wiki/
+#Zeta https://zetawiki.com/wiki/
