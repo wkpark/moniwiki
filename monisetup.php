@@ -773,22 +773,21 @@ body { background-color: #e0e0e0; }
 .body {
   background:#fff;
   font-family: Tahoma,"Times New Roman", Times, sans-serif;
-  margin-left: 10%;
-  margin-right: 10%;
-  margin-top: 1em;
+  margin: 1em auto 1em auto;
+  max-width: 960px;
   box-shadow: 0 2px 6px rgba(100, 100, 100, 0.3);
-  border-radius: 3px;
+  border-radius: 0.3em;
   padding-bottom: 2em;
   font-size: 84%;
 }
 
 .header {
-  border-radius: 1px;
+  border-radius: 0.3em 0.3em 0 0;
   font-size: 0.8em;
-  background: #3e3e3e;
+  background: #727272;
   width: 100%;
   /* color: #4A6071; /* */
-  color: #e0e0e0; /* */
+  color: #fdfdfd; /* */
   text-shadow: #000000 1px 1px 1px;
 }
 
@@ -964,6 +963,7 @@ input[type="submit"] {
 #lang {
   float: right;
   padding-right: 6px;
+  padding-top: 1em;
 }
 .helpicon {
   display: inline-block;
