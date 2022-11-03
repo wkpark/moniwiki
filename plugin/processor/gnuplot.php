@@ -84,7 +84,7 @@ function processor_gnuplot($formatter="",$value="") {
   
   #print "<pre>$plt</pre>";
 
-  if ($tmatch) {
+  if (!empty($tmatch)) {
     if (preg_match('/^postscript\s*(enhanced|color)?/',$tmatch[2])) { // XXX
       $term=$tmatch[2];
       $ext='ps';
@@ -99,8 +99,11 @@ function processor_gnuplot($formatter="",$value="") {
   if ($term != 'dumb') 
     $plt="\n".$size."\n".$plt;
   $uniq=md5($plt);
-  if ($DBInfo->cache_public_dir) {
-    $fc = new Cache_text('gnuplot',array('ext'=>$ext, 'dir'=>$DBInfo->cache_public_dir));
+  if (!empty($DBInfo->cache_public_dir)) {
+    $arena = 'gnuplot';
+    if ($ext == 'svg')
+      $arena = 'gnuplot-svg';
+    $fc = new Cache_text($arena, array('ext'=>$ext, 'dir'=>$DBInfo->cache_public_dir));
     $pngname=$fc->getKey($uniq, false);
     $png= $DBInfo->cache_public_dir.'/'.$pngname;
     $png_url=
@@ -130,13 +133,16 @@ $plt
   }
 
   $log = '';
+
+  $rext = $ext;
+  $rpng_url = $png_url;
   if ($formatter->refresh || !file_exists($outpath)) {
 
-     $flog=tempnam($vartmp_dir,"GNUPLOT");
      #
      # for Win32 wgnuplot.exe
      #
      if(getenv("OS")=="Windows_NT") {
+       $flog = tempnam($vartmp_dir,"GNUPLOT");
        $finp=tempnam($vartmp_dir,"GNUPLOT");
        $ifp=fopen($finp,"w");
        fwrite($ifp,$src);
@@ -169,36 +175,51 @@ $plt
        }
      }
 
+    if ($ext == 'png') {
+      // trim blank area
+      $opt = !empty($DBInfo->gnuplot_convert_options) ? $DBInfo->gnuplot_convert_options : "-trim -crop 0x0";
+
+      $routpath = preg_replace('/\.png$/','.tmp.png', $outpath);
+      $cmd = "$convert $opt $outpath $routpath";
+      $fp = popen($cmd.$formatter->NULL, 'r');
+      pclose($fp);
+      if (file_exists($routpath)) {
+        rename($routpath, $outpath);
+      }
+    }
+
      if ($log)
         $log ="<pre class='errlog'>$log</pre>\n";
+
+    if ($ext == 'ps' and file_exists($outpath)) {
+       $routpath=preg_replace('/\.'.$ext.'$/','.png',$outpath);
+       if ($formatter->refresh || !file_exists($routpath)) {
+        $cmd= "$convert -rotate 90 $outpath $routpath";
+        $fp=popen($cmd.$formatter->NULL,'r');
+        pclose($fp);
+       }
+       $rpng_url=preg_replace('/\.'.$ext.'$/','.png',$png_url);
+       $rext='png';
+    } else if ($ext == 'svg') {
+       $fp=fopen($outpath,'r');
+       if ($fp) {
+         $svg=fread($fp,filesize($outpath));
+         fclose($fp);
+
+       #  $svg=preg_replace('/<svg [^>]+>/','<svg xmlns="http://www.w3.org/2000/svg"
+       #xmlns:xlink="http://www.w3.org/1999/xlink">',$svg);
+         $fp=fopen($outpath,'w');
+         if ($fp) {
+           fwrite($fp,$svg);
+           fclose($fp);
+         }
+       }
+    }
   }
 
-  $rext=$ext;
-  $rpng_url=$png_url;
-
-  if ($ext == 'ps' and file_exists($outpath)) {
-     $routpath=preg_replace('/\.'.$ext.'$/','.png',$outpath);
-     if ($formatter->refresh || !file_exists($routpath)) {
-     	$cmd= "$convert -rotate 90 $outpath $routpath";
-     	$fp=popen($cmd.$formatter->NULL,'r');
-     	pclose($fp);
-     }
-     $rpng_url=preg_replace('/\.'.$ext.'$/','.png',$png_url);
-     $rext='png';
-  } else if ($ext == 'svg') {
-     $fp=fopen($outpath,'r');
-     if ($fp) {
-       $svg=fread($fp,filesize($outpath));
-       fclose($fp);
-
-       $svg=preg_replace('/<svg [^>]+>/','<svg xmlns="http://www.w3.org/2000/svg"
-     xmlns:xlink="http://www.w3.org/1999/xlink">',$svg);
-       $fp=fopen($outpath,'w');
-       if ($fp) {
-         fwrite($fp,$svg);
-         fclose($fp);
-       }
-     }
+  if ($ext == 'ps') {
+    $rpng_url = preg_replace('/\.'.$ext.'$/','.png',$png_url);
+    $rext = 'png';
   }
 
   $bra = ''; $ket = '';
@@ -208,10 +229,8 @@ $plt
   }
 
   if (!file_exists($outpath)) return $log;
-  if ($rext == 'png')
+  if ($rext == 'png' || $rext == 'svg')
      return $log.$bra."<img src='$rpng_url' alt='gnuplot' style='border:0' />".$ket;
-  if ($rext == 'svg')
-     return $log.$bra."<embed src='$rpng_url' alt='gnuplot' width='640' height='480' />".$ket;
   if ($rext == 'txt')
     return $log.'<pre class="gnuplot">'.(implode('',file("$cache_dir/$pngname"))).'</pre>';
 }
