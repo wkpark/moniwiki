@@ -382,9 +382,14 @@ $cache_public_url=$url_prefix.'/_cache';
 #$use_autosave=1; # enable autosave feature.
 #$delayindex=60*60*24*5; # delayed indexing
 $mobile_agents='android|iphone'; # mobile agents
-#$fetch_imagesize=; # fetch imagefile sizes for mobile wikis etc.
-#$fetch_images=0; # fetch images using the fetch_action
+#$fetch_max_size=2*1024*1024; # fetch maximum size for mobile wikis etc. please see the plugin/fetch.php for more detail.
+#$fetch_images_only=0; # fetch images using the fetch_action
 #$fetch_action=''; # fetch images with a specific url (default: ?action=fetch&amp;url=)
+#$fetch_referer='https://to_other_referrer_site'; # set specific fetch referrer
+#$fetch_referer_re=array('@(http://.*\.egloos.com)/p../@'=>'http://egloos.com','@(http://.*.clien.)@'=>''); # set fetch referrer based on its site
+#$fetch_ignore_re='.*'; # ignore fetch url. for this case, fetch disabled.
+#$fetch_use_cache_url=1; # redirect to user defined $fetch_action
+$fortune_dir='data/fortune'; # fortune cookie dir
 #$external_image_lazyload=1; # lazyload external images
 #$external_image_regex='(https?://upload\.wikimedia\.org/wikipedia/commons/.*\.(?:jpe?g|png|gif)$)'; # call ExternalImage macro for these sites
 #$proxy_host='proxy.foobar.com'; # proxy host
@@ -407,7 +412,7 @@ $use_local_translation=0; # automatic translation
 #$mysql_passwd='';
 #$mysql_dbname='moniwiki';
 #$config_mysql='default'; # or use mysql config separatly. config/mysql.default.php used
-#$pagekey_class='base64url'; # use base64url pagekey class
+#$pagekey_class='compat'; # base64url: base64url pagekey, compat: legacy pagekey class, utf8fs: utf8 pagekey
 #$use_x_forwarded_for=0; # use X-Forwarded-For header information to log all pass-by addresses
 #$use_cloudeflare=0; # use CF_CONNECTION_IP to set the real remote IP address
 #$pages_limit=5000; # maximum number of pages to retrieve by default to reduce server load.

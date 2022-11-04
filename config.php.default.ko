@@ -382,9 +382,14 @@ $cache_public_url=$url_prefix.'/_cache';
 #$use_autosave=1; # enable autosave feature.
 #$delayindex=60*60*24*5; # delayed indexing
 $mobile_agents='android|iphone'; # mobile agents
-#$fetch_imagesize=; # fetch imagefile sizes for mobile wikis etc.
-#$fetch_images=0; # fetch images using the fetch_action
-#$fetch_action=''; # fetch images with a specific url (default: ?action=fetch&amp;url=)
+#$fetch_max_size=2*1024*1024; # 모바일 위키등을 위해 fetch할 최대 파일 크기. 좀 더 자세한 사항은 plugin/fetch.php 참고.
+#$fetch_images_only=0; # 이미지 파일만 가져오도록 강제 지정
+#$fetch_action=''; # 특정 액션을 통한 이미지 fetch (기본값은 모니위키 내장 액션: ?action=fetch&amp;url=)
+#$fetch_referer='https://to_other_referrer_site'; # fetch 레퍼럴 지정
+#$fetch_referer_re=array('@(http://.*\.egloos.com)/p../@'=>'http://egloos.com','@(http://.*.clien.)@'=>''); # 사이트에 대응하는 fetch 레퍼럴 지정
+#$fetch_ignore_re='.*'; # 무시할 fetch url주소 정규식. .*를 쓰면 fetch는 안쓰임.
+#$fetch_use_cache_url=1; # 사용자 정의된 fetch_action으로 redirect시킴.
+$fortune_dir='data/fortune'; # 포춘 쿠키 데이터 디렉토리 '/usr/share/games/fortunes'
 #$external_image_lazyload=1; # lazyload external images
 #$external_image_regex='(https?://upload\.wikimedia\.org/wikipedia/commons/.*\.(?:jpe?g|png|gif)$)'; # call ExternalImage macro for these sites
 #$proxy_host='proxy.foobar.com'; # proxy host
@@ -407,7 +412,7 @@ $use_local_translation=0; # automatic translation
 #$mysql_passwd='';
 #$mysql_dbname='moniwiki';
 #$config_mysql='default'; # or use mysql config separatly. config/mysql.default.php used
-#$pagekey_class='base64url'; # use base64url pagekey class
+#$pagekey_class='compat'; # base64url: base64url 페이지키, compat: 기존 pagekey 클래스, utf8fs: utf8 페이지키
 #$use_x_forwarded_for=0; # use X-Forwarded-For header information to log all pass-by addresses
 #$use_cloudeflare=0; # use CF_CONNECTION_IP to set the real remote IP address
 #$pages_limit=5000; # maximum number of pages to retrieve by default to reduce server load.
