@@ -1120,7 +1120,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && ($config or $action == 'protect')) {
   }
 
   if ($update == _t('Update') || $update == _t("Merge settings")) {
-    if ($rawconfig['charset'] && $rawconfig['sitename']) {
+    if ($rawconfig['charset'] && $rawconfig['sitename'] && !empty($_SERVER['HTTP_ACCEPT_CHARSET'])) {
       if (function_exists('iconv')) {
         $ncharset=strtoupper($rawconfig['charset']);
 
