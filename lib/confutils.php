@@ -12,7 +12,7 @@ class Config_base {
     {
         if (file_exists($configfile)) {
             $this->config = $this->_getConfig($configfile, $vars);
-            $this->rawconfig = $this->_rawConfig($configfile);
+            list($this->rawconfig, $this->disabled) = $this->_rawConfig($configfile);
             $this->configdesc = $this->_getConfigDesc($configfile);
         } else {
             $this->config = array();
@@ -25,18 +25,25 @@ class Config_base {
         $lines = file($configfile);
         $key = '';
         $tag = '';
+        $val = '';
+        $config = array();
+        $disabled = array();
         foreach ($lines as $line) {
             $line = rtrim($line)."\n"; // for Win32
 
-            if (!$key and $line[0] != '$') continue;
+            if (!$key and !preg_match('/^#*\$/', $line[0])) continue;
             if ($key) {
                 $val .= $line;
-                if (!preg_match("/$tag\s*;(\s*#.*)?\s*$/", $line))
+                if (!preg_match("@$tag\s*;(\s*(?:#|//).*)?\s*$@", $line))
                     continue;
             } else {
-                list($key, $val) = explode('=', substr($line, 1), 2);
-                $key = trim($key);
-                if (!preg_match('/\s*;(\s*#.*)?$/', $val)) {
+                if (preg_match('/^(#*)\$([^=]+)\s*=\s*(.*)$/', $line, $match)) {
+                    $key = $match[2];
+                    $enable = empty($match[1]);
+                    $val = $match[3]."\n";
+                    #echo "key = ", $key, ", enable = ", $enable, ", val = ", $val;
+                }
+                if (!preg_match('@\s*;(\s*(#|//).*)?$@', $val)) {
                     if (substr($val, 0, 3) == '<<<') {
                         $tag = '^'.substr(rtrim($val), 3);
                     } else {
@@ -50,13 +57,17 @@ class Config_base {
             if ($key) {
                 $val = preg_replace(array('@<@', '@>@'), array('&lt;', '&gt;'), $val);
                 $val = rtrim($val);
-                $val = preg_replace('/\s*;(\s*#.*)?$/', '', $val);
-                $config[$key] = $val;
+                $val = preg_replace('@\s*;(\s*(#|//).*)?$@', '', $val);
+                if ($enable)
+                    $config[$key] = $val;
+                else
+                    $disabled[$key] = $val;
                 $key = '';
                 $tag = '';
+                $val = '';
             }
         }
-        return $config;
+        return array($config, $disabled);
     }
 
     function _getConfig($configfile, $vars = array()) {
@@ -76,25 +87,28 @@ class Config_base {
     {
         $lines = file($configfile);
         $key = '';
+        $tag = '';
+        $val = '';
         $desc = array();
         $multi = array();
         foreach ($lines as $line) {
             $line = rtrim($line)."\n"; // for Win32
             if (!$key && $line[0] != '$') {
-                if (!isset($line[1]) || $line[1] != '$')
+                if (!isset($line[1]) || !preg_match('@^#*\$@', $line))
                     continue;
             }
             if ($key) {
                 $val .= $line;
-                if (!preg_match("/$tag\s*;(\s*#.*)?\s*$/", $line))
+                if (!preg_match("@$tag\s*;(\s*(?:#|//).*)?\s*$@", $line))
                     continue;
             } else {
-                list($key, $val) =explode('=', substr($line, 1), 2);
-                $key = trim($key);
-                if ($key[0] == '$')
-                    $key = substr($key, 1);
+                if (preg_match('/^(#*)\$([^=]+)\s*=\s*(.*)$/', $line, $match)) {
+                    $key = $match[2];
+                    $enable = empty($match[1]);
+                    $val = $match[3]."\n";
+                }
 
-                if (!preg_match('/\s*;\s*(#.*)?$/', $val)) {
+                if (!preg_match('@\s*;\s*((?:#|//).*)?$@', $val)) {
                     if (substr($val, 0, 3) == '<<<')
                         $tag = '^'.substr(rtrim($val), 3);
                     else
@@ -104,7 +118,7 @@ class Config_base {
             }
 
             if ($key) {
-                preg_match('/\s*;\s*#(.*)?$/', rtrim($val), $match);
+                preg_match('@\s*;\s*(?:#|//)(.*)?$@', rtrim($val), $match);
                 if (!empty($match[1])) {
                     if (!isset($multi[$key])) {
                         $multi[$key] = 0;
@@ -252,7 +266,7 @@ HEADER;
                     $val = rtrim($val);
                     $val = str_replace("\n", "\n#", $val);
                     if (!$marker) $marker = '#';
-                    $nline = $marker."\$$key=$val;"; # XXX
+                    $nline = $marker."\$$key= ".ltrim($val).";"; # XXX
                     if (isset($this->configdesc[$keyid]))
                         $nline .= ' '.$this->configdesc[$keyid];
                     else if (isset($desc[$keyid]))
@@ -266,10 +280,10 @@ HEADER;
                     $val = str_replace('"','\"',$val);
                     $t = eval("\$$key=\"$val\";");
                     $val = $save_val;
-                    $nline = "\$$key=$val;\n";
+                    $nline = "\$$key= ".ltrim($val).";\n";
                 } else if ($marker) {
                     $val = str_replace('&gt;','>',$val);
-                    $nline = $marker."\$$key=$val";
+                    $nline = $marker."\$$key= ".ltrim($val);
                     if (empty($tag)) $nline .=';';
                     if (isset($this->configdesc[$keyid]))
                         $nline .= ' '.$this->configdesc[$keyid];
@@ -285,7 +299,7 @@ HEADER;
                     } else {
                         $t = @eval("\$$key=$val;");
                     }
-                    $nline = "\$$key=$val;";
+                    $nline = "\$$key= ".ltrim($val).";";
                     if (isset($this->configdesc[$keyid]))
                         $nline .= ' '.$this->configdesc[$keyid];
                     else if (isset($desc[$keyid]))
@@ -307,7 +321,7 @@ HEADER;
         if (!empty($newconfig)) {
             foreach ($newconfig as $k=>$v) {
                 if ($v != NULL)
-                    $nlines[] = '$'.$k.'='.$v.";\n";
+                    $nlines[] = '$'.$k.'= '.ltrim($v).";\n";
             }
         }
 

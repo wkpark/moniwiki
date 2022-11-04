@@ -27,7 +27,7 @@ class MoniConfig extends Config_base {
       $url_prefix= preg_replace("/\/([^\/]+)\.php$/","",$_SERVER['SCRIPT_NAME']);
       $config['url_prefix']=$url_prefix;
       $this->config=$this->_getConfig($configfile,$config);
-      $this->rawconfig=$this->_rawConfig($configfile);
+      list($this->rawconfig, $this->disabled) = $this->_rawConfig($configfile);
       $this->configdesc=$this->_getConfigDesc($configfile);
     } else {
       $this->config=array();
@@ -40,12 +40,36 @@ class MoniConfig extends Config_base {
     $this->config=$this->_getConfig($configfile,$hostconfig);
 
     $hostconf = $this->_quoteConfig($hostconfig);
-    $this->rawconfig=array_merge($this->_rawConfig($configfile),$hostconf);
+    list($configs, $disabled) = $this->_rawConfig($configfile);
+    $this->rawconfig = array_merge($configs, $hostconf);
     foreach ($hostconf as $key => $val) {
       eval("\$$key=$val;");
       eval("\$this->config[\$key]=$val;");
     }
   }
+
+  function checkUpdate($configfile = 'config.php.default') {
+    list($newconfig, $newdisabled) = $this->_rawConfig($configfile);
+    $confs = $this->_quoteConfig($this->config);
+    $newconfig = array_merge($newconfig, $confs);
+
+    if (sizeof($newconfig) + sizeof($newdisabled) > sizeof($this->config) + sizeof($this->disabled))
+      return true;
+
+    foreach ($newconfig as $key => $val) {
+      if (!isset($this->rawconfig[$key]))
+        return true;
+    }
+    return false;
+  }
+
+  function updateConfig($configfile = 'config.php.default') {
+    list($newconfig, $newdisabled) = $this->_rawConfig($configfile);
+    $this->rawconfig = array_merge($newconfig, $this->rawconfig);
+    // read new desc
+    $this->configdesc = $this->_getConfigDesc($configfile);
+  }
+
   function _getHostConfig() {
     print '<div class="check">';
     if (function_exists("dba_open")) {
@@ -698,6 +722,22 @@ function set_locale($lang,$charset='') {
   return $lang;
 }
 
+function backup_config($config = 'config.php', $ext = '.bak') {
+  $backup = $config.$ext;
+  if (!file_exists($config))
+    return;
+ 
+  $i = 1;
+  $newbackup = $config.$ext." (%d)";
+  while (file_exists($backup)) {
+    $backup = sprintf($newbackup, $i);
+    $i++;
+  }
+  umask(000);
+  copy($config, $backup);
+  umask(022);
+}
+
 $_locale = array();
 
 function initlocale($lang,$charset) {
@@ -1031,6 +1071,12 @@ $newpasswd=isset($_POST['newpasswd']) ? $_POST['newpasswd']:'';
 $oldpasswd=isset($_POST['oldpasswd']) ? $_POST['oldpasswd']:'';
 
 if ($_SERVER['REQUEST_METHOD']=="POST" && ($config or $action == 'protect')) {
+  $defaultconfig = 'config.php.default';
+  if (!empty($lang)) {
+    $short = substr($lang, 0, 2);
+    if ($short != 'en' and file_exists($defaultconfig.'.'.$short))
+      $defaultconfig = $defaultconfig.'.'.$short;
+  }
 
   if ($action == 'protect') {
     if (is_writable('config.php')) {
@@ -1073,7 +1119,7 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && ($config or $action == 'protect')) {
        $rawconfig['admin_passwd']=$newpasswd;
   }
 
-  if ($update == _t('Update')) {
+  if ($update == _t('Update') || $update == _t("Merge settings")) {
     if ($rawconfig['charset'] && $rawconfig['sitename']) {
       if (function_exists('iconv')) {
         $ncharset=strtoupper($rawconfig['charset']);
@@ -1095,7 +1141,13 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && ($config or $action == 'protect')) {
     }
     if (!empty($invalid))
       print "<h2>".sprintf(_t("Updated Configutations for this %s"),$config['sitename'])."</h2>\n";
-    $rawconf=$Config->_genRawConfig($rawconfig);
+    #$rawconf=$Config->_genRawConfig($rawconfig);
+    if ($update == _t("Merge settings")) {
+      backup_config();
+      $rawconf=$Config->_genRawConfig($rawconfig, 0, $defaultconfig);
+    } else {
+      $rawconf=$Config->_genRawConfig($rawconfig);
+    }
     print "<pre class='console'>\n";
     #
     ob_start();
@@ -1168,8 +1220,16 @@ if ($_SERVER['REQUEST_METHOD']=="POST" && ($config or $action == 'protect')) {
     exit;
     }
   } else {
+    $defaultconfig = 'config.php.default';
+    if (!empty($lang)) {
+      $short = substr($lang, 0, 2);
+      if ($short != 'en' and file_exists($defaultconfig.'.'.$short))
+        $defaultconfig = $defaultconfig.'.'.$short;
+    }
+
     $config=$Config->config;
     checkConfig($config);
+
     $rawconfig=&$Config->rawconfig;
     $configdesc=&$Config->configdesc;
   }
@@ -1272,6 +1332,12 @@ if ($_SERVER['REQUEST_METHOD']!="POST") {
   print "<input type='submit' name='update' value='"._t("Update")."' />\n";
   else
   print "<input type='submit' name='update' value='"._t("Update")."' />\n";
+  if ($Config->checkUpdate($defaultconfig)) {
+    print "<br />";
+    print _t("New config settings found.")."\n";
+    print "<br /><input type='submit' name='update' value='"._t("Merge settings")."' />\n";
+  }
+
   print "</div></form>\n";
 
   if (file_exists('config.php') && !file_exists($config['data_dir']."/text/RecentChanges")) {
