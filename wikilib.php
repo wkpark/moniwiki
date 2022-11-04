@@ -1,5 +1,5 @@
 <?php
-// Copyright 2003-2010 Won-Kyu Park <wkpark at kldp.org> all rights reserved.
+// Copyright 2003-2022 Won-Kyu Park <wkpark at kldp.org> all rights reserved.
 // distributable under GPL see COPYING
 //
 // many codes are imported from the MoinMoin
@@ -11,7 +11,6 @@
 // * Phiki is a php based wiki clone based on the MoinMoin
 //    by Fred C. Yankowski <fcy at acm.org>
 //
-// $Id$
 
 function _preg_escape($val) {
   return preg_replace('/([\$\^\.\[\]\{\}\|\(\)\+\*\/\\\\!\?]{1})/','\\\\\1',$val);
