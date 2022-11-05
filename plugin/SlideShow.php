@@ -14,7 +14,7 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
     if (!empty($options['d'])) $depth=intval($options['d']);
     $args=explode(',',$value);
     $sz=sizeof($args);
-    for($i=0,$sz=sizeof($args);$i<$sz;$i++) {
+    for($i=0;$i<$sz;$i++) {
         if (($p=strpos($args[$i],'='))!==false) {
             $k=substr($args[$i],0,$p);
             $v=substr($args[$i],$p+1);
@@ -23,7 +23,7 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
             $pgname=$args[$i];
         }
     }
-    if ($pgname) {
+    if (isset($pgname[0])) {
         if (!$DBInfo->hasPage($pgname))
             return '[[SlideShow('._("No page found").')]]';
         $pg=$DBInfo->getPage($pgname);
@@ -35,9 +35,9 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
     }
 
     if (!empty($options['p'])) {
-        list($sect,$dum)=explode('/',$options['p']);
-        $sect=abs(intval($sect));
-        $sect= $sect ? $sect:1;
+        $dum = explode('/',$options['p']);
+        $sect=abs(intval($dum[0]));
+        $sect= !empty($sect) ? $sect:1;
     } else $sect=1;
 
     $act=!empty($options['action']) ? $options['action']:'SlideShow';
@@ -46,9 +46,10 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
     $icon_dir=$formatter->imgs_dir.'/plugin/SlideShow/'.$iconset.'/';
 
     // get head title section
+    $dep = '';
     if ($depth==2) {
-        list($secthead,$dumm)=explode("\n",$sections[0]);
-        preg_match('/^\s*=\s*([^=].*[^=])\s*=\s?$/',$secthead,$match);
+        $dumm = explode("\n",$sections[0]);
+        preg_match('/^\s*=\s*([^=].*[^=])\s*=\s?$/',$dumm[0], $match);
         $secthead=rtrim($sections[0]);
         if (isset($match[1])) $title=$match[1];
     } else {
@@ -64,15 +65,15 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
 
     // get prev,next subtitle
     if ($sz > ($sect)) {
-        list($n_title,$dumm)=explode("\n",$sections[$sect+1]);
-        preg_match("/^\s*={".$depth.'}\s*(.*)\s*={'.$depth.'}\s?$/',$n_title,$match);
+        $dumm = explode("\n",$sections[$sect+1]);
+        preg_match("/^\s*={".$depth.'}\s*(.*)\s*={'.$depth.'}\s?$/', $dumm[0], $match);
         if (isset($match[1]))
             $n_title=$match[1];
         else
             $n_title='';
 
-        list($e_title,$dumm)=explode("\n",$sections[$sz]);
-        preg_match("/^[ ]*={".$depth."}\s+(.*)\s+={".$depth."}\s?/",$e_title,$match);
+        $dumm = explode("\n",$sections[$sz]);
+        preg_match("/^[ ]*={".$depth."}\s+(.*)\s+={".$depth."}\s?/", $dumm[0], $match);
         if (isset($match[1]))
             $e_title=$match[1];
         else
@@ -80,14 +81,14 @@ function macro_SlideShow($formatter,$value='',$options=array()) {
     }
     $s_title = '';
     if (!empty($sections[1]) and (empty($options['action']) or $sect > 1)) {
-        list($s_title,$dumm)=explode("\n",$sections[1]);
-        preg_match("/^\s*={".$depth."}\s*(.*)\s*={".$depth."}\s?$/",$s_title,$match);
+        $dumm = explode("\n",$sections[1]);
+        preg_match("/^\s*={".$depth."}\s*(.*)\s*={".$depth."}\s?$/", $dumm[0], $match);
         if (isset($match[1]))
             $s_title=$match[1];
     }
     if ($sect >= 1) {
-        list($p_title,$dumm)=explode("\n",$sections[$sect-1]);
-        preg_match('/^\s*={'.$depth.'}\s*(.*)\s*={'.$depth.'}\s?$/',$p_title,$match);
+        $dumm = explode("\n",$sections[$sect-1]);
+        preg_match('/^\s*={'.$depth.'}\s*(.*)\s*={'.$depth.'}\s?$/', $dumm[0], $match);
         if (isset($match[1]))
             $p_title=$match[1];
         else
