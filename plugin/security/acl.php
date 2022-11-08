@@ -108,12 +108,31 @@ class Security_ACL extends Security_base {
 
             $users = get_csv($tmp[1]);
             foreach ($users as $u) {
-                if (preg_match('/^[0-9]{1,3}(\.(?:[0-9]{1,3})){0,3}
-                    (\/([0-9]{1,3}(?:\.[0-9]{1,3}){3}|[0-9]{2}))?$/x', $u))
-                {
-                    if (!isset($info[$u])) $info[$u] = array(); // init
+                $is_ipv4rule = preg_match('/^[0-9]{1,3}(\.(?:[0-9]{1,3})){0,3}
+                               (\/([0-9]{1,3}(?:\.[0-9]{1,3}){3}|[0-9]{1,2}))?$/x', $u);
+                if (!isset($info[$u])) $info[$u] = array(); // init
+                if ($is_ipv4rule) {
                     $info[$u][] = $group;
+                    continue;
                 }
+
+                // IPv6
+                if (strpos($u, '/') === false) {
+                    if (validate_ip($u))
+                        $info[$u][] = $group;
+                    // else ignore
+                    continue;
+                }
+                $parts = explode('/', $u);
+                if (sizeof($parts) > 2)
+                    continue;
+                // else ignore
+                if (!is_integer($parts[1]))
+                    continue;
+                if ($parts[1] < 0 || $parts[1] > 128)
+                    continue;
+                if (validate_ip($parts[0]))
+                    $info[$u][] = $group;
             }
         }
     }
@@ -134,14 +153,29 @@ class Security_ACL extends Security_base {
 
         // has acl ip address info ?
         if (!empty($ip_info)) {
-            $myip = ip2long($_SERVER['REMOTE_ADDR']);
-            $mygrp = array();
+            $ip = $_SERVER['REMOTE_ADDR'];
+            $is_ipv4 = true;
+            if (strpos($ip, ':') === false) {
+                $myip = ip2long($ip);
+            } else {
+                $is_ipv4 = false;
+                $myip = ipv6uncompress($ip, 'bin');
+            }
 
+            $mygrp = array();
             $rules = array_keys($ip_info);
    
             foreach ($rules as $rule) {
-	        $ret = normalize_network($rule, true);
-                if (!$ret) continue; // ignore
+                if ($is_ipv4) {
+                    if (strpos($rule, ':') !== false)
+                        continue; // not a ipv4rule
+
+	            $ret = normalize_network($rule, true);
+                    if (!$ret) continue; // ignore
+                } else {
+                    // IPv6
+	            $ret = normalize_network_ipv6($rule, true);
+                }
 
                 $network = $ret[0];
                 $netmask = $ret[1];

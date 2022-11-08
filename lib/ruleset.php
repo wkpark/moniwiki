@@ -100,8 +100,22 @@ function parse_ruleset($filename, $validator = null, $params = array()) {
 }
 
 function is_valid_ip_ruleset($rule) {
-    return preg_match('/^[0-9]{1,3}(\.(?:[0-9]{1,3})){0,3}
+    $is_ipv4rule = preg_match('/^[0-9]{1,3}(\.(?:[0-9]{1,3})){0,3}
         (\/([0-9]{1,3}(?:\.[0-9]{1,3}){3}|[0-9]{1,2}))?$/x', $rule);
+    if ($is_ipv4rule)
+        return true;
+
+    // IPv6
+    if (strpos($rule, '/') === false)
+        return validate_ip($rule);
+    $parts = explode('/', $rule);
+    if (sizeof($parts) > 2)
+        return false;
+    if (!is_integer($parts[1]))
+        return false;
+    if ($parts[1] < 0 || $parts[1] > 128)
+        return false;
+    return validate_ip($parts[0]);
 }
 
 // vim:et:sts=4:sw=4:
