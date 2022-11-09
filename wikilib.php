@@ -1972,11 +1972,12 @@ class WikiUser {
         if (count($tmp) >= 3)
           $domain = '; Domain='.$_SERVER['SERVER_NAME'];
      }
-     if (empty($domain)) {
-        if (!empty($_SERVER['HTTP_HOST']) && ($pos = strpos($_SERVER['HTTP_HOST'], ':')) !== false) {
+
+     if (empty($domain) && !empty($_SERVER['HTTP_HOST'])) {
+        if (($pos = strpos($_SERVER['HTTP_HOST'], ':')) !== false) {
             $domain = substr($_SERVER['HTTP_HOST'], 0, $pos);
         } else {
-            $domain = 'localhost';
+            $domain = $_SERVER['HTTP_HOST'];
         }
         $domain = '; Domain='.$domain;
      }
@@ -2003,11 +2004,11 @@ class WikiUser {
         if (count($tmp) >= 3)
           $domain = '; Domain='.$_SERVER['SERVER_NAME'];
      }
-     if (empty($domain)) {
-        if (!empty($_SERVER['HTTP_HOST']) && ($pos = strpos($_SERVER['HTTP_HOST'], ':')) !== false) {
+     if (empty($domain) && !empty($_SERVER['HTTP_HOST'])) {
+        if (($pos = strpos($_SERVER['HTTP_HOST'], ':')) !== false) {
             $domain = substr($_SERVER['HTTP_HOST'], 0, $pos);
         } else {
-            $domain = 'localhost';
+            $domain = $_SERVER['HTTP_HOST'];
         }
         $domain = '; Domain='.$domain;
      }

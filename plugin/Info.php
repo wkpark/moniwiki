@@ -172,7 +172,7 @@ function _parse_rlog($formatter,$log,$options=array()) {
            $tmp = explode(',', $ip);
            $lastip = $ip = array_pop($tmp);
          }
-         $user=trim($dummy[1]);
+         $user = !empty($dummy[1]) ? trim($dummy[1]) : 'Anonymous';
          if (($p = strpos($user,' ')) !== false) { // XXX
            $user = substr($user, 0, $p);
          } else if (substr($user, 0, 9) == 'Anonymous') {
