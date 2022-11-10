@@ -6814,7 +6814,7 @@ function _session_start($session_id = null, $id = null) {
         }
     }
 
-    $expire = isset($Config['session_lifetime']) ? $Config['session_lifetime'] : 3600;
+    $expire = isset($Config['session_lifetime']) ? $Config['session_lifetime'] : 86400;
 
     if ($session_id == null) {
         // New session

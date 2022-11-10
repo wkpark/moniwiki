@@ -352,6 +352,7 @@ $cachetime=0;
 #$proxy_maxage=1; # maxage in seconds for shared caches
 #$user_maxage=5; # maxage in seconds
 #$nosession=1; # do not use session
+#$session_lifetime=60*60*24; # 세션 라이프타임
 #$cookie_expires=60*60*24*30; // default 30 days
 #$cookie_domain='.foobar.com'; // set cookie domain
 #$cookie_path='/'; // set cookie path
