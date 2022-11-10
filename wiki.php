@@ -4826,7 +4826,7 @@ EOJS;
         }
         if (!empty($subs)) {
           $subindices='';
-          if (empty($DBInfo->use_ajax)) {
+          if (empty($DBInfo->use_ajax_subindex)) {
             $subindices= '<div>'.$this->macro_repl('PageList','',array('subdir'=>1)).'</div>';
             $btncls='class="close"';
           } else

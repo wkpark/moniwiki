@@ -369,6 +369,7 @@ $cache_public_url=$url_prefix.'/_cache';
 #$gallery_use_lightbox=1;
 #$use_hangul_search=1; # use hangul search for auto-completer
 #$use_subindex=1; # use subpage indices
+#$use_ajax_subindex=1; # use subindex with ajax
 #$default_pre='pre'; # set the default pre processor
 #$default_markup='monimarkup'; # set the default markup processor
 #$use_rating=1; # builtin Rating support
