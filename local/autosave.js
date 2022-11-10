@@ -63,7 +63,7 @@ function moni_autosave(textarea, min, sec) {
 
     var href = location+'';
     var postdata = 'action=autosave/ajax&retrive=1';
-    HTTPPost(href, postdata, function(ret){
+    function loadautosave(ret){
         var stamp = 0;
         if (ret.match(/^false/)) {
             ret = null;
@@ -115,7 +115,21 @@ function moni_autosave(textarea, min, sec) {
         this.timer2 = setInterval(function() { ajax_save(self.textarea); } ,min * 60*1000); // ajax_save
         if (localStorage)
             this.timer = setInterval(function() { local_save(self.textarea); } , sec * 1000); // local storage save
-    });
+    }
+
+    if (typeof fetch == 'function') {
+        fetch(href, {
+            method: 'POST',
+            body: postdata,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        })
+           .then(function(res) { return res.text(); })
+           .then(loadautosave);
+
+        return;
+    }
+
+    HTTPPost(href, postdata, loadautosave);
 }
 
 function local_save(textarea) {
@@ -179,8 +193,7 @@ function ajax_save(textarea) {
         state.style.display = 'block';
     }
 
-    HTTPPost(href, postdata,
-        function(ret) {
+    function savelocal(ret) {
             state.innerHTML = '';
             if (ret == 'true') {
                 loading.src = _url_prefix + '/imgs/misc/saved.png';
@@ -196,8 +209,21 @@ function ajax_save(textarea) {
                 state.innerHTML = '';
                 state.style.display = 'none';
             }, 5000);
-        }
-    );
+    }
+
+    if (typeof fetch == 'function') {
+        fetch(href, {
+            method: 'POST',
+            body: postdata,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        })
+           .then(function(res) { return res.text(); })
+           .then(savelocal);
+
+        return;
+    }
+
+    HTTPPost(href, postdata, savelocal);
 }
 
 function init_autosave() {

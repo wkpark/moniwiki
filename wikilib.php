@@ -2257,11 +2257,25 @@ function submit_preview(e) {
 
   var preview = document.getElementById('wikiPreview');
   var location = self.location + '';
+  if (typeof fetch == 'function') {
+    fetch(location, {
+      method: 'POST',
+      body: toSend,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    })
+      .then(function(res) { return res.text(); })
+      .then(function(markup) {
+        // set preview
+        preview.style.display = 'block';
+        preview.innerHTML = markup;
+    });
+  } else {
   HTTPPost(location, toSend, function(markup){
     // set preview
     preview.style.display = 'block';
     preview.innerHTML = markup;
   });
+  }
 
   // get diffpreview
   var diffview = document.getElementById('wikiDiffPreview');
@@ -2280,7 +2294,7 @@ function submit_preview(e) {
     if (section)
       toSend+= '&section=' + section;
 
-  HTTPPost(location, toSend, function(diff){
+  function showdiff(diff) {
     if (!diffview) {
       diffview = document.createElement('div');
       diffview.setAttribute('id', 'wikiDiffPreview');
@@ -2290,7 +2304,21 @@ function submit_preview(e) {
       diffview.style.display = 'block';
       diffview.innerHTML = diff;
     }
-  });
+  }
+
+  if (typeof fetch == 'function') {
+    fetch(location, {
+      method: 'POST',
+      body: toSend,
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    })
+      .then(function(res) { return res.text(); })
+      .then(showdiff);
+
+    return false;
+  }
+
+  HTTPPost(location, toSend, showdiff);
 
   return false;
 }
@@ -4356,7 +4384,8 @@ function macro_RandomPage($formatter, $value = '', $params = array()) {
 <script type='text/javascript'>
 /*<![CDATA[*/
 $(function () {
-  HTTPGet("$url", function(msg) {
+var url = "$url";
+function randompage(msg) {
    var ret;
    if (msg != null && (ret = eval(msg))) {
       var div = document.getElementById("$myid");
@@ -4368,7 +4397,14 @@ $(function () {
       }
       div.appendChild(ul);
    }
- });
+}
+if (typeof fetch == 'function') {
+   fetch(url, { method: 'GET' })
+      .then(function(res) { return res.text(); })
+      .then(randompage);
+   return;
+}
+HTTPGet(url, randompage);
 });
 /*]]>*/
 </script>
@@ -5175,7 +5211,7 @@ function macro_PageCount($formatter, $value = '', $options = array()) {
 $(function() {
 var url = "$url";
 var mode = "$mode";
-HTTPGet(url, function(txt) {
+function pagecount(txt) {
 var ret = window["eval"]("(" + txt + ")");
 var rc = document.getElementById("macro-$mid");
 var out = ret['pagecount'];
@@ -5184,7 +5220,15 @@ if (mode == 'noredirect')
 else if (mode == 'redirect')
     out = ret['redirect'];
 rc.innerHTML = out;
-});
+}
+
+if (typeof fetch == 'function') {
+    fetch(url, { method: 'GET' })
+        .then(function(res) { return res.text(); })
+        .then(pagecount);
+    return;
+}
+HTTPGet(url, pagecount);
 });
 /*]]>*/
 </script>

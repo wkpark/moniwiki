@@ -157,7 +157,7 @@ function insertTags(tagOpen,tagClose,myText,replaced)
             if (myframe.style.display == 'none' || myframe.parentNode.style.display == 'none') break;
 
             var postdata = 'action=markup/ajax&value=' + encodeURIComponent(tagOpen + myText + tagClose);
-            HTTPPost(self.location, postdata, function(ret){
+            function inserthtml(ret) {
                 var html = ret.replace(/^<div>/i,''); // strip div tag
                 html = html.replace(/<\/div>\s*$/i,''); // strip div tag
 
@@ -172,7 +172,21 @@ function insertTags(tagOpen,tagClose,myText,replaced)
                 myframe.contentWindow.document.execCommand('inserthtml', false, html + ' ');
             }
 
-            });
+            }
+
+            if (typeof fetch == 'function') {
+                fetch(self.location, {
+                    method: 'POST',
+                    body: postdate,
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                })
+                   .then(function(res) { return res.text(); })
+                   .then(inserthtml);
+
+                return;
+            }
+
+            HTTPPost(self.location, postdata, inserthtml);
 
             return;
         }

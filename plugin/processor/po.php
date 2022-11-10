@@ -31,13 +31,25 @@ function checkmsg(obj) {
     var postdata = 'action=msgfmt/ajax&msgid=' +
         encodeURIComponent(msgid.value) + '&msgstr=' + encodeURIComponent(msgstr.value);
 
-    HTTPPost(self.location, postdata, function(msg){
+    function checkmsg(msg) {
         if (msg.substr(0,4) == 'true') {
             alert('OK\\n' + msg);
             return;
         }
         alert ('*** Error: AJAX msgfmt checker ***\\n' + msg);
     }
+    if (typeof fetch == 'function') {
+        fetch(self.location, {
+            method: 'POST',
+            body: postdata,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        })
+           .then(function(res) { return res.text(); })
+           .then(checkmsg);
+
+        return;
+    }
+    HTTPPost(self.location, postdata, checkmsg);
 }
 /*]]>*/
 </script>

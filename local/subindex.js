@@ -33,7 +33,7 @@ function toggleSubIndex(id)
                 } else {
 	            new Effect.SlideUp(sub, { duration: 0.3, afterFinish: function() {Element.hide(sub);} });
                 }
-            } else if (typeof Fx.Slide == 'undefined') { // get sectpages for the first time.
+            } else if (typeof Fx == 'undefined') { // get sectpages for the first time.
                 if (sub.style.display == 'none')
                     sub.style.display = 'block';
                 else
@@ -46,14 +46,14 @@ function toggleSubIndex(id)
             var qp=href.indexOf("?") != -1 ? '&':'?';
             href=self.location + qp + 'action=pagelist/ajax&subdir=1';
 
-            HTTPGet(href, function(form) {
+            function pagelist(form) {
             sub.innerHTML=form;
             subindex.appendChild(sub);
 
             if (typeof Effect != 'undefined') { // prototype.js
                 sub.setAttribute('style','display:none');
 	        new Effect.SlideDown(sub, { duration: 0.4,afterFinish: function() {Element.show(sub);} });
-            } else if (typeof Fx.Slide != 'undefined') { // get sectpages for the first time.
+            } else if (typeof Fx != 'undefined') { // get sectpages for the first time.
                 var mySlide = new Fx.Slide(sub);
                 //mySlide.wrapper.setStyle('height',0);
 
@@ -65,7 +65,15 @@ function toggleSubIndex(id)
                 mySlide.slideIn();
             }
             toggle=true;
-            });
+            }
+
+            if (typeof fetch == 'function') {
+                fetch(href, { method: 'GET' })
+                    .then(function(res) { return res.text(); })
+                    .then(pagelist);
+            } else {
+                HTTPGet(href, pagelist);
+            }
         }
         if (icon) {
             var name=icon.getAttribute('class');

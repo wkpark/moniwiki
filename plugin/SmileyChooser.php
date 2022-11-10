@@ -56,7 +56,7 @@ function mySmiley(myText)
     if (myframe.style.display == 'none' || myframe.parentNode.style.display == 'none') break;
 
     var postdata = 'action=markup/ajax&value=' + encodeURIComponent(myText);
-    HTTPPost(self.location, postdata, function(myhtml){
+    function addmarkup(myhtml) {
       // check the old wiki-engine or the new monimarkup
       var m = myhtml.match(/<div>(.*)\\n<\/div>/i) || myhtml.match(/<p class="[^"]+">(.*)<\/p>/i); // strip div tag
       if (!m) return;
@@ -72,7 +72,20 @@ function mySmiley(myText)
       } else {
         myframe.contentWindow.document.execCommand('inserthtml', false, html);
       }
-    });
+    }
+
+    if (typeof fetch == 'function') {
+      fetch(self.location, {
+        method: 'POST',
+        body: postdate,
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      })
+        .then(function(res) { return res.text(); })
+        .then(addmarkup);
+
+      return;
+    }
+    HTTPPost(self.location, postdata, addmarkup);
 
     return;
   }

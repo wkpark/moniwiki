@@ -218,7 +218,7 @@ function insertTags(tagOpen, tagClose, sampleText,replace) {
 			return false;
 		} else {
 			var postdata = 'action=markup/ajax&value=' + encodeURIComponent(tagOpen + sampleText + tagClose);
-			HTTPPost(self.location, postdata, function(myhtml){
+			function inserthtml(myhtml){
 				mnew = myhtml.replace(/^<div>/i,''); // strip div tag
 				mnew = mnew.replace(/<\/div>\s*$/i,''); // strip div tag
 
@@ -232,10 +232,22 @@ function insertTags(tagOpen, tagClose, sampleText,replace) {
 				} else {
 					myframe.contentWindow.document.execCommand('inserthtml', false, mnew + ' ');
 				}
-			});
+			}
+
+			if (typeof fetch == 'function') {
+				fetch(self.location, {
+					method: 'POST',
+					body: postdate,
+					headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+				})
+					.then(function(res) { return res.text(); })
+					.then(inserthtml);
+				return false;
+			}
+			HTTPPost(self.location, postdata, inserthtml);
 		}
 
-		return;
+		return false;
 	}
 
 	// IE

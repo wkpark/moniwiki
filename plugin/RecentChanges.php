@@ -1103,13 +1103,13 @@ function update_bookmark(time) {
       return;
 
       var timetag;
-      if (typeof time == 'undefined') timetag = '';
+      if (typeof time == 'undefined' || typeof time == 'object') timetag = '';
       else timetag = '&time=' + time;
 
       var data = "$postdata";
       data += timetag + '&value=' + encodeURIComponent(json_encode(rclist));
 
-    HTTPPost(url, data, function(txt) {
+    function bookmark(txt) {
       if (txt == null) return;
 
       var icon_new = "$icon_new";
@@ -1228,7 +1228,19 @@ function update_bookmark(time) {
           }
         }
       }
-    });
+    }
+
+    if (typeof fetch == "function") {
+      fetch(url, {
+        body: data,
+        method: "POST",
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      })
+        .then(function(res) { return res.text(); })
+        .then(bookmark);
+      return;
+    }
+    HTTPPost(url, data, bookmark);
 }
 if(window.addEventListener)window.addEventListener("load",update_bookmark,false);
 else if(window.attachEvent)window.attachEvent("onload",update_bookmark);
@@ -1265,7 +1277,7 @@ EOF;
 /*<![CDATA[*/
 $(function() {
   var url = "$url";
-  HTTPGet(url, function(txt) {
+  function update(txt) {
   var rc = document.getElementById("rc$rc_id");
   if (txt.substring(0,5) != 'false') {
     var m = null;
@@ -1273,8 +1285,16 @@ $(function() {
       rc.innerHTML = m[0];
     }
   }
- });
-})();
+ }
+
+if (typeof fetch == "function") {
+  fetch(url, { method: "GET" })
+    .then(function(res) { return res.text(); })
+    .then(update);
+} else {
+  HTTPGet(url, update);
+}
+});
 /*]]>*/
 </script>
 JS;

@@ -40,7 +40,7 @@ function sendMsg(ev,obj,url,id,num) {
      '\/ajax&value='+value+'&room='+id+nic+'&item='+num+
      '&stamp='+d.getTime()+last);
 
-   HTTPGet(nurl,function(msg){
+   function send(msg) {
       if (msg=='false') return;
       var chat=document.getElementById(id);
       //var node=document.createElement('li');
@@ -48,8 +48,16 @@ function sendMsg(ev,obj,url,id,num) {
       //chat.appendChild(node);
       chat.innerHTML=msg;
       if (soundon == 'soundOn') Sound('pass');
-   });
-   return;
+   }
+
+   if (typeof fetch == 'function') {
+      fetch(nurl, { method: 'GET' })
+         .then(function(res) { return res.text(); })
+         .then(send);
+      return;
+   }
+
+   HTTPGet(nurl, send);
 }
 
 function Sound(sndobj) {

@@ -82,6 +82,15 @@ function wikiFortune(el, cat) {
     if (location.port) loc+= ':' + location.port;
     loc+= location.pathname + qp + 'action=fortune/ajax&value=' + cat;
 
+    if (typeof fetch == 'function') {
+        fetch(loc, { method: 'GET' })
+            .then(function(res) { return res.text(); })
+            .then(function(ret) {
+                if (!ret) return;
+                wrapper.innerHTML = ret;
+            });
+        return;
+    }
     HTTPGet(loc, function(ret) {
         if (!ret) return;
         wrapper.innerHTML = ret;

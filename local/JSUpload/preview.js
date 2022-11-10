@@ -81,7 +81,7 @@ function showImgPreview(filename,temp) {
             var href = self.location + '';
             href = href.replace(/\?action=edit/, '');
 
-            HTTPPost(href, postdata, function(r){
+            function preview(r) {
                 var m = r.match(/<img src=(\'|\")([^\'\"]+)\1/i); // strip div tag
                 path = m[2];
                 fname="<img src='" + path + "' width='" + preview_width + '" ' + alt + " />";
@@ -89,7 +89,21 @@ function showImgPreview(filename,temp) {
                 var align = document.getElementById("previewAlign");
                 align.innerHTML=myAlign;
                 setPreviewTag();
-            });
+            }
+
+            if (typeof fetch == 'function') {
+                fetch(href, {
+                    method: 'POST',
+                    body: postdata,
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                })
+                   .then(function(res) { return res.text(); })
+                   .then(preview);
+
+                return;
+            }
+
+            HTTPPost(href, postdata, preview);
             return;
         }
         fname="<img src='" + path + "' width='" + preview_width + '" ' + alt + " />";

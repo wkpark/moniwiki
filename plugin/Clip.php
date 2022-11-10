@@ -158,7 +158,23 @@ function showImage(url) {
 
 function postBase64(base64, name) {
     var postdata = 'action=clip&name=' + name + '&value=' + encodeURIComponent(base64);
-    HTTPPost("$url_save", postdata, function(ret) {
+    var saveurl = "$url_save";
+
+    if (typeof fetch == 'function') {
+        fetch(saveurl, {
+            method: 'POST',
+            body: postdate,
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+        })
+           .then(function(res) { return res.text(); })
+           .then(function(ret) {
+               console.log(ret);
+               showImage(url);
+           });
+
+        return;
+    }
+    HTTPPost(saveurl, postdata, function(ret) {
         console.log(ret);
         showImage(url);
     });

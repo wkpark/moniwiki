@@ -1,8 +1,6 @@
 //
 // dynamic section editing for MoniWiki
 //
-// $Id$
-//
 function sectionEdit(ev,obj,sect) {
   if (sect) {
     var sec=document.getElementById('sect-'+sect);
@@ -12,7 +10,7 @@ function sectionEdit(ev,obj,sect) {
       return;
     }
     var href=obj.href.replace(/=edit/,'=edit/ajax');
-    HTTPGet(href, function(form) {
+    function showform(form) {
       if (form.substring(0,5) == 'false') return;
       //var node=document.createElement('li');
       //node.innerHTML=msg;
@@ -21,7 +19,16 @@ function sectionEdit(ev,obj,sect) {
       f.setAttribute('id','editSect-'+sect);
       f.innerHTML=form;
       sec.parentNode.appendChild(f);
-    });
+    }
+
+    if (typeof fetch == 'function') {
+      fetch(url, { method: 'GET' })
+        .then(function(res) { return res.text(); })
+        .then(showform);
+      return;
+    }
+
+    HTTPGet(href, showform);
   }
 }
 
@@ -37,7 +44,8 @@ function savePage(obj) {
       //alert(obj.elements[i].name+'='+obj.elements[i].value);
     }
   }
-  HTTPPost(self.location,toSend,function(form){
+
+  function saveform(form) {
 
   if (form.substring(0,4) == 'true') {
     var ed=document.getElementById('editSect-'+obj.section.value);
@@ -46,6 +54,18 @@ function savePage(obj) {
     }
 
     toSend = 'action=markup&all=1&section=' + obj.section.value;
+    if (typeof fetch == "function") {
+      fetch(self.location, {
+        body: toSend,
+        method: "POST",
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      })
+        .then(function(res) { return res.text(); })
+        .then(function(form) {
+          sec.parentNode.innerHTML = form;
+      });
+      return false;
+    }
     HTTPPost(self.location,toSend,function(form){
       sec.parentNode.innerHTML=form;
     });
@@ -58,7 +78,20 @@ function savePage(obj) {
     sec.parentNode.appendChild(f);
   }
 
-  });
+  }
+
+  if (typeof fetch == "function") {
+    fetch(self.location, {
+      body: toSend,
+      method: "POST",
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+    })
+      .then(function(res) { return res.text(); })
+      .then(saveform);
+    return false;
+  }
+
+  HTTPPost(self.location,toSend,saveform);
   return false;
 }
 

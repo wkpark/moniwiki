@@ -94,7 +94,7 @@ var oldOnload = window.onload;
 window.onload = function(e) {
 try { oldOnload(); } catch(e) {};
 var url = "$url";
-HTTPGet(url, function(status) {
+function logstatus(status) {
 if (status.substring(0, 4) == 'true') {
   var macro = document.getElementById("macro-$mid");
   var login = getElementsByClassName(macro, "wikiLogin")[0];
@@ -102,7 +102,14 @@ if (status.substring(0, 4) == 'true') {
   if (login) login.style.display = 'none';
   if (logout) logout.style.display = 'block';
 }
-});
+}
+if (typeof fetch == 'function') {
+  fetch(url, { method: 'GET' })
+    .then(function(res) { return res.text(); })
+    .then(logstatus);
+  return;
+}
+HTTPGet(url, logstatus);
 };
 })();
 /*]]>*/
