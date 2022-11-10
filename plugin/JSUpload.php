@@ -22,11 +22,13 @@ function macro_JSUpload($formatter,$value,$opts=array()) {
         $depth=2;
     }
 
-    if (session_id() == '') { // ip based
+    if (session_id() == '' || $DBInfo->user->id == 'Anonymous') { // ip based
         $seed = $_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI';
-        if ($DBInfo->seed)
+        if (!empty($DBInfo->seed))
             $seed .= $DBInfo->seed;
-        $myid = md5($seed); // FIXME
+        if ($DBInfo->user->id != 'Anonymous')
+            $seed .= $DBInfo->user->id;
+        $myid = md5($seed);
     } else {
         if (!empty($_SESSION['.jsupload']))
             $myid = $_SESSION['.jsupload'];

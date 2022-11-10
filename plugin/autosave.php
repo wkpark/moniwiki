@@ -17,26 +17,19 @@
 function do_autosave($formatter,$options) {
     global $DBInfo;
 
-    if (session_id() == '') { // ip based
+    if (session_id() == '' || $DBInfo->user->id == 'Anonymous') { // ip based
+        $seed = $_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI'; // IP based for Anonymous user
         if ($DBInfo->user->id == 'Anonymous') {
-            $myid = md5($_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI'); // IP based for Anonymous user XXX
+            $myid = md5($seed);
         } else {
-            $myid = md5($DBInfo->user->id.$_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI');
+            $myid = md5($DBInfo->user->id.$seed);
         }
     } else {
-        if (0) {
-            if ($_SESSION['_autosave'])
-                $myid = $_SESSION['_autosave'];
-            else {
-                $myid = session_id();
-                $_SESSION['_autosave'] = $myid;
-            }
-        } else {
-            if ($DBInfo->user->id == 'Anonymous') {
-                $myid = md5($_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI'); // IP based for Anonymous user XXX
-            } else {
-                $myid = md5($DBInfo->user->id.$_SERVER['REMOTE_ADDR'].'.'.'MONIWIKI');
-            }
+        if (!empty($_SESSION['_autosave']))
+            $myid = $_SESSION['_autosave'];
+        else {
+            $myid = session_id();
+            $_SESSION['_autosave'] = $myid;
         }
     }
     $myid = md5($myid . $formatter->page->name);
