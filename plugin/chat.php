@@ -68,6 +68,8 @@ function do_chat($formatter,$options) {
 }
 
 function ajax_chat($formatter,$options) {
+    require_once(dirname(__FILE__).'/../lib/xss.php');
+
     global $DBInfo;
     $user=&$DBInfo->user; # get cookie
     $id=$user->id;
