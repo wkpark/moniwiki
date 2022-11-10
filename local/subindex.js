@@ -1,8 +1,10 @@
 /**
- Support subpage index for MoniWiki with prototype.js or mootools.
- by wkpark@kldp.org
-
-*/
+ * Support subpage index for MoniWiki with prototype.js or jquery
+ *
+ * @author  wkpark at kldp.org
+ * @since   2007/10/6
+ * @license GPLv2
+ */
 function toggleSubIndex(id)
 {
     var subindex;
@@ -33,14 +35,16 @@ function toggleSubIndex(id)
                 } else {
 	            new Effect.SlideUp(sub, { duration: 0.3, afterFinish: function() {Element.hide(sub);} });
                 }
-            } else if (typeof Fx == 'undefined') { // get sectpages for the first time.
-                if (sub.style.display == 'none')
-                    sub.style.display = 'block';
-                else
-                    sub.style.display = 'none';
+            } else {
+                if (toggle) {
+                    $(sub).slideDown();
+                } else {
+                    $(sub).slideUp();
+                }
             }
         } else { // get subpages for the first time.
             var sub=document.createElement('div');
+            sub.setAttribute('style','display:none');
 
             var href= self.location + "";
             var qp=href.indexOf("?") != -1 ? '&':'?';
@@ -51,18 +55,9 @@ function toggleSubIndex(id)
             subindex.appendChild(sub);
 
             if (typeof Effect != 'undefined') { // prototype.js
-                sub.setAttribute('style','display:none');
-	        new Effect.SlideDown(sub, { duration: 0.4,afterFinish: function() {Element.show(sub);} });
-            } else if (typeof Fx != 'undefined') { // get sectpages for the first time.
-                var mySlide = new Fx.Slide(sub);
-                //mySlide.wrapper.setStyle('height',0);
-
-                icon.addEvent('click',function(e) {
-                    e = new Event(e);
-                    mySlide.toggle();
-                    e.stop();
-                });
-                mySlide.slideIn();
+                new Effect.SlideDown(sub, { duration: 0.4,afterFinish: function() {Element.show(sub);} });
+            } else { // jquery
+                $(sub).slideDown();
             }
             toggle=true;
             }
