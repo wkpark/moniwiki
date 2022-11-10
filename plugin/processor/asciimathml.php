@@ -37,6 +37,8 @@ function processor_asciimathml($formatter,$value="") {
   $edit_mathbgcolor='yellow';
   $myfontfamily='Palatino Linotype'; # or serif
   $myfontcolor='#2171B1'; # red(default), black etc.
+  $myfontfamily=''; # reset font family
+  $myfontcolor=''; # reset font color
 
   #
   $flag = 0;
@@ -49,7 +51,11 @@ function processor_asciimathml($formatter,$value="") {
 
     # wikimarkup specific settings
     $bgcolor = '';
-    $fontcolor="mathcolor='$myfontcolor';\n";
+    if (isset($DBInfo->mathml_fontcolor)) {
+      $fontcolor = "mathcolor='$DBInfo->mathml_fontcolor';\n";
+    } else {
+      $fontcolor = "mathcolor='$myfontcolor';\n";
+    }
   } else {
     $flag = 1;
     $id=md5($value.'.'.microtime());
@@ -57,10 +63,19 @@ function processor_asciimathml($formatter,$value="") {
     # normal settings
     $bgcolor="mathbgcolor='$edit_mathbgcolor';\n";
   }
-  $fontfamily="mathfontfamily='$myfontfamily';\n";
+  if (isset($DBInfo->mathml_fontfamily)) {
+    $fontfamily = "mathfontfamily='$DBInfo->mathml_fontfamily';\n";
+  } else {
+    $fontfamily="mathfontfamily='$myfontfamily';\n";
+  }
+
+  $mathmlstyle = '';
+  if (empty($DBInfo->use_default_mathml_style))
+    $mathmlstyle = "$bgcolor$fontfamily$fontcolor";
 
   if ( $flag ) {
     $formatter->register_javascripts('ASCIIMathML.js');
+    $formatter->register_javascripts('//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML');
 
     if ($_add_func)
       $js=<<<AJS
@@ -87,8 +102,7 @@ function translateById(objId,flag) {
     asciimath.AMprocessNode(AMbody, false, false);
   }
 }
-
-$bgcolor$fontfamily$fontcolor
+$mathmlstyle
 if (window.MathJax) { mathfontfamily = ''; mathcolor = ''; }
 // AMinitSymbols();
 /*]]>*/

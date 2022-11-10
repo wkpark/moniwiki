@@ -57,6 +57,7 @@ $inline_latex=0; # 인라인 latex 사용 (기본값)
 #$latex_convert_options='-crop 0x0 -density 120x120'; # change convert options for the latex processor
 #$latex_renumbering=1; # tex 수식 번호 재지정
 #$latex_allinone=1; # experimental. 텍을 하나의 파일로 만들어 한번에 랜더링함
+#$use_default_mathml_style=1; # mathml 기본 글꼴 스타일 사용
 $lang='auto'; # 기본 언어 (자동) 혹은 ko, ko_KR, en, en_US 등등
 #$default_lang='ko'; # default language
 $charset='utf-8'; # 기본 문자셋. euc-kr etc.
@@ -180,8 +181,6 @@ $javascripts=array(
 	#'defer,mobile.js',
 	#'defer,folding.js',
 	#'defer,googlehi.js',
-	'ASCIIMathML.js',
-	#'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML', # for ASCIIMathML.js + MathJax
 );
 
 #$diffonly=1; # show only diff infos (do not show wiki contents)

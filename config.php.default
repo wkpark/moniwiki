@@ -57,6 +57,7 @@ $inline_latex=0; # 0/1(on/off), mimetex, itex, etc.
 #$latex_convert_options='-crop 0x0 -density 120x120'; # change convert options for the latex processor
 #$latex_renumbering=1; # renumbering tex equations
 #$latex_allinone=1; # experimental feature. make a temporary latex file into all in one text.
+#$use_default_mathml_style=1; # use default mathml style
 $lang='auto'; # check language automatically.
 #$default_lang='ko'; # default language
 $charset='utf-8'; # default character set. euc-kr etc.
@@ -180,8 +181,6 @@ $javascripts=array(
 	#'defer,mobile.js',
 	#'defer,folding.js',
 	#'defer,googlehi.js',
-	'ASCIIMathML.js',
-	#'https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=TeX-AMS-MML_HTMLorMML', # for ASCIIMathML.js + MathJax
 );
 
 #$diffonly=1; # show only diff infos (do not show wiki contents)
