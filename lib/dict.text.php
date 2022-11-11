@@ -138,7 +138,7 @@ function _file_match($fp,$key,$lower,$upper,$fsize,$klen=1,$match_prefix=true,$e
         $l = fgets($fp,1024);
         $seek +=strlen($l);
 
-        if ($l{0} == '#') continue;
+        if ($l[0] == '#') continue;
         $mykey= strtok($l,' \t\n,:');
         #print '==>'.$l;
         #$llen = mb_strlen($mykey,$encoding);

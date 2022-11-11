@@ -193,7 +193,7 @@ EOF;
             $lines=explode("\n",($p->get_raw_body()));
             $lines=array_merge($lines,$lines0);
             foreach ($lines as $line) {
-                if (isset($line{0}) and $line{0}=='#') continue;
+                if (isset($line[0]) and $line[0]=='#') continue;
                 $common.="\n".$line;
             }
             $common=rtrim($common);

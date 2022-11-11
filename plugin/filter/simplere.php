@@ -24,7 +24,7 @@ function filter_simplere($formatter,$value,$options) {
         $repl = array();
         foreach ($lines as $line) {
             $line=trim($line);
-            if ($line{0}=='#' or $line=='') continue;
+            if ($line[0]=='#' or $line=='') continue;
             if (preg_match('/^([\/@])([^\\1]+)\\1([^\\1]+)\\1$/',$line,$match)) {
                 $rule[] = $match[1].$match[2].$match[1];
                 $repl[] = $match[3];

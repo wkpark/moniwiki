@@ -1500,12 +1500,12 @@ class WikiPage {
       if (isset($Config['pagetype'][$key]) and $f=$Config['pagetype'][$key]) {
         $p=preg_split('%(:|/)%',$f);
         $p2=strlen($p[0].$p[1])+1;
-        $p[1]=isset($p[1]) ? $f{strlen($p[0])}.$p[1]:'';
-        $p[2]=isset($p[2]) ? $f{$p2}.$p[2]:'';
+        $p[1]=isset($p[1]) ? $f[strlen($p[0])].$p[1]:'';
+        $p[2]=isset($p[2]) ? $f[$p2].$p[2]:'';
         $format=$p[0];
         if (!empty($sep[1])) { # have : or /
-          $format = ($sep[1]==$p[1]{0}) ? substr($p[1],1):
-                    (($sep[1]==$p[2]{0}) ? substr($p[2],1):'plain');
+          $format = ($sep[1]==$p[1][0]) ? substr($p[1],1):
+                    (($sep[1]==$p[2][0]) ? substr($p[2],1):'plain');
         }
       } else if (isset($Config['pagetype']['*']))
         $format=$Config['pagetype']['*']; // default page type
@@ -2159,7 +2159,7 @@ EOJS;
   }
 
   function _diff_repl($arr) {
-    if ($arr[1]{0}=="\010") { $tag='ins'; $sty='added'; }
+    if ($arr[1][0]=="\010") { $tag='ins'; $sty='added'; }
     else { $tag='del'; $sty='removed'; }
     if (strpos($arr[2],"\n") !== false)
       return "<div class='diff-$sty'>".$arr[2]."</div>";
@@ -2183,7 +2183,7 @@ EOJS;
     $url=str_replace('\"','"',$url); // XXX
     $bra = '';
     $ket = '';
-    if ($url{0}=='[') {
+    if ($url[0]=='[') {
       $bra='[';
       $ket=']';
       $url=substr($url,1,-1);
@@ -2306,7 +2306,7 @@ EOJS;
       return $this->word_repl($bra.$url.$ket, '', $attr);
     } else
     if (($p = strpos($urltest, ':')) !== false and
-        (!isset($url{$p+1}) or (isset($url{$p+1}) and $url{$p+1}!=':'))) {
+        (!isset($url[$p+1]) or (isset($url[$p+1]) and $url[$p+1]!=':'))) {
 
       // namespaced pages
       // [[한글:페이지]], [[한글:페이지 이름]]
@@ -2533,7 +2533,7 @@ EOJS;
 
       return "<a class='externalLink' $attr href='$link' $this->external_target>$url</a>";
     } else {
-      if ($url{0}=='?')
+      if ($url[0]=='?')
         $url=substr($url,1);
 
       $url = preg_replace('/&amp;/i', '&', $url);
@@ -3034,7 +3034,7 @@ EOJS;
         if (!empty($options['nowrap']) and !empty($this->pi['#format']) and $processor == $this->pi['#format']) { $btag='';$etag=''; }
         else { $btag='{{{';$etag='}}}'; }
         $notag = '';
-        if ($value{0}!='#' and $value{1}!='!') $notag="\n";
+        if ($value[0]!='#' and $value[1]!='!') $notag="\n";
         $markups=str_replace(array('=','-','&','<'),array('==','-=','&amp;','&lt;'),$value);
         $bra= "<span class='wikiMarkup'><!-- wiki:\n".$btag.$notag.$markups.$etag."\n-->";
       }
@@ -3228,8 +3228,8 @@ EOJS;
         );
         $start=substr($numtype,1);
         $litype='';
-        if (array_key_exists($numtype{0},$lists))
-          $litype=' style="list-style-type:'.$lists[$numtype{0}].'"';
+        if (array_key_exists($numtype[0],$lists))
+          $litype=' style="list-style-type:'.$lists[$numtype[0]].'"';
         if (!empty($start)) {
           #$litype[]='list-type-style:'.$lists[$numtype{0}];
           return "<$list_type$litype start='$start'>";
@@ -4468,7 +4468,7 @@ EOJS;
       foreach ($js as $j) $this->register_javascripts($j);
       return true;
     } else {
-      if ($js{0} == '<') { $tag=md5($js); }
+      if ($js[0] == '<') { $tag=md5($js); }
       else $tag=$js;
       if (!isset($this->java_scripts[$tag]))
         $this->java_scripts[$tag]=$js;
@@ -4507,7 +4507,7 @@ EOJS;
 
       foreach ($this->java_scripts as $k=>$js) {
         if ($js) {
-          if ($js{0} != '<') {
+          if ($js[0] != '<') {
             $asyncOrDefer = '';
             if (strpos($js, ',') !== false) {
               $check = substr($js, 0, 5);
@@ -4570,7 +4570,7 @@ EOJS;
     $out='';
     foreach ($this->java_scripts as $k=>$js) {
       if ($js) {
-        if ($js{0} != '<') {
+        if ($js[0] != '<') {
           $asyncOrDefer = '';
           if (strpos($js, ',') !== false) {
             $check = substr($js, 0, 5);

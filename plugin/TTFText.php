@@ -35,7 +35,7 @@ function macro_TTFText($formatter,$value,$params=array()) {
         list($k,$v)=explode('=',trim($arg),2);
         if ($k == 'font') {
             $font=$v;
-            if ($font{0}!='/') {
+            if ($font[0]!='/') {
                 $real=getcwd().'/data/'.$font; # XXX
                 if (!preg_match('/\.ttf$/i',$real))
                     $real.='.ttf';

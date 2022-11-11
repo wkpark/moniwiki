@@ -1,9 +1,15 @@
 <?php
 // Copyright 2003-2007 Won-Kyu Park <wkpark at kldp.org> all rights reserved.
 // distributable under GPL see COPYING 
-// $Id$
+
+// PHP_VERSION_ID is available as of PHP 5.2.7
+if (!defined('PHP_VERSION_ID')) {
+  $version = explode('.', PHP_VERSION);
+  define('PHP_VERSION_ID', ($version[0] * 10000 + $version[1] * 100 + $version[2]));
+}
 
 function _stripslashes($str) {
+  if (PHP_VERSION_ID >= 50400) return $str;
   return get_magic_quotes_gpc() ? stripslashes($str):$str;
 }
 

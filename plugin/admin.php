@@ -96,7 +96,7 @@ function macro_admin($formatter,$value='',$options=array()) {
         if (!$handle) continue;
         while ($file= readdir($handle)) {
             if (is_dir($dir.'/'.$pdir.'/'.$file)) continue;
-            if ($file{0}=='.') continue;
+            if ($file[0]=='.') continue;
             if (substr($file,-4)!='.php') continue;
             $name= substr($file,0,-4);
             $plugins[strtolower($name)]= $name;

@@ -186,7 +186,7 @@ function do_rating($formatter,$options) {
                     $head='';
                     while (true) {
                         list($line,$body)=explode("\n",$body,2);
-                        if ($line{0}=='#') $head.=$line."\n";
+                        if ($line[0]=='#') $head.=$line."\n";
                         else {
                             $body=$line."\n".$body;
                             break;

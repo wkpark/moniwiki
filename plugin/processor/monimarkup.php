@@ -61,7 +61,7 @@ class processor_monimarkup
                             list($type,$dum)= explode("\n",$block[$j],2);
                             $tag='';
                             if (!empty($type)) {
-                                if ($type[0]=='#' and $type{1}=='!') {
+                                if ($type[0]=='#' and $type[1]=='!') {
                                     #list($tag,$dummy)= explode(' ',$type);
                                     $tmp = explode(' ',$type);
                                     $tag = $tmp[0];
@@ -72,7 +72,7 @@ class processor_monimarkup
                                     # for a quote block
                                     $block[$j]=substr($block[$j],1);
                                     $arg= substr($type,1);
-                                    if ($type{1}=='#' or $type{1}=='.') {
+                                    if ($type[1]=='#' or $type[1]=='.') {
                                         $btype[$j]='monimarkup';
                                         $block[$j]='#!monimarkup '.$arg."\n".$dum;
                                     } else {
@@ -349,7 +349,7 @@ class processor_monimarkup
                 continue;
             }
             $tr_diff='';
-            if ($line[0]== "\010" or $line{1}=="\006") {
+            if ($line[0]== "\010" or $line[1]=="\006") {
                 $tr_diff=$line[0] == "\010" ? 'diff-added':'diff-removed';
                 $line=substr($line,1,-1);
             }

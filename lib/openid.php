@@ -220,7 +220,7 @@ class SimpleOpenID{
 		$response = call_user_func(array(&$this,$this->_request),$this->openid_url_identity);
 		$new_url=$this->getHTTPEquiv($response);
 		if ($new_url) {
-			if ($new_url{0}=='/') $new_url=$this->openid_url_identity.$new_url;
+			if ($new_url[0]=='/') $new_url=$this->openid_url_identity.$new_url;
 			$response = call_user_func(array(&$this,$this->_request),$new_url);
 		}
 		list($servers, $delegates) = $this->HTML2OpenIDServer($response);

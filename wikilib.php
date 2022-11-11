@@ -478,6 +478,7 @@ function _autofixencode($str) {
 
 if (!function_exists('_stripslashes')) {
 function _stripslashes($str) {
+  if (PHP_VERSION_ID >= 50400) return $str;
   return get_magic_quotes_gpc() ? stripslashes($str):$str;
 }
 }
@@ -1307,7 +1308,7 @@ function email_guard($email,$mode='hex') {
       $encode = '';
       $sz=strlen($email);
       for ($i=0; $i<$sz; $i++)
-        $encode .= '&#x' . bin2hex($email{$i}).';';
+        $encode .= '&#x' . bin2hex($email[$i]).';';
       return $encode;
 
     case 'none' :

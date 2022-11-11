@@ -281,7 +281,7 @@ function do_ticket($formatter,$options) {
             }
             $FONT=$DBInfo->ticket_font;
             //$FONT="/home/foobar/data/PenguinAttack.ttf";
-            if ($FONT{0}=='/' and !file_exists($FONT)) {
+            if ($FONT[0]=='/' and !file_exists($FONT)) {
                 $use_ttf=0;
             } else {
                 $FONT=$DBInfo->ticket_font;

@@ -1230,9 +1230,9 @@ class Markdown_Parser {
 	# Handle $token provided by parseSpan by determining its nature and 
 	# returning the corresponding value that should replace it.
 	#
-		switch ($token{0}) {
+		switch ($token[0]) {
 			case "\\":
-				return $this->hashPart("&#". ord($token{1}). ";");
+				return $this->hashPart("&#". ord($token[1]). ";");
 			case "`":
 				# Search for end marker in remaining text.
 				if (preg_match('/^(.*?[^`])'.$token.'(?!`)(.*)$/sm', 
@@ -1387,7 +1387,7 @@ class Processor_Markdown extends Markdown_Parser {
 	#
 	# strip bang-path #!markdown
 	#
-        	if ($text{0}=='#' and $text{1}=='!') {
+        	if ($text[0]=='#' and $text[1]=='!') {
             		list($line,$text)=explode("\n",$text,2);
             		$dum = preg_split('/\s+/', $line);
             		$myarg = $dum[1];
@@ -1570,7 +1570,7 @@ class Processor_Markdown extends Markdown_Parser {
 			{
 				# Tag is in code block or span and may not be a tag at all. So we
 				# simply skip the first char (should be a `<`).
-				$parsed .= $tag{0};
+				$parsed .= $tag[0];
 				$text = substr($tag, 1) . $text; # Put back $tag minus first char.
 			}
 			#
@@ -1596,7 +1596,7 @@ class Processor_Markdown extends Markdown_Parser {
 			#            HTML Comments, processing instructions.
 			#
 			else if (preg_match("{^<(?:$this->clean_tags)\b}", $tag) ||
-				$tag{1} == '!' || $tag{1} == '?')
+				$tag[1] == '!' || $tag[1] == '?')
 			{
 				# Need to parse tag and following text using the HTML parser.
 				# (don't check for markdown attribute)
@@ -1615,8 +1615,8 @@ class Processor_Markdown extends Markdown_Parser {
 				#
 				# Increase/decrease nested tag count.
 				#
-				if ($tag{1} == '/')						$depth--;
-				else if ($tag{strlen($tag)-2} != '/')	$depth++;
+				if ($tag[1] == '/')						$depth--;
+				else if ($tag[strlen($tag)-2] != '/')	$depth++;
 
 				if ($depth < 0) {
 					#
@@ -1717,7 +1717,7 @@ class Processor_Markdown extends Markdown_Parser {
 				# first character as filtered to prevent an infinite loop in the 
 				# parent function.
 				#
-				return array($original_text{0}, substr($original_text, 1));
+				return array($original_text[0], substr($original_text, 1));
 			}
 			
 			$block_text .= $parts[0]; # Text before current tag.
@@ -1729,7 +1729,7 @@ class Processor_Markdown extends Markdown_Parser {
 			#			 Comments and Processing Instructions.
 			#
 			if (preg_match("{^</?(?:$this->auto_close_tags)\b}", $tag) ||
-				$tag{1} == '!' || $tag{1} == '?')
+				$tag[1] == '!' || $tag[1] == '?')
 			{
 				# Just add the tag to the block as if it was text.
 				$block_text .= $tag;
@@ -1740,8 +1740,8 @@ class Processor_Markdown extends Markdown_Parser {
 				# the tag's name match base tag's.
 				#
 				if (preg_match("{^</?$base_tag_name\b}", $tag)) {
-					if ($tag{1} == '/')						$depth--;
-					else if ($tag{strlen($tag)-2} != '/')	$depth++;
+					if ($tag[1] == '/')						$depth--;
+					else if ($tag[strlen($tag)-2] != '/')	$depth++;
 				}
 				
 				#

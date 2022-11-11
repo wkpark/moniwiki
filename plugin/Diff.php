@@ -23,7 +23,7 @@ function code_diff($diff, $options = array()) {
   $i = 0;
   while($i < $sz) {
     for (; $i < $sz; $i++) {
-      if ($lines[$i]{0} == '@') {
+      if ($lines[$i][0] == '@') {
         break;
       } else if (preg_match('/^-{3} ([^ \t]+)/',$lines[$i], $m)
         and preg_match('/^\+{3} /',$lines[$i+1])) {
@@ -46,7 +46,7 @@ function code_diff($diff, $options = array()) {
     $next_patch = 0;
     for (;$i < $sz; $i++) {
       $line = $lines[$i];
-      $marker = $line{0};
+      $marker = $line[0];
       if (in_array($marker, array('-','+','@',' '))) $line = substr($line, 1);
       else {
         if (empty($new) and empty($orig)) break;

@@ -76,7 +76,7 @@ JS;
         foreach ($lines as $l) {
             $l=rtrim($l);
             if (empty($l)) continue;
-            if ($l{0}=='#') continue;
+            if ($l[0]=='#') continue;
             if (substr($l,-1)=='&') { $o.=$l; continue; }
             else if (!empty($o)) { $l=$o.$l; $o='';}
             list ($k,$v)=explode(' ',$l,2);

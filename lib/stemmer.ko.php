@@ -305,7 +305,7 @@ class KoreanStemmer {
             $pre = implode('-',$words);
 
             if (!empty($nword)) {
-                if ($type{0} == 'n') { // noun
+                if ($type[0] == 'n') { // noun
                     $stem = $this->getNoun($nword, $match);
                     #print '*** stem'.$nword.'=='.$stem."\n";
                     if (!empty($stem))
@@ -329,13 +329,13 @@ class KoreanStemmer {
         list($r, $cand, $last) = $this->isWord($word);
 
         // return first candidate XXX
-        if (isset($cand[0]) and $cand[0][1]{0} == 'n') return $cand[0][0];
+        if (isset($cand[0]) and $cand[0][1][0] == 'n') return $cand[0][0];
         else $stem=$this->getNoun($word,$match);
 
         if ($stem) {
             list ($r1, $cand1,$last1) = $this->isWord($stem);
             $type=$cand1[0][1];
-            if ($cand1[0][1]{0} == 'n') return $stem;
+            if ($cand1[0][1][0] == 'n') return $stem;
         }
         #if ($stem and $this->isWord($stem) == 'n') return $stem;
         $verb=$this->getVerb($word,$vmatch);
@@ -364,7 +364,7 @@ class KoreanStemmer {
             $pword=substr($word,0,-strlen($match[1]));
             if ($pword) {
                 list ($r, $cand,$last) = $this->isWord($pword);
-                if ($cand[0][1]{0} == 'n') return $pword;
+                if ($cand[0][1][0] == 'n') return $pword;
             }
             $pword=$this->getWordRule($pword).$match[1];
             preg_match('/('.$this->_josa_rule.')$/S',$pword,$nmatch);

@@ -54,14 +54,14 @@ function macro_MsgTrans($formatter,$value,$param=array()) {
 
     foreach ($lines as $l) {
         $l=trim($l);
-        if ($l{0}=='#') {
+        if ($l[0]=='#') {
             if (preg_match('/^#lang(?'.'>uage)? (ko_KR|en_US|fr_FR)$/',$l,$m)) {
                 $lang=$m[1];
                 if ($DBInfo->charset) $lang.='.'.$charset;
             }
             continue;
         }
-        if ($l{0}=='"') {
+        if ($l[0]=='"') {
             if (preg_match('/^(("(([^"]|\\\\")*?)"\s*)+)\s*(.*)$/',$l,$m)) {
                 $smap = array('/"\s+"/', '/\\\\n/', '/\\\\r/', '/\\\\t/', '/\\\\"/');
                 $rmap = array('', "\n", "\r", "\t", '"');

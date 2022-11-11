@@ -184,7 +184,7 @@ class Config_base {
 
             if (!$key) {
                 // first line
-                if ($line{0} == '<' and $line{1} == '?') {
+                if ($line[0] == '<' and $line[1] == '?') {
                     $date = date('Y-m-d h:i:s');
                     $nlines[] = '<'.'?php'."\n";
                     $nlines[] = <<<HEADER
