@@ -18,5 +18,5 @@ install: moni-install
 	cp moni-install $(DESTDIR)$(prefix)/share/moniwiki/bin
 
 moni-install: moni-install.in
-	cat moni-install.in | sed 's%@@INSTDIR@@%$(prefix)/share/moniwiki%' >moni-install
+	cat moni-install.in | sed 's%@@INSTDIR@@%$(DESTDIR)$(prefix)/share/moniwiki%' >moni-install
 	chmod 755 moni-install
