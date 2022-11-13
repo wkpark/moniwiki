@@ -64,11 +64,13 @@ function ipv6uncompress($ip, $type = 'hex') {
     if (!validate_ip($ip))
         return false;
 
-    // add additional colon's, until 7 (or 6 in case of an IPv4 (mapped) address
-    while (substr_count($ip, ":") < (substr_count($ip, ".") == 3 ? 6 : 7))
-        $ip = substr_replace($ip, "::", strpos($ip, "::"), 1);
+    // expand compressed colons to 7 (or 6 in case of an IPv4 (mapped) address
+    if (($c = substr_count($ip, ':')) < ($n = ((substr_count($ip, '.') > 0) ? 6 : 7))) {
+        $expand = substr(':::::::', 0, ($n - $c + 2));
+        $ip = str_replace('::', $expand, $ip);
+    }
 
-    $ip = explode(":", $ip);
+    $ip = explode(':', $ip);
 
     // replace the IPv4 part address with hexadecimals if needed
     if ((strpos($ip[count($ip)-1], '.')) !== false) {
@@ -83,7 +85,7 @@ function ipv6uncompress($ip, $type = 'hex') {
 
     // Add leading 0's in every part, up until 4 characters
     foreach ($ip as $i=>$chunk)
-        $ip[$i] = sprintf("%04s", $chunk);
+        $ip[$i] = str_pad($chunk, 4, '0', STR_PAD_LEFT);
 
     if ($type == 'hex')
         return implode('', $ip);
@@ -121,15 +123,15 @@ function ipv6compress($ip) {
     // find all :0:0: sequences
     preg_match_all("/((?:^|:)0(?::0)+(?::|$))/", $ip, $matches);
 
-    // Search all :0:0: sequences and determine the longest
-    $reg = "";
-    foreach ($matches[0] as $match)
-        if (strlen($match) > strlen($reg))
-            $reg = $match;
+    // search all :0:0: sequences and determine the longest
+    if ($matches[0]) {
+        $lens = array_map('strlen', $matches[0]);
+        $reg = $matches[0][array_search(max($lens), $lens)];
 
-    // replace the longst :0 sequence with ::, but do it only once
-    if (strlen($reg))
-        $ip = preg_replace("/$reg/", '::', $ip, 1);
+        // replace the longst :0 sequence with ::, but do it only once
+        if (strlen($reg))
+            $ip = preg_replace("/$reg/", '::', $ip, 1);
+    }
 
     return $ip;
 }
