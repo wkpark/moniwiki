@@ -105,7 +105,7 @@ class MoniConfig extends Config_base {
       $host = $_SERVER['SERVER_NAME'];
     }
 
-    if (empty($match)) {
+    if (!empty($match)) {
       $config['query_prefix']='?';
       while (ini_get('allow_url_fopen')) {
         print '<h3>'._t("Check a AcceptPathInfo setting for Apache 2.x.xx").'</h3>';
