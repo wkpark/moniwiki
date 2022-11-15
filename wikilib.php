@@ -3585,7 +3585,7 @@ function do_post_savepage($formatter,$options) {
 
   $savetext=$options['savetext'];
   $datestamp = intval($options['datestamp']);
-  $hash = $options['hash'];
+  $hash = !empty($options['hash']) ? $options['hash'] : '';
   $button_preview = !empty($options['button_preview']) ? 1 : 0;
 
   if ($button_preview)
