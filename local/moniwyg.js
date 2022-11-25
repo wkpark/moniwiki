@@ -679,7 +679,7 @@ function fixup_markup_style(html,modename)
     // fix for Mozilla
     // var embeds=dom.getElementsByTagName('embed');
     var objects=dom.getElementsByTagName('object');
-    var loc = location.protocol + '//' + location.host;
+    var loc = location.protocol + '//' + location.hostname;
     if (location.port) loc += ':' + location.port;
 
     if (objects.length) {
@@ -890,7 +890,7 @@ proto.get_edit_iframe = function() {
             link.setAttribute('rel', 'STYLESHEET');
             link.setAttribute('type', 'text/css');
             link.setAttribute('media', 'screen');
-            var loc = location.protocol + '//' + location.host;
+            var loc = location.protocol + '//' + location.hostname;
             if (location.port) loc += ':' + location.port;
             link.setAttribute('href',
                 loc + _url_prefix + '/local/Wikiwyg/css/wysiwyg.css');
@@ -1298,7 +1298,7 @@ proto.convert_html_to_wikitext = function(html) {
         html.replace(/<a class=.externalLink named. [^>]*href=(\'|\")?([^\'\"]+)\1?[^>]+>(.+)<\/a>/ig, "[$2 $3]");
 
     // inner links for IE
-    var loc = location.protocol + '//' + location.host + (location.port ? ':'+location.port:'');
+    var loc = location.protocol + '//' + location.hostname + (location.port ? ':'+location.port:'');
     this.loc_re=new RegExp('^' + loc.replace(/\//g,'\\/'),'ig');
 
     // escaped wiki markup blocks

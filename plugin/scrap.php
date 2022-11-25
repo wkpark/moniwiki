@@ -53,7 +53,7 @@ function get_scrap()
 
     // get the scrapped pages
     var qp = '?'; // query_prefix
-    var loc = '//' + location.host;
+    var loc = '//' + location.hostname;
     if (location.port) loc+= ':' + location.port;
     loc+= location.pathname + qp + 'action=scrap/ajax';
 

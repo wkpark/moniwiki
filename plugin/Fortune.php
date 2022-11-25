@@ -78,7 +78,7 @@ function wikiFortune(el, cat) {
 
     // get a FortuneCookie
     var qp = '?'; // query_prefix
-    var loc = location.protocol + '//' + location.host;
+    var loc = location.protocol + '//' + location.hostname;
     if (location.port) loc+= ':' + location.port;
     loc+= location.pathname + qp + 'action=fortune/ajax&value=' + cat;
 
