@@ -372,6 +372,9 @@ class processor_monimarkup
                     PREG_SPLIT_DELIM_CAPTURE);
 
                 $row='';
+                $col = 0;
+                $cols = array();
+                $has_colstyle = false;
                 $tr_attr=$tr_diff ? 'class="'.$tr_diff.'"':'';
                 for ($i=1,$s=sizeof($cells);$i<$s;$i+=2) {
                     $align='';
@@ -401,10 +404,33 @@ class processor_monimarkup
                         $tag = 'th';
                         unset($attrs['heading']);
                     }
+                    # column style
+                    $colstyle = '';
+                    if (isset($attrs['colstyle'])) {
+                        $colstyle = "style='".$attrs['colstyle']."'";
+                        unset($attrs['colstyle']);
+                        $has_colstyle = true;
+                    }
                     $attr = '';
                     foreach ($attrs as $k=>$v) $attr.= $k.'="'.trim($v, "'\"").'" ';
                     $attr.=$formatter->_td_span($cells[$i]);
                     $row.="<$tag $attr>".$cell.'</'.$tag.'>';
+
+                    # check column number
+                    $colspan = strlen($cells[$i])/2;
+                    if (!empty($attrs['colspan']) && $colspan < $attrs['colspan']) $colspan = $attrs['colspan'];
+                    if ($colspan > 1) $col += $colspan - 1;
+                    if ($colspan > 1) {
+                        $cattr = array();
+                        $cattr[] = "span='".$colspan."'";
+                        if (!empty($colstyle))
+                        $cattr[] = $colstyle;
+                        $colstyle = implode(' ', $cattr);
+                    }
+                    $cols[] = $colstyle;
+                }
+                if ($has_colstyle) {
+                    $row = '<colgroup><col '.implode(' /><col ', $cols).' /></colgroup>'.$row;
                 }
                 $line='<tr '.$tr_attr.'>'.$row.'</tr>';
                 $line=str_replace('\"','"',$line); # revert \\" to \"
