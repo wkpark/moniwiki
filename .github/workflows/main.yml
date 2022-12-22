@@ -78,11 +78,12 @@ jobs:
           ls -al release
 
       - name: Upload Build Artifact
-        if: ${{ success() && (github.event_name != 'pull_request') }}
         uses: actions/upload-artifact@v3
         with:
           name: moniwiki-${{ steps.setup.outputs.version }}-${{ steps.setup.outputs.commitHash }}
-          path: ${{ github.workspace }}/release/moniwiki-*.tgz
+          path: |
+            ${{ github.workspace }}/release/moniwiki-*.tgz
+            ${{ github.workspace }}/release/apserver-apache-*.zip
 
   make-release:
     name: Create and upload release
