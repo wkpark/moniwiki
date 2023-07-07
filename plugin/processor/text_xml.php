@@ -281,7 +281,7 @@ class Formatter_xml extends Formatter {
       $i=sizeof($dum);
       for ($j=0;$j<$i;$j++) $dum[$j]=1;
       $dum[$i-1]=0;
-      $num=join($dum,".");
+      $num=join(".", $dum);
     }
     $open="";
     $close="";
@@ -309,7 +309,7 @@ class Formatter_xml extends Formatter {
          $odepth--;
       }
       $dum[$i]++;
-      $num=join($dum,".");
+      $num=join(".", $dum);
       #$open.="</sect$depth>\n<sect$depth>"; # <section>
       $open.="</section>\n<section>"; # <section>
     }

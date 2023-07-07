@@ -64,7 +64,7 @@ function function_toc($formatter) {
             $i=sizeof($dum);
             for ($j=0;$j<$i;$j++) $dum[$j]=1;
             $dum[$i-1]=0;
-            $num=join($dum,'.');
+            $num=join('.', $dum);
             if ($prefix) $prefix++;
             else $prefix=1;
         }
@@ -80,7 +80,7 @@ function function_toc($formatter) {
                 $odepth--;
             }
             $dum[$i]++;
-            $num=join($dum,'.');
+            $num=join('.', $dum);
         }
         $head_dep=$depth; # save old
         $head_num=$num;

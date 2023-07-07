@@ -58,7 +58,7 @@ function processor_abc($formatter="",$value="") {
 #
 #     $cmd= "$abc2midi $finp -o $cache_dir/$uniq.midi > $flog";
 #     $fp=system($cmd);
-#     $log=join(file($flog),"");
+#     $log=join(file("", $flog));
 #     unlink($flog);
 #     unlink($finp);
 

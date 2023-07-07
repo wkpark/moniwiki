@@ -77,7 +77,7 @@ $plt
 
        $cmd= "$octave < $finp > $flog";
        $fp=system($cmd);
-       $log=join(file($flog),"");
+       $log=join("", file($flog));
        unlink($flog);
        unlink($finp);
      } else {

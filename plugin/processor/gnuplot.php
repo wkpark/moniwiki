@@ -150,7 +150,7 @@ $plt
 
        $cmd= "$gnuplot \"$finp\" > $flog";
        $fp=system($cmd);
-       $log=join(file($flog),"");
+       $log=join("", file($flog));
        if (file_exists($outpath)) {
          unlink($flog);
          unlink($finp);

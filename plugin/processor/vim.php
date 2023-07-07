@@ -129,7 +129,7 @@ addtogglebutton('PRE-$uniq');
   $out = '';
   if(getenv("OS")=="Windows_NT") {
     system($cmd);
-    $out=join(file($fout),"");
+    $out=join("", file($fout));
     unlink($fout);
   } else {
     $formatter->errlog();
