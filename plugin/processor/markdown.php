@@ -734,7 +734,7 @@ class Markdown_Parser {
 		return $text;
 	}
 	function _doHeaders_callback_setext($matches) {
-		$level = $matches[2]{0} == '=' ? 1 : 2;
+		$level = $matches[2][0] == '=' ? 1 : 2;
 		$block = "<h$level>".$this->runSpanGamut($matches[1])."</h$level>";
 		return "\n" . $this->hashBlock($block) . "\n\n";
 	}
@@ -1858,7 +1858,7 @@ class Processor_Markdown extends Markdown_Parser {
 		return " id=\"$attr\"";
 	}
 	function _doHeaders_callback_setext($matches) {
-		$level = $matches[3]{0} == '=' ? 1 : 2;
+		$level = $matches[3][0] == '=' ? 1 : 2;
 		$attr  = $this->_doHeaders_attr($id =& $matches[2]);
 		$block = "<h$level$attr>".$this->runSpanGamut($matches[1])."</h$level>";
 		return "\n" . $this->hashBlock($block) . "\n\n";

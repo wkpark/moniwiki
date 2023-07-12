@@ -56,7 +56,7 @@ function normSQL($sql, $cr = 0) {
     foreach ($lines as $line) {
         $line = rtrim($line);
         // skip sql comments
-        if ($line{1} == '-' and $line{0} == '-') {
+        if ($line[1] == '-' and $line[0] == '-') {
             if ($line == '--')
                 continue;
             $out .= $line."\n";

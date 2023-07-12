@@ -18,7 +18,7 @@ function postfilter_texturize($formatter, $text, $options) {
     for ($i = 0; $i < $stop; $i++) {
         $curl = $textarr[$i];
 
-        if (isset($curl{0}) && '<' != $curl{0} && $next) { // If it's not a tag
+        if (isset($curl[0]) && '<' != $curl[0] && $next) { // If it's not a tag
             $curl = str_replace('---', '&#8212;', $curl);
             $curl = str_replace(' -- ', ' &#8212; ', $curl);
             $curl = str_replace('--', '&#8211;', $curl);
