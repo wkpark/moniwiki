@@ -15,7 +15,7 @@ function do_download($formatter,$options) {
     return; 
   }
   $value=&$options['value'];
-  $down_mode=(!empty($options['mode']) and $options['mode']{0}=='a') ? 'attachment':
+  $down_mode=(!empty($options['mode']) and $options['mode'][0]=='a') ? 'attachment':
     (!empty($DBInfo->download_mode) ? $DBInfo->download_mode:'inline');
 
   // SubPage:foobar.png == SubPage/foobar.png
