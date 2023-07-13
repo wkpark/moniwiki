@@ -1,17 +1,28 @@
-모니위키 MoniWiki
-=================
 
-모니위키는 PHP 기반의 위키엔진입니다. 위키 포매팅 규칙은 모인모인 위키로부터 영감을 받았습니다.
+# MoniWiki
 
-모니는 한국말로 뭐? 뭐라고 등을 의미하는 약간 변형된 소리입니다. 또한 모니위키의 문법이 구 모인모인 문법과 거의 호환된다는 것을 말해줍니다.
+MoniWiki is a public wiki engine built on PHP. 
+The name "Moni" is a variant of the Korean word "Meoni" and is also a pun on the previously widely used MoinMoin wiki engine. 
+It can be installed and used in Windows, Linux, and other environments.
+Many wikis in the Korean language are using this engine. 
+A typical site that uses the MoniWiki engine is the Rigveda Wiki.
 
-PHP 언어에 익숙하시다면 기능이나 향상등을 쉽게 추가하실 수 있습니다.
+Since it was originally designed for personal wikis, it is known for its weak search function. 
+However, since version 1.1.5 of MoniWiki, it has built-in its own indexer and has been able to cope with search to some extent. 
+The reason for this is that Moniker has been enhanced to take into account large wiki sites like the Rigveda wiki.
+Starting with version 1.1.3.1, Moniker has been distributed for Windows with Apache and PHP embedded on the official website. 
+Since version 1.1.5, most of the main documentation has been rewritten in Korean for MoniWiki. 
 
-----
+One of MoniWiki's features, advantages, and disadvantages is that it is file system based. 
+This is an advantage because it requires only a web server (such as Apache or Nginx) and PHP, making it easy to install and maintain. 
+On the other hand, it's not very searchable, and it's hard to change the structure of the documents.
+Another advantage is that it's very easy to extend. If you know PHP, you can easily develop and add plugins. 
+You can also develop systems and issue management systems based on MoniWiki.
 
-MoniWiki is a PHP based WikiEngine. WikiFormattingRules are imported and
-inspired by the MoinMoin.
 
-Moni is a slightly modified sound that means What ? or What is it? in Korean and It also shows MoniWiki is nearly compatible with the MoinMoin.
+# How to install MoniWiki
+ Please refers to [Here](https://github.com/wkpark/moniwiki-apserver/wiki/INSTALL)
 
-If you are familiar with the PHP Script language you can easily add features or enhancements.
+
+# Maintainer
+ * Wonkyu Park (wkpark.at.gmail.com)
