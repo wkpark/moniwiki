@@ -1555,7 +1555,7 @@ class UserDB {
 
     $offset = !empty($options['offset']) ? intval($options['offset']) : 0;
     $limit = !empty($options['limit']) ? intval($options['limit']) : 1000;
-    $q = !empty($options['q']) ? trim($options['q']) : '[^\.]+';
+    $q = (!empty($options['q']) && !is_array($options['q'])) ? trim($options['q']) : '[^\.]+';
 
     // Anonymous user with editing information
     $rawid = false;
@@ -1709,7 +1709,7 @@ class UserDB {
     if (empty($id) || $id == 'Anonymous') {
       if ($suspended) return false;
       $wu = 'wu-'.$_SERVER['REMOTE_ADDR'];
-    } else if (preg_match('/^(\d{1,3}\.){3}\d{1,3}$/', $id)) {
+    } else if (!is_array($id) && preg_match('/^(\d{1,3}\.){3}\d{1,3}$/', $id)) {
       if ($suspended) return false;
       $wu = 'wu-'.$id;
     } else {
