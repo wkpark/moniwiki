@@ -478,8 +478,7 @@ function _autofixencode($str) {
 
 if (!function_exists('_stripslashes')) {
 function _stripslashes($str) {
-  if (PHP_VERSION_ID >= 50400) return $str;
-  return get_magic_quotes_gpc() ? stripslashes($str):$str;
+  return $str;
 }
 }
 
@@ -1011,7 +1010,7 @@ function http_need_cond_request($mtime, $last_modified = '', $etag = '') {
  *
  * @author   Won-Kyu Park <wkpark@gmail.com>
  */
-function get_extension($mime_types = 'mime.types', $mime) {
+function get_extension($mime_types, $mime) {
     if (!file_exists($mime_types)) return 'bin';
     $mimetypes = file_get_contents($mime_types);
     if (preg_match('@(^'.$mime.'\s+.*$)@m', $mimetypes, $match)) {
@@ -1317,11 +1316,14 @@ function email_guard($email,$mode='hex') {
   }
 }
 
-// Remember to initialize MT (using mt_srand() ) if required
 function pw_encode($password) {
-  $seed = substr('00' . dechex(mt_rand()), -3) .
-   substr('00' . dechex(mt_rand()), -3) .
-   substr('0' . dechex(mt_rand()), -2);
+  if (function_exists('random_bytes')) {
+    $seed = bin2hex(random_bytes(4));
+  } else {
+    $seed = substr('00' . dechex(mt_rand()), -3) .
+      substr('00' . dechex(mt_rand()), -3) .
+      substr('0' . dechex(mt_rand()), -2);
+  }
   return hmac($seed, $password, 'md5', 64) . $seed;
 }
 
@@ -1496,6 +1498,7 @@ function getSmileys() {
   return $smileys;
 }
 
+#[AllowDynamicProperties]
 class UserDB {
   var $users=array();
   function __construct($conf) {
@@ -1866,6 +1869,7 @@ class UserDB {
   }
 }
 
+#[AllowDynamicProperties]
 class WikiUser {
   var $cookie_expires = 2592000; // 60 * 60 * 24 * 30; // default 30 days
 
@@ -5360,11 +5364,7 @@ function macro_TitleIndex($formatter, $value, $options = array()) {
     if (!empty($formatter->use_group)) {
         array_walk($pages,'_setpagekey');
     } else {
-      if (PHP_VERSION_ID >= 50300) {
-        array_walk($pages, function(&$p, $k) { $p = $k;});
-      } else {
-        array_walk($pages, create_function('&$p, $k', '$p = $k;'));
-      }
+      array_walk($pages, function(&$p, $k) { $p = $k;});
     }
     $all_pages = array_flip($pages);
     uksort($all_pages, 'strcasecmp');
@@ -5796,7 +5796,7 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
     $idx++;
   }
 
-  if ($out) $out="<${type}l>$out</${type}l>\n";
+  if ($out) $out="<{$type}l>$out</{$type}l>\n";
   $opts['hits']= count($hits);
   if ($opts['hits']==1)
     $opts['value']=array_pop($hits);

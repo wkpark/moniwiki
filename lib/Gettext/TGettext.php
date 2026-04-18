@@ -33,6 +33,7 @@
  * @version     $Revision$
  * @access      public
  */
+#[AllowDynamicProperties]
 class File_Gettext
 {
     /**

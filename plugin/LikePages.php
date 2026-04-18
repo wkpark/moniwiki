@@ -20,7 +20,7 @@ function do_LikePages($formatter,$options) {
   $formatter->send_footer("",$options);
 }
 
-function macro_LikePages($formatter="", $value, &$opts) {
+function macro_LikePages($formatter, $value, &$opts) {
   global $DBInfo;
 
   $pname=_preg_escape($value);

@@ -7,6 +7,7 @@
  * @license GPLv2
  */
 
+#[AllowDynamicProperties]
 class TitleIndexer_Text {
     var $text_dir = '';
     var $_match_flags = 'uim';

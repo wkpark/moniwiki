@@ -31,6 +31,7 @@
  */
 
 
+#[AllowDynamicProperties]
 class FCKConstantProcessor
 {
     // Public properties.
@@ -95,6 +96,7 @@ class FCKConstantProcessor
     }
 }
 
+#[AllowDynamicProperties]
 class FCKFunctionProcessor
 {
     var $_Function ;
@@ -207,6 +209,7 @@ class FCKFunctionProcessor
 }
 
 
+#[AllowDynamicProperties]
 class FCKJavaScriptCompressor
 {
     function __construct()
@@ -374,6 +377,7 @@ class FCKJavaScriptCompressor
     }
 }
 
+#[AllowDynamicProperties]
 class FCKStringsProcessor
 {
     var $_ProtectedStrings ;

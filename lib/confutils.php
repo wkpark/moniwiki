@@ -7,6 +7,7 @@
  * @desc    raw config.php parser.
  */
 
+#[AllowDynamicProperties]
 class Config_base {
     function __construct($configfile = 'config.php', $vars = array())
     {

@@ -14,7 +14,7 @@
 // Usage: ?action=editlogbin&q=foobar&start=2009/05/01
 //
 
-function _editlog_binning($fp, $seek = null, $start, $bin = 0, $params = array()) {
+function _editlog_binning($fp, $seek, $start, $bin = 0, $params = array()) {
     if (empty($params['until']))
         $until = time();
     else

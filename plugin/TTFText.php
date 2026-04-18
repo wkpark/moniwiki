@@ -120,7 +120,7 @@ function macro_TTFText($formatter,$value,$params=array()) {
         return "<img src=\"$png_url\" alt=\"$text\" style='vertical-align:middle' />";
     }
     return "<span style='display:block;$float".
-        "background:url(\"$png_url\") no-repeat;width:${w}px;height:${h}px;' />".
+        "background:url(\"$png_url\") no-repeat;width:{$w}px;height:{$h}px;' />".
         "<span style='display:none'>".$text."</span></span>";
 }
 

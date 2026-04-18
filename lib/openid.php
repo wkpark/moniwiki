@@ -13,6 +13,7 @@ We need to be able to perform SSL Verification on the background to check for va
 
 */
 
+#[AllowDynamicProperties]
 class SimpleOpenID{
 	var $openid_url_identity;
 	var $URLs = array();

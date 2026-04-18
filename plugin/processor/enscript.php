@@ -78,8 +78,8 @@ function processor_enscript($formatter,$value) {
     while($s = fgets($fp, 1024)) $html.= $s;
     pclose($fp);
 
-    $html= eregi_replace('^.*<pre>', '<div class="wikiPre"><pre class="wiki">', $html);
-    $html= eregi_replace('<\/PRE>.*$', '</pre></div>', $html);
+    $html= preg_replace('#^.*<pre>#is', '<div class="wikiPre"><pre class="wiki">', $html);
+    $html= preg_replace('#</PRE>.*$#is', '</pre></div>', $html);
     unlink($tmpf);
   }
 

@@ -11,6 +11,7 @@
 
 require_once('lib/difflib.php');
 
+#[AllowDynamicProperties]
 class _Diff3_Block {
     var $type = 'diff3';
     
@@ -58,6 +59,7 @@ class _Diff3_CopyBlock extends _Diff3_Block {
     }
 }
 
+#[AllowDynamicProperties]
 class _Diff3_BlockBuilder {
     function __construct () {
         $this->_init();
@@ -103,6 +105,7 @@ class _Diff3_BlockBuilder {
 };
 
 
+#[AllowDynamicProperties]
 class Diff3 {
     function __construct ($orig, $final1, $final2) {
         $eng = new _DiffEngine;

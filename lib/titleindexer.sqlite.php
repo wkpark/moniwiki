@@ -8,6 +8,7 @@
  * @license GPLv2
  */
 
+#[AllowDynamicProperties]
 class TitleIndexer_sqlite {
     var $db = NULL;
     var $dbname = '';

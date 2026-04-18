@@ -69,7 +69,7 @@ class Security_community extends Security_base {
     return 1;
   }
 
-  function is_protected($action="read",&$options) {
+  function is_protected($action="read",&$options=null) {
     # password protected POST actions
     $protected_actions=array("rcs","rcspurge","chmod","backup",
       "restore","deletefile",'userinfo', 'rename', 'merge', 'rcsexport');

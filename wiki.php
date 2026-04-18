@@ -261,6 +261,7 @@ FrontPage= "$Config[frontpage]";
 EOS;
 }
 
+#[AllowDynamicProperties]
 class MetaDB {
   function __construct() {
     return;
@@ -288,6 +289,7 @@ class MetaDB {
   }
 }
 
+#[AllowDynamicProperties]
 class Counter_dba {
   var $counter = null;
   var $dba_type;
@@ -357,6 +359,7 @@ class Counter_dba {
   }
 }
 
+#[AllowDynamicProperties]
 class Counter {
   function __construct($DB="") { }
   function incCounter($page,$options="") { }
@@ -364,6 +367,7 @@ class Counter {
   function close() { }
 }
 
+#[AllowDynamicProperties]
 class Security_base {
   var $DB;
 
@@ -390,7 +394,7 @@ class Security_base {
     return 1;
   }
 
-  function is_protected($action="read",$options) {
+  function is_protected($action="read",$options=array()) {
     # password protected POST actions
     $protected_actions=array(
       "deletepage","deletefile","rename","rcspurge","rcs","chmod","backup","restore","rcsimport","revert","userinfo", 'merge');
@@ -439,6 +443,7 @@ function getConfig($configfile, $options=array()) {
   return $config;
 }
 
+#[AllowDynamicProperties]
 class WikiDB {
   function __construct($config) {
     // set configurations
@@ -1285,6 +1290,7 @@ class WikiDB {
   }
 }
 
+#[AllowDynamicProperties]
 class WikiPage {
   var $fp;
   var $filename;
@@ -1704,6 +1710,7 @@ class WikiPage {
 
 }
 
+#[AllowDynamicProperties]
 class Formatter {
   var $sister_idx=1;
   var $group='';
@@ -3953,19 +3960,11 @@ EOJS;
           continue;
         }
       } else {
-        if (PHP_VERSION_ID >= 50300) {
-          $chunk = preg_replace_callback(
+        $chunk = preg_replace_callback(
                     "/(({{{(?:(?:[^{}]+|{[^{}]+}(?!})|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!})|(?<=\\\\)[{}]{3}(?!}))|(?2))*+}}})|".
                     // unclosed inline pre tags
                     "(?:(?!<{{{){{{}}}(?!}}})|{{{(?:{{{|}}})}}}))/x",
                     function($m) { return str_repeat("_", strlen($m[1])); }, $line);
-        } else {
-          $chunk = preg_replace_callback(
-                    "/(({{{(?:(?:[^{}]+|{[^{}]+}(?!})|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!})|(?<=\\\\)[{}]{3}(?!}))|(?2))*+}}})|".
-                    // unclosed inline pre tags
-                    "(?:(?!<{{{){{{}}}(?!}}})|{{{(?:{{{|}}})}}}))/x",
-                    create_function('$m', 'return str_repeat("_", strlen($m[1]));'), $line);
-        }
         if (($p = strpos($chunk, '{{{')) !== false) {
           $processor = '';
           $in_pre = 1;
@@ -5112,7 +5111,7 @@ SCHEMA;
     return true;
   }
 
-  function get_actions($args='',$options) {
+  function get_actions($args,$options) {
     $menu=array();
     if (!empty($this->pi['#action']) && !in_array($this->pi['#action'],$this->actions)){
       $tmp =explode(" ",$this->pi['#action'],2);
@@ -5713,7 +5712,7 @@ MSG;
     $this->forcelink = 0;
   }
 
-  function set_trailer($trailer="",$pagename,$size=5) {
+  function set_trailer($trailer,$pagename,$size=5) {
     global $DBInfo;
     if (empty($trailer)) $trail=$DBInfo->frontpage;
     else $trail=$trailer;
@@ -6848,9 +6847,12 @@ function _session_start($session_id = null, $id = null) {
 
     $expire = isset($Config['session_lifetime']) ? $Config['session_lifetime'] : 86400;
 
+    $secure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ||
+              (!empty($_SERVER['HTTP_X_FORWARDED_PROTO']) && $_SERVER['HTTP_X_FORWARDED_PROTO'] === 'https');
+
     if ($session_id == null) {
         // New session
-        session_set_cookie_params($expire, $path, $domain);
+        session_set_cookie_params($expire, $path, $domain, $secure, true);
 
         session_start();
         $sess_id = session_id();
@@ -6866,7 +6868,7 @@ function _session_start($session_id = null, $id = null) {
 
     if ($session_id == null) {
         // set session cookie.
-        setCookie('MONIWIKI', $session_cookie, time() + $expire, $path, $domain);
+        setCookie('MONIWIKI', $session_cookie, time() + $expire, $path, $domain, $secure, true);
     } else {
         $cleanup_session_cookie = false;
         if (empty($_COOKIE['MONIWIKI'])) {
@@ -6883,17 +6885,17 @@ function _session_start($session_id = null, $id = null) {
             // invalid session cookie.
             // remove MONI_ID, MONIWIKI and session cookie
             if (isset($_COOKIE['MONI_ID']))
-                setCookie('MONI_ID', null, -1, $path, $domain);
+                setCookie('MONI_ID', '', -1, $path, $domain, $secure, true);
             if (isset($_COOKIE['MONIWIKI']))
-                setCookie('MONIWIKI', null, -1, $path, $domain);
+                setCookie('MONIWIKI', '', -1, $path, $domain, $secure, true);
             if (isset($_COOKIE[session_name()]))
-                setCookie(session_name(), null, -1, $path, $domain);
+                setCookie(session_name(), '', -1, $path, $domain, $secure, true);
 
             // reset some variables
             $DBInfo->user->id = 'Anonymous';
             $options['id'] = 'Anonymous';
         } else {
-            session_set_cookie_params($expire, $path, $domain);
+            session_set_cookie_params($expire, $path, $domain, $secure, true);
 
             session_start();
         }

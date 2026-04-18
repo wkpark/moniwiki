@@ -7,6 +7,7 @@
 //
 // EXPERIMENTAL !!
 
+#[AllowDynamicProperties]
 class TagOp {
     var $value;
     var $type;
@@ -45,6 +46,7 @@ class TagSet extends TagOp {
     }
 }
 
+#[AllowDynamicProperties]
 class KoreanStemmer {
     function __construct() {
         include_once(dirname(__FILE__).'/compat.php');
@@ -280,7 +282,7 @@ class KoreanStemmer {
             #print($buf);
             $type = $this->tagName($t);
             $pre = $k;
-            $pl = strlen(utf8_decode($pre));
+            $pl = mb_strlen($pre, 'UTF-8');
             if ($pl == 1 and strlen($word) > 1) { // not found
                 // split word to prefix + new word
                 // 5 => 2 + 3, 3 + 2 / 1 + 4

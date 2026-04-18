@@ -22,6 +22,7 @@
 #
 #
 
+#[AllowDynamicProperties]
 class processor_parsedown
 {
     #

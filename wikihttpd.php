@@ -39,6 +39,7 @@ if (!empty($_SERVER['SERVER_SOFTWARE']) || !isset($argv) || $argv[0] != 'wikihtt
   exit;
 }
 
+#[AllowDynamicProperties]
 class simple_server {
   var $runing=false;
   var $document_root;

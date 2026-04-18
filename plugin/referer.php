@@ -102,7 +102,7 @@ function macro_Referer($formatter, $value, &$options) {
         $fields[0] = date("Y-m-d H:i:s", strtotime($fields[0])+$tz_offset);
         $fields[1] = $formatter->link_tag(_rawurlencode($fields[1]), "", urldecode($fields[1]));
         $found = '';
-        if (ereg("[?&][pqQ](uery)?=([^&]+)&?", $fields[2], $regs)) {
+        if (preg_match("/[?&][pqQ](uery)?=([^&]+)&?/", $fields[2], $regs)) {
             $check = strpos($regs[2],'%'); # is it urlecnoded ?
             if ($check !== false) {
                 $found = urldecode($regs[2]);

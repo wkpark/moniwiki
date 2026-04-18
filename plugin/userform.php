@@ -477,7 +477,7 @@ function do_userform($formatter,$options) {
         if (isset($options['_chall'])) {
           $chall= $options['challenge'];
         } else {
-          $chall= rand(100000);
+          $chall= rand(100000, 999999);
           $options['password']=hmac($chall,$options['password']);
         }
       }

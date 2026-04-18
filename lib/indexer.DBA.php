@@ -7,6 +7,7 @@
 // heavily modified to adopt to the MoniWiki 2003/07/19 by wkpark
 // $Id$
 
+#[AllowDynamicProperties]
 class Indexer_dba {
     var $db = null;
     var $type = 'N'; // N for 32-bit. n for 16 bit.
@@ -17,7 +18,7 @@ class Indexer_dba {
     var $prefix = '';
     var $use_stemming = 0; // 0: noop / 1: fake stemming / 2: using KoreanStemmer 
 
-    function __construct($arena,$mode='r',$type, $prefix = '') {
+    function __construct($arena,$mode,$type, $prefix = '') {
         global $DBInfo;
 
         $this->index_dir=$DBInfo->cache_dir.'/index';

@@ -69,7 +69,7 @@ class Security_userbased extends Security_base {
     return 1;
   }
 
-  function is_protected($action="read",&$options) {
+  function is_protected($action="read",&$options=null) {
     # password protected POST actions
     $protected_actions=array("rcs","rcspurge","chmod","backup","restore",
         "userinfo", "rename", "rcsexport", "merge");

@@ -6,6 +6,7 @@
 // @author wkpark@kldp.org
 //
 
+#[AllowDynamicProperties]
 class PageKey_base {
     function __construct($pagename) {
     }

@@ -13,6 +13,7 @@
  * @license GPL
  */
 
+#[AllowDynamicProperties]
 class processor_monimarkup
 {
     var $_type='wikimarkup';
@@ -672,8 +673,8 @@ class processor_monimarkup
                         $val1=$val;
                         $val=preg_replace("/^[ ]*$/m","",$val1);
                         # fix for Wikiwyg !!
-                        $val=preg_replace("/(\n{2,})/es",
-                            'str_repeat("\n<br />",strlen("$1"))."\n"',$val);
+                        $val=preg_replace_callback("/(\n{2,})/s",
+                            function($m) { return str_repeat("\n<br />", strlen($m[1]))."\n"; },$val);
                         unset($val1);
                     }
                     #print "<pre>".htmlspecialchars($val)."</pre>";

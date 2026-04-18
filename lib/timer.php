@@ -9,6 +9,7 @@
 // $Id$
 //
 
+#[AllowDynamicProperties]
 class Timer {
     var $timers = array();
     var $total = 0.0;

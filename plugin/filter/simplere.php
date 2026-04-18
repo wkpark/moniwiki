@@ -37,6 +37,7 @@ function filter_simplere($formatter,$value,$options) {
     return $value;
 }
 
+#[AllowDynamicProperties]
 class SimpleReFilter {
     var $rule = array();
     var $repl = array();

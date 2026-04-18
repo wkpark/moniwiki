@@ -51,6 +51,7 @@ define( 'MARKDOWNEXTRA_VERSION',  "1.1.7" ); # Wed 26 Sep 2007
 # Markdown Parser Class
 #
 
+#[AllowDynamicProperties]
 class Markdown_Parser {
 
 	# Regex to match balanced [brackets].
@@ -1298,16 +1299,10 @@ class Markdown_Parser {
 	# function that will loosely count the number of UTF-8 characters with a
 	# regular expression.
 	#
-		if (function_exists($this->utf8_strlen)) return;
-		if (PHP_VERSION_ID >= 50300) {
-			$this->utf8_strlen = function($text) { return preg_match_all(
+		if (!is_string($this->utf8_strlen) || function_exists($this->utf8_strlen)) return;
+		$this->utf8_strlen = function($text) { return preg_match_all(
 			"/[\\x00-\\xBF]|[\\xC0-\\xFF][\\x80-\\xBF]*/",
 			$text, $m); };
-		} else {
-			$this->utf8_strlen = create_function('$text', 'return preg_match_all(
-			"/[\\\\x00-\\\\xBF]|[\\\\xC0-\\\\xFF][\\\\x80-\\\\xBF]*/", 
-			$text, $m);');
-		}
 	}
 
 

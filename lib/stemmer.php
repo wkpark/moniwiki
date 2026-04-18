@@ -16,6 +16,7 @@
  * How easy is that?
  */
 
+#[AllowDynamicProperties]
 class PorterStemmer
 {
     /**

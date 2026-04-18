@@ -16,7 +16,7 @@ class Security_desktop extends Security_base {
     return 1;
   }
 
-  function is_protected($action="read",$options) {
+  function is_protected($action="read",$options=array()) {
     return 0;
   }
 }

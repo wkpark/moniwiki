@@ -10,6 +10,7 @@ define('LEAFCOUNT',2);
 define('FONTSIZE',8);
 define('FONTNAME','WEBDOTFONT');
 
+#[AllowDynamicProperties]
 class LinkTree {
   var $cache=null;
   function __construct($arena='pagelinks') {
@@ -136,7 +137,7 @@ HEAD;
 
   $allnode=array_keys($node);
   $out = '';
-  while (list($leafname,$leaf) = @each ($node)) {
+  foreach ($node as $leafname => $leaf) {
     while (!empty($leafname)) {
       //$leafkey = _rawurlencode($leafname); // for old graphviz
       $leafkey = $leafname;

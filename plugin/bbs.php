@@ -52,6 +52,7 @@ function _get_pagelist($formatter,$pages,$action,$curpage=1,$listcount=10,$bra="
   return $pnut;
 }
 
+#[AllowDynamicProperties]
 class BBS_text {
     function __construct($name,$conf) {
         # $conf['data_dir'] from DBInfo.
@@ -974,7 +975,7 @@ EOF;
                     if (!preg_match('/^((ftp|http|news):\/\/)[a-z0-9][a-z0-9_\-]+\.[a-z0-9\-\.]+.*/',$home)) {
                         $options['msg']=_("Invalid HomePage address.");
                         break;   
-                    } else if (!eregi("^(ftp|http|news):\/\/",$home)) {
+                    } else if (!preg_match("#^(ftp|http|news)://#i",$home)) {
                         $home="http://".$home;
                     }
                 }

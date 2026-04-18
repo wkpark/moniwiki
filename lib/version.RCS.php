@@ -7,6 +7,7 @@
 // @author wkpark@kldp.org
 //
 
+#[AllowDynamicProperties]
 class Version_RCS
 {
     var $NULL = '';

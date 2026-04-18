@@ -33,6 +33,7 @@ function postfilter_abbr($formatter,$value,$options) {
     return implode('',$chunks);
 }
 
+#[AllowDynamicProperties]
 class SimpleDict {
     var $dicts=array();
     function __construct($dicts) {

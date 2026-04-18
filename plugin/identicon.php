@@ -16,6 +16,7 @@
  * Revision: $Id: identicon.php,v 1.1 2010/09/11 13:19:08 wkpark Exp $
 */
 
+#[AllowDynamicProperties]
 class identicon {
 	var $identicon_options;
 	var $blocks;
@@ -281,7 +282,7 @@ function identicon_get_options() {
 	return($identicon_array);
 }
 
-function do_identicon($formatter = null, $params) {
+function do_identicon($formatter, $params) {
 	//create identicon for later use
 	static $identicon = null;
 

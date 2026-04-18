@@ -79,7 +79,7 @@ class Security_nforge extends Security_base {
     return 1;
   }
 
-  function is_protected($action="read",&$options) {
+  function is_protected($action="read",&$options=null) {
     $perm =& $this->DB->group->getPermission( session_get_user() );
     // check if the user is docman's admin
     if ($perm and !$perm->isError()) {

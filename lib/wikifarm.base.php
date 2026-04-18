@@ -14,6 +14,7 @@
 // Param: wikifarm_autocreate=1
 // Param: wikifarm_autoseed=0
 
+#[AllowDynamicProperties]
 class WikiFarm_base {
     /**
      * Function - get wikifarm string

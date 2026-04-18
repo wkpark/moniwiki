@@ -20,6 +20,7 @@ define('HTTP_NL',"\r\n");
  * @author Andreas Gohr <andi@splitbrain.org>
  * @author Tobias Sarnowski <sarnowski@new-thoughts.org>
  */
+#[AllowDynamicProperties]
 class HTTPClient {
     //set these if you like
     var $agent;         // User agent

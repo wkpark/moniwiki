@@ -51,6 +51,7 @@
 
 define('__TEMPLATE_UNDERSCORE_VER__','2.2.8-mw');
 
+#[AllowDynamicProperties]
 class Template_Compiler_
 {
 	function _compile_template($tpl, $source, $params=array())

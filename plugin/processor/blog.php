@@ -9,7 +9,7 @@
 // this processor is used internally by the Blog action
 // $Id: blog.php,v 1.29 2010/08/23 09:20:34 wkpark Exp $
 
-function processor_blog($formatter,$value="",$options) {
+function processor_blog($formatter,$value,$options) {
   static $date_anchor='';
   global $DBInfo;
   #static $tackback_list=array();

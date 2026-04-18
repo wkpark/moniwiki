@@ -5,6 +5,7 @@
 // See http://moniwiki.sourceforge.net/wiki.php/FoafOnMoniWiki
 // $Id: foaf.php,v 1.6 2010/09/07 14:03:08 wkpark Exp $
 //
+#[AllowDynamicProperties]
 class FoafParser {
 
    var $insideitem = false;

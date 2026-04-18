@@ -158,7 +158,7 @@ EOF;
 
   //uasort($hits, 'strcasecmp');
   //$order = 0;
-  //uasort($hits, create_function('$a, $b', 'return ' . ($order ? '' : '-') . '(strcasecmp($a, $b));'));
+  //uasort($hits, function($a, $b) use ($order) { return ($order ? 1 : -1) * strcasecmp($a, $b); });
   $name = array_keys($hits);
   array_multisort($hits, SORT_DESC, $name, SORT_ASC);
 

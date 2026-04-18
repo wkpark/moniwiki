@@ -18,6 +18,7 @@
  * @license GPL
  */
 
+#[AllowDynamicProperties]
 class processor_bbcode {
 
   function __listing($mode, $str) {

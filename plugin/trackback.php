@@ -109,6 +109,7 @@ function do_trackback($formatter,$options) {
   send_error(0,'Successfully added');
 }
 
+#[AllowDynamicProperties]
 class TrackBack_text {
   function get_trackbacks() {
     global $DBInfo;

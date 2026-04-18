@@ -15,6 +15,7 @@
 /**
  * simple Dictionary class with dictionary
  */
+#[AllowDynamicProperties]
 class _localDict {
     var $vars = array();
 

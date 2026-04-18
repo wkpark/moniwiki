@@ -14,7 +14,7 @@
 // Usage: [[ShareButtons]]
 //
 
-function macro_ShareButtons($formatter, $value = '', $params) {
+function macro_ShareButtons($formatter, $value, $params) {
     global $DBInfo;
 
     $lang = $DBInfo->lang;

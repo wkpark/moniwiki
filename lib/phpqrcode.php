@@ -96,6 +96,7 @@
 	define('QR_FORMAT_TEXT', 0);
 	define('QR_FORMAT_PNG',  1);
 	
+	#[AllowDynamicProperties]
 	class qrstr {
 		public static function set(&$srctab, $x, $y, $repl, $replLen = false) {
 			$srctab[$y] = substr_replace($srctab[$y], ($replLen !== false)?substr($repl,0,$replLen):$repl, $x, ($replLen !== false)?$replLen:strlen($repl));
@@ -156,6 +157,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+    #[AllowDynamicProperties]
     class QRtools {
     
         //----------------------------------------------------------------------
@@ -365,6 +367,7 @@
     define('QRCAP_REMINDER',     2);
     define('QRCAP_EC',           3);
 
+    #[AllowDynamicProperties]
     class QRspec {
     
         public static $capacity = array(
@@ -949,10 +952,11 @@
 
     define('QR_IMAGE', true);
 
+    #[AllowDynamicProperties]
     class QRimage {
 
         //----------------------------------------------------------------------
-        public static function png($frame, $filename = false, $pixelPerPoint = 4, $outerFrame = 4,$saveandprint=FALSE, $back_color, $fore_color)
+        public static function png($frame, $filename = false, $pixelPerPoint = 4, $outerFrame = 4, $saveandprint = FALSE, $back_color = 0xFFFFFF, $fore_color = 0x000000)
         {
             $image = self::image($frame, $pixelPerPoint, $outerFrame, $back_color, $fore_color);
 
@@ -1067,6 +1071,7 @@
     define('STRUCTURE_HEADER_BITS',  20);
     define('MAX_STRUCTURED_SYMBOLS', 16);
 
+    #[AllowDynamicProperties]
     class QRinputItem {
     
         public $mode;
@@ -1310,6 +1315,7 @@
     
     //##########################################################################
 
+    #[AllowDynamicProperties]
     class QRinput {
 
         public $items;
@@ -1800,6 +1806,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
      
+    #[AllowDynamicProperties]
     class QRbitstream {
     
         public $data = array();
@@ -1993,6 +2000,7 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
+    #[AllowDynamicProperties]
     class QRsplit {
 
         public $dataStr = '';
@@ -2309,6 +2317,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
  
+    #[AllowDynamicProperties]
     class QRrsItem {
     
         public $mm;                  // Bits per symbol 
@@ -2465,6 +2474,7 @@
     
     //##########################################################################
     
+    #[AllowDynamicProperties]
     class QRrs {
     
         public static $items = array();
@@ -2528,6 +2538,7 @@
 	define('N3', 40);
 	define('N4', 10);
 
+	#[AllowDynamicProperties]
 	class QRmask {
 
 		public $runLength = array();
@@ -2859,6 +2870,7 @@
  * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
  
+    #[AllowDynamicProperties]
     class QRrsblock {
         public $dataLength;
         public $data = array();
@@ -2878,6 +2890,7 @@
     
     //##########################################################################
 
+    #[AllowDynamicProperties]
     class QRrawcode {
         public $version;
         public $datacode = array();
@@ -2987,6 +3000,7 @@
 
     //##########################################################################
     
+    #[AllowDynamicProperties]
     class QRcode {
     
         public $version;
@@ -3151,6 +3165,7 @@
     
     //##########################################################################
     
+    #[AllowDynamicProperties]
     class FrameFiller {
     
         public $width;
@@ -3241,6 +3256,7 @@
     
     //##########################################################################    
     
+    #[AllowDynamicProperties]
     class QRencode {
     
         public $casesensitive = true;
@@ -3435,6 +3451,7 @@
  
     define('QR_VECT', true);
 
+    #[AllowDynamicProperties]
     class QRvect {
     
         //----------------------------------------------------------------------
@@ -3548,7 +3565,7 @@
         }
         
         //----------------------------------------------------------------------
-        public static function svg($frame, $filename = false, $pixelPerPoint = 4, $outerFrame = 4,$saveandprint=FALSE, $back_color, $fore_color) 
+        public static function svg($frame, $filename = false, $pixelPerPoint = 4, $outerFrame = 4, $saveandprint = FALSE, $back_color = 0xFFFFFF, $fore_color = 0x000000)
         {
             $vect = self::vectSVG($frame, $pixelPerPoint, $outerFrame, $back_color, $fore_color);
             

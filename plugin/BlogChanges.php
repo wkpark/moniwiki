@@ -5,6 +5,7 @@
 //
 // $Id: BlogChanges.php,v 1.40 2010/08/23 09:19:15 wkpark Exp $
 
+#[AllowDynamicProperties]
 class Blog_cache {
   function get_all_blogs() {
     global $DBInfo;

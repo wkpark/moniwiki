@@ -400,7 +400,7 @@ function strip_html($page, $removenumbers, $removequotations, $charset = 'UTF-8'
     $result = $page;
 
 /*    if (!preg_match('/charset=UTF-8/iu', $result)) {
-        $result = utf8_encode($result);
+        $result = mb_convert_encoding($result, 'UTF-8', 'ISO-8859-1');
     } else {
         print(" (UTF8)");
     }

@@ -14,6 +14,7 @@
 //assert_options(ASSERT_ACTIVE, 0);
 define('USE_ASSERTS', false);
 
+#[AllowDynamicProperties]
 class _DiffOp {
     var $type;
     var $orig;
@@ -111,6 +112,7 @@ class _DiffOp_Change extends _DiffOp {
  * @author Geoffrey T. Dairiki
  * @access private
  */
+#[AllowDynamicProperties]
 class _DiffEngine
 {
     function diff ($from_lines, $to_lines) {
@@ -391,7 +393,7 @@ class _DiffEngine
 	$i = 0;
 	$j = 0;
 
-	USE_ASSERTS && assert('sizeof($lines) == sizeof($changed)');
+	USE_ASSERTS && assert(sizeof($lines) == sizeof($changed));
 	$len = sizeof($lines);
 	$other_len = sizeof($other_changed);
 
@@ -498,7 +500,8 @@ class _DiffEngine
 /**
  * Class representing a 'diff' between two sequences of strings.
  */
-class Diff 
+#[AllowDynamicProperties]
+class Diff
 {
     var $edits;
 
@@ -697,6 +700,7 @@ extends Diff
  * It is intended that this class be customized via inheritance,
  * to obtain fancier outputs.
  */
+#[AllowDynamicProperties]
 class DiffFormatter
 {
     /**
@@ -857,6 +861,7 @@ class DiffFormatter
 
 define('NBSP', "\r");         // iso-8859-x non-breaking space.
 
+#[AllowDynamicProperties]
 class _HWLDF_WordAccumulator {
     function __construct ($tags = array(), $nbsp = '&nbsp;', $html = null) {
         if (empty($tags))
@@ -1100,7 +1105,8 @@ class DeltaDiffFormatter extends DiffFormatter
 /**
  * a Plain Diff formatter.
  */
-class PlainDiffFormatter 
+#[AllowDynamicProperties]
+class PlainDiffFormatter
 {
     var $trailing_cr = "\n";
 

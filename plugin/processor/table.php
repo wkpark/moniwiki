@@ -19,6 +19,7 @@
  * @description         Moniwiki Table parser
  */
 
+#[AllowDynamicProperties]
 class tableParser {
 
     function __construct()
@@ -306,19 +307,11 @@ class tableParser {
             $pos = 0;
             while (strpos($line, '{{{', $pos) !== false) {
                 // trial test
-                if (PHP_VERSION_ID >= 50300) {
-                    $chunk = preg_replace_callback(
+                $chunk = preg_replace_callback(
                     "/(({{{(?:(?:[^{}]+|{[^{}]+}(?!})|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!}))|(?2))*+}}})|".
                     // unclosed inline pre tags
                     "(?:(?!<{{{){{{}}}(?!}}})|{{{(?:{{{|}}})}}}))/x",
                     function($m) { return str_repeat("_", strlen($m[1])); }, $line);
-                } else {
-                    $chunk = preg_replace_callback(
-                    "/(({{{(?:(?:[^{}]+|{[^{}]+}(?!})|(?<!{){{1,2}(?!{)|(?<!})}{1,2}(?!}))|(?2))*+}}})|".
-                    // unclosed inline pre tags
-                    "(?:(?!<{{{){{{}}}(?!}}})|{{{(?:{{{|}}})}}}))/x",
-                    create_function('$m', 'return str_repeat("_", strlen($m[1]));'), $line);
-                }
 
                 // real test
                 if (($p = strpos($chunk, '{{{', $pos)) !== false) {

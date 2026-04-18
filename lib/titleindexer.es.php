@@ -10,6 +10,7 @@
 require_once "lib/HTTPClient.php";
 require_once "lib/JSON.php";
 
+#[AllowDynamicProperties]
 class TitleIndexer_ES {
     var $text_dir = '';
 

@@ -859,7 +859,7 @@ class Security_ACL extends Security_base {
         return $ret;
     }
 
-    function is_protected($action="read",$options) {
+    function is_protected($action="read",$options=array()) {
         # password protected POST actions
         $action=strtolower($action);
         $action=strtr($action,'-','/'); # for myaction/macro or myaction/ajax

@@ -68,13 +68,13 @@ function macro_PageList($formatter,$arg="",$options=array()) {
   $out = '';
   if (!empty($options['date']) and !is_numeric($k = key($all_pages)) and is_numeric($all_pages[$k])) {
     if ($needle) {
-      while (list($pagename,$mtime) = @each ($all_pages)) {
+      foreach ($all_pages as $pagename => $mtime) {
         preg_match("/$needle/",$pagename,$matches);
         if ($matches) $hits[$pagename]=$mtime;
       }
     } else $hits=$all_pages;
     arsort($hits);
-    while (list($pagename,$mtime) = @each ($hits)) {
+    foreach ($hits as $pagename => $mtime) {
       $out.= '<li>'.$formatter->link_tag(_rawurlencode($pagename),"",
 	_html_escape($pagename)).
 	". . . . [".gmdate("Y-m-d",$mtime+$tz_offset)."]</li>\n";

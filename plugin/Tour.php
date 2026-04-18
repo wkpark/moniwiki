@@ -93,7 +93,7 @@ function macro_Tour($formatter,$value,$options=array()) {
 
     $id=0;
     $outs=array();
-    while (list($leafname,$leaf) = @each ($node)) {
+    foreach ($node as $leafname => $leaf) {
         if (empty($leafs[$leafname])) {
             $urlname=_rawurlencode($leafname);
             $leafs[$leafname]=1;

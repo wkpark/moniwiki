@@ -10,6 +10,7 @@
  *
  */
 
+#[AllowDynamicProperties]
 class Cache_Text {
 	/**
 	 * the cache name

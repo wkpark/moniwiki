@@ -634,7 +634,7 @@ function macro_RecentChanges($formatter,$value='',$options='') {
   $hiderule = null;
   if (!$ismember && !empty($Config['ruleset']['hiderule'])) {
     $rule = implode('|', $Config['ruleset']['hiderule']);
-    if (preg_match('@'.$rule.'@', null) !== false)
+    if (@preg_match('@'.$rule.'@', '') !== false)
       $hiderule = '@'. $rule . '@';
   }
 

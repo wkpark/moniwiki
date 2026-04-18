@@ -355,9 +355,10 @@ EOF;
 
     //move the uploaded file
     if (isset($_FILES['Filedata']['tmp_name'])) {
-        if (preg_match('/\.('.$allowed_re.')$/i', $_FILES['Filedata']['name'])) {
+        $safe_name = basename($_FILES['Filedata']['name']);
+        if (preg_match('/\.('.$allowed_re.')$/i', $safe_name)) {
             move_uploaded_file($_FILES['Filedata']['tmp_name'],
-                $jsupload_dir.'/'.$mysubdir.$_FILES['Filedata']['name']);
+                $jsupload_dir.'/'.$mysubdir.$safe_name);
         }
         echo "Success";
         return;

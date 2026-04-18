@@ -9,8 +9,7 @@ if (!defined('PHP_VERSION_ID')) {
 }
 
 function _stripslashes($str) {
-  if (PHP_VERSION_ID >= 50400) return $str;
-  return get_magic_quotes_gpc() ? stripslashes($str):$str;
+  return $str;
 }
 
 // from gforge perl snippet
@@ -669,7 +668,7 @@ JS;
   print "<br /><input type='submit' value='sow WikiSeeds'></form>\n";
 }
 
-function sow_wikiseed($config,$seeddir='wikiseed',$seeds) {
+function sow_wikiseed($config,$seeddir,$seeds) {
   $seeddir = get_seeddir($seeddir);
   umask(0133);
   print "<pre class='console'>\n";

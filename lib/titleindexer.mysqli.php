@@ -8,6 +8,7 @@
  * @license GPLv2
  */
 
+#[AllowDynamicProperties]
 class TitleIndexer_mysqli {
     var $conn = NULL;
     var $host = 'localhost';
@@ -276,7 +277,7 @@ class TitleIndexer_mysqli {
                 $pages[] = $rows[0];
             }
         }
-        mysql_free_result($res);
+        mysqli_free_result($res);
 
         // return
         $info = array();
@@ -340,7 +341,7 @@ class TitleIndexer_mysqli {
                 $pages[] = $rows[0];
             }
         }
-        mysql_free_result($res);
+        mysqli_free_result($res);
 
         $info = array();
         $info['offset'] = $offset;

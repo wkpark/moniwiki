@@ -263,11 +263,7 @@ EOF;
 */
     if ($bigwords) {
         // 
-        if (PHP_VERSION_ID >= 50300) {
-          $bigwords=array_filter($bigwords, function($a) { return ($a != 1); });
-        } else {
-          $bigwords=array_filter($bigwords,create_function('$a','return ($a != 1);'));
-        }
+        $bigwords=array_filter($bigwords, function($a) { return ($a != 1); });
         foreach ($bigwords as $k=>$v) $words["$k"] = $v;
     }
 
@@ -323,7 +319,7 @@ EOF;
     $fs=MAX_FONT_SZ; // max font-size:24px;
     for ($i=0;$i<$fz;$i++) {
         $ifs=(int)($fs+0.5);
-        $sty[]= " style='font-size:${ifs}px;'";
+        $sty[]= " style='font-size:{$ifs}px;'";
         #print '/'.$ifs;
         $fs-=$fsh;
         $fs=max($fs,9); // min font-size:9px
@@ -545,15 +541,9 @@ function do_keywords($formatter,$options) {
             unset($ws["'"]);
             unset($ws[' ']);
             $ws=array_flip($ws);
-            if (PHP_VERSION_ID >= 50300) {
-                $ws= array_map(function($a) {
-                    return preg_replace("/^([\"'])(.*)\\1$/","\\2",$a);
-                }, $ws); // delete ",'
-            } else {
-                $ws= array_map(create_function('$a',
-                'return preg_replace("/^([\"\'])(.*)\\\\1$/","\\\\2",$a);'),
-                $ws); // delete ",'
-            }
+            $ws= array_map(function($a) {
+                return preg_replace("/^([\"'])(.*)\\1$/","\\2",$a);
+            }, $ws); // delete ",'
             $ws=array_unique($ws);
             $all_keys=array_merge($all_keys,$ws);
             foreach ($ws as $k) {
@@ -600,9 +590,9 @@ function do_keywords($formatter,$options) {
             unset($ws[' ']);
             $ws=array_flip($ws);
 
-            $ws= array_map(create_function('$a',
-                'return preg_replace("/^([\"\'])(.*)\\\\1$/","\\\\2",$a);'),
-                $ws); // delete ",'
+            $ws= array_map(function($a) {
+                return preg_replace("/^([\"'])(.*)\\1$/","\\2",$a);
+            }, $ws); // delete ",'
             if (!is_array($options['key'])) $options['key']=array();
             $options['key']=array_merge($options['key'],$ws);
         }
@@ -681,9 +671,9 @@ function do_keywords($formatter,$options) {
         }
         if (!empty($options['key'])) {
             // XXX
-            $ks= array_map(create_function('$a',
-                'return (strpos($a," ") !== false) ? "\"$a\"":$a;'),
-                $options['key']);
+            $ks= array_map(function($a) {
+                return (strpos($a," ") !== false) ? "\"$a\"":$a;
+            }, $options['key']);
             $raw.="\n".implode(' ',$ks)."\n";
             $lk->write($raw);
             $DBInfo->savePage($lk,"Keywords are added",$options);

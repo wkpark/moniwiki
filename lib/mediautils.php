@@ -138,7 +138,7 @@ endif;
  * @since   2013/12/17
  * @license GPLv2
  */
-function resize_image($ext, $from, $to, $w = 0, $h = 0, $width, $height = 0) {
+function resize_image($ext, $from, $to, $w, $h, $width, $height = 0) {
     global $Config;
 
     if (empty($w) or empty($h)) list($w, $h) = getimagesize($from);
