@@ -3501,6 +3501,12 @@ function ajax_savepage($formatter,$options) {
     return ajax_invalid($formatter,$options);
   }
   $savetext=$options['savetext'];
+  $max_savetext_bytes = isset($DBInfo->savetext_max_bytes) ? intval($DBInfo->savetext_max_bytes) : 2 * 1024 * 1024;
+  if ($max_savetext_bytes > 0 && strlen($savetext) > $max_savetext_bytes) {
+    print "false\n";
+    print _("Page text is too large.");
+    return;
+  }
   $datestamp=$options['datestamp'];
   $hash = $options['hash'];
 
@@ -3623,6 +3629,14 @@ function do_post_savepage($formatter,$options) {
   }
 
   $savetext=$options['savetext'];
+  $max_savetext_bytes = isset($DBInfo->savetext_max_bytes) ? intval($DBInfo->savetext_max_bytes) : 2 * 1024 * 1024;
+  if ($max_savetext_bytes > 0 && strlen($savetext) > $max_savetext_bytes) {
+    $formatter->send_header("", $options);
+    $formatter->send_title(_("Page text is too large."),"",$options);
+    $formatter->send_page("== "._("Page text is too large.")." ==\n");
+    $formatter->send_footer('',$options);
+    return;
+  }
   $datestamp = intval($options['datestamp']);
   $hash = !empty($options['hash']) ? $options['hash'] : '';
   $button_preview = !empty($options['button_preview']) ? 1 : 0;
