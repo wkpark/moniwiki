@@ -24,9 +24,10 @@ jobs:
           submodules: recursive
 
       - name: Setup PHP
-        uses: nanasess/setup-php@v3
+        uses: shivammathur/setup-php@v2
         with:
-          php-version: 8.1
+          php-version: '8.1'
+          tools: none
 
       - name: PHP Lint
         run: if find . -name "*.php" ! -path "./vendor/*" -print0 | xargs -0 -n 1 -P 8 php -l | grep -v "No syntax errors detected"; then exit 1; fi
