@@ -4635,7 +4635,7 @@ EOJS;
       fwrite($fp, $text);
       fclose($fp);
 
-      $fp = popen('diff -u '.$this->page->filename.' '.$tmpf2.$this->NULL, 'r');
+      $fp = popen('diff -u '.escapeshellarg($this->page->filename).' '.escapeshellarg($tmpf2).$this->NULL, 'r');
       if (!is_resource($fp)) {
         unlink($tmpf2);
         return '';
@@ -4684,7 +4684,7 @@ EOJS;
       fwrite($fp, $orig);
       fclose($fp);
 
-      $fp=popen("merge -p ".$this->page->filename." $tmpf2 $tmpf3".$this->NULL,'r');
+      $fp=popen("merge -p ".escapeshellarg($this->page->filename).' '.escapeshellarg($tmpf2).' '.escapeshellarg($tmpf3).$this->NULL,'r');
 
       if (!is_resource($fp)) {
         unlink($tmpf2);

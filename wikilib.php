@@ -3263,8 +3263,10 @@ function do_goto($formatter,$options) {
         $new=iconv($from,$to,$url);
         if ($new) $url=_urlencode($new);
       } else {
-        $buf=exec(escapeshellcmd("echo ".$url." | ".escapeshellcmd("iconv -f $DBInfo->charset -t $to")));
-        $url=_urlencode($buf);
+        $formatter->send_header("",$options);
+        $formatter->send_title(_("Unsupported character conversion"),"",$options);
+        $formatter->send_footer('',$options);
+        return;
       }
     }
     $url=str_replace("&amp;","&",$url);
