@@ -126,6 +126,11 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
     if (!preg_match('@^((ftp|https?)://[^/]+)/@', $url, $m))
         return false;
 
+    if (_fetch_is_private_url($url)) {
+        $params['retval']['error'] = _("Private network URL is not allowed");
+        return false;
+    }
+
     $siteurl = $m[1];
 
     require_once "lib/HTTPClient.php";
@@ -205,6 +210,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
     } else {
         // check connection
         $http = new HTTPClient();
+        $http->url_validator = '_fetch_is_allowed_url';
         // get file header
         $http->nobody = true;
 
@@ -341,6 +347,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
 
         // retry to get all info
         $http = new HTTPClient();
+        $http->url_validator = '_fetch_is_allowed_url';
         if (!empty($buffer_size))
             $http->max_buffer_size = $buffer_size;
         $http->vartmp_dir = $vartmp_dir;
@@ -521,6 +528,26 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
     @ob_clean();
     $ret = readfile($fetchfile);
     return null;
+}
+
+function _fetch_is_private_url($url) {
+    $host = parse_url($url, PHP_URL_HOST);
+    if (empty($host)) return true;
+    $host = strtolower(rtrim($host, '.'));
+    if ($host == 'localhost') return true;
+
+    $ips = filter_var($host, FILTER_VALIDATE_IP) ? array($host) : gethostbynamel($host);
+    if (!$ips) return true;
+
+    foreach ($ips as $ip) {
+        if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE))
+            return true;
+    }
+    return false;
+}
+
+function _fetch_is_allowed_url($url) {
+    return !_fetch_is_private_url($url);
 }
 
 // vim:et:sts=4:sw=4:

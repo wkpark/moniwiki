@@ -31,6 +31,7 @@ class HTTPClient {
     var $max_buffer_size; // store body as a temp file conditionally
     var $max_bodysize;  // abort if the response body is bigger than this
     var $header_regexp; // if set this RE must match against the headers, else abort
+    var $url_validator; // optional callback to validate redirects
     var $headers;
     var $debug;
 
@@ -78,6 +79,7 @@ class HTTPClient {
         $this->debug        = false;
         $this->max_buffer_size = 0;
         $this->max_bodysize = 0;
+        $this->url_validator = null;
         $this->header_regexp= '';
         $this->nobody       = false;
         if(extension_loaded('zlib')) $this->headers['Accept-encoding'] = 'gzip';
@@ -306,6 +308,11 @@ class HTTPClient {
                 if (!preg_match('/^http/i', $this->resp_headers['location'])){
                     $this->resp_headers['location'] = $uri['scheme'].'://'.$uri['host'].
                                                       $this->resp_headers['location'];
+                }
+                if (is_callable($this->url_validator) &&
+                    !call_user_func($this->url_validator, $this->resp_headers['location'])) {
+                    $this->error = 'Redirect URL is not allowed';
+                    return false;
                 }
                 // perform redirected request, always via GET (required by RFC)
                 return $this->sendRequest($this->resp_headers['location'],array(),'GET');
