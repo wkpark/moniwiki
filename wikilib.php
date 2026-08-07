@@ -423,6 +423,24 @@ function _html_escape($string) {
   return preg_replace(array("@<(?=/?\s*\w+[^<>]*)@", '@"@', '@&(?!#?[a-zA-Z0-9]+;)@'), array("&lt;", '&quot;', '&amp;'), $string);
 }
 
+function _safe_filename($name) {
+  return is_string($name) && isset($name[0]) &&
+    $name != '.' && $name != '..' &&
+    strpbrk($name, "/\\") === false && !preg_match('/[\x00-\x1f]/', $name);
+}
+
+function _json_string($string) {
+  $string = str_replace(
+    array("\\", '"', '/', "\r", "\n", "\t", "\x08", "\x0c"),
+    array("\\\\", '\\"', '\\/', "\\r", "\\n", "\\t", "\\b", "\\f"),
+    $string
+  );
+  $string = preg_replace_callback('/[\x00-\x1f]/', function($m) {
+    return sprintf('\\u%04x', ord($m[0]));
+  }, $string);
+  return '"'.$string.'"';
+}
+
 function _rawurlencode($url) {
   $name=rawurlencode($url);
   $urlname = str_replace(array('%2F', '%7E', '%3A'), array('/', '~', ':'), $name);

@@ -4936,6 +4936,12 @@ JSHEAD;
       } else {
         $page_url = qualifiedUrl($this->link_url($this->page->urlname));
       }
+      $page_url_attr = _html_escape($page_url);
+      $sitename_attr = _html_escape($sitename);
+      $title_attr = _html_escape($options['title']);
+      $page_url_json = _json_string($page_url);
+      $sitename_json = _json_string($sitename);
+      $title_json = _json_string($options['title']);
 
       if ($is_show && $this->page->exists()) {
         $oc = new Cache_text('opengraph');
