@@ -2005,8 +2005,10 @@ class WikiUser {
         $path = '; Path='.$Config['cookie_path'];
      else
         $path = '; Path='.dirname(get_scriptname());
+     $secure = (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) != 'off') ? '; Secure' : '';
+     $cookie_attr = $secure.'; HttpOnly; SameSite=Lax';
      return "Set-Cookie: MONI_ID=".$ticket.'.'.urlencode($this->id).
-            '; expires='.gmdate('l, d-M-Y H:i:s', time() + $this->cookie_expires).' GMT '.$path.$domain;
+            '; expires='.gmdate('l, d-M-Y H:i:s', time() + $this->cookie_expires).' GMT '.$path.$domain.$cookie_attr;
   }
 
   function unsetCookie() {
@@ -2036,7 +2038,9 @@ class WikiUser {
         $path = '; Path='.$Config['cookie_path'];
      else
         $path = '; Path='.dirname(get_scriptname());
-     return "Set-Cookie: MONI_ID=".$this->id."; expires=Tuesday, 01-Jan-1999 12:00:00 GMT; Path=".$path.$domain;
+     $secure = (!empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) != 'off') ? '; Secure' : '';
+     $cookie_attr = $secure.'; HttpOnly; SameSite=Lax';
+     return "Set-Cookie: MONI_ID=".$this->id."; expires=Tuesday, 01-Jan-1999 12:00:00 GMT ".$path.$domain.$cookie_attr;
   }
 
   function setPasswd($passwd,$passwd2="",$rawmode=0) {
