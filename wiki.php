@@ -5008,17 +5008,19 @@ JSHEAD;
           $oc->update($this->page->name, $val, time());
         }
 
+        $image_attr = !empty($val['image']) ? _html_escape($val['image']) : '';
+
         if (empty($this->no_ogp)) {
         // for OpenGraph
-        echo '<meta property="og:url" content="'. $page_url.'" />',"\n";
-        echo '<meta property="og:site_name" content="'.$sitename.'" />',"\n";
-        echo '<meta property="og:title" content="'.$options['title'].'" />',"\n";
+        echo '<meta property="og:url" content="'. $page_url_attr.'" />',"\n";
+        echo '<meta property="og:site_name" content="'.$sitename_attr.'" />',"\n";
+        echo '<meta property="og:title" content="'.$title_attr.'" />',"\n";
         if ($is_frontpage)
           echo '<meta property="og:type" content="website" />',"\n";
         else
           echo '<meta property="og:type" content="article" />',"\n";
-        if (!empty($val['image']))
-          echo '<meta property="og:image" content="',$val['image'],'" />',"\n";
+        if (!empty($image_attr))
+          echo '<meta property="og:image" content="',$image_attr,'" />',"\n";
         if (!empty($val['description']))
           echo '<meta property="og:description" content="'.$val['description'].'" />',"\n";
         }
@@ -5026,14 +5028,14 @@ JSHEAD;
         // twitter card
         echo '<meta name="twitter:card" content="summary" />',"\n";
         if (!empty($DBInfo->twitter_id))
-          echo '<meta name="twitter:site" content="',$DBInfo->twitter_id,'">',"\n";
-        echo '<meta name="twitter:domain" content="',$sitename,'" />',"\n";
-        echo '<meta name="twitter:title" content="',$options['title'],'">',"\n";
-        echo '<meta name="twitter:url" content="',$page_url,'">',"\n";
+          echo '<meta name="twitter:site" content="'._html_escape($DBInfo->twitter_id).'">',"\n";
+        echo '<meta name="twitter:domain" content="',$sitename_attr,'" />',"\n";
+        echo '<meta name="twitter:title" content="',$title_attr,'">',"\n";
+        echo '<meta name="twitter:url" content="',$page_url_attr,'">',"\n";
         if (!empty($val['description']))
           echo '<meta name="twitter:description" content="'.$val['description'].'" />',"\n";
-        if (!empty($val['image']))
-          echo '<meta name="twitter:image:src" content="',$val['image'],'" />',"\n";
+        if (!empty($image_attr))
+          echo '<meta name="twitter:image:src" content="',$image_attr,'" />',"\n";
 
         // support google sitelinks serachbox
         if (!empty($DBInfo->use_google_sitelinks)) {
@@ -5042,16 +5044,18 @@ JSHEAD;
               $site_url = $DBInfo->canonical_url;
             else
               $site_url = qualifiedUrl($this->link_url(''));
+            $site_url_json = _json_string($site_url);
+            $search_url_json = _json_string($site_url.'?goto={search_term}');
 
             echo <<<SITELINK
 <script type='application/ld+json'>
 {"@context":"http://schema.org",
  "@type":"WebSite",
- "url":"$site_url",
- "name":"$sitename",
+ "url":$site_url_json,
+ "name":$sitename_json,
  "potentialAction":{
   "@type":"SearchAction",
-  "target":"$site_url?goto={search_term}",
+  "target":$search_url_json,
   "query-input":"required name=search_term"
  }
 }
@@ -5064,9 +5068,9 @@ SITELINK;
 <script type='application/ld+json'>
 {"@context":"http://schema.org",
  "@type":"WebPage",
- "url":"$page_url",
+ "url":$page_url_json,
  "dateModified":"$modified",
- "name":"{$options['title']}"
+ "name":$title_json
 }
 </script>\n
 SCHEMA;
@@ -5074,7 +5078,7 @@ SCHEMA;
           echo '<meta name="description" content="'.$val['description'].'" />',"\n";
       }
       echo '  <title>',$site_title,"</title>\n";
-      echo '  <link rel="canonical" href="',$page_url,'" />',"\n";
+      echo '  <link rel="canonical" href="',$page_url_attr,'" />',"\n";
 
       # echo '<meta property="og:title" content="'.$options['title'].'" />',"\n";
       if (!empty($upper))
@@ -6853,10 +6857,21 @@ function _session_start($session_id = null, $id = null) {
     }
 
     $expire = isset($Config['session_lifetime']) ? $Config['session_lifetime'] : 86400;
+    $secure = !empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) != 'off';
+    $cookie_options = array(
+        'path'=>$path,
+        'domain'=>$domain,
+        'secure'=>$secure,
+        'httponly'=>true,
+        'samesite'=>'Lax',
+    );
+    $cookie_params = array('lifetime'=>$expire) + $cookie_options;
+    $moniwiki_cookie_params = array('expires'=>time() + $expire) + $cookie_options;
+    $expired_cookie_params = array('expires'=>-1) + $cookie_options;
 
     if ($session_id == null) {
         // New session
-        session_set_cookie_params($expire, $path, $domain);
+        session_set_cookie_params($cookie_params);
 
         session_start();
         $sess_id = session_id();
@@ -6872,7 +6887,7 @@ function _session_start($session_id = null, $id = null) {
 
     if ($session_id == null) {
         // set session cookie.
-        setCookie('MONIWIKI', $session_cookie, time() + $expire, $path, $domain);
+        setCookie('MONIWIKI', $session_cookie, $moniwiki_cookie_params);
     } else {
         $cleanup_session_cookie = false;
         if (empty($_COOKIE['MONIWIKI'])) {
@@ -6889,17 +6904,17 @@ function _session_start($session_id = null, $id = null) {
             // invalid session cookie.
             // remove MONI_ID, MONIWIKI and session cookie
             if (isset($_COOKIE['MONI_ID']))
-                setCookie('MONI_ID', null, -1, $path, $domain);
+                setCookie('MONI_ID', null, $expired_cookie_params);
             if (isset($_COOKIE['MONIWIKI']))
-                setCookie('MONIWIKI', null, -1, $path, $domain);
+                setCookie('MONIWIKI', null, $expired_cookie_params);
             if (isset($_COOKIE[session_name()]))
-                setCookie(session_name(), null, -1, $path, $domain);
+                setCookie(session_name(), null, $expired_cookie_params);
 
             // reset some variables
             $DBInfo->user->id = 'Anonymous';
             $options['id'] = 'Anonymous';
         } else {
-            session_set_cookie_params($expire, $path, $domain);
+            session_set_cookie_params($cookie_params);
 
             session_start();
         }
