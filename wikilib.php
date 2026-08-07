@@ -2973,7 +2973,13 @@ function do_post_DeleteFile($formatter,$options) {
       
     if ($options['files']) {
       foreach ($options['files'] as $file) {
+        if (!_safe_filename($file)) {
+          $badfile = is_scalar($file) ? strval($file) : '';
+          $log.=sprintf(_("Invalid file name '%s'")."<br />", _html_escape($badfile));
+          continue;
+        }
         $key=$DBInfo->pageToKeyname($file);
+        $realfile = $file;
 
         if (!is_dir($dir."/".$file) && !is_dir($dir."/".$key)) {
           $fdir=$options['value'] ? _html_escape($options['value']).':':'';
@@ -3003,6 +3009,15 @@ function do_post_DeleteFile($formatter,$options) {
     if (!$file) {
       $file=$page;
       $page=$formatter->page->name;
+    }
+    if (!_safe_filename($file)) {
+      $title = sprintf(_("No files are selected !"));
+      $log = sprintf(_("Invalid file name '%s'")."<br />", _html_escape($file));
+      $formatter->send_header("",$options);
+      $formatter->send_title($title,"",$options);
+      print $log;
+      $formatter->send_footer('',$options);
+      return;
     }
     $page = _html_escape($page);
     $file = _html_escape($file);
