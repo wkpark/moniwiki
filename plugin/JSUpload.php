@@ -355,9 +355,14 @@ EOF;
 
     //move the uploaded file
     if (isset($_FILES['Filedata']['tmp_name'])) {
-        if (preg_match('/\.('.$allowed_re.')$/i', $_FILES['Filedata']['name'])) {
+        $upfilename = str_replace('\\', '/', $_FILES['Filedata']['name']);
+        $upfilename = basename($upfilename);
+        $upfilename = str_replace(array(" ", ":"), "_", $upfilename);
+        $protected_exts = !empty($DBInfo->pds_protected) ? $DBInfo->pds_protected :"pl|cgi|php|php3|php4|php5|phtml";
+        if (preg_match('/\.('.$allowed_re.')$/i', $upfilename) &&
+            !preg_match('/(^|\.)(?:'.$protected_exts.')(?:\.|$)/i', $upfilename)) {
             move_uploaded_file($_FILES['Filedata']['tmp_name'],
-                $jsupload_dir.'/'.$mysubdir.$_FILES['Filedata']['name']);
+                $jsupload_dir.'/'.$mysubdir.$upfilename);
         }
         echo "Success";
         return;
