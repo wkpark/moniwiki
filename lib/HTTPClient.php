@@ -632,7 +632,7 @@ class HTTPClient {
         foreach($lines as $line){
             @list($key,$val) = explode(':',$line,2);
             $key = strtolower(trim($key));
-            $val = trim($val);
+            $val = trim((string) $val);
             if(empty($val)) continue;
             if(isset($headers[$key])){
                 if(is_array($headers[$key])){
