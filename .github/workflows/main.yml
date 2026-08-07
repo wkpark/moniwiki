@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout Repo.
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           submodules: recursive
 
@@ -35,9 +35,9 @@ jobs:
         id: setup
         run: |
           HASH=$(git rev-parse HEAD | cut -c1-9)
-          echo "::set-output name=commitHash::$HASH"
+          echo "commitHash=$HASH" >> "$GITHUB_OUTPUT"
           VER=$(grep '$_release' wiki.php |awk '{print $3}' |sed "s/';\|'//g")
-          echo "::set-output name=version::$VER"
+          echo "version=$VER" >> "$GITHUB_OUTPUT"
 
       - name: Build Tarball
         run: |
@@ -78,7 +78,7 @@ jobs:
           ls -al release
 
       - name: Upload Build Artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: moniwiki-${{ steps.setup.outputs.version }}-${{ steps.setup.outputs.commitHash }}
           path: |
@@ -99,10 +99,10 @@ jobs:
         id: metadata
         run: |
           ## METADATA SCRIPT
-          echo "::set-output name=version::${GITHUB_REF/refs\/tags\//}"
+          echo "version=${GITHUB_REF/refs\/tags\//}" >> "$GITHUB_OUTPUT"
 
       - name: Download build artifacts
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
 
       - name: Generate Checksums
         run: |
