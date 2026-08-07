@@ -12,12 +12,20 @@ function do_post_restore($formatter,$options) {
   umask(02);
 
   if ($options['ticket'] and $options['tar']) {
-    $tar=$DBInfo->upload_dir."/".$options['tar'];
+    $tarfile = basename(str_replace('\\', '/', $options['tar']));
+    if ($tarfile != $options['tar']) {
+      $title = _("Error: invalid tarball name");
+      $formatter->send_header("",$options);
+      $formatter->send_title($title,"",$options);
+      $formatter->send_footer("",$options);
+      return;
+    }
+    $tar=$DBInfo->upload_dir."/".$tarfile;
 
     if ($options['show'])
-      $cmd="tar tzf $tar";
+      $cmd="tar tzf ".escapeshellarg($tar);
     else
-      $cmd="tar xzf $tar";
+      $cmd="tar xzf ".escapeshellarg($tar);
 
     if (file_exists($DBInfo->text_dir)) {
       $title = _("Error: Don't try to overwrite it");
@@ -47,7 +55,7 @@ function do_post_restore($formatter,$options) {
 
     $formatter->send_footer("",$options);
   } else if ($options['value']) {
-    $title = sprintf(_("Restore %s ?"),$options['value']);
+    $title = sprintf(_("Restore %s ?"),_html_escape($options['value']));
 
     $formatter->send_header("",$options);
     $formatter->send_title($title,"",$options);
@@ -57,7 +65,7 @@ function do_post_restore($formatter,$options) {
     if ($DBInfo->security->is_protected("restore",$options))
       $out.="Password: <input type='password' name='passwd' size='10' />\n";
     $out.="<input type='hidden' name='ticket' value='hello' /> \n";
-    $out.="<input type='hidden' name='tar' value='$options[value]' /> \n";
+    $out.="<input type='hidden' name='tar' value='"._html_escape($options['value'])."' /> \n";
     $out.="<input type='checkbox' name='show' checked='checked' />show only\n";
     $out.="<input type='submit' value='Restore now' /></form>\n";
     print $out;
