@@ -429,6 +429,10 @@ function _safe_filename($name) {
     strpbrk($name, "/\\") === false && !preg_match('/[\x00-\x1f]/', $name);
 }
 
+function _safe_class_token($name) {
+  return is_string($name) && preg_match('/\A[A-Za-z0-9_-]+\z/', $name);
+}
+
 function _json_string($string) {
   $string = str_replace(
     array("\\", '"', '/', "\r", "\n", "\t", "\x08", "\x0c"),
@@ -2062,6 +2066,7 @@ class WikiUser {
      preg_match("/[$SPECIAL]/",$id,$match);
      if (!$id || $match)
         return false;
+     if (preg_match('/[\x00-\x1f\x7f]/', $id)) return false;
      if (preg_match('/^\d/', $id)) return false;
      return true;
   }
@@ -2768,7 +2773,7 @@ EXTRA;
 EOS;
     $emailform = '';
     if (!empty($DBInfo->anonymous_friendly) and $options['id'] == 'Anonymous') {
-      $useremail = isset($DBInfo->user->verified_email) ? $DBInfo->user->verified_email : '';
+      $useremail = isset($DBInfo->user->verified_email) ? _html_escape($DBInfo->user->verified_email) : '';
       if ($useremail) {
         $email_msg = _("E-Mail");
         $send_msg = sprintf(_("Send mail to %s"), "<span class='email'>".$useremail."</span>");
@@ -3308,10 +3313,11 @@ function do_goto($formatter,$options) {
     }
     $url=str_replace("&amp;","&",$url);
     if (!preg_match("/^(https?:\/\/|ftp:\/\/)/",$options['url'])) {
+       $url = _html_escape(preg_replace('/[[:cntrl:]]/', ' ', $options['url']));
        print <<<HEADER
 <html>
   <head>
-    <meta http-equiv="refresh" content="0;URL=$options[url]">
+    <meta http-equiv="refresh" content="0;URL=$url">
   </head>
   <body bgcolor="#FFFFFF" text="#000000">
   </body>
@@ -4918,6 +4924,7 @@ FORM;
   if ($user->id == 'Anonymous' && !empty($DBInfo->anonymous_friendly)) {
     $verifiedemail = isset($options['verifyemail']) ? $options['verifyemail'] :
                     (isset($user->verified_email) ? $user->verified_email : '');
+    $verifiedemail = _html_escape($verifiedemail);
     $button3 =_("Verify E-mail address");
     $button4 =_("Remove");
     $remove = '';
@@ -5891,7 +5898,7 @@ function processor_plain($formatter,$value, $options=array()) {
             $extra = !empty($extra) ? $class.' '.$extra:$class;
             $class = $tag;
         }
-        if (!empty($class)) $cls[]=$class;
+        if (!empty($class) && _safe_class_token($class)) $cls[]=$class;
     }
     $class = implode(' ',$cls);
 

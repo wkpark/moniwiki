@@ -142,4 +142,86 @@ final class WikiRequestAuthStateTest extends TestCase
         $this->assertFalse(_minor_line_delta('phpinfo()'));
         $this->assertFalse(_minor_line_delta('+1; phpinfo()'));
     }
+
+    public function testClassTokenAllowsOnlySafeCssClassNames(): void
+    {
+        $this->assertTrue(_safe_class_token('wiki-note_1'));
+        $this->assertFalse(_safe_class_token('x" onclick="alert(1)'));
+        $this->assertFalse(_safe_class_token("x\ny"));
+        $this->assertFalse(_safe_class_token('../wiki'));
+    }
+
+    public function testWikiUserRejectsControlCharactersInIds(): void
+    {
+        $user = new WikiUser('ValidUser');
+
+        $this->assertTrue($user->checkID('ValidUser'));
+        $this->assertFalse($user->checkID("Bad\r\nBcc: attacker@example.com"));
+    }
+
+    public function testPlainProcessorDropsUnsafeClassToken(): void
+    {
+        $out = processor_plain(null, "#!plain x' onclick='alert(1)\nhello");
+
+        $this->assertStringContainsString("<pre class='wiki'>", $out);
+        $this->assertStringNotContainsString("onclick", $out);
+    }
+
+    public function testGotoMetaRefreshEscapesInternalUrl(): void
+    {
+        $GLOBALS['DBInfo'] = new stdClass();
+        $GLOBALS['DBInfo']->charset = 'UTF-8';
+        $GLOBALS['DBInfo']->interwikirule = 'NoSuchWiki';
+
+        ob_start();
+        do_goto(new stdClass(), array(
+            'value'=>'',
+            'url'=>'Self:" autofocus onfocus="alert(1)',
+            'ie'=>'',
+            'oe'=>'UTF-8',
+        ));
+        $out = ob_get_clean();
+
+        $this->assertStringContainsString('URL=Self:&quot; autofocus onfocus=&quot;alert(1)', $out);
+        $this->assertStringNotContainsString('URL=Self:" autofocus', $out);
+    }
+
+    public function testUserPreferencesEscapesVerifiedEmailValue(): void
+    {
+        $server = $_SERVER;
+        $_SERVER['SERVER_PORT'] = '80';
+        $_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
+        $_SERVER['HTTP_HOST'] = 'example.com';
+        $_SERVER['HTTPS'] = '';
+
+        $GLOBALS['DBInfo'] = new stdClass();
+        $GLOBALS['DBInfo']->anonymous_friendly = true;
+        $GLOBALS['DBInfo']->user = new WikiUser();
+        $GLOBALS['DBInfo']->user->verified_email = '" autofocus onfocus="alert(1)';
+
+        $formatter = new class {
+            public $_macrocache = false;
+            public $_dynamic_macros = array();
+            public $page;
+
+            public function __construct()
+            {
+                $this->page = (object)array('urlname'=>'UserPreferences');
+            }
+
+            public function link_url($pageurl, $query_string = '')
+            {
+                return '/wiki.php'.$query_string;
+            }
+        };
+
+        try {
+            $out = macro_UserPreferences($formatter, '', array());
+        } finally {
+            $_SERVER = $server;
+        }
+
+        $this->assertStringContainsString('value="&quot; autofocus onfocus=&quot;alert(1)"', $out);
+        $this->assertStringNotContainsString('value="" autofocus', $out);
+    }
 }
