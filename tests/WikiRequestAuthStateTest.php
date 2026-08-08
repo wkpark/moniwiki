@@ -167,6 +167,49 @@ final class WikiRequestAuthStateTest extends TestCase
         $this->assertStringNotContainsString("onclick", $out);
     }
 
+    public function testQualifiedUrlNormalizesHostAndKeepsProxyPortBehavior(): void
+    {
+        $server = $_SERVER;
+        $_SERVER['SERVER_PORT'] = '8080';
+        $_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
+        $_SERVER['HTTP_HOST'] = 'Example.COM:12345';
+        $_SERVER['SERVER_NAME'] = 'fallback.example';
+        $_SERVER['HTTPS'] = '';
+
+        try {
+            $this->assertSame('http://example.com/wiki.php', qualifiedUrl('/wiki.php'));
+
+            $_SERVER['HTTP_HOST'] = "bad.example\r\nX-Test: 1";
+            $this->assertSame('http://fallback.example/wiki.php', qualifiedUrl('/wiki.php'));
+        } finally {
+            $_SERVER = $server;
+        }
+    }
+
+    public function testWikiUserCookieDomainUsesNormalizedHost(): void
+    {
+        $server = $_SERVER;
+        $config = isset($GLOBALS['Config']) ? $GLOBALS['Config'] : null;
+        $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+        $_SERVER['SERVER_NAME'] = 'localhost';
+        $_SERVER['HTTP_HOST'] = 'Example.COM:12345';
+        $_SERVER['REQUEST_URI'] = '/wiki.php';
+        $_SERVER['HTTPS'] = '';
+        $GLOBALS['Config'] = array();
+
+        try {
+            $user = new WikiUser('ValidUser');
+            $cookie = $user->setCookie();
+        } finally {
+            $_SERVER = $server;
+            if ($config === null) unset($GLOBALS['Config']);
+            else $GLOBALS['Config'] = $config;
+        }
+
+        $this->assertStringContainsString('; Domain=example.com', $cookie);
+        $this->assertStringNotContainsString('12345', $cookie);
+    }
+
     public function testGotoMetaRefreshEscapesInternalUrl(): void
     {
         $GLOBALS['DBInfo'] = new stdClass();
@@ -196,7 +239,9 @@ final class WikiRequestAuthStateTest extends TestCase
 
         $GLOBALS['DBInfo'] = new stdClass();
         $GLOBALS['DBInfo']->anonymous_friendly = true;
+        $GLOBALS['DBInfo']->url_prefix = '';
         $GLOBALS['DBInfo']->user = new WikiUser();
+        $GLOBALS['DBInfo']->user->id = 'Anonymous';
         $GLOBALS['DBInfo']->user->verified_email = '" autofocus onfocus="alert(1)';
 
         $formatter = new class {
@@ -223,5 +268,77 @@ final class WikiRequestAuthStateTest extends TestCase
 
         $this->assertStringContainsString('value="&quot; autofocus onfocus=&quot;alert(1)"', $out);
         $this->assertStringNotContainsString('value="" autofocus', $out);
+    }
+
+    public function testInterWikiEscapesGeneratedAttributes(): void
+    {
+        $GLOBALS['DBInfo'] = new stdClass();
+        $GLOBALS['DBInfo']->interwiki = array(
+            'BAD'=>'https://example.com/\' onclick=\'alert(1)',
+        );
+        $GLOBALS['DBInfo']->interwikirule = 'BAD';
+        $GLOBALS['DBInfo']->intericon = array(
+            'BAD'=>array(16, 16, "https://example.com/icon.png' onerror='alert(1)"),
+        );
+        $GLOBALS['DBInfo']->imgs_url_interwiki = '/imgs/interwiki/';
+
+        $out = macro_InterWiki((object)array('refresh'=>false), '', array());
+
+        $this->assertStringContainsString('https://example.com/&#039; onclick=&#039;alert(1)', $out);
+        $this->assertStringNotContainsString("src='https://example.com/icon.png' onerror", $out);
+        $this->assertStringNotContainsString("href='https://example.com/' onclick", $out);
+    }
+
+    public function testInterWikiDropsScriptableLinks(): void
+    {
+        $GLOBALS['DBInfo'] = new stdClass();
+        $GLOBALS['DBInfo']->interwiki = array('BAD'=>'javascript:alert(1)');
+        $GLOBALS['DBInfo']->interwikirule = 'BAD';
+        $GLOBALS['DBInfo']->intericon = array();
+        $GLOBALS['DBInfo']->imgs_url_interwiki = '/imgs/interwiki/';
+
+        $out = macro_InterWiki((object)array('refresh'=>false), '', array());
+
+        $this->assertStringContainsString("href='#'", $out);
+        $this->assertStringNotContainsString('javascript:alert', $out);
+    }
+
+    public function testTableOfContentsTitleKeepsSafeMarkupAndFiltersScriptBoundaries(): void
+    {
+        $GLOBALS['DBInfo'] = new class {
+            public function hasPage($page)
+            {
+                return false;
+            }
+        };
+
+        $formatter = new class {
+            public $text = "== Heading ==\n";
+            public $wordrule = '';
+            public $footrule = '';
+            public $baserule = '/a^/';
+            public $baserepl = '';
+
+            public function macro_repl($macro, $value = '', $options = array())
+            {
+                return $value;
+            }
+
+            public function link_repl($match)
+            {
+                return is_array($match) ? $match[0] : $match;
+            }
+
+            public function link_url($pageurl, $query_string = '')
+            {
+                return '/wiki.php/'.$pageurl.$query_string;
+            }
+        };
+
+        $out = macro_TableOfContents($formatter, 'title=<b>Contents</b><img src=x onerror="alert(1)">,');
+
+        $this->assertStringContainsString('<b>Contents</b>', $out);
+        $this->assertStringNotContainsString('onerror', $out);
+        $this->assertStringNotContainsString('<script', $out);
     }
 }

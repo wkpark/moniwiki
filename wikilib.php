@@ -423,6 +423,10 @@ function _html_escape($string) {
   return preg_replace(array("@<(?=/?\s*\w+[^<>]*)@", '@"@', '@&(?!#?[a-zA-Z0-9]+;)@'), array("&lt;", '&quot;', '&amp;'), $string);
 }
 
+function _html_attr_escape($string) {
+  return str_replace("'", '&#039;', _html_escape($string));
+}
+
 function _safe_filename($name) {
   return is_string($name) && isset($name[0]) &&
     $name != '.' && $name != '..' &&
@@ -431,6 +435,29 @@ function _safe_filename($name) {
 
 function _safe_class_token($name) {
   return is_string($name) && preg_match('/\A[A-Za-z0-9_-]+\z/', $name);
+}
+
+function _safe_http_host($host) {
+  if (!is_string($host)) return '';
+  $host = trim($host);
+  if (!isset($host[0])) return '';
+  if (($pos = strpos($host, ':')) !== false) {
+    $port = substr($host, $pos + 1);
+    if ($port === '' || !ctype_digit($port)) return '';
+    $host = substr($host, 0, $pos);
+  }
+  $host = strtolower($host);
+  if (!preg_match('/^[a-z0-9.-]+$/', $host)) return '';
+  if ($host[0] == '.' || substr($host, -1) == '.' || strpos($host, '..') !== false) return '';
+  return $host;
+}
+
+function _safe_html_url($url) {
+  if (!is_string($url) || preg_match('/[\x00-\x1f\x7f]/', $url)) return false;
+  $decoded = html_entity_decode($url, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+  if (preg_match('/[\x00-\x1f\x7f]/', $decoded)) return false;
+  if (preg_match('/^\s*(javascript|vbscript|data):/i', $decoded)) return false;
+  return true;
 }
 
 function _json_string($string) {
@@ -526,9 +553,12 @@ function qualifiedUrl($url) {
   if (!empty($_SERVER['HTTPS'])) $proto= 'https';
   else $proto= strtolower(strtok($_SERVER['SERVER_PROTOCOL'],'/'));
   if (empty($url[0]) or $url[0] != '/') $url='/'.$url; // XXX
-  if (strpos($_SERVER['HTTP_HOST'],':') !== false)
+  $host = isset($_SERVER['HTTP_HOST']) ? _safe_http_host($_SERVER['HTTP_HOST']) : '';
+  if (!$host && isset($_SERVER['SERVER_NAME'])) $host = _safe_http_host($_SERVER['SERVER_NAME']);
+  if (!$host) $host = 'localhost';
+  if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'],':') !== false)
     $port = '';
-  return $proto.'://'.$_SERVER['HTTP_HOST'].$port.$url;
+  return $proto.'://'.$host.$port.$url;
 }
 
 function find_needle($body,$needle,$exclude='',$count=0) {
@@ -1997,12 +2027,8 @@ class WikiUser {
      }
 
      if (empty($domain) && !empty($_SERVER['HTTP_HOST'])) {
-        if (($pos = strpos($_SERVER['HTTP_HOST'], ':')) !== false) {
-            $domain = substr($_SERVER['HTTP_HOST'], 0, $pos);
-        } else {
-            $domain = $_SERVER['HTTP_HOST'];
-        }
-        $domain = '; Domain='.$domain;
+        $domain = _safe_http_host($_SERVER['HTTP_HOST']);
+        if ($domain) $domain = '; Domain='.$domain;
      }
 
      if (!empty($Config['cookie_path']))
@@ -2030,12 +2056,8 @@ class WikiUser {
           $domain = '; Domain='.$_SERVER['SERVER_NAME'];
      }
      if (empty($domain) && !empty($_SERVER['HTTP_HOST'])) {
-        if (($pos = strpos($_SERVER['HTTP_HOST'], ':')) !== false) {
-            $domain = substr($_SERVER['HTTP_HOST'], 0, $pos);
-        } else {
-            $domain = $_SERVER['HTTP_HOST'];
-        }
-        $domain = '; Domain='.$domain;
+        $domain = _safe_http_host($_SERVER['HTTP_HOST']);
+        if ($domain) $domain = '; Domain='.$domain;
      }
 
      if (!empty($Config['cookie_path']))
@@ -3263,8 +3285,10 @@ function do_goto($formatter,$options) {
         $url.=$page;
       else
         $url=str_replace('$PAGE',$page,$url);
-      $options['url']=$url;
-      unset($options['value']);
+      if (_safe_html_url($url)) {
+        $options['url']=$url;
+        unset($options['value']);
+      }
     }
   }
   if (isset($options['value'][0])) {
@@ -5103,9 +5127,18 @@ function macro_InterWiki($formatter,$value,$options=array()) {
       $sx=$DBInfo->intericon[$wiki][0];
       $sy=$DBInfo->intericon[$wiki][1];
     }
-    $out.="<tr><td><tt><img src='$icon' width='$sx' height='$sy' ".
-      "class='interwiki' alt='$wiki:' /><a href='$url'>$wiki</a></tt></td>";
-    $out.="<td><tt><a href='$href'>$href</a></tt></td></tr>\n";
+    if (!_safe_html_url($href)) $href='#';
+    if (!_safe_html_url($url)) $url='#';
+    if (!_safe_html_url($icon)) $icon=$DBInfo->imgs_url_interwiki.strtolower($wiki).'-16.png';
+    $icon_attr=_html_attr_escape($icon);
+    $url_attr=_html_attr_escape($url);
+    $href_attr=_html_attr_escape($href);
+    $wiki_attr=_html_attr_escape($wiki.':');
+    $wiki_text=_html_escape($wiki);
+    $href_text=_html_escape($href);
+    $out.="<tr><td><tt><img src='$icon_attr' width='$sx' height='$sy' ".
+      "class='interwiki' alt='$wiki_attr' /><a href='$url_attr'>$wiki_text</a></tt></td>";
+    $out.="<td><tt><a href='$href_attr'>$href_text</a></tt></td></tr>\n";
   }
   $out.="</table>\n";
   return $out;
@@ -5561,6 +5594,7 @@ function macro_TableOfContents(&$formatter,$value="") {
  $secdep = '';
  $prefix = '';
  $dot = '<span class="dot">.</span>';
+ $js = '';
 
  $attr = '';
  while($value) {
@@ -5600,6 +5634,10 @@ EOS;
  }
  $TOC0="\n<div class='wikiToc$attr' id='" . $tocid . "'>";
  if (!isset($title)) $title = $formatter->macro_repl('GetText', "Contents");
+ else {
+  require_once(dirname(__FILE__).'/lib/xss.php');
+  $title = _xss_filter($title);
+ }
  if ($title) {
   $TOC0.="<div class='toctitle'>
 <h2 style='display:inline'>$title</h2>
@@ -5713,7 +5751,7 @@ EOS;
      $close="";
      $depth=$head_dep;
      while ($depth>1) { $depth--;$close.="</dl></dd>\n"; };
-     if (isset($js))
+     if ($js)
         $formatter->register_javascripts("<script type=\"text/javascript\" src=\"$DBInfo->url_prefix/local/toctoggle.js\"></script>");
      return $TOC0.$TOC.$close."</dl></dd></dl>\n</div>\n".$js;
   }
