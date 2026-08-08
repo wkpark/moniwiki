@@ -439,6 +439,49 @@ function getConfig($configfile, $options=array()) {
   return $config;
 }
 
+function _normalize_http_host($host) {
+  if (!is_string($host)) return '';
+  $host = trim($host);
+  if (!isset($host[0])) return '';
+  if (($pos = strpos($host, ':')) !== false) {
+    $port = substr($host, $pos + 1);
+    if ($port === '' || !ctype_digit($port)) return '';
+    $host = substr($host, 0, $pos);
+  }
+  $host = strtolower($host);
+  if (!preg_match('/^[a-z0-9.-]+$/', $host)) return '';
+  if ($host[0] == '.' || substr($host, -1) == '.' || strpos($host, '..') !== false) return '';
+  return $host;
+}
+
+function _is_same_http_host_url($url, $host) {
+  $host = _normalize_http_host($host);
+  if ($host == '') return false;
+
+  $parts = @parse_url(str_replace('&amp;', '&', $url));
+  if (empty($parts['scheme']) || empty($parts['host'])) return false;
+  if (!in_array(strtolower($parts['scheme']), array('http', 'https'))) return false;
+
+  return _normalize_http_host($parts['host']) == $host;
+}
+
+function _image_align_class($align) {
+  if (!is_string($align) || !preg_match('/^[A-Za-z][A-Za-z0-9_-]*$/', $align)) return '';
+  return ' img'.ucfirst($align);
+}
+
+function _external_redirect_link($url, $anchor = '') {
+  $href = _html_escape($url.$anchor);
+  $text = _html_escape(rawurldecode($url).$anchor);
+  return '<a href="'.$href.'">'.$text.'</a>';
+}
+
+function _minor_line_delta($line_info) {
+  if (!is_string($line_info)) return false;
+  if (!preg_match('/^\s*([+-]?\d+)\s+([+-]\d+)\s*$/', $line_info, $m)) return false;
+  return intval($m[1]) + intval($m[2]);
+}
+
 class WikiDB {
   function __construct($config) {
     // set configurations
@@ -1023,8 +1066,8 @@ class WikiDB {
     if (!empty($this->use_minorcheck) or !empty($options['minorcheck'])) {
       $info = $page->get_info();
       if (!empty($info[0][1])) {
-        eval('$check='.$info[1].';');
-        if (abs($check) < 3) $minor=1;
+        $check = _minor_line_delta($info[0][1]);
+        if ($check !== false && abs($check) < 3) $minor=1;
       }
     }
     if (empty($options['.nolog']) && empty($options['minor']) && !$minor)
@@ -2372,9 +2415,7 @@ EOJS;
               $atext=substr($text,0,$p);
               parse_str(substr($text,$p+1),$attrs);
               foreach ($attrs as $n=>$v) {
-                if ($n == 'align') $img_cls = ' img'.ucfirst($v);
-                else
-                  $img_attr.="$n=\"$v\" ";
+                if ($n == 'align') $img_cls = _image_align_class($v);
               }
             }
 
@@ -2408,14 +2449,13 @@ EOJS;
             foreach ($attrs as $a) {
               $name = strtok($a, '=');
               $val = strtok(' ');
-              if ($name == 'align') $cls.=' img'.ucfirst($val);
-              else if ($name and $val) $eattr[] = $name.'="'.urldecode($val).'"';
+              if ($name == 'align') $cls.=_image_align_class(urldecode($val));
             }
 
             $fetch_url = $url;
             $info = '';
             // check internal links and fetch image
-            if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url)) {
+            if (!empty($this->fetch_images) and !_is_same_http_host_url($url, isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '')) {
               $fetch_url = $this->fetch_action. str_replace(array('&', '?'), array('%26', '%3f'), $url);
               $size = '';
               if (!empty($this->fetch_imagesize))
@@ -2485,8 +2525,7 @@ EOJS;
           foreach ($attrs as $arg) {
             $name=strtok($arg,'=');
             $val=strtok(' ');
-            if ($name == 'align') $cls.=' img'.ucfirst($val);
-            else if ($name and $val) $eattr[] = $name.'="'.urldecode($val).'"';
+            if ($name == 'align') $cls.=_image_align_class(urldecode($val));
           }
           $attr = '';
           if (isset($eattr[0]))
@@ -2496,7 +2535,7 @@ EOJS;
           $fetch_url = $url;
           $info = '';
           // check internal images
-          if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $url)) {
+          if (!empty($this->fetch_images) and !_is_same_http_host_url($url, isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : '')) {
             $fetch_url = $this->fetch_action.
                 str_replace(array('&', '?'), array('%26', '%3f'), $url);
 
@@ -2730,7 +2769,7 @@ EOJS;
           // trash dummy query string
           $text = preg_replace('@(\?|&)\.(png|gif|jpe?g)$@', '', $text);
 
-          if (!empty($this->fetch_images) and !preg_match('@^https?://'.$_SERVER['HTTP_HOST'].'@', $text))
+          if (!empty($this->fetch_images) and !_is_same_http_host_url($text, isset($_SERVER['HTTP_HOST']) ? $_SERVER['HTTP_HOST'] : ''))
             $text = $this->fetch_action. str_replace(array('&', '?'), array('%26', '%3f'), $text);
 
           $word="<img style='border:0' alt='$word' src='$text' /></a>";
@@ -3811,8 +3850,7 @@ EOJS;
         $url = substr($url, 0, $p);
       }
       if (preg_match('@^https?://@', $url)) {
-        $text = rawurldecode($url);
-        $lnk = '<a href="'.$url.$anchor.'">'.$text.$anchor.'</a>';
+        $lnk = _external_redirect_link($url, $anchor);
       } else {
         $text = $url;
         $url = _urlencode($url);
@@ -6457,7 +6495,7 @@ function wiki_main($options) {
       $redirect = $_GET['redirect'];
       $options['msg']=
         '<h3>'.sprintf(_("Redirected from page \"%s\""),
-          $formatter->link_tag(_rawurlencode($redirect), '?action=show', $redirect))."</h3>";
+          $formatter->link_tag(_rawurlencode($redirect), '?action=show', _html_escape($redirect)))."</h3>";
     }
 
     if (empty($action)) $options['pi']=1; # protect a recursivly called #redirect
@@ -6777,6 +6815,27 @@ function load_cached_site_config($topdir, $site, &$conf, $params = array()) {
     }
 }
 
+function _invalidate_authenticated_user(&$options) {
+    global $DBInfo;
+
+    if (isset($DBInfo->user) && is_object($DBInfo->user)) {
+        $DBInfo->user->id = 'Anonymous';
+        $DBInfo->user->ticket = '';
+        $DBInfo->user->groups = array();
+        $DBInfo->user->is_member = false;
+    }
+    $options['id'] = 'Anonymous';
+}
+
+function _is_valid_session_cookie($cookie, $site_hash, $addr_hash) {
+    $parts = explode('-*-', $cookie);
+    if (count($parts) != 3) {
+        return false;
+    }
+
+    return $parts[0] == $site_hash && $parts[1] == $addr_hash;
+}
+
 if (!defined('INC_MONIWIKI')):
 # Start Main
 $Config = getConfig('config.php', array('init'=>1));
@@ -6802,7 +6861,8 @@ else if (isset($Config['site_local_php']) and file_exists($Config['site_local_ph
 // load site specific config with default config variables.
 //$deps = array();
 //load_site_config(dirname(__FILE__), $_SERVER['HTTP_HOST'], $Config, $deps);
-load_cached_site_config(dirname(__FILE__), $_SERVER['HTTP_HOST'], $Config);
+$site = isset($_SERVER['HTTP_HOST']) ? _normalize_http_host($_SERVER['HTTP_HOST']) : '';
+load_cached_site_config(dirname(__FILE__), $site, $Config);
 
 $DBInfo= new WikiDB($Config);
 
@@ -6825,12 +6885,12 @@ if ($remote != $real) {
   $_SERVER['REMOTE_ADDR'] = $real;
 }
 
-function _session_start($session_id = null, $id = null) {
+function _session_start($session_id = null, $id = null, &$options = null) {
     global $DBInfo, $Config;
 
     // FIXME
     if ($id == null || $id == 'Anonymous')
-        return;
+        return false;
 
     // chceck some action and set expire
     session_cache_limiter('');
@@ -6843,17 +6903,13 @@ function _session_start($session_id = null, $id = null) {
 
     if (!empty($Config['cookie_domain']))
         $domain = $Config['cookie_domain'];
-    else if (strpos($_SERVER['SERVER_NAME'], '.') !== false) {
-        $tmp = explode('.', $_SERVER['SERVER_NAME']);
+    else if (!empty($_SERVER['SERVER_NAME']) && ($server_name = _normalize_http_host($_SERVER['SERVER_NAME'])) && strpos($server_name, '.') !== false) {
+        $tmp = explode('.', $server_name);
         if (count($tmp) >= 3)
-            $domain = $_SERVER['SERVER_NAME'];
+            $domain = $server_name;
     }
     if (empty($domain) && !empty($_SERVER['HTTP_HOST'])) {
-        if (($pos = strpos($_SERVER['HTTP_HOST'], ':')) !== false) {
-            $domain = substr($_SERVER['HTTP_HOST'], 0, $pos);
-        } else {
-            $domain = $_SERVER['HTTP_HOST'];
-        }
+        $domain = _normalize_http_host($_SERVER['HTTP_HOST']);
     }
 
     $expire = isset($Config['session_lifetime']) ? $Config['session_lifetime'] : 86400;
@@ -6888,16 +6944,13 @@ function _session_start($session_id = null, $id = null) {
     if ($session_id == null) {
         // set session cookie.
         setCookie('MONIWIKI', $session_cookie, $moniwiki_cookie_params);
+        return true;
     } else {
         $cleanup_session_cookie = false;
         if (empty($_COOKIE['MONIWIKI'])) {
             $cleanup_session_cookie = true;
-        } else {
-            // check session cookie
-            list($site, $addr, $dummy) = explode('-*-', $_COOKIE['MONIWIKI']);
-            if ($site != $site_hash || $addr != $addr_hash) {
-                $cleanup_session_cookie = true;
-            }
+        } else if (!_is_valid_session_cookie($_COOKIE['MONIWIKI'], $site_hash, $addr_hash)) {
+            $cleanup_session_cookie = true;
         }
 
         if ($cleanup_session_cookie) {
@@ -6911,12 +6964,18 @@ function _session_start($session_id = null, $id = null) {
                 setCookie(session_name(), null, $expired_cookie_params);
 
             // reset some variables
-            $DBInfo->user->id = 'Anonymous';
-            $options['id'] = 'Anonymous';
+            if (is_array($options)) {
+                _invalidate_authenticated_user($options);
+            } else {
+                $dummy = array();
+                _invalidate_authenticated_user($dummy);
+            }
+            return false;
         } else {
             session_set_cookie_params($cookie_params);
 
             session_start();
+            return true;
         }
     }
 }
@@ -6929,9 +6988,9 @@ if (empty($Config['nosession']) and is_writable(ini_get('session.save_path')) ) 
         $session_id = session_id();
     }
     if (!empty($session_id)) {
-        _session_start($session_id, $options['id']);
-    } elseif (!empty($options['id']) !== 'Anonymous') {
-        _session_start('dummy', $options['id']);
+        _session_start($session_id, $options['id'], $options);
+    } elseif (!empty($options['id']) && $options['id'] != 'Anonymous') {
+        _session_start('dummy', $options['id'], $options);
     }
 }
 
