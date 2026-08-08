@@ -196,11 +196,11 @@ EOF;
   else
     $pds_exts="png|jpg|jpeg|gif|mp3|zip|tgz|gz|txt|css|exe|pdf|hwp";
 
-  $allowed=0;
+  $upload_master = false;
   if (isset($DBInfo->upload_masters) and in_array($options['id'],$DBInfo->upload_masters)) {
     // XXX WARN!!
     $pds_exts='.*';
-    $allowed=1;
+    $upload_master=true;
   }
   $safe_types=array('text'=>'','media'=>'','image'=>'','audio'=>'','application'=>'bin');
 
@@ -209,6 +209,12 @@ EOF;
   # replace space and ':' strtr()
   $upfilename=str_replace(" ","_",$files['upfile']['name'][$j]);
   $upfilename=str_replace(":","_",$upfilename);
+  if (!_safe_filename($upfilename)) {
+    $err_msg[]=sprintf(_("Invalid file name '%s'"),_html_escape($upfilename));
+    continue;
+  }
+
+  $allowed=$upload_master ? 1:0;
 
   preg_match("/^(.*)\.([a-z0-9]{1,5})$/i",$upfilename,$fname);
 
@@ -279,6 +285,10 @@ EOF;
     # XXX
     $temp=explode("/",_stripslashes($options['rename'][$j]));
     $upfilename= $temp[count($temp)-1];
+    if (!_safe_filename($upfilename)) {
+      $err_msg[]=sprintf(_("Invalid file name '%s'"),_html_escape($upfilename));
+      continue;
+    }
 
     preg_match("/^(.*)\.([a-z0-9]{1,5})$/i",$upfilename,$tname);
     $exts=explode('.',$tname[1]);
@@ -392,6 +402,9 @@ EOF;
     $err = implode("\\n", $err_msg);
     $err = strip_tags($err);
     if ($err) $err .= "\\n";
+    $json_files = array();
+    foreach ($upload_ok as $file)
+      $json_files[] = _json_string($file);
 
     $formatter->header('Content-type: text/html; charset='.$DBInfo->charset);
     $scr = '';
@@ -399,10 +412,10 @@ EOF;
         $scr = '<script type="text/javascript">document.domain="'.$options['domain'].'";</script>';
     }
     echo $scr.'
-    {"title": "' . str_replace(array('"','<'), array("'",'&lt;'), $title) . '",
-     "msg": ["' . $err.strip_tags(implode("\\n", $msg )) . '"],
+    {"title": ' . _json_string($title) . ',
+     "msg": [' . _json_string($err.strip_tags(implode("\\n", $msg ))) . '],
      "uploaded":' . $uploaded.',
-     "files": ["' . implode("\"\n,\"", $upload_ok ) . '"]
+     "files": [' . implode(',', $json_files) . ']
     }';
     return true;
   }
