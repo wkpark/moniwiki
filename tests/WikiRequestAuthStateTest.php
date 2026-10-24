@@ -142,4 +142,321 @@ final class WikiRequestAuthStateTest extends TestCase
         $this->assertFalse(_minor_line_delta('phpinfo()'));
         $this->assertFalse(_minor_line_delta('+1; phpinfo()'));
     }
+
+    public function testClassTokenAllowsOnlySafeCssClassNames(): void
+    {
+        $this->assertTrue(_safe_class_token('wiki-note_1'));
+        $this->assertFalse(_safe_class_token('x" onclick="alert(1)'));
+        $this->assertFalse(_safe_class_token("x\ny"));
+        $this->assertFalse(_safe_class_token('../wiki'));
+    }
+
+    public function testWikiUserRejectsControlCharactersInIds(): void
+    {
+        $user = new WikiUser('ValidUser');
+
+        $this->assertTrue($user->checkID('ValidUser'));
+        $this->assertFalse($user->checkID("Bad\r\nBcc: attacker@example.com"));
+    }
+
+    public function testPlainProcessorDropsUnsafeClassToken(): void
+    {
+        $out = processor_plain(null, "#!plain x' onclick='alert(1)\nhello");
+
+        $this->assertStringContainsString("<pre class='wiki'>", $out);
+        $this->assertStringNotContainsString("onclick", $out);
+    }
+
+    public function testPlainProcessorKeepsSafeClassToken(): void
+    {
+        $out = processor_plain(null, "#!plain python\nhello");
+
+        $this->assertStringContainsString("<pre class='wiki python'>", $out);
+    }
+
+    public function testQualifiedUrlNormalizesHostAndKeepsProxyPortBehavior(): void
+    {
+        $server = $_SERVER;
+        $_SERVER['SERVER_PORT'] = '8080';
+        $_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
+        $_SERVER['HTTP_HOST'] = 'Example.COM:12345';
+        $_SERVER['SERVER_NAME'] = 'fallback.example';
+        $_SERVER['HTTPS'] = '';
+
+        try {
+            $this->assertSame('http://example.com:12345/wiki.php', qualifiedUrl('/wiki.php'));
+
+            $_SERVER['HTTP_HOST'] = 'Example.COM';
+            $this->assertSame('http://example.com:8080/wiki.php', qualifiedUrl('/wiki.php'));
+
+            $_SERVER['HTTP_HOST'] = "bad.example\r\nX-Test: 1";
+            $this->assertSame('http://fallback.example/wiki.php', qualifiedUrl('/wiki.php'));
+
+            unset($_SERVER['HTTP_HOST']);
+            $this->assertSame('http://fallback.example:8080/wiki.php', qualifiedUrl('/wiki.php'));
+
+            $_SERVER['SERVER_NAME'] = "bad\r\nname";
+            $this->assertSame('http://localhost:8080/wiki.php', qualifiedUrl('/wiki.php'));
+        } finally {
+            $_SERVER = $server;
+        }
+    }
+
+    public function testWikiUserCookieDomainUsesNormalizedHost(): void
+    {
+        $server = $_SERVER;
+        $config = isset($GLOBALS['Config']) ? $GLOBALS['Config'] : null;
+        $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+        $_SERVER['SERVER_NAME'] = 'localhost';
+        $_SERVER['HTTP_HOST'] = 'Example.COM:12345';
+        $_SERVER['REQUEST_URI'] = '/wiki.php';
+        $_SERVER['HTTPS'] = '';
+        $GLOBALS['Config'] = array();
+
+        try {
+            $user = new WikiUser('ValidUser');
+            $cookie = $user->setCookie();
+        } finally {
+            $_SERVER = $server;
+            if ($config === null) unset($GLOBALS['Config']);
+            else $GLOBALS['Config'] = $config;
+        }
+
+        $this->assertStringContainsString('; Domain=example.com', $cookie);
+        $this->assertStringNotContainsString('12345', $cookie);
+    }
+
+    public function testWikiUserCookieDomainSkipsInvalidHostAndNormalizesUnsetCookie(): void
+    {
+        $server = $_SERVER;
+        $config = isset($GLOBALS['Config']) ? $GLOBALS['Config'] : null;
+        $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+        $_SERVER['SERVER_NAME'] = 'localhost';
+        $_SERVER['HTTP_HOST'] = 'Example.COM:12345';
+        $_SERVER['REQUEST_URI'] = '/wiki.php';
+        $_SERVER['HTTPS'] = '';
+        $GLOBALS['Config'] = array();
+
+        try {
+            $user = new WikiUser('ValidUser');
+            $unset = $user->unsetCookie();
+
+            $_SERVER['HTTP_HOST'] = "bad.example\r\nX-Test: 1";
+            $invalid = $user->setCookie();
+        } finally {
+            $_SERVER = $server;
+            if ($config === null) unset($GLOBALS['Config']);
+            else $GLOBALS['Config'] = $config;
+        }
+
+        $this->assertStringContainsString('; Domain=example.com', $unset);
+        $this->assertStringNotContainsString('12345', $unset);
+        $this->assertStringNotContainsString('Domain=', $invalid);
+        $this->assertStringNotContainsString('X-Test', $invalid);
+    }
+
+    public function testGotoMetaRefreshEscapesInternalUrl(): void
+    {
+        $GLOBALS['DBInfo'] = new stdClass();
+        $GLOBALS['DBInfo']->charset = 'UTF-8';
+        $GLOBALS['DBInfo']->interwikirule = 'NoSuchWiki';
+
+        ob_start();
+        do_goto(new stdClass(), array(
+            'value'=>'',
+            'url'=>'Self:" autofocus onfocus="alert(1)',
+            'ie'=>'',
+            'oe'=>'UTF-8',
+        ));
+        $out = ob_get_clean();
+
+        $this->assertStringContainsString('URL=Self:&quot; autofocus onfocus=&quot;alert(1)', $out);
+        $this->assertStringNotContainsString('URL=Self:" autofocus', $out);
+    }
+
+    public function testGotoRejectsScriptableUrl(): void
+    {
+        $GLOBALS['DBInfo'] = new stdClass();
+        $GLOBALS['DBInfo']->charset = 'UTF-8';
+        $GLOBALS['DBInfo']->interwikirule = 'NoSuchWiki';
+        $formatter = $this->gotoFormatter();
+
+        ob_start();
+        do_goto($formatter, array(
+            'value'=>'',
+            'url'=>'javascript:alert(1)',
+            'ie'=>'',
+            'oe'=>'UTF-8',
+        ));
+        $out = ob_get_clean();
+
+        $this->assertStringNotContainsString('URL=javascript:', $out);
+        $this->assertStringNotContainsString('javascript:', implode("\n", $formatter->headers));
+    }
+
+    public function testGotoInterWikiFallsBackToPageForScriptableUrl(): void
+    {
+        $GLOBALS['DBInfo'] = new stdClass();
+        $GLOBALS['DBInfo']->charset = 'UTF-8';
+        $GLOBALS['DBInfo']->interwikirule = 'BAD';
+        $GLOBALS['DBInfo']->interwiki = array('BAD'=>'javascript:alert(1)//');
+        $formatter = $this->gotoFormatter();
+
+        ob_start();
+        do_goto($formatter, array('value'=>'BAD:Page', 'url'=>'', 'ie'=>'', 'oe'=>''));
+        $out = ob_get_clean();
+
+        $headers = implode("\n", $formatter->headers);
+        $this->assertStringContainsString('Location: /wiki.php/BAD', $headers);
+        $this->assertStringNotContainsString('javascript:', $headers.$out);
+    }
+
+    private function gotoFormatter()
+    {
+        return new class {
+            public $headers = array();
+            public $page;
+
+            public function __construct()
+            {
+                $this->page = (object)array('urlname'=>'FrontPage');
+            }
+
+            public function link_url($pageurl, $query_string = '')
+            {
+                return '/wiki.php/'.$pageurl.$query_string;
+            }
+
+            public function header($header, $replace = true)
+            {
+            }
+
+            public function send_header($header = '', $options = array())
+            {
+                $this->headers = array_merge($this->headers, (array)$header);
+            }
+
+            public function send_title($title = '', $link = '', $options = array())
+            {
+            }
+
+            public function send_footer($args = '', $options = array())
+            {
+            }
+        };
+    }
+
+    public function testUserPreferencesEscapesVerifiedEmailValue(): void
+    {
+        $server = $_SERVER;
+        $_SERVER['SERVER_PORT'] = '80';
+        $_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
+        $_SERVER['HTTP_HOST'] = 'example.com';
+        $_SERVER['HTTPS'] = '';
+
+        $GLOBALS['DBInfo'] = new stdClass();
+        $GLOBALS['DBInfo']->anonymous_friendly = true;
+        $GLOBALS['DBInfo']->url_prefix = '';
+        $GLOBALS['DBInfo']->user = new WikiUser();
+        $GLOBALS['DBInfo']->user->id = 'Anonymous';
+        $GLOBALS['DBInfo']->user->verified_email = '" autofocus onfocus="alert(1)';
+
+        $formatter = new class {
+            public $_macrocache = false;
+            public $_dynamic_macros = array();
+            public $page;
+
+            public function __construct()
+            {
+                $this->page = (object)array('urlname'=>'UserPreferences');
+            }
+
+            public function link_url($pageurl, $query_string = '')
+            {
+                return '/wiki.php'.$query_string;
+            }
+        };
+
+        try {
+            $out = macro_UserPreferences($formatter, '', array());
+        } finally {
+            $_SERVER = $server;
+        }
+
+        $this->assertStringContainsString('value="&quot; autofocus onfocus=&quot;alert(1)"', $out);
+        $this->assertStringNotContainsString('value="" autofocus', $out);
+    }
+
+    public function testInterWikiEscapesGeneratedAttributes(): void
+    {
+        $GLOBALS['DBInfo'] = new stdClass();
+        $GLOBALS['DBInfo']->interwiki = array(
+            'BAD'=>'https://example.com/\' onclick=\'alert(1)',
+        );
+        $GLOBALS['DBInfo']->interwikirule = 'BAD';
+        $GLOBALS['DBInfo']->intericon = array(
+            'BAD'=>array(16, 16, "https://example.com/icon.png' onerror='alert(1)"),
+        );
+        $GLOBALS['DBInfo']->imgs_url_interwiki = '/imgs/interwiki/';
+
+        $out = macro_InterWiki((object)array('refresh'=>false), '', array());
+
+        $this->assertStringContainsString('https://example.com/&#039; onclick=&#039;alert(1)', $out);
+        $this->assertStringNotContainsString("src='https://example.com/icon.png' onerror", $out);
+        $this->assertStringNotContainsString("href='https://example.com/' onclick", $out);
+    }
+
+    public function testInterWikiDropsScriptableLinks(): void
+    {
+        $GLOBALS['DBInfo'] = new stdClass();
+        $GLOBALS['DBInfo']->interwiki = array('BAD'=>'javascript:alert(1)');
+        $GLOBALS['DBInfo']->interwikirule = 'BAD';
+        $GLOBALS['DBInfo']->intericon = array('BAD'=>array(16, 16, 'javascript:alert(2)'));
+        $GLOBALS['DBInfo']->imgs_url_interwiki = '/imgs/interwiki/';
+
+        $out = macro_InterWiki((object)array('refresh'=>false), '', array());
+
+        $this->assertStringContainsString("href='#'", $out);
+        $this->assertStringContainsString("src='/imgs/interwiki/bad-16.png'", $out);
+        $this->assertStringNotContainsString('javascript:alert', $out);
+    }
+
+    public function testTableOfContentsTitleKeepsSafeMarkupAndFiltersScriptBoundaries(): void
+    {
+        $GLOBALS['DBInfo'] = new class {
+            public function hasPage($page)
+            {
+                return false;
+            }
+        };
+
+        $formatter = new class {
+            public $text = "== Heading ==\n";
+            public $wordrule = '';
+            public $footrule = '';
+            public $baserule = '/a^/';
+            public $baserepl = '';
+
+            public function macro_repl($macro, $value = '', $options = array())
+            {
+                return $value;
+            }
+
+            public function link_repl($match)
+            {
+                return is_array($match) ? $match[0] : $match;
+            }
+
+            public function link_url($pageurl, $query_string = '')
+            {
+                return '/wiki.php/'.$pageurl.$query_string;
+            }
+        };
+
+        $out = macro_TableOfContents($formatter, 'title=<b>Contents</b><img src=x onerror="alert(1)">,');
+
+        $this->assertStringContainsString('<b>Contents</b>', $out);
+        $this->assertStringNotContainsString('onerror', $out);
+        $this->assertStringNotContainsString('<script', $out);
+    }
 }
