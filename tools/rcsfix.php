@@ -1,4 +1,5 @@
 <?php
+if (php_sapi_name() != 'cli') exit(1); // CLI only
 /**
  * a broken RCS fixer by wkpark at gmail.com (2013/05/08)
  *

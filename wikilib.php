@@ -1548,6 +1548,7 @@ function getSmileys() {
   return $smileys;
 }
 
+#[\AllowDynamicProperties]
 class UserDB {
   var $users=array();
   function __construct($conf) {
@@ -1918,6 +1919,7 @@ class UserDB {
   }
 }
 
+#[\AllowDynamicProperties]
 class WikiUser {
   var $cookie_expires = 2592000; // 60 * 60 * 24 * 30; // default 30 days
 
@@ -2076,7 +2078,7 @@ class WikiUser {
         if ($rawmode)
            $this->info['password']=$passwd;
         else
-           $this->info['password']=crypt($passwd);
+           $this->info['password']=password_hash($passwd, PASSWORD_DEFAULT);
      }
 #     else
 #        $this->info[password]="";
@@ -5894,7 +5896,7 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
     $idx++;
   }
 
-  if ($out) $out="<${type}l>$out</${type}l>\n";
+  if ($out) $out="<{$type}l>$out</{$type}l>\n";
   $opts['hits']= count($hits);
   if ($opts['hits']==1)
     $opts['value']=array_pop($hits);

@@ -8,6 +8,7 @@
  * @license GPLv2
  */
 
+#[\AllowDynamicProperties]
 class TitleIndexer_mysqli {
     var $conn = NULL;
     var $host = 'localhost';

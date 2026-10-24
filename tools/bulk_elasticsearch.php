@@ -1,4 +1,5 @@
 <?php
+if (php_sapi_name() != 'cli') exit(1); // CLI only
 /**
  * ElasticSearch indexer by wkpark at gmail.com
  * 2012/05/25

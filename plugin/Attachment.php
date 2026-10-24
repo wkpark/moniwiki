@@ -54,7 +54,7 @@ function macro_Attachment($formatter,$value,$options=array()) {
   if (!empty($formatter->wikimarkup) and empty($options['nomarkup'])) {
     $ll=$rr='';
     if (strpos($value,' ') !==false) { $ll='['; $rr=']'; }
-    $bra= "<span class='wikiMarkup'><!-- wiki:\n${ll}attachment:$value$rr\n-->";
+    $bra= "<span class='wikiMarkup'><!-- wiki:\n{$ll}attachment:$value$rr\n-->";
     $ket= '</span>';
   }
 

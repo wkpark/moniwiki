@@ -7,6 +7,7 @@
 // heavily modified to adopt to the MoniWiki 2003/07/19 by wkpark
 // $Id$
 
+#[\AllowDynamicProperties]
 class Indexer_dba {
     var $db = null;
     var $type = 'N'; // N for 32-bit. n for 16 bit.

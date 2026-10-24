@@ -1,4 +1,5 @@
 <?php
+if (php_sapi_name() != 'cli') exit(1); // CLI only
 // Copyright 2003-2015 Won-Kyu Park <wkpark at kldp.org>
 // All rights reserved. Distributable under GPLv2 see COPYING
 //

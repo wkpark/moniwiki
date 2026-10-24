@@ -43,6 +43,7 @@
 
 define('RCSLITE_FORCE', 1);
 define('RCSLITE_QUICK', 2);
+#[\AllowDynamicProperties]
 Class RcsLite {
     var $rcs_dir='RCS';
     var $rcs_user='root';

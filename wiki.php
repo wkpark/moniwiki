@@ -261,6 +261,7 @@ FrontPage= "$Config[frontpage]";
 EOS;
 }
 
+#[\AllowDynamicProperties]
 class MetaDB {
   function __construct() {
     return;
@@ -364,6 +365,7 @@ class Counter {
   function close() { }
 }
 
+#[\AllowDynamicProperties]
 class Security_base {
   var $DB;
 
@@ -482,6 +484,7 @@ function _minor_line_delta($line_info) {
   return intval($m[1]) + intval($m[2]);
 }
 
+#[\AllowDynamicProperties]
 class WikiDB {
   function __construct($config) {
     // set configurations
@@ -1328,6 +1331,7 @@ class WikiDB {
   }
 }
 
+#[\AllowDynamicProperties]
 class WikiPage {
   var $fp;
   var $filename;
@@ -1747,6 +1751,7 @@ class WikiPage {
 
 }
 
+#[\AllowDynamicProperties]
 class Formatter {
   var $sister_idx=1;
   var $group='';

@@ -436,6 +436,8 @@ final class WikiRequestAuthStateTest extends TestCase
             public $footrule = '';
             public $baserule = '/a^/';
             public $baserepl = '';
+            public $toc;
+            public $nomacro;
 
             public function macro_repl($macro, $value = '', $options = array())
             {

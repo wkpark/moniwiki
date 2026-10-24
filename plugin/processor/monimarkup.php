@@ -13,6 +13,7 @@
  * @license GPL
  */
 
+#[\AllowDynamicProperties]
 class processor_monimarkup
 {
     var $_type='wikimarkup';

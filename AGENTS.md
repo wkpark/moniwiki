@@ -28,9 +28,9 @@ Use these rules when working in this repository.
 
 ## PHP Compatibility
 
-- Use syntax compatible with PHP 8.1.
+- Use syntax compatible with PHP 8.2.
 - Avoid introducing dependencies unless explicitly requested.
-- Run `php8.1 -l` on changed PHP files when possible.
+- Run `php8.2 -l` on changed PHP files when possible.
 - Run `git diff --check` before finishing.
 
 ## Security Review

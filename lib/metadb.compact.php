@@ -267,6 +267,7 @@ class MetaDB_compact extends MetaDB {
     }
 }
 
+#[\AllowDynamicProperties]
 class Storage_dba {
     var $db = null;
 

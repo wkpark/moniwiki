@@ -1,5 +1,6 @@
 #!/usr/bin/env php
 <?php
+if (php_sapi_name() != 'cli') exit(1); // CLI only
 # a simple password generator using the crypt() with a seed.
 # wkpark@kldp.org
 

@@ -15,6 +15,21 @@ on:
       - rewrite
 
 jobs:
+  phpunit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo.
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          tools: phpunit:10
+
+      - name: PHPUnit
+        run: sh tests/run.sh
+
   build-tarball:
     runs-on: ubuntu-latest
     steps:
@@ -26,7 +41,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.1'
+          php-version: '8.2'
           tools: none
 
       - name: PHP Lint
@@ -50,6 +65,7 @@ jobs:
           cat <<EXCLUDE >.excludes
           .git
           .git/*
+          .gitignore
           .gitmodules
           .github
           .github/*
