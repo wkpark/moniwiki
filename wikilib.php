@@ -5023,8 +5023,9 @@ function macro_InterWiki($formatter,$value,$options=array()) {
 
     // check intermap and shared_intermap
     // you can update interwiki maps by touch $intermap or edit $shared_intermap
-    if (empty($formatter->refresh) and ($info = $cf->fetch('interwiki')) !== false) {
-      $info = $cf->fetch('interwiki');
+    // v2: map entries are validated before caching
+    if (empty($formatter->refresh) and ($info = $cf->fetch('interwiki.v2')) !== false) {
+      $info = $cf->fetch('interwiki.v2');
       $DBInfo->interwiki=$info['interwiki'];
       $DBInfo->interwikirule=$info['interwikirule'];
       $DBInfo->intericon=$info['intericon'];
@@ -5033,6 +5034,7 @@ function macro_InterWiki($formatter,$value,$options=array()) {
 
     $deps = array();
     $interwiki=array();
+    $intericon = array();
     # intitialize interwiki map
     $map = array();
     if (isset($DBInfo->intermap[0]) && file_exists($DBInfo->intermap)) {
@@ -5054,17 +5056,20 @@ function macro_InterWiki($formatter,$value,$options=array()) {
       if (!$line || $line[0]=="#" || $line[0]==" ") continue;
       if (preg_match("/^[A-Z]+/",$line)) {
         $wiki=strtok($line,' ');$url=strtok(' ');
+        // skip map entries that are not safe in href attributes
+        if (isset($url[0]) && (!_safe_html_url($url) || preg_match('/["\'<>]/', $url))) continue;
         $dumm=trim(strtok(''));
         if (preg_match('/^(http|ftp|attachment):/',$dumm,$match)) {
           $icon=strtok($dumm,' ');
           if ($icon[0]=='a') {
-            $url=$formatter->macro_repl('Attachment',substr($icon,11),1);
-            $icon=qualifiedUrl($DBInfo->url_prefix.'/'.$url);
+            $icon_url=$formatter->macro_repl('Attachment',substr($icon,11),1);
+            $icon=qualifiedUrl($DBInfo->url_prefix.'/'.$icon_url);
           }
           preg_match('/^(\d+)(x(\d+))?\b/',strtok(''),$msz);
           $sx=$msz[1];$sy=$msz[3];
           $sx=$sx ? $sx:16; $sy=$sy ? $sy:16;
-          $intericon[$wiki]=array($sx,$sy,trim($icon));
+          if (!preg_match('/["\'<>]/', $icon))
+            $intericon[$wiki]=array($sx,$sy,trim($icon));
         }
         $interwiki[$wiki]=trim($url);
         $interwikirule.="$wiki|";
@@ -5083,13 +5088,12 @@ function macro_InterWiki($formatter,$value,$options=array()) {
     if (!empty($DBInfo->shared_intericon) and file_exists($DBInfo->shared_intericon))
       $map=array_merge($map,file($DBInfo->shared_intericon));
 
-    $intericon = array();
     for ($i=0,$isz=sizeof($map);$i<$isz;$i++) {
       $line=rtrim($map[$i]);
       if (!$line || $line[0]=="#" || $line[0]==" ") continue;
       if (preg_match("/^[A-Z]+/",$line)) {
         $wiki=strtok($line,' ');$icon=trim(strtok(' '));
-        if (!preg_match('/^(http|ftp|attachment):/',$icon,$match)) continue;
+        if (!preg_match('/^(http|ftp|attachment):/',$icon,$match) || preg_match('/["\'<>]/', $icon)) continue;
         preg_match('/^(\d+)(x(\d+))?\b/',strtok(''),$sz);
         $sx=$sz[1];$sy=$sz[3];
         $sx=$sx ? $sx:16; $sy=$sy ? $sy:16;
@@ -5105,7 +5109,7 @@ function macro_InterWiki($formatter,$value,$options=array()) {
     $DBInfo->intericon=$intericon;
     $interinfo=
       array('interwiki'=>$interwiki,'interwikirule'=>$interwikirule,'intericon'=>$intericon);
-    $cf->update('interwiki', $interinfo, 0, array('deps'=>$deps));
+    $cf->update('interwiki.v2', $interinfo, 0, array('deps'=>$deps));
     break;
   }
   if (!empty($options['init'])) return;
