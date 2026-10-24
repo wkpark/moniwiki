@@ -3,6 +3,7 @@
   bootstrap="tests/bootstrap.php"
   colors="true"
   cacheResult="false"
+  displayDetailsOnTestsThatTriggerDeprecations="true"
 >
   <testsuites>
     <testsuite name="moniwiki">
