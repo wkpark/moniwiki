@@ -441,21 +441,6 @@ function getConfig($configfile, $options=array()) {
   return $config;
 }
 
-function _normalize_http_host($host) {
-  if (!is_string($host)) return '';
-  $host = trim($host);
-  if (!isset($host[0])) return '';
-  if (($pos = strpos($host, ':')) !== false) {
-    $port = substr($host, $pos + 1);
-    if ($port === '' || !ctype_digit($port)) return '';
-    $host = substr($host, 0, $pos);
-  }
-  $host = strtolower($host);
-  if (!preg_match('/^[a-z0-9.-]+$/', $host)) return '';
-  if ($host[0] == '.' || substr($host, -1) == '.' || strpos($host, '..') !== false) return '';
-  return $host;
-}
-
 function _is_same_http_host_url($url, $host) {
   $host = _normalize_http_host($host);
   if ($host == '') return false;
@@ -6906,16 +6891,7 @@ function _session_start($session_id = null, $id = null, &$options = null) {
     else
         $path = dirname(get_scriptname());
 
-    if (!empty($Config['cookie_domain']))
-        $domain = $Config['cookie_domain'];
-    else if (!empty($_SERVER['SERVER_NAME']) && ($server_name = _normalize_http_host($_SERVER['SERVER_NAME'])) && strpos($server_name, '.') !== false) {
-        $tmp = explode('.', $server_name);
-        if (count($tmp) >= 3)
-            $domain = $server_name;
-    }
-    if (empty($domain) && !empty($_SERVER['HTTP_HOST'])) {
-        $domain = _normalize_http_host($_SERVER['HTTP_HOST']);
-    }
+    $domain = _cookie_domain();
 
     $expire = isset($Config['session_lifetime']) ? $Config['session_lifetime'] : 86400;
     $secure = !empty($_SERVER['HTTPS']) && strtolower($_SERVER['HTTPS']) != 'off';

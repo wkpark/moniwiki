@@ -27,16 +27,73 @@ final class WikiLibSecurityHelpersTest extends TestCase
         );
     }
 
-    public function testSafeHttpHostStripsPortAndRejectsUnsafeValues(): void
+    public function testNormalizeHttpHostStripsPortAndRejectsUnsafeValues(): void
     {
-        $this->assertSame('example.com', _safe_http_host('Example.COM:8080'));
-        $this->assertSame('localhost', _safe_http_host('localhost:8080'));
+        $this->assertSame('example.com', _normalize_http_host('Example.COM:8080'));
+        $this->assertSame('localhost', _normalize_http_host('localhost:8080'));
 
-        $this->assertSame('', _safe_http_host("example.com\r\nX-Test: 1"));
-        $this->assertSame('', _safe_http_host('example..com'));
-        $this->assertSame('', _safe_http_host('example.com:bad'));
-        $this->assertSame('', _safe_http_host('example.com:'));
-        $this->assertSame('', _safe_http_host('.example.com'));
+        $this->assertSame('', _normalize_http_host("example.com\r\nX-Test: 1"));
+        $this->assertSame('', _normalize_http_host('example..com'));
+        $this->assertSame('', _normalize_http_host('example.com:bad'));
+        $this->assertSame('', _normalize_http_host('example.com:'));
+        $this->assertSame('', _normalize_http_host('.example.com'));
+    }
+
+    public function testNormalizeHttpHostAcceptsValidHostForms(): void
+    {
+        $this->assertSame('[::1]', _normalize_http_host('[::1]'));
+        $this->assertSame('[2001:db8::1]', _normalize_http_host('[2001:DB8::1]:8000'));
+        $this->assertSame('example.com', _normalize_http_host('example.com.'));
+        $this->assertSame('my_host.example.com', _normalize_http_host('my_host.example.com:8080'));
+
+        $this->assertSame('', _normalize_http_host('[not-ipv6]'));
+        $this->assertSame('', _normalize_http_host('[::1]:bad'));
+        $this->assertSame('', _normalize_http_host('example.com..'));
+    }
+
+    public function testQualifiedUrlKeepsIpv6HostAndPort(): void
+    {
+        $server = $_SERVER;
+        $_SERVER['SERVER_PORT'] = '80';
+        $_SERVER['SERVER_PROTOCOL'] = 'HTTP/1.1';
+        $_SERVER['HTTPS'] = '';
+
+        try {
+            $_SERVER['HTTP_HOST'] = '[::1]:8000';
+            $this->assertSame('http://[::1]:8000/wiki.php', qualifiedUrl('/wiki.php'));
+
+            $_SERVER['HTTP_HOST'] = 'localhost:8000';
+            $this->assertSame('http://localhost:8000/wiki.php', qualifiedUrl('/wiki.php'));
+        } finally {
+            $_SERVER = $server;
+        }
+    }
+
+    public function testCookieDomainUsesOnlyValidatedNames(): void
+    {
+        $server = $_SERVER;
+        $config = isset($GLOBALS['Config']) ? $GLOBALS['Config'] : null;
+        $GLOBALS['Config'] = array();
+
+        try {
+            $_SERVER['SERVER_NAME'] = 'www.example.com';
+            $_SERVER['HTTP_HOST'] = 'www.example.com';
+            $this->assertSame('www.example.com', _cookie_domain());
+
+            $_SERVER['SERVER_NAME'] = "www.example.com; Path=/x";
+            $_SERVER['HTTP_HOST'] = 'example.com:8080';
+            $this->assertSame('example.com', _cookie_domain());
+
+            $_SERVER['SERVER_NAME'] = 'localhost';
+            $_SERVER['HTTP_HOST'] = '[::1]:8000';
+            $this->assertSame('', _cookie_domain());
+
+            $GLOBALS['Config'] = array('cookie_domain'=>'.example.org');
+            $this->assertSame('.example.org', _cookie_domain());
+        } finally {
+            $_SERVER = $server;
+            $GLOBALS['Config'] = $config;
+        }
     }
 
     public function testHtmlAttrEscapeEscapesBothQuoteTypes(): void

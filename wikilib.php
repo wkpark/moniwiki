@@ -437,19 +437,37 @@ function _safe_class_token($name) {
   return is_string($name) && preg_match('/\A[A-Za-z0-9_-]+\z/', $name);
 }
 
-function _safe_http_host($host) {
+function _normalize_http_host($host) {
   if (!is_string($host)) return '';
-  $host = trim($host);
+  $host = strtolower(trim($host));
   if (!isset($host[0])) return '';
+  // [IPv6] literal with an optional port
+  if ($host[0] == '[') {
+    if (!preg_match('/^\[([0-9a-f:.]+)\](?::\d+)?\z/', $host, $m) ||
+        !filter_var($m[1], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) return '';
+    return '['.$m[1].']';
+  }
   if (($pos = strpos($host, ':')) !== false) {
     $port = substr($host, $pos + 1);
     if ($port === '' || !ctype_digit($port)) return '';
     $host = substr($host, 0, $pos);
   }
-  $host = strtolower($host);
-  if (!preg_match('/^[a-z0-9.-]+$/', $host)) return '';
+  if (substr($host, -1) == '.') $host = substr($host, 0, -1); // FQDN trailing dot
+  if (!preg_match('/^[a-z0-9._-]+\z/', $host)) return '';
   if ($host[0] == '.' || substr($host, -1) == '.' || strpos($host, '..') !== false) return '';
   return $host;
+}
+
+// Cookie domain from config, or from the validated server/host name.
+function _cookie_domain() {
+  global $Config;
+
+  if (!empty($Config['cookie_domain'])) return $Config['cookie_domain'];
+  $name = isset($_SERVER['SERVER_NAME']) ? _normalize_http_host($_SERVER['SERVER_NAME']) : '';
+  if ($name != '' && count(explode('.', $name)) >= 3) return $name;
+  $host = isset($_SERVER['HTTP_HOST']) ? _normalize_http_host($_SERVER['HTTP_HOST']) : '';
+  // no Domain attribute for IPv6 literals
+  return ($host != '' && $host[0] != '[') ? $host : '';
 }
 
 function _safe_html_url($url) {
@@ -553,11 +571,11 @@ function qualifiedUrl($url) {
   if (!empty($_SERVER['HTTPS'])) $proto= 'https';
   else $proto= strtolower(strtok($_SERVER['SERVER_PROTOCOL'],'/'));
   if (empty($url[0]) or $url[0] != '/') $url='/'.$url; // XXX
-  $host = isset($_SERVER['HTTP_HOST']) ? _safe_http_host($_SERVER['HTTP_HOST']) : '';
-  if (!$host && isset($_SERVER['SERVER_NAME'])) $host = _safe_http_host($_SERVER['SERVER_NAME']);
+  $host = isset($_SERVER['HTTP_HOST']) ? _normalize_http_host($_SERVER['HTTP_HOST']) : '';
+  if (!$host && isset($_SERVER['SERVER_NAME'])) $host = _normalize_http_host($_SERVER['SERVER_NAME']);
   if (!$host) $host = 'localhost';
   if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'],':') !== false)
-    $port = _safe_http_host($_SERVER['HTTP_HOST']) ? strstr(trim($_SERVER['HTTP_HOST']), ':') : ''; // keep a valid Host port
+    $port = (_normalize_http_host($_SERVER['HTTP_HOST']) && preg_match('/:\d+\z/', trim($_SERVER['HTTP_HOST']), $m)) ? $m[0] : ''; // keep a valid Host port
   return $proto.'://'.$host.$port.$url;
 }
 
@@ -2019,19 +2037,8 @@ class WikiUser {
      $_COOKIE['MONI_ID']=$ticket.'.'.urlencode($this->id);
      if (!empty($this->info['nick'])) $_COOKIE['MONI_NICK']=$this->info['nick'];
 
-     $domain = '';
-     if (!empty($Config['cookie_domain'])) {
-        $domain = '; Domain='.$Config['cookie_domain'];
-     } else if (strpos($_SERVER['SERVER_NAME'], '.') !== false) {
-        $tmp = explode('.', $_SERVER['SERVER_NAME']);
-        if (count($tmp) >= 3)
-          $domain = '; Domain='.$_SERVER['SERVER_NAME'];
-     }
-
-     if (empty($domain) && !empty($_SERVER['HTTP_HOST'])) {
-        $domain = _safe_http_host($_SERVER['HTTP_HOST']);
-        if ($domain) $domain = '; Domain='.$domain;
-     }
+     $domain = _cookie_domain();
+     if ($domain) $domain = '; Domain='.$domain;
 
      if (!empty($Config['cookie_path']))
         $path = '; Path='.$Config['cookie_path'];
@@ -2049,18 +2056,8 @@ class WikiUser {
      # set the fake cookie
      $_COOKIE['MONI_ID']="Anonymous";
 
-     $domain = '';
-     if (!empty($Config['cookie_domain'])) {
-        $domain = '; Domain='.$Config['cookie_domain'];
-     } else if (strpos($_SERVER['SERVER_NAME'], '.') !== false) {
-        $tmp = explode('.', $_SERVER['SERVER_NAME']);
-        if (count($tmp) >= 3)
-          $domain = '; Domain='.$_SERVER['SERVER_NAME'];
-     }
-     if (empty($domain) && !empty($_SERVER['HTTP_HOST'])) {
-        $domain = _safe_http_host($_SERVER['HTTP_HOST']);
-        if ($domain) $domain = '; Domain='.$domain;
-     }
+     $domain = _cookie_domain();
+     if ($domain) $domain = '; Domain='.$domain;
 
      if (!empty($Config['cookie_path']))
         $path = '; Path='.$Config['cookie_path'];
