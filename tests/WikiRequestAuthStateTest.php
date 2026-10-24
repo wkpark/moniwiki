@@ -177,7 +177,10 @@ final class WikiRequestAuthStateTest extends TestCase
         $_SERVER['HTTPS'] = '';
 
         try {
-            $this->assertSame('http://example.com/wiki.php', qualifiedUrl('/wiki.php'));
+            $this->assertSame('http://example.com:12345/wiki.php', qualifiedUrl('/wiki.php'));
+
+            $_SERVER['HTTP_HOST'] = 'Example.COM';
+            $this->assertSame('http://example.com:8080/wiki.php', qualifiedUrl('/wiki.php'));
 
             $_SERVER['HTTP_HOST'] = "bad.example\r\nX-Test: 1";
             $this->assertSame('http://fallback.example/wiki.php', qualifiedUrl('/wiki.php'));

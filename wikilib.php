@@ -557,7 +557,7 @@ function qualifiedUrl($url) {
   if (!$host && isset($_SERVER['SERVER_NAME'])) $host = _safe_http_host($_SERVER['SERVER_NAME']);
   if (!$host) $host = 'localhost';
   if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'],':') !== false)
-    $port = '';
+    $port = _safe_http_host($_SERVER['HTTP_HOST']) ? strstr(trim($_SERVER['HTTP_HOST']), ':') : ''; // keep a valid Host port
   return $proto.'://'.$host.$port.$url;
 }
 
