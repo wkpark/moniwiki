@@ -3314,7 +3314,8 @@ function do_goto($formatter,$options) {
      $formatter->header('Pragma: no-cache');
 
      $formatter->send_header(array("Status: 302","Location: ".$url),$options);
-  } else if ($options['url'] and _safe_html_url($options['url'])) {
+  } else if ($options['url'] and _safe_html_url($options['url']) and
+      _safe_html_url(urldecode($options['url']))) { // the url may be decoded below
     $url=$options['url'];
 
     if ($options['ie']) $from=strtoupper($options['ie']);

@@ -294,6 +294,26 @@ final class WikiRequestAuthStateTest extends TestCase
         $this->assertStringNotContainsString('javascript:', implode("\n", $formatter->headers));
     }
 
+    public function testGotoChecksUrlAfterDecoding(): void
+    {
+        $GLOBALS['DBInfo'] = new stdClass();
+        $GLOBALS['DBInfo']->charset = 'UTF-8';
+        $GLOBALS['DBInfo']->interwikirule = 'NoSuchWiki';
+        $formatter = $this->gotoFormatter();
+
+        ob_start();
+        do_goto($formatter, array(
+            'value'=>'',
+            'url'=>'data%3Atext/plain,hello',
+            'ie'=>'EUC-KR',
+            'oe'=>'UTF-8',
+        ));
+        $out = ob_get_clean();
+
+        $this->assertStringNotContainsString('URL=data', $out);
+        $this->assertStringNotContainsString('data', implode("\n", $formatter->headers));
+    }
+
     public function testGotoInterWikiFallsBackToPageForScriptableUrl(): void
     {
         $GLOBALS['DBInfo'] = new stdClass();
