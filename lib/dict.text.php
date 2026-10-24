@@ -26,7 +26,7 @@ function _fuzzy_bsearch_file($fp, $key, $seek, $fuzzyoffset=0, $klen=0,$fz=0,$en
     if ($fz == 0) return null;
     if ($klen == 0)
         #$klen = mb_strlen($key,$encoding);
-        $klen= strlen(utf8_decode($key));
+        $klen= mb_strlen($key, 'UTF-8');
 
     $ki=0;
     $pkey=mb_substr($key,0,$klen,$encoding);
@@ -54,7 +54,7 @@ function _fuzzy_bsearch_file($fp, $key, $seek, $fuzzyoffset=0, $klen=0,$fz=0,$en
         $l=fgets($fp,1024);
         if ($l=='') break;
         $mykey= strtok($l,' \t\n,:');
-        $llen= strlen(utf8_decode($mykey));
+        $llen= mb_strlen($mykey, 'UTF-8');
         #$llen= mb_strlen($mykey,$encoding);
 
         $myseek=ftell($fp);
@@ -113,7 +113,7 @@ function _file_match($fp,$key,$lower,$upper,$fsize,$klen=1,$match_prefix=true,$e
 
     if ($klen == 0)
         #$klen = mb_strlen($key,$encoding);
-        $klen = strlen(utf8_decode($key));
+        $klen = mb_strlen($key, 'UTF-8');
 
     if ($klen == 1) $match_prefix=false;
 
@@ -142,7 +142,7 @@ function _file_match($fp,$key,$lower,$upper,$fsize,$klen=1,$match_prefix=true,$e
         $mykey= strtok($l,' \t\n,:');
         #print '==>'.$l;
         #$llen = mb_strlen($mykey,$encoding);
-        $llen = strlen(utf8_decode($mykey));
+        $llen = mb_strlen($mykey, 'UTF-8');
         if ($llen < $ki) {
             if ($_debug) print '*pkey='.$pkey."<br />\n";
             break;
