@@ -437,19 +437,37 @@ function _safe_class_token($name) {
   return is_string($name) && preg_match('/\A[A-Za-z0-9_-]+\z/', $name);
 }
 
-function _safe_http_host($host) {
+function _normalize_http_host($host) {
   if (!is_string($host)) return '';
-  $host = trim($host);
+  $host = strtolower(trim($host));
   if (!isset($host[0])) return '';
+  // [IPv6] literal with an optional port
+  if ($host[0] == '[') {
+    if (!preg_match('/^\[([0-9a-f:.]+)\](?::\d+)?\z/', $host, $m) ||
+        !filter_var($m[1], FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)) return '';
+    return '['.$m[1].']';
+  }
   if (($pos = strpos($host, ':')) !== false) {
     $port = substr($host, $pos + 1);
     if ($port === '' || !ctype_digit($port)) return '';
     $host = substr($host, 0, $pos);
   }
-  $host = strtolower($host);
-  if (!preg_match('/^[a-z0-9.-]+$/', $host)) return '';
+  if (substr($host, -1) == '.') $host = substr($host, 0, -1); // FQDN trailing dot
+  if (!preg_match('/^[a-z0-9._-]+\z/', $host)) return '';
   if ($host[0] == '.' || substr($host, -1) == '.' || strpos($host, '..') !== false) return '';
   return $host;
+}
+
+// Cookie domain from config, or from the validated server/host name.
+function _cookie_domain() {
+  global $Config;
+
+  if (!empty($Config['cookie_domain'])) return $Config['cookie_domain'];
+  $name = isset($_SERVER['SERVER_NAME']) ? _normalize_http_host($_SERVER['SERVER_NAME']) : '';
+  if ($name != '' && count(explode('.', $name)) >= 3) return $name;
+  $host = isset($_SERVER['HTTP_HOST']) ? _normalize_http_host($_SERVER['HTTP_HOST']) : '';
+  // no Domain attribute for IPv6 literals
+  return ($host != '' && $host[0] != '[') ? $host : '';
 }
 
 function _safe_html_url($url) {
@@ -553,11 +571,11 @@ function qualifiedUrl($url) {
   if (!empty($_SERVER['HTTPS'])) $proto= 'https';
   else $proto= strtolower(strtok($_SERVER['SERVER_PROTOCOL'],'/'));
   if (empty($url[0]) or $url[0] != '/') $url='/'.$url; // XXX
-  $host = isset($_SERVER['HTTP_HOST']) ? _safe_http_host($_SERVER['HTTP_HOST']) : '';
-  if (!$host && isset($_SERVER['SERVER_NAME'])) $host = _safe_http_host($_SERVER['SERVER_NAME']);
+  $host = isset($_SERVER['HTTP_HOST']) ? _normalize_http_host($_SERVER['HTTP_HOST']) : '';
+  if (!$host && isset($_SERVER['SERVER_NAME'])) $host = _normalize_http_host($_SERVER['SERVER_NAME']);
   if (!$host) $host = 'localhost';
   if (isset($_SERVER['HTTP_HOST']) && strpos($_SERVER['HTTP_HOST'],':') !== false)
-    $port = _safe_http_host($_SERVER['HTTP_HOST']) ? strstr(trim($_SERVER['HTTP_HOST']), ':') : ''; // keep a valid Host port
+    $port = (_normalize_http_host($_SERVER['HTTP_HOST']) && preg_match('/:\d+\z/', trim($_SERVER['HTTP_HOST']), $m)) ? $m[0] : ''; // keep a valid Host port
   return $proto.'://'.$host.$port.$url;
 }
 
@@ -2019,19 +2037,8 @@ class WikiUser {
      $_COOKIE['MONI_ID']=$ticket.'.'.urlencode($this->id);
      if (!empty($this->info['nick'])) $_COOKIE['MONI_NICK']=$this->info['nick'];
 
-     $domain = '';
-     if (!empty($Config['cookie_domain'])) {
-        $domain = '; Domain='.$Config['cookie_domain'];
-     } else if (strpos($_SERVER['SERVER_NAME'], '.') !== false) {
-        $tmp = explode('.', $_SERVER['SERVER_NAME']);
-        if (count($tmp) >= 3)
-          $domain = '; Domain='.$_SERVER['SERVER_NAME'];
-     }
-
-     if (empty($domain) && !empty($_SERVER['HTTP_HOST'])) {
-        $domain = _safe_http_host($_SERVER['HTTP_HOST']);
-        if ($domain) $domain = '; Domain='.$domain;
-     }
+     $domain = _cookie_domain();
+     if ($domain) $domain = '; Domain='.$domain;
 
      if (!empty($Config['cookie_path']))
         $path = '; Path='.$Config['cookie_path'];
@@ -2049,18 +2056,8 @@ class WikiUser {
      # set the fake cookie
      $_COOKIE['MONI_ID']="Anonymous";
 
-     $domain = '';
-     if (!empty($Config['cookie_domain'])) {
-        $domain = '; Domain='.$Config['cookie_domain'];
-     } else if (strpos($_SERVER['SERVER_NAME'], '.') !== false) {
-        $tmp = explode('.', $_SERVER['SERVER_NAME']);
-        if (count($tmp) >= 3)
-          $domain = '; Domain='.$_SERVER['SERVER_NAME'];
-     }
-     if (empty($domain) && !empty($_SERVER['HTTP_HOST'])) {
-        $domain = _safe_http_host($_SERVER['HTTP_HOST']);
-        if ($domain) $domain = '; Domain='.$domain;
-     }
+     $domain = _cookie_domain();
+     if ($domain) $domain = '; Domain='.$domain;
 
      if (!empty($Config['cookie_path']))
         $path = '; Path='.$Config['cookie_path'];
@@ -3317,7 +3314,8 @@ function do_goto($formatter,$options) {
      $formatter->header('Pragma: no-cache');
 
      $formatter->send_header(array("Status: 302","Location: ".$url),$options);
-  } else if ($options['url'] and _safe_html_url($options['url'])) {
+  } else if ($options['url'] and _safe_html_url($options['url']) and
+      _safe_html_url(urldecode($options['url']))) { // the url may be decoded below
     $url=$options['url'];
 
     if ($options['ie']) $from=strtoupper($options['ie']);
@@ -5026,8 +5024,9 @@ function macro_InterWiki($formatter,$value,$options=array()) {
 
     // check intermap and shared_intermap
     // you can update interwiki maps by touch $intermap or edit $shared_intermap
-    if (empty($formatter->refresh) and ($info = $cf->fetch('interwiki')) !== false) {
-      $info = $cf->fetch('interwiki');
+    // v2: map entries are validated before caching
+    if (empty($formatter->refresh) and ($info = $cf->fetch('interwiki.v2')) !== false) {
+      $info = $cf->fetch('interwiki.v2');
       $DBInfo->interwiki=$info['interwiki'];
       $DBInfo->interwikirule=$info['interwikirule'];
       $DBInfo->intericon=$info['intericon'];
@@ -5036,6 +5035,7 @@ function macro_InterWiki($formatter,$value,$options=array()) {
 
     $deps = array();
     $interwiki=array();
+    $intericon = array();
     # intitialize interwiki map
     $map = array();
     if (isset($DBInfo->intermap[0]) && file_exists($DBInfo->intermap)) {
@@ -5057,17 +5057,20 @@ function macro_InterWiki($formatter,$value,$options=array()) {
       if (!$line || $line[0]=="#" || $line[0]==" ") continue;
       if (preg_match("/^[A-Z]+/",$line)) {
         $wiki=strtok($line,' ');$url=strtok(' ');
+        // skip map entries that are not safe in href attributes
+        if (isset($url[0]) && (!_safe_html_url($url) || preg_match('/["\'<>]/', $url))) continue;
         $dumm=trim(strtok(''));
         if (preg_match('/^(http|ftp|attachment):/',$dumm,$match)) {
           $icon=strtok($dumm,' ');
           if ($icon[0]=='a') {
-            $url=$formatter->macro_repl('Attachment',substr($icon,11),1);
-            $icon=qualifiedUrl($DBInfo->url_prefix.'/'.$url);
+            $icon_url=$formatter->macro_repl('Attachment',substr($icon,11),1);
+            $icon=qualifiedUrl($DBInfo->url_prefix.'/'.$icon_url);
           }
           preg_match('/^(\d+)(x(\d+))?\b/',strtok(''),$msz);
           $sx=$msz[1];$sy=$msz[3];
           $sx=$sx ? $sx:16; $sy=$sy ? $sy:16;
-          $intericon[$wiki]=array($sx,$sy,trim($icon));
+          if (!preg_match('/["\'<>]/', $icon))
+            $intericon[$wiki]=array($sx,$sy,trim($icon));
         }
         $interwiki[$wiki]=trim($url);
         $interwikirule.="$wiki|";
@@ -5086,13 +5089,12 @@ function macro_InterWiki($formatter,$value,$options=array()) {
     if (!empty($DBInfo->shared_intericon) and file_exists($DBInfo->shared_intericon))
       $map=array_merge($map,file($DBInfo->shared_intericon));
 
-    $intericon = array();
     for ($i=0,$isz=sizeof($map);$i<$isz;$i++) {
       $line=rtrim($map[$i]);
       if (!$line || $line[0]=="#" || $line[0]==" ") continue;
       if (preg_match("/^[A-Z]+/",$line)) {
         $wiki=strtok($line,' ');$icon=trim(strtok(' '));
-        if (!preg_match('/^(http|ftp|attachment):/',$icon,$match)) continue;
+        if (!preg_match('/^(http|ftp|attachment):/',$icon,$match) || preg_match('/["\'<>]/', $icon)) continue;
         preg_match('/^(\d+)(x(\d+))?\b/',strtok(''),$sz);
         $sx=$sz[1];$sy=$sz[3];
         $sx=$sx ? $sx:16; $sy=$sy ? $sy:16;
@@ -5108,7 +5110,7 @@ function macro_InterWiki($formatter,$value,$options=array()) {
     $DBInfo->intericon=$intericon;
     $interinfo=
       array('interwiki'=>$interwiki,'interwikirule'=>$interwikirule,'intericon'=>$intericon);
-    $cf->update('interwiki', $interinfo, 0, array('deps'=>$deps));
+    $cf->update('interwiki.v2', $interinfo, 0, array('deps'=>$deps));
     break;
   }
   if (!empty($options['init'])) return;
