@@ -35,6 +35,8 @@ final class WikiLibSecurityHelpersTest extends TestCase
         $this->assertSame('', _safe_http_host("example.com\r\nX-Test: 1"));
         $this->assertSame('', _safe_http_host('example..com'));
         $this->assertSame('', _safe_http_host('example.com:bad'));
+        $this->assertSame('', _safe_http_host('example.com:'));
+        $this->assertSame('', _safe_http_host('.example.com'));
     }
 
     public function testHtmlAttrEscapeEscapesBothQuoteTypes(): void
@@ -51,6 +53,9 @@ final class WikiLibSecurityHelpersTest extends TestCase
         $this->assertFalse(_safe_html_url('javascript:alert(1)'));
         $this->assertFalse(_safe_html_url('java&#x73;cript:alert(1)'));
         $this->assertFalse(_safe_html_url('javascript&colon;alert(1)'));
+        $this->assertFalse(_safe_html_url(' JavaScript:alert(1)'));
+        $this->assertFalse(_safe_html_url('vbscript:msgbox(1)'));
+        $this->assertFalse(_safe_html_url('data:text/html,<script>alert(1)</script>'));
         $this->assertFalse(_safe_html_url("https://example.com/\nHeader: x"));
     }
 }

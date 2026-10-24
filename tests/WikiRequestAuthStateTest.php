@@ -167,6 +167,13 @@ final class WikiRequestAuthStateTest extends TestCase
         $this->assertStringNotContainsString("onclick", $out);
     }
 
+    public function testPlainProcessorKeepsSafeClassToken(): void
+    {
+        $out = processor_plain(null, "#!plain python\nhello");
+
+        $this->assertStringContainsString("<pre class='wiki python'>", $out);
+    }
+
     public function testQualifiedUrlNormalizesHostAndKeepsProxyPortBehavior(): void
     {
         $server = $_SERVER;
@@ -184,6 +191,12 @@ final class WikiRequestAuthStateTest extends TestCase
 
             $_SERVER['HTTP_HOST'] = "bad.example\r\nX-Test: 1";
             $this->assertSame('http://fallback.example/wiki.php', qualifiedUrl('/wiki.php'));
+
+            unset($_SERVER['HTTP_HOST']);
+            $this->assertSame('http://fallback.example:8080/wiki.php', qualifiedUrl('/wiki.php'));
+
+            $_SERVER['SERVER_NAME'] = "bad\r\nname";
+            $this->assertSame('http://localhost:8080/wiki.php', qualifiedUrl('/wiki.php'));
         } finally {
             $_SERVER = $server;
         }
@@ -213,6 +226,35 @@ final class WikiRequestAuthStateTest extends TestCase
         $this->assertStringNotContainsString('12345', $cookie);
     }
 
+    public function testWikiUserCookieDomainSkipsInvalidHostAndNormalizesUnsetCookie(): void
+    {
+        $server = $_SERVER;
+        $config = isset($GLOBALS['Config']) ? $GLOBALS['Config'] : null;
+        $_SERVER['REMOTE_ADDR'] = '127.0.0.1';
+        $_SERVER['SERVER_NAME'] = 'localhost';
+        $_SERVER['HTTP_HOST'] = 'Example.COM:12345';
+        $_SERVER['REQUEST_URI'] = '/wiki.php';
+        $_SERVER['HTTPS'] = '';
+        $GLOBALS['Config'] = array();
+
+        try {
+            $user = new WikiUser('ValidUser');
+            $unset = $user->unsetCookie();
+
+            $_SERVER['HTTP_HOST'] = "bad.example\r\nX-Test: 1";
+            $invalid = $user->setCookie();
+        } finally {
+            $_SERVER = $server;
+            if ($config === null) unset($GLOBALS['Config']);
+            else $GLOBALS['Config'] = $config;
+        }
+
+        $this->assertStringContainsString('; Domain=example.com', $unset);
+        $this->assertStringNotContainsString('12345', $unset);
+        $this->assertStringNotContainsString('Domain=', $invalid);
+        $this->assertStringNotContainsString('X-Test', $invalid);
+    }
+
     public function testGotoMetaRefreshEscapesInternalUrl(): void
     {
         $GLOBALS['DBInfo'] = new stdClass();
@@ -230,6 +272,78 @@ final class WikiRequestAuthStateTest extends TestCase
 
         $this->assertStringContainsString('URL=Self:&quot; autofocus onfocus=&quot;alert(1)', $out);
         $this->assertStringNotContainsString('URL=Self:" autofocus', $out);
+    }
+
+    public function testGotoRejectsScriptableUrl(): void
+    {
+        $GLOBALS['DBInfo'] = new stdClass();
+        $GLOBALS['DBInfo']->charset = 'UTF-8';
+        $GLOBALS['DBInfo']->interwikirule = 'NoSuchWiki';
+        $formatter = $this->gotoFormatter();
+
+        ob_start();
+        do_goto($formatter, array(
+            'value'=>'',
+            'url'=>'javascript:alert(1)',
+            'ie'=>'',
+            'oe'=>'UTF-8',
+        ));
+        $out = ob_get_clean();
+
+        $this->assertStringNotContainsString('URL=javascript:', $out);
+        $this->assertStringNotContainsString('javascript:', implode("\n", $formatter->headers));
+    }
+
+    public function testGotoInterWikiFallsBackToPageForScriptableUrl(): void
+    {
+        $GLOBALS['DBInfo'] = new stdClass();
+        $GLOBALS['DBInfo']->charset = 'UTF-8';
+        $GLOBALS['DBInfo']->interwikirule = 'BAD';
+        $GLOBALS['DBInfo']->interwiki = array('BAD'=>'javascript:alert(1)//');
+        $formatter = $this->gotoFormatter();
+
+        ob_start();
+        do_goto($formatter, array('value'=>'BAD:Page', 'url'=>'', 'ie'=>'', 'oe'=>''));
+        $out = ob_get_clean();
+
+        $headers = implode("\n", $formatter->headers);
+        $this->assertStringContainsString('Location: /wiki.php/BAD', $headers);
+        $this->assertStringNotContainsString('javascript:', $headers.$out);
+    }
+
+    private function gotoFormatter()
+    {
+        return new class {
+            public $headers = array();
+            public $page;
+
+            public function __construct()
+            {
+                $this->page = (object)array('urlname'=>'FrontPage');
+            }
+
+            public function link_url($pageurl, $query_string = '')
+            {
+                return '/wiki.php/'.$pageurl.$query_string;
+            }
+
+            public function header($header, $replace = true)
+            {
+            }
+
+            public function send_header($header = '', $options = array())
+            {
+                $this->headers = array_merge($this->headers, (array)$header);
+            }
+
+            public function send_title($title = '', $link = '', $options = array())
+            {
+            }
+
+            public function send_footer($args = '', $options = array())
+            {
+            }
+        };
     }
 
     public function testUserPreferencesEscapesVerifiedEmailValue(): void
@@ -297,12 +411,13 @@ final class WikiRequestAuthStateTest extends TestCase
         $GLOBALS['DBInfo'] = new stdClass();
         $GLOBALS['DBInfo']->interwiki = array('BAD'=>'javascript:alert(1)');
         $GLOBALS['DBInfo']->interwikirule = 'BAD';
-        $GLOBALS['DBInfo']->intericon = array();
+        $GLOBALS['DBInfo']->intericon = array('BAD'=>array(16, 16, 'javascript:alert(2)'));
         $GLOBALS['DBInfo']->imgs_url_interwiki = '/imgs/interwiki/';
 
         $out = macro_InterWiki((object)array('refresh'=>false), '', array());
 
         $this->assertStringContainsString("href='#'", $out);
+        $this->assertStringContainsString("src='/imgs/interwiki/bad-16.png'", $out);
         $this->assertStringNotContainsString('javascript:alert', $out);
     }
 
