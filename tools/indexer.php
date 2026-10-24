@@ -1,4 +1,5 @@
 <?php
+if (php_sapi_name() != 'cli') exit(1); // CLI only
 
 define('INC_MONIWIKI',1);
 include_once("wiki.php");

@@ -1,4 +1,5 @@
 <?php
+if (php_sapi_name() != 'cli') exit(1); // CLI only
 /**
  * TitleIndexer for SQL (MySQL, SQLite3)
  *

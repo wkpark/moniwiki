@@ -1,4 +1,5 @@
 <?php
+if (php_sapi_name() != 'cli') exit(1); // CLI only
 /**
  * Pagelinks and Backlinks generator by wkpark at gmail.com
  *

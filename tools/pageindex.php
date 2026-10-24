@@ -1,4 +1,5 @@
 <?php
+if (php_sapi_name() != 'cli') exit(1); // CLI only
 // init pageindex cache
 
 define('INC_MONIWIKI',1);
