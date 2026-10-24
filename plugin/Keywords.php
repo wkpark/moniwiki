@@ -323,7 +323,7 @@ EOF;
     $fs=MAX_FONT_SZ; // max font-size:24px;
     for ($i=0;$i<$fz;$i++) {
         $ifs=(int)($fs+0.5);
-        $sty[]= " style='font-size:${ifs}px;'";
+        $sty[]= " style='font-size:{$ifs}px;'";
         #print '/'.$ifs;
         $fs-=$fsh;
         $fs=max($fs,9); // min font-size:9px

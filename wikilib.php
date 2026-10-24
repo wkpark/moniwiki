@@ -5849,7 +5849,7 @@ function macro_TitleSearch($formatter="",$needle="",&$opts) {
     $idx++;
   }
 
-  if ($out) $out="<${type}l>$out</${type}l>\n";
+  if ($out) $out="<{$type}l>$out</{$type}l>\n";
   $opts['hits']= count($hits);
   if ($opts['hits']==1)
     $opts['value']=array_pop($hits);
