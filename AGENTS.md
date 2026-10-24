@@ -39,4 +39,6 @@ Use these rules when working in this repository.
 - For file uploads, preserve existing allowed-extension behavior unless the task is specifically to tighten it.
 - For shell commands, quote user-controlled arguments with `escapeshellarg()` and reject path traversal where applicable.
 - For remote fetches, do not allow private, loopback, reserved, or localhost targets unless explicitly required.
-
+- MoniWiki intentionally allows some wiki-authored HTML. Do not treat safe markup as a bug by itself.
+- For XSS fixes, prefer the existing XSS filter when preserving allowed HTML is required. Use plain HTML escaping only for generated attributes, form values, metadata, and other non-content boundaries.
+- Block script execution boundaries: event-handler attributes, scriptable URL schemes, active embed tags, quote-breaking attributes, and host/header/cookie injection.
