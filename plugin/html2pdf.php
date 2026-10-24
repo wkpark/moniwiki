@@ -32,6 +32,7 @@ function do_html2pdf($formatter,$options) {
     }
 
     if (!class_exists('XTCPDF')) {
+        #[\AllowDynamicProperties]
         class XTCPDF extends TCPDF {
             var $toc = array();
             var $fontalias = array();

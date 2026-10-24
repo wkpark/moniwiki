@@ -13,6 +13,7 @@
 
 define('FZW_CHAR', "\032");
 
+#[\AllowDynamicProperties]
 class processor_mixdown
 {
     //

@@ -111,6 +111,7 @@ class _DiffOp_Change extends _DiffOp {
  * @author Geoffrey T. Dairiki
  * @access private
  */
+#[\AllowDynamicProperties]
 class _DiffEngine
 {
     function diff ($from_lines, $to_lines) {
@@ -498,6 +499,7 @@ class _DiffEngine
 /**
  * Class representing a 'diff' between two sequences of strings.
  */
+#[\AllowDynamicProperties]
 class Diff 
 {
     var $edits;
@@ -857,6 +859,7 @@ class DiffFormatter
 
 define('NBSP', "\r");         // iso-8859-x non-breaking space.
 
+#[\AllowDynamicProperties]
 class _HWLDF_WordAccumulator {
     function __construct ($tags = array(), $nbsp = '&nbsp;', $html = null) {
         if (empty($tags))

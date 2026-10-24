@@ -51,6 +51,7 @@ define( 'MARKDOWNEXTRA_VERSION',  "1.1.7" ); # Wed 26 Sep 2007
 # Markdown Parser Class
 #
 
+#[\AllowDynamicProperties]
 class Markdown_Parser {
 
 	# Regex to match balanced [brackets].

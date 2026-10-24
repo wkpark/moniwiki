@@ -45,6 +45,7 @@ class TagSet extends TagOp {
     }
 }
 
+#[\AllowDynamicProperties]
 class KoreanStemmer {
     function __construct() {
         include_once(dirname(__FILE__).'/compat.php');

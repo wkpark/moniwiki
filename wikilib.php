@@ -1514,6 +1514,7 @@ function getSmileys() {
   return $smileys;
 }
 
+#[\AllowDynamicProperties]
 class UserDB {
   var $users=array();
   function __construct($conf) {
@@ -1884,6 +1885,7 @@ class UserDB {
   }
 }
 
+#[\AllowDynamicProperties]
 class WikiUser {
   var $cookie_expires = 2592000; // 60 * 60 * 24 * 30; // default 30 days
 

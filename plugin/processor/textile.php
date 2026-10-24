@@ -217,6 +217,7 @@ Applying Attributes:
 @define('txt_registered',         '&#174;');
 @define('txt_copyright',          '&#169;');
 
+#[\AllowDynamicProperties]
 class processor_textile
 {
     var $hlgn;

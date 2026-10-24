@@ -52,6 +52,7 @@ function _get_pagelist($formatter,$pages,$action,$curpage=1,$listcount=10,$bra="
   return $pnut;
 }
 
+#[\AllowDynamicProperties]
 class BBS_text {
     function __construct($name,$conf) {
         # $conf['data_dir'] from DBInfo.
