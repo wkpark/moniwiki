@@ -2050,7 +2050,7 @@ class WikiUser {
         if ($rawmode)
            $this->info['password']=$passwd;
         else
-           $this->info['password']=crypt($passwd);
+           $this->info['password']=password_hash($passwd, PASSWORD_DEFAULT);
      }
 #     else
 #        $this->info[password]="";
