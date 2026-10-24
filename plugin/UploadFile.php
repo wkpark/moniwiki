@@ -185,7 +185,7 @@ EOF;
 
   $log_entry='';
 
-  $protected_exts=!empty($DBInfo->pds_protected) ? $DBInfo->pds_protected :"pl|cgi|php";
+  $protected_exts=!empty($DBInfo->pds_protected) ? $DBInfo->pds_protected :"pl|cgi|php|php3|php4|php5|phtml";
   $safe_exts=!empty($DBInfo->pds_safe) ? $DBInfo->pds_safe :"txt|gif|png|jpg|jpeg";
   $protected=explode('|',$protected_exts);
   $safe=explode('|',$safe_exts);
