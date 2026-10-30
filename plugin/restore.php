@@ -65,7 +65,7 @@ function do_post_restore($formatter,$options) {
     if ($DBInfo->security->is_protected("restore",$options))
       $out.="Password: <input type='password' name='passwd' size='10' />\n";
     $out.="<input type='hidden' name='ticket' value='hello' /> \n";
-    $out.="<input type='hidden' name='tar' value='"._html_escape($options['value'])."' /> \n";
+    $out.="<input type='hidden' name='tar' value='"._html_attr_escape($options['value'])."' /> \n";
     $out.="<input type='checkbox' name='show' checked='checked' />show only\n";
     $out.="<input type='submit' value='Restore now' /></form>\n";
     print $out;
