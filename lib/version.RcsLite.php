@@ -43,7 +43,8 @@ class Version_RcsLite extends Version_RCS {
   function _ci($filename,$log,$force=false) {
     $dir = dirname($filename).'/'.$this->rcs_dir;
     if (!is_dir($dir) && !@mkdir($dir, 0777, true) && !is_dir($dir)) return -1;
-    $lock = @fopen($filename.'.##', 'c');
+    // Keep the lock out of the text directory; the text title indexer lists every file there as a page.
+    $lock = @fopen($dir.'/'.basename($filename).',v.lock', 'c');
     if (!$lock || !flock($lock, LOCK_EX)) {
       if ($lock) fclose($lock);
       return -1;
@@ -127,7 +128,10 @@ class Version_RcsLite extends Version_RCS {
     $oname=$this->DB->_getPageKey($pagename);
     $oldfile = $this->DB->text_dir.'/'.$this->rcs_dir."/$oname,v";
     $newfile = $this->DB->text_dir.'/'.$this->rcs_dir."/$keyname,v";
-    if (!file_exists($oldfile) || file_exists($newfile) || !rename($oldfile, $newfile)) return -1;
+    if (!file_exists($oldfile)) return -1;
+    // A history left by a deleted page goes aside as ,N, as delete() does.
+    $this->_atticpage($new);
+    if (file_exists($newfile) || !rename($oldfile, $newfile)) return -1;
     return $this->ci($new, isset($params['log']) ? $params['log'] : '', true);
   }
 
@@ -142,6 +146,9 @@ class Version_RcsLite extends Version_RCS {
 
     if ($last==1)
       return $this->rcs->_head;
+    // A damaged archive may have a cycle in its next chain.
+    if (empty($this->rcs->_head) || $this->rcs->_where === 'invalid')
+      return '';
     if ($mtime) {
       #print gmdate('Y/m/d H:i:s',$mtime);
       if ($mtime >= $this->rcs->_date[$this->rcs->_head])

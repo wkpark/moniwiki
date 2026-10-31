@@ -112,6 +112,43 @@ final class RcsLiteTest extends TestCase
         $this->assertSame("page content\n", $this->version->co('New', '1.2'));
     }
 
+    public function testRenameOntoDeletedPageKeepsBothHistories(): void
+    {
+        file_put_contents($this->dir.'/Target', "deleted page\n");
+        $this->assertSame(0, $this->version->_ci($this->dir.'/Target', 'target'));
+        unlink($this->dir.'/Target');
+        file_put_contents($this->dir.'/Source', "source page\n");
+        $this->assertSame(0, $this->version->_ci($this->dir.'/Source', 'source'));
+        rename($this->dir.'/Source', $this->dir.'/Target');
+        $this->assertSame(0, $this->version->rename('Source', 'Target', array('log'=>'renamed')));
+        $this->assertFileDoesNotExist($this->dir.'/RCS/Source,v');
+        $this->assertSame(array(1), $this->version->attics('Target'));
+        $this->assertSame("source page\n", $this->version->co('Target', '1.1'));
+        $this->assertSame('1.2', $this->version->get_rev('Target', '', 1));
+    }
+
+    public function testSaveLockStaysOutOfTextDirectory(): void
+    {
+        file_put_contents($this->dir.'/Locked', "text\n");
+        $this->assertSame(0, $this->version->_ci($this->dir.'/Locked', 'first'));
+        $this->assertSame(array('Locked', 'RCS'), array_values(array_diff(scandir($this->dir), array('.', '..'))));
+        $this->assertFileExists($this->dir.'/RCS/Locked,v.lock');
+    }
+
+    public function testDateLookupOnCyclicHistoryReturnsNothing(): void
+    {
+        mkdir($this->dir.'/RCS');
+        file_put_contents($this->dir.'/Loop', "x\n");
+        file_put_contents($this->dir.'/RCS/Loop,v', "head\t1.3;\naccess;\nsymbols;\nlocks; strict;\n\n\n".
+            "1.3\ndate\t2026.10.31.00.00.03;\tauthor u;\tstate Exp;\nbranches;\nnext\t1.2;\n\n".
+            "1.2\ndate\t2026.10.31.00.00.02;\tauthor u;\tstate Exp;\nbranches;\nnext\t1.3;\n\n\n".
+            "desc\n@@\n\n\n1.3\nlog\n@c\n@\ntext\n@x\n@\n\n\n1.2\nlog\n@b\n@\ntext\n@@\n");
+        set_time_limit(10); // fail instead of hanging the run if the lookup loops
+        $this->assertSame('', $this->version->get_rev('Loop', 1000));
+        $this->assertSame('', $this->version->get_rev('Missing', 1000));
+        set_time_limit(0);
+    }
+
     public function testHistorySelectionMatchesWikiRequests(): void
     {
         $page = $this->dir.'/History';
@@ -151,10 +188,29 @@ final class RcsLiteTest extends TestCase
 
         // Noncanonical whitespace uses the regular metadata parser.
         $archive = $this->dir.'/RCS/Recent,v';
-        file_put_contents($archive, str_replace("\ndesc\n", "\ndesc \n", file_get_contents($archive)));
+        chmod($archive, 0644);
+        $this->assertNotFalse(file_put_contents($archive, str_replace("\ndesc\n", "\ndesc \n", file_get_contents($archive))));
         $full = new RcsLite();
         $full->_process($page);
         $this->assertSame($full->rlog('', '-r1.11:1.21'), $fresh->rlog('Recent', '', '-r1.11:1.21'));
+    }
+
+    public function testBoundedHistoryReadsInFullBelowANonTrunkHead(): void
+    {
+        mkdir($this->dir.'/RCS');
+        file_put_contents($this->dir.'/Two', "x\n");
+        file_put_contents($this->dir.'/RCS/Two,v', "head\t2.1;\naccess;\nsymbols;\nlocks; strict;\n\n\n".
+            "2.1\ndate\t2026.10.31.00.00.03;\tauthor u;\tstate Exp;\nbranches;\nnext\t1.2;\n\n".
+            "1.2\ndate\t2026.10.31.00.00.02;\tauthor u;\tstate Exp;\nbranches;\nnext\t1.1;\n\n".
+            "1.1\ndate\t2026.10.31.00.00.01;\tauthor u;\tstate Exp;\nbranches;\nnext\t;\n\n\n".
+            "desc\n@@\n\n\n2.1\nlog\n@c\n@\ntext\n@x\n@\n\n\n1.2\nlog\n@b\n@\ntext\n@d1 1\na1 1\nb\n@\n\n\n".
+            "1.1\nlog\n@a\n@\ntext\n@d1 1\na1 1\na\n@\n");
+        $full = new RcsLite();
+        $full->_process($this->dir.'/Two');
+        $range = $this->version->rlog('Two', '', '-r1.1:1.2');
+        $this->assertSame($full->rlog('', '-r1.1:1.2'), $range);
+        $this->assertStringContainsString("\nrevision 1.1\n", $range);
+        $this->assertSame($full->rlog('1.1'), $this->version->rlog('Two', '1.1'));
     }
 
     public function testTokenDelimitersAtEofAndAfterQuotedStrings(): void

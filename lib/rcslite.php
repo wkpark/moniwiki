@@ -210,6 +210,11 @@ Class RcsLite {
             if( $where == 'admin.head' ) {
                 if( preg_match('/^head\s+([0-9]+\.[0-9]+);$/',$line, $match) ) {
                     $headNum = $match[1];
+                    if (($flag & RCSLITE_HISTORY) && !preg_match('/^1\.[1-9][0-9]*$/', $headNum)) {
+                        // Bounded reads count revisions down from a 1.N head; read everything else in full.
+                        $flag &= ~RCSLITE_HISTORY;
+                        $limit = 0;
+                    }
                     if ($flag & RCSLITE_HISTORY)
                         $limit = $limit < 0 ? 2 : max(1, (int)substr($headNum, 2) - $limit + 2);
                     $where = 'admin.access'; # Don't support branch
