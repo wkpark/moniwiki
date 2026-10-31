@@ -127,6 +127,23 @@ final class RcsLiteTest extends TestCase
         $this->assertSame('1.2', $this->version->get_rev('Target', '', 1));
     }
 
+    public function testUnchangedTextAddsNoRevisionUnlessForced(): void
+    {
+        $page = $this->dir.'/Same';
+        file_put_contents($page, "same text\n");
+        $this->assertSame(0, $this->version->_ci($page, 'first'));
+        $archive = file_get_contents($this->dir.'/RCS/Same,v');
+        $this->assertSame(0, $this->version->_ci($page, 'unchanged'));
+        $this->assertSame($archive, file_get_contents($this->dir.'/RCS/Same,v'));
+        $this->assertSame('1.1', (new Version_RcsLite($GLOBALS['DBInfo']))->get_rev('Same', '', 1));
+        $this->assertSame(0, $this->version->_ci($page, 'forced', true));
+        file_put_contents($page, "same text");
+        $this->assertSame(0, $this->version->_ci($page, 'final newline removed'));
+        $fresh = new Version_RcsLite($GLOBALS['DBInfo']);
+        $this->assertSame('1.3', $fresh->get_rev('Same', '', 1));
+        $this->assertSame("same text\n", $fresh->co('Same', '1.2'));
+    }
+
     public function testSaveLockStaysOutOfTextDirectory(): void
     {
         file_put_contents($this->dir.'/Locked', "text\n");

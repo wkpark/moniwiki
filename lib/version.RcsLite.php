@@ -50,7 +50,12 @@ class Version_RcsLite extends Version_RCS {
       return -1;
     }
     $this->rcs->_process($filename, 0, RCSLITE_FORCE);
-    $result = in_array($this->rcs->_where, array('invalid', 'unreadable'), true) ? false : $this->rcs->addRevisionPage($log);
+    $text = in_array($this->rcs->_where, array('invalid', 'unreadable'), true) ? false : @file_get_contents($filename);
+    // like ci without -f, an unchanged text adds no revision
+    if ($text !== false && !$force && $this->rcs->_head && $text === $this->rcs->delta($this->rcs->_head))
+      $result = '';
+    else
+      $result = $text === false ? false : $this->rcs->addRevisionText($text, $log);
     flock($lock, LOCK_UN);
     fclose($lock);
     return $result === '' ? 0 : -1;
