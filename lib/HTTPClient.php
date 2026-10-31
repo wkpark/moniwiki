@@ -33,6 +33,7 @@ class HTTPClient {
     var $max_bodysize;  // abort if the response body is bigger than this
     var $header_regexp; // if set this RE must match against the headers, else abort
     var $url_validator; // optional callback to validate redirects
+    var $url_resolver; // optional callback returning a validated connection IP
     var $headers;
     var $debug;
 
@@ -81,6 +82,7 @@ class HTTPClient {
         $this->max_buffer_size = 0;
         $this->max_bodysize = 0;
         $this->url_validator = null;
+        $this->url_resolver = null;
         $this->header_regexp= '';
         $this->nobody       = false;
         if(extension_loaded('zlib')) $this->headers['Accept-encoding'] = 'gzip';
@@ -136,6 +138,13 @@ class HTTPClient {
         if(!empty($uri['port'])) $port = $uri['port'];
         if(isset($uri['user'][0])) $this->user = $uri['user'];
         if(isset($uri['pass'][0])) $this->pass = $uri['pass'];
+
+        if (is_callable($this->url_resolver)) {
+            if ($this->proxy_host || !($server = call_user_func($this->url_resolver, $url))) {
+                $this->error = 'URL is not allowed';
+                return false;
+            }
+        }
 
         // proxy setup
         if($this->proxy_host){
@@ -198,6 +207,10 @@ class HTTPClient {
                     ));
                 $socket = stream_socket_client('tcp://'.$server.':'.$port, $errno, $errstr,
                     $this->timeout, STREAM_CLIENT_CONNECT, $context);
+            } else if (is_callable($this->url_resolver) && $uri['scheme'] == 'https') {
+                $context = stream_context_create(array('ssl' => array('peer_name' => $uri['host'])));
+                $socket = @stream_socket_client('ssl://'.preg_replace('/^ssl:\/\//', '', $server).':'.$port,
+                    $errno, $errstr, $this->timeout, STREAM_CLIENT_CONNECT, $context);
             } else {
                 $socket = @fsockopen($server,$port,$errno, $errstr, $this->timeout);
             }

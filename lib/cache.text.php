@@ -169,6 +169,7 @@ class Cache_Text {
 		}
 
 		$prefix = array('');
+		$rdirs = array();
 		for ($j = 0; $j < $depth; $j++) {
 			$dirs = array();
 			$rdirs = array();

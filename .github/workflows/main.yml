@@ -88,8 +88,8 @@ jobs:
           mkdir release
           mv ../moniwiki-*.tgz release/
           (cd release; tar xvf moniwiki-*.tgz)
-          (cd release; wget https://github.com/wkpark/moniwiki-apserver/releases/download/v0.5/apserver-apache-2.4.54-php-7.4.32.zip)
-          (cd release; zip -r -g apserver-apache-2.4.54-php-7.4.32.zip moniwiki)
+          (cd release; wget https://github.com/wkpark/moniwiki-apserver/releases/download/v0.6/apserver-apache-2.4.66-php-8.2.35.zip)
+          (cd release; zip -r -g apserver-apache-2.4.66-php-8.2.35.zip moniwiki)
           (rm -rf release/moniwiki)
 
           ls -al release

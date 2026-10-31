@@ -3,9 +3,32 @@
 use PHPUnit\Framework\TestCase;
 
 require_once MONIWIKI_TEST_ROOT.'/wikilib.php';
+require_once MONIWIKI_TEST_ROOT.'/plugin/restore.php';
 
 final class WikiLibSecurityHelpersTest extends TestCase
 {
+    public function testRestoreFormEscapesSingleQuotes(): void
+    {
+        $oldDb = $GLOBALS['DBInfo'] ?? null;
+        $GLOBALS['DBInfo'] = (object) array('security'=>new class {
+            public function is_protected($action, $options) { return false; }
+        });
+        $formatter = new class {
+            public function send_header($header, $options) {}
+            public function send_title($title, $unused, $options) {}
+            public function send_footer($unused, $options) {}
+        };
+        ob_start();
+        try {
+            do_post_restore($formatter, array('ticket'=>'', 'tar'=>'', 'value'=>"x' autofocus onfocus='alert(1)"));
+            $output = ob_get_contents();
+        } finally {
+            ob_end_clean();
+            $GLOBALS['DBInfo'] = $oldDb;
+        }
+        $this->assertStringContainsString("value='x&#039; autofocus onfocus=&#039;alert(1)'", $output);
+    }
+
     public function testSafeFilenameRejectsTraversalAndPathSeparators(): void
     {
         $this->assertTrue(_safe_filename('image.png'));

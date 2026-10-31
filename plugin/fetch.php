@@ -102,12 +102,12 @@ function do_fetch($formatter, $params = array()) {
         echo "<meta name='viewport' content='width=device-width' />";
         echo '</head><body>';
         echo '<h1>500 Internal Server Error</h1>';
-        echo '<div><a href="'.$url.'">Original source</a> : ';
-        echo $url,'</div>';
+        echo '<div><a href="'._html_escape($url).'">Original source</a> : ';
+        echo _html_escape($url),'</div>';
         echo '<h2>Error Message</h2>';
-        echo '<pre>', $ret['error'].'</pre>';
+        echo '<pre>', _html_escape($ret['error']).'</pre>';
         echo '<hr>';
-        echo '<div>', 'You can <a href="?action=fetch&amp;refresh=1&amp;url='.$url.'">refresh</a>';
+        echo '<div>', 'You can <a href="?action=fetch&amp;refresh=1&amp;url='._html_escape(rawurlencode($url)).'">refresh</a>';
         echo ' this URL manually</div>';
         echo '</body></html>';
 
@@ -210,7 +210,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
     } else {
         // check connection
         $http = new HTTPClient();
-        $http->url_validator = '_fetch_is_allowed_url';
+        $http->url_resolver = '_fetch_public_ip';
         // get file header
         $http->nobody = true;
 
@@ -347,7 +347,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
 
         // retry to get all info
         $http = new HTTPClient();
-        $http->url_validator = '_fetch_is_allowed_url';
+        $http->url_resolver = '_fetch_public_ip';
         if (!empty($buffer_size))
             $http->max_buffer_size = $buffer_size;
         $http->vartmp_dir = $vartmp_dir;
@@ -420,7 +420,7 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
             echo '<tr><th>'._("Last Modified").'</th><td>'.$info['last-modified'].'</td></tr>',"\n";
         echo '</table>',"\n";
         echo '<hr>',"\n";
-        echo '<div>', 'You can <a href="?action=fetch&amp;refresh=1&amp;url='.$url.'">refresh</a>';
+        echo '<div>', 'You can <a href="?action=fetch&amp;refresh=1&amp;url='._html_escape(rawurlencode($url)).'">refresh</a>';
         echo ' this URL manually</div>',"\n";
         echo '<div class="externalImage"><div><img src="'.$img_url.'"></div>',"\n";
         echo '</body>',"\n",'</html>',"\n";
@@ -530,20 +530,25 @@ function macro_Fetch($formatter, $url = '', $params = array()) {
     return null;
 }
 
-function _fetch_is_private_url($url) {
+function _fetch_public_ip($url) {
     $host = parse_url($url, PHP_URL_HOST);
-    if (empty($host)) return true;
+    if (empty($host)) return false;
     $host = strtolower(rtrim($host, '.'));
-    if ($host == 'localhost') return true;
+    if ($host == 'localhost') return false;
 
     $ips = filter_var($host, FILTER_VALIDATE_IP) ? array($host) : gethostbynamel($host);
-    if (!$ips) return true;
+    if (!$ips) return false;
 
     foreach ($ips as $ip) {
-        if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE))
-            return true;
+        if (!filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_GLOBAL_RANGE | FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE) ||
+            (filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) && (int) $ip >= 224))
+            return false;
     }
-    return false;
+    return $ips[0];
+}
+
+function _fetch_is_private_url($url) {
+    return _fetch_public_ip($url) === false;
 }
 
 function _fetch_is_allowed_url($url) {

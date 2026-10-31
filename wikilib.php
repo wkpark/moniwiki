@@ -5067,7 +5067,7 @@ function macro_InterWiki($formatter,$value,$options=array()) {
             $icon=qualifiedUrl($DBInfo->url_prefix.'/'.$icon_url);
           }
           preg_match('/^(\d+)(x(\d+))?\b/',strtok(''),$msz);
-          $sx=$msz[1];$sy=$msz[3];
+          $sx=isset($msz[1]) ? $msz[1] : 0;$sy=isset($msz[3]) ? $msz[3] : 0;
           $sx=$sx ? $sx:16; $sy=$sy ? $sy:16;
           if (!preg_match('/["\'<>]/', $icon))
             $intericon[$wiki]=array($sx,$sy,trim($icon));

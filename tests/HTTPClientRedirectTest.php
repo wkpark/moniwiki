@@ -45,6 +45,27 @@ final class HTTPClientRedirectTest extends TestCase
         }
     }
 
+    public function testResolverPinsTheAddressUsedForEachRequest(): void
+    {
+        list($process, $router) = $this->startRedirectServer();
+        try {
+            $http = new HTTPClient();
+            $seen = array();
+            $http->url_resolver = function($url) use (&$seen) {
+                $seen[] = $url;
+                return count($seen) == 1 ? '127.0.0.1' : false;
+            };
+            $url = str_replace('127.0.0.1', 'unresolvable.invalid', $this->serverUrl).'/redirect';
+            $this->assertFalse($http->sendRequest($url));
+            $this->assertSame('URL is not allowed', $http->error);
+            $this->assertCount(2, $seen);
+            $this->assertStringContainsString('unresolvable.invalid', $seen[0]);
+            $this->assertStringContainsString('127.0.0.1', $seen[1]);
+        } finally {
+            $this->stopServer($process, $router);
+        }
+    }
+
     private string $serverUrl = '';
 
     private function startRedirectServer(): array
