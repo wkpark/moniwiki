@@ -23,11 +23,20 @@ than rewritten.
 
 GNU RCS `,v` and SimpleRCS `,srcs` are different formats. This backend does not
 convert existing `,v` files. If a page has a `,v` history but no `,srcs`
-history, editing that page is refused to protect its existing history. Back up
-the wiki and use the existing version backend until a migration is available.
+history, editing that page is refused to protect its existing history. Renaming
+such a page with its history also fails, after the page file itself has been
+moved. Back up the wiki and use the existing version backend until a migration
+is available.
+
+Deleting a page keeps its `,srcs` history unless the history is deleted too. A
+deleted history, or the history left at a name that a page is renamed to, is
+moved aside as `Page,srcs.1`, `Page,srcs.2`, and so on. Those archives are kept
+but not shown in the wiki. Saving text identical to the latest revision adds
+no revision unless the save is forced, as with `ci` without `-f`.
 
 Writes use a temporary file and replace the archive after the new contents are
-flushed. This rewrites the history and is not an append-only implementation.
+flushed, while holding `RCS/Page,srcs.lock`. This rewrites the history and is
+not an append-only implementation.
 Page data and history are separate files and are not committed as one
 transaction. Concurrent edits and interruption during page saving require
 additional coordination.

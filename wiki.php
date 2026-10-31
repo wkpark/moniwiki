@@ -886,9 +886,13 @@ class WikiDB {
     $keyname = $this->_getPageKey($pagename);
     $filename = $this->text_dir.'/'.$keyname;
 
-    if (isset($this->version_class) && strcasecmp($this->version_class, 'SimpleRCS') === 0) {
+    // refuse before writing the page when its history cannot take this text
+    if (!empty($this->version_class)) {
       $version = $this->lazyLoad('version', $this);
-      if (!$version->canSave($pagename, $body)) return -1;
+      if (method_exists($version, 'canSave') && !$version->canSave($pagename, $body)) {
+        $options['retval']['msg'] = _("Fail to save version information");
+        return -1;
+      }
     }
 
     $dir=dirname($filename);

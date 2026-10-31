@@ -33,6 +33,7 @@ class Version_SimpleRCS extends Version_RCS {
   }
 
   function co($pagename, $rev, $opt=array()) {
+    if (!empty($opt['archive'])) return '';
     $filename = $this->_filename($pagename);
     if (!$this->load($filename)) return '';
     $body = $this->store->revision($rev);
@@ -51,7 +52,8 @@ class Version_SimpleRCS extends Version_RCS {
   function _ci($filename, $log, $force=false) {
     $dir = dirname($filename).'/RCS';
     if (!is_dir($dir) && !@mkdir($dir, 0777, true) && !is_dir($dir)) return -1;
-    $lock = @fopen($filename.'.srcs.lock', 'c');
+    // keep the lock beside the archive; files in the text directory are listed as pages
+    $lock = @fopen($dir.'/'.basename($filename).',srcs.lock', 'c');
     if (!$lock || !flock($lock, LOCK_EX)) {
       if ($lock) fclose($lock);
       return -1;
@@ -64,7 +66,8 @@ class Version_SimpleRCS extends Version_RCS {
     if ($body !== false) {
       $fields = explode(';;', $log, 3);
       $author = isset($fields[1]) && $fields[1] !== '' ? $fields[1] : 'Anonymous';
-      $ok = $this->store->save($archive, $body, $author, $log);
+      // like ci without -f, an unchanged text adds no revision
+      $ok = (!$force && $this->store->isHead($body)) || $this->store->save($archive, $body, $author, $log);
     } else $ok = false;
     flock($lock, LOCK_UN);
     fclose($lock);
@@ -86,7 +89,7 @@ class Version_SimpleRCS extends Version_RCS {
     $filename = $this->_filename($pagename);
     if (!$this->load($filename)) return '';
     $old = $this->store->revision($rev !== '' ? $rev : $this->store->head());
-    $new = $rev2 !== '' ? $this->store->revision($rev2) : @file_get_contents($filename);
+    $new = $rev2 !== '' ? $this->store->revision($rev2) : $this->store->normalize(@file_get_contents($filename));
     if ($old === false || $new === false) return '';
     return $this->store->diff($new, $old, 'udiff');
   }
@@ -101,15 +104,21 @@ class Version_SimpleRCS extends Version_RCS {
     $newfile = $this->_filename($new);
     $target = $this->archive($newfile);
     $legacy = dirname($newfile).'/RCS/'.basename($newfile).',v';
-    if (!is_file($old) || file_exists($target) || file_exists($legacy) || !@rename($old, $target)) return -1;
+    if (!is_file($old) || file_exists($legacy)) return -1;
+    // a deleted page keeps its history; set it aside as delete() does
+    if (file_exists($target) && !$this->attic($target)) return -1;
+    if (!@rename($old, $target)) return -1;
     return $this->ci($new, isset($params['log']) ? $params['log'] : '', true);
+  }
+
+  private function attic($file) {
+    for ($i=1; file_exists($file.'.'.$i); $i++) {}
+    return @rename($file, $file.'.'.$i);
   }
 
   function delete($pagename) {
     $file = $this->archive($this->_filename($pagename));
-    if (!is_file($file)) return false;
-    for ($i=1; file_exists($file.'.'.$i); $i++) {}
-    return @rename($file, $file.'.'.$i);
+    return is_file($file) && $this->attic($file);
   }
 
   function attics($pagename) { return false; }
@@ -198,6 +207,15 @@ class MoniSimpleRCS {
     return $this->blocks ? $this->blocks[count($this->blocks)-1]['ver'] : '';
   }
 
+  // Text is stored with a final newline, as the Python SimpleRCS does.
+  function normalize($text) {
+    return is_string($text) && $text !== '' && substr($text, -1) !== "\n" ? $text."\n" : $text;
+  }
+
+  function isHead($body) {
+    return $this->blocks && $this->revision($this->head()) === $this->normalize($body);
+  }
+
   function verifyHashes() { return $this->verifyHashes; }
 
   // Verify the full hash chain once per archive content; canSave() and save()
@@ -263,7 +281,7 @@ class MoniSimpleRCS {
 
   function save($path, $body, $author, $log) {
     if (strpos($body, "\0") !== false || !preg_match('//u', $body)) return false;
-    if ($body !== '' && substr($body, -1) !== "\n") $body .= "\n";
+    $body = $this->normalize($body);
     $last = count($this->blocks)-1;
     if ($last >= 0) {
       if ($this->verifyHashes && !$this->verifyAll()) return false;

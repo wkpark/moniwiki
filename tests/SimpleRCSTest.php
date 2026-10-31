@@ -221,4 +221,57 @@ final class SimpleRCSTest extends TestCase
         $this->assertTrue($this->version->delete('Renamed'));
         $this->assertFileExists($this->dir.'/RCS/Renamed,srcs.1');
     }
+
+    public function testLockFileStaysInHistoryDirectory(): void
+    {
+        file_put_contents($this->dir.'/FrontPage', "hi\n");
+        $this->assertSame(0, $this->version->_ci($this->dir.'/FrontPage', 'created'));
+        $this->assertSame(array('FrontPage', 'RCS'), array_values(array_diff(scandir($this->dir), array('.', '..'))));
+        $this->assertFileExists($this->dir.'/RCS/FrontPage,srcs.lock');
+    }
+
+    public function testRenameOntoDeletedPageSetsItsHistoryAside(): void
+    {
+        file_put_contents($this->dir.'/Target', "deleted page\n");
+        $this->assertSame(0, $this->version->_ci($this->dir.'/Target', 'created'));
+        unlink($this->dir.'/Target');
+        file_put_contents($this->dir.'/Old', "old page\n");
+        $this->assertSame(0, $this->version->_ci($this->dir.'/Old', 'created'));
+        rename($this->dir.'/Old', $this->dir.'/Target');
+        $this->assertSame(0, $this->version->rename('Old', 'Target', array('log'=>'renamed')));
+        $this->assertFileDoesNotExist($this->dir.'/RCS/Old,srcs');
+        $this->assertSame("old page\n", $this->version->co('Target', '1.0'));
+        $this->assertSame('1.1', $this->version->get_rev('Target', '', 1));
+        $this->assertStringContainsString("text @deleted page\n@;", file_get_contents($this->dir.'/RCS/Target,srcs.1'));
+    }
+
+    public function testArchiveOptionIsNotServedFromLiveHistory(): void
+    {
+        file_put_contents($this->dir.'/Page', "live\n");
+        $this->assertSame(0, $this->version->_ci($this->dir.'/Page', 'created'));
+        $this->assertSame("live\n", $this->version->co('Page', '1.0'));
+        $this->assertSame('', $this->version->co('Page', '1.0', array('archive'=>1)));
+    }
+
+    public function testUnchangedTextAddsRevisionOnlyWhenForced(): void
+    {
+        $path = $this->dir.'/Page';
+        file_put_contents($path, "same");
+        $this->assertSame(0, $this->version->_ci($path, 'created'));
+        file_put_contents($path, "same\n");
+        $this->assertSame(0, $this->version->_ci($path, 'again'));
+        $this->assertSame('1.0', $this->version->get_rev('Page', '', 1));
+        $this->assertSame(0, $this->version->_ci($path, 'forced', true));
+        $this->assertSame('1.1', $this->version->get_rev('Page', '', 1));
+    }
+
+    public function testDiffIgnoresMissingFinalNewline(): void
+    {
+        $path = $this->dir.'/Page';
+        file_put_contents($path, "one\ntwo");
+        $this->assertSame(0, $this->version->_ci($path, 'created'));
+        $this->assertSame('', $this->version->diff('Page'));
+        file_put_contents($path, "one\nthree");
+        $this->assertSame("@@ -1,2 +1,2 @@\n one\n-two\n+three\n", $this->version->diff('Page'));
+    }
 }
