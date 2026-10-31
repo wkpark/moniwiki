@@ -21,6 +21,12 @@ support binary content, signatures, other encodings or hash algorithms, or the
 RCS import/export and merge plugins. Unsupported histories are rejected rather
 than rewritten.
 
+Revision dates are written in UTC with an explicit offset, such as
+`2026-10-31T06:00:00+00:00`. A date without a zone, as the Python SimpleRCS
+writes it with the writer's local time, is read in PHP's default time zone
+(`date.timezone`). Set it to the zone the Python tools run in, or the history
+times of those revisions are shifted by the difference.
+
 GNU RCS `,v` and SimpleRCS `,srcs` are different formats. This backend does not
 convert existing `,v` files. If a page has a `,v` history but no `,srcs`
 history, editing that page is refused to protect its existing history. Renaming

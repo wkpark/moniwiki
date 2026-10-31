@@ -274,4 +274,38 @@ final class SimpleRCSTest extends TestCase
         file_put_contents($path, "one\nthree");
         $this->assertSame("@@ -1,2 +1,2 @@\n one\n-two\n+three\n", $this->version->diff('Page'));
     }
+
+    public function testNewRevisionDateCarriesUtcOffset(): void
+    {
+        file_put_contents($this->dir.'/Page', "x\n");
+        $before = time();
+        $this->assertSame(0, $this->version->_ci($this->dir.'/Page', 'created'));
+        $this->assertMatchesRegularExpression('/^date @\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\+00:00@;$/m', file_get_contents($this->dir.'/RCS/Page,srcs'));
+        $this->assertSame('1.0', $this->version->get_rev('Page', time()));
+        $this->assertSame('', $this->version->get_rev('Page', $before - 1));
+    }
+
+    public function testRevisionDatesFollowTheirZone(): void
+    {
+        $zone = date_default_timezone_get();
+        date_default_timezone_set('Asia/Seoul');
+        try {
+            mkdir($this->dir.'/RCS');
+            // an explicit offset, UTC, and a local time without a zone as the Python SimpleRCS writes it
+            $v1 = "ver @1.0@;\ndate @2026-01-01T09:00:00+09:00@;\nauthor @u@;\nlog @a@;\ntext @d1 1\na1 1\na\n@;\n\n".
+                  "ver @1.1@;\ndate @2026-01-01T00:30:00Z@;\nauthor @u@;\nlog @b@;\ntext @d1 1\na1 1\nb\n@;\n\n".
+                  "ver @1.2@;\ndate @2026-01-01T10:00:00.250000@;\nauthor @u@;\nlog @c@;\ntext @c\n@;\n\n";
+            file_put_contents($this->dir.'/RCS/Page,srcs', $v1);
+            $utc = function ($time) { return (new DateTime($time, new DateTimeZone('UTC')))->getTimestamp(); };
+            $this->assertSame('', $this->version->get_rev('Page', $utc('2025-12-31 23:59:59')));
+            $this->assertSame('1.0', $this->version->get_rev('Page', $utc('2026-01-01 00:10:00')));
+            $this->assertSame('1.1', $this->version->get_rev('Page', $utc('2026-01-01 00:59:59')));
+            $this->assertSame('1.2', $this->version->get_rev('Page', $utc('2026-01-01 01:00:00')));
+            $history = $this->version->rlog('Page');
+            $this->assertStringContainsString("revision 1.0\ndate: 2026/01/01 00:00:00;", $history);
+            $this->assertStringContainsString("revision 1.2\ndate: 2026/01/01 01:00:00;", $history);
+        } finally {
+            date_default_timezone_set($zone);
+        }
+    }
 }

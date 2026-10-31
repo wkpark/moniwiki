@@ -293,7 +293,7 @@ class MoniSimpleRCS {
         unset($this->blocks[$last]['text']);
       }
     }
-    $b = array('ver'=>'1.'.($last+1), 'date'=>gmdate('Y-m-d\TH:i:s'), 'author'=>$author, 'log'=>$log, 'text'=>$body);
+    $b = array('ver'=>'1.'.($last+1), 'date'=>gmdate('Y-m-d\TH:i:sP'), 'author'=>$author, 'log'=>$log, 'text'=>$body);
     if ($this->version === 2) {
       if ($last >= 0) $b['prev_hash'] = $this->blocks[$last]['hash'];
       $b['hash'] = $this->hashBlock($b, $body);
@@ -328,13 +328,19 @@ class MoniSimpleRCS {
     return $ok;
   }
 
+  // Dates are written in UTC with an offset. A date without a zone is local
+  // time, as the Python SimpleRCS writes it, and is read in PHP's default zone.
+  private function timestamp($date) {
+    return strtotime($date);
+  }
+
   function getRev($mtime='', $last=0) {
     $n = count($this->blocks);
     if (!$n) return '';
     if ($last) return $this->head();
     if ($mtime !== '') {
       for ($i=$n-1; $i>=0; $i--) {
-        $time = strtotime($this->blocks[$i]['date'].' UTC');
+        $time = $this->timestamp($this->blocks[$i]['date']);
         if ($time !== false && $time <= $mtime) return $this->blocks[$i]['ver'];
       }
       return '';
@@ -356,7 +362,7 @@ class MoniSimpleRCS {
     krsort($selected, SORT_NUMERIC);
     $out = 'total revisions: '.$count.'; selected revisions: '.count($selected)."\n";
     foreach ($selected as $i=>$unused) {
-      $b = $this->blocks[$i]; $time = strtotime($b['date'].' UTC');
+      $b = $this->blocks[$i]; $time = $this->timestamp($b['date']);
       if ($time === false) return '';
       $log = htmlspecialchars(str_replace(array("\r", "\n"), ' ', $b['log']), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
       $author = htmlspecialchars(str_replace(array("\r", "\n", ';'), ' ', $b['author']), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
