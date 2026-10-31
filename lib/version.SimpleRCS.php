@@ -1,6 +1,7 @@
 <?php
 // SimpleRCS text history adapter for MoniWiki.
-// Distributable under GPLv2; see COPYING.
+// Copyright 2026 Won-Kyu Park.
+// Licensed under the Apache License, Version 2.0; see SimpleRCS.LICENSE.
 
 require_once(dirname(__FILE__).'/version.RCS.php');
 require_once(dirname(__FILE__).'/difflib.php');

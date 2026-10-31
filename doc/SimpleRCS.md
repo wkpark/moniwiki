@@ -1,5 +1,8 @@
 # SimpleRCS text history
 
+The SimpleRCS PHP backend is licensed under Apache-2.0, matching the original
+Python SimpleRCS project. See `lib/SimpleRCS.LICENSE` for the license text.
+
 Set `$version_class='SimpleRCS';` in `config.php` to use a separate SimpleRCS
 history for UTF-8 text pages. Histories are stored as `data/text/RCS/Page,srcs`
 (the actual path follows the configured text directory and encoded page key).
