@@ -227,6 +227,8 @@ $myplugins=array('rcsexport'=>false, 'swfupload'=>'jsupload'); # disable rcsexpo
 #$use_twikilink=1;
 #$timezone='KST'; // for windows
 #$version_class='RcsLite';
+#$version_class='SimpleRCS'; # Separate SimpleRCS text history format
+$simplercs_verify_hashes=0; # Verify the full SimpleRCS hash chain on reads and saves
 #$rcs_check_broken=1; // check rcs file is broken or not
 #$rcs_always_unlock=0; // always unlock rcs files to fix $rcs_user problem
 #$use_numbering=1; // for the vim processor

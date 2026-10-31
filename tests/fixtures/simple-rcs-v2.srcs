@@ -1,0 +1,31 @@
+# SimpleRCS v2.0; hash_algo=sha256; encoding=utf-8;
+ver @1.0@;
+date @2026-10-31T06:00:00@;
+author @tester@;
+log @수정 0@;
+delta @d2 1
+a2 1
+첫 줄
+@;
+hash @088ce3eceecc977c9f18386e37f17daccfccdb49c1165f085350437a86dff42a@;
+
+ver @1.1@;
+date @2026-10-31T06:00:00@;
+author @tester@;
+log @수정 1@;
+delta @d3 1
+@;
+prev_hash @088ce3eceecc977c9f18386e37f17daccfccdb49c1165f085350437a86dff42a@;
+hash @719139ef23fc20576b62edc6bdca191f2fe2ccba12a50e863b5770f4a4be2949@;
+
+ver @1.2@;
+date @2026-10-31T06:00:00@;
+author @tester@;
+log @수정 2@;
+text @안녕하세요 @@ 사용자
+고친 줄
+끝
+@;
+prev_hash @719139ef23fc20576b62edc6bdca191f2fe2ccba12a50e863b5770f4a4be2949@;
+hash @6acb22310983f5201c07d1c0f8698f3883645ce5413d594473546539d05b1f97@;
+
