@@ -43,6 +43,7 @@
 
 define('RCSLITE_FORCE', 1);
 define('RCSLITE_QUICK', 2);
+define('RCSLITE_HISTORY', 4);
 #[\AllowDynamicProperties]
 Class RcsLite {
     var $rcs_dir='RCS';
@@ -79,46 +80,38 @@ Class RcsLite {
 
     function _readTo($fp, $char)
     {
-        $ch = null;
         $buf = '';
         $string = '';
-        $state = '';
-
-        while( false !== ($ch = fgetc($fp)) )
-            if ( !ctype_space($ch) ) break;
-
-        do {
-/*
-            if ($state) {
-                if ($ch == '@') {
-                    $ch=fgetc($fp);
-                    if ($ch == '@') {
-                        $string.=$ch;
-                        continue;
-                    } else {
-                        $state='';
-                        if ($char == '@') break;
-                    }
-                } else {
-                    $string.=$ch;
-                    continue;
+        $leading = true;
+        while (true) {
+            $start = ftell($fp);
+            $part = stream_get_line($fp, 65536, $char);
+            if ($part === false) break;
+            $ended = ftell($fp) - $start > strlen($part);
+            $at = strpos($part, '@');
+            if ($char !== '@' && $at !== false) {
+                // Rewind only the unread suffix, including the delimiter.
+                fseek($fp, -strlen($part) + $at + 1 - ($ended ? 1 : 0), SEEK_CUR);
+                $prefix = substr($part, 0, $at);
+                $buf .= $leading ? ltrim($prefix) : $prefix;
+                $leading = false;
+                list($str, $ch) = $this->_readString($fp);
+                $string .= $str;
+                $buf .= $ch;
+                if ($ch === $char || $ch === false) break;
+            } else {
+                $buf .= $leading ? ltrim($part) : $part;
+                if ($buf !== '' || $ended) $leading = false;
+                if (!$ended) continue;
+                if ($char === '@') {
+                    list($str, $ch) = $this->_readString($fp);
+                    $string .= $str;
+                    break;
                 }
-            } else if( $ch == '@' ) {
-                $state = 1;
-                continue;
+                $buf .= $char;
+                break;
             }
-//*/
-//*
-            if( $ch == '@' ) {
-                list($str,$ch)=$this->_readString($fp);
-                $string.=$str;
-                if ($char == '@') break;
-            }
-//*/
-            $buf .= $ch;
-            if( $ch == $char ) break;
-        } while ( false !== ($ch = fgetc($fp)) );
-
+        }
         $buf = preg_replace('/\s+/',' ',$buf);
         if ($buf == '') $buf=null;
         return array( $buf, $string );
@@ -181,7 +174,34 @@ Class RcsLite {
         $next = array();
         $dnum = '';
         $count = 0;
+        $metadataRead = false;
         while( $going ) {
+            if (($flag & RCSLITE_HISTORY) && $where === 'delta.date' && !$metadataRead) {
+                $metadataRead = true;
+                $start = ftell($fh);
+                // Fast path for canonical trunk metadata; other layouts fall back.
+                $metadata = stream_get_line($fh, 8388608, "\ndesc\n");
+                $pattern = '/\G\s*(1\.[1-9][0-9]*)\s+date\s+(\d{2}(?:\d{2})?(?:\.\d{2}){5});\s*author\s+([^;\s]+);\s*state\s+[^;\s]*;\s*branches\s*;\s*next\s*(1\.[1-9][0-9]*)?;/';
+                preg_match_all($pattern, $metadata, $records);
+                $end = array_sum(array_map('strlen', $records[0]));
+                if ($records[0] && trim(substr($metadata, $end)) === '' &&
+                    ftell($fh) === $start + strlen($metadata) + 6) {
+                    unset($records[0], $metadata);
+                    foreach ($records[1] as $i => $number) {
+                        $next[$number] = $records[4][$i];
+                        if ((int)substr($number, 2) > (int)substr($headNum, 2) - $limit) {
+                            $date[$number] = $this->rcsDateToTime($records[2][$i]);
+                            $author[$number] = $records[3][$i];
+                        }
+                    }
+                    fseek($fh, -5, SEEK_CUR);
+                    $where = 'desc';
+                    $term = '@';
+                } else {
+                    fseek($fh, $start);
+                }
+                unset($metadata, $records);
+            }
             list($line, $string) = $this->_readTo( $fh, $term );
             if( is_null($line) ) break;
             #print "\"$where -- $line\"\n";
@@ -190,6 +210,8 @@ Class RcsLite {
             if( $where == 'admin.head' ) {
                 if( preg_match('/^head\s+([0-9]+\.[0-9]+);$/',$line, $match) ) {
                     $headNum = $match[1];
+                    if ($flag & RCSLITE_HISTORY)
+                        $limit = $limit < 0 ? 2 : max(1, (int)substr($headNum, 2) - $limit + 2);
                     $where = 'admin.access'; # Don't support branch
                 } else {
                     break;
@@ -283,13 +305,15 @@ Class RcsLite {
         $this->_status = $dnum;
         $this->_where = $where;
         if (!($flag & RCSLITE_QUICK) &&
-            (!$headNum || !isset($next[$headNum]) || count($text) !== count($next)))
+            (!$headNum || !isset($next[$headNum]) || count($text) !== (($flag & RCSLITE_HISTORY) ? min($limit, count($next)) : count($next))))
             $this->_where = 'invalid';
         if ($this->_where !== 'invalid' && !($flag & RCSLITE_QUICK)) {
             $seen = array();
             $rev = $headNum;
             while ($rev !== '') {
-                if (isset($seen[$rev]) || !isset($next[$rev], $text[$rev], $log[$rev])) {
+                if (isset($seen[$rev]) || !isset($next[$rev]) ||
+                    (!($flag & RCSLITE_HISTORY) || count($seen) < $limit) &&
+                    !isset($text[$rev], $log[$rev])) {
                     $this->_where = 'invalid';
                     break;
                 }

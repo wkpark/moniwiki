@@ -129,4 +129,43 @@ final class RcsLiteTest extends TestCase
         $this->assertStringNotContainsString("\nrevision 1.6\n", $range);
         $this->assertLessThan(strpos($range, "\nrevision 1.4\n"), strpos($range, "\nrevision 1.15\n"));
     }
+    public function testPartialHistoryMatchesFullReaderAndDoesNotAffectWrites(): void
+    {
+        $page = $this->dir.'/Recent';
+        for ($i = 1; $i <= 20; $i++) {
+            $body = "revision $i\n".str_repeat("text @; desc\n", 6000);
+            file_put_contents($page, $body);
+            $this->assertSame(0, $this->version->_ci($page, "edit $i @;\ndesc\n"));
+        }
+        $full = new RcsLite();
+        $full->_process($page);
+        $fresh = new Version_RcsLite($GLOBALS['DBInfo']);
+        foreach (array('-r', '-r1.10:1.20', '-r1.1:1.3', '-r1.19', '-r1.21', '-r1.20:1.10', '-r1.2;1.19') as $opt)
+            $this->assertSame($full->rlog('', $opt), $fresh->rlog('Recent', '', $opt));
+        $this->assertSame($full->rlog('1.18'), $fresh->rlog('Recent', '1.18'));
+        $this->assertSame("revision 1\n".str_repeat("text @; desc\n", 6000), $fresh->co('Recent', '1.1'));
+        file_put_contents($page, "last revision\n");
+        $this->assertSame(0, $fresh->_ci($page, 'last'));
+        $this->assertSame('1.21', $fresh->get_rev('Recent', '', 1));
+        $this->assertSame("revision 1\n".str_repeat("text @; desc\n", 6000), $fresh->co('Recent', '1.1'));
+
+        // Noncanonical whitespace uses the regular metadata parser.
+        $archive = $this->dir.'/RCS/Recent,v';
+        file_put_contents($archive, str_replace("\ndesc\n", "\ndesc \n", file_get_contents($archive)));
+        $full = new RcsLite();
+        $full->_process($page);
+        $this->assertSame($full->rlog('', '-r1.11:1.21'), $fresh->rlog('Recent', '', '-r1.11:1.21'));
+    }
+
+    public function testTokenDelimitersAtEofAndAfterQuotedStrings(): void
+    {
+        foreach (array('a;' => array('a;', ''), ' @quoted@ a;' => array(' a;', 'quoted')) as $input => $expected) {
+            $stream = fopen('php://temp', 'w+');
+            fwrite($stream, $input);
+            rewind($stream);
+            $this->assertSame($expected, (new RcsLite())->_readTo($stream, ';'));
+            fclose($stream);
+        }
+    }
+
 }

@@ -58,6 +58,22 @@ class Version_RcsLite extends Version_RCS {
   function rlog($pagename,$rev='',$opt='',$oldopt='') {
     $filename=$this->_filename($pagename);
 
+    // Older, unread deltatext is not validated by a partial query.
+    // Keep partial history out of the reader used for checkout and writes.
+    $low = null;
+    if ($rev && preg_match('/^1\.([1-9][0-9]*)$/', $rev, $m))
+      $low = (int)$m[1];
+    else if (!$rev && $opt === '-r')
+      $low = -1;
+    else if (!$rev && preg_match('/^-r1\.([1-9][0-9]*)(?::1\.([1-9][0-9]*))?$/', $opt, $m))
+      $low = (int)$m[1];
+    if ($low !== null) {
+      $reader = new RcsLite($this->rcs->rcs_dir, $this->rcs->rcs_user);
+      $reader->_process($filename, $low, RCSLITE_HISTORY);
+      if ($reader->_where !== 'invalid')
+        return $reader->rlog($rev, $opt, $oldopt);
+    }
+
     $this->rcs->_process($filename);
 
     return $this->rcs->rlog($rev,$opt,$oldopt);
