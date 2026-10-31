@@ -43,6 +43,7 @@
 
 define('RCSLITE_FORCE', 1);
 define('RCSLITE_QUICK', 2);
+define('RCSLITE_HISTORY', 4);
 #[\AllowDynamicProperties]
 Class RcsLite {
     var $rcs_dir='RCS';
@@ -67,58 +68,50 @@ Class RcsLite {
     function _readString($fp)
     {
         $string='';
-        while(($ch=fgetc($fp)) !== false) {
-            if ($ch == '@') {
-                $ch=fgetc($fp);
-                if ($ch != '@') break;
-            }
-            $string.=$ch;
+        while (($part = stream_get_line($fp, 65536, '@')) !== false) {
+            $string .= $part;
+            if (strlen($part) === 65536) continue;
+            $ch = fgetc($fp);
+            if ($ch != '@') return array($string, $ch);
+            $string .= '@';
         }
-        return array($string,$ch);
+        return array($string, false);
     }
 
     function _readTo($fp, $char)
     {
-        $ch = null;
         $buf = '';
         $string = '';
-        $state = '';
-
-        while( false !== ($ch = fgetc($fp)) )
-            if ( !ctype_space($ch) ) break;
-
-        do {
-/*
-            if ($state) {
-                if ($ch == '@') {
-                    $ch=fgetc($fp);
-                    if ($ch == '@') {
-                        $string.=$ch;
-                        continue;
-                    } else {
-                        $state='';
-                        if ($char == '@') break;
-                    }
-                } else {
-                    $string.=$ch;
-                    continue;
+        $leading = true;
+        while (true) {
+            $start = ftell($fp);
+            $part = stream_get_line($fp, 65536, $char);
+            if ($part === false) break;
+            $ended = ftell($fp) - $start > strlen($part);
+            $at = strpos($part, '@');
+            if ($char !== '@' && $at !== false) {
+                // Rewind only the unread suffix, including the delimiter.
+                fseek($fp, -strlen($part) + $at + 1 - ($ended ? 1 : 0), SEEK_CUR);
+                $prefix = substr($part, 0, $at);
+                $buf .= $leading ? ltrim($prefix) : $prefix;
+                $leading = false;
+                list($str, $ch) = $this->_readString($fp);
+                $string .= $str;
+                $buf .= $ch;
+                if ($ch === $char || $ch === false) break;
+            } else {
+                $buf .= $leading ? ltrim($part) : $part;
+                if ($buf !== '' || $ended) $leading = false;
+                if (!$ended) continue;
+                if ($char === '@') {
+                    list($str, $ch) = $this->_readString($fp);
+                    $string .= $str;
+                    break;
                 }
-            } else if( $ch == '@' ) {
-                $state = 1;
-                continue;
+                $buf .= $char;
+                break;
             }
-//*/
-//*
-            if( $ch == '@' ) {
-                list($str,$ch)=$this->_readString($fp);
-                $string.=$str;
-                if ($char == '@') break;
-            }
-//*/
-            $buf .= $ch;
-            if( $ch == $char ) break;
-        } while ( false !== ($ch = fgetc($fp)) );
-
+        }
         $buf = preg_replace('/\s+/',' ',$buf);
         if ($buf == '') $buf=null;
         return array( $buf, $string );
@@ -140,7 +133,13 @@ Class RcsLite {
     # Read in the whole RCS file
     function _process($file='', $limit = 0, $flag = 0)
     {
-        if( !empty($this->_where) && !($flag & RCSLITE_FORCE)) return;
+        if (!empty($this->_where) && !($flag & RCSLITE_FORCE) &&
+            (!$file || $file === $this->filename)) return;
+
+        $this->_head = 0;
+        $this->_next = $this->_date = $this->_author = $this->_log = $this->_delta = array();
+        $this->_access = $this->_symbols = $this->_description = '';
+        unset($this->_strict, $this->_comment, $this->_expand);
 
         if ($file) {
             $this->filename=$file;
@@ -158,7 +157,7 @@ Class RcsLite {
         $fh = @fopen( $this->rcsFile, 'r');
         if( ! $fh ) {
             //$this->_warn( "Couldn't open file $this->rcsFile" );
-            $this->_where = 'nofile';
+            $this->_where = file_exists($this->rcsFile) ? 'unreadable' : 'nofile';
             return;
         }
         $where = 'admin.head';
@@ -175,7 +174,34 @@ Class RcsLite {
         $next = array();
         $dnum = '';
         $count = 0;
+        $metadataRead = false;
         while( $going ) {
+            if (($flag & RCSLITE_HISTORY) && $where === 'delta.date' && !$metadataRead) {
+                $metadataRead = true;
+                $start = ftell($fh);
+                // Fast path for canonical trunk metadata; other layouts fall back.
+                $metadata = stream_get_line($fh, 8388608, "\ndesc\n");
+                $pattern = '/\G\s*(1\.[1-9][0-9]*)\s+date\s+(\d{2}(?:\d{2})?(?:\.\d{2}){5});\s*author\s+([^;\s]+);\s*state\s+[^;\s]*;\s*branches\s*;\s*next\s*(1\.[1-9][0-9]*)?;/';
+                preg_match_all($pattern, $metadata, $records);
+                $end = array_sum(array_map('strlen', $records[0]));
+                if ($records[0] && trim(substr($metadata, $end)) === '' &&
+                    ftell($fh) === $start + strlen($metadata) + 6) {
+                    unset($records[0], $metadata);
+                    foreach ($records[1] as $i => $number) {
+                        $next[$number] = $records[4][$i];
+                        if ((int)substr($number, 2) > (int)substr($headNum, 2) - $limit) {
+                            $date[$number] = $this->rcsDateToTime($records[2][$i]);
+                            $author[$number] = $records[3][$i];
+                        }
+                    }
+                    fseek($fh, -5, SEEK_CUR);
+                    $where = 'desc';
+                    $term = '@';
+                } else {
+                    fseek($fh, $start);
+                }
+                unset($metadata, $records);
+            }
             list($line, $string) = $this->_readTo( $fh, $term );
             if( is_null($line) ) break;
             #print "\"$where -- $line\"\n";
@@ -184,6 +210,8 @@ Class RcsLite {
             if( $where == 'admin.head' ) {
                 if( preg_match('/^head\s+([0-9]+\.[0-9]+);$/',$line, $match) ) {
                     $headNum = $match[1];
+                    if ($flag & RCSLITE_HISTORY)
+                        $limit = $limit < 0 ? 2 : max(1, (int)substr($headNum, 2) - $limit + 2);
                     $where = 'admin.access'; # Don't support branch
                 } else {
                     break;
@@ -276,15 +304,34 @@ Class RcsLite {
         $this->_delta = $text;
         $this->_status = $dnum;
         $this->_where = $where;
+        if (!($flag & RCSLITE_QUICK) &&
+            (!$headNum || !isset($next[$headNum]) || count($text) !== (($flag & RCSLITE_HISTORY) ? min($limit, count($next)) : count($next))))
+            $this->_where = 'invalid';
+        if ($this->_where !== 'invalid' && !($flag & RCSLITE_QUICK)) {
+            $seen = array();
+            $rev = $headNum;
+            while ($rev !== '') {
+                if (isset($seen[$rev]) || !isset($next[$rev]) ||
+                    (!($flag & RCSLITE_HISTORY) || count($seen) < $limit) &&
+                    !isset($text[$rev], $log[$rev])) {
+                    $this->_where = 'invalid';
+                    break;
+                }
+                $seen[$rev] = true;
+                $rev = $next[$rev];
+            }
+            if (count($seen) !== count($next)) $this->_where = 'invalid';
+        }
         
         fclose( $fh );
     }
 
     # for rlog() function
-    function check_delta()
+    function check_delta($selected = null)
     {
         foreach ($this->_next as $rev=>$next) {
-            if ($next=="") break;
+            if ($next=="") continue;
+            if ($selected !== null && !isset($selected[$rev])) continue;
             $lines=explode("\n",$this->_delta[$next]);
             $add=0;
             $del=0;
@@ -353,24 +400,47 @@ Class RcsLite {
     function rlog($rev="",$option="",$oldopt="")
     {
         $this->_ensureProcessed();
-        $this->check_delta();
+        if ($this->_where === 'invalid' || empty($this->_head)) return '';
+
+        $ordered = array();
+        for ($number = $this->_head; $number !== ''; $number = $this->_next[$number])
+            $ordered[$number] = $this->_next[$number];
 
         $revs=array();
         if ($rev) {
-            if ($rev == $this->_head or in_array($rev,$this->_next))
+            if (isset($this->_next[$rev]))
                 $revs=array($rev=>'1');
             else
                 return '';
+        } else if (preg_match('/^-r(.*)$/', $option, $match)) {
+            $range = str_replace('\\;', ';', $match[1]);
+            if ($range === '') {
+                $revs = array($this->_head => $this->_next[$this->_head]);
+            } else {
+                $ranges = explode(';', $range);
+                foreach ($ranges as $part) {
+                    if (!preg_match('/^1\.(\d+)(?::1\.(\d+))?$/', $part, $bounds)) return '';
+                    $low = (int)$bounds[1];
+                    $high = isset($bounds[2]) ? (int)$bounds[2] : $low;
+                    foreach ($ordered as $number=>$next) {
+                        $index = (int)substr($number, 2);
+                        if ($index >= $low && $index <= $high) $revs[$number] = $next;
+                    }
+                }
+                $revs = array_intersect_key($ordered, $revs);
+            }
         } else
-            $revs=&$this->_next;
+            $revs=$ordered;
 
-        $rlog = '';
+        $this->check_delta($revs);
+        $rlog = 'total revisions: '.count($this->_next).'; selected revisions: '.count($revs)."\n";
         foreach ($revs as $rev=>$next) {
             $log=$this->_log[$rev];
             if (!preg_match("/\n$/",$log)) $log.="\n";
             $rlog.= "----------------------------\n";
             $rlog.= "revision $rev\n";
-            $rlog.= "date: ".gmdate("Y/m/d H:i:s",$this->_date[$rev]).";  author: ". $this->_author[$rev].";  state: Exp;  lines: ".$this->_change[$rev]."\n";
+            $change = isset($this->_change[$rev]) ? $this->_change[$rev] : '';
+            $rlog.= "date: ".gmdate("Y/m/d H:i:s",$this->_date[$rev]).";  author: ". $this->_author[$rev].";  state: Exp;  lines: ".$change."\n";
             $rlog.= $log;
         }
         if (!empty($rlog)) $rlog.= str_repeat("=",71)."\n";
@@ -493,14 +563,14 @@ Class RcsLite {
     {
         $this->_ensureProcessed();
 
-        $fp=fopen($this->filename,'r');
-        if (!$fp) return;
+        $fp=@fopen($this->filename,'r');
+        if (!$fp) return false;
         $text='';
         while(!feof($fp))
             $text.=fgets($fp,2048);
         fclose($fp);
 
-        $this->addRevisionText($text, $log, $date);
+        return $this->addRevisionText($text, $log, $date);
     }
 
     function _writeMe()
@@ -512,15 +582,14 @@ Class RcsLite {
             return $dataError;
 
         # FIXME move permission to config or similar
-        @chmod($this->rcsFile,0644 );
-        $fp=fopen($this->rcsFile, 'w'); 
-        if( ! $fp ) {
-           $dataError = 'Problem opening ' . $this->rcsFile . ' for writing';
-        } else {
-           fwrite( $fp, $this->_make_rcs() );
-           fclose( $fp );
+        $tmp = @tempnam(dirname($this->rcsFile), '.rcs-');
+        if (!$tmp) return 'Problem creating temporary RCS file';
+        $data = $this->_make_rcs();
+        if (file_put_contents($tmp, $data) !== strlen($data) ||
+            !chmod($tmp, 0444) || !rename($tmp, $this->rcsFile)) {
+            @unlink($tmp);
+            $dataError = 'Problem writing ' . $this->rcsFile;
         }
-        chmod($this->rcsFile,0444  ); # FIXME
         return $dataError;
     }
     
@@ -573,8 +642,9 @@ Class RcsLite {
     {
         $this->_ensureProcessed();
         $head = $this->numRevisions();
+        if ($this->_where === 'invalid' || !$head) return '';
         if ( $version != $head && !array_key_exists($version,$this->_next))
-            return $this->delta( $head );
+            return '';
         if( strcmp($version,$head) == 0 ) {
             return $this->delta( $version );
         } else {
@@ -613,11 +683,11 @@ Class RcsLite {
         $extra = '';
 
         $ds=sizeof($delta);
-        while( $pos <= $ds ) {
+        while( $pos < $ds ) {
             $d = $delta[$pos];
             if( preg_match("/^([ad])(\d+)\s(\d+)$/",$d, $match) ) {
                 $last = $match[1];
-                $extra = $match[4];
+                $extra = '';
                 $offset = $match[2];
                 $length = $match[3];
                 if( $last == 'd' ) {
@@ -648,29 +718,20 @@ Class RcsLite {
     
     function _patchN(&$text,$version,$target)
     {
-        $deltaText= $this->delta( $version );
-        $delta = $this->_mySplit( $deltaText );
-        $this->_patch( $text, $delta );
-        if( strcmp($version,$target) == 0 ) {
-            return implode('', $text );
-        } else {
-            return $this->_patchN( $text, $this->_next[$version], $target );
+        while ($version !== '' && isset($this->_next[$version])) {
+            $delta = $this->_mySplit($this->delta($version));
+            $this->_patch($text, $delta);
+            if ($version === $target) return implode('', $text);
+            $version = $this->_next[$version];
         }
+        return '';
     }
     
     # Split and make sure we have trailing carriage returns
     function _mySplit($text)
     {
-        $list = explode( "\n", $text );
-        $sz=sizeof($list);
-        if ($list[$sz-1]=="\n") {
-            array_pop($list);
-            $sz--;
-        }
-
-        for( $i = 0; $i<$sz; $i++ ) $list[$i] .= "\n";
-        # TODO: deal with Mac style line ending??
-        return $list; # FIXME would it be more efficient to return a reference?
+        if ($text === '') return array();
+        return preg_split('/(?<=\n)/', $text, -1, PREG_SPLIT_NO_EMPTY);
     }
     
     # Way of dealing with trailing \ns feels clumsy
