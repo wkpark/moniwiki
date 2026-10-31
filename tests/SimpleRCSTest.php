@@ -16,6 +16,7 @@ final class SimpleRCSTest extends TestCase
         $db = new class($this->dir) {
             public $text_dir;
             public $vartmp_dir;
+            public $simplercs_verify_hashes = 0;
             public function __construct($dir) { $this->text_dir = $dir; $this->vartmp_dir = $dir; }
             public function getPageKey($name) { return $this->text_dir.'/'.$name; }
         };
