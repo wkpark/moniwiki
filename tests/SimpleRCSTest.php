@@ -309,4 +309,22 @@ final class SimpleRCSTest extends TestCase
             date_default_timezone_set($zone);
         }
     }
+    public function testRecentHistoryMatchesFullParserAcrossChunks(): void
+    {
+        mkdir($this->dir.'/RCS');
+        $archive = $this->dir.'/RCS/Page,srcs';
+        $store = new MoniSimpleRCS();
+        $this->assertTrue($store->load($archive, true));
+        for ($i=0; $i<6; $i++) {
+            $body = str_repeat("large body @ line\n", 5000)."version $i\n\nver @1.999@;\n";
+            $this->assertTrue($store->save($archive, $body, 'u', "edit $i\n\nver @1.1000@;\n"));
+        }
+        foreach (array('-r', '-r1.3:1.5', '-r1.2:1.3', '-r1.0:1.5', '-r1.0;1.5') as $option) {
+            $this->assertSame($store->rlog('', $option), $this->version->rlog('Page', '', $option));
+        }
+        $this->assertSame($store->rlog('1.4'), $this->version->rlog('Page', '1.4'));
+        file_put_contents($archive, substr(file_get_contents($archive), 0, -10));
+        $this->assertSame('', $this->version->rlog('Page', '', '-r'));
+    }
+
 }

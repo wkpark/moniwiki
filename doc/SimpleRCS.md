@@ -46,3 +46,9 @@ not an append-only implementation.
 Page data and history are separate files and are not committed as one
 transaction. Concurrent edits and interruption during page saving require
 additional coordination.
+
+With hash verification disabled, single-revision and contiguous-range history
+queries read backward from the archive tail and stop after the oldest requested
+revision plus its preceding delta. Only the scanned suffix is structurally
+validated; corruption in older, unread history is not detected by this query.
+Other queries and verification-enabled queries use the full parser.

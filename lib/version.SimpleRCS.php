@@ -75,7 +75,11 @@ class Version_SimpleRCS extends Version_RCS {
   }
 
   function rlog($pagename, $rev='', $opt='', $params=array()) {
-    if (!empty($params['archive']) || !$this->load($this->_filename($pagename))) return '';
+    if (!empty($params['archive'])) return '';
+    $recent = new MoniSimpleRCS();
+    if (!$this->store->verifyHashes() && $recent->loadRecent($this->archive($this->_filename($pagename)), $rev, $opt))
+      return $recent->rlog($rev, $opt);
+    if (!$this->load($this->_filename($pagename))) return '';
     return $this->store->rlog($rev, $opt);
   }
 
@@ -168,6 +172,10 @@ class MoniSimpleRCS {
     $data = @file_get_contents($path);
     if ($data === false || $data === '') return false;
     if ($this->verifyHashes) $this->digest = hash('sha256', $data);
+    return $this->parseData($data);
+  }
+
+  private function parseData($data, $first=0) {
     $pos = 0;
     if (strncmp($data, '# SimpleRCS', 11) === 0) {
       $end = strpos($data, "\n");
@@ -190,21 +198,64 @@ class MoniSimpleRCS {
     if (!$this->blocks) return false;
     $prev = '';
     foreach ($this->blocks as $i=>$b) {
-      if (!isset($b['date'], $b['author'], $b['log']) || $b['ver'] !== '1.'.$i) return false;
+      if (!isset($b['date'], $b['author'], $b['log']) || $b['ver'] !== '1.'.($first+$i)) return false;
       if (isset($b['text']) === isset($b['delta'])) return false;
       if ($i === count($this->blocks)-1 && !isset($b['text'])) return false;
       if ($this->version === 1 && !isset($b['text'])) return false;
       if ($this->version === 2) {
         if (empty($b['hash']) || !preg_match('/\A[0-9a-f]{64}\z/', $b['hash'])) return false;
-        if (($b['prev_hash'] ?? '') !== $prev) return false;
+        if (($i > 0 || $first === 0) && ($b['prev_hash'] ?? '') !== $prev) return false;
         $prev = $b['hash'];
       }
     }
+    if ($first) $this->blocks = array_combine(range($first, $first+count($this->blocks)-1), $this->blocks);
     return true;
   }
 
+  // Read only the requested tail, plus one delta for line counts.
+  function loadRecent($path, $rev, $option) {
+    $range = $rev !== '' ? $rev : substr($option, 2);
+    if ($option !== '-r' || $rev !== '') {
+      if (!preg_match('/\A1\.(0|[1-9][0-9]*)(?::1\.(0|[1-9][0-9]*))?\z/', $range, $m)) return false;
+      $first = max(0, (int)$m[1]-1);
+    } else $first = null;
+    $fp = @fopen($path, 'rb');
+    if (!$fp) return false;
+    try {
+      $header = fgets($fp, 256);
+      if (!is_string($header) || !preg_match('/^# SimpleRCS v2\.0;\s*hash_algo=sha256;\s*encoding=utf-8;\s*$/i', $header)) return false;
+      $start = ftell($fp);
+      if (fseek($fp, 0, SEEK_END) !== 0) return false;
+      $pos = ftell($fp);
+      $data = '';
+      while ($pos > $start) {
+        $length = min(65536, $pos-$start);
+        $pos -= $length;
+        if (fseek($fp, $pos) !== 0) return false;
+        $chunk = fread($fp, $length);
+        if ($chunk === false || strlen($chunk) !== $length) return false;
+        $data = $chunk.$data;
+        // An embedded marker has doubled @ delimiters, so cannot match.
+        preg_match_all('/(?:^|\n)ver @(1\.(0|[1-9][0-9]*))@;/', $data, $matches, PREG_OFFSET_CAPTURE);
+        if (!$matches[0]) continue;
+        $last = count($matches[0])-1;
+        if ($first === null) $first = max(0, (int)$matches[2][$last][0]-1);
+        for ($i=$last; $i>=0; $i--) {
+          // A chunk may start in the middle of a field name.
+          if ($matches[0][$i][1] === 0 && $pos !== $start && $data[0] !== "\n") continue;
+          if ((int)$matches[2][$i][0] !== $first) continue;
+          $this->blocks = array();
+          return $this->parseData($header.substr($data, $matches[0][$i][1]), $first);
+        }
+      }
+      return false;
+    } finally {
+      fclose($fp);
+    }
+  }
+
   function head() {
-    return $this->blocks ? $this->blocks[count($this->blocks)-1]['ver'] : '';
+    return $this->blocks ? $this->blocks[array_key_last($this->blocks)]['ver'] : '';
   }
 
   // Text is stored with a final newline, as the Python SimpleRCS does.
@@ -349,7 +400,7 @@ class MoniSimpleRCS {
   }
 
   function rlog($rev='', $option='') {
-    $count = count($this->blocks); $selected = array();
+    $count = $this->blocks ? array_key_last($this->blocks)+1 : 0; $selected = array();
     if ($rev !== '') $ranges = array($rev);
     else if ($option === '-r') $ranges = array($this->head());
     else if (strncmp($option, '-r', 2) === 0) $ranges = explode(';', str_replace('\\;', ';', substr($option, 2)));
