@@ -11,9 +11,10 @@ class Version_RcsLite extends Version_RCS {
   var $DB;
 
   function __construct($DB) {
-    include_once('rcslite.php');
+    parent::__construct($DB);
+    include_once(dirname(__FILE__).'/rcslite.php');
 
-    $this->rcs=new RcsLite($DB->rcs_dir,$DB->rcs_user);
+    $this->rcs=new RcsLite(!empty($DB->rcs_dir) ? $DB->rcs_dir : 'RCS', !empty($DB->rcs_user) ? $DB->rcs_user : 'root');
     $this->rcs_dir=$this->rcs->rcs_dir;
     $this->DB=$DB;
   }
@@ -26,31 +27,75 @@ class Version_RcsLite extends Version_RCS {
     #if ($this->rcs->_author[$rev])
     $out=$this->rcs->getRevision($rev);
 
+    if (!empty($opt['stdout'])) {
+      if (!isset($this->rcs->_next[$rev]) || $this->rcs->_where === 'invalid') return '';
+      @file_put_contents($filename, $out, LOCK_EX);
+      return '';
+    }
+
     return $out;
   }
 
-  function ci($pagename,$log) {
+  function ci($pagename,$log,$force=false) {
     $filename=$this->_filename($pagename);
-    $this->_ci($filename,$log);
+    return $this->_ci($filename,$log,$force);
   }
-  function _ci($filename,$log) {
-    $this->rcs->_process($filename);
-    $this->rcs->addRevisionPage($log);
+  function _ci($filename,$log,$force=false) {
+    $dir = dirname($filename).'/'.$this->rcs_dir;
+    if (!is_dir($dir) && !@mkdir($dir, 0777, true) && !is_dir($dir)) return -1;
+    // Keep the lock out of the text directory; the text title indexer lists every file there as a page.
+    $lock = @fopen($dir.'/'.basename($filename).',v.lock', 'c');
+    if (!$lock || !flock($lock, LOCK_EX)) {
+      if ($lock) fclose($lock);
+      return -1;
+    }
+    $this->rcs->_process($filename, 0, RCSLITE_FORCE);
+    $text = in_array($this->rcs->_where, array('invalid', 'unreadable'), true) ? false : @file_get_contents($filename);
+    // like ci without -f, an unchanged text adds no revision
+    if ($text !== false && !$force && $this->rcs->_head && $text === $this->rcs->delta($this->rcs->_head))
+      $result = '';
+    else
+      $result = $text === false ? false : $this->rcs->addRevisionText($text, $log);
+    flock($lock, LOCK_UN);
+    fclose($lock);
+    return $result === '' ? 0 : -1;
   }
 
   function rlog($pagename,$rev='',$opt='',$oldopt='') {
     $filename=$this->_filename($pagename);
+
+    // Older, unread deltatext is not validated by a partial query.
+    // Keep partial history out of the reader used for checkout and writes.
+    $low = null;
+    if ($rev && preg_match('/^1\.([1-9][0-9]*)$/', $rev, $m))
+      $low = (int)$m[1];
+    else if (!$rev && $opt === '-r')
+      $low = -1;
+    else if (!$rev && preg_match('/^-r1\.([1-9][0-9]*)(?::1\.([1-9][0-9]*))?$/', $opt, $m))
+      $low = (int)$m[1];
+    if ($low !== null) {
+      $reader = new RcsLite($this->rcs->rcs_dir, $this->rcs->rcs_user);
+      $reader->_process($filename, $low, RCSLITE_HISTORY);
+      if ($reader->_where !== 'invalid')
+        return $reader->rlog($rev, $opt, $oldopt);
+    }
 
     $this->rcs->_process($filename);
 
     return $this->rcs->rlog($rev,$opt,$oldopt);
   }
 
-  function diff($pagename,$rev='',$rev2='') {
+  function diff($pagename,$rev='',$rev2='',$params=array()) {
     $filename=$this->_filename($pagename);
     $this->rcs->_process($filename);
 
-    $out=$this->rcs->revisionDiff($rev,$rev2,'udiff'); // XXX
+    if (empty($this->rcs->_head)) return '';
+    if (!$rev2) {
+      $old = $this->rcs->getRevision($rev ? $rev : $this->rcs->_head);
+      $new = @file_get_contents($filename);
+      return $new === false ? '' : $this->rcs->_diffText($new, $old, 'udiff');
+    }
+    $out=$this->rcs->revisionDiff($rev,$rev2,'udiff');
 
     return $out;
   }
@@ -83,13 +128,21 @@ class Version_RcsLite extends Version_RCS {
     return false;
   }
 
-  function rename($pagename,$new) {
+  function rename($pagename,$new,$params=array()) {
     $keyname=$this->DB->_getPageKey($new);
     $oname=$this->DB->_getPageKey($pagename);
-    if (file_exists($this->DB->text_dir.'/'.$this->rcs_dir."/$oname,v") and
-      !file_exists($this->DB->text_dir.'/'.$this->rcs_dir."/$keyname,v"))
-      rename($this->DB->text_dir.'/'.$this->rcs_dir."/$oname,v",
-      	$this->DB->text_dir.'/'.$this->rcs_dir."/$keyname,v");
+    $oldfile = $this->DB->text_dir.'/'.$this->rcs_dir."/$oname,v";
+    $newfile = $this->DB->text_dir.'/'.$this->rcs_dir."/$keyname,v";
+    if (!file_exists($oldfile)) return -1;
+    // A history left by a deleted page goes aside as ,N, as delete() does.
+    $this->_atticpage($new);
+    if (file_exists($newfile) || !rename($oldfile, $newfile)) return -1;
+    return $this->ci($new, isset($params['log']) ? $params['log'] : '', true);
+  }
+
+  function is_broken($pagename) {
+    $this->rcs->_process($this->_filename($pagename), 0, RCSLITE_FORCE);
+    return in_array($this->rcs->_where, array('invalid', 'unreadable'), true);
   }
 
   function get_rev($pagename,$mtime='',$last=0) {
@@ -98,18 +151,22 @@ class Version_RcsLite extends Version_RCS {
 
     if ($last==1)
       return $this->rcs->_head;
+    // A damaged archive may have a cycle in its next chain.
+    if (empty($this->rcs->_head) || $this->rcs->_where === 'invalid')
+      return '';
     if ($mtime) {
       #print gmdate('Y/m/d H:i:s',$mtime);
       if ($mtime >= $this->rcs->_date[$this->rcs->_head])
          return $this->rcs->_head;
-      foreach ($this->rcs->_date as $rev=>$date) {
+      for ($rev = $this->rcs->_head; $rev !== ''; $rev = $this->rcs->_next[$rev]) {
+         $date = $this->rcs->_date[$rev];
          if ($mtime >= $date) {
             return $rev;
          }
       }
-      return $this->_head;
+      return '';
     } else {
-      return $this->rcs->_next[$this->rcs->_head];
+      return isset($this->rcs->_next[$this->rcs->_head]) ? $this->rcs->_next[$this->rcs->_head] : '';
     }
 
     $out = $this->rlog($pagename,'',$opt);
