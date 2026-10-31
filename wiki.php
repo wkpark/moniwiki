@@ -14,7 +14,7 @@
 // $Id: wiki.php,v 1.639 2011/08/09 13:51:53 wkpark Exp $
 //
 $_revision = substr('$Revision: 1.2093 $',1,-1);
-$_release = '1.3.0-GIT';
+$_release = '1.3.0-rc1';
 
 #ob_start("ob_gzhandler");
 
