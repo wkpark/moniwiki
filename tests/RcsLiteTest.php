@@ -112,4 +112,21 @@ final class RcsLiteTest extends TestCase
         $this->assertSame("page content\n", $this->version->co('New', '1.2'));
     }
 
+    public function testHistorySelectionMatchesWikiRequests(): void
+    {
+        $page = $this->dir.'/History';
+        for ($i = 1; $i <= 15; $i++) {
+            file_put_contents($page, "revision $i\n");
+            $this->assertSame(0, $this->version->_ci($page, "edit $i"));
+        }
+        $head = $this->version->rlog('History', '', '-r');
+        $this->assertStringContainsString('total revisions: 15;', $head);
+        $this->assertSame(1, substr_count($head, "\nrevision "));
+        $this->assertStringContainsString("\nrevision 1.15\n", $head);
+        $range = $this->version->rlog('History', '', '-r1.4:1.5\\;1.13:1.15');
+        $this->assertSame(5, substr_count($range, "\nrevision "));
+        $this->assertStringContainsString("\nrevision 1.4\n", $range);
+        $this->assertStringNotContainsString("\nrevision 1.6\n", $range);
+        $this->assertLessThan(strpos($range, "\nrevision 1.4\n"), strpos($range, "\nrevision 1.15\n"));
+    }
 }

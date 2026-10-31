@@ -303,10 +303,11 @@ Class RcsLite {
     }
 
     # for rlog() function
-    function check_delta()
+    function check_delta($selected = null)
     {
         foreach ($this->_next as $rev=>$next) {
             if ($next=="") continue;
+            if ($selected !== null && !isset($selected[$rev])) continue;
             $lines=explode("\n",$this->_delta[$next]);
             $add=0;
             $del=0;
@@ -376,18 +377,39 @@ Class RcsLite {
     {
         $this->_ensureProcessed();
         if ($this->_where === 'invalid' || empty($this->_head)) return '';
-        $this->check_delta();
+
+        $ordered = array();
+        for ($number = $this->_head; $number !== ''; $number = $this->_next[$number])
+            $ordered[$number] = $this->_next[$number];
 
         $revs=array();
         if ($rev) {
-            if ($rev == $this->_head or in_array($rev,$this->_next))
+            if (isset($this->_next[$rev]))
                 $revs=array($rev=>'1');
             else
                 return '';
+        } else if (preg_match('/^-r(.*)$/', $option, $match)) {
+            $range = str_replace('\\;', ';', $match[1]);
+            if ($range === '') {
+                $revs = array($this->_head => $this->_next[$this->_head]);
+            } else {
+                $ranges = explode(';', $range);
+                foreach ($ranges as $part) {
+                    if (!preg_match('/^1\.(\d+)(?::1\.(\d+))?$/', $part, $bounds)) return '';
+                    $low = (int)$bounds[1];
+                    $high = isset($bounds[2]) ? (int)$bounds[2] : $low;
+                    foreach ($ordered as $number=>$next) {
+                        $index = (int)substr($number, 2);
+                        if ($index >= $low && $index <= $high) $revs[$number] = $next;
+                    }
+                }
+                $revs = array_intersect_key($ordered, $revs);
+            }
         } else
-            $revs=&$this->_next;
+            $revs=$ordered;
 
-        $rlog = '';
+        $this->check_delta($revs);
+        $rlog = 'total revisions: '.count($this->_next).'; selected revisions: '.count($revs)."\n";
         foreach ($revs as $rev=>$next) {
             $log=$this->_log[$rev];
             if (!preg_match("/\n$/",$log)) $log.="\n";
