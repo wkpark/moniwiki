@@ -886,6 +886,11 @@ class WikiDB {
     $keyname = $this->_getPageKey($pagename);
     $filename = $this->text_dir.'/'.$keyname;
 
+    if (isset($this->version_class) && strcasecmp($this->version_class, 'SimpleRCS') === 0) {
+      $version = $this->lazyLoad('version', $this);
+      if (!$version->canSave($pagename, $body)) return -1;
+    }
+
     $dir=dirname($filename);
     if (!is_dir($dir)) {
       $om=umask(~$this->umask);
