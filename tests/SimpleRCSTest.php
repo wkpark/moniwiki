@@ -132,6 +132,60 @@ final class SimpleRCSTest extends TestCase
         $this->assertSame($data, file_get_contents($archive));
     }
 
+    public function testVerifiedHashChainCanBeReadAndExtended(): void
+    {
+        $GLOBALS['DBInfo']->simplercs_verify_hashes = 1;
+        $this->version = new Version_SimpleRCS($GLOBALS['DBInfo']);
+        mkdir($this->dir.'/RCS');
+        copy(MONIWIKI_TEST_ROOT.'/tests/fixtures/simple-rcs-v2.srcs', $this->dir.'/RCS/Page,srcs');
+        $this->assertSame("안녕하세요 @ 사용자\n첫 줄\n", $this->version->co('Page', '1.0'));
+        $this->assertFalse($this->version->is_broken('Page'));
+        $this->assertTrue($this->version->canSave('Page', "next\n"));
+        file_put_contents($this->dir.'/Page', "next\n");
+        $this->assertSame(0, $this->version->_ci($this->dir.'/Page', 'edit'));
+        $this->assertSame("안녕하세요 @ 사용자\n첫 줄\n", $this->version->co('Page', '1.0'));
+        $this->assertSame("next\n", $this->version->co('Page', '1.3'));
+    }
+
+    public function testArchiveChangedAfterCanSaveIsVerifiedAgain(): void
+    {
+        $GLOBALS['DBInfo']->simplercs_verify_hashes = 1;
+        $this->version = new Version_SimpleRCS($GLOBALS['DBInfo']);
+        mkdir($this->dir.'/RCS');
+        $archive = $this->dir.'/RCS/Page,srcs';
+        $data = file_get_contents(MONIWIKI_TEST_ROOT.'/tests/fixtures/simple-rcs-v2.srcs');
+        file_put_contents($archive, $data);
+        $this->assertTrue($this->version->canSave('Page', "new content\n"));
+        $tampered = str_replace('수정 0', '변조 0', $data);
+        file_put_contents($archive, $tampered);
+        file_put_contents($this->dir.'/Page', "new content\n");
+        $this->assertSame(-1, $this->version->_ci($this->dir.'/Page', 'edit'));
+        $this->assertSame($tampered, file_get_contents($archive));
+    }
+
+    public function testManyRevisionsRoundTrip(): void
+    {
+        mt_srand(205);
+        $path = $this->dir.'/Page';
+        $lines = array();
+        for ($i = 0; $i < 30; $i++) $lines[] = "line $i @ 한글\n";
+        $bodies = array();
+        for ($rev = 0; $rev < 60; $rev++) {
+            for ($k = mt_rand(1, 3); $k > 0; $k--) {
+                $at = mt_rand(0, count($lines) - 1);
+                $op = mt_rand(0, 2);
+                if ($op === 0) $lines[$at] = "edit $rev.$k @@ ".mt_rand()."\n";
+                else if ($op === 1) array_splice($lines, $at, 0, array("\n", "insert $rev.$k\n"));
+                else if (count($lines) > 5) array_splice($lines, $at, mt_rand(1, 2));
+            }
+            $bodies[] = implode('', $lines);
+            file_put_contents($path, end($bodies));
+            $this->assertSame(0, $this->version->_ci($path, '127.0.0.1;;u;;r'.$rev));
+        }
+        foreach ($bodies as $i => $body) $this->assertSame($body, $this->version->co('Page', '1.'.$i));
+        $this->assertFalse($this->version->is_broken('Page'));
+    }
+
     public function testV2TextSnapshotCanBeRecalled(): void
     {
         mkdir($this->dir.'/RCS');

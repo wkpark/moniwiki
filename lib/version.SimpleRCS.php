@@ -29,7 +29,7 @@ class Version_SimpleRCS extends Version_RCS {
     $legacy = dirname($filename).'/RCS/'.basename($filename).',v';
     if (file_exists($legacy) && !file_exists($archive)) return false;
     if (!$this->store->load($archive, true)) return false;
-    return !$this->store->verifyHashes() || $this->store->head() === '' || $this->store->revision('1.0') !== false;
+    return !$this->store->verifyHashes() || $this->store->verifyAll();
   }
 
   function co($pagename, $rev, $opt=array()) {
@@ -122,6 +122,8 @@ class MoniSimpleRCS {
   private $blocks = array();
   private $version = 2;
   private $verifyHashes = false;
+  private $digest = '';
+  private $verified = '';
 
   function __construct($verifyHashes=false) {
     $this->verifyHashes = (bool)$verifyHashes;
@@ -152,9 +154,11 @@ class MoniSimpleRCS {
   function load($path, $allowNew=false) {
     $this->blocks = array();
     $this->version = 2;
+    $this->digest = '';
     if (!file_exists($path)) return $allowNew;
     $data = @file_get_contents($path);
     if ($data === false || $data === '') return false;
+    if ($this->verifyHashes) $this->digest = hash('sha256', $data);
     $pos = 0;
     if (strncmp($data, '# SimpleRCS', 11) === 0) {
       $end = strpos($data, "\n");
@@ -196,6 +200,15 @@ class MoniSimpleRCS {
 
   function verifyHashes() { return $this->verifyHashes; }
 
+  // Verify the full hash chain once per archive content; canSave() and save()
+  // both need it, and the second check under the lock sees the same bytes.
+  function verifyAll() {
+    if (!$this->blocks || ($this->digest !== '' && $this->digest === $this->verified)) return true;
+    if ($this->revision('1.0') === false) return false;
+    $this->verified = $this->digest;
+    return true;
+  }
+
   private function hashBlock($b, $body) {
     return hash('sha256', $b['ver'].'|'.$b['date'].'|'.$b['author'].'|'.$b['log'].'|'.$body.'|'.($b['prev_hash'] ?? ''));
   }
@@ -205,24 +218,22 @@ class MoniSimpleRCS {
     $target = (int)$m[1];
     $last = count($this->blocks)-1;
     if ($target > $last) return false;
+    $verify = $this->verifyHashes && $this->version === 2;
     $body = $this->blocks[$last]['text'];
-    for ($i=$last; $i >= $target; $i--) {
+    if ($verify && !hash_equals($this->blocks[$last]['hash'], $this->hashBlock($this->blocks[$last], $body))) return false;
+    if ($target === $last) return $body;
+    // walk back on one line array; splitting and joining the text per delta dominates old revisions
+    $lines = $this->lines($body);
+    for ($i=$last-1; $i >= $target; $i--) {
       $b = $this->blocks[$i];
-      if ($i !== $last) {
-        if ($this->version === 2 && isset($b['text'])) $body = $b['text'];
-        else {
-          $delta = $this->version === 1 ? $b['text'] : $b['delta'];
-          $body = $this->applyDelta($body, $delta);
-          if ($body === false) return false;
-        }
-      }
-      if ($this->verifyHashes && $this->version === 2 && !hash_equals($b['hash'], $this->hashBlock($b, $body))) return false;
+      if ($this->version === 2 && isset($b['text'])) $lines = $this->lines($b['text']);
+      else if (!$this->applyDelta($lines, $this->version === 1 ? $b['text'] : $b['delta'])) return false;
+      if ($verify && !hash_equals($b['hash'], $this->hashBlock($b, implode('', $lines)))) return false;
     }
-    return $body;
+    return implode('', $lines);
   }
 
-  private function applyDelta($body, $delta) {
-    $lines = $this->lines($body);
+  private function applyDelta(&$lines, $delta) {
     $commands = $this->lines($delta);
     $offset = 0;
     for ($i=0, $count=count($commands); $i<$count;) {
@@ -240,7 +251,7 @@ class MoniSimpleRCS {
         $i += $n; $offset += $n;
       }
     }
-    return implode('', $lines);
+    return true;
   }
 
   function diff($new, $old, $type='') {
@@ -255,7 +266,7 @@ class MoniSimpleRCS {
     if ($body !== '' && substr($body, -1) !== "\n") $body .= "\n";
     $last = count($this->blocks)-1;
     if ($last >= 0) {
-      if ($this->verifyHashes && $this->revision('1.0') === false) return false;
+      if ($this->verifyHashes && !$this->verifyAll()) return false;
       $old = $this->revision($this->head());
       if ($old === false) return false;
       if ($this->version === 1) $this->blocks[$last]['text'] = $this->diff($old, $body);
@@ -294,6 +305,8 @@ class MoniSimpleRCS {
     }
     if ($ok) $ok = @chmod($tmp, $mode) && @rename($tmp, $path);
     if (!$ok) @unlink($tmp);
+    // the chain was verified before appending, so the written archive needs no recheck
+    else if ($this->verifyHashes) $this->digest = $this->verified = hash('sha256', $out);
     return $ok;
   }
 
