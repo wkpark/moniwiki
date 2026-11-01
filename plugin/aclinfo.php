@@ -72,6 +72,7 @@ function macro_AclInfo($formatter, $value, $params = array()) {
 function do_aclinfo($formatter,$options) {
     global $DBInfo;
 
+    $allowed = $denied = $protected = array();
     if ($DBInfo->security_class=='acl') {
         $ret = $DBInfo->security->get_acl('aclinfo',$options);
         if (is_array($ret)) {
@@ -180,10 +181,10 @@ function do_aclinfo($formatter,$options) {
                 $msgs = array();
                 $page = !empty($options['value']) ? $options['value'] : $formatter->page->name;
 
-                $group = $options['group'];
-                $type = $options['type'];
-                $acts = (array)$options['act'];
-                $ttl = (int)$options['ttl'];
+                $group = $options['group'] ?? '';
+                $type = $options['type'] ?? '';
+                $acts = (array)($options['act'] ?? array());
+                $ttl = (int)($options['ttl'] ?? 0);
 
                 // Simple ACL mode.
                 if (isset($options['control'])) {
@@ -309,7 +310,7 @@ function do_aclinfo($formatter,$options) {
                 }
                 if (!empty($msgs)) {
                     $all_msg = implode(', ', $msgs);
-                    if ($options['title'])
+                    if (!empty($options['title']))
                         $options['title'].= ': '.$all_msg;
                     else
                         $options['title'] = $all_msg;
@@ -336,7 +337,7 @@ function do_aclinfo($formatter,$options) {
                 echo '<table class="wiki"><tr><th style="white-space:nowrap">',_("ACL Group"),"</th><th>",
                      _("Type"),"</th><th>",_("Actions"),"</th>",$form_th,"</tr>\n";
                 foreach ($acl as $group=>$entry) {
-                    $editor = $entry['.editor'];
+                    $editor = $entry['.editor'] ?? '';
                     $ttl_time = '';
                     if (!empty($entry['ttl'])) {
                         $ttl = $entry['ttl'];

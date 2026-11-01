@@ -32,6 +32,7 @@ class Security_ACL extends Security_base {
     var $DB;
 
     var $_acl_ok=0;
+    var $_acl_context = null;
     var $_protected=array();
     function __construct($DB="") {
         $this->DB=$DB;
@@ -425,10 +426,8 @@ class Security_ACL extends Security_base {
     }
 
     function merge_acl(&$acls, $acl) {
-        if (empty($acls)) {
-            $acls = $acl;
-            return;
-        }
+        if (empty($acls))
+            $acls = array();
 
         // merge ACL array
         foreach ($acl as $g=>$entry) {
@@ -478,10 +477,11 @@ class Security_ACL extends Security_base {
         }
         $this->merge_acl($acl, $aux_acl);
 
-        return $acl;
+        return empty($acl) ? false : $acl;
     }
 
     function add_page_acl($pagename, $acl, $params = array()) {
+        $this->_acl_ok = 0;
         // set TTL
         $ttl = 0;
         if (!empty($params['ttl'])) {
@@ -500,17 +500,19 @@ class Security_ACL extends Security_base {
                 $ttl = $retval['ttl'] - (time() - $retval['mtime']);
             }
 
+            if ($acls === false)
+                $acls = array();
             if (is_array($acl)) {
                 // remove ACL entry selectively
                 foreach ($acl as $g=>$v) {
-                    if (isset($acls[$g]) && $v == null) {
+                    if ($v === null) {
                         unset($acls[$g]);
                         unset($acl[$g]);
-                    } else if ($acl[$g]['allow'] && $acls[$g]['deny']) {
+                    } else if (!empty($acl[$g]['allow']) && !empty($acls[$g]['deny'])) {
                         // acl entry found conflict each other.
                         // just reset aux ACL
                         unset($acls[$g]['deny']);
-                    } else if ($acl[$g]['deny'] && $acls[$g]['allow']) {
+                    } else if (!empty($acl[$g]['deny']) && !empty($acls[$g]['allow'])) {
                         // reset aux ACL
                         unset($acls[$g]['allow']);
                     }
@@ -600,9 +602,13 @@ class Security_ACL extends Security_base {
                 $pri+= $found;
 
                 $entry = $acl[$group];
+                if (!empty($entry['ttl']) && $entry['mtime'] + $entry['ttl'] <= time())
+                    continue;
                 $types = array_keys($entry);
 
                 foreach ($types as $type) {
+                    if (!in_array($type, array('allow', 'deny', 'protect')))
+                        continue;
                     $acts = $entry[$type];
                     $tmp = array_flip($acts);
                     foreach ($acts as $act) {
@@ -647,6 +653,7 @@ class Security_ACL extends Security_base {
             ob_end_clean();
         }
 
+        $this->_acl_context = array($options['page'], $options['id']);
         $this->_acl_ok = 1;
         $this->_allowed = $allow;
         $this->_denied = $deny;
@@ -784,6 +791,7 @@ class Security_ACL extends Security_base {
             $options['msg'].=ob_get_contents();
             ob_end_clean();
         }
+        $this->_acl_context = array($options['page'], $options['id']);
         $this->_acl_ok=1;
         $this->_allowed=$allowed;
         $this->_denied=$denied;
@@ -816,7 +824,7 @@ class Security_ACL extends Security_base {
             }
             return 1;
         }
-        if ($allowed[$action] >= $denied[$action]) return 1;
+        if (($allowed[$action] ?? 0) >= ($denied[$action] ?? 0)) return 1;
         return 0;
         #if (isset($allowed[$action]) and isset($denied[$action])) {
         #    if ($allowed[$action] >= $denied[$action]) return 1;
@@ -831,7 +839,9 @@ class Security_ACL extends Security_base {
         # basic allowed actions
         $action=strtolower($action);
         $action=strtr($action,'-','/'); # for myaction/macro or myaction/ajax
-        if (!$this->_acl_ok) $this->get_acl($action,$options); # get acl info
+        if (in_array($options['id'], $this->allowed_users)) return 1;
+        if (!$this->_acl_ok || $this->_acl_context !== array($options['page'], $options['id']))
+            $this->get_acl($action,$options);
 
         $ret=$this->acl_check($action,$options);
         if ($ret == 0) {
@@ -863,7 +873,8 @@ class Security_ACL extends Security_base {
         # password protected POST actions
         $action=strtolower($action);
         $action=strtr($action,'-','/'); # for myaction/macro or myaction/ajax
-        if (!$this->_acl_ok) $this->get_acl($action,$options); # get acl info
+        if (!$this->_acl_ok || $this->_acl_context !== array($options['page'], $options['id']))
+            $this->get_acl($action,$options);
 
         if (in_array($action,$this->_protected)) return 1;
 
