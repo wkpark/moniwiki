@@ -101,6 +101,7 @@ function do_aclinfo($formatter,$options) {
         $ret = array();
         $retval = array();
         $ret['retval'] = &$retval;
+        $ret['ttl'] = 0;
 
         $acls = array();
 
@@ -113,27 +114,28 @@ function do_aclinfo($formatter,$options) {
                 continue;
             }
 
-            $ttl = '';
-            if (!empty($retval['ttl'])) {
-                $ttl = $retval['ttl'] - ($cur - $retval['mtime']);
-                $ttl = "\t".$ttl;
-            }
-            foreach ($info as $g=>$types) {
+            $active = array();
+            $DBInfo->security->merge_acl($active, $info);
+            foreach ($active as $g=>$types) {
+                $ttl = '';
+                if (!empty($types['ttl']))
+                    $ttl = "\t".($types['ttl'] - ($cur - $types['mtime']));
                 foreach ($types as $type=>$v) {
                     if (!is_array($v))
                         continue;
                     if (!isset($acls[$g]))
                         $acls[$g] = array();
 
-                    $acls[$g][$retval['id']] = $g."\t".$type."\t".implode(',', $v).$ttl;
+                    $acls[$g][$retval['id']][] = $g."\t".$type."\t".implode(',', $v).$ttl;
                 }
             }
         }
 
         foreach ($acls as $g=>$acl) {
             ksort($acl);
-            foreach ($acl as $id=>$entry) {
-                echo $id,"\t",$entry,"\n";
+            foreach ($acl as $id=>$entries) {
+                foreach ($entries as $entry)
+                    echo $id,"\t",$entry,"\n";
             }
         }
 

@@ -53,7 +53,7 @@ class Security_ACL extends Security_base {
             // merge all acl files
             $cache = new Cache_text('settings', array('depth'=>0));
             $acl_lines = $cache->fetch('acl');
-            if ($acl_lines === false) {
+            if ($acl_lines === false || $cache->fetch('acl_rules_v2') === false) {
                 $params = array();
                 // save dependencies
                 $deps = array($acl_file);
@@ -72,26 +72,18 @@ class Security_ACL extends Security_base {
                 }
                 // save default ACL
                 $cache->update('acl_default', $rules['*']);
-                // make all in one regex for all patthern
-                $tmp = array_keys($rules);
-                unset($tmp[0]);
-                $rule = '('.implode(')|(', $tmp).')';
-
-                $vals = array_values($rules);
-                $vals['*'] = $rule;
-                $cache->update('acl_rules', $vals);
+                unset($rules['*']);
+                $cache->update('acl_rules_v2', $rules);
             }
 
             $this->AUTH_ACL = $acl_lines;
             $this->default = $cache->fetch('acl_default');
-            $this->rules = $cache->fetch('acl_rules');
-            $this->rule = $this->rules['*'];
+            $this->rules = $cache->fetch('acl_rules_v2');
             $this->group = $cache->fetch('acl_group');
         } else{
             $this->AUTH_ACL= array('*   @ALL    allow   *');
             $this->default = array('@ALL'=>array('allow'=>array('*')));
-            $this->rules = null;
-            $this->rule = null;
+            $this->rules = array();
             $this->group = null;
         }
 
@@ -202,7 +194,7 @@ class Security_ACL extends Security_base {
                 list($users, $priority) = preg_split("/\s+/", $tmp, 2);
             else
                 $users = $tmp;
-            if (preg_match("/(^|.*,)$user(,.*|$)/", $users))
+            if (in_array($user, explode(',', $users), true))
                 $groups[] = $grp;
 
             if (!empty($priority) and is_numeric($priority)) $gpriority[$grp] = $priority; # set group priorities
@@ -471,6 +463,8 @@ class Security_ACL extends Security_base {
 
     function get_page_acl($pagename, $params = array()) {
         $acl = $this->cache->fetch($pagename);
+        // Expiration belongs to each group, not the whole page cache.
+        $params['ttl'] = 0;
         $aux_acl = $this->aux_cache->fetch($pagename, 0, $params);
         if ($aux_acl === false) {
             return $acl;
@@ -491,20 +485,17 @@ class Security_ACL extends Security_base {
             // delete all aux acls
             $this->aux_cache->remove($pagename);
         } else {
-            $retval = array();
-            $ret = array('retval'=>&$retval);
-            // get current acl
-            $acls = $this->aux_cache->fetch($pagename, 0, $ret);
-            if ($acls !== false && $ttl == 0 && !empty($retval['ttl'])) {
-                // update TTL
-                $ttl = $retval['ttl'] - (time() - $retval['mtime']);
-            }
-
-            if ($acls === false)
-                $acls = array();
+            $stored = $this->aux_cache->fetch($pagename, 0, array('ttl'=>0));
+            $acls = array();
+            if ($stored !== false)
+                $this->merge_acl($acls, $stored);
             if (is_array($acl)) {
                 // remove ACL entry selectively
                 foreach ($acl as $g=>$v) {
+                    if ($v !== null && !isset($acl[$g]['ttl'])) {
+                        $acl[$g]['ttl'] = $ttl;
+                        $acl[$g]['mtime'] = time();
+                    }
                     if ($v === null) {
                         unset($acls[$g]);
                         unset($acl[$g]);
@@ -522,7 +513,7 @@ class Security_ACL extends Security_base {
             if (!empty($acl))
                 $this->merge_acl($acls, $acl);
             if (!empty($acls))
-                $this->aux_cache->update($pagename, $acls, $ttl);
+                $this->aux_cache->update($pagename, $acls, 0);
             else
                 $this->aux_cache->remove($pagename);
         }
@@ -574,10 +565,10 @@ class Security_ACL extends Security_base {
         // get page acl
         if ($acl !== false) {
             $acls[$pagename] = $acl;
-        } else if (preg_match('/'.$this->rule.'/', $pagename, $m)) {
-            for ($i = 1; $i < sizeof($m); $i++) {
-                if (!empty($this->rules[$i])) {
-                    $acls[''] = $this->rules[$i]; // regex pattern
+        } else {
+            foreach ($this->rules as $pattern=>$rule_acl) {
+                if (preg_match('/'.$pattern.'/', $pagename)) {
+                    $acls[''] = $rule_acl;
                     break;
                 }
             }
@@ -602,8 +593,6 @@ class Security_ACL extends Security_base {
                 $pri+= $found;
 
                 $entry = $acl[$group];
-                if (!empty($entry['ttl']) && $entry['mtime'] + $entry['ttl'] <= time())
-                    continue;
                 $types = array_keys($entry);
 
                 foreach ($types as $type) {
@@ -617,15 +606,23 @@ class Security_ACL extends Security_base {
                                 unset($tmp[$act]);
                             else
                                 $tmp[$act] = $pri;
-                            if (isset($deny[$act]) and $deny[$act] <= $pri)
-                                unset($deny[$act]);
+                            if (isset($deny[$act])) {
+                                if ($deny[$act] <= $pri)
+                                    unset($deny[$act]);
+                                else
+                                    unset($tmp[$act]);
+                            }
                         } else if ($type == 'deny') {
                             if (isset($deny[$act]) and $deny[$act] > $pri)
                                 unset($tmp[$act]);
                             else
                                 $tmp[$act] = $pri;
-                            if (isset($allow[$act]) and $allow[$act] <= $pri)
-                                unset($allow[$act]);
+                            if (isset($allow[$act])) {
+                                if ($allow[$act] <= $pri)
+                                    unset($allow[$act]);
+                                else
+                                    unset($tmp[$act]);
+                            }
                         }
                     }
                     ${$type} = array_merge(${$type}, $tmp);
@@ -873,6 +870,8 @@ class Security_ACL extends Security_base {
         # password protected POST actions
         $action=strtolower($action);
         $action=strtr($action,'-','/'); # for myaction/macro or myaction/ajax
+        if (in_array($options['id'], $this->allowed_users))
+            return parent::is_protected($action, $options);
         if (!$this->_acl_ok || $this->_acl_context !== array($options['page'], $options['id']))
             $this->get_acl($action,$options);
 

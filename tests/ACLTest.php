@@ -44,22 +44,8 @@ final class ACLTest extends TestCase
 
     private function security($lines = array('* @ALL allow *'))
     {
+        file_put_contents($this->dir.'/acl.default.php', implode("\n", $lines)."\n");
         $security = new Security_ACL($GLOBALS['DBInfo']);
-        list($pages, $rules, $groups) = $security->parse_acl($lines);
-        $security->AUTH_ACL = $lines;
-        $security->group = $groups;
-        $security->default = $rules['*'] ?? array();
-        $security->rules = array();
-        $patterns = array();
-        foreach ($rules as $pattern=>$acl) {
-            if ($pattern == '*') continue;
-            $patterns[] = '('.$pattern.')';
-            $security->rules[count($patterns)] = $acl;
-        }
-        $security->rule = $patterns ? implode('|', $patterns) : '(?!)';
-        $security->cache = new Cache_Text('acl');
-        $security->aux_cache = new Cache_Text('aux_acl');
-        foreach ($pages as $page=>$acl) $security->cache->update($page, $acl, 0);
         $GLOBALS['DBInfo']->security = $security;
         return $security;
     }
@@ -310,6 +296,129 @@ final class ACLTest extends TestCase
         $s->aux_cache->update('SecretPage', array('@ALL'=>array('allow'=>array('read'),
             'ttl'=>10, 'mtime'=>time()-100)), 0);
         $this->assertEquals(0, $this->decision($s, 'SecretPage', 'read'));
+    }
+
+    public function testOwnerProtectionDoesNotReuseAnotherUsersRules(): void
+    {
+        $s = $this->security(array('* @ALL allow *', '* Tester protect read'));
+        $options = array('page'=>'Page', 'id'=>'Tester');
+        $this->assertEquals(1, $s->is_protected('read', $options));
+        $options['id'] = 'Owner';
+        $this->assertEquals(0, $s->is_protected('read', $options));
+    }
+
+    public function testGroupMembershipTreatsUserNamesLiterally(): void
+    {
+        $s = $this->security(array('* @ALL deny *', '@Staff Axb', '* @Staff allow read'));
+        $this->assertEquals(0, $this->decision($s, 'Page', 'read', 'A.b'));
+        $this->assertEquals(1, $this->decision($s, 'Page', 'read', 'Axb'));
+    }
+
+    public function testAddingShortLivedGroupDoesNotExpirePermanentGroup(): void
+    {
+        $s = $this->security();
+        $s->add_page_acl('Page', array('@ALL'=>array('deny'=>array('read'),
+            'ttl'=>0, 'mtime'=>time(), '.editor'=>'Tester')));
+        $s->add_page_acl('Page', array('@User'=>array('deny'=>array('savepage'),
+            'ttl'=>10, 'mtime'=>time(), '.editor'=>'Tester')), array('ttl'=>10));
+        $path = $s->aux_cache->cache_path.'/'.$s->aux_cache->getKey('Page');
+        $stored = unserialize(file_get_contents($path));
+        $stored['mtime'] = time()-100;
+        foreach ($stored['val'] as &$entry) $entry['mtime'] -= 100;
+        unset($entry);
+        file_put_contents($path, serialize($stored));
+        $this->assertEquals(0, $this->decision($s, 'Page', 'read'));
+        $this->assertEquals(1, $this->decision($s, 'Page', 'savepage'));
+    }
+
+    public function testDefaultRuleNeedNotBeFirstInConfiguration(): void
+    {
+        $s = $this->security(array('Secret* @ALL deny read', '* @ALL allow *'));
+        $this->assertEquals(0, $this->decision($s, 'SecretPage', 'read'));
+    }
+
+    public function testHigherPriorityWildcardAllowWinsOverLowerPriorityDeny(): void
+    {
+        $s = $this->security(array('* @ALL deny *', '* @User allow *'));
+        $this->assertEquals(1, $this->decision($s, 'Page', 'read'));
+    }
+
+    public function testExplicitCheckDoesNotOverrideHigherPriorityGroupDeny(): void
+    {
+        $s = $this->security(array('@Staff Tester 20', '* @Staff deny read', '* Tester allow read'));
+        $options = array('page'=>'Page', 'id'=>'Tester', 'explicit'=>1);
+        $this->assertEquals(0, $s->is_allowed('read', $options));
+    }
+
+    public function testOwnerStillRequiresPasswordForBaseProtectedActions(): void
+    {
+        $s = $this->security();
+        $options = array('page'=>'Page', 'id'=>'Owner');
+        $this->assertEquals(1, $s->is_protected('restore', $options));
+    }
+
+    public function testEachPatternUsesItsOwnPermissionsIncludingCapturingGroups(): void
+    {
+        $s = $this->security(array('* @ALL allow *', '^(Foo|Bar)$ @ALL deny read', 'Secret* @ALL deny savepage'));
+        $this->assertEquals(0, $this->decision($s, 'Foo', 'read'));
+        $this->assertEquals(1, $this->decision($s, 'SecretPage', 'read'));
+        $this->assertEquals(0, $this->decision($s, 'SecretPage', 'savepage'));
+    }
+
+    public function testLegacyPageTTLDoesNotHideUnexpiredGroups(): void
+    {
+        $s = $this->security();
+        $s->aux_cache->update('Page', array('@ALL'=>array('deny'=>array('read'),
+            'ttl'=>0, 'mtime'=>time()-100)), 10);
+        $path = $s->aux_cache->cache_path.'/'.$s->aux_cache->getKey('Page');
+        $stored = unserialize(file_get_contents($path));
+        $stored['mtime'] = time()-100;
+        file_put_contents($path, serialize($stored));
+        $this->assertEquals(0, $this->decision($s, 'Page', 'read'));
+    }
+
+    public function testOldCompiledRuleCacheIsRebuilt(): void
+    {
+        $settings = new Cache_Text('settings', array('depth'=>0));
+        $settings->update('acl', array('* @ALL allow *', 'Secret* @ALL deny read'), 0);
+        $settings->update('acl_rules', array('*'=>'(broken)'), 0);
+        $s = $this->security(array('* @ALL allow *', 'Secret* @ALL deny read'));
+        $this->assertEquals(0, $this->decision($s, 'SecretPage', 'read'));
+    }
+
+    public function testShippedSampleConfigurationPermissions(): void
+    {
+        copy(MONIWIKI_TEST_ROOT.'/config/acl.default.php.sample', $this->dir.'/acl.default.php');
+        $s = new Security_ACL($GLOBALS['DBInfo']);
+        $this->assertEquals(1, $this->decision($s, 'Page', 'read', 'Anonymous'));
+        $this->assertEquals(1, $this->decision($s, 'Page', 'uploadfile'));
+        $this->assertEquals(0, $this->decision($s, 'HelpOnEditing', 'uploadfile'));
+        $this->assertEquals(0, $this->decision($s, 'MoniWiki', 'uploadfile'));
+        $options = array('page'=>'Page', 'id'=>'Tester');
+        $this->assertEquals(1, $s->is_protected('restore', $options));
+    }
+
+    public function testAclInfoExportKeepsBothActionTypesAndPerGroupExpiration(): void
+    {
+        $s = $this->security();
+        $s->aux_cache->update('Page', array(
+            '@ALL'=>array('allow'=>array('read'), 'deny'=>array('savepage'), 'ttl'=>300, 'mtime'=>time()),
+            '@Guest'=>array('deny'=>array('read'), 'ttl'=>10, 'mtime'=>time()-100)), 0);
+        // Use a fresh CLI request so response headers are tested before any output.
+        $code = 'define("INC_MONIWIKI", 1); chdir('.var_export(MONIWIKI_TEST_ROOT, true).');'
+            .'require "wikilib.php"; require "wiki.php"; error_reporting(E_ALL & ~E_DEPRECATED); require "plugin/security/acl.php"; require "plugin/aclinfo.php";'
+            .'$Config = array("cache_dir"=>'.var_export($this->dir, true).');'
+            .'$DBInfo = (object)array("config_dir"=>'.var_export($this->dir, true).', "security_class"=>"acl",'
+            .'"user"=>(object)array("id"=>"Tester"), "owners"=>array());'
+            .'$DBInfo->security = new Security_ACL($DBInfo);'
+            .'do_aclinfo(null, array("get"=>1, "page"=>"Page", "id"=>"Tester"));';
+        exec(escapeshellarg(PHP_BINARY).' -d error_reporting=24575 -d display_errors=1 -d log_errors=0 -r '.escapeshellarg($code).' 2>&1', $lines, $status);
+        $this->assertSame(0, $status);
+        $this->assertCount(2, $lines, implode("\n", $lines));
+        $out = implode("\n", $lines)."\n";
+        $this->assertMatchesRegularExpression('/Page\t@ALL\tallow\tread\t(?:29[0-9]|300)\n/', $out);
+        $this->assertMatchesRegularExpression('/Page\t@ALL\tdeny\tsavepage\t(?:29[0-9]|300)\n/', $out);
+        $this->assertStringNotContainsString('@Guest', $out);
     }
 
 }
