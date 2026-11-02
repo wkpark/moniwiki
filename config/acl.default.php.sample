@@ -14,7 +14,7 @@
 WikiSandBox	@Guest	allow	edit,info,diff
 #*	Anonymous	deny	*
 # some POST actions support protected mode using admin password
-*	@ALL		protect	deletefile,deletepage,rename,rcspurge,rcs,chmod,backup,restore,revert
+*	@ALL		protect	deletefile,deletepage,rename,rcspurge,rcs,chmod,backup,restore,revert,merge
 # some actions allowed to @ALL
 *	@ALL		allow	read,userform,rss_rc,aclinfo,fortune,deletepage,fixmoin,ticket
 # some pages have restrict permission

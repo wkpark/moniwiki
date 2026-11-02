@@ -365,8 +365,9 @@ final class ACLTest extends TestCase
         $this->assertEquals(0, $this->decision($s, 'SecretPage', 'savepage'));
     }
 
-    public function testLegacyPageTTLDoesNotHideUnexpiredGroups(): void
+    public function testExpiredLegacyPageCacheStaysInactive(): void
     {
+        // Caches written before per-group expiration share one page TTL.
         $s = $this->security();
         $s->aux_cache->update('Page', array('@ALL'=>array('deny'=>array('read'),
             'ttl'=>0, 'mtime'=>time()-100)), 10);
@@ -374,6 +375,53 @@ final class ACLTest extends TestCase
         $stored = unserialize(file_get_contents($path));
         $stored['mtime'] = time()-100;
         file_put_contents($path, serialize($stored));
+        $this->assertEquals(1, $this->decision($s, 'Page', 'read'));
+        $s->add_page_acl('Page', array('@User'=>array('deny'=>array('savepage'))));
+        $this->assertEquals(1, $this->decision($s, 'Page', 'read'));
+        $this->assertEquals(0, $this->decision($s, 'Page', 'savepage'));
+    }
+
+    public function testRewritingLiveLegacyPageCacheKeepsPermanentGroups(): void
+    {
+        $s = $this->security();
+        $s->aux_cache->update('Page', array('@ALL'=>array('deny'=>array('read'),
+            'ttl'=>0, 'mtime'=>time())), 3600);
+        $this->assertEquals(0, $this->decision($s, 'Page', 'read'));
+        $s->add_page_acl('Page', array('@User'=>array('deny'=>array('savepage'))));
+        $path = $s->aux_cache->cache_path.'/'.$s->aux_cache->getKey('Page');
+        $stored = unserialize(file_get_contents($path));
+        $this->assertSame(0, $stored['ttl']);
+        $stored['mtime'] = time()-7200;
+        file_put_contents($path, serialize($stored));
+        $this->assertEquals(0, $this->decision($s, 'Page', 'read'));
+    }
+
+    public function testLatestExpirationForSameGroupWins(): void
+    {
+        // A temporary lock may be extended, then made permanent.
+        $s = $this->security();
+        $s->add_page_acl('Page', array('@ALL'=>array('deny'=>array('savepage'),
+            'ttl'=>10, 'mtime'=>time())), array('ttl'=>10));
+        $s->add_page_acl('Page', array('@ALL'=>array('deny'=>array('savepage'),
+            'ttl'=>3600, 'mtime'=>time())), array('ttl'=>3600));
+        $path = $s->aux_cache->cache_path.'/'.$s->aux_cache->getKey('Page');
+        $stored = unserialize(file_get_contents($path));
+        $stored['val']['@ALL']['mtime'] -= 100;
+        file_put_contents($path, serialize($stored));
+        $this->assertEquals(0, $this->decision($s, 'Page', 'savepage'));
+        $s->add_page_acl('Page', array('@ALL'=>array('deny'=>array('savepage'),
+            'ttl'=>0, 'mtime'=>time())));
+        $stored = unserialize(file_get_contents($path));
+        $stored['val']['@ALL']['mtime'] -= 7200;
+        file_put_contents($path, serialize($stored));
+        $this->assertEquals(0, $this->decision($s, 'Page', 'savepage'));
+    }
+
+    public function testAuxiliaryEntryOnStaticWildcardDenyDoesNotFail(): void
+    {
+        $s = $this->security(array('* @ALL allow *', 'Page @ALL deny *'));
+        $s->add_page_acl('Page', array('@ALL'=>array('deny'=>array('savepage'))));
+        $this->assertEquals(0, $this->decision($s, 'Page', 'savepage'));
         $this->assertEquals(0, $this->decision($s, 'Page', 'read'));
     }
 
@@ -396,6 +444,7 @@ final class ACLTest extends TestCase
         $this->assertEquals(0, $this->decision($s, 'MoniWiki', 'uploadfile'));
         $options = array('page'=>'Page', 'id'=>'Tester');
         $this->assertEquals(1, $s->is_protected('restore', $options));
+        $this->assertEquals(1, $s->is_protected('merge', $options));
     }
 
     public function testAclInfoExportKeepsBothActionTypesAndPerGroupExpiration(): void
@@ -404,6 +453,8 @@ final class ACLTest extends TestCase
         $s->aux_cache->update('Page', array(
             '@ALL'=>array('allow'=>array('read'), 'deny'=>array('savepage'), 'ttl'=>300, 'mtime'=>time()),
             '@Guest'=>array('deny'=>array('read'), 'ttl'=>10, 'mtime'=>time()-100)), 0);
+        $s->aux_cache->update('Expired', array(
+            '@ALL'=>array('deny'=>array('read'), 'ttl'=>10, 'mtime'=>time()-100)), 0);
         // Use a fresh CLI request so response headers are tested before any output.
         $code = 'define("INC_MONIWIKI", 1); chdir('.var_export(MONIWIKI_TEST_ROOT, true).');'
             .'require "wikilib.php"; require "wiki.php"; error_reporting(E_ALL & ~E_DEPRECATED); require "plugin/security/acl.php"; require "plugin/aclinfo.php";'
@@ -419,6 +470,7 @@ final class ACLTest extends TestCase
         $this->assertMatchesRegularExpression('/Page\t@ALL\tallow\tread\t(?:29[0-9]|300)\n/', $out);
         $this->assertMatchesRegularExpression('/Page\t@ALL\tdeny\tsavepage\t(?:29[0-9]|300)\n/', $out);
         $this->assertStringNotContainsString('@Guest', $out);
+        $this->assertFileDoesNotExist($s->aux_cache->cache_path.'/'.$s->aux_cache->getKey('Expired'));
     }
 
 }

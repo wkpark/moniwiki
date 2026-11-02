@@ -53,7 +53,8 @@ class Security_ACL extends Security_base {
             // merge all acl files
             $cache = new Cache_text('settings', array('depth'=>0));
             $acl_lines = $cache->fetch('acl');
-            if ($acl_lines === false || $cache->fetch('acl_rules_v2') === false) {
+            $rules = $cache->fetch('acl_rules_v2');
+            if ($acl_lines === false || $rules === false) {
                 $params = array();
                 // save dependencies
                 $deps = array($acl_file);
@@ -78,7 +79,7 @@ class Security_ACL extends Security_base {
 
             $this->AUTH_ACL = $acl_lines;
             $this->default = $cache->fetch('acl_default');
-            $this->rules = $cache->fetch('acl_rules_v2');
+            $this->rules = $rules;
             $this->group = $cache->fetch('acl_group');
         } else{
             $this->AUTH_ACL= array('*   @ALL    allow   *');
@@ -447,9 +448,11 @@ class Security_ACL extends Security_base {
                     // allow a,b,c
                     // deny a
                     if ($k == 'deny') {
-                        $acls[$g]['allow'] = array_diff($acls[$g]['allow'], $v);
+                        if (isset($acls[$g]['allow']))
+                            $acls[$g]['allow'] = array_diff($acls[$g]['allow'], $v);
                     } else if ($k == 'allow') {
-                        $acls[$g]['deny'] = array_diff($acls[$g]['deny'], $v);
+                        if (isset($acls[$g]['deny']))
+                            $acls[$g]['deny'] = array_diff($acls[$g]['deny'], $v);
                     } else {
                         trigger_error(_("Parse error"));
                     }
@@ -463,8 +466,7 @@ class Security_ACL extends Security_base {
 
     function get_page_acl($pagename, $params = array()) {
         $acl = $this->cache->fetch($pagename);
-        // Expiration belongs to each group, not the whole page cache.
-        $params['ttl'] = 0;
+        // Legacy caches keep their page TTL; groups expire in merge_acl().
         $aux_acl = $this->aux_cache->fetch($pagename, 0, $params);
         if ($aux_acl === false) {
             return $acl;
@@ -485,7 +487,7 @@ class Security_ACL extends Security_base {
             // delete all aux acls
             $this->aux_cache->remove($pagename);
         } else {
-            $stored = $this->aux_cache->fetch($pagename, 0, array('ttl'=>0));
+            $stored = $this->aux_cache->fetch($pagename);
             $acls = array();
             if ($stored !== false)
                 $this->merge_acl($acls, $stored);

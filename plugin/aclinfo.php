@@ -101,7 +101,6 @@ function do_aclinfo($formatter,$options) {
         $ret = array();
         $retval = array();
         $ret['retval'] = &$retval;
-        $ret['ttl'] = 0;
 
         $acls = array();
 
@@ -116,6 +115,12 @@ function do_aclinfo($formatter,$options) {
 
             $active = array();
             $DBInfo->security->merge_acl($active, $info);
+            if (empty($active)) {
+                // every auxiliary group has expired
+                if ($options['get'] == 1)
+                    $ac->_remove($f);
+                continue;
+            }
             foreach ($active as $g=>$types) {
                 $ttl = '';
                 if (!empty($types['ttl']))
