@@ -448,9 +448,15 @@ class processor_monimarkup
     }
 
     function _block($m) {
-        global $btype, $block, $options;
+        global $inline, $btype, $block, $options;
 
-        return $this->formatter->processor_repl($btype[$m[1]], $block[$m[1]], $options);
+        // Nested processors can render monimarkup again.
+        $saved = array($inline, $block, $btype, $options);
+        try {
+            return $this->formatter->processor_repl($btype[$m[1]], $block[$m[1]], $options);
+        } finally {
+            list($inline, $block, $btype, $options) = $saved;
+        }
     }
 
     function _inline($m) {
