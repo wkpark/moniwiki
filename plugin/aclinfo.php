@@ -72,6 +72,7 @@ function macro_AclInfo($formatter, $value, $params = array()) {
 function do_aclinfo($formatter,$options) {
     global $DBInfo;
 
+    $allowed = $denied = $protected = array();
     if ($DBInfo->security_class=='acl') {
         $ret = $DBInfo->security->get_acl('aclinfo',$options);
         if (is_array($ret)) {
@@ -112,27 +113,34 @@ function do_aclinfo($formatter,$options) {
                 continue;
             }
 
-            $ttl = '';
-            if (!empty($retval['ttl'])) {
-                $ttl = $retval['ttl'] - ($cur - $retval['mtime']);
-                $ttl = "\t".$ttl;
+            $active = array();
+            $DBInfo->security->merge_acl($active, $info);
+            if (empty($active)) {
+                // every auxiliary group has expired
+                if ($options['get'] == 1)
+                    $ac->_remove($f);
+                continue;
             }
-            foreach ($info as $g=>$types) {
+            foreach ($active as $g=>$types) {
+                $ttl = '';
+                if (!empty($types['ttl']))
+                    $ttl = "\t".($types['ttl'] - ($cur - $types['mtime']));
                 foreach ($types as $type=>$v) {
                     if (!is_array($v))
                         continue;
                     if (!isset($acls[$g]))
                         $acls[$g] = array();
 
-                    $acls[$g][$retval['id']] = $g."\t".$type."\t".implode(',', $v).$ttl;
+                    $acls[$g][$retval['id']][] = $g."\t".$type."\t".implode(',', $v).$ttl;
                 }
             }
         }
 
         foreach ($acls as $g=>$acl) {
             ksort($acl);
-            foreach ($acl as $id=>$entry) {
-                echo $id,"\t",$entry,"\n";
+            foreach ($acl as $id=>$entries) {
+                foreach ($entries as $entry)
+                    echo $id,"\t",$entry,"\n";
             }
         }
 
@@ -180,10 +188,10 @@ function do_aclinfo($formatter,$options) {
                 $msgs = array();
                 $page = !empty($options['value']) ? $options['value'] : $formatter->page->name;
 
-                $group = $options['group'];
-                $type = $options['type'];
-                $acts = (array)$options['act'];
-                $ttl = (int)$options['ttl'];
+                $group = $options['group'] ?? '';
+                $type = $options['type'] ?? '';
+                $acts = (array)($options['act'] ?? array());
+                $ttl = (int)($options['ttl'] ?? 0);
 
                 // Simple ACL mode.
                 if (isset($options['control'])) {
@@ -309,7 +317,7 @@ function do_aclinfo($formatter,$options) {
                 }
                 if (!empty($msgs)) {
                     $all_msg = implode(', ', $msgs);
-                    if ($options['title'])
+                    if (!empty($options['title']))
                         $options['title'].= ': '.$all_msg;
                     else
                         $options['title'] = $all_msg;
@@ -336,7 +344,7 @@ function do_aclinfo($formatter,$options) {
                 echo '<table class="wiki"><tr><th style="white-space:nowrap">',_("ACL Group"),"</th><th>",
                      _("Type"),"</th><th>",_("Actions"),"</th>",$form_th,"</tr>\n";
                 foreach ($acl as $group=>$entry) {
-                    $editor = $entry['.editor'];
+                    $editor = $entry['.editor'] ?? '';
                     $ttl_time = '';
                     if (!empty($entry['ttl'])) {
                         $ttl = $entry['ttl'];
